@@ -82,5 +82,8 @@ cmake-build-*/
 
 # IntelliJ build output
 out/
-Intermediate
-Saved
+### Unreal Engine
+[Bb]inaries/
+[Dd]erivedDataCache/
+[Ii]ntermediate/
+[Ss]aved/

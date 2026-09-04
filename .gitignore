@@ -82,3 +82,5 @@ cmake-build-*/
 
 # IntelliJ build output
 out/
+Intermediate
+Saved

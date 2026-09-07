@@ -87,3 +87,8 @@ out/
 [Dd]erivedDataCache/
 [Ii]ntermediate/
 [Ss]aved/
+
+# Serena / clangd generated files
+compile_commands.json
+.serena/
+.clangd

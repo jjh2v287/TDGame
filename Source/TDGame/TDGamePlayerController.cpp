@@ -2,6 +2,8 @@
 
 #include "TDGamePlayerController.h"
 #include "Combat/TDCombatComponent.h"
+#include "Animation/AnimMontage.h"
+#include "GameFramework/Character.h"
 #include "Combat/TDDamageTarget.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
@@ -489,5 +491,29 @@ void ATDGamePlayerController::TDSetCasterLevel(int32 Level)
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("Caster level %d | Attack %.1f | Spell %.1f"), Stats.Level, Stats.GetAttackPower(), Stats.GetSpellPower()));
+	}
+}
+
+void ATDGamePlayerController::TDPlayMeleeMontage(const FString& MontagePath)
+{
+	ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn());
+	if (!ControlledCharacter || !ControlledCharacter->GetMesh())
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeMontage: no controlled character with a skeletal mesh."));
+		return;
+	}
+
+	UAnimMontage* Montage = LoadObject<UAnimMontage>(nullptr, *MontagePath);
+	if (!Montage)
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeMontage: failed to load montage '%s'."), *MontagePath);
+		return;
+	}
+
+	const float Duration = ControlledCharacter->PlayAnimMontage(Montage);
+	UE_LOG(LogTDGame, Log, TEXT("TDPlayMeleeMontage: '%s' on '%s' (duration %.2f)."), *Montage->GetName(), *ControlledCharacter->GetName(), Duration);
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, Duration > 0.f ? FColor::Green : FColor::Red, FString::Printf(TEXT("PlayMeleeMontage %s -> %.2fs"), *Montage->GetName(), Duration));
 	}
 }

@@ -128,7 +128,10 @@
 - 탐색 순서: `get_symbols_overview`로 파일의 클래스와 함수 목록을 본 뒤, `find_symbol`로 필요한 심볼만 본문을 포함해 읽고, 호출처는 `find_referencing_symbols`로 확인한다. 파일 전체 읽기는 마지막 수단이다.
 - 편집: 함수 단위 교체는 `replace_symbol_body`, 새 함수와 프로퍼티 추가는 `insert_after_symbol` 또는 `insert_before_symbol`을 사용한다. 편집 후 `UCLASS`, `UPROPERTY`, `GENERATED_BODY` 매크로와 `.generated.h` 인클루드가 마지막 인클루드로 유지되는지 확인한다.
 - 대상은 `Source` 아래 코드만이다. `Binaries`, `DerivedDataCache`, `Intermediate`, `Saved`와 `.uasset`은 검색과 편집 대상에서 제외한다. 엔진 소스는 읽기 전용 참고로만 사용한다.
-- C++ 심볼 도구는 Serena의 C++ 언어 서버가 준비되어야 동작한다. 준비되지 않았으면 `search_for_pattern`과 파일 도구로 대체한다.
+- C++ 심볼 도구는 Serena의 C++ 언어 서버(clangd)가 켜져야 동작한다. 조건은 두 가지다. `C:\Users\<사용자>\.serena\projects\TDGame\.serena\project.yml`의 `language_servers`에 `cpp`가 있어야 하고, 프로젝트 루트에 `compile_commands.json`이 있어야 한다. 이 파일은 다음 명령으로 생성하며 소스 파일을 추가하거나 모듈 의존성을 바꾼 뒤에는 다시 생성한다(생성물이므로 커밋하지 않는다):
+  `"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.exe" -mode=GenerateClangDatabase -project="C:\Project\TDGame\TDGame.uproject" TDGameEditor Win64 Development -OutputDir="C:\Project\TDGame"`
+- Serena가 내려받는 clangd 19.1.2는 UE 5.8 엔진 헤더를 파싱하다 종료되므로, 같은 project.yml의 `ls_specific_settings.cpp.ls_path`에 데이터베이스를 만든 LLVM의 clangd(`C:/Program Files/LLVM/bin/clangd.exe`, 22.1.2)를 지정한다. 설정 후 `serena project health-check`가 통과해야 한다.
+- 심볼 도구가 "Active language servers: []"로 실패하면 위 조건들을 먼저 확인하고, 그래도 안 되면 `search_for_pattern`과 파일 도구로 대체한다.
 - Serena 메모리에는 프로젝트 구조와 반복 절차만 기록하고, 비밀 정보와 개인 정보는 기록하지 않는다.
 - Serena로 편집한 뒤에도 컴파일 검증은 생략하지 않는다.
 
@@ -136,7 +139,8 @@
 
 - 구성: `TDGame.uproject`에서 `ModelContextProtocol`과 `AllToolsets` 플러그인이 에디터 전용으로 켜져 있고, `Config/DefaultEditorPerProjectUserSettings.ini`에서 서버가 포트 8000, 경로 `/mcp`로 에디터 시작 시 자동 실행된다.
 - 클라이언트 설정은 `.mcp.json`(Claude Code), `.codex/config.toml`(Codex), `.cursor/mcp.json`, `.gemini/settings.json`, `.vscode/mcp.json`에 있으며 모두 `http://127.0.0.1:8000/mcp`를 가리킨다. 주소나 포트를 바꿀 때는 다섯 파일과 에디터 설정을 함께 바꾼다.
-- 전제: 언리얼 에디터가 이 프로젝트를 열고 있어야 연결된다. 연결에 실패하면 사용자에게 에디터 실행을 요청하고, 그동안 코드 작업은 진행한다.
+- 전제: 언리얼 에디터가 이 프로젝트를 열고 있어야 연결된다. 연결에 실패하면 에이전트가 직접 에디터를 백그라운드로 실행하고 포트 8000이 열릴 때까지 기다린 뒤 다시 연결한다. 실행 명령은 `"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe" "C:\Project\TDGame\TDGame.uproject"`이며, 실행 전에 `tasklist`로 이미 떠 있는 에디터가 없는지 확인해 중복 실행을 피한다. 에디터 기동에는 1~3분이 걸리므로 그동안 에디터가 필요 없는 코드 작업을 먼저 진행한다.
+- 에디터가 켜진 상태에서는 Build.bat 대신 라이브 코딩 도구로 컴파일한다. 헤더 변경이 큰 작업은 에디터를 닫고 Build.bat로 컴파일한 뒤 다시 연다. 에디터를 닫을 때는 저장되지 않은 에셋이 있는지 사용자에게 먼저 알린다.
 - 도구 검색이 켜져 있어 도구 목록이 통째로 로드되지 않는다. 필요한 작업을 키워드로 검색해 도구를 찾은 뒤 호출한다.
 - 용도는 7절의 로직 정책과 같다. 에셋 생성과 구성에 사용한다: 몽타주 생성과 노티파이 배치, 데이터 에셋 값 설정, 블루프린트의 기본값·컴포넌트·에셋 연결, 액터 배치, 콜리전과 프로젝트 설정, 게임플레이 태그, 자동화 테스트 실행, 라이브 코딩 컴파일. 블루프린트 그래프에 로직 노드를 추가하는 데는 사용하지 않는다.
 - 에디터 상태를 바꾸는 도구(에셋 생성·저장·삭제, 레벨 수정, 설정 변경)는 실행 전에 대상과 결과를 사용자에게 알린다. 삭제와 덮어쓰기는 명시적 승인 후에만 실행한다.

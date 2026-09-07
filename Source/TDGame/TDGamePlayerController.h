@@ -75,6 +75,10 @@ public:
 	UFUNCTION(Exec)
 	void TDSetCasterLevel(int32 Level);
 
+	/** Plays the given montage asset on the controlled character. Console: TDPlayMeleeMontage /Game/Combat/Animations/AM_TDMeleeAttack_Test */
+	UFUNCTION(Exec)
+	void TDPlayMeleeMontage(const FString& MontagePath);
+
 protected:
 
 	virtual void BeginPlay() override;

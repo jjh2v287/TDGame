@@ -11,6 +11,8 @@ class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 class UPathFollowingComponent;
+class ATDGameCharacter;
+struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -65,8 +67,20 @@ public:
 
 	/** Constructor */
 	ATDGamePlayerController();
+	virtual void FlushPressedKeys() override;
+
+	UFUNCTION(Exec)
+	void TDSpawnDamageTargets();
+
+	UFUNCTION(Exec)
+	void TDSetCasterLevel(int32 Level);
 
 protected:
+
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnUnPossess() override;
+	virtual void PostProcessInput(const float DeltaTime, const bool bGamePaused) override;
 
 	/** Initialize input bindings */
 	virtual void SetupInputComponent() override;
@@ -75,11 +89,44 @@ protected:
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
+	void OnPointerMovementCanceled();
+	void OnTouchStarted();
 	void OnTouchTriggered();
 	void OnTouchReleased();
 
 	/** Helper function to get the move destination */
 	void UpdateCachedDestination();
+	void CastDamageSpell(int32 Slot);
+	void CastFirstDamageSpell();
+	void CastSecondDamageSpell();
+	void CastThirdDamageSpell();
+	void CastFourthDamageSpell();
+	void CastFifthDamageSpell();
+	void CastSixthDamageSpell();
+
+private:
+	void SetupKeyboardMovement();
+	void OnKeyboardMovementTriggered(const FInputActionValue& Value);
+	void OnKeyboardMovementStopped();
+	void StartPointerMovement(bool bTouchInput);
+	void ResetMovementInput();
+	void SetKeyboardMovementMode(bool bKeyboardMode);
+	bool GetCursorHit(FHitResult& Hit) const;
+	void FaceMouseCursor(ATDGameCharacter* ControlledCharacter) const;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> KeyboardMoveAction;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInputMappingContext> KeyboardMappingContext;
+
+	FVector2D KeyboardMoveInput = FVector2D::ZeroVector;
+	bool bIsUsingKeyboardMovement = false;
+	bool bIsPointerInputActive = false;
+	bool bHasPointerStarted = false;
+	bool bHasPendingPointerRelease = false;
+	bool bShouldIgnorePointerUntilRelease = false;
+	bool bHasValidPointerDestination = false;
 };
 
 

@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "TDGameCharacter.h"
+#include "Combat/TDCombatComponent.h"
+#include "Combat/TDDamageDefinition.h"
+#include "Combat/TDDamageExamples.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/DecalComponent.h"
@@ -13,6 +16,10 @@
 
 ATDGameCharacter::ATDGameCharacter()
 {
+	FTDCombatStats PlayerStats;
+	PlayerStats.TeamId = 1;
+	CombatComponent->SetStats(PlayerStats);
+
 	// Set size for player capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -49,6 +56,31 @@ ATDGameCharacter::ATDGameCharacter()
 
 void ATDGameCharacter::BeginPlay()
 {
+	if (DamageSpells.IsEmpty())
+	{
+		const TCHAR* SpellNames[] = { TEXT("Fireball"), TEXT("Blizzard"), TEXT("Mine"), TEXT("Shockwave"), TEXT("Meteor"), TEXT("DelayedHoming") };
+		for (const TCHAR* SpellName : SpellNames)
+		{
+			const FString AssetPath = FString::Printf(TEXT("/Game/Combat/Examples/DA_TD%s.DA_TD%s"), SpellName, SpellName);
+			UTDDamageDefinition* Definition = LoadObject<UTDDamageDefinition>(nullptr, *AssetPath, nullptr, LOAD_NoWarn);
+			if (!Definition)
+			{
+				DamageSpells.Reset();
+				break;
+			}
+			DamageSpells.Add(Definition);
+		}
+
+		if (DamageSpells.IsEmpty())
+		{
+			TArray<UTDDamageDefinition*> Examples;
+			TDDamageExamples::CreateExamples(this, Examples);
+			for (UTDDamageDefinition* Definition : Examples)
+			{
+				DamageSpells.Add(Definition);
+			}
+		}
+	}
 	Super::BeginPlay();
 
 	// stub

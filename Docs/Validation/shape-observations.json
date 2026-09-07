@@ -1,0 +1,47 @@
+[
+  {
+    "case": "mine",
+    "center": {
+      "x": 177.1348114013672,
+      "y": 125.98329162597656,
+      "z": -0.5000000000002274
+    },
+    "early_health": 300,
+    "after_health": 240,
+    "outer_target_health": null,
+    "images": [
+      "C:\\Project\\TDGame\\Docs\\Validation\\mine-active.png",
+      "C:\\Project\\TDGame\\Docs\\Validation\\mine-result.png"
+    ]
+  },
+  {
+    "case": "shockwave",
+    "center": {
+      "x": 100.40567779541016,
+      "y": 100.40572357177734,
+      "z": -0.4999999999997726
+    },
+    "early_health": 300,
+    "after_health": 300,
+    "outer_target_health": 265,
+    "images": [
+      "C:\\Project\\TDGame\\Docs\\Validation\\shockwave-active.png",
+      "C:\\Project\\TDGame\\Docs\\Validation\\shockwave-result.png"
+    ]
+  },
+  {
+    "case": "meteor",
+    "center": {
+      "x": 100.9354019165039,
+      "y": 100.9354476928711,
+      "z": -0.4999999999997726
+    },
+    "early_health": 300,
+    "after_health": 185,
+    "outer_target_health": null,
+    "images": [
+      "C:\\Project\\TDGame\\Docs\\Validation\\meteor-active.png",
+      "C:\\Project\\TDGame\\Docs\\Validation\\meteor-result.png"
+    ]
+  }
+]

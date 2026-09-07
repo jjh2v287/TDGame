@@ -18,6 +18,9 @@ public class TDGame : ModuleRules
 			"NavigationSystem",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
+			"GameplayAbilities",
+			"GameplayTags",
+			"GameplayTasks",
 			"Niagara",
 			"UMG",
 			"Slate"

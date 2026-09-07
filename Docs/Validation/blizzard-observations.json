@@ -1,0 +1,279 @@
+{
+  "center": {
+    "x": 40.49228668212891,
+    "y": 0.39675208926200867,
+    "z": -0.4999999999997726
+  },
+  "records": [
+    {
+      "elapsed_real": 3.33,
+      "targets": [
+        {
+          "index": 0,
+          "health": 204,
+          "time_dilation": 1
+        },
+        {
+          "index": 1,
+          "health": 255,
+          "time_dilation": 0
+        },
+        {
+          "index": 2,
+          "health": 214,
+          "time_dilation": 0
+        },
+        {
+          "index": 3,
+          "health": 300,
+          "time_dilation": 1
+        },
+        {
+          "index": 4,
+          "health": 240,
+          "time_dilation": 0
+        }
+      ]
+    },
+    {
+      "elapsed_real": 7.67,
+      "targets": [
+        {
+          "index": 0,
+          "health": 204,
+          "time_dilation": 1
+        },
+        {
+          "index": 1,
+          "health": 195,
+          "time_dilation": 0
+        },
+        {
+          "index": 2,
+          "health": 154,
+          "time_dilation": 0
+        },
+        {
+          "index": 3,
+          "health": 270,
+          "time_dilation": 0
+        },
+        {
+          "index": 4,
+          "health": 180,
+          "time_dilation": 0
+        }
+      ]
+    },
+    {
+      "elapsed_real": 11.33,
+      "targets": [
+        {
+          "index": 0,
+          "health": 174,
+          "time_dilation": 0
+        },
+        {
+          "index": 1,
+          "health": 165,
+          "time_dilation": 1
+        },
+        {
+          "index": 2,
+          "health": 79,
+          "time_dilation": 1
+        },
+        {
+          "index": 3,
+          "health": 240,
+          "time_dilation": 0
+        },
+        {
+          "index": 4,
+          "health": 105,
+          "time_dilation": 1
+        }
+      ]
+    },
+    {
+      "elapsed_real": 15.0,
+      "targets": [
+        {
+          "index": 0,
+          "health": 159,
+          "time_dilation": 0
+        },
+        {
+          "index": 1,
+          "health": 135,
+          "time_dilation": 0
+        },
+        {
+          "index": 2,
+          "health": 49,
+          "time_dilation": 0
+        },
+        {
+          "index": 3,
+          "health": 180,
+          "time_dilation": 0
+        },
+        {
+          "index": 4,
+          "health": 105,
+          "time_dilation": 1
+        }
+      ]
+    },
+    {
+      "elapsed_real": 18.67,
+      "targets": [
+        {
+          "index": 0,
+          "health": 114,
+          "time_dilation": 0
+        },
+        {
+          "index": 1,
+          "health": 75,
+          "time_dilation": 0
+        },
+        {
+          "index": 2,
+          "health": 0,
+          "time_dilation": 0
+        },
+        {
+          "index": 3,
+          "health": 165,
+          "time_dilation": 1
+        },
+        {
+          "index": 4,
+          "health": 105,
+          "time_dilation": 1
+        }
+      ]
+    },
+    {
+      "elapsed_real": 22.33,
+      "targets": [
+        {
+          "index": 0,
+          "health": 84,
+          "time_dilation": 1
+        },
+        {
+          "index": 1,
+          "health": 0,
+          "time_dilation": 1
+        },
+        {
+          "index": 2,
+          "health": 0,
+          "time_dilation": 1
+        },
+        {
+          "index": 3,
+          "health": 165,
+          "time_dilation": 1
+        },
+        {
+          "index": 4,
+          "health": 105,
+          "time_dilation": 1
+        }
+      ]
+    },
+    {
+      "elapsed_real": 26.0,
+      "targets": [
+        {
+          "index": 0,
+          "health": 84,
+          "time_dilation": 1
+        },
+        {
+          "index": 1,
+          "health": 0,
+          "time_dilation": 1
+        },
+        {
+          "index": 2,
+          "health": 0,
+          "time_dilation": 1
+        },
+        {
+          "index": 3,
+          "health": 165,
+          "time_dilation": 1
+        },
+        {
+          "index": 4,
+          "health": 105,
+          "time_dilation": 1
+        }
+      ]
+    },
+    {
+      "elapsed_real": 29.67,
+      "targets": [
+        {
+          "index": 0,
+          "health": 84,
+          "time_dilation": 1
+        },
+        {
+          "index": 1,
+          "health": 0,
+          "time_dilation": 1
+        },
+        {
+          "index": 2,
+          "health": 0,
+          "time_dilation": 1
+        },
+        {
+          "index": 3,
+          "health": 165,
+          "time_dilation": 1
+        },
+        {
+          "index": 4,
+          "health": 105,
+          "time_dilation": 1
+        }
+      ]
+    },
+    {
+      "elapsed_real": 33.33,
+      "targets": [
+        {
+          "index": 0,
+          "health": 84,
+          "time_dilation": 1
+        },
+        {
+          "index": 1,
+          "health": 0,
+          "time_dilation": 1
+        },
+        {
+          "index": 2,
+          "health": 0,
+          "time_dilation": 1
+        },
+        {
+          "index": 3,
+          "health": 165,
+          "time_dilation": 1
+        },
+        {
+          "index": 4,
+          "health": 105,
+          "time_dilation": 1
+        }
+      ]
+    }
+  ]
+}

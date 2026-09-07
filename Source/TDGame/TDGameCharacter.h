@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "Combat/Characters/TDCombatCharacter.h"
 #include "TDGameCharacter.generated.h"
 
 class UCameraComponent;
@@ -13,7 +13,7 @@ class USpringArmComponent;
  *  A controllable top-down perspective character
  */
 UCLASS(abstract)
-class ATDGameCharacter : public ACharacter
+class ATDGameCharacter : public ATDCombatCharacter
 {
 	GENERATED_BODY()
 

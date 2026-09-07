@@ -124,7 +124,7 @@
 
 ### Serena (코드 심볼 탐색·편집 MCP 서버)
 
-- 프로젝트는 `C:\Project\TDGame`으로 Serena에 등록되어 있다. 세션에서 처음 사용할 때 이 프로젝트를 활성화한다.
+- 프로젝트는 `C:\Project\TDGame`으로 Serena에 등록되어 있다. Claude Code용 서버는 `.mcp.json`에 `uvx`로 실행하도록 등록되어 있고, Codex용은 사용자 전역 설정에 있다. 세션에서 처음 사용할 때 이 프로젝트를 활성화한다.
 - 탐색 순서: `get_symbols_overview`로 파일의 클래스와 함수 목록을 본 뒤, `find_symbol`로 필요한 심볼만 본문을 포함해 읽고, 호출처는 `find_referencing_symbols`로 확인한다. 파일 전체 읽기는 마지막 수단이다.
 - 편집: 함수 단위 교체는 `replace_symbol_body`, 새 함수와 프로퍼티 추가는 `insert_after_symbol` 또는 `insert_before_symbol`을 사용한다. 편집 후 `UCLASS`, `UPROPERTY`, `GENERATED_BODY` 매크로와 `.generated.h` 인클루드가 마지막 인클루드로 유지되는지 확인한다.
 - 대상은 `Source` 아래 코드만이다. `Binaries`, `DerivedDataCache`, `Intermediate`, `Saved`와 `.uasset`은 검색과 편집 대상에서 제외한다. 엔진 소스는 읽기 전용 참고로만 사용한다.

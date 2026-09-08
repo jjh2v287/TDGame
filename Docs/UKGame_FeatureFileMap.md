@@ -21,11 +21,13 @@
 | 8 | [서드파티 플러그인 목록](UKGame/08-thirdparty-plugins.md) | 외부 플러그인 제작자·용도·의존 관계 |
 | 9 | [상세 흐름: 심리스 던전 로딩](UKGame/09-flow-seamless-dungeon-loading.md) | 통로 액터, 스트리밍 소스 프로바이더, 상태 머신, 반경 축소 공식, 위험 요소 |
 | 10 | [상세 흐름: 부서지는 오브젝트 (Breakable · 폴리지 파손 · 생활 오브젝트)](UKGame/10-flow-breakable-objects.md) | 피격 판정 컴포넌트, 카오스 파괴, 폴리지 승격, 생활 오브젝트, 위험 요소 |
+| 11 | [애니메이션 · 캐릭터 이동 최적화](UKGame/11-animation-movement-optimization.md) | 중요도(Significance)/URO, 군중 틱 예산(Budgeter), 이동 시 본 피직스바디 갱신 차단(SkipAllBones), 무브먼트 캐싱, HPA*, ECS, VAT |
 
 ## 상세 흐름 문서
 
 - [심리스 던전 로딩](UKGame/09-flow-seamless-dungeon-loading.md) — 코드 본문 기준 단계별 흐름과 위험 요소
 - [부서지는 오브젝트](UKGame/10-flow-breakable-objects.md) — 카오스 파괴, 폴리지 파손, 생활 오브젝트
+- [애니메이션 · 캐릭터 이동 최적화](UKGame/11-animation-movement-optimization.md) — 중요도 틱/URO, 군중 틱 예산, 이동 시 본 피직스바디 갱신 차단, 지면 캐싱, HPA*, ECS 군집 이동, VAT
 
 ## 유지 방법
 

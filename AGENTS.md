@@ -152,3 +152,9 @@
 - 월드 파티션·던전 자동 제작·PCG 관련 작업은 `Docs/Tasks/README.md`의 규칙과 Phase별 할 일 목록을 따른다. 기준 문서는 `Docs/WorldDungeonPCG_Plan.md`(설계서 분석, 아키텍처, 리서치)다.
 - 작업을 시작할 때 상태를 `doing`으로, 끝낼 때 완료 조건을 모두 만족한 뒤 `done`으로 바꾸고 검증 근거를 기록에 남긴다. 사용자 결정이 필요한 항목은 `Docs/Tasks/decisions.md`에 적고 넘어간다.
 - `Docs/UKGame/`은 이전 프로젝트 참고 자료다. 그 구조를 기준으로 삼지 않고, 아키텍처 문서 3.9절의 차이 표에 따라 새 설계를 우선한다.
+
+## 13. 몬스터 AI · 전투 시뮬레이션 작업 대장
+
+- 몬스터 AI(코드 정의 유틸리티 + 실행 FSM), 결정론 전투 시뮬레이터(밸런스 툴), 틱·대량 몬스터 최적화, 머신러닝·생성형 AI 통합 작업은 `Docs/MonsterAI_CombatSim_Plan.md`(인덱스)와 `Docs/MonsterAI_CombatSim/07-roadmap-and-tasks.md`(할 일 대장, ID `M<phase>-<번호>`)를 따른다. 구속력 있는 결정은 `Docs/MonsterAI_CombatSim/00-decision-record.md`(D1~D38)이며, 결정을 바꾸려면 `Docs/MonsterAI_CombatSim/research/`의 근거를 먼저 반박한다.
+- 엔진 비헤이비어 트리·StateTree·HTNPlanner 플러그인·GOAP·Mass 두뇌·Mover·MLAdapter 는 전투 코어에 쓰지 않는다. 몬스터 한 종의 정본은 `Content/MonsterAI/Definitions/<Id>.json` 이고 행동 원시·입력 함수는 C++ 등록표다. 시뮬레이터와 게임은 같은 스텝 코드를 돌리며, 시뮬 코드에서 `FMath::FRand` 계열 전역 난수를 쓰지 않는다.
+- 작업 절차와 상태 표기(`todo/doing/blocked/done/decision`)는 12절의 월드·던전 대장과 같다. 두 대장은 별도 파일이며 통합 시점은 사용자가 결정한다.

@@ -32,6 +32,8 @@ PC·콘솔에서 한 화면에 보이는 몬스터 약 500마리를 60fps로 처
 
 이전 공유 구현의 상세 설정과 성능 캡처가 제공되지 않았으므로, 특정 설정 실수 때문에 품질이 나빴다고 단정할 수 없다. 대신 같은 증상을 만드는 구조적 원인을 나누어 설명한다. 또한 500마리가 모두 화면에 있다는 조건에서는 화면 밖 틱 중지만으로 목표를 해결할 수 없다.
 
+현재 C++·설정·모듈 의존성에서는 Animation Sharing·ABA·Significance·Mass·Leader Pose·Copy Pose의 통합 근거를 찾지 못했다. 바이너리 에셋 내부까지 검사한 결과는 아니므로 미사용을 확정하지 않는다. 기존 엔진 가이드의 모듈형 파츠 공유와 UKGame의 URO·VAT 참고 기록도 이번 500마리 전투의 측정 근거로 사용하지 않았다.[^29]
+
 ### 설명 2. ‘애니메이션 복사·공유’가 줄이는 비용
 
 | 방식 | 재사용하는 대상 | 주로 줄이는 비용 | 여전히 남는 비용·제약 |
@@ -96,6 +98,12 @@ UE 5.8.2의 `Num Randomized Instances`는 모든 follower에게 독립적인 임
 
 상체 흔들림이나 호흡 같은 비중요 표현과, 공격 예고·실제 타격·강한 경직은 정책을 나눈다. 전자는 제한된 변형 공유를 허용할 수 있지만 후자는 개체의 이벤트 시간과 중단 여부를 보존해야 한다. 부족한 표현 예산을 이유로 게임플레이 공격을 누락하거나 늦추는 정책은 이 연구에서 권장하지 않는다.
 
+**4.4 제한된 확장을 위해 엔진 포크부터 만들 필요는 없다.**
+
+로컬 플러그인에는 `DeterminePermutationIndex`, `CreateAnimSharingInstance`의 가상 함수와 커스텀 manager factory를 받는 생성 경로가 있다. 대표 배정 확장은 native 파생 클래스에서 검토할 수 있다. 다만 이 진입점이 임의의 속도·지형·전투 정책을 자동 제공하는 것은 아니다.[^22]
+
+공식 설정 예제는 상태·전환·Additive용 Animation Blueprint 구성을 사용한다. TDGame에서는 로직을 C++로 구현해야 하므로 native 애니메이션 proxy/node 구성과 생명주기 연결의 개발비를 포함해야 한다. ‘State Processor만 C++로 바꾸면 나머지 모든 애니메이션 로직도 C++ 정책을 충족한다’고 가정하지 않는다.
+
 ### 설명 5. 접지·회전 품질을 되찾는 방법
 
 **5.1 공유 포즈 뒤의 보정은 목적지에 독립 포즈가 있을 때 가능하다.**
@@ -150,9 +158,15 @@ Motion Matching은 좋은 동작을 찾는 품질 도구이며, 검색 비용 �
 
 `AnimSequenceTransformProviderDataInstance`에는 track별 자동·수동 재생, 재생 속도·위치, Blend Space 관련 API가 있다. 로컬 헤더에는 레이어와 마스크·블렌딩 관련 데이터 구조도 존재한다. 이것은 모든 개체가 동일 시점의 대표 포즈를 따라야 하는 구조보다 표현 자유도가 높다는 근거다.[^2][^21]
 
+여기서 **기본 Data asset과 런타임 DataInstance를 구분하는 것이 핵심**이다. 기본 경로는 시퀀스 수를 기준으로 포즈를 공유하지만 DataInstance는 track pool의 항목별로 포즈를 공급한다. 후자의 메시 `AnimationIndex`는 단순한 원본 클립 번호가 아니라 track을 가리킨다. 개별 위상을 시험할 때 여러 개체에 같은 track을 배정하면 다시 같은 재생을 공유하게 된다.[^21]
+
 이 경로의 실용적 가설은 다음과 같다. 애니메이터는 기존 스켈레톤·시퀀스를 수정하고, C++ 시스템이 개체별 클립·시간·속도·반응 상태를 제출한다. 필요한 GPU 데이터 변환·쿠킹은 공정에 포함하되, 매번 정점 텍스처와 머티리얼 연결을 수작업으로 관리하는 것을 기본 작업으로 만들지 않는다.
 
 특히 동일 클립에 각기 다른 시작 위상과 실제 이동에 맞는 재생 속도를 부여하기 쉬워지므로, 반복감과 속도 불일치에 유리할 가능성이 있다. 하지만 GPU도 개별 샘플링·블렌딩을 수행하며 레이어 수가 증가하면 비용이 증가한다. CPU 공유보다 항상 빠르다는 결론은 아직 내릴 수 없다.
+
+이 경로도 **데이터 전처리가 없는 시스템은 아니다.** 확인한 renderer 구현은 cooked 시퀀스를 CPU에서 풀어 GPU에 샘플 데이터를 올리고, GPU compute로 포즈를 평가한다. 로컬 기본값은 프레임당 업로드 예산 32개 시퀀스 프레임, 최대 샘플링 주파수 30, 단계적 quarter·half·full 업로드다. 이는 클립당 30개의 프레임만 저장한다는 뜻이나 GPU 평가를 항상 30Hz로 제한한다는 뜻은 아니다.[^30]
+
+따라서 안정 상태뿐 아니라 처음 보는 몬스터·클립이 등장할 때의 CPU 스파이크, 업로드 완료시간, 초기 저밀도 샘플의 품질을 측정해야 한다. 60fps로 출력하더라도 빠른 검·발 동작이 원본 시간 해상도를 충분히 보존하는지 따로 비교한다. 샘플링 빈도·정밀도를 높이면 메모리·업로드 비용이 늘 수 있으므로 기본 설정 변경을 곧바로 권장하지 않는다.
 
 **6.3 GPU에서 잘 재생되는 것과 게임에서 잘 동작하는 것은 다르다.**
 
@@ -170,6 +184,8 @@ Motion Matching은 좋은 동작을 찾는 품질 도구이며, 검색 비용 �
 
 GPU 포즈를 매 프레임 CPU로 동기적으로 가져와 공격·소켓 계산에 사용하는 구성은 지연과 동기화 비용을 검토해야 한다. 권장 방향은 필요한 전투 시간·일부 뼈 계산을 CPU에서 유지하거나 정확한 상호작용 개체를 CPU 포즈 경로로 승격하는 것이다. 어느 쪽이든 해당 비용을 GPU 재생 성능표에서 제외해서는 안 된다.
 
+인스턴스 컴포넌트에는 본 부착과 이전 프레임 변환 관련 API도 있다. 따라서 부착·모션 벡터가 전혀 지원되지 않는다고 단정해서는 안 된다. 다만 인스턴스 간 GPU 부착과 임의의 Actor가 CPU에서 조회하는 월드 소켓 좌표는 요구가 다르다. 실제 무기·이펙트 부착 방식으로 검증해야 한다.[^31]
+
 `AnimRuntimeTransformProvider`의 track별 갱신 API는 선택적 CPU 포즈 공급의 가능성을 보여준다. 그러나 기본 UAF instanced pose writer를 사용하면 500개 독립 IK 포즈가 자동 생성된다고 설명하면 틀리다. 확인한 writer는 LOD0 입력을 요구하고 같은 입력 포즈를 여러 인스턴스에 기록한다. 독립적인 교정 결과를 공급하려면 별도 C++ 연결을 검증해야 한다.[^24]
 
 **6.4 UAF·MetaHuman Crowd는 참고 구현과 채택 결정을 구분한다.**
@@ -178,6 +194,8 @@ UE 5.8 릴리스는 MetaHuman Crowd의 고품질 액터와 Instanced Skeletal Me
 
 UAF 관련 로컬 플러그인의 실험 상태, 현재 프로젝트의 C++ 로직 정책, 에셋 전환 비용을 별도로 고려한다. 이 연구는 UAF 전면 도입을 선행조건으로 두지 않는다. 기존 C++ 게임플레이와 core GPU 재생 연결만으로 필요한 이익이 나오는지 먼저 확인한다.[^25]
 
+`UAF.uplugin`에는 명시적인 Experimental 표시가 있지만 확인한 core sequence provider의 UCLASS에는 같은 표시가 없다. 이를 근거로 core 경로를 UAF와 함께 실험 기능이라고 일괄 분류하지 않는다. 반대로 표시가 없다는 이유만으로 출시 성숙도와 목표 플랫폼 지원을 보장하지도 않는다. `Animation Bank` 역시 별도 에셋·쿠킹·provider 구조이므로, 이 문서의 우선 실험은 이름이 유사한 모든 경로가 아니라 **DataInstance의 track별 시퀀스 재생**으로 특정한다.[^21][^25][^32]
+
 ### 설명 7. VAT·본 텍스처·기타 방법의 위치
 
 **정점 VAT와 본 애니메이션 텍스처는 생산성과 메모리 성격이 다르다.** 정점 VAT는 프레임별 정점 변형을 저장하는 방식이며, 본 텍스처 방식은 프레임별 본 변환과 메시의 스킨 가중치를 사용한다. 후자의 저장량은 정점 수보다는 본 수와 총 프레임 수에 영향을 받지만, GPU 스키닝과 데이터 포맷 설계가 필요하다. 실제 메모리는 정밀도·압축·패딩·LOD·클립 구성에 따라 달라진다.[^8]
@@ -185,6 +203,8 @@ UAF 관련 로컬 플러그인의 실험 상태, 현재 프로젝트의 C++ 로�
 VAT 계열도 개체별 시간, 프레임 보간, 클립 전환을 구현할 수 있다. ‘VAT이므로 블렌딩이 불가능하다’는 일반화는 하지 않는다. 이 프로젝트의 문제는 가능한가보다 **수정·재생성·연결·검증까지 포함한 작업량이 기존 시퀀스 제작보다 얼마나 늘어나는가**다.
 
 AnimToTexture 같은 엔진 도구는 변환 공정을 줄일 후보다. 그러나 원본 변경 감지, 파생 데이터 재생성, 머티리얼 설정, 노말·모션 벡터, 에셋 누락 검사까지 자동화해야 생산성 개선이라고 평가할 수 있다. 현재 조사만으로 그 공정이 TDGame 콘텐츠에서 충분히 자동화되었다고 볼 수 없다.[^26]
+
+로컬 AnimToTexture는 정점 위치·노말 또는 본 위치·회전을 텍스처로 변환하는 API를 제공하며 플러그인은 Experimental로 표시된다. 공개 API가 있다는 것은 배치 제작 도구의 기반이 있다는 뜻이지, 현재 프로젝트에 자동 제작 공정이 준비되어 있다는 뜻은 아니다.[^26]
 
 | 방법 | 성능상 기대 | 품질·생산성 절충 | 이번 연구의 위치 |
 |---|---|---|---|
@@ -225,6 +245,8 @@ ACL은 데이터 압축과 품질 설정의 도구이며 공유의 대체재가 
 
 **전환 비용은 한동안 두 경로를 사용하는 비용이다.** 풀링·사전 준비는 생성 스파이크를 줄일 수 있지만 메모리를 쓴다. 카메라 회전으로 다수 개체가 승격될 때 평가·리소스 갱신·드로 비용이 동시에 증가할 수 있다. 일상적인 예산 재배치는 분산하되, 즉시 보여야 하는 전투 반응은 늦추지 않는 정책이 필요하다.
 
+Stock Animation Sharing은 follower 등록 때 틱 플래그도 변경한다. 승격을 leader 포인터 해제만으로 끝내지 말고, 틱 복구·예산 시스템 재등록·대표의 수명·평가 순서를 함께 처리해야 한다. 보이지 않는 대표가 visibility 정책으로 멈추거나 낮은 LOD에서 필요한 뼈를 제공하지 못하는 상황도 검사한다. Copy Pose는 source가 준비된 뒤 실행되도록 의존성을 관리해야 한다.[^22][^23]
+
 **500마리 동시 피격은 독립 시나리오다.** 공유나 GPU 경로가 평균 보행에서는 빨라도, 모든 개체가 다른 시간의 반응을 시작하면 대표·레이어·전환 수가 급증할 수 있다. 이때 완전 독립 몽타주·래그돌을 전부 활성화하는 것이 필수인지 표현 요구를 구분해야 한다. 실루엣이 맞는 짧은 경직을 개별 시간으로 보여주는 경로와, 소수의 강조된 물리 반응을 비교할 수 있다.
 
 품질을 줄이는 경우에도 경직 여부·사망·공격 취소는 일치해야 한다. 풀 고갈로 다른 개체의 공격 중간 프레임에 합류하거나, 피해 이벤트가 중복 실행되는 것은 허용 가능한 시각적 간소화가 아니다.
@@ -234,6 +256,8 @@ ACL은 데이터 압축과 품질 설정의 도구이며 공유의 대체재가 
 현재 소스에서 `UTDAnimNotifyState_MeleeAttack`의 Begin/Tick/End는 근접 피해 sweep을 직접 구동한다. 상태는 `MeshComp`를 기준으로 보관하며, owner에서 피해 문맥을 얻고 `DamageSubsystem`으로 전달한다. 대표 메시의 notify를 모든 follower에 그대로 전달하면 기존의 개체별 상태·시간·owner 의미가 유지되는지 확인해야 한다.[^27]
 
 한편 `SampleBladePoints`는 화면에 그려진 현재 포즈를 그대로 읽는 대신, 원본 Montage track/Sequence에서 필요한 뼈를 평가하는 구조다. `SweepTimeRange`는 시간 구간을 나누어 샘플링한다. 이는 렌더 포즈와 독립적인 공격 궤적 계산을 검토할 수 있는 근거지만, 현재 notify 생명주기와 재생 시간 연결까지 이미 분리되어 있다는 뜻은 아니다.[^27]
+
+현재 기본 공격 샘플 간격은 1/60초이며 누적 구간을 여러 번 검사한다. 애니메이션 틱을 낮추면 이 비용이 사라지기보다 한 프레임에 몰릴 수 있다. 기존 테스트는 큰 프레임 간격에서의 명중·중복 피해 방지 등을 다루지만, 공유/독립 전환과 GPU 표현, 보정 포즈와 원본 궤적의 일치까지 검증한 것은 아니다.[^27]
 
 가장 작은 첫 실험에서는 공격 중인 개체를 기존 독립 애니메이션 경로에 유지하고, 이동·대기만 공유 또는 GPU 경로로 바꾸는 것이 좋다. 이 상태에서 얻는 이익을 확인한 뒤, 공격까지 대량 경로로 확장해야 할 때만 이벤트 시간 연결을 다룬다.
 
@@ -251,6 +275,8 @@ UE 5.8.2에서는 ABA에 컴포넌트를 등록하는 경로가 URO를 비활성
 
 Root Motion과 URO의 관계를 ‘항상 충돌한다’로 일반화하지 않는다. 로컬 엔진에는 root-motion 조건에 따른 매 프레임 처리와 LookAhead 경로가 있다. 모드, 이동 소비 경로, 네트워크 역할이 존재하는 경우 그 역할까지 구분하여 검증해야 한다.[^28]
 
+별도로, 기본 공유 leader의 Root Motion이 각 follower의 CharacterMovement에 자동 전달된다는 근거도 확인하지 못했다. 이동 delta를 개체별 충돌·이동에 적용하는 연결이 필요하다. 공유 이동은 C++ 이동과 in-place 동작으로 먼저 시험하고, Root Motion을 사용하는 중요한 돌진·공격은 독립 경로에서 기존 의미를 보존하는 것을 권장한다.[^33]
+
 **GPU 스키닝과 그림자는 공유 뒤에도 남는다.** 일반 Skin Cache는 스키닝 결과를 버퍼에 저장하는 렌더 경로다. 이를 여러 캐릭터가 동일한 결과를 무조건 공유하는 군중 캐시라고 해석하면 안 된다. 캐시 메모리, 메시 LOD, 버텍스·본 영향 수, 모프·탠전트 처리, 레이트레이싱의 추가 비용을 함께 관찰한다.[^13]
 
 VSM은 움직이거나 변형되는 그림자 투사체 때문에 캐시 페이지를 다시 그릴 수 있다. 500마리 애니메이션의 CPU 비용을 줄여도 그림자·픽셀·겹침 비용이 지배적이면 60fps를 달성하지 못한다. 그림자 품질 실험은 최종 요구를 유지한 비교와, 병목 분리를 위한 일시적 비활성 비교를 구분해서 보고한다.[^14]
@@ -263,9 +289,12 @@ AI·이동·충돌·GAS·피해 처리도 별도 축이다. 애니메이션 실�
 
 동일 카메라, 개체 위치·속도·회전, 공격·피격 이벤트, 랜덤 시드, 메시·머티리얼·LOD·그림자·해상도를 고정한다. 가능하면 C++ 시뮬레이션의 입력·사건 기록을 재생하여, 경로마다 AI가 달라진 탓에 비교가 오염되지 않게 한다. 이 시험에서만 게임플레이를 고정하고, 마지막에는 실제 AI·이동이 있는 통합 실행으로 검증한다.
 
+비교는 두 단계로 보고한다. 첫째는 가능한 한 같은 기능·품질 설정으로 경로의 순수 비용을 비교한다. 둘째는 각 경로의 설정을 조절해 **같은 허용 시각 품질**을 달성한 최종 구성을 비교한다. 낮은 평가 주기·그림자·LOD로 품질을 줄인 경로와 고품질 기준선을 직접 비교하여 알고리즘의 성능 우위라고 발표하지 않는다.
+
 | 시험 경로 | 목적 | 비교에서 지켜야 할 조건 |
 |---|---|---|
 | A. 개별 평가 | 품질·기능 기준선 | 실제 사용할 전환·공격·접지 포함 |
+| A2. 개별 평가 + URO 또는 ABA | 기존 경로의 빈도 최적화와 비교 | 같은 컴포넌트에 두 정책 중첩 금지, 실제 품질·이벤트 오차 공개 |
 | B. 기본 공유 | 공유만 적용한 성능·품질 차이 | 대표 수·전환·On Demand 사용량 공개 |
 | C. 공유 다양성 개선 | 위상·속도군의 효율 | 각 단계에서 실제 활성 대표 수 기록 |
 | D. 공유 + 선택적 보정 | 접지·회전 복구 비용 | Copy Pose와 단순 독립 평가 비교 |
@@ -284,6 +313,7 @@ AI·이동·충돌·GAS·피해 처리도 별도 축이다. 애니메이션 실�
 | 500마리 동시 공격 또는 다른 시점의 피격 | On Demand·전환·레이어 포화와 시간 정확도 |
 | 카메라 회전·줌·등급 경계 왕복 | 승격 폭증, 상태 손실, 포즈 팝·bounds 오류 |
 | 대량 사망·스폰·재사용 | 풀 생성·해제·메모리·이벤트 잔존 |
+| 미사용 클립·새로운 종의 최초 등장 | GPU 데이터 준비·점진 업로드·초기 품질·쿠킹 누락 |
 | 실제 최종 조명·그림자·이펙트 | GPU 병목 이동, 통합 프레임 예산 |
 
 인원은 `100·250·500`으로 올리고 500을 필수 합격 조건으로 둔다. `750`은 여유 용량을 보기 위한 선택적 스트레스 시험이다. 평지 500마리 대기 장면만으로 500마리 전투를 통과했다고 기록하지 않는다.
@@ -386,12 +416,17 @@ TDGame에서는 **중요한 움직임에 필요한 자유도만 복구하는 공
 [^14]: Epic Games. [Virtual Shadow Maps](https://dev.epicgames.com/documentation/en-us/unreal-engine/virtual-shadow-maps-in-unreal-engine). 변형·이동에 따른 캐시 무효화, 그림자 렌더링 비용과 프로파일링.
 [^15]: Epic Games. [Unreal Insights](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-insights-in-unreal-engine). CPU·프레임 추적의 기반 도구.
 [^16]: Epic Games. [Animation Insights](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-insights-in-unreal-engine). 애니메이션 런타임 추적 도구. 구체적 캡처 구성은 설치 버전에서 확인 필요.
-[^20]: 프로젝트 [TDGame.uproject](/C:/Project/TDGame/TDGame.uproject:3), 설치 엔진 [Build.version](</C:/Program Files/Epic Games/UE_5.8/Engine/Build/Build.version:2>). 엔진 연결과 패치·CL 확인.
-[^21]: UE 5.8.2 로컬 엔진. [AnimSequenceTransformProviderData.h](</C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Classes/Animation/AnimSequenceTransformProviderData.h>), [InstancedSkinnedMeshSceneProxyDesc.cpp](</C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Private/InstancedSkinnedMeshSceneProxyDesc.cpp:10>). 시퀀스 재생 데이터와 렌더 경로 확인. 상세 위치는 아래 로컬 근거 보완표 참고.
-[^22]: UE 5.8.2 로컬 엔진. `AnimationSharingManager.cpp`의 대표 오프셋·개체 배정·On Demand·Additive 구현. 상세 위치는 아래 로컬 근거 보완표 참고.
-[^23]: UE 5.8.2 로컬 엔진. `AnimNode_CopyPoseFromMesh.cpp`, `AnimNode_StrideWarping.h`, `AnimNode_FootPlacement.h`. 커브·속성 복사 기본값, root-motion 입력 조건, 실험 상태. 상세 위치는 아래 로컬 근거 보완표 참고.
-[^24]: UE 5.8.2 로컬 엔진. `AnimRuntimeTransformProviderData`와 `RigUnit_UAFWriteInstancedSkinnedMeshPose.cpp`. track별 CPU 포즈 공급과 기본 UAF writer의 제약. 상세 위치는 아래 로컬 근거 보완표 참고.
-[^25]: UE 5.8.2 로컬 엔진의 UAF 관련 `.uplugin`. 프레임워크 실험 상태 확인. 상세 위치는 아래 로컬 근거 보완표 참고.
-[^26]: UE 5.8.2 로컬 엔진의 AnimToTexture 플러그인. 원본에서 텍스처로 변환하는 제작 경로. 상세 위치는 아래 로컬 근거 보완표 참고.
-[^27]: 프로젝트 [TDAnimNotifyState_MeleeAttack.cpp](/C:/Project/TDGame/Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.cpp:59). Begin/Tick/End(59·76·103), `SampleBladePoints`(243), `SweepTimeRange`(300), 피해 적용(377) 구현을 확인.
-[^28]: UE 5.8.2 로컬 엔진. `AnimationBudgetAllocator.cpp`의 URO 비활성화와 `SkinnedMeshComponent.cpp`의 root-motion별 URO 분기. 상세 위치는 아래 로컬 근거 보완표 참고.
+[^20]: 프로젝트 [TDGame.uproject](C:/Project/TDGame/TDGame.uproject:3), 설치 엔진 [Build.version](<C:/Program Files/Epic Games/UE_5.8/Engine/Build/Build.version:2>). 엔진 연결과 패치·CL 확인.
+[^21]: UE 5.8.2 로컬 엔진. [AnimSequenceTransformProviderData.h](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Classes/Animation/AnimSequenceTransformProviderData.h:1037>)의 DataInstance·track API(1037~1109행), 레이어 설정(74~100행). [DataInstance 포즈 공급](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Private/Animation/AnimSequenceTransformProviderData.cpp:1341>)의 track 수·offset과 기본 Data 경로(392~431행). [InstancedSkinnedMeshSceneProxyDesc.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Private/InstancedSkinnedMeshSceneProxyDesc.cpp:10>)의 Nanite·Static·GPUSkin 분기 및 CPU skin/scene extension 조건. 소스는 읽기 전용으로 확인.
+[^22]: UE 5.8.2 로컬 플러그인. [AnimationSharingManager.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Developer/AnimationSharing/Source/AnimationSharing/Private/AnimationSharingManager.cpp:1135>): 대표 오프셋(1135~1142·1165~1169), 개체 배정(2183~2192), On Demand(2299~2416), Additive(1759~1764·2419~2441), 등록 시 tick 변경(583~596), leader 연결(2122~2127). [확장 함수](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Developer/AnimationSharing/Source/AnimationSharing/Public/AnimationSharingManager.h:401>)와 [manager factory](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Developer/AnimationSharing/Source/AnimationSharing/Public/AnimationSharingModule.h:51>). 개별 정책 확장은 제안이며 구현 결과가 아님.
+[^23]: UE 5.8.2 로컬 엔진. [AnimNode_CopyPoseFromMesh.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/AnimGraphRuntime/Private/AnimNodes/AnimNode_CopyPoseFromMesh.cpp:30>)의 커브·속성 복사 기본값. [AnimNode_StrideWarping.h](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Animation/AnimationWarping/Source/Runtime/Public/BoneControllers/AnimNode_StrideWarping.h:114>)의 root-motion 입력 조건. [AnimNode_FootPlacement.h](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Animation/AnimationWarping/Source/Runtime/Public/BoneControllers/AnimNode_FootPlacement.h:522>)의 Experimental·manual plant 설정. Copy Pose 평가 순서는 출처 4의 관련 절과 교차검증.
+[^24]: UE 5.8.2 로컬 엔진. [AnimRuntimeTransformProviderData.h](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Classes/Animation/AnimRuntimeTransformProviderData.h:193>)의 track별 갱신. [RigUnit_UAFWriteInstancedSkinnedMeshPose.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/UAF/UAF/Source/UAF/Private/Graph/RigUnit_UAFWriteInstancedSkinnedMeshPose.cpp:51>)의 LOD0 검사와 동일 입력 포즈를 각 instance track에 쓰는 반복문(73~102행).
+[^25]: UE 5.8.2 로컬 플러그인. [UAF.uplugin](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/UAF/UAF/UAF.uplugin:16>)의 `IsExperimentalVersion=true`. core provider의 성숙도와 별개로 해석.
+[^26]: UE 5.8.2 로컬 플러그인. [AnimToTextureBPLibrary.h](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/AnimToTexture/Source/AnimToTextureEditor/Public/AnimToTextureBPLibrary.h:16>)의 변환 대상 설명과 `AnimationToTexture` API(31행). [AnimToTexture.uplugin](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/AnimToTexture/AnimToTexture.uplugin:15>)의 Experimental 표시.
+[^27]: 프로젝트 [TDAnimNotifyState_MeleeAttack.cpp](C:/Project/TDGame/Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.cpp:59). Begin/Tick/End(59·76·103), `SampleBladePoints`(243), `SweepTimeRange`(300), 피해 적용(377). [Notify 설정·상태](<C:/Project/TDGame/Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.h>)와 [기존 테스트](<C:/Project/TDGame/Source/TDGame/Combat/Tests/TDMeleeAttackNotifyTests.cpp:146>)는 읽기 확인이며 이번에 실행하지 않음.
+[^28]: UE 5.8.2 로컬 엔진. [AnimationBudgetAllocator.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Runtime/AnimationBudgetAllocator/Source/AnimationBudgetAllocator/Private/AnimationBudgetAllocator.cpp:1195>)의 URO 비활성화. [SkinnedMeshComponent.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Private/Components/SkinnedMeshComponent.cpp:290>)의 root-motion별 URO 분기(290·302·360~363·394행). 매개변수 처방이 아닌 동작 경계의 근거로 사용.
+[^29]: 프로젝트 [TDCombatCharacter.h](C:/Project/TDGame/Source/TDGame/Combat/Characters/TDCombatCharacter.h:15), [TDGame.Build.cs](C:/Project/TDGame/Source/TDGame/TDGame.Build.cs:11), `Source`·`Config`·uproject의 관련 키워드 검색. 기존 [애니메이션·물리·이동 가이드](C:/Project/TDGame/Docs/UE_Engine_Animation_Physics_Movement_Optimization_Guide.md:139), [UKGame 애니메이션 참고](C:/Project/TDGame/Docs/UKGame/11-animation-movement-optimization.md:196)는 현재 500개체의 성능 근거로 사용하지 않음.
+[^30]: UE 5.8.2 로컬 renderer. [AnimSequenceTransformProvider.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Renderer/Private/Skinning/AnimSequenceTransformProvider.cpp:64>)의 업로드 예산·샘플 단계·최대 샘플링·정밀도 기본값(64~112행), compute shader 등록(241행), CPU 시퀀스 압축 해제(1063~1109행). 프로젝트별 CVar override와 실제 실행 결과는 미확인.
+[^31]: UE 5.8.2 로컬 엔진. [InstancedSkinnedMeshComponent.h](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Classes/Components/InstancedSkinnedMeshComponent.h:255>)의 이전 프레임 변환 API(255~265행), animation index/provider 설정(271~297행), 본 부착 API(311행). 지원 범위 존재를 확인한 것이며 실제 무기 부착 검증은 미실시.
+[^32]: UE 5.8.2 로컬 엔진. [AnimBank.h](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Classes/Animation/AnimBank.h:176>)의 별도 애니메이션 에셋·시퀀스·플랫폼 파생 데이터 경로와 [AnimBankTransformProvider.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Renderer/Private/Skinning/AnimBankTransformProvider.cpp>). DataInstance의 track API와 동일한 것으로 취급하지 않음.
+[^33]: UE 5.8.2 로컬 엔진. [SkeletalMeshComponent.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Private/Components/SkeletalMeshComponent.cpp:4527>)의 `ConsumeRootMotion_Internal`과 [CharacterMovementComponent.cpp](<C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp:1682>)의 자기 mesh 포즈 갱신·root-motion 소비. 기본 AnimationSharing에서 follower별 이동 delta 전파는 확인되지 않음.

@@ -22,11 +22,15 @@
 - 콘솔 변수(개발): `wp.Runtime.*` 디버그 표시, `pcg.RuntimeGeneration.EnableDebugOverlay`, `pcg.GraphExecution.DebugDrawGeneratedCells`.
 
 ## 4.3 소스 모듈과 빌드 설정
+
+2026-09-12 현황: `Source/TDWorldGen`(Runtime; Public/Dungeon·Public/World 계약 헤더 + 알고리즘, 의존 Core/CoreUObject/Engine/DeveloperSettings/Json/JsonUtilities)과 `Source/TDGameEditor`(Editor; 랜드스케이프 함수, WorldGen 베이커·라이브러리·커맨드릿)가 uproject·Target에 등록되어 컴파일된다. PCG 의존은 아직 넣지 않았다(바이옴 그래프 참조는 `TSoftObjectPtr<UObject>`).
 - `Source/TDWorldGen/TDWorldGen.Build.cs`: Runtime, 의존 `Core, CoreUObject, Engine, PCG`(데이터 타입 참조 시), `NavigationSystem`(검증 시 경로 질의).
 - `Source/TDGameEditor/TDGameEditor.Build.cs`: Editor, 의존 `UnrealEd, LevelEditor, ToolMenus, EditorSubsystem, MessageLog, PCG, PCGEditor, TDGame, TDWorldGen`. uproject `Modules`에 `{"Name":"TDGameEditor","Type":"Editor","LoadingPhase":"PostEngineInit"}` 추가.
 - Target: `TDGameEditor.Target.cs`에 두 모듈 포함. 새 소스 추가 후 `compile_commands.json` 재생성(AGENTS.md 11절).
 
 ## 4.4 에이전트 작업 도구
+
+2026-09-12부터 프로젝트 안 `Tools/`(카탈로그 `Tools/README.md`, 제미나이 진입점 `GEMINI.md`)가 기준이다: `ue_editor.py`(에디터 수명주기·빌드·재시작), `run_in_editor.py`(에디터 Python 전체), `uemcp.py`(MCP 셸 호출), `WorldGen/`(야외 생성·검증·시드 선택·베이크), `DungeonGen/`(던전 생성·검증·후보·베이크), `templates/`(새 도구 규칙). 아래 표는 그 이전 기준이다.
 | 작업 | 도구 | 비고 |
 |---|---|---|
 | 컴파일 | Build.bat(에디터 꺼짐) / 라이브 코딩(에디터 켜짐) | 메모리 `tdgame-build-and-test-workflow` |

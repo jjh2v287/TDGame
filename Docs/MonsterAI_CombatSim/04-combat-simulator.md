@@ -210,7 +210,7 @@ private:
 | 위치 | 현재 | 변경 |
 |---|---|---|
 | `Source/TDGame/Combat/TDCombatComponent.cpp:220` | `FMath::FRand() < Chance` (치명타) | `Context.RandomStream->FRand() < Chance` |
-| `Source/TDGame/Combat/TDDamageSubsystem.cpp:203-204` | `FMath::FRand()` 2회 (산포 각도·거리) | `const float Angle = Stream.FRand() * UE_TWO_PI; const float Distance = FMath::Sqrt(Stream.FRand()) * ...` |
+| `Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:203-204` | `FMath::FRand()` 2회 (산포 각도·거리) | `const float Angle = Stream.FRand() * UE_TWO_PI; const float Distance = FMath::Sqrt(Stream.FRand()) * ...` |
 
 두 곳이 현재 전투 코드에서 재현성을 깨는 유일한 실질 원인이다(project-current-combat-code 결론 1). `FMath::FRand` 는 C 런타임 `rand()` 전역 스트림이라 인스턴스별 시드가 불가능하다(engine-determinism-headless 결론 4, `GenericPlatformMath.h:603-620`).
 

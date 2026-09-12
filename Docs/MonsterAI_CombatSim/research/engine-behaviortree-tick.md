@@ -330,7 +330,7 @@ void UCrowdManager::Tick(float DeltaTime)
 
 ## 프로젝트 적용 시사점
 
-현재 상태(근거): 몬스터/동료 캐릭터는 `AutoPossessAI = PlacedInWorldOrSpawned`, `AIControllerClass = AAIController::StaticClass()` 로 두뇌 없는 기본 컨트롤러만 붙어 있고(`Source/TDGame/Combat/Characters/TDMonsterCharacter.cpp:10-11`, `TDCompanionCharacter.cpp:10-11`), 상태이상 빙결이 `Brain->PauseLogic` 을 호출한다(`Source/TDGame/Combat/TDCombatComponentStatus.cpp:434-442`). 템플릿 `ATwinStickAIController` 는 `UStateTreeAIComponent` 를 쓴다(`Source/TDGame/Variant_TwinStick/AI/TwinStickAIController.cpp:10`). 모듈 의존성에 `AIModule, NavigationSystem, StateTreeModule, GameplayStateTreeModule` 이 이미 있다(`Source/TDGame/TDGame.Build.cs:17-21`). 테스트 픽스처는 `UWorld::CreateWorld` + `World->Tick(LEVELTICK_All, 0.02f)` 고정 스텝이다(`Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:35-38, 71-77`).
+현재 상태(근거): 몬스터/동료 캐릭터는 `AutoPossessAI = PlacedInWorldOrSpawned`, `AIControllerClass = AAIController::StaticClass()` 로 두뇌 없는 기본 컨트롤러만 붙어 있고(`Source/TDGame/Characters/TDMonsterCharacter.cpp:10-11`, `TDCompanionCharacter.cpp:10-11`), 상태이상 빙결이 `Brain->PauseLogic` 을 호출한다(`Source/TDGame/Combat/TDCombatComponentStatus.cpp:434-442`). 템플릿 `ATwinStickAIController` 는 `UStateTreeAIComponent` 를 쓴다(`Source/TDGame/Variant_TwinStick/AI/TwinStickAIController.cpp:10`). 모듈 의존성에 `AIModule, NavigationSystem, StateTreeModule, GameplayStateTreeModule` 이 이미 있다(`Source/TDGame/TDGame.Build.cs:17-21`). 테스트 픽스처는 `UWorld::CreateWorld` + `World->Tick(LEVELTICK_All, 0.02f)` 고정 스텝이다(`Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:35-38, 71-77`).
 
 ### 쓸 수 있는 것
 

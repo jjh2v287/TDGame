@@ -41,7 +41,7 @@ Tools/CombatSim/*.py                     배치 런처 1개(run_batch.py, D35) +
 | 항목 | 결정 | 근거 |
 |---|---|---|
 | 모듈 | 새 모듈 없음. `TDGameEditor` 는 병행 월드젠 작업 소유라 만들지 않는다 | D13 |
-| 커맨드렛 위치 | 런타임 `TDGame` 모듈. `UCommandlet` 은 Engine 모듈 클래스이므로 에디터 모듈이 필요 없다 | 기존 선례 `Source/TDGame/Combat/TDDamageExamplesCommandlet.h:8`; `Engine/Source/Runtime/Engine/Classes/Commandlets/Commandlet.h:40` |
+| 커맨드렛 위치 | 런타임 `TDGame` 모듈. `UCommandlet` 은 Engine 모듈 클래스이므로 에디터 모듈이 필요 없다 | 기존 선례 `Source/TDGame/Combat/Damage/TDDamageExamplesCommandlet.h:8`; `Engine/Source/Runtime/Engine/Classes/Commandlets/Commandlet.h:40` |
 | 빌드 의존 | `TDGame.Build.cs` 에 `Json`, `JsonUtilities` 추가 | D13 |
 | 에디터 전용 편의 | 정의 파일 감시(`IDirectoryWatcher`)·MCP(Model Context Protocol) 툴셋은 `TDGameEditor` 가 생긴 뒤 옮긴다. 그 전까지 콘솔 명령·커맨드렛으로 완결 | D13, D37 |
 | 병행 작업 접점 | `Docs/WorldDungeonPCG_Plan.md`·`Docs/Tasks/` 파일은 건드리지 않는다 | 작업 규칙 |
@@ -233,7 +233,7 @@ IAUS(Infinite Axis Utility System, 무한 축 유틸리티 시스템) 의 "입�
   ] }
 ```
 
-`KeepDistance` 의 `Gaussian` + `invert` 는 규칙 6 의 출력 반전이라 밴드 중심(648cm)에서 0, 1200cm 에서 1, 300cm 에서 약 0.95 다(1200cm 에서 `Shoot` 은 `2 × 0.07 ≈ 0.14` 라 `KeepDistance` 가 이긴다). `Flee`·`Idle` 은 상속으로 남고 `abilities.Slash` 도 남는다(참조하는 행동이 없으므로 검증기 2단이 "미사용 능력" 경고). `DA_TDIceShard` 는 기존 투사체 정의다(`Source/TDGame/Combat/TDDamageExamples.cpp:79`). 시뮬레이터는 `.uasset` 을 열지 않고 C++ 원본을 메모리 생성한다(project-current-combat-code 결론 10).
+`KeepDistance` 의 `Gaussian` + `invert` 는 규칙 6 의 출력 반전이라 밴드 중심(648cm)에서 0, 1200cm 에서 1, 300cm 에서 약 0.95 다(1200cm 에서 `Shoot` 은 `2 × 0.07 ≈ 0.14` 라 `KeepDistance` 가 이긴다). `Flee`·`Idle` 은 상속으로 남고 `abilities.Slash` 도 남는다(참조하는 행동이 없으므로 검증기 2단이 "미사용 능력" 경고). `DA_TDIceShard` 는 기존 투사체 정의다(`Source/TDGame/Combat/Damage/TDDamageExamples.cpp:79`). 시뮬레이터는 `.uasset` 을 열지 않고 C++ 원본을 메모리 생성한다(project-current-combat-code 결론 10).
 
 ### 5.4 예시 3 — 보스 페이즈 `Ogre_Boss.json`
 
@@ -566,6 +566,6 @@ MCP 툴셋(`UToolsetDefinition`, `meta=(AICallable)`, engine-misc-decision-tools
 | `research/engine-movement-anim-scale.md` | 결론 1·4(CMC 비용, APawn 대체), 결론 11(`THierarchicalHashGrid2D`) |
 | `research/engine-gas-determinism.md` | 결론 4·10(ASC 틱 비용, 헤드리스 ASC 초기화) |
 | 엔진 소스 직접 확인 | `Engine/Source/Runtime/JsonUtilities/Public/JsonObjectConverter.h:87,239`(`CustomImportCallback`, `bStrictMode`·`ImportCb` 인자), `Private/JsonObjectConverter.cpp:265-280,909-946`(`FInstancedStruct` 내보내기·들여오기), `:1338-1339`(프로퍼티 이름으로 키 검색), `:1341-1354`(누락 필드만 검사), `Engine/Source/Runtime/CoreUObject/Private/UObject/Class.cpp:2558-2562`(`GetAuthoredNameForField` = `GetName`), `Engine/Source/Runtime/Json/Public/Dom/JsonValue.h:212`(`double` 저장), `Engine/Source/Runtime/Engine/Classes/Commandlets/Commandlet.h:40`(`UCommandlet` 은 Engine 모듈) |
-| 프로젝트 소스 | `Source/TDGame/Combat/TDDamageExamplesCommandlet.h:8`, `TDDamageExamples.cpp:59,79,115,137`, `Combat/Tests/TDDamageSystemTests.cpp:30`, `Combat/Characters/TDMonsterCharacter.cpp:10-11` |
+| 프로젝트 소스 | `Source/TDGame/Combat/Damage/TDDamageExamplesCommandlet.h:8`, `TDDamageExamples.cpp:59,79,115,137`, `Combat/Tests/TDDamageSystemTests.cpp:30`, `Combat/Characters/TDMonsterCharacter.cpp:10-11` |
 | 같은 묶음 문서 | [03 §1.3·§8.2·§9](03-tick-and-scale.md)(think_hz·lod 절, `FTDMonsterSlots`, CVar), [04 §6.2·§9.1·§11.2·§12](04-combat-simulator.md)(시간표 파일명, 시나리오 `player` 블록, 분석 스크립트 4개, `run_batch.py`), [05 §4](05-ml-and-generative-ai.md)(`tune:true` 잎 벡터), [06 미결 4](06-beyond-the-ask.md)(N+1 스텝 만료), [07 M1-01·M1-02·M1-05·M1-07·M2-08·M3-06·M3-07](07-roadmap-and-tasks.md)(산출물 이름) |
 | 설계안·심사 | A §2·§3·§6.2·§10·§11, B §2.3·§3.5, C §2.4·§3.5, D §3.4, 심사 2·3 "정의 형식" 판정, 심사 2 "이중 스텝" 지적 |

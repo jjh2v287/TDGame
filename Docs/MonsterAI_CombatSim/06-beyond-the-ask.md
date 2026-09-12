@@ -306,6 +306,6 @@
 | [04 결정론 전투 시뮬레이터](04-combat-simulator.md) | §1·§2.1~§2.3·§3·§4·§5·§6·§7.2·§7.3·§8·§9·§10.2~§10.4·§11.1(이벤트 줄 `src` 형)·§12, 미결 1~6(미결 3 `FTDDamageRule`) |
 | [05 머신러닝과 생성형 AI](05-ml-and-generative-ai.md) | §3.1~§3.5(§3.2 스키마 버전 문자열)·§4.2·§4.3·§5.1·§6.1·§7(R1~R8)·§9.1(플러그인 활성 목록)·§9.2, 미결 1~7 |
 | [07 로드맵과 할 일 대장](07-roadmap-and-tasks.md) | §1 Phase 표, §2 변경 목록 #4·#14, M0-01~M4-05(M1-13 목표 문장, M2-02 결과 폴더 규약, M2-07 스키마 덤프), MD-01~MD-08(MD-05), 위험표 1~12, 절차 3·5·7·8 |
-| 프로젝트 소스(읽기 전용) | `Source/TDGame/Combat/TDDamageTypes.h:255-266`(`FTDDamageRule` = {Event, Actions}) |
+| 프로젝트 소스(읽기 전용) | `Source/TDGame/Combat/Damage/TDDamageTypes.h:255-266`(`FTDDamageRule` = {Event, Actions}) |
 | 엔진 소스(읽기 전용) | `Engine/Source/Runtime/Engine/Private/LevelTick.cpp:1750`(`RunTickGroup(TG_PrePhysics)`)·`:1816`(`GetTimerManager().Tick`) — M19·C2 판정에 직접 확인; `TimerManager.cpp:1160`(`InternalTime += DeltaTime`)·`:1212`(`InternalTime > ExpireTime`); `Engine/Plugins/Runtime/GameplayAbilities/.../GameplayEffect.cpp:4485`(`SetTimer(DurationHandle)`); `Engine/Source/Runtime/AIModule/Public/HierarchicalHashGrid2D.h`(파일 존재 확인 — 커널 허용 include 근거); `PhysLevel.cpp:146-150`(비평 §4 인용) |
 | 조사 파일 | `web-balance-simulation-tools.md` 결론 1·5·6·8·9·10, `engine-gas-determinism.md` 결론 3·7·9, `engine-determinism-headless.md` 결론 4·8, `web-ai-architecture-comparison.md` 결론 4(킬존 2Hz 분대), `web-mass-monster-performance.md` 결론 1(StraySpark 수치)·결론 4(GAS Mass 미이식)·표 "UE6 방향" 행(2차 출처, 포럼 2026-06), `web-ue-5-6-to-5-8-ai-changes.md` 결론 2·3·10 |

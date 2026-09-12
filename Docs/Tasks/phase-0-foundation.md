@@ -2,15 +2,14 @@
 
 | 상태 | 개수 |
 |---|---|
-| todo | 7 |
-| doing | 0 |
-| done | 0 |
+| todo | 5 |
+| done | 2 |
 | decision | 2 |
 
 선행 없음. 이 Phase가 끝나야 Phase 1 코드 작업을 시작한다.
 
 ### P0-01 에디터 모듈 `TDGameEditor` 신설
-- 상태: todo
+- 상태: done
 - 우선순위: 높음
 - 선행: 없음
 - 목표: 에디터 전용 코드(툴, 커맨드릿, 커스터마이징)를 담을 모듈을 만든다.
@@ -21,10 +20,10 @@
 - 산출물: 위 파일들
 - 검증: 컴파일 로그, `LogModuleManager`에 TDGameEditor 로드
 - 참조: G-12, 03-architecture 3.1, 04-tools 4.3, research/persistence-editor-batch.md 2.3
-- 기록: 2026-09-09 작성
+- 기록: 2026-09-09 작성 / 2026-09-12 완료(Claude): Build.cs·모듈 클래스·uproject·Target.cs 추가, Build.bat 성공, 에디터 Python에서 `unreal.TDLandscapeEditorLibrary` 노출 확인. 메시지 로그 카테고리 등록은 아직 없음(툴 UI가 생길 때 추가). 모듈 루트 서브폴더 인클루드를 위해 `PublicIncludePaths.Add(ModuleDirectory)` 사용.
 
 ### P0-02 생성 알고리즘 모듈 `TDWorldGen` 신설
-- 상태: todo
+- 상태: done
 - 우선순위: 높음
 - 선행: 없음
 - 목표: 월드·던전 생성·검증의 순수 C++ 계층과 정의 데이터 타입을 담는 런타임 모듈을 만든다.
@@ -35,7 +34,7 @@
 - 산출물: 위 파일들, `Source/TDWorldGen/Private/Tests/TDWorldGenSeedTests.cpp`
 - 검증: `Automation RunTests TDGame.WorldGen` 통과
 - 참조: 03-architecture 3.1·3.2, research/dungeon-generation.md 4절
-- 기록: 2026-09-09 작성
+- 기록: 2026-09-09 작성 / 2026-09-12 완료(Claude): Build.cs·모듈 클래스·로그 카테고리 `LogTDWorldGen`·개발자 설정 `UTDWorldGenSettings`·계약 헤더(TDWorldGenTypes, Dungeon/TDDungeonTypes·Definitions·Generation, World/TDWorldTypes·Definitions·Generation) 작성, uproject·두 Target·TDGame/TDGameEditor Build.cs에 등록, Build.bat 성공.
 
 ### P0-03 플러그인 활성화
 - 상태: todo

@@ -4,16 +4,16 @@
 
 ## 결론 요약
 
-1. **현재 전투 코드는 "고정 스텝 `World->Tick` + 같은 입력"이면 대부분 재현 가능하지만, 전역 난수 두 곳이 재현성을 깨는 유일한 실질적 원인이다.** 치명타 판정 `FMath::FRand()`(`Source/TDGame/Combat/TDCombatComponent.cpp:220`)와 SpawnEntity 산포 `FMath::FRand()` 두 번(`Source/TDGame/Combat/TDDamageSubsystem.cpp:203-204`)이 C 표준 `rand()` 전역 스트림을 쓴다(`Engine/Source/Runtime/Core/Public/GenericPlatform/GenericPlatformMath.h:609-617`). 이 스트림은 엔진의 다른 코드와 공유되므로 시뮬레이션 인스턴스별 시드가 불가능하다. 시뮬레이션용으로는 `FTDDamageContext`(또는 시뮬 세션)에 `FRandomStream`을 넣어 호출부 두 곳을 바꾸는 것이 필수다.
-2. **시간 기반 로직은 월드 시간(`UWorld::GetTimeSeconds`)과 월드 타이머에만 의존하므로 벽시계 독립이다.** 상태이상 펄스는 `FTimerManager`(`Source/TDGame/Combat/TDCombatComponentStatus.cpp:300`), GameplayEffect 지속/주기도 `FTimerManager`(`Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Private/GameplayEffect.cpp:4485,4507`), 타이머는 `World->Tick`에서 `DeltaTime`만큼 진행한다(`Engine/Source/Runtime/Engine/Private/LevelTick.cpp:1816`, `Engine/Source/Runtime/Engine/Private/TimerManager.cpp:1107,1160`). 데미지 엔티티는 자체 `SimulationTime`으로 이벤트 시각을 분할 처리한다(`Source/TDGame/Combat/TDDamageEntity.cpp:96-167`).
+1. **현재 전투 코드는 "고정 스텝 `World->Tick` + 같은 입력"이면 대부분 재현 가능하지만, 전역 난수 두 곳이 재현성을 깨는 유일한 실질적 원인이다.** 치명타 판정 `FMath::FRand()`(`Source/TDGame/Combat/TDCombatComponent.cpp:220`)와 SpawnEntity 산포 `FMath::FRand()` 두 번(`Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:203-204`)이 C 표준 `rand()` 전역 스트림을 쓴다(`Engine/Source/Runtime/Core/Public/GenericPlatform/GenericPlatformMath.h:609-617`). 이 스트림은 엔진의 다른 코드와 공유되므로 시뮬레이션 인스턴스별 시드가 불가능하다. 시뮬레이션용으로는 `FTDDamageContext`(또는 시뮬 세션)에 `FRandomStream`을 넣어 호출부 두 곳을 바꾸는 것이 필수다.
+2. **시간 기반 로직은 월드 시간(`UWorld::GetTimeSeconds`)과 월드 타이머에만 의존하므로 벽시계 독립이다.** 상태이상 펄스는 `FTimerManager`(`Source/TDGame/Combat/TDCombatComponentStatus.cpp:300`), GameplayEffect 지속/주기도 `FTimerManager`(`Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Private/GameplayEffect.cpp:4485,4507`), 타이머는 `World->Tick`에서 `DeltaTime`만큼 진행한다(`Engine/Source/Runtime/Engine/Private/LevelTick.cpp:1816`, `Engine/Source/Runtime/Engine/Private/TimerManager.cpp:1107,1160`). 데미지 엔티티는 자체 `SimulationTime`으로 이벤트 시각을 분할 처리한다(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:96-167`).
 3. **단, `World->Tick`에 넘긴 델타는 `AWorldSettings::FixupDeltaSeconds`가 0.0005~0.4초로 조용히 클램프한다.** (`Engine/Source/Runtime/Engine/Private/LevelTick.cpp:1590-1601`, `Engine/Source/Runtime/Engine/Private/WorldSettings.cpp:334-341`, 기본값 `Engine/Config/BaseGame.ini:198-199`). 현재 근접 노티파이 테스트가 0.5초 스텝을 넘기는데(`Source/TDGame/Combat/Tests/TDMeleeAttackNotifyTests.cpp:171,180`) 실제로는 0.4초씩 진행된다. 고속 시뮬레이션에서 큰 스텝을 쓰려면 `MaxUndilatedFrameTime`을 시뮬 월드의 WorldSettings에서 올리거나, 시뮬 루프가 "요청 시간"이 아니라 "월드가 실제 진행한 시간"을 기준으로 종료 조건을 판단해야 한다.
-4. **대상 순회 순서는 정렬되지 않은 `TSet<TWeakObjectPtr>` 등록 순서에 의존한다.** `GatherTargets`(`Source/TDGame/Combat/TDDamageSubsystem.cpp:247-270`)는 결과를 정렬하지 않고, `HitArea`는 그 순서대로 피해를 준다(`Source/TDGame/Combat/TDDamageEntity.cpp:542-573`). 동률 판정 tie-break는 `GetUniqueID()`(전역 UObject 인덱스)를 쓴다(`Source/TDGame/Combat/TDDamageEntity.cpp:305-307, 497-498`). 같은 프로세스에서 같은 순서로 생성하면 재현되지만, 에디터/커맨드렛/패키지 실행 간 또는 이전에 만든 오브젝트 수가 달라지면 tie-break 결과가 달라질 수 있다. 시뮬 소유의 결정적 ID(스폰 순번)를 도입해야 한다.
+4. **대상 순회 순서는 정렬되지 않은 `TSet<TWeakObjectPtr>` 등록 순서에 의존한다.** `GatherTargets`(`Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:247-270`)는 결과를 정렬하지 않고, `HitArea`는 그 순서대로 피해를 준다(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:542-573`). 동률 판정 tie-break는 `GetUniqueID()`(전역 UObject 인덱스)를 쓴다(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:305-307, 497-498`). 같은 프로세스에서 같은 순서로 생성하면 재현되지만, 에디터/커맨드렛/패키지 실행 간 또는 이전에 만든 오브젝트 수가 달라지면 tie-break 결과가 달라질 수 있다. 시뮬 소유의 결정적 ID(스폰 순번)를 도입해야 한다.
 5. **헤드리스 픽스처 `FTDScopedCombatWorld`는 내비게이션 시스템·AI 시스템·게임모드가 없는 월드다.** `UWorld::CreateWorld` 기본 초기화값은 `CreateNavigation(Editor 전용)`, `CreateAISystem(Editor 전용)`, `ShouldSimulatePhysics(false)`, `EnableTraceCollision(true)`이다(`Engine/Source/Runtime/Engine/Private/World.cpp:2850`). 따라서 이 월드에서 `ATDMonsterCharacter`는 스폰·AI 컨트롤러 자동 소유·GAS 시전·피격은 되지만(`Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:654-676, 678-703`), `AAIController::MoveTo` 계열 이동은 내비 시스템 부재로 실패한다(`Engine/Source/Runtime/AIModule/Private/AIController.cpp:841-892`, 특히 888줄 "pathfinding-less movement requires presence of NavigationSystem"). 즉 **현재 헤드리스 세계에서 "몬스터가 다가와서 때린다"는 아직 성립하지 않는다.** 이동은 `UCharacterMovementComponent`에 직접 입력(`AddMovementInput`)을 주거나 시뮬 전용 이동으로 대체해야 한다.
 6. **근접 공격 판정은 스켈레탈 메시·애님 인스턴스·몽타주가 있어야만 성립한다.** `UTDAnimNotifyState_MeleeAttack::InitializeSweepState`는 `MeshComp->GetSkinnedAsset()`과 소켓/본 해석이 실패하면 즉시 반환한다(`Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.cpp:149-168`). 헤드리스 테스트는 실제 마네킹 메시와 공격 시퀀스를 로드해서만 동작한다(`Source/TDGame/Combat/Tests/TDMeleeAttackNotifyTests.cpp:22-23,146-154`). 대량 몬스터 밸런스 시뮬에서 몬스터마다 애니메이션을 재생하는 것은 비용상 부적절하므로, 시뮬 경로는 "노티파이 시작~끝 시간 창 + 사거리/각도" 같은 수치 모델로 근접 공격을 대체해야 하고, 그 수치는 노티파이 데이터(`TriggerTime`, `EndTriggerTime`, 소켓 궤적)에서 파생해 저장해 두는 것이 좋다.
 7. **GAS 예측/네트워크 코드는 없다.** ASC는 복제 안 함(`Source/TDGame/Combat/TDCombatComponent.cpp:44`), 어빌리티는 `LocalOnly`·`InstancedPerActor`(`Source/TDGame/Combat/GAS/TDDamageGameplayAbility.cpp:14-15`), 시전은 `HasAuthority()` 검사만 한다(`Source/TDGame/Combat/TDCombatComponent.cpp:309`). 결정론 관점의 GAS 위험은 예측이 아니라 "ASC 컴포넌트가 기본적으로 매 프레임 틱을 켠다"는 비용 문제다(`Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Private/AbilitySystemComponent.cpp:58`).
-8. **틱 구조: 프로젝트 코드에는 틱 간격(`SetTickInterval`) 설정이 한 곳도 없다.** 데미지 엔티티만 필요할 때 틱을 켜고 끈다(`Source/TDGame/Combat/TDDamageEntity.cpp:13-14,72,655`). 몬스터 1마리는 `ACharacter`(Pawn 틱) + `UCharacterMovementComponent` + `USkeletalMeshComponent`(CMC 선행 조건 틱) + ASC(매 프레임 틱) + `AAIController` 액터로 구성되어, 500마리 규모에서는 이 조합 자체가 병목이 된다. 대량 시뮬에서는 `ACharacter` 기반 몬스터 대신 "전투 컴포넌트 + 단순 루트 컴포넌트" 액터(테스트 픽스처의 `SpawnCombatant` 방식, `Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:49-69`)가 훨씬 가볍고 이미 검증되어 있다.
+8. **틱 구조: 프로젝트 코드에는 틱 간격(`SetTickInterval`) 설정이 한 곳도 없다.** 데미지 엔티티만 필요할 때 틱을 켜고 끈다(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:13-14,72,655`). 몬스터 1마리는 `ACharacter`(Pawn 틱) + `UCharacterMovementComponent` + `USkeletalMeshComponent`(CMC 선행 조건 틱) + ASC(매 프레임 틱) + `AAIController` 액터로 구성되어, 500마리 규모에서는 이 조합 자체가 병목이 된다. 대량 시뮬에서는 `ACharacter` 기반 몬스터 대신 "전투 컴포넌트 + 단순 루트 컴포넌트" 액터(테스트 픽스처의 `SpawnCombatant` 방식, `Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:49-69`)가 훨씬 가볍고 이미 검증되어 있다.
 9. **플레이어 조건(장비·물약·버프)은 AttributeSet 9개 속성 + GameplayEffect로 표현할 수 있으나 인벤토리·장비 슬롯·소비 아이템 개념은 코드에 없다.** 지속 버프는 `MaxHealth`·공격력 등 비체력 속성에만 허용되고 지속형 Health 수정자는 거부된다(`Source/TDGame/Combat/TDCombatComponent.cpp:20-39`). 물약은 즉시(Instant) 또는 주기(Periodic) Health 효과로만 표현된다.
-10. **DataAsset 12개는 C++ 함수 `TDDamageExamples::CreateExamples`가 원본이며(`Source/TDGame/Combat/TDDamageExamples.cpp:43-173`), 시뮬레이션은 `.uasset`을 열지 않고 `NewObject<UTDDamageDefinition>`으로 같은 그래프를 메모리에서 만들 수 있다.** 이미 테스트 21개 이상이 그렇게 한다. 다만 에디터에서 에셋을 편집하면 C++ 원본과 달라지고, 커맨드렛 `-ValidateOnly`는 유효성만 검사하고 차이는 비교하지 않는다(`Source/TDGame/Combat/TDDamageExamplesCommandlet.cpp:61-96`).
+10. **DataAsset 12개는 C++ 함수 `TDDamageExamples::CreateExamples`가 원본이며(`Source/TDGame/Combat/Damage/TDDamageExamples.cpp:43-173`), 시뮬레이션은 `.uasset`을 열지 않고 `NewObject<UTDDamageDefinition>`으로 같은 그래프를 메모리에서 만들 수 있다.** 이미 테스트 21개 이상이 그렇게 한다. 다만 에디터에서 에셋을 편집하면 C++ 원본과 달라지고, 커맨드렛 `-ValidateOnly`는 유효성만 검사하고 차이는 비교하지 않는다(`Source/TDGame/Combat/Damage/TDDamageExamplesCommandlet.cpp:61-96`).
 11. **Variant_TwinStick의 StateTree 사용법은 "C++ 컨트롤러가 `UStateTreeAIComponent`를 만들고, 어떤 StateTree 에셋을 쓰는지는 블루프린트/에셋에서 지정"하는 구조다**(`Source/TDGame/Variant_TwinStick/AI/TwinStickAIController.cpp:7-18`). 트리 자체는 바이너리 에셋이라 텍스트로 분석·수정할 수 없다. 반면 StateTree 런타임은 `FStateTreeExecutionContext`를 코드에서 직접 만들고 `Start(..., RandomSeed)`로 시드까지 줄 수 있어(`Engine/Plugins/Runtime/StateTree/Source/StateTreeModule/Public/StateTreeExecutionContext.h:332-335,477-493`), 컴포넌트 없이 시뮬 매니저가 수동 틱하는 것은 엔진이 막지 않는다. 컴포넌트 경로도 5.8에서는 "예약 틱(sleep/interval)"을 지원한다(`Engine/Plugins/Runtime/GameplayStateTree/Source/GameplayStateTreeModule/Private/Components/StateTreeComponent.cpp:19-23,298-330`).
 
 ## 상세 조사
@@ -25,7 +25,7 @@
 | 위치 | 코드 | 영향 | 근거 |
 | --- | --- | --- | --- |
 | 치명타 판정 | `Result.bWasCritical = bCanCrit && Chance > 0.f && (Chance >= 1.f \|\| FMath::FRand() < Chance);` | 피해량·처치 여부·Kill 연계까지 갈라짐 | `Source/TDGame/Combat/TDCombatComponent.cpp:220` |
-| SpawnEntity 산포 | `Angle = FMath::FRand() * UE_TWO_PI; Distance = Sqrt(FRand()) * ScatterRadius` | 블리자드 낙하 위치(예제 `ScatterRadius = 190`) | `Source/TDGame/Combat/TDDamageSubsystem.cpp:203-205`, `Source/TDGame/Combat/TDDamageExamples.cpp:96-97` |
+| SpawnEntity 산포 | `Angle = FMath::FRand() * UE_TWO_PI; Distance = Sqrt(FRand()) * ScatterRadius` | 블리자드 낙하 위치(예제 `ScatterRadius = 190`) | `Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:203-205`, `Source/TDGame/Combat/Damage/TDDamageExamples.cpp:96-97` |
 | TwinStick 드롭·스폰 지연 | `FMath::RandRange` | 템플릿 전용, 전투 코드 아님 | `Source/TDGame/Variant_TwinStick/AI/TwinStickNPC.cpp:104`, `Source/TDGame/Variant_TwinStick/AI/TwinStickSpawner.cpp:87` |
 
 엔진 사실: `FMath::FRand()`는 `(Rand() & RandMax) / (float)RandMax`, `Rand()`는 C 표준 `rand()`이고 시드는 `RandInit(Seed) { srand(Seed); }` 전역 하나뿐이다(`Engine/Source/Runtime/Core/Public/GenericPlatform/GenericPlatformMath.h:609-617`). 엔진 실행 인자 `-Deterministic`은 `-UseFixedTimeStep -FixedSeed`의 축약이며(`Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp:2457-2462`), `FApp::bUseFixedSeed`는 예를 들어 `UCharacterMovementComponent`의 자체 `RandomStream`을 컴포넌트 이름으로 시드하는 데 쓰인다(`Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp:657`). 전투 코드는 `FApp::bUseFixedSeed`를 참조하지 않는다.
@@ -39,7 +39,7 @@
 | 상태이상 다음 갱신 예약 | `SetTimer(StatusTimer, this, &UpdateStatuses, Delay, false)`; `Delay`는 `NextUpdateTime - World->GetTimeSeconds()`를 0.001 이상으로 클램프 | `Source/TDGame/Combat/TDCombatComponentStatus.cpp:265-301` |
 | 상태이상 시각 기준 | `const double Now = World->GetTimeSeconds();` | `Source/TDGame/Combat/TDCombatComponentStatus.cpp:31,186` |
 | GE 지속/주기 | 엔진 GAS가 `TimerManager.SetTimer(DurationHandle/PeriodHandle, ...)` | `Engine/.../GameplayEffect.cpp:4483-4507` |
-| 데미지 엔티티 | 타이머 미사용. `SimulationTime`·`ExpirationTime`을 월드 시간에서 초기화하고 Tick에서 자체 분할 | `Source/TDGame/Combat/TDDamageEntity.cpp:54-57,96-167` |
+| 데미지 엔티티 | 타이머 미사용. `SimulationTime`·`ExpirationTime`을 월드 시간에서 초기화하고 Tick에서 자체 분할 | `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:54-57,96-167` |
 
 엔진 사실: `UWorld::Tick`은 `GetTimerManager().Tick(DeltaSeconds)`를 호출하고(`Engine/Source/Runtime/Engine/Private/LevelTick.cpp:1816`), `FTimerManager::Tick`은 `InternalTime += DeltaTime`으로만 진행한다(`Engine/Source/Runtime/Engine/Private/TimerManager.cpp:1107,1160`). 벽시계를 읽지 않으므로 고정 스텝이면 결정적이다.
 
@@ -51,10 +51,10 @@
 
 | 위치 | 상태 | 근거 |
 | --- | --- | --- |
-| `GatherTargets` | `Combatants`(`TSet<TWeakObjectPtr<UTDCombatComponent>>`)를 순회하며 조건 통과 순으로 `OutTargets.Add`. 정렬 없음 | `Source/TDGame/Combat/TDDamageSubsystem.h:29`, `Source/TDGame/Combat/TDDamageSubsystem.cpp:247-270` |
-| `HitArea` / `Pulse(Mine)` | `GatherTargets` 결과 순서대로 `HitTarget` → 처치 순서·Kill 연계 순서가 등록 순서에 의존 | `Source/TDGame/Combat/TDDamageEntity.cpp:337-376,542-573` |
-| `MoveProjectile` | 적중 분율로 정렬, 동률은 `GetUniqueID()` 비교 → 결정적이지만 ID가 전역 오브젝트 인덱스 | `Source/TDGame/Combat/TDDamageEntity.cpp:490-499` |
-| `AcquireHomingTarget` | 최근접, 동률은 `GetUniqueID()` 작은 쪽 | `Source/TDGame/Combat/TDDamageEntity.cpp:295-313` |
+| `GatherTargets` | `Combatants`(`TSet<TWeakObjectPtr<UTDCombatComponent>>`)를 순회하며 조건 통과 순으로 `OutTargets.Add`. 정렬 없음 | `Source/TDGame/Combat/Damage/TDDamageSubsystem.h:29`, `Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:247-270` |
+| `HitArea` / `Pulse(Mine)` | `GatherTargets` 결과 순서대로 `HitTarget` → 처치 순서·Kill 연계 순서가 등록 순서에 의존 | `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:337-376,542-573` |
+| `MoveProjectile` | 적중 분율로 정렬, 동률은 `GetUniqueID()` 비교 → 결정적이지만 ID가 전역 오브젝트 인덱스 | `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:490-499` |
+| `AcquireHomingTarget` | 최근접, 동률은 `GetUniqueID()` 작은 쪽 | `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:295-313` |
 | 근접 스윕 | `SweepMultiByChannel` 결과 순서대로 적중 처리(같은 노티파이 창에서 대상당 1회) | `Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.cpp:335-375,377-409` |
 | 테스트의 `TActorIterator` | 개수 세기용, 순서 무관 | `Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:125-136` |
 
@@ -62,8 +62,8 @@
 
 #### 1-4. 프레임 델타 의존 이동·수명
 
-- 데미지 엔티티는 델타를 "다음 이벤트 시각"으로 분할해 이동한다(`Source/TDGame/Combat/TDDamageEntity.cpp:105-124,392-415`). 투사체는 한 구간을 선분 하나로 스윕하고(`417-489`), 호밍 회전은 `TurnRate × DeltaSeconds`로 구간마다 적분한다(`316-335`). 따라서 스텝 크기가 바뀌면 호밍 궤적과 곡선 이동의 적중 여부가 달라질 수 있다. 같은 스텝이면 재현된다.
-- 프레임당 펄스 따라잡기 상한 8회(`Source/TDGame/Combat/TDDamageEntity.cpp:107-110`), 상태이상 펄스 상한 64회(`Source/TDGame/Combat/TDCombatComponentStatus.cpp:240,257-260`) — 큰 스텝에서는 펄스가 생략되어 결과가 스텝에 의존한다.
+- 데미지 엔티티는 델타를 "다음 이벤트 시각"으로 분할해 이동한다(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:105-124,392-415`). 투사체는 한 구간을 선분 하나로 스윕하고(`417-489`), 호밍 회전은 `TurnRate × DeltaSeconds`로 구간마다 적분한다(`316-335`). 따라서 스텝 크기가 바뀌면 호밍 궤적과 곡선 이동의 적중 여부가 달라질 수 있다. 같은 스텝이면 재현된다.
+- 프레임당 펄스 따라잡기 상한 8회(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:107-110`), 상태이상 펄스 상한 64회(`Source/TDGame/Combat/TDCombatComponentStatus.cpp:240,257-260`) — 큰 스텝에서는 펄스가 생략되어 결과가 스텝에 의존한다.
 - 근접 스윕은 `SampleIntervalSeconds`(기본 1/60) 간격으로 애니메이션 원본을 재샘플링하고 컴포넌트 트랜스폼은 프레임 사이를 선형 보간한다(`Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.cpp:300-333`, 헤더 `Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.h:67-68`). 정지 상태에서는 스텝 독립, 이동 중에는 보간 오차만큼 스텝 의존.
 - `UCharacterMovementComponent` 이동은 델타 적분이며 별도 서브스텝 설정을 프로젝트가 건드리지 않는다(프로젝트 내 `SetTickInterval`/`MaxSimulationTimeStep` 설정 없음 — `grep` 결과 0건).
 
@@ -79,7 +79,7 @@
 
 - 진입: `NotifyBegin`이 `InitializeSweepState` 실패 시 상태를 만들지 않는다(`Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.cpp:59-74`). 실패 조건: 몽타주 슬롯 안 시퀀스 배치(`135-141`), `WeaponBaseSocketName` 미설정(`143-147`), `Owner`/`SkinnedAsset` 없음(`149-154`), `UTDCombatComponent` 없음 또는 사망(`156-160`), 소켓/본 미해석(`163-168`).
 - 포즈는 렌더 결과가 아니라 애니메이션 원본에서 `FCompactPose`로 재추출한다(`243-287`). 루트 모션 잠금 판단은 `UAnimInstance`가 없으면 `true`(`412-426`).
-- 판정은 물리 스윕 `World->SweepMultiByChannel`(`365`)이고 적중 시 `UTDDamageSubsystem::ExecuteRules(HitRules, Hit, ...)`(`408`). 이 경로에는 `SourceEntity`가 없어서 `DelaySeconds > 0` 액션은 실행되지 않는다(`Source/TDGame/Combat/TDDamageSubsystem.cpp:97-103`, 문서 `Docs/TDDamageSystemGuide.md:114`).
+- 판정은 물리 스윕 `World->SweepMultiByChannel`(`365`)이고 적중 시 `UTDDamageSubsystem::ExecuteRules(HitRules, Hit, ...)`(`408`). 이 경로에는 `SourceEntity`가 없어서 `DelaySeconds > 0` 액션은 실행되지 않는다(`Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:97-103`, 문서 `Docs/TDDamageSystemGuide.md:114`).
 - 헤드리스 검증: 테스트는 `/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple`과 `MM_Attack_01`을 로드하고(`Source/TDGame/Combat/Tests/TDMeleeAttackNotifyTests.cpp:22-23`), `USkeletalMeshComponent`에 `AlwaysTickPoseAndRefreshBones`·`AnimationSingleNode`를 지정한 뒤(`71-84`) 동적 몽타주를 만들어 재생한다(`100-122,168-172`). 물리 스윕이 성립하는 이유는 `CreateWorld` 기본값이 `EnableTraceCollision(true)`이기 때문이다(`Engine/Source/Runtime/Engine/Private/World.cpp:2850`).
 - 결론: 스켈레탈 메시·애님 인스턴스 없이 근접 공격은 성립하지 않는다. 시뮬은 노티파이 기반 판정을 그대로 쓸 수 없고, 사거리·각도·시간 창으로 축약한 수치 모델이 필요하다.
 
@@ -87,10 +87,10 @@
 
 | 클래스 | 틱 설정 | 근거 |
 | --- | --- | --- |
-| `ATDDamageEntity` | `bCanEverTick = true`, `bStartWithTickEnabled = false`; `BeginPlay`에서 `SetActorTickEnabled(CanContinue())`; 종료 시 `SetActorTickEnabled(false)`. Tick은 `ProcessTimeline()` + 디버그 그리기 | `Source/TDGame/Combat/TDDamageEntity.cpp:13-14,72,378-390,655` |
-| `ATDDamageTarget` | 항상 틱, 매 프레임 카메라를 향해 텍스트 회전 | `Source/TDGame/Combat/TDDamageTarget.cpp:14,60-70` |
-| `ATDGameCharacter`(플레이어) | `bCanEverTick`·`bStartWithTickEnabled = true`, Tick 본문은 stub | `Source/TDGame/TDGameCharacter.cpp:53-54,89-93` |
-| `ATDCombatCharacter`/`ATDMonsterCharacter` | 틱 설정 없음 → `APawn` 기본 `bCanEverTick = true` 상속 | `Source/TDGame/Combat/Characters/TDCombatCharacter.cpp:9-13`, `Engine/Source/Runtime/Engine/Private/Pawn.cpp:50` |
+| `ATDDamageEntity` | `bCanEverTick = true`, `bStartWithTickEnabled = false`; `BeginPlay`에서 `SetActorTickEnabled(CanContinue())`; 종료 시 `SetActorTickEnabled(false)`. Tick은 `ProcessTimeline()` + 디버그 그리기 | `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:13-14,72,378-390,655` |
+| `ATDDamageTarget` | 항상 틱, 매 프레임 카메라를 향해 텍스트 회전 | `Source/TDGame/Combat/Damage/TDDamageTarget.cpp:14,60-70` |
+| `ATDGameCharacter`(플레이어) | `bCanEverTick`·`bStartWithTickEnabled = true`, Tick 본문은 stub | `Source/TDGame/Characters/TDGameCharacter.cpp:53-54,89-93` |
+| `ATDCombatCharacter`/`ATDMonsterCharacter` | 틱 설정 없음 → `APawn` 기본 `bCanEverTick = true` 상속 | `Source/TDGame/Characters/TDCombatCharacter.cpp:9-13`, `Engine/Source/Runtime/Engine/Private/Pawn.cpp:50` |
 | `UTDCombatComponent`(ASC) | `TickComponent` 오버라이드 없음. 엔진 ASC가 `PrimaryComponentTick.bStartWithTickEnabled = true`로 시작 | `Engine/.../AbilitySystemComponent.cpp:58`; 부모 `UGameplayTasksComponent`는 `TG_DuringPhysics`, 시작 비활성(`Engine/Source/Runtime/GameplayTasks/Private/GameplayTasksComponent.cpp:53-55`) |
 | ASC 틱 본문 | 몽타주 복제 데이터 갱신 + `ITickableAttributeSetInterface` 틱 | `Engine/.../AbilitySystemComponent_Abilities.cpp:139-158` |
 | 빙결 시 | 소유 액터 틱·모든 `UMovementComponent` 틱 비활성, AI `Brain->PauseLogic` | `Source/TDGame/Combat/TDCombatComponentStatus.cpp:412,426,434-442` |
@@ -98,9 +98,9 @@
 
 `ATDMonsterCharacter` 1마리의 구성 비용(코드 근거):
 - `ACharacter` 상속 → 캡슐, 스켈레탈 메시(틱 그룹 `TG_PrePhysics`, CMC 선행 조건), `UCharacterMovementComponent`(`Engine/Source/Runtime/Engine/Private/Character.cpp:128,153-155`). CMC 비동기 물리 스레드 이동 `p.AsyncCharacterMovement` 기본 0(`Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp:262-265`).
-- ASC(`UTDCombatComponent`)와 액터 소유 `UTDCombatAttributeSet`(`Source/TDGame/Combat/Characters/TDCombatCharacter.cpp:11-12,22-23`).
-- `AutoPossessAI = PlacedInWorldOrSpawned`, `AIControllerClass = AAIController`(`Source/TDGame/Combat/Characters/TDMonsterCharacter.cpp:10-11`) → `APawn::PostInitializeComponents`가 컨트롤러 액터를 추가로 스폰한다(`Engine/Source/Runtime/Engine/Private/Pawn.cpp:146-157,384`). 두뇌(BrainComponent)는 없다.
-- 데미지 엔티티 1개는 헤드리스에서도 `UStaticMeshComponent`와 `UNiagaraComponent`를 생성한다(`Source/TDGame/Combat/TDDamageEntity.cpp:17-24`). 예제 에셋은 `bDrawDebug = true`라 매 틱 `DrawShape`를 호출한다(`Source/TDGame/Combat/TDDamageExamples.cpp:12`, `Source/TDGame/Combat/TDDamageEntity.cpp:386-389`).
+- ASC(`UTDCombatComponent`)와 액터 소유 `UTDCombatAttributeSet`(`Source/TDGame/Characters/TDCombatCharacter.cpp:11-12,22-23`).
+- `AutoPossessAI = PlacedInWorldOrSpawned`, `AIControllerClass = AAIController`(`Source/TDGame/Characters/TDMonsterCharacter.cpp:10-11`) → `APawn::PostInitializeComponents`가 컨트롤러 액터를 추가로 스폰한다(`Engine/Source/Runtime/Engine/Private/Pawn.cpp:146-157,384`). 두뇌(BrainComponent)는 없다.
+- 데미지 엔티티 1개는 헤드리스에서도 `UStaticMeshComponent`와 `UNiagaraComponent`를 생성한다(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:17-24`). 예제 에셋은 `bDrawDebug = true`라 매 틱 `DrawShape`를 호출한다(`Source/TDGame/Combat/Damage/TDDamageExamples.cpp:12`, `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:386-389`).
 
 엔진 틱 순서 관련 콘솔 변수(`Engine/Source/Runtime/Engine/Private/TickTaskManager.cpp:54-79`): `tick.AllowAsyncComponentTicks`=1, `tick.AllowBatchedTicks`=0, `tick.AllowBatchedTicksUnordered`=0, `tick.AllowOptimizedPrerequisites`=1, `tick.AllowConcurrentTickQueue`=0. 프로젝트 전투 틱 함수는 모두 게임 스레드 틱(`bRunOnAnyThread` 미설정)이며, 같은 틱 그룹 안의 액터 간 실행 순서는 등록 순서에 의존하고 명시적 보장은 없다. 순서 의존 로직(예: 두 몬스터가 같은 프레임에 같은 대상을 공격)은 시뮬 매니저가 순서를 정해 호출하는 편이 안전하다. 프레임 단위 고정 스텝 실행 인자는 `-UseFixedTimeStep`, `-FPS=`(`Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp:2460,4725-4730`), API는 `FApp::SetUseFixedTimeStep`/`SetFixedDeltaTime`(`Engine/Source/Runtime/Core/Public/Misc/App.h:662-675`)이다. 픽스처처럼 `World->Tick`을 직접 부르는 방식은 이 인자와 무관하게 결정적이다.
 
@@ -141,31 +141,31 @@ World->SetBegunPlay(true);
 
 | 조건 | 현재 가능한 표현 | 근거 | 없는 것 |
 | --- | --- | --- | --- |
-| 장비(영구 스탯) | `Infinite` 또는 `HasDuration` GE의 Additive/Multiplicative 수정자를 `MaxHealth/AttackPower/SpellPower/Armor/MagicResistance/CriticalChance/CriticalMultiplier`에 적용. 시작 시 적용은 `StartupEffects` 배열 | `Source/TDGame/Combat/Characters/TDCombatCharacter.h:43-44`, `Source/TDGame/Combat/Characters/TDCombatCharacter.cpp:45-50` | 장비 슬롯·아이템 정의·인벤토리 클래스 없음(`grep -i Inventory\|Equipment\|Potion` 결과 0건) |
+| 장비(영구 스탯) | `Infinite` 또는 `HasDuration` GE의 Additive/Multiplicative 수정자를 `MaxHealth/AttackPower/SpellPower/Armor/MagicResistance/CriticalChance/CriticalMultiplier`에 적용. 시작 시 적용은 `StartupEffects` 배열 | `Source/TDGame/Characters/TDCombatCharacter.h:43-44`, `Source/TDGame/Characters/TDCombatCharacter.cpp:45-50` | 장비 슬롯·아이템 정의·인벤토리 클래스 없음(`grep -i Inventory\|Equipment\|Potion` 결과 0건) |
 | 물약(즉시 회복) | Instant GE로 Health 양수 수정. `HandleHealthChanged`는 증가 시 사망 상태만 갱신 | `Source/TDGame/Combat/TDCombatComponent.cpp:243-254` | 소비 수량·쿨다운·사용 AI 정책 없음 |
 | 물약(지속 회복) | Periodic GE(주기 있음)만 허용 | `Source/TDGame/Combat/TDCombatComponent.cpp:20-39` (`CanApplyEffect`: 주기 없는 지속형 Health 수정자 거부) | — |
 | 버프(일시) | `HasDuration` GE로 비체력 속성 수정. `GetStats()`가 버프 반영 스냅샷 반환 | `Source/TDGame/Combat/TDCombatComponent.cpp:84-103`, `Docs/TDGASFoundation.md:39` | 이동 속도·공격 속도·쿨다운 감소·속성별 저항·흡혈 등의 속성 자체가 없음 |
-| 스킬 구성 | `DamageSpells` 배열 + 정의별 쿨다운 GE | `Source/TDGame/Combat/Characters/TDCombatCharacter.h:37-38`, `Source/TDGame/Combat/GAS/TDDamageGameplayAbility.cpp:45-88` | 마나/자원 없음 |
+| 스킬 구성 | `DamageSpells` 배열 + 정의별 쿨다운 GE | `Source/TDGame/Characters/TDCombatCharacter.h:37-38`, `Source/TDGame/Combat/GAS/TDDamageGameplayAbility.cpp:45-88` | 마나/자원 없음 |
 
-시뮬 관점의 중요한 성질: 시전 시 `Context.Stats = Combatant->GetStats()`로 스냅샷을 복사한다(`Source/TDGame/Combat/TDDamageSubsystem.cpp:10-25`). 따라서 "시전 후 버프가 바뀌어도 날아가는 효과는 그대로"이며, 플레이어 조건은 "시전 시점 스탯 벡터"로 완전히 요약된다. 밸런스 툴은 GE를 실제 적용하는 대신 `FTDCombatStats`를 직접 만들어 `SetStats`(`Source/TDGame/Combat/TDCombatComponent.cpp:120-152`)로 주입해도 같은 결과를 얻는다(치명타 난수 제외). 단, 장비 효과가 "속성 이외의 규칙"(예: 적중 시 추가 투사체)을 가지면 현재 GE 모델로는 표현할 수 없고 `FTDDamageRule` 추가가 필요하다.
+시뮬 관점의 중요한 성질: 시전 시 `Context.Stats = Combatant->GetStats()`로 스냅샷을 복사한다(`Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:10-25`). 따라서 "시전 후 버프가 바뀌어도 날아가는 효과는 그대로"이며, 플레이어 조건은 "시전 시점 스탯 벡터"로 완전히 요약된다. 밸런스 툴은 GE를 실제 적용하는 대신 `FTDCombatStats`를 직접 만들어 `SetStats`(`Source/TDGame/Combat/TDCombatComponent.cpp:120-152`)로 주입해도 같은 결과를 얻는다(치명타 난수 제외). 단, 장비 효과가 "속성 이외의 규칙"(예: 적중 시 추가 투사체)을 가지면 현재 GE 모델로는 표현할 수 없고 `FTDDamageRule` 추가가 필요하다.
 
 ### 5) DataAsset 12개 구조와 시뮬 입력 재사용성
 
 목록(`Docs/TDDamageSystemGuide.md:36-40`, 실제 파일 `Content/Combat/Examples/*.uasset` 12개 확인): 시작점 6개(`DA_TDFireball, DA_TDBlizzard, DA_TDMine, DA_TDShockwave, DA_TDMeteor, DA_TDDelayedHoming`), 후속 5개(`DA_TDFlameField, DA_TDIceShard, DA_TDMineExplosion, DA_TDFallingMeteor, DA_TDMeteorExplosion`), 상태이상 1개(`DA_TDFrostFreeze`). 이 외 `Content/Combat/Blueprints/` 3개는 설정 전용 블루프린트다.
 
 C++ 정의:
-- `UTDDamageDefinition : UDataAsset`(`Source/TDGame/Combat/TDDamageDefinition.h:13-92`): `Cooldown, CastRange, Mode(Projectile/Area/Mine/Shockwave), TargetPolicy, Lifetime, ActivationDelay, PulseInterval, Radius, InnerRadius, HalfHeight, ExpansionSpeed, ProjectileSpeed, ProjectileRadius, MaxHitsPerTarget, HitInterval, bDestroyOnHit, bRequireLineOfSight, Rules[]`, 표현용 `VisualEffect, Mesh, Material, VisualScale, bDrawDebug, DebugColor`. `ValidateDefinition`(`Source/TDGame/Combat/TDDamageDefinition.cpp:171-249`).
-- `UTDStatusDefinition : UDataAsset`(`Source/TDGame/Combat/TDStatusDefinition.h:9-38`): `Duration, PulseInterval, bFreezesTarget, DamageThreshold, BuildupResetDelay, bRefreshDuration, Rules[]`.
-- 규칙/액션(`Source/TDGame/Combat/TDDamageTypes.h:209-266`): `FTDDamageRule{Event, Actions[]}`, `FTDDamageAction{Type, DelaySeconds, Homing, Magnitude(FTDScaledValue), Element, bCanCrit, Status, Entity, SpawnAnchor, SpawnDirection, SpawnOffset, SpawnCount, ScatterRadius}`.
-- 수치 공식은 `FTDScaledValue::Evaluate`와 `FTDCombatStats::Get*`(`Source/TDGame/Combat/TDDamageTypes.cpp:21-42`), 피해 최종식은 `RawDamage × 배율 × 100 / (100 + 저항)`(`Source/TDGame/Combat/TDCombatComponent.cpp:222-223`).
+- `UTDDamageDefinition : UDataAsset`(`Source/TDGame/Combat/Damage/TDDamageDefinition.h:13-92`): `Cooldown, CastRange, Mode(Projectile/Area/Mine/Shockwave), TargetPolicy, Lifetime, ActivationDelay, PulseInterval, Radius, InnerRadius, HalfHeight, ExpansionSpeed, ProjectileSpeed, ProjectileRadius, MaxHitsPerTarget, HitInterval, bDestroyOnHit, bRequireLineOfSight, Rules[]`, 표현용 `VisualEffect, Mesh, Material, VisualScale, bDrawDebug, DebugColor`. `ValidateDefinition`(`Source/TDGame/Combat/Damage/TDDamageDefinition.cpp:171-249`).
+- `UTDStatusDefinition : UDataAsset`(`Source/TDGame/Combat/Damage/TDStatusDefinition.h:9-38`): `Duration, PulseInterval, bFreezesTarget, DamageThreshold, BuildupResetDelay, bRefreshDuration, Rules[]`.
+- 규칙/액션(`Source/TDGame/Combat/Damage/TDDamageTypes.h:209-266`): `FTDDamageRule{Event, Actions[]}`, `FTDDamageAction{Type, DelaySeconds, Homing, Magnitude(FTDScaledValue), Element, bCanCrit, Status, Entity, SpawnAnchor, SpawnDirection, SpawnOffset, SpawnCount, ScatterRadius}`.
+- 수치 공식은 `FTDScaledValue::Evaluate`와 `FTDCombatStats::Get*`(`Source/TDGame/Combat/Damage/TDDamageTypes.cpp:21-42`), 피해 최종식은 `RawDamage × 배율 × 100 / (100 + 저항)`(`Source/TDGame/Combat/TDCombatComponent.cpp:222-223`).
 
-원본은 코드다: 12개 에셋은 `TDDamageExamples::CreateExamples`(`Source/TDGame/Combat/TDDamageExamples.cpp:43-173`)가 만든 오브젝트를 커맨드렛이 `/Game/Combat/Examples/` 패키지로 저장한 것이다(`Source/TDGame/Combat/TDDamageExamplesCommandlet.cpp:45-137`). 플레이어는 에셋 로드 실패 시 같은 함수로 메모리 생성한다(`Source/TDGame/TDGameCharacter.cpp:57-83`). 테스트는 항상 `NewObject`로 정의를 만든다.
+원본은 코드다: 12개 에셋은 `TDDamageExamples::CreateExamples`(`Source/TDGame/Combat/Damage/TDDamageExamples.cpp:43-173`)가 만든 오브젝트를 커맨드렛이 `/Game/Combat/Examples/` 패키지로 저장한 것이다(`Source/TDGame/Combat/Damage/TDDamageExamplesCommandlet.cpp:45-137`). 플레이어는 에셋 로드 실패 시 같은 함수로 메모리 생성한다(`Source/TDGame/Characters/TDGameCharacter.cpp:57-83`). 테스트는 항상 `NewObject`로 정의를 만든다.
 
 시뮬 입력 재사용성 판단:
-- 재사용 가능: 정의는 순수 값 구조이고, 표현 필드는 `ATDDamageEntity::BeginPlay`가 컴포넌트에 넘길 뿐 판정에 쓰지 않는다(`Source/TDGame/Combat/TDDamageEntity.cpp:60-67`). 시뮬은 `NewObject`로 만든 정의 또는 로드한 에셋을 그대로 `UTDDamageSubsystem::Cast/SpawnEntity`에 넣으면 된다.
-- 주의: 에셋 편집본과 C++ 원본이 다를 수 있다. 커맨드렛 `-ValidateOnly`는 유효성만 본다(`Source/TDGame/Combat/TDDamageExamplesCommandlet.cpp:61-96`). "텍스트 우선" 원칙을 지키려면 에셋 → JSON(또는 C++ 표) 내보내기와 차이 검사가 필요하다. 이 기능은 현재 없다.
-- 주의: 예제는 `bDrawDebug = true`(`Source/TDGame/Combat/TDDamageExamples.cpp:12`). 시뮬에서는 꺼야 한다.
-- 몬스터 정의(체력·공격·스킬 목록·AI 파라미터)를 담는 DataAsset은 없다. 몬스터 스탯은 클래스 생성자 기본값(`Source/TDGame/Combat/Characters/TDMonsterCharacter.cpp:7-9`)과 블루프린트 설정에 의존한다.
+- 재사용 가능: 정의는 순수 값 구조이고, 표현 필드는 `ATDDamageEntity::BeginPlay`가 컴포넌트에 넘길 뿐 판정에 쓰지 않는다(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:60-67`). 시뮬은 `NewObject`로 만든 정의 또는 로드한 에셋을 그대로 `UTDDamageSubsystem::Cast/SpawnEntity`에 넣으면 된다.
+- 주의: 에셋 편집본과 C++ 원본이 다를 수 있다. 커맨드렛 `-ValidateOnly`는 유효성만 본다(`Source/TDGame/Combat/Damage/TDDamageExamplesCommandlet.cpp:61-96`). "텍스트 우선" 원칙을 지키려면 에셋 → JSON(또는 C++ 표) 내보내기와 차이 검사가 필요하다. 이 기능은 현재 없다.
+- 주의: 예제는 `bDrawDebug = true`(`Source/TDGame/Combat/Damage/TDDamageExamples.cpp:12`). 시뮬에서는 꺼야 한다.
+- 몬스터 정의(체력·공격·스킬 목록·AI 파라미터)를 담는 DataAsset은 없다. 몬스터 스탯은 클래스 생성자 기본값(`Source/TDGame/Characters/TDMonsterCharacter.cpp:7-9`)과 블루프린트 설정에 의존한다.
 
 ### 6) Variant_TwinStick의 StateTree AI 사용 방식과 몬스터 확장 한계
 
@@ -180,7 +180,7 @@ C++ 정의:
 - 컴포넌트 없이도 `FStateTreeExecutionContext(Owner, StateTree, InstanceData)`를 만들어 `Start(..., RandomSeed)`/`Tick` 할 수 있다(`Engine/Plugins/Runtime/StateTree/Source/StateTreeModule/Public/StateTreeExecutionContext.h:332-335,477-493`). 시뮬 매니저가 몬스터 배열을 순서대로 수동 틱하는 구조가 가능하다.
 
 몬스터 확장 시 한계:
-1. `ATDMonsterCharacter`는 두뇌 없는 `AAIController`를 쓴다(`Source/TDGame/Combat/Characters/TDMonsterCharacter.cpp:11`). StateTree를 붙이려면 전용 컨트롤러 클래스가 필요하고, 컨트롤러 액터가 몬스터 수만큼 늘어난다.
+1. `ATDMonsterCharacter`는 두뇌 없는 `AAIController`를 쓴다(`Source/TDGame/Characters/TDMonsterCharacter.cpp:11`). StateTree를 붙이려면 전용 컨트롤러 클래스가 필요하고, 컨트롤러 액터가 몬스터 수만큼 늘어난다.
 2. StateTree 에셋은 바이너리 → 생성형 AI가 텍스트로 읽고 고칠 수 없다. C++ 태스크/조건은 텍스트지만 그래프 배선은 아니다.
 3. 헤드리스 픽스처에는 내비·AI 시스템이 없어 `MoveTo`·EQS 기반 태스크는 동작하지 않는다(3절). StateTree 자체의 실행 가능 여부는 미확인.
 4. TwinStick 방식은 `GetPlayerPawn(0)` 같은 "플레이어 컨트롤러 존재"를 전제한다(`TwinStickStateTreeUtility.cpp:18`). 헤드리스에는 플레이어 컨트롤러가 없으므로 대상 선택은 팀/전투 컴포넌트 등록 집합(`UTDDamageSubsystem::Combatants`) 기반이어야 한다.
@@ -211,17 +211,17 @@ C++ 정의:
 
 | 항목 | 현재 코드에서의 근거 | 명세에 넣어야 하는 이유 |
 | --- | --- | --- |
-| 난수 시드 | 치명타·산포 `FRand`(`Source/TDGame/Combat/TDCombatComponent.cpp:220`, `Source/TDGame/Combat/TDDamageSubsystem.cpp:203-204`) | 교체 후에도 시드가 입력이다 |
-| 고정 스텝 크기 | 호밍 적분(`Source/TDGame/Combat/TDDamageEntity.cpp:330`), 펄스 상한(`107`), 상태 펄스 상한(`Source/TDGame/Combat/TDCombatComponentStatus.cpp:240`) | 스텝이 다르면 결과가 다르다 |
-| 스폰 순서(전투원 등록 순서) | `Combatants` 순회(`Source/TDGame/Combat/TDDamageSubsystem.cpp:257`) | 범위 피해 적용 순서와 Kill 연계 순서를 정한다 |
+| 난수 시드 | 치명타·산포 `FRand`(`Source/TDGame/Combat/TDCombatComponent.cpp:220`, `Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:203-204`) | 교체 후에도 시드가 입력이다 |
+| 고정 스텝 크기 | 호밍 적분(`Source/TDGame/Combat/Damage/TDDamageEntity.cpp:330`), 펄스 상한(`107`), 상태 펄스 상한(`Source/TDGame/Combat/TDCombatComponentStatus.cpp:240`) | 스텝이 다르면 결과가 다르다 |
+| 스폰 순서(전투원 등록 순서) | `Combatants` 순회(`Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:257`) | 범위 피해 적용 순서와 Kill 연계 순서를 정한다 |
 | 전투원별 `FTDCombatStats`(레벨·팀·체력·공격·주문·방어·저항·치명타) | `SetStats` 정규화(`Source/TDGame/Combat/TDCombatComponent.cpp:120-137`) | 플레이어 조건과 몬스터 종류를 모두 이 벡터로 표현 |
-| 시작 GE 목록(장비/버프) | `StartupEffects`(`Source/TDGame/Combat/Characters/TDCombatCharacter.cpp:39-48`) | 스탯 벡터로 환원 가능하나 기록은 남겨야 한다 |
-| 스킬 목록과 각 정의의 전체 값 | `DamageSpells`(`Source/TDGame/Combat/Characters/TDCombatCharacter.h:37-38`), 정의 필드(`Source/TDGame/Combat/TDDamageDefinition.h:18-70`) | 에셋 편집과 무관하게 재현 |
-| 초기 위치·팀 배치 | `GatherTargets` 반경·높이 판정(`Source/TDGame/Combat/TDDamageSubsystem.cpp:257-268`) | 공간 판정 입력 |
+| 시작 GE 목록(장비/버프) | `StartupEffects`(`Source/TDGame/Characters/TDCombatCharacter.cpp:39-48`) | 스탯 벡터로 환원 가능하나 기록은 남겨야 한다 |
+| 스킬 목록과 각 정의의 전체 값 | `DamageSpells`(`Source/TDGame/Characters/TDCombatCharacter.h:37-38`), 정의 필드(`Source/TDGame/Combat/Damage/TDDamageDefinition.h:18-70`) | 에셋 편집과 무관하게 재현 |
+| 초기 위치·팀 배치 | `GatherTargets` 반경·높이 판정(`Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:257-268`) | 공간 판정 입력 |
 | 시전 정책(누가 언제 무엇을 시전) | 현재는 테스트가 직접 호출(`Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:695-701`) | AI 모델이 결정하는 부분. 결정적 AI가 아니면 시드 포함 |
 | 종료 조건 | 없음(테스트는 고정 시간 틱) | 팀 전멸/시간 상한을 월드 시간 기준으로 |
 
-출력은 최소한 `OnDamaged`(피해량·치명타·시전자 문맥), `OnDeath`(시각·가해자), 시전 성공/실패(`TryCastDamageDefinition` 반환값, `Source/TDGame/Combat/TDCombatComponent.cpp:306-347`), 엔티티 생성 수(`FTDDamageChainBudget` 소비량, `Source/TDGame/Combat/TDDamageTypes.h:180-184`)를 월드 시간 태그와 함께 기록하면 승패·시간·피해 분포를 모두 계산할 수 있다.
+출력은 최소한 `OnDamaged`(피해량·치명타·시전자 문맥), `OnDeath`(시각·가해자), 시전 성공/실패(`TryCastDamageDefinition` 반환값, `Source/TDGame/Combat/TDCombatComponent.cpp:306-347`), 엔티티 생성 수(`FTDDamageChainBudget` 소비량, `Source/TDGame/Combat/Damage/TDDamageTypes.h:180-184`)를 월드 시간 태그와 함께 기록하면 승패·시간·피해 분포를 모두 계산할 수 있다.
 
 추가 고려사항(사용자가 언급하지 않은 것):
 - 몬스터 정의 DataAsset이 없다. AI 파라미터·스탯·스킬 목록을 하나의 텍스트 친화 구조(C++ 표 또는 JSON→DataAsset 생성 커맨드렛)로 두면 생성형 AI 작업과 시뮬 입력을 동시에 해결한다. 이미 커맨드렛으로 "C++ → 에셋" 흐름이 있으므로 같은 패턴을 재사용할 수 있다.

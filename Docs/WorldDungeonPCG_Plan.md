@@ -27,6 +27,7 @@
 | [pcg-api-and-nodes.md](WorldDungeonPCG/research/pcg-api-and-nodes.md) | PCG 컴포넌트·서브시스템·파라미터·결정론 API, 배치 노드 목록, 목적별 매핑 |
 | [pcg-bake-data-community.md](WorldDungeonPCG/research/pcg-bake-data-community.md) | 베이크(Clear PCG Link), 데이터 에셋·인터롭, Biome Core 구조, 커뮤니티 교훈 |
 | [dungeon-generation.md](WorldDungeonPCG/research/dungeon-generation.md) | 접근 비교, 흐름 그래프·Key/Lock 알고리즘, 모듈 조립, 결정론·버전, 검증기, 탑다운 특화, 툴 형태 |
+| [landscape-mcp-test.md](WorldDungeonPCG/research/landscape-mcp-test.md) | MCP로 랜드스케이프 생성·편집 실측(UI 자동화로 생성 성공, Python으로 높이맵·스플라인 편집 성공, 생성 API 부재) |
 
 ## 지금 당장 필요한 것 (요약)
 
@@ -37,6 +38,10 @@
 5. 룸 모듈 규격 확정(아트 선행) — P2-01
 
 사용자 결정이 필요한 항목은 [decisions.md](Tasks/decisions.md) 4건(템플릿 잔재, 시작 맵, 룸 그리드 단위, 던전 전용 그리드).
+
+## 메인 지역 프로토타입 (2026-09-12)
+
+`LV_DarkFantasy_OpenWorld`를 코드로 다시 만드는 파이프라인이 `Tools/WorldGen/README.md`에 있다(numpy 생성기 → C++ 랜드스케이프 함수 → 에디터 Python 베이크). 검증은 `Docs/Validation/P3-11-ashen-vale.md`, 할 일은 P3-11.
 
 ## 유지 방법
 - 리서치를 추가하면 `research/`에 파일을 만들고 이 표에 한 줄 추가한다.

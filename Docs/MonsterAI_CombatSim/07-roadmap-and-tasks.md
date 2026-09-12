@@ -43,18 +43,18 @@
 
 | # | 파일:줄 | 무엇을 | 왜 | 근거 |
 |---|---|---|---|---|
-| 1 | `Source/TDGame/Combat/TDDamageTypes.h:187` `FTDDamageContext` | `FRandomStream*`(또는 스트림 핸들) 필드 추가. 널이면 `UTDDamageSubsystem` 의 Combat 스트림 | 치명타·산포가 시뮬 소유 스트림을 쓰도록 | project-current-combat-code 결론 1; engine-gas-determinism 바꿔야 하는 것 1 |
+| 1 | `Source/TDGame/Combat/Damage/TDDamageTypes.h:187` `FTDDamageContext` | `FRandomStream*`(또는 스트림 핸들) 필드 추가. 널이면 `UTDDamageSubsystem` 의 Combat 스트림 | 치명타·산포가 시뮬 소유 스트림을 쓰도록 | project-current-combat-code 결론 1; engine-gas-determinism 바꿔야 하는 것 1 |
 | 2 | `Source/TDGame/Combat/TDCombatComponent.cpp:220` | `FMath::FRand()` → 컨텍스트 스트림 `FRand()` | 전역 `rand()` 는 시드 불가 | project-current-combat-code 결론 1(`GenericPlatformMath.h:609-617`); engine-determinism-headless 결론 4 |
-| 3 | `Source/TDGame/Combat/TDDamageSubsystem.cpp:203-204` | `FMath::FRand()` 2회 → 컨텍스트 스트림, 지역 변수로 순차 대입(인자 평가 순서 함정 회피) | 동일 | 동일 |
+| 3 | `Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:203-204` | `FMath::FRand()` 2회 → 컨텍스트 스트림, 지역 변수로 순차 대입(인자 평가 순서 함정 회피) | 동일 | 동일 |
 | 4 | `Source/TDGame/Combat/TDCombatComponent.cpp:221-223` | 저항·배율 공식을 `TDDamageFormula::Compute(RawDamage, bIsCritical, Multiplier, Resistance)` 정적 순수 함수로 분리 | GAS 경로와 미래 경량 커널이 같은 공식 사용 | engine-gas-determinism §규모별 선택 지침("GAS 와 공식 함수 공유")·결론 9(C §7, B §8-8) |
 | 5 | `Source/TDGame/Combat/TDCombatComponent.h` | `int32 SimulationId`(스폰 순번) + 접근자 | 정렬·동률·해시·로그 키 | 결정 D14·D30 |
-| 6 | `Source/TDGame/Combat/TDDamageSubsystem.cpp:247-270` `GatherTargets` | 결과를 `SimulationId` 오름차순 정렬. 등록 시 순번 부여 API 추가 | `TSet` 등록 순서 의존 제거 | project-current-combat-code 결론 4 |
-| 7 | `Source/TDGame/Combat/TDDamageEntity.cpp:305-307` | `GetUniqueID()` 동률 판정 → `SimulationId` | 전역 오브젝트 인덱스는 프로세스 간 불일치 | project-current-combat-code 결론 4 |
-| 8 | `Source/TDGame/Combat/TDDamageEntity.cpp:497-498` | 동일 교체(호밍 대상 정렬 람다) | 동일 | 동일 |
-| 9 | `Source/TDGame/Combat/TDDamageEntity.cpp:17-24` | `UStaticMeshComponent`·`UNiagaraComponent` 생성을 헤드리스 게이트(`FApp::CanEverRender()` 또는 서브시스템 `bIsHeadless`)로 감쌈 | 헤드리스 오브젝트 비용 | project-current-combat-code 결론 8 |
-| 10 | `Source/TDGame/Combat/TDDamageExamples.cpp:12` | `bDrawDebug = true` → 기본 false, 생성 함수에 `bDebug` 인자 | 매 틱 `DrawShape` 제거 | project-current-combat-code 결론 10 주의 |
+| 6 | `Source/TDGame/Combat/Damage/TDDamageSubsystem.cpp:247-270` `GatherTargets` | 결과를 `SimulationId` 오름차순 정렬. 등록 시 순번 부여 API 추가 | `TSet` 등록 순서 의존 제거 | project-current-combat-code 결론 4 |
+| 7 | `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:305-307` | `GetUniqueID()` 동률 판정 → `SimulationId` | 전역 오브젝트 인덱스는 프로세스 간 불일치 | project-current-combat-code 결론 4 |
+| 8 | `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:497-498` | 동일 교체(호밍 대상 정렬 람다) | 동일 | 동일 |
+| 9 | `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:17-24` | `UStaticMeshComponent`·`UNiagaraComponent` 생성을 헤드리스 게이트(`FApp::CanEverRender()` 또는 서브시스템 `bIsHeadless`)로 감쌈 | 헤드리스 오브젝트 비용 | project-current-combat-code 결론 8 |
+| 10 | `Source/TDGame/Combat/Damage/TDDamageExamples.cpp:12` | `bDrawDebug = true` → 기본 false, 생성 함수에 `bDebug` 인자 | 매 틱 `DrawShape` 제거 | project-current-combat-code 결론 10 주의 |
 | 11 | `Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:30-88` | `FTDScopedCombatWorld` 를 `Source/TDGame/CombatSim/TDScopedCombatWorld.h` 로 승격. 시드·스텝·해시 옵션 추가, **기본 스텝 0.02 유지** | 세션·테스트·커맨드렛 공유 | engine-gas-determinism "그대로 쓰는 것"; 결정 D27·D28 |
-| 12 | `Source/TDGame/Combat/Characters/TDMonsterCharacter.cpp:10-11` | `AutoPossessAI = Disabled`, `AIControllerClass` 제거. 정예 경로는 컨트롤러 없는 이동 요청 | 컨트롤러 액터 틱 제거, `IsLocallyControlled` 분기 회피. 정예 경로 추종 컴포넌트의 소유 주체(Pawn 소유 `UPathFollowingComponent` 또는 서브시스템 직접 `FindPathSync`)는 미확인이며 M3-01 에서 결정한다(Phase 3 플로우 필드 전까지는 직선 접근, D17) | engine-behaviortree-tick 결론 11; engine-gas-determinism 바꿔야 하는 것 4; engine-movement-anim-scale 결론 4(PathFollowing 은 `INavMovementInterface` 만 요구) |
+| 12 | `Source/TDGame/Characters/TDMonsterCharacter.cpp:10-11` | `AutoPossessAI = Disabled`, `AIControllerClass` 제거. 정예 경로는 컨트롤러 없는 이동 요청 | 컨트롤러 액터 틱 제거, `IsLocallyControlled` 분기 회피. 정예 경로 추종 컴포넌트의 소유 주체(Pawn 소유 `UPathFollowingComponent` 또는 서브시스템 직접 `FindPathSync`)는 미확인이며 M3-01 에서 결정한다(Phase 3 플로우 필드 전까지는 직선 접근, D17) | engine-behaviortree-tick 결론 11; engine-gas-determinism 바꿔야 하는 것 4; engine-movement-anim-scale 결론 4(PathFollowing 은 `INavMovementInterface` 만 요구) |
 | 13 | `Source/TDGame/Combat/GAS/TDDamageGameplayAbility.cpp:14-15` | 몬스터용 `NetExecutionPolicy = ServerOnly` 옵션(파생 또는 설정) | 컨트롤러 없는 폰은 현행 LocalOnly 도 권한자로 활성된다(`FGameplayAbilityActorInfo::IsLocallyControlled` 가 `IsNetAuthority()` 로 떨어짐, `GameplayAbilityTypes.cpp:107-126`). ServerOnly 는 TwinStick 호환 경로처럼 컨트롤러가 붙는 경우의 보험(옵션) | engine-gas-determinism 바꿔야 하는 것 4·미확인 8 |
 | 14 | `Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.*` | `bAuthoritativeHitJudgment` 게이트 **추가만**(기본 true = 플레이어 경로 현행 유지). Phase 3 에서 몬스터 시간표 도입 시 몬스터만 false | 단일 판정 경로 준비 | 결정 D19·D20 |
 | 15 | `Source/TDGame/TDGame.Build.cs:11` | `Json`, `JsonUtilities` 의존 추가(Phase 1 로더 직전) | JSON 정본 파서 | engine-misc-decision-tools R13; 결정 D13 |
@@ -796,5 +796,5 @@ A §8·B §8·C §8 을 통합했다. "감시 지표"는 어느 산출물의 어
 | research/zz-completeness-critique.md | §1 M5·M8·M12·M16·M18, §2 C2·C13, §3 B14 |
 | 묶음 문서 | 02 §1·§2·§5.2·§5.5·§5.7·§5.8·§5.12·§6·§8·미결 1·4; 03 §1.3·§6·§9·미결 3; 04 §1·§2.3·§6.2·§7.3·§8·§12·미결 2; 05 §3.3·§4.2·§4.3·§9.2·미결 6; 06 §1·§5-1·§5-4·§5-5·미결 5 |
 | 엔진 소스(읽기 전용, 5.8.2) | `Engine/Build/Build.version`; `Source/Runtime/Core/Private/Misc/Paths.cpp:114,1948`; `Source/Runtime/Core/Private/GenericPlatform/GenericPlatformOutputDevices.cpp:87`; `Source/Runtime/JsonUtilities/Public/JsonObjectConverter.h:233-239`; `Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/Private/GameplayAbilityTypes.cpp:107-126`; `Source/Runtime/Engine/Private/TimerManager.cpp:1212` |
-| 프로젝트 소스(2026-09-09) | `Source/TDGame/Combat/TDCombatComponent.cpp:220-223`; `Source/TDGame/Combat/TDDamageEntity.cpp:56`; `Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp`(테스트 19개); `Docs/TDGASFoundation.md:85` |
+| 프로젝트 소스(2026-09-09) | `Source/TDGame/Combat/TDCombatComponent.cpp:220-223`; `Source/TDGame/Combat/Damage/TDDamageEntity.cpp:56`; `Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp`(테스트 19개); `Docs/TDGASFoundation.md:85` |
 | 설계안·심사 | A §7·§8·§9, B §4.4·§7·§8·§9, C §7·§8·§9, D §7·§9, 심사 접목 목록, 심사 판정(B Phase 1 3,000줄 과다, D Phase 0 300줄) |

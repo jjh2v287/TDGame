@@ -3,9 +3,9 @@
 #include "Combat/GAS/TDCombatAttributeSet.h"
 #include "Combat/GAS/TDCombatGameplayEffects.h"
 #include "Combat/GAS/TDDamageGameplayAbility.h"
-#include "Combat/GAS/TDGameplayTags.h"
-#include "Combat/TDDamageDefinition.h"
-#include "Combat/TDDamageSubsystem.h"
+#include "Core/TDGameplayTags.h"
+#include "Combat/Damage/TDDamageDefinition.h"
+#include "Combat/Damage/TDDamageSubsystem.h"
 #include "Engine/World.h"
 #include "GameplayEffectExtension.h"
 #include "TDGame.h"
@@ -91,6 +91,7 @@ FTDCombatStats UTDCombatComponent::GetStats() const
 	Snapshot.Level = FMath::Clamp(FMath::RoundToInt(CombatAttributes->GetLevel()), 1, 1000);
 	Snapshot.BaseMaxHealth = CombatAttributes->GetMaxHealth();
 	Snapshot.HealthPerLevel = 0.f;
+	Snapshot.MaxStamina = CombatAttributes->GetMaxStamina();
 	Snapshot.AttackPower = CombatAttributes->GetAttackPower();
 	Snapshot.SpellPower = CombatAttributes->GetSpellPower();
 	Snapshot.AttackPowerPerLevel = 0.f;
@@ -105,6 +106,44 @@ FTDCombatStats UTDCombatComponent::GetStats() const
 float UTDCombatComponent::GetCurrentHealth() const
 {
 	return CombatAttributes ? CombatAttributes->GetHealth() : Stats.GetMaxHealth();
+}
+
+float UTDCombatComponent::GetCurrentStamina() const
+{
+	return CombatAttributes ? CombatAttributes->GetStamina() : Stats.MaxStamina;
+}
+
+float UTDCombatComponent::GetMaxStamina() const
+{
+	return CombatAttributes ? CombatAttributes->GetMaxStamina() : Stats.MaxStamina;
+}
+
+bool UTDCombatComponent::ConsumeStamina(float Cost)
+{
+	if (!CombatAttributes || !FMath::IsFinite(Cost) || Cost < 0.f)
+	{
+		return false;
+	}
+	if (Cost == 0.f)
+	{
+		return true;
+	}
+	const float CurrentStamina = GetCurrentStamina();
+	if (CurrentStamina < Cost)
+	{
+		return false;
+	}
+	SetNumericAttributeBase(UTDCombatAttributeSet::GetStaminaAttribute(), CurrentStamina - Cost);
+	return true;
+}
+
+void UTDCombatComponent::RestoreStamina(float Amount)
+{
+	if (!CombatAttributes || !FMath::IsFinite(Amount) || Amount <= 0.f)
+	{
+		return;
+	}
+	SetNumericAttributeBase(UTDCombatAttributeSet::GetStaminaAttribute(), FMath::Min(GetCurrentStamina() + Amount, GetMaxStamina()));
 }
 
 bool UTDCombatComponent::IsAlive() const
@@ -127,6 +166,7 @@ void UTDCombatComponent::SetStats(const FTDCombatStats& NewStats, bool bResetHea
 	Stats.Level = FMath::Clamp(Stats.Level, 1, 1000);
 	Stats.BaseMaxHealth = FMath::Max(1.f, TDCombatInitialization::NonNegative(Stats.BaseMaxHealth));
 	Stats.HealthPerLevel = TDCombatInitialization::NonNegative(Stats.HealthPerLevel);
+	Stats.MaxStamina = TDCombatInitialization::NonNegative(Stats.MaxStamina);
 	Stats.AttackPower = TDCombatInitialization::NonNegative(Stats.AttackPower);
 	Stats.SpellPower = TDCombatInitialization::NonNegative(Stats.SpellPower);
 	Stats.AttackPowerPerLevel = TDCombatInitialization::NonNegative(Stats.AttackPowerPerLevel);
@@ -174,9 +214,11 @@ void UTDCombatComponent::ApplyInitialAttributes(bool bResetHealth)
 	SetNumericAttributeBase(UTDCombatAttributeSet::GetMagicResistanceAttribute(), Stats.MagicResistance);
 	SetNumericAttributeBase(UTDCombatAttributeSet::GetCriticalChanceAttribute(), Stats.CriticalChance);
 	SetNumericAttributeBase(UTDCombatAttributeSet::GetCriticalMultiplierAttribute(), Stats.CriticalMultiplier);
+	SetNumericAttributeBase(UTDCombatAttributeSet::GetMaxStaminaAttribute(), Stats.MaxStamina);
 	if (bResetHealth)
 	{
 		SetNumericAttributeBase(UTDCombatAttributeSet::GetHealthAttribute(), CombatAttributes->GetMaxHealth());
+		SetNumericAttributeBase(UTDCombatAttributeSet::GetStaminaAttribute(), CombatAttributes->GetMaxStamina());
 	}
 }
 

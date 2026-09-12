@@ -97,13 +97,15 @@ namespace
 		UWorld* World = nullptr;
 	};
 
-	UAnimMontage* MakeAttackMontage(UAnimSequence* AttackSequence, float DamageAmount)
+	UAnimMontage* MakeAttackMontage(UAnimSequence* AttackSequence, float DamageAmount, bool bLockHeight = false, float LockedHeightOffset = 0.f)
 	{
 		UAnimMontage* Montage = UAnimMontage::CreateSlotAnimationAsDynamicMontage(AttackSequence, TEXT("DefaultSlot"), 0.f, 0.f);
 		UTDAnimNotifyState_MeleeAttack* Notify = NewObject<UTDAnimNotifyState_MeleeAttack>(Montage);
 		Notify->WeaponBaseSocketName = BladeBaseBoneName;
 		Notify->WeaponTipSocketName = BladeTipBoneName;
 		Notify->SweepChannel = ECC_Pawn;
+		Notify->bLockHeightToOwner = bLockHeight;
+		Notify->LockedHeightOffset = LockedHeightOffset;
 		FTDDamageAction DamageAction;
 		DamageAction.Magnitude.Base = DamageAmount;
 		FTDDamageRule HitRule;
@@ -179,6 +181,48 @@ bool FTDMeleeAttackNotifySweepTest::RunTest(const FString& Parameters)
 	SecondAttacker->PlayAnimation(MakeAttackMontage(AttackSequence, 10.f), false);
 	Fixture.Tick(1.5f, 0.5f);
 	TestEqual(TEXT("Allies on the blade path are not damaged"), Ally->GetCurrentHealth(), 1000.f);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMeleeAttackNotifyHeightLockTest, "TDGame.Combat.MeleeAttackNotifyLocksBladeHeightToOwner", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMeleeAttackNotifyHeightLockTest::RunTest(const FString& Parameters)
+{
+	USkeletalMesh* Mesh = LoadObject<USkeletalMesh>(nullptr, AttackerMeshPath);
+	UAnimSequence* AttackSequence = LoadObject<UAnimSequence>(nullptr, AttackSequencePath);
+	if (!Mesh || !AttackSequence)
+	{
+		AddError(TEXT("Mannequin mesh or attack sequence asset is missing"));
+		return false;
+	}
+
+	FTDScopedMeleeWorld Fixture;
+	FVector TipLocation = FVector::ZeroVector;
+	if (!RecordBladeTipAtWindowMiddle(Fixture, Mesh, AttackSequence, TipLocation))
+	{
+		AddError(TEXT("Could not record the blade tip location during the notify window"));
+		return false;
+	}
+	TestTrue(TEXT("Recorded tip is clearly above the actor origin so the lock moves it"), TipLocation.Z > TargetRadius * 4.f);
+
+	constexpr float LockedOffset = 20.f;
+	const FVector LockedTipLocation(TipLocation.X, TipLocation.Y, LockedOffset);
+	UTDCombatComponent* EnemyOnLockedPlane = Fixture.SpawnTarget(LockedTipLocation, 2);
+	UTDCombatComponent* EnemyAtRawTip = Fixture.SpawnTarget(TipLocation, 2);
+	USkeletalMeshComponent* Attacker = Fixture.SpawnAttacker(Mesh, 1);
+	Attacker->PlayAnimation(MakeAttackMontage(AttackSequence, 10.f, true, LockedOffset), false);
+	Fixture.Tick(1.5f, 0.5f);
+	TestEqual(TEXT("Height-locked sweep hits the target on the owner plane"), EnemyOnLockedPlane->GetCurrentHealth(), 990.f);
+	TestEqual(TEXT("Height-locked sweep misses the target at the raw animated tip height"), EnemyAtRawTip->GetCurrentHealth(), 1000.f);
+	Attacker->GetOwner()->Destroy();
+	EnemyOnLockedPlane->GetOwner()->Destroy();
+	EnemyAtRawTip->GetOwner()->Destroy();
+
+	UTDCombatComponent* EnemyAtRawTipUnlocked = Fixture.SpawnTarget(TipLocation, 2);
+	USkeletalMeshComponent* UnlockedAttacker = Fixture.SpawnAttacker(Mesh, 1);
+	UnlockedAttacker->PlayAnimation(MakeAttackMontage(AttackSequence, 10.f, false), false);
+	Fixture.Tick(1.5f, 0.5f);
+	TestEqual(TEXT("Without the lock the raw animated tip height is hit"), EnemyAtRawTipUnlocked->GetCurrentHealth(), 990.f);
 	return true;
 }
 

@@ -1,6 +1,6 @@
 #include "Combat/GAS/TDCombatGameplayEffects.h"
 #include "Combat/GAS/TDCombatAttributeSet.h"
-#include "Combat/GAS/TDGameplayTags.h"
+#include "Core/TDGameplayTags.h"
 #include "GameplayEffectComponents/AssetTagsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 
@@ -50,6 +50,14 @@ UTDDamageCooldownEffect::UTDDamageCooldownEffect()
 	FInheritedTagContainer Tags;
 	Tags.AddTag(TDGameplayTags::Effect_Cooldown_Damage);
 	TargetTags->SetAndApplyTargetTagChanges(Tags);
+}
+
+UTDActionCooldownEffect::UTDActionCooldownEffect()
+{
+	DurationPolicy = EGameplayEffectDurationType::HasDuration;
+	FSetByCallerFloat CooldownDuration;
+	CooldownDuration.DataTag = TDGameplayTags::Data_Cooldown_Duration;
+	DurationMagnitude = FGameplayEffectModifierMagnitude(CooldownDuration);
 }
 
 UTDDeadEffect::UTDDeadEffect()

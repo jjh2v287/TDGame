@@ -13,7 +13,7 @@
 #include "Animation/AttributesRuntime.h"
 #include "BonePose.h"
 #include "Combat/TDCombatComponent.h"
-#include "Combat/TDDamageSubsystem.h"
+#include "Combat/Damage/TDDamageSubsystem.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/SkinnedAsset.h"
@@ -192,6 +192,8 @@ bool UTDAnimNotifyState_MeleeAttack::InitializeSweepState(FTDMeleeSweepState& St
 	}
 
 	State.bShouldLockRootBone = ShouldLockRootBone(MeshComp->GetAnimInstance(), Animation);
+	State.bShouldLockHeight = bLockHeightToOwner;
+	State.LockedHeightAboveComponent = Owner->GetActorLocation().Z - MeshComp->GetComponentLocation().Z + LockedHeightOffset;
 	State.TriggerTime = NotifyEvent->GetTriggerTime();
 	State.EndTriggerTime = FMath::Max(NotifyEvent->GetEndTriggerTime(), State.TriggerTime);
 	RestartSweep(State, MeshComp, Animation);
@@ -268,7 +270,7 @@ bool UTDAnimNotifyState_MeleeAttack::SampleBladePoints(const FTDMeleeSweepState&
 
 	FCSPose<FCompactPose> ComponentSpacePose;
 	ComponentSpacePose.InitPose(MoveTemp(Pose));
-	const FVector BaseLocation = (State.BaseSocket.LocalTransform * ComponentSpacePose.GetComponentSpaceTransform(State.BaseSocket.CompactBoneIndex) * ComponentToWorld).GetLocation();
+	const FVector BaseLocation = ApplyHeightLock(State, ComponentToWorld, (State.BaseSocket.LocalTransform * ComponentSpacePose.GetComponentSpaceTransform(State.BaseSocket.CompactBoneIndex) * ComponentToWorld).GetLocation());
 	OutBladePoints.Reset();
 	if (!State.bHasTipSocket)
 	{
@@ -276,7 +278,7 @@ bool UTDAnimNotifyState_MeleeAttack::SampleBladePoints(const FTDMeleeSweepState&
 		return true;
 	}
 
-	const FVector TipLocation = (State.TipSocket.LocalTransform * ComponentSpacePose.GetComponentSpaceTransform(State.TipSocket.CompactBoneIndex) * ComponentToWorld).GetLocation();
+	const FVector TipLocation = ApplyHeightLock(State, ComponentToWorld, (State.TipSocket.LocalTransform * ComponentSpacePose.GetComponentSpaceTransform(State.TipSocket.CompactBoneIndex) * ComponentToWorld).GetLocation());
 	const int32 PointCount = FMath::Clamp(BladeSampleCount, 2, 16);
 	for (int32 PointIndex = 0; PointIndex < PointCount; ++PointIndex)
 	{
@@ -284,6 +286,15 @@ bool UTDAnimNotifyState_MeleeAttack::SampleBladePoints(const FTDMeleeSweepState&
 		OutBladePoints.Add(FMath::Lerp(BaseLocation, TipLocation, Alpha));
 	}
 	return true;
+}
+
+FVector UTDAnimNotifyState_MeleeAttack::ApplyHeightLock(const FTDMeleeSweepState& State, const FTransform& ComponentToWorld, const FVector& WorldLocation) const
+{
+	if (!State.bShouldLockHeight)
+	{
+		return WorldLocation;
+	}
+	return FVector(WorldLocation.X, WorldLocation.Y, ComponentToWorld.GetLocation().Z + State.LockedHeightAboveComponent);
 }
 
 void UTDAnimNotifyState_MeleeAttack::RestartSweep(FTDMeleeSweepState& State, const USkeletalMeshComponent* MeshComp, const UAnimSequenceBase* Animation) const

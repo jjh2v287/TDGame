@@ -1,9 +1,9 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Combat/TDCombatComponent.h"
-#include "Combat/TDDamageDefinition.h"
-#include "Combat/TDDamageEntity.h"
-#include "Combat/TDDamageSubsystem.h"
+#include "Combat/Damage/TDDamageDefinition.h"
+#include "Combat/Damage/TDDamageEntity.h"
+#include "Combat/Damage/TDDamageSubsystem.h"
 #include "Components/SphereComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"

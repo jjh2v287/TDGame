@@ -12,6 +12,16 @@
 				"UMG",
 				"AIModule"
 			]
+		},
+		{
+			"Name": "TDWorldGen",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "TDGameEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -46,6 +56,14 @@
 		},
 		{
 			"Name": "GameplayStateTree",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayMessageRouter",
+			"Enabled": true
+		},
+		{
+			"Name": "SignificanceManager",
 			"Enabled": true
 		}
 	]

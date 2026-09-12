@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
-#include "Combat/TDDamageTypes.h"
+#include "Combat/Damage/TDDamageTypes.h"
 #include "TDCombatComponent.generated.h"
 
 class UBrainComponent;
@@ -75,6 +75,18 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Combat")
 	float GetCurrentHealth() const;
+
+	UFUNCTION(BlueprintPure, Category="Combat")
+	float GetCurrentStamina() const;
+
+	UFUNCTION(BlueprintPure, Category="Combat")
+	float GetMaxStamina() const;
+
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool ConsumeStamina(float Cost);
+
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	void RestoreStamina(float Amount);
 
 	UFUNCTION(BlueprintPure, Category="Combat")
 	bool IsAlive() const;

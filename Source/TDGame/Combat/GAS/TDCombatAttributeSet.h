@@ -25,6 +25,14 @@ public:
 	FGameplayAttributeData MaxHealth = 100.f;
 	TD_ATTRIBUTE_ACCESSORS(UTDCombatAttributeSet, MaxHealth)
 
+	UPROPERTY(BlueprintReadOnly, Category="Combat|Stamina")
+	FGameplayAttributeData Stamina = 100.f;
+	TD_ATTRIBUTE_ACCESSORS(UTDCombatAttributeSet, Stamina)
+
+	UPROPERTY(BlueprintReadOnly, Category="Combat|Stamina")
+	FGameplayAttributeData MaxStamina = 100.f;
+	TD_ATTRIBUTE_ACCESSORS(UTDCombatAttributeSet, MaxStamina)
+
 	UPROPERTY(BlueprintReadOnly, Category="Combat|Stats")
 	FGameplayAttributeData Level = 1.f;
 	TD_ATTRIBUTE_ACCESSORS(UTDCombatAttributeSet, Level)
@@ -61,4 +69,5 @@ public:
 private:
 	void ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const;
 	void ClampHealthToMaximum();
+	void ClampStaminaToMaximum();
 };

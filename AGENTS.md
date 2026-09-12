@@ -158,3 +158,8 @@
 - 몬스터 AI(코드 정의 유틸리티 + 실행 FSM), 결정론 전투 시뮬레이터(밸런스 툴), 틱·대량 몬스터 최적화, 머신러닝·생성형 AI 통합 작업은 `Docs/MonsterAI_CombatSim_Plan.md`(인덱스)와 `Docs/MonsterAI_CombatSim/07-roadmap-and-tasks.md`(할 일 대장, ID `M<phase>-<번호>`)를 따른다. 구속력 있는 결정은 `Docs/MonsterAI_CombatSim/00-decision-record.md`(D1~D38)이며, 결정을 바꾸려면 `Docs/MonsterAI_CombatSim/research/`의 근거를 먼저 반박한다.
 - 엔진 비헤이비어 트리·StateTree·HTNPlanner 플러그인·GOAP·Mass 두뇌·Mover·MLAdapter 는 전투 코어에 쓰지 않는다. 몬스터 한 종의 정본은 `Content/MonsterAI/Definitions/<Id>.json` 이고 행동 원시·입력 함수는 C++ 등록표다. 시뮬레이터와 게임은 같은 스텝 코드를 돌리며, 시뮬 코드에서 `FMath::FRand` 계열 전역 난수를 쓰지 않는다.
 - 작업 절차와 상태 표기(`todo/doing/blocked/done/decision`)는 12절의 월드·던전 대장과 같다. 두 대장은 별도 파일이며 통합 시점은 사용자가 결정한다.
+
+## 14. 소스 폴더 구조와 PJGame 이식 규칙
+
+- `Source/TDGame`은 역할별 폴더로 나뉜다: `Core/`(태그·메시지·아이템 타입), `Characters/`, `Framework/`(+`ThirdPerson/`), `Combat/`(전투 컴포넌트·라이브러리), `Combat/Damage/`, `Combat/GAS/`(+`Abilities/`), `Combat/Skills/`, `Combat/AnimNotify/`, `AI/{CombatToken,NPC}/`, `Performance/BudgetTick/`, `Actors/`, `World/{Streaming,Persistence,Generation}/`, `Tests/`. 새 파일은 같은 역할의 폴더에 두고, 인클루드는 모듈 루트 기준 경로(`"Combat/TDCombatLibrary.h"`)로 쓴다.
+- 이전 프로젝트 `C:\Project\PJGame` 코드는 `Docs/PJGame_PortMap.md`의 대응표대로 이식되어 있다. 추가로 옮길 때는 `Docs/Tasks/decisions.md` D-11의 대체 규칙(ASC는 `UTDCombatComponent` 하나, 팀은 `FTDCombatStats.TeamId`, 데미지는 `UTDCombatLibrary::TryApplyDamage`, 태그는 `Core/TDGameplayTags.h`)을 따르고 표에 한 줄 추가한다.

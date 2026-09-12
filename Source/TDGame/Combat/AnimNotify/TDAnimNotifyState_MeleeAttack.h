@@ -4,7 +4,7 @@
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "BoneContainer.h"
 #include "BoneIndices.h"
-#include "Combat/TDDamageTypes.h"
+#include "Combat/Damage/TDDamageTypes.h"
 #include "TDAnimNotifyState_MeleeAttack.generated.h"
 
 class UAnimInstance;
@@ -26,6 +26,8 @@ struct FTDMeleeSweepState
 	FTDMeleeSweepSocket TipSocket;
 	bool bHasTipSocket = false;
 	bool bShouldLockRootBone = false;
+	bool bShouldLockHeight = false;
+	float LockedHeightAboveComponent = 0.f;
 	float TriggerTime = 0.f;
 	float EndTriggerTime = 0.f;
 	float LastSampledTime = 0.f;
@@ -70,6 +72,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Sweep")
 	FName MontageSlotName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Sweep", meta=(ToolTip="Blade points keep the owner's height (actor location Z plus offset) so the sweep stays on the top-down plane even when the animation swings up or down."))
+	bool bLockHeightToOwner = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Sweep", meta=(EditCondition="bLockHeightToOwner", ForceUnits="cm"))
+	float LockedHeightOffset = 0.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Damage")
 	ETDDamageTargetPolicy TargetPolicy = ETDDamageTargetPolicy::Enemies;
 
@@ -87,6 +95,7 @@ private:
 	int32 ResolveSocketBoneIndex(FTransform& OutSocketLocalTransform, const USkeletalMeshComponent* MeshComp, FName SocketName) const;
 	const FAnimTrack* FindMontageTrack(const UAnimMontage* Montage) const;
 	bool SampleBladePoints(const FTDMeleeSweepState& State, const UAnimSequenceBase* Animation, double AnimationTime, const FTransform& ComponentToWorld, TArray<FVector>& OutBladePoints) const;
+	FVector ApplyHeightLock(const FTDMeleeSweepState& State, const FTransform& ComponentToWorld, const FVector& WorldLocation) const;
 	void RestartSweep(FTDMeleeSweepState& State, const USkeletalMeshComponent* MeshComp, const UAnimSequenceBase* Animation) const;
 	void SweepTimeRange(FTDMeleeSweepState& State, USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float ToTime);
 	void SweepBladeStep(FTDMeleeSweepState& State, UWorld* World, const TArray<FVector>& NewBladePoints);

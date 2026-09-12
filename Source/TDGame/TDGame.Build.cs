@@ -23,10 +23,16 @@ public class TDGame : ModuleRules
 			"GameplayTasks",
 			"Niagara",
 			"UMG",
-			"Slate"
+			"Slate",
+			"TDWorldGen",
+			"GameplayMessageRuntime",
+			"SignificanceManager",
+			"GeometryCollectionEngine",
+			"FieldSystemEngine",
+			"Chaos"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "PCG" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"TDGame",

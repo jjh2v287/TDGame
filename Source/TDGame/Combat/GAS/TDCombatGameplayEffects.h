@@ -41,6 +41,15 @@ public:
 };
 
 UCLASS()
+class TDGAME_API UTDActionCooldownEffect : public UGameplayEffect
+{
+	GENERATED_BODY()
+
+public:
+	UTDActionCooldownEffect();
+};
+
+UCLASS()
 class TDGAME_API UTDDeadEffect : public UGameplayEffect
 {
 	GENERATED_BODY()

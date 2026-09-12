@@ -1,0 +1,51 @@
+#include "Core/TDGameplayTags.h"
+
+namespace TDGameplayTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(Data_Damage, "Data.Damage")
+	UE_DEFINE_GAMEPLAY_TAG(Data_Cooldown_Duration, "Data.Cooldown.Duration")
+	UE_DEFINE_GAMEPLAY_TAG(State_Dead, "State.Dead")
+	UE_DEFINE_GAMEPLAY_TAG(State_Frozen, "State.Frozen")
+	UE_DEFINE_GAMEPLAY_TAG(State_Attacking, "State.Attacking")
+	UE_DEFINE_GAMEPLAY_TAG(State_Skill, "State.Skill")
+	UE_DEFINE_GAMEPLAY_TAG(State_Recovery, "State.Recovery")
+	UE_DEFINE_GAMEPLAY_TAG(State_ComboWindow, "State.ComboWindow")
+	UE_DEFINE_GAMEPLAY_TAG(State_Rolling, "State.Rolling")
+	UE_DEFINE_GAMEPLAY_TAG(State_Invulnerable, "State.Invulnerable")
+	UE_DEFINE_GAMEPLAY_TAG(State_Jumping, "State.Jumping")
+	UE_DEFINE_GAMEPLAY_TAG(State_Stunned, "State.Stunned")
+	UE_DEFINE_GAMEPLAY_TAG(Ability_DamageCast, "Ability.DamageCast")
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Damage, "Effect.Damage")
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Status, "Effect.Status")
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Cooldown_Damage, "Effect.Cooldown.Damage")
+
+	UE_DEFINE_GAMEPLAY_TAG(Event_Damage_Applied, "Event.Damage.Applied")
+	UE_DEFINE_GAMEPLAY_TAG(Event_Actor_Death, "Event.Actor.Death")
+	UE_DEFINE_GAMEPLAY_TAG(Event_Caravan_Destroyed, "Event.Caravan.Destroyed")
+
+	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary, "Action.Attack.Primary")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary_01, "Action.Attack.Primary.01")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary_02, "Action.Attack.Primary.02")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary_03, "Action.Attack.Primary.03")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Skill_Q, "Action.Skill.Q")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Skill_E, "Action.Skill.E")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Roll, "Action.Roll")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Jump, "Action.Jump")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Monster_Attack_Primary, "Action.Monster.Attack.Primary")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Monster_Skill_01, "Action.Monster.Skill.01")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Reaction_Hit, "Action.Reaction.Hit")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Reaction_Death, "Action.Reaction.Death")
+
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_Q, "Cooldown.Skill.Q")
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_E, "Cooldown.Skill.E")
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Monster_Attack_Primary, "Cooldown.Monster.Attack.Primary")
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Monster_Skill_01, "Cooldown.Monster.Skill.01")
+
+	UE_DEFINE_GAMEPLAY_TAG(Input_Move, "Input.Move")
+	UE_DEFINE_GAMEPLAY_TAG(Input_Attack, "Input.Attack")
+	UE_DEFINE_GAMEPLAY_TAG(Input_Skill_Q, "Input.Skill.Q")
+	UE_DEFINE_GAMEPLAY_TAG(Input_Skill_E, "Input.Skill.E")
+	UE_DEFINE_GAMEPLAY_TAG(Input_Roll, "Input.Roll")
+	UE_DEFINE_GAMEPLAY_TAG(Input_Jump, "Input.Jump")
+	UE_DEFINE_GAMEPLAY_TAG(Input_Interact, "Input.Interact")
+}

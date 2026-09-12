@@ -20,6 +20,10 @@ void UTDCombatAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 	{
 		ClampHealthToMaximum();
 	}
+	if (Attribute == GetMaxStaminaAttribute())
+	{
+		ClampStaminaToMaximum();
+	}
 }
 
 void UTDCombatAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& EffectCallback)
@@ -40,6 +44,12 @@ void UTDCombatAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	{
 		ClampHealthToMaximum();
 	}
+
+	if (EffectCallback.EvaluatedData.Attribute == GetStaminaAttribute()
+		|| EffectCallback.EvaluatedData.Attribute == GetMaxStaminaAttribute())
+	{
+		ClampStaminaToMaximum();
+	}
 }
 
 void UTDCombatAttributeSet::ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const
@@ -53,6 +63,19 @@ void UTDCombatAttributeSet::ClampAttribute(const FGameplayAttribute& Attribute, 
 	{
 		const float Maximum = FMath::IsFinite(GetMaxHealth()) ? FMath::Max(1.f, GetMaxHealth()) : 1.f;
 		NewValue = FMath::Clamp(NewValue, 0.f, Maximum);
+		return;
+	}
+
+	if (Attribute == GetStaminaAttribute())
+	{
+		const float Maximum = FMath::IsFinite(GetMaxStamina()) ? FMath::Max(0.f, GetMaxStamina()) : 0.f;
+		NewValue = FMath::Clamp(NewValue, 0.f, Maximum);
+		return;
+	}
+
+	if (Attribute == GetMaxStaminaAttribute())
+	{
+		NewValue = FMath::Max(0.f, NewValue);
 		return;
 	}
 
@@ -88,5 +111,15 @@ void UTDCombatAttributeSet::ClampHealthToMaximum()
 	if (GetHealth() != ClampedHealth)
 	{
 		SetHealth(ClampedHealth);
+	}
+}
+
+void UTDCombatAttributeSet::ClampStaminaToMaximum()
+{
+	float ClampedStamina = GetStamina();
+	ClampAttribute(GetStaminaAttribute(), ClampedStamina);
+	if (GetStamina() != ClampedStamina)
+	{
+		SetStamina(ClampedStamina);
 	}
 }

@@ -3,8 +3,8 @@
 | 상태 | 개수 |
 |---|---|
 | todo | 5 |
-| done | 2 |
-| decision | 2 |
+| done | 3 |
+| decision | 1 |
 
 선행 없음. 이 Phase가 끝나야 Phase 1 코드 작업을 시작한다.
 
@@ -20,7 +20,7 @@
 - 산출물: 위 파일들
 - 검증: 컴파일 로그, `LogModuleManager`에 TDGameEditor 로드
 - 참조: G-12, 03-architecture 3.1, 04-tools 4.3, research/persistence-editor-batch.md 2.3
-- 기록: 2026-09-09 작성 / 2026-09-12 완료(Claude): Build.cs·모듈 클래스·uproject·Target.cs 추가, Build.bat 성공, 에디터 Python에서 `unreal.TDLandscapeEditorLibrary` 노출 확인. 메시지 로그 카테고리 등록은 아직 없음(툴 UI가 생길 때 추가). 모듈 루트 서브폴더 인클루드를 위해 `PublicIncludePaths.Add(ModuleDirectory)` 사용.
+- 기록: 2026-09-09 작성 / 2026-09-17 삭제 완료(결정 D-01). 함께 정리: `Content/LevelPrototyping`, `Content/Cursor`(미참조 복제본), `Content/TopDown` 중 미참조 8개, 마네킹 총기·사망 애니메이션 79개 / 2026-09-12 완료(Claude): Build.cs·모듈 클래스·uproject·Target.cs 추가, Build.bat 성공, 에디터 Python에서 `unreal.TDLandscapeEditorLibrary` 노출 확인. 메시지 로그 카테고리 등록은 아직 없음(툴 UI가 생길 때 추가). 모듈 루트 서브폴더 인클루드를 위해 `PublicIncludePaths.Add(ModuleDirectory)` 사용.
 
 ### P0-02 생성 알고리즘 모듈 `TDWorldGen` 신설
 - 상태: done
@@ -83,7 +83,7 @@
 - 기록: 2026-09-09 작성
 
 ### P0-D1 템플릿 잔재 정리 여부
-- 상태: decision
+- 상태: done
 - 우선순위: 낮음
 - 목표: `Source/TDGame/Variant_Strategy`, `Variant_TwinStick`와 대응 콘텐츠를 삭제할지 결정한다.
 - 참조: decisions.md D-01

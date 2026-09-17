@@ -35,13 +35,7 @@ public class TDGame : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { "PCG" });
 
 		PublicIncludePaths.AddRange(new string[] {
-			"TDGame",
-			"TDGame/Variant_Strategy",
-			"TDGame/Variant_Strategy/UI",
-			"TDGame/Variant_TwinStick",
-			"TDGame/Variant_TwinStick/AI",
-			"TDGame/Variant_TwinStick/Gameplay",
-			"TDGame/Variant_TwinStick/UI"
+			"TDGame"
 		});
 
 		// Uncomment if you are using Slate UI

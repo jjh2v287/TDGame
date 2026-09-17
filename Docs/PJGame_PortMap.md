@@ -73,5 +73,4 @@ Source/TDGame/
   Actors/          부서지는 액터, 캐러밴
   World/Streaming/, World/Persistence/, World/Generation/, World/Tests/
   Tests/           스모크 테스트
-  Variant_Strategy/, Variant_TwinStick/  (템플릿 잔재, 결정 D-01 대기)
 ```

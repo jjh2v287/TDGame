@@ -12,8 +12,7 @@
 | 플러그인 | GameplayAbilities, ModelContextProtocol, AllToolsets, ModelingToolsEditorMode, StateTree, GameplayStateTree | `TDGame.uproject` |
 | 전투 | GAS 기반 전투 캐릭터(`ATDCombatCharacter` 계열), 데미지 서브시스템·정의·엔티티, 상태이상, 근접 노티파이 스테이트, 자동화 테스트 28개 | `Source/TDGame/Combat/*`, `Docs/TDDamageSystemDesign.md`, `Docs/TDGASFoundation.md` |
 | 플레이어 | `ATDGameCharacter`, `ATDGamePlayerController`(Exec 콘솔 명령 다수), `ATDGameGameMode`, 블루프린트 `BP_TDCombat*` | `Source/TDGame/*.h`, `Content/Combat/Blueprints` |
-| 맵 | `Content/Level/LV-Game.umap`이 시작 맵. **World Partition이 아님**(외부 액터 폴더 없음, umap에 WorldPartition 문자열 0건). 템플릿 맵(TopDown, Variant_*)만 외부 액터(OFPA) 사용 | `Content/__ExternalActors__/`, `Config/DefaultEngine.ini` |
-| 템플릿 잔재 | `Variant_Strategy`, `Variant_TwinStick` 소스·콘텐츠가 남아 있음(TD 접두어 없음) | `Source/TDGame/Variant_*` |
+| 맵 | `Content/Level/LV-Game.umap`이 시작 맵. **World Partition이 아님**(외부 액터 폴더 없음, umap에 WorldPartition 문자열 0건). 템플릿 맵은 2026-09-17에 삭제함 | `Content/__ExternalActors__/`, `Config/DefaultEngine.ini` |
 | 내비게이션 | 기본 RecastNavMesh 설정(타일 1000UU). 월드 파티션 내비 파티셔닝 설정 없음 | `Config/DefaultEngine.ini` |
 | 도구 | 언리얼 공식 MCP로 에디터 조작(액터 배치, 프로퍼티, PIE, 자동화 테스트). 몽타주·콘솔·애니메이션 작업은 에디터 Python 원격 실행으로 보완 | `AGENTS.md` 11절, 메모리 |
 | 문서 | 데미지 시스템 설계·가이드, GAS 기반, UKGame 기능 맵(참고용) | `Docs/` |
@@ -49,7 +48,7 @@
 
 ## 2.4 정리해야 할 것 (선행 정리)
 
-- 템플릿 잔재 `Variant_Strategy`, `Variant_TwinStick`: 새 월드 작업과 무관하고 이름 규칙(TD 접두어)에도 어긋난다. 삭제 또는 보존 여부는 사용자 결정 사항이므로 할 일 목록에 "결정 요청" 항목으로만 둔다.
+- ~~템플릿 잔재 `Variant_Strategy`, `Variant_TwinStick`~~: 2026-09-17 삭제 완료(결정 D-01).
 - 시작 맵을 새 World Partition 월드로 바꿀지, LV-Game을 유지하고 별도 월드에서 개발할지 결정 필요. 권장: 새 월드 `L_TDWorld_Main`을 만들고 LV-Game은 전투 테스트용으로 유지.
 
 ## 2.5 지금 당장 필요한 것 (우선순위 순)

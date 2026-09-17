@@ -19,12 +19,26 @@ public class TDGameEditor : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"UnrealEd",
+			"EditorSubsystem",
 			"Landscape",
 			"LandscapeEditor",
 			"Json",
 			"JsonUtilities",
 			"NavigationSystem",
 			"MessageLog",
+			"ToolsetRegistry",
+			"AssetRegistry",
+			"AnimationDataController",
+			"AnimationCore",
+			"LevelSequence",
+			"LevelSequenceEditor",
+			"MovieScene",
+			"MovieSceneTracks",
+			"MovieSceneTools",
+			"ControlRig",
+			"ControlRigEditor",
+			"SequencerScripting",
+			"SequencerScriptingEditor",
 			"PCG"
 		});
 	}

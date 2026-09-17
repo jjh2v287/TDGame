@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-16",
+  "blender_version": "5.2.2 LTS",
+  "blender_mcp_version": "1.9.4",
+  "upstream_revision": "7684c6b3ad2aa0710bbdb1cb06b497c90899ae00",
+  "addon_protocol": 7,
+  "blender_bind": "127.0.0.1:9876",
+  "unreal_mcp": "http://127.0.0.1:8000/mcp",
+  "checks": {
+    "mcp_initialize_and_list": true,
+    "blender_execute_and_keyframe": true,
+    "unreal_mesh_export": true,
+    "blender_author_and_fbx_export": true,
+    "unreal_animation_import": true,
+    "client_shutdown_preserves_independent_blender_process": true,
+    "blend_reopen_then_mcp_reconnect": true,
+    "five_client_config_syntax": true,
+    "python_and_powershell_syntax": true,
+    "lfs_attributes": true
+  },
+  "client_application_sessions_tested": [
+    "MCP Python SDK used by current Codex task"
+  ],
+  "other_client_model_sessions_tested": false,
+  "multi_leg_character_tested": false,
+  "attack_input_binding_changed": false
+}

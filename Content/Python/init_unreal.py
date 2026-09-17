@@ -1,0 +1,3 @@
+import td_blender_animation_tools
+
+td_blender_animation_tools.register()

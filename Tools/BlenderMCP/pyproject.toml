@@ -1,0 +1,7 @@
+[project]
+name = "tdgame-blender-mcp"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "blender-mcp @ https://github.com/ahujasid/blender-mcp/archive/7684c6b3ad2aa0710bbdb1cb06b497c90899ae00.zip",
+]

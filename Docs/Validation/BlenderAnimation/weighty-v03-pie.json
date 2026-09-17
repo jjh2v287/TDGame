@@ -1,0 +1,74 @@
+{
+  "montage": "/Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_Heavy_RToL_v03.AM_TD_Player_Attack01_Heavy_RToL_v03",
+  "pawn_class": "BP_TDCombatCharacter_C",
+  "start_position_cm": [
+    0.0,
+    0.0,
+    97.7750039100647
+  ],
+  "samples": [
+    {
+      "elapsed": 0.32900000000017826,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        0.0,
+        0.0,
+        97.7750039100647
+      ]
+    },
+    {
+      "elapsed": 0.6570000000001528,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        51.43010006208073,
+        -7.105427437010325e-15,
+        97.7750039100647
+      ]
+    },
+    {
+      "elapsed": 0.9850000000001273,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        133.52397304986357,
+        -2.131628231103097e-14,
+        97.7750039100647
+      ]
+    },
+    {
+      "elapsed": 1.3290000000001783,
+      "slot_weight": 0.0,
+      "actor_position_cm": [
+        150.61387802601428,
+        -2.4868996029536117e-14,
+        97.7750039100647
+      ]
+    },
+    {
+      "elapsed": 1.6570000000001528,
+      "slot_weight": 0.0,
+      "actor_position_cm": [
+        150.61387802601428,
+        -2.4868996029536117e-14,
+        97.7750039100647
+      ]
+    },
+    {
+      "elapsed": 1.9850000000001273,
+      "slot_weight": 0.0,
+      "actor_position_cm": [
+        150.61387802601428,
+        -2.4868996029536117e-14,
+        97.7750039100647
+      ]
+    }
+  ],
+  "play_duration_seconds": 1.3333333730697632,
+  "end_position_cm": [
+    150.61387802601428,
+    -2.4868996029536117e-14,
+    97.7750039100647
+  ],
+  "travel_distance_cm": 150.61387802601428,
+  "maximum_slot_weight": 1.0,
+  "passed": true
+}

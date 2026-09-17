@@ -1,0 +1,134 @@
+{
+  "mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+  "save": false,
+  "asset_root": "/Game/Tests/AnimationAuthoring/Run_fed9fe8d2323",
+  "checks": [
+    "inspect skeleton",
+    "reject fractional frame rate before allocation",
+    "create bone animation",
+    "reject destination collision",
+    "inspect bone animation",
+    "bone midpoint moves 20 cm and returns",
+    "bone duration is one second",
+    "skeleton reports at least one montage slot",
+    "reject unknown montage slot",
+    "create two-segment montage",
+    "inspect montage",
+    "montage has two segments",
+    "montage preserves explicit section links",
+    "create native FK sequence",
+    "open FK sequence",
+    "inspect sequence bindings",
+    "native FK has a root bone control",
+    "key native FK frame 0",
+    "key native FK frame 15",
+    "key native FK frame 30",
+    "FK key reads back 20 cm motion",
+    "bake FK into new animation",
+    "inspect baked animation",
+    "baked animation contains root motion keys",
+    "baked duration is one second with final pose retained"
+  ],
+  "assets": [
+    "/Game/Tests/AnimationAuthoring/Run_fed9fe8d2323/AS_BonePulse.AS_BonePulse",
+    "/Game/Tests/AnimationAuthoring/Run_fed9fe8d2323/AM_BonePulse.AM_BonePulse",
+    "/Game/Tests/AnimationAuthoring/Run_fed9fe8d2323/LS_FKPulse.LS_FKPulse",
+    "/Game/Tests/AnimationAuthoring/Run_fed9fe8d2323/AS_FKBaked.AS_FKBaked"
+  ],
+  "sequence_info": {
+    "success": true,
+    "sequence": "/Game/Tests/AnimationAuthoring/Run_fed9fe8d2323/LS_FKPulse.LS_FKPulse",
+    "focused_in_sequencer": true,
+    "fps_numerator": 30,
+    "fps_denominator": 1,
+    "start_frame": 0,
+    "end_frame_exclusive": 31,
+    "bindings": [
+      {
+        "binding": "A5A53B29-40A6-1E79-BE06-EE93C1A34567",
+        "name": "SKM_Manny_Simple",
+        "skeletal_components": [
+          {
+            "component": "/Game/Tests/AnimationAuthoring/Run_fed9fe8d2323/LS_FKPulse.LS_FKPulse:MovieScene_0.TDAnimationCharacter.SkeletalMeshComponent0",
+            "skeletal_mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"
+          }
+        ]
+      }
+    ]
+  },
+  "baked_root_samples": [
+    {
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "rotation_quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "frame": 0
+    },
+    {
+      "translation": [
+        0,
+        0,
+        20
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "rotation_quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "frame": 15
+    },
+    {
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "rotation_quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "frame": 30
+    }
+  ],
+  "success": true
+}

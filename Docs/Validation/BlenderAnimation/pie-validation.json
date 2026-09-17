@@ -1,0 +1,17 @@
+{
+  "pawn_class": "BP_TDCombatCharacter_C",
+  "mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple",
+  "anim_instance": "ABP_Unarmed_C",
+  "montage": "/Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_RToL_Blender.AM_TD_Player_Attack01_RToL_Blender",
+  "slot": "DefaultSlot",
+  "slot_active": true,
+  "slot_weight": 1.0,
+  "montage_position": 0.550000011920929,
+  "sample_hand_r_cm": [
+    8.839949093458081,
+    38.01004788622347,
+    118.42126766334363
+  ],
+  "attack_input_binding_tested": false,
+  "preview_command": "TDPlayMeleeMontage /Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_RToL_Blender"
+}

@@ -1,0 +1,24 @@
+{
+  "animation": "/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_Heavy_RToL_v04",
+  "source_animation": "/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01",
+  "duration_seconds": 1.4333333333333333,
+  "fps": 30,
+  "sample_count": 44,
+  "maximum_blender_unreal_bone_position_error_cm": 0.0004500589148586195,
+  "maximum_reference_lower_body_error_cm": 0.00022780991285827743,
+  "root_travel_cm": 150.61180114746094,
+  "right_toe_plant_phase": {
+    "frames_zero_based": [
+      23,
+      43
+    ],
+    "max_xy_displacement_cm": 0.17044002643440706
+  },
+  "right_hand_sweep_x_cm": [
+    -45.76011013116828,
+    59.26678965018647
+  ],
+  "visual_review_is_separate": true,
+  "user_visual_approval": false,
+  "technical_checks_passed": true
+}

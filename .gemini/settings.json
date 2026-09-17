@@ -1,5 +1,11 @@
 {
   "mcpServers": {
+    "blender": {
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Project\\TDGame\\Tools\\BlenderMCP\\Run-BlenderMCP.ps1"],
+      "env": {"DISABLE_TELEMETRY": "true", "BLENDER_HOST": "127.0.0.1", "BLENDER_PORT": "9876"},
+      "timeout": 180000
+    },
     "unreal-mcp": {
       "httpUrl": "http://127.0.0.1:8000/mcp"
     }

@@ -1,0 +1,25 @@
+{
+  "animation": "/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_RToL_Blender",
+  "sample_count": 37,
+  "fps": 30,
+  "duration_seconds": 1.2,
+  "maximum_blender_unreal_position_error_cm": 0.027034143580112094,
+  "maximum_component_scale_error": 5.245209511173243e-06,
+  "maximum_displacement_cm": {
+    "root": 0.0,
+    "foot_r": 0.00015806812774644505,
+    "foot_l": 0.00016040753536180258
+  },
+  "right_hand_strike_start_cm": [
+    -51.00028738229739,
+    7.999839666428148,
+    121.99998146415355
+  ],
+  "right_hand_strike_end_cm": [
+    24.999991969545977,
+    22.000033783765645,
+    120.99987783736384
+  ],
+  "start_end_pose_position_error_cm": 1.2359670825755084e-05,
+  "passed": true
+}

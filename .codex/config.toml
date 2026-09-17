@@ -4,3 +4,12 @@ enabled = true
 startup_timeout_sec = 20
 tool_timeout_sec = 120
 default_tools_approval_mode = "prompt"
+
+[mcp_servers.blender]
+command = "powershell.exe"
+args = ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", 'C:\Project\TDGame\Tools\BlenderMCP\Run-BlenderMCP.ps1']
+env = { DISABLE_TELEMETRY = "true", BLENDER_HOST = "127.0.0.1", BLENDER_PORT = "9876" }
+enabled = true
+startup_timeout_sec = 60
+tool_timeout_sec = 180
+default_tools_approval_mode = "prompt"

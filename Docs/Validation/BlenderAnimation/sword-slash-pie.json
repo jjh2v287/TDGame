@@ -1,0 +1,643 @@
+{
+  "montage": "/Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_SwordSlash_RToL.AM_TD_Player_Attack01_SwordSlash_RToL",
+  "pawn_class": "BP_TDCombatCharacter_C",
+  "start_position_cm": [
+    -10600.0,
+    2600.0,
+    630.3500345937537
+  ],
+  "samples": [
+    {
+      "elapsed": 0.438,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10586.999816183004,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 0.891,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 1.125,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 1.422,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 1.703,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 2.063,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 2.328,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 2.563,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 2.781,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 3.016,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 3.266,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 3.5,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 3.75,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 3.984,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 4.203,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 4.422,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 4.641,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 4.859,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 5.078,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 5.313,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 5.531,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 5.766,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 5.984,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 6.203,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 6.422,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 6.625,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 6.859,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 7.094,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 7.328,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 7.547,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 7.766,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 8.0,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 8.203,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 8.422,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 8.625,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 8.844,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 9.047,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 9.234,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 9.453,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 9.656,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 9.891,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 10.109,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 10.313,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 10.531,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 10.75,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 10.953,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 11.188,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 11.406,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 11.625,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 11.844,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 12.047,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 12.266,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 12.453,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 12.656,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 12.875,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 13.078,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 13.297,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 13.5,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 13.734,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 13.938,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 14.188,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 14.391,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 14.625,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 14.828,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 15.047,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 15.25,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 15.438,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 15.609,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 15.797,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10554.867096787933,
+        2600.0,
+        630.3500345937537
+      ]
+    }
+  ],
+  "screenshot_taken": true,
+  "play_duration_seconds": 1.2999999523162842,
+  "end_position_cm": [
+    -10554.867096787933,
+    2600.0,
+    630.3500345937537
+  ],
+  "travel_distance_cm": 45.132903212066594,
+  "maximum_slot_weight": 1.0,
+  "passed": true,
+  "screenshot": "Docs\\Validation\\BlenderAnimation\\sword-slash-pie.png"
+}

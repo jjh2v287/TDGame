@@ -1,0 +1,31 @@
+{
+  "animation": "/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_SwordSlash_RToL",
+  "fps": 30,
+  "sample_count": 40,
+  "duration_seconds": 1.3,
+  "max_blender_unreal_bone_position_error_cm": {
+    "root_fwd": 0.0005,
+    "pelvis": 0.0007,
+    "hand_r": 0.0067,
+    "hand_l": 0.0012,
+    "foot_r": 0.0015,
+    "foot_l": 0.0023,
+    "ball_r": 0.002,
+    "ball_l": 0.0024
+  },
+  "root_travel_cm": 50.0,
+  "expected_step_cm": 50.0,
+  "left_ball_plant_xy_drift_cm": {
+    "frames_14_39": 0.0024
+  },
+  "right_ball_plant_xy_drift_cm": {
+    "frames_0_21": 0.0005,
+    "frames_27_39": 0.002
+  },
+  "sword_tip_min_height_cm": 11.75,
+  "max_wrist_twist_deg": 166.85,
+  "max_ik_error_cm": 0.524,
+  "visual_review_is_separate": true,
+  "user_visual_approval": false,
+  "technical_checks_passed": true
+}

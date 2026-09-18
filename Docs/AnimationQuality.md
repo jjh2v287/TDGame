@@ -1,5 +1,34 @@
 # 전투 애니메이션 품질 개선
 
+## 2026-09-19 현행: `AS_TD_Player_Attack01_SwordSlash_RToL` (절차적 저작, 참고 모션 없음)
+
+사용자가 이전 후보(v02~v05·RToL_Blender·`Anims/Sword/AS_Sword_Slash_01`, 언리얼 10개 + `AnimationSources/Player` 원본 15개)를 품질 불량으로 모두 지우게 했고, 새 기본 공격 하나를 다시 만들었다. 요구: 한손검, 오른손, 캐릭터 기준 우→좌 횡베기, 루트 모션, 한 발 전진, 오른손 본에 검을 붙였을 때 검 궤적이 보기 좋을 것.
+
+- 저작 방식(`Tools/BlenderAnimation/author_sword_slash.py`): 참고 모션 대신 코드로 정의한 키 포즈를 30fps 40포즈(1.3초)로 베이크한다. 발은 접지 모델(볼·뒤꿈치 피벗, 접지 중 이동 0)로, 다리·팔은 해석적 2본 IK로 푼다. 오른팔 팔꿈치는 손목 비틀림 최소화 + 힌트 방향 + 이전 프레임 연속성의 비용으로 고른다. 오른손 회전은 검 날 방향·날 선 방향(궤적 접선)에서 `HandGrip_R` 소켓을 거꾸로 풀어 정한다. 하박 twist 본에 손 롤을 0.62/0.30으로 나눈다. 손가락은 `MM_Attack_01` 첫 프레임 주먹을 오른손 0.88·왼손 0.32로 재사용한다.
+- 동작 설계: 준비(f0~f8, 상체 우측 50° 코일·검을 오른쪽 뒤로) → 왼발 스텝(f5 이탈, f12 뒤꿈치 착지, f14 평발) → 타격(f13~f19, 골반이 먼저 열리고 상체·검이 따라옴, 접촉 f17=0.57초, 검 끝 높이 약 110cm) → 팔로스루(f19~f24, 검이 왼쪽 아래로) → 오른발 끌어당김(f21~f27) → 회복(f28~f39, 시작 자세 + 전진 50cm). 루트 전진 50cm.
+- 무기: 미리보기는 실제 `SM_Sword`를 `HandGrip_R` 소켓 프로파일 + 메시 피벗 보정(언리얼 상대 위치 `(0, 32.2, -1.4)`cm)으로 붙였다. 게임 `BP_TDCombatCharacter`에는 아직 무기 컴포넌트가 없으므로 실제 부착 검증은 하지 않았다.
+- 산출물: `/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_SwordSlash_RToL`(루트 모션 켬, RefPose 락), `AM_…_SwordSlash_RToL`(`DefaultSlot`, 섹션 `Attack01`, blend in 0.1·out 0.2), [편집 원본 .blend](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.blend), [FBX](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.fbx), [저작 기록 JSON](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.json).
+- 미리보기: [세 방향 실시간](Validation/BlenderAnimation/sword-slash-three-views.gif), [1/3속](Validation/BlenderAnimation/sword-slash-slow.gif), [정면](Validation/BlenderAnimation/sword-slash-front.gif)·[측면](Validation/BlenderAnimation/sword-slash-side.gif)·[게임 시점](Validation/BlenderAnimation/sword-slash-game.gif), [주요 포즈](Validation/BlenderAnimation/sword-slash-poses.png), [검 끝 궤적 평면도](Validation/BlenderAnimation/sword-slash-tip-path.png).
+- 검증: [변환·접지·루트 검사](Validation/BlenderAnimation/sword-slash-validation.json) — Blender→언리얼 본 위치 오차 최대 0.007cm, 접지 중 볼 이동 최대 0.0024cm, 루트 이동 50.0cm, 검 끝 최저 높이 11.8cm. [PIE](Validation/BlenderAnimation/sword-slash-pie.json)([스크린샷](Validation/BlenderAnimation/sword-slash-pie.png)) — `BP_TDCombatCharacter`에서 1.30초 재생, `DefaultSlot` 최대 가중치 1.0, 실제 이동 45.1cm(블렌드 구간 포함).
+- 시각 판단(에이전트, 정지 프레임·연속 포즈·손 근접 렌더 기준): 코일→스텝→회전→팔로스루 순서가 읽히고, 타격 구간에서 날이 진행 방향을 향하며 검 끝 궤적이 한 평면에 가깝다. 손목 비틀림은 twist 본으로 분산되어 근접 렌더에서 꺾임이 보이지 않았다. 사용자의 재생 승인은 별도다.
+- 미검증·한계: 실제 무기 부착 상태 게임 재생, 공격 입력·데미지 노티파이·콤보 연결, 왼손은 중립 손목(별도 연출 없음), 다른 캐릭터 이식.
+
+```powershell
+# Context: C:/Project/TDGame; Blender MCP + 언리얼 에디터 열림. 순서: 저작(TD_SAVE) → 미리보기 렌더 → 합성 → 가져오기·몽타주 → 검증 → PIE
+Tools/BlenderMCP/.venv/Scripts/python.exe Tools/BlenderMCP/call_tool.py --code Tools/BlenderAnimation/author_sword_slash.py
+Tools/BlenderMCP/.venv/Scripts/python.exe Tools/BlenderMCP/call_tool.py --code Tools/BlenderAnimation/render_sword_slash_preview.py
+python Tools/BlenderAnimation/compose_sword_slash_preview.py
+python Tools/BlenderAnimation/import_sword_slash.py
+python Tools/BlenderAnimation/validate_sword_slash.py
+python Tools/BlenderAnimation/validate_sword_slash_pie.py
+```
+
+`call_tool.py --code`는 파일 본문을 그대로 실행하므로 저장하려면 본문 첫 줄에 `TD_SAVE = True`를 두거나 `execute_blender_code`에서 `exec(..., {'TD_SAVE': True})`로 넘긴다.
+
+---
+
+아래는 이전 후보(v04)의 기록이다. 해당 에셋과 원본은 2026-09-19에 삭제되었고 절차만 참고한다.
+
 2026-09-17. 사용자가 선택한 기준은 **무게감 있는 액션 게임 스타일**이다. 첫 제자리 횡베기는 파일 교환 검증용 수준이었고, 사용자가 다리와 동작 품질을 지적했다. 현재 검토 후보는 `AS_TD_Player_Attack01_Heavy_RToL_v04`이다. 기술 검증과 사용자의 시각적 승인은 구분한다.
 
 ## 첫 결과가 어색했던 이유

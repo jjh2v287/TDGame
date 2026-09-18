@@ -80,7 +80,7 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 위치 | 내용 | 상태 |
 |---|---|---|
 | `AnimationAuthoring/` | Unreal MCP C++ 툴셋 기반 저작. 정본 스킬 `SKILL.md`(td-animation-authoring), `smoke_test.py`(MCP 클라이언트 `TDMcpAnimationClient` 보유, D-22), `author_slash.py`·`author_swing.py`·`dump_animation.py`·`anim_report.py`·`pose_kinematics.py`. PowerShell에서 실행(L-repo-01) | 현행 |
-| `BlenderAnimation/` | Blender MCP bpy 편집 + Unreal 재가져오기. 정본 스킬 `SKILL.md`(td-combat-animation-quality, 스크립트 표 포함). `author_*`·`prepare_*`·`render_*`·`validate_*`·`inspect_*`·`create_player_montage.py` 등 14개 + grip 5개(총 19개; 2026-09-18 등록·docstring 4줄 추가, D-28) | 현행 |
+| `BlenderAnimation/` | Blender MCP bpy 편집 + Unreal 재가져오기. 정본 스킬 `SKILL.md`(td-combat-animation-quality, 스크립트 표 포함). `author_*`·`prepare_*`·`render_*`·`validate_*`·`inspect_*`·`create_player_montage.py` 등 14개 + grip 5개 + 검 횡베기 7개(`*_sword_slash*.py`, 2026-09-19 등록; 현행 공격은 이 묶음만 대상이고 앞선 19개는 삭제된 후보의 예제) | 현행 |
 | `BlenderMCP/` | Blender MCP 서버 실행(`Run-BlenderMCP.ps1`), `call_tool.py --code`로 bpy 실행, `smoke_test.py` | 현행 |
 | `Content/Python/td_blender_animation_tools.py` | 에디터 상주 툴셋(`export_fbx`·`import_animation_fbx`·`sample_animation_poses`), `init_unreal.py`가 register 호출 | 현행 |
 | `Animation/` (11개) | Kimodo text-to-motion 실험 파이프라인. 2026-09-18 `Tools/_archive/2026-09/Animation/`으로 보관(D-15) | 보관 · 실행 금지 |

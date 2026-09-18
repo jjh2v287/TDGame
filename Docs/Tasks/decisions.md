@@ -217,7 +217,8 @@
 - 권장: 현행 1개 표기 + 옛 버전은 사용자 지시 시 삭제.
 - 영향: OP-18
 - 상태: accepted (2026-09-18 사용자)
-- 결정: 정책 채택(현행 1개만 대장 산출물 칸에 표기, 옛 버전은 지시 시 삭제). 현행 버전 표기는 사용자가 v04·v05 미커밋 작업을 정리한 뒤. (2026-09-18 사용자 결정, claude 적용)
+- 결정: 정책 채택(현행 1개만 표기, 옛 버전은 지시 시 삭제). (2026-09-18 사용자 결정, claude 적용)
+- 갱신 2026-09-19: 사용자 지시로 v02~v05·RToL_Blender·`Anims/Sword/AS_Sword_Slash_01`(언리얼 10개)과 `AnimationSources/Player` 원본 15개를 삭제(`git rm` 스테이징, 커밋은 사용자). 현행은 `/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_SwordSlash_RToL`·`AM_…_SwordSlash_RToL`, 원본 `AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.{blend,fbx,json}`, 기록 `Docs/AnimationQuality.md` 첫 절.
 
 ### D-30 VS Code Copilot 실사용 여부
 - 질문: `.vscode/mcp.json`이 있다. VS Code Copilot을 실제로 쓰면 식별자 `copilot`을 추가하고, 안 쓰면 `.vscode/mcp.json`을 OP-31 동기화 대상에서 뺀다.
@@ -264,7 +265,7 @@
 - 권장: 둘 다 지금. 확인은 Blender 파이썬 콘솔에서 `bpy.context.preferences.addons['blender_mcp'].preferences.telemetry_consent` 값 캡처.
 - 영향: D-19, OP-31에 '저장소 런처 외 방법(`uvx blender-mcp`·`mcp-for-blender`·pip 설치본)으로 Blender MCP를 띄우지 않는다' 1문장
 - 상태: accepted (2026-09-18 사용자)
-- 결정: 둘 다 — 홈 mcp_config blender 항목은 claude가 정렬(D-19). GUI Blender 5.2 애드온의 Allow Telemetry 끄기(환경설정 → 애드온 → Blender MCP)와 저장은 사용자가 수행하고 확인 값을 Worklog에 남긴다. (2026-09-18 사용자 결정, claude 적용)
+- 결정: 둘 다 — 홈 mcp_config blender 항목은 claude가 정렬(D-19). GUI Blender 5.2 애드온 Allow Telemetry는 2026-09-18 claude가 Blender 백그라운드 실행으로 껐다(userpref.blend 백업 `.bak-20260918`; 결과: 애드온 활성 상태, consent true→false, userpref 저장, 재실행 읽기 False 확인). (2026-09-18 사용자 결정, claude 적용)
 
 ### D-37 Serena 메모리 검토 가능화와 허용 외부 채널
 - 질문: (1) `.serena/`는 `.gitignore`로 제외되어 Serena 메모리가 git diff로 검토되지 않는 유일한 교차 에이전트 메모리 채널이다(현재 비어 있음). `.gitignore`에 `!.serena/memories/` 예외를 둘까, 아니면 검사 스크립트로 비어 있음을 확인만 할까? (2) 장부 내용이 나갈 수 있는 외부 채널(Codex 전역 설정의 Notion MCP·openaiDeveloperDocs, Claude 전역 설정의 Notion 플러그인, Cursor 클라우드 인덱싱, 각 벤더 모델 API)을 "알고 수용"으로 기록할까?

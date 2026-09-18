@@ -1,6 +1,6 @@
 # Blender MCP 전투 애니메이션 제작
 
-2026-09-17: 첫 예제의 다리·체중 이동 품질을 개선한 현재 검토 후보는 `AS_TD_Player_Attack01_Heavy_RToL_v03`이다. [품질 개선 방법과 도구 선택](AnimationQuality.md), [품질 스킬](../Tools/BlenderAnimation/SKILL.md)을 먼저 확인한다. 아래 첫 예제의 수치는 교환 검증 기록이며 사용자 품질 승인을 뜻하지 않는다.
+2026-09-19: 현행 기본 공격은 `AS_TD_Player_Attack01_SwordSlash_RToL`(절차적 저작, `Tools/BlenderAnimation/author_sword_slash.py`)이며 이전 후보와 아래 첫 예제의 에셋·원본은 모두 삭제되었다. [품질 기록](AnimationQuality.md), [품질 스킬](../Tools/BlenderAnimation/SKILL.md)을 먼저 확인한다. 아래 첫 예제의 수치는 교환 절차 기록으로만 남긴다.
 
 TDGame의 Unreal 리소스를 Blender로 가져와 GPT/Codex, Claude, Gemini 에이전트가 자연어 요청에 맞는 포즈와 타이밍을 작성하고, 같은 Unreal Skeleton을 사용하는 새 애니메이션으로 돌려보내는 작업 흐름이다. 플레이어·몬스터·NPC에 같은 절차를 적용하되 실제 본 구조와 공격 방식을 먼저 확인한다.
 

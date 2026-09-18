@@ -71,4 +71,5 @@ description: TDGame에서 Blender MCP와 Unreal MCP로 전투 애니메이션을
 | 플레이어 샘플 | `create_player_sample.py`, `import_player_sample.py`, `validate_player_sample.py`, `open_player_source.py`, `save_preview_source.py`, `render_preview.py`, `author_player_slash.py`, `create_player_montage.py` | 샘플 애니메이션 생성·가져오기·검증·미리보기·몽타주 |
 | 참고 모션 | `review_reference_motion.py` | 참고 애니메이션 검토 |
 | weighty 슬래시 | `prepare_weighty_workspace.py`, `author_weighty_slash.py`, `render_weighty_preview.py`, `validate_weighty_slash.py`, `validate_weighty_pie.py` | 준비 → 저작 → 미리보기 → 검증(Blender·PIE) |
-| 검 그립 개정 | `prepare_grip_revision.py`, `author_sword_grip.py`, `inspect_grip.py`, `render_grip_review.py`, `validate_grip_revision.py` | 준비 → 저작 → 검사 → 검토 렌더 → 검증(2026-09-18 등록, D-28) |
+| 검 그립 개정 | `prepare_grip_revision.py`, `author_sword_grip.py`, `inspect_grip.py`, `render_grip_review.py`, `validate_grip_revision.py` | 준비 → 저작 → 검사 → 검토 렌더 → 검증(2026-09-18 등록, D-28). 대상 후보 v05는 2026-09-19 삭제됨 |
+| 검 횡베기(현행) | `author_sword_slash.py`, `render_sword_slash_preview.py`, `compose_sword_slash_preview.py`, `import_sword_slash.py`, `validate_sword_slash.py`, `validate_sword_slash_pie.py`, `editor_pie_capture_sword_slash.py` | 절차적 저작(접지 모델·2본 IK·검 궤적 기준 손목) → 3시점 렌더 → GIF·포즈표·궤적도 → 가져오기·루트 모션·몽타주 → 변환·접지 검증 → PIE 검증(2026-09-19 등록). 절차 요약은 `Docs/AnimationQuality.md` 첫 절 |

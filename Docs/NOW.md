@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-09-19 00:35 claude
+갱신: 2026-09-19 00:50 claude
 형식: `AGENTS.md` 15절 / `Docs/AgentRules.md` OP-07. 세션 종료 시 덮어쓴다(재작성 전에 다시 읽고 남의 항목을 보존).
 
 ## ① 진행 중 (대장 doing)
@@ -16,7 +16,8 @@
 
 - 사용자 시각 승인 대기: 새 공격 애니메이션 미리보기(`Docs/Validation/BlenderAnimation/sword-slash-three-views.gif`·`-slow.gif`·`-poses.png`). 수정 요청은 `Tools/BlenderAnimation/author_sword_slash.py`의 키 트랙 값만 바꿔 재실행
 - 게임 무기 부착 미구현: `BP_TDCombatCharacter`에 무기 컴포넌트 없음. 붙일 때 소켓 `HandGrip_R` + `SM_Sword` 상대 위치 (0, 32.2, -1.4)cm (C++ 구현, 7절)
-- 남은 사용자 조치: D-24 재정규화 커밋, 이번 삭제·신규 파일 커밋(LFS: .blend/.fbx/.uasset/.gif/.png 확인됨)
+- 남은 사용자 조치: D-24 재정규화 커밋, 이번 삭제·신규 파일 커밋(LFS: .blend/.fbx/.uasset/.gif/.png 확인됨), `Config/DefaultEditorSettings.ini`(PIE 스로틀 끔, L-editor-06) 커밋
+- PIE 속도: 2026-09-19 원인 2가지 해결(L-editor-06). 편집기 뷰포트 Navigation 표시(P키)를 다시 켜면 이 맵의 PIE는 다시 약 2fps가 된다. 진단은 `python Tools/pie_profile.py`
 - `Docs/Tasks/decisions.md#D-02`~`#D-05` (미정), `#P0-D2`, `#P2-D3`; `07-roadmap-and-tasks.md#M3-10`, `#MD-05`; blocked: M2-10 M3-08 M4-01~M4-05
 
 ## ③ 다음 행동

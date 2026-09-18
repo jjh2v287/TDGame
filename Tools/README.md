@@ -29,6 +29,7 @@ Serena가 내려받는 clangd 19.1.2는 UE 5.8 엔진 헤더를 파싱하다 종
 | `ue_editor.py` | 에디터 상태/시작/종료/빌드/재시작, Python 원격 실행 on/off | `python Tools/ue_editor.py restart` |
 | `editor_inspect_level.py` | 현재 레벨 액터 요약 JSON(`Saved/Inspect/`) | `python Tools/run_in_editor.py Tools/editor_inspect_level.py` |
 | `check_automation_tests.py` | MCP AutomationTestToolset으로 `TDGame.*` 자동화 테스트 발견·실행, 실패만 요약(`Saved/AgentOps/automation_tests_*.json`) | `python Tools/check_automation_tests.py --filter TDGame.Combat` |
+| `pie_profile.py` (+`editor_pie_profile.py`) | PIE 11초 프레임 간격 측정 + `stat dumpframe`·`ProfileGPU` 로그 발췌. "PIE가 느리다"를 스로틀·게임 스레드·GPU 중 어디인지 가른다(L-editor-06) | `python Tools/pie_profile.py` |
 | `templates/` | 새 도구 템플릿(에디터 Python, C++ 에디터 함수 절차) | 복사해서 시작 |
 
 MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 자주 쓰는 것: `editor_toolset.toolsets.scene.SceneTools`(액터 스폰·검색), `...object.ObjectTools`(프로퍼티), `...asset.AssetTools`, `EditorToolset.EditorAppToolset`(StartPIE/StopPIE/CaptureViewport/SetCameraTransform), `AutomationTestToolset.AutomationTestToolset`, `ConfigSettingsToolset.ConfigSettingsToolset`, `EditorToolset.LogsToolset`(GetLogEntries), `SlateInspectorToolset`(UI 자동화).

@@ -46,6 +46,11 @@ ATDGameCharacter::ATDGameCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
+	GetCharacterMovement()->bRequestedMoveUseAcceleration = true;
+	if (FNavMovementProperties* NavProps = GetCharacterMovement()->GetNavMovementProperties())
+	{
+		NavProps->bUseAccelerationForPaths = true;
+	}
 
 	// Create the camera boom component
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -97,6 +102,16 @@ void ATDGameCharacter::BeginPlay()
 			}
 		}
 	}
+
+	if (UCharacterMovementComponent* MovementComp = GetCharacterMovement())
+	{
+		MovementComp->bRequestedMoveUseAcceleration = true;
+		if (FNavMovementProperties* NavProps = MovementComp->GetNavMovementProperties())
+		{
+			NavProps->bUseAccelerationForPaths = true;
+		}
+	}
+
 	Super::BeginPlay();
 
 	GrantDefaultActionAbilities();

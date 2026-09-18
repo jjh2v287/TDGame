@@ -73,3 +73,4 @@ description: TDGame에서 Blender MCP와 Unreal MCP로 전투 애니메이션을
 | weighty 슬래시 | `prepare_weighty_workspace.py`, `author_weighty_slash.py`, `render_weighty_preview.py`, `validate_weighty_slash.py`, `validate_weighty_pie.py` | 준비 → 저작 → 미리보기 → 검증(Blender·PIE) |
 | 검 그립 개정 | `prepare_grip_revision.py`, `author_sword_grip.py`, `inspect_grip.py`, `render_grip_review.py`, `validate_grip_revision.py` | 준비 → 저작 → 검사 → 검토 렌더 → 검증(2026-09-18 등록, D-28). 대상 후보 v05는 2026-09-19 삭제됨 |
 | 검 횡베기(현행) | `author_sword_slash.py`, `render_sword_slash_preview.py`, `compose_sword_slash_preview.py`, `import_sword_slash.py`, `validate_sword_slash.py`, `validate_sword_slash_pie.py`, `editor_pie_capture_sword_slash.py` | 절차적 저작(접지 모델·2본 IK·검 궤적 기준 손목) → 3시점 렌더 → GIF·포즈표·궤적도 → 가져오기·루트 모션·몽타주 → 변환·접지 검증 → PIE 검증(2026-09-19 등록). 절차 요약은 `Docs/AnimationQuality.md` 첫 절 |
+| 접지 QA(공통) | `validate_contacts.py` | 발 접촉 구간 접지 오차(XY drift·Z 침투/부유·미끄러짐 속도) 수학적 정밀 계산·감사(Audit) 및 AI 교정 가이드 생성 (2026-09-19 등록) |

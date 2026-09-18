@@ -1,0 +1,40 @@
+{
+  "source": "AS_TD_Player_Attack01_SwordSlash_RToL",
+  "overall_status": "FAIL",
+  "thresholds": {
+    "max_xy_drift_cm": 0.1,
+    "max_z_penetration_cm": 0.3,
+    "max_z_floating_cm": 1.0
+  },
+  "audits": [
+    {
+      "bone": "ball_l",
+      "window": [
+        10,
+        39
+      ],
+      "status": "FAIL",
+      "anchor_location_cm": [
+        59.898,
+        -18.365,
+        8.638
+      ],
+      "max_xy_drift_cm": 10.1219,
+      "worst_xy_drift_frame": 14,
+      "mean_xy_drift_cm": 9.6453,
+      "max_z_penetration_cm": 7.887,
+      "worst_z_penetration_frame": 14,
+      "max_z_floating_cm": 0.0,
+      "worst_z_floating_frame": 10,
+      "max_instant_slip_cm_per_frame": 6.854,
+      "worst_slip_frame": 11,
+      "violations": [
+        "XY drift 10.122cm exceeds 0.10cm at frame 14",
+        "Z penetration 7.887cm exceeds 0.30cm at frame 14"
+      ],
+      "correction_guidelines": [
+        "Fix ball_l contact window [10, 39]: Lock horizontal translation to (59.90, -18.36)cm. Clamp vertical height Z >= 8.64cm. Preserve frames 0-9 and 39-39."
+      ]
+    }
+  ]
+}

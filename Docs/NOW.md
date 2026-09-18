@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-09-19 00:50 claude
+갱신: 2026-09-19 01:43 antigravity
 형식: `AGENTS.md` 15절 / `Docs/AgentRules.md` OP-07. 세션 종료 시 덮어쓴다(재작성 전에 다시 읽고 남의 항목을 보존).
 
 ## ① 진행 중 (대장 doing)
@@ -9,7 +9,7 @@
 
 - 월드·던전(P): P2-02 P2-04 P2-05 P2-06 P2-07 P2-09 (`Docs/Tasks/phase-2-dungeon-vertical-slice.md`, 2026-09-12 claude, 담당 없음) · P3-00 P3-02 P3-03 P3-04 P3-05 P3-07 P3-08 P3-09 P3-11 (`Docs/Tasks/phase-3-outdoor-generator.md`, 2026-09-12 claude, 담당 없음)
 - 몬스터 AI(M): doing 없음 (Phase 0 미착수, `Docs/MonsterAI_CombatSim/07-roadmap-and-tasks.md`)
-- 애니메이션(A~G): doing 없음 (우선순위 높음 todo: A-02 A-03 A-04 C-01 F-01, `Docs/AnimationAuthoring_Tasks.md`). 현행 기본 공격은 2026-09-19 새로 만든 `AS_TD_Player_Attack01_SwordSlash_RToL`(D-29 갱신, `Docs/AnimationQuality.md` 첫 절). 이전 후보·원본은 전부 삭제(스테이징만, 커밋은 사용자)
+- 애니메이션(A~G): doing 없음 (우선순위 높음 todo: A-02 A-03 A-04 C-01 F-01, `Docs/AnimationAuthoring_Tasks.md`). 현행 기본 공격은 2026-09-19 새로 만든 `AS_TD_Player_Attack01_SwordSlash_RToL`(D-29 갱신, `Docs/AnimationQuality.md` 첫 절). 공통 접지 QA 도구 `Tools/BlenderAnimation/validate_contacts.py` 구현 완료(2026-09-19 antigravity).
 - 공통: 관리 체계 도입 완료(2026-09-18 claude), Claude 서브에이전트 6개 정의; 각 에이전트 드라이런 미실시
 
 ## ② 막힘·결정 대기

@@ -1,3 +1,8 @@
+"""에디터 밖에서 실행: 가져온 v05 AnimSequence를 Unreal MCP(InspectAnimation·sample_animation_poses)로 조회해 원본 리포트와 손·발·머리 본 포즈를 비교한다.
+실행: python Tools/BlenderAnimation/validate_grip_revision.py (PowerShell; 에디터 실행 중, /Game/ 경로 인수는 Git Bash 금지 L-repo-01)
+출력: Saved/BlenderAnimation/GripV05/grip-v05-validation.json, unreal-samples.json
+상태: 현행 (후보 v05 예제; MCP 클라이언트는 Tools/AnimationAuthoring/smoke_test.py에서 import, D-22)
+"""
 import json
 import math
 from pathlib import Path

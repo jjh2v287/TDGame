@@ -25,3 +25,7 @@
 *.exr filter=lfs diff=lfs merge=lfs -text
 *.hdr filter=lfs diff=lfs merge=lfs -text
 *.psd filter=lfs diff=lfs merge=lfs -text
+# Text files: LF in repo and working tree (D-24, 2026-09-18). ini/ps1/uproject are left as-is.
+*.md text eol=lf
+*.py text eol=lf
+*.json text eol=lf

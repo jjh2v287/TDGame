@@ -1,3 +1,8 @@
+"""Blender 안에서 실행: v05 후보 저작. 빈 씬에 SKM_Manny_Simple과 참고 MM_Attack_01을 불러와 검 그립 프로파일을 적용한 공격 애니메이션을 만들고 .blend/.fbx/.json으로 저장한다.
+실행: Blender MCP execute_blender_code로 본문을 전달(`python Tools/BlenderMCP/call_tool.py --code …`, 절차는 Docs/BlenderAnimationWorkflow.md). 같은 이름의 후보가 있으면 중단한다.
+출력: AnimationSources/Player/AS_TD_Player_Attack01_Heavy_RToL_v05.{blend,fbx,json}
+상태: 현행 (특정 캐릭터·후보 v05 예제, 본 이름·프레임 고정; 다른 요청에 그대로 재사용하지 않는다)
+"""
 import json
 import math
 from pathlib import Path

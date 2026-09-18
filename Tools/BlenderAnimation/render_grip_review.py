@@ -1,3 +1,8 @@
+"""Blender 안에서 실행: v05 리포트의 그립 프로파일대로 검 미리보기 메시를 오른손 프레임에 붙이고 검토용 정지 이미지를 렌더한다.
+실행: Blender MCP execute_blender_code로 본문을 전달(`python Tools/BlenderMCP/call_tool.py --code …`); 먼저 author_sword_grip.py 결과 .json이 있어야 한다.
+출력: 검토 렌더 이미지(본문의 scene.render.filepath 경로)와 AnimationSources/Player/…_v05.json 갱신
+상태: 현행 (후보 v05 예제)
+"""
 import json
 from pathlib import Path
 

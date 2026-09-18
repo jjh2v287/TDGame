@@ -4,7 +4,7 @@
 
 ## 2026-09-08 이전 기록 (GAS 전환 전, 현재 검증으로 쓰지 않음)
 
-아래 기록의 파일 10개는 2026-09-18에 `_archive/pre-gas/`로 옮겼다(D-23). `meteor-active.png`와 `landscape-mcp-test-*.png`는 문서에서 참조되어 제자리에 둔다. 애니메이션 증거는 `anim/`(A-01 스모크 리포트)과 `BlenderAnimation/`에 있다.
+아래 기록의 파일 10개는 2026-09-18에 `_archive/pre-gas/`로 옮겼다(D-23). `meteor-active.png`와 `landscape-mcp-test-*.png`는 문서에서 참조되어 제자리에 둔다. 보관한 JSON 안의 절대 경로는 이동 전 위치이며 실제 파일은 같은 폴더 `_archive/pre-gas/`에 있다(기록이므로 JSON은 고치지 않는다). 애니메이션 증거는 `anim/`(A-01 스모크 리포트)과 `BlenderAnimation/`에 있다.
 
 이 디렉터리의 이미지와 JSON은 GAS 전환 전, 공식 Unreal MCP를 사용한 실제 PIE 검사 기록이다.
 

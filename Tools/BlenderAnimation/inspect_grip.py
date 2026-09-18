@@ -1,3 +1,8 @@
+"""Blender 안에서 실행: 현재 문서의 root 아마추어에서 오른손·손가락 본의 레스트/포즈 표본을 뽑아 손 방향·너클 선·전완 방향 지표를 계산한다.
+실행: Blender MCP execute_blender_code로 본문을 전달(`python Tools/BlenderMCP/call_tool.py --code …`)
+출력: Saved/BlenderAnimation/grip-inspection.json
+상태: 현행 (검 그립 개정 검사용 예제)
+"""
 import json
 from pathlib import Path
 

@@ -8,7 +8,7 @@
 ## 1. 등급
 
 - [A] 매 세션 필수 9개: OP-04·05·06·07·08·09·11·26·27. `AGENTS.md` 15절의 9줄과 같은 내용이다.
-- [B] 행위 조건부 21개: 도구 생성·문서 신설·증거 저장·설정 변경·커밋 직전에 해당 규칙만 읽는다.
+- [B] 행위 조건부 23개: 도구 생성·문서 신설·증거 저장·설정 변경·커밋 직전에 해당 규칙만 읽는다.
 - [C] 보류(5절): 동시 세션·기계 2대가 실제로 생길 때만 활성화한다.
 
 ## 2. 규칙 전문
@@ -29,7 +29,7 @@
 [A] 3절 '종료 8단계'를 따른다. 필수 네 가지: ① 대장 갱신 ② Worklog 항목 추가 ③ `Docs/NOW.md` 재작성 ④ 완료 보고 2줄. 질문만 한 세션은 ①③ 생략 가능, ②는 `검색` 항목 1개로 축약 가능, ④는 필수. 에디터 상태는 PIE 종료와 미저장 임시 변경 보고만 하고 액터를 삭제하지 않는다(`TDGen_` 라벨은 정식 생성물).
 
 ### OP-06 완료 보고 고정 2줄
-[A] 첫 줄 `읽음: NOW(<헤더 날짜>) / Worklog 마지막 <항목ID> / 대장 <파일>`, 마지막 줄 `기록 갱신: 대장 ✓|– / Worklog <항목ID> / NOW ✓|– / Lessons <L-ID|–> / 등록 <도구|–>`. 같은 `읽음:` 줄을 Worklog 항목 안에도 적어 파일로 남긴다. 항목ID는 Worklog 헤더의 `[YYYY-MM-DD HH:MM] <agent>`(같은 분 두 번째는 `HH:MMb`). 전역 출력 형식이 강제되는 에이전트는 '설명' 절 안에 넣는다(D-14 전까지).
+[A] 첫 줄 `읽음: NOW(<헤더 날짜>) / Worklog 마지막 <항목ID> / 대장 <파일>`, 마지막 줄 `기록 갱신: 대장 ✓|– / Worklog <항목ID> / NOW ✓|– / Lessons <L-ID|–> / 등록 <도구|–>`. 같은 `읽음:` 줄을 Worklog 항목 안에도 적어 파일로 남긴다. 항목ID는 Worklog 헤더의 `[YYYY-MM-DD HH:MM] <agent>`(같은 분 두 번째는 `HH:MMb`). 전역 출력 형식이 강제되는 에이전트는 '설명' 절 맨 앞과 맨 뒤에 넣는다(D-14).
 
 ### OP-07 Docs/NOW.md
 [A] 헤더 `갱신: YYYY-MM-DD HH:MM <agent>` + ① 진행 중(ID·담당·청구 날짜·경과일) ② 막힘·결정 대기(`경로#ID` 한 줄씩, 관리 체계 미결은 `→ Docs/Tasks/decisions.md '관리 체계'` 한 줄로 묶음, 기록 누락 의심 줄) ③ 다음 행동 3개(명령·파일까지). 40줄·2,000자 이하, 세션 종료 시 덮어쓴다. 재작성 직전 다시 읽어 남의 진행 중 항목을 보존한다. 헤더가 3일 이상 지났으면 대장 doing과 `git log -5 --oneline`으로 교차 확인한 뒤 갱신한다.
@@ -53,7 +53,7 @@
 [B] 실행 도구는 `Tools/<영역>/` 또는 `Tools/` 루트(범용 도구·공용 라이브러리, 등록 필수)에만 둔다. `.gemini/ .codex/ .claude/ .cursor/ .vscode/ .agents/`와 사용자 홈에는 설정·스킬 스텁만, `Content/Python`에는 `register()/unregister()`를 가진 상주 모듈만(`init_unreal.py`는 register 호출만 하는 예외). 채택 전 위반(`.gemini/scripts` 13개, `Tools/Animation` 11개)은 2026-09-18 `Tools/_archive/2026-09/`로 보관했고 Claude 홈 tools는 `check_automation_tests.py`만 이관했다(D-15~D-17). `Tools/_archive/`의 도구는 실행하지 않는다(OP-21).
 
 ### OP-14 도구 이름
-[B] 새 스크립트는 `<editor_|pie_|blender_|없음><동사>_<대상>.py`(PowerShell은 `동사-명사.ps1`). 접두어: `editor_` 에디터 안 파이썬(run_in_editor.py 경유), `pie_` PIE 검사, `blender_` Blender 안 bpy, 없음 = 시스템 파이썬 3.12. 금지 동의어 4개: create→make, bake→build, verify/test→validate/check. 권장 동사는 `Tools/README.md` 4절. 라이브러리 모듈(`uemcp.py` 등 import 전용)은 동사 규칙 대상이 아니다. 기존 파일 개명은 D-21 결정 후.
+[B] 새 스크립트는 `<editor_|pie_|blender_|없음><동사>_<대상>.py`(PowerShell은 `동사-명사.ps1`). 접두어: `editor_` 에디터 안 파이썬(run_in_editor.py 경유), `pie_` PIE 검사, `blender_` Blender 안 bpy, 없음 = 시스템 파이썬 3.12. 금지 동의어 4개: create→make, bake→build, verify/test→validate/check. 권장 동사는 `Tools/README.md` 4절. 라이브러리 모듈(`uemcp.py` 등 import 전용)은 동사 규칙 대상이 아니다. 기존 파일은 개명하지 않고 검사 스크립트 도입 시 allowlist로 점진 축소한다(D-21).
 
 ### OP-15 docstring 4줄
 [B] 모든 파이썬·PowerShell 도구의 첫 docstring은 `<환경>에서 실행: 목적` / `실행: 명령(셸 명시)` / `출력: 경로` / `상태: 현행|실험|보류|폐기(대체: 경로)` 4줄로 시작한다(`AGENTS.md` 5절의 명시 예외). 기존 파일은 수정할 때 채운다. 템플릿: `Tools/templates/editor_tool_template.py`.
@@ -156,7 +156,7 @@
 
 - PowerShell은 네이티브 실행 파일에 넘기는 와일드카드를 확장하지 않는다. `rg ... Docs/Tasks/phase-*.md`는 `os error 123`으로 실패하므로 `rg ... --glob 'phase-*.md' Docs/Tasks`처럼 디렉터리 + `--glob`을 쓴다(L-repo-02).
 - Git Bash는 `/Game/...` 인수를 Windows 경로로 바꾼다. 언리얼 에셋 경로를 넘기는 명령은 PowerShell에서 실행한다(L-repo-01).
-- 저장소 텍스트 파일은 UTF-8·BOM 없음이다. 장부 파일(NOW·Worklog·Lessons·대장)은 파일 편집 도구 또는 파이썬(`open(..., encoding="utf-8")`)으로 쓰고, PowerShell 5.1의 `Add-Content`/`Set-Content`/`>`는 쓰지 않는다(CP949·BOM이 섞인다, L-repo-03). 줄 끝 규칙은 D-24 결정 전까지 규정하지 않는다.
+- 저장소 텍스트 파일은 UTF-8·BOM 없음이다. 장부 파일(NOW·Worklog·Lessons·대장)은 파일 편집 도구 또는 파이썬(`open(..., encoding="utf-8")`)으로 쓰고, PowerShell 5.1의 `Add-Content`/`Set-Content`/`>`는 쓰지 않는다(CP949·BOM이 섞인다, L-repo-03). 줄 끝은 `.gitattributes`로 LF 통일을 채택했으나(D-24) 재정규화 커밋 전까지는 미적용이므로 비교는 줄 끝 정규화 후 한다.
 - bash 히어독과 파이썬 인라인 문자열에 Windows 경로(`\U`, `\P` 등)를 넣으면 이스케이프 오류가 난다. 긴 본문·경로가 든 스크립트는 파일로 쓴 뒤 실행한다(L-repo-07).
 
 ## 5. 보류 규칙 [C]
@@ -168,7 +168,7 @@
 
 ## 6. 사용자 결정 대기
 
-`Docs/Tasks/decisions.md` '관리 체계' 절 D-12~D-31. 결정 전에는 해당 항목을 선점하는 변경을 하지 않는다.
+`Docs/Tasks/decisions.md` '관리 체계' 절 D-12~D-37은 2026-09-18 결정·적용됐다. 새 미결 항목은 같은 절 끝에 연번으로 추가하고, 결정 전에는 해당 항목을 선점하는 변경을 하지 않는다.
 
 ## 7. 읽기 예산(추정치, 드라이런 뒤 실측으로 갱신)
 
@@ -178,4 +178,4 @@
 | 영역 진입 | 대장 doing 목록(≤3,000) + 항목 본문 2개(≤3,000) + 참조 절(≤3,000) + `Tools/README.md` 0절·해당 절(≤2,600) + Lessons 적중(≤800) | ≈12,400 |
 | 종료 쓰기 | NOW + Worklog 1항목 + 대장 기록 1~2줄 + 보고 2줄 | ≈1,000~2,500 |
 
-확인: 2026-09-18 claude (추정치). 이 문서 실측 16,596자·179줄(2026-09-18). 동시 세션 관련 보강안은 `AgentCollaboration/05-concurrency-and-handoff.md` 4절, 채택은 D-32.
+확인: 2026-09-18 claude (추정치). 이 문서 실측 17,258자·181줄(2026-09-18). 동시 세션 관련 보강안은 `AgentCollaboration/05-concurrency-and-handoff.md` 4절, 채택은 D-32.

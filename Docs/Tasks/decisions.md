@@ -98,7 +98,7 @@
 - 권장: (a). 루트 GEMINI.md는 Antigravity가 AGENTS.md와 함께 읽으므로 규칙을 두지 않고 도구 절차만 남긴다(이번에 머리 1줄 추가함).
 - 영향: OP-03, Gemini CLI·Antigravity 세션
 - 상태: accepted (2026-09-18 사용자)
-- 결정: (a) — 금지 줄은 사용자가 지웠고, "불분명하면 중단" 문장은 claude가 백업(`GEMINI.md.bak-20260918`) 후 Codex 전역과 같은 "중대한 모호성만 질문" 문구로 완화. 루트 GEMINI.md 유지. (2026-09-18 사용자 결정, claude 적용)
+- 결정: (a) — 금지 줄은 사용자가 지웠고, "불분명하면 중단" 문장은 claude가 백업(`GEMINI.md.bak-20260918`) 후 Codex 전역과 같은 "중대한 모호성만 질문" 문구로 완화(그 한 문장만 변경, 줄 끝 CRLF 유지). 루트 GEMINI.md 유지. (2026-09-18 사용자 결정, claude 적용)
 
 ### D-14 전역 출력 형식과 완료 보고 2줄의 관계
 - 질문: Codex·Gemini 전역 지침의 '요약/접근 방식/코드 구현/설명' 4절 형식과 `AGENTS.md` 10절의 고정 2줄(`읽음:`·`기록 갱신:`)을 어떻게 겹칠까? `~/.claude/CLAUDE.md`의 "프로젝트의 AGENTS.md을 참고 하세요"(이제 CLAUDE.md 임포트로 대체됨)와 "메모리에 저장"(프로젝트 사실은 Lessons로)을 고칠까?
@@ -130,7 +130,7 @@
 - 권장: (a).
 - 영향: OP-13·OP-19
 - 상태: accepted (2026-09-18 사용자)
-- 결정: 조정안: `run_tests.py`만 `Tools/check_automation_tests.py`로 이관·등록. 나머지 12개 일회용은 홈에 유지. (2026-09-18 사용자 결정, claude 적용)
+- 결정: 조정안: `run_tests.py`만 `Tools/check_automation_tests.py`로 이관·등록하고 홈 원본과 `uemcp.py` 동일본은 삭제. 나머지 12개 일회용은 홈에 유지. (2026-09-18 사용자 결정, claude 적용)
 
 ### D-18 추적 중인 생성물 해제
 - 질문: git이 추적 중인 `__pycache__/*.pyc` 14개와 `Tools/AnimationAuthoring/smoke-report.json`을 `git rm --cached`로 해제할까(.gitignore 규칙은 이번에 추가함)? 스모크 리포트는 `Saved/AnimationAuthoring/`로 옮기고 대장 참조를 고친다.
@@ -176,14 +176,14 @@
 - 권장: (a). 저장소 55MB 중 상당수.
 - 영향: OP-24
 - 상태: accepted (2026-09-18 사용자)
-- 결정: 조정안: GAS 전환 전 미참조 10개만 `Docs/Validation/_archive/pre-gas/`로 이동. ashen-vale 캡처 15개는 P3-11 증거로 유지, weighty-v03 5개는 v04 문서화 뒤 판단. (2026-09-18 사용자 결정, claude 적용)
+- 결정: 조정안: GAS 전환 전 미참조 10개만 `Docs/Validation/_archive/pre-gas/`로 이동. ashen-vale 캡처 24개는 P3-11 증거로 유지, weighty-v03 5개는 v04 문서화 뒤 판단. (2026-09-18 사용자 결정, claude 적용)
 
 ### D-24 줄 끝·인코딩 규칙
 - 질문: `core.autocrlf=true`이고 `.gitattributes`에 eol 규칙이 없어 체크아웃마다 줄 끝이 바뀔 수 있다. `*.md text eol=lf` 같은 규칙과 'UTF-8·BOM 없음' 고정을 넣을까?
 - 권장: `*.md`·`*.py`·`*.json`에 `text eol=lf` + UTF-8 고정. 적용 시 한 번 재정규화 커밋이 생긴다.
 - 영향: OP-02, Docs/AgentRules.md 4절
 - 상태: accepted (2026-09-18 사용자)
-- 결정: 채택. 사용자 미커밋 작업을 정리한 뒤 `.gitattributes`에 `*.md *.py *.json text eol=lf`를 넣고 재정규화 커밋 1회(영향 md 6·py 3·json 13개). 아직 미적용. (2026-09-18 사용자 결정, claude 적용)
+- 결정: 채택. 2026-09-18 11:51 사용자 커밋으로 작업 트리가 정리된 뒤 `.gitattributes`에 `*.md *.py *.json text eol=lf` 추가(claude). 재정규화(`git add --renormalize .`)와 커밋은 사용자가 1회 실행. (2026-09-18 사용자 결정, claude 적용)
 
 ### D-25 동시 세션 운용 여부
 - 질문: 한 기계에서 Claude Code·Codex·Antigravity를 동시에 돌릴 계획이 있는가? 있으면 `Docs/AgentRules.md` 5절 보류 규칙(7일 회수·자원 잠금)을 활성화해야 한다.
@@ -210,7 +210,7 @@
 - 권장: 재사용 가능하면 docstring 4줄 채워 등록·커밋, 1회용이면 scratch.
 - 영향: OP-16·OP-17
 - 상태: accepted (2026-09-18 사용자)
-- 결정: 조정안: 5개를 `Tools/README.md` 3c절과 `Tools/BlenderAnimation/SKILL.md` 스크립트 표에 등록. docstring 4줄은 사용자가 미커밋 작업을 정리한 뒤 추가. (2026-09-18 사용자 결정, claude 적용)
+- 결정: 조정안: 5개를 `Tools/README.md` 3c절과 `Tools/BlenderAnimation/SKILL.md` 스크립트 표에 등록. docstring 4줄은 사용자 커밋(11:51) 뒤 claude가 추가(2026-09-18). (2026-09-18 사용자 결정, claude 적용)
 
 ### D-29 에셋·원본 버전 복제 정책
 - 질문: `AnimationSources/`·`Content/.../Anims/Blender/`의 `_v03`·`_v04`·`_v05` 복제본(LFS 26MB+) 중 현행 1개만 대장 산출물 칸에 적고 옛 버전은 삭제·보관 중 무엇으로?

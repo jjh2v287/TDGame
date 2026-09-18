@@ -11,7 +11,7 @@ import sys
 
 import numpy as np
 
-sys.path.insert(0, r"C:\Users\jjh\.claude\projects\C--Project-TDGame\tools")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # Tools/ (uemcp.py)
 import uemcp  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -658,6 +658,8 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 
 ## 4. 사용자 결정 필요 항목(MD)
 
+> 2026-09-18 사용자: MD-01~MD-10 결정은 관리 체계 정리 뒤로 미룬다(보류). 결정 전 선점 변경 금지(OP-28).
+
 형식은 [Docs/Tasks/decisions.md](../Tasks/decisions.md)와 같다. 결정 전에는 영향 항목을 건드리지 않는다.
 
 ### MD-01 Phase 3 이후 플레이어 근접 판정 권위

@@ -1,8 +1,10 @@
-"""(템플릿) 에디터 안에서 실행되는 도구 스크립트. 복사해서 Tools/<영역>/editor_<동사>_<대상>.py 로 저장한다.
+"""에디터 안에서 실행: (템플릿) 복사해서 Tools/<영역>/editor_<동사>_<대상>.py 로 저장하고 이 네 줄을 채운다.
+실행: python Tools/run_in_editor.py Tools/<영역>/editor_<동사>_<대상>.py (PowerShell; Git Bash는 /Game/ 경로를 바꾼다)
+출력: Saved/<영역>/... 또는 저장한 에셋 경로
+상태: 실험 | 현행 | 보류 | 폐기(대체: 경로)
 
-실행: python Tools/run_in_editor.py Tools/<영역>/editor_<동사>_<대상>.py
-규칙: 생성 액터 라벨 접두어 TDGen_ (또는 TDTest_ 는 정리 대상), 아웃라이너 폴더 지정, 저장은 마지막에 한 번.
-      게임 로직은 C++로(AGENTS.md 7절); 이 스크립트는 에셋 생성·배치·설정 같은 구성 작업만 한다.
+규칙: 생성 액터 라벨 접두어 TDGen_, 아웃라이너 폴더 지정, 저장은 마지막에 한 번. 게임 로직은 C++로(AGENTS.md 7절).
+      경로는 unreal.SystemLibrary.get_project_directory() 로 계산하고 절대 경로를 쓰지 않는다(Docs/AgentRules.md OP-19).
 """
 import time
 

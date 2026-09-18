@@ -92,3 +92,9 @@ out/
 compile_commands.json
 .serena/
 .clangd
+
+# Python 생성물 / 에이전트 임시 작업 폴더 (AGENTS.md 15절, Docs/AgentRules.md OP-17·OP-18)
+__pycache__/
+*.pyc
+Tools/scratch/*
+!Tools/scratch/.gitkeep

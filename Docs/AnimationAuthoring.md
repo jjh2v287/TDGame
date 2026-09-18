@@ -38,7 +38,7 @@ TDGame 에디터를 연 상태에서 프로젝트 루트에서 실행한다.
 
 ```powershell
 # Context: C:/Project/TDGame
-python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins/Meshes/SKM_Manny_Simple --output Tools/AnimationAuthoring/smoke-report.json
+python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins/Meshes/SKM_Manny_Simple --output Saved/AnimationAuthoring/smoke-report.json
 ```
 
 `--output`에 JSON 검증 보고서를 쓴다. 각 실행은 `/Game/Tests/AnimationAuthoring/Run_<id>`에 테스트 에셋을 만들며, `--save`를 추가하면 디스크에도 저장한다. 기본 실행은 메모리에 에셋을 남긴다. 테스트는 본 키 생성·검사, 몽타주, FK 시퀀서·키 입력·베이크와 입력 거부를 확인한다. 통과 여부는 실제 실행 보고서에서 확인한다.

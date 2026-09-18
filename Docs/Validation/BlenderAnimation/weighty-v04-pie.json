@@ -1,0 +1,56 @@
+{
+  "montage": "/Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_Heavy_RToL_v04.AM_TD_Player_Attack01_Heavy_RToL_v04",
+  "pawn_class": "BP_TDCombatCharacter_C",
+  "start_position_cm": [
+    -10600.0,
+    2600.0,
+    630.3500345937537
+  ],
+  "samples": [
+    {
+      "elapsed": 0.06199999999807915,
+      "slot_weight": 0.0,
+      "actor_position_cm": [
+        -10600.0,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 0.8119999999980791,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10600.0,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 1.3429999999971187,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10529.640366911135,
+        2600.0,
+        630.3500345937537
+      ]
+    },
+    {
+      "elapsed": 1.8429999999971187,
+      "slot_weight": 1.0,
+      "actor_position_cm": [
+        -10449.390246335599,
+        2600.0,
+        630.3500345937537
+      ]
+    }
+  ],
+  "play_duration_seconds": 1.4333332777023315,
+  "end_position_cm": [
+    -10449.390246335599,
+    2600.0,
+    630.3500345937537
+  ],
+  "travel_distance_cm": 150.60975366440107,
+  "maximum_slot_weight": 1.0,
+  "passed": true
+}

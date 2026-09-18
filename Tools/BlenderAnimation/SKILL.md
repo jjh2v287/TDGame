@@ -61,3 +61,14 @@ description: TDGame에서 Blender MCP와 Unreal MCP로 전투 애니메이션을
 변환 검증, 시각 품질 판단, 게임플레이 연결 검증을 구분해서 보고한다. 수치가 맞아도 사용자가 지적한 발 동작이나 무게감이 해결되지 않았으면 완료로 단정하지 말고 해당 구간을 수정한다. 기반 Skeleton이나 실제 무기 같은 필수 리소스가 없으면 확인된 산출물과 구체적인 미검증 범위를 남긴다.
 
 보고에는 새 에셋과 원본 파일 경로, 참고한 동작과 수정한 구간, 실시간/느린 재생 미리보기, 검증 결과와 남은 품질 한계를 포함한다. “AAA 수준”, “실사급”, “모든 몬스터 지원” 같은 주장은 근거 없이 사용하지 않는다. 에이전트의 시각 판단과 사용자의 최종 미적 승인을 같은 것으로 취급하지 않는다.
+
+## 실행할 스크립트
+
+모두 `python Tools/BlenderAnimation/<파일>`(시스템 파이썬)이며 Blender 안 bpy 실행은 `Tools/BlenderMCP/call_tool.py --code` 경유다. 특정 캐릭터·후보 버전에 맞춘 예제이므로 본 이름·프레임·경로를 새 요청에 그대로 재사용하지 않는다.
+
+| 묶음 | 스크립트 | 역할 |
+|---|---|---|
+| 플레이어 샘플 | `create_player_sample.py`, `import_player_sample.py`, `validate_player_sample.py`, `open_player_source.py`, `save_preview_source.py`, `render_preview.py`, `author_player_slash.py`, `create_player_montage.py` | 샘플 애니메이션 생성·가져오기·검증·미리보기·몽타주 |
+| 참고 모션 | `review_reference_motion.py` | 참고 애니메이션 검토 |
+| weighty 슬래시 | `prepare_weighty_workspace.py`, `author_weighty_slash.py`, `render_weighty_preview.py`, `validate_weighty_slash.py`, `validate_weighty_pie.py` | 준비 → 저작 → 미리보기 → 검증(Blender·PIE) |
+| 검 그립 개정 | `prepare_grip_revision.py`, `author_sword_grip.py`, `inspect_grip.py`, `render_grip_review.py`, `validate_grip_revision.py` | 준비 → 저작 → 검사 → 검토 렌더 → 검증(2026-09-18 등록, D-28) |

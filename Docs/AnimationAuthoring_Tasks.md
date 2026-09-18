@@ -13,7 +13,7 @@
 | 컴파일·링크 | 통과 | `Build.bat TDGameEditor Win64 Development` |
 | MCP 툴셋 등록 | 동작 확인 | 로그의 `Registered animation authoring toolset: TD*` 3건 |
 | 도구 실제 호출 | **통과** | 스모크 테스트가 7개 도구를 전부 호출 |
-| 스모크 테스트 | **25/25 통과** | `Tools/AnimationAuthoring/smoke-report.json` (`success: true`) |
+| 스모크 테스트 | **25/25 통과** | `Docs/Validation/anim/A-01-smoke-report-2026-09-16.json` (`success: true`) |
 | UE 5.8 API 사용 | 이상 없음 | deprecated 미사용 |
 | git 커밋 | 미커밋 | `?? Source/TDGameEditor/Animation/`, `?? Tools/AnimationAuthoring/`, `?? Docs/AnimationAuthoring*.md` |
 
@@ -30,7 +30,7 @@
 
 ```powershell
 python Tools/ue_editor.py ensure
-python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins/Meshes/SKM_Manny_Simple --output Tools/AnimationAuthoring/smoke-report.json
+python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins/Meshes/SKM_Manny_Simple --output Saved/AnimationAuthoring/smoke-report.json
 ```
 
 ---
@@ -44,7 +44,7 @@ python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins
 - 절차:
   ```powershell
   python Tools/ue_editor.py ensure
-  python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins/Meshes/SKM_Manny_Simple --output Tools/AnimationAuthoring/smoke-report.json
+  python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins/Meshes/SKM_Manny_Simple --output Saved/AnimationAuthoring/smoke-report.json
   ```
 - 완료 조건: 보고서의 `success: true`. **충족** — 25개 항목 전부 통과.
 - 기록: 최초 실행에서 스모크 테스트 자체의 결함 2건(몽타주 `slot` 누락, FK 컨트롤 접미사 `_ctrl`→`_CONTROL`)을 고친 뒤 25/25 통과. 상태 요약의 "최초 실행에서 드러난 것" 참조.

@@ -184,7 +184,7 @@ TD FK 도구가 목록에 없다면 `TDGameEditor` 모듈의 빌드·로드 상�
 
 ```powershell
 # Context: C:/Project/TDGame, running Unreal Editor required
-python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins/Meshes/SKM_Manny_Simple --output Tools/AnimationAuthoring/smoke-report.json
+python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins/Meshes/SKM_Manny_Simple --output Saved/AnimationAuthoring/smoke-report.json
 ```
 
 `--output`은 JSON 검증 보고서 경로다. 기본값은 에디터 메모리에 에셋을 생성하며 `--save`를 추가하면 생성 에셋을 저장한다. 저장한 테스트 에셋은 Git/LFS 변경 검사를 거친다. 테스트 실행 자체가 시각적 모션 품질이나 게임에서의 재생을 검증하지는 않는다. 보고서의 실제 결과를 확인하고 통과 여부를 보고한다.

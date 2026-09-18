@@ -1,4 +1,10 @@
-# 검증 기록의 적용 범위
+# 검증 증거 폴더
+
+증거 규칙(`Docs/AgentRules.md` OP-24): 새 증거는 `Docs/Validation/<영역>/<작업ID 또는 L-ID>-<설명>-<YYYY-MM-DD>.<md|png|jpg|gif|json>`에 둔다(영역 폴더명은 `AGENTS.md` 15절 표의 Lessons 코드, 기존 `BlenderAnimation/`·`ashen-vale/`는 별칭으로 유지). 대장 항목이 경로를 지정했으면 그 경로가 우선하고, 몬스터 AI는 MD-05 결정 전까지 `Docs/MonsterAI_CombatSim/measurements/`. md 증거는 제목줄 `# <ID> <제목> (<날짜>, <agent>)` 아래 `교훈:`·`명령:` 2줄을 둔다. png·jpg·gif는 LFS, 5MB 초과 gif는 `Saved/`에 두고 md에 수치만 적는다. 기존 파일은 개명하지 않는다(옛 증거 처분은 D-23).
+
+## 2026-09-08 이전 기록 (GAS 전환 전, 현재 검증으로 쓰지 않음)
+
+아래 기록의 파일 10개는 2026-09-18에 `_archive/pre-gas/`로 옮겼다(D-23). `meteor-active.png`와 `landscape-mcp-test-*.png`는 문서에서 참조되어 제자리에 둔다. 애니메이션 증거는 `anim/`(A-01 스모크 리포트)과 `BlenderAnimation/`에 있다.
 
 이 디렉터리의 이미지와 JSON은 GAS 전환 전, 공식 Unreal MCP를 사용한 실제 PIE 검사 기록이다.
 

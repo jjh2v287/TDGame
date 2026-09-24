@@ -59,6 +59,10 @@ void ATDGamePlayerController::SetupInputComponent()
 		InputComponent->BindKey(EKeys::Four, IE_Pressed, this, &ATDGamePlayerController::CastFourthDamageSpell);
 		InputComponent->BindKey(EKeys::Five, IE_Pressed, this, &ATDGamePlayerController::CastFifthDamageSpell);
 		InputComponent->BindKey(EKeys::Six, IE_Pressed, this, &ATDGamePlayerController::CastSixthDamageSpell);
+		InputComponent->BindKey(EKeys::Seven, IE_Pressed, this, &ATDGamePlayerController::CastSeventhDamageSpell);
+		InputComponent->BindKey(EKeys::Eight, IE_Pressed, this, &ATDGamePlayerController::CastEighthDamageSpell);
+		InputComponent->BindKey(EKeys::Nine, IE_Pressed, this, &ATDGamePlayerController::CastNinthDamageSpell);
+		InputComponent->BindKey(EKeys::Zero, IE_Pressed, this, &ATDGamePlayerController::CastTenthDamageSpell);
 
 		// Add Input Mapping Context
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
@@ -406,7 +410,7 @@ void ATDGamePlayerController::BeginPlay()
 	Super::BeginPlay();
 	if (IsLocalPlayerController() && GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::White, TEXT("WASD Move + Mouse Aim | Left Click Move\n1 Fireball | 2 Blizzard | 3 Mine | 4 Shockwave | 5 Meteor | 6 Delayed Homing\nConsole: TDSpawnDamageTargets / TDSetCasterLevel 10"));
+		GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::White, TEXT("WASD Move + Mouse Aim | Left Click Move\n1 Fireball | 2 Blizzard | 3 Mine | 4 Shockwave | 5 Meteor | 6 Delayed Homing\n7 Thunder Cage | 8 Venom Bloom | 9 Astral Lances | 0 Phoenix Dive\nConsole: TDSpawnDamageTargets / TDSetCasterLevel 10"));
 	}
 }
 
@@ -454,6 +458,26 @@ void ATDGamePlayerController::CastFifthDamageSpell()
 void ATDGamePlayerController::CastSixthDamageSpell()
 {
 	CastDamageSpell(5);
+}
+
+void ATDGamePlayerController::CastSeventhDamageSpell()
+{
+	CastDamageSpell(6);
+}
+
+void ATDGamePlayerController::CastEighthDamageSpell()
+{
+	CastDamageSpell(7);
+}
+
+void ATDGamePlayerController::CastNinthDamageSpell()
+{
+	CastDamageSpell(8);
+}
+
+void ATDGamePlayerController::CastTenthDamageSpell()
+{
+	CastDamageSpell(9);
 }
 
 void ATDGamePlayerController::SetupCombatInputBindings(UEnhancedInputComponent* EnhancedInputComponent)

@@ -51,6 +51,10 @@ void ATDDamageEntity::BeginPlay()
 		Destroy();
 		return;
 	}
+	if (Definition->Mode != ETDDamageEntityMode::Projectile)
+	{
+		SetActorRotation(FRotator(0.f, TravelDirection.Rotation().Yaw, 0.f));
+	}
 	SimulationTime = GetWorld()->GetTimeSeconds();
 	EventTime = SimulationTime;
 	ActivationTime = SimulationTime + Definition->ActivationDelay;
@@ -62,9 +66,16 @@ void ATDDamageEntity::BeginPlay()
 	{
 		MeshComponent->SetMaterial(0, Definition->Material);
 	}
-	MeshComponent->SetRelativeScale3D(Definition->VisualScale);
 	EffectComponent->SetAsset(Definition->VisualEffect);
-	EffectComponent->SetRelativeScale3D(Definition->VisualScale);
+	UpdateVisualTransform();
+	if (Definition->bShowDuringActivationDelay && Definition->ActivationDelay > 0.f)
+	{
+		MeshComponent->SetVisibility(true);
+		if (Definition->VisualEffect)
+		{
+			EffectComponent->Activate(true);
+		}
+	}
 	{
 		TGuardValue<bool> ProcessingGuard(bIsProcessingTimeline, true);
 		EmitEvent(ETDDamageEvent::Spawn, nullptr, GetActorLocation());
@@ -82,7 +93,7 @@ void ATDDamageEntity::Activate()
 	bIsActive = true;
 	NextPulseTime = SimulationTime;
 	MeshComponent->SetVisibility(true);
-	if (Definition->VisualEffect)
+	if (Definition->VisualEffect && !EffectComponent->IsActive())
 	{
 		EffectComponent->Activate(true);
 	}
@@ -536,6 +547,7 @@ void ATDDamageEntity::ExpandShockwave(float DeltaSeconds, double HitTime)
 	const float Expansion = Definition->ExpansionSpeed * DeltaSeconds;
 	RingInnerRadius += Expansion;
 	RingOuterRadius += Expansion;
+	UpdateVisualTransform();
 	HitArea(RingOuterRadius, PreviousInnerRadius, HitTime);
 }
 
@@ -642,6 +654,11 @@ void ATDDamageEntity::Finish()
 	Complete(false, nullptr);
 }
 
+bool ATDDamageEntity::IsGameplayFinished() const
+{
+	return bHasFinished;
+}
+
 void ATDDamageEntity::Complete(bool bHasExpired, AActor* Target)
 {
 	if (!CanContinue())
@@ -649,16 +666,28 @@ void ATDDamageEntity::Complete(bool bHasExpired, AActor* Target)
 		return;
 	}
 	bHasFinished = true;
+	bIsActive = false;
 	ScheduledActions.Reset();
 	bIsHoming = false;
 	HomingTarget.Reset();
 	SetActorTickEnabled(false);
+	MeshComponent->SetVisibility(false);
+	EffectComponent->Deactivate();
 	TWeakObjectPtr<AActor> EventTarget = Target;
 	if (bHasExpired)
 	{
 		EmitEvent(ETDDamageEvent::Expire, EventTarget.Get(), GetActorLocation());
 	}
 	EmitEvent(ETDDamageEvent::End, EventTarget.Get(), GetActorLocation());
+	if (IsActorBeingDestroyed())
+	{
+		return;
+	}
+	if (Definition->VisualEffect && Definition->VisualTailSeconds > 0.f)
+	{
+		SetLifeSpan(Definition->VisualTailSeconds);
+		return;
+	}
 	Destroy();
 }
 
@@ -674,6 +703,20 @@ void ATDDamageEntity::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	bIsHoming = false;
 	HomingTarget.Reset();
 	Super::EndPlay(EndPlayReason);
+}
+
+void ATDDamageEntity::UpdateVisualTransform()
+{
+	FVector Scale = Definition->VisualScale;
+	if (Definition->bScaleVisualWithRadius && Definition->Mode == ETDDamageEntityMode::Shockwave)
+	{
+		const float RadiusScale = RingOuterRadius / Definition->Radius;
+		Scale.X *= RadiusScale;
+		Scale.Y *= RadiusScale;
+	}
+	const FTransform VisualTransform(Definition->VisualRotation, Definition->VisualOffset, Scale);
+	MeshComponent->SetRelativeTransform(VisualTransform);
+	EffectComponent->SetRelativeTransform(VisualTransform);
 }
 
 void ATDDamageEntity::DrawShape() const

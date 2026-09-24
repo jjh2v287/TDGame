@@ -23,6 +23,7 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void UnPossessed() override;
 	UTDCombatComponent* GetCombatComponent() const { return CombatComponent.Get(); }
+	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool CastDamageSpell(int32 Slot, const FVector& Target);
 
 protected:

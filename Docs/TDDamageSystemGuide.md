@@ -2,9 +2,11 @@
 
 ## 바로 실행하기
 
-UE 5.8에서 `TDGame.uproject`를 열고 `LV-Game`을 Play한다. 기본 게임 모드는 `BP_TDCombatGameMode`이며 `BP_TDCombatCharacter`와 `BP_TDCombatController`가 C++ 전투 클래스를 상속한다. 원래의 `BP_TopDownCharacter`와 `BP_TopDownController`는 이 C++ 클래스를 상속하지 않으므로 전투용 설정과 구분한다.
+UE 5.8에서 `/Game/Combat/Maps/LV_TDMegaMagicArena`를 열고 Play한다. 표적 6개와 이동 가능한 시험장이 준비되어 있다. 기본 게임 모드는 `BP_TDCombatGameMode`이며 `BP_TDCombatCharacter`와 `BP_TDCombatController`가 C++ 전투 클래스를 상속한다. 원래의 `BP_TopDownCharacter`와 `BP_TopDownController`는 이 C++ 클래스를 상속하지 않으므로 전투용 설정과 구분한다.
 
-현재 코드는 GAS로 전환했으며, 이번 변경의 에디터 테스트는 사용자의 요청에 따라 보류했다. 기존 플레이 기록은 전환 전 결과다. GAS 구성과 제약은 [GAS 기반 문서](TDGASFoundation.md)를 먼저 확인한다.
+주문 시전은 GAS를 거치며, 피해·재사용 대기시간·진영 필터·후속 공격은 C++에서 처리한다. GAS 구성과 제약은 [GAS 기반 문서](TDGASFoundation.md)를 참고한다. 현재 시스템은 로컬 게임용이며 네트워크 복제는 구현되어 있지 않다.
+
+2026-09-24 검증: 전투 자동화 37개와 실제 PIE 주문 10종 통과. [검증 결과와 화면](Validation/combat/megamagic-validation-2026-09-24.md)을 참고한다.
 
 콘솔에서 `TDSpawnDamageTargets`를 실행하면 커서 근처에 테스트 표적 5개가 생성된다. 커서를 월드 바닥이나 표적에 놓고 다음 키로 시전한다. 기존 좌클릭 이동은 유지된다.
 
@@ -26,20 +28,27 @@ UE 5.8에서 `TDGame.uproject`를 열고 `LV-Game`을 Play한다. 기본 게임 
 | 4 | Shockwave | 중심이 빈 띠를 확장하면서 대상별 한 번 피해 |
 | 5 | Meteor | 상공에서 운석 낙하, 충돌 후 폭발 피해 |
 | 6 | DelayedHoming | 1초 후 호밍 시작, 2초에 중지, 3초에 더 빠른 회전 속도로 재적용 |
+| 7 | ThunderCage / 뇌전 결계 | 0.45초 예고 후 전기 장판 반복 피해, 3.5초에 마지막 폭발 |
+| 8 | VenomBloom / 맹독 개화 | 0.7초 준비 후 적을 감지하는 마법 독 함정, 발동 뒤 4초간 피해 장판 |
+| 9 | AstralLances / 성운 창 | 3개의 마법 창을 시간차로 낙하시켜 가까운 적 추적, 적중 시 소형 폭발 |
+| 0 | PhoenixDive / 불사조 강하 | 예고 뒤 불덩이 낙하, 폭발·확장 불꽃 고리·화염 장판 연계 |
 
 표적에는 레벨, 체력과 FROZEN/DEFEATED 상태가 표시된다. `TDSetCasterLevel 10`으로 시전자 레벨을 바꿔 다음 시전의 위력을 확인한다. 이 명령은 체력을 회복시키지 않는다. 이미 시전한 효과에는 이전 능력치가 유지된다.
 
-시각 표현은 개발용 도형과 표적 메시다. 에셋의 `VisualEffect`, `Mesh`, `Material`, `VisualScale`에 실제 연출 에셋을 연결할 수 있다. 디버그 도형은 배포용 시각 효과를 대신하지 않는다.
+10종 기본 주문은 `MegaMagicVFXBundle`의 Niagara 이펙트를 사용하며 디버그 도형은 꺼져 있다. 번들에는 얼음 전용 이펙트가 없어 눈보라는 차가운 색의 마법장과 물빛 투사체로 표현한다. 뇌전·맹독·성운의 피해 속성은 현행 속성 체계의 `Arcane`이다.
+
+`VisualOffset`, `VisualRotation`, `VisualScale`로 표현을 조정한다. `VisualTailSeconds`는 피해가 종료된 후의 잔상 시간(최대 10초)이며 피해 수명을 늘리지 않는다. `bShowDuringActivationDelay`는 준비 중 효과를 표시하고, `bScaleVisualWithRadius`는 확장 충격파의 XY 크기를 판정 반경에 맞춰 바꾼다. `bProjectToGround`는 비투사체의 중심을 아래 지면으로 보정해 적중 후 장판이 공중에 남는 것을 방지한다.
 
 ## 편집할 에셋
 
-`Content/Combat/Examples`에 편집 가능한 DataAsset 12개가 있다.
+실전용 DataAsset은 `Content/Combat/MegaMagic`에 있다. 기존 `Content/Combat/Examples`의 개발 예제 12개도 보존한다.
 
 - 주문 시작점: `DA_TDFireball`, `DA_TDBlizzard`, `DA_TDMine`, `DA_TDShockwave`, `DA_TDMeteor`, `DA_TDDelayedHoming`.
+- 새 주문 시작점: `DA_TDThunderCage`, `DA_TDVenomBloom`, `DA_TDAstralLances`, `DA_TDPhoenixDive`.
 - 후속 엔티티: `DA_TDFlameField`, `DA_TDIceShard`, `DA_TDMineExplosion`, `DA_TDFallingMeteor`, `DA_TDMeteorExplosion`.
 - 상태이상: `DA_TDFrostFreeze`.
 
-플레이어의 `Combat / DamageSpells` 배열에 직접 지정하면 그 구성을 사용한다. 배열이 비어 있으면 위 6개 시작점 에셋을 불러온다. 저장된 예제 세트가 없으면 같은 그래프의 C++ 기본 설정을 메모리에 생성한다.
+플레이어의 `Combat / DamageSpells` 배열에 직접 지정하면 그 구성을 사용한다. 배열이 비어 있으면 MegaMagic 시작점 10개를 키 순서대로 불러온다. 저장된 세트가 없으면 같은 그래프의 C++ 기본 설정을 메모리에 생성한다.
 
 기본 예제 디렉터리는 패키징의 Always Cook 대상으로 등록했다. 다른 위치에 만든 주문 에셋은 캐릭터의 `DamageSpells` 같은 저장되는 프로퍼티에서 참조하거나 프로젝트의 쿠킹 규칙에 등록해야 한다.
 
@@ -130,7 +139,10 @@ UE 5.8에서 `TDGame.uproject`를 열고 `LV-Game`을 Play한다. 기본 게임 
 
 - 생성 인자: `-run=TDDamageExamples -unattended -nop4 -NullRHI`
 - 저장된 에셋 검증 인자: `-run=TDDamageExamples -ValidateOnly -unattended -nop4 -NullRHI`
+- MegaMagic 생성/검증: 위 인자에 `-MegaMagic`을 추가한다. 별도 경로에 생성하며 기존 목적지가 있으면 덮어쓰지 않는다.
 - 자동화 테스트 인자: `-ExecCmds="Automation RunTests TDGame.Combat" -TestExit="Automation Test Queue Empty" -unattended -NullRHI`
+
+시험장 생성은 `python Tools/run_in_editor.py Tools/Damage/editor_make_megamagic_arena.py`, PIE 자동 검사는 시험장을 Play한 상태에서 `python Tools/run_in_editor.py Tools/Damage/editor_validate_megamagic_pie.py`로 실행한다. PIE 검사 결과는 `Saved/Damage/megamagic-pie.json`에 기록된다.
 
 위 인자는 UE 5.8의 `UnrealEditor-Cmd.exe` 뒤에 `TDGame.uproject` 경로와 함께 전달한다. 테스트 보고서는 `-ReportOutputPath`로 별도 지정할 수 있다.
 

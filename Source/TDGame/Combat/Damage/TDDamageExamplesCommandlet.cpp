@@ -47,7 +47,15 @@ int32 UTDDamageExamplesCommandlet::Main(const FString& Params)
 #if WITH_EDITOR
 	TStrongObjectPtr<UPackage> ExamplesOuter(CreatePackage(TEXT("/Temp/TDDamageExampleGeneration")));
 	TArray<UTDDamageDefinition*> Spells;
-	TDDamageExamples::CreateExamples(ExamplesOuter.Get(), Spells);
+	const bool bMegaMagic = FParse::Param(*Params, TEXT("MegaMagic"));
+	if (bMegaMagic)
+	{
+		TDDamageExamples::CreateMegaMagicExamples(ExamplesOuter.Get(), Spells);
+	}
+	else
+	{
+		TDDamageExamples::CreateExamples(ExamplesOuter.Get(), Spells);
+	}
 	TArray<UObject*> GraphObjects;
 	GetObjectsWithOuter(ExamplesOuter.Get(), GraphObjects, EGetObjectsFlags::None);
 	GraphObjects.RemoveAll([](const UObject* Object) { return !Object->IsA<UDataAsset>(); });
@@ -64,7 +72,7 @@ int32 UTDDamageExamplesCommandlet::Main(const FString& Params)
 	bool bHasConflict = false;
 	for (UObject* Asset : GraphObjects)
 	{
-		const FString PackageName = TEXT("/Game/Combat/Examples/") + Asset->GetName();
+		const FString PackageName = FString(bMegaMagic ? TEXT("/Game/Combat/MegaMagic/") : TEXT("/Game/Combat/Examples/")) + Asset->GetName();
 		const FString Filename = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
 		PackageNames.Add(PackageName);
 		Filenames.Add(Filename);

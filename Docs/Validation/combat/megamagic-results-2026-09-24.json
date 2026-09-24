@@ -1,0 +1,482 @@
+{
+  "automation": {
+    "created": "2026.09.23-12.18.15",
+    "passed": 37,
+    "failed": 0,
+    "not_run": 0,
+    "tests": [
+      {
+        "name": "TDGame.Combat.GAS.CleansingFreezeCancelsExpiryBurst",
+        "state": "Success",
+        "warnings": 1
+      },
+      {
+        "name": "TDGame.Combat.GAS.DamageAbilityUsesIndependentCooldowns",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.GAS.HealthUsesInstantOrPeriodicResourceEffects",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.GAS.RevivalDuringDeadTagApplicationIsConsistent",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.GAS.SharedCharactersAndLevelGrowth",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.Homing.ApplyStopAndReapplyTimeline",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.Homing.EqualDeadlineActionsPreserveAuthoredOrder",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.Homing.ExpirationBoundaryExcludesDelayedActions",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.Homing.FinishAndDestroyCancelOwnedDelayedActions",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.Homing.LongFrameSplitsMotionAtActionDeadlines",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.Homing.ReapplicationAndEventTargetSelection",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.Homing.SpawnAndActivateHaveIndependentTiming",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.Homing.TargetLossReacquiresOrContinuesStraight",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MegaMagic.AstralLancesLaunchSeekAndImpact",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MegaMagic.FactoryGraphsAreProductionReady",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MegaMagic.FinishDuringDamageCancelsRemainingActions",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MegaMagic.PhoenixDiveCreatesBlastWaveAndBurningGround",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MegaMagic.SavedAssetGraphsLoadAndValidate",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MegaMagic.ThunderCageTelegraphsPulsesAndDetonates",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MegaMagic.VenomBloomIgnoresAlliesAndLeavesPersistentDamage",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MegaMagic.VisualTailStopsGameplayAndExpires",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.CyclicSpawnsAndActionsRespectSharedBudget",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.DamageCallbacksCannotReportStaleDeath",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.DefaultGameModeUsesNativeCombatClasses",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.FastShockwaveSweepsRingAndPreservesHole",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.InvalidDefinitionsAreRejected",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MeleeAttackNotifyLocksBladeHeightToOwner",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MeleeAttackNotifySweepsBladePathDuringLongFrames",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MineWaitsForArmingAndTriggersOnce",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.MitigatedBuildupFreezesAndExpiresOnce",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.OverlappingFreezesPreserveExternalMovementChanges",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.ProjectileCreatesPeriodicAreaWithCasterSnapshot",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.ProjectileSweepsWallsAndPiercesEnemies",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.ResetAndDeathCancelStatusExpiry",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.ScalingMitigationAndCriticalBoundaries",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.SourceDestructionCancelsSpawnFanout",
+        "state": "Success",
+        "warnings": 0
+      },
+      {
+        "name": "TDGame.Combat.TeamPolicyAndSpatialFiltering",
+        "state": "Success",
+        "warnings": 0
+      }
+    ]
+  },
+  "pie": {
+    "map": "/Game/Combat/Maps/UEDPIE_0_LV_TDMegaMagicArena.LV_TDMegaMagicArena",
+    "state": "complete",
+    "spells": [
+      {
+        "slot": 1,
+        "asset": "/Game/Combat/MegaMagic/DA_TDFireball.DA_TDFireball",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9904.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "damage": 96.0,
+        "peak_entities": 2,
+        "peak_active_fx": 2,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 2,
+        "asset": "/Game/Combat/MegaMagic/DA_TDBlizzard.DA_TDBlizzard",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          10000.0,
+          10000.0,
+          9790.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "damage": 210.0,
+        "peak_entities": 25,
+        "peak_active_fx": 25,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 3,
+        "asset": "/Game/Combat/MegaMagic/DA_TDMine.DA_TDMine",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9940.0,
+          10000.0,
+          9940.0,
+          10000.0,
+          9940.0,
+          10000.0
+        ],
+        "damage": 180.0,
+        "peak_entities": 2,
+        "peak_active_fx": 2,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 4,
+        "asset": "/Game/Combat/MegaMagic/DA_TDShockwave.DA_TDShockwave",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9965.0,
+          9965.0,
+          10000.0,
+          9965.0,
+          9965.0,
+          9965.0
+        ],
+        "damage": 175.0,
+        "peak_entities": 1,
+        "peak_active_fx": 1,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 5,
+        "asset": "/Game/Combat/MegaMagic/DA_TDMeteor.DA_TDMeteor",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9910.0,
+          10000.0,
+          9885.0,
+          10000.0,
+          9910.0,
+          10000.0
+        ],
+        "damage": 295.0,
+        "peak_entities": 3,
+        "peak_active_fx": 3,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 6,
+        "asset": "/Game/Combat/MegaMagic/DA_TDDelayedHoming.DA_TDDelayedHoming",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9904.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "damage": 96.0,
+        "peak_entities": 2,
+        "peak_active_fx": 2,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 7,
+        "asset": "/Game/Combat/MegaMagic/DA_TDThunderCage.DA_TDThunderCage",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9878.0,
+          10000.0,
+          9878.0,
+          10000.0,
+          9878.0,
+          10000.0
+        ],
+        "damage": 366.0,
+        "peak_entities": 2,
+        "peak_active_fx": 2,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 8,
+        "asset": "/Game/Combat/MegaMagic/DA_TDVenomBloom.DA_TDVenomBloom",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9915.203125,
+          10000.0,
+          9915.203125,
+          10000.0,
+          9915.203125,
+          10000.0
+        ],
+        "damage": 254.390625,
+        "peak_entities": 2,
+        "peak_active_fx": 2,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 9,
+        "asset": "/Game/Combat/MegaMagic/DA_TDAstralLances.DA_TDAstralLances",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9895.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "damage": 105.0,
+        "peak_entities": 7,
+        "peak_active_fx": 7,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      },
+      {
+        "slot": 10,
+        "asset": "/Game/Combat/MegaMagic/DA_TDPhoenixDive.DA_TDPhoenixDive",
+        "cast": true,
+        "health_before": [
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0,
+          10000.0
+        ],
+        "caster_before": 100.0,
+        "health_after": [
+          9877.0,
+          9967.0,
+          9816.0,
+          9967.0,
+          9877.0,
+          9967.0
+        ],
+        "damage": 529.0,
+        "peak_entities": 5,
+        "peak_active_fx": 5,
+        "remaining_entities": 0,
+        "caster_after": 100.0,
+        "passed": true
+      }
+    ],
+    "passed": true
+  }
+}

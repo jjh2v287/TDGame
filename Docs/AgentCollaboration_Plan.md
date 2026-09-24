@@ -64,4 +64,5 @@
 | `Docs/NOW.md` | 상태 | 매 세션 |
 | `Docs/Worklog/` | 기록 | 매 세션 마지막 5항목 |
 | `Docs/Lessons/` | 교훈 | 실패 시·영역 작업 전 검색 |
+| [Docs/Lessons/combat.md](Lessons/combat.md) | 교훈 | 데미지·전투 VFX 연결 시 |
 | `Docs/Automation_Backlog.md` | 계획 | 스크립트 착수 시 |

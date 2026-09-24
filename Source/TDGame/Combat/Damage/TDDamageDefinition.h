@@ -45,6 +45,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Shape", meta=(ClampMin="1"))
 	float HalfHeight = 150.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Shape")
+	bool bProjectToGround = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(ClampMin="0"))
 	float ExpansionSpeed = 400.f;
 
@@ -80,6 +83,21 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
 	FVector VisualScale = FVector::OneVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
+	FVector VisualOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
+	FRotator VisualRotation = FRotator::ZeroRotator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation", meta=(ClampMin="0", ClampMax="10"))
+	float VisualTailSeconds = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
+	bool bShowDuringActivationDelay = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
+	bool bScaleVisualWithRadius = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
 	bool bDrawDebug = false;

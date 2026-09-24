@@ -1,0 +1,27 @@
+[
+  {
+    "path": "Content/Fab/Stylized_Goblin_Minion_-_Free/Goblin.uasset",
+    "before_sha256": "18fcd080152d488ae4db5c645c5b56b9de0e23bc407f90cd10de682ed6b12ac6",
+    "after_sha256": "6187352f109dba5e1a94cbaa5776dddd51e21432e03df987bac9f6929db5e0c0"
+  },
+  {
+    "path": "Content/Fab/Stylized_Goblin_Minion_-_Free/goblin_base_DefaultMaterial_Metallic.uasset",
+    "before_sha256": "0ba83fd87a073ba9cdf03f7f3be8ba271c00986bc86a6e6d079ab45c1650f7d3",
+    "after_sha256": "69c013bbd413404c84979b9b5b5a1dedba2b51421ecc8f7969068921324be583"
+  },
+  {
+    "path": "Content/Fab/Stylized_Goblin_Minion_-_Free/goblin_base_DefaultMaterial_Roughness.uasset",
+    "before_sha256": "9db15a7a14931b7d60b1252a9d4ecf586fa1dff0fd11bc2e54ca4880f52dc2ad",
+    "after_sha256": "5b2cbd397f6ef08102fc5e08dc540e30f809ecbb4a866e287d5f3ccc4ab3a162"
+  },
+  {
+    "path": "Content/Fab/Hyena_A1/Hyenas_A1.uasset",
+    "before_sha256": "009efaf6b64e589d00ba1b7ade0176b00025551c93dfcda0fed2c383ae114554",
+    "after_sha256": "4efa96b5da282b68aa29bc9173b84157d248ff640e323fcea7ed025bd82b665e"
+  },
+  {
+    "path": "Content/Fab/Hyena_A1/Hyenas_A1_Opacity.uasset",
+    "before_sha256": "231e6298ffd2f76d0e4fd2379d592fc912fee7f684199e459bc70e98655de61c",
+    "after_sha256": "74738119b670c1ce6f3315e0e2cc074eb49c647f618b061c2ba57ab4e0ddb5e7"
+  }
+]

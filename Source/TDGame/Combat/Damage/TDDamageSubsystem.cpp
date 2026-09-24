@@ -49,8 +49,28 @@ ATDDamageEntity* UTDDamageSubsystem::SpawnEntity(UTDDamageDefinition* Definition
 	}
 
 	--Context.Budget->RemainingSpawns;
+	FVector SpawnLocation = Location;
+	if (Definition->bProjectToGround && Definition->Mode != ETDDamageEntityMode::Projectile)
+	{
+		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDDamageGroundProjection), false, Context.Caster.Get());
+		for (const TWeakObjectPtr<UTDCombatComponent>& Entry : Combatants)
+		{
+			if (const UTDCombatComponent* Combatant = Entry.Get())
+			{
+				QueryParams.AddIgnoredActor(Combatant->GetOwner());
+			}
+		}
+		FHitResult GroundHit;
+		const FVector TraceStart = Location + FVector(0.f, 0.f, 150.f);
+		const FVector TraceEnd = Location - FVector(0.f, 0.f, 2000.f);
+		if (GetWorld()->LineTraceSingleByChannel(GroundHit, TraceStart, TraceEnd, ECC_Visibility, QueryParams)
+			&& GroundHit.ImpactNormal.Z >= 0.5f)
+		{
+			SpawnLocation = GroundHit.ImpactPoint + FVector(0.f, 0.f, 2.f);
+		}
+	}
 	const FVector Direction = Context.Direction.GetSafeNormal(UE_SMALL_NUMBER, FVector::ForwardVector);
-	const FTransform Transform(Direction.Rotation(), Location);
+	const FTransform Transform(Direction.Rotation(), SpawnLocation);
 	ATDDamageEntity* Entity = GetWorld()->SpawnActorDeferred<ATDDamageEntity>(ATDDamageEntity::StaticClass(), Transform,
 		Context.Caster.Get(), ::Cast<APawn>(Context.Caster.Get()), ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 	if (!Entity)
@@ -81,7 +101,8 @@ void UTDDamageSubsystem::ExecuteRules(const TArray<FTDDamageRule>& Rules, ETDDam
 		}
 		for (const FTDDamageAction& Action : Rule.Actions)
 		{
-			if (SourceEntity && (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed()))
+			if (SourceEntity && (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed()
+				|| (SourceEntity->IsGameplayFinished() && Event != ETDDamageEvent::End && Event != ETDDamageEvent::Expire)))
 			{
 				return;
 			}
@@ -122,6 +143,11 @@ void UTDDamageSubsystem::ExecuteScheduledAction(const FTDDamageAction& Action, c
 void UTDDamageSubsystem::ExecuteAction(const FTDDamageAction& Action, const TArray<FTDDamageRule>& Rules,
 	ETDDamageEvent Event, const FTDDamageContext& Context, AActor* Target, const FVector& Location, ATDDamageEntity* SourceEntity)
 {
+	if (SourceEntity && (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed()
+		|| (SourceEntity->IsGameplayFinished() && Event != ETDDamageEvent::End && Event != ETDDamageEvent::Expire)))
+	{
+		return;
+	}
 	if (Action.Type == ETDDamageActionType::ApplyHoming || Action.Type == ETDDamageActionType::StopHoming)
 	{
 		if (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed())
@@ -147,7 +173,8 @@ void UTDDamageSubsystem::ExecuteAction(const FTDDamageAction& Action, const TArr
 		}
 
 		const FTDDamageResult Result = Combatant->ReceiveDamage(Action.Magnitude.Evaluate(Context.Stats), Action.Element, Action.bCanCrit, Context);
-		if (SourceEntity && (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed()))
+		if (SourceEntity && (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed()
+			|| (SourceEntity->IsGameplayFinished() && Event != ETDDamageEvent::End && Event != ETDDamageEvent::Expire)))
 		{
 			return;
 		}
@@ -192,7 +219,8 @@ void UTDDamageSubsystem::ExecuteAction(const FTDDamageAction& Action, const TArr
 	const int32 SpawnCount = FMath::Clamp(Action.SpawnCount, 1, 32);
 	for (int32 Index = 0; Index < SpawnCount; ++Index)
 	{
-		if (SourceEntity && (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed()))
+		if (SourceEntity && (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed()
+			|| (SourceEntity->IsGameplayFinished() && Event != ETDDamageEvent::End && Event != ETDDamageEvent::Expire)))
 		{
 			return;
 		}

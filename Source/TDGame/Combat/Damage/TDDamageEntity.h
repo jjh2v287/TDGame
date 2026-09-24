@@ -44,6 +44,7 @@ public:
 	void Initialize(UTDDamageDefinition* InDefinition, const FTDDamageContext& InContext);
 	UTDDamageDefinition* GetDefinition() const;
 	void Finish();
+	bool IsGameplayFinished() const;
 	void ApplyHoming(const FTDHomingSettings& Settings, AActor* EventTarget = nullptr);
 	void StopHoming();
 	bool IsHoming() const;
@@ -75,6 +76,7 @@ private:
 	bool HitTarget(UTDCombatComponent* Target, const FVector& Location, double HitTime);
 	bool HasLineOfSight(const AActor* Target) const;
 	bool CanContinue() const;
+	void UpdateVisualTransform();
 	void DrawShape() const;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Damage", meta=(AllowPrivateAccess="true"))

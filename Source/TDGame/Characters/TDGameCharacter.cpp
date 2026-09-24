@@ -79,10 +79,14 @@ void ATDGameCharacter::BeginPlay()
 {
 	if (DamageSpells.IsEmpty())
 	{
-		const TCHAR* SpellNames[] = { TEXT("Fireball"), TEXT("Blizzard"), TEXT("Mine"), TEXT("Shockwave"), TEXT("Meteor"), TEXT("DelayedHoming") };
+		const TCHAR* SpellNames[] =
+		{
+			TEXT("Fireball"), TEXT("Blizzard"), TEXT("Mine"), TEXT("Shockwave"), TEXT("Meteor"),
+			TEXT("DelayedHoming"), TEXT("ThunderCage"), TEXT("VenomBloom"), TEXT("AstralLances"), TEXT("PhoenixDive")
+		};
 		for (const TCHAR* SpellName : SpellNames)
 		{
-			const FString AssetPath = FString::Printf(TEXT("/Game/Combat/Examples/DA_TD%s.DA_TD%s"), SpellName, SpellName);
+			const FString AssetPath = FString::Printf(TEXT("/Game/Combat/MegaMagic/DA_TD%s.DA_TD%s"), SpellName, SpellName);
 			UTDDamageDefinition* Definition = LoadObject<UTDDamageDefinition>(nullptr, *AssetPath, nullptr, LOAD_NoWarn);
 			if (!Definition)
 			{
@@ -95,7 +99,7 @@ void ATDGameCharacter::BeginPlay()
 		if (DamageSpells.IsEmpty())
 		{
 			TArray<UTDDamageDefinition*> Examples;
-			TDDamageExamples::CreateExamples(this, Examples);
+			TDDamageExamples::CreateMegaMagicExamples(this, Examples);
 			for (UTDDamageDefinition* Definition : Examples)
 			{
 				DamageSpells.Add(Definition);

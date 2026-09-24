@@ -7,4 +7,5 @@ class UTDDamageDefinition;
 namespace TDDamageExamples
 {
 	TDGAME_API void CreateExamples(UObject* Outer, TArray<UTDDamageDefinition*>& OutSpells);
+	TDGAME_API void CreateMegaMagicExamples(UObject* Outer, TArray<UTDDamageDefinition*>& OutSpells);
 }

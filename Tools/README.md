@@ -29,6 +29,9 @@ Serena가 내려받는 clangd 19.1.2는 UE 5.8 엔진 헤더를 파싱하다 종
 | `ue_editor.py` | 에디터 상태/시작/종료/빌드/재시작, Python 원격 실행 on/off | `python Tools/ue_editor.py restart` |
 | `editor_inspect_level.py` | 현재 레벨 액터 요약 JSON(`Saved/Inspect/`) | `python Tools/run_in_editor.py Tools/editor_inspect_level.py` |
 | `check_automation_tests.py` | MCP AutomationTestToolset으로 `TDGame.*` 자동화 테스트 발견·실행, 실패만 요약(`Saved/AgentOps/automation_tests_*.json`) | `python Tools/check_automation_tests.py --filter TDGame.Combat` |
+| `Damage/editor_make_megamagic_arena.py` | MegaMagic 주문용 전투 테스트 맵 신규 생성(기존 목적지 보존) | `python Tools/run_in_editor.py Tools/Damage/editor_make_megamagic_arena.py` |
+| `Damage/editor_validate_megamagic_pie.py` | 실행 중인 테스트 맵에서 10종 시전·피해·아군 제외·VFX·정리 검사, `Saved/Damage/megamagic-pie.json` | `python Tools/run_in_editor.py Tools/Damage/editor_validate_megamagic_pie.py` |
+| `TDDamageExamples -MegaMagic` 명령렛 | 실제 VFX를 참조하는 주문 그래프를 `/Game/Combat/MegaMagic`에 신규 저장, `-ValidateOnly`로 저장 결과 검사 | 에디터 종료 후 `UnrealEditor-Cmd TDGame.uproject -run=TDDamageExamples -MegaMagic -unattended -NullRHI` |
 | `pie_profile.py` (+`editor_pie_profile.py`) | PIE 11초 프레임 간격 측정 + `stat dumpframe`·`ProfileGPU` 로그 발췌. "PIE가 느리다"를 스로틀·게임 스레드·GPU 중 어디인지 가른다(L-editor-06) | `python Tools/pie_profile.py` |
 | `templates/` | 새 도구 템플릿(에디터 Python, C++ 에디터 함수 절차) | 복사해서 시작 |
 

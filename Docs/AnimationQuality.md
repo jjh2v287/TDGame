@@ -25,6 +25,20 @@ python Tools/BlenderAnimation/validate_sword_slash_pie.py
 
 `call_tool.py --code`는 파일 본문을 그대로 실행하므로 저장하려면 본문 첫 줄에 `TD_SAVE = True`를 두거나 `execute_blender_code`에서 `exec(..., {'TD_SAVE': True})`로 넘긴다.
 
+## 2026-09-23 신규: `AS_TD_Player_Attack02_SwordSlash_LToR` (블렌더 확장 툴 및 인체 역학 개선, 좌→우 횡베기)
+
+공격 1번(우→좌)에 이어지는 2타 콤보 한손검 좌→우 횡베기 공격 2번 애니메이션 저작. 기존 절차적 모션의 치명적 결함(왼팔 몸통 파고듦, 우측 팔꿈치 과신전/급격한 스냅)을 블렌더 확장 툴(AnimAide F-Curve 이징 보간, 인체 해부학적 가동 범위 및 안정 힌트 벡터)을 적용하여 전면 개선했다.
+
+- 저작 방식(`Tools/BlenderAnimation/author_sword_slash_ltor.py`): 30fps 40포즈(1.3초), 루트 전진 50cm.
+- 개선 사항:
+  1. 왼팔 가슴 관통 완전 제거: 왼손 구면 방위각을 흉부 안쪽(-20°~-30°)에서 몸통 외측(-55°~-88°)으로 재배치하고 팔꿈치 힌트 벡터를 갈비뼈 외측/후방으로 고정하여 전 프레임 관통 0cm 및 20cm 이상 안전 이격 확보.
+  2. 오른팔 팔꿈치 꺾임/과신전 제거: 2본 IK 팔꿈치 후보 각도를 해부학적 운반각(Carrying Angle) 기준 ±30°로 제한하고 외측-하방 성분을 유지하여 13~21프레임 40cm 점프 현상 완전 제거.
+  3. AnimAide 베지에 이징 적용: Action F-Curve 키프레임 보간을 `BEZIER` 및 `AUTO_CLAMPED`로 전환하여 부드러운 가속·감속 및 관성 운동 구현.
+- 산출물: `/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack02_SwordSlash_LToR`(Root Motion 활성화, RefPose 락), `AM_TD_Player_Attack02_SwordSlash_LToR`([편집 원본 .blend](../AnimationSources/Player/AS_TD_Player_Attack02_SwordSlash_LToR.blend), [FBX](../AnimationSources/Player/AS_TD_Player_Attack02_SwordSlash_LToR.fbx), [JSON](../AnimationSources/Player/AS_TD_Player_Attack02_SwordSlash_LToR.json)).
+- 시각 산출물: [주요 포즈 모음](Validation/BlenderAnimation/sword-slash-ltor-poses.png), [세 방향 실시간](Validation/BlenderAnimation/sword-slash-ltor-three-views.gif), [1/3속](Validation/BlenderAnimation/sword-slash-ltor-slow.gif), [정면](Validation/BlenderAnimation/sword-slash-ltor-front.gif)·[측면](Validation/BlenderAnimation/sword-slash-ltor-side.gif)·[게임 시점](Validation/BlenderAnimation/sword-slash-ltor-game.gif).
+- 검증: [수치 검증](Validation/BlenderAnimation/sword-slash-ltor-validation.json) 통과 (`technical_checks_passed: true` — 본 위치 오차 최대 0.1188cm, 루트 전진 50.0cm 정확 일치, 오른발 착지 드리프트 0.1171cm, 검 끝 최저 높이 21.26cm).
+
+
 ---
 
 아래는 이전 후보(v04)의 기록이다. 해당 에셋과 원본은 2026-09-19에 삭제되었고 절차만 참고한다.

@@ -47,8 +47,9 @@
 | 5 | [05-ml-and-generative-ai.md](MonsterAI_CombatSim/05-ml-and-generative-ai.md) | 머신러닝과 생성형 AI 통합 | 두뇌 비신경망화 이유, Learning Agents 5.8 구조, 대리 봇 3단·관측 스키마·추론 결정론, tune 잎 CMA/PSO, LLM 루프, 플러그인·Build.cs | 시뮬 돌릴 때(Phase 4 전 참고) |
 | 6 | [06-beyond-the-ask.md](MonsterAI_CombatSim/06-beyond-the-ask.md) | 요구사항 밖의 추가 고려사항 | 우선순위 15개, 비평 누락 M1~M20·B1~B14 반영 상태, 모순 C1~C13 판정, 운영 규칙(골든 소유·문서=코드·저장·텔레메트리·시각화·벤치·업그레이드), 콘텐츠 모델 스키마 | 할 일 고를 때(제안 항목 확인) |
 | 7 | [07-roadmap-and-tasks.md](MonsterAI_CombatSim/07-roadmap-and-tasks.md) | 로드맵과 할 일 대장 | Phase 0~4 표, 기존 코드 변경 15건(D38), 할 일 50개(M0~M4), 사용자 결정 MD-01~MD-10, 위험표 12, 에이전트 절차 | 할 일 고를 때 |
+| 8 | [08-combat-fun-design.md](MonsterAI_CombatSim/08-combat-fun-design.md) | 탑다운 전투 재미 설계와 몬스터 AI·공동 제작 방식(제안, 사용자 승인 전) | 참고 대화 차용·기각 표, 고정 -60도 시점 제약·화면 계약 SC-01~11, 밀기·당기기·충돌 중심 재미 설계, 슬라임·고블린·오크 상호작용 IX-01~07·조우 EN-01~05, D1 유지 + 두뇌 밖 충돌 반응층, 사람·에이전트 역할 분담과 재미 지표, V0 회색 상자 → 슬라이스 1 순서, 결정 후보 D39~D43·MD-11~24 | 전투 재미·몬스터 기획할 때 |
 
-## 4. 조사 자료(`MonsterAI_CombatSim/research/`, 16편 + 비평 1편)
+## 4. 조사 자료(`MonsterAI_CombatSim/research/`, 21편 + 비평 1편)
 
 | 파일 | 한 줄 요약 | 핵심 결론 번호 |
 |---|---|---|
@@ -68,6 +69,11 @@
 | [web-mass-monster-performance.md](MonsterAI_CombatSim/research/web-mass-monster-performance.md) | 풀 액터 몬스터 0.13~0.41ms/마리(타사 실측), 애니메이션이 진짜 병목, Epic 은 BT·GAS 의 Mass 이식 가능성을 낮게 봄. 단계별 선택 기준 ≤300 액터 → Mass | 1·2·3·4·6·8·10 |
 | [web-ml-generative-npc.md](MonsterAI_CombatSim/research/web-ml-generative-npc.md) | 업계는 RL 을 적 두뇌보다 대리 봇·QA·밸런스에 먼저 쓴다. 추론 결정론 3조건(시드·노이즈 0·같은 빌드/명령셋), 생성형 AI 에 좋은 형식은 제한 텍스트 DSL, SLM NPC 는 소수 캐릭터용 | 1·3·4·5·6·7·8 |
 | [web-ue-5-6-to-5-8-ai-changes.md](MonsterAI_CombatSim/research/web-ue-5-6-to-5-8-ai-changes.md) | StateTree 만 정식이고 Mass 는 런타임 모듈 승격, Learning Agents·Mover·MCP 는 Experimental. 결정론 신기능 없음, 5.8 이 마지막 UE5 메이저(UE6 2027년 말 예고), StateTree 회귀 이력 | 1·2·3·4·5·6·7·10 |
+| [web-combat-fun-design.md](MonsterAI_CombatSim/research/web-combat-fun-design.md) | (08 근거) 탑다운 ARPG 전투 재미 원리와 함정: 러시 수렴, 시스템 상호작용, 조작 > 처치, Archnemesis 과복잡, 페이싱 | 08 §1·§3 |
+| [web-topdown-readability.md](MonsterAI_CombatSim/research/web-topdown-readability.md) | (08 근거) 고정 탑다운 가독성: 예고·동시 공격자 예산·남북 시야 기하·타격감·입력 | 08 §2·§3-2 |
+| [web-relational-enemy-ai.md](MonsterAI_CombatSim/research/web-relational-enemy-ai.md) | (08 근거) 관계형 적 AI 구성 요소 평가: 유틸리티 확장·스마트 오브젝트·규칙 표·반응 표·토큰·디렉터 | 08 §6 |
+| [project-combat-fun-hooks.md](MonsterAI_CombatSim/research/project-combat-fun-hooks.md) | (08 근거) 기존 결정·코드 연결점·공백(데미지·GAS·토큰·넉백·로드맵 자리) | 08 §6·§7·§10 |
+| [project-human-agent-cowork.md](MonsterAI_CombatSim/research/project-human-agent-cowork.md) | (08 근거) 사람·에이전트 공동 제작: 기존 절차·도구, 빠진 것, 입력 양식·역할 분담 초안 | 08 §8·§9 |
 | [zz-completeness-critique.md](MonsterAI_CombatSim/research/zz-completeness-critique.md) | 조사 16편이 놓친 주제 20개(M1~M20), 조사 간 모순 13건(C1~C13) 판정, 요구사항 밖 고려사항 14개(B1~B14). 06 문서의 입력 | M1~M20, C1~C13, B1~B14 |
 
 ## 5. 에이전트 작업 절차

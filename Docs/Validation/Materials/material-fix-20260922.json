@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-22",
+  "result": "PASS",
+  "disk_reload": true,
+  "goblin_inputs": {
+    "BaseColor": "/Game/Fab/Stylized_Goblin_Minion_-_Free/goblin_base_DefaultMaterial_BaseColor.goblin_base_DefaultMaterial_BaseColor",
+    "Normal": "/Game/Fab/Stylized_Goblin_Minion_-_Free/goblin_base_DefaultMaterial_Normal.goblin_base_DefaultMaterial_Normal",
+    "Roughness": "/Game/Fab/Stylized_Goblin_Minion_-_Free/goblin_base_DefaultMaterial_Roughness.goblin_base_DefaultMaterial_Roughness",
+    "Metallic": "/Game/Fab/Stylized_Goblin_Minion_-_Free/goblin_base_DefaultMaterial_Metallic.goblin_base_DefaultMaterial_Metallic"
+  },
+  "hyena_blend": "Masked",
+  "hyena_two_sided": true,
+  "hyena_emissive_weight": 0,
+  "hyena_mask": "/Game/Fab/Hyena_A1/Hyenas_A1_Opacity.Hyenas_A1_Opacity",
+  "hyena_meshes": [
+    "/Game/Fab/Hyena_A1/Hyenas_A11.Hyenas_A11",
+    "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion.Hyenas_A1_AllMotion"
+  ],
+  "dirty_packages": []
+}

@@ -217,6 +217,25 @@ bool UTDDamageDefinition::ValidateDefinition(FString& OutError) const
 		return false;
 	}
 
+	if (!IsFiniteVector(VisualOffset))
+	{
+		OutError = TEXT("VisualOffset must be finite on every axis.");
+		return false;
+	}
+
+	if (!FMath::IsFinite(VisualRotation.Pitch) || !FMath::IsFinite(VisualRotation.Yaw)
+		|| !FMath::IsFinite(VisualRotation.Roll))
+	{
+		OutError = TEXT("VisualRotation must have finite components.");
+		return false;
+	}
+
+	if (!FMath::IsFinite(VisualTailSeconds) || VisualTailSeconds < 0.f || VisualTailSeconds > 10.f)
+	{
+		OutError = TEXT("VisualTailSeconds must be finite and between zero and 10 seconds.");
+		return false;
+	}
+
 	if (!FMath::IsFinite(DebugColor.R) || !FMath::IsFinite(DebugColor.G)
 		|| !FMath::IsFinite(DebugColor.B) || !FMath::IsFinite(DebugColor.A))
 	{

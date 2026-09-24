@@ -139,6 +139,11 @@ protected:
 	void CastFifthDamageSpell();
 	void CastSixthDamageSpell();
 
+	void CastSeventhDamageSpell();
+	void CastEighthDamageSpell();
+	void CastNinthDamageSpell();
+	void CastTenthDamageSpell();
+
 private:
 	void SetupKeyboardMovement();
 	void OnKeyboardMovementTriggered(const FInputActionValue& Value);

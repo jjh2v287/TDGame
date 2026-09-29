@@ -141,41 +141,59 @@ namespace
 		return Entries;
 	}
 
+	const TCHAR* SeverityName(ETDValidationSeverity Severity)
+	{
+		switch (Severity)
+		{
+		case ETDValidationSeverity::Error: return TEXT("error");
+		case ETDValidationSeverity::Warning: return TEXT("warning");
+		default: return TEXT("info");
+		}
+	}
+
+	TSharedPtr<FJsonObject> ValidationItemObject(const FTDValidationItem& Item)
+	{
+		TSharedPtr<FJsonObject> Object = MakeShared<FJsonObject>();
+		Object->SetStringField(TEXT("severity"), SeverityName(Item.Severity));
+		Object->SetStringField(TEXT("message"), Item.Message);
+		Object->SetField(TEXT("world_location_cm"), VectorValue(Item.WorldLocation));
+		Object->SetField(TEXT("room"), NameOrNull(Item.RelatedId));
+		return Object;
+	}
+
 	TSharedPtr<FJsonObject> ValidationObject(const FTDValidationReport& Report)
 	{
 		static const FName CheckOrder[] = {
 			FName(TEXT("required_rooms")), FName(TEXT("overlap")), FName(TEXT("door_integrity")), FName(TEXT("connectivity")),
-			FName(TEXT("room_count")), FName(TEXT("deadend_ratio")), FName(TEXT("progression_key_lock"))};
+			FName(TEXT("room_count")), FName(TEXT("deadend_ratio")), FName(TEXT("main_path_ratio")), FName(TEXT("progression_key_lock"))};
 		TSharedPtr<FJsonObject> Object = MakeShared<FJsonObject>();
 		Object->SetBoolField(TEXT("passed"), Report.bPassed);
 		Object->SetNumberField(TEXT("score"), Report.Score);
 		TArray<TSharedPtr<FJsonValue>> Checks;
 		for (const FName& Code : CheckOrder)
 		{
-			bool bFound = false;
-			bool bPassed = true;
-			FString Summary;
-			TArray<TSharedPtr<FJsonValue>> Details;
+			TArray<const FTDValidationItem*> Matches;
 			for (const FTDValidationItem& Item : Report.Items)
 			{
-				if (Item.Code != Code)
+				if (Item.Code == Code)
 				{
-					continue;
+					Matches.Add(&Item);
 				}
-				bFound = true;
-				bPassed &= Item.Severity != ETDValidationSeverity::Error;
-				Details.Add(MakeShared<FJsonValueString>(Item.Message));
-				Summary = Item.Message;
 			}
-			if (!bFound)
+			if (Matches.Num() == 0)
 			{
 				continue;
 			}
-			Details.Pop();
-			TSharedPtr<FJsonObject> Check = MakeShared<FJsonObject>();
+			const bool bPassed = !Matches.ContainsByPredicate([](const FTDValidationItem* Item) { return Item->Severity == ETDValidationSeverity::Error; });
+			const FTDValidationItem* Summary = Matches.Pop();
+			TArray<TSharedPtr<FJsonValue>> Details;
+			for (const FTDValidationItem* Item : Matches)
+			{
+				Details.Add(MakeShared<FJsonValueObject>(ValidationItemObject(*Item)));
+			}
+			TSharedPtr<FJsonObject> Check = ValidationItemObject(*Summary);
 			Check->SetStringField(TEXT("name"), Code.ToString());
 			Check->SetBoolField(TEXT("passed"), bPassed);
-			Check->SetStringField(TEXT("message"), Summary);
 			Check->SetArrayField(TEXT("details"), Details);
 			Checks.Add(MakeShared<FJsonValueObject>(Check));
 		}
@@ -184,7 +202,7 @@ namespace
 	}
 }
 
-bool FTDDungeonGenerator::GenerateAndValidate(const UTDDungeonTheme& Theme, const UTDDungeonFlowTemplate& Template, ETDDungeonSize Size, int32 Seed, FTDDungeonLayout& OutLayout, FString& OutError)
+bool FTDDungeonGenerator::GenerateAndValidate(const UTDDungeonTheme& Theme, const UTDDungeonFlowTemplate& Template, ETDDungeonSize Size, int32 Seed, FTDDungeonLayout& OutLayout, FString& OutError, const FVector& WorldOriginCm)
 {
 	OutLayout = FTDDungeonLayout();
 	const FTDSeedContext SeedContext(Seed);
@@ -203,7 +221,7 @@ bool FTDDungeonGenerator::GenerateAndValidate(const UTDDungeonTheme& Theme, cons
 	FTDDungeonValidator::FSettings ValidatorSettings;
 	ValidatorSettings.RoomCountRange = TDDungeon::RoomCountRange(Size);
 	ValidatorSettings.MaxDeadEndRatio = Template.MaxDeadEndRatio;
-	OutLayout.Validation = FTDDungeonValidator::Validate(OutLayout, ValidatorSettings);
+	OutLayout.Validation = FTDDungeonValidator::Validate(OutLayout, ValidatorSettings, WorldOriginCm);
 	if (OutLayout.Validation.bPassed)
 	{
 		return true;

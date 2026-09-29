@@ -80,6 +80,27 @@
 - 폴더 정리: `Source/TDGame/{Core,Characters,Framework,Combat/{Damage,GAS,AnimNotify,Skills,Tests},AI,Performance,Actors,World/{Streaming,Persistence,Generation}}`. 클래스 이름은 바꾸지 않았으므로 블루프린트 참조는 유지된다. (2026-09-30 D44로 대체: `Combat/AnimNotify`와 `Framework/ThirdPerson`은 삭제됐다.)
 - 영향: `Docs/MonsterAI_CombatSim/*`의 소스 경로 참조는 새 경로로 치환함(줄 번호는 변화 없음).
 
+### D-38 P2-04 흐름 그래프 생성기 완료 조건 해석
+- 질문: 조건은 템플릿 파라미터로 방 수·분기 수·루프 수 제어, 열쇠 인덱스 < i인데 구현은 방 수 = Size 프리셋(소·중·대), MaxBranches = 부착점당 용량, 루프 최대 1(잠금과 비공존), 열쇠 ≤ i(잠금 앞쪽). 현재 동작을 인정할까, 조건대로 보강할까?
+- 선택지: (a) 현재 동작 인정·조건 문구 정정 (b) 템플릿 필드·다중 루프·열쇠 < i로 보강(결과·해시 변경)
+- 권장: (a). 1,500건 통과·결정론 해시가 유지되고 버티컬 슬라이스에 충분하다.
+- 영향: P2-04
+- 결정: 2026-09-30 사용자 (a). 작은 보완(시드 1~500 키·잠금 테스트)만 하고 닫는다.
+
+### D-39 P2-05 레이아웃 솔버 완료 조건 해석
+- 질문: 조건은 DFS 배치·깊이 4 백트랙·`TSet<FIntVector>`·모듈 GUID인데 구현은 BFS 부착·누적 4회 백트랙·단층 `FIntPoint` 셀·모듈 이름(FName). 현재 방식을 인정할까, 조건대로 재구현할까?
+- 선택지: (a) 현재 방식 인정·조건 문구 정정, GUID는 실제 룸 아트가 생기는 P4로 미룸 (b) DFS·깊이 백트랙·FIntVector·GUID 재구현(결과·해시·골든 변경)
+- 권장: (a). 근거 문서(dungeon-generation.md)는 DFS/BFS 모두 허용하고, 던전은 단층이다.
+- 영향: P2-05
+- 결정: 2026-09-30 사용자 (a). 작은 보완(시드 1~500 성공률 ≥90% 판정·실패 사유 집계 리포트)만 하고 닫는다.
+
+### D-40 P3-00 높이맵 생성기 정본
+- 질문: C++ `FTDHeightmapGenerator`·배열 입력 `CreateLandscape`·`ImportHeightmapFromTexture` 대신 쓰고 있는 numpy 생성기(`Tools/WorldGen/generate_ashen_vale.py`) + raw 입력 C++ `CreateLandscapeFromRawFiles`를 정본으로 인정할까?
+- 선택지: (a) numpy + raw 경로 정본 인정·조건 문구 정정 (b) C++ 생성기 이식(큼)
+- 권장: (a). 같은 시드 바이트 단위 재현이 확인되고 파이프라인이 이미 운영 중이다.
+- 영향: P3-00
+- 결정: 2026-09-30 사용자 (a). 해시 검증·에디터 측정·절차 문서화만 하고 닫는다(`Docs/Validation/P3-00-landscape.md`).
+
 ## 관리 체계 (다중 에이전트 공통 규칙, 2026-09-18 제안)
 
 인용은 `Docs/Tasks/decisions.md#D-12`처럼 `경로#ID`. 새 항목부터 `상태:` 줄을 둔다. 근거: `Docs/AgentCollaboration_Plan.md`. 결정 전에는 에이전트가 해당 항목을 선점하는 변경을 하지 않는다(OP-28).

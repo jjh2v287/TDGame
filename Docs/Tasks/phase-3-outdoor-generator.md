@@ -2,13 +2,14 @@
 
 | 상태 | 개수 |
 |---|---|
-| doing | 9 |
-| done | 3 |
+| todo | 1 |
+| doing | 6 |
+| done | 6 |
 
 목표(설계서 Phase 3): 500m×500m 필드에 마을 1, 던전 3, POI 8을 생성하고 도로 스플라인·배제 마스크·Forest 바이옴 PCG·월드 검증·시드 후보 선택까지 완성한다.
 
 ### P3-00 랜드스케이프 생성 C++ 에디터 함수와 높이맵 파이프라인
-- 상태: doing
+- 상태: done
 - 우선순위: 높음
 - 선행: P0-01, P0-02
 - 목표: 월드 기본 바탕(지형)을 결정론적으로 만들 수 있게 `ALandscape::Import`를 감싼 에디터 함수와 높이맵 생성 경로를 만든다.
@@ -18,11 +19,13 @@
   - 월드 파티션 큰 월드용 `LandscapeStreamingProxy` 분할 옵션(그리드 크기 배수)
   - 도로·강은 `editor_apply_spline`/랜드스케이프 스플라인, 바이옴 마스크는 웨이트맵 렌더타깃 임포트로 쓰는 절차를 문서화
   - Python 원격 실행 또는 커맨드릿에서 호출해 500m×500m 지형 생성 확인
+  - **정정(2026-09-30 D-40)**: 높이맵 정본은 numpy 생성기(`Tools/WorldGen/generate_ashen_vale.py`), 랜드스케이프 생성은 raw 입력 `CreateLandscapeFromRawFiles`로 한다. 배열 입력 `CreateLandscape`·`ImportHeightmapFromTexture`·C++ `FTDHeightmapGenerator`는 만들지 않는다.
 - 산출물: `Source/TDGameEditor/.../TDLandscapeEditorLibrary.h/.cpp`, `Source/TDWorldGen/.../TDHeightmapGenerator.h/.cpp`
 - 검증: 같은 시드 2회 생성 시 높이 배열 해시 동일, 에디터에서 생성된 컴포넌트 수·바운드 확인
 - 참조: research/landscape-mcp-test.md, R-20, R-32
 - 기록: 2026-09-11 작성(MCP UI 자동화로 생성 가능함을 실측했으나 재현성 위해 C++ 경로 채택)
   2026-09-12(Claude): `UTDLandscapeEditorLibrary::CreateLandscapeFromRawFiles(WorldContext, FTDLandscapeCreateRequest)` 구현·검증 — raw 높이맵(uint16)·레이어 raw(uint8) 파일을 읽어 `ALandscapeProxy::Import` → `UE::Landscape::CreateTargetLayerInfo`로 레이어 인포 자동 생성 → `ULandscapeSubsystem::ChangeGridSize`로 월드 파티션 프록시 분할. 1009×1009, 6레이어, 그리드 2 → 프록시 64개 생성 확인(약 25초). 높이맵 생성기는 C++ `FTDHeightmapGenerator` 대신 numpy 프로토타입(`Tools/WorldGen/generate_ashen_vale.py`)으로 먼저 만들었음. 남은 조건: C++ 생성기 이식 여부 결정, 시드 재현성 해시 테스트, 문서화.
+  2026-09-30 검증 종료(claude): 조건을 D-40으로 정정(높이맵 정본 = numpy `generate_ashen_vale.py`, 랜드스케이프 = raw 입력 `UTDLandscapeEditorLibrary::CreateLandscapeFromRawFiles`, 배열 입력·텍스처 임포트 함수와 C++ `FTDHeightmapGenerator`는 만들지 않음). 시드 7 2회 생성 SHA-256 동일(높이·레이어 6종·layout), 에디터 측정 랜드스케이프 1·프록시 64·컴포넌트 256·1,008m×1,008m, 절차 문서 `Tools/WorldGen/README.md` 'P3-00' 절. 증거 `Docs/Validation/P3-00-landscape.md`.
 
 ### P3-11 잿빛 골짜기(Ashen Vale) 메인 지역 프로토타입 생성·베이크
 - 상태: doing
@@ -59,22 +62,24 @@
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude): `ATDWorldAnchorActor`, `ATDRegionVolume`, `ATDPoiAnchor`, `ATDExclusionVolume`, `ATDRoadSplineActor` 런타임 액터 구현. 앵커는 정의 에셋 `HandAuthoredAnchors`로도 입력 가능. 생성기 입력 연결·잠금 보존은 남음.
 
 ### P3-03 월드 그래프 생성기 `FTDWorldGraphGenerator`
-- 상태: doing
+- 상태: done
 - 우선순위: 높음
 - 선행: P3-02
 - 목표: 지역 정의 + 앵커 + 시드 → 사이드 던전 입구 후보, POI 후보, 이벤트 영역, 전투 공간을 포아송 디스크 샘플링으로 배치한다(`FTDWorldLayout`).
 - 완료 조건: 최소 간격·앵커 배제 반경·지형 조건(경사·수면, 랜드스케이프 샘플은 에디터 단계에서 주입) 준수, 결정론 테스트, 지역별 수량 범위 충족
 - 참조: R-21, R-32
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude) C++: `TDWorldGraphGenerator.cpp`(앵커 고정 → 포아송 디스크 → 입구/POI/공터/이벤트 배치, 결정론 GUID), 테스트 시드 1~50 통과율 100%.
+  2026-09-30 검증 종료(claude): 테스트 `PlacementAvoidsWaterSteepSlopeAndAnchorExclusion`(합성 지형 시드 1~50 배치 822개 중 수면·경사 위반 0, 지형 없을 때는 287개가 금지 위치 → 필터 실효 확인, 앵커 배제 반경 안 0, Arena·EventArea 포함 간격 충족)·`PlacementCountsWithinRegionRanges`(시드 1~50 할당량·Arena·EventArea·SideDungeon 수량 범위 충족) 추가, `SameSeedProducesSameHash`·`FlatRegionPassRate` 50/50 유지. 75/75, 근거 `Saved/AgentOps/20260930/fix-world.md`.
 
 ### P3-04 도로 생성기 `FTDRoadGenerator`
-- 상태: doing
+- 상태: done
 - 우선순위: 높음
 - 선행: P3-03
 - 목표: 마을·메인 POI·던전 입구를 잇는 도로 스플라인 점을 만든다.
 - 완료 조건: 최소 신장 트리 + 보조 연결(설정 비율), 경사 비용 가중 A*(격자 코스트 맵은 에디터가 랜드스케이프에서 샘플해 전달), 도로 폭·배제 폭 출력
 - 참조: R-21, R-32(스플라인 샘플링)
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude) C++: `TDRoadGenerator.cpp`(격자 A* 경사·수면 비용, 프림 MST + 보조 도로, 20m 재표본), 테스트 `RoadsReachAllEntrancesFromTown` 통과.
+  2026-09-30 검증 종료(claude): 도로 노드에 Landmark 앵커 포함(`TDRoadGenerator.cpp` CollectNodes, 에디터는 잠긴 POI·입구를 Landmark로 넘김), 월드 검증기 road_reach 대상에도 포함(`TDWorldValidator.cpp` CollectLandmarkTargets). 테스트 `RoadsReachLandmarkAnchors`(주 도로 = 노드−1, 보조 = round(0.3×주), 먼 Landmark는 road_reach 오류)·`RoadsFollowGentlePassThroughSteepBand`(지형 있으면 최대 |Y| 15,400cm 통로 우회, 평지 200cm) 추가. 75/75.
 
 ### P3-05 월드 검증기 `FTDWorldValidator`
 - 상태: doing
@@ -134,3 +139,12 @@
 - 완료 조건: `-run=WorldPartitionBuilderCommandlet <Map> -Builder=TDWorldGenBuilder -Seed= -Validate [-Bake]`, 리포트 파일 `Saved/WorldGen/<날짜>.md`, 실패 시 종료 코드 ≠ 0
 - 참조: research/persistence-editor-batch.md 3.1
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude): `UTDWorldGenCommandlet`(`-run=TDWorldGen -Flow -Size -Seeds -Report`) 던전 시드 스윕 리포트 동작 확인. 월드 파티션 빌더 파생·베이크 옵션은 남음. / 2026-09-12(Claude): `UTDWorldGenBuilder : UWorldPartitionBuilder`(`Source/TDGameEditor/WorldGen/TDWorldGenBuilder.*`). `UnrealEditor-Cmd.exe TDGame.uproject /Game/Level/LV_DarkFantasy_OpenWorld -run=WorldPartitionBuilderCommandlet -Builder=TDWorldGenBuilder -Seed=7 -Validate [-Bake] [-Region=] [-Report=Saved/WorldGen/x.md] -unattended` → 시드 7 PASS 100/100, 종료 코드 0(검증 실패 시 1 확인). 주의: 에디터가 켜져 있으면 MCP 포트 8000 충돌 오류 로그 때문에 종료 코드가 1이 되므로 에디터를 닫고 실행. 결정 D-09. 첫 실행에서 MainDungeon 입구 지형 검사가 실패해 앵커에 `YawDeg` 추가·입구 접근로(전방 반원) 표본으로 검사 방식 변경(D-10).
+
+### P3-12 ID 없는 Landmark 앵커 여러 개일 때 도로 ID 중복
+- 상태: todo
+- 우선순위: 낮음
+- 선행: P3-04
+- 목표: Landmark 앵커를 도로 노드로 모을 때 ID가 비어 있어도 도로 ID가 겹치지 않게 결정론적 대체 ID를 만든다.
+- 완료 조건: ID 없는 Landmark 2개 이상 픽스처에서 도로 ID 고유, 결정론 해시 테스트 통과
+- 참조: P3-04 2026-09-30 기록, `Saved/AgentOps/20260930/fix-world.md`
+- 기록: 2026-09-30 발견(claude). 에디터 경로는 액터 라벨로 ID를 만들어 실제 영향은 작음

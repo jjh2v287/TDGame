@@ -62,3 +62,11 @@
 - 증거: 미검증(2026-09-18 세션에서 4회 재현)
 - 날짜·상태: 2026-09-18 active
 - 발견: claude
+
+### L-repo-08 대장 기록의 "구현·테스트 통과"만 보고 항목을 닫으면 완료 조건과 어긋난다 — 조건 문구와 한 줄씩 대조한다
+- 증상: 2026-09-12에 "C++ 구현, 테스트 통과"로 기록된 채 doing으로 남은 월드·던전 7개(P2-02·04·05·06, P3-00·03·04)를 조건별로 대조하자 7개 모두 미충족 조건이 있었다(시드 1~200 vs 조건 1~500, BFS vs 조건 DFS, 주경로 비율 검사 누락, IsDataValid 테스트 없음, C++ 높이맵 생성기 대신 numpy 등).
+- 해결: 항목당 감사자 1명이 완료 조건을 met/partial/unmet으로 판정(워크플로 `worldgen-a-items-audit`) → 작은 보완은 구현·테스트 후 닫고, 설계가 다른 것은 사용자 결정(decisions.md D-38~40)으로 조건 문구를 정정한 뒤 닫는다. 닫을 때 기록에 테스트 이름·수치를 남긴다.
+- 범위: `Docs/Tasks/phase-*.md`, `Docs/MonsterAI_CombatSim/07-roadmap-and-tasks.md` 등 모든 대장
+- 증거: `Saved/AgentOps/20260930/fix-dungeon.md`·`fix-world.md`, `Docs/Validation/P3-00-landscape.md`, 테스트 75/75(`Saved/Logs/AItemsFinal.log`)
+- 날짜·상태: 2026-09-30 active
+- 발견: claude

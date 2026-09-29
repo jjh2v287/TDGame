@@ -8,6 +8,30 @@ namespace
 	const float CorridorLengthWeights[] = {0.3f, 0.4f, 0.2f, 0.1f};
 	const float CorridorTurnWeights[] = {0.6f, 0.2f, 0.2f};
 
+	enum class ETDLayoutFailure : uint8
+	{
+		None,
+		NoFreeSocket,
+		NoModule,
+		Overlap,
+		LoopClosure,
+		BacktrackLimit,
+		Count
+	};
+
+	const TCHAR* LayoutFailureName(ETDLayoutFailure Failure)
+	{
+		switch (Failure)
+		{
+		case ETDLayoutFailure::NoFreeSocket: return TEXT("no_free_socket");
+		case ETDLayoutFailure::NoModule: return TEXT("no_module");
+		case ETDLayoutFailure::Overlap: return TEXT("overlap");
+		case ETDLayoutFailure::LoopClosure: return TEXT("loop_closure");
+		case ETDLayoutFailure::BacktrackLimit: return TEXT("backtrack_limit");
+		default: return TEXT("none");
+		}
+	}
+
 	int32 PickWeightedIndex(FRandomStream& Rng, TArrayView<const float> Weights)
 	{
 		float Total = 0.0f;
@@ -424,14 +448,14 @@ namespace
 			Rooms[Record.ParentRoom].Sockets[Record.ParentSocket].ConnectedRoom = INDEX_NONE;
 		}
 
-		bool TryAttach(int32 ParentRoom, const FTDFlowNode& Node, int32 DegreeRequired, FName LockId, FRandomStream& Rng, FTDPlacementRecord& OutRecord)
+		ETDLayoutFailure TryAttach(int32 ParentRoom, const FTDFlowNode& Node, int32 DegreeRequired, FName LockId, FRandomStream& Rng, FTDPlacementRecord& OutRecord)
 		{
 			TArray<const FTDRoomModuleDefinition*> Modules;
 			Theme.CollectModulesWithRole(Node.Role, Modules);
 			Modules.RemoveAll([DegreeRequired](const FTDRoomModuleDefinition* Module) { return Module->Sockets.Num() < DegreeRequired; });
 			if (Modules.Num() == 0)
 			{
-				return false;
+				return ETDLayoutFailure::NoModule;
 			}
 			const int32 WeightCount = FMath::Clamp(Settings.MaxCorridorCells + 1, 1, static_cast<int32>(UE_ARRAY_COUNT(CorridorLengthWeights)));
 			const TArrayView<const float> LengthWeights(CorridorLengthWeights, WeightCount);
@@ -441,7 +465,7 @@ namespace
 				CollectFreeSockets(ParentRoom, FreeSockets);
 				if (FreeSockets.Num() == 0)
 				{
-					return false;
+					return ETDLayoutFailure::NoFreeSocket;
 				}
 				const int32 ParentSocket = FreeSockets[Rng.RandHelper(FreeSockets.Num())];
 				const FTDSolverSocket Socket = Rooms[ParentRoom].Sockets[ParentSocket];
@@ -509,11 +533,11 @@ namespace
 						OutRecord.RoomCountBefore = RoomCountBefore;
 						OutRecord.DoorCountBefore = DoorCountBefore;
 						OutRecord.LockId = LockId;
-						return true;
+						return ETDLayoutFailure::None;
 					}
 				}
 			}
-			return false;
+			return ETDLayoutFailure::Overlap;
 		}
 
 		void ComputeBounds(FIntPoint& OutMin, FIntPoint& OutMax) const
@@ -653,7 +677,7 @@ namespace
 		}
 	};
 
-	bool SolveAttempt(const FTDDungeonFlowGraph& Graph, const TArray<TArray<const FTDFlowEdge*>>& TreeChildren, const TArray<int32>& Degrees, const FTDRoomModuleDefinition& EntranceModule, FTDSolverState& State, FRandomStream& Rng)
+	ETDLayoutFailure SolveAttempt(const FTDDungeonFlowGraph& Graph, const TArray<TArray<const FTDFlowEdge*>>& TreeChildren, const TArray<int32>& Degrees, const FTDRoomModuleDefinition& EntranceModule, FTDSolverState& State, FRandomStream& Rng)
 	{
 		const FTDFlowNode& StartNode = Graph.Nodes[Graph.StartNode];
 		State.PlaceRoom(EntranceModule, 0, FIntPoint::ZeroValue, {StartNode.Role}, StartNode.Index, StartNode.HeldKeyId);
@@ -669,22 +693,28 @@ namespace
 				while (true)
 				{
 					FTDPlacementRecord Record;
-					if (State.TryAttach(State.NodeToRoom[ParentNode], Child, Degrees[Child.Index], Edge->LockId, Rng, Record))
+					const ETDLayoutFailure AttachFailure = State.TryAttach(State.NodeToRoom[ParentNode], Child, Degrees[Child.Index], Edge->LockId, Rng, Record);
+					if (AttachFailure == ETDLayoutFailure::None)
 					{
 						Records.Add(Record);
 						break;
 					}
-					if (Records.Num() == 0 || BacktracksUsed >= State.Settings.MaxBacktrackDepth)
+					if (Records.Num() == 0)
 					{
-						return false;
+						return AttachFailure;
+					}
+					if (BacktracksUsed >= State.Settings.MaxBacktrackDepth)
+					{
+						return ETDLayoutFailure::BacktrackLimit;
 					}
 					const FTDPlacementRecord Undone = Records.Pop();
 					State.Undo(Undone);
 					++BacktracksUsed;
 					FTDPlacementRecord Replaced;
-					if (!State.TryAttach(Undone.ParentRoom, Graph.Nodes[Undone.Node], Degrees[Undone.Node], Undone.LockId, Rng, Replaced))
+					const ETDLayoutFailure ReplaceFailure = State.TryAttach(Undone.ParentRoom, Graph.Nodes[Undone.Node], Degrees[Undone.Node], Undone.LockId, Rng, Replaced);
+					if (ReplaceFailure != ETDLayoutFailure::None)
 					{
-						return false;
+						return ReplaceFailure;
 					}
 					Records.Add(Replaced);
 				}
@@ -699,10 +729,10 @@ namespace
 			}
 			if (!State.TryCloseLoop(State.NodeToRoom[Edge.From], State.NodeToRoom[Edge.To], Rng))
 			{
-				return false;
+				return ETDLayoutFailure::LoopClosure;
 			}
 		}
-		return true;
+		return ETDLayoutFailure::None;
 	}
 
 	FName MakeRoomId(int32 Index)
@@ -813,18 +843,30 @@ bool FTDDungeonLayoutSolver::Solve(const FTDDungeonFlowGraph& Graph, const UTDDu
 			TreeChildren[Edge.From].Add(&Edge);
 		}
 	}
+	TArray<int32> FailureCounts;
+	FailureCounts.Init(0, static_cast<int32>(ETDLayoutFailure::Count));
 	for (int32 Restart = 0; Restart <= Settings.MaxRestarts; ++Restart)
 	{
 		FRandomStream Rng = Seed.Derive(TEXT("Layout"), Restart);
 		FTDSolverState State(Theme, Settings);
-		if (!SolveAttempt(Graph, TreeChildren, Degrees, *EntranceModules[0], State, Rng))
+		const ETDLayoutFailure Failure = SolveAttempt(Graph, TreeChildren, Degrees, *EntranceModules[0], State, Rng);
+		if (Failure != ETDLayoutFailure::None)
 		{
+			++FailureCounts[static_cast<int32>(Failure)];
 			continue;
 		}
 		FillLayout(State, Graph, Theme, Seed, OutLayout);
 		OutLayout.LayoutRestarts = Restart;
 		return true;
 	}
-	OutError = FString::Printf(TEXT("배치 실패: 재시작 %d회 초과"), Settings.MaxRestarts);
+	TArray<FString> FailureSummary;
+	for (int32 Index = static_cast<int32>(ETDLayoutFailure::None) + 1; Index < FailureCounts.Num(); ++Index)
+	{
+		if (FailureCounts[Index] > 0)
+		{
+			FailureSummary.Add(FString::Printf(TEXT("%s=%d"), LayoutFailureName(static_cast<ETDLayoutFailure>(Index)), FailureCounts[Index]));
+		}
+	}
+	OutError = FString::Printf(TEXT("배치 실패: 재시작 %d회 초과 (%s)"), Settings.MaxRestarts, *FString::Join(FailureSummary, TEXT(", ")));
 	return false;
 }

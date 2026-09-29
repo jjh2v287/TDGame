@@ -32,6 +32,13 @@ C++ 도구: `Source/TDGameEditor/Landscape/TDLandscapeEditorLibrary.*`(에디터
 - 마을 중심 (−110, 20)m, 반지름 92m. 메인 던전 (352, −318), 사이드 던전 NW (−372, −262), SE (318, 412).
 - 도로: 평탄화 폭 3.5~7m + 6m 완만, `Road` 레이어. 강: 바닥 −3.1m, 폭 약 9m, 주변 계곡 완화.
 
+## 지형·도로·강·바이옴 마스크 절차 (P3-00, 2026-09-30 정본 결정)
+- 정본: 높이맵·레이어는 numpy 생성기 `generate_ashen_vale.py`가 만든다(C++ `FTDHeightmapGenerator`는 만들지 않음, 사용자 결정 2026-09-30). 같은 시드면 `height.r16`·`layer_*.r8`·`layout.json`(출력 경로 문자열 제외)이 바이트 단위로 같다.
+- 랜드스케이프 생성: C++ `UTDLandscapeEditorLibrary::CreateLandscapeFromRawFiles(월드, FTDLandscapeCreateRequest)`가 raw 높이맵(uint16)·레이어(uint8)를 읽어 `ALandscapeProxy::Import` → 레이어 인포 자동 생성(`/Game/World/Landscape/Layers`) → `ULandscapeSubsystem::ChangeGridSize`로 월드 파티션 스트리밍 프록시 분할(그리드 2 = 8×8 프록시). 배열 직접 입력·텍스처 임포트 함수는 두지 않는다(raw 파일 경로로 대체).
+- 도로·강: 스플라인이 아니라 생성기가 높이맵에 직접 새긴다(도로 평탄화 3.5~7m + 6m 완만 경사와 `Road` 레이어, 강 바닥 −3.1m·폭 약 9m 계곡). 사후 손질이 필요하면 에디터 랜드스케이프 스플라인 도구로 고치고, 재생성 시 덮어써지므로 생성기 좌표(코드 상수)에 반영한다.
+- 바이옴 마스크: 레이어 가중치 raw 6종(Soil/Moss/Mud/Road/Rock/Bedrock)을 임포트해 웨이트맵으로 쓰고, PCG 바이옴 그래프가 레이어 이름으로 샘플한다(P3-07). 렌더 타깃 경유 임포트는 쓰지 않는다.
+- 결정론 확인: `python Tools/WorldGen/generate_ashen_vale.py --seed 7 --out <A>`와 `--out <B>`를 실행해 두 폴더 파일의 SHA-256을 비교한다(증거 `Docs/Validation/P3-00-landscape.md`).
+
 ## 다시 만들 때
 `editor_build_open_world.py`는 `WorldSettings/WorldDataLayers/WorldPartitionMiniMap`을 제외한 **모든 액터를 지우고** 다시 만든다. 손으로 다듬은 액터를 보존하려면 라벨 접두어를 `TDGen_`이 아닌 것으로 바꾸고 `KEEP_CLASSES`/보존 규칙을 추가할 것(할 일 P3-06 잠금 기능).
 

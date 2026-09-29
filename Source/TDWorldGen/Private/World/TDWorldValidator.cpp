@@ -126,6 +126,18 @@ namespace
 		}
 	}
 
+	void CollectLandmarkTargets(const FTDWorldLayout& Layout, TArray<FTDContentTarget>& OutTargets)
+	{
+		for (const FTDWorldAnchor& Anchor : Layout.Anchors)
+		{
+			if (Anchor.Kind != ETDWorldAnchorKind::Landmark)
+			{
+				continue;
+			}
+			OutTargets.Add({ Anchor.AnchorId, Anchor.LocationCm });
+		}
+	}
+
 	const FTDWorldAnchor* FindStartAnchor(const FTDWorldLayout& Layout)
 	{
 		const FTDWorldAnchor* Town = Layout.FindAnchor(ETDWorldAnchorKind::Town);
@@ -212,6 +224,7 @@ namespace
 	{
 		TArray<FTDContentTarget> Targets;
 		CollectContentTargets(Layout, Targets);
+		CollectLandmarkTargets(Layout, Targets);
 		const FTDWorldAnchor* Start = FindStartAnchor(Layout);
 		if (Start == nullptr)
 		{

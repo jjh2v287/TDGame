@@ -29,9 +29,10 @@ struct TDWORLDGEN_API FTDDungeonValidator
 	{
 		FIntPoint RoomCountRange = FIntPoint(10, 15);
 		float MaxDeadEndRatio = 0.4f;
+		float MinMainPathRatio = 0.6f;
 	};
 
-	static FTDValidationReport Validate(const FTDDungeonLayout& Layout, const FSettings& Settings);
+	static FTDValidationReport Validate(const FTDDungeonLayout& Layout, const FSettings& Settings, const FVector& WorldOriginCm = FVector::ZeroVector);
 };
 
 struct TDWORLDGEN_API FTDCandidateSelector
@@ -50,7 +51,7 @@ struct TDWORLDGEN_API FTDCandidateSelector
 
 struct TDWORLDGEN_API FTDDungeonGenerator
 {
-	static bool GenerateAndValidate(const UTDDungeonTheme& Theme, const UTDDungeonFlowTemplate& Template, ETDDungeonSize Size, int32 Seed, FTDDungeonLayout& OutLayout, FString& OutError);
+	static bool GenerateAndValidate(const UTDDungeonTheme& Theme, const UTDDungeonFlowTemplate& Template, ETDDungeonSize Size, int32 Seed, FTDDungeonLayout& OutLayout, FString& OutError, const FVector& WorldOriginCm = FVector::ZeroVector);
 	static FString ToJson(const FTDDungeonLayout& Layout, const FVector& WorldOffsetCm);
 	static bool WriteJsonFile(const FTDDungeonLayout& Layout, const FVector& WorldOffsetCm, const FString& FilePath);
 };

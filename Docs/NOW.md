@@ -1,12 +1,12 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-09-30 02:25 claude
+갱신: 2026-09-30 02:53 claude
 
 ## ① 진행 중 (대장 doing)
 
-- 월드·던전: P2-02·04·05·06·07·09 / P3-00·02·03·04·05·07·08·09·11. 담당 없음, 마지막 기록 2026-09-12 claude.
+- 월드·던전: 09-30 claude가 P2-02·04·05·06, P3-00·03·04를 조건 대조·보완 후 done(D-38~40, 테스트 75/75, 미커밋). 남은 doing(담당 없음): P2-07·09 / P3-02·05·07·08·09·11, todo: P2-11·13·14, P3-12.
 - 몬스터 AI: doing 없음. 수직 슬라이스(`Source/TDGame/MonsterAI/`, JSON 7종, LV-Cambat 25마리)는 새 몸(Mover·UAF)으로 PIE 재통과.
-- 이동·애니: M3-16 done(D44) — 모든 캐릭터 `APawn`+Mover+UAF, AnimBP·몽타주·AnimNotify·StateTree 미사용, 행동은 시퀀스 주입 + C++ 시간표 `FTDActionAnimation`. 브랜치 `feat/mover-uaf`에 커밋 후 main에 병합(2026-09-30 사용자 지시, 원격 푸시 안 함).
+- 이동·애니: M3-16 done(D44) — 모든 캐릭터 `APawn`+Mover+UAF, AnimBP·몽타주·AnimNotify·StateTree 미사용, 행동은 시퀀스 주입 + C++ 시간표 `FTDActionAnimation`. 브랜치 `feat/mover-uaf`에 커밋 후 main에 병합, 사용자가 origin에 푸시(f166d4b).
 - 공통: 관리 체계 유지 중.
 - 최근 완료: claude 09-30 M3-16(헤드리스 66/66, PIE 플레이어·몬스터 통과, 쿠킹 25마리 게임 스레드 7.23→4.12ms) / codex MegaMagic 10종(자동화 37/37·PIE 10/10) / claude 09-25 오픈월드 심리스 회귀 수정(L-editor-09).
 

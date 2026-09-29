@@ -160,16 +160,23 @@ bool UTDWorldGenEditorLibrary::BakeDungeonToSlot(UObject* WorldContextObject, co
 bool UTDWorldGenEditorLibrary::GenerateAndBakeDungeon(UObject* WorldContextObject, UTDDungeonTheme* Theme, UTDDungeonFlowTemplate* FlowTemplate, ETDDungeonSize Size, int32 Seed, UTDDungeonAtlasDefinition* Atlas, int32 SlotIndex, FName DungeonId, FString& OutReportMarkdown)
 {
 	const FString Title = FString::Printf(TEXT("Dungeon %s slot %d seed %d"), *DungeonId.ToString(), SlotIndex, Seed);
+	if (!Theme || !FlowTemplate)
+	{
+		OutReportMarkdown = FString::Printf(TEXT("# %s\n\nGeneration failed: Theme or FlowTemplate is null\n"), *Title);
+		UE_LOG(LogTDWorldGenEditor, Error, TEXT("%s: Theme or FlowTemplate is null"), *Title);
+		return false;
+	}
+
+	const FVector SlotOriginCm = ResolveSlotOriginCm(Atlas, SlotIndex);
 	FTDDungeonLayout Layout;
 	FString Error;
-	if (!GenerateDungeonLayout(Theme, FlowTemplate, Size, Seed, Layout, Error))
+	if (!FTDDungeonGenerator::GenerateAndValidate(*Theme, *FlowTemplate, Size, Seed, Layout, Error, SlotOriginCm))
 	{
 		OutReportMarkdown = FString::Printf(TEXT("# %s\n\nGeneration failed: %s\n"), *Title, *Error);
 		UE_LOG(LogTDWorldGenEditor, Error, TEXT("%s: generation failed: %s"), *Title, *Error);
 		return false;
 	}
 
-	const FVector SlotOriginCm = ResolveSlotOriginCm(Atlas, SlotIndex);
 	UWorld* World = ResolveWorld(WorldContextObject);
 	if (!World)
 	{

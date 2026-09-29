@@ -8,8 +8,10 @@ namespace
 	const FName CodeConnectivity(TEXT("connectivity"));
 	const FName CodeRoomCount(TEXT("room_count"));
 	const FName CodeDeadEndRatio(TEXT("deadend_ratio"));
+	const FName CodeMainPathRatio(TEXT("main_path_ratio"));
 	const FName CodeProgression(TEXT("progression_key_lock"));
-	constexpr int32 CheckCount = 7;
+	constexpr int32 CheckCount = 8;
+	constexpr float WarningCheckPenalty = 0.5f;
 
 	struct FTDRoomAdjacency
 	{
@@ -37,6 +39,42 @@ namespace
 		static FName OtherSide(const FTDPlacedDoor& Door, FName RoomId)
 		{
 			return Door.RoomA == RoomId ? Door.RoomB : Door.RoomA;
+		}
+
+		bool FindShortestPath(FName Start, FName Goal, TArray<FName>& OutPath) const
+		{
+			TMap<FName, FName> Previous;
+			Previous.Add(Start, NAME_None);
+			TArray<FName> Frontier = {Start};
+			for (int32 Head = 0; Head < Frontier.Num(); ++Head)
+			{
+				const FName Current = Frontier[Head];
+				if (Current == Goal)
+				{
+					OutPath.Reset();
+					for (FName Walk = Current; !Walk.IsNone(); Walk = Previous[Walk])
+					{
+						OutPath.Insert(Walk, 0);
+					}
+					return true;
+				}
+				const TArray<const FTDPlacedDoor*>* Doors = DoorsByRoom.Find(Current);
+				if (!Doors)
+				{
+					continue;
+				}
+				for (const FTDPlacedDoor* Door : *Doors)
+				{
+					const FName Next = OtherSide(*Door, Current);
+					if (Previous.Contains(Next))
+					{
+						continue;
+					}
+					Previous.Add(Next, Current);
+					Frontier.Add(Next);
+				}
+			}
+			return false;
 		}
 	};
 
@@ -91,12 +129,14 @@ namespace
 		return Room.Cells.Num() > 0 ? Layout.CellCenterLocal(Room.Cells[0]) : FVector::ZeroVector;
 	}
 
-	void AddSummary(FTDValidationReport& Report, FName Code, bool bPassed, const FString& Message)
+	void AddSummary(FTDValidationReport& Report, FName Code, ETDValidationSeverity FailedSeverity, bool bPassed, const FString& Message, const FTDDungeonLayout& Layout, const FTDPlacedRoom* AnchorRoom)
 	{
-		Report.Add(bPassed ? ETDValidationSeverity::Info : ETDValidationSeverity::Error, Code, Message);
+		const ETDValidationSeverity Severity = bPassed ? ETDValidationSeverity::Info : FailedSeverity;
+		const FVector Location = AnchorRoom ? RoomLocation(Layout, *AnchorRoom) : FVector::ZeroVector;
+		Report.Add(Severity, Code, Message, Location, AnchorRoom ? AnchorRoom->RoomId : NAME_None);
 	}
 
-	void CheckRequiredRooms(const FTDDungeonLayout& Layout, FTDValidationReport& Report)
+	void CheckRequiredRooms(const FTDDungeonLayout& Layout, const FTDPlacedRoom* Anchor, FTDValidationReport& Report)
 	{
 		int32 Entrances = 0;
 		int32 Bosses = 0;
@@ -105,10 +145,10 @@ namespace
 			Entrances += Room.HasRole(ETDRoomRole::Entrance) ? 1 : 0;
 			Bosses += Room.HasRole(ETDRoomRole::Boss) ? 1 : 0;
 		}
-		AddSummary(Report, CodeRequiredRooms, Entrances == 1 && Bosses >= 1, FString::Printf(TEXT("start=%d boss=%d"), Entrances, Bosses));
+		AddSummary(Report, CodeRequiredRooms, ETDValidationSeverity::Error, Entrances == 1 && Bosses >= 1, FString::Printf(TEXT("start=%d boss=%d"), Entrances, Bosses), Layout, Anchor);
 	}
 
-	void CheckOverlap(const FTDDungeonLayout& Layout, FTDValidationReport& Report)
+	void CheckOverlap(const FTDDungeonLayout& Layout, const FTDPlacedRoom* Anchor, FTDValidationReport& Report)
 	{
 		TMap<FIntPoint, FName> Owner;
 		int32 Problems = 0;
@@ -124,10 +164,10 @@ namespace
 				Owner.Add(Cell, Room.RoomId);
 			}
 		}
-		AddSummary(Report, CodeOverlap, Problems == 0, FString::Printf(TEXT("%d overlapping cells"), Problems));
+		AddSummary(Report, CodeOverlap, ETDValidationSeverity::Error, Problems == 0, FString::Printf(TEXT("%d overlapping cells"), Problems), Layout, Anchor);
 	}
 
-	void CheckDoorIntegrity(const FTDDungeonLayout& Layout, FTDValidationReport& Report)
+	void CheckDoorIntegrity(const FTDDungeonLayout& Layout, const FTDPlacedRoom* Anchor, FTDValidationReport& Report)
 	{
 		TMap<FIntPoint, FName> Owner;
 		for (const FTDPlacedRoom& Room : Layout.Rooms)
@@ -156,14 +196,14 @@ namespace
 				Report.Add(ETDValidationSeverity::Error, CodeDoorIntegrity, FString::Printf(TEXT("%s cell ownership mismatch at (%d,%d)/(%d,%d)"), *DoorName, Door.CellA.X, Door.CellA.Y, Door.CellB.X, Door.CellB.Y), Layout.CellCenterLocal(Door.CellA), Door.RoomA);
 			}
 		}
-		AddSummary(Report, CodeDoorIntegrity, Problems == 0, FString::Printf(TEXT("%d door connections checked, %d problems"), Layout.Doors.Num(), Problems));
+		AddSummary(Report, CodeDoorIntegrity, ETDValidationSeverity::Error, Problems == 0, FString::Printf(TEXT("%d door connections checked, %d problems"), Layout.Doors.Num(), Problems), Layout, Anchor);
 	}
 
-	void CheckConnectivity(const FTDDungeonLayout& Layout, const FTDRoomAdjacency& Adjacency, const FTDPlacedRoom* Entrance, const FTDPlacedRoom* Boss, FTDValidationReport& Report)
+	void CheckConnectivity(const FTDDungeonLayout& Layout, const FTDRoomAdjacency& Adjacency, const FTDPlacedRoom* Entrance, const FTDPlacedRoom* Boss, const FTDPlacedRoom* Anchor, FTDValidationReport& Report)
 	{
 		if (!Entrance || !Boss)
 		{
-			AddSummary(Report, CodeConnectivity, false, TEXT("entrance or boss room missing"));
+			AddSummary(Report, CodeConnectivity, ETDValidationSeverity::Error, false, TEXT("entrance or boss room missing"), Layout, Anchor);
 			return;
 		}
 		TSet<FName> Visited;
@@ -180,7 +220,7 @@ namespace
 			Report.Add(ETDValidationSeverity::Error, CodeConnectivity, FString::Printf(TEXT("unreachable room %s"), *Room.RoomId.ToString()), RoomLocation(Layout, Room), Room.RoomId);
 		}
 		const bool bBossReachable = Visited.Contains(Boss->RoomId);
-		AddSummary(Report, CodeConnectivity, bBossReachable && Unreachable == 0, FString::Printf(TEXT("boss reachable=%s, unreachable rooms=%d"), bBossReachable ? TEXT("true") : TEXT("false"), Unreachable));
+		AddSummary(Report, CodeConnectivity, ETDValidationSeverity::Error, bBossReachable && Unreachable == 0, FString::Printf(TEXT("boss reachable=%s, unreachable rooms=%d"), bBossReachable ? TEXT("true") : TEXT("false"), Unreachable), Layout, Boss);
 	}
 
 	int32 CountNonCorridorRooms(const FTDDungeonLayout& Layout)
@@ -193,14 +233,14 @@ namespace
 		return Count;
 	}
 
-	void CheckRoomCount(const FTDDungeonLayout& Layout, const FIntPoint& Range, FTDValidationReport& Report)
+	void CheckRoomCount(const FTDDungeonLayout& Layout, const FIntPoint& Range, const FTDPlacedRoom* Anchor, FTDValidationReport& Report)
 	{
 		const int32 Count = CountNonCorridorRooms(Layout);
 		const bool bPassed = Count >= Range.X && Count <= Range.Y;
-		AddSummary(Report, CodeRoomCount, bPassed, FString::Printf(TEXT("%d rooms (allowed %d..%d for %s)"), Count, Range.X, Range.Y, TDDungeon::SizeName(Layout.Size)));
+		AddSummary(Report, CodeRoomCount, ETDValidationSeverity::Error, bPassed, FString::Printf(TEXT("%d rooms (allowed %d..%d for %s)"), Count, Range.X, Range.Y, TDDungeon::SizeName(Layout.Size)), Layout, Anchor);
 	}
 
-	void CheckDeadEndRatio(const FTDDungeonLayout& Layout, const FTDRoomAdjacency& Adjacency, float MaxRatio, FTDValidationReport& Report)
+	void CheckDeadEndRatio(const FTDDungeonLayout& Layout, const FTDRoomAdjacency& Adjacency, float MaxRatio, const FTDPlacedRoom* Anchor, FTDValidationReport& Report)
 	{
 		const int32 RoomCount = CountNonCorridorRooms(Layout);
 		TArray<const FTDPlacedRoom*> DeadEnds;
@@ -224,14 +264,47 @@ namespace
 				Report.Add(ETDValidationSeverity::Warning, CodeDeadEndRatio, FString::Printf(TEXT("dead-end room %s"), *Room->RoomId.ToString()), RoomLocation(Layout, *Room), Room->RoomId);
 			}
 		}
-		AddSummary(Report, CodeDeadEndRatio, bPassed, FString::Printf(TEXT("%d/%d = %.2f (max %.2f)"), DeadEnds.Num(), RoomCount, Ratio, MaxRatio));
+		AddSummary(Report, CodeDeadEndRatio, ETDValidationSeverity::Warning, bPassed, FString::Printf(TEXT("%d/%d = %.2f (max %.2f)"), DeadEnds.Num(), RoomCount, Ratio, MaxRatio), Layout, Anchor);
 	}
 
-	void CheckProgression(const FTDDungeonLayout& Layout, const FTDRoomAdjacency& Adjacency, const FTDPlacedRoom* Entrance, const FTDPlacedRoom* Boss, FTDValidationReport& Report)
+	void CheckMainPathRatio(const FTDDungeonLayout& Layout, const FTDRoomAdjacency& Adjacency, const FTDPlacedRoom* Entrance, const FTDPlacedRoom* Boss, float MinRatio, const FTDPlacedRoom* Anchor, FTDValidationReport& Report)
+	{
+		const int32 RoomCount = CountNonCorridorRooms(Layout);
+		TArray<FName> Path;
+		if (!Entrance || !Boss || RoomCount == 0 || !Adjacency.FindShortestPath(Entrance->RoomId, Boss->RoomId, Path))
+		{
+			AddSummary(Report, CodeMainPathRatio, ETDValidationSeverity::Warning, false, TEXT("no entrance-to-boss path"), Layout, Boss ? Boss : Anchor);
+			return;
+		}
+		TArray<const FTDPlacedRoom*> PathRooms;
+		TArray<FString> PathRoomIds;
+		for (const FName RoomId : Path)
+		{
+			const FTDPlacedRoom* Room = Layout.FindRoom(RoomId);
+			if (!Room || Room->HasRole(ETDRoomRole::Corridor))
+			{
+				continue;
+			}
+			PathRooms.Add(Room);
+			PathRoomIds.Add(RoomId.ToString());
+		}
+		const float Ratio = static_cast<float>(PathRooms.Num()) / RoomCount;
+		const bool bPassed = Ratio >= MinRatio;
+		if (!bPassed)
+		{
+			for (int32 Step = 0; Step < PathRooms.Num(); ++Step)
+			{
+				Report.Add(ETDValidationSeverity::Warning, CodeMainPathRatio, FString::Printf(TEXT("main path step %d room %s"), Step, *PathRooms[Step]->RoomId.ToString()), RoomLocation(Layout, *PathRooms[Step]), PathRooms[Step]->RoomId);
+			}
+		}
+		AddSummary(Report, CodeMainPathRatio, ETDValidationSeverity::Warning, bPassed, FString::Printf(TEXT("%d/%d = %.2f (min %.2f) path %s"), PathRooms.Num(), RoomCount, Ratio, MinRatio, *FString::Join(PathRoomIds, TEXT(">"))), Layout, Boss);
+	}
+
+	void CheckProgression(const FTDDungeonLayout& Layout, const FTDRoomAdjacency& Adjacency, const FTDPlacedRoom* Entrance, const FTDPlacedRoom* Boss, const FTDPlacedRoom* Anchor, FTDValidationReport& Report)
 	{
 		if (!Entrance || !Boss)
 		{
-			AddSummary(Report, CodeProgression, false, TEXT("entrance or boss room missing"));
+			AddSummary(Report, CodeProgression, ETDValidationSeverity::Error, false, TEXT("entrance or boss room missing"), Layout, Anchor);
 			return;
 		}
 		TSet<FName> Visited;
@@ -273,32 +346,42 @@ namespace
 			++Problems;
 			Report.Add(ETDValidationSeverity::Error, CodeProgression, FString::Printf(TEXT("room %s never reachable with keys"), *Room.RoomId.ToString()), RoomLocation(Layout, Room), Room.RoomId);
 		}
-		AddSummary(Report, CodeProgression, Problems == 0, FString::Printf(TEXT("locks=%d keys_held=%d"), LockCount, HeldKeys.Num()));
+		AddSummary(Report, CodeProgression, ETDValidationSeverity::Error, Problems == 0, FString::Printf(TEXT("locks=%d keys_held=%d"), LockCount, HeldKeys.Num()), Layout, Boss);
 	}
 }
 
-FTDValidationReport FTDDungeonValidator::Validate(const FTDDungeonLayout& Layout, const FSettings& Settings)
+FTDValidationReport FTDDungeonValidator::Validate(const FTDDungeonLayout& Layout, const FSettings& Settings, const FVector& WorldOriginCm)
 {
 	FTDValidationReport Report;
 	const FTDRoomAdjacency Adjacency(Layout);
 	const FTDPlacedRoom* Entrance = Layout.FindRoomByRole(ETDRoomRole::Entrance);
 	const FTDPlacedRoom* Boss = Layout.FindRoomByRole(ETDRoomRole::Boss);
-	CheckRequiredRooms(Layout, Report);
-	CheckOverlap(Layout, Report);
-	CheckDoorIntegrity(Layout, Report);
-	CheckConnectivity(Layout, Adjacency, Entrance, Boss, Report);
-	CheckRoomCount(Layout, Settings.RoomCountRange, Report);
-	CheckDeadEndRatio(Layout, Adjacency, Settings.MaxDeadEndRatio, Report);
-	CheckProgression(Layout, Adjacency, Entrance, Boss, Report);
-	TSet<FName> FailedCodes;
-	for (const FTDValidationItem& Item : Report.Items)
+	const FTDPlacedRoom* FirstRoom = Layout.Rooms.Num() > 0 ? &Layout.Rooms[0] : nullptr;
+	const FTDPlacedRoom* Anchor = Entrance ? Entrance : (Boss ? Boss : FirstRoom);
+	CheckRequiredRooms(Layout, Anchor, Report);
+	CheckOverlap(Layout, Anchor, Report);
+	CheckDoorIntegrity(Layout, Anchor, Report);
+	CheckConnectivity(Layout, Adjacency, Entrance, Boss, Anchor, Report);
+	CheckRoomCount(Layout, Settings.RoomCountRange, Anchor, Report);
+	CheckDeadEndRatio(Layout, Adjacency, Settings.MaxDeadEndRatio, Anchor, Report);
+	CheckMainPathRatio(Layout, Adjacency, Entrance, Boss, Settings.MinMainPathRatio, Anchor, Report);
+	CheckProgression(Layout, Adjacency, Entrance, Boss, Anchor, Report);
+	TSet<FName> ErrorCodes;
+	TSet<FName> WarningCodes;
+	for (FTDValidationItem& Item : Report.Items)
 	{
+		Item.WorldLocation += WorldOriginCm;
 		if (Item.Severity == ETDValidationSeverity::Error)
 		{
-			FailedCodes.Add(Item.Code);
+			ErrorCodes.Add(Item.Code);
+		}
+		if (Item.Severity == ETDValidationSeverity::Warning)
+		{
+			WarningCodes.Add(Item.Code);
 		}
 	}
-	Report.Score = 100.0f * static_cast<float>(CheckCount - FailedCodes.Num()) / CheckCount;
+	const int32 WarningOnlyCount = WarningCodes.Difference(ErrorCodes).Num();
+	Report.Score = 100.0f * (CheckCount - ErrorCodes.Num() - WarningCheckPenalty * WarningOnlyCount) / CheckCount;
 	Report.bPassed = !Report.HasErrors();
 	return Report;
 }

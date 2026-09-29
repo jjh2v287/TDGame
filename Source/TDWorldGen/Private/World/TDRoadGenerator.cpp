@@ -192,6 +192,14 @@ namespace
 			}
 			OutNodes.Add({ Anchor.AnchorId.IsNone() ? FName(TEXT("Town")) : Anchor.AnchorId, Anchor.LocationCm });
 		}
+		for (const FTDWorldAnchor& Anchor : Layout.Anchors)
+		{
+			if (Anchor.Kind != ETDWorldAnchorKind::Landmark)
+			{
+				continue;
+			}
+			OutNodes.Add({ Anchor.AnchorId.IsNone() ? FName(TEXT("Landmark")) : Anchor.AnchorId, Anchor.LocationCm });
+		}
 		for (const FTDDungeonEntrancePlacement& Entrance : Layout.Entrances)
 		{
 			OutNodes.Add({ Entrance.DungeonId, Entrance.LocationCm });

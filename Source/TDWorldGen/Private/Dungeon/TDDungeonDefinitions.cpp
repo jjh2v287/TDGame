@@ -61,7 +61,7 @@ void UTDDungeonTheme::FillCryptPlaceholderModules()
 #if WITH_EDITOR
 EDataValidationResult UTDDungeonTheme::IsDataValid(FDataValidationContext& Context) const
 {
-	EDataValidationResult Result = Super::IsDataValid(Context);
+	EDataValidationResult Result = CombineDataValidationResults(Super::IsDataValid(Context), EDataValidationResult::Valid);
 	if (Modules.Num() == 0)
 	{
 		Context.AddError(FText::FromString(TEXT("룸 모듈이 하나도 없습니다. FillCryptPlaceholderModules 또는 아트 모듈을 등록하세요.")));

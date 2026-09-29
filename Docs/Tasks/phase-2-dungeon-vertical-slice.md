@@ -2,9 +2,9 @@
 
 | 상태 | 개수 |
 |---|---|
-| todo | 1 |
-| doing | 6 |
-| done | 5 |
+| todo | 3 |
+| doing | 2 |
+| done | 9 |
 | decision | 1 |
 
 목표(설계서 Phase 2): 테마 1개, 룸 모듈 8개, 흐름 3개로 버튼 한 번에 서로 다른 던전 후보 10개를 생성·검증·베이크한다.
@@ -19,13 +19,14 @@
 - 기록: 2026-09-09 작성 / 2026-09-12 완료(Claude): `Docs/WorldDungeonPCG/room-module-spec.md` — 셀 400cm, 축·회전·소켓 규약, Crypt 카탈로그 12종(C++ `FillCryptPlaceholderModules`와 동일), 카메라 남쪽 벽 120cm 제한, 파일 이름 규칙. 소켓·인카운터 컴포넌트는 예정 표기.
 
 ### P2-02 테마·흐름 정의 에셋 타입
-- 상태: doing
+- 상태: done
 - 우선순위: 높음
 - 선행: P0-02, P2-01
 - 목표: `UTDDungeonTheme`, `UTDDungeonFlowTemplate`, `FTDRoomModuleDefinition`(레벨 인스턴스 소프트 참조, 셀 크기, 도어 소켓 배열, 역할 태그, 회전 허용)을 `TDWorldGen`에 만든다.
 - 완료 조건: 데이터 에셋 생성 가능, `DA_TDTheme_Crypt`, `DA_TDFlow_Linear/Branch/KeyLock` 3개 작성(모듈은 P2-03 후 채움), 에셋 유효성 검사(`IsDataValid`)로 필수 역할 누락 경고
 - 참조: R-40, R-41, 03-architecture 3.2
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude): `UTDDungeonTheme`(모듈 카탈로그·IsDataValid·`FillCryptPlaceholderModules`)·`UTDDungeonFlowTemplate`(`ApplyKindDefaults`)·`FTDRoomModuleDefinition` 구현, `DA_TDTheme_Crypt`·`DA_TDFlow_5종` 생성 스크립트 `Tools/WorldGen/editor_make_definitions.py`.
+  2026-09-30 검증 종료(claude): 타입 3종·필드와 `Content/Dungeon/Themes/DA_TDTheme_Crypt`·`Flows/DA_TDFlow_Linear/Branch/KeyLock(+Loop/Hub)` 실존 확인. `IsDataValid`가 오류 없을 때 NotValidated를 돌려주던 것을 Valid로 고침(`TDDungeonDefinitions.cpp:64`), 테스트 `TDGame.WorldGen.Dungeon.ThemeMissingRequiredRoleIsInvalid`(Boss 제거 시 Invalid) 추가. 전체 `TDGame.*` 75/75(`Saved/Logs/AItemsFinal.log`), 근거 `Saved/AgentOps/20260930/fix-dungeon.md`.
 
 ### P2-03 룸 모듈 8개 제작(플레이스홀더 지오메트리)
 - 상태: done
@@ -38,7 +39,7 @@
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude): 플레이스홀더 레벨 생성 스크립트 `Tools/DungeonGen/editor_make_room_modules.py`(12모듈, 바닥·벽·문 마커·내비 볼륨, 테마 LevelAsset 연결). 규격 검사 커맨드는 남음. / 2026-09-12: `Content/Dungeon/Rooms/Crypt/LI_TDRoom_Crypt_*` 12개 레벨 생성, 테마 `LevelAsset` 연결 완료. 규격 검사 커맨드는 남음. / 2026-09-12: 규격 검사 `UTDWorldGenEditorLibrary::ValidateRoomModuleLevels`(바닥·문 마커 가장자리·내비 볼륨) 12모듈 OK(`Tools/WorldGen/editor_place_generator_actors.py`).
 
 ### P2-04 흐름 그래프 생성기 `FTDDungeonFlowGenerator`
-- 상태: doing
+- 상태: done
 - 우선순위: 높음
 - 선행: P2-02
 - 목표: 흐름 템플릿 + 시드 → 미션 그래프(`FTDDungeonFlowGraph`: 노드 역할·순서 인덱스, 간선 잠금 ID).
@@ -46,12 +47,14 @@
   - 규칙 4종: 분기 추가, 루프 추가(잠긴 간선 우회 금지), 잠금 삽입(간선 i→i+1), 열쇠 배치(인덱스 < i 노드)
   - Linear/Branch/Loop/Hub/KeyLock 템플릿 파라미터로 방 수 범위·분기 수·루프 수 제어
   - 결정론 테스트: 고정 시드 3개의 그래프 해시가 변하지 않음. 시드 1~500에서 Key/Lock 순서 위반 0
+  - **정정(2026-09-30 D-38)**: 방 수 범위는 템플릿이 아니라 Size 프리셋(소·중·대)이 정하고, MaxBranches는 부착점당 용량, 루프는 최대 1개이며 잠금과 한 그래프에 공존하지 않는다. 열쇠는 잠금 앞쪽(인덱스 ≤ i) 노드에 붙는다. 선언은 `Public/Dungeon/TDDungeonGeneration.h`.
 - 산출물: `Source/TDWorldGen/Public/Dungeon/TDDungeonFlowGenerator.h/.cpp`, 테스트
 - 참조: R-40, research/dungeon-generation.md 2절
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude): Python 프로토타입 `Tools/DungeonGen/`로 선행 구현 — 흐름 5종(Linear/Branch/Loop/Hub/KeyLock)·크기 3종 생성기, 검증기 7항목, 후보 배치 툴(시드 1~100×3크기×5흐름 1,500건 통과율 100%, 같은 시드 해시 동일), 아틀라스 슬롯 베이크(`editor_build_dungeon.py`, 슬롯 원점 (300000+K×30000, 300000)cm). C++ 이식·데이터 에셋·실제 룸 모듈 아트는 남음. / 2026-09-12(Claude) C++: `TDDungeonFlowGenerator.cpp` 구현, 테스트 `TDGame.WorldGen.Dungeon.KeyLockSeeds1To200KeyBeforeLock` 등 통과.
+  2026-09-30 검증 종료(claude): 조건을 D-38로 정정(방 수=Size 프리셋, MaxBranches=부착점당 용량, 루프 최대 1·잠금과 비공존, 열쇠는 잠금 앞쪽 ≤i, 선언 헤더는 `Public/Dungeon/TDDungeonGeneration.h`). 테스트를 `KeyLockSeeds1To500KeyBeforeLock`(시드 1~500 위반 0)로 확장, `SameSeedProducesSameHash`(시드 7/42/1234×5흐름) 통과. 75/75.
 
 ### P2-05 레이아웃 솔버 `FTDDungeonLayoutSolver`
-- 상태: doing
+- 상태: done
 - 우선순위: 높음
 - 선행: P2-04, P2-02
 - 목표: 미션 그래프 + 테마 → 정수 격자 위 방 배치(`FTDDungeonLayout`).
@@ -60,17 +63,20 @@
   - 충돌 검사는 `TSet<FIntVector>` 셀 점유, 0 두께 접촉 허용. 복도는 도어 2개 모듈로 취급
   - 결과에 시드·생성기 버전·사용 모듈 GUID 기록
   - 테스트: 시드 1~500 성공률 보고(목표 ≥ 90%, 미달 시 리포트에 실패 사유 집계)
+  - **정정(2026-09-30 D-39)**: 배치는 BFS 부착, 시도 상한 16은 부모 소켓·복도 경로 시도 수, 백트랙 4는 시도당 누적 횟수, 셀 점유는 단층 `TSet<FIntPoint>`, 사용 모듈은 이름(FName)으로 기록한다(GUID는 실제 룸 아트 도입 시 P4).
 - 참조: research/dungeon-generation.md 3절
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude): Python 프로토타입 `Tools/DungeonGen/`로 선행 구현 — 흐름 5종(Linear/Branch/Loop/Hub/KeyLock)·크기 3종 생성기, 검증기 7항목, 후보 배치 툴(시드 1~100×3크기×5흐름 1,500건 통과율 100%, 같은 시드 해시 동일), 아틀라스 슬롯 베이크(`editor_build_dungeon.py`, 슬롯 원점 (300000+K×30000, 300000)cm). C++ 이식·데이터 에셋·실제 룸 모듈 아트는 남음. / 2026-09-12(Claude) C++: `TDDungeonLayoutSolver.cpp`(BFS 부착·복도·루프 봉합·재시작) 구현, 5흐름×3크기×시드 1~100 = 1,500건 통과.
+  2026-09-30 검증 종료(claude): 조건을 D-39로 정정(BFS 부착, 부모 소켓·경로 시도 16회, 누적 백트랙 4회, 단층 `TSet<FIntPoint>` 셀, 모듈 이름 FName — GUID는 P4). 솔버가 실패 사유 5종(소켓 없음·모듈 없음·겹침·루프 봉합 실패·백트랙 초과)을 재시작 전체에서 집계해 OutError로 반환. 테스트 `AllFlowsSizesSeeds1To500SuccessRate`: 7,498/7,500 = 99.97%(기준 ≥90%), 최대 재시작 43, 실패 2건 `[overlap]`(Loop Small 시드 171·350 → P2-13), 시드 1~100 전건 통과 유지. 75/75.
 
 ### P2-06 던전 검증기 `FTDDungeonValidator`
-- 상태: doing
+- 상태: done
 - 우선순위: 높음
 - 선행: P2-05
 - 목표: 레이아웃을 검사해 `FTDValidationReport`를 만든다.
 - 완료 조건: 연결성(BFS), 필수 방(Entrance/Boss), 겹침, 방 수 범위, 막다른 길 비율, Key/Lock(보유 키 BFS), 시작~보스 최단 경로 비율(≥ 60% 기본). 하드 실패는 Error, 소프트는 Warning+점수. 각 항목에 월드 위치와 관련 방 ID
 - 참조: R-90, research/dungeon-generation.md 5절
 - 기록: 2026-09-09 작성 / 2026-09-12(Claude): Python 프로토타입 `Tools/DungeonGen/`로 선행 구현 — 흐름 5종(Linear/Branch/Loop/Hub/KeyLock)·크기 3종 생성기, 검증기 7항목, 후보 배치 툴(시드 1~100×3크기×5흐름 1,500건 통과율 100%, 같은 시드 해시 동일), 아틀라스 슬롯 베이크(`editor_build_dungeon.py`, 슬롯 원점 (300000+K×30000, 300000)cm). C++ 이식·데이터 에셋·실제 룸 모듈 아트는 남음. / 2026-09-12(Claude) C++: `TDDungeonValidator.cpp` 7검사, 문 제거 시 실패 테스트 통과.
+  2026-09-30 검증 종료(claude): 검사 8종(연결성·필수 방·겹침·문 무결성·방 수·막다른 길·주경로 비율·Key/Lock). 주경로 비율(입구→보스 최단 경로 방 수/전체 방 수, 기본 0.6) 추가, 막다른 길·주경로는 Warning, 나머지는 Error, 점수 = 100×(8 − Error 검사 − 0.5×Warning 검사)/8. 모든 항목에 월드 위치(`Validate`의 WorldOriginCm, `TDWorldGenEditorLibrary.cpp`가 슬롯 원점 전달)와 방 ID, JSON details 갱신. 테스트 `ValidatorMissingBossRoomIsError`·`ValidatorShortMainPathIsWarning`·`ValidatorDeadEndExcessIsWarningNotError`·`ValidatorItemsCarryWorldLocationAndRoomId`·`RemovedDoorFailsValidation` 통과. 75/75.
 
 ### P2-07 후보 선택기 `FTDCandidateSelector`
 - 상태: doing
@@ -144,3 +150,21 @@
 - 목표: 룸 그리드 단위(400 vs 500cm)와 캐릭터 이동 속도·카메라 거리 관계를 확인해 결정한다.
 - 참조: decisions.md D-03
 - 기록: 2026-09-09 작성
+
+### P2-13 레이아웃 솔버 복도 경로가 점유 칸을 통과시키는 결함
+- 상태: todo
+- 우선순위: 중간
+- 선행: P2-05
+- 목표: `FindFreeCellPath`가 시작 칸과 목표 칸이 같을 때 빈 칸인지 확인하기 전에 성공을 돌려주는 결함을 고친다.
+- 완료 조건: `TDDungeonLayoutSolver.cpp` FindFreeCellPath 검사 순서 수정, `AllFlowsSizesSeeds1To500SuccessRate`에서 `[overlap]` 실패 0(현재 Loop Small 시드 171·350 두 건), 결정론 해시 테스트 통과
+- 참조: P2-05 2026-09-30 기록, `Saved/AgentOps/20260930/fix-dungeon.md`
+- 기록: 2026-09-30 발견(claude, P2-05 검증 중 빌더 보고). 원인 추정 `TDDungeonLayoutSolver.cpp:558-566`, 미검증
+
+### P2-14 흐름 템플릿·아틀라스 정의의 IsDataValid가 NotValidated를 돌려줌
+- 상태: todo
+- 우선순위: 낮음
+- 선행: P2-02
+- 목표: 오류가 없어도 엔진 기본값 NotValidated를 돌려주는 `IsDataValid` 구현을 테마(P2-02에서 수정)와 같게 Valid로 맞춘다.
+- 완료 조건: `UTDDungeonFlowTemplate`·아틀라스 정의의 IsDataValid가 정상 에셋에 Valid, 결함 에셋에 Invalid(테스트 각 1건)
+- 참조: P2-02 2026-09-30 기록
+- 기록: 2026-09-30 발견(claude, P2-02 검증 중 빌더 보고)

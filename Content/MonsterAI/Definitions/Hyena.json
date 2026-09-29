@@ -1,0 +1,22 @@
+{ "schema": 1, "id": "Hyena",
+  "stats": { "max_health": 90, "attack_power": 6, "armor": 2, "move_speed": 560, "team": 2 },
+  "think_hz": 12, "inertia": { "switch_ratio": 1.15, "min_hold_seconds": 0.3 },
+  "abilities": { "Bite": { "spell": "DA_TDHyenaBite", "range": 150, "cooldown": 2.0 } },
+  "actions": [
+    { "id": "Approach", "do": "MoveToward", "args": { "target": "Player", "stop_at": 115 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": 14, "c": 0.12, "range": [0, 1500] } ] },
+    { "id": "Bite", "do": "CastAbility", "args": { "ability": "Bite" }, "weight": 2.5,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Bite" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -40, "c": 0.1, "range": [0, 1500] } ] },
+    { "id": "Circle", "do": "MoveToBand", "args": { "target": "Player", "min": 230, "max": 360, "speed_scale": 0.6 }, "weight": 1.3,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Bite" }, "curve": "Binary", "invert": true },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -20, "c": 0.26, "range": [0, 1500] } ] },
+    { "id": "Flee", "do": "MoveAway", "args": { "target": "Player", "speed_scale": 1.0 }, "weight": 2.0,
+      "considerations": [
+        { "input": "SelfHealthRatio", "curve": "Quadratic", "m": -1, "k": 2, "b": 1 },
+        { "input": "AllyCountNearby", "args": { "radius": 700 }, "curve": "Linear", "m": -1, "b": 1, "range": [0, 3] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
+  ] }

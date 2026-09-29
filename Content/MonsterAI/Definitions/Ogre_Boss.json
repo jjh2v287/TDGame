@@ -1,0 +1,29 @@
+{ "schema": 1, "id": "Ogre_Boss",
+  "stats": { "max_health": 4000, "attack_power": 40, "armor": 30, "move_speed": 340, "team": 2 },
+  "think_hz": 12, "inertia": { "switch_ratio": 1.1, "min_hold_seconds": 0.8 },
+  "abilities": {
+    "Smash": { "spell": "DA_TDOgreSmash", "range": 220, "cooldown": 2.5 },
+    "Shockwave": { "spell": "DA_TDShockwave", "range": 600, "cooldown": 6.0 },
+    "Meteor": { "spell": "DA_TDMeteor", "range": 1400, "cooldown": 9.0 } },
+  "sequences": {
+    "Roar_Enrage": [ { "do": "Wait", "args": { "seconds": 0.6 } } ],
+    "Smash_Combo": [ { "do": "CastAbility", "args": { "ability": "Smash" } }, { "do": "Wait", "args": { "seconds": 0.25 } },
+                     { "do": "FaceTarget" }, { "do": "CastAbility", "args": { "ability": "Shockwave" } } ] },
+  "actions": [
+    { "id": "Approach", "do": "MoveToward", "args": { "target": "Player", "stop_at": 200 }, "weight": 1.0,
+      "considerations": [ { "input": "DistanceToTarget", "curve": "Logistic", "m": 12, "c": 0.14, "range": [0, 1600] } ] },
+    { "id": "Smash", "do": "CastAbility", "args": { "ability": "Smash" }, "weight": 2.0,
+      "considerations": [ { "input": "AbilityReady", "args": { "ability": "Smash" }, "curve": "Binary" },
+                          { "input": "DistanceToTarget", "curve": "Logistic", "m": -14, "c": 0.15, "range": [0, 1600] } ] },
+    { "id": "Meteor", "do": "CastAbility", "args": { "ability": "Meteor" }, "weight": { "value": 1.5, "tune": true },
+      "considerations": [ { "input": "AbilityReady", "args": { "ability": "Meteor" }, "curve": "Binary" },
+                          { "input": "DistanceToTarget", "curve": "Linear", "range": [200, 1400] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] } ],
+  "phases": [
+    { "id": "Enraged", "enter_when": { "input": "SelfHealthRatio", "op": "<=", "value": 0.5 },
+      "on_enter": "Roar_Enrage", "stats": { "attack_power": 56, "move_speed": 400 },
+      "actions": [
+        { "id": "Smash", "remove": true },
+        { "id": "SmashCombo", "do": "PlaySequence", "args": { "sequence": "Smash_Combo" }, "weight": 3.0,
+          "considerations": [ { "input": "AbilityReady", "args": { "ability": "Smash" }, "curve": "Binary" },
+                              { "input": "DistanceToTarget", "curve": "Logistic", "m": -14, "c": 0.15, "range": [0, 1600] } ] } ] } ] }

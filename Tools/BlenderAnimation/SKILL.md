@@ -12,6 +12,7 @@ description: TDGame에서 Blender MCP와 Unreal MCP로 전투 애니메이션을
 - 연결·교환 절차가 필요할 때 [BlenderAnimationWorkflow.md](C:/Project/TDGame/Docs/BlenderAnimationWorkflow.md)를 읽는다. 작업 루트는 `C:/Project/TDGame`이다.
 - Blender는 `Tools/BlenderMCP/call_tool.py`의 실제 MCP `execute_blender_code`로 `bpy` 스크립트를 실행한다. 현재 프로젝트의 Blender MCP 세션은 공유되므로 다른 에이전트와 씬 편집을 동시에 수행하지 않는다.
 - Unreal 교환 도구는 `td_blender_animation_tools.TDBlenderAnimationTools`의 `export_fbx`, `import_animation_fbx`, `sample_animation_poses`다. 연결된 스키마와 `Content/Python/td_blender_animation_tools.py`에서 실제 인수를 확인한다.
+- 칼을 붙일 때는 `HandGrip_R`에 회전 0으로 붙이지 않는다. 칼날이 손가락 방향으로 뻗어 모든 검 동작이 틀려 보인다. 해부학적 쥐기와 부착값은 L-anim-05를 따른다. 사람형 전투 동작은 키 포즈를 새로 짜기보다 이미 가진 AAA 동작을 골라 편집한다(L-anim-06).
 - 기존 `Tools/BlenderAnimation` 스크립트는 특정 캐릭터의 예제다. 고정된 본 이름·프레임·발 고정·미리보기용 무기를 다른 요청의 정답으로 재사용하지 않는다. 몽타주 작업이 필요할 때만 [AnimationAuthoring.md](C:/Project/TDGame/Docs/AnimationAuthoring.md)를 추가로 읽는다.
 
 ## 동작의 근거부터 선택
@@ -72,5 +73,6 @@ description: TDGame에서 Blender MCP와 Unreal MCP로 전투 애니메이션을
 | 참고 모션 | `review_reference_motion.py` | 참고 애니메이션 검토 |
 | weighty 슬래시 | `prepare_weighty_workspace.py`, `author_weighty_slash.py`, `render_weighty_preview.py`, `validate_weighty_slash.py`, `validate_weighty_pie.py` | 준비 → 저작 → 미리보기 → 검증(Blender·PIE) |
 | 검 그립 개정 | `prepare_grip_revision.py`, `author_sword_grip.py`, `inspect_grip.py`, `render_grip_review.py`, `validate_grip_revision.py` | 준비 → 저작 → 검사 → 검토 렌더 → 검증(2026-09-18 등록, D-28). 대상 후보 v05는 2026-09-19 삭제됨 |
-| 검 횡베기(현행) | `author_sword_slash.py`, `render_sword_slash_preview.py`, `compose_sword_slash_preview.py`, `import_sword_slash.py`, `validate_sword_slash.py`, `validate_sword_slash_pie.py`, `editor_pie_capture_sword_slash.py` | 절차적 저작(접지 모델·2본 IK·검 궤적 기준 손목) → 3시점 렌더 → GIF·포즈표·궤적도 → 가져오기·루트 모션·몽타주 → 변환·접지 검증 → PIE 검증(2026-09-19 등록). 절차 요약은 `Docs/AnimationQuality.md` 첫 절 |
+| 검 횡베기(대상 2026-09-25 삭제) | `author_sword_slash.py`, `render_sword_slash_preview.py`, `compose_sword_slash_preview.py`, `import_sword_slash.py`, `validate_sword_slash.py`, `validate_sword_slash_pie.py`, `editor_pie_capture_sword_slash.py` | 절차적 저작(접지 모델·2본 IK·검 궤적 기준 손목) → 3시점 렌더 → GIF·포즈표·궤적도 → 가져오기·루트 모션·몽타주 → 변환·접지 검증 → PIE 검증(2026-09-19 등록). 절차 요약은 `Docs/AnimationQuality.md` 첫 절 |
+| 검 공격 01(현행, 2026-09-25) | `blender_run.py`(TD_ 인수 주입 실행기), `editor_analyze_attack_candidates.py`, `editor_export_reference_fbx.py`, `sword_attack01_scene.py`, `sword_attack01_author.py`, `sword_attack01_measure.py`, `sword_attack01_render.py`, `sword_attack01_compose.py`, `sword_attack01_export.py`, `sword_attack01_grip_points.py`, `import_sword_attack01.py`, `editor_validate_sword_attack01.py`, `editor_solve_sword_attachment.py`, `validate_sword_attack01_pie.py`, `editor_pie_capture_sword_attack01.py` | 참고 공격 분류 → 참고 FBX 내보내기 → 해부학적 쥐기 씬·월드 행렬 베이크 → 폴리시(시간 재매핑·루트·발 IK·손목 한계·휩 보호) → 측정(궤적·날·손목·발·간격) → 렌더·GIF → FBX·.blend·JSON → UE 가져오기·몽타주 → 뼈·루트·압축 검증 → 무기 부착 역산 → PIE. 절차는 `Docs/AnimationQuality.md` 첫 절, 교훈 L-anim-05·06 |
 | 접지 QA(공통) | `validate_contacts.py` | 발 접촉 구간 접지 오차(XY drift·Z 침투/부유·미끄러짐 속도) 수학적 정밀 계산·감사(Audit) 및 AI 교정 가이드 생성 (2026-09-19 등록) |

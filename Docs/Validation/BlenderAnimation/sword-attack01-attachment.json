@@ -1,0 +1,54 @@
+{
+ "socket": "HandGrip_R",
+ "socket_bone": "hand_r",
+ "relative_location_cm": [
+  -5.052,
+  9.119,
+  25.857
+ ],
+ "relative_rotation_quat_xyzw": [
+  0.374547,
+  0.554279,
+  0.477513,
+  0.569623
+ ],
+ "relative_rotation_rotator_deg": {
+  "roll": -83.734,
+  "pitch": -15.888,
+  "yaw": 94.203
+ },
+ "max_fit_residual_cm": 0.0001,
+ "frame_spread_angle_deg": 0.0008,
+ "frame_spread_location_cm": 0.001,
+ "mirrored_labels": [
+  false
+ ],
+ "sword_mesh_features_cm": {
+  "tip": [
+   -0.389,
+   75.312,
+   1.373
+  ],
+  "pommel": [
+   0.967,
+   -46.697,
+   -0.341
+  ],
+  "guard_left": [
+   -14.908,
+   -20.393,
+   1.114
+  ],
+  "guard_right": [
+   14.994,
+   -21.264,
+   1.349
+  ],
+  "guard_center": [
+   0.043,
+   -20.829,
+   1.232
+  ]
+ },
+ "passed": true
+}

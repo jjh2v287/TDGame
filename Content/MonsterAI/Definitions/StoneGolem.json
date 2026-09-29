@@ -1,0 +1,25 @@
+{ "schema": 1, "id": "StoneGolem",
+  "stats": { "max_health": 700, "attack_power": 18, "armor": 25, "move_speed": 230, "team": 2 },
+  "think_hz": 8, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.6 },
+  "abilities": {
+    "Smash": { "spell": "DA_TDOgreSmash", "range": 260, "cooldown": 3.0 },
+    "Stomp": { "spell": "DA_TDGolemStomp", "range": 300, "cooldown": 8.0 } },
+  "sequences": {
+    "Rumble": [ { "do": "Wait", "args": { "seconds": 0.8 } } ] },
+  "actions": [
+    { "id": "Approach", "do": "MoveToward", "args": { "target": "Player", "stop_at": 200 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": 10, "c": 0.12, "range": [0, 1600] } ] },
+    { "id": "Smash", "do": "CastAbility", "args": { "ability": "Smash" }, "weight": 2.2,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Smash" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.16, "range": [0, 1600] } ] },
+    { "id": "Stomp", "do": "CastAbility", "args": { "ability": "Stomp" }, "weight": 2.8,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Stomp" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.17, "range": [0, 1600] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
+  ],
+  "phases": [
+    { "id": "Cracked", "enter_when": { "input": "SelfHealthRatio", "op": "<=", "value": 0.5 },
+      "on_enter": "Rumble", "stats": { "attack_power": 22, "move_speed": 300 } } ] }

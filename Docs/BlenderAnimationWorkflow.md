@@ -1,6 +1,6 @@
 # Blender MCP 전투 애니메이션 제작
 
-2026-09-19: 현행 기본 공격은 `AS_TD_Player_Attack01_SwordSlash_RToL`(절차적 저작, `Tools/BlenderAnimation/author_sword_slash.py`)이며 이전 후보와 아래 첫 예제의 에셋·원본은 모두 삭제되었다. [품질 기록](AnimationQuality.md), [품질 스킬](../Tools/BlenderAnimation/SKILL.md)을 먼저 확인한다. 아래 첫 예제의 수치는 교환 절차 기록으로만 남긴다.
+2026-09-25: 현행 기본 공격은 `AS_TD_Player_SwordAttack01`이다. Paragon Greystone PrimaryA 원본을 `Tools/BlenderAnimation/sword_attack01_*.py`로 편집했고, 해부학적 칼 쥐기를 쓴다(L-anim-05·06). 2026-09-19·09-23 후보와 아래 첫 예제의 에셋·원본은 모두 삭제되었다. [품질 기록](AnimationQuality.md), [품질 스킬](../Tools/BlenderAnimation/SKILL.md)을 먼저 확인한다. 아래 첫 예제의 수치는 교환 절차 기록으로만 남긴다.
 
 TDGame의 Unreal 리소스를 Blender로 가져와 GPT/Codex, Claude, Gemini 에이전트가 자연어 요청에 맞는 포즈와 타이밍을 작성하고, 같은 Unreal Skeleton을 사용하는 새 애니메이션으로 돌려보내는 작업 흐름이다. 플레이어·몬스터·NPC에 같은 절차를 적용하되 실제 본 구조와 공격 방식을 먼저 확인한다.
 

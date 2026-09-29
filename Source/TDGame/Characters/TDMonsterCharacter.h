@@ -5,22 +5,49 @@
 #include "Characters/TDCombatCharacter.h"
 #include "GameplayTagContainer.h"
 #include "GenericTeamAgentInterface.h"
+#include "MonsterAI/TDMonsterAnimationDriver.h"
+#include "MonsterAI/TDMonsterBody.h"
+#include "MonsterAI/TDMonsterThinkSubsystem.h"
 #include "TDMonsterCharacter.generated.h"
 
+class ATDDamageEntity;
 class UTDCombatTokenSubsystem;
+class UTDMonsterSpeciesAsset;
 class UTDSignificanceComponent;
 class UTDSkillComponent;
 struct FTDDamageContext;
+struct FTDDamageResult;
 
 UCLASS()
-class TDGAME_API ATDMonsterCharacter : public ATDCombatCharacter, public IGenericTeamAgentInterface, public ITDNPCUpdatable
+class TDGAME_API ATDMonsterCharacter : public ATDCombatCharacter, public IGenericTeamAgentInterface, public ITDNPCUpdatable, public ITDMonsterBody
 {
 	GENERATED_BODY()
 
 public:
 	ATDMonsterCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual FGenericTeamId GetGenericTeamId() const override;
+	virtual FVector GetBodyLocation() const override;
+	virtual float GetBodyYaw() const override;
+	virtual float GetBodyRadius() const override;
+	virtual UTDCombatComponent* GetBodyCombatComponent() const override;
+	virtual void ApplyBodyStats(const FTDMonsterStatValues& Stats) override;
+	virtual void ApplyBodyMoveIntent(const FVector2D& Direction, float SpeedScale) override;
+	virtual void FaceBodyToward(const FVector& Location) override;
+	virtual float BeginBodyAbility(const FTDMonsterAbilityRequest& Request) override;
+	virtual void CancelBodyAbility() override;
+	virtual void BeginBodyStagger(const FVector& SourceLocation, float Seconds) override;
+	virtual void PresentBody(float DeltaSeconds, ETDMonsterFsmState State) override;
+
+	UFUNCTION(BlueprintPure, Category="MonsterAI")
+	UTDMonsterSpeciesAsset* GetSpecies() const { return Species; }
+
+	UFUNCTION(BlueprintCallable, Category="MonsterAI")
+	void SetSpecies(UTDMonsterSpeciesAsset* NewSpecies);
+
+	UFUNCTION(BlueprintPure, Category="MonsterAI")
+	bool HasMonsterBrain() const { return BrainHandle.IsValid(); }
 	virtual void SetManagedByNPCUpdateSubsystem(bool bIsManaged) override;
 	virtual void ManualUpdateMovement(float DeltaTime) override;
 	virtual void ManualUpdateAnimation(float DeltaTime) override;
@@ -89,6 +116,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC Update", meta=(ClampMin="0.0"))
 	float ManagedAnimationRenderTolerance = 0.2f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="MonsterAI", meta=(ToolTip="Body, animation and brain definition of this monster. Monsters without a species keep the legacy behaviour and do not think."))
+	TObjectPtr<UTDMonsterSpeciesAsset> Species;
+
 private:
 	bool ActivateCombatAbility(FGameplayTag AbilityTag, AActor* TargetActor = nullptr);
 	FGameplayTag ResolveAbilityTag(FGameplayTag RequestedActionTag) const;
@@ -96,7 +126,26 @@ private:
 	void UnregisterFromNPCUpdateSubsystem();
 	void HandleDeath(const FTDDamageContext& Context);
 	UTDCombatTokenSubsystem* GetCombatTokenSubsystem() const;
+	UTDMonsterThinkSubsystem* GetThinkSubsystem() const;
+	void ApplySpeciesBody();
+	void StartMonsterBrain();
+	void StopMonsterBrain();
+	void HandleMonsterDamaged(const FTDDamageResult& Result, const FTDDamageContext& Context);
+	void HandleMonsterFrozen(bool bIsFrozen);
+	void PlayDeathPresentation();
+	FVector ComputeAbilityOrigin(const FTDMonsterAbilityRequest& Request) const;
+	float PlayAbilityClip(const FTDMonsterAbilityRequest& Request, float WindupSeconds, float& OutRecoverySeconds);
+	void TurnTowardDesiredYaw(float DeltaSeconds);
+	void HoldDeathPose();
 
 	bool bHasGrantedDefaultActionAbilities = false;
 	bool bIsManagedByNPCUpdateSubsystem = false;
+	bool bHasAppliedMonsterStats = false;
+	bool bHasDesiredYaw = false;
+	float BaseMoveSpeed = 400.f;
+	float DesiredYaw = 0.f;
+	float AbilityImpactTime = 0.f;
+	FTDMonsterSlotHandle BrainHandle;
+	FTDMonsterAnimationDriver AnimationDriver;
+	TWeakObjectPtr<ATDDamageEntity> ActiveAbilityEntity;
 };

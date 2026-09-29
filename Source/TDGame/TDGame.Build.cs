@@ -32,7 +32,7 @@ public class TDGame : ModuleRules
 			"Chaos"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "PCG" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "PCG", "Json", "JsonUtilities", "Mover", "UAF", "MoverAnimNext", "GameplayCameras", "Chooser", "SmartObjectsModule" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"TDGame"

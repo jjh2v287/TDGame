@@ -1,0 +1,20 @@
+{ "schema": 1, "id": "Archer", "extends": "Goblin_Melee",
+  "stats": { "max_health": 80, "attack_power": 16, "move_speed": 380 },
+  "think_hz": 8, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.6 },
+  "abilities": { "Shoot": { "spell": "DA_TDIceShard", "range": 900, "cooldown": 1.6 } },
+  "actions": [
+    { "id": "Approach", "remove": true },
+    { "id": "Slash", "remove": true },
+    { "id": "KeepDistance", "do": "MoveToBand", "args": { "target": "Player", "min": 500, "max": 800 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Gaussian", "m": 0.12, "c": 0.54, "range": [0, 1200], "invert": true } ] },
+    { "id": "Shoot", "do": "CastAbility", "args": { "ability": "Shoot", "lead_target": true }, "weight": 2.0,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Shoot" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Gaussian", "m": 0.2, "c": 0.54, "range": [0, 1200] },
+        { "input": "LineOfSightToTarget", "curve": "Binary" } ] },
+    { "id": "Backpedal", "do": "MoveAway", "args": { "target": "Player" }, "weight": 2.5,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -14, "c": 0.3, "range": [0, 1200] },
+        { "input": "TargetIsAttacking", "curve": "Binary" } ] }
+  ] }

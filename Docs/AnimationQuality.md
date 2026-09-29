@@ -1,6 +1,96 @@
 # 전투 애니메이션 품질 개선
 
-## 2026-09-19 현행: `AS_TD_Player_Attack01_SwordSlash_RToL` (절차적 저작, 참고 모션 없음)
+## 2026-09-25 현행: `AS_TD_Player_SwordAttack01` (AAA 원본 동작 + 폴리시 도구, 우상→좌하 대각 베기)
+
+사용자가 이전 기본 공격 전부(Attack01 RToL, Attack02 LToR, Attack03 모캡 후보)를 품질 불량으로 지우게 했다. 그리고 오른손 한손검 우→좌 대각 횡베기 하나를 AAA 수준으로 다시 만들게 했다. 요구 조건은 연계 1타, 루트 모션, 좋은 팔·손목·손 위치다. 이전 에셋 4개는 git 추적본이라 복구할 수 있고, 원본 파일 9개는 휴지통에 있다.
+
+### 무엇이 달랐나
+- **절차적 키 포즈를 버리고 AAA 원본 동작을 편집했다.** PJGame에는 Manny로 리타기팅된 Paragon Greystone 공격 20종이 있다. `editor_analyze_attack_candidates.py`로 오른손 궤적을 분류해, 한손 우상→좌하 하강 대각(손 174 cm → 76 cm)인 `Attack_PrimaryA`를 골랐다. Greystone의 PrimaryB(좌→우)·PrimaryC(수평)는 이 동작의 팔로스루에서 이어지는 연계로 설계되어 있다. Paragon 에셋은 Epic 무료 공개분이고 언리얼 프로젝트에서 상업 사용이 허용된다(Fab EULA 본문은 출시 전 확인 필요). 에셋 이름에는 Greystone을 쓰지 않는다.
+- **근본 원인은 칼 쥐기였다.** 기존 미리보기는 칼을 `HandGrip_R`에 회전 0으로 붙였다. 그러면 칼날이 손가락 방향(손 축과 6°)으로 뻗는다. 이것이 이전 후보들의 손목·칼 문제의 공통 원인이다(L-anim-05).
+  - 쥐기를 해부학적으로 다시 정의했다. 칼자루가 주먹 공간을 지나고, 칼날이 엄지 쪽으로 손 축과 73°를 이루며, 참날은 손가락 마디 쪽, 검지는 코등이에 닿는다.
+  - 같은 원본에서 칼끝 최저가 −30.6 → 27.9 cm, 날 정렬 평균이 136° → 86°가 됐다.
+- 두 차례 독립 다관점 비평(각 4명)과 v8·v9 검증 비평을 거쳐 다듬었다. 최종 검증은 "기계적 수정 3건(M1–M3) 후 경미 후속과 함께 합격"으로 판정했고, v10에서 그 수용 수치를 모두 통과했다. 비평 보고서는 `Saved/AgentOps/20260925/review-v3·v7·v8·v9/`에 있다.
+
+### 폴리시 도구(`Tools/BlenderAnimation/sword_attack01_author.py`)가 한 일
+- **시간 재매핑**(60 fps, 출력←원본): 1←1, 7←7, 10←9, 18←19, 22←23, 25←25.2, 34←33, 52←51, 96←79, 112←102.
+  - 머리 감기는 1.25배 압축, 복귀는 0.64배로 늦췄다.
+  - 타격은 f25–26(0.40–0.42 s)이고, 전체는 112프레임 1.85 s다.
+- **팔 사슬 블렌드**(쇄골·위팔·아래팔·손)
+  - 예비 동작: 캐릭터 공간에서 원본 f22.7→f23 자세(칼이 오른어깨 뒤)로 섞고, f22 이후에는 목표가 원본 시간과 같아진다. 쇄골은 부모 공간에서 절반만 섞는다. 가중치 키는 (4,0)(5,0)(13,1)(21,1)(24,0)(25,0)로 양 끝 기울기가 0이다.
+    - f12–22에 칼끝이 오른쪽 뒤 위(높이 169–176 cm)로 천천히 감겨 드는 무빙 홀드가 된다. 칼 회전은 프레임당 1–3°이고, 원본의 머리 위 왼쪽 정지가 사라진다.
+    - 풀림은 원본 타격 그대로다(16 → 120 → 119 → 123 → 112 cm/프레임).
+  - 복귀: 부모 공간에서 원본 대기 자세로 40% 섞어(f51–105, 양 끝 기울기 0), 칼을 낮게 든 채 돌아오게 한다.
+- **루트·발**
+  - 루트 36 cm를 직접 작성했다(접촉까지 80%, f31에 완료).
+  - 앞발(왼): f7에 떠서 smootherstep으로 36 cm 스텝하고, 착지 f21–24. 뒤꿈치 착지·발끝 들림이 있다.
+  - 뒷발(오른): f26까지 볼을 고정하고, 누적 이동량은 f26–33에 걸쳐 푼다. 도달이 모자라면 발 자신의 가로축으로 뒤꿈치를 들되 발목–볼 경사는 68°까지만 허용하고, 나머지는 골반을 낮춘다. f26–36에 18 cm 끌어 붙이는 스텝, f67–81에 18 cm 복귀 스텝(볼 약 4 cm 들림).
+  - 다리는 2본 IK로 풀고, 골반 하강은 원본의 75%에 도달 보정을 더했다.
+- **팔·손목**
+  - 팔은 원본 그대로다(팔꿈치 회전각 포함).
+  - 손목 관절 파라미터(회내·굴곡·편위)는 원본을 쓰고 한계(굴곡 −78~60°, 편위 −40~28°) 초과분만 뺀다. 휩 구간 f23–35는 원본 그대로 보호한다.
+
+### 산출물
+- 에셋: `/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01`(60 fps, 루트 모션 켬, RefPose 락)
+- 몽타주: `AM_TD_Player_SwordAttack01`(`DefaultSlot`, 섹션 `Attack` 0 s·`Recovery` f52 = 0.85 s, blend in 0.1·out 0.2)
+- 원본 파일: [편집 원본 .blend](../AnimationSources/Player/AS_TD_Player_SwordAttack01.blend)(원본 Action 포함), [FBX](../AnimationSources/Player/AS_TD_Player_SwordAttack01.fbx), [제작 기록 JSON](../AnimationSources/Player/AS_TD_Player_SwordAttack01.json)
+- 미리보기: [세 방향 실시간](Validation/BlenderAnimation/sword-attack01-three-views.gif), [1/3속](Validation/BlenderAnimation/sword-attack01-slow.gif), [손·게임 시점 1/3속](Validation/BlenderAnimation/sword-attack01-hand-game-slow.gif), [주요 포즈](Validation/BlenderAnimation/sword-attack01-keyposes.png), [스윙 구간](Validation/BlenderAnimation/sword-attack01-swing.png)
+
+### 검증
+| 항목 | 결과 |
+|---|---|
+| Blender→UE 뼈 위치 오차 | 최대 0.008 cm ([ue-validation](Validation/BlenderAnimation/sword-attack01-ue-validation.json)) |
+| 루트 | 전방 36.0 cm, 옆·수직 0 |
+| PIE(BP_TDCombatCharacter) | 1.85 s 재생, 실제 이동 36.0 cm, 슬롯 가중치 1.0 ([pie](Validation/BlenderAnimation/sword-attack01-pie.json)) |
+| 궤적 | 활성 평면 잔차 4.0 cm, 하강 97 cm, 우→좌, 칼끝 최고 74 m/s, 타격 f25 = 0.40 s ([measure](Validation/BlenderAnimation/sword-attack01-measure.json)) |
+| 날·팔 | 날 정렬 평균 79°(이상 90°), 팔–칼 각 140°, 프레임당 최대 뼈 회전 71°, 골반 → 팔·손 각속도 순서(f21 → f26) |
+| 간격 | 칼끝 최저 23 cm, 칼–몸 최소 18 cm, 관통 없음, f112 = f1(루프 0.05 cm 이내) |
+| 손목 | 휩 f26–32에서만 원본 수준의 순간 굽힘(최대 약 89°). 이 구간 편위 값은 굽힘 80° 이상 특이점이라 의미 없음 |
+
+### 게임 무기 부착값
+`BP_TDCombatCharacter`에는 아직 무기가 없다. 붙일 때 아래 값을 쓰면 미리보기와 같은 쥐기가 된다(정합 잔차 0.0001 cm, [attachment](Validation/BlenderAnimation/sword-attack01-attachment.json)).
+- 대상: `HandGrip_R` 소켓 기준 `SM_Sword` 상대 변환
+- 위치: (−5.052, 9.119, 25.857) cm
+- 회전: roll −83.734°, pitch −15.888°, yaw 94.203°
+
+### 연계·판정 권장 창 (60 fps, 몽타주 노티파이는 아직 없음)
+| 창 | 프레임 |
+|---|---|
+| 판정 | f23–f28 |
+| 트레일 | f23–f30 |
+| 입력 버퍼 | f12–f34 |
+| 2타 분기 | f35–f48(2타 시작 자세 ≈ f39–41 = Greystone PrimaryB 첫 자세) |
+| 회피 취소 | f33부터 |
+| 이동 취소·Recovery 섹션 | f52 |
+
+### 남은 한계
+- 무게감 있는 Greystone 스타일을 물려받았다: 팔로스루에서 가슴이 약 145° 돌고 골반이 약 23 cm 내려간다. 원본에서 물려받은 경미 항목은 휩 순간 손목 굽힘 −89°, 접촉 직전 팔꿈치 잠김, 앞발 볼의 작은 표류다.
+- 홀드에서 타격으로 풀리는 첫 프레임이 최고 속도에 가깝다(스냅형 풀림). 트레일·쓸기 판정을 전제로 한다.
+- 복귀는 칼을 낮게 든 느린 회수로 바꿨지만 여전히 몸 앞을 지난다.
+- 연계용 2타는 미제작이다.
+- 무기 부착 C++, 노티파이 창, 무장 대기 동작이 없다.
+- UE 압축 후 칼끝 오차는 에디터 평가에서 0으로 나와 쿠킹 후 검증은 미실시다.
+
+```powershell
+# Context: C:/Project/TDGame; Blender MCP + 언리얼 에디터. 순서: 참고 내보내기 → 씬·베이크 → 폴리시 → 측정 → 렌더·합성 → 내보내기 → UE 가져오기 → 검증 → 부착 역산 → PIE
+python Tools/run_in_editor.py Tools/BlenderAnimation/editor_export_reference_fbx.py
+python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack01_scene.py
+python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack01_author.py
+python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack01_measure.py
+python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack01_render.py "TD_OUT='v9'"
+python Tools/BlenderAnimation/sword_attack01_compose.py v9 --gif --triptych front,right,game --tile 240 --every 2
+python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack01_export.py
+python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack01_grip_points.py
+python Tools/BlenderAnimation/import_sword_attack01.py --replace --recovery-frame 52   # PIE 뒤에는 에디터 재시작이 필요할 수 있다(L-editor-10)
+python Tools/run_in_editor.py Tools/BlenderAnimation/editor_validate_sword_attack01.py
+python Tools/run_in_editor.py Tools/BlenderAnimation/editor_solve_sword_attachment.py
+python Tools/BlenderAnimation/validate_sword_attack01_pie.py
+```
+
+---
+
+아래 두 절(2026-09-19 Attack01 RToL, 2026-09-23 Attack02 LToR)의 에셋과 원본은 2026-09-25에 삭제됐다. 절차 기록으로만 남긴다.
+
+## 2026-09-19 (삭제됨): `AS_TD_Player_Attack01_SwordSlash_RToL` (절차적 저작, 참고 모션 없음)
 
 사용자가 이전 후보(v02~v05·RToL_Blender·`Anims/Sword/AS_Sword_Slash_01`, 언리얼 10개 + `AnimationSources/Player` 원본 15개)를 품질 불량으로 모두 지우게 했고, 새 기본 공격 하나를 다시 만들었다. 요구: 한손검, 오른손, 캐릭터 기준 우→좌 횡베기, 루트 모션, 한 발 전진, 오른손 본에 검을 붙였을 때 검 궤적이 보기 좋을 것.
 
@@ -25,7 +115,7 @@ python Tools/BlenderAnimation/validate_sword_slash_pie.py
 
 `call_tool.py --code`는 파일 본문을 그대로 실행하므로 저장하려면 본문 첫 줄에 `TD_SAVE = True`를 두거나 `execute_blender_code`에서 `exec(..., {'TD_SAVE': True})`로 넘긴다.
 
-## 2026-09-23 신규: `AS_TD_Player_Attack02_SwordSlash_LToR` (블렌더 확장 툴 및 인체 역학 개선, 좌→우 횡베기)
+## 2026-09-23 (삭제됨): `AS_TD_Player_Attack02_SwordSlash_LToR` (블렌더 확장 툴 및 인체 역학 개선, 좌→우 횡베기)
 
 공격 1번(우→좌)에 이어지는 2타 콤보 한손검 좌→우 횡베기 공격 2번 애니메이션 저작. 기존 절차적 모션의 치명적 결함(왼팔 몸통 파고듦, 우측 팔꿈치 과신전/급격한 스냅)을 블렌더 확장 툴(AnimAide F-Curve 이징 보간, 인체 해부학적 가동 범위 및 안정 힌트 벡터)을 적용하여 전면 개선했다.
 

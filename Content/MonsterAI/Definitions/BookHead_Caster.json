@@ -1,0 +1,24 @@
+{ "schema": 1, "id": "BookHead_Caster",
+  "stats": { "max_health": 110, "attack_power": 10, "armor": 4, "move_speed": 330, "team": 2 },
+  "think_hz": 8, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.5 },
+  "abilities": {
+    "Bolt": { "spell": "DA_TDMonsterBolt", "range": 950, "cooldown": 2.4 },
+    "Burst": { "spell": "DA_TDGroundBurst", "range": 1000, "cooldown": 6.0 } },
+  "actions": [
+    { "id": "KeepDistance", "do": "MoveToBand", "args": { "target": "Player", "min": 550, "max": 800 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Gaussian", "m": 0.08, "c": 0.45, "range": [0, 1500], "invert": true } ] },
+    { "id": "Bolt", "do": "CastAbility", "args": { "ability": "Bolt", "lead_target": true }, "weight": 2.0,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Bolt" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -18, "c": 0.62, "range": [0, 1500] },
+        { "input": "LineOfSightToTarget", "curve": "Binary" } ] },
+    { "id": "Burst", "do": "CastAbility", "args": { "ability": "Burst" }, "weight": 2.6,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Burst" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Gaussian", "m": 0.15, "c": 0.4, "range": [0, 1500] } ] },
+    { "id": "Backpedal", "do": "MoveAway", "args": { "target": "Player", "speed_scale": 1.1 }, "weight": 2.2,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -20, "c": 0.22, "range": [0, 1500] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
+  ] }

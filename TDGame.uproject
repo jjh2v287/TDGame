@@ -80,6 +80,42 @@
 		{
 			"Name": "SignificanceManager",
 			"Enabled": true
+		},
+		{
+			"Name": "Mover",
+			"Enabled": true
+		},
+		{
+			"Name": "UAF",
+			"Enabled": true
+		},
+		{
+			"Name": "UAFAnimGraph",
+			"Enabled": true
+		},
+		{
+			"Name": "MoverAnimNext",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayCameras",
+			"Enabled": true
+		},
+		{
+			"Name": "Chooser",
+			"Enabled": true
+		},
+		{
+			"Name": "SmartObjects",
+			"Enabled": true
+		},
+		{
+			"Name": "UAFStateTree",
+			"Enabled": true
+		},
+		{
+			"Name": "UAFChooser",
+			"Enabled": true
 		}
 	]
 }

@@ -84,7 +84,7 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 위치 | 내용 | 상태 |
 |---|---|---|
 | `AnimationAuthoring/` | Unreal MCP C++ 툴셋 기반 저작. 정본 스킬 `SKILL.md`(td-animation-authoring), `smoke_test.py`(MCP 클라이언트 `TDMcpAnimationClient` 보유, D-22), `author_slash.py`·`author_swing.py`·`dump_animation.py`·`anim_report.py`·`pose_kinematics.py`. PowerShell에서 실행(L-repo-01) | 현행 |
-| `BlenderAnimation/` | Blender MCP bpy 편집 + Unreal 재가져오기. 정본 스킬 `SKILL.md`(td-combat-animation-quality, 스크립트 표 포함). `author_*`·`prepare_*`·`render_*`·`validate_*`·`inspect_*`·`create_player_montage.py` 등 14개 + grip 5개 + 검 횡베기 7개(`*_sword_slash*.py`) + 공통 접지 QA `validate_contacts.py`(2026-09-19 등록) | 현행 |
+| `BlenderAnimation/` | Blender MCP bpy 편집 + Unreal 재가져오기. 정본 스킬 `SKILL.md`(td-combat-animation-quality, 스크립트 표 포함). `author_*`·`prepare_*`·`render_*`·`validate_*`·`inspect_*`·`create_player_montage.py` 등 14개 + grip 5개 + 검 횡베기 7개(`*_sword_slash*.py`, 대상 에셋 2026-09-25 삭제) + 공통 접지 QA `validate_contacts.py`(2026-09-19 등록) + 검 공격 01 15개(`blender_run.py`, `sword_attack01_*.py`, `*_sword_attack01*.py`, `editor_analyze_attack_candidates.py`, `editor_export_reference_fbx.py`, `editor_solve_sword_attachment.py`, 2026-09-25 등록, 표는 SKILL.md) | 현행 |
 | `BlenderMCP/` | Blender MCP 서버 실행(`Run-BlenderMCP.ps1`), `call_tool.py --code`로 bpy 실행, `smoke_test.py` | 현행 |
 | `Content/Python/td_blender_animation_tools.py` | 에디터 상주 툴셋(`export_fbx`·`import_animation_fbx`·`sample_animation_poses`), `init_unreal.py`가 register 호출 | 현행 |
 | `Animation/` (11개) | Kimodo text-to-motion 실험 파이프라인. 2026-09-18 `Tools/_archive/2026-09/Animation/`으로 보관(D-15) | 보관 · 실행 금지 |
@@ -92,6 +92,17 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | Claude 홈 `tools/` | `run_tests.py`는 `Tools/check_automation_tests.py`로 이관 후 홈 원본 삭제, `uemcp.py` 동일본 삭제. 나머지 일회용 12개는 홈에 유지(D-17) | 이관 완료 |
 | `_archive/` | 폐기·보관 도구. 목록과 이유는 `Tools/_archive/README.md` | 실행 금지 |
 확인: 2026-09-18 claude
+
+## 3d. 몬스터 AI 도구 (`MonsterAI/`, 대장 `Docs/MonsterAI_CombatSim/07-roadmap-and-tasks.md`)
+| 도구 | 용도 | 실행 |
+|---|---|---|
+| `MonsterAI/editor_make_monster_species.py` | 종 에셋 `DA_TDMonster_*`(메시·애니메이션 구간·정의 ID)과 루트 고정 공격 애니메이션 복제본 생성·갱신(재실행 안전) | `python Tools/run_in_editor.py Tools/MonsterAI/editor_make_monster_species.py` (PowerShell) |
+| `MonsterAI/editor_retarget_monster_anims.py` | Manny 애니메이션을 고블린·골렘으로 IK 리타기팅(IK 리그 3·리타기터 2 자동 캐릭터화, 결과 루트 고정). 자기가 만든 에셋(`TDGeneratedBy` 태그)만 갱신, 약 11초 | `python Tools/run_in_editor.py Tools/MonsterAI/editor_retarget_monster_anims.py` (PowerShell) |
+| `MonsterAI/editor_place_monsters.py` | LV-Cambat에 몬스터 무리 7개(25마리) 배치·저장. 이전 `TDGen_Monster_` 액터는 지우고 다시 만듦 | `python Tools/run_in_editor.py Tools/MonsterAI/editor_place_monsters.py` (PowerShell, PIE 종료·미저장 없음 필요) |
+| `MonsterAI/pie_check_monsters.py` (+`editor_pie_monster_probe.py`) | PIE 켜고 하이에나 무리 옆으로 이동 → 교전·예고·타격·경직·사망 기록 → `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json`(+스크린샷), 판정 `passed` | `python Tools/MonsterAI/pie_check_monsters.py` |
+| 콘솔 `TD.MonsterAI.Reload` / `TD.MonsterAI.DebugDraw 1` | JSON 정의 다시 읽기(이후 스폰분부터) / 몬스터 머리 위 상태·행동 표시 | PIE 콘솔 |
+| 자동화 테스트 `TDGame.MonsterAI.*` 7개 | 곡선·정의 검증·오류 안내·점수기·예고 후 타격·경직 취소·전역 난수 금지 | `python Tools/check_automation_tests.py --filter TDGame.MonsterAI` |
+확인: 2026-09-24 claude
 
 ## 4. 도구가 없을 때 만드는 규칙 (에이전트 공통)
 규칙 전문은 `Docs/AgentRules.md` OP-12(만들기 전 검색)·OP-13(위치)·OP-14(이름)·OP-15(docstring 4줄)·OP-16(등록)·OP-17(`Tools/scratch/`)·OP-19(절대 경로 금지)·OP-20(노출 경로). 접두어: `editor_`(에디터 안, run_in_editor.py), `pie_`(PIE 검사), `blender_`(Blender 안 bpy), 없음(시스템 파이썬 3.12). 권장 동사: generate build make validate check inspect capture export import author render prepare place setup select find. 금지 동의어: create→make, bake→build, verify/test→validate/check.

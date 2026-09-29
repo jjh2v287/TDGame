@@ -1,0 +1,20 @@
+{ "schema": 1, "id": "Goblin_Melee",
+  "stats": { "max_health": 120, "attack_power": 10, "armor": 5, "move_speed": 420, "team": 2 },
+  "think_hz": 10, "inertia": { "switch_ratio": 1.15, "min_hold_seconds": 0.4 },
+  "abilities": { "Slash": { "spell": "DA_TDGoblinSlash", "range": 160, "cooldown": 1.2 } },
+  "actions": [
+    { "id": "Approach", "do": "MoveToward", "args": { "target": "Player", "stop_at": 140 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": 12, "c": 0.15, "range": [0, 1200] } ] },
+    { "id": "Slash", "do": "CastAbility", "args": { "ability": "Slash" }, "weight": 2.0,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Slash" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -12, "c": 0.14, "range": [0, 1200] },
+        { "input": "FacingTarget", "curve": "Linear" },
+        { "input": "LineOfSightToTarget", "curve": "Binary" } ] },
+    { "id": "Flee", "do": "MoveAway", "args": { "target": "Player", "speed_scale": 1.1 }, "weight": 3.0,
+      "considerations": [
+        { "input": "SelfHealthRatio", "curve": "Quadratic", "m": -1, "k": 2, "b": 1 },
+        { "input": "AllyCountNearby", "args": { "radius": 600 }, "curve": "Linear", "m": -1, "b": 1, "range": [0, 4] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
+  ] }

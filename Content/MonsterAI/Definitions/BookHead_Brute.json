@@ -1,0 +1,33 @@
+{ "schema": 1, "id": "BookHead_Brute",
+  "stats": { "max_health": 260, "attack_power": 13, "armor": 12, "move_speed": 300, "team": 2 },
+  "think_hz": 8, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.5 },
+  "abilities": {
+    "Smash": { "spell": "DA_TDBruteSmash", "range": 200, "cooldown": 2.8 },
+    "Swipe": { "spell": "DA_TDGoblinSlash", "range": 160, "cooldown": 1.5 } },
+  "sequences": {
+    "Frenzy": [ { "do": "CastAbility", "args": { "ability": "Swipe" } }, { "do": "Wait", "args": { "seconds": 0.15 } },
+                { "do": "FaceTarget" }, { "do": "CastAbility", "args": { "ability": "Smash" } } ],
+    "Roar": [ { "do": "Wait", "args": { "seconds": 0.5 } } ] },
+  "actions": [
+    { "id": "Approach", "do": "MoveToward", "args": { "target": "Player", "stop_at": 140 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": 12, "c": 0.12, "range": [0, 1500] } ] },
+    { "id": "Smash", "do": "CastAbility", "args": { "ability": "Smash" }, "weight": 2.4,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Smash" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -30, "c": 0.13, "range": [0, 1500] } ] },
+    { "id": "Swipe", "do": "CastAbility", "args": { "ability": "Swipe" }, "weight": 1.8,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Swipe" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -40, "c": 0.1, "range": [0, 1500] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
+  ],
+  "phases": [
+    { "id": "Enraged", "enter_when": { "input": "SelfHealthRatio", "op": "<=", "value": 0.4 },
+      "on_enter": "Roar", "stats": { "attack_power": 18, "move_speed": 380 },
+      "actions": [
+        { "id": "FrenzyCombo", "do": "PlaySequence", "args": { "sequence": "Frenzy" }, "weight": 3.0,
+          "considerations": [
+            { "input": "AbilityReady", "args": { "ability": "Swipe" }, "curve": "Binary" },
+            { "input": "AbilityReady", "args": { "ability": "Smash" }, "curve": "Binary" },
+            { "input": "DistanceToTarget", "curve": "Logistic", "m": -40, "c": 0.1, "range": [0, 1500] } ] } ] } ] }

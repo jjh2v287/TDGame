@@ -10,3 +10,13 @@
 - 증거: MCP Niagara 스택·메시 바운드 읽기와 `Docs/Validation/combat/megamagic-validation-2026-09-24.md`의 PIE 10종 정리·시각 검증.
 - 날짜·상태: 2026-09-24 active
 - 발견: codex
+
+### L-combat-02 GameInstance 없는 테스트 월드에서 `TryApplyDamage`·사망 처리가 에디터를 죽인다
+- 증상: 자동화 테스트에서 `UTDCombatLibrary::TryApplyDamage` 호출 시 `Assertion failed: Router [GameplayMessageSubsystem.cpp:47]`, 호출 스택 `UGameplayMessageSubsystem::Get ← TryApplyDamage (TDCombatLibrary.cpp:47)`.
+- 원인: `UWorld::CreateWorld`로 만든 픽스처 월드에는 GameInstance가 없어 메시지 서브시스템이 없다. `TryApplyDamage`는 `Event.Damage.Applied`를, 캐릭터 사망 처리(`HandleDeath`)는 `Event.Actor.Death`를 방송하므로 둘 다 단언에 걸린다.
+- 해결: 픽스처 테스트에서는 `UTDCombatComponent::ReceiveDamage(Amount, Element, false, Context)`로 피해를 주고, 캐릭터가 죽는 시나리오는 GameInstance가 있는 월드(PIE 검증)로 옮긴다.
+- 범위: `Source/TDGame/**/Tests`의 스코프 월드 픽스처(FTDScopedCombatWorld, FTDMonsterAITestWorld)
+- 증거: 2026-09-24 `TDGame.MonsterAI.HeavyHitInterruptsTelegraph` 초판에서 재현 → `ReceiveDamage`로 바꾼 뒤 통과
+- 날짜·상태: 2026-09-24 active
+- 발견: claude
+

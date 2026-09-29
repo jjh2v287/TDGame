@@ -160,7 +160,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `Combat/Characters/TDMonsterCharacter.cpp`, `Combat/GAS/TDDamageGameplayAbility.h/.cpp`
 - 검증: BUILD; TEST `TDGame.Combat.GAS` `M0-06`
 - 참조: 변경 목록 #12·#13; engine-behaviortree-tick 결론 11; engine-gas-determinism 바꿔야 하는 것 4; 결정 D16
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — `AutoPossessAI=Disabled`·`AIControllerClass=nullptr`, `bRunPhysicsWithNoController=true` 적용(`Characters/TDMonsterCharacter.cpp` 생성자). 헤드리스 `TDGame.Combat.GAS.*` 통과. 남음: 어빌리티 `ServerOnly` 옵션(#13), `GetController()==nullptr` 로그.
 
 ### M0-07 NoGlobalRandom 자동화 테스트
 - 상태: todo
@@ -195,7 +195,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterDefinition.h`, `MonsterAI/TDMonsterDefinitionLibrary.h/.cpp`(`UTDMonsterDefinitionLibrary`, UEngineSubsystem), `TDGame.Build.cs`(Json·JsonUtilities), `Content/MonsterAI/Definitions/Goblin_Melee.json`
 - 검증: BUILD; TEST `TDGame.MonsterAI.Load` `M1-01`
 - 참조: 결정 D6·D11·D13; engine-misc-decision-tools R13; [02 아키텍처](02-architecture-and-definition-format.md)
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — 로더·extends 병합(스칼라 덮어쓰기·키 단위·actions id 병합·phases 대체)·미지 키 거부+유사 이름 제안·JSON 문법 오류 줄 번호·dh(병합 결과 문자열 FNV-1a) 구현, 6종 로드 0 오류. 편차: `FJsonObjectConverter` 대신 자체 엄격 파서(병합 존재 추적·`{value,tune}` 잎 처리 때문, D6 문구와 다름), 테스트 이름 `TDGame.MonsterAI.Validate`. 남음: `-print-resolved`, float 비트 dh.
 
 ### M1-02 C++ 정적 등록표(입력·원시·FSM 상태)
 - 상태: todo
@@ -206,7 +206,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterActionRegistry.h/.cpp`(`FTDMonsterActionRegistry`), `MonsterAI/TDBrainInputRegistry.h/.cpp`(`FTDBrainInputRegistry`), `MonsterAI/TDBrainInputs.h`
 - 검증: BUILD; TEST `TDGame.MonsterAI.Registry` `M1-02`
 - 참조: 결정 D7; web-llm-authorable-tooling 결론 7; web-ai-architecture-comparison 결론 5
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — 입력 7개(DistanceToTarget·SelfHealthRatio·AbilityReady·FacingTarget·TargetIsAttacking·AllyCountNearby·LineOfSightToTarget(Phase 1 스텁 1))·원시 7개+PlayEmote, 입력 함수 시그니처는 함수 포인터 형으로 강제, 비용 등급 안정 정렬. 남음: 대리 봇 입력 4개(IncomingAttackTelegraph·PersonaDodgeRoll·PotionCount·RingSlotFree).
 
 ### M1-03 응답 곡선 7종과 유틸리티 점수기
 - 상태: todo
@@ -217,10 +217,10 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDResponseCurve.h/.cpp`, `MonsterAI/TDUtilityScorer.h/.cpp`
 - 검증: BUILD; TEST `TDGame.MonsterAI.Scorer` `M1-03`
 - 참조: 결정 D1·D2; web-ai-architecture-comparison 결론 5·6; web-llm-authorable-tooling 결론 7
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — 곡선 7종·곱 결합·0점 조기 종료·정의 순서 동률·관성(도전자가 현재×switch_ratio를 넘어야 교체, 최소 유지 스텝) 구현·테스트. 남음: `select: weighted_random`(현재 로드 오류로 거부), 2회 평가 비트 동일 테스트.
 
 ### M1-04 실행 FSM 5상태와 빙결 연결
-- 상태: todo
+- 상태: done
 - 우선순위: 높음
 - 선행: M1-03
 - 목표: Idle/Move/Cast/Sequence/Stagger 5상태 실행기를 만들고, 상태이상 빙결이 `UTDMonsterThinkSubsystem::SetFrozen(SimulationId, bIsFrozen)` 을 호출하도록 연결한다.
@@ -228,7 +228,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterActionExecutor.h/.cpp`(`FTDMonsterActionExecutor`), `Combat/TDCombatComponentStatus.cpp:434-442`(병행 호출)
 - 검증: BUILD; TEST `TDGame.Combat` `M1-04`; TEST `TDGame.MonsterAI.Fsm` `M1-04b`
 - 참조: 결정 D1; 2절 D38 외 변경 1건; engine-behaviortree-tick 상세 1-4·피할 것 5
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 완료 — `MonsterAI/TDMonsterActionExecutor` 5상태(Idle/Move/Cast/Sequence/Stagger), 빙결은 `UTDCombatComponent::OnFreezeChanged` 구독으로 시전 취소·사고 정지·해제 시 강제 사고(`TDCombatComponentStatus.cpp` 무변경). 테스트 `TDGame.MonsterAI.Fsm.FreezeHaltsThenResumes`·`Fsm.PhasePlaysOnEnterSequence`·`HeavyHitInterruptsTelegraph`, 헤드리스 기존 빙결 테스트 통과.
 
 ### M1-05 UTDMonsterThinkSubsystem 슬롯 배열과 단일 틱 함수
 - 상태: todo
@@ -239,7 +239,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterThinkSubsystem.h/.cpp`, `MonsterAI/TDMonsterBrainSlot.h`(`FTDMonsterBrainSlot`)
 - 검증: BUILD; TEST `TDGame.MonsterAI.Subsystem` `M1-05`
 - 참조: 결정 D14·D15·D21; engine-movement-anim-scale 결론 7; engine-determinism-headless 결론 1·3
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — `UTDMonsterThinkSubsystem`(FTickFunction TG_PrePhysics 고우선, 1/64초 누적 최대 4스텝, SimulationId 순, 몸·두뇌·의도 3개 배열, 세대 핸들). 편차: 몸 위치 정본은 액터(CMC가 이동), 공간 해시 대신 선형 탐색, `ExecuteRules`는 데미지 엔티티가 자체 틱으로 처리. 추가: 교전·경보(900cm)·재교전 차단 6초·귀환·동시 공격 3 제한(06 §5-5 토큰의 고정 예산판)·동료 회피 조향. 남음: 100마리 사고 횟수 검증, 시뮬 경로.
 
 ### M1-06 ITDMonsterBody 와 시뮬 몸 ATDSimCombatant
 - 상태: todo
@@ -250,7 +250,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterBody.h`, `CombatSim/TDSimCombatant.h/.cpp`
 - 검증: BUILD; TEST `TDGame.CombatSim.Body` `M1-06`
 - 참조: 결정 D16·D18; engine-gas-determinism 결론 4·10·바꿔야 하는 것 3·4
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — `MonsterAI/TDMonsterBody.h`(`ITDMonsterBody`)와 게임 몸 `ATDMonsterCharacter` 구현. 남음: 시뮬 몸 `ATDSimCombatant`.
 
 ### M1-07 정의 기반 공격 원시(CastAbility)
 - 상태: todo
@@ -261,7 +261,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/Primitives/TDPrimitive_CastAbility.cpp`, `MonsterAI/Primitives/TDPrimitive_MoveToward.cpp`(직선), `Combat/TDDamageExamples.cpp`(`DA_TDGoblinSlash` 추가)
 - 검증: BUILD; TEST `TDGame.MonsterAI.Attack` `M1-07`
 - 참조: 결정 D19·D21; project-current-combat-code 결론 6·10; engine-gas-determinism 결론 3·5
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — `CastAbility`가 `UTDDamageSubsystem::Cast`로 `UTDDamageDefinition`(Area·Projectile, `ActivationDelay`=선딜, 바닥 예고 머티리얼 `MI_TD_Telegraph_Danger`) 실행, 예고 중 무피해·선딜 후 피해 테스트 통과. 편차: `DA_TDGoblinSlash` 등 6개를 `TDDamageExamples.cpp` 대신 `MonsterAI/TDMonsterAttackCatalog.cpp`에 둠(사용자 소유 데미지 파일 무변경). 남음: 피해 스텝 골든 고정, `Primitives/` 파일 분리.
 
 ### M1-08 검증기 1·2단과 커맨드렛
 - 상태: todo
@@ -474,7 +474,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterPawn.h/.cpp`, `Combat/Characters/TDMonsterCharacter.cpp`(옵션 축소)
 - 검증: BUILD; PIE 수동 + `DumpTicks` 로그; TEST `TDGame.Combat` 유지
 - 참조: 결정 D16; engine-movement-anim-scale 결론 1·2·3·4; web-mass-monster-performance 결론 2
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분(앞당김) — PIE에서 추적·공격 성공(LV-Cambat 17마리). 편차: 잡몹도 `ATDMonsterCharacter`(CMC Walking, 내비 없이 직선+회피) 사용, 애니메이션은 C++ 단일 노드 재생(`TDMonsterAnimationDriver`, AnimBP 로직 없음). 2026-09-25 claude: 고블린·스톤 골렘 추가 — Manny 애니메이션 IK 리타기팅(`Tools/MonsterAI/editor_retarget_monster_anims.py`, `/Game/MonsterAI/Animations/{Goblin,Golem}`), 골렘은 데모 이동 클립 사용, 새 정의 `StoneGolem.json`·공격 `DA_TDGolemStomp`(사거리 ≤ 반경이면 자기 중심), LV-Cambat 7무리 25마리, PIE 고블린 교전·골렘 발구르기·내려치기 확인. 남음: `ATDMonsterPawn` 잡몹 몸, NavWalking·경로, `DumpTicks`, 골렘 전용 내려찍기 동작(현재 훅), 고블린 무기 부착.
 
 ### M3-02 공간 해시와 분리 조향·근접 자리 토큰
 - 상태: todo
@@ -485,7 +485,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDNeighborGrid.h/.cpp`(클래스 `FTDNeighborGrid`, 02 §2), 입력 함수 `RingSlotFree`(02 §8, 06 §5-5)
 - 검증: BUILD; TEST `TDGame.MonsterAI.Grid` `M3-02`; TEST `TDGame.CombatSim.Determinism`
 - 참조: 결정 D17; engine-movement-anim-scale 결론 11; engine-behaviortree-tick 쓸 수 있는 것 4(EQS 대신 자체 격자 질의)
-- 기록: (없음)
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — 분리 조향(반경 합+20cm)·전방 동료 회피(65도 회전)를 선형 탐색으로 구현. 남음: `THierarchicalHashGrid2D`, 근접 자리 토큰.
 
 ### M3-03 LOD 4단 주기표 스케줄러
 - 상태: todo

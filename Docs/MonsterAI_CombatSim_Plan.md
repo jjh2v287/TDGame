@@ -95,6 +95,18 @@
 
 병행 월드젠 대장(`Docs/Tasks/`)과의 관계: **별도 대장**이다. 할 일 ID 접두사는 이 묶음이 `M`(`M<phase>-<번호>`), 월드젠이 `P` 로 구분한다. 통합 시점은 사용자 결정(MD-08, M3-10)이며 그 전까지 `Docs/Tasks/` 파일을 수정하지 않는다.
 
+### 5.1 구현 현황과 새 몬스터 추가 절차(2026-09-24)
+
+현황: 게임 경로 수직 슬라이스가 돈다(`Source/TDGame/MonsterAI/`, LV-Cambat 7무리 25마리(하이에나·책머리 2종·스켈레톤 가드·고블린·스톤 골렘), 애니메이션 없는 종은 `Tools/MonsterAI/editor_retarget_monster_anims.py`로 Manny에서 리타기팅, 테스트 `TDGame.MonsterAI.*` 7개, PIE 판정 `measurements/monster-pie-check.json`). 시뮬 경로(M1-06 시뮬 몸·M1-09~12)와 공간 해시·잡몹 전용 몸은 아직 없다. 항목별 편차는 07 각 항목의 기록 줄에 있다.
+
+| 단계 | 누가 | 할 일 |
+|---|---|---|
+| 1 두뇌 | 사람 의도 → 에이전트 | `Content/MonsterAI/Definitions/<Id>.json` 작성(02 §5.1 키만, 공격 `spell`은 `MonsterAI/TDMonsterAttackCatalog.cpp` 이름 또는 `/Game/Combat/Examples` 에셋). `TD.MonsterAI.Reload` 또는 `TDGame.MonsterAI.Validate`로 오류 0 확인(오타는 유사 이름 제안) |
+| 2 몸 | 에이전트 | `Tools/MonsterAI/editor_make_monster_species.py`에 종 한 줄 추가(메시·애니메이션 구간·`ImpactSeconds`·정의 ID) 후 실행 → `/Game/MonsterAI/Species/DA_TDMonster_<Id>` |
+| 3 배치 | 에이전트 | `Tools/MonsterAI/editor_place_monsters.py`의 무리 표에 추가 후 실행(LV-Cambat 저장) |
+| 4 검증 | 에이전트 → 사람 | `python Tools/MonsterAI/pie_check_monsters.py`(교전·예고·타격·사망) → 사람은 PIE에서 `TD.MonsterAI.DebugDraw 1`로 손맛·가독성 판정 |
+| 새 입력·원시·공격 | 사람 승인 | C++ 등록표(`TDBrainInputRegistry.cpp`·`TDMonsterActionRegistry.cpp`)나 공격 카탈로그 수정 + `python Tools/ue_editor.py restart` |
+
 ## 6. 정본 용어집
 
 이름이 문서마다 달랐던 항목은 여기 표기로 통일한다(괄호 안이 통일 전 표기). 축약어: SoA = Structure of Arrays(배열 구조체), POD = Plain Old Data(단순 자료형), GE = Gameplay Effect(게임플레이 효과), ASC = Ability System Component(어빌리티 시스템 컴포넌트), CMC = Character Movement Component(캐릭터 이동 컴포넌트), LOD = Level of Detail(세부 수준), FSM = 유한 상태 기계, HTN = 계층적 태스크 네트워크, BC = 행동 복제, PPO = Proximal Policy Optimization(근접 정책 최적화), CMA/PSO = 공분산 행렬 적응 / 입자 군집 최적화, JSONL = JSON Lines.

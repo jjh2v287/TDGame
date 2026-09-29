@@ -1,0 +1,206 @@
+{
+ "summary": {
+  "action": "TD_SwordAttack01",
+  "fps": 60.0,
+  "frames": [
+   1,
+   112
+  ],
+  "duration_s": 1.85,
+  "tip_peak_speed_m_s": 74.03,
+  "tip_peak_frame": 25,
+  "swing_frames_50pct": [
+   23,
+   28
+  ],
+  "swing_duration_s": 0.1,
+  "contact_frame": 25,
+  "contact_time_s": 0.4,
+  "contact_tip_cm": [
+   194.2,
+   2.7,
+   109.7
+  ],
+  "contact_horizontal_radius_cm": 191.0,
+  "active_plane_rms_cm": 4.04,
+  "active_plane_tilt_deg": 70.0,
+  "active_direction": "R->L",
+  "active_drop_cm": 97.0,
+  "edge_alignment_min_deg": 60.5,
+  "edge_alignment_mean_deg": 79.4,
+  "blade_roll_active_max_deg": 46.4,
+  "elbow_at_contact_deg": 172.6,
+  "arm_blade_at_contact_deg": 139.6,
+  "shoulder_yaw_range_deg": 226.2,
+  "hip_yaw_range_deg": 160.2,
+  "tip_horizontal_sweep_active_deg": 229.2,
+  "pelvis_z_range_cm": 23.3,
+  "pelvis_z_min_frame": 30,
+  "angular_peak_frames": {
+   "pelvis": 21,
+   "spine_03": 21,
+   "spine_05": 21,
+   "upperarm_r": 26,
+   "lowerarm_r": 26,
+   "hand_r": 26
+  },
+  "wrist_flexion_range_deg": [
+   -89.3,
+   26.1
+  ],
+  "wrist_deviation_range_deg": [
+   -56.5,
+   88.5
+  ],
+  "hand_l_travel_max_cm": 106.7,
+  "tip_min_z_cm": 23.4,
+  "tip_min_z_frame": 67,
+  "root_travel_cm": [
+   36.0,
+   0.0,
+   0.0
+  ],
+  "root_speed_start_end_cm_per_frame": [
+   0.0,
+   0.0
+  ],
+  "pelvis_root_horizontal_max_cm": 16.4,
+  "max_bone_rotation_per_frame_deg": 71.1,
+  "feet": {
+   "ball_l": {
+    "max_slide_cm_per_frame_grounded": 0.532,
+    "grounded_frames": 99,
+    "min_z_cm": 0.33,
+    "travel_cm": 36.0
+   },
+   "ball_r": {
+    "max_slide_cm_per_frame_grounded": 1.042,
+    "grounded_frames": 99,
+    "min_z_cm": 0.35,
+    "travel_cm": 36.0
+   }
+  },
+  "blade_body_clearance_min_cm": {
+   "thigh_l": 18.1,
+   "calf_l": 20.1,
+   "thigh_r": 19.3,
+   "calf_r": 24.8,
+   "pelvis": 26.8,
+   "neck_01": 41.3,
+   "upperarm_l": 44.5,
+   "lowerarm_l": 49.9
+  },
+  "blade_body_clearance_worst_frame": {
+   "thigh_l": 62,
+   "calf_l": 62,
+   "thigh_r": 1,
+   "calf_r": 1,
+   "pelvis": 45,
+   "neck_01": 14,
+   "upperarm_l": 44,
+   "lowerarm_l": 45
+  }
+ },
+ "source_with_corrected_grip": {
+  "action": "TD_Ref_Attack_PrimaryA",
+  "fps": 60.0,
+  "frames": [
+   1,
+   102
+  ],
+  "duration_s": 1.683,
+  "tip_peak_speed_m_s": 98.51,
+  "tip_peak_frame": 24,
+  "swing_frames_50pct": [
+   23,
+   27
+  ],
+  "swing_duration_s": 0.083,
+  "contact_frame": 26,
+  "contact_time_s": 0.417,
+  "contact_tip_cm": [
+   163.0,
+   -101.5,
+   84.9
+  ],
+  "contact_horizontal_radius_cm": 187.3,
+  "active_plane_rms_cm": 7.78,
+  "active_plane_tilt_deg": 69.0,
+  "active_direction": "R->L",
+  "active_drop_cm": 95.5,
+  "edge_alignment_min_deg": 64.4,
+  "edge_alignment_mean_deg": 86.0,
+  "blade_roll_active_max_deg": 56.1,
+  "elbow_at_contact_deg": 146.4,
+  "arm_blade_at_contact_deg": 154.1,
+  "shoulder_yaw_range_deg": 228.3,
+  "hip_yaw_range_deg": 160.2,
+  "tip_horizontal_sweep_active_deg": 267.6,
+  "pelvis_z_range_cm": 27.9,
+  "pelvis_z_min_frame": 50,
+  "angular_peak_frames": {
+   "pelvis": 22,
+   "spine_03": 22,
+   "spine_05": 22,
+   "upperarm_r": 26,
+   "lowerarm_r": 26,
+   "hand_r": 26
+  },
+  "wrist_flexion_range_deg": [
+   -89.7,
+   49.6
+  ],
+  "wrist_deviation_range_deg": [
+   -52.6,
+   89.4
+  ],
+  "hand_l_travel_max_cm": 96.2,
+  "tip_min_z_cm": 27.9,
+  "tip_min_z_frame": 93,
+  "root_travel_cm": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_speed_start_end_cm_per_frame": [
+   0.0,
+   0.0
+  ],
+  "pelvis_root_horizontal_max_cm": 16.4,
+  "max_bone_rotation_per_frame_deg": 95.7,
+  "feet": {
+   "ball_l": {
+    "max_slide_cm_per_frame_grounded": 0.826,
+    "grounded_frames": 102,
+    "min_z_cm": -2.03,
+    "travel_cm": 0.0
+   },
+   "ball_r": {
+    "max_slide_cm_per_frame_grounded": 0.951,
+    "grounded_frames": 102,
+    "min_z_cm": -3.02,
+    "travel_cm": 0.0
+   }
+  },
+  "blade_body_clearance_min_cm": {
+   "thigh_l": 24.9,
+   "calf_l": 31.7,
+   "thigh_r": 19.6,
+   "calf_r": 25.3,
+   "pelvis": 26.8,
+   "neck_01": 30.4,
+   "upperarm_l": 44.5,
+   "lowerarm_l": 49.1
+  },
+  "blade_body_clearance_worst_frame": {
+   "thigh_l": 44,
+   "calf_l": 53,
+   "thigh_r": 1,
+   "calf_r": 1,
+   "pelvis": 44,
+   "neck_01": 21,
+   "upperarm_l": 44,
+   "lowerarm_l": 53
+  }
+ }
+}

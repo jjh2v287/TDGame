@@ -1,0 +1,415 @@
+{
+ "name": "AS_TD_Player_SwordAttack01",
+ "fps": 60,
+ "frames": [
+  1,
+  112
+ ],
+ "duration_s": 1.85,
+ "source": "Paragon Greystone Attack_PrimaryA (Epic, retargeted to UE5 Manny in C:/Project/PJGame), edited by Tools/BlenderAnimation/sword_attack01_author.py",
+ "author": {
+  "action": "TD_SwordAttack01",
+  "frames": 112,
+  "config": {
+   "source_action": "TD_Ref_Attack_PrimaryA",
+   "output_action": "TD_SwordAttack01",
+   "time_keys": [
+    [
+     1,
+     1
+    ],
+    [
+     7,
+     7
+    ],
+    [
+     10,
+     9
+    ],
+    [
+     18,
+     19
+    ],
+    [
+     22,
+     23
+    ],
+    [
+     25,
+     25.2
+    ],
+    [
+     34,
+     33
+    ],
+    [
+     52,
+     51
+    ],
+    [
+     96,
+     79
+    ],
+    [
+     112,
+     102
+    ]
+   ],
+   "travel_cm": 36.0,
+   "root_travel_keys": [
+    [
+     1,
+     0.0
+    ],
+    [
+     7,
+     0.0
+    ],
+    [
+     12,
+     0.12
+    ],
+    [
+     16,
+     0.36
+    ],
+    [
+     20,
+     0.6
+    ],
+    [
+     24,
+     0.8
+    ],
+    [
+     28,
+     0.93
+    ],
+    [
+     32,
+     1.0
+    ],
+    [
+     36,
+     1.0
+    ]
+   ],
+   "lead_foot": "l",
+   "foot_plans": {
+    "l": [
+     [
+      7,
+      20,
+      1.0,
+      6.0
+     ]
+    ],
+    "r": [
+     [
+      26,
+      36,
+      0.5,
+      2.5
+     ],
+     [
+      67,
+      81,
+      0.5,
+      4.0
+     ]
+    ]
+   },
+   "lift_peak_fraction": 0.42,
+   "lead_pitch_keys": [
+    [
+     3,
+     0.0
+    ],
+    [
+     7,
+     14.0
+    ],
+    [
+     10,
+     6.0
+    ],
+    [
+     13,
+     0.0
+    ],
+    [
+     17,
+     -9.0
+    ],
+    [
+     20,
+     -12.0
+    ],
+    [
+     23,
+     0.0
+    ]
+   ],
+   "lead_flat_window": [
+    1,
+    7,
+    21,
+    25
+   ],
+   "rear_heel_max_deg": 40.0,
+   "rear_foot_max_pitch_deg": 68.0,
+   "toe_flat_heights_cm": [
+    1.5,
+    4.0
+   ],
+   "tip_height_bands": [],
+   "arm_blends": [
+    {
+     "reference_source_frames": [
+      [
+       12,
+       22.7
+      ],
+      [
+       22,
+       23.0
+      ],
+      [
+       25,
+       25.2
+      ]
+     ],
+     "space": "armature",
+     "local_bones": {
+      "clavicle_r": 0.5
+     },
+     "weight_keys": [
+      [
+       4,
+       0.0
+      ],
+      [
+       5,
+       0.0
+      ],
+      [
+       13,
+       1.0
+      ],
+      [
+       21,
+       1.0
+      ],
+      [
+       24,
+       0.0
+      ],
+      [
+       25,
+       0.0
+      ]
+     ]
+    },
+    {
+     "reference_source_frames": [
+      [
+       1,
+       102.0
+      ]
+     ],
+     "space": "local",
+     "local_bones": {},
+     "weight_keys": [
+      [
+       45,
+       0.0
+      ],
+      [
+       51,
+       0.0
+      ],
+      [
+       63,
+       0.4
+      ],
+      [
+       93,
+       0.4
+      ],
+      [
+       105,
+       0.0
+      ],
+      [
+       106,
+       0.0
+      ]
+     ]
+    }
+   ],
+   "rear_ball_pin_release": [
+    26,
+    33
+   ],
+   "tip_clearance_cm": 22.0,
+   "wrist_hard_limits": {
+    "flexion": [
+     -78.0,
+     60.0
+    ],
+    "deviation": [
+     -40.0,
+     28.0
+    ]
+   },
+   "wrist_protect_window": [
+    20,
+    23,
+    35,
+    39
+   ],
+   "wrist_knee_deg": 10.0,
+   "wrist_curve_sigma": 1.5,
+   "iterations": 2,
+   "crouch_scale": 0.75
+  },
+  "max_arm_over_cm": 0.1,
+  "max_leg_over_cm": 0.0,
+  "wrist_flexion_range": [
+   -89.3,
+   26.1
+  ],
+  "wrist_deviation_range": [
+   -56.5,
+   88.5
+  ],
+  "iterations": [
+   {
+    "iteration": 0,
+    "max_clearance_flexion_deg": 8.0,
+    "max_clearance_deviation_deg": 12.0
+   },
+   {
+    "iteration": 1,
+    "max_clearance_flexion_deg": 0.0,
+    "max_clearance_deviation_deg": 0.0
+   }
+  ],
+  "max_elbow_step_cm": 25.63,
+  "forearm_twist_range": [
+   -0.0,
+   -0.0
+  ]
+ },
+ "measure": {
+  "action": "TD_SwordAttack01",
+  "fps": 60.0,
+  "frames": [
+   1,
+   112
+  ],
+  "duration_s": 1.85,
+  "tip_peak_speed_m_s": 74.03,
+  "tip_peak_frame": 25,
+  "swing_frames_50pct": [
+   23,
+   28
+  ],
+  "swing_duration_s": 0.1,
+  "contact_frame": 25,
+  "contact_time_s": 0.4,
+  "contact_tip_cm": [
+   194.2,
+   2.7,
+   109.7
+  ],
+  "contact_horizontal_radius_cm": 191.0,
+  "active_plane_rms_cm": 4.04,
+  "active_plane_tilt_deg": 70.0,
+  "active_direction": "R->L",
+  "active_drop_cm": 97.0,
+  "edge_alignment_min_deg": 60.5,
+  "edge_alignment_mean_deg": 79.4,
+  "blade_roll_active_max_deg": 46.4,
+  "elbow_at_contact_deg": 172.6,
+  "arm_blade_at_contact_deg": 139.6,
+  "shoulder_yaw_range_deg": 226.2,
+  "hip_yaw_range_deg": 160.2,
+  "tip_horizontal_sweep_active_deg": 229.2,
+  "pelvis_z_range_cm": 23.3,
+  "pelvis_z_min_frame": 30,
+  "angular_peak_frames": {
+   "pelvis": 21,
+   "spine_03": 21,
+   "spine_05": 21,
+   "upperarm_r": 26,
+   "lowerarm_r": 26,
+   "hand_r": 26
+  },
+  "wrist_flexion_range_deg": [
+   -89.3,
+   26.1
+  ],
+  "wrist_deviation_range_deg": [
+   -56.5,
+   88.5
+  ],
+  "hand_l_travel_max_cm": 106.7,
+  "tip_min_z_cm": 23.4,
+  "tip_min_z_frame": 67,
+  "root_travel_cm": [
+   36.0,
+   0.0,
+   0.0
+  ],
+  "root_speed_start_end_cm_per_frame": [
+   0.0,
+   0.0
+  ],
+  "pelvis_root_horizontal_max_cm": 16.4,
+  "max_bone_rotation_per_frame_deg": 71.1,
+  "feet": {
+   "ball_l": {
+    "max_slide_cm_per_frame_grounded": 0.532,
+    "grounded_frames": 99,
+    "min_z_cm": 0.33,
+    "travel_cm": 36.0
+   },
+   "ball_r": {
+    "max_slide_cm_per_frame_grounded": 1.042,
+    "grounded_frames": 99,
+    "min_z_cm": 0.35,
+    "travel_cm": 36.0
+   }
+  },
+  "blade_body_clearance_min_cm": {
+   "thigh_l": 18.1,
+   "calf_l": 20.1,
+   "thigh_r": 19.3,
+   "calf_r": 24.8,
+   "pelvis": 26.8,
+   "neck_01": 41.3,
+   "upperarm_l": 44.5,
+   "lowerarm_l": 49.9
+  },
+  "blade_body_clearance_worst_frame": {
+   "thigh_l": 62,
+   "calf_l": 62,
+   "thigh_r": 1,
+   "calf_r": 1,
+   "pelvis": 45,
+   "neck_01": 14,
+   "upperarm_l": 44,
+   "lowerarm_l": 45
+  }
+ },
+ "weapon": {
+  "socket": "HandGrip_R",
+  "static_mesh": "/Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Sword",
+  "relative_location_cm": [
+   0.0,
+   32.2,
+   -1.4
+  ]
+ }
+}

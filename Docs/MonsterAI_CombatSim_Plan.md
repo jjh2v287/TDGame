@@ -3,7 +3,7 @@
 - 작성일: 2026-09-10. 상태: **문서 완료, 구현 미착수**.
 - 이 묶음은 "어떤 AI 모델인가 → 정의 형식과 아키텍처 → 틱과 규모 → 결정론 시뮬레이터 → 머신러닝·생성형 AI → 요구 밖 고려사항 → 로드맵·할 일" 순서로 읽는다. 결정 기록(00)과 문서 7편은 `Docs/MonsterAI_CombatSim/`, 조사 17편은 `Docs/MonsterAI_CombatSim/research/` 에 있다.
 - 원칙: 로직은 C++ 전용(AGENTS.md 7절), `TD` 접두어. 정본은 텍스트(JSON)이고 에셋은 파생물이다. UKGame(`Docs/UKGame/`)은 과거 설계 참고용이며 기준이 아니다.
-- 결정 기록(D1~D38)의 전문은 [00 결정 기록](MonsterAI_CombatSim/00-decision-record.md)이다(저장소에 반영됨(2026-09-10)). 각 문서의 "결론 요약(결정 문장)" 절과 이 문서 §2 는 결정 번호별 요약이며, 표현이 다르면 00 이 우선한다.
+- 결정 기록(D1~D38, 10b절 D44 이동·애니 전면 교체)의 전문은 [00 결정 기록](MonsterAI_CombatSim/00-decision-record.md)이다(저장소에 반영됨(2026-09-10)). 각 문서의 "결론 요약(결정 문장)" 절과 이 문서 §2 는 결정 번호별 요약이며, 표현이 다르면 00 이 우선한다.
 - 병행 작업 [월드·던전·PCG 계획](WorldDungeonPCG_Plan.md)과는 대장이 다르다(§5).
 
 ## 1. 이 묶음이 답하는 사용자 질문 6가지
@@ -22,13 +22,13 @@
 
 전문은 [00 결정 기록](MonsterAI_CombatSim/00-decision-record.md)에 있다. 아래 12문장은 그 압축이며, 표현이 다르면 00 이 우선한다.
 
-1. 주력은 코드 정의 유틸리티 AI(행동 × 고려사항 표, 4파라미터 곡선 7종, 곱 결합, 비용순 조기 종료, 최고점, 동률 정의 순서, 관성) + 실행 FSM 5상태이고, 엔진 BT·StateTree·GOAP·Mass 두뇌·Mover·MLAdapter 는 전투 코어에서 배제한다(D1·D4·D5) — web-ai-architecture-comparison, engine-behaviortree-tick, engine-statetree-runtime.
+1. 주력은 코드 정의 유틸리티 AI(행동 × 고려사항 표, 4파라미터 곡선 7종, 곱 결합, 비용순 조기 종료, 최고점, 동률 정의 순서, 관성) + 실행 FSM 5상태이고, 엔진 BT·StateTree·GOAP·Mass 두뇌·Mover·MLAdapter 는 전투 코어에서 배제한다(D1·D4·D5) — web-ai-architecture-comparison, engine-behaviortree-tick, engine-statetree-runtime. (2026-09-30 D44로 대체: Mover는 배제 목록에서 빠졌다. 모든 캐릭터 몸은 `APawn` + Mover, 애니메이션은 UAF이며 AI 두뇌 판정은 그대로 C++ 유틸리티 + FSM이다.)
 2. 보조는 데이터 정의 시퀀스(콤보)와 보스 페이즈 표이며, 자체 C++ HTN(Hierarchical Task Network, 계층적 태스크 네트워크)은 3페이즈 보스 안무·무리 역할 요구가 실제로 올 때 Phase 4 에 추가하고 엔진 HTNPlanner 플러그인은 쓰지 않는다(D2·D3) — engine-htnplanner-plugin.
 3. 정본은 종당 JSON 한 파일(평면 표 4개 + 메타, 미지 키 거부, `extends` 상속)이고, 행동 원시·입력 함수·FSM 상태는 C++ 정적 등록표에 두며 입력 함수는 스텝 시작 스냅샷 `FTDBrainInputs` 만 읽는다(D6·D7) — web-llm-authorable-tooling.
 4. 검증기 3단(스키마·참조 → 정적 규칙 → 5초 헤드리스 생존), 스키마 문서 코드 생성, JSON → C++ 상수표 되돌림 커맨드렛, float 비트를 포함한 정의 해시 dh, 시뮬 세션 중 핫리로드 잠금, 플레이어 대리 페르소나도 같은 JSON 형식이다(D8~D12) — engine-misc-decision-tools(R13 `FJsonObjectConverter`).
 5. 새 모듈 없이 `Source/TDGame/MonsterAI/`·`CombatSim/` 두 폴더만 추가하고 커맨드렛도 런타임 모듈에 두며, 몬스터 상태의 정본은 `UTDMonsterThinkSubsystem` 의 SoA 슬롯 배열이고 단일 고우선 `TG_PrePhysics` 틱 함수가 `World->Tick` 당 1회 SimulationId 오름차순으로 "공간 해시 → 사고 → 이동 → 판정 → 피해" 를 처리한다(D13~D15) — engine-determinism-headless, project-current-combat-code.
-6. 몸은 `ITDMonsterBody` 3구현(잡몹 `APawn`+`UFloatingPawnMovement`·컨트롤러 없음, 정예 `ATDMonsterCharacter`, 시뮬 `ATDSimCombatant`)으로 격리하고, 근접 탐색은 `THierarchicalHashGrid2D`(셀 250cm) 이며 잡몹은 물리 오버랩·RVO·DetourCrowd 를 쓰지 않고, GAS(Gameplay Ability System, 게임플레이 어빌리티 시스템)는 유지한다(D16~D18) — engine-movement-anim-scale, engine-gas-determinism.
-7. 몬스터 공격 판정은 게임·시뮬 모두 데이터가 권위다(Phase 0~2 `UTDDamageDefinition`, Phase 3 `FTDAttackTimetable`, 애님 노티파이는 표현·오라클). 플레이어의 노티파이 스윕 경로는 유지하고, 화면 밖에서도 이동·판정은 멈추지 않는다(D19~D21) — project-current-combat-code, engine-determinism-headless.
+6. 몸은 `ITDMonsterBody` 3구현(잡몹 `APawn`+`UFloatingPawnMovement`·컨트롤러 없음, 정예 `ATDMonsterCharacter`, 시뮬 `ATDSimCombatant`)으로 격리하고, 근접 탐색은 `THierarchicalHashGrid2D`(셀 250cm) 이며 잡몹은 물리 오버랩·RVO·DetourCrowd 를 쓰지 않고, GAS(Gameplay Ability System, 게임플레이 어빌리티 시스템)는 유지한다(D16~D18) — engine-movement-anim-scale, engine-gas-determinism. (2026-09-30 D44로 대체: 게임 몸은 잡몹·정예·보스 모두 `ATDMonsterCharacter : ATDCombatCharacter(APawn)` + Mover 한 종류이고 `UFloatingPawnMovement`·CMC는 쓰지 않는다. `ITDMonsterBody` 격리는 유지.)
+7. 몬스터 공격 판정은 게임·시뮬 모두 데이터가 권위다(Phase 0~2 `UTDDamageDefinition`, Phase 3 `FTDAttackTimetable`, 애님 노티파이는 표현·오라클). 플레이어의 노티파이 스윕 경로는 유지하고, 화면 밖에서도 이동·판정은 멈추지 않는다(D19~D21) — project-current-combat-code, engine-determinism-headless. (2026-09-30 D44로 대체: 노티파이·몽타주는 삭제됐다. 플레이어·몬스터 모두 능력 태스크가 스윕 코어 `FTDMeleeSweep`를 C++ 시간표 `FTDActionAnimation.HitWindows`로 구동한다.)
 8. 사고 주기는 4채널(think/move/judge/present) × LOD 4단 주기표 `uint8 PeriodTable[4][4]` 데이터이고 위상은 `Slot % Period` 로 난수 없이 분산하며, 시뮬 기본은 전원 L0, 규모 단계 A→B→C→D 는 실측 KPI 로만 넘어가고 게임·시뮬 모두 단일 스레드로 시작한다(D22~D25) — web-mass-monster-performance, engine-mass-entity-ai, engine-movement-anim-scale.
 9. 시뮬 세션 클래스 `FTDCombatSimSession` 하나를 커맨드렛 `-run=TDCombatSim` 과 자동화 테스트 `TDGame.CombatSim.*` 이 공유하고, 스텝은 1/64초 고정(`++GFrameCounter` → `FApp` 시간 → `World->Tick`)이며 기존 28개 테스트는 0.02 스텝을 유지한 채 Phase 0 에서 실제 통과부터 확인한다(D26~D28) — engine-determinism-headless, web-balance-simulation-tools.
 10. 난수는 마스터 시드에서 `HashCombine` 파생한 이름 있는 `FRandomStream` 만 쓰고 전역 `FMath::FRand` 계열은 grep 테스트로 금지하며, 순서는 SimulationId 하나로 통일하고, 스텝별 FNV-1a 64비트 해시 체인을 같은 프로세스 2회 + 다른 프로세스 1회 + 골든으로 게이트한다(D29~D31) — engine-determinism-headless, engine-gas-determinism, engine-behaviortree-tick(EQS·퍼셉션 벽시계).
@@ -39,7 +39,7 @@
 
 | 순서 | 파일 | 제목 | 내용 | 읽는 시점 |
 |---|---|---|---|---|
-| 0 | [00-decision-record.md](MonsterAI_CombatSim/00-decision-record.md) | 결정 기록(D1~D38, 구속력) | 심사 합의(골격 A·결정론 C·규모 B·최소 변경 D), D1~D38 전문 11절(AI 모델, 정의 형식, 아키텍처·상태 소유, 공격 판정, 틱·규모, 시뮬레이터, ML·생성형 AI, Phase 0 최소 변경, 로드맵 요약, UKGame 차이, 정오표). 01~07 과 표현이 다르면 이 문서가 우선 | 모든 작업 전 |
+| 0 | [00-decision-record.md](MonsterAI_CombatSim/00-decision-record.md) | 결정 기록(D1~D38·D44, 구속력) | 심사 합의(골격 A·결정론 C·규모 B·최소 변경 D), D1~D38 전문 11절(AI 모델, 정의 형식, 아키텍처·상태 소유, 공격 판정, 틱·규모, 시뮬레이터, ML·생성형 AI, Phase 0 최소 변경, 로드맵 요약, UKGame 차이, 정오표). 01~07 과 표현이 다르면 이 문서가 우선 | 모든 작업 전 |
 | 1 | [01-ai-model-decision.md](MonsterAI_CombatSim/01-ai-model-decision.md) | 몬스터 AI 모델 비교와 결정 | 두 우려의 엔진 소스 검증, 계획형/반응형 보정, 후보 8개 비교표, StateTree 재검토 S1~S7, HTN 도입 H1~H5 | AI 모델 정할 때 |
 | 2 | [02-architecture-and-definition-format.md](MonsterAI_CombatSim/02-architecture-and-definition-format.md) | 아키텍처와 몬스터 AI 정의 형식 | 폴더·클래스 표, 데이터 흐름, 게임/시뮬 공유 경계, JSON 스키마 규칙·예시 3종, 등록표, 점수기 코드, 검증·덤프·해시·핫리로드, 페르소나, LLM 절차 | 코드 짤 때 |
 | 3 | [03-tick-and-scale.md](MonsterAI_CombatSim/03-tick-and-scale.md) | 틱 제어와 대량 몬스터 규모 전략 | 채널 × LOD 주기표, 위상·누적기·히스테리시스, 스케줄러, 몸 3구현·이동·공간 해시, 단계 A~D KPI, 예산표(추정), Mass 이관 모양, 단일 스레드 | 코드 짤 때 |
@@ -128,8 +128,8 @@
 | 등록 입력 함수 | DistanceToTarget, SelfHealthRatio, TargetHealthRatio, FacingTarget, AbilityReady, AllyCountNearby, LineOfSightToTarget, TargetIsAttacking, RingSlotFree, IncomingAttackTelegraph, PersonaDodgeRoll, PotionCount(PascalCase). 06 제안 HasAttackToken | 02 §5.2~§6·§8 |
 | `FTDMonsterActionExecutor` | 실행 FSM 5상태 Idle/Move/Cast/Sequence/Stagger, 몸에 명령. 07 M1-04 파일 `TDMonsterExecutionState.h` 가 담는다 | 02 §2 (D1) |
 | `ITDMonsterBody` | 몸 UInterface(위치 읽기·이동 요청·시전·페이싱·경직), 구현 3종 | 02 §2, 03 §4.1 (D16) |
-| `ATDMonsterPawn` | 게임 잡몹 몸: `APawn` + `UFloatingPawnMovement`, 캡슐 QueryOnly, 오버랩 이벤트 끔, AIController 없음, 액터 틱 없음 | 02 §2, 03 §4.1 |
-| `ATDMonsterCharacter` | 기존 `ACharacter`, 게임 정예/보스 몸: CMC `MOVE_NavWalking`, `bAlwaysCheckFloor=false`, `bEnablePhysicsInteraction=false`, RVO 끔, `bRunPhysicsWithNoController=true`, AutoPossessAI/AIControllerClass 제거 | 03 §4.1, 07 변경 #12 (D16·D38) |
+| `ATDMonsterPawn` | 게임 잡몹 몸: `APawn` + `UFloatingPawnMovement`, 캡슐 QueryOnly, 오버랩 이벤트 끔, AIController 없음, 액터 틱 없음 (2026-09-30 D44로 대체: 별도 잡몹 몸은 만들지 않는다) | 02 §2, 03 §4.1 |
+| `ATDMonsterCharacter` | `ATDCombatCharacter`(APawn) 파생, 게임 몬스터 몸(잡몹·정예·보스 공통): `UCharacterMoverComponent`(Standalone) + `UNavMoverComponent` + UAF, AutoPossessAI/AIControllerClass 제거 (2026-09-30 D44로 대체: 옛 `ACharacter`·CMC `MOVE_NavWalking`·`bRunPhysicsWithNoController` 구성) | 03 §4.1, 07 변경 #12 (D16·D38·D44) |
 | `ATDSimCombatant` | 시뮬 몸: `AActor` + `UTDCombatComponent`(ASC, `bSuppressGameplayCues=true`), 수학 이동, 컨트롤러 없음, 픽스처 `SpawnCombatant` 방식 | 02 §2, 04 §5, 07 M1-06 |
 | `FTDNeighborGrid` | `THierarchicalHashGrid2D<2,4,uint32>` 래퍼, 셀 250cm(레벨1 1,000cm), 이웃 ≤ 8, 갱신은 스텝 끝·질의는 스텝 시작 스냅샷. (07 `TDMonsterSpatialGrid` 파일이 담는다) | 02 §2, 03 §4.4 (D17) |
 | `FTDMonsterTickScheduler` | `uint8 PeriodTable[4][4]`, Lod/Phase 배열, `CollectDue(Channel, StepIndex)` | 03 §2 |
@@ -153,7 +153,7 @@
 | 검증 3단 임계 | 1단 스키마·미지 키 거부·참조·유사도(편집 거리 ≤ 2) / 2단 정적 규칙 / 3단 헤드리스 5초(320스텝) × 시드 3: 첫 공격 < 3초(192스텝), 교체율 < 5회/초, 대기 점유 < 60%, 2회 해시 일치, 2초 내 사고 0회 감시 | 02 §5.7, 07 M1-08·M2-06 (D8) |
 | `UTDMonsterAISchemaDumpCommandlet` | `-run=TDMonsterAISchemaDump -out=Docs/MonsterAI_CombatSim/schema/` → `monster-definition.schema.json`, `inputs.md`, `actions.md`. 테스트 `TDGame.MonsterAI.SchemaUpToDate` | 02 §5.8, 07 M2-07 (D9) |
 | `UTDMonsterAIBakeConstantsCommandlet` | `-run=TDMonsterAIBakeConstants` → `Source/TDGame/MonsterAI/Generated/TDMonsterDefinitions.gen.cpp`. 테스트 `TDGame.MonsterAI.BakeMatchesJson`. 전환 조건: 런타임 오류 반복 또는 곡선 해석 > 1ms@300. (07 `TDMonsterAIBake` 는 이 이름으로) | 02 §5.12 (D10) |
-| `UTDAttackTimetableExtractCommandlet` | `-run=TDAttackTimetableExtract -Montage=<path>\|-All` → `Content/MonsterAI/Timetables/<Id>.json`. (07 `Attacks/` 경로는 이것으로) | 04 §6.2, 02 §1 |
+| `UTDAttackTimetableExtractCommandlet` | `-run=TDAttackTimetableExtract -Montage=<path>\|-All` → `Content/MonsterAI/Timetables/<Id>.json`. (07 `Attacks/` 경로는 이것으로) (2026-09-30 D44로 대체: 몽타주가 없어 입력은 시퀀스·`FTDActionAnimation`이며 `-Montage=` 인수는 다시 설계) | 04 §6.2, 02 §1 |
 
 ### 6.3 틱·규모
 
@@ -191,7 +191,7 @@
 | `Tools/CombatSim/` 스크립트 | 팬아웃 런처 `run_batch.py`(인자 scenario --seed-base --count --procs --out, --gate) + 분석 4개 `analyze_decisions.py`, `diff_runs.py`, `summarize_batch.py`(30줄 요약), `propose_tweaks.py` | 04 §11.2·§12, 07 M2-04·M2-05 (D34·D35) |
 | `FTDCombatPrefilter::Estimate` | 기대 DPS/EHP 비율 사전 필터, `TDDamageFormula::Compute` 사용, 제외 구간 [0.2, 5.0](04 미결 6) | 04 §9.3 |
 | `FTDAttackTimetable` | Phase 3 권위 판정: play_length_steps, windup_steps, hit_window_steps, recovery_end_steps, shape{Arc radius half_angle_deg height}, max_hits_per_target, source_hash, rules_ref | 04 §6.2 (D19) |
-| `bAuthoritativeHitJudgment` | `UTDAnimNotifyState_MeleeAttack` 프로퍼티. 기본 true(플레이어 유지), Phase 3 몬스터만 false(표현·오라클) | 04 §6.2, 07 변경 #14 (D19·D20) |
+| `bAuthoritativeHitJudgment` | `UTDAnimNotifyState_MeleeAttack` 프로퍼티. 기본 true(플레이어 유지), Phase 3 몬스터만 false(표현·오라클) (2026-09-30 D44로 대체: 이 노티파이 클래스는 삭제됨) | 04 §6.2, 07 변경 #14 (D19·D20) |
 | GE 만료 스텝 · 스텝 내 엔진 순서 | TimerManager `InternalTime > ExpireTime` 엄격 초과: 1초 효과는 1/64 에서 65번째, 0.02f 에서 51번째 스텝 만료. D27 유지, 기대값·cooldown_steps 해석은 N+1. 엔진 순서는 `TG_PrePhysics`(우리 틱 함수, LevelTick.cpp:1750) 뒤 `GetTimerManager().Tick`(:1816) 이라 같은 스텝 GE 만료는 다음 스텝 사고가 본다 | 06 §2 M19·§3 C2, engine-gas-determinism 결론 3 |
 
 ### 6.5 머신러닝·생성형 AI
@@ -233,7 +233,7 @@
 | 4 | **C2 GE 만료 스텝 반영 방식** — 04 §2.2 에 기준(적용 스텝 k, 두뇌 관측 k+N·64+1) 병기만 할지 로더가 +1 보정할지 | 병기만(로더 보정은 적용 시점 의존이라 비권장) | M1-11·M2-10 전 | 06 미결 4, 06 §3 C2 |
 | 5 | **텔레메트리 수집 범위** — 플레이어 입력 8스텝 다운샘플까지 기록할지 이벤트만인지, 저장 위치·보존 기간 | 06 §4-4 규격 | Phase 3 전(BC 봇·C단계 선행) | 06 미결 3 |
 | 6 | **L3 move 주기 완화 여부** — 1,000마리 추정 8.5~10.3ms > 6.0ms. (a) 유지 (b) 8스텝 완화 + 공격 불가 (c) 휴면 | 실측 전 (a) 기본 | 단계 B 진입 전 | 03 미결 1 |
-| 7 | **MD-01 Phase 3 이후 플레이어 근접 판정 권위** — 노티파이 스윕 유지 vs 시간표 | 유지(D20) | Phase 3 진입 | 07 MD-01, 04 미결 1 |
+| 7 | **MD-01 Phase 3 이후 플레이어 근접 판정 권위** — 노티파이 스윕 유지 vs 시간표 | 유지(D20) (2026-09-30 D44로 대체: 노티파이 스윕 삭제, 플레이어도 시간표를 능력 태스크가 구동) | Phase 3 진입 | 07 MD-01, 04 미결 1 |
 | 8 | **MD-10 정예·보스(≤ 10) DetourCrowd 허용** | 불허 시 시뮬 몸과 이동 동일. 허용 시 B단계 대상 확대 | Phase 3(M3-01) | 07 MD-10, 03 미결 3 |
 | 9 | **MD-04 엔진 버전 고정과 업그레이드 시 골든 재생성** — 5.8.1 고정, 06 §4-7 체크리스트 채택 여부 | 06 §4-7 편입 권장 | 첫 핫픽스 적용 전 | 07 MD-04, 06 미결 항목 15 |
 | 10 | **무리 전술 층 위치** — 조정자·공격 토큰을 Phase 3(M3-14 제안)에 넣을지 HTN 과 함께 Phase 4 로 미룰지 | 미루면 대량 시나리오 승률이 "동시 공격" 기준 | Phase 3 계획 시 | 06 미결 6 |

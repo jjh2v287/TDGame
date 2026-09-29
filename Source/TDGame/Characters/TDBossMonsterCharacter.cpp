@@ -4,7 +4,7 @@
 #include "Components/SkeletalMeshComponent.h"
 
 ATDBossMonsterCharacter::ATDBossMonsterCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UTDPartComponent>(ACharacter::MeshComponentName))
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UTDPartComponent>(ATDCombatCharacter::MeshComponentName))
 {
 }
 

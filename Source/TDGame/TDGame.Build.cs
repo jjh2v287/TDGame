@@ -16,8 +16,6 @@ public class TDGame : ModuleRules
 			"EnhancedInput",
 			"AIModule",
 			"NavigationSystem",
-			"StateTreeModule",
-			"GameplayStateTreeModule",
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
@@ -29,10 +27,12 @@ public class TDGame : ModuleRules
 			"SignificanceManager",
 			"GeometryCollectionEngine",
 			"FieldSystemEngine",
-			"Chaos"
+			"Chaos",
+			"Mover",
+			"UAF"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "PCG", "Json", "JsonUtilities", "Mover", "UAF", "MoverAnimNext", "GameplayCameras", "Chooser", "SmartObjectsModule" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "PCG", "Json", "JsonUtilities", "UAFAnimGraph" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"TDGame"

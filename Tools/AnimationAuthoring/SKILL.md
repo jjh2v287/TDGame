@@ -1,6 +1,6 @@
 ---
 name: td-animation-authoring
-description: Author new TDGame Unreal Engine animation sequences and montages through Unreal MCP, using native FK Control Rig, an existing Control Rig, Sequencer baking, or C++ bone keyframes. Use for character motion authoring and animation asset inspection; excludes gameplay Blueprint logic and external text-to-motion services.
+description: Author new TDGame Unreal Engine animation sequences (runtime uses UAF, no montages, D44) through Unreal MCP, using native FK Control Rig, an existing Control Rig, Sequencer baking, or C++ bone keyframes. Use for character motion authoring and animation asset inspection; excludes gameplay Blueprint logic and external text-to-motion services.
 ---
 
 # TD animation authoring

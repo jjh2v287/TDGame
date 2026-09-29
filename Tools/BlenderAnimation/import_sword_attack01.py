@@ -1,7 +1,7 @@
-"""시스템 Python으로 실행(언리얼 에디터 열림 필요): AnimationSources/Player의 검 공격 FBX를 SK_Mannequin에 60fps AnimSequence로 가져와 루트 모션을 켜고 DefaultSlot 몽타주(섹션 Attack·Recovery)를 만든다.
-실행: python Tools/BlenderAnimation/import_sword_attack01.py [--name AS_TD_Player_SwordAttack01] [--recovery-frame 50] [--replace]  (PowerShell 권장, L-repo-01)
-출력: /Game/Characters/Mannequins/Anims/Sword/<name>, AM_<name 접미>, Saved/BlenderAnimation/SwordAttack01/import-result.json
-상태: 현행 (2026-09-25, --replace는 메타데이터 TDGeneratedBy가 이 도구인 에셋만 지운다)
+"""시스템 Python으로 실행(언리얼 에디터 열림 필요): AnimationSources/Player의 검 공격 FBX를 SK_Mannequin에 60fps AnimSequence로 가져와 루트 모션을 켠다(몽타주는 만들지 않는다, D44).
+실행: python Tools/BlenderAnimation/import_sword_attack01.py [--name AS_TD_Player_SwordAttack01] [--replace]  (PowerShell 권장, L-repo-01)
+출력: /Game/Characters/Mannequins/Anims/Sword/<name>, Saved/BlenderAnimation/SwordAttack01/import-result.json
+상태: 현행 (2026-09-30 몽타주 단계 제거, 2026-09-25, --replace는 메타데이터 TDGeneratedBy가 이 도구인 에셋만 지운다)
 """
 import argparse
 import json
@@ -69,27 +69,16 @@ def configure_sequence(sequence_path):
     return run_in_editor(code, 'configure_sequence')
 
 
-def tag_montage(montage_path):
-    code = (
-        "import unreal\n"
-        f"montage = unreal.EditorAssetLibrary.load_asset('{montage_path}')\n"
-        f"unreal.EditorAssetLibrary.set_metadata_tag(montage, 'TDGeneratedBy', '{TOOL_TAG}')\n"
-        "unreal.log('[TDTool] montage saved ' + str(unreal.EditorAssetLibrary.save_loaded_asset(montage, only_if_is_dirty=False)))\n")
-    return run_in_editor(code, 'tag_montage')
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', default='AS_TD_Player_SwordAttack01')
-    parser.add_argument('--recovery-frame', type=int, default=50)
     parser.add_argument('--replace', action='store_true')
     args = parser.parse_args()
     WORK.mkdir(parents=True, exist_ok=True)
     sequence_path = f'{FOLDER}/{args.name}'
-    montage_path = f'{FOLDER}/AM_{args.name[3:]}'
     result = {}
     if args.replace:
-        result['removed'] = remove_previous([montage_path, sequence_path])
+        result['removed'] = remove_previous([sequence_path])
     client = TDMcpAnimationClient()
     result['sequence'] = client.call(
         '.TDBlenderAnimationTools.import_animation_fbx',
@@ -97,15 +86,9 @@ def main():
         destination_folder=FOLDER, asset_name=args.name, skeleton_path=SKELETON,
         sample_rate=FPS, import_uniform_scale=1.0, preserve_local_transform=True)
     result['configure'] = configure_sequence(sequence_path)
-    result['montage'] = client.request('.TDAnimationAuthoringTools.CreateMontage', {
-        'asset_path': montage_path, 'slot': 'DefaultSlot', 'save': True, 'blend_in': 0.1, 'blend_out': 0.2,
-        'segments': [{'sequence': sequence_path}],
-        'sections': [{'name': 'Attack', 'time': 0}, {'name': 'Recovery', 'time': round((args.recovery_frame - 1) / FPS, 4)}]})
-    if result['montage'].get('success'):
-        result['montage_tag'] = tag_montage(montage_path)
     (WORK / 'import-result.json').write_text(json.dumps(result, indent=1, ensure_ascii=False), encoding='utf-8')
     print(json.dumps(result, ensure_ascii=False)[:3000])
-    if not result['montage'].get('success'):
+    if not result['sequence'] or not result['configure']:
         raise SystemExit(1)
 
 

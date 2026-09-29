@@ -33,6 +33,8 @@ Serena가 내려받는 clangd 19.1.2는 UE 5.8 엔진 헤더를 파싱하다 종
 | `Damage/editor_validate_megamagic_pie.py` | 실행 중인 테스트 맵에서 10종 시전·피해·아군 제외·VFX·정리 검사, `Saved/Damage/megamagic-pie.json` | `python Tools/run_in_editor.py Tools/Damage/editor_validate_megamagic_pie.py` |
 | `TDDamageExamples -MegaMagic` 명령렛 | 실제 VFX를 참조하는 주문 그래프를 `/Game/Combat/MegaMagic`에 신규 저장, `-ValidateOnly`로 저장 결과 검사 | 에디터 종료 후 `UnrealEditor-Cmd TDGame.uproject -run=TDDamageExamples -MegaMagic -unattended -NullRHI` |
 | `pie_profile.py` (+`editor_pie_profile.py`) | PIE 11초 프레임 간격 측정 + `stat dumpframe`·`ProfileGPU` 로그 발췌. "PIE가 느리다"를 스로틀·게임 스레드·GPU 중 어디인지 가른다(L-editor-06) | `python Tools/pie_profile.py` |
+| `cook_single_map.py` | RunUAT BuildCookRun으로 Win64 Development 게임을 빌드하고 맵 하나만 쿠킹·스테이징·pak(에디터 꺼짐 필요, LV-Cambat 약 7분). 결과 `Saved/AgentOps/cook_<label>.json` | `python Tools/cook_single_map.py --label <이름>` |
+| `measure_game_frames.py` | 쿠킹 스테이징 실행 파일로 맵을 띄워 CSV 프로파일러 1,500프레임 → 워밍업 뒤 프레임·게임 스레드·렌더·GPU 평균/p50/p95와 크래시 줄 요약(`Saved/AgentOps/frames_<label>.json`). 에디터 바이너리 `-game`은 이 환경에서 로그 없이 즉시 종료돼 쓰지 않는다 | `python Tools/measure_game_frames.py --label <이름>` |
 | `templates/` | 새 도구 템플릿(에디터 Python, C++ 에디터 함수 절차) | 복사해서 시작 |
 
 MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 자주 쓰는 것: `editor_toolset.toolsets.scene.SceneTools`(액터 스폰·검색), `...object.ObjectTools`(프로퍼티), `...asset.AssetTools`, `EditorToolset.EditorAppToolset`(StartPIE/StopPIE/CaptureViewport/SetCameraTransform), `AutomationTestToolset.AutomationTestToolset`, `ConfigSettingsToolset.ConfigSettingsToolset`, `EditorToolset.LogsToolset`(GetLogEntries), `SlateInspectorToolset`(UI 자동화).
@@ -84,7 +86,7 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 위치 | 내용 | 상태 |
 |---|---|---|
 | `AnimationAuthoring/` | Unreal MCP C++ 툴셋 기반 저작. 정본 스킬 `SKILL.md`(td-animation-authoring), `smoke_test.py`(MCP 클라이언트 `TDMcpAnimationClient` 보유, D-22), `author_slash.py`·`author_swing.py`·`dump_animation.py`·`anim_report.py`·`pose_kinematics.py`. PowerShell에서 실행(L-repo-01) | 현행 |
-| `BlenderAnimation/` | Blender MCP bpy 편집 + Unreal 재가져오기. 정본 스킬 `SKILL.md`(td-combat-animation-quality, 스크립트 표 포함). `author_*`·`prepare_*`·`render_*`·`validate_*`·`inspect_*`·`create_player_montage.py` 등 14개 + grip 5개 + 검 횡베기 7개(`*_sword_slash*.py`, 대상 에셋 2026-09-25 삭제) + 공통 접지 QA `validate_contacts.py`(2026-09-19 등록) + 검 공격 01 15개(`blender_run.py`, `sword_attack01_*.py`, `*_sword_attack01*.py`, `editor_analyze_attack_candidates.py`, `editor_export_reference_fbx.py`, `editor_solve_sword_attachment.py`, 2026-09-25 등록, 표는 SKILL.md) | 현행 |
+| `BlenderAnimation/` | Blender MCP bpy 편집 + Unreal 재가져오기. 정본 스킬 `SKILL.md`(td-combat-animation-quality, 스크립트 표 포함). `author_*`·`prepare_*`·`render_*`·`validate_*`·`inspect_*` 등(몽타주 의존 6개는 2026-09-30 `_archive/2026-09/BlenderAnimation/`로 보관, D44) 14개 + grip 5개 + 검 횡베기 7개(`*_sword_slash*.py`, 대상 에셋 2026-09-25 삭제) + 공통 접지 QA `validate_contacts.py`(2026-09-19 등록) + 검 공격 01 15개(`blender_run.py`, `sword_attack01_*.py`, `*_sword_attack01*.py`, `editor_analyze_attack_candidates.py`, `editor_export_reference_fbx.py`, `editor_solve_sword_attachment.py`, 2026-09-25 등록, 표는 SKILL.md) | 현행 |
 | `BlenderMCP/` | Blender MCP 서버 실행(`Run-BlenderMCP.ps1`), `call_tool.py --code`로 bpy 실행, `smoke_test.py` | 현행 |
 | `Content/Python/td_blender_animation_tools.py` | 에디터 상주 툴셋(`export_fbx`·`import_animation_fbx`·`sample_animation_poses`), `init_unreal.py`가 register 호출 | 현행 |
 | `Animation/` (11개) | Kimodo text-to-motion 실험 파이프라인. 2026-09-18 `Tools/_archive/2026-09/Animation/`으로 보관(D-15) | 보관 · 실행 금지 |
@@ -103,6 +105,15 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 콘솔 `TD.MonsterAI.Reload` / `TD.MonsterAI.DebugDraw 1` | JSON 정의 다시 읽기(이후 스폰분부터) / 몬스터 머리 위 상태·행동 표시 | PIE 콘솔 |
 | 자동화 테스트 `TDGame.MonsterAI.*` 7개 | 곡선·정의 검증·오류 안내·점수기·예고 후 타격·경직 취소·전역 난수 금지 | `python Tools/check_automation_tests.py --filter TDGame.MonsterAI` |
 확인: 2026-09-24 claude
+
+## 3e. 이동·애니메이션 도구 (`Movement/`, 대장 M3-16, 결정 D44)
+| 도구 | 용도 | 실행 |
+|---|---|---|
+| `Movement/editor_migrate_character_assets.py` | Mover·UAF 전환 뒤 플레이어 블루프린트 메시의 AnimClass 참조 제거(저장 → 컴파일 → 저장: Mover 공유 설정은 저장 때 채워진다), 참조 없는 옛 ABP·몽타주 삭제 | `python Tools/run_in_editor.py Tools/Movement/editor_migrate_character_assets.py` (PowerShell) |
+| `Movement/pie_check_player_movement.py` (+`editor_pie_player_probe.py`) | 내비메시가 있는 LV_TDMegaMagicArena에서 PIE → 클릭 이동 도착 오차·방향·발 뼈 움직임, 점프 높이, `TDPlayMeleeAction` 루트모션 이동량을 매 프레임 기록 → `Docs/Validation/Movement/player-pie-check.json`, 판정 `passed` | `python Tools/Movement/pie_check_player_movement.py` |
+| 콘솔 `TDPlayMeleeAction [시퀀스 경로]` | 플레이어 폰에 공격 시퀀스를 UAF 행동(루트모션)으로 재생(기본 `AS_TD_Player_SwordAttack01`) | PIE 콘솔 |
+| 자동화 테스트 `TDGame.Movement.*` 3개 + `TDGame.Combat.ActionTimelineHitsOnceInWindow` | 루트모션 36±2cm, 빙결 정지, 몬스터 이동 의도, 시간표 타격 1회 | `python Tools/check_automation_tests.py --filter TDGame.Movement` 또는 헤드리스 |
+확인: 2026-09-30 claude
 
 ## 4. 도구가 없을 때 만드는 규칙 (에이전트 공통)
 규칙 전문은 `Docs/AgentRules.md` OP-12(만들기 전 검색)·OP-13(위치)·OP-14(이름)·OP-15(docstring 4줄)·OP-16(등록)·OP-17(`Tools/scratch/`)·OP-19(절대 경로 금지)·OP-20(노출 경로). 접두어: `editor_`(에디터 안, run_in_editor.py), `pie_`(PIE 검사), `blender_`(Blender 안 bpy), 없음(시스템 파이썬 3.12). 권장 동사: generate build make validate check inspect capture export import author render prepare place setup select find. 금지 동의어: create→make, bake→build, verify/test→validate/check.

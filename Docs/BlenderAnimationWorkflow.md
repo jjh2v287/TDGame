@@ -15,7 +15,7 @@ TDGame의 Unreal 리소스를 Blender로 가져와 GPT/Codex, Claude, Gemini 에
 | Blender 5.2의 로컬 `127.0.0.1:9876` | MCP 서버가 Blender 작업 세션에 명령을 전달하는 소켓 |
 | `Tools/BlenderAnimation` | 이 프로젝트의 Blender 애니메이션 제작 스크립트 |
 | `Content/Python` | Unreal FBX 교환용 에디터 Python 도구 |
-| `Tools/AnimationAuthoring` | 기존 Unreal 애니메이션 검사·몽타주 생성 도구의 사용 절차 |
+| `Tools/AnimationAuthoring` | 기존 Unreal 애니메이션 검사·몽타주 생성 도구의 사용 절차(런타임은 몽타주를 쓰지 않는다, D44) |
 
 에이전트는 Unreal MCP와 Blender MCP를 모두 사용한다. Blender 쪽 MCP는 stdio 서버이고, `9876`은 Blender 애드온의 로컬 소켓이다. 클라이언트의 HTTP MCP 주소에 `http://127.0.0.1:9876`을 넣는 방식이 아니다.
 
@@ -77,9 +77,9 @@ FBX 가져오기는 명시적으로 legacy `FbxFactory`를 사용하며 메시·
 5. **동작 작성:** 실제 리그에 맞춰 몸통·골반·팔·다리의 역할을 대응시킨다. 준비 동작, 타격 궤적, 체중 이동, 발 접지, 복귀를 키프레임으로 작성한다. 제약이나 보조 컨트롤을 사용했으면 내보내기용 본 동작으로 베이크한다.
 6. **Blender 검토:** 여러 시점과 타격 프레임을 확인한다. 손/무기 궤적, 관통, 발 미끄러짐, 예상하지 않은 루트 이동과 크기 변화를 확인한다. `.blend` 원본과 애니메이션 FBX를 새 이름으로 저장한다.
 7. **Unreal 가져오기:** 새 AnimSequence 이름을 사용하고 처음 확인한 기존 Skeleton을 명시한다. 생성된 에셋의 실제 경로, Skeleton, 길이, 샘플 수와 본 트랙을 다시 조회한다.
-8. **몽타주와 최종 검토:** 같은 Skeleton의 새 몽타주를 만들고 호환되는 슬롯을 지정한다. Unreal에서 캐릭터에 재생해 포즈·방향·크기와 결과를 확인한다. 저장된 산출물과 검증 근거를 보고한다.
+8. **행동 연결과 최종 검토:** 몽타주와 슬롯은 만들지 않는다(2026-09-30 D44로 대체). 새 AnimSequence를 C++ 행동 정의(`FTDActionAnimation`)에 넣고 UAF 시퀀스 주입으로 캐릭터에 재생해 포즈·방향·크기와 결과를 확인한다. 저장된 산출물과 검증 근거를 보고한다.
 
-기본 결과는 독립적인 AnimSequence와 몽타주다. 기존 공격 설정, 게임플레이 노티파이, 데미지 구간, 입력 처리, 콤보 연결은 자동 교체하지 않는다. 게임에 연결할 때는 현재 C++ 공격 구조와 기존 슬롯·노티파이 규칙을 먼저 확인한다.
+기본 결과는 독립적인 AnimSequence다(2026-09-30 D44로 대체: 몽타주는 만들지 않는다). 기존 공격 설정, 데미지 구간, 입력 처리, 콤보 연결은 자동 교체하지 않는다. 게임에 연결할 때는 현재 C++ 공격 구조와 `FTDActionAnimation` 시간표(`HitWindows`·`TagWindows`·`InputBufferWindow`·`JumpCapsuleWindow`) 규칙을 먼저 확인한다. 노티파이는 삭제됐다.
 
 ## 다족 몬스터와 다른 Skeleton
 
@@ -101,7 +101,7 @@ FBX 가져오기는 명시적으로 legacy `FbxFactory`를 사용하며 메시·
 
 다음 문서를 읽도록 요청하면 클라이언트의 자동 스킬 탐색에 의존하지 않고 같은 작업 순서를 사용할 수 있다.
 
-> `C:/Project/TDGame/Docs/BlenderAnimationWorkflow.md`를 읽고 Unreal MCP와 Blender MCP를 사용하세요. 현재 프로젝트 플레이어의 실제 Skeletal Mesh와 Skeleton을 확인한 뒤 Blender로 가져오세요. 오른손 한손 무기로 캐릭터 자신의 오른쪽에서 왼쪽으로 한 번 횡베기하는 기본 공격 1을 만드세요. 짧은 준비 동작, 몸통 회전, 타격 후 복귀를 넣고 발 접지를 확인하세요. 새 `.blend`, FBX, AnimSequence와 몽타주로 저장하고 기존 공격 연결은 유지하세요. Blender와 Unreal에서 결과를 검증하고 정확한 산출물 경로와 검증하지 못한 항목을 알려주세요.
+> `C:/Project/TDGame/Docs/BlenderAnimationWorkflow.md`를 읽고 Unreal MCP와 Blender MCP를 사용하세요. 현재 프로젝트 플레이어의 실제 Skeletal Mesh와 Skeleton을 확인한 뒤 Blender로 가져오세요. 오른손 한손 무기로 캐릭터 자신의 오른쪽에서 왼쪽으로 한 번 횡베기하는 기본 공격 1을 만드세요. 짧은 준비 동작, 몸통 회전, 타격 후 복귀를 넣고 발 접지를 확인하세요. 새 `.blend`, FBX, AnimSequence로 저장하고(몽타주는 만들지 않는다, D44) 기존 공격 연결은 유지하세요. Blender와 Unreal에서 결과를 검증하고 정확한 산출물 경로와 검증하지 못한 항목을 알려주세요.
 
 후속 콤보는 방향과 시작·끝 포즈를 함께 지정한다.
 
@@ -131,9 +131,9 @@ FBX 가져오기는 명시적으로 legacy `FbxFactory`를 사용하며 메시·
 - 플레이어: `/Game/Combat/Blueprints/BP_TDCombatCharacter`
 - 메시: `/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple` — 루트를 포함해 89본
 - 스켈레톤: `/Game/Characters/Mannequins/Meshes/SK_Mannequin`
-- AnimBP: `/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed`, 실제 슬롯 `DefaultSlot`
+- AnimBP: `/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed`, 실제 슬롯 `DefaultSlot` (2026-09-30 D44로 대체: `ABP_Unarmed` 삭제, 애니메이션은 UAF)
 - AnimSequence: `/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_RToL_Blender`
-- Montage: `/Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_RToL_Blender`, 섹션 `Attack01`
+- Montage: `/Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_RToL_Blender`, 섹션 `Attack01` (2026-09-30 D44로 대체: 몽타주 폐기)
 - 편집 원본: [AS_TD_Player_Attack01_RToL_Blender.blend](../AnimationSources/Player/AS_TD_Player_Attack01_RToL_Blender.blend)
 - 교환 파일: [AS_TD_Player_Attack01_RToL_Blender.fbx](../AnimationSources/Player/AS_TD_Player_Attack01_RToL_Blender.fbx)
 - [움직이는 미리보기](Validation/BlenderAnimation/player-attack01.gif), [주요 포즈](Validation/BlenderAnimation/player-attack01-poses.png), [Unreal PIE 화면](Validation/BlenderAnimation/unreal-pie-attack01.png)
@@ -142,17 +142,17 @@ FBX 가져오기는 명시적으로 legacy `FbxFactory`를 사용하며 메시·
 
 37개 프레임의 손/발 위치를 비교하여 Blender→Unreal 최대 오차 **0.0271cm 미만**, 루트 이동 **0cm**, 발 위치 변화 **0.00017cm 미만**, 컴포넌트 스케일 오차 **0.000006 미만**을 확인했다. 시작/끝 주요 본 위치 차이는 **0.00002cm 미만**이다. 근거는 [수치 검증 JSON](Validation/BlenderAnimation/player-attack01-validation.json)이며 `python Tools/BlenderAnimation/validate_player_sample.py`로 재확인한다.
 
-PIE의 실제 `BP_TDCombatCharacter`/`ABP_Unarmed`에서 C++ `TDPlayMeleeMontage` 명령과 몽타주 API로 재생했다. `DefaultSlot` 활성 및 가중치 `1.0`, 0.55초 포즈를 확인했다. [PIE 검증 JSON](Validation/BlenderAnimation/pie-validation.json)에 기록했다. 시각 검토를 위해 PIE 인스턴스의 카메라와 숨겨진 창의 본 갱신 설정만 임시 변경했으며 PIE 종료로 해제되었다. 런타임 AnimBP의 리타게팅/Control Rig 보정 후 위치는 원시 AnimSequence 수치와 다를 수 있다.
+PIE의 실제 `BP_TDCombatCharacter`/`ABP_Unarmed`에서 C++ `TDPlayMeleeMontage` 명령과 몽타주 API로 재생했다. `DefaultSlot` 활성 및 가중치 `1.0`, 0.55초 포즈를 확인했다. [PIE 검증 JSON](Validation/BlenderAnimation/pie-validation.json)에 기록했다. 시각 검토를 위해 PIE 인스턴스의 카메라와 숨겨진 창의 본 갱신 설정만 임시 변경했으며 PIE 종료로 해제되었다. 런타임 AnimBP의 리타게팅/Control Rig 보정 후 위치는 원시 AnimSequence 수치와 다를 수 있다. (2026-09-30 D44로 대체: AnimBP·몽타주 API·`TDPlayMeleeMontage`는 삭제됐고 런타임은 UAF 주입이며 콘솔은 `TDPlayMeleeAction`이다.)
 
-현재 플레이어의 `skillSet=None`이므로 공격 입력·데미지 노티파이·콤보에는 연결하지 않았다. 몽타주 재생 가능 여부와 공격 게임플레이 연결은 구분한다. 다족 몬스터 실물 에셋에 대한 제작 테스트는 이번 예제에 포함되지 않았다. 본 교환 도구는 특정 체형을 가정하지 않지만 `author_player_slash.py`는 검증한 Manny 전용 예제다.
+현재 플레이어의 `skillSet=None`이므로 공격 입력·데미지 노티파이·콤보에는 연결하지 않았다. 몽타주 재생 가능 여부와 공격 게임플레이 연결은 구분한다(2026-09-30 D44로 대체: 몽타주·노티파이는 삭제, 재생 가능 여부는 UAF 주입 재생, 판정은 C++ 시간표). 다족 몬스터 실물 에셋에 대한 제작 테스트는 이번 예제에 포함되지 않았다. 본 교환 도구는 특정 체형을 가정하지 않지만 `author_player_slash.py`는 검증한 Manny 전용 예제다.
 
-제작 스크립트는 `Tools/BlenderAnimation/author_player_slash.py`, 실행 예제는 `create_player_sample.py`, `import_player_sample.py`, `create_player_montage.py`다. 같은 이름의 결과가 존재하면 생성 스크립트는 거부한다. 새 변형은 요청의 이름/목적지를 바꾸고 원본을 보존한다. Manny 예제를 다시 제작할 때는 현재 문서를 저장한 뒤 새 Blender 문서를 열어 `root` 이름 충돌을 방지한다. 기존 결과를 열 때는 `open_player_source.py`를 Blender MCP로 실행한다.
+제작 스크립트는 `Tools/BlenderAnimation/author_player_slash.py`, 실행 예제는 `create_player_sample.py`, `import_player_sample.py`, `create_player_montage.py`다(2026-09-30 D44로 대체: `create_player_montage.py`는 `Tools/_archive/2026-09/BlenderAnimation/`으로 이동해 실행할 수 없다). 같은 이름의 결과가 존재하면 생성 스크립트는 거부한다. 새 변형은 요청의 이름/목적지를 바꾸고 원본을 보존한다. Manny 예제를 다시 제작할 때는 현재 문서를 저장한 뒤 새 Blender 문서를 열어 `root` 이름 충돌을 방지한다. 기존 결과를 열 때는 `open_player_source.py`를 Blender MCP로 실행한다.
 
-PIE에서 아래 콘솔 명령으로 재생할 수 있다.
+PIE에서 아래 콘솔 명령으로 재생할 수 있다(2026-09-30 D44로 대체: 옛 `TDPlayMeleeMontage <몽타주>`는 `TDPlayMeleeAction <AnimSequence 경로>`로 바뀌었다. 경로를 생략하면 `AS_TD_Player_SwordAttack01`).
 
 ```text
 // Context: Unreal PIE console
-TDPlayMeleeMontage /Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_RToL_Blender
+TDPlayMeleeAction /Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01
 ```
 
 ## 연결 문제 확인

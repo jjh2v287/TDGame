@@ -1,39 +1,40 @@
 #include "Combat/GAS/Abilities/TDCombatActionAbility.h"
 
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
+#include "Animation/AnimSequence.h"
+#include "Characters/TDCombatCharacter.h"
+#include "Combat/GAS/TDAbilityTask_PlayActionTimeline.h"
 #include "Combat/GAS/TDCombatGameplayEffects.h"
 #include "Combat/Skills/TDCombatActionTypes.h"
 #include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
 #include "Combat/TDCombatLibrary.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "Core/TDGameplayTags.h"
-#include "GameFramework/Character.h"
 
 namespace
 {
-UAnimInstance* GetAvatarAnimInstance(const AActor* AvatarActor)
+void RotateAvatarTowardTarget(AActor& AvatarActor, const AActor& TargetActor)
 {
-	if (!AvatarActor)
+	FVector ToTarget = TargetActor.GetActorLocation() - AvatarActor.GetActorLocation();
+	ToTarget.Z = 0.f;
+	if (ToTarget.IsNearlyZero())
 	{
-		return nullptr;
+		return;
 	}
 
-	if (const ACharacter* Character = Cast<ACharacter>(AvatarActor))
+	if (ATDCombatCharacter* CombatCharacter = Cast<ATDCombatCharacter>(&AvatarActor))
 	{
-		if (USkeletalMeshComponent* MeshComponent = Character->GetMesh())
-		{
-			return MeshComponent->GetAnimInstance();
-		}
+		CombatCharacter->FaceRotationImmediately(ToTarget.Rotation());
+		return;
 	}
+	AvatarActor.SetActorRotation(ToTarget.Rotation());
+}
 
-	if (USkeletalMeshComponent* MeshComponent = AvatarActor->FindComponentByClass<USkeletalMeshComponent>())
-	{
-		return MeshComponent->GetAnimInstance();
-	}
-
-	return nullptr;
+FTDDamageContext MakeActionDamageContext(AActor& AvatarActor, const UTDCombatComponent& CombatComponent)
+{
+	FTDDamageContext DamageContext;
+	DamageContext.Caster = &AvatarActor;
+	DamageContext.Stats = CombatComponent.GetStats();
+	return DamageContext;
 }
 }
 
@@ -59,6 +60,12 @@ bool UTDCombatActionAbility::CanActivateAbility(const FGameplayAbilitySpecHandle
 		return false;
 	}
 
+	const UTDCombatComponent* CombatComponent = Cast<UTDCombatComponent>(ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr);
+	if (CombatComponent && CombatComponent->IsFrozen())
+	{
+		return false;
+	}
+
 	const bool bUsesPrimaryComboResolution = bUsePrimaryComboResolution || PrimaryComboStep > 0;
 	FGameplayTag ActionTag = CombatActionTag;
 	int32 ComboStep = 0;
@@ -71,7 +78,6 @@ bool UTDCombatActionAbility::CanActivateAbility(const FGameplayAbilitySpecHandle
 		}
 	}
 
-	const UTDCombatComponent* CombatComponent = Cast<UTDCombatComponent>(ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr);
 	const bool bAllowActiveStateContinuation = bUsesPrimaryComboResolution && ComboStep > 1;
 	if (!bAllowActiveStateContinuation && CombatComponent && ActiveStateTag.IsValid()
 		&& CombatComponent->HasMatchingGameplayTag(ActiveStateTag))
@@ -121,25 +127,17 @@ void UTDCombatActionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 
 	if (ResolvedTarget && ActionDefinition->bRotateToTarget)
 	{
-		FVector ToTarget = ResolvedTarget->GetActorLocation() - AvatarActor->GetActorLocation();
-		ToTarget.Z = 0.f;
-		if (!ToTarget.IsNearlyZero())
-		{
-			AvatarActor->SetActorRotation(ToTarget.Rotation());
-		}
+		RotateAvatarTowardTarget(*AvatarActor, *ResolvedTarget);
 	}
 
-	UAnimMontage* ActionMontage = nullptr;
-	if (!ActionDefinition->Montage.IsNull())
+	const bool bHasActionAnimation = ActionDefinition->Action.HasAnimation();
+	if (bHasActionAnimation && !ActionDefinition->Action.Animation.LoadSynchronous())
 	{
-		ActionMontage = ActionDefinition->Montage.LoadSynchronous();
-		if (!ActionMontage)
-		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			return;
-		}
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
 	}
-	else if (ActionDefinition->HitExecutionType == ETDCombatHitExecutionType::NotifyTrace)
+
+	if (!bHasActionAnimation && ActionDefinition->HitExecutionType == ETDCombatHitExecutionType::TimelineSweep)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -154,39 +152,20 @@ void UTDCombatActionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	AddAbilityStateTag(ActiveStateTag, bHasAddedActiveStateTag);
 	SkillComponent->BeginActionExecution(this, ActiveCombatActionTag, ResolvedTarget, ActionDefinition->HitExecutionType);
 
-	bool bExecuted = false;
-	if (ActionMontage)
+	if (bHasActionAnimation)
 	{
-		UAnimInstance* AnimInstance = GetAvatarAnimInstance(AvatarActor);
-		if (!AnimInstance)
+		UTDAbilityTask_PlayActionTimeline* TimelineTask = UTDAbilityTask_PlayActionTimeline::PlayActionTimeline(
+			this, ActionDefinition->Action, MakeActionDamageContext(*AvatarActor, *CombatComponent));
+		TimelineTask->OnCompleted.AddDynamic(this, &ThisClass::HandleActionTimelineCompleted);
+		TimelineTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleActionTimelineInterrupted);
+		TimelineTask->ReadyForActivation();
+		if (!IsActive())
 		{
-			ClearAbilityState();
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 			return;
 		}
-
-		const float MontageDuration = AnimInstance->Montage_Play(ActionMontage, FMath::Max(ActionDefinition->PlayRate, 0.1f));
-		if (MontageDuration <= 0.f)
-		{
-			ClearAbilityState();
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			return;
-		}
-
-		if (!ActionDefinition->MontageSection.IsNone())
-		{
-			AnimInstance->Montage_JumpToSection(ActionDefinition->MontageSection, ActionMontage);
-		}
-
-		FOnMontageEnded MontageEndedDelegate;
-		MontageEndedDelegate.BindUObject(this, &ThisClass::HandleActionMontageEnded);
-		AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, ActionMontage);
-
-		ActiveAnimInstance = AnimInstance;
-		ActiveActionMontage = ActionMontage;
-		bExecuted = true;
 	}
 
+	bool bExecuted = bHasActionAnimation;
 	if (ActionDefinition->HitExecutionType == ETDCombatHitExecutionType::DirectDamage && ResolvedTarget)
 	{
 		FTDDamageSpec DamageSpec;
@@ -214,7 +193,7 @@ void UTDCombatActionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 		CommitAbilityCooldown(Handle, ActorInfo, ActivationInfo, true);
 	}
 
-	if (!ActionMontage)
+	if (!bHasActionAnimation)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
@@ -338,14 +317,24 @@ void UTDCombatActionAbility::RemoveAbilityStateTag(const FGameplayTag& Tag, bool
 	bTagAdded = false;
 }
 
-void UTDCombatActionAbility::HandleActionMontageEnded(UAnimMontage* Montage, const bool bInterrupted)
+void UTDCombatActionAbility::HandleActionTimelineCompleted()
 {
-	if (Montage != ActiveActionMontage || !IsActive())
+	if (!IsActive())
 	{
 		return;
 	}
 
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, bInterrupted);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UTDCombatActionAbility::HandleActionTimelineInterrupted()
+{
+	if (!IsActive())
+	{
+		return;
+	}
+
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UTDCombatActionAbility::ClearAbilityState()
@@ -355,19 +344,6 @@ void UTDCombatActionAbility::ClearAbilityState()
 		SkillComponent->EndActionExecution(this);
 	}
 
-	UAnimInstance* AnimInstance = ActiveAnimInstance.Get();
-	if (AnimInstance && ActiveActionMontage)
-	{
-		FOnMontageEnded EmptyMontageEndedDelegate;
-		AnimInstance->Montage_SetEndDelegate(EmptyMontageEndedDelegate, ActiveActionMontage);
-		if (AnimInstance->Montage_IsPlaying(ActiveActionMontage))
-		{
-			AnimInstance->Montage_Stop(0.1f, ActiveActionMontage);
-		}
-	}
-
-	ActiveAnimInstance.Reset();
-	ActiveActionMontage = nullptr;
 	RemoveAbilityStateTag(ActiveStateTag, bHasAddedActiveStateTag);
 }
 

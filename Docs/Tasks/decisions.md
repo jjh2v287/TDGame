@@ -75,9 +75,9 @@
   - 데미지 진입점은 `UTDCombatLibrary::TryApplyDamage(FTDDamageSpec)` → `UTDCombatComponent::ReceiveDamage`. 데미지 타입 태그(`Damage.*`) 대신 `ETDDamageElement`.
   - 메시지 버스는 유지: PJ 프로젝트 플러그인 `GameplayMessageRouter`를 `Plugins/`로 복사해 활성화(`Event.Damage.Applied`, `Event.Actor.Death`, `Event.Caravan.Destroyed`).
   - 게임플레이 태그는 `Core/TDGameplayTags.h` 한 곳에 네이티브 매크로로 통합(`TAG_` 접두어 없음).
-  - 근접 노티파이는 TD 것(`UTDAnimNotifyState_MeleeAttack`)을 유지하고 PJ의 높이 고정만 `bLockHeightToOwner`/`LockedHeightOffset` 플래그로 이식(테스트 `TDGame.Combat.MeleeAttackNotifyLocksBladeHeightToOwner`).
-  - BehaviorTree 태스크(`UTDBTTask_CombatTokenRequestAndRelease`)는 컴파일용으로만 이식. TD AI는 StateTree이므로 실제 사용 시 StateTree 태스크로 다시 만든다.
-- 폴더 정리: `Source/TDGame/{Core,Characters,Framework,Combat/{Damage,GAS,AnimNotify,Skills,Tests},AI,Performance,Actors,World/{Streaming,Persistence,Generation}}`. 클래스 이름은 바꾸지 않았으므로 블루프린트 참조는 유지된다.
+  - 근접 노티파이는 TD 것(`UTDAnimNotifyState_MeleeAttack`)을 유지하고 PJ의 높이 고정만 `bLockHeightToOwner`/`LockedHeightOffset` 플래그로 이식(테스트 `TDGame.Combat.MeleeAttackNotifyLocksBladeHeightToOwner`). (2026-09-30 D44로 대체: 이 노티파이 클래스는 삭제됐고 스윕 코어는 `FTDMeleeSweep`(`Combat/TDMeleeSweep.*`)로 옮겨 능력 태스크가 시간표로 구동한다. 테스트는 `TDGame.Combat.MeleeSweep.LocksBladeHeightToOwner`.)
+  - BehaviorTree 태스크(`UTDBTTask_CombatTokenRequestAndRelease`)는 컴파일용으로만 이식. TD AI는 StateTree이므로 실제 사용 시 StateTree 태스크로 다시 만든다. (2026-09-30 D44로 대체: TD AI는 C++ 유틸리티 + FSM이며 StateTree는 쓰지 않는다. 토큰 요청·반납은 몬스터 FSM 행동 원시로 다시 만든다.)
+- 폴더 정리: `Source/TDGame/{Core,Characters,Framework,Combat/{Damage,GAS,AnimNotify,Skills,Tests},AI,Performance,Actors,World/{Streaming,Persistence,Generation}}`. 클래스 이름은 바꾸지 않았으므로 블루프린트 참조는 유지된다. (2026-09-30 D44로 대체: `Combat/AnimNotify`와 `Framework/ThirdPerson`은 삭제됐다.)
 - 영향: `Docs/MonsterAI_CombatSim/*`의 소스 경로 참조는 새 경로로 치환함(줄 번호는 변화 없음).
 
 ## 관리 체계 (다중 에이전트 공통 규칙, 2026-09-18 제안)

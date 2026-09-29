@@ -1,39 +1,12 @@
 #include "Combat/GAS/Abilities/TDReactionAbility.h"
 
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
+#include "Animation/AnimSequence.h"
+#include "Characters/TDCharacterAnimationComponent.h"
+#include "Combat/GAS/TDAbilityTask_PlayActionTimeline.h"
 #include "Combat/Skills/TDCombatActionTypes.h"
 #include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "Core/TDGameplayTags.h"
-#include "GameFramework/Character.h"
-
-namespace
-{
-UAnimInstance* GetReactionAvatarAnimInstance(const AActor* AvatarActor)
-{
-	if (!AvatarActor)
-	{
-		return nullptr;
-	}
-
-	if (const ACharacter* Character = Cast<ACharacter>(AvatarActor))
-	{
-		if (USkeletalMeshComponent* MeshComponent = Character->GetMesh())
-		{
-			return MeshComponent->GetAnimInstance();
-		}
-	}
-
-	if (USkeletalMeshComponent* MeshComponent = AvatarActor->FindComponentByClass<USkeletalMeshComponent>())
-	{
-		return MeshComponent->GetAnimInstance();
-	}
-
-	return nullptr;
-}
-}
 
 UTDReactionAbility::UTDReactionAbility()
 {
@@ -92,15 +65,13 @@ void UTDReactionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		return;
 	}
 
-	UAnimMontage* ReactionMontage = ReactionDefinition->Montage.LoadSynchronous();
-	if (!ReactionMontage)
+	if (!ReactionDefinition->Action.Animation.LoadSynchronous())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	UAnimInstance* AnimInstance = GetReactionAvatarAnimInstance(AvatarActor);
-	if (!AnimInstance)
+	if (!AvatarActor->FindComponentByClass<UTDCharacterAnimationComponent>())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -113,27 +84,22 @@ void UTDReactionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		SkillComponent->ClearCurrentActionContext();
 	}
 
-	AddAbilityStateTag(ActiveStateTag, bHasAddedActiveStateTag);
-
-	const float MontageDuration = AnimInstance->Montage_Play(ReactionMontage, FMath::Max(ReactionDefinition->PlayRate, 0.1f));
-	if (MontageDuration <= 0.f)
+	if (bHoldFinalPose)
 	{
-		ClearAbilityState();
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		UTDCharacterAnimationComponent* CharacterAnimation = AvatarActor->FindComponentByClass<UTDCharacterAnimationComponent>();
+		const FTDActionAnimation& Action = ReactionDefinition->Action;
+		const float PoseSeconds = CharacterAnimation->PlayDeath(Action.Animation.Get(), Action.PlayRate, Action.EndSeconds);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, PoseSeconds <= 0.f);
 		return;
 	}
 
-	if (!ReactionDefinition->MontageSection.IsNone())
-	{
-		AnimInstance->Montage_JumpToSection(ReactionDefinition->MontageSection, ReactionMontage);
-	}
+	AddAbilityStateTag(ActiveStateTag, bHasAddedActiveStateTag);
 
-	FOnMontageEnded MontageEndedDelegate;
-	MontageEndedDelegate.BindUObject(this, &ThisClass::HandleReactionMontageEnded);
-	AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, ReactionMontage);
-
-	ActiveAnimInstance = AnimInstance;
-	ActiveReactionMontage = ReactionMontage;
+	UTDAbilityTask_PlayActionTimeline* TimelineTask = UTDAbilityTask_PlayActionTimeline::PlayActionTimeline(
+		this, ReactionDefinition->Action, FTDDamageContext());
+	TimelineTask->OnCompleted.AddDynamic(this, &ThisClass::HandleReactionTimelineCompleted);
+	TimelineTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleReactionTimelineInterrupted);
+	TimelineTask->ReadyForActivation();
 }
 
 void UTDReactionAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
@@ -186,31 +152,28 @@ void UTDReactionAbility::RemoveAbilityStateTag(const FGameplayTag& Tag, bool& bT
 	bTagAdded = false;
 }
 
-void UTDReactionAbility::HandleReactionMontageEnded(UAnimMontage* Montage, const bool bInterrupted)
+void UTDReactionAbility::HandleReactionTimelineCompleted()
 {
-	if (Montage != ActiveReactionMontage || !IsActive())
+	if (!IsActive())
 	{
 		return;
 	}
 
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, bInterrupted);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UTDReactionAbility::HandleReactionTimelineInterrupted()
+{
+	if (!IsActive())
+	{
+		return;
+	}
+
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UTDReactionAbility::ClearAbilityState()
 {
-	UAnimInstance* AnimInstance = ActiveAnimInstance.Get();
-	if (AnimInstance && ActiveReactionMontage)
-	{
-		FOnMontageEnded EmptyMontageEndedDelegate;
-		AnimInstance->Montage_SetEndDelegate(EmptyMontageEndedDelegate, ActiveReactionMontage);
-		if (AnimInstance->Montage_IsPlaying(ActiveReactionMontage))
-		{
-			AnimInstance->Montage_Stop(0.1f, ActiveReactionMontage);
-		}
-	}
-
-	ActiveAnimInstance.Reset();
-	ActiveReactionMontage = nullptr;
 	RemoveAbilityStateTag(ActiveStateTag, bHasAddedActiveStateTag);
 }
 
@@ -228,4 +191,5 @@ UTDReactionDeathAbility::UTDReactionDeathAbility()
 	SetAssetTags(FGameplayTagContainer(TDGameplayTags::Action_Reaction_Death));
 	ReactionTag = TDGameplayTags::Action_Reaction_Death;
 	bResetComboOnActivate = false;
+	bHoldFinalPose = true;
 }

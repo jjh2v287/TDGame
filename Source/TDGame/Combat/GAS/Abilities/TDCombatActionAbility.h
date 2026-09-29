@@ -4,8 +4,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "TDCombatActionAbility.generated.h"
 
-class UAnimInstance;
-class UAnimMontage;
 class UTDCombatComponent;
 class UTDSkillComponent;
 
@@ -63,13 +61,14 @@ protected:
 private:
 	void AddAbilityStateTag(const FGameplayTag& Tag, bool& bTagAdded);
 	void RemoveAbilityStateTag(const FGameplayTag& Tag, bool& bTagAdded);
-	void HandleActionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void ClearAbilityState();
 
-	UPROPERTY(Transient)
-	TObjectPtr<UAnimMontage> ActiveActionMontage = nullptr;
+	UFUNCTION()
+	void HandleActionTimelineCompleted();
 
-	TWeakObjectPtr<UAnimInstance> ActiveAnimInstance;
+	UFUNCTION()
+	void HandleActionTimelineInterrupted();
+
 	FGameplayTag ActiveCombatActionTag;
 	bool bHasAddedActiveStateTag = false;
 };

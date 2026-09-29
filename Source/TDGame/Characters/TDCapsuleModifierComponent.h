@@ -54,6 +54,7 @@ private:
 	float ResolveHalfHeight(float RequestedHalfHeight, float ResolvedRadius) const;
 	void MoveOwnerToMaintainCapsuleBase(float HalfHeightAdjustment) const;
 	void RefreshMeshOffset(float TargetScaledHalfHeight, bool bMaintainCapsuleBase) const;
+	void UpdateMoverVisualBaseLocation(const USkeletalMeshComponent& Mesh) const;
 	void RestoreOwnerFromBaseMaintainedState() const;
 
 	TWeakObjectPtr<UCapsuleComponent> OwnerCapsule;

@@ -71,7 +71,7 @@
 		},
 		{
 			"Name": "GameplayStateTree",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "GameplayMessageRouter",
@@ -95,7 +95,7 @@
 		},
 		{
 			"Name": "MoverAnimNext",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "GameplayCameras",
@@ -107,15 +107,15 @@
 		},
 		{
 			"Name": "SmartObjects",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFStateTree",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFChooser",
-			"Enabled": true
+			"Enabled": false
 		}
 	]
 }

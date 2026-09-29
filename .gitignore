@@ -98,3 +98,6 @@ __pycache__/
 *.pyc
 Tools/scratch/*
 !Tools/scratch/.gitkeep
+
+# Cook-generated file open order logs
+Build/**/FileOpenOrder/

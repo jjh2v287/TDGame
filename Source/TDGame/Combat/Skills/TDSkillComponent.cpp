@@ -136,7 +136,7 @@ float UTDSkillComponent::GetActionRange(const FGameplayTag ActionTag) const
 
 bool UTDSkillComponent::ShouldUseTraceForCurrentAction() const
 {
-	return CurrentActionTag.IsValid() && CurrentHitExecutionType == ETDCombatHitExecutionType::NotifyTrace;
+	return CurrentActionTag.IsValid() && CurrentHitExecutionType == ETDCombatHitExecutionType::TimelineSweep;
 }
 
 bool UTDSkillComponent::BuildCurrentActionDamageSpec(FTDDamageSpec& OutDamageSpec) const
@@ -242,7 +242,7 @@ void UTDSkillComponent::ClearCurrentActionContext()
 	CurrentActionOwningAbility.Reset();
 	CurrentActionTag = FGameplayTag();
 	CurrentActionTarget.Reset();
-	CurrentHitExecutionType = ETDCombatHitExecutionType::NotifyTrace;
+	CurrentHitExecutionType = ETDCombatHitExecutionType::TimelineSweep;
 }
 
 bool UTDSkillComponent::BuildDamageSpecForAction(const FTDCombatActionDefinition& ActionDefinition, FTDDamageSpec& OutDamageSpec) const

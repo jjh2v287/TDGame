@@ -36,7 +36,7 @@ bool UTDPlayerRollAbility::CanActivateAbility(const FGameplayAbilitySpecHandle H
 		return false;
 	}
 
-	return !PlayerCharacter->IsRollPlaying() && PlayerCharacter->CanJump();
+	return PlayerCharacter->CanStartJump();
 }
 
 void UTDPlayerRollAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -64,7 +64,7 @@ void UTDPlayerRollAbility::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	bHasAddedRollingTag = true;
 	bHasAddedInvulnerableTag = true;
 
-	const float RollDuration = PlayerCharacter->PlayRollMontageAbility(PlayerCharacter->ConsumePendingRollDirection());
+	const float RollDuration = PlayerCharacter->PlayRollAnimation(PlayerCharacter->ConsumePendingRollDirection());
 	if (RollDuration <= 0.f)
 	{
 		ClearRollState();
@@ -109,7 +109,7 @@ void UTDPlayerRollAbility::ClearRollState()
 
 	if (ATDGameCharacter* PlayerCharacter = GetPlayerCharacter())
 	{
-		PlayerCharacter->EndRollMontageAbility();
+		PlayerCharacter->EndRollAnimation();
 	}
 
 	UTDCombatComponent* CombatComponent = GetCombatComponent();
@@ -154,7 +154,7 @@ bool UTDPlayerJumpAbility::CanActivateAbility(const FGameplayAbilitySpecHandle H
 	}
 
 	const ATDGameCharacter* PlayerCharacter = ActorInfo ? Cast<ATDGameCharacter>(ActorInfo->AvatarActor.Get()) : nullptr;
-	return PlayerCharacter && PlayerCharacter->CanJump();
+	return PlayerCharacter && PlayerCharacter->CanStartJump();
 }
 
 void UTDPlayerJumpAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

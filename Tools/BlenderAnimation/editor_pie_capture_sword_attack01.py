@@ -1,7 +1,7 @@
-"""에디터 안(PIE 실행 중)에서 run_in_editor.py로 실행: 플레이어 캐릭터에 검 공격 몽타주를 재생해 몽타주 위치·슬롯 가중치·실제 이동 거리를 틱마다 기록하고 타격 시점 스크린샷을 찍는다(무기 부착은 게임 캐릭터에 아직 없어 검 없이 찍힌다).
+"""에디터 안(PIE 실행 중)에서 run_in_editor.py로 실행: 플레이어 폰에 콘솔 TDPlayMeleeAction으로 검 공격 시퀀스를 UAF 행동으로 재생해(루트모션 → Mover) 틱마다 실제 위치를 기록하고 타격 시점 스크린샷을 찍는다(무기 부착은 게임 캐릭터에 아직 없어 검 없이 찍힌다).
 실행: python Tools/BlenderAnimation/validate_sword_attack01_pie.py 가 PIE 시작 뒤 이 파일을 넘긴다(직접 실행 시 PIE가 켜져 있어야 한다).
 출력: Docs/Validation/BlenderAnimation/sword-attack01-pie.json, Saved/Screenshots/WindowsEditor/sword_attack01_contact.png
-상태: 현행 (2026-09-25, 고해상도 스크린샷은 한 번 실행에 한 장만 확실히 찍힌다)
+상태: 현행 (2026-09-30 몽타주 → UAF 행동 전환, 고해상도 스크린샷은 한 번 실행에 한 장만 확실히 찍힌다)
 """
 import json
 import math
@@ -10,14 +10,13 @@ from pathlib import Path
 
 import unreal
 
-MONTAGE = '/Game/Characters/Mannequins/Anims/Sword/AM_TD_Player_SwordAttack01'
+SEQUENCE = '/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01'
 SHOTS = [(0.35, 'contact')]
+SETTLE_SECONDS = 0.3
 world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
-player = unreal.GameplayStatics.get_player_character(world, 0)
-mesh = player.get_component_by_class(unreal.SkeletalMeshComponent)
-mesh.set_editor_property('visibility_based_anim_tick_option', unreal.VisibilityBasedAnimTickOption.ALWAYS_TICK_POSE_AND_REFRESH_BONES)
-instance = mesh.get_anim_instance()
-montage = unreal.load_asset(MONTAGE)
+player = unreal.GameplayStatics.get_player_pawn(world, 0)
+mesh = player.get_editor_property('mesh')
+sequence = unreal.load_asset(SEQUENCE)
 arm = player.get_component_by_class(unreal.SpringArmComponent)
 arm.set_editor_property('target_arm_length', 420)
 arm.set_editor_property('do_collision_test', False)
@@ -29,9 +28,11 @@ def coordinates(vector):
     return [vector.x, vector.y, vector.z]
 
 
-report = {'montage': montage.get_path_name(), 'pawn_class': player.get_class().get_name(), 'sword_socket_exists': mesh.does_socket_exist('HandGrip_R'),
+report = {'sequence': sequence.get_path_name(), 'pawn_class': player.get_class().get_name(), 'sword_socket_exists': mesh.does_socket_exist('HandGrip_R'),
+          'mesh_animation_enabled': mesh.get_editor_property('enable_animation'),
           'start_position_cm': coordinates(player.get_actor_location()), 'samples': [], 'screenshots': []}
-report['play_duration_seconds'] = instance.montage_play(montage, 1.0)
+report['play_duration_seconds'] = unreal.AnimationLibrary.get_sequence_length(sequence)
+unreal.SystemLibrary.execute_console_command(world, 'TDPlayMeleeAction')
 started = time.monotonic()
 handle = None
 
@@ -39,27 +40,22 @@ handle = None
 def capture_tick(delta):
     global handle
     elapsed = time.monotonic() - started
-    report['samples'].append({'elapsed': round(elapsed, 4),
-                              'montage_position': round(instance.montage_get_position(montage), 4),
-                              'slot_weight': instance.blueprint_get_slot_montage_local_weight('DefaultSlot'),
-                              'actor_position_cm': coordinates(player.get_actor_location())})
-    position = instance.montage_get_position(montage)
+    report['samples'].append({'elapsed': round(elapsed, 4), 'actor_position_cm': coordinates(player.get_actor_location())})
     for when, label in SHOTS:
-        if label not in report['screenshots'] and position >= when:
+        if label not in report['screenshots'] and elapsed >= when:
             report['screenshots'].append(label)
             unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, f'sword_attack01_{label}.png')
             break
-    if (instance.montage_is_playing(montage) or elapsed < 0.5) and elapsed < 8.0:
+    if elapsed < report['play_duration_seconds'] + SETTLE_SECONDS and elapsed < 8.0:
         return
     unreal.unregister_slate_post_tick_callback(handle)
     report['end_position_cm'] = coordinates(player.get_actor_location())
     report['travel_distance_cm'] = math.dist(report['start_position_cm'], report['end_position_cm'])
-    report['maximum_slot_weight'] = max(sample['slot_weight'] for sample in report['samples'])
-    report['passed'] = 1.7 < report['play_duration_seconds'] < 1.95 and 30 < report['travel_distance_cm'] < 40 and report['maximum_slot_weight'] > 0.99
+    report['passed'] = 1.7 < report['play_duration_seconds'] < 1.95 and 30 < report['travel_distance_cm'] < 40 and not report['mesh_animation_enabled']
     path = Path('C:/Project/TDGame/Docs/Validation/BlenderAnimation/sword-attack01-pie.json')
     path.write_text(json.dumps(report, indent=2), encoding='utf-8')
     unreal.log('TD_SWORD_ATTACK01_PIE ' + str(report['passed']) + ' travel_cm=' + str(report['travel_distance_cm']))
 
 
 handle = unreal.register_slate_post_tick_callback(capture_tick)
-print('Sword attack montage runtime capture scheduled')
+print('Sword attack action runtime capture scheduled')

@@ -16,7 +16,7 @@
 - 스텝은 1/64초 고정. 매 스텝 `++GFrameCounter` → `FApp` 시간 갱신 → `World->Tick(LEVELTICK_All, Step)` → 상태 해시 순이며, 시뮬 러너는 두뇌 서브시스템의 `Step` 을 직접 부르지 않는다(D15·D27).
 - 난수는 시나리오 마스터 시드에서 `HashCombine` 으로 파생한 이름 있는 `FRandomStream` 만 쓴다. 전역 `FMath::FRand` 계열은 grep 자동화 테스트로 금지한다(D29).
 - 순서는 `SimulationId` 하나로 통일한다. 액터 이름·`GetUniqueID` 를 키로 쓰지 않는다(D30).
-- 물리·내비·애니메이션은 기본 배제한다. 몬스터 공격은 Phase 0~2 에서 `UTDDamageDefinition`, Phase 3 부터 `FTDAttackTimetable` 이 권위이고 애님 노티파이는 표현·오라클 전용이다(D19~D21).
+- 물리·내비·애니메이션은 기본 배제한다. 몬스터 공격은 Phase 0~2 에서 `UTDDamageDefinition`, Phase 3 부터 `FTDAttackTimetable` 이 권위이고 애님 노티파이는 표현·오라클 전용이다(D19~D21). (2026-09-30 D44로 대체: 애님 노티파이·몽타주는 삭제됐다. 근접 판정은 능력 태스크 `UTDAbilityTask_PlayActionTimeline`이 스윕 코어 `FTDMeleeSweep`를 C++ 시간표 `FTDActionAnimation.HitWindows`로 구동한다.)
 - 상태 해시는 스텝별 FNV-1a 64비트 계층 체인이며 난수 스트림 현재 시드를 포함한다. 게이트는 같은 프로세스 2회 + 다른 프로세스 1회 + 골든 해시다(D31).
 - "게임 = 시뮬 비트 동일"은 약속하지 않는다. A 비트 동일 / B 이벤트 등가(±1 스텝) / C 통계 등가 3단으로 정의한다(D32).
 - 병렬은 프로세스 팬아웃, 지표는 승률 ± 표준오차·분위수·리썰 위험·행동 점유율·교체율, 로그는 JSONL 한 사고 한 줄이다(D33~D35).
@@ -53,7 +53,7 @@
 
 ### 2.1 픽스처 승격
 
-기존 `FTDScopedCombatWorld`(`Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:29-89`, 익명 네임스페이스)를 `Source/TDGame/CombatSim/TDScopedCombatWorld.h` 공용 헤더로 옮긴다. 기존 `Tick(Duration, Step = 0.02f)` 은 그대로 남겨 27개 테스트(`TDDamageSystemTests` 19개 + `TDDamageHomingTests` 8개)가 0.02 스텝을 유지하게 하고(D28), 세션은 새 `StepOnce()` 만 쓴다. 나머지 1개(`FTDMeleeAttackNotifySweepTest`)는 별도 픽스처 `FTDScopedMeleeWorld`(`TDMeleeAttackNotifyTests.cpp:25`, `Tick(Duration, Step)` 기본값 없음)를 쓰며 0.5초 스텝을 요청한다 — 이 두 번째 픽스처의 처리는 §2.4·§15 에 둔다.
+기존 `FTDScopedCombatWorld`(`Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:29-89`, 익명 네임스페이스)를 `Source/TDGame/CombatSim/TDScopedCombatWorld.h` 공용 헤더로 옮긴다. 기존 `Tick(Duration, Step = 0.02f)` 은 그대로 남겨 27개 테스트(`TDDamageSystemTests` 19개 + `TDDamageHomingTests` 8개)가 0.02 스텝을 유지하게 하고(D28), 세션은 새 `StepOnce()` 만 쓴다. 나머지 1개(`FTDMeleeAttackNotifySweepTest`)는 별도 픽스처 `FTDScopedMeleeWorld`(`TDMeleeAttackNotifyTests.cpp:25`, `Tick(Duration, Step)` 기본값 없음)를 쓰며 0.5초 스텝을 요청한다 — 이 두 번째 픽스처의 처리는 §2.4·§15 에 둔다. (2026-09-30 D44로 대체: `TDMeleeAttackNotifyTests.cpp`와 `FTDMeleeAttackNotifySweepTest`는 삭제됐고 스윕 코어 테스트는 `Combat/Tests/TDMeleeSweepTests.cpp`(`TDGame.Combat.MeleeSweep.*`)로 옮겼다.)
 
 ```cpp
 struct FTDScopedCombatWorldParams
@@ -150,7 +150,7 @@ int32 UTDCombatSimCommandlet::Main(const FString& Params)
 
 ### 2.4 기존 테스트의 스텝(D28)
 
-기존 28개 자동화 테스트는 현재 스텝을 유지한 채 Phase 0 에서 실제 통과부터 확인한다(GAS 전환 후 미실행 상태). 27개는 `FTDScopedCombatWorld` 0.02 스텝이고, 근접 노티파이 테스트 1개는 `FTDScopedMeleeWorld`(`TDMeleeAttackNotifyTests.cpp:25`) 0.5초 스텝이다. `TDMeleeAttackNotifyTests.cpp:171,180` 의 0.5초 스텝은 실제로는 0.4초씩 진행되지만(project-current-combat-code 결론 3) 결과가 결정적이므로 그대로 둔다. `FTDScopedMeleeWorld` 를 공용 헤더로 함께 승격해 B단계 정합 테스트(§8)가 재사용할지는 결정 항목이다(§15). 1/64 이행은 Phase 2 에서 기대값을 "초"가 아니라 "스텝 수"로 재정의하는 별도 작업이다([07 로드맵](07-roadmap-and-tasks.md)).
+기존 28개 자동화 테스트는 현재 스텝을 유지한 채 Phase 0 에서 실제 통과부터 확인한다(GAS 전환 후 미실행 상태). (2026-09-30 D44로 대체: 근접 노티파이 테스트 1개는 `TDMeleeSweepTests.cpp`로 바뀌었고 이 문단의 `FTDScopedMeleeWorld`·`TDMeleeAttackNotifyTests.cpp` 언급은 옛 상태다. 헤드리스 전체는 66/66 통과.) 27개는 `FTDScopedCombatWorld` 0.02 스텝이고, 근접 노티파이 테스트 1개는 `FTDScopedMeleeWorld`(`TDMeleeAttackNotifyTests.cpp:25`) 0.5초 스텝이다. `TDMeleeAttackNotifyTests.cpp:171,180` 의 0.5초 스텝은 실제로는 0.4초씩 진행되지만(project-current-combat-code 결론 3) 결과가 결정적이므로 그대로 둔다. `FTDScopedMeleeWorld` 를 공용 헤더로 함께 승격해 B단계 정합 테스트(§8)가 재사용할지는 결정 항목이다(§15). 1/64 이행은 Phase 2 에서 기대값을 "초"가 아니라 "스텝 수"로 재정의하는 별도 작업이다([07 로드맵](07-roadmap-and-tasks.md)).
 
 ---
 
@@ -237,7 +237,7 @@ private:
 | 1 | 전투원 등록·대상 수집 | `GatherTargets` 가 `TSet<TWeakObjectPtr>` 등록 순서대로 결과를 채우고 `HitArea` 가 그 순서로 피해를 준다(`TDDamageSubsystem.cpp:247-270`, `TDDamageEntity.cpp:542-573`) | `UTDCombatComponent::SimulationId` 를 서브시스템이 스폰 순번으로 부여하고 `GatherTargets` 결과를 `SimulationId` 오름차순 정렬 | project-current-combat-code 결론 4 |
 | 2 | 투사체·호밍 동률 tie-break | `GetUniqueID()` 전역 UObject 인덱스(`TDDamageEntity.cpp:305-307`, `497-498`) — 프로세스 간·이전 생성 오브젝트 수에 따라 달라짐 | `SimulationId` 비교로 교체 | project-current-combat-code 결론 4 |
 | 3 | 스윕 다중 히트 동시간 | 엔진이 `OutHits.Sort(FCompareFHitResultTime())` 로 시간순 정렬하지만 같은 `Time` 사이 순서는 불안정 정렬이라 보장 없음 | 호출 측에서 `(Time, SimulationId)` 안정 정렬 후 처리 | engine-determinism-headless 결론 6(`CollisionConversions.cpp:526-527`) |
-| 4 | 오버랩 결과 | `ConvertOverlapResults` 가 가속 구조 순회 순서 그대로, 정렬 코드 없음 | 시뮬 경로는 물리 오버랩을 쓰지 않는다(격자 후보를 `SimulationId` 순). 플레이어 노티파이 스윕 경로가 오버랩을 쓰면 호출 측에서 `SimulationId` 정렬 | engine-determinism-headless 결론 6(`SceneQuery.cpp:1097-1166`) |
+| 4 | 오버랩 결과 | `ConvertOverlapResults` 가 가속 구조 순회 순서 그대로, 정렬 코드 없음 | 시뮬 경로는 물리 오버랩을 쓰지 않는다(격자 후보를 `SimulationId` 순). 플레이어 노티파이 스윕 경로가 오버랩을 쓰면 호출 측에서 `SimulationId` 정렬 (2026-09-30 D44로 대체: 노티파이 스윕은 삭제됐고 `FTDMeleeSweep`가 같은 역할이다) | engine-determinism-headless 결론 6(`SceneQuery.cpp:1097-1166`) |
 | 5 | 타이머 동률 만료 | 같은 만료 시각의 타이머는 힙 삽입 순서에 의존(GE 만료·도트) | 1·6 으로 삽입 순서가 결정되므로 별도 조치 없음. 같은 스텝에 두 몬스터가 같은 대상을 때리면 `SimulationId` 순으로 GE 가 적용된다 | engine-gas-determinism 결론 1 해석 |
 | 6 | 스폰 순서 = 틱 순서 | 테스트마다 다름 | 시나리오 로더가 플레이어(`SimulationId 0`) → 몬스터(`spawn.at_step` 오름차순, 같은 스텝이면 `monsters` 배열 순, `count` 순번 순 — §9.1)로 고정. 늦게 스폰되는 웨이브도 이 순서로 `SimulationId` 를 이어 받는다. 같은 틱 그룹 안 틱 순서는 등록 이력에만 의존한다 | engine-determinism-headless 결론 3(`TickTaskManager.cpp:1481-1487`) |
 | 7 | 액터 이름 | 전역 카운터로 만들어 실행마다 달라질 수 있음 | 로그·리플레이·해시 키는 `SimulationId` 만. 액터 이름을 어디에도 키로 쓰지 않는다 | engine-determinism-headless 결론 10(e)(`UObjectGlobals.cpp:2703-2715`) |
@@ -265,7 +265,7 @@ private:
 
 | 예외 시나리오 | 켜는 것 | 추가 규약 | 근거 |
 |---|---|---|---|
-| B단계 정합 테스트(§8) | 실제 스켈레탈 메시 + 몽타주 재생, 같은 헤드리스 월드 | `VisibilityBasedAnimTickOption = AlwaysTickPoseAndRefreshBones`(기본값 유지), URO(Update Rate Optimization, 갱신 빈도 최적화) 끔, 1/64 스텝은 노티파이 최소 간격보다 작다. B단계 몸 = `ATDSimCombatant` + 스켈레탈 메시 컴포넌트(이동은 수학, CMC 없음 — D16, [03](03-tick-and-scale.md) 시뮬 몸 규약). CMC 스텝 분할 사실은 게임 쪽 03 문서에만 둔다 | engine-determinism-headless 결론 10(a)·(d), §7 표 |
+| B단계 정합 테스트(§8) | 실제 스켈레탈 메시 + 몽타주 재생, 같은 헤드리스 월드 | `VisibilityBasedAnimTickOption = AlwaysTickPoseAndRefreshBones`(기본값 유지), URO(Update Rate Optimization, 갱신 빈도 최적화) 끔, 1/64 스텝은 노티파이 최소 간격보다 작다. B단계 몸 = `ATDSimCombatant` + 스켈레탈 메시 컴포넌트(이동은 수학, CMC 없음 — D16, [03](03-tick-and-scale.md) 시뮬 몸 규약). CMC 스텝 분할 사실은 게임 쪽 03 문서에만 둔다 (2026-09-30 D44로 대체: 몽타주·노티파이가 없어 "몽타주 재생" 전제는 무효이며 B단계 대조 대상은 M3-06에서 UAF 시퀀스 재생 vs 시간표 판정으로 다시 정한다) | engine-determinism-headless 결론 10(a)·(d), §7 표 |
 | 물리 반응이 판정에 필요한 시나리오(넉백 등, 현재 없음) | `bSimulatePhysics = true` | `bEnableEnhancedDeterminism = true`(또는 `p.Chaos.Solver.Deterministic 1`), 바디 생성 순서 = `SimulationId` 순, 비동기 물리·서브스테핑 기본 꺼짐 유지 | engine-determinism-headless 결론 5(`PBDRigidsEvolutionGBF.cpp:1316-1323`) |
 | 내비 경로가 필요한 시나리오(플로우 필드로 대체 예정, 현재 없음) | `bCreateNavigation = true` | `SetMaxSimultaneousTileGenerationJobsCount(1)` → `Build()` → `EnsureBuildCompletion()` 동기 빌드, `FindPathSync` 만 사용 | engine-determinism-headless 결론 7(`RecastNavMesh.cpp:549`, `:3619`) |
 
@@ -279,14 +279,14 @@ private:
 
 | 단계 | 몬스터 공격 | 플레이어(사람 조작) | 시뮬의 플레이어 대리 |
 |---|---|---|---|
-| Phase 0~2 | 기존 `UTDDamageDefinition`(`Mode` Area/Shockwave/Projectile, `ActivationDelay` = 선딜, `Lifetime`, `Cooldown` — `TDDamageDefinition.h:19-34`). 스켈레탈 메시 없이 성립 | `UTDAnimNotifyState_MeleeAttack` 소켓 스윕 유지(`TDMeleeAttackNotifyTests` 로 검증됨 — GAS 전환 전 통과 기록이며 Phase 0 재실행으로 재확인, §2.4) | 플레이어 몽타주에서 추출한 시간표(§6.2)로 판정 |
-| Phase 3 이후 | 몽타주 주도 근접 몬스터가 생기면 `FTDAttackTimetable` 이 권위. 노티파이는 표현·오라클 전용(`bAuthoritativeHitJudgment` 게이트) | 유지. 시간표 권위로 전환할지는 결정 항목(§15) | 시간표 |
+| Phase 0~2 | 기존 `UTDDamageDefinition`(`Mode` Area/Shockwave/Projectile, `ActivationDelay` = 선딜, `Lifetime`, `Cooldown` — `TDDamageDefinition.h:19-34`). 스켈레탈 메시 없이 성립 | `UTDAnimNotifyState_MeleeAttack` 소켓 스윕 유지(`TDMeleeAttackNotifyTests` 로 검증됨 — GAS 전환 전 통과 기록이며 Phase 0 재실행으로 재확인, §2.4) (2026-09-30 D44로 대체: 노티파이 삭제, 능력 태스크가 `FTDMeleeSweep`를 시간표 `HitWindows`로 구동, 테스트는 `TDMeleeSweepTests`) | 플레이어 몽타주에서 추출한 시간표(§6.2)로 판정 (2026-09-30 D44로 대체: 몽타주가 아니라 시퀀스 + `FTDActionAnimation`) |
+| Phase 3 이후 | 몽타주 주도 근접 몬스터가 생기면 `FTDAttackTimetable` 이 권위. 노티파이는 표현·오라클 전용(`bAuthoritativeHitJudgment` 게이트) | 유지. 시간표 권위로 전환할지는 결정 항목(§15) (2026-09-30 D44로 대체: 몽타주·노티파이 삭제, 플레이어·몬스터 모두 시간표 `FTDActionAnimation`을 능력 태스크가 구동) | 시간표 |
 
-근거: project-current-combat-code 결론 6·10(근접 판정은 메시·애님 인스턴스·몽타주가 있어야만 성립, 예제 정의는 `NewObject` 로 메모리 생성 가능), engine-movement-anim-scale 결론 8(몽타주 시간표 추출 API).
+근거: project-current-combat-code 결론 6·10(근접 판정은 메시·애님 인스턴스·몽타주가 있어야만 성립, 예제 정의는 `NewObject` 로 메모리 생성 가능), engine-movement-anim-scale 결론 8(몽타주 시간표 추출 API). (2026-09-30 D44로 대체: 애님 인스턴스·몽타주는 삭제됐고 근접 판정은 능력 태스크가 `FTDMeleeSweep`를 시간표로 구동한다.)
 
 ### 6.2 시간표 형식과 추출 커맨드렛
 
-`UTDAttackTimetableExtractCommandlet`(`-run=TDAttackTimetableExtract -Montage=<path>|-All`)이 `GetPlayLength`, `GetSectionStartAndEndTime`, `Notifies[i].GetTriggerTime/GetDuration/NotifyName`, `BlendOut` 을 읽어 `Content/MonsterAI/Timetables/<Id>.json` 으로 저장한다. 소켓 궤적은 노티파이 구간을 1/64 간격으로 샘플링해 궤적 바운딩(부채꼴 반지름·반각·높이)으로 초기화하고, 그 값이 형상 파라미터가 된다(심사 판정: 궤적 손실 완화). 미확인: 소켓 궤적 샘플링은 몽타주 메타데이터만으로는 불가능하고 스켈레탈 메시 로드 + 포즈 평가(`GetBoneTransform`·`GetSocketTransform` 류)가 필요하다. 조사(engine-movement-anim-scale 결론 8)는 `GetSectionStartAndEndTime`·`GetTriggerTime/GetDuration` 만 확인했으므로 사용 API 와 비용은 Phase 3 착수 시 확인한다.
+`UTDAttackTimetableExtractCommandlet`(`-run=TDAttackTimetableExtract -Montage=<path>|-All`)이 `GetPlayLength`, `GetSectionStartAndEndTime`, `Notifies[i].GetTriggerTime/GetDuration/NotifyName`, `BlendOut` 을 읽어 `Content/MonsterAI/Timetables/<Id>.json` 으로 저장한다. 소켓 궤적은 노티파이 구간을 1/64 간격으로 샘플링해 궤적 바운딩(부채꼴 반지름·반각·높이)으로 초기화하고, 그 값이 형상 파라미터가 된다(심사 판정: 궤적 손실 완화). 미확인: 소켓 궤적 샘플링은 몽타주 메타데이터만으로는 불가능하고 스켈레탈 메시 로드 + 포즈 평가(`GetBoneTransform`·`GetSocketTransform` 류)가 필요하다. 조사(engine-movement-anim-scale 결론 8)는 `GetSectionStartAndEndTime`·`GetTriggerTime/GetDuration` 만 확인했으므로 사용 API 와 비용은 Phase 3 착수 시 확인한다. (2026-09-30 D44로 대체: 몽타주·노티파이가 없어 추출 입력은 몽타주가 아니라 시퀀스와 C++ 시간표 `FTDActionAnimation`(`HitWindows`·`TagWindows`·`InputBufferWindow`·`JumpCapsuleWindow`)이며, `-Montage=` 인수와 `Notifies[i]` 읽기는 다시 설계한다.)
 
 ```json
 {
@@ -306,12 +306,12 @@ private:
 | 규칙 | 내용 |
 |---|---|
 | 단위 | 시간은 초가 아니라 스텝 정수(1/64 격자 반올림). 판정은 `hit_window_steps` 안의 매 스텝, 대상당 `max_hits_per_target` 회 |
-| `source_hash` | 몽타주의 노티파이 목록(이름·시각·길이)과 `PlayLength` 의 해시. 검증기(`TDMonsterAIValidate`, [02 정의 형식](02-architecture-and-definition-format.md))가 현재 몽타주와 비교해 다르면 재추출을 요구한다 |
+| `source_hash` | 몽타주의 노티파이 목록(이름·시각·길이)과 `PlayLength` 의 해시. 검증기(`TDMonsterAIValidate`, [02 정의 형식](02-architecture-and-definition-format.md))가 현재 몽타주와 비교해 다르면 재추출을 요구한다 (2026-09-30 D44로 대체: 몽타주가 없어 해시 기준은 시퀀스·시간표로 다시 정한다) |
 | 판정 경로 | 창 안 스텝마다 격자 후보(`SimulationId` 순) → 형상 안 여부(2D 각도·거리 + 높이) → `UTDDamageSubsystem::ExecuteRules(HitRules, ...)`. 기존 규칙 경로를 그대로 탄다 |
-| `bAuthoritativeHitJudgment` | `UTDAnimNotifyState_MeleeAttack` 의 프로퍼티. 몬스터 노티파이는 false(표현·오라클), 플레이어 노티파이는 true 유지. false 면 스윕은 돌되 `ExecuteRules` 를 호출하지 않고 오라클 이벤트만 발행 |
+| `bAuthoritativeHitJudgment` | `UTDAnimNotifyState_MeleeAttack` 의 프로퍼티. 몬스터 노티파이는 false(표현·오라클), 플레이어 노티파이는 true 유지. false 면 스윕은 돌되 `ExecuteRules` 를 호출하지 않고 오라클 이벤트만 발행 (2026-09-30 D44로 대체: 이 노티파이 클래스는 삭제됐다) |
 | 화면 밖 | 시간표 진행·판정은 LOD 와 무관하게 매 스텝(D21). 화면 밖에서 애니메이션이 멈춰도 판정은 멈추지 않는다 |
 
-플레이어 대리의 시간표는 플레이어 몽타주에서 같은 커맨드렛으로 뽑는다. 게임의 플레이어 노티파이 스윕과 시뮬 대리의 시간표 판정이 같은 대상을 같은 창에서 맞히는지는 B단계 정합 테스트(§8)가 종별로 고정한다.
+플레이어 대리의 시간표는 플레이어 몽타주에서 같은 커맨드렛으로 뽑는다(2026-09-30 D44로 대체: 몽타주가 아니라 플레이어 행동의 `FTDActionAnimation` 시간표를 쓴다). 게임의 플레이어 노티파이 스윕과 시뮬 대리의 시간표 판정이 같은 대상을 같은 창에서 맞히는지는 B단계 정합 테스트(§8)가 종별로 고정한다.
 
 ---
 
@@ -400,10 +400,10 @@ D31 의 "같은 프로세스 2회 + 다른 프로세스 1회 + 골든 해시" �
 | 단계 | 구성 | 기준 | 테스트 | 약속 범위 |
 |---|---|---|---|---|
 | A 비트 동일 | 시뮬 vs 시뮬(같은 프로세스·다른 프로세스) | 해시 체인 전 구간 동일 | `TDGame.CombatSim.Determinism.*` | 항상 |
-| B 이벤트 등가 | 같은 헤드리스 월드에서 "실제 메시 + 몽타주 재생 + 노티파이(오라클 모드)" vs "시간표 판정", 둘 다 1/64 스텝 | 피해 이벤트 집합 동일, 근접 적중 시각 ±1 스텝, 총 피해 동일 | `TDGame.CombatSim.Parity.<Id>`(예 `Parity.Goblin_Melee`; 기존 `TDMeleeAttackNotifyTests` 확장), 시간표를 가진 종마다 1개 — [07 M3-06](07-roadmap-and-tasks.md) 과 같은 표기 | Phase 3 부터, 시간표를 가진 종마다 |
+| B 이벤트 등가 | 같은 헤드리스 월드에서 "실제 메시 + 몽타주 재생 + 노티파이(오라클 모드)" vs "시간표 판정", 둘 다 1/64 스텝 | 피해 이벤트 집합 동일, 근접 적중 시각 ±1 스텝, 총 피해 동일 | `TDGame.CombatSim.Parity.<Id>`(예 `Parity.Goblin_Melee`; 기존 `TDMeleeAttackNotifyTests` 확장 — 2026-09-30 D44로 대체: 이 테스트 파일은 삭제, 몽타주·노티파이 없이 UAF 시퀀스 재생 vs 시간표 판정으로 다시 설계), 시간표를 가진 종마다 1개 — [07 M3-06](07-roadmap-and-tasks.md) 과 같은 표기 | Phase 3 부터, 시간표를 가진 종마다 |
 | C 통계 등가 | 시뮬 승률 vs 실제 플레이테스트(사람) 승률 | 산포도 y=x 회귀, Bob's Buddy 방식 | 수동 리포트 | 실 플레이 데이터가 쌓인 뒤 |
 
-"게임 = 시뮬 비트 동일"은 약속하지 않는다. 게임은 가변 프레임이고 플레이어 입력·렌더 종속 표현이 섞이며, 플레이어 근접은 노티파이 권위를 유지하기 때문이다(D20). B단계가 시뮬이 게임을 대표한다는 핵심 근거이고, C단계가 밸런스 툴의 채택 기준이다(web-balance-simulation-tools 결론 1, Bob's Buddy 2020).
+"게임 = 시뮬 비트 동일"은 약속하지 않는다. 게임은 가변 프레임이고 플레이어 입력·렌더 종속 표현이 섞이며, 플레이어 근접은 노티파이 권위를 유지하기 때문이다(D20). (2026-09-30 D44로 대체: 노티파이는 삭제됐고 플레이어 근접도 시간표를 능력 태스크가 구동한다. 게임 = 시뮬 비트 동일을 약속하지 않는 이유는 가변 프레임과 입력·렌더 종속 표현이다.) B단계가 시뮬이 게임을 대표한다는 핵심 근거이고, C단계가 밸런스 툴의 채택 기준이다(web-balance-simulation-tools 결론 1, Bob's Buddy 2020).
 
 ---
 
@@ -647,7 +647,7 @@ if __name__ == "__main__":
 5. 배치 결과 보관 정책(`Saved/CombatSim/` 크기 상한, 스냅샷 보존 기간) → [07 MD-05](07-roadmap-and-tasks.md)(= 06 미결 8).
 6. 사전 필터 제외 구간 `[0.2, 5.0]` 의 값.
 7. 난이도 축: 난이도 등급(스탯 배율·행동 풀·AI 파라미터 오버라이드)을 시나리오 파라미터로 넣어 시뮬 매트릭스의 축으로 삼을지(zz-completeness-critique M5). 현재 스키마(§9.1)에는 없다.
-8. `FTDScopedMeleeWorld`(`TDMeleeAttackNotifyTests.cpp:25`)를 `FTDScopedCombatWorld` 와 함께 공용 헤더로 승격해 B단계 정합 테스트가 재사용할지, 정합 테스트를 `FTDScopedCombatWorld` + 스켈레탈 메시 옵션으로 통합할지(§2.4).
+8. `FTDScopedMeleeWorld`(`TDMeleeAttackNotifyTests.cpp:25`)를 `FTDScopedCombatWorld` 와 함께 공용 헤더로 승격해 B단계 정합 테스트가 재사용할지, 정합 테스트를 `FTDScopedCombatWorld` + 스켈레탈 메시 옵션으로 통합할지(§2.4). (2026-09-30 D44로 대체: `TDMeleeAttackNotifyTests.cpp`는 삭제되어 `Combat/Tests/TDMeleeSweepTests.cpp`로 바뀌었다.)
 
 ## 근거 색인(인용한 조사 파일 목록)
 

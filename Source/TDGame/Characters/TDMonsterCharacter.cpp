@@ -1,8 +1,9 @@
 #include "Characters/TDMonsterCharacter.h"
 #include "Abilities/GameplayAbility.h"
 #include "AI/CombatToken/TDCombatTokenSubsystem.h"
-#include "AI/NPC/TDNPCUpdateSubsystem.h"
 #include "AI/NPC/TDSignificanceComponent.h"
+#include "Animation/AnimSequence.h"
+#include "Characters/TDCharacterAnimationComponent.h"
 #include "Combat/GAS/Abilities/TDCombatActionAbility.h"
 #include "Combat/GAS/Abilities/TDReactionAbility.h"
 #include "Combat/Skills/TDSkillComponent.h"
@@ -14,9 +15,9 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/TDGameplayMessages.h"
 #include "Core/TDGameplayTags.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameplayAbilitySpec.h"
 #include "MonsterAI/TDMonsterDefinitionLibrary.h"
@@ -31,11 +32,31 @@ namespace
 	constexpr float DefaultRecoverySeconds = 0.3f;
 	constexpr float MaxAnimationOverrunSeconds = 0.6f;
 	constexpr float StaggerImpulse = 450.f;
-	constexpr float TurnDegreesPerSecond = 720.f;
-	constexpr float StationarySpeed = 30.f;
+	constexpr float MinimumClipPlayRate = 0.05f;
+
+	FTDLocomotionClipSet MakeLocomotionClipSet(const UTDMonsterSpeciesAsset& SpeciesAsset)
+	{
+		FTDLocomotionClipSet Clips;
+		Clips.Idle = Cast<UAnimSequence>(SpeciesAsset.Idle.Animation);
+		Clips.Walk = Cast<UAnimSequence>(SpeciesAsset.Walk.Animation);
+		Clips.Run = Cast<UAnimSequence>(SpeciesAsset.Run.Animation);
+		if (!Clips.Walk)
+		{
+			Clips.Walk = Clips.Idle;
+		}
+		if (!Clips.Run)
+		{
+			Clips.Run = Clips.Walk;
+		}
+		Clips.WalkClipSpeed = SpeciesAsset.WalkClipSpeed * SpeciesAsset.MeshScale;
+		Clips.RunClipSpeed = SpeciesAsset.RunClipSpeed * SpeciesAsset.MeshScale;
+		Clips.IdlePlayRate = SpeciesAsset.Idle.PlayRate;
+		return Clips;
+	}
 }
 
 ATDMonsterCharacter::ATDMonsterCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	FTDCombatStats MonsterStats;
 	MonsterStats.TeamId = 2;
@@ -43,10 +64,8 @@ ATDMonsterCharacter::ATDMonsterCharacter(const FObjectInitializer& ObjectInitial
 	AutoPossessAI = EAutoPossessAI::Disabled;
 	AIControllerClass = nullptr;
 	bUseControllerRotationYaw = false;
-	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
-	MovementComponent->bRunPhysicsWithNoController = true;
-	MovementComponent->bOrientRotationToMovement = true;
-	MovementComponent->RotationRate = FRotator(0.f, 540.f, 0.f);
+	DefaultMaxMoveSpeed = 400.f;
+	TurningRate = 540.f;
 
 	SkillComponent = CreateDefaultSubobject<UTDSkillComponent>(TEXT("SkillComponent"));
 	SignificanceComponent = CreateDefaultSubobject<UTDSignificanceComponent>(TEXT("SignificanceComponent"));
@@ -59,78 +78,19 @@ void ATDMonsterCharacter::BeginPlay()
 	GrantDefaultActionAbilities();
 	CombatComponent->OnDeath.AddUObject(this, &ThisClass::HandleDeath);
 	ApplySpeciesBody();
+	ApplySpeciesAnimation();
 	StartMonsterBrain();
-
-	if (!bUseNPCUpdateSubsystem)
-	{
-		return;
-	}
-
-	UTDNPCUpdateSubsystem* UpdateSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UTDNPCUpdateSubsystem>() : nullptr;
-	if (UpdateSubsystem)
-	{
-		UpdateSubsystem->Register(this);
-	}
 }
 
 void ATDMonsterCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	StopMonsterBrain();
-	UnregisterFromNPCUpdateSubsystem();
 	Super::EndPlay(EndPlayReason);
 }
 
 FGenericTeamId ATDMonsterCharacter::GetGenericTeamId() const
 {
 	return FGenericTeamId(static_cast<uint8>(CombatComponent->GetStats().TeamId));
-}
-
-void ATDMonsterCharacter::SetManagedByNPCUpdateSubsystem(const bool bIsManaged)
-{
-	bIsManagedByNPCUpdateSubsystem = bIsManaged;
-
-	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
-	{
-		MovementComponent->SetComponentTickEnabled(!bIsManaged);
-	}
-
-	if (USkeletalMeshComponent* MeshComponent = GetMesh())
-	{
-		MeshComponent->SetComponentTickEnabled(!bIsManaged);
-	}
-}
-
-void ATDMonsterCharacter::ManualUpdateMovement(const float DeltaTime)
-{
-	if (!bIsManagedByNPCUpdateSubsystem)
-	{
-		return;
-	}
-
-	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
-	if (MovementComponent && MovementComponent->IsActive())
-	{
-		MovementComponent->TickComponent(DeltaTime, LEVELTICK_All, nullptr);
-	}
-}
-
-void ATDMonsterCharacter::ManualUpdateAnimation(const float DeltaTime)
-{
-	if (!bIsManagedByNPCUpdateSubsystem)
-	{
-		return;
-	}
-
-	USkeletalMeshComponent* MeshComponent = GetMesh();
-	if (!MeshComponent || !MeshComponent->IsActive())
-	{
-		return;
-	}
-
-	if (ManagedAnimationRenderTolerance <= 0.f || MeshComponent->WasRecentlyRendered(ManagedAnimationRenderTolerance))
-	{
-		MeshComponent->TickComponent(DeltaTime, LEVELTICK_All, &MeshComponent->PrimaryComponentTick);
-	}
 }
 
 void ATDMonsterCharacter::SetCurrentTarget(AActor* NewTarget)
@@ -200,14 +160,13 @@ bool ATDMonsterCharacter::HasAvailableCombatToken() const
 
 void ATDMonsterCharacter::HandleDeath(const FTDDamageContext& Context)
 {
-	GetCharacterMovement()->DisableMovement();
+	DisableMovement();
 	SetActorEnableCollision(false);
 	if (DeathLifeSpanSeconds > 0.f)
 	{
 		SetLifeSpan(DeathLifeSpanSeconds);
 	}
 	UnregisterCombatTokenAggro();
-	UnregisterFromNPCUpdateSubsystem();
 	StopMonsterBrain();
 	PlayDeathPresentation();
 
@@ -222,20 +181,6 @@ void ATDMonsterCharacter::HandleDeath(const FTDDamageContext& Context)
 	DeathMessage.Killer = Context.Caster.Get();
 	DeathMessage.DeathLocation = GetActorLocation();
 	UGameplayMessageSubsystem::Get(World).BroadcastMessage(TDGameplayTags::Event_Actor_Death, DeathMessage);
-}
-
-void ATDMonsterCharacter::UnregisterFromNPCUpdateSubsystem()
-{
-	if (!bUseNPCUpdateSubsystem)
-	{
-		return;
-	}
-
-	UTDNPCUpdateSubsystem* UpdateSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UTDNPCUpdateSubsystem>() : nullptr;
-	if (UpdateSubsystem)
-	{
-		UpdateSubsystem->Unregister(this);
-	}
 }
 
 UTDCombatTokenSubsystem* ATDMonsterCharacter::GetCombatTokenSubsystem() const
@@ -363,7 +308,7 @@ void ATDMonsterCharacter::ApplyBodyStats(const FTDMonsterStatValues& Stats)
 	CombatComponent->SetStats(CombatStats, !bHasAppliedMonsterStats);
 	bHasAppliedMonsterStats = true;
 	BaseMoveSpeed = Stats.MoveSpeed;
-	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed;
+	SetMaxMoveSpeed(BaseMoveSpeed);
 }
 
 void ATDMonsterCharacter::ApplyBodyMoveIntent(const FVector2D& Direction, const float SpeedScale)
@@ -376,9 +321,9 @@ void ATDMonsterCharacter::ApplyBodyMoveIntent(const FVector2D& Direction, const 
 	{
 		return;
 	}
-	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * SpeedScale;
-	bHasDesiredYaw = false;
-	AddMovementInput(FVector(Direction.X, Direction.Y, 0.f), 1.f, true);
+	SetMaxMoveSpeed(BaseMoveSpeed * SpeedScale);
+	ClearDesiredFacingDirection();
+	Internal_AddMovementInput(FVector(Direction.X, Direction.Y, 0.f), true);
 }
 
 void ATDMonsterCharacter::FaceBodyToward(const FVector& Location)
@@ -388,8 +333,7 @@ void ATDMonsterCharacter::FaceBodyToward(const FVector& Location)
 	{
 		return;
 	}
-	DesiredYaw = Offset.Rotation().Yaw;
-	bHasDesiredYaw = true;
+	SetDesiredFacingDirection(Offset.GetSafeNormal2D());
 }
 
 float ATDMonsterCharacter::BeginBodyAbility(const FTDMonsterAbilityRequest& Request)
@@ -404,11 +348,9 @@ float ATDMonsterCharacter::BeginBodyAbility(const FTDMonsterAbilityRequest& Requ
 	const FVector AimOffset = Request.TargetLocation - GetActorLocation();
 	if (AimOffset.SizeSquared2D() > 1.f)
 	{
-		DesiredYaw = AimOffset.Rotation().Yaw;
-		bHasDesiredYaw = true;
-		SetActorRotation(FRotator(0.f, DesiredYaw, 0.f));
+		FaceRotationImmediately(FRotator(0.f, AimOffset.Rotation().Yaw, 0.f));
 	}
-	GetCharacterMovement()->StopMovementImmediately();
+	StopMovementImmediately();
 	ATDDamageEntity* Entity = DamageSubsystem->Cast(Request.Spell, this, Origin, Request.TargetLocation);
 	if (!Entity)
 	{
@@ -434,7 +376,7 @@ void ATDMonsterCharacter::CancelBodyAbility()
 	}
 	ActiveAbilityEntity.Reset();
 	AbilityImpactTime = 0.f;
-	AnimationDriver.StopAction();
+	CharacterAnimation->StopAction();
 }
 
 void ATDMonsterCharacter::BeginBodyStagger(const FVector& SourceLocation, const float Seconds)
@@ -442,23 +384,16 @@ void ATDMonsterCharacter::BeginBodyStagger(const FVector& SourceLocation, const 
 	const FVector Away = (GetActorLocation() - SourceLocation).GetSafeNormal2D();
 	if (!Away.IsNearlyZero() && !CombatComponent->IsFrozen())
 	{
-		GetCharacterMovement()->AddImpulse(Away * StaggerImpulse, true);
+		AddImpulseVelocity(Away * StaggerImpulse);
 	}
 	if (Species && Species->Hit.IsValidClip())
 	{
-		AnimationDriver.PlayAction(Species->Hit, Species->Hit.PlayRate);
+		PlaySpeciesClip(Species->Hit, Species->Hit.PlayRate);
 	}
 }
 
 void ATDMonsterCharacter::PresentBody(const float DeltaSeconds, const ETDMonsterFsmState State)
 {
-	if (!CombatComponent->IsAlive())
-	{
-		return;
-	}
-	TurnTowardDesiredYaw(DeltaSeconds);
-	AnimationDriver.Tick(DeltaSeconds);
-	AnimationDriver.UpdateLocomotion(GetVelocity().Size2D());
 }
 
 UTDMonsterThinkSubsystem* ATDMonsterCharacter::GetThinkSubsystem() const
@@ -481,11 +416,25 @@ void ATDMonsterCharacter::ApplySpeciesBody()
 	}
 	MeshComponent->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -Species->CapsuleHalfHeight + Species->MeshHeightOffset), FRotator(0.f, Species->MeshYaw, 0.f));
 	MeshComponent->SetRelativeScale3D(FVector(Species->MeshScale));
-	if (Species->Idle.Animation)
+	UCharacterMoverComponent* Mover = GetMoverComponent();
+	if (Mover && Mover->GetPrimaryVisualComponent() == MeshComponent)
 	{
-		MeshComponent->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-		MeshComponent->OverrideAnimationData(Species->Idle.Animation, true, true, Species->Idle.StartSeconds, Species->Idle.PlayRate);
+		Mover->SetBaseVisualComponentTransform(MeshComponent->GetRelativeTransform());
 	}
+}
+
+void ATDMonsterCharacter::ApplySpeciesAnimation()
+{
+	if (!Species)
+	{
+		return;
+	}
+	const FTDLocomotionClipSet Clips = MakeLocomotionClipSet(*Species);
+	if (!Clips.Idle && !Clips.Walk && !Clips.Run)
+	{
+		return;
+	}
+	CharacterAnimation->UseLocomotionClips(Clips);
 }
 
 void ATDMonsterCharacter::StartMonsterBrain()
@@ -506,7 +455,6 @@ void ATDMonsterCharacter::StartMonsterBrain()
 		UE_LOG(LogTDMonster, Error, TEXT("%s: monster definition %s is missing or invalid; see LogTDMonsterDefinition errors."), *GetName(), *Species->DefinitionId.ToString());
 		return;
 	}
-	AnimationDriver.Initialize(GetMesh(), Species);
 	BrainHandle = ThinkSubsystem->RegisterMonster(this, Definition);
 	if (!BrainHandle.IsValid())
 	{
@@ -562,18 +510,25 @@ void ATDMonsterCharacter::PlayDeathPresentation()
 	{
 		SetLifeSpan(Species->CorpseLifeSeconds);
 	}
-	const float DeathClipSeconds = AnimationDriver.PlayDeath();
-	if (DeathClipSeconds > 0.f)
+	const FTDMonsterAnimClip& DeathClip = Species->Death;
+	UAnimSequence* DeathSequence = Cast<UAnimSequence>(DeathClip.Animation);
+	if (DeathSequence && CharacterAnimation->PlayDeath(DeathSequence, FMath::Max(DeathClip.PlayRate, MinimumClipPlayRate), DeathClip.EndSeconds) > 0.f)
 	{
-		FTimerHandle DeathPoseTimer;
-		GetWorldTimerManager().SetTimer(DeathPoseTimer, this, &ThisClass::HoldDeathPose, DeathClipSeconds, false);
 		return;
 	}
+	if (!Species->bUseRagdollWithoutDeathClip || !GetMesh()->GetPhysicsAsset())
+	{
+		return;
+	}
+	StartRagdoll();
+}
+
+void ATDMonsterCharacter::StartRagdoll()
+{
 	USkeletalMeshComponent* MeshComponent = GetMesh();
-	if (!Species->bUseRagdollWithoutDeathClip || !MeshComponent->GetPhysicsAsset())
-	{
-		return;
-	}
+	CharacterAnimation->SetAnimationFrozen(true);
+	GetMoverComponent()->SetPrimaryVisualComponent(nullptr);
+	MeshComponent->UpdateKinematicBonesToAnim(MeshComponent->GetComponentSpaceTransforms(), ETeleportType::TeleportPhysics, true);
 	SetActorEnableCollision(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeshComponent->SetCollisionProfileName(TEXT("Ragdoll"));
@@ -620,21 +575,15 @@ float ATDMonsterCharacter::PlayAbilityClip(const FTDMonsterAbilityRequest& Reque
 	OutRecoverySeconds = Clip->RecoverySeconds;
 	const bool bCanAlignImpact = Clip->ImpactSeconds > 0.f && WindupSeconds > 0.f;
 	const float PlayRate = bCanAlignImpact ? FMath::Clamp(Clip->ImpactSeconds / WindupSeconds, 0.5f, 2.f) : Clip->PlayRate;
-	return AnimationDriver.PlayAction(*Clip, PlayRate);
+	return PlaySpeciesClip(*Clip, PlayRate);
 }
 
-void ATDMonsterCharacter::HoldDeathPose()
+float ATDMonsterCharacter::PlaySpeciesClip(const FTDMonsterAnimClip& Clip, const float PlayRate)
 {
-	AnimationDriver.Tick(0.f);
-}
-
-void ATDMonsterCharacter::TurnTowardDesiredYaw(const float DeltaSeconds)
-{
-	if (!bHasDesiredYaw || GetVelocity().Size2D() > StationarySpeed)
+	UAnimSequence* Sequence = Cast<UAnimSequence>(Clip.Animation);
+	if (!Sequence)
 	{
-		return;
+		return 0.f;
 	}
-	const FRotator Current = GetActorRotation();
-	const FRotator Target(0.f, DesiredYaw, 0.f);
-	SetActorRotation(FMath::RInterpConstantTo(Current, Target, DeltaSeconds, TurnDegreesPerSecond));
+	return CharacterAnimation->PlayAction(Sequence, FMath::Max(PlayRate, MinimumClipPlayRate), Clip.StartSeconds, Clip.EndSeconds, false);
 }

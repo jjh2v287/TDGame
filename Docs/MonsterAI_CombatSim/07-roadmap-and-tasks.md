@@ -56,7 +56,7 @@
 | 11 | `Source/TDGame/Combat/Tests/TDDamageSystemTests.cpp:30-88` | `FTDScopedCombatWorld` 를 `Source/TDGame/CombatSim/TDScopedCombatWorld.h` 로 승격. 시드·스텝·해시 옵션 추가, **기본 스텝 0.02 유지** | 세션·테스트·커맨드렛 공유 | engine-gas-determinism "그대로 쓰는 것"; 결정 D27·D28 |
 | 12 | `Source/TDGame/Characters/TDMonsterCharacter.cpp:10-11` | `AutoPossessAI = Disabled`, `AIControllerClass` 제거. 정예 경로는 컨트롤러 없는 이동 요청 | 컨트롤러 액터 틱 제거, `IsLocallyControlled` 분기 회피. 정예 경로 추종 컴포넌트의 소유 주체(Pawn 소유 `UPathFollowingComponent` 또는 서브시스템 직접 `FindPathSync`)는 미확인이며 M3-01 에서 결정한다(Phase 3 플로우 필드 전까지는 직선 접근, D17) | engine-behaviortree-tick 결론 11; engine-gas-determinism 바꿔야 하는 것 4; engine-movement-anim-scale 결론 4(PathFollowing 은 `INavMovementInterface` 만 요구) |
 | 13 | `Source/TDGame/Combat/GAS/TDDamageGameplayAbility.cpp:14-15` | 몬스터용 `NetExecutionPolicy = ServerOnly` 옵션(파생 또는 설정) | 컨트롤러 없는 폰은 현행 LocalOnly 도 권한자로 활성된다(`FGameplayAbilityActorInfo::IsLocallyControlled` 가 `IsNetAuthority()` 로 떨어짐, `GameplayAbilityTypes.cpp:107-126`). ServerOnly 는 TwinStick 호환 경로처럼 컨트롤러가 붙는 경우의 보험(옵션) | engine-gas-determinism 바꿔야 하는 것 4·미확인 8 |
-| 14 | `Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.*` | `bAuthoritativeHitJudgment` 게이트 **추가만**(기본 true = 플레이어 경로 현행 유지). Phase 3 에서 몬스터 시간표 도입 시 몬스터만 false | 단일 판정 경로 준비 | 결정 D19·D20 |
+| 14 | `Source/TDGame/Combat/AnimNotify/TDAnimNotifyState_MeleeAttack.*` | `bAuthoritativeHitJudgment` 게이트 **추가만**(기본 true = 플레이어 경로 현행 유지). Phase 3 에서 몬스터 시간표 도입 시 몬스터만 false | 단일 판정 경로 준비(2026-09-30 D44로 폐기: 노티파이 삭제, 판정은 `FTDMeleeSweep` + `FTDActionAnimation.HitWindows`) | 결정 D19·D20 |
 | 15 | `Source/TDGame/TDGame.Build.cs:11` | `Json`, `JsonUtilities` 의존 추가(Phase 1 로더 직전) | JSON 정본 파서 | engine-misc-decision-tools R13; 결정 D13 |
 
 D38 밖이지만 Phase 1 에서 반드시 따라오는 변경 1건: `Source/TDGame/Combat/TDCombatComponentStatus.cpp:434-442` 의 `Brain->PauseLogic` 경로는 새 두뇌가 `UBrainComponent` 가 아니므로 `UTDMonsterThinkSubsystem::SetFrozen(SimulationId, true)` 를 병행 호출한다(TwinStick 호환 경로는 유지). 참고로 BT 의 `PauseLogic` 이 보조 노드 틱을 못 멈추는 사실의 근거는 engine-behaviortree-tick **상세 1-4·피할 것 5**(`BehaviorTreeComponent.cpp:1760-1775`)이지 결론 12 가 아니다.
@@ -250,7 +250,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterBody.h`, `CombatSim/TDSimCombatant.h/.cpp`
 - 검증: BUILD; TEST `TDGame.CombatSim.Body` `M1-06`
 - 참조: 결정 D16·D18; engine-gas-determinism 결론 4·10·바꿔야 하는 것 3·4
-- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — `MonsterAI/TDMonsterBody.h`(`ITDMonsterBody`)와 게임 몸 `ATDMonsterCharacter` 구현. 남음: 시뮬 몸 `ATDSimCombatant`.
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — `MonsterAI/TDMonsterBody.h`(`ITDMonsterBody`)와 게임 몸 `ATDMonsterCharacter` 구현. 남음: 시뮬 몸 `ATDSimCombatant`. 2026-09-30 D44로 대체: 게임 몸 `ATDMonsterCharacter`는 `ATDCombatCharacter : APawn`(Mover 이동) 위에서 `ITDMonsterBody`를 구현한다.
 
 ### M1-07 정의 기반 공격 원시(CastAbility)
 - 상태: todo
@@ -474,7 +474,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterPawn.h/.cpp`, `Combat/Characters/TDMonsterCharacter.cpp`(옵션 축소)
 - 검증: BUILD; PIE 수동 + `DumpTicks` 로그; TEST `TDGame.Combat` 유지
 - 참조: 결정 D16; engine-movement-anim-scale 결론 1·2·3·4; web-mass-monster-performance 결론 2
-- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분(앞당김) — PIE에서 추적·공격 성공(LV-Cambat 17마리). 편차: 잡몹도 `ATDMonsterCharacter`(CMC Walking, 내비 없이 직선+회피) 사용, 애니메이션은 C++ 단일 노드 재생(`TDMonsterAnimationDriver`, AnimBP 로직 없음). 2026-09-25 claude: 고블린·스톤 골렘 추가 — Manny 애니메이션 IK 리타기팅(`Tools/MonsterAI/editor_retarget_monster_anims.py`, `/Game/MonsterAI/Animations/{Goblin,Golem}`), 골렘은 데모 이동 클립 사용, 새 정의 `StoneGolem.json`·공격 `DA_TDGolemStomp`(사거리 ≤ 반경이면 자기 중심), LV-Cambat 7무리 25마리, PIE 고블린 교전·골렘 발구르기·내려치기 확인. 남음: `ATDMonsterPawn` 잡몹 몸, NavWalking·경로, `DumpTicks`, 골렘 전용 내려찍기 동작(현재 훅), 고블린 무기 부착.
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분(앞당김) — PIE에서 추적·공격 성공(LV-Cambat 17마리). 편차: 잡몹도 `ATDMonsterCharacter`(CMC Walking, 내비 없이 직선+회피) 사용, 애니메이션은 C++ 단일 노드 재생(`TDMonsterAnimationDriver`, AnimBP 로직 없음). 2026-09-25 claude: 고블린·스톤 골렘 추가 — Manny 애니메이션 IK 리타기팅(`Tools/MonsterAI/editor_retarget_monster_anims.py`, `/Game/MonsterAI/Animations/{Goblin,Golem}`), 골렘은 데모 이동 클립 사용, 새 정의 `StoneGolem.json`·공격 `DA_TDGolemStomp`(사거리 ≤ 반경이면 자기 중심), LV-Cambat 7무리 25마리, PIE 고블린 교전·골렘 발구르기·내려치기 확인. 남음: `ATDMonsterPawn` 잡몹 몸, NavWalking·경로, `DumpTicks`, 골렘 전용 내려찍기 동작(현재 훅), 고블린 무기 부착. 2026-09-30 D44로 대체: 잡몹·정예·보스·동료·플레이어가 모두 `ATDCombatCharacter : APawn` 한 종의 몸이며(`UCharacterMoverComponent` Standalone + `UNavMoverComponent` + `UUAFComponent` + `UTDCharacterAnimationComponent`), CMC·`UFloatingPawnMovement`·`TDMonsterAnimationDriver`(삭제) 전제는 무효다(M3-16).
 
 ### M3-02 공간 해시와 분리 조향·근접 자리 토큰
 - 상태: todo
@@ -518,7 +518,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `TDGame.uproject`(플러그인), `MonsterAI/TDMonsterPawn.cpp`
 - 검증: PIE `stat Anim`·`stat TDMonsterAI` 캡처
 - 참조: 결정 D24; engine-movement-anim-scale 결론 8·9; web-mass-monster-performance 결론 6
-- 기록: (없음)
+- 기록: (없음). 2026-09-30 D44로 대체: UAF에는 애니메이션 예산 할당기·URO가 없어 `USkeletalMeshComponentBudgeted`·`a.Budget.*` 전제가 무효이며, 애니메이션 LOD는 UAF 컴포넌트 비활성·주기 정책을 C++로 직접 구현한다(D24 보정).
 
 ### M3-06 공격 시간표 추출과 B단계 정합 테스트
 - 상태: todo
@@ -529,7 +529,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDAttackTimetable.h`, `MonsterAI/TDAttackTimetableExtractCommandlet.h/.cpp`, `Content/MonsterAI/Timetables/<Id>.json`(02 §1, 04 §6.2)
 - 검증: BUILD; `UnrealEditor-Cmd.exe ... -run=TDAttackTimetableExtract -Montage=<경로>`(또는 `-All`); TEST `TDGame.CombatSim.Parity` `M3-06`
 - 참조: 결정 D19·D20·D32; project-current-combat-code 결론 6; engine-determinism-headless 시사점 7; engine-movement-anim-scale 결론 8
-- 기록: (없음)
+- 기록: (없음). 2026-09-30 D44로 대체: 몽타주·AnimNotify가 삭제되어 시간표의 원천은 시퀀스 + C++ 시간표 `FTDActionAnimation`(`HitWindows`·`TagWindows`·`InputBufferWindow`·`JumpCapsuleWindow`)이며, 몽타주 source_hash·`-Montage=` 추출·노티파이 강등 전제는 무효다(같은 스윕 코어 `FTDMeleeSweep`를 능력 태스크가 구동, D20 개정).
 
 ### M3-07 JSON→C++ 상수표 되돌림 커맨드렛
 - 상태: todo
@@ -584,7 +584,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDMonsterCrowdControl.h/.cpp`(02 §2 클래스 표 수록), `Content/CombatSim/Gate/knockback_ring.json`
 - 검증: BUILD; TEST `TDGame.MonsterAI.CrowdControl` `M3-13`; TEST `TDGame.CombatSim.Determinism`
 - 참조: zz-completeness-critique §1 M8; [06 요구 밖 고려사항](06-beyond-the-ask.md) §5-4; 결정 D15·D17
-- 기록: (없음)
+- 기록: (없음). 2026-09-30 D44로 대체: 빙결 사례는 Mover 몸에서 이동 모드를 `NullMovementMode`로 바꾸고 UAF를 비활성해 애니메이션을 멈추며 마지막 해동에서 이전 모드를 복원하는 경로가 됐다(`TDGame.Movement.FreezeHaltsMovementAndAnimation`), CMC의 `MOVE_*` 전제는 무효다.
 
 ### M3-15 세이브/로드 슬롯 직렬화 왕복 해시 테스트
 - 상태: todo
@@ -596,6 +596,18 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 검증: BUILD; TEST `TDGame.CombatSim.SaveLoadRoundTrip` `M3-15`
 - 참조: zz-completeness-critique §3 B14; [06 요구 밖 고려사항](06-beyond-the-ask.md) §1 13번; 결정 D14·D31
 - 기록: (없음)
+
+### M3-16 전 캐릭터 이동·애니메이션 Mover·UAF 전면 교체(D44)
+- 상태: done
+- 담당: claude/2026-09-30
+- 우선순위: 최상(사용자 지시 2026-09-29, 권장안 전부 승인)
+- 선행: 없음(기준 커밋 55af972, 브랜치 feat/mover-uaf)
+- 목표: `ATDCombatCharacter`를 `APawn`+Mover+UAF로 다시 세우고 플레이어·동료·몬스터·보스 전부를 옮긴다. 몽타주·AnimNotify·AnimBP·StateTree 사용 0. 행동은 시퀀스 주입 + C++ 시간표, 루트모션은 UAF→Mover.
+- 완료 조건: Source에 `ACharacter`·CMC·`UAnimInstance`·`Montage_` 0건, TD 소유 콘텐츠에 AnimBP·몽타주 0개 / 헤드리스 기준 통과 수(62) 유지 + 신규 테스트(루트모션 36±2cm, 판정 창 1회 적중, 빙결 정지) / PIE 이동·점프·구르기·공격·몬스터 25마리 교전 / 25마리 프레임 비용 ≤ 기준×1.5, LogMover 외부 이동 경고 0 / LV-Cambat 쿠킹 + 실행 크래시 0 / SeamlessTravel PIE 통과.
+- 산출물: `Characters/TDCombatCharacter.*`, `Characters/TDCharacterAnimationComponent.*`, `Combat/GAS/TDAbilityTask_PlayActionTimeline.*`, `Combat/TDMeleeSweep.*`, 도구 `Tools/measure_game_frames.py`·`Tools/cook_single_map.py`
+- 검증: BUILD; TEST `TDGame.*` 헤드리스; PIE; `python Tools/measure_game_frames.py`; `python Tools/cook_single_map.py`
+- 참조: 결정 D44(D4·D16·D20·D24 개정); `Saved/AgentOps/20260929/`
+- 기록: 2026-09-30 claude — 완료. 기준 커밋 55af972(브랜치 feat/mover-uaf). 헤드리스 TDGame.* 66/66(기준 62 + 신규 `TDGame.Movement.RootMotionActionMovesPawn` 36.00cm·`FreezeHaltsMovementAndAnimation` 0.000cm·`MonsterMoveIntentMovesPawn`·`TDGame.Combat.ActionTimelineHitsOnceInWindow`), PIE 플레이어(아레나: 클릭 이동 도착 30cm·방향 1.6°·발 흔들림 105cm·점프 124cm·공격 36.0cm, `Docs/Validation/Movement/player-pie-check.json`)·몬스터(LV-Cambat 25마리 교전, 래그돌·Mover 경고 0, `measurements/monster-pie-check.json`)·검 공격 파이프라인(36.06cm), 쿠킹 LV-Cambat 성공·실행 크래시 줄 0, 쿠킹본 25마리 게임 스레드 평균 7.23 → 4.12ms(프레임 11.69 → 11.51ms, `Saved/AgentOps/frames_*_staged.json`). TD·벤더 콘텐츠 AnimBP·몽타주 0개, `Source/TDGame`의 CMC·ACharacter·AnimInstance·Montage·AnimNotify·StateTree 참조 0건(에디터 저작 도구 `TDGameEditor`의 몽타주 생성 기능만 남음). 남은 것: 화면 밖 애니 LOD(M3-05 재정의), Mover 서브스텝 없음(프레임 끊김 시 점프 높이 변동, L-combat-03), 구르기 능력의 월드 타이머 종료(기존 결함), 발 IK(UAFControlRig), LV-Cambat 내비메시 경계 없음, UAF 첫 주입 ensure(L-anim-07), 쿠킹본 종료 코드 777003·`GameFeatureData` ensure(교체 전 설정 기인 추정, 미검증), StateTree·GameplayCameras·Chooser 플러그인은 AllToolsets·CameraShakePreviewer·PoseSearch 의존으로 켜 둠(코드 사용 0). 교훈 L-anim-07, L-combat-03, L-editor-12·13. 도구 `Tools/measure_game_frames.py`·`cook_single_map.py`·`Movement/*`.
 
 ### 3.6 Phase 4 — 확장(조건부)
 

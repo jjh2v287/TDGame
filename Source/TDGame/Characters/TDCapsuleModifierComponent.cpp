@@ -1,9 +1,10 @@
 #include "Characters/TDCapsuleModifierComponent.h"
 
+#include "Characters/TDCombatCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "GameFramework/Actor.h"
-#include "GameFramework/Character.h"
 
 UTDCapsuleModifierComponent::UTDCapsuleModifierComponent()
 {
@@ -159,7 +160,7 @@ USkeletalMeshComponent* UTDCapsuleModifierComponent::GetOwnerMesh() const
 		return Mesh;
 	}
 
-	if (const ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner()))
+	if (const ATDCombatCharacter* CharacterOwner = Cast<ATDCombatCharacter>(GetOwner()))
 	{
 		return CharacterOwner->GetMesh();
 	}
@@ -208,6 +209,21 @@ void UTDCapsuleModifierComponent::RefreshMeshOffset(float TargetScaledHalfHeight
 	}
 
 	Mesh->SetRelativeLocation(MeshRelativeLocation);
+	UpdateMoverVisualBaseLocation(*Mesh);
+}
+
+void UTDCapsuleModifierComponent::UpdateMoverVisualBaseLocation(const USkeletalMeshComponent& Mesh) const
+{
+	const ATDCombatCharacter* CharacterOwner = Cast<ATDCombatCharacter>(GetOwner());
+	UMoverComponent* MoverComponent = CharacterOwner ? CharacterOwner->GetMoverComponent() : nullptr;
+	if (!MoverComponent || MoverComponent->GetPrimaryVisualComponent() != &Mesh)
+	{
+		return;
+	}
+
+	FTransform VisualBaseTransform = MoverComponent->GetBaseVisualComponentTransform();
+	VisualBaseTransform.SetLocation(Mesh.GetRelativeLocation());
+	MoverComponent->SetBaseVisualComponentTransform(VisualBaseTransform);
 }
 
 void UTDCapsuleModifierComponent::RestoreOwnerFromBaseMaintainedState() const

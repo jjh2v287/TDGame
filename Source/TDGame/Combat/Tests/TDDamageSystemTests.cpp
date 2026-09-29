@@ -13,14 +13,15 @@
 #include "Combat/Damage/TDStatusDefinition.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "GameFramework/GameModeBase.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/ConfigCacheIni.h"
+#include "MovementMode.h"
+#include "MoverSimulationTypes.h"
 #include "Characters/TDGameCharacter.h"
 #include "Framework/TDGamePlayerController.h"
 #include "UObject/UnrealType.h"
@@ -562,16 +563,17 @@ bool FTDFreezeOwnershipTest::RunTest(const FString& Parameters)
 {
 	FTDScopedCombatWorld Fixture;
 	UTDCombatComponent* Caster = Fixture.SpawnCombatant(FVector(-500.f, 0.f, 0.f), 0);
-	ACharacter* FrozenCharacter = Fixture.World->SpawnActor<ACharacter>();
-	if (!TestNotNull(TEXT("Native character for freeze restoration exists"), FrozenCharacter))
+	ATDCompanionCharacter* FrozenCharacter = Fixture.World->SpawnActorDeferred<ATDCompanionCharacter>(ATDCompanionCharacter::StaticClass(), FTransform::Identity);
+	if (!TestNotNull(TEXT("Native combat character for freeze restoration exists"), FrozenCharacter))
 	{
 		return false;
 	}
-	UTDCombatComponent* Target = NewObject<UTDCombatComponent>(FrozenCharacter);
-	FrozenCharacter->AddInstanceComponent(Target);
-	Target->RegisterComponent();
+	FrozenCharacter->GetMoverComponent()->StartingMovementMode = DefaultModeNames::Flying;
+	FrozenCharacter->FinishSpawning(FTransform::Identity);
+	UTDCombatComponent* Target = FrozenCharacter->GetCombatComponent();
 	FrozenCharacter->CustomTimeDilation = 0.75f;
-	FrozenCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	Fixture.Tick(0.04f);
+	TestEqual(TEXT("Character starts in the flying movement mode"), FrozenCharacter->GetMoverComponent()->GetMovementModeName(), DefaultModeNames::Flying);
 	UTDStatusDefinition* ShortFreeze = MakeFreeze(Fixture.World);
 	UTDStatusDefinition* LongFreeze = MakeFreeze(Fixture.World);
 	LongFreeze->Duration = 0.3f;
@@ -579,13 +581,12 @@ bool FTDFreezeOwnershipTest::RunTest(const FString& Parameters)
 	Target->ApplyStatus(LongFreeze, MakeContext(Caster));
 	Fixture.Tick(0.2f);
 	TestTrue(TEXT("First expiry does not thaw a second active freeze"), Target->IsFrozen());
-	TestEqual(TEXT("Movement stays disabled until last freeze ends"), FrozenCharacter->GetCharacterMovement()->MovementMode.GetValue(), MOVE_None);
+	TestEqual(TEXT("Movement stays disabled until last freeze ends"), FrozenCharacter->GetMoverComponent()->GetMovementModeName(), UNullMovementMode::NullModeName);
 	FrozenCharacter->CustomTimeDilation = 0.4f;
-	FrozenCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Swimming);
 	Fixture.Tick(0.2f);
 	TestFalse(TEXT("Last freeze naturally expires"), Target->IsFrozen());
 	TestEqual(TEXT("External time dilation is preserved"), FrozenCharacter->CustomTimeDilation, 0.4f);
-	TestEqual(TEXT("External movement mode is preserved"), FrozenCharacter->GetCharacterMovement()->MovementMode.GetValue(), MOVE_Swimming);
+	TestEqual(TEXT("Pre-freeze movement mode is restored"), FrozenCharacter->GetMoverComponent()->GetMovementModeName(), DefaultModeNames::Flying);
 	return true;
 }
 

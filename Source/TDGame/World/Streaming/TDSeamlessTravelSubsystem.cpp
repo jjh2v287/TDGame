@@ -1,5 +1,6 @@
 #include "World/Streaming/TDSeamlessTravelSubsystem.h"
 
+#include "Characters/TDCombatCharacter.h"
 #include "Dungeon/TDDungeonDefinitions.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
@@ -25,6 +26,22 @@ namespace
 		case ETDSeamlessTravelState::Settling: return TEXT("Settling");
 		}
 		return TEXT("Unknown");
+	}
+
+	bool TeleportPawnToDestination(APawn& Pawn, const FVector& TargetLocation, const FRotator& TargetRotation)
+	{
+		if (ATDCombatCharacter* CombatCharacter = Cast<ATDCombatCharacter>(&Pawn))
+		{
+			CombatCharacter->TeleportPawn(TargetLocation, TargetRotation);
+			return true;
+		}
+
+		if (Pawn.TeleportTo(TargetLocation, TargetRotation))
+		{
+			return true;
+		}
+
+		return Pawn.SetActorLocationAndRotation(TargetLocation, TargetRotation, false, nullptr, ETeleportType::TeleportPhysics);
 	}
 }
 
@@ -342,8 +359,7 @@ bool UTDSeamlessTravelSubsystem::PerformTravel()
 		Controller->StopMovement();
 	}
 
-	const bool bTeleported = Pawn->TeleportTo(TargetLocation, TargetRotation);
-	if (!bTeleported && !Pawn->SetActorLocationAndRotation(TargetLocation, TargetRotation, false, nullptr, ETeleportType::TeleportPhysics))
+	if (!TeleportPawnToDestination(*Pawn, TargetLocation, TargetRotation))
 	{
 		UE_LOG(LogTDGame, Warning, TEXT("SeamlessTravel: failed to move '%s' to %s."), *Pawn->GetName(), *TargetLocation.ToCompactString());
 		return false;

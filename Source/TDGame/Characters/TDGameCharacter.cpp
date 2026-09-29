@@ -2,9 +2,10 @@
 
 #include "Characters/TDGameCharacter.h"
 #include "Abilities/GameplayAbility.h"
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/BlendSpace.h"
 #include "Characters/TDCapsuleModifierComponent.h"
+#include "Characters/TDCharacterAnimationComponent.h"
 #include "Combat/GAS/Abilities/TDCombatActionAbility.h"
 #include "Combat/GAS/Abilities/TDPlayerMovementAbilities.h"
 #include "Combat/GAS/Abilities/TDReactionAbility.h"
@@ -20,12 +21,16 @@
 #include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "DefaultMovementSet/NavMoverComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "MovementMode.h"
+#include "MoverTypes.h"
 
 ATDGameCharacter::ATDGameCharacter()
 {
@@ -35,22 +40,31 @@ ATDGameCharacter::ATDGameCharacter()
 
 	// Set size for player capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
+
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> DefaultPlayerMesh(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+	if (DefaultPlayerMesh.Succeeded())
+	{
+		GetMesh()->SetSkeletalMeshAsset(DefaultPlayerMesh.Object);
+	}
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
-	GetCharacterMovement()->bConstrainToPlane = true;
-	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-	GetCharacterMovement()->bRequestedMoveUseAcceleration = true;
-	if (FNavMovementProperties* NavProps = GetCharacterMovement()->GetNavMovementProperties())
+	DefaultMaxMoveSpeed = 600.f;
+	TurningRate = 640.f;
+	FacingMode = ETDFacingMode::MovementDirection;
+	if (FNavMovementProperties* NavProps = GetNavMoverComponent()->GetNavMovementProperties())
 	{
 		NavProps->bUseAccelerationForPaths = true;
 	}
+
+	LocomotionBlendSpace = TSoftObjectPtr<UBlendSpace>(FSoftObjectPath(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/BS_Idle_Walk_Run.BS_Idle_Walk_Run")));
+	JumpStartAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump")));
+	FallLoopAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Fall_Loop.MM_Fall_Loop")));
+	LandAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Land.MM_Land")));
 
 	// Create the camera boom component
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -107,20 +121,12 @@ void ATDGameCharacter::BeginPlay()
 		}
 	}
 
-	if (UCharacterMovementComponent* MovementComp = GetCharacterMovement())
-	{
-		MovementComp->bRequestedMoveUseAcceleration = true;
-		if (FNavMovementProperties* NavProps = MovementComp->GetNavMovementProperties())
-		{
-			NavProps->bUseAccelerationForPaths = true;
-		}
-	}
-
 	Super::BeginPlay();
 
+	ApplyAnimationSettings();
 	GrantDefaultActionAbilities();
 	CombatComponent->OnDeath.AddUObject(this, &ThisClass::HandleDeath);
-	RefreshJumpStateTag();
+	RefreshJumpStateTag(IsAirborne());
 }
 
 void ATDGameCharacter::Tick(float DeltaSeconds)
@@ -135,7 +141,7 @@ FGenericTeamId ATDGameCharacter::GetGenericTeamId() const
 	return FGenericTeamId(static_cast<uint8>(CombatComponent->GetStats().TeamId));
 }
 
-bool ATDGameCharacter::CanJumpInternal_Implementation() const
+bool ATDGameCharacter::CanStartJump() const
 {
 	if (IsRollPlaying())
 	{
@@ -147,13 +153,15 @@ bool ATDGameCharacter::CanJumpInternal_Implementation() const
 		return false;
 	}
 
-	return Super::CanJumpInternal_Implementation();
+	return CanJump();
 }
 
-void ATDGameCharacter::OnMovementModeChanged(const EMovementMode PrevMovementMode, const uint8 PreviousCustomMode)
+void ATDGameCharacter::HandleMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName)
 {
-	Super::OnMovementModeChanged(PrevMovementMode, PreviousCustomMode);
-	RefreshJumpStateTag();
+	Super::HandleMovementModeChanged(PreviousMovementModeName, NewMovementModeName);
+
+	const UBaseMovementMode* NewMovementMode = GetMoverComponent() ? GetMoverComponent()->FindMovementModeByName(NewMovementModeName) : nullptr;
+	RefreshJumpStateTag(NewMovementMode && NewMovementMode->HasGameplayTag(Mover_IsInAir, true));
 }
 
 float ATDGameCharacter::GetDesiredAttackRange() const
@@ -251,23 +259,13 @@ bool ATDGameCharacter::IsRollPlaying() const
 		return true;
 	}
 
-	if (RollMontage.IsNull())
+	const UAnimSequence* RollSequence = RollAnimation.Get();
+	if (!RollSequence || !CharacterAnimation)
 	{
 		return false;
 	}
 
-	UAnimMontage* RollMontageAsset = ResolveMontage(RollMontage);
-	if (!RollMontageAsset)
-	{
-		return false;
-	}
-
-	if (const UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
-	{
-		return AnimInstance->Montage_IsPlaying(RollMontageAsset);
-	}
-
-	return false;
+	return CharacterAnimation->IsPlayingAction(RollSequence);
 }
 
 bool ATDGameCharacter::ActivateCombatAbility(const FGameplayTag AbilityTag, AActor* TargetActor)
@@ -289,8 +287,7 @@ bool ATDGameCharacter::ActivateCombatAbility(const FGameplayTag AbilityTag, AAct
 
 bool ATDGameCharacter::CanStartRoll() const
 {
-	const UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
-	if (!CombatComponent->IsAlive() || RollMontage.IsNull() || !MovementComponent)
+	if (!CombatComponent->IsAlive() || CombatComponent->IsFrozen() || RollAnimation.IsNull())
 	{
 		return false;
 	}
@@ -300,7 +297,7 @@ bool ATDGameCharacter::CanStartRoll() const
 		return false;
 	}
 
-	if (bPressedJump || !MovementComponent->IsMovingOnGround())
+	if (!IsMovingOnGround())
 	{
 		return false;
 	}
@@ -320,16 +317,6 @@ bool ATDGameCharacter::CanStartRoll() const
 	return true;
 }
 
-UAnimMontage* ATDGameCharacter::ResolveMontage(const TSoftObjectPtr<UAnimMontage>& MontageReference) const
-{
-	if (MontageReference.IsNull())
-	{
-		return nullptr;
-	}
-
-	return MontageReference.LoadSynchronous();
-}
-
 FVector ATDGameCharacter::ConsumePendingRollDirection()
 {
 	FVector RollDirection = PendingRollDirection;
@@ -344,25 +331,12 @@ FVector ATDGameCharacter::ConsumePendingRollDirection()
 	return RollDirection.GetSafeNormal();
 }
 
-float ATDGameCharacter::PlayRollMontageAbility(const FVector& RollDirection)
+float ATDGameCharacter::PlayRollAnimation(const FVector& RollDirection)
 {
-	UAnimMontage* RollMontageAsset = ResolveMontage(RollMontage);
-	if (!RollMontageAsset)
+	UAnimSequence* RollSequence = RollAnimation.LoadSynchronous();
+	if (!RollSequence || !CharacterAnimation || CharacterAnimation->IsPlayingAction(RollSequence))
 	{
 		return 0.f;
-	}
-
-	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
-	if (!AnimInstance || AnimInstance->Montage_IsPlaying(RollMontageAsset))
-	{
-		return 0.f;
-	}
-
-	FVector DesiredRollDirection = RollDirection;
-	DesiredRollDirection.Z = 0.f;
-	if (!DesiredRollDirection.IsNearlyZero())
-	{
-		SetActorRotation(DesiredRollDirection.Rotation());
 	}
 
 	if (CapsuleModifierComponent)
@@ -370,20 +344,24 @@ float ATDGameCharacter::PlayRollMontageAbility(const FVector& RollDirection)
 		CapsuleModifierComponent->SetRollModifierEnabled(true);
 	}
 
-	const float MontageDuration = AnimInstance->Montage_Play(RollMontageAsset);
-	if (MontageDuration <= 0.f)
+	FVector DesiredRollDirection = RollDirection;
+	DesiredRollDirection.Z = 0.f;
+	if (!DesiredRollDirection.IsNearlyZero())
 	{
-		EndRollMontageAbility();
+		FaceRotationImmediately(DesiredRollDirection.Rotation());
+	}
+
+	const float RollDuration = CharacterAnimation->PlayAction(RollSequence, 1.f, 0.f, 0.f, true);
+	if (RollDuration <= 0.f)
+	{
+		EndRollAnimation();
 		return 0.f;
 	}
 
-	FOnMontageEnded MontageEndedDelegate;
-	MontageEndedDelegate.BindUObject(this, &ThisClass::HandleRollMontageEnded);
-	AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, RollMontageAsset);
-	return MontageDuration;
+	return RollDuration;
 }
 
-void ATDGameCharacter::EndRollMontageAbility()
+void ATDGameCharacter::EndRollAnimation()
 {
 	if (CapsuleModifierComponent)
 	{
@@ -391,12 +369,14 @@ void ATDGameCharacter::EndRollMontageAbility()
 	}
 }
 
-void ATDGameCharacter::HandleRollMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void ATDGameCharacter::HandleActionAnimationEnded(const UAnimSequence* Animation, bool bWasInterrupted)
 {
-	if (Montage == ResolveMontage(RollMontage))
+	if (!Animation || Animation != RollAnimation.Get())
 	{
-		EndRollMontageAbility();
+		return;
 	}
+
+	EndRollAnimation();
 }
 
 void ATDGameCharacter::HandleDeath(const FTDDamageContext& Context)
@@ -406,7 +386,7 @@ void ATDGameCharacter::HandleDeath(const FTDDamageContext& Context)
 		CapsuleModifierComponent->ResetModifiers();
 	}
 
-	GetCharacterMovement()->DisableMovement();
+	DisableMovement();
 	SetActorEnableCollision(false);
 	if (SkillComponent)
 	{
@@ -473,9 +453,30 @@ void ATDGameCharacter::GrantDefaultActionAbilities()
 	bHasGrantedDefaultActionAbilities = true;
 }
 
-void ATDGameCharacter::RefreshJumpStateTag() const
+void ATDGameCharacter::ApplyAnimationSettings()
 {
-	if (GetCharacterMovement() && GetCharacterMovement()->IsFalling())
+	if (!CharacterAnimation)
+	{
+		return;
+	}
+
+	if (UBlendSpace* BlendSpace = LocomotionBlendSpace.LoadSynchronous())
+	{
+		CharacterAnimation->UseLocomotionBlendSpace(BlendSpace);
+	}
+
+	FTDAirborneClipSet AirborneClips;
+	AirborneClips.JumpStart = JumpStartAnimation.LoadSynchronous();
+	AirborneClips.FallLoop = FallLoopAnimation.LoadSynchronous();
+	AirborneClips.Land = LandAnimation.LoadSynchronous();
+	CharacterAnimation->UseAirborneClips(AirborneClips);
+
+	CharacterAnimation->OnActionAnimationEnded.AddUObject(this, &ThisClass::HandleActionAnimationEnded);
+}
+
+void ATDGameCharacter::RefreshJumpStateTag(const bool bIsInAir) const
+{
+	if (bIsInAir)
 	{
 		CombatComponent->AddLooseGameplayTag(TDGameplayTags::State_Jumping);
 		return;

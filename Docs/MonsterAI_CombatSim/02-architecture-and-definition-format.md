@@ -62,12 +62,12 @@ Tools/CombatSim/*.py                     배치 런처 1개(run_batch.py, D35) +
 | `FTDMonsterActionRegistry` | 정적 표 | 원시 이름 → FSM 진입 상태·인자 스키마·`bSimulatable`·실행 함수 | 공용 | 제안(D7; 07 M1-02 의 `TDBrainRegistry` 와 통일 필요) |
 | `FTDBrainInputRegistry` | 정적 표 | 입력 이름 → 함수·비용 등급·기본 정규화 범위 | 공용 | 제안(D7; 07 M1-02 의 `TDBrainRegistry` 와 통일 필요) |
 | `FTDMonsterActionExecutor` | POD FSM | 5상태(Idle/Move/Cast/Sequence/Stagger) 진행, 몸에 명령 | 공용 | 제안(D1) |
-| `ITDMonsterBody` | UInterface | 위치 읽기·이동 요청·시전·페이싱·경직 | 공용(구현 3종) | 결정 D16 |
-| `ATDMonsterPawn` | APawn | 게임 잡몹 몸. `UFloatingPawnMovement`, 캡슐 QueryOnly, AIController·액터 틱 없음 | 게임 | 제안(D16 "APawn") |
-| `ATDMonsterCharacter` | 기존 ACharacter | 게임 정예/보스 몸. CMC NavWalking, AutoPossessAI 제거(D38) | 게임 | 기존 코드(D16) |
+| `ITDMonsterBody` | UInterface | 위치 읽기·이동 요청·시전·페이싱·경직 | 공용(구현 3종) (2026-09-30 D44로 대체: 게임 몸이 하나라 구현 2종) | 결정 D16 |
+| `ATDMonsterPawn` | APawn | 게임 잡몹 몸. `UFloatingPawnMovement`, 캡슐 QueryOnly, AIController·액터 틱 없음 (2026-09-30 D44로 대체: 별도 잡몹 몸을 만들지 않는다. 모든 게임 몸이 `ATDCombatCharacter : APawn`이다) | 게임 | 제안(D16 "APawn") |
+| `ATDMonsterCharacter` | `ATDCombatCharacter`(APawn) 파생 | 게임 몬스터 몸(잡몹·정예·보스 공통). `UCharacterMoverComponent`(Standalone) + `UNavMoverComponent` + UAF, AutoPossessAI 제거(D38) (2026-09-30 D44로 대체: 옛 ACharacter·CMC NavWalking 정예 몸) | 게임 | 기존 코드(D16, D44 개정) |
 | `ATDSimCombatant` | AActor | 시뮬 몸. 루트 셰이프 + `UTDCombatComponent`, 수학 이동, 컨트롤러 없음 | 시뮬 | 결정 D16 |
 | `FTDNeighborGrid` | 클래스 | `THierarchicalHashGrid2D<2,4,uint32>` 래퍼, 셀 250cm | 공용 | 제안(D17 래퍼) |
-| `FTDAttackTimetable` | USTRUCT | 선딜·히트 창·형상·소켓 궤적 바운딩·몽타주 source_hash(Phase 3) | 공용 | 결정 D19 |
+| `FTDAttackTimetable` | USTRUCT | 선딜·히트 창·형상·소켓 궤적 바운딩·몽타주 source_hash(Phase 3) (2026-09-30 D44로 대체: 몽타주가 없어 원천은 시퀀스 + C++ 시간표 `FTDActionAnimation`이고 source_hash 기준은 다시 정한다) | 공용 | 결정 D19 |
 | `FTDCombatRandomStreams` | 클래스 | 마스터 시드 → 이름 있는 스트림(Combat/PlayerProxy/Spawn/몬스터별 AI) | 공용 | 제안(D29) |
 | `FTDDecisionLogWriter` | 클래스 | JSONL 결정 로그(형식은 [04](04-combat-simulator.md)) | 공용(게임은 옵션) | 제안(D34) |
 | `FTDCombatStateHasher` | 정적 함수 | 스텝별 FNV-1a 계층 해시 | 시뮬(게임 디버그 옵션) | 제안(D31) |
@@ -76,7 +76,7 @@ Tools/CombatSim/*.py                     배치 런처 1개(run_batch.py, D35) +
 | `UTDCombatSimCommandlet` | UCommandlet | `-run=TDCombatSim` 배치 실행 | 시뮬 | 결정(진입점, D26) |
 | `UTDMonsterAIValidateCommandlet` | UCommandlet | `-run=TDMonsterAIValidate` 3단 검증, `-print-resolved` | 도구 | 결정(진입점, D8; 07 은 검증 본체 `TDMonsterAIValidator` 를 분리) |
 | `UTDMonsterAISchemaDumpCommandlet` | UCommandlet | 리플렉션·등록표 → 스키마·입력·행동 문서 | 도구 | 결정 D9 |
-| `UTDAttackTimetableExtractCommandlet` | UCommandlet | 몽타주 → 시간표 JSON(Phase 3) | 도구 | 제안(D19; 04 §6.2 와 같은 이름) |
+| `UTDAttackTimetableExtractCommandlet` | UCommandlet | 몽타주 → 시간표 JSON(Phase 3) (2026-09-30 D44로 대체: 입력은 몽타주가 아니라 시퀀스·`FTDActionAnimation`) | 도구 | 제안(D19; 04 §6.2 와 같은 이름) |
 | `UTDMonsterAIBakeConstantsCommandlet` | UCommandlet | JSON → C++ 상수표 생성(D10 되돌림, Phase 3) | 도구 | 제안(D10, 미결 4) |
 | `FTDMonsterDefinitionBuilder` | 클래스 | C++ 빌더 진입점. 증분 빌드 실측이 60초 미만일 때만 병행 유지(D10) | 공용(조건부) | 제안(D10, 미결 4) |
 | `FTDMonsterTickScheduler` | 구조체(상태 없는 함수 묶음) | 주기표 `PeriodTable[4][4]`(`Content/MonsterAI/PeriodTable.json` 에서 로드) 보관·`GetPeriod`·채널별 due 슬롯 수집. LOD·위상·`NextThinkStep` 의 정본은 슬롯 배열 | 공용 | 제안(D22·D23; [03 §2](03-tick-and-scale.md), 07 M3-03 `MonsterAI/TDMonsterTickScheduler.h/.cpp`) |
@@ -119,8 +119,8 @@ ATDMonsterPawn / ATDMonsterCharacter (ITDMonsterBody)          ATDSimCombatant (
 |---|---|---|
 | 두뇌 | 정의·등록표·점수기·FSM·슬롯·스케줄·로그 형식 | 없음 |
 | 스텝 진입 | `UTDMonsterThinkSubsystem` 틱 함수가 `World->Tick` 안에서 1회 | 게임은 실제 델타를 누적기로 스텝화(프레임당 상한 4, D22), 시뮬은 매 스텝 1/64초 고정(D27) |
-| 몸 | `ITDMonsterBody` 인터페이스, 2D 이동 적분 결과 | 게임 `ATDMonsterPawn`/`ATDMonsterCharacter`(메시·애니 예산), 시뮬 `ATDSimCombatant`(메시 없음) |
-| 공격 판정 | 데이터 권위(Phase 0~2 `UTDDamageDefinition`, Phase 3 `FTDAttackTimetable`) (D19) | 게임의 애님 노티파이는 표현·오라클 테스트 전용. 플레이어 사람 조작은 노티파이 스윕 유지(D20) |
+| 몸 | `ITDMonsterBody` 인터페이스, 2D 이동 적분 결과 | 게임 `ATDMonsterPawn`/`ATDMonsterCharacter`(메시·애니 예산), 시뮬 `ATDSimCombatant`(메시 없음) (2026-09-30 D44로 대체: 게임 몸은 `ATDMonsterCharacter`(APawn+Mover, 메시·UAF) 하나이고 애니메이션 예산 할당기는 없다) |
+| 공격 판정 | 데이터 권위(Phase 0~2 `UTDDamageDefinition`, Phase 3 `FTDAttackTimetable`) (D19) | 게임의 애님 노티파이는 표현·오라클 테스트 전용. 플레이어 사람 조작은 노티파이 스윕 유지(D20) (2026-09-30 D44로 대체: 노티파이는 삭제됐고 플레이어·몬스터 모두 같은 스윕 코어 `FTDMeleeSweep`를 능력 태스크가 시간표 `HitWindows`로 구동한다) |
 | 피해·상태이상 | `UTDDamageSubsystem`·GAS(Gameplay Ability System) 경로, `TDDamageFormula::Compute`. 몬스터 ASC(Ability System Component) 는 게임·시뮬 모두 `bSuppressGameplayCues=true`, 몽타주·틱 태스크 미사용(D18) | 시뮬은 프리젠테이션 컴포넌트 생성 게이트로 Niagara·메시를 만들지 않는다(D38) |
 | 난수 | `FTDCombatRandomStreams` 클래스 | 게임 시드는 세이브·시간, 시뮬은 시나리오 시드(D29) |
 | 근접 탐색 | `FTDNeighborGrid` | 없음(잡몹 물리 오버랩·RVO 미사용, D17) |
@@ -534,7 +534,7 @@ MCP 툴셋(`UToolsetDefinition`, `meta=(AICallable)`, engine-misc-decision-tools
 | 보스 페이즈 진행 | Logic Driver 스테이트 머신 클래스 + `BossPhaseManager` | JSON `phases` 배열(한 방향 진입, `on_enter` 시퀀스, stats 덮어쓰기) | 2페이즈 + 콤보는 표로 충분하고, 3페이즈 이상은 자체 HTN 을 조건부 추가(D2·D3) |
 | NPC 행동 계획(HTN) | 엔진 HTN 플러그인 기반 NPC 생활 행동 | 전투 코어에는 계획기 없음. 필요 시 자체 C++ HTN, 엔진 HTNPlanner 미채택 | 실행기 부재·백트래킹 결함·방치(engine-htnplanner-plugin 결론 1·2·3·6) |
 | NPC 최상위 의사결정(스테이트 트리) | `UKAIStateTreeComponent` + 에셋 트리 | StateTree 배제, 보스 연출·시각 디버깅 재검토 선택지로만 | 트리 조립·컴파일이 에디터 모듈에만 있고 MCP 툴셋은 검사 전용(engine-statetree-runtime 결론 6, web-llm-authorable-tooling 결론 2·3) |
-| AI 이동(경로/스플라인/단순 이동) | `UKAIMovementComponent`(CMC 파생) + `UKSimpleMovementComponent` | 잡몹 `APawn` + `UFloatingPawnMovement`, 정예 CMC NavWalking, 시뮬 수학 이동. 2D 적분은 공용 | 잡몹 수백 마리에서 CMC 바닥 검사·물리 상호작용 비용을 없앤다(engine-movement-anim-scale 결론 1·4, D16) |
+| AI 이동(경로/스플라인/단순 이동) | `UKAIMovementComponent`(CMC 파생) + `UKSimpleMovementComponent` | 잡몹 `APawn` + `UFloatingPawnMovement`, 정예 CMC NavWalking, 시뮬 수학 이동. 2D 적분은 공용 (2026-09-30 D44로 대체: 게임 몸은 모두 `APawn` + `UCharacterMoverComponent`(Standalone) + `UNavMoverComponent`. CMC·`UFloatingPawnMovement` 미사용) | 잡몹 수백 마리에서 CMC 바닥 검사·물리 상호작용 비용을 없앤다(engine-movement-anim-scale 결론 1·4, D16) |
 | 스쿼드 진형·AI 그룹 | `SquadSystem`(레이어·섹터 배정), `AIGroupSystem` 틱 | Phase 1~3 은 분리 조향 + 자리 토큰. 무리 역할 배정은 HTN 조건부 | 요구가 콘텐츠로 확정될 때 추가(D3) |
 | 어그로 관리·AI 시야/감지 | `UKAggroComponent`, 커스텀 시각 센스 컴포넌트 | 입력 함수(`DistanceToTarget`, `LineOfSightToTarget`, 대상 선택은 스냅샷 규칙) | 컴포넌트·델리게이트 대신 스냅샷 값. 순수 함수라 시뮬에서 같은 코드(D7) |
 | 공통 | 액터 이름 문자열·에셋 정본·리플렉션으로 엔진 비공개 필드 접근 | SimulationId 정수 핸들, 텍스트 정본, 공개 API 만 | 결정 기록 §10 |

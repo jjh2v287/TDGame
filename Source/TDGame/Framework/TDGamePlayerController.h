@@ -94,9 +94,8 @@ public:
 	UFUNCTION(Exec)
 	void TDSetCasterLevel(int32 Level);
 
-	/** Plays the given montage asset on the controlled character. Console: TDPlayMeleeMontage /Game/Combat/Animations/AM_TDMeleeAttack_Test */
 	UFUNCTION(Exec)
-	void TDPlayMeleeMontage(const FString& MontagePath);
+	void TDPlayMeleeAction(const FString& AnimationPath);
 
 	UFUNCTION(Exec)
 	void TDTravelToDungeon(FName DungeonId);
@@ -152,7 +151,7 @@ private:
 	void ResetMovementInput();
 	void SetKeyboardMovementMode(bool bKeyboardMode);
 	bool GetCursorHit(FHitResult& Hit) const;
-	void FaceMouseCursor(ATDGameCharacter* ControlledCharacter) const;
+	void FaceMouseCursor(ATDGameCharacter* ControlledCharacter);
 	void SetupCombatInputBindings(UEnhancedInputComponent* EnhancedInputComponent);
 	void OnPrimaryAttackStarted();
 	void OnSkillQStarted();

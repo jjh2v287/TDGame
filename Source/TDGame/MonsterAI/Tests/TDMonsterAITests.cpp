@@ -4,9 +4,9 @@
 #include "Combat/Damage/TDStatusDefinition.h"
 #include "Combat/TDCombatComponent.h"
 #include "Components/SphereComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "HAL/FileManager.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
@@ -16,6 +16,7 @@
 #include "MonsterAI/TDMonsterThinkSubsystem.h"
 #include "MonsterAI/TDResponseCurve.h"
 #include "MonsterAI/TDUtilityScorer.h"
+#include "MoverSimulationTypes.h"
 
 namespace
 {
@@ -67,10 +68,8 @@ namespace
 			const FTransform SpawnTransform(FRotator::ZeroRotator, Location);
 			ATDMonsterCharacter* Monster = World->SpawnActorDeferred<ATDMonsterCharacter>(ATDMonsterCharacter::StaticClass(), SpawnTransform);
 			Monster->SetSpecies(Species);
+			Monster->GetMoverComponent()->StartingMovementMode = DefaultModeNames::Flying;
 			Monster->FinishSpawning(SpawnTransform);
-			UCharacterMovementComponent* Movement = Monster->GetCharacterMovement();
-			Movement->GravityScale = 0.f;
-			Movement->SetMovementMode(MOVE_Flying);
 			return Monster;
 		}
 

@@ -52,8 +52,6 @@ struct FTDFrozenMovement
 	TWeakObjectPtr<UMovementComponent> Component;
 
 	bool bWasTickEnabled = false;
-	uint8 MovementMode = 0;
-	uint8 CustomMovementMode = 0;
 };
 
 UCLASS(ClassGroup=(Combat), meta=(BlueprintSpawnableComponent))

@@ -1,25 +1,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AI/NPC/TDNPCUpdatable.h"
 #include "Characters/TDCombatCharacter.h"
 #include "GameplayTagContainer.h"
 #include "GenericTeamAgentInterface.h"
-#include "MonsterAI/TDMonsterAnimationDriver.h"
 #include "MonsterAI/TDMonsterBody.h"
+#include "MonsterAI/TDMonsterSpeciesAsset.h"
 #include "MonsterAI/TDMonsterThinkSubsystem.h"
 #include "TDMonsterCharacter.generated.h"
 
 class ATDDamageEntity;
 class UTDCombatTokenSubsystem;
-class UTDMonsterSpeciesAsset;
 class UTDSignificanceComponent;
 class UTDSkillComponent;
 struct FTDDamageContext;
 struct FTDDamageResult;
 
 UCLASS()
-class TDGAME_API ATDMonsterCharacter : public ATDCombatCharacter, public IGenericTeamAgentInterface, public ITDNPCUpdatable, public ITDMonsterBody
+class TDGAME_API ATDMonsterCharacter : public ATDCombatCharacter, public IGenericTeamAgentInterface, public ITDMonsterBody
 {
 	GENERATED_BODY()
 
@@ -48,9 +46,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="MonsterAI")
 	bool HasMonsterBrain() const { return BrainHandle.IsValid(); }
-	virtual void SetManagedByNPCUpdateSubsystem(bool bIsManaged) override;
-	virtual void ManualUpdateMovement(float DeltaTime) override;
-	virtual void ManualUpdateAnimation(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void SetCurrentTarget(AActor* NewTarget);
@@ -110,12 +105,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Abilities")
 	bool bGrantDefaultActionAbilities = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC Update")
-	bool bUseNPCUpdateSubsystem = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC Update", meta=(ClampMin="0.0"))
-	float ManagedAnimationRenderTolerance = 0.2f;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="MonsterAI", meta=(ToolTip="Body, animation and brain definition of this monster. Monsters without a species keep the legacy behaviour and do not think."))
 	TObjectPtr<UTDMonsterSpeciesAsset> Species;
 
@@ -123,11 +112,11 @@ private:
 	bool ActivateCombatAbility(FGameplayTag AbilityTag, AActor* TargetActor = nullptr);
 	FGameplayTag ResolveAbilityTag(FGameplayTag RequestedActionTag) const;
 	void GrantDefaultActionAbilities();
-	void UnregisterFromNPCUpdateSubsystem();
 	void HandleDeath(const FTDDamageContext& Context);
 	UTDCombatTokenSubsystem* GetCombatTokenSubsystem() const;
 	UTDMonsterThinkSubsystem* GetThinkSubsystem() const;
 	void ApplySpeciesBody();
+	void ApplySpeciesAnimation();
 	void StartMonsterBrain();
 	void StopMonsterBrain();
 	void HandleMonsterDamaged(const FTDDamageResult& Result, const FTDDamageContext& Context);
@@ -135,17 +124,13 @@ private:
 	void PlayDeathPresentation();
 	FVector ComputeAbilityOrigin(const FTDMonsterAbilityRequest& Request) const;
 	float PlayAbilityClip(const FTDMonsterAbilityRequest& Request, float WindupSeconds, float& OutRecoverySeconds);
-	void TurnTowardDesiredYaw(float DeltaSeconds);
-	void HoldDeathPose();
+	float PlaySpeciesClip(const FTDMonsterAnimClip& Clip, float PlayRate);
+	void StartRagdoll();
 
 	bool bHasGrantedDefaultActionAbilities = false;
-	bool bIsManagedByNPCUpdateSubsystem = false;
 	bool bHasAppliedMonsterStats = false;
-	bool bHasDesiredYaw = false;
 	float BaseMoveSpeed = 400.f;
-	float DesiredYaw = 0.f;
 	float AbilityImpactTime = 0.f;
 	FTDMonsterSlotHandle BrainHandle;
-	FTDMonsterAnimationDriver AnimationDriver;
 	TWeakObjectPtr<ATDDamageEntity> ActiveAbilityEntity;
 };

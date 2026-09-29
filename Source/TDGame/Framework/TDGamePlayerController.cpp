@@ -3,15 +3,15 @@
 #include "Framework/TDGamePlayerController.h"
 #include "Combat/TDCombatComponent.h"
 #include "Combat/TDCombatLibrary.h"
-#include "Animation/AnimMontage.h"
-#include "GameFramework/Character.h"
+#include "Animation/AnimSequence.h"
+#include "Characters/TDCharacterAnimationComponent.h"
+#include "Characters/TDCombatCharacter.h"
 #include "Combat/Damage/TDDamageTarget.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/Engine.h"
 #include "InputCoreTypes.h"
 #include "GameFramework/Pawn.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
@@ -29,6 +29,12 @@
 #include "Engine/GameInstance.h"
 #include "World/Streaming/TDSeamlessTravelSubsystem.h"
 #include "World/Persistence/TDWorldStateSubsystem.h"
+
+namespace
+{
+	const TCHAR* const DefaultMeleeActionPath = TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01.AS_TD_Player_SwordAttack01");
+	constexpr float ImmediateFacingYawThresholdDegrees = 10.f;
+}
 
 ATDGamePlayerController::ATDGamePlayerController()
 {
@@ -226,17 +232,31 @@ void ATDGamePlayerController::OnPointerMovementCanceled()
 
 void ATDGamePlayerController::SetKeyboardMovementMode(bool bKeyboardMode)
 {
+	const bool bIsEnteringKeyboardMode = bKeyboardMode && !bIsUsingKeyboardMovement;
 	if (bIsUsingKeyboardMovement != bKeyboardMode)
 	{
 		StopMovement();
 	}
 	bIsUsingKeyboardMovement = bKeyboardMode;
-	if (ATDGameCharacter* ControlledCharacter = Cast<ATDGameCharacter>(GetPawn()))
+	ATDGameCharacter* ControlledCharacter = Cast<ATDGameCharacter>(GetPawn());
+	if (!ControlledCharacter)
 	{
-		ControlledCharacter->bUseControllerRotationYaw = false;
-		ControlledCharacter->GetCharacterMovement()->bUseControllerDesiredRotation = false;
-		ControlledCharacter->GetCharacterMovement()->bOrientRotationToMovement = !bKeyboardMode;
+		return;
 	}
+
+	ControlledCharacter->bUseControllerRotationYaw = false;
+	if (!bKeyboardMode)
+	{
+		ControlledCharacter->SetFacingMode(ETDFacingMode::MovementDirection);
+		ControlledCharacter->ClearDesiredFacingDirection();
+		return;
+	}
+
+	if (bIsEnteringKeyboardMode)
+	{
+		SetControlRotation(FRotator(0.f, ControlledCharacter->GetActorRotation().Yaw, 0.f));
+	}
+	ControlledCharacter->SetFacingMode(ETDFacingMode::ControlRotation);
 }
 
 void ATDGamePlayerController::PostProcessInput(const float DeltaTime, const bool bGamePaused)
@@ -328,7 +348,7 @@ bool ATDGamePlayerController::GetCursorHit(FHitResult& Hit) const
 	return GetHitResultAtScreenPosition(FVector2D(CursorX, CursorY), ECC_Visibility, QueryParams, Hit);
 }
 
-void ATDGamePlayerController::FaceMouseCursor(ATDGameCharacter* ControlledCharacter) const
+void ATDGamePlayerController::FaceMouseCursor(ATDGameCharacter* ControlledCharacter)
 {
 	if (ControlledCharacter->IsRollPlaying())
 	{
@@ -365,9 +385,17 @@ void ATDGamePlayerController::FaceMouseCursor(ATDGameCharacter* ControlledCharac
 		AimLocation = RayOrigin + RayDirection * Distance;
 	}
 	const FVector FacingDirection = (AimLocation - ControlledCharacter->GetActorLocation()).GetSafeNormal2D();
-	if (!FacingDirection.IsNearlyZero() && !FacingDirection.ContainsNaN())
+	if (FacingDirection.IsNearlyZero() || FacingDirection.ContainsNaN())
 	{
-		ControlledCharacter->SetActorRotation(FRotator(0.f, FacingDirection.Rotation().Yaw, 0.f));
+		return;
+	}
+
+	const FRotator FacingRotation(0.f, FacingDirection.Rotation().Yaw, 0.f);
+	SetControlRotation(FacingRotation);
+	const float RemainingYawDegrees = FMath::Abs(FRotator::NormalizeAxis(FacingRotation.Yaw - ControlledCharacter->GetActorRotation().Yaw));
+	if (RemainingYawDegrees > ImmediateFacingYawThresholdDegrees)
+	{
+		ControlledCharacter->FaceRotationImmediately(FacingRotation);
 	}
 }
 
@@ -738,7 +766,7 @@ void ATDGamePlayerController::TDSpawnDamageTargets()
 		else
 		{
 			Location.Z = ControlledPawn->GetActorLocation().Z;
-			if (const ACharacter* ControlledCharacter = Cast<ACharacter>(ControlledPawn))
+			if (const ATDCombatCharacter* ControlledCharacter = Cast<ATDCombatCharacter>(ControlledPawn))
 			{
 				Location.Z -= ControlledCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 			}
@@ -767,27 +795,29 @@ void ATDGamePlayerController::TDSetCasterLevel(int32 Level)
 	}
 }
 
-void ATDGamePlayerController::TDPlayMeleeMontage(const FString& MontagePath)
+void ATDGamePlayerController::TDPlayMeleeAction(const FString& AnimationPath)
 {
-	ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn());
-	if (!ControlledCharacter || !ControlledCharacter->GetMesh())
+	ATDCombatCharacter* ControlledCharacter = Cast<ATDCombatCharacter>(GetPawn());
+	UTDCharacterAnimationComponent* CharacterAnimation = ControlledCharacter ? ControlledCharacter->GetCharacterAnimation() : nullptr;
+	if (!CharacterAnimation)
 	{
-		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeMontage: no controlled character with a skeletal mesh."));
+		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeAction: no controlled combat character with an animation component."));
 		return;
 	}
 
-	UAnimMontage* Montage = LoadObject<UAnimMontage>(nullptr, *MontagePath);
-	if (!Montage)
+	const FString ResolvedAnimationPath = AnimationPath.IsEmpty() ? FString(DefaultMeleeActionPath) : AnimationPath;
+	UAnimSequence* Animation = LoadObject<UAnimSequence>(nullptr, *ResolvedAnimationPath);
+	if (!Animation)
 	{
-		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeMontage: failed to load montage '%s'."), *MontagePath);
+		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeAction: failed to load animation sequence '%s'."), *ResolvedAnimationPath);
 		return;
 	}
 
-	const float Duration = ControlledCharacter->PlayAnimMontage(Montage);
-	UE_LOG(LogTDGame, Log, TEXT("TDPlayMeleeMontage: '%s' on '%s' (duration %.2f)."), *Montage->GetName(), *ControlledCharacter->GetName(), Duration);
+	const float Duration = CharacterAnimation->PlayAction(Animation, 1.f, 0.f, 0.f, true);
+	UE_LOG(LogTDGame, Log, TEXT("TDPlayMeleeAction: '%s' on '%s' (duration %.2f)."), *Animation->GetName(), *ControlledCharacter->GetName(), Duration);
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, Duration > 0.f ? FColor::Green : FColor::Red, FString::Printf(TEXT("PlayMeleeMontage %s -> %.2fs"), *Montage->GetName(), Duration));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, Duration > 0.f ? FColor::Green : FColor::Red, FString::Printf(TEXT("PlayMeleeAction %s -> %.2fs"), *Animation->GetName(), Duration));
 	}
 }
 

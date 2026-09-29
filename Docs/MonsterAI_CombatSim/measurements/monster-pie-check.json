@@ -1,37 +1,36 @@
 {
-  "monsters_registered_at_start": 17,
-  "monster_actors": 17,
+  "monsters_registered_at_start": 25,
+  "monster_actors": 25,
   "max_engaged": 4,
   "max_casting": 3,
   "states_seen": [
     "Cast",
     "Idle",
-    "Move",
-    "Stagger"
+    "Move"
   ],
   "player_health_start": 100.0,
   "player_health_min": 0,
-  "dead_monsters_max": 3,
+  "dead_monsters_max": 2,
   "monsters_removed": 3,
-  "active_monsters_end": 14,
+  "active_monsters_end": 22,
   "engage_samples": 6,
   "passed": true,
   "records": [
     {
       "tag": "start",
       "action": "snapshot",
-      "time": 2.61,
+      "time": 2.64,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
           "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1900,0)",
@@ -50,25 +49,33 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "TD.MonsterAI.DebugDraw 1",
       "action": "console",
-      "time": 3.48,
+      "time": 3.54,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
           "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1900,0)",
@@ -87,25 +94,33 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "TDSetCasterLevel 10",
       "action": "console",
-      "time": 4.35,
+      "time": 4.43,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
           "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1900,0)",
@@ -124,25 +139,33 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "near_hyenas",
       "action": "teleport",
-      "time": 5.23,
+      "time": 5.33,
       "player": {
         "health": 100.0,
         "location": [
           1250,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
           "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1900,0)",
@@ -161,31 +184,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "engage_0",
       "action": "snapshot",
-      "time": 6.55,
+      "time": 6.68,
       "player": {
-        "health": 94.0,
+        "health": 100.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(1442,0)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1402,117)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1402,-117)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1543,-60)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1227,0)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1369,106)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1369,-106)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1507,0)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -198,31 +229,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "engage_1",
       "action": "snapshot",
-      "time": 7.88,
+      "time": 8.02,
       "player": {
-        "health": 82.0,
+        "health": 100.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1487,19)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1436,146)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1415,-174)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(1399,-58)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(478,0)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(651,77)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(651,-77)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(818,1)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -235,31 +274,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "engage_2",
       "action": "snapshot",
-      "time": 9.21,
+      "time": 9.37,
       "player": {
-        "health": 70.0,
+        "health": 94.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=1 phase=0 hp=90.0 pos=(1424,48)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(1351,134)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(1339,-103)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1473,-84)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(185,-11)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(159,98)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(159,-98)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(315,25)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -272,31 +319,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "engage_3",
       "action": "snapshot",
-      "time": 10.54,
+      "time": 10.73,
       "player": {
-        "health": 52.0,
+        "health": 76.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1478,63)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1392,189)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1408,-182)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(1412,-30)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(230,-41)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(180,160)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(207,-128)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(171,55)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -309,31 +364,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "engage_4",
       "action": "snapshot",
-      "time": 11.26,
+      "time": 11.22,
       "player": {
-        "health": 52.0,
+        "health": 76.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(1355,56)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1392,189)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1408,-182)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1464,-40)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(185,-40)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(180,160)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(207,-128)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(186,61)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -346,31 +409,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "engage_5",
       "action": "snapshot",
-      "time": 12.59,
+      "time": 12.57,
       "player": {
-        "health": 34.0,
+        "health": 58.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1461,112)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1259,227)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1388,-160)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1442,-32)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(234,-49)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(143,132)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(166,-157)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(223,51)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -383,31 +454,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_0",
       "action": "cast",
-      "time": 13.92,
+      "time": 13.91,
       "player": {
-        "health": 22.0,
+        "health": 52.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(1387,90)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1257,183)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1338,-102)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1489,-40)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(176,-65)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(130,120)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(126,-150)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(234,58)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -420,7 +499,15 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
@@ -429,22 +516,22 @@
       "action": "snapshot",
       "time": 15.27,
       "player": {
-        "health": 10.0,
+        "health": 34.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1450,132)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1259,241)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(1407,-180)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(1406,-15)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(226,-81)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(178,166)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(154,-188)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(143,33)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -457,31 +544,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_2",
       "action": "cast",
-      "time": 16.67,
+      "time": 16.59,
       "player": {
-        "health": 0.0,
+        "health": 22.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1441,105)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1329,216)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1374,-111)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1586,-20)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(140,-65)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(95,87)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(75,-138)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(236,55)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -494,31 +589,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_3",
       "action": "snapshot",
-      "time": 17.99,
+      "time": 17.85,
       "player": {
-        "health": 0.0,
+        "health": 4.0,
         "location": [
-          1250,
+          2,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1804,51)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1866,184)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1916,-151)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(2072,-4)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(221,-99)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(177,164)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(112,-211)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(133,27)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -531,31 +634,39 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_4",
       "action": "cast",
-      "time": 19.34,
+      "time": 19.2,
       "player": {
-        "health": 100.0,
+        "health": 0.0,
         "location": [
+          2,
           0,
-          0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
+        "active": 25,
+        "actors": 25,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1804,51)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1932,175)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1930,-152)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(2072,-4)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(305,-71)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(305,136)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(216,-169)",
+          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Idle action=None engaged=0 phase=0 hp=37.5 pos=(142,29)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -568,31 +679,38 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_5",
       "action": "snapshot",
-      "time": 20.63,
+      "time": 20.57,
       "player": {
-        "health": 100.0,
+        "health": 0.0,
         "location": [
+          2,
           0,
-          0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
-        "dead": 0,
+        "active": 24,
+        "actors": 25,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=30.0 pos=(1792,51)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=30.0 pos=(1920,174)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=30.0 pos=(1919,-151)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(2072,-4)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(841,-48)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(841,142)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(752,-166)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -605,31 +723,38 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_6",
       "action": "cast",
-      "time": 21.95,
+      "time": 21.88,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 17,
-        "actors": 17,
-        "dead": 0,
+        "active": 24,
+        "actors": 25,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=30.0 pos=(1065,30)",
-          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=30.0 pos=(1196,138)",
-          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=30.0 pos=(1194,-94)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(2072,-4)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1354,-25)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1354,150)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1265,-164)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -642,29 +767,38 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_7",
       "action": "snapshot",
-      "time": 23.29,
+      "time": 23.22,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 15,
-        "actors": 17,
-        "dead": 2,
+        "active": 24,
+        "actors": 25,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Flee engaged=1 phase=0 hp=30.0 pos=(1562,45)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(2072,-4)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=55.0 pos=(1448,-12)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1880,158)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1791,-161)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -677,29 +811,38 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_8",
       "action": "cast",
-      "time": 24.62,
+      "time": 24.56,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 15,
-        "actors": 17,
-        "dead": 2,
+        "active": 24,
+        "actors": 25,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Flee engaged=1 phase=0 hp=30.0 pos=(2282,142)",
-          "sim=4 actor=TDMonsterCharacter_3 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(2072,-4)",
+          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=55.0 pos=(1376,-12)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1931,158)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1930,-161)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -712,28 +855,37 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_9",
       "action": "snapshot",
-      "time": 25.94,
+      "time": 25.85,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 17,
-        "dead": 3,
+        "active": 23,
+        "actors": 25,
+        "dead": 2,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Move action=Flee engaged=1 phase=0 hp=30.0 pos=(3021,187)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1931,158)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1930,-161)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -746,28 +898,37 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_10",
       "action": "cast",
-      "time": 27.25,
+      "time": 27.19,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 17,
-        "dead": 3,
+        "active": 23,
+        "actors": 24,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(3404,201)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1931,158)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1930,-161)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -780,28 +941,37 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_11",
       "action": "snapshot",
-      "time": 28.59,
+      "time": 28.53,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 15,
+        "active": 23,
+        "actors": 24,
         "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2885,132)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1931,158)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1930,-161)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
@@ -814,449 +984,568 @@
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_12",
       "action": "cast",
-      "time": 29.91,
+      "time": 29.9,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 15,
+        "active": 23,
+        "actors": 24,
         "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2371,63)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1931,158)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1930,-161)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=103.0 pos=(-2068,-469)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=110.0 pos=(-2184,-180)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Move action=Approach engaged=1 phase=0 hp=206.0 pos=(-1972,-360)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_13",
       "action": "snapshot",
-      "time": 31.13,
+      "time": 31.25,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 15,
+        "active": 23,
+        "actors": 24,
         "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1931,158)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1930,-161)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=96.0 pos=(-1675,-390)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=110.0 pos=(-1784,-147)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Move action=Approach engaged=1 phase=0 hp=199.0 pos=(-1613,-295)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_14",
       "action": "cast",
-      "time": 32.46,
+      "time": 32.6,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
+        "active": 23,
+        "actors": 23,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(1503,124)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=1 phase=0 hp=60.0 pos=(1780,-149)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=96.0 pos=(-1244,-307)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=110.0 pos=(-1346,-111)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Move action=Approach engaged=1 phase=0 hp=199.0 pos=(-1221,-218)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_15",
       "action": "snapshot",
-      "time": 33.75,
+      "time": 33.94,
       "player": {
         "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
+        "active": 23,
+        "actors": 23,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Approach engaged=1 phase=0 hp=90.0 pos=(751,64)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=1 phase=0 hp=60.0 pos=(1780,-149)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Cast action=Bolt engaged=1 phase=0 hp=96.0 pos=(-872,-234)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=110.0 pos=(-926,-58)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Move action=Approach engaged=1 phase=0 hp=199.0 pos=(-844,-134)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_16",
       "action": "cast",
-      "time": 35.09,
+      "time": 35.3,
       "player": {
-        "health": 90.0,
+        "health": 100.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
+        "active": 23,
+        "actors": 23,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(169,14)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Flee engaged=1 phase=0 hp=30.0 pos=(1958,-163)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Cast action=Burst engaged=1 phase=0 hp=96.0 pos=(-872,-234)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Cast action=Burst engaged=1 phase=0 hp=110.0 pos=(-887,-50)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Move action=Approach engaged=1 phase=0 hp=199.0 pos=(-449,-71)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_17",
       "action": "snapshot",
-      "time": 36.63,
+      "time": 36.64,
       "player": {
-        "health": 48.80000305175781,
+        "health": 94.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
+        "active": 23,
+        "actors": 23,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Move action=Circle engaged=1 phase=0 hp=90.0 pos=(239,21)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Flee engaged=1 phase=0 hp=15.0 pos=(2464,-203)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Cast action=Bolt engaged=1 phase=0 hp=61.0 pos=(-880,-236)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Cast action=Bolt engaged=1 phase=0 hp=75.0 pos=(-895,-51)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Cast action=Smash engaged=1 phase=0 hp=199.0 pos=(-227,-36)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_18",
       "action": "cast",
-      "time": 38.0,
+      "time": 37.97,
       "player": {
-        "health": 28.800003051757812,
+        "health": 88.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
+        "active": 23,
+        "actors": 23,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=2 actor=TDMonsterCharacter_1 def=Hyena state=Cast action=Bite engaged=1 phase=0 hp=90.0 pos=(133,11)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Flee engaged=1 phase=0 hp=15.0 pos=(3209,-263)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=61.0 pos=(-763,-204)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=75.0 pos=(-791,-45)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Cast action=Swipe engaged=1 phase=0 hp=199.0 pos=(-132,-21)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_19",
       "action": "snapshot",
-      "time": 39.35,
+      "time": 39.32,
       "player": {
-        "health": 15.800003051757812,
+        "health": 88.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
-        "dead": 0,
+        "active": 22,
+        "actors": 23,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Flee engaged=1 phase=0 hp=15.0 pos=(3959,-323)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Cast action=Bolt engaged=1 phase=0 hp=61.0 pos=(-762,-204)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Cast action=Bolt engaged=1 phase=0 hp=75.0 pos=(-791,-45)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Stagger action=None engaged=1 phase=0 hp=84.0 pos=(-141,-22)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_20",
       "action": "cast",
-      "time": 40.76,
+      "time": 40.67,
       "player": {
-        "health": 0.0,
+        "health": 88.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
-        "dead": 0,
+        "active": 22,
+        "actors": 23,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Move action=Flee engaged=1 phase=0 hp=15.0 pos=(4568,-372)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=61.0 pos=(-903,-231)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=75.0 pos=(-934,-58)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=1 hp=84.0 pos=(-301,-52)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_21",
       "action": "snapshot",
-      "time": 42.09,
+      "time": 42.01,
       "player": {
-        "health": 0.0,
+        "health": 88.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
-        "dead": 0,
+        "active": 22,
+        "actors": 23,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=15.0 pos=(4742,-386)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=1.0 pos=(-1209,-291)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=15.0 pos=(-1244,-88)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=1 hp=84.0 pos=(-648,-116)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2300,-500)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(-2420,-200)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2080,-380)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "cast_22",
       "action": "cast",
-      "time": 43.45,
+      "time": 43.36,
       "player": {
-        "health": 100.0,
+        "health": 88.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
-        "dead": 0,
+        "active": 22,
+        "actors": 23,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=15.0 pos=(4531,-369)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=1.0 pos=(-1516,-350)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=15.0 pos=(-1556,-117)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=1 hp=84.0 pos=(-1003,-181)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=103.0 pos=(-2065,-459)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=110.0 pos=(-2175,-180)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Move action=Approach engaged=1 phase=0 hp=206.0 pos=(-1969,-360)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "fight_23",
       "action": "snapshot",
-      "time": 44.79,
+      "time": 44.7,
       "player": {
-        "health": 100.0,
+        "health": 88.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
-        "dead": 0,
+        "active": 22,
+        "actors": 23,
+        "dead": 1,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=15.0 pos=(4321,-352)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=1.0 pos=(-1818,-408)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=15.0 pos=(-1862,-147)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=1 hp=84.0 pos=(-1351,-246)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=96.0 pos=(-1644,-387)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=110.0 pos=(-1735,-145)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Move action=Approach engaged=1 phase=0 hp=199.0 pos=(-1575,-287)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     },
     {
       "tag": "end",
       "action": "snapshot",
-      "time": 46.68,
+      "time": 46.6,
       "player": {
-        "health": 100.0,
+        "health": 88.0,
         "location": [
           0,
           0,
-          98
+          96
         ]
       },
       "monsters": {
-        "active": 14,
-        "actors": 14,
+        "active": 22,
+        "actors": 22,
         "dead": 0,
         "lines": [
-          "sim=1 actor=TDMonsterCharacter_0 def=Hyena state=Idle action=None engaged=0 phase=0 hp=30.0 pos=(2010,15)",
+          "sim=3 actor=TDMonsterCharacter_2 def=Hyena state=Idle action=None engaged=0 phase=0 hp=15.0 pos=(4022,-328)",
           "sim=5 actor=TDMonsterCharacter_4 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(0,2300)",
           "sim=6 actor=TDMonsterCharacter_5 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-180,2460)",
           "sim=7 actor=TDMonsterCharacter_6 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(180,2460)",
-          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=1.0 pos=(-2186,-478)",
-          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=15.0 pos=(-2299,-188)",
-          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Idle action=None engaged=0 phase=1 hp=84.0 pos=(-1849,-337)",
+          "sim=8 actor=TDMonsterCharacter_7 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=96.0 pos=(-1044,-270)",
+          "sim=9 actor=TDMonsterCharacter_8 def=BookHead_Caster state=Move action=KeepDistance engaged=1 phase=0 hp=110.0 pos=(-1107,-94)",
+          "sim=10 actor=TDMonsterCharacter_9 def=BookHead_Brute state=Move action=Approach engaged=1 phase=0 hp=199.0 pos=(-1015,-182)",
           "sim=11 actor=TDMonsterCharacter_10 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1400,-2600)",
           "sim=12 actor=TDMonsterCharacter_11 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1560,-2460)",
           "sim=13 actor=TDMonsterCharacter_12 def=Hyena state=Idle action=None engaged=0 phase=0 hp=90.0 pos=(1240,-2460)",
           "sim=14 actor=TDMonsterCharacter_13 def=BookHead_Caster state=Idle action=None engaged=0 phase=0 hp=110.0 pos=(1400,-2950)",
           "sim=15 actor=TDMonsterCharacter_14 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1900,2400)",
           "sim=16 actor=TDMonsterCharacter_15 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,2280)",
-          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)"
+          "sim=17 actor=TDMonsterCharacter_16 def=BookHead_Brute state=Idle action=None engaged=0 phase=0 hp=260.0 pos=(-2100,2250)",
+          "sim=18 actor=TDMonsterCharacter_42 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1700,-2700)",
+          "sim=19 actor=TDMonsterCharacter_43 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2580)",
+          "sim=20 actor=TDMonsterCharacter_44 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1570,-2820)",
+          "sim=21 actor=TDMonsterCharacter_45 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2580)",
+          "sim=22 actor=TDMonsterCharacter_46 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(-1830,-2820)",
+          "sim=23 actor=TDMonsterCharacter_47 def=StoneGolem state=Idle action=None engaged=0 phase=0 hp=700.0 pos=(2500,2400)",
+          "sim=24 actor=TDMonsterCharacter_48 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2240,2200)",
+          "sim=25 actor=TDMonsterCharacter_49 def=Goblin_Melee state=Idle action=None engaged=0 phase=0 hp=120.0 pos=(2300,2660)"
         ]
       }
     }

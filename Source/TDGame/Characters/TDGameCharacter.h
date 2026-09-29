@@ -8,7 +8,8 @@
 #include "GenericTeamAgentInterface.h"
 #include "TDGameCharacter.generated.h"
 
-class UAnimMontage;
+class UAnimSequence;
+class UBlendSpace;
 class UCameraComponent;
 class USpringArmComponent;
 class UTDCapsuleModifierComponent;
@@ -87,13 +88,13 @@ public:
 
 	bool ActivateCombatAbility(FGameplayTag AbilityTag, AActor* TargetActor = nullptr);
 	FVector ConsumePendingRollDirection();
-	float PlayRollMontageAbility(const FVector& RollDirection);
-	void EndRollMontageAbility();
+	float PlayRollAnimation(const FVector& RollDirection);
+	void EndRollAnimation();
+	bool CanStartJump() const;
 	float GetRollStaminaCost() const { return RollStaminaCost; }
 
 protected:
-	virtual bool CanJumpInternal_Implementation() const override;
-	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
+	virtual void HandleMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UTDCapsuleModifierComponent> CapsuleModifierComponent;
@@ -104,8 +105,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat", meta=(ClampMin="0.0"))
 	float AttackAcceptanceRadius = 50.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animation")
+	TSoftObjectPtr<UBlendSpace> LocomotionBlendSpace;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animation")
+	TSoftObjectPtr<UAnimSequence> JumpStartAnimation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animation")
+	TSoftObjectPtr<UAnimSequence> FallLoopAnimation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animation")
+	TSoftObjectPtr<UAnimSequence> LandAnimation;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement")
-	TSoftObjectPtr<UAnimMontage> RollMontage;
+	TSoftObjectPtr<UAnimSequence> RollAnimation;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(ClampMin="0.0"))
 	float RollStaminaCost = 0.f;
@@ -115,10 +128,10 @@ protected:
 
 private:
 	void GrantDefaultActionAbilities();
-	void RefreshJumpStateTag() const;
-	UAnimMontage* ResolveMontage(const TSoftObjectPtr<UAnimMontage>& MontageReference) const;
+	void ApplyAnimationSettings();
+	void RefreshJumpStateTag(bool bIsInAir) const;
 	bool CanStartRoll() const;
-	void HandleRollMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void HandleActionAnimationEnded(const UAnimSequence* Animation, bool bWasInterrupted);
 	void HandleDeath(const FTDDamageContext& Context);
 
 	FVector PendingRollDirection = FVector::ForwardVector;

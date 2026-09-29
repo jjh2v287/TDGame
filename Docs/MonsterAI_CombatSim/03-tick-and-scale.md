@@ -16,7 +16,7 @@
 - 채널별 주기는 `uint8 PeriodTable[4][4]`(채널 × LOD) 데이터이며 기본값은 think 6/13/32/64 스텝(≈10.7/4.9/2/1Hz), move·judge 는 모든 LOD 에서 매 스텝, present 는 1/1/6/0 프레임(D21·D22). 전역 기본 표는 `Content/MonsterAI/PeriodTable.json`, 종별 오버라이드는 정의 JSON 최상위 키 `lod_periods` 다. LOD 는 사고 주기와 표현만 바꾸고 이동·판정은 바꾸지 않는다.
 - 위상은 `Phase[Slot] = Slot % Period` 로 슬롯 번호에서 결정적으로 파생한다. 난수를 쓰지 않는다(D22). 게임의 think/move/judge 위상은 커널 스텝 카운터, present 위상만 렌더 프레임 카운터를 쓴다.
 - 게임은 프레임 델타를 누적해 1/64초 스텝을 최대 4회 돌린다. 시뮬은 `World->Tick` 한 번에 스텝 1회다(D15·D27).
-- 잡몹 몸은 `APawn` + `UFloatingPawnMovement`, AIController 없음, 액터 틱 없음, `UFloatingPawnMovement` 컴포넌트 틱도 끔(컨트롤러가 없으면 어차피 이동하지 않는다 — FloatingPawnMovement.cpp:37-38). 위치는 슬롯 배열이 정본이고 present 채널이 스윕 없이 트랜스폼을 쓴다. 물리 오버랩·RVO(Reciprocal Velocity Obstacles, 상호 속도 장애물 회피)·DetourCrowd 없음. 근접 탐색은 `THierarchicalHashGrid2D`(셀 250cm) 다(D16·D17). 정예 `ATDMonsterCharacter` 는 컨트롤러 없이 CMC 를 돌리므로 `bRunPhysicsWithNoController=true` 가 필수다.
+- 잡몹 몸은 `APawn` + `UFloatingPawnMovement`, AIController 없음, 액터 틱 없음, `UFloatingPawnMovement` 컴포넌트 틱도 끔(컨트롤러가 없으면 어차피 이동하지 않는다 — FloatingPawnMovement.cpp:37-38). 위치는 슬롯 배열이 정본이고 present 채널이 스윕 없이 트랜스폼을 쓴다. 물리 오버랩·RVO(Reciprocal Velocity Obstacles, 상호 속도 장애물 회피)·DetourCrowd 없음. 근접 탐색은 `THierarchicalHashGrid2D`(셀 250cm) 다(D16·D17). 정예 `ATDMonsterCharacter` 는 컨트롤러 없이 CMC 를 돌리므로 `bRunPhysicsWithNoController=true` 가 필수다. (2026-09-30 D44로 대체: 잡몹·정예 구분 없이 모든 게임 몸은 `ATDCombatCharacter : APawn` + `UCharacterMoverComponent`(Standalone) + `UNavMoverComponent` + `UUAFComponent`이며 CMC·`UFloatingPawnMovement`·`bRunPhysicsWithNoController`는 쓰지 않는다. 액터·컴포넌트 틱 예산은 이 몸 기준으로 M3-16에서 다시 측정한다.)
 - 규모 단계는 A(≤300 전원 액터, 몬스터 몫 ≤ 4.0ms) → B(300~1,000, 무액터 L3 + 액터 풀 400, ≤ 6.0ms) → C(ISM/VAT 후열) → D(Mass 이관 선택지) 이며 실측 KPI 로만 넘어간다(D24). move·judge 를 LOD 불변으로 재계산한 1,000마리 추정 합계는 8.5~10.3ms 로 6.0ms 를 넘으므로, [미결 1](#미결-사항사용자-결정-필요)(L3 move 완화)은 단계 B 진입 전 **결정 필요** 항목이다.
 - 게임·시뮬 모두 단일 스레드로 시작한다. think 병렬화는 게임에서만, 병목 실측 + 해시 동일 테스트 통과 뒤 옵트인한다(D25).
 - 프레임 예산 표의 수치는 전부 "추정"이며 Phase 1 의 `stat TDMonsterAI` 실측으로 갱신하는 살아 있는 표다(D24).
@@ -102,7 +102,7 @@ void UTDMonsterThinkSubsystem::AccumulateAndStep(float FrameDeltaSeconds)
 
 | 항목 | 규칙 | 이유 |
 |---|---|---|
-| 스텝 크기 | 1/64초 고정 | 이진 소수라 float 누적 오차가 없다(D27). 정예의 CMC(Character Movement Component, 캐릭터 이동 컴포넌트)는 게임 전용이며 커널 스텝이 아니라 프레임 델타로 컴포넌트 틱한다(1/64 와 무관). 시뮬 몸 `ATDSimCombatant` 에는 CMC 가 없다 |
+| 스텝 크기 | 1/64초 고정 | 이진 소수라 float 누적 오차가 없다(D27). 정예의 CMC(Character Movement Component, 캐릭터 이동 컴포넌트)는 게임 전용이며 커널 스텝이 아니라 프레임 델타로 컴포넌트 틱한다(1/64 와 무관). 시뮬 몸 `ATDSimCombatant` 에는 CMC 가 없다 (2026-09-30 D44로 대체: 게임 몸은 CMC가 아니라 Mover가 프레임 델타로 이동하며 커널 스텝과 무관한 점은 같다) |
 | 상한 4 | 누적기를 `4 × Step` 으로 클램프 | 긴 프레임(로딩 히치)에서 폭주·죽음의 나선을 막는다. 상한에 걸리면 시뮬 시간이 실시간보다 느려질 뿐 커널 순서는 유지된다(B §4.3) |
 | 시계 불일치(게임 전용) | 상한에 걸린 프레임에서는 커널 시간(스텝 수 × 1/64) < 월드 시간 | GE(Gameplay Effect) 지속시간·쿨다운은 `FTimerManager` 월드 시간으로 진행되고(engine-gas-determinism 결론 1, D18) judge 의 공격 시간표는 스텝으로 진행되므로, 예를 들어 100ms 프레임에서 커널은 62.5ms 만 흐르고 GE 타이머는 100ms 흘러 게임에서만 쿨다운이 먼저 끝난다. 시뮬은 1스텝 = `World->Tick` 1회라 어긋나지 않는다(D15·D27). 이 편차는 게임 전용이며 D32 C 단계(통계 등가)로만 감시한다. 버린 시간을 `DroppedKernelSeconds` 누적 통계로 `stat TDMonsterAI` 에 찍는다. 월드 델타 자체를 같이 클램프할지는 [미결 7](#미결-사항사용자-결정-필요) |
 | 잔여 시간 | 다음 프레임으로 이월, `PresentAlpha` 로 표현 보간 | 60fps 에서 스텝은 프레임당 1.07회라 1회/2회가 번갈아 온다. 보간 없이는 위치가 튄다 |
@@ -117,7 +117,7 @@ void UTDMonsterThinkSubsystem::AccumulateAndStep(float FrameDeltaSeconds)
 | 거리 히스테리시스 | 승격 임계 R, 강등 임계 R × 1.10 | Mass `BufferHysteresisOnDistancePercentage=10` 관행(engine-mass-entity-ai §2-1, MassSimulationLOD.h:83-104) |
 | 교전 플래그 유지 | 마지막 피격·공격 후 192스텝(3초) | B §4.2 제안값(추정) |
 | LOD 평가 주기 | 32스텝(2Hz), 스텝 시작 시 입력 스냅샷으로 계산 | 시그니피컨스 갱신 2Hz(B §4.2). `USignificanceManager::Update` 는 엔진이 호출하지 않으므로 어차피 직접 돌려야 한다 — 입력이 둘뿐이라 자체 정렬을 쓴다(engine-movement-anim-scale 결론 7, SignificanceManager.cpp:478) |
-| 승격 시 첫 스텝 강제 사고 | `NextThinkStep = StepIndex`. `CollectDue(Think)` 는 위상과 무관하게 `NextThinkStep <= StepIndex` 인 슬롯을 포함한다([§2](#2-스케줄러-설계)) | 튀는 행동·포즈 방지(engine-movement-anim-scale §6 주의점 2, `a.Budget.ForceTickWhenComponentExitsOffScreen`, AnimationBudgetAllocatorCVars.cpp:36-39) |
+| 승격 시 첫 스텝 강제 사고 | `NextThinkStep = StepIndex`. `CollectDue(Think)` 는 위상과 무관하게 `NextThinkStep <= StepIndex` 인 슬롯을 포함한다([§2](#2-스케줄러-설계)) | 튀는 행동·포즈 방지(engine-movement-anim-scale §6 주의점 2, `a.Budget.ForceTickWhenComponentExitsOffScreen`, AnimationBudgetAllocatorCVars.cpp:36-39) (2026-09-30 D44로 대체: UAF에는 예산 할당기 CVar가 없다. 첫 스텝 강제 사고는 그대로 둔다) |
 | 승격 순서 | 액터 풀 여유가 있을 때 (거리², SimulationId) 오름차순으로 상위 K | 예산 할당기의 "상위 K" 방식(engine-movement-anim-scale §3-1) |
 | 프레임당 승격 상한(L3→L2, 단계 B) | 프레임당 K = 8 마리(추정) 또는 액터 활성화 시간 예산 0.5ms(추정) 중 먼저 닿는 쪽. 초과분은 다음 프레임으로 이월 | 풀에서 꺼내 메시·ASC 를 초기화하는 비용이 한 프레임에 몰리면 히치가 된다. Mass 도 액터 스폰을 프레임당 1.5ms 예산으로 시간 분할한다(engine-mass-entity-ai 결론 9). 탑다운은 한 번에 수십 마리가 화면에 들어오므로 상한이 필요하다 |
 | 강등 금지(L2→L3, 무액터 L3 도입 이후) | 활성 GE(Gameplay Effect) 있음 ∨ 체력 < 최대 ∨ 보스/엘리트 | D18·D24. 무액터로 가면 ASC(Ability System Component) 가 사라지므로 상태가 있는 개체는 내리지 않는다 |
@@ -205,17 +205,17 @@ think 채널이 실제로 사고를 마치면 `NextThinkStep = StepIndex + Perio
 | # | 비용 항목 | 기본 동작 | 우리 조치 | 근거 |
 |---|---|---|---|---|
 | 1 | `AAIController` 액터 틱 | `AController` 생성자가 `bCanEverTick=true`, `AAIController::Tick` 은 `UpdateControlRotation` 만 호출 | 잡몹·정예 모두 AIController 없음. `ATDMonsterCharacter` 의 AutoPossessAI/AIControllerClass 제거(D38) | engine-behaviortree-tick 결론 11, Controller.cpp:62, AIController.cpp:58-63 |
-| 2 | 몬스터 액터 자체 틱 | 액터·컴포넌트마다 틱 함수 큐잉·태스크 생성 | `PrimaryActorTick.bCanEverTick=false`. 몬스터 액터 틱은 없고 AI 는 서브시스템 틱 함수 하나가 돈다. 남는 컴포넌트 틱: 정예 CMC 1개, ASC(조건부 자동 비활성, 10행). 잡몹 `UFloatingPawnMovement` 틱은 끈다([§4.1](#41-itdmonsterbody-3구현d16)) | engine-movement-anim-scale 결론 7, FloatingPawnMovement.cpp:23 |
-| 3 | CMC 바닥 스윕 + 라인 트레이스 | `bAlwaysCheckFloor=true` 기본, 매 프레임 캡슐 스윕 1회(관통 시 2회) + 라인 트레이스 1회 | 잡몹은 CMC 없음. 정예·보스는 `bAlwaysCheckFloor=false` + `MOVE_NavWalking` + `bRunPhysicsWithNoController=true`(컨트롤러가 없으면 PhysWalking·물리 루프·PhysicsRotation 이 이 플래그 없이는 조기 리턴 — CharacterMovementComponent.cpp:5662·5686·6637, .h:502) | engine-movement-anim-scale 결론 1·2, CharacterMovementComponent.cpp:798·7125-7183·6082-6095 |
-| 4 | CMC 물리 상호작용 | `bEnablePhysicsInteraction=true` 기본, 틱 끝에 `ApplyRepulsionForce` 가 `GetOverlapInfos()` 전체 순회 | 정예·보스 `bEnablePhysicsInteraction=false` | engine-movement-anim-scale 결론 1, cpp:770·1804-1809·11798-11802 |
+| 2 | 몬스터 액터 자체 틱 | 액터·컴포넌트마다 틱 함수 큐잉·태스크 생성 | `PrimaryActorTick.bCanEverTick=false`. 몬스터 액터 틱은 없고 AI 는 서브시스템 틱 함수 하나가 돈다. 남는 컴포넌트 틱: 정예 CMC 1개, ASC(조건부 자동 비활성, 10행). 잡몹 `UFloatingPawnMovement` 틱은 끈다([§4.1](#41-itdmonsterbody-3구현d16)) (2026-09-30 D44로 대체: 남는 이동 컴포넌트는 CMC·`UFloatingPawnMovement`가 아니라 `UCharacterMoverComponent`·`UNavMoverComponent`·`UUAFComponent`이며 틱 비용은 M3-16에서 측정한다) | engine-movement-anim-scale 결론 7, FloatingPawnMovement.cpp:23 |
+| 3 | CMC 바닥 스윕 + 라인 트레이스 | `bAlwaysCheckFloor=true` 기본, 매 프레임 캡슐 스윕 1회(관통 시 2회) + 라인 트레이스 1회 | 잡몹은 CMC 없음. 정예·보스는 `bAlwaysCheckFloor=false` + `MOVE_NavWalking` + `bRunPhysicsWithNoController=true`(컨트롤러가 없으면 PhysWalking·물리 루프·PhysicsRotation 이 이 플래그 없이는 조기 리턴 — CharacterMovementComponent.cpp:5662·5686·6637, .h:502) (2026-09-30 D44로 대체: CMC를 쓰지 않으므로 이 조치는 해당 없음, Mover 이동 비용은 M3-16에서 측정) | engine-movement-anim-scale 결론 1·2, CharacterMovementComponent.cpp:798·7125-7183·6082-6095 |
+| 4 | CMC 물리 상호작용 | `bEnablePhysicsInteraction=true` 기본, 틱 끝에 `ApplyRepulsionForce` 가 `GetOverlapInfos()` 전체 순회 | 정예·보스 `bEnablePhysicsInteraction=false` (2026-09-30 D44로 대체: CMC 미사용으로 해당 없음) | engine-movement-anim-scale 결론 1, cpp:770·1804-1809·11798-11802 |
 | 5 | RVO 회피 | `UAvoidanceManager` 가 `AvoidanceObjects` 전체 순회 → O(N²) | 쓰지 않음. 공간 해시 분리 조향으로 대체 | engine-movement-anim-scale 결론 3, AvoidanceManager.cpp:361·403 |
 | 6 | DetourCrowd | `MaxAgents` 기본 50, 고정 상한 | 잡몹에 쓰지 않음(D17). 정예·보스 ≤10 은 허용 검토([미결 3](#미결-사항사용자-결정-필요)) | web-mass-monster-performance 결론 8, CrowdManager.cpp:168 |
 | 7 | 물리 오버랩 이벤트 | 브로드페이즈 + 컴포넌트마다 `FOverlapInfo` 배열 + Begin/End 델리게이트 | 캡슐은 `QueryOnly`, `bGenerateOverlapEvents=false`. 탐지는 공간 해시 | engine-movement-anim-scale §5, web-mass-monster-performance 결론 2("충돌 스피어 1개 추가 → 1.5fps") |
-| 8 | 애님 그래프 화면 밖 틱 | `ACharacter` 기본 `AlwaysTickPose`, URO(Update Rate Optimization, 갱신률 최적화) 비렌더 기본 4프레임 | LOD 별 `VisibilityBasedAnimTickOption` + 예산 할당기([§7](#7-애니메이션표현-계층)) | engine-movement-anim-scale 결론 9, Character.cpp:125, EngineTypes.h:2820 |
+| 8 | 애님 그래프 화면 밖 틱 | `ACharacter` 기본 `AlwaysTickPose`, URO(Update Rate Optimization, 갱신률 최적화) 비렌더 기본 4프레임 | LOD 별 `VisibilityBasedAnimTickOption` + 예산 할당기([§7](#7-애니메이션표현-계층)) (2026-09-30 D44로 대체: UAF에는 예산 할당기·URO가 없어 UAF 컴포넌트 비활성·주기 정책을 C++로 직접 구현한다) | engine-movement-anim-scale 결론 9, Character.cpp:125, EngineTypes.h:2820 |
 | 9 | BT(Behavior Tree, 비헤이비어 트리) 마리당 UObject 3~4개 | `UBehaviorTreeComponent`·`UBlackboardComponent` 등 + 인스턴스 메모리 | BT 미사용(D4). 유틸리티 점수기는 슬롯 배열 위에서 배치 실행 | engine-behaviortree-tick 결론 6, web-mass-monster-performance §2-3(BT→자체 로직 22~24 → 26~28fps) |
 | 10 | ASC 틱 | 기본 틱 활성이지만 몽타주·틱 태스크·틱 가능 AttributeSet 이 없으면 `GetShouldTick()` 이 false | 몬스터 ASC 는 몽타주·틱 태스크 미사용 → 틱 비용 0 근사(D18) | engine-gas-determinism 결론 4, AbilitySystemComponent_Abilities.cpp:139-160 |
 
-떼어낸 뒤 남는 마리당 비용은 "캡슐 1개(QueryOnly) + 스켈레탈 메시(예산 할당기 관리) + ASC 메모리·GE 타이머" 다. 커뮤니티 실측은 이 구성(CMC·Character 없는 Pawn)으로 1,000마리 약 60fps, 2,000마리 약 46fps 였다(web-mass-monster-performance 결론 2, 2025). 우리 목표(단계 A 300마리 ≤ 4.0ms)는 그보다 보수적이다.
+떼어낸 뒤 남는 마리당 비용은 "캡슐 1개(QueryOnly) + 스켈레탈 메시(예산 할당기 관리) + ASC 메모리·GE 타이머" 다(2026-09-30 D44로 대체: 예산 할당기 대신 UAF 컴포넌트 주기 정책, 몸은 CMC 없는 `APawn` + Mover). 커뮤니티 실측은 이 구성(CMC·Character 없는 Pawn)으로 1,000마리 약 60fps, 2,000마리 약 46fps 였다(web-mass-monster-performance 결론 2, 2025). 우리 목표(단계 A 300마리 ≤ 4.0ms)는 그보다 보수적이다.
 
 ---
 
@@ -225,13 +225,13 @@ think 채널이 실제로 사고를 마치면 `NextThinkStep = StepIndex + Perio
 
 | 구현 | 대상 | 이동 | 충돌 | 컨트롤러 | 액터 틱 | 남는 컴포넌트 틱 |
 |---|---|---|---|---|---|---|
-| `APawn` + `UFloatingPawnMovement` | 게임 잡몹 | `UFloatingPawnMovement` 컴포넌트 틱은 끈다(`PrimaryComponentTick.bCanEverTick=false`). 컨트롤러가 없으면 `TickComponent` 가 `Controller && Controller->IsLocalController()` 게이트(FloatingPawnMovement.cpp:37-38) 안에서만 속도 적용·`SafeMoveUpdatedComponent`(cpp:64)를 하므로 켜 두어도 움직이지 않는다. 위치는 슬롯 배열이 정본이고 present 채널이 `SetActorLocationAndRotation(…, bSweep=false)` 로 쓴다. 컴포넌트는 `INavMovementInterface` 자리로만 남기거나 제거한다 | 캡슐 `QueryOnly`, 오버랩 이벤트 끔 | 없음 | 없음 | 없음(ASC 는 조건부 비활성) |
-| `ATDMonsterCharacter` | 게임 정예·보스(≤ 수십) | CMC `MOVE_NavWalking`, `bRunPhysicsWithNoController=true` 필수(cpp:5662·5686·6637 컨트롤러 게이트), `bAlwaysCheckFloor=false`, `bEnablePhysicsInteraction=false`, RVO 끔, `bSweepWhileNavWalking` 은 L0 만. 서브시스템 move 채널이 슬롯 속도를 `CMC->Velocity`/`RequestDirectMove` 로 넘기고 CMC 가 프레임 델타로 적분한다 | 캡슐 | 없음(이동 요청은 서브시스템이 직접, D38) | 없음 | CMC 1개(프레임 델타), ASC(조건부 비활성) |
+| `APawn` + `UFloatingPawnMovement` | 게임 잡몹 | `UFloatingPawnMovement` 컴포넌트 틱은 끈다(`PrimaryComponentTick.bCanEverTick=false`). 컨트롤러가 없으면 `TickComponent` 가 `Controller && Controller->IsLocalController()` 게이트(FloatingPawnMovement.cpp:37-38) 안에서만 속도 적용·`SafeMoveUpdatedComponent`(cpp:64)를 하므로 켜 두어도 움직이지 않는다. 위치는 슬롯 배열이 정본이고 present 채널이 `SetActorLocationAndRotation(…, bSweep=false)` 로 쓴다. 컴포넌트는 `INavMovementInterface` 자리로만 남기거나 제거한다 (2026-09-30 D44로 대체: 이 행의 별도 잡몹 몸은 만들지 않는다. 모든 게임 몸이 `ATDCombatCharacter : APawn` + Mover) | 캡슐 `QueryOnly`, 오버랩 이벤트 끔 | 없음 | 없음 | 없음(ASC 는 조건부 비활성) |
+| `ATDMonsterCharacter` | 게임 정예·보스(≤ 수십) | CMC `MOVE_NavWalking`, `bRunPhysicsWithNoController=true` 필수(cpp:5662·5686·6637 컨트롤러 게이트), `bAlwaysCheckFloor=false`, `bEnablePhysicsInteraction=false`, RVO 끔, `bSweepWhileNavWalking` 은 L0 만. 서브시스템 move 채널이 슬롯 속도를 `CMC->Velocity`/`RequestDirectMove` 로 넘기고 CMC 가 프레임 델타로 적분한다 (2026-09-30 D44로 대체: CMC 대신 `UCharacterMoverComponent`(Standalone, 외부 이동 수용)가 적분하며 `ATDMonsterCharacter`는 `ATDCombatCharacter : APawn` 파생이다) | 캡슐 | 없음(이동 요청은 서브시스템이 직접, D38) | 없음 | CMC 1개(프레임 델타), ASC(조건부 비활성) |
 | `ATDSimCombatant` | 시뮬 | 수학 이동(픽스처 `SpawnCombatant` 방식) | 없음(형상 판정은 수학) | 없음 | 없음 | 없음 |
 
 - 내비메시 길찾기(`UPathFollowingComponent`)는 쓰지 않는다. 그 컴포넌트는 `AAIController` 가 생성·소유하는데(engine-behaviortree-tick 결론 6) 이 설계는 AIController 를 없앴고(D38), 이동은 직선 접근 + 분리 조향 + 플로우 필드라 경로 추종이 없다(D17). 조사 결론 4(engine-movement-anim-scale, `INavMovementInterface` 만 요구)는 AIController 전제의 문장이라 여기서는 성립하지도 필요하지도 않다. 잃는 것은 바닥·중력·계단·루트모션이며 탑다운 지상 몬스터는 내비메시 `ProjectPoint` 투영과 플로우 필드로 대체한다. 나중에 경로가 필요하면 서브시스템이 `UNavigationSystemV1::FindPathSync` 를 직접 부른다.
-- 정예의 NavWalking 은 캡슐의 WorldStatic/WorldDynamic 응답을 Ignore 로 바꾸고 0.1초 주기로만 투영한다(engine-movement-anim-scale 결론 2, CharacterMovementComponent.cpp:6471-6472·834). 투영 타이머의 스폰 시 무작위 분산(cpp:6477)은 `FRandRange` 이므로 시뮬에서는 이 몸을 쓰지 않는다(시뮬 몸은 `ATDSimCombatant` 만).
-- 세 구현 모두 "위치·속도·FSM 상태의 정본은 슬롯 배열"이고, 몸은 present 채널에서 트랜스폼을 받아 쓰기만 한다. 게임 잡몹은 **스윕을 하지 않는다**: 스윕 결과(벽에 막힘)를 슬롯 위치에 되먹이면 게임 위치가 시뮬과 갈라지고, 되먹이지 않으면 스윕이 무의미하기 때문이다. 장애물은 [§4.3](#43-phase-3-플로우-필드b-44) 플로우 필드의 도달성 마스크와 [§4.2](#42-이동d17-직선-접근--분리-조향--근접-자리-토큰) 격자 높이값으로만 처리한다. 스윕 결과를 "장애물 보정 입력"으로 다음 스텝에 넣는 대안(게임 전용 편차, D32 B 단계 허용 오차)은 정예 CMC 경로에만 존재한다.
+- 정예의 NavWalking 은 캡슐의 WorldStatic/WorldDynamic 응답을 Ignore 로 바꾸고 0.1초 주기로만 투영한다(engine-movement-anim-scale 결론 2, CharacterMovementComponent.cpp:6471-6472·834). 투영 타이머의 스폰 시 무작위 분산(cpp:6477)은 `FRandRange` 이므로 시뮬에서는 이 몸을 쓰지 않는다(시뮬 몸은 `ATDSimCombatant` 만). (2026-09-30 D44로 대체: 게임 몸은 CMC NavWalking이 아니라 Mover + `UNavMoverComponent`다.)
+- 세 구현 모두 "위치·속도·FSM 상태의 정본은 슬롯 배열"이고, 몸은 present 채널에서 트랜스폼을 받아 쓰기만 한다. 게임 잡몹은 **스윕을 하지 않는다**: 스윕 결과(벽에 막힘)를 슬롯 위치에 되먹이면 게임 위치가 시뮬과 갈라지고, 되먹이지 않으면 스윕이 무의미하기 때문이다. 장애물은 [§4.3](#43-phase-3-플로우-필드b-44) 플로우 필드의 도달성 마스크와 [§4.2](#42-이동d17-직선-접근--분리-조향--근접-자리-토큰) 격자 높이값으로만 처리한다. 스윕 결과를 "장애물 보정 입력"으로 다음 스텝에 넣는 대안(게임 전용 편차, D32 B 단계 허용 오차)은 정예 CMC 경로에만 존재한다. (2026-09-30 D44로 대체: CMC 경로는 없다. Mover 몸의 결정론 등급은 CMC와 같다(가변 스텝, 시뮬 → 입력 단방향 유지).)
 
 ### 4.2 이동(D17): 직선 접근 + 분리 조향 + 근접 자리 토큰
 
@@ -326,14 +326,14 @@ B §4.6 의 마이크로초 단가를 쓰되, move·judge 는 LOD 불변(D21, �
 
 ## 7. 애니메이션·표현 계층
 
-판정은 데이터(시간표)가 권위이므로(D19) 애니메이션을 얼마나 줄여도 전투 결과는 바뀌지 않는다. 이 절은 순전히 게임 스레드 비용 문제다.
+판정은 데이터(시간표)가 권위이므로(D19) 애니메이션을 얼마나 줄여도 전투 결과는 바뀌지 않는다. 이 절은 순전히 게임 스레드 비용 문제다. (2026-09-30 D44로 대체: UAF에는 애니메이션 예산 할당기·URO가 없어 아래 1~4층은 무효다. 애니메이션 LOD는 UAF 컴포넌트 비활성·주기 정책을 C++로 직접 구현한다(D24 보정). 5층 ISM + VAT는 그대로다.)
 
 | 층 | 수단 | LOD 적용 | 근거 |
 |---|---|---|---|
-| 1. 예산 할당기 | 몬스터 메시는 `USkeletalMeshComponentBudgeted`, `a.Budget.BudgetMs=1.5`, `OnCalculateSignificance` 정적 델리게이트에 프로젝트 중요도 함수(LOD 등급 → 0~1) 바인딩 | L0 최상위(bNeverSkip 아님), L1 보간 틱, L2 이하 최저 | engine-movement-anim-scale 결론 9·§3-1, AnimationBudgetAllocatorParameters.h:19·34·94, IAnimationBudgetAllocator.h:52 |
-| 2. 가시성 옵션 | `VisibilityBasedAnimTickOption` | L0/L1 `AlwaysTickPose`, L2 `OnlyTickMontagesWhenNotRendered`, L3 액터 없음 또는 `bEnableAnimation=false` | engine-movement-anim-scale 결론 8·9, SkinnedMeshComponent.h:96-116, SkeletalMeshComponent.cpp:1883-1915 |
-| 3. URO | `bEnableUpdateRateOptimizations=true`, 비렌더 `BaseNonRenderedUpdateRate=4` 기본 유지 | 예산 할당기가 외부 틱률을 잡으면 URO 는 무시된다(`bExternalTickRateControlled`) | SkeletalMeshComponent.cpp:1918-1927 |
-| 4. 전환 튐 방지 | `a.Budget.ForceTickWhenComponentExitsOffScreen=1` + 승격 시 첫 스텝 강제 사고 | L2→L1 | AnimationBudgetAllocatorCVars.cpp:36-39 |
+| 1. 예산 할당기(D44로 무효) | 몬스터 메시는 `USkeletalMeshComponentBudgeted`, `a.Budget.BudgetMs=1.5`, `OnCalculateSignificance` 정적 델리게이트에 프로젝트 중요도 함수(LOD 등급 → 0~1) 바인딩 | L0 최상위(bNeverSkip 아님), L1 보간 틱, L2 이하 최저 | engine-movement-anim-scale 결론 9·§3-1, AnimationBudgetAllocatorParameters.h:19·34·94, IAnimationBudgetAllocator.h:52 |
+| 2. 가시성 옵션(D44로 무효) | `VisibilityBasedAnimTickOption` | L0/L1 `AlwaysTickPose`, L2 `OnlyTickMontagesWhenNotRendered`, L3 액터 없음 또는 `bEnableAnimation=false` | engine-movement-anim-scale 결론 8·9, SkinnedMeshComponent.h:96-116, SkeletalMeshComponent.cpp:1883-1915 |
+| 3. URO(D44로 무효) | `bEnableUpdateRateOptimizations=true`, 비렌더 `BaseNonRenderedUpdateRate=4` 기본 유지 | 예산 할당기가 외부 틱률을 잡으면 URO 는 무시된다(`bExternalTickRateControlled`) | SkeletalMeshComponent.cpp:1918-1927 |
+| 4. 전환 튐 방지(`a.Budget` 부분만 D44로 무효) | `a.Budget.ForceTickWhenComponentExitsOffScreen=1` + 승격 시 첫 스텝 강제 사고 | L2→L1 | AnimationBudgetAllocatorCVars.cpp:36-39 |
 | 5. ISM + VAT(단계 C) | AnimToTexture 로 후열 1~2종 베이크, ISM 커스텀 데이터 실수 4개(`TimeOffset/PlayRate/StartFrame/EndFrame`) 로 셰이더 재생, `BatchUpdateInstancesTransforms` 로 일괄 이동 | L1 이하 | engine-movement-anim-scale 결론 10, AnimToTextureInstancePlaybackHelpers.h:27-59, InstancedStaticMeshComponent.h:391 |
 
 - 예산 할당기 기본 `MaxTickedOffsreenComponents=4`, 자동 중요도 최대 거리 30,000cm 는 탑다운에 맞지 않으므로 프로젝트 함수로 대체한다(engine-movement-anim-scale §6 표).

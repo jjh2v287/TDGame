@@ -4,8 +4,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "TDReactionAbility.generated.h"
 
-class UAnimInstance;
-class UAnimMontage;
 class UTDCombatComponent;
 class UTDSkillComponent;
 
@@ -35,19 +33,23 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Reaction")
 	bool bResetComboOnActivate = true;
 
+	UPROPERTY(EditDefaultsOnly, Category="Reaction")
+	bool bHoldFinalPose = false;
+
 	UTDCombatComponent* GetCombatComponent() const;
 	UTDSkillComponent* GetSkillComponent() const;
 
 private:
 	void AddAbilityStateTag(const FGameplayTag& Tag, bool& bTagAdded);
 	void RemoveAbilityStateTag(const FGameplayTag& Tag, bool& bTagAdded);
-	void HandleReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void ClearAbilityState();
 
-	UPROPERTY(Transient)
-	TObjectPtr<UAnimMontage> ActiveReactionMontage = nullptr;
+	UFUNCTION()
+	void HandleReactionTimelineCompleted();
 
-	TWeakObjectPtr<UAnimInstance> ActiveAnimInstance;
+	UFUNCTION()
+	void HandleReactionTimelineInterrupted();
+
 	bool bHasAddedActiveStateTag = false;
 };
 

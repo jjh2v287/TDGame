@@ -116,11 +116,11 @@ python Tools/AnimationAuthoring/smoke_test.py --mesh /Game/Characters/Mannequins
 ## C. 기능 공백
 
 ### C-01 AnimNotify / NotifyState 배치 — **가장 큰 공백**
-- 상태: todo
+- 상태: done (2026-09-30 claude, D44로 불필요: AnimNotify·몽타주 폐기, 타격·입력 창은 C++ 시간표 `FTDActionAnimation`)
 - 우선순위: **높음**
-- 증상: 애니메이션 폴더 전체에 노티파이 관련 코드가 0건이다(`Controller.NotifyPopulated()` 1건은 무관한 API). 그런데 이 프로젝트의 전투는 `Source/TDGame/Combat/AnimNotify/`의 `TDAnimNotifyState_MeleeAttack`·`AbilityTagWindow`·`InputBufferWindow`·`JumpCapsuleModifier` 4종에 의존한다.
-- 결론: **이 도구로 만든 몽타주는 히트박스도 입력 버퍼도 없어 실제 전투에 투입할 수 없다.** 현재 유일한 수단은 Python 원격 실행(`make_montage.py` 레시피)이다.
-- 완료 조건: `AddMontageNotifies` 같은 8번째 도구. 노티파이 트랙 생성 + `AnimNotifyState` 클래스·시작·길이·프로퍼티(JSON) 지정. 검증된 레시피는 `AnimationLibrary.add_animation_notify_track` / `add_animation_notify_state_event` 경로이며, 구조체는 `TDDamageRule`·`TDDamageAction`·`TDScaledValue`다.
+- 증상: 애니메이션 폴더 전체에 노티파이 관련 코드가 0건이다(`Controller.NotifyPopulated()` 1건은 무관한 API). 그런데 이 프로젝트의 전투는 `Source/TDGame/Combat/AnimNotify/`의 `TDAnimNotifyState_MeleeAttack`·`AbilityTagWindow`·`InputBufferWindow`·`JumpCapsuleModifier` 4종에 의존한다. (2026-09-30 D44로 대체: 이 4종 노티파이는 삭제됐고 전투는 C++ 시간표 `FTDActionAnimation`의 `HitWindows`·`TagWindows`·`InputBufferWindow`·`JumpCapsuleWindow`가 맡는다.)
+- 결론: **이 도구로 만든 몽타주는 히트박스도 입력 버퍼도 없어 실제 전투에 투입할 수 없다.** 현재 유일한 수단은 Python 원격 실행(`make_montage.py` 레시피)이다. (2026-09-30 D44로 대체: 런타임이 몽타주를 쓰지 않으므로 이 결론의 전제가 사라졌다.)
+- 완료 조건: `AddMontageNotifies` 같은 8번째 도구. 노티파이 트랙 생성 + `AnimNotifyState` 클래스·시작·길이·프로퍼티(JSON) 지정. 검증된 레시피는 `AnimationLibrary.add_animation_notify_track` / `add_animation_notify_state_event` 경로이며, 구조체는 `TDDamageRule`·`TDDamageAction`·`TDScaledValue`다. (2026-09-30 D44로 대체: 노티파이 도구의 필요성이 사라졌다.)
 - 주의: `AnimNotifyEvent`에는 `track_index` 속성이 없다(읽으면 예외).
 
 ### C-02 기존 에셋 수정 경로 부재
@@ -262,7 +262,7 @@ MCP 서버 배관은 3중으로 갖춰졌다(`.mcp.json`, `.gemini/settings.json
 
 1. **E-01** `Tools/README.md`·`AGENTS.md` 등재 — 비용이 거의 없고, 다른 에이전트가 이 도구를 발견하는 유일한 경로다.
 2. **A-02** 스모크 테스트 진단력 보강 — 이번 실행에서 `AssertionError: <이름>`만으로는 원인을 알 수 없어 매번 에디터 로그를 따로 봐야 했다.
-3. **C-01** AnimNotify 도구 — 이것이 없으면 산출물이 게임에서 쓸모가 없다. 기능 작업 중 1순위.
+3. **C-01** AnimNotify 도구 — 이것이 없으면 산출물이 게임에서 쓸모가 없다. 기능 작업 중 1순위. (2026-09-30 D44로 대체: 노티파이가 삭제돼 이 우선순위의 근거가 사라졌다. 산출물은 AnimSequence + C++ 시간표로 게임에 연결한다.)
 4. **F-01, F-02** 공용 클라이언트와 확정 툴셋 이름 표 — 이후 모든 세션의 토큰을 줄인다.
 5. **A-04** C++ 자동화 테스트 — B-01 같은 결함의 회귀를 에디터 없이 잡는다.
 6. **G-03** 커밋 — 스모크 테스트가 통과했으므로 지금 커밋할 수 있다.

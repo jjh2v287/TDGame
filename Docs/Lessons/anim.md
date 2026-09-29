@@ -54,3 +54,11 @@
 - 증거: `Saved/AgentOps/20260925/review-v3/*.md`(1차 비평), `Saved/BlenderAnimation/SwordAttack01/author-result.json`
 - 날짜·상태: 2026-09-25 active
 - 발견: claude
+
+### L-anim-07 UAF 5.8.2로 캐릭터를 구동할 때의 필수 조건과 엔진 함정
+- 증상: ① 모든 주입이 실패하고 `PlayAction`이 0을 돌려줌, 로그 `FInjectionRequest::ValidateArgs: Missing injection site` ② 첫 주입마다(프로세스당 1회) `Ensure condition failed: TimelineTrait.GetState(Context, ChildState) ... InjectionSiteTrait.cpp] [Line: 268]` + 콜스택 수집 멈춤(헤드리스 약 4.6초) ③ 빙결(CustomTimeDilation 0) 중에도 애니메이션이 계속 재생 ④ `SetAssetFromObject`·`Activate/Deactivate`를 게임 코드에서 호출 불가(private).
+- 해결: ① `FInjectionSite()` 기본값은 거부된다. 자동 시스템의 사이트는 `/Script/UAFAnimGraph.AnimNextInjectionSiteTraitSharedData`의 `Graph` 변수 참조로 만든다(`TDCharacterAnimationComponent.cpp` `GetDefaultInjectionSite`). ② 엔진 결함(새 주입 그래프나 Uninject로 복귀한 원본 그래프의 첫 PreUpdate에서 자식 플레이어가 아직 OnBecomeRelevant 전). 개발 빌드에서 첫 발생 때 약 0.7초 멈춤. 코드로 회피 불가, 주입 테스트는 해당 줄만 `AddExpectedError`. 게임 동작 영향 없음. ③ UAF는 시간 배율을 무시한다 → 빙결은 `UUAFComponent::SetActive(false)`. ④ 기본 자산 교체는 `UnregisterComponent → SetAsset(TInstancedStruct) → RegisterComponent`, 교체마다 시스템이 새로 생기므로 Mover 틱 연결(`AddSubsequent`)을 다시 건다. 메시는 `SetEnableAnimation(false)` 필수이며, 그 결과 물리 바디가 포즈를 따라가지 않아 래그돌 전에 `UpdateKinematicBonesToAnim(GetComponentSpaceTransforms(), TeleportPhysics, true)`를 부른다. URO·애니 예산 할당기는 UAF에 없다(화면 밖 몬스터도 매 프레임 평가 — 후속 LOD 과제). UAF는 `UAnimSequence::RateScale`을 곱해 재생하므로 C++ 시간표 진행에도 곱한다. 메시를 `bEnableAnimation=false`로 두면 클로스도 돌지 않는다(쿠킹본 클로스 틱 4개 메시).
+- 범위: `Source/TDGame/Characters/TDCharacterAnimationComponent.cpp`, UE 5.8.2 UAF·UAFAnimGraph(Experimental)
+- 증거: `Saved/AgentOps/20260930/impl-A.md`·`impl-E.md`, 테스트 `TDGame.Movement.*`(루트모션 36.00cm, 빙결 중 0.000cm)
+- 날짜·상태: 2026-09-30 active
+- 발견: claude

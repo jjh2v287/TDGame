@@ -31,7 +31,7 @@
 
 ### 산출물
 - 에셋: `/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01`(60 fps, 루트 모션 켬, RefPose 락)
-- 몽타주: `AM_TD_Player_SwordAttack01`(`DefaultSlot`, 섹션 `Attack` 0 s·`Recovery` f52 = 0.85 s, blend in 0.1·out 0.2)
+- 몽타주: 없다. 런타임은 이 시퀀스를 UAF 주입으로 재생하고 판정·입력 창은 C++ 시간표 `FTDActionAnimation`이 정한다(2026-09-30 D44로 대체: 옛 `AM_TD_Player_SwordAttack01`(`DefaultSlot`, 섹션 `Attack` 0 s·`Recovery` f52 = 0.85 s, blend in 0.1·out 0.2)은 삭제됨)
 - 원본 파일: [편집 원본 .blend](../AnimationSources/Player/AS_TD_Player_SwordAttack01.blend)(원본 Action 포함), [FBX](../AnimationSources/Player/AS_TD_Player_SwordAttack01.fbx), [제작 기록 JSON](../AnimationSources/Player/AS_TD_Player_SwordAttack01.json)
 - 미리보기: [세 방향 실시간](Validation/BlenderAnimation/sword-attack01-three-views.gif), [1/3속](Validation/BlenderAnimation/sword-attack01-slow.gif), [손·게임 시점 1/3속](Validation/BlenderAnimation/sword-attack01-hand-game-slow.gif), [주요 포즈](Validation/BlenderAnimation/sword-attack01-keyposes.png), [스윙 구간](Validation/BlenderAnimation/sword-attack01-swing.png)
 
@@ -40,7 +40,7 @@
 |---|---|
 | Blender→UE 뼈 위치 오차 | 최대 0.008 cm ([ue-validation](Validation/BlenderAnimation/sword-attack01-ue-validation.json)) |
 | 루트 | 전방 36.0 cm, 옆·수직 0 |
-| PIE(BP_TDCombatCharacter) | 1.85 s 재생, 실제 이동 36.0 cm, 슬롯 가중치 1.0 ([pie](Validation/BlenderAnimation/sword-attack01-pie.json)) |
+| PIE(BP_TDCombatCharacter) | 1.85 s 재생, 실제 이동 36.0 cm, 슬롯 가중치 1.0 ([pie](Validation/BlenderAnimation/sword-attack01-pie.json)) (2026-09-30 D44로 대체: 몽타주·슬롯이 없어 슬롯 가중치 항목은 폐기. 루트모션 36.00 cm / 1.850 s는 헤드리스 `TDGame.Movement.RootMotionActionMovesPawn`이 재확인하고, PIE 공격 이동 36.0 cm는 [player-pie-check](Validation/Movement/player-pie-check.json)에 있다) |
 | 궤적 | 활성 평면 잔차 4.0 cm, 하강 97 cm, 우→좌, 칼끝 최고 74 m/s, 타격 f25 = 0.40 s ([measure](Validation/BlenderAnimation/sword-attack01-measure.json)) |
 | 날·팔 | 날 정렬 평균 79°(이상 90°), 팔–칼 각 140°, 프레임당 최대 뼈 회전 71°, 골반 → 팔·손 각속도 순서(f21 → f26) |
 | 간격 | 칼끝 최저 23 cm, 칼–몸 최소 18 cm, 관통 없음, f112 = f1(루프 0.05 cm 이내) |
@@ -52,7 +52,7 @@
 - 위치: (−5.052, 9.119, 25.857) cm
 - 회전: roll −83.734°, pitch −15.888°, yaw 94.203°
 
-### 연계·판정 권장 창 (60 fps, 몽타주 노티파이는 아직 없음)
+### 연계·판정 권장 창 (60 fps, 노티파이는 삭제됨 — 창은 C++ 시간표 `FTDActionAnimation`에 초 단위로 넣는다, D44)
 | 창 | 프레임 |
 |---|---|
 | 판정 | f23–f28 |
@@ -60,14 +60,14 @@
 | 입력 버퍼 | f12–f34 |
 | 2타 분기 | f35–f48(2타 시작 자세 ≈ f39–41 = Greystone PrimaryB 첫 자세) |
 | 회피 취소 | f33부터 |
-| 이동 취소·Recovery 섹션 | f52 |
+| 이동 취소·Recovery 시작 | f52 (옛 몽타주 섹션 `Recovery`, 2026-09-30 D44로 몽타주 삭제) |
 
 ### 남은 한계
 - 무게감 있는 Greystone 스타일을 물려받았다: 팔로스루에서 가슴이 약 145° 돌고 골반이 약 23 cm 내려간다. 원본에서 물려받은 경미 항목은 휩 순간 손목 굽힘 −89°, 접촉 직전 팔꿈치 잠김, 앞발 볼의 작은 표류다.
 - 홀드에서 타격으로 풀리는 첫 프레임이 최고 속도에 가깝다(스냅형 풀림). 트레일·쓸기 판정을 전제로 한다.
 - 복귀는 칼을 낮게 든 느린 회수로 바꿨지만 여전히 몸 앞을 지난다.
 - 연계용 2타는 미제작이다.
-- 무기 부착 C++, 노티파이 창, 무장 대기 동작이 없다.
+- 무기 부착 C++, 무장 대기 동작이 없다. 판정·입력 창은 노티파이가 아니라 C++ 시간표(`FTDActionAnimation`)에 넣는다(2026-09-30 D44로 대체: 노티파이 삭제).
 - UE 압축 후 칼끝 오차는 에디터 평가에서 0으로 나와 쿠킹 후 검증은 미실시다.
 
 ```powershell
@@ -80,7 +80,7 @@ python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack
 python Tools/BlenderAnimation/sword_attack01_compose.py v9 --gif --triptych front,right,game --tile 240 --every 2
 python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack01_export.py
 python Tools/BlenderAnimation/blender_run.py Tools/BlenderAnimation/sword_attack01_grip_points.py
-python Tools/BlenderAnimation/import_sword_attack01.py --replace --recovery-frame 52   # PIE 뒤에는 에디터 재시작이 필요할 수 있다(L-editor-10)
+python Tools/BlenderAnimation/import_sword_attack01.py --replace   # 몽타주 단계 제거(D44), PIE 뒤에는 에디터 재시작이 필요할 수 있다(L-editor-10)
 python Tools/run_in_editor.py Tools/BlenderAnimation/editor_validate_sword_attack01.py
 python Tools/run_in_editor.py Tools/BlenderAnimation/editor_solve_sword_attachment.py
 python Tools/BlenderAnimation/validate_sword_attack01_pie.py
@@ -88,7 +88,7 @@ python Tools/BlenderAnimation/validate_sword_attack01_pie.py
 
 ---
 
-아래 두 절(2026-09-19 Attack01 RToL, 2026-09-23 Attack02 LToR)의 에셋과 원본은 2026-09-25에 삭제됐다. 절차 기록으로만 남긴다.
+아래 두 절(2026-09-19 Attack01 RToL, 2026-09-23 Attack02 LToR)의 에셋과 원본은 2026-09-25에 삭제됐다. 절차 기록으로만 남긴다. (2026-09-30 D44로 대체: 이 아래의 몽타주·`DefaultSlot`·`ABP_Unarmed`·노티파이·`TDPlayMeleeMontage` 언급은 당시 경로이며 모두 폐기됐다. 런타임은 시퀀스를 UAF로 주입해 재생하고 판정·입력 창은 C++ 시간표 `FTDActionAnimation`이다. 몽타주 의존 스크립트는 `Tools/_archive/2026-09/BlenderAnimation/`으로 옮겨 실행할 수 없다.)
 
 ## 2026-09-19 (삭제됨): `AS_TD_Player_Attack01_SwordSlash_RToL` (절차적 저작, 참고 모션 없음)
 
@@ -97,14 +97,14 @@ python Tools/BlenderAnimation/validate_sword_attack01_pie.py
 - 저작 방식(`Tools/BlenderAnimation/author_sword_slash.py`): 참고 모션 대신 코드로 정의한 키 포즈를 30fps 40포즈(1.3초)로 베이크한다. 발은 접지 모델(볼·뒤꿈치 피벗, 접지 중 이동 0)로, 다리·팔은 해석적 2본 IK로 푼다. 오른팔 팔꿈치는 손목 비틀림 최소화 + 힌트 방향 + 이전 프레임 연속성의 비용으로 고른다. 오른손 회전은 검 날 방향·날 선 방향(궤적 접선)에서 `HandGrip_R` 소켓을 거꾸로 풀어 정한다. 하박 twist 본에 손 롤을 0.62/0.30으로 나눈다. 손가락은 `MM_Attack_01` 첫 프레임 주먹을 오른손 0.88·왼손 0.32로 재사용한다.
 - 동작 설계: 준비(f0~f8, 상체 우측 50° 코일·검을 오른쪽 뒤로) → 왼발 스텝(f5 이탈, f12 뒤꿈치 착지, f14 평발) → 타격(f13~f19, 골반이 먼저 열리고 상체·검이 따라옴, 접촉 f17=0.57초, 검 끝 높이 약 110cm) → 팔로스루(f19~f24, 검이 왼쪽 아래로) → 오른발 끌어당김(f21~f27) → 회복(f28~f39, 시작 자세 + 전진 50cm). 루트 전진 50cm.
 - 무기: 미리보기는 실제 `SM_Sword`를 `HandGrip_R` 소켓 프로파일 + 메시 피벗 보정(언리얼 상대 위치 `(0, 32.2, -1.4)`cm)으로 붙였다. 게임 `BP_TDCombatCharacter`에는 아직 무기 컴포넌트가 없으므로 실제 부착 검증은 하지 않았다.
-- 산출물: `/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_SwordSlash_RToL`(루트 모션 켬, RefPose 락), `AM_…_SwordSlash_RToL`(`DefaultSlot`, 섹션 `Attack01`, blend in 0.1·out 0.2), [편집 원본 .blend](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.blend), [FBX](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.fbx), [저작 기록 JSON](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.json).
+- 산출물: `/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_SwordSlash_RToL`(루트 모션 켬, RefPose 락), `AM_…_SwordSlash_RToL`(`DefaultSlot`, 섹션 `Attack01`, blend in 0.1·out 0.2), [편집 원본 .blend](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.blend), [FBX](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.fbx), [저작 기록 JSON](../AnimationSources/Player/AS_TD_Player_Attack01_SwordSlash_RToL.json). (2026-09-30 D44로 대체: 몽타주는 폐기)
 - 미리보기: [세 방향 실시간](Validation/BlenderAnimation/sword-slash-three-views.gif), [1/3속](Validation/BlenderAnimation/sword-slash-slow.gif), [정면](Validation/BlenderAnimation/sword-slash-front.gif)·[측면](Validation/BlenderAnimation/sword-slash-side.gif)·[게임 시점](Validation/BlenderAnimation/sword-slash-game.gif), [주요 포즈](Validation/BlenderAnimation/sword-slash-poses.png), [검 끝 궤적 평면도](Validation/BlenderAnimation/sword-slash-tip-path.png).
-- 검증: [변환·접지·루트 검사](Validation/BlenderAnimation/sword-slash-validation.json) — Blender→언리얼 본 위치 오차 최대 0.007cm, 접지 중 볼 이동 최대 0.0024cm, 루트 이동 50.0cm, 검 끝 최저 높이 11.8cm. [PIE](Validation/BlenderAnimation/sword-slash-pie.json)([스크린샷](Validation/BlenderAnimation/sword-slash-pie.png)) — `BP_TDCombatCharacter`에서 1.30초 재생, `DefaultSlot` 최대 가중치 1.0, 실제 이동 45.1cm(블렌드 구간 포함).
+- 검증: [변환·접지·루트 검사](Validation/BlenderAnimation/sword-slash-validation.json) — Blender→언리얼 본 위치 오차 최대 0.007cm, 접지 중 볼 이동 최대 0.0024cm, 루트 이동 50.0cm, 검 끝 최저 높이 11.8cm. [PIE](Validation/BlenderAnimation/sword-slash-pie.json)([스크린샷](Validation/BlenderAnimation/sword-slash-pie.png)) — `BP_TDCombatCharacter`에서 1.30초 재생, `DefaultSlot` 최대 가중치 1.0, 실제 이동 45.1cm(블렌드 구간 포함). (2026-09-30 D44로 대체: 슬롯 가중치는 몽타주 경로의 값이며 폐기)
 - 시각 판단(에이전트, 정지 프레임·연속 포즈·손 근접 렌더 기준): 코일→스텝→회전→팔로스루 순서가 읽히고, 타격 구간에서 날이 진행 방향을 향하며 검 끝 궤적이 한 평면에 가깝다. 손목 비틀림은 twist 본으로 분산되어 근접 렌더에서 꺾임이 보이지 않았다. 사용자의 재생 승인은 별도다.
-- 미검증·한계: 실제 무기 부착 상태 게임 재생, 공격 입력·데미지 노티파이·콤보 연결, 왼손은 중립 손목(별도 연출 없음), 다른 캐릭터 이식.
+- 미검증·한계: 실제 무기 부착 상태 게임 재생, 공격 입력·데미지 노티파이·콤보 연결, 왼손은 중립 손목(별도 연출 없음), 다른 캐릭터 이식. (2026-09-30 D44로 대체: 데미지 노티파이는 삭제, 판정은 C++ 시간표 `HitWindows`)
 
 ```powershell
-# Context: C:/Project/TDGame; Blender MCP + 언리얼 에디터 열림. 순서: 저작(TD_SAVE) → 미리보기 렌더 → 합성 → 가져오기·몽타주 → 검증 → PIE
+# Context: C:/Project/TDGame; Blender MCP + 언리얼 에디터 열림. 순서: 저작(TD_SAVE) → 미리보기 렌더 → 합성 → 가져오기·몽타주 → 검증 → PIE (2026-09-30 D44로 대체: import_sword_slash.py·validate_sword_slash_pie.py는 몽타주 의존이라 _archive로 이동, 실행 불가)
 Tools/BlenderMCP/.venv/Scripts/python.exe Tools/BlenderMCP/call_tool.py --code Tools/BlenderAnimation/author_sword_slash.py
 Tools/BlenderMCP/.venv/Scripts/python.exe Tools/BlenderMCP/call_tool.py --code Tools/BlenderAnimation/render_sword_slash_preview.py
 python Tools/BlenderAnimation/compose_sword_slash_preview.py
@@ -167,12 +167,12 @@ Blender 안에서 반복 제작하려면 먼저 참고 모션과 편집용 리�
 ## 새 후보와 검증
 
 - 애니메이션: `/Game/Characters/Mannequins/Anims/Blender/AS_TD_Player_Attack01_Heavy_RToL_v04`
-- 몽타주: `/Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_Heavy_RToL_v04`, `DefaultSlot`, `Attack01`
+- 몽타주: `/Game/Characters/Mannequins/Anims/Blender/AM_TD_Player_Attack01_Heavy_RToL_v04`, `DefaultSlot`, `Attack01` (2026-09-30 D44로 대체: 몽타주는 폐기)
 - [편집 원본](../AnimationSources/Player/AS_TD_Player_Attack01_Heavy_RToL_v04.blend), [FBX](../AnimationSources/Player/AS_TD_Player_Attack01_Heavy_RToL_v04.fbx)
 - [정면 미리보기](Validation/BlenderAnimation/weighty-v04-front.gif), [세 방향 실시간 미리보기](Validation/BlenderAnimation/weighty-v04-three-views.gif), [느린 미리보기](Validation/BlenderAnimation/weighty-v04-slow.gif), [주요 포즈](Validation/BlenderAnimation/weighty-v04-poses.png)
 - [변환·원본 보존·접지 검사](Validation/BlenderAnimation/weighty-v04-validation.json), [PIE 재생과 실제 이동](Validation/BlenderAnimation/weighty-v04-pie.json)
 
-PIE의 실제 `BP_TDCombatCharacter`에서 몽타주가 약 1.43초 재생되었고 `DefaultSlot` 최대 가중치는 1.0, 캐릭터 실제 이동은 약 150.61cm였다. 테스트 중 변경한 PIE 카메라와 본 갱신 설정은 PIE 종료 시 사라진다. 공격 입력/피격 판정은 연결하지 않았다.
+PIE의 실제 `BP_TDCombatCharacter`에서 몽타주가 약 1.43초 재생되었고 `DefaultSlot` 최대 가중치는 1.0, 캐릭터 실제 이동은 약 150.61cm였다(2026-09-30 D44로 대체: 몽타주·슬롯 경로는 폐기). 테스트 중 변경한 PIE 카메라와 본 갱신 설정은 PIE 종료 시 사라진다. 공격 입력/피격 판정은 연결하지 않았다.
 
 v02는 기준 포즈 차이가 남은 중간 후보, v03은 착지보다 타격이 앞선 후보이며 v04를 검토 대상으로 사용한다. 기존 결과는 덮어쓰지 않았다. 현재 후보는 사람형 전진 횡베기이고, 다족 몬스터나 제자리 공격의 품질까지 검증한 것은 아니다. 무기 접촉·팔/몸 관통과 게임 감각의 최종 판단은 미리보기에서 별도 확인해야 한다.
 

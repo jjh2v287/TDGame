@@ -2,12 +2,12 @@
 
 #include "AIController.h"
 #include "BrainComponent.h"
+#include "Characters/TDCombatCharacter.h"
 #include "Combat/GAS/TDCombatGameplayEffects.h"
 #include "Core/TDGameplayTags.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
 #include "Combat/Damage/TDStatusDefinition.h"
 #include "Engine/World.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/MovementComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameplayEffect.h"
@@ -410,20 +410,21 @@ void UTDCombatComponent::SetFrozen(bool bShouldFreeze)
 			bWasActorTickEnabled = Owner->IsActorTickEnabled();
 			Owner->CustomTimeDilation = 0.f;
 			Owner->SetActorTickEnabled(false);
-			TInlineComponentArray<UMovementComponent*> Movements(Owner);
-			for (UMovementComponent* Movement : Movements)
+			if (ATDCombatCharacter* CombatCharacter = Cast<ATDCombatCharacter>(Owner))
 			{
-				FTDFrozenMovement& FrozenMovement = FrozenMovements.AddDefaulted_GetRef();
-				FrozenMovement.Component = Movement;
-				FrozenMovement.bWasTickEnabled = Movement->IsComponentTickEnabled();
-				Movement->StopMovementImmediately();
-				if (UCharacterMovementComponent* CharacterMovement = Cast<UCharacterMovementComponent>(Movement))
+				CombatCharacter->SetMovementFrozen(true);
+			}
+			else
+			{
+				TInlineComponentArray<UMovementComponent*> Movements(Owner);
+				for (UMovementComponent* Movement : Movements)
 				{
-					FrozenMovement.MovementMode = CharacterMovement->MovementMode;
-					FrozenMovement.CustomMovementMode = CharacterMovement->CustomMovementMode;
-					CharacterMovement->DisableMovement();
+					FTDFrozenMovement& FrozenMovement = FrozenMovements.AddDefaulted_GetRef();
+					FrozenMovement.Component = Movement;
+					FrozenMovement.bWasTickEnabled = Movement->IsComponentTickEnabled();
+					Movement->StopMovementImmediately();
+					Movement->SetComponentTickEnabled(false);
 				}
-				Movement->SetComponentTickEnabled(false);
 			}
 			if (APawn* Pawn = Cast<APawn>(Owner))
 			{
@@ -462,22 +463,17 @@ void UTDCombatComponent::SetFrozen(bool bShouldFreeze)
 				{
 					Owner->SetActorTickEnabled(bWasActorTickEnabled);
 				}
+				if (ATDCombatCharacter* CombatCharacter = Cast<ATDCombatCharacter>(Owner))
+				{
+					CombatCharacter->SetMovementFrozen(false);
+				}
 			}
 			for (const FTDFrozenMovement& FrozenMovement : MovementsToRestore)
 			{
-				if (UMovementComponent* Movement = FrozenMovement.Component.Get())
+				UMovementComponent* Movement = FrozenMovement.Component.Get();
+				if (Movement && !Movement->IsComponentTickEnabled())
 				{
-					if (UCharacterMovementComponent* CharacterMovement = Cast<UCharacterMovementComponent>(Movement))
-					{
-						if (CharacterMovement->MovementMode == MOVE_None && CharacterMovement->CustomMovementMode == 0)
-						{
-							CharacterMovement->SetMovementMode(static_cast<EMovementMode>(FrozenMovement.MovementMode), FrozenMovement.CustomMovementMode);
-						}
-					}
-					if (!Movement->IsComponentTickEnabled())
-					{
-						Movement->SetComponentTickEnabled(FrozenMovement.bWasTickEnabled);
-					}
+					Movement->SetComponentTickEnabled(FrozenMovement.bWasTickEnabled);
 				}
 			}
 			if (AController* Controller = ControllerToRestore.Get(); Controller && Controller->IsMoveInputIgnored())

@@ -108,19 +108,30 @@ UE 5.8에서 `/Game/Combat/Maps/LV_TDMegaMagicArena`를 열고 Play한다. 표�
 
 프레임워크는 Unreal의 일반 `TakeDamage`나 별도 TwinStick 템플릿의 즉사 함수를 자동으로 연결하지 않는다. 기존 적을 편입할 때는 컴포넌트의 OnDeath를 해당 적의 C++ 사망 처리에 연결한다.
 
-## 근접 물리 공격 노티파이
+## 근접 물리 공격 시간표
 
-`UTDAnimNotifyState_MeleeAttack`(`Source/TDGame/Combat/AnimNotify/`)은 공격 몽타주의 노티파이 트랙에 배치하는 노티파이 스테이트다. 렌더링된 포즈가 아니라 애니메이션 원본 데이터를 `SampleIntervalSeconds`(기본 1/60초) 간격으로 다시 샘플링하므로, 프레임이 길어져도 무기 궤적을 빠짐없이 스윕한다. 이전 샘플과 현재 샘플 사이는 액터 이동까지 보간해서 스피어 스윕한다.
+근접 판정은 애님 노티파이가 아니라 C++ 행동 시간표로 처리한다. 전투 행동과 반응 정의(`FTDCombatActionDefinition`, `FTDCombatReactionDefinition`)의 `Action` 필드는 `FTDActionAnimation`(`Source/TDGame/Combat/Skills/TDCombatActionTypes.h`)이며, 재생할 `UAnimSequence`와 애니메이션 시간(초) 기준의 창 목록을 가진다. 능력(`UTDCombatActionAbility`, `UTDReactionAbility`)은 `UTDAbilityTask_PlayActionTimeline`을 띄우고, 태스크가 `UTDCharacterAnimationComponent::PlayAction`으로 시퀀스를 재생한 뒤 매 틱 애니메이션 컴포넌트의 이전·현재 애니메이션 시간으로 창을 연다·닫는다.
 
-| 프로퍼티 | 역할 |
+| 필드 | 역할 |
+| --- | --- |
+| `Animation`, `StartSeconds`, `EndSeconds`, `PlayRate` | 재생할 시퀀스와 구간(`EndSeconds` 0이면 끝까지), 재생 속도 |
+| `bUseRootMotion` | 켜면 시퀀스 루트 모션을 Mover 레이어드 무브로 캐릭터 이동에 반영 |
+| `HitWindows` | 창마다 `FTDMeleeSweepSettings`로 무기 궤적 스윕(`FTDMeleeSweep`) |
+| `TagWindows` | 창 안에 있는 동안 소유자 ASC에 루즈 게임플레이 태그 추가 |
+| `InputBufferWindow` | 창 안에서 `UTDSkillComponent`의 전투 입력 버퍼 열기 |
+| `JumpCapsuleWindow` | 창 안에서 `UTDCapsuleModifierComponent` 점프 캡슐 보정 켜기 |
+
+`FTDMeleeSweep`(`Source/TDGame/Combat/TDMeleeSweep.h`)은 렌더링된 포즈가 아니라 시퀀스 원본 데이터를 `SampleIntervalSeconds`(기본 1/60초) 간격으로 다시 샘플링하므로, 프레임이 길어져도 무기 궤적을 빠짐없이 스윕한다. 이전 샘플과 현재 샘플 사이는 액터 이동까지 보간해서 스피어 스윕한다. 한 프레임 안에 창 전체를 건너뛰어도 그 프레임에서 창을 시작하고 끝까지 스윕한다.
+
+| `FTDMeleeSweepSettings` 필드 | 역할 |
 | --- | --- |
 | `WeaponBaseSocketName` / `WeaponTipSocketName` | 무기 손잡이와 날 끝 소켓(또는 본). 끝 소켓이 없으면 한 점만 스윕한다. |
 | `BladeSampleCount`, `SweepRadius`, `SweepChannel` | 날 위의 샘플 점 개수, 스윕 반경, 콜리전 채널(기본 Pawn) |
-| `MontageSlotName` | 포즈를 읽을 몽타주 슬롯. 비우면 첫 슬롯을 사용한다. |
+| `bLockHeightToOwner`, `LockedHeightOffset` | 날 점 높이를 소유자 높이+오프셋으로 고정해 탑다운 평면에서 판정 |
 | `TargetPolicy`, `HitRules` | 진영 필터와 적중 시 실행할 규칙. `UTDDamageSubsystem::ExecuteRules`로 Hit 이벤트를 실행한다. |
 | `bDrawDebugSweep`, `DebugDrawDuration` | 스윕 경로와 적중점 디버그 표시 |
 
-한 노티파이 구간 동안 같은 대상은 한 번만 적중한다. 시전자는 `UTDCombatComponent`가 있어야 하며, 시전 시점의 능력치 스냅샷으로 컨텍스트를 만든다. 엔티티가 없으므로 `HitRules`의 지연 액션은 실행되지 않는다. 몽타주 슬롯 안의 시퀀스에 배치하면 시간 좌표가 어긋나므로 몽타주 노티파이 트랙에 직접 배치한다. 미러 테이블이 적용된 재생은 반영하지 않는다.
+한 타격 창 동안 같은 대상은 한 번만 적중한다. 시전자는 `UTDCombatComponent`가 있어야 하며, 능력 발동 시점의 능력치 스냅샷에 창 시작 시점의 위치·방향과 창 전용 연쇄 예산을 더해 컨텍스트를 만든다. 엔티티가 없으므로 `HitRules`의 지연 액션은 실행되지 않는다. 루트 본은 UAF 시퀀스 플레이어와 같이 루트 모션을 추출한 상태(시퀀스의 루트 모션이 켜져 있으면 루트 고정)로 샘플링한다. 행동이 끝나거나 중단되면 열린 창을 모두 닫는다. 미러 테이블이 적용된 재생은 반영하지 않는다.
 
 ## 상태이상 확장
 

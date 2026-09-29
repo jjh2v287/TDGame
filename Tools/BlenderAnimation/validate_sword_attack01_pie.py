@@ -1,7 +1,7 @@
-"""시스템 Python으로 실행(언리얼 에디터 열림 필요): PIE를 켜고 editor_pie_capture_sword_attack01.py로 검 공격 몽타주를 실제 플레이어에 재생해 재생 시간·슬롯 가중치·루트 모션 이동 거리·타격 시점 스크린샷을 기록한 뒤 PIE를 끈다.
+"""시스템 Python으로 실행(언리얼 에디터 열림 필요): PIE를 켜고 editor_pie_capture_sword_attack01.py로 검 공격 시퀀스를 실제 플레이어 폰에 UAF 행동으로 재생해(몽타주 없음, D44) 재생 시간·루트 모션 이동 거리·타격 시점 스크린샷을 기록한 뒤 PIE를 끈다.
 실행: python Tools/BlenderAnimation/validate_sword_attack01_pie.py
 출력: Docs/Validation/BlenderAnimation/sword-attack01-pie.json, Docs/Validation/BlenderAnimation/sword-attack01-pie-contact.png
-상태: 현행 (2026-09-25)
+상태: 현행 (2026-09-30 UAF 행동 경로)
 """
 import json
 import shutil

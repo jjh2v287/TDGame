@@ -69,6 +69,7 @@
 - 게임 규칙, 상태 변경, 조건 분기, 반복 처리, 계산, 입력 처리, AI 판단, 상호작용, 전투, 데미지, 인벤토리, 저장, 네트워크 및 UI 동작 로직은 블루프린트로 구현하지 않는다.
 - 이 프로젝트에서는 성능 기준상 블루프린트 로직이 C++ 로직보다 10배 느린 것으로 간주하므로, 새 로직은 예외 없이 C++로 작성한다.
 - 블루프린트는 에셋 연결, 기본값 설정, 데이터 전용 파생 클래스, 디자이너 조정용 프로퍼티 노출과 같은 구성 용도로만 사용한다.
+- UAF 에셋(그래프·시스템)에는 포즈 조합만 두고 상태 선택·판단은 C++가 변수와 주입으로 넘긴다. AnimBP·몽타주·StateTree는 쓰지 않는다(D44).
 - C++ 로직을 블루프린트에서 사용해야 할 때는 `UFUNCTION`, `UPROPERTY` 등 언리얼 리플렉션을 통해 명확한 진입점만 노출한다.
 - 기존 블루프린트에 로직을 추가하거나 수정해야 할 때는 먼저 해당 로직을 C++로 이전하고, 블루프린트에는 필요한 호출과 설정만 남긴다.
 - 블루프린트 그래프에 새로운 분기, 반복, 계산, 상태 머신 또는 게임 규칙을 추가하지 않는다.
@@ -144,7 +145,7 @@
 - 구성: `TDGame.uproject`에서 `ModelContextProtocol`과 `AllToolsets` 플러그인이 에디터 전용으로 켜져 있고, `Config/DefaultEditorPerProjectUserSettings.ini`에서 서버가 포트 8000, 경로 `/mcp`로 에디터 시작 시 자동 실행된다.
 - 클라이언트 설정 파일 목록(5벌)과 에디터 기동·라이브 코딩·재시작 절차는 `Tools/README.md` 0b절에 있다. 주소나 포트를 바꿀 때는 그 목록의 파일 전부와 에디터 설정을 함께 바꾼다.
 - 언리얼 에디터가 이 프로젝트를 열고 있어야 연결된다. 연결 실패 시 `python Tools/ue_editor.py ensure`로 에디터·포트·원격 실행을 확인·복구한다(기동 1~3분, 그동안 에디터가 필요 없는 작업을 먼저 한다). 에디터를 닫을 때는 저장되지 않은 에셋이 있는지 사용자에게 먼저 알린다.
-- 용도는 7절의 로직 정책과 같다. 에셋 생성과 구성에 사용한다: 몽타주 생성과 노티파이 배치, 데이터 에셋 값 설정, 블루프린트의 기본값·컴포넌트·에셋 연결, 액터 배치, 콜리전과 프로젝트 설정, 게임플레이 태그, 자동화 테스트 실행, 라이브 코딩 컴파일. 블루프린트 그래프에 로직 노드를 추가하는 데는 사용하지 않는다.
+- 용도는 7절의 로직 정책과 같다. 에셋 생성과 구성에 사용한다: 애니메이션 시퀀스, 데이터 에셋 값 설정, 블루프린트의 기본값·컴포넌트·에셋 연결, 액터 배치, 콜리전과 프로젝트 설정, 게임플레이 태그, 자동화 테스트 실행, 라이브 코딩 컴파일. 블루프린트 그래프에 로직 노드를 추가하는 데는 사용하지 않는다.
 - 에디터 상태를 바꾸는 도구(에셋 생성·저장·삭제, 레벨 수정, 설정 변경)는 실행 전에 대상과 결과를 사용자에게 알린다. 삭제와 덮어쓰기는 명시적 승인 후에만 실행한다.
 - MCP로 만든 에셋은 `.uasset`이므로 8절의 Git LFS 규칙을 따른다. 생성 후 `git status`로 의도하지 않은 에셋 저장이 없는지 확인한다.
 - 빌드 결과 파일(`Binaries`, `Intermediate`)은 커밋하지 않는다.
@@ -158,13 +159,13 @@
 
 ## 13. 몬스터 AI · 전투 시뮬레이션 작업 대장
 
-- 몬스터 AI(코드 정의 유틸리티 + 실행 FSM), 결정론 전투 시뮬레이터(밸런스 툴), 틱·대량 몬스터 최적화, 머신러닝·생성형 AI 통합 작업은 `Docs/MonsterAI_CombatSim_Plan.md`(인덱스)와 `Docs/MonsterAI_CombatSim/07-roadmap-and-tasks.md`(할 일 대장, ID `M<phase>-<번호>`)를 따른다. 구속력 있는 결정은 `Docs/MonsterAI_CombatSim/00-decision-record.md`(D1~D38)이며, 결정을 바꾸려면 `Docs/MonsterAI_CombatSim/research/`의 근거를 먼저 반박한다.
-- 엔진 비헤이비어 트리·StateTree·HTNPlanner 플러그인·GOAP·Mass 두뇌·Mover·MLAdapter 는 전투 코어에 쓰지 않는다. 몬스터 한 종의 정본은 `Content/MonsterAI/Definitions/<Id>.json` 이고 행동 원시·입력 함수는 C++ 등록표다. 시뮬레이터와 게임은 같은 스텝 코드를 돌리며, 시뮬 코드에서 `FMath::FRand` 계열 전역 난수를 쓰지 않는다.
+- 몬스터 AI(코드 정의 유틸리티 + 실행 FSM), 결정론 전투 시뮬레이터(밸런스 툴), 틱·대량 몬스터 최적화, 머신러닝·생성형 AI 통합 작업은 `Docs/MonsterAI_CombatSim_Plan.md`(인덱스)와 `Docs/MonsterAI_CombatSim/07-roadmap-and-tasks.md`(할 일 대장, ID `M<phase>-<번호>`)를 따른다. 구속력 있는 결정은 `Docs/MonsterAI_CombatSim/00-decision-record.md`(D1~D38·D44)이며, 결정을 바꾸려면 `Docs/MonsterAI_CombatSim/research/`의 근거를 먼저 반박한다.
+- 엔진 비헤이비어 트리·StateTree·HTNPlanner 플러그인·GOAP·Mass 두뇌·MLAdapter 는 전투 코어에 쓰지 않는다. 모든 캐릭터 몸은 `APawn`+Mover, 애니메이션은 UAF(D44). 몬스터 한 종의 정본은 `Content/MonsterAI/Definitions/<Id>.json` 이고 행동 원시·입력 함수는 C++ 등록표다. 시뮬레이터와 게임은 같은 스텝 코드를 돌리며, 시뮬 코드에서 `FMath::FRand` 계열 전역 난수를 쓰지 않는다.
 - 작업 절차와 상태 표기(`todo/doing/blocked/done/decision`)·담당 필드·청구·기록 형식은 12절의 월드·던전 대장과 같다(15절). 두 대장은 별도 파일이며 통합 시점은 사용자가 결정한다.
 
 ## 14. 소스 폴더 구조와 PJGame 이식 규칙
 
-- `Source/TDGame`은 역할별 폴더로 나뉜다: `Core/`(태그·메시지·아이템 타입), `Characters/`, `Framework/`(+`ThirdPerson/`), `Combat/`(전투 컴포넌트·라이브러리), `Combat/Damage/`, `Combat/GAS/`(+`Abilities/`), `Combat/Skills/`, `Combat/AnimNotify/`, `AI/{CombatToken,NPC}/`, `Performance/BudgetTick/`, `Actors/`, `World/{Streaming,Persistence,Generation}/`, `Tests/`. 새 파일은 같은 역할의 폴더에 두고, 인클루드는 모듈 루트 기준 경로(`"Combat/TDCombatLibrary.h"`)로 쓴다.
+- `Source/TDGame`은 역할별 폴더로 나뉜다: `Core/`(태그·메시지·아이템 타입), `Characters/`, `Framework/`, `Combat/`(전투 컴포넌트·라이브러리), `Combat/Damage/`, `Combat/GAS/`(+`Abilities/`), `Combat/Skills/`, `AI/{CombatToken,NPC}/`, `Performance/BudgetTick/`, `Actors/`, `World/{Streaming,Persistence,Generation}/`, `Tests/`. 새 파일은 같은 역할의 폴더에 두고, 인클루드는 모듈 루트 기준 경로(`"Combat/TDCombatLibrary.h"`)로 쓴다.
 - 이전 프로젝트 `C:\Project\PJGame` 코드는 `Docs/PJGame_PortMap.md`의 대응표대로 이식되어 있다. 추가로 옮길 때는 `Docs/Tasks/decisions.md` D-11의 대체 규칙(ASC는 `UTDCombatComponent` 하나, 팀은 `FTDCombatStats.TeamId`, 데미지는 `UTDCombatLibrary::TryApplyDamage`, 태그는 `Core/TDGameplayTags.h`)을 따르고 표에 한 줄 추가한다.
 
 ## 15. 공통 관리 규칙: 세션·도구·기록 (모든 에이전트)

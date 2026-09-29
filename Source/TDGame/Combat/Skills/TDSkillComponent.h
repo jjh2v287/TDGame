@@ -93,7 +93,7 @@ private:
 	TWeakObjectPtr<AActor> CurrentActionTarget;
 	TWeakObjectPtr<UGameplayAbility> CurrentActionOwningAbility;
 	FGameplayTag CurrentActionTag;
-	ETDCombatHitExecutionType CurrentHitExecutionType = ETDCombatHitExecutionType::NotifyTrace;
+	ETDCombatHitExecutionType CurrentHitExecutionType = ETDCombatHitExecutionType::TimelineSweep;
 	double LastPrimaryAttackTimestamp = -1.0;
 	int32 CurrentPrimaryComboStep = 0;
 	bool bIsComboWindowOpen = false;

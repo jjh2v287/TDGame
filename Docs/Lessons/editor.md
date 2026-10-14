@@ -113,3 +113,37 @@
 - 증거: `Saved/Logs/TDGame.log`(2026-09-29 16:10~16:20 UTC), `Tools/Movement/editor_pie_player_probe.py`
 - 날짜·상태: 2026-09-30 active
 - 발견: claude
+
+### L-editor-14 `MaterialEditingLibrary.set_material_instance_*_parameter_value`가 성공해도 False를 돌려준다
+- 증상: UE 5.8 에디터 Python에서 벡터·스칼라 파라미터 설정 호출이 매번 `False`인데, 다시 읽으면 값이 바뀌어 있다.
+- 해결: 반환값으로 판정하지 말고 부모의 `get_vector_parameter_names`·`get_scalar_parameter_names`로 이름 존재를 먼저 확인한 뒤 설정하고, 필요하면 `get_material_instance_*_parameter_value`로 다시 읽어 확인한다(`editor_build_realm.py` 방식).
+- 범위: UE 5.8 에디터 Python
+- 증거: 2026-10-14 claude 세션(`Tools/scratch/realm_lookdev.py` 출력 False → `realm_material_params.py` 재조회 값 반영)
+- 날짜·상태: 2026-10-14 active
+- 발견: claude
+
+### L-editor-15 에디터 Python `set_collision_enabled(NO_COLLISION)`으로 끈 평면 충돌이 PIE에서는 살아나 폰을 막는다
+- 증상: 에디터 월드에서 `get_collision_enabled()`는 NO_COLLISION인데, PIE에서 같은 StaticMeshActor(엔진 Plane 안개·바닥 평면)가 capsule trace에 block=True로 걸리고 폰이 몸통 높이 평면 가장자리에서 멈춘다(오르막에서만 재현).
+- 원인: 충돌 프로필 이름이 기본값(BlockAll)으로 남아 있어, 저장·스트리밍 로드 뒤 프로필 값이 다시 적용된다(가정: 프로필 재적용 경로는 소스 미확인, 현상은 실측).
+- 해결: `comp.set_collision_profile_name("NoCollision")`을 함께 호출한다(`editor_build_open_world.spawn_planes`에 반영). 이미 배치된 평면은 월드 파티션 액터를 로드한 뒤 프로필을 바꿔 저장한다(이번에 338개).
+- 범위: UE 5.8 에디터 Python으로 만든 StaticMeshActor 전반
+- 증거: `Saved/AgentOps/20261014/piewalk/`(PIE 탐침 출력 Fog_2·Floor_5 block=True), 수정 뒤 실제 이동 입력 걷기 6/6 통과
+- 날짜·상태: 2026-10-14 active
+- 발견: claude
+
+### L-editor-16 재질 Python 편집 함정 세 가지: 잘못된 MaterialProperty 값은 크래시, 함수 표현식 일괄 삭제는 절반만, Vector4f는 import_text로
+- 증상: ① `MaterialEditingLibrary.get_material_property_input_node(material, <유효하지 않은 MaterialProperty 값>)`로 열거형을 훑다가 에디터가 크래시(로그 `Saved/AgentOps/20261014/topdown/laneM/editor_crash_tail.log`) ② `delete_all_material_expressions_in_function`이 표현식의 약 절반만 지운다 ③ `MaterialExpressionFunctionInput.preview_value`(Vector4f)는 생성자 인수·속성 대입으로 값이 들어가지 않는다.
+- 해결: ① 알려진 값(`MP_OPACITY_MASK` 등)만 넘기고 열거형 전체 순회 금지 ② `get_material_function_expressions` → `delete_material_expression_in_function`를 남은 것이 없을 때까지 반복(`editor_make_topdown_materials.clear_function`) ③ `v = unreal.Vector4f(); v.import_text("(X=1.0,Y=0.0,Z=0.0,W=0.0)")`.
+- 범위: UE 5.8 에디터 Python 재질·재질 함수 편집
+- 증거: P3-17 재질 갈래 실행(`Tools/WorldGen/editor_make_topdown_materials.py`), 크래시 로그 위 경로
+- 날짜·상태: 2026-10-14 active
+- 발견: claude
+
+### L-editor-17 팩 마스터를 복제해 Masked로 바꿔도 `GetBlendMode()`가 Opaque — 저장된 `bCanMaskedBeAssumedOpaque`가 따라온다
+- 증상: `/Game/DarkFantasyTopDown/.../M_Bark`(Opaque)를 `duplicate_asset`으로 복제해 `blend_mode`를 BLEND_MASKED로 바꾸고 OpacityMask를 연결·재컴파일해도, 컷아웃이 전혀 안 먹는다. `get_editor_property("blend_mode")`는 MASKED인데 `material.get_blend_mode()`와 자식 MI의 `get_blend_mode()`는 BLEND_OPAQUE. 블렌드 모드 토글·`update_material_instance`·재부모화로도 안 바뀐다.
+- 원인: `UMaterial::GetBlendMode()`는 Masked라도 `bCanMaskedBeAssumedOpaque`가 참이면 Opaque를 돌려준다. 이 UPROPERTY는 옛 버전 변환(`VER_UE4_MATERIAL_MASKED_BLENDMODE_TIDY` 등) 때만 계산돼 저장되고 일반 편집으로는 다시 계산되지 않는다(엔진 `Material.cpp` 3079·3322·7442행). Python에는 노출되지 않는다.
+- 해결: C++ 에디터 함수 `UTDWorldGenEditorLibrary::ClearMaskedAssumedOpaque(UMaterial*)`(공개 멤버를 false로 + PostEditChange)를 `editor_make_topdown_materials.py`가 마스터마다 부른다. 확인은 `material.get_blend_mode()`로 한다(속성값으로 확인하지 않는다).
+- 범위: UE 5.8, 오래된 팩에서 복제한 재질을 Opaque→Masked로 바꿀 때
+- 증거: `Saved/AgentOps/20261014/topdown/laneM/bark_w1.png`(줄기 안 잘림) ↔ `bark_w1_fixed.png`(잘림)
+- 날짜·상태: 2026-10-14 active
+- 발견: claude

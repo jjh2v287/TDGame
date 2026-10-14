@@ -2,9 +2,9 @@
 
 | 상태 | 개수 |
 |---|---|
-| todo | 1 |
-| doing | 6 |
-| done | 6 |
+| todo | 3 |
+| doing | 7 |
+| done | 8 |
 
 목표(설계서 Phase 3): 500m×500m 필드에 마을 1, 던전 3, POI 8을 생성하고 도로 스플라인·배제 마스크·Forest 바이옴 PCG·월드 검증·시드 후보 선택까지 완성한다.
 
@@ -148,3 +148,77 @@
 - 완료 조건: ID 없는 Landmark 2개 이상 픽스처에서 도로 ID 고유, 결정론 해시 테스트 통과
 - 참조: P3-04 2026-09-30 기록, `Saved/AgentOps/20260930/fix-world.md`
 - 기록: 2026-09-30 발견(claude). 에디터 경로는 액터 라벨로 ID를 만들어 실제 영향은 작음
+
+### P3-13 이계 지역(Realm) 2곳과 외곽 관문 심리스 이동
+- 상태: done
+- 담당:
+- 우선순위: 높음
+- 선행: P1-04, P1-05, P3-00, P3-11
+- 목표: 외곽 관문이 벽 복도 던전 대신 메인 지역과 지형·분위기가 다른 오픈 지역 2곳(지하 세계풍 이계, 천공풍 고지)으로 로딩 화면 없이 이어지게 한다.
+- 완료 조건:
+  - C++: `UTDRealmDefinition`(TDWorldGen)·설정 `RealmDefinitions`, 이동 서브시스템이 관문 ID를 이계 도착점·필드 귀환점으로 해석하고 요청 시 지역 색 페이드아웃 → 순간이동 → 정착 후 페이드인, 선로딩 구 이탈 시 취소, 도착 직후 겹친 관문 선로딩, `UTDRealmSubsystem`(이동 순간 전역 태양·스카이라이트·대기·안개 전환과 귀환 복원, 낙하 복구)
+  - 생성: `Tools/WorldGen/generate_realm.py` 두 이계(504m, 505×505) 시드 결정론·도달성·경사 검증 통과, 미리보기
+  - 베이크: `editor_build_realm.py`가 같은 레벨 먼 좌표(별밭 (−3024m, 3024m), 고원 (−3024m, −3024m))에 랜드스케이프·산포·조명·후처리 볼륨·내비 경계·관문(필드 3·이계 3)·정의 에셋을 멱등 생성. 메인 빌더 재실행이 이계를 지우지 않음
+  - 검증: 헤드리스 `TDGame.WorldGen`·`TDGame.SeamlessTravel`(신규 `RealmRoundTrip`·`PreloadCancelAllowsOtherTarget` 포함)·`TDGame.WorldState` 통과, PIE 걸어서 관문 3곳 왕복(로딩 화면 없음), 이계별 캡처 `Docs/Validation/P3-13-*`
+- 산출물: `Source/TDWorldGen/*/World/TDRealmDefinitions.*`, `Source/TDGame/World/Streaming/TDRealmSubsystem.*`, 이동 서브시스템·관문 수정, `Tools/WorldGen/{generate_realm,editor_build_realm}.py`, `Content/World/Definitions/DA_TDRealm_*`, `Content/World/Realms/`
+- 검증: 명세 `Saved/AgentOps/20261013/realm-spec.md` 2·3절 명령, `python Tools/WorldGen/pie_p1_checks.py --ids ...`
+- 참조: P1-04·P1-05(심리스 이동·입구), P3-00(랜드스케이프 raw 입력), P3-11(메인 지역 베이크), D-04·D-06
+- 기록: 2026-10-13 작성·청구(claude): 사용자 요청 "외곽 던전을 벽 복도가 아닌 오픈월드 특정 지역으로, 엘든링 지하 세계·공중 지역처럼 다른 세계, 심리스 로딩으로 이동"
+  2026-10-14 완료(claude): C++(UTDRealmDefinition·UTDRealmSubsystem·이동 서브시스템 관문 해석·지역 색 페이드·선로딩 취소·도착 직후 재선로딩·이계 진입 뒤 필드 귀환점 10초 붙잡기·낙하 복구), 생성기·베이크(별밭 인스턴스 4,639·조명 55, 고원 1,584·구름 평면 72, 랜드스케이프 각 17 프록시, 필드 입구 3→관문 3), 재질 `RealmTint`·`RealmBrightness`·`RealmDesaturation`. 헤드리스 29/29(RealmRoundTrip 포함), PIE 관문 3곳 걸어서 왕복 FAIL 0, 귀환 준비 9~24s→0~2.7s(L-worldgen-01), 메인 빌더 보호는 실제 에디터 건식 실행(이계 액터 927 보존·태그 누락 0, 필드 상자 랜드스케이프 65=메인만). 증거 `Docs/Validation/P3-13-realms.md`. 후속 P1-11·P1-12·P3-14.
+
+### P3-14 이계 인카운터와 이계 전용 장식 메시
+- 상태: todo
+- 우선순위: 중간
+- 선행: P3-13
+- 목표: 이계 공터(`TDRealmCombatClearing` 마커)에 몬스터 인카운터를 두고, 대체 중인 기둥·버섯을 이계 전용 메시(수정·유적·구름)로 바꾼다.
+- 완료 조건: 이계별 `UTDEncounterSet` 에셋과 공터 스포너, 셀 재로드 시 처치 상태 유지 방식 결정(P1-06 영속 상태), 신규 메시 확보 경로(제작·구매) 사용자 결정
+- 참조: `Docs/Validation/P3-13-realms.md`, 조사 `Saved/AgentOps/20261013/realm-understand.md` content-assets·editor-cpp 절
+- 기록: 2026-10-14 작성(claude)
+
+### P3-15 이계 통로: 걸어서 넘어가는 숨은 이음매 연결
+- 상태: done
+- 담당:
+- 우선순위: 높음
+- 선행: P3-13
+- 목표: 외곽 입구 3곳에서 통로를 걸어가면 앞쪽 이계가 열리고 지나온 필드가 꺼지며, 암전·포탈 없이 이계로 넘어간다(D-42).
+- 완료 조건:
+  - 공유 통로 모듈 `Tools/WorldGen/realm_passages.py`로 필드 통로 A(입구→이음매, 남서·남동 하강, 북동 상승)와 이계 통로 B를 깎고, 이음매 ±30m 핵심 구간 높이가 정수 오프셋 뒤 1/128m 이내로 같다
+  - C++: 걷는 동안 반대편 선로딩, 이음매 통과 시 암전 없는 평행이동(속도·회전 유지, 카메라 컷, 클릭 이동 목적지 이동), 진행도 기반 분위기·후처리 혼합과 이음매 안개, 낙하 복구
+  - 포탈 관문 액터 제거, 메인 필드는 부분 재베이크(던전 슬롯·PCG·상자·내비 설정 보존 개수 확인), 던전 귀환점 갱신
+  - 검증: 헤드리스 `TDGame.SeamlessTravel.RealmSeamWalk`(관문 3곳 왕복 연속성)·기존 테스트 통과, PIE에서 실제 이동 입력으로 관문 3곳 왕복, 이음매 전후 캡처 `Docs/Validation/P3-15-*`
+- 산출물: `Tools/WorldGen/realm_passages.py`, 생성기·빌더 수정, `UTDRealmSubsystem` 틱 처리, 메인 필드 지형·산포 재베이크
+- 검증: 명세 `Saved/AgentOps/20261013/seam-spec.md` 2.7·3·4절
+- 참조: D-42, P3-13 증거 `Docs/Validation/P3-13-realms.md`, L-worldgen-01
+- 기록: 2026-10-14 작성·청구(claude): 사용자 "포탈 같다, 플레이어가 이동하면서 다른 지역이 열리는 방식으로"
+  2026-10-14 완료(claude): 공유 통로 모듈 `realm_passages.py`, 필드 통로 A 3곳(부분 재베이크: 지형 65·layout 액터 1,896·ISM 1,090 교체, 보존 1,114), 이계 통로 B·소품, 포탈 액터 33개 제거, C++ 이음매 통과·진행도 혼합(태양 회전 포함)·이음매 안개·후처리 가중치. 형상 일치 0/128m, 헤드리스 31/31(RealmSeamWalk 3관문 왕복), PIE 실제 이동 입력 걷기 6/6(통과 순간 속도 600cm/s 유지). 중간 발견: 평면 충돌 PIE 부활(L-editor-15, 338개 수정), 이음매 태양 회전 튐(L-worldgen-03). 증거 `Docs/Validation/P3-15-passages.md`. 후속 P3-16.
+
+### P3-16 이계 통로 조명·카메라 가림 다듬기
+- 상태: todo
+- 우선순위: 낮음
+- 선행: P3-15
+- 목표: 통로 핵심 구간(깊은 협곡)의 어두움과 카메라가 벽 소품에 가려지는 장면을 줄여 전투 가독성을 확보한다.
+- 완료 조건: 통로 점광원·벽 높이·이음매 안개 값 조정 후 PIE 캡처 비교, 사용자 확인
+- 참조: `Docs/Validation/P3-15-passages.md` '남은 것', `Docs/Validation/P3-15-passages/*_2_*`·`*_3_*`
+- 기록: 2026-10-14 작성(claude). 2026-10-14 P3-17이 카메라 가림(통로 카메라 쪽 벽 낮춤·입구 상인방 제거·재질 컷아웃)과 통로 화면 암전(어두운 비율 ≤0.001)을 해결함 — 남은 범위는 통로 조명 분위기 다듬기와 사용자 확인
+
+### P3-17 탑다운 시점 시각 오류 정리: 큰 물체 가림·뒷면·빈 공간
+- 상태: done
+- 담당: claude/2026-10-14
+- 우선순위: 높음
+- 선행: P3-11, P3-13, P3-15
+- 목표: 고정 탑다운 카메라(실제 값은 BP가 덮어씀: 암 1100cm, 피치 −50°, 요 45°, 폰 기준 (−500,−500,+843)cm)에서 큰 나무·바위·절벽이 플레이어를 가리거나 뒷면·빈 공간을 드러내는 현상을 없앤다(필드·이계·통로).
+- 완료 조건: ① 프로젝트 탑다운 재질 체계(`/Game/World/Materials/TopDown/` MPC_TD·MF_TD·M_TD·MI_TD, D-43)와 C++ 가림 초점 서브시스템으로 폰 앞을 가리는 우리 배치물이 디더로 비워진다(그림자 유지, 콘솔 변수로 끄기) ② 결정론 배치 후처리(`topdown_rules.py`): 걷는 칸의 카메라 시선 가림 제거·축소, 바위 기울기 0·카메라 쪽 틈 묻기, 높은 기둥 상한, 통로 카메라 쪽 벽 낮춤(형상 일치 유지), 통로 입구 상인방 제거, 고원 가장자리 구름 확장 — 규칙 전후 수치 표 ③ 메인 부분 재베이크·이계 재베이크·PCG 재생성 뒤 헤드리스 테스트 회귀 없음, PIE 통로 실제 걷기 6/6 ④ PIE 27지점 조사 전후 비교에서 심각·높음(화면 암전·카메라 매몰·폰 가림) 0건 ⑤ 설계 문서 `Docs/WorldDungeonPCG/05-topdown-visuals.md`, 도구 등록
+- 명세: `Saved/AgentOps/20261014/topdown/topdown-spec.md`
+- 참조: P3-16(통로 카메라 가림 포함), `Docs/Validation/P3-15-passages.md`
+- 기록: 2026-10-14 작성·청구(claude): 사용자 "큰 오브젝트 배치로 고정 카메라에 뒷면·빈 공간이 보인다. 탑다운에 맞춘 배치, 투명 처리, 긴 물체 높이 줄이기 등으로 자연스럽게. 평원은 괜찮고 다른 지역·큰 나무·바위에서"
+  2026-10-14 완료(claude): ① 재질 체계 `/Game/World/Materials/TopDown/`(MPC·MF·마스터 5·거울 MI 31, 이계 MI 재부모화, PCG 그래프 6개 패치, 슬롯 3,432개 교체) + C++ `UTDTopDownOcclusionSubsystem`·`UTDTopDownSettings`(`td.TopDown.OcclusionCutout`), 줄기 Masked 함정은 `ClearMaskedAssumedOpaque`로 해결(L-editor-17) ② `topdown_rules.py` R1~R6(+별밭 바깥 고리): 걷는 칸 가림 필드 11.0→0.97%, 카메라 메시 안 3,889→0, 형상 일치 0/128m, 독립 반박 합격 ③ 메인 부분·이계 재베이크, 헤드리스 32/32, PIE 통로 실제 걷기 6/6(600cm/s, 프레임 평균 26~36ms) ④ 27지점 전후: 통로 암전 0.976/0.472/0.639→≤0.001, 가림 16→5(남은 5는 지점 자체 문제 2·디더 처리 3), 매몰 0 ⑤ 설계 `Docs/WorldDungeonPCG/05-topdown-visuals.md`, 도구 6개 등록. GPU: 컷아웃 켬/끔 차이 측정 잡음 이내. 증거 `Docs/Validation/P3-17-topdown.md`. 남은 것: 가파른 지형 텍스처 늘어남·이계 상자 지형 끝선, 고원 첨탑 62→6m 사용자 확인.
+
+### P3-18 엘든링식 동적 승강기(별밭 남동)와 걷는 통로 동적 속도 조절
+- 상태: doing
+- 담당: claude/2026-10-14
+- 우선순위: 높음
+- 선행: P3-15, P3-17
+- 목표: 남동 입구를 절벽 옆 열린 승강대로 바꿔, 하강하는 동안 별밭을 로드하고 준비되면 숨은 이음매를 넘어 바닥에서 멈추고 열리게 한다(로딩이 늦으면 이음매 위에서 느려지고 멈춰 기다림). 남서·북동 걷는 통로는 준비가 늦으면 이음매 앞에서 감속하고 안개를 짙게 한다(D-44).
+- 완료 조건: (조사 뒤 기록)
+- 참조: D-42·D-44, `Docs/Validation/P3-15-passages.md`, `Docs/WorldDungeonPCG/05-topdown-visuals.md`
+- 기록: 2026-10-14 작성·청구(claude): 사용자 "엘든링 지하 엘리베이터처럼 로드되는 동안 계속 내려가다 완료되면 멈추고 문이 열리는 방식, 브릿지 구간이 동적인지, 가능하면 적용"

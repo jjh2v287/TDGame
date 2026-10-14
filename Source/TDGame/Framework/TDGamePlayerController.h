@@ -109,6 +109,8 @@ public:
 	UFUNCTION(Exec)
 	void TDLoadWorldState(const FString& SlotName);
 
+	void ShiftMovementTargetsBy(const FVector& Offset);
+
 protected:
 
 	virtual void BeginPlay() override;

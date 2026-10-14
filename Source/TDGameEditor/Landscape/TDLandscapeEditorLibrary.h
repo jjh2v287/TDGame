@@ -69,4 +69,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "TD|Landscape", meta = (WorldContext = "WorldContextObject"))
 	static int32 DestroyAllLandscapeActors(UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "TD|Landscape", meta = (WorldContext = "WorldContextObject"))
+	static int32 DestroyLandscapeActorsInBounds(UObject* WorldContextObject, FVector MinCm, FVector MaxCm);
 };

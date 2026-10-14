@@ -5,8 +5,9 @@
   layer_<이름>.r8       레이어 가중치(uint8, 1009x1009) — Soil/Moss/Mud/Road/Rock/Bedrock
   layout.json           배치 데이터(인스턴스 메시, 고유 액터, 물/안개 평면, 조명, 나이아가라, 마커)
   preview.png           검토용 상공 지도
+  topdown_rules_report.json  탑다운 배치 후처리 규칙(topdown_rules.py)별 바뀐·제거 수
 
-실행: python Tools/WorldGen/generate_ashen_vale.py [--seed 7] [--out Saved/WorldGen/AshenVale]
+실행: python Tools/WorldGen/generate_ashen_vale.py [--seed 7] [--out Saved/WorldGen/AshenVale] [--no-topdown](탑다운 규칙 끄기, 이전 출력 재현)
 그다음 에디터 안에서 Tools/WorldGen/editor_build_open_world.py 를 실행해 레벨에 반영한다.
 
 좌표 규약: 월드 X = 지도 오른쪽(+), 월드 Y = 지도 아래쪽(+). 배열 인덱스는 [iy, ix]. 단위는 미터, 내보낼 때 cm.
@@ -20,6 +21,13 @@ import sys
 import numpy as np
 from scipy import ndimage
 
+import realm_passages as rp
+import topdown_rules as tdr
+
+GENERATOR_VERSION = 2
+SEAM_CORE_CLEAR_MARGIN_M = 2.0
+PASSAGE_SCATTER_MARGIN_M = 1.0
+SEAM_PCG_EXCLUSION_HEIGHT_PAD_M = 5.0
 SIZE = 1009
 HALF = (SIZE - 1) // 2
 QUAD_M = 1.0
@@ -30,7 +38,6 @@ OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.a
 MESH_ROOT = "/Game/DarkFantasyTopDown/StaticMeshes"
 MAT_ROOT = "/Game/DarkFantasyTopDown/Materials"
 ENGINE_PLANE = "/Engine/BasicShapes/Plane"
-ENGINE_CUBE = "/Engine/BasicShapes/Cube"
 
 M = {
     "Birch1": f"{MESH_ROOT}/Birch/SM_Birch1", "Birch2": f"{MESH_ROOT}/Birch/SM_Birch2", "Birch3": f"{MESH_ROOT}/Birch/SM_Birch3",
@@ -299,13 +306,61 @@ def build_terrain(rng):
     h = np.minimum(h, h * (1.0 - river_w) + river_w * bed)
     h = np.minimum(h, np.where(river_dist < 4.5, bed, h))
 
+    pre_passage_h, pre_passage_road_weight = h, road_weight
+    h, passage_floor, passage_footprint, passages = carve_field_passages(h, X, Y)
+    road_weight = np.maximum(road_weight, passage_floor)
+    road_layer = np.maximum(road_layer, passage_floor)
+
     slope = terrain_slope_deg(h)
     fields = {
         "X": X, "Y": Y, "h": h, "slope": slope, "river_dist": river_dist, "river_poly": river_poly,
         "road_weight": road_weight, "road_layer": road_layer, "road_mask": road_mask_all, "road_polys": road_polys,
         "marsh": marsh_m, "village": village_m, "grave": grave_m, "high": high, "west": west, "edge_d": edge_d, "rim": rim, "lake": lake_m,
+        "passage_footprint": passage_footprint, "passages": passages,
+        "pre_passage_h": pre_passage_h, "pre_passage_slope": terrain_slope_deg(pre_passage_h), "pre_passage_road_weight": pre_passage_road_weight,
     }
     return fields
+
+
+def build_placement_fields(f):
+    return dict(f, h=f["pre_passage_h"], slope=f["pre_passage_slope"], road_weight=f["pre_passage_road_weight"], passage_footprint=np.zeros_like(f["passage_footprint"]))
+
+
+def field_entrances():
+    return {"MainCrypt": (MAIN_DUNGEON, MAIN_DUNGEON_FACING), "HollowCave": (SIDE_DUNGEON_NW, SIDE_DUNGEON_NW_FACING), "SunkenCrypt": (SIDE_DUNGEON_SE, SIDE_DUNGEON_SE_FACING)}
+
+
+def require_passage_matches_entrance(passage):
+    entrance = field_entrances().get(passage["entrance_name"])
+    if entrance is None:
+        raise ValueError(f"{passage['gate_id']}: unknown entrance {passage['entrance_name']}")
+    (ex, ey), facing = entrance
+    if passage["field_entrance_m"] != (ex, ey) or passage["marker_yaw_deg"] != facing:
+        raise ValueError(f"{passage['gate_id']}: realm_passages entrance {passage['field_entrance_m']}/{passage['marker_yaw_deg']} != generator {(ex, ey)}/{facing}")
+
+
+def carve_field_passages(h, X, Y):
+    floor_total = np.zeros_like(h)
+    footprint_total = np.zeros_like(h)
+    passages = []
+    for passage in rp.PASSAGES:
+        require_passage_matches_entrance(passage)
+        mouth_x, mouth_y = passage["field_marker_m"]
+        mouth_z = float(sample_bilinear(h, np.array([mouth_x]), np.array([mouth_y]))[0])
+        z0 = rp.seam_floor_z(passage, "field", mouth_z)
+        s_start, s_end = rp.default_span(passage, "field")
+        h, floor_mask, wall_mask = rp.stamp_passage(h, X, Y, passage, "field", z0, s_start, s_end, mouth_z=mouth_z)
+        floor_total = np.maximum(floor_total, floor_mask)
+        footprint_total = np.maximum(footprint_total, np.maximum(floor_mask, wall_mask))
+        seam_x, seam_y = passage["field_seam_m"]
+        passages.append({
+            "gate_id": passage["gate_id"], "realm_id": passage["realm_id"], "field_marker_label": passage["field_marker_label"], "kind": passage["kind"], "grade": passage["grade"],
+            "yaw_deg": passage["yaw_deg"], "field_seam_cm": [seam_x * 100.0, seam_y * 100.0, z0 * 100.0], "seam_floor_z_m": z0, "mouth_z_m": mouth_z,
+            "approach_m": passage["approach_m"], "approach_length_cm": round(passage["approach_m"] * 100.0, 1), "seam_buffer_cm": rp.SEAM_BUFFER_M * 100.0,
+            "s_start_m": s_start, "s_end_m": s_end, "realm_seam_local_m": list(passage["realm_seam_local_m"]), "front_m": passage["front_m"],
+            "floor_cells": int((floor_mask > 0.5).sum()),
+        })
+    return h, floor_total, footprint_total, passages
 
 
 def terrain_slope_deg(h):
@@ -368,12 +423,32 @@ class Layout:
         self.markers = []
         self.occupied = []
         self.cell_m = 126.0
+        self.passage_distance_m = distance_and_nearest(f["passage_footprint"] > 0.0)[0]
 
     def height(self, x, y):
         return float(sample_bilinear(self.f["h"], np.array([x]), np.array([y]))[0])
 
-    def slope(self, x, y):
-        return float(sample_bilinear(self.f["slope"], np.array([x]), np.array([y]))[0])
+    def placement_slope(self, x, y):
+        return float(sample_bilinear(self.f["pre_passage_slope"], np.array([x]), np.array([y]))[0])
+
+    def is_near_passage(self, x, y, clearance_m):
+        distance_m = float(sample_bilinear(self.passage_distance_m, np.array([x]), np.array([y]))[0])
+        return distance_m < PASSAGE_SCATTER_MARGIN_M + clearance_m
+
+    def add_scatter_ism(self, key, x, y, yaw, scale, **kwargs):
+        if self.is_near_passage(x, y, 0.0):
+            return
+        self.add_ism(key, x, y, yaw, scale, **kwargs)
+
+    def add_scatter_plane(self, mat, x, y, z, yaw, sx, sy, label, **kwargs):
+        if self.is_near_passage(x, y, 0.5 * math.hypot(sx, sy)):
+            return
+        self.add_plane(mat, x, y, z, yaw, sx, sy, label, **kwargs)
+
+    def add_scatter_niagara(self, key, x, y, z_off, label):
+        if self.is_near_passage(x, y, 0.0):
+            return
+        self.add_niagara(key, x, y, z_off, label)
 
     def add_ism(self, key, x, y, yaw, scale, roll=0.0, pitch=0.0, z_off=0.0, sink=0.0, z=None):
         if z is None:
@@ -417,12 +492,14 @@ class Layout:
     def add_niagara(self, key, x, y, z_off, label):
         self.niagara.append({"asset": NIAGARA[key], "loc": [round(x * 100, 1), round(y * 100, 1), round((self.height(x, y) + z_off) * 100, 1)], "label": label})
 
-    def add_marker(self, kind, x, y, yaw, label, z_off=0.0, tags=None, scale=None):
+    def add_marker(self, kind, x, y, yaw, label, z_off=0.0, tags=None, scale=None, box_extent_cm=None):
         e = {"kind": kind, "loc": [round(x * 100, 1), round(y * 100, 1), round((self.height(x, y) + z_off) * 100, 1)], "rot": [0.0, yaw, 0.0], "label": label}
         if tags:
             e["tags"] = tags
         if scale:
             e["scale"] = scale
+        if box_extent_cm:
+            e["box_extent_cm"] = box_extent_cm
         self.markers.append(e)
 
     def reserve(self, x, y, r):
@@ -444,6 +521,7 @@ def build_exclusion(f, extra_circles):
     for (cx, cy, r) in extra_circles:
         excl = np.maximum(excl, radial(X, Y, cx, cy, r, r + 5.0))
     excl = np.maximum(excl, smoothstep(-2.6, -1.4, -f["h"]) * (f["h"] < -1.2))
+    excl = np.maximum(excl, f["passage_footprint"])
     return np.clip(excl, 0.0, 1.0)
 
 
@@ -487,10 +565,12 @@ def scatter(rng, density, cell, min_dist, count_cap=None):
     return np.array(out_x), np.array(out_y)
 
 
-def build_forest_density(rng, f, excl):
-    X, Y = f["X"], f["Y"]
-    n_clear = fbm(rng, 5, 3)
-    n_var = fbm(rng, 14, 2)
+def build_forest_noise(rng):
+    return fbm(rng, 5, 3), fbm(rng, 14, 2)
+
+
+def build_forest_density(forest_noise, f, excl):
+    n_clear, n_var = forest_noise
     base = 0.80 + 0.15 * f["west"]
     base = base * (1.0 - f["high"]) + f["high"] * 0.30
     base = base * (1.0 - f["marsh"]) + f["marsh"] * 0.34
@@ -520,29 +600,29 @@ def place_forest(L, rng, f, excl):
             key, s = "Birch3", rng.uniform(0.7, 1.15)
         if marsh > 0.5:
             s *= 0.85
-        L.add_ism(key, x, y, rng.uniform(0, 360), s, roll=rng.uniform(-3, 3), pitch=rng.uniform(-3, 3), sink=0.12)
+        L.add_scatter_ism(key, x, y, rng.uniform(0, 360), s, roll=rng.uniform(-3, 3), pitch=rng.uniform(-3, 3), sink=0.12)
     ux, uy = scatter(rng, np.clip(dens - 0.45, 0, 1) * 0.8, 3.0, 2.3)
     for x, y in zip(ux, uy):
-        L.add_ism("Birch3", x, y, rng.uniform(0, 360), rng.uniform(0.6, 1.0), roll=rng.uniform(-4, 4), pitch=rng.uniform(-4, 4), sink=0.15)
+        L.add_scatter_ism("Birch3", x, y, rng.uniform(0, 360), rng.uniform(0.6, 1.0), roll=rng.uniform(-4, 4), pitch=rng.uniform(-4, 4), sink=0.15)
     bush_d = np.clip(dens * 0.55 + 0.12 * (1.0 - excl) * (dens > 0.05), 0, 1) * (1.0 - f["marsh"] * 0.5)
     bx, by = scatter(rng, bush_d, 4.0, 2.6)
     for x, y in zip(bx, by):
-        L.add_ism("Bush", x, y, rng.uniform(0, 360), rng.uniform(0.7, 1.35), sink=0.05)
+        L.add_scatter_ism("Bush", x, y, rng.uniform(0, 360), rng.uniform(0.7, 1.35), sink=0.05)
     dread_d = np.clip(f["marsh"] * 0.5 + f["grove"] * 0.7 + dens * 0.18, 0, 1) * (1.0 - excl)
     dx, dy = scatter(rng, dread_d, 5.0, 3.0)
     for x, y in zip(dx, dy):
         key = "Dread1" if rng.random() < 0.5 else "Dread2"
-        L.add_ism(key, x, y, rng.uniform(0, 360), rng.uniform(0.28, 0.62), sink=0.03)
+        L.add_scatter_ism(key, x, y, rng.uniform(0, 360), rng.uniform(0.28, 0.62), sink=0.03)
     sx, sy = scatter(rng, np.clip(f["grove"] * 0.9 + f["marsh"] * 0.25 + dens * 0.15, 0, 1) * (1.0 - excl), 4.5, 2.0)
     for x, y in zip(sx, sy):
         key = "Shroom1" if rng.random() < 0.6 else "Shroom2"
-        L.add_ism(key, x, y, rng.uniform(0, 360), rng.uniform(0.5, 1.4))
+        L.add_scatter_ism(key, x, y, rng.uniform(0, 360), rng.uniform(0.5, 1.4))
     beam_d = np.clip(dens - 0.35, 0, 1) * 0.5 * (1.0 - f["marsh"])
     beam_d = np.maximum(beam_d, f["grove"] * 0.6)
     lx, ly = scatter(rng, beam_d, 22.0, 26.0)
     for x, y in zip(lx, ly):
         s = rng.uniform(4.0, 9.0)
-        L.add_ism("LightBeam", x, y, rng.uniform(0, 360), s, pitch=rng.uniform(-8, 8), roll=rng.uniform(-8, 8), z_off=s * 0.62 + 2.5)
+        L.add_scatter_ism("LightBeam", x, y, rng.uniform(0, 360), s, pitch=rng.uniform(-8, 8), roll=rng.uniform(-8, 8), z_off=s * 0.62 + 2.5)
     return len(px) + len(ux), len(bx), len(dx)
 
 
@@ -555,21 +635,21 @@ def place_rocks(L, rng, f, excl):
     big_d = np.where(f["h"] < -1.0, 0.0, big_d)
     bx, by = scatter(rng, big_d, 6.0, 7.5)
     for x, y in zip(bx, by):
-        sl = L.slope(x, y)
+        sl = L.placement_slope(x, y)
         ed = float(sample_bilinear(f["edge_d"], np.array([x]), np.array([y]))[0])
         if ed < 95.0 or sl > 30.0:
             key = ["Cliff4", "Cliff2", "Cliff3", "Cliffs1"][int(rng.integers(0, 4))]
             s = rng.uniform(1.1, 2.4) if ed < 95.0 else rng.uniform(0.7, 1.5)
-            L.add_ism(key, x, y, rng.uniform(0, 360), s, roll=rng.uniform(-14, 14), pitch=rng.uniform(-14, 14), sink=0.6 * s)
+            L.add_scatter_ism(key, x, y, rng.uniform(0, 360), s, roll=rng.uniform(-14, 14), pitch=rng.uniform(-14, 14), sink=0.6 * s)
         else:
             key = ["Rock1", "Rock2", "Rock3"][int(rng.integers(0, 3))]
-            L.add_ism(key, x, y, rng.uniform(0, 360), rng.uniform(0.35, 0.85), roll=rng.uniform(-6, 6), pitch=rng.uniform(-6, 6), sink=0.25)
+            L.add_scatter_ism(key, x, y, rng.uniform(0, 360), rng.uniform(0.35, 0.85), roll=rng.uniform(-6, 6), pitch=rng.uniform(-6, 6), sink=0.25)
     small_d = np.clip((1.0 - smoothstep(6.0, 15.0, f["river_dist"])) * 0.55 + smoothstep(14.0, 26.0, slope) * 0.35 + f["high"] * 0.22 + f["road_weight"] * 0.10, 0, 1)
     small_d = np.where(f["h"] < -1.2, 0.0, small_d) * (1.0 - excl * 0.6)
     sx, sy = scatter(rng, small_d, 3.0, 1.6)
     keys = ["SRock3", "SRock4", "SRock5", "SRock6", "SRock7", "SRock8"]
     for x, y in zip(sx, sy):
-        L.add_ism(keys[int(rng.integers(0, 6))], x, y, rng.uniform(0, 360), rng.uniform(0.6, 1.6), roll=rng.uniform(-10, 10), sink=0.04)
+        L.add_scatter_ism(keys[int(rng.integers(0, 6))], x, y, rng.uniform(0, 360), rng.uniform(0.6, 1.6), roll=rng.uniform(-10, 10), sink=0.04)
     return len(bx), len(sx)
 
 
@@ -579,12 +659,12 @@ def place_ground_decals(L, rng, f, excl):
     px, py = scatter(rng, puddle_d, 9.0, 9.0)
     for i, (x, y) in enumerate(zip(px, py)):
         s = rng.uniform(6.0, 20.0)
-        L.add_plane("Puddles", x, y, L.height(x, y) + 0.03, rng.uniform(0, 360), s, s * rng.uniform(0.7, 1.0), f"TDGen_Puddle_{i}", mesh=M["PlaneDecal"], sz=40.0)
+        L.add_scatter_plane("Puddles", x, y, L.height(x, y) + 0.03, rng.uniform(0, 360), s, s * rng.uniform(0.7, 1.0), f"TDGen_Puddle_{i}", mesh=M["PlaneDecal"], sz=40.0)
     fog_d = np.clip(f["marsh"] * 0.5 + f["grove"] * 0.5, 0, 1)
     fx, fy = scatter(rng, fog_d, 26.0, 24.0)
     for i, (x, y) in enumerate(zip(fx, fy)):
         s = rng.uniform(22.0, 42.0)
-        L.add_plane("Fog1" if rng.random() < 0.5 else "Fog2", x, y, L.height(x, y) + rng.uniform(0.6, 1.4), rng.uniform(0, 360), s, s, f"TDGen_FogPlane_{i}", sz=s)
+        L.add_scatter_plane("Fog1" if rng.random() < 0.5 else "Fog2", x, y, L.height(x, y) + rng.uniform(0.6, 1.4), rng.uniform(0, 360), s, s, f"TDGen_FogPlane_{i}", sz=s)
     return len(px), len(fx)
 
 
@@ -1062,7 +1142,7 @@ def place_arena(L, rng, name):
 def place_dungeon_entrance(L, rng, name, pos, facing, kind):
     cx, cy = pos
     yaw = facing
-    # 동굴 입구: 절벽 기둥 2 + 상인방 + 어두운 안쪽 상자 + 해골 장식 + 붉은 빛
+    # 동굴 입구: 절벽 기둥 2 + 상인방 + 해골 장식 + 붉은 빛
     for side in (-1, 1):
         x, y = local_to_world(cx, cy, yaw, 0.0, side * 4.2)
         L.add_actor("Cliff4", x, y, yaw + 90 + side * 15, 1.25, roll=side * 8, z_off=-0.6, label=f"TDGen_{name}_Pillar_{side}")
@@ -1070,10 +1150,6 @@ def place_dungeon_entrance(L, rng, name, pos, facing, kind):
     L.add_actor("Cliff2", x, y, yaw, 1.6, z_off=4.6, pitch=8, label=f"TDGen_{name}_Lintel")
     x, y = local_to_world(cx, cy, yaw, -3.5, 0.0)
     L.add_actor("Cliff3", x, y, yaw + 180, 1.8, z_off=7.2, label=f"TDGen_{name}_Cap")
-    x, y = local_to_world(cx, cy, yaw, -8.0, 0.0)
-    L.add_actor("Cube", x, y, yaw, 1.0, z_off=2.6, scale3=[14.0, 7.5, 5.4], mesh_path=ENGINE_CUBE, materials=[MATS["Bedrock"]], label=f"TDGen_{name}_Tunnel")
-    x, y = local_to_world(cx, cy, yaw, -1.2, 0.0)
-    L.add_actor("Cube", x, y, yaw, 1.0, z_off=2.4, scale3=[0.2, 5.6, 4.6], mesh_path=ENGINE_CUBE, materials=["/Engine/EngineMaterials/BlackUnlitMaterial"], label=f"TDGen_{name}_Darkness")
     for side in (-1, 1):
         x, y = local_to_world(cx, cy, yaw, 2.2, side * 3.4)
         L.add_actor("Pole", x, y, yaw, 1.1, label=f"TDGen_{name}_Post_{side}")
@@ -1156,7 +1232,7 @@ def place_roadside(L, rng, f):
                 n_ = n_ / (np.linalg.norm(n_) + 1e-6)
                 side = 1 if (j // 90) % 2 == 0 else -1
                 px, py = float(x + n_[0] * 4.2 * side), float(y + n_[1] * 4.2 * side)
-                if L.slope(px, py) > 25.0:
+                if L.placement_slope(px, py) > 25.0:
                     continue
                 r = rng.random()
                 if r < 0.45:
@@ -1166,6 +1242,70 @@ def place_roadside(L, rng, f):
                     L.add_actor("StickedSkull", px, py, rng.uniform(0, 360), 1.3, label=f"TDGen_RoadStake_{name}_{j}")
                 else:
                     L.add_actor("Cart" if rng.random() < 0.3 else "Barrel1", px, py, rng.uniform(0, 360), 1.0, label=f"TDGen_RoadProp_{name}_{j}")
+
+
+def build_seam_core_grid(f):
+    core = np.zeros((SIZE, SIZE), dtype=bool)
+    for passage in rp.PASSAGES:
+        core |= rp.core_mask(passage, "field", f["X"], f["Y"], SEAM_CORE_CLEAR_MARGIN_M)
+    return core
+
+
+def is_in_seam_core(core, x_cm, y_cm):
+    ix = int(round(x_cm / 100.0)) + HALF
+    iy = int(round(y_cm / 100.0)) + HALF
+    if ix < 0 or iy < 0 or ix >= SIZE or iy >= SIZE:
+        return False
+    return bool(core[iy, ix])
+
+
+def clear_seam_cores(L, core):
+    removed = 0
+    for bucket_key in list(L.ism):
+        bucket = L.ism[bucket_key]
+        kept = [t for t in bucket if not is_in_seam_core(core, t[0], t[1])]
+        removed += len(bucket) - len(kept)
+        if kept:
+            L.ism[bucket_key] = kept
+            continue
+        del L.ism[bucket_key]
+    for name in ("actors", "planes", "lights", "niagara"):
+        items = getattr(L, name)
+        kept = [e for e in items if not is_in_seam_core(core, e["loc"][0], e["loc"][1])]
+        removed += len(items) - len(kept)
+        setattr(L, name, kept)
+    return removed
+
+
+def add_seam_pcg_exclusions(L, f):
+    half_length_m = rp.SEAM_BUFFER_M + SEAM_CORE_CLEAR_MARGIN_M
+    half_width_m = rp.BAND_OUTER_M + SEAM_CORE_CLEAR_MARGIN_M
+    for passage in rp.PASSAGES:
+        core_heights = f["h"][rp.core_mask(passage, "field", f["X"], f["Y"], SEAM_CORE_CLEAR_MARGIN_M)]
+        low_z = float(core_heights.min()) - SEAM_PCG_EXCLUSION_HEIGHT_PAD_M
+        high_z = float(core_heights.max()) + SEAM_PCG_EXCLUSION_HEIGHT_PAD_M
+        seam_x, seam_y = passage["field_seam_m"]
+        box_extent_cm = [half_length_m * 100.0, half_width_m * 100.0, round((high_z - low_z) * 50.0, 1)]
+        z_off = 0.5 * (low_z + high_z) - L.height(seam_x, seam_y)
+        L.add_marker("PcgExclusion", seam_x, seam_y, passage["yaw_deg"], f"TDGen_SeamPcgExclusion_{passage['gate_id']}", z_off=z_off, tags=["TDExclusion"], box_extent_cm=box_extent_cm)
+
+
+def topdown_route_masks(grid, road_mask):
+    X, Y = grid.meter_axes()
+    floors = [rp.floor_cells(passage, "field", X, Y) for passage in rp.PASSAGES]
+    circles = [(poi["pos"][0], poi["pos"][1], poi["r"]) for poi in POIS.values()]
+    circles.append((VILLAGE[0], VILLAGE[1], VILLAGE_R))
+    circles += [(dungeon[0], dungeon[1], 14.0) for dungeon in (MAIN_DUNGEON, SIDE_DUNGEON_NW, SIDE_DUNGEON_SE)]
+    water = (grid.h < -1.75) & ~np.logical_or.reduce(floors)
+    return tdr.TDRouteMasks(grid, road_mask, circles, water, floors)
+
+
+def apply_topdown_rules(L, f, layers):
+    if not tdr.ENABLED:
+        return {}
+    grid = tdr.TDTerrainGrid(tdr.quantize_height_m(f["h"], UNITS_PER_METER))
+    masks = topdown_route_masks(grid, np.round(layers["Road"] * 255.0) >= 128)
+    return tdr.apply_placement_rules(L.ism, L.actors, lambda bucket_key: M[bucket_key[0]], grid, masks)
 
 
 def build_grove_mask(f):
@@ -1187,9 +1327,13 @@ def write_outputs(f, layers, L, seed):
         layer_files.append({"name": name, "path": p})
     ism_out = []
     for (key, cx, cy), tr in L.ism.items():
-        ism_out.append({"mesh": M[key], "key": key, "cell": [cx, cy], "transforms": tr})
+        entry = {"mesh": M[key], "key": key, "cell": [cx, cy], "transforms": tr}
+        if tdr.ENABLED and tdr.collision_for_asset(M[key]):
+            entry["collision"] = "none"
+        ism_out.append(entry)
     layout = {
         "seed": seed,
+        "generator_version": GENERATOR_VERSION,
         "landscape": {
             "location": [0.0, 0.0, 0.0], "scale": [100.0, 100.0, Z_SCALE], "components_x": 16, "components_y": 16, "sections_per_component": 1, "quads_per_section": 63,
             "heightmap": os.path.join(OUT_DIR, "height.r16"), "layers": layer_files,
@@ -1197,10 +1341,19 @@ def write_outputs(f, layers, L, seed):
         },
         "ism": ism_out, "actors": L.actors, "planes": L.planes, "lights": L.lights, "niagara": L.niagara, "markers": L.markers,
         "region": {"name": "AshenVale", "size_m": SIZE - 1, "village": VILLAGE, "water_z_cm": -175.0},
+        "passages": f["passages"],
     }
     with open(os.path.join(OUT_DIR, "layout.json"), "w", encoding="utf-8") as fp:
         json.dump(layout, fp)
     return layout
+
+
+def write_topdown_report(report):
+    if not report:
+        return
+    with open(os.path.join(OUT_DIR, "topdown_rules_report.json"), "w", encoding="utf-8") as fp:
+        json.dump(report, fp, ensure_ascii=False, indent=1, sort_keys=True)
+    print("topdown rules:", json.dumps(report, ensure_ascii=False, sort_keys=True))
 
 
 def write_preview(f, layers, L):
@@ -1217,10 +1370,15 @@ def write_preview(f, layers, L):
         for i in range(3):
             col[:, :, i] += layers[name] * c[i]
     col *= light[:, :, None]
-    water = h < -1.75
+    water = (h < -1.75) & (f["passage_footprint"] < 0.05)
     col[water] = (40, 70, 110)
     img = Image.fromarray(np.clip(col, 0, 255).astype(np.uint8), "RGB")
     dr = ImageDraw.Draw(img)
+    for passage in rp.PASSAGES:
+        ax, ay = rp.to_grid_m(passage, "field", 0.0, -rp.WALL_TOP_OUTER_M)
+        bx, by = rp.to_grid_m(passage, "field", 0.0, rp.WALL_TOP_OUTER_M)
+        dr.line((ax + HALF, ay + HALF, bx + HALF, by + HALF), fill=(80, 230, 255), width=2)
+        dr.text((bx + HALF + 4, by + HALF), f"SEAM {passage['gate_id']}", fill=(80, 230, 255))
     for (key, cx, cy), tr in L.ism.items():
         c = {"Birch1": (30, 70, 30), "Birch2": (40, 80, 35), "Birch3": (60, 95, 45)}.get(key)
         if not c:
@@ -1245,15 +1403,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--out", default=OUT_DIR)
+    ap.add_argument("--no-topdown", action="store_true")
     args = ap.parse_args()
+    tdr.ENABLED = not args.no_topdown
     OUT_DIR = os.path.abspath(args.out)
     rng = np.random.default_rng(args.seed)
     f = build_terrain(rng)
     f["grove"] = build_grove_mask(f)
     poi_circles = [(p["pos"][0], p["pos"][1], p["r"]) for p in POIS.values()]
     poi_circles += [(MAIN_DUNGEON[0], MAIN_DUNGEON[1], 16.0), (SIDE_DUNGEON_NW[0], SIDE_DUNGEON_NW[1], 16.0), (SIDE_DUNGEON_SE[0], SIDE_DUNGEON_SE[1], 16.0), (BRIDGE[0], BRIDGE[1], 24.0)]
-    excl = build_exclusion(f, poi_circles)
-    f["forest_density"] = build_forest_density(rng, f, excl)
+    placement = build_placement_fields(f)
+    excl = build_exclusion(placement, poi_circles)
+    forest_noise = build_forest_noise(rng)
+    f["forest_density"] = build_forest_density(forest_noise, f, build_exclusion(f, poi_circles))
+    placement["forest_density"] = build_forest_density(forest_noise, placement, excl)
     layers = build_layers(rng, f)
     L = Layout(f, rng)
     place_village(L, rng)
@@ -1274,20 +1437,27 @@ def main():
     place_dungeon_entrance(L, rng, "SunkenCrypt", SIDE_DUNGEON_SE, SIDE_DUNGEON_SE_FACING, "Side")
     place_bridge_and_boardwalk(L, rng, f)
     place_roadside(L, rng, f)
-    n_tree, n_bush, n_dread = place_forest(L, rng, f, excl)
-    n_big, n_small = place_rocks(L, rng, f, excl)
-    n_pud, n_fog = place_ground_decals(L, rng, f, excl)
+    n_tree, n_bush, n_dread = place_forest(L, rng, placement, excl)
+    n_big, n_small = place_rocks(L, rng, placement, excl)
+    n_pud, n_fog = place_ground_decals(L, rng, placement, excl)
     place_water(L, f)
     for i in range(24):
         x, y = rng.uniform(-450, 450), rng.uniform(-450, 450)
-        if float(sample_bilinear(f["forest_density"], np.array([x]), np.array([y]))[0]) > 0.45:
-            L.add_niagara("Leaves", x, y, 7.0, f"TDGen_FX_Leaves_{i}")
+        if float(sample_bilinear(placement["forest_density"], np.array([x]), np.array([y]))[0]) > 0.45:
+            L.add_scatter_niagara("Leaves", x, y, 7.0, f"TDGen_FX_Leaves_{i}")
+    n_core_cleared = clear_seam_cores(L, build_seam_core_grid(f))
+    topdown_report = apply_topdown_rules(L, f, layers)
+    add_seam_pcg_exclusions(L, f)
     L.add_marker("NavMeshBounds", 0.0, 0.0, 0.0, "TDGen_NavMeshBounds", z_off=20.0, scale=[520.0, 520.0, 60.0])
     layout = write_outputs(f, layers, L, args.seed)
     write_preview(f, layers, L)
+    write_topdown_report(topdown_report)
     n_inst = sum(len(v) for v in L.ism.values())
     print(f"height range m: {f['h'].min():.1f} .. {f['h'].max():.1f}; trees {n_tree} bushes {n_bush} dread {n_dread} bigrocks {n_big} smallrocks {n_small} puddles {n_pud} fog {n_fog}")
     print(f"ism buckets {len(L.ism)} instances {n_inst}; actors {len(L.actors)}; planes {len(L.planes)}; lights {len(L.lights)}; niagara {len(L.niagara)}; markers {len(L.markers)}")
+    for p in layout["passages"]:
+        print(f"passage {p['gate_id']}: seam cm {p['field_seam_cm']} yaw {p['yaw_deg']:.0f} mouth z {p['mouth_z_m']:.2f} m approach {p['approach_m']} m floor cells {p['floor_cells']}")
+    print(f"seam core cleared items {n_core_cleared}; generator version {GENERATOR_VERSION}")
     print("out:", OUT_DIR)
 
 

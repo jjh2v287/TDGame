@@ -61,6 +61,12 @@ namespace
 		}
 		return UE::Landscape::CreateTargetLayerInfo(LayerName, PackagePath, AssetName);
 	}
+
+	FVector GetLandscapeProxyReferenceLocation(const ALandscapeProxy& Proxy)
+	{
+		const FBox RegisteredComponentBounds = Proxy.GetProxyBounds();
+		return RegisteredComponentBounds.IsValid ? RegisteredComponentBounds.GetCenter() : Proxy.GetActorLocation();
+	}
 }
 
 int32 UTDLandscapeEditorLibrary::GetExpectedVertexCountPerSide(const FTDLandscapeCreateRequest& Request)
@@ -200,5 +206,29 @@ int32 UTDLandscapeEditorLibrary::DestroyAllLandscapeActors(UObject* WorldContext
 	{
 		World->EditorDestroyActor(Actor, true);
 	}
+	return ToDestroy.Num();
+}
+
+int32 UTDLandscapeEditorLibrary::DestroyLandscapeActorsInBounds(UObject* WorldContextObject, FVector MinCm, FVector MaxCm)
+{
+	UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull) : nullptr;
+	if (!World)
+	{
+		return 0;
+	}
+	const FBox BoundsCm(MinCm, MaxCm);
+	TArray<AActor*> ToDestroy;
+	for (TActorIterator<ALandscapeProxy> It(World); It; ++It)
+	{
+		if (BoundsCm.IsInsideOrOnXY(GetLandscapeProxyReferenceLocation(**It)))
+		{
+			ToDestroy.Add(*It);
+		}
+	}
+	for (AActor* Actor : ToDestroy)
+	{
+		World->EditorDestroyActor(Actor, true);
+	}
+	UE_LOG(LogTDLandscape, Log, TEXT("Destroyed %d landscape actors with XY reference inside %s .. %s"), ToDestroy.Num(), *MinCm.ToCompactString(), *MaxCm.ToCompactString());
 	return ToDestroy.Num();
 }

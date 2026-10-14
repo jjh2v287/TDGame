@@ -1,7 +1,7 @@
 """에디터 밖에서 실행: MCP CaptureViewport로 주요 지점을 탑다운 각도로 캡처해 Saved/WorldGen/Captures/<이름>.png 로 저장한다.
 
 사용: python Tools/WorldGen/capture_views_mcp.py [이름=x,y,pitch,yaw,dist ...]
-이름을 주지 않으면 기본 8개 시점을 찍는다. 높이는 Saved/WorldGen/AshenVale/height.r16 에서 읽는다.
+이름을 주지 않으면 기본 8개 시점을 찍는다. 높이는 Saved/WorldGen/AshenVale/height.r16, 이계 상자 안이면 Saved/WorldGen/Realms/<RealmId>/height.r16 에서 읽는다.
 """
 import base64
 import json
@@ -34,7 +34,41 @@ DEFAULT = {
 }
 
 
+REALMS_DIR = os.path.join(ROOT, "Saved", "WorldGen", "Realms")
+
+
+def find_realm_height_grid(xcm, ycm):
+    if not os.path.isdir(REALMS_DIR):
+        return None
+    for realm_id in sorted(os.listdir(REALMS_DIR)):
+        layout_path = os.path.join(REALMS_DIR, realm_id, "layout.json")
+        height_path = os.path.join(REALMS_DIR, realm_id, "height.r16")
+        if not (os.path.exists(layout_path) and os.path.exists(height_path)):
+            continue
+        realm = json.load(open(layout_path, encoding="utf-8"))["realm"]
+        center = realm["center_cm"]
+        half = realm["half_extent_cm"]
+        half_x, half_y = (half[0], half[1]) if isinstance(half, list) else (half, half)
+        if abs(xcm - center[0]) > half_x or abs(ycm - center[1]) > half_y:
+            continue
+        heights = np.fromfile(height_path, dtype="<u2")
+        size = int(round(math.sqrt(heights.size)))
+        return heights.reshape(size, size), xcm - center[0], ycm - center[1]
+    return None
+
+
+def sample_grid_height_cm(heights, local_xcm, local_ycm):
+    size = heights.shape[0]
+    half = (size - 1) // 2
+    ix = int(np.clip(round(local_xcm / 100 + half), 0, size - 1))
+    iy = int(np.clip(round(local_ycm / 100 + half), 0, size - 1))
+    return (float(heights[iy, ix]) - 32768.0) / 128.0 * 100.0
+
+
 def ground(xcm, ycm):
+    realm_grid = find_realm_height_grid(xcm, ycm)
+    if realm_grid is not None:
+        return sample_grid_height_cm(*realm_grid)
     if abs(xcm) > HALF * 100 or abs(ycm) > HALF * 100 or not os.path.exists(HEIGHT):
         return 0.0
     h = np.fromfile(HEIGHT, dtype="<u2").reshape(SIZE, SIZE)

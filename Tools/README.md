@@ -16,7 +16,6 @@ Serena(코드 심볼 MCP 서버) — C++ 심볼 도구는 clangd가 켜져야 �
 `"<UE_5.8>/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" -mode=GenerateClangDatabase -project="<프로젝트 루트>/TDGame.uproject" TDGameEditor Win64 Development -OutputDir="<프로젝트 루트>"` (경로 상수는 `Tools/ue_editor.py` 상단).
 Serena가 내려받는 clangd 19.1.2는 UE 5.8 엔진 헤더를 파싱하다 종료되므로 같은 project.yml의 `ls_specific_settings.cpp.ls_path`에 LLVM clangd 22.1.2(`C:/Program Files/LLVM/bin/clangd.exe`)를 지정한다(2026-09-18 확인: 설정 실재). 점검: `uvx --from git+https://github.com/oraios/serena serena project health-check`. 심볼 도구가 "Active language servers: []"로 실패하면 위 조건을 확인하고, 그래도 안 되면 `search_for_pattern`과 파일 도구로 대체한다. Serena 메모리(`~/.serena/projects/TDGame/.serena/memories/`)에는 프로젝트 사실을 두지 않는다(OP-30).
 
-언리얼 MCP — 서버 설정 `Config/DefaultEditorPerProjectUserSettings.ini`(포트 8000, 경로 `/mcp`). 클라이언트 설정 5벌: `.mcp.json`(Claude Code), `.codex/config.toml`(Codex), `.cursor/mcp.json`, `.gemini/settings.json`(Gemini CLI), `.agents/mcp_config.json`(Antigravity 작업 공간). 모두 `http://127.0.0.1:8000/mcp`. 주소·포트·Blender 런처를 바꾸면 서버 ini와 5벌을 함께 고친다(OP-31). `.vscode/mcp.json`은 VS Code Copilot 미사용 가정으로 동기화에서 제외(D-30). 사용자 홈 `~/.gemini/config/mcp_config.json`(Antigravity `~/.gemini/antigravity/mcp_config.json`은 이 파일의 심볼릭 링크)은 2026-09-18 저장소 런처 방식으로 정렬함(D-19·D-36). MCP는 도구 검색이 켜져 있어 도구 목록이 통째로 로드되지 않으므로 필요한 작업을 키워드로 검색해 도구를 찾은 뒤 호출한다. Blender MCP 서버는 `Tools/BlenderMCP/Run-BlenderMCP.ps1` 외의 방법(`uvx blender-mcp`·`mcp-for-blender`·pip 설치본)으로 띄우지 않는다(텔레메트리 보호, OP-31).
 에디터 기동: `python Tools/ue_editor.py start`(내부에서 `tasklist`로 중복 실행을 피하고 포트 8000이 열릴 때까지 기다린다). 에디터가 켜진 상태에서는 Build.bat 대신 라이브 코딩 도구로 컴파일하고, 헤더 변경이 큰 작업은 `ue_editor.py restart`. 에디터를 닫을 때는 저장되지 않은 에셋이 있는지 사용자에게 먼저 알린다(`ue_editor.py stop`이 중단한다).
 확인: 2026-09-18 claude
 
@@ -43,16 +42,26 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 도구 | 용도 |
 |---|---|
 | `WorldGen/generate_ashen_vale.py --seed N [--out 폴더]` | 메인 지역 높이맵·레이어·배치 생성(에디터 밖) → `Saved/WorldGen/AshenVale/` |
-| `WorldGen/editor_build_open_world.py` | 레벨에 베이크(랜드스케이프·대기·인스턴스·액터·조명·마커·저장) |
+| `WorldGen/editor_build_open_world.py` | 레벨에 베이크(랜드스케이프·대기·인스턴스·액터·조명·마커·저장). `Saved/WorldGen/open_world_build_request.json` {"mode":"partial","previous_layout":...}이면 부분 모드(지형·생성 산포만 교체, 던전·PCG·상자·이계 보존) |
+| `WorldGen/generate_realm.py --realm SunkenStarfield·PaleHeights·all [--seed N]` | 이계 지역(P3-13·P3-15) 높이맵·레이어·배치·통로 B·통로 소품(필드 사본 포함) 생성과 형상 일치 검증(에디터 밖, 필드 생성 뒤) → `Saved/WorldGen/Realms/<RealmId>/` |
+| `WorldGen/editor_build_realm.py` | 이계 베이크(지형·재질 인스턴스·인스턴스·액터·통로 소품 필드 사본·내비 경계·후처리·`DA_TDRealm_*`·저장), 자기 접두어와 옛 포탈 액터만 지우고 다시 만든다 |
+| `WorldGen/realm_passages.py` | 이계 통로 공유 정의(관문 표·단면·바닥 프로필·핵심 구간 소품, 난수 없음). `generate_ashen_vale.py`·`generate_realm.py`가 가져다 쓴다(직접 실행 시 자체 점검) |
 | `WorldGen/editor_make_landscape_material.py` | 레이어 머티리얼(텍스처 봄빙)·풀 타입 재생성 |
-| `WorldGen/editor_relight.py` + `Saved/WorldGen/look.json` | 재빌드 없이 조명·노출·안개 조정 |
+| `WorldGen/editor_relight.py` + `Saved/WorldGen/look.json` | 재빌드 없이 조명·노출·안개 조정. `Saved/WorldGen/relight_target.json` `{"realm": "<RealmId>"}`이면 이계 대기 미리보기(저장 안 함), 파일을 지우고 다시 실행하면 복원 |
 | `WorldGen/validate_world.py` | 월드 검증(입구 간격·POI 밀도·도로 도달성·지형 적합성·스트리밍·플레이 밀도) → report.md |
 | `WorldGen/select_seed.py --seeds 1-5` | 시드 후보 생성·검증·점수·추천 |
 | `WorldGen/capture_views_mcp.py 이름=x,y,pitch,yaw,dist` | 지점별 뷰포트 캡처 PNG |
 | `WorldGen/pie_check.py` | PIE 중 폰 위치·지면·내비메시 확인 |
 | `WorldGen/editor_make_pcg_biome.py` | P3-07 Forest 바이옴 PCG 그래프(메인+서브 5)·룸 드레싱 그래프 생성, `TDGen_PCG_BiomeForest` PCGVolume(파티션+HiGen) 배치·생성 |
 | `WorldGen/editor_check_pcg_determinism.py` | PCG 같은 시드 cleanup→generate 2회, ISM 수·위치 해시 비교 → `Saved/WorldGen/pcg_determinism.json` |
-| `WorldGen/rebuild_all.sh [--material] [--seed N] [--wait 초] [캡처...]` | 전체 파이프라인 한 줄 |
+| `WorldGen/rebuild_all.sh [--material] [--realms] [--seed N] [--wait 초] [캡처...]` | 전체 파이프라인 한 줄(`--realms`: 메인 베이크 뒤 이계 베이크) |
+| `WorldGen/editor_make_topdown_materials.py` | 탑다운 재질 체계(D-43) `/Game/World/Materials/TopDown/`: MPC_TD_TopDown·MF_TD_OcclusionCutout·마스터 5(팩 마스터 복제 + 컷아웃 삽입)·거울 MI_TD_*, 이계 MI 재부모화(재실행 안전) → `Saved/WorldGen/topdown_materials_report.json` |
+| `WorldGen/editor_apply_topdown_materials.py` (옵션 파일 `Saved/WorldGen/topdown_apply_request.json` `{"dry_run":…, "patch_pcg":…}`) | 레벨 배치물(베이크·이계·마을·PCG 출력) 재질 슬롯을 거울 MI로 교체, `patch_pcg`는 PCG 그래프 메시 항목 재질 덮어쓰기 패치. 순서: 베이크 → patch_pcg → PCG 재생성 → apply → 저장 → `Saved/WorldGen/topdown_apply_report.json` |
+| `WorldGen/topdown_rules.py --measure --label <이름>` | 탑다운 카메라(폰 기준 (−500,−500,+843)cm) 결정론 배치 후처리 규칙 R1~R3·R5 공용 모듈(두 생성기가 import, 난수 없음)과 걷는 칸 가림%·카메라 매몰·카메라 지형 아래 수치 → `Saved/WorldGen/TopDownMetrics/`. 생성기 `--no-topdown`은 규칙 끄기(이전 출력 바이트 재현) |
+| `WorldGen/topdown_materials.py` | 팩 재질 → 거울 경로 대응 규칙(에디터 밖 import 가능) |
+| `WorldGen/pie_capture_spots.py --run <이름> [--compare <이전 run>] [--spots 파일]` (PowerShell, 에디터 앞에 둠) | PIE 게임 카메라로 지점 목록(기본 `WorldGen/topdown_spots.json` 27곳) 촬영·가림 액터·카메라 매몰·어둠 비율, 전후 비교 표 → `Saved/WorldGen/PieShots/<run>/` (P3-17) |
+| `WorldGen/pie_walk_passages.py --run <이름>` (PowerShell, 에디터 앞에 둠) | 이계 통로 3곳 실제 이동 입력 왕복(이음매 통과·속도·가중치)과 프레임 시간(평균·95백분위·최대·100ms 초과) → `Saved/WorldGen/PieWalk/<run>/` |
+| `WorldGen/editor_pie_probe.py` | 위 두 드라이버가 요청 파일 `Saved/WorldGen/pie_probe_request.json`로 부르는 PIE 안 동작(move·shot·occluders·walk) |
 자세한 규격: `WorldGen/README.md`.
 
 ## 3. 던전 생성 도구 (`DungeonGen/`, 설계서 6·7·11.1장)
@@ -78,9 +87,9 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | `Tools/WorldGen/editor_set_anchor_yaw.py` | 월드 정의 앵커 향(YawDeg) 갱신 |
 | 콘솔(PIE) `TDTravelToDungeon <Id>` / `TDTravelToField` / `TDSaveWorldState <slot>` / `TDLoadWorldState <slot>` | 심리스 이동·세이브 |
 | 내비메시 설정 `Tools/WorldGen/editor_setup_navmesh_dynamic.py`(채택, D-06) / `editor_setup_navmesh_wp.py`(정적 월드 파티션, 보류), 영속 상자 배치 `editor_place_test_chest.py`, PIE 걸어서 입장 `pie_walkin_check.py`, PIE 상자 상태 `pie_chest_check.py` | P1 검증 스크립트 |
-| `python Tools/WorldGen/pie_p1_checks.py` (에디터 밖) | PIE 켜고 걸어 들어가기 왕복 ×3 + 상자 열림·세이브/로드 검사 → `Saved/WorldGen/pie_p1_checks.md` |
+| `python Tools/WorldGen/pie_p1_checks.py [--ids MainCrypt,<관문 ID>…]` (에디터 밖) | PIE 켜고 목적지마다 걸어 들어가기 왕복 ×3(이계 관문은 이계 상자로 판정) + 상자 열림·세이브/로드 검사 → `Saved/WorldGen/pie_p1_checks.md` |
 | `python Tools/tasks_recount.py` | 할 일 대장 상태 표 재계산 |
-| 정의 에셋 `Tools/WorldGen/editor_make_definitions.py`, 룸 모듈 레벨 `Tools/DungeonGen/editor_make_room_modules.py`, C++ 베이크 `Tools/DungeonGen/editor_bake_dungeons_cpp.py`, 입구 배치 `Tools/WorldGen/editor_place_dungeon_entrances.py`, PIE 왕복 `Tools/WorldGen/pie_travel_check.py` | 에디터 스크립트 |
+| 정의 에셋 `Tools/WorldGen/editor_make_definitions.py`, 룸 모듈 레벨 `Tools/DungeonGen/editor_make_room_modules.py`, C++ 베이크 `Tools/DungeonGen/editor_bake_dungeons_cpp.py`, 던전 안 출구 배치 `Tools/WorldGen/editor_place_dungeon_entrances.py`(D-41: 필드 입구는 만들지 않음), PIE 왕복 `Tools/WorldGen/pie_travel_check.py` | 에디터 스크립트 |
 
 ## 3c. 애니메이션·기타 도구 (상태·등록 대기)
 | 위치 | 내용 | 상태 |
@@ -114,6 +123,10 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 콘솔 `TDPlayMeleeAction [시퀀스 경로]` | 플레이어 폰에 공격 시퀀스를 UAF 행동(루트모션)으로 재생(기본 `AS_TD_Player_SwordAttack01`) | PIE 콘솔 |
 | 자동화 테스트 `TDGame.Movement.*` 3개 + `TDGame.Combat.ActionTimelineHitsOnceInWindow` | 루트모션 36±2cm, 빙결 정지, 몬스터 이동 의도, 시간표 타격 1회 | `python Tools/check_automation_tests.py --filter TDGame.Movement` 또는 헤드리스 |
 확인: 2026-09-30 claude
+
+| 도구 | 용도 | 실행 |
+|---|---|---|
+확인: 2026-10-08 claude
 
 ## 4. 도구가 없을 때 만드는 규칙 (에이전트 공통)
 규칙 전문은 `Docs/AgentRules.md` OP-12(만들기 전 검색)·OP-13(위치)·OP-14(이름)·OP-15(docstring 4줄)·OP-16(등록)·OP-17(`Tools/scratch/`)·OP-19(절대 경로 금지)·OP-20(노출 경로). 접두어: `editor_`(에디터 안, run_in_editor.py), `pie_`(PIE 검사), `blender_`(Blender 안 bpy), 없음(시스템 파이썬 3.12). 권장 동사: generate build make validate check inspect capture export import author render prepare place setup select find. 금지 동의어: create→make, bake→build, verify/test→validate/check.

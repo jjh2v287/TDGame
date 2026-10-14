@@ -29,7 +29,7 @@ C++ 도구: `Source/TDGameEditor/Landscape/TDLandscapeEditorLibrary.*`(에디터
 ## 좌표·규격
 - 랜드스케이프 1009×1009 정점, 쿼드 1m(스케일 100), 16×16 컴포넌트(63쿼드·1섹션), 월드 파티션 그리드 2컴포넌트 → 8×8 스트리밍 프록시(각 126m). 중심 (0,0), 범위 ±504m.
 - 높이 인코딩: 32768 + 미터×128 (Z 스케일 100). 물 높이 −1.75m.
-- 마을 중심 (−110, 20)m, 반지름 92m. 메인 던전 (352, −318), 사이드 던전 NW (−372, −262), SE (318, 412).
+- 마을 중심 (−110, 20)m, 반지름 92m. 외곽 입구 3곳(생성기 `MAIN_DUNGEON`·`SIDE_DUNGEON_NW`·`SIDE_DUNGEON_SE`): MainCrypt (296, −268), HollowCave (−372, −262), SunkenCrypt (318, 412). D-42 이후 이 세 자리는 이계로 가는 통로 입구다(아래 '이계 지역과 통로').
 - 도로: 평탄화 폭 3.5~7m + 6m 완만, `Road` 레이어. 강: 바닥 −3.1m, 폭 약 9m, 주변 계곡 완화.
 
 ## 지형·도로·강·바이옴 마스크 절차 (P3-00, 2026-09-30 정본 결정)
@@ -40,7 +40,46 @@ C++ 도구: `Source/TDGameEditor/Landscape/TDLandscapeEditorLibrary.*`(에디터
 - 결정론 확인: `python Tools/WorldGen/generate_ashen_vale.py --seed 7 --out <A>`와 `--out <B>`를 실행해 두 폴더 파일의 SHA-256을 비교한다(증거 `Docs/Validation/P3-00-landscape.md`).
 
 ## 다시 만들 때
-`editor_build_open_world.py`는 `WorldSettings/WorldDataLayers/WorldPartitionMiniMap`을 제외한 **모든 액터를 지우고** 다시 만든다. 손으로 다듬은 액터를 보존하려면 라벨 접두어를 `TDGen_`이 아닌 것으로 바꾸고 `KEEP_CLASSES`/보존 규칙을 추가할 것(할 일 P3-06 잠금 기능).
+`editor_build_open_world.py`는 `KEEP_CLASSES`(WorldSettings·WorldDataLayers·WorldPartitionMiniMap·Brush·LevelBounds)와 태그 `TDRealm`이 붙은 액터를 제외한 **로드된 모든 액터를 지우고** 다시 만든다. 랜드스케이프는 필드 상자(XY ±60000cm) 안 프록시만 지운다. 보존 기준은 라벨이 아니라 클래스와 `TDRealm` 태그다 — 라벨 접두어를 바꿔도 보존되지 않는다. 손으로 다듬은 액터를 남기는 잠금 기능은 할 일 P3-06.
+
+## 이계 지역과 통로(P3-13·P3-15, D-41·D-42)
+메인 외곽 입구 3곳에서 바깥으로 이어지는 통로 A를 걸어가면 이음매에서 같은 모양의 이계 통로 B로 평행이동한다(숨은 이음매, 암전 없음). 이계 2곳(각 504m×504m)은 같은 월드 파티션 레벨의 먼 좌표에 있다. 이음매 앞뒤 ±30m 핵심 구간은 정수 미터 오프셋으로 높이·소품이 같다. 던전 생성기·아틀라스·슬롯 안 출구(`TDGen_Exit_*`)는 남아 있고 콘솔 `TDTravelToDungeon MainCrypt`로 들어간다. 콘솔 `TDTravelToDungeon <GateId>`는 디버그용 암전 이동(도착 = 이계 이음매).
+
+| GateId | 이계 | 필드 입구 | 통로 yaw | 필드 이음매(m) | 이계 이음매(이계 로컬 m) | 높이 |
+|---|---|---|---|---|---|---|
+| `SunkenStarfieldSouthwest` | 가라앉은 별밭 (−302400, 302400)cm | HollowCave | 166 | (−456, −241) | (216, 61) | 하강 |
+| `SunkenStarfieldSoutheast` | 가라앉은 별밭 | MainCrypt | 315 | (365, −337) | (−216, 41) | 하강 |
+| `PaleHeightsNortheast` | 창백한 고원 (−302400, −302400)cm | SunkenCrypt | 16 | (450, 450) | (−216, 24) | 상승 |
+
+통로 정의·단면·소품은 공유 모듈 `realm_passages.py` 한 곳에 있다(난수 없음). 두 생성기가 이 모듈로 통로를 깎는다.
+
+순서(에디터 단계는 PowerShell, 먼저 `python Tools/ue_editor.py ensure`):
+1. 필드 생성(에디터 밖): 현재 출력을 `Saved/WorldGen/AshenVale_prev_<표시>/`로 복사한 뒤 `python Tools/WorldGen/generate_ashen_vale.py --seed 7`(통로 A 깎기, 입구 터널 없음, `passages`·`PcgExclusion` 마커 출력).
+   탑다운 배치 규칙(P3-17, `topdown_rules.py`, 난수 소비 불변): 걷는 칸의 카메라 시선 가림 제거·축소(R1), 바위·절벽 기울기 0·카메라 쪽 틈 묻기·가장자리 걸침 제거(R2), 이계 기둥 높이 상한·빛기둥 `collision: none`(R3), 통로 카메라 쪽 벽 낮춤(R4, `realm_passages.py`), 통로 입구 상인방·덮개 제거(R5), 고원 구름 확장(R6). 출력 폴더에 `topdown_rules_report.json`. 끄기 `--no-topdown`, 수치 `python Tools/WorldGen/topdown_rules.py --measure --label <이름>`.
+2. 이계 생성(에디터 밖, 1 뒤): `python Tools/WorldGen/generate_realm.py --realm all` — 필드 새 `height.r16`과 통로 형상 일치(≤1/128m)를 검사한다. 1을 다시 하면 2도 다시 한다.
+3. 재질(처음 한 번): `editor_make_landscape_material.py` — `LayerTint_<Layer>`·`RealmTint`·`RealmBrightness`·`RealmDesaturation`(기본값이면 메인 색 불변), 부모가 `M_TD_Landscape`인 인스턴스 재부모화, 프록시별 원래 재질 복원.
+4. 메인 부분 재베이크: `Saved/WorldGen/open_world_build_request.json`에 `{"mode": "partial", "previous_layout": "<1의 복사본>/layout.json"}`를 쓰고 `editor_build_open_world.py` 실행 → 실행 뒤 요청 파일을 지운다(남아 있으면 계속 부분 모드). 지형·layout 라벨 액터·`TDGen_ISM_`만 교체하고 던전·PCG·상자·도구·출구·`TDRealm`·대기 5종·PlayerStart·RecastNavMesh는 보존한다(삭제·보존 개수 로그). 요청 파일이 없으면 예전 전체 모드(레벨 전체 정리)다.
+5. `editor_make_definitions.py`(아틀라스 슬롯 귀환점을 입구 마커 앞 7m로).
+6. 이계 베이크: `editor_build_realm.py`(옛 포탈 `TDRealm_Gate_*`·`TDRealm_<Realm>_Exit_*` 일반 접두어로 삭제, 통로 소품 필드 사본 `TDRealm_Passage_<GateId>_*` 생성, `DA_TDRealm_*`에 통로 길이·안개 값 기록).
+7. 내비 동적 설정 `editor_setup_navmesh_dynamic.py` → (탑다운 재질, P3-17) `Saved/WorldGen/topdown_apply_request.json`에 `{"patch_pcg": true}` → `editor_apply_topdown_materials.py`(PCG 그래프 메시 항목을 거울 MI로) → PCG 재생성: `Saved/WorldGen/pcg_filter.txt`에 BOM 없이 `TDGen_PCG_BiomeForest` → `Tools/editor_regenerate_pcg.py` → 필터 파일 삭제. `editor_make_pcg_biome.py`는 다시 돌리지 않는다.
+8. 탑다운 재질 적용: 요청 파일을 지우고 `editor_apply_topdown_materials.py`(배치물 슬롯 → 거울 MI, 이계 MI 부모 → 거울; 베이크가 팩 재질로 되돌리므로 베이크마다 다시) → 저장. 재질 체계 자체를 바꿀 때만 먼저 `editor_make_topdown_materials.py`. 설계 `Docs/WorldDungeonPCG/05-topdown-visuals.md`.
+9. 검증: 헤드리스 `TDGame.SeamlessTravel.RealmSeamWalk`(관문 3곳 왕복 연속성)·`TDGame.TopDown`, 실제 이동 입력 걷기 `python Tools/WorldGen/pie_walk_passages.py --run <이름>`, 탑다운 지점 촬영·전후 비교 `python Tools/WorldGen/pie_capture_spots.py --run <이름> [--compare <이전 run>]`(에디터 창을 앞에 둔다, L-editor-06).
+
+런타임(C++ `UTDRealmSubsystem`): 통로 구간(필드 측 입구−선로딩 여유 ~ 이음매+버퍼, 이계 측 이음매−버퍼 ~ 통로 끝+여유)에서 반대편 선로딩, 이음매 ±50cm를 넘고 준비되면 평행이동(속도·회전 유지, 카메라 컷, 스프링암 보정, 클릭 이동 목적지 이동), 진행도 w로 분위기·태양 회전(1/32 단계)·이계 후처리 가중치 혼합, 이음매 부근 전역 안개 강화(`SeamMistDensity`·`SeamMistRadiusCm`). 붙잡기 `RealmDepartureHoldSeconds`(10초)는 떠난 쪽 이음매를 붙잡는다.
+
+라벨·폴더·태그 규약:
+
+| 대상 | 라벨 | 아웃라이너 폴더 | 태그 |
+|---|---|---|---|
+| 이계 생성물(지형·ISM·액터·평면·조명·FX·마커·내비 경계·후처리·통로 B 소품) | `TDRealm_<RealmId>_*`(통로 소품 `TDRealm_<RealmId>_Passage_<GateId>_*`) | `TDRealm/<RealmId>/<종류>` | `TDGen`, `TDRealm`, `TDRealm:<RealmId>` |
+| 필드 통로 A 소품 | `TDRealm_Passage_<GateId>_*` | `TDRealm/FieldPassages` | `TDGen`, `TDRealm`, `TDRealmPassage` |
+| 필드 통로 PCG 배제 상자 | `TDGen_SeamPcgExclusion_<GateId>`(TriggerBox, 충돌 없음) | `TDGen/Markers` | `TDExclusion` |
+| 에셋 | `DA_TDRealm_<RealmId>`, `MI_TD_Landscape_<RealmId>`, `/Game/World/Realms/<RealmId>/Materials/MI_TDRealm_<RealmId>_*` | — | — |
+
+재실행·주의:
+- 평면(안개·바닥 덮개·물웅덩이)은 충돌 프로필 `NoCollision`으로 만든다(L-editor-15). `set_collision_enabled`만 쓰면 PIE에서 다시 막는다.
+- `editor_relight.py` 이계 미리보기는 저장하지 않지만, 복원 전에 저장 스크립트나 PIE를 돌리면 이계 값이 필드 대기에 남는다. 미리보기 뒤에는 대상 파일을 지우고 다시 실행해 복원한다.
+- 메인 시드나 통로 정의를 바꾸면 1→2→4→6→7→8을 다시 한다.
 
 ## 검증
 - 생성기 로그의 개수(나무·인스턴스·액터·조명)와 `preview.png`.

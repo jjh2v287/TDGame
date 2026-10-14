@@ -707,6 +707,25 @@ void ATDGamePlayerController::ClearQueuedAttack()
 	bIsAttackMoveQueued = false;
 }
 
+void ATDGamePlayerController::ShiftMovementTargetsBy(const FVector& Offset)
+{
+	CachedDestination += Offset;
+	if (bIsAttackMoveQueued)
+	{
+		ClearQueuedAttack();
+		StopMovement();
+		return;
+	}
+
+	if (!PathFollowingComponent || PathFollowingComponent->GetStatus() == EPathFollowingStatus::Idle)
+	{
+		return;
+	}
+
+	const FVector ShiftedPathDestination = PathFollowingComponent->GetPathDestination() + Offset;
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, ShiftedPathDestination);
+}
+
 FVector ATDGamePlayerController::GetRollDirection(const ATDGameCharacter& ControlledCharacter) const
 {
 	const FVector2D SnappedMovementInput = SnapMovementInputToEightDirections(KeyboardMoveInput);

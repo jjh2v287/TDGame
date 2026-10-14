@@ -1,18 +1,23 @@
 #include "World/Streaming/TDSeamlessTravelSubsystem.h"
 
+#include "Camera/PlayerCameraManager.h"
 #include "Characters/TDCombatCharacter.h"
 #include "Dungeon/TDDungeonDefinitions.h"
+#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "NavigationSystem.h"
 #include "TDGame.h"
 #include "TDWorldGenSettings.h"
+#include "World/Streaming/TDRealmSubsystem.h"
+#include "World/TDRealmDefinitions.h"
 #include "WorldPartition/WorldPartitionSubsystem.h"
 
 namespace
 {
 	const FName TDSeamlessTravelSourceName(TEXT("TDSeamlessTravel"));
+	const FName TDSeamlessTravelDepartureHoldSourceName(TEXT("TDSeamlessTravelDepartureHold"));
 	const FVector TDNavigationProjectionExtent(300.0, 300.0, 600.0);
 
 	const TCHAR* TravelStateToString(ETDSeamlessTravelState State)
@@ -28,21 +33,39 @@ namespace
 		return TEXT("Unknown");
 	}
 
-	bool TeleportPawnToDestination(APawn& Pawn, const FVector& TargetLocation, const FRotator& TargetRotation)
+	float GetTravelFadeOutSeconds()
 	{
-		if (ATDCombatCharacter* CombatCharacter = Cast<ATDCombatCharacter>(&Pawn))
-		{
-			CombatCharacter->TeleportPawn(TargetLocation, TargetRotation);
-			return true;
-		}
-
-		if (Pawn.TeleportTo(TargetLocation, TargetRotation))
-		{
-			return true;
-		}
-
-		return Pawn.SetActorLocationAndRotation(TargetLocation, TargetRotation, false, nullptr, ETeleportType::TeleportPhysics);
+		const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
+		return Settings ? FMath::Max(Settings->TravelFadeOutSeconds, 0.0f) : 0.0f;
 	}
+
+	float GetTravelFadeInSeconds()
+	{
+		const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
+		return Settings ? FMath::Max(Settings->TravelFadeInSeconds, 0.0f) : 0.0f;
+	}
+}
+
+bool UTDSeamlessTravelSubsystem::TeleportPawnToDestination(APawn& Pawn, const FVector& TargetLocation, const FRotator& TargetRotation)
+{
+	if (ATDCombatCharacter* CombatCharacter = Cast<ATDCombatCharacter>(&Pawn))
+	{
+		CombatCharacter->TeleportPawn(TargetLocation, TargetRotation);
+		return true;
+	}
+
+	if (Pawn.TeleportTo(TargetLocation, TargetRotation))
+	{
+		return true;
+	}
+
+	return Pawn.SetActorLocationAndRotation(TargetLocation, TargetRotation, false, nullptr, ETeleportType::TeleportPhysics);
+}
+
+UTDSeamlessTravelSubsystem* UTDSeamlessTravelSubsystem::GetSeamlessTravelSubsystem(const UObject* WorldContextObject)
+{
+	const UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull) : nullptr;
+	return World ? World->GetSubsystem<UTDSeamlessTravelSubsystem>() : nullptr;
 }
 
 bool UTDSeamlessTravelSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
@@ -114,51 +137,87 @@ void UTDSeamlessTravelSubsystem::UnregisterStreamingProvider()
 
 bool UTDSeamlessTravelSubsystem::GetStreamingSources(TArray<FWorldPartitionStreamingSource>& StreamingSources) const
 {
-	if (TravelState == ETDSeamlessTravelState::Idle)
+	const bool bHasTravelSource = TravelState != ETDSeamlessTravelState::Idle;
+	if (bHasTravelSource)
 	{
-		return false;
+		FWorldPartitionStreamingSource& Source = StreamingSources.AddDefaulted_GetRef();
+		Source.Name = TDSeamlessTravelSourceName;
+		Source.Location = Destination.GetLocation();
+		Source.Rotation = Destination.Rotator();
+		Source.TargetState = EStreamingSourceTargetState::Activated;
+		Source.Priority = EStreamingSourcePriority::Highest;
+		FStreamingSourceShape& Shape = Source.Shapes.AddDefaulted_GetRef();
+		Shape.bUseGridLoadingRange = true;
 	}
 
-	FWorldPartitionStreamingSource& Source = StreamingSources.AddDefaulted_GetRef();
-	Source.Name = TDSeamlessTravelSourceName;
-	Source.Location = Destination.GetLocation();
-	Source.Rotation = Destination.Rotator();
-	Source.TargetState = EStreamingSourceTargetState::Activated;
-	Source.Priority = EStreamingSourcePriority::Highest;
-	FStreamingSourceShape& Shape = Source.Shapes.AddDefaulted_GetRef();
-	Shape.bUseGridLoadingRange = true;
-	return true;
+	const bool bHasDepartureHoldSource = IsDepartureHoldActive();
+	if (bHasDepartureHoldSource)
+	{
+		FWorldPartitionStreamingSource& HoldSource = StreamingSources.AddDefaulted_GetRef();
+		HoldSource.Name = TDSeamlessTravelDepartureHoldSourceName;
+		HoldSource.Location = DepartureHoldLocation;
+		HoldSource.TargetState = EStreamingSourceTargetState::Activated;
+		HoldSource.Priority = EStreamingSourcePriority::High;
+		FStreamingSourceShape& HoldShape = HoldSource.Shapes.AddDefaulted_GetRef();
+		HoldShape.bUseGridLoadingRange = true;
+	}
+
+	return bHasTravelSource || bHasDepartureHoldSource;
 }
 
-bool UTDSeamlessTravelSubsystem::ResolveDestination(FName DungeonId, bool bToEntry, FTransform& OutDestination) const
+bool UTDSeamlessTravelSubsystem::IsDepartureHoldActive() const
+{
+	return GetWorldTimeSeconds() < DepartureHoldEndSeconds;
+}
+
+void UTDSeamlessTravelSubsystem::BeginDepartureHold(const FVector& DepartureLocation)
 {
 	const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
-	if (!Settings)
+	const float HoldSeconds = Settings ? FMath::Max(Settings->RealmDepartureHoldSeconds, 0.0f) : 0.0f;
+	if (HoldSeconds <= 0.0f)
 	{
-		return false;
+		return;
 	}
 
-	const UTDDungeonAtlasDefinition* Atlas = Settings->DefaultDungeonAtlas.LoadSynchronous();
-	if (!Atlas)
+	DepartureHoldLocation = DepartureLocation;
+	DepartureHoldEndSeconds = GetWorldTimeSeconds() + HoldSeconds;
+	UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: holding departure area %s loaded for %.1fs."), *DepartureLocation.ToCompactString(), HoldSeconds);
+}
+
+bool UTDSeamlessTravelSubsystem::ResolveDestination(FName DungeonId, bool bToEntry, FTransform& OutDestination, FLinearColor& OutFadeColor) const
+{
+	const UTDRealmDefinition* Realm = UTDRealmDefinition::FindRealmByGateId(DungeonId);
+	const FTDRealmGate* Gate = Realm ? Realm->FindGate(DungeonId) : nullptr;
+	if (Gate)
 	{
-		UE_LOG(LogTDGame, Warning, TEXT("SeamlessTravel: DefaultDungeonAtlas is not set in TD World Generation settings."));
-		return false;
+		OutDestination = bToEntry ? Gate->ArrivalTransform : Gate->FieldReturnTransform;
+		OutFadeColor = Realm->TransitionFadeColor;
+		return true;
 	}
 
-	const FTDDungeonSlot* Slot = Atlas->FindSlotPtr(DungeonId);
+	const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
+	const UTDDungeonAtlasDefinition* Atlas = Settings ? Settings->DefaultDungeonAtlas.LoadSynchronous() : nullptr;
+	const FTDDungeonSlot* Slot = Atlas ? Atlas->FindSlotPtr(DungeonId) : nullptr;
 	if (!Slot)
 	{
-		UE_LOG(LogTDGame, Warning, TEXT("SeamlessTravel: dungeon '%s' not found in atlas '%s'."), *DungeonId.ToString(), *Atlas->GetName());
+		UE_LOG(LogTDGame, Warning, TEXT("SeamlessTravel: destination '%s' not found in realm definitions or dungeon atlas '%s'."), *DungeonId.ToString(), Atlas ? *Atlas->GetName() : TEXT("<DefaultDungeonAtlas not set>"));
 		return false;
 	}
 
 	OutDestination = bToEntry ? Slot->EntryTransform : Slot->FieldReturnTransform;
+	OutFadeColor = FLinearColor::Black;
 	return true;
 }
 
 bool UTDSeamlessTravelSubsystem::IsSameTarget(FName DungeonId, bool bToEntry) const
 {
 	return ActiveDungeonId == DungeonId && bIsTargetEntry == bToEntry;
+}
+
+bool UTDSeamlessTravelSubsystem::IsUnrequestedPreload() const
+{
+	const bool bIsPreloading = TravelState == ETDSeamlessTravelState::Preloading || TravelState == ETDSeamlessTravelState::ReadyToTravel;
+	return bIsPreloading && !bIsTravelRequested;
 }
 
 bool UTDSeamlessTravelSubsystem::BeginPreload(FName DungeonId, bool bToEntry)
@@ -173,16 +232,33 @@ bool UTDSeamlessTravelSubsystem::BeginPreload(FName DungeonId, bool bToEntry)
 		return IsSameTarget(DungeonId, bToEntry);
 	}
 
-	FTransform ResolvedDestination;
-	if (!ResolveDestination(DungeonId, bToEntry, ResolvedDestination))
+	return StartPreload(DungeonId, bToEntry);
+}
+
+bool UTDSeamlessTravelSubsystem::StartPreload(FName DungeonId, bool bToEntry)
+{
+	if (DungeonId.IsNone())
 	{
 		return false;
+	}
+
+	FTransform ResolvedDestination;
+	FLinearColor ResolvedFadeColor = FLinearColor::Black;
+	if (!ResolveDestination(DungeonId, bToEntry, ResolvedDestination, ResolvedFadeColor))
+	{
+		return false;
+	}
+
+	if (TravelState != ETDSeamlessTravelState::Idle)
+	{
+		UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: unrequested preload '%s' replaced by '%s'."), *ActiveDungeonId.ToString(), *DungeonId.ToString());
 	}
 
 	ActiveDungeonId = DungeonId;
 	bIsTargetEntry = bToEntry;
 	bIsTravelRequested = false;
 	Destination = ResolvedDestination;
+	TravelFadeColor = ResolvedFadeColor;
 	RequestStartSeconds = FPlatformTime::Seconds();
 	NextTimeoutWarningSeconds = RequestStartSeconds + GetTimeoutSeconds();
 	RegisterStreamingProvider();
@@ -193,7 +269,9 @@ bool UTDSeamlessTravelSubsystem::BeginPreload(FName DungeonId, bool bToEntry)
 
 bool UTDSeamlessTravelSubsystem::RequestTravel(FName DungeonId, bool bToEntry)
 {
-	if (TravelState == ETDSeamlessTravelState::Idle && !BeginPreload(DungeonId, bToEntry))
+	const bool bCanReplacePreload = IsUnrequestedPreload() && !IsSameTarget(DungeonId, bToEntry);
+	const bool bShouldStartPreload = TravelState == ETDSeamlessTravelState::Idle || bCanReplacePreload;
+	if (bShouldStartPreload && !StartPreload(DungeonId, bToEntry))
 	{
 		return false;
 	}
@@ -209,7 +287,11 @@ bool UTDSeamlessTravelSubsystem::RequestTravel(FName DungeonId, bool bToEntry)
 		return true;
 	}
 
-	bIsTravelRequested = true;
+	if (!bIsTravelRequested)
+	{
+		bIsTravelRequested = true;
+		BeginTravelFadeOut();
+	}
 	if (TravelState == ETDSeamlessTravelState::ReadyToTravel)
 	{
 		TickReadyToTravel();
@@ -227,7 +309,47 @@ void UTDSeamlessTravelSubsystem::CancelTravel()
 	UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: cancelled '%s' after %.2fs."), *ActiveDungeonId.ToString(), GetElapsedSeconds());
 	bIsTravelRequested = false;
 	ActiveDungeonId = NAME_None;
+	BeginTravelFadeIn();
 	SetTravelState(ETDSeamlessTravelState::Idle);
+}
+
+bool UTDSeamlessTravelSubsystem::CancelPreload(FName DungeonId, bool bToEntry)
+{
+	if (!IsUnrequestedPreload() || !IsSameTarget(DungeonId, bToEntry))
+	{
+		return false;
+	}
+
+	CancelTravel();
+	return true;
+}
+
+bool UTDSeamlessTravelSubsystem::IsReadyFor(FName DungeonId, bool bToEntry) const
+{
+	if (TravelState != ETDSeamlessTravelState::ReadyToTravel || !IsSameTarget(DungeonId, bToEntry))
+	{
+		return false;
+	}
+
+	return IsDestinationReady();
+}
+
+bool UTDSeamlessTravelSubsystem::CommitSeamCrossing(FName DungeonId, bool bToEntry, const FVector& HoldLocation)
+{
+	if (!IsReadyFor(DungeonId, bToEntry))
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("SeamlessTravel: seam crossing '%s' (%s) refused, '%s' is in state %s."), *DungeonId.ToString(), bToEntry ? TEXT("entry") : TEXT("field return"), *ActiveDungeonId.ToString(), TravelStateToString(TravelState));
+		return false;
+	}
+
+	LastTraveledDungeonId = DungeonId;
+	ActiveDungeonId = NAME_None;
+	bIsTravelRequested = false;
+	BeginTravelFadeIn();
+	SetTravelState(ETDSeamlessTravelState::Idle);
+	BeginDepartureHold(HoldLocation);
+	UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: '%s' crossed seam after %.2fs."), *DungeonId.ToString(), GetElapsedSeconds());
+	return true;
 }
 
 bool UTDSeamlessTravelSubsystem::IsTickable() const
@@ -308,6 +430,11 @@ void UTDSeamlessTravelSubsystem::TickReadyToTravel()
 		return;
 	}
 
+	if (GetWorldTimeSeconds() < TravelFadeOutEndSeconds)
+	{
+		return;
+	}
+
 	if (!IsDestinationReady())
 	{
 		UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: '%s' no longer ready, back to preloading."), *ActiveDungeonId.ToString());
@@ -315,12 +442,28 @@ void UTDSeamlessTravelSubsystem::TickReadyToTravel()
 		return;
 	}
 
+	FTransform DepartureSeamTransform;
+	FLinearColor DepartureSeamFadeColor;
+	const bool bIsRealmGate = UTDRealmDefinition::FindRealmByGateId(ActiveDungeonId) != nullptr
+		&& ResolveDestination(ActiveDungeonId, !bIsTargetEntry, DepartureSeamTransform, DepartureSeamFadeColor);
+
 	SetTravelState(ETDSeamlessTravelState::Traveling);
 	if (!PerformTravel())
 	{
 		bIsTravelRequested = false;
+		BeginTravelFadeIn();
 		SetTravelState(ETDSeamlessTravelState::ReadyToTravel);
 		return;
+	}
+
+	if (UTDRealmSubsystem* RealmSubsystem = UTDRealmSubsystem::GetRealmSubsystem(this))
+	{
+		RealmSubsystem->ApplyAtmosphereForLocation(Destination.GetLocation());
+	}
+
+	if (bIsRealmGate)
+	{
+		BeginDepartureHold(DepartureSeamTransform.GetLocation());
 	}
 
 	LastTraveledDungeonId = ActiveDungeonId;
@@ -339,6 +482,51 @@ APawn* UTDSeamlessTravelSubsystem::FindLocalPlayerPawn() const
 
 	APlayerController* PlayerController = World->GetFirstPlayerController();
 	return PlayerController ? PlayerController->GetPawn() : nullptr;
+}
+
+APlayerCameraManager* UTDSeamlessTravelSubsystem::FindLocalCameraManager() const
+{
+	UWorld* World = GetWorld();
+	APlayerController* PlayerController = World ? World->GetFirstPlayerController() : nullptr;
+	return PlayerController ? PlayerController->PlayerCameraManager.Get() : nullptr;
+}
+
+double UTDSeamlessTravelSubsystem::GetWorldTimeSeconds() const
+{
+	const UWorld* World = GetWorld();
+	return World ? World->GetTimeSeconds() : 0.0;
+}
+
+void UTDSeamlessTravelSubsystem::BeginTravelFadeOut()
+{
+	TravelFadeOutEndSeconds = GetWorldTimeSeconds();
+	const float FadeOutSeconds = GetTravelFadeOutSeconds();
+	APlayerCameraManager* CameraManager = FindLocalCameraManager();
+	if (FadeOutSeconds <= 0.0f || !CameraManager)
+	{
+		return;
+	}
+
+	CameraManager->StartCameraFade(0.0f, 1.0f, FadeOutSeconds, TravelFadeColor, false, true);
+	TravelFadeOutEndSeconds += FadeOutSeconds;
+	bIsTravelFadeActive = true;
+}
+
+void UTDSeamlessTravelSubsystem::BeginTravelFadeIn()
+{
+	if (!bIsTravelFadeActive)
+	{
+		return;
+	}
+
+	bIsTravelFadeActive = false;
+	APlayerCameraManager* CameraManager = FindLocalCameraManager();
+	if (!CameraManager)
+	{
+		return;
+	}
+
+	CameraManager->StartCameraFade(CameraManager->FadeAmount, 0.0f, GetTravelFadeInSeconds(), TravelFadeColor, false, false);
 }
 
 bool UTDSeamlessTravelSubsystem::PerformTravel()
@@ -381,6 +569,7 @@ void UTDSeamlessTravelSubsystem::HandleStreamingStateUpdated()
 
 	UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: '%s' settled, temporary source released after %.2fs."), *ActiveDungeonId.ToString(), GetElapsedSeconds());
 	ActiveDungeonId = NAME_None;
+	BeginTravelFadeIn();
 	SetTravelState(ETDSeamlessTravelState::Idle);
 }
 

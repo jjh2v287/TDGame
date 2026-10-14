@@ -10,7 +10,7 @@ class UBoxComponent;
 class USphereComponent;
 
 UCLASS()
-class ATDDungeonEntrance : public AActor
+class TDGAME_API ATDDungeonEntrance : public AActor
 {
 	GENERATED_BODY()
 
@@ -39,6 +39,9 @@ public:
 private:
 	UFUNCTION()
 	void HandlePreloadTriggerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void HandlePreloadTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
 
 	UFUNCTION()
 	void HandleTravelTriggerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

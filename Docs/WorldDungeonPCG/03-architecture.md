@@ -96,6 +96,7 @@ Content/Dungeon/Rooms/Crypt/LI_TDRoom_Crypt_Entrance … (레벨 인스턴스)
 Content/Dungeon/Encounters/DA_TDEncounter_*
 Content/POI/LevelInstances/LI_TDPoi_Camp_A …, POI/Definitions/DA_TDPoi_Camp
 Content/Editor/WorldGenerator/EUW_TDWorldGenerator (UI만)
+Content/World/Materials/TopDown/{Parameters,Functions,Masters,Instances} (MPC_TD_TopDown, MF_TD_OcclusionCutout, M_TD_*, MI_TD_*, 05-topdown-visuals.md)
 ```
 접두어: 데이터 에셋 `DA_TD`, 레벨 인스턴스 `LI_TD`, PCG 그래프 `PCG_TD`, 맵 `L_TD`, 데이터 레이어 `DL_TD`. C++는 AGENTS.md 3절.
 

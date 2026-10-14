@@ -12,6 +12,7 @@
 | 2 | [현재 상태와 차이](WorldDungeonPCG/02-current-state-gap.md) | 있는 것, 없는 것(G-xx), 재사용 자산, 지금 당장 필요한 것 |
 | 3 | [제안 아키텍처](WorldDungeonPCG/03-architecture.md) | 모듈 3개, 데이터 타입, 알고리즘, 런타임, 에디터, 폴더, 테스트, UKGame과의 차이, 리서치 반영 결정 |
 | 4 | [도구·플러그인·설정](WorldDungeonPCG/04-tools-and-plugins.md) | 플러그인, 월드·내비·PCG 설정 체크리스트, 모듈 빌드 설정, 에이전트 도구, 만들 툴 |
+| 4b | [탑다운 시각 정리](WorldDungeonPCG/05-topdown-visuals.md) | 카메라 실측, 탑다운 재질 계층(MPC·컷아웃 함수·마스터·거울 MI), 새 에셋 추가 규칙, 배치 규칙, 검증 방법, 성능 주의(P3-17, D-43) |
 | 5 | 리서치 (아래) | 엔진 소스 파일:줄 근거와 웹 사례 |
 | 6 | [할 일 목록](Tasks/README.md) | Phase 0~4 작업 대장, 결정 대장, 에이전트 작업 규칙 |
 

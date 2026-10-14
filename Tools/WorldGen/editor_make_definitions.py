@@ -7,11 +7,61 @@
 그리고 프로젝트 설정 TD World Generation 의 DefaultDungeonAtlas / DefaultWorldDefinition 을 채운다.
 실행: python Tools/run_in_editor.py Tools/WorldGen/editor_make_definitions.py
 """
+import array
+import json
+import math
+import os
+import sys
+
 import unreal
 
 EAL = unreal.EditorAssetLibrary
 tools = unreal.AssetToolsHelpers.get_asset_tools()
 MESH = "/Game/DarkFantasyTopDown/StaticMeshes"
+FIELD_OUTPUT_DIR = os.path.join(unreal.SystemLibrary.get_project_directory(), "Saved", "WorldGen", "AshenVale")
+FIELD_SIZE = 1009
+FIELD_HALF = (FIELD_SIZE - 1) // 2
+FIELD_UNITS_PER_METER = 128.0
+FIELD_RETURN_FORWARD_CM = 700.0
+FIELD_RETURN_LIFT_CM = 120.0
+
+
+def load_field_markers():
+    with open(os.path.join(FIELD_OUTPUT_DIR, "layout.json"), encoding="utf-8") as fp:
+        return {m["label"]: m for m in json.load(fp)["markers"]}
+
+
+def load_field_heights():
+    heights = array.array("H")
+    with open(os.path.join(FIELD_OUTPUT_DIR, "height.r16"), "rb") as fp:
+        heights.frombytes(fp.read())
+    if sys.byteorder != "little":
+        heights.byteswap()
+    if len(heights) != FIELD_SIZE * FIELD_SIZE:
+        raise RuntimeError(f"height.r16 has {len(heights)} samples, expected {FIELD_SIZE * FIELD_SIZE}")
+    return heights
+
+
+def field_height_cm_at(heights, ix, iy):
+    return (heights[iy * FIELD_SIZE + ix] - 32768.0) / FIELD_UNITS_PER_METER * 100.0
+
+
+def field_ground_cm(heights, x_cm, y_cm):
+    fx = min(max(x_cm / 100.0 + FIELD_HALF, 0.0), FIELD_SIZE - 1.001)
+    fy = min(max(y_cm / 100.0 + FIELD_HALF, 0.0), FIELD_SIZE - 1.001)
+    ix, iy = int(math.floor(fx)), int(math.floor(fy))
+    tx, ty = fx - ix, fy - iy
+    top = field_height_cm_at(heights, ix, iy) * (1.0 - tx) + field_height_cm_at(heights, ix + 1, iy) * tx
+    bottom = field_height_cm_at(heights, ix, iy + 1) * (1.0 - tx) + field_height_cm_at(heights, ix + 1, iy + 1) * tx
+    return top * (1.0 - ty) + bottom * ty
+
+
+def field_return_location(markers, heights, dungeon_id):
+    marker = markers[f"TDDungeonEntrance_{dungeon_id}"]
+    yaw = math.radians(marker["rot"][1])
+    x = marker["loc"][0] + FIELD_RETURN_FORWARD_CM * math.cos(yaw)
+    y = marker["loc"][1] + FIELD_RETURN_FORWARD_CM * math.sin(yaw)
+    return unreal.Vector(x, y, field_ground_cm(heights, x, y) + FIELD_RETURN_LIFT_CM)
 
 
 def ensure_dir(path):
@@ -112,8 +162,10 @@ atlas.set_editor_property("slot_pitch_cm", 30000.0)
 atlas.set_editor_property("columns", 4)
 atlas.set_editor_property("loading_range_cm", 12800.0)
 existing_slots = {str(s.get_editor_property("dungeon_id")): s for s in atlas.get_editor_property("slots")}
+field_markers = load_field_markers()
+field_heights = load_field_heights()
 slots = []
-for idx, (did, flow, size, seed, ret) in enumerate((("MainCrypt", "KeyLock", unreal.TDDungeonSize.MEDIUM, 7, (29600.0, -26800.0, 2133.0)), ("HollowCave", "Branch", unreal.TDDungeonSize.SMALL, 3, (-37200.0, -26200.0, 500.0)), ("SunkenCrypt", "Loop", unreal.TDDungeonSize.MEDIUM, 5, (31800.0, 41200.0, 250.0)))):
+for idx, (did, flow, size, seed) in enumerate((("MainCrypt", "KeyLock", unreal.TDDungeonSize.MEDIUM, 7), ("HollowCave", "Branch", unreal.TDDungeonSize.SMALL, 3), ("SunkenCrypt", "Loop", unreal.TDDungeonSize.MEDIUM, 5))):
     s = unreal.TDDungeonSlot()
     s.set_editor_property("dungeon_id", did)
     s.set_editor_property("slot_index", idx)
@@ -123,7 +175,9 @@ for idx, (did, flow, size, seed, ret) in enumerate((("MainCrypt", "KeyLock", unr
     s.set_editor_property("flow_template", soft(flows[flow]))
     s.set_editor_property("size", size)
     s.set_editor_property("seed", seed)
-    s.set_editor_property("field_return_transform", unreal.Transform(location=unreal.Vector(ret[0], ret[1], ret[2] + 120.0), rotation=unreal.Rotator(0, 0, 0), scale=unreal.Vector(1, 1, 1)))
+    field_return = field_return_location(field_markers, field_heights, did)
+    print(f"field return {did}: ({field_return.x:.1f}, {field_return.y:.1f}, {field_return.z:.1f})")
+    s.set_editor_property("field_return_transform", unreal.Transform(location=field_return, rotation=unreal.Rotator(0, 0, 0), scale=unreal.Vector(1, 1, 1)))
     prev = existing_slots.get(did)
     if prev is not None:
         for keep in ("entry_transform", "exit_transform", "bounds", "validation_passed", "generator_version"):

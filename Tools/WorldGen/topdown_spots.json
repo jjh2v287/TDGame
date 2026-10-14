@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "source": "Saved/AgentOps/20261014/topdown/survey.md 의 PIE 조사 27지점(1차 19지점 + 2차 표적 8지점)",
+  "regions": {
+    "field": {
+      "travel": {"method": "teleport"},
+      "height_file": "Saved/WorldGen/AshenVale/height.r16",
+      "samples": 1009,
+      "cell_cm": 100
+    },
+    "SunkenStarfield": {
+      "travel": {"method": "console_gate", "gate_id": "SunkenStarfieldSouthwest"},
+      "height_file": "Saved/WorldGen/Realms/SunkenStarfield/height.r16",
+      "samples": 505,
+      "cell_cm": 100,
+      "layout_file": "Saved/WorldGen/Realms/SunkenStarfield/layout.json"
+    },
+    "PaleHeights": {
+      "travel": {"method": "console_gate", "gate_id": "PaleHeightsNortheast"},
+      "height_file": "Saved/WorldGen/Realms/PaleHeights/height.r16",
+      "samples": 505,
+      "cell_cm": 100,
+      "layout_file": "Saved/WorldGen/Realms/PaleHeights/layout.json"
+    }
+  },
+  "spots": [
+    {"id": "F01_village", "region": "field", "x_cm": -11000, "y_cm": 2000, "description": "마을. 물웅덩이 평면이 지면 높이라 가림 없음(조사 결과 없음)"},
+    {"id": "F02_forest_path", "region": "field", "x_cm": -9000, "y_cm": -16000, "description": "숲길. 자작나무 줄기가 위로 잘려 막대처럼 보임(낮음)"},
+    {"id": "F03_graveyard", "region": "field", "x_cm": 1000, "y_cm": -33000, "description": "묘지. 문제 없음(없음)"},
+    {"id": "F04_mushroom_forest", "region": "field", "x_cm": -39000, "y_cm": 30000, "description": "버섯 숲. 빛기둥이 시선 광선을 막음, 큰 버섯 갓 파란 얼룩(시각 낮음)"},
+    {"id": "F05_swamp_bone_pit", "region": "field", "x_cm": 21000, "y_cm": 33000, "description": "습지 뼈 구덩이. 화면 가장자리 검은 덩어리(낮음)"},
+    {"id": "F06_shrine", "region": "field", "x_cm": -25000, "y_cm": -15000, "description": "사당. 선돌 Cliff4 키가 큼, 제단 위 순간이동으로 해골과 겹침(낮음)"},
+    {"id": "F07_bridge", "region": "field", "x_cm": 6200, "y_cm": 2600, "description": "다리. 다리 밑에서 상판이 폰 앞을 지남(낮음)"},
+    {"id": "F08_west_outer_forest", "region": "field", "x_cm": -44000, "y_cm": 5000, "description": "서쪽 외곽 숲. 카메라 앞 거대한 줄기·잎과 폰 가림, 어두운 비율 0.77(높음)"},
+    {"id": "F09_sw_passage_mouth", "region": "field", "x_cm": -36900, "y_cm": -26300, "description": "남서 통로 입구(HollowCave). 카메라가 상인방 메시에 닿아 화면 전체 암흑(치명)"},
+    {"id": "F10_se_passage_inside", "region": "field", "x_cm": 33000, "y_cm": -30200, "description": "남동 통로 안. 카메라가 지형 아래로 들어가 빈 공간이 보임(높음)"},
+    {"id": "F11_ne_passage_inside", "region": "field", "x_cm": 40200, "y_cm": 43700, "description": "북동 통로 안. 맞은편 벽의 늘어난 텍스처가 화면 약 45%(중간)"},
+    {"id": "E1_field_tallest_cliff4_behind", "region": "field", "x_cm": 34086, "y_cm": -42767, "description": "필드 최고 Cliff4 뒤. 폰 가림과 검은 덩어리, 어두운 비율 0.62(높음)"},
+    {"id": "E2_field_rock2_gap_front", "region": "field", "x_cm": 11230, "y_cm": -35666, "description": "필드 Rock2 앞. 바위 대신 지형만 있음(없음)"},
+    {"id": "E3_field_cliff2_gap_front", "region": "field", "x_cm": 33170, "y_cm": 48330, "description": "북쪽 외곽 고지 Cliff2 앞. 절벽 벽이 화면 절반, 맵 밖 하늘(중간, 도달 가능성 미확인)"},
+    {"id": "E4_field_cliff4_gap_front", "region": "field", "x_cm": 12726, "y_cm": -49394, "description": "남쪽 외곽 Cliff4 앞. 경사 지형 벽 늘어난 텍스처와 큰 그림자(중간, 도달 가능성 미확인)"},
+    {"id": "S01_passage_end_plaza", "region": "SunkenStarfield", "x_cm": -284800, "y_cm": 309500, "description": "별밭 통로 끝 광장. 왼쪽 위 지형 그림자(중간)"},
+    {"id": "S02_star_pillar_ring", "region": "SunkenStarfield", "x_cm": -304400, "y_cm": 318400, "description": "별 기둥 원환. 긴 기둥 그림자 띠가 폰을 덮고 빛기둥이 광선을 막음(중간)"},
+    {"id": "S03_mushroom_ring", "region": "SunkenStarfield", "x_cm": -293400, "y_cm": 316400, "description": "버섯 고리. 빛기둥이 광선을 막음, 화면 문제 없음(낮음)"},
+    {"id": "S04_lakeside", "region": "SunkenStarfield", "x_cm": -305000, "y_cm": 300000, "description": "호숫가. 큰 바위 면 늘어난 텍스처, 발광 버섯이 위쪽에서 잘림(낮음)"},
+    {"id": "E7_star_cliff2_gap_front", "region": "SunkenStarfield", "x_cm": -314958, "y_cm": 277563, "description": "별밭 가장자리 고지 Cliff2 앞. 왼쪽 26%가 이계 밖 빈 공간(높음, 도달 가능성 미확인)"},
+    {"id": "E8_star_tallest_pillar_behind", "region": "SunkenStarfield", "x_cm": -305802, "y_cm": 320395, "description": "별밭 최고 기둥 근처. 기둥 잘림과 긴 그림자 띠 둘이 화면 약 30%(중간)"},
+    {"id": "P01_arrival_plaza", "region": "PaleHeights", "x_cm": -317800, "y_cm": -298100, "description": "고원 도착 광장. 문제 없음(없음)"},
+    {"id": "P02_pillar_ring", "region": "PaleHeights", "x_cm": -302400, "y_cm": -301400, "description": "고원 기둥 원환. 폰이 63m 첨탑 안, 첨탑과 빛기둥이 화면 중앙을 덮음(높음)"},
+    {"id": "P03_east_bridge", "region": "PaleHeights", "x_cm": -294400, "y_cm": -302900, "description": "동쪽 다리. 능선 옆면 늘어난 텍스처, 협곡 바닥이 밝게 날아감(중간)"},
+    {"id": "P04_south_mesa", "region": "PaleHeights", "x_cm": -302400, "y_cm": -319000, "description": "남쪽 메사. 빛기둥이 카메라→폰 쓸기를 막음, 화면 문제 없음(시각 없음)"},
+    {"id": "E5_pale_rock1_gap_front", "region": "PaleHeights", "x_cm": -310232, "y_cm": -281549, "description": "고원 메사 가장자리 Rock1 앞. 오른쪽 25%가 이계 밖 빈 공간(높음, 도달 가능성 미확인)"},
+    {"id": "E6_pale_cliff4_gap_front", "region": "PaleHeights", "x_cm": -301094, "y_cm": -281785, "description": "고원 Cliff4 앞. 조사 때 높이맵 지면이 -2427cm로 낙하 복구 높이(-1500cm) 아래라 폰이 도착 광장 근처로 되돌아가 기록이 다른 자리였음. 촬영 결과의 목표 이탈 표시로 확인"}
+  ]
+}

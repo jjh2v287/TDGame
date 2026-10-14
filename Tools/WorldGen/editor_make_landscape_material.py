@@ -1,11 +1,16 @@
-"""에디터 안에서 실행: 랜드스케이프 레이어 머티리얼(M_TD_Landscape), 인스턴스, 풀(Grass) 타입 에셋을 만든다.
+"""에디터 안에서 실행: 랜드스케이프 레이어 머티리얼(M_TD_Landscape)·인스턴스·풀 타입을 다시 만들고, 부모가 M_TD_Landscape였던 인스턴스와 각 랜드스케이프의 원래 재질 연결을 되살린다.
+실행: python Tools/run_in_editor.py Tools/WorldGen/editor_make_landscape_material.py (PowerShell)
+출력: /Game/World/Landscape/M_TD_Landscape·MI_TD_Landscape·Grass/GT_TD_* (재실행하면 덮어쓴다), 재부모화한 /Game/World/Landscape·/Game/World/Realms 인스턴스
+상태: 현행
 
-실행: python Tools/run_in_editor.py Tools/WorldGen/editor_make_landscape_material.py
-결과 에셋: /Game/World/Landscape/ 아래 (재실행하면 덮어쓴다). 레이어 인포(LI_TD_*)는 C++ UTDLandscapeEditorLibrary가 만든다.
+레이어 인포(LI_TD_*)는 C++ UTDLandscapeEditorLibrary가 만든다.
+파라미터: LayerTint_<Layer>(기본값 = 예전 레이어 색조 상수), RealmTint(기본 1,1,1,1), RealmBrightness(기본 1.0), RealmDesaturation(기본 0.0). 기본값이면 메인 지역 색은 예전과 같다.
 """
 import unreal
 
 ROOT = "/Game/World/Landscape"
+MASTER_INSTANCE_ROOTS = (ROOT, "/Game/World/Realms")
+MASTER_PATH = f"{ROOT}/M_TD_Landscape.M_TD_Landscape"
 TEX = "/Game/DarkFantasyTopDown/Textures/Nature"
 MESH = "/Game/DarkFantasyTopDown/StaticMeshes"
 
@@ -161,11 +166,12 @@ def make_material(grass_types):
         coords.set_editor_property("mapping_scale", tile)
         base_tex = load_texture(folder, prefix, "basecolor")
         base_call = bombed_sample(base_tex, coords, False, -1200, y)
-        tint_node = MEL.create_material_expression(mat, unreal.MaterialExpressionConstant3Vector, -650, y + 60)
-        tint_node.set_editor_property("constant", unreal.LinearColor(tint_rgb[0], tint_rgb[1], tint_rgb[2], 1.0))
+        tint_node = MEL.create_material_expression(mat, unreal.MaterialExpressionVectorParameter, -650, y + 60)
+        tint_node.set_editor_property("parameter_name", "LayerTint_" + name)
+        tint_node.set_editor_property("default_value", unreal.LinearColor(tint_rgb[0], tint_rgb[1], tint_rgb[2], 1.0))
         tint_mul = MEL.create_material_expression(mat, unreal.MaterialExpressionMultiply, -450, y)
         MEL.connect_material_expressions(base_call, "Result", tint_mul, "A")
-        MEL.connect_material_expressions(tint_node, "", tint_mul, "B")
+        MEL.connect_material_expressions(tint_node, "RGB", tint_mul, "B")
         MEL.connect_material_expressions(tint_mul, "", blend_color, "Layer " + name)
         y += 220
         normal_tex = load_texture(folder, prefix, "normal")
@@ -220,7 +226,26 @@ def make_material(grass_types):
     MEL.connect_material_expressions(macro_mul, "", tint_mul, "A")
     MEL.connect_material_expressions(tint, "", tint_mul, "B")
 
-    MEL.connect_material_property(tint_mul, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    realm_tint = MEL.create_material_expression(mat, unreal.MaterialExpressionVectorParameter, 1250, -650)
+    realm_tint.set_editor_property("parameter_name", "RealmTint")
+    realm_tint.set_editor_property("default_value", unreal.LinearColor(1.0, 1.0, 1.0, 1.0))
+    realm_tint_mul = MEL.create_material_expression(mat, unreal.MaterialExpressionMultiply, 1500, -500)
+    MEL.connect_material_expressions(tint_mul, "", realm_tint_mul, "A")
+    MEL.connect_material_expressions(realm_tint, "RGB", realm_tint_mul, "B")
+    realm_brightness = MEL.create_material_expression(mat, unreal.MaterialExpressionScalarParameter, 1500, -650)
+    realm_brightness.set_editor_property("parameter_name", "RealmBrightness")
+    realm_brightness.set_editor_property("default_value", 1.0)
+    realm_color = MEL.create_material_expression(mat, unreal.MaterialExpressionMultiply, 1750, -500)
+    MEL.connect_material_expressions(realm_tint_mul, "", realm_color, "A")
+    MEL.connect_material_expressions(realm_brightness, "", realm_color, "B")
+    realm_desaturation = MEL.create_material_expression(mat, unreal.MaterialExpressionScalarParameter, 1750, -650)
+    realm_desaturation.set_editor_property("parameter_name", "RealmDesaturation")
+    realm_desaturation.set_editor_property("default_value", 0.0)
+    realm_desaturate = MEL.create_material_expression(mat, unreal.MaterialExpressionDesaturation, 2000, -500)
+    if not MEL.connect_material_expressions(realm_color, "", realm_desaturate, ""):
+        MEL.connect_material_expressions(realm_color, "", realm_desaturate, "Input")
+    MEL.connect_material_expressions(realm_desaturation, "", realm_desaturate, "Fraction")
+    MEL.connect_material_property(realm_desaturate, "", unreal.MaterialProperty.MP_BASE_COLOR)
     # 노멀 완화: 강한 흙 요철 노멀을 (0,0,1)과 섞어 탑다운에서 주름처럼 보이는 현상을 줄인다
     flat_n = MEL.create_material_expression(mat, unreal.MaterialExpressionConstant3Vector, 1000, 300)
     flat_n.set_editor_property("constant", unreal.LinearColor(0.0, 0.0, 1.0, 1.0))
@@ -263,17 +288,92 @@ def make_material(grass_types):
 
 
 
-def reassign_landscape_material(inst):
-    """현재 월드의 랜드스케이프가 옛 머티리얼 참조를 들고 있으면 새 인스턴스로 갈아 끼운다."""
+def read_instance_overrides(instance):
+    scalars = []
+    for value in instance.get_editor_property("scalar_parameter_values"):
+        name = value.get_editor_property("parameter_info").get_editor_property("name")
+        scalars.append((name, value.get_editor_property("parameter_value")))
+    vectors = []
+    for value in instance.get_editor_property("vector_parameter_values"):
+        name = value.get_editor_property("parameter_info").get_editor_property("name")
+        vectors.append((name, value.get_editor_property("parameter_value")))
+    return scalars, vectors
+
+
+def is_master_instance(asset):
+    if not isinstance(asset, unreal.MaterialInstanceConstant):
+        return False
+    parent = asset.get_editor_property("parent")
+    if parent is None:
+        return asset.get_name().startswith("MI_TD_Landscape")
+    return parent.get_path_name() == MASTER_PATH
+
+
+def find_master_instances():
+    records = []
+    for root in MASTER_INSTANCE_ROOTS:
+        if not EAL.does_directory_exist(root):
+            continue
+        for asset_path in EAL.list_assets(root, True, False):
+            asset = EAL.load_asset(asset_path)
+            if not is_master_instance(asset):
+                continue
+            scalars, vectors = read_instance_overrides(asset)
+            records.append((asset.get_path_name(), scalars, vectors))
+    return records
+
+
+def reparent_master_instances(records, mat):
+    reparented = []
+    for path, scalars, vectors in records:
+        inst = EAL.load_asset(path)
+        if inst is None:
+            print("material instance missing:", path)
+            continue
+        MEL.set_material_instance_parent(inst, mat)
+        for name, value in scalars:
+            MEL.set_material_instance_scalar_parameter_value(inst, name, value)
+        for name, value in vectors:
+            MEL.set_material_instance_vector_parameter_value(inst, name, value)
+        MEL.update_material_instance(inst)
+        EAL.save_loaded_asset(inst, False)
+        reparented.append(path)
+    return reparented
+
+
+def record_landscape_materials():
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
-    proxies = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.LandscapeProxy)
-    for proxy in proxies:
+    records = []
+    for proxy in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.LandscapeProxy):
+        material = proxy.get_editor_property("landscape_material")
+        records.append((proxy, material.get_path_name() if material else None))
+    return records
+
+
+def resolve_landscape_material(material_path, mat, inst):
+    if material_path is None:
+        return inst
+    if material_path == MASTER_PATH:
+        return mat
+    material = EAL.load_asset(material_path)
+    if material is None:
+        print("landscape material missing, using", inst.get_path_name(), ":", material_path)
+        return inst
+    return material
+
+
+def reassign_landscape_material(records, mat, inst):
+    """현재 월드의 랜드스케이프마다 원래 재질을 None→재질 순서로 다시 넣어 옛 머티리얼 참조를 갈아 끼운다."""
+    for proxy, material_path in records:
         proxy.set_editor_property("landscape_material", None)
-        proxy.set_editor_property("landscape_material", inst)
-    return len(proxies)
+        proxy.set_editor_property("landscape_material", resolve_landscape_material(material_path, mat, inst))
+    return len(records)
 
 
 grass = make_grass_types()
+instance_records = find_master_instances()
+landscape_records = record_landscape_materials()
 mat, inst = make_material(grass)
-print("landscape proxies reassigned:", reassign_landscape_material(inst))
+print("material instances reparented:", reparent_master_instances(instance_records, mat))
+print("landscape proxies reassigned:", reassign_landscape_material(landscape_records, mat, inst))
 print("DONE material", mat.get_path_name(), "instance", inst.get_path_name(), "grass", list(grass.keys()))

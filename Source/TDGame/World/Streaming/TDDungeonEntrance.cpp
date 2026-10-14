@@ -38,7 +38,9 @@ void ATDDungeonEntrance::BeginPlay()
 {
 	Super::BeginPlay();
 
+	PreloadTrigger->SetSphereRadius(PreloadDistanceCm);
 	PreloadTrigger->OnComponentBeginOverlap.AddUniqueDynamic(this, &ATDDungeonEntrance::HandlePreloadTriggerBeginOverlap);
+	PreloadTrigger->OnComponentEndOverlap.AddUniqueDynamic(this, &ATDDungeonEntrance::HandlePreloadTriggerEndOverlap);
 	TravelTrigger->OnComponentBeginOverlap.AddUniqueDynamic(this, &ATDDungeonEntrance::HandleTravelTriggerBeginOverlap);
 
 	if (UTDSeamlessTravelSubsystem* Travel = FindTravelSubsystem())
@@ -50,6 +52,7 @@ void ATDDungeonEntrance::BeginPlay()
 void ATDDungeonEntrance::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	PreloadTrigger->OnComponentBeginOverlap.RemoveDynamic(this, &ATDDungeonEntrance::HandlePreloadTriggerBeginOverlap);
+	PreloadTrigger->OnComponentEndOverlap.RemoveDynamic(this, &ATDDungeonEntrance::HandlePreloadTriggerEndOverlap);
 	TravelTrigger->OnComponentBeginOverlap.RemoveDynamic(this, &ATDDungeonEntrance::HandleTravelTriggerBeginOverlap);
 	if (UTDSeamlessTravelSubsystem* Travel = FindTravelSubsystem())
 	{
@@ -90,6 +93,20 @@ void ATDDungeonEntrance::HandlePreloadTriggerBeginOverlap(UPrimitiveComponent* O
 	}
 
 	Travel->BeginPreload(DungeonId, !bIsExit);
+}
+
+void ATDDungeonEntrance::HandlePreloadTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex)
+{
+	const APlayerController* PlayerController = FindPlayerControllerOfPawn(OtherActor);
+	if (!PlayerController || !PlayerController->IsLocalController())
+	{
+		return;
+	}
+
+	if (UTDSeamlessTravelSubsystem* Travel = FindTravelSubsystem())
+	{
+		Travel->CancelPreload(DungeonId, !bIsExit);
+	}
 }
 
 void ATDDungeonEntrance::HandleTravelTriggerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -148,7 +165,7 @@ void ATDDungeonEntrance::EndTransition()
 
 void ATDDungeonEntrance::HandleTravelStateChanged(ETDSeamlessTravelState OldState, ETDSeamlessTravelState NewState)
 {
-	if (!bIsTransitionActive || NewState != ETDSeamlessTravelState::Idle)
+	if (NewState != ETDSeamlessTravelState::Idle)
 	{
 		return;
 	}

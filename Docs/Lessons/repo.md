@@ -70,3 +70,37 @@
 - 증거: `Saved/AgentOps/20260930/fix-dungeon.md`·`fix-world.md`, `Docs/Validation/P3-00-landscape.md`, 테스트 75/75(`Saved/Logs/AItemsFinal.log`)
 - 날짜·상태: 2026-09-30 active
 - 발견: claude
+
+### L-repo-09 Windows PowerShell 5.1은 네이티브 프로그램 인수 안의 큰따옴표를 지운다 — JSON 인수는 파일로 넘긴다
+- 증상: `python Tools/Cascadeur/cascadeur_bridge.py call ... --args '{"fbx_path": "..."}'`가 `json.decoder.JSONDecodeError`, `eval "exec(...)"`가 `SyntaxError: invalid syntax`(따옴표가 사라진 문자열). PowerShell `>` 리디렉션 결과 JSON은 `Unexpected UTF-8 BOM`으로 읽기 실패.
+- 해결: JSON 인수는 `--args-file <파일>`로 넘기고 파일은 Python으로 만든다(`json.dump`). PowerShell 출력 파일은 `utf-8-sig`로 읽거나 `Out-File -Encoding utf8` 결과를 BOM 허용으로 읽는다(L-repo-03과 같은 계열).
+- 범위: Windows PowerShell 5.1 → 시스템 Python 3.12 호출 전반
+- 증거: 2026-10-08 세션 재현 2회, `cascadeur_bridge.py`의 `--args-file`
+- 날짜·상태: 2026-10-08 active
+- 발견: claude
+
+### L-repo-10 Read 도구의 PDF 페이지 렌더가 pdftoppm 없음으로 실패하고, 파이썬 출력은 cp949 콘솔에서 깨진다
+- 증상: Read 도구로 PDF를 `pages` 지정해 읽으면 `pdftoppm is not installed. Install poppler-utils`로 실패한다(페이지 지정 없이 읽으면 내용 없이 "PDF file read"만 나온다). 파이썬이 `µ`·`°` 등이 든 문자열을 출력하면 `UnicodeEncodeError: 'cp949' codec can't encode character '\xb5'`로 멈추고, 리디렉션 출력의 한글이 깨진다.
+- 해결: PDF는 시스템 Python 3.12의 `pypdf`(`pdfminer`·`pdfplumber`도 설치됨)로 텍스트를 뽑아 파일로 저장한 뒤 읽는다(수식 글리프는 깨지므로 본문 설명으로 해석한다). 웹 PDF는 WebFetch가 본문을 변환하지 못해도 사본을 자동 저장하므로, 그 사본에서 pypdf로 텍스트만 뽑아 읽는다(따로 내려받지 않음, 2026-10-14 문헌 조사 하위 에이전트 3곳에서 재현). 출력은 `PYTHONIOENCODING=utf-8 python ...` 또는 파일에 `encoding="utf-8"`로 쓴다. 파이썬 문자열 안 `\2026…` 같은 백슬래시+숫자는 8진 이스케이프가 되어 경로가 깨진다(L-repo-07 계열) — 치환 스크립트는 파일로 쓰고 `chr()`로 문자를 만든다.
+- 범위: 이 PC의 Claude Code Read 도구, Git Bash + 시스템 Python 3.12
+- 증거: 2026-10-14 세션 재현(HZD 9장 PDF 11쪽 추출 24,391자, `Saved/AgentOps/20261014/hzd_ch09.txt`)
+- 날짜·상태: 2026-10-14 active
+- 발견: claude
+
+### L-repo-11 파이썬 `open(path, 'w')`가 `OSError: [Errno 22] Invalid argument`로 간헐 실패한다
+- 증상: 같은 세션에서 `Config/DefaultGame.ini`·`Tools/WorldGen/editor_build_open_world.py`·`Docs/Tasks/phase-3-outdoor-generator.md` 쓰기가 한 번씩 실패하고, 잠시 뒤 같은 쓰기는 성공했다. 읽기는 정상이다.
+- 원인: 미검증. 에디터·다른 세션·백신 같은 다른 프로세스가 파일을 잠깐 잡는 것으로 추정한다(실패는 에디터가 켜져 있거나 다른 세션이 작업 중일 때만 났다).
+- 해결: 같은 폴더의 임시 파일에 쓴 뒤 `os.replace(tmp, path)`로 바꾸고, 실패하면 2초 간격으로 몇 번 재시도한다. 열기 단계에서 실패하면 원본은 잘리지 않는다(크기 확인함).
+- 범위: Windows 10, 시스템 Python 3.12, 저장소 안 텍스트 파일
+- 증거: 2026-10-14 claude 세션(P3-15) 도구 출력 4회
+- 날짜·상태: 2026-10-14 active
+- 발견: claude
+
+### L-repo-12 PowerShell 5.1에서 따옴표 없는 `-log=이름.log`가 `-log=이름`·`.log` 두 인수로 쪼개져 로그가 TDGame.log로 간다
+- 증상: `& UnrealEditor-Cmd.exe ... -log=M325_Before.log`로 헤드리스 시험을 돌렸는데 `Saved/Logs/M325_Before.log`가 생기지 않고 결과가 `Saved/Logs/TDGame.log`에 남았다.
+- 원인: Windows PowerShell 5.1이 `-`로 시작하고 `.`을 포함한 따옴표 없는 네이티브 인수를 마침표 앞에서 나눠 넘긴다(PowerShell 알려진 동작).
+- 해결: 인수 전체를 따옴표로 감싼다: `"-log=M325_After.log"`. 또는 Python `subprocess`에 인수 목록으로 넘긴다. L-editor-08의 헤드리스 명령도 PowerShell에서는 이렇게 감싼다.
+- 범위: Windows PowerShell 5.1 → UnrealEditor-Cmd 등 네이티브 프로그램 인수(`-key=값.확장자` 꼴)
+- 증거: 2026-10-14 claude 세션(M3-25) 수정 전 실행이 TDGame.log로 감, 따옴표를 붙인 수정 후 실행은 M325_After.log 생성
+- 날짜·상태: 2026-10-14 active
+- 발견: claude

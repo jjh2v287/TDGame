@@ -10,6 +10,7 @@
 #include "LandscapeProxy.h"
 #include "Logging/MessageLog.h"
 #include "Logging/TokenizedMessage.h"
+#include "Materials/Material.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
@@ -280,7 +281,7 @@ bool UTDWorldGenEditorLibrary::ResolveRegionVolumeBounds(UObject* WorldContextOb
 	return FTDWorldBaker::ResolveRegionBounds(ResolveWorld(WorldContextObject), RegionId, OutBoundsCm);
 }
 
-ALandscapeProxy* UTDWorldGenEditorLibrary::FindLandscapeForSampling(UObject* WorldContextObject)
+ALandscapeProxy* UTDWorldGenEditorLibrary::FindLandscapeForSampling(UObject* WorldContextObject, FVector SampleLocationCm)
 {
 	UWorld* World = ResolveWorld(WorldContextObject);
 	if (!World)
@@ -290,11 +291,17 @@ ALandscapeProxy* UTDWorldGenEditorLibrary::FindLandscapeForSampling(UObject* Wor
 	ALandscapeProxy* Fallback = nullptr;
 	for (TActorIterator<ALandscapeProxy> It(World); It; ++It)
 	{
-		if (It->IsA<ALandscape>())
+		ALandscape* Landscape = Cast<ALandscape>(*It);
+		if (Landscape)
 		{
-			return *It;
+			const FBox CompleteBoundsCm = Landscape->GetCompleteBounds();
+			if (CompleteBoundsCm.IsValid && CompleteBoundsCm.IsInsideOrOnXY(SampleLocationCm))
+			{
+				return Landscape;
+			}
 		}
-		Fallback = Fallback ? Fallback : *It;
+		const bool bShouldReplaceFallback = !Fallback || (Landscape && !Fallback->IsA<ALandscape>());
+		Fallback = bShouldReplaceFallback ? *It : Fallback;
 	}
 	return Fallback;
 }
@@ -673,6 +680,19 @@ void UTDWorldGenEditorLibrary::CollectLockedPlacements(UWorld* World, TArray<FTD
 		Anchor.ExclusionRadiusCm = 2000.0f;
 		Anchor.bLocked = true;
 	}
+}
+
+bool UTDWorldGenEditorLibrary::ClearMaskedAssumedOpaque(UMaterial* Material)
+{
+	if (!Material || !Material->bCanMaskedBeAssumedOpaque)
+	{
+		return false;
+	}
+
+	Material->Modify();
+	Material->bCanMaskedBeAssumedOpaque = false;
+	Material->PostEditChange();
+	return true;
 }
 
 #undef LOCTEXT_NAMESPACE

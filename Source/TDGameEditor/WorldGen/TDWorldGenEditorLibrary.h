@@ -6,6 +6,7 @@
 #include "TDWorldGenEditorLibrary.generated.h"
 
 class ALandscapeProxy;
+class UMaterial;
 class UTDDungeonAtlasDefinition;
 class UTDDungeonFlowTemplate;
 class UTDDungeonTheme;
@@ -55,7 +56,7 @@ public:
 	static bool ResolveRegionVolumeBounds(UObject* WorldContextObject, FName RegionId, FBox2D& OutBoundsCm);
 
 	UFUNCTION(BlueprintCallable, Category = "TD|WorldGen", meta = (WorldContext = "WorldContextObject"))
-	static ALandscapeProxy* FindLandscapeForSampling(UObject* WorldContextObject);
+	static ALandscapeProxy* FindLandscapeForSampling(UObject* WorldContextObject, FVector SampleLocationCm);
 
 	UFUNCTION(BlueprintCallable, Category = "TD|WorldGen")
 	static void LogReportToMessageLog(const FTDValidationReport& Report, const FString& Title);
@@ -74,6 +75,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "TD|WorldGen", meta = (WorldContext = "WorldContextObject"))
 	static int32 RegenerateAllPcg(UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "TD|WorldGen")
+	static bool ClearMaskedAssumedOpaque(UMaterial* Material);
 
 	static void CollectLockedPlacements(UWorld* World, TArray<FTDWorldAnchor>& OutAnchors);
 

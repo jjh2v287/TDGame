@@ -32,7 +32,7 @@ namespace
 		}
 	}
 
-	int32 PickWeightedIndex(FRandomStream& Rng, TArrayView<const float> Weights)
+	int32 PickLayoutWeightedIndex(FRandomStream& Rng, TArrayView<const float> Weights)
 	{
 		float Total = 0.0f;
 		for (const float Weight : Weights)
@@ -53,7 +53,7 @@ namespace
 	}
 
 	template <typename T>
-	void ShuffleArray(FRandomStream& Rng, TArray<T>& Items)
+	void ShuffleLayoutItems(FRandomStream& Rng, TArray<T>& Items)
 	{
 		for (int32 Index = Items.Num() - 1; Index > 0; --Index)
 		{
@@ -112,13 +112,13 @@ namespace
 		return Result;
 	}
 
-	struct FTDPlacementCandidate
+	struct FTDModulePlacementCandidate
 	{
 		int32 Rotation = 0;
 		FIntPoint Origin = FIntPoint::ZeroValue;
 	};
 
-	void CollectPlacements(const FTDRoomModuleDefinition& Module, const FIntPoint& WorldCell, ETDDoorDirection WorldDirection, TArray<FTDPlacementCandidate>& OutPlacements)
+	void CollectPlacements(const FTDRoomModuleDefinition& Module, const FIntPoint& WorldCell, ETDDoorDirection WorldDirection, TArray<FTDModulePlacementCandidate>& OutPlacements)
 	{
 		const int32 RotationCount = Module.bAllowRotation ? 4 : 1;
 		for (int32 Rotation = 0; Rotation < RotationCount; ++Rotation)
@@ -130,7 +130,7 @@ namespace
 				{
 					continue;
 				}
-				FTDPlacementCandidate& Candidate = OutPlacements.AddDefaulted_GetRef();
+				FTDModulePlacementCandidate& Candidate = OutPlacements.AddDefaulted_GetRef();
 				Candidate.Rotation = Rotation;
 				Candidate.Origin = WorldCell - Socket.Cell;
 			}
@@ -318,7 +318,7 @@ namespace
 				}
 				const ETDDoorDirection Forward = TDDungeon::Opposite(DoorIn);
 				const ETDDoorDirection Options[] = {Forward, TDDungeon::RotateDirection(Forward, 3), TDDungeon::RotateDirection(Forward, 1)};
-				const ETDDoorDirection DoorOut = Options[PickWeightedIndex(Rng, CorridorTurnWeights)];
+				const ETDDoorDirection DoorOut = Options[PickLayoutWeightedIndex(Rng, CorridorTurnWeights)];
 				FTDCorridorStep& Step = OutPath.AddDefaulted_GetRef();
 				Step.Cell = Cell;
 				Step.In = DoorIn;
@@ -340,9 +340,9 @@ namespace
 			TSet<FIntVector> WantSockets;
 			WantSockets.Add(SocketKey(Group[0].Cell, Group[0].In));
 			WantSockets.Add(SocketKey(Group.Last().Cell, Group.Last().Out));
-			TArray<FTDPlacementCandidate> Placements;
+			TArray<FTDModulePlacementCandidate> Placements;
 			CollectPlacements(Module, Group[0].Cell, Group[0].In, Placements);
-			for (const FTDPlacementCandidate& Placement : Placements)
+			for (const FTDModulePlacementCandidate& Placement : Placements)
 			{
 				const FTDRotatedModule Rotated = RotateModule(Module, Placement.Rotation);
 				if (Rotated.Cells.Num() != WantCells.Num() || Rotated.Sockets.Num() != WantSockets.Num())
@@ -469,7 +469,7 @@ namespace
 				}
 				const int32 ParentSocket = FreeSockets[Rng.RandHelper(FreeSockets.Num())];
 				const FTDSolverSocket Socket = Rooms[ParentRoom].Sockets[ParentSocket];
-				const int32 Length = PickWeightedIndex(Rng, LengthWeights);
+				const int32 Length = PickLayoutWeightedIndex(Rng, LengthWeights);
 				const FIntPoint FirstCell = Socket.Cell + TDDungeon::DirectionOffset(Socket.Direction);
 				TArray<FTDCorridorStep> Path;
 				if (!BuildCorridorPath(FirstCell, TDDungeon::Opposite(Socket.Direction), Length, Rng, Path))
@@ -492,13 +492,13 @@ namespace
 				{
 					continue;
 				}
-				ShuffleArray(Rng, Modules);
+				ShuffleLayoutItems(Rng, Modules);
 				for (const FTDRoomModuleDefinition* Module : Modules)
 				{
-					TArray<FTDPlacementCandidate> Placements;
+					TArray<FTDModulePlacementCandidate> Placements;
 					CollectPlacements(*Module, EndCell, EndDirection, Placements);
-					ShuffleArray(Rng, Placements);
-					for (const FTDPlacementCandidate& Placement : Placements)
+					ShuffleLayoutItems(Rng, Placements);
+					for (const FTDModulePlacementCandidate& Placement : Placements)
 					{
 						const FTDRotatedModule Rotated = RotateModule(*Module, Placement.Rotation);
 						TArray<FIntPoint> WorldCells;

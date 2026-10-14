@@ -202,7 +202,7 @@ bool UTDWorldGenBuilder::RunInternal(UWorld* World, const FCellInfo& InCellInfo,
 		return false;
 	}
 
-	ALandscapeProxy* Landscape = UTDWorldGenEditorLibrary::FindLandscapeForSampling(World);
+	ALandscapeProxy* Landscape = UTDWorldGenEditorLibrary::FindLandscapeForSampling(World, FVector(Inputs.BoundsCm.GetCenter(), 0.0));
 	FTDWorldLayout Layout;
 	if (!UTDWorldGenEditorLibrary::GenerateWorldLayoutWithLocked(World, Inputs.Region, Inputs.Anchors, Inputs.Locked, Inputs.BoundsCm, BuilderArgs.Seed, Landscape, Inputs.Atlas, Layout, Error))
 	{

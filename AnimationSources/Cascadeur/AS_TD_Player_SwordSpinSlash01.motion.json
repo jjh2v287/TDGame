@@ -1,0 +1,1057 @@
+{
+ "schema": "td-cascadeur-motion/1",
+ "name": "AS_TD_Player_SwordSpinSlash01",
+ "request": "근접 공격 모션을 제작 하세요 오른손 한손검 루트모션 왼쪽으로 뒤 돌면서 회전하듯이 좌에서 우로 횡배기 공격 / 추가(2026-10-08): 팔만 베는 것이 아니라 몸통 전체가 회전하면서 베기, 리그는 사용자가 만든 UE5_Manny.casc",
+ "interpretation": "오른발이 앞인 대기 자세에서 몸을 왼쪽(반시계)으로 약 125도 감아 등을 대상 쪽으로 돌리고 칼을 왼쪽 허리 앞에 백핸드로 장전한다. 골반이 먼저 풀리며 팔을 몸 오른쪽 앞으로 편 뒤(17프레임) 팔·칼을 가슴에 고정한 채 골반·척추가 시계 방향으로 약 156도(17→24프레임, 프레임당 약 23도) 돌아 몸통 회전으로 칼이 왼쪽에서 오른쪽으로 수평으로 지나간다(정면 통과 약 21~22프레임). 오른발이 앞으로 디디고 앞발 볼로 돌며, 왼발은 발끝을 떼고 몸을 따라 돌아 들어와 같은 대기 자세로 돌아온다. 루트는 리그의 루트 제약이 골반의 지면 투영을 따라가게 하고 회전 추종은 끈다.",
+ "fps": 30,
+ "frame_count": 53,
+ "character": {
+  "rig_scene": "AnimationSources/Cascadeur/UE5_Manny.casc"
+ },
+ "events": {
+  "hit_window_frames": [
+   20,
+   23
+  ],
+  "input_buffer_frames": [
+   15,
+   38
+  ],
+  "combo_branch_frames": [
+   36,
+   46
+  ]
+ },
+ "keys": [
+  {
+   "frame": 0,
+   "name": "ready",
+   "facing": 4,
+   "root": {
+    "position": [
+     0,
+     0,
+     0
+    ]
+   },
+   "pelvis": {
+    "position": [
+     0,
+     88,
+     -1
+    ],
+    "yaw": 12,
+    "pitch": 6,
+    "roll": 0
+   },
+   "spine": {
+    "yaw": -8,
+    "pitch": 8,
+    "roll": 0
+   },
+   "hand_r": {
+    "position_body": [
+     22,
+     106,
+     30
+    ],
+    "blade_body": [
+     -0.2,
+     0.5,
+     0.84
+    ],
+    "edge_body": [
+     0.0,
+     -0.86,
+     0.5
+    ],
+    "edge_tolerance": 30,
+    "elbow": "auto"
+   },
+   "hand_l": {
+    "position_body": [
+     -24,
+     102,
+     22
+    ],
+    "elbow_body": [
+     -0.6,
+     -0.6,
+     -0.5
+    ]
+   },
+   "foot_r": {
+    "position": [
+     13,
+     8.2,
+     16
+    ],
+    "yaw": -5,
+    "knee": "auto"
+   },
+   "foot_l": {
+    "position": [
+     -17,
+     8.2,
+     -20
+    ],
+    "yaw": 35,
+    "knee": "auto"
+   },
+   "head": {
+    "look_at": [
+     0,
+     150,
+     400
+    ]
+   },
+   "clavicle_l": {},
+   "clavicle_r": {},
+   "fingers_r": {
+    "curl": 1.0
+   },
+   "fingers_l": {
+    "curl": 0.5
+   },
+   "inbetween": "fk",
+   "inbetween_ease": "inout"
+  },
+  {
+   "frame": 8,
+   "name": "wind-up",
+   "facing": 60,
+   "root": {
+    "position": [
+     0,
+     0,
+     0
+    ]
+   },
+   "pelvis": {
+    "position": [
+     2,
+     86,
+     1
+    ],
+    "yaw": 38,
+    "pitch": 8
+   },
+   "spine": {
+    "yaw": 22,
+    "pitch": 10
+   },
+   "hand_r": {
+    "position_body": [
+     2,
+     114,
+     34
+    ],
+    "blade_body": [
+     -0.5,
+     0.3,
+     -0.866
+    ],
+    "edge": "auto"
+   },
+   "hand_l": {
+    "position_body": [
+     -22,
+     112,
+     30
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": 18,
+    "pitch": 4,
+    "toe": 4
+   },
+   "foot_l": {
+    "pivot": "ball",
+    "yaw": 58,
+    "pitch": 3,
+    "toe": 3
+   },
+   "inbetween": "fk",
+   "inbetween_ease": "inout"
+  },
+  {
+   "frame": 13,
+   "name": "coil-back-left",
+   "facing": 125,
+   "root": {
+    "position": [
+     0,
+     0,
+     2
+    ]
+   },
+   "pelvis": {
+    "position": [
+     5,
+     84,
+     4
+    ],
+    "yaw": 72,
+    "pitch": 10,
+    "roll": -3
+   },
+   "spine": {
+    "yaw": 53,
+    "pitch": 12
+   },
+   "hand_r": {
+    "position_body": [
+     -8,
+     120,
+     20
+    ],
+    "blade_body": [
+     -0.6428,
+     0.0,
+     -0.766
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 30,
+    "position_search": 8
+   },
+   "hand_l": {
+    "position_body": [
+     -10,
+     120,
+     32
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": 40,
+    "pitch": 8,
+    "toe": 8
+   },
+   "foot_l": {
+    "pivot": "ball",
+    "yaw": 85,
+    "pitch": 6,
+    "toe": 6
+   },
+   "inbetween": "fk",
+   "inbetween_ease": "inout"
+  },
+  {
+   "frame": 15,
+   "name": "launch-hips",
+   "facing": 112,
+   "root": {
+    "position": [
+     0,
+     0,
+     6
+    ]
+   },
+   "pelvis": {
+    "position": [
+     5,
+     83.5,
+     8
+    ],
+    "yaw": 58,
+    "pitch": 9,
+    "roll": -2
+   },
+   "spine": {
+    "yaw": 54,
+    "pitch": 12
+   },
+   "hand_r": {
+    "position_body": [
+     -4,
+     122,
+     36
+    ],
+    "blade_body": [
+     -0.9848,
+     0.0,
+     -0.1736
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 30,
+    "position_search": 12
+   },
+   "hand_l": {
+    "position_body": [
+     -28,
+     116,
+     20
+    ]
+   },
+   "foot_r": {
+    "position": [
+     12,
+     14,
+     28
+    ],
+    "yaw": 15,
+    "pitch": 0,
+    "toe": 0
+   },
+   "foot_l": {
+    "pivot": "ball",
+    "yaw": 70,
+    "pitch": 12,
+    "toe": 12
+   }
+  },
+  {
+   "frame": 16,
+   "name": "arm-unfold",
+   "facing": 98,
+   "root": {
+    "position": [
+     0,
+     0,
+     12
+    ]
+   },
+   "pelvis": {
+    "position": [
+     4.5,
+     83,
+     14
+    ],
+    "yaw": 50,
+    "pitch": 9
+   },
+   "spine": {
+    "yaw": 48,
+    "pitch": 11
+   },
+   "hand_r": {
+    "position_body": [
+     30,
+     124,
+     46
+    ],
+    "blade_body": [
+     -0.866,
+     0.0,
+     0.5
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 30,
+    "position_search": 12
+   },
+   "hand_l": {
+    "position_body": [
+     -32,
+     114,
+     10
+    ]
+   },
+   "foot_r": {
+    "position": [
+     12,
+     13,
+     42
+    ],
+    "yaw": 0,
+    "pitch": -4,
+    "toe": 0
+   },
+   "foot_l": {
+    "pivot": "ball",
+    "yaw": 62,
+    "pitch": 16,
+    "toe": 16
+   }
+  },
+  {
+   "frame": 17,
+   "name": "sweep",
+   "facing": 80,
+   "root": {
+    "position": [
+     0,
+     0,
+     20
+    ]
+   },
+   "pelvis": {
+    "position": [
+     3.5,
+     82.0,
+     20
+    ],
+    "yaw": 38,
+    "pitch": 8,
+    "roll": 1
+   },
+   "spine": {
+    "yaw": 42,
+    "pitch": 9
+   },
+   "hand_r": {
+    "position_body": [
+     56,
+     125,
+     46
+    ],
+    "blade_body": [
+     -0.5,
+     0.0,
+     0.866
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 15
+   },
+   "hand_l": {
+    "position_body": [
+     -36,
+     110,
+     -18
+    ]
+   },
+   "foot_r": {
+    "position": [
+     12,
+     9.0,
+     54
+    ],
+    "yaw": -8,
+    "pitch": -2,
+    "toe": 0
+   },
+   "foot_l": {
+    "pivot": "ball",
+    "yaw": 52,
+    "pitch": 20.0,
+    "toe": 20.0
+   }
+  },
+  {
+   "frame": 18,
+   "name": "sweep",
+   "facing": 58,
+   "root": {
+    "position": [
+     0,
+     0,
+     24
+    ]
+   },
+   "pelvis": {
+    "position": [
+     3.05,
+     82.0,
+     24
+    ],
+    "yaw": 26,
+    "pitch": 8,
+    "roll": 1
+   },
+   "spine": {
+    "yaw": 32,
+    "pitch": 9
+   },
+   "hand_r": {
+    "position_body": [
+     56,
+     125,
+     46
+    ],
+    "blade_body": [
+     -0.5,
+     0.0,
+     0.866
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 15
+   },
+   "hand_l": {
+    "position_body": [
+     -36,
+     110,
+     -18
+    ]
+   },
+   "foot_r": {
+    "position": [
+     12,
+     8.2,
+     55
+    ],
+    "yaw": -10,
+    "pitch": 0,
+    "toe": 0
+   },
+   "foot_l": {
+    "pivot": "ball",
+    "yaw": 42,
+    "pitch": 22.5,
+    "toe": 22.5
+   }
+  },
+  {
+   "frame": 19,
+   "name": "sweep",
+   "facing": 35,
+   "root": {
+    "position": [
+     0,
+     0,
+     27
+    ]
+   },
+   "pelvis": {
+    "position": [
+     2.6,
+     82.0,
+     27
+    ],
+    "yaw": 12,
+    "pitch": 8,
+    "roll": 1
+   },
+   "spine": {
+    "yaw": 23,
+    "pitch": 9
+   },
+   "hand_r": {
+    "position_body": [
+     56,
+     125,
+     46
+    ],
+    "blade_body": [
+     -0.5,
+     0.0,
+     0.866
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 15
+   },
+   "hand_l": {
+    "position_body": [
+     -36,
+     110,
+     -18
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": -16,
+    "pitch": 3,
+    "toe": 3
+   },
+   "foot_l": {
+    "pivot": "ball",
+    "yaw": 32,
+    "pitch": 25.0,
+    "toe": 25.0
+   }
+  },
+  {
+   "frame": 20,
+   "name": "hit",
+   "facing": 12,
+   "root": {
+    "position": [
+     0,
+     0,
+     30
+    ]
+   },
+   "pelvis": {
+    "position": [
+     2.15,
+     82.0,
+     30
+    ],
+    "yaw": -2,
+    "pitch": 8,
+    "roll": 1
+   },
+   "spine": {
+    "yaw": 14,
+    "pitch": 9
+   },
+   "hand_r": {
+    "position_body": [
+     56,
+     125,
+     46
+    ],
+    "blade_body": [
+     -0.5,
+     0.0,
+     0.866
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 15
+   },
+   "hand_l": {
+    "position_body": [
+     -36,
+     110,
+     -18
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": -22,
+    "pitch": 3,
+    "toe": 3
+   },
+   "foot_l": {
+    "ball": [
+     -21,
+     4.0,
+     -4
+    ],
+    "yaw": 25,
+    "pitch": 32,
+    "toe": 22
+   }
+  },
+  {
+   "frame": 21,
+   "name": "hit",
+   "facing": -12,
+   "root": {
+    "position": [
+     0,
+     0,
+     32
+    ]
+   },
+   "pelvis": {
+    "position": [
+     1.7,
+     82.5,
+     32
+    ],
+    "yaw": -16,
+    "pitch": 8,
+    "roll": 1
+   },
+   "spine": {
+    "yaw": 4,
+    "pitch": 9
+   },
+   "hand_r": {
+    "position_body": [
+     56,
+     125,
+     46
+    ],
+    "blade_body": [
+     -0.5,
+     0.0,
+     0.866
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 15
+   },
+   "hand_l": {
+    "position_body": [
+     -36,
+     110,
+     -18
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": -28,
+    "pitch": 3,
+    "toe": 3
+   }
+  },
+  {
+   "frame": 22,
+   "name": "hit",
+   "facing": -36,
+   "root": {
+    "position": [
+     0,
+     0,
+     33
+    ]
+   },
+   "pelvis": {
+    "position": [
+     1.25,
+     83.0,
+     33
+    ],
+    "yaw": -30,
+    "pitch": 8,
+    "roll": 1
+   },
+   "spine": {
+    "yaw": -6,
+    "pitch": 9
+   },
+   "hand_r": {
+    "position_body": [
+     56,
+     125,
+     46
+    ],
+    "blade_body": [
+     -0.5,
+     0.0,
+     0.866
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 15
+   },
+   "hand_l": {
+    "position_body": [
+     -36,
+     110,
+     -18
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": -34,
+    "pitch": 3,
+    "toe": 3
+   },
+   "foot_l": {
+    "position": [
+     -19,
+     15,
+     2
+    ],
+    "yaw": 10,
+    "pitch": 12,
+    "toe": 0
+   }
+  },
+  {
+   "frame": 23,
+   "name": "hit",
+   "facing": -58,
+   "root": {
+    "position": [
+     0,
+     0,
+     34
+    ]
+   },
+   "pelvis": {
+    "position": [
+     0.7999999999999998,
+     83.5,
+     34
+    ],
+    "yaw": -42,
+    "pitch": 8,
+    "roll": 1
+   },
+   "spine": {
+    "yaw": -16,
+    "pitch": 9
+   },
+   "hand_r": {
+    "position_body": [
+     56,
+     125,
+     46
+    ],
+    "blade_body": [
+     -0.5,
+     0.0,
+     0.866
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 15
+   },
+   "hand_l": {
+    "position_body": [
+     -36,
+     110,
+     -18
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": -40,
+    "pitch": 3,
+    "toe": 3
+   }
+  },
+  {
+   "frame": 24,
+   "name": "sweep",
+   "facing": -76,
+   "root": {
+    "position": [
+     0,
+     0,
+     35
+    ]
+   },
+   "pelvis": {
+    "position": [
+     0.3500000000000001,
+     84.0,
+     35
+    ],
+    "yaw": -52,
+    "pitch": 8,
+    "roll": 1
+   },
+   "spine": {
+    "yaw": -24,
+    "pitch": 9
+   },
+   "hand_r": {
+    "position_body": [
+     56,
+     125,
+     46
+    ],
+    "blade_body": [
+     -0.5,
+     0.0,
+     0.866
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 15
+   },
+   "hand_l": {
+    "position_body": [
+     -36,
+     110,
+     -18
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": -46,
+    "pitch": 3,
+    "toe": 3
+   },
+   "foot_l": {
+    "position": [
+     -16,
+     18,
+     10
+    ],
+    "yaw": -10,
+    "pitch": 5,
+    "toe": 0
+   },
+   "inbetween": "fk",
+   "inbetween_ease": "out"
+  },
+  {
+   "frame": 29,
+   "name": "follow-through",
+   "facing": -100,
+   "root": {
+    "position": [
+     0,
+     0,
+     38
+    ]
+   },
+   "pelvis": {
+    "position": [
+     0,
+     85.5,
+     37
+    ],
+    "yaw": -55,
+    "pitch": 7
+   },
+   "spine": {
+    "yaw": -45,
+    "pitch": 6
+   },
+   "hand_r": {
+    "position_body": [
+     48,
+     118,
+     30
+    ],
+    "blade_body": [
+     -0.0872,
+     0.0,
+     0.9962
+    ],
+    "edge": "sweep_cw",
+    "edge_tolerance": 30,
+    "position_search": 10
+   },
+   "hand_l": {
+    "position_body": [
+     -32,
+     112,
+     22
+    ]
+   },
+   "foot_r": {
+    "pivot": "ball",
+    "yaw": -55,
+    "pitch": 3,
+    "toe": 3
+   },
+   "foot_l": {
+    "position": [
+     -14,
+     16,
+     16
+    ],
+    "yaw": -30,
+    "pitch": 5,
+    "toe": 0
+   },
+   "inbetween": "fk",
+   "inbetween_ease": "inout"
+  },
+  {
+   "frame": 36,
+   "name": "recover-step",
+   "facing": -20,
+   "root": {
+    "position": [
+     0,
+     0,
+     40
+    ]
+   },
+   "pelvis": {
+    "position": [
+     0,
+     87,
+     39
+    ],
+    "yaw": -5,
+    "pitch": 6
+   },
+   "spine": {
+    "yaw": -15,
+    "pitch": 7
+   },
+   "hand_r": {
+    "position_body": [
+     26,
+     110,
+     30
+    ],
+    "blade_body": [
+     -0.1,
+     0.5,
+     0.86
+    ],
+    "edge": "auto"
+   },
+   "hand_l": {
+    "position_body": [
+     -24,
+     104,
+     20
+    ]
+   },
+   "foot_r": {
+    "position": [
+     12,
+     8.2,
+     56
+    ],
+    "yaw": -5,
+    "pitch": 0,
+    "toe": 0
+   },
+   "foot_l": {
+    "position": [
+     -17,
+     8.2,
+     21
+    ],
+    "yaw": 35,
+    "pitch": 0,
+    "toe": 0
+   },
+   "inbetween": "fk",
+   "inbetween_ease": "inout"
+  },
+  {
+   "frame": 44,
+   "name": "settle",
+   "facing": 4,
+   "root": {
+    "position": [
+     0,
+     0,
+     40
+    ]
+   },
+   "pelvis": {
+    "position": [
+     0,
+     88,
+     39
+    ],
+    "yaw": 12,
+    "pitch": 6
+   },
+   "spine": {
+    "yaw": -8,
+    "pitch": 8
+   },
+   "hand_r": {
+    "position_body": [
+     22,
+     106,
+     30
+    ],
+    "blade_body": [
+     -0.2,
+     0.5,
+     0.84
+    ],
+    "edge_body": [
+     0.0,
+     -0.86,
+     0.5
+    ],
+    "edge_tolerance": 30
+   },
+   "hand_l": {
+    "position_body": [
+     -24,
+     102,
+     22
+    ]
+   }
+  },
+  {
+   "frame": 52,
+   "name": "end",
+   "facing": 4,
+   "root": {
+    "position": [
+     0,
+     0,
+     40
+    ]
+   },
+   "pelvis": {
+    "position": [
+     0,
+     88,
+     39
+    ],
+    "yaw": 12,
+    "pitch": 6
+   },
+   "spine": {
+    "yaw": -8,
+    "pitch": 8
+   }
+  }
+ ]
+}

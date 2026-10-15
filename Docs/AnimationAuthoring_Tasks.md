@@ -247,6 +247,34 @@ MCP 서버 배관은 3중으로 갖춰졌다(`.mcp.json`, `.gemini/settings.json
 - 상태: todo / 우선순위: 중간 / 선행: A-01
 - 현재 전부 미커밋이다. 스모크 테스트가 통과한 뒤 코드·문서·보고서를 함께 커밋한다.
 
+## H. Cascadeur 제작 파이프라인 (2026-10-08 사용자 요청)
+
+### H-01 Cascadeur MCP·왕복 파이프라인 구축과 플레이어 근접 공격 시험 제작
+- 상태: blocked (2026-10-08, Cascadeur Free 라이선스가 FBX 내보내기를 막음 — 사용자 결정 필요)
+- 담당: claude/2026-10-08
+- 우선순위: 높음
+- 목표: 언리얼 캐릭터 FBX 내보내기 → Cascadeur 가져오기·퀵 리깅 → 텍스트 요청을 동작 명세(키 포즈·시간)로 바꿔 Cascadeur에서 제작(AutoPosing·AutoPhysics 등 보조) → FBX 내보내기 → 언리얼 AnimSequence(루트모션) 가져오기를 도구로 고정한다.
+- 완료 조건:
+  - Cascadeur 2026.2.3 내장 MCP 스크립트 서버(127.0.0.1:8765)가 Cascadeur 시작 때 자동 기동되고 에이전트 MCP 설정에 등록된다.
+  - 단계별 도구가 `Tools/Cascadeur/`에 있고 `Tools/README.md`에 등록된다.
+  - 시험: 요청 "오른손 한손검, 루트모션, 왼쪽으로 뒤돌며 회전하듯 좌→우 횡베기"를 기존 애니메이션 없이 Cascadeur로 만든 시퀀스가 언리얼에 들어가고 `TDPlayMeleeAction`으로 PIE 재생·루트모션 이동이 확인된다.
+- 참조: 사용자 지시라 L-anim-06(에이전트 키 포즈 금지·AAA 원본 편집)의 예외다. 이 경로는 Cascadeur 물리·AI 보조로 품질을 보완한다.
+- 기록(2026-10-08): 조건 1 충족 — 내장 MCP 서버 자동 기동(`setup_cascadeur.py`, 재시작 뒤 health ok), MCP 설정 5벌 + `~/.gemini/config/mcp_config.json`에 `cascadeur` 등록, MCP 흐름 시험 통과(ping만 미구현). 조건 2 충족 — `Tools/Cascadeur/` 도구 5개 + `csc_scripts/` 7개 + 스킬 `td-cascadeur-animation`, `Tools/README.md` 3f절. 조건 3 부분 — 텍스트 요청 → 명세 `AnimationSources/Cascadeur/AS_TD_Player_SwordSpinSlash01.motion.json` → Cascadeur 퀵 리깅·키·씬(`.casc`) 완료, 점검(왼→오 수평 베기, 정면 통과 19프레임, 루트 정면 45cm, 발 미끄러짐 ≤1.54cm/프레임), 증거 `Docs/Validation/Cascadeur/H-01-cascadeur-pipeline-2026-10-08.md`. FBX 내보내기에서 라이선스로 중단(L-anim-08) → UE 가져오기·PIE 미실행.
+- 재작업(2026-10-08, 사용자 지시): 사용자 리그 `AnimationSources/Cascadeur/UE5_Manny.casc`(공식 샘플 리그, 루트 제약 포함)로 다시 제작하고 "팔만이 아니라 몸통 전체가 회전하며 좌→우 베기"로 바꿨다. 원인 수정: 손가락 박스 위치 미기록으로 손가락이 최대 63cm 늘어남, 공식 리그 clavicle_l `Position` 0 읽힘(L-anim-13). 결과: 뼈 길이 변화 최대 0.07cm, 17~24프레임 팔 고정·몸통 156° 회전, 정면 통과 22프레임, 칼끝 122.4cm 일정, 손목 꺾임 ≤29.5°·비틀림 ≤50°, 루트(제약) 40cm 전진. 증거 `Docs/Validation/Cascadeur/H-01-sword-spin-slash-v2-2026-10-08.md`.
+- 결정 필요(사용자): Cascadeur Indie 이상(또는 체험판)을 켤지. 켜면 `python Tools/Cascadeur/build_cascadeur_animation.py --spec AnimationSources/Cascadeur/AS_TD_Player_SwordSpinSlash01.motion.json --stages export,import` 뒤 PIE `TDPlayMeleeAction /Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordSpinSlash01`로 조건 3을 닫는다. 무료 등급은 비상업 전용이다.
+
+### H-02 Cascadeur 역설계(클린룸 분석)와 자체 캐릭터 애니메이션 제작 도구 타당성 검토
+- 상태: todo
+- 담당:
+- 우선순위: 중간
+- 목표: 설치본 구조·공개 파이썬 API·공개 자료로 Cascadeur의 기능과 기술 구성을 분석하고, 같은 수준 이상의 자체 도구(언리얼 AnimSequence 산출)를 만들 수 있는지 기술·법률·비용 면에서 판정한다.
+- 완료 조건:
+  - 분석 범위가 클린룸 원칙(실행 파일 디스어셈블·디컴파일·모델 가중치 추출·라이선스 우회 없음)을 지킨다.
+  - 기능별 구현 기법·오픈소스 부품·라이선스·난이도와 아키텍처 선택지가 `Docs/AnimationTool/`에 문서로 남는다.
+  - 핵심 주장이 독립 반박 검증을 거친다.
+- 참조: H-01(L-anim-08 내보내기 잠금 우회 금지), D44(UAF), `Saved/AgentOps/20261008/cascadeur-*.md`
+- 기록: 2026-10-13 보류(claude): 사용자 우선순위 전환(P3-13)으로 doing 해제. 중간 노트 `Saved/AgentOps/20261011/re-*.md`, 남은 조건: `Docs/AnimationTool/` 문서화·반박 검증
+
 ---
 
 ### 실측 메모 (2026-09-16 작업 중 확인)

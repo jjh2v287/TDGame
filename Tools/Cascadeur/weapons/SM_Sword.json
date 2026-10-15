@@ -1,0 +1,21 @@
+{
+ "weapon": "/Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Sword",
+ "hand_bone": "hand_r",
+ "socket": {
+  "name": "HandGrip_R",
+  "relative_location_cm": [-7.012133741056203, 2.0487315208256485, 3.2430154532327865e-05],
+  "relative_rotation_deg": {"roll": -0.0003048190352527448, "pitch": 0.00015037254391036498, "yaw": 90.00022230996628}
+ },
+ "attachment": {
+  "relative_location_cm": [-5.052, 9.119, 25.857],
+  "relative_rotation_quat_xyzw": [0.374547, 0.554279, 0.477513, 0.569623]
+ },
+ "mesh_features_cm": {
+  "tip": [-0.389, 75.312, 1.373],
+  "pommel": [0.967, -46.697, -0.341],
+  "guard_left": [-14.908, -20.393, 1.114],
+  "guard_right": [14.994, -21.264, 1.349],
+  "guard_center": [0.043, -20.829, 1.232]
+ },
+ "source": "socket from SKM_Manny_Simple.find_socket('HandGrip_R') (2026-10-08); attachment and features from Saved/BlenderAnimation/SwordAttack01/sword-attachment.json (L-anim-05, editor_solve_sword_attachment.py)"
+}

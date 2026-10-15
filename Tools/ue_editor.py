@@ -20,6 +20,7 @@ import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENGINE = r"C:\Program Files\Epic Games\UE_5.8"
+CASCADEUR_EXE = r"C:\Program Files\Cascadeur\cascadeur.exe"
 UPROJECT = os.path.join(ROOT, "TDGame.uproject")
 EDITOR_EXE = os.path.join(ENGINE, "Engine", "Binaries", "Win64", "UnrealEditor.exe")
 BUILD_BAT = os.path.join(ENGINE, "Engine", "Build", "BatchFiles", "Build.bat")

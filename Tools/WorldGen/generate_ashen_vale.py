@@ -1,16 +1,7 @@
-"""잿빛 골짜기(Ashen Vale) 메인 지역 생성기 (에디터 밖에서 실행, numpy).
-
-입력: 시드. 출력(Saved/WorldGen/AshenVale/):
-  height.r16            랜드스케이프 높이맵(uint16, 1009x1009, 리틀엔디언)
-  layer_<이름>.r8       레이어 가중치(uint8, 1009x1009) — Soil/Moss/Mud/Road/Rock/Bedrock
-  layout.json           배치 데이터(인스턴스 메시, 고유 액터, 물/안개 평면, 조명, 나이아가라, 마커)
-  preview.png           검토용 상공 지도
-  topdown_rules_report.json  탑다운 배치 후처리 규칙(topdown_rules.py)별 바뀐·제거 수
-
-실행: python Tools/WorldGen/generate_ashen_vale.py [--seed 7] [--out Saved/WorldGen/AshenVale] [--no-topdown](탑다운 규칙 끄기, 이전 출력 재현)
-그다음 에디터 안에서 Tools/WorldGen/editor_build_open_world.py 를 실행해 레벨에 반영한다.
-
-좌표 규약: 월드 X = 지도 오른쪽(+), 월드 Y = 지도 아래쪽(+). 배열 인덱스는 [iy, ix]. 단위는 미터, 내보낼 때 cm.
+"""잿빛 골짜기(Ashen Vale) 메인 지역 생성기(에디터 밖 numpy): 지형·레이어·배치와 연속 세계(D-45) 필드 쪽 연결로(지선 2개, 남서·북동 걷는 협곡, 남동 상단 협곡·40 m 갱도·슬롯, 강 끝 되메움, 남·동 테두리 30 m 급경사 띠)를 만든다. 좌표: 월드 X = 지도 오른쪽(+), 월드 Y = 지도 아래쪽(+), 배열 [iy, ix], 단위 m(내보낼 때 cm). 결과는 에디터에서 Tools/WorldGen/editor_build_open_world.py 로 반영한다.
+실행: python Tools/WorldGen/generate_ashen_vale.py [--seed 7] [--out Saved/WorldGen/AshenVale] [--no-topdown](탑다운 배치 규칙 끄기) (PowerShell 또는 Git Bash, numpy·scipy·Pillow 필요)
+출력: <out>/{height.r16(uint16 1009x1009 리틀엔디언), layer_<Soil|Moss|Mud|Road|Rock|Bedrock>.r8, layout.json(ism·actors·planes·lights·niagara·markers, connectors[] = realm_passages.gate_entry 관문 스키마 + geometry), preview.png, preview_height.png, topdown_rules_report.json}, 표준 출력에 연결로·테두리 띠 점검 값
+상태: 현행(P3-19, generator_version 3)
 """
 import argparse
 import json
@@ -24,10 +15,25 @@ from scipy import ndimage
 import realm_passages as rp
 import topdown_rules as tdr
 
-GENERATOR_VERSION = 2
-SEAM_CORE_CLEAR_MARGIN_M = 2.0
+GENERATOR_VERSION = 3
+CONNECTOR_CLEAR_MARGIN_M = 2.0
+CONNECTOR_CLEAR_START_M = 10.0
 PASSAGE_SCATTER_MARGIN_M = 1.0
-SEAM_PCG_EXCLUSION_HEIGHT_PAD_M = 5.0
+CONNECTOR_PCG_EXCLUSION_HEIGHT_PAD_M = 5.0
+LIFT_WINDOW_HEADROOM_M = 1.0
+RIVER_REFILL_FOOT_M = 70.0
+RIVER_REFILL_FOOT_Z_M = -3.5
+RIVER_REFILL_GRADE = 1.0
+RIVER_REFILL_END_M = 75.0
+RIVER_WATER_MIN_Y_M = -439.0
+RIM_BAND_SLOPE = math.tan(math.radians(50.0))
+RIM_BAND_MIN_SLOPE_DEG = 46.0
+WALK_FLOOD_MAX_SLOPE_DEG = 44.0
+CONNECTOR_FLOOR_MAX_SLOPE_DEG = 35.0
+NAV_BOUNDS_CENTER_ABOVE_ORIGIN_M = 20.0
+NAV_BOUNDS_HALF_HEIGHT_M = 60.0
+NAV_BOUNDS_FLOOR_MARGIN_M = 4.0
+SPUR_ROADS = {"SunkenStarfieldSouthwest": ((-250.0, -300.0), 5.0), "SunkenStarfieldSoutheast": ((40.0, -320.0), 4.5)}
 SIZE = 1009
 HALF = (SIZE - 1) // 2
 QUAD_M = 1.0
@@ -301,22 +307,24 @@ def build_terrain(rng):
         road_layer = np.maximum(road_layer, 1.0 - smoothstep(w_flat - 0.5, w_flat + 1.5, dist))
         road_mask_all |= dist < (w_flat + 1.0)
 
+    h_before_river = h.copy()
     river_w = 1.0 - smoothstep(4.5, 11.0, river_dist)
     bed = -3.1 + 0.25 * fbm(rng, 90, 2)
     h = np.minimum(h, h * (1.0 - river_w) + river_w * bed)
     h = np.minimum(h, np.where(river_dist < 4.5, bed, h))
 
     pre_passage_h, pre_passage_road_weight = h, road_weight
-    h, passage_floor, passage_footprint, passages = carve_field_passages(h, X, Y)
-    road_weight = np.maximum(road_weight, passage_floor)
-    road_layer = np.maximum(road_layer, passage_floor)
+    carved = carve_field_connectors(h, h_before_river, X, Y)
+    h = carved["h"]
+    road_weight = np.maximum(road_weight, carved["road_weight"])
+    road_layer = np.maximum(road_layer, carved["floor"])
 
     slope = terrain_slope_deg(h)
     fields = {
         "X": X, "Y": Y, "h": h, "slope": slope, "river_dist": river_dist, "river_poly": river_poly,
         "road_weight": road_weight, "road_layer": road_layer, "road_mask": road_mask_all, "road_polys": road_polys,
         "marsh": marsh_m, "village": village_m, "grave": grave_m, "high": high, "west": west, "edge_d": edge_d, "rim": rim, "lake": lake_m,
-        "passage_footprint": passage_footprint, "passages": passages,
+        "passage_footprint": carved["footprint"], "connector_floor": carved["floor"], "connectors": connector_entries(h, X, Y, carved["floor"]),
         "pre_passage_h": pre_passage_h, "pre_passage_slope": terrain_slope_deg(pre_passage_h), "pre_passage_road_weight": pre_passage_road_weight,
     }
     return fields
@@ -326,41 +334,69 @@ def build_placement_fields(f):
     return dict(f, h=f["pre_passage_h"], slope=f["pre_passage_slope"], road_weight=f["pre_passage_road_weight"], passage_footprint=np.zeros_like(f["passage_footprint"]))
 
 
-def field_entrances():
-    return {"MainCrypt": (MAIN_DUNGEON, MAIN_DUNGEON_FACING), "HollowCave": (SIDE_DUNGEON_NW, SIDE_DUNGEON_NW_FACING), "SunkenCrypt": (SIDE_DUNGEON_SE, SIDE_DUNGEON_SE_FACING)}
+def quantized_units(h):
+    return np.round(32768.0 + h * UNITS_PER_METER)
 
 
-def require_passage_matches_entrance(passage):
-    entrance = field_entrances().get(passage["entrance_name"])
-    if entrance is None:
-        raise ValueError(f"{passage['gate_id']}: unknown entrance {passage['entrance_name']}")
-    (ex, ey), facing = entrance
-    if passage["field_entrance_m"] != (ex, ey) or passage["marker_yaw_deg"] != facing:
-        raise ValueError(f"{passage['gate_id']}: realm_passages entrance {passage['field_entrance_m']}/{passage['marker_yaw_deg']} != generator {(ex, ey)}/{facing}")
+def refill_river_end(h, h_before_river, Y):
+    depth = Y + HALF
+    level = RIVER_REFILL_FOOT_Z_M + RIVER_REFILL_GRADE * (RIVER_REFILL_FOOT_M - depth)
+    return np.where(depth < RIVER_REFILL_END_M, np.maximum(h, np.minimum(h_before_river, level)), h)
 
 
-def carve_field_passages(h, X, Y):
-    floor_total = np.zeros_like(h)
-    footprint_total = np.zeros_like(h)
-    passages = []
-    for passage in rp.PASSAGES:
-        require_passage_matches_entrance(passage)
-        mouth_x, mouth_y = passage["field_marker_m"]
-        mouth_z = float(sample_bilinear(h, np.array([mouth_x]), np.array([mouth_y]))[0])
-        z0 = rp.seam_floor_z(passage, "field", mouth_z)
-        s_start, s_end = rp.default_span(passage, "field")
-        h, floor_mask, wall_mask = rp.stamp_passage(h, X, Y, passage, "field", z0, s_start, s_end, mouth_z=mouth_z)
-        floor_total = np.maximum(floor_total, floor_mask)
-        footprint_total = np.maximum(footprint_total, np.maximum(floor_mask, wall_mask))
-        seam_x, seam_y = passage["field_seam_m"]
-        passages.append({
-            "gate_id": passage["gate_id"], "realm_id": passage["realm_id"], "field_marker_label": passage["field_marker_label"], "kind": passage["kind"], "grade": passage["grade"],
-            "yaw_deg": passage["yaw_deg"], "field_seam_cm": [seam_x * 100.0, seam_y * 100.0, z0 * 100.0], "seam_floor_z_m": z0, "mouth_z_m": mouth_z,
-            "approach_m": passage["approach_m"], "approach_length_cm": round(passage["approach_m"] * 100.0, 1), "seam_buffer_cm": rp.SEAM_BUFFER_M * 100.0,
-            "s_start_m": s_start, "s_end_m": s_end, "realm_seam_local_m": list(passage["realm_seam_local_m"]), "front_m": passage["front_m"],
-            "floor_cells": int((floor_mask > 0.5).sum()),
-        })
-    return h, floor_total, footprint_total, passages
+def rim_band_depth_m(X, Y):
+    inner = HALF - rp.FIELD_RIM_BAND_M
+    return np.hypot(np.maximum(X - inner, 0.0), np.maximum(-inner - Y, 0.0))
+
+
+def steepen_rim_band(h, X, Y):
+    inner = HALF - rp.FIELD_RIM_BAND_M
+    depth = rim_band_depth_m(X, Y)
+    band = depth > 0.0
+    base_ix = (np.minimum(X, inner) + HALF).astype(int)
+    base_iy = (np.maximum(Y, -inner) + HALF).astype(int)
+    steep = h.copy()
+    steep[band] = h[base_iy[band], base_ix[band]] + RIM_BAND_SLOPE * depth[band]
+    return steep
+
+
+def carve_field_connectors(h, h_before_river, X, Y):
+    stamped = steepen_rim_band(refill_river_end(h, h_before_river, Y), X, Y)
+    floor = np.zeros_like(h)
+    wall = np.zeros_like(h)
+    spur_weight = np.zeros_like(h)
+    for gate_id, (start, width) in SPUR_ROADS.items():
+        mouth = rp.pieces_of_gate(gate_id)[0]["vertices"][0]
+        stamped, road_layer, weight = rp.stamp_spur_road(stamped, X, Y, (start, (mouth[0], mouth[1])), width, end_z_m=mouth[2])
+        floor = np.maximum(floor, road_layer)
+        spur_weight = np.maximum(spur_weight, weight)
+    for connector in rp.CONNECTORS:
+        stamped, piece_floor, piece_wall = rp.stamp_passage(stamped, X, Y, connector)
+        floor = np.maximum(floor, piece_floor)
+        wall = np.maximum(wall, piece_wall)
+    for shaft in rp.SHAFTS:
+        stamped, piece_floor, piece_wall = rp.stamp_shaft(stamped, X, Y, shaft)
+        floor = np.maximum(floor, piece_floor)
+        wall = np.maximum(wall, piece_wall)
+    changed = (quantized_units(stamped) != quantized_units(h)).astype(np.float64)
+    return {"h": stamped, "floor": floor, "road_weight": np.maximum(floor, spur_weight), "footprint": np.maximum.reduce([floor, wall, spur_weight, changed])}
+
+
+def connector_entries(h, X, Y, floor):
+    entries = []
+    for gate_id in rp.GATE_IDS:
+        entry = rp.gate_entry(gate_id)
+        geometry = rp.gate_geometry(gate_id)
+        geometry["field_floor_cells"] = int((floor[rp.gate_floor_cells(gate_id, X, Y)] > 0.5).sum())
+        for piece, piece_geometry in zip(rp.pieces_of_gate(gate_id), geometry["pieces"]):
+            crossing = piece["boundary_crossing"]
+            if crossing is None:
+                continue
+            x, y = crossing["point_m"]
+            piece_geometry["boundary_crossing"]["field_terrain_z_m"] = round(float(sample_bilinear(h, np.array([x]), np.array([y]))[0]), 6)
+        entry["geometry"] = geometry
+        entries.append(entry)
+    return entries
 
 
 def terrain_slope_deg(h):
@@ -668,12 +704,35 @@ def place_ground_decals(L, rng, f, excl):
     return len(px), len(fx)
 
 
+def clip_to_water_region(a, b):
+    d = b - a
+    t0, t1 = 0.0, 1.0
+    for p, q in ((-d[0], a[0] + HALF), (d[0], HALF - a[0]), (-d[1], a[1] - RIVER_WATER_MIN_Y_M), (d[1], HALF - a[1])):
+        if p == 0.0:
+            if q < 0.0:
+                return None
+            continue
+        r = q / p
+        if p < 0.0:
+            t0 = max(t0, r)
+            continue
+        t1 = min(t1, r)
+    if t0 >= t1:
+        return None
+    if t0 == 0.0 and t1 == 1.0:
+        return a, b
+    return a + d * t0, a + d * t1
+
+
 def place_water(L, f):
     poly = f["river_poly"]
     step = 30
     idx = list(range(0, len(poly) - 1, step)) + [len(poly) - 1]
     for i in range(len(idx) - 1):
-        a, b = poly[idx[i]], poly[idx[i + 1]]
+        clipped = clip_to_water_region(poly[idx[i]], poly[idx[i + 1]])
+        if clipped is None:
+            continue
+        a, b = clipped
         mid = (a + b) * 0.5
         d = b - a
         length = float(np.hypot(d[0], d[1]))
@@ -1244,26 +1303,63 @@ def place_roadside(L, rng, f):
                     L.add_actor("Cart" if rng.random() < 0.3 else "Barrel1", px, py, rng.uniform(0, 360), 1.0, label=f"TDGen_RoadProp_{name}_{j}")
 
 
-def build_seam_core_grid(f):
-    core = np.zeros((SIZE, SIZE), dtype=bool)
-    for passage in rp.PASSAGES:
-        core |= rp.core_mask(passage, "field", f["X"], f["Y"], SEAM_CORE_CLEAR_MARGIN_M)
-    return core
+def connector_clear_mask(f):
+    X, Y = f["X"], f["Y"]
+    mask = np.zeros((SIZE, SIZE), dtype=bool)
+    for gate_id in rp.GATE_IDS:
+        for k, piece in enumerate(rp.pieces_of_gate(gate_id)):
+            s, l = rp.passage_coords(piece, X, Y)
+            s_start, s_end = piece["stamp_s_m"]
+            clear_start = s_start + (CONNECTOR_CLEAR_START_M if k == 0 else -CONNECTOR_CLEAR_MARGIN_M)
+            mask |= (rp.section_reach(piece, l) <= rp.BAND_OUTER_M + CONNECTOR_CLEAR_MARGIN_M) & (s >= clear_start) & (s <= s_end + CONNECTOR_CLEAR_MARGIN_M)
+    for shaft in rp.SHAFTS:
+        mask |= rp.landing_band_mask(shaft, X, Y, CONNECTOR_CLEAR_MARGIN_M)
+    for gate_id, (start, width) in SPUR_ROADS.items():
+        mouth = rp.pieces_of_gate(gate_id)[0]["vertices"][0]
+        mask |= segment_distance_m(X, Y, start, (float(mouth[0]), float(mouth[1]))) <= 0.5 * width + PASSAGE_SCATTER_MARGIN_M
+    return mask
 
 
-def is_in_seam_core(core, x_cm, y_cm):
+def segment_distance_m(X, Y, start, end):
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    length = math.hypot(dx, dy)
+    t = np.clip(((X - start[0]) * dx + (Y - start[1]) * dy) / length, 0.0, length)
+    return np.hypot(X - (start[0] + t * dx / length), Y - (start[1] + t * dy / length))
+
+
+def lift_protected_zones():
+    zones = []
+    for shaft in rp.SHAFTS:
+        low_v, high_v = rp.LIFT_FIELD_BACK_V_M - rp.LIFT_RING_M, rp.LIFT_FACE_V_M + rp.LIFT_RING_M
+        center_x, center_y = rp.shaft_to_grid_m(shaft, 0.5 * (low_v + high_v), 0.0)
+        half = [0.5 * (high_v - low_v) * 100.0, (rp.LIFT_HALF_WIDTH_M + rp.LIFT_RING_M) * 100.0]
+        z_range = [(shaft["bottom_z_m"] - LIFT_WINDOW_HEADROOM_M) * 100.0, (shaft["top_z_m"] + LIFT_WINDOW_HEADROOM_M) * 100.0]
+        zones.append(tdr.TDProtectedZone((center_x * 100.0, center_y * 100.0), shaft["frame_yaw_deg"], half, z_range))
+    return zones
+
+
+def settle_lift_landings(L):
+    counts = {"lights_clamped": [], "lights_removed": []}
+    for shaft in rp.SHAFTS:
+        result = rp.clamp_lights_off_lift_window(L.lights, shaft, shaft["bottom_z_m"], shaft["top_z_m"])
+        counts["lights_clamped"] += result["clamped"]
+        counts["lights_removed"] += result["removed"]
+    return counts
+
+
+def is_in_cells(cells, x_cm, y_cm):
     ix = int(round(x_cm / 100.0)) + HALF
     iy = int(round(y_cm / 100.0)) + HALF
     if ix < 0 or iy < 0 or ix >= SIZE or iy >= SIZE:
         return False
-    return bool(core[iy, ix])
+    return bool(cells[iy, ix])
 
 
-def clear_seam_cores(L, core):
+def clear_cells(L, cells):
     removed = 0
     for bucket_key in list(L.ism):
         bucket = L.ism[bucket_key]
-        kept = [t for t in bucket if not is_in_seam_core(core, t[0], t[1])]
+        kept = [t for t in bucket if not is_in_cells(cells, t[0], t[1])]
         removed += len(bucket) - len(kept)
         if kept:
             L.ism[bucket_key] = kept
@@ -1271,28 +1367,52 @@ def clear_seam_cores(L, core):
         del L.ism[bucket_key]
     for name in ("actors", "planes", "lights", "niagara"):
         items = getattr(L, name)
-        kept = [e for e in items if not is_in_seam_core(core, e["loc"][0], e["loc"][1])]
+        kept = [e for e in items if not is_in_cells(cells, e["loc"][0], e["loc"][1])]
         removed += len(items) - len(kept)
         setattr(L, name, kept)
     return removed
 
 
-def add_seam_pcg_exclusions(L, f):
-    half_length_m = rp.SEAM_BUFFER_M + SEAM_CORE_CLEAR_MARGIN_M
-    half_width_m = rp.BAND_OUTER_M + SEAM_CORE_CLEAR_MARGIN_M
-    for passage in rp.PASSAGES:
-        core_heights = f["h"][rp.core_mask(passage, "field", f["X"], f["Y"], SEAM_CORE_CLEAR_MARGIN_M)]
-        low_z = float(core_heights.min()) - SEAM_PCG_EXCLUSION_HEIGHT_PAD_M
-        high_z = float(core_heights.max()) + SEAM_PCG_EXCLUSION_HEIGHT_PAD_M
-        seam_x, seam_y = passage["field_seam_m"]
-        box_extent_cm = [half_length_m * 100.0, half_width_m * 100.0, round((high_z - low_z) * 50.0, 1)]
-        z_off = 0.5 * (low_z + high_z) - L.height(seam_x, seam_y)
-        L.add_marker("PcgExclusion", seam_x, seam_y, passage["yaw_deg"], f"TDGen_SeamPcgExclusion_{passage['gate_id']}", z_off=z_off, tags=["TDExclusion"], box_extent_cm=box_extent_cm)
+def gate_frame(gate_id):
+    if gate_id in rp.SHAFTS_BY_GATE:
+        shaft = rp.SHAFTS_BY_GATE[gate_id]
+        return shaft["axis_m"], shaft["frame_yaw_deg"]
+    start = rp.CONNECTORS_BY_GATE[gate_id]["vertices"][0]
+    end = rp.CONNECTORS_BY_GATE[gate_id]["vertices"][-1]
+    return (float(start[0]), float(start[1])), rp.bearing_deg(start[0], start[1], end[0], end[1])
+
+
+def add_connector_pcg_exclusions(L, f):
+    X, Y = f["X"], f["Y"]
+    for gate_id in rp.GATE_IDS:
+        cells = rp.gate_footprint(gate_id, X, Y)
+        if not cells.any():
+            continue
+        origin, yaw = gate_frame(gate_id)
+        s, l = rp.frame_coords(origin, yaw, X[cells], Y[cells])
+        s_low, s_high = float(s.min()) - CONNECTOR_CLEAR_MARGIN_M, float(s.max()) + CONNECTOR_CLEAR_MARGIN_M
+        l_low, l_high = float(l.min()) - CONNECTOR_CLEAR_MARGIN_M, float(l.max()) + CONNECTOR_CLEAR_MARGIN_M
+        heights = f["h"][cells]
+        low_z = float(heights.min()) - CONNECTOR_PCG_EXCLUSION_HEIGHT_PAD_M
+        high_z = float(heights.max()) + CONNECTOR_PCG_EXCLUSION_HEIGHT_PAD_M
+        center_x, center_y = rp.frame_point(origin, yaw, 0.5 * (s_low + s_high), 0.5 * (l_low + l_high))
+        box_extent_cm = [round((s_high - s_low) * 50.0, 1), round((l_high - l_low) * 50.0, 1), round((high_z - low_z) * 50.0, 1)]
+        z_off = 0.5 * (low_z + high_z) - L.height(center_x, center_y)
+        L.add_marker("PcgExclusion", center_x, center_y, round(yaw, 4), f"TDGen_ConnectorPcgExclusion_{gate_id}", z_off=z_off, tags=["TDExclusion"], box_extent_cm=box_extent_cm)
+
+
+def add_nav_mesh_bounds(L):
+    center_z = L.height(0.0, 0.0) + NAV_BOUNDS_CENTER_ABOVE_ORIGIN_M
+    floor_limit = min(shaft["bottom_z_m"] for shaft in rp.SHAFTS) - NAV_BOUNDS_FLOOR_MARGIN_M
+    if center_z - NAV_BOUNDS_HALF_HEIGHT_M > floor_limit:
+        raise ValueError(f"NavMeshBounds bottom {center_z - NAV_BOUNDS_HALF_HEIGHT_M:.2f} m is above shaft floor margin {floor_limit:.2f} m")
+    L.add_marker("NavMeshBounds", 0.0, 0.0, 0.0, "TDGen_NavMeshBounds", z_off=NAV_BOUNDS_CENTER_ABOVE_ORIGIN_M, scale=[520.0, 520.0, NAV_BOUNDS_HALF_HEIGHT_M])
+    return center_z - NAV_BOUNDS_HALF_HEIGHT_M
 
 
 def topdown_route_masks(grid, road_mask):
     X, Y = grid.meter_axes()
-    floors = [rp.floor_cells(passage, "field", X, Y) for passage in rp.PASSAGES]
+    floors = [rp.gate_floor_cells(gate_id, X, Y) for gate_id in rp.GATE_IDS]
     circles = [(poi["pos"][0], poi["pos"][1], poi["r"]) for poi in POIS.values()]
     circles.append((VILLAGE[0], VILLAGE[1], VILLAGE_R))
     circles += [(dungeon[0], dungeon[1], 14.0) for dungeon in (MAIN_DUNGEON, SIDE_DUNGEON_NW, SIDE_DUNGEON_SE)]
@@ -1300,12 +1420,35 @@ def topdown_route_masks(grid, road_mask):
     return tdr.TDRouteMasks(grid, road_mask, circles, water, floors)
 
 
+def rim_band_checks(f):
+    X, Y = f["X"], f["Y"]
+    band = rim_band_depth_m(X, Y) > 0.0
+    corridor = ndimage.binary_dilation(rp.connector_footprint(X, Y), iterations=2)
+    blocked = band & ~corridor
+    labels = rp.quad_components(rp.walkable_quads(f["h"], WALK_FLOOD_MAX_SLOPE_DEG))
+    start = labels[int(math.floor(VILLAGE[1] + 6.0)) + HALF, int(math.floor(VILLAGE[0] + 4.0)) + HALF]
+    reached = (labels == start) & (start > 0)
+    blocked_quads = blocked[:-1, :-1] & blocked[:-1, 1:] & blocked[1:, :-1] & blocked[1:, 1:]
+    edge_row = f["h"][0, :]
+    cut = rp.connector_footprint(X[0:1, :], Y[0:1, :])[0]
+    floors = np.logical_or.reduce([rp.inner_floor_cells(piece, X, Y) for gate_id in rp.GATE_IDS for piece in rp.pieces_of_gate(gate_id)])
+    for shaft in rp.SHAFTS:
+        floors &= ~rp.lift_window_mask(shaft, X, Y, CONNECTOR_CLEAR_MARGIN_M)
+    return {
+        "band_cells": int(band.sum()), "blocked_cells": int(blocked.sum()),
+        "blocked_min_slope_deg": round(float(f["slope"][blocked].min()), 3),
+        "walk_flood_quads": int(reached.sum()), "walk_flood_in_blocked": int((reached & blocked_quads).sum()),
+        "south_edge_min_z_outside_cuts_m": round(float(edge_row[~cut].min()), 3),
+        "connector_floor_max_slope_deg": round(float(f["slope"][floors].max()), 3),
+    }
+
+
 def apply_topdown_rules(L, f, layers):
     if not tdr.ENABLED:
         return {}
     grid = tdr.TDTerrainGrid(tdr.quantize_height_m(f["h"], UNITS_PER_METER))
     masks = topdown_route_masks(grid, np.round(layers["Road"] * 255.0) >= 128)
-    return tdr.apply_placement_rules(L.ism, L.actors, lambda bucket_key: M[bucket_key[0]], grid, masks)
+    return tdr.apply_placement_rules(L.ism, L.actors, lambda bucket_key: M[bucket_key[0]], grid, masks, lift_protected_zones())
 
 
 def build_grove_mask(f):
@@ -1341,7 +1484,7 @@ def write_outputs(f, layers, L, seed):
         },
         "ism": ism_out, "actors": L.actors, "planes": L.planes, "lights": L.lights, "niagara": L.niagara, "markers": L.markers,
         "region": {"name": "AshenVale", "size_m": SIZE - 1, "village": VILLAGE, "water_z_cm": -175.0},
-        "passages": f["passages"],
+        "connectors": f["connectors"],
     }
     with open(os.path.join(OUT_DIR, "layout.json"), "w", encoding="utf-8") as fp:
         json.dump(layout, fp)
@@ -1374,11 +1517,20 @@ def write_preview(f, layers, L):
     col[water] = (40, 70, 110)
     img = Image.fromarray(np.clip(col, 0, 255).astype(np.uint8), "RGB")
     dr = ImageDraw.Draw(img)
-    for passage in rp.PASSAGES:
-        ax, ay = rp.to_grid_m(passage, "field", 0.0, -rp.WALL_TOP_OUTER_M)
-        bx, by = rp.to_grid_m(passage, "field", 0.0, rp.WALL_TOP_OUTER_M)
-        dr.line((ax + HALF, ay + HALF, bx + HALF, by + HALF), fill=(80, 230, 255), width=2)
-        dr.text((bx + HALF + 4, by + HALF), f"SEAM {passage['gate_id']}", fill=(80, 230, 255))
+    for gate_id in rp.GATE_IDS:
+        for piece in rp.pieces_of_gate(gate_id):
+            dr.line([(float(x) + HALF, float(y) + HALF) for x, y, _ in piece["vertices"]], fill=(80, 230, 255), width=2)
+            crossing = piece["boundary_crossing"]
+            if crossing is None:
+                continue
+            cx, cy = crossing["point_m"]
+            dr.ellipse((cx + HALF - 3, cy + HALF - 3, cx + HALF + 3, cy + HALF + 3), outline=(255, 120, 255))
+        start = rp.pieces_of_gate(gate_id)[0]["vertices"][0]
+        dr.text((float(start[0]) + HALF + 4, float(start[1]) + HALF), f"{rp.gate_kind(gate_id).upper()} {gate_id}", fill=(80, 230, 255))
+    for shaft in rp.SHAFTS:
+        low_v, high_v, half_w = rp.lift_band_extent()
+        corners = [rp.shaft_to_grid_m(shaft, v, w) for v, w in ((low_v, -half_w), (high_v, -half_w), (high_v, half_w), (low_v, half_w))]
+        dr.polygon([(x + HALF, y + HALF) for x, y in corners], outline=(80, 230, 255))
     for (key, cx, cy), tr in L.ism.items():
         c = {"Birch1": (30, 70, 30), "Birch2": (40, 80, 35), "Birch3": (60, 95, 45)}.get(key)
         if not c:
@@ -1445,19 +1597,28 @@ def main():
         x, y = rng.uniform(-450, 450), rng.uniform(-450, 450)
         if float(sample_bilinear(placement["forest_density"], np.array([x]), np.array([y]))[0]) > 0.45:
             L.add_scatter_niagara("Leaves", x, y, 7.0, f"TDGen_FX_Leaves_{i}")
-    n_core_cleared = clear_seam_cores(L, build_seam_core_grid(f))
+    n_band_cleared = clear_cells(L, connector_clear_mask(f))
+    lift_settled = settle_lift_landings(L)
     topdown_report = apply_topdown_rules(L, f, layers)
-    add_seam_pcg_exclusions(L, f)
-    L.add_marker("NavMeshBounds", 0.0, 0.0, 0.0, "TDGen_NavMeshBounds", z_off=20.0, scale=[520.0, 520.0, 60.0])
+    add_connector_pcg_exclusions(L, f)
+    nav_bottom_z = add_nav_mesh_bounds(L)
+    rim_checks = rim_band_checks(f)
+    if rim_checks["blocked_min_slope_deg"] < RIM_BAND_MIN_SLOPE_DEG or rim_checks["walk_flood_in_blocked"] > 0:
+        raise ValueError(f"rim band not blocked: {rim_checks}")
+    if rim_checks["connector_floor_max_slope_deg"] > CONNECTOR_FLOOR_MAX_SLOPE_DEG:
+        raise ValueError(f"connector floor too steep: {rim_checks}")
     layout = write_outputs(f, layers, L, args.seed)
     write_preview(f, layers, L)
     write_topdown_report(topdown_report)
     n_inst = sum(len(v) for v in L.ism.values())
     print(f"height range m: {f['h'].min():.1f} .. {f['h'].max():.1f}; trees {n_tree} bushes {n_bush} dread {n_dread} bigrocks {n_big} smallrocks {n_small} puddles {n_pud} fog {n_fog}")
     print(f"ism buckets {len(L.ism)} instances {n_inst}; actors {len(L.actors)}; planes {len(L.planes)}; lights {len(L.lights)}; niagara {len(L.niagara)}; markers {len(L.markers)}")
-    for p in layout["passages"]:
-        print(f"passage {p['gate_id']}: seam cm {p['field_seam_cm']} yaw {p['yaw_deg']:.0f} mouth z {p['mouth_z_m']:.2f} m approach {p['approach_m']} m floor cells {p['floor_cells']}")
-    print(f"seam core cleared items {n_core_cleared}; generator version {GENERATOR_VERSION}")
+    for entry in layout["connectors"]:
+        print(f"connector {entry['gate_id']} {entry['gate_kind']}: field return {entry['field_return']} arrival {entry['arrival']} approach {entry['approach_length_cm']} departure {entry['departure_length_cm']} field floor cells {entry['geometry']['field_floor_cells']}")
+        for piece in entry["geometry"]["pieces"]:
+            print(f"  {piece['name']}: length {piece['length_m']} ridge zone {piece['ridge_zone_s_m']} crossing {piece['boundary_crossing']}")
+    print(f"rim band {rim_checks}; nav bounds bottom {nav_bottom_z:.2f} m")
+    print(f"connector band cleared items {n_band_cleared}; lift settle {lift_settled}; generator version {GENERATOR_VERSION}")
     print("out:", OUT_DIR)
 
 

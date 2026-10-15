@@ -1,9 +1,10 @@
-"""에디터 밖에서 실행: 지점 목록(Tools/WorldGen/topdown_spots.json)의 각 지점으로 PIE 폰을 옮겨 촬영하고 카메라 가림 목록·어두운 화소 비율을 잰다. --compare로 이전 실행과 지점별 변화 표를 만든다(P3-17).
-실행: python Tools/WorldGen/pie_capture_spots.py [--run 이름] [--ids F01,F08_west_outer_forest] [--regions field,PaleHeights] [--compare 이전 run 폴더 또는 이름] [--offline] [--overwrite] (PowerShell, 에디터 실행 중이고 다른 갈래가 에디터를 쓰지 않을 때)
+"""에디터 밖에서 실행: 지점 목록(Tools/WorldGen/topdown_spots.json)의 각 지점으로 PIE 폰을 옮겨 촬영하고 카메라 가림 목록·어두운 화소 비율을 잰다. --compare로 이전 실행과 지점별 변화 표를 만든다(P3-17, P3-19 연속 세계).
+실행: python Tools/WorldGen/pie_capture_spots.py [--run 이름] [--ids F01,B01] [--regions field,PaleHeights] [--compare 이전 run 폴더 또는 이름] [--offline] [--overwrite] [--exposure-offset EV(PIE 시작 뒤 r.ExposureOffset 설정, 종료 때 0으로 복귀, run.json·summary.md에 기록)] (PowerShell, 에디터 실행 중이고 다른 갈래가 에디터를 쓰지 않을 때, 에디터 창을 앞에 둔다)
 출력: Saved/WorldGen/PieShots/<run>/ 의 지점별 PNG·<지점 ID>.json·run.json·summary.md(--compare 이면 compare.md도). 종료 코드 0 = 전 지점 성공, 1 = 실패 지점 있음, 2 = PIE 시작 실패
-상태: 현행 (2026-10-14)
+상태: 현행 (2026-10-15)
 
-절차: StartPIE → 지역마다 [이계면 콘솔 관문 이동 → 지점마다 move → settle초 대기 → shot → 가림 목록(occluders) → 어두운 비율 계산] → 필드 귀환 → StopPIE. 에디터 쪽 동작은 editor_pie_probe.py.
+절차: StartPIE → 지역마다 [travel이 console_gate면 콘솔 관문 이동 → 지점마다 move → settle초 대기 → shot → 가림 목록(occluders) → 어두운 비율 계산] → (console_gate면 필드 귀환) → StopPIE. 에디터 쪽 동작은 editor_pie_probe.py. 연속 세계(D-45)의 지점 목록은 모든 지역이 teleport다.
+이동 높이: 지점에 z_cm이 없으면 높이맵 지면 + 150cm. 지점 지역의 격자를 먼저 보고, 그 격자 밖이면(이계 소유지만 필드 상자 안인 갱도 바닥 등) 그 점을 담는 다른 지역 격자를 쓴다. 이계 height.r16은 이계 로컬 높이라 layout.json realm.center_cm의 z(Zoff)를 더한다.
 어두운 화소 = 휘도(0~1, 0.2126R+0.7152G+0.0722B) 0.06 미만의 비율, 중앙 휘도 = 화면 가로·세로 가운데 30% 사각형의 평균 휘도. 가림 수 = 카메라→폰 가슴(지면+120cm) 반지름 30cm 구 쓸기에 걸린 지형 외 (액터, 구성 요소, 인스턴스 번호) 수. 매몰 = 카메라 점 겹침·위쪽 광선 내부 판정 또는 카메라가 지형 아래.
 --offline은 PIE 없이 --run 폴더의 지점 JSON으로 summary.md(와 --compare)만 다시 만든다. 이미 있는 run 폴더는 --overwrite 없이는 덮어쓰지 않는다.
 """
@@ -55,6 +56,8 @@ WRITE_RETRY_SECONDS = 2.0
 TRAVEL_METHODS = ("teleport", "console_gate")
 MAIN_OCCLUDER_COUNT = 3
 OFF_TARGET_WARN_CM = 1000.0
+EXPOSURE_VARIABLE = "r.ExposureOffset"
+EXPOSURE_RESET_VALUE = 0.0
 
 
 class ProbeError(RuntimeError):
@@ -166,11 +169,20 @@ def load_height_grid(region):
     raw = np.fromfile(height_path, dtype="<u2")
     if raw.size != samples * samples:
         raise ValueError(f"{height_path}: {raw.size} values, expected {samples}x{samples}")
-    center_x, center_y = 0.0, 0.0
+    center = (0.0, 0.0, 0.0)
     if region.get("layout_file"):
-        center = read_json(resolve_project_path(region["layout_file"]))["realm"]["center_cm"]
-        center_x, center_y = float(center[0]), float(center[1])
-    return {"raw": raw.reshape(samples, samples), "samples": samples, "center": (center_x, center_y), "cell_cm": float(region.get("cell_cm", 100.0))}
+        layout_center = read_json(resolve_project_path(region["layout_file"]))["realm"]["center_cm"]
+        center = (float(layout_center[0]), float(layout_center[1]), float(layout_center[2]) if len(layout_center) > 2 else 0.0)
+    return {"raw": raw.reshape(samples, samples), "samples": samples, "center": center, "cell_cm": float(region.get("cell_cm", 100.0))}
+
+
+def sample_grid_cm(grid, x_cm, y_cm):
+    half = (grid["samples"] - 1) / 2.0
+    row = int(round((y_cm - grid["center"][1]) / grid["cell_cm"] + half))
+    column = int(round((x_cm - grid["center"][0]) / grid["cell_cm"] + half))
+    if not (0 <= row < grid["samples"] and 0 <= column < grid["samples"]):
+        return None
+    return (float(grid["raw"][row, column]) - HEIGHT_RAW_ZERO) / HEIGHT_RAW_PER_100CM * 100.0 + grid["center"][2]
 
 
 def build_ground_lookup(regions):
@@ -182,15 +194,12 @@ def build_ground_lookup(regions):
         return grids[region_name]
 
     def ground_cm(region_name, x_cm, y_cm):
-        grid = grid_for(region_name)
-        if grid is None:
-            return None
-        half = (grid["samples"] - 1) / 2.0
-        row = int(round((y_cm - grid["center"][1]) / grid["cell_cm"] + half))
-        column = int(round((x_cm - grid["center"][0]) / grid["cell_cm"] + half))
-        if not (0 <= row < grid["samples"] and 0 <= column < grid["samples"]):
-            return None
-        return (float(grid["raw"][row, column]) - HEIGHT_RAW_ZERO) / HEIGHT_RAW_PER_100CM * 100.0
+        for name in [region_name] + [other for other in regions if other != region_name]:
+            grid = grid_for(name)
+            height = None if grid is None else sample_grid_cm(grid, x_cm, y_cm)
+            if height is not None:
+                return height
+        return None
 
     return ground_cm
 
@@ -237,6 +246,23 @@ def start_pie(warmup_seconds):
 
 def stop_pie():
     log(f"StopPIE {str(pie_checks.pie('StopPIE'))[:100]}")
+
+
+def set_exposure_offset(exposure_offset):
+    if exposure_offset is None:
+        return
+    result = call_probe({"action": "console", "variable": EXPOSURE_VARIABLE, "value": exposure_offset})
+    log(f"{EXPOSURE_VARIABLE} {exposure_offset:g} read_back={result.get('read_back')}")
+
+
+def reset_exposure_offset(exposure_offset):
+    if exposure_offset is None:
+        return
+    try:
+        result = call_probe({"action": "console", "variable": EXPOSURE_VARIABLE, "value": EXPOSURE_RESET_VALUE})
+        log(f"{EXPOSURE_VARIABLE} reset read_back={result.get('read_back')}")
+    except Exception as error:
+        log(f"{EXPOSURE_VARIABLE} reset failed, set it to {EXPOSURE_RESET_VALUE:g} by hand: {error!r}")
 
 
 def wait_for_file(path, timeout_seconds):
@@ -334,11 +360,11 @@ def enter_region(travel, boxes):
     return arrived
 
 
-def leave_region(travel):
+def leave_region(travel, boxes):
     if travel["method"] == "teleport":
         return
     log(pie_checks.run("pie_walkin_check.py", "field", quiet=True).replace("\n", " | "))
-    pie_checks.wait_for_arrival(pie_checks.is_inside_field, TRAVEL_WAIT_SECONDS)
+    pie_checks.wait_for_arrival(lambda pawn: pie_checks.is_inside_field(pawn, boxes), TRAVEL_WAIT_SECONDS)
     time.sleep(AFTER_RETURN_FIELD_SECONDS)
 
 
@@ -357,7 +383,7 @@ def capture_region(region_name, region, group, ground_cm, boxes, out_dir, option
         write_json(os.path.join(out_dir, spot["id"] + ".json"), record)
         log(describe_record(record))
         records.append(record)
-    leave_region(travel)
+    leave_region(travel, boxes)
     return records
 
 
@@ -368,12 +394,14 @@ def capture_all(regions, spots, out_dir, options):
     records = []
     start_pie(options.warmup)
     try:
+        set_exposure_offset(options.exposure_offset)
         for region_name, region in regions.items():
             group = [spot for spot in spots if spot["region"] == region_name]
             if not group:
                 continue
             records += capture_region(region_name, region, group, ground_cm, boxes, out_dir, options)
     finally:
+        reset_exposure_offset(options.exposure_offset)
         stop_pie()
     return records
 
@@ -435,12 +463,17 @@ def render_off_target_lines(records):
     return [f"- 폰이 목표 좌표에서 {OFF_TARGET_WARN_CM:.0f}cm 넘게 벗어난 지점(낙하 복구·이동 거부 의심, 수치 신뢰 불가): {', '.join(off_target)}"]
 
 
+def describe_exposure_offset(exposure_offset):
+    return "엔진 기본" if exposure_offset is None else f"{exposure_offset:+g} EV"
+
+
 def render_summary(run_name, meta, records):
     failed = [record for record in records if record.get("error")]
     lines = [
         f"# PIE 지점 촬영 {run_name}",
         "",
         f"- 실행: {meta.get('created', '-')}, 지점 {len(records)}개(성공 {len(records) - len(failed)}, 실패 {len(failed)}), 목록 `{meta.get('spots_file', '-')}`",
+        f"- 노출 오프셋({EXPOSURE_VARIABLE}): {describe_exposure_offset(meta.get('exposure_offset'))}",
         f"- 어두운 화소 = 휘도 {DARK_LUMINANCE} 미만, 중앙 휘도 = 가운데 가로·세로 {int(CENTER_FRACTION * 100)}% 사각형 평균(둘 다 0~1)",
         "- 가림 수 = 카메라→폰 가슴(지면+120cm) 구 쓸기(반지름 30cm)에 걸린 지형 외 (액터, 구성 요소, 인스턴스) 수, 매몰 = 카메라가 메시 안이거나 지형 아래",
         *render_off_target_lines(records),
@@ -522,6 +555,7 @@ def parse_args(argv=None):
     parser.add_argument("--settle", type=float, default=6.0, help="이동 뒤 촬영 전 대기 초(카메라 지연 수렴)")
     parser.add_argument("--warmup", type=float, default=12.0, help="PIE 시작 뒤 대기 초")
     parser.add_argument("--refine", action="store_true", help="이동 뒤 지면을 다시 추적해 폰을 붙인다")
+    parser.add_argument("--exposure-offset", type=float, default=None, help=f"PIE 시작 뒤 {EXPOSURE_VARIABLE}(EV)를 이 값으로 설정하고 종료 때 {EXPOSURE_RESET_VALUE:g}으로 되돌린다(기본 건드리지 않음)")
     return parser.parse_args(argv)
 
 
@@ -536,7 +570,7 @@ def main(argv=None):
     out_dir = os.path.join(SHOT_ROOT, run_name)
     run_file = os.path.join(out_dir, "run.json")
     previous_dir = resolve_run_dir(args.compare) if args.compare else None
-    meta = {"run": run_name, "created": time.strftime("%Y-%m-%d %H:%M:%S"), "spots_file": describe_project_path(spots_path), "spot_ids": [spot["id"] for spot in selected]}
+    meta = {"run": run_name, "created": time.strftime("%Y-%m-%d %H:%M:%S"), "spots_file": describe_project_path(spots_path), "spot_ids": [spot["id"] for spot in selected], "exposure_offset": args.exposure_offset}
     if args.offline:
         if not os.path.isfile(run_file):
             raise SystemExit(f"--offline needs an existing run folder with run.json: {out_dir}")

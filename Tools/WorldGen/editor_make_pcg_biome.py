@@ -23,6 +23,7 @@ MESH_ROOT = "/Game/DarkFantasyTopDown/StaticMeshes"
 BIOME_DEF_PATH = "/Game/World/Definitions/DA_TDBiome_Forest"
 VOLUME_LABEL = "TDGen_PCG_BiomeForest"
 VOLUME_FOLDER = "TDGen/PCG"
+REALM_LANDSCAPE_TAG = "TDRealm"
 COMPONENT_SEED = 7
 
 BASE_POINTS_PER_SQM = 0.04
@@ -424,7 +425,7 @@ def remove_previous_volume():
 def landscape_bounds():
     lo = hi = None
     for actor in eas.get_all_level_actors():
-        if not isinstance(actor, unreal.LandscapeProxy):
+        if not isinstance(actor, unreal.LandscapeProxy) or actor.actor_has_tag(REALM_LANDSCAPE_TAG):
             continue
         origin, extent = actor.get_actor_bounds(False)
         mn, mx = origin - extent, origin + extent

@@ -1,28 +1,53 @@
-"""에디터 안에서 실행: generate_ashen_vale.py 가 만든 layout.json 을 LV_DarkFantasy_OpenWorld 레벨에 반영한다.
-실행: python Tools/run_in_editor.py Tools/WorldGen/editor_build_open_world.py (PowerShell). Saved/WorldGen/open_world_build_request.json 이 {"mode":"partial","previous_layout":"<경로>"} 이면 부분 모드, 없으면 전체 모드
-출력: /Game/Level/LV_DarkFantasy_OpenWorld 와 외부 액터 패키지 저장
-상태: 현행. 전체 모드는 이계(TDRealm 태그) 액터와 필드 상자(±60000cm) 밖 랜드스케이프만 남긴다. 부분 모드는 이전·새 layout 라벨·TDGen_ISM_·필드 랜드스케이프만 다시 만들고 던전·PCG·이계·대기·PlayerStart·내비 경계를 보존한다. editor_build_realm 이 spawn 함수를 가져다 쓴다.
+"""에디터 안에서 실행: generate_ashen_vale.py 가 만든 layout.json 을 LV_DarkFantasy_OpenWorld 레벨에 반영한다(필드 소유 액터는 데이터 레이어 DL_TDRegion_Field, P3-19 명세 2.4·4.1).
+실행: python Tools/run_in_editor.py Tools/WorldGen/editor_build_open_world.py (PowerShell, editor_setup_data_layers.py 다음). Saved/WorldGen/open_world_build_request.json 이 {"mode":"partial","previous_layout":"<경로>"} 이면 부분 모드, 없으면 전체 모드
+출력: /Game/Level/LV_DarkFantasy_OpenWorld 와 외부 액터 패키지 저장, Saved/WorldGen/open_world_build_report.json(삭제 사유별 개수·랜드스케이프 DL 검사·랜드스케이프 수 전후)
+상태: 현행(P3-19 규칙은 에디터 실행 검증 전). 랜드스케이프는 TDRealm 태그가 없는 것만, 그 밖의 액터는 DL_TDRegion_Field 소속과 전환기 규칙(지역 DL 없음, 이전·새 layout 라벨+TDGen 태그는 위치와 무관, 그 밖의 layout 라벨·TDGen_ISM_ 는 ±50450cm 상자 안)·TDGen_SeamPcgExclusion_ 만 지운다. 이계(TDRealm 접두·태그·이계 DL)·던전·PCG·대기·PlayerStart 는 보존하고, 레벨에 있거나 Saved/WorldGen/Realms/<R>/layout.json 이 있는 이계마다 랜드스케이프가 17개가 아니면 지우기 전에 멈춘다. editor_build_realm 이 spawn·랜드스케이프 함수를 가져다 쓴다.
 
 절차: 레벨 로드 → 기존 생성물(TDGen_*)과 옛 액터 정리 → 랜드스케이프 생성(C++ UTDLandscapeEditorLibrary) →
       조명/안개/후처리 → 인스턴스 메시 셀 액터 → 고유 액터/평면/조명/나이아가라/마커 → 저장.
 환경 변수 TD_WORLDGEN_LAYOUT 으로 layout.json 경로를 바꿀 수 있다.
 """
+import importlib
 import json
 import os
+import sys
 import time
 
 import unreal
+
+PROJECT_DIR = unreal.SystemLibrary.get_project_directory()
+WORLDGEN_TOOLS_DIR = os.path.join(PROJECT_DIR, "Tools", "WorldGen")
+if WORLDGEN_TOOLS_DIR not in sys.path:
+    sys.path.insert(0, WORLDGEN_TOOLS_DIR)
+
+data_layers = importlib.reload(importlib.import_module("editor_setup_data_layers"))
 
 LEVEL_PATH = "/Game/Level/LV_DarkFantasy_OpenWorld"
 LAYOUT_PATH = os.environ.get("TD_WORLDGEN_LAYOUT", r"C:\Project\TDGame\Saved\WorldGen\AshenVale\layout.json")
 LOOK = {"sun_lux": 7.0, "sky_intensity": 1.8, "exposure_bias": 10.4, "fog_density": 0.022, "local_light_scale": 0.4}
 KEEP_CLASSES = {"WorldSettings", "WorldDataLayers", "WorldPartitionMiniMap", "Brush", "LevelBounds"}
 REALM_TAG = "TDRealm"
-FIELD_BOX_MIN = (-60000.0, -60000.0, -1.0e6)
-FIELD_BOX_MAX = (60000.0, 60000.0, 1.0e6)
+REALM_TAG_PREFIX = "TDRealm:"
+REALM_LABEL_PREFIX = "TDRealm_"
+FIELD_BOX_MIN = (-50450.0, -50450.0, -1.0e6)
+FIELD_BOX_MAX = (50450.0, 50450.0, 1.0e6)
+FIELD_BUILDER_TAG = "TDGen"
+FIELD_LANDSCAPE_TAGS = (FIELD_BUILDER_TAG, "TDRegion:Field")
+FIELD_LANDSCAPE_FOLDER = "TDGen/Landscape"
+REALM_LANDSCAPE_ACTOR_COUNT = 17
+REALM_LAYOUTS_DIR = os.path.join(PROJECT_DIR, "Saved", "WorldGen", "Realms")
+REALM_LAYOUT_FILE_NAME = "layout.json"
+LANDSCAPE_CLASS_NAMES = ("Landscape", "LandscapeStreamingProxy")
 BUILD_REQUEST_PATH = os.environ.get("TD_WORLDGEN_BUILD_REQUEST", r"C:\Project\TDGame\Saved\WorldGen\open_world_build_request.json")
+BUILD_REPORT_PATH = os.environ.get("TD_WORLDGEN_BUILD_REPORT", os.path.join(PROJECT_DIR, "Saved", "WorldGen", "open_world_build_report.json"))
 ATMOSPHERE_LABELS = {"TDGen_Sun", "TDGen_SkyAtmosphere", "TDGen_SkyLight", "TDGen_HeightFog", "TDGen_PostProcess"}
-PARTIAL_KEPT_MARKER_KINDS = ("PlayerStart", "NavMeshBounds")
+PARTIAL_KEPT_MARKER_KINDS = ("PlayerStart",)
+OUTSIDE_LAYER_MARKER_KINDS = ("PlayerStart",)
+SEAM_RESIDUE_PREFIXES = ("TDGen_SeamPcgExclusion_",)
+FIELD_LAYER_NAME = data_layers.region_layer_name(data_layers.FIELD_REGION_ID)
+REALM_LAYER_NAMES = frozenset(data_layers.region_layer_name(realm_id) for realm_id in data_layers.REALM_IDS)
+WRITE_RETRY_COUNT = 5
+WRITE_RETRY_SECONDS = 2.0
 PARTIAL_PROTECTED_TAGS = ("TDRealm", "TDGenDungeon", "TDGenPCG", "TDLocked", "TDDungeonEntry", "TDDungeonSlot")
 PARTIAL_PROTECTED_PREFIXES = ("TDGenDungeon_", "TDGen_Exit_", "TDGen_TestChest_", "TDGen_Tool_", "TDGen_PCG", "TDRealm_")
 PARTIAL_PROTECTED_CLASSES = KEEP_CLASSES | {"RecastNavMesh", "PCGWorldActor", "PCGPartitionActor"}
@@ -92,13 +117,125 @@ def landscape_center_xy(proxy):
     return location.x, location.y
 
 
-def landscape_proxies_in_box(world, box_min, box_max, margin=0.0):
-    found = []
-    for proxy in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.LandscapeProxy):
-        x, y = landscape_center_xy(proxy)
-        if is_xy_in_box(x, y, box_min, box_max, margin):
-            found.append(proxy)
-    return found
+def actor_tag_names(actor):
+    return {str(t) for t in actor.tags}
+
+
+def realm_id_of_tags(tags):
+    for tag in sorted(tags):
+        if tag.startswith(REALM_TAG_PREFIX):
+            return tag[len(REALM_TAG_PREFIX):]
+    return None
+
+
+def landscape_actors(world):
+    return list(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.LandscapeProxy))
+
+
+def is_landscape_desc(desc):
+    native_class = desc.native_class
+    return native_class is not None and native_class.get_name() in LANDSCAPE_CLASS_NAMES
+
+
+def load_landscape_actors():
+    library = unreal.WorldPartitionBlueprintLibrary
+    descs = library.get_actor_descs()
+    if descs is None:
+        log("WARNING world partition actor descs unavailable; only loaded landscape actors are handled")
+        return None
+    guids = [desc.guid for desc in descs if is_landscape_desc(desc)]
+    if guids:
+        library.load_actors(guids)
+    log(f"landscape actor descs loaded: {len(guids)}")
+    return len(guids)
+
+
+def landscape_counts(world):
+    counts = {"total": 0, "field": 0, "realms": {}, "realm_without_id": 0}
+    for proxy in landscape_actors(world):
+        tags = actor_tag_names(proxy)
+        counts["total"] += 1
+        if REALM_TAG not in tags:
+            counts["field"] += 1
+            continue
+        realm_id = realm_id_of_tags(tags)
+        if realm_id is None:
+            counts["realm_without_id"] += 1
+            continue
+        counts["realms"][realm_id] = counts["realms"].get(realm_id, 0) + 1
+    return counts
+
+
+def expected_landscape_actor_count(cfg):
+    grid = cfg["world_partition_grid_size"]
+    return -(-cfg["components_x"] // grid) * -(-cfg["components_y"] // grid) + 1
+
+
+def realm_ids_with_layout():
+    if not os.path.isdir(REALM_LAYOUTS_DIR):
+        return []
+    return sorted(name for name in os.listdir(REALM_LAYOUTS_DIR) if os.path.isfile(os.path.join(REALM_LAYOUTS_DIR, name, REALM_LAYOUT_FILE_NAME)))
+
+
+def landscape_safety_problems(counts, landscape_desc_count, required_realm_ids):
+    problems = []
+    if counts["realm_without_id"]:
+        problems.append(f"{counts['realm_without_id']} landscape actors have the {REALM_TAG} tag but no {REALM_TAG_PREFIX}<RealmId> tag")
+    for realm_id in sorted(set(counts["realms"]) | set(required_realm_ids)):
+        count = counts["realms"].get(realm_id, 0)
+        if count != REALM_LANDSCAPE_ACTOR_COUNT:
+            problems.append(f"{realm_id}: {count} landscape actors tagged {REALM_TAG_PREFIX}{realm_id}, expected {REALM_LANDSCAPE_ACTOR_COUNT}")
+    if landscape_desc_count is not None and counts["total"] < landscape_desc_count:
+        problems.append(f"only {counts['total']} of {landscape_desc_count} landscape actor descs are loaded")
+    return problems
+
+
+def require_landscapes_intact(world, landscape_desc_count):
+    counts = landscape_counts(world)
+    required_realm_ids = realm_ids_with_layout()
+    problems = landscape_safety_problems(counts, landscape_desc_count, required_realm_ids)
+    if problems:
+        raise RuntimeError(f"landscape safety check failed before any deletion (spec 4.1): {problems}; counts {counts}; realms with {REALM_LAYOUT_FILE_NAME} {required_realm_ids}")
+    log(f"landscape safety check passed: {counts}; realms with {REALM_LAYOUT_FILE_NAME} {required_realm_ids}")
+    return counts
+
+
+def destroy_actors(actors):
+    unique = {actor.get_path_name(): actor for actor in actors}
+    ordered = sorted(unique.values(), key=lambda actor: isinstance(actor, unreal.Landscape))
+    for actor in ordered:
+        eas.destroy_actor(actor)
+    return len(ordered)
+
+
+def destroy_field_landscape(world):
+    library = unreal.TDLandscapeEditorLibrary
+    if hasattr(library, "destroy_landscape_actors_without_tag"):
+        return library.destroy_landscape_actors_without_tag(world, REALM_TAG)
+    log("WARNING TDLandscapeEditorLibrary.destroy_landscape_actors_without_tag missing (C++ not rebuilt); Python fallback by tag")
+    return destroy_actors([proxy for proxy in landscape_actors(world) if REALM_TAG not in actor_tag_names(proxy)])
+
+
+def landscape_proxies_of(world, landscape, fallback_filter):
+    library = unreal.TDLandscapeEditorLibrary
+    if hasattr(library, "get_landscape_proxies_of"):
+        return list(library.get_landscape_proxies_of(landscape))
+    log("WARNING TDLandscapeEditorLibrary.get_landscape_proxies_of missing (C++ not rebuilt); tag and box fallback")
+    return [proxy for proxy in landscape_actors(world) if fallback_filter(proxy)]
+
+
+def is_untagged_field_landscape(proxy):
+    if REALM_TAG in actor_tag_names(proxy):
+        return False
+    x, y = landscape_center_xy(proxy)
+    return is_xy_in_box(x, y, FIELD_BOX_MIN, FIELD_BOX_MAX)
+
+
+def finish_field_landscape_proxies(proxies):
+    for proxy in proxies:
+        setp(proxy, "enable_nanite", True)
+        proxy.set_folder_path(FIELD_LANDSCAPE_FOLDER)
+        proxy.tags = [unreal.Name(t) for t in FIELD_LANDSCAPE_TAGS]
 
 
 def apply_static_mesh_materials(comp, entry):
@@ -117,20 +254,20 @@ def apply_static_mesh_materials(comp, entry):
 
 
 def clear_level(world):
-    removed = unreal.TDLandscapeEditorLibrary.destroy_landscape_actors_in_bounds(world, vec(FIELD_BOX_MIN), vec(FIELD_BOX_MAX))
-    log(f"landscape actors removed: {removed}")
-    n = 0
-    kept_realm = 0
+    counts = {"landscape": destroy_field_landscape(world), "removed": 0, "kept_class": 0, "kept_realm": 0}
+    log(f"landscape actors removed: {counts['landscape']}")
     for a in list(eas.get_all_level_actors()):
         cn = a.get_class().get_name()
-        if cn in KEEP_CLASSES:
+        if cn in KEEP_CLASSES or cn in LANDSCAPE_CLASS_NAMES:
+            counts["kept_class"] += 1
             continue
-        if a.actor_has_tag(REALM_TAG):
-            kept_realm += 1
+        if a.actor_has_tag(REALM_TAG) or data_layers.actor_layer_names(a) & REALM_LAYER_NAMES:
+            counts["kept_realm"] += 1
             continue
         eas.destroy_actor(a)
-        n += 1
-    log(f"other actors removed: {n}; realm actors kept: {kept_realm}")
+        counts["removed"] += 1
+    log(f"full clear: {counts}")
+    return counts
 
 
 def create_landscape_actor(world, cfg):
@@ -153,25 +290,45 @@ def create_landscape_actor(world, cfg):
     return landscape
 
 
-def create_landscape(world, cfg):
+def create_region_landscape(world, cfg, region_id, fallback_filter, finish_proxies):
+    result = {"region": region_id, "mode": "tag_only", "check": None, "expected_actors": expected_landscape_actor_count(cfg)}
+    if data_layers.is_landscape_layer_enabled():
+        with data_layers.region_context(region_id):
+            landscape = create_landscape_actor(world, cfg)
+        proxies = landscape_proxies_of(world, landscape, fallback_filter)
+        result["check"] = data_layers.check_landscape_layer(proxies, region_id)
+        if result["check"]["ok"]:
+            finish_proxies(proxies)
+            result.update({"mode": "data_layer", "actors": len(proxies)})
+            log(f"landscape {region_id}: data layer check passed ({len(proxies)} actors)")
+            return landscape, proxies, result
+        log(f"WARNING landscape {region_id}: data layer check failed {result['check']}; recreating it without data layer, tag only (spec 2.4)")
+        destroy_actors(proxies + [proxy for proxy in landscape_actors(world) if fallback_filter(proxy)])
+        result["mode"] = "tag_only_fallback"
     landscape = create_landscape_actor(world, cfg)
-    for proxy in landscape_proxies_in_box(world, FIELD_BOX_MIN, FIELD_BOX_MAX):
-        try:
-            proxy.set_editor_property("enable_nanite", True)
-        except Exception as e:
-            log(f"nanite flag skipped on {proxy.get_actor_label()}: {e}")
-        proxy.set_folder_path("TDGen/Landscape")
+    proxies = landscape_proxies_of(world, landscape, fallback_filter)
+    finish_proxies(proxies)
+    result["actors"] = len(proxies)
+    return landscape, proxies, result
+
+
+def build_grass_maps():
     try:
         unreal.get_editor_subsystem(unreal.LandscapeSubsystem).build_grass_maps()
         log("grass maps build requested")
     except Exception as e:
         log(f"grass maps build not available: {str(e)[:80]}")
-    log(f"landscape created: {landscape.get_actor_label()} proxies={len(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.LandscapeStreamingProxy))}")
-    return landscape
+
+
+def create_landscape(world, cfg):
+    landscape, proxies, result = create_region_landscape(world, cfg, data_layers.FIELD_REGION_ID, is_untagged_field_landscape, finish_field_landscape_proxies)
+    build_grass_maps()
+    log(f"landscape created: {landscape.get_actor_label()} actors={len(proxies)} expected={result['expected_actors']} mode={result['mode']}")
+    return result
 
 
 def setup_atmosphere(world, region):
-    sun = eas.spawn_actor_from_class(unreal.DirectionalLight, unreal.Vector(0, 0, 5000), unreal.Rotator(roll=0, pitch=-55, yaw=38))
+    sun = eas.spawn_actor_from_class(unreal.DirectionalLight, unreal.Vector(0, 0, 5000), unreal.Rotator(roll=0, pitch=-70, yaw=205))
     c = sun.light_component
     setp(c, "mobility", unreal.ComponentMobility.MOVABLE)
     c.set_intensity(LOOK["sun_lux"])
@@ -407,12 +564,15 @@ def spawn_pcg_exclusion_box(e, label, folder, tags):
     return actor
 
 
-def spawn_markers(layout, label_prefix="", folder_root="TDGen", extra_tags=(), skip_kinds=()):
+def spawn_markers(layout, label_prefix="", folder_root="TDGen", extra_tags=(), skip_kinds=(), only_kinds=None):
     folder = f"{folder_root}/Markers"
+    spawned = 0
     for e in layout["markers"]:
         kind = e["kind"]
+        if only_kinds is not None and kind not in only_kinds:
+            continue
         if kind in skip_kinds:
-            log(f"marker kept (already in level): {kind}")
+            log(f"marker skipped here: {kind}")
             continue
         if kind == "PlayerStart":
             actor = eas.spawn_actor_from_class(unreal.PlayerStart, vec(e["loc"]), rot(e["rot"]))
@@ -426,8 +586,9 @@ def spawn_markers(layout, label_prefix="", folder_root="TDGen", extra_tags=(), s
         else:
             actor = eas.spawn_actor_from_class(unreal.TargetPoint, vec(e["loc"]), rot(e["rot"]))
             finish_actor(actor, apply_label_prefix(e["label"], label_prefix), folder, True, ["TDGen"] + e.get("tags", []) + list(extra_tags))
-    log(f"markers {len(layout['markers'])}")
-    return len(layout["markers"])
+        spawned += 1
+    log(f"markers {spawned} of {len(layout['markers'])}")
+    return spawned
 
 
 def read_build_request():
@@ -443,10 +604,6 @@ def layout_labels(layout):
         labels.update(e["label"] for e in layout.get(key, []))
     labels.update(e["label"] for e in layout.get("markers", []) if e["kind"] not in PARTIAL_KEPT_MARKER_KINDS)
     return labels
-
-
-def actor_tag_names(actor):
-    return {str(t) for t in actor.tags}
 
 
 def is_partial_protected(label, class_name, tags):
@@ -468,7 +625,14 @@ def is_desc_for_field(desc, delete_labels):
     if native_class is not None and "HLOD" in native_class.get_name():
         return False
     label = str(desc.label)
-    if label in delete_labels or label.startswith(GENERATED_ISM_PREFIX):
+    if label.startswith(REALM_LABEL_PREFIX):
+        return False
+    layer_names = data_layers.desc_layer_names(desc)
+    if layer_names & REALM_LAYER_NAMES:
+        return False
+    if FIELD_LAYER_NAME in layer_names:
+        return True
+    if label in delete_labels or label.startswith(GENERATED_ISM_PREFIX) or label.startswith(SEAM_RESIDUE_PREFIXES):
         return True
     bounds = desc.bounds
     if not bounds.is_valid:
@@ -489,24 +653,38 @@ def load_field_actors(delete_labels):
     return len(guids)
 
 
+def field_clear_decision(label, class_name, tags, layer_names, x, y, delete_labels):
+    if class_name in LANDSCAPE_CLASS_NAMES:
+        return False, "kept_landscape"
+    if is_partial_protected(label, class_name, tags):
+        return False, "protected"
+    if layer_names & REALM_LAYER_NAMES:
+        return False, "realm_layer"
+    if FIELD_LAYER_NAME in layer_names:
+        return True, "deleted_field_layer"
+    if layer_names:
+        return False, "other_layer"
+    if label.startswith(SEAM_RESIDUE_PREFIXES):
+        return True, "deleted_seam_residue"
+    if not is_partial_delete_target(label, tags, delete_labels):
+        return False, "untouched"
+    is_inside_field = is_xy_in_box(x, y, FIELD_BOX_MIN, FIELD_BOX_MAX)
+    if label in delete_labels and FIELD_BUILDER_TAG in tags:
+        return True, "deleted_layout_labels" if is_inside_field else "deleted_layout_labels_outside_field"
+    if not is_inside_field:
+        return False, "outside_field"
+    return True, "deleted_layout_labels" if label in delete_labels else "deleted_ism"
+
+
 def clear_field_partial(world, delete_labels):
-    counts = {"landscape": unreal.TDLandscapeEditorLibrary.destroy_landscape_actors_in_bounds(world, vec(FIELD_BOX_MIN), vec(FIELD_BOX_MAX)),
-              "deleted_layout_labels": 0, "deleted_ism": 0, "protected": 0, "untouched": 0, "outside_field": 0}
+    counts = {"landscape": destroy_field_landscape(world)}
     for actor in list(eas.get_all_level_actors()):
-        label = actor.get_actor_label()
-        tags = actor_tag_names(actor)
-        if is_partial_protected(label, actor.get_class().get_name(), tags):
-            counts["protected"] += 1
-            continue
-        if not is_partial_delete_target(label, tags, delete_labels):
-            counts["untouched"] += 1
-            continue
         location = actor.get_actor_location()
-        if not is_xy_in_box(location.x, location.y, FIELD_BOX_MIN, FIELD_BOX_MAX):
-            counts["outside_field"] += 1
-            continue
-        counts["deleted_layout_labels" if label in delete_labels else "deleted_ism"] += 1
-        eas.destroy_actor(actor)
+        delete, reason = field_clear_decision(actor.get_actor_label(), actor.get_class().get_name(), actor_tag_names(actor),
+                                              data_layers.actor_layer_names(actor), location.x, location.y, delete_labels)
+        counts[reason] = counts.get(reason, 0) + 1
+        if delete:
+            eas.destroy_actor(actor)
     log(f"partial clear: {counts}")
     return counts
 
@@ -516,25 +694,29 @@ def existing_kept_marker_kinds():
     for actor in eas.get_all_level_actors():
         if actor.get_class().get_name() == "PlayerStart":
             kinds.add("PlayerStart")
-        if actor.get_actor_label() == "TDGen_NavMeshBounds":
-            kinds.add("NavMeshBounds")
     return kinds
 
 
 def spawn_field_content(layout, skip_marker_kinds=()):
-    spawn_ism_cells(layout)
-    spawn_actors(layout)
-    spawn_planes(layout)
-    spawn_lights(layout)
-    spawn_niagara(layout)
-    spawn_markers(layout, skip_kinds=skip_marker_kinds)
+    counts = {}
+    with data_layers.region_context(data_layers.FIELD_REGION_ID):
+        counts["ism_cells"], counts["ism_instances"] = spawn_ism_cells(layout)
+        counts["actors"] = spawn_actors(layout)
+        counts["planes"] = spawn_planes(layout)
+        counts["lights"] = spawn_lights(layout)
+        counts["niagara"] = spawn_niagara(layout)
+        counts["markers"] = spawn_markers(layout, skip_kinds=tuple(skip_marker_kinds) + OUTSIDE_LAYER_MARKER_KINDS)
+    counts["markers_outside_layer"] = spawn_markers(layout, skip_kinds=tuple(skip_marker_kinds), only_kinds=OUTSIDE_LAYER_MARKER_KINDS)
+    return counts
 
 
 def build_full(world, layout):
-    clear_level(world)
-    create_landscape(world, layout["landscape"])
+    result = {"loaded_field_actor_descs": load_field_actors(set())}
+    result["clear"] = clear_level(world)
+    result["landscape"] = create_landscape(world, layout["landscape"])
     setup_atmosphere(world, layout["region"])
-    spawn_field_content(layout)
+    result["spawned"] = spawn_field_content(layout)
+    return result
 
 
 def build_partial(world, layout, request):
@@ -545,27 +727,66 @@ def build_partial(world, layout, request):
         previous = json.load(fp)
     delete_labels = layout_labels(previous) | layout_labels(layout)
     log(f"partial: delete label set {len(delete_labels)} (previous {previous_path})")
-    load_field_actors(delete_labels)
-    clear_field_partial(world, delete_labels)
-    create_landscape(world, layout["landscape"])
-    spawn_field_content(layout, existing_kept_marker_kinds())
+    result = {"previous_layout": previous_path, "delete_labels": len(delete_labels)}
+    result["loaded_field_actor_descs"] = load_field_actors(delete_labels)
+    result["clear"] = clear_field_partial(world, delete_labels)
+    result["landscape"] = create_landscape(world, layout["landscape"])
+    kept = existing_kept_marker_kinds()
+    result["kept_marker_kinds"] = sorted(kept)
+    result["spawned"] = spawn_field_content(layout, kept)
+    return result
+
+
+def require_landscapes_after(before, after, cfg):
+    problems = []
+    if after["realms"] != before["realms"] or after["realm_without_id"] != before["realm_without_id"]:
+        problems.append(f"realm landscape counts changed {before['realms']} -> {after['realms']}")
+    expected = expected_landscape_actor_count(cfg)
+    if after["field"] != expected:
+        problems.append(f"field landscape actors {after['field']}, expected {expected}")
+    if problems:
+        raise RuntimeError(f"landscape check after build failed, level NOT saved: {problems}")
+
+
+def write_json_atomic(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    text = json.dumps(data, ensure_ascii=False, indent=2)
+    temporary = path + ".tmp"
+    for attempt in range(WRITE_RETRY_COUNT):
+        try:
+            with open(temporary, "w", encoding="utf-8", newline="\n") as fp:
+                fp.write(text)
+            os.replace(temporary, path)
+            return
+        except OSError as e:
+            if attempt == WRITE_RETRY_COUNT - 1:
+                raise
+            log(f"write retry {path} after {e}")
+            time.sleep(WRITE_RETRY_SECONDS)
 
 
 def main():
     layout = json.load(open(LAYOUT_PATH, encoding="utf-8"))
     request = read_build_request()
     mode = request.get("mode", "full")
+    if mode not in ("partial", "full"):
+        raise RuntimeError(f"unknown build mode {mode} in {BUILD_REQUEST_PATH}")
     les.load_level(LEVEL_PATH)
     world = ues.get_editor_world()
     log(f"level loaded: {world.get_name()}; build mode {mode}")
+    report = {"mode": mode, "layout": LAYOUT_PATH, "data_layers": data_layers.prepare_for_build()}
+    report["landscape_descs"] = load_landscape_actors()
+    report["landscape_before"] = require_landscapes_intact(world, report["landscape_descs"])
     if mode == "partial":
-        build_partial(world, layout, request)
-    elif mode == "full":
-        build_full(world, layout)
+        report.update(build_partial(world, layout, request))
     else:
-        raise RuntimeError(f"unknown build mode {mode} in {BUILD_REQUEST_PATH}")
+        report.update(build_full(world, layout))
+    report["landscape_after"] = landscape_counts(world)
+    require_landscapes_after(report["landscape_before"], report["landscape_after"], layout["landscape"])
     ok = unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True)
-    log(f"saved: {ok}; actors now {len(eas.get_all_level_actors())}")
+    report["saved"] = bool(ok)
+    write_json_atomic(BUILD_REPORT_PATH, report)
+    log(f"saved: {ok}; actors now {len(eas.get_all_level_actors())}; report {BUILD_REPORT_PATH}")
 
 
 if __name__ == "__main__":

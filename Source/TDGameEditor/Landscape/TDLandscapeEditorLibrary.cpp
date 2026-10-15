@@ -62,10 +62,33 @@ namespace
 		return UE::Landscape::CreateTargetLayerInfo(LayerName, PackagePath, AssetName);
 	}
 
-	FVector GetLandscapeProxyReferenceLocation(const ALandscapeProxy& Proxy)
+	UWorld* ResolveTDLandscapeEditorWorld(UObject* WorldContextObject)
 	{
-		const FBox RegisteredComponentBounds = Proxy.GetProxyBounds();
-		return RegisteredComponentBounds.IsValid ? RegisteredComponentBounds.GetCenter() : Proxy.GetActorLocation();
+		return GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull) : nullptr;
+	}
+
+	int32 DestroyTDLandscapeActorsMatching(UWorld& World, TFunctionRef<bool(const ALandscapeProxy&)> ShouldDestroy)
+	{
+		TArray<ALandscapeProxy*> StreamingProxies;
+		TArray<ALandscapeProxy*> ParentLandscapes;
+		for (TActorIterator<ALandscapeProxy> It(&World); It; ++It)
+		{
+			ALandscapeProxy* Proxy = *It;
+			if (!ShouldDestroy(*Proxy))
+			{
+				continue;
+			}
+			(Proxy->IsA<ALandscape>() ? ParentLandscapes : StreamingProxies).Add(Proxy);
+		}
+		for (ALandscapeProxy* Proxy : StreamingProxies)
+		{
+			World.EditorDestroyActor(Proxy, true);
+		}
+		for (ALandscapeProxy* Landscape : ParentLandscapes)
+		{
+			World.EditorDestroyActor(Landscape, true);
+		}
+		return StreamingProxies.Num() + ParentLandscapes.Num();
 	}
 }
 
@@ -209,26 +232,50 @@ int32 UTDLandscapeEditorLibrary::DestroyAllLandscapeActors(UObject* WorldContext
 	return ToDestroy.Num();
 }
 
-int32 UTDLandscapeEditorLibrary::DestroyLandscapeActorsInBounds(UObject* WorldContextObject, FVector MinCm, FVector MaxCm)
+int32 UTDLandscapeEditorLibrary::DestroyLandscapeActorsWithTag(UObject* WorldContextObject, FName Tag)
 {
-	UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull) : nullptr;
-	if (!World)
+	UWorld* World = ResolveTDLandscapeEditorWorld(WorldContextObject);
+	if (!World || Tag.IsNone())
 	{
+		UE_LOG(LogTDLandscape, Warning, TEXT("DestroyLandscapeActorsWithTag needs a world and a tag (tag '%s')"), *Tag.ToString());
 		return 0;
 	}
-	const FBox BoundsCm(MinCm, MaxCm);
-	TArray<AActor*> ToDestroy;
+	const int32 DestroyedCount = DestroyTDLandscapeActorsMatching(*World, [Tag](const ALandscapeProxy& Proxy) { return Proxy.ActorHasTag(Tag); });
+	UE_LOG(LogTDLandscape, Log, TEXT("Destroyed %d landscape actors tagged '%s'"), DestroyedCount, *Tag.ToString());
+	return DestroyedCount;
+}
+
+int32 UTDLandscapeEditorLibrary::DestroyLandscapeActorsWithoutTag(UObject* WorldContextObject, FName Tag)
+{
+	UWorld* World = ResolveTDLandscapeEditorWorld(WorldContextObject);
+	if (!World || Tag.IsNone())
+	{
+		UE_LOG(LogTDLandscape, Warning, TEXT("DestroyLandscapeActorsWithoutTag needs a world and a tag (tag '%s')"), *Tag.ToString());
+		return 0;
+	}
+	const int32 DestroyedCount = DestroyTDLandscapeActorsMatching(*World, [Tag](const ALandscapeProxy& Proxy) { return !Proxy.ActorHasTag(Tag); });
+	UE_LOG(LogTDLandscape, Log, TEXT("Destroyed %d landscape actors without tag '%s'"), DestroyedCount, *Tag.ToString());
+	return DestroyedCount;
+}
+
+TArray<ALandscapeProxy*> UTDLandscapeEditorLibrary::GetLandscapeProxiesOf(ALandscape* Landscape)
+{
+	TArray<ALandscapeProxy*> Proxies;
+	UWorld* World = Landscape ? Landscape->GetWorld() : nullptr;
+	if (!World)
+	{
+		return Proxies;
+	}
+
+	const FGuid LandscapeGuid = Landscape->GetLandscapeGuid();
+	Proxies.Add(Landscape);
 	for (TActorIterator<ALandscapeProxy> It(World); It; ++It)
 	{
-		if (BoundsCm.IsInsideOrOnXY(GetLandscapeProxyReferenceLocation(**It)))
+		ALandscapeProxy* Proxy = *It;
+		if (Proxy != Landscape && Proxy->GetLandscapeGuid() == LandscapeGuid)
 		{
-			ToDestroy.Add(*It);
+			Proxies.Add(Proxy);
 		}
 	}
-	for (AActor* Actor : ToDestroy)
-	{
-		World->EditorDestroyActor(Actor, true);
-	}
-	UE_LOG(LogTDLandscape, Log, TEXT("Destroyed %d landscape actors with XY reference inside %s .. %s"), ToDestroy.Num(), *MinCm.ToCompactString(), *MaxCm.ToCompactString());
-	return ToDestroy.Num();
+	return Proxies;
 }

@@ -3,6 +3,10 @@
 #include "Engine/DataAsset.h"
 #include "TDRealmDefinitions.generated.h"
 
+class UDataLayerAsset;
+class UMaterialInterface;
+class UStaticMesh;
+
 USTRUCT(BlueprintType)
 struct TDWORLDGEN_API FTDRealmAtmosphere
 {
@@ -69,6 +73,82 @@ struct TDWORLDGEN_API FTDRealmAtmosphere
 	float VolumetricFogExtinctionScale = 1.0f;
 };
 
+UENUM(BlueprintType)
+enum class ETDRealmGateKind : uint8
+{
+	Passage,
+	Lift
+};
+
+USTRUCT(BlueprintType)
+struct TDWORLDGEN_API FTDRealmLift
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Landing")
+	FTransform FieldLandingTransform;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Landing")
+	FTransform RealmLandingTransform;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion", meta = (ClampMin = "0"))
+	float CruiseSpeedCmPerSecond = 300.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion", meta = (ClampMin = "0"))
+	float AccelerationCmPerSecondSquared = 100.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion", meta = (ClampMin = "0"))
+	float BrakeDecelerationCmPerSecondSquared = 80.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boarding", meta = (ClampMin = "0"))
+	float BoardDwellSeconds = 1.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boarding", meta = (ClampMin = "0"))
+	float ApproachRadiusCm = 4000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion", meta = (ClampMin = "0"))
+	float CallSpeedCmPerSecond = 600.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Treadmill", meta = (ClampMin = "0"))
+	float HoldDepthCm = 1912.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Treadmill", meta = (ClampMin = "0"))
+	float MaxTreadmillSeconds = 20.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Liner", meta = (ClampMin = "0"))
+	float RingModuleHeightCm = 450.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Liner", meta = (ClampMin = "1"))
+	int32 RingModuleCount = 7;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Liner", meta = (ClampMin = "0"))
+	float RingTopDepthCm = 600.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Liner", meta = (ClampMin = "0"))
+	float AbyssScreenDepthCm = 600.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Deck")
+	FVector DeckHalfExtentCm = FVector(300.0, 300.0, 15.0);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Deck")
+	TSoftObjectPtr<UStaticMesh> DeckMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Deck")
+	TSoftObjectPtr<UStaticMesh> RailMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Deck")
+	TSoftObjectPtr<UMaterialInterface> DeckMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Liner")
+	TSoftObjectPtr<UStaticMesh> LinerPanelMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Liner")
+	TSoftObjectPtr<UMaterialInterface> LinerMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Liner")
+	TSoftObjectPtr<UMaterialInterface> AbyssScreenMaterial;
+};
+
 USTRUCT(BlueprintType)
 struct TDWORLDGEN_API FTDRealmGate
 {
@@ -76,6 +156,9 @@ struct TDWORLDGEN_API FTDRealmGate
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gate")
 	FName GateId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gate")
+	ETDRealmGateKind GateKind = ETDRealmGateKind::Passage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gate")
 	FTransform ArrivalTransform;
@@ -90,16 +173,18 @@ struct TDWORLDGEN_API FTDRealmGate
 	float DepartureLengthCm = 4500.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Passage", meta = (ClampMin = "0"))
-	float SeamBufferCm = 3000.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Passage", meta = (ClampMin = "0"))
 	float PassageHalfWidthCm = 1600.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Passage", meta = (ClampMin = "0"))
 	float PreloadLeadCm = 4000.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lift")
+	FTDRealmLift Lift;
+
 	FVector GetPassageDirection() const;
-	FVector GetSeamOffsetCm() const;
+	FVector GetBoundaryCrossingCm() const;
+	FVector GetPreloadLocation(bool bToEntry) const;
+	FTransform GetTravelDestination(bool bToEntry) const;
 };
 
 UCLASS(BlueprintType)
@@ -129,11 +214,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Travel")
 	FLinearColor TransitionFadeColor = FLinearColor::Black;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Passage", meta = (ClampMin = "0"))
-	float SeamMistDensity = 0.6f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Passage", meta = (ClampMin = "0"))
-	float SeamMistRadiusCm = 1500.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Streaming")
+	TSoftObjectPtr<UDataLayerAsset> GameplayDataLayer;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Atmosphere")
 	FTDRealmAtmosphere Atmosphere;

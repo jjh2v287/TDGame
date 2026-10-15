@@ -32,6 +32,11 @@
 #include "MovementMode.h"
 #include "MoverTypes.h"
 
+namespace
+{
+	constexpr float TDGameCharacterMinimumPassagePaceScale = 0.3f;
+}
+
 ATDGameCharacter::ATDGameCharacter()
 {
 	FTDCombatStats PlayerStats;
@@ -134,6 +139,17 @@ void ATDGameCharacter::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
 
 	// stub
+}
+
+void ATDGameCharacter::UnPossessed()
+{
+	Super::UnPossessed();
+	SetPassagePaceScale(1.f);
+}
+
+void ATDGameCharacter::SetPassagePaceScale(float Scale)
+{
+	SetMaxMoveSpeed(DefaultMaxMoveSpeed * FMath::Clamp(Scale, TDGameCharacterMinimumPassagePaceScale, 1.f));
 }
 
 FGenericTeamId ATDGameCharacter::GetGenericTeamId() const

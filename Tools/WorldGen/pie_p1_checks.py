@@ -1,14 +1,15 @@
 """에디터 밖에서 실행: PIE를 켜고 목적지 ID마다 걸어 들어가기 왕복 ×rounds(P1-05, P3-13 이계 관문 포함)와 P1-06/07(영속 상자 열림 상태가 스트리밍·세이브/로드를 견디는지)을 자동으로 돌린다.
 실행: python Tools/WorldGen/pie_p1_checks.py [--ids MainCrypt,SunkenStarfieldSouthwest] [--rounds 3] [--settle 20] [--travel-wait 90] (PowerShell 또는 Git Bash, 에디터 실행 중)
 출력: Saved/WorldGen/pie_p1_checks.md (종료 코드 0 = 모든 판정 OK, 1 = FAIL 있음)
-상태: 현행
+상태: 현행 (2026-10-15, P3-19 연속 세계)
 
 절차: MCP StartPIE → PIE 대기 → 목적지마다 [approach → enter(입구가 없으면 선로딩 취소 뒤 콘솔 이동) → 도착 대기·판정 → exit(출구가 없으면 선로딩 취소 뒤 콘솔 귀환) → 귀환 대기·판정] ×rounds → 상자 status/open/save 1 → 첫 목적지 콘솔 왕복 → status → load 1 → status → StopPIE.
-판정: 이계 관문 ID(Saved/WorldGen/Realms/*/layout.json realm.gates)면 폰 XY가 그 이계 상자 안, 아니면(아틀라스 던전) X > 250000이고, 마지막 이동 ID가 읽히면 목적지 ID와 같아야 한다. 귀환은 필드 상자 |X|,|Y| ≤ 60000. 도착 대기는 이동 상태가 TRAVELING·SETTLING이 아니고 판정이 맞을 때까지 --travel-wait 초 안에서 3초마다 확인한다. 관문 근처에 도착하면 입구가 선로딩을 다시 걸어 상태가 PRELOADING·READY_TO_TRAVEL에 머물므로 IDLE을 요구하지 않는다.
+판정: 이계 관문 ID(Saved/WorldGen/Realms/*/layout.json realm.gates)면 폰 XY가 그 이계 상자 안이거나, 승강 관문(lift.realm_landing_transform이 있음)이면 하단 착지에서 수평 1500cm·수직 600cm 안(콘솔 이동 도착점 = 하단 착지 + 출구 400cm, 필드 상자 안 갱도 바닥)이어야 한다. 아틀라스 던전은 X > 250000이고, 마지막 이동 ID가 읽히면 목적지 ID와 같아야 한다. 귀환은 필드 상자 |X|,|Y| ≤ 50400이면서 승강 하단 착지 근처가 아닌 곳. 도착 대기는 이동 상태가 TRAVELING·SETTLING이 아니고 판정이 맞을 때까지 --travel-wait 초 안에서 3초마다 확인한다. 관문 근처에 도착하면 입구가 선로딩을 다시 걸어 상태가 PRELOADING·READY_TO_TRAVEL에 머물므로 IDLE을 요구하지 않는다.
 """
 import argparse
 import glob
 import json
+import math
 import os
 import re
 import subprocess
@@ -23,7 +24,9 @@ import uemcp  # noqa: E402
 STEP = os.path.join(ROOT, "Saved", "WorldGen", "pie_travel_step.txt")
 OUT = os.path.join(ROOT, "Saved", "WorldGen", "pie_p1_checks.md")
 REALM_LAYOUTS = os.path.join(ROOT, "Saved", "WorldGen", "Realms", "*", "layout.json")
-FIELD_HALF_EXTENT_CM = 60000.0
+FIELD_HALF_EXTENT_CM = 50400.0
+LIFT_BOTTOM_RADIUS_CM = 1500.0
+LIFT_BOTTOM_HEIGHT_CM = 600.0
 DUNGEON_MIN_X_CM = 250000.0
 POLL_SECONDS = 3.0
 MOVING_STATES = ("TRAVELING", "SETTLING")
@@ -74,7 +77,13 @@ def load_realm_gate_boxes():
             continue
         half_x, half_y = (half, half) if isinstance(half, (int, float)) else (half[0], half[1])
         for gate in realm.get("gates") or layout.get("gates") or []:
-            boxes[gate["gate_id"]] = (realm.get("realm_id"), center[0], center[1], half_x, half_y)
+            landing = (gate.get("lift") or {}).get("realm_landing_transform")
+            boxes[gate["gate_id"]] = {
+                "realm_id": realm.get("realm_id"),
+                "center": (center[0], center[1]),
+                "half": (half_x, half_y),
+                "lift_bottom": None if landing is None else [float(value) for value in landing.get("loc_cm") or landing.get("loc")],
+            }
     return boxes
 
 
@@ -85,18 +94,29 @@ def parse_pawn(text):
     return {"x": float(m.group(1)), "y": float(m.group(2)), "z": float(m.group(3)), "state": m.group(4), "last": m.group(5)}
 
 
+def is_near_lift_bottom(pawn, bottom):
+    if bottom is None:
+        return False
+    return math.hypot(pawn["x"] - bottom[0], pawn["y"] - bottom[1]) <= LIFT_BOTTOM_RADIUS_CM and abs(pawn["z"] - bottom[2]) <= LIFT_BOTTOM_HEIGHT_CM
+
+
+def is_inside_realm_box(pawn, box):
+    return abs(pawn["x"] - box["center"][0]) <= box["half"][0] and abs(pawn["y"] - box["center"][1]) <= box["half"][1]
+
+
 def is_inside_destination(destination_id, pawn, boxes):
     if pawn["last"] not in (destination_id, "None"):
         return False
     box = boxes.get(destination_id)
     if box is None:
         return pawn["x"] > DUNGEON_MIN_X_CM
-    _, center_x, center_y, half_x, half_y = box
-    return abs(pawn["x"] - center_x) <= half_x and abs(pawn["y"] - center_y) <= half_y
+    return is_near_lift_bottom(pawn, box["lift_bottom"]) or is_inside_realm_box(pawn, box)
 
 
-def is_inside_field(pawn):
-    return abs(pawn["x"]) <= FIELD_HALF_EXTENT_CM and abs(pawn["y"]) <= FIELD_HALF_EXTENT_CM
+def is_inside_field(pawn, boxes):
+    if abs(pawn["x"]) > FIELD_HALF_EXTENT_CM or abs(pawn["y"]) > FIELD_HALF_EXTENT_CM:
+        return False
+    return not any(is_near_lift_bottom(pawn, box["lift_bottom"]) for box in boxes.values())
 
 
 def wait_for_arrival(is_arrived, timeout):
@@ -132,7 +152,7 @@ def check_round_trip(destination_id, boxes, travel_wait):
     enter_destination(destination_id)
     entered = wait_for_arrival(lambda p: is_inside_destination(destination_id, p, boxes), travel_wait)
     leave_destination(destination_id)
-    returned = wait_for_arrival(is_inside_field, travel_wait)
+    returned = wait_for_arrival(lambda p: is_inside_field(p, boxes), travel_wait)
     log(f"- 판정 {destination_id}: 입장 {'OK' if entered else 'FAIL'} / 귀환 {'OK' if returned else 'FAIL'}")
     return entered and returned
 
@@ -170,7 +190,7 @@ def main():
     run("pie_walkin_check.py", f"to {ids[0]}")
     wait_for_arrival(lambda p: is_inside_destination(ids[0], p, boxes), a.travel_wait)
     run("pie_walkin_check.py", "field")
-    wait_for_arrival(is_inside_field, a.travel_wait)
+    wait_for_arrival(lambda p: is_inside_field(p, boxes), a.travel_wait)
     run("pie_chest_check.py", "chest status")
     run("pie_chest_check.py", "chest load 1")
     time.sleep(2)

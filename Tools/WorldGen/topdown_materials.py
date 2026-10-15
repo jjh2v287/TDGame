@@ -1,7 +1,7 @@
-"""탑다운 재질 체계(D-43)의 이름 규약·대상 마스터 표·MPC 매개변수 표. 에디터 밖에서도 import 가능(순수 함수), unreal이 필요한 함수는 함수 안에서 import한다.
-실행: 직접 실행하지 않는다. editor_make_topdown_materials.py·editor_apply_topdown_materials.py가 가져다 쓰고, python Tools/WorldGen/topdown_materials.py 는 자체 점검만 한다.
+"""탑다운 재질 체계(D-43)의 이름 규약·대상 마스터 표·MPC 매개변수 표·지역 혼합(P3-19) 매개변수 이름. 에디터 밖에서도 import 가능(순수 함수), unreal이 필요한 함수는 함수 안에서 import한다.
+실행: 직접 실행하지 않는다. editor_make_topdown_materials.py·editor_apply_topdown_materials.py·editor_make_landscape_material.py가 가져다 쓰고, python Tools/WorldGen/topdown_materials.py 는 자체 점검만 한다.
 출력: 없음(자체 점검은 표준 출력에 PASS/FAIL).
-상태: 현행(P3-17)
+상태: 현행(P3-19). 갱도 라이너 재질 경로는 SHAFT_LINER_MATERIAL_PATH
 """
 import sys
 
@@ -18,6 +18,28 @@ FUNCTION_NAME = "MF_TD_OcclusionCutout"
 FUNCTION_PATH = FUNCTIONS_DIR + "/" + FUNCTION_NAME
 REALM_MATERIAL_GLOB = "/Game/World/Realms"
 REALM_INSTANCE_PREFIX = "MI_TDRealm_"
+
+REGION_FUNCTION_NAME = "MF_TD_RegionBlend"
+REGION_FUNCTION_PATH = FUNCTIONS_DIR + "/" + REGION_FUNCTION_NAME
+REGION_FUNCTION_REVISION = "TD region blend r1"
+REGION_STRENGTH_INPUT = "BlendStrength"
+REGION_WEIGHT_OUTPUT = "RegionWeight"
+REGION_STRENGTH_PARAMETER = "RegionBlendStrength"
+REGION_CENTER_PARAMETER = "RegionNeighborBoxCenter"
+REGION_HALF_EXTENT_PARAMETER = "RegionNeighborBoxHalfExtent"
+REGION_FADE_WIDTH_PARAMETER = "RegionFadeWidth"
+REGION_DEFAULT_CENTER_CM = (0.0, 0.0, 0.0, 0.0)
+REGION_DEFAULT_HALF_EXTENT_CM = (50400.0, 50400.0, 0.0, 0.0)
+REGION_DEFAULT_FADE_WIDTH_CM = 6000.0
+REALM_TWIN_PREFIX = "Realm"
+SNAPSHOT_EXCLUDED_PREFIXES = ("Region", "Realm")
+REGION_BLEND_TARGETS = {
+    "M_TD_Rock": ("NormalTopColor", "DiffuseMultiplier", "Desaturation"),
+}
+
+ROCK_LOCAL_MASTER_NAME = "M_TD_RockLocal"
+SHAFT_LINER_MATERIAL_NAME = "MI_TD_RockLocal_ShaftLiner"
+SHAFT_LINER_MATERIAL_PATH = INSTANCES_DIR + "/" + SHAFT_LINER_MATERIAL_NAME
 
 COLLECTION_SCALARS = (
     ("OcclusionRadius", 260.0),
@@ -62,6 +84,14 @@ def is_topdown_path(asset_path):
 
 def master_path(master_name):
     return f"{MASTERS_DIR}/{master_name}"
+
+
+def realm_twin_parameter(parameter_name):
+    return REALM_TWIN_PREFIX + parameter_name
+
+
+def is_snapshot_parameter(parameter_name):
+    return not str(parameter_name).startswith(SNAPSHOT_EXCLUDED_PREFIXES)
 
 
 def topdown_master_name(pack_master_path):
@@ -169,6 +199,8 @@ def parameter_snapshot(instance, master):
     snapshot = {}
     for kind, names in parameter_names(master).items():
         for name in names:
+            if not is_snapshot_parameter(name):
+                continue
             value = readers[kind](instance, master, name)
             snapshot[f"{kind}:{name}"] = round(value, 5) if isinstance(value, float) else value
     return snapshot
@@ -230,10 +262,23 @@ def self_check():
         PACK_MASTER_ROOT + "M_LightBeam.M_LightBeam": None,
         "/Game/World/Realms/PaleHeights/Materials/MI_TDRealm_PaleHeights_PaleRock": None,
         INSTANCES_DIR + "/MI_TD_Props1": None,
+        SHAFT_LINER_MATERIAL_PATH: None,
         "": None,
     }
     failures = [(source, expected, topdown_material_path(source)) for source, expected in cases.items()
                 if topdown_material_path(source) != expected]
+    snapshot_cases = {
+        "NormalTopColor": True,
+        "Desaturation": True,
+        realm_twin_parameter("Desaturation"): False,
+        REGION_STRENGTH_PARAMETER: False,
+        REGION_FADE_WIDTH_PARAMETER: False,
+        REGION_CENTER_PARAMETER: False,
+        REGION_HALF_EXTENT_PARAMETER: False,
+    }
+    failures += [("snapshot", name, expected) for name, expected in snapshot_cases.items() if is_snapshot_parameter(name) != expected]
+    if not SHAFT_LINER_MATERIAL_PATH.startswith(TOPDOWN_ROOT + "/"):
+        failures.append(("liner path", SHAFT_LINER_MATERIAL_PATH, TOPDOWN_ROOT))
     for failure in failures:
         print("FAIL", failure)
     print("PASS" if not failures else "FAILED")

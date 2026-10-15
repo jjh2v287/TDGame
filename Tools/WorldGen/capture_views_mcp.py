@@ -1,7 +1,7 @@
-"""에디터 밖에서 실행: MCP CaptureViewport로 주요 지점을 탑다운 각도로 캡처해 Saved/WorldGen/Captures/<이름>.png 로 저장한다.
-
-사용: python Tools/WorldGen/capture_views_mcp.py [이름=x,y,pitch,yaw,dist ...]
-이름을 주지 않으면 기본 8개 시점을 찍는다. 높이는 Saved/WorldGen/AshenVale/height.r16, 이계 상자 안이면 Saved/WorldGen/Realms/<RealmId>/height.r16 에서 읽는다.
+"""에디터 밖에서 실행: MCP CaptureViewport로 주요 지점을 탑다운 각도로 캡처해 Saved/WorldGen/Captures/<이름>.png 로 저장한다(지점 지면 높이는 높이맵에서 읽는다).
+실행: python Tools/WorldGen/capture_views_mcp.py [이름=x,y,pitch,yaw,dist ...] (PowerShell 또는 Git Bash, 에디터 실행 중·MCP 포트 8000 필요, 이름을 주지 않으면 기본 시점 전부)
+출력: Saved/WorldGen/Captures/<이름>.png, 표준 출력에 저장 경로와 지면 높이
+상태: 현행 (2026-10-15, P3-19 연속 세계: 이계 상자 안 지점은 Saved/WorldGen/Realms/<RealmId>/height.r16 로컬 높이에 layout.json realm.center_cm의 z(Zoff)를 더한다. 필드 상자 ±50400cm 밖이면서 이계 상자 밖이면 0)
 """
 import base64
 import json
@@ -53,16 +53,17 @@ def find_realm_height_grid(xcm, ycm):
             continue
         heights = np.fromfile(height_path, dtype="<u2")
         size = int(round(math.sqrt(heights.size)))
-        return heights.reshape(size, size), xcm - center[0], ycm - center[1]
+        z_offset_cm = float(center[2]) if len(center) > 2 else 0.0
+        return heights.reshape(size, size), xcm - center[0], ycm - center[1], z_offset_cm
     return None
 
 
-def sample_grid_height_cm(heights, local_xcm, local_ycm):
+def sample_grid_height_cm(heights, local_xcm, local_ycm, z_offset_cm):
     size = heights.shape[0]
     half = (size - 1) // 2
     ix = int(np.clip(round(local_xcm / 100 + half), 0, size - 1))
     iy = int(np.clip(round(local_ycm / 100 + half), 0, size - 1))
-    return (float(heights[iy, ix]) - 32768.0) / 128.0 * 100.0
+    return (float(heights[iy, ix]) - 32768.0) / 128.0 * 100.0 + z_offset_cm
 
 
 def ground(xcm, ycm):

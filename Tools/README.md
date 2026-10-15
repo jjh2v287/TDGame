@@ -16,6 +16,7 @@ Serena(코드 심볼 MCP 서버) — C++ 심볼 도구는 clangd가 켜져야 �
 `"<UE_5.8>/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" -mode=GenerateClangDatabase -project="<프로젝트 루트>/TDGame.uproject" TDGameEditor Win64 Development -OutputDir="<프로젝트 루트>"` (경로 상수는 `Tools/ue_editor.py` 상단).
 Serena가 내려받는 clangd 19.1.2는 UE 5.8 엔진 헤더를 파싱하다 종료되므로 같은 project.yml의 `ls_specific_settings.cpp.ls_path`에 LLVM clangd 22.1.2(`C:/Program Files/LLVM/bin/clangd.exe`)를 지정한다(2026-09-18 확인: 설정 실재). 점검: `uvx --from git+https://github.com/oraios/serena serena project health-check`. 심볼 도구가 "Active language servers: []"로 실패하면 위 조건을 확인하고, 그래도 안 되면 `search_for_pattern`과 파일 도구로 대체한다. Serena 메모리(`~/.serena/projects/TDGame/.serena/memories/`)에는 프로젝트 사실을 두지 않는다(OP-30).
 
+언리얼 MCP — 서버 설정 `Config/DefaultEditorPerProjectUserSettings.ini`(포트 8000, 경로 `/mcp`). 클라이언트 설정 5벌: `.mcp.json`(Claude Code), `.codex/config.toml`(Codex), `.cursor/mcp.json`, `.gemini/settings.json`(Gemini CLI), `.agents/mcp_config.json`(Antigravity 작업 공간). 모두 `http://127.0.0.1:8000/mcp`(Cascadeur 서버 `cascadeur`는 `http://127.0.0.1:8765/mcp`, 3f절). 주소·포트·Blender 런처를 바꾸면 서버 ini와 5벌을 함께 고친다(OP-31). `.vscode/mcp.json`은 VS Code Copilot 미사용 가정으로 동기화에서 제외(D-30). 사용자 홈 `~/.gemini/config/mcp_config.json`(Antigravity `~/.gemini/antigravity/mcp_config.json`은 이 파일의 심볼릭 링크)은 2026-09-18 저장소 런처 방식으로 정렬함(D-19·D-36). MCP는 도구 검색이 켜져 있어 도구 목록이 통째로 로드되지 않으므로 필요한 작업을 키워드로 검색해 도구를 찾은 뒤 호출한다. Blender MCP 서버는 `Tools/BlenderMCP/Run-BlenderMCP.ps1` 외의 방법(`uvx blender-mcp`·`mcp-for-blender`·pip 설치본)으로 띄우지 않는다(텔레메트리 보호, OP-31).
 에디터 기동: `python Tools/ue_editor.py start`(내부에서 `tasklist`로 중복 실행을 피하고 포트 8000이 열릴 때까지 기다린다). 에디터가 켜진 상태에서는 Build.bat 대신 라이브 코딩 도구로 컴파일하고, 헤더 변경이 큰 작업은 `ue_editor.py restart`. 에디터를 닫을 때는 저장되지 않은 에셋이 있는지 사용자에게 먼저 알린다(`ue_editor.py stop`이 중단한다).
 확인: 2026-09-18 claude
 
@@ -43,14 +44,17 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 |---|---|
 | `WorldGen/generate_ashen_vale.py --seed N [--out 폴더]` | 메인 지역 높이맵·레이어·배치 생성(에디터 밖) → `Saved/WorldGen/AshenVale/` |
 | `WorldGen/editor_build_open_world.py` | 레벨에 베이크(랜드스케이프·대기·인스턴스·액터·조명·마커·저장). `Saved/WorldGen/open_world_build_request.json` {"mode":"partial","previous_layout":...}이면 부분 모드(지형·생성 산포만 교체, 던전·PCG·상자·이계 보존) |
-| `WorldGen/generate_realm.py --realm SunkenStarfield·PaleHeights·all [--seed N]` | 이계 지역(P3-13·P3-15) 높이맵·레이어·배치·통로 B·통로 소품(필드 사본 포함) 생성과 형상 일치 검증(에디터 밖, 필드 생성 뒤) → `Saved/WorldGen/Realms/<RealmId>/` |
-| `WorldGen/editor_build_realm.py` | 이계 베이크(지형·재질 인스턴스·인스턴스·액터·통로 소품 필드 사본·내비 경계·후처리·`DA_TDRealm_*`·저장), 자기 접두어와 옛 포탈 액터만 지우고 다시 만든다 |
-| `WorldGen/realm_passages.py` | 이계 통로 공유 정의(관문 표·단면·바닥 프로필·핵심 구간 소품, 난수 없음). `generate_ashen_vale.py`·`generate_realm.py`가 가져다 쓴다(직접 실행 시 자체 점검) |
+| `WorldGen/generate_realm.py --realm SunkenStarfield·PaleHeights·all [--seed N]` | 연속 세계(D-45, P3-19) 이계 지역 생성: 필드 옆 자리(`realm_passages.REALM_PLACEMENT`)에 높이맵·레이어·배치, 공유 변 필드 값 복사·45m 경계 띠, 연결로 이계 구간·연결로 소품(`TDRealm_Connector_<GateId>_*`)·관문 `gates[]`·지형 MI 지역 혼합 값, 검증(에디터 밖, 필드 생성 뒤) → `Saved/WorldGen/Realms/<RealmId>/` |
+| `WorldGen/editor_build_realm.py` | 이계 베이크(지형·재질 인스턴스·인스턴스·액터·연결로 소품·내비 경계·후처리·`DA_TDRealm_*`(관문·승강 lift·`gameplay_data_layer`)·저장). 굽기 전에 layout을 검사하고, 랜드스케이프는 태그 `TDRealm:<R>`, 그 밖은 `DL_TDRegion_<R>` 소속·이전 접두로 지운다 |
+| `WorldGen/realm_passages.py` | 연속 세계 공유 정의(이계 배치 `REALM_PLACEMENT`, 걷는 연결로 `CONNECTOR_ROWS`, 승강 갱도 `SHAFT_ROWS`, 운행 `LIFT_MOTION`, 단면·스탬프·소품, 난수 없음). `generate_ashen_vale.py`·`generate_realm.py`·`check_continuous_world.py`가 가져다 쓴다(직접 실행 시 자체 점검) |
+| `WorldGen/check_continuous_world.py [--no-rerun] [--report <json>]` | 연속 세계 결정론 검사(필드·두 이계 생성기 출력을 한 월드 격자로 이어붙여 K2 결정론·K3 공유 경계·K4 경사·K5 시야 누출(16:9·21:9)·K6 거리 보장·K7 능선 차단·K8 강 끝·라이너 부등식·재질 지역 혼합·배치·옛 키), 실패 시 종료 코드 1 → `Saved/WorldGen/ContinuousCheck/report.json` |
+| `WorldGen/editor_setup_data_layers.py` (PowerShell, `run_in_editor.py`) | 데이터 레이어 5개(`DL_TDRegion_{Field,SunkenStarfield,PaleHeights}` Editor, `DL_TDGameplay_{SunkenStarfield,PaleHeights}` Runtime 초기 Loaded)와 레벨 인스턴스를 멱등 생성, 빌더용 DL 문맥 함수 제공 → `Saved/WorldGen/data_layers_report.json` |
 | `WorldGen/editor_make_landscape_material.py` | 레이어 머티리얼(텍스처 봄빙)·풀 타입 재생성 |
 | `WorldGen/editor_relight.py` + `Saved/WorldGen/look.json` | 재빌드 없이 조명·노출·안개 조정. `Saved/WorldGen/relight_target.json` `{"realm": "<RealmId>"}`이면 이계 대기 미리보기(저장 안 함), 파일을 지우고 다시 실행하면 복원 |
+| `WorldGen/editor_set_sun.py` + `Saved/WorldGen/sun_request.json` (PowerShell, PIE 종료) | 태양 회전만 바꾼다(D-46: 빛 진행 방향을 카메라 반대). `{"field": [pitch, yaw], "realms_from_layout": true, "save": false}`는 메모리만 바꿔 다음 PIE 촬영에 반영되는 미리보기, `"save": true`는 필드 `TDGen_Sun` 외부 액터 패키지 하나와 바뀌었거나 미저장인 `DA_TDRealm_*`만 저장하고 look.json을 맞춘다. 이계 값은 `generate_realm.py` → layout.json에서 읽는다. 카메라 반대(yaw 225)에서 수평 30° 넘게 벗어나면 바꾸기 전에 거부하고, 저장 실패는 오류로 끝난다. 미리보기를 되돌리려면 sun_result.json의 before 값으로 다시 미리보기를 건다(미리보기 상태로 `save_dirty_packages`를 쓰는 다른 도구를 돌리면 그 값이 저장된다) → `Saved/WorldGen/sun_result.json` (P3-20) |
 | `WorldGen/validate_world.py` | 월드 검증(입구 간격·POI 밀도·도로 도달성·지형 적합성·스트리밍·플레이 밀도) → report.md |
 | `WorldGen/select_seed.py --seeds 1-5` | 시드 후보 생성·검증·점수·추천 |
-| `WorldGen/capture_views_mcp.py 이름=x,y,pitch,yaw,dist` | 지점별 뷰포트 캡처 PNG |
+| `WorldGen/capture_views_mcp.py 이름=x,y,pitch,yaw,dist` | 지점별 뷰포트 캡처 PNG(지면 높이는 높이맵, 이계 상자 안이면 Zoff 반영) |
 | `WorldGen/pie_check.py` | PIE 중 폰 위치·지면·내비메시 확인 |
 | `WorldGen/editor_make_pcg_biome.py` | P3-07 Forest 바이옴 PCG 그래프(메인+서브 5)·룸 드레싱 그래프 생성, `TDGen_PCG_BiomeForest` PCGVolume(파티션+HiGen) 배치·생성 |
 | `WorldGen/editor_check_pcg_determinism.py` | PCG 같은 시드 cleanup→generate 2회, ISM 수·위치 해시 비교 → `Saved/WorldGen/pcg_determinism.json` |
@@ -59,9 +63,11 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | `WorldGen/editor_apply_topdown_materials.py` (옵션 파일 `Saved/WorldGen/topdown_apply_request.json` `{"dry_run":…, "patch_pcg":…}`) | 레벨 배치물(베이크·이계·마을·PCG 출력) 재질 슬롯을 거울 MI로 교체, `patch_pcg`는 PCG 그래프 메시 항목 재질 덮어쓰기 패치. 순서: 베이크 → patch_pcg → PCG 재생성 → apply → 저장 → `Saved/WorldGen/topdown_apply_report.json` |
 | `WorldGen/topdown_rules.py --measure --label <이름>` | 탑다운 카메라(폰 기준 (−500,−500,+843)cm) 결정론 배치 후처리 규칙 R1~R3·R5 공용 모듈(두 생성기가 import, 난수 없음)과 걷는 칸 가림%·카메라 매몰·카메라 지형 아래 수치 → `Saved/WorldGen/TopDownMetrics/`. 생성기 `--no-topdown`은 규칙 끄기(이전 출력 바이트 재현) |
 | `WorldGen/topdown_materials.py` | 팩 재질 → 거울 경로 대응 규칙(에디터 밖 import 가능) |
-| `WorldGen/pie_capture_spots.py --run <이름> [--compare <이전 run>] [--spots 파일]` (PowerShell, 에디터 앞에 둠) | PIE 게임 카메라로 지점 목록(기본 `WorldGen/topdown_spots.json` 27곳) 촬영·가림 액터·카메라 매몰·어둠 비율, 전후 비교 표 → `Saved/WorldGen/PieShots/<run>/` (P3-17) |
-| `WorldGen/pie_walk_passages.py --run <이름>` (PowerShell, 에디터 앞에 둠) | 이계 통로 3곳 실제 이동 입력 왕복(이음매 통과·속도·가중치)과 프레임 시간(평균·95백분위·최대·100ms 초과) → `Saved/WorldGen/PieWalk/<run>/` |
-| `WorldGen/editor_pie_probe.py` | 위 두 드라이버가 요청 파일 `Saved/WorldGen/pie_probe_request.json`로 부르는 PIE 안 동작(move·shot·occluders·walk) |
+| `WorldGen/pie_capture_spots.py --run <이름> [--ids B01,B02,B03] [--compare <이전 run>] [--spots 파일] [--exposure-offset EV]` (PowerShell, 에디터 앞에 둠) | PIE 게임 카메라로 지점 목록(기본 `WorldGen/topdown_spots.json` 36곳: 연결로 입구 C01~C03·경계 통과점 B01~B03(K15)·갱도 상단 F12/하단 S05 포함, 모두 teleport, 이계 높이 Zoff 반영) 촬영·가림 액터·카메라 매몰·어둠 비율, 전후 비교 표 → `Saved/WorldGen/PieShots/<run>/` (P3-17, P3-19). `--exposure-offset`은 PIE에서 r.ExposureOffset을 두고 끝나면 0으로(수동 노출이라 어두운 곳 K15 측정용) |
+| `WorldGen/pie_walk_passages.py --run <이름> [--gates …] [--simulate-delay 초] [--offline]` (PowerShell, 에디터 앞에 둠) | 연결로 SW·NE 지선 끝↔이계 도착 실제 이동 입력 왕복과 SE 승강기 왕복(지선→상단 협곡→덱→출구 슬롯). 프레임별 폰·카메라 이동·w·준비·감속, 덱 높이·링 속도·트레드밀 단계, 에디터 로그(감속 발동·DL 활성화·트레드밀·준비 시간)로 K1·K11~K14·K17 참고 판정과 프레임 시간 → `Saved/WorldGen/PieWalk/<run>/`. 감속 강제 `--simulate-delay 30`, 트레드밀 강제 `15`. 시작 배치 뒤 폰 둘레 격자 칸 Loaded·카메라 정지까지 기다린 뒤 기록(`settle_s`, 순간 배치 산물 제외, L-worldgen-05). 첫 프레임이 이미 PRELOADING이면 K12는 상태 시간으로, 지연 모의의 K13 감속·K11 트레드밀은 실행 전체로 센다. `--offline`은 저장된 결과로 summary.md만 다시 만든다 |
+| `WorldGen/check_boundary_luminance.py --run <촬영 run> [--ids B01,B02,B03] [--self-test] [--out 폴더]` (에디터 불필요) | `pie_capture_spots.py` 경계 지점 촬영(PNG·카메라 JSON)에 공유 경계선을 높이맵 지면으로 투영해, 경계를 가로지르는 단면 17개의 휘도 계단 ÷ 같은 단면 인접 차이 중앙값을 잰다(K15 ≤ 2.0). `--self-test`는 경계 바깥쪽 휘도 ×1.10·×1.25 합성으로 측정 민감도를 확인한다. 출력 `boundary_luminance.json·.md`·`<지점>_boundary_overlay.png` (P3-19) |
+| `WorldGen/pie_perf_memory.py --run <이름> [--settle 8] [--sample 8] [--offline]` (PowerShell 또는 Git Bash, 에디터 앞에 둠) | 필드 기준 4곳·연결로 8곳에 서서 `csvprofile`(r.GPUCsvStatsEnabled 1, `GPUTime` 열, 파일 끝 헤더 처리)로 GPU p99를 비교하고 필드 중앙·남쪽 테두리·두 이계 중앙에서 `memreport -full` 물리 메모리를 비교한다(K16: GPU p99 비율 ≤ 1.2, 메모리 +30% 표시) → `Saved/WorldGen/PiePerf/<run>/` (P3-19) |
+| `WorldGen/editor_pie_probe.py` | 위 두 드라이버가 요청 파일 `Saved/WorldGen/pie_probe_request.json`로 부르는 PIE 안 동작(move·shot·occluders·walk(경유점 따라 걷기)·ride(접근·출구 경로, 링 속도)·console), 50m 점프·카메라 점프 기록. 페이드는 Python으로 잴 수 없다(UE 5.8 `APlayerCameraManager::FadeAmount`가 UPROPERTY가 아니라 `fade_amount`를 읽지 못해 결과가 늘 "측정 불가"). 페이드·카메라 컷 0회는 C++ PIE 시험 `TDGame.SeamlessTravel.RealmConnectorWalk`·`RealmLiftRide`·`RealmLiftTreadmill`이 판정한다 |
 자세한 규격: `WorldGen/README.md`.
 
 ## 3. 던전 생성 도구 (`DungeonGen/`, 설계서 6·7·11.1장)
@@ -87,7 +93,7 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | `Tools/WorldGen/editor_set_anchor_yaw.py` | 월드 정의 앵커 향(YawDeg) 갱신 |
 | 콘솔(PIE) `TDTravelToDungeon <Id>` / `TDTravelToField` / `TDSaveWorldState <slot>` / `TDLoadWorldState <slot>` | 심리스 이동·세이브 |
 | 내비메시 설정 `Tools/WorldGen/editor_setup_navmesh_dynamic.py`(채택, D-06) / `editor_setup_navmesh_wp.py`(정적 월드 파티션, 보류), 영속 상자 배치 `editor_place_test_chest.py`, PIE 걸어서 입장 `pie_walkin_check.py`, PIE 상자 상태 `pie_chest_check.py` | P1 검증 스크립트 |
-| `python Tools/WorldGen/pie_p1_checks.py [--ids MainCrypt,<관문 ID>…]` (에디터 밖) | PIE 켜고 목적지마다 걸어 들어가기 왕복 ×3(이계 관문은 이계 상자로 판정) + 상자 열림·세이브/로드 검사 → `Saved/WorldGen/pie_p1_checks.md` |
+| `python Tools/WorldGen/pie_p1_checks.py [--ids MainCrypt,<관문 ID>…]` (에디터 밖) | PIE 켜고 목적지마다 걸어 들어가기 왕복 ×3(이계 관문은 이계 상자, 승강 관문은 하단 착지 근처로 판정, 귀환은 필드 상자 ±50400cm) + 상자 열림·세이브/로드 검사 → `Saved/WorldGen/pie_p1_checks.md` |
 | `python Tools/tasks_recount.py` | 할 일 대장 상태 표 재계산 |
 | 정의 에셋 `Tools/WorldGen/editor_make_definitions.py`, 룸 모듈 레벨 `Tools/DungeonGen/editor_make_room_modules.py`, C++ 베이크 `Tools/DungeonGen/editor_bake_dungeons_cpp.py`, 던전 안 출구 배치 `Tools/WorldGen/editor_place_dungeon_entrances.py`(D-41: 필드 입구는 만들지 않음), PIE 왕복 `Tools/WorldGen/pie_travel_check.py` | 에디터 스크립트 |
 
@@ -124,8 +130,17 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 자동화 테스트 `TDGame.Movement.*` 3개 + `TDGame.Combat.ActionTimelineHitsOnceInWindow` | 루트모션 36±2cm, 빙결 정지, 몬스터 이동 의도, 시간표 타격 1회 | `python Tools/check_automation_tests.py --filter TDGame.Movement` 또는 헤드리스 |
 확인: 2026-09-30 claude
 
+## 3f. Cascadeur 제작 도구 (`Cascadeur/`, 대장 AnimationAuthoring_Tasks H-01, 스킬 td-cascadeur-animation)
+Cascadeur 2026.2.3 내장 MCP 스크립트 서버(`http://127.0.0.1:8765/mcp`, 도구 `run_script`)를 MCP 설정 5벌에 `cascadeur`로 등록했다. Cascadeur가 켜져 있어야 연결된다. 접두어 `csc_` = Cascadeur 안 Python(`csc_scripts/`, 브리지가 불러 씀). Free(basic) 라이선스는 FBX 내보내기가 막혀 `export` 단계에서 멈춘다(L-anim-08).
 | 도구 | 용도 | 실행 |
 |---|---|---|
+| `Cascadeur/setup_cascadeur.py` | 사용자 settings.json에 `csc_scripts`·`td_events` 등록 → Cascadeur 시작 때 MCP 서버 자동 기동(재실행 안전, 1회 백업, L-anim-09) | `python Tools/Cascadeur/setup_cascadeur.py [--check]` |
+| `Cascadeur/cascadeur_bridge.py` | Cascadeur 실행·재시작·상태, `csc_*` 함수 호출(JSON 결과, 30초 넘는 작업 대기) | `python Tools/Cascadeur/cascadeur_bridge.py health\|ensure\|restart\|call <모듈>.<함수> --args-file <JSON>` |
+| `Cascadeur/build_motion_keys.py` | 동작 명세(`*.motion.json`) → FK·2관절 IK·손목 인지 칼 쥐기 탐색 → 리그 점·손가락·루트 키 JSON과 보고 | `python Tools/Cascadeur/build_motion_keys.py describe\|solve --rest <기준 자세> --weapon Tools/Cascadeur/weapons/SM_Sword.json [--spec … --out …]` |
+| `Cascadeur/build_cascadeur_animation.py` | 단계 실행: character(UE FBX·퀵 리깅·기준 자세) → keys → scene(.casc) → capture(3방향) → export(라이선스 확인) → import(UE AnimSequence 루트모션) | `python Tools/Cascadeur/build_cascadeur_animation.py --spec AnimationSources/Cascadeur/<이름>.motion.json [--stages …] [--replace]` (PowerShell) |
+| `Cascadeur/check_cascadeur_animation.py` | Cascadeur가 푼 관절 + 칼 → 칼끝 궤적·속도·회전 방향·정면 통과·발 미끄러짐·루트 수치, 막대 인형 GIF·시트 | `python Tools/Cascadeur/check_cascadeur_animation.py --spec AnimationSources/Cascadeur/<이름>.motion.json` |
+| `Cascadeur/csc_scripts/` | `csc_character`(가져오기·퀵 리깅), `csc_motion`(키·보간·탭·AI 모션 생성), `csc_capture`(렌더), `csc_export`(FBX), `csc_inspect`(읽기), `csc_runtime`(작업 실행기), `td_events/scene_idle/td_autostart_mcp.py` | 브리지 `call`로만 |
+| `Cascadeur/weapons/SM_Sword.json` | HandGrip_R 소켓·칼 부착값·칼 특징점(쥐기 좌표의 정본, L-anim-05) | 데이터 |
 확인: 2026-10-08 claude
 
 ## 4. 도구가 없을 때 만드는 규칙 (에이전트 공통)

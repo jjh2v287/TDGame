@@ -44,9 +44,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "TD|Travel")
 	bool IsReadyFor(FName DungeonId, bool bToEntry) const;
 
-	UFUNCTION(BlueprintCallable, Category = "TD|Travel")
-	bool CommitSeamCrossing(FName DungeonId, bool bToEntry, const FVector& HoldLocation);
-
 	UFUNCTION(BlueprintPure, Category = "TD|Travel", meta = (WorldContext = "WorldContextObject"))
 	static UTDSeamlessTravelSubsystem* GetSeamlessTravelSubsystem(const UObject* WorldContextObject);
 
@@ -78,7 +75,9 @@ private:
 	bool ResolveDestination(FName DungeonId, bool bToEntry, FTransform& OutDestination, FLinearColor& OutFadeColor) const;
 	bool IsSameTarget(FName DungeonId, bool bToEntry) const;
 	bool StartPreload(FName DungeonId, bool bToEntry);
+	bool IsSimulatedPreloadDelayActive() const;
 	bool IsDestinationReady() const;
+	FWorldPartitionStreamingQuerySource MakeReadinessQuerySource() const;
 	bool IsDestinationOnNavigation() const;
 	void RegisterStreamingProvider();
 	void UnregisterStreamingProvider();
@@ -105,11 +104,14 @@ private:
 	bool bIsProviderRegistered = false;
 	bool bIsTravelFadeActive = false;
 	FTransform Destination;
+	FVector ReadinessLocation = FVector::ZeroVector;
+	bool bIsRealmGateTarget = false;
 	FLinearColor TravelFadeColor = FLinearColor::Black;
 	double TravelFadeOutEndSeconds = 0.0;
 	FVector DepartureHoldLocation = FVector::ZeroVector;
 	double DepartureHoldEndSeconds = 0.0;
 	double RequestStartSeconds = 0.0;
+	double PreloadStartWorldSeconds = 0.0;
 	double NextTimeoutWarningSeconds = 0.0;
 	FDelegateHandle StreamingStateUpdatedHandle;
 };

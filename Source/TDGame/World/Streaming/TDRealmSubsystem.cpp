@@ -1,6 +1,7 @@
 #include "World/Streaming/TDRealmSubsystem.h"
 
 #include "Camera/PlayerCameraManager.h"
+#include "Characters/TDGameCharacter.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
@@ -12,23 +13,62 @@
 #include "Engine/SkyLight.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
-#include "Framework/TDGamePlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "TDGame.h"
 #include "TDWorldGenSettings.h"
+#include "World/Streaming/TDRealmLiftDeck.h"
+#include "World/Streaming/TDRealmShaftLiner.h"
 #include "World/Streaming/TDSeamlessTravelSubsystem.h"
+#include "WorldPartition/DataLayer/DataLayerAsset.h"
+#include "WorldPartition/DataLayer/DataLayerInstance.h"
+#include "WorldPartition/DataLayer/DataLayerManager.h"
 
 namespace
 {
-	constexpr double TDSeamCrossingMarginCm = 50.0;
 	constexpr double TDPassageVerticalToleranceCm = 6000.0;
 	constexpr float TDAtmosphereQuantizationSteps = 64.0f;
 	constexpr double TDPostProcessScanIntervalSeconds = 1.0;
 	constexpr double TDFallRecoveryTraceUpCm = 3000.0;
 	constexpr double TDFallRecoveryTraceDownCm = 6000.0;
 	constexpr double TDFallRecoveryClearanceCm = 10.0;
+	constexpr double TDRealmShaftInteriorBackVCm = -1300.0;
+	constexpr double TDRealmShaftInteriorFaceVCm = 450.0;
+	constexpr double TDRealmShaftInteriorHalfWidthCm = 800.0;
+	constexpr double TDRealmShaftInteriorMarginCm = 100.0;
+	constexpr double TDRealmShaftVerticalMarginCm = 300.0;
+	constexpr double TDRealmLiftSlotHalfWidthCm = 700.0;
+	constexpr double TDRealmLiftSlotHeightToleranceCm = 600.0;
+	constexpr double TDRealmLiftPitRecoveryRadiusCm = 1600.0;
+	constexpr double TDRealmLiftPitRecoveryMarginCm = 300.0;
+	constexpr double TDRealmLiftExitTraceUpCm = 200.0;
+	constexpr double TDRealmPassageDirectionSpeedCm = 50.0;
+	constexpr double TDRealmPawnVelocityJumpDistanceCm = 5000.0;
+	constexpr float TDRealmPassagePaceMinimumScale = 0.3f;
+	constexpr float TDRealmPassagePaceSlowStartCm = -2500.0f;
+	constexpr float TDRealmPassagePaceSlowEndCm = -300.0f;
+	constexpr float TDRealmPassagePaceDecreasePerSecond = 0.5f;
+	constexpr float TDRealmPassagePaceIncreasePerSecond = 1.0f;
+	constexpr float TDRealmPassagePaceApplyThreshold = 0.005f;
+	constexpr double TDRealmPassagePaceMovingAwaySpeedCm = 10.0;
+
+	bool IsInsideRealmLiftShaft(const FVector& ShaftLocalCm, double TravelLengthCm)
+	{
+		return ShaftLocalCm.X >= TDRealmShaftInteriorBackVCm - TDRealmShaftInteriorMarginCm
+			&& ShaftLocalCm.X <= TDRealmShaftInteriorFaceVCm + TDRealmShaftInteriorMarginCm
+			&& FMath::Abs(ShaftLocalCm.Y) <= TDRealmShaftInteriorHalfWidthCm + TDRealmShaftInteriorMarginCm
+			&& ShaftLocalCm.Z >= -TravelLengthCm - TDRealmShaftVerticalMarginCm
+			&& ShaftLocalCm.Z <= TDRealmShaftVerticalMarginCm;
+	}
+
+	bool IsInsideRealmLiftPit(const FTDRealmGate& Gate, const FVector& LocationCm)
+	{
+		const FVector TopLandingCm = Gate.Lift.FieldLandingTransform.GetLocation();
+		const double BottomLandingZCm = Gate.Lift.RealmLandingTransform.GetLocation().Z;
+		return FVector::DistSquared2D(LocationCm, TopLandingCm) <= FMath::Square(TDRealmLiftPitRecoveryRadiusCm)
+			&& LocationCm.Z > BottomLandingZCm + TDRealmLiftPitRecoveryMarginCm
+			&& LocationCm.Z < TopLandingCm.Z - TDRealmLiftPitRecoveryMarginCm;
+	}
 
 	template <typename TActor, typename TComponent>
 	TComponent* FindFirstActorComponent(UWorld& World)
@@ -53,56 +93,6 @@ namespace
 		return static_cast<float>(Step) / TDAtmosphereQuantizationSteps;
 	}
 
-	FVector GetSeamLocation(const FTDRealmGate& Gate, bool bIsRealmSide)
-	{
-		return bIsRealmSide ? Gate.ArrivalTransform.GetLocation() : Gate.FieldReturnTransform.GetLocation();
-	}
-
-	bool TryMeasurePassage(const FTDRealmGate& Gate, bool bIsRealmSide, const FVector& LocationCm, double& OutAlongCm, double& OutDistanceSquared)
-	{
-		const FVector Direction = Gate.GetPassageDirection();
-		if (Direction.IsNearlyZero())
-		{
-			return false;
-		}
-
-		const FVector Seam = GetSeamLocation(Gate, bIsRealmSide);
-		if (FMath::Abs(LocationCm.Z - Seam.Z) > TDPassageVerticalToleranceCm)
-		{
-			return false;
-		}
-
-		const FVector Delta(LocationCm.X - Seam.X, LocationCm.Y - Seam.Y, 0.0);
-		const FVector Lateral(-Direction.Y, Direction.X, 0.0);
-		const double AlongCm = FVector::DotProduct(Delta, Direction);
-		const double AcrossCm = FVector::DotProduct(Delta, Lateral);
-		if (FMath::Abs(AcrossCm) > Gate.PassageHalfWidthCm)
-		{
-			return false;
-		}
-
-		const double MinAlongCm = bIsRealmSide ? -Gate.SeamBufferCm : -(Gate.ApproachLengthCm + Gate.PreloadLeadCm);
-		const double MaxAlongCm = bIsRealmSide ? Gate.DepartureLengthCm + Gate.PreloadLeadCm : Gate.SeamBufferCm;
-		if (AlongCm < MinAlongCm || AlongCm > MaxAlongCm)
-		{
-			return false;
-		}
-
-		OutAlongCm = AlongCm;
-		OutDistanceSquared = Delta.SizeSquared();
-		return true;
-	}
-
-	float GetPassageWeight(const FTDRealmGate& Gate, bool bIsRealmSide, double AlongCm)
-	{
-		const float Along = static_cast<float>(AlongCm);
-		if (bIsRealmSide)
-		{
-			return 0.5f + 0.5f * FMath::SmoothStep(0.0f, Gate.DepartureLengthCm, Along);
-		}
-		return 0.5f * FMath::SmoothStep(-Gate.ApproachLengthCm, 0.0f, Along);
-	}
-
 	FName MakeRealmPostProcessTag(FName RealmId)
 	{
 		return FName(*FString::Printf(TEXT("TDRealm:%s"), *RealmId.ToString()));
@@ -124,6 +114,7 @@ void UTDRealmSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 	LoadConfiguredRealmDefinitions();
+	SpawnRealmLifts();
 	CaptureFieldAtmosphere();
 	if (!bHasCapturedFieldAtmosphere)
 	{
@@ -135,9 +126,62 @@ void UTDRealmSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 void UTDRealmSubsystem::Deinitialize()
 {
 	bHasBegunPlay = false;
+	RestorePassagePace();
+	PacedCharacter.Reset();
 	LoadedRealmDefinitions.Reset();
+	RealmLiftDecks.Reset();
+	RealmShaftLiners.Reset();
 	RealmPostProcessVolumes.Reset();
+	ActivatedGameplayRealmIds.Reset();
+	bHasPreviousPawnLocation = false;
 	Super::Deinitialize();
+}
+
+ATDRealmLiftDeck* UTDRealmSubsystem::FindRealmLiftDeck(FName GateId) const
+{
+	for (ATDRealmLiftDeck* Lift : RealmLiftDecks)
+	{
+		if (Lift && Lift->GetGateId() == GateId)
+		{
+			return Lift;
+		}
+	}
+	return nullptr;
+}
+
+float UTDRealmSubsystem::ComputeConnectorWeight(double AlongCm, double ApproachLengthCm, double DepartureLengthCm)
+{
+	if (AlongCm <= 0.0)
+	{
+		return static_cast<float>(0.5 * FMath::SmoothStep(-ApproachLengthCm, 0.0, AlongCm));
+	}
+	return static_cast<float>(0.5 + 0.5 * FMath::SmoothStep(0.0, DepartureLengthCm, AlongCm));
+}
+
+float UTDRealmSubsystem::ComputeLiftShaftWeight(double DepthCm, double TravelLengthCm)
+{
+	return static_cast<float>(FMath::SmoothStep(0.0, TravelLengthCm, DepthCm));
+}
+
+float UTDRealmSubsystem::ComputePassagePaceTarget(double ApproachCm, bool bIsReady, bool bIsPreloadRejected, bool bIsMovingAway)
+{
+	if (bIsReady || bIsPreloadRejected || bIsMovingAway)
+	{
+		return 1.0f;
+	}
+
+	const float SlowAlpha = FMath::SmoothStep(TDRealmPassagePaceSlowStartCm, TDRealmPassagePaceSlowEndCm, static_cast<float>(ApproachCm));
+	return FMath::Lerp(1.0f, TDRealmPassagePaceMinimumScale, SlowAlpha);
+}
+
+float UTDRealmSubsystem::StepPassagePaceScale(float CurrentScale, float TargetScale, float DeltaSeconds)
+{
+	const float StepSeconds = FMath::Max(DeltaSeconds, 0.0f);
+	if (TargetScale < CurrentScale)
+	{
+		return FMath::Max(TargetScale, CurrentScale - TDRealmPassagePaceDecreasePerSecond * StepSeconds);
+	}
+	return FMath::Min(TargetScale, CurrentScale + TDRealmPassagePaceIncreasePerSecond * StepSeconds);
 }
 
 bool UTDRealmSubsystem::IsTickable() const
@@ -160,14 +204,14 @@ void UTDRealmSubsystem::Tick(float DeltaTime)
 		return;
 	}
 
-	FTDPassageLocation Passage = FindPassageLocation(Pawn->GetActorLocation());
+	const FVector PawnLocation = Pawn->GetActorLocation();
+	const FVector PawnVelocityCm = MeasurePawnVelocity(PawnLocation, DeltaTime);
+	const FTDPassageLocation Passage = FindPassageLocation(PawnLocation);
+	UpdatePassageDirection(*Pawn, Passage, PawnVelocityCm);
 	UpdatePassagePreload(Passage);
-	if (TryCrossSeam(*Pawn, Passage))
-	{
-		Passage = FindPassageLocation(Pawn->GetActorLocation());
-	}
-
-	UpdateAtmosphere(Pawn->GetActorLocation(), Passage);
+	ActivateGameplayDataLayers(PawnLocation, Passage);
+	UpdatePassagePace(*Pawn, Passage, PawnVelocityCm, DeltaTime);
+	UpdateAtmosphere(PawnLocation, Passage);
 	if (RefreshRealmPostProcessVolumes())
 	{
 		ApplyPostProcessWeights();
@@ -193,6 +237,65 @@ void UTDRealmSubsystem::LoadConfiguredRealmDefinitions()
 		}
 	}
 	UE_LOG(LogTDGame, Log, TEXT("Realm: %d of %d configured realm definitions loaded."), LoadedRealmDefinitions.Num(), Settings->RealmDefinitions.Num());
+}
+
+void UTDRealmSubsystem::SpawnRealmLifts()
+{
+	RealmLiftDecks.Reset();
+	RealmShaftLiners.Reset();
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	for (const UTDRealmDefinition* Realm : LoadedRealmDefinitions)
+	{
+		if (!Realm)
+		{
+			continue;
+		}
+
+		for (const FTDRealmGate& Gate : Realm->Gates)
+		{
+			if (Gate.GateKind != ETDRealmGateKind::Lift)
+			{
+				continue;
+			}
+
+			FActorSpawnParameters SpawnParameters;
+			SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnParameters.ObjectFlags |= RF_Transient;
+			const FTransform SpawnTransform(FRotator(0.0, Gate.Lift.FieldLandingTransform.Rotator().Yaw, 0.0), Gate.Lift.FieldLandingTransform.GetLocation());
+			ATDRealmLiftDeck* Lift = World->SpawnActor<ATDRealmLiftDeck>(ATDRealmLiftDeck::StaticClass(), SpawnTransform, SpawnParameters);
+			if (!Lift)
+			{
+				UE_LOG(LogTDGame, Warning, TEXT("Realm: failed to spawn the lift of gate '%s' in realm '%s'."), *Gate.GateId.ToString(), *Realm->RealmId.ToString());
+				continue;
+			}
+
+			Lift->InitializeLift(Gate);
+			RealmLiftDecks.Add(Lift);
+			SpawnShaftLiner(*World, Gate, *Lift);
+			UE_LOG(LogTDGame, Log, TEXT("Realm: lift of gate '%s' spawned at the field landing %s."), *Gate.GateId.ToString(), *Lift->GetActorLocation().ToCompactString());
+		}
+	}
+}
+
+void UTDRealmSubsystem::SpawnShaftLiner(UWorld& World, const FTDRealmGate& Gate, ATDRealmLiftDeck& Lift)
+{
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParameters.ObjectFlags |= RF_Transient;
+	ATDRealmShaftLiner* Liner = World.SpawnActor<ATDRealmShaftLiner>(ATDRealmShaftLiner::StaticClass(), ATDRealmLiftDeck::MakeShaftFrameTransform(Gate), SpawnParameters);
+	if (!Liner)
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("Realm: failed to spawn the shaft liner of lift gate '%s'."), *Gate.GateId.ToString());
+		return;
+	}
+
+	Liner->InitializeLiner(Gate, Lift);
+	RealmShaftLiners.Add(Liner);
 }
 
 void UTDRealmSubsystem::CaptureFieldAtmosphere()
@@ -244,6 +347,17 @@ void UTDRealmSubsystem::CaptureFieldAtmosphere()
 	bHasCapturedFieldAtmosphere = SunComponent.IsValid() || SkyLightComponent.IsValid() || SkyAtmosphereComponent.IsValid() || HeightFogComponent.IsValid();
 }
 
+UTDRealmSubsystem::FTDPassageLocation UTDRealmSubsystem::MakePassageLocation(const UTDRealmDefinition& Realm, const FTDRealmGate& Gate, double AlongCm, float Weight, bool bIsLift)
+{
+	FTDPassageLocation Passage;
+	Passage.Realm = &Realm;
+	Passage.Gate = &Gate;
+	Passage.AlongCm = AlongCm;
+	Passage.Weight = Weight;
+	Passage.bIsLift = bIsLift;
+	return Passage;
+}
+
 UTDRealmSubsystem::FTDPassageLocation UTDRealmSubsystem::FindPassageLocation(const FVector& LocationCm) const
 {
 	FTDPassageLocation Nearest;
@@ -257,24 +371,153 @@ UTDRealmSubsystem::FTDPassageLocation UTDRealmSubsystem::FindPassageLocation(con
 
 		for (const FTDRealmGate& Gate : Realm->Gates)
 		{
-			for (const bool bIsRealmSide : { false, true })
+			FTDPassageLocation Measured;
+			double DistanceSquared = 0.0;
+			const bool bHasMeasured = Gate.GateKind == ETDRealmGateKind::Lift
+				? TryMeasureLiftGate(*Realm, Gate, LocationCm, Measured, DistanceSquared)
+				: TryMeasureConnector(*Realm, Gate, LocationCm, Measured, DistanceSquared);
+			if (!bHasMeasured || DistanceSquared >= NearestDistanceSquared)
 			{
-				double AlongCm = 0.0;
-				double DistanceSquared = 0.0;
-				if (!TryMeasurePassage(Gate, bIsRealmSide, LocationCm, AlongCm, DistanceSquared) || DistanceSquared >= NearestDistanceSquared)
-				{
-					continue;
-				}
-
-				NearestDistanceSquared = DistanceSquared;
-				Nearest.Realm = Realm;
-				Nearest.Gate = &Gate;
-				Nearest.bIsRealmSide = bIsRealmSide;
-				Nearest.AlongCm = AlongCm;
+				continue;
 			}
+
+			NearestDistanceSquared = DistanceSquared;
+			Nearest = Measured;
 		}
 	}
 	return Nearest;
+}
+
+bool UTDRealmSubsystem::TryMeasureConnector(const UTDRealmDefinition& Realm, const FTDRealmGate& Gate, const FVector& LocationCm, FTDPassageLocation& OutPassage, double& OutDistanceSquared)
+{
+	const FVector Direction = Gate.GetPassageDirection();
+	const double ApproachLengthCm = Gate.ApproachLengthCm;
+	const double DepartureLengthCm = Gate.DepartureLengthCm;
+	const double ConnectorLengthCm = ApproachLengthCm + DepartureLengthCm;
+	if (Direction.IsNearlyZero() || ConnectorLengthCm <= 0.0)
+	{
+		return false;
+	}
+
+	const FVector BoundaryCm = Gate.GetBoundaryCrossingCm();
+	const FVector OffsetCm(LocationCm.X - BoundaryCm.X, LocationCm.Y - BoundaryCm.Y, 0.0);
+	const double AlongCm = FVector::DotProduct(OffsetCm, Direction);
+	const double AcrossCm = FVector::DotProduct(OffsetCm, FVector(-Direction.Y, Direction.X, 0.0));
+	const bool bIsInsideWindow = FMath::Abs(AcrossCm) <= Gate.PassageHalfWidthCm
+		&& AlongCm >= -(ApproachLengthCm + Gate.PreloadLeadCm)
+		&& AlongCm <= DepartureLengthCm + Gate.PreloadLeadCm;
+	if (!bIsInsideWindow)
+	{
+		return false;
+	}
+
+	const double FloorAlpha = FMath::Clamp((AlongCm + ApproachLengthCm) / ConnectorLengthCm, 0.0, 1.0);
+	const double ConnectorZCm = FMath::Lerp(Gate.FieldReturnTransform.GetLocation().Z, Gate.ArrivalTransform.GetLocation().Z, FloorAlpha);
+	if (FMath::Abs(LocationCm.Z - ConnectorZCm) > TDPassageVerticalToleranceCm)
+	{
+		return false;
+	}
+
+	OutPassage = MakePassageLocation(Realm, Gate, AlongCm, ComputeConnectorWeight(AlongCm, ApproachLengthCm, DepartureLengthCm), false);
+	OutDistanceSquared = FMath::Square(AcrossCm);
+	return true;
+}
+
+bool UTDRealmSubsystem::TryMeasureLiftGate(const UTDRealmDefinition& Realm, const FTDRealmGate& Gate, const FVector& LocationCm, FTDPassageLocation& OutPassage, double& OutDistanceSquared) const
+{
+	const FVector TopLandingCm = Gate.Lift.FieldLandingTransform.GetLocation();
+	const FVector BottomLandingCm = Gate.Lift.RealmLandingTransform.GetLocation();
+	const double TravelLengthCm = TopLandingCm.Z - BottomLandingCm.Z;
+	if (TravelLengthCm <= 0.0)
+	{
+		return false;
+	}
+
+	const double HalfTravelCm = TravelLengthCm * 0.5;
+	const ATDRealmLiftDeck* Lift = FindRealmLiftDeck(Gate.GateId);
+	const bool bIsCarried = Lift && Lift->IsCarryingLocation(LocationCm);
+	const FVector ShaftLocalCm = ATDRealmLiftDeck::MakeShaftFrameTransform(Gate).InverseTransformPositionNoScale(LocationCm);
+	if (bIsCarried || IsInsideRealmLiftShaft(ShaftLocalCm, TravelLengthCm))
+	{
+		const double DepthCm = bIsCarried ? Lift->GetMotion().PositionCm : FMath::Clamp(-ShaftLocalCm.Z, 0.0, TravelLengthCm);
+		OutPassage = MakePassageLocation(Realm, Gate, DepthCm - HalfTravelCm, ComputeLiftShaftWeight(DepthCm, TravelLengthCm), true);
+		OutDistanceSquared = 0.0;
+		return true;
+	}
+
+	const FVector SlotEndCm = Gate.ArrivalTransform.GetLocation();
+	const FVector SlotSpanCm(SlotEndCm.X - BottomLandingCm.X, SlotEndCm.Y - BottomLandingCm.Y, 0.0);
+	const double SlotLengthCm = SlotSpanCm.Size();
+	if (SlotLengthCm > UE_KINDA_SMALL_NUMBER)
+	{
+		const FVector SlotDirection = SlotSpanCm / SlotLengthCm;
+		const FVector SlotOffsetCm(LocationCm.X - BottomLandingCm.X, LocationCm.Y - BottomLandingCm.Y, 0.0);
+		const double SlotAlongCm = FVector::DotProduct(SlotOffsetCm, SlotDirection);
+		const double SlotAcrossCm = FVector::DotProduct(SlotOffsetCm, FVector(-SlotDirection.Y, SlotDirection.X, 0.0));
+		const bool bIsInsideSlot = SlotAlongCm >= 0.0 && SlotAlongCm <= SlotLengthCm + Gate.PreloadLeadCm
+			&& FMath::Abs(SlotAcrossCm) <= TDRealmLiftSlotHalfWidthCm
+			&& FMath::Abs(LocationCm.Z - BottomLandingCm.Z) <= TDRealmLiftSlotHeightToleranceCm;
+		if (bIsInsideSlot)
+		{
+			const bool bIsRealmWeighted = SlotAlongCm <= SlotLengthCm || Realm.ContainsLocationXY(LocationCm);
+			OutPassage = MakePassageLocation(Realm, Gate, HalfTravelCm + SlotAlongCm, bIsRealmWeighted ? 1.0f : 0.0f, true);
+			OutDistanceSquared = FMath::Square(SlotAcrossCm);
+			return true;
+		}
+	}
+
+	const double TopDistanceSquared = FVector::DistSquared2D(LocationCm, TopLandingCm);
+	const bool bIsNearTopLanding = TopDistanceSquared <= FMath::Square(static_cast<double>(Gate.Lift.ApproachRadiusCm))
+		&& LocationCm.Z >= TopLandingCm.Z - TDRealmShaftVerticalMarginCm
+		&& LocationCm.Z <= TopLandingCm.Z + TDPassageVerticalToleranceCm;
+	if (!bIsNearTopLanding)
+	{
+		return false;
+	}
+
+	OutPassage = MakePassageLocation(Realm, Gate, -(HalfTravelCm + FMath::Sqrt(TopDistanceSquared)), Realm.ContainsLocationXY(LocationCm) ? 1.0f : 0.0f, true);
+	OutDistanceSquared = TopDistanceSquared;
+	return true;
+}
+
+FVector UTDRealmSubsystem::MeasurePawnVelocity(const FVector& PawnLocationCm, float DeltaTime)
+{
+	const FVector DisplacementCm = PawnLocationCm - PreviousPawnLocationCm;
+	const bool bCanMeasure = bHasPreviousPawnLocation && DeltaTime > UE_SMALL_NUMBER && DisplacementCm.SizeSquared() <= FMath::Square(TDRealmPawnVelocityJumpDistanceCm);
+	PreviousPawnLocationCm = PawnLocationCm;
+	bHasPreviousPawnLocation = true;
+	return bCanMeasure ? DisplacementCm / DeltaTime : FVector::ZeroVector;
+}
+
+void UTDRealmSubsystem::UpdatePassageDirection(const APawn& Pawn, const FTDPassageLocation& Passage, const FVector& PawnVelocityCm)
+{
+	if (!Passage.Gate)
+	{
+		TrackedPassageGateId = NAME_None;
+		return;
+	}
+
+	const FTDRealmGate& Gate = *Passage.Gate;
+	const bool bWasTracking = TrackedPassageGateId == Gate.GateId;
+	TrackedPassageGateId = Gate.GateId;
+	if (Passage.bIsLift)
+	{
+		const ATDRealmLiftDeck* Lift = FindRealmLiftDeck(Gate.GateId);
+		const bool bIsRiding = Lift && Lift->IsCarryingPawn(Pawn);
+		bIsTrackedPassageToEntry = bIsRiding ? Lift->GetMotion().Direction == ETDRealmLiftDirection::Down : Passage.AlongCm < 0.0;
+		return;
+	}
+
+	const double AxisSpeedCmPerSecond = FVector::DotProduct(PawnVelocityCm, Gate.GetPassageDirection());
+	if (FMath::Abs(AxisSpeedCmPerSecond) > TDRealmPassageDirectionSpeedCm)
+	{
+		bIsTrackedPassageToEntry = AxisSpeedCmPerSecond > 0.0;
+		return;
+	}
+	if (!bWasTracking)
+	{
+		bIsTrackedPassageToEntry = Passage.AlongCm < 0.0;
+	}
 }
 
 void UTDRealmSubsystem::UpdatePassagePreload(const FTDPassageLocation& Passage)
@@ -293,7 +536,7 @@ void UTDRealmSubsystem::UpdatePassagePreload(const FTDPassageLocation& Passage)
 	}
 
 	const FName GateId = Passage.Gate->GateId;
-	const bool bToEntry = !Passage.bIsRealmSide;
+	const bool bToEntry = bIsTrackedPassageToEntry;
 	if (FailedPreloadGateId == GateId && bIsFailedPreloadToEntry == bToEntry)
 	{
 		return;
@@ -307,8 +550,7 @@ void UTDRealmSubsystem::UpdatePassagePreload(const FTDPassageLocation& Passage)
 		}
 		if (Travel->BeginPreload(GateId, bToEntry))
 		{
-			OwnedPreloadGateId = GateId;
-			bIsOwnedPreloadToEntry = bToEntry;
+			RecordOwnedPreload(GateId, bToEntry);
 			return;
 		}
 
@@ -324,8 +566,20 @@ void UTDRealmSubsystem::UpdatePassagePreload(const FTDPassageLocation& Passage)
 		return;
 	}
 
+	RecordOwnedPreload(GateId, bToEntry);
+}
+
+void UTDRealmSubsystem::RecordOwnedPreload(FName GateId, bool bToEntry)
+{
+	if (OwnedPreloadGateId == GateId && bIsOwnedPreloadToEntry == bToEntry)
+	{
+		return;
+	}
+
 	OwnedPreloadGateId = GateId;
 	bIsOwnedPreloadToEntry = bToEntry;
+	const UWorld* World = GetWorld();
+	OwnedPreloadStartWorldSeconds = World ? World->GetTimeSeconds() : 0.0;
 }
 
 void UTDRealmSubsystem::CancelOwnedPreload(UTDSeamlessTravelSubsystem& Travel)
@@ -339,80 +593,138 @@ void UTDRealmSubsystem::CancelOwnedPreload(UTDSeamlessTravelSubsystem& Travel)
 	OwnedPreloadGateId = NAME_None;
 }
 
-bool UTDRealmSubsystem::TryCrossSeam(APawn& Pawn, const FTDPassageLocation& Passage)
+void UTDRealmSubsystem::ActivateGameplayDataLayers(const FVector& LocationCm, const FTDPassageLocation& Passage)
 {
-	if (!Passage.Gate)
+	if (Passage.Realm && Passage.Weight > 0.0f)
 	{
-		bHasWarnedSeamNotReady = false;
-		return false;
+		ActivateGameplayDataLayer(*Passage.Realm, TEXT("connector"));
+	}
+	if (const UTDRealmDefinition* Realm = FindLoadedRealmContainingLocation(LocationCm))
+	{
+		ActivateGameplayDataLayer(*Realm, TEXT("inside the realm"));
+	}
+}
+
+void UTDRealmSubsystem::ActivateGameplayDataLayer(const UTDRealmDefinition& Realm, const TCHAR* Reason)
+{
+	if (ActivatedGameplayRealmIds.Contains(Realm.RealmId))
+	{
+		return;
 	}
 
-	const bool bIsPastSeam = Passage.bIsRealmSide ? Passage.AlongCm <= -TDSeamCrossingMarginCm : Passage.AlongCm >= TDSeamCrossingMarginCm;
-	if (!bIsPastSeam)
+	ActivatedGameplayRealmIds.Add(Realm.RealmId);
+	if (Realm.GameplayDataLayer.IsNull())
 	{
-		bHasWarnedSeamNotReady = false;
-		return false;
+		UE_LOG(LogTDGame, Log, TEXT("Realm: realm '%s' has no gameplay data layer to activate (%s)."), *Realm.RealmId.ToString(), Reason);
+		return;
+	}
+
+	const UDataLayerAsset* DataLayerAsset = Realm.GameplayDataLayer.LoadSynchronous();
+	UDataLayerManager* DataLayerManager = UDataLayerManager::GetDataLayerManager(GetWorld());
+	if (!DataLayerAsset || !DataLayerManager)
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("Realm: gameplay data layer '%s' of realm '%s' was not activated (asset loaded %d, data layer manager %d)."),
+			*Realm.GameplayDataLayer.ToSoftObjectPath().ToString(), *Realm.RealmId.ToString(), DataLayerAsset ? 1 : 0, DataLayerManager ? 1 : 0);
+		return;
+	}
+
+	const bool bIsAccepted = DataLayerManager->SetDataLayerRuntimeState(DataLayerAsset, EDataLayerRuntimeState::Activated);
+	UE_LOG(LogTDGame, Log, TEXT("Realm: gameplay data layer '%s' of realm '%s' set to Activated (%s, accepted %d)."), *DataLayerAsset->GetName(), *Realm.RealmId.ToString(), Reason, bIsAccepted ? 1 : 0);
+}
+
+void UTDRealmSubsystem::UpdatePassagePace(APawn& Pawn, const FTDPassageLocation& Passage, const FVector& PawnVelocityCm, float DeltaTime)
+{
+	ATDGameCharacter* Character = Cast<ATDGameCharacter>(&Pawn);
+	if (PacedCharacter.Get() != Character)
+	{
+		RestorePassagePace();
+		PacedCharacter = Character;
+	}
+	if (!Character)
+	{
+		return;
+	}
+
+	if (!Passage.Gate || Passage.bIsLift)
+	{
+		StopPassagePacing();
+		RestorePassagePace();
+		return;
 	}
 
 	const FTDRealmGate& Gate = *Passage.Gate;
-	const bool bToEntry = !Passage.bIsRealmSide;
-	UTDSeamlessTravelSubsystem* Travel = UTDSeamlessTravelSubsystem::GetSeamlessTravelSubsystem(this);
-	if (!Travel || !Travel->IsReadyFor(Gate.GateId, bToEntry))
+	const bool bToEntry = bIsTrackedPassageToEntry;
+	const double ApproachCm = bToEntry ? Passage.AlongCm : -Passage.AlongCm;
+	if (PacingGateId != Gate.GateId || bIsPacingToEntry != bToEntry)
 	{
-		if (!bHasWarnedSeamNotReady)
-		{
-			bHasWarnedSeamNotReady = true;
-			UE_LOG(LogTDGame, Warning, TEXT("Realm: pawn passed the seam of gate '%s' (%s) before the other side was ready; waiting."), *Gate.GateId.ToString(), bToEntry ? TEXT("entry") : TEXT("field return"));
-		}
-		return false;
+		StopPassagePacing();
+		PacingGateId = Gate.GateId;
+		bIsPacingToEntry = bToEntry;
+		bIsPacingArmed = ApproachCm <= 0.0;
 	}
 
-	const FVector SeamOffsetCm = Gate.GetSeamOffsetCm();
-	const FVector OffsetCm = bToEntry ? SeamOffsetCm : -SeamOffsetCm;
-	if (!ShiftPawnAcrossSeam(Pawn, OffsetCm))
-	{
-		return false;
-	}
-
-	Travel->CommitSeamCrossing(Gate.GateId, bToEntry, GetSeamLocation(Gate, Passage.bIsRealmSide));
-	OwnedPreloadGateId = NAME_None;
-	bHasWarnedSeamNotReady = false;
-	UE_LOG(LogTDGame, Log, TEXT("Realm: pawn '%s' crossed the seam of gate '%s' to %s by %s."), *Pawn.GetName(), *Gate.GateId.ToString(), bToEntry ? TEXT("the realm") : TEXT("the field"), *OffsetCm.ToCompactString());
-	return true;
+	const UTDSeamlessTravelSubsystem* Travel = UTDSeamlessTravelSubsystem::GetSeamlessTravelSubsystem(this);
+	const bool bIsReady = Travel && Travel->IsReadyFor(Gate.GateId, bToEntry);
+	const bool bIsPreloadRejected = FailedPreloadGateId == Gate.GateId && bIsFailedPreloadToEntry == bToEntry;
+	const FVector TowardBoundaryDirection = Gate.GetPassageDirection() * (bToEntry ? 1.0 : -1.0);
+	const bool bIsMovingAway = FVector::DotProduct(PawnVelocityCm, TowardBoundaryDirection) < -TDRealmPassagePaceMovingAwaySpeedCm;
+	const float TargetScale = bIsPacingArmed ? ComputePassagePaceTarget(ApproachCm, bIsReady, bIsPreloadRejected, bIsMovingAway) : 1.0f;
+	PacingAlongCm = Passage.AlongCm;
+	SetPassagePacingEngaged(TargetScale < 1.0f, bIsReady);
+	CurrentPassagePaceScale = StepPassagePaceScale(CurrentPassagePaceScale, TargetScale, DeltaTime);
+	ApplyPassagePace();
 }
 
-bool UTDRealmSubsystem::ShiftPawnAcrossSeam(APawn& Pawn, const FVector& OffsetCm) const
+void UTDRealmSubsystem::SetPassagePacingEngaged(bool bIsEngaged, bool bIsReady)
 {
-	const FVector TargetLocation = Pawn.GetActorLocation() + OffsetCm;
-	if (!UTDSeamlessTravelSubsystem::TeleportPawnToDestination(Pawn, TargetLocation, Pawn.GetActorRotation()))
+	if (bIsEngaged == bIsPassagePacingEngaged)
 	{
-		UE_LOG(LogTDGame, Warning, TEXT("Realm: failed to shift pawn '%s' across the seam to %s."), *Pawn.GetName(), *TargetLocation.ToCompactString());
-		return false;
+		return;
 	}
 
-	if (USpringArmComponent* SpringArm = Pawn.FindComponentByClass<USpringArmComponent>())
+	bIsPassagePacingEngaged = bIsEngaged;
+	PassagePacingEngagedCount += bIsEngaged ? 1 : 0;
+	const UWorld* World = GetWorld();
+	const double ElapsedSeconds = World && !OwnedPreloadGateId.IsNone() ? World->GetTimeSeconds() - OwnedPreloadStartWorldSeconds : 0.0;
+	UE_LOG(LogTDGame, Warning, TEXT("Realm: pacing %s gate=%s along=%.0f ready=%d elapsed=%.2f"),
+		bIsEngaged ? TEXT("engaged") : TEXT("released"), *PacingGateId.ToString(), PacingAlongCm, bIsReady ? 1 : 0, ElapsedSeconds);
+}
+
+void UTDRealmSubsystem::StopPassagePacing()
+{
+	SetPassagePacingEngaged(false, false);
+	PacingGateId = NAME_None;
+	bIsPacingArmed = false;
+}
+
+void UTDRealmSubsystem::ApplyPassagePace()
+{
+	const bool bHasChangedEnough = FMath::Abs(CurrentPassagePaceScale - AppliedPassagePaceScale) > TDRealmPassagePaceApplyThreshold;
+	const bool bHasReturnedToFull = CurrentPassagePaceScale >= 1.0f && AppliedPassagePaceScale < 1.0f;
+	if (!bHasChangedEnough && !bHasReturnedToFull)
 	{
-		SpringArm->PreviousDesiredLoc += OffsetCm;
-		SpringArm->PreviousArmOrigin += OffsetCm;
+		return;
 	}
 
-	APlayerController* PlayerController = Cast<APlayerController>(Pawn.GetController());
-	if (PlayerController && PlayerController->PlayerCameraManager)
+	AppliedPassagePaceScale = CurrentPassagePaceScale;
+	if (ATDGameCharacter* Character = PacedCharacter.Get())
 	{
-		PlayerController->PlayerCameraManager->SetGameCameraCutThisFrame();
+		Character->SetPassagePaceScale(CurrentPassagePaceScale);
 	}
+}
 
-	if (ATDGamePlayerController* GamePlayerController = Cast<ATDGamePlayerController>(PlayerController))
-	{
-		GamePlayerController->ShiftMovementTargetsBy(OffsetCm);
-	}
-	return true;
+void UTDRealmSubsystem::RestorePassagePace()
+{
+	CurrentPassagePaceScale = 1.0f;
+	ApplyPassagePace();
 }
 
 void UTDRealmSubsystem::ApplyAtmosphereForLocation(const FVector& LocationCm)
 {
 	CaptureFieldAtmosphere();
-	UpdateAtmosphere(LocationCm, FindPassageLocation(LocationCm));
+	const FTDPassageLocation Passage = FindPassageLocation(LocationCm);
+	ActivateGameplayDataLayers(LocationCm, Passage);
+	UpdateAtmosphere(LocationCm, Passage);
 }
 
 float UTDRealmSubsystem::GetRealmWeight(FName RealmId) const
@@ -427,15 +739,9 @@ float UTDRealmSubsystem::GetRealmWeight(FName RealmId) const
 void UTDRealmSubsystem::UpdateAtmosphere(const FVector& LocationCm, const FTDPassageLocation& Passage)
 {
 	const UTDRealmDefinition* Realm = Passage.Realm ? Passage.Realm : FindLoadedRealmContainingLocation(LocationCm);
-	const bool bIsRealmSide = Passage.Gate ? Passage.bIsRealmSide : Realm != nullptr;
-	const float Weight = Passage.Gate ? GetPassageWeight(*Passage.Gate, Passage.bIsRealmSide, Passage.AlongCm) : (Realm ? 1.0f : 0.0f);
-	const float MistRadiusCm = Realm ? Realm->SeamMistRadiusCm : 0.0f;
-	const float Mist = Passage.Gate ? 1.0f - FMath::SmoothStep(0.0f, MistRadiusCm, static_cast<float>(FMath::Abs(Passage.AlongCm))) : 0.0f;
-
+	const float Weight = Passage.Gate ? Passage.Weight : (Realm ? 1.0f : 0.0f);
 	const FName RealmId = Realm ? Realm->RealmId : NAME_None;
-	const FName GateId = Passage.Gate ? Passage.Gate->GateId : NAME_None;
 	const int32 WeightStep = QuantizeAtmosphereStep(Weight);
-	const int32 MistStep = QuantizeAtmosphereStep(Mist);
 
 	CurrentRealmId = RealmId;
 	CurrentRealmWeight = Realm ? Weight : 0.0f;
@@ -456,24 +762,19 @@ void UTDRealmSubsystem::UpdateAtmosphere(const FVector& LocationCm, const FTDPas
 		ApplySunRotation(Realm ? FQuat::Slerp(FieldAtmosphere.SunRotation.Quaternion(), Realm->Atmosphere.SunRotation.Quaternion(), SunAlpha).Rotator() : FieldAtmosphere.SunRotation);
 	}
 
-	const bool bHasAtmosphereChanged = RealmId != AppliedRealmId || GateId != AppliedGateId || bIsRealmSide != bIsAppliedRealmSide
-		|| WeightStep != AppliedWeightStep || MistStep != AppliedMistStep;
-	if (!bHasAtmosphereChanged)
+	if (RealmId == AppliedRealmId && WeightStep == AppliedWeightStep)
 	{
 		return;
 	}
 
 	AppliedRealmId = RealmId;
-	AppliedGateId = GateId;
-	bIsAppliedRealmSide = bIsRealmSide;
 	AppliedWeightStep = WeightStep;
-	AppliedMistStep = MistStep;
 	CaptureFieldAtmosphere();
-	ApplyAtmosphere(Realm ? MakeBlendedAtmosphere(*Realm, Passage, GetAtmosphereStepValue(WeightStep), GetAtmosphereStepValue(MistStep)) : FieldAtmosphere);
+	ApplyAtmosphere(Realm ? MakeBlendedAtmosphere(*Realm, GetAtmosphereStepValue(WeightStep)) : FieldAtmosphere);
 	ApplyPostProcessWeights();
 }
 
-FTDRealmAtmosphere UTDRealmSubsystem::MakeBlendedAtmosphere(const UTDRealmDefinition& Realm, const FTDPassageLocation& Passage, float Weight, float Mist) const
+FTDRealmAtmosphere UTDRealmSubsystem::MakeBlendedAtmosphere(const UTDRealmDefinition& Realm, float Weight) const
 {
 	const FTDRealmAtmosphere& Field = FieldAtmosphere;
 	const FTDRealmAtmosphere& Target = Realm.Atmosphere;
@@ -487,6 +788,7 @@ FTDRealmAtmosphere UTDRealmSubsystem::MakeBlendedAtmosphere(const UTDRealmDefini
 	Blended.MieScatteringScale = FMath::Lerp(Field.MieScatteringScale, Target.MieScatteringScale, Weight);
 	Blended.FogDensity = FMath::Lerp(Field.FogDensity, Target.FogDensity, Weight);
 	Blended.FogHeightFalloff = FMath::Lerp(Field.FogHeightFalloff, Target.FogHeightFalloff, Weight);
+	Blended.FogHeightCm = FMath::Lerp(Field.FogHeightCm, Target.FogHeightCm, Weight);
 	Blended.FogInscatteringColor = FMath::Lerp(Field.FogInscatteringColor, Target.FogInscatteringColor, Weight);
 	Blended.FogMaxOpacity = FMath::Lerp(Field.FogMaxOpacity, Target.FogMaxOpacity, Weight);
 	Blended.FogStartDistanceCm = FMath::Lerp(Field.FogStartDistanceCm, Target.FogStartDistanceCm, Weight);
@@ -496,16 +798,6 @@ FTDRealmAtmosphere UTDRealmSubsystem::MakeBlendedAtmosphere(const UTDRealmDefini
 	Blended.VolumetricFogAlbedo = FMath::Lerp(Field.VolumetricFogAlbedo, Target.VolumetricFogAlbedo, Weight);
 	Blended.VolumetricFogEmissive = FMath::Lerp(Field.VolumetricFogEmissive, Target.VolumetricFogEmissive, Weight);
 	Blended.VolumetricFogExtinctionScale = FMath::Lerp(Field.VolumetricFogExtinctionScale, Target.VolumetricFogExtinctionScale, Weight);
-
-	const float SeamHeightOffsetCm = Passage.Gate ? static_cast<float>(Passage.Gate->GetSeamOffsetCm().Z) : 0.0f;
-	const bool bIsRealmSide = Passage.Gate ? Passage.bIsRealmSide : true;
-	const float FieldFogHeightCm = bIsRealmSide ? Field.FogHeightCm + SeamHeightOffsetCm : Field.FogHeightCm;
-	const float RealmFogHeightCm = bIsRealmSide ? Target.FogHeightCm : Target.FogHeightCm - SeamHeightOffsetCm;
-	Blended.FogHeightCm = FMath::Lerp(FieldFogHeightCm, RealmFogHeightCm, Weight);
-
-	Blended.FogDensity += Realm.SeamMistDensity * Mist;
-	Blended.FogMaxOpacity = FMath::Lerp(Blended.FogMaxOpacity, 1.0f, Mist);
-	Blended.FogStartDistanceCm = FMath::Lerp(Blended.FogStartDistanceCm, 0.0f, Mist);
 	return Blended;
 }
 
@@ -659,8 +951,13 @@ void UTDRealmSubsystem::ApplyPostProcessWeights()
 	}
 }
 
-void UTDRealmSubsystem::RecoverFallenPawnIfNeeded(APawn& Pawn) const
+void UTDRealmSubsystem::RecoverFallenPawnIfNeeded(APawn& Pawn)
 {
+	if (RecoverPawnFromLiftPitIfNeeded(Pawn))
+	{
+		return;
+	}
+
 	const FVector PawnLocation = Pawn.GetActorLocation();
 	const UTDRealmDefinition* Realm = FindLoadedRealmContainingLocation(PawnLocation);
 	if (!Realm || PawnLocation.Z >= Realm->FallRecoveryHeightCm)
@@ -668,8 +965,7 @@ void UTDRealmSubsystem::RecoverFallenPawnIfNeeded(APawn& Pawn) const
 		return;
 	}
 
-	const UTDSeamlessTravelSubsystem* Travel = UTDSeamlessTravelSubsystem::GetSeamlessTravelSubsystem(this);
-	if (Travel && Travel->GetTravelState() != ETDSeamlessTravelState::Idle && !Travel->IsUnrequestedPreload())
+	if (IsTravelBlockingRecovery())
 	{
 		return;
 	}
@@ -677,7 +973,46 @@ void UTDRealmSubsystem::RecoverFallenPawnIfNeeded(APawn& Pawn) const
 	RecoverFallenPawn(Pawn, *Realm);
 }
 
-void UTDRealmSubsystem::RecoverFallenPawn(APawn& Pawn, const UTDRealmDefinition& Realm) const
+bool UTDRealmSubsystem::RecoverPawnFromLiftPitIfNeeded(APawn& Pawn) const
+{
+	const FVector PawnLocation = Pawn.GetActorLocation();
+	for (const UTDRealmDefinition* Realm : LoadedRealmDefinitions)
+	{
+		if (!Realm)
+		{
+			continue;
+		}
+
+		for (const FTDRealmGate& Gate : Realm->Gates)
+		{
+			if (Gate.GateKind != ETDRealmGateKind::Lift || !IsInsideRealmLiftPit(Gate, PawnLocation))
+			{
+				continue;
+			}
+
+			const ATDRealmLiftDeck* Lift = FindRealmLiftDeck(Gate.GateId);
+			const bool bIsOnDeck = Lift && (Lift->IsCarryingPawn(Pawn) || Lift->IsPawnBasedOnDeck(Pawn));
+			if (bIsOnDeck || IsTravelBlockingRecovery())
+			{
+				return false;
+			}
+
+			const FTransform ExitTransform = Gate.GetTravelDestination(false);
+			const FVector RecoveryLocation = FindLiftExitRecoveryLocation(Pawn, ExitTransform.GetLocation());
+			if (!TeleportFallenPawn(Pawn, RecoveryLocation, ExitTransform.Rotator(), Realm->TransitionFadeColor))
+			{
+				UE_LOG(LogTDGame, Warning, TEXT("Realm: failed to recover pawn '%s' from the shaft of lift gate '%s' to %s."), *Pawn.GetName(), *Gate.GateId.ToString(), *RecoveryLocation.ToCompactString());
+				return true;
+			}
+
+			UE_LOG(LogTDGame, Warning, TEXT("Realm: pawn '%s' fell to %s in the shaft of lift gate '%s'; recovered to the field landing exit %s."), *Pawn.GetName(), *PawnLocation.ToCompactString(), *Gate.GateId.ToString(), *RecoveryLocation.ToCompactString());
+			return true;
+		}
+	}
+	return false;
+}
+
+void UTDRealmSubsystem::RecoverFallenPawn(APawn& Pawn, const UTDRealmDefinition& Realm)
 {
 	const FVector FallenLocation = Pawn.GetActorLocation();
 	const FTDRealmGate* NearestGate = Realm.FindNearestGate(FallenLocation);
@@ -687,12 +1022,25 @@ void UTDRealmSubsystem::RecoverFallenPawn(APawn& Pawn, const UTDRealmDefinition&
 		return;
 	}
 
-	const FVector RecoveryLocation = FindFallRecoveryLocation(Pawn, *NearestGate);
-	const FRotator RecoveryRotation = NearestGate->ArrivalTransform.Rotator();
-	if (!UTDSeamlessTravelSubsystem::TeleportPawnToDestination(Pawn, RecoveryLocation, RecoveryRotation))
+	const bool bIsLiftGate = NearestGate->GateKind == ETDRealmGateKind::Lift;
+	const FTransform LiftExitTransform = NearestGate->GetTravelDestination(true);
+	const FVector RecoveryLocation = bIsLiftGate ? FindLiftExitRecoveryLocation(Pawn, LiftExitTransform.GetLocation()) : FindFallRecoveryLocation(Pawn, *NearestGate);
+	const FRotator RecoveryRotation = bIsLiftGate ? LiftExitTransform.Rotator() : NearestGate->ArrivalTransform.Rotator();
+	if (!TeleportFallenPawn(Pawn, RecoveryLocation, RecoveryRotation, Realm.TransitionFadeColor))
 	{
 		UE_LOG(LogTDGame, Warning, TEXT("Realm: failed to recover pawn '%s' to gate '%s' passage end %s."), *Pawn.GetName(), *NearestGate->GateId.ToString(), *RecoveryLocation.ToCompactString());
 		return;
+	}
+
+	UE_LOG(LogTDGame, Warning, TEXT("Realm: pawn '%s' fell to %s below %.0f in '%s'; recovered to gate '%s' passage end %s."), *Pawn.GetName(), *FallenLocation.ToCompactString(), Realm.FallRecoveryHeightCm, *Realm.RealmId.ToString(), *NearestGate->GateId.ToString(), *RecoveryLocation.ToCompactString());
+	ActivateGameplayDataLayer(Realm, TEXT("fall recovery"));
+}
+
+bool UTDRealmSubsystem::TeleportFallenPawn(APawn& Pawn, const FVector& RecoveryLocation, const FRotator& RecoveryRotation, const FLinearColor& FadeColor) const
+{
+	if (!UTDSeamlessTravelSubsystem::TeleportPawnToDestination(Pawn, RecoveryLocation, RecoveryRotation))
+	{
+		return false;
 	}
 
 	const APlayerController* PlayerController = Cast<APlayerController>(Pawn.GetController());
@@ -700,9 +1048,15 @@ void UTDRealmSubsystem::RecoverFallenPawn(APawn& Pawn, const UTDRealmDefinition&
 	{
 		const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
 		const float FadeInSeconds = Settings ? FMath::Max(Settings->TravelFadeInSeconds, 0.0f) : 0.0f;
-		PlayerController->PlayerCameraManager->StartCameraFade(1.0f, 0.0f, FadeInSeconds, Realm.TransitionFadeColor, false, false);
+		PlayerController->PlayerCameraManager->StartCameraFade(1.0f, 0.0f, FadeInSeconds, FadeColor, false, false);
 	}
-	UE_LOG(LogTDGame, Warning, TEXT("Realm: pawn '%s' fell to %s below %.0f in '%s'; recovered to gate '%s' passage end %s."), *Pawn.GetName(), *FallenLocation.ToCompactString(), Realm.FallRecoveryHeightCm, *Realm.RealmId.ToString(), *NearestGate->GateId.ToString(), *RecoveryLocation.ToCompactString());
+	return true;
+}
+
+bool UTDRealmSubsystem::IsTravelBlockingRecovery() const
+{
+	const UTDSeamlessTravelSubsystem* Travel = UTDSeamlessTravelSubsystem::GetSeamlessTravelSubsystem(this);
+	return Travel && Travel->GetTravelState() != ETDSeamlessTravelState::Idle && !Travel->IsUnrequestedPreload();
 }
 
 FVector UTDRealmSubsystem::FindFallRecoveryLocation(const APawn& Pawn, const FTDRealmGate& Gate) const
@@ -725,6 +1079,28 @@ FVector UTDRealmSubsystem::FindFallRecoveryLocation(const APawn& Pawn, const FTD
 	}
 
 	return FVector(PassageEnd.X, PassageEnd.Y, Hit.Location.Z + Pawn.GetSimpleCollisionHalfHeight() + TDFallRecoveryClearanceCm);
+}
+
+FVector UTDRealmSubsystem::FindLiftExitRecoveryLocation(const APawn& Pawn, const FVector& ExitLocationCm) const
+{
+	const double StandingOffsetCm = Pawn.GetSimpleCollisionHalfHeight() + TDFallRecoveryClearanceCm;
+	const FVector StandingLocation = ExitLocationCm + FVector(0.0, 0.0, StandingOffsetCm);
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return StandingLocation;
+	}
+
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDRealmLiftFallRecovery), false, &Pawn);
+	FHitResult Hit;
+	const FVector TraceStart(ExitLocationCm.X, ExitLocationCm.Y, ExitLocationCm.Z + TDRealmLiftExitTraceUpCm);
+	const FVector TraceEnd(ExitLocationCm.X, ExitLocationCm.Y, ExitLocationCm.Z - TDFallRecoveryTraceDownCm);
+	if (!World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams))
+	{
+		return StandingLocation;
+	}
+
+	return FVector(ExitLocationCm.X, ExitLocationCm.Y, Hit.Location.Z + StandingOffsetCm);
 }
 
 const UTDRealmDefinition* UTDRealmSubsystem::FindLoadedRealmContainingLocation(const FVector& LocationCm) const

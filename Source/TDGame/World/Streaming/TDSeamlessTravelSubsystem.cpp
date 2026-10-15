@@ -7,11 +7,14 @@
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "HAL/IConsoleManager.h"
 #include "NavigationSystem.h"
 #include "TDGame.h"
 #include "TDWorldGenSettings.h"
 #include "World/Streaming/TDRealmSubsystem.h"
 #include "World/TDRealmDefinitions.h"
+#include "WorldPartition/DataLayer/DataLayerManager.h"
+#include "WorldPartition/WorldPartitionRuntimeCell.h"
 #include "WorldPartition/WorldPartitionSubsystem.h"
 
 namespace
@@ -19,6 +22,13 @@ namespace
 	const FName TDSeamlessTravelSourceName(TEXT("TDSeamlessTravel"));
 	const FName TDSeamlessTravelDepartureHoldSourceName(TEXT("TDSeamlessTravelDepartureHold"));
 	const FVector TDNavigationProjectionExtent(300.0, 300.0, 600.0);
+	constexpr float TDSeamlessTravelReadinessRadiusCm = 20000.0f;
+	constexpr float TDSeamlessTravelRealmSourceRadiusCm = 25000.0f;
+
+	TAutoConsoleVariable<float> CVarTDRealmSimulatedPreloadDelaySeconds(
+		TEXT("td.Realm.SimulatedPreloadDelaySeconds"),
+		0.0f,
+		TEXT("Test only. Seconds of world time after a seamless travel preload starts during which the destination is reported as not ready. 0 = Off."));
 
 	const TCHAR* TravelStateToString(ETDSeamlessTravelState State)
 	{
@@ -142,12 +152,13 @@ bool UTDSeamlessTravelSubsystem::GetStreamingSources(TArray<FWorldPartitionStrea
 	{
 		FWorldPartitionStreamingSource& Source = StreamingSources.AddDefaulted_GetRef();
 		Source.Name = TDSeamlessTravelSourceName;
-		Source.Location = Destination.GetLocation();
+		Source.Location = bIsRealmGateTarget ? ReadinessLocation : Destination.GetLocation();
 		Source.Rotation = Destination.Rotator();
 		Source.TargetState = EStreamingSourceTargetState::Activated;
 		Source.Priority = EStreamingSourcePriority::Highest;
 		FStreamingSourceShape& Shape = Source.Shapes.AddDefaulted_GetRef();
-		Shape.bUseGridLoadingRange = true;
+		Shape.bUseGridLoadingRange = !bIsRealmGateTarget;
+		Shape.Radius = TDSeamlessTravelRealmSourceRadiusCm;
 	}
 
 	const bool bHasDepartureHoldSource = IsDepartureHoldActive();
@@ -190,7 +201,7 @@ bool UTDSeamlessTravelSubsystem::ResolveDestination(FName DungeonId, bool bToEnt
 	const FTDRealmGate* Gate = Realm ? Realm->FindGate(DungeonId) : nullptr;
 	if (Gate)
 	{
-		OutDestination = bToEntry ? Gate->ArrivalTransform : Gate->FieldReturnTransform;
+		OutDestination = Gate->GetTravelDestination(bToEntry);
 		OutFadeColor = Realm->TransitionFadeColor;
 		return true;
 	}
@@ -254,15 +265,25 @@ bool UTDSeamlessTravelSubsystem::StartPreload(FName DungeonId, bool bToEntry)
 		UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: unrequested preload '%s' replaced by '%s'."), *ActiveDungeonId.ToString(), *DungeonId.ToString());
 	}
 
+	const UTDRealmDefinition* Realm = UTDRealmDefinition::FindRealmByGateId(DungeonId);
+	const FTDRealmGate* Gate = Realm ? Realm->FindGate(DungeonId) : nullptr;
 	ActiveDungeonId = DungeonId;
 	bIsTargetEntry = bToEntry;
 	bIsTravelRequested = false;
 	Destination = ResolvedDestination;
+	bIsRealmGateTarget = Gate != nullptr;
+	ReadinessLocation = Gate ? Gate->GetPreloadLocation(bToEntry) : ResolvedDestination.GetLocation();
 	TravelFadeColor = ResolvedFadeColor;
 	RequestStartSeconds = FPlatformTime::Seconds();
+	PreloadStartWorldSeconds = GetWorldTimeSeconds();
 	NextTimeoutWarningSeconds = RequestStartSeconds + GetTimeoutSeconds();
 	RegisterStreamingProvider();
-	UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: preload '%s' (%s) at %s."), *DungeonId.ToString(), bToEntry ? TEXT("entry") : TEXT("field return"), *Destination.GetLocation().ToCompactString());
+	UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: preload '%s' (%s) at %s, readiness query at %s."), *DungeonId.ToString(), bToEntry ? TEXT("entry") : TEXT("field return"), *Destination.GetLocation().ToCompactString(), *ReadinessLocation.ToCompactString());
+	const float SimulatedDelaySeconds = CVarTDRealmSimulatedPreloadDelaySeconds.GetValueOnGameThread();
+	if (SimulatedDelaySeconds > 0.0f)
+	{
+		UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: simulated preload delay %.1fs for '%s' (td.Realm.SimulatedPreloadDelaySeconds)."), SimulatedDelaySeconds, *DungeonId.ToString());
+	}
 	SetTravelState(ETDSeamlessTravelState::Preloading);
 	return true;
 }
@@ -334,24 +355,6 @@ bool UTDSeamlessTravelSubsystem::IsReadyFor(FName DungeonId, bool bToEntry) cons
 	return IsDestinationReady();
 }
 
-bool UTDSeamlessTravelSubsystem::CommitSeamCrossing(FName DungeonId, bool bToEntry, const FVector& HoldLocation)
-{
-	if (!IsReadyFor(DungeonId, bToEntry))
-	{
-		UE_LOG(LogTDGame, Warning, TEXT("SeamlessTravel: seam crossing '%s' (%s) refused, '%s' is in state %s."), *DungeonId.ToString(), bToEntry ? TEXT("entry") : TEXT("field return"), *ActiveDungeonId.ToString(), TravelStateToString(TravelState));
-		return false;
-	}
-
-	LastTraveledDungeonId = DungeonId;
-	ActiveDungeonId = NAME_None;
-	bIsTravelRequested = false;
-	BeginTravelFadeIn();
-	SetTravelState(ETDSeamlessTravelState::Idle);
-	BeginDepartureHold(HoldLocation);
-	UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: '%s' crossed seam after %.2fs."), *DungeonId.ToString(), GetElapsedSeconds());
-	return true;
-}
-
 bool UTDSeamlessTravelSubsystem::IsTickable() const
 {
 	return TravelState == ETDSeamlessTravelState::Preloading || TravelState == ETDSeamlessTravelState::ReadyToTravel;
@@ -392,16 +395,44 @@ bool UTDSeamlessTravelSubsystem::IsDestinationOnNavigation() const
 	return NavigationSystem->ProjectPointToNavigation(Destination.GetLocation(), ProjectedLocation, TDNavigationProjectionExtent);
 }
 
+bool UTDSeamlessTravelSubsystem::IsSimulatedPreloadDelayActive() const
+{
+	const float DelaySeconds = CVarTDRealmSimulatedPreloadDelaySeconds.GetValueOnGameThread();
+	if (DelaySeconds <= 0.0f)
+	{
+		return false;
+	}
+
+	return GetWorldTimeSeconds() < PreloadStartWorldSeconds + DelaySeconds;
+}
+
 bool UTDSeamlessTravelSubsystem::IsDestinationReady() const
 {
+	if (IsSimulatedPreloadDelayActive())
+	{
+		return false;
+	}
+
 	UWorld* World = GetWorld();
 	const UWorldPartitionSubsystem* WorldPartition = World ? World->GetSubsystem<UWorldPartitionSubsystem>() : nullptr;
-	if (WorldPartition && !WorldPartition->IsStreamingCompleted(this))
+	if (WorldPartition && !WorldPartition->IsStreamingCompleted(EWorldPartitionRuntimeCellState::Activated, { MakeReadinessQuerySource() }, false))
 	{
 		return false;
 	}
 
 	return IsDestinationOnNavigation();
+}
+
+FWorldPartitionStreamingQuerySource UTDSeamlessTravelSubsystem::MakeReadinessQuerySource() const
+{
+	FWorldPartitionStreamingQuerySource QuerySource(ReadinessLocation);
+	QuerySource.Radius = TDSeamlessTravelReadinessRadiusCm;
+	QuerySource.bUseGridLoadingRange = false;
+	if (const UDataLayerManager* DataLayerManager = UDataLayerManager::GetDataLayerManager(GetWorld()))
+	{
+		QuerySource.DataLayers = DataLayerManager->GetEffectiveActiveDataLayerNames().Array();
+	}
+	return QuerySource;
 }
 
 void UTDSeamlessTravelSubsystem::TickPreloading()

@@ -587,6 +587,11 @@ void ATDGamePlayerController::OnRollStarted()
 
 void ATDGamePlayerController::OnJumpStarted()
 {
+	if (IsMoveInputIgnored())
+	{
+		return;
+	}
+
 	if (ATDGameCharacter* PlayerCharacter = Cast<ATDGameCharacter>(GetPawn()))
 	{
 		PlayerCharacter->TryStartJumpAbility();
@@ -705,25 +710,6 @@ void ATDGamePlayerController::ClearQueuedAttack()
 {
 	QueuedAttackTarget.Reset();
 	bIsAttackMoveQueued = false;
-}
-
-void ATDGamePlayerController::ShiftMovementTargetsBy(const FVector& Offset)
-{
-	CachedDestination += Offset;
-	if (bIsAttackMoveQueued)
-	{
-		ClearQueuedAttack();
-		StopMovement();
-		return;
-	}
-
-	if (!PathFollowingComponent || PathFollowingComponent->GetStatus() == EPathFollowingStatus::Idle)
-	{
-		return;
-	}
-
-	const FVector ShiftedPathDestination = PathFollowingComponent->GetPathDestination() + Offset;
-	UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, ShiftedPathDestination);
 }
 
 FVector ATDGamePlayerController::GetRollDirection(const ATDGameCharacter& ControlledCharacter) const

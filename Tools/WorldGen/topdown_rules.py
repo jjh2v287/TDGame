@@ -1,7 +1,7 @@
-"""에디터 밖 시스템 파이썬(numpy)에서 쓰는 공유 모듈: 탑다운 카메라 대비 결정론 배치 후처리 규칙 R1·R2·R3·R5와 규칙 전후 수치 계산(P3-17, 명세 3절). 난수를 쓰지 않는다.
-실행: generate_ashen_vale.py·generate_realm.py·realm_passages.py 가 import 한다. 수치 계산은 python Tools/WorldGen/topdown_rules.py --measure --label <이름> [--field-dir <경로> --realms-dir <경로>] (numpy·scipy 필요, 생성기 출력이 먼저 있어야 함)
-출력: --measure 는 Saved/WorldGen/TopDownMetrics/metrics_<이름>.json(--out-dir 로 변경) 과 표준 출력 표. 생성기는 출력 폴더에 topdown_rules_report.json 을 쓴다
-상태: 현행
+"""에디터 밖 시스템 파이썬(numpy)에서 쓰는 공유 모듈: 탑다운 카메라 대비 결정론 배치 후처리 규칙 R1·R2·R3·R5와 갱도 창 보호 구역(TDProtectedZone), MaintainYFOV 카메라 시야 모델(16:9·21:9 광선 격자), 필드·이계 출력을 한 월드 격자로 이어붙이는 읽기(stitch_world)와 그 격자 기준 걷는 칸 수치 계산(P3-17, P3-19 명세 3.4). 난수를 쓰지 않는다.
+실행: generate_ashen_vale.py·generate_realm.py·realm_passages.py·check_continuous_world.py 가 import 한다. 수치 계산은 python Tools/WorldGen/topdown_rules.py --measure --label <이름> [--field-dir <경로> --realms-dir <경로>] (numpy·scipy 필요, 생성기 출력이 먼저 있어야 함)
+출력: --measure 는 Saved/WorldGen/TopDownMetrics/metrics_<이름>.json(--out-dir 로 변경) 과 표준 출력 표(지역별 연결로 밖 걷는 칸, 관문별 연결로 바닥). 생성기는 출력 폴더에 topdown_rules_report.json 을 쓴다
+상태: 현행(P3-19)
 """
 import argparse
 import json
@@ -10,12 +10,10 @@ import os
 import re
 import sys
 from collections import Counter
-from contextlib import contextmanager
 
 import numpy as np
 
 ENABLED = True
-PLACEMENT_LEGACY_TERRAIN = False
 
 CAMERA_ARM_CM = 1100.0
 CAMERA_PITCH_DEG = -50.0
@@ -29,6 +27,11 @@ CAMERA_OFFSET_CM = (
 )
 CAMERA_OFFSET_M = tuple(v / 100.0 for v in CAMERA_OFFSET_CM)
 CAMERA_FROM_HEAD_CM = np.array([CAMERA_OFFSET_CM[0], CAMERA_OFFSET_CM[1], CAMERA_OFFSET_CM[2] + PAWN_CENTER_ABOVE_GROUND_CM - PAWN_HEAD_ABOVE_GROUND_CM])
+CAMERA_FOV_DEG = 90.0
+CAMERA_COMPONENT_ASPECT_RATIO = 1.777778
+CAMERA_HALF_VERTICAL_FOV_RAD = math.atan(math.tan(math.radians(0.5 * CAMERA_FOV_DEG)) / CAMERA_COMPONENT_ASPECT_RATIO)
+VIEW_ASPECT_RATIOS = {"16x9": 16.0 / 9.0, "21x9": 21.0 / 9.0}
+VIEW_RAY_ROWS = 15
 CAMERA_NEAR_RADIUS_CM = 150.0
 ZONE_AHEAD_CM = 650.0
 WALK_MAX_SLOPE_DEG = 35.0
@@ -50,7 +53,6 @@ ASSET_PREFIX = "/Game/DarkFantasyTopDown/StaticMeshes/"
 NO_COLLISION_ASSETS = ("VFX/SM_LightBeam",)
 PILLAR_LABEL_TOKENS = ("StarPillar_", "RuinPillar_", "LookoutPillar_", "PillarSpire")
 ENTRANCE_LABEL_PATTERN = re.compile(r"TDGen_(MainCrypt|HollowCave|SunkenCrypt)_(Lintel|Cap|Pillar_-1|Pillar_1|Ram)")
-FIELD_PASSAGE_LABEL_PREFIX = "TDRealm_Passage_"
 ROCKLIKE = ("rock", "cliff")
 SOLID_CATEGORIES = ("rock", "cliff", "structure")
 
@@ -99,14 +101,35 @@ BASE_RIM_CM = {
 }
 
 
-@contextmanager
-def legacy_placement_terrain():
-    global PLACEMENT_LEGACY_TERRAIN
-    PLACEMENT_LEGACY_TERRAIN = True
-    try:
-        yield
-    finally:
-        PLACEMENT_LEGACY_TERRAIN = False
+def camera_view_basis():
+    pitch = math.radians(CAMERA_PITCH_DEG)
+    yaw = math.radians(CAMERA_YAW_DEG)
+    forward = np.array([math.cos(pitch) * math.cos(yaw), math.cos(pitch) * math.sin(yaw), math.sin(pitch)])
+    right = np.array([math.sin(yaw), -math.cos(yaw), 0.0])
+    up = np.cross(right, forward)
+    up = up / np.linalg.norm(up)
+    if up[2] < 0.0:
+        up = -up
+    return forward, right, up
+
+
+def half_horizontal_fov_rad(aspect_ratio):
+    return math.atan(math.tan(CAMERA_HALF_VERTICAL_FOV_RAD) * aspect_ratio)
+
+
+def view_ray_grid(aspect_ratio, rows=VIEW_RAY_ROWS):
+    columns = int(round(rows * half_horizontal_fov_rad(aspect_ratio) / CAMERA_HALF_VERTICAL_FOV_RAD)) | 1
+    return columns, rows
+
+
+def view_ray_directions(aspect_ratio, rows=VIEW_RAY_ROWS):
+    columns, rows = view_ray_grid(aspect_ratio, rows)
+    forward, right, up = camera_view_basis()
+    tan_h = math.tan(half_horizontal_fov_rad(aspect_ratio))
+    tan_v = math.tan(CAMERA_HALF_VERTICAL_FOV_RAD)
+    uu, vv = np.meshgrid(np.linspace(-1.0, 1.0, columns), np.linspace(-1.0, 1.0, rows))
+    directions = forward[None, :] + (uu.ravel() * tan_h)[:, None] * right[None, :] + (vv.ravel() * tan_v)[:, None] * up[None, :]
+    return directions / np.linalg.norm(directions, axis=1)[:, None]
 
 
 def quantize_height_m(height_m, units_per_meter=128.0):
@@ -533,8 +556,9 @@ def apply_visibility_rules(records, grid, masks, report):
                     "authored_blocking_kept": sum(kept_authored.values()), "authored_blocking_kept_by_asset": dict(sorted(kept_authored.items()))}
 
 
-def apply_entrance_rules(actors, grid, report):
-    records = [TDPlacedMesh("actor", e, asset_key(e["mesh"]), "", e.get("label", "")) for e in actors if ENTRANCE_LABEL_PATTERN.fullmatch(e.get("label", ""))]
+def apply_entrance_rules(actors, grid, report, protected_zones=()):
+    records = [TDPlacedMesh("actor", e, asset_key(e["mesh"]), "", e.get("label", "")) for e in actors
+               if ENTRANCE_LABEL_PATTERN.fullmatch(e.get("label", "")) and not is_protected(e["loc"], protected_zones)]
     stats = Counter()
     for record in records:
         part = ENTRANCE_LABEL_PATTERN.fullmatch(record.label).group(2)
@@ -557,10 +581,36 @@ def apply_entrance_rules(actors, grid, report):
     report["r5"] = dict(sorted(stats.items()))
 
 
-def apply_placement_rules(ism, actors, path_of_bucket, grid, masks):
+class TDProtectedZone:
+    def __init__(self, center_cm, yaw_deg, half_extent_cm, z_range_cm):
+        self.center_cm = (float(center_cm[0]), float(center_cm[1]))
+        self.cos_yaw = math.cos(math.radians(yaw_deg))
+        self.sin_yaw = math.sin(math.radians(yaw_deg))
+        self.half_extent_cm = (float(half_extent_cm[0]), float(half_extent_cm[1]))
+        self.z_range_cm = (float(z_range_cm[0]), float(z_range_cm[1]))
+
+    def contains(self, loc):
+        dx = float(loc[0]) - self.center_cm[0]
+        dy = float(loc[1]) - self.center_cm[1]
+        forward = dx * self.cos_yaw + dy * self.sin_yaw
+        lateral = -dx * self.sin_yaw + dy * self.cos_yaw
+        if abs(forward) > self.half_extent_cm[0] or abs(lateral) > self.half_extent_cm[1]:
+            return False
+        return self.z_range_cm[0] <= float(loc[2]) <= self.z_range_cm[1]
+
+
+def is_protected(loc, protected_zones):
+    return any(zone.contains(loc) for zone in protected_zones)
+
+
+def apply_placement_rules(ism, actors, path_of_bucket, grid, masks, protected_zones=()):
     report = {}
-    apply_entrance_rules(actors, grid, report)
+    apply_entrance_rules(actors, grid, report, protected_zones)
     records = collect_placements(ism, actors, path_of_bucket)
+    if protected_zones:
+        protected_count = sum(1 for r in records if is_protected(r.values()[0], protected_zones))
+        records = [r for r in records if not is_protected(r.values()[0], protected_zones)]
+        report["protected_zone_records"] = protected_count
     apply_base_rules(records, grid, masks, report)
     apply_pillar_rules(records, grid, masks, report)
     apply_visibility_rules(records, grid, masks, report)
@@ -623,57 +673,134 @@ def subset_stats(measured, masks, subset):
             "camera_under_terrain_cells": int((cells & measured["camera_under"]).sum()), "terrain_sightline_blocked_cells": int((cells & measured["sight_blocked"]).sum())}
 
 
-def read_height_grid(folder, size, center_cm):
-    raw = np.fromfile(os.path.join(folder, "height.r16"), dtype="<u2")
-    return TDTerrainGrid((raw.reshape(size, size).astype(np.float64) - 32768.0) / 128.0, center_cm)
+FIELD_REGION_NAME = "AshenVale"
+FIELD_WATER_Z_M = -1.75
+VOID_FILL_DEPTH_M = 100.0
 
 
-def read_road_mask(folder, size):
-    return np.fromfile(os.path.join(folder, "layer_Road.r8"), dtype=np.uint8).reshape(size, size) >= 128
+def read_landscape(folder):
+    with open(os.path.join(folder, "layout.json"), encoding="utf-8") as fp:
+        layout = json.load(fp)
+    land = layout["landscape"]
+    size = land["components_x"] * land["sections_per_component"] * land["quads_per_section"] + 1
+    center_m = (land["location"][0] / 100.0, land["location"][1] / 100.0)
+    if any(abs(v - round(v)) > 1e-9 for v in center_m):
+        raise ValueError(f"{folder}: landscape center {center_m} m is not integer meters")
+    units_per_meter = 128.0 * 100.0 / land["scale"][2]
+    units = np.fromfile(os.path.join(folder, "height.r16"), dtype="<u2").reshape(size, size)
+    layers = {e["name"]: np.fromfile(os.path.join(folder, f"layer_{e['name']}.r8"), dtype=np.uint8).reshape(size, size) for e in land["layers"]}
+    return {"folder": folder, "layout": layout, "size": size, "half": (size - 1) // 2, "center_m": (int(round(center_m[0])), int(round(center_m[1]))),
+            "z_offset_m": land["location"][2] / 100.0, "units": units, "units_per_meter": units_per_meter,
+            "height_m": (units.astype(np.float64) - 32768.0) / units_per_meter + land["location"][2] / 100.0, "layers": layers}
 
 
-def load_layout_records(layout, extra_actors=(), skip_actor_prefix=None):
+def stitch_world(field_dir, realms_dir, realm_ids):
+    regions = [(rid, read_landscape(os.path.join(realms_dir, rid))) for rid in realm_ids] + [(FIELD_REGION_NAME, read_landscape(field_dir))]
+    x0 = min(land["center_m"][0] - land["half"] for _, land in regions)
+    y0 = min(land["center_m"][1] - land["half"] for _, land in regions)
+    x1 = max(land["center_m"][0] + land["half"] for _, land in regions)
+    y1 = max(land["center_m"][1] + land["half"] for _, land in regions)
+    shape = (y1 - y0 + 1, x1 - x0 + 1)
+    height = np.full(shape, np.nan)
+    region = np.zeros(shape, dtype=np.int8)
+    layer_names = sorted({name for _, land in regions for name in land["layers"]})
+    layers = {name: np.zeros(shape, dtype=np.uint8) for name in layer_names}
+    names = [FIELD_REGION_NAME] + list(realm_ids)
+    for rid, land in regions:
+        ix = land["center_m"][0] - land["half"] - x0
+        iy = land["center_m"][1] - land["half"] - y0
+        window = (slice(iy, iy + land["size"]), slice(ix, ix + land["size"]))
+        height[window] = land["height_m"]
+        region[window] = names.index(rid) + 1
+        for name, layer in land["layers"].items():
+            layers[name][window] = layer
+    return {"x0": x0, "y0": y0, "h": height, "region": region, "names": names, "layers": layers, "landscapes": dict(regions)}
+
+
+def world_axes(world):
+    ny, nx = world["h"].shape
+    return np.meshgrid(np.arange(nx, dtype=np.float64) + world["x0"], np.arange(ny, dtype=np.float64) + world["y0"])
+
+
+def world_square_grid(world):
+    ny, nx = world["h"].shape
+    size = max(ny, nx) | 1
+    half = (size - 1) // 2
+    fill = float(np.nanmin(world["h"])) - VOID_FILL_DEPTH_M
+    square = np.full((size, size), fill)
+    square[:ny, :nx] = np.where(np.isfinite(world["h"]), world["h"], fill)
+    return TDTerrainGrid(square, ((world["x0"] + half) * 100.0, (world["y0"] + half) * 100.0))
+
+
+def pad_to_grid(grid, array, fill):
+    padded = np.full(grid.h.shape, fill, dtype=array.dtype)
+    padded[:array.shape[0], :array.shape[1]] = array
+    return padded
+
+
+def load_layout_records(layout):
     ism = {}
     paths = {}
     for index, entry in enumerate(layout["ism"]):
         bucket = (entry["key"], index)
         ism[bucket] = entry["transforms"]
         paths[bucket] = entry["mesh"]
-    actors = [e for e in layout["actors"] if not (skip_actor_prefix and e.get("label", "").startswith(skip_actor_prefix))]
-    actors = actors + list(extra_actors)
-    return collect_placements(ism, actors, lambda bucket: paths[bucket])
+    return collect_placements(ism, layout["actors"], lambda bucket: paths[bucket])
+
+
+def world_route_circles_m(world):
+    import generate_ashen_vale as gav
+    import generate_realm as gr
+    circles = [(poi["pos"][0], poi["pos"][1], poi["r"]) for poi in gav.POIS.values()]
+    circles.append((gav.VILLAGE[0], gav.VILLAGE[1], gav.VILLAGE_R))
+    circles += [(dungeon[0], dungeon[1], 14.0) for dungeon in (gav.MAIN_DUNGEON, gav.SIDE_DUNGEON_NW, gav.SIDE_DUNGEON_SE)]
+    for rid in world["names"][1:]:
+        cfg = gr.REALM_CONFIGS[rid]
+        cx, cy = world["landscapes"][rid]["center_m"]
+        circles += [(c["x"] + cx, c["y"] + cy, 20.0) for c in cfg["clearings"]]
+        circles += [(p["plaza"][0] + cx, p["plaza"][1] + cy, p["radius_m"]) for p in gr.gate_plazas(rid)]
+        if cfg.get("pillar_ring"):
+            ring = cfg["pillar_ring"]
+            circles.append((ring["x"] + cx, ring["y"] + cy, ring["r"] - 2.0))
+    return circles
+
+
+def world_water_mask(world, grid):
+    import generate_realm as gr
+    levels = {FIELD_REGION_NAME: FIELD_WATER_Z_M, "SunkenStarfield": gr.SUNKEN_WATER_Z_M, "PaleHeights": gr.PALE_WATER_LEVEL_M}
+    water = np.zeros(world["h"].shape, dtype=bool)
+    for index, name in enumerate(world["names"], start=1):
+        level = levels[name] + (0.0 if name == FIELD_REGION_NAME else world["landscapes"][name]["z_offset_m"])
+        water |= (world["region"] == index) & (world["h"] < level)
+    return pad_to_grid(grid, water, False)
+
+
+def world_route_masks(world, grid):
+    import realm_passages as rp
+    X, Y = grid.meter_axes()
+    cx, cy = grid.center_cm[0] / 100.0, grid.center_cm[1] / 100.0
+    floors = [rp.gate_floor_cells(gate_id, X + cx, Y + cy) for gate_id in rp.GATE_IDS]
+    road = pad_to_grid(grid, world["layers"]["Road"] >= 128, False)
+    circles = [(x - cx, y - cy, r) for x, y, r in world_route_circles_m(world)]
+    water = world_water_mask(world, grid) & ~np.logical_or.reduce(floors)
+    return TDRouteMasks(grid, road, circles, water, floors)
 
 
 def measure_all(field_dir, realms_dir):
-    import generate_ashen_vale as gav
-    import generate_realm as gr
     import realm_passages as rp
-    results = {}
-    realm_layouts = {rid: json.load(open(os.path.join(realms_dir, rid, "layout.json"), encoding="utf-8")) for rid in gr.REALM_CONFIGS}
-    field_layout = json.load(open(os.path.join(field_dir, "layout.json"), encoding="utf-8"))
-    extras = [e for layout in realm_layouts.values() for e in layout["actors"] if e.get("label", "").startswith(FIELD_PASSAGE_LABEL_PREFIX)]
-    grid = read_height_grid(field_dir, gav.SIZE, (0.0, 0.0))
-    masks = gav.topdown_route_masks(grid, read_road_mask(field_dir, gav.SIZE))
-    records = load_layout_records(field_layout, extras)
+    world = stitch_world(field_dir, realms_dir, tuple(rp.REALM_PLACEMENT))
+    grid = world_square_grid(world)
+    masks = world_route_masks(world, grid)
+    records = []
+    for land in world["landscapes"].values():
+        records += load_layout_records(land["layout"])
     measured = measure_region(records, grid, masks)
-    subsets = {"route_excluding_passages": ~masks.floor_union}
-    for passage, floor in zip(rp.PASSAGES, masks.floors):
-        subsets[passage["gate_id"]] = floor
-    results["field"] = {name: subset_stats(measured, masks, mask) for name, mask in subsets.items()}
-    results["field"]["top_blockers_cells"] = dict(measured["by_asset"].most_common(8))
-    for rid, cfg in gr.REALM_CONFIGS.items():
-        folder = os.path.join(realms_dir, rid)
-        layout = realm_layouts[rid]
-        grid = read_height_grid(folder, gr.SIZE, tuple(layout["realm"]["center_cm"][:2]))
-        masks = gr.topdown_route_masks(cfg, grid, read_road_mask(folder, gr.SIZE))
-        records = load_layout_records(layout, skip_actor_prefix=FIELD_PASSAGE_LABEL_PREFIX)
-        measured = measure_region(records, grid, masks)
-        subsets = {"route_excluding_passages": ~masks.floor_union}
-        gate_ids = [p["gate_id"] for p in rp.PASSAGES if p["realm_id"] == rid]
-        for gate_id, floor in zip(gate_ids, masks.floors):
-            subsets[gate_id] = floor
-        results[rid] = {name: subset_stats(measured, masks, mask) for name, mask in subsets.items()}
-        results[rid]["top_blockers_cells"] = dict(measured["by_asset"].most_common(8))
+    region = pad_to_grid(grid, world["region"], 0)
+    results = {}
+    for index, name in enumerate(world["names"], start=1):
+        results[name] = {"route_excluding_connectors": subset_stats(measured, masks, (region == index) & ~masks.floor_union)}
+    results["connectors"] = {gate_id: subset_stats(measured, masks, floor) for gate_id, floor in zip(rp.GATE_IDS, masks.floors)}
+    results["world"] = {"top_blockers_cells": dict(measured["by_asset"].most_common(8))}
     return results
 
 

@@ -9,7 +9,7 @@
   {"realm": "<RealmId>"} → Saved/WorldGen/Realms/<RealmId>/layout.json 의 realm.atmosphere 적용. 스냅숏이 없을 때만 필드 값을 먼저 기록한다.
 look.json 예:
 {"sun_lux": 6.0, "sky_intensity": 2.2, "exposure_bias": 10.2, "fog_density": 0.022, "local_light_scale": 0.4,
- "sun_pitch": -52, "sun_yaw": 38, "sun_color": [0.8, 0.86, 1.0], "saturation": 0.8}
+ "sun_pitch": -70, "sun_yaw": 205, "sun_color": [0.8, 0.86, 1.0], "saturation": 0.8}
 국소 조명 기본 세기는 layout.json 의 lights 항목(라벨로 대응)에서 다시 읽어 local_light_scale 을 곱한다.
 """
 import json

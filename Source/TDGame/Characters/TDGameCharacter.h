@@ -45,6 +45,8 @@ public:
 	/** Update */
 	virtual void Tick(float DeltaSeconds) override;
 
+	virtual void UnPossessed() override;
+
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
 	/** Returns the camera component **/
@@ -85,6 +87,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Movement")
 	bool IsRollPlaying() const;
+
+	UFUNCTION(BlueprintCallable, Category="Movement")
+	void SetPassagePaceScale(float Scale);
 
 	bool ActivateCombatAbility(FGameplayTag AbilityTag, AActor* TargetActor = nullptr);
 	FVector ConsumePendingRollDirection();

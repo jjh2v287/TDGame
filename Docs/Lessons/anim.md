@@ -62,3 +62,58 @@
 - 증거: `Saved/AgentOps/20260930/impl-A.md`·`impl-E.md`, 테스트 `TDGame.Movement.*`(루트모션 36.00cm, 빙결 중 0.000cm)
 - 날짜·상태: 2026-09-30 active
 - 발견: claude
+
+### L-anim-08 Cascadeur Free(basic)는 FBX·DAE 내보내기와 UE Live Link가 막혀 있다 — UE 왕복은 Indie 이상
+- 증상: `csc.app.get_application().is_export_available()` → `False`, `is_pro_features_available()` → `False`, 로그 `Actual license type: basic`. 파이프라인 내보내기 단계 결과 `{"exported": false, "reason": "Cascadeur license does not allow FBX export (Free/basic exports .casc only; Indie or higher is required)."}`.
+- 해결: 무료 등급에서는 가져오기·퀵 리깅·키 쓰기·렌더·AI 모션 생성·.casc 저장까지만 자동화하고 내보내기 단계에서 멈춘다(`csc_export.py`가 먼저 검사). Python으로 관절 값을 읽어 FBX를 직접 만드는 것은 유료 기능 제한 우회라 하지 않는다. Indie(연매출 10만 달러 미만 상업 가능)·Pro 활성화 뒤 `--stages export,import`만 다시 돌린다. 무료 등급은 비상업 전용이다.
+- 범위: Cascadeur 2026.2.3, `Tools/Cascadeur/`
+- 증거: `Docs/Validation/Cascadeur/H-01-cascadeur-pipeline-2026-10-08.md`, cascadeur.com/plans(2026-10-08 확인)
+- 날짜·상태: 2026-10-08 active
+- 발견: claude
+
+### L-anim-09 Cascadeur 내장 MCP 서버 자동 기동: 사용자 settings.json의 목록 키는 내장 목록을 "대체"한다
+- 증상: 내장 MCP 스크립트 서버(`scripts/mcp`, 8765)는 Commands 메뉴의 `MCP.Start script server`를 눌러야 켜진다. 사용자 `%LOCALAPPDATA%/Nekki Limited/Cascadeur/settings.json`의 `Python.Events`에 `td_events`만 적으면 내장 `events`가 빠져 `scene_idle`이 안 돌고 `/run`이 "Timed out waiting for Cascadeur idle event"가 된다(정적 분석). 파일은 첫 실행 때 읽기 전용 속성으로 생긴다.
+- 해결: `python Tools/Cascadeur/setup_cascadeur.py`가 읽기 전용을 풀고 원본을 `settings.json.td-backup`으로 1회 백업한 뒤 `Python.Path`에 `Tools/Cascadeur/csc_scripts`, `Python.Events`에 `["events", "td_events"]`를 적는다. `td_events/scene_idle/td_autostart_mcp.py`가 첫 scene_idle에서 `scripts.mcp.start_server.run(scene)`을 한 번 부른다. 반영은 Cascadeur 재시작 뒤(`cascadeur_bridge.py restart`). 사용자 패키지 이름은 내장(`commands`, `scripts`, `events` 등)과 겹치지 않게 `td_` 접두어.
+- 범위: Cascadeur 2026.2.3(`presenter::SettingsJson`), Windows
+- 증거: 재시작 뒤 `GET /health` → `{"ok": true, "version": "0.3.1", "idle_subscription": 0}`, `Saved/AgentOps/20261008/cascadeur-app-integration.md` 1.2·2.4절
+- 날짜·상태: 2026-10-08 active
+- 발견: claude
+
+### L-anim-10 Cascadeur Python 키 쓰기·렌더 함정 6가지
+- 증상: ① 마지막 프레임에 `scene_updater.run_update(...)` → 로그 `RuntimeError: flat_map::at key not found`, `modify_update`가 `False`, 애니메이션 길이 1로 되돌아감 ② 다음 키가 없는 마지막 구간의 `change_section(...).interval.interpolation`을 바꾸자 Cascadeur가 `domain::scene::getVelocities`에서 비정상 종료 ③ 타임라인 끝 표식 구간(`set_section(Section(), 마지막+1)`)에 값을 안 쓰면 그 키로 접선이 끌려 중간 프레임이 크게 튐(20cm 이동 키에서 60cm 넘게 솟음) ④ 같은 스크립트 안의 `set_current_frame` + `RenderToFile.take_image`는 프레임 번호만 바뀌고 자세는 이전 그대로, 그림은 비동기로 생성 ⑤ root 조인트 `local_position`은 FBX Z-up 부모 좌표라 (0,0,20)이 위로 20cm ⑥ 현재 탭이 빈 무제 탭이면 `DataSourceManager.load_scene`이 새 탭 없이 그 탭에 불러옴.
+- 해결: ① 끝 표식은 마지막 키+1에 두고 그 프레임에는 마지막 키 값을 그대로 써서(유지 키) `run_update`는 건너뛴다 ② 마지막 구간은 보간을 바꾸지 않는다 ③ 위와 같음 ④ 프레임 설정과 렌더를 서로 다른 브리지 호출로 나누고 파일 생성을 기다린다(`csc_capture.py`) ⑤ 부모 회전 = root 전역 회전 × 로컬 회전ᵀ로 변환해 쓴다(`csc_motion.TDRootWriter`) ⑥ 탭 수가 아니라 경로로 확인. 탭을 닫을 때는 빈 새 탭을 먼저 현재 탭으로 만든 뒤 저장된 파이프라인 탭만 닫는다(미저장 탭이 있으면 정상 종료가 저장 대화상자에 막힌다).
+- 범위: Cascadeur 2026.2.3 Python API(`csc.domain`, `csc.layers`, `csc.tools.RenderToFile`)
+- 증거: `Saved/AgentOps/20261008/cascadeur-authoring-api.md` 4절 + 이 세션 로그(`cascadeur_log.log` 2026-10-08 11:09·11:26), `Tools/Cascadeur/csc_scripts/csc_motion.py`
+- 날짜·상태: 2026-10-08 active
+- 발견: claude
+
+### L-anim-11 Cascadeur AI 인비트위닝: 보간 종류를 AI로 바꾸는 것만으로는 아무 일도 안 하고, 모션 생성 동작은 선택 구간의 키를 덮어쓴다
+- 증상: 구간 보간을 `Interpolation.AI`(+문장 설명)로 바꾸고 자동 갱신(`InbetweeningTool.get_update_parameter()`=True)인 상태에서도 중간 프레임이 clamped Bezier와 완전히 같았다. `call_action("View.Inbetweening_RunMotionGeneration")`(25~44프레임 선택)은 무료 등급에서 51초 동안 돌며 로그 `Command: RootMotion / Root motion: done`을 남기고 동작을 새로 만들었으나 키 프레임까지 16~27cm 바꿔 경계 튐(칼끝 22 → 38cm/프레임)·끝 미정지(14cm/프레임)·발 미끄러짐(17.7cm/프레임)이 생겼다.
+- 해결: 키가 촘촘한 전투 동작에는 쓰지 않는다. 키가 드문 요청에서만 명세 `ai_motion_generation: [{"frames": [a, b]}]`로 켜고, 구간 경계와 끝 자세를 `check_cascadeur_animation.py`로 다시 확인한다.
+- 범위: Cascadeur 2026.2.3 basic, `tool_inbetweening.dll`
+- 증거: `Docs/Validation/Cascadeur/H-01-cascadeur-pipeline-2026-10-08.md` '해석과 한계', 비교 수치(같은 키 Bezier 씬 대비)
+- 날짜·상태: 2026-10-08 active
+- 발견: claude
+
+### L-anim-12 텍스트 → 키 포즈 풀이에서 칼 쥐기가 손목을 지배하고, 큰 회전 호는 키 보간으로 직선이 된다
+- 증상: ① HandGrip_R+SM_Sword 쥐기는 칼날이 손 축과 약 100°라 칼날·날 방향만 정하면 손목 꺾임 110~150°, 아래팔 비틀림 ±173°처럼 불가능한 자세가 나온다 ② 감기(칼 오른쪽 뒤) → 타격(칼 왼쪽 앞) 사이 키 2프레임 간격·관절 구면 보간으로는 칼이 등 뒤로 도는 긴 호 대신 앞쪽으로 질러가고(방위각 108 → 62 → −43°) 칼끝이 59cm까지 떨어졌다 ③ 발 명세 병합에서 `pivot`이 위치 필드와 배타 묶음이 아니어서 이후 키의 새 발 위치가 무시됐다.
+- 해결: ① `build_motion_keys.py`의 손목 인지 탐색(날 허용각 `edge_tolerance`, 손 위치 탐색 `position_search`, 팔꿈치 자동, 비틀림 75° 초과·팔꿈치 75° 미만 벌점)과 손목 보고를 쓴다. 백핸드 타격 순간 아래팔은 진행 방향(바깥)을 향하고 날은 아래팔 방향(손가락 마디 쪽)이다 ② 회전량이 큰 타격 구간은 매 프레임 키를 쓰고 칼 방위각을 회전 방향으로 단조 증가시키며 날은 `edge: "sweep_cw"`로 진행 방향을 향하게 한다 ③ `pivot`을 위치 배타 묶음에 넣었다.
+- 범위: `Tools/Cascadeur/build_motion_keys.py`, UE5 Manny + SM_Sword 쥐기(L-anim-05)
+- 증거: `Saved/Cascadeur/AS_TD_Player_SwordSpinSlash01/keys.solve.json`(최종 손목 꺾임 최대 66.6°·비틀림 75.3°), `check.json`(방위각 단조·정면 통과 19프레임)
+- 날짜·상태: 2026-10-08 active
+- 발견: claude
+### L-anim-13 Cascadeur 리그 데이터 함정 2: 손가락 박스는 위치도 써야 하고, 공식 샘플의 clavicle_l `Position`은 0으로 읽힌다
+- 증상: ① 손가락 박스(`index_01_Box_r` 등, FK 조작자)에 전역 `Rotation`만 키로 쓰자 손가락이 기준 자세 자리에 남아 손만 이동해 메시가 갈퀴처럼 늘어났다(첫 마디 5.9cm → 0프레임 31.5cm, 19프레임 63.3cm), 사용자 보고 "팔꿈치랑 손가락 등이 이상" ② 공식 샘플 `samples/UE5_Manny.casc`(사용자가 복사해 만든 `AnimationSources/Cascadeur/UE5_Manny.casc` 포함)에서 `data_viewer.get_data_id(clavicle_l, "Position")` 값이 모든 프레임 (0,0,0)인데 조작점·메시는 정상이다. 이 값을 기준 자세로 쓰면 왼쪽 쇄골 점이 140cm 지렛대로 계산돼 어깨가 틀어진다.
+- 해결: ① FK 박스는 `Position`(= 관절 위치)과 `Rotation`을 함께 쓴다(`build_motion_keys.controller_values`, `csc_motion.write_keys`) ② 관절 전역 변환은 `Transform` 동작의 `global_position`·`global_rotation`으로 읽는다(`csc_inspect.read_global_transform`) ③ `check_cascadeur_animation.py`의 뼈 길이 유지 검사(`bone_stretch`, 허용 1cm, ik_*·interaction·center_of_mass 제외)와 손 근접 렌더로 확인한다. 전신 렌더·막대 인형만으로는 손가락 문제를 못 본다.
+- 범위: Cascadeur 2026.2.3 UE5 퀵 리깅/공식 UE5_Manny 리그
+- 증거: 수정 전 `bone_stretch`·근접 렌더(`Saved/Cascadeur/Diagnose/old_closeups/sheet.png`), 수정 후 최대 변화 0.07cm·`Saved/Cascadeur/AS_TD_Player_SwordSpinSlash01/closeups/hand-sheet.png`
+- 날짜·상태: 2026-10-08 active
+- 발견: claude(사용자 시각 확인에서 시작)
+### L-anim-14 기존 검사를 모두 통과한 Cascadeur v2에 팔꿈치 몸통 관통·위팔 비틀림·발목 교차가 있었다 — 검사기가 해부학 항목을 재지 않는다
+- 증상: 사용자 "팔꿈치가 몸통을 파고들고 다리가 꼬인다". `AS_TD_Player_SwordSpinSlash01` v2는 `check_cascadeur_animation.py` 전 항목(손목 29.5°, 뼈 길이 0.07cm, 미끄러짐 ≤0.95cm/프레임)을 통과했다. 같은 명세를 다시 풀어 재 보니 오른팔꿈치–몸통 캡슐 근사 −7~−10cm(0~3·34~44프레임), 왼 위팔 축 비틀림 140~177°(17~24), 골반 기준 발목 교차 28cm(22~32, 무릎은 교차 안 함)였다.
+- 원인: 에이전트가 명세에 골반·척추·발 요, 손 목표, `elbow_body`를 몸 모형 없이 썼다(16프레임 손 목표 56.5cm/프레임 점프, 0키 `elbow_body`가 `merge_component`로 끝까지 잔존, `*_body`가 가슴이 아니라 facing 기준으로 풀림). `build_motion_keys.py:280-298` 팔꿈치 폴 비용에 몸통 거리·연속 항이 없다. 검사기에 캡슐 관통·스윙-트위스트 가동 범위·골반 기준 다리 순서·폴 튐 항목이 없다. Cascadeur 쓰기 경로(`csc_motion.py:184`)에는 쿼터니언 반구 정렬도 없다(Blender 작성기에는 있음).
+- 해결(미구현·제안): 검출 전용 해부학 게이트(캡슐 부호거리, 스윙-트위스트, 골반 좌표 다리 순서, 프레임당 폴 방향 변화, 쿼터니언 반구)를 구운 모든 프레임에 걸고 최악 프레임으로 판정한다. 에이전트 자체 PASS를 품질 근거로 쓰지 않는다. 상세 `Docs/AIAnimation_AgentPractice_Research.md` 1·5·7절.
+- 범위: `Tools/Cascadeur/build_motion_keys.py`, `check_cascadeur_animation.py`, UE5 Manny. Blender 절차적 경로의 사용자 보고 증상은 미측정(문서 7.4절)
+- 증거: `Saved/AgentOps/20261011/aianim-scratch/measure-result.json`, `aianim-codebase-audit.md`
+- 날짜·상태: 2026-10-12 active(해결 미구현)
+- 발견: claude(사용자 보고에서 시작)

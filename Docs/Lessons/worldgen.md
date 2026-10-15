@@ -37,3 +37,21 @@
 - 증거: `Saved/WorldGen/PieWalk/walk_p3-17_after`(낙하) ↔ `walk_p3-17_after2`·`after3_pale`(6/6 통과, 대기 3.8초)
 - 날짜·상태: 2026-10-14 active
 - 발견: claude
+
+### L-worldgen-05 PIE 걷기 도구: 시작점이 나무 판자 모서리면 바닥을 못 찾고, 순간 배치 직후 카메라 따라잡기가 '카메라 점프'로 잡힌다
+- 증상: ① 고원 북동 걷기가 `ground not loaded under walk start after 60s`로 실패. 시작점(31508,41131) 아래 첫 막힘이 `TDGen_Boardwalk_115`의 판자 모서리(법선 z 0.39)라 걸을 수 있는 면 판정(z>0.5)을 못 넘는다(`line_trace_multi`는 첫 막힘에서 멈춘다, L-worldgen-04의 두 번째 변형). ② 남서 걷기에서 카메라 점프 3회(최대 26,091cm)와 4.7초 끊김이 걷기 0.24초에 나온다 — 도구가 폰을 수백 m 옮긴 직후 카메라가 따라온 것이지 게임의 이음매가 아니다.
+- 해결: `editor_pie_probe.py` `find_support_z`가 시작점과 ±30·60cm 8점을 차례로 본다. 배치 뒤 폰 둘레 격자 칸이 Loaded(월드 파티션 서브시스템은 Python에서 `unreal.ObjectIterator(unreal.WorldPartitionSubsystem)` 중 `get_world()==PIE 월드`로 얻는다, `SubsystemBlueprintLibrary`는 Python에 없음)이고 카메라가 10프레임 연속 20cm 이하로 움직이며 틱이 100ms 이하일 때까지(최대 30초) 기록을 시작하지 않는다(`settle_s`).
+- 함께 본 것: 시작점이 미리 불러오기 구역(접근 + 40m) 안이면 배치하는 순간 미리 불러오기가 시작돼 로그 'ready after'에 배치·스트리밍 시간이 섞인다(북동 3.06s = 대기 2.55s + 0.49s). 첫 프레임이 이미 PRELOADING이면 걷기 시작부터의 상태 시간으로 판정한다. 지연 모의의 감속·트레드밀은 접근 걷기가 지연보다 길면 안 걸리므로(북동 접근 196m ≈ 33초 > 30초) 실행 전체로 센다.
+- 범위: PIE에서 폰을 순간 배치한 뒤 프레임 단위로 카메라·끊김을 재는 도구
+- 증거: `Saved/WorldGen/PieWalk/p3-19_walk`(실패) ↔ `p3-19_walk2`·`p3-19_walk3`·`p3-19_pace30`·`p3-19_tread15`(전부 통과)
+- 날짜·상태: 2026-10-15 active
+- 발견: claude
+
+### L-worldgen-06 그림자를 남기는 탑다운 컷아웃 + 카메라 뒤 태양 = 비운 가림물의 그림자만 폰 위에 남는다. 태양 후보는 저장 없이 PIE로 비교한다
+- 증상: 사용자 "플레이어를 가리는 오브젝트를 투명 처리하면 그림자만 보여 부자연스럽다". 필드 태양 빛 진행 yaw 38°, 카메라 시선 yaw 45°(3D 각도 6.6°)라 컷아웃 원통 안 물체의 그림자가 폰을 덮는다(모델 계산: 폰 300cm 안 지면 그림자 88.9%, E1 촬영 중앙 휘도 0.02).
+- 해결: 빛 진행 수평 방향을 카메라 반대 ±30°로(D-46, 필드 (−70°, 205°)). 고도가 낮은 역광(−55°)은 벽·절벽 그림자가 화면을 덮어, 다섯 후보 촬영 중 −70°가 평균 어두운 비율이 가장 낮았다(0.218 → 0.193). 후보 비교는 `editor_set_sun.py` `save:false`로 에디터 메모리만 바꾸고 `pie_capture_spots.py`를 돌린다. PIE가 미저장 액터·데이터 에셋 변경을 그대로 복제한다.
+- 함께 본 것: `EditorLoadingAndSavingUtils.get_dirty_content_packages()`는 OFPA 외부 액터 패키지(태양)의 미저장 변경을 돌려주지 않았다. 저장 대상은 패키지를 직접 지정하고, 미리보기로 이미 바뀐 데이터 에셋은 "값 같음"이어도 미저장이면 저장해야 한다(첫 저장에서 고원 정의가 빠졌다).
+- 범위: 탑다운 카메라 + `MF_TD_OcclusionCutout`(그림자 패스 원래 재질) + 위치별 태양 혼합
+- 증거: `Saved/WorldGen/PieShots/sun038_before`·`sun225_p55`·`sun225_p65`·`sun205_p65`·`sun205_p70`, `Saved/AgentOps/20261016/sun/geometry.md`, `Docs/Validation/P3-20-sun.md`
+- 날짜·상태: 2026-10-16 active
+- 발견: claude

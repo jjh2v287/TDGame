@@ -147,3 +147,30 @@
 - 증거: `Saved/AgentOps/20261014/topdown/laneM/bark_w1.png`(줄기 안 잘림) ↔ `bark_w1_fixed.png`(잘림)
 - 날짜·상태: 2026-10-14 active
 - 발견: claude
+
+### L-editor-18 `bGameCameraCutThisFrame`은 그리기 직후 지워진다 — latent 명령에서 읽으면 컷을 놓치고, 헤드리스에서는 한 번 켜지면 계속 남는다
+- 증상: PIE 자동화 시험에서 "카메라 컷 0회"를 latent 명령으로 읽으면, 일부러 `SetGameCameraCutThisFrame`을 불러도 0으로 나온다. 헤드리스(뷰포트 그리기 없음)에서는 컷이 한 번 생기면 이후 매 틱 참으로 읽혀 과하게 센다.
+- 원인: `APlayerController::SetGameCameraCutThisFrame`이 켠 값은 `LocalPlayer::CalcSceneView`에서 `bInCameraCut`으로 쓰이고 `GameViewportClient`가 그린 직후 끈다. latent 명령은 그 뒤에 돈다. 헤드리스는 그리기가 없어 끄는 쪽이 없다.
+- 해결: `FWorldDelegates::OnWorldPostActorTick`(카메라 관리자 갱신 뒤, 그리기 전)에서 프레임마다 읽는다(`Source/TDGameEditor/Tests/TDRealmTravelPieTests.cpp`). 헤드리스 값은 상한(과대 계수)으로만 해석하고, 카메라 위치 점프(프레임당 50m 초과)를 함께 단언한다.
+- 범위: UE 5.8 PIE·헤드리스 자동화 시험에서 카메라 컷·렌더 기록 초기화를 셀 때
+- 증거: 엔진 `LevelTick.cpp`(UpdateCameraManager 뒤 OnWorldPostActorTick), 반박 검토에서 기존 단언이 컷을 못 잡는 것을 확인(2026-10-15 P3-19)
+- 날짜·상태: 2026-10-15 active
+- 발견: claude
+
+### L-editor-19 PIE 성능·화면 측정: CSV 프로파일은 헤더가 파일 끝에 있고, 전역 노출이 수동이라 어두운 곳은 측정 전에 노출을 올려야 한다
+- 증상: ① `csvprofile start/stop`으로 받은 CSV를 첫 줄 헤더로 읽으면 지점마다 표본이 8~47개로 끊기고 `GPUTime` 열이 없다고 판단된다. 측정 중 통계 열이 늘면서 행 길이가 378→379→381로 바뀐다. ② 협곡·갱도 경계 촬영은 표본 휘도가 0.002~0.05라, 10~25% 밝기 계단을 넣어도 계단 측정이 잡지 못한다.
+- 원인: ① 최종 헤더는 메타데이터 행(`[HasHeaderRowAtEnd],1,...`) 바로 앞 줄이다. 열은 뒤에 덧붙고, `GPUTime`·`FrameTime`은 있다. 패스별 GPU 열(`GPU/*`)은 `r.GPUCsvStatsEnabled 1`일 때만 있다. ② 필드 PPV가 AEM_MANUAL·바이어스 10.4(`editor_build_open_world.py` LOOK)라 깊은 곳을 자동으로 밝히지 않는다.
+- 해결: ① 끝 헤더로 열 이름을 정하고, 각 행은 앞쪽 열부터 맞춘다(`Tools/WorldGen/pie_perf_memory.py` `read_csv_columns`). ② 측정용 촬영만 `r.ExposureOffset`(치트 CVar, `pie_capture_spots.py --exposure-offset 3`)으로 일괄 올린다. 그림자 가장자리를 가리려면 `r.ShadowQuality 0`으로 A/B를 찍는다.
+- 범위: UE 5.8 에디터 PIE에서 CSV 프로파일·화면 휘도 측정
+- 증거: `Saved/WorldGen/PiePerf/p3-19_perf/summary.md`, `Saved/WorldGen/PieShots/p3-19_spots`(어두움) ↔ `p3-19_spots_ev3`·`p3-19_spots_ev3_noshadow`
+- 날짜·상태: 2026-10-15 active
+- 발견: claude
+
+### L-editor-20 헤드리스 자동화 시험과 에디터 PIE 측정을 동시에 돌리면 둘 다 거짓 실패한다
+- 증상: 헤드리스 `TDGame.SeamlessTravel.RealmConnectorWalk`(5000cm 넘는 이동 프레임·경계 통과 2회)와 `PreloadCancelAllowsOtherTarget`(기대 HollowCave, 실제 SunkenStarfieldSoutheast)가 실패했다(52/54). 같은 시각 에디터 PIE 도구는 `walk: ground not loaded under walk start after 60s`·`ride: no result within 255s`로 실패했고, 촬영 지점 2곳은 폰이 시작 위치에 남았다.
+- 원인: 두 프로세스가 CPU·디스크를 나눠 쓰면서 스트리밍·프레임 시간 의존 단언이 시간 한도를 넘는다(미검증 추정, 코드 경로에는 변경 없음).
+- 해결: 헤드리스 시험과 PIE 측정은 차례로 돌린다. 단독 재실행에서 54/54와 PIE 통과를 확인했다. 동료 세션의 헤드리스 실행이 있는지 먼저 본다(L-build-05와 같은 점검).
+- 범위: 같은 기계에서 UnrealEditor-Cmd 시험과 GUI 에디터 PIE 도구(`pie_*.py`)를 함께 쓸 때
+- 증거: `Saved/AgentOps/20261016/sun/headless.log`(52/54, 동시) ↔ `headless_solo.log`(54/54), `sun/walk.log`(동시 실패) ↔ `walk_solo.log`
+- 날짜·상태: 2026-10-16 active
+- 발견: claude

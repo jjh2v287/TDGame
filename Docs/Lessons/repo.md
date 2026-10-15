@@ -104,3 +104,11 @@
 - 증거: 2026-10-14 claude 세션(M3-25) 수정 전 실행이 TDGame.log로 감, 따옴표를 붙인 수정 후 실행은 M325_After.log 생성
 - 날짜·상태: 2026-10-14 active
 - 발견: claude
+
+### L-repo-13 Fab 브라우저의 AX 요소를 DOM 로케이터로 찾지 못할 때
+- 증상 원문: `Playwright selector deadline exceeded` / `Locator diagnostics: {"kind":"no_matches"}`. Fab 카테고리의 AX row와 텍스트를 DOM 로케이터로 찾는 두 시도가 실패했다.
+- 해결: 최신 `getAXState()`의 요소 번호로 `tab.click(번호)`를 실행해 카테고리를 바꾼 뒤 상태를 읽었다. 목록 이름·링크 읽기는 DOM 평가로 가능했다. 실패 원인은 미확인이다.
+- 범위: 이번 Codex In-app Browser Fab 세션. 다른 브라우저·페이지 일반화는 미검증.
+- 증거: 2026-10-15 Fab 조회 로그의 두 no_matches 및 AX 클릭 뒤 카테고리 URL·목록 변경.
+- 날짜·상태: 2026-10-15 active
+- 발견: codex

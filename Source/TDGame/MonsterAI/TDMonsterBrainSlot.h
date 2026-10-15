@@ -10,9 +10,17 @@ struct FTDMonsterBodyFragment
 	uint32 Generation = 0;
 	bool bIsActive = false;
 	FVector Location = FVector::ZeroVector;
+	FVector SpawnLocation = FVector::ZeroVector;
 	FVector HomeLocation = FVector::ZeroVector;
 	float Yaw = 0.f;
 	float Radius = 40.f;
+};
+
+enum class ETDMonsterEngagement : uint8
+{
+	Home,
+	Engaged,
+	Returning
 };
 
 struct FTDMonsterBrainFragment
@@ -33,10 +41,18 @@ struct FTDMonsterBrainFragment
 	int32 SequenceCursor = 0;
 	TArray<int32> ActionCooldownSteps;
 	TArray<int32> AbilityCooldownSteps;
-	bool bIsEngaged = false;
+	ETDMonsterEngagement Engagement = ETDMonsterEngagement::Home;
 	bool bIsFrozen = false;
 	int32 EngageLockSteps = 0;
 	int32 ReengageBlockSteps = 0;
+	int32 OutOfReachStepCount = 0;
+	int32 ReturnStallStepCount = 0;
+	float ClosestReturnDistance = 0.f;
+
+	bool IsEngaged() const
+	{
+		return Engagement == ETDMonsterEngagement::Engaged;
+	}
 
 	ETDMonsterFsmState GetReportedState() const
 	{
@@ -68,4 +84,11 @@ struct FTDMonsterMoveIntent
 	FVector2D Direction = FVector2D::ZeroVector;
 	float SpeedScale = 0.f;
 	bool bShouldFaceTarget = false;
+};
+
+struct FTDMonsterAvoidanceFragment
+{
+	FVector2D PreviousCommandVelocity = FVector2D::ZeroVector;
+	int32 PreviousCandidateIndex = INDEX_NONE;
+	int32 SlowedWaitStepCount = 0;
 };

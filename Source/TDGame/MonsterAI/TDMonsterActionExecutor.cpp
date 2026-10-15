@@ -130,7 +130,7 @@ void FTDMonsterActionExecutor::InterruptActivity(FTDMonsterBrainFragment& Brain,
 FTDMonsterMoveIntent FTDMonsterActionExecutor::StepState(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
 {
 	FTDMonsterMoveIntent Intent;
-	Intent.bShouldFaceTarget = Brain.bIsEngaged && Context.Target != nullptr;
+	Intent.bShouldFaceTarget = Brain.IsEngaged() && Context.Target != nullptr;
 	switch (Brain.State)
 	{
 	case ETDMonsterFsmState::Move:

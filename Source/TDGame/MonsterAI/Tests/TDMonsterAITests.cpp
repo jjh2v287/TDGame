@@ -7,7 +7,10 @@
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "HAL/FileManager.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -105,6 +108,243 @@ namespace
     { "id": "First", "do": "Wait", "weight": %.3f, "considerations": [ { "input": "SelfHealthRatio", "curve": "Constant", "b": 0.5 } ] },
     { "id": "Second", "do": "Wait", "weight": %.3f, "considerations": [ { "input": "SelfHealthRatio", "curve": "Constant", "b": 0.5 } ] },
     { "id": "Never", "do": "Wait", "weight": 9.0, "considerations": [ { "input": "SelfHealthRatio", "curve": "Constant", "b": 0.0 }, { "input": "SelfHealthRatio", "curve": "Constant", "b": 1.0 } ] } ] })"), FirstWeight, SecondWeight);
+	}
+
+	constexpr float EngagementTestStepSeconds = 1.f / 64.f;
+	constexpr float EngagementTestHomeBand = 240.f;
+	constexpr float EngagementTestNearPlayerX = 1300.f;
+	constexpr float EngagementTestUnreachablePlayerX = 4000.f;
+	constexpr float EngagementTestInsideLeashPlayerX = 1500.f;
+	constexpr float EngagementTestNearbyPlayerOffset = 600.f;
+	constexpr float EngagementTestOutsideReturnHitPlayerX = 2700.f;
+	constexpr float EngagementTestHitDamage = 2.f;
+	constexpr float EngagementTestGiveUpWaitSeconds = 4.f;
+	constexpr int32 EngagementTestEngageWaitSteps = 2;
+	constexpr float KitingBotSpeed = 600.f;
+	constexpr float KitingBotKeepDistance = 1300.f;
+	constexpr float KitingTestSeconds = 40.f;
+	constexpr float KitingChaseCeiling = 4800.f;
+	constexpr float KitingMinimumChase = 1000.f;
+	constexpr float KitingScriptTolerance = 0.1f;
+	constexpr int32 KitingArrivalSettleSteps = 64;
+	constexpr float HitKitingTestSeconds = 20.f;
+	constexpr float HitKitingChaseCeiling = 4700.f;
+	constexpr int32 HitKitingIntervalSteps = 192;
+	constexpr float StallTestLeashEdgePlayerX = 2800.f;
+	constexpr float StallTestChaseSeconds = 6.f;
+	constexpr float StallTestFarPlayerX = 5500.f;
+	constexpr float StallTestMinBlockedSpawnDistance = 2500.f;
+	constexpr int32 StallTestEngageWaitSteps = 128;
+	constexpr float StallTestDriftTolerance = 1.f;
+	constexpr float AllyAlertTestAllyOffsetY = 500.f;
+
+	struct FTDKitingRunReport
+	{
+		float MaxHomeDistance = 0.f;
+		int32 FarEngagements = 0;
+		int32 Disengagements = 0;
+		int32 Arrivals = 0;
+		int32 ExternalBotMoves = 0;
+		int32 LineCountMismatches = 0;
+		int32 MinArrivalToEngageSteps = INDEX_NONE;
+		int32 Hits = 0;
+		bool bDidFirstHitLand = false;
+		FString FirstFarEngagement;
+		FString FirstCeilingBreach;
+		FString FirstUnreturnedDisengagement;
+		FString FirstExternalBotMove;
+	};
+
+	APawn* SpawnKitingPlayerPawn(UWorld& World, const FVector& Location)
+	{
+		APawn* PlayerPawn = World.SpawnActor<APawn>();
+		USphereComponent* Sphere = NewObject<USphereComponent>(PlayerPawn);
+		PlayerPawn->AddInstanceComponent(Sphere);
+		PlayerPawn->SetRootComponent(Sphere);
+		Sphere->SetSphereRadius(30.f);
+		Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		Sphere->SetCollisionObjectType(ECC_Pawn);
+		Sphere->SetCollisionResponseToAllChannels(ECR_Overlap);
+		Sphere->RegisterComponent();
+		PlayerPawn->SetActorLocation(Location);
+		UTDCombatComponent* Combatant = NewObject<UTDCombatComponent>(PlayerPawn);
+		PlayerPawn->AddInstanceComponent(Combatant);
+		FTDCombatStats Stats;
+		Stats.TeamId = 1;
+		Stats.BaseMaxHealth = 100000.f;
+		Combatant->SetStats(Stats);
+		Combatant->RegisterComponent();
+		APlayerController* PlayerController = World.SpawnActor<APlayerController>();
+		PlayerController->SetActorTickEnabled(false);
+		PlayerController->SetPawn(PlayerPawn);
+		return PlayerPawn;
+	}
+
+	bool IsSoleMonsterEngaged(const UTDMonsterThinkSubsystem& ThinkSubsystem)
+	{
+		const TArray<FString> Lines = ThinkSubsystem.GetMonsterDebugLines();
+		return Lines.Num() == 1 && Lines[0].Contains(TEXT("engaged=1"));
+	}
+
+	bool IsMonsterLineEngaged(const UTDMonsterThinkSubsystem& ThinkSubsystem, const int32 LineIndex)
+	{
+		const TArray<FString> Lines = ThinkSubsystem.GetMonsterDebugLines();
+		return Lines.IsValidIndex(LineIndex) && Lines[LineIndex].Contains(TEXT("engaged=1"));
+	}
+
+	bool CheckEngagementTestSetup(FAutomationTestBase& Test, UWorld* World, APawn* PlayerPawn, ATDMonsterCharacter* Monster, UTDMonsterThinkSubsystem* ThinkSubsystem)
+	{
+		if (!Test.TestNotNull(TEXT("Player pawn exists"), PlayerPawn) || !Test.TestNotNull(TEXT("Monster exists"), Monster) || !Test.TestNotNull(TEXT("Think subsystem exists"), ThinkSubsystem))
+		{
+			return false;
+		}
+		if (!Test.TestTrue(TEXT("The scripted pawn is player 0"), UGameplayStatics::GetPlayerPawn(World, 0) == PlayerPawn))
+		{
+			return false;
+		}
+		return Test.TestEqual(TEXT("Exactly one monster brain is registered"), ThinkSubsystem->GetMonsterDebugLines().Num(), 1);
+	}
+
+	bool TickUntilSoleMonsterEngages(FTDMonsterAITestWorld& Fixture, const UTDMonsterThinkSubsystem& ThinkSubsystem, const int32 MaxSteps)
+	{
+		for (int32 Step = 0; Step < MaxSteps; ++Step)
+		{
+			Fixture.Tick(EngagementTestStepSeconds);
+			if (IsSoleMonsterEngaged(ThinkSubsystem))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool TickUntilSoleMonsterDisengages(FTDMonsterAITestWorld& Fixture, const UTDMonsterThinkSubsystem& ThinkSubsystem, const float MaxSeconds)
+	{
+		const int32 MaxSteps = FMath::RoundToInt(MaxSeconds / EngagementTestStepSeconds);
+		for (int32 Step = 0; Step < MaxSteps; ++Step)
+		{
+			Fixture.Tick(EngagementTestStepSeconds);
+			if (!IsSoleMonsterEngaged(ThinkSubsystem))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool DriveSoleMonsterToGiveUp(FAutomationTestBase& Test, FTDMonsterAITestWorld& Fixture, const UTDMonsterThinkSubsystem& ThinkSubsystem, APawn& PlayerPawn)
+	{
+		if (!Test.TestTrue(TEXT("The monster engages the nearby player"), TickUntilSoleMonsterEngages(Fixture, ThinkSubsystem, EngagementTestEngageWaitSteps)))
+		{
+			return false;
+		}
+		Fixture.Tick(0.5f);
+		PlayerPawn.SetActorLocation(FVector(EngagementTestUnreachablePlayerX, 0.f, 0.f));
+		return Test.TestTrue(TEXT("The monster gives up on a player beyond its leash within four seconds"), TickUntilSoleMonsterDisengages(Fixture, ThinkSubsystem, EngagementTestGiveUpWaitSeconds));
+	}
+
+	void HitMonsterFromScriptedPlayer(ATDMonsterCharacter& Monster, APawn& PlayerPawn)
+	{
+		FTDDamageContext HitContext;
+		HitContext.Caster = &PlayerPawn;
+		const UTDCombatComponent* PlayerCombat = PlayerPawn.FindComponentByClass<UTDCombatComponent>();
+		if (PlayerCombat)
+		{
+			HitContext.Stats = PlayerCombat->GetStats();
+		}
+		Monster.GetCombatComponent()->ReceiveDamage(EngagementTestHitDamage, ETDDamageElement::Physical, false, HitContext);
+	}
+
+	FVector StepKitingBot(const FVector& BotLocation, const FVector& MonsterLocation, const bool bIsMonsterEngaged)
+	{
+		const float StepDistance = KitingBotSpeed * EngagementTestStepSeconds;
+		if (bIsMonsterEngaged)
+		{
+			return BotLocation + FVector(StepDistance, 0.f, 0.f);
+		}
+		const float ToMonsterX = static_cast<float>(MonsterLocation.X - BotLocation.X);
+		const float Gap = FMath::Abs(ToMonsterX) - KitingBotKeepDistance;
+		return BotLocation + FVector(FMath::Sign(ToMonsterX) * FMath::Clamp(Gap, -StepDistance, StepDistance), 0.f, 0.f);
+	}
+
+	void RecordFirstKitingViolation(FString& FirstViolation, const int32 Step, const float Value)
+	{
+		if (!FirstViolation.IsEmpty())
+		{
+			return;
+		}
+		FirstViolation = FString::Printf(TEXT("first at step %d (%.2f s), value %.1f"), Step, (Step + 1) * EngagementTestStepSeconds, Value);
+	}
+
+	FTDKitingRunReport RunKitingBotScenario(FTDMonsterAITestWorld& Fixture, APawn& PlayerPawn, ATDMonsterCharacter& Monster, const UTDMonsterThinkSubsystem& ThinkSubsystem, const float Seconds, const float ChaseCeiling, const int32 HitIntervalSteps)
+	{
+		FTDKitingRunReport Report;
+		const int32 StepCount = FMath::RoundToInt(Seconds / EngagementTestStepSeconds);
+		FVector BotLocation = PlayerPawn.GetActorLocation();
+		bool bWasEngaged = false;
+		bool bIsArrivalPending = false;
+		int32 LastArrivalStep = INDEX_NONE;
+		for (int32 Step = 0; Step < StepCount; ++Step)
+		{
+			BotLocation = StepKitingBot(BotLocation, Monster.GetActorLocation(), bWasEngaged);
+			PlayerPawn.SetActorLocation(BotLocation);
+			if (HitIntervalSteps > 0 && bWasEngaged && Step % HitIntervalSteps == 0)
+			{
+				const float HealthBeforeHit = Monster.GetCombatComponent()->GetCurrentHealth();
+				HitMonsterFromScriptedPlayer(Monster, PlayerPawn);
+				if (Report.Hits == 0)
+				{
+					Report.bDidFirstHitLand = Monster.GetCombatComponent()->GetCurrentHealth() < HealthBeforeHit;
+				}
+				++Report.Hits;
+			}
+			Fixture.Tick(EngagementTestStepSeconds);
+			if (ThinkSubsystem.GetMonsterDebugLines().Num() != 1)
+			{
+				++Report.LineCountMismatches;
+			}
+			const bool bIsEngaged = IsSoleMonsterEngaged(ThinkSubsystem);
+			const float HomeDistance = FVector::Dist2D(Monster.GetActorLocation(), FVector::ZeroVector);
+			Report.MaxHomeDistance = FMath::Max(Report.MaxHomeDistance, HomeDistance);
+			const float BotDrift = FVector::Dist(PlayerPawn.GetActorLocation(), BotLocation);
+			if (BotDrift > KitingScriptTolerance)
+			{
+				++Report.ExternalBotMoves;
+				RecordFirstKitingViolation(Report.FirstExternalBotMove, Step, BotDrift);
+			}
+			if (HomeDistance > ChaseCeiling)
+			{
+				RecordFirstKitingViolation(Report.FirstCeilingBreach, Step, HomeDistance);
+			}
+			if (bIsEngaged && !bWasEngaged && HomeDistance > EngagementTestHomeBand)
+			{
+				++Report.FarEngagements;
+				RecordFirstKitingViolation(Report.FirstFarEngagement, Step, HomeDistance);
+			}
+			if (bIsEngaged && !bWasEngaged && LastArrivalStep != INDEX_NONE)
+			{
+				const int32 ArrivalToEngageSteps = Step - LastArrivalStep;
+				Report.MinArrivalToEngageSteps = Report.MinArrivalToEngageSteps == INDEX_NONE ? ArrivalToEngageSteps : FMath::Min(Report.MinArrivalToEngageSteps, ArrivalToEngageSteps);
+				LastArrivalStep = INDEX_NONE;
+			}
+			if (bWasEngaged && !bIsEngaged)
+			{
+				++Report.Disengagements;
+				bIsArrivalPending = true;
+			}
+			if (!bIsEngaged && bIsArrivalPending && HomeDistance <= EngagementTestHomeBand)
+			{
+				++Report.Arrivals;
+				bIsArrivalPending = false;
+				LastArrivalStep = Step;
+			}
+			if (Report.Disengagements > Report.Arrivals + 1)
+			{
+				RecordFirstKitingViolation(Report.FirstUnreturnedDisengagement, Step, HomeDistance);
+			}
+			bWasEngaged = bIsEngaged;
+		}
+		return Report;
 	}
 }
 
@@ -396,6 +636,161 @@ bool FTDMonsterAINoGlobalRandomTest::RunTest(const FString& Parameters)
 			TestFalse(FString::Printf(TEXT("%s must not use %s"), *FPaths::GetCleanFilename(File), *Call), Text.Contains(Call));
 		}
 	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterAIKitingTest, "TDGame.MonsterAI.Engagement.KitingDoesNotYoYo", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMonsterAIKitingTest::RunTest(const FString& Parameters)
+{
+	FTDMonsterAITestWorld Fixture;
+	APawn* PlayerPawn = SpawnKitingPlayerPawn(*Fixture.World, FVector(KitingBotKeepDistance, 0.f, 0.f));
+	ATDMonsterCharacter* Monster = Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector::ZeroVector);
+	UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.World->GetSubsystem<UTDMonsterThinkSubsystem>();
+	if (!CheckEngagementTestSetup(*this, Fixture.World, PlayerPawn, Monster, ThinkSubsystem))
+	{
+		return false;
+	}
+	const FTDKitingRunReport Report = RunKitingBotScenario(Fixture, *PlayerPawn, *Monster, *ThinkSubsystem, KitingTestSeconds, KitingChaseCeiling, 0);
+	AddInfo(FString::Printf(TEXT("max home distance %.0f cm, disengagements %d, arrivals %d, far engagements %d, external bot moves %d, shortest arrival to engage %d steps"), Report.MaxHomeDistance, Report.Disengagements, Report.Arrivals, Report.FarEngagements, Report.ExternalBotMoves, Report.MinArrivalToEngageSteps));
+	TestEqual(FString::Printf(TEXT("Nothing else moves the scripted player (%s)"), *Report.FirstExternalBotMove), Report.ExternalBotMoves, 0);
+	TestEqual(TEXT("The think subsystem reports exactly one monster on every step"), Report.LineCountMismatches, 0);
+	TestEqual(FString::Printf(TEXT("A disengaged monster away from home never re-engages by proximity (%s)"), *Report.FirstFarEngagement), Report.FarEngagements, 0);
+	TestTrue(FString::Printf(TEXT("The kiting player never drags the monster past %.0f cm from home (%s)"), KitingChaseCeiling, *Report.FirstCeilingBreach), Report.MaxHomeDistance <= KitingChaseCeiling);
+	TestTrue(FString::Printf(TEXT("Every disengagement ends at home: disengagements %d, arrivals %d (%s)"), Report.Disengagements, Report.Arrivals, *Report.FirstUnreturnedDisengagement), Report.Disengagements <= Report.Arrivals + 1);
+	TestTrue(FString::Printf(TEXT("The monster gives up at least twice (%d)"), Report.Disengagements), Report.Disengagements >= 2);
+	TestTrue(FString::Printf(TEXT("The monster chases at least %.0f cm from home (%.0f)"), KitingMinimumChase, Report.MaxHomeDistance), Report.MaxHomeDistance >= KitingMinimumChase);
+	if (Report.MinArrivalToEngageSteps == INDEX_NONE)
+	{
+		AddInfo(TEXT("The monster never engaged again after arriving home, so the arrival settle check is skipped"));
+		return true;
+	}
+	TestTrue(FString::Printf(TEXT("An arrived monster waits at least %d steps before engaging again (shortest %d)"), KitingArrivalSettleSteps, Report.MinArrivalToEngageSteps), Report.MinArrivalToEngageSteps >= KitingArrivalSettleSteps);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterAIReturningHitTest, "TDGame.MonsterAI.Engagement.ReturningIgnoresOutsideHits", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMonsterAIReturningHitTest::RunTest(const FString& Parameters)
+{
+	FTDMonsterAITestWorld Fixture;
+	APawn* PlayerPawn = SpawnKitingPlayerPawn(*Fixture.World, FVector(EngagementTestNearPlayerX, 0.f, 0.f));
+	ATDMonsterCharacter* Monster = Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector::ZeroVector);
+	UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.World->GetSubsystem<UTDMonsterThinkSubsystem>();
+	if (!CheckEngagementTestSetup(*this, Fixture.World, PlayerPawn, Monster, ThinkSubsystem))
+	{
+		return false;
+	}
+	if (!DriveSoleMonsterToGiveUp(*this, Fixture, *ThinkSubsystem, *PlayerPawn))
+	{
+		return false;
+	}
+	PlayerPawn->SetActorLocation(FVector(EngagementTestOutsideReturnHitPlayerX, 0.f, 0.f));
+	const float HealthBeforeOutsideHit = Monster->GetCombatComponent()->GetCurrentHealth();
+	HitMonsterFromScriptedPlayer(*Monster, *PlayerPawn);
+	TestTrue(TEXT("The hit from beyond the returning re-engage range lands"), Monster->GetCombatComponent()->GetCurrentHealth() < HealthBeforeOutsideHit);
+	Fixture.Tick(0.5f);
+	TestFalse(TEXT("A hit from beyond the returning re-engage range does not pull a returning monster back"), IsSoleMonsterEngaged(*ThinkSubsystem));
+	PlayerPawn->SetActorLocation(FVector(EngagementTestInsideLeashPlayerX, 0.f, 0.f));
+	Fixture.Tick(0.25f);
+	TestFalse(TEXT("A returning monster ignores a player who walks up to it"), IsSoleMonsterEngaged(*ThinkSubsystem));
+	const float HomeDistance = FVector::Dist2D(Monster->GetActorLocation(), FVector::ZeroVector);
+	TestTrue(FString::Printf(TEXT("The monster is still on its way home (%.0f cm from home)"), HomeDistance), HomeDistance > EngagementTestHomeBand);
+	HitMonsterFromScriptedPlayer(*Monster, *PlayerPawn);
+	TestTrue(TEXT("A hit from inside the leash re-engages within two steps"), TickUntilSoleMonsterEngages(Fixture, *ThinkSubsystem, EngagementTestEngageWaitSteps));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterAIReturnStallTest, "TDGame.MonsterAI.Engagement.BlockedReturnSettlesInPlace", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMonsterAIReturnStallTest::RunTest(const FString& Parameters)
+{
+	FTDMonsterAITestWorld Fixture;
+	APawn* PlayerPawn = SpawnKitingPlayerPawn(*Fixture.World, FVector(EngagementTestNearPlayerX, 0.f, 0.f));
+	ATDMonsterCharacter* Monster = Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector::ZeroVector);
+	UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.World->GetSubsystem<UTDMonsterThinkSubsystem>();
+	if (!CheckEngagementTestSetup(*this, Fixture.World, PlayerPawn, Monster, ThinkSubsystem))
+	{
+		return false;
+	}
+	if (!TestTrue(TEXT("The monster engages the nearby player"), TickUntilSoleMonsterEngages(Fixture, *ThinkSubsystem, EngagementTestEngageWaitSteps)))
+	{
+		return false;
+	}
+	PlayerPawn->SetActorLocation(FVector(StallTestLeashEdgePlayerX, 0.f, 0.f));
+	Fixture.Tick(StallTestChaseSeconds);
+	PlayerPawn->SetActorLocation(FVector(StallTestFarPlayerX, 0.f, 0.f));
+	if (!TestTrue(TEXT("The monster gives up on a player beyond its leash within four seconds"), TickUntilSoleMonsterDisengages(Fixture, *ThinkSubsystem, EngagementTestGiveUpWaitSeconds)))
+	{
+		return false;
+	}
+	Monster->DisableMovement();
+	const FVector BlockedLocation = Monster->GetActorLocation();
+	const float BlockedSpawnDistance = FVector::Dist2D(BlockedLocation, FVector::ZeroVector);
+	if (!TestTrue(FString::Printf(TEXT("The monster is blocked more than %.0f cm from its spawn (%.0f)"), StallTestMinBlockedSpawnDistance, BlockedSpawnDistance), BlockedSpawnDistance > StallTestMinBlockedSpawnDistance))
+	{
+		return false;
+	}
+	PlayerPawn->SetActorLocation(BlockedLocation + FVector(EngagementTestNearbyPlayerOffset, 0.f, 0.f));
+	Fixture.Tick(0.5f);
+	TestFalse(TEXT("A returning monster ignores a nearby player before its blocked return settles"), IsSoleMonsterEngaged(*ThinkSubsystem));
+	Fixture.Tick(1.f);
+	TestFalse(TEXT("A settled monster waits out its arrival settle before engaging"), IsSoleMonsterEngaged(*ThinkSubsystem));
+	TestTrue(TEXT("A blocked return settles in place and engages the nearby player within 3.5 seconds of giving up"), TickUntilSoleMonsterEngages(Fixture, *ThinkSubsystem, StallTestEngageWaitSteps));
+	const float BlockedDrift = FVector::Dist2D(Monster->GetActorLocation(), BlockedLocation);
+	AddInfo(FString::Printf(TEXT("blocked %.0f cm from spawn, drift %.1f cm"), BlockedSpawnDistance, BlockedDrift));
+	TestTrue(FString::Printf(TEXT("The blocked monster stays put (%.1f cm)"), BlockedDrift), BlockedDrift < StallTestDriftTolerance);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterAIHitKitingTest, "TDGame.MonsterAI.Engagement.HitKitingIsCappedByMaxChase", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMonsterAIHitKitingTest::RunTest(const FString& Parameters)
+{
+	FTDMonsterAITestWorld Fixture;
+	APawn* PlayerPawn = SpawnKitingPlayerPawn(*Fixture.World, FVector(KitingBotKeepDistance, 0.f, 0.f));
+	ATDMonsterCharacter* Monster = Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector::ZeroVector);
+	UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.World->GetSubsystem<UTDMonsterThinkSubsystem>();
+	if (!CheckEngagementTestSetup(*this, Fixture.World, PlayerPawn, Monster, ThinkSubsystem))
+	{
+		return false;
+	}
+	const FTDKitingRunReport Report = RunKitingBotScenario(Fixture, *PlayerPawn, *Monster, *ThinkSubsystem, HitKitingTestSeconds, HitKitingChaseCeiling, HitKitingIntervalSteps);
+	AddInfo(FString::Printf(TEXT("max home distance %.0f cm, hits %d, disengagements %d, far engagements %d"), Report.MaxHomeDistance, Report.Hits, Report.Disengagements, Report.FarEngagements));
+	TestTrue(FString::Printf(TEXT("The first kiting hit lands (%d hits)"), Report.Hits), Report.bDidFirstHitLand);
+	TestTrue(FString::Printf(TEXT("Repeated hits never drag the monster past %.0f cm from home (%s)"), HitKitingChaseCeiling, *Report.FirstCeilingBreach), Report.MaxHomeDistance <= HitKitingChaseCeiling);
+	TestTrue(FString::Printf(TEXT("The hit monster still gives up at its maximum chase distance (%d)"), Report.Disengagements), Report.Disengagements >= 1);
+	TestEqual(FString::Printf(TEXT("A disengaged monster away from home never re-engages by proximity (%s)"), *Report.FirstFarEngagement), Report.FarEngagements, 0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterAIAllyAlertTest, "TDGame.MonsterAI.Engagement.ReturningIgnoresAllyAlert", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMonsterAIAllyAlertTest::RunTest(const FString& Parameters)
+{
+	FTDMonsterAITestWorld Fixture;
+	APawn* PlayerPawn = SpawnKitingPlayerPawn(*Fixture.World, FVector(EngagementTestNearPlayerX, 0.f, 0.f));
+	ATDMonsterCharacter* ReturningMonster = Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector::ZeroVector);
+	UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.World->GetSubsystem<UTDMonsterThinkSubsystem>();
+	if (!CheckEngagementTestSetup(*this, Fixture.World, PlayerPawn, ReturningMonster, ThinkSubsystem))
+	{
+		return false;
+	}
+	if (!DriveSoleMonsterToGiveUp(*this, Fixture, *ThinkSubsystem, *PlayerPawn))
+	{
+		return false;
+	}
+	ATDMonsterCharacter* AlertingMonster = Fixture.SpawnMonster(TEXT("Goblin_Melee"), ReturningMonster->GetActorLocation() + FVector(0.f, AllyAlertTestAllyOffsetY, 0.f));
+	Fixture.Tick(EngagementTestStepSeconds);
+	if (!TestNotNull(TEXT("The alerting monster exists"), AlertingMonster) || !TestEqual(TEXT("Both monster brains are registered"), ThinkSubsystem->GetMonsterDebugLines().Num(), 2))
+	{
+		return false;
+	}
+	PlayerPawn->SetActorLocation(FVector(EngagementTestOutsideReturnHitPlayerX, 0.f, 0.f));
+	HitMonsterFromScriptedPlayer(*AlertingMonster, *PlayerPawn);
+	Fixture.Tick(EngagementTestStepSeconds * EngagementTestEngageWaitSteps);
+	TestTrue(TEXT("The hit ally engages"), IsMonsterLineEngaged(*ThinkSubsystem, 1));
+	TestFalse(TEXT("A returning monster ignores an ally's alert"), IsMonsterLineEngaged(*ThinkSubsystem, 0));
 	return true;
 }
 

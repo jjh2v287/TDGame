@@ -5,6 +5,8 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "UObject/ObjectKey.h"
 #include "MonsterAI/TDMonsterBrainSlot.h"
+#include "MonsterAI/TDCircleAvoidance.h"
+#include "MonsterAI/TDNeighborGrid.h"
 #include "TDMonsterThinkSubsystem.generated.h"
 
 class ITDMonsterBody;
@@ -51,7 +53,10 @@ class TDGAME_API UTDMonsterThinkSubsystem : public UWorldSubsystem
 public:
 	static constexpr int32 MaxStepsPerFrame = 4;
 	static constexpr float EngageRadius = 1500.f;
-	static constexpr float DisengageRadius = 3500.f;
+	static constexpr float LoseTargetRadius = 3500.f;
+	static constexpr float LeashRadius = 3000.f;
+	static constexpr float ReturningReengageRadius = 2500.f;
+	static constexpr float MaxChaseDistanceFromHome = 4500.f;
 	static constexpr float AlertRadius = 900.f;
 	static constexpr float NeighborRadius = 1200.f;
 	static constexpr float DamageEngageSeconds = 6.f;
@@ -61,7 +66,11 @@ public:
 	static constexpr float AvoidanceTurnDegrees = 65.f;
 	static constexpr float ReengageBlockSeconds = 6.f;
 	static constexpr float HomeArrivalRadius = 120.f;
-	static constexpr float ReturnHomeSpeedScale = 0.7f;
+	static constexpr float ReturnHomeSpeedScale = 1.f;
+	static constexpr float GiveUpSeconds = 2.f;
+	static constexpr float ReturnStallSeconds = 1.f;
+	static constexpr float ArrivalSettleSeconds = 1.f;
+	static constexpr float AvoidanceWaitGraceSeconds = 3.f;
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	virtual void Deinitialize() override;
@@ -90,6 +99,7 @@ protected:
 
 private:
 	friend struct FTDMonsterThinkTickFunction;
+	friend struct FTDMonsterThinkSubsystemTestAccess;
 
 	void AdvanceFrame(float DeltaSeconds);
 	bool IsHandleCurrent(FTDMonsterSlotHandle Handle) const;
@@ -98,7 +108,16 @@ private:
 	void SenseSlot(int32 SlotIndex);
 	void UpdateEngagement();
 	void ThinkAndAct(int32 SlotIndex);
+	void ApplyLocalAvoidance();
 	void ApplySeparation();
+	void ApplyCircleAvoidance();
+	FVector2D ApplyCircleAvoidanceToSlot(int32 SlotIndex, TConstArrayView<FTDAvoidanceObstacle> ExternalBodies, TConstArrayView<const AActor*> ExternalActors);
+	void GatherExternalBodies(TArray<FTDAvoidanceObstacle>& OutBodies, TArray<const AActor*>& OutActors) const;
+	void GatherMonsterObstacles(int32 SlotIndex, FTDAvoidanceObstacleList& OutObstacles) const;
+	bool IsHoldingEngagedAttacker(int32 SlotIndex) const;
+	bool IsReturnStallExcusedByAvoidance(int32 SlotIndex) const;
+	void RebuildNeighborGrid();
+	void RefreshNeighborGridIfStale();
 	FVector2D SteerAroundBlockingAlly(int32 SlotIndex, const FVector2D& Direction) const;
 	void CountAttackersByTarget();
 	bool HasAttackToken(int32 SlotIndex) const;
@@ -108,7 +127,8 @@ private:
 	FTDBrainInputs BuildInputs(int32 SlotIndex, const FTDMonsterStepContext& Context) const;
 	FTDMonsterStepContext MakeContext(int32 SlotIndex) const;
 	void Engage(int32 SlotIndex);
-	void Disengage(int32 SlotIndex);
+	void BeginReturn(int32 SlotIndex);
+	void FinishReturn(int32 SlotIndex);
 	FTDMonsterMoveIntent MakeReturnHomeIntent(int32 SlotIndex) const;
 	void DrawDebugState(int32 SlotIndex) const;
 
@@ -116,10 +136,13 @@ private:
 	TArray<FTDMonsterBodyFragment> Bodies;
 	TArray<FTDMonsterBrainFragment> Brains;
 	TArray<FTDMonsterMoveIntent> Intents;
+	TArray<FTDMonsterAvoidanceFragment> Avoidances;
 	TArray<int32> FreeSlots;
 	TArray<int32> OrderedSlots;
 	TArray<int32> PendingAlertSlots;
 	TMap<TObjectKey<AActor>, int32> AttackersByTarget;
+	FTDNeighborGrid NeighborGrid;
+	bool bIsNeighborGridStale = true;
 	uint64 StepIndex = 0;
 	uint32 NextSimulationId = 1;
 	float AccumulatedSeconds = 0.f;

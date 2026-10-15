@@ -477,7 +477,8 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분(앞당김) — PIE에서 추적·공격 성공(LV-Cambat 17마리). 편차: 잡몹도 `ATDMonsterCharacter`(CMC Walking, 내비 없이 직선+회피) 사용, 애니메이션은 C++ 단일 노드 재생(`TDMonsterAnimationDriver`, AnimBP 로직 없음). 2026-09-25 claude: 고블린·스톤 골렘 추가 — Manny 애니메이션 IK 리타기팅(`Tools/MonsterAI/editor_retarget_monster_anims.py`, `/Game/MonsterAI/Animations/{Goblin,Golem}`), 골렘은 데모 이동 클립 사용, 새 정의 `StoneGolem.json`·공격 `DA_TDGolemStomp`(사거리 ≤ 반경이면 자기 중심), LV-Cambat 7무리 25마리, PIE 고블린 교전·골렘 발구르기·내려치기 확인. 남음: `ATDMonsterPawn` 잡몹 몸, NavWalking·경로, `DumpTicks`, 골렘 전용 내려찍기 동작(현재 훅), 고블린 무기 부착. 2026-09-30 D44로 대체: 잡몹·정예·보스·동료·플레이어가 모두 `ATDCombatCharacter : APawn` 한 종의 몸이며(`UCharacterMoverComponent` Standalone + `UNavMoverComponent` + `UUAFComponent` + `UTDCharacterAnimationComponent`), CMC·`UFloatingPawnMovement`·`TDMonsterAnimationDriver`(삭제) 전제는 무효다(M3-16).
 
 ### M3-02 공간 해시와 분리 조향·근접 자리 토큰
-- 상태: todo
+- 상태: blocked
+- 담당: claude/2026-10-14
 - 우선순위: 높음
 - 선행: M1-05
 - 목표: `THierarchicalHashGrid2D`(셀 250cm, 이웃 ≤ 8)로 근접 탐색을 바꾸고 직선 접근 + 분리 조향 + 근접 자리 토큰(`ring_slot`)과 그 입력 함수 `RingSlotFree` 를 넣는다.
@@ -485,7 +486,8 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/TDNeighborGrid.h/.cpp`(클래스 `FTDNeighborGrid`, 02 §2), 입력 함수 `RingSlotFree`(02 §8, 06 §5-5)
 - 검증: BUILD; TEST `TDGame.MonsterAI.Grid` `M3-02`; TEST `TDGame.CombatSim.Determinism`
 - 참조: 결정 D17; engine-movement-anim-scale 결론 11; engine-behaviortree-tick 쓸 수 있는 것 4(EQS 대신 자체 격자 질의)
-- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — 분리 조향(반경 합+20cm)·전방 동료 회피(65도 회전)를 선형 탐색으로 구현. 남음: `THierarchicalHashGrid2D`, 근접 자리 토큰.
+- 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — 분리 조향(반경 합+20cm)·전방 동료 회피(65도 회전)를 선형 탐색으로 구현. 남음: `THierarchicalHashGrid2D`, 근접 자리 토큰. 2026-10-14 claude(사용자 승인 범위 확장: 속도 인지 원형 회피·정지 몬스터 양보·플레이어 장애물): 구현·미시험 — `FTDNeighborGrid`(`THierarchicalHashGrid2D<2,4>` 셀 250, 매 스텝 SimulationId 순 재구성; 회피 이웃 = 표면 간격 200cm·(거리², SimulationId) 상위 8, `BuildInputs` 이웃 = 기존과 같은 팀·1200·상위 8을 격자로) + `FTDCircleAvoidance`(희망 속도 TTC 1.0초 조기 통과, 후보 40, 비용 편차+0.3·TTC+0.3·평활+정지 0.2, 이력 0.1, 접촉 밀어내기, 양보 0.5배, 외부 몸 = 플레이어·동료이되 교전 대상 제외) + CVar `TD.MonsterAI.LocalAvoidance`(기본 1, 0 = 기존 분리 조향) + 귀환 막힘 판정 3초 유예. 선택: 교전 중(Engaged + 대상 유효) 정지 몬스터는 양보하지 않음(밀집 포위 떨림 방지, 프로토 규칙). 근거 프로토 2,196회(40마리 포위 물리 막힘 21.7→0.28%, 이동 중 yaw 총변화 0.31~0.53배, 귀환 막힘 오판 2→0, `Docs/MonsterAI_CombatSim/measurements/circle-avoidance/`). 게임 타깃 컴파일 성공(일반·통합, `Saved/AgentOps/20261014/m3-02-build-3-fix.log`·`m3-02-build-4-fix-unity.log`), 정적 반박 8건 중 7 반영. **막힘**: 에디터 사용 중(다른 세션)이라 에디터 빌드·헤드리스 시험(새 15개 `TDGame.MonsterAI.Grid.*`·`TDGame.MonsterAI.CircleAvoidance.*` + 기존 `TDGame.MonsterAI`·`TDGame.Movement`) 미실행 — 사용자 선택 '에디터 유지'. 남음: 시험 실행·장면 시험 기준값 보정·300마리 탐색 비용 실측 표(`Grid.SearchCost` 로그), ring_slot(03 미결 2). 양보 뒤 Home 변위는 07#MD-45 (a) 현행 유지로 결정(2026-10-15).
+  2026-10-16 claude(커밋 전 확인, 코드 변경 없음): 헤드리스 `TDGame.MonsterAI+TDGame.Movement` 31/32. 실패 `CircleAvoidance.Scene.CrossingStreams` — 6+6 교차에서 원형 회피 접촉 단계 비율 0.1618 > 기존 분리 0.0792(`Tests/TDCircleAvoidanceTests.cpp:1360`), 겹침 0·도착 12/12. 장면 보정 대기와 일치. 로그 `Saved/AgentOps/20261016/sun/monsterai_precommit.log`
 
 ### M3-03 LOD 4단 주기표 스케줄러
 - 상태: todo
@@ -608,6 +610,18 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 검증: BUILD; TEST `TDGame.*` 헤드리스; PIE; `python Tools/measure_game_frames.py`; `python Tools/cook_single_map.py`
 - 참조: 결정 D44(D4·D16·D20·D24 개정); `Saved/AgentOps/20260929/`
 - 기록: 2026-09-30 claude — 완료. 기준 커밋 55af972(브랜치 feat/mover-uaf). 헤드리스 TDGame.* 66/66(기준 62 + 신규 `TDGame.Movement.RootMotionActionMovesPawn` 36.00cm·`FreezeHaltsMovementAndAnimation` 0.000cm·`MonsterMoveIntentMovesPawn`·`TDGame.Combat.ActionTimelineHitsOnceInWindow`), PIE 플레이어(아레나: 클릭 이동 도착 30cm·방향 1.6°·발 흔들림 105cm·점프 124cm·공격 36.0cm, `Docs/Validation/Movement/player-pie-check.json`)·몬스터(LV-Cambat 25마리 교전, 래그돌·Mover 경고 0, `measurements/monster-pie-check.json`)·검 공격 파이프라인(36.06cm), 쿠킹 LV-Cambat 성공·실행 크래시 줄 0, 쿠킹본 25마리 게임 스레드 평균 7.23 → 4.12ms(프레임 11.69 → 11.51ms, `Saved/AgentOps/frames_*_staged.json`). TD·벤더 콘텐츠 AnimBP·몽타주 0개, `Source/TDGame`의 CMC·ACharacter·AnimInstance·Montage·AnimNotify·StateTree 참조 0건(에디터 저작 도구 `TDGameEditor`의 몽타주 생성 기능만 남음). 남은 것: 화면 밖 애니 LOD(M3-05 재정의), Mover 서브스텝 없음(프레임 끊김 시 점프 높이 변동, L-combat-03), 구르기 능력의 월드 타이머 종료(기존 결함), 발 IK(UAFControlRig), LV-Cambat 내비메시 경계 없음, UAF 첫 주입 ensure(L-anim-07), 쿠킹본 종료 코드 777003·`GameFeatureData` ensure(교체 전 설정 기인 추정, 미검증), StateTree·GameplayCameras·Chooser 플러그인은 AllToolsets·CameraShakePreviewer·PoseSearch 의존으로 켜 둠(코드 사용 0). 교훈 L-anim-07, L-combat-03, L-editor-12·13. 도구 `Tools/measure_game_frames.py`·`cook_single_map.py`·`Movement/*`.
+
+### M3-25 교전 해제·귀환 요요(추격↔귀환 반복) 제거
+- 상태: done
+- 담당: claude/2026-10-14
+- 우선순위: 상(사용자 지시 2026-10-14)
+- 선행: 없음(M3-18~24·06 제안 M3-11~14 번호는 비워 둠)
+- 목표: 플레이어가 교전 경계에서 오가도 몬스터가 추격↔귀환을 반복하지 않게 교전 계층을 명시적 상태로 다시 세우고, 원인이 프레임워크(유틸리티+FSM) 선택인지 교전 계층 로직인지 판정을 남긴다.
+- 완료 조건: 경계 왕복(카이팅) 재현 테스트에서 수정 전 교전 전환 반복이 재현되고 수정 후 전환 횟수가 기준 이하 / 기존 헤드리스 `TDGame.*` 통과 수 유지 / 결정론 규약(전역 난수 0, 스텝 순서) 유지 / 판정·설계 근거 문서화.
+- 산출물: `MonsterAI/TDMonsterThinkSubsystem.*`·`TDMonsterBrainSlot.h`(교전 계층 Home/Engaged/Returning), `TDMonsterActionExecutor.cpp`(1줄), 시험 `TDGame.MonsterAI.Engagement.*` 5개, 조사 문서 [research/project-engagement-leash-yoyo.md](research/project-engagement-leash-yoyo.md), 시뮬 `Tools/scratch/20261014_claude_m325_engagement/`
+- 검증: BUILD; TEST `TDGame.MonsterAI.*`·`TDGame.*` 헤드리스
+- 참조: 사용자 증상 보고 2026-10-14; MD-40~44
+- 기록: 2026-10-14 claude — 완료. 판정: 프레임워크(유틸리티+FSM) 문제가 아니라 결정 없이 덧붙은 교전 bool 계층의 상태 설계 결함(해제 기준이 몬스터-플레이어 거리, 귀환이 상태가 아님, 생존 대상 재교전 차단 0). 수정: 3상태(집 기준 영역 3000·포기 2초·상한 4500·귀환 커밋 1.0배속·귀환 중 영역 2500 밖 피격 무시·도착 안정 1초·막힘 1초 시 임시 정착 후 다음 포기 때 스폰 복원·경보는 Home 동료와 영역 안 대상만). 완료 조건 대조: ① 수정 전(최종 시험 파일 + 구 구현, `Saved/Logs/M325_Before2.log`) 새 시험 5개가 교전 규칙 단언으로 실패(카이팅: 집 밖 재교전 2회·첫 18.27초 3268cm, 4800 초과 11.53초, 해제 2/도착 0), 수정 후(`M325_After2.log`) 17/17 통과(카이팅 집 최대 2050cm·해제 4·도착 3·도착 뒤 최소 재교전 83스텝, 피격 카이팅 최대 4541cm, 막힘 3326cm 정착·이동 0cm) ② 전체 `M325_Full2.log` 88/88 통과(이전 86 + 신규 2) ③ NoGlobalRandom 통과, 반복 실행 5회 수치 동일 ④ 조사 문서. 설계 검증: 2D 결정론 시뮬 6정책×7종(신 규칙 귀환 도중 재교전 0, 최대 4580) + 반박 3관점 2회. 남은 것: 집 도착 뒤 영역 안 재풀링은 의도(전 종이 플레이어보다 느림 → MD-44), 귀환 중 영역 밖 공짜 타격(MD-41), Flee 루프(MD-43), 보스 leash(MD-42), 상수 JSON화(MD-40), 경로 탐색 귀환·수색 단계 없음, M1-11 해시에 교전 필드 포함 필요. 교훈 L-repo-12.
 
 ### 3.6 Phase 4 — 확장(조건부)
 
@@ -743,6 +757,49 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 권장: (b) 를 기본으로 두고, 정예 이동 품질 문제가 실측될 때만 (a) 재검토.
 - 영향: M3-01, M3-04
 - 결정: (미정)
+
+### MD-40 교전 파라미터 종별 JSON화
+- 질문: M3-25 교전 계층 상수(EngageRadius 1500·LeashRadius 3000·ReturningReengageRadius 2500·MaxChaseDistanceFromHome 4500·GiveUpSeconds 2·ArrivalSettleSeconds 1·AlertRadius 900)를 종 정의 JSON으로 옮길까?
+- 선택지: (a) C++ 전역 상수 유지(현행) (b) schema 1에 선택적 최상위 키 `engagement` 추가, 없으면 현 상수 기본값(기존 7개 정의 무변경, 02 규칙 2·5.10·5.11과 로더 갱신) (c) schema 2로 올리며 추가
+- 권장: (b). 종별 차이(골렘 230·하이에나 560, 보스 구역)가 실측되면 바로 조정할 수 있고 기존 정의는 그대로 동작한다.
+- 영향: M3-25 후속, 02 규칙 2, `TDMonsterDefinitionLibrary`
+- 결정: (미정)
+
+### MD-41 귀환(Returning) 중 피격·회복 정책
+- 질문: 귀환 중 영역 밖 공격자의 타격은 지금 교전을 일으키지 않지만 체력은 깎인다(원거리 공짜 타격). 어떻게 할까?
+- 선택지: (a) 현행 유지 (b) 귀환 중 무적(`State.Invulnerable` 태그 재사용, WoW·ESO식) (c) 귀환 중 점진 회복(초당 최대 체력 몇 %) (d) 도착 시 체력·페이즈 복원(회복 API 신설 필요)
+- 권장: (c). 액션 RPG 사용자는 '무적 + 즉시 전체 회복'을 싫어한다는 포럼 신호가 있고(근거 약함), (c)는 공짜 사냥과 Flee 루프를 함께 줄인다.
+- 영향: M3-25 후속, `UTDCombatComponent`(회복 경로), D-11
+- 결정: (미정)
+
+### MD-42 보스·던전 몬스터 leash 예외
+- 질문: 보스와 던전 몬스터도 필드와 같은 전역 leash를 쓸까?
+- 선택지: (a) 같은 규칙(현행) (b) 보스는 leash 없음 + 전투 구역 경계 (c) 보스는 leash 시 체력·페이즈 복원
+- 권장: (b). 귀환 시작이 시전·시퀀스를 취소하므로 보스 위험 패턴 회피에 악용될 수 있다.
+- 영향: M3-25 후속, MD-40
+- 결정: (미정)
+
+### MD-43 Flee(MoveAway) 끝 조건 데이터
+- 질문: Goblin_Melee·Hyena의 Flee에 끝 조건이 없어 체력이 낮으면 '도망 → 포기 → 귀가 → 재교전'을 약 20초 주기로 반복한다. 데이터로 끝 조건을 넣을까?
+- 선택지: (a) 현행 (b) `seconds`(MoveAway 스키마 지원)와 쿨다운 (c) DistanceToTarget 고려 추가(가까울 때만 도망)
+- 권장: (b)+(c). 종 정의 JSON만 바뀐다.
+- 영향: `Content/MonsterAI/Definitions/Goblin_Melee.json`·`Hyena.json`·`Archer.json`(상속)
+- 결정: (미정)
+
+### MD-44 몬스터 속도와 플레이어 속도의 관계
+- 질문: 전 종(230~560)이 플레이어(600)보다 느려 플레이어는 언제나 이탈·재풀링할 수 있다. 의도인가?
+- 선택지: (a) 의도(도망 가능 = 플레이어 우위, 현행) (b) 추격형 종(하이에나 등)은 플레이어 이상 (c) 교전 중 일시 가속(돌진 능력)으로 보완
+- 권장: (a)를 기본으로 하되 추격형 1~2종만 (c). 이 결정이 M3-25의 '영역 안 재풀링' 빈도를 정한다.
+- 영향: 종 정의 JSON `move_speed`, 08 손맛 설계
+- 결정: (미정)
+
+### MD-45 양보한 Home 몬스터의 복귀 반경
+- 상태: accepted · 2026-10-15 사용자 결정(제안 2026-10-14 claude, M3-02)
+- 질문: 서 있다가 지나가는 동료에게 비켜 준 Home 상태 몬스터는 `HomeArrivalRadius` 120cm 안이면 돌아가지 않아 밀린 자리에 남는다(프로토 C4 평균 59cm·최악 118cm). 되돌아가게 할까?
+- 선택지: (a) 현행 120 유지(밀린 채로 둠, 움직임 최소) (b) 양보한 개체만 40cm 안으로 복귀(최악 변위 39.5cm, 대신 C4 이동 중 yaw 총변화 12→103°/s) (c) 복귀 없이 다음 귀환·재교전 때 자연히 정리
+- 권장: (a). 원형 몸은 위치가 조금 바뀌어도 티가 덜 나고, (b)는 무리 전체가 자주 움직여 산만하다. PIE에서 보고 다시 정한다.
+- 영향: 07#M3-02, 07#M3-25(`HomeArrivalRadius`), `Docs/MonsterAI_CombatSim/measurements/circle-avoidance/proto-summary-tables.md`
+- 결정: (a) 현행 120 유지 — 2026-10-15 사용자 지시. 코드 변경 없음(양보한 Home 몬스터는 120cm 안이면 밀린 자리에 남는다).
 
 ---
 

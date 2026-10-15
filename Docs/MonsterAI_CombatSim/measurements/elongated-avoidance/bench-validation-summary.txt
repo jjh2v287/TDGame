@@ -1,0 +1,12 @@
+M0_vs_A: samples=56 within_1cm_s=100.0% within_10cm_s=100.0% max_diff_cm_s=0.000
+    goblin: n=24 within_1cm_s=100.0% max=0.000
+    hyena: n=16 within_1cm_s=100.0% max=0.000
+    large: n=16 within_1cm_s=100.0% max=0.000
+M2_vs_C_hzd: samples=56 within_1cm_s=100.0% within_10cm_s=100.0% max_diff_cm_s=0.000
+    goblin: n=24 within_1cm_s=100.0% max=0.000
+    hyena: n=16 within_1cm_s=100.0% max=0.000
+    large: n=16 within_1cm_s=100.0% max=0.000
+M3p_vs_D_rotOBB_esc: samples=56 within_1cm_s=100.0% within_10cm_s=100.0% max_diff_cm_s=0.000
+    goblin: n=24 within_1cm_s=100.0% max=0.000
+    hyena: n=16 within_1cm_s=100.0% max=0.000
+    large: n=16 within_1cm_s=100.0% max=0.000

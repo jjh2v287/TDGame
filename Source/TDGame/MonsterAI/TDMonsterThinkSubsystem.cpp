@@ -1,4 +1,6 @@
 #include "MonsterAI/TDMonsterThinkSubsystem.h"
+#include "Algo/Sort.h"
+#include "Characters/TDCompanionCharacter.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
 #include "Combat/TDCombatComponent.h"
 #include "Combat/TDCombatLibrary.h"
@@ -6,7 +8,9 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "MonsterAI/TDMonsterActionExecutor.h"
@@ -19,6 +23,12 @@ namespace
 		TEXT("TD.MonsterAI.DebugDraw"),
 		0,
 		TEXT("Draws each monster's FSM state and current action above its head. 0 = off, 1 = on."),
+		ECVF_Cheat);
+
+	TAutoConsoleVariable<int32> CVarMonsterAILocalAvoidance(
+		TEXT("TD.MonsterAI.LocalAvoidance"),
+		1,
+		TEXT("Selects monster local avoidance. 0 = legacy separation steering, 1 = velocity-aware circle avoidance with yielding."),
 		ECVF_Cheat);
 
 	ITDMonsterBody* ResolveBody(const FTDMonsterBodyFragment& Body)
@@ -42,6 +52,19 @@ namespace
 			return Left.Y < Right.Y;
 		}
 		return Left.Z < Right.Z;
+	}
+
+	const TCHAR* GetMonsterEngagementName(const ETDMonsterEngagement Engagement)
+	{
+		switch (Engagement)
+		{
+		case ETDMonsterEngagement::Engaged:
+			return TEXT("Engaged");
+		case ETDMonsterEngagement::Returning:
+			return TEXT("Returning");
+		default:
+			return TEXT("Home");
+		}
 	}
 }
 
@@ -91,6 +114,7 @@ void UTDMonsterThinkSubsystem::Deinitialize()
 	Bodies.Reset();
 	Brains.Reset();
 	Intents.Reset();
+	Avoidances.Reset();
 	FreeSlots.Reset();
 	OrderedSlots.Reset();
 	PendingAlertSlots.Reset();
@@ -114,6 +138,7 @@ FTDMonsterSlotHandle UTDMonsterThinkSubsystem::RegisterMonster(AActor* BodyActor
 		SlotIndex = Bodies.AddDefaulted();
 		Brains.AddDefaulted();
 		Intents.AddDefaulted();
+		Avoidances.AddDefaulted();
 	}
 
 	FTDMonsterBodyFragment& Body = Bodies[SlotIndex];
@@ -130,10 +155,12 @@ FTDMonsterSlotHandle UTDMonsterThinkSubsystem::RegisterMonster(AActor* BodyActor
 	FTDMonsterActionExecutor::ResetForDefinition(Brain);
 	Brain.NextThinkStep = StepIndex + 1 + Body.SimulationId % static_cast<uint32>(Definition->ThinkPeriodSteps);
 	Intents[SlotIndex] = FTDMonsterMoveIntent();
+	Avoidances[SlotIndex] = FTDMonsterAvoidanceFragment();
 
 	ITDMonsterBody* MonsterBody = Cast<ITDMonsterBody>(BodyActor);
 	MonsterBody->ApplyBodyStats(Definition->Stats);
 	Body.Location = MonsterBody->GetBodyLocation();
+	Body.SpawnLocation = Body.Location;
 	Body.HomeLocation = Body.Location;
 	Body.Yaw = MonsterBody->GetBodyYaw();
 	Body.Radius = MonsterBody->GetBodyRadius();
@@ -169,7 +196,11 @@ void UTDMonsterThinkSubsystem::NotifyMonsterDamaged(const FTDMonsterSlotHandle H
 		return;
 	}
 	FTDMonsterBrainFragment& Brain = Brains[Handle.Index];
-	if (!Brain.bIsEngaged)
+	if (Brain.Engagement == ETDMonsterEngagement::Returning && PlanarDistance(Bodies[Handle.Index].HomeLocation, SourceLocation) > ReturningReengageRadius)
+	{
+		return;
+	}
+	if (!Brain.IsEngaged())
 	{
 		PendingAlertSlots.AddUnique(Handle.Index);
 	}
@@ -233,7 +264,7 @@ FName UTDMonsterThinkSubsystem::GetMonsterActionId(const FTDMonsterSlotHandle Ha
 
 bool UTDMonsterThinkSubsystem::IsMonsterEngaged(const FTDMonsterSlotHandle Handle) const
 {
-	return IsHandleCurrent(Handle) && Brains[Handle.Index].bIsEngaged;
+	return IsHandleCurrent(Handle) && Brains[Handle.Index].IsEngaged();
 }
 
 UTDMonsterThinkSubsystem* UTDMonsterThinkSubsystem::GetMonsterThinkSubsystem(const UObject* WorldContextObject)
@@ -256,13 +287,14 @@ TArray<FString> UTDMonsterThinkSubsystem::GetMonsterDebugLines() const
 		const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
 		const AActor* Actor = Body.Actor.Get();
 		const UTDCombatComponent* Combat = UTDCombatLibrary::GetCombatComponent(Actor);
-		Lines.Add(FString::Printf(TEXT("sim=%u actor=%s def=%s state=%s action=%s engaged=%d phase=%d hp=%.1f pos=(%.0f,%.0f)"),
+		Lines.Add(FString::Printf(TEXT("sim=%u actor=%s def=%s state=%s action=%s engaged=%d engagement=%s phase=%d hp=%.1f pos=(%.0f,%.0f)"),
 			Body.SimulationId,
 			Actor ? *Actor->GetName() : TEXT("None"),
 			Brain.Definition.IsValid() ? *Brain.Definition->Id.ToString() : TEXT("None"),
 			FTDMonsterActionRegistry::GetStateName(Brain.GetReportedState()),
 			*Brain.GetCurrentActionId().ToString(),
-			Brain.bIsEngaged ? 1 : 0,
+			Brain.IsEngaged() ? 1 : 0,
+			GetMonsterEngagementName(Brain.Engagement),
 			Brain.PhaseIndex,
 			Combat ? Combat->GetCurrentHealth() : 0.f,
 			Body.Location.X,
@@ -290,6 +322,7 @@ void UTDMonsterThinkSubsystem::RebuildOrder()
 	{
 		return Bodies[Left].SimulationId < Bodies[Right].SimulationId;
 	});
+	bIsNeighborGridStale = true;
 }
 
 void UTDMonsterThinkSubsystem::RunKernelStep()
@@ -312,6 +345,7 @@ void UTDMonsterThinkSubsystem::RunKernelStep()
 		Handle.Generation = Bodies[SlotIndex].Generation;
 		UnregisterMonster(Handle);
 	}
+	RebuildNeighborGrid();
 	UpdateEngagement();
 	CountAttackersByTarget();
 	for (const int32 SlotIndex : TArray<int32>(OrderedSlots))
@@ -328,7 +362,7 @@ void UTDMonsterThinkSubsystem::RunKernelStep()
 			++AttackersByTarget.FindOrAdd(Target);
 		}
 	}
-	ApplySeparation();
+	ApplyLocalAvoidance();
 }
 
 void UTDMonsterThinkSubsystem::SenseSlot(const int32 SlotIndex)
@@ -354,27 +388,93 @@ void UTDMonsterThinkSubsystem::UpdateEngagement()
 	for (const int32 SlotIndex : OrderedSlots)
 	{
 		FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+		FTDMonsterBodyFragment& Body = Bodies[SlotIndex];
 		const AActor* Target = Brain.Target.Get();
 		const bool bHasLivingTarget = Target && UTDCombatLibrary::IsActorAlive(Target);
-		const float Distance = bHasLivingTarget ? PlanarDistance(Bodies[SlotIndex].Location, Target->GetActorLocation()) : TNumericLimits<float>::Max();
-		if (!Brain.bIsEngaged && bHasLivingTarget && Distance <= EngageRadius && Brain.ReengageBlockSteps == 0)
+		const FVector TargetLocation = bHasLivingTarget ? Target->GetActorLocation() : FVector::ZeroVector;
+		const float DistanceToTarget = bHasLivingTarget ? PlanarDistance(Body.Location, TargetLocation) : TNumericLimits<float>::Max();
+		const float HomeDistance = PlanarDistance(Body.Location, Body.HomeLocation);
+		switch (Brain.Engagement)
 		{
-			Engage(SlotIndex);
-			NewlyEngaged.Add(SlotIndex);
-			continue;
+		case ETDMonsterEngagement::Home:
+		{
+			const bool bCanEngage = bHasLivingTarget && DistanceToTarget <= EngageRadius && PlanarDistance(Body.HomeLocation, TargetLocation) <= LeashRadius && Brain.ReengageBlockSteps == 0;
+			if (bCanEngage)
+			{
+				Engage(SlotIndex);
+				NewlyEngaged.Add(SlotIndex);
+			}
+			break;
 		}
-		const bool bShouldDisengage = !bHasLivingTarget || (Distance > DisengageRadius && Brain.EngageLockSteps == 0);
-		if (Brain.bIsEngaged && bShouldDisengage)
+		case ETDMonsterEngagement::Engaged:
 		{
-			Disengage(SlotIndex);
-			Brain.ReengageBlockSteps = bHasLivingTarget ? 0 : TDMonsterAI::SecondsToSteps(ReengageBlockSeconds);
+			if (!bHasLivingTarget)
+			{
+				BeginReturn(SlotIndex);
+				Brain.ReengageBlockSteps = TDMonsterAI::SecondsToSteps(ReengageBlockSeconds);
+				break;
+			}
+			if (HomeDistance > MaxChaseDistanceFromHome)
+			{
+				BeginReturn(SlotIndex);
+				break;
+			}
+			const bool bIsOutOfReach = PlanarDistance(Body.HomeLocation, TargetLocation) > LeashRadius || DistanceToTarget > LoseTargetRadius;
+			Brain.OutOfReachStepCount = bIsOutOfReach ? Brain.OutOfReachStepCount + 1 : 0;
+			if (Brain.OutOfReachStepCount >= TDMonsterAI::SecondsToSteps(GiveUpSeconds) && Brain.EngageLockSteps == 0)
+			{
+				BeginReturn(SlotIndex);
+			}
+			break;
+		}
+		case ETDMonsterEngagement::Returning:
+		{
+			if (HomeDistance <= HomeArrivalRadius)
+			{
+				FinishReturn(SlotIndex);
+				break;
+			}
+			if (Brain.bIsFrozen)
+			{
+				break;
+			}
+			if (IsReturnStallExcusedByAvoidance(SlotIndex))
+			{
+				break;
+			}
+			if (HomeDistance < Brain.ClosestReturnDistance - 1.f)
+			{
+				Brain.ClosestReturnDistance = HomeDistance;
+				Brain.ReturnStallStepCount = 0;
+				break;
+			}
+			++Brain.ReturnStallStepCount;
+			if (Brain.ReturnStallStepCount >= TDMonsterAI::SecondsToSteps(ReturnStallSeconds))
+			{
+				Body.HomeLocation = Body.Location;
+				FinishReturn(SlotIndex);
+			}
+			break;
+		}
 		}
 	}
 	for (const int32 AlertingSlot : NewlyEngaged)
 	{
+		const AActor* AlertTarget = Brains[AlertingSlot].Target.Get();
+		if (!Brains[AlertingSlot].IsEngaged() || !AlertTarget)
+		{
+			continue;
+		}
+		const FVector AlertTargetLocation = AlertTarget->GetActorLocation();
 		for (const int32 SlotIndex : OrderedSlots)
 		{
-			if (Brains[SlotIndex].bIsEngaged || Brains[SlotIndex].ReengageBlockSteps > 0 || PlanarDistance(Bodies[SlotIndex].Location, Bodies[AlertingSlot].Location) > AlertRadius)
+			const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+			const FTDMonsterBodyFragment& Body = Bodies[SlotIndex];
+			const bool bCanHearAlert = Brain.Engagement == ETDMonsterEngagement::Home
+				&& Brain.ReengageBlockSteps == 0
+				&& PlanarDistance(Body.Location, Bodies[AlertingSlot].Location) <= AlertRadius
+				&& PlanarDistance(Body.HomeLocation, AlertTargetLocation) <= LeashRadius;
+			if (!bCanHearAlert)
 			{
 				continue;
 			}
@@ -393,7 +493,7 @@ void UTDMonsterThinkSubsystem::ThinkAndAct(const int32 SlotIndex)
 	{
 		return;
 	}
-	if (!Brain.bIsEngaged)
+	if (!Brain.IsEngaged())
 	{
 		Intent = MakeReturnHomeIntent(SlotIndex);
 		return;
@@ -408,6 +508,7 @@ void UTDMonsterThinkSubsystem::ThinkAndAct(const int32 SlotIndex)
 	{
 		Brain.NextThinkStep = StepIndex + static_cast<uint64>(Brain.Definition->ThinkPeriodSteps);
 		Brain.bForceThink = false;
+		RefreshNeighborGridIfStale();
 		const FTDBrainInputs Inputs = BuildInputs(SlotIndex, Context);
 		const TArray<FTDResolvedPhase>& Phases = Brain.Definition->Phases;
 		if (Phases.IsValidIndex(Brain.PhaseIndex) && Phases[Brain.PhaseIndex].IsSatisfied(Inputs))
@@ -495,6 +596,171 @@ FVector2D UTDMonsterThinkSubsystem::SteerAroundBlockingAlly(const int32 SlotInde
 	const float Side = FVector2D::CrossProduct(Direction, ToBlocker);
 	const bool bTurnLeft = FMath::IsNearlyZero(Side) ? (Body.SimulationId % 2) == 0 : Side < 0.f;
 	return Direction.GetRotated(bTurnLeft ? AvoidanceTurnDegrees : -AvoidanceTurnDegrees).GetSafeNormal();
+}
+
+void UTDMonsterThinkSubsystem::ApplyLocalAvoidance()
+{
+	if (CVarMonsterAILocalAvoidance.GetValueOnGameThread() == 0)
+	{
+		ApplySeparation();
+		for (const int32 SlotIndex : OrderedSlots)
+		{
+			Avoidances[SlotIndex] = FTDMonsterAvoidanceFragment();
+		}
+		return;
+	}
+	ApplyCircleAvoidance();
+}
+
+void UTDMonsterThinkSubsystem::ApplyCircleAvoidance()
+{
+	RefreshNeighborGridIfStale();
+	TArray<FTDAvoidanceObstacle> ExternalBodies;
+	TArray<const AActor*> ExternalActors;
+	GatherExternalBodies(ExternalBodies, ExternalActors);
+	TArray<FVector2D> NextCommandVelocities;
+	NextCommandVelocities.SetNumZeroed(Bodies.Num());
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		NextCommandVelocities[SlotIndex] = ApplyCircleAvoidanceToSlot(SlotIndex, ExternalBodies, ExternalActors);
+	}
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		Avoidances[SlotIndex].PreviousCommandVelocity = NextCommandVelocities[SlotIndex];
+	}
+}
+
+FVector2D UTDMonsterThinkSubsystem::ApplyCircleAvoidanceToSlot(const int32 SlotIndex, const TConstArrayView<FTDAvoidanceObstacle> ExternalBodies, const TConstArrayView<const AActor*> ExternalActors)
+{
+	const FTDMonsterBodyFragment& Body = Bodies[SlotIndex];
+	const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	FTDMonsterAvoidanceFragment& Avoidance = Avoidances[SlotIndex];
+	FTDMonsterMoveIntent& Intent = Intents[SlotIndex];
+	const float MoveSpeed = Brain.Definition->GetStatsForPhase(Brain.PhaseIndex).MoveSpeed;
+	if (MoveSpeed <= 0.f)
+	{
+		Avoidance.SlowedWaitStepCount = 0;
+		return FVector2D::ZeroVector;
+	}
+	FTDAvoidanceAgent Agent;
+	Agent.Location = FVector2D(Body.Location.X, Body.Location.Y);
+	Agent.Radius = Body.Radius;
+	Agent.PreferredVelocity = Intent.Direction * Intent.SpeedScale * MoveSpeed;
+	Agent.PreviousCommandVelocity = Avoidance.PreviousCommandVelocity;
+	Agent.PreviousCandidateIndex = Avoidance.PreviousCandidateIndex;
+	Agent.MaxSpeed = MoveSpeed;
+	Agent.SimulationId = Body.SimulationId;
+	FTDAvoidanceObstacleList Obstacles;
+	GatherMonsterObstacles(SlotIndex, Obstacles);
+	if (Agent.PreferredVelocity.Size() < FTDCircleAvoidance::MinimumPreferredSpeed)
+	{
+		Avoidance.SlowedWaitStepCount = 0;
+		if (Brain.State != ETDMonsterFsmState::Cast)
+		{
+			Avoidance.PreviousCandidateIndex = INDEX_NONE;
+		}
+		if (!FTDCircleAvoidance::CanYield(Brain.GetReportedState(), Brain.bIsFrozen, IsHoldingEngagedAttacker(SlotIndex)))
+		{
+			return FVector2D::ZeroVector;
+		}
+		return FTDCircleAvoidance::ApplyCommandToIntent(FTDCircleAvoidance::ComputeYieldVelocity(Agent, Obstacles), MoveSpeed, Intent);
+	}
+	const AActor* EngagedTarget = Brain.IsEngaged() ? Brain.Target.Get() : nullptr;
+	const int32 ExcludedExternalIndex = EngagedTarget ? ExternalActors.Find(EngagedTarget) : INDEX_NONE;
+	FTDCircleAvoidance::AppendNearbyExternalObstacles(Agent.Location, Agent.Radius, ExternalBodies, ExcludedExternalIndex, Obstacles);
+	const FTDAvoidanceCommand Command = FTDCircleAvoidance::ComputeAvoidanceCommand(Agent, Obstacles);
+	Avoidance.PreviousCandidateIndex = Command.CandidateIndex;
+	Avoidance.SlowedWaitStepCount = Command.bIsSlowedWaiting ? Avoidance.SlowedWaitStepCount + 1 : 0;
+	return FTDCircleAvoidance::ApplyCommandToIntent(Command.Velocity, MoveSpeed, Intent);
+}
+
+void UTDMonsterThinkSubsystem::GatherExternalBodies(TArray<FTDAvoidanceObstacle>& OutBodies, TArray<const AActor*>& OutActors) const
+{
+	OutBodies.Reset();
+	OutActors.Reset();
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	TArray<AActor*> Candidates;
+	for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		const APlayerController* PlayerController = Iterator->Get();
+		APawn* PlayerPawn = PlayerController ? PlayerController->GetPawn() : nullptr;
+		if (PlayerPawn)
+		{
+			Candidates.AddUnique(PlayerPawn);
+		}
+	}
+	for (TActorIterator<ATDCompanionCharacter> Iterator(World); Iterator; ++Iterator)
+	{
+		Candidates.AddUnique(*Iterator);
+	}
+	Candidates.RemoveAll([](AActor* Candidate)
+	{
+		return !IsValid(Candidate) || Cast<ITDMonsterBody>(Candidate) || !UTDCombatLibrary::IsActorAlive(Candidate);
+	});
+	Algo::Sort(Candidates, [](const AActor* Left, const AActor* Right)
+	{
+		return Left->GetUniqueID() < Right->GetUniqueID();
+	});
+	for (const AActor* Candidate : Candidates)
+	{
+		float CollisionRadius = 0.f;
+		float CollisionHalfHeight = 0.f;
+		Candidate->GetSimpleCollisionCylinder(CollisionRadius, CollisionHalfHeight);
+		const FVector Location = Candidate->GetActorLocation();
+		const FVector Velocity = Candidate->GetVelocity();
+		FTDAvoidanceObstacle& ExternalBody = OutBodies.AddDefaulted_GetRef();
+		ExternalBody.Location = FVector2D(Location.X, Location.Y);
+		ExternalBody.Velocity = FVector2D(Velocity.X, Velocity.Y);
+		ExternalBody.Radius = CollisionRadius;
+		OutActors.Add(Candidate);
+	}
+}
+
+void UTDMonsterThinkSubsystem::GatherMonsterObstacles(const int32 SlotIndex, FTDAvoidanceObstacleList& OutObstacles) const
+{
+	OutObstacles.Reset();
+	FTDNeighborCandidateList Neighbors;
+	NeighborGrid.GatherAvoidanceNeighbors(Bodies, SlotIndex, Neighbors);
+	for (const FTDNeighborCandidate& Neighbor : Neighbors)
+	{
+		const FTDMonsterBodyFragment& Other = Bodies[Neighbor.SlotIndex];
+		FTDAvoidanceObstacle& Obstacle = OutObstacles.AddDefaulted_GetRef();
+		Obstacle.Location = FVector2D(Other.Location.X, Other.Location.Y);
+		Obstacle.Velocity = Avoidances[Neighbor.SlotIndex].PreviousCommandVelocity;
+		Obstacle.Radius = Other.Radius;
+		Obstacle.SimulationId = Other.SimulationId;
+		Obstacle.bIsMonster = true;
+	}
+}
+
+bool UTDMonsterThinkSubsystem::IsHoldingEngagedAttacker(const int32 SlotIndex) const
+{
+	const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	return Brain.IsEngaged() && Brain.Target.IsValid();
+}
+
+bool UTDMonsterThinkSubsystem::IsReturnStallExcusedByAvoidance(const int32 SlotIndex) const
+{
+	const int32 SlowedWaitStepCount = Avoidances[SlotIndex].SlowedWaitStepCount;
+	return SlowedWaitStepCount > 0 && SlowedWaitStepCount <= TDMonsterAI::SecondsToSteps(AvoidanceWaitGraceSeconds);
+}
+
+void UTDMonsterThinkSubsystem::RebuildNeighborGrid()
+{
+	NeighborGrid.Rebuild(Bodies, OrderedSlots);
+	bIsNeighborGridStale = false;
+}
+
+void UTDMonsterThinkSubsystem::RefreshNeighborGridIfStale()
+{
+	if (bIsNeighborGridStale)
+	{
+		RebuildNeighborGrid();
+	}
 }
 
 void UTDMonsterThinkSubsystem::CountAttackersByTarget()
@@ -634,29 +900,16 @@ FTDBrainInputs UTDMonsterThinkSubsystem::BuildInputs(const int32 SlotIndex, cons
 		}
 	}
 
-	TArray<FTDNeighborEntry, TInlineAllocator<32>> Neighbors;
+	FTDNeighborCandidateList Neighbors;
 	const int32 SelfTeam = Brain.Definition->Stats.Team;
-	for (const int32 OtherIndex : OrderedSlots)
+	NeighborGrid.GatherNeighborsWithinDistance(Bodies, SlotIndex, NeighborRadius, FTDBrainInputs::MaxNeighbors, [this, SelfTeam](const int32 OtherIndex)
 	{
-		if (OtherIndex == SlotIndex || Brains[OtherIndex].Definition->Stats.Team != SelfTeam)
-		{
-			continue;
-		}
-		const float Distance = PlanarDistance(Body.Location, Bodies[OtherIndex].Location);
-		if (Distance > NeighborRadius)
-		{
-			continue;
-		}
-		Neighbors.Add({ Distance, Bodies[OtherIndex].SimulationId });
-	}
-	Neighbors.Sort([](const FTDNeighborEntry& Left, const FTDNeighborEntry& Right)
-	{
-		return Left.Distance < Right.Distance || (Left.Distance == Right.Distance && Left.SimulationId < Right.SimulationId);
-	});
-	Inputs.NeighborCount = FMath::Min(Neighbors.Num(), FTDBrainInputs::MaxNeighbors);
+		return Brains[OtherIndex].Definition->Stats.Team == SelfTeam;
+	}, Neighbors);
+	Inputs.NeighborCount = Neighbors.Num();
 	for (int32 NeighborIndex = 0; NeighborIndex < Inputs.NeighborCount; ++NeighborIndex)
 	{
-		Inputs.Neighbors[NeighborIndex] = Neighbors[NeighborIndex];
+		Inputs.Neighbors[NeighborIndex] = { static_cast<float>(Neighbors[NeighborIndex].SortDistance), Neighbors[NeighborIndex].SimulationId };
 	}
 	return Inputs;
 }
@@ -680,7 +933,7 @@ FTDMonsterStepContext UTDMonsterThinkSubsystem::MakeContext(const int32 SlotInde
 void UTDMonsterThinkSubsystem::Engage(const int32 SlotIndex)
 {
 	FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
-	if (Brain.bIsEngaged)
+	if (Brain.IsEngaged())
 	{
 		return;
 	}
@@ -688,17 +941,32 @@ void UTDMonsterThinkSubsystem::Engage(const int32 SlotIndex)
 	{
 		Brain.Target = AcquireTarget(SlotIndex);
 	}
-	Brain.bIsEngaged = true;
+	Brain.Engagement = ETDMonsterEngagement::Engaged;
 	Brain.bForceThink = true;
+	Brain.OutOfReachStepCount = 0;
 }
 
-void UTDMonsterThinkSubsystem::Disengage(const int32 SlotIndex)
+void UTDMonsterThinkSubsystem::BeginReturn(const int32 SlotIndex)
 {
+	FTDMonsterBodyFragment& Body = Bodies[SlotIndex];
+	Body.HomeLocation = Body.SpawnLocation;
 	FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
 	FTDMonsterActionExecutor::InterruptActivity(Brain, MakeContext(SlotIndex));
-	Brain.bIsEngaged = false;
+	Brain.Engagement = ETDMonsterEngagement::Returning;
 	Brain.Target.Reset();
 	Intents[SlotIndex] = FTDMonsterMoveIntent();
+	Brain.EngageLockSteps = 0;
+	Brain.OutOfReachStepCount = 0;
+	Brain.ReturnStallStepCount = 0;
+	Brain.ClosestReturnDistance = PlanarDistance(Body.Location, Body.HomeLocation);
+}
+
+void UTDMonsterThinkSubsystem::FinishReturn(const int32 SlotIndex)
+{
+	FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	Brain.Engagement = ETDMonsterEngagement::Home;
+	Brain.ReturnStallStepCount = 0;
+	Brain.ReengageBlockSteps = FMath::Max(Brain.ReengageBlockSteps, TDMonsterAI::SecondsToSteps(ArrivalSettleSeconds));
 }
 
 FTDMonsterMoveIntent UTDMonsterThinkSubsystem::MakeReturnHomeIntent(const int32 SlotIndex) const
@@ -719,6 +987,7 @@ void UTDMonsterThinkSubsystem::DrawDebugState(const int32 SlotIndex) const
 {
 	const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
 	const FString Label = FString::Printf(TEXT("%s | %s"), FTDMonsterActionRegistry::GetStateName(Brain.GetReportedState()), *Brain.GetCurrentActionId().ToString());
-	const FColor Color = Brain.bIsEngaged ? FColor::Orange : FColor::Silver;
+	const FColor ReturningOrHomeColor = Brain.Engagement == ETDMonsterEngagement::Returning ? FColor::Cyan : FColor::Silver;
+	const FColor Color = Brain.IsEngaged() ? FColor::Orange : ReturningOrHomeColor;
 	DrawDebugString(GetWorld(), Bodies[SlotIndex].Location + FVector(0.f, 0.f, 140.f), Label, nullptr, Color, 0.f, true, 1.1f);
 }

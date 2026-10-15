@@ -1,0 +1,23 @@
+runs=22 pairs, mismatches=0
+hyena,G0,H1_parallel,,cc8fa024ea9d379d,cc8fa024ea9d379d,same
+hyena,G0,H2_cross,,474545c0a33bc5df,474545c0a33bc5df,same
+hyena,G0,H3_turn,,d1de39639a305ae0,d1de39639a305ae0,same
+hyena,G0,H4_corridor,,560175628e2646d4,560175628e2646d4,same
+missing,G0,S7_column_ahead,,c1788fc1f79e0f55,c1788fc1f79e0f55,same
+hyena,G0,S8_approach,,5ed80ffdb1ac03a7,5ed80ffdb1ac03a7,same
+stop,G0,S8_approach,c115,5ed80ffdb1ac03a7,5ed80ffdb1ac03a7,same
+missing,G0,S9_bite,snap3,4391fbe8aa10be6a,4391fbe8aa10be6a,same
+missing,G0,S10_knock,impulse,a2278afbcf7dfcdf,a2278afbcf7dfcdf,same
+lowfps,G3,S10_knock,sustained,529eaeebaf750e12,529eaeebaf750e12,same
+missing,G0,S11_roll,,4ada9e582010547d,4ada9e582010547d,same
+missing,G0,S12_queue,,e51ac89affe429f1,e51ac89affe429f1,same
+large,LC,L1_parallel,medium,f908bdd28dd09f6e,f908bdd28dd09f6e,same
+large,LC,L2_turn,medium,d012f4190c98d721,d012f4190c98d721,same
+large,LC,L3_cross,medium,e384b99093dd7d8c,e384b99093dd7d8c,same
+large,LC,L4_corridor,medium,59c51531dc110e3e,59c51531dc110e3e,same
+fps30,G0,H2_cross,,a8c670f2c753d81a,a8c670f2c753d81a,same
+fps30,G0,H3_turn,,5e526ff7aea64eb7,5e526ff7aea64eb7,same
+fps30,G0,S8_approach,,92aefa31a71280e3,92aefa31a71280e3,same
+sens,G1,H2_cross,C:des_anglex0.5,be9ce9bbfed8c2e9,be9ce9bbfed8c2e9,same
+sens,G1,H3_turn,C:des_anglex0.5,a589d8933bf31cb7,a589d8933bf31cb7,same
+sens,G1,S8_approach,C:des_anglex0.5,59fd70a56cecc0f0,59fd70a56cecc0f0,same

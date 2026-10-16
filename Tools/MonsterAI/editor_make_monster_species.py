@@ -14,6 +14,7 @@ TOOLS = unreal.AssetToolsHelpers.get_asset_tools()
 SPECIES_FOLDER = "/Game/MonsterAI/Species"
 ANIM_FOLDER = "/Game/MonsterAI/Animations"
 HYENA = "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotionHyenas_A15_"
+HYENA_LOOP = "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_"
 BOOKHEAD_ANIMS = "/Game/BookHeadMonster/Demo/Animations/"
 MANNY_ATTACK = "/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01"
 GUARD_ANIMS = "/Game/Skeleton_Guard/Demoscene_UE4/Animations/"
@@ -131,7 +132,7 @@ def main():
 
     hyena_bite = clip(HYENA + "Atk", 0.0, 0.6, 1.0, 0.3, 0.25)
     species("DA_TDMonster_Hyena", "Hyena", "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion", 0.65, -90.0, 45.0, 48.0,
-            clip(HYENA + "Idle", 0.0, 2.5), clip(HYENA + "Walk", 0.0, 1.333), clip(HYENA + "Run", 0.0, 0.5), 70.0, 925.0,
+            clip(HYENA_LOOP + "Idle"), clip(HYENA_LOOP + "Walk"), clip(HYENA_LOOP + "Run"), 70.0, 731.0,
             clip(HYENA + "Die", 0.0, 1.667), {"Bite": hyena_bite}, corpse_seconds=6.0)
 
     brute_attack = clip(bookhead_attack, 0.0, 1.0, 1.0, 0.45, 0.35)

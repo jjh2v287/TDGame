@@ -45,6 +45,13 @@ namespace TDMovementAnimationTestSupport
 	const FName BladeTipBoneName(TEXT("hand_r"));
 	const TCHAR* SwordAttackSequencePath = TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01.AS_TD_Player_SwordAttack01");
 	const TCHAR* UnarmedAttackSequencePath = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01.MM_Attack_01");
+	const TCHAR* ShortIdleSpeciesPath = TEXT("/Game/MonsterAI/Species/DA_TDMonster_SkeletonGuard.DA_TDMonster_SkeletonGuard");
+	constexpr float SpeciesSpawnClearance = 2.f;
+	constexpr float IdleSettleSeconds = 0.2f;
+	constexpr float IdleLoopCheckCycleRatio = 1.5f;
+	constexpr float IdlePoseSampleSpacingSeconds = 0.25f;
+	constexpr int32 IdlePoseSampleCount = 4;
+	constexpr float MinimumIdlePoseChange = 0.05f;
 
 	struct FTDScopedMovementWorld
 	{
@@ -103,6 +110,19 @@ namespace TDMovementAnimationTestSupport
 		{
 			const FTransform SpawnTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, MonsterSpawnHeight));
 			return World->SpawnActor<ATDMonsterCharacter>(ATDMonsterCharacter::StaticClass(), SpawnTransform);
+		}
+
+		ATDMonsterCharacter* SpawnMonsterOfSpecies(UTDMonsterSpeciesAsset& Species)
+		{
+			const FTransform SpawnTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, Species.CapsuleHalfHeight + SpeciesSpawnClearance));
+			ATDMonsterCharacter* Monster = World->SpawnActorDeferred<ATDMonsterCharacter>(ATDMonsterCharacter::StaticClass(), SpawnTransform);
+			if (!Monster)
+			{
+				return nullptr;
+			}
+			Monster->SetSpecies(&Species);
+			Monster->FinishSpawning(SpawnTransform);
+			return Monster;
 		}
 
 		UTDCombatComponent* SpawnTarget(const FVector& Location, int32 TeamId)
@@ -174,6 +194,23 @@ namespace TDMovementAnimationTestSupport
 		ComponentSpacePose.InitPose(MoveTemp(Pose));
 		OutLocation = ComponentSpacePose.GetComponentSpaceTransform(BoneContainer.MakeCompactPoseIndex(FMeshPoseBoneIndex(BoneIndex))).GetLocation();
 		return true;
+	}
+
+	float MeasureIdlePoseChange(FTDScopedMovementWorld& Fixture, const USkeletalMeshComponent& Mesh)
+	{
+		const TArray<FTransform> FirstPose = Mesh.GetComponentSpaceTransforms();
+		float LargestChange = 0.f;
+		for (int32 SampleIndex = 1; SampleIndex < IdlePoseSampleCount; ++SampleIndex)
+		{
+			Fixture.Tick(IdlePoseSampleSpacingSeconds);
+			const TArray<FTransform>& Pose = Mesh.GetComponentSpaceTransforms();
+			const int32 NumBones = FMath::Min(FirstPose.Num(), Pose.Num());
+			for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+			{
+				LargestChange = FMath::Max(LargestChange, static_cast<float>(FVector::Dist(FirstPose[BoneIndex].GetLocation(), Pose[BoneIndex].GetLocation())));
+			}
+		}
+		return LargestChange;
 	}
 
 	void IgnoreEngineInjectionTimelineEnsure(FAutomationTestBase& Test)
@@ -333,6 +370,45 @@ bool FTDMonsterMoveIntentMovesPawnTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Move intent carries the monster forward"), Offset.X > 100.f);
 	TestTrue(TEXT("Move intent keeps the monster on its line"), FMath::Abs(Offset.Y) < 5.f);
 	TestTrue(TEXT("Monster faces its movement direction"), Monster->GetActorForwardVector().X > 0.9f);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterIdleKeepsLoopingTest, "TDGame.Movement.MonsterIdleKeepsLooping", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMonsterIdleKeepsLoopingTest::RunTest(const FString& Parameters)
+{
+	const UTDMonsterSpeciesAsset* SourceSpecies = LoadObject<UTDMonsterSpeciesAsset>(nullptr, TDMovementAnimationTestSupport::ShortIdleSpeciesPath);
+	if (!TestNotNull(TEXT("Short idle species exists"), SourceSpecies))
+	{
+		return false;
+	}
+	const UAnimSequence* IdleSequence = Cast<UAnimSequence>(SourceSpecies->Idle.Animation);
+	if (!TestNotNull(TEXT("Species has an idle sequence"), IdleSequence))
+	{
+		return false;
+	}
+
+	UTDMonsterSpeciesAsset* Species = DuplicateObject<UTDMonsterSpeciesAsset>(SourceSpecies, GetTransientPackage());
+	Species->DefinitionId = NAME_None;
+	TDMovementAnimationTestSupport::FTDScopedMovementWorld Fixture;
+	ATDMonsterCharacter* Monster = Fixture.SpawnMonsterOfSpecies(*Species);
+	if (!TestNotNull(TEXT("Monster pawn spawns"), Monster))
+	{
+		return false;
+	}
+	const USkeletalMeshComponent* Mesh = Monster->GetMesh();
+	const float IdleCycleSeconds = IdleSequence->GetPlayLength() / FMath::Max(Species->Idle.PlayRate, UE_KINDA_SMALL_NUMBER);
+	Fixture.Tick(TDMovementAnimationTestSupport::IdleSettleSeconds);
+
+	const float FirstCycleChange = TDMovementAnimationTestSupport::MeasureIdlePoseChange(Fixture, *Mesh);
+	const float ElapsedSeconds = TDMovementAnimationTestSupport::IdleSettleSeconds + TDMovementAnimationTestSupport::IdlePoseSampleSpacingSeconds * (TDMovementAnimationTestSupport::IdlePoseSampleCount - 1);
+	Fixture.Tick(FMath::Max(IdleCycleSeconds * TDMovementAnimationTestSupport::IdleLoopCheckCycleRatio - ElapsedSeconds, 0.f));
+	const float LaterCycleChange = TDMovementAnimationTestSupport::MeasureIdlePoseChange(Fixture, *Mesh);
+
+	AddInfo(FString::Printf(TEXT("%s idle %.3f s (loop %d): pose change %.3f cm in the first cycle, %.3f cm after %.2f cycles"),
+		*IdleSequence->GetName(), IdleCycleSeconds, IdleSequence->bLoop ? 1 : 0, FirstCycleChange, LaterCycleChange, TDMovementAnimationTestSupport::IdleLoopCheckCycleRatio));
+	TestTrue(FString::Printf(TEXT("Idle pose animates during the first cycle: %.3f cm"), FirstCycleChange), FirstCycleChange > TDMovementAnimationTestSupport::MinimumIdlePoseChange);
+	TestTrue(FString::Printf(TEXT("Idle keeps animating after %.2f cycles: %.3f cm"), TDMovementAnimationTestSupport::IdleLoopCheckCycleRatio, LaterCycleChange), LaterCycleChange > TDMovementAnimationTestSupport::MinimumIdlePoseChange);
 	return true;
 }
 

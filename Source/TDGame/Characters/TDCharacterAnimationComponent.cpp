@@ -118,6 +118,17 @@ namespace TDCharacterAnimationPlayback
 		});
 	}
 
+	float ComputeRunThreshold(const float WalkClipSpeed, const float RunClipSpeed)
+	{
+		const float WalkTopSpeed = WalkClipSpeed * MaximumLocomotionPlayRate;
+		const float RunBottomSpeed = RunClipSpeed * MinimumLocomotionPlayRate;
+		if (WalkTopSpeed < RunBottomSpeed)
+		{
+			return FMath::Sqrt(WalkTopSpeed * RunBottomSpeed);
+		}
+		return (WalkClipSpeed + RunClipSpeed) * 0.5f;
+	}
+
 	float ComputeSignedMoveDirection(const FVector& Velocity, const FRotator& FacingRotation)
 	{
 		const FVector PlanarDirection = Velocity.GetSafeNormal2D();
@@ -652,7 +663,7 @@ UTDCharacterAnimationComponent::ETDLocomotionPose UTDCharacterAnimationComponent
 	{
 		return ETDLocomotionPose::Idle;
 	}
-	const float RunThreshold = (LocomotionClips.WalkClipSpeed + LocomotionClips.RunClipSpeed) * 0.5f;
+	const float RunThreshold = TDCharacterAnimationPlayback::ComputeRunThreshold(LocomotionClips.WalkClipSpeed, LocomotionClips.RunClipSpeed);
 	const float RunMargin = RunThreshold * TDCharacterAnimationPlayback::RunHysteresisRatio;
 	const float ActiveRunThreshold = CurrentLocomotionPose == ETDLocomotionPose::Run ? RunThreshold - RunMargin : RunThreshold + RunMargin;
 	return PlanarSpeed > ActiveRunThreshold ? ETDLocomotionPose::Run : ETDLocomotionPose::Walk;

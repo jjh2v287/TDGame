@@ -117,3 +117,12 @@
 - 증거: `Saved/AgentOps/20261011/aianim-scratch/measure-result.json`, `aianim-codebase-audit.md`
 - 날짜·상태: 2026-10-12 active(해결 미구현)
 - 발견: claude(사용자 보고에서 시작)
+
+### L-anim-15 UAF 기본 자산으로 도는 대기는 시퀀스 bLoop을 따르고, 대기를 주입으로 돌리면 `Event.SerialNumber != 0` ensure가 난다
+- 증상: ① 몬스터 대기가 한 번 재생된 뒤 마지막 포즈로 멈춘다(시험 `TDGame.Movement.MonsterIdleKeepsLooping`: 첫 주기 7.36cm 움직임 → 1.5주기 뒤 0.000cm). 시스템 공개 변수(`FSequencePlayerData`)의 `LoopMode`를 `ForceLoop`로 바꿔도 그대로다. ② 대기를 걷기·달리기처럼 `ForceLoop` 주입으로 바꾸면 반복은 되지만 `LogOutputDevice: Error: Ensure condition failed: Event.SerialNumber != 0 [File:...\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp] [Line: 88]`가 오류로 남아 시험이 실패한다.
+- 원인: ① 실제 대기를 재생하는 그래프는 주입 지점이 `Graph.Asset`(UObject)의 기본값으로 따로 만들기 때문에, 반복 여부가 시퀀스 자산의 `bLoop`(Auto 루프 모드)을 따른다. 쓰던 대기 시퀀스 4개(MM_Idle·AS_TD_Goblin_Idle·Skeleton_Guard·Stone_Golem ThirdPersonIdle)가 모두 `bLoop=False`였다. ② 미검증(모듈 주입 컴포넌트를 거치지 않은 주입 이벤트로 추정).
+- 해결: 대기는 기본 자산 그대로 두고 쓰는 시퀀스의 `loop`를 켠다(`Tools/MonsterAI/editor_make_loop_clips.py`가 종 자산 전부를 읽어 켬, 재실행 안전). 종 시험 `TDGame.MonsterAI.Species.LocomotionClipsLoop`이 대기 bLoop을 단언한다. 이동 클립은 C++이 `StartPosition 0 + ForceLoop`로 자산 전체를 주입하므로 종 자산의 Start/End를 쓰지 말고 반복 구간만 담은 자산을 쓴다(UAF 5.8 `FPlayAnimArgs`에 끝 위치 없음).
+- 범위: `Source/TDGame/Characters/TDCharacterAnimationComponent.cpp`(ApplyBaseAsset·UpdateLocomotionClips), UE 5.8.2 UAFAnimGraph(Experimental)
+- 증거: `Saved/Logs/M326_Before2.log`·`M326_After2.log`(2769줄)·`M326_After4.log`, 시도 패치 `Saved/AgentOps/20261016/m3-26/idle_injection_attempt.patch`
+- 날짜·상태: 2026-10-16 active
+- 발견: claude

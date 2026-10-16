@@ -114,6 +114,7 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 도구 | 용도 | 실행 |
 |---|---|---|
 | `MonsterAI/editor_make_monster_species.py` | 종 에셋 `DA_TDMonster_*`(메시·애니메이션 구간·정의 ID)과 루트 고정 공격 애니메이션 복제본 생성·갱신(재실행 안전) | `python Tools/run_in_editor.py Tools/MonsterAI/editor_make_monster_species.py` (PowerShell) |
+| `MonsterAI/editor_make_loop_clips.py` | 앞부분만 움직이고 뒤가 정지 포즈로 채워진 원본(Fab 하이에나 16.5초)에서 동작 구간(원본 프레임 무변경)만 남기고, 끝과 시작 사이의 빠진 틈 G프레임을 C1 Hermite(회전은 로그 공간)로 채워 루프 자산 `AS_TD_Hyena_{Idle,Walk,Run}`을 만든다. G = 몸통 뼈 틈 거리÷경계 속도의 가중 중앙값−1(경계가 정지면 12). 하이에나 지면 속도·종 자산 갱신, 종 자산이 쓰는 대기 시퀀스 loop 켜기(기본 자산 대기는 bLoop을 따름, L-anim-15). 결과가 같으면 저장 안 함, 출력 `Saved/MonsterAI/loop_clips.json`(M3-26) | `python Tools/run_in_editor.py Tools/MonsterAI/editor_make_loop_clips.py` (PowerShell) |
 | `MonsterAI/editor_retarget_monster_anims.py` | Manny 애니메이션을 고블린·골렘으로 IK 리타기팅(IK 리그 3·리타기터 2 자동 캐릭터화, 결과 루트 고정). 자기가 만든 에셋(`TDGeneratedBy` 태그)만 갱신, 약 11초 | `python Tools/run_in_editor.py Tools/MonsterAI/editor_retarget_monster_anims.py` (PowerShell) |
 | `MonsterAI/editor_place_monsters.py` | LV-Cambat에 몬스터 무리 7개(25마리) 배치·저장. 이전 `TDGen_Monster_` 액터는 지우고 다시 만듦 | `python Tools/run_in_editor.py Tools/MonsterAI/editor_place_monsters.py` (PowerShell, PIE 종료·미저장 없음 필요) |
 | `MonsterAI/pie_check_monsters.py` (+`editor_pie_monster_probe.py`) | PIE 켜고 하이에나 무리 옆으로 이동 → 교전·예고·타격·경직·사망 기록 → `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json`(+스크린샷), 판정 `passed` | `python Tools/MonsterAI/pie_check_monsters.py` |

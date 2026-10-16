@@ -1,11 +1,12 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-10-16 01:50 claude
+갱신: 2026-10-16 17:05 claude
 
 ## ① 진행 중 (대장 doing)
 
 - P3-19·P3-20 done: 연속 세계(사용자 확인)·태양 역광(D-46, 필드 −70°/205°). 증거 `Docs/Validation/P3-19-continuous.md`·`P3-20-sun.md`.
 - M3-25 done: Home/Engaged/Returning, 집 기준 교전·귀환 커밋. 헤드리스88/88, 근거 `research/project-engagement-leash-yoyo.md`.
+- M3-26 done(미커밋): 하이에나 이동 애니 루프 자산 3개·전 종 대기 bLoop(L-anim-15). 헤드리스127/126(기준선 CrossingStreams), PIE 육안 대기.
 - P3-17 done: 탑다운 컷아웃·재베이크, 가림11→1%. 끄기 `td.TopDown.OcclusionCutout 0`.
 - 2026-10-16 사용자 지시로 작업 트리 전체 커밋·푸시(영역별 커밋, 의도 확인 묶음은 마지막 커밋에 분리).
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.

@@ -126,6 +126,8 @@ def retarget_clip(retargeter, target_key, target_mesh, clip):
         return None
     sequence.set_editor_property("enable_root_motion", False)
     sequence.set_editor_property("force_root_lock", True)
+    if clip == "Idle":
+        sequence.set_editor_property("loop", True)
     mark_owned(sequence)
     return sequence
 

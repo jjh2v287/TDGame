@@ -15,6 +15,7 @@ class UExponentialHeightFogComponent;
 class USkyAtmosphereComponent;
 class USkyLightComponent;
 class UTDSeamlessTravelSubsystem;
+struct FStreamableHandle;
 
 UCLASS()
 class TDGAME_API UTDRealmSubsystem : public UTickableWorldSubsystem
@@ -66,7 +67,10 @@ private:
 	static FTDPassageLocation MakePassageLocation(const UTDRealmDefinition& Realm, const FTDRealmGate& Gate, double AlongCm, float Weight, bool bIsLift);
 	static bool TryMeasureConnector(const UTDRealmDefinition& Realm, const FTDRealmGate& Gate, const FVector& LocationCm, FTDPassageLocation& OutPassage, double& OutDistanceSquared);
 
-	void LoadConfiguredRealmDefinitions();
+	void CollectConfiguredRealmDefinitions(TArray<TObjectPtr<UTDRealmDefinition>>& OutRealms) const;
+	void RequestRealmDefinitions();
+	void RequestRealmLiftAssets();
+	void HandleRealmLiftAssetsLoaded();
 	void SpawnRealmLifts();
 	void SpawnShaftLiner(UWorld& World, const FTDRealmGate& Gate, ATDRealmLiftDeck& Lift);
 	void CaptureFieldAtmosphere();
@@ -110,6 +114,9 @@ private:
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<ATDRealmShaftLiner>> RealmShaftLiners;
+
+	TSharedPtr<FStreamableHandle> RealmDefinitionsHandle;
+	TSharedPtr<FStreamableHandle> RealmLiftAssetsHandle;
 
 	TWeakObjectPtr<ATDGameCharacter> PacedCharacter;
 	float CurrentPassagePaceScale = 1.0f;

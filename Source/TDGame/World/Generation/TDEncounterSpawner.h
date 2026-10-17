@@ -6,6 +6,7 @@
 #include "TDEncounterSpawner.generated.h"
 
 class USceneComponent;
+struct FStreamableHandle;
 
 UCLASS()
 class TDGAME_API ATDEncounterSpawner : public AActor
@@ -49,4 +50,10 @@ public:
 
 private:
 	FTDSeedContext MakeSeedContext() const;
+	int32 SpawnPendingPicks();
+	void HandleEnemyClassesLoaded();
+
+	TSharedPtr<FStreamableHandle> EnemyClassesHandle;
+	TArray<FTDEncounterPick> PendingPicks;
+	TArray<FTransform> PendingMarkerTransforms;
 };

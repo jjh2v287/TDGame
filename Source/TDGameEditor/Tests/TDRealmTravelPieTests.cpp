@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Algo/AllOf.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Characters/TDCombatCharacter.h"
 #include "Components/DirectionalLightComponent.h"
@@ -27,6 +28,7 @@ namespace
 	const FName TDPreloadCancelFirstTargetId(TEXT("MainCrypt"));
 	const FName TDPreloadCancelSecondTargetId(TEXT("HollowCave"));
 	constexpr float TDRealmPieWarmupSeconds = 10.0f;
+	constexpr float TDRealmLiftDeckReadyTimeoutSeconds = 30.0f;
 	constexpr float TDPreloadCancelStreamingSeconds = 1.0f;
 	constexpr double TDRealmTravelTimeoutSeconds = 90.0;
 	constexpr double TDRealmPieFieldHalfExtentCm = 50400.0;
@@ -673,7 +675,7 @@ namespace
 
 	bool TryGetGameplayLayerState(UWorld& World, const FTDRealmGateTravelCase& Case, EDataLayerRuntimeState& OutState)
 	{
-		const UDataLayerAsset* LayerAsset = Case.GameplayDataLayer.IsNull() ? nullptr : Case.GameplayDataLayer.LoadSynchronous();
+		const UDataLayerAsset* LayerAsset = Case.GameplayDataLayer.IsNull() ? nullptr : Case.GameplayDataLayer.Get();
 		const UDataLayerManager* LayerManager = UDataLayerManager::GetDataLayerManager(&World);
 		const UDataLayerInstance* LayerInstance = LayerAsset && LayerManager ? LayerManager->GetDataLayerInstanceFromAsset(LayerAsset) : nullptr;
 		if (!LayerInstance)
@@ -932,6 +934,24 @@ namespace
 			return true;
 		});
 	}
+
+	void EnqueueWaitForRealmLiftDecks(FAutomationTestBase& Test, const TArray<FTDRealmGateTravelCase>& Cases, TFunction<void()> OnTimeout)
+	{
+		TArray<FName> LiftGateIds;
+		for (const FTDRealmGateTravelCase& Case : Cases)
+		{
+			if (Case.bIsLift)
+			{
+				LiftGateIds.Add(Case.GateId);
+			}
+		}
+
+		TDPieTestUtils::EnqueueWaitUntil(Test, TEXT("Realm lift decks are spawned"), [LiftGateIds]()
+		{
+			const UTDRealmSubsystem* Realm = UTDRealmSubsystem::GetRealmSubsystem(TDPieTestUtils::GetPieWorld());
+			return Realm && Algo::AllOf(LiftGateIds, [Realm](FName GateId) { return Realm->FindRealmLiftDeck(GateId) != nullptr; });
+		}, TDRealmLiftDeckReadyTimeoutSeconds, MoveTemp(OnTimeout));
+	}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDPreloadCancelAllowsOtherTargetPieTest, "TDGame.SeamlessTravel.PreloadCancelAllowsOtherTarget", EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
@@ -1037,6 +1057,7 @@ bool FTDRealmRoundTripPieTest::RunTest(const FString& Parameters)
 	};
 
 	EnqueueWaitSeconds(TDRealmPieWarmupSeconds);
+	EnqueueWaitForRealmLiftDecks(*this, Cases, Abort);
 
 	EnqueueStep([this, State]()
 	{
@@ -1173,6 +1194,7 @@ bool FTDRealmConnectorWalkPieTest::RunTest(const FString& Parameters)
 	}
 
 	EnqueueWaitSeconds(TDRealmPieWarmupSeconds);
+	EnqueueWaitForRealmLiftDecks(*this, Cases, []() {});
 	for (const FTDRealmGateTravelCase& Case : ConnectorCases)
 	{
 		EnqueueConnectorWalk(*this, Case, AllRealmBoundsCm);
@@ -1929,6 +1951,7 @@ bool FTDRealmLiftRidePieTest::RunTest(const FString& Parameters)
 	}
 
 	EnqueueWaitSeconds(TDRealmPieWarmupSeconds);
+	EnqueueWaitForRealmLiftDecks(*this, Cases, []() {});
 
 	for (const FTDRealmGateTravelCase& Case : Cases)
 	{
@@ -1972,6 +1995,7 @@ bool FTDRealmLiftTreadmillPieTest::RunTest(const FString& Parameters)
 	}
 
 	EnqueueWaitSeconds(TDRealmPieWarmupSeconds);
+	EnqueueWaitForRealmLiftDecks(*this, Cases, []() {});
 
 	const FTDRealmGateTravelCase Case = Cases[0];
 	TSharedRef<FTDRealmLiftPieState> State = MakeShared<FTDRealmLiftPieState>();

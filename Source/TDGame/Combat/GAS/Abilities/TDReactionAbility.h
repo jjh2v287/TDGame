@@ -2,10 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Combat/Skills/TDCombatActionTypes.h"
 #include "TDReactionAbility.generated.h"
 
 class UTDCombatComponent;
 class UTDSkillComponent;
+struct FStreamableHandle;
 
 UCLASS(Abstract)
 class TDGAME_API UTDReactionAbility : public UGameplayAbility
@@ -43,6 +45,8 @@ private:
 	void AddAbilityStateTag(const FGameplayTag& Tag, bool& bTagAdded);
 	void RemoveAbilityStateTag(const FGameplayTag& Tag, bool& bTagAdded);
 	void ClearAbilityState();
+	void PlayFinalPoseAndEnd(const FTDActionAnimation& FinalPoseAction);
+	void HandleFinalPoseAnimationLoaded();
 
 	UFUNCTION()
 	void HandleReactionTimelineCompleted();
@@ -50,6 +54,10 @@ private:
 	UFUNCTION()
 	void HandleReactionTimelineInterrupted();
 
+	UPROPERTY(Transient)
+	FTDActionAnimation PendingFinalPoseAction;
+
+	TSharedPtr<FStreamableHandle> FinalPoseLoadHandle;
 	bool bHasAddedActiveStateTag = false;
 };
 

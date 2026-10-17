@@ -1,16 +1,19 @@
 #include "World/Streaming/TDRealmSubsystem.h"
 
+#include "Algo/AllOf.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Characters/TDGameCharacter.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/SkyLightComponent.h"
+#include "Engine/AssetManager.h"
 #include "Engine/DirectionalLight.h"
 #include "Engine/Engine.h"
 #include "Engine/ExponentialHeightFog.h"
 #include "Engine/PostProcessVolume.h"
 #include "Engine/SkyLight.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
@@ -113,8 +116,7 @@ UTDRealmSubsystem* UTDRealmSubsystem::GetRealmSubsystem(const UObject* WorldCont
 void UTDRealmSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
-	LoadConfiguredRealmDefinitions();
-	SpawnRealmLifts();
+	RequestRealmDefinitions();
 	CaptureFieldAtmosphere();
 	if (!bHasCapturedFieldAtmosphere)
 	{
@@ -125,6 +127,16 @@ void UTDRealmSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void UTDRealmSubsystem::Deinitialize()
 {
+	if (RealmDefinitionsHandle.IsValid())
+	{
+		RealmDefinitionsHandle->CancelHandle();
+	}
+	RealmDefinitionsHandle.Reset();
+	if (RealmLiftAssetsHandle.IsValid())
+	{
+		RealmLiftAssetsHandle->CancelHandle();
+	}
+	RealmLiftAssetsHandle.Reset();
 	bHasBegunPlay = false;
 	RestorePassagePace();
 	PacedCharacter.Reset();
@@ -219,9 +231,9 @@ void UTDRealmSubsystem::Tick(float DeltaTime)
 	RecoverFallenPawnIfNeeded(*Pawn);
 }
 
-void UTDRealmSubsystem::LoadConfiguredRealmDefinitions()
+void UTDRealmSubsystem::CollectConfiguredRealmDefinitions(TArray<TObjectPtr<UTDRealmDefinition>>& OutRealms) const
 {
-	LoadedRealmDefinitions.Reset();
+	OutRealms.Reset();
 	const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
 	if (!Settings)
 	{
@@ -230,13 +242,85 @@ void UTDRealmSubsystem::LoadConfiguredRealmDefinitions()
 
 	for (const TSoftObjectPtr<UTDRealmDefinition>& RealmReference : Settings->RealmDefinitions)
 	{
-		UObject* LoadedObject = RealmReference.IsNull() ? nullptr : RealmReference.ToSoftObjectPath().TryLoad(nullptr, static_cast<ELoadFlags>(LOAD_NoWarn | LOAD_Quiet));
-		if (UTDRealmDefinition* Realm = Cast<UTDRealmDefinition>(LoadedObject))
+		if (UTDRealmDefinition* Realm = RealmReference.Get())
 		{
-			LoadedRealmDefinitions.Add(Realm);
+			OutRealms.Add(Realm);
 		}
 	}
-	UE_LOG(LogTDGame, Log, TEXT("Realm: %d of %d configured realm definitions loaded."), LoadedRealmDefinitions.Num(), Settings->RealmDefinitions.Num());
+}
+
+void UTDRealmSubsystem::RequestRealmDefinitions()
+{
+	TArray<FSoftObjectPath> RealmDefinitionPaths;
+	if (const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get())
+	{
+		for (const TSoftObjectPtr<UTDRealmDefinition>& RealmReference : Settings->RealmDefinitions)
+		{
+			if (!RealmReference.IsNull())
+			{
+				RealmDefinitionPaths.Add(RealmReference.ToSoftObjectPath());
+			}
+		}
+	}
+	if (RealmDefinitionPaths.IsEmpty())
+	{
+		HandleRealmLiftAssetsLoaded();
+		return;
+	}
+
+	const bool bAreDefinitionsResident = Algo::AllOf(RealmDefinitionPaths, [](const FSoftObjectPath& RealmDefinitionPath) { return RealmDefinitionPath.ResolveObject() != nullptr; });
+	RealmDefinitionsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		RealmDefinitionPaths,
+		bAreDefinitionsResident ? FStreamableDelegate() : FStreamableDelegate::CreateUObject(this, &ThisClass::RequestRealmLiftAssets),
+		FStreamableManager::AsyncLoadHighPriority);
+	if (bAreDefinitionsResident || !RealmDefinitionsHandle.IsValid())
+	{
+		RequestRealmLiftAssets();
+	}
+}
+
+void UTDRealmSubsystem::RequestRealmLiftAssets()
+{
+	TArray<TObjectPtr<UTDRealmDefinition>> ResidentRealms;
+	CollectConfiguredRealmDefinitions(ResidentRealms);
+	TArray<FSoftObjectPath> RealmLiftAssetPaths;
+	for (const UTDRealmDefinition* Realm : ResidentRealms)
+	{
+		for (const FTDRealmGate& Gate : Realm->Gates)
+		{
+			if (Gate.GateKind != ETDRealmGateKind::Lift)
+			{
+				continue;
+			}
+
+			ATDRealmLiftDeck::GatherRequiredAssetPaths(Gate, RealmLiftAssetPaths);
+			ATDRealmShaftLiner::GatherRequiredAssetPaths(Gate, RealmLiftAssetPaths);
+		}
+	}
+	if (Algo::AllOf(RealmLiftAssetPaths, [](const FSoftObjectPath& RealmLiftAssetPath) { return RealmLiftAssetPath.ResolveObject() != nullptr; }))
+	{
+		HandleRealmLiftAssetsLoaded();
+		return;
+	}
+
+	RealmLiftAssetsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		RealmLiftAssetPaths,
+		FStreamableDelegate::CreateUObject(this, &ThisClass::HandleRealmLiftAssetsLoaded),
+		FStreamableManager::AsyncLoadHighPriority);
+	if (!RealmLiftAssetsHandle.IsValid())
+	{
+		HandleRealmLiftAssetsLoaded();
+	}
+}
+
+void UTDRealmSubsystem::HandleRealmLiftAssetsLoaded()
+{
+	CollectConfiguredRealmDefinitions(LoadedRealmDefinitions);
+	if (const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get())
+	{
+		UE_LOG(LogTDGame, Log, TEXT("Realm: %d of %d configured realm definitions loaded."), LoadedRealmDefinitions.Num(), Settings->RealmDefinitions.Num());
+	}
+	SpawnRealmLifts();
 }
 
 void UTDRealmSubsystem::SpawnRealmLifts()
@@ -619,7 +703,7 @@ void UTDRealmSubsystem::ActivateGameplayDataLayer(const UTDRealmDefinition& Real
 		return;
 	}
 
-	const UDataLayerAsset* DataLayerAsset = Realm.GameplayDataLayer.LoadSynchronous();
+	const UDataLayerAsset* DataLayerAsset = Realm.GameplayDataLayer.Get();
 	UDataLayerManager* DataLayerManager = UDataLayerManager::GetDataLayerManager(GetWorld());
 	if (!DataLayerAsset || !DataLayerManager)
 	{

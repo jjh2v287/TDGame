@@ -3,7 +3,9 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Characters/TDCombatCharacter.h"
 #include "Dungeon/TDDungeonDefinitions.h"
+#include "Engine/AssetManager.h"
 #include "Engine/Engine.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -94,12 +96,48 @@ void UTDSeamlessTravelSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 	RegisterStreamingProvider();
+	RequestDungeonAtlas();
 }
 
 void UTDSeamlessTravelSubsystem::Deinitialize()
 {
 	UnregisterStreamingProvider();
+	DungeonAtlasHandle.Reset();
 	Super::Deinitialize();
+}
+
+void UTDSeamlessTravelSubsystem::RequestDungeonAtlas()
+{
+	if (DungeonAtlasHandle.IsValid())
+	{
+		return;
+	}
+
+	const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
+	if (!Settings || Settings->DefaultDungeonAtlas.IsNull())
+	{
+		return;
+	}
+
+	DungeonAtlasHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		Settings->DefaultDungeonAtlas.ToSoftObjectPath(), FStreamableDelegate(), FStreamableManager::AsyncLoadHighPriority);
+}
+
+const UTDDungeonAtlasDefinition* UTDSeamlessTravelSubsystem::WaitForDungeonAtlas()
+{
+	const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
+	if (!Settings || Settings->DefaultDungeonAtlas.IsNull())
+	{
+		return nullptr;
+	}
+
+	RequestDungeonAtlas();
+	if (DungeonAtlasHandle.IsValid() && !DungeonAtlasHandle->HasLoadCompleted())
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("SeamlessTravel: dungeon atlas '%s' was requested before its preload finished; waiting for it."), *Settings->DefaultDungeonAtlas.ToSoftObjectPath().ToString());
+		DungeonAtlasHandle->WaitUntilComplete();
+	}
+	return Settings->DefaultDungeonAtlas.Get();
 }
 
 void UTDSeamlessTravelSubsystem::RegisterStreamingProvider()
@@ -195,7 +233,7 @@ void UTDSeamlessTravelSubsystem::BeginDepartureHold(const FVector& DepartureLoca
 	UE_LOG(LogTDGame, Log, TEXT("SeamlessTravel: holding departure area %s loaded for %.1fs."), *DepartureLocation.ToCompactString(), HoldSeconds);
 }
 
-bool UTDSeamlessTravelSubsystem::ResolveDestination(FName DungeonId, bool bToEntry, FTransform& OutDestination, FLinearColor& OutFadeColor) const
+bool UTDSeamlessTravelSubsystem::ResolveDestination(FName DungeonId, bool bToEntry, FTransform& OutDestination, FLinearColor& OutFadeColor)
 {
 	const UTDRealmDefinition* Realm = UTDRealmDefinition::FindRealmByGateId(DungeonId);
 	const FTDRealmGate* Gate = Realm ? Realm->FindGate(DungeonId) : nullptr;
@@ -206,8 +244,7 @@ bool UTDSeamlessTravelSubsystem::ResolveDestination(FName DungeonId, bool bToEnt
 		return true;
 	}
 
-	const UTDWorldGenSettings* Settings = UTDWorldGenSettings::Get();
-	const UTDDungeonAtlasDefinition* Atlas = Settings ? Settings->DefaultDungeonAtlas.LoadSynchronous() : nullptr;
+	const UTDDungeonAtlasDefinition* Atlas = WaitForDungeonAtlas();
 	const FTDDungeonSlot* Slot = Atlas ? Atlas->FindSlotPtr(DungeonId) : nullptr;
 	if (!Slot)
 	{

@@ -1,5 +1,7 @@
 #include "Framework/TDTopDownOcclusionSubsystem.h"
 
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 #include "Framework/TDTopDownSettings.h"
 #include "GameFramework/Pawn.h"
@@ -30,19 +32,6 @@ namespace TDTopDownOcclusionParameterNames
 
 namespace
 {
-	UMaterialParameterCollection* LoadTopDownParameterCollection(const UTDTopDownSettings& Settings)
-	{
-		if (Settings.TopDownParameterCollection.IsNull())
-		{
-			return nullptr;
-		}
-		if (!FPackageName::DoesPackageExist(Settings.TopDownParameterCollection.GetLongPackageName()))
-		{
-			return nullptr;
-		}
-		return Settings.TopDownParameterCollection.LoadSynchronous();
-	}
-
 	const APawn* FindTopDownLocalPlayerPawn(const UWorld* World)
 	{
 		const APlayerController* PlayerController = World ? World->GetFirstPlayerController() : nullptr;
@@ -79,7 +68,30 @@ void UTDTopDownOcclusionSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	Super::OnWorldBeginPlay(InWorld);
 
 	const UTDTopDownSettings& Settings = *GetDefault<UTDTopDownSettings>();
-	ParameterCollection = LoadTopDownParameterCollection(Settings);
+	ParameterCollection = Settings.TopDownParameterCollection.Get();
+	if (ParameterCollection)
+	{
+		return;
+	}
+
+	if (Settings.TopDownParameterCollection.IsNull() || !FPackageName::DoesPackageExist(Settings.TopDownParameterCollection.GetLongPackageName()))
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("TopDownOcclusion: parameter collection '%s' is missing or failed to load; the occlusion cutout stays off."), *Settings.TopDownParameterCollection.ToString());
+		return;
+	}
+
+	ParameterCollectionHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		Settings.TopDownParameterCollection.ToSoftObjectPath(), FStreamableDelegate::CreateUObject(this, &ThisClass::HandleParameterCollectionLoaded));
+	if (!ParameterCollectionHandle.IsValid())
+	{
+		HandleParameterCollectionLoaded();
+	}
+}
+
+void UTDTopDownOcclusionSubsystem::HandleParameterCollectionLoaded()
+{
+	const UTDTopDownSettings& Settings = *GetDefault<UTDTopDownSettings>();
+	ParameterCollection = Settings.TopDownParameterCollection.Get();
 	if (ParameterCollection)
 	{
 		return;
@@ -90,6 +102,11 @@ void UTDTopDownOcclusionSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void UTDTopDownOcclusionSubsystem::Deinitialize()
 {
+	if (ParameterCollectionHandle.IsValid())
+	{
+		ParameterCollectionHandle->CancelHandle();
+	}
+	ParameterCollectionHandle.Reset();
 	ParameterCollection = nullptr;
 	Super::Deinitialize();
 }

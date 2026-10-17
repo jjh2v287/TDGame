@@ -18,9 +18,8 @@ if not isinstance(player, unreal.TDGameCharacter):
 targets = list(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.TDDamageTarget))
 if not targets:
     raise RuntimeError("The arena must contain damage targets")
-spells = list(player.get_editor_property("damage_spells"))
-if len(spells) != 10:
-    raise RuntimeError(f"Expected 10 spells, got {len(spells)}")
+spells = []
+spell_wait_start = unreal.GameplayStatics.get_time_seconds(world)
 
 output = Path(unreal.SystemLibrary.get_project_directory()) / "Saved/Damage/megamagic-pie.json"
 output.parent.mkdir(parents=True, exist_ok=True)
@@ -64,6 +63,16 @@ def begin_spell(now):
 
 
 def tick(delta):
+    if state["slot"] < 0:
+        loaded_spells = list(player.get_editor_property("damage_spells"))
+        if len(loaded_spells) != 10:
+            if unreal.GameplayStatics.get_time_seconds(world) - spell_wait_start < 15.0:
+                return
+            report["state"] = "spells-not-loaded"
+            save()
+            unreal.unregister_slate_post_tick_callback(handle)
+            raise RuntimeError(f"Expected 10 spells within 15 seconds, got {len(loaded_spells)}")
+        spells[:] = loaded_spells
     try:
         now = unreal.GameplayStatics.get_time_seconds(world)
         if state["slot"] < 0:

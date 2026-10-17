@@ -19,6 +19,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FTDTravelStateChanged, ETDSeamlessT
 
 class APawn;
 class APlayerCameraManager;
+class UTDDungeonAtlasDefinition;
+struct FStreamableHandle;
 
 UCLASS()
 class TDGAME_API UTDSeamlessTravelSubsystem : public UTickableWorldSubsystem, public IWorldPartitionStreamingSourceProvider
@@ -72,7 +74,9 @@ public:
 	virtual bool GetStreamingSources(TArray<FWorldPartitionStreamingSource>& StreamingSources) const override;
 
 private:
-	bool ResolveDestination(FName DungeonId, bool bToEntry, FTransform& OutDestination, FLinearColor& OutFadeColor) const;
+	bool ResolveDestination(FName DungeonId, bool bToEntry, FTransform& OutDestination, FLinearColor& OutFadeColor);
+	void RequestDungeonAtlas();
+	const UTDDungeonAtlasDefinition* WaitForDungeonAtlas();
 	bool IsSameTarget(FName DungeonId, bool bToEntry) const;
 	bool StartPreload(FName DungeonId, bool bToEntry);
 	bool IsSimulatedPreloadDelayActive() const;
@@ -114,4 +118,5 @@ private:
 	double PreloadStartWorldSeconds = 0.0;
 	double NextTimeoutWarningSeconds = 0.0;
 	FDelegateHandle StreamingStateUpdatedHandle;
+	TSharedPtr<FStreamableHandle> DungeonAtlasHandle;
 };

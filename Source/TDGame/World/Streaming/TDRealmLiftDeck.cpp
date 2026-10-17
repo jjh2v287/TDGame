@@ -62,20 +62,20 @@ namespace
 		return static_cast<uint8>(1 << EdgeIndex);
 	}
 
-	UStaticMesh* LoadRealmLiftMesh(const TSoftObjectPtr<UStaticMesh>& MeshReference, UStaticMesh* FallbackMesh)
+	UStaticMesh* ResolveRealmLiftMesh(const TSoftObjectPtr<UStaticMesh>& MeshReference, UStaticMesh* FallbackMesh)
 	{
-		UStaticMesh* LoadedMesh = MeshReference.IsNull() ? nullptr : MeshReference.LoadSynchronous();
+		UStaticMesh* LoadedMesh = MeshReference.IsNull() ? nullptr : MeshReference.Get();
 		return LoadedMesh ? LoadedMesh : FallbackMesh;
 	}
 
-	UMaterialInterface* LoadRealmLiftMaterial(const TSoftObjectPtr<UMaterialInterface>& MaterialReference, const TCHAR* FallbackMaterialPath)
+	UMaterialInterface* ResolveRealmLiftMaterial(const TSoftObjectPtr<UMaterialInterface>& MaterialReference, const TCHAR* FallbackMaterialPath)
 	{
-		UMaterialInterface* LoadedMaterial = MaterialReference.IsNull() ? nullptr : MaterialReference.LoadSynchronous();
+		UMaterialInterface* LoadedMaterial = MaterialReference.IsNull() ? nullptr : MaterialReference.Get();
 		if (LoadedMaterial || !FallbackMaterialPath)
 		{
 			return LoadedMaterial;
 		}
-		return LoadObject<UMaterialInterface>(nullptr, FallbackMaterialPath);
+		return Cast<UMaterialInterface>(FSoftObjectPath(FallbackMaterialPath).ResolveObject());
 	}
 
 	void FitRealmLiftMeshToBox(UStaticMeshComponent& Component, UStaticMesh* Mesh, const FVector& CenterCm, const FVector& HalfExtentCm, UMaterialInterface* Material, const FQuat& Rotation = FQuat::Identity)
@@ -547,6 +547,27 @@ FTransform ATDRealmLiftDeck::MakeShaftFrameTransform(const FTDRealmGate& Gate)
 	return FTransform(FRotator(0.0, FrameYawDeg, 0.0), Gate.Lift.FieldLandingTransform.GetLocation());
 }
 
+void ATDRealmLiftDeck::GatherRequiredAssetPaths(const FTDRealmGate& Gate, TArray<FSoftObjectPath>& OutPaths)
+{
+	const FSoftObjectPath GateAssetPaths[] =
+	{
+		Gate.Lift.DeckMesh.ToSoftObjectPath(),
+		Gate.Lift.RailMesh.ToSoftObjectPath(),
+		Gate.Lift.DeckMaterial.ToSoftObjectPath(),
+		Gate.Lift.AbyssScreenMaterial.ToSoftObjectPath()
+	};
+	for (const FSoftObjectPath& GateAssetPath : GateAssetPaths)
+	{
+		if (!GateAssetPath.IsNull())
+		{
+			OutPaths.AddUnique(GateAssetPath);
+		}
+	}
+	OutPaths.AddUnique(FSoftObjectPath(TDRealmLiftFallbackMeshPath));
+	OutPaths.AddUnique(FSoftObjectPath(TDRealmLiftAbyssScreenMeshPath));
+	OutPaths.AddUnique(FSoftObjectPath(TDRealmLiftAbyssScreenFallbackMaterialPath));
+}
+
 void ATDRealmLiftDeck::InitializeLift(const FTDRealmGate& Gate)
 {
 	GateId = Gate.GateId;
@@ -555,10 +576,10 @@ void ATDRealmLiftDeck::InitializeLift(const FTDRealmGate& Gate)
 	DeckHalfExtentCm = Gate.Lift.DeckHalfExtentCm.ComponentMax(FVector(1.0));
 	SetActorRotation(FRotator(0.0, Gate.Lift.FieldLandingTransform.Rotator().Yaw, 0.0));
 
-	UStaticMesh* FallbackMesh = LoadObject<UStaticMesh>(nullptr, TDRealmLiftFallbackMeshPath);
-	UStaticMesh* DeckMesh = LoadRealmLiftMesh(Gate.Lift.DeckMesh, FallbackMesh);
-	UStaticMesh* RailMesh = LoadRealmLiftMesh(Gate.Lift.RailMesh, FallbackMesh);
-	UMaterialInterface* DeckMaterial = LoadRealmLiftMaterial(Gate.Lift.DeckMaterial, nullptr);
+	UStaticMesh* FallbackMesh = Cast<UStaticMesh>(FSoftObjectPath(TDRealmLiftFallbackMeshPath).ResolveObject());
+	UStaticMesh* DeckMesh = ResolveRealmLiftMesh(Gate.Lift.DeckMesh, FallbackMesh);
+	UStaticMesh* RailMesh = ResolveRealmLiftMesh(Gate.Lift.RailMesh, FallbackMesh);
+	UMaterialInterface* DeckMaterial = ResolveRealmLiftMaterial(Gate.Lift.DeckMaterial, nullptr);
 	FitRealmLiftMeshToBox(*DeckComponent, DeckMesh, FVector(0.0, 0.0, TDRealmLiftDeckTopClearanceCm - DeckHalfExtentCm.Z), DeckHalfExtentCm, DeckMaterial);
 	ConfigureEdges(Gate, RailMesh, DeckMaterial);
 	ConfigureAbyssScreen(Gate);
@@ -618,8 +639,8 @@ void ATDRealmLiftDeck::ConfigureEdges(const FTDRealmGate& Gate, UStaticMesh* Rai
 void ATDRealmLiftDeck::ConfigureAbyssScreen(const FTDRealmGate& Gate)
 {
 	AbyssScreenDepthCm = Gate.Lift.AbyssScreenDepthCm;
-	UStaticMesh* ScreenMesh = LoadObject<UStaticMesh>(nullptr, TDRealmLiftAbyssScreenMeshPath);
-	UMaterialInterface* ScreenMaterial = LoadRealmLiftMaterial(Gate.Lift.AbyssScreenMaterial, TDRealmLiftAbyssScreenFallbackMaterialPath);
+	UStaticMesh* ScreenMesh = Cast<UStaticMesh>(FSoftObjectPath(TDRealmLiftAbyssScreenMeshPath).ResolveObject());
+	UMaterialInterface* ScreenMaterial = ResolveRealmLiftMaterial(Gate.Lift.AbyssScreenMaterial, TDRealmLiftAbyssScreenFallbackMaterialPath);
 	const FQuat DeckToFrameRotation = GetActorQuat().Inverse() * MakeShaftFrameTransform(Gate).GetRotation();
 	const FVector FrameCenterCm((TDRealmLiftShaftBackVCm + TDRealmLiftShaftFaceVCm) * 0.5, 0.0, 0.0);
 	const FVector ScreenCenterCm = DeckToFrameRotation.RotateVector(FrameCenterCm) - FVector(0.0, 0.0, AbyssScreenDepthCm);

@@ -1,10 +1,16 @@
 #include "MonsterAI/TDMonsterDefinitionLibrary.h"
+#include "Algo/AllOf.h"
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Dom/JsonObject.h"
+#include "Engine/AssetManager.h"
 #include "Engine/Engine.h"
+#include "Engine/StreamableManager.h"
 #include "HAL/FileManager.h"
 #include "HAL/IConsoleManager.h"
+#include "Misc/App.h"
+#include "Misc/CoreDelegates.h"
 #include "Misc/FileHelper.h"
+#include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "MonsterAI/TDMonsterAttackCatalog.h"
 #include "Policies/CondensedJsonPrintPolicy.h"
@@ -984,6 +990,16 @@ namespace
 		Merged->SetStringField(TEXT("id"), Id);
 		return Merged;
 	}
+
+	TArray<FSoftObjectPath> MakeTDSpellCandidatePaths(const FName SpellName)
+	{
+		const FString NameText = SpellName.ToString();
+		return
+		{
+			FSoftObjectPath(FString::Printf(TEXT("/Game/MonsterAI/Attacks/%s.%s"), *NameText, *NameText)),
+			FSoftObjectPath(FString::Printf(TEXT("/Game/Combat/Examples/%s.%s"), *NameText, *NameText))
+		};
+	}
 }
 
 void UTDMonsterDefinitionLibrary::ResolveDefinitionTexts(const TMap<FString, FString>& FileTexts, FTDMonsterSpellResolver SpellResolver, TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>>& OutDefinitions, TArray<FString>& OutErrors)
@@ -1047,10 +1063,22 @@ void UTDMonsterDefinitionLibrary::Initialize(FSubsystemCollectionBase& Collectio
 			ReloadDefinitions();
 		}),
 		ECVF_Default);
+	FCoreDelegates::GetOnPostEngineInit().AddUObject(this, &ThisClass::PrefetchDefinitionAssets);
 }
 
 void UTDMonsterDefinitionLibrary::Deinitialize()
 {
+	FCoreDelegates::GetOnPostEngineInit().RemoveAll(this);
+	if (SpellAssetsHandle.IsValid())
+	{
+		SpellAssetsHandle->CancelHandle();
+	}
+	SpellAssetsHandle.Reset();
+	if (AttackPresentationHandle.IsValid())
+	{
+		AttackPresentationHandle->CancelHandle();
+	}
+	AttackPresentationHandle.Reset();
 	if (ReloadCommand)
 	{
 		IConsoleManager::Get().UnregisterConsoleObject(ReloadCommand);
@@ -1094,15 +1122,9 @@ UTDDamageDefinition* UTDMonsterDefinitionLibrary::FindSpell(const FName SpellNam
 	{
 		return *Spell;
 	}
-	const FString NameText = SpellName.ToString();
-	const FString CandidatePaths[] =
+	for (const FSoftObjectPath& CandidatePath : MakeTDSpellCandidatePaths(SpellName))
 	{
-		FString::Printf(TEXT("/Game/MonsterAI/Attacks/%s.%s"), *NameText, *NameText),
-		FString::Printf(TEXT("/Game/Combat/Examples/%s.%s"), *NameText, *NameText)
-	};
-	for (const FString& CandidatePath : CandidatePaths)
-	{
-		if (UTDDamageDefinition* Loaded = LoadObject<UTDDamageDefinition>(nullptr, *CandidatePath, nullptr, LOAD_NoWarn | LOAD_Quiet))
+		if (UTDDamageDefinition* Loaded = Cast<UTDDamageDefinition>(CandidatePath.ResolveObject()))
 		{
 			OwnedSpells.Add(Loaded);
 			SpellsByName.Add(SpellName, Loaded);
@@ -1115,6 +1137,22 @@ UTDDamageDefinition* UTDMonsterDefinitionLibrary::FindSpell(const FName SpellNam
 int32 UTDMonsterDefinitionLibrary::ReloadDefinitions()
 {
 	EnsureAttackCatalog();
+	const TMap<FString, FString> FileTexts = ReadDefinitionFiles();
+	WaitForSpellAssets(FileTexts);
+
+	LoadErrors.Reset();
+	ResolveDefinitionTexts(FileTexts, [this](const FName SpellName) { return FindSpell(SpellName); }, Definitions, LoadErrors);
+	bHasLoaded = true;
+	for (const FString& Error : LoadErrors)
+	{
+		UE_LOG(LogTDMonsterDefinition, Error, TEXT("%s"), *Error);
+	}
+	UE_LOG(LogTDMonsterDefinition, Log, TEXT("Loaded %d monster definitions from %s with %d errors"), Definitions.Num(), *GetDefinitionDirectory(), LoadErrors.Num());
+	return LoadErrors.Num();
+}
+
+TMap<FString, FString> UTDMonsterDefinitionLibrary::ReadDefinitionFiles()
+{
 	TMap<FString, FString> FileTexts;
 	TArray<FString> FileNames;
 	const FString Directory = GetDefinitionDirectory();
@@ -1128,16 +1166,97 @@ int32 UTDMonsterDefinitionLibrary::ReloadDefinitions()
 			FileTexts.Add(FileName, Text);
 		}
 	}
+	return FileTexts;
+}
 
-	LoadErrors.Reset();
-	ResolveDefinitionTexts(FileTexts, [this](const FName SpellName) { return FindSpell(SpellName); }, Definitions, LoadErrors);
-	bHasLoaded = true;
-	for (const FString& Error : LoadErrors)
+TArray<FSoftObjectPath> UTDMonsterDefinitionLibrary::CollectUnloadedSpellPaths(const TMap<FString, FString>& FileTexts) const
+{
+	TArray<FSoftObjectPath> UnloadedSpellPaths;
+	TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>> IgnoredDefinitions;
+	TArray<FString> IgnoredErrors;
+	ResolveDefinitionTexts(FileTexts, [this, &UnloadedSpellPaths](const FName SpellName) -> UTDDamageDefinition*
 	{
-		UE_LOG(LogTDMonsterDefinition, Error, TEXT("%s"), *Error);
+		if (UTDDamageDefinition* const* Spell = SpellsByName.Find(SpellName))
+		{
+			return *Spell;
+		}
+		const TArray<FSoftObjectPath> CandidatePaths = MakeTDSpellCandidatePaths(SpellName);
+		for (const FSoftObjectPath& CandidatePath : CandidatePaths)
+		{
+			if (UTDDamageDefinition* Resident = Cast<UTDDamageDefinition>(CandidatePath.ResolveObject()))
+			{
+				return Resident;
+			}
+		}
+		for (const FSoftObjectPath& CandidatePath : CandidatePaths)
+		{
+			if (FPackageName::DoesPackageExist(CandidatePath.GetLongPackageName()))
+			{
+				UnloadedSpellPaths.AddUnique(CandidatePath);
+			}
+		}
+		return nullptr;
+	}, IgnoredDefinitions, IgnoredErrors);
+	return UnloadedSpellPaths;
+}
+
+void UTDMonsterDefinitionLibrary::WaitForSpellAssets(const TMap<FString, FString>& FileTexts)
+{
+	const TArray<FSoftObjectPath> SpellPaths = CollectUnloadedSpellPaths(FileTexts);
+	if (SpellPaths.IsEmpty())
+	{
+		return;
 	}
-	UE_LOG(LogTDMonsterDefinition, Log, TEXT("Loaded %d monster definitions from %s with %d errors"), Definitions.Num(), *Directory, LoadErrors.Num());
-	return LoadErrors.Num();
+	if (!UAssetManager::IsInitialized())
+	{
+		UE_LOG(LogTDMonsterDefinition, Error, TEXT("Monster spell assets cannot be loaded before the asset manager exists."));
+		return;
+	}
+	UE_LOG(LogTDMonsterDefinition, Warning, TEXT("Monster spell assets were not prefetched; waiting for %d assets before resolving definitions."), SpellPaths.Num());
+	SpellAssetsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(SpellPaths, FStreamableDelegate(), FStreamableManager::AsyncLoadHighPriority);
+	if (SpellAssetsHandle.IsValid())
+	{
+		SpellAssetsHandle->WaitUntilComplete();
+	}
+}
+
+void UTDMonsterDefinitionLibrary::PrefetchDefinitionAssets()
+{
+	if (bHasLoaded || IsRunningCommandlet() || !UAssetManager::IsInitialized())
+	{
+		return;
+	}
+	EnsureAttackCatalog();
+	const TArray<FSoftObjectPath> SpellPaths = CollectUnloadedSpellPaths(ReadDefinitionFiles());
+	if (SpellPaths.IsEmpty())
+	{
+		return;
+	}
+	SpellAssetsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(SpellPaths, FStreamableDelegate());
+}
+
+void UTDMonsterDefinitionLibrary::RequestAttackPresentation()
+{
+	if (!FApp::CanEverRender())
+	{
+		return;
+	}
+
+	const TMap<FName, UTDDamageDefinition*> CatalogAttacks = SpellsByName;
+	const TArray<FSoftObjectPath> PresentationPaths = TDMonsterAttackCatalog::GetPresentationAssetPaths();
+	const bool bArePresentationAssetsResident = Algo::AllOf(PresentationPaths, [](const FSoftObjectPath& PresentationPath) { return PresentationPath.ResolveObject() != nullptr; });
+	if (bArePresentationAssetsResident || !UAssetManager::IsInitialized())
+	{
+		TDMonsterAttackCatalog::ApplyPresentationAssets(CatalogAttacks);
+		return;
+	}
+
+	AttackPresentationHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		PresentationPaths, FStreamableDelegate::CreateWeakLambda(this, [CatalogAttacks]() { TDMonsterAttackCatalog::ApplyPresentationAssets(CatalogAttacks); }));
+	if (!AttackPresentationHandle.IsValid())
+	{
+		TDMonsterAttackCatalog::ApplyPresentationAssets(CatalogAttacks);
+	}
 }
 
 void UTDMonsterDefinitionLibrary::EnsureLoaded()
@@ -1160,4 +1279,5 @@ void UTDMonsterDefinitionLibrary::EnsureAttackCatalog()
 	{
 		OwnedSpells.Add(Entry.Value);
 	}
+	RequestAttackPresentation();
 }

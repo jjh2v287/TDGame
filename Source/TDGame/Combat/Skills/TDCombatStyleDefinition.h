@@ -14,6 +14,7 @@ class TDGAME_API UTDCombatStyleDefinition : public UDataAsset
 public:
 	const FTDCombatActionDefinition* FindAction(FGameplayTag ActionTag) const;
 	const FTDCombatReactionDefinition* FindReaction(FGameplayTag ReactionTag) const;
+	void GatherAnimationPaths(TArray<FSoftObjectPath>& OutPaths) const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Actions")

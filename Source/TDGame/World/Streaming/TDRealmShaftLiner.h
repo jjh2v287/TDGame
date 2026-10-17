@@ -22,6 +22,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	static double ComputeRingTopDepthCm(int32 RingIndex, double PhaseCm, double ModuleHeightCm, int32 ModuleCount, double RingTopDepthCm, bool bIsDescending);
+	static void GatherRequiredAssetPaths(const FTDRealmGate& Gate, TArray<FSoftObjectPath>& OutPaths);
 
 	int32 GetRingCount() const { return RingRoots.Num(); }
 	double GetRingTopDepthCm(int32 RingIndex) const;

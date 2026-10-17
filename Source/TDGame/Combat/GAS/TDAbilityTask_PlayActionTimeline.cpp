@@ -8,7 +8,10 @@
 #include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "GameFramework/Actor.h"
+#include "TDGame.h"
 
 namespace
 {
@@ -103,9 +106,25 @@ UTDAbilityTask_PlayActionTimeline* UTDAbilityTask_PlayActionTimeline::PlayAction
 void UTDAbilityTask_PlayActionTimeline::Activate()
 {
 	Super::Activate();
+	LoadedAnimation = Action.Animation.Get();
+	if (LoadedAnimation || Action.Animation.IsNull())
+	{
+		StartTimeline();
+		return;
+	}
 
+	UE_LOG(LogTDGame, Warning, TEXT("ActionTimeline: animation '%s' was not preloaded; waiting for it."), *Action.Animation.ToString());
+	AnimationLoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		Action.Animation.ToSoftObjectPath(), FStreamableDelegate::CreateUObject(this, &ThisClass::HandleAnimationLoaded), FStreamableManager::AsyncLoadHighPriority);
+	if (!AnimationLoadHandle.IsValid())
+	{
+		StartTimeline();
+	}
+}
+
+void UTDAbilityTask_PlayActionTimeline::StartTimeline()
+{
 	UTDCharacterAnimationComponent* CharacterAnimation = ResolveCharacterAnimation();
-	LoadedAnimation = Action.Animation.LoadSynchronous();
 	if (CharacterAnimation && LoadedAnimation)
 	{
 		PlaySeconds = CharacterAnimation->PlayAction(LoadedAnimation.Get(), Action.PlayRate, Action.StartSeconds, Action.EndSeconds, Action.bUseRootMotion);
@@ -133,10 +152,21 @@ void UTDAbilityTask_PlayActionTimeline::Activate()
 	}
 }
 
+void UTDAbilityTask_PlayActionTimeline::HandleAnimationLoaded()
+{
+	if (bHasFinished)
+	{
+		return;
+	}
+
+	LoadedAnimation = Action.Animation.Get();
+	StartTimeline();
+}
+
 void UTDAbilityTask_PlayActionTimeline::TickTask(const float DeltaTime)
 {
 	Super::TickTask(DeltaTime);
-	if (bHasFinished)
+	if (bHasFinished || !LoadedAnimation)
 	{
 		return;
 	}
@@ -154,6 +184,12 @@ void UTDAbilityTask_PlayActionTimeline::TickTask(const float DeltaTime)
 
 void UTDAbilityTask_PlayActionTimeline::OnDestroy(const bool bInOwnerFinished)
 {
+	if (AnimationLoadHandle.IsValid())
+	{
+		AnimationLoadHandle->CancelHandle();
+	}
+	AnimationLoadHandle.Reset();
+
 	UTDCharacterAnimationComponent* CharacterAnimation = ResolveCharacterAnimation();
 	if (CharacterAnimation && ActionEndedHandle.IsValid())
 	{

@@ -31,15 +31,15 @@ namespace
 	const TCHAR* TDShaftLinerCrossbarMeshPath = TEXT("/Engine/BasicShapes/Cube.Cube");
 	const TCHAR* TDShaftLinerDefaultMaterialPath = TEXT("/Game/World/Materials/TopDown/Instances/MI_TD_RockLocal_ShaftLiner.MI_TD_RockLocal_ShaftLiner");
 
-	UStaticMesh* LoadTDShaftLinerMesh(const TSoftObjectPtr<UStaticMesh>& MeshReference, const TCHAR* FallbackMeshPath)
+	UStaticMesh* ResolveTDShaftLinerMesh(const TSoftObjectPtr<UStaticMesh>& MeshReference, const TCHAR* FallbackMeshPath)
 	{
-		UStaticMesh* LoadedMesh = MeshReference.IsNull() ? nullptr : MeshReference.LoadSynchronous();
-		return LoadedMesh ? LoadedMesh : LoadObject<UStaticMesh>(nullptr, FallbackMeshPath);
+		UStaticMesh* LoadedMesh = MeshReference.IsNull() ? nullptr : MeshReference.Get();
+		return LoadedMesh ? LoadedMesh : Cast<UStaticMesh>(FSoftObjectPath(FallbackMeshPath).ResolveObject());
 	}
 
-	UMaterialInterface* LoadTDShaftLinerMaterial(const TSoftObjectPtr<UMaterialInterface>& MaterialReference)
+	UMaterialInterface* ResolveTDShaftLinerMaterial(const TSoftObjectPtr<UMaterialInterface>& MaterialReference)
 	{
-		UMaterialInterface* LoadedMaterial = MaterialReference.IsNull() ? nullptr : MaterialReference.LoadSynchronous();
+		UMaterialInterface* LoadedMaterial = MaterialReference.IsNull() ? nullptr : MaterialReference.Get();
 		if (LoadedMaterial)
 		{
 			return LoadedMaterial;
@@ -50,7 +50,7 @@ namespace
 		{
 			return nullptr;
 		}
-		return DefaultMaterial.LoadSynchronous();
+		return DefaultMaterial.Get();
 	}
 
 	int32 WrapTDShaftLinerModuleIndex(int32 ModuleIndex, int32 ModuleCount)
@@ -121,6 +121,31 @@ double ATDRealmShaftLiner::ComputeRingTopDepthCm(int32 RingIndex, double PhaseCm
 	return RingTopDepthCm + OffsetCm - LoopCount * LoopLengthCm;
 }
 
+void ATDRealmShaftLiner::GatherRequiredAssetPaths(const FTDRealmGate& Gate, TArray<FSoftObjectPath>& OutPaths)
+{
+	const FSoftObjectPath GateAssetPaths[] =
+	{
+		Gate.Lift.LinerPanelMesh.ToSoftObjectPath(),
+		Gate.Lift.LinerMaterial.ToSoftObjectPath()
+	};
+	for (const FSoftObjectPath& GateAssetPath : GateAssetPaths)
+	{
+		if (!GateAssetPath.IsNull())
+		{
+			OutPaths.AddUnique(GateAssetPath);
+		}
+	}
+	OutPaths.AddUnique(FSoftObjectPath(TDShaftLinerPanelMeshPath));
+	OutPaths.AddUnique(FSoftObjectPath(TDShaftLinerCrossbarMeshPath));
+
+	const FSoftObjectPath DefaultMaterialPath(TDShaftLinerDefaultMaterialPath);
+	if (!FPackageName::DoesPackageExist(DefaultMaterialPath.GetLongPackageName()))
+	{
+		return;
+	}
+	OutPaths.AddUnique(DefaultMaterialPath);
+}
+
 double ATDRealmShaftLiner::GetRingTopDepthCm(int32 RingIndex) const
 {
 	if (!RingRoots.IsValidIndex(RingIndex) || !RingRoots[RingIndex])
@@ -157,9 +182,9 @@ void ATDRealmShaftLiner::InitializeLiner(const FTDRealmGate& Gate, ATDRealmLiftD
 	BaseModuleShift = 0;
 	bIsBaseDescending = Motion.Direction == ETDRealmLiftDirection::Down;
 
-	UStaticMesh* PanelMesh = LoadTDShaftLinerMesh(Lift.LinerPanelMesh, TDShaftLinerPanelMeshPath);
-	UStaticMesh* CrossbarMesh = LoadObject<UStaticMesh>(nullptr, TDShaftLinerCrossbarMeshPath);
-	UMaterialInterface* LinerMaterial = LoadTDShaftLinerMaterial(Lift.LinerMaterial);
+	UStaticMesh* PanelMesh = ResolveTDShaftLinerMesh(Lift.LinerPanelMesh, TDShaftLinerPanelMeshPath);
+	UStaticMesh* CrossbarMesh = Cast<UStaticMesh>(FSoftObjectPath(TDShaftLinerCrossbarMeshPath).ResolveObject());
+	UMaterialInterface* LinerMaterial = ResolveTDShaftLinerMaterial(Lift.LinerMaterial);
 	for (int32 RingIndex = 0; RingIndex < ModuleCount; ++RingIndex)
 	{
 		BuildRing(RingIndex, PanelMesh, CrossbarMesh, LinerMaterial);

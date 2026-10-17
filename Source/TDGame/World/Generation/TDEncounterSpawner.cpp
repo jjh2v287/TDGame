@@ -1,6 +1,9 @@
 #include "World/Generation/TDEncounterSpawner.h"
 
+#include "Algo/AllOf.h"
 #include "Components/SceneComponent.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTDEncounterSpawner, Log, All);
@@ -92,27 +95,57 @@ int32 ATDEncounterSpawner::SpawnEncounter()
 	}
 	DespawnEncounter();
 
-	TArray<FTransform> MarkerTransforms;
-	CollectSpawnMarkerTransforms(MarkerTransforms);
-	if (MarkerTransforms.Num() == 0)
+	CollectSpawnMarkerTransforms(PendingMarkerTransforms);
+	if (PendingMarkerTransforms.Num() == 0)
 	{
 		UE_LOG(LogTDEncounterSpawner, Warning, TEXT("%s: no components or attached actors tagged %s"), *GetName(), *SpawnMarkerTag.ToString());
 		return 0;
 	}
 
-	const TArray<FTDEncounterPick> Picks = FTDEncounterResolver::Resolve(EncounterSet, RoomDepth, MarkerTransforms.Num(), MakeSeedContext());
+	PendingPicks = FTDEncounterResolver::Resolve(EncounterSet, RoomDepth, PendingMarkerTransforms.Num(), MakeSeedContext());
+	TArray<FSoftObjectPath> EnemyClassPaths;
+	for (const FTDEncounterPick& Pick : PendingPicks)
+	{
+		if (Pick.EnemyClass.IsNull())
+		{
+			continue;
+		}
+		EnemyClassPaths.AddUnique(Pick.EnemyClass.ToSoftObjectPath());
+	}
+	if (Algo::AllOf(EnemyClassPaths, [](const FSoftObjectPath& EnemyClassPath) { return EnemyClassPath.ResolveObject() != nullptr; }))
+	{
+		return SpawnPendingPicks();
+	}
+
+	EnemyClassesHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		EnemyClassPaths, FStreamableDelegate::CreateUObject(this, &ThisClass::HandleEnemyClassesLoaded));
+	if (!EnemyClassesHandle.IsValid())
+	{
+		return SpawnPendingPicks();
+	}
+	return 0;
+}
+
+int32 ATDEncounterSpawner::SpawnPendingPicks()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return 0;
+	}
+
 	FActorSpawnParameters Params;
 	Params.Owner = this;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	for (const FTDEncounterPick& Pick : Picks)
+	for (const FTDEncounterPick& Pick : PendingPicks)
 	{
-		UClass* EnemyClass = Pick.EnemyClass.LoadSynchronous();
+		UClass* EnemyClass = Pick.EnemyClass.Get();
 		if (!EnemyClass)
 		{
 			UE_LOG(LogTDEncounterSpawner, Warning, TEXT("%s: enemy class could not be loaded: %s"), *GetName(), *Pick.EnemyClass.ToString());
 			continue;
 		}
-		AActor* Enemy = World->SpawnActor<AActor>(EnemyClass, MarkerTransforms[Pick.MarkerIndex], Params);
+		AActor* Enemy = World->SpawnActor<AActor>(EnemyClass, PendingMarkerTransforms[Pick.MarkerIndex], Params);
 		if (!Enemy)
 		{
 			continue;
@@ -120,12 +153,26 @@ int32 ATDEncounterSpawner::SpawnEncounter()
 		SpawnedEnemies.Add(Enemy);
 	}
 	UE_LOG(LogTDEncounterSpawner, Log, TEXT("%s: room %s depth %d seed %d markers %d picks %d spawned %d difficulty %.1f"),
-		*GetName(), *RoomId.ToString(), RoomDepth, Seed, MarkerTransforms.Num(), Picks.Num(), SpawnedEnemies.Num(), FTDEncounterResolver::SumDifficulty(Picks));
+		*GetName(), *RoomId.ToString(), RoomDepth, Seed, PendingMarkerTransforms.Num(), PendingPicks.Num(), SpawnedEnemies.Num(), FTDEncounterResolver::SumDifficulty(PendingPicks));
+	PendingPicks.Reset();
+	PendingMarkerTransforms.Reset();
 	return SpawnedEnemies.Num();
+}
+
+void ATDEncounterSpawner::HandleEnemyClassesLoaded()
+{
+	SpawnPendingPicks();
 }
 
 void ATDEncounterSpawner::DespawnEncounter()
 {
+	if (EnemyClassesHandle.IsValid())
+	{
+		EnemyClassesHandle->CancelHandle();
+	}
+	EnemyClassesHandle.Reset();
+	PendingPicks.Reset();
+	PendingMarkerTransforms.Reset();
 	for (AActor* Enemy : SpawnedEnemies)
 	{
 		if (IsValid(Enemy))

@@ -5,6 +5,8 @@
 #include "Combat/TDCombatComponent.h"
 #include "Combat/TDCombatLibrary.h"
 #include "Core/TDGameplayTags.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 
 UTDSkillComponent::UTDSkillComponent()
@@ -15,6 +17,7 @@ UTDSkillComponent::UTDSkillComponent()
 void UTDSkillComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	PrefetchSkillSetAnimations();
 
 	UTDCombatComponent* CombatComponent = UTDCombatLibrary::GetCombatComponent(GetOwner());
 	if (!CombatComponent)
@@ -404,4 +407,21 @@ bool UTDSkillComponent::TryConsumeBufferedInput()
 bool UTDSkillComponent::HasBufferedInput() const
 {
 	return BufferedActionTag.IsValid();
+}
+
+void UTDSkillComponent::PrefetchSkillSetAnimations()
+{
+	if (!SkillSet)
+	{
+		return;
+	}
+
+	TArray<FSoftObjectPath> AnimationPaths;
+	SkillSet->GatherAnimationPaths(AnimationPaths);
+	if (AnimationPaths.IsEmpty())
+	{
+		return;
+	}
+
+	SkillSetAnimationsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(AnimationPaths, FStreamableDelegate(), FStreamableManager::AsyncLoadHighPriority);
 }

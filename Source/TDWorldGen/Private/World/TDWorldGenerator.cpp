@@ -113,7 +113,7 @@ namespace
 	{
 		OutSettings.SecondaryRoadRatio = Region.SecondaryRoadRatio;
 		OutSettings.RoadWidthCm = Region.RoadWidthCm;
-		const UTDBiomeDefinition* Biome = Region.Biome.LoadSynchronous();
+		const UTDBiomeDefinition* Biome = Region.Biome.Get();
 		if (Biome != nullptr)
 		{
 			OutSettings.RoadClearanceCm = Biome->RoadClearanceCm;
@@ -154,6 +154,22 @@ namespace
 	}
 }
 
+void FTDWorldGenerator::GatherRequiredDefinitionPaths(const UTDRegionDefinition& Region, TArray<FSoftObjectPath>& OutPaths)
+{
+	if (!Region.Biome.IsNull())
+	{
+		OutPaths.Add(Region.Biome.ToSoftObjectPath());
+	}
+	for (const FTDPoiQuota& Quota : Region.PoiQuotas)
+	{
+		if (Quota.Archetype.IsNull())
+		{
+			continue;
+		}
+		OutPaths.Add(Quota.Archetype.ToSoftObjectPath());
+	}
+}
+
 bool FTDWorldGenerator::GenerateAndValidate(const UTDRegionDefinition& Region, const TArray<FTDWorldAnchor>& Anchors, const FBox2D& BoundsCm, int32 Seed, const FTDTerrainSampler* Terrain, const UTDDungeonAtlasDefinition* Atlas, FTDWorldLayout& OutLayout, FString& OutError)
 {
 	return GenerateAndValidate(Region, Anchors, FTDLockedLayoutElements(), BoundsCm, Seed, Terrain, Atlas, OutLayout, OutError);
@@ -162,6 +178,16 @@ bool FTDWorldGenerator::GenerateAndValidate(const UTDRegionDefinition& Region, c
 bool FTDWorldGenerator::GenerateAndValidate(const UTDRegionDefinition& Region, const TArray<FTDWorldAnchor>& Anchors, const FTDLockedLayoutElements& Locked, const FBox2D& BoundsCm, int32 Seed, const FTDTerrainSampler* Terrain, const UTDDungeonAtlasDefinition* Atlas, FTDWorldLayout& OutLayout, FString& OutError)
 {
 	OutError.Reset();
+	TArray<FSoftObjectPath> DefinitionPaths;
+	GatherRequiredDefinitionPaths(Region, DefinitionPaths);
+	for (const FSoftObjectPath& DefinitionPath : DefinitionPaths)
+	{
+		if (DefinitionPath.ResolveObject() == nullptr)
+		{
+			OutError = FString::Printf(TEXT("Definition '%s' is not loaded; call FTDWorldGenerator::GatherRequiredDefinitionPaths and load the paths before generating."), *DefinitionPath.ToString());
+			return false;
+		}
+	}
 	const FTDSeedContext SeedContext(Seed);
 	FString GraphError;
 	if (!FTDWorldGraphGenerator::Generate(Region, Anchors, Locked, BoundsCm, SeedContext, Terrain, FTDWorldGraphGenerator::FSettings(), OutLayout, GraphError))

@@ -101,6 +101,7 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	static FTransform MakeShaftFrameTransform(const FTDRealmGate& Gate);
+	static void GatherRequiredAssetPaths(const FTDRealmGate& Gate, TArray<FSoftObjectPath>& OutPaths);
 
 	FName GetGateId() const { return GateId; }
 	const FTDRealmLiftMotion& GetMotion() const { return Motion; }

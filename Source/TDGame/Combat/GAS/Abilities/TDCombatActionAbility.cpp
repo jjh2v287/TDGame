@@ -131,12 +131,6 @@ void UTDCombatActionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	}
 
 	const bool bHasActionAnimation = ActionDefinition->Action.HasAnimation();
-	if (bHasActionAnimation && !ActionDefinition->Action.Animation.LoadSynchronous())
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-
 	if (!bHasActionAnimation && ActionDefinition->HitExecutionType == ETDCombatHitExecutionType::TimelineSweep)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);

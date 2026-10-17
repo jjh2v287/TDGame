@@ -9,8 +9,11 @@
 #include "Combat/Damage/TDDamageTarget.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Engine/AssetManager.h"
 #include "Engine/Engine.h"
+#include "Engine/StreamableManager.h"
 #include "InputCoreTypes.h"
+#include "Misc/PackageName.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraSystem.h"
@@ -34,6 +37,21 @@ namespace
 {
 	const TCHAR* const DefaultMeleeActionPath = TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01.AS_TD_Player_SwordAttack01");
 	constexpr float ImmediateFacingYawThresholdDegrees = 10.f;
+
+	FSoftObjectPath MakeTDMeleeActionAssetPath(const FString& AnimationPath)
+	{
+		if (AnimationPath.IsEmpty())
+		{
+			return FSoftObjectPath(DefaultMeleeActionPath);
+		}
+
+		if (AnimationPath.Contains(TEXT(".")))
+		{
+			return FSoftObjectPath(AnimationPath);
+		}
+
+		return FSoftObjectPath(AnimationPath + TEXT(".") + FPackageName::GetShortName(AnimationPath));
+	}
 }
 
 ATDGamePlayerController::ATDGamePlayerController()
@@ -810,11 +828,36 @@ void ATDGamePlayerController::TDPlayMeleeAction(const FString& AnimationPath)
 		return;
 	}
 
-	const FString ResolvedAnimationPath = AnimationPath.IsEmpty() ? FString(DefaultMeleeActionPath) : AnimationPath;
-	UAnimSequence* Animation = LoadObject<UAnimSequence>(nullptr, *ResolvedAnimationPath);
+	const FSoftObjectPath AnimationAssetPath = MakeTDMeleeActionAssetPath(AnimationPath);
+	if (MeleeActionHandle.IsValid())
+	{
+		MeleeActionHandle->CancelHandle();
+	}
+	MeleeActionHandle.Reset();
+
+	const bool bIsAnimationResident = AnimationAssetPath.ResolveObject() != nullptr;
+	FStreamableDelegate OnAnimationLoaded = bIsAnimationResident ? FStreamableDelegate() : FStreamableDelegate::CreateUObject(this, &ThisClass::PlayLoadedMeleeAction, AnimationAssetPath);
+	MeleeActionHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(AnimationAssetPath, MoveTemp(OnAnimationLoaded), FStreamableManager::AsyncLoadHighPriority);
+	if (bIsAnimationResident || !MeleeActionHandle.IsValid())
+	{
+		PlayLoadedMeleeAction(AnimationAssetPath);
+	}
+}
+
+void ATDGamePlayerController::PlayLoadedMeleeAction(FSoftObjectPath AnimationAssetPath)
+{
+	ATDCombatCharacter* ControlledCharacter = Cast<ATDCombatCharacter>(GetPawn());
+	UTDCharacterAnimationComponent* CharacterAnimation = ControlledCharacter ? ControlledCharacter->GetCharacterAnimation() : nullptr;
+	if (!CharacterAnimation)
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeAction: no controlled combat character with an animation component."));
+		return;
+	}
+
+	UAnimSequence* Animation = Cast<UAnimSequence>(AnimationAssetPath.ResolveObject());
 	if (!Animation)
 	{
-		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeAction: failed to load animation sequence '%s'."), *ResolvedAnimationPath);
+		UE_LOG(LogTDGame, Warning, TEXT("TDPlayMeleeAction: failed to load animation sequence '%s'."), *AnimationAssetPath.ToString());
 		return;
 	}
 

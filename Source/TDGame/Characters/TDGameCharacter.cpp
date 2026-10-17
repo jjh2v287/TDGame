@@ -2,6 +2,7 @@
 
 #include "Characters/TDGameCharacter.h"
 #include "Abilities/GameplayAbility.h"
+#include "Algo/AllOf.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/BlendSpace.h"
 #include "Characters/TDCapsuleModifierComponent.h"
@@ -23,7 +24,9 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "DefaultMovementSet/NavMoverComponent.h"
+#include "Engine/AssetManager.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/StreamableManager.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -31,10 +34,27 @@
 #include "Engine/World.h"
 #include "MovementMode.h"
 #include "MoverTypes.h"
+#include "TDGame.h"
 
 namespace
 {
 	constexpr float TDGameCharacterMinimumPassagePaceScale = 0.3f;
+
+	TArray<FSoftObjectPath> MakeTDDefaultDamageSpellPaths()
+	{
+		const TCHAR* SpellNames[] =
+		{
+			TEXT("Fireball"), TEXT("Blizzard"), TEXT("Mine"), TEXT("Shockwave"), TEXT("Meteor"),
+			TEXT("DelayedHoming"), TEXT("ThunderCage"), TEXT("VenomBloom"), TEXT("AstralLances"), TEXT("PhoenixDive")
+		};
+
+		TArray<FSoftObjectPath> SpellPaths;
+		for (const TCHAR* SpellName : SpellNames)
+		{
+			SpellPaths.Add(FSoftObjectPath(FString::Printf(TEXT("/Game/Combat/MegaMagic/DA_TD%s.DA_TD%s"), SpellName, SpellName)));
+		}
+		return SpellPaths;
+	}
 }
 
 ATDGameCharacter::ATDGameCharacter()
@@ -98,37 +118,16 @@ void ATDGameCharacter::BeginPlay()
 {
 	if (DamageSpells.IsEmpty())
 	{
-		const TCHAR* SpellNames[] =
-		{
-			TEXT("Fireball"), TEXT("Blizzard"), TEXT("Mine"), TEXT("Shockwave"), TEXT("Meteor"),
-			TEXT("DelayedHoming"), TEXT("ThunderCage"), TEXT("VenomBloom"), TEXT("AstralLances"), TEXT("PhoenixDive")
-		};
-		for (const TCHAR* SpellName : SpellNames)
-		{
-			const FString AssetPath = FString::Printf(TEXT("/Game/Combat/MegaMagic/DA_TD%s.DA_TD%s"), SpellName, SpellName);
-			UTDDamageDefinition* Definition = LoadObject<UTDDamageDefinition>(nullptr, *AssetPath, nullptr, LOAD_NoWarn);
-			if (!Definition)
-			{
-				DamageSpells.Reset();
-				break;
-			}
-			DamageSpells.Add(Definition);
-		}
-
-		if (DamageSpells.IsEmpty())
-		{
-			TArray<UTDDamageDefinition*> Examples;
-			TDDamageExamples::CreateMegaMagicExamples(this, Examples);
-			for (UTDDamageDefinition* Definition : Examples)
-			{
-				DamageSpells.Add(Definition);
-			}
-		}
+		RequestDefaultDamageSpells();
 	}
 
 	Super::BeginPlay();
 
-	ApplyAnimationSettings();
+	if (CharacterAnimation)
+	{
+		CharacterAnimation->OnActionAnimationEnded.AddUObject(this, &ThisClass::HandleActionAnimationEnded);
+	}
+	RequestAnimationAssets();
 	GrantDefaultActionAbilities();
 	CombatComponent->OnDeath.AddUObject(this, &ThisClass::HandleDeath);
 	RefreshJumpStateTag(IsAirborne());
@@ -303,7 +302,7 @@ bool ATDGameCharacter::ActivateCombatAbility(const FGameplayTag AbilityTag, AAct
 
 bool ATDGameCharacter::CanStartRoll() const
 {
-	if (!CombatComponent->IsAlive() || CombatComponent->IsFrozen() || RollAnimation.IsNull())
+	if (!CombatComponent->IsAlive() || CombatComponent->IsFrozen() || RollAnimation.Get() == nullptr)
 	{
 		return false;
 	}
@@ -349,7 +348,7 @@ FVector ATDGameCharacter::ConsumePendingRollDirection()
 
 float ATDGameCharacter::PlayRollAnimation(const FVector& RollDirection)
 {
-	UAnimSequence* RollSequence = RollAnimation.LoadSynchronous();
+	UAnimSequence* RollSequence = RollAnimation.Get();
 	if (!RollSequence || !CharacterAnimation || CharacterAnimation->IsPlayingAction(RollSequence))
 	{
 		return 0.f;
@@ -469,6 +468,99 @@ void ATDGameCharacter::GrantDefaultActionAbilities()
 	bHasGrantedDefaultActionAbilities = true;
 }
 
+void ATDGameCharacter::RequestDefaultDamageSpells()
+{
+	TArray<FSoftObjectPath> SpellPaths = MakeTDDefaultDamageSpellPaths();
+	if (Algo::AllOf(SpellPaths, [](const FSoftObjectPath& SpellPath) { return SpellPath.ResolveObject() != nullptr; }))
+	{
+		HandleDefaultDamageSpellsLoaded();
+		return;
+	}
+
+	DefaultDamageSpellsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		SpellPaths, FStreamableDelegate::CreateUObject(this, &ThisClass::HandleDefaultDamageSpellsLoaded));
+	if (!DefaultDamageSpellsHandle.IsValid())
+	{
+		HandleDefaultDamageSpellsLoaded();
+	}
+}
+
+void ATDGameCharacter::HandleDefaultDamageSpellsLoaded()
+{
+	if (!DamageSpells.IsEmpty())
+	{
+		return;
+	}
+
+	TArray<UTDDamageDefinition*> LoadedSpells;
+	for (const FSoftObjectPath& SpellPath : MakeTDDefaultDamageSpellPaths())
+	{
+		UTDDamageDefinition* Definition = Cast<UTDDamageDefinition>(SpellPath.ResolveObject());
+		if (!Definition)
+		{
+			LoadedSpells.Reset();
+			break;
+		}
+		LoadedSpells.Add(Definition);
+	}
+
+#if WITH_EDITOR
+	if (LoadedSpells.IsEmpty())
+	{
+		TDDamageExamples::CreateMegaMagicExamples(this, LoadedSpells);
+	}
+#endif
+
+	if (LoadedSpells.IsEmpty())
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("MegaMagic spell assets were not found; the player has no default damage spells."));
+		return;
+	}
+
+	for (UTDDamageDefinition* Definition : LoadedSpells)
+	{
+		DamageSpells.Add(Definition);
+	}
+}
+
+void ATDGameCharacter::GatherAnimationAssetPaths(TArray<FSoftObjectPath>& OutPaths) const
+{
+	const FSoftObjectPath AnimationAssetPaths[] =
+	{
+		LocomotionBlendSpace.ToSoftObjectPath(),
+		JumpStartAnimation.ToSoftObjectPath(),
+		FallLoopAnimation.ToSoftObjectPath(),
+		LandAnimation.ToSoftObjectPath(),
+		RollAnimation.ToSoftObjectPath()
+	};
+	for (const FSoftObjectPath& AnimationAssetPath : AnimationAssetPaths)
+	{
+		if (!AnimationAssetPath.IsNull())
+		{
+			OutPaths.Add(AnimationAssetPath);
+		}
+	}
+}
+
+void ATDGameCharacter::RequestAnimationAssets()
+{
+	TArray<FSoftObjectPath> AnimationPaths;
+	GatherAnimationAssetPaths(AnimationPaths);
+	if (AnimationPaths.IsEmpty())
+	{
+		ApplyAnimationSettings();
+		return;
+	}
+
+	const bool bAreAnimationsResident = Algo::AllOf(AnimationPaths, [](const FSoftObjectPath& AnimationPath) { return AnimationPath.ResolveObject() != nullptr; });
+	FStreamableDelegate OnAnimationsLoaded = bAreAnimationsResident ? FStreamableDelegate() : FStreamableDelegate::CreateUObject(this, &ThisClass::ApplyAnimationSettings);
+	AnimationAssetsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(AnimationPaths, MoveTemp(OnAnimationsLoaded), FStreamableManager::AsyncLoadHighPriority);
+	if (bAreAnimationsResident || !AnimationAssetsHandle.IsValid())
+	{
+		ApplyAnimationSettings();
+	}
+}
+
 void ATDGameCharacter::ApplyAnimationSettings()
 {
 	if (!CharacterAnimation)
@@ -476,18 +568,16 @@ void ATDGameCharacter::ApplyAnimationSettings()
 		return;
 	}
 
-	if (UBlendSpace* BlendSpace = LocomotionBlendSpace.LoadSynchronous())
+	if (UBlendSpace* BlendSpace = LocomotionBlendSpace.Get())
 	{
 		CharacterAnimation->UseLocomotionBlendSpace(BlendSpace);
 	}
 
 	FTDAirborneClipSet AirborneClips;
-	AirborneClips.JumpStart = JumpStartAnimation.LoadSynchronous();
-	AirborneClips.FallLoop = FallLoopAnimation.LoadSynchronous();
-	AirborneClips.Land = LandAnimation.LoadSynchronous();
+	AirborneClips.JumpStart = JumpStartAnimation.Get();
+	AirborneClips.FallLoop = FallLoopAnimation.Get();
+	AirborneClips.Land = LandAnimation.Get();
 	CharacterAnimation->UseAirborneClips(AirborneClips);
-
-	CharacterAnimation->OnActionAnimationEnded.AddUObject(this, &ThisClass::HandleActionAnimationEnded);
 }
 
 void ATDGameCharacter::RefreshJumpStateTag(const bool bIsInAir) const

@@ -755,4 +755,35 @@ bool FTDWorldGenRoadsFollowGentlePassTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDWorldGenUnloadedDefinitionTest, "TDGame.WorldGen.World.UnloadedDefinitionIsAnError", EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
+bool FTDWorldGenUnloadedDefinitionTest::RunTest(const FString& Parameters)
+{
+	FTDFlatRegionFixture Fixture;
+	UTDRegionDefinition* MissingArchetypeRegion = DuplicateObject<UTDRegionDefinition>(Fixture.Region, GetTransientPackage());
+	if (!TestNotNull(TEXT("복제한 지역"), MissingArchetypeRegion) || !TestTrue(TEXT("복제한 지역에 할당량 있음"), MissingArchetypeRegion->PoiQuotas.Num() > 0))
+	{
+		return false;
+	}
+	MissingArchetypeRegion->AddToRoot();
+	Fixture.RootedObjects.Add(MissingArchetypeRegion);
+	MissingArchetypeRegion->PoiQuotas[0].Archetype = TSoftObjectPtr<UTDPoiArchetype>(FSoftObjectPath(TEXT("/Game/TDTests/Missing/DA_TDMissingArchetype.DA_TDMissingArchetype")));
+	const auto HasCustomPoi = [](const FTDWorldLayout& Layout)
+	{
+		return Layout.Pois.ContainsByPredicate([](const FTDPoiPlacement& Poi) { return Poi.Kind == ETDPoiKind::Custom; });
+	};
+
+	FTDWorldLayout GraphLayout;
+	FString GraphError;
+	TestFalse(TEXT("미로드 원형이면 배치 생성 실패"), FTDWorldGraphGenerator::Generate(*MissingArchetypeRegion, Fixture.Anchors, Fixture.BoundsCm, FTDSeedContext(1), nullptr, FTDWorldGraphGenerator::FSettings(), GraphLayout, GraphError));
+	TestTrue(FString::Printf(TEXT("배치 오류에 미로드 원형 이름: %s"), *GraphError), GraphError.Contains(TEXT("DA_TDMissingArchetype")));
+	TestFalse(TEXT("배치에 대체 Custom POI 없음"), HasCustomPoi(GraphLayout));
+
+	FTDWorldLayout WorldLayout;
+	FString WorldError;
+	TestFalse(TEXT("미로드 원형이면 월드 생성 실패"), FTDWorldGenerator::GenerateAndValidate(*MissingArchetypeRegion, Fixture.Anchors, Fixture.BoundsCm, 1, nullptr, nullptr, WorldLayout, WorldError));
+	TestTrue(FString::Printf(TEXT("월드 오류에 미로드 원형 이름: %s"), *WorldError), WorldError.Contains(TEXT("DA_TDMissingArchetype")));
+	TestFalse(TEXT("월드에 대체 Custom POI 없음"), HasCustomPoi(WorldLayout));
+	return true;
+}
+
 #endif

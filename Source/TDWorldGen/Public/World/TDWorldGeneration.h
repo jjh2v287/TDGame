@@ -52,6 +52,7 @@ struct TDWORLDGEN_API FTDWorldValidator
 
 struct TDWORLDGEN_API FTDWorldGenerator
 {
+	static void GatherRequiredDefinitionPaths(const UTDRegionDefinition& Region, TArray<FSoftObjectPath>& OutPaths);
 	static bool GenerateAndValidate(const UTDRegionDefinition& Region, const TArray<FTDWorldAnchor>& Anchors, const FBox2D& BoundsCm, int32 Seed, const FTDTerrainSampler* Terrain, const UTDDungeonAtlasDefinition* Atlas, FTDWorldLayout& OutLayout, FString& OutError);
 	static bool GenerateAndValidate(const UTDRegionDefinition& Region, const TArray<FTDWorldAnchor>& Anchors, const FTDLockedLayoutElements& Locked, const FBox2D& BoundsCm, int32 Seed, const FTDTerrainSampler* Terrain, const UTDDungeonAtlasDefinition* Atlas, FTDWorldLayout& OutLayout, FString& OutError);
 	static FString ToJson(const FTDWorldLayout& Layout);

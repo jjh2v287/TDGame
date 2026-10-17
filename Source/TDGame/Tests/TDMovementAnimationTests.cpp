@@ -30,6 +30,22 @@
 #include "Misc/MemStack.h"
 #include "UObject/UnrealType.h"
 
+namespace
+{
+	void PreloadMovementTestPlayerAnimations(UClass& PlayerPawnClass)
+	{
+		const UObject* PlayerPawnDefaults = PlayerPawnClass.GetDefaultObject();
+		for (TFieldIterator<FSoftObjectProperty> PropertyIt(&PlayerPawnClass); PropertyIt; ++PropertyIt)
+		{
+			if (!PropertyIt->PropertyClass->IsChildOf(UAnimationAsset::StaticClass()))
+			{
+				continue;
+			}
+			PropertyIt->GetPropertyValue_InContainer(PlayerPawnDefaults).LoadSynchronous();
+		}
+	}
+}
+
 namespace TDMovementAnimationTestSupport
 {
 	constexpr float FrameSeconds = 1.f / 60.f;
@@ -92,6 +108,7 @@ namespace TDMovementAnimationTestSupport
 			{
 				return nullptr;
 			}
+			PreloadMovementTestPlayerAnimations(*PlayerPawnClass);
 			const FTransform SpawnTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, PlayerSpawnHeight));
 			return World->SpawnActor<ATDGameCharacter>(PlayerPawnClass, SpawnTransform);
 		}
@@ -470,6 +487,68 @@ bool FTDActionTimelineHitsOnceInWindowTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Enemy away from the blade path is untouched"), FarEnemy->GetCurrentHealth(), 1000.f);
 	TestFalse(TEXT("Action animation finished"), Player->GetCharacterAnimation()->IsPlayingAction());
 	TestFalse(TEXT("Skill state is cleared when the timeline completes"), Player->GetCombatComponent()->HasMatchingGameplayTag(TDGameplayTags::State_Skill));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDActionTimelineWaitsForUnloadedAnimationTest, "TDGame.Combat.ActionTimelineWaitsForUnloadedAnimation", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDActionTimelineWaitsForUnloadedAnimationTest::RunTest(const FString& Parameters)
+{
+	TDMovementAnimationTestSupport::IgnoreEngineInjectionTimelineEnsure(*this);
+	UAnimSequence* Attack = LoadObject<UAnimSequence>(nullptr, TDMovementAnimationTestSupport::UnarmedAttackSequencePath);
+	if (!TestNotNull(TEXT("Attack sequence exists"), Attack))
+	{
+		return false;
+	}
+
+	TDMovementAnimationTestSupport::FTDScopedMovementWorld Fixture;
+	ATDGameCharacter* Player = Fixture.SpawnPlayer();
+	if (!TestNotNull(TEXT("Player pawn spawns"), Player))
+	{
+		return false;
+	}
+	Fixture.Tick(0.3f);
+
+	const USkeletalMesh* Mesh = Player->GetMesh()->GetSkeletalMeshAsset();
+	if (!TestNotNull(TEXT("Player has a skeletal mesh"), Mesh))
+	{
+		return false;
+	}
+
+	const float WindowEndSeconds = FMath::Min(TDMovementAnimationTestSupport::HitWindowStartSeconds + TDMovementAnimationTestSupport::HitWindowDurationSeconds, Attack->GetPlayLength() - 0.05f);
+	FTDCombatActionDefinition MissingAnimationAction = TDMovementAnimationTestSupport::MakeTimelineSweepAction(Attack, WindowEndSeconds);
+	MissingAnimationAction.Action.Animation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/TDTests/Missing/AS_TDMissingAction.AS_TDMissingAction")));
+	if (!TestTrue(TEXT("Skill Q action is assigned"), TDMovementAnimationTestSupport::AssignSkillQAction(*Player->GetSkillComponent(), *Fixture.World, MissingAnimationAction)))
+	{
+		return false;
+	}
+
+	FVector TipComponentLocation = FVector::ZeroVector;
+	const double WindowMiddleSeconds = (TDMovementAnimationTestSupport::HitWindowStartSeconds + WindowEndSeconds) * 0.5;
+	if (!TestTrue(TEXT("Blade tip can be sampled"), TDMovementAnimationTestSupport::SampleBoneInComponentSpace(*Mesh, *Attack, TDMovementAnimationTestSupport::BladeTipBoneName, WindowMiddleSeconds, TipComponentLocation)))
+	{
+		return false;
+	}
+	const FVector TipWorldLocation = Player->GetMesh()->GetComponentTransform().TransformPosition(TipComponentLocation);
+	UTDCombatComponent* Enemy = Fixture.SpawnTarget(TipWorldLocation, 2);
+
+	UTDCombatComponent* PlayerCombat = Player->GetCombatComponent();
+	if (!PlayerCombat->FindAbilitySpecFromClass(UTDPlayerSkillQAbility::StaticClass()))
+	{
+		PlayerCombat->GiveAbility(FGameplayAbilitySpec(UTDPlayerSkillQAbility::StaticClass(), 1, INDEX_NONE, Player));
+	}
+	if (!TestTrue(TEXT("Timeline action ability activates"), Player->ActivateCombatAbility(TDGameplayTags::Action_Skill_Q, Enemy->GetOwner())))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("Skill state is held while the action animation is loading"), PlayerCombat->HasMatchingGameplayTag(TDGameplayTags::State_Skill));
+	TestFalse(TEXT("Action animation does not play before it is loaded"), Player->GetCharacterAnimation()->IsPlayingAction());
+	Fixture.Tick(1.f);
+
+	TestEqual(TEXT("Enemy on the blade path is untouched while the action animation is loading"), Enemy->GetCurrentHealth(), 1000.f);
+	PlayerCombat->CancelAllAbilities();
+	TestFalse(TEXT("Skill state is cleared when the waiting ability is cancelled"), PlayerCombat->HasMatchingGameplayTag(TDGameplayTags::State_Skill));
 	return true;
 }
 

@@ -264,19 +264,24 @@ namespace
 		return Placed;
 	}
 
-	void BuildPlacementRequests(const UTDRegionDefinition& Region, const FTDWorldGraphGenerator::FSettings& Settings, FRandomStream& CountStream, TArray<FTDPlacementRequest>& OutRequests)
+	bool BuildPlacementRequests(const UTDRegionDefinition& Region, const FTDWorldGraphGenerator::FSettings& Settings, FRandomStream& CountStream, TArray<FTDPlacementRequest>& OutRequests, FString& OutError)
 	{
 		for (const FTDPoiQuota& Quota : Region.PoiQuotas)
 		{
 			FTDPlacementRequest& Request = OutRequests.AddDefaulted_GetRef();
 			Request.Count = CountStream.RandRange(Quota.CountRange.X, FMath::Max(Quota.CountRange.X, Quota.CountRange.Y));
 			Request.MaxSlopeDeg = Region.MaxPlacementSlopeDeg;
-			const UTDPoiArchetype* Archetype = Quota.Archetype.LoadSynchronous();
-			if (Archetype == nullptr)
+			if (Quota.Archetype.IsNull())
 			{
 				Request.ArchetypeId = *Quota.Archetype.GetAssetName();
 				Request.Kind = ETDPoiKind::Custom;
 				continue;
+			}
+			const UTDPoiArchetype* Archetype = Quota.Archetype.Get();
+			if (Archetype == nullptr)
+			{
+				OutError = FString::Printf(TEXT("Definition '%s' is not loaded; call FTDWorldGenerator::GatherRequiredDefinitionPaths and load the paths before generating."), *Quota.Archetype.ToString());
+				return false;
 			}
 			Request.ArchetypeId = Archetype->PoiId;
 			Request.Kind = Archetype->Kind;
@@ -296,6 +301,7 @@ namespace
 		EventArea.Kind = ETDPoiKind::EventArea;
 		EventArea.Count = CountStream.RandRange(Region.EventAreaRange.X, FMath::Max(Region.EventAreaRange.X, Region.EventAreaRange.Y));
 		EventArea.MaxSlopeDeg = Region.MaxPlacementSlopeDeg;
+		return true;
 	}
 
 	void SeedLayoutWithLockedElements(const UTDRegionDefinition& Region, const FTDLockedLayoutElements& Locked, FTDWorldLayout& Layout)
@@ -400,7 +406,10 @@ bool FTDWorldGraphGenerator::Generate(const UTDRegionDefinition& Region, const T
 
 	TArray<FTDPlacementRequest> Requests;
 	FRandomStream CountStream = Seed.Derive(TEXT("Counts"));
-	BuildPlacementRequests(Region, Settings, CountStream, Requests);
+	if (!BuildPlacementRequests(Region, Settings, CountStream, Requests, OutError))
+	{
+		return false;
+	}
 	SubtractLockedCounts(BaseLayout, Requests);
 
 	FTDWorldLayout BestLayout;

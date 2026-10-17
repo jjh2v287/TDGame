@@ -8,6 +8,7 @@
 
 class UAnimSequence;
 class UTDCharacterAnimationComponent;
+struct FStreamableHandle;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTDActionTimelineDelegate);
 
@@ -34,6 +35,8 @@ public:
 	FTDActionTimelineDelegate OnInterrupted;
 
 private:
+	void StartTimeline();
+	void HandleAnimationLoaded();
 	void HandleActionAnimationEnded(const UAnimSequence* Animation, bool bWasInterrupted);
 	void AdvanceWindows(float PreviousAnimationTime, float AnimationTime);
 	void CloseOpenWindows(float AnimationTime);
@@ -48,6 +51,7 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UAnimSequence> LoadedAnimation;
 
+	TSharedPtr<FStreamableHandle> AnimationLoadHandle;
 	TArray<FTDMeleeSweep> ActiveSweeps;
 	TArray<bool> ActiveSweepFlags;
 	TArray<bool> ActiveTagWindowFlags;

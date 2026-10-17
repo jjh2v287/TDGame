@@ -8,6 +8,7 @@ class APawn;
 class UMaterialParameterCollection;
 class UMaterialParameterCollectionInstance;
 class UTDTopDownSettings;
+struct FStreamableHandle;
 
 UCLASS()
 class TDGAME_API UTDTopDownOcclusionSubsystem : public UTickableWorldSubsystem
@@ -44,9 +45,12 @@ private:
 	void ApplyShape(UMaterialParameterCollectionInstance& Instance, const UTDTopDownSettings& Settings);
 	void ApplyFocus(UMaterialParameterCollectionInstance& Instance, const UTDTopDownSettings& Settings, const APawn& Pawn);
 	void ApplyDisabledFocus(UMaterialParameterCollectionInstance& Instance);
+	void HandleParameterCollectionLoaded();
 
 	UPROPERTY(Transient)
 	TObjectPtr<UMaterialParameterCollection> ParameterCollection;
+
+	TSharedPtr<FStreamableHandle> ParameterCollectionHandle;
 
 	FTDOcclusionShape AppliedShape;
 	bool bHasAppliedShape = false;

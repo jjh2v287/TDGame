@@ -9,19 +9,14 @@ namespace
 {
 	constexpr double TDRealmLiftExitDistanceCm = 400.0;
 
-	const UTDRealmDefinition* LoadRealmDefinitionQuietly(const TSoftObjectPtr<UTDRealmDefinition>& RealmReference)
+	const UTDRealmDefinition* FindResidentRealmDefinition(const TSoftObjectPtr<UTDRealmDefinition>& RealmReference)
 	{
 		if (RealmReference.IsNull())
 		{
 			return nullptr;
 		}
 
-		if (const UTDRealmDefinition* LoadedRealm = RealmReference.Get())
-		{
-			return LoadedRealm;
-		}
-
-		return Cast<UTDRealmDefinition>(RealmReference.ToSoftObjectPath().TryLoad(nullptr, static_cast<ELoadFlags>(LOAD_NoWarn | LOAD_Quiet)));
+		return RealmReference.Get();
 	}
 
 	template <typename TPredicate>
@@ -35,7 +30,7 @@ namespace
 
 		for (const TSoftObjectPtr<UTDRealmDefinition>& RealmReference : Settings->RealmDefinitions)
 		{
-			const UTDRealmDefinition* Realm = LoadRealmDefinitionQuietly(RealmReference);
+			const UTDRealmDefinition* Realm = FindResidentRealmDefinition(RealmReference);
 			if (Realm && Predicate(*Realm))
 			{
 				return Realm;

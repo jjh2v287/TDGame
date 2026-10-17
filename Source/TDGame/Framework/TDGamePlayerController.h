@@ -14,6 +14,7 @@ class UEnhancedInputComponent;
 class UPathFollowingComponent;
 class ATDGameCharacter;
 struct FInputActionValue;
+struct FStreamableHandle;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -166,6 +167,7 @@ private:
 	void ClearQueuedAttack();
 	FVector GetRollDirection(const ATDGameCharacter& ControlledCharacter) const;
 	static FVector2D SnapMovementInputToEightDirections(const FVector2D& MovementInput);
+	void PlayLoadedMeleeAction(FSoftObjectPath AnimationAssetPath);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> KeyboardMoveAction;
@@ -183,6 +185,7 @@ private:
 	TWeakObjectPtr<AActor> QueuedAttackTarget;
 	bool bIsAttackMoveQueued = false;
 	uint64 LastAttackCommandFrame = MAX_uint64;
+	TSharedPtr<FStreamableHandle> MeleeActionHandle;
 };
 
 

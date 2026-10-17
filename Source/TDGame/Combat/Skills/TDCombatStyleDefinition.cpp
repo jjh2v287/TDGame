@@ -9,3 +9,24 @@ const FTDCombatReactionDefinition* UTDCombatStyleDefinition::FindReaction(const 
 {
 	return ReactionMap.Find(ReactionTag);
 }
+
+void UTDCombatStyleDefinition::GatherAnimationPaths(TArray<FSoftObjectPath>& OutPaths) const
+{
+	for (const TPair<FGameplayTag, FTDCombatActionDefinition>& ActionEntry : ActionMap)
+	{
+		if (ActionEntry.Value.Action.Animation.IsNull())
+		{
+			continue;
+		}
+		OutPaths.AddUnique(ActionEntry.Value.Action.Animation.ToSoftObjectPath());
+	}
+
+	for (const TPair<FGameplayTag, FTDCombatReactionDefinition>& ReactionEntry : ReactionMap)
+	{
+		if (ReactionEntry.Value.Action.Animation.IsNull())
+		{
+			continue;
+		}
+		OutPaths.AddUnique(ReactionEntry.Value.Action.Animation.ToSoftObjectPath());
+	}
+}

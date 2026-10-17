@@ -8,6 +8,7 @@
 
 class UGameplayAbility;
 class UTDCombatStyleDefinition;
+struct FStreamableHandle;
 struct FTDDamageSpec;
 
 UCLASS(ClassGroup=(Combat), meta=(BlueprintSpawnableComponent))
@@ -79,6 +80,7 @@ private:
 	void HandleOwnerDeath(const FTDDamageContext& Context);
 	bool TryConsumeBufferedInput();
 	bool HasBufferedInput() const;
+	void PrefetchSkillSetAnimations();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Skill", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UTDCombatStyleDefinition> SkillSet = nullptr;
@@ -100,4 +102,5 @@ private:
 	int32 ActiveInputBufferWindowCount = 0;
 	FGameplayTag BufferedActionTag;
 	TWeakObjectPtr<AActor> BufferedActionTarget;
+	TSharedPtr<FStreamableHandle> SkillSetAnimationsHandle;
 };

@@ -228,6 +228,12 @@ bool UTDWorldGenEditorLibrary::GenerateWorldLayoutWithLocked(UObject* WorldConte
 	FTDTerrainSampler Sampler;
 	BuildLandscapeSampler(LandscapeForSampling, Sampler);
 	const FTDTerrainSampler* TerrainPtr = Sampler.IsValid() ? &Sampler : nullptr;
+	TArray<FSoftObjectPath> DefinitionPaths;
+	FTDWorldGenerator::GatherRequiredDefinitionPaths(*Region, DefinitionPaths);
+	for (const FSoftObjectPath& DefinitionPath : DefinitionPaths)
+	{
+		DefinitionPath.TryLoad();
+	}
 	return FTDWorldGenerator::GenerateAndValidate(*Region, Anchors, Locked, BoundsCm, Seed, TerrainPtr, Atlas, OutLayout, OutError);
 }
 

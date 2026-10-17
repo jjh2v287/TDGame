@@ -7,6 +7,8 @@
 #include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
 #include "Core/TDGameplayTags.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 
 UTDReactionAbility::UTDReactionAbility()
 {
@@ -65,7 +67,7 @@ void UTDReactionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		return;
 	}
 
-	if (!ReactionDefinition->Action.Animation.LoadSynchronous())
+	if (!ReactionDefinition->Action.HasAnimation())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -86,10 +88,20 @@ void UTDReactionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 	if (bHoldFinalPose)
 	{
-		UTDCharacterAnimationComponent* CharacterAnimation = AvatarActor->FindComponentByClass<UTDCharacterAnimationComponent>();
 		const FTDActionAnimation& Action = ReactionDefinition->Action;
-		const float PoseSeconds = CharacterAnimation->PlayDeath(Action.Animation.Get(), Action.PlayRate, Action.EndSeconds);
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, PoseSeconds <= 0.f);
+		if (Action.Animation.Get())
+		{
+			PlayFinalPoseAndEnd(Action);
+			return;
+		}
+
+		PendingFinalPoseAction = Action;
+		FinalPoseLoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+			Action.Animation.ToSoftObjectPath(), FStreamableDelegate::CreateUObject(this, &ThisClass::HandleFinalPoseAnimationLoaded), FStreamableManager::AsyncLoadHighPriority);
+		if (!FinalPoseLoadHandle.IsValid())
+		{
+			PlayFinalPoseAndEnd(PendingFinalPoseAction);
+		}
 		return;
 	}
 
@@ -106,6 +118,12 @@ void UTDReactionAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
+	if (FinalPoseLoadHandle.IsValid())
+	{
+		FinalPoseLoadHandle->CancelHandle();
+	}
+	FinalPoseLoadHandle.Reset();
+
 	ClearAbilityState();
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
@@ -175,6 +193,30 @@ void UTDReactionAbility::HandleReactionTimelineInterrupted()
 void UTDReactionAbility::ClearAbilityState()
 {
 	RemoveAbilityStateTag(ActiveStateTag, bHasAddedActiveStateTag);
+}
+
+void UTDReactionAbility::PlayFinalPoseAndEnd(const FTDActionAnimation& FinalPoseAction)
+{
+	const AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	UTDCharacterAnimationComponent* CharacterAnimation = AvatarActor ? AvatarActor->FindComponentByClass<UTDCharacterAnimationComponent>() : nullptr;
+	if (!CharacterAnimation)
+	{
+		EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, true);
+		return;
+	}
+
+	const float PoseSeconds = CharacterAnimation->PlayDeath(FinalPoseAction.Animation.Get(), FinalPoseAction.PlayRate, FinalPoseAction.EndSeconds);
+	EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, PoseSeconds <= 0.f);
+}
+
+void UTDReactionAbility::HandleFinalPoseAnimationLoaded()
+{
+	if (!IsActive())
+	{
+		return;
+	}
+
+	PlayFinalPoseAndEnd(PendingFinalPoseAction);
 }
 
 UTDReactionHitAbility::UTDReactionHitAbility()

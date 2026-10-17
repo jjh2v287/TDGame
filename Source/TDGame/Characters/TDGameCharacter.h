@@ -14,6 +14,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UTDCapsuleModifierComponent;
 class UTDSkillComponent;
+struct FStreamableHandle;
 struct FTDDamageContext;
 
 /**
@@ -133,6 +134,10 @@ protected:
 
 private:
 	void GrantDefaultActionAbilities();
+	void RequestDefaultDamageSpells();
+	void HandleDefaultDamageSpellsLoaded();
+	void RequestAnimationAssets();
+	void GatherAnimationAssetPaths(TArray<FSoftObjectPath>& OutPaths) const;
 	void ApplyAnimationSettings();
 	void RefreshJumpStateTag(bool bIsInAir) const;
 	bool CanStartRoll() const;
@@ -141,4 +146,6 @@ private:
 
 	FVector PendingRollDirection = FVector::ForwardVector;
 	bool bHasGrantedDefaultActionAbilities = false;
+	TSharedPtr<FStreamableHandle> DefaultDamageSpellsHandle;
+	TSharedPtr<FStreamableHandle> AnimationAssetsHandle;
 };

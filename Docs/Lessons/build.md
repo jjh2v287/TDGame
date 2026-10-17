@@ -53,3 +53,12 @@
 - 증거: 2026-10-14 M3-02 `Saved/AgentOps/20261014/m3-02-build-3-fix.log`·`m3-02-build-4-fix-unity.log`(Result: Succeeded, 에디터 pid 39400 실행 중)
 - 날짜·상태: 2026-10-14 active
 - 발견: claude
+
+### L-build-07 C++ 생성자에서 기본값으로 넣은 소프트 에셋 경로는 쿠킹되지 않아 패키지 게임에서 빠진다
+- 증상: 쿠킹한 게임 로그 `LogStreaming: Warning: LoadPackage: SkipPackage: /Game/Characters/Mannequins/Anims/Unarmed/BS_Idle_Walk_Run (0xE2A393FE2948EC5B) - The package to load does not exist on disk or in the loader`(MM_Jump·MM_Fall_Loop·MM_Land도 같음). 에디터·PIE에서는 정상이라 드러나지 않는다.
+- 원인: 쿠커는 패키지 직렬화·텍스트 가져오기 때 만나는 소프트 경로만 모은다. 네이티브 생성자(CDO)의 `TSoftObjectPtr` 기본값과 C++ 문자열 경로는 어느 패키지에도 저장되지 않아 발견되지 않는다. `ATDGameCharacter` 생성자의 플레이어 이동·점프 애니 기본값이 이 경우다(비동기 전환 전 `LoadSynchronous` 때도 같았다).
+- 해결: 그 에셋을 다른 쿠킹 대상 에셋(BP 기본값·데이터 에셋)이 참조하게 하거나, 폴더를 `Config/DefaultGame.ini`의 `+DirectoriesToAlwaysCook`에 넣거나, `UDeveloperSettings` 소프트 필드(설정 ini 경로는 쿠킹됨)로 옮긴다. 확인은 `python Tools/cook_single_map.py` 뒤 게임 로그에서 `SkipPackage`를 찾는다. 마네킹 애니 4개는 아직 고치지 않았다(D-47 후속).
+- 범위: 런타임 C++가 코드 안 소프트 경로·문자열 경로로 여는 모든 에셋(OP-33).
+- 증거: 2026-10-17 `Saved/AgentOps/20261017/async-load/cook-run-game.log:930-933`, 엔진 `SoftObjectPath.cpp`(직렬화 경로에서만 수집, `engine-research.md` 5절)
+- 날짜·상태: 2026-10-17 active
+- 발견: claude

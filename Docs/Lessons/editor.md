@@ -174,3 +174,12 @@
 - 증거: `Saved/AgentOps/20261016/sun/headless.log`(52/54, 동시) ↔ `headless_solo.log`(54/54), `sun/walk.log`(동시 실패) ↔ `walk_solo.log`
 - 날짜·상태: 2026-10-16 active
 - 발견: claude
+
+### L-editor-21 `TDGame.SeamlessTravel.RealmConnectorWalk`는 GUI 에디터 PIE에서 남서 관문 준비가 3~5초라 실패한다(헤드리스는 0초 통과)
+- 증상: `python Tools/check_automation_tests.py --filter TDGame.SeamlessTravel.RealmConnectorWalk` → `Gate 'SunkenStarfieldSouthwest' walk into the realm: destination became ready 6.68 s after entering the connector (<= 1.0)`. 같은 바이너리의 헤드리스(`-NullRHI`) 실행은 두 관문 모두 0.00초로 통과한다.
+- 원인: 준비 판정 `IsDestinationReady`는 월드 파티션 셀 활성화 질의와 내비 투영만 본다. GUI PIE(초당 12~17프레임)에서 남서 목적지 셀·내비가 늦게 준비된다. 셀과 내비 중 어느 쪽이 늦는지는 미확인. 변경 전 코드(HEAD 1495a34f)로 대조해도 남서 3.27·3.94·5.42초로 같아 비동기 로드 전환(D-47)과 무관하다.
+- 해결: 아직 없음. 이 시험의 1.0초 단언은 지금까지 헤드리스로만 검증됐으므로 GUI 실패를 회귀로 판정하기 전에 변경 전 바이너리와 대조한다(변경 파일 바이트 사본 보관 → `git show HEAD:<경로> > <경로>` → 빌드·시험 → 복원·체크섬).
+- 범위: 이계 연결 통로 PIE 시험, GUI 에디터
+- 증거: 2026-10-17 `Saved/AgentOps/20261017/async-load/baseline-ab/run-log.txt`·`before-run1~3.json`·`after-run1~3.json`
+- 날짜·상태: 2026-10-17 active
+- 발견: claude

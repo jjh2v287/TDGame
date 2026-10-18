@@ -1,10 +1,10 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-10-17 14:10 claude
+갱신: 2026-10-18 00:48 claude
 
 ## ① 진행 중 (대장 doing)
 
-- D-47 비동기 에셋 로드 done(미커밋): 동기 로드 32줄 전환·OP-33·검사 도구 0·새 실패 0. 근거 Worklog 10-17 14:05.
+- D-47 비동기 에셋 로드 done(미커밋): 동기 로드 32줄 전환·OP-33·검사 도구 0·새 실패 0. 근거 Worklog 10-17 14:05. 후속: 마네킹 애니 쿠킹(ini 2줄)·쿠킹 보장 검사 도구(Worklog 10-17 23:52, 10-18 00:45).
 - P3-19·P3-20 done: 연속 세계·태양 역광(D-46). `Docs/Validation/P3-19-continuous.md`·`P3-20-sun.md`.
 - M3-25 done: 집 기준 교전·귀환, 헤드리스88/88(`research/project-engagement-leash-yoyo.md`).
 - M3-26 done(미커밋): 하이에나 이동 애니 루프 자산 3개·전 종 대기 bLoop(L-anim-15). 헤드리스127/126(기준선 CrossingStreams), PIE 육안 대기.
@@ -15,7 +15,7 @@
 
 ## ② 막힘·결정 대기
 
-- D-47 후속(사용자 결정): 마네킹 애니 쿠킹 누락(L-build-07)·피해 정의 표현 소프트화·남서 관문 GUI 지연(L-editor-21).
+- D-47 후속(사용자 결정): 피해 정의 표현 소프트화·남서 관문 GUI 지연(L-editor-21). OP-33에 check_cook_coverage 반영(10-18 사용자 승인).
 - 어두움(P3-16): 수동 노출이라 B01 남서 경계 0.82·E3 절벽 앞 0.51·F12 승강기 상단 0.26·갱도 바닥 0.99. 국소 조명·하늘빛 최저값 결정. 나무 다리 1.65m 단차(기존, 작업 제안).
 - M3-02 blocked: 격자·속도 인지 회피·양보·플레이어 장애물 구현(커밋됨). 헤드리스 MonsterAI 29/30(CrossingStreams 실패, 10-17 재확인). `TD.MonsterAI.LocalAvoidance` 0=기존. 장면 보정·300마리 실측 대기. ring_slot=03 미결2. MD-45=(a)120 유지(10-15).
 - 길쭉한 형상 회피: `research/project-elongated-monster-avoidance.md` MD-25~39(§6)·M3-18~24(§5)는07 미등록. 승인 뒤 부모 등록(M3-18부터). 문헌 `research/web-noncircular-agent-avoidance.md`.

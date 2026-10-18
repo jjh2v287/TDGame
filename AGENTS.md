@@ -74,7 +74,7 @@
 - 기존 블루프린트에 로직을 추가하거나 수정해야 할 때는 먼저 해당 로직을 C++로 이전하고, 블루프린트에는 필요한 호출과 설정만 남긴다.
 - 블루프린트 그래프에 새로운 분기, 반복, 계산, 상태 머신 또는 게임 규칙을 추가하지 않는다.
 - C++로 구현할 수 있는 작업을 블루프린트로 우회하지 않는다.
-- 에셋 로드는 비동기가 기본이다: 소프트 참조로 두고 `FStreamableManager`로 미리 요청한다. 런타임 코드에 동기 로드(`LoadSynchronous`·`LoadObject`·`ConstructorHelpers` 등)를 새로 넣지 않고, 시뮬·생성 결과에 쓰이는 데이터는 시작 전에 모두 불러온다. 예외·판정: `python Tools/check_sync_loads.py`(OP-33).
+- 에셋 로드는 비동기가 기본이다: 소프트 참조로 두고 `FStreamableManager`로 미리 요청한다. 런타임 코드에 동기 로드(`LoadSynchronous`·`LoadObject`·`ConstructorHelpers` 등)를 새로 넣지 않고, 시뮬·생성 결과에 쓰이는 데이터는 시작 전에 모두 불러온다. 예외·판정: `python Tools/check_sync_loads.py`, 코드 안 경로의 쿠킹 보장: `python Tools/check_cook_coverage.py`(OP-33).
 
 ## 8. Git과 Git LFS
 

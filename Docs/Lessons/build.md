@@ -57,8 +57,17 @@
 ### L-build-07 C++ 생성자에서 기본값으로 넣은 소프트 에셋 경로는 쿠킹되지 않아 패키지 게임에서 빠진다
 - 증상: 쿠킹한 게임 로그 `LogStreaming: Warning: LoadPackage: SkipPackage: /Game/Characters/Mannequins/Anims/Unarmed/BS_Idle_Walk_Run (0xE2A393FE2948EC5B) - The package to load does not exist on disk or in the loader`(MM_Jump·MM_Fall_Loop·MM_Land도 같음). 에디터·PIE에서는 정상이라 드러나지 않는다.
 - 원인: 쿠커는 패키지 직렬화·텍스트 가져오기 때 만나는 소프트 경로만 모은다. 네이티브 생성자(CDO)의 `TSoftObjectPtr` 기본값과 C++ 문자열 경로는 어느 패키지에도 저장되지 않아 발견되지 않는다. `ATDGameCharacter` 생성자의 플레이어 이동·점프 애니 기본값이 이 경우다(비동기 전환 전 `LoadSynchronous` 때도 같았다).
-- 해결: 그 에셋을 다른 쿠킹 대상 에셋(BP 기본값·데이터 에셋)이 참조하게 하거나, 폴더를 `Config/DefaultGame.ini`의 `+DirectoriesToAlwaysCook`에 넣거나, `UDeveloperSettings` 소프트 필드(설정 ini 경로는 쿠킹됨)로 옮긴다. 확인은 `python Tools/cook_single_map.py` 뒤 게임 로그에서 `SkipPackage`를 찾는다. 마네킹 애니 4개는 아직 고치지 않았다(D-47 후속).
+- 해결: 그 에셋을 다른 쿠킹 대상 에셋(BP 기본값·데이터 에셋)이 참조하게 하거나, 폴더를 `Config/DefaultGame.ini`의 `+DirectoriesToAlwaysCook`에 넣거나, `UDeveloperSettings` 소프트 필드(설정 ini 경로는 쿠킹됨)로 옮긴다. 확인은 `python Tools/cook_single_map.py` 뒤 게임 로그에서 `SkipPackage`를 찾는다. 마네킹 애니 4개는 `+DirectoriesToAlwaysCook=(Path="/Game/Characters/Mannequins/Anims/Unarmed")` 한 줄로 고쳤다(블렌드 스페이스가 그 폴더의 걷기·조깅 16개와 MM_Idle을 참조하므로 불필요 쿠킹은 MM_Attack_01 하나). 고치기 전에는 폴더 안 에셋이 다른 에셋의 하드 의존인지 문자열 표에서 확인한다. 기본 근접 공격 `AS_TD_Player_SwordAttack01`(`TDGamePlayerController.cpp:38`, `TDPlayMeleeAction` 호출 때만 요청이라 맵 실행 로그에 안 드러남)도 `Anims/Sword` 폴더 한 줄로 고쳤다(2026-10-18). 코드 안 경로 전체는 `python Tools/check_cook_coverage.py`로 판정한다(요청 때만 여는 경로까지 잡는다).
 - 범위: 런타임 C++가 코드 안 소프트 경로·문자열 경로로 여는 모든 에셋(OP-33).
-- 증거: 2026-10-17 `Saved/AgentOps/20261017/async-load/cook-run-game.log:930-933`, 엔진 `SoftObjectPath.cpp`(직렬화 경로에서만 수집, `engine-research.md` 5절)
+- 증거: 2026-10-17 `Saved/AgentOps/20261017/async-load/cook-run-game.log:930-933`, 엔진 `SoftObjectPath.cpp`(직렬화 경로에서만 수집, `engine-research.md` 5절). 수정 뒤 `Saved/AgentOps/20261017/anim-cook/game.log` SkipPackage 0·경고 13→9, 쿠킹 `AssetRegistry.bin`에 4개 존재(`anim-cook/judge.txt`). 근접 공격: `Saved/AgentOps/20261018/cook-path-audit/exec_melee-default.log`(쿠킹 게임 `-ExecCmds=TDPlayMeleeAction` 재생, SkipPackage 0)
+- 날짜·상태: 2026-10-17 active
+- 발견: claude
+
+### L-build-08 다른 세션의 UBT·UAT가 돌면 `cook_single_map.py`가 몇 초 만에 뮤텍스 충돌로 실패한다
+- 증상: `A conflicting instance of Global\UnrealBuildTool_Mutex_096b8b11a8779fc55e9da244f4a8ecf62868c83d is already running.` → `Result: Failed (ConflictingInstance)` → `AutomationTool exiting with ExitCode=10 (Error_SDKNotFound)`. 또는 `Unhandled exception: System.Exception: A conflicting instance of AutomationTool is already running.` → `ExitCode=1 (Error_Unknown)`. 종료 코드 이름(SDKNotFound)은 원인과 무관하다.
+- 원인: UBT와 AutomationTool은 기계 전체에서 한 번에 하나만 돈다. 같은 작업 트리의 다른 세션 빌드(`Build.bat`·게임 타깃), 에디터가 띄운 Turnkey `VerifySdk`, 또는 같은 도구의 중복 실행이 뮤텍스를 잡고 있었다.
+- 해결: 실행 전에 `Get-CimInstance Win32_Process`로 `UnrealEditor*`·`cl.exe`·`link.exe`·명령줄에 `UnrealBuildTool|AutomationTool`이 있는 dotnet을 확인한다. 공유 노트에 사용 계획·시작·끝을 적고 다른 세션과 차례를 정한다(쿠킹은 에디터가 꺼져 있어야 하고 약 2분). 남의 프로세스는 종료하지 않는다.
+- 범위: 여러 에이전트 세션이 같은 기계에서 빌드·쿠킹·헤드리스를 돌릴 때(L-build-05와 같은 계열)
+- 증거: 2026-10-17 `Saved/Logs/cook_anim-cook.log` 23:29 1차 실패, `C:/Users/jjh/AppData/Local/UnrealEngine/Programs/AutomationTool/Saved/Logs/ErrorLog.txt` 23:47:50
 - 날짜·상태: 2026-10-17 active
 - 발견: claude

@@ -112,3 +112,12 @@
 - 증거: 2026-10-15 Fab 조회 로그의 두 no_matches 및 AX 클릭 뒤 카테고리 URL·목록 변경.
 - 날짜·상태: 2026-10-15 active
 - 발견: codex
+
+### L-repo-14 백그라운드 Bash 작업을 TaskStop해도 그 안에서 띄운 `bash 스크립트.sh`는 살아남아 계속 실행된다
+- 증상: 대기 스크립트를 TaskStop으로 멈추고(`Successfully stopped task`) 새 대기 스크립트를 띄웠더니, 조건이 맞는 순간 두 개가 함께 `cook_single_map.py`를 시작했다. 늦은 쪽은 `A conflicting instance of AutomationTool is already running`으로 실패하고 공유 노트에 '실패'를 남겼지만, 멈춘 줄 알았던 쪽의 쿠킹은 계속 돌았다.
+- 원인: TaskStop은 감싼 셸만 끝내고 자식 `bash.exe`(별도 프로세스)를 끝내지 않는다(Windows Git Bash). 고아가 된 스크립트는 수정 전 내용으로 계속 돈다. Monitor의 `tail -f | grep` 자식도 같이 남는다.
+- 해결: 멈춘 뒤 `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match '<스크립트 이름>' }`으로 남은 프로세스를 찾아 내 것만 `taskkill //PID <id> //T //F`로 끝낸다. 오래 기다리는 스크립트는 처음부터 PID를 파일에 남기게 한다. 바이트가 섞인 로그를 Monitor로 볼 때는 `grep -a`를 쓴다(아니면 `Binary file (standard input) matches`만 나온다).
+- 범위: Claude Code 백그라운드 Bash·Monitor 작업(Windows)
+- 증거: 2026-10-17 고아 bash pid 11080·9116이 `python Tools/cook_single_map.py --label anim-cook`(pid 17596)을 23:47:40에 시작, `side-session-notes/.../anim-cook.md` 23:47~23:51 기록
+- 날짜·상태: 2026-10-17 active
+- 발견: claude

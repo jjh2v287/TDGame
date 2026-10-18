@@ -1,29 +1,33 @@
-"""실행 환경: 언리얼 에디터 안(PythonScriptPlugin 원격 실행). Fab 하이에나 원본은 읽기만 하고 하이에나 복제본·하이에나 종 자산·종 대기 클립(loop 속성만)을 저장한다.
-실행 명령: python Tools/run_in_editor.py Tools/MonsterAI/editor_make_loop_clips.py (PowerShell, L-repo-01)
-출력: /Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_{Idle,Walk,Run}(원본 동작 프레임 + C1 Hermite 틈 채우기), DA_TDMonster_Hyena 갱신, 종 대기 클립 loop 켜기, Saved/MonsterAI/loop_clips.json
-상태: 현행(M3-26, 재실행 안전: 계산 결과가 자산과 같으면 쓰기·저장을 건너뜀)
+"""실행 환경: 언리얼 에디터 안(PythonScriptPlugin 원격 실행). Tools/MonsterAI/species_table.json 의 loop_clips 항목마다 원본(Fab 등)은 읽기만 하고 루프 복제본·종 자산(update_species_run_speed 항목만)·종 대기 클립(loop 속성만)을 저장한다.
+실행 명령: python Tools/run_in_editor.py Tools/MonsterAI/editor_make_loop_clips.py (PowerShell, L-repo-01). 일부 종만: -c "TD_ONLY_SPECIES=['Hyena']; exec(open('C:/Project/TDGame/Tools/MonsterAI/editor_make_loop_clips.py', encoding='utf-8').read())"
+출력: 표의 clips 대상 자산(예: /Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_{Idle,Walk,Run}, 원본 동작 프레임 + C1 Hermite 틈 채우기), 종 자산 갱신, 종 대기 클립 loop 켜기, Saved/MonsterAI/loop_clips.json(entries 배열)
+상태: 현행(M3-26, M3-33 표 전환, 재실행 안전: 계산 결과가 자산과 같으면 쓰기·저장을 건너뜀)
 """
 import json
+import importlib
 import math
 import os
 import statistics
+import sys
 import time
 
 import unreal
 
+PROJECT_DIR = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir())
+TABLE_TOOLS_DIR = os.path.join(PROJECT_DIR, "Tools", "MonsterAI")
+if TABLE_TOOLS_DIR not in sys.path:
+    sys.path.insert(0, TABLE_TOOLS_DIR)
+import species_table
+
+importlib.reload(species_table)
+
+TABLE = species_table.load_table()
+ONLY_SPECIES = globals().get("TD_ONLY_SPECIES")
 EDITOR_ASSETS = unreal.EditorAssetLibrary
 POSE_LIBRARY = unreal.AnimPoseExtensions
 ANIMATION_LIBRARY = unreal.AnimationLibrary
-SOURCE_PREFIX = "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotionHyenas_A15_"
-TARGET_FOLDER = "/Game/MonsterAI/Animations/Hyena"
-SPECIES_FOLDER = "/Game/MonsterAI/Species"
-HYENA_SPECIES_PATH = SPECIES_FOLDER + "/DA_TDMonster_Hyena"
+SPECIES_FOLDER = TABLE["paths"]["species_folder"]
 OUTPUT_PATH = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_saved_dir()), "MonsterAI", "loop_clips.json")
-CLIP_SPECS = [
-    {"role": "run", "source": SOURCE_PREFIX + "Run", "target": TARGET_FOLDER + "/AS_TD_Hyena_Run", "motion_end_frame": 30},
-    {"role": "walk", "source": SOURCE_PREFIX + "Walk", "target": TARGET_FOLDER + "/AS_TD_Hyena_Walk", "motion_end_frame": 80},
-    {"role": "idle", "source": SOURCE_PREFIX + "Idle", "target": TARGET_FOLDER + "/AS_TD_Hyena_Idle", "motion_end_frame": 150},
-]
 MAXIMUM_GAP_FRAMES = 12
 MINIMUM_BOUNDARY_SPEED_CM = 0.2
 STATIC_STEP_CM = 0.05
@@ -31,9 +35,6 @@ MINIMUM_INTERIOR_STEP_CM = 0.5
 UNCHANGED_SOURCE_TOLERANCE_CM = 0.01
 KEY_MATCH_TOLERANCE = 0.001
 ROTATION_MATCH_TOLERANCE_RADIANS = 0.005
-TAIL_AND_HELPER_PREFIXES = ("bone01", "bone02", "bone03", "bone04", "bone05", "bone06", "s_fx")
-FEET_PRIMARY = ["bip01_l_toe0", "bip01_r_toe0", "bip01_l_finger0", "bip01_r_finger0"]
-FEET_TIPS = ["bip01_l_toe0_end", "bip01_r_toe0_end", "bip01_l_finger0_end", "bip01_r_finger0_end"]
 MINIMUM_PLAY_RATE = 0.5
 MAXIMUM_PLAY_RATE = 2.0
 started = time.time()
@@ -211,8 +212,8 @@ def read_root_relative_positions(animation, bones, frames):
     return rows
 
 
-def is_body_bone(bone):
-    return not bone.startswith(TAIL_AND_HELPER_PREFIXES) and "ponytail" not in bone and not bone.endswith("_end")
+def is_body_bone(bone, helper_prefixes):
+    return not bone.startswith(tuple(helper_prefixes)) and "ponytail" not in bone and not bone.endswith("_end")
 
 
 def measure_largest_steps(rows, first_frame, last_frame, bone_count):
@@ -223,12 +224,12 @@ def measure_largest_steps(rows, first_frame, last_frame, bone_count):
     return largest
 
 
-def score_gap(gap_steps, interior_steps, bones, body_only):
+def score_gap(gap_steps, interior_steps, bones, body_only, helper_prefixes):
     score = 0.0
     for bone_index in range(1, len(bones)):
         if interior_steps[bone_index] <= STATIC_STEP_CM:
             continue
-        if body_only and not is_body_bone(bones[bone_index]):
+        if body_only and not is_body_bone(bones[bone_index], helper_prefixes):
             continue
         score = max(score, gap_steps[bone_index] / interior_steps[bone_index])
     return score
@@ -261,10 +262,10 @@ def measure_boundary_speed(rows, bone_index, motion_end_frame):
     return (end_step + start_step) * 0.5
 
 
-def estimate_gap_frames(original_rows, bones, motion_end_frame):
+def estimate_gap_frames(original_rows, bones, motion_end_frame, helper_prefixes):
     needed_frames, weights = [], []
     for bone_index in range(1, len(bones)):
-        if not is_body_bone(bones[bone_index]):
+        if not is_body_bone(bones[bone_index], helper_prefixes):
             continue
         boundary_speed = measure_boundary_speed(original_rows, bone_index, motion_end_frame)
         if boundary_speed < MINIMUM_BOUNDARY_SPEED_CM:
@@ -300,10 +301,10 @@ def pick_extreme(rows, key, use_largest):
     return {"bone": chosen["bone"], key: chosen[key]}
 
 
-def measure_gap_speed_ratios(gap_rows, original_rows, interior_steps, bones, motion_end_frame):
+def measure_gap_speed_ratios(gap_rows, original_rows, interior_steps, bones, motion_end_frame, helper_prefixes):
     rows = []
     for bone_index in range(1, len(bones)):
-        if not is_body_bone(bones[bone_index]) or interior_steps[bone_index] <= STATIC_STEP_CM:
+        if not is_body_bone(bones[bone_index], helper_prefixes) or interior_steps[bone_index] <= STATIC_STEP_CM:
             continue
         steps = [measure_distance(gap_rows[frame - 1][bone_index], gap_rows[frame][bone_index]) for frame in range(1, len(gap_rows))]
         boundary_speed = measure_boundary_speed(original_rows, bone_index, motion_end_frame)
@@ -317,20 +318,20 @@ def measure_gap_speed_ratios(gap_rows, original_rows, interior_steps, bones, mot
             "mean_step_over_boundary_speed_lowest": pick_extreme(rows, "mean_step_over_boundary_speed", False)}
 
 
-def choose_gap_frames(keys, bones, parents, reference_locals, motion_end_frame):
+def choose_gap_frames(keys, bones, parents, reference_locals, motion_end_frame, helper_prefixes):
     original_rows = [compute_root_relative_positions(keys, frame, bones, parents, reference_locals) for frame in range(motion_end_frame + 1)]
     interior_steps = measure_largest_steps(original_rows, 0, motion_end_frame, len(bones))
-    gap_frames, estimate = estimate_gap_frames(original_rows, bones, motion_end_frame)
+    gap_frames, estimate = estimate_gap_frames(original_rows, bones, motion_end_frame, helper_prefixes)
     search = []
     for candidate in range(1, MAXIMUM_GAP_FRAMES + 1):
         gap_steps = measure_largest_steps(compute_gap_rows(keys, candidate, bones, parents, reference_locals, motion_end_frame), 0, candidate + 1, len(bones))
         search.append({"gap_frames": candidate,
-                       "body_score": round(score_gap(gap_steps, interior_steps, bones, True), 3),
-                       "all_score": round(score_gap(gap_steps, interior_steps, bones, False), 3)})
+                       "body_score": round(score_gap(gap_steps, interior_steps, bones, True, helper_prefixes), 3),
+                       "all_score": round(score_gap(gap_steps, interior_steps, bones, False, helper_prefixes), 3)})
     chosen = next(row for row in search if row["gap_frames"] == gap_frames)
     gap_rows = compute_gap_rows(keys, gap_frames, bones, parents, reference_locals, motion_end_frame)
     estimate.update({"gap_frames": gap_frames, "body_score": chosen["body_score"], "all_score": chosen["all_score"], "gap_search_scores_report_only": search,
-                     "gap_speed": measure_gap_speed_ratios(gap_rows, original_rows, interior_steps, bones, motion_end_frame)})
+                     "gap_speed": measure_gap_speed_ratios(gap_rows, original_rows, interior_steps, bones, motion_end_frame, helper_prefixes)})
     return estimate
 
 
@@ -365,9 +366,9 @@ def measure_static_tail(rows, bones):
     return motion_end, (frame_count - motion_end) / frame_count
 
 
-def measure_foot_heights(rows, bones, motion_end_frame):
+def measure_foot_heights(rows, bones, motion_end_frame, feet):
     heights = {}
-    for bone in FEET_PRIMARY:
+    for bone in feet:
         if bone not in bones:
             continue
         index = bones.index(bone)
@@ -403,9 +404,9 @@ def measure_stance_speed(trajectory, axis, frames_per_second):
     return -statistics.median(backward) * forward if backward else None
 
 
-def measure_ground_speed(rows, bones, frames_per_second):
+def measure_ground_speed(rows, bones, frames_per_second, feet, feet_tips):
     cycle = rows[:-1]
-    names = [bone for bone in FEET_PRIMARY + FEET_TIPS if bone in bones]
+    names = [bone for bone in feet + feet_tips if bone in bones]
     indices = {bone: bones.index(bone) for bone in names}
     stacked = []
     for bone in names:
@@ -414,9 +415,9 @@ def measure_ground_speed(rows, bones, frames_per_second):
         mean_y = sum(point[1] for point in points) / len(points)
         stacked.extend((point[0] - mean_x, point[1] - mean_y) for point in points)
     axis = find_principal_axis(stacked)
-    feet = {bone: measure_stance_speed([row[indices[bone]] for row in cycle], axis, frames_per_second) for bone in FEET_PRIMARY if bone in indices}
-    valid = [speed for speed in feet.values() if speed is not None]
-    return (statistics.median(valid) if valid else None), {bone: (round(speed, 1) if speed is not None else None) for bone, speed in feet.items()}
+    speeds = {bone: measure_stance_speed([row[indices[bone]] for row in cycle], axis, frames_per_second) for bone in feet if bone in indices}
+    valid = [speed for speed in speeds.values() if speed is not None]
+    return (statistics.median(valid) if valid else None), {bone: (round(speed, 1) if speed is not None else None) for bone, speed in speeds.items()}
 
 
 def are_keys_equal(left, right):
@@ -466,16 +467,16 @@ def write_keys(animation, filled, frame_count):
     return is_rebound
 
 
-def load_or_duplicate_target(spec):
-    if not EDITOR_ASSETS.does_directory_exist(TARGET_FOLDER):
-        EDITOR_ASSETS.make_directory(TARGET_FOLDER)
+def load_or_duplicate_target(spec, target_folder):
+    if not EDITOR_ASSETS.does_directory_exist(target_folder):
+        EDITOR_ASSETS.make_directory(target_folder)
     is_created = not EDITOR_ASSETS.does_asset_exist(spec["target"])
     if is_created and EDITOR_ASSETS.duplicate_asset(spec["source"], spec["target"]) is None:
         raise RuntimeError(f"duplicate failed {spec['source']} -> {spec['target']}")
     return EDITOR_ASSETS.load_asset(spec["target"]), is_created
 
 
-def make_clip(spec):
+def make_clip(spec, entry):
     source = EDITOR_ASSETS.load_asset(spec["source"])
     if source is None:
         raise RuntimeError(f"missing source {spec['source']}")
@@ -485,12 +486,12 @@ def make_clip(spec):
     bones, parents, reference_locals = read_skeleton_bones(source)
     motion_end_frame = spec["motion_end_frame"]
     keys = read_local_keys(source, tracks, motion_end_frame)
-    gap_choice = choose_gap_frames(keys, bones, parents, reference_locals, motion_end_frame)
+    gap_choice = choose_gap_frames(keys, bones, parents, reference_locals, motion_end_frame, entry["helper_prefixes"])
     gap_frames = gap_choice["gap_frames"]
     filled = fill_tracks(keys, gap_frames)
     frame_count = motion_end_frame + gap_frames + 1
 
-    target, is_created = load_or_duplicate_target(spec)
+    target, is_created = load_or_duplicate_target(spec, entry["target_folder"])
     is_written = is_created or not is_target_current(target, tracks, filled, frame_count)
     is_rebound = False
     if is_written:
@@ -503,7 +504,7 @@ def make_clip(spec):
     unchanged_offset = max(find_largest_bone_offset(source_rows[frame], new_rows[frame], bones)[0] for frame in range(motion_end_frame + 1))
     seam, seam_bone = find_largest_bone_offset(new_rows[0], new_rows[-1], bones)
     motion_end, tail_fraction = measure_static_tail(new_rows, bones)
-    ground_speed, feet_speeds = measure_ground_speed(new_rows, bones, frames_per_second) if spec["role"] != "idle" else (None, {})
+    ground_speed, feet_speeds = measure_ground_speed(new_rows, bones, frames_per_second, entry["feet"], entry["feet_tips"]) if spec["role"] != "idle" else (None, {})
     result = {
         "role": spec["role"], "source": spec["source"], "target": spec["target"], "created": is_created, "written_and_saved": is_written,
         "controller_rebound": is_rebound, "closing": "c1_hermite_gap_fill", "motion_end_frame": motion_end_frame,
@@ -516,7 +517,7 @@ def make_clip(spec):
         "source_frames_max_offset_cm": round(unchanged_offset, 4), "source_frames_unchanged": unchanged_offset <= UNCHANGED_SOURCE_TOLERANCE_CM,
         "seam_cm": round(seam, 4), "seam_bone": seam_bone,
         "seam_step_ratio_top5": find_seam_step_ratios(new_rows, bones),
-        "feet_lowest_height": measure_foot_heights(new_rows, bones, motion_end_frame),
+        "feet_lowest_height": measure_foot_heights(new_rows, bones, motion_end_frame, entry["feet"]),
         "ground_speed_four_feet_median_cm_s": round(ground_speed, 1) if ground_speed is not None else None, "ground_speed_feet_cm_s": feet_speeds,
         "motion_end_frame_after": motion_end, "static_tail_fraction": round(tail_fraction, 4),
     }
@@ -560,8 +561,13 @@ def describe_clip(clip):
             "end_seconds": clip.get_editor_property("end_seconds"), "play_rate": clip.get_editor_property("play_rate")}
 
 
-def update_hyena_species(targets, run_clip_speed):
-    species = EDITOR_ASSETS.load_asset(HYENA_SPECIES_PATH)
+def update_species_locomotion(entry, targets, run_clip_speed):
+    if not entry["update_species_run_speed"]:
+        return {}, False
+    if run_clip_speed is None:
+        raise RuntimeError(f"{entry['species']}: update_species_run_speed needs a run clip")
+    species_path = species_table.species_asset_path(TABLE, entry["species"])
+    species = EDITOR_ASSETS.load_asset(species_path)
     before = {"run_clip_speed": species.get_editor_property("run_clip_speed")}
     is_changed = before["run_clip_speed"] != float(run_clip_speed)
     for role, animation in targets.items():
@@ -579,7 +585,7 @@ def update_hyena_species(targets, run_clip_speed):
     if is_changed:
         species.set_editor_property("run_clip_speed", float(run_clip_speed))
         EDITOR_ASSETS.save_loaded_asset(species, False)
-        print_progress(f"saved {HYENA_SPECIES_PATH}: run_clip_speed {before['run_clip_speed']} -> {run_clip_speed}")
+        print_progress(f"saved {species_path}: run_clip_speed {before['run_clip_speed']} -> {run_clip_speed}")
     return before, is_changed
 
 
@@ -601,24 +607,32 @@ def enable_idle_loops():
     return rows
 
 
-def main():
-    thresholds_before = collect_run_thresholds()
+def process_entry(entry):
     targets, results = {}, []
-    for spec in CLIP_SPECS:
-        target, result = make_clip(spec)
+    for spec in entry["clips"]:
+        target, result = make_clip(spec, entry)
         targets[spec["role"]] = target
         results.append(result)
-    run_result = next(result for result in results if result["role"] == "run")
-    run_clip_speed = int(round(run_result["ground_speed_four_feet_median_cm_s"]))
-    species_before, is_species_saved = update_hyena_species(targets, run_clip_speed)
-    idle_loops = enable_idle_loops()
-    saved_count = sum(1 for result in results if result["written_and_saved"]) + int(is_species_saved) + sum(1 for row in idle_loops if row["saved"])
-    report = {
-        "clips": results, "run_clip_speed": run_clip_speed, "species_before": species_before, "species_saved": is_species_saved,
-        "idle_loops": idle_loops, "saved_asset_count": saved_count,
-        "run_thresholds_before_species_update": thresholds_before, "run_thresholds_after_species_update": collect_run_thresholds(),
+    run_result = next((result for result in results if result["role"] == "run"), None)
+    run_clip_speed = int(round(run_result["ground_speed_four_feet_median_cm_s"])) if run_result else None
+    species_before, is_species_saved = update_species_locomotion(entry, targets, run_clip_speed)
+    return {
+        "species": entry["species"], "clips": results, "run_clip_speed": run_clip_speed, "species_before": species_before, "species_saved": is_species_saved,
         "all_seams_zero": all(result["seam_cm"] <= UNCHANGED_SOURCE_TOLERANCE_CM for result in results),
         "all_source_frames_unchanged": all(result["source_frames_unchanged"] for result in results),
+    }
+
+
+def main():
+    thresholds_before = collect_run_thresholds()
+    entry_reports = [process_entry(entry) for entry in TABLE["loop_clips"] if not ONLY_SPECIES or entry["species"] in ONLY_SPECIES]
+    idle_loops = enable_idle_loops()
+    saved_count = sum(1 for report in entry_reports for result in report["clips"] if result["written_and_saved"]) + sum(1 for report in entry_reports if report["species_saved"]) + sum(1 for row in idle_loops if row["saved"])
+    report = {
+        "entries": entry_reports, "idle_loops": idle_loops, "saved_asset_count": saved_count,
+        "run_thresholds_before_species_update": thresholds_before, "run_thresholds_after_species_update": collect_run_thresholds(),
+        "all_seams_zero": all(entry_report["all_seams_zero"] for entry_report in entry_reports),
+        "all_source_frames_unchanged": all(entry_report["all_source_frames_unchanged"] for entry_report in entry_reports),
         "dirty_packages_after": [package.get_name() for package in unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()],
     }
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)

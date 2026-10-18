@@ -1,0 +1,12 @@
+{ "schema": 1, "id": "Swordsman", "role": "Melee", "extends": "Goblin_Melee",
+  "stats": { "max_health": 160, "attack_power": 11, "armor": 6, "move_speed": 400 },
+  "abilities": {
+    "Slash": { "spell": "DA_TDGoblinSlash", "range": 170, "cooldown": 1.8 },
+    "Thrust": { "spell": "DA_TDQuickSlash", "range": 200, "cooldown": 4.0 } },
+  "actions": [
+    { "id": "Thrust", "do": "CastAbility", "args": { "ability": "Thrust" }, "weight": 2.2,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Thrust" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -12, "c": 0.16, "range": [0, 1200] },
+        { "input": "FacingTarget", "curve": "Linear" } ] }
+  ] }

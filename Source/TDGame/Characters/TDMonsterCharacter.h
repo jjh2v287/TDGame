@@ -100,6 +100,8 @@ private:
 	void HandleDeath(const FTDDamageContext& Context);
 	UTDMonsterThinkSubsystem* GetThinkSubsystem() const;
 	void ApplySpeciesBody();
+	void ApplySpeciesFollowerMeshes();
+	USkeletalMeshComponent* CreateFollowerMeshComponent();
 	void ApplySpeciesAnimation();
 	void StartMonsterBrain();
 	void StopMonsterBrain();
@@ -127,4 +129,7 @@ private:
 	float CorpseSinkDepth = 0.f;
 	FTDMonsterSlotHandle BrainHandle;
 	TWeakObjectPtr<ATDDamageEntity> ActiveAbilityEntity;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<USkeletalMeshComponent>> FollowerMeshComponents;
 };

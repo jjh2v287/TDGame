@@ -1,0 +1,260 @@
+{
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 1000.0,
+ "ranged_distance": 1300.0,
+ "species": [
+  {
+   "species": "Hyena",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Hyena_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Hyena_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Hyena_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Hyena_4_death.png"
+   },
+   "brain": true,
+   "max_health": 90.0,
+   "followers": 0,
+   "moved_cm": 472.2,
+   "attack_seen": true,
+   "health_after_hit": 63.52941131591797,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "BookHeadBrute",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BookHeadBrute_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BookHeadBrute_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BookHeadBrute_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BookHeadBrute_4_death.png"
+   },
+   "brain": true,
+   "max_health": 260.0,
+   "followers": 0,
+   "moved_cm": 595.8,
+   "attack_seen": true,
+   "health_after_hit": 190.35714721679688,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "BookHeadCaster",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BookHeadCaster_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BookHeadCaster_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BookHeadCaster_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BookHeadCaster_4_death.png"
+   },
+   "brain": true,
+   "max_health": 110.0,
+   "followers": 0,
+   "moved_cm": 200.3,
+   "attack_seen": true,
+   "health_after_hit": 78.26922607421875,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1300.0
+  },
+  {
+   "species": "SkeletonGuard",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/SkeletonGuard_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/SkeletonGuard_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/SkeletonGuard_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/SkeletonGuard_4_death.png"
+   },
+   "brain": true,
+   "max_health": 120.0,
+   "followers": 0,
+   "moved_cm": 548.0,
+   "attack_seen": true,
+   "health_after_hit": 85.71428680419922,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "Goblin",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Goblin_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Goblin_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Goblin_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Goblin_4_death.png"
+   },
+   "brain": true,
+   "max_health": 120.0,
+   "followers": 0,
+   "moved_cm": 556.5,
+   "attack_seen": true,
+   "health_after_hit": 85.71428680419922,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "StoneGolem",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/StoneGolem_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/StoneGolem_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/StoneGolem_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/StoneGolem_4_death.png"
+   },
+   "brain": true,
+   "max_health": 700.0,
+   "followers": 0,
+   "moved_cm": 513.2,
+   "attack_seen": true,
+   "health_after_hit": 532.0,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "Barghest",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Barghest_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Barghest_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Barghest_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Barghest_4_death.png"
+   },
+   "brain": true,
+   "max_health": 150.0,
+   "followers": 2,
+   "moved_cm": 389.9,
+   "attack_seen": true,
+   "health_after_hit": 106.73077392578125,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "BarghestAlpha",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BarghestAlpha_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BarghestAlpha_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BarghestAlpha_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/BarghestAlpha_4_death.png"
+   },
+   "brain": true,
+   "max_health": 340.0,
+   "followers": 2,
+   "moved_cm": 390.9,
+   "attack_seen": true,
+   "health_after_hit": 245.55555725097656,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "Griffon",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Griffon_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Griffon_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Griffon_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Griffon_4_death.png"
+   },
+   "brain": true,
+   "max_health": 900.0,
+   "followers": 0,
+   "moved_cm": 437.8,
+   "attack_seen": true,
+   "health_after_hit": 665.2174072265625,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "Centaur",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Centaur_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Centaur_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Centaur_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Centaur_4_death.png"
+   },
+   "brain": true,
+   "max_health": 520.0,
+   "followers": 7,
+   "moved_cm": 198.5,
+   "attack_seen": true,
+   "health_after_hit": 378.18182373046875,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1300.0
+  },
+  {
+   "species": "Greystone",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Greystone_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Greystone_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Greystone_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Greystone_4_death.png"
+   },
+   "brain": true,
+   "max_health": 650.0,
+   "followers": 0,
+   "moved_cm": 525.9,
+   "attack_seen": true,
+   "health_after_hit": 487.5,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "Kwang",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Kwang_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Kwang_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Kwang_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Kwang_4_death.png"
+   },
+   "brain": true,
+   "max_health": 560.0,
+   "followers": 0,
+   "moved_cm": 513.9,
+   "attack_seen": true,
+   "health_after_hit": 412.631591796875,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "Wukong",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Wukong_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Wukong_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Wukong_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Wukong_4_death.png"
+   },
+   "brain": true,
+   "max_health": 480.0,
+   "followers": 0,
+   "moved_cm": 507.2,
+   "attack_seen": true,
+   "health_after_hit": 349.0909118652344,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  },
+  {
+   "species": "Swordsman",
+   "shots": {
+    "move": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Swordsman_1_move.png",
+    "attack": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Swordsman_2_attack.png",
+    "hit": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Swordsman_3_hit.png",
+    "death": "Docs/MonsterAI_CombatSim/measurements/monsterize/pie-2026-10-18/Swordsman_4_death.png"
+   },
+   "brain": true,
+   "max_health": 160.0,
+   "followers": 0,
+   "moved_cm": 541.3,
+   "attack_seen": true,
+   "health_after_hit": 114.71697998046875,
+   "alive_after_death": false,
+   "passed": true,
+   "spawn_distance": 1000.0
+  }
+ ],
+ "passed": true
+}

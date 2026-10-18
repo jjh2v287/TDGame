@@ -88,6 +88,7 @@ void ATDMonsterCharacter::BeginPlay()
 	GrantDefaultActionAbilities();
 	CombatComponent->OnDeath.AddUObject(this, &ThisClass::HandleDeath);
 	ApplySpeciesBody();
+	ApplySpeciesFollowerMeshes();
 	ApplySpeciesAnimation();
 	StartMonsterBrain();
 }
@@ -397,6 +398,48 @@ void ATDMonsterCharacter::ApplySpeciesBody()
 	{
 		Mover->SetBaseVisualComponentTransform(MeshComponent->GetRelativeTransform());
 	}
+}
+
+void ATDMonsterCharacter::ApplySpeciesFollowerMeshes()
+{
+	const int32 FollowerCount = Species ? Species->FollowerMeshes.Num() : 0;
+	while (FollowerMeshComponents.Num() > FollowerCount)
+	{
+		if (USkeletalMeshComponent* RemovedFollower = FollowerMeshComponents.Pop())
+		{
+			RemovedFollower->DestroyComponent();
+		}
+	}
+	for (int32 FollowerIndex = 0; FollowerIndex < FollowerCount; ++FollowerIndex)
+	{
+		if (!FollowerMeshComponents.IsValidIndex(FollowerIndex))
+		{
+			FollowerMeshComponents.Add(CreateFollowerMeshComponent());
+		}
+		USkeletalMeshComponent* FollowerMesh = FollowerMeshComponents[FollowerIndex];
+		if (!FollowerMesh)
+		{
+			continue;
+		}
+		FollowerMesh->SetSkeletalMeshAsset(Species->FollowerMeshes[FollowerIndex]);
+		FollowerMesh->SetLeaderPoseComponent(GetMesh());
+	}
+}
+
+USkeletalMeshComponent* ATDMonsterCharacter::CreateFollowerMeshComponent()
+{
+	USkeletalMeshComponent* LeaderMesh = GetMesh();
+	if (!LeaderMesh)
+	{
+		return nullptr;
+	}
+	USkeletalMeshComponent* FollowerMesh = NewObject<USkeletalMeshComponent>(this, NAME_None, RF_Transient);
+	FollowerMesh->SetupAttachment(LeaderMesh);
+	FollowerMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	FollowerMesh->SetCanEverAffectNavigation(false);
+	FollowerMesh->bUseBoundsFromLeaderPoseComponent = true;
+	FollowerMesh->RegisterComponent();
+	return FollowerMesh;
 }
 
 void ATDMonsterCharacter::ApplySpeciesAnimation()

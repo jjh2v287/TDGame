@@ -1,0 +1,971 @@
+{
+ "schema": 1,
+ "paths": {
+  "species_folder": "/Game/MonsterAI/Species",
+  "animation_folder": "/Game/MonsterAI/Animations",
+  "definitions_dir": "Content/MonsterAI/Definitions"
+ },
+ "root_locked_copies": [
+  {
+   "target": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Attack01",
+   "source": "/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01"
+  }
+ ],
+ "species": [
+  {
+   "name": "Hyena",
+   "definition": "Hyena",
+   "mesh": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion",
+   "followers": [],
+   "scale": 0.65,
+   "yaw": -90.0,
+   "radius": 45.0,
+   "half_height": 48.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 70.0,
+   "run_clip_speed": 731.0,
+   "idle": {
+    "anim": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Idle"
+   },
+   "walk": {
+    "anim": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Walk"
+   },
+   "run": {
+    "anim": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Run"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Hit",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotionHyenas_A15_Die",
+    "end": 1.667
+   },
+   "abilities": {
+    "Bite": {
+     "anim": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotionHyenas_A15_Atk",
+     "start": 0.0,
+     "end": 0.6,
+     "rate": 1.0,
+     "impact": 0.3,
+     "recovery": 0.25
+    }
+   },
+   "corpse_seconds": 6.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "BookHeadBrute",
+   "definition": "BookHead_Brute",
+   "mesh": "/Game/BookHeadMonster/Meshes/BookHeadMonster",
+   "followers": [],
+   "scale": 1.0,
+   "yaw": -90.0,
+   "radius": 40.0,
+   "half_height": 90.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 230.0,
+   "run_clip_speed": 510.0,
+   "idle": {
+    "anim": "/Game/BookHeadMonster/Demo/Animations/MM_Idle"
+   },
+   "walk": {
+    "anim": "/Game/BookHeadMonster/Demo/Animations/MM_Walk_Fwd"
+   },
+   "run": {
+    "anim": "/Game/BookHeadMonster/Demo/Animations/MM_Run_Fwd"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_HitReact",
+    "rate": 1.25
+   },
+   "abilities": {
+    "Smash": {
+     "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Attack01",
+     "start": 0.0,
+     "end": 1.0,
+     "rate": 1.0,
+     "impact": 0.45,
+     "recovery": 0.35
+    },
+    "Swipe": {
+     "anim": "/Game/Characters/Paragon/Greystone/Attack/Attack_PrimaryB",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.4,
+     "recovery": 0.35
+    }
+   },
+   "corpse_seconds": 8.0,
+   "ragdoll_after_death": true,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5,
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Death",
+    "start": 0.0,
+    "end": 0.0,
+    "rate": 1.0,
+    "impact": 0.0,
+    "recovery": 0.3
+   }
+  },
+  {
+   "name": "BookHeadCaster",
+   "definition": "BookHead_Caster",
+   "mesh": "/Game/BookHeadMonster/Meshes/BookHeadMonster",
+   "followers": [],
+   "scale": 0.9,
+   "yaw": -90.0,
+   "radius": 36.0,
+   "half_height": 81.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 230.0,
+   "run_clip_speed": 510.0,
+   "idle": {
+    "anim": "/Game/BookHeadMonster/Demo/Animations/MM_Idle"
+   },
+   "walk": {
+    "anim": "/Game/BookHeadMonster/Demo/Animations/MM_Walk_Fwd"
+   },
+   "run": {
+    "anim": "/Game/BookHeadMonster/Demo/Animations/MM_Run_Fwd"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_HitReact",
+    "rate": 1.25
+   },
+   "abilities": {
+    "Bolt": {
+     "anim": "/Game/Characters/Paragon/Greystone/Attack/Attack_A_Med",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.27,
+     "recovery": 0.4
+    },
+    "Burst": {
+     "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Attack01",
+     "start": 0.0,
+     "end": 1.0,
+     "rate": 1.0,
+     "impact": 0.45,
+     "recovery": 0.4
+    }
+   },
+   "corpse_seconds": 8.0,
+   "ragdoll_after_death": true,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5,
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Death",
+    "start": 0.0,
+    "end": 0.0,
+    "rate": 1.0,
+    "impact": 0.0,
+    "recovery": 0.3
+   }
+  },
+  {
+   "name": "SkeletonGuard",
+   "definition": "Goblin_Melee",
+   "mesh": "/Game/Skeleton_Guard/Mesh_UE4/Full/SKM_Skeleton_Guard",
+   "followers": [],
+   "scale": 1.0,
+   "yaw": -90.0,
+   "radius": 40.0,
+   "half_height": 92.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 150.0,
+   "run_clip_speed": 375.0,
+   "idle": {
+    "anim": "/Game/Skeleton_Guard/Demoscene_UE4/Animations/ThirdPersonIdle"
+   },
+   "walk": {
+    "anim": "/Game/Skeleton_Guard/Demoscene_UE4/Animations/ThirdPersonWalk"
+   },
+   "run": {
+    "anim": "/Game/Skeleton_Guard/Demoscene_UE4/Animations/ThirdPersonRun"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/Guard/AS_TD_Guard_HitReact",
+    "rate": 1.25
+   },
+   "abilities": {
+    "Slash": {
+     "anim": "/Game/MonsterAI/Animations/Guard/AS_TD_Guard_Slash",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.38,
+     "recovery": 0.3
+    }
+   },
+   "corpse_seconds": 8.0,
+   "ragdoll_after_death": true,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5,
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/Guard/AS_TD_Guard_Death",
+    "start": 0.0,
+    "end": 0.0,
+    "rate": 1.0,
+    "impact": 0.0,
+    "recovery": 0.3
+   }
+  },
+  {
+   "name": "Goblin",
+   "definition": "Goblin_Melee",
+   "mesh": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin",
+   "followers": [],
+   "scale": 1.06,
+   "yaw": -90.0,
+   "radius": 28.0,
+   "half_height": 60.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 175.0,
+   "run_clip_speed": 355.0,
+   "idle": {
+    "anim": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Idle"
+   },
+   "walk": {
+    "anim": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Walk"
+   },
+   "run": {
+    "anim": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Run"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_HitReact",
+    "rate": 1.25
+   },
+   "abilities": {
+    "Slash": {
+     "anim": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Slash",
+     "start": 0.0,
+     "end": 1.3,
+     "rate": 1.0,
+     "impact": 0.52,
+     "recovery": 0.3
+    }
+   },
+   "corpse_seconds": 6.0,
+   "ragdoll_after_death": true,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5,
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Death",
+    "start": 0.0,
+    "end": 0.0,
+    "rate": 1.0,
+    "impact": 0.0,
+    "recovery": 0.3
+   }
+  },
+  {
+   "name": "StoneGolem",
+   "definition": "StoneGolem",
+   "mesh": "/Game/Stone_Golem/mesh/SKM_Stone_Golem",
+   "followers": [],
+   "scale": 0.64,
+   "yaw": -90.0,
+   "radius": 58.0,
+   "half_height": 105.0,
+   "height_offset": 6.0,
+   "walk_clip_speed": 325.0,
+   "run_clip_speed": 950.0,
+   "idle": {
+    "anim": "/Game/Stone_Golem/demo/animations/ThirdPersonIdle"
+   },
+   "walk": {
+    "anim": "/Game/Stone_Golem/demo/animations/ThirdPersonWalk"
+   },
+   "run": {
+    "anim": "/Game/Stone_Golem/demo/animations/ThirdPersonRun"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/Golem/AS_TD_Golem_HitReact",
+    "rate": 1.25
+   },
+   "abilities": {
+    "Smash": {
+     "anim": "/Game/MonsterAI/Animations/Golem/AS_TD_Golem_Attack01",
+     "start": 0.0,
+     "end": 1.0,
+     "rate": 1.0,
+     "impact": 0.39,
+     "recovery": 0.45
+    },
+    "Stomp": {
+     "anim": "/Game/MonsterAI/Animations/Golem/AS_TD_Golem_GreystoneRMB",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.74,
+     "recovery": 0.45
+    }
+   },
+   "corpse_seconds": 10.0,
+   "ragdoll_after_death": true,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5,
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/Golem/AS_TD_Golem_Death",
+    "start": 0.0,
+    "end": 0.0,
+    "rate": 1.0,
+    "impact": 0.0,
+    "recovery": 0.3
+   }
+  },
+  {
+   "name": "Barghest",
+   "definition": "Barghest",
+   "mesh": "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST",
+   "followers": [
+    "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST_MANE",
+    "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST_TAIL"
+   ],
+   "scale": 0.6,
+   "yaw": -90.0,
+   "radius": 50.0,
+   "half_height": 48.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 163.0,
+   "run_clip_speed": 753.0,
+   "idle": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_idleBreathe"
+   },
+   "walk": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_walk"
+   },
+   "run": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_run"
+   },
+   "hit": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_getHitNormal",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_deathNormal"
+   },
+   "abilities": {
+    "Bite": {
+     "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_biteNormal",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.17,
+     "recovery": 0.3
+    },
+    "Pounce": {
+     "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_jumpBiteNormal",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.27,
+     "recovery": 0.35
+    }
+   },
+   "corpse_seconds": 6.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "BarghestAlpha",
+   "definition": "Barghest_Alpha",
+   "mesh": "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST",
+   "followers": [
+    "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST_MANE",
+    "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST_TAIL"
+   ],
+   "scale": 0.72,
+   "yaw": -90.0,
+   "radius": 58.0,
+   "half_height": 57.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 163.0,
+   "run_clip_speed": 753.0,
+   "idle": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_idleAggressive"
+   },
+   "walk": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_walk"
+   },
+   "run": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_run"
+   },
+   "hit": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_getHitAggressive",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_deathAggressive"
+   },
+   "abilities": {
+    "Bite": {
+     "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_biteAggressive",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.33,
+     "recovery": 0.3
+    },
+    "Pounce": {
+     "anim": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_jumpBiteAggressive",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.3,
+     "recovery": 0.35
+    }
+   },
+   "corpse_seconds": 8.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "Griffon",
+   "definition": "Griffon",
+   "mesh": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon",
+   "followers": [],
+   "scale": 0.5,
+   "yaw": -90.0,
+   "radius": 90.0,
+   "half_height": 95.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 234.0,
+   "run_clip_speed": 935.0,
+   "idle": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Idle"
+   },
+   "walk": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Walk"
+   },
+   "run": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Gallop"
+   },
+   "hit": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_GetHit1",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Death"
+   },
+   "abilities": {
+    "Bite": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_BiteAttack",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.43,
+     "recovery": 0.35
+    },
+    "Claws": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_LeftClawsAttack",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.47,
+     "recovery": 0.4
+    },
+    "Combo": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_2HitComboAttack",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 1.3,
+     "recovery": 0.45
+    }
+   },
+   "corpse_seconds": 10.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "Centaur",
+   "definition": "Centaur_Archer",
+   "mesh": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur",
+   "followers": [
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Body_Armor",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Shoulder_Pads",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Bow_Action",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Sheath",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Sword_Idle",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Mane",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Beard"
+   ],
+   "scale": 0.75,
+   "yaw": -90.0,
+   "radius": 60.0,
+   "half_height": 108.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 174.0,
+   "run_clip_speed": 1115.0,
+   "idle": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_IdleBow"
+   },
+   "walk": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_WalkBow"
+   },
+   "run": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GallopBow"
+   },
+   "hit": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GetHitBow",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_DeathBow"
+   },
+   "abilities": {
+    "Shoot": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_ShootArrowToIdleAiming",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.27,
+     "recovery": 0.35
+    },
+    "Kick": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_LegAttackBow",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.67,
+     "recovery": 0.4
+    }
+   },
+   "corpse_seconds": 10.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "Greystone",
+   "definition": "Greystone",
+   "mesh": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone",
+   "followers": [],
+   "scale": 1.0,
+   "yaw": -90.0,
+   "radius": 45.0,
+   "half_height": 100.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 346.0,
+   "run_clip_speed": 692.0,
+   "idle": {
+    "anim": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Idle"
+   },
+   "walk": {
+    "anim": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Walk"
+   },
+   "run": {
+    "anim": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Run"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_HitReact",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Death"
+   },
+   "abilities": {
+    "Strike": {
+     "anim": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Attack_A_Fast",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.15,
+     "recovery": 0.3
+    },
+    "Cleave": {
+     "anim": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Attack_PrimaryC",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.63,
+     "recovery": 0.4
+    },
+    "Slam": {
+     "anim": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Ability_R",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.9,
+     "recovery": 0.45
+    }
+   },
+   "corpse_seconds": 10.0,
+   "ragdoll_after_death": true,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "Kwang",
+   "definition": "Kwang",
+   "mesh": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_GDC",
+   "followers": [],
+   "scale": 1.0,
+   "yaw": -90.0,
+   "radius": 42.0,
+   "half_height": 90.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 348.0,
+   "run_clip_speed": 697.0,
+   "idle": {
+    "anim": "/Game/MonsterAI/Animations/Kwang/AS_TD_Kwang_Idle"
+   },
+   "walk": {
+    "anim": "/Game/MonsterAI/Animations/Kwang/AS_TD_Kwang_Walk"
+   },
+   "run": {
+    "anim": "/Game/MonsterAI/Animations/Kwang/AS_TD_Kwang_Run"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/Kwang/AS_TD_Kwang_HitReact",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/Kwang/AS_TD_Kwang_Death"
+   },
+   "abilities": {
+    "Strike": {
+     "anim": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Animations/PrimaryAttack_C_Slow",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.19,
+     "recovery": 0.35
+    },
+    "Slam": {
+     "anim": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Animations/Ability_R",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.9,
+     "recovery": 0.45
+    }
+   },
+   "corpse_seconds": 10.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "Wukong",
+   "definition": "Wukong",
+   "mesh": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong",
+   "followers": [],
+   "scale": 1.0,
+   "yaw": -90.0,
+   "radius": 42.0,
+   "half_height": 98.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 348.0,
+   "run_clip_speed": 697.0,
+   "idle": {
+    "anim": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Idle"
+   },
+   "walk": {
+    "anim": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Walk"
+   },
+   "run": {
+    "anim": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Run"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_HitReact",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Death"
+   },
+   "abilities": {
+    "Strike": {
+     "anim": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_GreystonePrimaryA",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.39,
+     "recovery": 0.35
+    },
+    "Spin": {
+     "anim": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Animations/Emote_StaffSpin",
+     "start": 1.9,
+     "end": 3.3,
+     "rate": 1.0,
+     "impact": 0.39,
+     "recovery": 0.3
+    }
+   },
+   "corpse_seconds": 10.0,
+   "ragdoll_after_death": true,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "Swordsman",
+   "definition": "Swordsman",
+   "mesh": "/Game/SwordTrailVFX/Demo/SKM_Man/SKM_Man",
+   "followers": [],
+   "scale": 1.0,
+   "yaw": -90.0,
+   "radius": 40.0,
+   "half_height": 90.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 290.0,
+   "run_clip_speed": 600.0,
+   "idle": {
+    "anim": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Idle"
+   },
+   "walk": {
+    "anim": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Walk"
+   },
+   "run": {
+    "anim": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Run"
+   },
+   "hit": {
+    "anim": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_HitReact",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Death"
+   },
+   "abilities": {
+    "Slash": {
+     "anim": "/Game/SwordTrailVFX/Demo/Anims/NS_Demo/A_NS_01",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.6,
+     "recovery": 0.3
+    },
+    "Thrust": {
+     "anim": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Slash",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.38,
+     "recovery": 0.3
+    }
+   },
+   "corpse_seconds": 8.0,
+   "ragdoll_after_death": true,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5
+  }
+ ],
+ "retarget": {
+  "sources": {
+   "Manny": {
+    "mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+    "rig": "IK_TD_Manny"
+   }
+  },
+  "clips": {
+   "Idle": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle",
+    "kind": "idle"
+   },
+   "Walk": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd",
+    "kind": "locomotion"
+   },
+   "Run": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd",
+    "kind": "locomotion"
+   },
+   "Attack01": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01",
+    "kind": "attack"
+   },
+   "Slash": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01",
+    "kind": "attack"
+   },
+   "HitReact": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Mannequins/Anims/Reaction/AS_TD_Manny_HitReact_Unarmed",
+    "kind": "hit"
+   },
+   "Death": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Mannequins/Anims/Death/MM_Death_Front_01",
+    "kind": "death"
+   },
+   "GreystoneRMB": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Paragon/Greystone/Attack/Attack_RMB",
+    "kind": "attack"
+   },
+   "GreystonePrimaryA": {
+    "source": "Manny",
+    "anim": "/Game/Characters/Paragon/Greystone/Attack/Attack_PrimaryA",
+    "kind": "attack"
+   }
+  },
+  "targets": {
+   "Goblin": {
+    "mesh": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin",
+    "source": "Manny",
+    "clips": [
+     "Idle",
+     "Walk",
+     "Run",
+     "Attack01",
+     "Slash",
+     "HitReact",
+     "Death"
+    ],
+    "bone_names": {}
+   },
+   "Golem": {
+    "mesh": "/Game/Stone_Golem/mesh/SKM_Stone_Golem",
+    "source": "Manny",
+    "clips": [
+     "Attack01",
+     "HitReact",
+     "GreystoneRMB",
+     "Death"
+    ],
+    "bone_names": {}
+   },
+   "Guard": {
+    "mesh": "/Game/Skeleton_Guard/Mesh_UE4/Full/SKM_Skeleton_Guard",
+    "source": "Manny",
+    "clips": [
+     "HitReact",
+     "Slash",
+     "Death"
+    ],
+    "bone_names": {}
+   },
+   "BookHead": {
+    "mesh": "/Game/BookHeadMonster/Meshes/BookHeadMonster",
+    "source": "Manny",
+    "clips": [
+     "HitReact",
+     "Death"
+    ],
+    "bone_names": {}
+   },
+   "Greystone": {
+    "mesh": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone",
+    "source": "Manny",
+    "clips": [
+     "Idle",
+     "Walk",
+     "Run",
+     "HitReact",
+     "Death"
+    ],
+    "bone_names": {}
+   },
+   "Kwang": {
+    "mesh": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_GDC",
+    "source": "Manny",
+    "clips": [
+     "Idle",
+     "Walk",
+     "Run",
+     "HitReact",
+     "Death"
+    ],
+    "bone_names": {}
+   },
+   "Wukong": {
+    "mesh": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong",
+    "source": "Manny",
+    "clips": [
+     "Idle",
+     "Walk",
+     "Run",
+     "HitReact",
+     "Death",
+     "GreystonePrimaryA"
+    ],
+    "bone_names": {}
+   },
+   "Swordsman": {
+    "mesh": "/Game/SwordTrailVFX/Demo/SKM_Man/SKM_Man",
+    "source": "Manny",
+    "clips": [
+     "Idle",
+     "Walk",
+     "Run",
+     "HitReact",
+     "Death",
+     "Slash"
+    ],
+    "bone_names": {
+     "root": "Hips",
+     "pelvis": "Hips",
+     "head": "Head",
+     "hand_l": "LeftHand",
+     "hand_r": "RightHand",
+     "foot_l": "LeftFoot",
+     "foot_r": "RightFoot",
+     "ball_l": "LeftToeBase",
+     "ball_r": "RightToeBase"
+    }
+   }
+  }
+ },
+ "loop_clips": [
+  {
+   "species": "Hyena",
+   "target_folder": "/Game/MonsterAI/Animations/Hyena",
+   "update_species_run_speed": true,
+   "feet": [
+    "bip01_l_toe0",
+    "bip01_r_toe0",
+    "bip01_l_finger0",
+    "bip01_r_finger0"
+   ],
+   "feet_tips": [
+    "bip01_l_toe0_end",
+    "bip01_r_toe0_end",
+    "bip01_l_finger0_end",
+    "bip01_r_finger0_end"
+   ],
+   "helper_prefixes": [
+    "bone01",
+    "bone02",
+    "bone03",
+    "bone04",
+    "bone05",
+    "bone06",
+    "s_fx"
+   ],
+   "clips": [
+    {
+     "role": "run",
+     "source": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotionHyenas_A15_Run",
+     "target": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Run",
+     "motion_end_frame": 30
+    },
+    {
+     "role": "walk",
+     "source": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotionHyenas_A15_Walk",
+     "target": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Walk",
+     "motion_end_frame": 80
+    },
+    {
+     "role": "idle",
+     "source": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotionHyenas_A15_Idle",
+     "target": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Idle",
+     "motion_end_frame": 150
+    }
+   ]
+  }
+ ]
+}

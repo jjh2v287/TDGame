@@ -1,0 +1,8277 @@
+{
+"species_measure": {
+"groups": [
+{
+"name": "Barghest",
+"mesh": {
+"path": "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+"bounds_origin": [
+0.0,
+20.9,
+75.2
+],
+"bounds_extent": [
+55.4,
+137.0,
+78.9
+],
+"imported_origin": [
+0.0,
+20.9,
+75.2
+],
+"imported_extent": [
+55.4,
+137.0,
+78.9
+],
+"reference_pose": {
+"bones": 38,
+"pose_size_cm": 306.0,
+"low": [
+-48.2,
+-199.2,
+0.0
+],
+"high": [
+48.2,
+106.7,
+136.2
+],
+"head_from_pelvis": {
+"bone": "BARGHEST_-Head",
+"x": 0.0,
+"y": 172.9,
+"z": 10.7
+}
+}
+},
+"clips": [
+{
+"role": "idleBreathe",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_idleBreathe",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 60,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-R-Calf",
+"seam_step_ratio": 0.768,
+"seam_step_bone": "BARGHEST_-Tail2"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 5,
+"time_s": 1.633
+},
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 1,
+"time_s": 1.933
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 1,
+"time_s": 1.933
+},
+{
+"bone": "BARGHEST_-L-Finger0",
+"peak_cm_s": 0,
+"time_s": 1.933
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 0,
+"time_s": 1.933
+},
+{
+"bone": "BARGHEST_-L-Hand",
+"peak_cm_s": 0,
+"time_s": 1.933
+}
+]
+},
+{
+"role": "idleAggressive",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_idleAggressive",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 60,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-L-Calf",
+"seam_step_ratio": 0.925,
+"seam_step_bone": "BARGHEST_-Tail1"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 5,
+"time_s": 1.633
+},
+{
+"bone": "BARGHEST_-L-Toe0",
+"peak_cm_s": 0,
+"time_s": 0.033
+},
+{
+"bone": "BARGHEST_-L-Foot",
+"peak_cm_s": 0,
+"time_s": 0.033
+},
+{
+"bone": "BARGHEST_-R-Toe0",
+"peak_cm_s": 0,
+"time_s": 1.967
+},
+{
+"bone": "BARGHEST_-R-Foot",
+"peak_cm_s": 0,
+"time_s": 1.967
+},
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 0,
+"time_s": 0.8
+}
+]
+},
+{
+"role": "walk",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_walk",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-R-Calf",
+"seam_step_ratio": 1.724,
+"seam_step_bone": "BARGHEST_-L-UpperArm"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 589,
+"time_s": 0.3
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 504,
+"time_s": 0.8
+},
+{
+"bone": "BARGHEST_-R-Toe0",
+"peak_cm_s": 482,
+"time_s": 0.3
+},
+{
+"bone": "BARGHEST_-L-Toe0",
+"peak_cm_s": 480,
+"time_s": 0.8
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 411,
+"time_s": 0.7
+},
+{
+"bone": "BARGHEST_-L-Finger0",
+"peak_cm_s": 401,
+"time_s": 0.2
+}
+],
+"ground_speed_cm_s": 163.7,
+"ground_speed_bones": {
+"BARGHEST_-R-Toe0": 162.5,
+"BARGHEST_-R-Finger01": 166.3,
+"BARGHEST_-L-Finger01": 163.7
+}
+},
+{
+"role": "run",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_run",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6,
+"frames": 18,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 18,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-R-HorseLink",
+"seam_step_ratio": 0.996,
+"seam_step_bone": "BARGHEST_-R-Hand"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-L-Toe0",
+"peak_cm_s": 1146,
+"time_s": 0.267
+},
+{
+"bone": "BARGHEST_-R-Toe0",
+"peak_cm_s": 1103,
+"time_s": 0.333
+},
+{
+"bone": "BARGHEST_-L-Foot",
+"peak_cm_s": 968,
+"time_s": 0.233
+},
+{
+"bone": "BARGHEST_-R-Foot",
+"peak_cm_s": 888,
+"time_s": 0.367
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 814,
+"time_s": 0.567
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 811,
+"time_s": 0.567
+}
+],
+"ground_speed_cm_s": 550.2,
+"ground_speed_bones": {
+"BARGHEST_-R-Finger01": 419.1,
+"BARGHEST_-L-Finger01": 681.4
+}
+},
+{
+"role": "biteNormal",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_biteNormal",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6667,
+"frames": 20,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 20,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-L-Calf",
+"seam_step_ratio": 0.653,
+"seam_step_bone": "BARGHEST_-L-Clavicle"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 768,
+"time_s": 0.167
+},
+{
+"bone": "BARGHEST_-R-Hand",
+"peak_cm_s": 65,
+"time_s": 0.133
+},
+{
+"bone": "BARGHEST_-L-Hand",
+"peak_cm_s": 65,
+"time_s": 0.133
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 23,
+"time_s": 0.167
+},
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 23,
+"time_s": 0.167
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 23,
+"time_s": 0.167
+}
+]
+},
+{
+"role": "biteAggressive",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_biteAggressive",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.8333,
+"frames": 25,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 25,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-R-Calf",
+"seam_step_ratio": 0.677,
+"seam_step_bone": "BARGHEST_-Tail3"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 352,
+"time_s": 0.333
+},
+{
+"bone": "BARGHEST_-L-Hand",
+"peak_cm_s": 38,
+"time_s": 0.067
+},
+{
+"bone": "BARGHEST_-R-Hand",
+"peak_cm_s": 38,
+"time_s": 0.067
+},
+{
+"bone": "BARGHEST_-L-Finger0",
+"peak_cm_s": 21,
+"time_s": 0.067
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 21,
+"time_s": 0.067
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 7,
+"time_s": 0.3
+}
+]
+},
+{
+"role": "jumpBiteNormal",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_jumpBiteNormal",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.009,
+"seam_percent": 0.003,
+"seam_bone": "BARGHEST_-R-Toe0",
+"seam_step_ratio": 0.612,
+"seam_step_bone": "BARGHEST_-Tail4"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-L-Hand",
+"peak_cm_s": 920,
+"time_s": 0.267
+},
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 907,
+"time_s": 0.267
+},
+{
+"bone": "BARGHEST_-L-Finger0",
+"peak_cm_s": 903,
+"time_s": 0.267
+},
+{
+"bone": "BARGHEST_-L-Foot",
+"peak_cm_s": 791,
+"time_s": 0.567
+},
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 772,
+"time_s": 0.167
+},
+{
+"bone": "BARGHEST_-L-Toe0",
+"peak_cm_s": 770,
+"time_s": 0.567
+}
+]
+},
+{
+"role": "jumpBiteAggressive",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_jumpBiteAggressive",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-L-Calf",
+"seam_step_ratio": 0.935,
+"seam_step_bone": "BARGHEST_-Tail4"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-L-Hand",
+"peak_cm_s": 920,
+"time_s": 0.3
+},
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 907,
+"time_s": 0.3
+},
+{
+"bone": "BARGHEST_-L-Finger0",
+"peak_cm_s": 903,
+"time_s": 0.3
+},
+{
+"bone": "BARGHEST_-L-Foot",
+"peak_cm_s": 788,
+"time_s": 0.6
+},
+{
+"bone": "BARGHEST_-L-Toe0",
+"peak_cm_s": 768,
+"time_s": 0.6
+},
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 764,
+"time_s": 0.2
+}
+]
+},
+{
+"role": "runBite",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_runBite",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6,
+"frames": 18,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 18,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-R-HorseLink",
+"seam_step_ratio": 0.996,
+"seam_step_bone": "BARGHEST_-R-Hand"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-L-Toe0",
+"peak_cm_s": 1146,
+"time_s": 0.267
+},
+{
+"bone": "BARGHEST_-R-Toe0",
+"peak_cm_s": 1103,
+"time_s": 0.333
+},
+{
+"bone": "BARGHEST_-L-Foot",
+"peak_cm_s": 968,
+"time_s": 0.233
+},
+{
+"bone": "BARGHEST_-R-Foot",
+"peak_cm_s": 888,
+"time_s": 0.367
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 814,
+"time_s": 0.567
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 811,
+"time_s": 0.567
+}
+],
+"ground_speed_cm_s": 550.2,
+"ground_speed_bones": {
+"BARGHEST_-R-Finger01": 419.1,
+"BARGHEST_-L-Finger01": 681.4
+}
+},
+{
+"role": "getHitNormal",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_getHitNormal",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.117,
+"seam_percent": 0.038,
+"seam_bone": "BARGHEST_-R-HorseLink",
+"seam_step_ratio": 0.265,
+"seam_step_bone": "BARGHEST_-Tail4"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 538,
+"time_s": 0.2
+},
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 0,
+"time_s": 0.033
+},
+{
+"bone": "BARGHEST_-L-Finger0",
+"peak_cm_s": 0,
+"time_s": 0.033
+},
+{
+"bone": "BARGHEST_-L-Hand",
+"peak_cm_s": 0,
+"time_s": 0.033
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 0,
+"time_s": 0.933
+},
+{
+"bone": "BARGHEST_-R-Hand",
+"peak_cm_s": 0,
+"time_s": 0.933
+}
+]
+},
+{
+"role": "getHitAggressive",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_getHitAggressive",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-R-Calf",
+"seam_step_ratio": 0.429,
+"seam_step_bone": "BARGHEST_-L-Calf"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 531,
+"time_s": 0.167
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 0,
+"time_s": 0.9
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 0,
+"time_s": 0.9
+},
+{
+"bone": "BARGHEST_-R-Hand",
+"peak_cm_s": 0,
+"time_s": 0.9
+},
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 0,
+"time_s": 0.9
+},
+{
+"bone": "BARGHEST_-L-Finger0",
+"peak_cm_s": 0,
+"time_s": 0.9
+}
+]
+},
+{
+"role": "deathNormal",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_deathNormal",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0667,
+"frames": 62,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 62,
+"static_tail": 0.0,
+"seam_cm": 143.737,
+"seam_percent": 46.973,
+"seam_bone": "BARGHEST_-R-Clavicle",
+"seam_step_ratio": 0.297,
+"seam_step_bone": "BARGHEST_-Tail4"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 815,
+"time_s": 0.067
+},
+{
+"bone": "BARGHEST_-R-Toe0",
+"peak_cm_s": 775,
+"time_s": 1.2
+},
+{
+"bone": "BARGHEST_-R-Foot",
+"peak_cm_s": 586,
+"time_s": 1.2
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 499,
+"time_s": 1.133
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 483,
+"time_s": 1.133
+},
+{
+"bone": "BARGHEST_-R-Hand",
+"peak_cm_s": 408,
+"time_s": 1.1
+}
+]
+},
+{
+"role": "deathAggressive",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_deathAggressive",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0667,
+"frames": 62,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 62,
+"static_tail": 0.0,
+"seam_cm": 125.059,
+"seam_percent": 40.869,
+"seam_bone": "BARGHEST_-R-Clavicle",
+"seam_step_ratio": 0.091,
+"seam_step_bone": "BARGHEST_-Tail4"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-R-Toe0",
+"peak_cm_s": 775,
+"time_s": 1.2
+},
+{
+"bone": "BARGHEST_-Head",
+"peak_cm_s": 596,
+"time_s": 0.067
+},
+{
+"bone": "BARGHEST_-R-Foot",
+"peak_cm_s": 586,
+"time_s": 1.2
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 499,
+"time_s": 1.133
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 483,
+"time_s": 1.133
+},
+{
+"bone": "BARGHEST_-R-Hand",
+"peak_cm_s": 408,
+"time_s": 1.1
+}
+]
+}
+]
+},
+{
+"name": "BarghestMane",
+"mesh": {
+"path": "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST_MANE",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"physics_asset": null,
+"bounds_origin": [
+0.0,
+46.4,
+165.9
+],
+"bounds_extent": [
+42.6,
+78.0,
+37.8
+],
+"imported_origin": [
+0.0,
+46.4,
+165.9
+],
+"imported_extent": [
+42.6,
+78.0,
+37.8
+],
+"reference_pose": {
+"bones": 38,
+"pose_size_cm": 306.0,
+"low": [
+-48.2,
+-199.2,
+0.0
+],
+"high": [
+48.2,
+106.7,
+136.2
+],
+"head_from_pelvis": {
+"bone": "BARGHEST_-Head",
+"x": 0.0,
+"y": 172.9,
+"z": 10.7
+}
+}
+},
+"clips": []
+},
+{
+"name": "BarghestTail",
+"mesh": {
+"path": "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST_TAIL",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"physics_asset": null,
+"bounds_origin": [
+1.5,
+-147.2,
+78.1
+],
+"bounds_extent": [
+27.3,
+84.6,
+61.1
+],
+"imported_origin": [
+1.5,
+-147.2,
+78.1
+],
+"imported_extent": [
+27.3,
+84.6,
+61.1
+],
+"reference_pose": {
+"bones": 38,
+"pose_size_cm": 306.0,
+"low": [
+-48.2,
+-199.2,
+0.0
+],
+"high": [
+48.2,
+106.7,
+136.2
+],
+"head_from_pelvis": {
+"bone": "BARGHEST_-Head",
+"x": 0.0,
+"y": 172.9,
+"z": 10.7
+}
+}
+},
+"clips": []
+},
+{
+"name": "Griffon",
+"mesh": {
+"path": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"physics_asset": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Physics.SK_Griffon_Physics",
+"bounds_origin": [
+0.0,
+-20.4,
+253.4
+],
+"bounds_extent": [
+449.6,
+289.6,
+254.1
+],
+"imported_origin": [
+0.0,
+-20.4,
+253.4
+],
+"imported_extent": [
+449.6,
+289.6,
+254.1
+],
+"reference_pose": {
+"bones": 94,
+"pose_size_cm": 514.2,
+"low": [
+-257.1,
+-226.4,
+0.0
+],
+"high": [
+257.1,
+215.2,
+385.2
+],
+"head_from_pelvis": {
+"bone": "GRIFFON_-Head",
+"x": 0.0,
+"y": 254.4,
+"z": 48.7
+}
+}
+},
+"clips": [
+{
+"role": "Idle",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Idle",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 60,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-L-Calf",
+"seam_step_ratio": 0.827,
+"seam_step_bone": "GRIFFON_-Tail1"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_WingHand_L",
+"peak_cm_s": 13,
+"time_s": 0.533
+},
+{
+"bone": "GRIFFON_WingHand_R",
+"peak_cm_s": 13,
+"time_s": 0.533
+},
+{
+"bone": "GRIFFON_-Head",
+"peak_cm_s": 10,
+"time_s": 0.367
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 0,
+"time_s": 1.967
+},
+{
+"bone": "GRIFFON_-L-Finger31",
+"peak_cm_s": 0,
+"time_s": 1.967
+},
+{
+"bone": "GRIFFON_-L-Finger3",
+"peak_cm_s": 0,
+"time_s": 1.967
+}
+]
+},
+{
+"role": "Walk",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Walk",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-L-Forearm",
+"seam_step_ratio": 0.944,
+"seam_step_bone": "GRIFFON_-R-Forearm"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-L-Toe0",
+"peak_cm_s": 760,
+"time_s": 0.033
+},
+{
+"bone": "GRIFFON_-R-Toe0",
+"peak_cm_s": 759,
+"time_s": 0.533
+},
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 661,
+"time_s": 0.6
+},
+{
+"bone": "GRIFFON_-L-Finger12",
+"peak_cm_s": 623,
+"time_s": 0.6
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 619,
+"time_s": 0.6
+},
+{
+"bone": "GRIFFON_-R-Finger22",
+"peak_cm_s": 614,
+"time_s": 0.067
+}
+],
+"ground_speed_cm_s": 262.7,
+"ground_speed_bones": {
+"GRIFFON_-L-Toe0": 262.4,
+"GRIFFON_-R-Toe0": 263.1,
+"GRIFFON_-L-Finger02": 249.8,
+"GRIFFON_-L-Finger01": 251.0,
+"GRIFFON_-L-Finger12": 268.0,
+"GRIFFON_-L-Finger3": 260.5,
+"GRIFFON_-L-Finger11": 268.9,
+"GRIFFON_-L-Finger1": 262.9
+}
+},
+{
+"role": "Gallop",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Gallop",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.5333,
+"frames": 16,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 16,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-R-Finger12",
+"seam_step_ratio": 1.367,
+"seam_step_bone": "GRIFFON_-L-Hand"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-R-Toe0",
+"peak_cm_s": 1302,
+"time_s": 0.5
+},
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 1255,
+"time_s": 0.3
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 1252,
+"time_s": 0.5
+},
+{
+"bone": "GRIFFON_-L-Finger31",
+"peak_cm_s": 1252,
+"time_s": 0.5
+},
+{
+"bone": "GRIFFON_-L-Finger3",
+"peak_cm_s": 1252,
+"time_s": 0.5
+},
+{
+"bone": "GRIFFON_-L-Finger02",
+"peak_cm_s": 1252,
+"time_s": 0.5
+}
+],
+"ground_speed_cm_s": 989.3,
+"ground_speed_bones": {
+"GRIFFON_-L-Finger12": 1038.8,
+"GRIFFON_-L-Finger32": 1153.6,
+"GRIFFON_-R-Finger32": 547.1,
+"GRIFFON_-L-Finger22": 939.8,
+"GRIFFON_-R-Finger12": 546.6,
+"GRIFFON_-L-Finger11": 1130.2,
+"GRIFFON_-L-Finger21": 1132.2,
+"GRIFFON_-R-Finger22": 544.2
+}
+},
+{
+"role": "BiteAttack",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_BiteAttack",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 79.949,
+"seam_percent": 15.548,
+"seam_bone": "GRIFFON_-L-Toe0",
+"seam_step_ratio": 0.331,
+"seam_step_bone": "GRIFFON_WingLowerArm_R"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-R-Toe0",
+"peak_cm_s": 1286,
+"time_s": 0.433
+},
+{
+"bone": "GRIFFON_-R-Finger22",
+"peak_cm_s": 1254,
+"time_s": 0.233
+},
+{
+"bone": "GRIFFON_-L-Toe0",
+"peak_cm_s": 1211,
+"time_s": 0.267
+},
+{
+"bone": "GRIFFON_-R-Finger12",
+"peak_cm_s": 1164,
+"time_s": 0.233
+},
+{
+"bone": "GRIFFON_-R-Finger32",
+"peak_cm_s": 1162,
+"time_s": 0.233
+},
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 1084,
+"time_s": 0.167
+}
+]
+},
+{
+"role": "LeftClawsAttack",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_LeftClawsAttack",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.1667,
+"frames": 35,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 35,
+"static_tail": 0.0,
+"seam_cm": 0.002,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-Queue-de-cheval-1",
+"seam_step_ratio": 0.431,
+"seam_step_bone": "GRIFFON_-Tail6"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 1738,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 1633,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger21",
+"peak_cm_s": 1568,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger31",
+"peak_cm_s": 1510,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger12",
+"peak_cm_s": 1446,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger2",
+"peak_cm_s": 1398,
+"time_s": 0.467
+}
+]
+},
+{
+"role": "RightClawsAttack",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_RightClawsAttack",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.1667,
+"frames": 35,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 35,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-R-Calf",
+"seam_step_ratio": 0.431,
+"seam_step_bone": "GRIFFON_-Tail6"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-R-Finger22",
+"peak_cm_s": 1738,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-R-Finger32",
+"peak_cm_s": 1633,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-R-Finger21",
+"peak_cm_s": 1568,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-R-Finger31",
+"peak_cm_s": 1510,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-R-Finger12",
+"peak_cm_s": 1446,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-R-Finger2",
+"peak_cm_s": 1398,
+"time_s": 0.467
+}
+]
+},
+{
+"role": "2HitComboAttack",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_2HitComboAttack",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 60,
+"static_tail": 0.0,
+"seam_cm": 0.002,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-Queue-de-cheval-1",
+"seam_step_ratio": 0.386,
+"seam_step_bone": "GRIFFON_-Tail"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 1738,
+"time_s": 1.3
+},
+{
+"bone": "GRIFFON_-R-Finger22",
+"peak_cm_s": 1738,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 1633,
+"time_s": 1.3
+},
+{
+"bone": "GRIFFON_-R-Finger32",
+"peak_cm_s": 1633,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger21",
+"peak_cm_s": 1568,
+"time_s": 1.3
+},
+{
+"bone": "GRIFFON_-R-Finger21",
+"peak_cm_s": 1568,
+"time_s": 0.467
+}
+]
+},
+{
+"role": "3HitComboAttack",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_3HitComboAttack",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.8333,
+"frames": 85,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 85,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-R-Toe0",
+"seam_step_ratio": 0.309,
+"seam_step_bone": "GRIFFON_-Tail8"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 1738,
+"time_s": 1.3
+},
+{
+"bone": "GRIFFON_-R-Finger22",
+"peak_cm_s": 1738,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 1633,
+"time_s": 1.3
+},
+{
+"bone": "GRIFFON_-R-Finger32",
+"peak_cm_s": 1633,
+"time_s": 0.467
+},
+{
+"bone": "GRIFFON_-L-Finger21",
+"peak_cm_s": 1568,
+"time_s": 1.3
+},
+{
+"bone": "GRIFFON_-R-Finger21",
+"peak_cm_s": 1568,
+"time_s": 0.467
+}
+]
+},
+{
+"role": "GetHit1",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_GetHit1",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.8333,
+"frames": 25,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 25,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-L-HorseLink",
+"seam_step_ratio": 0.942,
+"seam_step_bone": "GRIFFON_-Tail8"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-Head",
+"peak_cm_s": 490,
+"time_s": 0.033
+},
+{
+"bone": "GRIFFON_WingHand_R",
+"peak_cm_s": 392,
+"time_s": 0.033
+},
+{
+"bone": "GRIFFON_WingHand_L",
+"peak_cm_s": 392,
+"time_s": 0.033
+},
+{
+"bone": "GRIFFON_-R-Finger22",
+"peak_cm_s": 0,
+"time_s": 0.767
+},
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 0,
+"time_s": 0.767
+},
+{
+"bone": "GRIFFON_-R-Finger21",
+"peak_cm_s": 0,
+"time_s": 0.767
+}
+]
+},
+{
+"role": "GetHit2",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_GetHit2",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.8333,
+"frames": 25,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 25,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-L-Foot",
+"seam_step_ratio": 0.838,
+"seam_step_bone": "GRIFFON_-Tail7"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_WingHand_R",
+"peak_cm_s": 345,
+"time_s": 0.433
+},
+{
+"bone": "GRIFFON_WingHand_L",
+"peak_cm_s": 345,
+"time_s": 0.433
+},
+{
+"bone": "GRIFFON_-Head",
+"peak_cm_s": 311,
+"time_s": 0.367
+},
+{
+"bone": "GRIFFON_-R-Finger32",
+"peak_cm_s": 0,
+"time_s": 0.333
+},
+{
+"bone": "GRIFFON_-R-Finger22",
+"peak_cm_s": 0,
+"time_s": 0.333
+},
+{
+"bone": "GRIFFON_-R-Finger31",
+"peak_cm_s": 0,
+"time_s": 0.333
+}
+]
+},
+{
+"role": "Death",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Death",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 3.0,
+"frames": 90,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 89,
+"static_tail": 0.0111,
+"seam_cm": 745.155,
+"seam_percent": 144.915,
+"seam_bone": "GRIFFON_Feather_01_L",
+"seam_step_ratio": 0.0,
+"seam_step_bone": "GRIFFON_-R-Hand"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_WingHand_L",
+"peak_cm_s": 1728,
+"time_s": 1.7
+},
+{
+"bone": "GRIFFON_-Head",
+"peak_cm_s": 1378,
+"time_s": 1.733
+},
+{
+"bone": "GRIFFON_WingHand_R",
+"peak_cm_s": 1018,
+"time_s": 1.7
+},
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 914,
+"time_s": 1.7
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 889,
+"time_s": 1.7
+},
+{
+"bone": "GRIFFON_-L-Finger21",
+"peak_cm_s": 858,
+"time_s": 1.7
+}
+]
+}
+]
+},
+{
+"name": "Centaur",
+"mesh": {
+"path": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"physics_asset": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_PhysicsAsset.SK_Centaur_PhysicsAsset",
+"bounds_origin": [
+0.0,
+-66.9,
+143.7
+],
+"bounds_extent": [
+100.3,
+172.4,
+144.2
+],
+"imported_origin": [
+0.0,
+-66.9,
+143.7
+],
+"imported_extent": [
+100.3,
+172.4,
+144.2
+],
+"reference_pose": {
+"bones": 126,
+"pose_size_cm": 350.5,
+"low": [
+-99.1,
+-198.3,
+0.0
+],
+"high": [
+117.6,
+124.7,
+350.5
+],
+"head_from_pelvis": {
+"bone": "CENTAUR_-Head",
+"x": 0.0,
+"y": 137.5,
+"z": 117.9
+}
+}
+},
+"clips": [
+{
+"role": "IdleBow",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_IdleBow",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 59,
+"static_tail": 0.0167,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-R-Finger0",
+"seam_step_ratio": 0.0,
+"seam_step_bone": null
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_BOW_UP_CURVE_3",
+"peak_cm_s": 11,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 9,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 9,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-Head",
+"peak_cm_s": 7,
+"time_s": 1.633
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_2",
+"peak_cm_s": 7,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_1",
+"peak_cm_s": 6,
+"time_s": 0.733
+}
+]
+},
+{
+"role": "IdleAiming",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_IdleAiming",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 59,
+"static_tail": 0.0167,
+"seam_cm": 0.604,
+"seam_percent": 0.172,
+"seam_bone": "CENTAUR_middle_R_03",
+"seam_step_ratio": 0.0,
+"seam_step_bone": null
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_BOW_STRING",
+"peak_cm_s": 6,
+"time_s": 1.933
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_3",
+"peak_cm_s": 4,
+"time_s": 1.933
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 3,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 3,
+"time_s": 1.933
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_1",
+"peak_cm_s": 3,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_BOW_ROOT_",
+"peak_cm_s": 3,
+"time_s": 0.3
+}
+]
+},
+{
+"role": "IdleNormal",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_IdleNormal",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 60,
+"static_tail": 0.0,
+"seam_cm": 0.486,
+"seam_percent": 0.139,
+"seam_bone": "SwordIdle_Socket",
+"seam_step_ratio": 0.83,
+"seam_step_bone": "CENTAUR_-Tail4"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-Head",
+"peak_cm_s": 7,
+"time_s": 1.633
+},
+{
+"bone": "SK_swordAction",
+"peak_cm_s": 5,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 5,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_3",
+"peak_cm_s": 5,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_1",
+"peak_cm_s": 5,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_HANDLE",
+"peak_cm_s": 5,
+"time_s": 0.733
+}
+]
+},
+{
+"role": "IdleSword",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_IdleSword",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 59,
+"static_tail": 0.0167,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-R-Finger0",
+"seam_step_ratio": 0.0,
+"seam_step_bone": null
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-Head",
+"peak_cm_s": 7,
+"time_s": 1.633
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_1",
+"peak_cm_s": 5,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 5,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_HANDLE",
+"peak_cm_s": 5,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_ROOT_",
+"peak_cm_s": 5,
+"time_s": 0.733
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_1",
+"peak_cm_s": 5,
+"time_s": 0.733
+}
+]
+},
+{
+"role": "WalkBow",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_WalkBow",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-L-HorseLink",
+"seam_step_ratio": 0.644,
+"seam_step_bone": "CENTAUR_-R-Calf"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 449,
+"time_s": 0.7
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 441,
+"time_s": 0.2
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 316,
+"time_s": 0.033
+},
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 311,
+"time_s": 0.533
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 288,
+"time_s": 0.933
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 284,
+"time_s": 0.1
+}
+],
+"ground_speed_cm_s": 195.2,
+"ground_speed_bones": {
+"CENTAUR_-R-Finger0": 207.5,
+"CENTAUR_-L-Foot": 189.7,
+"CENTAUR_-R-Foot": 172.6,
+"CENTAUR_-L-Finger0": 200.6
+}
+},
+{
+"role": "TrotBow",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_TrotBow",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.001,
+"seam_bone": "CENTAUR_-L-HorseLink",
+"seam_step_ratio": 0.512,
+"seam_step_bone": "CENTAUR_-L-Calf"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 445,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 444,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 394,
+"time_s": 0.9
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 377,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 372,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 298,
+"time_s": 0.467
+}
+],
+"ground_speed_cm_s": 282.4,
+"ground_speed_bones": {
+"CENTAUR_-L-Foot": 262.2,
+"CENTAUR_-R-Finger0": 282.4,
+"CENTAUR_-L-Finger0": 288.6
+}
+},
+{
+"role": "GallopBow",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GallopBow",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6,
+"frames": 18,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 18,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_BOW_UP_CURVE_3",
+"seam_step_ratio": 0.976,
+"seam_step_bone": "CENTAUR_-R-UpperArm"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 972,
+"time_s": 0.2
+},
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 945,
+"time_s": 0.5
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 943,
+"time_s": 0.433
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 748,
+"time_s": 0.367
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 638,
+"time_s": 0.467
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 589,
+"time_s": 0.367
+}
+],
+"ground_speed_cm_s": 663.3,
+"ground_speed_bones": {
+"CENTAUR_-R-Finger0": 663.3
+}
+},
+{
+"role": "WalkAiming",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_WalkAiming",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-R-Foot",
+"seam_step_ratio": 0.654,
+"seam_step_bone": "CENTAUR_FOREARM_R"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 449,
+"time_s": 0.7
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 441,
+"time_s": 0.2
+},
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 311,
+"time_s": 0.533
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 308,
+"time_s": 0.033
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 288,
+"time_s": 0.933
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 277,
+"time_s": 0.367
+}
+],
+"ground_speed_cm_s": 195.2,
+"ground_speed_bones": {
+"CENTAUR_-R-Finger0": 207.5,
+"CENTAUR_-L-Foot": 189.7,
+"CENTAUR_-R-Foot": 172.6,
+"CENTAUR_-L-Finger0": 200.6
+}
+},
+{
+"role": "TrotAiming",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_TrotAiming",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.629,
+"seam_percent": 0.18,
+"seam_bone": "CENTAUR_BOW_STRING",
+"seam_step_ratio": 1.43,
+"seam_step_bone": "CENTAUR_-L-Calf"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 445,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 444,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 377,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 372,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 346,
+"time_s": 0.933
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 298,
+"time_s": 0.467
+}
+],
+"ground_speed_cm_s": 300.6,
+"ground_speed_bones": {
+"CENTAUR_-L-Foot": 299.5,
+"CENTAUR_-R-Finger0": 301.7
+}
+},
+{
+"role": "WalkNormal",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_WalkNormal",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.017,
+"seam_percent": 0.005,
+"seam_bone": "CENTAUR_BOW_UP_CURVE_3",
+"seam_step_ratio": 0.644,
+"seam_step_bone": "CENTAUR_-R-Calf"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 449,
+"time_s": 0.7
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 441,
+"time_s": 0.2
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 316,
+"time_s": 0.033
+},
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 311,
+"time_s": 0.533
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 288,
+"time_s": 0.933
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 277,
+"time_s": 0.367
+}
+],
+"ground_speed_cm_s": 195.2,
+"ground_speed_bones": {
+"CENTAUR_-R-Finger0": 207.5,
+"CENTAUR_-L-Foot": 189.7,
+"CENTAUR_-R-Foot": 172.6,
+"CENTAUR_-L-Finger0": 200.6
+}
+},
+{
+"role": "TrotNormal",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_TrotNormal",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.044,
+"seam_percent": 0.013,
+"seam_bone": "CENTAUR_BOW_UP_CURVE_3",
+"seam_step_ratio": 0.511,
+"seam_step_bone": "CENTAUR_-L-Calf"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 445,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 444,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 394,
+"time_s": 0.9
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 377,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 372,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 298,
+"time_s": 0.467
+}
+],
+"ground_speed_cm_s": 282.5,
+"ground_speed_bones": {
+"CENTAUR_-L-Foot": 262.2,
+"CENTAUR_-R-Finger0": 282.5,
+"CENTAUR_-L-Finger0": 288.6
+}
+},
+{
+"role": "GallopNormal",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GallopNormal",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6,
+"frames": 18,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 18,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.001,
+"seam_bone": "CENTAUR_BOW_UP_CURVE_3",
+"seam_step_ratio": 0.976,
+"seam_step_bone": "CENTAUR_-R-UpperArm"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 972,
+"time_s": 0.2
+},
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 945,
+"time_s": 0.5
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 943,
+"time_s": 0.433
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 748,
+"time_s": 0.367
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 638,
+"time_s": 0.467
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 589,
+"time_s": 0.367
+}
+],
+"ground_speed_cm_s": 663.3,
+"ground_speed_bones": {
+"CENTAUR_-R-Finger0": 663.3
+}
+},
+{
+"role": "ShootArrowToIdleAiming",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_ShootArrowToIdleAiming",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.1667,
+"frames": 35,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 35,
+"static_tail": 0.0,
+"seam_cm": 1.826,
+"seam_percent": 0.521,
+"seam_bone": "Shoulder_Pad_Left",
+"seam_step_ratio": 0.876,
+"seam_step_bone": "CENTAUR_-Head"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_BOW_UP_CURVE_3",
+"peak_cm_s": 955,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 895,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_BOW_STRING",
+"peak_cm_s": 871,
+"time_s": 0.033
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_2",
+"peak_cm_s": 774,
+"time_s": 0.233
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_1",
+"peak_cm_s": 771,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 770,
+"time_s": 0.233
+}
+]
+},
+{
+"role": "LegAttackBow",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_LegAttackBow",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 60,
+"static_tail": 0.0,
+"seam_cm": 0.002,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-L-Finger0",
+"seam_step_ratio": 0.409,
+"seam_step_bone": "ponytail_C_3"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_BOW_UP_CURVE_3",
+"peak_cm_s": 1081,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 940,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_1",
+"peak_cm_s": 743,
+"time_s": 0.233
+},
+{
+"bone": "CENTAUR_BOW_STRING",
+"peak_cm_s": 658,
+"time_s": 0.233
+},
+{
+"bone": "CENTAUR_BOW_ROOT_",
+"peak_cm_s": 639,
+"time_s": 0.233
+},
+{
+"bone": "CENTAUR_BOW_HANDLE",
+"peak_cm_s": 632,
+"time_s": 0.233
+}
+]
+},
+{
+"role": "LegAttackAiming",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_LegAttackAiming",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.0,
+"frames": 60,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 60,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-R-Finger0",
+"seam_step_ratio": 0.576,
+"seam_step_bone": "CENTAUR_FOREARM_L"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 547,
+"time_s": 1.2
+},
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 534,
+"time_s": 0.667
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 519,
+"time_s": 0.567
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 456,
+"time_s": 0.133
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_2",
+"peak_cm_s": 394,
+"time_s": 0.467
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 384,
+"time_s": 0.267
+}
+]
+},
+{
+"role": "attack1Sword",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_attack1Sword",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-L-Finger0",
+"seam_step_ratio": 0.867,
+"seam_step_bone": "CENTAUR_-Tail4"
+},
+"fast_bones": [
+{
+"bone": "SK_swordAction",
+"peak_cm_s": 1709,
+"time_s": 0.233
+},
+{
+"bone": "SwordAction_Socket",
+"peak_cm_s": 1709,
+"time_s": 0.233
+},
+{
+"bone": "SwordAction",
+"peak_cm_s": 1709,
+"time_s": 0.233
+},
+{
+"bone": "CENTAUR_HAND_R",
+"peak_cm_s": 1584,
+"time_s": 0.233
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_1",
+"peak_cm_s": 833,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_ROOT_",
+"peak_cm_s": 833,
+"time_s": 0.067
+}
+]
+},
+{
+"role": "Attack2Sword",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_Attack2Sword",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.9667,
+"frames": 29,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 29,
+"static_tail": 0.0,
+"seam_cm": 5.724,
+"seam_percent": 1.633,
+"seam_bone": "ponytail_C_5",
+"seam_step_ratio": 0.725,
+"seam_step_bone": "CENTAUR_-L-Forearm"
+},
+"fast_bones": [
+{
+"bone": "SK_swordAction",
+"peak_cm_s": 2553,
+"time_s": 0.333
+},
+{
+"bone": "SwordAction_Socket",
+"peak_cm_s": 2553,
+"time_s": 0.333
+},
+{
+"bone": "SwordAction",
+"peak_cm_s": 2553,
+"time_s": 0.333
+},
+{
+"bone": "CENTAUR_HAND_R",
+"peak_cm_s": 2286,
+"time_s": 0.333
+},
+{
+"bone": "CENTAUR_-Head",
+"peak_cm_s": 761,
+"time_s": 0.233
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_2",
+"peak_cm_s": 731,
+"time_s": 0.267
+}
+]
+},
+{
+"role": "2HitComboSword",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_2HitComboSword",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.6667,
+"frames": 50,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 50,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-R-Calf",
+"seam_step_ratio": 1.008,
+"seam_step_bone": "CENTAUR_-L-Forearm"
+},
+"fast_bones": [
+{
+"bone": "SK_swordAction",
+"peak_cm_s": 2552,
+"time_s": 1.0
+},
+{
+"bone": "SwordAction_Socket",
+"peak_cm_s": 2552,
+"time_s": 1.0
+},
+{
+"bone": "SwordAction",
+"peak_cm_s": 2552,
+"time_s": 1.0
+},
+{
+"bone": "CENTAUR_HAND_R",
+"peak_cm_s": 2286,
+"time_s": 1.0
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_1",
+"peak_cm_s": 832,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_ROOT_",
+"peak_cm_s": 832,
+"time_s": 0.067
+}
+]
+},
+{
+"role": "GetHitBow",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GetHitBow",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.8333,
+"frames": 25,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 25,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-R-Finger0",
+"seam_step_ratio": 0.628,
+"seam_step_bone": "CENTAUR_-Tail4"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_BOW_UP_CURVE_3",
+"peak_cm_s": 861,
+"time_s": 0.7
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 751,
+"time_s": 0.7
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_1",
+"peak_cm_s": 498,
+"time_s": 0.7
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 494,
+"time_s": 0.667
+},
+{
+"bone": "SwordAction",
+"peak_cm_s": 418,
+"time_s": 0.067
+},
+{
+"bone": "SwordAction_Socket",
+"peak_cm_s": 418,
+"time_s": 0.067
+}
+]
+},
+{
+"role": "GetHitAiming",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GetHitAiming",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.8333,
+"frames": 25,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 25,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_pinky_L_02",
+"seam_step_ratio": 0.7,
+"seam_step_bone": "CENTAUR_BOW_STRING"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_2",
+"peak_cm_s": 377,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_1",
+"peak_cm_s": 376,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_ROOT_",
+"peak_cm_s": 374,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_HANDLE",
+"peak_cm_s": 373,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_1",
+"peak_cm_s": 372,
+"time_s": 0.067
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 369,
+"time_s": 0.067
+}
+]
+},
+{
+"role": "DeathBow",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_DeathBow",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.2333,
+"frames": 67,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 66,
+"static_tail": 0.0149,
+"seam_cm": 411.805,
+"seam_percent": 117.491,
+"seam_bone": "ponytail_A_5",
+"seam_step_ratio": 0.001,
+"seam_step_bone": "CENTAUR_FOREARM_R"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 1518,
+"time_s": 1.367
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_2",
+"peak_cm_s": 1324,
+"time_s": 1.367
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_1",
+"peak_cm_s": 1065,
+"time_s": 1.367
+},
+{
+"bone": "CENTAUR_-Head",
+"peak_cm_s": 1028,
+"time_s": 1.333
+},
+{
+"bone": "CENTAUR_HAND_L",
+"peak_cm_s": 949,
+"time_s": 1.367
+},
+{
+"bone": "CENTAUR_BOW_ROOT_",
+"peak_cm_s": 927,
+"time_s": 1.367
+}
+]
+},
+{
+"role": "DeathAiming",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_DeathAiming",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 2.2333,
+"frames": 67,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 63,
+"static_tail": 0.0597,
+"seam_cm": 417.533,
+"seam_percent": 119.125,
+"seam_bone": "ponytail_A_5",
+"seam_step_ratio": 0.0,
+"seam_step_bone": "CENTAUR_-L-Calf"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 1636,
+"time_s": 1.367
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_2",
+"peak_cm_s": 1401,
+"time_s": 1.367
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_3",
+"peak_cm_s": 1266,
+"time_s": 0.033
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_1",
+"peak_cm_s": 1092,
+"time_s": 1.367
+},
+{
+"bone": "CENTAUR_BOW_UP_CURVE_2",
+"peak_cm_s": 1091,
+"time_s": 0.033
+},
+{
+"bone": "CENTAUR_-Head",
+"peak_cm_s": 1028,
+"time_s": 1.333
+}
+]
+},
+{
+"role": "DrawSword",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_DrawSword",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 37.64,
+"seam_percent": 10.739,
+"seam_bone": "SwordIdle_Socket",
+"seam_step_ratio": 0.499,
+"seam_step_bone": "ponytail_B_5"
+},
+"fast_bones": [
+{
+"bone": "SwordAction",
+"peak_cm_s": 709,
+"time_s": 0.1
+},
+{
+"bone": "SwordAction_Socket",
+"peak_cm_s": 709,
+"time_s": 0.1
+},
+{
+"bone": "SK_swordAction",
+"peak_cm_s": 701,
+"time_s": 0.1
+},
+{
+"bone": "CENTAUR_HAND_R",
+"peak_cm_s": 575,
+"time_s": 0.1
+},
+{
+"bone": "SwordIdle_Socket",
+"peak_cm_s": 562,
+"time_s": 0.333
+},
+{
+"bone": "SwordIdle",
+"peak_cm_s": 562,
+"time_s": 0.333
+}
+]
+}
+]
+},
+{
+"name": "Greystone",
+"mesh": {
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_PhysicsAsset.Greystone_PhysicsAsset",
+"bounds_origin": [
+9.1,
+45.5,
+102.3
+],
+"bounds_extent": [
+76.2,
+84.7,
+102.8
+],
+"imported_origin": [
+9.1,
+45.5,
+102.3
+],
+"imported_extent": [
+76.2,
+84.7,
+102.8
+],
+"reference_pose": {
+"bones": 180,
+"pose_size_cm": 201.1,
+"low": [
+-65.1,
+-26.0,
+0.0
+],
+"high": [
+65.1,
+50.5,
+201.1
+],
+"head_from_pelvis": {
+"bone": "head",
+"x": 0.0,
+"y": -3.6,
+"z": 74.8
+}
+}
+},
+"clips": [
+{
+"role": "Attack_A_Fast",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Attack_A_Fast",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6,
+"frames": 18,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 18,
+"static_tail": 0.0,
+"seam_cm": 155.893,
+"seam_percent": 77.52,
+"seam_bone": "pinky_02_r",
+"seam_step_ratio": 0.409,
+"seam_step_bone": "upperarm_l"
+},
+"fast_bones": [
+{
+"bone": "sword_top",
+"peak_cm_s": 3744,
+"time_s": 0.133
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 2891,
+"time_s": 0.133
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 2793,
+"time_s": 0.133
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1421,
+"time_s": 0.133
+},
+{
+"bone": "C_jaw",
+"peak_cm_s": 683,
+"time_s": 0.133
+},
+{
+"bone": "head",
+"peak_cm_s": 679,
+"time_s": 0.133
+}
+]
+},
+{
+"role": "Attack_B_Fast",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Attack_B_Fast",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6,
+"frames": 18,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 18,
+"static_tail": 0.0,
+"seam_cm": 154.349,
+"seam_percent": 76.753,
+"seam_bone": "middle_01_r",
+"seam_step_ratio": 0.241,
+"seam_step_bone": "butt_cloth_l_05"
+},
+"fast_bones": [
+{
+"bone": "sword_top",
+"peak_cm_s": 3415,
+"time_s": 0.167
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 2724,
+"time_s": 0.133
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 2548,
+"time_s": 0.133
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1453,
+"time_s": 0.167
+},
+{
+"bone": "C_jaw",
+"peak_cm_s": 763,
+"time_s": 0.167
+},
+{
+"bone": "head",
+"peak_cm_s": 755,
+"time_s": 0.167
+}
+]
+},
+{
+"role": "Attack_PrimaryC",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Attack_PrimaryC",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.8667,
+"frames": 112,
+"fps": 60.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 112,
+"static_tail": 0.0,
+"seam_cm": 148.441,
+"seam_percent": 73.814,
+"seam_bone": "sword_top",
+"seam_step_ratio": 0.052,
+"seam_step_bone": "back_fur_2_l"
+},
+"fast_bones": [
+{
+"bone": "sword_top",
+"peak_cm_s": 3699,
+"time_s": 0.633
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 2294,
+"time_s": 0.617
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 2102,
+"time_s": 0.617
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1145,
+"time_s": 0.55
+},
+{
+"bone": "C_jaw",
+"peak_cm_s": 393,
+"time_s": 0.567
+},
+{
+"bone": "head",
+"peak_cm_s": 392,
+"time_s": 0.567
+}
+]
+},
+{
+"role": "Ability_E",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Ability_E",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.2667,
+"frames": 38,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 38,
+"static_tail": 0.0,
+"seam_cm": 18.455,
+"seam_percent": 9.177,
+"seam_bone": "sword_top",
+"seam_step_ratio": 0.059,
+"seam_step_bone": "butt_cloth_l_03"
+},
+"fast_bones": [
+{
+"bone": "sword_top",
+"peak_cm_s": 3223,
+"time_s": 0.567
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 1959,
+"time_s": 0.567
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 1938,
+"time_s": 0.567
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 944,
+"time_s": 0.567
+},
+{
+"bone": "C_jaw",
+"peak_cm_s": 621,
+"time_s": 0.533
+},
+{
+"bone": "head",
+"peak_cm_s": 620,
+"time_s": 0.533
+}
+]
+},
+{
+"role": "Ability_E_Slash",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Ability_E_Slash",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.2667,
+"frames": 38,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 38,
+"static_tail": 0.0,
+"seam_cm": 18.455,
+"seam_percent": 9.177,
+"seam_bone": "sword_top",
+"seam_step_ratio": 0.059,
+"seam_step_bone": "butt_cloth_l_03"
+},
+"fast_bones": [
+{
+"bone": "sword_top",
+"peak_cm_s": 3223,
+"time_s": 0.567
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 1959,
+"time_s": 0.567
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 1938,
+"time_s": 0.567
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 944,
+"time_s": 0.567
+},
+{
+"bone": "C_jaw",
+"peak_cm_s": 621,
+"time_s": 0.533
+},
+{
+"bone": "head",
+"peak_cm_s": 620,
+"time_s": 0.533
+}
+]
+},
+{
+"role": "Ability_Q",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Ability_Q",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.9333,
+"frames": 28,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 28,
+"static_tail": 0.0,
+"seam_cm": 77.859,
+"seam_percent": 38.717,
+"seam_bone": "pinky_01_l",
+"seam_step_ratio": 0.272,
+"seam_step_bone": "calf_l"
+},
+"fast_bones": [
+{
+"bone": "sword_top",
+"peak_cm_s": 733,
+"time_s": 0.333
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 388,
+"time_s": 0.2
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 336,
+"time_s": 0.233
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 272,
+"time_s": 0.233
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 112,
+"time_s": 0.133
+},
+{
+"bone": "head",
+"peak_cm_s": 109,
+"time_s": 0.367
+}
+]
+},
+{
+"role": "Ability_R",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Animations/Ability_R",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.8667,
+"frames": 112,
+"fps": 60.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 112,
+"static_tail": 0.0,
+"seam_cm": 17.565,
+"seam_percent": 8.734,
+"seam_bone": "ring_02_l",
+"seam_step_ratio": 0.009,
+"seam_step_bone": "beard_l_03"
+},
+"fast_bones": [
+{
+"bone": "sword_top",
+"peak_cm_s": 5669,
+"time_s": 0.9
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 3729,
+"time_s": 0.9
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 3483,
+"time_s": 0.9
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 3157,
+"time_s": 0.867
+},
+{
+"bone": "C_jaw",
+"peak_cm_s": 2309,
+"time_s": 0.867
+},
+{
+"bone": "head",
+"peak_cm_s": 2306,
+"time_s": 0.867
+}
+]
+}
+]
+},
+{
+"name": "Kwang",
+"mesh": {
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_GDC",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"physics_asset": null,
+"bounds_origin": [
+-0.7,
+62.3,
+97.4
+],
+"bounds_extent": [
+64.7,
+94.5,
+97.5
+],
+"imported_origin": [
+-0.7,
+62.3,
+97.4
+],
+"imported_extent": [
+64.7,
+94.5,
+97.5
+],
+"reference_pose": {
+"bones": 130,
+"pose_size_cm": 178.7,
+"low": [
+-62.9,
+-24.4,
+0.0
+],
+"high": [
+62.9,
+11.4,
+178.7
+],
+"head_from_pelvis": {
+"bone": "head",
+"x": 0.0,
+"y": 0.3,
+"z": 60.6
+}
+}
+},
+"clips": [
+{
+"role": "PrimaryAttack_B_Slow",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Animations/PrimaryAttack_B_Slow",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.2667,
+"frames": 38,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 38,
+"static_tail": 0.0,
+"seam_cm": 90.141,
+"seam_percent": 50.443,
+"seam_bone": "sleeve_jiggle",
+"seam_step_ratio": 0.868,
+"seam_step_bone": "ball_l"
+},
+"fast_bones": [
+{
+"bone": "weapon_r",
+"peak_cm_s": 1169,
+"time_s": 0.2
+},
+{
+"bone": "weapon_backMount_r",
+"peak_cm_s": 1169,
+"time_s": 0.2
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 1151,
+"time_s": 0.2
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 1044,
+"time_s": 0.2
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 930,
+"time_s": 0.2
+},
+{
+"bone": "shoulder_pad_bow_l_back_02",
+"peak_cm_s": 718,
+"time_s": 0.2
+}
+]
+},
+{
+"role": "PrimaryAttack_C_Slow",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Animations/PrimaryAttack_C_Slow",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.2667,
+"frames": 38,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 38,
+"static_tail": 0.0,
+"seam_cm": 148.061,
+"seam_percent": 82.854,
+"seam_bone": "index_03_r",
+"seam_step_ratio": 0.184,
+"seam_step_bone": "foot_l"
+},
+"fast_bones": [
+{
+"bone": "weapon_r",
+"peak_cm_s": 1582,
+"time_s": 0.2
+},
+{
+"bone": "weapon_backMount_r",
+"peak_cm_s": 1582,
+"time_s": 0.2
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 1446,
+"time_s": 0.2
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 1384,
+"time_s": 0.2
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1271,
+"time_s": 0.167
+},
+{
+"bone": "shoulder_pad_bow_l_back_02",
+"peak_cm_s": 768,
+"time_s": 0.167
+}
+]
+},
+{
+"role": "PrimaryAttack_D_Slow",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Animations/PrimaryAttack_D_Slow",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.4667,
+"frames": 44,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 44,
+"static_tail": 0.0,
+"seam_cm": 100.791,
+"seam_percent": 56.402,
+"seam_bone": "index_02_r",
+"seam_step_ratio": 0.077,
+"seam_step_bone": "upperarm_r"
+},
+"fast_bones": [
+{
+"bone": "weapon_r",
+"peak_cm_s": 1518,
+"time_s": 0.2
+},
+{
+"bone": "weapon_backMount_r",
+"peak_cm_s": 1518,
+"time_s": 0.2
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 1495,
+"time_s": 0.2
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 1299,
+"time_s": 0.2
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1212,
+"time_s": 0.2
+},
+{
+"bone": "shoulder_pad_bow_r_back",
+"peak_cm_s": 636,
+"time_s": 0.2
+}
+]
+},
+{
+"role": "PrimaryAttack_D_Slow_2",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Animations/PrimaryAttack_D_Slow_2",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.4667,
+"frames": 44,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 44,
+"static_tail": 0.0,
+"seam_cm": 100.791,
+"seam_percent": 56.402,
+"seam_bone": "index_02_r",
+"seam_step_ratio": 0.077,
+"seam_step_bone": "upperarm_r"
+},
+"fast_bones": [
+{
+"bone": "weapon_r",
+"peak_cm_s": 1518,
+"time_s": 0.2
+},
+{
+"bone": "weapon_backMount_r",
+"peak_cm_s": 1518,
+"time_s": 0.2
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 1495,
+"time_s": 0.2
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 1299,
+"time_s": 0.2
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1212,
+"time_s": 0.2
+},
+{
+"bone": "shoulder_pad_bow_r_back",
+"peak_cm_s": 636,
+"time_s": 0.2
+}
+]
+},
+{
+"role": "Ability_Q_Catch",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Animations/Ability_Q_Catch",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.1667,
+"frames": 35,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 35,
+"static_tail": 0.0,
+"seam_cm": 137.152,
+"seam_percent": 76.75,
+"seam_bone": "weapon_backMount_r",
+"seam_step_ratio": 0.133,
+"seam_step_bone": "thigh_twist_01_l"
+},
+"fast_bones": [
+{
+"bone": "weapon_backMount_r",
+"peak_cm_s": 5022,
+"time_s": 0.3
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 5022,
+"time_s": 0.3
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 745,
+"time_s": 0.4
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 617,
+"time_s": 0.533
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 556,
+"time_s": 0.533
+},
+{
+"bone": "shoulder_pad_bow_front",
+"peak_cm_s": 220,
+"time_s": 0.5
+}
+]
+},
+{
+"role": "Ability_R",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Animations/Ability_R",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.8667,
+"frames": 56,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 56,
+"static_tail": 0.0,
+"seam_cm": 85.865,
+"seam_percent": 48.05,
+"seam_bone": "R_brow_mid",
+"seam_step_ratio": 0.05,
+"seam_step_bone": "hip_helper_r"
+},
+"fast_bones": [
+{
+"bone": "weapon_r",
+"peak_cm_s": 2455,
+"time_s": 0.133
+},
+{
+"bone": "weapon_backMount_r",
+"peak_cm_s": 2455,
+"time_s": 0.133
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 2244,
+"time_s": 0.133
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1918,
+"time_s": 0.1
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 1681,
+"time_s": 0.167
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 1109,
+"time_s": 0.267
+}
+]
+}
+]
+},
+{
+"name": "Wukong",
+"mesh": {
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Skeleton.Wukong_Skeleton",
+"physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Extents.Wukong_Extents",
+"bounds_origin": [
+0.0,
+1.7,
+97.3
+],
+"bounds_extent": [
+64.2,
+114.7,
+97.8
+],
+"imported_origin": [
+0.0,
+1.7,
+97.3
+],
+"imported_extent": [
+64.2,
+114.7,
+97.8
+],
+"reference_pose": {
+"bones": 193,
+"pose_size_cm": 250.8,
+"low": [
+-63.0,
+-107.5,
+0.0
+],
+"high": [
+63.0,
+59.8,
+250.8
+],
+"head_from_pelvis": {
+"bone": "head",
+"x": 0.0,
+"y": -0.3,
+"z": 59.3
+}
+}
+},
+"clips": [
+{
+"role": "Emote_StaffSpin",
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Animations/Emote_StaffSpin",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Skeleton.Wukong_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 7.0667,
+"frames": 212,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 212,
+"static_tail": 0.0,
+"seam_cm": 0.809,
+"seam_percent": 0.323,
+"seam_bone": "weapon_l",
+"seam_step_ratio": 0.097,
+"seam_step_bone": "grtsage_crown_string_02_r"
+},
+"fast_bones": [
+{
+"bone": "weapon_B_front_r",
+"peak_cm_s": 2193,
+"time_s": 5.9
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 988,
+"time_s": 2.267
+},
+{
+"bone": "root_weapon_r",
+"peak_cm_s": 988,
+"time_s": 2.267
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 988,
+"time_s": 2.267
+},
+{
+"bone": "weapon_B_r",
+"peak_cm_s": 936,
+"time_s": 2.267
+},
+{
+"bone": "weapon_C_r",
+"peak_cm_s": 888,
+"time_s": 2.267
+}
+]
+}
+]
+},
+{
+"name": "Swordsman",
+"mesh": {
+"path": "/Game/SwordTrailVFX/Demo/SKM_Man/SKM_Man",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"physics_asset": "/Game/SwordTrailVFX/Demo/SKM_Man/PhA_Man.PhA_Man",
+"bounds_origin": [
+-0.0,
+2.2,
+90.2
+],
+"bounds_extent": [
+97.3,
+18.2,
+90.2
+],
+"imported_origin": [
+-0.0,
+2.2,
+90.2
+],
+"imported_extent": [
+97.3,
+18.2,
+90.2
+],
+"reference_pose": {
+"bones": 65,
+"pose_size_cm": 194.6,
+"low": [
+-97.3,
+-10.9,
+-96.7
+],
+"high": [
+97.3,
+21.3,
+78.8
+],
+"head_from_pelvis": {
+"bone": "Head",
+"x": -0.0,
+"y": -0.3,
+"z": 60.3
+}
+}
+},
+"clips": [
+{
+"role": "A_Combo_1",
+"path": "/Game/SwordTrailVFX/Demo/Anims/A_Combo_1",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 2.4,
+"frames": 2088,
+"fps": 870.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+234.9,
+0.0
+],
+"seam": {
+"motion_end_frame": 2088,
+"static_tail": 0.0,
+"seam_cm": 0.006,
+"seam_percent": 0.003,
+"seam_bone": "LeftHandIndex4",
+"seam_step_ratio": 0.167,
+"seam_step_bone": "RightForeArm"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 1949,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 1918,
+"time_s": 0.449
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 1877,
+"time_s": 0.448
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 1869,
+"time_s": 0.452
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 1856,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle1",
+"peak_cm_s": 1853,
+"time_s": 0.451
+}
+]
+},
+{
+"role": "A_Combo_2",
+"path": "/Game/SwordTrailVFX/Demo/Anims/A_Combo_2",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 2.4,
+"frames": 2088,
+"fps": 870.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+234.9,
+0.0
+],
+"seam": {
+"motion_end_frame": 2088,
+"static_tail": 0.0,
+"seam_cm": 0.006,
+"seam_percent": 0.003,
+"seam_bone": "LeftHandIndex4",
+"seam_step_ratio": 0.167,
+"seam_step_bone": "RightForeArm"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 1949,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 1918,
+"time_s": 0.449
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 1877,
+"time_s": 0.448
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 1869,
+"time_s": 0.452
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 1856,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle1",
+"peak_cm_s": 1853,
+"time_s": 0.451
+}
+]
+},
+{
+"role": "A_Combo_3",
+"path": "/Game/SwordTrailVFX/Demo/Anims/A_Combo_3",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 2.4,
+"frames": 2088,
+"fps": 870.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+234.9,
+0.0
+],
+"seam": {
+"motion_end_frame": 2088,
+"static_tail": 0.0,
+"seam_cm": 0.006,
+"seam_percent": 0.003,
+"seam_bone": "LeftHandIndex4",
+"seam_step_ratio": 0.167,
+"seam_step_bone": "RightForeArm"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 1949,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 1918,
+"time_s": 0.449
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 1877,
+"time_s": 0.448
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 1869,
+"time_s": 0.452
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 1856,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle1",
+"peak_cm_s": 1853,
+"time_s": 0.451
+}
+]
+},
+{
+"role": "A_Combo_4",
+"path": "/Game/SwordTrailVFX/Demo/Anims/A_Combo_4",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 2.4,
+"frames": 2088,
+"fps": 870.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+234.9,
+0.0
+],
+"seam": {
+"motion_end_frame": 2088,
+"static_tail": 0.0,
+"seam_cm": 0.006,
+"seam_percent": 0.003,
+"seam_bone": "LeftHandIndex4",
+"seam_step_ratio": 0.167,
+"seam_step_bone": "RightForeArm"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 1949,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 1918,
+"time_s": 0.449
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 1877,
+"time_s": 0.448
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 1869,
+"time_s": 0.452
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 1856,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle1",
+"peak_cm_s": 1853,
+"time_s": 0.451
+}
+]
+},
+{
+"role": "A_Combo_5",
+"path": "/Game/SwordTrailVFX/Demo/Anims/A_Combo_5",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 2.4,
+"frames": 2088,
+"fps": 870.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+234.9,
+0.0
+],
+"seam": {
+"motion_end_frame": 2088,
+"static_tail": 0.0,
+"seam_cm": 0.006,
+"seam_percent": 0.003,
+"seam_bone": "LeftHandIndex4",
+"seam_step_ratio": 0.167,
+"seam_step_bone": "RightForeArm"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 1949,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 1918,
+"time_s": 0.449
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 1877,
+"time_s": 0.448
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 1869,
+"time_s": 0.452
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 1856,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle1",
+"peak_cm_s": 1853,
+"time_s": 0.451
+}
+]
+},
+{
+"role": "A_Combo_6",
+"path": "/Game/SwordTrailVFX/Demo/Anims/A_Combo_6",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 2.4,
+"frames": 2088,
+"fps": 870.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+234.9,
+0.0
+],
+"seam": {
+"motion_end_frame": 2088,
+"static_tail": 0.0,
+"seam_cm": 0.006,
+"seam_percent": 0.003,
+"seam_bone": "LeftHandIndex4",
+"seam_step_ratio": 0.167,
+"seam_step_bone": "RightForeArm"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 1949,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 1918,
+"time_s": 0.449
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 1877,
+"time_s": 0.448
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 1869,
+"time_s": 0.452
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 1856,
+"time_s": 0.451
+},
+{
+"bone": "RightHandMiddle1",
+"peak_cm_s": 1853,
+"time_s": 0.451
+}
+]
+},
+{
+"role": "A_NS_01",
+"path": "/Game/SwordTrailVFX/Demo/Anims/NS_Demo/A_NS_01",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 2070,
+"fps": 1380.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+-0.0
+],
+"seam": {
+"motion_end_frame": 2070,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.002,
+"seam_bone": "HeadTop_End",
+"seam_step_ratio": 0.239,
+"seam_step_bone": "LeftHandIndex2"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 2846,
+"time_s": 0.592
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 2827,
+"time_s": 0.592
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 2819,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 2761,
+"time_s": 0.592
+},
+{
+"bone": "RightHandRing2",
+"peak_cm_s": 2734,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 2716,
+"time_s": 0.592
+}
+]
+},
+{
+"role": "A_NS_02",
+"path": "/Game/SwordTrailVFX/Demo/Anims/NS_Demo/A_NS_02",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 2070,
+"fps": 1380.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+-0.0
+],
+"seam": {
+"motion_end_frame": 2070,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.002,
+"seam_bone": "HeadTop_End",
+"seam_step_ratio": 0.239,
+"seam_step_bone": "LeftHandIndex2"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 2846,
+"time_s": 0.592
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 2827,
+"time_s": 0.592
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 2819,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 2761,
+"time_s": 0.592
+},
+{
+"bone": "RightHandRing2",
+"peak_cm_s": 2734,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 2716,
+"time_s": 0.592
+}
+]
+},
+{
+"role": "A_NS_03",
+"path": "/Game/SwordTrailVFX/Demo/Anims/NS_Demo/A_NS_03",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 2070,
+"fps": 1380.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+-0.0
+],
+"seam": {
+"motion_end_frame": 2070,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.002,
+"seam_bone": "HeadTop_End",
+"seam_step_ratio": 0.239,
+"seam_step_bone": "LeftHandIndex2"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 2846,
+"time_s": 0.592
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 2827,
+"time_s": 0.592
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 2819,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 2761,
+"time_s": 0.592
+},
+{
+"bone": "RightHandRing2",
+"peak_cm_s": 2734,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 2716,
+"time_s": 0.592
+}
+]
+},
+{
+"role": "A_NS_04",
+"path": "/Game/SwordTrailVFX/Demo/Anims/NS_Demo/A_NS_04",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 2070,
+"fps": 1380.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+-0.0
+],
+"seam": {
+"motion_end_frame": 2070,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.002,
+"seam_bone": "HeadTop_End",
+"seam_step_ratio": 0.239,
+"seam_step_bone": "LeftHandIndex2"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 2846,
+"time_s": 0.592
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 2827,
+"time_s": 0.592
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 2819,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 2761,
+"time_s": 0.592
+},
+{
+"bone": "RightHandRing2",
+"peak_cm_s": 2734,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 2716,
+"time_s": 0.592
+}
+]
+},
+{
+"role": "A_NS_05",
+"path": "/Game/SwordTrailVFX/Demo/Anims/NS_Demo/A_NS_05",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 2070,
+"fps": 1380.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+-0.0
+],
+"seam": {
+"motion_end_frame": 2070,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.002,
+"seam_bone": "HeadTop_End",
+"seam_step_ratio": 0.239,
+"seam_step_bone": "LeftHandIndex2"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 2846,
+"time_s": 0.592
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 2827,
+"time_s": 0.592
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 2819,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 2761,
+"time_s": 0.592
+},
+{
+"bone": "RightHandRing2",
+"peak_cm_s": 2734,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 2716,
+"time_s": 0.592
+}
+]
+},
+{
+"role": "A_NS_06",
+"path": "/Game/SwordTrailVFX/Demo/Anims/NS_Demo/A_NS_06",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 2070,
+"fps": 1380.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+-0.0
+],
+"seam": {
+"motion_end_frame": 2070,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.002,
+"seam_bone": "HeadTop_End",
+"seam_step_ratio": 0.239,
+"seam_step_bone": "LeftHandIndex2"
+},
+"fast_bones": [
+{
+"bone": "RightHandIndex2",
+"peak_cm_s": 2846,
+"time_s": 0.592
+},
+{
+"bone": "RightHandThumb4",
+"peak_cm_s": 2827,
+"time_s": 0.592
+},
+{
+"bone": "RightHandMiddle2",
+"peak_cm_s": 2819,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex3",
+"peak_cm_s": 2761,
+"time_s": 0.592
+},
+{
+"bone": "RightHandRing2",
+"peak_cm_s": 2734,
+"time_s": 0.591
+},
+{
+"bone": "RightHandIndex1",
+"peak_cm_s": 2716,
+"time_s": 0.592
+}
+]
+}
+]
+},
+{
+"name": "Manny",
+"mesh": {
+"path": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"physics_asset": "/Game/Characters/Mannequins/Rigs/PA_Mannequin.PA_Mannequin",
+"bounds_origin": [
+0.0,
+6.9,
+90.3
+],
+"bounds_extent": [
+55.4,
+21.2,
+90.3
+],
+"imported_origin": [
+0.0,
+6.9,
+90.3
+],
+"imported_extent": [
+55.4,
+21.2,
+90.3
+],
+"reference_pose": {
+"bones": 161,
+"pose_size_cm": 162.6,
+"low": [
+-54.5,
+-10.2,
+0.0
+],
+"high": [
+54.5,
+26.9,
+162.6
+],
+"head_from_pelvis": {
+"bone": "head",
+"x": -0.0,
+"y": -1.6,
+"z": 66.7
+}
+}
+},
+"clips": [
+{
+"role": "Walk",
+"path": "/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 45,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": true,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+450.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 45,
+"static_tail": 0.0,
+"seam_cm": 0.015,
+"seam_percent": 0.009,
+"seam_bone": "middle_03_r",
+"seam_step_ratio": 1.051,
+"seam_step_bone": "calf_knee_r"
+},
+"fast_bones": [
+{
+"bone": "foot_l",
+"peak_cm_s": 563,
+"time_s": 1.2
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 497,
+"time_s": 0.033
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 304,
+"time_s": 0.067
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 296,
+"time_s": 0.067
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 246,
+"time_s": 0.767
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 246,
+"time_s": 0.767
+}
+],
+"ground_speed_cm_s": 290.1,
+"ground_speed_bones": {
+"interaction": null,
+"center_of_mass": null,
+"ball_l": 300.3,
+"foot_l": 290.7,
+"ankle_bck_l": 289.5,
+"ankle_fwd_l": 289.6
+}
+},
+{
+"role": "Run",
+"path": "/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 1.7667,
+"frames": 53,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": true,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+1060.6,
+0.0
+],
+"seam": {
+"motion_end_frame": 53,
+"static_tail": 0.0,
+"seam_cm": 1.405,
+"seam_percent": 0.864,
+"seam_bone": "pinky_02_l",
+"seam_step_ratio": 1.142,
+"seam_step_bone": "upperarm_out_l"
+},
+"fast_bones": [
+{
+"bone": "foot_r",
+"peak_cm_s": 690,
+"time_s": 1.467
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 640,
+"time_s": 1.2
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 561,
+"time_s": 0.3
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 554,
+"time_s": 0.3
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 473,
+"time_s": 0.833
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 468,
+"time_s": 0.033
+}
+],
+"ground_speed_cm_s": 520.5,
+"ground_speed_bones": {
+"interaction": null,
+"center_of_mass": null,
+"ball_l": 520.5
+}
+},
+{
+"role": "SwordAttack01",
+"path": "/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 1.85,
+"frames": 111,
+"fps": 60.0,
+"loop": false,
+"enable_root_motion": true,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+36.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 110,
+"static_tail": 0.009,
+"seam_cm": 0.058,
+"seam_percent": 0.035,
+"seam_bone": "middle_02_l",
+"seam_step_ratio": 0.005,
+"seam_step_bone": "thigh_twist_02_r"
+},
+"fast_bones": [
+{
+"bone": "weapon_r",
+"peak_cm_s": 2393,
+"time_s": 0.383
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 2375,
+"time_s": 0.383
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 1542,
+"time_s": 0.317
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1511,
+"time_s": 0.317
+},
+{
+"bone": "head",
+"peak_cm_s": 507,
+"time_s": 0.35
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 188,
+"time_s": 0.5
+}
+]
+},
+{
+"role": "Death_Front_01",
+"path": "/Game/Characters/Mannequins/Anims/Death/MM_Death_Front_01",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 1.1,
+"frames": 33,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+-17.2,
+-126.1,
+0.0
+],
+"seam": {
+"motion_end_frame": 33,
+"static_tail": 0.0,
+"seam_cm": 87.885,
+"seam_percent": 54.05,
+"seam_bone": "index_03_l",
+"seam_step_ratio": 1.292,
+"seam_step_bone": "ball_r"
+},
+"fast_bones": [
+{
+"bone": "weapon_l",
+"peak_cm_s": 555,
+"time_s": 0.2
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 543,
+"time_s": 0.2
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 448,
+"time_s": 0.267
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 403,
+"time_s": 0.267
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 393,
+"time_s": 0.267
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 341,
+"time_s": 1.067
+}
+]
+},
+{
+"role": "Death_Back_01",
+"path": "/Game/Characters/Mannequins/Anims/Death/MM_Death_Back_01",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 1.1,
+"frames": 33,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+-11.4,
+195.2,
+0.0
+],
+"seam": {
+"motion_end_frame": 33,
+"static_tail": 0.0,
+"seam_cm": 59.088,
+"seam_percent": 36.339,
+"seam_bone": "index_01_r",
+"seam_step_ratio": 0.981,
+"seam_step_bone": "calf_twist_01_l"
+},
+"fast_bones": [
+{
+"bone": "hand_l",
+"peak_cm_s": 473,
+"time_s": 0.067
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 473,
+"time_s": 0.067
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 386,
+"time_s": 0.533
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 358,
+"time_s": 0.5
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 355,
+"time_s": 0.533
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 346,
+"time_s": 0.8
+}
+]
+},
+{
+"role": "Greystone_Attack_C_Slow",
+"path": "/Game/Characters/Paragon/Greystone/Attack/Attack_C_Slow",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 0.8,
+"frames": 24,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 24,
+"static_tail": 0.0,
+"seam_cm": 113.637,
+"seam_percent": 69.888,
+"seam_bone": "wrist_outer_r",
+"seam_step_ratio": 0.05,
+"seam_step_bone": "thigh_fwd_lwr_r"
+},
+"fast_bones": [
+{
+"bone": "hand_r",
+"peak_cm_s": 2313,
+"time_s": 0.167
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 2312,
+"time_s": 0.167
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 1761,
+"time_s": 0.133
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1737,
+"time_s": 0.133
+},
+{
+"bone": "head",
+"peak_cm_s": 772,
+"time_s": 0.133
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 199,
+"time_s": 0.067
+}
+]
+},
+{
+"role": "Greystone_Attack_D_Slow",
+"path": "/Game/Characters/Paragon/Greystone/Attack/Attack_D_Slow",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 0.8,
+"frames": 24,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 24,
+"static_tail": 0.0,
+"seam_cm": 127.619,
+"seam_percent": 78.487,
+"seam_bone": "ring_01_r",
+"seam_step_ratio": 0.093,
+"seam_step_bone": "upperarm_out_l"
+},
+"fast_bones": [
+{
+"bone": "weapon_r",
+"peak_cm_s": 2362,
+"time_s": 0.167
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 2330,
+"time_s": 0.167
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 1219,
+"time_s": 0.167
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1208,
+"time_s": 0.167
+},
+{
+"bone": "head",
+"peak_cm_s": 513,
+"time_s": 0.167
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 277,
+"time_s": 0.267
+}
+]
+},
+{
+"role": "Greystone_Attack_PrimaryB",
+"path": "/Game/Characters/Paragon/Greystone/Attack/Attack_PrimaryB",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 1.4,
+"frames": 84,
+"fps": 60.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 84,
+"static_tail": 0.0,
+"seam_cm": 109.048,
+"seam_percent": 67.065,
+"seam_bone": "lowerarm_bck_r",
+"seam_step_ratio": 0.096,
+"seam_step_bone": "calf_kneeBack_r"
+},
+"fast_bones": [
+{
+"bone": "weapon_r",
+"peak_cm_s": 2213,
+"time_s": 0.4
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 2169,
+"time_s": 0.4
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 718,
+"time_s": 0.417
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 710,
+"time_s": 0.417
+},
+{
+"bone": "head",
+"peak_cm_s": 428,
+"time_s": 0.383
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 337,
+"time_s": 0.383
+}
+]
+},
+{
+"role": "Greystone_Attack_A_Med",
+"path": "/Game/Characters/Paragon/Greystone/Attack/Attack_A_Med",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 0.8,
+"frames": 48,
+"fps": 60.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 48,
+"static_tail": 0.0,
+"seam_cm": 149.017,
+"seam_percent": 91.646,
+"seam_bone": "pinky_02_r",
+"seam_step_ratio": 0.685,
+"seam_step_bone": "ball_r"
+},
+"fast_bones": [
+{
+"bone": "hand_r",
+"peak_cm_s": 2716,
+"time_s": 0.267
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 2703,
+"time_s": 0.267
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 1105,
+"time_s": 0.2
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 1080,
+"time_s": 0.2
+},
+{
+"bone": "head",
+"peak_cm_s": 413,
+"time_s": 0.233
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 144,
+"time_s": 0.167
+}
+]
+},
+{
+"role": "Greystone_Attack_RMB",
+"path": "/Game/Characters/Paragon/Greystone/Attack/Attack_RMB",
+"skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+"same_skeleton_as_mesh": true,
+"length_s": 3.0333,
+"frames": 91,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 91,
+"static_tail": 0.0,
+"seam_cm": 262.452,
+"seam_percent": 161.41,
+"seam_bone": "thigh_in_l",
+"seam_step_ratio": 0.03,
+"seam_step_bone": "index_01_l"
+},
+"fast_bones": [
+{
+"bone": "foot_r",
+"peak_cm_s": 1067,
+"time_s": 0.6
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 855,
+"time_s": 0.733
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 852,
+"time_s": 0.733
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 490,
+"time_s": 0.2
+},
+{
+"bone": "head",
+"peak_cm_s": 395,
+"time_s": 0.367
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 386,
+"time_s": 0.233
+}
+]
+}
+]
+},
+{
+"name": "Goblin_ref",
+"mesh": {
+"path": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin",
+"skeleton": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_Skeleton.SK_Goblin_Skeleton",
+"physics_asset": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_PhysicsAsset.SK_Goblin_PhysicsAsset",
+"bounds_origin": [
+-0.2,
+9.6,
+56.1
+],
+"bounds_extent": [
+41.0,
+20.1,
+56.5
+],
+"imported_origin": [
+-0.2,
+9.6,
+56.1
+],
+"imported_extent": [
+41.0,
+20.1,
+56.5
+],
+"reference_pose": {
+"bones": 118,
+"pose_size_cm": 99.3,
+"low": [
+-40.8,
+-0.3,
+0.0
+],
+"high": [
+40.4,
+22.5,
+99.3
+],
+"head_from_pelvis": {
+"bone": "head",
+"x": 0.0,
+"y": 4.1,
+"z": 40.9
+}
+}
+},
+"clips": [
+{
+"role": "Walk",
+"path": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Walk",
+"skeleton": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_Skeleton.SK_Goblin_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 45,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+264.1,
+0.0
+],
+"seam": {
+"motion_end_frame": 45,
+"static_tail": 0.0,
+"seam_cm": 0.011,
+"seam_percent": 0.011,
+"seam_bone": "index_03_l",
+"seam_step_ratio": 1.038,
+"seam_step_bone": "cc_base_r_kneesharebone"
+},
+"fast_bones": [
+{
+"bone": "cc_base_l_midtoe1",
+"peak_cm_s": 387,
+"time_s": 1.167
+},
+{
+"bone": "cc_base_l_pinkytoe1",
+"peak_cm_s": 387,
+"time_s": 1.167
+},
+{
+"bone": "cc_base_l_bigtoe1",
+"peak_cm_s": 386,
+"time_s": 1.167
+},
+{
+"bone": "cc_base_l_ringtoe1",
+"peak_cm_s": 386,
+"time_s": 1.167
+},
+{
+"bone": "cc_base_l_indextoe1",
+"peak_cm_s": 385,
+"time_s": 1.167
+},
+{
+"bone": "cc_base_l_toebasesharebone",
+"peak_cm_s": 381,
+"time_s": 1.167
+}
+],
+"ground_speed_cm_s": 169.5,
+"ground_speed_bones": {
+"cc_base_l_pinkytoe1": 170.5,
+"cc_base_l_ringtoe1": 170.5,
+"cc_base_l_toebasesharebone": 169.2,
+"ball_l": 169.2,
+"cc_base_l_midtoe1": 169.8,
+"cc_base_l_bigtoe1": 169.1,
+"cc_base_l_indextoe1": 169.0,
+"cc_base_r_bigtoe1": 334.1
+}
+},
+{
+"role": "Run",
+"path": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Run",
+"skeleton": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_Skeleton.SK_Goblin_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.7667,
+"frames": 53,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+622.4,
+0.0
+],
+"seam": {
+"motion_end_frame": 53,
+"static_tail": 0.0,
+"seam_cm": 0.941,
+"seam_percent": 0.947,
+"seam_bone": "middle_02_l",
+"seam_step_ratio": 1.016,
+"seam_step_bone": "foot_l"
+},
+"fast_bones": [
+{
+"bone": "cc_base_l_bigtoe1",
+"peak_cm_s": 474,
+"time_s": 1.567
+},
+{
+"bone": "cc_base_l_midtoe1",
+"peak_cm_s": 471,
+"time_s": 1.567
+},
+{
+"bone": "cc_base_l_indextoe1",
+"peak_cm_s": 470,
+"time_s": 1.567
+},
+{
+"bone": "cc_base_l_ringtoe1",
+"peak_cm_s": 466,
+"time_s": 1.567
+},
+{
+"bone": "cc_base_l_pinkytoe1",
+"peak_cm_s": 464,
+"time_s": 1.567
+},
+{
+"bone": "cc_base_l_toebasesharebone",
+"peak_cm_s": 459,
+"time_s": 1.567
+}
+],
+"ground_speed_cm_s": 314.7,
+"ground_speed_bones": {
+"cc_base_l_pinkytoe1": 315.2,
+"cc_base_l_ringtoe1": 315.3,
+"cc_base_l_midtoe1": 315.7,
+"cc_base_l_toebasesharebone": 313.0,
+"ball_l": 313.0,
+"cc_base_l_bigtoe1": 313.3,
+"cc_base_l_indextoe1": 314.7
+}
+},
+{
+"role": "Slash",
+"path": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Slash",
+"skeleton": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_Skeleton.SK_Goblin_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.3,
+"frames": 39,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+29.3,
+0.0
+],
+"seam": {
+"motion_end_frame": 39,
+"static_tail": 0.0,
+"seam_cm": 2.485,
+"seam_percent": 2.503,
+"seam_bone": "cc_base_l_bigtoe1",
+"seam_step_ratio": 0.017,
+"seam_step_bone": "thumb_01_l"
+},
+"fast_bones": [
+{
+"bone": "hand_r",
+"peak_cm_s": 629,
+"time_s": 0.533
+},
+{
+"bone": "cc_base_r_elbowsharebone",
+"peak_cm_s": 384,
+"time_s": 0.533
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 249,
+"time_s": 0.5
+},
+{
+"bone": "cc_base_r_bigtoe1",
+"peak_cm_s": 203,
+"time_s": 0.8
+},
+{
+"bone": "cc_base_l_elbowsharebone",
+"peak_cm_s": 198,
+"time_s": 0.533
+},
+{
+"bone": "cc_base_r_indextoe1",
+"peak_cm_s": 196,
+"time_s": 0.8
+}
+]
+}
+]
+},
+{
+"name": "Hyena_ref",
+"mesh": {
+"path": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion",
+"skeleton": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_Skeleton.Hyenas_A1_AllMotion_Skeleton",
+"physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+"bounds_origin": [
+-2.0,
+-4.0,
+63.7
+],
+"bounds_extent": [
+44.0,
+140.1,
+65.0
+],
+"imported_origin": [
+-2.0,
+-4.0,
+63.7
+],
+"imported_extent": [
+44.0,
+140.1,
+65.0
+],
+"reference_pose": {
+"bones": 51,
+"pose_size_cm": 326.1,
+"low": [
+-87.6,
+-206.6,
+-10.6
+],
+"high": [
+22.0,
+119.4,
+135.4
+],
+"head_from_pelvis": {
+"bone": "bip01_head",
+"x": 0.0,
+"y": 127.8,
+"z": 20.4
+}
+}
+},
+"clips": [
+{
+"role": "Walk",
+"path": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Walk",
+"skeleton": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_Skeleton.Hyenas_A1_AllMotion_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.4167,
+"frames": 85,
+"fps": 60.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 85,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "bip01_r_toe0",
+"seam_step_ratio": 0.598,
+"seam_step_bone": "bone05"
+},
+"fast_bones": [
+{
+"bone": "bip01_r_foot",
+"peak_cm_s": 190,
+"time_s": 0.033
+},
+{
+"bone": "bip01_r_finger0",
+"peak_cm_s": 166,
+"time_s": 0.867
+},
+{
+"bone": "bip01_l_finger0",
+"peak_cm_s": 159,
+"time_s": 0.033
+},
+{
+"bone": "bip01_r_toe0",
+"peak_cm_s": 158,
+"time_s": 0.033
+},
+{
+"bone": "bip01_l_foot",
+"peak_cm_s": 153,
+"time_s": 0.883
+},
+{
+"bone": "bip01_r_hand",
+"peak_cm_s": 148,
+"time_s": 0.867
+}
+],
+"ground_speed_cm_s": 71.1,
+"ground_speed_bones": {
+"bip01_r_finger0_end": 59.1,
+"bip01_l_finger0_end": 83.1
+}
+},
+{
+"role": "Run",
+"path": "/Game/MonsterAI/Animations/Hyena/AS_TD_Hyena_Run",
+"skeleton": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_Skeleton.Hyenas_A1_AllMotion_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.5333,
+"frames": 32,
+"fps": 60.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 32,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "bip01_l_toe0",
+"seam_step_ratio": 0.667,
+"seam_step_bone": "bone02"
+},
+"fast_bones": [
+{
+"bone": "bip01_r_finger0",
+"peak_cm_s": 1170,
+"time_s": 0.1
+},
+{
+"bone": "bip01_r_toe0",
+"peak_cm_s": 1095,
+"time_s": 0.333
+},
+{
+"bone": "bip01_l_finger0",
+"peak_cm_s": 1026,
+"time_s": 0.167
+},
+{
+"bone": "bip01_r_hand",
+"peak_cm_s": 981,
+"time_s": 0.1
+},
+{
+"bone": "bip01_r_foot",
+"peak_cm_s": 946,
+"time_s": 0.333
+},
+{
+"bone": "bip01_l_hand",
+"peak_cm_s": 880,
+"time_s": 0.167
+}
+],
+"ground_speed_cm_s": 224.0,
+"ground_speed_bones": {
+"bone06_end": 224.0
+}
+}
+]
+}
+]
+},
+"species_measure2": {
+"groups": [
+{
+"name": "Greystone",
+"mesh": {
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_PhysicsAsset.Greystone_PhysicsAsset",
+"bounds_origin": [
+9.1,
+45.5,
+102.3
+],
+"bounds_extent": [
+76.2,
+84.7,
+102.8
+],
+"imported_origin": [
+9.1,
+45.5,
+102.3
+],
+"imported_extent": [
+76.2,
+84.7,
+102.8
+],
+"reference_pose": {
+"bones": 180,
+"pose_size_cm": 201.1,
+"low": [
+-65.1,
+-26.0,
+0.0
+],
+"high": [
+65.1,
+50.5,
+201.1
+],
+"head_from_pelvis": {
+"bone": "head",
+"x": 0.0,
+"y": -3.6,
+"z": 74.8
+}
+}
+},
+"clips": [
+{
+"role": "Idle",
+"path": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Idle",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 7.5667,
+"frames": 227,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 225,
+"static_tail": 0.0088,
+"seam_cm": 0.046,
+"seam_percent": 0.023,
+"seam_bone": "sword_top",
+"seam_step_ratio": 0.0,
+"seam_step_bone": null
+},
+"fast_bones": [
+{
+"bone": "sword_top",
+"peak_cm_s": 13,
+"time_s": 1.9
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 10,
+"time_s": 1.7
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 7,
+"time_s": 1.867
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 6,
+"time_s": 1.833
+},
+{
+"bone": "C_jaw",
+"peak_cm_s": 4,
+"time_s": 2.667
+},
+{
+"bone": "head",
+"peak_cm_s": 4,
+"time_s": 2.667
+}
+]
+},
+{
+"role": "Walk",
+"path": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Walk",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 45,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+519.1,
+0.0
+],
+"seam": {
+"motion_end_frame": 45,
+"static_tail": 0.0,
+"seam_cm": 0.017,
+"seam_percent": 0.008,
+"seam_bone": "sword_top",
+"seam_step_ratio": 1.039,
+"seam_step_bone": "thigh_twist_02_r"
+},
+"fast_bones": [
+{
+"bone": "foot_l",
+"peak_cm_s": 644,
+"time_s": 1.2
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 567,
+"time_s": 0.8
+},
+{
+"bone": "sword_top",
+"peak_cm_s": 523,
+"time_s": 0.067
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 338,
+"time_s": 0.067
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 313,
+"time_s": 0.767
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 276,
+"time_s": 0.767
+}
+],
+"ground_speed_cm_s": 331.1,
+"ground_speed_bones": {
+"ball_l": 335.2,
+"calf_twist_01_l": 331.1,
+"foot_l": 325.4
+}
+},
+{
+"role": "Run",
+"path": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Run",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_Skeleton.Greystone_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.7667,
+"frames": 53,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+1223.4,
+0.0
+],
+"seam": {
+"motion_end_frame": 53,
+"static_tail": 0.0,
+"seam_cm": 1.676,
+"seam_percent": 0.833,
+"seam_bone": "middle_03_l",
+"seam_step_ratio": 1.138,
+"seam_step_bone": "beard_l_03"
+},
+"fast_bones": [
+{
+"bone": "foot_r",
+"peak_cm_s": 767,
+"time_s": 1.467
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 715,
+"time_s": 1.733
+},
+{
+"bone": "sword_top",
+"peak_cm_s": 706,
+"time_s": 1.733
+},
+{
+"bone": "sword_bottom",
+"peak_cm_s": 680,
+"time_s": 0.3
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 635,
+"time_s": 0.3
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 539,
+"time_s": 0.033
+}
+],
+"ground_speed_cm_s": 560.3,
+"ground_speed_bones": {
+"ball_l": 584.9,
+"calf_twist_01_l": 535.8
+}
+}
+]
+},
+{
+"name": "Kwang",
+"mesh": {
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_GDC",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"physics_asset": null,
+"bounds_origin": [
+-0.7,
+62.3,
+97.4
+],
+"bounds_extent": [
+64.7,
+94.5,
+97.5
+],
+"imported_origin": [
+-0.7,
+62.3,
+97.4
+],
+"imported_extent": [
+64.7,
+94.5,
+97.5
+],
+"reference_pose": {
+"bones": 130,
+"pose_size_cm": 178.7,
+"low": [
+-62.9,
+-24.4,
+0.0
+],
+"high": [
+62.9,
+11.4,
+178.7
+],
+"head_from_pelvis": {
+"bone": "head",
+"x": 0.0,
+"y": 0.3,
+"z": 60.6
+}
+}
+},
+"clips": [
+{
+"role": "Idle",
+"path": "/Game/MonsterAI/Animations/Kwang/AS_TD_Kwang_Idle",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 7.5667,
+"frames": 227,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 225,
+"static_tail": 0.0088,
+"seam_cm": 0.043,
+"seam_percent": 0.024,
+"seam_bone": "index_03_l",
+"seam_step_ratio": 0.0,
+"seam_step_bone": null
+},
+"fast_bones": [
+{
+"bone": "weapon_l",
+"peak_cm_s": 10,
+"time_s": 1.667
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 9,
+"time_s": 1.7
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 7,
+"time_s": 1.9
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 6,
+"time_s": 1.9
+},
+{
+"bone": "shoulder_pad_bow_l_back_02",
+"peak_cm_s": 5,
+"time_s": 1.5
+},
+{
+"bone": "shoulder_pad_bow_l_back_01",
+"peak_cm_s": 5,
+"time_s": 1.5
+}
+]
+},
+{
+"role": "Walk",
+"path": "/Game/MonsterAI/Animations/Kwang/AS_TD_Kwang_Walk",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 45,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+522.4,
+0.0
+],
+"seam": {
+"motion_end_frame": 45,
+"static_tail": 0.0,
+"seam_cm": 0.013,
+"seam_percent": 0.008,
+"seam_bone": "middle_03_r",
+"seam_step_ratio": 0.987,
+"seam_step_bone": "calf_r"
+},
+"fast_bones": [
+{
+"bone": "foot_l",
+"peak_cm_s": 575,
+"time_s": 1.2
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 507,
+"time_s": 0.033
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 407,
+"time_s": 0.067
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 340,
+"time_s": 0.767
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 333,
+"time_s": 0.067
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 276,
+"time_s": 0.8
+}
+],
+"ground_speed_cm_s": 306.3,
+"ground_speed_bones": {
+"ball_l": 306.3
+}
+},
+{
+"role": "Run",
+"path": "/Game/MonsterAI/Animations/Kwang/AS_TD_Kwang_Run",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonKwang/Characters/Heroes/Kwang/Meshes/Kwang_Skeleton.Kwang_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.7667,
+"frames": 53,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+1231.3,
+0.0
+],
+"seam": {
+"motion_end_frame": 53,
+"static_tail": 0.0,
+"seam_cm": 1.574,
+"seam_percent": 0.881,
+"seam_bone": "middle_03_l",
+"seam_step_ratio": 1.076,
+"seam_step_bone": "upperarm_twist_01_l"
+},
+"fast_bones": [
+{
+"bone": "foot_r",
+"peak_cm_s": 698,
+"time_s": 1.467
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 650,
+"time_s": 1.733
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 649,
+"time_s": 0.3
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 631,
+"time_s": 0.833
+},
+{
+"bone": "hand_r",
+"peak_cm_s": 623,
+"time_s": 0.3
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 528,
+"time_s": 0.033
+}
+],
+"ground_speed_cm_s": 552.5,
+"ground_speed_bones": {
+"ball_l": 552.5
+}
+}
+]
+},
+{
+"name": "Wukong",
+"mesh": {
+"path": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Skeleton.Wukong_Skeleton",
+"physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Extents.Wukong_Extents",
+"bounds_origin": [
+0.0,
+1.7,
+97.3
+],
+"bounds_extent": [
+64.2,
+114.7,
+97.8
+],
+"imported_origin": [
+0.0,
+1.7,
+97.3
+],
+"imported_extent": [
+64.2,
+114.7,
+97.8
+],
+"reference_pose": {
+"bones": 193,
+"pose_size_cm": 250.8,
+"low": [
+-63.0,
+-107.5,
+0.0
+],
+"high": [
+63.0,
+59.8,
+250.8
+],
+"head_from_pelvis": {
+"bone": "head",
+"x": 0.0,
+"y": -0.3,
+"z": 59.3
+}
+}
+},
+"clips": [
+{
+"role": "Idle",
+"path": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Idle",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Skeleton.Wukong_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 7.5667,
+"frames": 227,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 225,
+"static_tail": 0.0088,
+"seam_cm": 0.091,
+"seam_percent": 0.036,
+"seam_bone": "grtsage_feather_05_r",
+"seam_step_ratio": 0.0,
+"seam_step_bone": null
+},
+"fast_bones": [
+{
+"bone": "weapon_B_front_r",
+"peak_cm_s": 14,
+"time_s": 1.9
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 10,
+"time_s": 1.7
+},
+{
+"bone": "hand_l",
+"peak_cm_s": 9,
+"time_s": 1.7
+},
+{
+"bone": "weapon_r",
+"peak_cm_s": 7,
+"time_s": 1.9
+},
+{
+"bone": "elbowpad_l",
+"peak_cm_s": 6,
+"time_s": 1.467
+},
+{
+"bone": "weapon_B_r",
+"peak_cm_s": 6,
+"time_s": 1.9
+}
+]
+},
+{
+"role": "Walk",
+"path": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Walk",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Skeleton.Wukong_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 45,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+522.4,
+0.0
+],
+"seam": {
+"motion_end_frame": 45,
+"static_tail": 0.0,
+"seam_cm": 0.021,
+"seam_percent": 0.008,
+"seam_bone": "grtsage_feather_04_r",
+"seam_step_ratio": 1.097,
+"seam_step_bone": "grtsage_kneerings_r"
+},
+"fast_bones": [
+{
+"bone": "inner_toe_l",
+"peak_cm_s": 646,
+"time_s": 1.2
+},
+{
+"bone": "weapon_B_front_r",
+"peak_cm_s": 581,
+"time_s": 0.067
+},
+{
+"bone": "foot_l",
+"peak_cm_s": 570,
+"time_s": 1.2
+},
+{
+"bone": "inner_toe_r",
+"peak_cm_s": 570,
+"time_s": 0.033
+},
+{
+"bone": "foot_r",
+"peak_cm_s": 503,
+"time_s": 0.033
+},
+{
+"bone": "weapon_l",
+"peak_cm_s": 381,
+"time_s": 0.067
+}
+],
+"ground_speed_cm_s": 302.0,
+"ground_speed_bones": {
+"pinky_proximal_phalange_l": 304.9,
+"ring_proximal_phalange_l": 303.7,
+"middle_proximal_phalange_l": 302.4,
+"index_proximal_phalange_l": 302.5,
+"ball_l": 301.7,
+"inner_toe_l": 299.5,
+"index_proximal_phalange_r": 297.8,
+"middle_proximal_phalange_r": 298.1
+}
+},
+{
+"role": "Run",
+"path": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Run",
+"skeleton": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Skeleton.Wukong_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.7667,
+"frames": 53,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+1231.3,
+0.0
+],
+"seam": {
+"motion_end_frame": 53,
+"static_tail": 0.0,
+"seam_cm": 1.701,
+"seam_percent": 0.678,
+"seam_bone": "weapon_B_front_r",
+"seam_step_ratio": 1.168,
+"seam_step_bone": "grtsage_shoulder_armor_r"
+},
+"fast_bones": [
+{
+"bone": "weapon_B_front_r",
+"peak_cm_s": 834,
+"time_s": 1.733
+},
+{
+"bone": "inner_toe_l",
+"peak_cm_s": 727,
+"time_s": 1.0
+},
+{
+"bone": "weapon_D_r",
+"peak_cm_s": 722,
+"time_s": 0.3
+},
+{
+"bone": "handChain_l",
+"peak_cm_s": 711,
+"time_s": 0.3
+},
+{
+"bone": "inner_toe_r",
+"peak_cm_s": 701,
+"time_s": 1.467
+},
+{
+"bone": "weapon_C_r",
+"peak_cm_s": 693,
+"time_s": 0.3
+}
+],
+"ground_speed_cm_s": 546.9,
+"ground_speed_bones": {
+"pinky_proximal_phalange_l": 546.2,
+"ring_proximal_phalange_l": 555.5,
+"middle_proximal_phalange_l": 552.4,
+"index_proximal_phalange_l": 546.9,
+"ball_l": 546.9,
+"inner_toe_l": 520.7,
+"foot_l": 503.7
+}
+}
+]
+},
+{
+"name": "Swordsman",
+"mesh": {
+"path": "/Game/SwordTrailVFX/Demo/SKM_Man/SKM_Man",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"physics_asset": "/Game/SwordTrailVFX/Demo/SKM_Man/PhA_Man.PhA_Man",
+"bounds_origin": [
+-0.0,
+2.2,
+90.2
+],
+"bounds_extent": [
+97.3,
+18.2,
+90.2
+],
+"imported_origin": [
+-0.0,
+2.2,
+90.2
+],
+"imported_extent": [
+97.3,
+18.2,
+90.2
+],
+"reference_pose": {
+"bones": 65,
+"pose_size_cm": 194.6,
+"low": [
+-97.3,
+-10.9,
+-96.7
+],
+"high": [
+97.3,
+21.3,
+78.8
+],
+"head_from_pelvis": {
+"bone": "Head",
+"x": -0.0,
+"y": -0.3,
+"z": 60.3
+}
+}
+},
+"clips": [
+{
+"role": "Idle",
+"path": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Idle",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 7.5667,
+"frames": 227,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+0.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 225,
+"static_tail": 0.0088,
+"seam_cm": 0.052,
+"seam_percent": 0.027,
+"seam_bone": "LeftHandRing4",
+"seam_step_ratio": 0.0,
+"seam_step_bone": null
+},
+"fast_bones": [
+{
+"bone": "LeftHandPinky4",
+"peak_cm_s": 12,
+"time_s": 1.533
+},
+{
+"bone": "LeftHandRing4",
+"peak_cm_s": 12,
+"time_s": 1.533
+},
+{
+"bone": "LeftHandIndex4",
+"peak_cm_s": 12,
+"time_s": 1.8
+},
+{
+"bone": "LeftHandThumb4",
+"peak_cm_s": 12,
+"time_s": 1.833
+},
+{
+"bone": "LeftHandMiddle4",
+"peak_cm_s": 12,
+"time_s": 1.533
+},
+{
+"bone": "LeftHandPinky3",
+"peak_cm_s": 12,
+"time_s": 1.533
+}
+]
+},
+{
+"role": "Walk",
+"path": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Walk",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 1.5,
+"frames": 45,
+"fps": 30.0,
+"loop": true,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+468.3,
+0.0
+],
+"seam": {
+"motion_end_frame": 45,
+"static_tail": 0.0,
+"seam_cm": 0.016,
+"seam_percent": 0.008,
+"seam_bone": "RightHandMiddle4",
+"seam_step_ratio": 1.016,
+"seam_step_bone": "RightHandMiddle2"
+},
+"fast_bones": [
+{
+"bone": "LeftToeBase",
+"peak_cm_s": 622,
+"time_s": 1.2
+},
+{
+"bone": "RightToeBase",
+"peak_cm_s": 575,
+"time_s": 0.033
+},
+{
+"bone": "LeftFoot",
+"peak_cm_s": 540,
+"time_s": 1.2
+},
+{
+"bone": "RightFoot",
+"peak_cm_s": 476,
+"time_s": 0.033
+},
+{
+"bone": "LeftHandMiddle4",
+"peak_cm_s": 462,
+"time_s": 0.1
+},
+{
+"bone": "LeftHandIndex4",
+"peak_cm_s": 455,
+"time_s": 0.1
+}
+],
+"ground_speed_cm_s": 280.2,
+"ground_speed_bones": {
+"LeftToe_End": 283.6,
+"LeftToeBase": 283.1,
+"RightToe_End": 277.4,
+"LeftFoot": 274.1,
+"RightToeBase": 280.2
+}
+},
+{
+"role": "Run",
+"path": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Run",
+"skeleton": "/Game/SwordTrailVFX/Demo/SKM_Man/Skeleton_Man.Skeleton_Man",
+"same_skeleton_as_mesh": true,
+"length_s": 1.7667,
+"frames": 53,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": true,
+"root_travel_cm": [
+0.0,
+1103.7,
+0.0
+],
+"seam": {
+"motion_end_frame": 53,
+"static_tail": 0.0,
+"seam_cm": 1.91,
+"seam_percent": 0.981,
+"seam_bone": "LeftHandMiddle4",
+"seam_step_ratio": 1.017,
+"seam_step_bone": "LeftFoot"
+},
+"fast_bones": [
+{
+"bone": "RightHandRing4",
+"peak_cm_s": 952,
+"time_s": 0.3
+},
+{
+"bone": "LeftHandRing4",
+"peak_cm_s": 951,
+"time_s": 0.033
+},
+{
+"bone": "LeftHandMiddle4",
+"peak_cm_s": 950,
+"time_s": 0.033
+},
+{
+"bone": "RightHandMiddle4",
+"peak_cm_s": 946,
+"time_s": 0.3
+},
+{
+"bone": "RightHandPinky4",
+"peak_cm_s": 938,
+"time_s": 0.3
+},
+{
+"bone": "LeftHandPinky4",
+"peak_cm_s": 928,
+"time_s": 0.033
+}
+],
+"ground_speed_cm_s": 522.1,
+"ground_speed_bones": {
+"LeftToe_End": 532.4,
+"LeftToeBase": 511.8
+}
+}
+]
+}
+]
+},
+"species_measure3": {
+"groups": [
+{
+"name": "Barghest",
+"mesh": {
+"path": "/Game/QuadrapedCreatures/Barghest/Meshes/SK_BARGHEST",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+"bounds_origin": [
+0.0,
+20.9,
+75.2
+],
+"bounds_extent": [
+55.4,
+137.0,
+78.9
+],
+"imported_origin": [
+0.0,
+20.9,
+75.2
+],
+"imported_extent": [
+55.4,
+137.0,
+78.9
+],
+"reference_pose": {
+"bones": 38,
+"pose_size_cm": 306.0,
+"low": [
+-48.2,
+-199.2,
+0.0
+],
+"high": [
+48.2,
+106.7,
+136.2
+],
+"head_from_pelvis": {
+"bone": "BARGHEST_-Head",
+"x": 0.0,
+"y": 172.9,
+"z": 10.7
+}
+}
+},
+"clips": [
+{
+"role": "walkRM",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_walk_RM",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+163.4,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-R-Calf",
+"seam_step_ratio": 1.724,
+"seam_step_bone": "BARGHEST_-L-UpperArm"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-L-Finger01",
+"peak_cm_s": 589,
+"time_s": 0.3
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 504,
+"time_s": 0.8
+},
+{
+"bone": "BARGHEST_-R-Toe0",
+"peak_cm_s": 482,
+"time_s": 0.3
+},
+{
+"bone": "BARGHEST_-L-Toe0",
+"peak_cm_s": 480,
+"time_s": 0.8
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 411,
+"time_s": 0.7
+},
+{
+"bone": "BARGHEST_-L-Finger0",
+"peak_cm_s": 401,
+"time_s": 0.2
+}
+],
+"ground_speed_cm_s": 163.7,
+"ground_speed_bones": {
+"BARGHEST_-R-Toe0": 162.5,
+"BARGHEST_-R-Finger01": 166.3,
+"BARGHEST_-L-Finger01": 163.7
+}
+},
+{
+"role": "runRM",
+"path": "/Game/QuadrapedCreatures/Barghest/Animations/BARGHEST_run_RM",
+"skeleton": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_Skeleton.BARGHEST_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6,
+"frames": 18,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+451.6,
+0.0
+],
+"seam": {
+"motion_end_frame": 18,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "BARGHEST_-R-Finger01",
+"seam_step_ratio": 1.008,
+"seam_step_bone": "BARGHEST_-R-Hand"
+},
+"fast_bones": [
+{
+"bone": "BARGHEST_-L-Toe0",
+"peak_cm_s": 1146,
+"time_s": 0.267
+},
+{
+"bone": "BARGHEST_-R-Toe0",
+"peak_cm_s": 1103,
+"time_s": 0.333
+},
+{
+"bone": "BARGHEST_-L-Foot",
+"peak_cm_s": 968,
+"time_s": 0.233
+},
+{
+"bone": "BARGHEST_-R-Foot",
+"peak_cm_s": 888,
+"time_s": 0.367
+},
+{
+"bone": "BARGHEST_-R-Finger01",
+"peak_cm_s": 796,
+"time_s": 0.567
+},
+{
+"bone": "BARGHEST_-R-Finger0",
+"peak_cm_s": 789,
+"time_s": 0.567
+}
+],
+"ground_speed_cm_s": 689.9,
+"ground_speed_bones": {
+"BARGHEST_-R-Finger01": 699.0,
+"BARGHEST_-L-Finger01": 680.8
+}
+}
+]
+},
+{
+"name": "Griffon",
+"mesh": {
+"path": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"physics_asset": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Physics.SK_Griffon_Physics",
+"bounds_origin": [
+0.0,
+-20.4,
+253.4
+],
+"bounds_extent": [
+449.6,
+289.6,
+254.1
+],
+"imported_origin": [
+0.0,
+-20.4,
+253.4
+],
+"imported_extent": [
+449.6,
+289.6,
+254.1
+],
+"reference_pose": {
+"bones": 94,
+"pose_size_cm": 514.2,
+"low": [
+-257.1,
+-226.4,
+0.0
+],
+"high": [
+257.1,
+215.2,
+385.2
+],
+"head_from_pelvis": {
+"bone": "GRIFFON_-Head",
+"x": 0.0,
+"y": 254.4,
+"z": 48.7
+}
+}
+},
+"clips": [
+{
+"role": "walkRM",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Walk_RM",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+234.0,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.005,
+"seam_percent": 0.001,
+"seam_bone": "GRIFFON_-L-Calf",
+"seam_step_ratio": 0.944,
+"seam_step_bone": "GRIFFON_-R-Forearm"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-L-Toe0",
+"peak_cm_s": 760,
+"time_s": 0.033
+},
+{
+"bone": "GRIFFON_-R-Toe0",
+"peak_cm_s": 759,
+"time_s": 0.533
+},
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 661,
+"time_s": 0.6
+},
+{
+"bone": "GRIFFON_-L-Finger12",
+"peak_cm_s": 623,
+"time_s": 0.6
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 619,
+"time_s": 0.6
+},
+{
+"bone": "GRIFFON_-R-Finger22",
+"peak_cm_s": 614,
+"time_s": 0.067
+}
+],
+"ground_speed_cm_s": 262.7,
+"ground_speed_bones": {
+"GRIFFON_-L-Toe0": 262.4,
+"GRIFFON_-R-Toe0": 263.1,
+"GRIFFON_-L-Finger02": 249.8,
+"GRIFFON_-L-Finger01": 251.0,
+"GRIFFON_-L-Finger12": 268.0,
+"GRIFFON_-L-Finger3": 260.5,
+"GRIFFON_-L-Finger11": 268.9,
+"GRIFFON_-L-Finger1": 262.9
+}
+},
+{
+"role": "runRM",
+"path": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Gallop_RM",
+"skeleton": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Skeleton.SK_Griffon_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.5333,
+"frames": 16,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+498.7,
+0.0
+],
+"seam": {
+"motion_end_frame": 16,
+"static_tail": 0.0,
+"seam_cm": 0.002,
+"seam_percent": 0.0,
+"seam_bone": "GRIFFON_-R-Forearm",
+"seam_step_ratio": 1.367,
+"seam_step_bone": "GRIFFON_-L-Hand"
+},
+"fast_bones": [
+{
+"bone": "GRIFFON_-R-Toe0",
+"peak_cm_s": 1296,
+"time_s": 0.5
+},
+{
+"bone": "GRIFFON_-L-Finger22",
+"peak_cm_s": 1255,
+"time_s": 0.3
+},
+{
+"bone": "GRIFFON_-L-Finger32",
+"peak_cm_s": 1252,
+"time_s": 0.5
+},
+{
+"bone": "GRIFFON_-L-Finger31",
+"peak_cm_s": 1252,
+"time_s": 0.5
+},
+{
+"bone": "GRIFFON_-L-Finger3",
+"peak_cm_s": 1252,
+"time_s": 0.5
+},
+{
+"bone": "GRIFFON_-L-Finger02",
+"peak_cm_s": 1252,
+"time_s": 0.5
+}
+],
+"ground_speed_cm_s": 989.3,
+"ground_speed_bones": {
+"GRIFFON_-L-Finger12": 1038.8,
+"GRIFFON_-L-Finger32": 1153.6,
+"GRIFFON_-R-Finger32": 547.1,
+"GRIFFON_-L-Finger22": 939.8,
+"GRIFFON_-R-Finger12": 546.6,
+"GRIFFON_-L-Finger11": 1130.2,
+"GRIFFON_-L-Finger21": 1132.2,
+"GRIFFON_-R-Finger22": 544.2
+}
+}
+]
+},
+{
+"name": "Centaur",
+"mesh": {
+"path": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"physics_asset": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_PhysicsAsset.SK_Centaur_PhysicsAsset",
+"bounds_origin": [
+0.0,
+-66.9,
+143.7
+],
+"bounds_extent": [
+100.3,
+172.4,
+144.2
+],
+"imported_origin": [
+0.0,
+-66.9,
+143.7
+],
+"imported_extent": [
+100.3,
+172.4,
+144.2
+],
+"reference_pose": {
+"bones": 126,
+"pose_size_cm": 350.5,
+"low": [
+-99.1,
+-198.3,
+0.0
+],
+"high": [
+117.6,
+124.7,
+350.5
+],
+"head_from_pelvis": {
+"bone": "CENTAUR_-Head",
+"x": 0.0,
+"y": 137.5,
+"z": 117.9
+}
+}
+},
+"clips": [
+{
+"role": "walkRM",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_WalkBow_RM",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+173.6,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.001,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-R-Calf",
+"seam_step_ratio": 0.644,
+"seam_step_bone": "CENTAUR_-R-Calf"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 449,
+"time_s": 0.7
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 441,
+"time_s": 0.2
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 316,
+"time_s": 0.033
+},
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 311,
+"time_s": 0.533
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 288,
+"time_s": 0.933
+},
+{
+"bone": "CENTAUR_BOW_BOTTOM_CURVE_3",
+"peak_cm_s": 284,
+"time_s": 0.1
+}
+],
+"ground_speed_cm_s": 195.2,
+"ground_speed_bones": {
+"CENTAUR_-R-Finger0": 207.5,
+"CENTAUR_-L-Foot": 189.7,
+"CENTAUR_-R-Foot": 172.6,
+"CENTAUR_-L-Finger0": 200.6
+}
+},
+{
+"role": "runRM",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GallopBow_RM",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 0.6,
+"frames": 18,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+668.9,
+0.0
+],
+"seam": {
+"motion_end_frame": 18,
+"static_tail": 0.0,
+"seam_cm": 0.0,
+"seam_percent": 0.0,
+"seam_bone": "CENTAUR_-R-Finger0",
+"seam_step_ratio": 0.976,
+"seam_step_bone": "CENTAUR_-R-UpperArm"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 972,
+"time_s": 0.2
+},
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 945,
+"time_s": 0.5
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 943,
+"time_s": 0.433
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 748,
+"time_s": 0.367
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 638,
+"time_s": 0.467
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 589,
+"time_s": 0.367
+}
+],
+"ground_speed_cm_s": 663.3,
+"ground_speed_bones": {
+"CENTAUR_-R-Finger0": 663.3
+}
+},
+{
+"role": "trotRM",
+"path": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_TrotBow_RM",
+"skeleton": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_Skeleton.SK_Centaur_Skeleton",
+"same_skeleton_as_mesh": true,
+"length_s": 1.0,
+"frames": 30,
+"fps": 30.0,
+"loop": false,
+"enable_root_motion": false,
+"force_root_lock": false,
+"root_travel_cm": [
+0.0,
+275.5,
+0.0
+],
+"seam": {
+"motion_end_frame": 30,
+"static_tail": 0.0,
+"seam_cm": 0.003,
+"seam_percent": 0.001,
+"seam_bone": "CENTAUR_-L-HorseLink",
+"seam_step_ratio": 0.512,
+"seam_step_bone": "CENTAUR_-L-Calf"
+},
+"fast_bones": [
+{
+"bone": "CENTAUR_-R-Finger0",
+"peak_cm_s": 445,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_-L-Finger0",
+"peak_cm_s": 444,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-L-Foot",
+"peak_cm_s": 394,
+"time_s": 0.9
+},
+{
+"bone": "CENTAUR_-L-Hand",
+"peak_cm_s": 377,
+"time_s": 0.767
+},
+{
+"bone": "CENTAUR_-R-Hand",
+"peak_cm_s": 372,
+"time_s": 0.267
+},
+{
+"bone": "CENTAUR_-R-Foot",
+"peak_cm_s": 298,
+"time_s": 0.467
+}
+],
+"ground_speed_cm_s": 282.4,
+"ground_speed_bones": {
+"CENTAUR_-L-Foot": 262.2,
+"CENTAUR_-R-Finger0": 282.4,
+"CENTAUR_-L-Finger0": 288.6
+}
+}
+]
+}
+]
+},
+"hand_peaks": {
+"PrimaryAttack_B_Slow:hand_r": {
+"top": [
+[
+1127,
+0.19
+],
+[
+50,
+0.73
+]
+],
+"max_forward_t": 0.22,
+"length": 1.27
+},
+"PrimaryAttack_B_Slow:hand_l": {
+"top": [
+[
+1020,
+0.19
+],
+[
+916,
+0.12
+],
+[
+807,
+0.29
+],
+[
+60,
+0.78
+]
+],
+"max_forward_t": 0.24,
+"length": 1.27
+},
+"PrimaryAttack_B_Slow:weapon_r": {
+"top": [
+[
+1299,
+0.19
+],
+[
+55,
+0.74
+]
+],
+"max_forward_t": 0.22,
+"length": 1.27
+},
+"PrimaryAttack_B_Slow:root": "root",
+"PrimaryAttack_C_Slow:hand_r": {
+"top": [
+[
+1629,
+0.19
+],
+[
+150,
+0.35
+],
+[
+41,
+1.01
+]
+],
+"max_forward_t": 0.19,
+"length": 1.27
+},
+"PrimaryAttack_C_Slow:hand_l": {
+"top": [
+[
+1600,
+0.19
+],
+[
+303,
+0.35
+],
+[
+43,
+1.01
+]
+],
+"max_forward_t": 0.19,
+"length": 1.27
+},
+"PrimaryAttack_C_Slow:weapon_r": {
+"top": [
+[
+1784,
+0.19
+],
+[
+164,
+0.35
+],
+[
+43,
+1.01
+]
+],
+"max_forward_t": 0.2,
+"length": 1.27
+},
+"PrimaryAttack_C_Slow:root": "root",
+"PrimaryAttack_D_Slow:hand_r": {
+"top": [
+[
+1471,
+0.18
+],
+[
+188,
+1.22
+],
+[
+128,
+1.08
+],
+[
+69,
+0.62
+]
+],
+"max_forward_t": 0.2,
+"length": 1.47
+},
+"PrimaryAttack_D_Slow:hand_l": {
+"top": [
+[
+1464,
+0.18
+],
+[
+609,
+0.27
+],
+[
+214,
+1.22
+],
+[
+111,
+0.52
+]
+],
+"max_forward_t": 0.2,
+"length": 1.47
+},
+"PrimaryAttack_D_Slow:weapon_r": {
+"top": [
+[
+1692,
+0.18
+],
+[
+211,
+1.22
+],
+[
+97,
+0.52
+],
+[
+45,
+0.85
+]
+],
+"max_forward_t": 0.2,
+"length": 1.47
+},
+"PrimaryAttack_D_Slow:root": "root",
+"Ability_R:hand_r": {
+"top": [
+[
+3483,
+0.9
+],
+[
+1303,
+0.2
+],
+[
+1089,
+1.38
+],
+[
+980,
+0.15
+]
+],
+"max_forward_t": 0.9,
+"length": 1.87
+},
+"Ability_R:hand_l": {
+"top": [
+[
+2568,
+0.12
+],
+[
+1571,
+0.43
+],
+[
+860,
+0.32
+],
+[
+329,
+1.05
+]
+],
+"max_forward_t": 1.3,
+"length": 1.87
+},
+"Ability_R:weapon_r": {
+"top": [
+[
+3147,
+0.12
+],
+[
+2231,
+0.45
+],
+[
+576,
+0.32
+],
+[
+442,
+1.02
+]
+],
+"max_forward_t": 0.47,
+"length": 1.87
+},
+"Ability_R:root": "root",
+"Ability_Q_Catch:hand_r": {
+"top": [
+[
+742,
+0.41
+],
+[
+691,
+0.05
+],
+[
+354,
+0.81
+],
+[
+229,
+0.98
+]
+],
+"max_forward_t": 0.19,
+"length": 1.17
+},
+"Ability_Q_Catch:hand_l": {
+"top": [
+[
+575,
+0.54
+],
+[
+216,
+0.78
+],
+[
+193,
+0.98
+],
+[
+144,
+0.37
+]
+],
+"max_forward_t": 0.61,
+"length": 1.17
+},
+"Ability_Q_Catch:weapon_r": {
+"top": [
+[
+5484,
+0.29
+],
+[
+3413,
+0.05
+],
+[
+1986,
+0.15
+],
+[
+852,
+0.22
+]
+],
+"max_forward_t": 0.2,
+"length": 1.17
+},
+"Ability_Q_Catch:root": "root",
+"A_NS_01:RightHand": {
+"top": [
+[
+1577,
+0.6
+],
+[
+482,
+1.08
+],
+[
+363,
+0.25
+],
+[
+296,
+1.22
+]
+],
+"max_forward_t": 0.6,
+"length": 1.5
+},
+"A_NS_01:LeftHand": {
+"top": [
+[
+606,
+1.05
+],
+[
+402,
+0.63
+],
+[
+271,
+0.45
+],
+[
+256,
+0.05
+]
+],
+"max_forward_t": 0.18,
+"length": 1.5
+},
+"A_NS_01:root": "Hips",
+"A_NS_07:RightHand": {
+"top": [
+[
+1577,
+0.6
+],
+[
+482,
+1.08
+],
+[
+363,
+0.25
+],
+[
+296,
+1.22
+]
+],
+"max_forward_t": 0.6,
+"length": 1.5
+},
+"A_NS_07:LeftHand": {
+"top": [
+[
+606,
+1.05
+],
+[
+402,
+0.63
+],
+[
+271,
+0.45
+],
+[
+256,
+0.05
+]
+],
+"max_forward_t": 0.18,
+"length": 1.5
+},
+"A_NS_07:root": "Hips",
+"A_Combo_1:RightHand": {
+"top": [
+[
+1289,
+0.47
+],
+[
+1132,
+0.83
+],
+[
+857,
+1.63
+],
+[
+818,
+0.57
+]
+],
+"max_forward_t": 0.48,
+"length": 2.4
+},
+"A_Combo_1:LeftHand": {
+"top": [
+[
+1136,
+1.1
+],
+[
+1048,
+1.53
+],
+[
+1036,
+1.22
+],
+[
+992,
+1.67
+]
+],
+"max_forward_t": 0.18,
+"length": 2.4
+},
+"A_Combo_1:root": "Hips",
+"Emote_StaffSpin:hand_r": {
+"top": [
+[
+729,
+6.58
+],
+[
+669,
+2.26
+],
+[
+667,
+3.09
+],
+[
+649,
+5.75
+]
+],
+"max_forward_t": 2.24,
+"length": 7.07
+},
+"Emote_StaffSpin:hand_l": {
+"top": [
+[
+625,
+4.89
+],
+[
+614,
+2.69
+],
+[
+595,
+3.49
+],
+[
+569,
+6.62
+]
+],
+"max_forward_t": 3.49,
+"length": 7.07
+},
+"Emote_StaffSpin:weapon_r": {
+"top": [
+[
+1043,
+2.29
+],
+[
+1028,
+5.93
+],
+[
+1024,
+5.9
+],
+[
+987,
+5.01
+]
+],
+"max_forward_t": 5.88,
+"length": 7.07
+},
+"Emote_StaffSpin:root": "root",
+"Attack_RMB:hand_r": {
+"top": [
+[
+869,
+0.74
+],
+[
+416,
+0.39
+],
+[
+414,
+0.34
+],
+[
+201,
+2.53
+]
+],
+"max_forward_t": 1.34,
+"length": 3.03
+},
+"Attack_RMB:hand_l": {
+"top": [
+[
+381,
+0.25
+],
+[
+380,
+0.22
+],
+[
+356,
+0.34
+],
+[
+320,
+0.62
+]
+],
+"max_forward_t": 3.0,
+"length": 3.03
+},
+"Attack_RMB:root": "root",
+"Attack_PrimaryB:hand_r": {
+"top": [
+[
+2149,
+0.4
+],
+[
+735,
+0.07
+],
+[
+323,
+0.57
+],
+[
+249,
+1.11
+]
+],
+"max_forward_t": 0.39,
+"length": 1.4
+},
+"Attack_PrimaryB:hand_l": {
+"top": [
+[
+698,
+0.42
+],
+[
+636,
+0.62
+],
+[
+534,
+0.56
+],
+[
+387,
+1.05
+]
+],
+"max_forward_t": 0.67,
+"length": 1.4
+},
+"Attack_PrimaryB:root": "root",
+"Attack_A_Med:hand_r": {
+"top": [
+[
+2716,
+0.27
+],
+[
+1364,
+0.17
+],
+[
+678,
+0.33
+],
+[
+42,
+0.52
+]
+],
+"max_forward_t": 0.27,
+"length": 0.8
+},
+"Attack_A_Med:hand_l": {
+"top": [
+[
+1080,
+0.2
+],
+[
+492,
+0.07
+],
+[
+204,
+0.37
+],
+[
+115,
+0.45
+]
+],
+"max_forward_t": 0.07,
+"length": 0.8
+},
+"Attack_A_Med:root": "root",
+"Attack_PrimaryA:hand_r": {
+"top": [
+[
+3001,
+0.39
+],
+[
+830,
+0.17
+],
+[
+787,
+0.08
+],
+[
+623,
+0.99
+]
+],
+"max_forward_t": 0.4,
+"length": 1.67
+},
+"Attack_PrimaryA:hand_l": {
+"top": [
+[
+1613,
+0.37
+],
+[
+633,
+0.08
+],
+[
+590,
+0.94
+],
+[
+116,
+1.28
+]
+],
+"max_forward_t": 0.3,
+"length": 1.67
+},
+"Attack_PrimaryA:root": "root",
+"Attack_D_Slow:hand_r": {
+"top": [
+[
+3360,
+0.15
+],
+[
+1598,
+0.05
+],
+[
+1486,
+0.08
+],
+[
+229,
+0.62
+]
+],
+"max_forward_t": 0.15,
+"length": 0.8
+},
+"Attack_D_Slow:hand_l": {
+"top": [
+[
+1405,
+0.15
+],
+[
+1061,
+0.28
+],
+[
+313,
+0.42
+]
+],
+"max_forward_t": 0.25,
+"length": 0.8
+},
+"Attack_D_Slow:root": "root",
+"Attack_PrimaryC:hand_r": {
+"top": [
+[
+2102,
+0.62
+],
+[
+359,
+1.2
+],
+[
+354,
+1.55
+],
+[
+279,
+1.35
+]
+],
+"max_forward_t": 0.63,
+"length": 1.87
+},
+"Attack_PrimaryC:sword_top": {
+"top": [
+[
+3699,
+0.63
+],
+[
+576,
+0.33
+],
+[
+533,
+1.48
+],
+[
+446,
+1.27
+]
+],
+"max_forward_t": 0.65,
+"length": 1.87
+},
+"Attack_PrimaryC:root": "root",
+"Ability_R:sword_top": {
+"top": [
+[
+5669,
+0.9
+],
+[
+2271,
+0.15
+],
+[
+1085,
+1.38
+],
+[
+897,
+0.72
+]
+],
+"max_forward_t": 1.22,
+"length": 1.87
+},
+"Ability_E:hand_r": {
+"top": [
+[
+2326,
+0.56
+],
+[
+1493,
+0.42
+],
+[
+965,
+1.0
+],
+[
+681,
+0.22
+]
+],
+"max_forward_t": 0.57,
+"length": 1.27
+},
+"Ability_E:sword_top": {
+"top": [
+[
+3959,
+0.57
+],
+[
+2231,
+0.42
+],
+[
+1239,
+1.01
+],
+[
+935,
+0.25
+]
+],
+"max_forward_t": 0.57,
+"length": 1.27
+},
+"Ability_E:root": "root",
+"Attack_A_Fast:hand_r": {
+"top": [
+[
+3994,
+0.15
+],
+[
+820,
+0.03
+],
+[
+49,
+0.35
+]
+],
+"max_forward_t": 0.17,
+"length": 0.6
+},
+"Attack_A_Fast:sword_top": {
+"top": [
+[
+6595,
+0.15
+],
+[
+1653,
+0.03
+]
+],
+"max_forward_t": 0.17,
+"length": 0.6
+},
+"Attack_A_Fast:root": "root"
+}
+}

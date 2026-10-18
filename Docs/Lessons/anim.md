@@ -144,3 +144,12 @@
 - 증거: `Saved/AgentOps/20261018/combat-full/pie/editor-pie-run1.log`(4065줄), `review-code/uaf_ensure.md`
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-anim-19 루트 뼈가 Hips인 Mixamo 스켈레톤으로 리타깃한 클립에 루트 고정을 켜면 엉덩이가 굳어 사망 클립이 쓰러지지 않는다
+- 증상: Manny → `SKM_Man`(Mixamo, `Skeleton_Man`) 리타깃 결과 검사에서 `pelvis_z 0.0`, `foot_*_buried`·`head_below_pelvis` 플래그가 모든 시각에 뜬다. `force_root_lock`을 켠 사망 클립은 엉덩이가 서 있는 높이에 고정되어 상체만 접힌다(관찰: 리타깃 검사 수치, PIE 육안은 `measurements/monsterize/pie-2026-10-18/` 참조)
+- 원인: Mixamo 스켈레톤은 뼈 0번이 `Hips`라 `force_root_lock`이 골반의 이동·회전을 기준 포즈로 잠근다. Manny 클립의 전진(루트 모션)도 리타기터가 Hips로 옮기므로 잠그지 않으면 걷기·달리기가 한 주기마다 앞으로 갔다 되돌아간다
+- 해결: 이동·피격 클립은 잠금 유지(엉덩이 흔들림이 사라지는 제한을 감수), 사망만 잠그지 않는다 — 종 표 리타깃 대상 키 `unlocked_clips: ["Death"]`(`Tools/MonsterAI/editor_retarget_monster_anims.py`). Mixamo 자체 공격은 루트가 움직이지 않는 제자리판(`A_NS_*`)을 쓰고 `A_Combo_*`(Hips 235cm 이동)는 쓰지 않는다. 근본 해결은 Hips 위에 root 뼈를 넣어 다시 가져오기(Blender)
+- 범위: UE 5.8.2 IK 리타기터 일괄 리타깃, 루트 뼈 없는 Mixamo 메시
+- 증거: 2026-10-18 리타깃 로그(`check /Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_*`), `Saved/MonsterAI/hand_peaks.json`(`A_NS_01:root = Hips`), `Saved/MonsterAI/species_measure.json`(A_Combo root_travel 234.9cm)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

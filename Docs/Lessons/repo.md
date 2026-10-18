@@ -121,3 +121,12 @@
 - 증거: 2026-10-17 고아 bash pid 11080·9116이 `python Tools/cook_single_map.py --label anim-cook`(pid 17596)을 23:47:40에 시작, `side-session-notes/.../anim-cook.md` 23:47~23:51 기록
 - 날짜·상태: 2026-10-17 active
 - 발견: claude
+
+### L-repo-15 Bash 도구에서 긴 heredoc 명령이 `unexpected EOF while looking for matching` 오류로 통째로 실행되지 않는다
+- 증상: 약 100줄짜리 명령(여러 `cat > 파일 <<'EOF'` 묶음 또는 `<<'PYEOF'` 파이썬 본문)이 `/usr/bin/bash: -c: line 103: unexpected EOF while looking for matching `''`로 실패하고 파일이 하나도 써지지 않는다. 같은 세션의 짧은 heredoc(20~40줄, 작은따옴표 포함)은 정상
+- 원인: 미검증. 도구가 명령 문자열을 `bash -c`로 넘기는 과정에서 긴 본문의 따옴표 짝이 깨지는 것으로 보인다(두 번 모두 본문에 작은따옴표가 여러 개 있었다)
+- 해결: 파일 내용은 Write 도구로 쓰고, Bash에서는 그 파일만 실행한다(`python <스크립트 경로>`). 한 번 실패하면 같은 heredoc을 다시 보내지 않는다
+- 범위: Claude Code Bash 도구(Windows Git Bash)
+- 증거: 2026-10-18 M3-33 세션 정의 JSON 8개 작성·종 표 확장 명령 2회 실패 → Write 도구로 대체해 성공
+- 날짜·상태: 2026-10-18 미검증
+- 발견: claude

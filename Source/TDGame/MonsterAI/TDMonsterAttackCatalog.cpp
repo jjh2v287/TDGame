@@ -10,6 +10,7 @@ namespace
 	const TCHAR* TelegraphMeshPath = TEXT("/Engine/BasicShapes/Plane.Plane");
 	const TCHAR* TelegraphMaterialPath = TEXT("/Game/MonsterAI/Materials/MI_TD_Telegraph_Danger.MI_TD_Telegraph_Danger");
 	const TCHAR* BoltEffectPath = TEXT("/Game/MegaMagicVFXBundle/VFX/MagicShieldsVFX/VFX/DefaultVersions/PoisonShield/Systems/N_PoisonShield.N_PoisonShield");
+	const TCHAR* ArrowEffectPath = TEXT("/Game/SlashTrail_SoftTofu/Niagara/Basic/NS_SlashTrail_Basic_Loop.NS_SlashTrail_Basic_Loop");
 	constexpr float TelegraphMeshHalfExtent = 50.f;
 
 	FTDDamageAction MakeAttackDamage(const float AttackRatio, const ETDDamageElement Element)
@@ -86,6 +87,21 @@ namespace
 		return Definition;
 	}
 
+	UTDDamageDefinition* CreateArrow(UObject* Outer, const TCHAR* Name, const float WindupSeconds, const float AttackRatio)
+	{
+		UTDDamageDefinition* Definition = CreateBolt(Outer, Name, WindupSeconds, AttackRatio);
+		Definition->Rules.Reset();
+		AddHitDamage(Definition, AttackRatio, ETDDamageElement::Physical);
+		Definition->Lifetime = WindupSeconds + 1.f;
+		Definition->ProjectileSpeed = 1700.f;
+		Definition->ProjectileRadius = 18.f;
+		Definition->DebugColor = FLinearColor(0.9f, 0.8f, 0.5f);
+		Definition->VisualEffect = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(ArrowEffectPath));
+		Definition->VisualScale = FVector(0.5f);
+		Definition->bDrawDebug = !DoesAssetPackageExist(ArrowEffectPath);
+		return Definition;
+	}
+
 	void Register(TMap<FName, UTDDamageDefinition*>& OutAttacks, UTDDamageDefinition* Definition)
 	{
 		OutAttacks.Add(Definition->GetFName(), Definition);
@@ -107,6 +123,17 @@ void TDMonsterAttackCatalog::CreateAttacks(UObject* Outer, TMap<FName, UTDDamage
 	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDGroundBurst"), 150.f, 1.1f, 1.3f, ETDDamageElement::Fire, FLinearColor(1.f, 0.45f, 0.05f)));
 	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDGolemStomp"), 320.f, 1.2f, 1.2f, ETDDamageElement::Physical, DangerColor));
 	Register(OutAttacks, CreateBolt(Outer, TEXT("DA_TDMonsterBolt"), 0.55f, 1.f));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDBarghestBite"), 110.f, 0.32f, 1.f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDBarghestPounce"), 140.f, 0.5f, 1.4f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDGriffonBite"), 150.f, 0.5f, 1.2f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDGriffonClaws"), 200.f, 0.55f, 1.3f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDGriffonCombo"), 220.f, 1.1f, 1.9f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDCentaurKick"), 170.f, 0.7f, 1.3f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateArrow(Outer, TEXT("DA_TDCentaurArrow"), 0.45f, 1.1f));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDQuickSlash"), 150.f, 0.32f, 1.15f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDWideCleave"), 190.f, 0.65f, 1.4f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDHeavySlam"), 280.f, 1.f, 2.f, ETDDamageElement::Physical, DangerColor));
+	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDStaffSpin"), 230.f, 0.6f, 1.5f, ETDDamageElement::Physical, DangerColor));
 }
 
 TArray<FSoftObjectPath> TDMonsterAttackCatalog::GetPresentationAssetPaths()

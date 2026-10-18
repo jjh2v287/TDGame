@@ -1,0 +1,21 @@
+{ "schema": 1, "id": "Wukong", "role": "Melee", "elite": true,
+  "stats": { "max_health": 480, "attack_power": 15, "armor": 10, "move_speed": 450, "team": 2 },
+  "think_hz": 10, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.4 },
+  "abilities": {
+    "Strike": { "spell": "DA_TDBruteSmash", "range": 220, "cooldown": 2.2 },
+    "Spin": { "spell": "DA_TDStaffSpin", "range": 220, "cooldown": 6.0 } },
+  "actions": [
+    { "id": "Approach", "do": "MoveToward", "args": { "target": "Player", "stop_at": 170 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": 12, "c": 0.13, "range": [0, 1400] } ] },
+    { "id": "Strike", "do": "CastAbility", "args": { "ability": "Strike" }, "weight": 2.0,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Strike" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.15, "range": [0, 1400] },
+        { "input": "FacingTarget", "curve": "Linear" } ] },
+    { "id": "Spin", "do": "CastAbility", "args": { "ability": "Spin" }, "weight": 2.8,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Spin" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.15, "range": [0, 1400] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
+  ] }

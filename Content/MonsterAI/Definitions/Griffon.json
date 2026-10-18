@@ -1,0 +1,30 @@
+{ "schema": 1, "id": "Griffon", "role": "Melee", "elite": true,
+  "stats": { "max_health": 900, "attack_power": 20, "armor": 15, "move_speed": 420, "team": 2 },
+  "think_hz": 10, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.5 },
+  "abilities": {
+    "Bite": { "spell": "DA_TDGriffonBite", "range": 260, "cooldown": 2.5 },
+    "Claws": { "spell": "DA_TDGriffonClaws", "range": 280, "cooldown": 4.0 },
+    "Combo": { "spell": "DA_TDGriffonCombo", "range": 300, "cooldown": 9.0 } },
+  "actions": [
+    { "id": "Approach", "do": "MoveToward", "args": { "target": "Player", "stop_at": 220 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": 10, "c": 0.16, "range": [0, 1600] } ] },
+    { "id": "Bite", "do": "CastAbility", "args": { "ability": "Bite" }, "weight": 2.0,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Bite" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.16, "range": [0, 1600] } ] },
+    { "id": "Claws", "do": "CastAbility", "args": { "ability": "Claws" }, "weight": 2.4,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Claws" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.17, "range": [0, 1600] } ] },
+    { "id": "Combo", "do": "CastAbility", "args": { "ability": "Combo" }, "weight": 3.0,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Combo" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.18, "range": [0, 1600] },
+        { "input": "FacingTarget", "curve": "Linear" } ] },
+    { "id": "Circle", "do": "MoveToBand", "args": { "target": "Player", "min": 380, "max": 520, "speed_scale": 0.5 }, "weight": 1.2,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Bite" }, "curve": "Binary", "invert": true },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -20, "c": 0.3, "range": [0, 1600] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
+  ] }

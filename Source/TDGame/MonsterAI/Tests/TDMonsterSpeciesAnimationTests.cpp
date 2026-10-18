@@ -12,6 +12,8 @@
 #include "Engine/SkeletalMesh.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/MemStack.h"
+#include "MonsterAI/TDMonsterDefinition.h"
+#include "MonsterAI/TDMonsterDefinitionLibrary.h"
 #include "MonsterAI/TDMonsterSpeciesAsset.h"
 
 namespace TDMonsterSpeciesAnimationTestSupport
@@ -266,6 +268,51 @@ bool FTDMonsterSpeciesLocomotionClipsLoopTest::RunTest(const FString& Parameters
 			{
 				TestTrue(FString::Printf(TEXT("%s has bLoop on because the idle base asset follows the sequence loop flag and would freeze after one play"), *ClipLabel), Sequence->bLoop);
 			}
+		}
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterSpeciesClipsCoverDefinitionTest, "TDGame.MonsterAI.Species.ClipsCoverDefinition", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMonsterSpeciesClipsCoverDefinitionTest::RunTest(const FString& Parameters)
+{
+	using namespace TDMonsterSpeciesAnimationTestSupport;
+
+	UTDMonsterDefinitionLibrary* Library = UTDMonsterDefinitionLibrary::Get();
+	if (!TestNotNull(TEXT("Definition library exists"), Library))
+	{
+		return false;
+	}
+	for (const UTDMonsterSpeciesAsset* Species : LoadAllSpecies())
+	{
+		const FString SpeciesName = Species->GetName();
+		const TSharedPtr<const FTDResolvedMonsterDefinition> Definition = Library->FindDefinition(Species->DefinitionId);
+		if (!TestTrue(FString::Printf(TEXT("%s definition %s resolves"), *SpeciesName, *Species->DefinitionId.ToString()), Definition.IsValid()))
+		{
+			continue;
+		}
+		TSet<FName> DefinitionAbilityNames;
+		for (const FTDResolvedAbility& Ability : Definition->Abilities)
+		{
+			DefinitionAbilityNames.Add(Ability.Name);
+			const FTDMonsterAnimClip* Clip = Species->AbilityClips.Find(Ability.Name);
+			TestTrue(FString::Printf(TEXT("%s plays an animation for ability %s"), *SpeciesName, *Ability.Name.ToString()), Clip && Cast<UAnimSequence>(Clip->Animation) != nullptr);
+		}
+		for (const TPair<FName, FTDMonsterAnimClip>& Clip : Species->AbilityClips)
+		{
+			TestTrue(FString::Printf(TEXT("%s ability clip %s names an ability of definition %s"), *SpeciesName, *Clip.Key.ToString(), *Species->DefinitionId.ToString()), DefinitionAbilityNames.Contains(Clip.Key));
+		}
+		TestTrue(FString::Printf(TEXT("%s has a hit reaction clip"), *SpeciesName), Cast<UAnimSequence>(Species->Hit.Animation) != nullptr);
+		TestTrue(FString::Printf(TEXT("%s has a death clip"), *SpeciesName), Cast<UAnimSequence>(Species->Death.Animation) != nullptr);
+		for (int32 FollowerIndex = 0; FollowerIndex < Species->FollowerMeshes.Num(); ++FollowerIndex)
+		{
+			const USkeletalMesh* FollowerMesh = Species->FollowerMeshes[FollowerIndex];
+			if (!TestNotNull(*FString::Printf(TEXT("%s follower mesh %d is set"), *SpeciesName, FollowerIndex), FollowerMesh))
+			{
+				continue;
+			}
+			TestTrue(FString::Printf(TEXT("%s follower mesh %s shares the body skeleton"), *SpeciesName, *FollowerMesh->GetName()), Species->Mesh && FollowerMesh->GetSkeleton() == Species->Mesh->GetSkeleton());
 		}
 	}
 	return true;

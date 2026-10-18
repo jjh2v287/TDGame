@@ -63,6 +63,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Body", meta=(ClampMin="10"))
 	float CapsuleHalfHeight = 90.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Body", meta=(ToolTip="Extra skeletal meshes on the body skeleton, such as armour, weapons, mane or tail, that copy the body pose."))
+	TArray<TObjectPtr<USkeletalMesh>> FollowerMeshes;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation")
 	FTDMonsterAnimClip Idle;
 

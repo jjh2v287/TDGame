@@ -1,0 +1,21 @@
+{ "schema": 1, "id": "Kwang", "role": "Melee", "elite": true,
+  "stats": { "max_health": 560, "attack_power": 17, "armor": 14, "move_speed": 360, "team": 2 },
+  "think_hz": 10, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.5 },
+  "abilities": {
+    "Strike": { "spell": "DA_TDQuickSlash", "range": 200, "cooldown": 1.6 },
+    "Slam": { "spell": "DA_TDHeavySlam", "range": 260, "cooldown": 8.0 } },
+  "actions": [
+    { "id": "Approach", "do": "MoveToward", "args": { "target": "Player", "stop_at": 170 }, "weight": 1.0,
+      "considerations": [
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": 12, "c": 0.13, "range": [0, 1400] } ] },
+    { "id": "Strike", "do": "CastAbility", "args": { "ability": "Strike" }, "weight": 2.0,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Strike" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.14, "range": [0, 1400] },
+        { "input": "FacingTarget", "curve": "Linear" } ] },
+    { "id": "Slam", "do": "CastAbility", "args": { "ability": "Slam" }, "weight": 3.0,
+      "considerations": [
+        { "input": "AbilityReady", "args": { "ability": "Slam" }, "curve": "Binary" },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -25, "c": 0.17, "range": [0, 1400] } ] },
+    { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
+  ] }

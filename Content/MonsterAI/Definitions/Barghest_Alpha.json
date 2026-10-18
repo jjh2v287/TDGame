@@ -1,0 +1,8 @@
+{ "schema": 1, "id": "Barghest_Alpha", "extends": "Barghest", "role": "Melee", "elite": true,
+  "stats": { "max_health": 340, "attack_power": 12, "armor": 8, "move_speed": 500 },
+  "abilities": {
+    "Bite": { "spell": "DA_TDBarghestBite", "range": 170, "cooldown": 1.5 },
+    "Pounce": { "spell": "DA_TDBarghestPounce", "range": 360, "cooldown": 4.5 } },
+  "actions": [
+    { "id": "Flee", "remove": true }
+  ] }

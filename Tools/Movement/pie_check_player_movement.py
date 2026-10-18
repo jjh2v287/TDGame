@@ -1,7 +1,7 @@
-"""시스템 Python으로 실행(언리얼 에디터 열림 필요): 내비메시가 있는 LV_TDMegaMagicArena(LV-Cambat에는 내비메시 경계가 없다)를 열고 에디터 내비메시 빌드가 끝난 뒤 PIE를 켜서 플레이어 폰(Mover·UAF)의 클릭 이동·도착 오차·이동 방향 회전·걷기 애니메이션(발 뼈 움직임)·점프·루트모션 공격(TDPlayMeleeAction) 이동량을 기록한 뒤 PIE를 끈다.
+"""시스템 Python으로 실행(언리얼 에디터 열림 필요): 내비메시가 있는 LV_TDMegaMagicArena(LV-Cambat에는 내비메시 경계가 없다)를 열고, 에디터 월드에 RecastNavMesh가 생기고 내비 빌드·잠금이 끝나고 모든 PlayerStart와 그 이동 목표점이 내비에 투영되는 상태가 연속 2회 확인된 뒤 PIE를 켜서 플레이어 폰(Mover·UAF)의 클릭 이동·도착 오차·이동 방향 회전·걷기 애니메이션(발 뼈 움직임)·점프·루트모션 공격(TDPlayMeleeAction) 이동량을 기록한 뒤 PIE를 끈다. 300초 안에 내비가 준비되지 않으면 측정하지 않고 종료 코드 2로 멈춘다.
 실행: python Tools/Movement/pie_check_player_movement.py
-출력: Docs/Validation/Movement/player-pie-check.json(+ 스크린샷 2장), 중간 기록 Saved/Movement/player_probe.jsonl
-상태: 현행 (2026-09-30)
+출력: Docs/Validation/Movement/player-pie-check.json(+ 스크린샷 2장), 중간 기록 Saved/Movement/player_probe.jsonl, 표준 출력 TD_NAV_STATE 대기 기록
+상태: 현행 (2026-10-18)
 """
 import json
 import math
@@ -28,6 +28,9 @@ MIN_JUMP_HEIGHT_CM = 20.0
 ATTACK_DISPLACEMENT_CM = (32.0, 40.0)
 NAVIGATION_WAIT_SECONDS = 60.0
 EDITOR_NAVIGATION_WAIT_SECONDS = 300.0
+EDITOR_NAVIGATION_POLL_SECONDS = 5.0
+EDITOR_NAVIGATION_READY_CHECKS = 2
+EDITOR_NAVIGATION_STATE_MARKER = "TD_NAV_STATE"
 
 
 def call(session, name, arguments):
@@ -103,15 +106,44 @@ def summarize_attack(records):
     return {"displacement_cm": round(planar_distance(before["location"], after["location"]), 2)}
 
 
+def read_editor_navigation_state():
+    check = ("import unreal, json; world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world(); "
+             "starts = [start.get_actor_location() for start in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.PlayerStart)]; "
+             "extent = unreal.Vector(50.0, 50.0, 250.0); "
+             f"points = [point for origin in starts for point in (origin, unreal.Vector(origin.x + {MOVE_OFFSET[0]}, origin.y + {MOVE_OFFSET[1]}, origin.z))]; "
+             f"print('{EDITOR_NAVIGATION_STATE_MARKER}', json.dumps({{"
+             "'level': world.get_path_name(), "
+             "'navmesh_actors': len(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.RecastNavMesh)), "
+             "'building_or_locked': unreal.NavigationSystemV1.is_navigation_being_built_or_locked(world), "
+             "'player_start_found': len(starts) > 0, "
+             "'projected': [unreal.NavigationSystemV1.project_point_to_navigation(world, point, None, None, extent) is not None for point in points]}))")
+    completed = subprocess.run([sys.executable, str(ROOT / "Tools/run_in_editor.py"), "-c", check], capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=ROOT)
+    for line in completed.stdout.splitlines():
+        marker_index = line.find(EDITOR_NAVIGATION_STATE_MARKER)
+        if marker_index >= 0:
+            return json.loads(line[marker_index + len(EDITOR_NAVIGATION_STATE_MARKER):])
+    return {"unreadable": (completed.stdout + completed.stderr)[-300:]}
+
+
+def is_editor_navigation_ready(state):
+    return (state.get("navmesh_actors", 0) > 0 and state.get("building_or_locked") is False
+            and state.get("player_start_found") is True and all(state.get("projected", [False])))
+
+
 def wait_for_editor_navigation():
-    check = ("import unreal; world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world(); "
-             "print('TD_NAV_BUILDING', unreal.NavigationSystemV1.is_navigation_being_built(world))")
     started = time.monotonic()
+    ready_checks = 0
+    state = {}
     while time.monotonic() - started < EDITOR_NAVIGATION_WAIT_SECONDS:
-        completed = subprocess.run([sys.executable, str(ROOT / "Tools/run_in_editor.py"), "-c", check], capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=ROOT)
-        if "TD_NAV_BUILDING False" in completed.stdout:
-            return
-        time.sleep(5.0)
+        state = read_editor_navigation_state()
+        ready_checks = ready_checks + 1 if is_editor_navigation_ready(state) else 0
+        elapsed = round(time.monotonic() - started, 1)
+        print(EDITOR_NAVIGATION_STATE_MARKER, elapsed, json.dumps(state, ensure_ascii=False), flush=True)
+        if ready_checks >= EDITOR_NAVIGATION_READY_CHECKS:
+            return elapsed
+        time.sleep(EDITOR_NAVIGATION_POLL_SECONDS)
+    print(f"editor navigation not ready after {EDITOR_NAVIGATION_WAIT_SECONDS:.0f} s: {json.dumps(state, ensure_ascii=False)}", flush=True)
+    raise SystemExit(2)
 
 
 def main():
@@ -123,7 +155,7 @@ def main():
                   f"ok = world.get_path_name().startswith('{LEVEL_PATH}') or levels.load_level('{LEVEL_PATH}'); "
                   "print('level', editor.get_editor_world().get_path_name(), ok)")
     subprocess.run([sys.executable, str(ROOT / "Tools/run_in_editor.py"), "-c", open_level], check=True, cwd=ROOT)
-    wait_for_editor_navigation()
+    editor_navigation_wait_seconds = wait_for_editor_navigation()
     session = uemcp.connect()
     call(session, "StartPIE", {"options": {"warmupSeconds": 2.0}})
     try:
@@ -155,6 +187,7 @@ def main():
 
     records = read_records()
     report = {
+        "editor_navigation_wait_seconds": editor_navigation_wait_seconds,
         "navigation_wait_seconds": navigation_wait_seconds,
         "path_ready": any(record.get("result") for record in records if record["tag"] == "path_ready"),
         "pawn_class": records[0]["player"].get("class"),

@@ -128,7 +128,7 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 도구 | 용도 | 실행 |
 |---|---|---|
 | `Movement/editor_migrate_character_assets.py` | Mover·UAF 전환 뒤 플레이어 블루프린트 메시의 AnimClass 참조 제거(저장 → 컴파일 → 저장: Mover 공유 설정은 저장 때 채워진다), 참조 없는 옛 ABP·몽타주 삭제 | `python Tools/run_in_editor.py Tools/Movement/editor_migrate_character_assets.py` (PowerShell) |
-| `Movement/pie_check_player_movement.py` (+`editor_pie_player_probe.py`) | 내비메시가 있는 LV_TDMegaMagicArena에서 PIE → 클릭 이동 도착 오차·방향·발 뼈 움직임, 점프 높이, `TDPlayMeleeAction` 루트모션 이동량을 매 프레임 기록 → `Docs/Validation/Movement/player-pie-check.json`, 판정 `passed` | `python Tools/Movement/pie_check_player_movement.py` |
+| `Movement/pie_check_player_movement.py` (+`editor_pie_player_probe.py`) | 내비메시가 있는 LV_TDMegaMagicArena를 열고 에디터 내비 준비(RecastNavMesh 존재·빌드·잠금 끝·PlayerStart와 목표점 투영, 연속 2회, 최대 300초, 미준비면 종료 코드 2)를 기다린 뒤 PIE → 클릭 이동 도착 오차·방향·발 뼈 움직임, 점프 높이, `TDPlayMeleeAction` 루트모션 이동량을 매 프레임 기록 → `Docs/Validation/Movement/player-pie-check.json`, 판정 `passed` | `python Tools/Movement/pie_check_player_movement.py` |
 | 콘솔 `TDPlayMeleeAction [시퀀스 경로]` | 플레이어 폰에 공격 시퀀스를 UAF 행동(루트모션)으로 재생(기본 `AS_TD_Player_SwordAttack01`) | PIE 콘솔 |
 | 자동화 테스트 `TDGame.Movement.*` 3개 + `TDGame.Combat.ActionTimelineHitsOnceInWindow` | 루트모션 36±2cm, 빙결 정지, 몬스터 이동 의도, 시간표 타격 1회 | `python Tools/check_automation_tests.py --filter TDGame.Movement` 또는 헤드리스 |
 확인: 2026-09-30 claude

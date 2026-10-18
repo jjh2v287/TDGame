@@ -183,3 +183,12 @@
 - 증거: 2026-10-17 `Saved/AgentOps/20261017/async-load/baseline-ab/run-log.txt`·`before-run1~3.json`·`after-run1~3.json`
 - 날짜·상태: 2026-10-17 active
 - 발견: claude
+
+### L-editor-25 레벨을 연 직후 `is_navigation_being_built`는 빌드 시작 전에도 False라 내비 대기를 그냥 통과한다
+- 증상: 에디터를 다시 띄운 직후 `python Tools/Movement/pie_check_player_movement.py` → `path_ready=false`(60.7 s), 클릭 이동 0 cm, PIE 로그 `Unable to find RecastNavMesh instance`, `passed=false`. 이미 켜진 에디터에서는 통과한다.
+- 원인: 도구가 에디터 월드의 `unreal.NavigationSystemV1.is_navigation_being_built(world)`가 한 번 False면 내비가 준비됐다고 봤다. 레벨을 막 연 직후에는 빌드가 아직 시작되지 않아도 False가 나와, 내비 데이터 없이 PIE가 시작됐다(그날 빌드는 약 82초).
+- 해결: 준비 판정을 '에디터 월드에 RecastNavMesh 액터 존재 + `is_navigation_being_built_or_locked` False + 모든 PlayerStart와 이동 목표점이 `project_point_to_navigation`(extent 50,50,250)으로 투영'으로 바꾸고, 5초 간격 연속 2회를 요구한다. 300초 안에 안 되면 측정 없이 종료 코드 2. 재기동 직후 실행에서 첫 확인은 빌드 중·투영 실패였고 13.8초 뒤 측정해 통과했다.
+- 범위: 에디터 Python으로 내비에 기대는 PIE 측정 도구(클릭 이동·경로 질의)
+- 증거: 2026-10-18 `Saved/AgentOps/20261018/player-move/runtime.txt`(실패), `Saved/AgentOps/20261018/nav-wait/run-cold.log`·`run-warm.log`·`run-warm2.log`(통과)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

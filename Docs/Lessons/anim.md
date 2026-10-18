@@ -153,3 +153,12 @@
 - 증거: 2026-10-18 리타깃 로그(`check /Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_*`), `Saved/MonsterAI/hand_peaks.json`(`A_NS_01:root = Hips`), `Saved/MonsterAI/species_measure.json`(A_Combo root_travel 234.9cm)
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-anim-20 재생 중인 캐릭터에 `UseLocomotionClips`를 부르면(UAF 시스템 해제·재등록) 같은 프레임의 워커 UAF 틱이 사라진 모듈을 참조해 에디터가 크래시한다
+- 증상: PIE에서 켄타우로스 사냥꾼이 페이즈 1에 들어간 직후 `Unhandled Exception: EXCEPTION_ACCESS_VIOLATION reading address 0x0000000000000178`, 콜스택 `TSharedFromThis<FAnimNextModuleInstance,1>::AsShared() ← FAnimNextModuleInstance::GetReference() ← FBlendStackCoreTrait::OnBlendInitiated() ← ... FInjectionSiteTrait::PreUpdate() ← FUAFSimplePrePhysicsGraphComponent::PrePhysics()`(Foreground Worker 스레드).
+- 원인: `UTDCharacterAnimationComponent::UseLocomotionClips`는 BeginPlay 이후면 `ApplyBaseAsset`으로 UAF 컴포넌트를 Unregister → SetAsset → Register 한다. 몬스터 생각 단계(페이즈 진입 알림)에서 이를 부르면 이미 예약·실행 중인 PrePhysics UAF 틱이 옛 모듈 인스턴스를 본다. 시작 때(BeginPlay)에는 틱이 없어 안전하다.
+- 해결: 런타임 교체는 시스템을 다시 만들지 않는 `ReplaceWalkAndRunClips`(걷기·달리기 주입 클립과 기준 속도만 바꾸고 현재 이동 자세를 None으로 돌려 다음 갱신에 다시 주입)를 쓴다. 대기(기준 자산) 교체는 런타임에 하지 않는다. 회귀 시험 `TDGame.MonsterAI.MidBoss.CentaurSpeciesSwapsToSwordWhileAnimating`(실제 종 에셋으로 페이즈 전환 — 헤드리스에서 옛 코드가 크래시하는지는 미확인).
+- 범위: `UseLocomotionClips`·`ApplyBaseAsset`을 BeginPlay 이후에 부르는 모든 경로(페이즈 외형, 장비 교체, 형태 변환)
+- 증거: 2026-10-18 `Saved/Logs/TDGame-backup-2026.10.18-09.34.25.log`(크래시 콜스택, UTC 기준 이름), 수정 뒤 PIE `Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/report.json` 전 단계 통과
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

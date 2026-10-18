@@ -907,6 +907,259 @@
    "ragdoll_after_death": false,
    "ragdoll_without_death_clip": true,
    "corpse_sink_seconds": 2.0
+  },
+  {
+   "name": "CentaurHunter",
+   "definition": "Centaur_Hunter",
+   "mesh": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur",
+   "followers": [
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Body_Armor",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Shoulder_Pads",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Bow_Action",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Sheath",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Sword_Idle",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Mane",
+    "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Beard"
+   ],
+   "scale": 0.85,
+   "yaw": -90.0,
+   "radius": 68.0,
+   "half_height": 122.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 174.0,
+   "run_clip_speed": 1115.0,
+   "idle": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_IdleBow"
+   },
+   "walk": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_WalkBow"
+   },
+   "run": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GallopBow"
+   },
+   "hit": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GetHitBow",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_DeathBow"
+   },
+   "abilities": {
+    "Shoot": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_ShootArrowToIdleAiming",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.27,
+     "recovery": 0.35
+    },
+    "Kick": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_LegAttackBow",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.67,
+     "recovery": 0.4
+    },
+    "VolleyReady": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_ShootArrowToIdleAiming",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.27,
+     "recovery": 0.2
+    },
+    "VolleyShot": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_ShootArrowToIdleAiming",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.27,
+     "recovery": 0.2
+    },
+    "Charge": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_IdleSword",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.0,
+     "recovery": 0.0
+    },
+    "SwordSlash": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_attack1Sword",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.45,
+     "recovery": 0.35
+    },
+    "SwordCombo": {
+     "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_2HitComboSword",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.6,
+     "recovery": 0.4
+    }
+   },
+   "corpse_seconds": 10.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5,
+   "phases": {
+    "Sword": {
+     "idle": {
+      "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_IdleSword"
+     },
+     "walk": {
+      "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_WalkSword"
+     },
+     "run": {
+      "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GallopSword"
+     },
+     "hit": {
+      "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_GetHitSword",
+      "rate": 1.25
+     },
+     "death": {
+      "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_DeathSword"
+     },
+     "followers": [
+      "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Body_Armor",
+      "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Shoulder_Pads",
+      "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Bow_idle",
+      "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Sheath",
+      "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Sword_Action",
+      "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Mane",
+      "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Beard"
+     ]
+    }
+   },
+   "channel": {
+    "anim": "/Game/QuadrapedCreatures/Centaur/Animations/ANIM_Centaur_DrawSword",
+    "start": 0.0,
+    "end": 0.0,
+    "rate": 1.0,
+    "impact": 0.0,
+    "recovery": 0.0
+   }
+  },
+  {
+   "name": "GriffonAlpha",
+   "definition": "Griffon_Alpha",
+   "mesh": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon",
+   "followers": [],
+   "scale": 0.6,
+   "yaw": -90.0,
+   "radius": 108.0,
+   "half_height": 114.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 234.0,
+   "run_clip_speed": 935.0,
+   "idle": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Idle"
+   },
+   "walk": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Walk"
+   },
+   "run": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Gallop"
+   },
+   "hit": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_GetHit1",
+    "rate": 1.25
+   },
+   "death": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Death"
+   },
+   "abilities": {
+    "Bite": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_BiteAttack",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.43,
+     "recovery": 0.35
+    },
+    "Claws": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_LeftClawsAttack",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.47,
+     "recovery": 0.4
+    },
+    "Combo": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_2HitComboAttack",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.7,
+     "recovery": 0.45
+    },
+    "Rake3": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_3HitComboAttack",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.7,
+     "recovery": 0.45
+    },
+    "TakeOffGust": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_JumpToFly",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.8,
+     "recovery": 0.0
+    },
+    "DiveClaw": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_FlyStationaryClawsAttack",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.6,
+     "recovery": 0.2
+    },
+    "GlideSwoop": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Swooping",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.4,
+     "recovery": 0.2
+    },
+    "LandingImpact": {
+     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_HitTheGround",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.5,
+     "recovery": 0.2
+    }
+   },
+   "corpse_seconds": 10.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 1.5,
+   "fly_idle": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_FlyStationary"
+   },
+   "land": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_Landing"
+   },
+   "fly_hit": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_FlyGetHitStationary",
+    "rate": 1.25
+   },
+   "stun": {
+    "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_FlyGetHitStationaryToFalling",
+    "start": 0.0,
+    "end": 0.0,
+    "rate": 1.0,
+    "impact": 0.0,
+    "recovery": 0.0
+   }
   }
  ],
  "retarget": {

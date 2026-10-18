@@ -1,0 +1,389 @@
+{
+ "schema": 1,
+ "id": "Centaur_Hunter",
+ "extends": "Centaur_Archer",
+ "role": "Ranged",
+ "boss": true,
+ "stats": {
+  "max_health": 3200,
+  "attack_power": 10,
+  "armor": 10,
+  "move_speed": 430,
+  "team": 2
+ },
+ "think_hz": 12,
+ "inertia": {
+  "switch_ratio": 1.15,
+  "min_hold_seconds": 0.5
+ },
+ "abilities": {
+  "Shoot": {
+   "spell": "DA_TDCentaurHunterArrow",
+   "range": 1400,
+   "cooldown": 2.5,
+   "windup": 1.0
+  },
+  "VolleyShot": {
+   "spell": "DA_TDCentaurHunterVolleyArrow",
+   "range": 1200,
+   "cooldown": 0.1,
+   "windup": 0.55
+  },
+  "VolleyReady": {
+   "spell": "DA_TDCentaurHunterVolleyArrow",
+   "range": 1200,
+   "cooldown": 6.0,
+   "windup": 0.55
+  },
+  "Charge": {
+   "spell": "DA_TDCentaurHunterCharge",
+   "range": 1200,
+   "cooldown": 8.0,
+   "danger": true
+  },
+  "SwordSlash": {
+   "spell": "DA_TDCentaurHunterSwordSlash",
+   "range": 240,
+   "cooldown": 3.0
+  },
+  "SwordCombo": {
+   "spell": "DA_TDCentaurHunterSwordCombo",
+   "range": 260,
+   "cooldown": 5.0
+  }
+ },
+ "sequences": {
+  "Volley": [
+   {
+    "do": "CastAbility",
+    "args": {
+     "ability": "VolleyReady",
+     "lead_target": true
+    }
+   },
+   {
+    "do": "CastAbility",
+    "args": {
+     "ability": "VolleyShot",
+     "lead_target": true
+    }
+   },
+   {
+    "do": "CastAbility",
+    "args": {
+     "ability": "VolleyShot",
+     "lead_target": true
+    }
+   },
+   {
+    "do": "Wait",
+    "args": {
+     "seconds": 0.8
+    }
+   }
+  ],
+  "DrawSword": [
+   {
+    "do": "SummonMinions",
+    "args": {
+     "species": "Barghest",
+     "count": 2,
+     "radius": 900,
+     "seconds": 0.6
+    }
+   },
+   {
+    "do": "Channel",
+    "args": {
+     "seconds": 1.2,
+     "break_ratio": 0.04,
+     "break_stun": 3.0
+    }
+   },
+   {
+    "do": "FaceTarget"
+   }
+  ],
+  "SwordCombo": [
+   {
+    "do": "CastAbility",
+    "args": {
+     "ability": "SwordCombo"
+    }
+   },
+   {
+    "do": "Wait",
+    "args": {
+     "seconds": 1.0
+    }
+   }
+  ]
+ },
+ "actions": [
+  {
+   "id": "KeepDistance",
+   "remove": true
+  },
+  {
+   "id": "Backpedal",
+   "remove": true
+  },
+  {
+   "id": "KeepBand",
+   "do": "MoveToBand",
+   "args": {
+    "target": "Player",
+    "min": 600,
+    "max": 900,
+    "speed_scale": 1.0
+   },
+   "weight": 1.0,
+   "considerations": []
+  },
+  {
+   "id": "Shoot",
+   "do": "CastAbility",
+   "args": {
+    "ability": "Shoot"
+   },
+   "weight": 2.0,
+   "considerations": [
+    {
+     "input": "AbilityReady",
+     "args": {
+      "ability": "Shoot"
+     },
+     "curve": "Binary"
+    },
+    {
+     "input": "LineOfSightToTarget",
+     "curve": "Binary"
+    },
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": 20,
+     "c": 0.25,
+     "range": [
+      0,
+      1600
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Volley",
+   "do": "PlaySequence",
+   "args": {
+    "sequence": "Volley"
+   },
+   "weight": 2.6,
+   "considerations": [
+    {
+     "input": "AbilityReady",
+     "args": {
+      "ability": "VolleyReady"
+     },
+     "curve": "Binary"
+    },
+    {
+     "input": "LineOfSightToTarget",
+     "curve": "Binary"
+    },
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": 20,
+     "c": 0.3,
+     "range": [
+      0,
+      1600
+     ]
+    },
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": -20,
+     "c": 0.75,
+     "range": [
+      0,
+      1600
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Disengage",
+   "do": "MoveAway",
+   "args": {
+    "target": "Player",
+    "speed_scale": 1.2,
+    "seconds": 1.0
+   },
+   "weight": 2.2,
+   "cooldown": 4.0,
+   "considerations": [
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": -25,
+     "c": 0.3,
+     "range": [
+      0,
+      1600
+     ]
+    },
+    {
+     "input": "AbilityReady",
+     "args": {
+      "ability": "Kick"
+     },
+     "curve": "Binary",
+     "invert": true
+    }
+   ]
+  }
+ ],
+ "phases": [
+  {
+   "id": "Sword",
+   "enter_when": {
+    "input": "SelfHealthRatio",
+    "op": "<=",
+    "value": 0.5
+   },
+   "on_enter": "DrawSword",
+   "stats": {
+    "move_speed": 520
+   },
+   "actions": [
+    {
+     "id": "KeepBand",
+     "remove": true
+    },
+    {
+     "id": "Shoot",
+     "remove": true
+    },
+    {
+     "id": "Volley",
+     "remove": true
+    },
+    {
+     "id": "Disengage",
+     "remove": true
+    },
+    {
+     "id": "Approach",
+     "do": "MoveToward",
+     "args": {
+      "target": "Player",
+      "stop_at": 200
+     },
+     "weight": 1.0,
+     "considerations": [
+      {
+       "input": "DistanceToTarget",
+       "curve": "Logistic",
+       "m": 12,
+       "c": 0.14,
+       "range": [
+        0,
+        1600
+       ]
+      }
+     ]
+    },
+    {
+     "id": "Charge",
+     "do": "Charge",
+     "args": {
+      "ability": "Charge",
+      "distance": 1200,
+      "speed": 1500,
+      "wall_stun": 2.5
+     },
+     "weight": 3.0,
+     "considerations": [
+      {
+       "input": "AbilityReady",
+       "args": {
+        "ability": "Charge"
+       },
+       "curve": "Binary"
+      },
+      {
+       "input": "DistanceToTarget",
+       "curve": "Logistic",
+       "m": 15,
+       "c": 0.4,
+       "range": [
+        0,
+        1600
+       ]
+      },
+      {
+       "input": "MinionsAlive",
+       "curve": "Binary",
+       "invert": true
+      }
+     ]
+    },
+    {
+     "id": "SwordCombo",
+     "do": "PlaySequence",
+     "args": {
+      "sequence": "SwordCombo"
+     },
+     "weight": 2.6,
+     "considerations": [
+      {
+       "input": "AbilityReady",
+       "args": {
+        "ability": "SwordCombo"
+       },
+       "curve": "Binary"
+      },
+      {
+       "input": "DistanceToTarget",
+       "curve": "Logistic",
+       "m": -25,
+       "c": 0.2,
+       "range": [
+        0,
+        1600
+       ]
+      }
+     ]
+    },
+    {
+     "id": "SwordSlash",
+     "do": "CastAbility",
+     "args": {
+      "ability": "SwordSlash"
+     },
+     "weight": 2.0,
+     "considerations": [
+      {
+       "input": "AbilityReady",
+       "args": {
+        "ability": "SwordSlash"
+       },
+       "curve": "Binary"
+      },
+      {
+       "input": "DistanceToTarget",
+       "curve": "Logistic",
+       "m": -25,
+       "c": 0.18,
+       "range": [
+        0,
+        1600
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

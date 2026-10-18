@@ -11,6 +11,7 @@
 #include "TDMonsterCharacter.generated.h"
 
 class ATDDamageEntity;
+class UNiagaraComponent;
 class UTDSignificanceComponent;
 class UTDSkillComponent;
 struct FTDDamageContext;
@@ -43,6 +44,8 @@ public:
 	virtual float BeginBodySummon(const FTDMonsterSummonRequest& Request) override;
 	virtual int32 CountBodyMinionsAlive() const override;
 	virtual void NotifyBodyPhaseEntered(int32 PhaseIndex, FName PhaseId) override;
+	virtual void SetBodyChanneling(bool bIsChanneling) override;
+	virtual void SetBodyDashing(bool bIsDashing) override;
 
 	UFUNCTION(BlueprintPure, Category="MonsterAI")
 	UTDMonsterSpeciesAsset* GetSpecies() const { return Species; }
@@ -122,6 +125,12 @@ private:
 	UTDMonsterThinkSubsystem* GetThinkSubsystem() const;
 	void ApplySpeciesBody();
 	void ApplySpeciesFollowerMeshes();
+	void ApplyFollowerMeshes(const TArray<TObjectPtr<USkeletalMesh>>& Meshes);
+	void ApplyPhasePresentation(FName PhaseId);
+	const FTDMonsterPhasePresentation* FindActivePhasePresentation() const;
+	const FTDMonsterAnimClip& SelectHitClip() const;
+	const FTDMonsterAnimClip& SelectDeathClip() const;
+	void RequestChannelEffect();
 	USkeletalMeshComponent* CreateFollowerMeshComponent();
 	void ApplySpeciesAnimation();
 	void StartMonsterBrain();
@@ -166,6 +175,11 @@ private:
 	TArray<TWeakObjectPtr<ATDMonsterCharacter>> SummonedMinions;
 	TArray<TSharedPtr<FStreamableHandle>> SummonLoadHandles;
 	TArray<FTimerHandle> SummonTimerHandles;
+	FName ActivePresentationPhaseId;
+	TSharedPtr<FStreamableHandle> ChannelEffectHandle;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UNiagaraComponent> ChannelEffectComponent;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<USkeletalMeshComponent>> FollowerMeshComponents;

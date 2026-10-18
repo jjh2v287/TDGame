@@ -427,6 +427,47 @@ namespace
 			Register(OutAttacks, Definition);
 		}
 	}
+
+	UTDDamageDefinition* CreateFastArrow(UObject* Outer, const TCHAR* Name, const float AttackRatio)
+	{
+		UTDDamageDefinition* Definition = CreateArrow(Outer, Name, 0.05f, AttackRatio);
+		Definition->ProjectileSpeed = 2600.f;
+		Definition->ProjectileRadius = 22.f;
+		Definition->Lifetime = 0.05f + 0.7f;
+		return Definition;
+	}
+
+	UTDDamageDefinition* CreateComboAttack(UObject* Outer, const TCHAR* Name, const FTDAreaFootprint& Footprint, const float WindupSeconds, const float AttackRatio, const int32 HitCount, const float IntervalSeconds)
+	{
+		UTDDamageDefinition* Definition = CreateShapedAttack(Outer, Name, Footprint, WindupSeconds, AttackRatio, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+		SetRepeatingHits(Definition, WindupSeconds + IntervalSeconds * (HitCount - 1) + 0.1f, IntervalSeconds);
+		Definition->MaxHitsPerTarget = HitCount;
+		return Definition;
+	}
+
+	void CreateMidBossAttacks(UObject* Outer, TMap<FName, UTDDamageDefinition*>& OutAttacks)
+	{
+		UTDDamageDefinition* HunterArrow = CreateFastArrow(Outer, TEXT("DA_TDCentaurHunterArrow"), 1.5f);
+		UTDDamageDefinition* VolleyArrow = CreateFastArrow(Outer, TEXT("DA_TDCentaurHunterVolleyArrow"), 0.8f);
+		UTDDamageDefinition* HunterCharge = CreateShapedAttack(Outer, TEXT("DA_TDCentaurHunterCharge"), MakeLineFootprint(1200.f, 100.f), 1.4f, 2.2f, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+		HunterCharge->bRequireLineOfSight = true;
+		UTDDamageDefinition* SwordSlash = CreateShapedAttack(Outer, TEXT("DA_TDCentaurHunterSwordSlash"), MakeConeFootprint(240.f, 45.f), 0.6f, 1.4f, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+		UTDDamageDefinition* SwordCombo = CreateComboAttack(Outer, TEXT("DA_TDCentaurHunterSwordCombo"), MakeConeFootprint(260.f, 45.f), 0.7f, 1.2f, 2, 0.45f);
+
+		UTDDamageDefinition* GriffonBite = CreateShapedAttack(Outer, TEXT("DA_TDGriffonAlphaBite"), MakeCircleFootprint(130.f), 0.6f, 1.4f, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+		UTDDamageDefinition* GriffonClaw = CreateShapedAttack(Outer, TEXT("DA_TDGriffonAlphaClaw"), MakeConeFootprint(220.f, 60.f), 0.7f, 1.2f, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+		UTDDamageDefinition* RakeTwo = CreateComboAttack(Outer, TEXT("DA_TDGriffonAlphaRakeTwo"), MakeLineFootprint(400.f, 100.f), 0.8f, 1.1f, 2, 0.4f);
+		UTDDamageDefinition* RakeThree = CreateComboAttack(Outer, TEXT("DA_TDGriffonAlphaRakeThree"), MakeLineFootprint(400.f, 100.f), 0.8f, 1.1f, 3, 0.4f);
+		UTDDamageDefinition* TakeOffGust = CreateShapedAttack(Outer, TEXT("DA_TDGriffonAlphaTakeOffGust"), MakeCircleFootprint(250.f), 0.8f, 0.5f, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+		UTDDamageDefinition* DiveClaw = CreateShapedAttack(Outer, TEXT("DA_TDGriffonAlphaDiveClaw"), MakeCircleFootprint(250.f), 1.5f, 2.2f, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+		UTDDamageDefinition* GlideSwoop = CreateShapedAttack(Outer, TEXT("DA_TDGriffonAlphaGlideSwoop"), MakeLineFootprint(1600.f, 150.f), 1.6f, 2.f, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+		UTDDamageDefinition* LandingImpact = CreateShapedAttack(Outer, TEXT("DA_TDGriffonAlphaLandingImpact"), MakeCircleFootprint(300.f), 1.2f, 1.5f, ETDDamageElement::Physical, ETDTelegraphStyle::Danger);
+
+		for (UTDDamageDefinition* Definition : { HunterArrow, VolleyArrow, HunterCharge, SwordSlash, SwordCombo, GriffonBite, GriffonClaw, RakeTwo, RakeThree, TakeOffGust, DiveClaw, GlideSwoop, LandingImpact })
+		{
+			Register(OutAttacks, Definition);
+		}
+	}
 }
 
 void TDMonsterAttackCatalog::CreateAttacks(UObject* Outer, TMap<FName, UTDDamageDefinition*>& OutAttacks)
@@ -456,6 +497,7 @@ void TDMonsterAttackCatalog::CreateAttacks(UObject* Outer, TMap<FName, UTDDamage
 	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDHeavySlam"), 280.f, 1.f, 2.f, ETDDamageElement::Physical, DangerColor));
 	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDStaffSpin"), 230.f, 0.6f, 1.5f, ETDDamageElement::Physical, DangerColor));
 	CreateDragonAttacks(Outer, OutAttacks);
+	CreateMidBossAttacks(Outer, OutAttacks);
 }
 
 void TDMonsterAttackCatalog::ApplyTelegraph(UTDDamageDefinition& Definition, const ETDTelegraphStyle Style)

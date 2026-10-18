@@ -403,6 +403,10 @@ void UTDMonsterThinkSubsystem::NotifyMonsterDamaged(const FTDMonsterSlotHandle H
 	Engage(Handle.Index);
 	Brain.EngageLockSteps = TDMonsterAI::SecondsToSteps(DamageEngageSeconds);
 	const float MaxHealth = Brain.Definition->GetStatsForPhase(Brain.PhaseIndex).MaxHealth;
+	if (FTDMonsterActionExecutor::ApplyBreakDamage(Brain, Damage, MaxHealth, SourceLocation, MakeContext(Handle.Index)))
+	{
+		return;
+	}
 	const bool bIsHeavyHit = Damage >= MaxHealth * StaggerHealthRatio;
 	if (!bIsHeavyHit || Brain.bIsFrozen || Brain.State == ETDMonsterFsmState::Stagger)
 	{
@@ -1336,7 +1340,7 @@ void UTDMonsterThinkSubsystem::ApplySeparation()
 	for (const int32 SlotIndex : OrderedSlots)
 	{
 		FTDMonsterMoveIntent& Intent = Intents[SlotIndex];
-		if (Intent.Direction.IsNearlyZero())
+		if (Intent.Direction.IsNearlyZero() || Brains[SlotIndex].ChargeStage == ETDMonsterChargeStage::Dash)
 		{
 			continue;
 		}

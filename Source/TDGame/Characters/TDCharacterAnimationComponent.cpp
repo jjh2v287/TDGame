@@ -287,6 +287,24 @@ void UTDCharacterAnimationComponent::UseLocomotionClips(const FTDLocomotionClipS
 	}
 }
 
+void UTDCharacterAnimationComponent::ReplaceWalkAndRunClips(const FTDLocomotionClipSet& Clips)
+{
+	if (Clips.Walk)
+	{
+		LocomotionClips.Walk = Clips.Walk;
+		LocomotionClips.WalkClipSpeed = Clips.WalkClipSpeed;
+	}
+	if (Clips.Run)
+	{
+		LocomotionClips.Run = Clips.Run;
+		LocomotionClips.RunClipSpeed = Clips.RunClipSpeed;
+	}
+	if (CurrentLocomotionPose == ETDLocomotionPose::Walk || CurrentLocomotionPose == ETDLocomotionPose::Run)
+	{
+		CurrentLocomotionPose = ETDLocomotionPose::None;
+	}
+}
+
 void UTDCharacterAnimationComponent::UseAirborneClips(const FTDAirborneClipSet& Clips)
 {
 	AirborneClips = Clips;

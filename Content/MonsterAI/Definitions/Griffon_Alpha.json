@@ -1,0 +1,510 @@
+{
+ "schema": 1,
+ "id": "Griffon_Alpha",
+ "extends": "Griffon",
+ "role": "Melee",
+ "boss": true,
+ "stats": {
+  "max_health": 3600,
+  "attack_power": 10,
+  "armor": 15,
+  "move_speed": 500,
+  "team": 2
+ },
+ "think_hz": 12,
+ "inertia": {
+  "switch_ratio": 1.15,
+  "min_hold_seconds": 0.4
+ },
+ "abilities": {
+  "Bite": {
+   "spell": "DA_TDGriffonAlphaBite",
+   "range": 200,
+   "cooldown": 3.0,
+   "stance": "ground"
+  },
+  "Claws": {
+   "spell": "DA_TDGriffonAlphaClaw",
+   "range": 220,
+   "cooldown": 4.0,
+   "stance": "ground"
+  },
+  "Combo": {
+   "spell": "DA_TDGriffonAlphaRakeTwo",
+   "range": 380,
+   "cooldown": 8.0,
+   "stance": "ground"
+  },
+  "Rake3": {
+   "spell": "DA_TDGriffonAlphaRakeThree",
+   "range": 380,
+   "cooldown": 8.0,
+   "stance": "ground"
+  },
+  "TakeOffGust": {
+   "spell": "DA_TDGriffonAlphaTakeOffGust",
+   "range": 250,
+   "cooldown": 30.0,
+   "stance": "ground"
+  },
+  "DiveClaw": {
+   "spell": "DA_TDGriffonAlphaDiveClaw",
+   "range": 1600,
+   "cooldown": 3.5,
+   "stance": "air",
+   "danger": true
+  },
+  "GlideSwoop": {
+   "spell": "DA_TDGriffonAlphaGlideSwoop",
+   "range": 1600,
+   "cooldown": 7.0,
+   "stance": "air",
+   "danger": true
+  },
+  "LandingImpact": {
+   "spell": "DA_TDGriffonAlphaLandingImpact",
+   "range": 300,
+   "cooldown": 0.1,
+   "stance": "ground"
+  }
+ },
+ "sequences": {
+  "RakeComboTwo": [
+   {
+    "do": "CastAbility",
+    "args": {
+     "ability": "Combo"
+    }
+   },
+   {
+    "do": "Wait",
+    "args": {
+     "seconds": 1.3
+    }
+   }
+  ],
+  "RakeComboThree": [
+   {
+    "do": "CastAbility",
+    "args": {
+     "ability": "Rake3"
+    }
+   },
+   {
+    "do": "Wait",
+    "args": {
+     "seconds": 1.3
+    }
+   }
+  ],
+  "TakeOffRaid": [
+   {
+    "do": "CastAbility",
+    "args": {
+     "ability": "TakeOffGust"
+    }
+   },
+   {
+    "do": "TakeOff",
+    "args": {
+     "altitude": 120,
+     "seconds": 1.2,
+     "shootdown_ratio": 0.03,
+     "downed_seconds": 5.6
+    }
+   }
+  ],
+  "DiveAndHover": [
+   {
+    "do": "Charge",
+    "args": {
+     "ability": "DiveClaw",
+     "distance": 0,
+     "speed": 1600
+    }
+   },
+   {
+    "do": "Wait",
+    "args": {
+     "seconds": 1.0
+    }
+   }
+  ],
+  "LandAndRest": [
+   {
+    "do": "Land",
+    "args": {
+     "seconds": 1.2
+    }
+   },
+   {
+    "do": "CastAbility",
+    "args": {
+     "ability": "LandingImpact"
+    }
+   },
+   {
+    "do": "Wait",
+    "args": {
+     "seconds": 2.5
+    }
+   }
+  ]
+ },
+ "actions": [
+  {
+   "id": "Approach",
+   "do": "MoveToward",
+   "args": {
+    "target": "Player",
+    "stop_at": 150
+   },
+   "weight": 1.0,
+   "considerations": [
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": 14,
+     "c": 0.12,
+     "range": [
+      0,
+      1600
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Bite",
+   "do": "CastAbility",
+   "args": {
+    "ability": "Bite"
+   },
+   "weight": 2.4,
+   "considerations": [
+    {
+     "input": "AbilityReady",
+     "args": {
+      "ability": "Bite"
+     },
+     "curve": "Binary"
+    },
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": -35,
+     "c": 0.13,
+     "range": [
+      0,
+      1600
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Claws",
+   "do": "CastAbility",
+   "args": {
+    "ability": "Claws"
+   },
+   "weight": 2.2,
+   "considerations": [
+    {
+     "input": "AbilityReady",
+     "args": {
+      "ability": "Claws"
+     },
+     "curve": "Binary"
+    },
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": -30,
+     "c": 0.15,
+     "range": [
+      0,
+      1600
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Combo",
+   "do": "PlaySequence",
+   "args": {
+    "sequence": "RakeComboTwo"
+   },
+   "weight": 2.8,
+   "considerations": [
+    {
+     "input": "AbilityReady",
+     "args": {
+      "ability": "Combo"
+     },
+     "curve": "Binary"
+    },
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": -25,
+     "c": 0.22,
+     "range": [
+      0,
+      1600
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Circle",
+   "do": "MoveToBand",
+   "args": {
+    "target": "Player",
+    "min": 260,
+    "max": 380,
+    "speed_scale": 0.6
+   },
+   "weight": 1.2,
+   "considerations": [
+    {
+     "input": "AbilityReady",
+     "args": {
+      "ability": "Bite"
+     },
+     "curve": "Binary",
+     "invert": true
+    },
+    {
+     "input": "DistanceToTarget",
+     "curve": "Logistic",
+     "m": -20,
+     "c": 0.3,
+     "range": [
+      0,
+      1600
+     ]
+    }
+   ]
+  }
+ ],
+ "phases": [
+  {
+   "id": "Sky",
+   "enter_when": {
+    "input": "SelfHealthRatio",
+    "op": "<=",
+    "value": 0.6
+   },
+   "on_enter": "TakeOffRaid",
+   "actions": [
+    {
+     "id": "Combo",
+     "remove": true
+    },
+    {
+     "id": "Approach",
+     "remove": true
+    },
+    {
+     "id": "Circle",
+     "remove": true
+    },
+    {
+     "id": "ApproachOnFoot",
+     "do": "MoveToward",
+     "args": {
+      "target": "Player",
+      "stop_at": 150
+     },
+     "weight": 1.0,
+     "considerations": [
+      {
+       "input": "SelfIsFlying",
+       "curve": "Binary",
+       "invert": true
+      },
+      {
+       "input": "DistanceToTarget",
+       "curve": "Logistic",
+       "m": 14,
+       "c": 0.12,
+       "range": [
+        0,
+        1600
+       ]
+      }
+     ]
+    },
+    {
+     "id": "CircleOnFoot",
+     "do": "MoveToBand",
+     "args": {
+      "target": "Player",
+      "min": 260,
+      "max": 380,
+      "speed_scale": 0.6
+     },
+     "weight": 1.2,
+     "considerations": [
+      {
+       "input": "SelfIsFlying",
+       "curve": "Binary",
+       "invert": true
+      },
+      {
+       "input": "AbilityReady",
+       "args": {
+        "ability": "Bite"
+       },
+       "curve": "Binary",
+       "invert": true
+      },
+      {
+       "input": "DistanceToTarget",
+       "curve": "Logistic",
+       "m": -20,
+       "c": 0.3,
+       "range": [
+        0,
+        1600
+       ]
+      }
+     ]
+    },
+    {
+     "id": "RakeComboThree",
+     "do": "PlaySequence",
+     "args": {
+      "sequence": "RakeComboThree"
+     },
+     "weight": 2.8,
+     "considerations": [
+      {
+       "input": "AbilityReady",
+       "args": {
+        "ability": "Rake3"
+       },
+       "curve": "Binary"
+      },
+      {
+       "input": "DistanceToTarget",
+       "curve": "Logistic",
+       "m": -25,
+       "c": 0.22,
+       "range": [
+        0,
+        1600
+       ]
+      }
+     ]
+    },
+    {
+     "id": "TakeOffRaid",
+     "do": "PlaySequence",
+     "args": {
+      "sequence": "TakeOffRaid"
+     },
+     "weight": 4.0,
+     "considerations": [
+      {
+       "input": "AbilityReady",
+       "args": {
+        "ability": "TakeOffGust"
+       },
+       "curve": "Binary"
+      },
+      {
+       "input": "SelfIsFlying",
+       "curve": "Binary",
+       "invert": true
+      }
+     ]
+    },
+    {
+     "id": "Hover",
+     "do": "MoveToBand",
+     "args": {
+      "target": "Player",
+      "min": 450,
+      "max": 700,
+      "speed_scale": 0.8
+     },
+     "weight": 1.0,
+     "considerations": [
+      {
+       "input": "SelfIsFlying",
+       "curve": "Binary"
+      }
+     ]
+    },
+    {
+     "id": "DiveClaw",
+     "do": "PlaySequence",
+     "args": {
+      "sequence": "DiveAndHover"
+     },
+     "weight": 3.0,
+     "considerations": [
+      {
+       "input": "SelfIsFlying",
+       "curve": "Binary"
+      },
+      {
+       "input": "AbilityReady",
+       "args": {
+        "ability": "DiveClaw"
+       },
+       "curve": "Binary"
+      }
+     ]
+    },
+    {
+     "id": "GlideSwoop",
+     "do": "Charge",
+     "args": {
+      "ability": "GlideSwoop",
+      "distance": 1100,
+      "speed": 1800
+     },
+     "weight": 3.4,
+     "considerations": [
+      {
+       "input": "SelfIsFlying",
+       "curve": "Binary"
+      },
+      {
+       "input": "AbilityReady",
+       "args": {
+        "ability": "GlideSwoop"
+       },
+       "curve": "Binary"
+      }
+     ]
+    },
+    {
+     "id": "LandAndRest",
+     "do": "PlaySequence",
+     "args": {
+      "sequence": "LandAndRest"
+     },
+     "weight": 6.0,
+     "considerations": [
+      {
+       "input": "SelfIsFlying",
+       "curve": "Binary"
+      },
+      {
+       "input": "FlightStateSeconds",
+       "curve": "Logistic",
+       "m": 60,
+       "c": 0.4,
+       "range": [
+        0,
+        30
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

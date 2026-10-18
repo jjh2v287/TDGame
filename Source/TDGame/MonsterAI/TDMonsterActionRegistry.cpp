@@ -23,11 +23,15 @@ namespace
 			{ TEXT("PlayEmote"), ETDMonsterPrimitive::PlayEmote, ETDMonsterFsmState::Idle, false,
 				{ { TEXT("seconds"), ETDActionArgKind::Seconds } } },
 			{ TEXT("TakeOff"), ETDMonsterPrimitive::TakeOff, ETDMonsterFsmState::Idle, true,
-				{ { TEXT("altitude"), ETDActionArgKind::Number }, { TEXT("seconds"), ETDActionArgKind::Seconds } } },
+				{ { TEXT("altitude"), ETDActionArgKind::Number }, { TEXT("seconds"), ETDActionArgKind::Seconds }, { TEXT("shootdown_ratio"), ETDActionArgKind::Number }, { TEXT("downed_seconds"), ETDActionArgKind::Seconds } } },
 			{ TEXT("Land"), ETDMonsterPrimitive::Land, ETDMonsterFsmState::Idle, true,
 				{ { TEXT("seconds"), ETDActionArgKind::Seconds } } },
 			{ TEXT("SummonMinions"), ETDMonsterPrimitive::SummonMinions, ETDMonsterFsmState::Idle, false,
-				{ { TEXT("species"), ETDActionArgKind::Species, true }, { TEXT("count"), ETDActionArgKind::Number }, { TEXT("radius"), ETDActionArgKind::Number }, { TEXT("seconds"), ETDActionArgKind::Seconds } } }
+				{ { TEXT("species"), ETDActionArgKind::Species, true }, { TEXT("count"), ETDActionArgKind::Number }, { TEXT("radius"), ETDActionArgKind::Number }, { TEXT("seconds"), ETDActionArgKind::Seconds } } },
+			{ TEXT("Charge"), ETDMonsterPrimitive::Charge, ETDMonsterFsmState::Cast, true,
+				{ { TEXT("ability"), ETDActionArgKind::Ability, true }, { TEXT("distance"), ETDActionArgKind::Number }, { TEXT("speed"), ETDActionArgKind::Number }, { TEXT("wall_stun"), ETDActionArgKind::Seconds } } },
+			{ TEXT("Channel"), ETDMonsterPrimitive::Channel, ETDMonsterFsmState::Idle, true,
+				{ { TEXT("seconds"), ETDActionArgKind::Seconds }, { TEXT("break_ratio"), ETDActionArgKind::Number }, { TEXT("break_stun"), ETDActionArgKind::Seconds } } }
 		};
 		return Table;
 	}

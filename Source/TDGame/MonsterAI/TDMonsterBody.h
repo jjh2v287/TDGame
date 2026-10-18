@@ -56,4 +56,6 @@ public:
 	virtual float BeginBodySummon(const FTDMonsterSummonRequest& Request) = 0;
 	virtual int32 CountBodyMinionsAlive() const = 0;
 	virtual void NotifyBodyPhaseEntered(int32 PhaseIndex, FName PhaseId) = 0;
+	virtual void SetBodyChanneling(bool bIsChanneling) = 0;
+	virtual void SetBodyDashing(bool bIsDashing) = 0;
 };

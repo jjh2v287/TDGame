@@ -755,6 +755,11 @@ namespace
 					Reader.Error(ArgPath, FString::Printf(TEXT("must be a whole number from 1 to %d"), MaxSummonCount));
 					return;
 				}
+				if ((ArgName == TEXT("break_ratio") || ArgName == TEXT("shootdown_ratio")) && (Number <= 0.f || Number > 1.f))
+				{
+					Reader.Error(ArgPath, TEXT("expected a ratio of maximum health above 0 and at most 1"));
+					return;
+				}
 				if (Number < 0.f)
 				{
 					Reader.Error(ArgPath, TEXT("must be >= 0"));
@@ -844,6 +849,31 @@ namespace
 			if (ArgName == TEXT("radius"))
 			{
 				OutArgs.Radius = Number;
+				return;
+			}
+			if (ArgName == TEXT("distance"))
+			{
+				OutArgs.Distance = Number;
+				return;
+			}
+			if (ArgName == TEXT("speed"))
+			{
+				OutArgs.Speed = Number;
+				return;
+			}
+			if (ArgName == TEXT("wall_stun") || ArgName == TEXT("break_stun") || ArgName == TEXT("downed_seconds"))
+			{
+				OutArgs.StunSeconds = Number;
+				return;
+			}
+			if (ArgName == TEXT("break_ratio"))
+			{
+				OutArgs.BreakRatio = Number;
+				return;
+			}
+			if (ArgName == TEXT("shootdown_ratio"))
+			{
+				OutArgs.ShootdownRatio = Number;
 			}
 		}
 

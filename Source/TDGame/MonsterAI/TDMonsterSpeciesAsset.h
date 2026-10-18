@@ -36,6 +36,30 @@ struct TDGAME_API FTDMonsterAnimClip
 	}
 };
 
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDMonsterPhasePresentation
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation")
+	FTDMonsterAnimClip Idle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation")
+	FTDMonsterAnimClip Walk;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation")
+	FTDMonsterAnimClip Run;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation")
+	FTDMonsterAnimClip Hit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation")
+	FTDMonsterAnimClip Death;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Body", meta=(ToolTip="Replaces the species follower meshes from this phase on; leave empty to keep them."))
+	TArray<TObjectPtr<USkeletalMesh>> FollowerMeshes;
+};
+
 UCLASS(BlueprintType)
 class TDGAME_API UTDMonsterSpeciesAsset : public UPrimaryDataAsset
 {
@@ -101,6 +125,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Hit reaction while flying; falls back to Hit."))
 	FTDMonsterAnimClip FlyHitClip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Played while channelling an interruptible move such as drawing a weapon or roaring."))
+	FTDMonsterAnimClip ChannelClip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Played for long stuns such as a broken channel, a charge into a wall or a shoot-down; falls back to Hit."))
+	FTDMonsterAnimClip StunClip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Keyed by the phase id in the monster definition JSON; replaces locomotion, hit and death clips and follower meshes from that phase on."))
+	TMap<FName, FTDMonsterPhasePresentation> PhasePresentations;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death")
 	bool bUseRagdollWithoutDeathClip = true;

@@ -36,11 +36,22 @@ public:
 	static constexpr int32 FaceTargetSteps = 8;
 	static constexpr int32 RetreatCorneredSteps = 24;
 	static constexpr float RetreatProgressCm = 30.f;
+	static constexpr float MinimumChargeDistanceCm = 100.f;
+	static constexpr float ChargeOvershootCm = 600.f;
+	static constexpr float DefaultChargeSpeedCm = 1400.f;
+	static constexpr float ChargeOverrunSeconds = 0.5f;
+	static constexpr int32 ChargeGraceSteps = 8;
+	static constexpr int32 ChargeStallLimitSteps = 6;
+	static constexpr float ChargeStallProgressRatio = 0.25f;
+	static constexpr float DefaultChannelSeconds = 1.f;
+	static constexpr float ShootdownLandingSeconds = 0.6f;
 
 	static void ResetForDefinition(FTDMonsterBrainFragment& Brain);
 	static void ApplyDecision(FTDMonsterBrainFragment& Brain, const FTDBrainDecision& Decision, const FTDMonsterStepContext& Context);
 	static void EnterPhase(FTDMonsterBrainFragment& Brain, int32 NewPhaseIndex, const FTDMonsterStepContext& Context);
 	static void EnterStagger(FTDMonsterBrainFragment& Brain, const FVector& SourceLocation, const FTDMonsterStepContext& Context);
+	static void EnterStagger(FTDMonsterBrainFragment& Brain, const FVector& SourceLocation, const FTDMonsterStepContext& Context, float Seconds);
+	static bool ApplyBreakDamage(FTDMonsterBrainFragment& Brain, float Damage, float MaxHealth, const FVector& SourceLocation, const FTDMonsterStepContext& Context);
 	static void InterruptActivity(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
 	static void BeginRetreat(FTDMonsterBrainFragment& Brain, int32 Steps, float SpeedScale, float HoldDistanceCm, const FTDMonsterStepContext& Context);
 	static void TickCounters(FTDMonsterBrainFragment& Brain);
@@ -53,6 +64,13 @@ private:
 	static void StartTakeOff(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
 	static void StartLand(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
 	static void StartSummonMinions(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
+	static void ArmShootdown(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
+	static bool StartCharge(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
+	static void BeginChargeDash(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
+	static FTDMonsterMoveIntent StepChargeDash(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
+	static void FinishCharge(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
+	static void StartChannel(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
+	static void FinishChannel(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
 	static void StartSequence(FTDMonsterBrainFragment& Brain, int32 SequenceIndex, const FTDMonsterStepContext& Context);
 	static void CompleteActivity(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
 	static void ResetRetreatTracking(FTDMonsterBrainFragment& Brain);

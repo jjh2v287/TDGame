@@ -1,0 +1,662 @@
+{
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 900.0,
+ "level": 30,
+ "passed": true,
+ "bosses": {
+  "CentaurHunter": {
+   "boss": "CentaurHunter",
+   "species_asset": "DA_TDMonster_CentaurHunter",
+   "definition_id": "Centaur_Hunter",
+   "definition_seen": "Centaur_Hunter",
+   "passed": true,
+   "error": null,
+   "checks": {
+    "phase_order": true,
+    "definition_id": true,
+    "entity_names_readable": true,
+    "screenshots": true
+   },
+   "stages": {
+    "spawn": {
+     "passed": true,
+     "start": 1.97,
+     "end": 6.78,
+     "elapsed": 4.81,
+     "samples": 2
+    },
+    "1_bow": {
+     "passed": true,
+     "start": 6.78,
+     "end": 10.95,
+     "elapsed": 4.17,
+     "samples": 3,
+     "phases": [
+      0
+     ],
+     "minions_peak": 0,
+     "peak_altitude_cm": 0.0,
+     "matched_definitions": [
+      "DA_TDCentaurHunterVolleyArrow"
+     ]
+    },
+    "2_draw_sword": {
+     "passed": true,
+     "start": 10.95,
+     "end": 14.02,
+     "elapsed": 3.07,
+     "samples": 1,
+     "phases": [
+      1
+     ],
+     "minions_peak": 2,
+     "peak_altitude_cm": -0.8,
+     "lowered_health": 1536.0,
+     "lowered_reached": true
+    },
+    "minions_cleared": {
+     "passed": true,
+     "start": 14.02,
+     "end": 15.33,
+     "elapsed": 1.31,
+     "samples": 1,
+     "killed": 2
+    },
+    "3_sword": {
+     "passed": true,
+     "start": 15.33,
+     "end": 17.61,
+     "elapsed": 2.28,
+     "samples": 1,
+     "phases": [
+      1
+     ],
+     "minions_peak": 0,
+     "peak_altitude_cm": -0.8,
+     "matched_definitions": [
+      "DA_TDCentaurHunterCharge"
+     ]
+    },
+    "4_death": {
+     "passed": true,
+     "start": 17.61,
+     "end": 24.2,
+     "elapsed": 6.59,
+     "samples": 2
+    }
+   },
+   "phase_first_seen": {
+    "0": 6.78,
+    "1": 12.33
+   },
+   "phase_transitions": [
+    {
+     "from": 0,
+     "to": 1,
+     "t": 12.33
+    }
+   ],
+   "start_z": 125.0,
+   "max_altitude_cm": 0.0,
+   "minions_max": 2,
+   "observed_definitions": [
+    "DA_TDCentaurHunterCharge",
+    "DA_TDCentaurHunterVolleyArrow",
+    "DA_TDCentaurHunterVolleyArrow_Windup_0"
+   ],
+   "definition_breakdown": {
+    "DA_TDCentaurHunterVolleyArrow": {
+     "samples": 2,
+     "max_concurrent": 1
+    },
+    "DA_TDCentaurHunterVolleyArrow_Windup_0": {
+     "samples": 1,
+     "max_concurrent": 1
+    },
+    "DA_TDCentaurHunterCharge": {
+     "samples": 2,
+     "max_concurrent": 1
+    }
+   },
+   "player_min_health": 942.7999877929688,
+   "player_max_health": 1000.0,
+   "player_heal_count": 0,
+   "sample_errors": 0,
+   "screenshots": {
+    "1_bow": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/CentaurHunter_1_bow.png",
+    "2_draw_sword": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/CentaurHunter_2_draw_sword.png",
+    "3_sword": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/CentaurHunter_3_sword.png",
+    "4_death": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/CentaurHunter_4_death.png"
+   },
+   "samples": [
+    {
+     "t": 2.62,
+     "boss_found": false,
+     "alive": false,
+     "phase": null,
+     "flying": null,
+     "health_ratio": null,
+     "z": null,
+     "altitude_cm": null,
+     "player_health": 1000.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 6.78,
+     "boss_found": true,
+     "alive": true,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 1.0,
+     "z": 125.0,
+     "altitude_cm": 0.0,
+     "player_health": 1000.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDCentaurHunterVolleyArrow": 1
+     }
+    },
+    {
+     "t": 7.45,
+     "boss_found": true,
+     "alive": true,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 1.0,
+     "z": 125.0,
+     "altitude_cm": 0.0,
+     "player_health": 992.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 8.12,
+     "boss_found": true,
+     "alive": true,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 1.0,
+     "z": 125.0,
+     "altitude_cm": 0.0,
+     "player_health": 992.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDCentaurHunterVolleyArrow_Windup_0": 1
+     }
+    },
+    {
+     "t": 12.33,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": false,
+     "health_ratio": 0.48,
+     "z": 124.2,
+     "altitude_cm": -0.8,
+     "player_health": 976.0,
+     "player_max_health": 1000.0,
+     "minions": 2,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 15.33,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": false,
+     "health_ratio": 0.48,
+     "z": 124.2,
+     "altitude_cm": -0.8,
+     "player_health": 964.7999877929688,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDCentaurHunterCharge": 1
+     }
+    },
+    {
+     "t": 18.92,
+     "boss_found": true,
+     "alive": false,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 0.0,
+     "z": 124.2,
+     "altitude_cm": -0.8,
+     "player_health": 942.7999877929688,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 24.2,
+     "boss_found": true,
+     "alive": false,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 0.0,
+     "z": 124.2,
+     "altitude_cm": -0.8,
+     "player_health": 942.7999877929688,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    }
+   ]
+  },
+  "GriffonAlpha": {
+   "boss": "GriffonAlpha",
+   "species_asset": "DA_TDMonster_GriffonAlpha",
+   "definition_id": "Griffon_Alpha",
+   "definition_seen": "Griffon_Alpha",
+   "passed": true,
+   "error": null,
+   "checks": {
+    "phase_order": true,
+    "definition_id": true,
+    "entity_names_readable": true,
+    "screenshots": true
+   },
+   "stages": {
+    "spawn": {
+     "passed": true,
+     "start": 1.94,
+     "end": 2.59,
+     "elapsed": 0.65,
+     "samples": 1
+    },
+    "1_ground": {
+     "passed": true,
+     "start": 2.59,
+     "end": 5.52,
+     "elapsed": 2.93,
+     "samples": 2,
+     "phases": [
+      0
+     ],
+     "minions_peak": 0,
+     "peak_altitude_cm": 0.0,
+     "matched_definitions": [
+      "DA_TDGriffonAlphaRakeTwo"
+     ]
+    },
+    "2_takeoff": {
+     "passed": true,
+     "start": 5.52,
+     "end": 10.41,
+     "elapsed": 4.89,
+     "samples": 4,
+     "phases": [
+      1
+     ],
+     "minions_peak": 0,
+     "peak_altitude_cm": 81.3,
+     "lowered_health": 2088.0,
+     "lowered_reached": true
+    },
+    "3_air_attack": {
+     "passed": true,
+     "start": 10.41,
+     "end": 13.94,
+     "elapsed": 3.53,
+     "samples": 3,
+     "phases": [
+      1
+     ],
+     "minions_peak": 0,
+     "peak_altitude_cm": 201.9,
+     "matched_definitions": [
+      "DA_TDGriffonAlphaDiveClaw"
+     ]
+    },
+    "4_landed": {
+     "passed": true,
+     "start": 13.94,
+     "end": 23.86,
+     "elapsed": 9.92,
+     "samples": 12,
+     "landed_at": 21.73,
+     "flying_flag_at_landing": false
+    },
+    "5_death": {
+     "passed": true,
+     "start": 23.86,
+     "end": 30.44,
+     "elapsed": 6.58,
+     "samples": 2
+    }
+   },
+   "phase_first_seen": {
+    "0": 2.59,
+    "1": 6.83
+   },
+   "phase_transitions": [
+    {
+     "from": 0,
+     "to": 1,
+     "t": 6.83
+    }
+   ],
+   "start_z": 116.14999413490295,
+   "max_altitude_cm": 201.9,
+   "minions_max": 0,
+   "observed_definitions": [
+    "DA_TDGriffonAlphaDiveClaw",
+    "DA_TDGriffonAlphaGlideSwoop",
+    "DA_TDGriffonAlphaRakeTwo",
+    "DA_TDGriffonAlphaTakeOffGust"
+   ],
+   "definition_breakdown": {
+    "DA_TDGriffonAlphaRakeTwo": {
+     "samples": 1,
+     "max_concurrent": 1
+    },
+    "DA_TDGriffonAlphaTakeOffGust": {
+     "samples": 1,
+     "max_concurrent": 1
+    },
+    "DA_TDGriffonAlphaDiveClaw": {
+     "samples": 4,
+     "max_concurrent": 1
+    },
+    "DA_TDGriffonAlphaGlideSwoop": {
+     "samples": 3,
+     "max_concurrent": 1
+    }
+   },
+   "player_min_health": 894.0,
+   "player_max_health": 1000.0,
+   "player_heal_count": 0,
+   "sample_errors": 0,
+   "screenshots": {
+    "1_ground": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/GriffonAlpha_1_ground.png",
+    "2_takeoff": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/GriffonAlpha_2_takeoff.png",
+    "3_air_attack": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/GriffonAlpha_3_air_attack.png",
+    "4_landed": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/GriffonAlpha_4_landed.png",
+    "5_death": "Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/GriffonAlpha_5_death.png"
+   },
+   "samples": [
+    {
+     "t": 2.59,
+     "boss_found": true,
+     "alive": true,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 1.0,
+     "z": 116.1,
+     "altitude_cm": 0.0,
+     "player_health": 1000.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 3.23,
+     "boss_found": true,
+     "alive": true,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 1.0,
+     "z": 116.1,
+     "altitude_cm": 0.0,
+     "player_health": 1000.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 6.83,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": false,
+     "health_ratio": 0.58,
+     "z": 116.1,
+     "altitude_cm": 0.0,
+     "player_health": 978.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDGriffonAlphaTakeOffGust": 1
+     }
+    },
+    {
+     "t": 7.48,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": false,
+     "health_ratio": 0.58,
+     "z": 116.1,
+     "altitude_cm": 0.0,
+     "player_health": 978.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 8.12,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 160.5,
+     "altitude_cm": 44.3,
+     "player_health": 978.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 11.05,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 318.0,
+     "altitude_cm": 201.9,
+     "player_health": 958.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 12.31,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 243.5,
+     "altitude_cm": 127.3,
+     "player_health": 958.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDGriffonAlphaDiveClaw": 1
+     }
+    },
+    {
+     "t": 14.61,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 291.9,
+     "altitude_cm": 175.8,
+     "player_health": 936.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 15.25,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 216.8,
+     "altitude_cm": 100.6,
+     "player_health": 936.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 16.56,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 225.4,
+     "altitude_cm": 109.3,
+     "player_health": 936.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDGriffonAlphaDiveClaw": 1
+     }
+    },
+    {
+     "t": 17.19,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 225.4,
+     "altitude_cm": 109.3,
+     "player_health": 936.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDGriffonAlphaDiveClaw": 1
+     }
+    },
+    {
+     "t": 18.48,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 214.5,
+     "altitude_cm": 98.4,
+     "player_health": 914.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 19.14,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 225.1,
+     "altitude_cm": 108.9,
+     "player_health": 914.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDGriffonAlphaGlideSwoop": 1
+     }
+    },
+    {
+     "t": 20.42,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 225.4,
+     "altitude_cm": 109.2,
+     "player_health": 894.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 1,
+     "definitions": {
+      "DA_TDGriffonAlphaGlideSwoop": 1
+     }
+    },
+    {
+     "t": 21.08,
+     "boss_found": true,
+     "alive": true,
+     "phase": 1,
+     "flying": true,
+     "health_ratio": 0.58,
+     "z": 234.8,
+     "altitude_cm": 118.6,
+     "player_health": 894.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 25.16,
+     "boss_found": true,
+     "alive": false,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 0.0,
+     "z": 116.1,
+     "altitude_cm": -0.0,
+     "player_health": 894.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    },
+    {
+     "t": 30.44,
+     "boss_found": true,
+     "alive": false,
+     "phase": 0,
+     "flying": false,
+     "health_ratio": 0.0,
+     "z": 116.1,
+     "altitude_cm": -0.0,
+     "player_health": 894.0,
+     "player_max_health": 1000.0,
+     "minions": 0,
+     "entity_total": 0,
+     "definitions": {}
+    }
+   ]
+  }
+ }
+}

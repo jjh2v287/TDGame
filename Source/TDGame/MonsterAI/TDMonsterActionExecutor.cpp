@@ -1,4 +1,5 @@
 #include "MonsterAI/TDMonsterActionExecutor.h"
+#include "Combat/Damage/TDDamageDefinition.h"
 #include "MonsterAI/TDMonsterBody.h"
 
 namespace
@@ -117,6 +118,8 @@ void FTDMonsterActionExecutor::ApplyDecision(FTDMonsterBrainFragment& Brain, con
 
 void FTDMonsterActionExecutor::EnterPhase(FTDMonsterBrainFragment& Brain, const int32 NewPhaseIndex, const FTDMonsterStepContext& Context)
 {
+	FinishCharge(Brain, Context);
+	FinishChannel(Brain, Context);
 	Brain.PhaseIndex = NewPhaseIndex;
 	Brain.CurrentActionIndex = INDEX_NONE;
 	Brain.CurrentScore = 0.f;
@@ -135,17 +138,24 @@ void FTDMonsterActionExecutor::EnterPhase(FTDMonsterBrainFragment& Brain, const 
 
 void FTDMonsterActionExecutor::EnterStagger(FTDMonsterBrainFragment& Brain, const FVector& SourceLocation, const FTDMonsterStepContext& Context)
 {
+	EnterStagger(Brain, SourceLocation, Context, StaggerSeconds);
+}
+
+void FTDMonsterActionExecutor::EnterStagger(FTDMonsterBrainFragment& Brain, const FVector& SourceLocation, const FTDMonsterStepContext& Context, const float Seconds)
+{
 	InterruptActivity(Brain, Context);
 	Brain.State = ETDMonsterFsmState::Stagger;
-	Brain.StateStepsRemaining = TDMonsterAI::SecondsToSteps(StaggerSeconds);
+	Brain.StateStepsRemaining = TDMonsterAI::SecondsToSteps(Seconds);
 	if (Context.Body)
 	{
-		Context.Body->BeginBodyStagger(SourceLocation, StaggerSeconds);
+		Context.Body->BeginBodyStagger(SourceLocation, Seconds);
 	}
 }
 
 void FTDMonsterActionExecutor::InterruptActivity(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
 {
+	FinishCharge(Brain, Context);
+	FinishChannel(Brain, Context);
 	if (Brain.State == ETDMonsterFsmState::Cast && Context.Body)
 	{
 		Context.Body->CancelBodyAbility();
@@ -204,6 +214,10 @@ FTDMonsterMoveIntent FTDMonsterActionExecutor::StepState(FTDMonsterBrainFragment
 		return Intent;
 	}
 	case ETDMonsterFsmState::Cast:
+		if (Brain.ChargeStage == ETDMonsterChargeStage::Dash)
+		{
+			return StepChargeDash(Brain, Context);
+		}
 		Intent.bShouldFaceTarget = false;
 		Brain.StateStepsRemaining = FMath::Max(0, Brain.StateStepsRemaining - 1);
 		if (Brain.StateStepsRemaining == 0)
@@ -288,6 +302,8 @@ FTDMonsterMoveIntent FTDMonsterActionExecutor::StepTimedRetreat(FTDMonsterBrainF
 
 void FTDMonsterActionExecutor::StartPrimitive(FTDMonsterBrainFragment& Brain, const ETDMonsterPrimitive Primitive, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
 {
+	FinishCharge(Brain, Context);
+	FinishChannel(Brain, Context);
 	Brain.ActivePrimitive = Primitive;
 	Brain.ActiveArgs = Args;
 	switch (Primitive)
@@ -332,12 +348,23 @@ void FTDMonsterActionExecutor::StartPrimitive(FTDMonsterBrainFragment& Brain, co
 		return;
 	case ETDMonsterPrimitive::TakeOff:
 		StartTakeOff(Brain, Args, Context);
+		ArmShootdown(Brain, Args, Context);
 		return;
 	case ETDMonsterPrimitive::Land:
 		StartLand(Brain, Args, Context);
 		return;
 	case ETDMonsterPrimitive::SummonMinions:
 		StartSummonMinions(Brain, Args, Context);
+		return;
+	case ETDMonsterPrimitive::Charge:
+		if (!StartCharge(Brain, Args, Context))
+		{
+			Brain.State = ETDMonsterFsmState::Idle;
+			Brain.StateStepsRemaining = 1;
+		}
+		return;
+	case ETDMonsterPrimitive::Channel:
+		StartChannel(Brain, Args, Context);
 		return;
 	}
 }
@@ -449,7 +476,8 @@ void FTDMonsterActionExecutor::StartSequence(FTDMonsterBrainFragment& Brain, con
 	Brain.SequenceCursor = 0;
 	const FTDResolvedStep& FirstStep = Brain.Definition->Sequences[SequenceIndex][0];
 	StartPrimitive(Brain, FirstStep.Primitive, FirstStep.Args, Context);
-	if (!Context.bIsTacticsActive || FirstStep.Primitive != ETDMonsterPrimitive::CastAbility || Brain.State == ETDMonsterFsmState::Cast)
+	const bool bStartsWithAttack = FirstStep.Primitive == ETDMonsterPrimitive::CastAbility || FirstStep.Primitive == ETDMonsterPrimitive::Charge;
+	if (!Context.bIsTacticsActive || !bStartsWithAttack || Brain.State == ETDMonsterFsmState::Cast)
 	{
 		return;
 	}
@@ -461,6 +489,13 @@ void FTDMonsterActionExecutor::StartSequence(FTDMonsterBrainFragment& Brain, con
 
 void FTDMonsterActionExecutor::CompleteActivity(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
 {
+	if (Brain.ChargeStage == ETDMonsterChargeStage::Telegraph)
+	{
+		BeginChargeDash(Brain, Context);
+		return;
+	}
+	FinishCharge(Brain, Context);
+	FinishChannel(Brain, Context);
 	if (IsInSequence(Brain))
 	{
 		const TArray<FTDResolvedStep>& Steps = Brain.Definition->Sequences[Brain.SequenceIndex];
@@ -643,4 +678,153 @@ bool FTDMonsterActionExecutor::MeasureTacticsSlotGap(const FTDMonsterBrainFragme
 	}
 	OutGap = (SlotPoint - ToPlanar(Context.SelfLocation)).Size();
 	return true;
+}
+
+bool FTDMonsterActionExecutor::ApplyBreakDamage(FTDMonsterBrainFragment& Brain, const float Damage, const float MaxHealth, const FVector& SourceLocation, const FTDMonsterStepContext& Context)
+{
+	if (Damage <= 0.f || MaxHealth <= 0.f || Brain.bIsFrozen)
+	{
+		return false;
+	}
+	if (Brain.bIsChanneling && Brain.ChannelBreakDamage > 0.f)
+	{
+		Brain.ChannelDamageTaken += Damage;
+		if (Brain.ChannelDamageTaken >= Brain.ChannelBreakDamage)
+		{
+			EnterStagger(Brain, SourceLocation, Context, Brain.ActiveArgs.StunSeconds > 0.f ? Brain.ActiveArgs.StunSeconds : StaggerSeconds);
+			return true;
+		}
+	}
+	if (!Brain.bIsFlying || Brain.ShootdownDamage <= 0.f)
+	{
+		return false;
+	}
+	Brain.FlightDamageTaken += Damage;
+	if (Brain.FlightDamageTaken < Brain.ShootdownDamage)
+	{
+		return false;
+	}
+	if (Context.Body && Context.Body->EndBodyFlight(ShootdownLandingSeconds) <= 0.f)
+	{
+		return false;
+	}
+	const float DownedSeconds = Brain.ShootdownStunSeconds > 0.f ? Brain.ShootdownStunSeconds : StaggerSeconds;
+	Brain.ShootdownDamage = 0.f;
+	Brain.bIsFlying = false;
+	Brain.FlightChangeStep = Context.StepIndex;
+	EnterStagger(Brain, SourceLocation, Context, DownedSeconds);
+	return true;
+}
+
+void FTDMonsterActionExecutor::ArmShootdown(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
+{
+	if (!Brain.bIsFlying || Brain.FlightChangeStep != Context.StepIndex)
+	{
+		return;
+	}
+	Brain.ShootdownDamage = Args.ShootdownRatio * Brain.Definition->GetStatsForPhase(Brain.PhaseIndex).MaxHealth;
+	Brain.ShootdownStunSeconds = Args.StunSeconds;
+	Brain.FlightDamageTaken = 0.f;
+}
+
+bool FTDMonsterActionExecutor::StartCharge(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
+{
+	if (!StartCast(Brain, Args, Context))
+	{
+		return false;
+	}
+	const FTDResolvedAbility& Ability = Brain.Definition->Abilities[Args.AbilityIndex];
+	const float TelegraphSeconds = FMath::Max(Ability.WindupSeconds, Ability.Spell ? Ability.Spell->ActivationDelay : 0.f);
+	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(TelegraphSeconds));
+	float TargetDistance = 0.f;
+	const FVector2D ToTarget = GetDirectionToTarget(Context, TargetDistance);
+	const float BodyYawRadians = FMath::DegreesToRadians(Context.Body ? Context.Body->GetBodyYaw() : 0.f);
+	Brain.ChargeDirection = ToTarget.IsNearlyZero() ? FVector2D(FMath::Cos(BodyYawRadians), FMath::Sin(BodyYawRadians)) : ToTarget;
+	const float ReachCm = FMath::Max(MinimumChargeDistanceCm, TargetDistance);
+	Brain.ChargeDistanceCm = Args.Distance > 0.f ? FMath::Min(Args.Distance, ReachCm + ChargeOvershootCm) : ReachCm;
+	Brain.ChargeStage = ETDMonsterChargeStage::Telegraph;
+	return true;
+}
+
+void FTDMonsterActionExecutor::BeginChargeDash(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
+{
+	const float SpeedCm = Brain.ActiveArgs.Speed > 0.f ? Brain.ActiveArgs.Speed : DefaultChargeSpeedCm;
+	Brain.ChargeStage = ETDMonsterChargeStage::Dash;
+	Brain.State = ETDMonsterFsmState::Cast;
+	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(Brain.ChargeDistanceCm / SpeedCm + ChargeOverrunSeconds));
+	Brain.ChargeLastLocation = ToPlanar(Context.SelfLocation);
+	Brain.ChargeTravelledCm = 0.f;
+	Brain.ChargeElapsedSteps = 0;
+	Brain.ChargeStallSteps = 0;
+	if (Context.Body)
+	{
+		Context.Body->SetBodyDashing(true);
+	}
+}
+
+FTDMonsterMoveIntent FTDMonsterActionExecutor::StepChargeDash(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
+{
+	const float SpeedCm = Brain.ActiveArgs.Speed > 0.f ? Brain.ActiveArgs.Speed : DefaultChargeSpeedCm;
+	const FVector2D Location = ToPlanar(Context.SelfLocation);
+	const float ProgressCm = FVector2D::DotProduct(Location - Brain.ChargeLastLocation, Brain.ChargeDirection);
+	Brain.ChargeLastLocation = Location;
+	Brain.ChargeTravelledCm += FMath::Max(0.f, ProgressCm);
+	++Brain.ChargeElapsedSteps;
+	const bool bIsStalling = Context.Body && Brain.ChargeElapsedSteps > ChargeGraceSteps && ProgressCm < SpeedCm * TDMonsterAI::StepSeconds * ChargeStallProgressRatio;
+	Brain.ChargeStallSteps = bIsStalling ? Brain.ChargeStallSteps + 1 : 0;
+	Brain.StateStepsRemaining = FMath::Max(0, Brain.StateStepsRemaining - 1);
+	FTDMonsterMoveIntent Intent;
+	const bool bIsBlocked = Brain.ChargeStallSteps >= ChargeStallLimitSteps;
+	if (bIsBlocked && Brain.ActiveArgs.StunSeconds > 0.f)
+	{
+		const FVector WallLocation = Context.SelfLocation + FVector(Brain.ChargeDirection.X, Brain.ChargeDirection.Y, 0.f) * 100.f;
+		EnterStagger(Brain, WallLocation, Context, Brain.ActiveArgs.StunSeconds);
+		return Intent;
+	}
+	if (bIsBlocked || Brain.ChargeTravelledCm >= Brain.ChargeDistanceCm || Brain.StateStepsRemaining == 0)
+	{
+		CompleteActivity(Brain, Context);
+		return Intent;
+	}
+	const float MoveSpeedCm = Brain.Definition->GetStatsForPhase(Brain.PhaseIndex).MoveSpeed;
+	Intent.Direction = Brain.ChargeDirection;
+	Intent.SpeedScale = MoveSpeedCm > 0.f ? SpeedCm / MoveSpeedCm : 1.f;
+	return Intent;
+}
+
+void FTDMonsterActionExecutor::FinishCharge(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
+{
+	if (Brain.ChargeStage == ETDMonsterChargeStage::Dash && Context.Body)
+	{
+		Context.Body->SetBodyDashing(false);
+	}
+	Brain.ChargeStage = ETDMonsterChargeStage::None;
+}
+
+void FTDMonsterActionExecutor::StartChannel(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
+{
+	Brain.State = ETDMonsterFsmState::Idle;
+	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(Args.Seconds > 0.f ? Args.Seconds : DefaultChannelSeconds));
+	Brain.bIsChanneling = true;
+	Brain.ChannelBreakDamage = Args.BreakRatio * Brain.Definition->GetStatsForPhase(Brain.PhaseIndex).MaxHealth;
+	Brain.ChannelDamageTaken = 0.f;
+	if (Context.Body)
+	{
+		Context.Body->SetBodyChanneling(true);
+	}
+}
+
+void FTDMonsterActionExecutor::FinishChannel(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
+{
+	if (!Brain.bIsChanneling)
+	{
+		return;
+	}
+	Brain.bIsChanneling = false;
+	Brain.ChannelBreakDamage = 0.f;
+	Brain.ChannelDamageTaken = 0.f;
+	if (Context.Body)
+	{
+		Context.Body->SetBodyChanneling(false);
+	}
 }

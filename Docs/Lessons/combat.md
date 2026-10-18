@@ -53,3 +53,12 @@
 - 증거: 2026-10-18 `Saved/AgentOps/automation_tests_20261018-1317.json`(수정 전 실패) → 1328(통과, 1회에 고블린)
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-combat-08 몬스터가 질주·비행으로 대상에게서 교전 반경(1500cm) 밖으로 나가면 다음 생각에서 대상을 잃고 귀환하며, 비행 중이면 착지한다
+- 증상: 헤드리스 `TDGame.MonsterAI.MidBoss.GriffonTakesOffAndLandsWithPunishWindow` 실패 `Expected 'The air raid lasts 8 to 18 seconds (2.72)'`. 시험이 남긴 타임라인: 활공 급습(Charge 1600cm) 직후 `Move/Hover` → `Idle/None`으로 바뀌고 고도 0까지 내려간 뒤 6초 동안 아무것도 안 함.
+- 원인: `UTDMonsterThinkSubsystem::AcquireTarget`이 몸 위치 기준 `EngageRadius`(1500) 안에서만 적을 모은다. 질주가 대상을 지나 1500 밖에서 멈추면 대상이 null → `!bHasLivingTarget` → `BeginReturn`(재교전 막힘 시간 포함) → 비행 중이면 `EndBodyFlight`.
+- 해결: 커널 `StartCharge`에서 질주 거리를 min(인수, 시전 순간 대상 거리 + `ChargeOvershootCm` 600)로 제한(M3-34). 데이터는 질주 거리 ≤ 교전 반경 − 여유로 둔다(그리폰 활공 1100). 진단은 실패 때만 타임라인을 `AddInfo`로 남기는 시험 도우미(`TDMidBossTests.cpp` `DescribeTimeline`).
+- 범위: 대상 쪽으로 멀리 이동하는 모든 원시(Charge, 긴 MoveToward·MoveAway, 비행 중 이동), 용 활공·직선 폭격
+- 증거: 2026-10-18 `Saved/AgentOps/20261018/m334-green2-tests.log`(타임라인) → JSON 1100으로 `m334-glide1100-tests.json` 3/3, `m334-green3-tests.json` 10/10
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

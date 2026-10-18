@@ -67,6 +67,7 @@ public:
 
 	void UseLocomotionBlendSpace(UBlendSpace* BlendSpace);
 	void UseLocomotionClips(const FTDLocomotionClipSet& Clips);
+	void ReplaceWalkAndRunClips(const FTDLocomotionClipSet& Clips);
 	void UseAirborneClips(const FTDAirborneClipSet& Clips);
 
 	float PlayAction(UAnimSequence* Animation, float PlayRate = 1.f, float StartSeconds = 0.f, float EndSeconds = 0.f, bool bUseRootMotion = false);

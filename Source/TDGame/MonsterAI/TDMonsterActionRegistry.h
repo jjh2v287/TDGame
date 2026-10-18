@@ -23,7 +23,9 @@ enum class ETDMonsterPrimitive : uint8
 	PlayEmote,
 	TakeOff,
 	Land,
-	SummonMinions
+	SummonMinions,
+	Charge,
+	Channel
 };
 
 enum class ETDActionArgKind : uint8
@@ -67,6 +69,11 @@ struct FTDActionArgs
 	FName SpeciesName;
 	int32 Count = 0;
 	float Radius = 0.f;
+	float Distance = 0.f;
+	float Speed = 0.f;
+	float StunSeconds = 0.f;
+	float BreakRatio = 0.f;
+	float ShootdownRatio = 0.f;
 };
 
 class TDGAME_API FTDMonsterActionRegistry

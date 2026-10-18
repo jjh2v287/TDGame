@@ -17,15 +17,20 @@
 #include "Core/TDGameplayMessages.h"
 #include "Core/TDGameplayTags.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
 #include "Engine/AssetManager.h"
 #include "Engine/GameInstance.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameplayAbilitySpec.h"
+#include "Misc/PackageName.h"
 #include "MonsterAI/TDMonsterDefinitionLibrary.h"
 #include "MonsterAI/TDMonsterSpeciesAsset.h"
 #include "MoverSimulationTypes.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "PhysicsEngine/BodyInstance.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "TimerManager.h"
@@ -98,12 +103,17 @@ namespace
 		return WindupSpell ? WindupSpell : Request.Spell;
 	}
 
-	FTDLocomotionClipSet MakeLocomotionClipSet(const UTDMonsterSpeciesAsset& SpeciesAsset)
+	const TCHAR* ChannelEffectPath = TEXT("/Game/MegaMagicVFXBundle/VFX/MagicShieldsVFX/VFX/DefaultVersions/AquaShield/Systems/N_AquaShield.N_AquaShield");
+	constexpr float ChannelEffectRadiusPerScale = 50.f;
+	constexpr float DashAcceleration = 20000.f;
+	constexpr float LongStaggerSeconds = 1.f;
+
+	FTDLocomotionClipSet MakeLocomotionClipSet(const UTDMonsterSpeciesAsset& SpeciesAsset, const FTDMonsterAnimClip& Idle, const FTDMonsterAnimClip& Walk, const FTDMonsterAnimClip& Run)
 	{
 		FTDLocomotionClipSet Clips;
-		Clips.Idle = Cast<UAnimSequence>(SpeciesAsset.Idle.Animation);
-		Clips.Walk = Cast<UAnimSequence>(SpeciesAsset.Walk.Animation);
-		Clips.Run = Cast<UAnimSequence>(SpeciesAsset.Run.Animation);
+		Clips.Idle = Cast<UAnimSequence>(Idle.Animation);
+		Clips.Walk = Cast<UAnimSequence>(Walk.Animation);
+		Clips.Run = Cast<UAnimSequence>(Run.Animation);
 		if (!Clips.Walk)
 		{
 			Clips.Walk = Clips.Idle;
@@ -114,8 +124,13 @@ namespace
 		}
 		Clips.WalkClipSpeed = SpeciesAsset.WalkClipSpeed * SpeciesAsset.MeshScale;
 		Clips.RunClipSpeed = SpeciesAsset.RunClipSpeed * SpeciesAsset.MeshScale;
-		Clips.IdlePlayRate = SpeciesAsset.Idle.PlayRate;
+		Clips.IdlePlayRate = Idle.PlayRate;
 		return Clips;
+	}
+
+	FTDLocomotionClipSet MakeLocomotionClipSet(const UTDMonsterSpeciesAsset& SpeciesAsset)
+	{
+		return MakeLocomotionClipSet(SpeciesAsset, SpeciesAsset.Idle, SpeciesAsset.Walk, SpeciesAsset.Run);
 	}
 }
 
@@ -150,6 +165,11 @@ void ATDMonsterCharacter::BeginPlay()
 void ATDMonsterCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	CancelSummonLoads();
+	if (ChannelEffectHandle.IsValid())
+	{
+		ChannelEffectHandle->CancelHandle();
+		ChannelEffectHandle.Reset();
+	}
 	StopMonsterBrain();
 	Super::EndPlay(EndPlayReason);
 }
@@ -430,7 +450,9 @@ void ATDMonsterCharacter::BeginBodyStagger(const FVector& SourceLocation, const 
 		return;
 	}
 	const bool bIsBodyAirborne = bIsBodyFlying || bIsBodyLanding;
-	const FTDMonsterAnimClip& HitClip = bIsBodyAirborne && Species->FlyHitClip.IsValidClip() ? Species->FlyHitClip : Species->Hit;
+	const bool bIsLongStagger = Seconds >= LongStaggerSeconds && Species->StunClip.IsValidClip();
+	const FTDMonsterAnimClip& AirOrGroundHitClip = bIsBodyAirborne && Species->FlyHitClip.IsValidClip() ? Species->FlyHitClip : SelectHitClip();
+	const FTDMonsterAnimClip& HitClip = bIsLongStagger ? Species->StunClip : AirOrGroundHitClip;
 	if (HitClip.IsValidClip())
 	{
 		PlaySpeciesClip(HitClip, HitClip.PlayRate);
@@ -546,6 +568,7 @@ int32 ATDMonsterCharacter::CountBodyMinionsAlive() const
 
 void ATDMonsterCharacter::NotifyBodyPhaseEntered(const int32 PhaseIndex, const FName PhaseId)
 {
+	ApplyPhasePresentation(PhaseId);
 	UWorld* World = GetWorld();
 	if (!World || !UGameplayMessageSubsystem::HasInstance(World))
 	{
@@ -808,7 +831,12 @@ void ATDMonsterCharacter::ApplySpeciesBody()
 
 void ATDMonsterCharacter::ApplySpeciesFollowerMeshes()
 {
-	const int32 FollowerCount = Species ? Species->FollowerMeshes.Num() : 0;
+	ApplyFollowerMeshes(Species ? Species->FollowerMeshes : TArray<TObjectPtr<USkeletalMesh>>());
+}
+
+void ATDMonsterCharacter::ApplyFollowerMeshes(const TArray<TObjectPtr<USkeletalMesh>>& Meshes)
+{
+	const int32 FollowerCount = Meshes.Num();
 	while (FollowerMeshComponents.Num() > FollowerCount)
 	{
 		if (USkeletalMeshComponent* RemovedFollower = FollowerMeshComponents.Pop())
@@ -827,7 +855,7 @@ void ATDMonsterCharacter::ApplySpeciesFollowerMeshes()
 		{
 			continue;
 		}
-		FollowerMesh->SetSkeletalMeshAsset(Species->FollowerMeshes[FollowerIndex]);
+		FollowerMesh->SetSkeletalMeshAsset(Meshes[FollowerIndex]);
 		FollowerMesh->SetLeaderPoseComponent(GetMesh());
 	}
 }
@@ -892,6 +920,10 @@ void ATDMonsterCharacter::StartMonsterBrain()
 	{
 		return;
 	}
+	if (Definition->bIsBoss)
+	{
+		RequestChannelEffect();
+	}
 	CombatComponent->OnDamaged.AddUObject(this, &ThisClass::HandleMonsterDamaged);
 	CombatComponent->OnFreezeChanged.AddUObject(this, &ThisClass::HandleMonsterFrozen);
 }
@@ -950,7 +982,7 @@ void ATDMonsterCharacter::PlayDeathPresentation()
 	{
 		return;
 	}
-	const FTDMonsterAnimClip& DeathClip = Species->Death;
+	const FTDMonsterAnimClip& DeathClip = SelectDeathClip();
 	UAnimSequence* DeathSequence = Cast<UAnimSequence>(DeathClip.Animation);
 	const float DeathClipSeconds = DeathSequence ? CharacterAnimation->PlayDeath(DeathSequence, FMath::Max(DeathClip.PlayRate, MinimumClipPlayRate), DeathClip.EndSeconds) : 0.f;
 	if (DeathClipSeconds > 0.f)
@@ -1107,4 +1139,86 @@ float ATDMonsterCharacter::PlaySpeciesClip(const FTDMonsterAnimClip& Clip, const
 		return 0.f;
 	}
 	return CharacterAnimation->PlayAction(Sequence, FMath::Max(PlayRate, MinimumClipPlayRate), Clip.StartSeconds, Clip.EndSeconds, false);
+}
+
+void ATDMonsterCharacter::SetBodyChanneling(const bool bIsChanneling)
+{
+	if (!bIsChanneling)
+	{
+		if (ChannelEffectComponent)
+		{
+			ChannelEffectComponent->DestroyComponent();
+			ChannelEffectComponent = nullptr;
+		}
+		return;
+	}
+	if (!CombatComponent->IsAlive())
+	{
+		return;
+	}
+	if (Species && Species->ChannelClip.IsValidClip())
+	{
+		PlaySpeciesClip(Species->ChannelClip, Species->ChannelClip.PlayRate);
+	}
+	UNiagaraSystem* Effect = Cast<UNiagaraSystem>(FSoftObjectPath(ChannelEffectPath).ResolveObject());
+	if (!Effect || ChannelEffectComponent)
+	{
+		return;
+	}
+	const FVector EffectScale(GetBodyRadius() / ChannelEffectRadiusPerScale);
+	ChannelEffectComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(Effect, GetRootComponent(), NAME_None, FVector::ZeroVector, FRotator::ZeroRotator, EffectScale, EAttachLocation::KeepRelativeOffset, false, ENCPoolMethod::None);
+}
+
+void ATDMonsterCharacter::SetBodyDashing(const bool bIsDashing)
+{
+	UCommonLegacyMovementSettings* MovementSettings = MoverComponent ? MoverComponent->FindSharedSettings_Mutable<UCommonLegacyMovementSettings>() : nullptr;
+	if (!MovementSettings)
+	{
+		return;
+	}
+	MovementSettings->Acceleration = bIsDashing ? DashAcceleration : MoveAcceleration;
+}
+
+void ATDMonsterCharacter::RequestChannelEffect()
+{
+	const FSoftObjectPath EffectPath(ChannelEffectPath);
+	if (ChannelEffectHandle.IsValid() || EffectPath.ResolveObject() || !FPackageName::DoesPackageExist(EffectPath.GetLongPackageName()))
+	{
+		return;
+	}
+	ChannelEffectHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(EffectPath, FStreamableDelegate(), FStreamableManager::AsyncLoadHighPriority);
+}
+
+void ATDMonsterCharacter::ApplyPhasePresentation(const FName PhaseId)
+{
+	const FTDMonsterPhasePresentation* Presentation = Species ? Species->PhasePresentations.Find(PhaseId) : nullptr;
+	if (!Presentation)
+	{
+		return;
+	}
+	ActivePresentationPhaseId = PhaseId;
+	const FTDMonsterAnimClip& WalkClip = Presentation->Walk.IsValidClip() ? Presentation->Walk : Species->Walk;
+	const FTDMonsterAnimClip& RunClip = Presentation->Run.IsValidClip() ? Presentation->Run : Species->Run;
+	CharacterAnimation->ReplaceWalkAndRunClips(MakeLocomotionClipSet(*Species, Species->Idle, WalkClip, RunClip));
+	if (!Presentation->FollowerMeshes.IsEmpty())
+	{
+		ApplyFollowerMeshes(Presentation->FollowerMeshes);
+	}
+}
+
+const FTDMonsterPhasePresentation* ATDMonsterCharacter::FindActivePhasePresentation() const
+{
+	return Species && !ActivePresentationPhaseId.IsNone() ? Species->PhasePresentations.Find(ActivePresentationPhaseId) : nullptr;
+}
+
+const FTDMonsterAnimClip& ATDMonsterCharacter::SelectHitClip() const
+{
+	const FTDMonsterPhasePresentation* Presentation = FindActivePhasePresentation();
+	return Presentation && Presentation->Hit.IsValidClip() ? Presentation->Hit : Species->Hit;
+}
+
+const FTDMonsterAnimClip& ATDMonsterCharacter::SelectDeathClip() const
+{
+	const FTDMonsterPhasePresentation* Presentation = FindActivePhasePresentation();
+	return Presentation && Presentation->Death.IsValidClip() ? Presentation->Death : Species->Death;
 }

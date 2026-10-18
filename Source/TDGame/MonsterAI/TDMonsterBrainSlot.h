@@ -31,6 +31,13 @@ enum class ETDMonsterAlarmRole : uint8
 	Follower
 };
 
+enum class ETDMonsterChargeStage : uint8
+{
+	None,
+	Telegraph,
+	Dash
+};
+
 struct FTDMonsterBrainFragment
 {
 	TSharedPtr<const FTDResolvedMonsterDefinition> Definition;
@@ -66,6 +73,19 @@ struct FTDMonsterBrainFragment
 	bool bWasRetreatCornered = false;
 	bool bIsFlying = false;
 	uint64 FlightChangeStep = 0;
+	ETDMonsterChargeStage ChargeStage = ETDMonsterChargeStage::None;
+	FVector2D ChargeDirection = FVector2D::ZeroVector;
+	FVector2D ChargeLastLocation = FVector2D::ZeroVector;
+	float ChargeDistanceCm = 0.f;
+	float ChargeTravelledCm = 0.f;
+	int32 ChargeElapsedSteps = 0;
+	int32 ChargeStallSteps = 0;
+	bool bIsChanneling = false;
+	float ChannelBreakDamage = 0.f;
+	float ChannelDamageTaken = 0.f;
+	float ShootdownDamage = 0.f;
+	float FlightDamageTaken = 0.f;
+	float ShootdownStunSeconds = 0.f;
 
 	bool IsEngaged() const
 	{

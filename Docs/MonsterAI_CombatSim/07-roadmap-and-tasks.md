@@ -743,6 +743,19 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 참조: `Saved/AgentOps/20261018/monsterize/understand/`(boss-encounter-infra·boss-design-research·combat-assets)
 - 기록: 2026-10-18 claude — 청구.
 
+### M3-34 중간 보스 2종(켄타우로스 사냥꾼 활→검 자세 전환·사냥개 소환 / 그리폰 지상→공중·격추·착지 처벌)
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 높음(사용자 요청 2026-10-18 "용 같은 보스·중간 보스·전투 한 사이클", 부모 세션 c7fdf4 위임)
+- 선행: M3-33(Centaur·Griffon·Barghest 기본 종·활·검 추종 메시), M3-35(공용 보스 기반: 비행 이륙·착지, 졸개 소환, 직선·부채꼴 판정·예고, 끊기)
+- 목표: ① `Centaur_Hunter`(중간 보스, 체력 약 3,200): P1 활 자세(조준 직선 사격·3연 부채 화살·띠 600~900 유지·뒷발차기) → 50%에 DrawSword(파랑 끊기 기회) + Barghest 2마리 소환 → P2 검 자세(질주 돌진 직선, 벽 충돌 시 기절, 2연 검 콤보). ② `Griffon_Alpha`(체력 약 3,600): P1 지상(물기·좌우 할퀴기·2·3연 돌진 할퀴기) → 60%부터 이륙, 급강하 할퀴기 원형·활공 급습 직선, 격추 시 추락 처벌, 착지 처벌 창(용 공중 페이즈 예습)
+- 완료 조건: 두 종의 페이즈·소환·비행 결정론 시험 빨강(구현 전)→초록 / PIE에서 `TDSpawnMonster Centaur_Hunter`·`Griffon_Alpha`를 처치까지 싸운 스크린샷 / 헤드리스 회귀 유지(기준선 CrossingStreams 1건) / OP-33 검사 2개 종료 0 / 로컬 커밋(내 파일만, 푸시 금지)
+- 산출물: `Content/MonsterAI/Definitions/Centaur_Hunter.json`·`Griffon_Alpha.json`, `/Game/MonsterAI/Species/DA_TDMonster_CentaurHunter`·`DA_TDMonster_GriffonAlpha`, 중간 보스 피해 정의(카탈로그 항목, M3-35와 조율), 시험 `MonsterAI/Tests/TDMidBossTests.cpp`, `measurements/M3-34/`
+- 검증: BUILD; TEST `TDGame.MonsterAI.MidBoss.*`·`TDGame.MonsterAI` 헤드리스; PIE 스크린샷; OP-33 검사 2개
+- 참조: `Saved/AgentOps/20261018/monsterize/understand/boss-design-research.md` 3.2·3.3·6.1·6.2절, `mesh-inventory.md` 3.2·3.3절
+- 기록: 2026-10-18 claude — 청구.
+- 기록: 2026-10-18 claude — 완료. 데이터: `Centaur_Hunter.json`(extends Centaur_Archer, boss, 3200: 활 띠 600~900·조준 사격 windup 1.0·조준 3연사·앞발 차기·물러서기 → 50% `DrawSword` = SummonMinions Barghest 2 + Channel 1.2초(최대 체력 4% 받으면 기절 3초) → 검: 돌진 1200(사냥개 생존 중 금지, 벽 충돌 기절 2.5초)·검 2연·단일 베기), `Griffon_Alpha.json`(extends Griffon, boss, 3600: 물기·할퀴기·2연 갈퀴 → 60% 이륙(고도 120, 격추 3%·쓰러짐 5.6초) → 비행 중 맴돌기·급강하(대상 지점 질주)·활공 1100 → 비행 약 12초 뒤 착지 충격 + 처벌 2.5초, 지상 3연 갈퀴). 피해 정의 13종 `CreateMidBossAttacks`(M3-35 형상·예고 재사용). 종 `DA_TDMonster_CentaurHunter`(배율 0.85, 페이즈 Sword 외형: 검 손·활 등 추종 메시, 이동 클립)·`DA_TDMonster_GriffonAlpha`(0.6, 공중 클립·StunClip) — 표 `species_table.json` 행으로 생성. C++(M3-35 기반 위 덧붙임, MD-54): 원시 `Charge`(예고 → Cast 유지 질주, 고정 방향 전진량 정체로 벽 판정, 거리 상한 대상+600)·`Channel`, `TakeOff` `shootdown_ratio`·`downed_seconds`, EnterStagger 초 지정, 몸 `SetBodyChanneling`(N_AquaShield)·`SetBodyDashing`(가속 20000), 종 `ChannelClip`·`StunClip`·`PhasePresentations`, `ReplaceWalkAndRunClips`(L-anim-20). 검증: 빨강(정의 없이 1/10, 고정 장치 보호 1만 통과) → 초록 `TDGame.MonsterAI.MidBoss` 11/11(`Saved/AgentOps/20261018/m334-green4-tests.json`), 회귀 MonsterAI·Combat·Movement·Encounter·Smoke 177/178(기준선 CrossingStreams, `m334-regress2-tests.json`), PIE `Tools/MonsterAI/pie_check_mid_bosses.py` 두 보스 전 단계 통과·스크린샷 9장(`measurements/M3-34/pie-20261018/`), OP-33 두 검사 종료 0. 반박 2회(명세 `Saved/AgentOps/20261018/mid-bosses/refute-spec-v1.md` 치명 3 반영, 커널 `refute-kernel-v1.md` 주요 3·경미 4 반영). 결정 MD-53·MD-54(proposed). 교훈 L-combat-08(질주로 교전 반경 밖 → 대상 상실·착지), L-anim-20(런타임 UseLocomotionClips 크래시). 남은 것: 처치 시간 PIE 실측 기반 체력 조정(MD-53①), 공간 부채 화살, 페이즈 대기 클립 교체(런타임 기준 자산 교체 불가), 끊기 성공·벽 충돌 기절의 PIE 육안 확인, 넉백. 완료 내용: 명세(`Saved/AgentOps/20261018/m335/spec-v1.md`·`spec-dragon-v1.md`) → 계약 선언·빈 구현 + 시험 7개 먼저(빨강 7/7, `measurements/M3-35/red-before.json`) ∥ 사본 빌더 3(피해·예고·용 공격 / 커널·로더 / 몸) → 정적 반박 2관점(주요 2: 주문 해석이 상주 여부로 갈림, 외부 충격으로 Flying 이탈 시 비행 상태 어긋남 → 수정, 경미 수정 4) → 3방향 병합(충돌 0) → 첫 빌드 초록: `TDGame.MonsterAI`·Combat·Movement·Encounter·Smoke 165/166(실패 = 기준선 CrossingStreams), Boss 7/7, OP-33 두 검사 새 위반 0. 공용 기반: 원시 `TakeOff`·`Land`(Mover Flying)·`SummonMinions`(비동기·다음 틱 스폰·즉시 교전), 입력 `SelfIsFlying`·`FlightStateSeconds`·`MinionsAlive`, 능력 키 `windup`·`danger`·`stance`, 페이즈 키 `cooldown_scale`, 피해 형상 Cone·Line·Ring + 예고(재질 18개 `Tools/MonsterAI/editor_make_boss_telegraphs.py`), 위험 공격 대상당 동시 1, 페이즈 알림(`OnMonsterPhaseEntered`·`Event_Monster_PhaseEntered`)과 조회 API, 주문 후보에 MegaMagic. M3-34가 이 위에 Charge·Channel·격추를 덧붙임(MD-54), M3-36이 페이즈 메시지·조회를 보스바에 씀. 용: `Dragon_Boss.json`(3페이즈+업화, MD-57), 카탈로그 `DA_TDDragon*` 19개, 종 `DA_TDMonster_MountainDragon`(종 표 항목, 공중 클립 4). PIE `pie_check_dragon_boss.py` 3회 통과(페이즈 1→2→3·비행 24초 고도 337·졸개 3·착지·업화·처치·위험 동시 1, 스크린샷 7장, 용 체력은 탐침이 깎음) `measurements/M3-35/`. 교훈 L-editor-34. 최종 합본(M3-34 덧붙임 포함) 헤드리스 177/178(기준선만, M3-34 m334-green4), OP-33 재확인 0. 커밋 ① D-47 후속(c) 분리 + ② M3-35(부모 지시). 남은 것: 근접 공격(물기·할퀴기·잡아 던지기) PIE 표본 미관측(탐침 플레이어 원거리 정지), 화염 방사 VFX는 RingOfFlames 대용, 용 소리 없음, 꼬리치기·끊기 기회·격추 미적용(MD-57), 실제 손 조작 처치 시간 미측정.
+
 ### 3.6 Phase 4 — 확장(조건부)
 
 ### M4-01 자체 C++ HTN(보스·무리)
@@ -958,6 +971,22 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 결정: (대기)
 
 ---
+
+### MD-53 중간 보스 2종 기본값(권장안 적용, 재검토 가능)
+- 상태: proposed · 2026-10-18 claude(M3-34, 부모 세션 위임 "묻지 말고 권장안으로, 편차는 proposed MD")
+- 질문: 켄타우로스 사냥꾼·우두머리 그리폰의 지금 값을 확정할까? ① 체력 3,200/3,600(위임 지시값) — 칼만 쓰면 처치 약 164~190초 추정(반박 `Saved/AgentOps/20261018/mid-bosses/refute-spec-v1.md` M7, 목표 90~130초) ② 조사의 3연 부채 화살(공간 부채) 대신 조준 3연사(같은 직선 예고 0.55초 ×3, 각 8%) ③ 그리폰 비행 고도 120cm(칼이 닿게)·격추 문턱 최대 체력 3%·쓰러짐 5.6초(지상 약 5초) ④ 사냥개 생존 중 돌진 금지(조사: 재사용 ×1.5) ⑤ 넉백(뒷발차기·이륙 돌풍)·소환 체력 0.7배 생략 ⑥ 그리폰 활공 1100cm(+커널 돌진 상한 대상 거리 + 600, L-combat-08) ⑦ 켄타우로스 검 페이즈에서 걷기·달리기 클립과 추종 메시만 바꾸고 대기 클립(기준 자산)은 활 자세 그대로(런타임 교체는 UAF 크래시, L-anim-20)
+- 선택지: (a) 현행 (b) ①을 PIE 실측 처치 시간으로 하향(예 약 2,100/2,000) (c) ②를 피해 생성 동작에 방향 퍼짐 인수를 더해 공간 부채로
+- 권장: (a) 후 PIE 실측으로 ①만 (b) 검토. ② 공간 부채는 피해 시스템 확장(전역 난수 산포 정리 포함)이 필요해 이번 범위 밖.
+- 영향: 07#M3-34, `Content/MonsterAI/Definitions/Centaur_Hunter.json`·`Griffon_Alpha.json`, `TDMonsterAttackCatalog.cpp` `CreateMidBossAttacks`
+- 결정: (대기)
+
+### MD-54 돌진·끊기·격추 커널 구현 방식(권장안 적용, 재검토 가능)
+- 상태: proposed · 2026-10-18 claude(M3-34, M3-35와 합의해 그쪽 기반 위에 덧붙임)
+- 질문: ① 질주 단계도 Cast 상태로 둔다(재결정 방지 — 대신 질주 중 공격 토큰 보유·원 회피 제외, 분리 조향 건너뜀) ② 벽 판정은 몸 충돌이 아니라 커널의 고정 방향 전진량 정체(8스텝 유예 뒤 6스텝 연속 기대치 25% 미만) ③ 기존 줄 변경 6곳(EnterStagger 본문 위임, MakeLocomotionClipSet 클립 인수판, 추종 메시 적용 함수 분리, 피격·사망 클립 선택, TakeOff 인수, 시퀀스 첫 단계 방어에 Charge) — 이대로 둘까?
+- 선택지: (a) 현행 (b) 질주를 Move 상태 + CanThink 예외로 (c) 벽 판정을 몸의 이동 막힘 충돌 결과로
+- 권장: (a). 결정론 커널 안에서 끝나고(몸 없는 시뮬은 막힘 없음), 상태 이름이 하나 덜 생긴다.
+- 영향: `MonsterAI/TDMonsterActionExecutor.*`·`TDMonsterThinkSubsystem.cpp`·`TDMonsterActionRegistry.*`·`TDMonsterBrainSlot.h`·`TDMonsterBody.h`·`TDMonsterDefinitionLibrary.cpp`, `Characters/TDMonsterCharacter.*`, `TDMonsterSpeciesAsset.h`
+- 결정: (대기)
 
 ### MD-57 용 보스 Dragon_Boss 구성·수치(권장안 적용, 재검토 가능)
 - 상태: proposed · 2026-10-18 claude(M3-35, 사용자 "묻지 말고 권장안"으로 적용)

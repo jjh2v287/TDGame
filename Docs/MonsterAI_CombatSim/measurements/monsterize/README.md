@@ -60,7 +60,7 @@
 | Wukong | 1000 | 예 | 0 | 507cm | 예 | 349/480 | 예 | 통과 |
 | Swordsman | 1000 | 예 | 0 | 541cm | 예 | 115/160 | 예 | 통과 |
 
-육안(스크린샷 확대): Centaur 손의 활·어깨 갑옷·칼집·머리 장식, Barghest 갈기·꼬리가 몸 포즈를 따라간다(리더 포즈가 UAF 몸에서 동작). 사망 2.5초 뒤 13종은 바닥에 눕는다. 인간형 Manny 사망 6종은 모두 골반을 약 85cm에 둔 채 끝나는 "래그돌 전 반응" 클립이라 인간형 8종은 `ragdoll_after_death`를 켰다(Greystone 머리 23cm·Swordsman 12cm·SkeletonGuard 7cm, 끄면 100cm 안팎에서 무릎 자세로 멈춤).
+육안(스크린샷 확대): Centaur 손의 활·어깨 갑옷·칼집·머리 장식, Barghest 갈기·꼬리가 몸 포즈를 따라간다(리더 포즈가 UAF 몸에서 동작). 사망 2.5초 뒤 13종은 바닥에 눕는다. 인간형 Manny 사망 6종은 모두 골반을 약 85cm에 둔 채 끝나는 "래그돌 전 반응" 클립이라 인간형 8종은 `ragdoll_after_death`를 켰다(Greystone 머리 23cm·Swordsman 12cm·SkeletonGuard 7cm, 끄면 100cm 안팎에서 무릎 자세로 멈춤). 후속: 처치 1초 안 래그돌(M3-27 FullLoop 기준)을 지키려고 인간형 8종 Death 클립은 0.5초에서 끊는다(`end` 0.5, FullLoop seconds_to_ragdoll 0.503).
 
 ## 5. 남은 제한
 

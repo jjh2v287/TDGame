@@ -106,7 +106,7 @@
    "death": {
     "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Death",
     "start": 0.0,
-    "end": 0.0,
+    "end": 0.5,
     "rate": 1.0,
     "impact": 0.0,
     "recovery": 0.3
@@ -162,7 +162,7 @@
    "death": {
     "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Death",
     "start": 0.0,
-    "end": 0.0,
+    "end": 0.5,
     "rate": 1.0,
     "impact": 0.0,
     "recovery": 0.3
@@ -210,7 +210,7 @@
    "death": {
     "anim": "/Game/MonsterAI/Animations/Guard/AS_TD_Guard_Death",
     "start": 0.0,
-    "end": 0.0,
+    "end": 0.5,
     "rate": 1.0,
     "impact": 0.0,
     "recovery": 0.3
@@ -258,7 +258,7 @@
    "death": {
     "anim": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Death",
     "start": 0.0,
-    "end": 0.0,
+    "end": 0.5,
     "rate": 1.0,
     "impact": 0.0,
     "recovery": 0.3
@@ -314,7 +314,7 @@
    "death": {
     "anim": "/Game/MonsterAI/Animations/Golem/AS_TD_Golem_Death",
     "start": 0.0,
-    "end": 0.0,
+    "end": 0.5,
     "rate": 1.0,
     "impact": 0.0,
     "recovery": 0.3
@@ -572,7 +572,8 @@
     "rate": 1.25
    },
    "death": {
-    "anim": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Death"
+    "anim": "/Game/MonsterAI/Animations/Greystone/AS_TD_Greystone_Death",
+    "end": 0.5
    },
    "abilities": {
     "Strike": {
@@ -682,7 +683,8 @@
     "rate": 1.25
    },
    "death": {
-    "anim": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Death"
+    "anim": "/Game/MonsterAI/Animations/Wukong/AS_TD_Wukong_Death",
+    "end": 0.5
    },
    "abilities": {
     "Strike": {
@@ -733,7 +735,8 @@
     "rate": 1.25
    },
    "death": {
-    "anim": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Death"
+    "anim": "/Game/MonsterAI/Animations/Swordsman/AS_TD_Swordsman_Death",
+    "end": 0.5
    },
    "abilities": {
     "Slash": {

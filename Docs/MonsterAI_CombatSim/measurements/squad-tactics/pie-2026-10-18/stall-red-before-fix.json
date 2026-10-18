@@ -1,0 +1,21 @@
+{
+ "results": [
+  {
+   "path": "TDGame.MonsterAI.Tactics.UnreachableReservationIsReleased",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'A blocked goblin gives up its reservation within two seconds' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(1921)]",
+    "Error: Expected 'Blocked goblins hold a reservation at most thirty percent of the time' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(1922)]"
+   ]
+  }
+ ],
+ "found_count": 1,
+ "crash_lines": [],
+ "engine_exit_code": 0,
+ "filters": [
+  "TDGame.MonsterAI.Tactics.UnreachableReservationIsReleased"
+ ],
+ "log": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261018\\tactics-stall-red-tests.log",
+ "incomplete": false,
+ "crashed": false
+}

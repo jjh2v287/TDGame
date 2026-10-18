@@ -201,3 +201,29 @@
 - 증거: 2026-10-18 `Saved/Logs/M327_ExportHitRefs.log`(애니 7개 성공 뒤 하이에나 메시에서 중단)
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-editor-30 `run_in_editor.py -c` 스니펫이 남긴 전역 변수(월드·패키지·액터 배열)가 옛 맵을 붙잡아, 다음 맵 전환이 `World Memory Leaks` 치명 오류로 에디터를 죽인다
+- 증상: `unreal.EditorLoadingAndSavingUtils.new_blank_map(False)` 호출 중 원격 연결이 끊김(`ConnectionResetError 10054`), 로그 `Fatal error: [EditorServer.cpp] [Line: 1951] World Memory Leaks: 1 leaks objects and packages`, 참조 사슬 `GCObjectReferencer -> FPyReferenceCollector::AddReferencedObjects( Package /Game/Level/LV-Cambat)` ← `FPyWrapperArrayMetaData`
+- 원인: 원격 실행의 `-c` 코드는 에디터 Python `__main__` 전역에서 돈다. 직전 스니펫의 `m = get_dirty_map_packages()`(패키지 배열)가 전역에 남아 GC 뿌리가 됐고, 맵을 바꾸며 옛 월드를 지우는 `CheckForWorldGCLeaks`가 치명 오류를 낸다. 월드·액터 변수(`w = get_game_world()`)나 `unreal` 모듈 속성에 둔 탐침 상태(생성기 지역 변수 포함)도 같은 위험이다
+- 해결: 스니펫은 함수 안에서 돌리거나 끝에 `del`로 UObject 참조를 지운다. 탐침 상태를 `unreal` 모듈에 둘 때는 끝날 때 생성기·후크·월드 참조를 비운다. 맵 전환 전에는 저장 안 된 변경이 테스트용 임시 액터뿐인지 확인하고, 전환이 꼭 필요하면 에디터를 새로 띄운다(`python Tools/ue_editor.py ensure`)
+- 범위: UE 5.8 PythonScriptPlugin 원격 실행 + 에디터 맵 전환(`new_blank_map`·`load_map`·`load_level`, 추정: PIE 종료 시 월드 정리도 같은 검사)
+- 증거: `Saved/Logs/TDGame-backup-*.log`(2026-10-18 16:08 크래시, 3566행 근처), 이 세션 Worklog M3-14 완료 항목
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
+### L-editor-31 PIE 디버그 선(DrawDebug*)을 스크린샷에 담으려면 `Shot`을 PIE 플레이어 컨트롤러로 보내야 한다(`HighResShot`엔 안 나오고, 컨트롤러 없이 보낸 `Shot`은 편집기 뷰포트를 찍는다)
+- 증상: `TD.MonsterAI.Tactics.Debug 1`(DrawDebugCircle·Line)·`TD.MonsterAI.DebugDraw 1`(DrawDebugString)을 켠 PIE에서 `HighResShot 1920x1080 filename=…`은 게임 화면을 찍지만 디버그 선·글자가 없다(2026-09-30 `measurements/monster_pie_engage.png`도 같음). `execute_console_command(world, 'Shot')`(세 번째 인수 없음)은 PlayerStart·조명 아이콘이 보이는 레벨 편집기 뷰포트를 찍는다
+- 해결: `unreal.SystemLibrary.execute_console_command(world, 'Shot', unreal.GameplayStatics.get_player_controller(world, 0))` → `Saved/Screenshots/WindowsEditor/ScreenShotNNNNN.png`(PIE 게임 뷰포트, 디버그 선 포함, 뷰포트 해상도). 새 파일을 찾아 옮긴다(`Tools/MonsterAI/pie_check_tactics.py` `capture_screenshot`)
+- 범위: UE 5.8 GUI 에디터 PIE, 원격 Python 콘솔 명령. `HighResShot`이 디버그 선을 빼는 원인은 엔진 소스로 확정하지 못함(미검증)
+- 증거: `Docs/MonsterAI_CombatSim/measurements/squad-tactics/pie-2026-10-18/01~05*.png`(선 있음), 같은 장면 HighResShot 1회차(선 없음, 덮어씀)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
+### L-editor-32 Unreal Insights 명령줄 내보내기: 파일 트레이스는 에디터 메모리 꼬리를 앞에 붙이고, `ExportTimerStatistics`는 `-timers`를 무시한다
+- 증상: PIE에서 `Trace.File <경로> cpu,frame` → 15초 → `Trace.Stop`으로 받은 .utrace에 스텝 1,829회(약 28.6초)가 들어 있어, 전술 끔 구간 트레이스에도 직전 전술 켬 구간의 `TDMonsterAI_Tactics` 618회가 섞였다. 마지막 게임 프레임의 끝이 무한대라 프레임 평균이 `Infinity`
+- 원인: 에디터는 명령줄 없이도 기본 채널을 메모리에 기록하고, 파일 연결 때 그 꼬리를 먼저 보낸다(`TraceAuxiliary.cpp`). `TimingInsights.ExportTimerStatistics`는 `-timers=`·`-columns=`를 무시해 전체 타이머를 낸다(`TimingExporter.cpp:985`)
+- 해결: `UnrealInsights.exe -OpenTraceFile=<utrace> -AutoQuit -NoUI -unattended -nullrhi -ExecOnAnalysisCompleteCmd=@=<rsp>`(rsp 한 줄 한 명령), 구간 값은 `TimingInsights.ExportTimingEvents <csv> -columns=ThreadName,TimerName,StartTime,EndTime,Duration -threads=GameThread,Game?Frames -timers=<접두사>*`로 받아 **마지막 프레임 끝에서 구간 실제 초만큼만** 잘라 계산하고, 끝이 무한인 행은 버린다(`Tools/MonsterAI/pie_check_tactics.py` `summarize_timing_events`). 이미 트레이스 중이면 `Trace.File`이 거부되므로 먼저 `Trace.Stop`
+- 범위: UE 5.8 에디터 PIE CPU 트레이스·UnrealInsights 명령줄
+- 증거: `Saved/MonsterAI/TacticsPie/crowd_tactics_*_events.csv`, `measurements/squad-tactics/pie-2026-10-18/report.json` `crowd_cost`
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

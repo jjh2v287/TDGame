@@ -176,6 +176,7 @@ private:
 	bool SyncTacticsSlots();
 	bool ReturnFinishedTacticsToken(int32 SlotIndex);
 	void RevokeInvalidReservation(int32 SlotIndex);
+	bool DetectStalledReservation(int32 SlotIndex, const FVector& TargetLocation);
 	void DetectBlockedTacticsSector(int32 SlotIndex);
 	bool MeasureTacticsSlotProgress(int32 SlotIndex, ETDTacticsSlotKind Kind, const FTDMonsterStepContext& Context, int32& OutProgressValue, int32& OutProgressThreshold) const;
 	void UpdateTacticsDirectors(bool bIsRingPass);

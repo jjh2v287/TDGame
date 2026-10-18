@@ -49,6 +49,9 @@ struct FTDMonsterTacticsFragment
 	bool bIsOnDeck = false;
 	uint64 SlotProgressAnchorStep = 0;
 	int32 SlotProgressBestCm = 0;
+	uint64 ReservationProgressAnchorStep = 0;
+	int32 ReservationBestDistanceCm = 0;
+	uint64 StalledUntilStep = 0;
 	uint32 LastCastStartCount = 0;
 };
 
@@ -166,6 +169,8 @@ public:
 	static constexpr int32 BlockedAngleProgressDecidegrees = 20;
 	static constexpr int32 BlockedArrivalCm = 60;
 	static constexpr int32 BlockedSectorSteps = 512;
+	static constexpr int32 StalledExclusionSteps = 512;
+	static constexpr int32 StallReanchorCm = 60;
 	static constexpr int32 MovingTargetSpeed = 150;
 	static constexpr int32 MovingTargetPenaltyDecidegrees = 600;
 	static constexpr int32 SouthPenaltyDecidegrees = 900;

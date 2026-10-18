@@ -46,6 +46,23 @@ namespace
 
 	constexpr int32 TacticsBudgetLowerPassCount = 2;
 
+	int32 CountBlockedTacticsSectors(const FTDTargetTacticsRecord& Record, const uint64 StepIndex)
+	{
+		int32 BlockedCount = 0;
+		for (int32 Ring = 0; Ring < FTDTargetTacticsRecord::WaitRingCount; ++Ring)
+		{
+			for (int32 Sector = 0; Sector < FTDTargetTacticsRecord::MaxWaitSectorCount; ++Sector)
+			{
+				BlockedCount += StepIndex < Record.WaitBlockedUntilStep[Ring][Sector] ? 1 : 0;
+			}
+		}
+		for (int32 Sector = 0; Sector < FTDTargetTacticsRecord::RangedSectorCount; ++Sector)
+		{
+			BlockedCount += StepIndex < Record.RangedBlockedUntilStep[Sector] ? 1 : 0;
+		}
+		return BlockedCount;
+	}
+
 	int64 SquareCm(const int32 Value)
 	{
 		return static_cast<int64>(Value) * Value;
@@ -67,6 +84,7 @@ namespace
 		Fragment.TokenRecordId = 0;
 		Fragment.CommittedCostQuarters = 0;
 		Fragment.InnerSector = -1;
+		Fragment.ReservationProgressAnchorStep = 0;
 	}
 
 	void ClearTacticsSectors(FTDMonsterTacticsFragment& Fragment)
@@ -407,6 +425,7 @@ void UTDMonsterThinkSubsystem::NotifyMonsterFrozen(const FTDMonsterSlotHandle Ha
 
 void UTDMonsterThinkSubsystem::AdvanceFrame(const float DeltaSeconds)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDMonsterAI_Frame);
 	if (OrderedSlots.IsEmpty())
 	{
 		AccumulatedSeconds = 0.f;
@@ -500,7 +519,7 @@ TArray<FString> UTDMonsterThinkSubsystem::GetTacticsDebugLines() const
 		const AActor* Target = Record.Target.Get();
 		const FTDTacticsPool& MeleePool = Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex];
 		const FTDTacticsPool& RangedPool = Record.Pools[FTDTargetTacticsRecord::RangedPoolIndex];
-		Lines.Add(FString::Printf(TEXT("record=%u target=%s melee=%d ranged=%d base_tokens=%d/%d budget=%d/%d held=%d/%d phase=%s intensity=%d spacing=%d mercy=%d freeze=%d grace=%d"),
+		Lines.Add(FString::Printf(TEXT("record=%u target=%s melee=%d ranged=%d base_tokens=%d/%d budget=%d/%d held=%d/%d phase=%s intensity=%d spacing=%d mercy=%d freeze=%d grace=%d blocked=%d"),
 			Record.RecordId,
 			Target ? *Target->GetName() : TEXT("None"),
 			MeleePool.EngagedCount,
@@ -516,7 +535,8 @@ TArray<FString> UTDMonsterThinkSubsystem::GetTacticsDebugLines() const
 			FTDCombatDirector::GetStartSpacingSteps(Record.Director),
 			Record.Director.bIsMercyOpen ? 1 : 0,
 			StepIndex < Record.GrantFreezeUntilStep ? 1 : 0,
-			StepIndex < Record.OpeningGraceUntilStep ? 1 : 0));
+			StepIndex < Record.OpeningGraceUntilStep ? 1 : 0,
+			CountBlockedTacticsSectors(Record, StepIndex)));
 	}
 	return Lines;
 }
@@ -545,6 +565,7 @@ void UTDMonsterThinkSubsystem::RebuildOrder()
 
 void UTDMonsterThinkSubsystem::RunKernelStep()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDMonsterAI_Step);
 	++StepIndex;
 	SnapshotTacticsSettings();
 	TArray<int32> StaleSlots;
@@ -1963,12 +1984,44 @@ void UTDMonsterThinkSubsystem::RevokeInvalidReservation(const int32 SlotIndex)
 	const bool bIsExpired = StepIndex - Fragment.GrantStep >= static_cast<uint64>(FTDCombatTactics::ReservationExpirySteps);
 	const bool bIsTooFar = !Target || FTDCombatTactics::ComputePlanarDistanceSquared(Bodies[SlotIndex].Location, Target->GetActorLocation()) > SquareCm(RevokeRadiusCm);
 	const bool bIsFleeing = Brain.ActivePrimitive == ETDMonsterPrimitive::MoveAway;
-	if (!bIsExpired && !bIsTooFar && !bIsFleeing)
+	const bool bIsStalled = !bIsTooFar && DetectStalledReservation(SlotIndex, Target->GetActorLocation());
+	if (!bIsExpired && !bIsTooFar && !bIsFleeing && !bIsStalled)
 	{
 		return;
 	}
 	ClearTacticsToken(Fragment);
 	Fragment.RegrantReadyStep = StepIndex + FTDCombatTactics::RegrantCooldownSteps;
+	if (bIsStalled)
+	{
+		Fragment.StalledUntilStep = StepIndex + FTDCombatTactics::StalledExclusionSteps;
+	}
+}
+
+bool UTDMonsterThinkSubsystem::DetectStalledReservation(const int32 SlotIndex, const FVector& TargetLocation)
+{
+	FTDMonsterTacticsFragment& Fragment = Tactics[SlotIndex];
+	const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	const int32 DistanceCm = FMath::FloorToInt32(FVector::Dist2D(Bodies[SlotIndex].Location, TargetLocation));
+	const int32 ReachCm = FTDCombatTactics::IsRangedLaneRole(Fragment.Role) ? Fragment.MaxReachCm : Fragment.MeleeReachCm;
+	const double MoveSpeed = Brain.Definition.IsValid() ? static_cast<double>(Brain.Definition->GetStatsForPhase(Brain.PhaseIndex).MoveSpeed) : 0.0;
+	const bool bIsApproaching = Brain.State == ETDMonsterFsmState::Move
+		&& Brain.ActivePrimitive == ETDMonsterPrimitive::MoveToward
+		&& DistanceCm > ReachCm + FTDCombatTactics::BlockedArrivalCm
+		&& MakeContext(SlotIndex).TargetVelocity.SizeSquared2D() < FMath::Square(MoveSpeed);
+	if (!bIsApproaching)
+	{
+		Fragment.ReservationProgressAnchorStep = 0;
+		return false;
+	}
+	const bool bHasProgressed = DistanceCm < Fragment.ReservationBestDistanceCm - FTDCombatTactics::BlockedProgressCm;
+	const bool bHasLostGround = DistanceCm > Fragment.ReservationBestDistanceCm + FTDCombatTactics::StallReanchorCm;
+	if (Fragment.ReservationProgressAnchorStep == 0 || bHasProgressed || bHasLostGround)
+	{
+		Fragment.ReservationProgressAnchorStep = StepIndex;
+		Fragment.ReservationBestDistanceCm = DistanceCm;
+		return false;
+	}
+	return StepIndex - Fragment.ReservationProgressAnchorStep >= static_cast<uint64>(FTDCombatTactics::BlockedProgressSteps);
 }
 
 void UTDMonsterThinkSubsystem::DetectBlockedTacticsSector(const int32 SlotIndex)
@@ -2466,6 +2519,7 @@ void UTDMonsterThinkSubsystem::GrantTacticsToken(const int32 SlotIndex, const ui
 	Fragment.TokenRecordId = RecordId;
 	Fragment.GrantStep = StepIndex;
 	Fragment.bIsOnDeck = false;
+	Fragment.ReservationProgressAnchorStep = 0;
 }
 
 void UTDMonsterThinkSubsystem::RemoveFinishedTacticsRecords()
@@ -2557,6 +2611,10 @@ bool UTDMonsterThinkSubsystem::IsTokenCandidate(const int32 SlotIndex, const FTD
 		return false;
 	}
 	if (Brain.bIsFrozen || Brain.State == ETDMonsterFsmState::Stagger || Brain.ActivePrimitive == ETDMonsterPrimitive::MoveAway || IsInPackFear(SlotIndex))
+	{
+		return false;
+	}
+	if (StepIndex < Fragment.StalledUntilStep)
 	{
 		return false;
 	}

@@ -312,6 +312,15 @@ B §4.6 의 마이크로초 단가를 쓰되, move·judge 는 LOD 불변(D21, �
 
 같은 단가로 재계산하면 스케줄러 0.01 + think 0.10 + move 0.64 + 분리 조향 0.26 + 공간 해시 0.8~1.2 + judge 0.15~0.2 + present 0.5~0.7(150 × 4µs) + 애니 1.5 + GE < 0.1 ≈ **4.0~4.7ms**(추정, 플로우 필드는 Phase 3 이라 0). 단계 A 목표 4.0ms 의 경계에 있으며, 넘는 쪽은 공간 해시 단가에 달려 있다. 최악 케이스(L0 120 동시 교전)는 think 0.1ms 증가, present 0.3ms 증가, 애니 초과분은 예산 할당기가 보간으로 흡수한다. 가장 큰 변수는 매 스텝 도는 공간 해시·move 와 present·애니메이션이며 AI 모델(think)이 아니다.
 
+**실측(2026-10-18, M3-14 PIE — 에디터 개발 빌드·GUI PIE·Insights `Trace.File cpu,frame` 15초 창, 활성 325·교전 310·대상 1):**
+
+| 항목 | 스텝당 | 60fps 환산 프레임당(스텝 1.07) | 비고 |
+|---|---|---|---|
+| `TDMonsterAI_Step`(커널 스텝 전체) | 3.00ms(전술 끔 3.32ms) | 약 3.2ms | 위 추정 합(4.0~4.7ms)과 같은 자릿수. 에디터 값이라 출하본은 더 낮을 것(미측정) |
+| `TDMonsterAI_Tactics`(무리 전술층·디렉터, M3-14·M3-28) | 83µs(p95 161·최대 418µs) | 약 0.09ms | 위 표에 없던 행. 스텝의 2.8%. 전술을 켜면 대기자가 고리에 머물러 스텝 전체가 7~10% 가볍다(실행 3회) |
+
+측정 PIE가 약 19fps라 프레임당 스텝이 3.3이었다(프레임당 값은 스텝당 × 스텝 수). 채널별 카운터(§6.3 통계 그룹)는 아직 없고 Insights 범위 `TDMonsterAI_Frame`·`TDMonsterAI_Step`·`TDMonsterAI_Tactics`만 있다. 재현 `python Tools/MonsterAI/pie_check_tactics.py --suite crowd`, 근거 [measurements/squad-tactics/pie-2026-10-18/summary.md](measurements/squad-tactics/pie-2026-10-18/summary.md).
+
 ### 6.3 실측 갱신 절차와 `stat TDMonsterAI`
 
 | 항목 | 내용 |

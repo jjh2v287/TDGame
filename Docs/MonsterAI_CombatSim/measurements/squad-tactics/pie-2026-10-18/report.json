@@ -1,0 +1,2808 @@
+{
+  "tool": "pie_check_tactics",
+  "date": "2026-10-18",
+  "environment_by_run": [
+    {
+      "level": {
+        "pie_running": false,
+        "loaded": true,
+        "world": "/Game/Level/LV-Cambat.LV-Cambat"
+      },
+      "inspect": {
+        "world": "/Game/Level/LV-Cambat.LV-Cambat",
+        "floor": {
+          "label": "Floor",
+          "min_x": -4000.00244140625,
+          "max_x": 4000.00048828125,
+          "min_y": -3999.99951171875,
+          "max_y": 4000.00048828125,
+          "top_z": -0.5
+        },
+        "player_starts": [
+          [
+            0,
+            0,
+            92
+          ]
+        ],
+        "placed_monsters": 25,
+        "probe_actors": []
+      },
+      "prepare": {
+        "walls": [
+          "TDProbe_Tactics_Wall",
+          "TDProbe_Tactics_CorridorNorth",
+          "TDProbe_Tactics_CorridorSouth"
+        ],
+        "removed_stale": [],
+        "layout": {
+          "wall_x": -3400.0,
+          "wall_stand": [
+            -3240.0,
+            0.0
+          ],
+          "corridor_center": [
+            0.0,
+            -3500.0
+          ],
+          "corridor_stand": [
+            0.0,
+            -3500.0
+          ],
+          "corridor_inner_width_cm": 500.0,
+          "wall_length_cm": 2600.0,
+          "floor": {
+            "label": "Floor",
+            "min_x": -4000.00244140625,
+            "max_x": 4000.00048828125,
+            "min_y": -3999.99951171875,
+            "max_y": 4000.00048828125,
+            "top_z": -0.5
+          }
+        }
+      },
+      "behavior_start": {
+        "started": true,
+        "map": "/Game/Level/UEDPIE_0_LV-Cambat.LV-Cambat",
+        "suite": "behavior"
+      },
+      "behavior_pie_ended": true,
+      "crowd_start": {
+        "started": true,
+        "map": "/Game/Level/UEDPIE_0_LV-Cambat.LV-Cambat",
+        "suite": "crowd"
+      },
+      "crowd_pie_ended": true,
+      "cleanup": {
+        "removed": [
+          "TDProbe_Tactics_Wall",
+          "TDProbe_Tactics_CorridorNorth",
+          "TDProbe_Tactics_CorridorSouth"
+        ]
+      }
+    }
+  ],
+  "behavior_state": {
+    "tool": "editor_pie_tactics_probe",
+    "suite": "behavior",
+    "map": "/Game/Level/UEDPIE_0_LV-Cambat.LV-Cambat",
+    "result": "complete",
+    "stage": "fight",
+    "started": "2026-10-18 16:53:40",
+    "events": [
+      {
+        "console": "TD.MonsterAI.Tactics 1",
+        "game_seconds": 4.58
+      },
+      {
+        "console": "TD.MonsterAI.Tactics.Debug 1",
+        "game_seconds": 4.58
+      },
+      {
+        "console": "TDSetCasterLevel 10",
+        "game_seconds": 4.58
+      },
+      {
+        "console": "TDSpawnMonster Goblin 10 900",
+        "game_seconds": 4.63
+      },
+      {
+        "stage": "surround10",
+        "game_seconds": 4.7
+      },
+      {
+        "stage": "awaiting_capture",
+        "game_seconds": 18.71,
+        "capture": "01_surround10"
+      },
+      {
+        "stage": "captured",
+        "game_seconds": 21.22,
+        "capture": "01_surround10"
+      },
+      {
+        "stage": "pull25",
+        "game_seconds": 49.7
+      },
+      {
+        "stage": "stand35",
+        "game_seconds": 59.57
+      },
+      {
+        "stage": "awaiting_capture",
+        "game_seconds": 75.58,
+        "capture": "02_stand35"
+      },
+      {
+        "stage": "captured",
+        "game_seconds": 78.32,
+        "capture": "02_stand35"
+      },
+      {
+        "stage": "kite35",
+        "game_seconds": 99.59
+      },
+      {
+        "stage": "awaiting_capture",
+        "game_seconds": 119.6,
+        "capture": "03_kite35"
+      },
+      {
+        "stage": "captured",
+        "game_seconds": 122.66,
+        "capture": "03_kite35"
+      },
+      {
+        "stage": "walk_to_wall",
+        "game_seconds": 159.59,
+        "waypoints": [
+          [
+            -2440.0,
+            0.0
+          ],
+          [
+            -3240.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "console": "TDSpawnMonster Goblin 10 900",
+        "game_seconds": 167.64
+      },
+      {
+        "stage": "wall",
+        "game_seconds": 167.7
+      },
+      {
+        "stage": "awaiting_capture",
+        "game_seconds": 181.71,
+        "capture": "04_wall"
+      },
+      {
+        "stage": "captured",
+        "game_seconds": 184.37,
+        "capture": "04_wall"
+      },
+      {
+        "stage": "walk_to_corridor",
+        "game_seconds": 197.7,
+        "waypoints": [
+          [
+            -2200.0,
+            -3500.0
+          ],
+          [
+            0.0,
+            -3500.0
+          ]
+        ]
+      },
+      {
+        "console": "TDSpawnMonster Goblin 8 150",
+        "game_seconds": 207.44
+      },
+      {
+        "stage": "corridor",
+        "game_seconds": 207.49
+      },
+      {
+        "stage": "awaiting_capture",
+        "game_seconds": 221.5,
+        "capture": "05_corridor"
+      },
+      {
+        "stage": "captured",
+        "game_seconds": 224.02,
+        "capture": "05_corridor"
+      },
+      {
+        "stage": "walk_to_center",
+        "game_seconds": 237.52,
+        "waypoints": [
+          [
+            -2200.0,
+            -3500.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "stage": "fight",
+        "game_seconds": 248.62
+      }
+    ],
+    "errors": [],
+    "captures": {
+      "01_surround10": true,
+      "02_stand35": true,
+      "03_kite35": true,
+      "04_wall": true,
+      "05_corridor": true
+    },
+    "traces": {},
+    "samples_path": "C:/Project/TDGame/Saved/MonsterAI\\TacticsPie\\samples_behavior.jsonl",
+    "registered_at_start": 25,
+    "kite_mode": "input",
+    "walk_hops": {
+      "walk_to_wall": 0,
+      "walk_to_corridor": 0,
+      "walk_to_center": 0
+    },
+    "refills": 21,
+    "fight_casts": 17
+  },
+  "behavior_captures": {
+    "01_surround10": {
+      "saved": true,
+      "path": "Docs/MonsterAI_CombatSim/measurements/squad-tactics/pie-2026-10-18/01_surround10.png",
+      "bytes": 1929736,
+      "source": "PIE Shot(뷰포트, 디버그 선 포함)"
+    },
+    "02_stand35": {
+      "saved": true,
+      "path": "Docs/MonsterAI_CombatSim/measurements/squad-tactics/pie-2026-10-18/02_stand35.png",
+      "bytes": 2020372,
+      "source": "PIE Shot(뷰포트, 디버그 선 포함)"
+    },
+    "03_kite35": {
+      "saved": true,
+      "path": "Docs/MonsterAI_CombatSim/measurements/squad-tactics/pie-2026-10-18/03_kite35.png",
+      "bytes": 2032126,
+      "source": "PIE Shot(뷰포트, 디버그 선 포함)"
+    },
+    "04_wall": {
+      "saved": true,
+      "path": "Docs/MonsterAI_CombatSim/measurements/squad-tactics/pie-2026-10-18/04_wall.png",
+      "bytes": 1733223,
+      "source": "PIE Shot(뷰포트, 디버그 선 포함)"
+    },
+    "05_corridor": {
+      "saved": true,
+      "path": "Docs/MonsterAI_CombatSim/measurements/squad-tactics/pie-2026-10-18/05_corridor.png",
+      "bytes": 1915620,
+      "source": "PIE Shot(뷰포트, 디버그 선 포함)"
+    }
+  },
+  "crowd_state": {
+    "tool": "editor_pie_tactics_probe",
+    "suite": "crowd",
+    "map": "/Game/Level/UEDPIE_0_LV-Cambat.LV-Cambat",
+    "result": "complete",
+    "stage": "crowd_tactics_off",
+    "started": "2026-10-18 16:58:13",
+    "events": [
+      {
+        "console": "TD.MonsterAI.Tactics 1",
+        "game_seconds": 3.44
+      },
+      {
+        "console": "TD.MonsterAI.Tactics.Debug 0",
+        "game_seconds": 3.44
+      },
+      {
+        "console": "TD.MonsterAI.DebugDraw 0",
+        "game_seconds": 3.44
+      },
+      {
+        "console": "Trace.Stop",
+        "game_seconds": 3.44
+      },
+      {
+        "console": "TDSpawnMonster Goblin 15 1000",
+        "game_seconds": 3.48
+      },
+      {
+        "console": "TDSpawnMonster Hyena 15 1150",
+        "game_seconds": 3.56
+      },
+      {
+        "console": "TDSpawnMonster Goblin 15 1300",
+        "game_seconds": 3.66
+      },
+      {
+        "console": "TDSpawnMonster Hyena 15 1450",
+        "game_seconds": 3.75
+      },
+      {
+        "console": "TDSpawnMonster BookHeadCaster 15 1600",
+        "game_seconds": 3.86
+      },
+      {
+        "console": "TDSpawnMonster Goblin 15 1000",
+        "game_seconds": 3.97
+      },
+      {
+        "console": "TDSpawnMonster Hyena 15 1150",
+        "game_seconds": 4.08
+      },
+      {
+        "console": "TDSpawnMonster Goblin 15 1300",
+        "game_seconds": 4.21
+      },
+      {
+        "console": "TDSpawnMonster Hyena 15 1450",
+        "game_seconds": 4.34
+      },
+      {
+        "console": "TDSpawnMonster BookHeadCaster 15 1600",
+        "game_seconds": 4.49
+      },
+      {
+        "console": "TDSpawnMonster Goblin 15 1000",
+        "game_seconds": 4.65
+      },
+      {
+        "console": "TDSpawnMonster Hyena 15 1150",
+        "game_seconds": 4.81
+      },
+      {
+        "console": "TDSpawnMonster Goblin 15 1300",
+        "game_seconds": 5.01
+      },
+      {
+        "console": "TDSpawnMonster Hyena 15 1450",
+        "game_seconds": 5.21
+      },
+      {
+        "console": "TDSpawnMonster BookHeadCaster 15 1600",
+        "game_seconds": 5.43
+      },
+      {
+        "console": "TDSpawnMonster Goblin 15 1000",
+        "game_seconds": 5.65
+      },
+      {
+        "console": "TDSpawnMonster Hyena 15 1150",
+        "game_seconds": 5.87
+      },
+      {
+        "console": "TDSpawnMonster Goblin 15 1300",
+        "game_seconds": 6.12
+      },
+      {
+        "console": "TDSpawnMonster Hyena 15 1450",
+        "game_seconds": 6.36
+      },
+      {
+        "console": "TDSpawnMonster BookHeadCaster 15 1600",
+        "game_seconds": 6.62
+      },
+      {
+        "console": "Trace.File C:/Project/TDGame/Saved/MonsterAI/TacticsPie/crowd_tactics_on.utrace cpu,frame",
+        "game_seconds": 18.95
+      },
+      {
+        "stage": "crowd_tactics_on",
+        "game_seconds": 18.95
+      },
+      {
+        "console": "Trace.Stop",
+        "game_seconds": 33.96
+      },
+      {
+        "console": "TD.MonsterAI.Tactics 0",
+        "game_seconds": 33.96
+      },
+      {
+        "console": "Trace.File C:/Project/TDGame/Saved/MonsterAI/TacticsPie/crowd_tactics_off.utrace cpu,frame",
+        "game_seconds": 37.03
+      },
+      {
+        "stage": "crowd_tactics_off",
+        "game_seconds": 37.03
+      },
+      {
+        "console": "Trace.Stop",
+        "game_seconds": 52.08
+      },
+      {
+        "console": "TD.MonsterAI.Tactics 1",
+        "game_seconds": 52.08
+      }
+    ],
+    "errors": [],
+    "captures": {},
+    "traces": {
+      "tactics_on": {
+        "path": "C:/Project/TDGame/Saved/MonsterAI/TacticsPie/crowd_tactics_on.utrace",
+        "real_seconds": 15.0
+      },
+      "tactics_off": {
+        "path": "C:/Project/TDGame/Saved/MonsterAI/TacticsPie/crowd_tactics_off.utrace",
+        "real_seconds": 15.0
+      }
+    },
+    "samples_path": "C:/Project/TDGame/Saved/MonsterAI\\TacticsPie\\samples_crowd.jsonl",
+    "registered_at_start": 25,
+    "registered_after_spawn": 325,
+    "refills": 10
+  },
+  "crowd_captures": {},
+  "behavior": {
+    "surround10": {
+      "seconds": 44.5,
+      "morale_labels_seen": [
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 740,
+        "max_casting_engaged": 3,
+        "max_casting_with_token": 3,
+        "samples_casting_over_token_budget": 2,
+        "samples_held_over_budget": 2,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": {
+          "t": 47.034,
+          "casting": 3,
+          "token_budget": 2,
+          "excess": 1,
+          "phase": "PeakFade"
+        },
+        "melee_engaged_to_base_tokens": {
+          "10": [
+            3
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 740,
+        "waiters_median": 7.0,
+        "largest_angle_gap_median_deg": 114.7,
+        "largest_angle_gap_p90_deg": 180.1,
+        "quadrants_occupied_median": 4.0,
+        "ring_distance_median_cm": {
+          "0": 310,
+          "1": 512
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            298,
+            325
+          ],
+          "1": [
+            336,
+            530
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 68,
+        "bearing_span_median_deg": 4.5,
+        "distance_span_median_cm": 18,
+        "stints_with_feint_dip": 10,
+        "stints_motionless": 5,
+        "path_per_second_median_cm": 15,
+        "longest": [
+          {
+            "sim": 29,
+            "slot": "W0:10",
+            "seconds": 5.8,
+            "bearing_span_deg": 2.7,
+            "distance_span_cm": 19,
+            "feint_dips": 0,
+            "path_cm": 60
+          },
+          {
+            "sim": 28,
+            "slot": "W0:9",
+            "seconds": 5.2,
+            "bearing_span_deg": 4.9,
+            "distance_span_cm": 16,
+            "feint_dips": 0,
+            "path_cm": 63
+          },
+          {
+            "sim": 34,
+            "slot": "W0:3",
+            "seconds": 5.2,
+            "bearing_span_deg": 4.0,
+            "distance_span_cm": 17,
+            "feint_dips": 0,
+            "path_cm": 62
+          },
+          {
+            "sim": 33,
+            "slot": "W0:5",
+            "seconds": 5.1,
+            "bearing_span_deg": 3.5,
+            "distance_span_cm": 14,
+            "feint_dips": 0,
+            "path_cm": 62
+          },
+          {
+            "sim": 31,
+            "slot": "W0:2",
+            "seconds": 4.9,
+            "bearing_span_deg": 7.4,
+            "distance_span_cm": 11,
+            "feint_dips": 0,
+            "path_cm": 78
+          }
+        ]
+      },
+      "blocked": {
+        "blocked_sectors_max": 0,
+        "samples_with_blocked_sector": 0,
+        "wait_slot_changes": 9,
+        "ring_reference_cm": {
+          "0": 310,
+          "1": 512
+        },
+        "stuck_waiter_runs_over_2s": 0,
+        "stuck_examples": []
+      },
+      "director": {
+        "transitions": 10,
+        "completed_cycles": 2,
+        "out_of_order_transitions": 0,
+        "intensity_max": 1000,
+        "seconds_by_phase": {
+          "BuildUp": 13.4,
+          "SustainPeak": 12.0,
+          "PeakFade": 11.1,
+          "Relax": 8.0
+        },
+        "timeline": [
+          {
+            "phase": "BuildUp",
+            "t": 5.15,
+            "seconds": 7.47,
+            "intensity": 0
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 12.62,
+            "seconds": 3.98,
+            "intensity": 788
+          },
+          {
+            "phase": "PeakFade",
+            "t": 16.59,
+            "seconds": 4.32,
+            "intensity": 1000
+          },
+          {
+            "phase": "Relax",
+            "t": 20.91,
+            "seconds": 4.04,
+            "intensity": 250
+          },
+          {
+            "phase": "BuildUp",
+            "t": 24.95,
+            "seconds": 3.48,
+            "intensity": 340
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 28.43,
+            "seconds": 4.01,
+            "intensity": 746
+          },
+          {
+            "phase": "PeakFade",
+            "t": 32.44,
+            "seconds": 4.0,
+            "intensity": 1000
+          },
+          {
+            "phase": "Relax",
+            "t": 36.44,
+            "seconds": 4.0,
+            "intensity": 250
+          },
+          {
+            "phase": "BuildUp",
+            "t": 40.45,
+            "seconds": 2.49,
+            "intensity": 400
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 42.94,
+            "seconds": 3.98,
+            "intensity": 720
+          },
+          {
+            "phase": "PeakFade",
+            "t": 46.92,
+            "seconds": 2.76,
+            "intensity": 1000
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 10,
+        "attack_starts_total": 72,
+        "monsters_with_engaged_gap_over_20s": 0,
+        "longest_engaged_gap_seconds": 8.4,
+        "longest_eligible_tokenless_seconds": 6.9,
+        "share_of_engaged_time_without_cast": 0.035,
+        "worst_monsters": [
+          {
+            "sim": 29,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 44.5,
+            "engaged_runs": 1,
+            "attack_starts": 7,
+            "longest_engaged_gap_seconds": 8.4,
+            "longest_eligible_tokenless_seconds": 6.9
+          },
+          {
+            "sim": 33,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 44.5,
+            "engaged_runs": 1,
+            "attack_starts": 7,
+            "longest_engaged_gap_seconds": 8.1,
+            "longest_eligible_tokenless_seconds": 6.2
+          },
+          {
+            "sim": 28,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 44.5,
+            "engaged_runs": 1,
+            "attack_starts": 7,
+            "longest_engaged_gap_seconds": 7.8,
+            "longest_eligible_tokenless_seconds": 6.2
+          },
+          {
+            "sim": 34,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 44.5,
+            "engaged_runs": 1,
+            "attack_starts": 7,
+            "longest_engaged_gap_seconds": 7.8,
+            "longest_eligible_tokenless_seconds": 6.2
+          },
+          {
+            "sim": 27,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 44.5,
+            "engaged_runs": 1,
+            "attack_starts": 6,
+            "longest_engaged_gap_seconds": 7.7,
+            "longest_eligible_tokenless_seconds": 5.7
+          },
+          {
+            "sim": 35,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 44.5,
+            "engaged_runs": 1,
+            "attack_starts": 7,
+            "longest_engaged_gap_seconds": 7.6,
+            "longest_eligible_tokenless_seconds": 5.8
+          }
+        ]
+      }
+    },
+    "stand35": {
+      "seconds": 39.9,
+      "morale_labels_seen": [
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 646,
+        "max_casting_engaged": 5,
+        "max_casting_with_token": 5,
+        "samples_casting_over_token_budget": 0,
+        "samples_held_over_budget": 0,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": null,
+        "melee_engaged_to_base_tokens": {
+          "11": [
+            4
+          ],
+          "12": [
+            4
+          ],
+          "13": [
+            4
+          ],
+          "14": [
+            4
+          ],
+          "15": [
+            4
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 646,
+        "waiters_median": 12.0,
+        "largest_angle_gap_median_deg": 95.6,
+        "largest_angle_gap_p90_deg": 187.0,
+        "quadrants_occupied_median": 4.0,
+        "ring_distance_median_cm": {
+          "0": 314,
+          "1": 524
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            299,
+            363
+          ],
+          "1": [
+            425,
+            629
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 64,
+        "bearing_span_median_deg": 7.6,
+        "distance_span_median_cm": 34,
+        "stints_with_feint_dip": 28,
+        "stints_motionless": 0,
+        "path_per_second_median_cm": 35,
+        "longest": [
+          {
+            "sim": 16,
+            "slot": "W1:7",
+            "seconds": 7.3,
+            "bearing_span_deg": 24.7,
+            "distance_span_cm": 54,
+            "feint_dips": 1,
+            "path_cm": 419
+          },
+          {
+            "sim": 35,
+            "slot": "W0:2",
+            "seconds": 7.3,
+            "bearing_span_deg": 18.8,
+            "distance_span_cm": 100,
+            "feint_dips": 1,
+            "path_cm": 381
+          },
+          {
+            "sim": 27,
+            "slot": "W1:2",
+            "seconds": 7.1,
+            "bearing_span_deg": 7.2,
+            "distance_span_cm": 190,
+            "feint_dips": 1,
+            "path_cm": 410
+          },
+          {
+            "sim": 34,
+            "slot": "W1:6",
+            "seconds": 7.1,
+            "bearing_span_deg": 6.7,
+            "distance_span_cm": 31,
+            "feint_dips": 0,
+            "path_cm": 210
+          },
+          {
+            "sim": 26,
+            "slot": "W0:4",
+            "seconds": 7.0,
+            "bearing_span_deg": 20.9,
+            "distance_span_cm": 53,
+            "feint_dips": 1,
+            "path_cm": 271
+          }
+        ]
+      },
+      "blocked": {
+        "blocked_sectors_max": 1,
+        "samples_with_blocked_sector": 262,
+        "wait_slot_changes": 38,
+        "ring_reference_cm": {
+          "0": 314,
+          "1": 524
+        },
+        "stuck_waiter_runs_over_2s": 0,
+        "stuck_examples": []
+      },
+      "director": {
+        "transitions": 10,
+        "completed_cycles": 2,
+        "out_of_order_transitions": 0,
+        "intensity_max": 1000,
+        "seconds_by_phase": {
+          "BuildUp": 9.3,
+          "SustainPeak": 12.0,
+          "PeakFade": 10.3,
+          "Relax": 8.3
+        },
+        "timeline": [
+          {
+            "phase": "BuildUp",
+            "t": 59.63,
+            "seconds": 5.81,
+            "intensity": 0
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 65.44,
+            "seconds": 4.01,
+            "intensity": 900
+          },
+          {
+            "phase": "PeakFade",
+            "t": 69.45,
+            "seconds": 3.98,
+            "intensity": 1000
+          },
+          {
+            "phase": "Relax",
+            "t": 73.43,
+            "seconds": 4.28,
+            "intensity": 250
+          },
+          {
+            "phase": "BuildUp",
+            "t": 77.71,
+            "seconds": 1.49,
+            "intensity": 400
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 79.2,
+            "seconds": 3.99,
+            "intensity": 802
+          },
+          {
+            "phase": "PeakFade",
+            "t": 83.19,
+            "seconds": 4.02,
+            "intensity": 1000
+          },
+          {
+            "phase": "Relax",
+            "t": 87.22,
+            "seconds": 3.98,
+            "intensity": 250
+          },
+          {
+            "phase": "BuildUp",
+            "t": 91.2,
+            "seconds": 2.05,
+            "intensity": 400
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 93.25,
+            "seconds": 3.96,
+            "intensity": 798
+          },
+          {
+            "phase": "PeakFade",
+            "t": 97.21,
+            "seconds": 2.33,
+            "intensity": 1000
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 22,
+        "attack_starts_total": 87,
+        "monsters_with_engaged_gap_over_20s": 0,
+        "longest_engaged_gap_seconds": 10.7,
+        "longest_eligible_tokenless_seconds": 8.4,
+        "share_of_engaged_time_without_cast": 0.01,
+        "worst_monsters": [
+          {
+            "sim": 28,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 39.9,
+            "engaged_runs": 1,
+            "attack_starts": 5,
+            "longest_engaged_gap_seconds": 10.7,
+            "longest_eligible_tokenless_seconds": 7.1
+          },
+          {
+            "sim": 34,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 39.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 10.5,
+            "longest_eligible_tokenless_seconds": 8.1
+          },
+          {
+            "sim": 5,
+            "def": "BookHead_Brute",
+            "engaged_seconds": 39.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 10.4,
+            "longest_eligible_tokenless_seconds": 7.3
+          },
+          {
+            "sim": 35,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 39.9,
+            "engaged_runs": 1,
+            "attack_starts": 5,
+            "longest_engaged_gap_seconds": 10.4,
+            "longest_eligible_tokenless_seconds": 8.3
+          },
+          {
+            "sim": 27,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 39.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 10.3,
+            "longest_eligible_tokenless_seconds": 8.1
+          },
+          {
+            "sim": 16,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 39.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 10.2,
+            "longest_eligible_tokenless_seconds": 8.4
+          }
+        ]
+      }
+    },
+    "kite35": {
+      "seconds": 59.9,
+      "morale_labels_seen": [
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 988,
+        "max_casting_engaged": 4,
+        "max_casting_with_token": 4,
+        "samples_casting_over_token_budget": 0,
+        "samples_held_over_budget": 14,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": null,
+        "melee_engaged_to_base_tokens": {
+          "11": [
+            4
+          ],
+          "12": [
+            4
+          ],
+          "13": [
+            4
+          ],
+          "14": [
+            4,
+            5
+          ],
+          "15": [
+            4,
+            5
+          ],
+          "16": [
+            4,
+            5
+          ],
+          "17": [
+            4,
+            5
+          ],
+          "18": [
+            4,
+            5
+          ],
+          "19": [
+            4,
+            5
+          ],
+          "20": [
+            4,
+            5
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 326,
+        "waiters_median": 12.0,
+        "largest_angle_gap_median_deg": 193.0,
+        "largest_angle_gap_p90_deg": 260.1,
+        "quadrants_occupied_median": 3.0,
+        "ring_distance_median_cm": {
+          "0": 390,
+          "1": 641
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            287,
+            922
+          ],
+          "1": [
+            511,
+            1021
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 9,
+        "bearing_span_median_deg": 32.3,
+        "distance_span_median_cm": 251,
+        "stints_with_feint_dip": 8,
+        "stints_motionless": 0,
+        "path_per_second_median_cm": 385,
+        "longest": [
+          {
+            "sim": 4,
+            "slot": "W1:1",
+            "seconds": 8.6,
+            "bearing_span_deg": 15.5,
+            "distance_span_cm": 177,
+            "feint_dips": 2,
+            "path_cm": 3310
+          },
+          {
+            "sim": 31,
+            "slot": "W1:7",
+            "seconds": 4.8,
+            "bearing_span_deg": 52.2,
+            "distance_span_cm": 504,
+            "feint_dips": 2,
+            "path_cm": 1759
+          },
+          {
+            "sim": 30,
+            "slot": "W1:9",
+            "seconds": 4.4,
+            "bearing_span_deg": 40.2,
+            "distance_span_cm": 36,
+            "feint_dips": 0,
+            "path_cm": 1361
+          },
+          {
+            "sim": 35,
+            "slot": "W1:2",
+            "seconds": 4.2,
+            "bearing_span_deg": 32.3,
+            "distance_span_cm": 310,
+            "feint_dips": 2,
+            "path_cm": 1514
+          },
+          {
+            "sim": 6,
+            "slot": "W1:2",
+            "seconds": 4.0,
+            "bearing_span_deg": 41.5,
+            "distance_span_cm": 296,
+            "feint_dips": 2,
+            "path_cm": 1366
+          }
+        ]
+      },
+      "blocked": {
+        "blocked_sectors_max": 1,
+        "samples_with_blocked_sector": 133,
+        "wait_slot_changes": 581,
+        "ring_reference_cm": {
+          "0": 483,
+          "1": 707
+        },
+        "stuck_waiter_runs_over_2s": 1,
+        "stuck_examples": [
+          {
+            "sim": 2,
+            "slot": "W0:2",
+            "start": 120.773,
+            "x": 1434.0,
+            "y": 169.0,
+            "ring_error_cm": 205
+          }
+        ]
+      },
+      "director": {
+        "transitions": 2,
+        "completed_cycles": 1,
+        "out_of_order_transitions": 0,
+        "intensity_max": 1000,
+        "seconds_by_phase": {
+          "PeakFade": 1.6,
+          "Relax": 4.0,
+          "BuildUp": 54.3
+        },
+        "timeline": [
+          {
+            "phase": "PeakFade",
+            "t": 99.61,
+            "seconds": 1.59,
+            "intensity": 1000
+          },
+          {
+            "phase": "Relax",
+            "t": 101.2,
+            "seconds": 4.02,
+            "intensity": 250
+          },
+          {
+            "phase": "BuildUp",
+            "t": 105.22,
+            "seconds": 54.33,
+            "intensity": 242
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 27,
+        "attack_starts_total": 70,
+        "monsters_with_engaged_gap_over_20s": 2,
+        "longest_engaged_gap_seconds": 43.6,
+        "longest_eligible_tokenless_seconds": 10.6,
+        "share_of_engaged_time_without_cast": 0.26,
+        "worst_monsters": [
+          {
+            "sim": 32,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 59.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 43.6,
+            "longest_eligible_tokenless_seconds": 8.8
+          },
+          {
+            "sim": 26,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 59.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 23.4,
+            "longest_eligible_tokenless_seconds": 8.1
+          },
+          {
+            "sim": 31,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 59.9,
+            "engaged_runs": 1,
+            "attack_starts": 5,
+            "longest_engaged_gap_seconds": 19.8,
+            "longest_eligible_tokenless_seconds": 8.2
+          },
+          {
+            "sim": 33,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 59.9,
+            "engaged_runs": 1,
+            "attack_starts": 6,
+            "longest_engaged_gap_seconds": 19.1,
+            "longest_eligible_tokenless_seconds": 8.3
+          },
+          {
+            "sim": 28,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 59.9,
+            "engaged_runs": 1,
+            "attack_starts": 6,
+            "longest_engaged_gap_seconds": 18.8,
+            "longest_eligible_tokenless_seconds": 8.7
+          },
+          {
+            "sim": 27,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 59.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 18.6,
+            "longest_eligible_tokenless_seconds": 8.9
+          }
+        ]
+      }
+    },
+    "walk_to_wall": {
+      "seconds": 8.0,
+      "morale_labels_seen": [
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 138,
+        "max_casting_engaged": 4,
+        "max_casting_with_token": 4,
+        "samples_casting_over_token_budget": 0,
+        "samples_held_over_budget": 0,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": null,
+        "melee_engaged_to_base_tokens": {
+          "8": [
+            3
+          ],
+          "9": [
+            3
+          ],
+          "10": [
+            3
+          ],
+          "11": [
+            4
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 15,
+        "waiters_median": 7,
+        "largest_angle_gap_median_deg": 125.8,
+        "largest_angle_gap_p90_deg": 148.1,
+        "quadrants_occupied_median": 2,
+        "ring_distance_median_cm": {
+          "0": 314,
+          "1": 397
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            205,
+            335
+          ],
+          "1": [
+            243,
+            717
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 0
+      },
+      "blocked": {
+        "blocked_sectors_max": 0,
+        "samples_with_blocked_sector": 0,
+        "wait_slot_changes": 32,
+        "ring_reference_cm": {
+          "0": 382,
+          "1": 804
+        },
+        "stuck_waiter_runs_over_2s": 0,
+        "stuck_examples": []
+      },
+      "director": {
+        "transitions": 0,
+        "completed_cycles": 0,
+        "out_of_order_transitions": 0,
+        "intensity_max": 216,
+        "seconds_by_phase": {
+          "BuildUp": 8.0
+        },
+        "timeline": [
+          {
+            "phase": "BuildUp",
+            "t": 159.61,
+            "seconds": 8.01,
+            "intensity": 132
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 13,
+        "attack_starts_total": 13,
+        "monsters_with_engaged_gap_over_20s": 0,
+        "longest_engaged_gap_seconds": 8.0,
+        "longest_eligible_tokenless_seconds": 5.3,
+        "share_of_engaged_time_without_cast": 0.198,
+        "worst_monsters": [
+          {
+            "sim": 26,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 8.0,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 8.0,
+            "longest_eligible_tokenless_seconds": 4.1
+          },
+          {
+            "sim": 31,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 8.0,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 8.0,
+            "longest_eligible_tokenless_seconds": 4.2
+          },
+          {
+            "sim": 32,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 8.0,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 8.0,
+            "longest_eligible_tokenless_seconds": 3.9
+          },
+          {
+            "sim": 34,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 8.0,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 7.6,
+            "longest_eligible_tokenless_seconds": 4.6
+          },
+          {
+            "sim": 27,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 8.0,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 6.9,
+            "longest_eligible_tokenless_seconds": 2.9
+          },
+          {
+            "sim": 30,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 8.0,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 6.6,
+            "longest_eligible_tokenless_seconds": 5.3
+          }
+        ]
+      }
+    },
+    "wall": {
+      "seconds": 29.9,
+      "morale_labels_seen": [
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 524,
+        "max_casting_engaged": 5,
+        "max_casting_with_token": 5,
+        "samples_casting_over_token_budget": 5,
+        "samples_held_over_budget": 5,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": {
+          "t": 191.349,
+          "casting": 5,
+          "token_budget": 4,
+          "excess": 1,
+          "phase": "PeakFade"
+        },
+        "melee_engaged_to_base_tokens": {
+          "10": [
+            3
+          ],
+          "11": [
+            4
+          ],
+          "13": [
+            4
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 521,
+        "waiters_median": 7,
+        "largest_angle_gap_median_deg": 162.4,
+        "largest_angle_gap_p90_deg": 226.2,
+        "quadrants_occupied_median": 3,
+        "ring_distance_median_cm": {
+          "0": 312,
+          "1": 518
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            268,
+            349
+          ],
+          "1": [
+            325,
+            587
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 35,
+        "bearing_span_median_deg": 6.3,
+        "distance_span_median_cm": 30,
+        "stints_with_feint_dip": 12,
+        "stints_motionless": 2,
+        "path_per_second_median_cm": 32,
+        "longest": [
+          {
+            "sim": 41,
+            "slot": "W0:0",
+            "seconds": 4.4,
+            "bearing_span_deg": 17.5,
+            "distance_span_cm": 126,
+            "feint_dips": 0,
+            "path_cm": 382
+          },
+          {
+            "sim": 10,
+            "slot": "W1:13",
+            "seconds": 4.3,
+            "bearing_span_deg": 15.2,
+            "distance_span_cm": 34,
+            "feint_dips": 0,
+            "path_cm": 237
+          },
+          {
+            "sim": 45,
+            "slot": "W0:2",
+            "seconds": 4.2,
+            "bearing_span_deg": 6.2,
+            "distance_span_cm": 19,
+            "feint_dips": 0,
+            "path_cm": 62
+          },
+          {
+            "sim": 42,
+            "slot": "W0:1",
+            "seconds": 4.0,
+            "bearing_span_deg": 2.3,
+            "distance_span_cm": 54,
+            "feint_dips": 1,
+            "path_cm": 93
+          },
+          {
+            "sim": 38,
+            "slot": "W0:11",
+            "seconds": 4.0,
+            "bearing_span_deg": 9.2,
+            "distance_span_cm": 32,
+            "feint_dips": 0,
+            "path_cm": 142
+          }
+        ]
+      },
+      "blocked": {
+        "blocked_sectors_max": 4,
+        "samples_with_blocked_sector": 307,
+        "wait_slot_changes": 32,
+        "ring_reference_cm": {
+          "0": 312,
+          "1": 519
+        },
+        "stuck_waiter_runs_over_2s": 0,
+        "stuck_examples": []
+      },
+      "director": {
+        "transitions": 7,
+        "completed_cycles": 1,
+        "out_of_order_transitions": 0,
+        "intensity_max": 1000,
+        "seconds_by_phase": {
+          "BuildUp": 7.2,
+          "SustainPeak": 8.0,
+          "PeakFade": 8.0,
+          "Relax": 6.7
+        },
+        "timeline": [
+          {
+            "phase": "BuildUp",
+            "t": 167.75,
+            "seconds": 5.73,
+            "intensity": 0
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 173.48,
+            "seconds": 4.01,
+            "intensity": 864
+          },
+          {
+            "phase": "PeakFade",
+            "t": 177.49,
+            "seconds": 4.02,
+            "intensity": 1000
+          },
+          {
+            "phase": "Relax",
+            "t": 181.5,
+            "seconds": 4.24,
+            "intensity": 250
+          },
+          {
+            "phase": "BuildUp",
+            "t": 185.74,
+            "seconds": 1.48,
+            "intensity": 400
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 187.22,
+            "seconds": 4.02,
+            "intensity": 712
+          },
+          {
+            "phase": "PeakFade",
+            "t": 191.24,
+            "seconds": 3.98,
+            "intensity": 1000
+          },
+          {
+            "phase": "Relax",
+            "t": 195.22,
+            "seconds": 2.48,
+            "intensity": 250
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 16,
+        "attack_starts_total": 64,
+        "monsters_with_engaged_gap_over_20s": 0,
+        "longest_engaged_gap_seconds": 9.7,
+        "longest_eligible_tokenless_seconds": 5.7,
+        "share_of_engaged_time_without_cast": 0.062,
+        "worst_monsters": [
+          {
+            "sim": 10,
+            "def": "BookHead_Brute",
+            "engaged_seconds": 29.9,
+            "engaged_runs": 1,
+            "attack_starts": 3,
+            "longest_engaged_gap_seconds": 9.7,
+            "longest_eligible_tokenless_seconds": 5.7
+          },
+          {
+            "sim": 37,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 29.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 8.0,
+            "longest_eligible_tokenless_seconds": 5.1
+          },
+          {
+            "sim": 39,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 29.9,
+            "engaged_runs": 1,
+            "attack_starts": 5,
+            "longest_engaged_gap_seconds": 7.7,
+            "longest_eligible_tokenless_seconds": 5.3
+          },
+          {
+            "sim": 44,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 29.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 7.7,
+            "longest_eligible_tokenless_seconds": 5.4
+          },
+          {
+            "sim": 38,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 29.9,
+            "engaged_runs": 1,
+            "attack_starts": 5,
+            "longest_engaged_gap_seconds": 7.6,
+            "longest_eligible_tokenless_seconds": 5.0
+          },
+          {
+            "sim": 45,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 29.9,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 7.5,
+            "longest_eligible_tokenless_seconds": 5.2
+          }
+        ]
+      }
+    },
+    "walk_to_corridor": {
+      "seconds": 9.7,
+      "morale_labels_seen": [
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 174,
+        "max_casting_engaged": 3,
+        "max_casting_with_token": 3,
+        "samples_casting_over_token_budget": 0,
+        "samples_held_over_budget": 0,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": null,
+        "melee_engaged_to_base_tokens": {
+          "5": [
+            2
+          ],
+          "6": [
+            2
+          ],
+          "7": [
+            2
+          ],
+          "8": [
+            3
+          ],
+          "9": [
+            3
+          ],
+          "10": [
+            3
+          ],
+          "11": [
+            4
+          ],
+          "12": [
+            4
+          ],
+          "13": [
+            4
+          ],
+          "14": [
+            4,
+            5
+          ],
+          "15": [
+            4
+          ],
+          "16": [
+            4
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 1,
+        "waiters_median": 8,
+        "largest_angle_gap_median_deg": 220.3,
+        "largest_angle_gap_p90_deg": 220.3,
+        "quadrants_occupied_median": 3,
+        "ring_distance_median_cm": {
+          "0": 313,
+          "1": 519
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            300,
+            327
+          ],
+          "1": [
+            327,
+            530
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 0
+      },
+      "blocked": {
+        "blocked_sectors_max": 2,
+        "samples_with_blocked_sector": 109,
+        "wait_slot_changes": 82,
+        "ring_reference_cm": {
+          "0": 662,
+          "1": 1185
+        },
+        "stuck_waiter_runs_over_2s": 0,
+        "stuck_examples": []
+      },
+      "director": {
+        "transitions": 1,
+        "completed_cycles": 1,
+        "out_of_order_transitions": 0,
+        "intensity_max": 670,
+        "seconds_by_phase": {
+          "Relax": 1.5,
+          "BuildUp": 8.2
+        },
+        "timeline": [
+          {
+            "phase": "Relax",
+            "t": 197.75,
+            "seconds": 1.48,
+            "intensity": 662
+          },
+          {
+            "phase": "BuildUp",
+            "t": 199.23,
+            "seconds": 8.19,
+            "intensity": 400
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 18,
+        "attack_starts_total": 6,
+        "monsters_with_engaged_gap_over_20s": 0,
+        "longest_engaged_gap_seconds": 9.5,
+        "longest_eligible_tokenless_seconds": 5.1,
+        "share_of_engaged_time_without_cast": 0.633,
+        "worst_monsters": [
+          {
+            "sim": 36,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 9.5,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 9.5,
+            "longest_eligible_tokenless_seconds": 4.6
+          },
+          {
+            "sim": 8,
+            "def": "BookHead_Caster",
+            "engaged_seconds": 8.9,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 8.9,
+            "longest_eligible_tokenless_seconds": 1.8
+          },
+          {
+            "sim": 37,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 8.7,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 8.7,
+            "longest_eligible_tokenless_seconds": 1.6
+          },
+          {
+            "sim": 38,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 8.0,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 8.0,
+            "longest_eligible_tokenless_seconds": 2.5
+          },
+          {
+            "sim": 39,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 7.7,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 7.7,
+            "longest_eligible_tokenless_seconds": 1.4
+          },
+          {
+            "sim": 40,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 7.4,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 7.4,
+            "longest_eligible_tokenless_seconds": 3.8
+          }
+        ]
+      }
+    },
+    "corridor": {
+      "seconds": 30.0,
+      "morale_labels_seen": [
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 472,
+        "max_casting_engaged": 3,
+        "max_casting_with_token": 3,
+        "samples_casting_over_token_budget": 0,
+        "samples_held_over_budget": 0,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": null,
+        "melee_engaged_to_base_tokens": {
+          "13": [
+            4
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 469,
+        "waiters_median": 9,
+        "largest_angle_gap_median_deg": 185.1,
+        "largest_angle_gap_p90_deg": 282.0,
+        "quadrants_occupied_median": 3,
+        "ring_distance_median_cm": {
+          "0": 284,
+          "1": 479
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            224,
+            374
+          ],
+          "1": [
+            262,
+            567
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 10,
+        "bearing_span_median_deg": 6.8,
+        "distance_span_median_cm": 68,
+        "stints_with_feint_dip": 5,
+        "stints_motionless": 1,
+        "path_per_second_median_cm": 52,
+        "longest": [
+          {
+            "sim": 20,
+            "slot": "W1:2",
+            "seconds": 7.2,
+            "bearing_span_deg": 16.4,
+            "distance_span_cm": 68,
+            "feint_dips": 2,
+            "path_cm": 395
+          },
+          {
+            "sim": 20,
+            "slot": "W1:2",
+            "seconds": 4.8,
+            "bearing_span_deg": 6.2,
+            "distance_span_cm": 27,
+            "feint_dips": 1,
+            "path_cm": 135
+          },
+          {
+            "sim": 51,
+            "slot": "W1:9",
+            "seconds": 4.4,
+            "bearing_span_deg": 11.8,
+            "distance_span_cm": 155,
+            "feint_dips": 0,
+            "path_cm": 331
+          },
+          {
+            "sim": 22,
+            "slot": "W1:11",
+            "seconds": 3.4,
+            "bearing_span_deg": 5.2,
+            "distance_span_cm": 143,
+            "feint_dips": 0,
+            "path_cm": 207
+          },
+          {
+            "sim": 50,
+            "slot": "W1:7",
+            "seconds": 2.9,
+            "bearing_span_deg": 7.4,
+            "distance_span_cm": 90,
+            "feint_dips": 1,
+            "path_cm": 144
+          }
+        ]
+      },
+      "blocked": {
+        "blocked_sectors_max": 15,
+        "samples_with_blocked_sector": 423,
+        "wait_slot_changes": 157,
+        "ring_reference_cm": {
+          "0": 284,
+          "1": 479
+        },
+        "stuck_waiter_runs_over_2s": 0,
+        "stuck_examples": []
+      },
+      "director": {
+        "transitions": 6,
+        "completed_cycles": 1,
+        "out_of_order_transitions": 0,
+        "intensity_max": 1000,
+        "seconds_by_phase": {
+          "BuildUp": 12.8,
+          "SustainPeak": 8.4,
+          "PeakFade": 4.8,
+          "Relax": 4.0
+        },
+        "timeline": [
+          {
+            "phase": "BuildUp",
+            "t": 207.55,
+            "seconds": 10.21,
+            "intensity": 8
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 217.76,
+            "seconds": 3.95,
+            "intensity": 724
+          },
+          {
+            "phase": "PeakFade",
+            "t": 221.71,
+            "seconds": 4.24,
+            "intensity": 960
+          },
+          {
+            "phase": "Relax",
+            "t": 225.96,
+            "seconds": 3.98,
+            "intensity": 250
+          },
+          {
+            "phase": "BuildUp",
+            "t": 229.94,
+            "seconds": 2.55,
+            "intensity": 400
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 232.48,
+            "seconds": 4.44,
+            "intensity": 712
+          },
+          {
+            "phase": "PeakFade",
+            "t": 236.93,
+            "seconds": 0.59,
+            "intensity": 1000
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 13,
+        "attack_starts_total": 50,
+        "monsters_with_engaged_gap_over_20s": 1,
+        "longest_engaged_gap_seconds": 30.0,
+        "longest_eligible_tokenless_seconds": 8.6,
+        "share_of_engaged_time_without_cast": 0.004,
+        "worst_monsters": [
+          {
+            "sim": 20,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 30.0,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 30.0,
+            "longest_eligible_tokenless_seconds": 8.4
+          },
+          {
+            "sim": 18,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 30.0,
+            "engaged_runs": 1,
+            "attack_starts": 3,
+            "longest_engaged_gap_seconds": 16.1,
+            "longest_eligible_tokenless_seconds": 8.5
+          },
+          {
+            "sim": 52,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 30.0,
+            "engaged_runs": 1,
+            "attack_starts": 3,
+            "longest_engaged_gap_seconds": 15.7,
+            "longest_eligible_tokenless_seconds": 8.6
+          },
+          {
+            "sim": 22,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 30.0,
+            "engaged_runs": 1,
+            "attack_starts": 5,
+            "longest_engaged_gap_seconds": 7.9,
+            "longest_eligible_tokenless_seconds": 5.1
+          },
+          {
+            "sim": 47,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 30.0,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 7.9,
+            "longest_eligible_tokenless_seconds": 6.3
+          },
+          {
+            "sim": 19,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 30.0,
+            "engaged_runs": 1,
+            "attack_starts": 4,
+            "longest_engaged_gap_seconds": 7.8,
+            "longest_eligible_tokenless_seconds": 5.6
+          }
+        ]
+      }
+    },
+    "walk_to_center": {
+      "seconds": 10.8,
+      "morale_labels_seen": [
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 89,
+        "max_casting_engaged": 3,
+        "max_casting_with_token": 3,
+        "samples_casting_over_token_budget": 0,
+        "samples_held_over_budget": 0,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": null,
+        "melee_engaged_to_base_tokens": {
+          "12": [
+            4
+          ],
+          "13": [
+            4
+          ],
+          "15": [
+            5
+          ],
+          "16": [
+            5
+          ],
+          "17": [
+            5
+          ],
+          "19": [
+            5
+          ],
+          "20": [
+            5
+          ],
+          "21": [
+            5
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 1,
+        "waiters_median": 8,
+        "largest_angle_gap_median_deg": 117.6,
+        "largest_angle_gap_p90_deg": 117.6,
+        "quadrants_occupied_median": 4,
+        "ring_distance_median_cm": {
+          "0": 233,
+          "1": 435
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            224,
+            393
+          ],
+          "1": [
+            380,
+            603
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 0
+      },
+      "blocked": {
+        "blocked_sectors_max": 10,
+        "samples_with_blocked_sector": 55,
+        "wait_slot_changes": 82,
+        "ring_reference_cm": {
+          "0": 669,
+          "1": 953
+        },
+        "stuck_waiter_runs_over_2s": 0,
+        "stuck_examples": []
+      },
+      "director": {
+        "transitions": 2,
+        "completed_cycles": 1,
+        "out_of_order_transitions": 0,
+        "intensity_max": 1000,
+        "seconds_by_phase": {
+          "PeakFade": 3.6,
+          "Relax": 4.0,
+          "BuildUp": 3.1
+        },
+        "timeline": [
+          {
+            "phase": "PeakFade",
+            "t": 237.79,
+            "seconds": 3.62,
+            "intensity": 1000
+          },
+          {
+            "phase": "Relax",
+            "t": 241.41,
+            "seconds": 4.03,
+            "intensity": 250
+          },
+          {
+            "phase": "BuildUp",
+            "t": 245.44,
+            "seconds": 3.13,
+            "intensity": 0
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 23,
+        "attack_starts_total": 6,
+        "monsters_with_engaged_gap_over_20s": 0,
+        "longest_engaged_gap_seconds": 10.8,
+        "longest_eligible_tokenless_seconds": 7.5,
+        "share_of_engaged_time_without_cast": 0.643,
+        "worst_monsters": [
+          {
+            "sim": 21,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 10.8,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 10.8,
+            "longest_eligible_tokenless_seconds": 5.4
+          },
+          {
+            "sim": 22,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 10.8,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 10.8,
+            "longest_eligible_tokenless_seconds": 7.5
+          },
+          {
+            "sim": 46,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 10.8,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 10.8,
+            "longest_eligible_tokenless_seconds": 5.1
+          },
+          {
+            "sim": 47,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 10.8,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 10.8,
+            "longest_eligible_tokenless_seconds": 1.4
+          },
+          {
+            "sim": 48,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 10.8,
+            "engaged_runs": 1,
+            "attack_starts": 0,
+            "longest_engaged_gap_seconds": 10.8,
+            "longest_eligible_tokenless_seconds": 1.6
+          },
+          {
+            "sim": 49,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 10.8,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 10.8,
+            "longest_eligible_tokenless_seconds": 2.2
+          }
+        ]
+      }
+    },
+    "fight": {
+      "seconds": 19.9,
+      "morale_labels_seen": [
+        "fear",
+        "panic",
+        "rallied",
+        "steady"
+      ],
+      "concurrency": {
+        "samples": 311,
+        "max_casting_engaged": 4,
+        "max_casting_with_token": 4,
+        "samples_casting_over_token_budget": 0,
+        "samples_held_over_budget": 0,
+        "samples_with_tokenless_cast": 0,
+        "worst_over_budget": null,
+        "melee_engaged_to_base_tokens": {
+          "0": [
+            0
+          ],
+          "1": [
+            1
+          ],
+          "2": [
+            2
+          ],
+          "4": [
+            2
+          ],
+          "5": [
+            2
+          ],
+          "11": [
+            4
+          ],
+          "13": [
+            4
+          ],
+          "14": [
+            5
+          ],
+          "15": [
+            5
+          ],
+          "19": [
+            5
+          ],
+          "20": [
+            5
+          ],
+          "21": [
+            5
+          ],
+          "22": [
+            5
+          ]
+        }
+      },
+      "surround": {
+        "stationary_samples_with_3_waiters": 113,
+        "waiters_median": 7,
+        "largest_angle_gap_median_deg": 148.7,
+        "largest_angle_gap_p90_deg": 217.0,
+        "quadrants_occupied_median": 3,
+        "ring_distance_median_cm": {
+          "0": 319,
+          "1": 524
+        },
+        "ring_distance_p10_p90_cm": {
+          "0": [
+            282,
+            964
+          ],
+          "1": [
+            427,
+            1423
+          ]
+        }
+      },
+      "drift_and_feint": {
+        "settled_wait_stints": 3,
+        "bearing_span_median_deg": 7.0,
+        "distance_span_median_cm": 37,
+        "stints_with_feint_dip": 3,
+        "stints_motionless": 0,
+        "path_per_second_median_cm": 34,
+        "longest": [
+          {
+            "sim": 35,
+            "slot": "W1:4",
+            "seconds": 2.7,
+            "bearing_span_deg": 8.9,
+            "distance_span_cm": 37,
+            "feint_dips": 1,
+            "path_cm": 93
+          },
+          {
+            "sim": 29,
+            "slot": "W0:0",
+            "seconds": 2.5,
+            "bearing_span_deg": 7.0,
+            "distance_span_cm": 46,
+            "feint_dips": 1,
+            "path_cm": 115
+          },
+          {
+            "sim": 26,
+            "slot": "W0:8",
+            "seconds": 2.5,
+            "bearing_span_deg": 5.1,
+            "distance_span_cm": 36,
+            "feint_dips": 1,
+            "path_cm": 74
+          }
+        ]
+      },
+      "blocked": {
+        "blocked_sectors_max": 0,
+        "samples_with_blocked_sector": 0,
+        "wait_slot_changes": 25,
+        "ring_reference_cm": {
+          "0": 319,
+          "1": 524
+        },
+        "stuck_waiter_runs_over_2s": 0,
+        "stuck_examples": []
+      },
+      "director": {
+        "transitions": 3,
+        "completed_cycles": 0,
+        "out_of_order_transitions": 1,
+        "intensity_max": 1000,
+        "seconds_by_phase": {
+          "BuildUp": 10.8,
+          "SustainPeak": 4.0,
+          "PeakFade": 5.2
+        },
+        "timeline": [
+          {
+            "phase": "BuildUp",
+            "t": 248.68,
+            "seconds": 6.29,
+            "intensity": 8
+          },
+          {
+            "phase": "SustainPeak",
+            "t": 254.97,
+            "seconds": 3.97,
+            "intensity": 878
+          },
+          {
+            "phase": "PeakFade",
+            "t": 258.95,
+            "seconds": 5.17,
+            "intensity": 960
+          },
+          {
+            "phase": "BuildUp",
+            "t": 264.12,
+            "seconds": 4.48,
+            "intensity": 0
+          }
+        ]
+      },
+      "turns": {
+        "engaged_monsters": 24,
+        "attack_starts_total": 19,
+        "monsters_with_engaged_gap_over_20s": 0,
+        "longest_engaged_gap_seconds": 9.3,
+        "longest_eligible_tokenless_seconds": 6.8,
+        "share_of_engaged_time_without_cast": 0.434,
+        "worst_monsters": [
+          {
+            "sim": 30,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 11.9,
+            "engaged_runs": 1,
+            "attack_starts": 3,
+            "longest_engaged_gap_seconds": 9.3,
+            "longest_eligible_tokenless_seconds": 3.3
+          },
+          {
+            "sim": 27,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 9.2,
+            "engaged_runs": 1,
+            "attack_starts": 2,
+            "longest_engaged_gap_seconds": 8.0,
+            "longest_eligible_tokenless_seconds": 2.8
+          },
+          {
+            "sim": 26,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 9.2,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 7.9,
+            "longest_eligible_tokenless_seconds": 6.8
+          },
+          {
+            "sim": 19,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 9.2,
+            "engaged_runs": 1,
+            "attack_starts": 1,
+            "longest_engaged_gap_seconds": 6.1,
+            "longest_eligible_tokenless_seconds": 5.0
+          },
+          {
+            "sim": 34,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 9.2,
+            "engaged_runs": 1,
+            "attack_starts": 2,
+            "longest_engaged_gap_seconds": 5.8,
+            "longest_eligible_tokenless_seconds": 3.5
+          },
+          {
+            "sim": 29,
+            "def": "Goblin_Melee",
+            "engaged_seconds": 5.8,
+            "engaged_runs": 1,
+            "attack_starts": 2,
+            "longest_engaged_gap_seconds": 5.5,
+            "longest_eligible_tokenless_seconds": 3.5
+          }
+        ]
+      }
+    },
+    "_session_director": {
+      "transitions": 42,
+      "completed_cycles": 9,
+      "out_of_order_transitions": 2,
+      "intensity_max": 1000,
+      "seconds_by_phase": {
+        "BuildUp": 127.6,
+        "SustainPeak": 44.3,
+        "PeakFade": 54.9,
+        "Relax": 36.6
+      },
+      "timeline": [
+        {
+          "phase": "BuildUp",
+          "t": 5.15,
+          "seconds": 7.47,
+          "intensity": 0
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 12.62,
+          "seconds": 3.98,
+          "intensity": 788
+        },
+        {
+          "phase": "PeakFade",
+          "t": 16.59,
+          "seconds": 4.32,
+          "intensity": 1000
+        },
+        {
+          "phase": "Relax",
+          "t": 20.91,
+          "seconds": 4.04,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 24.95,
+          "seconds": 3.48,
+          "intensity": 340
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 28.43,
+          "seconds": 4.01,
+          "intensity": 746
+        },
+        {
+          "phase": "PeakFade",
+          "t": 32.44,
+          "seconds": 4.0,
+          "intensity": 1000
+        },
+        {
+          "phase": "Relax",
+          "t": 36.44,
+          "seconds": 4.0,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 40.45,
+          "seconds": 2.49,
+          "intensity": 400
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 42.94,
+          "seconds": 3.98,
+          "intensity": 720
+        },
+        {
+          "phase": "PeakFade",
+          "t": 46.92,
+          "seconds": 12.71,
+          "intensity": 1000
+        },
+        {
+          "phase": "BuildUp",
+          "t": 59.63,
+          "seconds": 5.81,
+          "intensity": 0
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 65.44,
+          "seconds": 4.01,
+          "intensity": 900
+        },
+        {
+          "phase": "PeakFade",
+          "t": 69.45,
+          "seconds": 3.98,
+          "intensity": 1000
+        },
+        {
+          "phase": "Relax",
+          "t": 73.43,
+          "seconds": 4.28,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 77.71,
+          "seconds": 1.49,
+          "intensity": 400
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 79.2,
+          "seconds": 3.99,
+          "intensity": 802
+        },
+        {
+          "phase": "PeakFade",
+          "t": 83.19,
+          "seconds": 4.02,
+          "intensity": 1000
+        },
+        {
+          "phase": "Relax",
+          "t": 87.22,
+          "seconds": 3.98,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 91.2,
+          "seconds": 2.05,
+          "intensity": 400
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 93.25,
+          "seconds": 3.96,
+          "intensity": 798
+        },
+        {
+          "phase": "PeakFade",
+          "t": 97.21,
+          "seconds": 3.99,
+          "intensity": 1000
+        },
+        {
+          "phase": "Relax",
+          "t": 101.2,
+          "seconds": 4.02,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 105.22,
+          "seconds": 68.25,
+          "intensity": 242
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 173.48,
+          "seconds": 4.01,
+          "intensity": 864
+        },
+        {
+          "phase": "PeakFade",
+          "t": 177.49,
+          "seconds": 4.02,
+          "intensity": 1000
+        },
+        {
+          "phase": "Relax",
+          "t": 181.5,
+          "seconds": 4.24,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 185.74,
+          "seconds": 1.48,
+          "intensity": 400
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 187.22,
+          "seconds": 4.02,
+          "intensity": 712
+        },
+        {
+          "phase": "PeakFade",
+          "t": 191.24,
+          "seconds": 3.98,
+          "intensity": 1000
+        },
+        {
+          "phase": "Relax",
+          "t": 195.22,
+          "seconds": 4.01,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 199.23,
+          "seconds": 18.53,
+          "intensity": 400
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 217.76,
+          "seconds": 3.95,
+          "intensity": 724
+        },
+        {
+          "phase": "PeakFade",
+          "t": 221.71,
+          "seconds": 4.24,
+          "intensity": 960
+        },
+        {
+          "phase": "Relax",
+          "t": 225.96,
+          "seconds": 3.98,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 229.94,
+          "seconds": 2.55,
+          "intensity": 400
+        },
+        {
+          "phase": "SustainPeak",
+          "t": 232.48,
+          "seconds": 4.44,
+          "intensity": 712
+        },
+        {
+          "phase": "PeakFade",
+          "t": 236.93,
+          "seconds": 4.49,
+          "intensity": 1000
+        },
+        {
+          "phase": "Relax",
+          "t": 241.41,
+          "seconds": 4.03,
+          "intensity": 250
+        },
+        {
+          "phase": "BuildUp",
+          "t": 245.44,
+          "seconds": 9.54,
+          "intensity": 0
+        }
+      ]
+    }
+  },
+  "behavior_evidence_samples": "Docs/MonsterAI_CombatSim/measurements/squad-tactics/pie-2026-10-18/samples_behavior_1hz.jsonl",
+  "crowd_counts": {
+    "crowd_engage": {
+      "samples": 5,
+      "active_max": 325,
+      "engaged_median": 310,
+      "engaged_max": 310,
+      "casting_max": 3,
+      "records_max": 1,
+      "melee_token_budget_max": 4
+    },
+    "crowd_tactics_on": {
+      "samples": 10,
+      "active_max": 325,
+      "engaged_median": 310.0,
+      "engaged_max": 310,
+      "casting_max": 3,
+      "records_max": 1,
+      "melee_token_budget_max": 4
+    },
+    "crowd_tactics_off": {
+      "samples": 7,
+      "active_max": 325,
+      "engaged_median": 310,
+      "engaged_max": 310,
+      "casting_max": 3,
+      "records_max": 0,
+      "melee_token_budget_max": null
+    }
+  },
+  "crowd_cost": {
+    "tactics_on": {
+      "whole_file_timers": {
+        "TDMonsterAI_Frame": {
+          "count": 537,
+          "total_ms": 5271.989,
+          "avg_us": 9817.0,
+          "median_us": 9808.0,
+          "max_us": 18929.0
+        },
+        "TDMonsterAI_Step": {
+          "count": 1820,
+          "total_ms": 5193.268,
+          "avg_us": 2853.0,
+          "median_us": 2912.0,
+          "max_us": 6113.0
+        },
+        "TDMonsterAI_Tactics": {
+          "count": 1820,
+          "total_ms": 158.175,
+          "avg_us": 87.0,
+          "median_us": 79.0,
+          "max_us": 519.0
+        }
+      },
+      "segment": {
+        "window_seconds": 15.0,
+        "frames": 290,
+        "frame_ms_mean": 51.53,
+        "frame_ms_p50": 50.47,
+        "frame_ms_p95": 60.36,
+        "TDMonsterAI_Frame": {
+          "calls": 291,
+          "calls_per_frame": 1.0,
+          "per_call_mean_us": 10007.5,
+          "per_call_p95_us": 12680.0,
+          "per_call_max_us": 18929.0,
+          "per_frame_mean_ms": 10.0026,
+          "per_frame_p95_ms": 12.68,
+          "per_frame_max_ms": 18.929
+        },
+        "TDMonsterAI_Step": {
+          "calls": 957,
+          "calls_per_frame": 3.3,
+          "per_call_mean_us": 2999.8,
+          "per_call_p95_us": 3933.0,
+          "per_call_max_us": 6113.0,
+          "per_frame_mean_ms": 9.8607,
+          "per_frame_p95_ms": 12.529,
+          "per_frame_max_ms": 18.659
+        },
+        "TDMonsterAI_Tactics": {
+          "calls": 957,
+          "calls_per_frame": 3.3,
+          "per_call_mean_us": 83.0,
+          "per_call_p95_us": 161.0,
+          "per_call_max_us": 418.0,
+          "per_frame_mean_ms": 0.2723,
+          "per_frame_p95_ms": 0.437,
+          "per_frame_max_ms": 0.527
+        }
+      },
+      "trace_bytes": 74627161
+    },
+    "tactics_off": {
+      "whole_file_timers": {
+        "TDMonsterAI_Frame": {
+          "count": 472,
+          "total_ms": 5623.147,
+          "avg_us": 11913.0,
+          "median_us": 12601.0,
+          "max_us": 18929.0
+        },
+        "TDMonsterAI_Step": {
+          "count": 1736,
+          "total_ms": 5544.955,
+          "avg_us": 3194.0,
+          "median_us": 3122.0,
+          "max_us": 6113.0
+        },
+        "TDMonsterAI_Tactics": {
+          "count": 621,
+          "total_ms": 51.015,
+          "avg_us": 82.0,
+          "median_us": 72.0,
+          "max_us": 418.0
+        }
+      },
+      "segment": {
+        "window_seconds": 15.0,
+        "frames": 232,
+        "frame_ms_mean": 64.2,
+        "frame_ms_p50": 63.28,
+        "frame_ms_p95": 72.04,
+        "TDMonsterAI_Frame": {
+          "calls": 233,
+          "calls_per_frame": 1.0,
+          "per_call_mean_us": 13455.8,
+          "per_call_p95_us": 15091.0,
+          "per_call_max_us": 18647.0,
+          "per_frame_mean_ms": 13.4335,
+          "per_frame_p95_ms": 15.074,
+          "per_frame_max_ms": 18.608
+        },
+        "TDMonsterAI_Step": {
+          "calls": 931,
+          "calls_per_frame": 4.01,
+          "per_call_mean_us": 3321.2,
+          "per_call_p95_us": 4347.0,
+          "per_call_max_us": 5749.0,
+          "per_frame_mean_ms": 13.2491,
+          "per_frame_p95_ms": 14.828,
+          "per_frame_max_ms": 18.261
+        }
+      },
+      "trace_bytes": 68373224
+    }
+  }
+}

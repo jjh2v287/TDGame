@@ -4,7 +4,7 @@
 
 ## ① 진행 중 (대장 doing)
 
-- M3-14 PIE 검증 done(미커밋): 포위·예산·디렉터 확인, 300마리 81µs/스텝, 막힌 예약 수정.
+- M3-14 PIE 검증 done(미커밋): 포위·예산·디렉터 확인, 300마리 83µs/스텝, 막힌 예약 수정.
 - M3-30·31·32 done(미커밋): 경보 2단 파문·호출자, 무리 사기·공황 후퇴(+MD-43 Flee 끝), Charger·Support 독점·원거리 띠. MonsterAI 72/73(기준선), Pack 22/22(`research/project-pack-behaviors.md`).
 - M3-29 done(커밋 3db74045): 종 JSON `role`·`boss`·`token_cost`(예약 최대·개시 정산), 체력 2000 보스 규칙·구 `AI/CombatToken` 삭제. TDGame.* 243/248(회귀 0), 반박 합격.
 - M3-27 done(커밋 0d302219): 전투 완성(피해 표시·VFX·소리·HUD·4단 콤보·피격·래그돌).

@@ -1,0 +1,23 @@
+{
+ "results": [
+  {
+   "path": "TDGame.MonsterAI.Tactics.CirclingHolderIsNotStalled",
+   "result": "Fail",
+   "events": [
+    "Error: Expected '1 hyenas keep biting' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(1963)]",
+    "Error: Expected 'No circling or biting hyena is marked stalled (1 hyenas)' to be 0, but it was 1. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(1964)]",
+    "Error: Expected '3 hyenas keep biting' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(1963)]",
+    "Error: Expected 'No circling or biting hyena is marked stalled (3 hyenas)' to be 0, but it was 3. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(1964)]"
+   ]
+  }
+ ],
+ "found_count": 1,
+ "crash_lines": [],
+ "engine_exit_code": 0,
+ "filters": [
+  "TDGame.MonsterAI.Tactics.CirclingHolderIsNotStalled"
+ ],
+ "log": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261018\\tactics-circling-red-tests.log",
+ "incomplete": false,
+ "crashed": false
+}

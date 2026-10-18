@@ -4,6 +4,7 @@
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDStatusDefinition.h"
 #include "Combat/TDCombatComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "Engine/Engine.h"
@@ -1001,6 +1002,24 @@ namespace TDCombatTacticsPhaseBTests
 
 namespace TDTacticsB = TDCombatTacticsPhaseBTests;
 
+namespace
+{
+	constexpr float TacticsWallCenterY = 250.f;
+	constexpr float TacticsWallHalfLength = 1500.f;
+	constexpr float TacticsWallHalfThickness = 30.f;
+	constexpr float TacticsWallHalfHeight = 200.f;
+	constexpr float TacticsBlockedSpawnY = 520.f;
+	constexpr float TacticsOpenSpawnY = -800.f;
+	constexpr float TacticsUnreachableWarmupSeconds = 3.f;
+	constexpr float TacticsUnreachableMeasureSeconds = 30.f;
+	constexpr int32 TacticsMaxBlockedReservationSteps = 128;
+	constexpr float TacticsMaxBlockedReservationShare = 0.2f;
+	constexpr int32 TacticsMinOpenAttackStarts = 25;
+	constexpr float TacticsCirclingSpawnRadius = 450.f;
+	constexpr float TacticsCirclingSeconds = 20.f;
+	constexpr int32 TacticsMinCirclingBitesPerHyena = 3;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCombatTacticsBudgetFormulaTest, "TDGame.MonsterAI.Tactics.BudgetFormula", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FTDCombatTacticsBudgetFormulaTest::RunTest(const FString& Parameters)
@@ -1834,6 +1853,116 @@ bool FTDCombatTacticsFleeingRevokeTest::RunTest(const FString& Parameters)
 	}
 	TestEqual(TEXT("An approaching monster keeps its reservation"), static_cast<int32>(ApproachState), static_cast<int32>(ETDTacticsTokenState::Reserved));
 	TestEqual(TEXT("An approaching monster gets no regrant cooldown"), static_cast<int64>(ApproachRegrantReadyStep), static_cast<int64>(0));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCombatTacticsUnreachableReservationTest, "TDGame.MonsterAI.Tactics.UnreachableReservationIsReleased", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDCombatTacticsUnreachableReservationTest::RunTest(const FString& Parameters)
+{
+	TDTacticsB::FTDTacticsPhaseBWorld Fixture;
+	APawn* PlayerPawn = Fixture.SpawnPlayer(FVector::ZeroVector);
+	AActor* Wall = Fixture.World->SpawnActor<AActor>();
+	UBoxComponent* WallBox = NewObject<UBoxComponent>(Wall);
+	Wall->AddInstanceComponent(WallBox);
+	Wall->SetRootComponent(WallBox);
+	WallBox->SetBoxExtent(FVector(TacticsWallHalfLength, TacticsWallHalfThickness, TacticsWallHalfHeight));
+	WallBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WallBox->SetCollisionObjectType(ECC_WorldStatic);
+	WallBox->SetCollisionResponseToAllChannels(ECR_Block);
+	WallBox->RegisterComponent();
+	Wall->SetActorLocation(FVector(0.f, TacticsWallCenterY, 0.f));
+	const TArray<ATDMonsterCharacter*> BlockedMonsters = {
+		Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector(-120.f, TacticsBlockedSpawnY, 0.f)),
+		Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector(120.f, TacticsBlockedSpawnY, 0.f)) };
+	const TArray<ATDMonsterCharacter*> OpenMonsters = {
+		Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector(-300.f, TacticsOpenSpawnY, 0.f)),
+		Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector(0.f, TacticsOpenSpawnY, 0.f)),
+		Fixture.SpawnMonster(TEXT("Goblin_Melee"), FVector(300.f, TacticsOpenSpawnY, 0.f)) };
+	const UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.GetThinkSubsystem();
+	if (!TestNotNull(TEXT("Player exists"), PlayerPawn) || !TestNotNull(TEXT("Think subsystem exists"), ThinkSubsystem) || BlockedMonsters.Contains(nullptr) || OpenMonsters.Contains(nullptr))
+	{
+		return false;
+	}
+	Fixture.TickSeconds(TacticsUnreachableWarmupSeconds);
+	TArray<int32> ReservationRuns;
+	ReservationRuns.SetNumZeroed(BlockedMonsters.Num());
+	TArray<bool> WasOpenCasting;
+	WasOpenCasting.SetNumZeroed(OpenMonsters.Num());
+	TArray<int32> ReservedStepsByBlocked;
+	ReservedStepsByBlocked.SetNumZeroed(BlockedMonsters.Num());
+	int32 LongestBlockedReservationSteps = 0;
+	int32 OpenAttackStarts = 0;
+	float ClosestBlockedY = TNumericLimits<float>::Max();
+	const int32 MeasureSteps = FMath::RoundToInt(TacticsUnreachableMeasureSeconds * 64.f);
+	for (int32 Step = 0; Step < MeasureSteps; ++Step)
+	{
+		Fixture.TickSteps(1);
+		for (int32 Index = 0; Index < BlockedMonsters.Num(); ++Index)
+		{
+			const bool bIsReserved = TDTacticsB::ReadLineField(TDTacticsB::FindMonsterLine(*ThinkSubsystem, BlockedMonsters[Index]), TEXT("token")) == TEXT("R");
+			ReservationRuns[Index] = bIsReserved ? ReservationRuns[Index] + 1 : 0;
+			LongestBlockedReservationSteps = FMath::Max(LongestBlockedReservationSteps, ReservationRuns[Index]);
+			ReservedStepsByBlocked[Index] += bIsReserved ? 1 : 0;
+			ClosestBlockedY = FMath::Min(ClosestBlockedY, static_cast<float>(BlockedMonsters[Index]->GetActorLocation().Y));
+		}
+		for (int32 Index = 0; Index < OpenMonsters.Num(); ++Index)
+		{
+			const bool bIsCasting = TDTacticsB::ReadLineField(TDTacticsB::FindMonsterLine(*ThinkSubsystem, OpenMonsters[Index]), TEXT("state")) == TEXT("Cast");
+			OpenAttackStarts += bIsCasting && !WasOpenCasting[Index] ? 1 : 0;
+			WasOpenCasting[Index] = bIsCasting;
+		}
+	}
+	const float BlockedReservationShare = static_cast<float>(FMath::Max(ReservedStepsByBlocked[0], ReservedStepsByBlocked[1])) / static_cast<float>(MeasureSteps);
+	AddInfo(FString::Printf(TEXT("Longest blocked reservation %d steps, largest blocked reservation share %.2f, open attack starts %d, closest blocked y %.0f"), LongestBlockedReservationSteps, BlockedReservationShare, OpenAttackStarts, ClosestBlockedY));
+	if (!TestTrue(TEXT("The wall keeps the blocked goblins on its far side"), ClosestBlockedY > TacticsWallCenterY))
+	{
+		return false;
+	}
+	TestTrue(TEXT("The open goblins keep attacking past the blocked ones"), OpenAttackStarts >= TacticsMinOpenAttackStarts);
+	TestTrue(TEXT("A blocked goblin gives up its reservation within two seconds"), LongestBlockedReservationSteps <= TacticsMaxBlockedReservationSteps);
+	TestTrue(TEXT("Each blocked goblin holds a reservation at most a fifth of the time"), BlockedReservationShare <= TacticsMaxBlockedReservationShare);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCombatTacticsCirclingHolderTest, "TDGame.MonsterAI.Tactics.CirclingHolderIsNotStalled", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDCombatTacticsCirclingHolderTest::RunTest(const FString& Parameters)
+{
+	for (const int32 HyenaCount : { 1, 3 })
+	{
+		TDTacticsB::FTDTacticsPhaseBWorld Fixture;
+		APawn* PlayerPawn = Fixture.SpawnPlayer(FVector::ZeroVector);
+		const TArray<ATDMonsterCharacter*> Hyenas = Fixture.SpawnMonsterRing(TEXT("Hyena"), HyenaCount, TacticsCirclingSpawnRadius);
+		UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.GetThinkSubsystem();
+		if (!TestNotNull(TEXT("Player exists"), PlayerPawn) || !TestNotNull(TEXT("Think subsystem exists"), ThinkSubsystem) || Hyenas.Contains(nullptr))
+		{
+			return false;
+		}
+		TArray<bool> WasCasting;
+		WasCasting.SetNumZeroed(Hyenas.Num());
+		int32 BiteStarts = 0;
+		int32 StalledHyenas = 0;
+		const int32 MeasureSteps = FMath::RoundToInt(TacticsCirclingSeconds * 64.f);
+		for (int32 Step = 0; Step < MeasureSteps; ++Step)
+		{
+			Fixture.TickSteps(1);
+			for (int32 Index = 0; Index < Hyenas.Num(); ++Index)
+			{
+				const bool bIsCasting = TDTacticsB::ReadLineField(TDTacticsB::FindMonsterLine(*ThinkSubsystem, Hyenas[Index]), TEXT("state")) == TEXT("Cast");
+				BiteStarts += bIsCasting && !WasCasting[Index] ? 1 : 0;
+				WasCasting[Index] = bIsCasting;
+			}
+		}
+		for (ATDMonsterCharacter* Hyena : Hyenas)
+		{
+			const int32 SlotIndex = FTDCombatTacticsTestAccess::FindSlotForActor(*ThinkSubsystem, Hyena);
+			StalledHyenas += SlotIndex != INDEX_NONE && FTDCombatTacticsTestAccess::GetTactics(*ThinkSubsystem, SlotIndex).StalledUntilStep != 0 ? 1 : 0;
+		}
+		AddInfo(FString::Printf(TEXT("%d hyenas: bite starts %d, stalled hyenas %d"), HyenaCount, BiteStarts, StalledHyenas));
+		TestTrue(FString::Printf(TEXT("%d hyenas keep biting"), HyenaCount), BiteStarts >= TacticsMinCirclingBitesPerHyena * HyenaCount);
+		TestEqual(FString::Printf(TEXT("No circling or biting hyena is marked stalled (%d hyenas)"), HyenaCount), StalledHyenas, 0);
+	}
 	return true;
 }
 

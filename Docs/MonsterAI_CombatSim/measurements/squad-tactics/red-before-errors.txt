@@ -1,0 +1,8 @@
+[2026.10.18-02.47.37:353][507]LogAutomationController: Error: Test Completed. Result={Fail} Name={AttackStartsAreSpaced} Path={TDGame.MonsterAI.Tactics.AttackStartsAreSpaced}
+[2026.10.18-02.47.37:353][507]LogAutomationController: Error: min start gap 0 steps < 16 (at step 84, monsters 0 and 3) [C:\Project\TDGame\Source\TDGame\MonsterAI\Tests\TDCombatTacticsTests.cpp(383)]
+[2026.10.18-02.47.37:882][790]LogAutomationController: Error: Test Completed. Result={Fail} Name={ConcurrentAttackersFollowBudget} Path={TDGame.MonsterAI.Tactics.ConcurrentAttackersFollowBudget}
+[2026.10.18-02.47.37:883][790]LogAutomationController: Error: max concurrent casts 3 > 2 (first reached at step 96) [C:\Project\TDGame\Source\TDGame\MonsterAI\Tests\TDCombatTacticsTests.cpp(347)]
+[2026.10.18-02.47.40:092][633]LogAutomationController: Error: Test Completed. Result={Fail} Name={EveryMonsterGetsATurn} Path={TDGame.MonsterAI.Tactics.EveryMonsterGetsATurn}
+[2026.10.18-02.47.40:092][633]LogAutomationController: Error: monster 8 went 20.2 s without an attack > 20 s [C:\Project\TDGame\Source\TDGame\MonsterAI\Tests\TDCombatTacticsTests.cpp(487)]
+[2026.10.18-02.47.40:988][916]LogAutomationController: Error: Test Completed. Result={Fail} Name={TokenlessMonstersHoldTheWaitRing} Path={TDGame.MonsterAI.Tactics.TokenlessMonstersHoldTheWaitRing}
+[2026.10.18-02.47.40:988][916]LogAutomationController: Error: median waiter distance 182 cm < 300 cm [C:\Project\TDGame\Source\TDGame\MonsterAI\Tests\TDCombatTacticsTests.cpp(424)]

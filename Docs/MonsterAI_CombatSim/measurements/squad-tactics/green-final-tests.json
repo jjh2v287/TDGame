@@ -1,0 +1,281 @@
+{
+ "results": [
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.ClearPathKeepsPreferredVelocity",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.EngagedTargetIsNotAnObstacle",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.HeadOnPairTurnsSameSide",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.HoldingAttackerDoesNotYield",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.HysteresisKeepsPreviousChoice",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.OverlapNeverApproaches",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.ProcessingOrderDoesNotMatter",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.Scene.CrossingStreams",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'Circle avoidance touches no more often than legacy separation' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCircleAvoidanceTests.cpp(1360)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.Scene.Deterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.Scene.PassThroughStandingGroup",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.StopChoiceHasZeroSpeedScale",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.YieldSideFollowsCrossProduct",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.DefinitionErrorsNameTheFix",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.BlockedReturnSettlesInPlace",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.HitKitingIsCappedByMaxChase",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.KitingDoesNotYoYo",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.ReturningIgnoresAllyAlert",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.ReturningIgnoresOutsideHits",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Fsm.FreezeHaltsThenResumes",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Fsm.PhasePlaysOnEnterSequence",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Grid.BuildInputsNeighborsUnchanged",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Grid.MatchesBruteForce",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Grid.SearchCost",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.HeavyHitInterruptsTelegraph",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MonsterTelegraphsThenHits",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.NoGlobalRandom",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.ResponseCurves",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.ScorerTieBreakAndInertia",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Species.LocomotionClipsLoop",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.AttackStartsAreSpaced",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.AttackedWaiterRetaliates",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.BossLaneNotStarved",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.BudgetFormula",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.ConcurrentAttackersFollowBudget",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.Deterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.DirectorCyclesUnderConstantPressure",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.EncounterResetRestoresGrace",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.EveryMonsterGetsATurn",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.FleeingMonsterDoesNotStallTokens",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.FleeingReservationIsRevoked",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.HoldingAttackerStillHoldsWithoutQueue",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.LoneMonsterEngagedFromFarNeverWaits",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.MercyWindowOpensOnce",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.RetaliationStealsFarReservation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.RoleClassification",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.TacticsOffKeepsLegacyCap",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.TokenReleasedOnInterrupt",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.TokenlessMonstersHoldTheWaitRing",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Validate",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Movement.FreezeHaltsMovementAndAnimation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Movement.MonsterIdleKeepsLooping",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Movement.MonsterMoveIntentMovesPawn",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Movement.RootMotionActionMovesPawn",
+   "result": "Success",
+   "events": []
+  }
+ ],
+ "found_count": 53,
+ "crash_lines": [],
+ "engine_exit_code": 0,
+ "filters": [
+  "TDGame.MonsterAI",
+  "TDGame.Movement"
+ ],
+ "log": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261018\\m314-final-tests.log",
+ "incomplete": false,
+ "crashed": false
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MonsterAI/TDCombatTactics.h"
 #include "MonsterAI/TDMonsterBrainSlot.h"
 #include "MonsterAI/TDUtilityScorer.h"
 
@@ -14,6 +15,14 @@ struct FTDMonsterStepContext
 	FVector TargetLocation = FVector::ZeroVector;
 	FVector TargetVelocity = FVector::ZeroVector;
 	bool bHasAttackToken = true;
+	bool bIsTacticsActive = false;
+	bool bHoldsAttackToken = false;
+	ETDTacticsSlotKind TacticsSlotKind = ETDTacticsSlotKind::None;
+	FVector2D TacticsSlotDirection = FVector2D::ZeroVector;
+	float TacticsSlotRadius = 0.f;
+	float TacticsSlotHalfAngleDegrees = 0.f;
+	bool bIsTargetClosingIn = false;
+	bool bIsFeinting = false;
 };
 
 class TDGAME_API FTDMonsterActionExecutor
@@ -30,6 +39,7 @@ public:
 	static void InterruptActivity(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
 	static void TickCounters(FTDMonsterBrainFragment& Brain);
 	static FTDMonsterMoveIntent StepState(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
+	static bool MeasureTacticsSlotGap(const FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context, float& OutGap);
 
 private:
 	static void StartPrimitive(FTDMonsterBrainFragment& Brain, ETDMonsterPrimitive Primitive, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
@@ -37,4 +47,7 @@ private:
 	static void StartSequence(FTDMonsterBrainFragment& Brain, int32 SequenceIndex, const FTDMonsterStepContext& Context);
 	static void CompleteActivity(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
 	static FTDMonsterMoveIntent ComputeMoveIntent(const FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context, bool& bOutHasArrived);
+	static FTDMonsterMoveIntent ComputeWaitSlotIntent(const FTDMonsterStepContext& Context, const FVector2D& ToTarget, float Distance, bool& bOutHasArrived);
+	static FTDMonsterMoveIntent ComputeQueueIntent(const FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context, const FVector2D& ToTarget, float Distance, bool& bOutHasArrived);
+	static bool ComputeTacticsSlotPoint(const FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context, FVector2D& OutPoint);
 };

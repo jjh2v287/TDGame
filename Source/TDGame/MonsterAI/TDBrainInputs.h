@@ -18,6 +18,8 @@ struct FTDBrainInputs
 	float FacingDot = 1.f;
 	bool bHasLineOfSight = true;
 	bool bIsTargetAttacking = false;
+	bool bHasAttackToken = true;
+	bool bHasRingSlot = false;
 	uint64 ReadyAbilityMask = 0;
 	int32 NeighborCount = 0;
 	FTDNeighborEntry Neighbors[MaxNeighbors];

@@ -4,6 +4,7 @@
 #include "Engine/EngineBaseTypes.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "UObject/ObjectKey.h"
+#include "MonsterAI/TDCombatTactics.h"
 #include "MonsterAI/TDMonsterBrainSlot.h"
 #include "MonsterAI/TDCircleAvoidance.h"
 #include "MonsterAI/TDNeighborGrid.h"
@@ -94,12 +95,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category="MonsterAI")
 	TArray<FString> GetMonsterDebugLines() const;
 
+	UFUNCTION(BlueprintCallable, Category="MonsterAI")
+	TArray<FString> GetTacticsDebugLines() const;
+
 protected:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
 private:
 	friend struct FTDMonsterThinkTickFunction;
 	friend struct FTDMonsterThinkSubsystemTestAccess;
+	friend struct FTDCombatTacticsTestAccess;
 
 	void AdvanceFrame(float DeltaSeconds);
 	bool IsHandleCurrent(FTDMonsterSlotHandle Handle) const;
@@ -131,12 +136,57 @@ private:
 	void FinishReturn(int32 SlotIndex);
 	FTDMonsterMoveIntent MakeReturnHomeIntent(int32 SlotIndex) const;
 	void DrawDebugState(int32 SlotIndex) const;
+	void SnapshotTacticsSettings();
+	void ResetTactics();
+	void UpdateTactics();
+	void ApplyPendingKills();
+	bool LinkTacticsRecords();
+	int32 CreateTacticsRecord(AActor* Target);
+	void CountTacticsEngaged(FTDTargetTacticsRecord& Record);
+	bool SyncTacticsSlots();
+	bool ReturnFinishedTacticsToken(int32 SlotIndex);
+	void RevokeInvalidReservation(int32 SlotIndex);
+	void DetectBlockedTacticsSector(int32 SlotIndex);
+	bool MeasureTacticsSlotProgress(int32 SlotIndex, ETDTacticsSlotKind Kind, const FTDMonsterStepContext& Context, int32& OutProgressValue, int32& OutProgressThreshold) const;
+	void UpdateTacticsDirectors(bool bIsRingPass);
+	int32 PollTargetHealth(FTDTargetTacticsRecord& Record, const AActor* Target) const;
+	void AssignWaitAndRangedSectors();
+	void AssignWaitSectors(FTDTargetTacticsRecord& Record, const FVector& TargetLocation, const FTDSectorSearch& Search);
+	void ChooseWaitSector(int32 SlotIndex, FTDTargetTacticsRecord& Record, const FTDSectorSearch& Search);
+	void AssignRangedSectors(FTDTargetTacticsRecord& Record, const FVector& TargetLocation, const FTDSectorSearch& Search);
+	void AssignInnerSectors(FTDTargetTacticsRecord& Record, const FVector& TargetLocation);
+	void RunTokenPass(bool bIsPeriodic);
+	void GrantPoolTokens(FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation);
+	void InterceptForRetaliation(const FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation, TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates);
+	int32 FindRetaliationVictim(const FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation, int64 CandidateDistanceSquared) const;
+	void GrantTacticsToken(int32 SlotIndex, uint32 RecordId);
+	void RemoveFinishedTacticsRecords();
+	void ConfirmTacticsAttackStart(int32 SlotIndex);
+	void DetachTacticsSlot(int32 SlotIndex);
+	bool IsTokenCandidate(int32 SlotIndex, const FTDTargetTacticsRecord& Record) const;
+	bool CanKeepTacticsToken(int32 SlotIndex) const;
+	bool HasOtherTokenCandidate(int32 SlotIndex, const FTDTargetTacticsRecord& Record) const;
+	FTDTacticsCandidateKey MakeTacticsCandidateKey(int32 SlotIndex, const FVector& TargetLocation) const;
+	TArray<FTDTacticsCandidateKey> GatherOrderedTacticsMembers(const FTDTargetTacticsRecord& Record, const FVector& TargetLocation, TFunctionRef<bool(int32)> Filter) const;
+	int32 CountHeldQuarters(uint32 RecordId, int32 PoolIndex) const;
+	int32 FindTacticsRecordIndex(const AActor* Target) const;
+	int32 FindTacticsRecordIndexById(uint32 RecordId) const;
+	bool HasTacticsAttackToken(int32 SlotIndex) const;
+	bool IsStepElapsed(uint64 SinceStep, int32 Steps) const;
+	bool IsAvoidingTacticsTarget(int32 SlotIndex) const;
+	ETDTacticsSlotKind ResolveTacticsSlotKind(int32 SlotIndex, const FTDTargetTacticsRecord*& OutRecord) const;
+	void FillTacticsContext(int32 SlotIndex, FTDMonsterStepContext& Context) const;
+	FString MakeTacticsDebugSuffix(int32 SlotIndex) const;
+	void DrawTacticsDebugState(int32 SlotIndex) const;
 
 	FTDMonsterThinkTickFunction TickFunction;
 	TArray<FTDMonsterBodyFragment> Bodies;
 	TArray<FTDMonsterBrainFragment> Brains;
 	TArray<FTDMonsterMoveIntent> Intents;
 	TArray<FTDMonsterAvoidanceFragment> Avoidances;
+	TArray<FTDMonsterTacticsFragment> Tactics;
+	TArray<FTDTargetTacticsRecord> TacticsRecords;
+	TArray<FVector> PendingKillLocations;
 	TArray<int32> FreeSlots;
 	TArray<int32> OrderedSlots;
 	TArray<int32> PendingAlertSlots;
@@ -145,5 +195,8 @@ private:
 	bool bIsNeighborGridStale = true;
 	uint64 StepIndex = 0;
 	uint32 NextSimulationId = 1;
+	uint32 NextTacticsRecordId = 1;
+	bool bIsTacticsActive = true;
+	bool bShouldDrawTacticsDebug = false;
 	float AccumulatedSeconds = 0.f;
 };

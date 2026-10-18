@@ -1,9 +1,10 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-10-18 00:48 claude
+갱신: 2026-10-18 13:32 claude
 
 ## ① 진행 중 (대장 doing)
 
+- M3-14·M3-28 done: 어그로 비례 공격 토큰(근접·원거리·보스 차선)·포위 자리(대기 고리 2겹·안쪽·원거리)·전투 디렉터(긴장도·박자·자비). `TDGame.MonsterAI.Tactics.*` 19/19, 끄기 `TD.MonsterAI.Tactics 0`(`research/project-squad-tokens-director.md`).
 - D-47 비동기 에셋 로드 done(미커밋): 동기 로드 32줄 전환·OP-33·검사 도구 0·새 실패 0. 근거 Worklog 10-17 14:05. 후속: 마네킹 애니 쿠킹(ini 2줄)·쿠킹 보장 검사 도구(Worklog 10-17 23:52, 10-18 00:45).
 - P3-19·P3-20 done: 연속 세계·태양 역광(D-46). `Docs/Validation/P3-19-continuous.md`·`P3-20-sun.md`.
 - M3-25 done: 집 기준 교전·귀환, 헤드리스88/88(`research/project-engagement-leash-yoyo.md`).
@@ -15,9 +16,10 @@
 
 ## ② 막힘·결정 대기
 
+- 07#MD-47 전술 기본값(토큰 바닥 2·합 상한 5·보스 체력 2000 임시) 권장안 적용, 재검토 가능. 전술 PIE 육안·300마리 비용 미측정.
 - D-47 후속(사용자 결정): 피해 정의 표현 소프트화·남서 관문 GUI 지연(L-editor-21). OP-33에 check_cook_coverage 반영(10-18 사용자 승인).
 - 어두움(P3-16): 수동 노출이라 B01 남서 경계 0.82·E3 절벽 앞 0.51·F12 승강기 상단 0.26·갱도 바닥 0.99. 국소 조명·하늘빛 최저값 결정. 나무 다리 1.65m 단차(기존, 작업 제안).
-- M3-02 blocked: 격자·속도 인지 회피·양보·플레이어 장애물 구현(커밋됨). 헤드리스 MonsterAI 29/30(CrossingStreams 실패, 10-17 재확인). `TD.MonsterAI.LocalAvoidance` 0=기존. 장면 보정·300마리 실측 대기. ring_slot=03 미결2. MD-45=(a)120 유지(10-15).
+- M3-02 blocked: 격자·속도 인지 회피·양보·플레이어 장애물 구현(커밋됨). 헤드리스 MonsterAI 29/30(CrossingStreams 실패, 10-17 재확인). `TD.MonsterAI.LocalAvoidance` 0=기존. 장면 보정·300마리 실측 대기. ring_slot은 M3-14로 구현. MD-45=(a)120 유지(10-15).
 - 길쭉한 형상 회피: `research/project-elongated-monster-avoidance.md` MD-25~39(§6)·M3-18~24(§5)는07 미등록. 승인 뒤 부모 등록(M3-18부터). 문헌 `research/web-noncircular-agent-avoidance.md`.
 - M3-25 후속(07§4): MD-40 상수JSON/41 귀환 피격·회복/42 보스leash/43 Flee 종료/44 몬스터<플레이어 속도 의도.
 - 공개 저장소에 Fab·Paragon·Manny 원본 에셋이 올라간다: 비공개 전환 여부 사용자 결정.

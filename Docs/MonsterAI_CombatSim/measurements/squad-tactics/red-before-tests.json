@@ -1,0 +1,46 @@
+{
+ "results": [
+  {
+   "path": "TDGame.MonsterAI.Tactics.AttackStartsAreSpaced",
+   "result": "Fail",
+   "events": [
+    "Error: min start gap 0 steps < 16 (at step 84, monsters 0 and 3) [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(383)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.ConcurrentAttackersFollowBudget",
+   "result": "Fail",
+   "events": [
+    "Error: max concurrent casts 3 > 2 (first reached at step 96) [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(347)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.Deterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.EveryMonsterGetsATurn",
+   "result": "Fail",
+   "events": [
+    "Error: monster 8 went 20.2 s without an attack > 20 s [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(487)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.TokenlessMonstersHoldTheWaitRing",
+   "result": "Fail",
+   "events": [
+    "Error: median waiter distance 182 cm < 300 cm [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCombatTacticsTests.cpp(424)]"
+   ]
+  }
+ ],
+ "found_count": 5,
+ "crash_lines": [],
+ "engine_exit_code": 0,
+ "filters": [
+  "TDGame.MonsterAI.Tactics"
+ ],
+ "log": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261018\\m314-red-tests.log",
+ "incomplete": false,
+ "crashed": false
+}

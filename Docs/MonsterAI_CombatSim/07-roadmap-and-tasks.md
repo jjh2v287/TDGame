@@ -588,6 +588,18 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 참조: zz-completeness-critique §1 M8; [06 요구 밖 고려사항](06-beyond-the-ask.md) §5-4; 결정 D15·D17
 - 기록: (없음). 2026-09-30 D44로 대체: 빙결 사례는 Mover 몸에서 이동 모드를 `NullMovementMode`로 바꾸고 UAF를 비활성해 애니메이션을 멈추며 마지막 해동에서 이전 모드를 복원하는 경로가 됐다(`TDGame.Movement.FreezeHaltsMovementAndAnimation`), CMC의 `MOVE_*` 전제는 무효다.
 
+### M3-14 무리 전술층: 가중 공격 토큰·포위 자리(스쿼드)·토큰 없는 행동
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 상(사용자 지시 2026-10-18 "스쿼드·어그로 비례 공격 토큰·AI 디렉터, 확인 절차 없이 권장안으로")
+- 선행: M3-25(교전 계층), M3-02(회피·격자). M3-27(전투 완성, 다른 세션)과 파일 분리
+- 목표: 대상(플레이어)별 조정자가 교전 몬스터 수에 비례한 가중 공격 예산을 배정하고(06 §5-5, 08 SC-03), 대상 주위 가상 자리(안쪽 공격 고리·바깥 대기 고리)를 몬스터에 배정하며, 토큰이 없는 몬스터는 자리 유지·선회·위협 같은 다른 행동을 한다. 고정 '동시 공격 3' 제한을 대체한다.
+- 완료 조건: 명세 v2(`Saved/AgentOps/20261018/combat-tactics/spec-v2.md`) 12절 시험 16개 통과(단계 A 5개는 구현 전 빨강 로그 보존) / 기존 `TDGame.MonsterAI.*`·`TDGame.Movement.*` 통과 수 유지(기준선 CrossingStreams 1건) / NoGlobalRandom / CVar `TD.MonsterAI.Tactics 0`으로 기존 '대상당 동시 3' 복귀 / OP-33 검사 두 개 종료 0
+- 산출물: `MonsterAI/TDCombatTactics.h/.cpp`(자료·상수·순수 함수), `MonsterAI/TDCombatDirector.h/.cpp`, 커널 연결 `TDMonsterThinkSubsystem.*`(UpdateTactics 등 약 45개 함수)·`TDMonsterActionExecutor.*`(칸 이동·시퀀스 첫 시전 실패 중단)·`TDMonsterBrainSlot.h`(CastStartCount)·`TDBrainInputs.h`·`TDBrainInputRegistry.cpp`(`HasAttackToken`·`RingSlotFree`), 시험 `Tests/TDCombatTacticsTests.cpp` 19개, 근거 [research/project-squad-tokens-director.md](research/project-squad-tokens-director.md), 명세·시뮬 [measurements/squad-tactics/](measurements/squad-tactics/), 문헌 3편 `research/web-attack-token-systems.md`·`web-squad-slots-and-directors.md`·`web-topdown-arpg-crowd-combat.md`
+- 검증: BUILD; TEST `TDGame.MonsterAI.*` 헤드리스(기준선 CrossingStreams 1건 제외 통과 수 유지); NoGlobalRandom; `python Tools/check_sync_loads.py`·`python Tools/check_cook_coverage.py`
+- 참조: 06 §1-9·§5-5, 08 §6-5·§6-8·SC-03, 03 §4.2, `Saved/AgentOps/20261018/combat-tactics/`
+- 기록: 2026-10-18 claude — 완료. 조사 9갈래(코드 6 + 웹 3) → 명세 v1 → 파이썬 결정론 시뮬 457회 + 반박 3관점(48건) → v2 → 시뮬 재검증(규칙 결함 6) → v2.1 → 단계 A 시험 먼저(빨강) → 사본 구현(동료 세션 2개와 build_hold.json·메시지로 빌드 창 조정, 강제 재부팅 뒤 재개) → 정적 반박 3관점(경미 11·시험 판별력 주요 1) → 수정 → 수정 반박(경미 4) → 수정 → 도주 시험 전제 결함 수정. 완료 조건 대조: ① 빨강(구현 전 `measurements/squad-tactics/red-before-*`): 동시 시전 3 > 2, 같은 스텝 동시 시작 41쌍(최소 간격 0), 대기자 중앙 거리 182cm < 300, 최장 무공격 20.2초 > 20 — 4/5 실패, Deterministic만 통과 ② 초록: `TDGame.MonsterAI.Tactics.*` 19/19(AttackStartsAreSpaced·AttackedWaiterRetaliates·BossLaneNotStarved·BudgetFormula·ConcurrentAttackersFollowBudget·Deterministic·DirectorCyclesUnderConstantPressure·EncounterResetRestoresGrace·EveryMonsterGetsATurn·FleeingMonsterDoesNotStallTokens·FleeingReservationIsRevoked·HoldingAttackerStillHoldsWithoutQueue·LoneMonsterEngagedFromFarNeverWaits·MercyWindowOpensOnce·RetaliationStealsFarReservation·RoleClassification·TacticsOffKeepsLegacyCap·TokenReleasedOnInterrupt·TokenlessMonstersHoldTheWaitRing), 동료 세션 독립 실행 `Saved/AgentOps/20261018/m327-final-tests.json`(13:29, Combat·MonsterAI·Movement·FluidFX 175/176, 실패 = 기준선 `CircleAvoidance.Scene.CrossingStreams`), 이 세션 최종 실행 `measurements/squad-tactics/green-final-tests.json`(14:0x, MonsterAI·Movement 52/53, 같은 기준선 1건) ③ NoGlobalRandom 통과 ④ `TD.MonsterAI.Tactics 0` = 기존 '대상당 동시 3'(TacticsOffKeepsLegacyCap; 기존과 다른 유일한 점은 사고 루프의 (슬롯, 세대) 사본 확인) ⑤ check_sync_loads·check_cook_coverage 종료 0. 사용자 규칙 편차는 07#MD-47(바닥 min(N,2)·합 상한 5, 시뮬 근거). 남은 것: PIE 육안·300마리 비용 실측 미실행, 종 JSON 키(역할·토큰 비용·보스 표식) 없음 → 보스는 체력 2000 임시 규칙, 정면 유지 옆걸음(Characters 소유), 구 `AI/CombatToken` 미삭제, 경보 연쇄·사기·역할 독점, D31 해시에 전술 상태 미포함(명세 11절 목록), `TDMonsterThinkSubsystem.cpp` 비대(약 2,250줄, 분리 시 통합 빌드 이름 충돌 주의 L-build-03), 고블린 Flee(체력 1/3 이하)가 근접 처치 시험을 흔든다는 동료 보고(JSON 기존 행동). 적중 L-repo-10·L-build-03·L-build-06.
+
 ### M3-15 세이브/로드 슬롯 직렬화 왕복 해시 테스트
 - 상태: todo
 - 우선순위: 중간
@@ -634,6 +646,18 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 검증: BUILD; TEST `TDGame.MonsterAI.*`·`TDGame.*` 헤드리스; 에디터 파이썬 측정
 - 참조: 사용자 보고 2026-10-16; `Saved/AgentOps/20260924/assets_hyena_active.json`(자산 16.517초, 동작 구간 달리기 0.5·걷기 1.333·대기 2.5초)
 - 기록: 2026-10-16 claude — 완료. 원인: Fab 하이에나 자산이 전부 16.517초(991프레임)인데 동작은 앞 30(달리기)·80(걷기)·150(대기)프레임뿐이고 나머지는 완전 정지 포즈, 이동 재생(`InjectLocomotionPose`)은 종 자산 Start/End를 버리고 자산 전체를 ForceLoop → 0.5초 뛰고 16초 정지 포즈로 미끄러짐. UAF 5.8 `FPlayAnimArgs`에 끝 위치가 없어 데이터로 고침. 같은 부류로 발견: 전 종 대기가 한 번 재생 뒤 멈춤(기본 자산은 시퀀스 bLoop을 따르고 쓰던 4개가 False, L-anim-15). 수정: 원본 프레임 무변경 + 끝↔시작 틈을 C1 Hermite로 채운 루프 자산(Run G=1 0.533초 +6.7%, Walk G=4 1.417초 +6.3%, Idle G=12 2.717초 +8.7%, 이음매 0cm, 이음매 속도 비 최대 0.67), RunClipSpeed 925→731(네 발 접지 중앙값, 독립 재측정 721.6), 달리기 문턱은 걷기 상한<달리기 하한이면 기하평균(하이에나만 323→147, 나머지 5종 불변), 대기 4개 bLoop 켬(서드파티 3개는 재저장으로 5.8 형식 승격, 포즈·메타 동일). 대기 C++ 강제 반복은 효과 없음(기본 자산), 대기 주입은 ensure(InjectionSiteTrait.cpp:88)로 폐기. 완료 조건 대조: ① 하이에나 3클립 반복 구간만·이음매 0 ② 수정 전 `Saved/Logs/M326_Before.log`·`M326_Before2.log` 종 시험(하이에나 구간·정지 꼬리·이음매, 대기 bLoop)·대기 시험(1.5주기 뒤 0.000cm) 실패 → 수정 후 `M326_After8.log` 34/33·전체 `M326_Full6.log` 127/126(실패는 기준선 `CircleAvoidance.Scene.CrossingStreams`, M3-02, 사전 커밋부터 같은 수치) ③ 독립 검증 3관점(재실행 3회 수치 동일, 코드 반박 major 2 반영, 자산 재측정) ④ 이 기록·L-anim-15. 남은 것: 육안(PIE) 미확인, 걷기 앞왼발 디딤 중 원본 최저보다 0.61cm 낮음(배율 1), 원본 동작의 앞뒤 발 접지 속도 불일치(앞 877·뒤 615 → 어느 값이든 일부 미끄럼), SkeletonGuard·StoneGolem 걷기 이음매 팔 속도 비 2.5~2.8(기존 결함, 문턱 3.0 근접), 리타깃 도구 대기 loop 변경 미실행, 달리기 문턱 C++ 시험 없음.
+
+### M3-28 전투 디렉터(긴장도·박자·예산 조절)
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 상(사용자 지시 2026-10-18)
+- 선행: M3-14(같은 세션에서 함께 진행)
+- 목표: 대상(플레이어)별 디렉터가 긴장도(받은 피해·근처 처치·공격 시작)를 결정론 정수로 추적해 박자(형성→절정 유지→감쇠→숨)를 정하고 M3-14 조정자의 예산 배율·공격 시작 간격을 조절한다. 자비 창·큰 피해 숨 고르기·조우 경계·개시 유예 포함(08 §5 박자, MD-21은 권장안 '교전 집합 기준 조우'로 진행).
+- 완료 조건: 명세 v2 7절 규칙, 순수 시험 `DirectorCyclesUnderConstantPressure`(상시 압박 60초에 Relax 진입 ≥ 1, 예산 ≤ 1토큰 시간 ≤ 35%)·`MercyWindowOpensOnce`·`EncounterResetRestoresGrace` 통과
+- 산출물: `MonsterAI/TDCombatDirector.h/.cpp`(`FTDCombatDirector` 정적 함수 + `FTDCombatDirectorState`), 커널 연결은 M3-14와 같음
+- 검증: BUILD; TEST `TDGame.MonsterAI.*` 헤드리스
+- 참조: 08 §5 박자, MD-21, `Saved/AgentOps/20261018/combat-tactics/`
+- 기록: 2026-10-18 claude — 완료(M3-14와 같은 세션·같은 검증). 긴장도 0~1000 정수: 대상 체력 폴링(centi 정수, 감소 ‰×2), 근처(1200cm) 처치 +40, 공격 시작 +8, 64스텝 무피해면 고리 주기 −40. 박자 BuildUp(≥700) → SustainPeak 256 → PeakFade(≤250 또는 256스텝) → Relax 256 → BuildUp, 배율 100/100/75/50%·기본−1 하한, 시작 간격 20/16/24/32. 자비 창·큰 피해 동결·조우 경계(연결 0명 128스텝)·개시 유예 96(2마리 이상). v1의 '근접 가산' 규칙은 PeakFade 영구 고착(시뮬 21개 장면 Relax 진입 0회)으로 삭제. 시험 DirectorCyclesUnderConstantPressure(상시 압박에서 Relax 순환·1토큰 이하 ≤ 35%)·MercyWindowOpensOnce·EncounterResetRestoresGrace 통과. 남은 것: 긴장도의 음악·HUD 연결 진입점 없음(디버그 줄 `GetTacticsDebugLines`만), 스폰 박자 레버는 월드젠 P2-11 소유(MD-21 경계), 실제 플레이 체감 미확인.
 
 ### 3.6 Phase 4 — 확장(조건부)
 
@@ -812,6 +836,14 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 권장: (a). 원형 몸은 위치가 조금 바뀌어도 티가 덜 나고, (b)는 무리 전체가 자주 움직여 산만하다. PIE에서 보고 다시 정한다.
 - 영향: 07#M3-02, 07#M3-25(`HomeArrivalRadius`), `Docs/MonsterAI_CombatSim/measurements/circle-avoidance/proto-summary-tables.md`
 - 결정: (a) 현행 120 유지 — 2026-10-15 사용자 지시. 코드 변경 없음(양보한 Home 몬스터는 120cm 안이면 밀린 자리에 남는다).
+
+### MD-47 무리 전술층·전투 디렉터 기본값(권장안 적용, 재검토 가능)
+- 상태: proposed · 2026-10-18 claude(M3-14·M3-28, 사용자 지시 "확인 절차 없이 권장안"으로 적용)
+- 질문: 지금 들어간 기본값을 확정할까? ① 근접 기본 토큰 = clamp(max((N+1)/3, min(N,2)), 1, 5)(사용자 예시 10→3 유지, 2~7마리 바닥 2, 합 상한 5) ② 근접·원거리 풀 분리(원거리 상한 3, 원거리 교전 시 근접 상한 4) ③ 보스 차선 = 페이즈 0 체력 ≥ 2000(임시, JSON 역할 키 생기면 교체) ④ 시작 간격 BuildUp 20·SustainPeak 16·PeakFade 24·Relax 32스텝, 박자 배율 100/100/75/50%(기본−1 하한) ⑤ 자비 창(25% 첫 진입 4초·30초 잠금·40% 재무장), 큰 피해(1초 창 16%) 1초 동결, 개시 유예 1.5초(2마리 이상)
+- 선택지: (a) 현행 유지 (b) 사용자 원래 식 그대로(바닥 없음·상한 없음: N=3이면 1토큰, 30이면 10토큰) (c) 상한 8(처리량 우선)
+- 권장: (a). 파이썬 결정론 시뮬에서 (b)는 3마리 전투 공격 시작이 기존의 30%(시간 43% 무공격), 상한 8은 시작 간격 때문에 동시 시전이 약 4에서 멈춰 만료(달려왔다 멈칫)만 157회 → 상한 5에서 43회.
+- 영향: 07#M3-14·M3-28, `MonsterAI/TDCombatTactics.h` 상수, `research/project-squad-tokens-director.md`, `measurements/squad-tactics/`
+- 결정: (대기)
 
 ---
 

@@ -37,6 +37,16 @@ namespace
 		return Inputs.bHasTarget && Inputs.bIsTargetAttacking ? 1.f : 0.f;
 	}
 
+	float ReadHasAttackToken(const FTDBrainInputs& Inputs, const FTDInputArgs& Args)
+	{
+		return Inputs.bHasAttackToken ? 1.f : 0.f;
+	}
+
+	float ReadRingSlotFree(const FTDBrainInputs& Inputs, const FTDInputArgs& Args)
+	{
+		return Inputs.bHasRingSlot ? 1.f : 0.f;
+	}
+
 	const FTDBrainInputFunction InputFunctions[] =
 	{
 		{ TEXT("DistanceToTarget"), &ReadDistanceToTarget, ETDInputCost::Cheap, 0.f, 1200.f, ETDInputArgKind::None, 0.f },
@@ -44,6 +54,8 @@ namespace
 		{ TEXT("AbilityReady"), &ReadAbilityReady, ETDInputCost::Cheap, 0.f, 1.f, ETDInputArgKind::Ability, 0.f },
 		{ TEXT("FacingTarget"), &ReadFacingTarget, ETDInputCost::Cheap, -1.f, 1.f, ETDInputArgKind::None, 0.f },
 		{ TEXT("TargetIsAttacking"), &ReadTargetIsAttacking, ETDInputCost::Cheap, 0.f, 1.f, ETDInputArgKind::None, 0.f },
+		{ TEXT("HasAttackToken"), &ReadHasAttackToken, ETDInputCost::Cheap, 0.f, 1.f, ETDInputArgKind::None, 0.f },
+		{ TEXT("RingSlotFree"), &ReadRingSlotFree, ETDInputCost::Cheap, 0.f, 1.f, ETDInputArgKind::None, 0.f },
 		{ TEXT("AllyCountNearby"), &ReadAllyCountNearby, ETDInputCost::Grid, 0.f, 8.f, ETDInputArgKind::Radius, 600.f },
 		{ TEXT("LineOfSightToTarget"), &ReadLineOfSightToTarget, ETDInputCost::Trace, 0.f, 1.f, ETDInputArgKind::None, 0.f }
 	};

@@ -19,6 +19,21 @@ namespace
 	{
 		return Brain.SequenceIndex != INDEX_NONE;
 	}
+
+	bool IsQueuedWithoutSlot(const FTDMonsterStepContext& Context)
+	{
+		return Context.bIsTacticsActive && !Context.bHoldsAttackToken && Context.TacticsSlotKind == ETDTacticsSlotKind::None && Context.TacticsSlotRadius > 0.f;
+	}
+
+	bool IsBandSlot(const FTDMonsterStepContext& Context)
+	{
+		return Context.bIsTacticsActive && (Context.TacticsSlotKind == ETDTacticsSlotKind::Ranged || Context.TacticsSlotKind == ETDTacticsSlotKind::Wait);
+	}
+
+	bool IsWithinSlotAngle(const FTDMonsterStepContext& Context, const FVector2D& ToTarget)
+	{
+		return FVector2D::DotProduct(-ToTarget, Context.TacticsSlotDirection) >= FMath::Cos(FMath::DegreesToRadians(Context.TacticsSlotHalfAngleDegrees));
+	}
 }
 
 void FTDMonsterActionExecutor::ResetForDefinition(FTDMonsterBrainFragment& Brain)
@@ -253,6 +268,7 @@ bool FTDMonsterActionExecutor::StartCast(FTDMonsterBrainFragment& Brain, const F
 	Brain.State = ETDMonsterFsmState::Cast;
 	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(DurationSeconds));
 	Brain.AbilityCooldownSteps[Args.AbilityIndex] = Ability.CooldownSteps;
+	++Brain.CastStartCount;
 	return true;
 }
 
@@ -268,6 +284,14 @@ void FTDMonsterActionExecutor::StartSequence(FTDMonsterBrainFragment& Brain, con
 	Brain.SequenceCursor = 0;
 	const FTDResolvedStep& FirstStep = Brain.Definition->Sequences[SequenceIndex][0];
 	StartPrimitive(Brain, FirstStep.Primitive, FirstStep.Args, Context);
+	if (!Context.bIsTacticsActive || FirstStep.Primitive != ETDMonsterPrimitive::CastAbility || Brain.State == ETDMonsterFsmState::Cast)
+	{
+		return;
+	}
+	Brain.SequenceIndex = INDEX_NONE;
+	Brain.SequenceCursor = 0;
+	Brain.State = ETDMonsterFsmState::Idle;
+	Brain.bForceThink = true;
 }
 
 void FTDMonsterActionExecutor::CompleteActivity(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
@@ -309,18 +333,32 @@ FTDMonsterMoveIntent FTDMonsterActionExecutor::ComputeMoveIntent(const FTDMonste
 	switch (Brain.ActivePrimitive)
 	{
 	case ETDMonsterPrimitive::MoveToward:
+	{
+		if (Context.bIsTacticsActive && Context.TacticsSlotKind == ETDTacticsSlotKind::Wait)
+		{
+			return ComputeWaitSlotIntent(Context, ToTarget, Distance, bOutHasArrived);
+		}
+		if (IsQueuedWithoutSlot(Context))
+		{
+			return ComputeQueueIntent(Brain, Context, ToTarget, Distance, bOutHasArrived);
+		}
 		if (Distance <= Args.StopAtDistance)
 		{
 			bOutHasArrived = true;
 			return Intent;
 		}
-		Intent.Direction = ToTarget;
+		const bool bShouldUseInnerSlot = Context.bIsTacticsActive && Context.TacticsSlotKind == ETDTacticsSlotKind::Inner;
+		const FVector2D InnerPoint = ToPlanar(Context.TargetLocation) + Context.TacticsSlotDirection * Args.StopAtDistance;
+		const FVector2D ToInnerPoint = (InnerPoint - ToPlanar(Context.SelfLocation)).GetSafeNormal();
+		Intent.Direction = bShouldUseInnerSlot && !ToInnerPoint.IsNearlyZero() ? ToInnerPoint : ToTarget;
 		break;
+	}
 	case ETDMonsterPrimitive::MoveAway:
 		Intent.Direction = -ToTarget;
 		Intent.bShouldFaceTarget = false;
 		break;
 	case ETDMonsterPrimitive::MoveToBand:
+	{
 		if (Distance < Args.BandMin)
 		{
 			Intent.Direction = -ToTarget;
@@ -331,12 +369,107 @@ FTDMonsterMoveIntent FTDMonsterActionExecutor::ComputeMoveIntent(const FTDMonste
 			Intent.Direction = ToTarget;
 			break;
 		}
+		FVector2D BandPoint = FVector2D::ZeroVector;
+		if (IsBandSlot(Context) && !IsWithinSlotAngle(Context, ToTarget) && ComputeTacticsSlotPoint(Brain, Context, BandPoint))
+		{
+			Intent.Direction = (BandPoint - ToPlanar(Context.SelfLocation)).GetSafeNormal();
+			if (!Intent.Direction.IsNearlyZero())
+			{
+				break;
+			}
+		}
 		bOutHasArrived = true;
 		return Intent;
+	}
 	default:
 		bOutHasArrived = true;
 		return Intent;
 	}
 	Intent.SpeedScale = Args.SpeedScale;
 	return Intent;
+}
+
+FTDMonsterMoveIntent FTDMonsterActionExecutor::ComputeWaitSlotIntent(const FTDMonsterStepContext& Context, const FVector2D& ToTarget, const float Distance, bool& bOutHasArrived)
+{
+	FTDMonsterMoveIntent Intent;
+	Intent.bShouldFaceTarget = true;
+	const FVector2D WaitPoint = ToPlanar(Context.TargetLocation) + Context.TacticsSlotDirection * Context.TacticsSlotRadius;
+	const FVector2D ToWaitPoint = WaitPoint - ToPlanar(Context.SelfLocation);
+	const int32 ArrivalCm = Context.bIsFeinting ? FTDCombatTactics::FeintArrivalCm : FTDCombatTactics::WaitArrivalCm;
+	if (ToWaitPoint.Size() <= ArrivalCm)
+	{
+		bOutHasArrived = true;
+		return Intent;
+	}
+	if (Distance < Context.TacticsSlotRadius - FTDCombatTactics::WaitInsideMarginCm)
+	{
+		if (Context.bIsTargetClosingIn)
+		{
+			bOutHasArrived = true;
+			return Intent;
+		}
+		Intent.Direction = -ToTarget;
+		Intent.SpeedScale = 1.f;
+		return Intent;
+	}
+	Intent.Direction = ToWaitPoint.GetSafeNormal();
+	Intent.SpeedScale = 1.f;
+	return Intent;
+}
+
+FTDMonsterMoveIntent FTDMonsterActionExecutor::ComputeQueueIntent(const FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context, const FVector2D& ToTarget, const float Distance, bool& bOutHasArrived)
+{
+	FTDMonsterMoveIntent Intent;
+	Intent.bShouldFaceTarget = true;
+	const float RingRadius = Context.TacticsSlotRadius;
+	if (Distance < RingRadius - FTDCombatTactics::WaitInsideMarginCm)
+	{
+		Intent.Direction = -ToTarget;
+		Intent.SpeedScale = Brain.ActiveArgs.SpeedScale;
+		return Intent;
+	}
+	if (Distance <= RingRadius + FTDCombatTactics::QueueOuterMarginCm)
+	{
+		bOutHasArrived = true;
+		return Intent;
+	}
+	Intent.Direction = ToTarget;
+	Intent.SpeedScale = Brain.ActiveArgs.SpeedScale;
+	return Intent;
+}
+
+bool FTDMonsterActionExecutor::ComputeTacticsSlotPoint(const FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context, FVector2D& OutPoint)
+{
+	if (!IsBandSlot(Context))
+	{
+		return false;
+	}
+	float PointRadius = Context.TacticsSlotRadius;
+	if (Brain.ActivePrimitive == ETDMonsterPrimitive::MoveToBand)
+	{
+		PointRadius = (Brain.ActiveArgs.BandMin + Brain.ActiveArgs.BandMax) * 0.5f;
+	}
+	else if (Brain.ActivePrimitive != ETDMonsterPrimitive::MoveToward || Context.TacticsSlotKind != ETDTacticsSlotKind::Wait)
+	{
+		return false;
+	}
+	OutPoint = ToPlanar(Context.TargetLocation) + Context.TacticsSlotDirection * PointRadius;
+	return true;
+}
+
+bool FTDMonsterActionExecutor::MeasureTacticsSlotGap(const FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context, float& OutGap)
+{
+	if (Brain.State != ETDMonsterFsmState::Move || !Context.Target)
+	{
+		return false;
+	}
+	bool bHasArrived = false;
+	const FTDMonsterMoveIntent Intent = ComputeMoveIntent(Brain, Context, bHasArrived);
+	FVector2D SlotPoint = FVector2D::ZeroVector;
+	if (bHasArrived || Intent.Direction.IsNearlyZero() || !ComputeTacticsSlotPoint(Brain, Context, SlotPoint))
+	{
+		return false;
+	}
+	OutGap = (SlotPoint - ToPlanar(Context.SelfLocation)).Size();
+	return true;
 }

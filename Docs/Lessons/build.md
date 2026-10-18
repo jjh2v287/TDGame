@@ -81,3 +81,12 @@
 - 증거: 2026-10-18 `Saved/AgentOps/20261018/pack-red-run1.out`(0건)·`pack-red-tests-backup-2026.10.18-06.15.43.log:2234` → Makefile.bin 삭제 뒤 `pack-red-build.log`(no existing makefile)·`pack-red-tests.json` found_count 17
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-build-10 게임 타깃(`Build.bat TDGame`)으로 미리 컴파일이 통과해도 에디터 DLL 링크가 `FBodyInstanceCore::ShouldInstanceSimulatingPhysics` LNK2019로 실패한다
+- 증상: `UnrealEditor-TDGame.dll : fatal error LNK1120`, `__imp_?ShouldInstanceSimulatingPhysics@FBodyInstanceCore@@QEBA_NXZ ... 확인할 수 없는 외부 기호`(호출처 `FBodyInstance::IsInstanceSimulatingPhysics()` 인라인). 같은 코드가 게임 타깃 빌드(368초)는 `Result: Succeeded`
+- 원인: `IsInstanceSimulatingPhysics`는 헤더 인라인이라 PhysicsCore 모듈의 `FBodyInstanceCore` 심볼을 직접 부른다. TDGame 모듈은 PhysicsCore에 의존하지 않고, 게임 타깃은 단일 실행 파일로 링크돼 문제가 드러나지 않는다
+- 해결: 래그돌 전신 시뮬레이션처럼 확인이 불필요하면 호출을 뺀다(M3-38 `ComputeRagdollMeanSpeed`). 꼭 필요하면 `TDGame.Build.cs`에 "PhysicsCore" 의존 추가. 게임 타깃 사전 컴파일은 컴파일 오류만 잡고 모듈 간 링크 오류는 못 잡는다(L-build-06 보완)
+- 범위: UE 5.8 에디터(모듈) 빌드, PhysicsCore 인라인 API를 쓰는 TDGame 코드
+- 증거: 2026-10-19 `Saved/AgentOps/20261019/m338-b1-build.log`(실패), `Saved/AgentOps/20261018/ragdoll-jitter/game-build-1.log`(게임 타깃 성공)
+- 날짜·상태: 2026-10-19 active
+- 발견: claude

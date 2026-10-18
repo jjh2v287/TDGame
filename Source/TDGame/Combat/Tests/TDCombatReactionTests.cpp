@@ -636,6 +636,11 @@ bool FTDPlayerDeathWithoutGameInstanceIsSafeTest::RunTest(const FString& Paramet
 	{
 		TestTrue(TEXT("The player falls as a ragdoll"), Player->IsRagdolling());
 		TestTrue(TEXT("The ragdoll simulates physics"), Player->GetMesh()->IsSimulatingPhysics());
+		const TArray<FBodyInstance*>& RagdollBodies = Player->GetMesh()->Bodies;
+		TestTrue(TEXT("Every ragdoll body damps its spin so the corpse can settle"), RagdollBodies.Num() > 0 && !RagdollBodies.ContainsByPredicate([](const FBodyInstance* Body)
+		{
+			return !Body || Body->AngularDamping < 0.5f;
+		}));
 		UTDCharacterAnimationComponent* Animation = Player->GetCharacterAnimation();
 		if (TestNotNull(TEXT("The dead player has an animation driver"), Animation))
 		{

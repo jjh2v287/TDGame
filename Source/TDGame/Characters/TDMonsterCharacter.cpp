@@ -820,6 +820,10 @@ void ATDMonsterCharacter::ApplySpeciesBody()
 	{
 		MeshComponent->SetSkeletalMeshAsset(Species->Mesh);
 	}
+	if (MeshComponent->PhysicsAssetOverride != Species->RagdollPhysicsAsset)
+	{
+		MeshComponent->SetPhysicsAsset(Species->RagdollPhysicsAsset);
+	}
 	MeshComponent->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -Species->CapsuleHalfHeight + Species->MeshHeightOffset), FRotator(0.f, Species->MeshYaw, 0.f));
 	MeshComponent->SetRelativeScale3D(FVector(Species->MeshScale));
 	UCharacterMoverComponent* Mover = GetMoverComponent();
@@ -1047,6 +1051,7 @@ void ATDMonsterCharacter::BeginCorpseSink()
 
 	if (IsRagdolling())
 	{
+		StopRagdollSettle();
 		MeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 		for (FBodyInstance* Body : MeshComponent->Bodies)
 		{

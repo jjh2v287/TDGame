@@ -1,0 +1,317 @@
+{
+ "label": "exp6-wukong-generated-pa",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 350.0,
+ "kill_fraction": 0.25,
+ "count": 1,
+ "experiment": {
+  "body": {
+   "angular_damping": 1.0
+  },
+  "self_collision_off": false,
+  "assist": {
+   "min_seconds": 1.0,
+   "speed_cm_s": 15.0,
+   "hold_seconds": 0.3
+  }
+ },
+ "window": {
+  "land_speed_cm_s": 60.0,
+  "delay_seconds": 0.5,
+  "length_seconds": 2.5
+ },
+ "target": {
+  "position_rms_cm": 0.5,
+  "sleep_seconds": 3.0
+ },
+ "results": [
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Wukong",
+   "physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_PhysicsAsset.Wukong_PhysicsAsset",
+   "body_count": 36,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "hip_pad_top_l": 1.0,
+    "hip_pad_top_r": 1.0,
+    "spine_01": 1.0,
+    "spine_02": 1.0,
+    "spine_03": 1.0,
+    "clavicle_l": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "clavicle_r": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "weapon_r": 1.0,
+    "weapon_B_r": 1.0,
+    "weapon_C_r": 1.0,
+    "weapon_D_r": 1.0,
+    "upperarm_twist_01_r": 1.0,
+    "neck_01": 1.0,
+    "head": 1.0,
+    "faceAttach": 1.0,
+    "C_jaw": 1.0,
+    "tail_01": 1.0,
+    "tail_04": 1.0,
+    "tail_06": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "foot_l": 1.0,
+    "ball_l": 1.0,
+    "thigh_twist_01_l": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "foot_r": 1.0,
+    "ball_r": 1.0,
+    "thigh_twist_01_r": 1.0
+   },
+   "frames": 429,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5932,
+   "launch_speed_cm_s": 393.7,
+   "land_seconds": 1.4107,
+   "sink_seconds": null,
+   "window_seconds": [
+    1.9107,
+    4.4107
+   ],
+   "observed_seconds": 6.4187,
+   "sleep_seconds": 1.5217,
+   "fps": 61.0,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": 1.5057,
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "foot_l",
+     0.0
+    ],
+    [
+     "ball_r",
+     0.0
+    ],
+    [
+     "clavicle_l",
+     0.0
+    ],
+    [
+     "hip_pad_top_l",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "target": "Wukong-1",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Wukong",
+   "physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_PhysicsAsset.Wukong_PhysicsAsset",
+   "body_count": 36,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "hip_pad_top_l": 1.0,
+    "hip_pad_top_r": 1.0,
+    "spine_01": 1.0,
+    "spine_02": 1.0,
+    "spine_03": 1.0,
+    "clavicle_l": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "clavicle_r": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "weapon_r": 1.0,
+    "weapon_B_r": 1.0,
+    "weapon_C_r": 1.0,
+    "weapon_D_r": 1.0,
+    "upperarm_twist_01_r": 1.0,
+    "neck_01": 1.0,
+    "head": 1.0,
+    "faceAttach": 1.0,
+    "C_jaw": 1.0,
+    "tail_01": 1.0,
+    "tail_04": 1.0,
+    "tail_06": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "foot_l": 1.0,
+    "ball_l": 1.0,
+    "thigh_twist_01_l": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "foot_r": 1.0,
+    "ball_r": 1.0,
+    "thigh_twist_01_r": 1.0
+   },
+   "frames": 440,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5765,
+   "launch_speed_cm_s": 398.3,
+   "land_seconds": 1.3223,
+   "sink_seconds": null,
+   "window_seconds": [
+    1.8223,
+    4.3223
+   ],
+   "observed_seconds": 6.4278,
+   "sleep_seconds": 1.466,
+   "fps": 62.7,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": 1.4486,
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "tail_04",
+     0.0
+    ],
+    [
+     "weapon_r",
+     0.0
+    ],
+    [
+     "weapon_B_r",
+     0.0
+    ],
+    [
+     "calf_l",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "target": "Wukong-2",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Wukong",
+   "physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_PhysicsAsset.Wukong_PhysicsAsset",
+   "body_count": 36,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "hip_pad_top_l": 1.0,
+    "hip_pad_top_r": 1.0,
+    "spine_01": 1.0,
+    "spine_02": 1.0,
+    "spine_03": 1.0,
+    "clavicle_l": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "clavicle_r": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "weapon_r": 1.0,
+    "weapon_B_r": 1.0,
+    "weapon_C_r": 1.0,
+    "weapon_D_r": 1.0,
+    "upperarm_twist_01_r": 1.0,
+    "neck_01": 1.0,
+    "head": 1.0,
+    "faceAttach": 1.0,
+    "C_jaw": 1.0,
+    "tail_01": 1.0,
+    "tail_04": 1.0,
+    "tail_06": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "foot_l": 1.0,
+    "ball_l": 1.0,
+    "thigh_twist_01_l": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "foot_r": 1.0,
+    "ball_r": 1.0,
+    "thigh_twist_01_r": 1.0
+   },
+   "frames": 441,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5896,
+   "launch_speed_cm_s": 414.2,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4168,
+   "sleep_seconds": 1.5138,
+   "fps": 62.8,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": 1.4976,
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "tail_04",
+     0.0
+    ],
+    [
+     "hip_pad_top_l",
+     0.0
+    ],
+    [
+     "clavicle_r",
+     0.0
+    ],
+    [
+     "upperarm_r",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "target": "Wukong-3",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  }
+ ]
+}

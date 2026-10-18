@@ -5,6 +5,7 @@
 #include "TDMonsterSpeciesAsset.generated.h"
 
 class UAnimationAsset;
+class UPhysicsAsset;
 class USkeletalMesh;
 
 USTRUCT(BlueprintType)
@@ -146,4 +147,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death", meta=(ClampMin="0", ForceUnits="s"))
 	float CorpseSinkSeconds = 1.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death", meta=(ToolTip="Replaces the mesh's own physics asset for this species, for packs whose physics asset is not built for ragdolls."))
+	TObjectPtr<UPhysicsAsset> RagdollPhysicsAsset;
 };

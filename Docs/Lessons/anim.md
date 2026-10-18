@@ -162,3 +162,12 @@
 - 증거: 2026-10-18 `Saved/Logs/TDGame-backup-2026.10.18-09.34.25.log`(크래시 콜스택, UTC 기준 이름), 수정 뒤 PIE `Docs/MonsterAI_CombatSim/measurements/M3-34/pie-20261018/report.json` 전 단계 통과
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-anim-21 래그돌이 바닥에서 계속 꿈틀대며 잠들지 않고, 일부 종은 시작 순간 팔다리가 튄다
+- 증상: PIE 측정(`pie_measure_ragdoll_jitter.py` 기준선)에서 12종 대부분이 가라앉기 전까지 깨어 있음(깨어 있는 비율 1.0), 정착 창 위치 RMS Goblin 1.0~1.3·StoneGolem 1.7~4.1·Wukong 5.6~27.5cm, 최대 각속도 3801도/초. 래그돌 첫 스텝에 말단 바디가 1300~2300cm/s·5000~7800도/초로 튐
+- 원인: ① 팩 물리 에셋 바디의 `AngularDamping` 기본 0과 엔진 기본 잠들기 문턱(선 1cm/s·각 0.05rad/s·4틱, 섬 단위)이라 미세한 잔여 회전이 섬 전체를 깨워 둔다 ② StoneGolem(손·발이 62×89cm급 상자로 서로 겹침)·Paragon `*_Extents`(손·발·머리 바디가 골반에 회전 자유 관절로 직결, 경계 계산용)처럼 래그돌용이 아닌 물리 에셋은 사망 포즈에서 겹침·한계 위반을 한 스텝에 풀며 튄다
+- 해결: ① 래그돌 시작 때 바디 `AngularDamping` 1.0 + 정착 재우기(래그돌 1초 뒤 질량 가중 평균 속도 15cm/s 이하가 0.3초 이어지면 `PutAllRigidBodiesToSleep`, 가라앉기 시작 때 중지) — `ATDCombatCharacter::UpdateRagdollSettle` ② 불량 팩 에셋은 `SkeletalMeshEditorSubsystem.create_physics_asset`로 메시에서 다시 만들어 종 에셋 `RagdollPhysicsAsset`으로 교체(`Tools/MonsterAI/editor_make_ragdoll_physics_assets.py`, 팩 원본 유지). 메모리 실험에서 생성 에셋으로 StoneGolem 첫 속도 2000→750cm/s·잠들기 1.7~1.9초, Wukong 1.5초
+- 범위: UE 5.8 Chaos 전신 래그돌(UAF 메시), 마켓 팩 자동 생성·경계용 물리 에셋
+- 증거: `Docs/MonsterAI_CombatSim/measurements/M3-38/`(baseline·exp1·exp3·exp4·exp6·exp7 report.json), 엔진 근거 `Saved/AgentOps/20261018/ragdoll-jitter/engine-research.md`(IslandManager.cpp:2752-2756, BodyInstance.cpp:367-411)
+- 날짜·상태: 2026-10-19 active(빌드 뒤 최종 측정은 M3-38 기록)
+- 발견: claude

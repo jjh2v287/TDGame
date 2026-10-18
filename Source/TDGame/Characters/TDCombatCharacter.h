@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "Engine/TimerHandle.h"
 #include "GameFramework/Pawn.h"
 #include "MoverSimulationTypes.h"
 #include "TDCombatCharacter.generated.h"
@@ -125,6 +126,7 @@ protected:
 	virtual void HandleMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName);
 
 	FVector ResolveHitPlanarDirection(const FTDDamageResult& Result) const;
+	void StopRagdollSettle();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UCapsuleComponent> CapsuleComponent;
@@ -196,11 +198,15 @@ private:
 	bool IsMoveInputBlockedByStun() const;
 	bool IsCapsuleModifierActive() const;
 	bool IsKnockbackSuppressed() const;
+	void UpdateRagdollSettle();
 
 	FVector DesiredFacingDirection = FVector::ZeroVector;
 	FVector LastPresentationOffsetLocal = FVector::ZeroVector;
 	FName MovementModeBeforeFreeze = NAME_None;
+	FTimerHandle RagdollSettleTimerHandle;
+	double RagdollStartSeconds = 0.0;
 	bool bIsMovementDisabled = false;
 	bool bIsMovementFrozen = false;
 	bool bIsRagdolling = false;
+	bool bIsRagdollSettling = false;
 };

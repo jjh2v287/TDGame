@@ -1,0 +1,190 @@
+{
+ "label": "baseline-player",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 350.0,
+ "kill_fraction": 0.25,
+ "count": 1,
+ "experiment": {
+  "body": {},
+  "self_collision_off": false,
+  "assist": null
+ },
+ "window": {
+  "land_speed_cm_s": 60.0,
+  "delay_seconds": 0.5,
+  "length_seconds": 2.5
+ },
+ "target": {
+  "position_rms_cm": 0.5,
+  "sleep_seconds": 3.0
+ },
+ "results": [
+  {
+   "result": "actor destroyed",
+   "species": null,
+   "physics_asset": "/Game/Characters/Mannequins/Rigs/PA_Mannequin.PA_Mannequin",
+   "body_count": 22,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_02": 1.0,
+    "spine_03": 1.0,
+    "spine_04": 1.0,
+    "spine_05": 1.0,
+    "neck_01": 1.0,
+    "neck_02": 1.0,
+    "head": 1.0,
+    "clavicle_l": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "clavicle_r": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "foot_r": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "foot_l": 1.0
+   },
+   "frames": 213,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0,
+   "launch_speed_cm_s": 341.4,
+   "land_seconds": 1.4293,
+   "sink_seconds": null,
+   "window_seconds": [
+    1.9293,
+    4.4293
+   ],
+   "observed_seconds": 3.9968,
+   "sleep_seconds": 3.0948,
+   "fps": 53.0,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 0.1818,
+    "step_rms_cm": 0.0265,
+    "high_frequency_rms_cm": 0.015
+   },
+   "physics": {
+    "position_rms_cm": 0.1702,
+    "step_rms_cm": 0.025,
+    "high_frequency_rms_cm": 0.0135
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "calf_r",
+     0.5313
+    ],
+    [
+     "hand_l",
+     0.2707
+    ],
+    [
+     "foot_r",
+     0.251
+    ],
+    [
+     "spine_03",
+     0.2078
+    ]
+   ],
+   "component_step_rms_cm": 0.0961,
+   "max_angular_deg_s": 77.61,
+   "max_linear_cm_s": 11.82,
+   "awake_fraction": 0.5,
+   "meets_target": false,
+   "target": "Player-1",
+   "kind": "player",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-38/baseline-player/Player-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-38/baseline-player/Player-1_shot2.png"
+   ]
+  },
+  {
+   "result": "actor destroyed",
+   "species": null,
+   "physics_asset": "/Game/Characters/Mannequins/Rigs/PA_Mannequin.PA_Mannequin",
+   "body_count": 22,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_02": 1.0,
+    "spine_03": 1.0,
+    "spine_04": 1.0,
+    "spine_05": 1.0,
+    "neck_01": 1.0,
+    "neck_02": 1.0,
+    "head": 1.0,
+    "clavicle_l": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "clavicle_r": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "foot_r": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "foot_l": 1.0
+   },
+   "frames": 244,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0,
+   "launch_speed_cm_s": 348.5,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 3.9857,
+   "sleep_seconds": 2.8269,
+   "fps": 61.0,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 0.0766,
+    "step_rms_cm": 0.0111,
+    "high_frequency_rms_cm": 0.0075
+   },
+   "physics": {
+    "position_rms_cm": 0.0664,
+    "step_rms_cm": 0.0103,
+    "high_frequency_rms_cm": 0.0071
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "head",
+     0.1585
+    ],
+    [
+     "hand_l",
+     0.1457
+    ],
+    [
+     "neck_02",
+     0.1344
+    ],
+    [
+     "neck_01",
+     0.1086
+    ]
+   ],
+   "component_step_rms_cm": 0.0324,
+   "max_angular_deg_s": 31.34,
+   "max_linear_cm_s": 5.42,
+   "awake_fraction": 0.407,
+   "meets_target": true,
+   "target": "Player-2",
+   "kind": "player",
+   "forced_ragdoll": false,
+   "shots": []
+  }
+ ]
+}

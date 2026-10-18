@@ -38,6 +38,15 @@ namespace TDCombatCharacterMovement
 	constexpr float PresentationOffsetTolerance = 0.01f;
 	constexpr float RagdollMaxDepenetrationVelocity = 150.f;
 	constexpr float RagdollLinearDamping = 0.6f;
+	constexpr float RagdollAngularDamping = 1.f;
+	constexpr float RagdollSettleCheckSeconds = 0.1f;
+	constexpr float RagdollSettleMinSeconds = 1.f;
+	constexpr float RagdollSettleForceSeconds = 2.f;
+	constexpr float RagdollSleepCapSeconds = 3.f;
+	constexpr float RagdollSettleMeanSpeed = 15.f;
+	constexpr float RagdollSleepBodySpeed = 20.f;
+	constexpr float RagdollSleepCapBodySpeed = 100.f;
+	constexpr float RagdollSettleDamping = 4.f;
 	constexpr float StatusKillUpSpeedScale = 0.3f;
 
 	const FName& GetRagdollCollisionProfileName()
@@ -67,7 +76,13 @@ namespace TDCombatCharacterMovement
 		return FRotator(0.f, Rotation.Yaw, 0.f).Vector();
 	}
 
-	void ConfigureRagdollBodies(USkeletalMeshComponent& MeshComponent)
+	struct FTDRagdollMotion
+	{
+		float MeanSpeed = 0.f;
+		float MaxBodySpeed = 0.f;
+	};
+
+	void SetRagdollDamping(USkeletalMeshComponent& MeshComponent, float LinearDamping, float AngularDamping)
 	{
 		for (FBodyInstance* Body : MeshComponent.Bodies)
 		{
@@ -75,10 +90,43 @@ namespace TDCombatCharacterMovement
 			{
 				continue;
 			}
-			Body->SetMaxDepenetrationVelocity(RagdollMaxDepenetrationVelocity);
-			Body->LinearDamping = RagdollLinearDamping;
+			Body->LinearDamping = LinearDamping;
+			Body->AngularDamping = AngularDamping;
 			Body->UpdateDampingProperties();
 		}
+	}
+
+	void ConfigureRagdollBodies(USkeletalMeshComponent& MeshComponent)
+	{
+		for (FBodyInstance* Body : MeshComponent.Bodies)
+		{
+			if (Body)
+			{
+				Body->SetMaxDepenetrationVelocity(RagdollMaxDepenetrationVelocity);
+			}
+		}
+		SetRagdollDamping(MeshComponent, RagdollLinearDamping, RagdollAngularDamping);
+	}
+
+	FTDRagdollMotion MeasureRagdollMotion(const USkeletalMeshComponent& MeshComponent)
+	{
+		FTDRagdollMotion Motion;
+		FVector Momentum = FVector::ZeroVector;
+		float TotalMass = 0.f;
+		for (const FBodyInstance* Body : MeshComponent.Bodies)
+		{
+			if (!Body)
+			{
+				continue;
+			}
+			const FVector Velocity = Body->GetUnrealWorldVelocity();
+			const float Mass = Body->GetBodyMass();
+			Momentum += Velocity * Mass;
+			TotalMass += Mass;
+			Motion.MaxBodySpeed = FMath::Max(Motion.MaxBodySpeed, static_cast<float>(Velocity.Size()));
+		}
+		Motion.MeanSpeed = TotalMass > 0.f ? static_cast<float>(Momentum.Size()) / TotalMass : 0.f;
+		return Motion;
 	}
 
 	void GrantStartupAbilitiesAndEffects(UTDCombatComponent& CombatComponent, const TArray<TSubclassOf<UGameplayAbility>>& Abilities, const TArray<TSubclassOf<UGameplayEffect>>& Effects, UObject* SourceObject)
@@ -482,7 +530,57 @@ bool ATDCombatCharacter::StartRagdoll(const FVector& LinearVelocity)
 	{
 		MeshComponent->SetAllPhysicsLinearVelocity(LinearVelocity, false);
 	}
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return true;
+	}
+	RagdollStartSeconds = World->GetTimeSeconds();
+	bIsRagdollSettling = false;
+	World->GetTimerManager().SetTimer(RagdollSettleTimerHandle, this, &ATDCombatCharacter::UpdateRagdollSettle, TDCombatCharacterMovement::RagdollSettleCheckSeconds, true);
 	return true;
+}
+
+void ATDCombatCharacter::UpdateRagdollSettle()
+{
+	USkeletalMeshComponent* MeshComponent = Mesh.Get();
+	const UWorld* World = GetWorld();
+	if (!bIsRagdolling || !MeshComponent || !World)
+	{
+		StopRagdollSettle();
+		return;
+	}
+	const double ElapsedSeconds = World->GetTimeSeconds() - RagdollStartSeconds;
+	if (!MeshComponent->IsAnyRigidBodyAwake() || ElapsedSeconds < TDCombatCharacterMovement::RagdollSettleMinSeconds)
+	{
+		return;
+	}
+	const TDCombatCharacterMovement::FTDRagdollMotion Motion = TDCombatCharacterMovement::MeasureRagdollMotion(*MeshComponent);
+	if (!bIsRagdollSettling)
+	{
+		if (Motion.MeanSpeed > TDCombatCharacterMovement::RagdollSettleMeanSpeed && ElapsedSeconds < TDCombatCharacterMovement::RagdollSettleForceSeconds)
+		{
+			return;
+		}
+		bIsRagdollSettling = true;
+		TDCombatCharacterMovement::SetRagdollDamping(*MeshComponent, TDCombatCharacterMovement::RagdollSettleDamping, TDCombatCharacterMovement::RagdollSettleDamping);
+		return;
+	}
+	const bool bIsStill = Motion.MaxBodySpeed <= TDCombatCharacterMovement::RagdollSleepBodySpeed;
+	const bool bIsPastSleepCap = ElapsedSeconds >= TDCombatCharacterMovement::RagdollSleepCapSeconds && Motion.MaxBodySpeed <= TDCombatCharacterMovement::RagdollSleepCapBodySpeed;
+	if (bIsStill || bIsPastSleepCap)
+	{
+		MeshComponent->PutAllRigidBodiesToSleep();
+	}
+}
+
+void ATDCombatCharacter::StopRagdollSettle()
+{
+	bIsRagdollSettling = false;
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(RagdollSettleTimerHandle);
+	}
 }
 
 FVector ATDCombatCharacter::ComputeKillVelocity(const FTDDamageResult& Result) const

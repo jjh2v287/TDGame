@@ -299,3 +299,11 @@
 - 증거: `Saved/AgentOps/20261018/fluidfx/flamemat-run1.log`·`flamemat-run2.log`(실패), `flamemat-run3.log`(성공)
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-editor-37 파이썬으로 물리 에셋 바디를 읽으면 `skeletal_body_setups`가 비고, 자기 충돌 응답 속성 이름은 `collision_reponse`(엔진 오타)다
+- 증상: `physics_asset.get_editor_property("skeletal_body_setups")`가 실패해 모든 물리 에셋이 "bodies 0", `unreal.SkeletalBodySetup`은 `module 'unreal' has no attribute`, `get_editor_property("collision_response")`는 `Failed to find property`. 관절 `get_disable_collision`도 없음
+- 해결: 바디는 `[o for o in unreal.ObjectIterator(unreal.BodySetup) if o.get_outer() == physics_asset]`(형식은 BodySetup으로 보임), 자기 충돌은 `collision_reponse`, 관절은 `physics_asset.get_constraints(False)` + `unreal.ConstraintInstanceBlueprintLibrary`(`get_angular_limits`·`get_disable_collsion` 오타, 반환 튜플 첫 원소는 접근자). 주의: `collision_reponse=BODY_COLLISION_DISABLED`는 같은 에셋끼리만이 아니라 바닥까지 충돌을 꺼 래그돌이 떨어진다. 바디 쌍만 끄는 표(CollisionDisableTable)는 파이썬 비노출
+- 범위: UE 5.8 PythonScriptPlugin, PhysicsAsset·BodySetup·ConstraintInstance 읽기·메모리 재정의(`Tools/MonsterAI/editor_audit_ragdoll_physics.py`)
+- 증거: 2026-10-19 `Saved/AgentOps/20261018/ragdoll-jitter/physics-audit.json`, 무효 실험 `Docs/MonsterAI_CombatSim/measurements/M3-38/exp5-selfcol-off-assist/report.json`(RMS 650~999cm = 낙하)
+- 날짜·상태: 2026-10-19 active
+- 발견: claude

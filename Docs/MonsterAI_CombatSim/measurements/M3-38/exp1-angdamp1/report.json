@@ -1,0 +1,1115 @@
+{
+ "label": "exp1-angdamp1",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 350.0,
+ "kill_fraction": 0.25,
+ "count": 1,
+ "experiment": {
+  "body": {
+   "angular_damping": 1.0
+  },
+  "self_collision_off": false,
+  "assist": null
+ },
+ "window": {
+  "land_speed_cm_s": 60.0,
+  "delay_seconds": 0.5,
+  "length_seconds": 2.5
+ },
+ "target": {
+  "position_rms_cm": 0.5,
+  "sleep_seconds": 3.0
+ },
+ "results": [
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Goblin",
+   "physics_asset": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_PhysicsAsset.SK_Goblin_PhysicsAsset",
+   "body_count": 12,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_02": 1.0,
+    "spine_04": 1.0,
+    "upperarm_l": 1.0,
+    "hand_l": 1.0,
+    "head": 1.0,
+    "upperarm_r": 1.0,
+    "hand_r": 1.0,
+    "cc_base_l_calftwist01": 1.0,
+    "cc_base_l_thightwist01": 1.0,
+    "cc_base_r_thightwist01": 1.0,
+    "calf_r": 1.0
+   },
+   "frames": 366,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.6235,
+   "launch_speed_cm_s": 1129.4,
+   "land_seconds": 0.8663,
+   "sink_seconds": 3.6839,
+   "window_seconds": [
+    1.3663,
+    3.6839
+   ],
+   "observed_seconds": 5.3625,
+   "sleep_seconds": null,
+   "fps": 61.0,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 0.5543,
+    "step_rms_cm": 0.0706,
+    "high_frequency_rms_cm": 0.011
+   },
+   "physics": {
+    "position_rms_cm": 0.5354,
+    "step_rms_cm": 0.0638,
+    "high_frequency_rms_cm": 0.0093
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "hand_r",
+     1.066
+    ],
+    [
+     "head",
+     0.9328
+    ],
+    [
+     "upperarm_l",
+     0.8785
+    ],
+    [
+     "hand_l",
+     0.7659
+    ]
+   ],
+   "component_step_rms_cm": 0.0289,
+   "max_angular_deg_s": 198.57,
+   "max_linear_cm_s": 23.86,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Goblin-1",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_StoneGolem",
+   "physics_asset": "/Game/Stone_Golem/mesh/PA_Stone_Golem_PhysicsAsset.PA_Stone_Golem_PhysicsAsset",
+   "body_count": 16,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_01": 1.0,
+    "spine_02": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "head": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "foot_l": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "foot_r": 1.0
+   },
+   "frames": 430,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5886,
+   "launch_speed_cm_s": 1853.5,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4332,
+   "sleep_seconds": null,
+   "fps": 61.1,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 12.2202,
+    "step_rms_cm": 0.8768,
+    "high_frequency_rms_cm": 0.0743
+   },
+   "physics": {
+    "position_rms_cm": 12.2884,
+    "step_rms_cm": 0.8599,
+    "high_frequency_rms_cm": 0.0672
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "lowerarm_r",
+     18.5326
+    ],
+    [
+     "hand_r",
+     18.4004
+    ],
+    [
+     "upperarm_r",
+     16.608
+    ],
+    [
+     "thigh_r",
+     14.1243
+    ]
+   ],
+   "component_step_rms_cm": 0.7683,
+   "max_angular_deg_s": 668.23,
+   "max_linear_cm_s": 246.51,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "StoneGolem-1",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Swordsman",
+   "physics_asset": "/Game/SwordTrailVFX/Demo/SKM_Man/PhA_Man.PhA_Man",
+   "body_count": 14,
+   "bone_mass_kg": {
+    "Hips": 1.0,
+    "Spine1": 1.0,
+    "Spine2": 1.0,
+    "Neck": 1.0,
+    "LeftArm": 1.0,
+    "LeftHand": 1.0,
+    "RightArm": 1.0,
+    "RightHand": 1.0,
+    "LeftUpLeg": 1.0,
+    "LeftLeg": 1.0,
+    "LeftFoot": 1.0,
+    "RightUpLeg": 1.0,
+    "RightLeg": 1.0,
+    "RightFoot": 1.0
+   },
+   "frames": 430,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5999,
+   "launch_speed_cm_s": 853.3,
+   "land_seconds": 1.5,
+   "sink_seconds": 5.7064,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4124,
+   "sleep_seconds": null,
+   "fps": 61.2,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 0.8153,
+    "step_rms_cm": 0.0771,
+    "high_frequency_rms_cm": 0.0124
+   },
+   "physics": {
+    "position_rms_cm": 0.6281,
+    "step_rms_cm": 0.0607,
+    "high_frequency_rms_cm": 0.0108
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "RightHand",
+     2.4193
+    ],
+    [
+     "LeftArm",
+     1.3195
+    ],
+    [
+     "RightArm",
+     0.982
+    ],
+    [
+     "Neck",
+     0.4718
+    ]
+   ],
+   "component_step_rms_cm": 0.0758,
+   "max_angular_deg_s": 257.39,
+   "max_linear_cm_s": 29.08,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Swordsman-1",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Greystone",
+   "physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_PhysicsAsset.Greystone_PhysicsAsset",
+   "body_count": 7,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_03": 1.0,
+    "hand_l": 1.0,
+    "hand_r": 1.0,
+    "head": 1.0,
+    "foot_l": 1.0,
+    "foot_r": 1.0
+   },
+   "frames": 431,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5861,
+   "launch_speed_cm_s": 889.8,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4249,
+   "sleep_seconds": null,
+   "fps": 61.3,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 1.6926,
+    "step_rms_cm": 0.0398,
+    "high_frequency_rms_cm": 0.0058
+   },
+   "physics": {
+    "position_rms_cm": 0.5286,
+    "step_rms_cm": 0.0258,
+    "high_frequency_rms_cm": 0.0054
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "foot_r",
+     4.4778
+    ],
+    [
+     "hand_l",
+     0.0407
+    ],
+    [
+     "hand_r",
+     0.0373
+    ],
+    [
+     "head",
+     0.0226
+    ]
+   ],
+   "component_step_rms_cm": 0.0174,
+   "max_angular_deg_s": 457.66,
+   "max_linear_cm_s": 9.42,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Greystone-1",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Wukong",
+   "physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Extents.Wukong_Extents",
+   "body_count": 11,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "hand_l": 1.0,
+    "hand_r": 1.0,
+    "weapon_r": 1.0,
+    "weapon_B_r": 1.0,
+    "weapon_C_r": 1.0,
+    "weapon_D_r": 1.0,
+    "head": 1.0,
+    "tail_03": 1.0,
+    "foot_l": 1.0,
+    "foot_r": 1.0
+   },
+   "frames": 429,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.6037,
+   "launch_speed_cm_s": 792.3,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.3973,
+   "sleep_seconds": null,
+   "fps": 61.1,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 1.794,
+    "step_rms_cm": 0.1632,
+    "high_frequency_rms_cm": 0.0201
+   },
+   "physics": {
+    "position_rms_cm": 2.7818,
+    "step_rms_cm": 0.1747,
+    "high_frequency_rms_cm": 0.0218
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "foot_r",
+     5.2636
+    ],
+    [
+     "foot_l",
+     1.7017
+    ],
+    [
+     "weapon_D_r",
+     0.894
+    ],
+    [
+     "hand_r",
+     0.8598
+    ]
+   ],
+   "component_step_rms_cm": 0.1086,
+   "max_angular_deg_s": 533.53,
+   "max_linear_cm_s": 60.31,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Wukong-1",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Hyena",
+   "physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+   "body_count": 19,
+   "bone_mass_kg": {
+    "bip01_pelvis": 1.0,
+    "bip01_spine": 1.0,
+    "bip01_spine1": 1.0,
+    "bip01_spine2": 1.0,
+    "bip01_neck": 1.0,
+    "bip01_neck1": 1.0,
+    "bip01_head": 1.0,
+    "bip01_l_upperarm": 1.0,
+    "bip01_l_hand": 1.0,
+    "bip01_r_upperarm": 1.0,
+    "bip01_r_hand": 1.0,
+    "bip01_l_thigh": 1.0,
+    "bip01_l_calf": 1.0,
+    "bip01_l_foot": 1.0,
+    "bip01_r_thigh": 1.0,
+    "bip01_r_calf": 1.0,
+    "bip01_r_foot": 1.0,
+    "bone02": 1.0,
+    "bone03": 1.0
+   },
+   "frames": 369,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 1.756,
+   "launch_speed_cm_s": 881.0,
+   "land_seconds": 0.6935,
+   "sink_seconds": 2.5526,
+   "window_seconds": [
+    1.1935,
+    2.5526
+   ],
+   "observed_seconds": 4.2394,
+   "sleep_seconds": null,
+   "fps": 61.4,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 0.163,
+    "step_rms_cm": 0.0416,
+    "high_frequency_rms_cm": 0.0126
+   },
+   "physics": {
+    "position_rms_cm": 0.7658,
+    "step_rms_cm": 0.0933,
+    "high_frequency_rms_cm": 0.0146
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "bip01_r_foot",
+     0.3317
+    ],
+    [
+     "bone03",
+     0.2825
+    ],
+    [
+     "bip01_head",
+     0.2738
+    ],
+    [
+     "bip01_l_hand",
+     0.2601
+    ]
+   ],
+   "component_step_rms_cm": 0.0671,
+   "max_angular_deg_s": 395.54,
+   "max_linear_cm_s": 59.49,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Hyena-1",
+   "kind": "monster",
+   "forced_ragdoll": true,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Griffon",
+   "physics_asset": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Physics.SK_Griffon_Physics",
+   "body_count": 46,
+   "bone_mass_kg": {
+    "root": 1.0,
+    "GRIFFON_-Pelvis": 1.0,
+    "GRIFFON_-Spine": 1.0,
+    "GRIFFON_-Spine1": 1.0,
+    "GRIFFON_-Spine2": 1.0,
+    "GRIFFON_-Neck": 1.0,
+    "GRIFFON_-Neck1": 1.0,
+    "GRIFFON_-Neck2": 1.0,
+    "GRIFFON_-Head": 1.0,
+    "GRIFFON_WingUpperArm_R": 1.0,
+    "GRIFFON_WingLowerArm_R": 1.0,
+    "GRIFFON_WingHand_R": 1.0,
+    "GRIFFON_WingUpperArm_L": 1.0,
+    "GRIFFON_WingLowerArm_L": 1.0,
+    "GRIFFON_WingHand_L": 1.0,
+    "GRIFFON_-L-UpperArm": 1.0,
+    "GRIFFON_-L-Forearm": 1.0,
+    "GRIFFON_-L-Hand": 1.0,
+    "GRIFFON_-L-Finger0": 1.0,
+    "GRIFFON_-L-Finger1": 1.0,
+    "GRIFFON_-L-Finger2": 1.0,
+    "GRIFFON_-L-Finger3": 1.0,
+    "GRIFFON_-R-UpperArm": 1.0,
+    "GRIFFON_-R-Forearm": 1.0,
+    "GRIFFON_-R-Hand": 1.0,
+    "GRIFFON_-R-Finger0": 1.0,
+    "GRIFFON_-R-Finger1": 1.0,
+    "GRIFFON_-R-Finger2": 1.0,
+    "GRIFFON_-R-Finger3": 1.0,
+    "GRIFFON_-L-Thigh": 1.0,
+    "GRIFFON_-L-Calf": 1.0,
+    "GRIFFON_-L-HorseLink": 1.0,
+    "GRIFFON_-L-Foot": 1.0,
+    "GRIFFON_-R-Thigh": 1.0,
+    "GRIFFON_-R-Calf": 1.0,
+    "GRIFFON_-R-HorseLink": 1.0,
+    "GRIFFON_-R-Foot": 1.0,
+    "GRIFFON_-Tail": 1.0,
+    "GRIFFON_-Tail1": 1.0,
+    "GRIFFON_-Tail2": 1.0,
+    "GRIFFON_-Tail3": 1.0,
+    "GRIFFON_-Tail4": 1.0,
+    "GRIFFON_-Tail5": 1.0,
+    "GRIFFON_-Tail6": 1.0,
+    "GRIFFON_-Tail7": 1.0,
+    "GRIFFON_-Tail8": 1.0
+   },
+   "frames": 443,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 3.0847,
+   "launch_speed_cm_s": 2453.8,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 3.9337,
+   "sleep_seconds": null,
+   "fps": 63.0,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 3.9954,
+    "step_rms_cm": 0.4005,
+    "high_frequency_rms_cm": 0.0777
+   },
+   "physics": {
+    "position_rms_cm": 4.2168,
+    "step_rms_cm": 0.3964,
+    "high_frequency_rms_cm": 0.0728
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "GRIFFON_WingLowerArm_R",
+     11.8933
+    ],
+    [
+     "GRIFFON_WingHand_R",
+     9.1053
+    ],
+    [
+     "GRIFFON_WingLowerArm_L",
+     6.3127
+    ],
+    [
+     "GRIFFON_WingUpperArm_R",
+     5.6934
+    ]
+   ],
+   "component_step_rms_cm": 0.4609,
+   "max_angular_deg_s": 722.99,
+   "max_linear_cm_s": 148.99,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Griffon-1",
+   "kind": "monster",
+   "forced_ragdoll": true,
+   "shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Goblin",
+   "physics_asset": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_PhysicsAsset.SK_Goblin_PhysicsAsset",
+   "body_count": 12,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_02": 1.0,
+    "spine_04": 1.0,
+    "upperarm_l": 1.0,
+    "hand_l": 1.0,
+    "head": 1.0,
+    "upperarm_r": 1.0,
+    "hand_r": 1.0,
+    "cc_base_l_calftwist01": 1.0,
+    "cc_base_l_thightwist01": 1.0,
+    "cc_base_r_thightwist01": 1.0,
+    "calf_r": 1.0
+   },
+   "frames": 383,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.578,
+   "launch_speed_cm_s": 869.6,
+   "land_seconds": 0.7934,
+   "sink_seconds": 3.7273,
+   "window_seconds": [
+    1.2934,
+    3.7273
+   ],
+   "observed_seconds": 5.4073,
+   "sleep_seconds": null,
+   "fps": 63.8,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 0.0916,
+    "step_rms_cm": 0.0215,
+    "high_frequency_rms_cm": 0.0054
+   },
+   "physics": {
+    "position_rms_cm": 0.326,
+    "step_rms_cm": 0.033,
+    "high_frequency_rms_cm": 0.0076
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "calf_r",
+     0.1953
+    ],
+    [
+     "cc_base_r_thightwist01",
+     0.1211
+    ],
+    [
+     "pelvis",
+     0.0961
+    ],
+    [
+     "hand_l",
+     0.093
+    ]
+   ],
+   "component_step_rms_cm": 0.0317,
+   "max_angular_deg_s": 304.0,
+   "max_linear_cm_s": 34.56,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Goblin-2",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_StoneGolem",
+   "physics_asset": "/Game/Stone_Golem/mesh/PA_Stone_Golem_PhysicsAsset.PA_Stone_Golem_PhysicsAsset",
+   "body_count": 16,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_01": 1.0,
+    "spine_02": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "head": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "foot_l": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "foot_r": 1.0
+   },
+   "frames": 444,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5795,
+   "launch_speed_cm_s": 1915.0,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4324,
+   "sleep_seconds": 3.7275,
+   "fps": 63.2,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 2.3642,
+    "step_rms_cm": 0.2078,
+    "high_frequency_rms_cm": 0.0284
+   },
+   "physics": {
+    "position_rms_cm": 3.7818,
+    "step_rms_cm": 0.2589,
+    "high_frequency_rms_cm": 0.0292
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "hand_l",
+     6.691
+    ],
+    [
+     "lowerarm_l",
+     5.8031
+    ],
+    [
+     "upperarm_l",
+     2.3096
+    ],
+    [
+     "head",
+     1.1697
+    ]
+   ],
+   "component_step_rms_cm": 0.1886,
+   "max_angular_deg_s": 280.49,
+   "max_linear_cm_s": 130.58,
+   "awake_fraction": 0.688,
+   "meets_target": false,
+   "target": "StoneGolem-2",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Swordsman",
+   "physics_asset": "/Game/SwordTrailVFX/Demo/SKM_Man/PhA_Man.PhA_Man",
+   "body_count": 14,
+   "bone_mass_kg": {
+    "Hips": 1.0,
+    "Spine1": 1.0,
+    "Spine2": 1.0,
+    "Neck": 1.0,
+    "LeftArm": 1.0,
+    "LeftHand": 1.0,
+    "RightArm": 1.0,
+    "RightHand": 1.0,
+    "LeftUpLeg": 1.0,
+    "LeftLeg": 1.0,
+    "LeftFoot": 1.0,
+    "RightUpLeg": 1.0,
+    "RightLeg": 1.0,
+    "RightFoot": 1.0
+   },
+   "frames": 438,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.591,
+   "launch_speed_cm_s": 1316.9,
+   "land_seconds": 1.4771,
+   "sink_seconds": 5.7099,
+   "window_seconds": [
+    1.9771,
+    4.4771
+   ],
+   "observed_seconds": 6.4114,
+   "sleep_seconds": 4.6913,
+   "fps": 62.4,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 0.3741,
+    "step_rms_cm": 0.0415,
+    "high_frequency_rms_cm": 0.0076
+   },
+   "physics": {
+    "position_rms_cm": 0.3085,
+    "step_rms_cm": 0.0386,
+    "high_frequency_rms_cm": 0.0066
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "Spine1",
+     0.7177
+    ],
+    [
+     "LeftHand",
+     0.6177
+    ],
+    [
+     "RightUpLeg",
+     0.5136
+    ],
+    [
+     "LeftArm",
+     0.4187
+    ]
+   ],
+   "component_step_rms_cm": 0.1043,
+   "max_angular_deg_s": 295.21,
+   "max_linear_cm_s": 37.52,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Swordsman-2",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Greystone",
+   "physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone_PhysicsAsset.Greystone_PhysicsAsset",
+   "body_count": 7,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_03": 1.0,
+    "hand_l": 1.0,
+    "hand_r": 1.0,
+    "head": 1.0,
+    "foot_l": 1.0,
+    "foot_r": 1.0
+   },
+   "frames": 433,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5781,
+   "launch_speed_cm_s": 907.5,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4307,
+   "sleep_seconds": null,
+   "fps": 61.6,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 3.9317,
+    "step_rms_cm": 0.1045,
+    "high_frequency_rms_cm": 0.0138
+   },
+   "physics": {
+    "position_rms_cm": 1.5992,
+    "step_rms_cm": 0.1063,
+    "high_frequency_rms_cm": 0.0138
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "foot_l",
+     10.395
+    ],
+    [
+     "foot_r",
+     0.3776
+    ],
+    [
+     "hand_l",
+     0.0661
+    ],
+    [
+     "hand_r",
+     0.0552
+    ]
+   ],
+   "component_step_rms_cm": 0.0486,
+   "max_angular_deg_s": 372.29,
+   "max_linear_cm_s": 32.94,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Greystone-2",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Wukong",
+   "physics_asset": "/Game/SlashTrail_SoftTofu/DemoRoom/ParagonSunWukong/Characters/Heroes/Wukong/Meshes/Wukong_Extents.Wukong_Extents",
+   "body_count": 11,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "hand_l": 1.0,
+    "hand_r": 1.0,
+    "weapon_r": 1.0,
+    "weapon_B_r": 1.0,
+    "weapon_C_r": 1.0,
+    "weapon_D_r": 1.0,
+    "head": 1.0,
+    "tail_03": 1.0,
+    "foot_l": 1.0,
+    "foot_r": 1.0
+   },
+   "frames": 439,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5899,
+   "launch_speed_cm_s": 807.3,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4141,
+   "sleep_seconds": null,
+   "fps": 62.5,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 9.6979,
+    "step_rms_cm": 0.3221,
+    "high_frequency_rms_cm": 0.0404
+   },
+   "physics": {
+    "position_rms_cm": 9.1716,
+    "step_rms_cm": 0.2924,
+    "high_frequency_rms_cm": 0.0353
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "head",
+     13.0406
+    ],
+    [
+     "foot_l",
+     12.3814
+    ],
+    [
+     "foot_r",
+     11.7512
+    ],
+    [
+     "hand_r",
+     10.3944
+    ]
+   ],
+   "component_step_rms_cm": 0.3002,
+   "max_angular_deg_s": 1406.74,
+   "max_linear_cm_s": 64.77,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Wukong-2",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Hyena",
+   "physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+   "body_count": 19,
+   "bone_mass_kg": {
+    "bip01_pelvis": 1.0,
+    "bip01_spine": 1.0,
+    "bip01_spine1": 1.0,
+    "bip01_spine2": 1.0,
+    "bip01_neck": 1.0,
+    "bip01_neck1": 1.0,
+    "bip01_head": 1.0,
+    "bip01_l_upperarm": 1.0,
+    "bip01_l_hand": 1.0,
+    "bip01_r_upperarm": 1.0,
+    "bip01_r_hand": 1.0,
+    "bip01_l_thigh": 1.0,
+    "bip01_l_calf": 1.0,
+    "bip01_l_foot": 1.0,
+    "bip01_r_thigh": 1.0,
+    "bip01_r_calf": 1.0,
+    "bip01_r_foot": 1.0,
+    "bone02": 1.0,
+    "bone03": 1.0
+   },
+   "frames": 380,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 1.7519,
+   "launch_speed_cm_s": 1262.4,
+   "land_seconds": 0.7457,
+   "sink_seconds": 2.55,
+   "window_seconds": [
+    1.2457,
+    2.55
+   ],
+   "observed_seconds": 4.2481,
+   "sleep_seconds": null,
+   "fps": 63.2,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 3.6885,
+    "step_rms_cm": 0.2396,
+    "high_frequency_rms_cm": 0.0333
+   },
+   "physics": {
+    "position_rms_cm": 4.1326,
+    "step_rms_cm": 0.2368,
+    "high_frequency_rms_cm": 0.0315
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "bip01_head",
+     8.209
+    ],
+    [
+     "bip01_neck1",
+     6.7683
+    ],
+    [
+     "bip01_l_upperarm",
+     4.8473
+    ],
+    [
+     "bip01_neck",
+     4.152
+    ]
+   ],
+   "component_step_rms_cm": 0.3431,
+   "max_angular_deg_s": 272.9,
+   "max_linear_cm_s": 76.81,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Hyena-2",
+   "kind": "monster",
+   "forced_ragdoll": true,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Griffon",
+   "physics_asset": "/Game/QuadrapedCreatures/Griffon/Meshes/SK_Griffon_Physics.SK_Griffon_Physics",
+   "body_count": 46,
+   "bone_mass_kg": {
+    "root": 1.0,
+    "GRIFFON_-Pelvis": 1.0,
+    "GRIFFON_-Spine": 1.0,
+    "GRIFFON_-Spine1": 1.0,
+    "GRIFFON_-Spine2": 1.0,
+    "GRIFFON_-Neck": 1.0,
+    "GRIFFON_-Neck1": 1.0,
+    "GRIFFON_-Neck2": 1.0,
+    "GRIFFON_-Head": 1.0,
+    "GRIFFON_WingUpperArm_R": 1.0,
+    "GRIFFON_WingLowerArm_R": 1.0,
+    "GRIFFON_WingHand_R": 1.0,
+    "GRIFFON_WingUpperArm_L": 1.0,
+    "GRIFFON_WingLowerArm_L": 1.0,
+    "GRIFFON_WingHand_L": 1.0,
+    "GRIFFON_-L-UpperArm": 1.0,
+    "GRIFFON_-L-Forearm": 1.0,
+    "GRIFFON_-L-Hand": 1.0,
+    "GRIFFON_-L-Finger0": 1.0,
+    "GRIFFON_-L-Finger1": 1.0,
+    "GRIFFON_-L-Finger2": 1.0,
+    "GRIFFON_-L-Finger3": 1.0,
+    "GRIFFON_-R-UpperArm": 1.0,
+    "GRIFFON_-R-Forearm": 1.0,
+    "GRIFFON_-R-Hand": 1.0,
+    "GRIFFON_-R-Finger0": 1.0,
+    "GRIFFON_-R-Finger1": 1.0,
+    "GRIFFON_-R-Finger2": 1.0,
+    "GRIFFON_-R-Finger3": 1.0,
+    "GRIFFON_-L-Thigh": 1.0,
+    "GRIFFON_-L-Calf": 1.0,
+    "GRIFFON_-L-HorseLink": 1.0,
+    "GRIFFON_-L-Foot": 1.0,
+    "GRIFFON_-R-Thigh": 1.0,
+    "GRIFFON_-R-Calf": 1.0,
+    "GRIFFON_-R-HorseLink": 1.0,
+    "GRIFFON_-R-Foot": 1.0,
+    "GRIFFON_-Tail": 1.0,
+    "GRIFFON_-Tail1": 1.0,
+    "GRIFFON_-Tail2": 1.0,
+    "GRIFFON_-Tail3": 1.0,
+    "GRIFFON_-Tail4": 1.0,
+    "GRIFFON_-Tail5": 1.0,
+    "GRIFFON_-Tail6": 1.0,
+    "GRIFFON_-Tail7": 1.0,
+    "GRIFFON_-Tail8": 1.0
+   },
+   "frames": 431,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 3.0746,
+   "launch_speed_cm_s": 1953.7,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 3.9307,
+   "sleep_seconds": null,
+   "fps": 61.4,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "render": {
+    "position_rms_cm": 1.9522,
+    "step_rms_cm": 0.3831,
+    "high_frequency_rms_cm": 0.0964
+   },
+   "physics": {
+    "position_rms_cm": 1.8993,
+    "step_rms_cm": 0.3553,
+    "high_frequency_rms_cm": 0.0858
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "GRIFFON_WingLowerArm_R",
+     3.5751
+    ],
+    [
+     "GRIFFON_WingLowerArm_L",
+     3.0994
+    ],
+    [
+     "GRIFFON_-R-Finger2",
+     2.6041
+    ],
+    [
+     "GRIFFON_-R-Hand",
+     2.5887
+    ]
+   ],
+   "component_step_rms_cm": 0.2107,
+   "max_angular_deg_s": 714.17,
+   "max_linear_cm_s": 138.24,
+   "awake_fraction": 1.0,
+   "meets_target": false,
+   "target": "Griffon-2",
+   "kind": "monster",
+   "forced_ragdoll": true,
+   "shots": []
+  }
+ ]
+}

@@ -1,0 +1,335 @@
+{
+ "label": "exp7-golem-generated-pa",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 350.0,
+ "kill_fraction": 0.25,
+ "count": 1,
+ "experiment": {
+  "body": {
+   "angular_damping": 1.0
+  },
+  "self_collision_off": false,
+  "assist": {
+   "min_seconds": 1.0,
+   "speed_cm_s": 15.0,
+   "hold_seconds": 0.3
+  }
+ },
+ "window": {
+  "land_speed_cm_s": 60.0,
+  "delay_seconds": 0.5,
+  "length_seconds": 2.5
+ },
+ "target": {
+  "position_rms_cm": 0.5,
+  "sleep_seconds": 3.0
+ },
+ "results": [
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_StoneGolem",
+   "physics_asset": "/Game/Stone_Golem/mesh/SKM_Stone_Golem_PhysicsAsset.SKM_Stone_Golem_PhysicsAsset",
+   "body_count": 42,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_01": 1.0,
+    "spine_02": 1.0,
+    "spine_03": 1.0,
+    "clavicle_l": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "index_01_l": 1.0,
+    "index_02_l": 1.0,
+    "middle_01_l": 1.0,
+    "middle_02_l": 1.0,
+    "ring_01_l": 1.0,
+    "ring_02_l": 1.0,
+    "thumb_01_l": 1.0,
+    "thumb_02_l": 1.0,
+    "clavicle_r": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "index_01_r": 1.0,
+    "index_02_r": 1.0,
+    "middle_01_r": 1.0,
+    "middle_02_r": 1.0,
+    "ring_01_r": 1.0,
+    "ring_02_r": 1.0,
+    "thumb_01_r": 1.0,
+    "thumb_02_r": 1.0,
+    "neck_01": 1.0,
+    "head": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "calf_twist_01_l": 1.0,
+    "foot_l": 1.0,
+    "ball_l": 1.0,
+    "thigh_twist_01_l": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "calf_twist_01_r": 1.0,
+    "foot_r": 1.0,
+    "ball_r": 1.0,
+    "thigh_twist_01_r": 1.0
+   },
+   "frames": 442,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5769,
+   "launch_speed_cm_s": 789.4,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4274,
+   "sleep_seconds": 1.6964,
+   "fps": 63.0,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": 1.6784,
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "middle_02_r",
+     0.0
+    ],
+    [
+     "foot_l",
+     0.0
+    ],
+    [
+     "calf_twist_01_r",
+     0.0
+    ],
+    [
+     "foot_r",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "target": "StoneGolem-1",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_StoneGolem",
+   "physics_asset": "/Game/Stone_Golem/mesh/SKM_Stone_Golem_PhysicsAsset.SKM_Stone_Golem_PhysicsAsset",
+   "body_count": 42,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_01": 1.0,
+    "spine_02": 1.0,
+    "spine_03": 1.0,
+    "clavicle_l": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "index_01_l": 1.0,
+    "index_02_l": 1.0,
+    "middle_01_l": 1.0,
+    "middle_02_l": 1.0,
+    "ring_01_l": 1.0,
+    "ring_02_l": 1.0,
+    "thumb_01_l": 1.0,
+    "thumb_02_l": 1.0,
+    "clavicle_r": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "index_01_r": 1.0,
+    "index_02_r": 1.0,
+    "middle_01_r": 1.0,
+    "middle_02_r": 1.0,
+    "ring_01_r": 1.0,
+    "ring_02_r": 1.0,
+    "thumb_01_r": 1.0,
+    "thumb_02_r": 1.0,
+    "neck_01": 1.0,
+    "head": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "calf_twist_01_l": 1.0,
+    "foot_l": 1.0,
+    "ball_l": 1.0,
+    "thigh_twist_01_l": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "calf_twist_01_r": 1.0,
+    "foot_r": 1.0,
+    "ball_r": 1.0,
+    "thigh_twist_01_r": 1.0
+   },
+   "frames": 438,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5821,
+   "launch_speed_cm_s": 723.9,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.427,
+   "sleep_seconds": 1.8947,
+   "fps": 62.3,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": 1.8696,
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "ring_01_r",
+     0.0
+    ],
+    [
+     "thigh_r",
+     0.0
+    ],
+    [
+     "upperarm_r",
+     0.0
+    ],
+    [
+     "lowerarm_l",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "target": "StoneGolem-2",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_StoneGolem",
+   "physics_asset": "/Game/Stone_Golem/mesh/SKM_Stone_Golem_PhysicsAsset.SKM_Stone_Golem_PhysicsAsset",
+   "body_count": 42,
+   "bone_mass_kg": {
+    "pelvis": 1.0,
+    "spine_01": 1.0,
+    "spine_02": 1.0,
+    "spine_03": 1.0,
+    "clavicle_l": 1.0,
+    "upperarm_l": 1.0,
+    "lowerarm_l": 1.0,
+    "hand_l": 1.0,
+    "index_01_l": 1.0,
+    "index_02_l": 1.0,
+    "middle_01_l": 1.0,
+    "middle_02_l": 1.0,
+    "ring_01_l": 1.0,
+    "ring_02_l": 1.0,
+    "thumb_01_l": 1.0,
+    "thumb_02_l": 1.0,
+    "clavicle_r": 1.0,
+    "upperarm_r": 1.0,
+    "lowerarm_r": 1.0,
+    "hand_r": 1.0,
+    "index_01_r": 1.0,
+    "index_02_r": 1.0,
+    "middle_01_r": 1.0,
+    "middle_02_r": 1.0,
+    "ring_01_r": 1.0,
+    "ring_02_r": 1.0,
+    "thumb_01_r": 1.0,
+    "thumb_02_r": 1.0,
+    "neck_01": 1.0,
+    "head": 1.0,
+    "thigh_l": 1.0,
+    "calf_l": 1.0,
+    "calf_twist_01_l": 1.0,
+    "foot_l": 1.0,
+    "ball_l": 1.0,
+    "thigh_twist_01_l": 1.0,
+    "thigh_r": 1.0,
+    "calf_r": 1.0,
+    "calf_twist_01_r": 1.0,
+    "foot_r": 1.0,
+    "ball_r": 1.0,
+    "thigh_twist_01_r": 1.0
+   },
+   "frames": 439,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.6002,
+   "launch_speed_cm_s": 806.0,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.401,
+   "sleep_seconds": 1.7491,
+   "fps": 62.6,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": 1.733,
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "index_01_r",
+     0.0
+    ],
+    [
+     "index_02_r",
+     0.0
+    ],
+    [
+     "middle_01_l",
+     0.0
+    ],
+    [
+     "ring_01_l",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "target": "StoneGolem-3",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  }
+ ]
+}

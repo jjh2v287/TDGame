@@ -157,7 +157,7 @@ private:
 	void AssignInnerSectors(FTDTargetTacticsRecord& Record, const FVector& TargetLocation);
 	void RunTokenPass(bool bIsPeriodic);
 	void GrantPoolTokens(FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation);
-	void InterceptForRetaliation(const FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation, TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates);
+	void InterceptForRetaliation(FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation, TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates);
 	int32 FindRetaliationVictim(const FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation, int64 CandidateDistanceSquared) const;
 	void GrantTacticsToken(int32 SlotIndex, uint32 RecordId);
 	void RemoveFinishedTacticsRecords();

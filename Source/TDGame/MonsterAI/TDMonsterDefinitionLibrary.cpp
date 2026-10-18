@@ -30,11 +30,11 @@ namespace
 	constexpr float DefaultSwitchRatio = 1.15f;
 	constexpr float DefaultMinHoldSeconds = 0.4f;
 
-	const TArray<FString> TopLevelKeys = { TEXT("schema"), TEXT("id"), TEXT("kind"), TEXT("extends"), TEXT("stats"), TEXT("think_hz"), TEXT("lod_periods"), TEXT("inertia"), TEXT("select"), TEXT("top_n"), TEXT("abilities"), TEXT("sequences"), TEXT("actions"), TEXT("phases"), TEXT("persona") };
+	const TArray<FString> TopLevelKeys = { TEXT("schema"), TEXT("id"), TEXT("kind"), TEXT("role"), TEXT("boss"), TEXT("extends"), TEXT("stats"), TEXT("think_hz"), TEXT("lod_periods"), TEXT("inertia"), TEXT("select"), TEXT("top_n"), TEXT("abilities"), TEXT("sequences"), TEXT("actions"), TEXT("phases"), TEXT("persona") };
 	const TArray<FString> StatKeys = { TEXT("max_health"), TEXT("attack_power"), TEXT("armor"), TEXT("move_speed"), TEXT("team") };
 	const TArray<FString> PhaseStatKeys = { TEXT("max_health"), TEXT("attack_power"), TEXT("armor"), TEXT("move_speed") };
 	const TArray<FString> InertiaKeys = { TEXT("switch_ratio"), TEXT("min_hold_seconds") };
-	const TArray<FString> AbilityKeys = { TEXT("spell"), TEXT("range"), TEXT("cooldown"), TEXT("timetable") };
+	const TArray<FString> AbilityKeys = { TEXT("spell"), TEXT("range"), TEXT("cooldown"), TEXT("token_cost"), TEXT("timetable") };
 	const TArray<FString> StepKeys = { TEXT("do"), TEXT("args") };
 	const TArray<FString> ActionKeys = { TEXT("id"), TEXT("do"), TEXT("args"), TEXT("weight"), TEXT("cooldown"), TEXT("considerations"), TEXT("remove") };
 	const TArray<FString> RemoveKeys = { TEXT("id"), TEXT("remove") };
@@ -42,6 +42,7 @@ namespace
 	const TArray<FString> PhaseKeys = { TEXT("id"), TEXT("enter_when"), TEXT("on_enter"), TEXT("stats"), TEXT("actions") };
 	const TArray<FString> EnterWhenKeys = { TEXT("input"), TEXT("args"), TEXT("op"), TEXT("value") };
 	const TArray<FString> TargetNames = { TEXT("Player"), TEXT("NearestEnemy") };
+	const TArray<FString> CombatRoleNames = { TEXT("Melee"), TEXT("Ranged") };
 	const TArray<FString> KeyMergedObjects = { TEXT("stats"), TEXT("abilities"), TEXT("sequences"), TEXT("persona"), TEXT("inertia"), TEXT("lod_periods") };
 
 	int32 ComputeEditDistance(const FString& Left, const FString& Right)
@@ -345,6 +346,7 @@ namespace
 
 			ResolveHeader(*Definition, Root);
 			ResolveStats(*Definition, Root);
+			ResolveTacticsKeys(*Definition, Root);
 			ResolveAbilities(*Definition, Root);
 			ResolveSequences(*Definition, Root);
 
@@ -448,6 +450,42 @@ namespace
 			}
 		}
 
+		void ResolveTacticsKeys(FTDResolvedMonsterDefinition& Definition, const TSharedPtr<FJsonObject>& Root)
+		{
+			const TSharedPtr<FJsonValue> RoleValue = Root->TryGetField(TEXT("role"));
+			if (RoleValue.IsValid() && RoleValue->Type != EJson::String)
+			{
+				Reader.Error(TEXT("role"), TEXT("expected Melee or Ranged"));
+			}
+			else if (RoleValue.IsValid())
+			{
+				const FString RoleName = RoleValue->AsString();
+				if (RoleName == TEXT("Melee"))
+				{
+					Definition.CombatRole = ETDMonsterCombatRole::Melee;
+				}
+				else if (RoleName == TEXT("Ranged"))
+				{
+					Definition.CombatRole = ETDMonsterCombatRole::Ranged;
+				}
+				else
+				{
+					Reader.Error(TEXT("role"), FString::Printf(TEXT("unknown role '%s'%s, use Melee or Ranged (a boss sets \"boss\": true)"), *RoleName, *MakeSuggestion(RoleName, CombatRoleNames)));
+				}
+			}
+			const TSharedPtr<FJsonValue> BossValue = Root->TryGetField(TEXT("boss"));
+			if (!BossValue.IsValid())
+			{
+				return;
+			}
+			if (BossValue->Type != EJson::Boolean)
+			{
+				Reader.Error(TEXT("boss"), TEXT("expected true or false"));
+				return;
+			}
+			Definition.bIsBoss = BossValue->AsBool();
+		}
+
 		void ResolveAbilities(FTDResolvedMonsterDefinition& Definition, const TSharedPtr<FJsonObject>& Root)
 		{
 			const TSharedPtr<FJsonObject> Abilities = Reader.ReadOptionalObject(Root, TEXT("abilities"), FString());
@@ -481,6 +519,20 @@ namespace
 				float CooldownSeconds = 0.f;
 				Reader.ReadRequiredNumber(*AbilityObject, TEXT("cooldown"), Path, CooldownSeconds);
 				Ability.CooldownSteps = TDMonsterAI::SecondsToSteps(CooldownSeconds);
+				float TokenCost = 1.f;
+				if (Reader.ReadOptionalNumber(*AbilityObject, TEXT("token_cost"), Path, TokenCost))
+				{
+					const float CostQuarters = TokenCost * TDMonsterAI::QuartersPerToken;
+					const int32 RoundedQuarters = FMath::RoundToInt(CostQuarters);
+					if (RoundedQuarters < 1 || RoundedQuarters > TDMonsterAI::QuartersPerToken || !FMath::IsNearlyEqual(CostQuarters, static_cast<float>(RoundedQuarters)))
+					{
+						Reader.Error(JoinPath(Path, TEXT("token_cost")), TEXT("must be 0.25, 0.5, 0.75 or 1 (quarter tokens)"));
+					}
+					else
+					{
+						Ability.TokenCostQuarters = RoundedQuarters;
+					}
+				}
 				if (Ability.Range <= 0.f)
 				{
 					Reader.Error(JoinPath(Path, TEXT("range")), TEXT("must be > 0"));

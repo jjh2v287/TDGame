@@ -30,7 +30,7 @@
 | `PJThirdPersonPlayerController`, `PJThirdPersonGameMode` | `ATDThirdPersonPlayerController`, `ATDThirdPersonGameMode` | `Framework/ThirdPerson/` | 입력 에셋을 C++에서 생성. 삭제 2026-09-30(M3-16) |
 | `PJBreakableActor` | `ATDBreakableActor` | `Actors/TDBreakableActor.*` | Chaos 모듈 3종 추가 |
 | `PJCaravanActor` | `ATDCaravanActor` | `Actors/TDCaravanActor.*` | 콜리전 프로파일 `Caravan` 대신 `Pawn` |
-| `PJCombatTokenManager`, `PJBTTask_CombatTokenRequestAndRelease` | `UTDCombatTokenSubsystem`, `UTDBTTask_CombatTokenRequestAndRelease` | `AI/CombatToken/` | BT 태스크는 컴파일용(TD AI는 C++ 유틸리티+FSM이며 StateTree는 쓰지 않는다, D44·AGENTS.md 13절) |
+| `PJCombatTokenManager`, `PJBTTask_CombatTokenRequestAndRelease` | `UTDCombatTokenSubsystem`, `UTDBTTask_CombatTokenRequestAndRelease` | `AI/CombatToken/` | BT 태스크는 컴파일용(TD AI는 C++ 유틸리티+FSM이며 StateTree는 쓰지 않는다, D44·AGENTS.md 13절). 삭제 2026-10-18(M3-29): 호출처 0건, 게임 인스턴스 전역 풀·월드 타이머·BT 과제가 결정론 규약(D4·D29·D30)과 맞지 않음. 대체는 `MonsterAI/TDCombatTactics.*`(대상별 가중 토큰, 종 JSON `role`·`boss`·`token_cost`)와 `ATDMonsterCharacter` 토큰 래퍼 5개 삭제 |
 | `PJNPCUpdateInterface/Manager`, `PJSignificanceComponent` | `ITDNPCUpdatable`, `UTDNPCUpdateSubsystem`, `UTDSignificanceComponent` | `AI/NPC/` | CVar `td.NPCUpdate.*` |
 | `PJBudgetTick*` 4종 | `ITDBudgetTickable`, `UTDBudgetTickParticipantComponent`, `UTDBudgetTickSubsystem`, `ATDBudgetTickTestActor` | `Performance/BudgetTick/` | CVar `td.BudgetTick.*` |
 | `PJGameSmokeTests` | `TDGame.Smoke.PortedClassesExist` | `Tests/TDPortedClassesSmokeTests.cpp` | |
@@ -53,7 +53,7 @@
 - 구르기 AnimSequence를 `ATDGameCharacter::RollAnimation`에 연결. (2026-09-30 D44로 대체: `RollMontage`는 삭제)
 - `bGrantDefaultActionAbilities`를 켜거나 `StartupAbilities`에 어빌리티 클래스를 넣는다.
 - 캐러밴 전용 콜리전 프로파일이 필요하면 `DefaultEngine.ini`에 `Caravan` 프로파일 추가.
-- BT 태스크 대신 몬스터 FSM(C++)의 행동 원시로 토큰 요청·반납을 다시 만든다. (2026-09-30 D44로 대체: StateTree는 쓰지 않는다)
+- BT 태스크 대신 몬스터 FSM(C++)의 행동 원시로 토큰 요청·반납을 다시 만든다. (2026-09-30 D44로 대체: StateTree는 쓰지 않는다) (2026-10-18 M3-14·M3-29로 완료: 토큰은 `UTDMonsterThinkSubsystem` 전술층이 배정하고 입력 `HasAttackToken`으로 읽는다)
 
 ## 4. 폴더 구조 (정리 후)
 ```
@@ -67,7 +67,7 @@ Source/TDGame/
   Combat/GAS/      어트리뷰트셋, 이펙트, 어빌리티(Abilities/)
   Combat/Skills/   액션 정의, 스타일 정의 에셋, 스킬 컴포넌트
   Combat/Tests/
-  AI/CombatToken/, AI/NPC/
+  AI/NPC/          (AI/CombatToken/은 2026-10-18 M3-29에서 삭제)
   Performance/BudgetTick/
   Actors/          부서지는 액터, 캐러밴
   World/Streaming/, World/Persistence/, World/Generation/, World/Tests/

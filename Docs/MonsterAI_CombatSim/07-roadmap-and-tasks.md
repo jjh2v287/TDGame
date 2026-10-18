@@ -670,6 +670,18 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 참조: 08 §5 박자, MD-21, `Saved/AgentOps/20261018/combat-tactics/`
 - 기록: 2026-10-18 claude — 완료(M3-14와 같은 세션·같은 검증). 긴장도 0~1000 정수: 대상 체력 폴링(centi 정수, 감소 ‰×2), 근처(1200cm) 처치 +40, 공격 시작 +8, 64스텝 무피해면 고리 주기 −40. 박자 BuildUp(≥700) → SustainPeak 256 → PeakFade(≤250 또는 256스텝) → Relax 256 → BuildUp, 배율 100/100/75/50%·기본−1 하한, 시작 간격 20/16/24/32. 자비 창·큰 피해 동결·조우 경계(연결 0명 128스텝)·개시 유예 96(2마리 이상). v1의 '근접 가산' 규칙은 PeakFade 영구 고착(시뮬 21개 장면 Relax 진입 0회)으로 삭제. 시험 DirectorCyclesUnderConstantPressure(상시 압박에서 Relax 순환·1토큰 이하 ≤ 35%)·MercyWindowOpensOnce·EncounterResetRestoresGrace 통과. 남은 것: 긴장도의 음악·HUD 연결 진입점 없음(디버그 줄 `GetTacticsDebugLines`만), 스폰 박자 레버는 월드젠 P2-11 소유(MD-21 경계), 실제 플레이 체감 미확인.
 
+### M3-29 무리 전술 역할·토큰 비용·보스 표식 JSON 이관과 구 CombatToken 삭제
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 중간(부모 세션 c7fdf4 위임, M3-14 남은 것)
+- 선행: M3-14
+- 목표: M3-14가 C++에서 추정하던 역할(참조 능력 사거리 450)·보스(페이즈 0 체력 ≥ 2000)·토큰 비용(전부 1.0)을 종 JSON 선택 키 `role`·`boss`·`abilities.<이름>.token_cost`(08 SC-03, 1/4 단위)로 옮기고, 예약은 종 최대 비용·개시 때 실제 비용으로 정산한다(08 §6-5). 호출처 0건인 구 PJGame 이식 `AI/CombatToken/`(게임 인스턴스 전역 풀·BT 과제, D4 위반)과 `ATDMonsterCharacter` 토큰 래퍼를 지운다.
+- 완료 조건: 헤드리스 `TDGame.MonsterAI.*`·`TDGame.*` 통과 수 유지(기준선 CrossingStreams) + 새 키 시험(역할·보스·비용 반영·정산·검증 오류) 통과 / NoGlobalRandom / `check_sync_loads`·`check_cook_coverage` 종료 0 / 출하 7종 동작 불변(비용 기본 1.0)
+- 산출물: `TDMonsterDefinition.h`·`TDMonsterDefinitionLibrary.cpp`·`TDCombatTactics.*`·`TDMonsterThinkSubsystem.*`·`TDMonsterBrainSlot.h`·`TDMonsterActionExecutor.cpp`, 정의 JSON 7종, 시험, 02 §5.1, `Docs/PJGame_PortMap.md`, 삭제 `AI/CombatToken/` 4파일
+- 검증: BUILD; TEST `TDGame.*` 헤드리스; NoGlobalRandom; OP-33 검사 2개
+- 참조: 08 SC-03·§6-5, 07#MD-47 ③, `research/project-squad-tokens-director.md`, `Saved/AgentOps/20261018/m329/`
+- 기록: 2026-10-18 claude — 완료. 명세(`m329/spec.md` 계약 절) → 사본 빌더 2개 병렬(코어·시험, 컴파일 없음) → 체크섬 통합(build_hold) → 첫 빌드 성공 → 반박 합격(결함 0, 시험 공백 3) → 공백 보강 → 재빌드. JSON 키: 최상위 `role`(Melee·Ranged, 생략 시 사거리 450 추정 유지)·`boss`(불리언), `abilities.<이름>.token_cost`(0.25 단위, 기본 1). C++: `ETDMonsterCombatRole`·`CombatRole`·`bIsBoss`·`FTDResolvedAbility::TokenCostQuarters`, 전술 조각 `ReserveCostQuarters`(참조 능력 최대)·`CommittedCostQuarters`(개시 능력 비용, `FTDBrainFragment::LastCastAbilityIndex`), 풀 `EngagedCostQuarters`(근접 줄서기 판정), 엄격한 우선순위 부여(앞 후보가 안 들어가면 멈춤), 보복 가로채기 비용 적합 검사. 삭제: `FTDCombatTactics::TokenCostQuarters`·`BossHealthThreshold`, `AI/CombatToken/` 4파일, `ATDMonsterCharacter` 토큰 UFUNCTION 5개·사망 시 해제 호출, 스모크 1줄. 출하 7종에 `role` 명시, Ogre_Boss `boss: true`, `token_cost`는 넣지 않음(밸런스 불변). 완료 조건 대조: ① 변경 전 기준선 `Saved/AgentOps/20261018/m329-baseline-tests.json` 240/246(실패 FluidFX.Niagara 4·Perf 1·CrossingStreams) → 변경 후 `m329-int1-tests.json` 243/248(새 시험 2 통과, 회귀 0, 실패 = 기준선 부분집합) → 보강 후 `m329-int2-tests.json` MonsterAI·Smoke 51/52(CrossingStreams) ② 새 시험 `TDGame.MonsterAI.DefinitionTacticsKeys`(정상·생략·오류 7종)·`TDGame.MonsterAI.Tactics.WeightedTokenCosts`(예약 최대·정산·접촉 무리 8명·옛 줄서기 식 판별·보복 비용 장면 2) + `RoleClassification`(체력 5000 비보스·명시 역할 우선·표식 보스)·`Validate` 보강 ③ NoGlobalRandom 통과 ④ `check_cook_coverage` 0, `check_sync_loads`는 반박자 재실행 0(통합 직후 1회는 FluidFX 세션 파일 오탐 1건, 그쪽 처리). 남은 것: 실행기 `LastCastAbilityIndex` 대입은 시험이 직접 값을 넣어 판별 안 됨(코드 한 줄), 종별 `token_cost` 실제 값(SC-03 모양 분류) 미지정, AGENTS.md 14절 폴더 목록 갱신 제안(decisions D-11), PIE 육안은 tactics-pie 세션.
+
 ### 3.6 Phase 4 — 확장(조건부)
 
 ### M4-01 자체 C++ HTN(보스·무리)
@@ -863,6 +875,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 권장: (a). 파이썬 결정론 시뮬에서 (b)는 3마리 전투 공격 시작이 기존의 30%(시간 43% 무공격), 상한 8은 시작 간격 때문에 동시 시전이 약 4에서 멈춰 만료(달려왔다 멈칫)만 157회 → 상한 5에서 43회.
 - 영향: 07#M3-14·M3-28, `MonsterAI/TDCombatTactics.h` 상수, `research/project-squad-tokens-director.md`, `measurements/squad-tactics/`
 - 결정: (대기)
+- 후속: 2026-10-18 claude M3-29 — ③의 체력 2000 임시 규칙은 삭제하고 종 JSON `boss: true`(Ogre_Boss)로 교체, 역할은 `role` 키(생략 시 사거리 450 추정), 토큰 비용은 `token_cost`(출하 7종 기본 1.0이라 ①②④⑤ 동작 불변).
 
 ---
 

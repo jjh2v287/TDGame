@@ -1,4 +1,4 @@
-{ "schema": 1, "id": "Hyena",
+{ "schema": 1, "id": "Hyena", "role": "Melee",
   "stats": { "max_health": 90, "attack_power": 6, "armor": 2, "move_speed": 560, "team": 2 },
   "think_hz": 12, "inertia": { "switch_ratio": 1.15, "min_hold_seconds": 0.3 },
   "abilities": { "Bite": { "spell": "DA_TDHyenaBite", "range": 150, "cooldown": 2.0 } },

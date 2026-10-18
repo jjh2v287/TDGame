@@ -3,7 +3,6 @@
 #include "Misc/AutomationTest.h"
 
 #include "Actors/TDCaravanActor.h"
-#include "AI/CombatToken/TDCombatTokenSubsystem.h"
 #include "Backends/MoverStandaloneLiaison.h"
 #include "Characters/TDCharacterAnimationComponent.h"
 #include "Characters/TDGameCharacter.h"
@@ -22,7 +21,6 @@ bool FTDPortedClassesSmokeTest::RunTest(const FString& Parameters)
 	TestNotNull(TEXT("Caravan actor class is registered"), ATDCaravanActor::StaticClass());
 	TestNotNull(TEXT("Budget tick subsystem class is registered"), UTDBudgetTickSubsystem::StaticClass());
 	TestNotNull(TEXT("Skill component class is registered"), UTDSkillComponent::StaticClass());
-	TestNotNull(TEXT("Combat token subsystem class is registered"), UTDCombatTokenSubsystem::StaticClass());
 
 	const ATDGameCharacter* CharacterCDO = GetDefault<ATDGameCharacter>();
 	if (!TestNotNull(TEXT("Player character default object exists"), CharacterCDO))

@@ -11,7 +11,6 @@
 #include "TDMonsterCharacter.generated.h"
 
 class ATDDamageEntity;
-class UTDCombatTokenSubsystem;
 class UTDSignificanceComponent;
 class UTDSkillComponent;
 struct FTDDamageContext;
@@ -66,21 +65,6 @@ public:
 	UFUNCTION(BlueprintPure, Category="Combat")
 	float GetDesiredAttackRange() const;
 
-	UFUNCTION(BlueprintCallable, Category="CombatToken")
-	void RegisterCombatTokenAggro();
-
-	UFUNCTION(BlueprintCallable, Category="CombatToken")
-	void UnregisterCombatTokenAggro();
-
-	UFUNCTION(BlueprintCallable, Category="CombatToken")
-	bool TryAcquireCombatToken();
-
-	UFUNCTION(BlueprintCallable, Category="CombatToken")
-	void ReleaseCombatToken();
-
-	UFUNCTION(BlueprintPure, Category="CombatToken")
-	bool HasAvailableCombatToken() const;
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -114,7 +98,6 @@ private:
 	FGameplayTag ResolveAbilityTag(FGameplayTag RequestedActionTag) const;
 	void GrantDefaultActionAbilities();
 	void HandleDeath(const FTDDamageContext& Context);
-	UTDCombatTokenSubsystem* GetCombatTokenSubsystem() const;
 	UTDMonsterThinkSubsystem* GetThinkSubsystem() const;
 	void ApplySpeciesBody();
 	void ApplySpeciesAnimation();

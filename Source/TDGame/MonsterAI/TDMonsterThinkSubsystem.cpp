@@ -65,6 +65,7 @@ namespace
 	{
 		Fragment.TokenState = ETDTacticsTokenState::None;
 		Fragment.TokenRecordId = 0;
+		Fragment.CommittedCostQuarters = 0;
 		Fragment.InnerSector = -1;
 	}
 
@@ -99,7 +100,7 @@ namespace
 	void UpdatePoolBudget(FTDTacticsPool& Pool, const int32 BaseTokens, const int32 BudgetPercent, const bool bIsPeriodic)
 	{
 		Pool.BaseTokens = BaseTokens;
-		const int32 ComputedQuarters = FTDCombatTactics::ComputePoolTokens(BaseTokens, BudgetPercent) * FTDCombatTactics::TokenCostQuarters;
+		const int32 ComputedQuarters = FTDCombatTactics::ComputePoolTokens(BaseTokens, BudgetPercent) * TDMonsterAI::QuartersPerToken;
 		if (ComputedQuarters >= Pool.BudgetQuarters)
 		{
 			Pool.BudgetQuarters = ComputedQuarters;
@@ -1250,6 +1251,7 @@ void UTDMonsterThinkSubsystem::ResetTactics()
 		Fragment.Role = Previous.Role;
 		Fragment.MeleeReachCm = Previous.MeleeReachCm;
 		Fragment.MaxReachCm = Previous.MaxReachCm;
+		Fragment.ReserveCostQuarters = Previous.ReserveCostQuarters;
 		Fragment.LastCastStartCount = Brains[SlotIndex].CastStartCount;
 	}
 	TacticsRecords.Reset();
@@ -1357,6 +1359,8 @@ void UTDMonsterThinkSubsystem::CountTacticsEngaged(FTDTargetTacticsRecord& Recor
 {
 	Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex].EngagedCount = 0;
 	Record.Pools[FTDTargetTacticsRecord::RangedPoolIndex].EngagedCount = 0;
+	Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex].EngagedCostQuarters = 0;
+	Record.Pools[FTDTargetTacticsRecord::RangedPoolIndex].EngagedCostQuarters = 0;
 	const AActor* Target = Record.Target.Get();
 	const FVector TargetLocation = Target ? Target->GetActorLocation() : FVector::ZeroVector;
 	for (const int32 SlotIndex : Record.MemberSlots)
@@ -1366,7 +1370,9 @@ void UTDMonsterThinkSubsystem::CountTacticsEngaged(FTDTargetTacticsRecord& Recor
 		{
 			continue;
 		}
-		++Record.Pools[GetTacticsPoolIndex(Role)].EngagedCount;
+		FTDTacticsPool& Pool = Record.Pools[GetTacticsPoolIndex(Role)];
+		++Pool.EngagedCount;
+		Pool.EngagedCostQuarters += Tactics[SlotIndex].ReserveCostQuarters;
 	}
 	if (!Record.MemberSlots.IsEmpty())
 	{
@@ -1416,6 +1422,7 @@ bool UTDMonsterThinkSubsystem::ReturnFinishedTacticsToken(const int32 SlotIndex)
 		return true;
 	}
 	Fragment.TokenState = ETDTacticsTokenState::Reserved;
+	Fragment.CommittedCostQuarters = 0;
 	Fragment.GrantStep = StepIndex;
 	return true;
 }
@@ -1764,7 +1771,7 @@ void UTDMonsterThinkSubsystem::GrantPoolTokens(FTDTargetTacticsRecord& Record, c
 		{
 			continue;
 		}
-		HeldQuarters += FTDCombatTactics::TokenCostQuarters;
+		HeldQuarters += FTDCombatTactics::GetHeldCostQuarters(Fragment);
 		if (Fragment.TokenState == ETDTacticsTokenState::Reserved)
 		{
 			Holders.Add(MakeTacticsCandidateKey(SlotIndex, TargetLocation));
@@ -1773,8 +1780,9 @@ void UTDMonsterThinkSubsystem::GrantPoolTokens(FTDTargetTacticsRecord& Record, c
 	Algo::Sort(Holders, &FTDCombatTactics::IsCandidateBefore);
 	while (HeldQuarters > Pool.BudgetQuarters && !Holders.IsEmpty())
 	{
-		ClearTacticsToken(Tactics[Holders.Pop(EAllowShrinking::No).SlotIndex]);
-		HeldQuarters -= FTDCombatTactics::TokenCostQuarters;
+		FTDMonsterTacticsFragment& ReleasedFragment = Tactics[Holders.Pop(EAllowShrinking::No).SlotIndex];
+		HeldQuarters -= FTDCombatTactics::GetHeldCostQuarters(ReleasedFragment);
+		ClearTacticsToken(ReleasedFragment);
 	}
 	TArray<FTDTacticsCandidateKey> Candidates;
 	for (const int32 SlotIndex : Record.MemberSlots)
@@ -1792,14 +1800,20 @@ void UTDMonsterThinkSubsystem::GrantPoolTokens(FTDTargetTacticsRecord& Record, c
 	}
 	Algo::Sort(Candidates, &FTDCombatTactics::IsCandidateBefore);
 	int32 NextCandidate = 0;
-	while (Pool.BudgetQuarters - HeldQuarters >= FTDCombatTactics::TokenCostQuarters && NextCandidate < Candidates.Num())
+	while (NextCandidate < Candidates.Num())
 	{
-		GrantTacticsToken(Candidates[NextCandidate].SlotIndex, Record.RecordId);
-		HeldQuarters += FTDCombatTactics::TokenCostQuarters;
+		const int32 CandidateSlot = Candidates[NextCandidate].SlotIndex;
+		const int32 CostQuarters = Tactics[CandidateSlot].ReserveCostQuarters;
+		if (Pool.BudgetQuarters - HeldQuarters < CostQuarters)
+		{
+			break;
+		}
+		GrantTacticsToken(CandidateSlot, Record.RecordId);
+		HeldQuarters += CostQuarters;
 		++NextCandidate;
 	}
 	Pool.HeldQuarters = HeldQuarters;
-	if (Pool.BudgetQuarters - HeldQuarters >= FTDCombatTactics::TokenCostQuarters || NextCandidate >= Candidates.Num())
+	if (NextCandidate >= Candidates.Num())
 	{
 		return;
 	}
@@ -1815,8 +1829,9 @@ void UTDMonsterThinkSubsystem::GrantPoolTokens(FTDTargetTacticsRecord& Record, c
 	}
 }
 
-void UTDMonsterThinkSubsystem::InterceptForRetaliation(const FTDTargetTacticsRecord& Record, const int32 PoolIndex, const FVector& TargetLocation, const TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates)
+void UTDMonsterThinkSubsystem::InterceptForRetaliation(FTDTargetTacticsRecord& Record, const int32 PoolIndex, const FVector& TargetLocation, const TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates)
 {
+	FTDTacticsPool& Pool = Record.Pools[PoolIndex];
 	for (const FTDTacticsCandidateKey& Candidate : RemainingCandidates)
 	{
 		if (!Candidate.bIsRetaliating)
@@ -1828,8 +1843,15 @@ void UTDMonsterThinkSubsystem::InterceptForRetaliation(const FTDTargetTacticsRec
 		{
 			continue;
 		}
+		const int32 VictimQuarters = FTDCombatTactics::GetHeldCostQuarters(Tactics[VictimSlot]);
+		const int32 CandidateQuarters = Tactics[Candidate.SlotIndex].ReserveCostQuarters;
+		if (Pool.BudgetQuarters - Pool.HeldQuarters + VictimQuarters < CandidateQuarters)
+		{
+			continue;
+		}
 		ClearTacticsToken(Tactics[VictimSlot]);
 		GrantTacticsToken(Candidate.SlotIndex, Record.RecordId);
+		Pool.HeldQuarters += CandidateQuarters - VictimQuarters;
 	}
 }
 
@@ -1899,10 +1921,12 @@ void UTDMonsterThinkSubsystem::ConfirmTacticsAttackStart(const int32 SlotIndex)
 	FTDMonsterTacticsFragment& Fragment = Tactics[SlotIndex];
 	Fragment.LastCastStartCount = Brains[SlotIndex].CastStartCount;
 	const int32 RecordIndex = FindTacticsRecordIndex(Brains[SlotIndex].Target.Get());
-	if (Fragment.TokenState == ETDTacticsTokenState::Reserved)
+	int32 CastCostQuarters = TDMonsterAI::QuartersPerToken;
+	if (Brains[SlotIndex].Definition.IsValid())
 	{
-		Fragment.TokenState = ETDTacticsTokenState::Committed;
+		CastCostQuarters = FTDCombatTactics::GetAbilityCostQuarters(*Brains[SlotIndex].Definition, Brains[SlotIndex].LastCastAbilityIndex);
 	}
+	FTDCombatTactics::CommitToken(Fragment, CastCostQuarters);
 	if (RecordIndex == INDEX_NONE)
 	{
 		return;
@@ -2021,7 +2045,7 @@ int32 UTDMonsterThinkSubsystem::CountHeldQuarters(const uint32 RecordId, const i
 		const FTDMonsterTacticsFragment& Fragment = Tactics[SlotIndex];
 		if (Fragment.Role != ETDTacticsRole::Boss && GetTacticsPoolIndex(Fragment.Role) == PoolIndex && Fragment.TokenState != ETDTacticsTokenState::None && Fragment.TokenRecordId == RecordId)
 		{
-			HeldQuarters += FTDCombatTactics::TokenCostQuarters;
+			HeldQuarters += FTDCombatTactics::GetHeldCostQuarters(Fragment);
 		}
 	}
 	return HeldQuarters;

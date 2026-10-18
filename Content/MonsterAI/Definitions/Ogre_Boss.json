@@ -1,4 +1,4 @@
-{ "schema": 1, "id": "Ogre_Boss",
+{ "schema": 1, "id": "Ogre_Boss", "role": "Melee", "boss": true,
   "stats": { "max_health": 4000, "attack_power": 40, "armor": 30, "move_speed": 340, "team": 2 },
   "think_hz": 12, "inertia": { "switch_ratio": 1.1, "min_hold_seconds": 0.8 },
   "abilities": {

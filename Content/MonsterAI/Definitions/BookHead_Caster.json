@@ -1,4 +1,4 @@
-{ "schema": 1, "id": "BookHead_Caster",
+{ "schema": 1, "id": "BookHead_Caster", "role": "Ranged",
   "stats": { "max_health": 110, "attack_power": 10, "armor": 4, "move_speed": 330, "team": 2 },
   "think_hz": 8, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.5 },
   "abilities": {

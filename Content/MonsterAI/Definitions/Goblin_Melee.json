@@ -1,4 +1,4 @@
-{ "schema": 1, "id": "Goblin_Melee",
+{ "schema": 1, "id": "Goblin_Melee", "role": "Melee",
   "stats": { "max_health": 120, "attack_power": 10, "armor": 5, "move_speed": 420, "team": 2 },
   "think_hz": 10, "inertia": { "switch_ratio": 1.15, "min_hold_seconds": 0.4 },
   "abilities": { "Slash": { "spell": "DA_TDGoblinSlash", "range": 160, "cooldown": 1.2 } },

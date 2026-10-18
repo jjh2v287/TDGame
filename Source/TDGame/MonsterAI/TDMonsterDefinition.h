@@ -11,6 +11,7 @@ namespace TDMonsterAI
 {
 	constexpr int32 StepsPerSecond = 64;
 	constexpr float StepSeconds = 1.f / StepsPerSecond;
+	constexpr int32 QuartersPerToken = 4;
 
 	inline int32 SecondsToSteps(const float Seconds)
 	{
@@ -25,6 +26,13 @@ enum class ETDCompareOp : uint8
 	Greater,
 	GreaterOrEqual,
 	Equal
+};
+
+enum class ETDMonsterCombatRole : uint8
+{
+	Unspecified,
+	Melee,
+	Ranged
 };
 
 struct FTDMonsterStatValues
@@ -92,6 +100,7 @@ struct FTDResolvedAbility
 	UTDDamageDefinition* Spell = nullptr;
 	float Range = 0.f;
 	int32 CooldownSteps = 0;
+	int32 TokenCostQuarters = TDMonsterAI::QuartersPerToken;
 };
 
 struct FTDResolvedPhase
@@ -133,6 +142,8 @@ struct FTDResolvedMonsterDefinition
 	int32 ThinkPeriodSteps = 6;
 	float SwitchRatio = 1.15f;
 	int32 MinHoldSteps = 26;
+	ETDMonsterCombatRole CombatRole = ETDMonsterCombatRole::Unspecified;
+	bool bIsBoss = false;
 	TArray<FTDResolvedAbility> Abilities;
 	TArray<FName> SequenceNames;
 	TArray<TArray<FTDResolvedStep>> Sequences;

@@ -50,6 +50,7 @@ void FTDMonsterActionExecutor::ResetForDefinition(FTDMonsterBrainFragment& Brain
 	Brain.StateStepsRemaining = 0;
 	Brain.SequenceIndex = INDEX_NONE;
 	Brain.SequenceCursor = 0;
+	Brain.LastCastAbilityIndex = INDEX_NONE;
 	Brain.ActionCooldownSteps.Init(0, Definition.GetMaxActionCount());
 	Brain.AbilityCooldownSteps.Init(0, Definition.Abilities.Num());
 }
@@ -268,6 +269,7 @@ bool FTDMonsterActionExecutor::StartCast(FTDMonsterBrainFragment& Brain, const F
 	Brain.State = ETDMonsterFsmState::Cast;
 	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(DurationSeconds));
 	Brain.AbilityCooldownSteps[Args.AbilityIndex] = Ability.CooldownSteps;
+	Brain.LastCastAbilityIndex = Args.AbilityIndex;
 	++Brain.CastStartCount;
 	return true;
 }

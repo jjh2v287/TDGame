@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Characters/TDMonsterCharacter.h"
+#include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDStatusDefinition.h"
 #include "Combat/TDCombatComponent.h"
 #include "Components/SphereComponent.h"
@@ -12,6 +13,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
 #include "MonsterAI/TDCombatDirector.h"
 #include "MonsterAI/TDCombatTactics.h"
@@ -315,6 +317,21 @@ namespace
 			return Values[Middle];
 		}
 		return (Values[Middle - 1] + Values[Middle]) * 0.5f;
+	}
+
+	TSharedPtr<const FTDResolvedMonsterDefinition> ResolveTacticsProbeDefinition(const FString& FileName, const FString& Text, TArray<FString>& OutErrors)
+	{
+		TMap<FString, FString> Texts;
+		Texts.Add(FileName, Text);
+		TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>> Definitions;
+		UTDMonsterDefinitionLibrary::ResolveDefinitionTexts(Texts, [](FName) -> UTDDamageDefinition* { return GetMutableDefault<UTDDamageDefinition>(); }, Definitions, OutErrors);
+		const TSharedPtr<const FTDResolvedMonsterDefinition>* Definition = Definitions.Find(FName(*FPaths::GetBaseFilename(FileName)));
+		return Definition ? *Definition : nullptr;
+	}
+
+	int32 FindTacticsProbeAbilityIndex(const FTDResolvedMonsterDefinition& Definition, const FName AbilityName)
+	{
+		return Definition.Abilities.IndexOfByPredicate([AbilityName](const FTDResolvedAbility& Ability) { return Ability.Name == AbilityName; });
 	}
 }
 
@@ -640,6 +657,18 @@ struct FTDCombatTacticsTestAccess
 		FTDTargetTacticsRecord& Record = Subsystem.TacticsRecords[RecordIndex];
 		Subsystem.GrantPoolTokens(Record, PoolIndex, Record.Target->GetActorLocation());
 	}
+
+	static void ConfirmAttackStart(UTDMonsterThinkSubsystem& Subsystem, const int32 SlotIndex, const int32 AbilityIndex)
+	{
+		Subsystem.Brains[SlotIndex].LastCastAbilityIndex = AbilityIndex;
+		++Subsystem.Brains[SlotIndex].CastStartCount;
+		Subsystem.ConfirmTacticsAttackStart(SlotIndex);
+	}
+
+	static void CountEngaged(UTDMonsterThinkSubsystem& Subsystem, const int32 RecordIndex)
+	{
+		Subsystem.CountTacticsEngaged(Subsystem.TacticsRecords[RecordIndex]);
+	}
 };
 
 namespace TDCombatTacticsPhaseBTests
@@ -828,6 +857,145 @@ namespace TDCombatTacticsPhaseBTests
 		}
 		return FMath::Max(LongestGap, Steps - LastStartStep);
 	}
+
+	bool CheckCrowdCostScene(FAutomationTestBase& Test, const TCHAR* SceneName, const TSharedPtr<const FTDResolvedMonsterDefinition>& Definition, const int32 ExpectedEngagedCostQuarters, const int32 ExpectedReservedCount)
+	{
+		constexpr uint64 ScenarioStep = 1000;
+		constexpr int32 MonsterCount = 10;
+		FTDTacticsPhaseBWorld Fixture;
+		APawn* PlayerPawn = Fixture.SpawnPlayer(FVector::ZeroVector);
+		UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.GetThinkSubsystem();
+		if (!Test.TestTrue(FString::Printf(TEXT("%s: the scene has a player and a think subsystem"), SceneName), PlayerPawn && ThinkSubsystem))
+		{
+			return false;
+		}
+		FTDCombatTacticsTestAccess::SetStepIndex(*ThinkSubsystem, ScenarioStep);
+		const int32 RecordIndex = FTDCombatTacticsTestAccess::AddScenarioRecord(*ThinkSubsystem, PlayerPawn);
+		TArray<int32> MonsterSlots;
+		for (int32 MonsterIndex = 0; MonsterIndex < MonsterCount; ++MonsterIndex)
+		{
+			MonsterSlots.Add(FTDCombatTacticsTestAccess::AddScenarioSlot(*ThinkSubsystem, Definition, FVector(200.f + 30.f * static_cast<float>(MonsterIndex), 0.f, 0.f)));
+		}
+		FTDTargetTacticsRecord& Record = FTDCombatTacticsTestAccess::GetRecord(*ThinkSubsystem, RecordIndex);
+		Record.MemberSlots = MonsterSlots;
+		for (const int32 SlotIndex : MonsterSlots)
+		{
+			FTDCombatTacticsTestAccess::GetTactics(*ThinkSubsystem, SlotIndex).TargetRecordId = Record.RecordId;
+		}
+		FTDCombatTacticsTestAccess::CountEngaged(*ThinkSubsystem, RecordIndex);
+		FTDTacticsPool& MeleePool = Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex];
+		Test.TestEqual(FString::Printf(TEXT("%s: every monster counts as engaged"), SceneName), MeleePool.EngagedCount, MonsterCount);
+		Test.TestEqual(FString::Printf(TEXT("%s: the engaged cost adds every reserve cost"), SceneName), MeleePool.EngagedCostQuarters, ExpectedEngagedCostQuarters);
+		MeleePool.BudgetQuarters = 2 * TDMonsterAI::QuartersPerToken;
+		FTDCombatTacticsTestAccess::GrantPoolTokens(*ThinkSubsystem, RecordIndex, FTDTargetTacticsRecord::MeleePoolIndex);
+		int32 ReservedCount = 0;
+		for (const int32 SlotIndex : MonsterSlots)
+		{
+			ReservedCount += FTDCombatTacticsTestAccess::GetTokenState(*ThinkSubsystem, SlotIndex) == ETDTacticsTokenState::Reserved ? 1 : 0;
+		}
+		Test.TestEqual(FString::Printf(TEXT("%s: the two-token budget reserves this many monsters"), SceneName), ReservedCount, ExpectedReservedCount);
+		Test.TestEqual(FString::Printf(TEXT("%s: the reservations fill the budget exactly"), SceneName), MeleePool.HeldQuarters, MeleePool.BudgetQuarters);
+		Test.TestTrue(FString::Printf(TEXT("%s: engaged cost above the budget forms a melee queue"), SceneName), Record.HasMeleeQueue());
+		return true;
+	}
+
+	bool CheckSettlementScene(FAutomationTestBase& Test, const TCHAR* SceneName, const TSharedPtr<const FTDResolvedMonsterDefinition>& Definition, const FName StartedAbilityName, const ETDTacticsTokenState ExpectedFarthestState, const int32 ExpectedHeldQuarters)
+	{
+		constexpr uint64 ScenarioStep = 1000;
+		constexpr int32 MonsterCount = 3;
+		const int32 StartedAbilityIndex = FindTacticsProbeAbilityIndex(*Definition, StartedAbilityName);
+		if (!Test.TestTrue(FString::Printf(TEXT("%s: the started ability exists"), SceneName), StartedAbilityIndex != INDEX_NONE))
+		{
+			return false;
+		}
+		FTDTacticsPhaseBWorld Fixture;
+		APawn* PlayerPawn = Fixture.SpawnPlayer(FVector::ZeroVector);
+		UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.GetThinkSubsystem();
+		if (!Test.TestTrue(FString::Printf(TEXT("%s: the scene has a player and a think subsystem"), SceneName), PlayerPawn && ThinkSubsystem))
+		{
+			return false;
+		}
+		FTDCombatTacticsTestAccess::SetStepIndex(*ThinkSubsystem, ScenarioStep);
+		const int32 RecordIndex = FTDCombatTacticsTestAccess::AddScenarioRecord(*ThinkSubsystem, PlayerPawn);
+		TArray<int32> MonsterSlots;
+		for (int32 MonsterIndex = 0; MonsterIndex < MonsterCount; ++MonsterIndex)
+		{
+			MonsterSlots.Add(FTDCombatTacticsTestAccess::AddScenarioSlot(*ThinkSubsystem, Definition, FVector(200.f + 50.f * static_cast<float>(MonsterIndex), 0.f, 0.f)));
+		}
+		FTDTargetTacticsRecord& Record = FTDCombatTacticsTestAccess::GetRecord(*ThinkSubsystem, RecordIndex);
+		Record.MemberSlots = MonsterSlots;
+		for (const int32 SlotIndex : MonsterSlots)
+		{
+			FTDCombatTacticsTestAccess::GetTactics(*ThinkSubsystem, SlotIndex).TargetRecordId = Record.RecordId;
+		}
+		FTDCombatTacticsTestAccess::CountEngaged(*ThinkSubsystem, RecordIndex);
+		FTDTacticsPool& MeleePool = Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex];
+		Test.TestEqual(FString::Printf(TEXT("%s: every monster counts as engaged"), SceneName), MeleePool.EngagedCount, MonsterCount);
+		MeleePool.BudgetQuarters = 2 * TDMonsterAI::QuartersPerToken;
+		FTDCombatTacticsTestAccess::GrantPoolTokens(*ThinkSubsystem, RecordIndex, FTDTargetTacticsRecord::MeleePoolIndex);
+		const int32 NearestSlot = MonsterSlots[0];
+		const int32 MiddleSlot = MonsterSlots[1];
+		const int32 FarthestSlot = MonsterSlots[2];
+		Test.TestTrue(FString::Printf(TEXT("%s: the two nearest monsters are reserved first"), SceneName),
+			FTDCombatTacticsTestAccess::GetTokenState(*ThinkSubsystem, NearestSlot) == ETDTacticsTokenState::Reserved
+			&& FTDCombatTacticsTestAccess::GetTokenState(*ThinkSubsystem, MiddleSlot) == ETDTacticsTokenState::Reserved);
+		Test.TestEqual(FString::Printf(TEXT("%s: the first pass holds two full reservations"), SceneName), MeleePool.HeldQuarters, 2 * FTDCombatTacticsTestAccess::GetTactics(*ThinkSubsystem, NearestSlot).ReserveCostQuarters);
+		Test.TestTrue(FString::Printf(TEXT("%s: the farthest monster has no token after the first pass"), SceneName), FTDCombatTacticsTestAccess::GetTokenState(*ThinkSubsystem, FarthestSlot) == ETDTacticsTokenState::None);
+		Test.TestTrue(FString::Printf(TEXT("%s: the farthest monster waits on deck after the first pass"), SceneName), FTDCombatTacticsTestAccess::GetTactics(*ThinkSubsystem, FarthestSlot).bIsOnDeck);
+		FTDCombatTacticsTestAccess::ConfirmAttackStart(*ThinkSubsystem, NearestSlot, StartedAbilityIndex);
+		Test.TestTrue(FString::Printf(TEXT("%s: the started attack commits the nearest token"), SceneName), FTDCombatTacticsTestAccess::GetTokenState(*ThinkSubsystem, NearestSlot) == ETDTacticsTokenState::Committed);
+		FTDCombatTacticsTestAccess::GrantPoolTokens(*ThinkSubsystem, RecordIndex, FTDTargetTacticsRecord::MeleePoolIndex);
+		Test.TestEqual(FString::Printf(TEXT("%s: held quarters after the committed cost settles"), SceneName), MeleePool.HeldQuarters, ExpectedHeldQuarters);
+		Test.TestEqual(FString::Printf(TEXT("%s: token state of the farthest monster after settling"), SceneName), static_cast<int32>(FTDCombatTacticsTestAccess::GetTokenState(*ThinkSubsystem, FarthestSlot)), static_cast<int32>(ExpectedFarthestState));
+		return true;
+	}
+
+	bool CheckRetaliationCostScene(FAutomationTestBase& Test, const TCHAR* SceneName, const TSharedPtr<const FTDResolvedMonsterDefinition>& HolderDefinition, const TSharedPtr<const FTDResolvedMonsterDefinition>& RetaliatorDefinition, const bool bHasNearHolder, const bool bShouldSteal, const int32 ExpectedHeldQuarters)
+	{
+		constexpr uint64 ScenarioStep = 1000;
+		FTDTacticsPhaseBWorld Fixture;
+		APawn* PlayerPawn = Fixture.SpawnPlayer(FVector::ZeroVector);
+		UTDMonsterThinkSubsystem* ThinkSubsystem = Fixture.GetThinkSubsystem();
+		if (!Test.TestTrue(FString::Printf(TEXT("%s: the scene has a player and a think subsystem"), SceneName), PlayerPawn && ThinkSubsystem))
+		{
+			return false;
+		}
+		FTDCombatTacticsTestAccess::SetStepIndex(*ThinkSubsystem, ScenarioStep);
+		const int32 RecordIndex = FTDCombatTacticsTestAccess::AddScenarioRecord(*ThinkSubsystem, PlayerPawn);
+		FTDTargetTacticsRecord& Record = FTDCombatTacticsTestAccess::GetRecord(*ThinkSubsystem, RecordIndex);
+		TArray<FVector> HolderLocations = { FVector(800.f, 0.f, 0.f) };
+		if (bHasNearHolder)
+		{
+			HolderLocations.Add(FVector(-500.f, 0.f, 0.f));
+		}
+		TArray<int32> HolderSlots;
+		for (const FVector& HolderLocation : HolderLocations)
+		{
+			const int32 HolderSlot = FTDCombatTacticsTestAccess::AddScenarioSlot(*ThinkSubsystem, HolderDefinition, HolderLocation);
+			FTDMonsterTacticsFragment& Holder = FTDCombatTacticsTestAccess::GetTactics(*ThinkSubsystem, HolderSlot);
+			Holder.TokenState = ETDTacticsTokenState::Reserved;
+			Holder.TokenRecordId = Record.RecordId;
+			Holder.TargetRecordId = Record.RecordId;
+			Holder.GrantStep = ScenarioStep - 40;
+			HolderSlots.Add(HolderSlot);
+		}
+		const int32 RetaliatorSlot = FTDCombatTacticsTestAccess::AddScenarioSlot(*ThinkSubsystem, RetaliatorDefinition, FVector(0.f, 300.f, 0.f));
+		FTDMonsterTacticsFragment& Retaliator = FTDCombatTacticsTestAccess::GetTactics(*ThinkSubsystem, RetaliatorSlot);
+		Retaliator.TargetRecordId = Record.RecordId;
+		Retaliator.LastDamagedStep = ScenarioStep - 10;
+		Record.MemberSlots = HolderSlots;
+		Record.MemberSlots.Add(RetaliatorSlot);
+		FTDTacticsPool& MeleePool = Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex];
+		MeleePool.EngagedCount = Record.MemberSlots.Num();
+		MeleePool.BudgetQuarters = TDMonsterAI::QuartersPerToken;
+		FTDCombatTacticsTestAccess::GrantPoolTokens(*ThinkSubsystem, RecordIndex, FTDTargetTacticsRecord::MeleePoolIndex);
+		const bool bDidSteal = FTDCombatTacticsTestAccess::GetTokenState(*ThinkSubsystem, RetaliatorSlot) == ETDTacticsTokenState::Reserved
+			&& FTDCombatTacticsTestAccess::GetTokenState(*ThinkSubsystem, HolderSlots[0]) == ETDTacticsTokenState::None;
+		Test.TestTrue(FString::Printf(TEXT("%s: the retaliator takes the far reservation only when its cost fits"), SceneName), bDidSteal == bShouldSteal);
+		Test.TestEqual(FString::Printf(TEXT("%s: held quarters after the retaliation pass"), SceneName), MeleePool.HeldQuarters, ExpectedHeldQuarters);
+		Test.TestTrue(FString::Printf(TEXT("%s: the retaliation pass stays inside the budget"), SceneName), MeleePool.HeldQuarters <= MeleePool.BudgetQuarters);
+		return true;
+	}
 }
 
 namespace TDTacticsB = TDCombatTacticsPhaseBTests;
@@ -905,6 +1073,15 @@ bool FTDCombatTacticsRoleClassificationTest::RunTest(const FString& Parameters)
 	if (Goblin.IsValid())
 	{
 		TestEqual(TEXT("Goblin melee reach comes from Slash"), FTDCombatTactics::MakeFragment(*Goblin).MeleeReachCm, 160);
+		const TSharedRef<FTDResolvedMonsterDefinition> LargeHealthVariant = MakeShared<FTDResolvedMonsterDefinition>(*Goblin);
+		LargeHealthVariant->Stats.MaxHealth = 5000.f;
+		TestEqual(TEXT("A large health pool alone no longer makes a boss"), static_cast<int32>(FTDCombatTactics::MakeFragment(*LargeHealthVariant).Role), static_cast<int32>(ETDTacticsRole::Melee));
+		const TSharedRef<FTDResolvedMonsterDefinition> RangedRoleVariant = MakeShared<FTDResolvedMonsterDefinition>(*Goblin);
+		RangedRoleVariant->CombatRole = ETDMonsterCombatRole::Ranged;
+		TestEqual(TEXT("An explicit Ranged role beats the reach estimate"), static_cast<int32>(FTDCombatTactics::MakeFragment(*RangedRoleVariant).Role), static_cast<int32>(ETDTacticsRole::Ranged));
+		const TSharedRef<FTDResolvedMonsterDefinition> BossVariant = MakeShared<FTDResolvedMonsterDefinition>(*Goblin);
+		BossVariant->bIsBoss = true;
+		TestEqual(TEXT("The boss flag makes a boss"), static_cast<int32>(FTDCombatTactics::MakeFragment(*BossVariant).Role), static_cast<int32>(ETDTacticsRole::Boss));
 	}
 	if (Archer.IsValid())
 	{
@@ -1441,7 +1618,7 @@ bool FTDCombatTacticsRetaliationStealTest::RunTest(const FString& Parameters)
 		FTDTargetTacticsRecord& Record = FTDCombatTacticsTestAccess::GetRecord(*ThinkSubsystem, RecordIndex);
 		Record.MemberSlots = { HolderSlot, RetaliatorSlot };
 		Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex].EngagedCount = 2;
-		Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex].BudgetQuarters = FTDCombatTactics::TokenCostQuarters;
+		Record.Pools[FTDTargetTacticsRecord::MeleePoolIndex].BudgetQuarters = TDMonsterAI::QuartersPerToken;
 		FTDMonsterTacticsFragment& Holder = FTDCombatTacticsTestAccess::GetTactics(*ThinkSubsystem, HolderSlot);
 		Holder.TokenState = ETDTacticsTokenState::Reserved;
 		Holder.TokenRecordId = Record.RecordId;
@@ -1472,6 +1649,84 @@ bool FTDCombatTacticsRetaliationStealTest::RunTest(const FString& Parameters)
 	}
 	TestFalse(TEXT("A holder closer than twice the retaliator's distance keeps its token"), bDidStealNear);
 	TestTrue(TEXT("The retaliator waits on deck instead"), bIsOnDeckNear);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCombatTacticsWeightedTokenCostsTest, "TDGame.MonsterAI.Tactics.WeightedTokenCosts", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDCombatTacticsWeightedTokenCostsTest::RunTest(const FString& Parameters)
+{
+	UTDMonsterDefinitionLibrary* Library = UTDMonsterDefinitionLibrary::Get();
+	if (!TestNotNull(TEXT("Definition library exists"), Library))
+	{
+		return false;
+	}
+	const TSharedPtr<const FTDResolvedMonsterDefinition> Goblin = Library->FindDefinition(TEXT("Goblin_Melee"));
+	if (!TestTrue(TEXT("Goblin_Melee resolves"), Goblin.IsValid()))
+	{
+		return false;
+	}
+	const FString ContactText = TEXT(R"({ "schema": 1, "id": "CostContact",
+  "stats": { "max_health": 100, "attack_power": 1, "armor": 0, "move_speed": 100, "team": 2 },
+  "abilities": {
+    "Touch": { "spell": "DA_Any", "range": 150, "cooldown": 1, "token_cost": 0.25 } },
+  "actions": [
+    { "id": "Touch", "do": "CastAbility", "args": { "ability": "Touch" }, "weight": 1 },
+    { "id": "Idle", "do": "Wait", "weight": 1 } ] })");
+	const FString MixedText = TEXT(R"({ "schema": 1, "id": "CostMixed",
+  "stats": { "max_health": 100, "attack_power": 1, "armor": 0, "move_speed": 100, "team": 2 },
+  "abilities": {
+    "Nip": { "spell": "DA_Any", "range": 150, "cooldown": 1, "token_cost": 0.25 },
+    "Maul": { "spell": "DA_Any", "range": 180, "cooldown": 1, "token_cost": 0.75 },
+    "Unused": { "spell": "DA_Any", "range": 150, "cooldown": 1, "token_cost": 1 } },
+  "actions": [
+    { "id": "Nip", "do": "CastAbility", "args": { "ability": "Nip" }, "weight": 1 },
+    { "id": "Maul", "do": "CastAbility", "args": { "ability": "Maul" }, "weight": 1 },
+    { "id": "Idle", "do": "Wait", "weight": 1 } ] })");
+	TArray<FString> Errors;
+	const TSharedPtr<const FTDResolvedMonsterDefinition> CostContact = ResolveTacticsProbeDefinition(TEXT("CostContact.json"), ContactText, Errors);
+	const TSharedPtr<const FTDResolvedMonsterDefinition> CostMixed = ResolveTacticsProbeDefinition(TEXT("CostMixed.json"), MixedText, Errors);
+	if (!TestTrue(TEXT("The cost probe definitions resolve"), CostContact.IsValid() && CostMixed.IsValid()))
+	{
+		AddError(FString::Join(Errors, TEXT("\n")));
+		return false;
+	}
+	TestEqual(TEXT("The reserve cost follows the dearest referenced ability and ignores the unreferenced one"), FTDCombatTactics::MakeFragment(*CostMixed).ReserveCostQuarters, 3);
+	TestEqual(TEXT("A contact-only monster reserves one quarter token"), FTDCombatTactics::MakeFragment(*CostContact).ReserveCostQuarters, 1);
+	TestEqual(TEXT("Goblin_Melee keeps the whole-token reserve cost"), FTDCombatTactics::MakeFragment(*Goblin).ReserveCostQuarters, TDMonsterAI::QuartersPerToken);
+
+	FTDMonsterTacticsFragment CheapFragment = FTDCombatTactics::MakeFragment(*CostMixed);
+	CheapFragment.TokenState = ETDTacticsTokenState::Reserved;
+	TestEqual(TEXT("A reserved fragment holds its reserve cost"), FTDCombatTactics::GetHeldCostQuarters(CheapFragment), 3);
+	FTDCombatTactics::CommitToken(CheapFragment, 1);
+	TestTrue(TEXT("A cheap first cast commits the reservation"), CheapFragment.TokenState == ETDTacticsTokenState::Committed);
+	TestEqual(TEXT("A committed cheap cast holds only its own cost"), FTDCombatTactics::GetHeldCostQuarters(CheapFragment), 1);
+	FTDCombatTactics::CommitToken(CheapFragment, 3);
+	TestEqual(TEXT("A later dearer cast raises the held cost"), FTDCombatTactics::GetHeldCostQuarters(CheapFragment), 3);
+	FTDMonsterTacticsFragment TokenlessFragment = FTDCombatTactics::MakeFragment(*CostMixed);
+	FTDCombatTactics::CommitToken(TokenlessFragment, 1);
+	TestTrue(TEXT("Committing without a token leaves the state alone"), TokenlessFragment.TokenState == ETDTacticsTokenState::None);
+	TestEqual(TEXT("Committing without a token holds nothing"), FTDCombatTactics::GetHeldCostQuarters(TokenlessFragment), 0);
+	FTDMonsterTacticsFragment OverpaidFragment = FTDCombatTactics::MakeFragment(*CostMixed);
+	OverpaidFragment.TokenState = ETDTacticsTokenState::Reserved;
+	FTDCombatTactics::CommitToken(OverpaidFragment, 9);
+	TestEqual(TEXT("A cast cost above the reservation is capped at the reserved cost"), FTDCombatTactics::GetHeldCostQuarters(OverpaidFragment), 3);
+
+	FTDTargetTacticsRecord QueueRecord;
+	FTDTacticsPool& QueuePool = QueueRecord.Pools[FTDTargetTacticsRecord::MeleePoolIndex];
+	QueuePool.EngagedCount = 6;
+	QueuePool.EngagedCostQuarters = 6;
+	QueuePool.BudgetQuarters = 2 * TDMonsterAI::QuartersPerToken;
+	TestFalse(TEXT("Six contact monsters fit a two-token budget without a melee queue"), QueueRecord.HasMeleeQueue());
+	QueuePool.EngagedCostQuarters = 9;
+	TestTrue(TEXT("An engaged cost above the budget forms a melee queue"), QueueRecord.HasMeleeQueue());
+
+	TDTacticsB::CheckCrowdCostScene(*this, TEXT("Contact crowd"), CostContact, 10, 8);
+	TDTacticsB::CheckCrowdCostScene(*this, TEXT("Whole-token crowd"), Goblin, 10 * TDMonsterAI::QuartersPerToken, 2);
+	TDTacticsB::CheckSettlementScene(*this, TEXT("Cheap first attack"), CostMixed, TEXT("Nip"), ETDTacticsTokenState::Reserved, 7);
+	TDTacticsB::CheckSettlementScene(*this, TEXT("Costly first attack"), CostMixed, TEXT("Maul"), ETDTacticsTokenState::None, 6);
+	TDTacticsB::CheckRetaliationCostScene(*this, TEXT("Cheap far holder only"), CostContact, Goblin, false, true, TDMonsterAI::QuartersPerToken);
+	TDTacticsB::CheckRetaliationCostScene(*this, TEXT("Cheap far holder beside a near holder"), CostContact, Goblin, true, false, 2);
 	return true;
 }
 

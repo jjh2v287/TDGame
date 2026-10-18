@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Characters/TDMonsterCharacter.h"
+#include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDStatusDefinition.h"
 #include "Combat/TDCombatComponent.h"
 #include "Components/SphereComponent.h"
@@ -97,6 +98,33 @@ namespace
 		UTDMonsterDefinitionLibrary::ResolveDefinitionTexts(Texts, [](FName) -> UTDDamageDefinition* { return nullptr; }, Definitions, OutErrors);
 		const TSharedPtr<const FTDResolvedMonsterDefinition>* Definition = Definitions.Find(FName(*FPaths::GetBaseFilename(FileName)));
 		return Definition ? *Definition : nullptr;
+	}
+
+	TSharedPtr<const FTDResolvedMonsterDefinition> ResolveSingleWithSpells(const FString& FileName, const FString& Text, TArray<FString>& OutErrors)
+	{
+		TMap<FString, FString> Texts;
+		Texts.Add(FileName, Text);
+		TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>> Definitions;
+		UTDMonsterDefinitionLibrary::ResolveDefinitionTexts(Texts, [](FName) -> UTDDamageDefinition* { return GetMutableDefault<UTDDamageDefinition>(); }, Definitions, OutErrors);
+		const TSharedPtr<const FTDResolvedMonsterDefinition>* Definition = Definitions.Find(FName(*FPaths::GetBaseFilename(FileName)));
+		return Definition ? *Definition : nullptr;
+	}
+
+	FString MakeKeyProbeText(const FString& TopLevelFields, const FString& NipExtraFields)
+	{
+		return FString::Printf(TEXT(R"({ "schema": 1, "id": "KeyProbe", %s
+  "stats": { "max_health": 100, "attack_power": 1, "armor": 0, "move_speed": 100, "team": 2 },
+  "abilities": {
+    "Nip": { "spell": "DA_Any", "range": 150, "cooldown": 1%s },
+    "Maul": { "spell": "DA_Any", "range": 200, "cooldown": 1, "token_cost": 0.75 },
+    "Plain": { "spell": "DA_Any", "range": 300, "cooldown": 1 } },
+  "actions": [ { "id": "Idle", "do": "Wait", "weight": 1 } ] })"), *TopLevelFields, *NipExtraFields);
+	}
+
+	int32 FindAbilityTokenCostQuarters(const FTDResolvedMonsterDefinition& Definition, const FName AbilityName)
+	{
+		const FTDResolvedAbility* Ability = Definition.Abilities.FindByPredicate([AbilityName](const FTDResolvedAbility& Candidate) { return Candidate.Name == AbilityName; });
+		return Ability ? Ability->TokenCostQuarters : INDEX_NONE;
 	}
 
 	FString MakeConstantBrainText(const float FirstWeight, const float SecondWeight)
@@ -417,12 +445,23 @@ bool FTDMonsterAIDefinitionFilesTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Archer overrides only the stats it lists"), Archer->Stats.Armor, 5.f);
 	TestEqual(TEXT("Archer inherits the team"), Archer->Stats.Team, 2);
 	TestEqual(TEXT("think_hz 8 becomes an 8-step period"), Archer->ThinkPeriodSteps, 8);
+	TestTrue(TEXT("Archer's own role overrides the Melee role it inherits"), Archer->CombatRole == ETDMonsterCombatRole::Ranged);
+
+	const TSharedPtr<const FTDResolvedMonsterDefinition> Goblin = Library->FindDefinition(TEXT("Goblin_Melee"));
+	if (!TestTrue(TEXT("Goblin_Melee resolves"), Goblin.IsValid()))
+	{
+		return false;
+	}
+	TestTrue(TEXT("Goblin_Melee declares the Melee role"), Goblin->CombatRole == ETDMonsterCombatRole::Melee);
 
 	const TSharedPtr<const FTDResolvedMonsterDefinition> Ogre = Library->FindDefinition(TEXT("Ogre_Boss"));
 	if (!TestTrue(TEXT("Ogre_Boss resolves"), Ogre.IsValid()))
 	{
 		return false;
 	}
+	TestTrue(TEXT("Ogre_Boss is marked as a boss"), Ogre->bIsBoss);
+	TestTrue(TEXT("Every Ogre_Boss ability keeps the default one-token cost"),
+		!Ogre->Abilities.IsEmpty() && !Ogre->Abilities.ContainsByPredicate([](const FTDResolvedAbility& Ability) { return Ability.TokenCostQuarters != TDMonsterAI::QuartersPerToken; }));
 	TestEqual(TEXT("One phase gives two action lists"), Ogre->ActionsByPhase.Num(), 2);
 	const bool bEnragedHasCombo = Ogre->GetActions(1).ContainsByPredicate([](const FTDResolvedAction& Action) { return Action.Id == TEXT("SmashCombo"); });
 	const bool bEnragedKeepsSmash = Ogre->GetActions(1).ContainsByPredicate([](const FTDResolvedAction& Action) { return Action.Id == TEXT("Smash"); });
@@ -435,6 +474,8 @@ bool FTDMonsterAIDefinitionFilesTest::RunTest(const FString& Parameters)
 		TestTrue(FString::Printf(TEXT("%s resolves with every ability bound to a spell"), *Id.ToString()),
 			Definition.IsValid() && !Definition->Abilities.ContainsByPredicate([](const FTDResolvedAbility& Ability) { return Ability.Spell == nullptr; }));
 	}
+	const TSharedPtr<const FTDResolvedMonsterDefinition> Hyena = Library->FindDefinition(TEXT("Hyena"));
+	TestTrue(TEXT("Hyena is not a boss"), Hyena.IsValid() && !Hyena->bIsBoss);
 	return true;
 }
 
@@ -458,6 +499,52 @@ bool FTDMonsterAIDefinitionErrorsTest::RunTest(const FString& Parameters)
 	Errors.Reset();
 	const FString MismatchText = TEXT(R"({ "schema": 1, "id": "Other", "stats": { "max_health": 10, "attack_power": 1, "armor": 0, "move_speed": 100, "team": 2 }, "actions": [ { "id": "Idle", "do": "Wait", "weight": 1 } ] })");
 	TestFalse(TEXT("id must match the file name"), ResolveSingle(TEXT("Mismatch.json"), MismatchText, Errors).IsValid());
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterAIDefinitionTacticsKeysTest, "TDGame.MonsterAI.DefinitionTacticsKeys", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMonsterAIDefinitionTacticsKeysTest::RunTest(const FString& Parameters)
+{
+	TArray<FString> Errors;
+	const TSharedPtr<const FTDResolvedMonsterDefinition> Probe = ResolveSingleWithSpells(TEXT("KeyProbe.json"), MakeKeyProbeText(TEXT("\"role\": \"Ranged\", \"boss\": true,"), TEXT(", \"token_cost\": 0.25")), Errors);
+	if (!TestTrue(TEXT("A definition with role, boss and token_cost resolves"), Probe.IsValid()))
+	{
+		AddError(FString::Join(Errors, TEXT("\n")));
+		return false;
+	}
+	TestEqual(TEXT("The tactics keys resolve without errors"), Errors.Num(), 0);
+	TestTrue(TEXT("role Ranged resolves to the Ranged combat role"), Probe->CombatRole == ETDMonsterCombatRole::Ranged);
+	TestTrue(TEXT("boss true marks the definition as a boss"), Probe->bIsBoss);
+	TestEqual(TEXT("token_cost 0.25 is one quarter token"), FindAbilityTokenCostQuarters(*Probe, TEXT("Nip")), 1);
+	TestEqual(TEXT("token_cost 0.75 is three quarter tokens"), FindAbilityTokenCostQuarters(*Probe, TEXT("Maul")), 3);
+	TestEqual(TEXT("An ability without token_cost costs one whole token"), FindAbilityTokenCostQuarters(*Probe, TEXT("Plain")), TDMonsterAI::QuartersPerToken);
+
+	Errors.Reset();
+	const TSharedPtr<const FTDResolvedMonsterDefinition> Bare = ResolveSingleWithSpells(TEXT("KeyProbe.json"), MakeKeyProbeText(FString(), FString()), Errors);
+	if (!TestTrue(TEXT("A definition without role and boss resolves"), Bare.IsValid()))
+	{
+		AddError(FString::Join(Errors, TEXT("\n")));
+		return false;
+	}
+	TestEqual(TEXT("Omitted tactics keys resolve without errors"), Errors.Num(), 0);
+	TestTrue(TEXT("An omitted role stays Unspecified"), Bare->CombatRole == ETDMonsterCombatRole::Unspecified);
+	TestFalse(TEXT("An omitted boss flag stays false"), Bare->bIsBoss);
+
+	auto CheckRejected = [this, &Errors](const TCHAR* CaseName, const FString& TopLevelFields, const FString& NipExtraFields, const TCHAR* ExpectedMessage)
+	{
+		Errors.Reset();
+		const TSharedPtr<const FTDResolvedMonsterDefinition> Rejected = ResolveSingleWithSpells(TEXT("KeyProbe.json"), MakeKeyProbeText(TopLevelFields, NipExtraFields), Errors);
+		TestFalse(FString::Printf(TEXT("%s rejects the definition"), CaseName), Rejected.IsValid());
+		TestTrue(FString::Printf(TEXT("%s reports '%s'"), CaseName, ExpectedMessage), FString::Join(Errors, TEXT("\n")).Contains(ExpectedMessage));
+	};
+	CheckRejected(TEXT("An unknown role"), TEXT("\"role\": \"Boss\","), FString(), TEXT("\"boss\": true"));
+	CheckRejected(TEXT("A misspelled role"), TEXT("\"role\": \"Range\","), FString(), TEXT("did you mean 'Ranged'?"));
+	CheckRejected(TEXT("A numeric role"), TEXT("\"role\": 1,"), FString(), TEXT("role: expected Melee or Ranged"));
+	CheckRejected(TEXT("A text boss flag"), TEXT("\"boss\": \"yes\","), FString(), TEXT("boss: expected true or false"));
+	CheckRejected(TEXT("token_cost 0.3"), FString(), TEXT(", \"token_cost\": 0.3"), TEXT("quarter tokens"));
+	CheckRejected(TEXT("token_cost 0"), FString(), TEXT(", \"token_cost\": 0"), TEXT("quarter tokens"));
+	CheckRejected(TEXT("token_cost 1.5"), FString(), TEXT(", \"token_cost\": 1.5"), TEXT("quarter tokens"));
 	return true;
 }
 

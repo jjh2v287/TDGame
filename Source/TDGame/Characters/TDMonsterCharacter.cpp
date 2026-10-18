@@ -1,6 +1,5 @@
 #include "Characters/TDMonsterCharacter.h"
 #include "Abilities/GameplayAbility.h"
-#include "AI/CombatToken/TDCombatTokenSubsystem.h"
 #include "AI/NPC/TDSignificanceComponent.h"
 #include "Animation/AnimSequence.h"
 #include "Characters/TDCharacterAnimationComponent.h"
@@ -133,42 +132,6 @@ float ATDMonsterCharacter::GetDesiredAttackRange() const
 	return SkillComponent->GetActionRange(PreferredActionTag);
 }
 
-void ATDMonsterCharacter::RegisterCombatTokenAggro()
-{
-	if (UTDCombatTokenSubsystem* CombatTokenSubsystem = GetCombatTokenSubsystem())
-	{
-		CombatTokenSubsystem->RegisterAggroMonster(this);
-	}
-}
-
-void ATDMonsterCharacter::UnregisterCombatTokenAggro()
-{
-	if (UTDCombatTokenSubsystem* CombatTokenSubsystem = GetCombatTokenSubsystem())
-	{
-		CombatTokenSubsystem->UnregisterAggroMonster(this);
-	}
-}
-
-bool ATDMonsterCharacter::TryAcquireCombatToken()
-{
-	UTDCombatTokenSubsystem* CombatTokenSubsystem = GetCombatTokenSubsystem();
-	return CombatTokenSubsystem && CombatTokenSubsystem->RequestToken(this) != INDEX_NONE;
-}
-
-void ATDMonsterCharacter::ReleaseCombatToken()
-{
-	if (UTDCombatTokenSubsystem* CombatTokenSubsystem = GetCombatTokenSubsystem())
-	{
-		CombatTokenSubsystem->ReleaseTokenByUser(this);
-	}
-}
-
-bool ATDMonsterCharacter::HasAvailableCombatToken() const
-{
-	const UTDCombatTokenSubsystem* CombatTokenSubsystem = GetCombatTokenSubsystem();
-	return CombatTokenSubsystem && CombatTokenSubsystem->IsTokenAvailable();
-}
-
 void ATDMonsterCharacter::HandleDeath(const FTDDamageContext& Context)
 {
 	DisableMovement();
@@ -177,7 +140,6 @@ void ATDMonsterCharacter::HandleDeath(const FTDDamageContext& Context)
 	{
 		SetLifeSpan(DeathLifeSpanSeconds);
 	}
-	UnregisterCombatTokenAggro();
 	StopMonsterBrain();
 	PlayDeathPresentation();
 	ScheduleCorpseSink();
@@ -197,12 +159,6 @@ void ATDMonsterCharacter::BroadcastDeathMessage(const FTDDamageContext& Context)
 	DeathMessage.Killer = Context.Caster.Get();
 	DeathMessage.DeathLocation = GetActorLocation();
 	UGameplayMessageSubsystem::Get(World).BroadcastMessage(TDGameplayTags::Event_Actor_Death, DeathMessage);
-}
-
-UTDCombatTokenSubsystem* ATDMonsterCharacter::GetCombatTokenSubsystem() const
-{
-	const UGameInstance* GameInstance = GetGameInstance();
-	return GameInstance ? GameInstance->GetSubsystem<UTDCombatTokenSubsystem>() : nullptr;
 }
 
 bool ATDMonsterCharacter::ActivateCombatAbility(const FGameplayTag AbilityTag, AActor* TargetActor)

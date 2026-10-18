@@ -34,6 +34,7 @@ FTDMonsterTacticsFragment FTDCombatTactics::MakeFragment(const FTDResolvedMonste
 	const uint64 ReferencedMask = GetReferencedAbilityMask(Definition);
 	bool bHasMeleeAbility = false;
 	bool bHasAnyAbility = false;
+	int32 MaxCostQuarters = 0;
 	for (int32 AbilityIndex = 0; AbilityIndex < Definition.Abilities.Num() && AbilityIndex < 64; ++AbilityIndex)
 	{
 		if ((ReferencedMask & (uint64(1) << AbilityIndex)) == 0)
@@ -42,6 +43,7 @@ FTDMonsterTacticsFragment FTDCombatTactics::MakeFragment(const FTDResolvedMonste
 		}
 		const int32 RangeCm = FMath::FloorToInt32(Definition.Abilities[AbilityIndex].Range);
 		bHasAnyAbility = true;
+		MaxCostQuarters = FMath::Max(MaxCostQuarters, Definition.Abilities[AbilityIndex].TokenCostQuarters);
 		Fragment.MaxReachCm = FMath::Max(Fragment.MaxReachCm, RangeCm);
 		if (RangeCm < RangedRoleRange)
 		{
@@ -49,13 +51,62 @@ FTDMonsterTacticsFragment FTDCombatTactics::MakeFragment(const FTDResolvedMonste
 			Fragment.MeleeReachCm = FMath::Max(Fragment.MeleeReachCm, RangeCm);
 		}
 	}
-	if (Definition.GetStatsForPhase(0).MaxHealth >= BossHealthThreshold)
+	Fragment.ReserveCostQuarters = MaxCostQuarters > 0 ? MaxCostQuarters : TDMonsterAI::QuartersPerToken;
+	if (Definition.bIsBoss)
 	{
 		Fragment.Role = ETDTacticsRole::Boss;
 		return Fragment;
 	}
+	if (Definition.CombatRole == ETDMonsterCombatRole::Melee)
+	{
+		Fragment.Role = ETDTacticsRole::Melee;
+		return Fragment;
+	}
+	if (Definition.CombatRole == ETDMonsterCombatRole::Ranged)
+	{
+		Fragment.Role = ETDTacticsRole::Ranged;
+		return Fragment;
+	}
 	Fragment.Role = bHasAnyAbility && !bHasMeleeAbility ? ETDTacticsRole::Ranged : ETDTacticsRole::Melee;
 	return Fragment;
+}
+
+int32 FTDCombatTactics::GetAbilityCostQuarters(const FTDResolvedMonsterDefinition& Definition, const int32 AbilityIndex)
+{
+	if (!Definition.Abilities.IsValidIndex(AbilityIndex))
+	{
+		return TDMonsterAI::QuartersPerToken;
+	}
+	return Definition.Abilities[AbilityIndex].TokenCostQuarters;
+}
+
+int32 FTDCombatTactics::GetHeldCostQuarters(const FTDMonsterTacticsFragment& Fragment)
+{
+	if (Fragment.TokenState == ETDTacticsTokenState::Reserved)
+	{
+		return Fragment.ReserveCostQuarters;
+	}
+	if (Fragment.TokenState == ETDTacticsTokenState::Committed)
+	{
+		return Fragment.CommittedCostQuarters > 0 ? Fragment.CommittedCostQuarters : Fragment.ReserveCostQuarters;
+	}
+	return 0;
+}
+
+void FTDCombatTactics::CommitToken(FTDMonsterTacticsFragment& Fragment, const int32 CastCostQuarters)
+{
+	if (Fragment.TokenState == ETDTacticsTokenState::None)
+	{
+		return;
+	}
+	const int32 SettledQuarters = FMath::Clamp(CastCostQuarters, 1, Fragment.ReserveCostQuarters);
+	if (Fragment.TokenState == ETDTacticsTokenState::Reserved)
+	{
+		Fragment.TokenState = ETDTacticsTokenState::Committed;
+		Fragment.CommittedCostQuarters = SettledQuarters;
+		return;
+	}
+	Fragment.CommittedCostQuarters = FMath::Max(Fragment.CommittedCostQuarters, SettledQuarters);
 }
 
 uint64 FTDCombatTactics::GetReferencedAbilityMask(const FTDResolvedMonsterDefinition& Definition)

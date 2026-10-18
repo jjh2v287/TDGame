@@ -1,4 +1,4 @@
-{ "schema": 1, "id": "StoneGolem",
+{ "schema": 1, "id": "StoneGolem", "role": "Melee",
   "stats": { "max_health": 700, "attack_power": 18, "armor": 25, "move_speed": 230, "team": 2 },
   "think_hz": 8, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.6 },
   "abilities": {

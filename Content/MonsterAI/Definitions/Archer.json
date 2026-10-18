@@ -1,4 +1,4 @@
-{ "schema": 1, "id": "Archer", "extends": "Goblin_Melee",
+{ "schema": 1, "id": "Archer", "role": "Ranged", "extends": "Goblin_Melee",
   "stats": { "max_health": 80, "attack_power": 16, "move_speed": 380 },
   "think_hz": 8, "inertia": { "switch_ratio": 1.2, "min_hold_seconds": 0.6 },
   "abilities": { "Shoot": { "spell": "DA_TDIceShard", "range": 900, "cooldown": 1.6 } },

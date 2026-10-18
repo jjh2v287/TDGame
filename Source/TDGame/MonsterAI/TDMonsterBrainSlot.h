@@ -40,6 +40,7 @@ struct FTDMonsterBrainFragment
 	int32 SequenceIndex = INDEX_NONE;
 	int32 SequenceCursor = 0;
 	uint32 CastStartCount = 0;
+	int32 LastCastAbilityIndex = INDEX_NONE;
 	TArray<int32> ActionCooldownSteps;
 	TArray<int32> AbilityCooldownSteps;
 	ETDMonsterEngagement Engagement = ETDMonsterEngagement::Home;

@@ -2,8 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "MonsterAI/TDCombatDirector.h"
-
-struct FTDResolvedMonsterDefinition;
+#include "MonsterAI/TDMonsterDefinition.h"
 
 enum class ETDTacticsTokenState : uint8
 {
@@ -39,6 +38,8 @@ struct FTDMonsterTacticsFragment
 	ETDTacticsRole Role = ETDTacticsRole::Melee;
 	int32 MeleeReachCm = 0;
 	int32 MaxReachCm = 0;
+	int32 ReserveCostQuarters = TDMonsterAI::QuartersPerToken;
+	int32 CommittedCostQuarters = 0;
 	int8 WaitRing = -1;
 	int8 WaitSector = -1;
 	int8 InnerSector = -1;
@@ -52,6 +53,7 @@ struct FTDMonsterTacticsFragment
 struct FTDTacticsPool
 {
 	int32 EngagedCount = 0;
+	int32 EngagedCostQuarters = 0;
 	int32 BaseTokens = 0;
 	int32 BudgetQuarters = 0;
 	int32 HeldQuarters = 0;
@@ -95,7 +97,7 @@ struct FTDTargetTacticsRecord
 
 	bool HasMeleeQueue() const
 	{
-		return Pools[MeleePoolIndex].EngagedCount * 4 > Pools[MeleePoolIndex].BudgetQuarters;
+		return Pools[MeleePoolIndex].EngagedCostQuarters > Pools[MeleePoolIndex].BudgetQuarters;
 	}
 };
 
@@ -134,7 +136,6 @@ public:
 	static constexpr int32 RingPassPeriodSteps = 32;
 	static constexpr int32 MaxTokensPerTarget = 5;
 	static constexpr int32 MaxRangedTokens = 3;
-	static constexpr int32 TokenCostQuarters = 4;
 	static constexpr int32 ReservationExpirySteps = 256;
 	static constexpr int32 RegrantCooldownSteps = 48;
 	static constexpr int32 WaitStageCap = 64;
@@ -142,7 +143,6 @@ public:
 	static constexpr int32 RangedGrantMargin = 100;
 	static constexpr int32 EngagedCountRadius = 1600;
 	static constexpr int32 RangedRoleRange = 450;
-	static constexpr int32 BossHealthThreshold = 2000;
 	static constexpr int32 BossSpacingSteps = 24;
 	static constexpr int32 RetaliationSteps = 64;
 	static constexpr int32 RetaliationSourceRadiusCm = 250;
@@ -178,6 +178,9 @@ public:
 	static constexpr int32 QueueOuterMarginCm = 200;
 
 	static FTDMonsterTacticsFragment MakeFragment(const FTDResolvedMonsterDefinition& Definition);
+	static int32 GetAbilityCostQuarters(const FTDResolvedMonsterDefinition& Definition, int32 AbilityIndex);
+	static int32 GetHeldCostQuarters(const FTDMonsterTacticsFragment& Fragment);
+	static void CommitToken(FTDMonsterTacticsFragment& Fragment, int32 CastCostQuarters);
 	static uint64 GetReferencedAbilityMask(const FTDResolvedMonsterDefinition& Definition);
 	static int32 ComputeBaseTokens(int32 EngagedCount, int32 TokenCap);
 	static void ComputePoolBaseTokens(int32 MeleeCount, int32 RangedCount, int32& OutMeleeTokens, int32& OutRangedTokens);

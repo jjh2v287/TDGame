@@ -62,3 +62,12 @@
 - 증거: 2026-10-18 `Saved/AgentOps/20261018/m334-green2-tests.log`(타임라인) → JSON 1100으로 `m334-glide1100-tests.json` 3/3, `m334-green3-tests.json` 10/10
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-combat-09 날거나 질주하는 보스가 열린 시험장(낮은 테두리) 밖 허공에서 착지·이동하면 맵 아래로 끝없이 떨어져 전투가 끝나지 않는다
+- 증상: PIE 자동 전투 `pie_fight_mid_bosses.py` 그리폰 칼만 판이 300초 상한으로 끝남(`ended_reason: cap`), 보스 체력 19%에서 멈춤. 표본에서 착지 뒤 Z가 196 → −177 → −26,000으로 계속 감소, 그 상태로 비행·공격 행동은 계속됨.
+- 원인: 활공 급습(Charge)이 대상 지점을 600cm 지나쳐 `LV_TDMegaMagicArena`의 낮은 테두리 너머 허공 위로 감. `LandAndRest`가 그 자리에서 착지 → 바닥이 없어 Falling → Walking 복귀 없이 추락. 몬스터 이동에는 발판 경계(내비 경계)가 없다.
+- 해결: 데이터로 착지 위치를 플레이어 근처로 묶는다 — 활공 거리 0(시전 순간 대상 지점까지), 착지 시퀀스 앞에 `MoveToward Player stop_at 250`. 실전 아레나는 벽으로 닫는다(M3-36). 일반 해결(발판 밖 착지 금지·낙하 감지 복귀)은 미구현.
+- 범위: 비행·질주 원시를 쓰는 보스(그리폰·용), 테두리가 낮은 시험 맵
+- 증거: 2026-10-18 `Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018/report.json`(그리폰 칼만 cap), 수정 뒤 `fight-20261018-v3`·`fight-20261018-final`(최저 Z 116, 처치)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

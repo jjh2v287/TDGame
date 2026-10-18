@@ -5,7 +5,7 @@
  "role": "Melee",
  "boss": true,
  "stats": {
-  "max_health": 3600,
+  "max_health": 2400,
   "attack_power": 10,
   "armor": 15,
   "move_speed": 500,
@@ -131,6 +131,13 @@
    }
   ],
   "LandAndRest": [
+   {
+    "do": "MoveToward",
+    "args": {
+     "target": "Player",
+     "stop_at": 250
+    }
+   },
    {
     "do": "Land",
     "args": {
@@ -462,7 +469,7 @@
      "do": "Charge",
      "args": {
       "ability": "GlideSwoop",
-      "distance": 1100,
+      "distance": 0,
       "speed": 1800
      },
      "weight": 3.4,

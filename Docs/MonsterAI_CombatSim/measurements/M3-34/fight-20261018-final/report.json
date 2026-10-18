@@ -1,0 +1,1791 @@
+{
+ "date": "2026-10-18",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "cap_seconds": 300.0,
+ "origin": {
+  "x": -500.0,
+  "y": 0.0,
+  "z": 96.0,
+  "yaw": 0.0
+ },
+ "time_base": "kill_seconds·phase1_seconds는 보스 교전(engaged) 순간부터, 나머지 시각은 보스 등록 순간부터의 게임 초. player_damage_in_H = 받은 피해 / 100(플레이어 최대 체력 100 기준)",
+ "summary": [
+  {
+   "boss": "CentaurHunter",
+   "mode": "sword",
+   "result": "complete",
+   "ended_reason": "boss_dead",
+   "boss_defeated": true,
+   "kill_seconds": 121.5,
+   "phase1_seconds": 56.22,
+   "player_damage_taken": 682.6,
+   "player_damage_in_H": 6.83,
+   "player_attacks": 2045,
+   "spell_casts": 0,
+   "rolls": 4,
+   "stagger_intervals": 0,
+   "flight_intervals": 0,
+   "minions_killed": 2,
+   "environment_problem": null
+  },
+  {
+   "boss": "CentaurHunter",
+   "mode": "sword_spells",
+   "result": "complete",
+   "ended_reason": "boss_dead",
+   "boss_defeated": true,
+   "kill_seconds": 44.0,
+   "phase1_seconds": 25.04,
+   "player_damage_taken": 220.4,
+   "player_damage_in_H": 2.2,
+   "player_attacks": 565,
+   "spell_casts": 35,
+   "rolls": 1,
+   "stagger_intervals": 1,
+   "flight_intervals": 0,
+   "minions_killed": 2,
+   "environment_problem": null
+  },
+  {
+   "boss": "GriffonAlpha",
+   "mode": "sword",
+   "result": "complete",
+   "ended_reason": "boss_dead",
+   "boss_defeated": true,
+   "kill_seconds": 130.08,
+   "phase1_seconds": 37.29,
+   "player_damage_taken": 545.0,
+   "player_damage_in_H": 5.45,
+   "player_attacks": 1325,
+   "spell_casts": 0,
+   "rolls": 20,
+   "stagger_intervals": 2,
+   "flight_intervals": 3,
+   "minions_killed": 0,
+   "environment_problem": null
+  },
+  {
+   "boss": "GriffonAlpha",
+   "mode": "sword_spells",
+   "result": "complete",
+   "ended_reason": "boss_dead",
+   "boss_defeated": true,
+   "kill_seconds": 22.49,
+   "phase1_seconds": 12.35,
+   "player_damage_taken": 75.0,
+   "player_damage_in_H": 0.75,
+   "player_attacks": 433,
+   "spell_casts": 21,
+   "rolls": 0,
+   "stagger_intervals": 1,
+   "flight_intervals": 1,
+   "minions_killed": 0,
+   "environment_problem": null
+  }
+ ],
+ "fights": [
+  {
+   "boss": "CentaurHunter",
+   "mode": "sword",
+   "environment_problem": null,
+   "result": "complete",
+   "errors": [],
+   "notes": [],
+   "samples_path": "C:/Project/TDGame/Saved/MonsterAI\\MidBossFight\\samples_CentaurHunter_sword.jsonl",
+   "fight": {
+    "boss": "CentaurHunter",
+    "mode": "sword",
+    "cap_seconds": 300.0,
+    "ended_reason": "boss_dead",
+    "boss_defeated": true,
+    "kill_seconds": 121.5,
+    "phase1_seconds": 56.22,
+    "engage_seconds": 0.02,
+    "boss_max_health": 3000.0,
+    "player_damage_taken": 682.6,
+    "player_damage_in_H": 6.83,
+    "player_min_health": 317.39996337890625,
+    "player_max_health": 1000.0,
+    "player_attacks": 2045,
+    "spell_attempts": 0,
+    "spell_casts": 0,
+    "spell_casts_by_slot": {},
+    "rolls": 4,
+    "roll_attempts": 237,
+    "roll_triggers_by_definition": {
+     "DA_TDCentaurHunterSwordCombo": 3,
+     "DA_TDCentaurKick": 1
+    },
+    "dodge_shape_counts": {
+     "DA_TDCentaurHunterVolleyArrow_Windup_0": "LINE",
+     "DA_TDCentaurHunterVolleyArrow": "CIRCLE/projectile-ignored",
+     "DA_TDCentaurKick": "CIRCLE",
+     "DA_TDCentaurHunterArrow_Windup_0": "LINE",
+     "DA_TDCentaurHunterArrow": "CIRCLE/projectile-ignored",
+     "DA_TDCentaurHunterSwordCombo": "CONE",
+     "DA_TDCentaurHunterSwordSlash": "CONE"
+    },
+    "dodge_shape_unreadable": 0,
+    "boss_hp_timeline": [
+     {
+      "t": 0,
+      "boss_hp_ratio": 1.0
+     },
+     {
+      "t": 1,
+      "boss_hp_ratio": 1.0
+     },
+     {
+      "t": 2,
+      "boss_hp_ratio": 0.9927
+     },
+     {
+      "t": 3,
+      "boss_hp_ratio": 0.9782
+     },
+     {
+      "t": 4,
+      "boss_hp_ratio": 0.9685
+     },
+     {
+      "t": 5,
+      "boss_hp_ratio": 0.9612
+     },
+     {
+      "t": 6,
+      "boss_hp_ratio": 0.9467
+     },
+     {
+      "t": 7,
+      "boss_hp_ratio": 0.937
+     },
+     {
+      "t": 8,
+      "boss_hp_ratio": 0.937
+     },
+     {
+      "t": 9,
+      "boss_hp_ratio": 0.937
+     },
+     {
+      "t": 10,
+      "boss_hp_ratio": 0.9297
+     },
+     {
+      "t": 11,
+      "boss_hp_ratio": 0.9224
+     },
+     {
+      "t": 12,
+      "boss_hp_ratio": 0.9152
+     },
+     {
+      "t": 13,
+      "boss_hp_ratio": 0.9152
+     },
+     {
+      "t": 14,
+      "boss_hp_ratio": 0.9079
+     },
+     {
+      "t": 15,
+      "boss_hp_ratio": 0.9006
+     },
+     {
+      "t": 16,
+      "boss_hp_ratio": 0.8836
+     },
+     {
+      "t": 17,
+      "boss_hp_ratio": 0.8764
+     },
+     {
+      "t": 18,
+      "boss_hp_ratio": 0.8764
+     },
+     {
+      "t": 19,
+      "boss_hp_ratio": 0.8691
+     },
+     {
+      "t": 20,
+      "boss_hp_ratio": 0.8545
+     },
+     {
+      "t": 21,
+      "boss_hp_ratio": 0.8448
+     },
+     {
+      "t": 22,
+      "boss_hp_ratio": 0.8376
+     },
+     {
+      "t": 23,
+      "boss_hp_ratio": 0.8303
+     },
+     {
+      "t": 24,
+      "boss_hp_ratio": 0.8133
+     },
+     {
+      "t": 25,
+      "boss_hp_ratio": 0.8133
+     },
+     {
+      "t": 26,
+      "boss_hp_ratio": 0.7988
+     },
+     {
+      "t": 27,
+      "boss_hp_ratio": 0.7915
+     },
+     {
+      "t": 28,
+      "boss_hp_ratio": 0.7818
+     },
+     {
+      "t": 29,
+      "boss_hp_ratio": 0.7745
+     },
+     {
+      "t": 30,
+      "boss_hp_ratio": 0.76
+     },
+     {
+      "t": 31,
+      "boss_hp_ratio": 0.7503
+     },
+     {
+      "t": 32,
+      "boss_hp_ratio": 0.7358
+     },
+     {
+      "t": 33,
+      "boss_hp_ratio": 0.7285
+     },
+     {
+      "t": 34,
+      "boss_hp_ratio": 0.7188
+     },
+     {
+      "t": 35,
+      "boss_hp_ratio": 0.7115
+     },
+     {
+      "t": 36,
+      "boss_hp_ratio": 0.7042
+     },
+     {
+      "t": 37,
+      "boss_hp_ratio": 0.6873
+     },
+     {
+      "t": 38,
+      "boss_hp_ratio": 0.68
+     },
+     {
+      "t": 39,
+      "boss_hp_ratio": 0.6727
+     },
+     {
+      "t": 40,
+      "boss_hp_ratio": 0.6655
+     },
+     {
+      "t": 41,
+      "boss_hp_ratio": 0.6558
+     },
+     {
+      "t": 42,
+      "boss_hp_ratio": 0.6412
+     },
+     {
+      "t": 43,
+      "boss_hp_ratio": 0.6339
+     },
+     {
+      "t": 44,
+      "boss_hp_ratio": 0.6242
+     },
+     {
+      "t": 45,
+      "boss_hp_ratio": 0.617
+     },
+     {
+      "t": 46,
+      "boss_hp_ratio": 0.6024
+     },
+     {
+      "t": 47,
+      "boss_hp_ratio": 0.5927
+     },
+     {
+      "t": 48,
+      "boss_hp_ratio": 0.5855
+     },
+     {
+      "t": 49,
+      "boss_hp_ratio": 0.5709
+     },
+     {
+      "t": 50,
+      "boss_hp_ratio": 0.5612
+     },
+     {
+      "t": 51,
+      "boss_hp_ratio": 0.5539
+     },
+     {
+      "t": 52,
+      "boss_hp_ratio": 0.5467
+     },
+     {
+      "t": 53,
+      "boss_hp_ratio": 0.5297
+     },
+     {
+      "t": 54,
+      "boss_hp_ratio": 0.5224
+     },
+     {
+      "t": 55,
+      "boss_hp_ratio": 0.5152
+     },
+     {
+      "t": 56,
+      "boss_hp_ratio": 0.5079
+     },
+     {
+      "t": 57,
+      "boss_hp_ratio": 0.4982
+     },
+     {
+      "t": 58,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 59,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 60,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 61,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 62,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 63,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 64,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 65,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 66,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 67,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 68,
+      "boss_hp_ratio": 0.4909
+     },
+     {
+      "t": 69,
+      "boss_hp_ratio": 0.4836
+     },
+     {
+      "t": 70,
+      "boss_hp_ratio": 0.4739
+     },
+     {
+      "t": 71,
+      "boss_hp_ratio": 0.4594
+     },
+     {
+      "t": 72,
+      "boss_hp_ratio": 0.4521
+     },
+     {
+      "t": 73,
+      "boss_hp_ratio": 0.4424
+     },
+     {
+      "t": 74,
+      "boss_hp_ratio": 0.4352
+     },
+     {
+      "t": 75,
+      "boss_hp_ratio": 0.4206
+     },
+     {
+      "t": 76,
+      "boss_hp_ratio": 0.4109
+     },
+     {
+      "t": 77,
+      "boss_hp_ratio": 0.4036
+     },
+     {
+      "t": 78,
+      "boss_hp_ratio": 0.3891
+     },
+     {
+      "t": 79,
+      "boss_hp_ratio": 0.3794
+     },
+     {
+      "t": 80,
+      "boss_hp_ratio": 0.3721
+     },
+     {
+      "t": 81,
+      "boss_hp_ratio": 0.3576
+     },
+     {
+      "t": 82,
+      "boss_hp_ratio": 0.3479
+     },
+     {
+      "t": 83,
+      "boss_hp_ratio": 0.3406
+     },
+     {
+      "t": 84,
+      "boss_hp_ratio": 0.3333
+     },
+     {
+      "t": 85,
+      "boss_hp_ratio": 0.3164
+     },
+     {
+      "t": 86,
+      "boss_hp_ratio": 0.3091
+     },
+     {
+      "t": 87,
+      "boss_hp_ratio": 0.3018
+     },
+     {
+      "t": 88,
+      "boss_hp_ratio": 0.2945
+     },
+     {
+      "t": 89,
+      "boss_hp_ratio": 0.2848
+     },
+     {
+      "t": 90,
+      "boss_hp_ratio": 0.2848
+     },
+     {
+      "t": 91,
+      "boss_hp_ratio": 0.2776
+     },
+     {
+      "t": 92,
+      "boss_hp_ratio": 0.2703
+     },
+     {
+      "t": 93,
+      "boss_hp_ratio": 0.263
+     },
+     {
+      "t": 94,
+      "boss_hp_ratio": 0.2533
+     },
+     {
+      "t": 95,
+      "boss_hp_ratio": 0.2533
+     },
+     {
+      "t": 96,
+      "boss_hp_ratio": 0.2461
+     },
+     {
+      "t": 97,
+      "boss_hp_ratio": 0.2388
+     },
+     {
+      "t": 98,
+      "boss_hp_ratio": 0.2218
+     },
+     {
+      "t": 99,
+      "boss_hp_ratio": 0.2218
+     },
+     {
+      "t": 100,
+      "boss_hp_ratio": 0.2073
+     },
+     {
+      "t": 101,
+      "boss_hp_ratio": 0.1903
+     },
+     {
+      "t": 102,
+      "boss_hp_ratio": 0.183
+     },
+     {
+      "t": 103,
+      "boss_hp_ratio": 0.1758
+     },
+     {
+      "t": 104,
+      "boss_hp_ratio": 0.1685
+     },
+     {
+      "t": 105,
+      "boss_hp_ratio": 0.1588
+     },
+     {
+      "t": 106,
+      "boss_hp_ratio": 0.1442
+     },
+     {
+      "t": 107,
+      "boss_hp_ratio": 0.137
+     },
+     {
+      "t": 108,
+      "boss_hp_ratio": 0.1273
+     },
+     {
+      "t": 109,
+      "boss_hp_ratio": 0.1127
+     },
+     {
+      "t": 110,
+      "boss_hp_ratio": 0.1055
+     },
+     {
+      "t": 111,
+      "boss_hp_ratio": 0.0958
+     },
+     {
+      "t": 112,
+      "boss_hp_ratio": 0.0812
+     },
+     {
+      "t": 113,
+      "boss_hp_ratio": 0.0739
+     },
+     {
+      "t": 114,
+      "boss_hp_ratio": 0.0642
+     },
+     {
+      "t": 115,
+      "boss_hp_ratio": 0.0497
+     },
+     {
+      "t": 116,
+      "boss_hp_ratio": 0.0327
+     },
+     {
+      "t": 117,
+      "boss_hp_ratio": 0.0327
+     },
+     {
+      "t": 118,
+      "boss_hp_ratio": 0.0182
+     },
+     {
+      "t": 119,
+      "boss_hp_ratio": 0.0012
+     },
+     {
+      "t": 120,
+      "boss_hp_ratio": 0.0012
+     },
+     {
+      "t": 121,
+      "boss_hp_ratio": 0.0012
+     }
+    ],
+    "phase_transitions": [
+     {
+      "from": 0,
+      "to": 1,
+      "seconds": 56.24,
+      "boss_hp_ratio": 0.4982
+     }
+    ],
+    "stagger_intervals": [],
+    "short_stagger_count": 0,
+    "flight_intervals": [],
+    "boss_action_counts": {
+     "Volley": 1,
+     "None": 59,
+     "Kick": 23,
+     "Disengage": 12,
+     "Shoot": 2,
+     "KeepBand": 10,
+     "SwordCombo": 11,
+     "Approach": 4,
+     "SwordSlash": 11
+    },
+    "minions_spawned": 2,
+    "minions_killed": 2,
+    "target_seconds": {
+     "boss": 77.25,
+     "minion": 16.6
+    },
+    "in_attack_range_seconds": 79.75,
+    "game_seconds": 121.51,
+    "real_seconds": 121.55,
+    "game_per_real": 1.0,
+    "screenshots": {
+     "phase1": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/CentaurHunter_sword_phase1.png",
+     "kill": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/CentaurHunter_sword_kill.png"
+    }
+   }
+  },
+  {
+   "boss": "CentaurHunter",
+   "mode": "sword_spells",
+   "environment_problem": null,
+   "result": "complete",
+   "errors": [],
+   "notes": [],
+   "samples_path": "C:/Project/TDGame/Saved/MonsterAI\\MidBossFight\\samples_CentaurHunter_sword_spells.jsonl",
+   "fight": {
+    "boss": "CentaurHunter",
+    "mode": "sword_spells",
+    "cap_seconds": 300.0,
+    "ended_reason": "boss_dead",
+    "boss_defeated": true,
+    "kill_seconds": 44.0,
+    "phase1_seconds": 25.04,
+    "engage_seconds": 0.02,
+    "boss_max_health": 3000.0,
+    "player_damage_taken": 220.4,
+    "player_damage_in_H": 2.2,
+    "player_min_health": 779.5999755859375,
+    "player_max_health": 1000.0,
+    "player_attacks": 565,
+    "spell_attempts": 35,
+    "spell_casts": 35,
+    "spell_casts_by_slot": {
+     "0": 4,
+     "1": 4,
+     "2": 4,
+     "3": 4,
+     "4": 4,
+     "5": 3,
+     "6": 3,
+     "7": 3,
+     "8": 3,
+     "9": 3
+    },
+    "rolls": 1,
+    "roll_attempts": 63,
+    "roll_triggers_by_definition": {
+     "DA_TDCentaurKick": 1
+    },
+    "dodge_shape_counts": {
+     "DA_TDCentaurHunterVolleyArrow_Windup_0": "LINE",
+     "DA_TDCentaurHunterVolleyArrow": "CIRCLE/projectile-ignored",
+     "DA_TDCentaurKick": "CIRCLE",
+     "DA_TDCentaurHunterArrow_Windup_0": "LINE",
+     "DA_TDCentaurHunterArrow": "CIRCLE/projectile-ignored",
+     "DA_TDCentaurHunterSwordCombo": "CONE",
+     "DA_TDCentaurHunterSwordSlash": "CONE"
+    },
+    "dodge_shape_unreadable": 0,
+    "boss_hp_timeline": [
+     {
+      "t": 0,
+      "boss_hp_ratio": 1.0
+     },
+     {
+      "t": 1,
+      "boss_hp_ratio": 1.0
+     },
+     {
+      "t": 2,
+      "boss_hp_ratio": 0.9927
+     },
+     {
+      "t": 3,
+      "boss_hp_ratio": 0.9782
+     },
+     {
+      "t": 4,
+      "boss_hp_ratio": 0.9685
+     },
+     {
+      "t": 5,
+      "boss_hp_ratio": 0.9362
+     },
+     {
+      "t": 6,
+      "boss_hp_ratio": 0.9217
+     },
+     {
+      "t": 7,
+      "boss_hp_ratio": 0.8736
+     },
+     {
+      "t": 8,
+      "boss_hp_ratio": 0.858
+     },
+     {
+      "t": 9,
+      "boss_hp_ratio": 0.8556
+     },
+     {
+      "t": 10,
+      "boss_hp_ratio": 0.8394
+     },
+     {
+      "t": 11,
+      "boss_hp_ratio": 0.8188
+     },
+     {
+      "t": 12,
+      "boss_hp_ratio": 0.7954
+     },
+     {
+      "t": 13,
+      "boss_hp_ratio": 0.7954
+     },
+     {
+      "t": 14,
+      "boss_hp_ratio": 0.7881
+     },
+     {
+      "t": 15,
+      "boss_hp_ratio": 0.7335
+     },
+     {
+      "t": 16,
+      "boss_hp_ratio": 0.7119
+     },
+     {
+      "t": 17,
+      "boss_hp_ratio": 0.7
+     },
+     {
+      "t": 18,
+      "boss_hp_ratio": 0.6953
+     },
+     {
+      "t": 19,
+      "boss_hp_ratio": 0.6634
+     },
+     {
+      "t": 20,
+      "boss_hp_ratio": 0.6488
+     },
+     {
+      "t": 21,
+      "boss_hp_ratio": 0.6391
+     },
+     {
+      "t": 22,
+      "boss_hp_ratio": 0.5838
+     },
+     {
+      "t": 23,
+      "boss_hp_ratio": 0.5676
+     },
+     {
+      "t": 24,
+      "boss_hp_ratio": 0.5337
+     },
+     {
+      "t": 25,
+      "boss_hp_ratio": 0.4943
+     },
+     {
+      "t": 26,
+      "boss_hp_ratio": 0.4377
+     },
+     {
+      "t": 27,
+      "boss_hp_ratio": 0.3833
+     },
+     {
+      "t": 28,
+      "boss_hp_ratio": 0.3678
+     },
+     {
+      "t": 29,
+      "boss_hp_ratio": 0.3632
+     },
+     {
+      "t": 30,
+      "boss_hp_ratio": 0.3585
+     },
+     {
+      "t": 31,
+      "boss_hp_ratio": 0.3585
+     },
+     {
+      "t": 32,
+      "boss_hp_ratio": 0.3468
+     },
+     {
+      "t": 33,
+      "boss_hp_ratio": 0.3168
+     },
+     {
+      "t": 34,
+      "boss_hp_ratio": 0.3023
+     },
+     {
+      "t": 35,
+      "boss_hp_ratio": 0.2864
+     },
+     {
+      "t": 36,
+      "boss_hp_ratio": 0.2645
+     },
+     {
+      "t": 37,
+      "boss_hp_ratio": 0.2197
+     },
+     {
+      "t": 38,
+      "boss_hp_ratio": 0.151
+     },
+     {
+      "t": 39,
+      "boss_hp_ratio": 0.0823
+     },
+     {
+      "t": 40,
+      "boss_hp_ratio": 0.0659
+     },
+     {
+      "t": 41,
+      "boss_hp_ratio": 0.0636
+     },
+     {
+      "t": 42,
+      "boss_hp_ratio": 0.049
+     },
+     {
+      "t": 43,
+      "boss_hp_ratio": 0.007
+     }
+    ],
+    "phase_transitions": [
+     {
+      "from": 0,
+      "to": 1,
+      "seconds": 25.05,
+      "boss_hp_ratio": 0.4827
+     }
+    ],
+    "stagger_intervals": [
+     {
+      "start_seconds": 26.46,
+      "length_seconds": 3.16,
+      "action_before": "None",
+      "stagger_action": "None",
+      "flying": false,
+      "phase": 1,
+      "boss_hp_ratio": 0.3892
+     }
+    ],
+    "short_stagger_count": 0,
+    "flight_intervals": [],
+    "boss_action_counts": {
+     "Volley": 1,
+     "None": 21,
+     "Kick": 7,
+     "Disengage": 5,
+     "Shoot": 2,
+     "KeepBand": 3,
+     "SwordCombo": 3,
+     "Approach": 2,
+     "SwordSlash": 2
+    },
+    "minions_spawned": 2,
+    "minions_killed": 2,
+    "target_seconds": {
+     "boss": 29.89,
+     "minion": 6.73
+    },
+    "in_attack_range_seconds": 25.9,
+    "game_seconds": 44.01,
+    "real_seconds": 44.05,
+    "game_per_real": 0.999,
+    "screenshots": {
+     "phase1": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/CentaurHunter_sword_spells_phase1.png",
+     "long_stagger": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/CentaurHunter_sword_spells_long_stagger.png",
+     "kill": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/CentaurHunter_sword_spells_kill.png"
+    }
+   }
+  },
+  {
+   "boss": "GriffonAlpha",
+   "mode": "sword",
+   "environment_problem": null,
+   "result": "complete",
+   "errors": [],
+   "notes": [],
+   "samples_path": "C:/Project/TDGame/Saved/MonsterAI\\MidBossFight\\samples_GriffonAlpha_sword.jsonl",
+   "fight": {
+    "boss": "GriffonAlpha",
+    "mode": "sword",
+    "cap_seconds": 300.0,
+    "ended_reason": "boss_dead",
+    "boss_defeated": true,
+    "kill_seconds": 130.08,
+    "phase1_seconds": 37.29,
+    "engage_seconds": 0.01,
+    "boss_max_health": 2400.0,
+    "player_damage_taken": 545.0,
+    "player_damage_in_H": 5.45,
+    "player_min_health": 455.0,
+    "player_max_health": 1000.0,
+    "player_attacks": 1325,
+    "spell_attempts": 0,
+    "spell_casts": 0,
+    "spell_casts_by_slot": {},
+    "rolls": 20,
+    "roll_attempts": 274,
+    "roll_triggers_by_definition": {
+     "DA_TDGriffonAlphaBite": 1,
+     "DA_TDGriffonAlphaGlideSwoop": 4,
+     "DA_TDGriffonAlphaDiveClaw": 6,
+     "DA_TDGriffonAlphaRakeThree": 5,
+     "DA_TDGriffonAlphaClaw": 3,
+     "DA_TDGriffonAlphaTakeOffGust": 1
+    },
+    "dodge_shape_counts": {
+     "DA_TDGriffonAlphaRakeTwo": "LINE",
+     "DA_TDGriffonAlphaBite": "CIRCLE",
+     "DA_TDGriffonAlphaClaw": "CONE",
+     "DA_TDGriffonAlphaTakeOffGust": "CIRCLE",
+     "DA_TDGriffonAlphaGlideSwoop": "LINE",
+     "DA_TDGriffonAlphaDiveClaw": "CIRCLE",
+     "DA_TDGriffonAlphaRakeThree": "LINE",
+     "DA_TDGriffonAlphaLandingImpact": "CIRCLE"
+    },
+    "dodge_shape_unreadable": 0,
+    "boss_hp_timeline": [
+     {
+      "t": 0,
+      "boss_hp_ratio": 1.0
+     },
+     {
+      "t": 1,
+      "boss_hp_ratio": 1.0
+     },
+     {
+      "t": 2,
+      "boss_hp_ratio": 0.9826
+     },
+     {
+      "t": 3,
+      "boss_hp_ratio": 0.9623
+     },
+     {
+      "t": 4,
+      "boss_hp_ratio": 0.9623
+     },
+     {
+      "t": 5,
+      "boss_hp_ratio": 0.9449
+     },
+     {
+      "t": 6,
+      "boss_hp_ratio": 0.9246
+     },
+     {
+      "t": 7,
+      "boss_hp_ratio": 0.9246
+     },
+     {
+      "t": 8,
+      "boss_hp_ratio": 0.9072
+     },
+     {
+      "t": 9,
+      "boss_hp_ratio": 0.8986
+     },
+     {
+      "t": 10,
+      "boss_hp_ratio": 0.887
+     },
+     {
+      "t": 11,
+      "boss_hp_ratio": 0.8696
+     },
+     {
+      "t": 12,
+      "boss_hp_ratio": 0.8493
+     },
+     {
+      "t": 13,
+      "boss_hp_ratio": 0.8493
+     },
+     {
+      "t": 14,
+      "boss_hp_ratio": 0.8319
+     },
+     {
+      "t": 15,
+      "boss_hp_ratio": 0.8116
+     },
+     {
+      "t": 16,
+      "boss_hp_ratio": 0.8116
+     },
+     {
+      "t": 17,
+      "boss_hp_ratio": 0.7942
+     },
+     {
+      "t": 18,
+      "boss_hp_ratio": 0.7739
+     },
+     {
+      "t": 19,
+      "boss_hp_ratio": 0.7652
+     },
+     {
+      "t": 20,
+      "boss_hp_ratio": 0.7565
+     },
+     {
+      "t": 21,
+      "boss_hp_ratio": 0.7362
+     },
+     {
+      "t": 22,
+      "boss_hp_ratio": 0.7362
+     },
+     {
+      "t": 23,
+      "boss_hp_ratio": 0.7188
+     },
+     {
+      "t": 24,
+      "boss_hp_ratio": 0.6986
+     },
+     {
+      "t": 25,
+      "boss_hp_ratio": 0.6986
+     },
+     {
+      "t": 26,
+      "boss_hp_ratio": 0.6899
+     },
+     {
+      "t": 27,
+      "boss_hp_ratio": 0.6812
+     },
+     {
+      "t": 28,
+      "boss_hp_ratio": 0.6609
+     },
+     {
+      "t": 29,
+      "boss_hp_ratio": 0.6609
+     },
+     {
+      "t": 30,
+      "boss_hp_ratio": 0.6609
+     },
+     {
+      "t": 31,
+      "boss_hp_ratio": 0.6522
+     },
+     {
+      "t": 32,
+      "boss_hp_ratio": 0.6435
+     },
+     {
+      "t": 33,
+      "boss_hp_ratio": 0.6348
+     },
+     {
+      "t": 34,
+      "boss_hp_ratio": 0.6145
+     },
+     {
+      "t": 35,
+      "boss_hp_ratio": 0.6058
+     },
+     {
+      "t": 36,
+      "boss_hp_ratio": 0.5971
+     },
+     {
+      "t": 37,
+      "boss_hp_ratio": 0.5768
+     },
+     {
+      "t": 38,
+      "boss_hp_ratio": 0.5768
+     },
+     {
+      "t": 39,
+      "boss_hp_ratio": 0.5594
+     },
+     {
+      "t": 40,
+      "boss_hp_ratio": 0.5507
+     },
+     {
+      "t": 41,
+      "boss_hp_ratio": 0.5391
+     },
+     {
+      "t": 42,
+      "boss_hp_ratio": 0.5391
+     },
+     {
+      "t": 43,
+      "boss_hp_ratio": 0.5391
+     },
+     {
+      "t": 44,
+      "boss_hp_ratio": 0.5391
+     },
+     {
+      "t": 45,
+      "boss_hp_ratio": 0.5391
+     },
+     {
+      "t": 46,
+      "boss_hp_ratio": 0.5391
+     },
+     {
+      "t": 47,
+      "boss_hp_ratio": 0.5391
+     },
+     {
+      "t": 48,
+      "boss_hp_ratio": 0.5304
+     },
+     {
+      "t": 49,
+      "boss_hp_ratio": 0.513
+     },
+     {
+      "t": 50,
+      "boss_hp_ratio": 0.5014
+     },
+     {
+      "t": 51,
+      "boss_hp_ratio": 0.4928
+     },
+     {
+      "t": 52,
+      "boss_hp_ratio": 0.4754
+     },
+     {
+      "t": 53,
+      "boss_hp_ratio": 0.4638
+     },
+     {
+      "t": 54,
+      "boss_hp_ratio": 0.4551
+     },
+     {
+      "t": 55,
+      "boss_hp_ratio": 0.4551
+     },
+     {
+      "t": 56,
+      "boss_hp_ratio": 0.4551
+     },
+     {
+      "t": 57,
+      "boss_hp_ratio": 0.4464
+     },
+     {
+      "t": 58,
+      "boss_hp_ratio": 0.429
+     },
+     {
+      "t": 59,
+      "boss_hp_ratio": 0.4174
+     },
+     {
+      "t": 60,
+      "boss_hp_ratio": 0.4087
+     },
+     {
+      "t": 61,
+      "boss_hp_ratio": 0.4
+     },
+     {
+      "t": 62,
+      "boss_hp_ratio": 0.4
+     },
+     {
+      "t": 63,
+      "boss_hp_ratio": 0.4
+     },
+     {
+      "t": 64,
+      "boss_hp_ratio": 0.3913
+     },
+     {
+      "t": 65,
+      "boss_hp_ratio": 0.3913
+     },
+     {
+      "t": 66,
+      "boss_hp_ratio": 0.3913
+     },
+     {
+      "t": 67,
+      "boss_hp_ratio": 0.3826
+     },
+     {
+      "t": 68,
+      "boss_hp_ratio": 0.3652
+     },
+     {
+      "t": 69,
+      "boss_hp_ratio": 0.3652
+     },
+     {
+      "t": 70,
+      "boss_hp_ratio": 0.3536
+     },
+     {
+      "t": 71,
+      "boss_hp_ratio": 0.3449
+     },
+     {
+      "t": 72,
+      "boss_hp_ratio": 0.3449
+     },
+     {
+      "t": 73,
+      "boss_hp_ratio": 0.3449
+     },
+     {
+      "t": 74,
+      "boss_hp_ratio": 0.3449
+     },
+     {
+      "t": 75,
+      "boss_hp_ratio": 0.3362
+     },
+     {
+      "t": 76,
+      "boss_hp_ratio": 0.3362
+     },
+     {
+      "t": 77,
+      "boss_hp_ratio": 0.3362
+     },
+     {
+      "t": 78,
+      "boss_hp_ratio": 0.3275
+     },
+     {
+      "t": 79,
+      "boss_hp_ratio": 0.3188
+     },
+     {
+      "t": 80,
+      "boss_hp_ratio": 0.2986
+     },
+     {
+      "t": 81,
+      "boss_hp_ratio": 0.2899
+     },
+     {
+      "t": 82,
+      "boss_hp_ratio": 0.2812
+     },
+     {
+      "t": 83,
+      "boss_hp_ratio": 0.2609
+     },
+     {
+      "t": 84,
+      "boss_hp_ratio": 0.2522
+     },
+     {
+      "t": 85,
+      "boss_hp_ratio": 0.2522
+     },
+     {
+      "t": 86,
+      "boss_hp_ratio": 0.2522
+     },
+     {
+      "t": 87,
+      "boss_hp_ratio": 0.2435
+     },
+     {
+      "t": 88,
+      "boss_hp_ratio": 0.2348
+     },
+     {
+      "t": 89,
+      "boss_hp_ratio": 0.2261
+     },
+     {
+      "t": 90,
+      "boss_hp_ratio": 0.2145
+     },
+     {
+      "t": 91,
+      "boss_hp_ratio": 0.2058
+     },
+     {
+      "t": 92,
+      "boss_hp_ratio": 0.2058
+     },
+     {
+      "t": 93,
+      "boss_hp_ratio": 0.2058
+     },
+     {
+      "t": 94,
+      "boss_hp_ratio": 0.1971
+     },
+     {
+      "t": 95,
+      "boss_hp_ratio": 0.1971
+     },
+     {
+      "t": 96,
+      "boss_hp_ratio": 0.1971
+     },
+     {
+      "t": 97,
+      "boss_hp_ratio": 0.1884
+     },
+     {
+      "t": 98,
+      "boss_hp_ratio": 0.171
+     },
+     {
+      "t": 99,
+      "boss_hp_ratio": 0.1594
+     },
+     {
+      "t": 100,
+      "boss_hp_ratio": 0.1594
+     },
+     {
+      "t": 101,
+      "boss_hp_ratio": 0.1594
+     },
+     {
+      "t": 102,
+      "boss_hp_ratio": 0.1594
+     },
+     {
+      "t": 103,
+      "boss_hp_ratio": 0.1594
+     },
+     {
+      "t": 104,
+      "boss_hp_ratio": 0.1594
+     },
+     {
+      "t": 105,
+      "boss_hp_ratio": 0.1594
+     },
+     {
+      "t": 106,
+      "boss_hp_ratio": 0.1594
+     },
+     {
+      "t": 107,
+      "boss_hp_ratio": 0.1507
+     },
+     {
+      "t": 108,
+      "boss_hp_ratio": 0.1507
+     },
+     {
+      "t": 109,
+      "boss_hp_ratio": 0.1507
+     },
+     {
+      "t": 110,
+      "boss_hp_ratio": 0.1507
+     },
+     {
+      "t": 111,
+      "boss_hp_ratio": 0.1507
+     },
+     {
+      "t": 112,
+      "boss_hp_ratio": 0.1507
+     },
+     {
+      "t": 113,
+      "boss_hp_ratio": 0.1507
+     },
+     {
+      "t": 114,
+      "boss_hp_ratio": 0.142
+     },
+     {
+      "t": 115,
+      "boss_hp_ratio": 0.1246
+     },
+     {
+      "t": 116,
+      "boss_hp_ratio": 0.1246
+     },
+     {
+      "t": 117,
+      "boss_hp_ratio": 0.113
+     },
+     {
+      "t": 118,
+      "boss_hp_ratio": 0.0957
+     },
+     {
+      "t": 119,
+      "boss_hp_ratio": 0.087
+     },
+     {
+      "t": 120,
+      "boss_hp_ratio": 0.087
+     },
+     {
+      "t": 121,
+      "boss_hp_ratio": 0.087
+     },
+     {
+      "t": 122,
+      "boss_hp_ratio": 0.0783
+     },
+     {
+      "t": 123,
+      "boss_hp_ratio": 0.0609
+     },
+     {
+      "t": 124,
+      "boss_hp_ratio": 0.0493
+     },
+     {
+      "t": 125,
+      "boss_hp_ratio": 0.0406
+     },
+     {
+      "t": 126,
+      "boss_hp_ratio": 0.0319
+     },
+     {
+      "t": 127,
+      "boss_hp_ratio": 0.0319
+     },
+     {
+      "t": 128,
+      "boss_hp_ratio": 0.0319
+     },
+     {
+      "t": 129,
+      "boss_hp_ratio": 0.0145
+     },
+     {
+      "t": 130,
+      "boss_hp_ratio": 0.0058
+     }
+    ],
+    "phase_transitions": [
+     {
+      "from": 0,
+      "to": 1,
+      "seconds": 37.3,
+      "boss_hp_ratio": 0.5768
+     }
+    ],
+    "stagger_intervals": [
+     {
+      "start_seconds": 47.68,
+      "length_seconds": 5.83,
+      "action_before": "DiveClaw",
+      "stagger_action": "None",
+      "flying": false,
+      "phase": 1,
+      "boss_hp_ratio": 0.5304
+     },
+     {
+      "start_seconds": 77.92,
+      "length_seconds": 5.6,
+      "action_before": "DiveClaw",
+      "stagger_action": "None",
+      "flying": false,
+      "phase": 1,
+      "boss_hp_ratio": 0.3275
+     }
+    ],
+    "short_stagger_count": 0,
+    "flight_intervals": [
+     {
+      "start_seconds": 38.62,
+      "end_seconds": 47.68,
+      "length_seconds": 9.06,
+      "boss_hp_ratio_at_start": 0.5594
+     },
+     {
+      "start_seconds": 69.09,
+      "end_seconds": 77.92,
+      "length_seconds": 8.83,
+      "boss_hp_ratio_at_start": 0.3652
+     },
+     {
+      "start_seconds": 99.57,
+      "end_seconds": 113.45,
+      "length_seconds": 13.87,
+      "boss_hp_ratio_at_start": 0.1594
+     }
+    ],
+    "boss_action_counts": {
+     "Approach": 2,
+     "Combo": 5,
+     "None": 46,
+     "Bite": 11,
+     "Claws": 12,
+     "Circle": 4,
+     "GlideSwoop": 4,
+     "Hover": 6,
+     "DiveClaw": 6,
+     "RakeComboThree": 6,
+     "CircleOnFoot": 3,
+     "TakeOffRaid": 2,
+     "ApproachOnFoot": 1,
+     "LandAndRest": 1
+    },
+    "minions_spawned": 0,
+    "minions_killed": 0,
+    "target_seconds": {
+     "boss": 82.7,
+     "minion": 0.0
+    },
+    "in_attack_range_seconds": 58.27,
+    "game_seconds": 130.09,
+    "real_seconds": 130.12,
+    "game_per_real": 1.0,
+    "screenshots": {
+     "phase1": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/GriffonAlpha_sword_phase1.png",
+     "flight": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/GriffonAlpha_sword_flight.png",
+     "long_stagger": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/GriffonAlpha_sword_long_stagger.png",
+     "kill": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/GriffonAlpha_sword_kill.png"
+    }
+   }
+  },
+  {
+   "boss": "GriffonAlpha",
+   "mode": "sword_spells",
+   "environment_problem": null,
+   "result": "complete",
+   "errors": [],
+   "notes": [],
+   "samples_path": "C:/Project/TDGame/Saved/MonsterAI\\MidBossFight\\samples_GriffonAlpha_sword_spells.jsonl",
+   "fight": {
+    "boss": "GriffonAlpha",
+    "mode": "sword_spells",
+    "cap_seconds": 300.0,
+    "ended_reason": "boss_dead",
+    "boss_defeated": true,
+    "kill_seconds": 22.49,
+    "phase1_seconds": 12.35,
+    "engage_seconds": 0.02,
+    "boss_max_health": 2400.0,
+    "player_damage_taken": 75.0,
+    "player_damage_in_H": 0.75,
+    "player_min_health": 925.0,
+    "player_max_health": 1000.0,
+    "player_attacks": 433,
+    "spell_attempts": 21,
+    "spell_casts": 21,
+    "spell_casts_by_slot": {
+     "0": 3,
+     "1": 2,
+     "2": 2,
+     "3": 2,
+     "4": 2,
+     "5": 2,
+     "6": 2,
+     "7": 2,
+     "8": 2,
+     "9": 2
+    },
+    "rolls": 0,
+    "roll_attempts": 19,
+    "roll_triggers_by_definition": {},
+    "dodge_shape_counts": {
+     "DA_TDGriffonAlphaRakeTwo": "LINE",
+     "DA_TDGriffonAlphaBite": "CIRCLE",
+     "DA_TDGriffonAlphaClaw": "CONE",
+     "DA_TDGriffonAlphaTakeOffGust": "CIRCLE",
+     "DA_TDGriffonAlphaGlideSwoop": "LINE",
+     "DA_TDGriffonAlphaRakeThree": "LINE"
+    },
+    "dodge_shape_unreadable": 0,
+    "boss_hp_timeline": [
+     {
+      "t": 0,
+      "boss_hp_ratio": 1.0
+     },
+     {
+      "t": 1,
+      "boss_hp_ratio": 0.9804
+     },
+     {
+      "t": 2,
+      "boss_hp_ratio": 0.9572
+     },
+     {
+      "t": 3,
+      "boss_hp_ratio": 0.9311
+     },
+     {
+      "t": 4,
+      "boss_hp_ratio": 0.894
+     },
+     {
+      "t": 5,
+      "boss_hp_ratio": 0.8674
+     },
+     {
+      "t": 6,
+      "boss_hp_ratio": 0.8471
+     },
+     {
+      "t": 7,
+      "boss_hp_ratio": 0.7555
+     },
+     {
+      "t": 8,
+      "boss_hp_ratio": 0.7356
+     },
+     {
+      "t": 9,
+      "boss_hp_ratio": 0.6986
+     },
+     {
+      "t": 10,
+      "boss_hp_ratio": 0.6644
+     },
+     {
+      "t": 11,
+      "boss_hp_ratio": 0.5794
+     },
+     {
+      "t": 12,
+      "boss_hp_ratio": 0.4744
+     },
+     {
+      "t": 13,
+      "boss_hp_ratio": 0.4452
+     },
+     {
+      "t": 14,
+      "boss_hp_ratio": 0.4249
+     },
+     {
+      "t": 15,
+      "boss_hp_ratio": 0.3983
+     },
+     {
+      "t": 16,
+      "boss_hp_ratio": 0.3896
+     },
+     {
+      "t": 17,
+      "boss_hp_ratio": 0.3473
+     },
+     {
+      "t": 18,
+      "boss_hp_ratio": 0.2682
+     },
+     {
+      "t": 19,
+      "boss_hp_ratio": 0.242
+     },
+     {
+      "t": 20,
+      "boss_hp_ratio": 0.2166
+     },
+     {
+      "t": 21,
+      "boss_hp_ratio": 0.1616
+     },
+     {
+      "t": 22,
+      "boss_hp_ratio": 0.0829
+     }
+    ],
+    "phase_transitions": [
+     {
+      "from": 0,
+      "to": 1,
+      "seconds": 12.37,
+      "boss_hp_ratio": 0.4642
+     }
+    ],
+    "stagger_intervals": [
+     {
+      "start_seconds": 15.92,
+      "length_seconds": 5.84,
+      "action_before": "GlideSwoop",
+      "stagger_action": "None",
+      "flying": false,
+      "phase": 1,
+      "boss_hp_ratio": 0.3896
+     }
+    ],
+    "short_stagger_count": 0,
+    "flight_intervals": [
+     {
+      "start_seconds": 13.69,
+      "end_seconds": 15.92,
+      "length_seconds": 2.23,
+      "boss_hp_ratio_at_start": 0.4278
+     }
+    ],
+    "boss_action_counts": {
+     "Approach": 1,
+     "Combo": 2,
+     "Bite": 2,
+     "None": 5,
+     "Claws": 1,
+     "GlideSwoop": 1,
+     "RakeComboThree": 1
+    },
+    "minions_spawned": 0,
+    "minions_killed": 0,
+    "target_seconds": {
+     "boss": 20.49,
+     "minion": 0.0
+    },
+    "in_attack_range_seconds": 19.66,
+    "game_seconds": 22.51,
+    "real_seconds": 22.55,
+    "game_per_real": 0.998,
+    "screenshots": {
+     "phase1": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/GriffonAlpha_sword_spells_phase1.png",
+     "flight": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/GriffonAlpha_sword_spells_flight.png",
+     "long_stagger": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/GriffonAlpha_sword_spells_long_stagger.png",
+     "kill": "Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018-final/GriffonAlpha_sword_spells_kill.png"
+    }
+   }
+  }
+ ]
+}

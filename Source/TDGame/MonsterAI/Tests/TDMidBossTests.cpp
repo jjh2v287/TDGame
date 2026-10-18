@@ -430,7 +430,7 @@ bool FTDMidBossDefinitionsTest::RunTest(const FString& Parameters)
 		float MaxHealth;
 		float PhaseHealthRatio;
 	};
-	const FExpectedBoss ExpectedBosses[] = { { CentaurId, 3200.f, 0.5f }, { GriffonId, 3600.f, 0.6f } };
+	const FExpectedBoss ExpectedBosses[] = { { CentaurId, 3000.f, 0.5f }, { GriffonId, 2400.f, 0.6f } };
 	for (const FExpectedBoss& Expected : ExpectedBosses)
 	{
 		const TSharedPtr<const FTDResolvedMonsterDefinition> Definition = Library->FindDefinition(Expected.Id);

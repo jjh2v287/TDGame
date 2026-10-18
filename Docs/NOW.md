@@ -1,15 +1,15 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-10-18 19:22 claude
+갱신: 2026-10-18 21:56 claude
 
 ## ① 진행 중 (대장 doing)
 
 - M3-33 done(로컬 커밋): 종 14개·종 표 `species_table.json`·추종 메시.
 - M3-36 done(로컬 커밋): 아레나 `LV_TDBossArena` 한 사이클(웨이브→켄타우로스→산룡·사망 초기화·승리)·보스바. BossLoop 통과.
 - M3-35 done(로컬 커밋): 공용 보스 기반(비행·소환·형상 예고·위험 1·페이즈 알림)·3페이즈 용 `TDSpawnMonster MountainDragon`. Boss 7/7, 합본 177/178, PIE 처치 통과.
-- M3-34 done: 중간 보스 CentaurHunter·GriffonAlpha. MidBoss 11/11, 회귀 177/178, PIE 통과.
+- M3-34 done(6d80f296)+후속 미커밋: 실전 PIE 측정으로 체력 3000/2400·끊기 1.5초·그리폰 착지 수정, 칼만 처치 122·130초.
 - 커밋 끝(07): M3-14(26eda9e8)·M3-30~32(0c716eac)·M3-29·M3-27·M3-14·28. 전술 끄기 `TD.MonsterAI.Tactics 0`.
-- FluidFX done(미커밋, D-48): 68/68·PIE 통과, 128×4 틱 27→1.3ms(`D-48-perf-2026-10-18.md`).
+- FluidFX v2 doing(미커밋, D-49 LIVE-2 동등): FX-1 볼륨 연기 완료(81/81, `LV_TDFluidSmokeStage`), 다음 FX-2 흐름 노이즈·FX-3 불·폭발(설계서 8절).
 - D-47 done(커밋 3794ad14), 후속(c) 피해 정의 소프트화는 M3-35 앞 커밋으로 정리.
 - M3-25·26 done(26 미커밋, PIE 육안 대기). P3-17·19·20 done.
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.

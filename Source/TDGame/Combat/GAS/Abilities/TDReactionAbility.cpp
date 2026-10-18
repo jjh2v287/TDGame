@@ -226,6 +226,17 @@ UTDReactionHitAbility::UTDReactionHitAbility()
 	ActiveStateTag = TDGameplayTags::State_Stunned;
 
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Dead);
+	ActivationBlockedTags.AddTag(TDGameplayTags::State_Rolling);
+}
+
+UTDReactionHeavyHitAbility::UTDReactionHeavyHitAbility()
+{
+	SetAssetTags(FGameplayTagContainer(TDGameplayTags::Action_Reaction_HeavyHit));
+	ReactionTag = TDGameplayTags::Action_Reaction_HeavyHit;
+	ActiveStateTag = TDGameplayTags::State_Stunned;
+
+	ActivationBlockedTags.AddTag(TDGameplayTags::State_Dead);
+	ActivationBlockedTags.AddTag(TDGameplayTags::State_Rolling);
 }
 
 UTDReactionDeathAbility::UTDReactionDeathAbility()

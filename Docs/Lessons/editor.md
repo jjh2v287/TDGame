@@ -192,3 +192,12 @@
 - 증거: 2026-10-18 `Saved/AgentOps/20261018/player-move/runtime.txt`(실패), `Saved/AgentOps/20261018/nav-wait/run-cold.log`·`run-warm.log`·`run-warm2.log`(통과)
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-editor-27 `-nullrhi` 헤드리스 커맨드릿에서 스켈레탈 메시를 FBX로 내보내면 `Assertion failed: MeshObject`로 죽는다(애니 FBX는 된다)
+- 증상: `UnrealEditor-Cmd ... -run=pythonscript -nullrhi`에서 AnimSequence FBX 7개는 내보낸 뒤 `AssetExportTask(SkeletalMesh)`에서 `Assertion failed: MeshObject [SkinnedMeshComponent.cpp:4987]`(GetCPUSkinnedVertices ← FMeshMergeHelpers::RetrieveMesh) 치명 오류
+- 원인: 메시 내보내기가 렌더 메시 객체로 CPU 스키닝 정점을 읽는데 NullRHI에서는 MeshObject가 만들어지지 않는다
+- 해결: 애니만 필요하면 헤드리스로 내보내고(골격은 애니 FBX에 들어 있음), 메시가 필요하면 GUI 에디터(`run_in_editor.py`)에서 내보낸다. 헤드리스 스크립트는 메시 내보내기를 마지막에 두거나 빼서 앞 산출물을 잃지 않게 한다
+- 범위: UE 5.8 에디터 커맨드릿 FBX 내보내기
+- 증거: 2026-10-18 `Saved/Logs/M327_ExportHitRefs.log`(애니 7개 성공 뒤 하이에나 메시에서 중단)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

@@ -390,7 +390,9 @@ void UTDCombatComponent::ExecuteStatusEvent(const FTDStatusRuntime& Status, ETDD
 	const TStrongObjectPtr<UTDStatusDefinition> RetainedDefinition(Status.Definition);
 	if (UTDDamageSubsystem* Subsystem = World->GetSubsystem<UTDDamageSubsystem>())
 	{
-		Subsystem->ExecuteRules(Status.Definition->Rules, Event, Status.Context, Owner, Owner->GetActorLocation());
+		FTDDamageContext StatusContext = Status.Context;
+		StatusContext.Delivery = ETDDamageDelivery::Status;
+		Subsystem->ExecuteRules(Status.Definition->Rules, Event, StatusContext, Owner, Owner->GetActorLocation());
 	}
 }
 

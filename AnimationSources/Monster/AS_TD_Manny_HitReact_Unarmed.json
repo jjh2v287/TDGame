@@ -1,0 +1,105 @@
+{
+ "name": "AS_TD_Manny_HitReact_Unarmed",
+ "fps": 60,
+ "frames": [
+  1,
+  41
+ ],
+ "frame_count": 41,
+ "duration_s": 0.6667,
+ "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+ "root_motion": false,
+ "in_place": true,
+ "source": "/Game/Characters/Mannequins/Anims (Lyra/Manny) MM_HitReact_Front_Med_01 (30fps, exported to Saved/BlenderAnimation/Reference/CombatHit/MM_HitReact_Front_Med_01.fbx), resampled to 60fps; used source 60fps frames [1, 41] (= 0.0..0.667 s), remaining settle tail dropped",
+ "start_end_pose": "MM_Idle frame 0 (/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle); runtime blend in 0.1 s / out 0.15 s",
+ "edit": "body (pelvis/spine/neck/head/legs) = MM_Idle frame0 + source local deltas (parent-space), feet = idle stance + source foot deltas with ball XY locked, arms = MM_Idle hanging arms driven by a shoulder-acceleration pendulum (lags, then swings back away from the impact) plus elbow whip and partial gravity hold; fingers = MM_Idle; tail faded to MM_Idle frame0",
+ "author_script": "Saved/AgentOps/20261018/combat-full/blender/scripts/hit_author.py (helpers exec-loaded from Tools/BlenderAnimation/blender_author_sword_shield_combo.py)",
+ "export": "Blender FBX: armature root only, add_leaf_bones False, bake every frame, simplify 0, axis_forward -Z, axis_up Y (same as sword_attack01_export.py)",
+ "unreal_import": {
+  "skeleton_path": "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+  "sample_rate": 60,
+  "import_uniform_scale": 1.0,
+  "preserve_local_transform": true,
+  "enable_root_motion": false,
+  "force_root_lock": true
+ },
+ "measure": {
+  "root_max_cm": 0.0,
+  "max_bone_length_error_cm": 0.00136,
+  "start_vs_idle0": {
+   "max_bone_pos_cm": 0.049,
+   "max_local_rot_deg": 0.04
+  },
+  "end_vs_idle0": {
+   "max_bone_pos_cm": 0.0,
+   "max_local_rot_deg": 0.441
+  },
+  "contacts": {
+   "ball_l": {
+    "contact_frame_pairs": 40,
+    "max_slip_cm_per_frame": 0.0002,
+    "total_slip_cm": 0.0013,
+    "max_xy_drift_cm": 0.0,
+    "z_range_cm": [
+     0.34,
+     0.55
+    ]
+   },
+   "ball_r": {
+    "contact_frame_pairs": 40,
+    "max_slip_cm_per_frame": 0.0001,
+    "total_slip_cm": 0.001,
+    "max_xy_drift_cm": 0.0,
+    "z_range_cm": [
+     0.13,
+     0.37
+    ]
+   },
+   "heel_l": {
+    "contact_frame_pairs": 24,
+    "max_slip_cm_per_frame": 0.0867,
+    "total_slip_cm": 0.6252,
+    "max_xy_drift_cm": 0.224,
+    "z_range_cm": [
+     0.51,
+     3.03
+    ]
+   },
+   "heel_r": {
+    "contact_frame_pairs": 40,
+    "max_slip_cm_per_frame": 0.123,
+    "total_slip_cm": 1.0306,
+    "max_xy_drift_cm": 0.371,
+    "z_range_cm": [
+     -0.46,
+     1.99
+    ]
+   }
+  },
+  "elbow_wrist": {
+   "l": {
+    "flex_deg_range": [
+     12.7,
+     29.8
+    ],
+    "max_flex_change_deg_per_frame": 3.06,
+    "max_hand_rot_deg_per_frame": 5.51,
+    "max_wrist_speed_cm_per_frame": 4.1,
+    "max_wrist_speed_jump_cm_per_frame2": 1.21,
+    "wrist_travel_from_start_max_cm": 24.6
+   },
+   "r": {
+    "flex_deg_range": [
+     16.4,
+     32.2
+    ],
+    "max_flex_change_deg_per_frame": 2.5,
+    "max_hand_rot_deg_per_frame": 4.44,
+    "max_wrist_speed_cm_per_frame": 3.71,
+    "max_wrist_speed_jump_cm_per_frame2": 1.15,
+    "wrist_travel_from_start_max_cm": 24.3
+   }
+  },
+  "peak_head_frame": 11
+ }
+}

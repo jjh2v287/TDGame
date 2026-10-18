@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Characters/TDCombatCharacter.h"
+#include "Engine/TimerHandle.h"
 #include "GameplayTagContainer.h"
 #include "GenericTeamAgentInterface.h"
 #include "MonsterAI/TDMonsterBody.h"
@@ -122,15 +123,25 @@ private:
 	void HandleMonsterDamaged(const FTDDamageResult& Result, const FTDDamageContext& Context);
 	void HandleMonsterFrozen(bool bIsFrozen);
 	void PlayDeathPresentation();
+	void StartDeathRagdoll();
+	void ScheduleCorpseSink();
+	void BeginCorpseSink();
+	void AdvanceCorpseSink();
+	void BroadcastDeathMessage(const FTDDamageContext& Context);
 	FVector ComputeAbilityOrigin(const FTDMonsterAbilityRequest& Request) const;
 	float PlayAbilityClip(const FTDMonsterAbilityRequest& Request, float WindupSeconds, float& OutRecoverySeconds);
 	float PlaySpeciesClip(const FTDMonsterAnimClip& Clip, float PlayRate);
-	void StartRagdoll();
 
 	bool bHasGrantedDefaultActionAbilities = false;
 	bool bHasAppliedMonsterStats = false;
 	float BaseMoveSpeed = 400.f;
 	float AbilityImpactTime = 0.f;
+	FTimerHandle DeathRagdollTimerHandle;
+	FTimerHandle CorpseSinkTimerHandle;
+	FVector CorpseSinkStartLocation = FVector::ZeroVector;
+	double CorpseSinkStartSeconds = 0.0;
+	float CorpseSinkDurationSeconds = 0.f;
+	float CorpseSinkDepth = 0.f;
 	FTDMonsterSlotHandle BrainHandle;
 	TWeakObjectPtr<ATDDamageEntity> ActiveAbilityEntity;
 };

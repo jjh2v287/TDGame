@@ -1,10 +1,7 @@
 #include "Combat/TDCombatLibrary.h"
 #include "AbilitySystemGlobals.h"
 #include "Combat/TDCombatComponent.h"
-#include "Core/TDGameplayMessages.h"
-#include "Core/TDGameplayTags.h"
-#include "Engine/World.h"
-#include "GameFramework/GameplayMessageSubsystem.h"
+#include "GameFramework/Actor.h"
 
 float UTDCombatLibrary::TryApplyDamage(AActor* TargetActor, const FTDDamageSpec& DamageSpec)
 {
@@ -31,22 +28,7 @@ float UTDCombatLibrary::TryApplyDamage(AActor* TargetActor, const FTDDamageSpec&
 
 	const FTDDamageContext Context = MakeDamageContext(Instigator, TargetActor->GetActorLocation());
 	const FTDDamageResult Result = TargetCombatant->ReceiveDamage(DamageSpec.Amount, DamageSpec.Element, DamageSpec.bCanCrit, Context);
-	if (Result.AppliedDamage <= 0.f)
-	{
-		return 0.f;
-	}
-
-	if (UWorld* World = TargetActor->GetWorld())
-	{
-		FTDDamageAppliedMessage Message;
-		Message.Instigator = Instigator;
-		Message.Target = TargetActor;
-		Message.DamageAmount = Result.AppliedDamage;
-		Message.Element = DamageSpec.Element;
-		Message.bWasCritical = Result.bWasCritical;
-		UGameplayMessageSubsystem::Get(World).BroadcastMessage(TDGameplayTags::Event_Damage_Applied, Message);
-	}
-	return Result.AppliedDamage;
+	return FMath::Max(0.f, Result.AppliedDamage);
 }
 
 bool UTDCombatLibrary::AreActorsHostile(const AActor* SourceActor, const AActor* TargetActor)

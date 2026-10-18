@@ -8,9 +8,13 @@
 #include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Core/TDGameplayMessages.h"
+#include "Core/TDGameplayTags.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
+#include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "TDGame.h"
 
 namespace
@@ -84,8 +88,22 @@ namespace
 		}
 		WindowContext.CastTarget = Avatar.GetActorLocation();
 		WindowContext.Direction = Avatar.GetActorForwardVector();
+		WindowContext.Delivery = ETDDamageDelivery::Melee;
 		WindowContext.Budget = MakeShared<FTDDamageChainBudget>();
 		return WindowContext;
+	}
+
+	void BroadcastTimelineMeleeSwing(AActor& Avatar)
+	{
+		UWorld* World = Avatar.GetWorld();
+		if (!World || !UGameplayMessageSubsystem::HasInstance(World))
+		{
+			return;
+		}
+		FTDMeleeSwingMessage Message;
+		Message.Attacker = &Avatar;
+		Message.Location = Avatar.GetActorLocation();
+		UGameplayMessageSubsystem::Get(World).BroadcastMessage(TDGameplayTags::Event_Combat_MeleeSwing, Message);
 	}
 }
 
@@ -271,7 +289,10 @@ void UTDAbilityTask_PlayActionTimeline::AdvanceWindows(const float PreviousAnima
 			}
 			ActiveSweepFlags[WindowIndex] = true;
 			const float SweepStartTime = FMath::Max(HitWindow.Window.StartSeconds, Action.StartSeconds);
-			Sweep.Begin(FindAvatarMesh(*Avatar), LoadedAnimation.Get(), HitWindow.Sweep, MakeWindowDamageContext(DamageContext, *Avatar), SweepStartTime, bSampleWithRootMotionExtracted);
+			if (Sweep.Begin(FindAvatarMesh(*Avatar), LoadedAnimation.Get(), HitWindow.Sweep, MakeWindowDamageContext(DamageContext, *Avatar), SweepStartTime, bSampleWithRootMotionExtracted))
+			{
+				BroadcastTimelineMeleeSwing(*Avatar);
+			}
 		}
 
 		if (!Sweep.IsActive())

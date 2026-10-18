@@ -32,6 +32,7 @@ namespace TDCharacterAnimationPlayback
 	constexpr float ActionBlendInSeconds = 0.1f;
 	constexpr float ActionBlendOutSeconds = 0.15f;
 	constexpr float DeathBlendSeconds = 0.1f;
+	constexpr int32 InjectionWarmupTicks = 2;
 
 	const FName& GetAnimationPrePhysicsEventName()
 	{
@@ -86,6 +87,16 @@ namespace TDCharacterAnimationPlayback
 		PlayArgs.LoopMode = bShouldLoop ? UE::UAF::EAnimAssetLoopMode::ForceLoop : UE::UAF::EAnimAssetLoopMode::ForceNonLoop;
 		PlayArgs.LifetimeType = LifetimeType;
 		return UE::UAF::FInjectionUtils::PlayAnim(&AnimationSystem, GetDefaultInjectionSite(), Animation, MoveTemp(PlayArgs), MakeBlendSettings(BlendInSeconds), MakeBlendSettings(BlendOutSeconds));
+	}
+
+	UE::UAF::FInjectionRequestPtr InjectActionSequence(UUAFComponent& AnimationSystem, UAnimSequence* Animation, const float PlayRate, const float StartSeconds)
+	{
+		return InjectSequence(AnimationSystem, Animation, PlayRate, StartSeconds, false, EAnimNextInjectionLifetimeType::Auto, ActionBlendInSeconds, ActionBlendOutSeconds);
+	}
+
+	UE::UAF::FInjectionRequestPtr InjectDeathSequence(UUAFComponent& AnimationSystem, UAnimSequence* Animation, const float PlayRate)
+	{
+		return InjectSequence(AnimationSystem, Animation, PlayRate, 0.f, false, EAnimNextInjectionLifetimeType::ForcePersistent, DeathBlendSeconds, DeathBlendSeconds);
 	}
 
 	bool IsInjectionPending(const UE::UAF::FInjectionRequest& Request)
@@ -194,9 +205,12 @@ void UTDCharacterAnimationComponent::BeginPlay()
 
 void UTDCharacterAnimationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	ClearHitStop();
 	TDCharacterAnimationPlayback::UninjectAndReset(ActionRequest);
 	TDCharacterAnimationPlayback::UninjectAndReset(LocomotionRequest);
 	ActiveAction = FTDActiveAction();
+	PendingInjection = FTDPendingInjection();
+	InjectionWarmupTicksRemaining = 0;
 	CurrentLocomotionPose = ETDLocomotionPose::None;
 	bIsRootMotionEnabled = false;
 	Super::EndPlay(EndPlayReason);
@@ -206,7 +220,12 @@ void UTDCharacterAnimationComponent::TickComponent(float DeltaTime, ELevelTick T
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	CancelPendingRootMotion();
-	if (bIsPlayingDeath || bIsAnimationFrozen || !bHasBaseAsset)
+	if (IsPoseHeld() || !bHasBaseAsset)
+	{
+		return;
+	}
+	AdvanceInjectionWarmup();
+	if (bIsPlayingDeath)
 	{
 		return;
 	}
@@ -276,7 +295,7 @@ void UTDCharacterAnimationComponent::UseAirborneClips(const FTDAirborneClipSet& 
 float UTDCharacterAnimationComponent::PlayAction(UAnimSequence* Animation, float PlayRate, float StartSeconds, float EndSeconds, bool bUseRootMotion)
 {
 	UUAFComponent* AnimationSystem = ResolveUAFComponent();
-	if (!Animation || !AnimationSystem || !bHasBaseAsset || bIsPlayingDeath || bIsAnimationFrozen)
+	if (!Animation || !AnimationSystem || !bHasBaseAsset || bIsPlayingDeath || bIsAnimationFrozen || bIsPoseHeldByDeath)
 	{
 		return 0.f;
 	}
@@ -291,6 +310,7 @@ float UTDCharacterAnimationComponent::PlayAction(UAnimSequence* Animation, float
 		return 0.f;
 	}
 
+	EndHitStop();
 	for (int32 StopAttempt = 0; StopAttempt < TDCharacterAnimationPlayback::MaximumActionStopAttempts && IsPlayingAction(); ++StopAttempt)
 	{
 		StopAction(TDCharacterAnimationPlayback::ActionBlendOutSeconds);
@@ -300,10 +320,19 @@ float UTDCharacterAnimationComponent::PlayAction(UAnimSequence* Animation, float
 		return 0.f;
 	}
 
-	ActionRequest = TDCharacterAnimationPlayback::InjectSequence(*AnimationSystem, Animation, SafePlayRate, StartTime, false, EAnimNextInjectionLifetimeType::Auto, TDCharacterAnimationPlayback::ActionBlendInSeconds, TDCharacterAnimationPlayback::ActionBlendOutSeconds);
-	if (!ActionRequest)
+	if (IsInjectionWarmingUp())
 	{
-		return 0.f;
+		PendingInjection.Animation = Animation;
+		PendingInjection.PlayRate = SafePlayRate;
+		PendingInjection.bIsDeath = false;
+	}
+	else
+	{
+		ActionRequest = TDCharacterAnimationPlayback::InjectActionSequence(*AnimationSystem, Animation, SafePlayRate, StartTime);
+		if (!ActionRequest)
+		{
+			return 0.f;
+		}
 	}
 
 	LocomotionRequest.Reset();
@@ -333,28 +362,38 @@ void UTDCharacterAnimationComponent::StopAction(float BlendOutSeconds)
 float UTDCharacterAnimationComponent::PlayDeath(UAnimSequence* Animation, float PlayRate, float EndSeconds)
 {
 	UUAFComponent* AnimationSystem = ResolveUAFComponent();
-	if (!Animation || !AnimationSystem || !bHasBaseAsset || bIsPlayingDeath)
+	if (!Animation || !AnimationSystem || !bHasBaseAsset || bIsPlayingDeath || bIsPoseHeldByDeath)
 	{
 		return 0.f;
 	}
 
+	EndHitStop();
 	bIsPlayingDeath = true;
 	StopAction(TDCharacterAnimationPlayback::ActionBlendOutSeconds);
 
 	const float SafePlayRate = FMath::Max(PlayRate, TDCharacterAnimationPlayback::MinimumActionPlayRate);
 	const float AnimationLength = Animation->GetPlayLength();
 	const float EndTime = EndSeconds > 0.f ? FMath::Min(EndSeconds, AnimationLength) : AnimationLength;
-	UE::UAF::FInjectionRequestPtr DeathRequest = TDCharacterAnimationPlayback::InjectSequence(*AnimationSystem, Animation, SafePlayRate, 0.f, false, EAnimNextInjectionLifetimeType::ForcePersistent, TDCharacterAnimationPlayback::DeathBlendSeconds, TDCharacterAnimationPlayback::DeathBlendSeconds);
-	if (!DeathRequest)
+	if (IsInjectionWarmingUp())
 	{
-		bIsPlayingDeath = false;
-		return 0.f;
+		PendingInjection.Animation = Animation;
+		PendingInjection.PlayRate = SafePlayRate;
+		PendingInjection.bIsDeath = true;
+	}
+	else
+	{
+		UE::UAF::FInjectionRequestPtr DeathRequest = TDCharacterAnimationPlayback::InjectDeathSequence(*AnimationSystem, Animation, SafePlayRate);
+		if (!DeathRequest)
+		{
+			bIsPlayingDeath = false;
+			return 0.f;
+		}
+		ActionRequest = MoveTemp(DeathRequest);
 	}
 
 	LocomotionRequest.Reset();
 	CurrentLocomotionPose = ETDLocomotionPose::None;
 	LandingSecondsRemaining = 0.f;
-	ActionRequest = MoveTemp(DeathRequest);
 	DeathAnimation = Animation;
 
 	const float EffectivePlayRate = FMath::Max(SafePlayRate * Animation->RateScale, TDCharacterAnimationPlayback::MinimumActionPlayRate);
@@ -382,13 +421,79 @@ void UTDCharacterAnimationComponent::SetAnimationFrozen(bool bIsFrozen)
 	{
 		return;
 	}
+	if (bIsFrozen)
+	{
+		ClearHitStop();
+	}
 	bIsAnimationFrozen = bIsFrozen;
+	RefreshAnimationSystemActivation();
+}
+
+void UTDCharacterAnimationComponent::HoldPoseForDeath()
+{
+	if (bIsPoseHeldByDeath)
+	{
+		return;
+	}
+	ClearHitStop();
+	PendingInjection = FTDPendingInjection();
+	bIsPoseHeldByDeath = true;
+	RefreshAnimationSystemActivation();
+}
+
+void UTDCharacterAnimationComponent::StartHitStop(float Seconds)
+{
+	UWorld* World = GetWorld();
+	if (Seconds <= 0.f || !World || bIsAnimationFrozen || bIsPlayingDeath || bIsPoseHeldByDeath)
+	{
+		return;
+	}
+	FTimerManager& TimerManager = World->GetTimerManager();
+	if (bIsHitStopped && TimerManager.GetTimerRemaining(HitStopTimerHandle) >= Seconds)
+	{
+		return;
+	}
+	TimerManager.SetTimer(HitStopTimerHandle, FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		EndHitStop();
+	}), Seconds, false);
+	bIsHitStopped = true;
+	RefreshAnimationSystemActivation();
+}
+
+void UTDCharacterAnimationComponent::EndHitStop()
+{
+	if (!bIsHitStopped)
+	{
+		return;
+	}
+	ClearHitStop();
+	RefreshAnimationSystemActivation();
+}
+
+void UTDCharacterAnimationComponent::ClearHitStop()
+{
+	bIsHitStopped = false;
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(HitStopTimerHandle);
+	}
+}
+
+void UTDCharacterAnimationComponent::RefreshAnimationSystemActivation()
+{
+	const bool bShouldPause = IsPoseHeld();
+	if (bIsAnimationSystemPaused == bShouldPause)
+	{
+		return;
+	}
 	UUAFComponent* AnimationSystem = ResolveUAFComponent();
 	if (!AnimationSystem)
 	{
 		return;
 	}
-	AnimationSystem->SetActive(!bIsFrozen);
+	bIsAnimationSystemPaused = bShouldPause;
+	AnimationSystem->SetActive(!bShouldPause);
 }
 
 UUAFComponent* UTDCharacterAnimationComponent::ResolveUAFComponent() const
@@ -406,7 +511,7 @@ void UTDCharacterAnimationComponent::ApplyBaseAsset()
 	UAnimSequence* FallbackIdleClip = LocomotionClips.Idle ? LocomotionClips.Idle.Get() : (LocomotionClips.Walk ? LocomotionClips.Walk.Get() : LocomotionClips.Run.Get());
 	const UObject* BaseAsset = bUsesBlendSpace ? static_cast<const UObject*>(LocomotionBlendSpace.Get()) : FallbackIdleClip;
 	UUAFComponent* AnimationSystem = ResolveUAFComponent();
-	if (!BaseAsset || !AnimationSystem || bIsPlayingDeath)
+	if (!BaseAsset || !AnimationSystem || bIsPlayingDeath || bIsPoseHeldByDeath)
 	{
 		return;
 	}
@@ -420,6 +525,7 @@ void UTDCharacterAnimationComponent::ApplyBaseAsset()
 	StopAction(TDCharacterAnimationPlayback::ActionBlendOutSeconds);
 	ActionRequest.Reset();
 	LocomotionRequest.Reset();
+	PendingInjection = FTDPendingInjection();
 	CurrentLocomotionPose = ETDLocomotionPose::None;
 	CurrentLocomotionPlayRate = 1.f;
 	LandingSecondsRemaining = 0.f;
@@ -434,8 +540,10 @@ void UTDCharacterAnimationComponent::ApplyBaseAsset()
 	bHasBaseAsset = AnimationSystem->GetSystemReference().IsValid();
 	if (!bHasBaseAsset)
 	{
+		InjectionWarmupTicksRemaining = 0;
 		return;
 	}
+	InjectionWarmupTicksRemaining = TDCharacterAnimationPlayback::InjectionWarmupTicks;
 	TDCharacterAnimationPlayback::LinkMovementAfterAnimation(*AnimationSystem, *this);
 	if (!bUsesBlendSpace)
 	{
@@ -575,6 +683,7 @@ void UTDCharacterAnimationComponent::FinishAction(bool bWasInterrupted, float Bl
 		return;
 	}
 	const UAnimSequence* EndedAnimation = ActiveAction.Animation;
+	PendingInjection = FTDPendingInjection();
 
 	if (ActionRequest && TDCharacterAnimationPlayback::IsInjectionPending(*ActionRequest))
 	{
@@ -592,13 +701,59 @@ void UTDCharacterAnimationComponent::FinishAction(bool bWasInterrupted, float Bl
 void UTDCharacterAnimationComponent::InjectLocomotionPose(ETDLocomotionPose Pose, UAnimSequence* Animation, float PlayRate, bool bShouldLoop)
 {
 	UUAFComponent* AnimationSystem = ResolveUAFComponent();
-	if (!AnimationSystem || !Animation || !bHasBaseAsset)
+	if (!AnimationSystem || !Animation || !bHasBaseAsset || IsInjectionWarmingUp())
 	{
 		return;
 	}
 	LocomotionRequest = TDCharacterAnimationPlayback::InjectSequence(*AnimationSystem, Animation, PlayRate, 0.f, bShouldLoop, EAnimNextInjectionLifetimeType::Auto, TDCharacterAnimationPlayback::LocomotionBlendSeconds, TDCharacterAnimationPlayback::LocomotionBlendSeconds);
 	CurrentLocomotionPose = Pose;
 	CurrentLocomotionPlayRate = PlayRate;
+}
+
+void UTDCharacterAnimationComponent::AdvanceInjectionWarmup()
+{
+	if (InjectionWarmupTicksRemaining <= 0)
+	{
+		return;
+	}
+	--InjectionWarmupTicksRemaining;
+	if (InjectionWarmupTicksRemaining > 0)
+	{
+		return;
+	}
+	FlushPendingInjection();
+}
+
+void UTDCharacterAnimationComponent::FlushPendingInjection()
+{
+	UAnimSequence* Animation = PendingInjection.Animation.Get();
+	const float PlayRate = PendingInjection.PlayRate;
+	const bool bIsDeath = PendingInjection.bIsDeath;
+	PendingInjection = FTDPendingInjection();
+	UUAFComponent* AnimationSystem = ResolveUAFComponent();
+	if (!Animation || !AnimationSystem)
+	{
+		return;
+	}
+
+	if (bIsDeath)
+	{
+		if (bIsPlayingDeath && DeathAnimation == Animation)
+		{
+			ActionRequest = TDCharacterAnimationPlayback::InjectDeathSequence(*AnimationSystem, Animation, PlayRate);
+		}
+		return;
+	}
+
+	if (ActiveAction.Animation != Animation)
+	{
+		return;
+	}
+	ActionRequest = TDCharacterAnimationPlayback::InjectActionSequence(*AnimationSystem, Animation, PlayRate, ActiveAction.AnimationTime);
+	if (!ActionRequest)
+	{
+		FinishAction(true, TDCharacterAnimationPlayback::ActionBlendOutSeconds);
+	}
 }
 
 void UTDCharacterAnimationComponent::ClearLocomotionInjection()

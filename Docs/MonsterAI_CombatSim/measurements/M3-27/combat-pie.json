@@ -1,0 +1,326 @@
+{
+	"setup":
+	{
+		"map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+		"controller_class": "BP_TDCombatController_C",
+		"player_class": "BP_TDCombatCharacter_C",
+		"player_skill_set": "TDCombatStyleDefinition_0",
+		"attack_hostile_on_click": true,
+		"player_combat_level": 10,
+		"player_max_health": 280,
+		"navigation_passes": 2,
+		"assets_requested": 5,
+		"player_skill_set_combo_steps": 4
+	},
+	"aborted": false,
+	"screenshots":
+	{
+		"01_player_hits.png": true,
+		"02_monster_ragdoll.png": true,
+		"03_player_damaged.png": true,
+		"04_player_dead.png": true
+	},
+	"combo_windows": [
+		{
+			"step": 1,
+			"clip": "/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo01.AS_TD_Player_SwordCombo01",
+			"clip_seconds": 1.4166666269302368,
+			"hit_windows": 1,
+			"tag_windows": 1,
+			"input_buffer_start": 0.34999999403953552,
+			"input_buffer_end": 1.4166666269302368
+		},
+		{
+			"step": 2,
+			"clip": "/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo02.AS_TD_Player_SwordCombo02",
+			"clip_seconds": 1.4166666269302368,
+			"hit_windows": 1,
+			"tag_windows": 1,
+			"input_buffer_start": 0.38333332538604736,
+			"input_buffer_end": 1.4166666269302368
+		},
+		{
+			"step": 3,
+			"clip": "/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo03.AS_TD_Player_SwordCombo03",
+			"clip_seconds": 1.5166666507720947,
+			"hit_windows": 1,
+			"tag_windows": 1,
+			"input_buffer_start": 0.3333333432674408,
+			"input_buffer_end": 1.5166666507720947
+		},
+		{
+			"step": 4,
+			"clip": "/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo04.AS_TD_Player_SwordCombo04",
+			"clip_seconds": 1.1166666746139526,
+			"hit_windows": 1,
+			"tag_windows": 0,
+			"input_buffer_start": 0.60000002384185791,
+			"input_buffer_end": 1.1166666746139526
+		}
+	],
+	"player_hits":
+	{
+		"cursor_trace":
+		{
+			"hit_goblin": true,
+			"attempts": 1,
+			"screen_x": 1213.8330078125,
+			"screen_y": 723.751220703125,
+			"hit_actor": "TDMonsterCharacter_0",
+			"hit_component": "ResolveHostileTargetAtScreenPosition"
+		},
+		"attack_commands": 19,
+		"attacked_commands": 3,
+		"approaching_commands": 13,
+		"rejected_commands": 3,
+		"highest_combo_step": 4,
+		"sampled_highest_combo_step": 4,
+		"action_sequence": [
+			"Action.Attack.Primary.01",
+			"Action.Attack.Primary.02",
+			"Action.Attack.Primary.03",
+			"Action.Attack.Primary.04",
+			"Action.Attack.Primary.01"
+		],
+		"monster_hits": 3,
+		"melee_hits_from_player": 3,
+		"melee_hits_with_location": 3,
+		"hits": [
+			{
+				"seconds": 0.83956240490078926,
+				"caster": "BP_TDCombatCharacter_C_0",
+				"from_player": true,
+				"delivery": "ETDDamageDelivery::Melee",
+				"applied": 40,
+				"unclamped": 40,
+				"ratio": 0.3333333432674408,
+				"critical": false,
+				"killed": false,
+				"has_hit_location": true,
+				"hit_location_to_monster_cm": 51.837091254365504,
+				"combo_step": 1,
+				"action": "Action.Attack.Primary.01"
+			},
+			{
+				"seconds": 1.542578611522913,
+				"caster": "BP_TDCombatCharacter_C_0",
+				"from_player": true,
+				"delivery": "ETDDamageDelivery::Melee",
+				"applied": 40,
+				"unclamped": 40,
+				"ratio": 0.3333333432674408,
+				"critical": false,
+				"killed": false,
+				"has_hit_location": true,
+				"hit_location_to_monster_cm": 49.347856699140486,
+				"combo_step": 2,
+				"action": "Action.Attack.Primary.02"
+			},
+			{
+				"seconds": 6.9201295077800751,
+				"caster": "BP_TDCombatCharacter_C_0",
+				"from_player": true,
+				"delivery": "ETDDamageDelivery::Melee",
+				"applied": 40,
+				"unclamped": 40,
+				"ratio": 0.3333333432674408,
+				"critical": false,
+				"killed": true,
+				"has_hit_location": true,
+				"hit_location_to_monster_cm": 52.011089252183545,
+				"combo_step": 1,
+				"action": "Action.Attack.Primary.01"
+			}
+		],
+		"monster_start_health": 120,
+		"monster_lowest_health": 0,
+		"monster_max_health": 120,
+		"killed_by_melee": true,
+		"kill_forced_by_test": false,
+		"seconds_to_kill": 6.9201295077800751,
+		"monster_hit_effects_required": 3,
+		"feedback_delta":
+		{
+			"numbers_shown": 3,
+			"player_damage_numbers_shown": 0,
+			"effects_requested": 3,
+			"effects_spawned": 3,
+			"effects_skipped_not_loaded": 0,
+			"effects_skipped_frame_cap": 0,
+			"effects_spawn_failed": 0,
+			"monster_hits_seen": 3,
+			"monster_hit_effects_spawned": 3,
+			"sounds_played": 9,
+			"flashes_started": 3,
+			"hit_stops_started": 2,
+			"wobbles_started": 3,
+			"shakes_started": 3,
+			"avoided_shown": 0,
+			"death_screens_shown": 0,
+			"swings_played": 5
+		},
+		"monster_debug": []
+	},
+	"monster_ragdoll":
+	{
+		"ragdoll_started": true,
+		"seconds_to_ragdoll": 0,
+		"is_ragdolling_at_start": true,
+		"is_ragdolling_after_observation": true,
+		"probe_bone": "pelvis",
+		"pose_bones": [
+			"hand_l",
+			"hand_r",
+			"head"
+		],
+		"pose_max_change_cm": 56.870942599587174,
+		"probe_max_horizontal_travel_cm": 18.653733820886217,
+		"probe_max_vertical_travel_cm": 19.905408899708377,
+		"arena_drift_cm": 18.653733820886217,
+		"floor_clearance_cm": 45.516845726591434,
+		"corpse_life_span_seconds": 3.9889955520629883,
+		"observation_cut": false
+	},
+	"monster_hits_player":
+	{
+		"player_damaged": true,
+		"player_start_health": 100,
+		"player_damaged_health": 90,
+		"seconds_to_first_damage": 0.97368640080094337,
+		"player_hits": 1,
+		"player_hits_from_second_goblin": 1,
+		"first_hit_caster": "TDMonsterCharacter_1",
+		"first_hit_delivery": "ETDDamageDelivery::Spell",
+		"hits": [
+			{
+				"seconds": 0.97368640080094337,
+				"caster": "TDMonsterCharacter_1",
+				"from_second_goblin": true,
+				"delivery": "ETDDamageDelivery::Spell",
+				"applied": 10,
+				"ratio": 0.035714287310838699,
+				"has_hit_location": false
+			}
+		],
+		"feedback_delta":
+		{
+			"numbers_shown": 1,
+			"player_damage_numbers_shown": 1,
+			"effects_requested": 1,
+			"effects_spawned": 1,
+			"effects_skipped_not_loaded": 0,
+			"effects_skipped_frame_cap": 0,
+			"effects_spawn_failed": 0,
+			"monster_hits_seen": 0,
+			"monster_hit_effects_spawned": 0,
+			"sounds_played": 2,
+			"flashes_started": 1,
+			"hit_stops_started": 1,
+			"wobbles_started": 1,
+			"shakes_started": 1,
+			"avoided_shown": 0,
+			"death_screens_shown": 0,
+			"swings_played": 0
+		},
+		"monster_debug": [
+			"sim=2 actor=TDMonsterCharacter_1 def=Goblin_Melee state=Cast action=Slash engaged=1 engagement=Engaged phase=0 hp=120.0 pos=(1490,-0) token=C slot=I0 ondeck=0"
+		]
+	},
+	"player_reaction":
+	{
+		"health_reset": false,
+		"raw_damage": 56,
+		"applied_damage": 56,
+		"damage_ratio": 0.20000000298023224,
+		"was_playing_action_before": false,
+		"reaction_clips": [
+			"AS_TD_Player_HitReact_Heavy",
+			"AS_TD_Player_HitReact_Light"
+		],
+		"reaction_first_seen_seconds": 0,
+		"reaction_action": "None",
+		"max_planar_displacement_cm": 53.011027155533611,
+		"feedback_delta":
+		{
+			"numbers_shown": 1,
+			"player_damage_numbers_shown": 1,
+			"effects_requested": 1,
+			"effects_spawned": 1,
+			"effects_skipped_not_loaded": 0,
+			"effects_skipped_frame_cap": 0,
+			"effects_spawn_failed": 0,
+			"monster_hits_seen": 0,
+			"monster_hit_effects_spawned": 0,
+			"sounds_played": 2,
+			"flashes_started": 1,
+			"hit_stops_started": 1,
+			"wobbles_started": 1,
+			"shakes_started": 1,
+			"avoided_shown": 0,
+			"death_screens_shown": 0,
+			"swings_played": 0
+		}
+	},
+	"invulnerable":
+	{
+		"health_before": 34,
+		"health_after": 34,
+		"applied_damage": 0,
+		"feedback_delta":
+		{
+			"numbers_shown": 1,
+			"player_damage_numbers_shown": 0,
+			"effects_requested": 0,
+			"effects_spawned": 0,
+			"effects_skipped_not_loaded": 0,
+			"effects_skipped_frame_cap": 0,
+			"effects_spawn_failed": 0,
+			"monster_hits_seen": 0,
+			"monster_hit_effects_spawned": 0,
+			"sounds_played": 0,
+			"flashes_started": 0,
+			"hit_stops_started": 0,
+			"wobbles_started": 0,
+			"shakes_started": 0,
+			"avoided_shown": 1,
+			"death_screens_shown": 0,
+			"swings_played": 0
+		}
+	},
+	"player_death":
+	{
+		"player_killed": true,
+		"ragdoll_started": true,
+		"seconds_to_ragdoll": 0,
+		"is_ragdolling_at_start": true,
+		"is_ragdolling_after_screenshot": true,
+		"respawn_delay_seconds": 4,
+		"feedback_delta":
+		{
+			"numbers_shown": 1,
+			"player_damage_numbers_shown": 1,
+			"effects_requested": 1,
+			"effects_spawned": 1,
+			"effects_skipped_not_loaded": 0,
+			"effects_skipped_frame_cap": 0,
+			"effects_spawn_failed": 0,
+			"monster_hits_seen": 0,
+			"monster_hit_effects_spawned": 0,
+			"sounds_played": 3,
+			"flashes_started": 1,
+			"hit_stops_started": 0,
+			"wobbles_started": 1,
+			"shakes_started": 1,
+			"avoided_shown": 0,
+			"death_screens_shown": 1,
+			"swings_played": 0
+		}
+	},
+	"respawn":
+	{
+		"respawned": true,
+		"seconds_after_death": 4.000499002635479,
+		"new_player_health": 100
+	},
+	"completed": true
+}

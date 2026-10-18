@@ -13,6 +13,7 @@ class UTDCombatAttributeSet;
 DECLARE_MULTICAST_DELEGATE_TwoParams(FTDOnCombatDamage, const FTDDamageResult&, const FTDDamageContext&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FTDOnCombatDeath, const FTDDamageContext&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FTDOnCombatFreezeChanged, bool);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FTDOnCombatDamageAvoided, const FTDDamageContext&, const FVector&);
 
 USTRUCT()
 struct FTDStatusRuntime
@@ -41,6 +42,7 @@ struct FTDPendingCombatDamage
 	FGameplayEffectContextHandle EffectContext;
 	FTDDamageContext CombatContext;
 	FTDDamageResult Result;
+	float UnclampedDamage = 0.f;
 };
 
 USTRUCT()
@@ -75,6 +77,9 @@ public:
 	float GetCurrentHealth() const;
 
 	UFUNCTION(BlueprintPure, Category="Combat")
+	float GetMaxHealth() const;
+
+	UFUNCTION(BlueprintPure, Category="Combat")
 	float GetCurrentStamina() const;
 
 	UFUNCTION(BlueprintPure, Category="Combat")
@@ -94,12 +99,14 @@ public:
 
 	bool TryCastDamageDefinition(UTDDamageDefinition* Definition, const FVector& Target);
 
-	FTDDamageResult ReceiveDamage(float RawDamage, ETDDamageElement Element, bool bCanCrit, const FTDDamageContext& Context);
+	FTDDamageResult ReceiveDamage(float RawDamage, ETDDamageElement Element, bool bCanCrit, const FTDDamageContext& Context, const FTDDamageHitInfo& HitInfo = FTDDamageHitInfo());
 	void ApplyStatus(UTDStatusDefinition* Definition, const FTDDamageContext& Context, float BuildupAmount = 0.f);
+	const FTDDamageResult& GetLastDamageResult() const;
 
 	FTDOnCombatDamage OnDamaged;
 	FTDOnCombatDeath OnDeath;
 	FTDOnCombatFreezeChanged OnFreezeChanged;
+	FTDOnCombatDamageAvoided OnDamageAvoided;
 
 protected:
 	virtual void BeginPlay() override;
@@ -117,6 +124,10 @@ private:
 	void HandleHealthChanged(const FOnAttributeChangeData& Change);
 	void ApplyInitialAttributes(bool bResetHealth);
 	void RefreshDeathState();
+	FVector ResolveHitLocation(const FTDDamageHitInfo& HitInfo) const;
+	FVector ResolveHitDirection(const FTDDamageHitInfo& HitInfo, const FTDDamageContext& Context) const;
+	void BroadcastDamageAvoided(const FTDDamageContext& Context, const FVector& Location);
+	void BroadcastDamageApplied(const FTDDamageResult& Result, const FTDDamageContext& Context) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat", meta=(AllowPrivateAccess="true"))
 	FTDCombatStats Stats;
@@ -138,6 +149,9 @@ private:
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<AController> FrozenController;
+
+	UPROPERTY(Transient)
+	FTDDamageResult LastDamageResult;
 
 	FTimerHandle StatusTimer;
 	FDelegateHandle HealthChangedHandle;

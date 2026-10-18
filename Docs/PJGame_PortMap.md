@@ -73,3 +73,11 @@ Source/TDGame/
   World/Streaming/, World/Persistence/, World/Generation/, World/Tests/
   Tests/           스모크 테스트
 ```
+
+## 5. 에셋 복사
+
+| PJGame 경로 | TDGame 경로 | 방법 | 검증 |
+|---|---|---|---|
+| `/Game/Characters/Mannequins/Anims/Death/MM_Death_{Back_01,Front_01,Front_02,Front_03,Left_01,Right_01}` | 같은 경로 | uasset 바이트 복사(`cp -n`, 엔진 5.8 동일) | 2026-10-18 md5 일치, 외부 참조는 `SK_Mannequin` 하나(M3-27) |
+| `/Game/Characters/Mannequins/Anims/Rifle/HitReact/MM_HitReact_{Back_Med_01,Front_Hvy_01,Front_Lgt_01~04,Front_Med_01~02}` | 같은 경로 | 같음, 몽타주 `AM_HitReact_Front_Med_01`은 제외(D44) | 같음 |
+| `/Game/Characters/Mannequins/Anims/Roll/A_Roll_IdleFwd`, `A_Roll_IdleFwd1` | 같은 경로 | 같음, 몽타주 `AM-RollFwd` 제외 | 같음 |

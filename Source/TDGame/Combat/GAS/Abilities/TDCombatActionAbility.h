@@ -110,6 +110,15 @@ public:
 };
 
 UCLASS()
+class TDGAME_API UTDPlayerPrimaryAttack04Ability : public UTDCombatActionAbility
+{
+	GENERATED_BODY()
+
+public:
+	UTDPlayerPrimaryAttack04Ability();
+};
+
+UCLASS()
 class TDGAME_API UTDPlayerSkillQAbility : public UTDCombatActionAbility
 {
 	GENERATED_BODY()

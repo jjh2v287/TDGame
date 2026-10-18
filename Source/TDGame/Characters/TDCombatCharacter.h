@@ -10,6 +10,7 @@ class UCapsuleComponent;
 class UCharacterMoverComponent;
 class UGameplayAbility;
 class UGameplayEffect;
+class UMaterialInterface;
 class UNavMoverComponent;
 class USkeletalMeshComponent;
 class UTDCharacterAnimationComponent;
@@ -17,6 +18,7 @@ class UTDCombatAttributeSet;
 class UTDCombatComponent;
 class UTDDamageDefinition;
 class UUAFComponent;
+struct FTDDamageResult;
 
 UENUM(BlueprintType)
 enum class ETDFacingMode : uint8
@@ -108,12 +110,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Movement")
 	void SetMovementFrozen(bool bIsFrozen);
 
+	void SetHitFlashOverlay(UMaterialInterface* Material);
+	void SetPresentationOffset(const FVector& WorldOffset);
+	void ApplyKnockback(const FVector& PlanarVelocity, float Seconds);
+	bool StartRagdoll(const FVector& LinearVelocity);
+	FVector ComputeKillVelocity(const FTDDamageResult& Result) const;
+	bool IsRagdolling() const { return bIsRagdolling; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult) override;
 
 	UFUNCTION()
 	virtual void HandleMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName);
+
+	FVector ResolveHitPlanarDirection(const FTDDamageResult& Result) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UCapsuleComponent> CapsuleComponent;
@@ -163,13 +174,33 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 	ETDFacingMode FacingMode = ETDFacingMode::MovementDirection;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement")
+	bool bBlockMoveInputWhileStunned = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Death", meta=(ClampMin="0.0", ForceUnits="cm/s"))
+	float RagdollBaseSpeed = 220.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Death", meta=(ClampMin="0.0", ForceUnits="cm/s"))
+	float RagdollRatioSpeed = 380.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Death", meta=(ClampMin="1.0"))
+	float RagdollCriticalScale = 1.2f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Death", meta=(ForceUnits="cm/s"))
+	float RagdollUpSpeed = 160.f;
+
 private:
 	void ApplyMovementSettings();
 	void LinkAnimationBeforeMovement();
 	FVector ConsumeMoveIntent();
+	bool IsMoveInputBlockedByStun() const;
+	bool IsCapsuleModifierActive() const;
+	bool IsKnockbackSuppressed() const;
 
 	FVector DesiredFacingDirection = FVector::ZeroVector;
+	FVector LastPresentationOffsetLocal = FVector::ZeroVector;
 	FName MovementModeBeforeFreeze = NAME_None;
 	bool bIsMovementDisabled = false;
 	bool bIsMovementFrozen = false;
+	bool bIsRagdolling = false;
 };

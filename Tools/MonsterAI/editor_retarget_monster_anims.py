@@ -1,6 +1,6 @@
 """에디터 안에서 실행: UE5 Manny 애니메이션을 고블린·스톤 골렘 스켈레톤으로 IK 리타기팅해 몬스터용 AnimSequence(루트 모션 끔·루트 잠금)를 만들고 클립별 검사 수치를 출력한다.
-실행: python Tools/run_in_editor.py Tools/MonsterAI/editor_retarget_monster_anims.py (PowerShell; Git Bash는 PYTHONIOENCODING=utf-8 을 앞에 붙인다)
-출력: /Game/MonsterAI/Retarget/{IK_TD_*,RTG_TD_*}, /Game/MonsterAI/Animations/{Goblin,Golem}/AS_TD_*, 로그의 [TDTool] check 줄(길이·이상 플래그·접지 속도·타격 시각)
+실행: python Tools/run_in_editor.py Tools/MonsterAI/editor_retarget_monster_anims.py (PowerShell; Git Bash는 PYTHONIOENCODING=utf-8 을 앞에 붙인다). 일부 클립만: -c "TD_ONLY_CLIPS=['HitReact']; exec(open('C:/Project/TDGame/Tools/MonsterAI/editor_retarget_monster_anims.py', encoding='utf-8').read())"(이때 바뀐 에셋만 저장)
+출력: /Game/MonsterAI/Retarget/{IK_TD_*,RTG_TD_*}, /Game/MonsterAI/Animations/{Goblin,Golem,Guard,BookHead}/AS_TD_*, 로그의 [TDTool] check 줄(길이·이상 플래그·접지 속도·타격 시각)
 상태: 현행
 
 규칙: 에셋 메타데이터 TDGeneratedBy 가 이 도구 이름인 에셋만 갱신·덮어쓴다. 원본 에셋과 레벨은 저장하지 않는다.
@@ -28,11 +28,15 @@ MANNY_CLIPS = {
     "Run": "Unarmed/Jog/MF_Unarmed_Jog_Fwd",
     "Attack01": "Unarmed/Attack/MM_Attack_01",
     "Slash": "Sword/AS_TD_Player_SwordAttack01",
+    "HitReact": "Reaction/AS_TD_Manny_HitReact_Unarmed",
 }
 TARGETS = {
-    "Goblin": {"mesh": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin", "clips": ["Idle", "Walk", "Run", "Attack01", "Slash"]},
-    "Golem": {"mesh": "/Game/Stone_Golem/mesh/SKM_Stone_Golem", "clips": ["Attack01"]},
+    "Goblin": {"mesh": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin", "clips": ["Idle", "Walk", "Run", "Attack01", "Slash", "HitReact"]},
+    "Golem": {"mesh": "/Game/Stone_Golem/mesh/SKM_Stone_Golem", "clips": ["Attack01", "HitReact"]},
+    "Guard": {"mesh": "/Game/Skeleton_Guard/Mesh_UE4/Full/SKM_Skeleton_Guard", "clips": ["HitReact"]},
+    "BookHead": {"mesh": "/Game/BookHeadMonster/Meshes/BookHeadMonster", "clips": ["HitReact"]},
 }
+ONLY_CLIPS = globals().get("TD_ONLY_CLIPS")
 LOCOMOTION_CLIPS = {"Walk", "Run"}
 ATTACK_CLIPS = {"Attack01", "Slash"}
 CHECK_BONES = ["pelvis", "head", "hand_l", "hand_r", "foot_l", "foot_r", "ball_l", "ball_r"]
@@ -239,12 +243,14 @@ def main():
         to_save += [target_rig, retargeter]
         target_mesh = EAL.load_asset(target["mesh"])
         for clip in target["clips"]:
+            if ONLY_CLIPS and clip not in ONLY_CLIPS:
+                continue
             sequence = retarget_clip(retargeter, target_key, target_mesh, clip)
             if sequence is None:
                 continue
             to_save.append(sequence)
             checks.append((sequence, target_mesh, clip))
-    saved = EAL.save_loaded_assets(to_save, False)
+    saved = EAL.save_loaded_assets(to_save, bool(ONLY_CLIPS))
     log(f"saved {len(to_save)} assets: {saved}")
     for sequence, mesh, clip in checks:
         log(f"check {sequence.get_path_name().split('.')[0]} {check_clip(sequence, mesh, clip)}")

@@ -12,16 +12,19 @@ class UAnimSequence;
 class UBlendSpace;
 class UCameraComponent;
 class USpringArmComponent;
+class UStaticMesh;
+class UStaticMeshComponent;
 class UTDCapsuleModifierComponent;
 class UTDSkillComponent;
 struct FStreamableHandle;
 struct FTDDamageContext;
+struct FTDDamageResult;
 
 /**
  *  A controllable top-down perspective character
  */
 UCLASS(abstract)
-class ATDGameCharacter : public ATDCombatCharacter, public IGenericTeamAgentInterface
+class TDGAME_API ATDGameCharacter : public ATDCombatCharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -130,9 +133,56 @@ protected:
 	float RollStaminaCost = 0.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Abilities")
-	bool bGrantDefaultActionAbilities = false;
+	bool bGrantDefaultActionAbilities = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UStaticMeshComponent> SwordMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UStaticMeshComponent> ShieldMeshComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Weapons")
+	TSoftObjectPtr<UStaticMesh> SwordMesh;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Weapons")
+	FName SwordSocketName = TEXT("HandGrip_R");
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Weapons")
+	FTransform SwordRelativeTransform;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Weapons")
+	TSoftObjectPtr<UStaticMesh> ShieldMesh;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Weapons")
+	FName ShieldSocketName = TEXT("hand_l");
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Weapons")
+	FTransform ShieldRelativeTransform;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Knockback", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float LightKnockbackRatio = 0.08f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Knockback", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float HeavyKnockbackRatio = 0.15f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Knockback", meta=(ClampMin="0.0", ForceUnits="cm/s"))
+	float LightKnockbackSpeed = 300.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Knockback", meta=(ClampMin="0.0", ForceUnits="s"))
+	float LightKnockbackSeconds = 0.15f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Knockback", meta=(ClampMin="0.0", ForceUnits="cm/s"))
+	float HeavyKnockbackSpeed = 600.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Knockback", meta=(ClampMin="0.0", ForceUnits="s"))
+	float HeavyKnockbackSeconds = 0.22f;
 
 private:
+	void ApplyDefaultCombatStyle();
+	void AttachWeaponMeshes();
+	void RequestWeaponMeshes();
+	void ApplyWeaponMeshes();
+	void HandleDamaged(const FTDDamageResult& Result, const FTDDamageContext& Context);
 	void GrantDefaultActionAbilities();
 	void RequestDefaultDamageSpells();
 	void HandleDefaultDamageSpellsLoaded();
@@ -148,4 +198,5 @@ private:
 	bool bHasGrantedDefaultActionAbilities = false;
 	TSharedPtr<FStreamableHandle> DefaultDamageSpellsHandle;
 	TSharedPtr<FStreamableHandle> AnimationAssetsHandle;
+	TSharedPtr<FStreamableHandle> WeaponMeshesHandle;
 };

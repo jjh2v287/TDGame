@@ -72,6 +72,15 @@ enum class ETDDamageDirection : uint8
 };
 
 UENUM(BlueprintType)
+enum class ETDDamageDelivery : uint8
+{
+	Direct,
+	Melee,
+	Spell,
+	Status
+};
+
+UENUM(BlueprintType)
 enum class ETDHomingTargetSelection : uint8
 {
 	NearestEnemy,
@@ -206,7 +215,25 @@ struct TDGAME_API FTDDamageContext
 	UPROPERTY()
 	int32 Depth = 0;
 
+	UPROPERTY()
+	ETDDamageDelivery Delivery = ETDDamageDelivery::Direct;
+
 	TSharedPtr<FTDDamageChainBudget> Budget;
+};
+
+USTRUCT()
+struct TDGAME_API FTDDamageHitInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FVector Location = FVector::ZeroVector;
+
+	UPROPERTY()
+	FVector Direction = FVector::ZeroVector;
+
+	UPROPERTY()
+	bool bHasLocation = false;
 };
 
 USTRUCT(BlueprintType)
@@ -281,4 +308,25 @@ struct TDGAME_API FTDDamageResult
 
 	UPROPERTY(BlueprintReadOnly)
 	bool bWasKilled = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	ETDDamageElement Element = ETDDamageElement::Physical;
+
+	UPROPERTY(BlueprintReadOnly)
+	ETDDamageDelivery Delivery = ETDDamageDelivery::Direct;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector HitLocation = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector HitDirection = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bHasHitLocation = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	float DamageRatio = 0.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	float UnclampedDamage = 0.f;
 };

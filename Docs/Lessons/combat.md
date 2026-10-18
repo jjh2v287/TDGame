@@ -43,3 +43,12 @@
 - 증거: `Saved/WorldGen/PieWalk/p3-19_walk2`·`p3-19_walk3`(SE 하행·상행 도착, 착지 오차 −2.21cm, 공중·기반 이탈 0), 헤드리스 `TDGame.RealmLift.*`
 - 날짜·상태: 2026-10-15 active
 - 발견: claude
+
+### L-combat-06 탑다운 커서 Visibility 추적은 몬스터를 맞히지 못해 적 클릭이 바닥 이동이 된다
+- 증상: PIE 시험에서 고블린 화면 위치로 `GetHitResultAtScreenPosition(ECC_Visibility)` 107회 모두 `StaticMeshActor_0`(바닥)을 맞힘. 실제 게임에서 적을 클릭해도 공격 대신 그 지점으로 이동
+- 원인: 몬스터 캡슐·메시가 Visibility 채널을 막지 않는다(캡슐 Pawn 프로필, 메시 CharacterMesh 계열)
+- 해결: `ATDGamePlayerController::ResolveHostileTargetAtScreenPosition` — ① 커서 위치에서 Pawn 오브젝트 타입 추적(`GetHitResultAtScreenPosition(ObjectTypes)`) ② 없으면 Visibility로 바닥 점을 얻고 반경 `CursorTargetAssistRadiusCm`(120) 안 가장 가까운 살아 있는 적. 시험도 같은 함수를 쓴다
+- 범위: 커서로 적을 고르는 모든 입력(클릭 공격·스킬 대상)
+- 증거: 2026-10-18 `Saved/AgentOps/automation_tests_20261018-1317.json`(수정 전 실패) → 1328(통과, 1회에 고블린)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

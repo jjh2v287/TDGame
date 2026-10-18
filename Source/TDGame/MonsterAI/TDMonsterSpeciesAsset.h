@@ -92,4 +92,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death", meta=(ClampMin="0"))
 	float CorpseLifeSeconds = 8.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death")
+	bool bRagdollAfterDeathClip = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death", meta=(ClampMin="0", ForceUnits="s"))
+	float CorpseSinkSeconds = 1.5f;
 };

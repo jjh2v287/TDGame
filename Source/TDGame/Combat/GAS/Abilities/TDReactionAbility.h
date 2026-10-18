@@ -71,6 +71,15 @@ public:
 };
 
 UCLASS()
+class TDGAME_API UTDReactionHeavyHitAbility : public UTDReactionAbility
+{
+	GENERATED_BODY()
+
+public:
+	UTDReactionHeavyHitAbility();
+};
+
+UCLASS()
 class TDGAME_API UTDReactionDeathAbility : public UTDReactionAbility
 {
 	GENERATED_BODY()

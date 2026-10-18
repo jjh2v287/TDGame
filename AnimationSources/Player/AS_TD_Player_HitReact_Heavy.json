@@ -1,0 +1,138 @@
+{
+ "name": "AS_TD_Player_HitReact_Heavy",
+ "fps": 60,
+ "frames": [
+  1,
+  47
+ ],
+ "frame_count": 47,
+ "duration_s": 0.7667,
+ "skeleton": "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+ "root_motion": false,
+ "in_place": true,
+ "source": "/Game/Characters/Mannequins/Anims (Lyra/Manny) MM_HitReact_Front_Hvy_01 (30fps, exported to Saved/BlenderAnimation/Reference/CombatHit/MM_HitReact_Front_Hvy_01.fbx), resampled to 60fps; used source 60fps frames [1, 47] (= 0.0..0.767 s), remaining settle tail dropped",
+ "start_end_pose": "MM_Idle frame 0 (/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle); runtime blend in 0.1 s / out 0.15 s",
+ "edit": "body (pelvis/spine/neck/head/legs) = MM_Idle frame0 + source local deltas (parent-space), feet = idle stance + source foot deltas with ball XY locked and heel lift while swivelling, arms = MM_Idle arms blended (local slerp) into a chest-frame IK sword-and-shield guard (L-anim-05 fist grip, shield socket of AS_TD_Player_SwordCombo01) plus shoulder-acceleration spring lag and elbow whip; fingers held in the combo grip pose; tail faded to MM_Idle frame0",
+ "author_script": "Saved/AgentOps/20261018/combat-full/blender/scripts/hit_author.py (helpers exec-loaded from Tools/BlenderAnimation/blender_author_sword_shield_combo.py)",
+ "export": "Blender FBX: armature root only, add_leaf_bones False, bake every frame, simplify 0, axis_forward -Z, axis_up Y (same as sword_attack01_export.py)",
+ "unreal_import": {
+  "skeleton_path": "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+  "sample_rate": 60,
+  "import_uniform_scale": 1.0,
+  "preserve_local_transform": true,
+  "enable_root_motion": false,
+  "force_root_lock": true
+ },
+ "measure": {
+  "root_max_cm": 0.0,
+  "max_bone_length_error_cm": 0.00027,
+  "start_vs_idle0": {
+   "max_bone_pos_cm": 0.119,
+   "max_local_rot_deg": 0.148
+  },
+  "end_vs_idle0": {
+   "max_bone_pos_cm": 0.0,
+   "max_local_rot_deg": 1.138
+  },
+  "contacts": {
+   "ball_l": {
+    "contact_frame_pairs": 33,
+    "max_slip_cm_per_frame": 0.0681,
+    "total_slip_cm": 0.231,
+    "max_xy_drift_cm": 0.356,
+    "z_range_cm": [
+     0.44,
+     2.2
+    ]
+   },
+   "ball_r": {
+    "contact_frame_pairs": 46,
+    "max_slip_cm_per_frame": 0.0001,
+    "total_slip_cm": 0.0011,
+    "max_xy_drift_cm": 0.0,
+    "z_range_cm": [
+     -0.12,
+     0.48
+    ]
+   },
+   "heel_l": {
+    "contact_frame_pairs": 38,
+    "max_slip_cm_per_frame": 0.6313,
+    "total_slip_cm": 6.2354,
+    "max_xy_drift_cm": 5.453,
+    "z_range_cm": [
+     -0.18,
+     3.98
+    ]
+   },
+   "heel_r": {
+    "contact_frame_pairs": 30,
+    "max_slip_cm_per_frame": 0.7781,
+    "total_slip_cm": 4.8786,
+    "max_xy_drift_cm": 7.56,
+    "z_range_cm": [
+     0.28,
+     5.89
+    ]
+   }
+  },
+  "elbow_wrist": {
+   "l": {
+    "flex_deg_range": [
+     26.6,
+     131.8
+    ],
+    "max_flex_change_deg_per_frame": 17.66,
+    "max_hand_rot_deg_per_frame": 18.21,
+    "max_wrist_speed_cm_per_frame": 11.04,
+    "max_wrist_speed_jump_cm_per_frame2": 4.64,
+    "wrist_travel_from_start_max_cm": 54.3
+   },
+   "r": {
+    "flex_deg_range": [
+     28.4,
+     55.8
+    ],
+    "max_flex_change_deg_per_frame": 2.99,
+    "max_hand_rot_deg_per_frame": 11.31,
+    "max_wrist_speed_cm_per_frame": 6.8,
+    "max_wrist_speed_jump_cm_per_frame2": 2.19,
+    "wrist_travel_from_start_max_cm": 40.1
+   }
+  },
+  "peak_head_frame": 15
+ },
+ "weapons": {
+  "sword": {
+   "socket": "HandGrip_R",
+   "static_mesh": "/Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Sword",
+   "relative_location_cm": [
+    -5.052,
+    9.119,
+    25.857
+   ],
+   "relative_rotation_deg": {
+    "roll": -83.734,
+    "pitch": -15.888,
+    "yaw": 94.203
+   },
+   "note": "L-anim-05"
+  },
+  "shield": {
+   "bone": "hand_l",
+   "static_mesh": "/Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Shield",
+   "attach": "Saved/AgentOps/20261018/combat-full/blender/shield-attach.json"
+  },
+  "measure_sword": {
+   "min_tip_z_cm": 61.0,
+   "min_blade_clearance_cm": 23.04,
+   "nearest_capsule": "thigh_r",
+   "frame": 1
+  },
+  "measure_shield_preview": {
+   "min_rim_clearance_cm": 13.97,
+   "nearest_capsule": "spine_03",
+   "frame": 21
+  }
+ }
+}

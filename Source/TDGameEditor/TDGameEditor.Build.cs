@@ -25,6 +25,8 @@ public class TDGameEditor : ModuleRules
 			"Json",
 			"JsonUtilities",
 			"NavigationSystem",
+			"GameplayTags",
+			"GameplayAbilities",
 			"MessageLog",
 			"ToolsetRegistry",
 			"AssetRegistry",

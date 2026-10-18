@@ -3,9 +3,36 @@
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDDamageEntity.h"
 #include "Combat/Damage/TDStatusDefinition.h"
+#include "Core/TDGameplayTags.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "TDGame.h"
+
+namespace
+{
+	FTDDamageHitInfo MakeDamageActionHitInfo(const FTDDamageContext& HitContext, const AActor* Target, const FVector& Location, const ATDDamageEntity* SourceEntity)
+	{
+		FTDDamageHitInfo HitInfo;
+		HitInfo.Location = Location;
+		if (!SourceEntity)
+		{
+			HitInfo.bHasLocation = HitContext.Delivery == ETDDamageDelivery::Melee;
+			return HitInfo;
+		}
+		const UTDDamageDefinition* Definition = SourceEntity->GetDefinition();
+		if (IsValid(Definition) && Definition->Mode == ETDDamageEntityMode::Projectile)
+		{
+			HitInfo.bHasLocation = true;
+			HitInfo.Direction = HitContext.Direction;
+			return HitInfo;
+		}
+		if (IsValid(Target))
+		{
+			HitInfo.Direction = Target->GetActorLocation() - SourceEntity->GetActorLocation();
+		}
+		return HitInfo;
+	}
+}
 
 ATDDamageEntity* UTDDamageSubsystem::Cast(UTDDamageDefinition* Definition, AActor* Caster, const FVector& Origin, const FVector& Target)
 {
@@ -29,6 +56,7 @@ ATDDamageEntity* UTDDamageSubsystem::Cast(UTDDamageDefinition* Definition, AActo
 	{
 		Context.Direction = Caster->GetActorForwardVector();
 	}
+	Context.Delivery = ETDDamageDelivery::Spell;
 	Context.Budget = MakeShared<FTDDamageChainBudget>();
 	return SpawnEntity(Definition, Context, Origin);
 }
@@ -172,7 +200,10 @@ void UTDDamageSubsystem::ExecuteAction(const FTDDamageAction& Action, const TArr
 			return;
 		}
 
-		const FTDDamageResult Result = Combatant->ReceiveDamage(Action.Magnitude.Evaluate(Context.Stats), Action.Element, Action.bCanCrit, Context);
+		FTDDamageContext HitContext = Context;
+		HitContext.Delivery = SourceEntity ? ETDDamageDelivery::Spell : Context.Delivery;
+		const FTDDamageHitInfo HitInfo = MakeDamageActionHitInfo(HitContext, Target, Location, SourceEntity);
+		const FTDDamageResult Result = Combatant->ReceiveDamage(Action.Magnitude.Evaluate(Context.Stats), Action.Element, Action.bCanCrit, HitContext, HitInfo);
 		if (SourceEntity && (!IsValid(SourceEntity) || SourceEntity->IsActorBeingDestroyed()
 			|| (SourceEntity->IsGameplayFinished() && Event != ETDDamageEvent::End && Event != ETDDamageEvent::Expire)))
 		{
@@ -193,7 +224,7 @@ void UTDDamageSubsystem::ExecuteAction(const FTDDamageAction& Action, const TArr
 
 	if (Action.Type == ETDDamageActionType::ApplyStatus)
 	{
-		if (Combatant && Combatant->IsAlive() && IsValid(Action.Status))
+		if (Combatant && Combatant->IsAlive() && !Combatant->HasMatchingGameplayTag(TDGameplayTags::State_Invulnerable) && IsValid(Action.Status))
 		{
 			Combatant->ApplyStatus(Action.Status, Context, Action.Magnitude.Evaluate(Context.Stats));
 		}

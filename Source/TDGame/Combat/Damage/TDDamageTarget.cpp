@@ -79,7 +79,6 @@ void ATDDamageTarget::UpdateHealthLabel()
 void ATDDamageTarget::HandleDamage(const FTDDamageResult& Result, const FTDDamageContext& Context)
 {
 	UpdateHealthLabel();
-	DrawDebugString(GetWorld(), GetActorLocation() + FVector(0.f, 0.f, 160.f), FString::Printf(TEXT("-%.1f%s"), Result.AppliedDamage, Result.bWasCritical ? TEXT(" CRIT") : TEXT("")), nullptr, FColor::Orange, 0.5f, true);
 }
 
 void ATDDamageTarget::HandleDeath(const FTDDamageContext& Context)

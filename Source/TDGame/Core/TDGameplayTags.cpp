@@ -20,6 +20,8 @@ namespace TDGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Effect_Cooldown_Damage, "Effect.Cooldown.Damage")
 
 	UE_DEFINE_GAMEPLAY_TAG(Event_Damage_Applied, "Event.Damage.Applied")
+	UE_DEFINE_GAMEPLAY_TAG(Event_Damage_Avoided, "Event.Damage.Avoided")
+	UE_DEFINE_GAMEPLAY_TAG(Event_Combat_MeleeSwing, "Event.Combat.MeleeSwing")
 	UE_DEFINE_GAMEPLAY_TAG(Event_Actor_Death, "Event.Actor.Death")
 	UE_DEFINE_GAMEPLAY_TAG(Event_Caravan_Destroyed, "Event.Caravan.Destroyed")
 
@@ -27,6 +29,7 @@ namespace TDGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary_01, "Action.Attack.Primary.01")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary_02, "Action.Attack.Primary.02")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary_03, "Action.Attack.Primary.03")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary_04, "Action.Attack.Primary.04")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Skill_Q, "Action.Skill.Q")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Skill_E, "Action.Skill.E")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Roll, "Action.Roll")
@@ -34,6 +37,7 @@ namespace TDGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Action_Monster_Attack_Primary, "Action.Monster.Attack.Primary")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Monster_Skill_01, "Action.Monster.Skill.01")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Reaction_Hit, "Action.Reaction.Hit")
+	UE_DEFINE_GAMEPLAY_TAG(Action_Reaction_HeavyHit, "Action.Reaction.HeavyHit")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Reaction_Death, "Action.Reaction.Death")
 
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_Q, "Cooldown.Skill.Q")

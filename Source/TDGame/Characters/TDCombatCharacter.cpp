@@ -2,13 +2,17 @@
 #include "Abilities/GameplayAbility.h"
 #include "AI/Navigation/NavigationTypes.h"
 #include "Backends/MoverStandaloneLiaison.h"
+#include "Characters/TDCapsuleModifierComponent.h"
 #include "Characters/TDCharacterAnimationComponent.h"
+#include "Characters/TDKnockbackLayeredMove.h"
 #include "Combat/Damage/TDDamageDefinition.h"
+#include "Combat/Damage/TDDamageTypes.h"
 #include "Combat/GAS/TDCombatAttributeSet.h"
 #include "Combat/TDCombatComponent.h"
 #include "Component/AnimNextComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Core/TDGameplayTags.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "DefaultMovementSet/InstantMovementEffects/BasicInstantMovementEffects.h"
 #include "DefaultMovementSet/NavMoverComponent.h"
@@ -17,8 +21,11 @@
 #include "GameFramework/Controller.h"
 #include "GameplayAbilitySpec.h"
 #include "GameplayEffect.h"
+#include "Materials/MaterialInterface.h"
 #include "Module/UAFWeakSystemReference.h"
 #include "MovementMode.h"
+#include "PhysicsEngine/BodyInstance.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 
 const FName ATDCombatCharacter::CapsuleComponentName(TEXT("CollisionCylinder"));
 const FName ATDCombatCharacter::MeshComponentName(TEXT("CharacterMesh0"));
@@ -28,6 +35,16 @@ namespace TDCombatCharacterMovement
 	constexpr float StandardCapsuleRadius = 34.f;
 	constexpr float StandardCapsuleHalfHeight = 88.f;
 	constexpr float MinimumOrientationInputSize = 1e-3f;
+	constexpr float PresentationOffsetTolerance = 0.01f;
+	constexpr float RagdollMaxDepenetrationVelocity = 150.f;
+	constexpr float RagdollLinearDamping = 0.6f;
+	constexpr float StatusKillUpSpeedScale = 0.3f;
+
+	const FName& GetRagdollCollisionProfileName()
+	{
+		static const FName ProfileName(TEXT("Ragdoll"));
+		return ProfileName;
+	}
 
 	const FName& GetAnimationPrePhysicsEventName()
 	{
@@ -48,6 +65,20 @@ namespace TDCombatCharacterMovement
 	FVector MakePlanarDirection(const FRotator& Rotation)
 	{
 		return FRotator(0.f, Rotation.Yaw, 0.f).Vector();
+	}
+
+	void ConfigureRagdollBodies(USkeletalMeshComponent& MeshComponent)
+	{
+		for (FBodyInstance* Body : MeshComponent.Bodies)
+		{
+			if (!Body)
+			{
+				continue;
+			}
+			Body->SetMaxDepenetrationVelocity(RagdollMaxDepenetrationVelocity);
+			Body->LinearDamping = RagdollLinearDamping;
+			Body->UpdateDampingProperties();
+		}
 	}
 
 	void GrantStartupAbilitiesAndEffects(UTDCombatComponent& CombatComponent, const TArray<TSubclassOf<UGameplayAbility>>& Abilities, const TArray<TSubclassOf<UGameplayEffect>>& Effects, UObject* SourceObject)
@@ -366,6 +397,118 @@ void ATDCombatCharacter::SetMovementFrozen(bool bIsFrozen)
 	MoverComponent->QueueNextMode(TDCombatCharacterMovement::IsRestorableMovementMode(MovementModeToRestore) ? MovementModeToRestore : DefaultModeNames::Falling);
 }
 
+void ATDCombatCharacter::SetHitFlashOverlay(UMaterialInterface* Material)
+{
+	if (!Mesh || Mesh->GetOverlayMaterial() == Material)
+	{
+		return;
+	}
+	Mesh->SetOverlayMaterial(Material);
+}
+
+void ATDCombatCharacter::SetPresentationOffset(const FVector& WorldOffset)
+{
+	if (!MoverComponent || !Mesh || !CapsuleComponent || bIsRagdolling || MoverComponent->GetPrimaryVisualComponent() != Mesh.Get() || IsCapsuleModifierActive())
+	{
+		LastPresentationOffsetLocal = FVector::ZeroVector;
+		return;
+	}
+
+	const FVector NewOffsetLocal = CapsuleComponent->GetComponentTransform().InverseTransformVector(WorldOffset);
+	if (NewOffsetLocal.Equals(LastPresentationOffsetLocal, TDCombatCharacterMovement::PresentationOffsetTolerance))
+	{
+		return;
+	}
+	FTransform VisualTransform = MoverComponent->GetBaseVisualComponentTransform();
+	VisualTransform.SetLocation(VisualTransform.GetLocation() - LastPresentationOffsetLocal + NewOffsetLocal);
+	MoverComponent->SetBaseVisualComponentTransform(VisualTransform);
+	Mesh->SetRelativeTransform(VisualTransform);
+	LastPresentationOffsetLocal = NewOffsetLocal;
+}
+
+void ATDCombatCharacter::ApplyKnockback(const FVector& PlanarVelocity, float Seconds)
+{
+	const FVector Velocity(PlanarVelocity.X, PlanarVelocity.Y, 0.f);
+	if (bIsMovementDisabled || bIsMovementFrozen || bIsRagdolling || !TDCombatCharacterMovement::IsMoverReady(MoverComponent) || Velocity.IsNearlyZero() || Seconds <= 0.f)
+	{
+		return;
+	}
+	if (IsKnockbackSuppressed())
+	{
+		return;
+	}
+	const TSharedPtr<FTDKnockbackLayeredMove> KnockbackMove = MakeShared<FTDKnockbackLayeredMove>();
+	KnockbackMove->Velocity = Velocity;
+	KnockbackMove->DurationMs = Seconds * 1000.f;
+	MoverComponent->QueueLayeredMove(KnockbackMove);
+}
+
+bool ATDCombatCharacter::StartRagdoll(const FVector& LinearVelocity)
+{
+	USkeletalMeshComponent* MeshComponent = Mesh.Get();
+	if (!MeshComponent || !MeshComponent->GetPhysicsAsset())
+	{
+		return false;
+	}
+	if (bIsRagdolling)
+	{
+		return true;
+	}
+
+	SetPresentationOffset(FVector::ZeroVector);
+	bIsRagdolling = true;
+	if (CharacterAnimation)
+	{
+		CharacterAnimation->HoldPoseForDeath();
+	}
+	if (MoverComponent)
+	{
+		MoverComponent->SetPrimaryVisualComponent(nullptr);
+	}
+	MeshComponent->UpdateKinematicBonesToAnim(MeshComponent->GetComponentSpaceTransforms(), ETeleportType::TeleportPhysics, true);
+	SetActorEnableCollision(true);
+	if (CapsuleComponent)
+	{
+		CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	MeshComponent->SetCollisionProfileName(TDCombatCharacterMovement::GetRagdollCollisionProfileName());
+	MeshComponent->SetComponentSpaceTransformsDoubleBuffering(false);
+	MeshComponent->SetAllBodiesSimulatePhysics(true);
+	MeshComponent->SetSimulatePhysics(true);
+	TDCombatCharacterMovement::ConfigureRagdollBodies(*MeshComponent);
+	MeshComponent->WakeAllRigidBodies();
+	MeshComponent->bBlendPhysics = true;
+	if (!LinearVelocity.IsNearlyZero())
+	{
+		MeshComponent->SetAllPhysicsLinearVelocity(LinearVelocity, false);
+	}
+	return true;
+}
+
+FVector ATDCombatCharacter::ComputeKillVelocity(const FTDDamageResult& Result) const
+{
+	if (Result.Delivery == ETDDamageDelivery::Status)
+	{
+		return FVector(0.f, 0.f, RagdollUpSpeed * TDCombatCharacterMovement::StatusKillUpSpeedScale);
+	}
+	const float MaxHealth = CombatComponent ? CombatComponent->GetMaxHealth() : 0.f;
+	const float UnclampedDamageRatio = MaxHealth > 0.f ? Result.UnclampedDamage / MaxHealth : 0.f;
+	const float RatioScale = FMath::Clamp(FMath::Max(Result.DamageRatio, UnclampedDamageRatio), 0.f, 1.f);
+	const float CriticalScale = Result.bWasCritical ? RagdollCriticalScale : 1.f;
+	const float PlanarSpeed = (RagdollBaseSpeed + RagdollRatioSpeed * RatioScale) * CriticalScale;
+	return ResolveHitPlanarDirection(Result) * PlanarSpeed + FVector(0.f, 0.f, RagdollUpSpeed);
+}
+
+FVector ATDCombatCharacter::ResolveHitPlanarDirection(const FTDDamageResult& Result) const
+{
+	const FVector HitDirection = Result.HitDirection.GetSafeNormal2D();
+	if (!HitDirection.IsNearlyZero())
+	{
+		return HitDirection;
+	}
+	return (-GetActorForwardVector()).GetSafeNormal2D();
+}
+
 void ATDCombatCharacter::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
 {
 	FVector NavMoveIntent = FVector::ZeroVector;
@@ -383,7 +526,7 @@ void ATDCombatCharacter::ProduceInput_Implementation(int32 SimTimeMs, FMoverInpu
 		CharacterInputs.ControlRotation = OwningController->GetControlRotation();
 	}
 
-	if (bIsMovementDisabled || bIsMovementFrozen)
+	if (bIsMovementDisabled || bIsMovementFrozen || IsMoveInputBlockedByStun())
 	{
 		CharacterInputs.SetMoveInput(EMoveInputType::DirectionalIntent, FVector::ZeroVector);
 		CharacterInputs.OrientationIntent = FVector::ZeroVector;
@@ -451,4 +594,24 @@ void ATDCombatCharacter::LinkAnimationBeforeMovement()
 FVector ATDCombatCharacter::ConsumeMoveIntent()
 {
 	return Internal_ConsumeMovementInputVector().GetClampedToMaxSize(1.f);
+}
+
+bool ATDCombatCharacter::IsMoveInputBlockedByStun() const
+{
+	return bBlockMoveInputWhileStunned && CombatComponent && CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Stunned);
+}
+
+bool ATDCombatCharacter::IsCapsuleModifierActive() const
+{
+	const UTDCapsuleModifierComponent* CapsuleModifier = FindComponentByClass<UTDCapsuleModifierComponent>();
+	return CapsuleModifier && (CapsuleModifier->IsJumpModifierEnabled() || CapsuleModifier->IsRollModifierEnabled());
+}
+
+bool ATDCombatCharacter::IsKnockbackSuppressed() const
+{
+	if (IsAirborne())
+	{
+		return true;
+	}
+	return CombatComponent && CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Rolling);
 }

@@ -1,12 +1,15 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Framework/TDGamePlayerController.h"
+#include "Algo/AllOf.h"
 #include "Combat/TDCombatComponent.h"
 #include "Combat/TDCombatLibrary.h"
 #include "Animation/AnimSequence.h"
 #include "Characters/TDCharacterAnimationComponent.h"
 #include "Characters/TDCombatCharacter.h"
+#include "Characters/TDMonsterCharacter.h"
 #include "Combat/Damage/TDDamageTarget.h"
+#include "Combat/Skills/TDSkillComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/AssetManager.h"
@@ -20,6 +23,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Characters/TDGameCharacter.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "EnhancedInputComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "InputActionValue.h"
@@ -36,7 +40,36 @@
 namespace
 {
 	const TCHAR* const DefaultMeleeActionPath = TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01.AS_TD_Player_SwordAttack01");
+	const TCHAR* const DefaultCombatMappingContextPath = TEXT("/Game/Combat/Input/IMC_TDCombat.IMC_TDCombat");
+	const TCHAR* const DefaultCombatRollActionPath = TEXT("/Game/Combat/Input/IA_TDRoll.IA_TDRoll");
+	const TCHAR* const MonsterSpeciesFolderPath = TEXT("/Game/MonsterAI/Species/");
+	const TCHAR* const MonsterSpeciesAssetPrefix = TEXT("DA_TDMonster_");
 	constexpr float ImmediateFacingYawThresholdDegrees = 10.f;
+
+	constexpr float ComboContinueExtraRangeCm = 150.f;
+
+	bool IsContinuingComboOnTarget(const ATDGameCharacter& PlayerCharacter, const AActor& TargetActor)
+	{
+		const UTDSkillComponent* SkillComponent = PlayerCharacter.GetSkillComponent();
+		if (!SkillComponent || SkillComponent->GetCombatTarget() != &TargetActor || !SkillComponent->IsComboInputOpen())
+		{
+			return false;
+		}
+		const float DistanceToTarget = FVector::Dist2D(PlayerCharacter.GetActorLocation(), TargetActor.GetActorLocation());
+		return DistanceToTarget <= PlayerCharacter.GetDesiredAttackRange() + PlayerCharacter.GetAttackAcceptanceRadius() + ComboContinueExtraRangeCm;
+	}
+
+	bool IsTargetWithinAttackRange(const ATDGameCharacter& PlayerCharacter, const AActor& TargetActor)
+	{
+		const float DistanceToTarget = FVector::Dist2D(PlayerCharacter.GetActorLocation(), TargetActor.GetActorLocation());
+		return DistanceToTarget <= PlayerCharacter.GetDesiredAttackRange() + PlayerCharacter.GetAttackAcceptanceRadius();
+	}
+	constexpr int32 CombatMappingContextPriority = 1;
+	constexpr int32 MaxSpawnedMonsterCount = 16;
+	constexpr float MonsterSpawnSpacingCm = 140.f;
+	constexpr float MonsterSpawnTraceAboveCm = 500.f;
+	constexpr float MonsterSpawnTraceBelowCm = 2000.f;
+	constexpr float MonsterSpawnGroundClearanceCm = 3.f;
 
 	FSoftObjectPath MakeTDMeleeActionAssetPath(const FString& AnimationPath)
 	{
@@ -51,6 +84,12 @@ namespace
 		}
 
 		return FSoftObjectPath(AnimationPath + TEXT(".") + FPackageName::GetShortName(AnimationPath));
+	}
+
+	FSoftObjectPath MakeTDMonsterSpeciesAssetPath(const FString& SpeciesName)
+	{
+		const FString AssetName = SpeciesName.StartsWith(MonsterSpeciesAssetPrefix) ? SpeciesName : FString(MonsterSpeciesAssetPrefix) + SpeciesName;
+		return FSoftObjectPath(FString(MonsterSpeciesFolderPath) + AssetName + TEXT(".") + AssetName);
 	}
 }
 
@@ -67,6 +106,8 @@ ATDGamePlayerController::ATDGamePlayerController()
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
+	CombatMappingContext = TSoftObjectPtr<UInputMappingContext>(FSoftObjectPath(DefaultCombatMappingContextPath));
+	CombatRollAction = TSoftObjectPtr<UInputAction>(FSoftObjectPath(DefaultCombatRollActionPath));
 }
 
 void ATDGamePlayerController::SetupInputComponent()
@@ -447,16 +488,88 @@ void ATDGamePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		{
 			Subsystem->RemoveMappingContext(KeyboardMappingContext);
 		}
+		if (const UInputMappingContext* LoadedCombatMappingContext = CombatMappingContext.Get())
+		{
+			Subsystem->RemoveMappingContext(LoadedCombatMappingContext);
+		}
 	}
+	if (CombatInputHandle.IsValid())
+	{
+		CombatInputHandle->CancelHandle();
+	}
+	CombatInputHandle.Reset();
+	if (MonsterSpeciesHandle.IsValid())
+	{
+		MonsterSpeciesHandle->CancelHandle();
+	}
+	MonsterSpeciesHandle.Reset();
 	Super::EndPlay(EndPlayReason);
 }
 
 void ATDGamePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	if (IsLocalPlayerController() && GEngine)
+	if (!IsLocalPlayerController())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::White, TEXT("WASD Move + Mouse Aim | Left Click Move\n1 Fireball | 2 Blizzard | 3 Mine | 4 Shockwave | 5 Meteor | 6 Delayed Homing\n7 Thunder Cage | 8 Venom Bloom | 9 Astral Lances | 0 Phoenix Dive\nConsole: TDSpawnDamageTargets / TDSetCasterLevel 10"));
+		return;
+	}
+
+	LoadCombatInputAssets();
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::White, TEXT("WASD Move + Mouse Aim | Left Click Move\n1 Fireball | 2 Blizzard | 3 Mine | 4 Shockwave | 5 Meteor | 6 Delayed Homing\n7 Thunder Cage | 8 Venom Bloom | 9 Astral Lances | 0 Phoenix Dive\nConsole: TDSpawnDamageTargets / TDSetCasterLevel 10 / TDSpawnMonster Goblin 1 350"));
+	}
+}
+
+void ATDGamePlayerController::LoadCombatInputAssets()
+{
+	TArray<FSoftObjectPath> AssetPaths;
+	for (const FSoftObjectPath& AssetPath : { CombatMappingContext.ToSoftObjectPath(), CombatRollAction.ToSoftObjectPath() })
+	{
+		if (!AssetPath.IsNull() && FPackageName::DoesPackageExist(AssetPath.GetLongPackageName()))
+		{
+			AssetPaths.Add(AssetPath);
+		}
+	}
+	if (AssetPaths.IsEmpty())
+	{
+		return;
+	}
+
+	if (CombatInputHandle.IsValid())
+	{
+		CombatInputHandle->CancelHandle();
+	}
+	CombatInputHandle.Reset();
+
+	const bool bAreAssetsResident = Algo::AllOf(AssetPaths, [](const FSoftObjectPath& AssetPath) { return AssetPath.ResolveObject() != nullptr; });
+	FStreamableDelegate OnAssetsLoaded = bAreAssetsResident ? FStreamableDelegate() : FStreamableDelegate::CreateUObject(this, &ThisClass::ApplyCombatInputAssets);
+	CombatInputHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(MoveTemp(AssetPaths), MoveTemp(OnAssetsLoaded), FStreamableManager::AsyncLoadHighPriority);
+	if (bAreAssetsResident || !CombatInputHandle.IsValid())
+	{
+		ApplyCombatInputAssets();
+	}
+}
+
+void ATDGamePlayerController::ApplyCombatInputAssets()
+{
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	const UInputMappingContext* LoadedCombatMappingContext = CombatMappingContext.Get();
+	if (Subsystem && LoadedCombatMappingContext)
+	{
+		Subsystem->AddMappingContext(LoadedCombatMappingContext, CombatMappingContextPriority);
+	}
+
+	UInputAction* LoadedRollAction = CombatRollAction.Get();
+	if (RollAction || !LoadedRollAction)
+	{
+		return;
+	}
+
+	RollAction = LoadedRollAction;
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Started, this, &ATDGamePlayerController::OnRollStarted);
 	}
 }
 
@@ -624,15 +737,30 @@ bool ATDGamePlayerController::TryIssueAttackUnderCursor()
 		return false;
 	}
 
-	AActor* TargetActor = ResolveHostileTargetUnderCursor(PlayerCharacter);
-	if (!TargetActor)
+	AActor* Target = ResolveHostileTargetUnderCursor(PlayerCharacter);
+	if (!Target)
 	{
 		return false;
 	}
+	return CommandAttackTarget(Target) != ETDAttackCommandResult::Rejected;
+}
 
-	IssueAttackCommand(TargetActor);
+ETDAttackCommandResult ATDGamePlayerController::CommandAttackTarget(AActor* Target)
+{
+	const ATDGameCharacter* PlayerCharacter = Cast<ATDGameCharacter>(GetPawn());
+	if (!PlayerCharacter || !Target)
+	{
+		return ETDAttackCommandResult::Rejected;
+	}
+
+	if (!UTDCombatLibrary::IsActorAlive(Target) || !UTDCombatLibrary::AreActorsHostile(PlayerCharacter, Target))
+	{
+		return ETDAttackCommandResult::Rejected;
+	}
+
+	const ETDAttackCommandResult CommandResult = IssueAttackCommand(Target);
 	LastAttackCommandFrame = GFrameCounter;
-	return true;
+	return CommandResult;
 }
 
 void ATDGamePlayerController::SuppressPointerMovementUntilRelease()
@@ -650,43 +778,105 @@ AActor* ATDGamePlayerController::ResolveHostileTargetUnderCursor(const ATDGameCh
 		return nullptr;
 	}
 
-	FHitResult Hit;
-	if (!GetCursorHit(Hit))
+	float CursorX = 0.f;
+	float CursorY = 0.f;
+	if (!GetMousePosition(CursorX, CursorY))
 	{
 		return nullptr;
 	}
-
-	AActor* HitActor = Hit.GetActor();
-	if (!HitActor || !UTDCombatLibrary::IsActorAlive(HitActor) || !UTDCombatLibrary::AreActorsHostile(PlayerCharacter, HitActor))
-	{
-		return nullptr;
-	}
-
-	return HitActor;
+	return ResolveHostileTargetAtScreenPosition(FVector2D(CursorX, CursorY));
 }
 
-void ATDGamePlayerController::IssueAttackCommand(AActor* TargetActor)
+AActor* ATDGamePlayerController::ResolveHostileTargetAtScreenPosition(const FVector2D& ScreenPosition) const
+{
+	const APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn)
+	{
+		return nullptr;
+	}
+
+	int32 Width = 0;
+	int32 Height = 0;
+	GetViewportSize(Width, Height);
+	if (ScreenPosition.X < 0.0 || ScreenPosition.Y < 0.0 || ScreenPosition.X >= Width || ScreenPosition.Y >= Height)
+	{
+		return nullptr;
+	}
+
+	const TArray<TEnumAsByte<EObjectTypeQuery>> PawnObjectTypes = { UEngineTypes::ConvertToObjectType(ECC_Pawn) };
+	FHitResult PawnHit;
+	if (GetHitResultAtScreenPosition(ScreenPosition, PawnObjectTypes, false, PawnHit))
+	{
+		AActor* HitActor = PawnHit.GetActor();
+		if (HitActor && HitActor != ControlledPawn && UTDCombatLibrary::IsActorAlive(HitActor) && UTDCombatLibrary::AreActorsHostile(ControlledPawn, HitActor))
+		{
+			return HitActor;
+		}
+	}
+
+	const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDPlayerCursorTarget), true, ControlledPawn);
+	FHitResult GroundHit;
+	if (!GetHitResultAtScreenPosition(ScreenPosition, ECC_Visibility, QueryParams, GroundHit))
+	{
+		return nullptr;
+	}
+	AActor* GroundActor = GroundHit.GetActor();
+	if (GroundActor && GroundActor != ControlledPawn && UTDCombatLibrary::IsActorAlive(GroundActor) && UTDCombatLibrary::AreActorsHostile(ControlledPawn, GroundActor))
+	{
+		return GroundActor;
+	}
+	return FindNearestHostileAround(GroundHit.ImpactPoint, CursorTargetAssistRadiusCm);
+}
+
+AActor* ATDGamePlayerController::FindNearestHostileAround(const FVector& Location, const float RadiusCm) const
+{
+	const APawn* ControlledPawn = GetPawn();
+	UWorld* World = GetWorld();
+	if (!ControlledPawn || !World || RadiusCm <= 0.f)
+	{
+		return nullptr;
+	}
+
+	AActor* NearestActor = nullptr;
+	double NearestDistanceSquared = FMath::Square(static_cast<double>(RadiusCm));
+	for (TActorIterator<ATDCombatCharacter> It(World); It; ++It)
+	{
+		ATDCombatCharacter* Candidate = *It;
+		if (Candidate == ControlledPawn || !UTDCombatLibrary::IsActorAlive(Candidate) || !UTDCombatLibrary::AreActorsHostile(ControlledPawn, Candidate))
+		{
+			continue;
+		}
+		const double DistanceSquared = FVector::DistSquared2D(Candidate->GetActorLocation(), Location);
+		if (DistanceSquared > NearestDistanceSquared)
+		{
+			continue;
+		}
+		NearestDistanceSquared = DistanceSquared;
+		NearestActor = Candidate;
+	}
+	return NearestActor;
+}
+
+ETDAttackCommandResult ATDGamePlayerController::IssueAttackCommand(AActor* TargetActor)
 {
 	ATDGameCharacter* PlayerCharacter = Cast<ATDGameCharacter>(GetPawn());
 	if (!PlayerCharacter || !TargetActor)
 	{
-		return;
+		return ETDAttackCommandResult::Rejected;
 	}
 
-	const float DistanceToTarget = FVector::Dist2D(PlayerCharacter->GetActorLocation(), TargetActor->GetActorLocation());
-	const float DesiredRange = PlayerCharacter->GetDesiredAttackRange() + PlayerCharacter->GetAttackAcceptanceRadius();
-	if (DistanceToTarget > DesiredRange)
+	if (!IsContinuingComboOnTarget(*PlayerCharacter, *TargetActor) && !IsTargetWithinAttackRange(*PlayerCharacter, *TargetActor))
 	{
 		QueuedAttackTarget = TargetActor;
 		bIsAttackMoveQueued = true;
 		SetKeyboardMovementMode(false);
 		UAIBlueprintHelperLibrary::SimpleMoveToActor(this, TargetActor);
-		return;
+		return ETDAttackCommandResult::Approaching;
 	}
 
 	ClearQueuedAttack();
 	StopMovement();
-	PlayerCharacter->ExecutePrimaryAttack(TargetActor);
+	return PlayerCharacter->ExecutePrimaryAttack(TargetActor) ? ETDAttackCommandResult::Attacked : ETDAttackCommandResult::Rejected;
 }
 
 void ATDGamePlayerController::UpdateQueuedAttack()
@@ -924,4 +1114,95 @@ void ATDGamePlayerController::TDLoadWorldState(const FString& SlotName)
 	}
 
 	WorldState->LoadFromSlot(SlotName);
+}
+
+void ATDGamePlayerController::TDSpawnMonster(const FString& SpeciesName, int32 Count, float Distance)
+{
+	if (SpeciesName.IsEmpty())
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("TDSpawnMonster: give a species name such as Goblin."));
+		return;
+	}
+
+	const FSoftObjectPath SpeciesPath = MakeTDMonsterSpeciesAssetPath(SpeciesName);
+	if (!FPackageName::DoesPackageExist(SpeciesPath.GetLongPackageName()))
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("TDSpawnMonster: no species asset at '%s'."), *SpeciesPath.ToString());
+		return;
+	}
+
+	if (MonsterSpeciesHandle.IsValid())
+	{
+		MonsterSpeciesHandle->CancelHandle();
+	}
+	MonsterSpeciesHandle.Reset();
+
+	const bool bIsSpeciesResident = SpeciesPath.ResolveObject() != nullptr;
+	FStreamableDelegate OnSpeciesLoaded = bIsSpeciesResident ? FStreamableDelegate() : FStreamableDelegate::CreateUObject(this, &ThisClass::SpawnMonstersInFront, SpeciesPath, Count, Distance);
+	MonsterSpeciesHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(SpeciesPath, MoveTemp(OnSpeciesLoaded), FStreamableManager::AsyncLoadHighPriority);
+	if (bIsSpeciesResident || !MonsterSpeciesHandle.IsValid())
+	{
+		SpawnMonstersInFront(SpeciesPath, Count, Distance);
+	}
+}
+
+void ATDGamePlayerController::SpawnMonstersInFront(FSoftObjectPath SpeciesPath, int32 Count, float Distance)
+{
+	const APawn* ControlledPawn = GetPawn();
+	UTDMonsterSpeciesAsset* Species = Cast<UTDMonsterSpeciesAsset>(SpeciesPath.ResolveObject());
+	if (!ControlledPawn || !Species)
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("TDSpawnMonster: species '%s' did not load or there is no controlled pawn."), *SpeciesPath.ToString());
+		return;
+	}
+
+	const FVector PawnLocation = ControlledPawn->GetActorLocation();
+	FVector Forward = ControlledPawn->GetActorForwardVector().GetSafeNormal2D();
+	if (Forward.IsNearlyZero())
+	{
+		Forward = FVector::ForwardVector;
+	}
+	const FVector Right = FVector::CrossProduct(FVector::UpVector, Forward);
+	const int32 SpawnCount = FMath::Clamp(Count, 1, MaxSpawnedMonsterCount);
+	for (int32 SpawnIndex = 0; SpawnIndex < SpawnCount; ++SpawnIndex)
+	{
+		const float LateralOffsetCm = (SpawnIndex - (SpawnCount - 1) * 0.5f) * MonsterSpawnSpacingCm;
+		const FVector Location = PawnLocation + Forward * Distance + Right * LateralOffsetCm;
+		const FRotator FacingPawn(0.f, (PawnLocation - Location).GetSafeNormal2D().Rotation().Yaw, 0.f);
+		const ATDMonsterCharacter* Monster = SpawnMonsterForTest(Species, Location, FacingPawn);
+		UE_LOG(LogTDGame, Log, TEXT("TDSpawnMonster: %s '%s' near %s."), Monster ? TEXT("spawned") : TEXT("failed to spawn"), *Species->GetName(), *Location.ToCompactString());
+	}
+}
+
+ATDMonsterCharacter* ATDGamePlayerController::SpawnMonsterForTest(UTDMonsterSpeciesAsset* Species, const FVector& Location, const FRotator& Rotation)
+{
+	UWorld* World = GetWorld();
+	if (!Species || !World)
+	{
+		return nullptr;
+	}
+
+	ATDMonsterCharacter* Monster = World->SpawnActorDeferred<ATDMonsterCharacter>(ATDMonsterCharacter::StaticClass(), FTransform(Rotation, Location), nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+	if (!Monster)
+	{
+		return nullptr;
+	}
+
+	Monster->SetSpecies(Species);
+	FVector MonsterSpawnLocation = Location;
+	FCollisionObjectQueryParams GroundObjects;
+	GroundObjects.AddObjectTypesToQuery(ECC_WorldStatic);
+	GroundObjects.AddObjectTypesToQuery(ECC_WorldDynamic);
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDSpawnMonster), false, GetPawn());
+	QueryParams.AddIgnoredActor(Monster);
+	FHitResult GroundHit;
+	if (World->LineTraceSingleByObjectType(GroundHit, Location + FVector(0.f, 0.f, MonsterSpawnTraceAboveCm), Location - FVector(0.f, 0.f, MonsterSpawnTraceBelowCm), GroundObjects, QueryParams))
+	{
+		const UCapsuleComponent* Capsule = Monster->GetCapsuleComponent();
+		const float CapsuleHalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 0.f;
+		MonsterSpawnLocation.Z = GroundHit.ImpactPoint.Z + CapsuleHalfHeight + MonsterSpawnGroundClearanceCm;
+	}
+
+	Monster->FinishSpawning(FTransform(Rotation, MonsterSpawnLocation));
+	return Monster;
 }

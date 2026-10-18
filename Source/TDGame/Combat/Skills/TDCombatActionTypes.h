@@ -41,6 +41,12 @@ struct TDGAME_API FTDMeleeSweepSettings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon")
 	FName WeaponTipSocketName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon", meta=(ForceUnits="cm"))
+	FVector BaseLocalOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon", meta=(ForceUnits="cm"))
+	FVector TipLocalOffset = FVector::ZeroVector;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Weapon", meta=(ClampMin="2", ClampMax="16"))
 	int32 BladeSampleCount = 5;
 

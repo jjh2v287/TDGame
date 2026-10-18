@@ -39,6 +39,42 @@ void UTDSkillComponent::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleDeathStateChanged);
 }
 
+void UTDSkillComponent::SetSkillSet(UTDCombatStyleDefinition* NewSkillSet)
+{
+	SkillSet = NewSkillSet;
+	if (HasBegunPlay())
+	{
+		PrefetchSkillSetAnimations();
+	}
+}
+
+void UTDSkillComponent::SetPrimaryComboSettings(const int32 NewMaxPrimaryComboCount, const float NewPrimaryComboResetWindow)
+{
+	MaxPrimaryComboCount = FMath::Max(NewMaxPrimaryComboCount, 1);
+	PrimaryComboResetWindow = FMath::Max(NewPrimaryComboResetWindow, 0.1f);
+}
+
+FGameplayTag UTDSkillComponent::ResolveHitReactionTag(const FTDDamageResult& Result) const
+{
+	if (Result.AppliedDamage <= 0.f)
+	{
+		return FGameplayTag();
+	}
+	if (!bUsesHitReactionThresholds)
+	{
+		return TDGameplayTags::Action_Reaction_Hit;
+	}
+	if (Result.bWasKilled || Result.Delivery == ETDDamageDelivery::Status || Result.DamageRatio < HitReactionMinDamageRatio)
+	{
+		return FGameplayTag();
+	}
+	if (Result.bWasCritical || Result.DamageRatio >= HeavyHitReactionMinDamageRatio)
+	{
+		return TDGameplayTags::Action_Reaction_HeavyHit;
+	}
+	return TDGameplayTags::Action_Reaction_Hit;
+}
+
 void UTDSkillComponent::SetCombatTarget(AActor* NewTarget)
 {
 	CombatTarget = NewTarget;
@@ -73,7 +109,8 @@ FGameplayTag UTDSkillComponent::ResolvePrimaryActionTag(int32& OutComboStep) con
 	{
 		TDGameplayTags::Action_Attack_Primary_01,
 		TDGameplayTags::Action_Attack_Primary_02,
-		TDGameplayTags::Action_Attack_Primary_03
+		TDGameplayTags::Action_Attack_Primary_03,
+		TDGameplayTags::Action_Attack_Primary_04
 	};
 
 	const int32 ComboArrayIndex = FMath::Clamp(OutComboStep - 1, 0, static_cast<int32>(UE_ARRAY_COUNT(ComboTags)) - 1);
@@ -83,7 +120,13 @@ FGameplayTag UTDSkillComponent::ResolvePrimaryActionTag(int32& OutComboStep) con
 		return ComboActionTag;
 	}
 
-	if (OutComboStep <= 1 && HasActionDefinition(TDGameplayTags::Action_Attack_Primary))
+	OutComboStep = 1;
+	if (HasActionDefinition(ComboTags[0]))
+	{
+		return ComboTags[0];
+	}
+
+	if (HasActionDefinition(TDGameplayTags::Action_Attack_Primary))
 	{
 		return TDGameplayTags::Action_Attack_Primary;
 	}
@@ -190,6 +233,17 @@ void UTDSkillComponent::NotifyPrimaryActionActivated(const int32 ComboStep, cons
 	{
 		CurrentPrimaryComboStep = 1;
 	}
+	HighestPrimaryComboStepReached = FMath::Max(HighestPrimaryComboStepReached, CurrentPrimaryComboStep);
+}
+
+bool UTDSkillComponent::IsComboInputOpen() const
+{
+	if (bIsComboWindowOpen || ActiveInputBufferWindowCount > 0)
+	{
+		return true;
+	}
+	const UTDCombatComponent* CombatComponent = UTDCombatLibrary::GetCombatComponent(GetOwner());
+	return CombatComponent && CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Attacking);
 }
 
 void UTDSkillComponent::ResetPrimaryCombo()
@@ -337,14 +391,37 @@ void UTDSkillComponent::HandleDeathStateChanged(const FGameplayTag Tag, const in
 
 void UTDSkillComponent::HandleDamageReceived(const FTDDamageResult& Result, const FTDDamageContext& Context)
 {
-	if (Result.AppliedDamage <= 0.f)
+	const FGameplayTag ReactionTag = ResolveHitReactionTag(Result);
+	if (!ReactionTag.IsValid() || !TryStartHitReaction(ReactionTag))
 	{
 		return;
 	}
-
 	ClearBufferedInput();
 	ResetPrimaryCombo();
-	TryPlayReaction(TDGameplayTags::Action_Reaction_Hit);
+}
+
+bool UTDSkillComponent::TryStartHitReaction(const FGameplayTag ReactionTag)
+{
+	if (!bUsesHitReactionThresholds)
+	{
+		return TryPlayReaction(ReactionTag);
+	}
+	if (ReactionTag == TDGameplayTags::Action_Reaction_HeavyHit && TryPlayResidentReaction(TDGameplayTags::Action_Reaction_HeavyHit))
+	{
+		return true;
+	}
+	return TryPlayResidentReaction(TDGameplayTags::Action_Reaction_Hit);
+}
+
+bool UTDSkillComponent::IsReactionAnimationResident(const FGameplayTag ReactionTag) const
+{
+	const FTDCombatReactionDefinition* ReactionDefinition = FindReactionDefinition(ReactionTag);
+	return ReactionDefinition && ReactionDefinition->Action.Animation.Get() != nullptr;
+}
+
+bool UTDSkillComponent::TryPlayResidentReaction(const FGameplayTag ReactionTag)
+{
+	return IsReactionAnimationResident(ReactionTag) && TryPlayReaction(ReactionTag);
 }
 
 void UTDSkillComponent::HandleOwnerDeath(const FTDDamageContext& Context)

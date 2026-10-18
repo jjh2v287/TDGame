@@ -3,10 +3,12 @@
 #include "Combat/GAS/TDCombatAttributeSet.h"
 #include "Combat/GAS/TDCombatGameplayEffects.h"
 #include "Combat/GAS/TDDamageGameplayAbility.h"
+#include "Core/TDGameplayMessages.h"
 #include "Core/TDGameplayTags.h"
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
 #include "Engine/World.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameplayEffectExtension.h"
 #include "TDGame.h"
 
@@ -106,6 +108,16 @@ FTDCombatStats UTDCombatComponent::GetStats() const
 float UTDCombatComponent::GetCurrentHealth() const
 {
 	return CombatAttributes ? CombatAttributes->GetHealth() : Stats.GetMaxHealth();
+}
+
+float UTDCombatComponent::GetMaxHealth() const
+{
+	return CombatAttributes ? CombatAttributes->GetMaxHealth() : Stats.GetMaxHealth();
+}
+
+const FTDDamageResult& UTDCombatComponent::GetLastDamageResult() const
+{
+	return LastDamageResult;
 }
 
 float UTDCombatComponent::GetCurrentStamina() const
@@ -251,11 +263,19 @@ void UTDCombatComponent::RefreshDeathState()
 	}
 }
 
-FTDDamageResult UTDCombatComponent::ReceiveDamage(float RawDamage, ETDDamageElement Element, bool bCanCrit, const FTDDamageContext& Context)
+FTDDamageResult UTDCombatComponent::ReceiveDamage(float RawDamage, ETDDamageElement Element, bool bCanCrit, const FTDDamageContext& Context, const FTDDamageHitInfo& HitInfo)
 {
 	FTDDamageResult Result;
 	if (bIsEndingPlay || !CombatAttributes || !IsAlive() || !FMath::IsFinite(RawDamage) || RawDamage <= 0.f)
 	{
+		return Result;
+	}
+	if (HasMatchingGameplayTag(TDGameplayTags::State_Invulnerable))
+	{
+		if (Context.Delivery != ETDDamageDelivery::Status)
+		{
+			BroadcastDamageAvoided(Context, ResolveHitLocation(HitInfo));
+		}
 		return Result;
 	}
 	const float Chance = FMath::Clamp(TDCombatInitialization::NonNegative(Context.Stats.CriticalChance), 0.f, 1.f);
@@ -274,7 +294,13 @@ FTDDamageResult UTDCombatComponent::ReceiveDamage(float RawDamage, ETDDamageElem
 	FTDPendingCombatDamage Frame;
 	Frame.CombatContext = Context;
 	Frame.EffectContext = EffectContext;
+	Frame.UnclampedDamage = Damage;
 	Frame.Result.bWasCritical = Result.bWasCritical;
+	Frame.Result.Element = Element;
+	Frame.Result.Delivery = Context.Delivery;
+	Frame.Result.bHasHitLocation = HitInfo.bHasLocation && !HitInfo.Location.ContainsNaN();
+	Frame.Result.HitLocation = ResolveHitLocation(HitInfo);
+	Frame.Result.HitDirection = ResolveHitDirection(HitInfo, Context);
 	const int32 FrameIndex = PendingDamage.Add(MoveTemp(Frame));
 	ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 	Result = PendingDamage[FrameIndex].Result;
@@ -307,10 +333,20 @@ void UTDCombatComponent::HandleHealthChanged(const FOnAttributeChangeData& Chang
 	FTDDamageContext Context;
 	FTDDamageResult Result;
 	Result.AppliedDamage = FMath::Max(0.f, Change.OldValue - Change.NewValue);
+	Result.UnclampedDamage = Result.AppliedDamage;
+	Result.DamageRatio = Result.AppliedDamage / FMath::Max(1.f, GetMaxHealth());
+	const bool bShouldReportDamage = FrameIndex != INDEX_NONE || Change.GEModData != nullptr;
 	if (FrameIndex != INDEX_NONE)
 	{
+		const FTDDamageResult& FrameResult = PendingDamage[FrameIndex].Result;
 		Context = PendingDamage[FrameIndex].CombatContext;
-		Result.bWasCritical = PendingDamage[FrameIndex].Result.bWasCritical;
+		Result.bWasCritical = FrameResult.bWasCritical;
+		Result.Element = FrameResult.Element;
+		Result.Delivery = FrameResult.Delivery;
+		Result.HitLocation = FrameResult.HitLocation;
+		Result.HitDirection = FrameResult.HitDirection;
+		Result.bHasHitLocation = FrameResult.bHasHitLocation;
+		Result.UnclampedDamage = FMath::Max(Result.AppliedDamage, PendingDamage[FrameIndex].UnclampedDamage);
 	}
 	else
 	{
@@ -320,6 +356,8 @@ void UTDCombatComponent::HandleHealthChanged(const FOnAttributeChangeData& Chang
 		{
 			Context.Stats = Source->GetStats();
 		}
+		Result.HitLocation = ResolveHitLocation(FTDDamageHitInfo());
+		Result.HitDirection = ResolveHitDirection(FTDDamageHitInfo(), Context);
 	}
 	Result.bWasKilled = GetCurrentHealth() <= 0.f && !bDeathReported;
 	const uint64 ExpectedGeneration = StatusGeneration + (Result.bWasKilled ? 1 : 0);
@@ -331,18 +369,99 @@ void UTDCombatComponent::HandleHealthChanged(const FOnAttributeChangeData& Chang
 		CancelAllAbilities();
 	}
 	Result.bWasKilled &= ExpectedGeneration == StatusGeneration && GetCurrentHealth() <= 0.f && !bIsEndingPlay;
+	LastDamageResult = Result;
 	OnDamaged.Broadcast(Result, Context);
 	Result.bWasKilled &= ExpectedGeneration == StatusGeneration && GetCurrentHealth() <= 0.f && !bIsEndingPlay
 		&& IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed();
 	if (FrameIndex != INDEX_NONE)
 	{
 		PendingDamage[FrameIndex].Result.AppliedDamage += Result.AppliedDamage;
+		PendingDamage[FrameIndex].Result.UnclampedDamage = FMath::Max(PendingDamage[FrameIndex].Result.AppliedDamage, PendingDamage[FrameIndex].UnclampedDamage);
+		PendingDamage[FrameIndex].Result.DamageRatio += Result.DamageRatio;
 		PendingDamage[FrameIndex].Result.bWasKilled = Result.bWasKilled;
+	}
+	if (bShouldReportDamage && Result.AppliedDamage > 0.f)
+	{
+		BroadcastDamageApplied(Result, Context);
 	}
 	if (Result.bWasKilled)
 	{
 		OnDeath.Broadcast(Context);
 	}
+}
+
+FVector UTDCombatComponent::ResolveHitLocation(const FTDDamageHitInfo& HitInfo) const
+{
+	if (HitInfo.bHasLocation && !HitInfo.Location.ContainsNaN())
+	{
+		return HitInfo.Location;
+	}
+	const AActor* Owner = GetOwner();
+	return IsValid(Owner) ? Owner->GetActorLocation() : FVector::ZeroVector;
+}
+
+FVector UTDCombatComponent::ResolveHitDirection(const FTDDamageHitInfo& HitInfo, const FTDDamageContext& Context) const
+{
+	const FVector AuthoredDirection = HitInfo.Direction.ContainsNaN() ? FVector::ZeroVector : HitInfo.Direction.GetSafeNormal2D();
+	if (!AuthoredDirection.IsZero())
+	{
+		return AuthoredDirection;
+	}
+	const AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		return FVector::ZeroVector;
+	}
+	const AActor* Caster = Context.Caster.Get();
+	if (IsValid(Caster) && Caster != Owner)
+	{
+		const FVector CasterDirection = (Owner->GetActorLocation() - Caster->GetActorLocation()).GetSafeNormal2D();
+		if (!CasterDirection.IsZero())
+		{
+			return CasterDirection;
+		}
+	}
+	return (-Owner->GetActorForwardVector()).GetSafeNormal2D();
+}
+
+void UTDCombatComponent::BroadcastDamageAvoided(const FTDDamageContext& Context, const FVector& Location)
+{
+	OnDamageAvoided.Broadcast(Context, Location);
+	UWorld* World = GetWorld();
+	AActor* Owner = GetOwner();
+	if (bIsEndingPlay || !World || !IsValid(Owner) || !UGameplayMessageSubsystem::HasInstance(World))
+	{
+		return;
+	}
+	FTDDamageAvoidedMessage Message;
+	Message.Instigator = Context.Caster.Get();
+	Message.Target = Owner;
+	Message.Location = Location;
+	UGameplayMessageSubsystem::Get(World).BroadcastMessage(TDGameplayTags::Event_Damage_Avoided, Message);
+}
+
+void UTDCombatComponent::BroadcastDamageApplied(const FTDDamageResult& Result, const FTDDamageContext& Context) const
+{
+	UWorld* World = GetWorld();
+	AActor* Owner = GetOwner();
+	if (bIsEndingPlay || !World || !IsValid(Owner) || !UGameplayMessageSubsystem::HasInstance(World))
+	{
+		return;
+	}
+	FTDDamageAppliedMessage Message;
+	Message.Instigator = Context.Caster.Get();
+	Message.Target = Owner;
+	Message.DamageAmount = Result.AppliedDamage;
+	Message.Element = Result.Element;
+	Message.bWasCritical = Result.bWasCritical;
+	Message.HitLocation = Result.HitLocation;
+	Message.HitDirection = Result.HitDirection;
+	Message.bHasHitLocation = Result.bHasHitLocation;
+	Message.bWasKilled = Result.bWasKilled;
+	Message.Delivery = Result.Delivery;
+	Message.DamageRatio = Result.DamageRatio;
+	Message.UnclampedDamage = Result.UnclampedDamage;
+	UGameplayMessageSubsystem::Get(World).BroadcastMessage(TDGameplayTags::Event_Damage_Applied, Message);
 }
 
 bool UTDCombatComponent::TryCastDamageDefinition(UTDDamageDefinition* Definition, const FVector& Target)

@@ -15,7 +15,7 @@ struct FTDActorDeathMessage;
  *  Check the Blueprint derived class for the set values
  */
 UCLASS(abstract)
-class ATDGameGameMode : public AGameModeBase
+class TDGAME_API ATDGameGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
@@ -24,12 +24,14 @@ public:
 	/** Constructor */
 	ATDGameGameMode();
 
+	float GetPlayerRespawnDelaySeconds() const { return PlayerRespawnDelaySeconds; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Respawn", meta=(ClampMin="0"))
-	float PlayerRespawnDelaySeconds = 3.f;
+	float PlayerRespawnDelaySeconds = 4.f;
 
 private:
 	void HandleActorDeath(FGameplayTag Channel, const FTDActorDeathMessage& Message);

@@ -34,6 +34,21 @@ namespace
 		const USkeletalMeshComponent* MeshComponent = Mesh.Get();
 		return MeshComponent && Animation.IsValid() && SkinnedAsset.IsValid() && MeshComponent->GetSkinnedAsset() == SkinnedAsset.Get();
 	}
+
+	FVector ResolveMeleeImpactLocation(const FHitResult& Hit, const AActor& HitActor)
+	{
+		const FVector ImpactPoint = Hit.ImpactPoint;
+		if (!ImpactPoint.ContainsNaN() && !ImpactPoint.IsZero())
+		{
+			return ImpactPoint;
+		}
+		const FVector SweepLocation = Hit.Location;
+		if (!SweepLocation.ContainsNaN() && !SweepLocation.IsZero())
+		{
+			return SweepLocation;
+		}
+		return HitActor.GetActorLocation();
+	}
 }
 
 bool FTDMeleeSweep::Begin(USkeletalMeshComponent* MeshComponent, const UAnimSequence* Animation, const FTDMeleeSweepSettings& InSettings, const FTDDamageContext& InDamageContext, const float AnimationTime, const bool bLockRootBone)
@@ -198,7 +213,8 @@ bool FTDMeleeSweep::SampleBladePoints(const double AnimationTime, const FTransfo
 
 	FCSPose<FCompactPose> ComponentSpacePose;
 	ComponentSpacePose.InitPose(MoveTemp(Pose));
-	const FVector BaseLocation = ApplyHeightLock(ComponentToWorld, (BaseSocket.LocalTransform * ComponentSpacePose.GetComponentSpaceTransform(BaseSocket.CompactBoneIndex) * ComponentToWorld).GetLocation());
+	const FTransform BaseSocketToWorld = BaseSocket.LocalTransform * ComponentSpacePose.GetComponentSpaceTransform(BaseSocket.CompactBoneIndex) * ComponentToWorld;
+	const FVector BaseLocation = ApplyHeightLock(ComponentToWorld, BaseSocketToWorld.TransformPosition(Settings.BaseLocalOffset));
 	OutBladePoints.Reset();
 	if (!bHasTipSocket)
 	{
@@ -206,7 +222,8 @@ bool FTDMeleeSweep::SampleBladePoints(const double AnimationTime, const FTransfo
 		return true;
 	}
 
-	const FVector TipLocation = ApplyHeightLock(ComponentToWorld, (TipSocket.LocalTransform * ComponentSpacePose.GetComponentSpaceTransform(TipSocket.CompactBoneIndex) * ComponentToWorld).GetLocation());
+	const FTransform TipSocketToWorld = TipSocket.LocalTransform * ComponentSpacePose.GetComponentSpaceTransform(TipSocket.CompactBoneIndex) * ComponentToWorld;
+	const FVector TipLocation = ApplyHeightLock(ComponentToWorld, TipSocketToWorld.TransformPosition(Settings.TipLocalOffset));
 	const int32 PointCount = FMath::Clamp(Settings.BladeSampleCount, 2, 16);
 	for (int32 PointIndex = 0; PointIndex < PointCount; ++PointIndex)
 	{
@@ -338,7 +355,7 @@ void FTDMeleeSweep::ApplyHitResults(UWorld* World, const TArray<FHitResult>& Hit
 
 		HitActors.Add(HitActor);
 		QueryParams.AddIgnoredActor(HitActor);
-		const FVector HitLocation = Hit.ImpactPoint.ContainsNaN() ? HitActor->GetActorLocation() : FVector(Hit.ImpactPoint);
+		const FVector HitLocation = ResolveMeleeImpactLocation(Hit, *HitActor);
 #if ENABLE_DRAW_DEBUG
 		if (Settings.bDrawDebugSweep)
 		{

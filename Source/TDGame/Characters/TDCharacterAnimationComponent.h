@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Engine/TimerHandle.h"
 #include "TDCharacterAnimationComponent.generated.h"
 
 class UAnimSequence;
@@ -82,6 +83,14 @@ public:
 	void SetAnimationFrozen(bool bIsFrozen);
 	bool IsAnimationFrozen() const { return bIsAnimationFrozen; }
 
+	void HoldPoseForDeath();
+	bool IsPoseHeldByDeath() const { return bIsPoseHeldByDeath; }
+	bool IsInjectionWarmingUp() const { return InjectionWarmupTicksRemaining > 0; }
+
+	void StartHitStop(float Seconds);
+	bool IsHitStopped() const { return bIsHitStopped; }
+	bool IsPlayingRootMotionAction() const { return ActiveAction.Animation != nullptr && ActiveAction.bUsesRootMotion; }
+
 	FTDOnActionAnimationEnded OnActionAnimationEnded;
 
 protected:
@@ -111,7 +120,20 @@ private:
 		bool bUsesRootMotion = false;
 	};
 
+	struct FTDPendingInjection
+	{
+		TWeakObjectPtr<UAnimSequence> Animation;
+		float PlayRate = 1.f;
+		bool bIsDeath = false;
+	};
+
 	UUAFComponent* ResolveUAFComponent() const;
+	bool IsPoseHeld() const { return bIsAnimationFrozen || bIsHitStopped || bIsPoseHeldByDeath; }
+	void AdvanceInjectionWarmup();
+	void FlushPendingInjection();
+	void EndHitStop();
+	void ClearHitStop();
+	void RefreshAnimationSystemActivation();
 	void ApplyBaseAsset();
 	void UpdateBlendSpaceInputs() const;
 	void UpdateLocomotionClips(float DeltaTime);
@@ -140,16 +162,22 @@ private:
 	TObjectPtr<UAnimSequence> DeathAnimation;
 
 	FTDActiveAction ActiveAction;
+	FTDPendingInjection PendingInjection;
+	FTimerHandle HitStopTimerHandle;
 	TSharedPtr<UE::UAF::FInjectionRequest> ActionRequest;
 	TSharedPtr<UE::UAF::FInjectionRequest> LocomotionRequest;
 	ETDLocomotionPose CurrentLocomotionPose = ETDLocomotionPose::None;
 	float CurrentLocomotionPlayRate = 1.f;
 	float LandingSecondsRemaining = 0.f;
+	int32 InjectionWarmupTicksRemaining = 0;
 	bool bUsesBlendSpace = false;
 	bool bHasBaseAsset = false;
 	bool bWasAirborne = false;
 	bool bIsPlayingDeath = false;
 	bool bIsAnimationFrozen = false;
+	bool bIsHitStopped = false;
+	bool bIsPoseHeldByDeath = false;
+	bool bIsAnimationSystemPaused = false;
 	bool bIsRootMotionEnabled = false;
 	bool bHasPendingRootMotionCancel = false;
 };

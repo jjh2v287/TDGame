@@ -13,17 +13,27 @@ class UInputAction;
 class UEnhancedInputComponent;
 class UPathFollowingComponent;
 class ATDGameCharacter;
+class ATDMonsterCharacter;
+class UTDMonsterSpeciesAsset;
 struct FInputActionValue;
 struct FStreamableHandle;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+
+UENUM(BlueprintType)
+enum class ETDAttackCommandResult : uint8
+{
+	Rejected,
+	Attacked,
+	Approaching
+};
 
 /**
  *  Player controller for a top-down perspective game.
  *  Implements point and click based controls
  */
 UCLASS(abstract)
-class ATDGamePlayerController : public APlayerController
+class TDGAME_API ATDGamePlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
@@ -69,7 +79,16 @@ protected:
 	TObjectPtr<UInputAction> SkillEAction;
 
 	UPROPERTY(EditAnywhere, Category="Input|Combat")
-	bool bAttackHostileOnClick = false;
+	bool bAttackHostileOnClick = true;
+
+	UPROPERTY(EditAnywhere, Category="Input|Combat", meta=(ClampMin="0"))
+	float CursorTargetAssistRadiusCm = 120.f;
+
+	UPROPERTY(EditAnywhere, Category="Input|Combat")
+	TSoftObjectPtr<UInputMappingContext> CombatMappingContext;
+
+	UPROPERTY(EditAnywhere, Category="Input|Combat")
+	TSoftObjectPtr<UInputAction> CombatRollAction;
 
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
@@ -109,6 +128,14 @@ public:
 
 	UFUNCTION(Exec)
 	void TDLoadWorldState(const FString& SlotName);
+
+	UFUNCTION(Exec)
+	void TDSpawnMonster(const FString& SpeciesName, int32 Count = 1, float Distance = 350.f);
+
+	ATDMonsterCharacter* SpawnMonsterForTest(UTDMonsterSpeciesAsset* Species, const FVector& Location, const FRotator& Rotation);
+
+	ETDAttackCommandResult CommandAttackTarget(AActor* Target);
+	AActor* ResolveHostileTargetAtScreenPosition(const FVector2D& ScreenPosition) const;
 
 protected:
 
@@ -152,6 +179,8 @@ private:
 	void ResetMovementInput();
 	void SetKeyboardMovementMode(bool bKeyboardMode);
 	bool GetCursorHit(FHitResult& Hit) const;
+	AActor* ResolveHostileTargetUnderCursor(const ATDGameCharacter* PlayerCharacter) const;
+	AActor* FindNearestHostileAround(const FVector& Location, float RadiusCm) const;
 	void FaceMouseCursor(ATDGameCharacter* ControlledCharacter);
 	void SetupCombatInputBindings(UEnhancedInputComponent* EnhancedInputComponent);
 	void OnPrimaryAttackStarted();
@@ -161,13 +190,15 @@ private:
 	void OnJumpStarted();
 	bool TryIssueAttackUnderCursor();
 	void SuppressPointerMovementUntilRelease();
-	AActor* ResolveHostileTargetUnderCursor(const ATDGameCharacter* PlayerCharacter) const;
-	void IssueAttackCommand(AActor* TargetActor);
+	ETDAttackCommandResult IssueAttackCommand(AActor* TargetActor);
 	void UpdateQueuedAttack();
 	void ClearQueuedAttack();
 	FVector GetRollDirection(const ATDGameCharacter& ControlledCharacter) const;
 	static FVector2D SnapMovementInputToEightDirections(const FVector2D& MovementInput);
 	void PlayLoadedMeleeAction(FSoftObjectPath AnimationAssetPath);
+	void LoadCombatInputAssets();
+	void ApplyCombatInputAssets();
+	void SpawnMonstersInFront(FSoftObjectPath SpeciesPath, int32 Count, float Distance);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> KeyboardMoveAction;
@@ -186,6 +217,8 @@ private:
 	bool bIsAttackMoveQueued = false;
 	uint64 LastAttackCommandFrame = MAX_uint64;
 	TSharedPtr<FStreamableHandle> MeleeActionHandle;
+	TSharedPtr<FStreamableHandle> CombatInputHandle;
+	TSharedPtr<FStreamableHandle> MonsterSpeciesHandle;
 };
 
 

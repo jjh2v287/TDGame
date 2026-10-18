@@ -22,9 +22,20 @@
 #include "GameplayAbilitySpec.h"
 #include "MonsterAI/TDMonsterDefinitionLibrary.h"
 #include "MonsterAI/TDMonsterSpeciesAsset.h"
+#include "PhysicsEngine/BodyInstance.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "TimerManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTDMonster, Log, All);
+
+namespace TDMonsterCorpse
+{
+	constexpr float SinkDepthMargin = 30.f;
+	constexpr float SinkEndMarginSeconds = 0.2f;
+	constexpr float SinkStepSeconds = 1.f / 30.f;
+	constexpr float MinimumSinkSeconds = 0.05f;
+	constexpr float RagdollSinkLinearDamping = 6.f;
+}
 
 namespace
 {
@@ -169,9 +180,14 @@ void ATDMonsterCharacter::HandleDeath(const FTDDamageContext& Context)
 	UnregisterCombatTokenAggro();
 	StopMonsterBrain();
 	PlayDeathPresentation();
+	ScheduleCorpseSink();
+	BroadcastDeathMessage(Context);
+}
 
+void ATDMonsterCharacter::BroadcastDeathMessage(const FTDDamageContext& Context)
+{
 	UWorld* World = GetWorld();
-	if (!World)
+	if (!World || !UGameplayMessageSubsystem::HasInstance(World))
 	{
 		return;
 	}
@@ -381,6 +397,10 @@ void ATDMonsterCharacter::CancelBodyAbility()
 
 void ATDMonsterCharacter::BeginBodyStagger(const FVector& SourceLocation, const float Seconds)
 {
+	if (!CombatComponent->IsAlive())
+	{
+		return;
+	}
 	const FVector Away = (GetActorLocation() - SourceLocation).GetSafeNormal2D();
 	if (!Away.IsNearlyZero() && !CombatComponent->IsFrozen())
 	{
@@ -512,30 +532,111 @@ void ATDMonsterCharacter::PlayDeathPresentation()
 	}
 	const FTDMonsterAnimClip& DeathClip = Species->Death;
 	UAnimSequence* DeathSequence = Cast<UAnimSequence>(DeathClip.Animation);
-	if (DeathSequence && CharacterAnimation->PlayDeath(DeathSequence, FMath::Max(DeathClip.PlayRate, MinimumClipPlayRate), DeathClip.EndSeconds) > 0.f)
+	const float DeathClipSeconds = DeathSequence ? CharacterAnimation->PlayDeath(DeathSequence, FMath::Max(DeathClip.PlayRate, MinimumClipPlayRate), DeathClip.EndSeconds) : 0.f;
+	if (DeathClipSeconds > 0.f)
+	{
+		UWorld* World = GetWorld();
+		if (!Species->bRagdollAfterDeathClip || !World)
+		{
+			return;
+		}
+		World->GetTimerManager().SetTimer(DeathRagdollTimerHandle, FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			StartDeathRagdoll();
+		}), DeathClipSeconds, false);
+		return;
+	}
+	if (!Species->bUseRagdollWithoutDeathClip)
 	{
 		return;
 	}
-	if (!Species->bUseRagdollWithoutDeathClip || !GetMesh()->GetPhysicsAsset())
-	{
-		return;
-	}
-	StartRagdoll();
+	StartDeathRagdoll();
 }
 
-void ATDMonsterCharacter::StartRagdoll()
+void ATDMonsterCharacter::StartDeathRagdoll()
 {
+	if (IsRagdolling())
+	{
+		return;
+	}
+	StartRagdoll(ComputeKillVelocity(CombatComponent->GetLastDamageResult()));
+}
+
+void ATDMonsterCharacter::ScheduleCorpseSink()
+{
+	UWorld* World = GetWorld();
+	const float SinkSeconds = Species ? Species->CorpseSinkSeconds : 0.f;
+	const float LifeSeconds = GetLifeSpan();
+	if (!World || SinkSeconds <= 0.f || LifeSeconds <= 0.f)
+	{
+		return;
+	}
+	const float SinkDelaySeconds = LifeSeconds - SinkSeconds - TDMonsterCorpse::SinkEndMarginSeconds;
+	if (SinkDelaySeconds <= 0.f)
+	{
+		BeginCorpseSink();
+		return;
+	}
+	World->GetTimerManager().SetTimer(CorpseSinkTimerHandle, FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		BeginCorpseSink();
+	}), SinkDelaySeconds, false);
+}
+
+void ATDMonsterCharacter::BeginCorpseSink()
+{
+	UWorld* World = GetWorld();
 	USkeletalMeshComponent* MeshComponent = GetMesh();
-	CharacterAnimation->SetAnimationFrozen(true);
-	GetMoverComponent()->SetPrimaryVisualComponent(nullptr);
-	MeshComponent->UpdateKinematicBonesToAnim(MeshComponent->GetComponentSpaceTransforms(), ETeleportType::TeleportPhysics, true);
-	SetActorEnableCollision(true);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	MeshComponent->SetCollisionProfileName(TEXT("Ragdoll"));
-	MeshComponent->SetAllBodiesSimulatePhysics(true);
-	MeshComponent->SetSimulatePhysics(true);
-	MeshComponent->WakeAllRigidBodies();
-	MeshComponent->bBlendPhysics = true;
+	if (!World || !MeshComponent)
+	{
+		return;
+	}
+	World->GetTimerManager().ClearTimer(DeathRagdollTimerHandle);
+
+	if (IsRagdolling())
+	{
+		MeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+		for (FBodyInstance* Body : MeshComponent->Bodies)
+		{
+			if (!Body)
+			{
+				continue;
+			}
+			Body->LinearDamping = TDMonsterCorpse::RagdollSinkLinearDamping;
+			Body->UpdateDampingProperties();
+		}
+		MeshComponent->WakeAllRigidBodies();
+		return;
+	}
+
+	if (UCharacterMoverComponent* Mover = GetMoverComponent())
+	{
+		Mover->SetPrimaryVisualComponent(nullptr);
+	}
+	CorpseSinkStartLocation = MeshComponent->GetRelativeLocation();
+	CorpseSinkStartSeconds = World->GetTimeSeconds();
+	CorpseSinkDepth = static_cast<float>(MeshComponent->Bounds.BoxExtent.Z) * 2.f + TDMonsterCorpse::SinkDepthMargin;
+	CorpseSinkDurationSeconds = FMath::Max(FMath::Min(Species ? Species->CorpseSinkSeconds : 0.f, GetLifeSpan() - TDMonsterCorpse::SinkEndMarginSeconds), TDMonsterCorpse::MinimumSinkSeconds);
+	World->GetTimerManager().SetTimer(CorpseSinkTimerHandle, FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		AdvanceCorpseSink();
+	}), TDMonsterCorpse::SinkStepSeconds, true);
+}
+
+void ATDMonsterCharacter::AdvanceCorpseSink()
+{
+	UWorld* World = GetWorld();
+	USkeletalMeshComponent* MeshComponent = GetMesh();
+	if (!World || !MeshComponent)
+	{
+		return;
+	}
+	const float SinkAlpha = static_cast<float>(FMath::Clamp((World->GetTimeSeconds() - CorpseSinkStartSeconds) / CorpseSinkDurationSeconds, 0.0, 1.0));
+	MeshComponent->SetRelativeLocation(CorpseSinkStartLocation - FVector(0.f, 0.f, CorpseSinkDepth * SinkAlpha));
+	if (SinkAlpha >= 1.f)
+	{
+		World->GetTimerManager().ClearTimer(CorpseSinkTimerHandle);
+	}
 }
 
 FVector ATDMonsterCharacter::ComputeAbilityOrigin(const FTDMonsterAbilityRequest& Request) const

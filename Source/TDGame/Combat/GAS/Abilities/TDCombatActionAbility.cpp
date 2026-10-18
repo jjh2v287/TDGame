@@ -393,6 +393,19 @@ UTDPlayerPrimaryAttack03Ability::UTDPlayerPrimaryAttack03Ability()
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Stunned);
 }
 
+UTDPlayerPrimaryAttack04Ability::UTDPlayerPrimaryAttack04Ability()
+{
+	SetAssetTags(FGameplayTagContainer(TDGameplayTags::Action_Attack_Primary_04));
+	CombatActionTag = TDGameplayTags::Action_Attack_Primary_04;
+	ActiveStateTag = TDGameplayTags::State_Attacking;
+	PrimaryComboStep = 4;
+
+	ActivationBlockedTags.AddTag(TDGameplayTags::State_Dead);
+	ActivationBlockedTags.AddTag(TDGameplayTags::State_Rolling);
+	ActivationBlockedTags.AddTag(TDGameplayTags::State_Skill);
+	ActivationBlockedTags.AddTag(TDGameplayTags::State_Stunned);
+}
+
 UTDPlayerSkillQAbility::UTDPlayerSkillQAbility()
 {
 	SetAssetTags(FGameplayTagContainer(TDGameplayTags::Action_Skill_Q));

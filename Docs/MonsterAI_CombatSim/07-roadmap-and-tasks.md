@@ -647,6 +647,17 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 참조: 사용자 보고 2026-10-16; `Saved/AgentOps/20260924/assets_hyena_active.json`(자산 16.517초, 동작 구간 달리기 0.5·걷기 1.333·대기 2.5초)
 - 기록: 2026-10-16 claude — 완료. 원인: Fab 하이에나 자산이 전부 16.517초(991프레임)인데 동작은 앞 30(달리기)·80(걷기)·150(대기)프레임뿐이고 나머지는 완전 정지 포즈, 이동 재생(`InjectLocomotionPose`)은 종 자산 Start/End를 버리고 자산 전체를 ForceLoop → 0.5초 뛰고 16초 정지 포즈로 미끄러짐. UAF 5.8 `FPlayAnimArgs`에 끝 위치가 없어 데이터로 고침. 같은 부류로 발견: 전 종 대기가 한 번 재생 뒤 멈춤(기본 자산은 시퀀스 bLoop을 따르고 쓰던 4개가 False, L-anim-15). 수정: 원본 프레임 무변경 + 끝↔시작 틈을 C1 Hermite로 채운 루프 자산(Run G=1 0.533초 +6.7%, Walk G=4 1.417초 +6.3%, Idle G=12 2.717초 +8.7%, 이음매 0cm, 이음매 속도 비 최대 0.67), RunClipSpeed 925→731(네 발 접지 중앙값, 독립 재측정 721.6), 달리기 문턱은 걷기 상한<달리기 하한이면 기하평균(하이에나만 323→147, 나머지 5종 불변), 대기 4개 bLoop 켬(서드파티 3개는 재저장으로 5.8 형식 승격, 포즈·메타 동일). 대기 C++ 강제 반복은 효과 없음(기본 자산), 대기 주입은 ensure(InjectionSiteTrait.cpp:88)로 폐기. 완료 조건 대조: ① 하이에나 3클립 반복 구간만·이음매 0 ② 수정 전 `Saved/Logs/M326_Before.log`·`M326_Before2.log` 종 시험(하이에나 구간·정지 꼬리·이음매, 대기 bLoop)·대기 시험(1.5주기 뒤 0.000cm) 실패 → 수정 후 `M326_After8.log` 34/33·전체 `M326_Full6.log` 127/126(실패는 기준선 `CircleAvoidance.Scene.CrossingStreams`, M3-02, 사전 커밋부터 같은 수치) ③ 독립 검증 3관점(재실행 3회 수치 동일, 코드 반박 major 2 반영, 자산 재측정) ④ 이 기록·L-anim-15. 남은 것: 육안(PIE) 미확인, 걷기 앞왼발 디딤 중 원본 최저보다 0.61cm 낮음(배율 1), 원본 동작의 앞뒤 발 접지 속도 불일치(앞 877·뒤 615 → 어느 값이든 일부 미끄럼), SkeletonGuard·StoneGolem 걷기 이음매 팔 속도 비 2.5~2.8(기존 결함, 문턱 3.0 근접), 리타깃 도구 대기 loop 변경 미실행, 달리기 문턱 C++ 시험 없음.
 
+### M3-27 플레이어↔몬스터 전투 완성(피해 표시·피격 연출·피격 모션·사망 래그돌·사운드·HUD)
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 상(사용자 지시 2026-10-18 "몬스터와 플레이어의 전투를 모두 끝까지 개발")
+- 선행: 없음(M3-13 CC·넉백 규약·MD-13 강인도/히트스톱 제안은 미정이라 선점하지 않고 표현층 기본값으로만 둔다, 잠정값은 07#MD-46)
+- 목표: 플레이어 근접·주문과 몬스터 공격이 서로 실제 피해를 주고, 모든 피해 경로에서 데미지 숫자·피격 VFX·사운드·번쩍임·히트스톱·카메라 흔들림·피격 모션·넉백이 나오며, 사망 시 타격 방향 래그돌과 시체 정리, 플레이어 HUD(체력)·몬스터 체력바가 동작한다.
+- 완료 조건: 피해 방송이 근접·주문·상태이상·직접 피해 모두에서 한 번씩 나가고 위치·방향·속성·처치 여부를 싣는다 / 구르기 무적이 피해를 막는다 / 표현층은 헤드리스·시뮬 월드에서 꺼지고 결정론 해시 시험 통과 수 유지 / PIE에서 플레이어가 몬스터를 쳐 죽이고 몬스터가 플레이어를 쳐 죽이는 흐름이 자동 시험과 스크린샷으로 확인된다 / OP-33 검사 두 개 종료 0.
+- 산출물: C++ `Combat/Feedback/`(표현 서브시스템·C++ 오버레이 위젯(숫자 풀 48·몬스터 체력바 24·플레이어 HUD·비네트·사망 화면)·트라우마 카메라 흔들림·지연 큐·설정), `Characters/TDKnockbackLayeredMove`, `Combat/Skills/TDPlayerCombatCatalog`(칼·방패 4단 스타일), 피해 사건 단일화(`ETDDamageDelivery`·`FTDDamageHitInfo`·`FTDDamageResult`/`FTDDamageAppliedMessage` 확장·`Event.Damage.Avoided`·`Event.Combat.MeleeSwing`), 히트스톱·사망 정지(`UTDCharacterAnimationComponent`), 래그돌·흔들림·넉백(`ATDCombatCharacter`), 커서 대상 선택(`ResolveHostileTargetAtScreenPosition`)·`TDSpawnMonster`·구르기 입력, 시험 `TDGame.Combat.DamageEvent.*`(11)·`Feedback.*`(11)·`Reaction.*`(10)·`TDGame.PIE.Combat.FullLoop`. 자산 `/Game/Combat/Feedback/{M_TD_HitFlashOverlay,M_TD_DamageVignette,Audio/SW_TD_*4}`, `/Game/Combat/Input/{IA_TDRoll,IMC_TDCombat}`, `/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo01..04`·`Reaction/AS_TD_{Player_HitReact_Light,Player_HitReact_Heavy,Manny_HitReact_Unarmed}`·PJGame 사망6·피격8·구르기2 복사, `/Game/MonsterAI/Animations/{Goblin,Golem,Guard,BookHead}/AS_TD_*_HitReact`·`Hyena/AS_TD_Hyena_Hit`, 종 DA 6개 Hit 클립, RTG/IK Guard·BookHead. 도구 `Tools/Combat/*`(3)·`Tools/BlenderAnimation/CombatHit/*`(9)·리타깃 도구 확장. Blender 원본 `AnimationSources/{Player,Monster}/AS_TD_*Hit*`, 합성음 원본 `AudioSources/Combat/*.wav`.
+- 검증: BUILD; TEST `TDGame.Combat.*`·`TDGame.MonsterAI.*`·`TDGame.Movement.*`·`TDGame.FluidFX.*` 헤드리스 175/176(`measurements/M3-27/headless-final-tests.json`); PIE `TDGame.PIE.Combat.FullLoop` 통과(`measurements/M3-27/combat-pie.json`·스크린샷 02~04); `python Tools/check_sync_loads.py`·`python Tools/check_cook_coverage.py` 0
+- 참조: `Saved/AgentOps/20261018/combat-full/`(understand·research·review·review-code·spec-v1~v4), 07#MD-46
+- 기록: 2026-10-18 claude — 완료. 조사 9+7갈래 → 명세 v1 → 3관점 반박 → v2(모듈 간 계약 절) → 사본 빌더 4 + Blender 피격 모션 병렬 → 체크섬 통합(동료 세션 FluidFX·몬스터 AI와 build_hold.json으로 창 조정) → 첫 빌드 오류 2종만 → 코드 반박 5관점 → 2차 수정 → PIE 6회. PIE에서 잡은 실결함: ① 래그돌이 화면에서 굳은 덩어리로 미끄러짐(UAF 메시는 버퍼 뒤집기 플래그가 안 서 물리 결과가 렌더에 안 보임, L-anim-17) ② 커서 Visibility 추적이 몬스터를 못 맞혀 클릭이 이동이 됨(L-combat-06) ③ 런타임 스폰 몬스터 첫 주입 `InjectionSiteTrait.cpp:88` ensure(새 UAF 시스템 첫 PrePhysics 전 주입, 2틱 워밍업, L-anim-18) ④ 도주하는 적에게 콤보 이어치기가 사거리 밖 허공을 벰(이어치기 거리 +150cm 제한) ⑤ 처치 시체가 벽 밖으로 날아감(속도 상수·탈침투 150·감쇠) ⑥ 전체 화면 붉은 틴트(비율 비례 가장자리 비네트로) ⑦ 소리 단일 동시성 재발동 거부(채널 3개). 최종 PIE 수치: 클릭 대상 1회에 고블린, 콤보 4단 도달·근접 3타 처치 6.9초, 타격 VFX 3/3, 래그돌 포즈 변화 57cm·사망점 19cm 안 정착, 20% 피격 즉시 반응 클립·넉백 53cm, 무적 피해 0·회피 표시, 플레이어 래그돌·사망 화면·4초 부활. 남은 것: 근접 시점 육안(칼·방패 쥐기·피격 모션 품질) 미확인 — 탑다운 스크린샷만, PIE 스크린샷 01이 편집기 뷰포트를 찍는 흔들림, MD-13·M3-13·07#MD-46 사용자 결정, 4단 콤보는 사용자 Blender 검토 대기였으나 이번 지시로 이식함, 커밋 안 함.
 ### M3-28 전투 디렉터(긴장도·박자·예산 조절)
 - 상태: done
 - 담당: claude/2026-10-18
@@ -836,6 +847,14 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 권장: (a). 원형 몸은 위치가 조금 바뀌어도 티가 덜 나고, (b)는 무리 전체가 자주 움직여 산만하다. PIE에서 보고 다시 정한다.
 - 영향: 07#M3-02, 07#M3-25(`HomeArrivalRadius`), `Docs/MonsterAI_CombatSim/measurements/circle-avoidance/proto-summary-tables.md`
 - 결정: (a) 현행 120 유지 — 2026-10-15 사용자 지시. 코드 변경 없음(양보한 Home 몬스터는 120cm 안이면 밀린 자리에 남는다).
+
+### MD-46 플레이어 피격 반응·넉백·히트스톱·래그돌 기본값(잠정)
+- 상태: proposed · 2026-10-18 claude(M3-27, MD-13·M3-13 미정이라 표현층·플레이어 한정 잠정값으로 구현)
+- 질문: 지금 들어간 기본값을 확정할까? ① 플레이어 피격 반응은 지속 피해 제외, 한 타 피해 비율 ≥8% 가벼운 반응·≥15% 또는 치명타 무거운 반응, 미만이면 콤보 유지(`UTDSkillComponent` 문턱, 플레이어만 켬) ② 넉백 8%: 300cm/s 0.15초, 15%: 600cm/s 0.22초(구르기·공중 제외) ③ 히트스톱 피격자 0.05/0.09초, 공격자 0(MD-13 제안 따름), 루트모션 액션 중 피격자는 생략 ④ 처치 래그돌 속도 (220+380×비율)×치명1.2, 위 160cm/s ⑤ 몬스터 Stagger 문턱 12%·밀림 450은 그대로
+- 선택지: (a) 현행 유지 (b) 공격자 히트스톱 0.03~0.05초 추가(손맛↑, 플레이어 입력·판정 시점 지연) (c) 반응 문턱 상향(덜 끊김)
+- 권장: (a). PIE에서 피격 반응·넉백이 과하지 않았고, 공격자 정지는 결정론·입력 감각 위험이 있어 MD-13 결정 뒤에 본다.
+- 영향: 07#M3-27, 07#M3-13, MD-13(08 §3-6), `Config/DefaultGame.ini` `[/Script/TDGame.TDCombatFeedbackSettings]`, `ATDCombatCharacter` Ragdoll* UPROPERTY
+- 결정: (대기)
 
 ### MD-47 무리 전술층·전투 디렉터 기본값(권장안 적용, 재검토 가능)
 - 상태: proposed · 2026-10-18 claude(M3-14·M3-28, 사용자 지시 "확인 절차 없이 권장안"으로 적용)

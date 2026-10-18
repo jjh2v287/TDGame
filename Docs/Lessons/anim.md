@@ -126,3 +126,21 @@
 - 증거: `Saved/Logs/M326_Before2.log`·`M326_After2.log`(2769줄)·`M326_After4.log`, 시도 패치 `Saved/AgentOps/20261016/m3-26/idle_injection_attempt.patch`
 - 날짜·상태: 2026-10-16 active
 - 발견: claude
+
+### L-anim-17 UAF로 포즈를 쓰는 메시를 래그돌로 바꾸면 물리는 도는데 화면 포즈가 굳어 한 덩어리로 미끄러진다
+- 증상: 사망 래그돌에서 몬스터 메시가 마지막 애니 포즈 그대로 날아가거나 미끄러진다. PIE 측정 골반은 203cm 이동, 골반 대비 손·머리 위치 변화 1e-13cm(포즈 고정)
+- 원인: 물리 블렌드(`PerformBlendPhysicsBones`)는 편집 버퍼에 쓰고 `FinalizeBoneTransform → FlipEditableSpaceBases`가 `bNeedToFlipSpaceBaseBuffers`일 때만 읽기 버퍼로 넘긴다. 그 플래그는 애님BP 경로(`SkeletalMeshComponent.cpp:3327·3798`)에서만 서서, `SetEnableAnimation(false)`+UAF 메시는 래그돌 결과가 렌더·`GetBoneLocation`에 안 보인다(`PhysAnim.cpp:420-460`, `SkinnedMeshComponent.cpp:4900`)
+- 해결: 래그돌 시작 때 `SetAllBodiesSimulatePhysics` 전에 `MeshComponent->SetComponentSpaceTransformsDoubleBuffering(false)`(`ATDCombatCharacter::StartRagdoll`). 사망 래그돌은 되돌리지 않으므로 복원 불필요. 손가락처럼 바디 없는 뼈는 참조 포즈로 돌아간다
+- 범위: UE 5.8 UAF + `bEnableAnimation=false` 스켈레탈 메시의 물리 시뮬레이션·물리 블렌드 전부
+- 증거: 2026-10-18 `Saved/AgentOps/20261018/combat-full/pie/combat-pie.json`(수정 전 pose_max_change 0.0 → 수정 후 46~57cm), `Docs/MonsterAI_CombatSim/measurements/M3-27/02_monster_ragdoll.png`
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
+### L-anim-18 런타임에 스폰한 캐릭터의 첫 주입에서 `Event.SerialNumber != 0`(InjectionSiteTrait.cpp:88) ensure가 난다
+- 증상: PIE 시험 중 몬스터를 스폰한 다음 프레임 `Ensure condition failed: Event.SerialNumber != 0 [...UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp] [Line: 88]`(콜스택 OnInjectEvent ← RaiseTraitEvents ← UpdateGraph ← FUAFSimplePrePhysicsGraphComponent::PrePhysics). 자동화 시험이 Fail, 개발 빌드는 첫 발생 때 멈칫
+- 원인: `ApplyBaseAsset`(Unregister→SetAsset→Register)로 새 UAF 시스템이 생긴 뒤 첫 PrePhysics 전에 큐에 든 주입(이동·액션)은 주입 컴포넌트가 아직 없어 번호 0으로 도달한다(`AnimNextModuleInjectionComponent.cpp:80`, `ModuleTickFunction.cpp:220`). L-anim-15(대기 ForceLoop 주입)와 같은 줄, 다른 경로
+- 해결: `UTDCharacterAnimationComponent`가 `ApplyBaseAsset` 뒤 자기 틱 2회 동안 이동 주입과 PlayAction·PlayDeath 주입을 보류(마지막 요청 1개 보관, 반환 길이는 정상)했다가 내보낸다. 수정 뒤 PIE 6회 :88 0건. `:268`(L-anim-07)은 여전히 프로세스 첫 주입에 1회 나서 PIE 시험은 그 줄만 `AddExpectedError`
+- 범위: UE 5.8.2 UAF, 런타임 스폰·기본 자산 교체 직후 주입
+- 증거: `Saved/AgentOps/20261018/combat-full/pie/editor-pie-run1.log`(4065줄), `review-code/uaf_ensure.md`
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

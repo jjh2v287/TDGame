@@ -22,6 +22,16 @@ public:
 	UFUNCTION(BlueprintPure, Category="Skill")
 	UTDCombatStyleDefinition* GetSkillSet() const { return SkillSet; }
 
+	void SetSkillSet(UTDCombatStyleDefinition* NewSkillSet);
+	void SetPrimaryComboSettings(int32 NewMaxPrimaryComboCount, float NewPrimaryComboResetWindow);
+	int32 GetPrimaryComboStep() const { return CurrentPrimaryComboStep; }
+	int32 GetHighestPrimaryComboStepReached() const { return HighestPrimaryComboStepReached; }
+	void ResetHighestPrimaryComboStepReached() { HighestPrimaryComboStepReached = 0; }
+	bool IsComboInputOpen() const;
+	void SetUsesHitReactionThresholds(bool bShouldUseThresholds) { bUsesHitReactionThresholds = bShouldUseThresholds; }
+	bool UsesHitReactionThresholds() const { return bUsesHitReactionThresholds; }
+	FGameplayTag ResolveHitReactionTag(const FTDDamageResult& Result) const;
+
 	UFUNCTION(BlueprintCallable, Category="Skill")
 	void SetCombatTarget(AActor* NewTarget);
 
@@ -81,6 +91,9 @@ private:
 	bool TryConsumeBufferedInput();
 	bool HasBufferedInput() const;
 	void PrefetchSkillSetAnimations();
+	bool IsReactionAnimationResident(FGameplayTag ReactionTag) const;
+	bool TryPlayResidentReaction(FGameplayTag ReactionTag);
+	bool TryStartHitReaction(FGameplayTag ReactionTag);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Skill", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UTDCombatStyleDefinition> SkillSet = nullptr;
@@ -91,6 +104,15 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combo", meta=(AllowPrivateAccess="true", ClampMin="0.1"))
 	float PrimaryComboResetWindow = 0.85f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Reaction", meta=(AllowPrivateAccess="true", ToolTip="Ignore status damage and small hits, and use the heavy hit reaction for large or critical hits."))
+	bool bUsesHitReactionThresholds = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Reaction", meta=(AllowPrivateAccess="true", ClampMin="0.0", ClampMax="1.0", EditCondition="bUsesHitReactionThresholds"))
+	float HitReactionMinDamageRatio = 0.08f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Reaction", meta=(AllowPrivateAccess="true", ClampMin="0.0", ClampMax="1.0", EditCondition="bUsesHitReactionThresholds"))
+	float HeavyHitReactionMinDamageRatio = 0.15f;
+
 	TWeakObjectPtr<AActor> CombatTarget;
 	TWeakObjectPtr<AActor> CurrentActionTarget;
 	TWeakObjectPtr<UGameplayAbility> CurrentActionOwningAbility;
@@ -98,6 +120,7 @@ private:
 	ETDCombatHitExecutionType CurrentHitExecutionType = ETDCombatHitExecutionType::TimelineSweep;
 	double LastPrimaryAttackTimestamp = -1.0;
 	int32 CurrentPrimaryComboStep = 0;
+	int32 HighestPrimaryComboStepReached = 0;
 	bool bIsComboWindowOpen = false;
 	int32 ActiveInputBufferWindowCount = 0;
 	FGameplayTag BufferedActionTag;

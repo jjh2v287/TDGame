@@ -146,6 +146,15 @@ Cascadeur 2026.2.3 내장 MCP 스크립트 서버(`http://127.0.0.1:8765/mcp`, �
 | `Cascadeur/weapons/SM_Sword.json` | HandGrip_R 소켓·칼 부착값·칼 특징점(쥐기 좌표의 정본, L-anim-05) | 데이터 |
 확인: 2026-10-08 claude
 
+## 3g. 전투 표현 도구 (`Combat/`, 대장 M3-27)
+| 명령 | 내용 | 상태 |
+|---|---|---|
+| `python Tools/Combat/generate_feedback_sounds.py [--out AudioSources/Combat]` (에디터 밖, numpy) | 치명 강조음·처치 쿵·쓰러짐·묵직한 타격음 WAV 4개 결정론 합성(같은 실행 = 같은 바이트) | 현행 (2026-10-18) |
+| `python Tools/run_in_editor.py Tools/Combat/editor_make_combat_assets.py` (PowerShell, `TD_STEPS` 로 단계 선택) | 합성음 가져오기 `/Game/Combat/Feedback/Audio`, 번쩍임 오버레이 `M_TD_HitFlashOverlay`(FlashColor·FlashIntensity), 입력 `IA_TDRoll`·`IMC_TDCombat`(스페이스), 콤보 4개·피격 애니 FBX 가져오기(60fps), 있으면 건너뜀 | 현행 (2026-10-18) |
+| `python Tools/run_in_editor.py Tools/Combat/editor_set_species_hit_clips.py` | 종 자산의 비어 있는 Hit 클립에 피격 애니 연결(스켈레톤 일치 확인) | 현행 (2026-10-18) |
+| `Tools/MonsterAI/editor_retarget_monster_anims.py` + `TD_ONLY_CLIPS=['HitReact']` | 맨손 피격을 고블린·골렘·해골 경비병으로 리타깃(그 클립만, 바뀐 에셋만 저장) | 현행 (2026-10-18 확장) |
+| `Tools/BlenderAnimation/CombatHit/` 9개(`hit_scene`·`hit_author`·`hit_review`·`hit_export`·`hyena_author`·`hyena_review`·`hyena_export`·`shield_attach`·`roundtrip`, `blender_run.py`로 실행) | 피격 모션 저작: 원본 MM_HitReact 모캡 몸통·다리 보존 + 칼·방패/맨손 팔 교체, 하이에나 0.45초 반동, 측정·시트·FBX 내보내기·왕복 검증, 방패 부착값 계산 | 현행 (2026-10-18) |
+
 ## 4. 도구가 없을 때 만드는 규칙 (에이전트 공통)
 규칙 전문은 `Docs/AgentRules.md` OP-12(만들기 전 검색)·OP-13(위치)·OP-14(이름)·OP-15(docstring 4줄)·OP-16(등록)·OP-17(`Tools/scratch/`)·OP-19(절대 경로 금지)·OP-20(노출 경로). 접두어: `editor_`(에디터 안, run_in_editor.py), `pie_`(PIE 검사), `blender_`(Blender 안 bpy), 없음(시스템 파이썬 3.12). 권장 동사: generate build make validate check inspect capture export import author render prepare place setup select find. 금지 동의어: create→make, bake→build, verify/test→validate/check.
 1. 먼저 에디터 Python으로 되는지 확인한다: `python Tools/run_in_editor.py -c "import unreal; print([n for n in dir(unreal) if 'Landscape' in n][:20])"`.

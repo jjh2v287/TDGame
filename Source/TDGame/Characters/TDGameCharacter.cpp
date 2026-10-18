@@ -10,10 +10,13 @@
 #include "Combat/GAS/Abilities/TDCombatActionAbility.h"
 #include "Combat/GAS/Abilities/TDPlayerMovementAbilities.h"
 #include "Combat/GAS/Abilities/TDReactionAbility.h"
+#include "Combat/Skills/TDCombatStyleDefinition.h"
+#include "Combat/Skills/TDPlayerCombatCatalog.h"
 #include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDDamageExamples.h"
+#include "Combat/Damage/TDDamageTypes.h"
 #include "Core/TDGameplayMessages.h"
 #include "Core/TDGameplayTags.h"
 #include "GameplayAbilitySpec.h"
@@ -22,16 +25,19 @@
 #include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "DefaultMovementSet/NavMoverComponent.h"
 #include "Engine/AssetManager.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/StaticMesh.h"
 #include "Engine/StreamableManager.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "Misc/App.h"
 #include "MovementMode.h"
 #include "MoverTypes.h"
 #include "TDGame.h"
@@ -39,6 +45,36 @@
 namespace
 {
 	constexpr float TDGameCharacterMinimumPassagePaceScale = 0.3f;
+	constexpr int32 TDGameCharacterSwordComboStepCount = 4;
+	constexpr float TDGameCharacterSwordComboResetSeconds = 1.6f;
+
+	void ConfigureTDWeaponMeshComponent(UStaticMeshComponent& WeaponMeshComponent, const FTransform& RelativeTransform)
+	{
+		WeaponMeshComponent.SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMeshComponent.SetGenerateOverlapEvents(false);
+		WeaponMeshComponent.SetCanEverAffectNavigation(false);
+		WeaponMeshComponent.SetRelativeTransform(RelativeTransform);
+	}
+
+	void AttachTDWeaponMeshComponent(UStaticMeshComponent* WeaponMeshComponent, USkeletalMeshComponent* CharacterMesh, const FName SocketName, const FTransform& RelativeTransform)
+	{
+		if (!WeaponMeshComponent || !CharacterMesh)
+		{
+			return;
+		}
+		WeaponMeshComponent->AttachToComponent(CharacterMesh, FAttachmentTransformRules::KeepRelativeTransform, SocketName);
+		WeaponMeshComponent->SetRelativeTransform(RelativeTransform);
+	}
+
+	void AssignTDWeaponStaticMesh(UStaticMeshComponent* WeaponMeshComponent, const TSoftObjectPtr<UStaticMesh>& WeaponMesh)
+	{
+		UStaticMesh* LoadedMesh = WeaponMesh.Get();
+		if (!WeaponMeshComponent || !LoadedMesh)
+		{
+			return;
+		}
+		WeaponMeshComponent->SetStaticMesh(LoadedMesh);
+	}
 
 	TArray<FSoftObjectPath> MakeTDDefaultDamageSpellPaths()
 	{
@@ -90,6 +126,8 @@ ATDGameCharacter::ATDGameCharacter()
 	JumpStartAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump")));
 	FallLoopAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Fall_Loop.MM_Fall_Loop")));
 	LandAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Land.MM_Land")));
+	RollAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/Mannequins/Anims/Roll/A_Roll_IdleFwd.A_Roll_IdleFwd")));
+	bBlockMoveInputWhileStunned = true;
 
 	// Create the camera boom component
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -108,6 +146,20 @@ ATDGameCharacter::ATDGameCharacter()
 
 	CapsuleModifierComponent = CreateDefaultSubobject<UTDCapsuleModifierComponent>(TEXT("CapsuleModifierComponent"));
 	SkillComponent = CreateDefaultSubobject<UTDSkillComponent>(TEXT("SkillComponent"));
+	SkillComponent->SetUsesHitReactionThresholds(true);
+
+	SwordMesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Sword.SM_Sword")));
+	ShieldMesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Shield.SM_Shield")));
+	SwordRelativeTransform = FTransform(FRotator(-15.888f, 94.203f, -83.734f), FVector(-5.052f, 9.119f, 25.857f));
+	ShieldRelativeTransform = FTransform(FRotator(-1.016f, 6.03f, 101.973f), FVector(-5.991f, 9.108f, -0.007f), FVector(0.7f));
+
+	SwordMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SwordMesh"));
+	SwordMeshComponent->SetupAttachment(GetMesh(), SwordSocketName);
+	ConfigureTDWeaponMeshComponent(*SwordMeshComponent, SwordRelativeTransform);
+
+	ShieldMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ShieldMesh"));
+	ShieldMeshComponent->SetupAttachment(GetMesh(), ShieldSocketName);
+	ConfigureTDWeaponMeshComponent(*ShieldMeshComponent, ShieldRelativeTransform);
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -120,6 +172,7 @@ void ATDGameCharacter::BeginPlay()
 	{
 		RequestDefaultDamageSpells();
 	}
+	ApplyDefaultCombatStyle();
 
 	Super::BeginPlay();
 
@@ -129,8 +182,87 @@ void ATDGameCharacter::BeginPlay()
 	}
 	RequestAnimationAssets();
 	GrantDefaultActionAbilities();
+	CombatComponent->OnDamaged.AddUObject(this, &ThisClass::HandleDamaged);
 	CombatComponent->OnDeath.AddUObject(this, &ThisClass::HandleDeath);
 	RefreshJumpStateTag(IsAirborne());
+	AttachWeaponMeshes();
+	RequestWeaponMeshes();
+}
+
+void ATDGameCharacter::ApplyDefaultCombatStyle()
+{
+	if (!SkillComponent || SkillComponent->GetSkillSet())
+	{
+		return;
+	}
+	UTDCombatStyleDefinition* SwordShieldStyle = TDPlayerCombatCatalog::CreateSwordShieldStyle(this);
+	if (!SwordShieldStyle)
+	{
+		return;
+	}
+	SkillComponent->SetSkillSet(SwordShieldStyle);
+	SkillComponent->SetPrimaryComboSettings(TDGameCharacterSwordComboStepCount, TDGameCharacterSwordComboResetSeconds);
+}
+
+void ATDGameCharacter::AttachWeaponMeshes()
+{
+	AttachTDWeaponMeshComponent(SwordMeshComponent, GetMesh(), SwordSocketName, SwordRelativeTransform);
+	AttachTDWeaponMeshComponent(ShieldMeshComponent, GetMesh(), ShieldSocketName, ShieldRelativeTransform);
+}
+
+void ATDGameCharacter::RequestWeaponMeshes()
+{
+	if (!FApp::CanEverRender())
+	{
+		return;
+	}
+
+	TArray<FSoftObjectPath> WeaponMeshPaths;
+	const FSoftObjectPath WeaponMeshCandidatePaths[] = { SwordMesh.ToSoftObjectPath(), ShieldMesh.ToSoftObjectPath() };
+	for (const FSoftObjectPath& WeaponMeshPath : WeaponMeshCandidatePaths)
+	{
+		if (!WeaponMeshPath.IsNull())
+		{
+			WeaponMeshPaths.Add(WeaponMeshPath);
+		}
+	}
+	if (WeaponMeshPaths.IsEmpty())
+	{
+		return;
+	}
+
+	const bool bAreWeaponMeshesResident = Algo::AllOf(WeaponMeshPaths, [](const FSoftObjectPath& WeaponMeshPath) { return WeaponMeshPath.ResolveObject() != nullptr; });
+	if (bAreWeaponMeshesResident)
+	{
+		ApplyWeaponMeshes();
+		return;
+	}
+	WeaponMeshesHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(WeaponMeshPaths, FStreamableDelegate::CreateUObject(this, &ThisClass::ApplyWeaponMeshes));
+	if (!WeaponMeshesHandle.IsValid())
+	{
+		ApplyWeaponMeshes();
+	}
+}
+
+void ATDGameCharacter::ApplyWeaponMeshes()
+{
+	AssignTDWeaponStaticMesh(SwordMeshComponent, SwordMesh);
+	AssignTDWeaponStaticMesh(ShieldMeshComponent, ShieldMesh);
+}
+
+void ATDGameCharacter::HandleDamaged(const FTDDamageResult& Result, const FTDDamageContext& Context)
+{
+	if (Result.AppliedDamage <= 0.f || Result.bWasKilled || Result.Delivery == ETDDamageDelivery::Status || !CombatComponent->IsAlive())
+	{
+		return;
+	}
+	if (Result.DamageRatio < LightKnockbackRatio)
+	{
+		return;
+	}
+	const bool bIsHeavyHit = Result.bWasCritical || Result.DamageRatio >= HeavyKnockbackRatio;
+	const FVector KnockbackDirection = ResolveHitPlanarDirection(Result);
+	ApplyKnockback(KnockbackDirection * (bIsHeavyHit ? HeavyKnockbackSpeed : LightKnockbackSpeed), bIsHeavyHit ? HeavyKnockbackSeconds : LightKnockbackSeconds);
 }
 
 void ATDGameCharacter::Tick(float DeltaSeconds)
@@ -408,9 +540,10 @@ void ATDGameCharacter::HandleDeath(const FTDDamageContext& Context)
 		SkillComponent->ResetPrimaryCombo();
 		SkillComponent->SetCombatTarget(nullptr);
 	}
+	StartRagdoll(ComputeKillVelocity(CombatComponent->GetLastDamageResult()));
 
 	UWorld* World = GetWorld();
-	if (!World)
+	if (!World || !UGameplayMessageSubsystem::HasInstance(World))
 	{
 		return;
 	}
@@ -437,9 +570,11 @@ void ATDGameCharacter::GrantDefaultActionAbilities()
 			UTDPlayerPrimaryAttack01Ability::StaticClass(),
 			UTDPlayerPrimaryAttack02Ability::StaticClass(),
 			UTDPlayerPrimaryAttack03Ability::StaticClass(),
+			UTDPlayerPrimaryAttack04Ability::StaticClass(),
 			UTDPlayerSkillQAbility::StaticClass(),
 			UTDPlayerSkillEAbility::StaticClass(),
 			UTDReactionHitAbility::StaticClass(),
+			UTDReactionHeavyHitAbility::StaticClass(),
 			UTDReactionDeathAbility::StaticClass(),
 			UTDPlayerRollAbility::StaticClass(),
 			UTDPlayerJumpAbility::StaticClass()
@@ -450,9 +585,11 @@ void ATDGameCharacter::GrantDefaultActionAbilities()
 		AbilityClasses.Add(UTDPlayerPrimaryAttack01Ability::StaticClass());
 		AbilityClasses.Add(UTDPlayerPrimaryAttack02Ability::StaticClass());
 		AbilityClasses.Add(UTDPlayerPrimaryAttack03Ability::StaticClass());
+		AbilityClasses.Add(UTDPlayerPrimaryAttack04Ability::StaticClass());
 	}
 
 	AbilityClasses.AddUnique(UTDReactionHitAbility::StaticClass());
+	AbilityClasses.AddUnique(UTDReactionHeavyHitAbility::StaticClass());
 	AbilityClasses.AddUnique(UTDReactionDeathAbility::StaticClass());
 
 	const int32 AbilityLevel = CombatComponent->GetStats().Level;

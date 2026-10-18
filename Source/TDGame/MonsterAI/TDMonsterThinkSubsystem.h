@@ -8,6 +8,8 @@
 #include "MonsterAI/TDMonsterBrainSlot.h"
 #include "MonsterAI/TDCircleAvoidance.h"
 #include "MonsterAI/TDNeighborGrid.h"
+#include "MonsterAI/TDPackAlarm.h"
+#include "MonsterAI/TDPackMorale.h"
 #include "TDMonsterThinkSubsystem.generated.h"
 
 class ITDMonsterBody;
@@ -84,6 +86,8 @@ public:
 	ETDMonsterFsmState GetMonsterState(FTDMonsterSlotHandle Handle) const;
 	FName GetMonsterActionId(FTDMonsterSlotHandle Handle) const;
 	bool IsMonsterEngaged(FTDMonsterSlotHandle Handle) const;
+	ETDMonsterAlarmRole GetMonsterAlarmRole(FTDMonsterSlotHandle Handle) const;
+	bool IsMonsterPanicking(FTDMonsterSlotHandle Handle) const;
 	uint64 GetStepIndex() const { return StepIndex; }
 
 	UFUNCTION(BlueprintCallable, Category="MonsterAI", meta=(WorldContext="WorldContextObject"))
@@ -105,6 +109,7 @@ private:
 	friend struct FTDMonsterThinkTickFunction;
 	friend struct FTDMonsterThinkSubsystemTestAccess;
 	friend struct FTDCombatTacticsTestAccess;
+	friend struct FTDPackBehaviorTestAccess;
 
 	void AdvanceFrame(float DeltaSeconds);
 	bool IsHandleCurrent(FTDMonsterSlotHandle Handle) const;
@@ -112,6 +117,31 @@ private:
 	void RunKernelStep();
 	void SenseSlot(int32 SlotIndex);
 	void UpdateEngagement();
+	void RunPackAlarms(TArray<int32>& NewlyEngaged);
+	void CallPackAlarm(int32 DiscovererSlot);
+	bool HasRecentAlarmCaller(int32 DiscovererSlot) const;
+	void SchedulePackAlarms(const FVector& OriginLocation, AActor* Target, int32 TeamId, int32 Hop);
+	void ReleaseDuePackAlarms();
+	void ArrivePackAlarm(const FTDPendingAlarm& Alarm);
+	int32 GetPackTeamId(int32 SlotIndex) const;
+	void RecordPackDeath(int32 SlotIndex);
+	void UpdatePackMorale();
+	void RecordPackLosses();
+	void JudgePackPanic();
+	void AdvancePackPanic();
+	void AdvancePendingPanic(int32 SlotIndex);
+	void AdvanceRetreatingPanic(int32 SlotIndex);
+	void StartPackFear(int32 SlotIndex);
+	bool ShouldPackSlotPanic(int32 SlotIndex) const;
+	bool CanWitnessPackLoss(int32 SlotIndex) const;
+	bool IsPackAlly(int32 SlotIndex, int32 OtherIndex) const;
+	void GatherLivingLeaderSlots(int32 TeamId, TArray<int32>& OutLeaderSlots) const;
+	bool HasOtherLivingLeader(int32 SlotIndex, TConstArrayView<int32> LivingLeaderSlots) const;
+	bool CanStartPanicRetreat(int32 SlotIndex) const;
+	bool IsInPackFear(int32 SlotIndex) const;
+	bool IsRoleHolderLimitReached(ETDTacticsRole Role, bool bIsRetaliating, int32 HolderCount) const;
+	int32 CountRoleHolders(uint32 RecordId, ETDTacticsRole Role, int32 ExcludedSlotIndex) const;
+	FString MakePackDebugSuffix(int32 SlotIndex) const;
 	void ThinkAndAct(int32 SlotIndex);
 	void ApplyLocalAvoidance();
 	void ApplySeparation();
@@ -157,8 +187,9 @@ private:
 	void AssignInnerSectors(FTDTargetTacticsRecord& Record, const FVector& TargetLocation);
 	void RunTokenPass(bool bIsPeriodic);
 	void GrantPoolTokens(FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation);
-	void InterceptForRetaliation(FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation, TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates);
+	void InterceptForRetaliation(FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation, TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates, TArrayView<int32> RoleHeldCounts);
 	int32 FindRetaliationVictim(const FTDTargetTacticsRecord& Record, int32 PoolIndex, const FVector& TargetLocation, int64 CandidateDistanceSquared) const;
+	int32 CountRoleBlockedMembers(const FTDTargetTacticsRecord& Record, int32 PoolIndex, TConstArrayView<int32> RoleHeldCounts) const;
 	void GrantTacticsToken(int32 SlotIndex, uint32 RecordId);
 	void RemoveFinishedTacticsRecords();
 	void ConfirmTacticsAttackStart(int32 SlotIndex);
@@ -190,6 +221,10 @@ private:
 	TArray<int32> FreeSlots;
 	TArray<int32> OrderedSlots;
 	TArray<int32> PendingAlertSlots;
+	TArray<FTDMonsterMoraleFragment> Morales;
+	TArray<FTDPendingAlarm> PendingAlarms;
+	TArray<FTDPackDeathEvent> PendingPackDeaths;
+	TArray<FTDPackDeathAlarm> PendingDeathAlarms;
 	TMap<TObjectKey<AActor>, int32> AttackersByTarget;
 	FTDNeighborGrid NeighborGrid;
 	bool bIsNeighborGridStale = true;
@@ -198,5 +233,6 @@ private:
 	uint32 NextTacticsRecordId = 1;
 	bool bIsTacticsActive = true;
 	bool bShouldDrawTacticsDebug = false;
+	bool bShouldEvaluateMorale = false;
 	float AccumulatedSeconds = 0.f;
 };

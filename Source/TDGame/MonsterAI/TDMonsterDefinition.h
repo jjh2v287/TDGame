@@ -32,7 +32,9 @@ enum class ETDMonsterCombatRole : uint8
 {
 	Unspecified,
 	Melee,
-	Ranged
+	Ranged,
+	Charger,
+	Support
 };
 
 struct FTDMonsterStatValues
@@ -144,6 +146,7 @@ struct FTDResolvedMonsterDefinition
 	int32 MinHoldSteps = 26;
 	ETDMonsterCombatRole CombatRole = ETDMonsterCombatRole::Unspecified;
 	bool bIsBoss = false;
+	bool bIsElite = false;
 	TArray<FTDResolvedAbility> Abilities;
 	TArray<FName> SequenceNames;
 	TArray<TArray<FTDResolvedStep>> Sequences;

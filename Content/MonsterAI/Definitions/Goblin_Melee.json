@@ -12,9 +12,10 @@
         { "input": "DistanceToTarget", "curve": "Logistic", "m": -12, "c": 0.14, "range": [0, 1200] },
         { "input": "FacingTarget", "curve": "Linear" },
         { "input": "LineOfSightToTarget", "curve": "Binary" } ] },
-    { "id": "Flee", "do": "MoveAway", "args": { "target": "Player", "speed_scale": 1.1 }, "weight": 3.0,
+    { "id": "Flee", "do": "MoveAway", "args": { "target": "Player", "speed_scale": 1.1, "seconds": 1.5 }, "weight": 3.0, "cooldown": 6.0,
       "considerations": [
-        { "input": "SelfHealthRatio", "curve": "Quadratic", "m": -1, "k": 2, "b": 1 },
+        { "input": "SelfHealthRatio", "curve": "Logistic", "m": -20, "c": 0.3 },
+        { "input": "DistanceToTarget", "curve": "Logistic", "m": -12, "c": 0.35, "range": [0, 1200] },
         { "input": "AllyCountNearby", "args": { "radius": 600 }, "curve": "Linear", "m": -1, "b": 1, "range": [0, 4] } ] },
     { "id": "Idle", "do": "Wait", "weight": 0.05, "considerations": [] }
   ] }

@@ -71,3 +71,12 @@
 - 증거: 2026-10-17 `Saved/Logs/cook_anim-cook.log` 23:29 1차 실패, `C:/Users/jjh/AppData/Local/UnrealEngine/Programs/AutomationTool/Saved/Logs/ErrorLog.txt` 23:47:50
 - 날짜·상태: 2026-10-17 active
 - 발견: claude
+
+### L-build-09 새 .cpp를 넣었는데 `BUILD Succeeded`인데도 그 파일이 컴파일되지 않아 새 시험이 0건으로 잡힌다
+- 증상: `build_and_test.py`가 `BUILD Succeeded` 뒤 `TESTS 0/? passed`, 엔진 로그 `LogAutomationCommandLine: Error: No automation tests matched 'TDGame.MonsterAI.Pack'`(새 시험 파일 `TDPackBehaviorTests.cpp`를 막 복사한 직후).
+- 원인: UBT가 캐시한 `Intermediate/Build/Win64/x64/TDGameEditor/Development/Makefile.bin`을 "유효"로 판정해 소스 목록을 다시 훑지 않았다. 다른 세션이 같은 트리를 방금 빌드해 makefile이 최신으로 보이면 새로 추가된 .cpp가 빠진다(헤더·기존 .cpp 수정은 정상 반영).
+- 해결: 새 .cpp를 추가·삭제한 빌드 전에 그 `Makefile.bin`을 지운다(`rm -f Intermediate/Build/Win64/x64/TDGameEditor/Development/Makefile.bin`). 빌드 로그에 `Creating makefile for TDGameEditor (no existing makefile)`가 나오면 다시 훑은 것이다. 새 시험은 첫 실행에서 `found_count`가 기대 수인지 확인한다.
+- 범위: 공용 작업 트리에 새 C++ 파일을 넣는 모든 빌드(통합 스크립트로 파일을 복사하는 사본 작업 포함)
+- 증거: 2026-10-18 `Saved/AgentOps/20261018/pack-red-run1.out`(0건)·`pack-red-tests-backup-2026.10.18-06.15.43.log:2234` → Makefile.bin 삭제 뒤 `pack-red-build.log`(no existing makefile)·`pack-red-tests.json` found_count 17
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

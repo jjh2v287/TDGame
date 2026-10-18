@@ -540,7 +540,7 @@ bool FTDMonsterAIDefinitionTacticsKeysTest::RunTest(const FString& Parameters)
 	};
 	CheckRejected(TEXT("An unknown role"), TEXT("\"role\": \"Boss\","), FString(), TEXT("\"boss\": true"));
 	CheckRejected(TEXT("A misspelled role"), TEXT("\"role\": \"Range\","), FString(), TEXT("did you mean 'Ranged'?"));
-	CheckRejected(TEXT("A numeric role"), TEXT("\"role\": 1,"), FString(), TEXT("role: expected Melee or Ranged"));
+	CheckRejected(TEXT("A numeric role"), TEXT("\"role\": 1,"), FString(), TEXT("role: expected Melee, Ranged, Charger or Support"));
 	CheckRejected(TEXT("A text boss flag"), TEXT("\"boss\": \"yes\","), FString(), TEXT("boss: expected true or false"));
 	CheckRejected(TEXT("token_cost 0.3"), FString(), TEXT(", \"token_cost\": 0.3"), TEXT("quarter tokens"));
 	CheckRejected(TEXT("token_cost 0"), FString(), TEXT(", \"token_cost\": 0"), TEXT("quarter tokens"));

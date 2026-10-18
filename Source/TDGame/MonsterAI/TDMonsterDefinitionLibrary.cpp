@@ -30,7 +30,7 @@ namespace
 	constexpr float DefaultSwitchRatio = 1.15f;
 	constexpr float DefaultMinHoldSeconds = 0.4f;
 
-	const TArray<FString> TopLevelKeys = { TEXT("schema"), TEXT("id"), TEXT("kind"), TEXT("role"), TEXT("boss"), TEXT("extends"), TEXT("stats"), TEXT("think_hz"), TEXT("lod_periods"), TEXT("inertia"), TEXT("select"), TEXT("top_n"), TEXT("abilities"), TEXT("sequences"), TEXT("actions"), TEXT("phases"), TEXT("persona") };
+	const TArray<FString> TopLevelKeys = { TEXT("schema"), TEXT("id"), TEXT("kind"), TEXT("role"), TEXT("boss"), TEXT("elite"), TEXT("extends"), TEXT("stats"), TEXT("think_hz"), TEXT("lod_periods"), TEXT("inertia"), TEXT("select"), TEXT("top_n"), TEXT("abilities"), TEXT("sequences"), TEXT("actions"), TEXT("phases"), TEXT("persona") };
 	const TArray<FString> StatKeys = { TEXT("max_health"), TEXT("attack_power"), TEXT("armor"), TEXT("move_speed"), TEXT("team") };
 	const TArray<FString> PhaseStatKeys = { TEXT("max_health"), TEXT("attack_power"), TEXT("armor"), TEXT("move_speed") };
 	const TArray<FString> InertiaKeys = { TEXT("switch_ratio"), TEXT("min_hold_seconds") };
@@ -42,7 +42,7 @@ namespace
 	const TArray<FString> PhaseKeys = { TEXT("id"), TEXT("enter_when"), TEXT("on_enter"), TEXT("stats"), TEXT("actions") };
 	const TArray<FString> EnterWhenKeys = { TEXT("input"), TEXT("args"), TEXT("op"), TEXT("value") };
 	const TArray<FString> TargetNames = { TEXT("Player"), TEXT("NearestEnemy") };
-	const TArray<FString> CombatRoleNames = { TEXT("Melee"), TEXT("Ranged") };
+	const TArray<FString> CombatRoleNames = { TEXT("Melee"), TEXT("Ranged"), TEXT("Charger"), TEXT("Support") };
 	const TArray<FString> KeyMergedObjects = { TEXT("stats"), TEXT("abilities"), TEXT("sequences"), TEXT("persona"), TEXT("inertia"), TEXT("lod_periods") };
 
 	int32 ComputeEditDistance(const FString& Left, const FString& Right)
@@ -455,7 +455,7 @@ namespace
 			const TSharedPtr<FJsonValue> RoleValue = Root->TryGetField(TEXT("role"));
 			if (RoleValue.IsValid() && RoleValue->Type != EJson::String)
 			{
-				Reader.Error(TEXT("role"), TEXT("expected Melee or Ranged"));
+				Reader.Error(TEXT("role"), TEXT("expected Melee, Ranged, Charger or Support"));
 			}
 			else if (RoleValue.IsValid())
 			{
@@ -468,10 +468,27 @@ namespace
 				{
 					Definition.CombatRole = ETDMonsterCombatRole::Ranged;
 				}
+				else if (RoleName == TEXT("Charger"))
+				{
+					Definition.CombatRole = ETDMonsterCombatRole::Charger;
+				}
+				else if (RoleName == TEXT("Support"))
+				{
+					Definition.CombatRole = ETDMonsterCombatRole::Support;
+				}
 				else
 				{
-					Reader.Error(TEXT("role"), FString::Printf(TEXT("unknown role '%s'%s, use Melee or Ranged (a boss sets \"boss\": true)"), *RoleName, *MakeSuggestion(RoleName, CombatRoleNames)));
+					Reader.Error(TEXT("role"), FString::Printf(TEXT("unknown role '%s'%s, use Melee, Ranged, Charger or Support (a boss sets \"boss\": true)"), *RoleName, *MakeSuggestion(RoleName, CombatRoleNames)));
 				}
+			}
+			const TSharedPtr<FJsonValue> EliteValue = Root->TryGetField(TEXT("elite"));
+			if (EliteValue.IsValid() && EliteValue->Type != EJson::Boolean)
+			{
+				Reader.Error(TEXT("elite"), TEXT("expected true or false"));
+			}
+			else if (EliteValue.IsValid())
+			{
+				Definition.bIsElite = EliteValue->AsBool();
 			}
 			const TSharedPtr<FJsonValue> BossValue = Root->TryGetField(TEXT("boss"));
 			if (!BossValue.IsValid())

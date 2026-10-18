@@ -15,7 +15,9 @@ enum class ETDTacticsRole : uint8
 {
 	Melee,
 	Ranged,
-	Boss
+	Boss,
+	Charger,
+	Support
 };
 
 enum class ETDTacticsSlotKind : uint8
@@ -58,6 +60,7 @@ struct FTDTacticsPool
 	int32 BudgetQuarters = 0;
 	int32 HeldQuarters = 0;
 	int32 LowerPassCount = 0;
+	int32 RoleBlockedCount = 0;
 };
 
 struct FTDTargetTacticsRecord
@@ -88,6 +91,7 @@ struct FTDTargetTacticsRecord
 	int32 PreviousTargetXCm = 0;
 	int32 PreviousTargetYCm = 0;
 	uint64 PreviousTargetStep = 0;
+	int32 RangedBandFloorCm = 0;
 	TArray<int32> MemberSlots;
 
 	int32 GetEngagedCount() const
@@ -97,7 +101,7 @@ struct FTDTargetTacticsRecord
 
 	bool HasMeleeQueue() const
 	{
-		return Pools[MeleePoolIndex].EngagedCostQuarters > Pools[MeleePoolIndex].BudgetQuarters;
+		return Pools[MeleePoolIndex].EngagedCostQuarters > Pools[MeleePoolIndex].BudgetQuarters || Pools[MeleePoolIndex].RoleBlockedCount > 0;
 	}
 };
 
@@ -176,8 +180,18 @@ public:
 	static constexpr int32 FeintArrivalCm = 15;
 	static constexpr int32 WaitInsideMarginCm = 60;
 	static constexpr int32 QueueOuterMarginCm = 200;
+	static constexpr int32 MaxChargerHolders = 1;
+	static constexpr int32 MaxSupportHolders = 1;
+	static constexpr int32 RangedBandGapCm = 100;
+	static constexpr int32 RangedReachMarginCm = 100;
+	static constexpr int32 RangedBandFloorCapCm = 700;
+	static constexpr int32 RangedBandMinWidthCm = 100;
 
 	static FTDMonsterTacticsFragment MakeFragment(const FTDResolvedMonsterDefinition& Definition);
+	static bool IsMeleeLaneRole(ETDTacticsRole Role);
+	static bool IsRangedLaneRole(ETDTacticsRole Role);
+	static int32 GetExclusiveRoleCap(ETDTacticsRole Role);
+	static int32 ComputeRangedBandFloor(int32 RecordFloorCm, int32 BodyRadiusCm, int32 MaxReachCm);
 	static int32 GetAbilityCostQuarters(const FTDResolvedMonsterDefinition& Definition, int32 AbilityIndex);
 	static int32 GetHeldCostQuarters(const FTDMonsterTacticsFragment& Fragment);
 	static void CommitToken(FTDMonsterTacticsFragment& Fragment, int32 CastCostQuarters);

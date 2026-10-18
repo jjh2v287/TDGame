@@ -23,6 +23,14 @@ enum class ETDMonsterEngagement : uint8
 	Returning
 };
 
+enum class ETDMonsterAlarmRole : uint8
+{
+	None,
+	Caller,
+	Silent,
+	Follower
+};
+
 struct FTDMonsterBrainFragment
 {
 	TSharedPtr<const FTDResolvedMonsterDefinition> Definition;
@@ -50,6 +58,12 @@ struct FTDMonsterBrainFragment
 	int32 OutOfReachStepCount = 0;
 	int32 ReturnStallStepCount = 0;
 	float ClosestReturnDistance = 0.f;
+	ETDMonsterAlarmRole AlarmRole = ETDMonsterAlarmRole::None;
+	uint8 AlarmHop = 0;
+	uint64 AlarmCallStep = 0;
+	float RetreatAnchorDistance = -1.f;
+	int32 RetreatStallSteps = 0;
+	bool bWasRetreatCornered = false;
 
 	bool IsEngaged() const
 	{
@@ -65,9 +79,14 @@ struct FTDMonsterBrainFragment
 		return State;
 	}
 
+	bool IsInTimedRetreat() const
+	{
+		return SequenceIndex == INDEX_NONE && State == ETDMonsterFsmState::Move && ActivePrimitive == ETDMonsterPrimitive::MoveAway && StateStepsRemaining > 0;
+	}
+
 	bool CanThink() const
 	{
-		return SequenceIndex == INDEX_NONE && (State == ETDMonsterFsmState::Idle || State == ETDMonsterFsmState::Move);
+		return SequenceIndex == INDEX_NONE && (State == ETDMonsterFsmState::Idle || State == ETDMonsterFsmState::Move) && !IsInTimedRetreat();
 	}
 
 	FName GetCurrentActionId() const

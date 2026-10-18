@@ -34,6 +34,21 @@ namespace
 	{
 		return FVector2D::DotProduct(-ToTarget, Context.TacticsSlotDirection) >= FMath::Cos(FMath::DegreesToRadians(Context.TacticsSlotHalfAngleDegrees));
 	}
+
+	bool HasRangedBandFloor(const FTDMonsterStepContext& Context)
+	{
+		return Context.bIsTacticsActive && Context.TacticsSlotKind == ETDTacticsSlotKind::Ranged && Context.TacticsBandFloor > 0.f;
+	}
+
+	float ResolveTacticsBandMin(const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
+	{
+		return HasRangedBandFloor(Context) ? FMath::Max(Args.BandMin, Context.TacticsBandFloor) : Args.BandMin;
+	}
+
+	float ResolveTacticsBandMax(const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
+	{
+		return HasRangedBandFloor(Context) ? FMath::Max(Args.BandMax, ResolveTacticsBandMin(Args, Context) + FTDCombatTactics::RangedBandMinWidthCm) : Args.BandMax;
+	}
 }
 
 void FTDMonsterActionExecutor::ResetForDefinition(FTDMonsterBrainFragment& Brain)
@@ -143,6 +158,23 @@ void FTDMonsterActionExecutor::InterruptActivity(FTDMonsterBrainFragment& Brain,
 	Brain.bForceThink = true;
 }
 
+void FTDMonsterActionExecutor::BeginRetreat(FTDMonsterBrainFragment& Brain, const int32 Steps, const float SpeedScale, const float HoldDistanceCm, const FTDMonsterStepContext& Context)
+{
+	InterruptActivity(Brain, Context);
+	Brain.ActiveArgs = FTDActionArgs();
+	Brain.ActiveArgs.SpeedScale = SpeedScale;
+	Brain.ActiveArgs.StopAtDistance = HoldDistanceCm;
+	Brain.ActivePrimitive = ETDMonsterPrimitive::MoveAway;
+	Brain.State = ETDMonsterFsmState::Move;
+	Brain.StateStepsRemaining = FMath::Max(1, Steps);
+	Brain.CurrentActionIndex = INDEX_NONE;
+	Brain.CurrentScore = 0.f;
+	Brain.HoldSteps = 0;
+	Brain.bWasRetreatCornered = false;
+	ResetRetreatTracking(Brain);
+	Brain.bForceThink = false;
+}
+
 FTDMonsterMoveIntent FTDMonsterActionExecutor::StepState(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
 {
 	FTDMonsterMoveIntent Intent;
@@ -151,6 +183,10 @@ FTDMonsterMoveIntent FTDMonsterActionExecutor::StepState(FTDMonsterBrainFragment
 	{
 	case ETDMonsterFsmState::Move:
 	{
+		if (Brain.IsInTimedRetreat())
+		{
+			return StepTimedRetreat(Brain, Context);
+		}
 		bool bHasArrived = false;
 		Intent = ComputeMoveIntent(Brain, Context, bHasArrived);
 		if (!IsInSequence(Brain))
@@ -196,6 +232,57 @@ FTDMonsterMoveIntent FTDMonsterActionExecutor::StepState(FTDMonsterBrainFragment
 	return Intent;
 }
 
+FTDMonsterMoveIntent FTDMonsterActionExecutor::StepTimedRetreat(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context)
+{
+	Brain.StateStepsRemaining = FMath::Max(0, Brain.StateStepsRemaining - 1);
+	if (!Context.Target)
+	{
+		CompleteActivity(Brain, Context);
+		return FTDMonsterMoveIntent();
+	}
+	float Distance = 0.f;
+	const FVector2D ToTarget = GetDirectionToTarget(Context, Distance);
+	const FTDActionArgs& Args = Brain.ActiveArgs;
+	const bool bIsHolding = Args.StopAtDistance > 0.f && Distance >= Args.StopAtDistance;
+	if (!bIsHolding)
+	{
+		if (Brain.RetreatAnchorDistance < 0.f)
+		{
+			Brain.RetreatAnchorDistance = Distance;
+		}
+		if (Distance > Brain.RetreatAnchorDistance + RetreatProgressCm)
+		{
+			Brain.RetreatAnchorDistance = Distance;
+			Brain.RetreatStallSteps = 0;
+		}
+		else
+		{
+			++Brain.RetreatStallSteps;
+		}
+		if (Brain.RetreatStallSteps >= RetreatCorneredSteps)
+		{
+			Brain.bWasRetreatCornered = true;
+			CompleteActivity(Brain, Context);
+			return FTDMonsterMoveIntent();
+		}
+	}
+	if (Brain.StateStepsRemaining == 0)
+	{
+		CompleteActivity(Brain, Context);
+		return FTDMonsterMoveIntent();
+	}
+	FTDMonsterMoveIntent Intent;
+	if (bIsHolding)
+	{
+		Intent.bShouldFaceTarget = true;
+		return Intent;
+	}
+	Intent.Direction = -ToTarget;
+	Intent.SpeedScale = Args.SpeedScale;
+	Intent.bShouldFaceTarget = false;
+	return Intent;
+}
+
 void FTDMonsterActionExecutor::StartPrimitive(FTDMonsterBrainFragment& Brain, const ETDMonsterPrimitive Primitive, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
 {
 	Brain.ActivePrimitive = Primitive;
@@ -207,6 +294,12 @@ void FTDMonsterActionExecutor::StartPrimitive(FTDMonsterBrainFragment& Brain, co
 	case ETDMonsterPrimitive::MoveToBand:
 	{
 		Brain.State = ETDMonsterFsmState::Move;
+		if (!IsInSequence(Brain) && Primitive == ETDMonsterPrimitive::MoveAway && Args.Seconds > 0.f)
+		{
+			Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(Args.Seconds));
+			ResetRetreatTracking(Brain);
+			return;
+		}
 		const float TimeoutSeconds = Args.Seconds > 0.f ? Args.Seconds : SequenceMoveTimeoutSeconds;
 		Brain.StateStepsRemaining = IsInSequence(Brain) ? FMath::Max(1, TDMonsterAI::SecondsToSteps(TimeoutSeconds)) : 0;
 		return;
@@ -319,6 +412,12 @@ void FTDMonsterActionExecutor::CompleteActivity(FTDMonsterBrainFragment& Brain, 
 	Brain.bForceThink = true;
 }
 
+void FTDMonsterActionExecutor::ResetRetreatTracking(FTDMonsterBrainFragment& Brain)
+{
+	Brain.RetreatAnchorDistance = -1.f;
+	Brain.RetreatStallSteps = 0;
+}
+
 FTDMonsterMoveIntent FTDMonsterActionExecutor::ComputeMoveIntent(const FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context, bool& bOutHasArrived)
 {
 	FTDMonsterMoveIntent Intent;
@@ -361,12 +460,12 @@ FTDMonsterMoveIntent FTDMonsterActionExecutor::ComputeMoveIntent(const FTDMonste
 		break;
 	case ETDMonsterPrimitive::MoveToBand:
 	{
-		if (Distance < Args.BandMin)
+		if (Distance < ResolveTacticsBandMin(Args, Context))
 		{
 			Intent.Direction = -ToTarget;
 			break;
 		}
-		if (Distance > Args.BandMax)
+		if (Distance > ResolveTacticsBandMax(Args, Context))
 		{
 			Intent.Direction = ToTarget;
 			break;
@@ -449,7 +548,7 @@ bool FTDMonsterActionExecutor::ComputeTacticsSlotPoint(const FTDMonsterBrainFrag
 	float PointRadius = Context.TacticsSlotRadius;
 	if (Brain.ActivePrimitive == ETDMonsterPrimitive::MoveToBand)
 	{
-		PointRadius = (Brain.ActiveArgs.BandMin + Brain.ActiveArgs.BandMax) * 0.5f;
+		PointRadius = (ResolveTacticsBandMin(Brain.ActiveArgs, Context) + ResolveTacticsBandMax(Brain.ActiveArgs, Context)) * 0.5f;
 	}
 	else if (Brain.ActivePrimitive != ETDMonsterPrimitive::MoveToward || Context.TacticsSlotKind != ETDTacticsSlotKind::Wait)
 	{

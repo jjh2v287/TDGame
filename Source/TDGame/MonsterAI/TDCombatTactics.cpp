@@ -57,6 +57,16 @@ FTDMonsterTacticsFragment FTDCombatTactics::MakeFragment(const FTDResolvedMonste
 		Fragment.Role = ETDTacticsRole::Boss;
 		return Fragment;
 	}
+	if (Definition.CombatRole == ETDMonsterCombatRole::Charger)
+	{
+		Fragment.Role = ETDTacticsRole::Charger;
+		return Fragment;
+	}
+	if (Definition.CombatRole == ETDMonsterCombatRole::Support)
+	{
+		Fragment.Role = ETDTacticsRole::Support;
+		return Fragment;
+	}
 	if (Definition.CombatRole == ETDMonsterCombatRole::Melee)
 	{
 		Fragment.Role = ETDTacticsRole::Melee;
@@ -69,6 +79,39 @@ FTDMonsterTacticsFragment FTDCombatTactics::MakeFragment(const FTDResolvedMonste
 	}
 	Fragment.Role = bHasAnyAbility && !bHasMeleeAbility ? ETDTacticsRole::Ranged : ETDTacticsRole::Melee;
 	return Fragment;
+}
+
+bool FTDCombatTactics::IsMeleeLaneRole(const ETDTacticsRole Role)
+{
+	return Role == ETDTacticsRole::Melee || Role == ETDTacticsRole::Charger;
+}
+
+bool FTDCombatTactics::IsRangedLaneRole(const ETDTacticsRole Role)
+{
+	return Role == ETDTacticsRole::Ranged || Role == ETDTacticsRole::Support;
+}
+
+int32 FTDCombatTactics::GetExclusiveRoleCap(const ETDTacticsRole Role)
+{
+	if (Role == ETDTacticsRole::Charger)
+	{
+		return MaxChargerHolders;
+	}
+	if (Role == ETDTacticsRole::Support)
+	{
+		return MaxSupportHolders;
+	}
+	return MAX_int32;
+}
+
+int32 FTDCombatTactics::ComputeRangedBandFloor(const int32 RecordFloorCm, const int32 BodyRadiusCm, const int32 MaxReachCm)
+{
+	if (RecordFloorCm <= 0)
+	{
+		return 0;
+	}
+	const int32 CeilingCm = FMath::Max(0, FMath::Min(MaxReachCm - RangedReachMarginCm, RangedBandFloorCapCm));
+	return FMath::Clamp(RecordFloorCm + RangedBandGapCm + BodyRadiusCm, 0, CeilingCm);
 }
 
 int32 FTDCombatTactics::GetAbilityCostQuarters(const FTDResolvedMonsterDefinition& Definition, const int32 AbilityIndex)

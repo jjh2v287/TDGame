@@ -19,6 +19,7 @@
 - 증거: 2026-09-24 `TDGame.MonsterAI.HeavyHitInterruptsTelegraph` 초판에서 재현 → `ReceiveDamage`로 바꾼 뒤 통과
 - 날짜·상태: 2026-09-24 active
 - 발견: claude
+- 갱신 2026-10-18 claude: 캐릭터 사망 경로는 이제 픽스처에서도 안전하다 — `ATDMonsterCharacter::BroadcastDeathMessage`가 `UGameplayMessageSubsystem::HasInstance`로 가드되고 `StartRagdoll`은 PhysicsAsset이 없으면 돌아온다. 치명 `ReceiveDamage`로 몬스터를 죽이는 헤드리스 시험(`TDGame.MonsterAI.Pack.LeaderDeathScattersPack`·`BurstLossesPanicSmallPack`·`OneShotKillAlertsNeighbors`)이 통과한다. `TryApplyDamage`(메시지 방송) 금지는 그대로.
 
 ### L-combat-03 Mover 5.8.2 폰에서 CMC 습관대로 짜면 조용히 틀리는 곳
 - 증상: ① `FindComponentByClass<UMovementComponent>`·GAS `ActorInfo->MovementComponent`가 null(UMoverComponent는 UActorComponent 파생)이라 빙결 루프가 이동을 못 멈춤 ② `SetActorRotation`·`SetRelativeTransform(메시)`이 다음 프레임 되돌려짐, 래그돌 몬스터에서 "완전 시뮬레이션 스켈레탈 메시를 이동하려 함" 경고 1,253건 ③ 구르기에서 `FaceRotationImmediately`(FTeleportEffect) 뒤 캡슐 축소 `AddActorWorldOffset(-54)`를 하면 텔레포트가 옛 위치로 되돌려 54cm 떠서 Falling ④ 프레임이 0.4초 끊기면 점프 최고점이 124cm → 48cm(Standalone 백엔드는 가변 스텝 한 번, CMC와 달리 서브스텝 없음) ⑤ 블루프린트 CDO에 `CommonLegacyMovementSettings`가 없다는 컴파일 오류(L-editor-13).

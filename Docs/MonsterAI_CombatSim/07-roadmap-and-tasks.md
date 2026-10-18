@@ -682,6 +682,42 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 참조: 08 SC-03·§6-5, 07#MD-47 ③, `research/project-squad-tokens-director.md`, `Saved/AgentOps/20261018/m329/`
 - 기록: 2026-10-18 claude — 완료. 명세(`m329/spec.md` 계약 절) → 사본 빌더 2개 병렬(코어·시험, 컴파일 없음) → 체크섬 통합(build_hold) → 첫 빌드 성공 → 반박 합격(결함 0, 시험 공백 3) → 공백 보강 → 재빌드. JSON 키: 최상위 `role`(Melee·Ranged, 생략 시 사거리 450 추정 유지)·`boss`(불리언), `abilities.<이름>.token_cost`(0.25 단위, 기본 1). C++: `ETDMonsterCombatRole`·`CombatRole`·`bIsBoss`·`FTDResolvedAbility::TokenCostQuarters`, 전술 조각 `ReserveCostQuarters`(참조 능력 최대)·`CommittedCostQuarters`(개시 능력 비용, `FTDBrainFragment::LastCastAbilityIndex`), 풀 `EngagedCostQuarters`(근접 줄서기 판정), 엄격한 우선순위 부여(앞 후보가 안 들어가면 멈춤), 보복 가로채기 비용 적합 검사. 삭제: `FTDCombatTactics::TokenCostQuarters`·`BossHealthThreshold`, `AI/CombatToken/` 4파일, `ATDMonsterCharacter` 토큰 UFUNCTION 5개·사망 시 해제 호출, 스모크 1줄. 출하 7종에 `role` 명시, Ogre_Boss `boss: true`, `token_cost`는 넣지 않음(밸런스 불변). 완료 조건 대조: ① 변경 전 기준선 `Saved/AgentOps/20261018/m329-baseline-tests.json` 240/246(실패 FluidFX.Niagara 4·Perf 1·CrossingStreams) → 변경 후 `m329-int1-tests.json` 243/248(새 시험 2 통과, 회귀 0, 실패 = 기준선 부분집합) → 보강 후 `m329-int2-tests.json` MonsterAI·Smoke 51/52(CrossingStreams) ② 새 시험 `TDGame.MonsterAI.DefinitionTacticsKeys`(정상·생략·오류 7종)·`TDGame.MonsterAI.Tactics.WeightedTokenCosts`(예약 최대·정산·접촉 무리 8명·옛 줄서기 식 판별·보복 비용 장면 2) + `RoleClassification`(체력 5000 비보스·명시 역할 우선·표식 보스)·`Validate` 보강 ③ NoGlobalRandom 통과 ④ `check_cook_coverage` 0, `check_sync_loads`는 반박자 재실행 0(통합 직후 1회는 FluidFX 세션 파일 오탐 1건, 그쪽 처리). 남은 것: 실행기 `LastCastAbilityIndex` 대입은 시험이 직접 값을 넣어 판별 안 됨(코드 한 줄), 종별 `token_cost` 실제 값(SC-03 모양 분류) 미지정, AGENTS.md 14절 폴더 목록 갱신 제안(decisions D-11), PIE 육안은 tactics-pie 세션.
 
+### M3-30 경보 연쇄(2단·지연 파문·첫 발견자 호출 표시)
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 중간(부모 세션 c7fdf4 위임, M3-14 조사 추가 가치 순위 ②)
+- 선행: M3-14, M3-25(교전 계층), M3-29(같은 파일, 먼저 통합)
+- 목표: 즉시 1단(900cm) 경보를 최대 2단·단마다 8~16스텝 지연(거리 비례) 연쇄로 바꾸고, 무리당 첫 발견자만 호출자로 표시한다(TLOU 비명·추종). `TD.MonsterAI.Tactics 0`이면 기존 즉시 1단.
+- 완료 조건: 새 시험(2단 파문·호출자 1명) 구현 전 빨강·구현 뒤 초록 / M3-25 `Engagement.*` 포함 기존 `TDGame.MonsterAI.*` 통과 수 유지(기준선 CrossingStreams) / NoGlobalRandom / 결정론 반복 동일
+- 산출물: `MonsterAI/TDPackAlarm.h/.cpp`, `TDMonsterThinkSubsystem.*`(UpdateEngagement), `TDMonsterBrainSlot.h`, 시험 `MonsterAI/Tests/TDPackBehaviorTests.cpp`
+- 검증: BUILD; TEST `TDGame.MonsterAI.*` 헤드리스; NoGlobalRandom
+- 참조: `research/web-topdown-arpg-crowd-combat.md` §3.7·§6 순위 2, 명세 `Saved/AgentOps/20261018/pack-behaviors/`
+- 기록: 2026-10-18 claude — 완료. 구현: 발견자(근접·피격·한 방 처치된 Home 몬스터의 사망 경보)마다 900cm 안 같은 팀 Home 동료를 8+8×거리/900스텝 뒤 깨우고 최대 2단, 호출자는 같은 종·같은 대상·1800cm·3초 안 첫 발견자 1명(`GetMonsterAlarmRole`, 디버그 `alarm=`). 빨강→초록: AlarmRipplesTwoHops(구현 전 B·A 같은 스텝·C 미교전 → 단 간격 14스텝·D 미교전), OnlyFirstDiscovererCalls(호출자 0줄 → 1줄), OneShotKillAlertsNeighbors(이웃 미교전 → 9~16스텝 안 교전). 보호: TacticsOffKeepsInstantAlarm(CVar 0 = 기존 즉시 1단), M3-25 `Engagement.*` 통과 수 유지. 공통 절차: 명세 v1 → 반박 3관점(치명 3·주요 20·경미 25, `measurements/pack-behaviors/refutations/`) + 파이썬 결정론 시뮬 v1(`measurements/squad-tactics/sim_pack.py`) → 명세 v2·계약 → 빨강 시험 먼저(구현 전 M3-29 통합 트리에서 `TDGame.MonsterAI.Pack.*` 17개 중 빨강 12/12 실패·보호 5/5 통과, `measurements/pack-behaviors/red-before-summary.md`) ∥ 사본 구현 빌더 2(규칙·커널) → 시뮬 v2 재검증 → v2.1(손실 창 80) → 3방향 병합 통합(충돌 0) → 정적 반박 2관점(코드 주요 2·경미 9, 시험 놓친 돌연변이 5) → 수정·시험 보강 17→22 → 실행에서 드러난 결함 1(보복 +1로 생긴 두 번째 독점 보유자가 반납 안 함) 수정. 최종 `TDGame.MonsterAI` 72/73(실패 = 기준선 CircleAvoidance.Scene.CrossingStreams, `measurements/pack-behaviors/green-tests.json`), Pack 22/22, NoGlobalRandom 통과, 통합 1차 때 MonsterAI·Movement·Combat 142/143(같은 기준선), `check_sync_loads` new 0·`check_cook_coverage` 종료 0(MISSING 1건은 기존). 근거 문서 [research/project-pack-behaviors.md](research/project-pack-behaviors.md). 교훈 L-build-09(새 .cpp가 UBT makefile 캐시로 빠짐), L-combat-02 갱신. 동료 세션 M3-29·FluidFX·tactics-pie와 build_hold로 창 조정. 미커밋. 남은 것: 외침·아이콘 연출 미연결(진입점만), 기본 카메라에서 파문은 대부분 화면 밖(반박 B-4).
+
+### M3-31 무리 사기·공포 전염(공황 후퇴·결속 면역·막히면 싸움)과 Flee 끝 조건(MD-43)
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 중간(부모 세션 c7fdf4 위임, 순위 ④)
+- 선행: M3-14, M3-29
+- 목표: Days Gone 사기 단계를 단순화해 우두머리(보스·정예) 사망 목격 또는 잃은 동료 대비 남은 지지가 약할 때 1~2초 공황 후퇴, 막히면 즉시 싸움, 공황 동료는 전염 압력으로 센다. 보스·정예는 면역. 저체력 Flee(MoveAway)에 시간·쿨다운·근접 한정 끝 조건(MD-43 권장 (b)+(c))을 같은 후퇴 규칙으로 정리한다.
+- 완료 조건: 새 시험(우두머리 사망 공황·소규모 손실 공황·시간 제한 후퇴·막힘 종료·저체력 Flee 비반복) 구현 전 빨강·구현 뒤 초록 / 기존 통과 수 유지 / NoGlobalRandom
+- 산출물: `MonsterAI/TDPackMorale.h/.cpp`, `TDMonsterActionExecutor.*`(시간 제한 후퇴), `TDMonsterBrainSlot.h`, `TDMonsterThinkSubsystem.*`, 로더 `elite` 키, 정의 JSON(Goblin_Melee·Hyena Flee, StoneGolem·BookHead_Brute elite), 시험
+- 검증: BUILD; TEST `TDGame.MonsterAI.*` 헤드리스; NoGlobalRandom; OP-33 검사 2개
+- 참조: 순위 ④, Days Gone(GAP 온라인 2021 12장)·Halo·Diablo II Fallen, 07#MD-43
+- 기록: 2026-10-18 claude — 완료. 구현: 1.25초(80스텝) 안 목격 손실 ≥ 2·동료 ≥ 1·2×손실+공황 동료 ≥ 1+지지(정예·보스 2배)면 1~2초 공황, 우두머리(boss·새 키 `elite`) 사망은 1600cm 안·다른 우두머리 없을 때 2~3초 공황, 결속 교전당 1회, 보스·정예·Support 면역. 실행기 시간 제한 후퇴(속도 1.2·700cm 움츠림·24스텝 막히면 싸움·경직 뒤 재개) — 저체력 Flee(MD-43)와 공용. 데이터: StoneGolem·BookHead_Brute `elite`, Goblin_Melee·Hyena Flee `seconds` 1.5·`cooldown` 6·근접 한정·체력 Logistic(약 32% 미만). 빨강→초록: LeaderDeathScattersPack·BurstLossesPanicSmallPack(공황 0 → 실측 후퇴 런·움츠림 거리), TimedRetreatEndsOnTime(끝나지 않음 → 96스텝), TimedRetreatEndsWhenCornered(→ 24~26스텝), LowHealthFleeDoesNotLoop(귀환 712스텝·시전 0 → 귀환 0·MoveAway ≤ 30%·시전 ≥ 8). 보강·보호: LargePackHoldsNerve·SlowLossesDoNotPanic(1.5초 간격)·LoneSurvivorHoldsNerve·RalliedPackPanicsOnce. 시뮬 v2: 창 80에서 꾸준 처치 공황 무리 0/7·범위 6/7·느림 0(우두머리 제외), 창 192는 꾸준 6/7(기각). 공통 절차: 명세 v1 → 반박 3관점(치명 3·주요 20·경미 25, `measurements/pack-behaviors/refutations/`) + 파이썬 결정론 시뮬 v1(`measurements/squad-tactics/sim_pack.py`) → 명세 v2·계약 → 빨강 시험 먼저(구현 전 M3-29 통합 트리에서 `TDGame.MonsterAI.Pack.*` 17개 중 빨강 12/12 실패·보호 5/5 통과, `measurements/pack-behaviors/red-before-summary.md`) ∥ 사본 구현 빌더 2(규칙·커널) → 시뮬 v2 재검증 → v2.1(손실 창 80) → 3방향 병합 통합(충돌 0) → 정적 반박 2관점(코드 주요 2·경미 9, 시험 놓친 돌연변이 5) → 수정·시험 보강 17→22 → 실행에서 드러난 결함 1(보복 +1로 생긴 두 번째 독점 보유자가 반납 안 함) 수정. 최종 `TDGame.MonsterAI` 72/73(실패 = 기준선 CircleAvoidance.Scene.CrossingStreams, `measurements/pack-behaviors/green-tests.json`), Pack 22/22, NoGlobalRandom 통과, 통합 1차 때 MonsterAI·Movement·Combat 142/143(같은 기준선), `check_sync_loads` new 0·`check_cook_coverage` 종료 0(MISSING 1건은 기존). 근거 문서 [research/project-pack-behaviors.md](research/project-pack-behaviors.md). 교훈 L-build-09(새 .cpp가 UBT makefile 캐시로 빠짐), L-combat-02 갱신. 동료 세션 M3-29·FluidFX·tactics-pie와 build_hold로 창 조정. 미커밋. 남은 것: 공황 움츠림·외침 연출, 사기 상승(Days Gone 정지 플레이어), 300마리 사망 다발 스텝 비용 미측정(J2 순서 개선만), 07#MD-48·MD-43 결정 대기. 수정 반박 합격(`measurements/pack-behaviors/refutations/refute-R1-fix.md`): 경미 2 — 막힌 돌진자 수 집계가 보복 가로채기 전이라 대기열 판정 최대 8스텝 지연, 공황 개체를 교전 수에서 빼 큰 무리의 기본 토큰이 줄 수 있음(흔들린 무리는 압박도 준다 — 의도로 둠, MD-48).
+
+### M3-32 역할 독점(돌진자 대상당 1·지원 동시 1·원거리 띠는 근접 전열 뒤)
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 중간(부모 세션 c7fdf4 위임, 순위 ③)
+- 선행: M3-14, M3-29(`role` 키)
+- 목표: `role`에 `Charger`·`Support`를 더해 대상당 돌진자 1·지원 1을 역할 토큰처럼 독점시키고(TLOU 전투 조정자, Diablo IV 역할), 원거리 차선의 띠 바닥을 근접 대기 고리 바깥으로 둔다.
+- 완료 조건: 새 시험(돌진자 차례·지원 단독·띠 바닥·정의 키) 구현 전 빨강·구현 뒤 초록 / 기존 통과 수 유지 / NoGlobalRandom
+- 산출물: `TDCombatTactics.*`, `TDMonsterThinkSubsystem.*`(GrantPoolTokens·차선 비교), `TDMonsterActionExecutor.*`(MoveToBand 띠 바닥), `TDMonsterDefinition.h`·로더, 정의 JSON(Hyena Charger), 시험
+- 검증: BUILD; TEST `TDGame.MonsterAI.*` 헤드리스; NoGlobalRandom
+- 참조: 순위 ③, `research/web-squad-slots-and-directors.md` A2
+- 기록: 2026-10-18 claude — 완료. 구현: `role` Charger(근접 차선)·Support(원거리 차선) 추가, 대상당 독점 역할 토큰 보유 1(보복 중 +1, 공격 끝나면 상한 초과분 반납), 상한 후보는 건너뛰고 하위 다른 역할은 계속 받음, 막힌 돌진자는 대기 고리. 원거리 띠 바닥 = 근접 대기자 (고리+몸) 최대 + 100 + 자기 몸, 상한 min(사거리−100, 700). 차선 비교 8곳을 `IsMeleeLaneRole`·`IsRangedLaneRole`로(rg 잔여 0). 빨강→초록: ChargersTakeTurns·SupportCastsAlone(보유 2 → 1), RangedHoldsBandBehindMeleeRing(궁수 540 → 중앙 약 641), PackDefinitionKeys(미지 값 오류 → 해석·면역). 보강: ChargerCapDoesNotBlockMelee·ChargerRetaliationAllowsSecondHolder·RangedBandFloorFormula. Hyena는 Melee 유지(돌진자 지정 시 초당 공격 시작 0.67~0.74배, MD-48). 공통 절차: 명세 v1 → 반박 3관점(치명 3·주요 20·경미 25, `measurements/pack-behaviors/refutations/`) + 파이썬 결정론 시뮬 v1(`measurements/squad-tactics/sim_pack.py`) → 명세 v2·계약 → 빨강 시험 먼저(구현 전 M3-29 통합 트리에서 `TDGame.MonsterAI.Pack.*` 17개 중 빨강 12/12 실패·보호 5/5 통과, `measurements/pack-behaviors/red-before-summary.md`) ∥ 사본 구현 빌더 2(규칙·커널) → 시뮬 v2 재검증 → v2.1(손실 창 80) → 3방향 병합 통합(충돌 0) → 정적 반박 2관점(코드 주요 2·경미 9, 시험 놓친 돌연변이 5) → 수정·시험 보강 17→22 → 실행에서 드러난 결함 1(보복 +1로 생긴 두 번째 독점 보유자가 반납 안 함) 수정. 최종 `TDGame.MonsterAI` 72/73(실패 = 기준선 CircleAvoidance.Scene.CrossingStreams, `measurements/pack-behaviors/green-tests.json`), Pack 22/22, NoGlobalRandom 통과, 통합 1차 때 MonsterAI·Movement·Combat 142/143(같은 기준선), `check_sync_loads` new 0·`check_cook_coverage` 종료 0(MISSING 1건은 기존). 근거 문서 [research/project-pack-behaviors.md](research/project-pack-behaviors.md). 교훈 L-build-09(새 .cpp가 UBT makefile 캐시로 빠짐), L-combat-02 갱신. 동료 세션 M3-29·FluidFX·tactics-pie와 build_hold로 창 조정. 미커밋. 남은 것: 띠 바닥이 점수기 거리 곡선을 옮기지 않아 궁수가 바닥 670이 아닌 641에서 멈춤, 카이팅 중 바닥 유지 안 됨, Support 종 없음.
+
 ### 3.6 Phase 4 — 확장(조건부)
 
 ### M4-01 자체 C++ HTN(보스·무리)
@@ -844,6 +880,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 권장: (b)+(c). 종 정의 JSON만 바뀐다.
 - 영향: `Content/MonsterAI/Definitions/Goblin_Melee.json`·`Hyena.json`·`Archer.json`(상속)
 - 결정: (미정)
+- 후속: 2026-10-18 claude M3-31 — 권장 (b)+(c)를 적용(proposed, 데이터만 되돌리면 원복): Goblin_Melee·Hyena Flee에 `seconds` 1.5·`cooldown` 6·대상 근접 고려(고블린 약 400cm, 하이에나 약 225cm), 체력 고려를 Logistic m −20 c 0.3(약 32% 미만)으로. 실행기는 시퀀스 밖 `seconds` 있는 MoveAway를 시간 제한 후퇴로 처리하고 24스텝 막히면 끝낸다. 시뮬 S3: 정지·카이팅 귀환 0, 도망 시간 ≤ 25%(구 규칙은 공격 0·귀환 3~12회/60초). 시험 `TDGame.MonsterAI.Pack.LowHealthFleeDoesNotLoop`.
 
 ### MD-44 몬스터 속도와 플레이어 속도의 관계
 - 질문: 전 종(230~560)이 플레이어(600)보다 느려 플레이어는 언제나 이탈·재풀링할 수 있다. 의도인가?
@@ -877,6 +914,14 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 결정: (대기)
 - 후속: 2026-10-18 claude M3-29 — ③의 체력 2000 임시 규칙은 삭제하고 종 JSON `boss: true`(Ogre_Boss)로 교체, 역할은 `role` 키(생략 시 사거리 450 추정), 토큰 비용은 `token_cost`(출하 7종 기본 1.0이라 ①②④⑤ 동작 불변).
 
+
+### MD-48 무리 행동 3종 기본값과 데이터(권장안 적용, 재검토 가능)
+- 상태: proposed · 2026-10-18 claude(M3-30·M3-31·M3-32, 부모 세션 위임 "결정은 권장안으로 진행한 뒤 proposed로")
+- 질문: 지금 들어간 기본값을 확정할까? ① 경보: 최대 2단, 단마다 8+8×거리/900스텝(8~16), 호출자는 같은 종·같은 대상·1800cm·3초 안 첫 발견자 1명, 한 방 처치된 Home 몬스터도 900cm 안 동료를 깨움 ② 사기: 1.25초(80스텝) 안 손실 ≥ 2 그리고 2×손실 + 공황 동료 ≥ 1 + 비공황 동료 지지(정예·보스 2배) 그리고 동료 1 이상이면 1~2초 공황(속도 1.2, 대상 700cm에서 움츠림, 24스텝 막히면 싸움), 우두머리(정예·보스) 사망은 1600cm 안·다른 우두머리 없을 때 2~3초 공황, 결속은 교전당 1회 ③ 역할: 돌진자·지원 대상당 토큰 보유 1(보복 중 +1), 원거리 띠 바닥 = 근접 대기자 (고리+몸) 최대 + 100 + 자기 몸, 상한 min(사거리−100, 700) ④ 데이터: StoneGolem·BookHead_Brute `elite: true`, Hyena는 `Melee` 유지(돌진자 지정 보류)
+- 선택지: (a) 현행 (b) Hyena `Charger` 지정(하이에나 무리가 한 마리씩 덤벼들고 나머지 선회) (c) 사기 손실 창 192(꾸준 처치에서도 공황)
+- 권장: (a). 파이썬 결정론 시뮬 v2(`measurements/squad-tactics/sim_pack_tables.md` V2 절): 창 80은 꾸준 처치(1.5초당 1) 공황 무리 0/7·범위 처치 6/7·느림 0(우두머리 충격 제외), 창 192는 꾸준 6/7로 '매 전투 1/3 지점 붕괴'(반박 B-1). (b)는 초당 공격 시작이 하이에나 4마리 0.74배·6마리 0.67배로 위협이 크게 준다.
+- 영향: 07#M3-30·M3-31·M3-32, `MonsterAI/TDPackAlarm.h`·`TDPackMorale.h`·`TDCombatTactics.h` 상수, 정의 JSON, 표현층(외침·움츠림 연출 진입점 `GetMonsterAlarmRole`·`IsMonsterPanicking`은 있으나 연결 안 됨 — 연결 전에는 공황·호출이 동작으로만 보인다)
+- 결정: (대기)
 ---
 
 ## 5. 위험표(12)

@@ -1,0 +1,137 @@
+{
+ "results": [
+  {
+   "path": "TDGame.MonsterAI.Pack.AlarmRipplesTwoHops",
+   "result": "Fail",
+   "events": [
+    "Warning: LogAbilitySystem: No GameplayCueNotifyPaths were specified in DefaultGame.ini under [/Script/GameplayAbilities.AbilitySystemGlobals]. Falling back to using all of /Game/. This may be slow on large projects. Consider specifying which paths are to be searched. [log]",
+    "Error: Expected 'B engages 8..16 steps after A (A at 0, B at 0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(823)]",
+    "Error: Expected 'C engages 8..16 steps after B (B at 0, C at -1)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(825)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.BurstLossesPanicSmallPack",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'at least two of the three survivors panic within 1 s of the second loss (0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1005)]",
+    "Error: Expected 'at least two survivors retreat 32 or more steps while the distance grows (0 measured; runs:)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1006)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.ChargersTakeTurns",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'chargers: at most one monster of the exclusive role holds a token on every step (max 2, first at step 0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(717)]",
+    "Error: Expected 'chargers: at most one monster of the exclusive role casts at a time (max 2, first at step 120)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(718)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.Deterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.EventOrderInvariant",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.LargePackHoldsNerve",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.LeaderDeathScattersPack",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'at least two goblins show morale=panic within 1 s of the leader dying (0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(969)]",
+    "Error: Expected 'at least one goblin retreats for 32 or more steps while the distance to the player grows (0 measured; runs:)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(970)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.LowHealthFleeDoesNotLoop",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'the goblin never gives up and turns toward home' to be 0, but it was 712. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1180)]",
+    "Error: Expected 'the goblin spends at most 30% of 30 s in the Flee action (0.596)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1180)]",
+    "Error: Expected 'no single flee lasts longer than 108 steps (longest 578)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1181)]",
+    "Error: Expected 'the goblin still starts at least 8 casts in 30 s (0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1182)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.OneShotKillAlertsNeighbors",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'the neighbor engages within 16 steps of the one-shot kill (ticks after kill -1)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(937)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.OnlyFirstDiscovererCalls",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'exactly one alarm=caller line, on the lowest SimulationId, on every step after the sighting (256 bad steps, first at step 0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(866)]",
+    "Error: Expected 'the second discoverer is alarm=silent on every step after the sighting (256 bad steps)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(867)]",
+    "Error: Expected 'the goblin that heard the alarm reports alarm=hop1 when it engages' to be \"hop1\", but it was \"\". [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(870)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.PackDefinitionKeys",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'role Charger resolves without errors (errors 1, first: PackProbe.json: role: unknown role 'Charger', use Melee or Ranged (a boss sets \"boss\": true))' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(619)]",
+    "Error: Expected 'role Support resolves without errors (errors 1, first: PackProbe.json: role: unknown role 'Support', use Melee or Ranged (a boss sets \"boss\": true))' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(619)]",
+    "Error: Expected 'elite true resolves without errors (errors 1, first: PackProbe.json: elite: unknown key)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(619)]",
+    "Error: Expected 'elite set to a string is rejected with 'expected true or false' (errors 1, first: PackProbe.json: elite: unknown key)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1261)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.RangedHoldsBandBehindMeleeRing",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'the archer median distance after 6 s is at least 640 cm (540)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1246)]",
+    "Error: Expected 'at most 10% of archer samples are closer than 610 cm (1.000)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1247)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.SlowLossesDoNotPanic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.SupportCastsAlone",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'support: at most one monster of the exclusive role holds a token on every step (max 2, first at step 0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(717)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.TacticsOffKeepsInstantAlarm",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.TimedRetreatEndsOnTime",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'a 1.5 s retreat that keeps gaining distance (10 cm per step) ends within 1 of step 96 (idle at step -1)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1113)]",
+    "Error: Expected 'a 1.5 s retreat that keeps gaining distance (5 cm per step) ends within 1 of step 96 (idle at step -1)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1113)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.TimedRetreatEndsWhenCornered",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'a retreat that cannot gain distance ends between steps 24 and 26 (idle at step -1)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDPackBehaviorTests.cpp(1139)]"
+   ]
+  }
+ ],
+ "found_count": 17,
+ "crash_lines": [],
+ "engine_exit_code": 0,
+ "filters": [
+  "TDGame.MonsterAI.Pack"
+ ],
+ "log": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261018\\pack-red-tests.log",
+ "incomplete": false,
+ "crashed": false
+}

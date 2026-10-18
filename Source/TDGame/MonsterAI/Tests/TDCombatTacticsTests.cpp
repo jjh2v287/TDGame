@@ -609,6 +609,7 @@ struct FTDCombatTacticsTestAccess
 		Subsystem.Intents.AddDefaulted();
 		Subsystem.Avoidances.AddDefaulted();
 		Subsystem.Tactics.Add(FTDCombatTactics::MakeFragment(*Definition));
+		Subsystem.Morales.Add(FTDPackMorale::MakeFragment(*Definition));
 		FTDMonsterBodyFragment& Body = Subsystem.Bodies[SlotIndex];
 		Body.SimulationId = Subsystem.NextSimulationId++;
 		Body.Location = Location;

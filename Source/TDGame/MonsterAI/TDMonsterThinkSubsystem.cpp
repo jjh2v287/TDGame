@@ -53,12 +53,12 @@ namespace
 
 	int32 GetTacticsPoolIndex(const ETDTacticsRole Role)
 	{
-		return Role == ETDTacticsRole::Ranged ? FTDTargetTacticsRecord::RangedPoolIndex : FTDTargetTacticsRecord::MeleePoolIndex;
+		return FTDCombatTactics::IsRangedLaneRole(Role) ? FTDTargetTacticsRecord::RangedPoolIndex : FTDTargetTacticsRecord::MeleePoolIndex;
 	}
 
 	int32 GetGrantRadiusCm(const FTDMonsterTacticsFragment& Fragment)
 	{
-		return Fragment.Role == ETDTacticsRole::Ranged ? Fragment.MaxReachCm + FTDCombatTactics::RangedGrantMargin : FTDCombatTactics::MeleeGrantRadius;
+		return FTDCombatTactics::IsRangedLaneRole(Fragment.Role) ? Fragment.MaxReachCm + FTDCombatTactics::RangedGrantMargin : FTDCombatTactics::MeleeGrantRadius;
 	}
 
 	void ClearTacticsToken(FTDMonsterTacticsFragment& Fragment)
@@ -270,6 +270,10 @@ void UTDMonsterThinkSubsystem::Deinitialize()
 	FreeSlots.Reset();
 	OrderedSlots.Reset();
 	PendingAlertSlots.Reset();
+	Morales.Reset();
+	PendingAlarms.Reset();
+	PendingPackDeaths.Reset();
+	PendingDeathAlarms.Reset();
 	Super::Deinitialize();
 }
 
@@ -292,6 +296,7 @@ FTDMonsterSlotHandle UTDMonsterThinkSubsystem::RegisterMonster(AActor* BodyActor
 		Intents.AddDefaulted();
 		Avoidances.AddDefaulted();
 		Tactics.AddDefaulted();
+		Morales.AddDefaulted();
 	}
 
 	FTDMonsterBodyFragment& Body = Bodies[SlotIndex];
@@ -310,6 +315,7 @@ FTDMonsterSlotHandle UTDMonsterThinkSubsystem::RegisterMonster(AActor* BodyActor
 	Intents[SlotIndex] = FTDMonsterMoveIntent();
 	Avoidances[SlotIndex] = FTDMonsterAvoidanceFragment();
 	Tactics[SlotIndex] = FTDCombatTactics::MakeFragment(*Definition);
+	Morales[SlotIndex] = FTDPackMorale::MakeFragment(*Definition);
 
 	ITDMonsterBody* MonsterBody = Cast<ITDMonsterBody>(BodyActor);
 	MonsterBody->ApplyBodyStats(Definition->Stats);
@@ -338,6 +344,7 @@ void UTDMonsterThinkSubsystem::UnregisterMonster(const FTDMonsterSlotHandle Hand
 	if (bIsTacticsActive && DyingActor && !UTDCombatLibrary::IsActorAlive(DyingActor))
 	{
 		PendingKillLocations.Add(Bodies[Handle.Index].Location);
+		RecordPackDeath(Handle.Index);
 	}
 	DetachTacticsSlot(Handle.Index);
 	ClearTacticsToken(Tactics[Handle.Index]);
@@ -345,6 +352,8 @@ void UTDMonsterThinkSubsystem::UnregisterMonster(const FTDMonsterSlotHandle Hand
 	Bodies[Handle.Index].Actor.Reset();
 	Brain.Definition.Reset();
 	Brain.Target.Reset();
+	FTDPackAlarm::RemoveSlot(PendingAlarms, Handle.Index);
+	Morales[Handle.Index] = FTDMonsterMoraleFragment();
 	PendingAlertSlots.Remove(Handle.Index);
 	FreeSlots.Add(Handle.Index);
 	RebuildOrder();
@@ -401,6 +410,8 @@ void UTDMonsterThinkSubsystem::AdvanceFrame(const float DeltaSeconds)
 	if (OrderedSlots.IsEmpty())
 	{
 		AccumulatedSeconds = 0.f;
+		PendingPackDeaths.Reset();
+		PendingDeathAlarms.Reset();
 		return;
 	}
 	AccumulatedSeconds += FMath::Max(0.f, DeltaSeconds);
@@ -433,6 +444,16 @@ bool UTDMonsterThinkSubsystem::IsMonsterEngaged(const FTDMonsterSlotHandle Handl
 	return IsHandleCurrent(Handle) && Brains[Handle.Index].IsEngaged();
 }
 
+ETDMonsterAlarmRole UTDMonsterThinkSubsystem::GetMonsterAlarmRole(const FTDMonsterSlotHandle Handle) const
+{
+	return IsHandleCurrent(Handle) ? Brains[Handle.Index].AlarmRole : ETDMonsterAlarmRole::None;
+}
+
+bool UTDMonsterThinkSubsystem::IsMonsterPanicking(const FTDMonsterSlotHandle Handle) const
+{
+	return IsHandleCurrent(Handle) && Morales[Handle.Index].FearState == ETDPackFearState::Retreating && Brains[Handle.Index].IsInTimedRetreat();
+}
+
 UTDMonsterThinkSubsystem* UTDMonsterThinkSubsystem::GetMonsterThinkSubsystem(const UObject* WorldContextObject)
 {
 	const UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull) : nullptr;
@@ -453,7 +474,7 @@ TArray<FString> UTDMonsterThinkSubsystem::GetMonsterDebugLines() const
 		const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
 		const AActor* Actor = Body.Actor.Get();
 		const UTDCombatComponent* Combat = UTDCombatLibrary::GetCombatComponent(Actor);
-		Lines.Add(FString::Printf(TEXT("sim=%u actor=%s def=%s state=%s action=%s engaged=%d engagement=%s phase=%d hp=%.1f pos=(%.0f,%.0f)%s"),
+		Lines.Add(FString::Printf(TEXT("sim=%u actor=%s def=%s state=%s action=%s engaged=%d engagement=%s phase=%d hp=%.1f pos=(%.0f,%.0f)%s%s"),
 			Body.SimulationId,
 			Actor ? *Actor->GetName() : TEXT("None"),
 			Brain.Definition.IsValid() ? *Brain.Definition->Id.ToString() : TEXT("None"),
@@ -465,7 +486,8 @@ TArray<FString> UTDMonsterThinkSubsystem::GetMonsterDebugLines() const
 			Combat ? Combat->GetCurrentHealth() : 0.f,
 			Body.Location.X,
 			Body.Location.Y,
-			*MakeTacticsDebugSuffix(SlotIndex)));
+			*MakeTacticsDebugSuffix(SlotIndex),
+			*MakePackDebugSuffix(SlotIndex)));
 	}
 	return Lines;
 }
@@ -546,6 +568,7 @@ void UTDMonsterThinkSubsystem::RunKernelStep()
 	UpdateEngagement();
 	if (bIsTacticsActive)
 	{
+		UpdatePackMorale();
 		UpdateTactics();
 	}
 	else
@@ -678,6 +701,11 @@ void UTDMonsterThinkSubsystem::UpdateEngagement()
 		}
 		}
 	}
+	if (bIsTacticsActive)
+	{
+		RunPackAlarms(NewlyEngaged);
+		return;
+	}
 	for (const int32 AlertingSlot : NewlyEngaged)
 	{
 		const AActor* AlertTarget = Brains[AlertingSlot].Target.Get();
@@ -702,6 +730,473 @@ void UTDMonsterThinkSubsystem::UpdateEngagement()
 			Engage(SlotIndex);
 		}
 	}
+}
+
+void UTDMonsterThinkSubsystem::RunPackAlarms(TArray<int32>& NewlyEngaged)
+{
+	Algo::Sort(NewlyEngaged, [this](const int32 Left, const int32 Right)
+	{
+		return Bodies[Left].SimulationId < Bodies[Right].SimulationId;
+	});
+	for (const int32 DiscovererSlot : NewlyEngaged)
+	{
+		CallPackAlarm(DiscovererSlot);
+	}
+	Algo::Sort(PendingDeathAlarms, [](const FTDPackDeathAlarm& Left, const FTDPackDeathAlarm& Right)
+	{
+		return Left.SimulationId < Right.SimulationId;
+	});
+	const TArray<FTDPackDeathAlarm> DeathAlarms = MoveTemp(PendingDeathAlarms);
+	PendingDeathAlarms.Reset();
+	for (const FTDPackDeathAlarm& DeathAlarm : DeathAlarms)
+	{
+		AActor* Target = DeathAlarm.Target.Get();
+		if (!Target || !UTDCombatLibrary::IsActorAlive(Target))
+		{
+			continue;
+		}
+		SchedulePackAlarms(DeathAlarm.Location, Target, DeathAlarm.TeamId, 1);
+	}
+	ReleaseDuePackAlarms();
+}
+
+void UTDMonsterThinkSubsystem::CallPackAlarm(const int32 DiscovererSlot)
+{
+	FTDMonsterBrainFragment& Brain = Brains[DiscovererSlot];
+	AActor* Target = Brain.Target.Get();
+	if (!Brain.IsEngaged() || !Target || !UTDCombatLibrary::IsActorAlive(Target))
+	{
+		return;
+	}
+	if (HasRecentAlarmCaller(DiscovererSlot))
+	{
+		Brain.AlarmRole = ETDMonsterAlarmRole::Silent;
+	}
+	else
+	{
+		Brain.AlarmRole = ETDMonsterAlarmRole::Caller;
+		Brain.AlarmCallStep = StepIndex;
+	}
+	SchedulePackAlarms(Bodies[DiscovererSlot].Location, Target, GetPackTeamId(DiscovererSlot), 1);
+}
+
+bool UTDMonsterThinkSubsystem::HasRecentAlarmCaller(const int32 DiscovererSlot) const
+{
+	const FTDMonsterBrainFragment& Discoverer = Brains[DiscovererSlot];
+	const FVector& DiscovererLocation = Bodies[DiscovererSlot].Location;
+	const int32 DiscovererTeamId = GetPackTeamId(DiscovererSlot);
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		const FTDMonsterBrainFragment& Caller = Brains[SlotIndex];
+		if (Caller.AlarmCallStep == 0 || StepIndex - Caller.AlarmCallStep >= static_cast<uint64>(FTDPackAlarm::AlarmCallMemorySteps))
+		{
+			continue;
+		}
+		const bool bIsSameGroup = Caller.Target.Get() == Discoverer.Target.Get()
+			&& Caller.Definition->Id == Discoverer.Definition->Id
+			&& GetPackTeamId(SlotIndex) == DiscovererTeamId;
+		if (bIsSameGroup && PlanarDistance(Bodies[SlotIndex].Location, DiscovererLocation) <= FTDPackAlarm::AlarmCallRadiusCm)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void UTDMonsterThinkSubsystem::SchedulePackAlarms(const FVector& OriginLocation, AActor* Target, const int32 TeamId, const int32 Hop)
+{
+	const FVector TargetLocation = Target->GetActorLocation();
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+		const FTDMonsterBodyFragment& Body = Bodies[SlotIndex];
+		const float OriginDistance = PlanarDistance(Body.Location, OriginLocation);
+		const bool bCanHearAlarm = Brain.Engagement == ETDMonsterEngagement::Home
+			&& Brain.ReengageBlockSteps == 0
+			&& GetPackTeamId(SlotIndex) == TeamId
+			&& OriginDistance <= AlertRadius
+			&& PlanarDistance(Body.HomeLocation, TargetLocation) <= LeashRadius;
+		if (!bCanHearAlarm)
+		{
+			continue;
+		}
+		FTDPendingAlarm Alarm;
+		Alarm.SlotIndex = SlotIndex;
+		Alarm.Generation = Body.Generation;
+		Alarm.SimulationId = Body.SimulationId;
+		Alarm.Target = Target;
+		Alarm.DueStep = StepIndex + FTDPackAlarm::ComputeHopDelaySteps(FMath::FloorToInt32(OriginDistance));
+		Alarm.Hop = static_cast<uint8>(Hop);
+		FTDPackAlarm::AddOrKeepEarlier(PendingAlarms, Alarm);
+	}
+}
+
+void UTDMonsterThinkSubsystem::ReleaseDuePackAlarms()
+{
+	TArray<FTDPendingAlarm> DueAlarms;
+	for (const FTDPendingAlarm& Alarm : PendingAlarms)
+	{
+		if (Alarm.DueStep <= StepIndex)
+		{
+			DueAlarms.Add(Alarm);
+		}
+	}
+	if (DueAlarms.IsEmpty())
+	{
+		return;
+	}
+	PendingAlarms.RemoveAll([this](const FTDPendingAlarm& Alarm)
+	{
+		return Alarm.DueStep <= StepIndex;
+	});
+	Algo::Sort(DueAlarms, &FTDPackAlarm::IsAlarmDueBefore);
+	for (const FTDPendingAlarm& Alarm : DueAlarms)
+	{
+		ArrivePackAlarm(Alarm);
+	}
+}
+
+void UTDMonsterThinkSubsystem::ArrivePackAlarm(const FTDPendingAlarm& Alarm)
+{
+	const int32 SlotIndex = Alarm.SlotIndex;
+	if (!Bodies.IsValidIndex(SlotIndex) || !Bodies[SlotIndex].bIsActive || Bodies[SlotIndex].Generation != Alarm.Generation)
+	{
+		return;
+	}
+	FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	AActor* Target = Alarm.Target.Get();
+	const bool bCanArrive = Brain.Engagement == ETDMonsterEngagement::Home
+		&& Brain.ReengageBlockSteps == 0
+		&& Target
+		&& UTDCombatLibrary::IsActorAlive(Target);
+	if (!bCanArrive || PlanarDistance(Bodies[SlotIndex].HomeLocation, Target->GetActorLocation()) > LeashRadius)
+	{
+		return;
+	}
+	Brain.Target = Target;
+	Engage(SlotIndex);
+	Brain.AlarmRole = ETDMonsterAlarmRole::Follower;
+	Brain.AlarmHop = Alarm.Hop;
+	if (Alarm.Hop >= FTDPackAlarm::MaxAlarmHops)
+	{
+		return;
+	}
+	SchedulePackAlarms(Bodies[SlotIndex].Location, Target, GetPackTeamId(SlotIndex), Alarm.Hop + 1);
+}
+
+int32 UTDMonsterThinkSubsystem::GetPackTeamId(const int32 SlotIndex) const
+{
+	return Brains[SlotIndex].Definition->GetStatsForPhase(0).Team;
+}
+
+void UTDMonsterThinkSubsystem::RecordPackDeath(const int32 SlotIndex)
+{
+	const FTDMonsterBodyFragment& Body = Bodies[SlotIndex];
+	const int32 TeamId = GetPackTeamId(SlotIndex);
+	FTDPackDeathEvent& Death = PendingPackDeaths.AddDefaulted_GetRef();
+	Death.Location = Body.Location;
+	Death.VictimSimulationId = Body.SimulationId;
+	Death.TeamId = TeamId;
+	Death.bWasLeader = Morales[SlotIndex].bIsLeader;
+	AActor* Target = Brains[SlotIndex].Target.Get();
+	if (!Target || !PendingAlertSlots.Contains(SlotIndex))
+	{
+		return;
+	}
+	FTDPackDeathAlarm& DeathAlarm = PendingDeathAlarms.AddDefaulted_GetRef();
+	DeathAlarm.Location = Body.Location;
+	DeathAlarm.Target = Target;
+	DeathAlarm.TeamId = TeamId;
+	DeathAlarm.SimulationId = Body.SimulationId;
+}
+
+void UTDMonsterThinkSubsystem::UpdatePackMorale()
+{
+	const bool bShouldJudge = !PendingPackDeaths.IsEmpty() || bShouldEvaluateMorale;
+	bShouldEvaluateMorale = false;
+	RecordPackLosses();
+	if (bShouldJudge)
+	{
+		JudgePackPanic();
+	}
+	AdvancePackPanic();
+}
+
+void UTDMonsterThinkSubsystem::RecordPackLosses()
+{
+	Algo::Sort(PendingPackDeaths, [](const FTDPackDeathEvent& Left, const FTDPackDeathEvent& Right)
+	{
+		return Left.VictimSimulationId < Right.VictimSimulationId;
+	});
+	const int64 WitnessRadiusSquared = SquareCm(FTDPackMorale::WitnessRadiusCm);
+	const int64 LeaderWitnessRadiusSquared = SquareCm(FTDPackMorale::LeaderWitnessRadiusCm);
+	for (const FTDPackDeathEvent& Death : PendingPackDeaths)
+	{
+		TArray<int32> LivingLeaderSlots;
+		if (Death.bWasLeader)
+		{
+			GatherLivingLeaderSlots(Death.TeamId, LivingLeaderSlots);
+		}
+		const int64 MaxWitnessRadiusSquared = Death.bWasLeader ? LeaderWitnessRadiusSquared : WitnessRadiusSquared;
+		for (const int32 SlotIndex : OrderedSlots)
+		{
+			const int64 DistanceSquared = FTDCombatTactics::ComputePlanarDistanceSquared(Bodies[SlotIndex].Location, Death.Location);
+			if (DistanceSquared > MaxWitnessRadiusSquared || GetPackTeamId(SlotIndex) != Death.TeamId || !CanWitnessPackLoss(SlotIndex))
+			{
+				continue;
+			}
+			if (DistanceSquared <= WitnessRadiusSquared)
+			{
+				FTDPackMorale::RecordLoss(Morales[SlotIndex], StepIndex);
+			}
+			if (Death.bWasLeader && !HasOtherLivingLeader(SlotIndex, LivingLeaderSlots))
+			{
+				Morales[SlotIndex].bLeaderShock = true;
+			}
+		}
+	}
+	PendingPackDeaths.Reset();
+}
+
+void UTDMonsterThinkSubsystem::JudgePackPanic()
+{
+	TArray<int32> PanicSlots;
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		if (ShouldPackSlotPanic(SlotIndex) && CanWitnessPackLoss(SlotIndex))
+		{
+			PanicSlots.Add(SlotIndex);
+		}
+	}
+	for (const int32 SlotIndex : PanicSlots)
+	{
+		StartPackFear(SlotIndex);
+	}
+}
+
+void UTDMonsterThinkSubsystem::AdvancePackPanic()
+{
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		FTDMonsterMoraleFragment& Morale = Morales[SlotIndex];
+		if (!FTDPackMorale::IsInFear(Morale))
+		{
+			continue;
+		}
+		if (!Brains[SlotIndex].IsEngaged())
+		{
+			Morale.FearState = ETDPackFearState::None;
+			continue;
+		}
+		if (Morale.FearState == ETDPackFearState::Pending)
+		{
+			AdvancePendingPanic(SlotIndex);
+			continue;
+		}
+		AdvanceRetreatingPanic(SlotIndex);
+	}
+}
+
+void UTDMonsterThinkSubsystem::AdvancePendingPanic(const int32 SlotIndex)
+{
+	FTDMonsterMoraleFragment& Morale = Morales[SlotIndex];
+	if (Morale.FearStartDeadlineStep < StepIndex)
+	{
+		Morale.FearState = ETDPackFearState::None;
+		return;
+	}
+	if (!CanStartPanicRetreat(SlotIndex))
+	{
+		return;
+	}
+	Morale.FearState = ETDPackFearState::Retreating;
+	Morale.FearEndStep = StepIndex + Morale.FearSteps;
+	bShouldEvaluateMorale = true;
+	FTDMonsterActionExecutor::BeginRetreat(Brains[SlotIndex], Morale.FearSteps, FTDPackMorale::FearSpeedScale, FTDPackMorale::PanicHoldDistanceCm, MakeContext(SlotIndex));
+}
+
+void UTDMonsterThinkSubsystem::AdvanceRetreatingPanic(const int32 SlotIndex)
+{
+	FTDMonsterMoraleFragment& Morale = Morales[SlotIndex];
+	FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	if (Brain.bWasRetreatCornered)
+	{
+		Brain.bWasRetreatCornered = false;
+		Morale.FearState = ETDPackFearState::None;
+		return;
+	}
+	if (StepIndex >= Morale.FearEndStep)
+	{
+		Morale.FearState = ETDPackFearState::None;
+		return;
+	}
+	const int32 RemainingSteps = static_cast<int32>(Morale.FearEndStep - StepIndex);
+	if (Brain.IsInTimedRetreat() || RemainingSteps < FTDPackMorale::FearResumeMinSteps || !CanStartPanicRetreat(SlotIndex))
+	{
+		return;
+	}
+	FTDMonsterActionExecutor::BeginRetreat(Brain, RemainingSteps, FTDPackMorale::FearSpeedScale, FTDPackMorale::PanicHoldDistanceCm, MakeContext(SlotIndex));
+}
+
+void UTDMonsterThinkSubsystem::StartPackFear(const int32 SlotIndex)
+{
+	FTDMonsterMoraleFragment& Morale = Morales[SlotIndex];
+	Morale.bIsLeaderFear = Morale.bLeaderShock;
+	Morale.FearState = ETDPackFearState::Pending;
+	Morale.FearStartDeadlineStep = StepIndex + FTDPackMorale::FearPendingSteps;
+	Morale.FearSteps = FTDPackMorale::ComputeFearSteps(Bodies[SlotIndex].SimulationId, StepIndex, Morale.bIsLeaderFear);
+	FTDPackMorale::ClearLosses(Morale);
+	Morale.bLeaderShock = false;
+	Morale.bHasRallied = true;
+	ClearTacticsSectors(Tactics[SlotIndex]);
+	Tactics[SlotIndex].bIsOnDeck = false;
+}
+
+bool UTDMonsterThinkSubsystem::ShouldPackSlotPanic(const int32 SlotIndex) const
+{
+	const FTDMonsterMoraleFragment& Morale = Morales[SlotIndex];
+	if (Morale.bLeaderShock)
+	{
+		return true;
+	}
+	const int32 RecentLossCount = FTDPackMorale::CountRecentLosses(Morale, StepIndex);
+	if (RecentLossCount < FTDPackMorale::MinLossesForPanic)
+	{
+		return false;
+	}
+	const int64 WitnessRadiusSquared = SquareCm(FTDPackMorale::WitnessRadiusCm);
+	int32 PanickingAllyCount = 0;
+	int32 AllySupport = 1;
+	for (const int32 OtherIndex : OrderedSlots)
+	{
+		if (FTDCombatTactics::ComputePlanarDistanceSquared(Bodies[SlotIndex].Location, Bodies[OtherIndex].Location) > WitnessRadiusSquared || !IsPackAlly(SlotIndex, OtherIndex))
+		{
+			continue;
+		}
+		if (FTDPackMorale::IsInFear(Morales[OtherIndex]))
+		{
+			++PanickingAllyCount;
+			continue;
+		}
+		AllySupport += FTDPackMorale::GetAllyWeight(Morales[OtherIndex].bIsImmune);
+	}
+	return FTDPackMorale::ShouldPanic(RecentLossCount, PanickingAllyCount, AllySupport);
+}
+
+bool UTDMonsterThinkSubsystem::CanWitnessPackLoss(const int32 SlotIndex) const
+{
+	const FTDMonsterMoraleFragment& Morale = Morales[SlotIndex];
+	if (!Brains[SlotIndex].IsEngaged() || Morale.bIsImmune || Morale.bHasRallied || FTDPackMorale::IsInFear(Morale))
+	{
+		return false;
+	}
+	return UTDCombatLibrary::IsActorAlive(Bodies[SlotIndex].Actor.Get());
+}
+
+bool UTDMonsterThinkSubsystem::IsPackAlly(const int32 SlotIndex, const int32 OtherIndex) const
+{
+	return OtherIndex != SlotIndex
+		&& Brains[OtherIndex].IsEngaged()
+		&& GetPackTeamId(OtherIndex) == GetPackTeamId(SlotIndex)
+		&& UTDCombatLibrary::IsActorAlive(Bodies[OtherIndex].Actor.Get());
+}
+
+void UTDMonsterThinkSubsystem::GatherLivingLeaderSlots(const int32 TeamId, TArray<int32>& OutLeaderSlots) const
+{
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		if (Morales[SlotIndex].bIsLeader && Brains[SlotIndex].IsEngaged() && GetPackTeamId(SlotIndex) == TeamId && UTDCombatLibrary::IsActorAlive(Bodies[SlotIndex].Actor.Get()))
+		{
+			OutLeaderSlots.Add(SlotIndex);
+		}
+	}
+}
+
+bool UTDMonsterThinkSubsystem::HasOtherLivingLeader(const int32 SlotIndex, const TConstArrayView<int32> LivingLeaderSlots) const
+{
+	const int64 LeaderWitnessRadiusSquared = SquareCm(FTDPackMorale::LeaderWitnessRadiusCm);
+	for (const int32 LeaderIndex : LivingLeaderSlots)
+	{
+		if (LeaderIndex != SlotIndex && FTDCombatTactics::ComputePlanarDistanceSquared(Bodies[SlotIndex].Location, Bodies[LeaderIndex].Location) <= LeaderWitnessRadiusSquared)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool UTDMonsterThinkSubsystem::CanStartPanicRetreat(const int32 SlotIndex) const
+{
+	const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	return Brain.CanThink() && !Brain.bIsFrozen && Brain.State != ETDMonsterFsmState::Stagger;
+}
+
+bool UTDMonsterThinkSubsystem::IsInPackFear(const int32 SlotIndex) const
+{
+	return Morales.IsValidIndex(SlotIndex) && FTDPackMorale::IsInFear(Morales[SlotIndex]);
+}
+
+bool UTDMonsterThinkSubsystem::IsRoleHolderLimitReached(const ETDTacticsRole Role, const bool bIsRetaliating, const int32 HolderCount) const
+{
+	const int32 RoleCap = FTDCombatTactics::GetExclusiveRoleCap(Role);
+	if (RoleCap == MAX_int32)
+	{
+		return false;
+	}
+	return HolderCount >= RoleCap + (bIsRetaliating ? 1 : 0);
+}
+
+int32 UTDMonsterThinkSubsystem::CountRoleHolders(const uint32 RecordId, const ETDTacticsRole Role, const int32 ExcludedSlotIndex) const
+{
+	int32 HolderCount = 0;
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		const FTDMonsterTacticsFragment& Fragment = Tactics[SlotIndex];
+		if (SlotIndex != ExcludedSlotIndex && Fragment.Role == Role && Fragment.TokenState != ETDTacticsTokenState::None && Fragment.TokenRecordId == RecordId)
+		{
+			++HolderCount;
+		}
+	}
+	return HolderCount;
+}
+
+FString UTDMonsterThinkSubsystem::MakePackDebugSuffix(const int32 SlotIndex) const
+{
+	if (!bIsTacticsActive || !Morales.IsValidIndex(SlotIndex))
+	{
+		return TEXT(" alarm=none morale=steady");
+	}
+	const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	const FTDMonsterMoraleFragment& Morale = Morales[SlotIndex];
+	const TCHAR* AlarmLabel = TEXT("none");
+	switch (Brain.AlarmRole)
+	{
+	case ETDMonsterAlarmRole::Caller:
+		AlarmLabel = TEXT("caller");
+		break;
+	case ETDMonsterAlarmRole::Silent:
+		AlarmLabel = TEXT("silent");
+		break;
+	case ETDMonsterAlarmRole::Follower:
+		AlarmLabel = Brain.AlarmHop >= 2 ? TEXT("hop2") : TEXT("hop1");
+		break;
+	default:
+		break;
+	}
+	const TCHAR* MoraleLabel = TEXT("steady");
+	if (Morale.FearState == ETDPackFearState::Retreating && Brain.IsInTimedRetreat())
+	{
+		MoraleLabel = TEXT("panic");
+	}
+	else if (FTDPackMorale::IsInFear(Morale))
+	{
+		MoraleLabel = TEXT("fear");
+	}
+	else if (Morale.bHasRallied)
+	{
+		MoraleLabel = TEXT("rallied");
+	}
+	return FString::Printf(TEXT(" alarm=%s morale=%s"), AlarmLabel, MoraleLabel);
 }
 
 void UTDMonsterThinkSubsystem::ThinkAndAct(const int32 SlotIndex)
@@ -1196,6 +1691,10 @@ void UTDMonsterThinkSubsystem::BeginReturn(const int32 SlotIndex)
 	Brain.OutOfReachStepCount = 0;
 	Brain.ReturnStallStepCount = 0;
 	Brain.ClosestReturnDistance = PlanarDistance(Body.Location, Body.HomeLocation);
+	Brain.AlarmRole = ETDMonsterAlarmRole::None;
+	Brain.AlarmHop = 0;
+	Brain.AlarmCallStep = 0;
+	Morales[SlotIndex].bHasRallied = false;
 }
 
 void UTDMonsterThinkSubsystem::FinishReturn(const int32 SlotIndex)
@@ -1204,6 +1703,7 @@ void UTDMonsterThinkSubsystem::FinishReturn(const int32 SlotIndex)
 	Brain.Engagement = ETDMonsterEngagement::Home;
 	Brain.ReturnStallStepCount = 0;
 	Brain.ReengageBlockSteps = FMath::Max(Brain.ReengageBlockSteps, TDMonsterAI::SecondsToSteps(ArrivalSettleSeconds));
+	Morales[SlotIndex].bHasRallied = false;
 }
 
 FTDMonsterMoveIntent UTDMonsterThinkSubsystem::MakeReturnHomeIntent(const int32 SlotIndex) const
@@ -1253,9 +1753,22 @@ void UTDMonsterThinkSubsystem::ResetTactics()
 		Fragment.MaxReachCm = Previous.MaxReachCm;
 		Fragment.ReserveCostQuarters = Previous.ReserveCostQuarters;
 		Fragment.LastCastStartCount = Brains[SlotIndex].CastStartCount;
+		FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+		Brain.AlarmRole = ETDMonsterAlarmRole::None;
+		Brain.AlarmHop = 0;
+		Brain.AlarmCallStep = 0;
+		if (Morales[SlotIndex].FearState == ETDPackFearState::Retreating && Brain.IsInTimedRetreat())
+		{
+			FTDMonsterActionExecutor::InterruptActivity(Brain, MakeContext(SlotIndex));
+		}
+		Morales[SlotIndex] = Brain.Definition.IsValid() ? FTDPackMorale::MakeFragment(*Brain.Definition) : FTDMonsterMoraleFragment();
 	}
 	TacticsRecords.Reset();
 	PendingKillLocations.Reset();
+	PendingAlarms.Reset();
+	PendingPackDeaths.Reset();
+	PendingDeathAlarms.Reset();
+	bShouldEvaluateMorale = false;
 }
 
 void UTDMonsterThinkSubsystem::UpdateTactics()
@@ -1366,7 +1879,7 @@ void UTDMonsterThinkSubsystem::CountTacticsEngaged(FTDTargetTacticsRecord& Recor
 	for (const int32 SlotIndex : Record.MemberSlots)
 	{
 		const ETDTacticsRole Role = Tactics[SlotIndex].Role;
-		if (!Target || Role == ETDTacticsRole::Boss || FTDCombatTactics::ComputePlanarDistanceSquared(Bodies[SlotIndex].Location, TargetLocation) > SquareCm(FTDCombatTactics::EngagedCountRadius))
+		if (!Target || Role == ETDTacticsRole::Boss || IsInPackFear(SlotIndex) || FTDCombatTactics::ComputePlanarDistanceSquared(Bodies[SlotIndex].Location, TargetLocation) > SquareCm(FTDCombatTactics::EngagedCountRadius))
 		{
 			continue;
 		}
@@ -1412,8 +1925,11 @@ bool UTDMonsterThinkSubsystem::ReturnFinishedTacticsToken(const int32 SlotIndex)
 	Fragment.LastAttackEndStep = StepIndex;
 	Fragment.RegrantReadyStep = StepIndex + FTDCombatTactics::RegrantCooldownSteps;
 	const int32 RecordIndex = FindTacticsRecordIndexById(Fragment.TokenRecordId);
+	const bool bExceedsRoleCap = FTDCombatTactics::GetExclusiveRoleCap(Fragment.Role) != MAX_int32
+		&& IsRoleHolderLimitReached(Fragment.Role, false, CountRoleHolders(Fragment.TokenRecordId, Fragment.Role, SlotIndex));
 	const bool bCanKeepToken = RecordIndex != INDEX_NONE
 		&& Fragment.TargetRecordId == Fragment.TokenRecordId
+		&& !bExceedsRoleCap
 		&& CanKeepTacticsToken(SlotIndex)
 		&& !HasOtherTokenCandidate(SlotIndex, TacticsRecords[RecordIndex]);
 	if (!bCanKeepToken)
@@ -1520,8 +2036,15 @@ bool UTDMonsterThinkSubsystem::MeasureTacticsSlotProgress(const int32 SlotIndex,
 	{
 		return false;
 	}
+	float BandMin = Brain.ActiveArgs.BandMin;
+	float BandMax = Brain.ActiveArgs.BandMax;
+	if (Context.TacticsBandFloor > 0.f)
+	{
+		BandMin = FMath::Max(BandMin, Context.TacticsBandFloor);
+		BandMax = FMath::Max(BandMax, BandMin + FTDCombatTactics::RangedBandMinWidthCm);
+	}
 	const double Distance = FVector::Dist2D(Context.SelfLocation, Context.TargetLocation);
-	if (Distance < Brain.ActiveArgs.BandMin || Distance > Brain.ActiveArgs.BandMax)
+	if (Distance < BandMin || Distance > BandMax)
 	{
 		return false;
 	}
@@ -1612,8 +2135,9 @@ void UTDMonsterThinkSubsystem::AssignWaitSectors(FTDTargetTacticsRecord& Record,
 	const bool bHasQueue = Record.HasMeleeQueue();
 	const TArray<FTDTacticsCandidateKey> Members = GatherOrderedTacticsMembers(Record, TargetLocation, [this](const int32 SlotIndex)
 	{
-		return Tactics[SlotIndex].Role == ETDTacticsRole::Melee;
+		return FTDCombatTactics::IsMeleeLaneRole(Tactics[SlotIndex].Role) && !IsInPackFear(SlotIndex);
 	});
+	int32 RangedBandFloorCm = 0;
 	for (const FTDTacticsCandidateKey& Member : Members)
 	{
 		FTDMonsterTacticsFragment& Fragment = Tactics[Member.SlotIndex];
@@ -1627,7 +2151,14 @@ void UTDMonsterThinkSubsystem::AssignWaitSectors(FTDTargetTacticsRecord& Record,
 		const FVector& Location = Bodies[Member.SlotIndex].Location;
 		MemberSearch.BearingDecidegrees = FTDCombatTactics::ToDecidegrees(Location.X - TargetLocation.X, Location.Y - TargetLocation.Y);
 		ChooseWaitSector(Member.SlotIndex, Record, MemberSearch);
+		if (Fragment.WaitRing < 0)
+		{
+			continue;
+		}
+		const int32 BodyRadiusCm = FMath::FloorToInt32(Bodies[Member.SlotIndex].Radius);
+		RangedBandFloorCm = FMath::Max(RangedBandFloorCm, FTDCombatTactics::ComputeWaitRingRadius(Fragment.MeleeReachCm, BodyRadiusCm, Fragment.WaitRing) + BodyRadiusCm);
 	}
+	Record.RangedBandFloorCm = RangedBandFloorCm;
 }
 
 void UTDMonsterThinkSubsystem::ChooseWaitSector(const int32 SlotIndex, FTDTargetTacticsRecord& Record, const FTDSectorSearch& Search)
@@ -1679,7 +2210,7 @@ void UTDMonsterThinkSubsystem::AssignRangedSectors(FTDTargetTacticsRecord& Recor
 	FTDCombatTactics::ClearOccupants(Table);
 	const TArray<FTDTacticsCandidateKey> Members = GatherOrderedTacticsMembers(Record, TargetLocation, [this](const int32 SlotIndex)
 	{
-		return Tactics[SlotIndex].Role == ETDTacticsRole::Ranged;
+		return FTDCombatTactics::IsRangedLaneRole(Tactics[SlotIndex].Role) && !IsInPackFear(SlotIndex);
 	});
 	for (const FTDTacticsCandidateKey& Member : Members)
 	{
@@ -1711,7 +2242,7 @@ void UTDMonsterThinkSubsystem::AssignInnerSectors(FTDTargetTacticsRecord& Record
 	auto IsInnerHolder = [this, RecordId](const int32 SlotIndex)
 	{
 		const FTDMonsterTacticsFragment& Fragment = Tactics[SlotIndex];
-		return Fragment.Role == ETDTacticsRole::Melee && Fragment.TokenState != ETDTacticsTokenState::None && Fragment.TokenRecordId == RecordId;
+		return FTDCombatTactics::IsMeleeLaneRole(Fragment.Role) && Fragment.TokenState != ETDTacticsTokenState::None && Fragment.TokenRecordId == RecordId && !IsInPackFear(SlotIndex);
 	};
 	for (const int32 SlotIndex : Record.MemberSlots)
 	{
@@ -1784,6 +2315,15 @@ void UTDMonsterThinkSubsystem::GrantPoolTokens(FTDTargetTacticsRecord& Record, c
 		HeldQuarters -= FTDCombatTactics::GetHeldCostQuarters(ReleasedFragment);
 		ClearTacticsToken(ReleasedFragment);
 	}
+	int32 RoleHeldCounts[static_cast<int32>(ETDTacticsRole::Support) + 1] = {};
+	for (const int32 SlotIndex : OrderedSlots)
+	{
+		const FTDMonsterTacticsFragment& Fragment = Tactics[SlotIndex];
+		if (Fragment.TokenState != ETDTacticsTokenState::None && Fragment.TokenRecordId == Record.RecordId)
+		{
+			++RoleHeldCounts[static_cast<int32>(Fragment.Role)];
+		}
+	}
 	TArray<FTDTacticsCandidateKey> Candidates;
 	for (const int32 SlotIndex : Record.MemberSlots)
 	{
@@ -1799,26 +2339,42 @@ void UTDMonsterThinkSubsystem::GrantPoolTokens(FTDTargetTacticsRecord& Record, c
 		}
 	}
 	Algo::Sort(Candidates, &FTDCombatTactics::IsCandidateBefore);
-	int32 NextCandidate = 0;
-	while (NextCandidate < Candidates.Num())
+	int32 BudgetBlockedIndex = INDEX_NONE;
+	for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Num(); ++CandidateIndex)
 	{
-		const int32 CandidateSlot = Candidates[NextCandidate].SlotIndex;
-		const int32 CostQuarters = Tactics[CandidateSlot].ReserveCostQuarters;
+		const FTDTacticsCandidateKey& Candidate = Candidates[CandidateIndex];
+		const ETDTacticsRole CandidateRole = Tactics[Candidate.SlotIndex].Role;
+		if (IsRoleHolderLimitReached(CandidateRole, Candidate.bIsRetaliating, RoleHeldCounts[static_cast<int32>(CandidateRole)]))
+		{
+			continue;
+		}
+		const int32 CostQuarters = Tactics[Candidate.SlotIndex].ReserveCostQuarters;
 		if (Pool.BudgetQuarters - HeldQuarters < CostQuarters)
 		{
+			BudgetBlockedIndex = CandidateIndex;
 			break;
 		}
-		GrantTacticsToken(CandidateSlot, Record.RecordId);
+		GrantTacticsToken(Candidate.SlotIndex, Record.RecordId);
 		HeldQuarters += CostQuarters;
-		++NextCandidate;
+		++RoleHeldCounts[static_cast<int32>(CandidateRole)];
 	}
 	Pool.HeldQuarters = HeldQuarters;
-	if (NextCandidate >= Candidates.Num())
+	Pool.RoleBlockedCount = CountRoleBlockedMembers(Record, PoolIndex, MakeArrayView(RoleHeldCounts));
+	if (BudgetBlockedIndex == INDEX_NONE)
 	{
 		return;
 	}
-	const TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates = MakeArrayView(Candidates).RightChop(NextCandidate);
-	InterceptForRetaliation(Record, PoolIndex, TargetLocation, RemainingCandidates);
+	TArray<FTDTacticsCandidateKey> RemainingCandidates;
+	for (int32 CandidateIndex = BudgetBlockedIndex; CandidateIndex < Candidates.Num(); ++CandidateIndex)
+	{
+		const FTDTacticsCandidateKey& Candidate = Candidates[CandidateIndex];
+		const ETDTacticsRole CandidateRole = Tactics[Candidate.SlotIndex].Role;
+		if (!IsRoleHolderLimitReached(CandidateRole, Candidate.bIsRetaliating, RoleHeldCounts[static_cast<int32>(CandidateRole)]))
+		{
+			RemainingCandidates.Add(Candidate);
+		}
+	}
+	InterceptForRetaliation(Record, PoolIndex, TargetLocation, RemainingCandidates, MakeArrayView(RoleHeldCounts));
 	for (const FTDTacticsCandidateKey& Candidate : RemainingCandidates)
 	{
 		if (Tactics[Candidate.SlotIndex].TokenState == ETDTacticsTokenState::None)
@@ -1829,7 +2385,7 @@ void UTDMonsterThinkSubsystem::GrantPoolTokens(FTDTargetTacticsRecord& Record, c
 	}
 }
 
-void UTDMonsterThinkSubsystem::InterceptForRetaliation(FTDTargetTacticsRecord& Record, const int32 PoolIndex, const FVector& TargetLocation, const TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates)
+void UTDMonsterThinkSubsystem::InterceptForRetaliation(FTDTargetTacticsRecord& Record, const int32 PoolIndex, const FVector& TargetLocation, const TConstArrayView<FTDTacticsCandidateKey> RemainingCandidates, const TArrayView<int32> RoleHeldCounts)
 {
 	FTDTacticsPool& Pool = Record.Pools[PoolIndex];
 	for (const FTDTacticsCandidateKey& Candidate : RemainingCandidates)
@@ -1837,6 +2393,11 @@ void UTDMonsterThinkSubsystem::InterceptForRetaliation(FTDTargetTacticsRecord& R
 		if (!Candidate.bIsRetaliating)
 		{
 			return;
+		}
+		const ETDTacticsRole CandidateRole = Tactics[Candidate.SlotIndex].Role;
+		if (IsRoleHolderLimitReached(CandidateRole, true, RoleHeldCounts[static_cast<int32>(CandidateRole)]))
+		{
+			continue;
 		}
 		const int32 VictimSlot = FindRetaliationVictim(Record, PoolIndex, TargetLocation, Candidate.DistanceSquared);
 		if (VictimSlot == INDEX_NONE)
@@ -1849,8 +2410,10 @@ void UTDMonsterThinkSubsystem::InterceptForRetaliation(FTDTargetTacticsRecord& R
 		{
 			continue;
 		}
+		--RoleHeldCounts[static_cast<int32>(Tactics[VictimSlot].Role)];
 		ClearTacticsToken(Tactics[VictimSlot]);
 		GrantTacticsToken(Candidate.SlotIndex, Record.RecordId);
+		++RoleHeldCounts[static_cast<int32>(CandidateRole)];
 		Pool.HeldQuarters += CandidateQuarters - VictimQuarters;
 	}
 }
@@ -1875,6 +2438,25 @@ int32 UTDMonsterThinkSubsystem::FindRetaliationVictim(const FTDTargetTacticsReco
 		}
 	}
 	return VictimSlot;
+}
+
+int32 UTDMonsterThinkSubsystem::CountRoleBlockedMembers(const FTDTargetTacticsRecord& Record, const int32 PoolIndex, const TConstArrayView<int32> RoleHeldCounts) const
+{
+	int32 BlockedCount = 0;
+	for (const int32 SlotIndex : Record.MemberSlots)
+	{
+		const FTDMonsterTacticsFragment& Fragment = Tactics[SlotIndex];
+		const int32 RoleCap = FTDCombatTactics::GetExclusiveRoleCap(Fragment.Role);
+		if (RoleCap == MAX_int32 || GetTacticsPoolIndex(Fragment.Role) != PoolIndex || RoleHeldCounts[static_cast<int32>(Fragment.Role)] < RoleCap)
+		{
+			continue;
+		}
+		if (Fragment.TokenState == ETDTacticsTokenState::None && !IsInPackFear(SlotIndex) && Brains[SlotIndex].IsEngaged())
+		{
+			++BlockedCount;
+		}
+	}
+	return BlockedCount;
 }
 
 void UTDMonsterThinkSubsystem::GrantTacticsToken(const int32 SlotIndex, const uint32 RecordId)
@@ -1974,7 +2556,7 @@ bool UTDMonsterThinkSubsystem::IsTokenCandidate(const int32 SlotIndex, const FTD
 	{
 		return false;
 	}
-	if (Brain.bIsFrozen || Brain.State == ETDMonsterFsmState::Stagger || Brain.ActivePrimitive == ETDMonsterPrimitive::MoveAway)
+	if (Brain.bIsFrozen || Brain.State == ETDMonsterFsmState::Stagger || Brain.ActivePrimitive == ETDMonsterPrimitive::MoveAway || IsInPackFear(SlotIndex))
 	{
 		return false;
 	}
@@ -1999,10 +2581,26 @@ bool UTDMonsterThinkSubsystem::CanKeepTacticsToken(const int32 SlotIndex) const
 
 bool UTDMonsterThinkSubsystem::HasOtherTokenCandidate(const int32 SlotIndex, const FTDTargetTacticsRecord& Record) const
 {
+	const AActor* Target = Record.Target.Get();
+	if (!Target)
+	{
+		return false;
+	}
+	const FVector TargetLocation = Target->GetActorLocation();
 	const int32 PoolIndex = GetTacticsPoolIndex(Tactics[SlotIndex].Role);
 	for (const int32 OtherIndex : Record.MemberSlots)
 	{
-		if (OtherIndex != SlotIndex && GetTacticsPoolIndex(Tactics[OtherIndex].Role) == PoolIndex && IsTokenCandidate(OtherIndex, Record))
+		if (OtherIndex == SlotIndex || GetTacticsPoolIndex(Tactics[OtherIndex].Role) != PoolIndex || !IsTokenCandidate(OtherIndex, Record))
+		{
+			continue;
+		}
+		const ETDTacticsRole OtherRole = Tactics[OtherIndex].Role;
+		if (FTDCombatTactics::GetExclusiveRoleCap(OtherRole) == MAX_int32)
+		{
+			return true;
+		}
+		const bool bIsRetaliating = MakeTacticsCandidateKey(OtherIndex, TargetLocation).bIsRetaliating;
+		if (!IsRoleHolderLimitReached(OtherRole, bIsRetaliating, CountRoleHolders(Record.RecordId, OtherRole, SlotIndex)))
 		{
 			return true;
 		}
@@ -2131,13 +2729,13 @@ bool UTDMonsterThinkSubsystem::IsAvoidingTacticsTarget(const int32 SlotIndex) co
 		return false;
 	}
 	const FTDMonsterTacticsFragment& Fragment = Tactics[SlotIndex];
-	if (Fragment.Role == ETDTacticsRole::Boss || Fragment.TokenState != ETDTacticsTokenState::None || Brains[SlotIndex].State == ETDMonsterFsmState::Cast)
+	if (Fragment.Role == ETDTacticsRole::Boss || Fragment.TokenState != ETDTacticsTokenState::None || Brains[SlotIndex].State == ETDMonsterFsmState::Cast || IsInPackFear(SlotIndex))
 	{
 		return false;
 	}
 	const FTDTargetTacticsRecord* Record = nullptr;
 	const ETDTacticsSlotKind Kind = ResolveTacticsSlotKind(SlotIndex, Record);
-	return Kind != ETDTacticsSlotKind::None || (Record && Fragment.Role == ETDTacticsRole::Melee && Record->HasMeleeQueue());
+	return Kind != ETDTacticsSlotKind::None || (Record && FTDCombatTactics::IsMeleeLaneRole(Fragment.Role) && Record->HasMeleeQueue());
 }
 
 ETDTacticsSlotKind UTDMonsterThinkSubsystem::ResolveTacticsSlotKind(const int32 SlotIndex, const FTDTargetTacticsRecord*& OutRecord) const
@@ -2154,7 +2752,11 @@ ETDTacticsSlotKind UTDMonsterThinkSubsystem::ResolveTacticsSlotKind(const int32 
 		return ETDTacticsSlotKind::None;
 	}
 	OutRecord = &TacticsRecords[RecordIndex];
-	if (Fragment.Role == ETDTacticsRole::Melee && Fragment.TokenState != ETDTacticsTokenState::None && Fragment.InnerSector >= 0)
+	if (IsInPackFear(SlotIndex))
+	{
+		return ETDTacticsSlotKind::None;
+	}
+	if (FTDCombatTactics::IsMeleeLaneRole(Fragment.Role) && Fragment.TokenState != ETDTacticsTokenState::None && Fragment.InnerSector >= 0)
 	{
 		return ETDTacticsSlotKind::Inner;
 	}
@@ -2212,12 +2814,13 @@ void UTDMonsterThinkSubsystem::FillTacticsContext(const int32 SlotIndex, FTDMons
 		const int32 Width = FTDCombatTactics::ComputeSectorWidth(FMath::Max(1, Fragment.MaxReachCm), FTDCombatTactics::RangedSectorCount, BodyRadiusCm);
 		Context.TacticsSlotDirection = FTDCombatTactics::MakeDirection(Center);
 		Context.TacticsSlotHalfAngleDegrees = FTDCombatTactics::ComputeSectorHalfAngleDegrees(FTDCombatTactics::RangedSectorCount, Width);
+		Context.TacticsBandFloor = static_cast<float>(FTDCombatTactics::ComputeRangedBandFloor(Record->RangedBandFloorCm, BodyRadiusCm, Fragment.MaxReachCm));
 		return;
 	}
 	default:
 		break;
 	}
-	if (Fragment.Role != ETDTacticsRole::Melee || Context.bHoldsAttackToken || !Record || !Record->HasMeleeQueue())
+	if (!FTDCombatTactics::IsMeleeLaneRole(Fragment.Role) || Context.bHoldsAttackToken || !Record || !Record->HasMeleeQueue() || IsInPackFear(SlotIndex))
 	{
 		return;
 	}
@@ -2268,4 +2871,8 @@ void UTDMonsterThinkSubsystem::DrawTacticsDebugState(const int32 SlotIndex) cons
 		DrawDebugLine(World, RingCenter, SlotPoint, SlotColor, false, -1.f, 0, 2.f);
 	}
 	DrawDebugString(World, SelfLocation + FVector(0.f, 0.f, 170.f), MakeTacticsDebugSuffix(SlotIndex), nullptr, SlotColor, 0.f, true, 1.f);
+	if (Brains[SlotIndex].AlarmRole == ETDMonsterAlarmRole::Caller)
+	{
+		DrawDebugString(World, SelfLocation + FVector(0.f, 0.f, 220.f), TEXT("!"), nullptr, FColor::Red, 0.f, true, 2.f);
+	}
 }

@@ -20,7 +20,7 @@ SPECIES_DEFAULTS = {
 }
 LOCOMOTION_CLIP_KEYS = ("idle", "walk", "run")
 OPTIONAL_CLIP_KEYS = ("hit", "death")
-FLIGHT_CLIP_PROPERTIES = {"takeoff": "take_off_clip", "fly_idle": "fly_idle_clip", "land": "land_clip", "fly_hit": "fly_hit_clip"}
+EXTRA_CLIP_PROPERTIES = {"takeoff": "take_off_clip", "fly_idle": "fly_idle_clip", "land": "land_clip", "fly_hit": "fly_hit_clip", "channel": "channel_clip", "stun": "stun_clip"}
 PHASE_CLIP_KEYS = ("idle", "walk", "run", "hit", "death")
 
 
@@ -50,7 +50,7 @@ def fill_species_defaults(entry):
     for key in LOCOMOTION_CLIP_KEYS + OPTIONAL_CLIP_KEYS:
         filled[key] = fill_clip_defaults(entry.get(key))
     filled["abilities"] = {name: fill_clip_defaults(raw) for name, raw in entry.get("abilities", {}).items()}
-    filled["flight"] = {key: fill_clip_defaults(entry[key]) for key in FLIGHT_CLIP_PROPERTIES if key in entry}
+    filled["extra_clips"] = {key: fill_clip_defaults(entry[key]) for key in EXTRA_CLIP_PROPERTIES if key in entry}
     filled["phases"] = {phase_id: fill_phase_defaults(raw) for phase_id, raw in entry.get("phases", {}).items()}
     return filled
 

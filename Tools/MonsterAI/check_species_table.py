@@ -14,7 +14,7 @@ import species_table
 DEFAULT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_]+$")
 SPECIES_REQUIRED_KEYS = ("name", "definition", "mesh", "scale", "yaw", "radius", "half_height", "walk_clip_speed", "run_clip_speed", "idle", "walk", "run")
-SPECIES_OPTIONAL_KEYS = ("followers", "height_offset", "hit", "death", "abilities", "corpse_seconds", "ragdoll_after_death", "ragdoll_without_death_clip", "corpse_sink_seconds", "phases") + tuple(species_table.FLIGHT_CLIP_PROPERTIES)
+SPECIES_OPTIONAL_KEYS = ("followers", "height_offset", "hit", "death", "abilities", "corpse_seconds", "ragdoll_after_death", "ragdoll_without_death_clip", "corpse_sink_seconds", "phases") + tuple(species_table.EXTRA_CLIP_PROPERTIES)
 REQUIRED_PATH_KEYS = ("species_folder", "animation_folder", "definitions_dir")
 CLIP_KEYS = set(species_table.CLIP_DEFAULTS)
 RETARGET_CLIP_KINDS = ("idle", "locomotion", "attack", "hit", "death")
@@ -119,7 +119,7 @@ def check_species_entry(findings, entry, definitions_dir, game_paths):
     for key in species_table.OPTIONAL_CLIP_KEYS:
         if key in entry:
             check_clip(findings, f"{where}.{key}", entry[key], game_paths, True)
-    for key in species_table.FLIGHT_CLIP_PROPERTIES:
+    for key in species_table.EXTRA_CLIP_PROPERTIES:
         if key in entry:
             check_clip(findings, f"{where}.{key}", entry[key], game_paths, False)
     check_phases(findings, where, entry, definitions_dir, game_paths)

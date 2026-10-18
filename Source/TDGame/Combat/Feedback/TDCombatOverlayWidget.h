@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Combat/Feedback/TDDamageNumberPool.h"
+#include "Core/TDGameplayMessages.h"
 #include "TDCombatOverlayWidget.generated.h"
 
 class APawn;
@@ -64,9 +65,20 @@ public:
 	void ShowMonsterHealthBar(ATDCombatCharacter* Character, float HealthFractionBeforeHit, bool bWasKilled);
 	void PulseDamageVignette(float Intensity);
 	void ShowDeathScreen(APawn* DeadPawn, float RespawnDelaySeconds);
+	void ShowBossHealthBar(ATDCombatCharacter* Boss, const FText& DisplayName, const TArray<float>& PhaseHealthMarks);
+	void HideBossHealthBar();
+	void PulseBossPhase(int32 PhaseIndex);
+	void ShowEncounterBanner(const FText& Title, const FText& Subtitle, ETDEncounterBannerStyle Style, float DisplaySeconds);
 
 	int32 CountActiveDamageNumbers() const { return NumberPool.CountActive(); }
 	bool IsDeathScreenShown() const { return bIsDeathScreenShown; }
+	bool IsBossHealthBarShown() const { return bIsBossHealthBarShown; }
+	ATDCombatCharacter* GetBossHealthBarTarget() const;
+	float GetBossHealthBarFraction() const { return BossHealthFraction; }
+	int32 GetBossPhaseMarkCount() const { return ShownBossPhaseMarkCount; }
+	bool IsEncounterBannerShown() const { return bIsEncounterBannerShown; }
+	FText GetEncounterBannerTitle() const { return EncounterBannerTitle; }
+	ETDEncounterBannerStyle GetEncounterBannerStyle() const { return EncounterBannerStyle; }
 
 protected:
 	virtual void NativeOnInitialized() override;
@@ -79,11 +91,15 @@ private:
 	void BuildMonsterHealthBars(int32 BarCount);
 	void BuildDamageNumbers(int32 NumberCount);
 	void BuildPlayerHud();
+	void BuildBossHealthBar();
+	void BuildEncounterBanner();
 	void BuildDeathScreen();
 
 	void UpdateDamageNumbers(const APlayerController& Controller, double Now);
 	void UpdateMonsterHealthBars(const APlayerController& Controller, double Now, float DeltaSeconds);
 	void UpdatePlayerHud(APawn* Pawn, double Now, float DeltaSeconds);
+	void UpdateBossHealthBar(double Now, float DeltaSeconds);
+	void UpdateEncounterBanner(double Now);
 	void UpdateDamageVignette(double Now);
 	void EnsureDamageVignetteMaterial(const UTDCombatFeedbackSettings& FeedbackSettings);
 	float ComputeRemainingHitVignette(double Now) const;
@@ -94,6 +110,10 @@ private:
 	void SetMonsterHealthBarVisible(FTDMonsterHealthBarWidgetSlot& BarSlot, bool bShouldBeVisible) const;
 	void ReleaseMonsterHealthBar(FTDMonsterHealthBarWidgetSlot& BarSlot) const;
 	void SetPlayerHudVisible(bool bShouldBeVisible);
+	void SetBossHealthBarVisible(bool bShouldBeVisible);
+	void ApplyBossPhaseMarks(const TArray<float>& PhaseHealthMarks);
+	void FoldBossHealthBar();
+	void HideEncounterBanner();
 	bool ProjectToOverlay(const APlayerController& Controller, const FVector& WorldLocation, float EdgeMargin, FVector2D& OutPosition) const;
 	double GetOverlayTime() const;
 
@@ -130,22 +150,54 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> DeathCountdownText;
 
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> BossNameText;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UProgressBar> BossHealthDelayedBar;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UProgressBar> BossHealthBar;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UImage>> BossPhaseMarkImages;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> EncounterBannerTitleText;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> EncounterBannerSubtitleText;
+
 	TWeakObjectPtr<APawn> HudPawn;
 	TWeakObjectPtr<APawn> DeathPawn;
+	TWeakObjectPtr<ATDCombatCharacter> BossHealthBarTarget;
 	FTDDamageNumberPool NumberPool;
+	FText BossDisplayName;
+	FText EncounterBannerTitle;
 	FVector2D OverlayViewportSize = FVector2D::ZeroVector;
 	double PlayerHealthHoldUntil = 0.;
 	double DamageVignetteStartTime = 0.;
 	double DeathScreenStartTime = 0.;
 	double RespawnTime = 0.;
+	double BossHealthHoldUntil = 0.;
+	double BossFoldTime = 0.;
+	double EncounterBannerStartTime = 0.;
 	float PlayerHealthFraction = 1.f;
 	float PlayerHealthDelayedFraction = 1.f;
 	float DamageVignettePeakIntensity = 0.f;
+	float BossHealthFraction = 1.f;
+	float BossHealthDelayedFraction = 1.f;
+	float EncounterBannerSeconds = 0.f;
 	int32 ShownHealthValue = INDEX_NONE;
 	int32 ShownMaxHealthValue = INDEX_NONE;
 	int32 ShownCountdownSeconds = INDEX_NONE;
+	int32 ShownBossPhaseMarkCount = 0;
+	ETDEncounterBannerStyle EncounterBannerStyle = ETDEncounterBannerStyle::Wave;
 	bool bIsPlayerHudVisible = false;
 	bool bIsDamageVignetteVisible = false;
 	bool bIsHudPawnAlive = false;
 	bool bIsDeathScreenShown = false;
+	bool bIsBossHealthBarShown = false;
+	bool bIsBossHealthBarFolding = false;
+	bool bIsEncounterBannerShown = false;
 };

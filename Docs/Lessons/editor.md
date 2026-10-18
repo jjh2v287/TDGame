@@ -237,6 +237,15 @@
 - 날짜·상태: 2026-10-17 active
 - 발견: claude
 
+### L-editor-33 C++ PIE 자동화 시험의 `FScreenshotRequest::RequestScreenshot`이 절반쯤 레벨 편집기 뷰포트를 찍는다 → 요청 직후 PIE `UGameViewportClient::ProcessScreenShots`를 직접 부른다
+- 증상: `TDGame.PIE.Combat.BossLoop` 1회차 스크린샷 8장 가운데 4장(02·04·05·06)이 PIE 게임 창(2888×1656, UI 포함)이 아니라 조명·PlayerStart 아이콘이 보이는 편집기 뷰포트(2113×957)였다. M3-27 FullLoop의 "스크린샷 01 편집기 뷰포트 흔들림"도 같은 현상
+- 원인: 스크린샷 요청은 전역 플래그라 다음에 그려지는 뷰포트가 가져간다. 실시간 갱신 중인 레벨 편집기 뷰포트(`FEditorViewportClient::ProcessScreenShots`)가 PIE 게임 뷰포트보다 먼저 그리면 그쪽이 찍는다
+- 해결: `RequestScreenshot(Path, true, …)` 바로 뒤에 `GetPieWorld()->GetGameViewport()->ProcessScreenShots(GameViewport->Viewport)`를 호출해 같은 틱에 게임 창(UI 포함)으로 처리한다(`Source/TDGameEditor/Tests/TDBossLoopPieTests.cpp` `RequestBossLoopPieScreenshot`). 이후 2회 실행 8/8 모두 게임 창
+- 범위: UE 5.8 GUI 에디터 PIE(새 창 실행), C++ 자동화 시험. 디버그 선이 필요한 파이썬 탐침은 L-editor-31
+- 증거: `Saved/AgentOps/20261018/boss-loop/pie/`(1회차 크기 1.26MB 4장 → 수정 뒤 전부 2888×1656), `Docs/MonsterAI_CombatSim/measurements/M3-36/`
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
 ### L-editor-34 새 예고 재질을 만든 같은 에디터 세션에서는 몬스터 공격 예고가 디버그 와이어로 나온다
 - 증상: `editor_make_boss_telegraphs.py`로 `MI_TD_Telegraph_Safe` 등 18개를 만든 직후 같은 에디터에서 PIE를 돌리자 용 업화의 안전 지대가 청록 원판이 아니라 디버그 원기둥 와이어로 그려졌다(부채꼴·띠 예고도 같은 조건)
 - 원인: `TDMonsterAttackCatalog::CreateAttacks`는 라이브러리 초기화 때 한 번 돌고, `ApplyTelegraph`가 그 시점에 `FPackageName::DoesPackageExist`로 재질 패키지를 검사해 없으면 `bDrawDebug = true`로 굳힌다. 카탈로그 정의는 런타임 임시 객체라 에셋이 생겨도 다시 만들지 않는다

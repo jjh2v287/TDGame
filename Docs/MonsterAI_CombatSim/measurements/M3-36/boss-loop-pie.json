@@ -1,0 +1,78 @@
+{
+	"passed": true,
+	"attempts": 2,
+	"waves_cleared": 4,
+	"kills": 12,
+	"wave_timings_seconds": [
+		0.84118069708347321,
+		0.86604990065097809,
+		7.2528678998351097,
+		18.393657498061657
+	],
+	"bosses": [
+		{
+			"wave": 2,
+			"name": "켄타우로스 사냥꾼",
+			"marks": [
+				0.5
+			],
+			"phase_messages": 1,
+			"health_ratio_end": 0.45454525947570801,
+			"overlay_mark_count": 1,
+			"boss_phase_index": 1,
+			"boss_has_brain": true,
+			"overlay_phase_pulses": 1
+		},
+		{
+			"wave": 3,
+			"name": "산룡",
+			"marks": [
+				0.69999998807907104,
+				0.40000000596046448,
+				0.25
+			],
+			"phase_messages": 3,
+			"health_ratio_end": 0.21666666865348816,
+			"overlay_mark_count": 3,
+			"boss_phase_index": 3,
+			"boss_has_brain": true,
+			"overlay_phase_pulses": 4
+		}
+	],
+	"respawn_distance_cm": 0,
+	"screenshots": [
+		{
+			"file": "01_arena_sealed.png",
+			"saved": true
+		},
+		{
+			"file": "02_wave_one.png",
+			"saved": true
+		},
+		{
+			"file": "03_defeat.png",
+			"saved": true
+		},
+		{
+			"file": "04_respawn_checkpoint.png",
+			"saved": true
+		},
+		{
+			"file": "05_midboss_bar.png",
+			"saved": true
+		},
+		{
+			"file": "06_boss_bar.png",
+			"saved": true
+		},
+		{
+			"file": "07_boss_low.png",
+			"saved": true
+		},
+		{
+			"file": "08_victory.png",
+			"saved": true
+		}
+	],
+	"errors": []
+}

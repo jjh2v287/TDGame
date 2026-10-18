@@ -14,6 +14,18 @@ ATDGameGameMode::ATDGameGameMode()
 	// stub
 }
 
+void ATDGameGameMode::SetRespawnCheckpoint(const FTransform& CheckpointTransform)
+{
+	RespawnCheckpoint = CheckpointTransform;
+	bHasRespawnCheckpoint = true;
+}
+
+void ATDGameGameMode::ClearRespawnCheckpoint()
+{
+	RespawnCheckpoint = FTransform::Identity;
+	bHasRespawnCheckpoint = false;
+}
+
 void ATDGameGameMode::BeginPlay()
 {
 	Super::BeginPlay();
@@ -49,6 +61,11 @@ void ATDGameGameMode::RespawnPlayer(const TWeakObjectPtr<AController> Controller
 	{
 		PlayerController->UnPossess();
 		OldPawn->Destroy();
+	}
+	if (bHasRespawnCheckpoint)
+	{
+		RestartPlayerAtTransform(PlayerController, RespawnCheckpoint);
+		return;
 	}
 	RestartPlayer(PlayerController);
 }

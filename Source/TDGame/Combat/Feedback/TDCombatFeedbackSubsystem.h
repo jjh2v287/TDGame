@@ -22,10 +22,13 @@ class UTDCombatFeedbackSettings;
 class UTDCombatOverlayWidget;
 struct FStreamableHandle;
 struct FTDActorDeathMessage;
+struct FTDBossHealthBarMessage;
 struct FTDDamageAppliedMessage;
 struct FTDDamageAvoidedMessage;
+struct FTDEncounterBannerMessage;
 struct FTDFeedbackSoundSet;
 struct FTDMeleeSwingMessage;
+struct FTDMonsterPhaseMessage;
 
 enum class ETDHitFeedbackTier : uint8
 {
@@ -116,6 +119,15 @@ struct TDGAME_API FTDCombatFeedbackStats
 
 	UPROPERTY()
 	int32 PlayerDamageNumbersShown = 0;
+
+	UPROPERTY()
+	int32 BossHealthBarsShown = 0;
+
+	UPROPERTY()
+	int32 EncounterBannersShown = 0;
+
+	UPROPERTY()
+	int32 BossPhasePulses = 0;
 };
 
 USTRUCT()
@@ -172,6 +184,13 @@ private:
 		float Amplitude = 0.f;
 	};
 
+	struct FTDPendingBossHealthBar
+	{
+		TWeakObjectPtr<ATDCombatCharacter> Boss;
+		FText DisplayName;
+		TArray<float> PhaseHealthMarks;
+	};
+
 	void RegisterListeners(UWorld& InWorld);
 	void UnregisterListeners();
 	USoundConcurrency* CreateSoundConcurrency(int32 MaxCount);
@@ -182,6 +201,9 @@ private:
 	void HandleDamageAvoided(FGameplayTag Channel, const FTDDamageAvoidedMessage& Message);
 	void HandleActorDeath(FGameplayTag Channel, const FTDActorDeathMessage& Message);
 	void HandleMeleeSwing(FGameplayTag Channel, const FTDMeleeSwingMessage& Message);
+	void HandleEncounterBanner(FGameplayTag Channel, const FTDEncounterBannerMessage& Message);
+	void HandleBossHealthBar(FGameplayTag Channel, const FTDBossHealthBarMessage& Message);
+	void HandleMonsterPhaseEntered(FGameplayTag Channel, const FTDMonsterPhaseMessage& Message);
 
 	void ShowHitNumber(const FTDDamageAppliedMessage& Message, const FTDHitPresentation& Presentation, const FVector& Location, bool bIsLocalVictim);
 	bool SpawnImpactEffects(const FTDDamageAppliedMessage& Message, const FVector& Location, const FVector& Direction);
@@ -204,6 +226,7 @@ private:
 	bool StartCharacterHitStop(ATDCombatCharacter& Character, float Seconds);
 
 	void UpdateOverlayOwner();
+	void RestorePendingBossHealthBar();
 	void UpdateHitFlashes(double Now);
 	void UpdateWobbles(double Now);
 	void ReleaseHitFlash(FTDHitFlashState& FlashState);
@@ -244,6 +267,10 @@ private:
 	FGameplayMessageListenerHandle DamageAvoidedListener;
 	FGameplayMessageListenerHandle ActorDeathListener;
 	FGameplayMessageListenerHandle MeleeSwingListener;
+	FGameplayMessageListenerHandle EncounterBannerListener;
+	FGameplayMessageListenerHandle BossHealthBarListener;
+	FGameplayMessageListenerHandle MonsterPhaseListener;
+	FTDPendingBossHealthBar PendingBossHealthBar;
 	FTDCombatFeedbackStats Stats;
 	FRandomStream FeedbackRandom{ 0x7D1A };
 	int32 NumbersThisFrame = 0;

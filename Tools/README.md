@@ -132,6 +132,7 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 자동화 테스트 `TDGame.MonsterAI.*` 7개 | 곡선·정의 검증·오류 안내·점수기·예고 후 타격·경직 취소·전역 난수 금지 | `python Tools/check_automation_tests.py --filter TDGame.MonsterAI` |
 확인: 2026-09-24 claude
 
+| `MonsterAI/editor_make_boss_arena.py` | M3-36 원형 보스 아레나 `/Game/MonsterAI/Maps/LV_TDBossArena`(반경 1400 바닥·링 벽 32·입구/출구 복도·봉쇄문·출구문·`ATDArenaEncounter`·내비)와 조우 정의 `/Game/MonsterAI/Encounters/DA_TDArena_DragonLair`(웨이브 4: 졸개 2·중간 보스·보스) 생성. 맵이 있으면 정의 웨이브만 갱신, 종 대역은 파일 위 `SPECIES` 표에서 교체 | `python Tools/run_in_editor.py Tools/MonsterAI/editor_make_boss_arena.py` (PowerShell, PIE 종료·미저장 없음 필요, 새 C++ 클래스라 에디터 재시작 뒤) |
 ## 3e. 이동·애니메이션 도구 (`Movement/`, 대장 M3-16, 결정 D44)
 | 도구 | 용도 | 실행 |
 |---|---|---|

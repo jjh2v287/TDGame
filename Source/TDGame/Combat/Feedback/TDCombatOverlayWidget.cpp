@@ -36,6 +36,28 @@ namespace TDCombatOverlayWidgetInternal
 	const FLinearColor PlayerHealthColor(0.8f, 0.08f, 0.08f, 1.f);
 	const FLinearColor PlayerHealthPulseColor(1.f, 0.45f, 0.35f, 1.f);
 	const FLinearColor PlayerStaminaColor(0.95f, 0.8f, 0.2f, 1.f);
+	const FVector2D BossNamePosition(0.f, 30.f);
+	const FVector2D BossBarPosition(0.f, 52.f);
+	const FVector2D BossBarSize(640.f, 16.f);
+	const FVector2D BossPhaseMarkSize(3.f, 24.f);
+	const FVector2D EncounterBannerTitlePosition(0.f, 0.f);
+	const FVector2D EncounterBannerSubtitlePosition(0.f, 46.f);
+	const FLinearColor BossHealthColor(0.85f, 0.2f, 0.08f, 1.f);
+	const FLinearColor BossPhaseMarkColor(1.f, 0.85f, 0.4f, 0.95f);
+	const FLinearColor EncounterWaveColor(1.f, 1.f, 1.f, 1.f);
+	const FLinearColor EncounterBossColor(1.f, 0.55f, 0.25f, 1.f);
+	const FLinearColor EncounterVictoryColor(1.f, 0.85f, 0.3f, 1.f);
+	const FLinearColor EncounterDefeatColor(0.95f, 0.25f, 0.2f, 1.f);
+	constexpr float BossNameFontSize = 18.f;
+	constexpr float BossFoldDelaySeconds = 1.f;
+	constexpr float BossPhaseBannerSeconds = 2.5f;
+	constexpr float EncounterBannerAnchorY = 0.28f;
+	constexpr float EncounterBannerTitleFontSize = 40.f;
+	constexpr float EncounterBannerSubtitleFontSize = 20.f;
+	constexpr float EncounterBannerFadeInSeconds = 0.25f;
+	constexpr float EncounterBannerFadeOutSeconds = 0.5f;
+	constexpr float EncounterBannerMinSeconds = 0.5f;
+	constexpr int32 BossPhaseMarkCapacity = 4;
 	constexpr float MonsterBarHeadClearanceCm = 25.f;
 	constexpr float DelayedBarHoldSeconds = 0.35f;
 	constexpr float DelayedBarDrainPerSecond = 0.6f;
@@ -115,6 +137,27 @@ namespace TDCombatOverlayWidgetInternal
 			return 0.f;
 		}
 		return FMath::Clamp(Combat.GetCurrentHealth() / MaxHealth, 0.f, 1.f);
+	}
+
+	float ComputeCharacterHealthFraction(const ATDCombatCharacter* Character)
+	{
+		const UTDCombatComponent* Combat = Character ? Character->GetCombatComponent() : nullptr;
+		return Combat ? ComputeHealthFraction(*Combat) : 0.f;
+	}
+
+	FLinearColor GetEncounterBannerColor(const ETDEncounterBannerStyle Style)
+	{
+		switch (Style)
+		{
+		case ETDEncounterBannerStyle::Boss:
+			return EncounterBossColor;
+		case ETDEncounterBannerStyle::Victory:
+			return EncounterVictoryColor;
+		case ETDEncounterBannerStyle::Defeat:
+			return EncounterDefeatColor;
+		default:
+			return EncounterWaveColor;
+		}
 	}
 
 	bool IsPawnAlive(const APawn* Pawn)
@@ -291,6 +334,83 @@ void UTDCombatOverlayWidget::ShowDeathScreen(APawn* DeadPawn, const float Respaw
 	DeathCountdownText->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
+void UTDCombatOverlayWidget::ShowBossHealthBar(ATDCombatCharacter* Boss, const FText& DisplayName, const TArray<float>& PhaseHealthMarks)
+{
+	if (!Boss || !BossNameText || !BossHealthBar || !BossHealthDelayedBar)
+	{
+		return;
+	}
+
+	const bool bIsSameBoss = BossHealthBarTarget.Get() == Boss;
+	BossHealthBarTarget = Boss;
+	BossDisplayName = DisplayName;
+	BossNameText->SetText(DisplayName);
+	ApplyBossPhaseMarks(PhaseHealthMarks);
+	bIsBossHealthBarFolding = false;
+	if (!bIsSameBoss)
+	{
+		BossHealthFraction = TDCombatOverlayWidgetInternal::ComputeCharacterHealthFraction(Boss);
+		BossHealthDelayedFraction = BossHealthFraction;
+		BossHealthHoldUntil = 0.;
+		BossHealthBar->SetPercent(BossHealthFraction);
+		BossHealthDelayedBar->SetPercent(BossHealthDelayedFraction);
+	}
+	SetBossHealthBarVisible(true);
+}
+
+void UTDCombatOverlayWidget::HideBossHealthBar()
+{
+	if (!bIsBossHealthBarShown || bIsBossHealthBarFolding)
+	{
+		return;
+	}
+
+	bIsBossHealthBarFolding = true;
+	BossFoldTime = GetOverlayTime() + TDCombatOverlayWidgetInternal::BossFoldDelaySeconds;
+}
+
+void UTDCombatOverlayWidget::PulseBossPhase(const int32 PhaseIndex)
+{
+	if (!bIsBossHealthBarShown)
+	{
+		return;
+	}
+
+	const FText PhaseLabel = FText::Format(FText::FromString(TEXT("{0}단계")), PhaseIndex + 1);
+	ShowEncounterBanner(BossDisplayName, PhaseLabel, ETDEncounterBannerStyle::Boss, TDCombatOverlayWidgetInternal::BossPhaseBannerSeconds);
+}
+
+void UTDCombatOverlayWidget::ShowEncounterBanner(const FText& Title, const FText& Subtitle, const ETDEncounterBannerStyle Style, const float DisplaySeconds)
+{
+	using namespace TDCombatOverlayWidgetInternal;
+
+	if (!EncounterBannerTitleText || !EncounterBannerSubtitleText)
+	{
+		return;
+	}
+
+	EncounterBannerStartTime = GetOverlayTime();
+	EncounterBannerSeconds = FMath::Max(DisplaySeconds, EncounterBannerMinSeconds);
+	EncounterBannerStyle = Style;
+	EncounterBannerTitle = Title;
+	bIsEncounterBannerShown = true;
+
+	const FSlateColor BannerColor(GetEncounterBannerColor(Style));
+	EncounterBannerTitleText->SetText(Title);
+	EncounterBannerTitleText->SetColorAndOpacity(BannerColor);
+	EncounterBannerTitleText->SetRenderOpacity(0.f);
+	EncounterBannerTitleText->SetVisibility(ESlateVisibility::HitTestInvisible);
+	EncounterBannerSubtitleText->SetText(Subtitle);
+	EncounterBannerSubtitleText->SetColorAndOpacity(BannerColor);
+	EncounterBannerSubtitleText->SetRenderOpacity(0.f);
+	EncounterBannerSubtitleText->SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+ATDCombatCharacter* UTDCombatOverlayWidget::GetBossHealthBarTarget() const
+{
+	return BossHealthBarTarget.Get();
+}
+
 void UTDCombatOverlayWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
@@ -319,6 +439,8 @@ void UTDCombatOverlayWidget::NativeTick(const FGeometry& MyGeometry, const float
 	UpdateDamageNumbers(*Controller, Now);
 	UpdateMonsterHealthBars(*Controller, Now, InDeltaTime);
 	UpdatePlayerHud(Pawn, Now, InDeltaTime);
+	UpdateBossHealthBar(Now, InDeltaTime);
+	UpdateEncounterBanner(Now);
 	UpdateDamageVignette(Now);
 	UpdateDeathScreen(Pawn, Now);
 }
@@ -349,6 +471,8 @@ void UTDCombatOverlayWidget::BuildWidgetTree()
 	BuildMonsterHealthBars(FeedbackSettings.MaxMonsterBars);
 	BuildDamageNumbers(NumberPool.GetCapacity());
 	BuildPlayerHud();
+	BuildBossHealthBar();
+	BuildEncounterBanner();
 	BuildDeathScreen();
 }
 
@@ -410,6 +534,50 @@ void UTDCombatOverlayWidget::BuildPlayerHud()
 	PlayerHealthText = AddOverlayText(*WidgetTree, *RootCanvas, HudTextFontSize, BottomAnchor, PlayerHealthTextPosition);
 	bIsPlayerHudVisible = true;
 	SetPlayerHudVisible(false);
+}
+
+void UTDCombatOverlayWidget::BuildBossHealthBar()
+{
+	using namespace TDCombatOverlayWidgetInternal;
+
+	const FAnchors TopAnchor(0.5f, 0.f);
+	const FVector2D TopCenter(0.5f, 0.f);
+	BossNameText = AddOverlayText(*WidgetTree, *RootCanvas, BossNameFontSize, TopAnchor, BossNamePosition);
+	BossHealthDelayedBar = AddOverlayBar(*WidgetTree, *RootCanvas, MakeOverlayBarStyle(BarBackgroundColor), DelayedBarColor, TopAnchor, TopCenter, BossBarPosition, BossBarSize);
+	BossHealthBar = AddOverlayBar(*WidgetTree, *RootCanvas, MakeOverlayBarStyle(FLinearColor::Transparent), BossHealthColor, TopAnchor, TopCenter, BossBarPosition, BossBarSize);
+
+	BossPhaseMarkImages.Reset();
+	for (int32 MarkIndex = 0; MarkIndex < BossPhaseMarkCapacity; ++MarkIndex)
+	{
+		UImage* MarkImage = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+		MarkImage->SetBrush(FSlateColorBrush(FLinearColor::White));
+		MarkImage->SetColorAndOpacity(BossPhaseMarkColor);
+		UCanvasPanelSlot* MarkSlot = RootCanvas->AddChildToCanvas(MarkImage);
+		MarkSlot->SetAnchors(TopAnchor);
+		MarkSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+		MarkSlot->SetPosition(FVector2D(0.f, BossBarPosition.Y + BossBarSize.Y * 0.5f));
+		MarkSlot->SetSize(BossPhaseMarkSize);
+		BossPhaseMarkImages.Add(MarkImage);
+	}
+
+	BossHealthBarTarget.Reset();
+	BossHealthFraction = 1.f;
+	BossHealthDelayedFraction = 1.f;
+	ShownBossPhaseMarkCount = 0;
+	bIsBossHealthBarFolding = false;
+	SetBossHealthBarVisible(false);
+}
+
+void UTDCombatOverlayWidget::BuildEncounterBanner()
+{
+	using namespace TDCombatOverlayWidgetInternal;
+
+	const FAnchors BannerAnchor(0.5f, EncounterBannerAnchorY);
+	EncounterBannerTitleText = AddOverlayText(*WidgetTree, *RootCanvas, EncounterBannerTitleFontSize, BannerAnchor, EncounterBannerTitlePosition);
+	EncounterBannerTitleText->SetVisibility(ESlateVisibility::Collapsed);
+	EncounterBannerSubtitleText = AddOverlayText(*WidgetTree, *RootCanvas, EncounterBannerSubtitleFontSize, BannerAnchor, EncounterBannerSubtitlePosition);
+	EncounterBannerSubtitleText->SetVisibility(ESlateVisibility::Collapsed);
+	bIsEncounterBannerShown = false;
 }
 
 void UTDCombatOverlayWidget::BuildDeathScreen()
@@ -551,6 +719,60 @@ void UTDCombatOverlayWidget::UpdatePlayerHud(APawn* Pawn, const double Now, cons
 		PlayerHealthText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), HealthValue, MaxHealthValue)));
 	}
 	SetPlayerHudVisible(true);
+}
+
+void UTDCombatOverlayWidget::UpdateBossHealthBar(const double Now, const float DeltaSeconds)
+{
+	using namespace TDCombatOverlayWidgetInternal;
+
+	if (!bIsBossHealthBarShown || !BossHealthBar || !BossHealthDelayedBar)
+	{
+		return;
+	}
+	if (bIsBossHealthBarFolding && Now >= BossFoldTime)
+	{
+		FoldBossHealthBar();
+		return;
+	}
+
+	const ATDCombatCharacter* Boss = BossHealthBarTarget.Get();
+	if (!Boss || !Boss->GetCombatComponent())
+	{
+		HideBossHealthBar();
+	}
+
+	const float HealthFraction = ComputeCharacterHealthFraction(Boss);
+	if (HealthFraction < BossHealthFraction)
+	{
+		BossHealthHoldUntil = Now + DelayedBarHoldSeconds;
+	}
+	BossHealthFraction = HealthFraction;
+	BossHealthDelayedFraction = StepDelayedFraction(BossHealthDelayedFraction, HealthFraction, Now, BossHealthHoldUntil, DeltaSeconds);
+	BossHealthBar->SetPercent(BossHealthFraction);
+	BossHealthDelayedBar->SetPercent(BossHealthDelayedFraction);
+}
+
+void UTDCombatOverlayWidget::UpdateEncounterBanner(const double Now)
+{
+	using namespace TDCombatOverlayWidgetInternal;
+
+	if (!bIsEncounterBannerShown || !EncounterBannerTitleText || !EncounterBannerSubtitleText)
+	{
+		return;
+	}
+
+	const float Elapsed = static_cast<float>(Now - EncounterBannerStartTime);
+	if (Elapsed >= EncounterBannerSeconds)
+	{
+		HideEncounterBanner();
+		return;
+	}
+
+	const float FadeIn = FMath::Clamp(Elapsed / EncounterBannerFadeInSeconds, 0.f, 1.f);
+	const float FadeOut = FMath::Clamp((EncounterBannerSeconds - Elapsed) / EncounterBannerFadeOutSeconds, 0.f, 1.f);
+	const float Opacity = FMath::Min(FadeIn, FadeOut);
+	EncounterBannerTitleText->SetRenderOpacity(Opacity);
+	EncounterBannerSubtitleText->SetRenderOpacity(Opacity);
 }
 
 void UTDCombatOverlayWidget::UpdateDamageVignette(const double Now)
@@ -715,6 +937,75 @@ void UTDCombatOverlayWidget::SetPlayerHudVisible(const bool bShouldBeVisible)
 		{
 			HudWidget->SetVisibility(NewVisibility);
 		}
+	}
+}
+
+void UTDCombatOverlayWidget::SetBossHealthBarVisible(const bool bShouldBeVisible)
+{
+	bIsBossHealthBarShown = bShouldBeVisible;
+	const ESlateVisibility NewVisibility = bShouldBeVisible ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed;
+	for (UWidget* BossWidget : { static_cast<UWidget*>(BossNameText.Get()), static_cast<UWidget*>(BossHealthDelayedBar.Get()), static_cast<UWidget*>(BossHealthBar.Get()) })
+	{
+		if (BossWidget)
+		{
+			BossWidget->SetVisibility(NewVisibility);
+		}
+	}
+	for (int32 MarkIndex = 0; MarkIndex < BossPhaseMarkImages.Num(); ++MarkIndex)
+	{
+		if (BossPhaseMarkImages[MarkIndex])
+		{
+			BossPhaseMarkImages[MarkIndex]->SetVisibility(bShouldBeVisible && MarkIndex < ShownBossPhaseMarkCount ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+		}
+	}
+}
+
+void UTDCombatOverlayWidget::ApplyBossPhaseMarks(const TArray<float>& PhaseHealthMarks)
+{
+	using namespace TDCombatOverlayWidgetInternal;
+
+	int32 MarkCount = 0;
+	for (const float MarkValue : PhaseHealthMarks)
+	{
+		if (MarkCount >= BossPhaseMarkImages.Num())
+		{
+			break;
+		}
+		if (!(MarkValue > 0.f && MarkValue < 1.f))
+		{
+			continue;
+		}
+
+		UImage* MarkImage = BossPhaseMarkImages[MarkCount];
+		UCanvasPanelSlot* MarkSlot = MarkImage ? Cast<UCanvasPanelSlot>(MarkImage->Slot) : nullptr;
+		if (!MarkSlot)
+		{
+			continue;
+		}
+		MarkSlot->SetPosition(FVector2D((MarkValue - 0.5f) * BossBarSize.X, BossBarPosition.Y + BossBarSize.Y * 0.5f));
+		++MarkCount;
+	}
+	ShownBossPhaseMarkCount = MarkCount;
+}
+
+void UTDCombatOverlayWidget::FoldBossHealthBar()
+{
+	bIsBossHealthBarFolding = false;
+	BossHealthBarTarget.Reset();
+	ShownBossPhaseMarkCount = 0;
+	SetBossHealthBarVisible(false);
+}
+
+void UTDCombatOverlayWidget::HideEncounterBanner()
+{
+	bIsEncounterBannerShown = false;
+	if (EncounterBannerTitleText)
+	{
+		EncounterBannerTitleText->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	if (EncounterBannerSubtitleText)
+	{
+		EncounterBannerSubtitleText->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
 

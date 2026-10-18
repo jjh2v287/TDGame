@@ -26,6 +26,11 @@ public:
 
 	float GetPlayerRespawnDelaySeconds() const { return PlayerRespawnDelaySeconds; }
 
+	void SetRespawnCheckpoint(const FTransform& CheckpointTransform);
+	void ClearRespawnCheckpoint();
+	bool HasRespawnCheckpoint() const { return bHasRespawnCheckpoint; }
+	const FTransform& GetRespawnCheckpoint() const { return RespawnCheckpoint; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -38,6 +43,8 @@ private:
 	void RespawnPlayer(TWeakObjectPtr<AController> Controller);
 
 	FGameplayMessageListenerHandle DeathListenerHandle;
+	FTransform RespawnCheckpoint = FTransform::Identity;
+	bool bHasRespawnCheckpoint = false;
 };
 
 

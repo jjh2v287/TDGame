@@ -41,7 +41,8 @@ public class TDGameEditor : ModuleRules
 			"ControlRigEditor",
 			"SequencerScripting",
 			"SequencerScriptingEditor",
-			"PCG"
+			"PCG",
+			"GameplayMessageRuntime"
 		});
 	}
 }

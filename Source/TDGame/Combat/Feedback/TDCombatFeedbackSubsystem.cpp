@@ -161,6 +161,9 @@ void UTDCombatFeedbackSubsystem::RegisterListeners(UWorld& InWorld)
 	DamageAvoidedListener = MessageSubsystem.RegisterListener<FTDDamageAvoidedMessage>(TDGameplayTags::Event_Damage_Avoided, this, &ThisClass::HandleDamageAvoided);
 	ActorDeathListener = MessageSubsystem.RegisterListener<FTDActorDeathMessage>(TDGameplayTags::Event_Actor_Death, this, &ThisClass::HandleActorDeath);
 	MeleeSwingListener = MessageSubsystem.RegisterListener<FTDMeleeSwingMessage>(TDGameplayTags::Event_Combat_MeleeSwing, this, &ThisClass::HandleMeleeSwing);
+	EncounterBannerListener = MessageSubsystem.RegisterListener<FTDEncounterBannerMessage>(TDGameplayTags::Event_Encounter_Banner, this, &ThisClass::HandleEncounterBanner);
+	BossHealthBarListener = MessageSubsystem.RegisterListener<FTDBossHealthBarMessage>(TDGameplayTags::Event_Encounter_BossHealthBar, this, &ThisClass::HandleBossHealthBar);
+	MonsterPhaseListener = MessageSubsystem.RegisterListener<FTDMonsterPhaseMessage>(TDGameplayTags::Event_Monster_PhaseEntered, this, &ThisClass::HandleMonsterPhaseEntered);
 	bIsListening = true;
 }
 
@@ -170,6 +173,9 @@ void UTDCombatFeedbackSubsystem::UnregisterListeners()
 	DamageAvoidedListener.Unregister();
 	ActorDeathListener.Unregister();
 	MeleeSwingListener.Unregister();
+	EncounterBannerListener.Unregister();
+	BossHealthBarListener.Unregister();
+	MonsterPhaseListener.Unregister();
 	bIsListening = false;
 }
 
@@ -342,6 +348,59 @@ void UTDCombatFeedbackSubsystem::HandleMeleeSwing(FGameplayTag Channel, const FT
 	{
 		++Stats.SwingsPlayed;
 	}
+}
+
+void UTDCombatFeedbackSubsystem::HandleEncounterBanner(FGameplayTag Channel, const FTDEncounterBannerMessage& Message)
+{
+	if (!OverlayWidget)
+	{
+		return;
+	}
+
+	OverlayWidget->ShowEncounterBanner(Message.Title, Message.Subtitle, Message.Style, Message.DisplaySeconds);
+	++Stats.EncounterBannersShown;
+}
+
+void UTDCombatFeedbackSubsystem::HandleBossHealthBar(FGameplayTag Channel, const FTDBossHealthBarMessage& Message)
+{
+	if (!Message.bIsShown)
+	{
+		PendingBossHealthBar = FTDPendingBossHealthBar();
+		if (OverlayWidget)
+		{
+			OverlayWidget->HideBossHealthBar();
+		}
+		return;
+	}
+
+	ATDCombatCharacter* Boss = Cast<ATDCombatCharacter>(Message.Boss.Get());
+	if (!Boss)
+	{
+		return;
+	}
+
+	PendingBossHealthBar.Boss = Boss;
+	PendingBossHealthBar.DisplayName = Message.DisplayName;
+	PendingBossHealthBar.PhaseHealthMarks = Message.PhaseHealthMarks;
+	if (!OverlayWidget)
+	{
+		return;
+	}
+
+	OverlayWidget->ShowBossHealthBar(Boss, Message.DisplayName, Message.PhaseHealthMarks);
+	++Stats.BossHealthBarsShown;
+}
+
+void UTDCombatFeedbackSubsystem::HandleMonsterPhaseEntered(FGameplayTag Channel, const FTDMonsterPhaseMessage& Message)
+{
+	const AActor* Monster = Message.Monster.Get();
+	if (!Monster || !OverlayWidget || OverlayWidget->GetBossHealthBarTarget() != Monster)
+	{
+		return;
+	}
+
+	OverlayWidget->PulseBossPhase(Message.PhaseIndex);
+	++Stats.BossPhasePulses;
 }
 
 void UTDCombatFeedbackSubsystem::ShowHitNumber(const FTDDamageAppliedMessage& Message, const FTDHitPresentation& Presentation, const FVector& Location, const bool bIsLocalVictim)
@@ -652,7 +711,7 @@ void UTDCombatFeedbackSubsystem::PlayLocalCameraFeedback(APlayerController& Cont
 void UTDCombatFeedbackSubsystem::ShowMonsterHealthBar(ATDCombatCharacter& Victim, const FTDDamageAppliedMessage& Message)
 {
 	const UTDCombatComponent* Combat = Victim.GetCombatComponent();
-	if (!OverlayWidget || !Combat)
+	if (!OverlayWidget || !Combat || OverlayWidget->GetBossHealthBarTarget() == &Victim)
 	{
 		return;
 	}
@@ -777,6 +836,20 @@ void UTDCombatFeedbackSubsystem::UpdateOverlayOwner()
 		return;
 	}
 	OverlayWidget->AddToViewport(10);
+	RestorePendingBossHealthBar();
+}
+
+void UTDCombatFeedbackSubsystem::RestorePendingBossHealthBar()
+{
+	ATDCombatCharacter* Boss = PendingBossHealthBar.Boss.Get();
+	const UTDCombatComponent* Combat = Boss ? Boss->GetCombatComponent() : nullptr;
+	if (!OverlayWidget || !Combat || !Combat->IsAlive())
+	{
+		return;
+	}
+
+	OverlayWidget->ShowBossHealthBar(Boss, PendingBossHealthBar.DisplayName, PendingBossHealthBar.PhaseHealthMarks);
+	++Stats.BossHealthBarsShown;
 }
 
 void UTDCombatFeedbackSubsystem::UpdateHitFlashes(const double Now)

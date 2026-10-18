@@ -24,6 +24,10 @@ namespace TDGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Combat_MeleeSwing, "Event.Combat.MeleeSwing")
 	UE_DEFINE_GAMEPLAY_TAG(Event_Actor_Death, "Event.Actor.Death")
 	UE_DEFINE_GAMEPLAY_TAG(Event_Caravan_Destroyed, "Event.Caravan.Destroyed")
+	UE_DEFINE_GAMEPLAY_TAG(Event_Monster_PhaseEntered, "Event.Monster.PhaseEntered")
+	UE_DEFINE_GAMEPLAY_TAG(Event_Encounter_Banner, "Event.Encounter.Banner")
+	UE_DEFINE_GAMEPLAY_TAG(Event_Encounter_BossHealthBar, "Event.Encounter.BossHealthBar")
+	UE_DEFINE_GAMEPLAY_TAG(Event_Encounter_Finished, "Event.Encounter.Finished")
 
 	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary, "Action.Attack.Primary")
 	UE_DEFINE_GAMEPLAY_TAG(Action_Attack_Primary_01, "Action.Attack.Primary.01")

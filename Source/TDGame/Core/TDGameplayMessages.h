@@ -106,3 +106,84 @@ struct TDGAME_API FTDCaravanDestroyedMessage
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	TArray<FTDItemStack> DroppedItems;
 };
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDMonsterPhaseMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<AActor> Monster = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 PhaseIndex = 0;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FName PhaseId;
+};
+
+UENUM(BlueprintType)
+enum class ETDEncounterBannerStyle : uint8
+{
+	Wave,
+	Boss,
+	Victory,
+	Defeat
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDEncounterBannerMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<AActor> Encounter = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FText Title;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FText Subtitle;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	ETDEncounterBannerStyle Style = ETDEncounterBannerStyle::Wave;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	float DisplaySeconds = 3.f;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDBossHealthBarMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<AActor> Encounter = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<AActor> Boss = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FText DisplayName;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TArray<float> PhaseHealthMarks;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	bool bIsShown = false;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDEncounterFinishedMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<AActor> Encounter = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FName EncounterId;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	bool bWasVictory = false;
+};

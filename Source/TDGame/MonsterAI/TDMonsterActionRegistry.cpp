@@ -21,7 +21,13 @@ namespace
 			{ TEXT("PlaySequence"), ETDMonsterPrimitive::PlaySequence, ETDMonsterFsmState::Sequence, true,
 				{ { TEXT("sequence"), ETDActionArgKind::Sequence, true } } },
 			{ TEXT("PlayEmote"), ETDMonsterPrimitive::PlayEmote, ETDMonsterFsmState::Idle, false,
-				{ { TEXT("seconds"), ETDActionArgKind::Seconds } } }
+				{ { TEXT("seconds"), ETDActionArgKind::Seconds } } },
+			{ TEXT("TakeOff"), ETDMonsterPrimitive::TakeOff, ETDMonsterFsmState::Idle, true,
+				{ { TEXT("altitude"), ETDActionArgKind::Number }, { TEXT("seconds"), ETDActionArgKind::Seconds } } },
+			{ TEXT("Land"), ETDMonsterPrimitive::Land, ETDMonsterFsmState::Idle, true,
+				{ { TEXT("seconds"), ETDActionArgKind::Seconds } } },
+			{ TEXT("SummonMinions"), ETDMonsterPrimitive::SummonMinions, ETDMonsterFsmState::Idle, false,
+				{ { TEXT("species"), ETDActionArgKind::Species, true }, { TEXT("count"), ETDActionArgKind::Number }, { TEXT("radius"), ETDActionArgKind::Number }, { TEXT("seconds"), ETDActionArgKind::Seconds } } }
 		};
 		return Table;
 	}

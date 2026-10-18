@@ -90,6 +90,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Keyed by the ability name in the monster definition JSON."))
 	TMap<FName, FTDMonsterAnimClip> AbilityClips;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Played once when the monster takes off into flight."))
+	FTDMonsterAnimClip TakeOffClip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Looping hover pose while flying."))
+	FTDMonsterAnimClip FlyIdleClip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Played once while the monster descends to land."))
+	FTDMonsterAnimClip LandClip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animation", meta=(ToolTip="Hit reaction while flying; falls back to Hit."))
+	FTDMonsterAnimClip FlyHitClip;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death")
 	bool bUseRagdollWithoutDeathClip = true;
 

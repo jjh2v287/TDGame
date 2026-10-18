@@ -731,6 +731,18 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 검증: BUILD; TEST `TDGame.MonsterAI`·`TDGame.Movement` 헤드리스; OP-33 검사 2개; PIE 스크린샷
 - 참조: `Saved/AgentOps/20261018/monsterize/understand/`(mesh-inventory·species-pipeline·tests-and-tools·combat-assets)
 - 기록: 2026-10-18 claude — 청구. → 완료. 종 14개(신규 8: Barghest·BarghestAlpha·Griffon·Centaur·Greystone·Kwang·Wukong·Swordsman, 보강 5: Goblin·SkeletonGuard·StoneGolem·BookHeadBrute·BookHeadCaster, Hyena 그대로), 목록·사유 표 [measurements/monsterize/README.md](measurements/monsterize/README.md). 도구: 종 표 `Tools/MonsterAI/species_table.json`(정본) + 범용화한 `editor_make_monster_species.py`(Hit·Death·추종 메시·래그돌 값, `TD_ONLY_SPECIES`, 능력 키 대조)·`editor_retarget_monster_anims.py`(원천·대상·뼈 이름 표, `TD_ONLY_TARGETS`)·`editor_make_loop_clips.py`(표의 loop_clips, 발·보조 뼈 매개변수), 새 `check_species_table.py`(오프라인 검사)·`editor_measure_species_clips.py`(크기·루프·지면 속도·타격 시각 측정)·`pie_check_species.py`, 옛 `Combat/editor_set_species_hit_clips.py` 삭제(표 `hit`로 흡수, 옛 6종 값 이전 대조 차이 0). C++: 종 에셋 `FollowerMeshes` + `ATDMonsterCharacter::ApplySpeciesFollowerMeshes`(리더 포즈, BeginPlay), 공격 카탈로그 11종(+화살 투사체), 새 시험 `TDGame.MonsterAI.Species.ClipsCoverDefinition`(정의 능력마다 클립·클립 키가 정의에 있음·Hit·Death·추종 메시 스켈레톤 일치, 구현 전 SkeletonGuard 빈 AbilityClips·5종 Death 없음으로 빨강이 될 조건). 리타깃: Manny → Greystone·Kwang·Wukong·SKM_Man(Mixamo) 이동·피격·사망 + 기존 4종 사망·Guard 검 공격·Golem Stomp. 실측: 4족 팩 제자리 이동은 그대로 루프 기준 통과(대기만 loop 켬), 지면 속도는 `_RM` 루트 이동(Barghest 163/753, Griffon 234/935, Centaur 174/1115), 타격 시각은 빠른 뼈 최고 속도(`measurements/monsterize/clip-measure.json`). 완료 조건 대조: ① 헤드리스 MonsterAI+Movement 79/80(`Saved/AgentOps/20261018/monsterize-h2-tests.json`, 실패 = 기준선 CrossingStreams, `Species.LocomotionClipsLoop`·`Validate`·`ClipsCoverDefinition`·`RoleClassification` 통과, 정의 15개 오류 0) ② OP-33 `check_sync_loads` new 0·`check_cook_coverage` uncovered 0 둘 다 종료 0 ③ PIE 14/14 통과(스폰·이동·공격 예고·피격 체력 감소·사망, `measurements/monsterize/pie-2026-10-18/` PNG 56장·report.json), 추종 메시(활·갑옷·갈기·꼬리) 리더 포즈가 UAF 몸에서 동작 확인 ④ 로컬 커밋. 편차 07#MD-50(proposed). 교훈 L-anim-19(Mixamo 루트=Hips 리타깃 잠금), L-repo-15(긴 heredoc 실패). 남은 것: Kwang 물리 에셋 없음(사망 무릎 자세), Swordsman·SkeletonGuard 손 무기(정적 메시 소켓 부착 미지원), Paragon 흰 데모 재질, 피격 경직의 정량 판정·타격 시각 근접 육안, 마켓 팩 미추적(공개 저장소 결정 대기). 마지막 빌드 시도(17:47)는 FluidFX 세션 작성 중 코드 컴파일 오류로 실패해 시험은 17:22 빌드 DLL(제 C++ 포함)로 `--no-build` 실행.
+### M3-35 공용 보스 기반(비행·졸개 소환·부채꼴/직선 판정·예고·위험 공격 1개·페이즈 알림)과 3페이즈 용 보스 Dragon_Boss
+- 상태: done
+- 담당: claude/2026-10-18
+- 우선순위: 높음(사용자 요청 2026-10-18 "용 같은 보스", 부모 세션 c7fdf4 위임, M3-34 중간 보스·M3-36 사이클이 이 기반을 씀)
+- 선행: M3-29(`boss` 키), M3-14(전술층 보스 차선), M3-27(전투 표현층). 종 도구는 M3-33과 병행
+- 목표: 공용 기반 ① 비행(이동 의도 Z, 원시 `TakeOff`·`Land`, 입력 `SelfIsFlying`, 몸 비행 함수 = Mover Flying 모드, 종 에셋 공중 클립) ② 원시 `SummonMinions`(종·수·반경, 비동기 스폰)·입력 `MinionsAlive` ③ 부채꼴·직선 피해 형상과 예고, 능력 선딜·예고 시간 ④ 보스 위험 공격 동시 1개 ⑤ 페이즈 진입 알림(메시지·조회 API) ⑥ 주문 후보 경로 `/Game/Combat/MegaMagic`. 그 위에 MountainDragon 3페이즈 `Dragon_Boss`(P1 지상 100→70%, P2 공중·지상 교대 70→40%·진입 졸개 1회, P3 격노 40→0%·25% 업화+안전 지대), 예고 색 규칙·처벌 창·즉사 없음.
+- 완료 조건: 결정론 시험(페이즈 전환·이륙/착지·소환·부채꼴 판정·위험 공격 1개) 구현 전 빨강·구현 뒤 초록 / PIE `TDSpawnMonster Dragon_Boss` 세 페이즈 처치 스크린샷 / 헤드리스 회귀 유지(기준선 CrossingStreams 1건) / OP-33 검사 2개 종료 0 / 로컬 커밋(내 파일만, 푸시 금지)
+- 산출물: `MonsterAI/` 커널(ActionRegistry·Executor·ThinkSubsystem·BrainInputs·InputRegistry·CombatTactics·AttackCatalog·DefinitionLibrary), `Combat/Damage/` 형상·예고, `TDMonsterBody.h`, `TDMonsterCharacter.*` 비행 부분, `TDMonsterSpeciesAsset.h` 공중 클립, `Content/MonsterAI/Definitions/Dragon_Boss.json`, `/Game/MonsterAI/Species/DA_TDMonster_MountainDragon`, 시험, `measurements/M3-35/`
+- 검증: BUILD; TEST `TDGame.MonsterAI` 헤드리스(새 `Boss.*`); OP-33 검사 2개; PIE 스크린샷
+- 참조: `Saved/AgentOps/20261018/monsterize/understand/`(boss-encounter-infra·boss-design-research·combat-assets)
+- 기록: 2026-10-18 claude — 청구.
+
 ### 3.6 Phase 4 — 확장(조건부)
 
 ### M4-01 자체 C++ HTN(보스·무리)
@@ -946,6 +958,21 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 결정: (대기)
 
 ---
+
+### MD-57 용 보스 Dragon_Boss 구성·수치(권장안 적용, 재검토 가능)
+- 상태: proposed · 2026-10-18 claude(M3-35, 사용자 "묻지 말고 권장안"으로 적용)
+- 질문: 지금 넣은 값과 조사안 편차를 확정할까? ① 체력 6000·공격력 10(플레이어 기본 체력 100 기준 한 방 15~60%, 즉사 없음)·방어 20·이동 360, 축척 0.5(몸 길이 약 6.7m, 캡슐 반경 150) ② 페이즈 문턱 0.7 Sky(포효→고블린 3 소환→이륙, 공중 약 22초 ↔ 지상 12초 교대, 졸개가 살아 있으면 공중 화염구만) / 0.4 Enraged(착지 충격·포효, 공격력 11·이동 400·재사용 대기 ×0.75) / 0.25 Inferno(업화 1회) ③ 업화는 조사안 "안전 지대 2곳" 대신 **용 주변 반경 380 안전 원 + 바깥 반경 2400 피해**(Ring 형상 하나, 4초 예고, H의 60%) ④ 꼬리치기는 클립이 없어 생략, 포효는 `idleLookAround` 앞 2초 + 저피해 충격파, 끊기 기회(파랑)·공중 격추·시간 초과 격노·회복 구슬은 이번에 넣지 않음(M3-34의 Channel·격추 인수로 후속 가능) ⑤ 3페이즈 안무는 기존 페이즈+시퀀스+유틸리티로 충분해 M4-01(자체 HTN)은 열지 않음
+- 선택지: (a) 현행 (b) 업화 안전 지대를 2곳(용 양옆 고정 점)으로 — 피해 정의에 다중 제외 원이 필요 (c) 체력을 조사안 12000으로(처치 4~5분, 지금은 약 2~3분 예상)
+- 권장: (a). (b)는 형상 코드가 하나 더 늘고 탑다운에서 "용에게 붙어라"가 더 읽기 쉽다. 체력은 플레이어 DPS 실측 뒤 조정.
+- 영향: `Content/MonsterAI/Definitions/Dragon_Boss.json`, `MonsterAI/TDMonsterAttackCatalog.cpp`(DA_TDDragon* 19개), `Tools/MonsterAI/species_table.json`(MountainDragon), 07 M4-01 선행 조건
+- 결정: (대기)
+### MD-58 공용 보스 기반 규칙 기본값(권장안 적용, 재검토 가능)
+- 상태: proposed · 2026-10-18 claude(M3-35)
+- 질문: ① 위험 공격(`danger`) 잠금은 대상별, 길이 = max(시전 시간, 래퍼 선딜+주문 수명) + 1초, 전술층이 꺼지면(`TD.MonsterAI.Tactics 0`) 규칙 없음 ② `windup`은 "합계 선딜"(주문 자체 선딜을 빼고 래퍼로 감쌈), 래퍼 예고는 주문 형상을 따르고 투사체는 직선 띠 ③ 비행은 몸이 지면 추적으로 목표 Z를 잡고 이동 입력 수직 성분(오차/120cm)으로 유지, 착지는 목표 15cm 또는 시간+0.5초 뒤 Falling, 몸이 거절하면(동결·사망) 뇌 비행 플래그 불변, 귀환 시 자동 착지 ④ 예고 부채꼴 반각은 집합 {20,30,35,45,60,90}만(재질 인스턴스), 밖이면 디버그 대체 ⑤ 주문 이름은 패키지가 있는 첫 후보 하나만(Attacks → MegaMagic → Examples) — Ogre_Boss·Archer의 같은 이름 주문이 MegaMagic(VFX)판으로 바뀜 — 이대로 둘까?
+- 선택지: (a) 현행 (b) 위험 잠금을 전술층과 별도로 항상 켬 (c) 부채꼴 반각을 동적 재질 인스턴스로 임의 각도 허용
+- 권장: (a). 전술층이 기본 켜짐이고, MI 고정 집합은 런타임 할당이 없다.
+- 영향: `MonsterAI/TDMonsterThinkSubsystem.cpp`(FillTacticsContext·ConfirmTacticsAttackStart), `TDMonsterDefinitionLibrary.cpp`, `TDMonsterAttackCatalog.cpp`, `Characters/TDMonsterCharacter.cpp`
+- 결정: (대기)
 
 ## 5. 위험표(12)
 

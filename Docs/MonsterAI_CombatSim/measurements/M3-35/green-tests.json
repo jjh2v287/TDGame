@@ -1,0 +1,51 @@
+{
+ "source": "Saved/AgentOps/20261018/m335-green1-tests.json",
+ "filters": [
+  "TDGame.MonsterAI",
+  "TDGame.Combat",
+  "TDGame.Movement",
+  "TDGame.Encounter",
+  "TDGame.Smoke"
+ ],
+ "total": 166,
+ "passed": 165,
+ "failures": [
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.Scene.CrossingStreams",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'Circle avoidance touches no more often than legacy separation' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCircleAvoidanceTests.cpp(1360)]"
+   ]
+  }
+ ],
+ "boss": [
+  [
+   "TDGame.MonsterAI.Boss.ConeLineRingShapes",
+   "Success"
+  ],
+  [
+   "TDGame.MonsterAI.Boss.DangerAttacksNeverOverlap",
+   "Success"
+  ],
+  [
+   "TDGame.MonsterAI.Boss.DefinitionKeysResolve",
+   "Success"
+  ],
+  [
+   "TDGame.MonsterAI.Boss.PhaseEnteredNotifiesAndQueries",
+   "Success"
+  ],
+  [
+   "TDGame.MonsterAI.Boss.SummonMinionsSpawnsEngagedRing",
+   "Success"
+  ],
+  [
+   "TDGame.MonsterAI.Boss.TakeOffHoldsAltitudeThenLands",
+   "Success"
+  ],
+  [
+   "TDGame.MonsterAI.Boss.WindupDelaysInstantSpell",
+   "Success"
+  ]
+ ]
+}

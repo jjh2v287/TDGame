@@ -47,6 +47,21 @@ namespace
 		return Inputs.bHasRingSlot ? 1.f : 0.f;
 	}
 
+	float ReadSelfIsFlying(const FTDBrainInputs& Inputs, const FTDInputArgs& Args)
+	{
+		return Inputs.bIsFlying ? 1.f : 0.f;
+	}
+
+	float ReadFlightStateSeconds(const FTDBrainInputs& Inputs, const FTDInputArgs& Args)
+	{
+		return Inputs.FlightStateSeconds;
+	}
+
+	float ReadMinionsAlive(const FTDBrainInputs& Inputs, const FTDInputArgs& Args)
+	{
+		return static_cast<float>(Inputs.MinionsAlive);
+	}
+
 	const FTDBrainInputFunction InputFunctions[] =
 	{
 		{ TEXT("DistanceToTarget"), &ReadDistanceToTarget, ETDInputCost::Cheap, 0.f, 1200.f, ETDInputArgKind::None, 0.f },
@@ -57,7 +72,10 @@ namespace
 		{ TEXT("HasAttackToken"), &ReadHasAttackToken, ETDInputCost::Cheap, 0.f, 1.f, ETDInputArgKind::None, 0.f },
 		{ TEXT("RingSlotFree"), &ReadRingSlotFree, ETDInputCost::Cheap, 0.f, 1.f, ETDInputArgKind::None, 0.f },
 		{ TEXT("AllyCountNearby"), &ReadAllyCountNearby, ETDInputCost::Grid, 0.f, 8.f, ETDInputArgKind::Radius, 600.f },
-		{ TEXT("LineOfSightToTarget"), &ReadLineOfSightToTarget, ETDInputCost::Trace, 0.f, 1.f, ETDInputArgKind::None, 0.f }
+		{ TEXT("LineOfSightToTarget"), &ReadLineOfSightToTarget, ETDInputCost::Trace, 0.f, 1.f, ETDInputArgKind::None, 0.f },
+		{ TEXT("SelfIsFlying"), &ReadSelfIsFlying, ETDInputCost::Cheap, 0.f, 1.f, ETDInputArgKind::None, 0.f },
+		{ TEXT("FlightStateSeconds"), &ReadFlightStateSeconds, ETDInputCost::Cheap, 0.f, 30.f, ETDInputArgKind::None, 0.f },
+		{ TEXT("MinionsAlive"), &ReadMinionsAlive, ETDInputCost::Cheap, 0.f, 8.f, ETDInputArgKind::None, 0.f }
 	};
 }
 

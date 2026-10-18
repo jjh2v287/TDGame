@@ -16,6 +16,17 @@ struct FTDMonsterAbilityRequest
 	float Range = 0.f;
 	TWeakObjectPtr<AActor> Target;
 	FVector TargetLocation = FVector::ZeroVector;
+	float WindupSeconds = 0.f;
+	bool bIsDanger = false;
+};
+
+struct FTDMonsterSummonRequest
+{
+	FName SpeciesName;
+	int32 Count = 3;
+	float RadiusCm = 600.f;
+	float Seconds = 1.f;
+	TWeakObjectPtr<AActor> Target;
 };
 
 UINTERFACE(MinimalAPI, meta=(CannotImplementInterfaceInBlueprint))
@@ -40,4 +51,9 @@ public:
 	virtual void CancelBodyAbility() = 0;
 	virtual void BeginBodyStagger(const FVector& SourceLocation, float Seconds) = 0;
 	virtual void PresentBody(float DeltaSeconds, ETDMonsterFsmState State) = 0;
+	virtual float BeginBodyFlight(float AltitudeCm, float Seconds) = 0;
+	virtual float EndBodyFlight(float Seconds) = 0;
+	virtual float BeginBodySummon(const FTDMonsterSummonRequest& Request) = 0;
+	virtual int32 CountBodyMinionsAlive() const = 0;
+	virtual void NotifyBodyPhaseEntered(int32 PhaseIndex, FName PhaseId) = 0;
 };

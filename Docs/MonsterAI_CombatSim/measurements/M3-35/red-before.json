@@ -1,0 +1,71 @@
+{
+ "source": "Saved/AgentOps/20261018/m336-headless-3-tests.json (M3-36 헤드리스, M3-35 빈 구현+시험 트리)",
+ "filters": [
+  "TDGame.Encounter",
+  "TDGame.Combat",
+  "TDGame.MonsterAI",
+  "TDGame.Movement",
+  "TDGame.Smoke"
+ ],
+ "total": 166,
+ "passed": 157,
+ "boss_red": [
+  {
+   "path": "TDGame.MonsterAI.Boss.ConeLineRingShapes",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'Cone target outside the half angle (400,300) is not hit (health 990.0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(411)]",
+    "Error: Expected 'Cone target behind (-200,0) is not hit (health 990.0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(411)]",
+    "Error: Expected 'Line target outside the half width (500,180) is not hit (health 990.0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(411)]",
+    "Error: Expected 'Line target behind the origin (-100,0) is not hit (health 990.0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(411)]",
+    "Error: Expected 'Ring target inside the inner radius (100,0) is not hit (health 990.0)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(411)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.DangerAttacksNeverOverlap",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'The danger run sets up (the definition did not resolve (errors 1, first: BossDangerProbe.json: abilities.Breath.danger: unknown key (did you mean 'range'?)))' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(656)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.DefinitionKeysResolve",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'BossKeysProbe resolves without errors (errors 7, first: BossKeysProbe.json: abilities.Snap.windup: unknown key)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(319)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.PhaseEnteredNotifiesAndQueries",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'Exactly 1 phase notifications arrived after reaching Sky' to be 1, but it was 0. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(729)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.SummonMinionsSpawnsEngagedRing",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'BossSummonProbe resolves without errors (errors 3, first: BossSummonProbe.json: actions[0].do: unknown action primitive 'SummonMinions')' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(319)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.TakeOffHoldsAltitudeThenLands",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'BossFlightProbe resolves without errors (errors 2, first: BossFlightProbe.json: sequences.Flight[0].do: unknown action primitive 'TakeOff')' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(319)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.WindupDelaysInstantSpell",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'BossWindupProbe resolves without errors (errors 1, first: BossWindupProbe.json: abilities.Snap.windup: unknown key)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDBossFoundationTests.cpp(319)]"
+   ]
+  }
+ ],
+ "other_failures": [
+  "TDGame.Encounter.Arena.EmptyWaveFailsInsteadOfWinning",
+  "TDGame.MonsterAI.CircleAvoidance.Scene.CrossingStreams"
+ ]
+}

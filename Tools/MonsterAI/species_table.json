@@ -757,6 +757,156 @@
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
    "corpse_sink_seconds": 1.5
+  },
+  {
+   "name": "MountainDragon",
+   "definition": "Dragon_Boss",
+   "mesh": "/Game/QuadrapedCreatures/MountainDragon/Meshes/SK_MOUNTAIN_DRAGON",
+   "followers": [],
+   "scale": 0.5,
+   "yaw": -90.0,
+   "radius": 150.0,
+   "half_height": 160.0,
+   "height_offset": 0.0,
+   "walk_clip_speed": 444.0,
+   "run_clip_speed": 795.0,
+   "idle": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_idleBreathe"
+   },
+   "walk": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_walk"
+   },
+   "run": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_run"
+   },
+   "hit": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_getHitFront"
+   },
+   "death": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_death"
+   },
+   "takeoff": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_takeOffToFlyStationary"
+   },
+   "fly_idle": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_FlyStationary"
+   },
+   "land": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_FlyStationaryToLanding"
+   },
+   "fly_hit": {
+    "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_FlyStationaryGetHit"
+   },
+   "abilities": {
+    "Bite": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_bite",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.3,
+     "recovery": 0.45
+    },
+    "ClawLeft": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_LeftClawsAttackForward",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.7,
+     "recovery": 0.45
+    },
+    "ClawRight": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_rightClawsAttackForward",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.7,
+     "recovery": 0.45
+    },
+    "ClawCombo": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_ClawsAttack2HitComboForward",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.74,
+     "recovery": 0.9
+    },
+    "Fireball": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_spitFireBall",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.45,
+     "recovery": 0.4
+    },
+    "FlameBreath": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_spreadFire",
+     "start": 0.0,
+     "end": 3.0,
+     "rate": 1.0,
+     "impact": 0.9,
+     "recovery": 2.0
+    },
+    "GrabThrow": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_biteGrabThrow",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 1.0,
+     "recovery": 0.9
+    },
+    "AirFireball": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_FlyStationarySpitFireBall",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 0.55,
+     "recovery": 0.3
+    },
+    "FireRain": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_FlyStationarySpreadFire",
+     "start": 0.0,
+     "end": 2.0,
+     "rate": 1.0,
+     "impact": 0.0,
+     "recovery": 0.6
+    },
+    "DiveBreath": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_FlyStationarySpreadFire",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 1.0,
+     "recovery": 1.0
+    },
+    "LandingShock": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_LeftClawsAttackForward",
+     "start": 0.2,
+     "end": 1.2,
+     "rate": 1.0,
+     "impact": 0.5,
+     "recovery": 0.4
+    },
+    "Roar": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_idleLookAround",
+     "start": 0.0,
+     "end": 2.0,
+     "rate": 1.0,
+     "impact": 0.6,
+     "recovery": 0.6
+    },
+    "Inferno": {
+     "anim": "/Game/QuadrapedCreatures/MountainDragon/Animations/ANIM_MOUNTAIN_DRAGON_spreadFire",
+     "start": 0.0,
+     "end": 0.0,
+     "rate": 1.0,
+     "impact": 2.0,
+     "recovery": 1.0
+    }
+   },
+   "corpse_seconds": 12.0,
+   "ragdoll_after_death": false,
+   "ragdoll_without_death_clip": true,
+   "corpse_sink_seconds": 2.0
   }
  ],
  "retarget": {

@@ -48,6 +48,8 @@ struct FTDMonsterSlotHandle
 	}
 };
 
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FTDMonsterPhaseEnteredEvent, AActor*, int32, FName);
+
 UCLASS()
 class TDGAME_API UTDMonsterThinkSubsystem : public UWorldSubsystem
 {
@@ -88,7 +90,12 @@ public:
 	bool IsMonsterEngaged(FTDMonsterSlotHandle Handle) const;
 	ETDMonsterAlarmRole GetMonsterAlarmRole(FTDMonsterSlotHandle Handle) const;
 	bool IsMonsterPanicking(FTDMonsterSlotHandle Handle) const;
+	int32 GetMonsterPhaseIndex(FTDMonsterSlotHandle Handle) const;
+	TArray<float> GetMonsterPhaseHealthMarks(FTDMonsterSlotHandle Handle) const;
+	bool IsMonsterFlying(FTDMonsterSlotHandle Handle) const;
+	void EngageMonster(FTDMonsterSlotHandle Handle, AActor* Target);
 	uint64 GetStepIndex() const { return StepIndex; }
+	FTDMonsterPhaseEnteredEvent OnMonsterPhaseEntered;
 
 	UFUNCTION(BlueprintCallable, Category="MonsterAI", meta=(WorldContext="WorldContextObject"))
 	static UTDMonsterThinkSubsystem* GetMonsterThinkSubsystem(const UObject* WorldContextObject);
@@ -106,6 +113,14 @@ protected:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
 private:
+	struct FTDPendingPhaseEvent
+	{
+		int32 SlotIndex = INDEX_NONE;
+		TWeakObjectPtr<AActor> Actor;
+		int32 PhaseIndex = 0;
+		FName PhaseId;
+	};
+
 	friend struct FTDMonsterThinkTickFunction;
 	friend struct FTDMonsterThinkSubsystemTestAccess;
 	friend struct FTDCombatTacticsTestAccess;
@@ -115,6 +130,7 @@ private:
 	bool IsHandleCurrent(FTDMonsterSlotHandle Handle) const;
 	void RebuildOrder();
 	void RunKernelStep();
+	void DispatchPendingPhaseEvents();
 	void SenseSlot(int32 SlotIndex);
 	void UpdateEngagement();
 	void RunPackAlarms(TArray<int32>& NewlyEngaged);
@@ -226,6 +242,7 @@ private:
 	TArray<FTDPendingAlarm> PendingAlarms;
 	TArray<FTDPackDeathEvent> PendingPackDeaths;
 	TArray<FTDPackDeathAlarm> PendingDeathAlarms;
+	TArray<FTDPendingPhaseEvent> PendingPhaseEvents;
 	TMap<TObjectKey<AActor>, int32> AttackersByTarget;
 	FTDNeighborGrid NeighborGrid;
 	bool bIsNeighborGridStale = true;

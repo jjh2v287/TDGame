@@ -29,20 +29,25 @@ namespace
 	constexpr float DefaultThinkHz = 10.f;
 	constexpr float DefaultSwitchRatio = 1.15f;
 	constexpr float DefaultMinHoldSeconds = 0.4f;
+	constexpr float MaxAbilityWindupSeconds = 6.f;
+	constexpr float MinCooldownScale = 0.1f;
+	constexpr float MaxCooldownScale = 4.f;
+	constexpr int32 MaxSummonCount = 8;
 
 	const TArray<FString> TopLevelKeys = { TEXT("schema"), TEXT("id"), TEXT("kind"), TEXT("role"), TEXT("boss"), TEXT("elite"), TEXT("extends"), TEXT("stats"), TEXT("think_hz"), TEXT("lod_periods"), TEXT("inertia"), TEXT("select"), TEXT("top_n"), TEXT("abilities"), TEXT("sequences"), TEXT("actions"), TEXT("phases"), TEXT("persona") };
 	const TArray<FString> StatKeys = { TEXT("max_health"), TEXT("attack_power"), TEXT("armor"), TEXT("move_speed"), TEXT("team") };
 	const TArray<FString> PhaseStatKeys = { TEXT("max_health"), TEXT("attack_power"), TEXT("armor"), TEXT("move_speed") };
 	const TArray<FString> InertiaKeys = { TEXT("switch_ratio"), TEXT("min_hold_seconds") };
-	const TArray<FString> AbilityKeys = { TEXT("spell"), TEXT("range"), TEXT("cooldown"), TEXT("token_cost"), TEXT("timetable") };
+	const TArray<FString> AbilityKeys = { TEXT("spell"), TEXT("range"), TEXT("cooldown"), TEXT("token_cost"), TEXT("timetable"), TEXT("windup"), TEXT("danger"), TEXT("stance") };
 	const TArray<FString> StepKeys = { TEXT("do"), TEXT("args") };
 	const TArray<FString> ActionKeys = { TEXT("id"), TEXT("do"), TEXT("args"), TEXT("weight"), TEXT("cooldown"), TEXT("considerations"), TEXT("remove") };
 	const TArray<FString> RemoveKeys = { TEXT("id"), TEXT("remove") };
 	const TArray<FString> ConsiderationKeys = { TEXT("input"), TEXT("args"), TEXT("curve"), TEXT("m"), TEXT("k"), TEXT("b"), TEXT("c"), TEXT("range"), TEXT("invert") };
-	const TArray<FString> PhaseKeys = { TEXT("id"), TEXT("enter_when"), TEXT("on_enter"), TEXT("stats"), TEXT("actions") };
+	const TArray<FString> PhaseKeys = { TEXT("id"), TEXT("enter_when"), TEXT("on_enter"), TEXT("stats"), TEXT("actions"), TEXT("cooldown_scale") };
 	const TArray<FString> EnterWhenKeys = { TEXT("input"), TEXT("args"), TEXT("op"), TEXT("value") };
 	const TArray<FString> TargetNames = { TEXT("Player"), TEXT("NearestEnemy") };
 	const TArray<FString> CombatRoleNames = { TEXT("Melee"), TEXT("Ranged"), TEXT("Charger"), TEXT("Support") };
+	const TArray<FString> StanceNames = { TEXT("ground"), TEXT("air"), TEXT("any") };
 	const TArray<FString> KeyMergedObjects = { TEXT("stats"), TEXT("abilities"), TEXT("sequences"), TEXT("persona"), TEXT("inertia"), TEXT("lod_periods") };
 
 	int32 ComputeEditDistance(const FString& Left, const FString& Right)
@@ -120,6 +125,28 @@ namespace
 		const TSharedRef<TJsonWriter<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>> Writer = TJsonWriterFactory<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>::Create(&Output);
 		FJsonSerializer::Serialize(Object.ToSharedRef(), Writer);
 		return Output;
+	}
+
+	bool IsSpeciesName(const FString& Text)
+	{
+		if (Text.IsEmpty())
+		{
+			return false;
+		}
+		for (const TCHAR Character : Text)
+		{
+			const bool bIsAllowed = (Character >= TEXT('a') && Character <= TEXT('z')) || (Character >= TEXT('A') && Character <= TEXT('Z')) || (Character >= TEXT('0') && Character <= TEXT('9')) || Character == TEXT('_');
+			if (!bIsAllowed)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool IsMinionCount(const float Number)
+	{
+		return Number >= 1.f && Number <= MaxSummonCount && FMath::IsNearlyEqual(Number, static_cast<float>(FMath::RoundToInt(Number)), 0.001f);
 	}
 
 	class FTDDefinitionReader
@@ -529,7 +556,7 @@ namespace
 					Ability.Spell = SpellResolver(Ability.SpellName);
 					if (!Ability.Spell)
 					{
-						Reader.Error(JoinPath(Path, TEXT("spell")), FString::Printf(TEXT("unknown spell '%s' (not in the monster attack catalog or /Game/Combat/Examples)"), *SpellName));
+						Reader.Error(JoinPath(Path, TEXT("spell")), FString::Printf(TEXT("unknown spell '%s' (not in the monster attack catalog, /Game/Combat/MegaMagic or /Game/Combat/Examples)"), *SpellName));
 					}
 				}
 				Reader.ReadRequiredNumber(*AbilityObject, TEXT("range"), Path, Ability.Range);
@@ -554,11 +581,59 @@ namespace
 				{
 					Reader.Error(JoinPath(Path, TEXT("range")), TEXT("must be > 0"));
 				}
+				ResolveAbilityTactics(*AbilityObject, Path, Ability);
 			}
 			if (Definition.Abilities.Num() > MaxAbilities)
 			{
 				Reader.Error(TEXT("abilities"), FString::Printf(TEXT("at most %d abilities"), MaxAbilities));
 			}
+		}
+
+		void ResolveAbilityTactics(const TSharedPtr<FJsonObject>& AbilityObject, const FString& Path, FTDResolvedAbility& Ability)
+		{
+			float WindupSeconds = 0.f;
+			if (Reader.ReadOptionalNumber(AbilityObject, TEXT("windup"), Path, WindupSeconds))
+			{
+				if (WindupSeconds < 0.f || WindupSeconds > MaxAbilityWindupSeconds)
+				{
+					Reader.Error(JoinPath(Path, TEXT("windup")), FString::Printf(TEXT("must be between 0 and %.0f seconds"), MaxAbilityWindupSeconds));
+				}
+				else
+				{
+					Ability.WindupSeconds = WindupSeconds;
+				}
+			}
+			const TSharedPtr<FJsonValue> DangerValue = AbilityObject->TryGetField(TEXT("danger"));
+			if (DangerValue.IsValid() && DangerValue->Type != EJson::Boolean)
+			{
+				Reader.Error(JoinPath(Path, TEXT("danger")), TEXT("expected true or false"));
+			}
+			else if (DangerValue.IsValid())
+			{
+				Ability.bIsDanger = DangerValue->AsBool();
+			}
+			const TSharedPtr<FJsonValue> StanceValue = AbilityObject->TryGetField(TEXT("stance"));
+			if (StanceValue.IsValid() && StanceValue->Type != EJson::String)
+			{
+				Reader.Error(JoinPath(Path, TEXT("stance")), TEXT("expected ground, air or any"));
+			}
+			else if (StanceValue.IsValid())
+			{
+				const FString StanceName = StanceValue->AsString();
+				if (StanceName == TEXT("ground"))
+				{
+					Ability.Stance = ETDAbilityStance::Ground;
+				}
+				else if (StanceName == TEXT("air"))
+				{
+					Ability.Stance = ETDAbilityStance::Air;
+				}
+				else if (StanceName != TEXT("any"))
+				{
+					Reader.Error(JoinPath(Path, TEXT("stance")), FString::Printf(TEXT("unknown stance '%s'%s, use ground, air or any"), *StanceName, *MakeSuggestion(StanceName, StanceNames)));
+				}
+			}
+			Ability.DangerSteps = TDMonsterAI::SecondsToSteps(Ability.WindupSeconds + (Ability.Spell ? Ability.Spell->Lifetime : 0.f));
 		}
 
 		void ResolveSequences(FTDResolvedMonsterDefinition& Definition, const TSharedPtr<FJsonObject>& Root)
@@ -675,6 +750,11 @@ namespace
 				{
 					return;
 				}
+				if (ArgName == TEXT("count") && !IsMinionCount(Number))
+				{
+					Reader.Error(ArgPath, FString::Printf(TEXT("must be a whole number from 1 to %d"), MaxSummonCount));
+					return;
+				}
 				if (Number < 0.f)
 				{
 					Reader.Error(ArgPath, TEXT("must be >= 0"));
@@ -713,6 +793,14 @@ namespace
 				}
 				OutArgs.bLeadTarget = bFlag;
 				return;
+			case ETDActionArgKind::Species:
+				if (Value->Type != EJson::String || !IsSpeciesName(Value->AsString()))
+				{
+					Reader.Error(ArgPath, TEXT("expected a species short name of letters, digits and underscores, for example Goblin"));
+					return;
+				}
+				OutArgs.SpeciesName = FName(*Value->AsString());
+				return;
 			}
 		}
 
@@ -741,6 +829,21 @@ namespace
 			if (ArgName == TEXT("seconds"))
 			{
 				OutArgs.Seconds = Number;
+				return;
+			}
+			if (ArgName == TEXT("altitude"))
+			{
+				OutArgs.Altitude = Number;
+				return;
+			}
+			if (ArgName == TEXT("count"))
+			{
+				OutArgs.Count = FMath::RoundToInt(Number);
+				return;
+			}
+			if (ArgName == TEXT("radius"))
+			{
+				OutArgs.Radius = Number;
 			}
 		}
 
@@ -952,6 +1055,7 @@ namespace
 					}
 				}
 				ResolvePhaseStats(*PhaseObject, Path, Phase);
+				ResolvePhaseCooldownScale(*PhaseObject, Path, Phase);
 				if (const TArray<TSharedPtr<FJsonValue>>* PhaseActions = Reader.ReadOptionalArray(*PhaseObject, TEXT("actions"), Path))
 				{
 					CurrentActionValues = MergeActionArrays(CurrentActionValues, *PhaseActions, JoinPath(Path, TEXT("actions")), Reader);
@@ -989,6 +1093,21 @@ namespace
 				}
 			}
 			Reader.ReadRequiredNumber(EnterWhen, TEXT("value"), ConditionPath, Phase.Value);
+		}
+
+		void ResolvePhaseCooldownScale(const TSharedPtr<FJsonObject>& PhaseObject, const FString& Path, FTDResolvedPhase& Phase)
+		{
+			float CooldownScale = 1.f;
+			if (!Reader.ReadOptionalNumber(PhaseObject, TEXT("cooldown_scale"), Path, CooldownScale))
+			{
+				return;
+			}
+			if (CooldownScale < MinCooldownScale || CooldownScale > MaxCooldownScale)
+			{
+				Reader.Error(JoinPath(Path, TEXT("cooldown_scale")), FString::Printf(TEXT("must be between %.1f and %.0f"), MinCooldownScale, MaxCooldownScale));
+				return;
+			}
+			Phase.CooldownScale = CooldownScale;
 		}
 
 		void ResolvePhaseStats(const TSharedPtr<FJsonObject>& PhaseObject, const FString& Path, FTDResolvedPhase& Phase)
@@ -1060,14 +1179,28 @@ namespace
 		return Merged;
 	}
 
-	TArray<FSoftObjectPath> MakeTDSpellCandidatePaths(const FName SpellName)
+	void GatherSummonSpeciesNames(const FTDResolvedMonsterDefinition& Definition, TArray<FName>& OutSpeciesNames)
 	{
-		const FString NameText = SpellName.ToString();
-		return
+		for (const TArray<FTDResolvedAction>& Actions : Definition.ActionsByPhase)
 		{
-			FSoftObjectPath(FString::Printf(TEXT("/Game/MonsterAI/Attacks/%s.%s"), *NameText, *NameText)),
-			FSoftObjectPath(FString::Printf(TEXT("/Game/Combat/Examples/%s.%s"), *NameText, *NameText))
-		};
+			for (const FTDResolvedAction& Action : Actions)
+			{
+				if (Action.Primitive == ETDMonsterPrimitive::SummonMinions && !Action.Args.SpeciesName.IsNone())
+				{
+					OutSpeciesNames.AddUnique(Action.Args.SpeciesName);
+				}
+			}
+		}
+		for (const TArray<FTDResolvedStep>& Steps : Definition.Sequences)
+		{
+			for (const FTDResolvedStep& Step : Steps)
+			{
+				if (Step.Primitive == ETDMonsterPrimitive::SummonMinions && !Step.Args.SpeciesName.IsNone())
+				{
+					OutSpeciesNames.AddUnique(Step.Args.SpeciesName);
+				}
+			}
+		}
 	}
 }
 
@@ -1144,6 +1277,11 @@ void UTDMonsterDefinitionLibrary::Deinitialize()
 	}
 	SpellAssetsHandle.Reset();
 	SpellPresentationHandle.Reset();
+	if (SummonSpeciesHandle.IsValid())
+	{
+		SummonSpeciesHandle->CancelHandle();
+	}
+	SummonSpeciesHandle.Reset();
 	if (ReloadCommand)
 	{
 		IConsoleManager::Get().UnregisterConsoleObject(ReloadCommand);
@@ -1152,6 +1290,7 @@ void UTDMonsterDefinitionLibrary::Deinitialize()
 	Definitions.Reset();
 	SpellsByName.Reset();
 	OwnedSpells.Reset();
+	WindupSpells.Reset();
 	Super::Deinitialize();
 }
 
@@ -1163,6 +1302,56 @@ UTDMonsterDefinitionLibrary* UTDMonsterDefinitionLibrary::Get()
 FString UTDMonsterDefinitionLibrary::GetDefinitionDirectory()
 {
 	return FPaths::Combine(FPaths::ProjectContentDir(), TEXT("MonsterAI"), TEXT("Definitions"));
+}
+
+FSoftObjectPath UTDMonsterDefinitionLibrary::FindExistingSpellPath(const FName SpellName)
+{
+	for (const FSoftObjectPath& CandidatePath : GetSpellCandidatePaths(SpellName))
+	{
+		if (FPackageName::DoesPackageExist(CandidatePath.GetLongPackageName()))
+		{
+			return CandidatePath;
+		}
+	}
+	return FSoftObjectPath();
+}
+
+TArray<FSoftObjectPath> UTDMonsterDefinitionLibrary::GetSpellCandidatePaths(const FName SpellName)
+{
+	const FString NameText = SpellName.ToString();
+	return
+	{
+		FSoftObjectPath(FString::Printf(TEXT("/Game/MonsterAI/Attacks/%s.%s"), *NameText, *NameText)),
+		FSoftObjectPath(FString::Printf(TEXT("/Game/Combat/MegaMagic/%s.%s"), *NameText, *NameText)),
+		FSoftObjectPath(FString::Printf(TEXT("/Game/Combat/Examples/%s.%s"), *NameText, *NameText))
+	};
+}
+
+FSoftObjectPath UTDMonsterDefinitionLibrary::MakeSpeciesAssetPath(const FName SpeciesName)
+{
+	const FString NameText = SpeciesName.ToString();
+	return FSoftObjectPath(FString::Printf(TEXT("/Game/MonsterAI/Species/DA_TDMonster_%s.DA_TDMonster_%s"), *NameText, *NameText));
+}
+
+UTDDamageDefinition* UTDMonsterDefinitionLibrary::FindOrCreateWindupSpell(UTDDamageDefinition* Spell, const float WindupSeconds, const bool bIsDanger)
+{
+	if (!Spell)
+	{
+		return nullptr;
+	}
+	const FName Key(*FString::Printf(TEXT("%s_W%d_%s"), *Spell->GetPathName(), FMath::RoundToInt(WindupSeconds * 1000.f), bIsDanger ? TEXT("D") : TEXT("N")));
+	if (const TObjectPtr<UTDDamageDefinition>* Cached = WindupSpells.Find(Key))
+	{
+		return Cached->Get();
+	}
+	const FName WrapperName = MakeUniqueObjectName(this, UTDDamageDefinition::StaticClass(), FName(*FString::Printf(TEXT("%s_Windup"), *Spell->GetName())));
+	UTDDamageDefinition* WindupSpell = TDMonsterAttackCatalog::CreateWindupSpell(this, WrapperName, Spell, WindupSeconds, bIsDanger ? ETDTelegraphStyle::Unblockable : ETDTelegraphStyle::Danger);
+	if (!WindupSpell)
+	{
+		return Spell;
+	}
+	WindupSpells.Add(Key, WindupSpell);
+	return WindupSpell;
 }
 
 TSharedPtr<const FTDResolvedMonsterDefinition> UTDMonsterDefinitionLibrary::FindDefinition(const FName DefinitionId)
@@ -1187,16 +1376,15 @@ UTDDamageDefinition* UTDMonsterDefinitionLibrary::FindSpell(const FName SpellNam
 	{
 		return *Spell;
 	}
-	for (const FSoftObjectPath& CandidatePath : MakeTDSpellCandidatePaths(SpellName))
+	const FSoftObjectPath SpellPath = FindExistingSpellPath(SpellName);
+	UTDDamageDefinition* Loaded = SpellPath.IsNull() ? nullptr : Cast<UTDDamageDefinition>(SpellPath.ResolveObject());
+	if (!Loaded)
 	{
-		if (UTDDamageDefinition* Loaded = Cast<UTDDamageDefinition>(CandidatePath.ResolveObject()))
-		{
-			OwnedSpells.Add(Loaded);
-			SpellsByName.Add(SpellName, Loaded);
-			return Loaded;
-		}
+		return nullptr;
 	}
-	return nullptr;
+	OwnedSpells.Add(Loaded);
+	SpellsByName.Add(SpellName, Loaded);
+	return Loaded;
 }
 
 int32 UTDMonsterDefinitionLibrary::ReloadDefinitions()
@@ -1208,6 +1396,7 @@ int32 UTDMonsterDefinitionLibrary::ReloadDefinitions()
 	LoadErrors.Reset();
 	ResolveDefinitionTexts(FileTexts, [this](const FName SpellName) { return FindSpell(SpellName); }, Definitions, LoadErrors);
 	RequestSpellPresentation();
+	RequestSummonSpeciesAssets(Definitions);
 	bHasLoaded = true;
 	for (const FString& Error : LoadErrors)
 	{
@@ -1246,21 +1435,16 @@ TArray<FSoftObjectPath> UTDMonsterDefinitionLibrary::CollectUnloadedSpellPaths(c
 		{
 			return *Spell;
 		}
-		const TArray<FSoftObjectPath> CandidatePaths = MakeTDSpellCandidatePaths(SpellName);
-		for (const FSoftObjectPath& CandidatePath : CandidatePaths)
+		const FSoftObjectPath SpellPath = UTDMonsterDefinitionLibrary::FindExistingSpellPath(SpellName);
+		if (SpellPath.IsNull())
 		{
-			if (UTDDamageDefinition* Resident = Cast<UTDDamageDefinition>(CandidatePath.ResolveObject()))
-			{
-				return Resident;
-			}
+			return nullptr;
 		}
-		for (const FSoftObjectPath& CandidatePath : CandidatePaths)
+		if (UTDDamageDefinition* Resident = Cast<UTDDamageDefinition>(SpellPath.ResolveObject()))
 		{
-			if (FPackageName::DoesPackageExist(CandidatePath.GetLongPackageName()))
-			{
-				UnloadedSpellPaths.AddUnique(CandidatePath);
-			}
+			return Resident;
 		}
+		UnloadedSpellPaths.AddUnique(SpellPath);
 		return nullptr;
 	}, IgnoredDefinitions, IgnoredErrors);
 	return UnloadedSpellPaths;
@@ -1293,12 +1477,48 @@ void UTDMonsterDefinitionLibrary::PrefetchDefinitionAssets()
 		return;
 	}
 	EnsureAttackCatalog();
-	const TArray<FSoftObjectPath> SpellPaths = CollectUnloadedSpellPaths(ReadDefinitionFiles());
+	const TMap<FString, FString> FileTexts = ReadDefinitionFiles();
+	TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>> PrefetchedDefinitions;
+	TArray<FString> IgnoredErrors;
+	ResolveDefinitionTexts(FileTexts, [](const FName) { return GetMutableDefault<UTDDamageDefinition>(); }, PrefetchedDefinitions, IgnoredErrors);
+	RequestSummonSpeciesAssets(PrefetchedDefinitions);
+	const TArray<FSoftObjectPath> SpellPaths = CollectUnloadedSpellPaths(FileTexts);
 	if (SpellPaths.IsEmpty())
 	{
 		return;
 	}
 	SpellAssetsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(SpellPaths, FStreamableDelegate());
+}
+
+void UTDMonsterDefinitionLibrary::RequestSummonSpeciesAssets(const TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>>& ResolvedDefinitions)
+{
+	if (!UAssetManager::IsInitialized())
+	{
+		return;
+	}
+	TArray<FName> DefinitionIds;
+	ResolvedDefinitions.GetKeys(DefinitionIds);
+	DefinitionIds.Sort([](const FName Left, const FName Right) { return Left.LexicalLess(Right); });
+	TArray<FName> SpeciesNames;
+	for (const FName DefinitionId : DefinitionIds)
+	{
+		GatherSummonSpeciesNames(*ResolvedDefinitions[DefinitionId], SpeciesNames);
+	}
+	SpeciesNames.Sort([](const FName Left, const FName Right) { return Left.LexicalLess(Right); });
+	TArray<FSoftObjectPath> UnloadedPaths;
+	for (const FName SpeciesName : SpeciesNames)
+	{
+		const FSoftObjectPath SpeciesPath = MakeSpeciesAssetPath(SpeciesName);
+		if (!SpeciesPath.ResolveObject())
+		{
+			UnloadedPaths.Add(SpeciesPath);
+		}
+	}
+	if (UnloadedPaths.IsEmpty())
+	{
+		return;
+	}
+	SummonSpeciesHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(UnloadedPaths, FStreamableDelegate());
 }
 
 void UTDMonsterDefinitionLibrary::RequestSpellPresentation()

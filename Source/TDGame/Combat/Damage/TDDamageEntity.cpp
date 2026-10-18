@@ -15,6 +15,80 @@
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 
+namespace
+{
+	float GetAreaGatherRadius(const UTDDamageDefinition& Definition, const float Radius)
+	{
+		if (Definition.AreaShape != ETDDamageAreaShape::Line)
+		{
+			return Radius;
+		}
+		return FMath::Sqrt(FMath::Square(Radius) + FMath::Square(Definition.LineHalfWidth));
+	}
+
+	bool IsInsideAreaShape(const UTDDamageDefinition& Definition, const FVector& Origin, const FVector& Forward, const FVector& Point)
+	{
+		const double OffsetX = Point.X - Origin.X;
+		const double OffsetY = Point.Y - Origin.Y;
+		const double Distance = FMath::Sqrt(OffsetX * OffsetX + OffsetY * OffsetY);
+		if (Definition.AreaShape == ETDDamageAreaShape::Cone)
+		{
+			if (Distance > Definition.Radius)
+			{
+				return false;
+			}
+			if (Distance < 1.)
+			{
+				return true;
+			}
+			const double CosineToPoint = (OffsetX * Forward.X + OffsetY * Forward.Y) / Distance;
+			const double CosineAtEdge = FMath::Cos(FMath::DegreesToRadians(static_cast<double>(Definition.ConeHalfAngleDegrees)));
+			return CosineToPoint >= CosineAtEdge - UE_DOUBLE_SMALL_NUMBER;
+		}
+		if (Definition.AreaShape == ETDDamageAreaShape::Line)
+		{
+			const double Ahead = OffsetX * Forward.X + OffsetY * Forward.Y;
+			const double Side = OffsetY * Forward.X - OffsetX * Forward.Y;
+			return Ahead >= 0. && Ahead <= Definition.Radius && FMath::Abs(Side) <= Definition.LineHalfWidth;
+		}
+		if (Definition.AreaShape == ETDDamageAreaShape::Ring)
+		{
+			return Distance >= Definition.InnerRadius && Distance <= Definition.Radius;
+		}
+		return true;
+	}
+
+	void DrawConeOutline(const UWorld* World, const FVector& Origin, const double YawDegrees, const float HalfAngleDegrees, const float Radius, const FColor& Color)
+	{
+		constexpr int32 ArcSegments = 12;
+		const double StartYaw = YawDegrees - HalfAngleDegrees;
+		FVector PreviousPoint = Origin + FRotator(0., StartYaw, 0.).Vector() * Radius;
+		DrawDebugLine(World, Origin, PreviousPoint, Color);
+		for (int32 Segment = 1; Segment <= ArcSegments; ++Segment)
+		{
+			const double SegmentYaw = StartYaw + 2. * HalfAngleDegrees * Segment / ArcSegments;
+			const FVector Point = Origin + FRotator(0., SegmentYaw, 0.).Vector() * Radius;
+			DrawDebugLine(World, PreviousPoint, Point, Color);
+			PreviousPoint = Point;
+		}
+		DrawDebugLine(World, Origin, PreviousPoint, Color);
+	}
+
+	void DrawLineOutline(const UWorld* World, const FVector& Origin, const double YawDegrees, const float Length, const float HalfWidth, const FColor& Color)
+	{
+		const FVector Forward = FRotator(0., YawDegrees, 0.).Vector();
+		const FVector Right = FRotator(0., YawDegrees + 90., 0.).Vector();
+		const FVector NearLeft = Origin - Right * HalfWidth;
+		const FVector NearRight = Origin + Right * HalfWidth;
+		const FVector FarLeft = NearLeft + Forward * Length;
+		const FVector FarRight = NearRight + Forward * Length;
+		DrawDebugLine(World, NearLeft, NearRight, Color);
+		DrawDebugLine(World, NearRight, FarRight, Color);
+		DrawDebugLine(World, FarRight, FarLeft, Color);
+		DrawDebugLine(World, FarLeft, NearLeft, Color);
+	}
+}
+
 ATDDamageEntity::ATDDamageEntity()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -558,8 +632,11 @@ void ATDDamageEntity::HitArea(float OuterRadius, float InnerRadius, double HitTi
 	{
 		return;
 	}
+	const bool bFiltersByAreaShape = Definition->Mode == ETDDamageEntityMode::Area;
+	const FVector Forward = FRotator(0., GetActorRotation().Yaw, 0.).Vector();
+	const float GatherRadius = bFiltersByAreaShape ? GetAreaGatherRadius(*Definition, OuterRadius) : OuterRadius;
 	TArray<UTDCombatComponent*> Targets;
-	Subsystem->GatherTargets(GetActorLocation(), OuterRadius, Definition->HalfHeight,
+	Subsystem->GatherTargets(GetActorLocation(), GatherRadius, Definition->HalfHeight,
 		Context, Definition->TargetPolicy, Targets);
 	for (UTDCombatComponent* Target : Targets)
 	{
@@ -573,6 +650,10 @@ void ATDDamageEntity::HitArea(float OuterRadius, float InnerRadius, double HitTi
 		}
 		const FVector TargetLocation = Target->GetOwner()->GetActorLocation();
 		if (FVector::DistSquared2D(GetActorLocation(), TargetLocation) < FMath::Square(InnerRadius))
+		{
+			continue;
+		}
+		if (bFiltersByAreaShape && !IsInsideAreaShape(*Definition, GetActorLocation(), Forward, TargetLocation))
 		{
 			continue;
 		}
@@ -790,14 +871,36 @@ void ATDDamageEntity::DrawShape() const
 		DrawDebugSphere(GetWorld(), GetActorLocation(), Definition->ProjectileRadius, 12, Color);
 		return;
 	}
+	const bool bIsArea = Definition->Mode == ETDDamageEntityMode::Area;
+	if (bIsArea && Definition->AreaShape == ETDDamageAreaShape::Cone)
+	{
+		DrawConeOutline(GetWorld(), GetActorLocation(), GetActorRotation().Yaw,
+			Definition->ConeHalfAngleDegrees, Definition->Radius, Color);
+		return;
+	}
+	if (bIsArea && Definition->AreaShape == ETDDamageAreaShape::Line)
+	{
+		DrawLineOutline(GetWorld(), GetActorLocation(), GetActorRotation().Yaw,
+			Definition->Radius, Definition->LineHalfWidth, Color);
+		return;
+	}
 	const FVector Height(0.f, 0.f, Definition->HalfHeight);
 	const bool bIsShockwave = Definition->Mode == ETDDamageEntityMode::Shockwave;
 	const float OuterRadius = bIsShockwave ? RingOuterRadius : Definition->Radius;
+	float InnerRadius = 0.f;
+	if (bIsShockwave)
+	{
+		InnerRadius = RingInnerRadius;
+	}
+	else if (bIsArea && Definition->AreaShape == ETDDamageAreaShape::Ring)
+	{
+		InnerRadius = Definition->InnerRadius;
+	}
 	DrawDebugCylinder(GetWorld(), GetActorLocation() - Height, GetActorLocation() + Height,
 		OuterRadius, 32, Color);
-	if (bIsShockwave && RingInnerRadius > 0.f)
+	if (InnerRadius > 0.f)
 	{
 		DrawDebugCylinder(GetWorld(), GetActorLocation() - Height, GetActorLocation() + Height,
-			RingInnerRadius, 32, Color);
+			InnerRadius, 32, Color);
 	}
 }

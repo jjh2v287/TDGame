@@ -236,3 +236,12 @@
 - 증거: 2026-10-17 `Saved/AgentOps/20261017/soft-damage/resave.json`(저장 프로세스, 하드 21) ↔ `resave-dryrun-after.json`(새 프로세스, 하드 0)
 - 날짜·상태: 2026-10-17 active
 - 발견: claude
+
+### L-editor-34 새 예고 재질을 만든 같은 에디터 세션에서는 몬스터 공격 예고가 디버그 와이어로 나온다
+- 증상: `editor_make_boss_telegraphs.py`로 `MI_TD_Telegraph_Safe` 등 18개를 만든 직후 같은 에디터에서 PIE를 돌리자 용 업화의 안전 지대가 청록 원판이 아니라 디버그 원기둥 와이어로 그려졌다(부채꼴·띠 예고도 같은 조건)
+- 원인: `TDMonsterAttackCatalog::CreateAttacks`는 라이브러리 초기화 때 한 번 돌고, `ApplyTelegraph`가 그 시점에 `FPackageName::DoesPackageExist`로 재질 패키지를 검사해 없으면 `bDrawDebug = true`로 굳힌다. 카탈로그 정의는 런타임 임시 객체라 에셋이 생겨도 다시 만들지 않는다
+- 해결: 예고 에셋을 새로 만들거나 경로를 바꾼 뒤에는 `python Tools/ue_editor.py restart`(또는 에디터 재시작) 후 PIE. 재시작 뒤 같은 탐침에서 원판·부채꼴·띠가 재질로 나옴
+- 범위: C++ 카탈로그 정의(용·중간 보스·기본 몬스터 공격)의 예고 재질 전부. `.uasset` 주문은 해당 없음
+- 증거: `Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/6_inferno.png`(재시작 뒤), 재시작 전 실행은 같은 폴더 덮어씀(Worklog M3-35 완료 항목)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude

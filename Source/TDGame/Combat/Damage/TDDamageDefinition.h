@@ -45,6 +45,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Shape", meta=(ClampMin="1"))
 	float HalfHeight = 150.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Shape", meta=(ToolTip="Footprint of an Area entity. Circle fills Radius, Cone is a wedge along the facing, Line is a band along the facing, Ring excludes InnerRadius."))
+	ETDDamageAreaShape AreaShape = ETDDamageAreaShape::Circle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Shape", meta=(ClampMin="1", ClampMax="180", ToolTip="Half of the Cone opening angle in degrees, measured from the facing."))
+	float ConeHalfAngleDegrees = 45.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Shape", meta=(ClampMin="1", ToolTip="Half of the Line band width in cm. The band is Radius long."))
+	float LineHalfWidth = 100.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Shape")
 	bool bProjectToGround = false;
 

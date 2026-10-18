@@ -15,6 +15,7 @@ class UTDSignificanceComponent;
 class UTDSkillComponent;
 struct FTDDamageContext;
 struct FTDDamageResult;
+struct FStreamableHandle;
 
 UCLASS()
 class TDGAME_API ATDMonsterCharacter : public ATDCombatCharacter, public IGenericTeamAgentInterface, public ITDMonsterBody
@@ -37,6 +38,11 @@ public:
 	virtual void CancelBodyAbility() override;
 	virtual void BeginBodyStagger(const FVector& SourceLocation, float Seconds) override;
 	virtual void PresentBody(float DeltaSeconds, ETDMonsterFsmState State) override;
+	virtual float BeginBodyFlight(float AltitudeCm, float Seconds) override;
+	virtual float EndBodyFlight(float Seconds) override;
+	virtual float BeginBodySummon(const FTDMonsterSummonRequest& Request) override;
+	virtual int32 CountBodyMinionsAlive() const override;
+	virtual void NotifyBodyPhaseEntered(int32 PhaseIndex, FName PhaseId) override;
 
 	UFUNCTION(BlueprintPure, Category="MonsterAI")
 	UTDMonsterSpeciesAsset* GetSpecies() const { return Species; }
@@ -46,6 +52,21 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="MonsterAI")
 	bool HasMonsterBrain() const { return BrainHandle.IsValid(); }
+
+	UFUNCTION(BlueprintPure, Category="MonsterAI")
+	int32 GetMonsterPhaseIndex() const;
+
+	UFUNCTION(BlueprintPure, Category="MonsterAI")
+	TArray<float> GetPhaseHealthMarks() const;
+
+	UFUNCTION(BlueprintPure, Category="MonsterAI")
+	bool IsMonsterFlying() const;
+
+	UFUNCTION(BlueprintPure, Category="MonsterAI")
+	bool IsBossMonster() const;
+
+	UFUNCTION(BlueprintCallable, Category="MonsterAI")
+	void EngageMonsterBrain(AActor* Target);
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void SetCurrentTarget(AActor* NewTarget);
@@ -116,6 +137,13 @@ private:
 	FVector ComputeAbilityOrigin(const FTDMonsterAbilityRequest& Request) const;
 	float PlayAbilityClip(const FTDMonsterAbilityRequest& Request, float WindupSeconds, float& OutRecoverySeconds);
 	float PlaySpeciesClip(const FTDMonsterAnimClip& Clip, float PlayRate);
+	void ApplyFlightMoveInput(const FVector2D& Direction, float SpeedScale);
+	void FinishBodyLandingIfArrived();
+	bool FindGroundHeight(const FVector& Location, const AActor* SpawnedActor, float& OutGroundZ) const;
+	void CompleteSummonLoad(const FSoftObjectPath& SpeciesPath, const FTDMonsterSummonRequest& Request);
+	void SpawnSummonedMinions(UTDMonsterSpeciesAsset* MinionSpecies, const FTDMonsterSummonRequest& Request);
+	ATDMonsterCharacter* SpawnSummonedMinion(UTDMonsterSpeciesAsset* MinionSpecies, const FVector& Location, const FRotator& Rotation);
+	void CancelSummonLoads();
 
 	bool bHasGrantedDefaultActionAbilities = false;
 	bool bHasAppliedMonsterStats = false;
@@ -129,6 +157,15 @@ private:
 	float CorpseSinkDepth = 0.f;
 	FTDMonsterSlotHandle BrainHandle;
 	TWeakObjectPtr<ATDDamageEntity> ActiveAbilityEntity;
+	bool bIsBodyFlying = false;
+	bool bIsBodyLanding = false;
+	float BodyFlightTargetZ = 0.f;
+	float BodyFlightBoostSpeed = 0.f;
+	double BodyFlightTransitionEndSeconds = 0.0;
+	int32 PendingMinionCount = 0;
+	TArray<TWeakObjectPtr<ATDMonsterCharacter>> SummonedMinions;
+	TArray<TSharedPtr<FStreamableHandle>> SummonLoadHandles;
+	TArray<FTimerHandle> SummonTimerHandles;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<USkeletalMeshComponent>> FollowerMeshComponents;

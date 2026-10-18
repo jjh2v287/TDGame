@@ -108,6 +108,55 @@ namespace
 
 		return ValidateMinimum(TEXT("ScatterRadius"), Action.ScatterRadius, 0.f, OutError);
 	}
+
+	bool ValidateAreaShape(const UTDDamageDefinition& Definition, FString& OutError)
+	{
+		if (Definition.AreaShape > ETDDamageAreaShape::Ring)
+		{
+			OutError = TEXT("AreaShape must use a supported enum value.");
+			return false;
+		}
+
+		if (Definition.AreaShape == ETDDamageAreaShape::Circle)
+		{
+			return true;
+		}
+
+		if (Definition.Mode != ETDDamageEntityMode::Area)
+		{
+			OutError = TEXT("AreaShape other than Circle requires Mode to be Area.");
+			return false;
+		}
+
+		if (Definition.AreaShape == ETDDamageAreaShape::Cone)
+		{
+			if (!ValidateMinimum(TEXT("ConeHalfAngleDegrees"), Definition.ConeHalfAngleDegrees, 1.f, OutError))
+			{
+				return false;
+			}
+
+			if (Definition.ConeHalfAngleDegrees > 180.f)
+			{
+				OutError = TEXT("ConeHalfAngleDegrees must be at most 180.");
+				return false;
+			}
+
+			return true;
+		}
+
+		if (Definition.AreaShape == ETDDamageAreaShape::Line)
+		{
+			return ValidateMinimum(TEXT("LineHalfWidth"), Definition.LineHalfWidth, 1.f, OutError);
+		}
+
+		if (Definition.InnerRadius >= Definition.Radius)
+		{
+			OutError = TEXT("Ring InnerRadius must be smaller than Radius.");
+			return false;
+		}
+
+		return true;
+	}
 }
 
 bool FTDHomingSettings::Validate(FString& OutError) const
@@ -202,6 +251,11 @@ bool UTDDamageDefinition::ValidateDefinition(FString& OutError) const
 	if (Mode == ETDDamageEntityMode::Shockwave && InnerRadius >= Radius)
 	{
 		OutError = TEXT("Shockwave InnerRadius must be smaller than Radius.");
+		return false;
+	}
+
+	if (!ValidateAreaShape(*this, OutError))
+	{
 		return false;
 	}
 

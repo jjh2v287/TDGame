@@ -1,13 +1,14 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-10-18 17:50 claude
+갱신: 2026-10-18 19:10 claude
 
 ## ① 진행 중 (대장 doing)
 
-- M3-33 done(로컬 커밋): 종 14개, 종 표 `Tools/MonsterAI/species_table.json`, 추종 메시. 79/80, PIE 14/14. M3-34·35·36 doing.
+- M3-33 done(로컬 커밋): 종 14개, 종 표 `Tools/MonsterAI/species_table.json`, 추종 메시. 79/80, PIE 14/14. M3-34·36 doing.
+- M3-35 done(로컬 커밋): 공용 보스 기반(비행·소환·형상 예고·위험 1·페이즈 알림)·3페이즈 용 `TDSpawnMonster MountainDragon`. Boss 7/7, 합본 177/178, PIE 처치 통과.
 - 커밋 끝(상세는 07): M3-14 PIE(26eda9e8)·M3-30~32 경보·사기·독점(0c716eac)·M3-29 JSON 전술 키(3db74045)·M3-27 전투 완성(0d302219)·M3-14·28 토큰·디렉터(e785257d). 전술 끄기 `TD.MonsterAI.Tactics 0`.
 - FluidFX done(미커밋, D-48): 68/68·PIE 통과. 최적화: 128×4 PIE 틱 27→1.3ms, 비트 동일(`D-48-perf-2026-10-18.md` 6절).
-- D-47 done(커밋 3794ad14)+후속 미커밋(피해 정의 소프트화·쿠킹 보장 도구).
+- D-47 done(커밋 3794ad14), 후속(c) 피해 정의 소프트화는 M3-35 앞 커밋으로 정리.
 - M3-25·M3-26 done(M3-26 미커밋, PIE 육안 대기). P3-17·19·20 done.
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked(Cascadeur Free, L-anim-08), H-02 todo.
@@ -21,6 +22,7 @@
 - M3-02 blocked: 장면 보정·300마리 실측. 기준선 CrossingStreams 실패 1.
 - 07#MD-47 (a) 유지 권장, ⑥ 막힌 예약 회수 적용, ⑦ 발짝 깊이·Relax 체감 검토.
 - 07#MD-50 몬스터화 종 구성·수치(proposed). Kwang 래그돌 없음·검사 무기 미부착.
+- 07#MD-57 용 보스 수치·업화 안전 지대 1곳·생략 기술, MD-58 보스 기반 규칙(proposed).
 - 07#MD-48 무리 행동 기본값·elite 데이터·Hyena 돌진자 보류(proposed), MD-43 Flee 끝 적용(proposed). 공황·호출 연출 미연결.
 - M3-29 제안: AGENTS.md 14절 폴더 목록 `AI/{CombatToken,NPC}/` → `AI/NPC/`(decisions D-11, 승인 필요). 종별 `token_cost` 값(SC-03 모양) 미지정.
 - 길쭉한 형상 회피 MD-25~39·M3-18~24 07 미등록(승인 대기). M3-25 후속 MD-40~44.

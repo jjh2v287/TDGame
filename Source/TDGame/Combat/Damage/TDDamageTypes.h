@@ -48,6 +48,15 @@ enum class ETDDamageEntityMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class ETDDamageAreaShape : uint8
+{
+	Circle,
+	Cone,
+	Line,
+	Ring
+};
+
+UENUM(BlueprintType)
 enum class ETDDamageTargetPolicy : uint8
 {
 	Enemies,

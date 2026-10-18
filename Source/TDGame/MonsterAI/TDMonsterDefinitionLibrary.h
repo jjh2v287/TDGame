@@ -21,12 +21,16 @@ public:
 
 	static UTDMonsterDefinitionLibrary* Get();
 	static FString GetDefinitionDirectory();
+	static TArray<FSoftObjectPath> GetSpellCandidatePaths(FName SpellName);
+	static FSoftObjectPath FindExistingSpellPath(FName SpellName);
+	static FSoftObjectPath MakeSpeciesAssetPath(FName SpeciesName);
 	static void ResolveDefinitionTexts(const TMap<FString, FString>& FileTexts, FTDMonsterSpellResolver SpellResolver, TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>>& OutDefinitions, TArray<FString>& OutErrors);
 
 	TSharedPtr<const FTDResolvedMonsterDefinition> FindDefinition(FName DefinitionId);
 	int32 ReloadDefinitions();
 	const TArray<FString>& GetLoadErrors() const { return LoadErrors; }
 	TArray<FName> GetDefinitionIds();
+	UTDDamageDefinition* FindOrCreateWindupSpell(UTDDamageDefinition* Spell, float WindupSeconds, bool bIsDanger);
 
 private:
 	void EnsureLoaded();
@@ -34,12 +38,16 @@ private:
 	UTDDamageDefinition* FindSpell(FName SpellName);
 	void PrefetchDefinitionAssets();
 	void RequestSpellPresentation();
+	void RequestSummonSpeciesAssets(const TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>>& ResolvedDefinitions);
 	void WaitForSpellAssets(const TMap<FString, FString>& FileTexts);
 	TArray<FSoftObjectPath> CollectUnloadedSpellPaths(const TMap<FString, FString>& FileTexts) const;
 	static TMap<FString, FString> ReadDefinitionFiles();
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UTDDamageDefinition>> OwnedSpells;
+
+	UPROPERTY(Transient)
+	TMap<FName, TObjectPtr<UTDDamageDefinition>> WindupSpells;
 
 	TMap<FName, UTDDamageDefinition*> SpellsByName;
 	TMap<FName, TSharedPtr<const FTDResolvedMonsterDefinition>> Definitions;
@@ -48,4 +56,5 @@ private:
 	IConsoleObject* ReloadCommand = nullptr;
 	TSharedPtr<FStreamableHandle> SpellAssetsHandle;
 	TSharedPtr<FStreamableHandle> SpellPresentationHandle;
+	TSharedPtr<FStreamableHandle> SummonSpeciesHandle;
 };

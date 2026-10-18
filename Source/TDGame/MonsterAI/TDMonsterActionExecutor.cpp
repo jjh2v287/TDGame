@@ -3,6 +3,9 @@
 
 namespace
 {
+	constexpr float DefaultFlightAltitudeCm = 350.f;
+	constexpr float DefaultFlightSeconds = 1.2f;
+
 	FVector2D ToPlanar(const FVector& Vector)
 	{
 		return FVector2D(Vector.X, Vector.Y);
@@ -327,7 +330,68 @@ void FTDMonsterActionExecutor::StartPrimitive(FTDMonsterBrainFragment& Brain, co
 	case ETDMonsterPrimitive::PlaySequence:
 		StartSequence(Brain, Args.SequenceIndex, Context);
 		return;
+	case ETDMonsterPrimitive::TakeOff:
+		StartTakeOff(Brain, Args, Context);
+		return;
+	case ETDMonsterPrimitive::Land:
+		StartLand(Brain, Args, Context);
+		return;
+	case ETDMonsterPrimitive::SummonMinions:
+		StartSummonMinions(Brain, Args, Context);
+		return;
 	}
+}
+
+void FTDMonsterActionExecutor::StartTakeOff(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
+{
+	Brain.State = ETDMonsterFsmState::Idle;
+	Brain.StateStepsRemaining = 1;
+	if (Brain.bIsFlying)
+	{
+		return;
+	}
+	const float AltitudeCm = Args.Altitude > 0.f ? Args.Altitude : DefaultFlightAltitudeCm;
+	const float Seconds = Args.Seconds > 0.f ? Args.Seconds : DefaultFlightSeconds;
+	const float DurationSeconds = Context.Body ? Context.Body->BeginBodyFlight(AltitudeCm, Seconds) : Seconds;
+	if (DurationSeconds <= 0.f)
+	{
+		return;
+	}
+	Brain.bIsFlying = true;
+	Brain.FlightChangeStep = Context.StepIndex;
+	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(DurationSeconds));
+}
+
+void FTDMonsterActionExecutor::StartLand(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
+{
+	Brain.State = ETDMonsterFsmState::Idle;
+	Brain.StateStepsRemaining = 1;
+	if (!Brain.bIsFlying)
+	{
+		return;
+	}
+	const float Seconds = Args.Seconds > 0.f ? Args.Seconds : DefaultFlightSeconds;
+	const float DurationSeconds = Context.Body ? Context.Body->EndBodyFlight(Seconds) : Seconds;
+	if (DurationSeconds <= 0.f)
+	{
+		return;
+	}
+	Brain.bIsFlying = false;
+	Brain.FlightChangeStep = Context.StepIndex;
+	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(DurationSeconds));
+}
+
+void FTDMonsterActionExecutor::StartSummonMinions(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
+{
+	FTDMonsterSummonRequest Request;
+	Request.SpeciesName = Args.SpeciesName;
+	Request.Count = Args.Count > 0 ? Args.Count : Request.Count;
+	Request.RadiusCm = Args.Radius > 0.f ? Args.Radius : Request.RadiusCm;
+	Request.Seconds = Args.Seconds > 0.f ? Args.Seconds : Request.Seconds;
+	Request.Target = Context.Target;
+	const float DurationSeconds = Context.Body ? Context.Body->BeginBodySummon(Request) : Request.Seconds;
+	Brain.State = ETDMonsterFsmState::Idle;
+	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(DurationSeconds));
 }
 
 bool FTDMonsterActionExecutor::StartCast(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context)
@@ -342,12 +406,18 @@ bool FTDMonsterActionExecutor::StartCast(FTDMonsterBrainFragment& Brain, const F
 		return false;
 	}
 	const FTDResolvedAbility& Ability = Definition.Abilities[Args.AbilityIndex];
+	if (!Ability.IsAllowedInStance(Brain.bIsFlying) || (Ability.bIsDanger && Context.bIsDangerLocked))
+	{
+		return false;
+	}
 	FTDMonsterAbilityRequest Request;
 	Request.AbilityName = Ability.Name;
 	Request.Spell = Ability.Spell;
 	Request.Range = Ability.Range;
 	Request.Target = Context.Target;
 	Request.TargetLocation = Context.TargetLocation;
+	Request.WindupSeconds = Ability.WindupSeconds;
+	Request.bIsDanger = Ability.bIsDanger;
 	if (Args.bLeadTarget)
 	{
 		const float Distance = FVector::Dist2D(Context.SelfLocation, Context.TargetLocation);
@@ -361,7 +431,7 @@ bool FTDMonsterActionExecutor::StartCast(FTDMonsterBrainFragment& Brain, const F
 	}
 	Brain.State = ETDMonsterFsmState::Cast;
 	Brain.StateStepsRemaining = FMath::Max(1, TDMonsterAI::SecondsToSteps(DurationSeconds));
-	Brain.AbilityCooldownSteps[Args.AbilityIndex] = Ability.CooldownSteps;
+	Brain.AbilityCooldownSteps[Args.AbilityIndex] = FMath::Max(0, FMath::RoundToInt(Ability.CooldownSteps * Definition.GetCooldownScaleForPhase(Brain.PhaseIndex)));
 	Brain.LastCastAbilityIndex = Args.AbilityIndex;
 	++Brain.CastStartCount;
 	return true;

@@ -45,6 +45,7 @@ namespace
 		ECVF_Cheat);
 
 	constexpr int32 TacticsBudgetLowerPassCount = 2;
+	constexpr float ReturnLandingSeconds = 1.2f;
 
 	int32 CountBlockedTacticsSectors(const FTDTargetTacticsRecord& Record, const uint64 StepIndex)
 	{
@@ -292,6 +293,7 @@ void UTDMonsterThinkSubsystem::Deinitialize()
 	PendingAlarms.Reset();
 	PendingPackDeaths.Reset();
 	PendingDeathAlarms.Reset();
+	PendingPhaseEvents.Reset();
 	Super::Deinitialize();
 }
 
@@ -328,6 +330,7 @@ FTDMonsterSlotHandle UTDMonsterThinkSubsystem::RegisterMonster(AActor* BodyActor
 	FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
 	Brain = FTDMonsterBrainFragment();
 	Brain.Definition = Definition;
+	Brain.FlightChangeStep = StepIndex;
 	FTDMonsterActionExecutor::ResetForDefinition(Brain);
 	Brain.NextThinkStep = StepIndex + 1 + Body.SimulationId % static_cast<uint32>(Definition->ThinkPeriodSteps);
 	Intents[SlotIndex] = FTDMonsterMoveIntent();
@@ -471,6 +474,46 @@ ETDMonsterAlarmRole UTDMonsterThinkSubsystem::GetMonsterAlarmRole(const FTDMonst
 bool UTDMonsterThinkSubsystem::IsMonsterPanicking(const FTDMonsterSlotHandle Handle) const
 {
 	return IsHandleCurrent(Handle) && Morales[Handle.Index].FearState == ETDPackFearState::Retreating && Brains[Handle.Index].IsInTimedRetreat();
+}
+
+int32 UTDMonsterThinkSubsystem::GetMonsterPhaseIndex(const FTDMonsterSlotHandle Handle) const
+{
+	return IsHandleCurrent(Handle) ? Brains[Handle.Index].PhaseIndex : 0;
+}
+
+TArray<float> UTDMonsterThinkSubsystem::GetMonsterPhaseHealthMarks(const FTDMonsterSlotHandle Handle) const
+{
+	TArray<float> HealthMarks;
+	if (!IsHandleCurrent(Handle) || !Brains[Handle.Index].Definition.IsValid())
+	{
+		return HealthMarks;
+	}
+	for (const FTDResolvedPhase& Phase : Brains[Handle.Index].Definition->Phases)
+	{
+		const bool bIsHealthThreshold = Phase.Input && FCString::Strcmp(Phase.Input->Name, TEXT("SelfHealthRatio")) == 0 && (Phase.Op == ETDCompareOp::Less || Phase.Op == ETDCompareOp::LessOrEqual);
+		if (bIsHealthThreshold)
+		{
+			HealthMarks.Add(Phase.Value);
+		}
+	}
+	return HealthMarks;
+}
+
+bool UTDMonsterThinkSubsystem::IsMonsterFlying(const FTDMonsterSlotHandle Handle) const
+{
+	return IsHandleCurrent(Handle) && Brains[Handle.Index].bIsFlying;
+}
+
+void UTDMonsterThinkSubsystem::EngageMonster(const FTDMonsterSlotHandle Handle, AActor* Target)
+{
+	if (!IsHandleCurrent(Handle) || !IsValid(Target))
+	{
+		return;
+	}
+	FTDMonsterBrainFragment& Brain = Brains[Handle.Index];
+	Brain.Target = Target;
+	Engage(Handle.Index);
+	Brain.bForceThink = true;
 }
 
 UTDMonsterThinkSubsystem* UTDMonsterThinkSubsystem::GetMonsterThinkSubsystem(const UObject* WorldContextObject)
@@ -627,6 +670,28 @@ void UTDMonsterThinkSubsystem::RunKernelStep()
 		}
 	}
 	ApplyLocalAvoidance();
+	DispatchPendingPhaseEvents();
+}
+
+void UTDMonsterThinkSubsystem::DispatchPendingPhaseEvents()
+{
+	if (PendingPhaseEvents.IsEmpty())
+	{
+		return;
+	}
+	const TArray<FTDPendingPhaseEvent> DueEvents = MoveTemp(PendingPhaseEvents);
+	PendingPhaseEvents.Reset();
+	for (const FTDPendingPhaseEvent& DueEvent : DueEvents)
+	{
+		AActor* Actor = DueEvent.Actor.Get();
+		ITDMonsterBody* MonsterBody = Cast<ITDMonsterBody>(Actor);
+		if (!MonsterBody)
+		{
+			continue;
+		}
+		MonsterBody->NotifyBodyPhaseEntered(DueEvent.PhaseIndex, DueEvent.PhaseId);
+		OnMonsterPhaseEntered.Broadcast(Actor, DueEvent.PhaseIndex, DueEvent.PhaseId);
+	}
 }
 
 void UTDMonsterThinkSubsystem::SenseSlot(const int32 SlotIndex)
@@ -1249,7 +1314,9 @@ void UTDMonsterThinkSubsystem::ThinkAndAct(const int32 SlotIndex)
 		const TArray<FTDResolvedPhase>& Phases = Brain.Definition->Phases;
 		if (Phases.IsValidIndex(Brain.PhaseIndex) && Phases[Brain.PhaseIndex].IsSatisfied(Inputs))
 		{
-			FTDMonsterActionExecutor::EnterPhase(Brain, Brain.PhaseIndex + 1, Context);
+			const int32 NewPhaseIndex = Brain.PhaseIndex + 1;
+			FTDMonsterActionExecutor::EnterPhase(Brain, NewPhaseIndex, Context);
+			PendingPhaseEvents.Add({ SlotIndex, Bodies[SlotIndex].Actor, NewPhaseIndex, Phases[NewPhaseIndex - 1].Id });
 		}
 		if (Brain.CanThink())
 		{
@@ -1644,13 +1711,18 @@ FTDBrainInputs UTDMonsterThinkSubsystem::BuildInputs(const int32 SlotIndex, cons
 	}
 	for (int32 AbilityIndex = 0; Context.bHasAttackToken && AbilityIndex < Brain.AbilityCooldownSteps.Num() && AbilityIndex < 64; ++AbilityIndex)
 	{
-		if (Brain.AbilityCooldownSteps[AbilityIndex] == 0 && Brain.Definition->Abilities[AbilityIndex].Spell)
+		const FTDResolvedAbility& Ability = Brain.Definition->Abilities[AbilityIndex];
+		const bool bIsBlockedByDanger = Ability.bIsDanger && Context.bIsDangerLocked;
+		if (Brain.AbilityCooldownSteps[AbilityIndex] == 0 && Ability.Spell && Ability.IsAllowedInStance(Brain.bIsFlying) && !bIsBlockedByDanger)
 		{
 			Inputs.ReadyAbilityMask |= uint64(1) << AbilityIndex;
 		}
 	}
 	Inputs.bHasAttackToken = Context.bHasAttackToken;
 	Inputs.bHasRingSlot = Context.TacticsSlotKind != ETDTacticsSlotKind::None;
+	Inputs.bIsFlying = Brain.bIsFlying;
+	Inputs.FlightStateSeconds = static_cast<float>(StepIndex - Brain.FlightChangeStep) / static_cast<float>(TDMonsterAI::StepsPerSecond);
+	Inputs.MinionsAlive = Context.Body ? Context.Body->CountBodyMinionsAlive() : 0;
 
 	FTDNeighborCandidateList Neighbors;
 	const int32 SelfTeam = Brain.Definition->Stats.Team;
@@ -1670,6 +1742,7 @@ FTDMonsterStepContext UTDMonsterThinkSubsystem::MakeContext(const int32 SlotInde
 {
 	FTDMonsterStepContext Context;
 	Context.Body = ResolveBody(Bodies[SlotIndex]);
+	Context.StepIndex = StepIndex;
 	Context.SelfLocation = Bodies[SlotIndex].Location;
 	AActor* Target = Brains[SlotIndex].Target.Get();
 	if (Target && UTDCombatLibrary::IsActorAlive(Target))
@@ -1705,6 +1778,12 @@ void UTDMonsterThinkSubsystem::BeginReturn(const int32 SlotIndex)
 	Body.HomeLocation = Body.SpawnLocation;
 	FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
 	FTDMonsterActionExecutor::InterruptActivity(Brain, MakeContext(SlotIndex));
+	ITDMonsterBody* ReturningBody = ResolveBody(Body);
+	if (Brain.bIsFlying && (!ReturningBody || ReturningBody->EndBodyFlight(ReturnLandingSeconds) > 0.f))
+	{
+		Brain.bIsFlying = false;
+		Brain.FlightChangeStep = StepIndex;
+	}
 	Brain.Engagement = ETDMonsterEngagement::Returning;
 	Brain.Target.Reset();
 	Intents[SlotIndex] = FTDMonsterMoveIntent();
@@ -2569,6 +2648,12 @@ void UTDMonsterThinkSubsystem::ConfirmTacticsAttackStart(const int32 SlotIndex)
 	}
 	FTDTargetTacticsRecord& Record = TacticsRecords[RecordIndex];
 	FTDCombatDirector::AddIntensity(Record.Director, FTDCombatDirector::AttackStartIntensity);
+	const FTDMonsterBrainFragment& Brain = Brains[SlotIndex];
+	if (Brain.Definition.IsValid() && Brain.Definition->Abilities.IsValidIndex(Brain.LastCastAbilityIndex) && Brain.Definition->Abilities[Brain.LastCastAbilityIndex].bIsDanger)
+	{
+		const int32 DangerSteps = FMath::Max(Brain.StateStepsRemaining, Brain.Definition->Abilities[Brain.LastCastAbilityIndex].DangerSteps);
+		Record.DangerActiveUntilStep = StepIndex + static_cast<uint64>(DangerSteps) + FTDCombatTactics::DangerGapSteps;
+	}
 	if (Fragment.Role == ETDTacticsRole::Boss)
 	{
 		Record.LastBossStartStep = StepIndex;
@@ -2845,6 +2930,7 @@ void UTDMonsterThinkSubsystem::FillTacticsContext(const int32 SlotIndex, FTDMons
 	Context.bIsTargetClosingIn = FVector2D::DotProduct(TargetVelocity, AwayFromTarget) > FTDCombatTactics::MovingTargetSpeed;
 	const FTDTargetTacticsRecord* Record = nullptr;
 	Context.TacticsSlotKind = ResolveTacticsSlotKind(SlotIndex, Record);
+	Context.bIsDangerLocked = Record && StepIndex < Record->DangerActiveUntilStep;
 	switch (Context.TacticsSlotKind)
 	{
 	case ETDTacticsSlotKind::Inner:

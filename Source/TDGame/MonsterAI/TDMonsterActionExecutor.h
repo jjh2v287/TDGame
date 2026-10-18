@@ -24,6 +24,8 @@ struct FTDMonsterStepContext
 	bool bIsTargetClosingIn = false;
 	bool bIsFeinting = false;
 	float TacticsBandFloor = 0.f;
+	uint64 StepIndex = 0;
+	bool bIsDangerLocked = false;
 };
 
 class TDGAME_API FTDMonsterActionExecutor
@@ -48,6 +50,9 @@ public:
 private:
 	static void StartPrimitive(FTDMonsterBrainFragment& Brain, ETDMonsterPrimitive Primitive, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
 	static bool StartCast(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
+	static void StartTakeOff(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
+	static void StartLand(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
+	static void StartSummonMinions(FTDMonsterBrainFragment& Brain, const FTDActionArgs& Args, const FTDMonsterStepContext& Context);
 	static void StartSequence(FTDMonsterBrainFragment& Brain, int32 SequenceIndex, const FTDMonsterStepContext& Context);
 	static void CompleteActivity(FTDMonsterBrainFragment& Brain, const FTDMonsterStepContext& Context);
 	static void ResetRetreatTracking(FTDMonsterBrainFragment& Brain);

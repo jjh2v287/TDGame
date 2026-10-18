@@ -1,0 +1,911 @@
+{
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 900.0,
+ "level": 30,
+ "passed": true,
+ "error": null,
+ "checks": {
+  "phase_order": true,
+  "minions_three": true,
+  "danger_concurrent_at_most_one": true
+ },
+ "stages": {
+  "spawn": {
+   "passed": true,
+   "start": 1.86,
+   "end": 2.49
+  },
+  "ground": {
+   "passed": true,
+   "start": 2.49,
+   "end": 14.83,
+   "entity_peak": 2,
+   "phases": [
+    0
+   ]
+  },
+  "sky": {
+   "passed": true,
+   "start": 14.83,
+   "end": 20.94,
+   "lowered_health": 3960.0,
+   "flight_start": 19.33,
+   "max_phase": 1,
+   "minions_peak": 3
+  },
+  "minions": {
+   "passed": true,
+   "start": 20.94,
+   "end": 29.2,
+   "killed": 3
+  },
+  "landing": {
+   "passed": true,
+   "start": 29.2,
+   "end": 45.53,
+   "landed_at": 43.39
+  },
+  "enraged": {
+   "passed": true,
+   "start": 45.53,
+   "end": 48.44,
+   "lowered_health": 2280.0
+  },
+  "inferno": {
+   "passed": true,
+   "start": 48.44,
+   "end": 53.24,
+   "lowered_health": 1440.0,
+   "judged_by": "entity"
+  },
+  "death": {
+   "passed": true,
+   "start": 53.24,
+   "end": 59.75
+  }
+ },
+ "phase_first_seen": {
+  "0": 2.49,
+  "1": 16.11,
+  "2": 46.81,
+  "3": 50.99
+ },
+ "phase_transitions": [
+  {
+   "from": 0,
+   "to": 1,
+   "t": 16.11
+  },
+  {
+   "from": 1,
+   "to": 2,
+   "t": 46.81
+  },
+  {
+   "from": 2,
+   "to": 3,
+   "t": 50.99
+  }
+ ],
+ "flight_segments": [
+  {
+   "start": 19.33,
+   "end": 43.39,
+   "max_altitude_cm": 337.3
+  }
+ ],
+ "ground_z": 163.0,
+ "minions_max": 3,
+ "danger_concurrent_max": 1,
+ "definition_breakdown": {
+  "DA_TDDragonFlameBreath": {
+   "samples": 6,
+   "max_concurrent": 1
+  },
+  "DA_TDDragonBreathFlames": {
+   "samples": 5,
+   "max_concurrent": 1
+  },
+  "DA_TDDragonFireball": {
+   "samples": 3,
+   "max_concurrent": 1
+  },
+  "DA_TDDragonEmbers": {
+   "samples": 6,
+   "max_concurrent": 1
+  },
+  "DA_TDDragonRoar": {
+   "samples": 4,
+   "max_concurrent": 1
+  },
+  "DA_TDGoblinSlash": {
+   "samples": 8,
+   "max_concurrent": 2
+  },
+  "DA_TDDragonAirFireball": {
+   "samples": 14,
+   "max_concurrent": 1
+  },
+  "DA_TDDragonBlast": {
+   "samples": 32,
+   "max_concurrent": 6
+  },
+  "DA_TDDragonFireRain": {
+   "samples": 2,
+   "max_concurrent": 1
+  },
+  "DA_TDDragonFireRainDrop": {
+   "samples": 2,
+   "max_concurrent": 2
+  },
+  "DA_TDDragonLandingShock": {
+   "samples": 1,
+   "max_concurrent": 1
+  },
+  "DA_TDDragonInferno": {
+   "samples": 1,
+   "max_concurrent": 1
+  },
+  "DA_TDDragonSafeZone": {
+   "samples": 2,
+   "max_concurrent": 1
+  }
+ },
+ "player_min_health": 624.7000122070312,
+ "player_max_health": 1000.0,
+ "player_heal_count": 0,
+ "sample_errors": 0,
+ "screenshots": {
+  "1_ground": "Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/1_ground.png",
+  "2_sky_minions": "Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/2_sky_minions.png",
+  "3_sky_attack": "Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/3_sky_attack.png",
+  "4_landed": "Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/4_landed.png",
+  "5_enraged": "Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/5_enraged.png",
+  "6_inferno": "Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/6_inferno.png",
+  "7_death": "Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/7_death.png"
+ },
+ "samples": [
+  {
+   "t": 2.49,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 163.0,
+   "player_health": 1000.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonFlameBreath": 1
+   },
+   "danger": 1
+  },
+  {
+   "t": 3.14,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 163.0,
+   "player_health": 995.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonFlameBreath": 1,
+    "DA_TDDragonBreathFlames": 1
+   },
+   "danger": 1
+  },
+  {
+   "t": 5.42,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 163.0,
+   "player_health": 960.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonBreathFlames": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 6.06,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 163.0,
+   "player_health": 960.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 7.31,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 163.0,
+   "player_health": 943.5,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonFireball": 1,
+    "DA_TDDragonEmbers": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 8.56,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 162.1,
+   "player_health": 940.5,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonEmbers": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 9.19,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 162.1,
+   "player_health": 939.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonEmbers": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 10.44,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 162.1,
+   "player_health": 936.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonEmbers": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 11.06,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 162.1,
+   "player_health": 936.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 0,
+   "definitions": {},
+   "danger": 0
+  },
+  {
+   "t": 12.3,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 162.1,
+   "player_health": 936.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 0,
+   "definitions": {},
+   "danger": 0
+  },
+  {
+   "t": 13.53,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 162.1,
+   "player_health": 936.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 0,
+   "definitions": {},
+   "danger": 0
+  },
+  {
+   "t": 14.19,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 1.0,
+   "z": 162.1,
+   "player_health": 936.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonFlameBreath": 1
+   },
+   "danger": 1
+  },
+  {
+   "t": 16.11,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": false,
+   "health_ratio": 0.66,
+   "z": 162.1,
+   "player_health": 916.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 3,
+   "definitions": {
+    "DA_TDDragonFlameBreath": 1,
+    "DA_TDDragonBreathFlames": 1,
+    "DA_TDDragonRoar": 1
+   },
+   "danger": 1
+  },
+  {
+   "t": 17.41,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": false,
+   "health_ratio": 0.66,
+   "z": 162.1,
+   "player_health": 893.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBreathFlames": 1,
+    "DA_TDDragonRoar": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 18.05,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": false,
+   "health_ratio": 0.66,
+   "z": 162.1,
+   "player_health": 893.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 0,
+   "definitions": {},
+   "danger": 0
+  },
+  {
+   "t": 19.33,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 233.7,
+   "player_health": 893.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDGoblinSlash": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 21.56,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 873.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDGoblinSlash": 1,
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 22.19,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 863.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 23.49,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 828.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonBlast": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 24.16,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 828.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 3,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonAirFireball": 1,
+    "DA_TDGoblinSlash": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 25.42,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 793.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 2
+   },
+   "danger": 0
+  },
+  {
+   "t": 26.05,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 793.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDGoblinSlash": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 27.3,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 758.0,
+   "player_max_health": 1000.0,
+   "minions": 3,
+   "entity_total": 3,
+   "definitions": {
+    "DA_TDDragonBlast": 2,
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 29.2,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 738.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 30.45,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 723.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonBlast": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 31.08,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 723.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 32.34,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 708.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonBlast": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 33.58,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 708.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 34.2,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 693.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 2
+   },
+   "danger": 0
+  },
+  {
+   "t": 35.49,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 693.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 4,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonFireRain": 1,
+    "DA_TDDragonFireRainDrop": 2
+   },
+   "danger": 1
+  },
+  {
+   "t": 37.77,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 658.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 8,
+   "definitions": {
+    "DA_TDDragonFireRain": 1,
+    "DA_TDDragonBlast": 6,
+    "DA_TDDragonFireRainDrop": 1
+   },
+   "danger": 1
+  },
+  {
+   "t": 38.41,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 658.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 6,
+   "definitions": {
+    "DA_TDDragonBlast": 6
+   },
+   "danger": 0
+  },
+  {
+   "t": 39.03,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 658.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 7,
+   "definitions": {
+    "DA_TDDragonBlast": 6,
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 40.28,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 643.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 3,
+   "definitions": {
+    "DA_TDDragonBlast": 3
+   },
+   "danger": 0
+  },
+  {
+   "t": 41.5,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 643.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 42.14,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": true,
+   "health_ratio": 0.66,
+   "z": 500.3,
+   "player_health": 643.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonAirFireball": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 43.39,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 1,
+   "flying": false,
+   "health_ratio": 0.66,
+   "z": 465.2,
+   "player_health": 628.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonBlast": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 46.81,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 2,
+   "flying": false,
+   "health_ratio": 0.38,
+   "z": 162.2,
+   "player_health": 628.0,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonLandingShock": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 49.7,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 2,
+   "flying": false,
+   "health_ratio": 0.24,
+   "z": 162.2,
+   "player_health": 624.7000122070312,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonBlast": 1,
+    "DA_TDDragonRoar": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 50.36,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 2,
+   "flying": false,
+   "health_ratio": 0.24,
+   "z": 162.2,
+   "player_health": 624.7000122070312,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 0,
+   "definitions": {},
+   "danger": 0
+  },
+  {
+   "t": 51.61,
+   "dragon_found": true,
+   "alive": true,
+   "phase": 3,
+   "flying": false,
+   "health_ratio": 0.24,
+   "z": 162.2,
+   "player_health": 624.7000122070312,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 2,
+   "definitions": {
+    "DA_TDDragonInferno": 1,
+    "DA_TDDragonSafeZone": 1
+   },
+   "danger": 1
+  },
+  {
+   "t": 54.5,
+   "dragon_found": true,
+   "alive": false,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 0.0,
+   "z": 162.2,
+   "player_health": 624.7000122070312,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 1,
+   "definitions": {
+    "DA_TDDragonSafeZone": 1
+   },
+   "danger": 0
+  },
+  {
+   "t": 59.75,
+   "dragon_found": true,
+   "alive": false,
+   "phase": 0,
+   "flying": false,
+   "health_ratio": 0.0,
+   "z": 162.2,
+   "player_health": 624.7000122070312,
+   "player_max_health": 1000.0,
+   "minions": 0,
+   "entity_total": 0,
+   "definitions": {},
+   "danger": 0
+  }
+ ]
+}

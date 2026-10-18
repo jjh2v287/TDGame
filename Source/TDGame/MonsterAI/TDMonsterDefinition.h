@@ -95,6 +95,13 @@ struct FTDResolvedAction
 	TArray<FTDResolvedConsideration> Considerations;
 };
 
+enum class ETDAbilityStance : uint8
+{
+	Any,
+	Ground,
+	Air
+};
+
 struct FTDResolvedAbility
 {
 	FName Name;
@@ -103,6 +110,24 @@ struct FTDResolvedAbility
 	float Range = 0.f;
 	int32 CooldownSteps = 0;
 	int32 TokenCostQuarters = TDMonsterAI::QuartersPerToken;
+	float WindupSeconds = 0.f;
+	bool bIsDanger = false;
+	ETDAbilityStance Stance = ETDAbilityStance::Any;
+	int32 DangerSteps = 0;
+
+	bool IsAllowedInStance(const bool bIsFlying) const
+	{
+		switch (Stance)
+		{
+		case ETDAbilityStance::Ground:
+			return !bIsFlying;
+		case ETDAbilityStance::Air:
+			return bIsFlying;
+		case ETDAbilityStance::Any:
+			return true;
+		}
+		return true;
+	}
 };
 
 struct FTDResolvedPhase
@@ -114,6 +139,7 @@ struct FTDResolvedPhase
 	float Value = 0.f;
 	int32 OnEnterSequenceIndex = INDEX_NONE;
 	FTDMonsterStatOverride Stats;
+	TOptional<float> CooldownScale;
 
 	bool IsSatisfied(const FTDBrainInputs& Inputs) const
 	{
@@ -166,6 +192,18 @@ struct FTDResolvedMonsterDefinition
 			Phases[Index].Stats.ApplyTo(PhaseStats);
 		}
 		return PhaseStats;
+	}
+
+	float GetCooldownScaleForPhase(const int32 PhaseIndex) const
+	{
+		for (int32 Index = FMath::Min(PhaseIndex, Phases.Num()) - 1; Index >= 0; --Index)
+		{
+			if (Phases[Index].CooldownScale.IsSet())
+			{
+				return Phases[Index].CooldownScale.GetValue();
+			}
+		}
+		return 1.f;
 	}
 
 	int32 GetMaxActionCount() const

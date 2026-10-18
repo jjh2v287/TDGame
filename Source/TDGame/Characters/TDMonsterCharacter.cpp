@@ -3,6 +3,7 @@
 #include "AI/NPC/TDSignificanceComponent.h"
 #include "Animation/AnimSequence.h"
 #include "Characters/TDCharacterAnimationComponent.h"
+#include "CollisionQueryParams.h"
 #include "Combat/GAS/Abilities/TDCombatActionAbility.h"
 #include "Combat/GAS/Abilities/TDReactionAbility.h"
 #include "Combat/Skills/TDSkillComponent.h"
@@ -10,17 +11,21 @@
 #include "Combat/Damage/TDDamageEntity.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
 #include "Combat/TDCombatComponent.h"
+#include "Combat/TDCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/TDGameplayMessages.h"
 #include "Core/TDGameplayTags.h"
 #include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "Engine/AssetManager.h"
 #include "Engine/GameInstance.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameplayAbilitySpec.h"
 #include "MonsterAI/TDMonsterDefinitionLibrary.h"
 #include "MonsterAI/TDMonsterSpeciesAsset.h"
+#include "MoverSimulationTypes.h"
 #include "PhysicsEngine/BodyInstance.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "TimerManager.h"
@@ -43,6 +48,55 @@ namespace
 	constexpr float MaxAnimationOverrunSeconds = 0.6f;
 	constexpr float StaggerImpulse = 450.f;
 	constexpr float MinimumClipPlayRate = 0.05f;
+	constexpr float WindupSpellMarginSeconds = 0.01f;
+	constexpr float FlightHeightGainCm = 120.f;
+	constexpr float FlightHoverToleranceCm = 10.f;
+	constexpr float FlightLandingToleranceCm = 15.f;
+	constexpr float FlightTransitionGraceSeconds = 0.5f;
+	constexpr float FlightBoostSpeedScale = 1.3f;
+	constexpr float FlightClipMinimumPlayRate = 0.5f;
+	constexpr float FlightClipMaximumPlayRate = 2.f;
+	constexpr float GroundTraceAboveCm = 300.f;
+	constexpr float FlightGroundTraceAboveCm = 50.f;
+	constexpr float GroundTraceBelowCm = 1000.f;
+	constexpr float SummonGroundClearanceCm = 3.f;
+
+	const FName& GetSummonClipName()
+	{
+		static const FName ClipName(TEXT("Summon"));
+		return ClipName;
+	}
+
+	bool HasFlightClips(const UTDMonsterSpeciesAsset& SpeciesAsset)
+	{
+		return SpeciesAsset.TakeOffClip.IsValidClip()
+			|| SpeciesAsset.FlyIdleClip.IsValidClip()
+			|| SpeciesAsset.LandClip.IsValidClip()
+			|| SpeciesAsset.FlyHitClip.IsValidClip();
+	}
+
+	float ComputeFlightClipPlayRate(const FTDMonsterAnimClip& Clip, const float Seconds)
+	{
+		const UAnimSequence* Sequence = Cast<UAnimSequence>(Clip.Animation);
+		if (!Sequence || Seconds <= 0.f)
+		{
+			return Clip.PlayRate;
+		}
+		const float EndSeconds = Clip.EndSeconds > Clip.StartSeconds ? FMath::Min(Clip.EndSeconds, Sequence->GetPlayLength()) : Sequence->GetPlayLength();
+		const float ClipSeconds = FMath::Max(EndSeconds - Clip.StartSeconds, UE_KINDA_SMALL_NUMBER);
+		return FMath::Clamp(ClipSeconds / Seconds, FlightClipMinimumPlayRate, FlightClipMaximumPlayRate);
+	}
+
+	UTDDamageDefinition* ResolveCastSpell(const FTDMonsterAbilityRequest& Request)
+	{
+		UTDMonsterDefinitionLibrary* Library = UTDMonsterDefinitionLibrary::Get();
+		if (!Library || Request.WindupSeconds <= Request.Spell->ActivationDelay + WindupSpellMarginSeconds)
+		{
+			return Request.Spell;
+		}
+		UTDDamageDefinition* WindupSpell = Library->FindOrCreateWindupSpell(Request.Spell, Request.WindupSeconds, Request.bIsDanger);
+		return WindupSpell ? WindupSpell : Request.Spell;
+	}
 
 	FTDLocomotionClipSet MakeLocomotionClipSet(const UTDMonsterSpeciesAsset& SpeciesAsset)
 	{
@@ -95,6 +149,7 @@ void ATDMonsterCharacter::BeginPlay()
 
 void ATDMonsterCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	CancelSummonLoads();
 	StopMonsterBrain();
 	Super::EndPlay(EndPlayReason);
 }
@@ -290,6 +345,12 @@ void ATDMonsterCharacter::ApplyBodyMoveIntent(const FVector2D& Direction, const 
 	{
 		return;
 	}
+	FinishBodyLandingIfArrived();
+	if (bIsBodyFlying || bIsBodyLanding)
+	{
+		ApplyFlightMoveInput(Direction, SpeedScale);
+		return;
+	}
 	if (Direction.IsNearlyZero() || SpeedScale <= 0.f)
 	{
 		return;
@@ -324,13 +385,14 @@ float ATDMonsterCharacter::BeginBodyAbility(const FTDMonsterAbilityRequest& Requ
 		FaceRotationImmediately(FRotator(0.f, AimOffset.Rotation().Yaw, 0.f));
 	}
 	StopMovementImmediately();
-	ATDDamageEntity* Entity = DamageSubsystem->Cast(Request.Spell, this, Origin, Request.TargetLocation);
+	UTDDamageDefinition* CastSpell = ResolveCastSpell(Request);
+	ATDDamageEntity* Entity = DamageSubsystem->Cast(CastSpell, this, Origin, Request.TargetLocation);
 	if (!Entity)
 	{
 		return 0.f;
 	}
 	ActiveAbilityEntity = Entity;
-	const float WindupSeconds = Request.Spell->ActivationDelay;
+	const float WindupSeconds = CastSpell->ActivationDelay + (CastSpell != Request.Spell ? Request.Spell->ActivationDelay : 0.f);
 	AbilityImpactTime = World->GetTimeSeconds() + WindupSeconds;
 	float RecoverySeconds = DefaultRecoverySeconds;
 	const float ClipSeconds = PlayAbilityClip(Request, WindupSeconds, RecoverySeconds);
@@ -363,14 +425,358 @@ void ATDMonsterCharacter::BeginBodyStagger(const FVector& SourceLocation, const 
 	{
 		AddImpulseVelocity(Away * StaggerImpulse);
 	}
-	if (Species && Species->Hit.IsValidClip())
+	if (!Species)
 	{
-		PlaySpeciesClip(Species->Hit, Species->Hit.PlayRate);
+		return;
+	}
+	const bool bIsBodyAirborne = bIsBodyFlying || bIsBodyLanding;
+	const FTDMonsterAnimClip& HitClip = bIsBodyAirborne && Species->FlyHitClip.IsValidClip() ? Species->FlyHitClip : Species->Hit;
+	if (HitClip.IsValidClip())
+	{
+		PlaySpeciesClip(HitClip, HitClip.PlayRate);
 	}
 }
 
 void ATDMonsterCharacter::PresentBody(const float DeltaSeconds, const ETDMonsterFsmState State)
 {
+}
+
+float ATDMonsterCharacter::BeginBodyFlight(const float AltitudeCm, const float Seconds)
+{
+	UCharacterMoverComponent* Mover = GetMoverComponent();
+	const UWorld* World = GetWorld();
+	if (!Mover || !World || !CombatComponent->IsAlive() || CombatComponent->IsFrozen())
+	{
+		return 0.f;
+	}
+	const FVector Location = GetActorLocation();
+	const float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	float GroundZ = static_cast<float>(Location.Z) - CapsuleHalfHeight;
+	FindGroundHeight(Location - FVector(0.f, 0.f, GroundTraceAboveCm - FlightGroundTraceAboveCm), nullptr, GroundZ);
+	BodyFlightTargetZ = GroundZ + CapsuleHalfHeight + AltitudeCm;
+	BodyFlightBoostSpeed = Seconds > 0.f ? AltitudeCm / Seconds * FlightBoostSpeedScale : 0.f;
+	BodyFlightTransitionEndSeconds = World->GetTimeSeconds() + Seconds + FlightTransitionGraceSeconds;
+	bIsBodyFlying = true;
+	bIsBodyLanding = false;
+	Mover->QueueNextMode(DefaultModeNames::Flying);
+	if (Species)
+	{
+		PlaySpeciesClip(Species->TakeOffClip, ComputeFlightClipPlayRate(Species->TakeOffClip, Seconds));
+	}
+	return Seconds;
+}
+
+float ATDMonsterCharacter::EndBodyFlight(const float Seconds)
+{
+	const UWorld* World = GetWorld();
+	if (!World || !bIsBodyFlying || !CombatComponent->IsAlive() || CombatComponent->IsFrozen())
+	{
+		return 0.f;
+	}
+	const FVector Location = GetActorLocation();
+	const float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	float GroundZ = static_cast<float>(Location.Z) - CapsuleHalfHeight;
+	FindGroundHeight(Location - FVector(0.f, 0.f, GroundTraceAboveCm - FlightGroundTraceAboveCm), nullptr, GroundZ);
+	BodyFlightTargetZ = GroundZ + CapsuleHalfHeight;
+	const float DescentCm = FMath::Max(static_cast<float>(Location.Z) - BodyFlightTargetZ, 0.f);
+	BodyFlightBoostSpeed = Seconds > 0.f ? DescentCm / Seconds * FlightBoostSpeedScale : 0.f;
+	BodyFlightTransitionEndSeconds = World->GetTimeSeconds() + Seconds + FlightTransitionGraceSeconds;
+	bIsBodyLanding = true;
+	if (Species)
+	{
+		PlaySpeciesClip(Species->LandClip, ComputeFlightClipPlayRate(Species->LandClip, Seconds));
+	}
+	return Seconds;
+}
+
+float ATDMonsterCharacter::BeginBodySummon(const FTDMonsterSummonRequest& Request)
+{
+	UWorld* World = GetWorld();
+	if (!World || !CombatComponent->IsAlive() || Request.SpeciesName.IsNone() || Request.Count <= 0)
+	{
+		return 0.f;
+	}
+	const FTDMonsterAnimClip* SummonClip = Species ? Species->AbilityClips.Find(GetSummonClipName()) : nullptr;
+	if (SummonClip && SummonClip->IsValidClip())
+	{
+		PlaySpeciesClip(*SummonClip, SummonClip->PlayRate);
+	}
+
+	const FSoftObjectPath SpeciesPath = UTDMonsterDefinitionLibrary::MakeSpeciesAssetPath(Request.SpeciesName);
+	PendingMinionCount += Request.Count;
+	if (SpeciesPath.ResolveObject())
+	{
+		SummonTimerHandles.Add(World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, SpeciesPath, Request]()
+		{
+			CompleteSummonLoad(SpeciesPath, Request);
+		})));
+		return Request.Seconds;
+	}
+
+	SummonLoadHandles.RemoveAll([](const TSharedPtr<FStreamableHandle>& Handle)
+	{
+		return !Handle.IsValid() || Handle->HasLoadCompleted();
+	});
+	TSharedPtr<FStreamableHandle> SpeciesHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(SpeciesPath, FStreamableDelegate::CreateWeakLambda(this, [this, SpeciesPath, Request]()
+	{
+		CompleteSummonLoad(SpeciesPath, Request);
+	}), FStreamableManager::AsyncLoadHighPriority);
+	if (!SpeciesHandle.IsValid())
+	{
+		PendingMinionCount = FMath::Max(PendingMinionCount - Request.Count, 0);
+		UE_LOG(LogTDMonster, Warning, TEXT("%s: could not request species asset '%s' for the summon."), *GetName(), *SpeciesPath.ToString());
+		return Request.Seconds;
+	}
+	SummonLoadHandles.Add(SpeciesHandle);
+	return Request.Seconds;
+}
+
+int32 ATDMonsterCharacter::CountBodyMinionsAlive() const
+{
+	int32 AliveCount = PendingMinionCount;
+	for (const TWeakObjectPtr<ATDMonsterCharacter>& Minion : SummonedMinions)
+	{
+		if (UTDCombatLibrary::IsActorAlive(Minion.Get()))
+		{
+			++AliveCount;
+		}
+	}
+	return AliveCount;
+}
+
+void ATDMonsterCharacter::NotifyBodyPhaseEntered(const int32 PhaseIndex, const FName PhaseId)
+{
+	UWorld* World = GetWorld();
+	if (!World || !UGameplayMessageSubsystem::HasInstance(World))
+	{
+		return;
+	}
+
+	FTDMonsterPhaseMessage PhaseMessage;
+	PhaseMessage.Monster = this;
+	PhaseMessage.PhaseIndex = PhaseIndex;
+	PhaseMessage.PhaseId = PhaseId;
+	UGameplayMessageSubsystem::Get(World).BroadcastMessage(TDGameplayTags::Event_Monster_PhaseEntered, PhaseMessage);
+}
+
+int32 ATDMonsterCharacter::GetMonsterPhaseIndex() const
+{
+	const UTDMonsterThinkSubsystem* ThinkSubsystem = GetThinkSubsystem();
+	if (!ThinkSubsystem || !BrainHandle.IsValid())
+	{
+		return 0;
+	}
+	return ThinkSubsystem->GetMonsterPhaseIndex(BrainHandle);
+}
+
+TArray<float> ATDMonsterCharacter::GetPhaseHealthMarks() const
+{
+	const UTDMonsterThinkSubsystem* ThinkSubsystem = GetThinkSubsystem();
+	if (!ThinkSubsystem || !BrainHandle.IsValid())
+	{
+		return TArray<float>();
+	}
+	return ThinkSubsystem->GetMonsterPhaseHealthMarks(BrainHandle);
+}
+
+bool ATDMonsterCharacter::IsMonsterFlying() const
+{
+	const UTDMonsterThinkSubsystem* ThinkSubsystem = GetThinkSubsystem();
+	return ThinkSubsystem && BrainHandle.IsValid() && ThinkSubsystem->IsMonsterFlying(BrainHandle);
+}
+
+bool ATDMonsterCharacter::IsBossMonster() const
+{
+	UTDMonsterDefinitionLibrary* Library = UTDMonsterDefinitionLibrary::Get();
+	if (!Library || !Species || Species->DefinitionId.IsNone())
+	{
+		return false;
+	}
+	const TSharedPtr<const FTDResolvedMonsterDefinition> Definition = Library->FindDefinition(Species->DefinitionId);
+	return Definition.IsValid() && Definition->bIsBoss;
+}
+
+void ATDMonsterCharacter::EngageMonsterBrain(AActor* Target)
+{
+	UTDMonsterThinkSubsystem* ThinkSubsystem = GetThinkSubsystem();
+	if (!ThinkSubsystem || !BrainHandle.IsValid())
+	{
+		return;
+	}
+	ThinkSubsystem->EngageMonster(BrainHandle, Target);
+}
+
+void ATDMonsterCharacter::ApplyFlightMoveInput(const FVector2D& Direction, const float SpeedScale)
+{
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	UCharacterMoverComponent* Mover = GetMoverComponent();
+	if (Mover && bIsBodyFlying && !bIsBodyLanding && Mover->GetMovementModeName() != DefaultModeNames::Flying)
+	{
+		Mover->QueueNextMode(DefaultModeNames::Flying);
+	}
+	const bool bHasPlanarIntent = !Direction.IsNearlyZero() && SpeedScale > 0.f;
+	const float HeightError = BodyFlightTargetZ - static_cast<float>(GetActorLocation().Z);
+	if (!bHasPlanarIntent && FMath::Abs(HeightError) < FlightHoverToleranceCm)
+	{
+		return;
+	}
+
+	float MoveSpeed = bHasPlanarIntent ? BaseMoveSpeed * SpeedScale : 0.f;
+	if (World->GetTimeSeconds() < BodyFlightTransitionEndSeconds)
+	{
+		MoveSpeed = FMath::Max(MoveSpeed, BodyFlightBoostSpeed);
+	}
+	if (MoveSpeed > 0.f)
+	{
+		SetMaxMoveSpeed(MoveSpeed);
+	}
+
+	const FVector2D PlanarDirection = bHasPlanarIntent ? Direction : FVector2D::ZeroVector;
+	if (bHasPlanarIntent)
+	{
+		ClearDesiredFacingDirection();
+	}
+	const float VerticalInput = FMath::Clamp(HeightError / FlightHeightGainCm, -1.f, 1.f);
+	Internal_AddMovementInput(FVector(PlanarDirection.X, PlanarDirection.Y, VerticalInput).GetClampedToMaxSize(1.f), true);
+}
+
+void ATDMonsterCharacter::FinishBodyLandingIfArrived()
+{
+	const UWorld* World = GetWorld();
+	UCharacterMoverComponent* Mover = GetMoverComponent();
+	if (!bIsBodyLanding || !World || !Mover)
+	{
+		return;
+	}
+	const bool bHasArrived = FMath::Abs(BodyFlightTargetZ - static_cast<float>(GetActorLocation().Z)) <= FlightLandingToleranceCm;
+	const bool bHasTimedOut = World->GetTimeSeconds() >= BodyFlightTransitionEndSeconds;
+	if (!bHasArrived && !bHasTimedOut)
+	{
+		return;
+	}
+	bIsBodyLanding = false;
+	bIsBodyFlying = false;
+	Mover->QueueNextMode(DefaultModeNames::Falling);
+}
+
+bool ATDMonsterCharacter::FindGroundHeight(const FVector& Location, const AActor* SpawnedActor, float& OutGroundZ) const
+{
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+	FCollisionObjectQueryParams GroundObjects;
+	GroundObjects.AddObjectTypesToQuery(ECC_WorldStatic);
+	GroundObjects.AddObjectTypesToQuery(ECC_WorldDynamic);
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDMonsterFindGround), false, this);
+	if (SpawnedActor)
+	{
+		QueryParams.AddIgnoredActor(SpawnedActor);
+	}
+	for (const TWeakObjectPtr<ATDMonsterCharacter>& Minion : SummonedMinions)
+	{
+		if (const ATDMonsterCharacter* MinionActor = Minion.Get())
+		{
+			QueryParams.AddIgnoredActor(MinionActor);
+		}
+	}
+	FHitResult GroundHit;
+	if (!World->LineTraceSingleByObjectType(GroundHit, Location + FVector(0.f, 0.f, GroundTraceAboveCm), Location - FVector(0.f, 0.f, GroundTraceBelowCm), GroundObjects, QueryParams))
+	{
+		return false;
+	}
+	OutGroundZ = static_cast<float>(GroundHit.ImpactPoint.Z);
+	return true;
+}
+
+void ATDMonsterCharacter::CompleteSummonLoad(const FSoftObjectPath& SpeciesPath, const FTDMonsterSummonRequest& Request)
+{
+	PendingMinionCount = FMath::Max(PendingMinionCount - Request.Count, 0);
+	if (!CombatComponent->IsAlive())
+	{
+		return;
+	}
+	UTDMonsterSpeciesAsset* MinionSpecies = Cast<UTDMonsterSpeciesAsset>(SpeciesPath.ResolveObject());
+	if (!MinionSpecies)
+	{
+		UE_LOG(LogTDMonster, Warning, TEXT("%s: species asset '%s' did not load for the summon."), *GetName(), *SpeciesPath.ToString());
+		return;
+	}
+	SpawnSummonedMinions(MinionSpecies, Request);
+}
+
+void ATDMonsterCharacter::SpawnSummonedMinions(UTDMonsterSpeciesAsset* MinionSpecies, const FTDMonsterSummonRequest& Request)
+{
+	SummonedMinions.RemoveAll([](const TWeakObjectPtr<ATDMonsterCharacter>& Minion)
+	{
+		return !UTDCombatLibrary::IsActorAlive(Minion.Get());
+	});
+	const FVector Center = GetActorLocation();
+	const float BaseYaw = static_cast<float>(GetActorRotation().Yaw);
+	AActor* Target = Request.Target.Get();
+	for (int32 MinionIndex = 0; MinionIndex < Request.Count; ++MinionIndex)
+	{
+		const float RingYaw = BaseYaw + 360.f * MinionIndex / Request.Count + 180.f / Request.Count;
+		const FVector RingDirection = FRotator(0.f, RingYaw, 0.f).Vector();
+		const FVector Location = Center + RingDirection * Request.RadiusCm;
+		const FVector FacingDirection = Target ? (Target->GetActorLocation() - Location).GetSafeNormal2D() : RingDirection;
+		ATDMonsterCharacter* Minion = SpawnSummonedMinion(MinionSpecies, Location, FRotator(0.f, FacingDirection.Rotation().Yaw, 0.f));
+		if (!Minion)
+		{
+			continue;
+		}
+		SummonedMinions.Add(Minion);
+		Minion->EngageMonsterBrain(Target);
+	}
+}
+
+ATDMonsterCharacter* ATDMonsterCharacter::SpawnSummonedMinion(UTDMonsterSpeciesAsset* MinionSpecies, const FVector& Location, const FRotator& Rotation)
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+	ATDMonsterCharacter* Minion = World->SpawnActorDeferred<ATDMonsterCharacter>(ATDMonsterCharacter::StaticClass(), FTransform(Rotation, Location), nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+	if (!Minion)
+	{
+		return nullptr;
+	}
+	Minion->SetSpecies(MinionSpecies);
+	FVector SpawnLocation = Location;
+	float GroundZ = 0.f;
+	if (FindGroundHeight(Location, Minion, GroundZ))
+	{
+		SpawnLocation.Z = GroundZ + Minion->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + SummonGroundClearanceCm;
+	}
+	Minion->FinishSpawning(FTransform(Rotation, SpawnLocation));
+	return Minion;
+}
+
+void ATDMonsterCharacter::CancelSummonLoads()
+{
+	for (const TSharedPtr<FStreamableHandle>& Handle : SummonLoadHandles)
+	{
+		if (Handle.IsValid() && !Handle->HasLoadCompleted())
+		{
+			Handle->CancelHandle();
+		}
+	}
+	SummonLoadHandles.Reset();
+	if (UWorld* World = GetWorld())
+	{
+		for (FTimerHandle& TimerHandle : SummonTimerHandles)
+		{
+			World->GetTimerManager().ClearTimer(TimerHandle);
+		}
+	}
+	SummonTimerHandles.Reset();
+	PendingMinionCount = 0;
 }
 
 UTDMonsterThinkSubsystem* ATDMonsterCharacter::GetThinkSubsystem() const
@@ -454,6 +860,13 @@ void ATDMonsterCharacter::ApplySpeciesAnimation()
 		return;
 	}
 	CharacterAnimation->UseLocomotionClips(Clips);
+	if (!HasFlightClips(*Species))
+	{
+		return;
+	}
+	FTDAirborneClipSet AirborneClips;
+	AirborneClips.FallLoop = Cast<UAnimSequence>(Species->FlyIdleClip.Animation);
+	CharacterAnimation->UseAirborneClips(AirborneClips);
 }
 
 void ATDMonsterCharacter::StartMonsterBrain()
@@ -528,6 +941,14 @@ void ATDMonsterCharacter::PlayDeathPresentation()
 	if (Species->CorpseLifeSeconds > 0.f)
 	{
 		SetLifeSpan(Species->CorpseLifeSeconds);
+	}
+	if (bIsBodyFlying || bIsBodyLanding)
+	{
+		StartDeathRagdoll();
+	}
+	if (IsRagdolling())
+	{
+		return;
 	}
 	const FTDMonsterAnimClip& DeathClip = Species->Death;
 	UAnimSequence* DeathSequence = Cast<UAnimSequence>(DeathClip.Animation);

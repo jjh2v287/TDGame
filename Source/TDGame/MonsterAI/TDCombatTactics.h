@@ -95,6 +95,7 @@ struct FTDTargetTacticsRecord
 	int32 PreviousTargetYCm = 0;
 	uint64 PreviousTargetStep = 0;
 	int32 RangedBandFloorCm = 0;
+	uint64 DangerActiveUntilStep = 0;
 	TArray<int32> MemberSlots;
 
 	int32 GetEngagedCount() const
@@ -191,6 +192,7 @@ public:
 	static constexpr int32 RangedReachMarginCm = 100;
 	static constexpr int32 RangedBandFloorCapCm = 700;
 	static constexpr int32 RangedBandMinWidthCm = 100;
+	static constexpr int32 DangerGapSteps = 64;
 
 	static FTDMonsterTacticsFragment MakeFragment(const FTDResolvedMonsterDefinition& Definition);
 	static bool IsMeleeLaneRole(ETDTacticsRole Role);

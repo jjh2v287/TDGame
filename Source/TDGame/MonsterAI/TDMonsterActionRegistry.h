@@ -20,7 +20,10 @@ enum class ETDMonsterPrimitive : uint8
 	Wait,
 	CastAbility,
 	PlaySequence,
-	PlayEmote
+	PlayEmote,
+	TakeOff,
+	Land,
+	SummonMinions
 };
 
 enum class ETDActionArgKind : uint8
@@ -30,7 +33,8 @@ enum class ETDActionArgKind : uint8
 	Seconds,
 	Ability,
 	Sequence,
-	Flag
+	Flag,
+	Species
 };
 
 struct FTDActionArgSchema
@@ -59,6 +63,10 @@ struct FTDActionArgs
 	int32 AbilityIndex = INDEX_NONE;
 	int32 SequenceIndex = INDEX_NONE;
 	bool bLeadTarget = false;
+	float Altitude = 0.f;
+	FName SpeciesName;
+	int32 Count = 0;
+	float Radius = 0.f;
 };
 
 class TDGAME_API FTDMonsterActionRegistry

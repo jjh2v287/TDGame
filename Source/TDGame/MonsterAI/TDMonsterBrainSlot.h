@@ -64,6 +64,8 @@ struct FTDMonsterBrainFragment
 	float RetreatAnchorDistance = -1.f;
 	int32 RetreatStallSteps = 0;
 	bool bWasRetreatCornered = false;
+	bool bIsFlying = false;
+	uint64 FlightChangeStep = 0;
 
 	bool IsEngaged() const
 	{

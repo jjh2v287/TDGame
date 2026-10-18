@@ -20,6 +20,9 @@ struct FTDBrainInputs
 	bool bIsTargetAttacking = false;
 	bool bHasAttackToken = true;
 	bool bHasRingSlot = false;
+	bool bIsFlying = false;
+	float FlightStateSeconds = 0.f;
+	int32 MinionsAlive = 0;
 	uint64 ReadyAbilityMask = 0;
 	int32 NeighborCount = 0;
 	FTDNeighborEntry Neighbors[MaxNeighbors];

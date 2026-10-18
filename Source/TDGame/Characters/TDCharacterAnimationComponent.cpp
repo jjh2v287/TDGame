@@ -640,6 +640,13 @@ void UTDCharacterAnimationComponent::UpdateAirborneClips()
 		return;
 	}
 
+	const bool bIsAirbornePoseStuck = CurrentLocomotionPose == ETDLocomotionPose::JumpStart || CurrentLocomotionPose == ETDLocomotionPose::FallLoop;
+	if (!bJustLanded && bIsAirbornePoseStuck)
+	{
+		CurrentLocomotionPose = ETDLocomotionPose::None;
+		return;
+	}
+
 	if (bJustLanded)
 	{
 		if (AirborneClips.Land)

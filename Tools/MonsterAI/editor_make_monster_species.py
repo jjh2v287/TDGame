@@ -1,6 +1,6 @@
 """에디터 안에서 실행: Tools/MonsterAI/species_table.json 의 종마다 몬스터 종 에셋(UTDMonsterSpeciesAsset)과 루트 고정 애니메이션 복제본을 만들거나 갱신한다(재실행 안전).
 실행: python Tools/run_in_editor.py Tools/MonsterAI/editor_make_monster_species.py (PowerShell; Git Bash는 /Game/ 경로를 바꾼다). 일부 종만: -c "TD_ONLY_SPECIES=['Goblin']; exec(open('C:/Project/TDGame/Tools/MonsterAI/editor_make_monster_species.py', encoding='utf-8').read())"
-출력: /Game/MonsterAI/Species/DA_TDMonster_*, 표의 root_locked_copies 복제본, 종마다 스켈레톤 호환·능력 키 대조·없는 에셋 로그와 마지막 요약 한 줄
+출력: /Game/MonsterAI/Species/DA_TDMonster_*(선택 키 phases·takeoff/fly_idle/land/fly_hit는 해당 C++ 필드가 있을 때만 기록), 표의 root_locked_copies 복제본, 종마다 스켈레톤 호환·능력 키 대조·없는 에셋 로그와 마지막 요약 한 줄
 상태: 현행(M3-33, 종 목록은 표가 정본. 옛 editor_set_species_hit_clips.py 는 이 도구의 hit 항목으로 흡수)
 """
 import importlib
@@ -138,6 +138,35 @@ def set_follower_meshes(asset, species_name, follower_meshes):
         warn(f"follower field unavailable: {species_name}: {error}")
 
 
+def set_flight_clips(asset, species_name, flight_clips):
+    for key, clip in flight_clips.items():
+        try:
+            asset.set_editor_property(species_table.FLIGHT_CLIP_PROPERTIES[key], clip)
+        except Exception as error:
+            warn(f"flight field unavailable: {species_name}.{key}: {error}")
+
+
+def make_phase_presentation(phase_clips, follower_meshes):
+    presentation = unreal.TDMonsterPhasePresentation()
+    for key, clip in phase_clips.items():
+        presentation.set_editor_property(key, clip)
+    meshes = unreal.Array(unreal.SkeletalMesh)
+    for mesh in follower_meshes:
+        meshes.append(mesh)
+    presentation.set_editor_property("follower_meshes", meshes)
+    return presentation
+
+
+def set_phase_presentations(asset, species_name, phases):
+    if not phases:
+        return
+    try:
+        presentations = {unreal.Name(phase_id): make_phase_presentation(clips, followers) for phase_id, (clips, followers) in phases.items()}
+        asset.set_editor_property("phase_presentations", presentations)
+    except Exception as error:
+        warn(f"phase field unavailable: {species_name}: {error}")
+
+
 def enable_idle_loop(idle_clip):
     animation = idle_clip.get_editor_property("animation")
     if not isinstance(animation, unreal.AnimSequence) or animation.get_editor_property("loop"):
@@ -156,6 +185,9 @@ def build_species(raw_entry):
     follower_meshes = [load(path, missing) for path in entry["followers"]]
     clips = {key: make_clip(entry[key], missing) for key in species_table.LOCOMOTION_CLIP_KEYS + species_table.OPTIONAL_CLIP_KEYS}
     ability_clips = {ability: make_clip(raw, missing) for ability, raw in entry["abilities"].items()}
+    flight_clips = {key: make_clip(raw, missing) for key, raw in entry["flight"].items()}
+    phases = {phase_id: ({key: make_clip(phase[key], missing) for key in species_table.PHASE_CLIP_KEYS}, [load(path, missing) for path in phase["followers"]])
+              for phase_id, phase in entry["phases"].items()}
     if missing:
         log(f"skip {name}: {len(missing)} missing asset(s), not saved")
         return False
@@ -178,11 +210,14 @@ def build_species(raw_entry):
     asset.set_editor_property("hit", clips["hit"])
     asset.set_editor_property("death", clips["death"])
     asset.set_editor_property("ability_clips", ability_clips)
+    set_flight_clips(asset, name, flight_clips)
+    set_phase_presentations(asset, name, phases)
     asset.set_editor_property("use_ragdoll_without_death_clip", entry["ragdoll_without_death_clip"])
     asset.set_editor_property("ragdoll_after_death_clip", entry["ragdoll_after_death"])
     asset.set_editor_property("corpse_sink_seconds", entry["corpse_sink_seconds"])
     asset.set_editor_property("corpse_life_seconds", entry["corpse_seconds"])
-    for value in list(clips.values()) + list(ability_clips.values()):
+    phase_clip_values = [clip for phase_clips, _ in phases.values() for clip in phase_clips.values()]
+    for value in list(clips.values()) + list(ability_clips.values()) + list(flight_clips.values()) + phase_clip_values:
         check_clip_skeleton(name, mesh, value)
     enable_idle_loop(clips["idle"])
     EAL.save_loaded_asset(asset)

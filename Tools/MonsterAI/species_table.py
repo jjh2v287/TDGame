@@ -20,6 +20,8 @@ SPECIES_DEFAULTS = {
 }
 LOCOMOTION_CLIP_KEYS = ("idle", "walk", "run")
 OPTIONAL_CLIP_KEYS = ("hit", "death")
+FLIGHT_CLIP_PROPERTIES = {"takeoff": "take_off_clip", "fly_idle": "fly_idle_clip", "land": "land_clip", "fly_hit": "fly_hit_clip"}
+PHASE_CLIP_KEYS = ("idle", "walk", "run", "hit", "death")
 
 
 def load_table(path=None):
@@ -48,7 +50,15 @@ def fill_species_defaults(entry):
     for key in LOCOMOTION_CLIP_KEYS + OPTIONAL_CLIP_KEYS:
         filled[key] = fill_clip_defaults(entry.get(key))
     filled["abilities"] = {name: fill_clip_defaults(raw) for name, raw in entry.get("abilities", {}).items()}
+    filled["flight"] = {key: fill_clip_defaults(entry[key]) for key in FLIGHT_CLIP_PROPERTIES if key in entry}
+    filled["phases"] = {phase_id: fill_phase_defaults(raw) for phase_id, raw in entry.get("phases", {}).items()}
     return filled
+
+
+def fill_phase_defaults(raw_phase):
+    phase = {key: fill_clip_defaults(raw_phase.get(key)) for key in PHASE_CLIP_KEYS}
+    phase["followers"] = list(raw_phase.get("followers", []))
+    return phase
 
 
 def species_asset_name(species_name):
@@ -97,6 +107,20 @@ def resolve_definition_abilities(definitions_dir, definition_id):
         parent_id = next_parent_id
         depth += 1
     return resolved
+
+
+def resolve_definition_phase_ids(definitions_dir, definition_id):
+    phase_ids, visited = [], set()
+    while definition_id and definition_id not in visited and len(visited) <= MAXIMUM_EXTENDS_DEPTH:
+        path = os.path.join(definitions_dir, definition_id + ".json")
+        if not os.path.isfile(path):
+            break
+        with open(path, encoding="utf-8") as handle:
+            root = json.load(handle)
+        phase_ids += [phase.get("id") for phase in root.get("phases", []) if isinstance(phase, dict) and phase.get("id") not in phase_ids]
+        visited.add(definition_id)
+        definition_id = root.get("extends")
+    return phase_ids
 
 
 def compare_ability_keys(entry, definition_keys):

@@ -14,7 +14,7 @@ import species_table
 DEFAULT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_]+$")
 SPECIES_REQUIRED_KEYS = ("name", "definition", "mesh", "scale", "yaw", "radius", "half_height", "walk_clip_speed", "run_clip_speed", "idle", "walk", "run")
-SPECIES_OPTIONAL_KEYS = ("followers", "height_offset", "hit", "death", "abilities", "corpse_seconds", "ragdoll_after_death", "ragdoll_without_death_clip", "corpse_sink_seconds")
+SPECIES_OPTIONAL_KEYS = ("followers", "height_offset", "hit", "death", "abilities", "corpse_seconds", "ragdoll_after_death", "ragdoll_without_death_clip", "corpse_sink_seconds", "phases") + tuple(species_table.FLIGHT_CLIP_PROPERTIES)
 REQUIRED_PATH_KEYS = ("species_folder", "animation_folder", "definitions_dir")
 CLIP_KEYS = set(species_table.CLIP_DEFAULTS)
 RETARGET_CLIP_KINDS = ("idle", "locomotion", "attack", "hit", "death")
@@ -119,6 +119,10 @@ def check_species_entry(findings, entry, definitions_dir, game_paths):
     for key in species_table.OPTIONAL_CLIP_KEYS:
         if key in entry:
             check_clip(findings, f"{where}.{key}", entry[key], game_paths, True)
+    for key in species_table.FLIGHT_CLIP_PROPERTIES:
+        if key in entry:
+            check_clip(findings, f"{where}.{key}", entry[key], game_paths, False)
+    check_phases(findings, where, entry, definitions_dir, game_paths)
     abilities = entry.get("abilities", {})
     if not isinstance(abilities, dict):
         findings.error(where, "abilities must be an object")
@@ -126,6 +130,33 @@ def check_species_entry(findings, entry, definitions_dir, game_paths):
         for ability, raw_clip in abilities.items():
             check_clip(findings, f"{where}.abilities.{ability}", raw_clip, game_paths, False)
     check_definition(findings, where, entry, definitions_dir)
+
+
+def check_phases(findings, where, entry, definitions_dir, game_paths):
+    phases = entry.get("phases", {})
+    if not isinstance(phases, dict):
+        findings.error(where, "phases must be an object keyed by definition phase id")
+        return
+    known_ids = species_table.resolve_definition_phase_ids(definitions_dir, entry.get("definition")) if phases else []
+    for phase_id, phase in phases.items():
+        phase_where = f"{where}.phases.{phase_id}"
+        if not isinstance(phase, dict):
+            findings.error(phase_where, "phase must be an object")
+            continue
+        if phase_id not in known_ids:
+            findings.warn(phase_where, f"phase id is not in definition phases {known_ids}")
+        for key in sorted(set(phase) - set(species_table.PHASE_CLIP_KEYS) - {"followers"}):
+            findings.warn(phase_where, f"unknown phase key '{key}'")
+        for key in species_table.PHASE_CLIP_KEYS:
+            if key in phase:
+                check_clip(findings, f"{phase_where}.{key}", phase[key], game_paths, True)
+        followers = phase.get("followers", [])
+        if not isinstance(followers, list):
+            findings.error(phase_where, "followers must be a list")
+            continue
+        for index, follower in enumerate(followers):
+            if check_game_path_value(findings, phase_where, f"followers[{index}]", follower):
+                game_paths.append((f"{phase_where}.followers[{index}]", follower))
 
 
 def check_definition(findings, where, entry, definitions_dir):

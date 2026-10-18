@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-10-18 19:18 claude
+갱신: 2026-10-18 19:22 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -30,7 +30,7 @@
 - 길쭉한 형상 회피 MD-25~39·M3-18~24 미등록(승인 대기). M3-25 후속 MD-40~44.
 - 공개 저장소의 Fab·Paragon·Manny 원본 에셋 비공개 전환·재저장 에셋 유지 판단.
 - 빌드 순서: `build_and_test.py --acquire-hold/--release-hold`·`--holder`(L-build-05·08).
-- `TDGame.Combat` 에디터 실행 크래시→헤드리스(L-editor-08). GUI FullLoop 실패(831aa720 고블린 사망 클립, M3-33 확인).
+- `TDGame.Combat` 에디터 실행 크래시→헤드리스(L-editor-08).
 
 ## ③ 다음 행동
 

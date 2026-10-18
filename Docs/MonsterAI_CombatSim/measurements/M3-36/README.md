@@ -30,5 +30,5 @@
 - 종 교체: `Tools/MonsterAI/editor_make_boss_arena.py` 위 `SPECIES`·이름·눈금을 고치고 다시 실행하면 맵은 두고 정의 에셋만 갱신된다.
 
 ## 알려진 남은 것·미검증
-- GUI `TDGame.PIE.Combat.FullLoop`이 18:00·19:13 실행에서 "Killed goblin simulates physics within 1 s"로 실패: 831aa720(M3-33)이 고블린 종에 사망 클립을 넣은 뒤의 변화로 보이며 이 작업 변경과 무관(원인 미검증, M3-33에 전달).
+- GUI `TDGame.PIE.Combat.FullLoop`이 18:00·19:13 실행에서 "Killed goblin simulates physics within 1 s"로 실패했다. 원인은 831aa720(M3-33)의 고블린 사망 클립(1.1초 뒤 래그돌)이었고, 19:19 M3-33이 인간형 8종 사망 클립을 0.5초에서 끊어 고쳐 통과했다(`Saved/AgentOps/automation_tests_20261018-1919.json`, 래그돌 0.503초).
 - 미검증: 실제 손 조작으로 끝까지 깬 플레이(시험은 피해를 직접 넣음), 로드 완료 전 진입(Loading 경로), 저장·불러오기 뒤 승리 상태 복원, 카메라 당김 체감, 콘솔 명령, 쿠킹·패키지 실행. 06에서 서 있는 사냥개가 살아 있는지(소환 정리)는 화면만으로 확인하지 못함.

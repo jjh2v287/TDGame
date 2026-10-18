@@ -54,6 +54,14 @@
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
 
+### L-combat-07 워커 태스크에서 도는 결정론 float 코드는 호출 스레드의 FTZ(비정규수를 0으로) 상태를 물려받을 수 있다
+- 증상: (미발생, 정적 반박으로 발견) FluidFX 솔버 스텝을 `ParallelFor` 워커로 옮기며 "직렬과 비트 동일"을 주장했는데, 엔진 병렬 애니 평가 태스크가 워커에서 `FScopedFTZFloatMode`를 켠다(`Engine/Private/Components/SkeletalMeshComponent.cpp:360·421`). 그 범위 안 대기 중에 다른 태스크가 같은 스레드에서 돌면 감쇠로 생긴 비정규수가 0이 되어 직렬 결과와 갈릴 수 있다
+- 해결: 워커에서도 도는 결정론 스텝 입구에서 `VectorGetControlRegister()`를 저장하고 `VECTOR_DENORMALS_FLUSH_TO_ZERO`를 끈 뒤 끝에서 되돌린다(`TDFluidGrid2DSolver.cpp` `FTDFluidDenormalPreservingScope`, `StepSimulation`·`ApplyBrushStamps`). 패킹처럼 결과가 바이트로 양자화되는 내부 `ParallelFor`는 영향 없음
+- 범위: 결정론이 필요한 시뮬 코드(FluidFX 솔버, 전투 시뮬을 태스크로 옮길 때)
+- 증거: 엔진 소스 위 두 줄, 반박 보고 `Saved/AgentOps/20261018/fluidfx/perf-opt/refute-static.md` 5번. 실제로 FTZ 상태에서 실행된 사례는 미관측
+- 날짜·상태: 2026-10-18 미검증
+- 발견: claude
+
 ### L-combat-08 몬스터가 질주·비행으로 대상에게서 교전 반경(1500cm) 밖으로 나가면 다음 생각에서 대상을 잃고 귀환하며, 비행 중이면 착지한다
 - 증상: 헤드리스 `TDGame.MonsterAI.MidBoss.GriffonTakesOffAndLandsWithPunishWindow` 실패 `Expected 'The air raid lasts 8 to 18 seconds (2.72)'`. 시험이 남긴 타임라인: 활공 급습(Charge 1600cm) 직후 `Move/Hover` → `Idle/None`으로 바뀌고 고도 0까지 내려간 뒤 6초 동안 아무것도 안 함.
 - 원인: `UTDMonsterThinkSubsystem::AcquireTarget`이 몸 위치 기준 `EngageRadius`(1500) 안에서만 적을 모은다. 질주가 대상을 지나 1500 밖에서 멈추면 대상이 null → `!bHasLivingTarget` → `BeginReturn`(재교전 막힘 시간 포함) → 비행 중이면 `EndBodyFlight`.
@@ -71,3 +79,12 @@
 - 증거: 2026-10-18 `Docs/MonsterAI_CombatSim/measurements/M3-34/fight-20261018/report.json`(그리폰 칼만 cap), 수정 뒤 `fight-20261018-v3`·`fight-20261018-final`(최저 Z 116, 처치)
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-combat-10 파괴 액터의 방사 필드: 감쇠 MinRange/MaxRange는 출력 범위이고, 속도는 클러스터가 풀리기 전에 루트에 들어간다
+- 증상: `ATDBreakableActor::StartBreak`로 깬 벽돌 블록이 한 덩어리로 약 1,057m/s(BreakForce 450·반지름 300 기준)로 날아갔다
+- 원인: ① `URadialFalloff`의 MinRange·MaxRange는 거리 범위가 아니라 출력 값 범위다(값 = Magnitude × (Min + (Max−Min) × f), FieldSystemNodes.cpp:440-503). MaxRange에 반지름을 넣어 속도가 (반지름−거리)배. ② `EFieldFilterType::Field_Filter_Max`는 "필터 없음"으로 처리된다(FieldSystemProxyHelper.h:67). ③ 같은 프레임의 Crumble과 필드 명령은 필드가 먼저 활성 루트에 속도를 더하고(PBDRigidsSolver.cpp:513) 그 뒤 클러스터가 풀려 자식이 루트 속도를 물려받는다(PBDRigidClustering.cpp:937)
+- 해결(2026-10-18 `TDBreakableActor.cpp`): `MaxRange = 1.0f`, 필터 `Field_Filter_Dynamic`, `StartBreak`에서 `CrumbleActiveClusters()` 뒤 `SetTimerForNextTick`으로 힘 적용(`ApplyBreakForce`). 에셋이 깨지려면 충돌 형상이 있어야 한다(L-editor-35)
+- 범위: `ATDBreakableActor`를 쓰는 모든 파괴물(이전 동작은 BreakForce가 반지름배로 과대). 다른 BP 하위 클래스의 BreakForce 값은 이 수정 뒤 다시 맞춰야 할 수 있음(미확인)
+- 증거: `Saved/AgentOps/20261018/fluidfx/gc-explosion-debug.md`, `Docs/Validation/FluidFX/D-49-fx3-probe-2026-10-18.json`(퍼짐 11.3배, 트리거 뒤 오류 0)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude(td-debugger)

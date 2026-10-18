@@ -88,18 +88,25 @@ void ATDBreakableActor::StartBreak(const FVector& HitLocation)
 
 	GeometryCollectionComponent->SetCollisionObjectType(FragmentObjectChannel);
 	GeometryCollectionComponent->WakeAllRigidBodies();
-
-	if (bUseRadialForce && FieldSystemComponent)
+	GeometryCollectionComponent->CrumbleActiveClusters();
+	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, HitLocation]()
 	{
-		ApplyRadialBreakForce(HitLocation);
-	}
-	else
-	{
-		ApplyImpulseBreakForce(HitLocation);
-	}
+		ApplyBreakForce(HitLocation);
+	}));
 
 	OnBreak(HitLocation);
 	ScheduleAutoDestroy();
+}
+
+void ATDBreakableActor::ApplyBreakForce(const FVector& HitLocation)
+{
+	if (bUseRadialForce && FieldSystemComponent)
+	{
+		ApplyRadialBreakForce(HitLocation);
+		return;
+	}
+
+	ApplyImpulseBreakForce(HitLocation);
 }
 
 void ATDBreakableActor::ApplyRadialBreakForce(const FVector& HitLocation)
@@ -113,7 +120,7 @@ void ATDBreakableActor::ApplyRadialBreakForce(const FVector& HitLocation)
 	Falloff->Radius = BreakForceRadius;
 	Falloff->Magnitude = 1.0f;
 	Falloff->MinRange = 0.0f;
-	Falloff->MaxRange = BreakForceRadius;
+	Falloff->MaxRange = 1.0f;
 	Falloff->Default = 0.0f;
 	Falloff->Falloff = EFieldFalloffType::Field_Falloff_Linear;
 
@@ -125,7 +132,7 @@ void ATDBreakableActor::ApplyRadialBreakForce(const FVector& HitLocation)
 	{
 		MetaData = NewObject<UFieldSystemMetaDataFilter>(this);
 		MetaData->SetMetaDataFilterType(
-			EFieldFilterType::Field_Filter_Max,
+			EFieldFilterType::Field_Filter_Dynamic,
 			FieldObjectType,
 			EFieldPositionType::Field_Position_CenterOfMass);
 	}

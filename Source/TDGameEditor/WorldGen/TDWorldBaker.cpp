@@ -27,7 +27,7 @@ namespace
 	const TCHAR* SeedTagPrefix = TEXT("TDSeed:");
 	const TCHAR* RadiusTagPrefix = TEXT("R");
 	const FName WorldFolder(TEXT("TDGen/World"));
-	const FName TagGen(TEXT("TDGen"));
+	const FName WorldBakerTagGen(TEXT("TDGen"));
 	const FName TagLocked(TEXT("TDLocked"));
 	const FName TagPoi(TEXT("TDPoi"));
 	const FName TagEntrance(TEXT("TDDungeonEntrance"));
@@ -129,7 +129,7 @@ namespace
 	void ApplyTags(AActor& Actor, std::initializer_list<FName> ExtraTags, int32 Seed, const FGuid& StableId)
 	{
 		Actor.Tags.Reset();
-		Actor.Tags.Add(TagGen);
+		Actor.Tags.Add(WorldBakerTagGen);
 		for (const FName& Tag : ExtraTags)
 		{
 			if (!Tag.IsNone())
@@ -372,7 +372,7 @@ FName FTDWorldBaker::GetLockedTagName()
 
 FName FTDWorldBaker::GetGeneratedTagName()
 {
-	return TagGen;
+	return WorldBakerTagGen;
 }
 
 bool FTDWorldBaker::IsLockedActor(const AActor& Actor)

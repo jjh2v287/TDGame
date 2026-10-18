@@ -1,0 +1,358 @@
+{
+  "tool": "editor_pie_fluid_probe",
+  "map": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena",
+  "state": "complete",
+  "stage": "awaiting_capture",
+  "passed": true,
+  "capture_mode": "driver",
+  "started": "2026-10-18 13:55:44",
+  "items": {
+    "7_topdown_capture": {
+      "passed": true,
+      "criterion": "PIE 게임 화면(탑다운 카메라) HighResShot PNG가 Docs/Validation/FluidFX/에 저장된다",
+      "value": {
+        "saved": true,
+        "path": "Docs/Validation/FluidFX/D-48-pie-gameview-2026-10-18.png",
+        "bytes": 1702169,
+        "source": "PIE HighResShot"
+      },
+      "note": ""
+    },
+    "8_pie_ended": {
+      "passed": true,
+      "criterion": "측정이 끝난 뒤 PIE가 종료되어 게임 월드가 없다",
+      "value": {
+        "pie_running_after_stop": false
+      },
+      "note": ""
+    },
+    "1_surface_material_instances": {
+      "passed": true,
+      "criterion": "레벨의 유체 액터마다 내부 메시에 정적 메시가 있고 슬롯 0이 MaterialInstanceDynamic이며 DensityPressureTexture·VelocityTexture가 null이 아니고 컴포넌트가 만든 실행 중 텍스처와 같다",
+      "value": [
+        {
+          "label": "TDGen_FluidArena_CombatPool",
+          "has_static_mesh": true,
+          "slot0_is_dynamic_instance": true,
+          "slot0_material": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_4.LiveComponent.MID_MI_TD_Fluid_Blood_0",
+          "DensityPressureTexture": "/Engine/Transient.Texture2D_14",
+          "DensityPressureTexture_is_runtime_texture": true,
+          "VelocityTexture": "/Engine/Transient.Texture2D_15",
+          "VelocityTexture_is_runtime_texture": true,
+          "SimCenterWorld": "<Struct 'LinearColor' (0x0000021F90F71FE0) {r: 400.000000, g: 0.000000, b: 0.000000, a: 1.000000}>",
+          "SimExtentsCm": "<Struct 'LinearColor' (0x0000021F90F71FE0) {r: 1000.000000, g: 700.000000, b: 0.120000, a: 0.000000}>",
+          "passed": true
+        },
+        {
+          "label": "TDGen_FluidArena_MudZone",
+          "has_static_mesh": true,
+          "slot0_is_dynamic_instance": true,
+          "slot0_material": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_5.LiveComponent.MID_MI_TD_Fluid_Mud_0",
+          "DensityPressureTexture": "/Engine/Transient.Texture2D_16",
+          "DensityPressureTexture_is_runtime_texture": true,
+          "VelocityTexture": "/Engine/Transient.Texture2D_17",
+          "VelocityTexture_is_runtime_texture": true,
+          "SimCenterWorld": "<Struct 'LinearColor' (0x0000021F90F71FE0) {r: -750.000000, g: -760.000000, b: 0.000000, a: 1.000000}>",
+          "SimExtentsCm": "<Struct 'LinearColor' (0x0000021F90F71FE0) {r: 800.000000, g: 640.000000, b: 0.100000, a: 0.000000}>",
+          "passed": true
+        },
+        {
+          "label": "TDGen_FluidArena_PlayerTrail",
+          "has_static_mesh": true,
+          "slot0_is_dynamic_instance": true,
+          "slot0_material": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_6.LiveComponent.MID_MI_TD_Fluid_Water_0",
+          "DensityPressureTexture": "/Engine/Transient.Texture2D_18",
+          "DensityPressureTexture_is_runtime_texture": true,
+          "VelocityTexture": "/Engine/Transient.Texture2D_19",
+          "VelocityTexture_is_runtime_texture": true,
+          "SimCenterWorld": "<Struct 'LinearColor' (0x0000021F90F71FE0) {r: -450.000000, g: 0.000000, b: 0.000000, a: 1.000000}>",
+          "SimExtentsCm": "<Struct 'LinearColor' (0x0000021F90F71FE0) {r: 800.000000, g: 640.000000, b: 0.100000, a: 0.000000}>",
+          "passed": true
+        },
+        {
+          "label": "TDGen_FluidArena_RampWater",
+          "has_static_mesh": true,
+          "slot0_is_dynamic_instance": true,
+          "slot0_material": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_7.LiveComponent.MID_MI_TD_Fluid_Water_0",
+          "DensityPressureTexture": "/Engine/Transient.Texture2D_20",
+          "DensityPressureTexture_is_runtime_texture": true,
+          "VelocityTexture": "/Engine/Transient.Texture2D_21",
+          "VelocityTexture_is_runtime_texture": true,
+          "SimCenterWorld": "<Struct 'LinearColor' (0x0000021F90F71FE0) {r: 1000.000000, g: 820.000000, b: 0.000000, a: 1.000000}>",
+          "SimExtentsCm": "<Struct 'LinearColor' (0x0000021F90F71FE0) {r: 800.000000, g: 640.000000, b: 0.100000, a: 0.000000}>",
+          "passed": true
+        }
+      ],
+      "note": ""
+    },
+    "2_walk_trail_density": {
+      "passed": true,
+      "criterion": "경로 이동(게임의 클릭 이동과 같은 simple_move_to)으로 약 3초 걷고(100cm 이상) 경로 끝에서 60·140·220cm 뒤 3점(플레이어 추적 창 안)에서 주 밀도가 0.1보다 크다",
+      "value": {
+        "trail_actor": "TDGen_FluidArena_PlayerTrail",
+        "goal": [
+          -450.0,
+          1000.0,
+          96.0
+        ],
+        "walked_cm": 976.2,
+        "navigation_wait_real_seconds": 0.0,
+        "points": [
+          {
+            "location": [
+              -450.0,
+              925.81,
+              98.15
+            ],
+            "primary_density": 0.5729
+          },
+          {
+            "location": [
+              -450.0,
+              856.74,
+              98.15
+            ],
+            "primary_density": 0.5901
+          },
+          {
+            "location": [
+              -450.0,
+              763.88,
+              98.15
+            ],
+            "primary_density": 0.54
+          }
+        ]
+      },
+      "note": ""
+    },
+    "3_fire_damage_stamp": {
+      "passed": true,
+      "criterion": "전투 더미에 Fire 피해를 주면(적용 피해 > 0, 사전 선택 밀도 < 0.1) 3프레임 안에 더미 위치의 선택 밀도가 0.1보다 크다",
+      "value": {
+        "dummy": "TDGen_DamageTarget_1",
+        "location": [
+          150.0,
+          -180.0,
+          65.0
+        ],
+        "applied_damage": 30.0,
+        "baseline": 0.0,
+        "baseline_by_actor": {
+          "TDGen_FluidArena_CombatPool": 0.0
+        },
+        "frames_after_damage": [
+          {
+            "selective_density": 0.9996,
+            "by_actor": {
+              "TDGen_FluidArena_CombatPool": 0.9996
+            }
+          },
+          {
+            "selective_density": 0.9981,
+            "by_actor": {
+              "TDGen_FluidArena_CombatPool": 0.9981
+            }
+          },
+          {
+            "selective_density": 0.9964,
+            "by_actor": {
+              "TDGen_FluidArena_CombatPool": 0.9964
+            }
+          }
+        ],
+        "first_visible_frame": 1
+      },
+      "note": ""
+    },
+    "4_death_stamp": {
+      "passed": true,
+      "criterion": "더미를 처치하면(사망) 더미 중심에서 150cm 떨어진 지점의 선택 밀도가 처치 전보다 0.1 이상 늘어난다",
+      "value": {
+        "dummy": "TDGen_DamageTarget_6",
+        "ring_location": [
+          800.0,
+          180.0,
+          65.0
+        ],
+        "health_before_kill": 1.0,
+        "kill_amount": 5.0,
+        "applied_damage": 1.0,
+        "is_dead": true,
+        "baseline": 0.0,
+        "baseline_by_actor": {
+          "TDGen_FluidArena_CombatPool": 0.0
+        },
+        "frames_after_kill": [
+          {
+            "selective_density": 0.4717,
+            "by_actor": {
+              "TDGen_FluidArena_CombatPool": 0.4717
+            }
+          },
+          {
+            "selective_density": 0.4988,
+            "by_actor": {
+              "TDGen_FluidArena_CombatPool": 0.4988
+            }
+          },
+          {
+            "selective_density": 0.5258,
+            "by_actor": {
+              "TDGen_FluidArena_CombatPool": 0.5258
+            }
+          }
+        ],
+        "increase": 0.5258,
+        "isolated_from_damage_stamp": true
+      },
+      "note": ""
+    },
+    "5_teleport_return_velocity": {
+      "passed": true,
+      "criterion": "플레이어 추적 유체 볼륨 밖으로 순간이동했다 복귀한 뒤 0.6초 동안 그 지점의 |VelocityCmPerSec| 최댓값이 1200 이하다",
+      "value": {
+        "trail_actor": "TDGen_FluidArena_PlayerTrail",
+        "origin": [
+          -450.0,
+          976.21,
+          98.15
+        ],
+        "destination": [
+          -450.0,
+          -123.79,
+          98.15
+        ],
+        "speed_before_cm_per_second": 51.5,
+        "left_volume": true,
+        "return_frames": 17,
+        "valid_samples": 17,
+        "peak_speed_cm_per_second": 0.0,
+        "last_speed_cm_per_second": 0.0
+      },
+      "note": ""
+    },
+    "6_slope_flow_downhill": {
+      "passed": true,
+      "criterion": "경사로 유체 위에 스탬프를 찍고 2초 뒤 밀도 무게중심이 내리막 방향으로 15cm 이상 이동한다",
+      "value": {
+        "slope_actor": "TDGen_FluidArena_RampWater",
+        "ground_heights": {
+          "plus_x": 78.7338733822757,
+          "minus_x": 15.671335061753584,
+          "plus_y": 47.202604222014756,
+          "minus_y": 47.202604222014756
+        },
+        "downhill_direction": [
+          -1.0,
+          -0.0
+        ],
+        "terrain_slope_at_center": [
+          0.1051,
+          0.0
+        ],
+        "mass_start": 23.449,
+        "mass_end": 15.778,
+        "centroid_start": [
+          999.8398715142974,
+          820.0000025376681
+        ],
+        "centroid_end": [
+          956.3722869350011,
+          819.9999477571037
+        ],
+        "shift_cm": 43.47,
+        "shift_along_downhill_cm": 43.47
+      },
+      "note": ""
+    }
+  },
+  "events": [
+    {
+      "stage": "waiting_for_fluid_setup",
+      "game_seconds": 4.367,
+      "real_seconds": 0.0
+    },
+    {
+      "stage": "surface_material_instances",
+      "game_seconds": 4.404,
+      "real_seconds": 0.03
+    },
+    {
+      "stage": "walk",
+      "game_seconds": 4.404,
+      "real_seconds": 0.03
+    },
+    {
+      "stage": "fire_damage",
+      "game_seconds": 7.98,
+      "real_seconds": 3.61
+    },
+    {
+      "stage": "death_stamp",
+      "game_seconds": 8.096,
+      "real_seconds": 3.72
+    },
+    {
+      "stage": "teleport_return",
+      "game_seconds": 8.213,
+      "real_seconds": 3.84
+    },
+    {
+      "stage": "slope_flow",
+      "game_seconds": 9.858,
+      "real_seconds": 5.49
+    },
+    {
+      "stage": "capture_scene",
+      "game_seconds": 11.956,
+      "real_seconds": 7.59
+    },
+    {
+      "stage": "awaiting_capture",
+      "game_seconds": 12.958,
+      "real_seconds": 8.59
+    }
+  ],
+  "errors": [],
+  "fluid_actors": [
+    "TDGen_FluidArena_CombatPool",
+    "TDGen_FluidArena_MudZone",
+    "TDGen_FluidArena_PlayerTrail",
+    "TDGen_FluidArena_RampWater"
+  ],
+  "setup_ready_within_timeout": true,
+  "subsystem_found": true,
+  "capture_scene": {
+    "fire_hits": 5,
+    "mud_stamps": 3,
+    "water_stamps": 1,
+    "pawn_location": [
+      250.0,
+      0.0,
+      98.15
+    ]
+  },
+  "environment": {
+    "level": {
+      "exists": true,
+      "pie_running": false,
+      "loaded": true,
+      "world": "/Game/FluidFX/Maps/LV_TDFluidTestArena.LV_TDFluidTestArena"
+    },
+    "editor_navigation_ready": true,
+    "prepare": {
+      "mode": "level",
+      "label": "TDGen_FluidArena_RampWater",
+      "removed_stale": []
+    },
+    "start": {
+      "started": true,
+      "map": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena",
+      "capture_mode": "driver"
+    },
+    "cleanup": {
+      "removed": []
+    }
+  }
+}

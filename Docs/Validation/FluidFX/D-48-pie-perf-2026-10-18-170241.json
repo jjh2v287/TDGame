@@ -1,0 +1,552 @@
+{
+  "tool": "pie_profile_fluid",
+  "run_token": "20261018170133",
+  "date": "2026-10-18",
+  "started": "2026-10-18 17:01:33",
+  "level": "/Game/FluidFX/Maps/LV_TDFluidTestArena",
+  "phase_seconds": 10.0,
+  "warnings": [
+    "에디터 창이 앞창이 아니면 PIE가 3fps로 제한되어 비용이 왜곡된다(L-editor-06). 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다."
+  ],
+  "environment": {
+    "level": {
+      "exists": true,
+      "pie_running": false,
+      "loaded": true,
+      "world": "/Game/FluidFX/Maps/LV_TDFluidTestArena.LV_TDFluidTestArena"
+    },
+    "pie_ended": true
+  },
+  "setup_actors": [
+    {
+      "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_4",
+      "label": "TDGen_FluidArena_CombatPool",
+      "resolution": 128,
+      "awake": true,
+      "has_runtime_texture": true
+    },
+    {
+      "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_5",
+      "label": "TDGen_FluidArena_MudZone",
+      "resolution": 128,
+      "awake": true,
+      "has_runtime_texture": true
+    },
+    {
+      "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_6",
+      "label": "TDGen_FluidArena_PlayerTrail",
+      "resolution": 128,
+      "awake": true,
+      "has_runtime_texture": true
+    },
+    {
+      "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_7",
+      "label": "TDGen_FluidArena_RampWater",
+      "resolution": 128,
+      "awake": true,
+      "has_runtime_texture": true
+    }
+  ],
+  "phases": {
+    "awake_res128": {
+      "started": true,
+      "lines": 3,
+      "lines_total": 5,
+      "dropped_transition_lines": 2,
+      "frames_total": 383,
+      "avg_tick_ms": 1.2889,
+      "max_tick_ms": 2.1006,
+      "avg_frame_ms": 15.743,
+      "awake_actors": 4,
+      "total_cells": 65536,
+      "state_consistent": true,
+      "matches_editor_state": true,
+      "expected_editor_state": {
+        "awake_actors": 4,
+        "total_cells": 65536
+      },
+      "driver_wait_seconds": 10.0,
+      "raw_lines": [
+        {
+          "frames": 103,
+          "avg_tick_ms": 1.4375,
+          "max_tick_ms": 2.2932,
+          "avg_frame_ms": 19.564,
+          "awake_actors": 4,
+          "total_cells": 65536
+        },
+        {
+          "frames": 114,
+          "avg_tick_ms": 1.3329,
+          "max_tick_ms": 2.0986,
+          "avg_frame_ms": 17.586,
+          "awake_actors": 4,
+          "total_cells": 65536
+        },
+        {
+          "frames": 127,
+          "avg_tick_ms": 1.3316,
+          "max_tick_ms": 2.1006,
+          "avg_frame_ms": 15.819,
+          "awake_actors": 4,
+          "total_cells": 65536
+        },
+        {
+          "frames": 128,
+          "avg_tick_ms": 1.266,
+          "max_tick_ms": 1.9003,
+          "avg_frame_ms": 15.723,
+          "awake_actors": 4,
+          "total_cells": 65536
+        },
+        {
+          "frames": 128,
+          "avg_tick_ms": 1.2694,
+          "max_tick_ms": 1.9561,
+          "avg_frame_ms": 15.688,
+          "awake_actors": 4,
+          "total_cells": 65536
+        }
+      ],
+      "editor_state": [
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_4",
+          "label": "TDGen_FluidArena_CombatPool",
+          "resolution": 128,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_5",
+          "label": "TDGen_FluidArena_MudZone",
+          "resolution": 128,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_6",
+          "label": "TDGen_FluidArena_PlayerTrail",
+          "resolution": 128,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_7",
+          "label": "TDGen_FluidArena_RampWater",
+          "resolution": 128,
+          "awake": true,
+          "has_runtime_texture": true
+        }
+      ]
+    },
+    "all_asleep": {
+      "started": true,
+      "lines": 3,
+      "lines_total": 5,
+      "dropped_transition_lines": 2,
+      "frames_total": 383,
+      "avg_tick_ms": 0.0041,
+      "max_tick_ms": 0.1268,
+      "avg_frame_ms": 15.709,
+      "awake_actors": 0,
+      "total_cells": 0,
+      "state_consistent": true,
+      "matches_editor_state": true,
+      "expected_editor_state": {
+        "awake_actors": 0,
+        "total_cells": 0
+      },
+      "driver_wait_seconds": 10.0,
+      "raw_lines": [
+        {
+          "frames": 128,
+          "avg_tick_ms": 0.6288,
+          "max_tick_ms": 1.84,
+          "avg_frame_ms": 15.686,
+          "awake_actors": 0,
+          "total_cells": 0
+        },
+        {
+          "frames": 128,
+          "avg_tick_ms": 0.0037,
+          "max_tick_ms": 0.013,
+          "avg_frame_ms": 15.686,
+          "awake_actors": 0,
+          "total_cells": 0
+        },
+        {
+          "frames": 127,
+          "avg_tick_ms": 0.0049,
+          "max_tick_ms": 0.1268,
+          "avg_frame_ms": 15.754,
+          "awake_actors": 0,
+          "total_cells": 0
+        },
+        {
+          "frames": 128,
+          "avg_tick_ms": 0.0037,
+          "max_tick_ms": 0.0142,
+          "avg_frame_ms": 15.671,
+          "awake_actors": 0,
+          "total_cells": 0
+        },
+        {
+          "frames": 128,
+          "avg_tick_ms": 0.0037,
+          "max_tick_ms": 0.015,
+          "avg_frame_ms": 15.703,
+          "awake_actors": 0,
+          "total_cells": 0
+        }
+      ],
+      "editor_state": [
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_4",
+          "label": "TDGen_FluidArena_CombatPool",
+          "resolution": 128,
+          "awake": false,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_5",
+          "label": "TDGen_FluidArena_MudZone",
+          "resolution": 128,
+          "awake": false,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_6",
+          "label": "TDGen_FluidArena_PlayerTrail",
+          "resolution": 128,
+          "awake": false,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_7",
+          "label": "TDGen_FluidArena_RampWater",
+          "resolution": 128,
+          "awake": false,
+          "has_runtime_texture": true
+        }
+      ]
+    },
+    "awake_res64": {
+      "started": true,
+      "lines": 3,
+      "lines_total": 5,
+      "dropped_transition_lines": 2,
+      "frames_total": 382,
+      "avg_tick_ms": 0.4199,
+      "max_tick_ms": 0.8491,
+      "avg_frame_ms": 15.74,
+      "awake_actors": 4,
+      "total_cells": 16384,
+      "state_consistent": true,
+      "matches_editor_state": true,
+      "expected_editor_state": {
+        "awake_actors": 4,
+        "total_cells": 16384
+      },
+      "driver_wait_seconds": 10.0,
+      "raw_lines": [
+        {
+          "frames": 128,
+          "avg_tick_ms": 0.1859,
+          "max_tick_ms": 2.2749,
+          "avg_frame_ms": 15.704,
+          "awake_actors": 4,
+          "total_cells": 16384
+        },
+        {
+          "frames": 128,
+          "avg_tick_ms": 0.4034,
+          "max_tick_ms": 0.6856,
+          "avg_frame_ms": 15.748,
+          "awake_actors": 4,
+          "total_cells": 16384
+        },
+        {
+          "frames": 128,
+          "avg_tick_ms": 0.4002,
+          "max_tick_ms": 0.568,
+          "avg_frame_ms": 15.648,
+          "awake_actors": 4,
+          "total_cells": 16384
+        },
+        {
+          "frames": 127,
+          "avg_tick_ms": 0.4292,
+          "max_tick_ms": 0.8491,
+          "avg_frame_ms": 15.762,
+          "awake_actors": 4,
+          "total_cells": 16384
+        },
+        {
+          "frames": 127,
+          "avg_tick_ms": 0.4304,
+          "max_tick_ms": 0.8093,
+          "avg_frame_ms": 15.811,
+          "awake_actors": 4,
+          "total_cells": 16384
+        }
+      ],
+      "editor_state": [
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_4",
+          "label": "TDGen_FluidArena_CombatPool",
+          "resolution": 64,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_5",
+          "label": "TDGen_FluidArena_MudZone",
+          "resolution": 64,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_6",
+          "label": "TDGen_FluidArena_PlayerTrail",
+          "resolution": 64,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_7",
+          "label": "TDGen_FluidArena_RampWater",
+          "resolution": 64,
+          "awake": true,
+          "has_runtime_texture": true
+        }
+      ]
+    },
+    "awake_res256": {
+      "started": true,
+      "lines": 4,
+      "lines_total": 6,
+      "dropped_transition_lines": 2,
+      "frames_total": 500,
+      "avg_tick_ms": 5.0939,
+      "max_tick_ms": 8.1267,
+      "avg_frame_ms": 16.073,
+      "awake_actors": 4,
+      "total_cells": 262144,
+      "state_consistent": true,
+      "matches_editor_state": true,
+      "expected_editor_state": {
+        "awake_actors": 4,
+        "total_cells": 262144
+      },
+      "driver_wait_seconds": 10.0,
+      "raw_lines": [
+        {
+          "frames": 127,
+          "avg_tick_ms": 0.5691,
+          "max_tick_ms": 6.0725,
+          "avg_frame_ms": 15.87,
+          "awake_actors": 4,
+          "total_cells": 262144
+        },
+        {
+          "frames": 119,
+          "avg_tick_ms": 5.5983,
+          "max_tick_ms": 7.4349,
+          "avg_frame_ms": 16.874,
+          "awake_actors": 4,
+          "total_cells": 262144
+        },
+        {
+          "frames": 124,
+          "avg_tick_ms": 5.0828,
+          "max_tick_ms": 7.1772,
+          "avg_frame_ms": 16.229,
+          "awake_actors": 4,
+          "total_cells": 262144
+        },
+        {
+          "frames": 127,
+          "avg_tick_ms": 4.9305,
+          "max_tick_ms": 7.9636,
+          "avg_frame_ms": 15.799,
+          "awake_actors": 4,
+          "total_cells": 262144
+        },
+        {
+          "frames": 125,
+          "avg_tick_ms": 5.1189,
+          "max_tick_ms": 7.6491,
+          "avg_frame_ms": 16.072,
+          "awake_actors": 4,
+          "total_cells": 262144
+        },
+        {
+          "frames": 124,
+          "avg_tick_ms": 5.2472,
+          "max_tick_ms": 8.1267,
+          "avg_frame_ms": 16.198,
+          "awake_actors": 4,
+          "total_cells": 262144
+        }
+      ],
+      "editor_state": [
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_4",
+          "label": "TDGen_FluidArena_CombatPool",
+          "resolution": 256,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_5",
+          "label": "TDGen_FluidArena_MudZone",
+          "resolution": 256,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_6",
+          "label": "TDGen_FluidArena_PlayerTrail",
+          "resolution": 256,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_7",
+          "label": "TDGen_FluidArena_RampWater",
+          "resolution": 256,
+          "awake": true,
+          "has_runtime_texture": true
+        }
+      ]
+    },
+    "awake_res128_repeat": {
+      "started": true,
+      "lines": 3,
+      "lines_total": 5,
+      "dropped_transition_lines": 2,
+      "frames_total": 381,
+      "avg_tick_ms": 1.2441,
+      "max_tick_ms": 1.8052,
+      "avg_frame_ms": 15.808,
+      "awake_actors": 4,
+      "total_cells": 65536,
+      "state_consistent": true,
+      "matches_editor_state": true,
+      "expected_editor_state": {
+        "awake_actors": 4,
+        "total_cells": 65536
+      },
+      "driver_wait_seconds": 10.01,
+      "raw_lines": [
+        {
+          "frames": 127,
+          "avg_tick_ms": 2.3091,
+          "max_tick_ms": 6.5027,
+          "avg_frame_ms": 15.878,
+          "awake_actors": 4,
+          "total_cells": 65536
+        },
+        {
+          "frames": 128,
+          "avg_tick_ms": 1.2734,
+          "max_tick_ms": 1.8911,
+          "avg_frame_ms": 15.643,
+          "awake_actors": 4,
+          "total_cells": 65536
+        },
+        {
+          "frames": 127,
+          "avg_tick_ms": 1.2279,
+          "max_tick_ms": 1.5739,
+          "avg_frame_ms": 15.756,
+          "awake_actors": 4,
+          "total_cells": 65536
+        },
+        {
+          "frames": 127,
+          "avg_tick_ms": 1.251,
+          "max_tick_ms": 1.8052,
+          "avg_frame_ms": 15.807,
+          "awake_actors": 4,
+          "total_cells": 65536
+        },
+        {
+          "frames": 127,
+          "avg_tick_ms": 1.2534,
+          "max_tick_ms": 1.7468,
+          "avg_frame_ms": 15.86,
+          "awake_actors": 4,
+          "total_cells": 65536
+        }
+      ],
+      "editor_state": [
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_4",
+          "label": "TDGen_FluidArena_CombatPool",
+          "resolution": 128,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_5",
+          "label": "TDGen_FluidArena_MudZone",
+          "resolution": 128,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_6",
+          "label": "TDGen_FluidArena_PlayerTrail",
+          "resolution": 128,
+          "awake": true,
+          "has_runtime_texture": true
+        },
+        {
+          "path": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidTestArena.LV_TDFluidTestArena:PersistentLevel.TDFluidLiveActor_7",
+          "label": "TDGen_FluidArena_RampWater",
+          "resolution": 128,
+          "awake": true,
+          "has_runtime_texture": true
+        }
+      ]
+    }
+  },
+  "last_started_phase": "awake_res128_repeat",
+  "finish_logged": true,
+  "console_variable_state": "off",
+  "console_variable_readback": 1,
+  "environment_error": null,
+  "niagara_check": {
+    "passed": true,
+    "actor": "TDGen_FluidArena_CombatPool",
+    "system": "/Game/ArrowTrail/FX/NS_ArrowTrail_Water",
+    "stages": {
+      "spawned": [
+        {
+          "component": "NiagaraComponent_0",
+          "asset": "/Game/ArrowTrail/FX/NS_ArrowTrail_Water.NS_ArrowTrail_Water",
+          "active": true
+        }
+      ],
+      "asleep": [
+        {
+          "component": "NiagaraComponent_0",
+          "asset": "/Game/ArrowTrail/FX/NS_ArrowTrail_Water.NS_ArrowTrail_Water",
+          "active": false
+        }
+      ],
+      "awake_again": [
+        {
+          "component": "NiagaraComponent_0",
+          "asset": "/Game/ArrowTrail/FX/NS_ArrowTrail_Water.NS_ArrowTrail_Water",
+          "active": true
+        }
+      ]
+    },
+    "criterion": "프리셋 ExternalNiagaraSystem 컴포넌트가 정확히 1개 생기고 활성, 잠들면 비활성, 깨면 다시 활성"
+  },
+  "passed": true,
+  "last_phase_end_logged": true,
+  "exit_code": 0
+}

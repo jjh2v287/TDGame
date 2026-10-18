@@ -33,6 +33,7 @@ protected:
 	void OnBreak(const FVector& Location);
 
 private:
+	void ApplyBreakForce(const FVector& HitLocation);
 	void ApplyRadialBreakForce(const FVector& HitLocation);
 	void ApplyImpulseBreakForce(const FVector& HitLocation);
 	void ScheduleAutoDestroy();

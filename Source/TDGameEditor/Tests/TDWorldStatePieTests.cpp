@@ -11,12 +11,12 @@
 
 namespace
 {
-	const FName TDPieTestDungeonId(TEXT("MainCrypt"));
+	const FName TDWorldStatePieDungeonId(TEXT("MainCrypt"));
 	const FName TDChestOpenedStateKey(TEXT("Opened"));
 	const FVector TDFallbackChestLocation(-10300.0, 2600.0, 630.0);
 	const FVector TDChestOffsetFromPawn(300.0, 0.0, 0.0);
-	constexpr float TDPieWarmupSeconds = 10.0f;
-	constexpr double TDTravelTimeoutSeconds = 60.0;
+	constexpr float TDWorldStatePieWarmupSeconds = 10.0f;
+	constexpr double TDWorldStateTravelTimeoutSeconds = 60.0;
 
 	struct FTDChestStatePieTestState
 	{
@@ -66,10 +66,10 @@ bool FTDChestStateSurvivesStreamingPieTest::RunTest(const FString& Parameters)
 	const auto Abort = [State]() { State->bIsAborted = true; };
 	const auto WaitForTravelIdle = [this, State, Abort](const FString& Description)
 	{
-		EnqueueWaitUntil(*this, Description, [State]() { return State->bIsAborted || State->IsTravelIdle(); }, TDTravelTimeoutSeconds, Abort);
+		EnqueueWaitUntil(*this, Description, [State]() { return State->bIsAborted || State->IsTravelIdle(); }, TDWorldStateTravelTimeoutSeconds, Abort);
 	};
 
-	EnqueueWaitSeconds(TDPieWarmupSeconds);
+	EnqueueWaitSeconds(TDWorldStatePieWarmupSeconds);
 
 	EnqueueStep([this, State]()
 	{
@@ -109,7 +109,7 @@ bool FTDChestStateSurvivesStreamingPieTest::RunTest(const FString& Parameters)
 			TestTrue(TEXT("Stored record marks the chest as opened"), Record.GetBool(TDChestOpenedStateKey, false));
 		}
 
-		if (!TestTrue(TEXT("RequestTravel to dungeon entry is accepted"), Travel->RequestTravel(TDPieTestDungeonId, true)))
+		if (!TestTrue(TEXT("RequestTravel to dungeon entry is accepted"), Travel->RequestTravel(TDWorldStatePieDungeonId, true)))
 		{
 			State->bIsAborted = true;
 		}
@@ -143,7 +143,7 @@ bool FTDChestStateSurvivesStreamingPieTest::RunTest(const FString& Parameters)
 			TestTrue(TEXT("Chest record still marks the chest as opened after unload"), Record.GetBool(TDChestOpenedStateKey, false));
 		}
 
-		if (!State->Travel.IsValid() || !TestTrue(TEXT("RequestTravel back to field is accepted"), State->Travel->RequestTravel(TDPieTestDungeonId, false)))
+		if (!State->Travel.IsValid() || !TestTrue(TEXT("RequestTravel back to field is accepted"), State->Travel->RequestTravel(TDWorldStatePieDungeonId, false)))
 		{
 			State->bIsAborted = true;
 		}

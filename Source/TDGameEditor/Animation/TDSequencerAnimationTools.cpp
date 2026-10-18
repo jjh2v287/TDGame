@@ -37,7 +37,7 @@ namespace
 		return Json;
 	}
 
-	FString Fail(const FString& Error)
+	FString FailSequencerAnimationTool(const FString& Error)
 	{
 		UE_LOG(LogTDAnimAuthoring, Warning, TEXT("%s failed: %s"), TDActiveAuthoringTool(), *Error);
 		const TSharedRef<FJsonObject> Result = MakeShared<FJsonObject>();
@@ -189,17 +189,17 @@ FString UTDSequencerAnimationTools::InspectSequence(const FString& SequencePath)
 	const FTDAuthoringToolScope ToolScope(TEXT("InspectSequence"), SequencePath);
 	if (!IsInGameThread() || !GEditor)
 	{
-		return Fail(TEXT("This tool requires the Unreal Editor game thread."));
+		return FailSequencerAnimationTool(TEXT("This tool requires the Unreal Editor game thread."));
 	}
 	FString Error;
 	if (!CheckReadPath(SequencePath, TEXT("sequence"), Error))
 	{
-		return Fail(Error);
+		return FailSequencerAnimationTool(Error);
 	}
 	ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, *SequencePath);
 	if (!Sequence || !Sequence->GetMovieScene())
 	{
-		return Fail(TEXT("sequence does not resolve to a LevelSequence with a MovieScene."));
+		return FailSequencerAnimationTool(TEXT("sequence does not resolve to a LevelSequence with a MovieScene."));
 	}
 	const UMovieScene* MovieScene = Sequence->GetMovieScene();
 	const FFrameRate FrameRate = MovieScene->GetDisplayRate();
@@ -238,23 +238,23 @@ FString UTDSequencerAnimationTools::BakeAnimation(const FString& RequestJson)
 	const FTDAuthoringToolScope ToolScope(TEXT("BakeAnimation"), RequestJson);
 	if (!IsInGameThread() || !GEditor || GEditor->PlayWorld)
 	{
-		return Fail(TEXT("Baking requires the Unreal Editor game thread with PIE stopped."));
+		return FailSequencerAnimationTool(TEXT("Baking requires the Unreal Editor game thread with PIE stopped."));
 	}
 	if (RequestJson.Len() > 65536)
 	{
-		return Fail(TEXT("RequestJson exceeds the 64 KiB limit."));
+		return FailSequencerAnimationTool(TEXT("RequestJson exceeds the 64 KiB limit."));
 	}
 	TSharedPtr<FJsonObject> Request;
 	if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(RequestJson), Request) || !Request.IsValid())
 	{
-		return Fail(TEXT("RequestJson must be a JSON object."));
+		return FailSequencerAnimationTool(TEXT("RequestJson must be a JSON object."));
 	}
 	const TSet<FString> AllowedFields{TEXT("sequence"), TEXT("binding"), TEXT("skeletal_mesh"), TEXT("asset_path"), TEXT("save")};
 	for (const TPair<FString, TSharedPtr<FJsonValue>>& Field : Request->Values)
 	{
 		if (!AllowedFields.Contains(Field.Key))
 		{
-			return Fail(FString::Printf(TEXT("Unknown request field: %s"), *Field.Key));
+			return FailSequencerAnimationTool(FString::Printf(TEXT("Unknown request field: %s"), *Field.Key));
 		}
 	}
 	FString SequencePath;
@@ -266,38 +266,38 @@ FString UTDSequencerAnimationTools::BakeAnimation(const FString& RequestJson)
 		|| !Request->TryGetStringField(TEXT("skeletal_mesh"), SkeletalMeshPath) || SkeletalMeshPath.IsEmpty()
 		|| !Request->TryGetStringField(TEXT("asset_path"), AssetPath))
 	{
-		return Fail(TEXT("Required string fields: sequence, binding, skeletal_mesh, asset_path."));
+		return FailSequencerAnimationTool(TEXT("Required string fields: sequence, binding, skeletal_mesh, asset_path."));
 	}
 	bool bShouldSave = true;
 	if (Request->HasField(TEXT("save")) && !Request->TryGetBoolField(TEXT("save"), bShouldSave))
 	{
-		return Fail(TEXT("save must be a boolean."));
+		return FailSequencerAnimationTool(TEXT("save must be a boolean."));
 	}
 	FString Error;
 	if (!CheckDestination(AssetPath, Error))
 	{
-		return Fail(Error);
+		return FailSequencerAnimationTool(Error);
 	}
 	FGuid BindingId;
 	if (!FGuid::Parse(BindingText, BindingId) || !BindingId.IsValid())
 	{
-		return Fail(TEXT("binding must be an explicit valid GUID returned by InspectSequence."));
+		return FailSequencerAnimationTool(TEXT("binding must be an explicit valid GUID returned by InspectSequence."));
 	}
 	if (!CheckReadPath(SequencePath, TEXT("sequence"), Error) || !CheckReadPath(SkeletalMeshPath, TEXT("skeletal_mesh"), Error))
 	{
-		return Fail(Error);
+		return FailSequencerAnimationTool(Error);
 	}
 	ULevelSequence* Sequence = LoadObject<ULevelSequence>(nullptr, *SequencePath);
 	USkeletalMesh* SkeletalMesh = LoadObject<USkeletalMesh>(nullptr, *SkeletalMeshPath);
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 	if (!World || World->bIsTearingDown || !Sequence || !Sequence->GetMovieScene() || !SkeletalMesh || !SkeletalMesh->GetSkeleton())
 	{
-		return Fail(TEXT("Expected an editor world, a valid LevelSequence and a skeletal_mesh with a Skeleton."));
+		return FailSequencerAnimationTool(TEXT("Expected an editor world, a valid LevelSequence and a skeletal_mesh with a Skeleton."));
 	}
 	UMovieScene* MovieScene = Sequence->GetMovieScene();
 	if (!MovieScene->FindBinding(BindingId))
 	{
-		return Fail(TEXT("binding is not present in the requested sequence."));
+		return FailSequencerAnimationTool(TEXT("binding is not present in the requested sequence."));
 	}
 	const FFrameRate FrameRate = MovieScene->GetDisplayRate();
 	const FFrameRate TickResolution = MovieScene->GetTickResolution();
@@ -305,27 +305,27 @@ FString UTDSequencerAnimationTools::BakeAnimation(const FString& RequestJson)
 	if (FrameRate.Numerator <= 0 || FrameRate.Denominator <= 0 || TickResolution.Numerator <= 0 || TickResolution.Denominator <= 0
 		|| !Range.HasLowerBound() || !Range.HasUpperBound() || Range.IsEmpty())
 	{
-		return Fail(TEXT("The sequence must have positive frame rates and a finite nonempty playback range."));
+		return FailSequencerAnimationTool(TEXT("The sequence must have positive frame rates and a finite nonempty playback range."));
 	}
 	const double Duration = (static_cast<double>(Range.GetUpperBoundValue().Value) - Range.GetLowerBoundValue().Value) / TickResolution.AsDecimal();
 	if (Duration <= 0.0 || Duration > 600.0 || Duration * FrameRate.AsDecimal() > 100000.0)
 	{
-		return Fail(TEXT("The bake range must be positive, at most 600 seconds and at most 100000 output frames."));
+		return FailSequencerAnimationTool(TEXT("The bake range must be positive, at most 600 seconds and at most 100000 output frames."));
 	}
 	const FFrameNumber StartFrame = FFrameRate::TransformTime(Range.GetLowerBoundValue(), TickResolution, FrameRate).CeilToFrame();
 	const FFrameNumber EndFrame = FFrameRate::TransformTime(Range.GetUpperBoundValue(), TickResolution, FrameRate).CeilToFrame() - 1;
 	if (EndFrame <= StartFrame)
 	{
-		return Fail(TEXT("The playback range must contain at least two display-rate sample frames."));
+		return FailSequencerAnimationTool(TEXT("The playback range must contain at least two display-rate sample frames."));
 	}
 	const TArray<USkeletalMeshComponent*> Components = ResolveSkeletalComponents(Sequence, BindingId);
 	if (Components.Num() != 1)
 	{
-		return Fail(TEXT("binding must resolve to exactly one skeletal component. Native spawnables resolve from their templates; otherwise open/focus this sequence and evaluate a frame where the bound character exists. For actors with multiple skeletal components, use an explicit component binding."));
+		return FailSequencerAnimationTool(TEXT("binding must resolve to exactly one skeletal component. Native spawnables resolve from their templates; otherwise open/focus this sequence and evaluate a frame where the bound character exists. For actors with multiple skeletal components, use an explicit component binding."));
 	}
 	if (Components[0]->GetSkeletalMeshAsset() != SkeletalMesh)
 	{
-		return Fail(FString::Printf(TEXT("skeletal_mesh does not match the binding's mesh: %s"), *GetPathNameSafe(Components[0]->GetSkeletalMeshAsset())));
+		return FailSequencerAnimationTool(FString::Printf(TEXT("skeletal_mesh does not match the binding's mesh: %s"), *GetPathNameSafe(Components[0]->GetSkeletalMeshAsset())));
 	}
 	TStrongObjectPtr<UAnimSequence> Animation(NewObject<UAnimSequence>(GetTransientPackage(), NAME_None, RF_Transient));
 	Animation->SetSkeleton(SkeletalMesh->GetSkeleton());
@@ -333,23 +333,23 @@ FString UTDSequencerAnimationTools::BakeAnimation(const FString& RequestJson)
 	Animation->GetController().InitializeModel();
 	if (!ExportAnimation(World, Sequence, BindingId, SkeletalMesh, Animation.Get(), StartFrame, EndFrame, Error))
 	{
-		return Fail(Error);
+		return FailSequencerAnimationTool(Error);
 	}
 	const IAnimationDataModel* Model = Animation->GetDataModel();
 	if (!Model || Model->GetNumBoneTracks() == 0 || Model->GetNumberOfKeys() < 2 || Animation->GetPlayLength() <= 0.0
 		|| Animation->GetSkeleton() != SkeletalMesh->GetSkeleton())
 	{
-		return Fail(TEXT("Export did not produce valid skeletal animation samples for the requested Skeleton. No destination asset was created."));
+		return FailSequencerAnimationTool(TEXT("Export did not produce valid skeletal animation samples for the requested Skeleton. No destination asset was created."));
 	}
 	if (!CheckDestination(AssetPath, Error))
 	{
-		return Fail(Error);
+		return FailSequencerAnimationTool(Error);
 	}
 	FTDAuthoringPackageScope PackageScope(AssetPath);
 	const FString AssetName = FPackageName::GetLongPackageAssetName(AssetPath);
 	if (!Animation->Rename(*AssetName, PackageScope.Get(), REN_DontCreateRedirectors | REN_NonTransactional))
 	{
-		return Fail(TEXT("The baked animation could not be assigned to the new package."));
+		return FailSequencerAnimationTool(TEXT("The baked animation could not be assigned to the new package."));
 	}
 	PackageScope.Track(Animation.Get());
 	Animation->ClearFlags(RF_Transient);
@@ -364,7 +364,7 @@ FString UTDSequencerAnimationTools::BakeAnimation(const FString& RequestJson)
 		if (!UPackage::SavePackage(PackageScope.Get(), Animation.Get(), *Filename, SaveArgs))
 		{
 			Animation->SetFlags(RF_Transient);
-			return Fail(TEXT("Saving the new animation package failed. Check the editor log and output directory before retrying."));
+			return FailSequencerAnimationTool(TEXT("Saving the new animation package failed. Check the editor log and output directory before retrying."));
 		}
 	}
 	PackageScope.Commit();

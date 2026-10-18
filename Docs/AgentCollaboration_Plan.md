@@ -67,3 +67,4 @@
 | [Docs/Lessons/combat.md](Lessons/combat.md) | 교훈 | 데미지·전투 VFX 연결 시 |
 | [Docs/Lessons/worldgen.md](Lessons/worldgen.md) | 교훈 | 월드·이계 생성, 심리스 이동 작업 시 |
 | `Docs/Automation_Backlog.md` | 계획 | 스크립트 착수 시 |
+| [Docs/TDFluidLiveSystemDesign.md](TDFluidLiveSystemDesign.md) | 설계 | FluidFX(FluidNinja LIVE-2 역공학 2D 유체) 작업 시, 결정 D-48 |

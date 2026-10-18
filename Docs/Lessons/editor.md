@@ -193,12 +193,40 @@
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
 
+### L-editor-26 에디터 Python이 `Failed to find property`·AttributeError로 멈추면 C++에 그 UPROPERTY가 없거나 함수가 UFUNCTION이 아니다
+- 증상: `Exception: TDFluidPresetAsset: Failed to find property 'override_preset_defaults' for attribute 'override_preset_defaults' on 'TDFluidPresetAsset'`(Tools/FluidFX/editor_make_fluid_test_level.py:280). 다음 줄 `resolve_effective_config()`도 C++ 함수가 UFUNCTION이 아니라 호출 불가였다. 재질 3개만 저장되고 작업 세션이 멈췄다
+- 원인: 스크립트를 C++ 선언보다 먼저 써서 없는 속성·리플렉션 밖 함수를 불렀다. 언리얼 Python은 UPROPERTY·UFUNCTION만 노출하고 bool의 b 접두를 뗀다(bOverridePresetDefaults → override_preset_defaults)
+- 해결: 스크립트 작성 전에 `Intermediate/PythonStub/unreal.py`를 rg하거나 헤더의 UPROPERTY·UFUNCTION을 확인한다. 새 UPROPERTY·UFUNCTION은 라이브 코딩이 안 되므로 빌드 후 에디터 재시작(L-build-01). 시험은 FindFProperty만 보지 말고 CPF_Edit·CPF_BlueprintVisible·FUNC_BlueprintPure 플래그까지 단언한다
+- 범위: C++ 클래스·데이터 에셋을 만지는 모든 에디터 Python 도구
+- 증거: 2026-10-18 `Saved/Logs/TDGame-backup-2026.10.17-17.41.25.log:2512`, 분석 `Saved/AgentOps/20261018/fluidfx/analysis/critic.md`
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
 ### L-editor-27 `-nullrhi` 헤드리스 커맨드릿에서 스켈레탈 메시를 FBX로 내보내면 `Assertion failed: MeshObject`로 죽는다(애니 FBX는 된다)
 - 증상: `UnrealEditor-Cmd ... -run=pythonscript -nullrhi`에서 AnimSequence FBX 7개는 내보낸 뒤 `AssetExportTask(SkeletalMesh)`에서 `Assertion failed: MeshObject [SkinnedMeshComponent.cpp:4987]`(GetCPUSkinnedVertices ← FMeshMergeHelpers::RetrieveMesh) 치명 오류
 - 원인: 메시 내보내기가 렌더 메시 객체로 CPU 스키닝 정점을 읽는데 NullRHI에서는 MeshObject가 만들어지지 않는다
 - 해결: 애니만 필요하면 헤드리스로 내보내고(골격은 애니 FBX에 들어 있음), 메시가 필요하면 GUI 에디터(`run_in_editor.py`)에서 내보낸다. 헤드리스 스크립트는 메시 내보내기를 마지막에 두거나 빼서 앞 산출물을 잃지 않게 한다
 - 범위: UE 5.8 에디터 커맨드릿 FBX 내보내기
 - 증거: 2026-10-18 `Saved/Logs/M327_ExportHitRefs.log`(애니 7개 성공 뒤 하이에나 메시에서 중단)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
+### L-editor-28 스크립트로 새로 만든 맵을 열면 에디터 내비메시가 생성되지 않아 `project_point_to_navigation`이 몇 분이고 None이다
+- 증상: `python Tools/FluidFX/pie_check_fluid.py` → `TD_NAV_STATE {"navmesh_actors": 1, "building_or_locked": false, "player_start_found": true, "projected": [false]}`가 300초 내내 반복. 바닥 충돌(QueryAndPhysics·CanEverAffectNavigation)·NavMeshBoundsVolume 범위·PlayerStart 높이는 정상이고 질의 범위를 500×500×2000으로 키워도 None
+- 원인: RecastNavMesh(DYNAMIC)와 경계 볼륨은 있지만 에디터가 이 맵의 내비 타일 빌드를 시작하지 않았다(빌드 중·잠금도 아님). L-editor-25(빌드 시작 전 False)와 달리 기다려도 시작되지 않는다
+- 해결: 내비가 준비되지 않았고 빌드 중도 아니면 에디터 월드에 `unreal.SystemLibrary.execute_console_command(world, 'RebuildNavigation')`을 한 번 보낸다. 8초 안에 투영 성공(`pie_check_fluid.py` `request_editor_navigation_rebuild`). 맵이 더러워지므로 저장하지 않을 거면 닫을 때 버린다
+- 함께 본 것: `UnrealEditorSubsystem.get_editor_world()`는 PIE 중 None을 돌려주고 `LogUtils: Error: The Editor is currently in a play mode.`를 남긴다. PIE 상태 보고 함수는 `get_game_world()`를 먼저 보고 PIE가 아닐 때만 에디터 월드를 읽는다
+- 범위: 에디터 Python으로 새 맵을 만든 직후 PIE·내비 질의를 하는 도구
+- 증거: 2026-10-18 `Saved/AgentOps/20261018/fluidfx/pie-run1.log`(실패), RebuildNavigation 뒤 투영 `(-450, 0, 10)` 성공
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
+### L-editor-29 `-NullRHI` 헤드리스 시험에서 `UNiagaraFunctionLibrary::SpawnSystemAttached`는 null을 돌려주고 나이아가라 `IsActive`는 늘 거짓이다
+- 증상: FluidFX 프리셋 나이아가라 스폰 시험이 헤드리스(`build_and_test.py`)에서 소유 컴포넌트 null로 실패. 직접 만든 컴포넌트도 `Activate(true)` 뒤 `IsActive()` 거짓
+- 원인: `NiagaraFunctionLibrary.cpp:71`이 `FApp::CanEverRender()`가 거짓이면 스폰을 건너뛴다. 활성화도 같은 조건에서 일찍 반환한다
+- 해결: 컴포넌트가 꼭 있어야 하면 `NewObject<UNiagaraComponent>(Owner)`+`SetAsset`+`SetupAttachment`+`RegisterComponent`로 만든다. 활성 토글은 헤드리스에서 판별하지 말고(단언 건너뜀 + AddInfo) PIE 도구로 검증한다(`Tools/FluidFX/pie_profile_fluid.py` 나이아가라 단계)
+- 범위: 헤드리스 자동화 시험에서 나이아가라 컴포넌트를 만들거나 활성 상태를 보는 코드
+- 증거: 2026-10-18 `Saved/AgentOps/20261018/fluidfx-perf-cpp-red-tests.json`, PIE 통과 `Docs/Validation/FluidFX/D-48-pie-perf-2026-10-18.json`
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
 
@@ -252,5 +280,22 @@
 - 해결: 예고 에셋을 새로 만들거나 경로를 바꾼 뒤에는 `python Tools/ue_editor.py restart`(또는 에디터 재시작) 후 PIE. 재시작 뒤 같은 탐침에서 원판·부채꼴·띠가 재질로 나옴
 - 범위: C++ 카탈로그 정의(용·중간 보스·기본 몬스터 공격)의 예고 재질 전부. `.uasset` 주문은 해당 없음
 - 증거: `Docs/MonsterAI_CombatSim/measurements/M3-35/pie-20261018/6_inferno.png`(재시작 뒤), 재시작 전 실행은 같은 폴더 덮어씀(Worklog M3-35 완료 항목)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
+### L-editor-35 코드로 만든 지오메트리 컬렉션은 충돌 형상이 비어 깨지지 않고 통째로 움직인다
+- 증상: `UTDFluidFractureEditorLibrary::CreateBrickGeometryCollection`(AppendStaticMesh 64개 + 루트)으로 만든 벽돌 블록이 PIE에서 `CrumbleActiveClusters()`를 불러도 `IsRootBroken()`이 계속 false, 조각 65개가 상대 위치를 유지한 채 한 몸으로 이동. 트리거 직후 `Ensure condition failed: Geometry != nullptr [PhysScene_Chaos.cpp:2396]`
+- 원인: 새 UGeometryCollection의 기본 충돌 형상은 Convex인데 AppendStaticMesh는 볼록 껍질 데이터를 만들지 않아 잎·루트 Implicits가 전부 nullptr. 프록시가 형상 없는 잎을 입자로 만들지 않아 루트가 자식 없는 단일 강체가 되고, 부술 클러스터가 없다(엔진 GeometryCollectionPhysicsProxy.cpp:5239-5254·3207·1607)
+- 해결: AddSingleRootNodeIfRequired 뒤 `SizeSpecificData[*].CollisionShapes[*].ImplicitType = Chaos_Implicit_Box`(벽돌) 또는 `UpdateConvexGeometry()`, 그다음 `EnsureDataIsCooked(false, false, false, false)`(PreSave와 같은 인수. bInitResources=true는 RebuildRenderData 뒤 `Assertion failed: !bIsInitialized` 크래시). 시험은 `FGeometryCollectionPhysicsProxy::NeedToInitializeSharedCollisionStructures`(속성 존재만 봄, 거짓 양성) 대신 `FGeometryDynamicCollection::ImplicitsAttribute` 값의 유효 개수를 센다(빨강 0/65 → 초록 65/65)
+- 범위: UE 5.8, C++·파이썬으로 생성한 GC 전부. 프랙처 편집기로 만든 에셋은 해당 없음
+- 증거: `Saved/AgentOps/20261018/fluidfx/gc-crumble-debug.md`, `Saved/AgentOps/20261018/fx3-gc-red-tests.json`·`fx3-gc-green-tests.json`, 탐침 `Docs/Validation/FluidFX/D-49-fx3-probe-2026-10-18.json`(퍼짐 1.0배 → 11.3배)
+- 날짜·상태: 2026-10-18 active
+- 발견: claude(td-debugger 2회)
+
+### L-editor-36 반투명 재질의 속도 출력과 SceneDepth는 함께 못 쓰고, set_material_usage 반환값은 성공 여부가 아니다
+- 증상: ① `editor_make_fluid_flame_material.py` 컴파일 실패 `(Node SceneDepth) Translucenct material with 'Output Velocity' enabled will write to depth buffer, therefore cannot read from depth buffer at the same time.` ② `MaterialEditingLibrary.set_material_usage(m, MATUSAGE_INSTANCED_STATIC_MESHES)`가 False를 돌려줘 스크립트가 실패로 판정했지만 `has_material_usage`는 True
+- 해결: ① 깊이 페이드(SceneDepth)가 필요한 불꽃 카드는 `output_translucent_velocity=False` + `enable_responsive_aa=True`(움직이는 반투명 번짐 완화). ② 사용 플래그는 `has_material_usage`로만 판정
+- 범위: UE 5.8 반투명·가산 재질, 파이썬 MaterialEditingLibrary
+- 증거: `Saved/AgentOps/20261018/fluidfx/flamemat-run1.log`·`flamemat-run2.log`(실패), `flamemat-run3.log`(성공)
 - 날짜·상태: 2026-10-18 active
 - 발견: claude

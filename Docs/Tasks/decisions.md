@@ -342,3 +342,20 @@
 - 영향: `AGENTS.md` 7절, OP-33, `Tools/check_sync_loads.py`, `Config/DefaultEngine.ini`·`DefaultGame.ini`, 캐릭터·전투 GAS·몬스터 AI·이계 스트리밍·월드 생성 런타임 코드와 시험, 개발 빌드 동기 로드 경고 서브시스템
 - 후속(2026-10-18 claude): 쿠킹 보장 — 코드 안 경로로만 여는 마네킹 `Anims/Unarmed`·`Anims/Sword` 폴더를 `DefaultGame.ini` 항상 쿠킹에 추가(쿠킹 게임 SkipPackage 0, 근접 공격 재생 확인), 런타임 C++의 `/Game` 경로 쿠킹 근거 검사 `Tools/check_cook_coverage.py`(종료 0, 근거 없는 경로 0). 제안(규칙 변경이라 사용자 승인 필요): `AGENTS.md` 7절과 OP-33의 판정 명령에 `python Tools/check_cook_coverage.py`를 `check_sync_loads.py`와 함께 넣는다. 근거 `Saved/AgentOps/20261018/cook-path-audit/`
 - 후속(2026-10-18 사용자 승인, claude 반영): `AGENTS.md` 7절과 OP-33의 판정 명령에 `python Tools/check_cook_coverage.py`를 `check_sync_loads.py`와 함께 넣었다. OP-33에는 코드 안 `/Game` 경로의 쿠킹 보장 문장(L-build-07)을 더했다.
+
+### D-48 FluidFX(FluidNinja LIVE-2 역공학) 연산 백엔드·채널·전투 연동
+- 질문: 설계서 `Docs/TDFluidLiveSystemDesign.md` 4절 방식 A(C++ 솔버 + 동적 UTexture2D)·B(RDG 컴퓨트 셰이더) 중 무엇인가? 3.1절 브러시 채널 4개와 3.4절 출력 밀도 2개(R 주·B 선택)가 어긋난다. 전투 피격은 어느 경로로 받나?
+- 선택지: 백엔드 (a) A (b) B. 채널 (a) 2개 유지(Mud·Water→주, Blood·Fire→선택) (b) 4채널로 확장. 전투 (a) 델리게이트만 (b) 메시지만 (c) 둘 다 받아 대상·프레임당 1회로 합침
+- 결정: 백엔드 A(사용자 승인 설계서의 권장안, 2026-10-18 구현), 채널 (a)(3.4절 출력 그대로, 확장은 요청 시), 전투 (c)(확정 원소·피격 위치 우선, 상태이상 펄스 제외) — claude 판정, 사용자 이견 시 이 항목 갱신
+- 상태: accepted (2026-10-18, 백엔드는 사용자 승인 설계서·세부는 claude 판정)
+- 근거: `Saved/AgentOps/20261018/fluidfx/analysis/critic.md`, 헤드리스 `TDGame.FluidFX.*`(`Saved/AgentOps/20261018/fluidfx-final-*-tests.json`)
+- 영향: `Source/TDGame/FluidFX/`, `Tools/FluidFX/`, `Content/FluidFX/`, 설계서 4·7절
+
+### D-49 FluidFX v2: FluidNinja LIVE-2 동등 화면을 목표로 렌더러 우선 → 자체 GPU 솔버
+- 질문: 사용자가 결과(바닥 평면 반투명)를 LIVE-2와 다르다고 거부하고 '완전 동일 수준'을 요구했다(2026-10-18). LIVE-2는 에픽 NiagaraFluids 기반이 아니라 자체 나이아가라 시뮬레이션 단계(GPU) + 블루프린트 래퍼 프로젝트다.
+- 선택지: 방식 (a) 공개 원리로 자체 재구현 (b) 원본 구매·도입. 백엔드 (a) 렌더러 먼저, 이후 자체 C++ RDG 컴퓨트 GPU 솔버 (b) CPU만 (c) NiagaraFluids 그래프. 7절 해석 (a) 렌더링 HLSL·나이아가라 출력 전용 허용 (b) HLSL만
+- 결정: 방식 (a), 백엔드 (a), 7절 해석 (a), 첫 장면 '폰이 가르는 볼륨 연기', 단계마다 PIE 화면을 사용자에게 보여 육안 승인. 사용자: "앞으로 물어보지 말고 당신이 권장사항으로 다 진행합니다. 목표는 Fluid Ninja LIVE 2.0과 동일할 정도"
+- 상태: accepted (2026-10-18 사용자, 세부는 claude 판정). D-48 백엔드 A는 기준 구현·헤드리스 시험·대체 경로로 유지
+- 7절 해석 세부: 시뮬레이션·입력 판단은 C++·컴퓨트 셰이더, 재질 Custom 노드·.usf HLSL은 렌더링 전용, 나이아가라 에셋은 텍스처 샘플·색·이동 출력 전용(솔버 금지). AGENTS.md 본문 변경은 하지 않음(용량 한도)
+- 저작권: 원본 셰이더·텍스처·에셋·튜닝값을 복제하지 않는다. 원본 데모·홍보 화면은 공개 저장소(Docs/)에 두지 않고 Saved/에서만 비교한다
+- 근거: Saved/AgentOps/20261018/fluidfx/live2-parity/(조사 3·설계·반박 3), 설계서 8절

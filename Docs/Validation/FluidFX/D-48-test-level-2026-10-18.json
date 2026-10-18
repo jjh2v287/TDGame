@@ -1,0 +1,201 @@
+{
+  "map": "/Game/FluidFX/Maps/LV_TDFluidTestArena",
+  "overwrite": true,
+  "deleted_before_create": [
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Water",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Mud",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Blood",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Fire",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Footprint",
+    "/Game/FluidFX/Materials/M_TD_FluidArenaFloor",
+    "/Game/FluidFX/Materials/M_TD_FluidArenaWall",
+    "/Game/FluidFX/Materials/M_TD_FluidSurface"
+  ],
+  "created_assets": [
+    "/Game/FluidFX/Materials/M_TD_FluidSurface",
+    "/Game/FluidFX/Materials/M_TD_FluidArenaFloor",
+    "/Game/FluidFX/Materials/M_TD_FluidArenaWall",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Water",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Mud",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Blood",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Fire",
+    "/Game/FluidFX/Materials/MI_TD_Fluid_Footprint",
+    "/Game/FluidFX/Presets/DA_TDFluid_Water",
+    "/Game/FluidFX/Presets/DA_TDFluid_Mud",
+    "/Game/FluidFX/Presets/DA_TDFluid_Blood",
+    "/Game/FluidFX/Presets/DA_TDFluid_Fire",
+    "/Game/FluidFX/Presets/DA_TDFluid_Footprint",
+    "/Game/FluidFX/Maps/LV_TDFluidTestArena"
+  ],
+  "surface_material": {
+    "default_texture": "/Engine/EngineResources/Black",
+    "sampler_type": "<MaterialSamplerType.SAMPLERTYPE_COLOR: 0>",
+    "blend_mode": "<BlendMode.BLEND_TRANSLUCENT: 2>",
+    "shading_model": "<MaterialShadingModel.MSM_UNLIT: 0>",
+    "compile_errors": [],
+    "statistics": {
+      "num_vertex_shader_instructions": 339,
+      "num_pixel_shader_instructions": 177,
+      "num_samplers": 3
+    }
+  },
+  "presets": [
+    {
+      "asset": "/Game/FluidFX/Presets/DA_TDFluid_Water",
+      "extent_cm": [
+        800.0,
+        640.0
+      ],
+      "grid_resolution": 128,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Water"
+    },
+    {
+      "asset": "/Game/FluidFX/Presets/DA_TDFluid_Mud",
+      "extent_cm": [
+        800.0,
+        640.0
+      ],
+      "grid_resolution": 128,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Mud"
+    },
+    {
+      "asset": "/Game/FluidFX/Presets/DA_TDFluid_Blood",
+      "extent_cm": [
+        1000.0,
+        700.0
+      ],
+      "grid_resolution": 128,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Blood"
+    },
+    {
+      "asset": "/Game/FluidFX/Presets/DA_TDFluid_Fire",
+      "extent_cm": [
+        800.0,
+        640.0
+      ],
+      "grid_resolution": 128,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Fire"
+    },
+    {
+      "asset": "/Game/FluidFX/Presets/DA_TDFluid_Footprint",
+      "extent_cm": [
+        1000.0,
+        1000.0
+      ],
+      "grid_resolution": 128,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Footprint"
+    }
+  ],
+  "fluid_actors": [
+    {
+      "label": "TDGen_FluidArena_CombatPool",
+      "preset": "DA_TDFluid_Blood",
+      "extent_cm": [
+        1000.0,
+        700.0
+      ],
+      "grid_resolution": 128,
+      "location": [
+        400,
+        0,
+        3
+      ],
+      "pitch_degrees": 0.0,
+      "follows_player": false,
+      "samples_terrain_elevation": false,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Blood.MI_TD_Fluid_Blood"
+    },
+    {
+      "label": "TDGen_FluidArena_MudZone",
+      "preset": "DA_TDFluid_Mud",
+      "extent_cm": [
+        800.0,
+        640.0
+      ],
+      "grid_resolution": 128,
+      "location": [
+        -750,
+        -760,
+        6
+      ],
+      "pitch_degrees": 0.0,
+      "follows_player": false,
+      "samples_terrain_elevation": false,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Mud.MI_TD_Fluid_Mud"
+    },
+    {
+      "label": "TDGen_FluidArena_PlayerTrail",
+      "preset": "DA_TDFluid_Water",
+      "extent_cm": [
+        800.0,
+        640.0
+      ],
+      "grid_resolution": 128,
+      "location": [
+        -450,
+        0,
+        9
+      ],
+      "pitch_degrees": 0.0,
+      "follows_player": true,
+      "samples_terrain_elevation": false,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Water.MI_TD_Fluid_Water"
+    },
+    {
+      "label": "TDGen_FluidArena_RampWater",
+      "preset": "DA_TDFluid_Water",
+      "extent_cm": [
+        800.0,
+        640.0
+      ],
+      "grid_resolution": 128,
+      "location": [
+        1000.0,
+        820.0,
+        50.21912907206326
+      ],
+      "pitch_degrees": 6.0,
+      "follows_player": false,
+      "samples_terrain_elevation": true,
+      "output_material": "/Game/FluidFX/Materials/MI_TD_Fluid_Water.MI_TD_Fluid_Water"
+    }
+  ],
+  "terrain_sampling_property": {
+    "owner": "actor",
+    "name": "sample_terrain_elevation"
+  },
+  "ramp": {
+    "center": [
+      1000.0,
+      820.0,
+      32.119980039919966
+    ],
+    "size_cm": [
+      900.0,
+      720.0,
+      30.0
+    ],
+    "pitch_degrees": 6.0,
+    "slope_ratio": 0.10510423526567647,
+    "top_height_low_end_cm": 7.105427357601002e-15,
+    "top_height_high_end_cm": 94.07561694088812,
+    "support_height_cm": 64.2399600798399,
+    "x_range_cm": [
+      550.8972201352623,
+      1449.1027798647376
+    ],
+    "y_range_cm": [
+      460.0,
+      1180.0
+    ],
+    "fluid_actor": "TDGen_FluidArena_RampWater"
+  },
+  "damage_targets": 6,
+  "created_actors": 35,
+  "navigation_extent": [
+    1600.0,
+    1300.0,
+    400.0
+  ],
+  "saved": true
+}

@@ -1,0 +1,507 @@
+{
+  "date": "2026-10-18",
+  "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+  "status": {
+    "map": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidFireStage.LV_TDFluidFireStage",
+    "socket_exists": true,
+    "live_actors": {
+      "TDGen_TorchFire": true,
+      "TDGen_CampfireFire": true,
+      "TDGen_CampfireSmoke": true,
+      "TDGen_ExplosionFire": true,
+      "TDGen_ExplosionSmoke": true
+    }
+  },
+  "environment": {
+    "navigation_ready": true
+  },
+  "scenes": {
+    "torch": {
+      "directions": {
+        "+X": {
+          "samples": 54,
+          "mean_drag_cm": 52.147813755584494,
+          "seconds_to_5cm_drag": 0.0,
+          "mean_area_cm2": 732.4558354130497
+        },
+        "+Y": {
+          "samples": 57,
+          "mean_drag_cm": 52.33544405962484,
+          "seconds_to_5cm_drag": 0.0,
+          "mean_area_cm2": 695.4640079966763
+        },
+        "-X": {
+          "samples": 54,
+          "mean_drag_cm": 22.346372196543175,
+          "seconds_to_5cm_drag": 0.0,
+          "mean_area_cm2": 659.4830604835793
+        },
+        "-Y": {
+          "samples": 57,
+          "mean_drag_cm": 20.705001438808992,
+          "seconds_to_5cm_drag": 0.0,
+          "mean_area_cm2": 690.1951154742325
+        }
+      },
+      "mean_drag_cm": 36.883657862640376,
+      "standing_mean_offset_xyz_area": [
+        6.065205114099363,
+        5.855267296290027,
+        52.762065251737276,
+        1122.8876866828507
+      ],
+      "light_cv": 0.1594538819278103,
+      "light_cv_while_walking_included": 0.22302836305361542,
+      "standing_light_samples": 778,
+      "light_mean_cd": 31.495371071094183,
+      "ember_alive_mean": 4.471552555448409,
+      "ember_alive_max": 11,
+      "sample_count": 1037,
+      "mean_dt_seconds": 0.017868135390280527,
+      "duration_seconds": 18.496386103332043,
+      "cpu": {
+        "lines": 9,
+        "avg_tick_ms": 1.2163105472636817,
+        "max_tick_ms": 2.822,
+        "avg_frame_ms": 17.97892736318408,
+        "awake_actors": 1,
+        "total_cells": 9216
+      }
+    },
+    "campfire": {
+      "light_cv": 0.0837132588726812,
+      "light_mean_cd": 102.56865007082621,
+      "ember_alive_min": 23,
+      "ember_alive_mean": 34.28125,
+      "ember_alive_max": 45,
+      "fire_area_mean_cm2": 5410.748919677734,
+      "smoke_area_mean_cm2": 9149.759411621093,
+      "smoke_area_series": [
+        [
+          0.0,
+          9117.6
+        ],
+        [
+          0.5,
+          9631.1
+        ],
+        [
+          1.02,
+          9781.1
+        ],
+        [
+          1.51,
+          9229.3
+        ],
+        [
+          2.0,
+          8965.8
+        ],
+        [
+          2.52,
+          9245.0
+        ],
+        [
+          3.01,
+          9132.7
+        ],
+        [
+          3.5,
+          8966.6
+        ],
+        [
+          4.0,
+          9144.3
+        ],
+        [
+          4.51,
+          10108.5
+        ],
+        [
+          5.01,
+          9942.7
+        ],
+        [
+          5.51,
+          9288.6
+        ],
+        [
+          6.0,
+          8945.9
+        ],
+        [
+          6.52,
+          9002.0
+        ],
+        [
+          7.01,
+          8657.2
+        ],
+        [
+          7.51,
+          8373.0
+        ],
+        [
+          8.0,
+          8860.3
+        ],
+        [
+          8.52,
+          9200.4
+        ],
+        [
+          9.01,
+          8944.6
+        ],
+        [
+          9.5,
+          9086.0
+        ],
+        [
+          10.02,
+          9144.6
+        ]
+      ],
+      "smoke_steady_rate_per_sec": 0.005210648909265435,
+      "sample_count": 532,
+      "mean_dt_seconds": 0.019778133832142317,
+      "duration_seconds": 10.49733579903841,
+      "cpu": {
+        "lines": 5,
+        "avg_tick_ms": 1.309537598425197,
+        "max_tick_ms": 1.9835,
+        "avg_frame_ms": 19.76901968503937,
+        "awake_actors": 2,
+        "total_cells": 21760
+      },
+      "ember_profile": {
+        "alive": 45,
+        "custom_data_available": true,
+        "mean_heat_by_height_cm": {
+          "0-100": 0.5499555930081341,
+          "100-200": 0.5097316064768367,
+          "200+": null
+        }
+      },
+      "gpu_visibility_ab": {
+        "all": {
+          "dump": "Saved/FluidFX/fluid_fire_probe_gpu_campfire_all.txt",
+          "matching_lines": [
+            "[2026.10.18-14.56.34:284][871]LogPython: TD_FLUID_FIRE_PROBE_RESULT {\"label\": \"campfire_all\", \"hidden\": []}",
+            "[2026.10.18-14.56.34:357][876]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.006 ms ┃    25 │      0 │ 123275 │ 107956 │   0.8% ┊          │  0.150 ms ┃                  ",
+            "[2026.10.18-14.56.34:357][876]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.001 ms ┃     5 │      0 │      2 │      4 │   0.3% ┊          │  0.065 ms ┃                  "
+          ]
+        },
+        "without_cards": {
+          "dump": "Saved/FluidFX/fluid_fire_probe_gpu_campfire_without_cards.txt",
+          "matching_lines": [
+            "[2026.10.18-14.56.39:302][125]LogPython: TD_FLUID_FIRE_PROBE_RESULT {\"label\": \"campfire_without_cards\", \"hidden\": [\"cards\"]}",
+            "[2026.10.18-14.56.39:383][130]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.006 ms ┃    25 │      0 │ 123275 │ 107956 │   0.8% ┊          │  0.151 ms ┃                  ",
+            "[2026.10.18-14.56.39:383][130]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.006 ms ┃     2 │      0 │      0 │      0 │   0.1% ┊          │  0.025 ms ┃                  ",
+            "[2026.10.18-14.56.39:383][130]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.000 ms ┃     5 │      0 │      2 │      4 │   0.3% ┊          │  0.051 ms ┃                  "
+          ]
+        },
+        "without_volumes": {
+          "dump": "Saved/FluidFX/fluid_fire_probe_gpu_campfire_without_volumes.txt",
+          "matching_lines": [
+            "[2026.10.18-14.56.44:337][380]LogPython: TD_FLUID_FIRE_PROBE_RESULT {\"label\": \"campfire_without_volumes\", \"hidden\": [\"volumes\"]}",
+            "[2026.10.18-14.56.44:415][384]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.006 ms ┃    25 │      0 │ 123275 │ 107956 │   0.9% ┊          │  0.150 ms ┃                  ",
+            "[2026.10.18-14.56.44:416][384]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.001 ms ┃     5 │      0 │      2 │      4 │   0.4% ┊          │  0.064 ms ┃                  "
+          ]
+        },
+        "without_embers": {
+          "dump": "Saved/FluidFX/fluid_fire_probe_gpu_campfire_without_embers.txt",
+          "matching_lines": [
+            "[2026.10.18-14.56.49:391][668]LogPython: TD_FLUID_FIRE_PROBE_RESULT {\"label\": \"campfire_without_embers\", \"hidden\": [\"embers\"]}",
+            "[2026.10.18-14.56.49:459][671]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.006 ms ┃    25 │      0 │ 123275 │ 107956 │   0.8% ┊          │  0.151 ms ┃                  ",
+            "[2026.10.18-14.56.49:459][671]LogRHI: Display:     ┃     0 │      0 │     0 │     0 │  0.0% ┊          │ 0.001 ms ┃     5 │      0 │      2 │      4 │   0.3% ┊          │  0.064 ms ┃                  "
+          ]
+        }
+      }
+    },
+    "explosion": {
+      "trigger_game_time": 75.24526720121503,
+      "tracked_leaf_count": 64,
+      "moved_leaf_count_at_1s": 64,
+      "moved_ratio_at_1s": 1.0,
+      "fragment_spread_cm_before": 64.9519052838329,
+      "fragment_spread_cm_at_1s": 735.4128476543233,
+      "fragment_spread_ratio_at_1s": 11.322421481566208,
+      "stamped_leaf_count_at_1s": 62,
+      "stamped_ratio_of_moved": 0.96875,
+      "frames_in_first_0_6s": 31,
+      "frames_with_zero_stamps_in_first_0_6s": 0,
+      "tracking_end_seconds": 2.3900173008441925,
+      "light_peak_cd": 121.62911224365234,
+      "light_seconds_from_peak_to_30_percent": 1.6933663003146648,
+      "smoke_area_series": [
+        [
+          0.0,
+          13682.9
+        ],
+        [
+          0.52,
+          69603.5
+        ],
+        [
+          1.01,
+          129316.4
+        ],
+        [
+          1.52,
+          127907.7
+        ],
+        [
+          2.0,
+          113914.8
+        ],
+        [
+          2.51,
+          98743.6
+        ],
+        [
+          3.01,
+          84989.0
+        ],
+        [
+          3.51,
+          72512.2
+        ],
+        [
+          4.01,
+          61933.7
+        ],
+        [
+          4.51,
+          53268.3
+        ],
+        [
+          5.0,
+          46325.0
+        ],
+        [
+          5.51,
+          39333.7
+        ],
+        [
+          6.02,
+          33248.5
+        ],
+        [
+          6.51,
+          28663.1
+        ],
+        [
+          7.01,
+          24626.6
+        ],
+        [
+          7.51,
+          21016.2
+        ]
+      ],
+      "fire_area_series": [
+        [
+          0.0,
+          8911.8
+        ],
+        [
+          0.52,
+          64854.1
+        ],
+        [
+          1.01,
+          54009.8
+        ],
+        [
+          1.52,
+          29108.2
+        ],
+        [
+          2.0,
+          16759.6
+        ],
+        [
+          2.51,
+          8053.8
+        ],
+        [
+          3.01,
+          4044.8
+        ],
+        [
+          3.51,
+          1912.7
+        ],
+        [
+          4.01,
+          947.3
+        ],
+        [
+          4.51,
+          462.1
+        ],
+        [
+          5.0,
+          243.5
+        ],
+        [
+          5.51,
+          122.0
+        ],
+        [
+          6.02,
+          59.5
+        ],
+        [
+          6.51,
+          30.8
+        ],
+        [
+          7.01,
+          15.7
+        ],
+        [
+          7.51,
+          8.0
+        ]
+      ],
+      "sample_count": 443,
+      "mean_dt_seconds": 0.02043206592008438,
+      "duration_seconds": 9.02088449895382,
+      "trigger": {
+        "hit": [
+          -55.0,
+          3200.0,
+          15.0
+        ],
+        "game_time": 75.21551639959216
+      },
+      "cpu": {
+        "lines": 4,
+        "avg_tick_ms": 1.5870913924050634,
+        "max_tick_ms": 2.6735,
+        "avg_frame_ms": 20.406384810126582,
+        "awake_actors": 2,
+        "total_cells": 28928
+      },
+      "log_problems_after_trigger": {
+        "count": 0,
+        "first": []
+      }
+    }
+  },
+  "measured": {
+    "torch_drag_cm": 36.883657862640376,
+    "torch_light_cv": 0.1594538819278103,
+    "campfire_light_cv": 0.0837132588726812,
+    "campfire_ember_alive_mean": 34.28125,
+    "campfire_fire_area_cm2": 5410.748919677734,
+    "campfire_smoke_area_cm2": 9149.759411621093
+  },
+  "headless_reference_path": "C:/Project/TDGame/Saved/FluidFX/fluid_fire_headless_reference.json",
+  "headless_judgement": {
+    "torch_drag_cm": {
+      "value": 36.883657862640376,
+      "reference": 39.4,
+      "ratio": 0.9361334482903649,
+      "passed": true
+    },
+    "torch_light_cv": {
+      "value": 0.1594538819278103,
+      "reference": 0.065,
+      "ratio": 2.453136645043235,
+      "passed": false
+    },
+    "campfire_light_cv": {
+      "value": 0.0837132588726812,
+      "reference": 0.067,
+      "ratio": 1.249451624965391,
+      "passed": true
+    },
+    "campfire_ember_alive_mean": {
+      "value": 34.28125,
+      "reference": null,
+      "passed": null
+    },
+    "campfire_fire_area_cm2": {
+      "value": 5410.748919677734,
+      "reference": 5265.0,
+      "ratio": 1.02768260582673,
+      "passed": true
+    },
+    "campfire_smoke_area_cm2": {
+      "value": 9149.759411621093,
+      "reference": 9288.7,
+      "ratio": 0.9850419769850562,
+      "passed": true
+    }
+  },
+  "cpu_budget": {
+    "torch": {
+      "avg_tick_ms": 1.2163105472636817,
+      "budget_ms": 1.0,
+      "passed": false
+    },
+    "campfire": {
+      "avg_tick_ms": 1.309537598425197,
+      "budget_ms": 2.0,
+      "passed": true
+    },
+    "explosion": {
+      "avg_tick_ms": 1.5870913924050634,
+      "budget_ms": 2.5,
+      "passed": true
+    }
+  },
+  "rules": {
+    "light_cv_in_0.05_0.30": {
+      "torch": 0.1594538819278103,
+      "campfire": 0.0837132588726812,
+      "passed": true
+    },
+    "ember_alive_20_256": {
+      "value": 34.28125,
+      "passed": true
+    },
+    "smoke_steady_under_5_percent_per_sec": {
+      "value": 0.005210648909265435,
+      "passed": true
+    },
+    "b0_moved_leaf_ratio_at_least_0.7": {
+      "value": 1.0,
+      "passed": true
+    },
+    "b0_fragments_scatter_spread_ratio_at_least_2": {
+      "value": 11.322421481566208,
+      "passed": true
+    },
+    "stamped_leaf_ratio_at_least_0.7": {
+      "value": 0.96875,
+      "passed": true
+    },
+    "stamps_every_frame_first_0_6s": {
+      "value": 0,
+      "passed": true
+    },
+    "tracking_ends_within_2_6s": {
+      "value": 2.3900173008441925,
+      "passed": true
+    },
+    "light_decays_to_30_percent_within_2_5s": {
+      "value": 1.6933663003146648,
+      "passed": true
+    },
+    "no_errors_after_trigger": {
+      "value": {
+        "count": 0,
+        "first": []
+      },
+      "passed": true
+    }
+  },
+  "notes": [
+    "불티 스텝·조각 추적 개별 비용은 C++ 계측 없이 잴 수 없어 서브시스템 틱 평균만 기록한다",
+    "ProfileGPU 출력 형식은 엔진 버전에 따라 달라 Saved/FluidFX/fluid_fire_probe_gpu_*.txt 원문을 함께 본다"
+  ]
+}

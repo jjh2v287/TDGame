@@ -28,6 +28,7 @@
 - 증거: `Saved/AgentOps/20261013/B1_build_1.log`(실패)·`B1_build_5.log`(패치 후 성공)
 - 날짜·상태: 2026-10-14 active
 - 발견: claude(P3-13 B1 하위 에이전트)
+- 재발(2026-10-18, TDGameEditor): FluidFX 묶음 C가 에디터 모듈에 .cpp 2개를 더하자 `TDWorldStatePieTests.cpp`(TDPieTestDungeonId 등)·`TDWorldBaker.cpp`(TagGen)·`TDSequencerAnimationTools.cpp`(Fail) 이름이 겹쳐 다른 세션 빌드까지 깨졌다. 빌더가 `bUseUnity = false`로 모듈 전체를 끈 것은 빌드 시간 비용이라 되돌리고 같은 해결(파일 고유 이름)로 고쳤다. 새 파일을 더한 빌더는 모듈 전체 끄기 대신 이 해결을 쓴다.
 
 ### L-build-04 Git Bash의 `cmd //c build.cmd`가 오류 없이 재빌드를 건너뛴다
 - 증상: 독립 C++ 벤치를 Git Bash에서 `cmd //c build.cmd`로 빌드하자 오류 표시 없이 끝났지만 실행 파일 수정 시각이 바뀌지 않았고, 수정 검증이 이전 바이너리로 실행됐다.

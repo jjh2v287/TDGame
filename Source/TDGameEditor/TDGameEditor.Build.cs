@@ -42,7 +42,9 @@ public class TDGameEditor : ModuleRules
 			"SequencerScripting",
 			"SequencerScriptingEditor",
 			"PCG",
-			"GameplayMessageRuntime"
+			"GameplayMessageRuntime",
+			"GeometryCollectionEngine",
+			"Chaos"
 		});
 	}
 }

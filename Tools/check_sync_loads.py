@@ -45,7 +45,6 @@ SYNC_LOAD_PATTERNS = [
 BASELINE_ENTRIES = [
     ("Source/TDGame/Characters/TDGameCharacter.cpp", "ConstructorHelpers::FObjectFinder<USkeletalMesh> DefaultPlayerMesh", "constructor", "CDO 기본 메시, 생성자 안 비동기는 엔진이 동기로 바꿈"),
     ("Source/TDGame/Combat/Damage/TDDamageTarget.cpp", "ConstructorHelpers::FObjectFinder<UStaticMesh> Cube", "constructor", "엔진 기본 도형, 시험장 더미"),
-    ("Source/TDGame/Combat/Damage/TDMegaMagicDamageExamples.cpp", "LoadObject<UNiagaraSystem>", "authoring-factory", "커맨드릿·시험·에디터 전용 대체 경로만 호출"),
     ("Source/TDGame/MonsterAI/TDMonsterDefinitionLibrary.cpp", "SpellAssetsHandle->WaitUntilComplete", "gate-wait", "몬스터 정의 해석 전 규칙 데이터 상주(결정론, D-47)"),
     ("Source/TDGame/World/Streaming/TDSeamlessTravelSubsystem.cpp", "DungeonAtlasHandle->WaitUntilComplete", "gate-wait", "ResolveDestination 즉시 bool 반환 계약(D-47)"),
 ]

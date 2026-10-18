@@ -267,6 +267,41 @@ bool UTDDamageDefinition::ValidateDefinition(FString& OutError) const
 	return true;
 }
 
+void UTDDamageDefinition::GatherPresentationAssetPaths(TArray<FSoftObjectPath>& OutPaths) const
+{
+	TSet<const UTDDamageDefinition*> VisitedDefinitions;
+	TArray<const UTDDamageDefinition*> PendingDefinitions = { this };
+	while (!PendingDefinitions.IsEmpty())
+	{
+		const UTDDamageDefinition* Definition = PendingDefinitions.Pop();
+		if (!Definition || VisitedDefinitions.Contains(Definition))
+		{
+			continue;
+		}
+		VisitedDefinitions.Add(Definition);
+		const FSoftObjectPath PresentationAssetPaths[] =
+		{
+			Definition->Mesh.ToSoftObjectPath(),
+			Definition->Material.ToSoftObjectPath(),
+			Definition->VisualEffect.ToSoftObjectPath()
+		};
+		for (const FSoftObjectPath& PresentationAssetPath : PresentationAssetPaths)
+		{
+			if (!PresentationAssetPath.IsNull())
+			{
+				OutPaths.AddUnique(PresentationAssetPath);
+			}
+		}
+		for (const FTDDamageRule& Rule : Definition->Rules)
+		{
+			for (const FTDDamageAction& Action : Rule.Actions)
+			{
+				PendingDefinitions.Add(Action.Entity.Get());
+			}
+		}
+	}
+}
+
 #if WITH_EDITOR
 EDataValidationResult UTDDamageDefinition::IsDataValid(FDataValidationContext& Context) const
 {

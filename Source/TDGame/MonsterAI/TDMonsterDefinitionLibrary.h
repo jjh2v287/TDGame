@@ -33,7 +33,7 @@ private:
 	void EnsureAttackCatalog();
 	UTDDamageDefinition* FindSpell(FName SpellName);
 	void PrefetchDefinitionAssets();
-	void RequestAttackPresentation();
+	void RequestSpellPresentation();
 	void WaitForSpellAssets(const TMap<FString, FString>& FileTexts);
 	TArray<FSoftObjectPath> CollectUnloadedSpellPaths(const TMap<FString, FString>& FileTexts) const;
 	static TMap<FString, FString> ReadDefinitionFiles();
@@ -47,5 +47,5 @@ private:
 	bool bHasLoaded = false;
 	IConsoleObject* ReloadCommand = nullptr;
 	TSharedPtr<FStreamableHandle> SpellAssetsHandle;
-	TSharedPtr<FStreamableHandle> AttackPresentationHandle;
+	TSharedPtr<FStreamableHandle> SpellPresentationHandle;
 };

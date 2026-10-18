@@ -658,6 +658,29 @@ void ATDGameCharacter::HandleDefaultDamageSpellsLoaded()
 	{
 		DamageSpells.Add(Definition);
 	}
+	RequestDamageSpellPresentation();
+}
+
+void ATDGameCharacter::RequestDamageSpellPresentation()
+{
+	if (!FApp::CanEverRender())
+	{
+		return;
+	}
+
+	TArray<FSoftObjectPath> PresentationPaths;
+	for (const UTDDamageDefinition* Definition : DamageSpells)
+	{
+		if (Definition)
+		{
+			Definition->GatherPresentationAssetPaths(PresentationPaths);
+		}
+	}
+	if (PresentationPaths.IsEmpty())
+	{
+		return;
+	}
+	DamageSpellPresentationHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(PresentationPaths, FStreamableDelegate());
 }
 
 void ATDGameCharacter::GatherAnimationAssetPaths(TArray<FSoftObjectPath>& OutPaths) const

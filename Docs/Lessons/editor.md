@@ -227,3 +227,12 @@
 - 증거: `Saved/MonsterAI/TacticsPie/crowd_tactics_*_events.csv`, `measurements/squad-tactics/pie-2026-10-18/report.json` `crowd_cost`
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
+
+### L-editor-22 같은 에디터 프로세스에서 에셋을 다시 저장한 직후 에셋 레지스트리 의존 조회는 옛 하드 의존을 돌려준다
+- 증상: 하드→소프트 UPROPERTY 변경 뒤 파이썬 커맨드렛에서 DA 21개를 `save_loaded_asset`으로 저장하고 `scan_paths_synchronous(..., True)` 뒤 `get_dependencies`(하드만)를 다시 읽었더니 21개 모두 Niagara 하드 의존이 그대로 나왔다.
+- 원인: 같은 프로세스의 에셋 레지스트리가 저장 전 로드에서 모은 의존을 유지한다(강제 재검색으로도 갱신되지 않음, 엔진 코드 경로는 미확인). 파일 자체는 바뀌었다: 저장본 이름 표에 `NiagaraSystem`·`/Script/Niagara`가 없고 소프트 경로 문자열만 남았다.
+- 해결: 저장 결과는 새 프로세스에서 확인한다 — `Tools/editor_resave_assets.py --dry-run`을 다시 실행하면 하드 의존 0으로 나온다.
+- 범위: 에디터 Python·커맨드렛으로 에셋을 저장한 뒤 같은 프로세스에서 의존·참조를 검증할 때
+- 증거: 2026-10-17 `Saved/AgentOps/20261017/soft-damage/resave.json`(저장 프로세스, 하드 21) ↔ `resave-dryrun-after.json`(새 프로세스, 하드 0)
+- 날짜·상태: 2026-10-17 active
+- 발견: claude

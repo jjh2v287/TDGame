@@ -1,5 +1,6 @@
 #include "Combat/Damage/TDDamageExamples.h"
 #include "Combat/Damage/TDDamageDefinition.h"
+#include "Misc/PackageName.h"
 #include "NiagaraSystem.h"
 
 namespace
@@ -7,7 +8,7 @@ namespace
 	void SetVisual(UTDDamageDefinition* Definition, const TCHAR* RelativePath, float Scale, float Tail = 0.75f)
 	{
 		const FString PackagePath = FString(TEXT("/Game/MegaMagicVFXBundle/VFX/")) + RelativePath;
-		Definition->VisualEffect = LoadObject<UNiagaraSystem>(nullptr, *PackagePath);
+		Definition->VisualEffect = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(PackagePath + TEXT(".") + FPackageName::GetShortName(PackagePath)));
 		Definition->VisualScale = FVector(Scale);
 		Definition->VisualTailSeconds = Tail;
 		Definition->bDrawDebug = false;

@@ -1,12 +1,19 @@
 #include "Combat/Damage/TDDamageEntity.h"
+#include "Algo/AllOf.h"
 #include "Combat/TDCombatComponent.h"
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
+#include "Materials/MaterialInterface.h"
+#include "Misc/App.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 
 ATDDamageEntity::ATDDamageEntity()
 {
@@ -61,20 +68,12 @@ void ATDDamageEntity::BeginPlay()
 	ExpirationTime = SimulationTime + Definition->Lifetime;
 	RingInnerRadius = Definition->InnerRadius;
 	RingOuterRadius = Definition->Radius;
-	MeshComponent->SetStaticMesh(Definition->Mesh);
-	if (Definition->Material)
-	{
-		MeshComponent->SetMaterial(0, Definition->Material);
-	}
-	EffectComponent->SetAsset(Definition->VisualEffect);
+	RequestPresentationAssets();
 	UpdateVisualTransform();
 	if (Definition->bShowDuringActivationDelay && Definition->ActivationDelay > 0.f)
 	{
 		MeshComponent->SetVisibility(true);
-		if (Definition->VisualEffect)
-		{
-			EffectComponent->Activate(true);
-		}
+		ActivateLoadedEffect();
 	}
 	{
 		TGuardValue<bool> ProcessingGuard(bIsProcessingTimeline, true);
@@ -93,10 +92,7 @@ void ATDDamageEntity::Activate()
 	bIsActive = true;
 	NextPulseTime = SimulationTime;
 	MeshComponent->SetVisibility(true);
-	if (Definition->VisualEffect && !EffectComponent->IsActive())
-	{
-		EffectComponent->Activate(true);
-	}
+	ActivateLoadedEffect();
 	EmitEvent(ETDDamageEvent::Activate, nullptr, GetActorLocation());
 	if (CanContinue() && Definition->Mode == ETDDamageEntityMode::Shockwave)
 	{
@@ -683,7 +679,7 @@ void ATDDamageEntity::Complete(bool bHasExpired, AActor* Target)
 	{
 		return;
 	}
-	if (Definition->VisualEffect && Definition->VisualTailSeconds > 0.f)
+	if (!Definition->VisualEffect.IsNull() && Definition->VisualTailSeconds > 0.f)
 	{
 		SetLifeSpan(Definition->VisualTailSeconds);
 		return;
@@ -702,7 +698,74 @@ void ATDDamageEntity::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	ScheduledActions.Reset();
 	bIsHoming = false;
 	HomingTarget.Reset();
+	if (PresentationAssetsHandle.IsValid())
+	{
+		PresentationAssetsHandle->CancelHandle();
+	}
+	PresentationAssetsHandle.Reset();
 	Super::EndPlay(EndPlayReason);
+}
+
+void ATDDamageEntity::RequestPresentationAssets()
+{
+	if (!FApp::CanEverRender())
+	{
+		return;
+	}
+
+	TArray<FSoftObjectPath> PresentationAssetPaths;
+	const FSoftObjectPath DefinitionAssetPaths[] =
+	{
+		Definition->Mesh.ToSoftObjectPath(),
+		Definition->Material.ToSoftObjectPath(),
+		Definition->VisualEffect.ToSoftObjectPath()
+	};
+	for (const FSoftObjectPath& DefinitionAssetPath : DefinitionAssetPaths)
+	{
+		if (!DefinitionAssetPath.IsNull())
+		{
+			PresentationAssetPaths.Add(DefinitionAssetPath);
+		}
+	}
+	if (Algo::AllOf(PresentationAssetPaths, [](const FSoftObjectPath& AssetPath) { return AssetPath.ResolveObject() != nullptr; }))
+	{
+		ApplyPresentationAssets();
+		return;
+	}
+
+	PresentationAssetsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		PresentationAssetPaths, FStreamableDelegate::CreateUObject(this, &ThisClass::ApplyPresentationAssets));
+	if (!PresentationAssetsHandle.IsValid())
+	{
+		ApplyPresentationAssets();
+	}
+}
+
+void ATDDamageEntity::ApplyPresentationAssets()
+{
+	if (!CanContinue())
+	{
+		return;
+	}
+
+	MeshComponent->SetStaticMesh(Definition->Mesh.Get());
+	if (UMaterialInterface* LoadedMaterial = Definition->Material.Get())
+	{
+		MeshComponent->SetMaterial(0, LoadedMaterial);
+	}
+	EffectComponent->SetAsset(Definition->VisualEffect.Get());
+	if (MeshComponent->GetVisibleFlag())
+	{
+		ActivateLoadedEffect();
+	}
+}
+
+void ATDDamageEntity::ActivateLoadedEffect()
+{
+	if (EffectComponent->GetFXSystemAsset() && !EffectComponent->IsActive())
+	{
+		EffectComponent->Activate(true);
+	}
 }
 
 void ATDDamageEntity::UpdateVisualTransform()

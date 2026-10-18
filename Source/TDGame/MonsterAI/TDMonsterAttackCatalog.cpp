@@ -2,6 +2,7 @@
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInterface.h"
+#include "Misc/PackageName.h"
 #include "NiagaraSystem.h"
 #include "UObject/SoftObjectPath.h"
 
@@ -29,16 +30,21 @@ namespace
 		Rule.Actions.Add(MakeAttackDamage(AttackRatio, Element));
 	}
 
-	void ApplyGroundTelegraph(UTDDamageDefinition& Definition, UStaticMesh* TelegraphMesh, UMaterialInterface* TelegraphMaterial)
+	bool DoesAssetPackageExist(const TCHAR* AssetPath)
 	{
-		if (!TelegraphMesh || !TelegraphMaterial)
+		return FPackageName::DoesPackageExist(FSoftObjectPath(AssetPath).GetLongPackageName());
+	}
+
+	void ApplyGroundTelegraph(UTDDamageDefinition& Definition)
+	{
+		if (!DoesAssetPackageExist(TelegraphMeshPath) || !DoesAssetPackageExist(TelegraphMaterialPath))
 		{
 			Definition.bDrawDebug = true;
 			return;
 		}
 		const float PlaneScale = Definition.Radius / TelegraphMeshHalfExtent;
-		Definition.Mesh = TelegraphMesh;
-		Definition.Material = TelegraphMaterial;
+		Definition.Mesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TelegraphMeshPath));
+		Definition.Material = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(TelegraphMaterialPath));
 		Definition.VisualScale = FVector(PlaneScale, PlaneScale, 1.f);
 		Definition.VisualOffset = FVector(0.f, 0.f, 3.f);
 		Definition.bShowDuringActivationDelay = true;
@@ -62,6 +68,7 @@ namespace
 		Definition->bDestroyOnHit = false;
 		Definition->DebugColor = Color;
 		AddHitDamage(Definition, AttackRatio, Element);
+		ApplyGroundTelegraph(*Definition);
 		return Definition;
 	}
 
@@ -81,8 +88,10 @@ namespace
 		Definition->bDestroyOnHit = true;
 		Definition->bShowDuringActivationDelay = true;
 		Definition->DebugColor = FLinearColor(0.4f, 1.f, 0.2f);
+		Definition->VisualEffect = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(BoltEffectPath));
 		Definition->VisualScale = FVector(0.16f);
 		Definition->VisualTailSeconds = 0.3f;
+		Definition->bDrawDebug = !DoesAssetPackageExist(BoltEffectPath);
 		AddHitDamage(Definition, AttackRatio, ETDDamageElement::Arcane);
 		return Definition;
 	}
@@ -136,29 +145,3 @@ void TDMonsterAttackCatalog::CreateAttacks(UObject* Outer, TMap<FName, UTDDamage
 	Register(OutAttacks, CreateGroundAttack(Outer, TEXT("DA_TDStaffSpin"), 230.f, 0.6f, 1.5f, ETDDamageElement::Physical, DangerColor));
 }
 
-TArray<FSoftObjectPath> TDMonsterAttackCatalog::GetPresentationAssetPaths()
-{
-	return { FSoftObjectPath(TelegraphMeshPath), FSoftObjectPath(TelegraphMaterialPath), FSoftObjectPath(BoltEffectPath) };
-}
-
-void TDMonsterAttackCatalog::ApplyPresentationAssets(const TMap<FName, UTDDamageDefinition*>& CatalogAttacks)
-{
-	UStaticMesh* TelegraphMesh = Cast<UStaticMesh>(FSoftObjectPath(TelegraphMeshPath).ResolveObject());
-	UMaterialInterface* TelegraphMaterial = Cast<UMaterialInterface>(FSoftObjectPath(TelegraphMaterialPath).ResolveObject());
-	UNiagaraSystem* BoltEffect = Cast<UNiagaraSystem>(FSoftObjectPath(BoltEffectPath).ResolveObject());
-	for (const TPair<FName, UTDDamageDefinition*>& Entry : CatalogAttacks)
-	{
-		UTDDamageDefinition* Definition = Entry.Value;
-		if (!Definition)
-		{
-			continue;
-		}
-		if (Definition->Mode == ETDDamageEntityMode::Projectile)
-		{
-			Definition->VisualEffect = BoltEffect;
-			Definition->bDrawDebug = BoltEffect == nullptr;
-			continue;
-		}
-		ApplyGroundTelegraph(*Definition, TelegraphMesh, TelegraphMaterial);
-	}
-}

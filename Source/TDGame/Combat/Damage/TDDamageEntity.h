@@ -8,6 +8,7 @@
 class UTDCombatComponent;
 class UNiagaraComponent;
 class UStaticMeshComponent;
+struct FStreamableHandle;
 
 USTRUCT()
 struct FTDScheduledDamageAction
@@ -76,6 +77,9 @@ private:
 	bool HitTarget(UTDCombatComponent* Target, const FVector& Location, double HitTime);
 	bool HasLineOfSight(const AActor* Target) const;
 	bool CanContinue() const;
+	void RequestPresentationAssets();
+	void ApplyPresentationAssets();
+	void ActivateLoadedEffect();
 	void UpdateVisualTransform();
 	void DrawShape() const;
 
@@ -100,6 +104,7 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Homing", meta=(AllowPrivateAccess="true"))
 	TWeakObjectPtr<AActor> HomingTarget;
 
+	TSharedPtr<FStreamableHandle> PresentationAssetsHandle;
 	TMap<TWeakObjectPtr<UTDCombatComponent>, int32> TargetHitCounts;
 	TMap<TWeakObjectPtr<UTDCombatComponent>, double> TargetHitTimes;
 	FVector TravelDirection = FVector::ForwardVector;

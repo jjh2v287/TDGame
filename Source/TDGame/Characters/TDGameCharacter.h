@@ -186,6 +186,7 @@ private:
 	void GrantDefaultActionAbilities();
 	void RequestDefaultDamageSpells();
 	void HandleDefaultDamageSpellsLoaded();
+	void RequestDamageSpellPresentation();
 	void RequestAnimationAssets();
 	void GatherAnimationAssetPaths(TArray<FSoftObjectPath>& OutPaths) const;
 	void ApplyAnimationSettings();
@@ -197,6 +198,7 @@ private:
 	FVector PendingRollDirection = FVector::ForwardVector;
 	bool bHasGrantedDefaultActionAbilities = false;
 	TSharedPtr<FStreamableHandle> DefaultDamageSpellsHandle;
+	TSharedPtr<FStreamableHandle> DamageSpellPresentationHandle;
 	TSharedPtr<FStreamableHandle> AnimationAssetsHandle;
 	TSharedPtr<FStreamableHandle> WeaponMeshesHandle;
 };

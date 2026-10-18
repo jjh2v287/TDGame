@@ -1143,11 +1143,7 @@ void UTDMonsterDefinitionLibrary::Deinitialize()
 		SpellAssetsHandle->CancelHandle();
 	}
 	SpellAssetsHandle.Reset();
-	if (AttackPresentationHandle.IsValid())
-	{
-		AttackPresentationHandle->CancelHandle();
-	}
-	AttackPresentationHandle.Reset();
+	SpellPresentationHandle.Reset();
 	if (ReloadCommand)
 	{
 		IConsoleManager::Get().UnregisterConsoleObject(ReloadCommand);
@@ -1211,6 +1207,7 @@ int32 UTDMonsterDefinitionLibrary::ReloadDefinitions()
 
 	LoadErrors.Reset();
 	ResolveDefinitionTexts(FileTexts, [this](const FName SpellName) { return FindSpell(SpellName); }, Definitions, LoadErrors);
+	RequestSpellPresentation();
 	bHasLoaded = true;
 	for (const FString& Error : LoadErrors)
 	{
@@ -1304,28 +1301,26 @@ void UTDMonsterDefinitionLibrary::PrefetchDefinitionAssets()
 	SpellAssetsHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(SpellPaths, FStreamableDelegate());
 }
 
-void UTDMonsterDefinitionLibrary::RequestAttackPresentation()
+void UTDMonsterDefinitionLibrary::RequestSpellPresentation()
 {
-	if (!FApp::CanEverRender())
+	if (!FApp::CanEverRender() || !UAssetManager::IsInitialized())
 	{
 		return;
 	}
 
-	const TMap<FName, UTDDamageDefinition*> CatalogAttacks = SpellsByName;
-	const TArray<FSoftObjectPath> PresentationPaths = TDMonsterAttackCatalog::GetPresentationAssetPaths();
-	const bool bArePresentationAssetsResident = Algo::AllOf(PresentationPaths, [](const FSoftObjectPath& PresentationPath) { return PresentationPath.ResolveObject() != nullptr; });
-	if (bArePresentationAssetsResident || !UAssetManager::IsInitialized())
+	TArray<FSoftObjectPath> PresentationPaths;
+	for (const TPair<FName, UTDDamageDefinition*>& Entry : SpellsByName)
 	{
-		TDMonsterAttackCatalog::ApplyPresentationAssets(CatalogAttacks);
+		if (Entry.Value)
+		{
+			Entry.Value->GatherPresentationAssetPaths(PresentationPaths);
+		}
+	}
+	if (PresentationPaths.IsEmpty())
+	{
 		return;
 	}
-
-	AttackPresentationHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
-		PresentationPaths, FStreamableDelegate::CreateWeakLambda(this, [CatalogAttacks]() { TDMonsterAttackCatalog::ApplyPresentationAssets(CatalogAttacks); }));
-	if (!AttackPresentationHandle.IsValid())
-	{
-		TDMonsterAttackCatalog::ApplyPresentationAssets(CatalogAttacks);
-	}
+	SpellPresentationHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(PresentationPaths, FStreamableDelegate());
 }
 
 void UTDMonsterDefinitionLibrary::EnsureLoaded()
@@ -1348,5 +1343,5 @@ void UTDMonsterDefinitionLibrary::EnsureAttackCatalog()
 	{
 		OwnedSpells.Add(Entry.Value);
 	}
-	RequestAttackPresentation();
+	RequestSpellPresentation();
 }

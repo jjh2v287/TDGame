@@ -73,13 +73,13 @@ public:
 	TArray<FTDDamageRule> Rules;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
-	TObjectPtr<UNiagaraSystem> VisualEffect;
+	TSoftObjectPtr<UNiagaraSystem> VisualEffect;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
-	TObjectPtr<UStaticMesh> Mesh;
+	TSoftObjectPtr<UStaticMesh> Mesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
-	TObjectPtr<UMaterialInterface> Material;
+	TSoftObjectPtr<UMaterialInterface> Material;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation")
 	FVector VisualScale = FVector::OneVector;
@@ -106,6 +106,7 @@ public:
 	FLinearColor DebugColor = FLinearColor::Red;
 
 	bool ValidateDefinition(FString& OutError) const;
+	void GatherPresentationAssetPaths(TArray<FSoftObjectPath>& OutPaths) const;
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;

@@ -83,11 +83,12 @@ namespace
 		{
 			const bool bDefinitionValid = Damage->ValidateDefinition(Error);
 			bIsValid &= Test.TestTrue(*FString::Printf(TEXT("%s validates: %s"), *Definition->GetName(), *Error), bDefinitionValid);
-			bIsValid &= Test.TestNotNull(TEXT("Every damage stage has Niagara presentation"), Damage->VisualEffect.Get());
-			if (Damage->VisualEffect)
+			const UNiagaraSystem* VisualEffect = Damage->VisualEffect.LoadSynchronous();
+			bIsValid &= Test.TestNotNull(TEXT("Every damage stage has Niagara presentation"), VisualEffect);
+			if (VisualEffect)
 			{
 				bIsValid &= Test.TestTrue(TEXT("Presentation uses the supplied bundle's gameplay VFX"),
-					Damage->VisualEffect->GetPathName().StartsWith(TEXT("/Game/MegaMagicVFXBundle/VFX/")));
+					VisualEffect->GetPathName().StartsWith(TEXT("/Game/MegaMagicVFXBundle/VFX/")));
 			}
 			bIsValid &= Test.TestFalse(TEXT("Production spell disables debug geometry"), Damage->bDrawDebug);
 			bIsValid &= Test.TestTrue(TEXT("Damage stage has a bounded lifetime"), Damage->Lifetime <= 30.f);

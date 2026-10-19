@@ -795,6 +795,31 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 기록: 2026-10-19 claude — 청구.
 - 기록: 2026-10-19 claude — 완료. 측정(시나리오마다 report.json, `measurements/M3-39/README.md` 비교표): ③ 빙결 중 처치는 결함 아님(사망 때 OnDeath 전에 빙결 해제, 래그돌 중 액터 시간 배율 1.0). ① 일반 Griffon은 정의에 이륙이 없어 날지 않으므로 GriffonAlpha·MountainDragon 실제 비행 중 처치로 측정했고, 둘 다 boss라 ④ 슬로모와 겹침. 결함 3: (a) M3-38 3초 상한(100cm/s 이하면 재우기)이 35~130cm/s로 움직이는 바디를 멈춤(비행 6/6·빙결 Swordsman·더미 StoneGolem) (b) 슬로모 중 래그돌 시작은 내부 속도 1/dt 증폭(GriffonAlpha 2100~2400 대 700~780cm/s) (c) 팩 에셋 GriffonAlpha는 슬로모 처치 뒤 +265~390cm 튀고 2/3회 끝없이 떨며 기어감(L-anim-22). 메모리 실험: 생성 물리 에셋(`gen-*`)이 (c)를 없애고 시작 튐을 줄임, 감쇠 강화 흉내(`emu-*`)가 상한 직전 속도를 128→35cm/s 이하로, 시작 창 상대 속도 제한·최대 각속도 720은 (b)에 효과 없음. 수정: 생성 물리 에셋 4개(Griffon 70·GriffonAlpha 공용, MountainDragon 92, Swordsman 14, Kwang 23) + 정착 규칙(2.4초 감쇠 12, 3초 뒤 30cm/s 이하, 4초 뒤 평균 15cm/s 이하). 결과(빌드 뒤 `after-*`): 비행 목표 0/6→2/6·미정착 2→0·재우는 순간 최대 94→41cm/s, 동시 더미 6/8→8/8(다른 시체 69→28), 빙결 8/10→10/10(130→27), 순차 더미 4/4→3/4, M3-38 지상 세트 23/26→20/26(실제 구르는 바디를 기다린 3.1·3.7초 2건, 시료기 프레임 경계값 31~40cm/s 3건, 가라앉기 겹침 1건 — 맞바꿈은 MD-61), Kwang·GriffonAlpha 강제 4/4. Kwang은 물리 에셋만 붙이고 `ragdoll_after_death`는 표대로 False(사망 즉시 래그돌은 M3-40). 남은 증폭(b)은 진입 시점 문제라 M3-40에 근거와 함께 넘김. 측정 도구 결함 수정: 같은 종 여러 회차 강제 뒤 종 플래그가 True로 남음·모듈 재적재 때 바디 재정의 미복원(L-editor-39). 검증: 빌드 성공, 헤드리스 `TDGame.*` 394/395(`Saved/AgentOps/20261019/m339-b1-tests.json`, 실패 = 기준선 CrossingStreams), GUI PIE FullLoop 15.2초·BossLoop 55.8초 통과(`Saved/AgentOps/automation_tests_20261019-1045.json`·`-1046.json`), OP-33 두 검사 종료 0. 교훈 L-anim-22·L-editor-39(적중 L-repo-15). 남은 것: MountainDragon 날개 손가락 구속 다툼(평균 3~5·최대 34~60cm/s, 4초에 정지), 슬로모 증폭(M3-40), 동시 더미는 맞닿은 정도(높게 쌓인 더미는 순차로만 측정).
 
+### M3-40 사망 즉시 래그돌과 타격 방향 둔탁한 날림(디아블로4식 처치 손맛)
+- 상태: done
+- 담당: claude/2026-10-19
+- 우선순위: 상(사용자 지시 2026-10-19 "죽는 모션 뒤 래그돌 대신 디아블로4처럼 체력 0이면 바로 래그돌, 타격된 방향으로 둔탁하게 날아가게, 퀄리티 높게")
+- 선행: M3-37(처치 자세 유지·처치 등급·슬로모), M3-38·M3-39(래그돌 정착 규칙 MD-60·측정 도구), M3-33(종 표 `ragdoll_after_death`·인간형 사망 클립 0.5초 컷)
+- 목표: 체력 0 → 사망 클립 없이 처치 정지 몇 프레임 뒤 곧바로 래그돌, 마지막 타격의 방향·세기·처치 등급에 비례한 날림, 무겁고 짧은 체공·낮은 반발·빠른 정착, 착지 둔탁음. 보스·래그돌 없는 종·플레이어 사망 규칙 포함
+- 완료 조건: 명세(조사→v1→반박→v2) 동작, 측정(체력 0→래그돌 시작 시간·날림 방향 일치·거리·체공·정착), 헤드리스 `TDGame.*` 통과 수 유지, PIE `TDGame.PIE.Combat` 통과, OP-33 검사 0
+- 산출물: `Combat/Feedback/TDDeathLaunchRules.*`(새: 사망 표현 결정·날림 방향/거리/체공/회전·처치 정지·다수 처치 시차·슬로모 시작·착지 판정·착지음·외상·물기·굴림 상한 규칙), `Characters/TDCombatCharacter.*`(날림 적용: 질량 중심 기준 강체 속도·추가 중력·CCD·착지 감시·물기 감쇠·진입 미루기·렌더 자세 밀기), `TDMonsterCharacter.*`(표현 결정·마무리·다수 처치·가라앉기 진입), `TDGameCharacter.*`(플레이어 0.1초 정지 뒤 진입), `MonsterAI/TDMonsterSpeciesAsset.h`(bPlayDeathClipBeforeRagdoll·bHasHorizontalBodyPlan·CorpseRestHeightRatio), `Combat/Damage/TDDamageTypes.h`·`Combat/TDMeleeSweep.*`·`Combat/Damage/TDDamageSubsystem.cpp`·`Combat/TDCombatComponent.cpp`(SwingDirection 전달), `Combat/Feedback/TDCombatFeedbackSubsystem.*`·`TDCombatFeedbackSettings.*`(슬로모 실제 진입 대기·시체 물리 재질·착지음 채널·외상·다수 처치 색인), `Config/DefaultGame.ini`(KillSound=KillThud, CorpseLandSound=BodyFall), `TDGame.Build.cs`(PhysicsCore), 시험 `Combat/Tests/TDDeathLaunchTests.cpp`(20)·`TDDeathRagdollWorldTests.cpp`(7, 2개 offscreen)·MeleeSweep·Homing·Reaction·PIE 기대값, 종 표 키 death_clip_before_ragdoll·body_plan·corpse_rest_height_ratio와 종 도구 3개, 측정 도구 M3-40 지표(launch·bone_revision·고정 간격 촬영·근접 카메라·다수 처치 배치·부하 재측정)
+- 검증: BUILD; 헤드리스 `TDGame.*`; PIE `TDGame.PIE.Combat`; 래그돌 측정 도구 확장; OP-33 검사 2개
+- 참조: `Saved/AgentOps/20261019/death-ragdoll/`(spec-v2·refute·measure~measure5·investigate6), [measurements/M3-40/](measurements/M3-40/), 07#MD-62, 후속 07#M3-41
+- 기록: 2026-10-19 claude — 청구.
+- 기록: 2026-10-19 claude — 완료. 조사 7갈래+보충 5 → 명세 v1 → 반박 4관점 → v2 → 사본 5묶음 구현 → 통합 → 측정·판정 4회·수정 6차. 결과(r4, 14종+플레이어): 체력 0→래그돌 0.07~0.14초(예전 인간형 0.57초·사족 지상 래그돌 없음), 방향 오차 ≤11.8°, 2초 이동 약한 처치 103~140·강한 처치 143~245cm, 착지 뒤 미끄러짐 ≤61.7cm, 착지 감지 규칙 97.5%·공중 대체 0, 보스 처치 래그돌 첫 프레임 시간 배율 1.0(슬로모를 실제 진입 +0.035초 뒤로), 다수 처치 시차 0.02~0.07초, 더미 옛 시체 이동 0.1cm. 렌더 결함 발견·수정(L-anim-23: 애니 끈 래그돌이 처치 자세로 굳어 보임 → 매 프레임 ForceMotionVector, 개정 번호 증가 3517/3517, 굳음 판정 0/36). 예외: GriffonAlpha·MountainDragon 지상 처치 사망 클립(앉은 채 굳음·날개 수직), Barghest·BarghestAlpha 클립 뒤 래그돌(착지 뒤 배 뒤집힘 관문 3회 불합격), 공중 처치는 전 종 래그돌. 헤드리스 465/466(기준선 CrossingStreams), offscreen DeathRagdoll 7/7, PIE BossLoop 54.7~66.6·FullLoop 17.0·HitFeel 362.5초, OP-33 검사 0. 남음: 동시 시체 16구 p95 +2.26ms(3회 평균, 기준 1.0 초과 — 정상 렌더 비용, MD-62 ⑦), 검사 착지 각 114~124°(살아 있을 때 떠 있는 기존 결함), 끝 사슬 잠들기 경계 → M3-41. 미커밋
+
+### M3-41 사망 래그돌 후속: 끝 사슬 정착·검사 떠 있음·바게스트 즉시 래그돌 재시도·동시 시체 렌더 비용
+- 상태: todo
+- 담당:
+- 우선순위: 중(M3-40에서 남은 것)
+- 선행: M3-40, 07#MD-62
+- 목표: ① 켄타우로스 계열 손가락·바게스트 꼬리·하이에나 bone02·03 끝 사슬 잠들기(재우는 순간 30cm/s 초과) 물리 에셋 정리 ② 검사(Swordsman) 살아 있을 때 몸이 약 80cm 떠 있는 결함(서 있는 COM 2.06h, L-anim-19 관련 의심) ③ 바게스트·알파 즉시 래그돌 재시도(각도 맞춤 굴림 상한 9s⁻¹·max(0, 100°−기울기), 각감쇠 20, 선감쇠 7.5·0.5초 중) ④ 동시 시체 렌더 밀기 비용(16구 p95 +2.26ms): 원거리·작은 화면 시체 격프레임 밀기나 동시 깨어 있는 래그돌 상한 ⑤ 기존 결함: 오공 봉 노출, 그레이스톤·오공 흰 재질, 산룡 비행 처치 착지음 지연(첫 접촉 +0.43초)
+- 완료 조건: M3-40 측정 도구 기준(3초 안 잠들기·재우는 순간 ≤30cm/s, 바게스트 strong 정지 ≤115° 5/5, 동시 시체 p95 증가 ≤1.0ms), 헤드리스·PIE 통과 수 유지
+- 산출물: (없음)
+- 검증: `Tools/MonsterAI/pie_measure_ragdoll_jitter.py --task M3-40` 라벨 재측정, 헤드리스 `TDGame.*`, PIE `TDGame.PIE.Combat`
+- 참조: `Saved/AgentOps/20261019/death-ragdoll/measure4/judge-*.md`·`measure5/`·`investigate6/roll.md`
+- 기록: 2026-10-19 claude — 등록(M3-40 완료 때).
+
 ### 3.6 Phase 4 — 확장(조건부)
 ### M3-36 전투 한 사이클(아레나 조우: 봉쇄·졸개 웨이브·중간 보스·용 보스·승리·재도전)
 - 상태: done
@@ -1086,6 +1111,14 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 선택지: (a) 현행 (b) MD-60 상한(3초 100cm/s) 유지 — 3초 안 잠들기 우선, 멈추는 순간 최대 130cm/s (c) 3초 뒤 평균 5cm/s 이하면 바로 재우기 추가 — 산룡 비행 3초 정착, 제자리 떨림 34~66cm/s를 3초에 멈춤
 - 권장: (a). 비행·더미·빙결에서 멈추는 순간 최대 130→41cm/s·미정착 2→0. 대가로 3초에도 실제 움직이는 바디는 3.1~3.7초에 잠들고(지상 26회 중 2회), 산룡 비행은 4.0초 정착.
 - 영향: 07#M3-39, `Characters/TDCombatCharacter.cpp`(TDCombatCharacterMovement 상수·`UpdateRagdollSettle`), `Content/MonsterAI/Physics/PA_TD_*_Ragdoll`, 종 DA 5개, MD-50 (c)(Kwang 물리 에셋 — 마켓 메시를 고치지 않는 종 `RagdollPhysicsAsset` 방식으로 해결)
+- 결정: (대기)
+
+### MD-62 사망 즉시 래그돌·날림 기본값(사용자 지시 "디아블로4처럼 바로 래그돌", 권장안 적용·재검토 가능)
+- 상태: proposed · 2026-10-19 claude(M3-40, "묻지 말고 권장안")
+- 질문: 지금 들어간 규칙·값을 확정할까? ① 일반·엘리트 14종과 보스 CentaurHunter는 즉시 래그돌. 예외: GriffonAlpha·MountainDragon 지상 처치는 사망 클립(사용자 원문 "사망 모션 없이"와 다름 — 즉시 래그돌 측정에서 앉은 채 굳음·날개 수직·잠들기 4초), Barghest·BarghestAlpha는 클립 뒤 래그돌(V=0, 착지 뒤 배 뒤집힘으로 관문 3회 불합격). 공중 처치는 전 종 래그돌 ② 처치 정지 clamp(Light 0.067·Heavy 0.11 + 치명 0.033 + 엘리트 0.02·보스 0.03, 0.07~0.15초), 플레이어 0.1초, 다수 처치 시차 첫 처치 0·나머지 0.02~0.07초(씨앗), 장판은 중심 거리/400×0.10초 ③ 날림: 공중 거리 (110+60·초과 비율)×치명 1.1×마무리 1.8×보스 0.5×크기 clamp(90/h, 0.55, 1)×플레이어 0.5, 위 100cm/s, 날림 중 추가 중력 0.6g, 수평 상한 800cm/s, 방향은 가해자→피해자를 칼날 쪽으로 min(0.5θ, 35°)(마무리 0.25θ·15°) 돌리고 37°로 자름, 투사체는 진행 방향 ④ 회전: 목표 착지 각 75+20·H/800°(수평 몸 70° 고정·상한 95°), 회전 상한 720°/s·수직 300°/s, 수평 몸은 긴 축 옆 구름 ⑤ 착지: 반발 0·마찰 1 시체 재질, 착지 뒤 물기 선 5.0·각 직립 3/수평 6 0.35초, 작은 수평 몸(h ≤ 70) 굴림 200°/s 상한, 착지음 BodyFall 분리(처치음은 KillThud)·0.1초 무리 합침, 엘리트·h ≥ 100 착지 외상 0.10(1500cm 안) ⑥ 보스 처치·승리 슬로모는 예약된 래그돌의 실제 진입 + 0.035초 뒤에 시작(요청 + 0.3초 상한) ⑦ 동시 시체 16구 p95 +2.26ms를 받아들임(물리 자세를 제대로 그리는 비용, 수정 전 +0.61ms는 렌더 굳음 상태 값) ⑧ 종별 누운 높이 비율 실측값(종 표 corpse_rest_height_ratio)
+- 선택지: (a) 현행 (b) 보스 3종 모두 즉시 래그돌(사용자 원문 우선, 용·그리폰 알파 품질 위험) (c) 바게스트 계열도 즉시 래그돌(배 뒤집힘 감수) (d) 동시 시체 비용 1.0ms 유지 → M3-41 ④ 선행
+- 권장: (a). r4 측정(14종+플레이어): 시작 0.07~0.14초, 미끄러짐 ≤61.7cm, 착지 감지 규칙 97.5%, 렌더 굳음 0/36, 하이에나 순간 각 ≤125° 7/7. 손 조작 체감 뒤 확정. 끄기 `TD.Death.ImmediateRagdoll 0`, 세기 `TD.Death.LaunchScale`, 칼날 섞기 `TD.Death.SwingTurnScale`
+- 영향: 07#M3-40·M3-41, `Combat/Feedback/TDDeathLaunchRules.*`, `Characters/TDCombatCharacter.*`, `Tools/MonsterAI/species_table.json`, `Config/DefaultGame.ini`, MD-59(처치 정지 길이), MD-60·61(정착과 물기 상호작용)
 - 결정: (대기)
 
 ## 5. 위험표(12)

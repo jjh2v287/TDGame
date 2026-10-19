@@ -52,6 +52,7 @@ void UTDCombatFeedbackSettings::CollectSoftObjectPaths(TArray<FSoftObjectPath>& 
 	}
 	AddFeedbackSoundSetPaths(CriticalSound, OutPaths);
 	AddFeedbackSoundSetPaths(KillSound, OutPaths);
+	AddFeedbackSoundSetPaths(CorpseLandSound, OutPaths);
 	AddFeedbackSoundSetPaths(PlayerHurtSound, OutPaths);
 	AddFeedbackSoundSetPaths(MeleeSwingSound, OutPaths);
 	AddFeedbackSoundSetPaths(PlayerHitSounds, OutPaths);

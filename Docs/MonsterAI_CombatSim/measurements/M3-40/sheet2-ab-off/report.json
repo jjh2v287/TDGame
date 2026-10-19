@@ -1,0 +1,466 @@
+{
+ "label": "sheet2-ab-off",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 350.0,
+ "kill_fraction": 0.25,
+ "count": 1,
+ "kill_strength": "strong",
+ "critical": false,
+ "screenshot_times": [
+  0.0,
+  0.1,
+  0.2,
+  0.35,
+  0.6,
+  1.0
+ ],
+ "screenshots": {
+  "times": [
+   0.0,
+   0.1,
+   0.2,
+   0.35,
+   0.6,
+   1.0
+  ],
+  "clock": "kill",
+  "unit": "game seconds",
+  "kill_stop_included": true,
+  "fixed_step_console_variable": "t.OverrideFPS",
+  "fixed_fps": 60.0,
+  "first_repeat_only": true
+ },
+ "camera_arm_cm": 400.0,
+ "experiment": {
+  "body": {},
+  "self_collision_off": false,
+  "assist": null
+ },
+ "scenario": {
+  "kill_strength": "strong"
+ },
+ "cvars": {
+  "TD.Death.ImmediateRagdoll": 0
+ },
+ "kill_delay": 0.6,
+ "observe": 7.0,
+ "window": {
+  "land_speed_cm_s": 60.0,
+  "delay_seconds": 0.5,
+  "length_seconds": 2.5
+ },
+ "landing_rule": {
+  "min_fall_speed_cm_s": -60.0,
+  "rebound_min_speed_cm_s": 35.0,
+  "rebound_fraction": 0.25,
+  "height_margin_cm": 25.0,
+  "fallback_extra_seconds": 0.25,
+  "fallback_height_margin_cm": 75.0,
+  "forced_fallback_seconds": 1.5,
+  "up_speed_cm_s": 100.0,
+  "effective_gravity_cm_s2": 1568.0,
+  "rest_height_ratio_default": [
+   0.18,
+   0.45
+  ]
+ },
+ "target": {
+  "position_rms_cm": 0.5,
+  "sleep_seconds": 3.0,
+  "freeze_body_speed_cm_s": 30.0
+ },
+ "definitions": {
+  "ragdoll_delay_real_seconds": "처치(체력 0) 틱 월드 실시간부터 첫 시뮬 프레임 실시간까지(처치 정지는 실시간이라 ragdoll_delay_seconds 게임 시간과 다를 수 있음)",
+  "launch_direction_error_deg": "래그돌 시작 0.1초 뒤(게임 시간) 첫 프레임의 질량 가중 COM 수평 속도와 R(처치 순간 가해자→피해자 수평 단위 방향)의 각",
+  "com_travel_2s_cm": "래그돌 시작 프레임 COM과 2초 뒤(게임 시간) 첫 프레임 COM의 수평 거리",
+  "land_detect_seconds": "C++ 날림 감시 v2 재현. 래그돌 시작부터 매 프레임 COM 수직 속도 vz, vz_min = min(0, 지금까지 vz). 경과 ≥ 1.5초면 강제, 경과 ≥ T+0.25초이고 COM ≤ 지면+누운 높이+75cm면 대체(*), 아니면 vz_min ≤ −60이고 vz − vz_min ≥ max(35, 0.25·|vz_min|)이고 COM ≤ 지면+누운 높이+25cm일 때. T = (U+√(U²+2·1.6g·Δz))/1.6g, U 100, Δz = max(10, 시작 COM − 지면 − 누운 높이), 누운 높이 = 종 누운 비율(0이면 직립 0.18·수평 몸 0.45) × 캡슐 반높이",
+  "lowest_fall_speed_seconds": "래그돌 1.5초 안 COM vz 최저 시각(실제 접촉 근사). fallback_before_lowest_fall_speed는 대체 감지가 그보다 먼저 걸림(공중 감지)",
+  "post_land_slide_cm": "착지 감지 프레임 COM부터 min(감지+2초, 최종 잠들기, 가라앉기 시작) 프레임 COM까지 수평 거리",
+  "landing_angle_deg": "착지 감지 프레임의 몸 각(rest_angle_deg는 최종 잠든 프레임). 직립: 첫 바디(골반)→머리 바디(이름에 head, 없으면 neck, 없으면 처치 프레임에서 가장 높은 바디) 질량 중심 벡터와 Up의 각. 수평 몸: 질량 상위 바디 3개마다 처치 프레임의 월드 Up을 그 바디의 앞·옆·위 축 좌표로 고정해 그 프레임 축으로 옮긴 벡터와 Up의 각을 평균(굴림 각 근사, 코 들림이 있으면 피치도 섞임)",
+  "first_frame_relative_speed_cm_s": "첫 시뮬 프레임 max|vᵢ − v_COM|(질량 가중), relative_speed_first_frames_cm_s는 첫 3프레임",
+  "standing_com_ratio": "(처치 프레임 COM − 지면) / 캡슐 반높이",
+  "rest_height_ratio": "(최종 잠든 프레임 COM − 지면) / 캡슐 반높이, 종 표 corpse_rest_height_ratio 채움용",
+  "ground": "처치 순간 COM에서 아래로 300cm WorldStatic·WorldDynamic 오브젝트 트레이스(못 맞히면 액터 z − 캡슐 반높이, ground_source capsule)",
+  "frame_time": "슬레이트 틱마다 월드 실시간 차이(ms). 처치 틱 전 1초·뒤 3초에 시작한 프레임의 p50·p95, after_sampler_ms는 그 프레임 안 표본기 비용(빼서 볼 것). fixed_step 작업은 계산하지 않음",
+  "timed_shots": "--screenshot-times 시각은 --screenshot-clock 기준 게임 시간(GetTimeSeconds). ragdoll(기본): 대상 첫 시뮬 프레임의 게임 시간이 0이라 처치 정지(처치 틱→래그돌 시작)는 포함하지 않음, 정지 길이는 captured_game_seconds_after_kill − captured_game_seconds_after_ragdoll. kill: 처치 틱이 0이라 처치 정지 포함. 그 시각 뒤 첫 틱에 명령(issued_game_seconds)하고 사진은 다음 월드 프레임의 그림이라 captured_*가 실제 찍힌 프레임의 게임 시각. 앞 사진이 그려지기 전에는 다음 명령을 미룸(HighResShot 요청 덮어쓰기 방지). 보스 처치 슬로모가 걸리면 게임 시간이 느려져 같은 간격도 실시간으로는 길어짐",
+  "fixed_step": "시간 지정 스크린샷 작업 동안 t.OverrideFPS=fps(UEngine::UpdateTimeAndHandleMaxTickRate가 매 프레임 시간 간격을 1/fps로 덮어씀)로 HighResShot 끊김에도 게임 시간이 1/fps씩만 감, 작업 끝에 이전 값으로 복구(restored.fixed_step_fps, 다시 읽은 값이 다르면 {read_back, expected, kept_for_retry}이고 다음 복구가 다시 시도). 이 동안 월드 실시간(GetRealTimeSeconds)도 1/fps씩 늘어 벽시계가 아니므로 frame_time은 생략하고 *_real_seconds·fps는 게임 안 실시간(처치 정지·슬로모 상한이 쓰는 시계)",
+  "camera": "--camera-arm: 작업 동안 플레이어 폰 SpringArm target_arm_length를 그 값으로, 카메라 지연을 끄고, 매 틱 target_offset(월드)을 처치 전에는 대상 액터 위치, 처치 뒤에는 처치 순간 대상 위치에 맞춰 대상이 화면 가운데(피치·요 유지, 날아간 시체는 그 기준점에서 멀어짐). 작업 끝에 원래 값 복구(restored.camera). 피드백 흔들림·떨림 배율(ResolveCameraArmLength)도 팔 길이를 따름"
+ },
+ "results": [
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Goblin",
+   "physics_asset": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_PhysicsAsset.SK_Goblin_PhysicsAsset",
+   "body_count": 12,
+   "bone_mass_kg": {
+    "pelvis": 13.938,
+    "spine_02": 6.94,
+    "spine_04": 13.433,
+    "upperarm_l": 3.647,
+    "hand_l": 3.699,
+    "head": 16.473,
+    "upperarm_r": 5.402,
+    "hand_r": 2.701,
+    "cc_base_l_calftwist01": 2.392,
+    "cc_base_l_thightwist01": 7.003,
+    "cc_base_r_thightwist01": 6.231,
+    "calf_r": 8.58
+   },
+   "frames": 441,
+   "fixed_step": {
+    "console_variable": "t.OverrideFPS",
+    "requested_fps": 60.0,
+    "applied_fps": 60.0,
+    "before": 0.0
+   },
+   "camera": {
+    "arm_length_cm": 400.0,
+    "original_arm_length_cm": 1100.0,
+    "original_target_offset": [
+     146.222,
+     0.0,
+     -36.0
+    ],
+    "original_camera_lag": true,
+    "pitch_deg": -50.0,
+    "yaw_deg": 45.0,
+    "focus": "target actor until kill, then kill location"
+   },
+   "restored": {
+    "fixed_step_fps": 0.0,
+    "camera": true
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5833,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.6,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 30.0,
+    "attacker_location": [
+     -535.81,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 60.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -301.358,
+     2.861,
+     64.632
+    ],
+    "attacker_location": [
+     -535.81,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -304.422,
+     0.0,
+     62.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 993.2,
+   "first_sleep_seconds": 1.4,
+   "freeze_body_speed_cm_s": 17.9,
+   "pre_sleep_move_cm": 12.01,
+   "land_seconds": 1.1167,
+   "sink_seconds": 3.7167,
+   "window_seconds": [
+    1.6167,
+    3.7167
+   ],
+   "observed_seconds": 5.4,
+   "sleep_seconds": 1.4,
+   "fps": 73.5,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.4,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.4,
+     17.9
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 17.9,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "upright",
+    "launch_up_speed_cm_s": 0.0,
+    "first_frame_relative_speed_cm_s": 0.0,
+    "relative_speed_first_frames_cm_s": [
+     0.0,
+     1040.9,
+     866.1
+    ],
+    "ragdoll_delay_real_seconds": 0.5833,
+    "launch_direction_error_deg": 36.8,
+    "launch_planar_speed_cm_s": 20.6,
+    "com_travel_2s_cm": 47.9,
+    "rest_height_ratio_used": 0.28,
+    "drop_height_cm": 26.8,
+    "expected_fall_seconds": 0.2593,
+    "lowest_fall_speed_seconds": 0.4667,
+    "landing_angle_kind": "upright_pelvis_head",
+    "standing_com_height_cm": 69.7,
+    "standing_com_ratio": 1.162,
+    "land_detect_seconds": 0.4833,
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 35.4,
+    "landing_angle_deg": 101.7,
+    "rest_com_height_cm": 18.1,
+    "rest_height_ratio": 0.301,
+    "rest_angle_deg": 73.3
+   },
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "pelvis",
+     0.0
+    ],
+    [
+     "spine_02",
+     0.0
+    ],
+    [
+     "spine_04",
+     0.0
+    ],
+    [
+     "upperarm_l",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.008,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_shot4.png"
+   ],
+   "target": "Goblin-1",
+   "timed_shots": [
+    {
+     "offset": 0.0,
+     "clock": "kill",
+     "issued_game_seconds": 0.0,
+     "issued_world_real_seconds": 9.041053228080273,
+     "real_seconds_after_kill": 0.0,
+     "captured_game_seconds_after_kill": 0.0167,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_kill0000ms.png"
+    },
+    {
+     "offset": 0.1,
+     "clock": "kill",
+     "issued_game_seconds": 0.1,
+     "issued_world_real_seconds": 9.141053233295679,
+     "real_seconds_after_kill": 0.1,
+     "captured_game_seconds_after_kill": 0.1167,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_kill0100ms.png"
+    },
+    {
+     "offset": 0.2,
+     "clock": "kill",
+     "issued_game_seconds": 0.2,
+     "issued_world_real_seconds": 9.241053238511086,
+     "real_seconds_after_kill": 0.2,
+     "captured_game_seconds_after_kill": 0.2167,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_kill0200ms.png"
+    },
+    {
+     "offset": 0.35,
+     "clock": "kill",
+     "issued_game_seconds": 0.35,
+     "issued_world_real_seconds": 9.391053246334195,
+     "real_seconds_after_kill": 0.35,
+     "captured_game_seconds_after_kill": 0.3667,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_kill0350ms.png"
+    },
+    {
+     "offset": 0.6,
+     "clock": "kill",
+     "issued_game_seconds": 0.6,
+     "issued_world_real_seconds": 9.641053259372711,
+     "real_seconds_after_kill": 0.6,
+     "captured_game_seconds_after_kill": 0.6167,
+     "captured_game_seconds_after_ragdoll": 0.0333,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_kill0600ms.png"
+    },
+    {
+     "offset": 1.0,
+     "clock": "kill",
+     "issued_game_seconds": 1.0,
+     "issued_world_real_seconds": 10.041053280234337,
+     "real_seconds_after_kill": 1.0,
+     "captured_game_seconds_after_kill": 1.0167,
+     "captured_game_seconds_after_ragdoll": 0.4333,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Goblin-1_kill1000ms.png"
+    }
+   ]
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Hyena",
+   "physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+   "body_count": 19,
+   "bone_mass_kg": {
+    "bip01_pelvis": 1.0,
+    "bip01_spine": 1.0,
+    "bip01_spine1": 1.0,
+    "bip01_spine2": 1.0,
+    "bip01_neck": 1.0,
+    "bip01_neck1": 1.0,
+    "bip01_head": 1.0,
+    "bip01_l_upperarm": 1.0,
+    "bip01_l_hand": 1.0,
+    "bip01_r_upperarm": 1.0,
+    "bip01_r_hand": 1.0,
+    "bip01_l_thigh": 1.0,
+    "bip01_l_calf": 1.0,
+    "bip01_l_foot": 1.0,
+    "bip01_r_thigh": 1.0,
+    "bip01_r_calf": 1.0,
+    "bip01_r_foot": 1.0,
+    "bone02": 1.0,
+    "bone03": 1.0
+   },
+   "frames": 432,
+   "fixed_step": {
+    "console_variable": "t.OverrideFPS",
+    "requested_fps": 60.0,
+    "applied_fps": 60.0,
+    "before": 0.0
+   },
+   "camera": {
+    "arm_length_cm": 400.0,
+    "original_arm_length_cm": 1100.0,
+    "original_target_offset": [
+     204.131,
+     0.0,
+     -48.0
+    ],
+    "original_camera_lag": true,
+    "pitch_deg": -50.0,
+    "yaw_deg": 45.0,
+    "focus": "target actor until kill, then kill location"
+   },
+   "restored": {
+    "fixed_step_fps": 0.0,
+    "camera": true
+   },
+   "ragdoll": false,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "Hyena-1",
+   "timed_shots": [
+    {
+     "offset": 0.0,
+     "clock": "kill",
+     "issued_game_seconds": 0.0,
+     "issued_world_real_seconds": 19.961688175797462,
+     "real_seconds_after_kill": 0.0,
+     "captured_game_seconds_after_kill": 0.0167,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Hyena-1_kill0000ms.png"
+    },
+    {
+     "offset": 0.1,
+     "clock": "kill",
+     "issued_game_seconds": 0.1,
+     "issued_world_real_seconds": 20.06168818101287,
+     "real_seconds_after_kill": 0.1,
+     "captured_game_seconds_after_kill": 0.1167,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Hyena-1_kill0100ms.png"
+    },
+    {
+     "offset": 0.2,
+     "clock": "kill",
+     "issued_game_seconds": 0.2,
+     "issued_world_real_seconds": 20.161688186228275,
+     "real_seconds_after_kill": 0.2,
+     "captured_game_seconds_after_kill": 0.2167,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Hyena-1_kill0200ms.png"
+    },
+    {
+     "offset": 0.35,
+     "clock": "kill",
+     "issued_game_seconds": 0.35,
+     "issued_world_real_seconds": 20.311688194051385,
+     "real_seconds_after_kill": 0.35,
+     "captured_game_seconds_after_kill": 0.3667,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Hyena-1_kill0350ms.png"
+    },
+    {
+     "offset": 0.6,
+     "clock": "kill",
+     "issued_game_seconds": 0.6,
+     "issued_world_real_seconds": 20.5616882070899,
+     "real_seconds_after_kill": 0.6,
+     "captured_game_seconds_after_kill": 0.6167,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Hyena-1_kill0600ms.png"
+    },
+    {
+     "offset": 1.0,
+     "clock": "kill",
+     "issued_game_seconds": 1.0,
+     "issued_world_real_seconds": 20.961688227951527,
+     "real_seconds_after_kill": 1.0,
+     "captured_game_seconds_after_kill": 1.0167,
+     "captured_game_seconds_after_ragdoll": null,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet2-ab-off/Hyena-1_kill1000ms.png"
+    }
+   ]
+  }
+ ]
+}

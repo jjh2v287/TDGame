@@ -1,7 +1,7 @@
 """실행 환경: 일반 파이썬 3 표준 라이브러리만(에디터 불필요). 프로젝트 루트의 Content 디스크 파일과 정의 JSON 을 읽기만 한다
 실행 명령: python Tools/MonsterAI/check_species_table.py [--root <프로젝트 루트>] [--table <species_table.json 경로>]
 출력: 문제마다 한 줄(ERROR 또는 WARN)과 마지막 요약 한 줄, ERROR 가 하나라도 있으면 종료 코드 1
-상태: 현행(M3-33)
+상태: 현행(M3-40, death_clip_before_ragdoll 불리언·body_plan 열거·corpse_rest_height_ratio 0~1 범위 검사 추가)
 """
 import argparse
 import os
@@ -14,7 +14,7 @@ import species_table
 DEFAULT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_]+$")
 SPECIES_REQUIRED_KEYS = ("name", "definition", "mesh", "scale", "yaw", "radius", "half_height", "walk_clip_speed", "run_clip_speed", "idle", "walk", "run")
-SPECIES_OPTIONAL_KEYS = ("followers", "height_offset", "hit", "death", "abilities", "corpse_seconds", "ragdoll_after_death", "ragdoll_without_death_clip", "corpse_sink_seconds", "phases") + tuple(species_table.EXTRA_CLIP_PROPERTIES)
+SPECIES_OPTIONAL_KEYS = ("followers", "height_offset", "hit", "death", "abilities", "corpse_seconds", "ragdoll_after_death", "ragdoll_without_death_clip", "corpse_sink_seconds", "death_clip_before_ragdoll", "body_plan", "corpse_rest_height_ratio", "phases") + tuple(species_table.EXTRA_CLIP_PROPERTIES)
 REQUIRED_PATH_KEYS = ("species_folder", "animation_folder", "definitions_dir")
 CLIP_KEYS = set(species_table.CLIP_DEFAULTS)
 RETARGET_CLIP_KINDS = ("idle", "locomotion", "attack", "hit", "death")
@@ -103,9 +103,13 @@ def check_species_entry(findings, entry, definitions_dir, game_paths):
     check_number(findings, where, "run_clip_speed", filled["run_clip_speed"], 1.0)
     check_number(findings, where, "corpse_seconds", filled["corpse_seconds"], 0.0)
     check_number(findings, where, "corpse_sink_seconds", filled["corpse_sink_seconds"], 0.0)
-    for key in ("ragdoll_after_death", "ragdoll_without_death_clip"):
+    for key in ("ragdoll_after_death", "ragdoll_without_death_clip", "death_clip_before_ragdoll"):
         if not isinstance(filled[key], bool):
             findings.error(where, f"{key} must be true or false (got {filled[key]!r})")
+    if not isinstance(filled["body_plan"], str) or filled["body_plan"] not in species_table.BODY_PLANS:
+        findings.error(where, f"body_plan must be one of {list(species_table.BODY_PLANS)} (got {filled['body_plan']!r})")
+    if not species_table.is_corpse_rest_height_ratio(filled["corpse_rest_height_ratio"]):
+        findings.error(where, f"corpse_rest_height_ratio must be a number from 0 to 1, 0 uses the body plan default (got {filled['corpse_rest_height_ratio']!r})")
     if check_game_path_value(findings, where, "mesh", filled["mesh"]):
         game_paths.append((f"{where}.mesh", filled["mesh"]))
     if not isinstance(filled["followers"], list):

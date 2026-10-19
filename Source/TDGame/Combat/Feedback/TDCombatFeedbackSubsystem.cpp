@@ -8,6 +8,7 @@
 #include "Characters/TDMonsterCharacter.h"
 #include "Combat/Feedback/TDCombatFeedbackSettings.h"
 #include "Combat/Feedback/TDCombatOverlayWidget.h"
+#include "Combat/Feedback/TDDeathLaunchRules.h"
 #include "Combat/Feedback/TDHitCameraShake.h"
 #include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
@@ -32,6 +33,7 @@
 #include "NiagaraComponentPoolMethodEnum.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Sound/SoundAttenuation.h"
 #include "Sound/SoundBase.h"
 #include "Sound/SoundConcurrency.h"
@@ -40,6 +42,13 @@
 
 namespace
 {
+	constexpr float CorpseFriction = 1.f;
+	constexpr float CorpseRestitution = 0.f;
+	constexpr float MaxCorpseLandVolumeScale = 2.f;
+	constexpr float MinCorpseLandPitchScale = 0.5f;
+	constexpr float MaxCorpseLandPitchScale = 2.f;
+	constexpr double MultiKillWindowMarginSeconds = 0.05;
+
 	float ResolveUnclampedDamageRatio(const FTDDamageAppliedMessage& Message)
 	{
 		if (Message.DamageAmount <= 0.f || Message.UnclampedDamage <= Message.DamageAmount)
@@ -261,6 +270,144 @@ void UTDCombatFeedbackSubsystem::RequestSlowMotion(const float Scale, const floa
 	RequestSlowMotionWithRule(Scale, RealSeconds, false, true);
 }
 
+void UTDCombatFeedbackSubsystem::NotifyRagdollEntryScheduled(const ATDCombatCharacter& Character)
+{
+	RemoveInvalidRagdollEntryWaiters();
+	RagdollEntryWaiters.Add(&Character);
+}
+
+void UTDCombatFeedbackSubsystem::NotifyRagdollEntered(const ATDCombatCharacter& Character)
+{
+	RagdollEntryWaiters.Remove(&Character);
+	RaiseLatestRagdollEntry(GetFeedbackRealTime());
+}
+
+void UTDCombatFeedbackSubsystem::CancelRagdollEntryWait(const ATDCombatCharacter& Character)
+{
+	RagdollEntryWaiters.Remove(&Character);
+}
+
+void UTDCombatFeedbackSubsystem::RaiseLatestRagdollEntry(const double EntryRealSeconds)
+{
+	if (LatestRagdollEntryRealTime.IsSet() && EntryRealSeconds <= LatestRagdollEntryRealTime.GetValue())
+	{
+		return;
+	}
+	LatestRagdollEntryRealTime = EntryRealSeconds;
+}
+
+bool UTDCombatFeedbackSubsystem::HasRagdollAwaitingEntry() const
+{
+	for (const TWeakObjectPtr<const ATDCombatCharacter>& Waiter : RagdollEntryWaiters)
+	{
+		if (Waiter.IsValid())
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void UTDCombatFeedbackSubsystem::RemoveInvalidRagdollEntryWaiters()
+{
+	for (auto WaiterIt = RagdollEntryWaiters.CreateIterator(); WaiterIt; ++WaiterIt)
+	{
+		if (!WaiterIt->IsValid())
+		{
+			WaiterIt.RemoveCurrent();
+		}
+	}
+}
+
+int32 UTDCombatFeedbackSubsystem::RecordAttackerKill(const AActor& Attacker)
+{
+	const double RealNow = GetFeedbackRealTime();
+	const double WindowSeconds = FMath::Max(GetDefault<UTDCombatFeedbackSettings>()->AttackerKillHitStopSeconds, 0.f) + MultiKillWindowMarginSeconds;
+	AttackerKillWindows.RemoveAll([RealNow, WindowSeconds](const FTDAttackerKillWindow& Window)
+	{
+		return !Window.Attacker.IsValid() || RealNow - Window.LastKillRealTime > WindowSeconds;
+	});
+	FTDAttackerKillWindow* AttackerWindow = AttackerKillWindows.FindByPredicate([&Attacker](const FTDAttackerKillWindow& Window)
+	{
+		return Window.Attacker.Get() == &Attacker;
+	});
+	if (!AttackerWindow)
+	{
+		AttackerKillWindows.Add(FTDAttackerKillWindow{ &Attacker, RealNow, 1 });
+		return 0;
+	}
+	AttackerWindow->LastKillRealTime = RealNow;
+	const int32 KillIndex = AttackerWindow->KillCount;
+	++AttackerWindow->KillCount;
+	return KillIndex;
+}
+
+float UTDCombatFeedbackSubsystem::GetSecondsUntilPendingSlowMotion() const
+{
+	const double RealNow = GetFeedbackRealTime();
+	float SecondsUntilStart = TNumericLimits<float>::Max();
+	for (const FTDPendingSlowMotion& PendingSlowMotion : PendingSlowMotions)
+	{
+		const double StartRealTime = ResolveRagdollSlowMotionStartRealTime(PendingSlowMotion.RequestedStartRealTime);
+		SecondsUntilStart = FMath::Min(SecondsUntilStart, static_cast<float>(FMath::Max(StartRealTime - RealNow, 0.)));
+	}
+	return SecondsUntilStart;
+}
+
+UPhysicalMaterial* UTDCombatFeedbackSubsystem::GetCorpsePhysicalMaterial()
+{
+	if (CorpsePhysicalMaterial)
+	{
+		return CorpsePhysicalMaterial;
+	}
+
+	CorpsePhysicalMaterial = NewObject<UPhysicalMaterial>(this, TEXT("TDCorpsePhysicalMaterial"));
+	CorpsePhysicalMaterial->Friction = CorpseFriction;
+	CorpsePhysicalMaterial->StaticFriction = CorpseFriction;
+	CorpsePhysicalMaterial->FrictionCombineMode = EFrictionCombineMode::Max;
+	CorpsePhysicalMaterial->bOverrideFrictionCombineMode = true;
+	CorpsePhysicalMaterial->Restitution = CorpseRestitution;
+	CorpsePhysicalMaterial->RestitutionCombineMode = EFrictionCombineMode::Min;
+	CorpsePhysicalMaterial->bOverrideRestitutionCombineMode = true;
+	return CorpsePhysicalMaterial;
+}
+
+void UTDCombatFeedbackSubsystem::PlayCorpseLanding(const FVector& Location, const float Strength, const float PitchScale, const ETDKillRank KillRank, const float CapsuleHalfHeight)
+{
+	if (!FMath::IsFinite(Strength) || !FMath::IsFinite(PitchScale) || Location.ContainsNaN())
+	{
+		return;
+	}
+
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const double RealNow = GetFeedbackRealTime();
+	AddCorpseLandTrauma(RealNow, Location, KillRank, CapsuleHalfHeight);
+	const float VolumeScale = FMath::Min(Strength, MaxCorpseLandVolumeScale);
+	if (VolumeScale <= 0.f)
+	{
+		return;
+	}
+	if (CorpseLandGroup.LandingCount == 0 || RealNow - CorpseLandGroup.WindowStartRealTime >= FeedbackSettings.CorpseLandGroupWindowSeconds)
+	{
+		CorpseLandGroup = FTDCorpseLandGroup();
+		CorpseLandGroup.WindowStartRealTime = RealNow;
+	}
+
+	++CorpseLandGroup.LandingCount;
+	if (CorpseLandGroup.LandingCount >= FeedbackSettings.CorpseLandGroupStartCount)
+	{
+		RaiseFirstCorpseLandSound();
+		return;
+	}
+
+	const float SafePitchScale = FMath::Clamp(PitchScale, MinCorpseLandPitchScale, MaxCorpseLandPitchScale);
+	UAudioComponent* Audio = SpawnFeedbackSound(FeedbackSettings.CorpseLandSound, Location, VolumeScale, SafePitchScale, ETDFeedbackSoundChannel::CorpseLand);
+	if (CorpseLandGroup.LandingCount == 1)
+	{
+		CorpseLandGroup.FirstAudio = Audio;
+	}
+}
+
 float UTDCombatFeedbackSubsystem::GetCameraTraumaForTest() const
 {
 	const UTDTraumaCameraShakePattern* ShakePattern = ActiveShakePattern.Get();
@@ -306,6 +453,7 @@ void UTDCombatFeedbackSubsystem::CreateSoundSettings(const UTDCombatFeedbackSett
 	MonsterSwingSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.MonsterSwingSoundMaxCount, 0.f);
 	StatusTickSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.StatusTickSoundMaxCount, 0.f);
 	PlayerHitSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.PlayerHitSoundMaxCount, FeedbackSettings.PlayerHitSoundRetriggerSeconds);
+	CorpseLandSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.CorpseLandSoundMaxCount, 0.f);
 
 	SoundAttenuation = NewObject<USoundAttenuation>(this);
 	SoundAttenuation->Attenuation.bAttenuate = true;
@@ -329,6 +477,8 @@ USoundConcurrency* UTDCombatFeedbackSubsystem::GetSoundConcurrency(const ETDFeed
 		return PlayerHitSoundConcurrency.Get();
 	case ETDFeedbackSoundChannel::StatusTick:
 		return StatusTickSoundConcurrency.Get();
+	case ETDFeedbackSoundChannel::CorpseLand:
+		return CorpseLandSoundConcurrency.Get();
 	default:
 		return ImpactSoundConcurrency.Get();
 	}
@@ -494,8 +644,7 @@ void UTDCombatFeedbackSubsystem::HandleEncounterBanner(FGameplayTag Channel, con
 {
 	if (Message.Style == ETDEncounterBannerStyle::Victory)
 	{
-		const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
-		RequestSlowMotion(FeedbackSettings.VictorySlowMotionScale, FeedbackSettings.VictorySlowMotionSeconds);
+		RequestVictorySlowMotion();
 	}
 	if (!OverlayWidget)
 	{
@@ -838,7 +987,7 @@ void UTDCombatFeedbackSubsystem::StartWobble(ATDCombatCharacter& Victim, const E
 {
 	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
 	const float Amplitude = Tier == ETDHitFeedbackTier::Light ? FeedbackSettings.WobbleLightCm : FeedbackSettings.WobbleHeavyCm;
-	if (Direction.IsNearlyZero() || Amplitude <= 0.f || FeedbackSettings.WobbleSeconds <= 0.f || Victim.IsRagdolling())
+	if (Direction.IsNearlyZero() || Amplitude <= 0.f || FeedbackSettings.WobbleSeconds <= 0.f || Victim.IsRagdollPendingOrActive())
 	{
 		return;
 	}
@@ -1062,19 +1211,51 @@ void UTDCombatFeedbackSubsystem::PlayRumble(APlayerController& Controller, const
 void UTDCombatFeedbackSubsystem::ScheduleBossKillSlowMotion(const float AttackerStopSeconds)
 {
 	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const double RequestedStartRealTime = GetFeedbackRealTime() + FMath::Max(AttackerStopSeconds, 0.f) + FeedbackSettings.BossKillSlowMotionDelaySeconds;
+	AddPendingSlowMotion(RequestedStartRealTime, FeedbackSettings.BossKillSlowMotionScale, FeedbackSettings.BossKillSlowMotionSeconds, true);
+}
+
+void UTDCombatFeedbackSubsystem::RequestVictorySlowMotion()
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const double RealNow = GetFeedbackRealTime();
+	if (ResolveRagdollSlowMotionStartRealTime(RealNow) <= RealNow)
+	{
+		RequestSlowMotion(FeedbackSettings.VictorySlowMotionScale, FeedbackSettings.VictorySlowMotionSeconds);
+		return;
+	}
+
+	AddPendingSlowMotion(RealNow, FeedbackSettings.VictorySlowMotionScale, FeedbackSettings.VictorySlowMotionSeconds, false);
+}
+
+void UTDCombatFeedbackSubsystem::AddPendingSlowMotion(const double RequestedStartRealTime, const float Scale, const float RealSeconds, const bool bIgnoresCooldown)
+{
 	FTDPendingSlowMotion& PendingSlowMotion = PendingSlowMotions.AddDefaulted_GetRef();
-	PendingSlowMotion.StartRealTime = GetFeedbackRealTime() + FMath::Max(AttackerStopSeconds, 0.f) + FeedbackSettings.BossKillSlowMotionDelaySeconds;
-	PendingSlowMotion.Scale = FeedbackSettings.BossKillSlowMotionScale;
-	PendingSlowMotion.RealSeconds = FeedbackSettings.BossKillSlowMotionSeconds;
+	PendingSlowMotion.RequestedStartRealTime = RequestedStartRealTime;
+	PendingSlowMotion.Scale = Scale;
+	PendingSlowMotion.RealSeconds = RealSeconds;
+	PendingSlowMotion.bIgnoresCooldown = bIgnoresCooldown;
+}
+
+double UTDCombatFeedbackSubsystem::ResolveRagdollSlowMotionStartRealTime(const double RequestedStartRealTime) const
+{
+	FTDSlowMotionStartInput StartInput;
+	StartInput.RequestedStartRealSeconds = RequestedStartRealTime;
+	StartInput.NowRealSeconds = GetFeedbackRealTime();
+	StartInput.MaxRagdollDelaySeconds = GetDefault<UTDCombatFeedbackSettings>()->SlowMotionMaxRagdollDelaySeconds;
+	StartInput.LatestRagdollEntryRealSeconds = LatestRagdollEntryRealTime;
+	StartInput.bHasRagdollAwaitingEntry = HasRagdollAwaitingEntry();
+	return TDDeathLaunchRules::ResolveSlowMotionStartRealSeconds(StartInput);
 }
 
 void UTDCombatFeedbackSubsystem::UpdateSlowMotion()
 {
 	const double RealNow = GetFeedbackRealTime();
+	RemoveInvalidRagdollEntryWaiters();
 	TArray<FTDPendingSlowMotion, TInlineAllocator<2>> DueSlowMotions;
 	for (int32 Index = PendingSlowMotions.Num() - 1; Index >= 0; --Index)
 	{
-		if (PendingSlowMotions[Index].StartRealTime > RealNow)
+		if (ResolveRagdollSlowMotionStartRealTime(PendingSlowMotions[Index].RequestedStartRealTime) > RealNow)
 		{
 			continue;
 		}
@@ -1083,7 +1264,7 @@ void UTDCombatFeedbackSubsystem::UpdateSlowMotion()
 	}
 	for (const FTDPendingSlowMotion& DueSlowMotion : DueSlowMotions)
 	{
-		RequestSlowMotionWithRule(DueSlowMotion.Scale, DueSlowMotion.RealSeconds, true, true);
+		RequestSlowMotionWithRule(DueSlowMotion.Scale, DueSlowMotion.RealSeconds, DueSlowMotion.bIgnoresCooldown, true);
 	}
 	if (SlowMotion.RemoveExpired(RealNow))
 	{
@@ -1115,6 +1296,8 @@ void UTDCombatFeedbackSubsystem::ApplySlowMotionDilation()
 void UTDCombatFeedbackSubsystem::RestoreSlowMotion()
 {
 	PendingSlowMotions.Reset();
+	LatestRagdollEntryRealTime.Reset();
+	RagdollEntryWaiters.Reset();
 	if (!SlowMotion.IsActive())
 	{
 		return;
@@ -1191,27 +1374,32 @@ void UTDCombatFeedbackSubsystem::DrainDeferredFeedback(const double Now)
 
 bool UTDCombatFeedbackSubsystem::PlayFeedbackSound(const FTDFeedbackSoundSet& SoundSet, const FVector& Location, const float VolumeScale, const ETDFeedbackSoundChannel Channel)
 {
+	return SpawnFeedbackSound(SoundSet, Location, VolumeScale, 1.f, Channel) != nullptr;
+}
+
+UAudioComponent* UTDCombatFeedbackSubsystem::SpawnFeedbackSound(const FTDFeedbackSoundSet& SoundSet, const FVector& Location, const float VolumeScale, const float PitchScale, const ETDFeedbackSoundChannel Channel)
+{
 	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
 	const bool bIsStatusTick = Channel == ETDFeedbackSoundChannel::StatusTick;
-	const bool bIsBudgetExempt = Channel == ETDFeedbackSoundChannel::Accent || Channel == ETDFeedbackSoundChannel::PlayerHit;
+	const bool bIsBudgetExempt = Channel == ETDFeedbackSoundChannel::Accent || Channel == ETDFeedbackSoundChannel::PlayerHit || Channel == ETDFeedbackSoundChannel::CorpseLand;
 	if (bIsStatusTick && StatusSoundsThisFrame >= FeedbackSettings.MaxStatusSoundsPerFrame)
 	{
-		return false;
+		return nullptr;
 	}
 	if (!bIsStatusTick && !bIsBudgetExempt && SoundsThisFrame >= FeedbackSettings.MaxNewSoundsPerFrame)
 	{
-		return false;
+		return nullptr;
 	}
 
 	USoundBase* Sound = PickSound(SoundSet);
 	if (!Sound)
 	{
-		return false;
+		return nullptr;
 	}
 	const float BurstVolumeScale = Channel == ETDFeedbackSoundChannel::Impact ? ResolveBurstVolumeScale(SoundSet) : 1.f;
 	if (BurstVolumeScale <= 0.f)
 	{
-		return false;
+		return nullptr;
 	}
 
 	if (bIsStatusTick)
@@ -1222,14 +1410,14 @@ bool UTDCombatFeedbackSubsystem::PlayFeedbackSound(const FTDFeedbackSoundSet& So
 	{
 		++SoundsThisFrame;
 	}
-	const float Pitch = static_cast<float>(FeedbackRandom.FRandRange(SoundSet.PitchMin, SoundSet.PitchMax));
-	const UAudioComponent* Audio = UGameplayStatics::SpawnSoundAtLocation(this, Sound, Location, FRotator::ZeroRotator, SoundSet.Volume * VolumeScale * BurstVolumeScale, Pitch, 0.f, SoundAttenuation, GetSoundConcurrency(Channel), true);
+	const float Pitch = static_cast<float>(FeedbackRandom.FRandRange(SoundSet.PitchMin, SoundSet.PitchMax)) * PitchScale;
+	UAudioComponent* Audio = UGameplayStatics::SpawnSoundAtLocation(this, Sound, Location, FRotator::ZeroRotator, SoundSet.Volume * VolumeScale * BurstVolumeScale, Pitch, 0.f, SoundAttenuation, GetSoundConcurrency(Channel), true);
 	if (!Audio)
 	{
-		return false;
+		return nullptr;
 	}
 	++Stats.SoundsPlayed;
-	return true;
+	return Audio;
 }
 
 USoundBase* UTDCombatFeedbackSubsystem::PickSound(const FTDFeedbackSoundSet& SoundSet)
@@ -1252,6 +1440,38 @@ USoundBase* UTDCombatFeedbackSubsystem::PickSound(const FTDFeedbackSoundSet& Sou
 float UTDCombatFeedbackSubsystem::ResolveBurstVolumeScale(const FTDFeedbackSoundSet& SoundSet)
 {
 	return SoundBursts.FindOrAdd(&SoundSet).TryPlay(GetFeedbackRealTime());
+}
+
+void UTDCombatFeedbackSubsystem::RaiseFirstCorpseLandSound()
+{
+	UAudioComponent* FirstAudio = CorpseLandGroup.FirstAudio.Get();
+	if (CorpseLandGroup.bHasRaisedFirstAudio || !FirstAudio)
+	{
+		return;
+	}
+
+	FirstAudio->SetVolumeMultiplier(FirstAudio->VolumeMultiplier * GetDefault<UTDCombatFeedbackSettings>()->CorpseLandGroupVolumeScale);
+	CorpseLandGroup.bHasRaisedFirstAudio = true;
+}
+
+void UTDCombatFeedbackSubsystem::AddCorpseLandTrauma(const double RealNow, const FVector& Location, const ETDKillRank KillRank, const float CapsuleHalfHeight)
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	APlayerController* LocalController = FindLocalPlayerController();
+	const AActor* ViewTarget = LocalController ? LocalController->GetViewTarget() : nullptr;
+	if (!ViewTarget)
+	{
+		return;
+	}
+	const float ViewTargetDistance = static_cast<float>(FVector::Dist(Location, ViewTarget->GetActorLocation()));
+	const bool bIsTooSoon = LastCorpseLandTraumaRealTime.IsSet() && RealNow - LastCorpseLandTraumaRealTime.GetValue() < FeedbackSettings.CorpseLandTraumaIntervalSeconds;
+	if (bIsTooSoon || !TDDeathLaunchRules::ShouldAddCorpseLandTrauma(KillRank, CapsuleHalfHeight, ViewTargetDistance))
+	{
+		return;
+	}
+
+	LastCorpseLandTraumaRealTime = RealNow;
+	AddCameraTrauma(*LocalController, ETDShakeChannel::Event, FeedbackSettings.CorpseLandTrauma, FeedbackSettings.ShakeTraumaCap, false, FRotator::ZeroRotator);
 }
 
 void UTDCombatFeedbackSubsystem::UpdateOverlayOwner()
@@ -1344,7 +1564,7 @@ void UTDCombatFeedbackSubsystem::UpdateWobbles(const double Now)
 			Wobbles.RemoveAtSwap(Index);
 			continue;
 		}
-		if (Character->IsRagdolling())
+		if (Character->IsRagdollPendingOrActive())
 		{
 			Character->SetPresentationOffset(FVector::ZeroVector);
 			Wobbles.RemoveAtSwap(Index);

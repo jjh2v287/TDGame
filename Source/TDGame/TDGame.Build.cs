@@ -33,7 +33,7 @@ public class TDGame : ModuleRules
 			"UAF"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "PCG", "Json", "JsonUtilities", "UAFAnimGraph", "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "PCG", "Json", "JsonUtilities", "UAFAnimGraph", "SlateCore", "PhysicsCore" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"TDGame"

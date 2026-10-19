@@ -180,3 +180,12 @@
 - 증거: `Docs/MonsterAI_CombatSim/measurements/M3-39/`(flight·flight-noslowmo·gen-flight·gen-flight-noslowmo·emu-flight·emu-angcap-flight report.json), 원본 `Saved/AgentOps/20261019/ragdoll-m3-39/`
 - 날짜·상태: 2026-10-19 부분 해결(물리 에셋), 증폭 자체는 미해결(M3-40)
 - 발견: claude
+
+### L-anim-23 애니메이션을 끈 스켈레탈 메시의 래그돌은 물리 자세가 화면에 그려지지 않아, 처치 순간 자세가 골반에 붙은 채 굳어 보이다가 1.5초쯤 한꺼번에 바뀐다
+- 증상: M3-40 근접 시트에서 0.6초와 1.0초 사진이 거의 같다가 1.6초에 자세가 바뀌었다(스톤골렘 '앉은 자세', 켄타우로스 상체 '늦게 펼쳐짐', 바게스트 '다리가 하늘'). 그러나 게임 스레드 뼈는 물리를 그대로 따랐다(소켓과 바디 COM 어긋남 0). 사진은 '처치 자세를 골반 바디에 강체로 붙인 자세'와 맞았다(실루엣 Dice).
+- 원인: 뼈 개정 번호는 `FlipEditableSpaceBases`가 `bNeedToFlipSpaceBaseBuffers`일 때만 올린다(SkinnedMeshComponent.cpp 4900-4949). 이 플래그는 애니메이션 평가(`SetEnableAnimation(false)`라 꺼짐)와 UAF 출력(처치 정지·`HoldPoseForDeath`로 `SetActive(false)`)만 켜고, 물리 블렌드 경로(PhysAnim.cpp 420-523)는 켜지 않는다. GPU 스킨 캐시는 (뼈 버퍼, 개정 번호)가 같으면 이전 스키닝을 재사용한다(GPUSkinCache.cpp 1639-1663). 그래서 컴포넌트만 골반을 따라간다. 히트 플래시 오버레이 해제(`SetOverlayMaterial`→렌더 상태 재생성)가 처치 + 약 1.5초에 한 번 다시 스키닝하는 것으로 추정한다.
+- 해결: 래그돌을 시작할 때 `RegisterOnBoneTransformsFinalizedDelegate`로 매 프레임 `Mesh->ForceMotionVector()`를 부른다. 보일 때만 부르고, 잠든 뒤 1회 더 부르며, `EndPlay`에서 해제한다(`ATDCombatCharacter::PushRagdollPoseToRenderer`, M3-40). 검증: 깨어 있는 프레임 3517/3517에서 개정 번호가 늘었고, 굳은 자세 판정(RIGID)은 0/36이다. 헤드리스는 `--rhi offscreen`으로 `TDGame.Combat.DeathRagdoll.World.PushesPose*`를 돌린다.
+- 범위: UE 5.8, 애니메이션을 끈 메시의 물리 블렌드 래그돌(몬스터·플레이어·추종 메시). M3-38·M3-39의 육안 판정 일부는 이 착시였을 수 있다.
+- 증거: 2026-10-19 `Saved/AgentOps/20261019/death-ragdoll/investigate6/posture.md`(사건표·Dice·겹침 그림), `Docs/MonsterAI_CombatSim/measurements/M3-40/r3-sheet`(수정 전)와 `r4-sheet`(수정 뒤), `Saved/AgentOps/20261019/m340-int4-rhi-tests.json`
+- 날짜·상태: 2026-10-19 active
+- 발견: claude

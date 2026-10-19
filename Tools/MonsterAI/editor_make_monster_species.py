@@ -1,7 +1,7 @@
 """에디터 안에서 실행: Tools/MonsterAI/species_table.json 의 종마다 몬스터 종 에셋(UTDMonsterSpeciesAsset)과 루트 고정 애니메이션 복제본을 만들거나 갱신한다(재실행 안전).
-실행: python Tools/run_in_editor.py Tools/MonsterAI/editor_make_monster_species.py (PowerShell; Git Bash는 /Game/ 경로를 바꾼다). 일부 종만: -c "TD_ONLY_SPECIES=['Goblin']; exec(open('C:/Project/TDGame/Tools/MonsterAI/editor_make_monster_species.py', encoding='utf-8').read())"
-출력: /Game/MonsterAI/Species/DA_TDMonster_*(선택 키 phases·takeoff/fly_idle/land/fly_hit·channel/stun은 해당 C++ 필드가 있을 때만 기록), 표의 root_locked_copies 복제본, 종마다 스켈레톤 호환·능력 키 대조·없는 에셋 로그와 마지막 요약 한 줄
-상태: 현행(M3-33, 종 목록은 표가 정본. 옛 editor_set_species_hit_clips.py 는 이 도구의 hit 항목으로 흡수)
+실행: M3-40 C++ 빌드·에디터 재시작 뒤 python Tools/run_in_editor.py Tools/MonsterAI/editor_make_monster_species.py (PowerShell; Git Bash는 /Game/ 경로를 바꾼다. 종 에셋에 새 필드가 없으면 아무것도 바꾸지 않고 첫 줄에서 오류로 멈춘다). 일부 종만: -c "TD_ONLY_SPECIES=['Goblin']; exec(open('C:/Project/TDGame/Tools/MonsterAI/editor_make_monster_species.py', encoding='utf-8').read())"
+출력: /Game/MonsterAI/Species/DA_TDMonster_*(사망 표현 play_death_clip_before_ragdoll·has_horizontal_body_plan·corpse_rest_height_ratio(표 키 생략이면 0, 몸 구조 기본 누운 높이) 기록, 기존 에셋은 불러와 표의 속성만 바꾸므로 editor_make_ragdoll_physics_assets.py 가 연결한 ragdoll_physics_asset 은 그대로 두고 저장 줄에 표시. 선택 키 phases·takeoff/fly_idle/land/fly_hit·channel/stun은 해당 C++ 필드가 있을 때만 기록), 표의 root_locked_copies 복제본, 종마다 스켈레톤 호환·능력 키 대조·없는 에셋 로그와 마지막 요약 한 줄
+상태: 현행(M3-40, 종 목록은 표가 정본. 옛 editor_set_species_hit_clips.py 는 이 도구의 hit 항목으로 흡수)
 """
 import importlib
 import os
@@ -26,6 +26,7 @@ TABLE = species_table.load_table()
 SPECIES_FOLDER = TABLE["paths"]["species_folder"]
 DEFINITIONS_DIR = os.path.join(PROJECT_DIR, TABLE["paths"]["definitions_dir"])
 ONLY_SPECIES = globals().get("TD_ONLY_SPECIES")
+REQUIRED_SPECIES_PROPERTIES = ("play_death_clip_before_ragdoll", "has_horizontal_body_plan", "corpse_rest_height_ratio", "ragdoll_physics_asset")
 warning_count = 0
 
 
@@ -116,6 +117,32 @@ def check_ability_keys(entry):
         warn(species_table.format_ability_mismatch(entry["name"], clip_only, definition_only))
 
 
+def find_missing_species_properties():
+    species_defaults = unreal.get_default_object(unreal.TDMonsterSpeciesAsset)
+    missing_properties = []
+    for property_name in REQUIRED_SPECIES_PROPERTIES:
+        try:
+            species_defaults.get_editor_property(property_name)
+        except Exception:
+            missing_properties.append(property_name)
+    return missing_properties
+
+
+def describe_invalid_death_keys(entry):
+    if not isinstance(entry["death_clip_before_ragdoll"], bool):
+        return f"death_clip_before_ragdoll {entry['death_clip_before_ragdoll']!r} is not true or false"
+    if entry["body_plan"] not in species_table.BODY_PLANS:
+        return f"body_plan {entry['body_plan']!r} is not one of {list(species_table.BODY_PLANS)}"
+    if not species_table.is_corpse_rest_height_ratio(entry["corpse_rest_height_ratio"]):
+        return f"corpse_rest_height_ratio {entry['corpse_rest_height_ratio']!r} is not a number from 0 to 1"
+    return None
+
+
+def describe_ragdoll_physics_asset(asset):
+    physics_asset = asset.get_editor_property("ragdoll_physics_asset")
+    return physics_asset.get_path_name() if physics_asset else "None"
+
+
 def load_or_create_species_asset(asset_name):
     path = f"{SPECIES_FOLDER}/{asset_name}"
     asset = EAL.load_asset(path)
@@ -179,6 +206,10 @@ def enable_idle_loop(idle_clip):
 def build_species(raw_entry):
     entry = species_table.fill_species_defaults(raw_entry)
     name = entry["name"]
+    invalid_death_keys = describe_invalid_death_keys(entry)
+    if invalid_death_keys:
+        warn(f"skip {name}: {invalid_death_keys}, not saved (run Tools/MonsterAI/check_species_table.py)")
+        return False
     check_ability_keys(entry)
     missing = []
     mesh = load(entry["mesh"], missing)
@@ -214,6 +245,9 @@ def build_species(raw_entry):
     set_phase_presentations(asset, name, phases)
     asset.set_editor_property("use_ragdoll_without_death_clip", entry["ragdoll_without_death_clip"])
     asset.set_editor_property("ragdoll_after_death_clip", entry["ragdoll_after_death"])
+    asset.set_editor_property("play_death_clip_before_ragdoll", entry["death_clip_before_ragdoll"])
+    asset.set_editor_property("has_horizontal_body_plan", entry["body_plan"] == species_table.HORIZONTAL_BODY_PLAN)
+    asset.set_editor_property("corpse_rest_height_ratio", float(entry["corpse_rest_height_ratio"]))
     asset.set_editor_property("corpse_sink_seconds", entry["corpse_sink_seconds"])
     asset.set_editor_property("corpse_life_seconds", entry["corpse_seconds"])
     phase_clip_values = [clip for phase_clips, _ in phases.values() for clip in phase_clips.values()]
@@ -221,11 +255,14 @@ def build_species(raw_entry):
         check_clip_skeleton(name, mesh, value)
     enable_idle_loop(clips["idle"])
     EAL.save_loaded_asset(asset)
-    log(f"saved {SPECIES_FOLDER}/{asset_name} -> definition {entry['definition']}")
+    log(f"saved {SPECIES_FOLDER}/{asset_name} -> definition {entry['definition']}, ragdoll physics asset kept: {describe_ragdoll_physics_asset(asset)}")
     return True
 
 
 def main():
+    missing_properties = find_missing_species_properties()
+    if missing_properties:
+        raise RuntimeError(f"TDMonsterSpeciesAsset has no property {missing_properties}: build the M3-40 C++ and restart the editor (python Tools/ue_editor.py restart) before running this tool; nothing was changed")
     for copy in TABLE["root_locked_copies"]:
         if make_root_locked_copy(copy["target"], copy["source"]):
             log(f"root-locked copy {copy['target']}")

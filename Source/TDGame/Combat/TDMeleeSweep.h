@@ -33,7 +33,7 @@ private:
 	FVector ApplyHeightLock(const FTransform& ComponentToWorld, const FVector& WorldLocation) const;
 	void SweepTimeRange(float ToTime);
 	void SweepBladeStep(UWorld* World, const TArray<FVector>& NewBladePoints);
-	void ApplyHitResults(UWorld* World, const TArray<FHitResult>& HitResults, FCollisionQueryParams& QueryParams);
+	void ApplyHitResults(UWorld* World, const TArray<FHitResult>& HitResults, FCollisionQueryParams& QueryParams, const FVector& SwingDirection);
 
 	TWeakObjectPtr<USkeletalMeshComponent> Mesh;
 	TWeakObjectPtr<const UAnimSequence> SweepAnimation;

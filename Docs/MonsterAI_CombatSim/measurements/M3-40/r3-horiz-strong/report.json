@@ -1,0 +1,2669 @@
+{
+ "label": "r3-horiz-strong",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 350.0,
+ "kill_fraction": 0.25,
+ "count": 1,
+ "kill_strength": "strong",
+ "critical": false,
+ "screenshot_times": [],
+ "screenshots": null,
+ "camera_arm_cm": null,
+ "experiment": {
+  "body": {},
+  "self_collision_off": false,
+  "assist": null
+ },
+ "scenario": {
+  "kill_strength": "strong"
+ },
+ "cvars": {},
+ "kill_delay": 0.6,
+ "observe": 7.0,
+ "auto_rerun_load_ms": 30.0,
+ "load_reruns": [],
+ "asset_editors_closed": [
+  {
+   "closed": [],
+   "failed": {},
+   "left_open_prompting_classes": [
+    "SkeletalMesh",
+    "StaticMesh",
+    "MaterialInterface",
+    "NiagaraSystem"
+   ]
+  }
+ ],
+ "window": {
+  "land_speed_cm_s": 60.0,
+  "delay_seconds": 0.5,
+  "length_seconds": 2.5
+ },
+ "landing_rule": {
+  "min_fall_speed_cm_s": -60.0,
+  "rebound_min_speed_cm_s": 35.0,
+  "rebound_fraction": 0.25,
+  "height_margin_cm": 25.0,
+  "fallback_extra_seconds": 0.25,
+  "fallback_height_margin_cm": 75.0,
+  "overdue_seconds": 1.5,
+  "abandon_seconds": 3.0,
+  "up_speed_cm_s": 100.0,
+  "effective_gravity_cm_s2": 1568.0,
+  "rest_height_ratio_default": [
+   0.18,
+   0.45
+  ]
+ },
+ "target": {
+  "position_rms_cm": 0.5,
+  "sleep_seconds": 3.0,
+  "freeze_body_speed_cm_s": 30.0
+ },
+ "definitions": {
+  "ragdoll_delay_real_seconds": "처치(체력 0) 틱 월드 실시간부터 첫 시뮬 프레임 실시간까지(처치 정지는 실시간이라 ragdoll_delay_seconds 게임 시간과 다를 수 있음)",
+  "launch_direction_error_deg": "래그돌 시작 0.1초 뒤(게임 시간) 첫 프레임의 질량 가중 COM 수평 속도와 R(처치 순간 가해자→피해자 수평 단위 방향)의 각",
+  "com_travel_2s_cm": "래그돌 시작 프레임 COM과 2초 뒤(게임 시간) 첫 프레임 COM의 수평 거리",
+  "land_detect_seconds": "C++ 날림 감시 v2 재현. 래그돌 시작부터 매 프레임 COM 수직 속도 vz, vz_min = min(0, 지금까지 vz). 경과 ≥ 3초면 착지 없음(abandoned), 경과 ≥ 1.5초면 COM ≤ 지면+누운 높이+75cm일 때만 착지(overdue), 경과 ≥ T+0.25초이고 COM ≤ 지면+누운 높이+75cm면 대체(*), 아니면 vz_min ≤ −60이고 vz − vz_min ≥ max(35, 0.25·|vz_min|)이고 COM ≤ 지면+누운 높이+25cm일 때. T = (U+√(U²+2·1.6g·Δz))/1.6g, U 100, Δz = max(10, 시작 COM − 지면 − 누운 높이), 누운 높이 = 종 누운 비율(0이면 직립 0.18·수평 몸 0.45) × 캡슐 반높이",
+  "lowest_fall_speed_seconds": "래그돌 1.5초 안 COM vz 최저 시각(실제 접촉 근사). fallback_before_lowest_fall_speed는 대체 감지가 그보다 먼저 걸림(공중 감지)",
+  "post_land_slide_cm": "착지 감지 프레임 COM부터 min(감지+2초, 최종 잠들기, 가라앉기 시작) 프레임 COM까지 수평 거리",
+  "landing_angle_deg": "착지 감지 프레임의 몸 각(rest_angle_deg는 최종 잠든 프레임). 직립: 첫 바디(골반)→머리 바디(이름에 head, 없으면 neck, 없으면 처치 프레임에서 가장 높은 바디) 질량 중심 벡터와 Up의 각. 수평 몸: 질량 상위 바디 3개마다 처치 프레임의 월드 Up을 그 바디의 앞·옆·위 축 좌표로 고정해 그 프레임 축으로 옮긴 벡터와 Up의 각을 평균(굴림 각 근사, 코 들림이 있으면 피치도 섞임)",
+  "first_frame_relative_speed_cm_s": "첫 시뮬 프레임 max|vᵢ − v_COM|(질량 가중), relative_speed_first_frames_cm_s는 첫 3프레임",
+  "standing_com_ratio": "(처치 프레임 COM − 지면) / 캡슐 반높이",
+  "rest_height_ratio": "(최종 잠든 프레임 COM − 지면) / 캡슐 반높이, 종 표 corpse_rest_height_ratio 채움용",
+  "ground": "처치 순간 COM에서 아래로 300cm WorldStatic·WorldDynamic 오브젝트 트레이스(못 맞히면 액터 z − 캡슐 반높이, ground_source capsule)",
+  "frame_time": "슬레이트 틱마다 월드 실시간 차이(ms). 처치 틱 전 1초·뒤 3초에 시작한 프레임의 p50·p95, after_sampler_ms는 그 프레임 안 표본기 비용(빼서 볼 것). before_advancing_ms는 처치 전 틱 중 월드 실시간이 늘어난 틱만(before_stalled_ticks = 월드가 돌지 않은 0ms 슬레이트 틱 수, 편집기 뷰포트·멈춤 오염 신호). fixed_step 작업은 계산하지 않음",
+  "timed_shots": "--screenshot-times 시각은 --screenshot-clock 기준 게임 시간(GetTimeSeconds). ragdoll(기본): 대상 첫 시뮬 프레임의 게임 시간이 0이라 처치 정지(처치 틱→래그돌 시작)는 포함하지 않음, 정지 길이는 captured_game_seconds_after_kill − captured_game_seconds_after_ragdoll. kill: 처치 틱이 0이라 처치 정지 포함. 그 시각 뒤 첫 틱에 명령(issued_game_seconds)하고 사진은 다음 월드 프레임의 그림이라 captured_*가 실제 찍힌 프레임의 게임 시각. 앞 사진이 그려지기 전에는 다음 명령을 미룸(HighResShot 요청 덮어쓰기 방지). 보스 처치 슬로모가 걸리면 게임 시간이 느려져 같은 간격도 실시간으로는 길어짐",
+  "fixed_step": "시간 지정 스크린샷 작업 동안 t.OverrideFPS=fps(UEngine::UpdateTimeAndHandleMaxTickRate가 매 프레임 시간 간격을 1/fps로 덮어씀)로 HighResShot 끊김에도 게임 시간이 1/fps씩만 감, 작업 끝에 이전 값으로 복구(restored.fixed_step_fps, 다시 읽은 값이 다르면 {read_back, expected, kept_for_retry}이고 다음 복구가 다시 시도). 이 동안 월드 실시간(GetRealTimeSeconds)도 1/fps씩 늘어 벽시계가 아니므로 frame_time은 생략하고 *_real_seconds·fps는 게임 안 실시간(처치 정지·슬로모 상한이 쓰는 시계)",
+  "instant_angle_deg": "래그돌 시작 뒤 0.6·1.0초(게임 시간) 첫 프레임의 몸 각(landing_angle_deg와 같은 정의), 착지 뒤 배 쪽 과회전·순간 뒤집힘 확인용",
+  "multi_kill": "--count 2 이상 동시 처치(others_killed): 처치 순서(다른 몬스터들→대상)마다 처치 틱부터 첫 시뮬 프레임까지 게임·실시간 초와 그 최대−최소(ragdoll_start_spread_*), --spread면 kill_distances_cm(처치 직전 배치 뒤 가해자 3D 거리). 래그돌이 시작되지 않은 몬스터는 ragdoll_missing",
+  "rerun": "--auto-rerun-load-ms: 처치 전 1초 프레임 p50(frame_time.before_ms.p50과 before_advancing_ms.p50 중 큰 값, 0ms 틱이 절반을 넘어 before_ms.p50이 0이 되는 월드 멈춤도 잡음)이 한도를 넘으면 그 대상을 한 번 다시 재고 결과를 바꿈. 사유·첫 측정 frame_time·첫 원본(raw/load_rerun/)·재측정 p50·still_over_limit을 기록, 재측정이 실패하면 첫 결과를 남기고 rerun_error. 고정 시간 간격(촬영) 작업은 frame_time이 없어 대상 아님",
+  "asset_editors_closed": "PIE 시작마다 원격 실행으로 닫은 에셋 편집기(closed 에셋 경로), 실패(failed), 닫기 확인 창 위험으로 닫지 않은 종류(left_open_prompting_classes, 열려 있으면 직접 닫을 것)",
+  "camera": "--camera-arm: 작업 동안 플레이어 폰 SpringArm target_arm_length를 그 값으로, 카메라 지연을 끄고, 매 틱 target_offset(월드)을 처치 전에는 대상 액터 위치, 처치 뒤에는 처치 순간 대상 위치에 맞춰 대상이 화면 가운데(피치·요 유지, 날아간 시체는 그 기준점에서 멀어짐). 작업 끝에 원래 값 복구(restored.camera). 피드백 흔들림·떨림 배율(ResolveCameraArmLength)도 팔 길이를 따름"
+ },
+ "results": [
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Barghest",
+   "physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+   "body_count": 28,
+   "bone_mass_kg": {
+    "BARGHEST_-Pelvis": 12.146,
+    "BARGHEST_-Spine": 8.988,
+    "BARGHEST_-Spine1": 8.24,
+    "BARGHEST_-Spine2": 12.376,
+    "BARGHEST_-Spine3": 18.737,
+    "BARGHEST_-Neck": 6.556,
+    "BARGHEST_-Neck1": 4.927,
+    "BARGHEST_-Head": 8.228,
+    "BARGHEST_-Queue-de-cheval-1": 4.845,
+    "BARGHEST_-R-UpperArm": 5.462,
+    "BARGHEST_-R-Forearm": 3.579,
+    "BARGHEST_-R-Hand": 1.644,
+    "BARGHEST_-L-UpperArm": 5.462,
+    "BARGHEST_-L-Forearm": 3.579,
+    "BARGHEST_-L-Hand": 1.644,
+    "BARGHEST_-Tail": 0.895,
+    "BARGHEST_-Tail1": 2.581,
+    "BARGHEST_-Tail2": 3.283,
+    "BARGHEST_-Tail3": 2.751,
+    "BARGHEST_-Tail4": 1.689,
+    "BARGHEST_-L-Thigh": 7.042,
+    "BARGHEST_-L-Calf": 2.684,
+    "BARGHEST_-L-HorseLink": 1.315,
+    "BARGHEST_-L-Foot": 2.077,
+    "BARGHEST_-R-Thigh": 7.042,
+    "BARGHEST_-R-Calf": 2.684,
+    "BARGHEST_-R-HorseLink": 1.315,
+    "BARGHEST_-R-Foot": 2.077
+   },
+   "frames": 219,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.571,
+    "before_ms": {
+     "p50": 22.235,
+     "p95": 26.815,
+     "frames": 27
+    },
+    "before_advancing_ms": {
+     "p50": 22.235,
+     "p95": 26.815,
+     "frames": 27
+    },
+    "after_ms": {
+     "p50": 23.349,
+     "p95": 29.114,
+     "frames": 84
+    },
+    "after_sampler_ms": {
+     "p50": 1.684,
+     "p95": 2.415,
+     "frames": 84
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 2.299
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0761,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.608,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 37.5,
+    "attacker_location": [
+     -537.235,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 50.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -275.663,
+     -2.752,
+     44.997
+    ],
+    "attacker_location": [
+     -537.235,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -298.247,
+     0.0,
+     52.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 716.6,
+   "first_sleep_seconds": 1.6027,
+   "freeze_body_speed_cm_s": 11.4,
+   "pre_sleep_move_cm": 5.98,
+   "land_seconds": 1.1386,
+   "sink_seconds": 4.2261,
+   "window_seconds": [
+    1.6386,
+    4.1386
+   ],
+   "observed_seconds": 5.9024,
+   "sleep_seconds": 1.6027,
+   "fps": 36.5,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.578,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.603,
+     11.4
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 11.4,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 61.4,
+    "first_frame_relative_speed_cm_s": 281.2,
+    "relative_speed_first_frames_cm_s": [
+     281.2,
+     287.7,
+     295.2
+    ],
+    "ragdoll_delay_real_seconds": 0.1008,
+    "launch_direction_error_deg": 1.9,
+    "launch_planar_speed_cm_s": 606.7,
+    "com_travel_2s_cm": 180.0,
+    "rest_height_ratio_used": 0.56,
+    "drop_height_cm": 26.9,
+    "expected_fall_seconds": 0.2598,
+    "lowest_fall_speed_seconds": 0.1987,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 55.8,
+    "standing_com_ratio": 1.115,
+    "land_detect_seconds": 0.2698,
+    "instant_angle_deg": {
+     "0.6": 98.1,
+     "1.0": 93.6
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 37.0,
+    "landing_angle_deg": 81.4,
+    "rest_com_height_cm": 27.2,
+    "rest_height_ratio": 0.544,
+    "rest_angle_deg": 91.2
+   },
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "BARGHEST_-R-Thigh",
+     0.0
+    ],
+    [
+     "BARGHEST_-Pelvis",
+     0.0
+    ],
+    [
+     "BARGHEST_-Spine",
+     0.0
+    ],
+    [
+     "BARGHEST_-Spine1",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/Barghest-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/Barghest-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/Barghest-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/Barghest-1_shot4.png"
+   ],
+   "target": "Barghest-1",
+   "timed_shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_BarghestAlpha",
+   "physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+   "body_count": 28,
+   "bone_mass_kg": {
+    "BARGHEST_-Pelvis": 18.307,
+    "BARGHEST_-Spine": 13.547,
+    "BARGHEST_-Spine1": 12.418,
+    "BARGHEST_-Spine2": 18.652,
+    "BARGHEST_-Spine3": 28.24,
+    "BARGHEST_-Neck": 9.88,
+    "BARGHEST_-Neck1": 7.425,
+    "BARGHEST_-Head": 12.401,
+    "BARGHEST_-Queue-de-cheval-1": 7.302,
+    "BARGHEST_-R-UpperArm": 8.232,
+    "BARGHEST_-R-Forearm": 5.395,
+    "BARGHEST_-R-Hand": 2.478,
+    "BARGHEST_-L-UpperArm": 8.232,
+    "BARGHEST_-L-Forearm": 5.395,
+    "BARGHEST_-L-Hand": 2.478,
+    "BARGHEST_-Tail": 1.349,
+    "BARGHEST_-Tail1": 3.889,
+    "BARGHEST_-Tail2": 4.948,
+    "BARGHEST_-Tail3": 4.146,
+    "BARGHEST_-Tail4": 2.546,
+    "BARGHEST_-L-Thigh": 10.613,
+    "BARGHEST_-L-Calf": 4.046,
+    "BARGHEST_-L-HorseLink": 1.982,
+    "BARGHEST_-L-Foot": 3.13,
+    "BARGHEST_-R-Thigh": 10.613,
+    "BARGHEST_-R-Calf": 4.046,
+    "BARGHEST_-R-HorseLink": 1.982,
+    "BARGHEST_-R-Foot": 3.13
+   },
+   "frames": 270,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.584,
+    "before_ms": {
+     "p50": 21.333,
+     "p95": 25.921,
+     "frames": 27
+    },
+    "before_advancing_ms": {
+     "p50": 21.333,
+     "p95": 25.921,
+     "frames": 27
+    },
+    "after_ms": {
+     "p50": 23.167,
+     "p95": 34.883,
+     "frames": 86
+    },
+    "after_sampler_ms": {
+     "p50": 1.693,
+     "p95": 2.654,
+     "frames": 86
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 8.962
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.1006,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.624,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 85.0,
+    "attacker_location": [
+     -589.152,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 58.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -332.321,
+     -0.478,
+     50.418
+    ],
+    "attacker_location": [
+     -589.152,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -358.595,
+     0.0,
+     60.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 763.2,
+   "first_sleep_seconds": 1.3198,
+   "freeze_body_speed_cm_s": 18.6,
+   "pre_sleep_move_cm": 9.79,
+   "land_seconds": 0.618,
+   "sink_seconds": 6.2054,
+   "window_seconds": [
+    1.118,
+    3.618
+   ],
+   "observed_seconds": 6.8996,
+   "sleep_seconds": 1.3198,
+   "fps": 38.4,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.2952,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.32,
+     18.6
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 18.6,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 65.1,
+    "first_frame_relative_speed_cm_s": 300.5,
+    "relative_speed_first_frames_cm_s": [
+     300.5,
+     295.2,
+     300.4
+    ],
+    "ragdoll_delay_real_seconds": 0.1252,
+    "launch_direction_error_deg": 4.8,
+    "launch_planar_speed_cm_s": 639.3,
+    "com_travel_2s_cm": 188.4,
+    "rest_height_ratio_used": 0.56,
+    "drop_height_cm": 28.4,
+    "expected_fall_seconds": 0.2643,
+    "lowest_fall_speed_seconds": 0.2464,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 62.1,
+    "standing_com_ratio": 1.07,
+    "land_detect_seconds": 0.2894,
+    "instant_angle_deg": {
+     "0.6": 92.4,
+     "1.0": 86.2
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 33.0,
+    "landing_angle_deg": 73.4,
+    "rest_com_height_cm": 33.2,
+    "rest_height_ratio": 0.572,
+    "rest_angle_deg": 85.9
+   },
+   "render": {
+    "position_rms_cm": 0.4142,
+    "step_rms_cm": 0.1484,
+    "high_frequency_rms_cm": 0.0371
+   },
+   "physics": {
+    "position_rms_cm": 0.3809,
+    "step_rms_cm": 0.1382,
+    "high_frequency_rms_cm": 0.0331
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "BARGHEST_-R-Hand",
+     0.7989
+    ],
+    [
+     "BARGHEST_-R-HorseLink",
+     0.6991
+    ],
+    [
+     "BARGHEST_-Tail1",
+     0.6713
+    ],
+    [
+     "BARGHEST_-R-UpperArm",
+     0.6661
+    ]
+   ],
+   "component_step_rms_cm": 0.1815,
+   "max_angular_deg_s": 283.81,
+   "max_linear_cm_s": 46.11,
+   "awake_fraction": 0.123,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/BarghestAlpha-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/BarghestAlpha-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/BarghestAlpha-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/BarghestAlpha-1_shot4.png"
+   ],
+   "target": "BarghestAlpha-1",
+   "timed_shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Hyena",
+   "physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+   "body_count": 19,
+   "bone_mass_kg": {
+    "bip01_pelvis": 18.069,
+    "bip01_spine": 26.899,
+    "bip01_spine1": 26.992,
+    "bip01_spine2": 35.698,
+    "bip01_neck": 17.203,
+    "bip01_neck1": 8.416,
+    "bip01_head": 25.377,
+    "bip01_l_upperarm": 22.135,
+    "bip01_l_hand": 1.925,
+    "bip01_r_upperarm": 19.655,
+    "bip01_r_hand": 1.872,
+    "bip01_l_thigh": 10.389,
+    "bip01_l_calf": 7.667,
+    "bip01_l_foot": 1.607,
+    "bip01_r_thigh": 8.176,
+    "bip01_r_calf": 6.107,
+    "bip01_r_foot": 1.612,
+    "bone02": 4.141,
+    "bone03": 4.391
+   },
+   "frames": 227,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.571,
+    "before_ms": {
+     "p50": 21.688,
+     "p95": 23.908,
+     "frames": 28
+    },
+    "before_advancing_ms": {
+     "p50": 21.688,
+     "p95": 23.908,
+     "frames": 28
+    },
+    "after_ms": {
+     "p50": 22.453,
+     "p95": 33.684,
+     "frames": 86
+    },
+    "after_sampler_ms": {
+     "p50": 1.418,
+     "p95": 1.964,
+     "frames": 86
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 9.776
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0869,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.612,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 22.5,
+    "attacker_location": [
+     -589.152,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 48.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -302.779,
+     -1.966,
+     51.371
+    ],
+    "attacker_location": [
+     -589.152,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -303.175,
+     0.0,
+     50.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 670.1,
+   "first_sleep_seconds": 2.7995,
+   "freeze_body_speed_cm_s": 23.7,
+   "pre_sleep_move_cm": 0.0,
+   "land_seconds": 0.9125,
+   "sink_seconds": 4.2335,
+   "window_seconds": [
+    1.4125,
+    3.9125
+   ],
+   "observed_seconds": 5.9085,
+   "sleep_seconds": 2.7995,
+   "fps": 37.7,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 2.7741,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     2.8,
+     23.7
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 23.7,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 59.7,
+    "first_frame_relative_speed_cm_s": 304.6,
+    "relative_speed_first_frames_cm_s": [
+     304.6,
+     340.2,
+     332.2
+    ],
+    "ragdoll_delay_real_seconds": 0.1122,
+    "launch_direction_error_deg": 3.3,
+    "launch_planar_speed_cm_s": 579.1,
+    "com_travel_2s_cm": 167.7,
+    "rest_height_ratio_used": 0.47,
+    "drop_height_cm": 36.3,
+    "expected_fall_seconds": 0.2882,
+    "lowest_fall_speed_seconds": 0.2397,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 59.1,
+    "standing_com_ratio": 1.232,
+    "land_detect_seconds": 0.29,
+    "instant_angle_deg": {
+     "0.6": 145.5,
+     "1.0": 139.2
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 26.8,
+    "landing_angle_deg": 78.5,
+    "rest_com_height_cm": 22.0,
+    "rest_height_ratio": 0.459,
+    "rest_angle_deg": 110.2
+   },
+   "render": {
+    "position_rms_cm": 1.6159,
+    "step_rms_cm": 0.2582,
+    "high_frequency_rms_cm": 0.049
+   },
+   "physics": {
+    "position_rms_cm": 1.4822,
+    "step_rms_cm": 0.2289,
+    "high_frequency_rms_cm": 0.0436
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "bip01_r_calf",
+     3.5755
+    ],
+    [
+     "bip01_r_thigh",
+     3.2242
+    ],
+    [
+     "bip01_spine1",
+     2.7739
+    ],
+    [
+     "bip01_spine",
+     2.2279
+    ]
+   ],
+   "component_step_rms_cm": 0.5712,
+   "max_angular_deg_s": 269.84,
+   "max_linear_cm_s": 53.03,
+   "awake_fraction": 0.217,
+   "meets_target": false,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/Hyena-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/Hyena-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/Hyena-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/r3-horiz-strong/Hyena-1_shot4.png"
+   ],
+   "target": "Hyena-1",
+   "timed_shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Barghest",
+   "physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+   "body_count": 28,
+   "bone_mass_kg": {
+    "BARGHEST_-Pelvis": 12.146,
+    "BARGHEST_-Spine": 8.988,
+    "BARGHEST_-Spine1": 8.24,
+    "BARGHEST_-Spine2": 12.376,
+    "BARGHEST_-Spine3": 18.737,
+    "BARGHEST_-Neck": 6.556,
+    "BARGHEST_-Neck1": 4.927,
+    "BARGHEST_-Head": 8.228,
+    "BARGHEST_-Queue-de-cheval-1": 4.845,
+    "BARGHEST_-R-UpperArm": 5.462,
+    "BARGHEST_-R-Forearm": 3.579,
+    "BARGHEST_-R-Hand": 1.644,
+    "BARGHEST_-L-UpperArm": 5.462,
+    "BARGHEST_-L-Forearm": 3.579,
+    "BARGHEST_-L-Hand": 1.644,
+    "BARGHEST_-Tail": 0.895,
+    "BARGHEST_-Tail1": 2.581,
+    "BARGHEST_-Tail2": 3.283,
+    "BARGHEST_-Tail3": 2.751,
+    "BARGHEST_-Tail4": 1.689,
+    "BARGHEST_-L-Thigh": 7.042,
+    "BARGHEST_-L-Calf": 2.684,
+    "BARGHEST_-L-HorseLink": 1.315,
+    "BARGHEST_-L-Foot": 2.077,
+    "BARGHEST_-R-Thigh": 7.042,
+    "BARGHEST_-R-Calf": 2.684,
+    "BARGHEST_-R-HorseLink": 1.315,
+    "BARGHEST_-R-Foot": 2.077
+   },
+   "frames": 275,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.571,
+    "before_ms": {
+     "p50": 22.145,
+     "p95": 24.503,
+     "frames": 26
+    },
+    "before_advancing_ms": {
+     "p50": 22.145,
+     "p95": 24.503,
+     "frames": 26
+    },
+    "after_ms": {
+     "p50": 22.13,
+     "p95": 26.492,
+     "frames": 136
+    },
+    "after_sampler_ms": {
+     "p50": 1.741,
+     "p95": 2.555,
+     "frames": 136
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 1.989
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0725,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.616,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 37.5,
+    "attacker_location": [
+     -626.387,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 50.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -370.31,
+     -9.4,
+     45.24
+    ],
+    "attacker_location": [
+     -626.387,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -389.745,
+     0.0,
+     52.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 787.3,
+   "first_sleep_seconds": 1.1087,
+   "freeze_body_speed_cm_s": 20.3,
+   "pre_sleep_move_cm": 5.78,
+   "land_seconds": 0.7728,
+   "sink_seconds": 4.2352,
+   "window_seconds": [
+    1.2728,
+    3.7728
+   ],
+   "observed_seconds": 5.9079,
+   "sleep_seconds": 1.1087,
+   "fps": 45.8,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.0838,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.109,
+     20.3
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 20.3,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 61.1,
+    "first_frame_relative_speed_cm_s": 348.7,
+    "relative_speed_first_frames_cm_s": [
+     348.7,
+     331.0,
+     311.1
+    ],
+    "ragdoll_delay_real_seconds": 0.0973,
+    "launch_direction_error_deg": 5.0,
+    "launch_planar_speed_cm_s": 650.3,
+    "com_travel_2s_cm": 209.6,
+    "rest_height_ratio_used": 0.56,
+    "drop_height_cm": 27.1,
+    "expected_fall_seconds": 0.2603,
+    "lowest_fall_speed_seconds": 0.2265,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 56.0,
+    "standing_com_ratio": 1.119,
+    "land_detect_seconds": 0.2777,
+    "instant_angle_deg": {
+     "0.6": 145.2,
+     "1.0": 153.3
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 53.5,
+    "landing_angle_deg": 85.0,
+    "rest_com_height_cm": 24.4,
+    "rest_height_ratio": 0.489,
+    "rest_angle_deg": 152.5
+   },
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "BARGHEST_-Neck1",
+     0.0
+    ],
+    [
+     "BARGHEST_-R-UpperArm",
+     0.0
+    ],
+    [
+     "BARGHEST_-L-Foot",
+     0.0
+    ],
+    [
+     "BARGHEST_-Head",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "Barghest-2",
+   "timed_shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_BarghestAlpha",
+   "physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+   "body_count": 28,
+   "bone_mass_kg": {
+    "BARGHEST_-Pelvis": 18.307,
+    "BARGHEST_-Spine": 13.547,
+    "BARGHEST_-Spine1": 12.418,
+    "BARGHEST_-Spine2": 18.652,
+    "BARGHEST_-Spine3": 28.24,
+    "BARGHEST_-Neck": 9.88,
+    "BARGHEST_-Neck1": 7.425,
+    "BARGHEST_-Head": 12.401,
+    "BARGHEST_-Queue-de-cheval-1": 7.302,
+    "BARGHEST_-R-UpperArm": 8.232,
+    "BARGHEST_-R-Forearm": 5.395,
+    "BARGHEST_-R-Hand": 2.478,
+    "BARGHEST_-L-UpperArm": 8.232,
+    "BARGHEST_-L-Forearm": 5.395,
+    "BARGHEST_-L-Hand": 2.478,
+    "BARGHEST_-Tail": 1.349,
+    "BARGHEST_-Tail1": 3.889,
+    "BARGHEST_-Tail2": 4.948,
+    "BARGHEST_-Tail3": 4.146,
+    "BARGHEST_-Tail4": 2.546,
+    "BARGHEST_-L-Thigh": 10.613,
+    "BARGHEST_-L-Calf": 4.046,
+    "BARGHEST_-L-HorseLink": 1.982,
+    "BARGHEST_-L-Foot": 3.13,
+    "BARGHEST_-R-Thigh": 10.613,
+    "BARGHEST_-R-Calf": 4.046,
+    "BARGHEST_-R-HorseLink": 1.982,
+    "BARGHEST_-R-Foot": 3.13
+   },
+   "frames": 320,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.563,
+    "before_ms": {
+     "p50": 21.568,
+     "p95": 26.371,
+     "frames": 27
+    },
+    "before_advancing_ms": {
+     "p50": 21.568,
+     "p95": 26.371,
+     "frames": 27
+    },
+    "after_ms": {
+     "p50": 22.695,
+     "p95": 27.886,
+     "frames": 130
+    },
+    "after_sampler_ms": {
+     "p50": 1.721,
+     "p95": 2.576,
+     "frames": 130
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 1.515
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.1008,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.604,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 85.0,
+    "attacker_location": [
+     -677.081,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 58.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -399.25,
+     -0.55,
+     50.538
+    ],
+    "attacker_location": [
+     -677.081,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -426.151,
+     0.0,
+     60.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 959.4,
+   "first_sleep_seconds": 2.5237,
+   "freeze_body_speed_cm_s": 9.3,
+   "pre_sleep_move_cm": 19.76,
+   "land_seconds": 1.1411,
+   "sink_seconds": 6.2074,
+   "window_seconds": [
+    1.6411,
+    4.1411
+   ],
+   "observed_seconds": 6.9115,
+   "sleep_seconds": 2.5237,
+   "fps": 45.5,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 2.5003,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     2.524,
+     9.3
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 9.3,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 67.2,
+    "first_frame_relative_speed_cm_s": 622.1,
+    "relative_speed_first_frames_cm_s": [
+     622.1,
+     628.0,
+     598.1
+    ],
+    "ragdoll_delay_real_seconds": 0.1243,
+    "launch_direction_error_deg": 6.2,
+    "launch_planar_speed_cm_s": 697.0,
+    "com_travel_2s_cm": 244.6,
+    "rest_height_ratio_used": 0.56,
+    "drop_height_cm": 28.6,
+    "expected_fall_seconds": 0.2652,
+    "lowest_fall_speed_seconds": 0.2693,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 62.4,
+    "standing_com_ratio": 1.075,
+    "land_detect_seconds": 0.3108,
+    "instant_angle_deg": {
+     "0.6": 127.8,
+     "1.0": 148.4
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 61.1,
+    "landing_angle_deg": 90.0,
+    "rest_com_height_cm": 30.0,
+    "rest_height_ratio": 0.517,
+    "rest_angle_deg": 144.7
+   },
+   "render": {
+    "position_rms_cm": 5.0287,
+    "step_rms_cm": 0.3341,
+    "high_frequency_rms_cm": 0.0507
+   },
+   "physics": {
+    "position_rms_cm": 4.8348,
+    "step_rms_cm": 0.3232,
+    "high_frequency_rms_cm": 0.0489
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "BARGHEST_-L-Foot",
+     18.6998
+    ],
+    [
+     "BARGHEST_-L-HorseLink",
+     17.938
+    ],
+    [
+     "BARGHEST_-L-Calf",
+     5.9836
+    ],
+    [
+     "BARGHEST_-R-Hand",
+     0.5799
+    ]
+   ],
+   "component_step_rms_cm": 0.1256,
+   "max_angular_deg_s": 339.25,
+   "max_linear_cm_s": 118.86,
+   "awake_fraction": 0.327,
+   "meets_target": false,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "BarghestAlpha-2",
+   "timed_shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Hyena",
+   "physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+   "body_count": 19,
+   "bone_mass_kg": {
+    "bip01_pelvis": 18.069,
+    "bip01_spine": 26.899,
+    "bip01_spine1": 26.992,
+    "bip01_spine2": 35.698,
+    "bip01_neck": 17.203,
+    "bip01_neck1": 8.416,
+    "bip01_head": 25.377,
+    "bip01_l_upperarm": 22.135,
+    "bip01_l_hand": 1.925,
+    "bip01_r_upperarm": 19.655,
+    "bip01_r_hand": 1.872,
+    "bip01_l_thigh": 10.389,
+    "bip01_l_calf": 7.667,
+    "bip01_l_foot": 1.607,
+    "bip01_r_thigh": 8.176,
+    "bip01_r_calf": 6.107,
+    "bip01_r_foot": 1.612,
+    "bone02": 4.141,
+    "bone03": 4.391
+   },
+   "frames": 280,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.577,
+    "before_ms": {
+     "p50": 20.533,
+     "p95": 24.031,
+     "frames": 28
+    },
+    "before_advancing_ms": {
+     "p50": 20.533,
+     "p95": 24.031,
+     "frames": 28
+    },
+    "after_ms": {
+     "p50": 21.819,
+     "p95": 27.133,
+     "frames": 138
+    },
+    "after_sampler_ms": {
+     "p50": 1.384,
+     "p95": 2.169,
+     "frames": 138
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 3.102
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0704,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.621,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 22.5,
+    "attacker_location": [
+     -677.081,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 48.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -398.616,
+     -2.585,
+     53.336
+    ],
+    "attacker_location": [
+     -677.081,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -398.101,
+     0.0,
+     50.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 659.6,
+   "first_sleep_seconds": 1.8082,
+   "freeze_body_speed_cm_s": 11.7,
+   "pre_sleep_move_cm": 4.39,
+   "land_seconds": 0.7525,
+   "sink_seconds": 4.2332,
+   "window_seconds": [
+    1.2525,
+    3.7525
+   ],
+   "observed_seconds": 5.9185,
+   "sleep_seconds": 1.8082,
+   "fps": 46.6,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.8082,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.808,
+     11.7
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 11.7,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 100.0,
+    "first_frame_relative_speed_cm_s": 251.8,
+    "relative_speed_first_frames_cm_s": [
+     251.8,
+     306.5,
+     312.8
+    ],
+    "ragdoll_delay_real_seconds": 0.0704,
+    "launch_direction_error_deg": 5.4,
+    "launch_planar_speed_cm_s": 563.4,
+    "com_travel_2s_cm": 178.7,
+    "rest_height_ratio_used": 0.47,
+    "drop_height_cm": 35.5,
+    "expected_fall_seconds": 0.286,
+    "lowest_fall_speed_seconds": 0.243,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 59.7,
+    "standing_com_ratio": 1.245,
+    "land_detect_seconds": 0.293,
+    "instant_angle_deg": {
+     "0.6": 143.0,
+     "1.0": 135.9
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 26.2,
+    "landing_angle_deg": 78.4,
+    "rest_com_height_cm": 21.9,
+    "rest_height_ratio": 0.457,
+    "rest_angle_deg": 91.2
+   },
+   "render": {
+    "position_rms_cm": 1.4693,
+    "step_rms_cm": 0.2313,
+    "high_frequency_rms_cm": 0.0475
+   },
+   "physics": {
+    "position_rms_cm": 1.2914,
+    "step_rms_cm": 0.1889,
+    "high_frequency_rms_cm": 0.0404
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "bone02",
+     2.6534
+    ],
+    [
+     "bone03",
+     2.1299
+    ],
+    [
+     "bip01_r_thigh",
+     2.0133
+    ],
+    [
+     "bip01_r_calf",
+     1.9388
+    ]
+   ],
+   "component_step_rms_cm": 0.7673,
+   "max_angular_deg_s": 272.82,
+   "max_linear_cm_s": 58.9,
+   "awake_fraction": 0.21,
+   "meets_target": false,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "Hyena-2",
+   "timed_shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Barghest",
+   "physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+   "body_count": 28,
+   "bone_mass_kg": {
+    "BARGHEST_-Pelvis": 12.146,
+    "BARGHEST_-Spine": 8.988,
+    "BARGHEST_-Spine1": 8.24,
+    "BARGHEST_-Spine2": 12.376,
+    "BARGHEST_-Spine3": 18.737,
+    "BARGHEST_-Neck": 6.556,
+    "BARGHEST_-Neck1": 4.927,
+    "BARGHEST_-Head": 8.228,
+    "BARGHEST_-Queue-de-cheval-1": 4.845,
+    "BARGHEST_-R-UpperArm": 5.462,
+    "BARGHEST_-R-Forearm": 3.579,
+    "BARGHEST_-R-Hand": 1.644,
+    "BARGHEST_-L-UpperArm": 5.462,
+    "BARGHEST_-L-Forearm": 3.579,
+    "BARGHEST_-L-Hand": 1.644,
+    "BARGHEST_-Tail": 0.895,
+    "BARGHEST_-Tail1": 2.581,
+    "BARGHEST_-Tail2": 3.283,
+    "BARGHEST_-Tail3": 2.751,
+    "BARGHEST_-Tail4": 1.689,
+    "BARGHEST_-L-Thigh": 7.042,
+    "BARGHEST_-L-Calf": 2.684,
+    "BARGHEST_-L-HorseLink": 1.315,
+    "BARGHEST_-L-Foot": 2.077,
+    "BARGHEST_-R-Thigh": 7.042,
+    "BARGHEST_-R-Calf": 2.684,
+    "BARGHEST_-R-HorseLink": 1.315,
+    "BARGHEST_-R-Foot": 2.077
+   },
+   "frames": 271,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.568,
+    "before_ms": {
+     "p50": 21.819,
+     "p95": 24.516,
+     "frames": 26
+    },
+    "before_advancing_ms": {
+     "p50": 21.819,
+     "p95": 24.516,
+     "frames": 26
+    },
+    "after_ms": {
+     "p50": 22.424,
+     "p95": 26.569,
+     "frames": 134
+    },
+    "after_sampler_ms": {
+     "p50": 1.713,
+     "p95": 2.427,
+     "frames": 134
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 2.053
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0711,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.611,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 37.5,
+    "attacker_location": [
+     -714.243,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 50.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -455.464,
+     -0.837,
+     45.081
+    ],
+    "attacker_location": [
+     -714.243,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -477.812,
+     0.0,
+     52.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 758.6,
+   "first_sleep_seconds": 1.2188,
+   "freeze_body_speed_cm_s": 10.7,
+   "pre_sleep_move_cm": 12.06,
+   "land_seconds": 1.0548,
+   "sink_seconds": 4.2455,
+   "window_seconds": [
+    1.5548,
+    4.0548
+   ],
+   "observed_seconds": 5.9286,
+   "sleep_seconds": 1.2188,
+   "fps": 45.0,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.2188,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.219,
+     10.7
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 10.7,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 100.0,
+    "first_frame_relative_speed_cm_s": 342.3,
+    "relative_speed_first_frames_cm_s": [
+     342.3,
+     327.6,
+     317.6
+    ],
+    "ragdoll_delay_real_seconds": 0.0711,
+    "launch_direction_error_deg": 4.2,
+    "launch_planar_speed_cm_s": 658.8,
+    "com_travel_2s_cm": 230.6,
+    "rest_height_ratio_used": 0.56,
+    "drop_height_cm": 25.5,
+    "expected_fall_seconds": 0.255,
+    "lowest_fall_speed_seconds": 0.2062,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 55.8,
+    "standing_com_ratio": 1.117,
+    "land_detect_seconds": 0.275,
+    "instant_angle_deg": {
+     "0.6": 118.5,
+     "1.0": 143.8
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 59.9,
+    "landing_angle_deg": 73.2,
+    "rest_com_height_cm": 23.9,
+    "rest_height_ratio": 0.477,
+    "rest_angle_deg": 143.3
+   },
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "BARGHEST_-Spine3",
+     0.0
+    ],
+    [
+     "BARGHEST_-Neck",
+     0.0
+    ],
+    [
+     "BARGHEST_-Spine",
+     0.0
+    ],
+    [
+     "BARGHEST_-L-Thigh",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "Barghest-3",
+   "timed_shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_BarghestAlpha",
+   "physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+   "body_count": 28,
+   "bone_mass_kg": {
+    "BARGHEST_-Pelvis": 18.307,
+    "BARGHEST_-Spine": 13.547,
+    "BARGHEST_-Spine1": 12.418,
+    "BARGHEST_-Spine2": 18.652,
+    "BARGHEST_-Spine3": 28.24,
+    "BARGHEST_-Neck": 9.88,
+    "BARGHEST_-Neck1": 7.425,
+    "BARGHEST_-Head": 12.401,
+    "BARGHEST_-Queue-de-cheval-1": 7.302,
+    "BARGHEST_-R-UpperArm": 8.232,
+    "BARGHEST_-R-Forearm": 5.395,
+    "BARGHEST_-R-Hand": 2.478,
+    "BARGHEST_-L-UpperArm": 8.232,
+    "BARGHEST_-L-Forearm": 5.395,
+    "BARGHEST_-L-Hand": 2.478,
+    "BARGHEST_-Tail": 1.349,
+    "BARGHEST_-Tail1": 3.889,
+    "BARGHEST_-Tail2": 4.948,
+    "BARGHEST_-Tail3": 4.146,
+    "BARGHEST_-Tail4": 2.546,
+    "BARGHEST_-L-Thigh": 10.613,
+    "BARGHEST_-L-Calf": 4.046,
+    "BARGHEST_-L-HorseLink": 1.982,
+    "BARGHEST_-L-Foot": 3.13,
+    "BARGHEST_-R-Thigh": 10.613,
+    "BARGHEST_-R-Calf": 4.046,
+    "BARGHEST_-R-HorseLink": 1.982,
+    "BARGHEST_-R-Foot": 3.13
+   },
+   "frames": 321,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.566,
+    "before_ms": {
+     "p50": 22.116,
+     "p95": 24.925,
+     "frames": 27
+    },
+    "before_advancing_ms": {
+     "p50": 22.116,
+     "p95": 24.925,
+     "frames": 27
+    },
+    "after_ms": {
+     "p50": 22.608,
+     "p95": 25.789,
+     "frames": 134
+    },
+    "after_sampler_ms": {
+     "p50": 1.657,
+     "p95": 2.549,
+     "frames": 134
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 0.864
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0934,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.606,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 85.0,
+    "attacker_location": [
+     -762.62,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 58.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -519.712,
+     -0.552,
+     50.541
+    ],
+    "attacker_location": [
+     -762.62,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -546.629,
+     0.0,
+     60.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 751.4,
+   "first_sleep_seconds": 1.6169,
+   "freeze_body_speed_cm_s": 14.7,
+   "pre_sleep_move_cm": 9.95,
+   "land_seconds": 0.6404,
+   "sink_seconds": 6.21,
+   "window_seconds": [
+    1.1404,
+    3.6404
+   ],
+   "observed_seconds": 6.907,
+   "sleep_seconds": 1.6169,
+   "fps": 45.7,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.5921,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.617,
+     14.7
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 14.7,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 70.1,
+    "first_frame_relative_speed_cm_s": 345.8,
+    "relative_speed_first_frames_cm_s": [
+     345.8,
+     348.8,
+     352.6
+    ],
+    "ragdoll_delay_real_seconds": 0.1181,
+    "launch_direction_error_deg": 4.2,
+    "launch_planar_speed_cm_s": 586.7,
+    "com_travel_2s_cm": 176.0,
+    "rest_height_ratio_used": 0.56,
+    "drop_height_cm": 28.8,
+    "expected_fall_seconds": 0.2657,
+    "lowest_fall_speed_seconds": 0.2485,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 62.4,
+    "standing_com_ratio": 1.075,
+    "land_detect_seconds": 0.3161,
+    "instant_angle_deg": {
+     "0.6": 97.8,
+     "1.0": 99.4
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 28.3,
+    "landing_angle_deg": 80.9,
+    "rest_com_height_cm": 30.2,
+    "rest_height_ratio": 0.521,
+    "rest_angle_deg": 97.9
+   },
+   "render": {
+    "position_rms_cm": 1.2095,
+    "step_rms_cm": 0.1873,
+    "high_frequency_rms_cm": 0.0489
+   },
+   "physics": {
+    "position_rms_cm": 1.175,
+    "step_rms_cm": 0.1796,
+    "high_frequency_rms_cm": 0.0422
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "BARGHEST_-L-Calf",
+     2.9974
+    ],
+    [
+     "BARGHEST_-L-Foot",
+     1.812
+    ],
+    [
+     "BARGHEST_-L-HorseLink",
+     1.7691
+    ],
+    [
+     "BARGHEST_-L-UpperArm",
+     1.5887
+    ]
+   ],
+   "component_step_rms_cm": 0.6371,
+   "max_angular_deg_s": 344.31,
+   "max_linear_cm_s": 71.12,
+   "awake_fraction": 0.175,
+   "meets_target": false,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "BarghestAlpha-3",
+   "timed_shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Hyena",
+   "physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+   "body_count": 19,
+   "bone_mass_kg": {
+    "bip01_pelvis": 18.069,
+    "bip01_spine": 26.899,
+    "bip01_spine1": 26.992,
+    "bip01_spine2": 35.698,
+    "bip01_neck": 17.203,
+    "bip01_neck1": 8.416,
+    "bip01_head": 25.377,
+    "bip01_l_upperarm": 22.135,
+    "bip01_l_hand": 1.925,
+    "bip01_r_upperarm": 19.655,
+    "bip01_r_hand": 1.872,
+    "bip01_l_thigh": 10.389,
+    "bip01_l_calf": 7.667,
+    "bip01_l_foot": 1.607,
+    "bip01_r_thigh": 8.176,
+    "bip01_r_calf": 6.107,
+    "bip01_r_foot": 1.612,
+    "bone02": 4.141,
+    "bone03": 4.391
+   },
+   "frames": 278,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.561,
+    "before_ms": {
+     "p50": 21.759,
+     "p95": 24.761,
+     "frames": 26
+    },
+    "before_advancing_ms": {
+     "p50": 21.759,
+     "p95": 24.761,
+     "frames": 26
+    },
+    "after_ms": {
+     "p50": 22.015,
+     "p95": 25.45,
+     "frames": 138
+    },
+    "after_sampler_ms": {
+     "p50": 1.33,
+     "p95": 1.978,
+     "frames": 138
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 0.689
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0902,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.608,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 22.5,
+    "attacker_location": [
+     -762.62,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 48.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -461.204,
+     -3.358,
+     53.707
+    ],
+    "attacker_location": [
+     -762.62,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -455.843,
+     0.0,
+     50.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 744.0,
+   "first_sleep_seconds": 1.7155,
+   "freeze_body_speed_cm_s": 20.2,
+   "pre_sleep_move_cm": 2.21,
+   "land_seconds": 0.757,
+   "sink_seconds": 4.2184,
+   "window_seconds": [
+    1.257,
+    3.757
+   ],
+   "observed_seconds": 5.8977,
+   "sleep_seconds": 1.7155,
+   "fps": 46.3,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.7155,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.716,
+     20.2
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 20.2,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 100.0,
+    "first_frame_relative_speed_cm_s": 282.7,
+    "relative_speed_first_frames_cm_s": [
+     282.7,
+     368.2,
+     304.1
+    ],
+    "ragdoll_delay_real_seconds": 0.0902,
+    "launch_direction_error_deg": 8.5,
+    "launch_planar_speed_cm_s": 583.3,
+    "com_travel_2s_cm": 189.0,
+    "rest_height_ratio_used": 0.47,
+    "drop_height_cm": 34.8,
+    "expected_fall_seconds": 0.284,
+    "lowest_fall_speed_seconds": 0.2494,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 59.2,
+    "standing_com_ratio": 1.233,
+    "land_detect_seconds": 0.2717,
+    "instant_angle_deg": {
+     "0.6": 123.2,
+     "1.0": 106.7
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 33.0,
+    "landing_angle_deg": 72.9,
+    "rest_com_height_cm": 21.3,
+    "rest_height_ratio": 0.443,
+    "rest_angle_deg": 78.9
+   },
+   "render": {
+    "position_rms_cm": 0.4052,
+    "step_rms_cm": 0.1143,
+    "high_frequency_rms_cm": 0.0215
+   },
+   "physics": {
+    "position_rms_cm": 0.6771,
+    "step_rms_cm": 0.1092,
+    "high_frequency_rms_cm": 0.0195
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "bip01_l_calf",
+     0.9029
+    ],
+    [
+     "bip01_l_foot",
+     0.8505
+    ],
+    [
+     "bip01_head",
+     0.6869
+    ],
+    [
+     "bip01_r_thigh",
+     0.3785
+    ]
+   ],
+   "component_step_rms_cm": 0.3096,
+   "max_angular_deg_s": 231.41,
+   "max_linear_cm_s": 55.55,
+   "awake_fraction": 0.171,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "Hyena-3",
+   "timed_shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Barghest",
+   "physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+   "body_count": 28,
+   "bone_mass_kg": {
+    "BARGHEST_-Pelvis": 12.146,
+    "BARGHEST_-Spine": 8.988,
+    "BARGHEST_-Spine1": 8.24,
+    "BARGHEST_-Spine2": 12.376,
+    "BARGHEST_-Spine3": 18.737,
+    "BARGHEST_-Neck": 6.556,
+    "BARGHEST_-Neck1": 4.927,
+    "BARGHEST_-Head": 8.228,
+    "BARGHEST_-Queue-de-cheval-1": 4.845,
+    "BARGHEST_-R-UpperArm": 5.462,
+    "BARGHEST_-R-Forearm": 3.579,
+    "BARGHEST_-R-Hand": 1.644,
+    "BARGHEST_-L-UpperArm": 5.462,
+    "BARGHEST_-L-Forearm": 3.579,
+    "BARGHEST_-L-Hand": 1.644,
+    "BARGHEST_-Tail": 0.895,
+    "BARGHEST_-Tail1": 2.581,
+    "BARGHEST_-Tail2": 3.283,
+    "BARGHEST_-Tail3": 2.751,
+    "BARGHEST_-Tail4": 1.689,
+    "BARGHEST_-L-Thigh": 7.042,
+    "BARGHEST_-L-Calf": 2.684,
+    "BARGHEST_-L-HorseLink": 1.315,
+    "BARGHEST_-L-Foot": 2.077,
+    "BARGHEST_-R-Thigh": 7.042,
+    "BARGHEST_-R-Calf": 2.684,
+    "BARGHEST_-R-HorseLink": 1.315,
+    "BARGHEST_-R-Foot": 2.077
+   },
+   "frames": 270,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.559,
+    "before_ms": {
+     "p50": 21.319,
+     "p95": 25.292,
+     "frames": 27
+    },
+    "before_advancing_ms": {
+     "p50": 21.319,
+     "p95": 25.292,
+     "frames": 27
+    },
+    "after_ms": {
+     "p50": 22.465,
+     "p95": 25.662,
+     "frames": 134
+    },
+    "after_sampler_ms": {
+     "p50": 1.724,
+     "p95": 2.588,
+     "frames": 134
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 0.37
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0914,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.608,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 37.5,
+    "attacker_location": [
+     -799.758,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 50.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -538.744,
+     -8.854,
+     45.081
+    ],
+    "attacker_location": [
+     -799.758,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -559.282,
+     0.0,
+     52.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 797.3,
+   "first_sleep_seconds": 1.1061,
+   "freeze_body_speed_cm_s": 14.9,
+   "pre_sleep_move_cm": 11.41,
+   "land_seconds": 0.8492,
+   "sink_seconds": 4.2094,
+   "window_seconds": [
+    1.3492,
+    3.8492
+   ],
+   "observed_seconds": 5.9027,
+   "sleep_seconds": 1.1061,
+   "fps": 44.9,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.1061,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.106,
+     14.9
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 14.9,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 100.0,
+    "first_frame_relative_speed_cm_s": 440.2,
+    "relative_speed_first_frames_cm_s": [
+     440.2,
+     424.9,
+     411.3
+    ],
+    "ragdoll_delay_real_seconds": 0.0914,
+    "launch_direction_error_deg": 5.5,
+    "launch_planar_speed_cm_s": 628.4,
+    "com_travel_2s_cm": 226.3,
+    "rest_height_ratio_used": 0.56,
+    "drop_height_cm": 25.5,
+    "expected_fall_seconds": 0.255,
+    "lowest_fall_speed_seconds": 0.2418,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 55.8,
+    "standing_com_ratio": 1.117,
+    "land_detect_seconds": 0.2887,
+    "instant_angle_deg": {
+     "0.6": 147.1,
+     "1.0": 154.9
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 53.2,
+    "landing_angle_deg": 89.1,
+    "rest_com_height_cm": 24.2,
+    "rest_height_ratio": 0.484,
+    "rest_angle_deg": 155.1
+   },
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "BARGHEST_-Pelvis",
+     0.0
+    ],
+    [
+     "BARGHEST_-Spine1",
+     0.0
+    ],
+    [
+     "BARGHEST_-R-Forearm",
+     0.0
+    ],
+    [
+     "BARGHEST_-L-Hand",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "Barghest-4",
+   "timed_shots": []
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_BarghestAlpha",
+   "physics_asset": "/Game/QuadrapedCreatures/Barghest/Meshes/BARGHEST_PhysicsAsset.BARGHEST_PhysicsAsset",
+   "body_count": 28,
+   "bone_mass_kg": {
+    "BARGHEST_-Pelvis": 18.307,
+    "BARGHEST_-Spine": 13.547,
+    "BARGHEST_-Spine1": 12.418,
+    "BARGHEST_-Spine2": 18.652,
+    "BARGHEST_-Spine3": 28.24,
+    "BARGHEST_-Neck": 9.88,
+    "BARGHEST_-Neck1": 7.425,
+    "BARGHEST_-Head": 12.401,
+    "BARGHEST_-Queue-de-cheval-1": 7.302,
+    "BARGHEST_-R-UpperArm": 8.232,
+    "BARGHEST_-R-Forearm": 5.395,
+    "BARGHEST_-R-Hand": 2.478,
+    "BARGHEST_-L-UpperArm": 8.232,
+    "BARGHEST_-L-Forearm": 5.395,
+    "BARGHEST_-L-Hand": 2.478,
+    "BARGHEST_-Tail": 1.349,
+    "BARGHEST_-Tail1": 3.889,
+    "BARGHEST_-Tail2": 4.948,
+    "BARGHEST_-Tail3": 4.146,
+    "BARGHEST_-Tail4": 2.546,
+    "BARGHEST_-L-Thigh": 10.613,
+    "BARGHEST_-L-Calf": 4.046,
+    "BARGHEST_-L-HorseLink": 1.982,
+    "BARGHEST_-L-Foot": 3.13,
+    "BARGHEST_-R-Thigh": 10.613,
+    "BARGHEST_-R-Calf": 4.046,
+    "BARGHEST_-R-HorseLink": 1.982,
+    "BARGHEST_-R-Foot": 3.13
+   },
+   "frames": 319,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.564,
+    "before_ms": {
+     "p50": 22.039,
+     "p95": 25.096,
+     "frames": 27
+    },
+    "before_advancing_ms": {
+     "p50": 22.039,
+     "p95": 25.096,
+     "frames": 27
+    },
+    "after_ms": {
+     "p50": 22.322,
+     "p95": 25.991,
+     "frames": 134
+    },
+    "after_sampler_ms": {
+     "p50": 1.689,
+     "p95": 2.52,
+     "frames": 134
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 0.895
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.0941,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.602,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 85.0,
+    "attacker_location": [
+     -848.749,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 58.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -615.939,
+     -0.571,
+     50.574
+    ],
+    "attacker_location": [
+     -848.749,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -643.041,
+     0.0,
+     60.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 893.1,
+   "first_sleep_seconds": 1.5117,
+   "freeze_body_speed_cm_s": 14.4,
+   "pre_sleep_move_cm": 7.79,
+   "land_seconds": 0.8289,
+   "sink_seconds": 6.2129,
+   "window_seconds": [
+    1.3289,
+    3.8289
+   ],
+   "observed_seconds": 6.9135,
+   "sleep_seconds": 1.5117,
+   "fps": 45.4,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.5117,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.512,
+     14.4
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 14.4,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 100.0,
+    "first_frame_relative_speed_cm_s": 363.9,
+    "relative_speed_first_frames_cm_s": [
+     363.9,
+     367.9,
+     369.3
+    ],
+    "ragdoll_delay_real_seconds": 0.0941,
+    "launch_direction_error_deg": 0.9,
+    "launch_planar_speed_cm_s": 676.5,
+    "com_travel_2s_cm": 226.8,
+    "rest_height_ratio_used": 0.56,
+    "drop_height_cm": 27.2,
+    "expected_fall_seconds": 0.2605,
+    "lowest_fall_speed_seconds": 0.2514,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 62.5,
+    "standing_com_ratio": 1.077,
+    "land_detect_seconds": 0.2953,
+    "instant_angle_deg": {
+     "0.6": 68.9,
+     "1.0": 71.8
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 40.2,
+    "landing_angle_deg": 60.1,
+    "rest_com_height_cm": 34.7,
+    "rest_height_ratio": 0.599,
+    "rest_angle_deg": 79.2
+   },
+   "render": {
+    "position_rms_cm": 0.1834,
+    "step_rms_cm": 0.0594,
+    "high_frequency_rms_cm": 0.019
+   },
+   "physics": {
+    "position_rms_cm": 0.1767,
+    "step_rms_cm": 0.0565,
+    "high_frequency_rms_cm": 0.0183
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "BARGHEST_-Spine2",
+     0.3151
+    ],
+    [
+     "BARGHEST_-L-Calf",
+     0.2598
+    ],
+    [
+     "BARGHEST_-Spine1",
+     0.2537
+    ],
+    [
+     "BARGHEST_-L-HorseLink",
+     0.2526
+    ]
+   ],
+   "component_step_rms_cm": 0.1607,
+   "max_angular_deg_s": 151.28,
+   "max_linear_cm_s": 40.89,
+   "awake_fraction": 0.07,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "BarghestAlpha-4",
+   "timed_shots": []
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Hyena",
+   "physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+   "body_count": 19,
+   "bone_mass_kg": {
+    "bip01_pelvis": 18.069,
+    "bip01_spine": 26.899,
+    "bip01_spine1": 26.992,
+    "bip01_spine2": 35.698,
+    "bip01_neck": 17.203,
+    "bip01_neck1": 8.416,
+    "bip01_head": 25.377,
+    "bip01_l_upperarm": 22.135,
+    "bip01_l_hand": 1.925,
+    "bip01_r_upperarm": 19.655,
+    "bip01_r_hand": 1.872,
+    "bip01_l_thigh": 10.389,
+    "bip01_l_calf": 7.667,
+    "bip01_l_foot": 1.607,
+    "bip01_r_thigh": 8.176,
+    "bip01_r_calf": 6.107,
+    "bip01_r_foot": 1.612,
+    "bone02": 4.141,
+    "bone03": 4.391
+   },
+   "frames": 280,
+   "restored": {
+    "fixed_step_fps": null,
+    "camera": null
+   },
+   "frame_time": {
+    "before_covered_seconds": 0.577,
+    "before_ms": {
+     "p50": 20.46,
+     "p95": 23.399,
+     "frames": 29
+    },
+    "before_advancing_ms": {
+     "p50": 20.46,
+     "p95": 23.399,
+     "frames": 29
+    },
+    "after_ms": {
+     "p50": 21.836,
+     "p95": 26.214,
+     "frames": 139
+    },
+    "after_sampler_ms": {
+     "p50": 1.332,
+     "p95": 2.002,
+     "frames": 139
+    },
+    "before_stalled_ticks": 0,
+    "p95_increase_ms": 2.815
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.087,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.62,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 22.5,
+    "attacker_location": [
+     -848.749,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 48.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -556.472,
+     -3.134,
+     54.71
+    ],
+    "attacker_location": [
+     -848.749,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -554.708,
+     0.0,
+     50.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 668.6,
+   "first_sleep_seconds": 1.4009,
+   "freeze_body_speed_cm_s": 16.6,
+   "pre_sleep_move_cm": 22.53,
+   "land_seconds": 0.7443,
+   "sink_seconds": 4.2254,
+   "window_seconds": [
+    1.2443,
+    3.7443
+   ],
+   "observed_seconds": 5.8974,
+   "sleep_seconds": 1.4009,
+   "fps": 46.6,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.4008,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.401,
+     16.6
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 16.6,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 100.0,
+    "first_frame_relative_speed_cm_s": 260.5,
+    "relative_speed_first_frames_cm_s": [
+     260.5,
+     302.2,
+     303.3
+    ],
+    "ragdoll_delay_real_seconds": 0.087,
+    "launch_direction_error_deg": 2.3,
+    "launch_planar_speed_cm_s": 556.7,
+    "com_travel_2s_cm": 177.8,
+    "rest_height_ratio_used": 0.47,
+    "drop_height_cm": 35.9,
+    "expected_fall_seconds": 0.287,
+    "lowest_fall_speed_seconds": 0.2554,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 60.1,
+    "standing_com_ratio": 1.251,
+    "land_detect_seconds": 0.2742,
+    "instant_angle_deg": {
+     "0.6": 138.0,
+     "1.0": 125.6
+    },
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 30.4,
+    "landing_angle_deg": 69.6,
+    "rest_com_height_cm": 22.0,
+    "rest_height_ratio": 0.458,
+    "rest_angle_deg": 88.9
+   },
+   "render": {
+    "position_rms_cm": 0.3967,
+    "step_rms_cm": 0.1186,
+    "high_frequency_rms_cm": 0.0244
+   },
+   "physics": {
+    "position_rms_cm": 0.2962,
+    "step_rms_cm": 0.0901,
+    "high_frequency_rms_cm": 0.019
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "bip01_r_thigh",
+     0.6851
+    ],
+    [
+     "bip01_r_calf",
+     0.605
+    ],
+    [
+     "bip01_l_foot",
+     0.5673
+    ],
+    [
+     "bone02",
+     0.5292
+    ]
+   ],
+   "component_step_rms_cm": 0.4023,
+   "max_angular_deg_s": 260.97,
+   "max_linear_cm_s": 52.23,
+   "awake_fraction": 0.051,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [],
+   "target": "Hyena-4",
+   "timed_shots": []
+  }
+ ]
+}

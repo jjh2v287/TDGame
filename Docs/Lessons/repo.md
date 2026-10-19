@@ -12,6 +12,7 @@
 - 날짜·상태: 2026-09-16 active
 - 발견: claude
 
+- 재발(2026-10-19): `python Tools/FluidFX/pie_lookdev_fluid.py --level /Game/FluidFX/Maps/LV_TDFluidWaterStage` 를 Git Bash 에서 실행하자 `레벨을 열지 못했다: {"exists": false, ...}` — PowerShell 로 다시 실행해 해결
 ### L-repo-02 PowerShell에서 `rg` 경로 와일드카드가 실패한다
 - 증상: `rg -n '...' Docs/Tasks/phase-*.md` → `rg: Docs/Tasks/phase-*.md: IO error ... (os error 123)`, 종료 코드 2.
 - 원인: PowerShell은 네이티브 실행 파일 인수의 와일드카드를 확장하지 않는다.
@@ -138,4 +139,13 @@
 - 범위: Windows 한국어 로캘, 시스템 Python 3.12
 - 증거: 2026-10-18 M3-37 GUI PIE 1회차 실패(같은 명령에서 `PYTHONUTF8` 유무만 바꿔 재현: 있으면 예외, 없으면 `editor running: False pids=[]`)
 - 날짜·상태: 2026-10-18 검증
+- 발견: claude
+
+### L-repo-17 PowerShell에서 쉼표로 이은 인수(`--screenshot-times 0,0.1,0.2`)는 배열로 펼쳐져 파이썬 argparse가 `unrecognized arguments`로 끝난다
+- 증상: `python Tools/MonsterAI/pie_measure_ragdoll_jitter.py ... --screenshot-times 0,0.1,0.2,0.35` → 종료 2, `unrecognized arguments: 0.1 0.2 0.35`
+- 원인: PowerShell은 따옴표 없는 `a,b,c`를 배열 식으로 해석해 공백으로 나눈 여러 인수로 넘긴다.
+- 해결: 작은따옴표로 감싼다(`'0,0.1,0.2,0.35'`). `Start-Process` 인수 문자열 안에서는 안쪽 따옴표가 그대로 전달되므로 빼야 한다.
+- 범위: Windows PowerShell 5.1에서 쉼표 값을 받는 Tools 스크립트(`--screenshot-times`·`--spread`·`--assist` 등)
+- 증거: 2026-10-19 `Saved/AgentOps/20261019/death-ragdoll/measure2/run-log.md`(sheet2 1회째 실패), `measure4/run-log.md`(Start-Process 안쪽 따옴표)
+- 날짜·상태: 2026-10-19 검증
 - 발견: claude

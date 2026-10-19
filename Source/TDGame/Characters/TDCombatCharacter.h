@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "Combat/Feedback/TDDeathLaunchRules.h"
 #include "Engine/TimerHandle.h"
 #include "GameFramework/Pawn.h"
 #include "MoverSimulationTypes.h"
@@ -117,9 +118,14 @@ public:
 	void ApplyKnockback(const FVector& PlanarVelocity, float Seconds);
 	void ApplyLinearKnockback(const FVector& PlanarVelocity, float Seconds);
 	void ClearDeferredKnockback();
-	bool StartRagdoll(const FVector& LinearVelocity);
-	FVector ComputeKillVelocity(const FTDDamageResult& Result) const;
+	FTDDeathLaunchInput MakeDeathLaunchInput(const FTDDamageResult& Result) const;
 	bool IsRagdolling() const { return bIsRagdolling; }
+	bool IsRagdollPendingOrActive() const { return bIsRagdolling || bIsRagdollPending; }
+	bool HasActiveDeathLaunchTimersForTest() const;
+	bool HasRagdollPosePushForTest() const { return RagdollPoseFinalizedHandle.IsValid(); }
+
+	UFUNCTION(BlueprintPure, Category="Combat")
+	int64 GetMeshBoneRevisionForTest() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -131,6 +137,13 @@ protected:
 
 	FVector ResolveHitPlanarDirection(const FTDDamageResult& Result) const;
 	void StopRagdollSettle();
+	void StopDeathLaunchWatch();
+	void ScheduleRagdollEntry(float HoldRealSeconds);
+	void CancelScheduledRagdollEntry();
+	bool RequestDeathRagdoll(const FTDDeathLaunchInput& Input);
+	bool StartRagdoll(const FTDDeathLaunchInput& Input);
+	void StartPendingDeathRagdollNow(bool bStartsAtRest);
+	virtual void HandleDeathRagdollFailed();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UCapsuleComponent> CapsuleComponent;
@@ -183,18 +196,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement")
 	bool bBlockMoveInputWhileStunned = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Death", meta=(ClampMin="0.0", ForceUnits="cm/s"))
-	float RagdollBaseSpeed = 220.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Death", meta=(ClampMin="0.0", ForceUnits="cm/s"))
-	float RagdollRatioSpeed = 380.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Death", meta=(ClampMin="1.0"))
-	float RagdollCriticalScale = 1.2f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Death", meta=(ForceUnits="cm/s"))
-	float RagdollUpSpeed = 160.f;
-
 private:
 	struct FTDDeferredKnockback
 	{
@@ -216,6 +217,8 @@ private:
 	bool IsCapsuleModifierActive() const;
 	bool IsKnockbackSuppressed() const;
 	void UpdateRagdollSettle();
+	void PushRagdollPoseToRenderer();
+	void StopRagdollPosePush();
 
 	FVector DesiredFacingDirection = FVector::ZeroVector;
 	FVector LastPresentationOffsetLocal = FVector::ZeroVector;
@@ -225,6 +228,7 @@ private:
 
 	FTimerHandle DeferredMovementTimerHandle;
 	FTimerHandle RagdollSettleTimerHandle;
+	FDelegateHandle RagdollPoseFinalizedHandle;
 	double RagdollStartSeconds = 0.0;
 
 	bool bIsMovementDisabled = false;
@@ -232,4 +236,55 @@ private:
 	bool bIsRagdolling = false;
 	bool bIsRagdollSettling = false;
 	bool bIsRagdollFirm = false;
+	bool bWasRagdollAwakeAtLastPoseFinalize = false;
+	bool bHasUnpushedRagdollPose = false;
+
+	struct FTDDeathLaunchBody
+	{
+		int32 BodyIndex = INDEX_NONE;
+		float Mass = 0.f;
+	};
+
+	FTDDeathLaunch MakeDeathLaunchFromMassCenter(const FTDDeathLaunchInput& Input, const FVector& MassCenter) const;
+	void ApplyDeathLaunch(USkeletalMeshComponent& MeshComponent, const FTDDeathLaunchInput& Input);
+	void CacheDeathLaunchBodies(const USkeletalMeshComponent& MeshComponent);
+	bool MeasureDeathLaunchMassCenter(const USkeletalMeshComponent& MeshComponent, FVector& OutLocation, FVector& OutVelocity) const;
+	bool TraceDeathGroundHeight(const FVector& From, float& OutGroundHeight) const;
+	void ApplyCorpsePhysicalMaterial(USkeletalMeshComponent& MeshComponent);
+	void EnableDeathLaunchCcd(USkeletalMeshComponent& MeshComponent);
+	void DisableDeathLaunchCcd();
+	void AddDeathLaunchGravity(USkeletalMeshComponent& MeshComponent);
+	void UpdateDeathLaunchWatch();
+	void LandDeathLaunch(USkeletalMeshComponent& MeshComponent, const FVector& MassCenter, const FTDDeathLandingSample& Sample);
+	void PlayCorpseLanding(const FVector& MassCenter, const FTDDeathLandingSample& Sample);
+	void StartDeathLaunchBite(USkeletalMeshComponent& MeshComponent);
+	void EndDeathLaunchBite();
+	void CacheDeathRollBodies(const USkeletalMeshComponent& MeshComponent, const FTDDeathLaunchInput& Input);
+	void StartLandingRollLimit();
+	void LimitLandingRoll();
+	float MeasureTorsoRollRadiansPerSecond(const USkeletalMeshComponent& MeshComponent, const FVector& RollAxis) const;
+	void ApplyRagdollDamping(USkeletalMeshComponent& MeshComponent) const;
+	bool ShouldDeferDeathRagdoll() const;
+	void RetryPendingDeathRagdoll();
+	void ClearPendingDeathRagdoll();
+
+	TArray<FTDDeathLaunchBody> DeathLaunchBodies;
+	TArray<FTDDeathLaunchBody, TInlineAllocator<8>> DeathRollTorsoBodies;
+	TArray<int32, TInlineAllocator<3>> DeathLaunchCcdBodyIndices;
+	FVector DeathRollAxisInAxisBody = FVector::ForwardVector;
+	int32 DeathRollAxisBodyIndex = INDEX_NONE;
+	FTDDeathLaunch ActiveDeathLaunch;
+	FTDDeathLaunchInput PendingDeathLaunchInput;
+	FTimerHandle DeathLaunchWatchTimerHandle;
+	FTimerHandle DeathLaunchBiteTimerHandle;
+	FTimerHandle PendingDeathRagdollTimerHandle;
+	double DeathLaunchStartSeconds = 0.0;
+	double PendingDeathRagdollStartRealSeconds = 0.0;
+	double ScheduledRagdollEntryRealSeconds = 0.0;
+	uint64 DeathLaunchGravityFrame = TNumericLimits<uint64>::Max();
+	float DeathLaunchMinVerticalSpeed = 0.f;
+	ETDKillRank DeathLaunchKillRank = ETDKillRank::Normal;
+	bool bHasHorizontalDeathBodyPlan = false;
+	bool bIsRagdollPending = false;
+	bool bHasScheduledRagdollEntry = false;
 };

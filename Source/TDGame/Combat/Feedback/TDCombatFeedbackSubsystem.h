@@ -15,9 +15,11 @@ class AActor;
 class APawn;
 class APlayerController;
 class ATDCombatCharacter;
+class UAudioComponent;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
 class UNiagaraComponent;
+class UPhysicalMaterial;
 class USoundBase;
 class USoundAttenuation;
 class USoundConcurrency;
@@ -48,7 +50,8 @@ enum class ETDFeedbackSoundChannel : uint8
 	Swing,
 	MonsterSwing,
 	PlayerHit,
-	StatusTick
+	StatusTick,
+	CorpseLand
 };
 
 struct FTDHitPresentation
@@ -191,6 +194,13 @@ public:
 	UTDCombatOverlayWidget* GetOverlayWidget() const { return OverlayWidget.Get(); }
 	void RequestSlowMotion(float Scale, float RealSeconds);
 	bool IsSlowMotionActive() const { return SlowMotion.IsActive(); }
+	void NotifyRagdollEntryScheduled(const ATDCombatCharacter& Character);
+	void NotifyRagdollEntered(const ATDCombatCharacter& Character);
+	void CancelRagdollEntryWait(const ATDCombatCharacter& Character);
+	int32 RecordAttackerKill(const AActor& Attacker);
+	float GetSecondsUntilPendingSlowMotion() const;
+	UPhysicalMaterial* GetCorpsePhysicalMaterial();
+	void PlayCorpseLanding(const FVector& Location, float Strength, float PitchScale, ETDKillRank KillRank, float CapsuleHalfHeight);
 	float GetCameraTraumaForTest() const;
 	FVector2D GetLastShakeScreenOffsetForTest() const;
 	int32 GetFlashCountForTest() const { return Stats.FlashesStarted; }
@@ -227,9 +237,25 @@ private:
 
 	struct FTDPendingSlowMotion
 	{
-		double StartRealTime = 0.;
+		double RequestedStartRealTime = 0.;
 		float Scale = 1.f;
 		float RealSeconds = 0.f;
+		bool bIgnoresCooldown = true;
+	};
+
+	struct FTDAttackerKillWindow
+	{
+		TWeakObjectPtr<const AActor> Attacker;
+		double LastKillRealTime = 0.;
+		int32 KillCount = 0;
+	};
+
+	struct FTDCorpseLandGroup
+	{
+		TWeakObjectPtr<UAudioComponent> FirstAudio;
+		double WindowStartRealTime = 0.;
+		int32 LandingCount = 0;
+		bool bHasRaisedFirstAudio = false;
 	};
 
 	void RegisterListeners(UWorld& InWorld);
@@ -265,6 +291,12 @@ private:
 	void AddCameraTrauma(APlayerController& Controller, ETDShakeChannel Channel, float Amount, float ChannelCap, bool bAllowsFullTrauma, const FRotator& KickRotation);
 	void PlayRumble(APlayerController& Controller, float Intensity, float Seconds, bool bUsesLargeMotors);
 	void ScheduleBossKillSlowMotion(float AttackerStopSeconds);
+	void RequestVictorySlowMotion();
+	void AddPendingSlowMotion(double RequestedStartRealTime, float Scale, float RealSeconds, bool bIgnoresCooldown);
+	double ResolveRagdollSlowMotionStartRealTime(double RequestedStartRealTime) const;
+	void RaiseLatestRagdollEntry(double EntryRealSeconds);
+	bool HasRagdollAwaitingEntry() const;
+	void RemoveInvalidRagdollEntryWaiters();
 	void RequestSlowMotionWithRule(float Scale, float RealSeconds, bool bIgnoresCooldown, bool bStartsCooldown);
 	void UpdateSlowMotion();
 	void ApplySlowMotionDilation();
@@ -277,6 +309,9 @@ private:
 	void RefreshHitFlash(FTDHitFlashState& FlashState, const FTDHitFlashRequest& Request);
 	void DrainDeferredFeedback(double Now);
 	bool PlayFeedbackSound(const FTDFeedbackSoundSet& SoundSet, const FVector& Location, float VolumeScale, ETDFeedbackSoundChannel Channel);
+	UAudioComponent* SpawnFeedbackSound(const FTDFeedbackSoundSet& SoundSet, const FVector& Location, float VolumeScale, float PitchScale, ETDFeedbackSoundChannel Channel);
+	void RaiseFirstCorpseLandSound();
+	void AddCorpseLandTrauma(double RealNow, const FVector& Location, ETDKillRank KillRank, float CapsuleHalfHeight);
 	USoundBase* PickSound(const FTDFeedbackSoundSet& SoundSet);
 	float ResolveBurstVolumeScale(const FTDFeedbackSoundSet& SoundSet);
 
@@ -323,13 +358,24 @@ private:
 	TObjectPtr<USoundConcurrency> StatusTickSoundConcurrency;
 
 	UPROPERTY(Transient)
+	TObjectPtr<USoundConcurrency> CorpseLandSoundConcurrency;
+
+	UPROPERTY(Transient)
 	TObjectPtr<USoundAttenuation> SoundAttenuation;
 
 	UPROPERTY(Transient)
 	TArray<FTDHitFlashState> HitFlashes;
 
+	UPROPERTY(Transient)
+	TObjectPtr<UPhysicalMaterial> CorpsePhysicalMaterial;
+
 	TArray<FTDWobbleState> Wobbles;
 	TArray<FTDPendingSlowMotion> PendingSlowMotions;
+	TOptional<double> LatestRagdollEntryRealTime;
+	TSet<TWeakObjectPtr<const ATDCombatCharacter>> RagdollEntryWaiters;
+	TOptional<double> LastCorpseLandTraumaRealTime;
+	FTDCorpseLandGroup CorpseLandGroup;
+	TArray<FTDAttackerKillWindow, TInlineAllocator<2>> AttackerKillWindows;
 	TMap<const FTDFeedbackSoundSet*, FTDSoundBurstLimiter> SoundBursts;
 	FTDSlowMotionArbiter SlowMotion;
 	FTDFlashRateLimiter PlayerFlashLimiter;

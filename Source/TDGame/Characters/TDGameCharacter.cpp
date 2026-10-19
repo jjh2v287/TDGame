@@ -19,6 +19,8 @@
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDDamageExamples.h"
 #include "Combat/Damage/TDDamageTypes.h"
+#include "Combat/Feedback/TDCombatFeedbackSubsystem.h"
+#include "Combat/Feedback/TDDeathLaunchRules.h"
 #include "Core/TDGameplayMessages.h"
 #include "Core/TDGameplayTags.h"
 #include "GameplayAbilitySpec.h"
@@ -43,6 +45,7 @@
 #include "MovementMode.h"
 #include "MoverTypes.h"
 #include "TDGame.h"
+#include "TimerManager.h"
 
 namespace
 {
@@ -692,7 +695,7 @@ void ATDGameCharacter::HandleDeath(const FTDDamageContext& Context)
 		SkillComponent->ResetPrimaryCombo();
 		SkillComponent->SetCombatTarget(nullptr);
 	}
-	StartRagdoll(ComputeKillVelocity(CombatComponent->GetLastDamageResult()));
+	ScheduleDeathRagdoll();
 
 	UWorld* World = GetWorld();
 	if (!World || !UGameplayMessageSubsystem::HasInstance(World))
@@ -901,4 +904,30 @@ void ATDGameCharacter::RefreshJumpStateTag(const bool bIsInAir) const
 	}
 
 	CombatComponent->RemoveLooseGameplayTag(TDGameplayTags::State_Jumping);
+}
+
+void ATDGameCharacter::ScheduleDeathRagdoll()
+{
+	UWorld* World = GetWorld();
+	FTDKillPoseHoldInput HoldInput;
+	HoldInput.bIsPlayer = true;
+	const float HoldRealSeconds = World && World->GetSubsystem<UTDCombatFeedbackSubsystem>() ? TDDeathLaunchRules::ComputeKillPoseHoldRealSeconds(HoldInput) : 0.f;
+	if (!World || HoldRealSeconds <= 0.f)
+	{
+		StartPlayerDeathRagdoll();
+		return;
+	}
+	ScheduleRagdollEntry(HoldRealSeconds);
+	if (CharacterAnimation)
+	{
+		CharacterAnimation->HoldPoseForDeath();
+	}
+	World->GetTimerManager().SetTimer(DeathRagdollTimerHandle, this, &ATDGameCharacter::StartPlayerDeathRagdoll, UTDCharacterAnimationComponent::ConvertRealToWorldSeconds(*World, HoldRealSeconds), false);
+}
+
+void ATDGameCharacter::StartPlayerDeathRagdoll()
+{
+	FTDDeathLaunchInput LaunchInput = MakeDeathLaunchInput(CombatComponent->GetLastDamageResult());
+	LaunchInput.bIsPlayer = true;
+	RequestDeathRagdoll(LaunchInput);
 }

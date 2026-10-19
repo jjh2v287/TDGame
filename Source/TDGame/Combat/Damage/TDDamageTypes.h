@@ -222,6 +222,9 @@ struct TDGAME_API FTDDamageContext
 	FVector Direction = FVector::ForwardVector;
 
 	UPROPERTY()
+	FVector SwingDirection = FVector::ZeroVector;
+
+	UPROPERTY()
 	int32 Depth = 0;
 
 	UPROPERTY()
@@ -240,6 +243,9 @@ struct TDGAME_API FTDDamageHitInfo
 
 	UPROPERTY()
 	FVector Direction = FVector::ZeroVector;
+
+	UPROPERTY()
+	FVector SwingDirection = FVector::ZeroVector;
 
 	UPROPERTY()
 	bool bHasLocation = false;
@@ -329,6 +335,9 @@ struct TDGAME_API FTDDamageResult
 
 	UPROPERTY(BlueprintReadOnly)
 	FVector HitDirection = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector SwingDirection = FVector::ZeroVector;
 
 	UPROPERTY(BlueprintReadOnly)
 	bool bHasHitLocation = false;

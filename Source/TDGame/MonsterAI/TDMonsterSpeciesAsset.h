@@ -145,6 +145,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death")
 	bool bRagdollAfterDeathClip = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death", meta=(ToolTip="Plays the death clip before the ragdoll instead of starting the ragdoll right after the kill pose hold."))
+	bool bPlayDeathClipBeforeRagdoll = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death", meta=(ToolTip="Four-legged or winged bodies that lie along their forward axis; death launches roll them sideways instead of tipping them over head first."))
+	bool bHasHorizontalBodyPlan = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death", meta=(ClampMin="0", ClampMax="1", ToolTip="Center of mass height of the resting corpse above the ground as a fraction of the capsule half height; 0 uses the body plan default."))
+	float CorpseRestHeightRatio = 0.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Death", meta=(ClampMin="0", ForceUnits="s"))
 	float CorpseSinkSeconds = 1.5f;
 

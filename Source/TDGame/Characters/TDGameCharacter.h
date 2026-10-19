@@ -206,7 +206,10 @@ private:
 	bool WasDamagedWithin(double Seconds) const;
 	void HandleActionAnimationEnded(const UAnimSequence* Animation, bool bWasInterrupted);
 	void HandleDeath(const FTDDamageContext& Context);
+	void ScheduleDeathRagdoll();
+	void StartPlayerDeathRagdoll();
 
+	FTimerHandle DeathRagdollTimerHandle;
 	FVector PendingRollDirection = FVector::ForwardVector;
 	double LastAttackCancelRollStartTimeSeconds = -1.0;
 	double LastDamagedTimeSeconds = -1.0;

@@ -89,4 +89,5 @@
 - 범위: UE 5.8 에디터(모듈) 빌드, PhysicsCore 인라인 API를 쓰는 TDGame 코드
 - 증거: 2026-10-19 `Saved/AgentOps/20261019/m338-b1-build.log`(실패), `Saved/AgentOps/20261018/ragdoll-jitter/game-build-1.log`(게임 타깃 성공)
 - 날짜·상태: 2026-10-19 active
+- 후속(2026-10-19 M3-40): 같은 유형이 두 번 더 나왔다. `NewObject<UPhysicalMaterial>`(PhysicsCore, `TDGame.Build.cs` Private에 "PhysicsCore" 추가로 해결)과 시험의 `FlushRenderingCommands`(RenderCore, `LNK2019 __imp_?FlushRenderingCommands`, 호출 제거로 해결 — RenderCore 의존은 FluidFX가 따로 추가 예정). 엔진 모듈 함수를 새로 부르면 소속 모듈을 먼저 확인한다.
 - 발견: claude

@@ -1,0 +1,1541 @@
+{
+ "label": "sheet",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 350.0,
+ "kill_fraction": 0.25,
+ "count": 1,
+ "kill_strength": "strong",
+ "critical": false,
+ "screenshot_times": [
+  0.0,
+  0.1,
+  0.2,
+  0.35,
+  0.6,
+  1.0
+ ],
+ "experiment": {
+  "body": {},
+  "self_collision_off": false,
+  "assist": null
+ },
+ "scenario": {
+  "kill_strength": "strong"
+ },
+ "cvars": {},
+ "kill_delay": 0.6,
+ "observe": 7.0,
+ "window": {
+  "land_speed_cm_s": 60.0,
+  "delay_seconds": 0.5,
+  "length_seconds": 2.5
+ },
+ "landing_rule": {
+  "min_fall_speed_cm_s": -60.0,
+  "rebound_min_speed_cm_s": 35.0,
+  "rebound_fraction": 0.25,
+  "height_margin_cm": 25.0,
+  "fallback_extra_seconds": 0.25,
+  "fallback_height_margin_cm": 75.0,
+  "forced_fallback_seconds": 1.5,
+  "up_speed_cm_s": 100.0,
+  "effective_gravity_cm_s2": 1568.0,
+  "rest_height_ratio_default": [
+   0.18,
+   0.45
+  ]
+ },
+ "target": {
+  "position_rms_cm": 0.5,
+  "sleep_seconds": 3.0,
+  "freeze_body_speed_cm_s": 30.0
+ },
+ "definitions": {
+  "ragdoll_delay_real_seconds": "처치(체력 0) 틱 월드 실시간부터 첫 시뮬 프레임 실시간까지(처치 정지는 실시간이라 ragdoll_delay_seconds 게임 시간과 다를 수 있음)",
+  "launch_direction_error_deg": "래그돌 시작 0.1초 뒤(게임 시간) 첫 프레임의 질량 가중 COM 수평 속도와 R(처치 순간 가해자→피해자 수평 단위 방향)의 각",
+  "com_travel_2s_cm": "래그돌 시작 프레임 COM과 2초 뒤(게임 시간) 첫 프레임 COM의 수평 거리",
+  "land_detect_seconds": "C++ 날림 감시 v2 재현. 래그돌 시작부터 매 프레임 COM 수직 속도 vz, vz_min = min(0, 지금까지 vz). 경과 ≥ 1.5초면 강제, 경과 ≥ T+0.25초이고 COM ≤ 지면+누운 높이+75cm면 대체(*), 아니면 vz_min ≤ −60이고 vz − vz_min ≥ max(35, 0.25·|vz_min|)이고 COM ≤ 지면+누운 높이+25cm일 때. T = (U+√(U²+2·1.6g·Δz))/1.6g, U 100, Δz = max(10, 시작 COM − 지면 − 누운 높이), 누운 높이 = 종 누운 비율(0이면 직립 0.18·수평 몸 0.45) × 캡슐 반높이",
+  "lowest_fall_speed_seconds": "래그돌 1.5초 안 COM vz 최저 시각(실제 접촉 근사). fallback_before_lowest_fall_speed는 대체 감지가 그보다 먼저 걸림(공중 감지)",
+  "post_land_slide_cm": "착지 감지 프레임 COM부터 min(감지+2초, 최종 잠들기, 가라앉기 시작) 프레임 COM까지 수평 거리",
+  "landing_angle_deg": "착지 감지 프레임의 몸 각(rest_angle_deg는 최종 잠든 프레임). 직립: 첫 바디(골반)→머리 바디(이름에 head, 없으면 neck, 없으면 처치 프레임에서 가장 높은 바디) 질량 중심 벡터와 Up의 각. 수평 몸: 질량 상위 바디 3개마다 처치 프레임의 월드 Up을 그 바디의 앞·옆·위 축 좌표로 고정해 그 프레임 축으로 옮긴 벡터와 Up의 각을 평균(굴림 각 근사, 코 들림이 있으면 피치도 섞임)",
+  "first_frame_relative_speed_cm_s": "첫 시뮬 프레임 max|vᵢ − v_COM|(질량 가중), relative_speed_first_frames_cm_s는 첫 3프레임",
+  "standing_com_ratio": "(처치 프레임 COM − 지면) / 캡슐 반높이",
+  "rest_height_ratio": "(최종 잠든 프레임 COM − 지면) / 캡슐 반높이, 종 표 corpse_rest_height_ratio 채움용",
+  "ground": "처치 순간 COM에서 아래로 300cm WorldStatic·WorldDynamic 오브젝트 트레이스(못 맞히면 액터 z − 캡슐 반높이, ground_source capsule)",
+  "frame_time": "슬레이트 틱마다 월드 실시간 차이(ms). 처치 틱 전 1초·뒤 3초에 시작한 프레임의 p50·p95, after_sampler_ms는 그 프레임 안 표본기 비용(빼서 볼 것)"
+ },
+ "results": [
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Goblin",
+   "physics_asset": "/Game/Fab/Stylized_Goblin_Minion_-_Free/SK_Goblin_PhysicsAsset.SK_Goblin_PhysicsAsset",
+   "body_count": 12,
+   "bone_mass_kg": {
+    "pelvis": 13.938,
+    "spine_02": 6.94,
+    "spine_04": 13.433,
+    "upperarm_l": 3.647,
+    "hand_l": 3.699,
+    "head": 16.473,
+    "upperarm_r": 5.402,
+    "hand_r": 2.701,
+    "cc_base_l_calftwist01": 2.392,
+    "cc_base_l_thightwist01": 7.003,
+    "cc_base_r_thightwist01": 6.231,
+    "calf_r": 8.58
+   },
+   "frames": 254,
+   "frame_time": {
+    "before_covered_seconds": 0.577,
+    "before_ms": {
+     "p50": 22.638,
+     "p95": 26.387,
+     "frames": 25
+    },
+    "after_ms": {
+     "p50": 0.0,
+     "p95": 86.084,
+     "frames": 138
+    },
+    "after_sampler_ms": {
+     "p50": 1.013,
+     "p95": 1.503,
+     "frames": 138
+    },
+    "p95_increase_ms": 59.697
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.4233,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.616,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 30.0,
+    "attacker_location": [
+     -541.63,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 60.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -298.804,
+     2.636,
+     64.393
+    ],
+    "attacker_location": [
+     -541.63,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -302.04,
+     0.0,
+     62.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 738.6,
+   "first_sleep_seconds": 1.3152,
+   "freeze_body_speed_cm_s": 21.0,
+   "pre_sleep_move_cm": 5.15,
+   "land_seconds": 0.5453,
+   "sink_seconds": 3.9005,
+   "window_seconds": [
+    1.0453,
+    3.5453
+   ],
+   "observed_seconds": 5.5546,
+   "sleep_seconds": 1.3152,
+   "fps": 41.2,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.3637,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.315,
+     21.0
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 21.0,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "upright",
+    "launch_up_speed_cm_s": 46.8,
+    "first_frame_relative_speed_cm_s": 246.4,
+    "relative_speed_first_frames_cm_s": [
+     246.4,
+     246.4,
+     246.4
+    ],
+    "ragdoll_delay_real_seconds": 0.5368,
+    "launch_direction_error_deg": 1.5,
+    "launch_planar_speed_cm_s": 503.1,
+    "com_travel_2s_cm": 144.9,
+    "rest_height_ratio_used": 0.18,
+    "drop_height_cm": 51.7,
+    "expected_fall_seconds": 0.3283,
+    "lowest_fall_speed_seconds": 0.2956,
+    "landing_angle_kind": "upright_pelvis_head",
+    "standing_com_height_cm": 69.5,
+    "standing_com_ratio": 1.158,
+    "land_detect_seconds": 0.3413,
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 26.4,
+    "landing_angle_deg": 84.8,
+    "rest_com_height_cm": 16.1,
+    "rest_height_ratio": 0.268,
+    "rest_angle_deg": 89.4
+   },
+   "render": {
+    "position_rms_cm": 0.5261,
+    "step_rms_cm": 0.1295,
+    "high_frequency_rms_cm": 0.0232
+   },
+   "physics": {
+    "position_rms_cm": 0.4927,
+    "step_rms_cm": 0.1321,
+    "high_frequency_rms_cm": 0.0274
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "upperarm_l",
+     0.9242
+    ],
+    [
+     "hand_r",
+     0.832
+    ],
+    [
+     "hand_l",
+     0.8166
+    ],
+    [
+     "head",
+     0.8018
+    ]
+   ],
+   "component_step_rms_cm": 0.1521,
+   "max_angular_deg_s": 215.87,
+   "max_linear_cm_s": 47.39,
+   "awake_fraction": 0.138,
+   "meets_target": false,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_shot4.png"
+   ],
+   "target": "Goblin-1",
+   "timed_shots": [
+    {
+     "offset": 0.0,
+     "real_seconds_after_kill": 0.0,
+     "game_seconds_after_kill": 0.0,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_t0000ms.png"
+    },
+    {
+     "offset": 0.1,
+     "real_seconds_after_kill": 0.4507,
+     "game_seconds_after_kill": 0.4233,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_t0100ms.png"
+    },
+    {
+     "offset": 0.2,
+     "real_seconds_after_kill": 0.5368,
+     "game_seconds_after_kill": 0.5094,
+     "path": null
+    },
+    {
+     "offset": 0.35,
+     "real_seconds_after_kill": 0.5368,
+     "game_seconds_after_kill": 0.5094,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_t0350ms.png"
+    },
+    {
+     "offset": 0.6,
+     "real_seconds_after_kill": 0.6038,
+     "game_seconds_after_kill": 0.5764,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_t0600ms.png"
+    },
+    {
+     "offset": 1.0,
+     "real_seconds_after_kill": 1.0171,
+     "game_seconds_after_kill": 0.9897,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Goblin-1_t1000ms.png"
+    }
+   ]
+  },
+  {
+   "result": "actor destroyed",
+   "species": "DA_TDMonster_Hyena",
+   "physics_asset": "/Game/Fab/Hyena_A1/Hyenas_A1_AllMotion_PhysicsAsset.Hyenas_A1_AllMotion_PhysicsAsset",
+   "body_count": 19,
+   "bone_mass_kg": {
+    "bip01_pelvis": 18.069,
+    "bip01_spine": 26.899,
+    "bip01_spine1": 26.992,
+    "bip01_spine2": 35.698,
+    "bip01_neck": 17.203,
+    "bip01_neck1": 8.416,
+    "bip01_head": 25.377,
+    "bip01_l_upperarm": 22.135,
+    "bip01_l_hand": 1.925,
+    "bip01_r_upperarm": 19.655,
+    "bip01_r_hand": 1.872,
+    "bip01_l_thigh": 10.389,
+    "bip01_l_calf": 7.667,
+    "bip01_l_foot": 1.607,
+    "bip01_r_thigh": 8.176,
+    "bip01_r_calf": 6.107,
+    "bip01_r_foot": 1.612,
+    "bone02": 4.141,
+    "bone03": 4.391
+   },
+   "frames": 266,
+   "frame_time": {
+    "before_covered_seconds": 0.568,
+    "before_ms": {
+     "p50": 21.091,
+     "p95": 24.806,
+     "frames": 28
+    },
+    "after_ms": {
+     "p50": 0.0,
+     "p95": 28.512,
+     "frames": 147
+    },
+    "after_sampler_ms": {
+     "p50": 1.264,
+     "p95": 1.958,
+     "frames": 147
+    },
+    "p95_increase_ms": 3.706
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.4229,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.608,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 22.5,
+    "attacker_location": [
+     -541.63,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 48.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -249.704,
+     -2.716,
+     53.479
+    ],
+    "attacker_location": [
+     -541.63,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -249.096,
+     0.0,
+     50.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 744.4,
+   "first_sleep_seconds": 2.9111,
+   "freeze_body_speed_cm_s": 19.6,
+   "pre_sleep_move_cm": 0.95,
+   "land_seconds": 1.4814,
+   "sink_seconds": 3.8865,
+   "window_seconds": [
+    1.9814,
+    3.8865
+   ],
+   "observed_seconds": 5.5707,
+   "sleep_seconds": 2.9111,
+   "fps": 43.1,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 2.9969,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     2.911,
+     19.6
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 19.6,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 100.0,
+    "first_frame_relative_speed_cm_s": 342.8,
+    "relative_speed_first_frames_cm_s": [
+     342.8,
+     317.7,
+     317.7
+    ],
+    "ragdoll_delay_real_seconds": 0.4914,
+    "launch_direction_error_deg": 4.3,
+    "launch_planar_speed_cm_s": 650.2,
+    "com_travel_2s_cm": 188.7,
+    "rest_height_ratio_used": 0.45,
+    "drop_height_cm": 36.5,
+    "expected_fall_seconds": 0.2887,
+    "lowest_fall_speed_seconds": 0.3269,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 59.7,
+    "standing_com_ratio": 1.244,
+    "land_detect_seconds": 0.3524,
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 15.9,
+    "landing_angle_deg": 98.1,
+    "rest_com_height_cm": 23.7,
+    "rest_height_ratio": 0.495,
+    "rest_angle_deg": 141.1
+   },
+   "render": {
+    "position_rms_cm": 0.2938,
+    "step_rms_cm": 0.1243,
+    "high_frequency_rms_cm": 0.0281
+   },
+   "physics": {
+    "position_rms_cm": 0.2529,
+    "step_rms_cm": 0.1071,
+    "high_frequency_rms_cm": 0.0244
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "bip01_spine1",
+     0.5945
+    ],
+    [
+     "bip01_spine2",
+     0.558
+    ],
+    [
+     "bip01_spine",
+     0.4025
+    ],
+    [
+     "bip01_r_thigh",
+     0.3917
+    ]
+   ],
+   "component_step_rms_cm": 0.2723,
+   "max_angular_deg_s": 109.67,
+   "max_linear_cm_s": 31.42,
+   "awake_fraction": 0.12,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_shot4.png"
+   ],
+   "target": "Hyena-1",
+   "timed_shots": [
+    {
+     "offset": 0.0,
+     "real_seconds_after_kill": 0.0,
+     "game_seconds_after_kill": 0.0,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_t0000ms.png"
+    },
+    {
+     "offset": 0.1,
+     "real_seconds_after_kill": 0.4914,
+     "game_seconds_after_kill": 0.4229,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_t0100ms.png"
+    },
+    {
+     "offset": 0.2,
+     "real_seconds_after_kill": 0.579,
+     "game_seconds_after_kill": 0.5105,
+     "path": null
+    },
+    {
+     "offset": 0.35,
+     "real_seconds_after_kill": 0.579,
+     "game_seconds_after_kill": 0.5105,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_t0350ms.png"
+    },
+    {
+     "offset": 0.6,
+     "real_seconds_after_kill": 0.6077,
+     "game_seconds_after_kill": 0.5392,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_t0600ms.png"
+    },
+    {
+     "offset": 1.0,
+     "real_seconds_after_kill": 1.0165,
+     "game_seconds_after_kill": 0.948,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Hyena-1_t1000ms.png"
+    }
+   ]
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_StoneGolem",
+   "physics_asset": "/Game/MonsterAI/Physics/PA_TD_StoneGolem_Ragdoll.PA_TD_StoneGolem_Ragdoll",
+   "body_count": 42,
+   "bone_mass_kg": {
+    "pelvis": 59.375,
+    "spine_01": 29.338,
+    "spine_02": 138.438,
+    "spine_03": 29.055,
+    "clavicle_l": 116.847,
+    "upperarm_l": 43.007,
+    "lowerarm_l": 41.521,
+    "hand_l": 34.893,
+    "index_01_l": 3.409,
+    "index_02_l": 2.315,
+    "middle_01_l": 6.568,
+    "middle_02_l": 3.877,
+    "ring_01_l": 4.057,
+    "ring_02_l": 2.198,
+    "thumb_01_l": 10.53,
+    "thumb_02_l": 3.603,
+    "clavicle_r": 120.595,
+    "upperarm_r": 42.808,
+    "lowerarm_r": 41.508,
+    "hand_r": 44.599,
+    "index_01_r": 3.395,
+    "index_02_r": 2.386,
+    "middle_01_r": 6.703,
+    "middle_02_r": 3.808,
+    "ring_01_r": 3.752,
+    "ring_02_r": 1.959,
+    "thumb_01_r": 12.797,
+    "thumb_02_r": 3.506,
+    "neck_01": 17.578,
+    "head": 20.453,
+    "thigh_l": 38.813,
+    "calf_l": 36.814,
+    "calf_twist_01_l": 41.379,
+    "foot_l": 51.809,
+    "ball_l": 14.474,
+    "thigh_twist_01_l": 11.871,
+    "thigh_r": 40.073,
+    "calf_r": 35.902,
+    "calf_twist_01_r": 41.779,
+    "foot_r": 48.357,
+    "ball_r": 14.535,
+    "thigh_twist_01_r": 8.75
+   },
+   "frames": 294,
+   "frame_time": {
+    "before_covered_seconds": 0.57,
+    "before_ms": {
+     "p50": 21.512,
+     "p95": 25.922,
+     "frames": 26
+    },
+    "after_ms": {
+     "p50": 0.0,
+     "p95": 93.063,
+     "frames": 136
+    },
+    "after_sampler_ms": {
+     "p50": 2.125,
+     "p95": 3.235,
+     "frames": 136
+    },
+    "p95_increase_ms": 67.141
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.4277,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.616,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 175.0,
+    "attacker_location": [
+     -591.633,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 105.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -316.362,
+     2.04,
+     91.099
+    ],
+    "attacker_location": [
+     -591.633,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -319.019,
+     0.0,
+     107.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 818.3,
+   "first_sleep_seconds": 3.1207,
+   "freeze_body_speed_cm_s": 23.1,
+   "pre_sleep_move_cm": 8.29,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.6115,
+   "sleep_seconds": 3.1207,
+   "fps": 40.6,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 3.1506,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     3.121,
+     23.1
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 23.1,
+   "meets_sleep_target": false,
+   "others": [],
+   "launch": {
+    "body_plan": "upright",
+    "launch_up_speed_cm_s": 73.4,
+    "first_frame_relative_speed_cm_s": 450.7,
+    "relative_speed_first_frames_cm_s": [
+     450.7,
+     450.7,
+     450.7
+    ],
+    "ragdoll_delay_real_seconds": 0.5705,
+    "launch_direction_error_deg": 5.9,
+    "launch_planar_speed_cm_s": 410.0,
+    "com_travel_2s_cm": 168.4,
+    "rest_height_ratio_used": 0.18,
+    "drop_height_cm": 92.1,
+    "expected_fall_seconds": 0.4125,
+    "lowest_fall_speed_seconds": 0.4095,
+    "landing_angle_kind": "upright_pelvis_head",
+    "standing_com_height_cm": 112.5,
+    "standing_com_ratio": 1.071,
+    "land_detect_seconds": 0.9536,
+    "land_detect_rule": "fallback",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 10.5,
+    "landing_angle_deg": 72.1,
+    "rest_com_height_cm": 44.8,
+    "rest_height_ratio": 0.427,
+    "rest_angle_deg": 57.6
+   },
+   "render": {
+    "position_rms_cm": 0.9984,
+    "step_rms_cm": 0.2463,
+    "high_frequency_rms_cm": 0.0535
+   },
+   "physics": {
+    "position_rms_cm": 1.1666,
+    "step_rms_cm": 0.2692,
+    "high_frequency_rms_cm": 0.0557
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "thumb_02_r",
+     2.6266
+    ],
+    [
+     "middle_02_l",
+     2.4715
+    ],
+    [
+     "thumb_01_r",
+     2.4095
+    ],
+    [
+     "index_01_r",
+     1.7685
+    ]
+   ],
+   "component_step_rms_cm": 0.1827,
+   "max_angular_deg_s": 326.49,
+   "max_linear_cm_s": 133.16,
+   "awake_fraction": 0.205,
+   "meets_target": false,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_shot4.png"
+   ],
+   "target": "StoneGolem-1",
+   "timed_shots": [
+    {
+     "offset": 0.0,
+     "real_seconds_after_kill": 0.0,
+     "game_seconds_after_kill": 0.0,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_t0000ms.png"
+    },
+    {
+     "offset": 0.1,
+     "real_seconds_after_kill": 0.4774,
+     "game_seconds_after_kill": 0.4277,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_t0100ms.png"
+    },
+    {
+     "offset": 0.2,
+     "real_seconds_after_kill": 0.5705,
+     "game_seconds_after_kill": 0.5208,
+     "path": null
+    },
+    {
+     "offset": 0.35,
+     "real_seconds_after_kill": 0.5705,
+     "game_seconds_after_kill": 0.5208,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_t0350ms.png"
+    },
+    {
+     "offset": 0.6,
+     "real_seconds_after_kill": 0.6216,
+     "game_seconds_after_kill": 0.5719,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_t0600ms.png"
+    },
+    {
+     "offset": 1.0,
+     "real_seconds_after_kill": 1.0061,
+     "game_seconds_after_kill": 0.9564,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/StoneGolem-1_t1000ms.png"
+    }
+   ]
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Swordsman",
+   "physics_asset": "/Game/MonsterAI/Physics/PA_TD_Swordsman_Ragdoll.PA_TD_Swordsman_Ragdoll",
+   "body_count": 14,
+   "bone_mass_kg": {
+    "Hips": 15.245,
+    "Spine1": 12.681,
+    "Spine2": 8.193,
+    "Neck": 8.514,
+    "LeftArm": 3.913,
+    "LeftHand": 3.058,
+    "RightArm": 3.913,
+    "RightHand": 3.058,
+    "LeftUpLeg": 8.568,
+    "LeftLeg": 4.708,
+    "LeftFoot": 3.088,
+    "RightUpLeg": 8.568,
+    "RightLeg": 4.708,
+    "RightFoot": 3.088
+   },
+   "frames": 314,
+   "frame_time": {
+    "before_covered_seconds": 0.559,
+    "before_ms": {
+     "p50": 21.261,
+     "p95": 24.992,
+     "frames": 27
+    },
+    "after_ms": {
+     "p50": 0.0,
+     "p95": 30.315,
+     "frames": 148
+    },
+    "after_sampler_ms": {
+     "p50": 1.006,
+     "p95": 1.536,
+     "frames": 148
+    },
+    "p95_increase_ms": 5.323
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.4259,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.609,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 40.0,
+    "attacker_location": [
+     -628.98,
+     0.0,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 90.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -375.423,
+     -2.023,
+     185.654
+    ],
+    "attacker_location": [
+     -628.98,
+     0.0,
+     98.15
+    ],
+    "victim_location": [
+     -376.06,
+     0.0,
+     92.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 674.4,
+   "first_sleep_seconds": 2.9208,
+   "freeze_body_speed_cm_s": 15.6,
+   "pre_sleep_move_cm": 4.02,
+   "land_seconds": 1.5,
+   "sink_seconds": 5.8803,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.5779,
+   "sleep_seconds": 2.9208,
+   "fps": 43.6,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 2.9795,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     2.921,
+     15.6
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 15.6,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "upright",
+    "launch_up_speed_cm_s": 43.7,
+    "first_frame_relative_speed_cm_s": 426.4,
+    "relative_speed_first_frames_cm_s": [
+     426.4,
+     426.4,
+     426.4
+    ],
+    "ragdoll_delay_real_seconds": 0.5456,
+    "launch_direction_error_deg": 1.9,
+    "launch_planar_speed_cm_s": 356.1,
+    "com_travel_2s_cm": 165.1,
+    "rest_height_ratio_used": 0.18,
+    "drop_height_cm": 166.0,
+    "expected_fall_seconds": 0.5283,
+    "lowest_fall_speed_seconds": 0.5231,
+    "landing_angle_kind": "upright_pelvis_head",
+    "standing_com_height_cm": 185.8,
+    "standing_com_ratio": 2.065,
+    "land_detect_seconds": 0.5679,
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 16.0,
+    "landing_angle_deg": 112.4,
+    "rest_com_height_cm": 20.0,
+    "rest_height_ratio": 0.222,
+    "rest_angle_deg": 87.6
+   },
+   "render": {
+    "position_rms_cm": 0.4371,
+    "step_rms_cm": 0.1255,
+    "high_frequency_rms_cm": 0.0284
+   },
+   "physics": {
+    "position_rms_cm": 0.4289,
+    "step_rms_cm": 0.12,
+    "high_frequency_rms_cm": 0.0258
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "LeftHand",
+     1.1137
+    ],
+    [
+     "LeftFoot",
+     0.8936
+    ],
+    [
+     "RightHand",
+     0.5431
+    ],
+    [
+     "LeftLeg",
+     0.3643
+    ]
+   ],
+   "component_step_rms_cm": 0.155,
+   "max_angular_deg_s": 228.9,
+   "max_linear_cm_s": 49.25,
+   "awake_fraction": 0.115,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_shot4.png"
+   ],
+   "target": "Swordsman-1",
+   "timed_shots": [
+    {
+     "offset": 0.0,
+     "real_seconds_after_kill": 0.0,
+     "game_seconds_after_kill": 0.0,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_t0000ms.png"
+    },
+    {
+     "offset": 0.1,
+     "real_seconds_after_kill": 0.4661,
+     "game_seconds_after_kill": 0.4259,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_t0100ms.png"
+    },
+    {
+     "offset": 0.2,
+     "real_seconds_after_kill": 0.5456,
+     "game_seconds_after_kill": 0.5054,
+     "path": null
+    },
+    {
+     "offset": 0.35,
+     "real_seconds_after_kill": 0.5456,
+     "game_seconds_after_kill": 0.5054,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_t0350ms.png"
+    },
+    {
+     "offset": 0.6,
+     "real_seconds_after_kill": 0.6104,
+     "game_seconds_after_kill": 0.5702,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_t0600ms.png"
+    },
+    {
+     "offset": 1.0,
+     "real_seconds_after_kill": 1.0131,
+     "game_seconds_after_kill": 0.9729,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Swordsman-1_t1000ms.png"
+    }
+   ]
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Centaur",
+   "physics_asset": "/Game/QuadrapedCreatures/Centaur/Meshes/SK_Centaur_PhysicsAsset.SK_Centaur_PhysicsAsset",
+   "body_count": 60,
+   "bone_mass_kg": {
+    "CENTAUR_-Pelvis": 21.618,
+    "CENTAUR_-Spine": 19.679,
+    "CENTAUR_-Spine1": 19.706,
+    "CENTAUR_-Spine2": 36.846,
+    "CENTAUR_-Neck": 8.156,
+    "CENTAUR_-Neck1": 6.871,
+    "CENTAUR_-Neck2": 10.677,
+    "CENTAUR_-Neck3": 2.03,
+    "CENTAUR_-Head": 5.193,
+    "ponytail_A_1": 1.543,
+    "ponytail_A_2": 1.543,
+    "ponytail_A_3": 1.543,
+    "ponytail_A_4": 1.543,
+    "ponytail_A_5": 1.543,
+    "ponytail_B_1": 1.62,
+    "ponytail_B_2": 1.62,
+    "ponytail_B_3": 1.62,
+    "ponytail_B_4": 1.62,
+    "ponytail_B_5": 1.62,
+    "CENTAUR_CLAVICLE_R": 3.523,
+    "CENTAUR_ARM_R": 3.157,
+    "CENTAUR_FOREARM_R": 2.483,
+    "CENTAUR_HAND_R": 1.698,
+    "CENTAUR_CLAVICLE_L": 3.596,
+    "CENTAUR_ARM_L": 3.823,
+    "CENTAUR_FOREARM_L": 2.483,
+    "CENTAUR_HAND_L": 1.659,
+    "ponytail_C_1": 1.543,
+    "ponytail_C_2": 1.543,
+    "ponytail_C_3": 1.543,
+    "ponytail_C_4": 1.543,
+    "ponytail_C_5": 1.543,
+    "ponytail_D_1": 1.543,
+    "ponytail_D_2": 1.543,
+    "ponytail_D_3": 1.543,
+    "ponytail_D_4": 1.543,
+    "ponytail_D_5": 1.543,
+    "CENTAUR_-R-Clavicle": 1.301,
+    "CENTAUR_-R-UpperArm": 4.501,
+    "CENTAUR_-R-Forearm": 4.006,
+    "CENTAUR_-R-Hand": 1.811,
+    "CENTAUR_-R-Finger0": 2.488,
+    "CENTAUR_-L-Clavicle": 1.301,
+    "CENTAUR_-L-UpperArm": 4.501,
+    "CENTAUR_-L-Forearm": 4.006,
+    "CENTAUR_-L-Hand": 1.811,
+    "CENTAUR_-L-Finger0": 2.553,
+    "CENTAUR_-L-Thigh": 9.6,
+    "CENTAUR_-L-Calf": 6.464,
+    "CENTAUR_-L-HorseLink": 2.363,
+    "CENTAUR_-L-Foot": 3.175,
+    "CENTAUR_-R-Thigh": 10.327,
+    "CENTAUR_-R-Calf": 6.064,
+    "CENTAUR_-R-HorseLink": 2.365,
+    "CENTAUR_-R-Foot": 3.238,
+    "CENTAUR_-Tail": 0.867,
+    "CENTAUR_-Tail1": 3.733,
+    "CENTAUR_-Tail2": 8.489,
+    "CENTAUR_-Tail3": 5.203,
+    "CENTAUR_-Tail4": 3.2
+   },
+   "frames": 288,
+   "frame_time": {
+    "before_covered_seconds": 0.564,
+    "before_ms": {
+     "p50": 23.134,
+     "p95": 26.109,
+     "frames": 25
+    },
+    "after_ms": {
+     "p50": 0.0,
+     "p95": 89.578,
+     "frames": 133
+    },
+    "after_sampler_ms": {
+     "p50": 2.881,
+     "p95": 4.092,
+     "frames": 133
+    },
+    "p95_increase_ms": 63.469
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.4242,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.604,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 130.0,
+    "attacker_location": [
+     -679.946,
+     -0.47,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.009,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 108.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -73.21,
+     6.786,
+     137.909
+    ],
+    "attacker_location": [
+     -679.946,
+     -0.47,
+     98.15
+    ],
+    "victim_location": [
+     -54.35,
+     5.3,
+     110.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.009,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 711.0,
+   "first_sleep_seconds": 3.0008,
+   "freeze_body_speed_cm_s": 25.3,
+   "pre_sleep_move_cm": 2.76,
+   "land_seconds": 1.5,
+   "sink_seconds": null,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.5982,
+   "sleep_seconds": 3.0008,
+   "fps": 40.2,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 3.0009,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     3.001,
+     25.3
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 25.3,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "horizontal",
+    "launch_up_speed_cm_s": 47.8,
+    "first_frame_relative_speed_cm_s": 603.4,
+    "relative_speed_first_frames_cm_s": [
+     603.4,
+     603.4,
+     603.4
+    ],
+    "ragdoll_delay_real_seconds": 0.5425,
+    "launch_direction_error_deg": 5.5,
+    "launch_planar_speed_cm_s": 364.1,
+    "com_travel_2s_cm": 139.9,
+    "rest_height_ratio_used": 0.45,
+    "drop_height_cm": 62.6,
+    "expected_fall_seconds": 0.3535,
+    "lowest_fall_speed_seconds": 0.4413,
+    "landing_angle_kind": "horizontal_torso_roll",
+    "standing_com_height_cm": 119.0,
+    "standing_com_ratio": 1.102,
+    "land_detect_seconds": 0.497,
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 12.5,
+    "landing_angle_deg": 85.2,
+    "rest_com_height_cm": 19.9,
+    "rest_height_ratio": 0.184,
+    "rest_angle_deg": 90.5
+   },
+   "render": {
+    "position_rms_cm": 0.3477,
+    "step_rms_cm": 0.0775,
+    "high_frequency_rms_cm": 0.0254
+   },
+   "physics": {
+    "position_rms_cm": 0.3317,
+    "step_rms_cm": 0.0754,
+    "high_frequency_rms_cm": 0.0241
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "CENTAUR_-L-Hand",
+     0.7581
+    ],
+    [
+     "ponytail_D_3",
+     0.7082
+    ],
+    [
+     "CENTAUR_-L-Finger0",
+     0.6837
+    ],
+    [
+     "CENTAUR_HAND_R",
+     0.6657
+    ]
+   ],
+   "component_step_rms_cm": 0.1274,
+   "max_angular_deg_s": 97.79,
+   "max_linear_cm_s": 38.07,
+   "awake_fraction": 0.139,
+   "meets_target": false,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_shot4.png"
+   ],
+   "target": "Centaur-1",
+   "timed_shots": [
+    {
+     "offset": 0.0,
+     "real_seconds_after_kill": 0.0,
+     "game_seconds_after_kill": 0.0,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_t0000ms.png"
+    },
+    {
+     "offset": 0.1,
+     "real_seconds_after_kill": 0.4529,
+     "game_seconds_after_kill": 0.4242,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_t0100ms.png"
+    },
+    {
+     "offset": 0.2,
+     "real_seconds_after_kill": 0.5425,
+     "game_seconds_after_kill": 0.5138,
+     "path": null
+    },
+    {
+     "offset": 0.35,
+     "real_seconds_after_kill": 0.5425,
+     "game_seconds_after_kill": 0.5138,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_t0350ms.png"
+    },
+    {
+     "offset": 0.6,
+     "real_seconds_after_kill": 0.6163,
+     "game_seconds_after_kill": 0.5876,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_t0600ms.png"
+    },
+    {
+     "offset": 1.0,
+     "real_seconds_after_kill": 1.0003,
+     "game_seconds_after_kill": 0.9716,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Centaur-1_t1000ms.png"
+    }
+   ]
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Kwang",
+   "physics_asset": "/Game/MonsterAI/Physics/PA_TD_Kwang_Ragdoll.PA_TD_Kwang_Ragdoll",
+   "body_count": 23,
+   "bone_mass_kg": {
+    "pelvis": 68.659,
+    "spine_02": 22.456,
+    "spine_03": 30.416,
+    "clavicle_l": 13.087,
+    "upperarm_l": 4.402,
+    "hand_l": 2.273,
+    "lowerarm_twist_01_l": 3.512,
+    "upperarm_twist_01_l": 6.363,
+    "clavicle_r": 15.474,
+    "lowerarm_r": 6.516,
+    "hand_r": 2.273,
+    "weapon_r": 17.208,
+    "upperarm_twist_01_r": 8.951,
+    "head": 14.507,
+    "faceAttach": 1.866,
+    "calf_l": 7.52,
+    "foot_l": 3.237,
+    "thigh_twist_01_l": 12.884,
+    "hip_plate_bott_l": 9.489,
+    "thigh_r": 19.656,
+    "calf_r": 7.52,
+    "foot_r": 3.237,
+    "thigh_twist_01_r": 12.987
+   },
+   "frames": 285,
+   "frame_time": {
+    "before_covered_seconds": 0.562,
+    "before_ms": {
+     "p50": 23.284,
+     "p95": 26.39,
+     "frames": 24
+    },
+    "after_ms": {
+     "p50": 0.0,
+     "p95": 94.049,
+     "frames": 128
+    },
+    "after_sampler_ms": {
+     "p50": 1.694,
+     "p95": 2.612,
+     "frames": 128
+    },
+    "p95_increase_ms": 67.659
+   },
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.4271,
+   "at_kill": {
+    "frozen": false,
+    "actor_dilation": 1.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.606,
+    "flying_seconds": null,
+    "kill_strength": "strong",
+    "critical": false,
+    "health_before_kill": 140.0,
+    "attacker_location": [
+     -732.317,
+     -0.47,
+     98.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "geometry": {
+    "capsule_half_height_cm": 90.0,
+    "ground_z": 0.0,
+    "ground_source": "trace",
+    "kill_com": [
+     -568.474,
+     1.635,
+     109.743
+    ],
+    "attacker_location": [
+     -732.317,
+     -0.47,
+     98.15
+    ],
+    "victim_location": [
+     -567.77,
+     -0.47,
+     92.15
+    ],
+    "attack_direction": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "forced_immediate_ragdoll": true,
+   "pile_dropped_seconds": [],
+   "launch_speed_cm_s": 692.2,
+   "first_sleep_seconds": 1.9328,
+   "freeze_body_speed_cm_s": 24.2,
+   "pre_sleep_move_cm": 0.65,
+   "land_seconds": 1.4834,
+   "sink_seconds": null,
+   "window_seconds": [
+    1.9834,
+    4.4834
+   ],
+   "observed_seconds": 6.5991,
+   "sleep_seconds": 1.9328,
+   "fps": 39.6,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 1.9555,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     1.933,
+     24.2
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 24.2,
+   "meets_sleep_target": true,
+   "others": [],
+   "launch": {
+    "body_plan": "upright",
+    "launch_up_speed_cm_s": 47.9,
+    "first_frame_relative_speed_cm_s": 431.2,
+    "relative_speed_first_frames_cm_s": [
+     431.2,
+     431.2,
+     431.2
+    ],
+    "ragdoll_delay_real_seconds": 0.5572,
+    "launch_direction_error_deg": 6.9,
+    "launch_planar_speed_cm_s": 430.8,
+    "com_travel_2s_cm": 175.3,
+    "rest_height_ratio_used": 0.18,
+    "drop_height_cm": 92.8,
+    "expected_fall_seconds": 0.4137,
+    "lowest_fall_speed_seconds": 0.3846,
+    "landing_angle_kind": "upright_pelvis_head",
+    "standing_com_height_cm": 116.4,
+    "standing_com_ratio": 1.293,
+    "land_detect_seconds": 0.4629,
+    "land_detect_rule": "rule",
+    "fallback_before_lowest_fall_speed": false,
+    "post_land_slide_cm": 33.1,
+    "landing_angle_deg": 89.6,
+    "rest_com_height_cm": 26.1,
+    "rest_height_ratio": 0.29,
+    "rest_angle_deg": 101.3
+   },
+   "render": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "physics": {
+    "position_rms_cm": 0.0,
+    "step_rms_cm": 0.0,
+    "high_frequency_rms_cm": 0.0
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "foot_r",
+     0.0
+    ],
+    [
+     "clavicle_l",
+     0.0
+    ],
+    [
+     "hand_r",
+     0.0
+    ],
+    [
+     "pelvis",
+     0.0
+    ]
+   ],
+   "component_step_rms_cm": 0.0,
+   "max_angular_deg_s": 0.0,
+   "max_linear_cm_s": 0.0,
+   "awake_fraction": 0.0,
+   "meets_target": true,
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_shot4.png"
+   ],
+   "target": "Kwang-1",
+   "timed_shots": [
+    {
+     "offset": 0.0,
+     "real_seconds_after_kill": 0.0,
+     "game_seconds_after_kill": 0.0,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_t0000ms.png"
+    },
+    {
+     "offset": 0.1,
+     "real_seconds_after_kill": 0.4632,
+     "game_seconds_after_kill": 0.4271,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_t0100ms.png"
+    },
+    {
+     "offset": 0.2,
+     "real_seconds_after_kill": 0.5572,
+     "game_seconds_after_kill": 0.5212,
+     "path": null
+    },
+    {
+     "offset": 0.35,
+     "real_seconds_after_kill": 0.5572,
+     "game_seconds_after_kill": 0.5212,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_t0350ms.png"
+    },
+    {
+     "offset": 0.6,
+     "real_seconds_after_kill": 0.6134,
+     "game_seconds_after_kill": 0.5774,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_t0600ms.png"
+    },
+    {
+     "offset": 1.0,
+     "real_seconds_after_kill": 1.0047,
+     "game_seconds_after_kill": 0.9687,
+     "path": "Docs/MonsterAI_CombatSim/measurements/M3-40/sheet/Kwang-1_t1000ms.png"
+    }
+   ]
+  }
+ ]
+}

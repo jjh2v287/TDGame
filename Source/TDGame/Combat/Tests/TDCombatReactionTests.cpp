@@ -7,6 +7,7 @@
 #include "Characters/TDKnockbackLayeredMove.h"
 #include "Characters/TDMonsterCharacter.h"
 #include "Combat/Damage/TDDamageTypes.h"
+#include "Combat/Feedback/TDDeathLaunchRules.h"
 #include "Combat/Skills/TDCombatActionTypes.h"
 #include "Combat/Skills/TDCombatStyleDefinition.h"
 #include "Combat/Skills/TDPlayerCombatCatalog.h"
@@ -14,6 +15,7 @@
 #include "Combat/TDCombatComponent.h"
 #include "Component/AnimNextComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Core/TDGameplayTags.h"
@@ -317,52 +319,97 @@ bool FTDKillVelocityFromHitDirectionTest::RunTest(const FString& Parameters)
 {
 	using namespace TDCombatReactionTestSupport;
 	const ATDMonsterCharacter* Monster = GetDefault<ATDMonsterCharacter>();
+	const float MonsterMaxHealth = Monster->GetCombatComponent() ? Monster->GetCombatComponent()->GetMaxHealth() : 0.f;
+	if (!TestTrue(TEXT("Monster defaults report a max health"), MonsterMaxHealth > 0.f))
+	{
+		return false;
+	}
+	const float MaxDeviationCosine = FMath::Cos(FMath::DegreesToRadians(37.f)) - UE_KINDA_SMALL_NUMBER;
+	const auto ComputePlanarSpeed = [](const FTDDeathLaunch& Launch)
+	{
+		return static_cast<float>(Launch.LinearVelocity.Size2D());
+	};
+	const auto MakeLaunchFromInput = [Monster](FTDDeathLaunchInput LaunchInput)
+	{
+		LaunchInput.ActorHeight = static_cast<float>(Monster->GetActorLocation().Z);
+		LaunchInput.CenterOfMassHeight = LaunchInput.ActorHeight;
+		LaunchInput.bHasGroundHeight = false;
+		return TDDeathLaunchRules::ComputeDeathLaunch(LaunchInput);
+	};
+	const auto MakeLaunch = [Monster, MakeLaunchFromInput](const FTDDamageResult& DamageResult)
+	{
+		return MakeLaunchFromInput(Monster->MakeDeathLaunchInput(DamageResult));
+	};
 
 	FTDDamageResult Result;
+	Result.Delivery = ETDDamageDelivery::Melee;
 	Result.HitDirection = FVector(0.f, 2.f, 0.f);
+	Result.SwingDirection = FVector(1.f, 0.f, 0.f);
 	Result.DamageRatio = 0.5f;
-	FVector KillVelocity = Monster->ComputeKillVelocity(Result);
-	TestEqual(TEXT("Kill velocity has no sideways part"), static_cast<float>(KillVelocity.X), 0.f, VelocityTolerance);
-	TestEqual(TEXT("Kill velocity grows with the damage ratio"), static_cast<float>(KillVelocity.Y), 410.f, VelocityTolerance);
-	TestEqual(TEXT("Kill velocity lifts the body"), static_cast<float>(KillVelocity.Z), 160.f, VelocityTolerance);
+	Result.UnclampedDamage = MonsterMaxHealth * 0.25f;
+	Result.bWasCritical = true;
+	const FTDDeathLaunchInput Input = Monster->MakeDeathLaunchInput(Result);
+	TestTrue(TEXT("The launch input keeps the delivery"), Input.Delivery == Result.Delivery);
+	TestTrue(TEXT("The launch input keeps the hit direction"), Input.HitDirection.Equals(Result.HitDirection));
+	TestTrue(TEXT("The launch input keeps the swing direction"), Input.SwingDirection.Equals(Result.SwingDirection));
+	TestEqual(TEXT("The launch input keeps the damage ratio"), Input.DamageRatio, Result.DamageRatio);
+	TestEqual(TEXT("The launch input keeps the overkill damage"), Input.UnclampedDamage, Result.UnclampedDamage);
+	TestEqual(TEXT("The launch input reads the max health"), Input.MaxHealth, MonsterMaxHealth);
+	TestTrue(TEXT("The launch input keeps the critical flag"), Input.bWasCritical);
+	TestTrue(TEXT("The launch input faces the actor forward"), Input.ActorForward.Equals(Monster->GetActorForwardVector()));
+	TestEqual(TEXT("The launch input reads the capsule half height"), Input.CapsuleHalfHeight, Monster->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+	TestTrue(TEXT("The launch seed comes from the actor"), Input.VariationSeed == Monster->GetUniqueID());
+
+	TestTrue(TEXT("The launch input asks for an immediate ragdoll"), Input.Presentation == ETDDeathPresentation::Ragdoll && !Input.bStartsAtRest);
+	TestTrue(TEXT("An immediate ragdoll watches for the landing"), MakeLaunchFromInput(Input).bWatchesLanding);
+
+	Result.Delivery = ETDDamageDelivery::Direct;
+	Result.SwingDirection = FVector::ZeroVector;
+	Result.bWasCritical = false;
+	Result.UnclampedDamage = 0.f;
+	const FTDDeathLaunch PlainLaunch = MakeLaunch(Result);
+	TestTrue(TEXT("Kill launch follows the hit direction"), (PlainLaunch.LinearVelocity.GetSafeNormal2D() | FVector(0.f, 1.f, 0.f)) >= MaxDeviationCosine);
+	TestTrue(TEXT("Kill launch lifts the body"), PlainLaunch.LinearVelocity.Z > 0.f);
 
 	Result.bWasCritical = true;
-	KillVelocity = Monster->ComputeKillVelocity(Result);
-	TestEqual(TEXT("Critical kills launch faster"), static_cast<float>(KillVelocity.Y), 492.f, VelocityTolerance);
-
+	TestTrue(TEXT("Critical kills launch faster"), ComputePlanarSpeed(MakeLaunch(Result)) > ComputePlanarSpeed(PlainLaunch));
 	Result.bWasCritical = false;
+
+	Result.DamageRatio = 1.f;
+	const FTDDeathLaunch FullRatioLaunch = MakeLaunch(Result);
+	TestTrue(TEXT("Kill launch grows with the damage ratio"), ComputePlanarSpeed(FullRatioLaunch) > ComputePlanarSpeed(PlainLaunch));
 	Result.DamageRatio = 3.f;
-	KillVelocity = Monster->ComputeKillVelocity(Result);
-	TestEqual(TEXT("Damage ratio is clamped to one"), static_cast<float>(KillVelocity.Y), 600.f, VelocityTolerance);
+	TestEqual(TEXT("Damage ratio is clamped to one"), ComputePlanarSpeed(MakeLaunch(Result)), ComputePlanarSpeed(FullRatioLaunch), VelocityTolerance);
 
-	const float MonsterMaxHealth = Monster->GetCombatComponent() ? Monster->GetCombatComponent()->GetMaxHealth() : 0.f;
-	if (TestTrue(TEXT("Monster defaults report a max health"), MonsterMaxHealth > 0.f))
-	{
-		Result.DamageRatio = 0.05f;
-		Result.UnclampedDamage = MonsterMaxHealth * 0.5f;
-		KillVelocity = Monster->ComputeKillVelocity(Result);
-		TestEqual(TEXT("Overkill damage beyond the remaining health drives the launch speed"), static_cast<float>(KillVelocity.Y), 410.f, VelocityTolerance);
-		Result.UnclampedDamage = 0.f;
-	}
+	Result.DamageRatio = 0.05f;
+	Result.UnclampedDamage = MonsterMaxHealth * 0.5f;
+	TestEqual(TEXT("Overkill damage beyond the remaining health drives the launch speed"), ComputePlanarSpeed(MakeLaunch(Result)), ComputePlanarSpeed(PlainLaunch), VelocityTolerance);
+	Result.UnclampedDamage = 0.f;
+	Result.DamageRatio = 0.5f;
 
-	Result.DamageRatio = 0.f;
 	Result.HitDirection = FVector(3.f, 0.f, 5.f);
-	KillVelocity = Monster->ComputeKillVelocity(Result);
-	TestEqual(TEXT("Kill direction is planar"), static_cast<float>(KillVelocity.X), 220.f, VelocityTolerance);
-	TestEqual(TEXT("Vertical hit direction does not change the lift"), static_cast<float>(KillVelocity.Z), 160.f, VelocityTolerance);
+	const FTDDeathLaunch TiltedLaunch = MakeLaunch(Result);
+	Result.HitDirection = FVector(1.f, 0.f, 0.f);
+	const FTDDeathLaunch FlatLaunch = MakeLaunch(Result);
+	TestTrue(TEXT("Kill direction is planar"), (TiltedLaunch.LinearVelocity.GetSafeNormal2D() | FVector(1.f, 0.f, 0.f)) >= MaxDeviationCosine);
+	TestEqual(TEXT("Vertical hit direction does not change the lift"), static_cast<float>(TiltedLaunch.LinearVelocity.Z), static_cast<float>(FlatLaunch.LinearVelocity.Z), VelocityTolerance);
 
 	Result.HitDirection = FVector::ZeroVector;
-	KillVelocity = Monster->ComputeKillVelocity(Result);
-	const FVector ExpectedPlanarVelocity = (-Monster->GetActorForwardVector()).GetSafeNormal2D() * 220.f;
-	TestTrue(TEXT("Missing hit direction pushes the body backward"), FVector(KillVelocity.X, KillVelocity.Y, 0.f).Equals(ExpectedPlanarVelocity, VelocityTolerance));
+	const FTDDeathLaunch BackwardLaunch = MakeLaunch(Result);
+	TestTrue(TEXT("Missing hit direction pushes the body backward"), (BackwardLaunch.LinearVelocity.GetSafeNormal2D() | -Monster->GetActorForwardVector().GetSafeNormal2D()) >= MaxDeviationCosine);
 
 	Result.HitDirection = FVector(1.f, 0.f, 0.f);
-	Result.DamageRatio = 0.5f;
 	Result.bWasCritical = true;
 	Result.Delivery = ETDDamageDelivery::Status;
-	KillVelocity = Monster->ComputeKillVelocity(Result);
-	TestTrue(TEXT("Status kills do not push the body sideways"), FVector(KillVelocity.X, KillVelocity.Y, 0.f).IsNearlyZero(VelocityTolerance));
-	TestEqual(TEXT("Status kills only lift the body a little"), static_cast<float>(KillVelocity.Z), 48.f, VelocityTolerance);
+	const FTDDeathLaunch StatusLaunch = MakeLaunch(Result);
+	TestTrue(TEXT("Status kills do not push the body sideways"), FVector(StatusLaunch.LinearVelocity.X, StatusLaunch.LinearVelocity.Y, 0.f).IsNearlyZero(VelocityTolerance));
+	TestTrue(TEXT("Status kills lift the body less than other kills"), StatusLaunch.LinearVelocity.Z < PlainLaunch.LinearVelocity.Z);
+
+	FTDDeathLaunchInput ClipInput = Monster->MakeDeathLaunchInput(Result);
+	ClipInput.Presentation = ETDDeathPresentation::ClipThenRagdoll;
+	const FTDDeathLaunch ClipLaunch = MakeLaunchFromInput(ClipInput);
+	TestTrue(TEXT("A ragdoll after the death clip starts at rest"), ClipLaunch.LinearVelocity.IsNearlyZero() && ClipLaunch.AngularVelocityRadians.IsNearlyZero());
+	TestFalse(TEXT("A ragdoll after the death clip does not watch for a landing"), ClipLaunch.bWatchesLanding);
 	return true;
 }
 

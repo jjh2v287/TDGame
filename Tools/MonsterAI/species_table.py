@@ -1,7 +1,7 @@
 """실행 환경: 일반 파이썬(unreal 모듈 없이 import 가능). 몬스터 종 도구와 표 검사 도구가 함께 쓰는 표 읽기·기본값·경로 함수
 실행 명령: 직접 실행하지 않는다. 에디터 도구와 check_species_table.py 가 import 한다
 출력: 없음(함수 모음). 표 정본은 Tools/MonsterAI/species_table.json
-상태: 현행(M3-33)
+상태: 현행(M3-40, 사망 표현 키 death_clip_before_ragdoll·body_plan·corpse_rest_height_ratio 추가)
 """
 import json
 import os
@@ -17,7 +17,12 @@ SPECIES_DEFAULTS = {
     "ragdoll_after_death": False,
     "ragdoll_without_death_clip": True,
     "corpse_sink_seconds": 1.5,
+    "death_clip_before_ragdoll": False,
+    "body_plan": "upright",
+    "corpse_rest_height_ratio": 0.0,
 }
+HORIZONTAL_BODY_PLAN = "horizontal"
+BODY_PLANS = ("upright", HORIZONTAL_BODY_PLAN)
 LOCOMOTION_CLIP_KEYS = ("idle", "walk", "run")
 OPTIONAL_CLIP_KEYS = ("hit", "death")
 EXTRA_CLIP_PROPERTIES = {"takeoff": "take_off_clip", "fly_idle": "fly_idle_clip", "land": "land_clip", "fly_hit": "fly_hit_clip", "channel": "channel_clip", "stun": "stun_clip"}
@@ -41,6 +46,10 @@ def fill_clip_defaults(raw_clip):
     if raw_clip:
         clip.update(raw_clip)
     return clip
+
+
+def is_corpse_rest_height_ratio(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and 0.0 <= value <= 1.0
 
 
 def fill_species_defaults(entry):

@@ -135,6 +135,22 @@ namespace
 		return !Sweep.IsActive();
 	}
 
+	bool SweepBladeByMovingOwner(USkeletalMeshComponent* Attacker, const UAnimSequence* AttackSequence, const FVector& BladeTravel)
+	{
+		FTDDamageContext DamageContext = MakeAttackerDamageContext(Attacker);
+		DamageContext.Delivery = ETDDamageDelivery::Melee;
+		const float SweepTime = MeleeWindowStartTime + MeleeWindowDuration * 0.5f;
+		FTDMeleeSweep Sweep;
+		if (!Sweep.Begin(Attacker, AttackSequence, MakeSweepSettings(10.f), DamageContext, SweepTime, false))
+		{
+			return false;
+		}
+		Attacker->GetOwner()->SetActorLocation(Attacker->GetOwner()->GetActorLocation() + BladeTravel);
+		Sweep.Advance(SweepTime);
+		Sweep.End(SweepTime);
+		return Sweep.GetHitActorCount() == 1;
+	}
+
 	bool SampleBladeTipAtWindowMiddle(const USkeletalMesh* Mesh, const UAnimSequence* AttackSequence, FVector& OutTipLocation)
 	{
 		const FReferenceSkeleton& ReferenceSkeleton = Mesh->GetRefSkeleton();
@@ -245,6 +261,45 @@ bool FTDMeleeSweepHeightLockTest::RunTest(const FString& Parameters)
 	USkeletalMeshComponent* UnlockedAttacker = Fixture.SpawnAttacker(Mesh, 1);
 	SweepAttackWindowWithLongFrame(UnlockedAttacker, AttackSequence, MakeSweepSettings(10.f, false));
 	TestEqual(TEXT("Without the lock the raw animated tip height is hit"), EnemyAtRawTipUnlocked->GetCurrentHealth(), 990.f);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMeleeSweepSwingDirectionTest, "TDGame.Combat.MeleeSweep.ReportsBladeTravelAsSwingDirection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDMeleeSweepSwingDirectionTest::RunTest(const FString& Parameters)
+{
+	USkeletalMesh* Mesh = LoadObject<USkeletalMesh>(nullptr, MeleeAttackerMeshPath);
+	UAnimSequence* AttackSequence = LoadObject<UAnimSequence>(nullptr, MeleeAttackSequencePath);
+	if (!Mesh || !AttackSequence)
+	{
+		AddError(TEXT("Mannequin mesh or attack sequence asset is missing"));
+		return false;
+	}
+
+	FVector TipLocation = FVector::ZeroVector;
+	if (!SampleBladeTipAtWindowMiddle(Mesh, AttackSequence, TipLocation))
+	{
+		AddError(TEXT("Could not sample the blade tip location in the middle of the sweep window"));
+		return false;
+	}
+
+	const TArray<FVector> BladeTravels = { FVector(0.f, 400.f, 0.f), FVector(300.f, -200.f, -250.f) };
+	FTDScopedMeleeWorld Fixture;
+	for (const FVector& BladeTravel : BladeTravels)
+	{
+		UTDCombatComponent* Enemy = Fixture.SpawnTarget(TipLocation + BladeTravel * 0.5f, 2);
+		USkeletalMeshComponent* Attacker = Fixture.SpawnAttacker(Mesh, 1);
+		TestTrue(TEXT("Moving the attacker sweeps the blade through the target once"), SweepBladeByMovingOwner(Attacker, AttackSequence, BladeTravel));
+		TestEqual(TEXT("The swept target takes the hit damage"), Enemy->GetCurrentHealth(), 990.f);
+		const FTDDamageResult& Result = Enemy->GetLastDamageResult();
+		const double SwingCosine = FVector::DotProduct(Result.SwingDirection, BladeTravel.GetSafeNormal());
+		TestTrue(FString::Printf(TEXT("Last damage result swing direction follows the 3D blade travel, cosine=%g"), SwingCosine), SwingCosine >= 0.99);
+		TestTrue(TEXT("Swing direction is a unit vector"), Result.SwingDirection.IsNormalized());
+		const FVector RadialDirection = (Enemy->GetOwner()->GetActorLocation() - Attacker->GetOwner()->GetActorLocation()).GetSafeNormal2D();
+		TestTrue(TEXT("Hit direction stays the attacker-to-victim direction"), Result.HitDirection.Equals(RadialDirection, 0.001));
+		Attacker->GetOwner()->Destroy();
+		Enemy->GetOwner()->Destroy();
+	}
 	return true;
 }
 

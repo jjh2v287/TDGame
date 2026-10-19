@@ -62,6 +62,9 @@ public:
 	FTDFeedbackSoundSet KillSound;
 
 	UPROPERTY(Config, EditAnywhere, Category="Sounds")
+	FTDFeedbackSoundSet CorpseLandSound;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds")
 	FTDFeedbackSoundSet PlayerHurtSound;
 
 	UPROPERTY(Config, EditAnywhere, Category="Sounds")
@@ -100,6 +103,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
 	int32 StatusTickSoundMaxCount = 2;
 
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
+	int32 CorpseLandSoundMaxCount = 4;
+
 	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="0.0"))
 	float PlayerHitSoundRetriggerSeconds = 0.2f;
 
@@ -111,6 +117,15 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
 	int32 SameSoundBurstMaxCount = 3;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="0.0"))
+	float CorpseLandGroupWindowSeconds = 0.1f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
+	int32 CorpseLandGroupStartCount = 3;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1.0"))
+	float CorpseLandGroupVolumeScale = 1.4f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="0.0"))
 	float SoundInnerRadiusCm = 1200.f;
@@ -374,6 +389,12 @@ public:
 	float PhaseEventTrauma = 0.6f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float CorpseLandTrauma = 0.1f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float CorpseLandTraumaIntervalSeconds = 0.15f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float RumbleDealtIntensity = 0.2f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
@@ -534,6 +555,9 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.0"))
 	float BossKillSlowMotionDelaySeconds = 0.05f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.0"))
+	float SlowMotionMaxRagdollDelaySeconds = 0.3f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.01", ClampMax="1.0"))
 	float VictorySlowMotionScale = 0.3f;

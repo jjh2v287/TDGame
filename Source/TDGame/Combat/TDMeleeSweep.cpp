@@ -322,11 +322,11 @@ void FTDMeleeSweep::SweepBladeStep(UWorld* World, const TArray<FVector>& NewBlad
 			DrawDebugSphere(World, SweepEnd, SweepShape.GetSphereRadius(), 8, FColor::Orange, false, Settings.DebugDrawDuration, 0, 0.25f);
 		}
 #endif
-		ApplyHitResults(World, HitResults, QueryParams);
+		ApplyHitResults(World, HitResults, QueryParams, (SweepEnd - SweepStart).GetSafeNormal());
 	}
 }
 
-void FTDMeleeSweep::ApplyHitResults(UWorld* World, const TArray<FHitResult>& HitResults, FCollisionQueryParams& QueryParams)
+void FTDMeleeSweep::ApplyHitResults(UWorld* World, const TArray<FHitResult>& HitResults, FCollisionQueryParams& QueryParams, const FVector& SwingDirection)
 {
 	UTDDamageSubsystem* DamageSubsystem = World->GetSubsystem<UTDDamageSubsystem>();
 	if (!DamageSubsystem)
@@ -362,6 +362,8 @@ void FTDMeleeSweep::ApplyHitResults(UWorld* World, const TArray<FHitResult>& Hit
 			DrawDebugSphere(World, HitLocation, Settings.SweepRadius * 2.f, 12, FColor::Green, false, Settings.DebugDrawDuration, 0, 1.f);
 		}
 #endif
-		DamageSubsystem->ExecuteRules(Settings.HitRules, ETDDamageEvent::Hit, DamageContext, HitActor, HitLocation);
+		FTDDamageContext HitContext = DamageContext;
+		HitContext.SwingDirection = SwingDirection;
+		DamageSubsystem->ExecuteRules(Settings.HitRules, ETDDamageEvent::Hit, HitContext, HitActor, HitLocation);
 	}
 }

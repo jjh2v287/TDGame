@@ -104,6 +104,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void HandleDeathRagdollFailed() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UTDSkillComponent> SkillComponent;
@@ -153,7 +154,13 @@ private:
 	void PlayDeathClipOrRagdoll();
 	float ComputeKillPoseHoldSeconds() const;
 	void ReleaseKillPoseWhenHoldEnds();
-	void StartDeathRagdoll();
+	bool StartDeathRagdoll(ETDDeathPresentation Presentation);
+	void ScheduleDeathClipEnd(float DeathClipSeconds, bool bShouldRagdollAfterClip);
+	void PlayDeathClipCorpseLanding();
+	float PlayDeathClip();
+	ETDDeathPresentation ResolveMonsterDeathPresentation() const;
+	ETDKillRank ResolveDeathKillRank() const;
+	void RecordKillingBlow(const FTDDamageContext& Context);
 	void ScheduleCorpseSink();
 	void BeginCorpseSink();
 	void AdvanceCorpseSink();
@@ -190,6 +197,10 @@ private:
 	FTimerHandle MeleeSwingTimerHandle;
 	FTimerHandle KillPoseHoldTimerHandle;
 	bool bWasHitStopHoldingBody = false;
+	bool bWasKilledByComboFinisher = false;
+	bool bWasKilledByGroundArea = false;
+	int32 MultiKillIndex = 0;
+	float GroundAreaKillDistance = 0.f;
 
 	FTimerHandle DeathRagdollTimerHandle;
 	FTimerHandle CorpseSinkTimerHandle;

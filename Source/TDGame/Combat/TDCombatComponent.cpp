@@ -301,6 +301,7 @@ FTDDamageResult UTDCombatComponent::ReceiveDamage(float RawDamage, ETDDamageElem
 	Frame.Result.bHasHitLocation = HitInfo.bHasLocation && !HitInfo.Location.ContainsNaN();
 	Frame.Result.HitLocation = ResolveHitLocation(HitInfo);
 	Frame.Result.HitDirection = ResolveHitDirection(HitInfo, Context);
+	Frame.Result.SwingDirection = HitInfo.SwingDirection.ContainsNaN() ? FVector::ZeroVector : HitInfo.SwingDirection.GetSafeNormal();
 	const int32 FrameIndex = PendingDamage.Add(MoveTemp(Frame));
 	ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 	Result = PendingDamage[FrameIndex].Result;
@@ -345,6 +346,7 @@ void UTDCombatComponent::HandleHealthChanged(const FOnAttributeChangeData& Chang
 		Result.Delivery = FrameResult.Delivery;
 		Result.HitLocation = FrameResult.HitLocation;
 		Result.HitDirection = FrameResult.HitDirection;
+		Result.SwingDirection = FrameResult.SwingDirection;
 		Result.bHasHitLocation = FrameResult.bHasHitLocation;
 		Result.UnclampedDamage = FMath::Max(Result.AppliedDamage, PendingDamage[FrameIndex].UnclampedDamage);
 	}

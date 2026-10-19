@@ -46,6 +46,7 @@ namespace TDMonsterCorpse
 	constexpr float SinkStepSeconds = 1.f / 30.f;
 	constexpr float MinimumSinkSeconds = 0.05f;
 	constexpr float RagdollSinkLinearDamping = 6.f;
+	constexpr float DeathClipLandVolumeScale = 0.6f;
 }
 
 namespace
@@ -58,7 +59,6 @@ namespace
 	constexpr float ComboPushSeconds = 0.2f;
 	constexpr float FinisherPushSpeed = 660.f;
 	constexpr float FinisherPushSeconds = 0.25f;
-	constexpr float KillPoseHoldRealSeconds = 0.07f;
 	constexpr float MinimumClipCatchUpScale = 0.5f;
 	constexpr float MaximumClipCatchUpScale = 2.f;
 	constexpr float ClipCatchUpScaleTolerance = 0.01f;
@@ -231,6 +231,7 @@ float ATDMonsterCharacter::GetDesiredAttackRange() const
 
 void ATDMonsterCharacter::HandleDeath(const FTDDamageContext& Context)
 {
+	RecordKillingBlow(Context);
 	DisableMovement();
 	SetActorEnableCollision(false);
 	if (DeathLifeSpanSeconds > 0.f)
@@ -1099,7 +1100,12 @@ void ATDMonsterCharacter::PlayDeathPresentation()
 		SetLifeSpan(Species->CorpseLifeSeconds);
 	}
 	const float HoldSeconds = ComputeKillPoseHoldSeconds();
-	if (HoldSeconds <= 0.f || !CharacterAnimation->StartKillPoseHold(HoldSeconds))
+	const bool bIsHoldingKillPose = HoldSeconds > 0.f && CharacterAnimation->StartKillPoseHold(HoldSeconds);
+	if (ResolveMonsterDeathPresentation() == ETDDeathPresentation::Ragdoll)
+	{
+		ScheduleRagdollEntry(bIsHoldingKillPose ? HoldSeconds : 0.f);
+	}
+	if (!bIsHoldingKillPose)
 	{
 		PlayDeathClipOrRagdoll();
 		return;
@@ -1126,53 +1132,79 @@ float ATDMonsterCharacter::ComputeKillPoseHoldSeconds() const
 	{
 		return 0.f;
 	}
-	return KillPoseHoldRealSeconds;
+	FTDKillPoseHoldInput HoldInput;
+	HoldInput.bWasCritical = CombatComponent->GetLastDamageResult().bWasCritical;
+	HoldInput.Tier = bWasKilledByComboFinisher || HoldInput.bWasCritical ? ETDHitFeelTier::Heavy : ETDHitFeelTier::Light;
+	HoldInput.KillRank = ResolveDeathKillRank();
+	HoldInput.GroundAreaDistance = GroundAreaKillDistance;
+	HoldInput.MultiKillIndex = MultiKillIndex;
+	HoldInput.VariationSeed = GetUniqueID();
+	HoldInput.bIsGroundAreaKill = bWasKilledByGroundArea;
+	return TDDeathLaunchRules::ComputeKillPoseHoldRealSeconds(HoldInput);
 }
 
 void ATDMonsterCharacter::PlayDeathClipOrRagdoll()
 {
-	if (!Species)
+	if (!Species || IsRagdollPendingOrActive())
 	{
 		return;
 	}
-	if (bIsBodyFlying || bIsBodyLanding)
-	{
-		StartDeathRagdoll();
-	}
-	if (IsRagdolling())
+	const ETDDeathPresentation Presentation = ResolveMonsterDeathPresentation();
+	if (Presentation == ETDDeathPresentation::Ragdoll && StartDeathRagdoll(Presentation))
 	{
 		return;
 	}
-	const FTDMonsterAnimClip& DeathClip = SelectDeathClip();
-	UAnimSequence* DeathSequence = Cast<UAnimSequence>(DeathClip.Animation);
-	const float DeathClipSeconds = DeathSequence ? CharacterAnimation->PlayDeath(DeathSequence, FMath::Max(DeathClip.PlayRate, MinimumClipPlayRate), DeathClip.EndSeconds) : 0.f;
-	if (DeathClipSeconds > 0.f)
-	{
-		UWorld* World = GetWorld();
-		if (!Species->bRagdollAfterDeathClip || !World)
-		{
-			return;
-		}
-		World->GetTimerManager().SetTimer(DeathRagdollTimerHandle, FTimerDelegate::CreateWeakLambda(this, [this]()
-		{
-			StartDeathRagdoll();
-		}), DeathClipSeconds, false);
-		return;
-	}
-	if (!Species->bUseRagdollWithoutDeathClip)
-	{
-		return;
-	}
-	StartDeathRagdoll();
+	CancelScheduledRagdollEntry();
+	ScheduleDeathClipEnd(PlayDeathClip(), Presentation == ETDDeathPresentation::ClipThenRagdoll);
 }
 
-void ATDMonsterCharacter::StartDeathRagdoll()
+void ATDMonsterCharacter::ScheduleDeathClipEnd(const float DeathClipSeconds, const bool bShouldRagdollAfterClip)
 {
-	if (IsRagdolling())
+	UWorld* World = GetWorld();
+	if (DeathClipSeconds <= 0.f || !World)
 	{
 		return;
 	}
-	StartRagdoll(ComputeKillVelocity(CombatComponent->GetLastDamageResult()));
+	World->GetTimerManager().SetTimer(DeathRagdollTimerHandle, FTimerDelegate::CreateWeakLambda(this, [this, bShouldRagdollAfterClip]()
+	{
+		PlayDeathClipCorpseLanding();
+		if (bShouldRagdollAfterClip)
+		{
+			StartDeathRagdoll(ETDDeathPresentation::ClipThenRagdoll);
+		}
+	}), DeathClipSeconds, false);
+}
+
+void ATDMonsterCharacter::PlayDeathClipCorpseLanding()
+{
+	UWorld* World = GetWorld();
+	UTDCombatFeedbackSubsystem* Feedback = World ? World->GetSubsystem<UTDCombatFeedbackSubsystem>() : nullptr;
+	if (!Feedback)
+	{
+		return;
+	}
+	const float HalfHeight = CapsuleComponent ? CapsuleComponent->GetScaledCapsuleHalfHeight() : 0.f;
+	FTDDeathLaunch ClipFall;
+	ClipFall.DropHeight = FMath::Max(HalfHeight, 1.f);
+	FTDDeathLandingSample FullStrengthImpact;
+	FullStrengthImpact.MinVerticalSpeed = -TNumericLimits<float>::Max();
+	const FTDCorpseLandSound MassSound = TDDeathLaunchRules::ComputeCorpseLandSound(ClipFall, FullStrengthImpact, HalfHeight);
+	Feedback->PlayCorpseLanding(GetActorLocation(), TDMonsterCorpse::DeathClipLandVolumeScale * MassSound.VolumeScale, MassSound.PitchScale, ResolveDeathKillRank(), HalfHeight);
+}
+
+bool ATDMonsterCharacter::StartDeathRagdoll(const ETDDeathPresentation Presentation)
+{
+	if (IsRagdollPendingOrActive())
+	{
+		return true;
+	}
+	FTDDeathLaunchInput LaunchInput = MakeDeathLaunchInput(CombatComponent->GetLastDamageResult());
+	LaunchInput.Presentation = Presentation;
+	LaunchInput.KillRank = ResolveDeathKillRank();
+	LaunchInput.bIsComboFinisher = bWasKilledByComboFinisher;
+	LaunchInput.bHasHorizontalBodyPlan = Species && Species->bHasHorizontalBodyPlan;
+	LaunchInput.RestHeightRatio = Species ? Species->CorpseRestHeightRatio : 0.f;
+	return RequestDeathRagdoll(LaunchInput);
 }
 
 void ATDMonsterCharacter::ScheduleCorpseSink()
@@ -1205,6 +1237,9 @@ void ATDMonsterCharacter::BeginCorpseSink()
 		return;
 	}
 	World->GetTimerManager().ClearTimer(DeathRagdollTimerHandle);
+	StartPendingDeathRagdollNow(true);
+	CancelScheduledRagdollEntry();
+	StopDeathLaunchWatch();
 
 	if (IsRagdolling())
 	{
@@ -1470,4 +1505,71 @@ const FTDMonsterAnimClip& ATDMonsterCharacter::SelectDeathClip() const
 {
 	const FTDMonsterPhasePresentation* Presentation = FindActivePhasePresentation();
 	return Presentation && Presentation->Death.IsValidClip() ? Presentation->Death : Species->Death;
+}
+
+void ATDMonsterCharacter::HandleDeathRagdollFailed()
+{
+	if (!Species || !CharacterAnimation || CharacterAnimation->IsPlayingDeath())
+	{
+		return;
+	}
+	ScheduleDeathClipEnd(PlayDeathClip(), false);
+}
+
+float ATDMonsterCharacter::PlayDeathClip()
+{
+	if (!Species || !CharacterAnimation)
+	{
+		return 0.f;
+	}
+	const FTDMonsterAnimClip& DeathClip = SelectDeathClip();
+	UAnimSequence* DeathSequence = Cast<UAnimSequence>(DeathClip.Animation);
+	if (!DeathSequence)
+	{
+		return 0.f;
+	}
+	return CharacterAnimation->PlayDeath(DeathSequence, FMath::Max(DeathClip.PlayRate, MinimumClipPlayRate), DeathClip.EndSeconds);
+}
+
+ETDDeathPresentation ATDMonsterCharacter::ResolveMonsterDeathPresentation() const
+{
+	if (!Species)
+	{
+		return ETDDeathPresentation::ClipOnly;
+	}
+	const USkeletalMeshComponent* MeshComponent = GetMesh();
+	FTDDeathPresentationInput PresentationInput;
+	PresentationInput.bIsBodyAirborne = bIsBodyFlying || bIsBodyLanding;
+	PresentationInput.bHasRagdollPhysicsAsset = MeshComponent && MeshComponent->GetPhysicsAsset();
+	PresentationInput.bShouldPlayDeathClipBeforeRagdoll = Species->bPlayDeathClipBeforeRagdoll;
+	PresentationInput.bHasDeathClip = Cast<UAnimSequence>(SelectDeathClip().Animation) != nullptr;
+	PresentationInput.bShouldRagdollAfterDeathClip = Species->bRagdollAfterDeathClip;
+	PresentationInput.bShouldUseRagdollWithoutDeathClip = Species->bUseRagdollWithoutDeathClip;
+	return TDDeathLaunchRules::ResolveDeathPresentation(PresentationInput);
+}
+
+ETDKillRank ATDMonsterCharacter::ResolveDeathKillRank() const
+{
+	if (IsBossMonster())
+	{
+		return ETDKillRank::Boss;
+	}
+	if (IsEliteMonster())
+	{
+		return ETDKillRank::Elite;
+	}
+	return ETDKillRank::Normal;
+}
+
+void ATDMonsterCharacter::RecordKillingBlow(const FTDDamageContext& Context)
+{
+	const AActor* Caster = Context.Caster.Get();
+	const UTDSkillComponent* CasterSkills = Caster ? Caster->FindComponentByClass<UTDSkillComponent>() : nullptr;
+	bWasKilledByComboFinisher = Context.Delivery == ETDDamageDelivery::Melee && CasterSkills && CasterSkills->IsPrimaryComboFinisherActive();
+	const FTDDamageResult& KillingResult = CombatComponent->GetLastDamageResult();
+	bWasKilledByGroundArea = Context.Delivery == ETDDamageDelivery::Spell && KillingResult.SwingDirection.IsNearlyZero() && !Context.CastTarget.IsNearlyZero();
+	UWorld* World = GetWorld();
+	UTDCombatFeedbackSubsystem* Feedback = World ? World->GetSubsystem<UTDCombatFeedbackSubsystem>() : nullptr;
+	MultiKillIndex = Feedback && Caster ? Feedback->RecordAttackerKill(*Caster) : 0;
+	GroundAreaKillDistance = bWasKilledByGroundArea ? static_cast<float>(FVector::Dist(GetActorLocation(), Context.CastTarget)) : 0.f;
 }

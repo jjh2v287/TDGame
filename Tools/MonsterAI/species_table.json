@@ -54,6 +54,9 @@
    "corpse_seconds": 6.0,
    "ragdoll_after_death": false,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "horizontal",
+   "corpse_rest_height_ratio": 0.47,
    "corpse_sink_seconds": 1.5
   },
   {
@@ -102,6 +105,9 @@
    "corpse_seconds": 8.0,
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.11,
    "corpse_sink_seconds": 1.5,
    "death": {
     "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Death",
@@ -158,6 +164,9 @@
    "corpse_seconds": 8.0,
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.11,
    "corpse_sink_seconds": 1.5,
    "death": {
     "anim": "/Game/MonsterAI/Animations/BookHead/AS_TD_BookHead_Death",
@@ -206,6 +215,9 @@
    "corpse_seconds": 8.0,
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.16,
    "corpse_sink_seconds": 1.5,
    "death": {
     "anim": "/Game/MonsterAI/Animations/Guard/AS_TD_Guard_Death",
@@ -254,6 +266,9 @@
    "corpse_seconds": 6.0,
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.28,
    "corpse_sink_seconds": 1.5,
    "death": {
     "anim": "/Game/MonsterAI/Animations/Goblin/AS_TD_Goblin_Death",
@@ -310,6 +325,9 @@
    "corpse_seconds": 10.0,
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.42,
    "corpse_sink_seconds": 1.5,
    "death": {
     "anim": "/Game/MonsterAI/Animations/Golem/AS_TD_Golem_Death",
@@ -370,8 +388,11 @@
     }
    },
    "corpse_seconds": 6.0,
-   "ragdoll_after_death": false,
+   "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": true,
+   "body_plan": "horizontal",
+   "corpse_rest_height_ratio": 0.56,
    "corpse_sink_seconds": 1.5
   },
   {
@@ -424,8 +445,11 @@
     }
    },
    "corpse_seconds": 8.0,
-   "ragdoll_after_death": false,
+   "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": true,
+   "body_plan": "horizontal",
+   "corpse_rest_height_ratio": 0.56,
    "corpse_sink_seconds": 1.5
   },
   {
@@ -485,6 +509,9 @@
    "corpse_seconds": 10.0,
    "ragdoll_after_death": false,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "horizontal",
+   "corpse_rest_height_ratio": 0.56,
    "corpse_sink_seconds": 1.5
   },
   {
@@ -544,6 +571,8 @@
    "corpse_seconds": 10.0,
    "ragdoll_after_death": false,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "horizontal",
    "corpse_sink_seconds": 1.5
   },
   {
@@ -604,6 +633,9 @@
    "corpse_seconds": 10.0,
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.28,
    "corpse_sink_seconds": 1.5
   },
   {
@@ -655,6 +687,9 @@
    "corpse_seconds": 10.0,
    "ragdoll_after_death": false,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.27,
    "corpse_sink_seconds": 1.5
   },
   {
@@ -707,6 +742,9 @@
    "corpse_seconds": 10.0,
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.19,
    "corpse_sink_seconds": 1.5
   },
   {
@@ -759,6 +797,9 @@
    "corpse_seconds": 8.0,
    "ragdoll_after_death": true,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "upright",
+   "corpse_rest_height_ratio": 0.2,
    "corpse_sink_seconds": 1.5
   },
   {
@@ -909,6 +950,9 @@
    "corpse_seconds": 12.0,
    "ragdoll_after_death": false,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": true,
+   "body_plan": "horizontal",
+   "corpse_rest_height_ratio": 0.41,
    "corpse_sink_seconds": 2.0
   },
   {
@@ -1008,6 +1052,8 @@
    "corpse_seconds": 10.0,
    "ragdoll_after_death": false,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": false,
+   "body_plan": "horizontal",
    "corpse_sink_seconds": 1.5,
    "phases": {
     "Sword": {
@@ -1144,6 +1190,9 @@
    "corpse_seconds": 10.0,
    "ragdoll_after_death": false,
    "ragdoll_without_death_clip": true,
+   "death_clip_before_ragdoll": true,
+   "body_plan": "horizontal",
+   "corpse_rest_height_ratio": 0.59,
    "corpse_sink_seconds": 1.5,
    "fly_idle": {
     "anim": "/Game/QuadrapedCreatures/Griffon/Animations/ANIM_Griffon_FlyStationary"

@@ -16,7 +16,9 @@ namespace
 		HitInfo.Location = Location;
 		if (!SourceEntity)
 		{
-			HitInfo.bHasLocation = HitContext.Delivery == ETDDamageDelivery::Melee;
+			const bool bIsMeleeHit = HitContext.Delivery == ETDDamageDelivery::Melee;
+			HitInfo.bHasLocation = bIsMeleeHit;
+			HitInfo.SwingDirection = bIsMeleeHit ? HitContext.SwingDirection : FVector::ZeroVector;
 			return HitInfo;
 		}
 		const UTDDamageDefinition* Definition = SourceEntity->GetDefinition();
@@ -24,6 +26,7 @@ namespace
 		{
 			HitInfo.bHasLocation = true;
 			HitInfo.Direction = HitContext.Direction;
+			HitInfo.SwingDirection = Definition->ProjectileSpeed > 0.f ? SourceEntity->GetTravelDirection() : FVector::ZeroVector;
 			return HitInfo;
 		}
 		if (IsValid(Target))

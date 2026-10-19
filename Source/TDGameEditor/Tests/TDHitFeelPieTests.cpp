@@ -12,6 +12,7 @@
 #include "Combat/Feedback/TDCombatFeedbackSettings.h"
 #include "Combat/Feedback/TDCombatFeedbackSubsystem.h"
 #include "Combat/Feedback/TDCombatOverlayWidget.h"
+#include "Combat/Feedback/TDDeathLaunchRules.h"
 #include "Combat/Feedback/TDHitCameraShake.h"
 #include "Combat/GAS/TDCombatAttributeSet.h"
 #include "Combat/Skills/TDSkillComponent.h"
@@ -149,7 +150,6 @@ namespace
 	constexpr float TDHitFeelPieNoisePhaseStep = 0.618f;
 	constexpr float TDHitFeelPieNoisePhasePeriod = 1.f;
 	constexpr float TDHitFeelPieTraumaDecaySlack = 0.003f;
-	constexpr float TDHitFeelPieKillPoseHoldSeconds = 0.07f;
 	constexpr float TDHitFeelPieVictimCriticalBonusSeconds = 0.033f;
 	constexpr float TDHitFeelPieVictimCriticalStopSeconds = TDHitFeelPieVictimHeavyStopSeconds + TDHitFeelPieVictimCriticalBonusSeconds;
 	constexpr float TDHitFeelPieMinimumSpeedDropCmPerSecond = 1.f;
@@ -176,7 +176,6 @@ namespace
 	constexpr int32 TDHitFeelPieCriticalRepetitions = 3;
 	constexpr int32 TDHitFeelPieVictimStopStartLimitFrames = 1;
 	constexpr int32 TDHitFeelPieCommittedMinionStopLimitFrames = 5;
-	constexpr int32 TDHitFeelPieKillDeathDelayMinimumFrames = 4;
 	constexpr int32 TDHitFeelPieKnockbackWindowFrames = 9;
 	constexpr int32 TDHitFeelPieKnockbackWatchLimitFrames = 50;
 	constexpr int32 TDHitFeelPieApproachSampleFrames = 12;
@@ -622,6 +621,7 @@ namespace
 		int32 VictimPendingFrames = 0;
 		FTDHitFeelPieSpan AttackerStopSpan;
 		FTDHitFeelPieSpan ShakeSpan;
+		FTDHitFeelPieSpan DealtShakeSpan;
 		FTDHitFeelPieSpan SlowMotionSpan;
 		float DilationAtCheck = -1.f;
 		int32 SurroundHitsDone = 0;
@@ -641,6 +641,13 @@ namespace
 		int32 VictimStopStartDelayFrames = 0;
 		int32 KillPoseHoldFrames = INDEX_NONE;
 		int32 DeathStartFrame = INDEX_NONE;
+		float KillPoseHoldSeconds = -1.f;
+		float KillPoseHoldWithoutWaveSeconds = -1.f;
+		bool bDidDeathStartWithRagdoll = false;
+		bool bDidPlayDeathClip = false;
+		int32 CorpseLandTraumaRises = 0;
+		float CorpseLandEventTrauma = -1.f;
+		float PeakCorpseLandEventTrauma = 0.f;
 		int32 AttackerStopLastFrame = INDEX_NONE;
 		int32 SlowMotionFirstFrame = INDEX_NONE;
 		float SlowMotionMinDilation = 1.f;
@@ -1485,6 +1492,8 @@ namespace
 		Json->SetNumberField(TEXT("attacker_stop_real_seconds"), Run.AttackerStopSpan.GetSeconds());
 		Json->SetNumberField(TEXT("shake_frames"), Run.ShakeSpan.FrameCount);
 		Json->SetNumberField(TEXT("shake_real_seconds"), Run.ShakeSpan.GetSeconds());
+		Json->SetNumberField(TEXT("dealt_shake_frames"), Run.DealtShakeSpan.FrameCount);
+		Json->SetNumberField(TEXT("dealt_shake_real_seconds"), Run.DealtShakeSpan.GetSeconds());
 		Json->SetNumberField(TEXT("slow_motion_frames"), Run.SlowMotionSpan.FrameCount);
 		Json->SetNumberField(TEXT("slow_motion_real_seconds"), Run.SlowMotionSpan.GetSeconds());
 		Json->SetNumberField(TEXT("time_dilation_at_check"), Run.DilationAtCheck);
@@ -1499,6 +1508,13 @@ namespace
 		Json->SetNumberField(TEXT("victim_stop_start_delay_frames"), Run.VictimStopStartDelayFrames);
 		Json->SetNumberField(TEXT("kill_pose_hold_frames"), Run.KillPoseHoldFrames);
 		Json->SetNumberField(TEXT("death_start_frame"), Run.DeathStartFrame);
+		Json->SetNumberField(TEXT("kill_pose_hold_seconds"), Run.KillPoseHoldSeconds);
+		Json->SetNumberField(TEXT("kill_pose_hold_without_wave_seconds"), Run.KillPoseHoldWithoutWaveSeconds);
+		Json->SetBoolField(TEXT("death_started_with_ragdoll"), Run.bDidDeathStartWithRagdoll);
+		Json->SetBoolField(TEXT("played_death_clip"), Run.bDidPlayDeathClip);
+		Json->SetNumberField(TEXT("corpse_land_trauma_rises"), Run.CorpseLandTraumaRises);
+		Json->SetNumberField(TEXT("corpse_land_event_trauma"), Run.CorpseLandEventTrauma);
+		Json->SetNumberField(TEXT("peak_corpse_land_event_trauma"), Run.PeakCorpseLandEventTrauma);
 		Json->SetNumberField(TEXT("attacker_stop_last_frame"), Run.AttackerStopLastFrame);
 		Json->SetNumberField(TEXT("slow_motion_first_frame"), Run.SlowMotionFirstFrame);
 		Json->SetNumberField(TEXT("slow_motion_min_dilation"), Run.SlowMotionMinDilation);
@@ -1676,6 +1692,33 @@ namespace
 		return FocusMonster && FocusMonster->IsInCommittedAttack();
 	}
 
+	ETDKillRank ResolveHitFeelPieKillRank(const ATDMonsterCharacter& Victim)
+	{
+		if (Victim.IsBossMonster())
+		{
+			return ETDKillRank::Boss;
+		}
+		return Victim.IsEliteMonster() ? ETDKillRank::Elite : ETDKillRank::Normal;
+	}
+
+	void RecordHitFeelPieKillPoseHold(FTDHitFeelPieRun& Run, const ATDGameCharacter& Player, const ATDMonsterCharacter& Victim, const FTDDamageResult& Result)
+	{
+		if (!Result.bWasKilled)
+		{
+			return;
+		}
+
+		const UTDSkillComponent* PlayerSkill = Player.GetSkillComponent();
+		const bool bIsComboFinisher = Result.Delivery == ETDDamageDelivery::Melee && PlayerSkill && PlayerSkill->IsPrimaryComboFinisherActive();
+		FTDKillPoseHoldInput HoldInput;
+		HoldInput.Tier = bIsComboFinisher || Result.bWasCritical ? ETDHitFeelTier::Heavy : ETDHitFeelTier::Light;
+		HoldInput.KillRank = ResolveHitFeelPieKillRank(Victim);
+		HoldInput.bWasCritical = Result.bWasCritical;
+		Run.KillPoseHoldWithoutWaveSeconds = TDDeathLaunchRules::ComputeKillPoseHoldRealSeconds(HoldInput);
+		HoldInput.VariationSeed = Victim.GetUniqueID();
+		Run.KillPoseHoldSeconds = TDDeathLaunchRules::ComputeKillPoseHoldRealSeconds(HoldInput);
+	}
+
 	bool ApplyHitFeelPieDealtInjection(FTDHitFeelPieRun& Run, ATDGameCharacter& Player, ATDMonsterCharacter& Victim, int32 KillCount, ETDKillRank KillRank, bool bIsLethal, ETDDamageDelivery Delivery = ETDDamageDelivery::Melee, bool bIsCritical = false)
 	{
 		Run.bIsVictimCommitted = Victim.IsInCommittedAttack();
@@ -1686,6 +1729,7 @@ namespace
 		Run.ExpectedTrauma = UTDCombatFeedbackSubsystem::ComputeDealtTrauma(ResolveHitFeelPieDealtTier(Result), KillCount, KillRank);
 		if (bIsLethal)
 		{
+			RecordHitFeelPieKillPoseHold(Run, Player, Victim, Result);
 			return Result.bWasKilled;
 		}
 		return Result.AppliedDamage > 0.f && (!bIsCritical || Result.bWasCritical);
@@ -1985,6 +2029,7 @@ namespace
 		const FTDDamageResult Result = InjectHitFeelPieDealtDamage(*Player, *Boss, 0.f, true);
 		Run.AppliedRatio = Result.DamageRatio;
 		Run.ExpectedTrauma = UTDCombatFeedbackSubsystem::ComputeDealtTrauma(ResolveHitFeelPieDealtTier(Result), 1, ETDKillRank::Boss);
+		RecordHitFeelPieKillPoseHold(Run, *Player, *Boss, Result);
 		Run.bDidInjectionApply = Result.bWasKilled;
 		Run.InjectTrauma = Feedback->GetCameraTraumaForTest();
 		Run.bDidShakeStartAtInject = Feedback->GetStats().ShakesStarted > Run.ShakesBefore;
@@ -2105,6 +2150,7 @@ namespace
 		const int32 EventFrame = GetHitFeelPieEventFrame(Run);
 		const float DecayPerSecond = GetDefault<UTDCombatFeedbackSettings>()->ShakeTraumaDecayPerSecond;
 		const int32 EventChannelIndex = static_cast<int32>(ETDShakeChannel::Event);
+		const int32 DealtChannelIndex = static_cast<int32>(ETDShakeChannel::Dealt);
 		const FTDHitFeelPieFrameRow* PreviousRow = nullptr;
 		bool bHasFoundShakeStart = false;
 		for (int32 RowIndex = Run.FirstRowIndex; RowIndex < State.Rows.Num(); ++RowIndex)
@@ -2154,6 +2200,7 @@ namespace
 			}
 			Run.AttackerStopSpan.Add(Row.bIsAttackerStopActive, Row.RealSeconds);
 			Run.ShakeSpan.Add(Row.Trauma > TDHitFeelPieQuietTrauma, Row.RealSeconds);
+			Run.DealtShakeSpan.Add(Row.ChannelTrauma[DealtChannelIndex] > TDHitFeelPieQuietTrauma, Row.RealSeconds);
 			Run.SlowMotionSpan.Add(bIsSlowMotion, Row.RealSeconds);
 			if (Row.Frame == EventFrame + TDHitFeelPieBossDilationCheckFrames)
 			{
@@ -2314,6 +2361,9 @@ namespace
 	{
 		const int32 EventFrame = GetHitFeelPieEventFrame(Run);
 		Run.KillPoseHoldFrames = 0;
+		Run.DeathStartFrame = INDEX_NONE;
+		Run.bDidDeathStartWithRagdoll = false;
+		Run.bDidPlayDeathClip = false;
 		for (int32 RowIndex = Run.FirstRowIndex; RowIndex < State.Rows.Num(); ++RowIndex)
 		{
 			const FTDHitFeelPieFrameRow& Row = State.Rows[RowIndex];
@@ -2321,12 +2371,66 @@ namespace
 			{
 				continue;
 			}
+			Run.bDidPlayDeathClip = Run.bDidPlayDeathClip || Row.bIsVictimPlayingDeath;
+			if (Run.DeathStartFrame != INDEX_NONE)
+			{
+				continue;
+			}
 			if (Row.bIsVictimPlayingDeath || Row.bIsVictimRagdolling)
 			{
 				Run.DeathStartFrame = Row.Frame;
-				return;
+				Run.bDidDeathStartWithRagdoll = Row.bIsVictimRagdolling;
+				continue;
 			}
 			Run.KillPoseHoldFrames += !Row.bIsVictimUafActive || Row.VictimStopRemainingSeconds > 0.f ? 1 : 0;
+		}
+	}
+
+	float ResolveHitFeelPieRisenTrauma(float SampledTrauma, double RealDeltaSeconds, float ExpectedTrauma)
+	{
+		const float DecayCorrectedTrauma = SampledTrauma + GetDefault<UTDCombatFeedbackSettings>()->ShakeTraumaDecayPerSecond * static_cast<float>(RealDeltaSeconds);
+		const bool bIsRawCloser = FMath::Abs(SampledTrauma - ExpectedTrauma) <= FMath::Abs(DecayCorrectedTrauma - ExpectedTrauma);
+		return bIsRawCloser ? SampledTrauma : DecayCorrectedTrauma;
+	}
+
+	void AnalyzeHitFeelPieCorpseLanding(const FTDHitFeelPieState& State, FTDHitFeelPieRun& Run)
+	{
+		Run.CorpseLandTraumaRises = 0;
+		Run.CorpseLandEventTrauma = -1.f;
+		Run.PeakCorpseLandEventTrauma = 0.f;
+		if (Run.DeathStartFrame == INDEX_NONE)
+		{
+			return;
+		}
+
+		const float ExpectedTrauma = GetDefault<UTDCombatFeedbackSettings>()->CorpseLandTrauma;
+		const int32 EventChannelIndex = static_cast<int32>(ETDShakeChannel::Event);
+		const FTDHitFeelPieFrameRow* PreviousRow = nullptr;
+		for (int32 RowIndex = Run.FirstRowIndex; RowIndex < State.Rows.Num(); ++RowIndex)
+		{
+			const FTDHitFeelPieFrameRow& Row = State.Rows[RowIndex];
+			if (Row.RunIndex != Run.RunIndex || Row.Frame < Run.DeathStartFrame)
+			{
+				continue;
+			}
+			const FTDHitFeelPieFrameRow* RowBefore = PreviousRow;
+			PreviousRow = &Row;
+			if (!RowBefore)
+			{
+				continue;
+			}
+
+			const float EventTrauma = Row.ChannelTrauma[EventChannelIndex];
+			Run.PeakCorpseLandEventTrauma = FMath::Max(Run.PeakCorpseLandEventTrauma, EventTrauma);
+			if (EventTrauma <= RowBefore->ChannelTrauma[EventChannelIndex] + TDHitFeelPieQuietTrauma)
+			{
+				continue;
+			}
+			++Run.CorpseLandTraumaRises;
+			if (Run.CorpseLandEventTrauma < 0.f)
+			{
+				Run.CorpseLandEventTrauma = ResolveHitFeelPieRisenTrauma(EventTrauma, Row.RealDeltaSeconds, ExpectedTrauma);
+			}
 		}
 	}
 
@@ -2500,6 +2604,7 @@ namespace
 		if (Run.Scenario == ETDHitFeelPieScenario::DealtKill || Run.Scenario == ETDHitFeelPieScenario::BossKill)
 		{
 			AnalyzeHitFeelPieKillPose(State, Run);
+			AnalyzeHitFeelPieCorpseLanding(State, Run);
 		}
 		if (Run.Scenario == ETDHitFeelPieScenario::DealtKill)
 		{
@@ -2930,7 +3035,6 @@ namespace
 
 	void VerifyHitFeelPieKillPose(FAutomationTestBase& Test, FTDHitFeelPieState& State)
 	{
-		const int32 ExpectedFrames = ComputeHitFeelPieFrames(TDHitFeelPieKillPoseHoldSeconds);
 		for (const ETDHitFeelPieScenario Scenario : TDHitFeelPieKillScenarios)
 		{
 			const TCHAR* ScenarioName = GetHitFeelPieScenarioName(Scenario);
@@ -2938,9 +3042,15 @@ namespace
 			Test.TestTrue(*FString::Printf(TEXT("%s has a clean run for the kill pose hold"), ScenarioName), Runs.Num() > 0);
 			for (const FTDHitFeelPieRun* Run : Runs)
 			{
+				const float ShortestHoldSeconds = FMath::Min(Run->KillPoseHoldWithoutWaveSeconds, Run->KillPoseHoldSeconds);
+				const float LongestHoldSeconds = FMath::Max(Run->KillPoseHoldWithoutWaveSeconds, Run->KillPoseHoldSeconds);
+				const int32 MinimumHoldFrames = ComputeHitFeelPieFrames(ShortestHoldSeconds) - TDHitFeelPieFrameTolerance;
+				const int32 MaximumHoldFrames = ComputeHitFeelPieFrames(LongestHoldSeconds) + TDHitFeelPieFrameTolerance;
 				const int32 DeathDelayFrames = Run->DeathStartFrame == INDEX_NONE ? INDEX_NONE : Run->DeathStartFrame - GetHitFeelPieEventFrame(*Run);
-				Test.TestTrue(*FString::Printf(TEXT("%s run %d holds the kill pose %d frames (expected %d or %d)"), ScenarioName, Run->RunIndex, Run->KillPoseHoldFrames, ExpectedFrames, ExpectedFrames + 1), Run->KillPoseHoldFrames == ExpectedFrames || Run->KillPoseHoldFrames == ExpectedFrames + TDHitFeelPieFrameTolerance);
-				Test.TestTrue(*FString::Printf(TEXT("%s run %d starts the death clip or ragdoll %d frames after the kill (>= %d)"), ScenarioName, Run->RunIndex, DeathDelayFrames, TDHitFeelPieKillDeathDelayMinimumFrames), DeathDelayFrames >= TDHitFeelPieKillDeathDelayMinimumFrames);
+				Test.TestTrue(*FString::Printf(TEXT("%s run %d records the kill pose hold from the kill rule (%.3f s)"), ScenarioName, Run->RunIndex, Run->KillPoseHoldSeconds), ShortestHoldSeconds > 0.f);
+				Test.TestTrue(*FString::Printf(TEXT("%s run %d holds the kill pose %d frames (expected %d to %d for %.3f to %.3f s)"), ScenarioName, Run->RunIndex, Run->KillPoseHoldFrames, MinimumHoldFrames, MaximumHoldFrames, ShortestHoldSeconds, LongestHoldSeconds), Run->KillPoseHoldFrames >= MinimumHoldFrames && Run->KillPoseHoldFrames <= MaximumHoldFrames);
+				Test.TestTrue(*FString::Printf(TEXT("%s run %d starts the ragdoll %d frames after the kill, right after the hold (expected %d to %d)"), ScenarioName, Run->RunIndex, DeathDelayFrames, MinimumHoldFrames + 1, MaximumHoldFrames + 1), Run->bDidDeathStartWithRagdoll && DeathDelayFrames >= MinimumHoldFrames + 1 && DeathDelayFrames <= MaximumHoldFrames + 1);
+				Test.TestFalse(*FString::Printf(TEXT("%s run %d never plays the death clip"), ScenarioName, Run->RunIndex), Run->bDidPlayDeathClip);
 			}
 		}
 	}
@@ -3100,15 +3210,19 @@ namespace
 
 		const FTDHitFeelPieRun& Run = *Runs[0];
 		const double AttackerStopSeconds = Run.AttackerStopSpan.GetSeconds();
-		const double ShakeSeconds = Run.ShakeSpan.GetSeconds();
+		const double ShakeSeconds = Run.DealtShakeSpan.GetSeconds();
 		const double SlowMotionSeconds = Run.SlowMotionSpan.GetSeconds();
 		State.Summary->SetNumberField(TEXT("boss_attacker_stop_real_seconds"), AttackerStopSeconds);
 		State.Summary->SetNumberField(TEXT("boss_shake_real_seconds"), ShakeSeconds);
 		State.Summary->SetNumberField(TEXT("boss_slow_motion_real_seconds"), SlowMotionSeconds);
+		State.Summary->SetNumberField(TEXT("boss_corpse_land_event_trauma"), Run.CorpseLandEventTrauma);
+		State.Summary->SetNumberField(TEXT("boss_corpse_land_trauma_rises"), Run.CorpseLandTraumaRises);
 		Test.TestTrue(TEXT("Boss kill victim is a boss monster"), Run.bIsBossVictim);
 		Test.TestTrue(*FString::Printf(TEXT("Boss kill stops the attacker (%d frames)"), Run.AttackerStopSpan.FrameCount), Run.AttackerStopSpan.FrameCount > 0);
 		Test.TestTrue(*FString::Printf(TEXT("Boss kill attacker stop lasts <= 0.06 s of real time (%d frames = %.3f s)"), Run.AttackerStopSpan.FrameCount, AttackerStopSeconds), AttackerStopSeconds <= TDHitFeelPieBossAttackerStopLimitSeconds);
-		Test.TestTrue(*FString::Printf(TEXT("Boss kill shake lasts > 0 and <= 0.5 s of real time (%d frames = %.3f s)"), Run.ShakeSpan.FrameCount, ShakeSeconds), Run.ShakeSpan.FrameCount > 0 && ShakeSeconds <= TDHitFeelPieBossShakeLimitSeconds);
+		Test.TestTrue(*FString::Printf(TEXT("Boss kill shake on the dealt channel lasts > 0 and <= 0.5 s of real time (%d frames = %.3f s)"), Run.DealtShakeSpan.FrameCount, ShakeSeconds), Run.DealtShakeSpan.FrameCount > 0 && ShakeSeconds <= TDHitFeelPieBossShakeLimitSeconds);
+		Test.TestTrue(*FString::Printf(TEXT("Boss corpse landing event-channel trauma %.3f after the ragdoll start (raw peak %.3f, one frame of decay allowed) equals %.2f +- 0.01"), Run.CorpseLandEventTrauma, Run.PeakCorpseLandEventTrauma, Settings->CorpseLandTrauma), Run.CorpseLandEventTrauma >= 0.f && FMath::Abs(Run.CorpseLandEventTrauma - Settings->CorpseLandTrauma) <= TDHitFeelPieTraumaTolerance);
+		Test.TestEqual(TEXT("Boss corpse landing raises the event-channel trauma exactly once after the ragdoll start"), Run.CorpseLandTraumaRises, 1);
 		Test.TestTrue(*FString::Printf(TEXT("Boss kill slow motion lasts <= 1.0 s of real time (%d frames = %.3f s)"), Run.SlowMotionSpan.FrameCount, SlowMotionSeconds), SlowMotionSeconds <= TDHitFeelPieBossSlowMotionLimitSeconds);
 		Test.TestTrue(*FString::Printf(TEXT("Time dilation is back to 1 within 1.5 s of real time after the boss kill (%.3f)"), Run.DilationAtCheck), Run.DilationAtCheck >= 0.f && FMath::IsNearlyEqual(Run.DilationAtCheck, 1.f, TDHitFeelPieDilationTolerance));
 		if (!Settings->IsSlowMotionEnabled())
@@ -3119,10 +3233,19 @@ namespace
 
 		const int32 ExpectedSlowFrames = ComputeHitFeelPieFrames(Settings->BossKillSlowMotionSeconds);
 		const int32 ExpectedDelayFrames = ComputeHitFeelPieFrames(Settings->BossKillSlowMotionDelaySeconds);
-		const int32 DelayFrames = Run.SlowMotionFirstFrame != INDEX_NONE && Run.AttackerStopLastFrame != INDEX_NONE ? Run.SlowMotionFirstFrame - Run.AttackerStopLastFrame : INDEX_NONE;
+		FTDSlowMotionStartInput RagdollLeadInput;
+		RagdollLeadInput.MaxRagdollDelaySeconds = Settings->SlowMotionMaxRagdollDelaySeconds;
+		RagdollLeadInput.LatestRagdollEntryRealSeconds = 0.;
+		const int32 RagdollLeadFrames = ComputeHitFeelPieFrames(static_cast<float>(TDDeathLaunchRules::ResolveSlowMotionStartRealSeconds(RagdollLeadInput)));
+		const bool bHasStartFrames = Run.SlowMotionFirstFrame != INDEX_NONE && Run.AttackerStopLastFrame != INDEX_NONE && Run.DeathStartFrame != INDEX_NONE;
+		const int32 RequestedStartFrame = Run.AttackerStopLastFrame + ExpectedDelayFrames;
+		const int32 RagdollLeadStartFrame = Run.DeathStartFrame + RagdollLeadFrames;
+		const int32 LatestStartFrame = RequestedStartFrame + ComputeHitFeelPieFrames(Settings->SlowMotionMaxRagdollDelaySeconds);
+		const int32 ExpectedStartFrame = FMath::Min(FMath::Max(RequestedStartFrame, RagdollLeadStartFrame), LatestStartFrame);
 		Test.TestTrue(*FString::Printf(TEXT("Boss kill slow motion scale %.4f equals %.2f +- 0.001"), Run.SlowMotionMinDilation, Settings->BossKillSlowMotionScale), Run.SlowMotionSpan.FrameCount > 0 && FMath::Abs(Run.SlowMotionMinDilation - Settings->BossKillSlowMotionScale) <= TDHitFeelPieSlowMotionScaleTolerance);
 		Test.TestTrue(*FString::Printf(TEXT("Boss kill slow motion lasts %d frames (expected %d +- 1)"), Run.SlowMotionSpan.FrameCount, ExpectedSlowFrames), FMath::Abs(Run.SlowMotionSpan.FrameCount - ExpectedSlowFrames) <= TDHitFeelPieFrameTolerance);
-		Test.TestTrue(*FString::Printf(TEXT("Boss kill slow motion starts %d frames after the kill stop ends (expected %d +- 1)"), DelayFrames, ExpectedDelayFrames), DelayFrames != INDEX_NONE && FMath::Abs(DelayFrames - ExpectedDelayFrames) <= TDHitFeelPieFrameTolerance);
+		Test.TestTrue(*FString::Printf(TEXT("Boss kill ragdoll starts before the slow motion (ragdoll frame %d, slow motion frame %d)"), Run.DeathStartFrame, Run.SlowMotionFirstFrame), bHasStartFrames && Run.SlowMotionFirstFrame > Run.DeathStartFrame);
+		Test.TestTrue(*FString::Printf(TEXT("Boss kill slow motion starts at frame %d (expected %d +- 1, the later of the kill stop end + %d and the ragdoll start + %d, no later than frame %d)"), Run.SlowMotionFirstFrame, ExpectedStartFrame, ExpectedDelayFrames, RagdollLeadFrames, LatestStartFrame), bHasStartFrames && FMath::Abs(Run.SlowMotionFirstFrame - ExpectedStartFrame) <= TDHitFeelPieFrameTolerance);
 	}
 
 	void VerifyHitFeelPie(FAutomationTestBase& Test, FTDHitFeelPieState& State)

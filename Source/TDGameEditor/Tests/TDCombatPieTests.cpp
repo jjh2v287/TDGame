@@ -7,6 +7,7 @@
 #include "Characters/TDMonsterCharacter.h"
 #include "Combat/Damage/TDDamageTypes.h"
 #include "Combat/Feedback/TDCombatFeedbackSubsystem.h"
+#include "Combat/Feedback/TDDeathLaunchRules.h"
 #include "Combat/GAS/TDCombatAttributeSet.h"
 #include "Combat/Skills/TDCombatActionTypes.h"
 #include "Combat/Skills/TDCombatStyleDefinition.h"
@@ -74,7 +75,8 @@ namespace
 	constexpr double TDCombatPieAttackIntervalSeconds = 0.35;
 	constexpr double TDCombatPieKillTimeoutSeconds = 40.0;
 	constexpr int32 TDCombatPieMinimumComboStepReached = 2;
-	constexpr double TDCombatPieRagdollStartLimitSeconds = 1.0;
+	constexpr double TDCombatPieRagdollStartSlackSeconds = 0.1;
+	constexpr float TDCombatPieKillHoldFallbackWaveDistanceCm = 400.f;
 	constexpr double TDCombatPieRagdollStartTimeoutSeconds = 1.5;
 	constexpr double TDCombatPieRagdollObserveSeconds = 2.0;
 	constexpr double TDCombatPieRagdollObserveTimeoutSeconds = 15.0;
@@ -149,6 +151,9 @@ namespace
 		TArray<TSharedPtr<FJsonValue>> MonsterHitRows;
 		double PhaseStartSeconds = 0.0;
 		double MonsterDeathSeconds = -1.0;
+		double MonsterKillHoldSeconds = -1.0;
+		FVector MonsterDeathProbeLocation = FVector::ZeroVector;
+		bool bHasMonsterDeathProbeLocation = false;
 		bool bWasMonsterKilledByMelee = false;
 		bool bWasMonsterKillForced = false;
 
@@ -633,6 +638,57 @@ namespace
 		return State.bDidCursorTraceHitMonster;
 	}
 
+	ETDKillRank ResolveCombatPieKillRank(const ATDMonsterCharacter& Monster)
+	{
+		if (Monster.IsBossMonster())
+		{
+			return ETDKillRank::Boss;
+		}
+		return Monster.IsEliteMonster() ? ETDKillRank::Elite : ETDKillRank::Normal;
+	}
+
+	double ComputeCombatPieKillHoldSeconds(const ATDGameCharacter* Player, const ATDMonsterCharacter* Monster, const bool bIsPlayerMelee, const bool bWasCritical)
+	{
+		const UTDSkillComponent* PlayerSkill = Player ? Player->GetSkillComponent() : nullptr;
+		const bool bIsComboFinisher = bIsPlayerMelee && PlayerSkill && PlayerSkill->IsPrimaryComboFinisherActive();
+		FTDKillPoseHoldInput HoldInput;
+		HoldInput.Tier = bIsComboFinisher || bWasCritical ? ETDHitFeelTier::Heavy : ETDHitFeelTier::Light;
+		HoldInput.KillRank = Monster ? ResolveCombatPieKillRank(*Monster) : ETDKillRank::Normal;
+		HoldInput.bWasCritical = bWasCritical;
+		return TDDeathLaunchRules::ComputeKillPoseHoldRealSeconds(HoldInput);
+	}
+
+	double ComputeCombatPieRagdollStartLimitSeconds(const FTDCombatPieTestState& State)
+	{
+		if (State.MonsterKillHoldSeconds >= 0.0)
+		{
+			return State.MonsterKillHoldSeconds + TDCombatPieRagdollStartSlackSeconds;
+		}
+
+		FTDKillPoseHoldInput LongestHoldInput;
+		LongestHoldInput.Tier = ETDHitFeelTier::Heavy;
+		LongestHoldInput.KillRank = ETDKillRank::Normal;
+		LongestHoldInput.GroundAreaDistance = TDCombatPieKillHoldFallbackWaveDistanceCm;
+		LongestHoldInput.bWasCritical = true;
+		LongestHoldInput.bIsGroundAreaKill = true;
+		return TDDeathLaunchRules::ComputeKillPoseHoldRealSeconds(LongestHoldInput) + TDCombatPieRagdollStartSlackSeconds;
+	}
+
+	FName FindRagdollProbeBone(const USkeletalMeshComponent& Mesh);
+
+	void RecordMonsterDeathPoint(FTDCombatPieTestState& State)
+	{
+		State.MonsterDeathSeconds = GetPieWorldSeconds();
+		const ATDMonsterCharacter* Monster = State.Monster.Get();
+		const USkeletalMeshComponent* Mesh = Monster ? Monster->GetMesh() : nullptr;
+		if (!Mesh)
+		{
+			return;
+		}
+		State.MonsterDeathProbeLocation = Mesh->GetBoneLocation(FindRagdollProbeBone(*Mesh));
+		State.bHasMonsterDeathProbeLocation = true;
+	}
+
 	void RecordPlayerHitOnMonster(FTDCombatPieTestState& State, const FTDDamageResult& Result, const FTDDamageContext& Context)
 	{
 		const ATDGameCharacter* Player = State.Player.Get();
@@ -646,6 +702,7 @@ namespace
 		if (Result.bWasKilled)
 		{
 			State.bWasMonsterKilledByMelee = bIsPlayerMelee;
+			State.MonsterKillHoldSeconds = ComputeCombatPieKillHoldSeconds(Player, Monster, bIsPlayerMelee, Result.bWasCritical);
 		}
 		if (State.MonsterHitRows.Num() >= TDCombatPieHitRowLimit)
 		{
@@ -740,6 +797,8 @@ namespace
 		State.MeleeHitsFromPlayerWithLocation = 0;
 		State.MonsterHitRows.Reset();
 		State.MonsterDeathSeconds = -1.0;
+		State.MonsterKillHoldSeconds = -1.0;
+		State.bHasMonsterDeathProbeLocation = false;
 		State.bWasMonsterKilledByMelee = false;
 		State.bWasMonsterKillForced = false;
 		PlayerSkill->ResetHighestPrimaryComboStepReached();
@@ -801,7 +860,7 @@ namespace
 		const double NowSeconds = GetPieWorldSeconds();
 		if (!MonsterCombat->IsAlive())
 		{
-			State.MonsterDeathSeconds = NowSeconds;
+			RecordMonsterDeathPoint(State);
 			return true;
 		}
 
@@ -1024,10 +1083,12 @@ namespace
 
 		const ATDMonsterCharacter* Monster = State.Monster.Get();
 		const double SecondsToRagdoll = State.bHasRagdollStarted && State.MonsterDeathSeconds >= 0.0 ? State.RagdollStartSeconds - State.MonsterDeathSeconds : -1.0;
-		const double ArenaDriftCm = FVector::Dist2D(State.RagdollLastProbeLocation, State.RagdollStartLocation);
+		const double RagdollStartLimitSeconds = ComputeCombatPieRagdollStartLimitSeconds(State);
+		const FVector DeathPointLocation = State.bHasMonsterDeathProbeLocation ? State.MonsterDeathProbeLocation : State.RagdollStartLocation;
+		const double ArenaDriftCm = FVector::Dist2D(State.RagdollLastProbeLocation, DeathPointLocation);
 		const double FloorClearanceCm = State.RagdollLastProbeLocation.Z - State.FirstMonsterFloorZ;
 		const bool bStaysInArena = State.bHasRagdollStarted && ArenaDriftCm <= TDCombatPieArenaMaxHorizontalDriftCm && FloorClearanceCm >= -TDCombatPieArenaFloorToleranceCm;
-		Test.TestTrue(TEXT("Killed goblin simulates physics within 1 s"), State.bHasRagdollStarted && SecondsToRagdoll <= TDCombatPieRagdollStartLimitSeconds);
+		Test.TestTrue(*FString::Printf(TEXT("Killed goblin simulates physics within the kill pose hold + 0.1 s (%.3f s, limit %.3f s)"), SecondsToRagdoll, RagdollStartLimitSeconds), State.bHasRagdollStarted && SecondsToRagdoll >= 0.0 && SecondsToRagdoll <= RagdollStartLimitSeconds);
 		Test.TestTrue(TEXT("Killed goblin reports ragdolling when its physics starts"), State.bWasRagdollingAtStart);
 		Test.TestFalse(TEXT("Goblin corpse stays for the 2 s ragdoll observation"), State.bWasRagdollObservationCut);
 		Test.TestTrue(*FString::Printf(TEXT("Goblin ragdoll pose bones are found relative to '%s'"), *State.RagdollBoneName.ToString()), State.RagdollPoseBoneNames.Num() > 0);
@@ -1037,6 +1098,10 @@ namespace
 		const TSharedRef<FJsonObject> Phase = MakeShared<FJsonObject>();
 		Phase->SetBoolField(TEXT("ragdoll_started"), State.bHasRagdollStarted);
 		Phase->SetNumberField(TEXT("seconds_to_ragdoll"), SecondsToRagdoll);
+		Phase->SetNumberField(TEXT("kill_hold_seconds"), State.MonsterKillHoldSeconds);
+		Phase->SetNumberField(TEXT("ragdoll_start_limit_seconds"), RagdollStartLimitSeconds);
+		Phase->SetBoolField(TEXT("has_death_point"), State.bHasMonsterDeathProbeLocation);
+		Phase->SetNumberField(TEXT("death_point_drift_cm"), ArenaDriftCm);
 		Phase->SetBoolField(TEXT("is_ragdolling_at_start"), State.bWasRagdollingAtStart);
 		Phase->SetBoolField(TEXT("is_ragdolling_after_observation"), Monster && Monster->IsRagdolling());
 		Phase->SetStringField(TEXT("probe_bone"), State.RagdollBoneName.ToString());
@@ -1624,7 +1689,7 @@ bool FTDCombatFullLoopPieTest::RunTest(const FString& Parameters)
 	}, TDCombatPieKillTimeoutSeconds, [State]()
 	{
 		RecordCombatPieTimeout(*State, TEXT("player_kills_goblin"));
-		State->MonsterDeathSeconds = GetPieWorldSeconds();
+		RecordMonsterDeathPoint(*State);
 		State->bWasMonsterKillForced = true;
 		KillActorForTest(State->Monster.Get(), State->Player.Get());
 	});

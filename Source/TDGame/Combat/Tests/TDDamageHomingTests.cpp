@@ -119,6 +119,14 @@ namespace
 		return Rule;
 	}
 
+	FTDDamageAction MakeDamageAction(float Amount)
+	{
+		FTDDamageAction Action;
+		Action.Type = ETDDamageActionType::Damage;
+		Action.Magnitude.Base = Amount;
+		return Action;
+	}
+
 	FTDDamageAction MakeDelayedChild(UTDDamageDefinition* Child, float Delay)
 	{
 		FTDDamageAction Action;
@@ -361,6 +369,60 @@ bool FTDSpawnActivateEventTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Activate fires once when its deadline is crossed"), Fixture.CountEntities(ActivateChild), 1);
 	TestEqual(TEXT("Activation does not emit Spawn again"), Fixture.CountEntities(SpawnChild), 1);
 	TestTrue(TEXT("Movement starts only after activation within the crossing frame"), FMath::IsNearlyEqual(Entity->GetActorLocation().X, 1.0, 0.05));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDProjectileSwingDirectionTest, "TDGame.Combat.Homing.ProjectileHitReportsTravelAsSwingDirection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDProjectileSwingDirectionTest::RunTest(const FString& Parameters)
+{
+	FTDHomingTestWorld Fixture;
+	UTDCombatComponent* Target = Fixture.SpawnCombatant(FVector(200.f, 0.f, 0.f));
+	UTDDamageDefinition* Definition = Fixture.MakeProjectile();
+	Definition->ProjectileSpeed = 400.f;
+	Definition->ProjectileRadius = 10.f;
+	Definition->Rules.Add(MakeHomingRule(ETDDamageEvent::Hit, { MakeDamageAction(10.f) }));
+	if (!TestNotNull(TEXT("Straight damaging projectile is created"), Fixture.SpawnEntity(Definition)))
+	{
+		return false;
+	}
+	Fixture.Tick(1.f, 0.02f);
+	TestEqual(TEXT("Straight projectile damages the target ahead"), Target->GetCurrentHealth(), 990.f);
+	const FTDDamageResult& Result = Target->GetLastDamageResult();
+	const double SwingCosine = FVector::DotProduct(Result.SwingDirection, FVector::ForwardVector);
+	TestTrue(FString::Printf(TEXT("Last damage result swing direction is the projectile travel, cosine=%g"), SwingCosine), SwingCosine >= 0.99);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDHomingProjectileKillSwingDirectionTest, "TDGame.Combat.Homing.TurnedProjectileKillReportsLastTravelAsSwingDirection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDHomingProjectileKillSwingDirectionTest::RunTest(const FString& Parameters)
+{
+	FTDHomingTestWorld Fixture;
+	UTDCombatComponent* SideTarget = Fixture.SpawnCombatant(FVector(0.f, 300.f, 0.f));
+	UTDDamageDefinition* Definition = Fixture.MakeProjectile();
+	Definition->ProjectileSpeed = 300.f;
+	Definition->ProjectileRadius = 10.f;
+	Definition->Rules.Add(MakeHomingRule(ETDDamageEvent::Hit, { MakeDamageAction(5000.f) }));
+	ATDDamageEntity* Entity = Fixture.SpawnEntity(Definition);
+	if (!TestNotNull(TEXT("Homing damaging projectile is created"), Entity))
+	{
+		return false;
+	}
+	FTDHomingSettings Settings;
+	Settings.SearchRadius = 1000.f;
+	Settings.TurnRateDegreesPerSecond = 360.f;
+	Entity->ApplyHoming(Settings);
+	TestEqual(TEXT("Homing selects the side target"), Entity->GetHomingTarget(), SideTarget->GetOwner());
+	Fixture.Tick(3.f, 0.01f);
+	TestFalse(TEXT("Turned homing projectile kills the side target"), SideTarget->IsAlive());
+	const FTDDamageResult& Result = SideTarget->GetLastDamageResult();
+	TestTrue(TEXT("Last damage result is the killing blow"), Result.bWasKilled);
+	TestTrue(TEXT("Swing direction is a unit vector"), Result.SwingDirection.IsNormalized());
+	const double LaunchCosine = FVector::DotProduct(Result.SwingDirection, FVector::ForwardVector);
+	TestTrue(FString::Printf(TEXT("Swing direction is the turned travel rather than the launch heading, cosine=%g"), LaunchCosine), LaunchCosine < 0.5);
+	const double TravelCosine = FVector::DotProduct(Result.SwingDirection.GetSafeNormal2D(), Result.HitDirection);
+	TestTrue(FString::Printf(TEXT("Swing direction matches the travel heading at impact within one degree, cosine=%g"), TravelCosine), TravelCosine >= FMath::Cos(FMath::DegreesToRadians(1.0)));
 	return true;
 }
 

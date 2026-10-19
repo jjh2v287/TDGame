@@ -171,3 +171,12 @@
 - 증거: `Docs/MonsterAI_CombatSim/measurements/M3-38/`(baseline·exp1·exp3·exp4·exp6·exp7 report.json), 엔진 근거 `Saved/AgentOps/20261018/ragdoll-jitter/engine-research.md`(IslandManager.cpp:2752-2756, BodyInstance.cpp:367-411)
 - 날짜·상태: 2026-10-19 active(빌드 뒤 최종 측정은 M3-38 기록)
 - 발견: claude
+
+### L-anim-22 보스 처치 슬로모(전역 시간 0.2배) 중 래그돌이 시작되면 몸이 튀고, 팩 물리 에셋은 3~4m 던져진 뒤 끝없이 떤다
+- 증상: 비행 중 처치한 GriffonAlpha·MountainDragon(보스라 처치 0.05초 뒤 0.2배 슬로모)에서 래그돌 시작 순간 최대 바디 속도가 슬로모 없을 때의 약 3배(GriffonAlpha 팩 에셋 2100~2400 대 700~780cm/s, 생성 에셋 1330~1600 대 611). 질량 중심 속도는 처치 속도(410·160cm/s) 그대로인데 내부 속도만 프레임마다 커짐(1952→3435cm/s). 팩 에셋(SK_Griffon_Physics)은 루트 바디가 +265~390cm 튀고 착지 뒤 꼬리·허벅지가 230~420cm/s로 6초까지 떨며 평균 26cm/s로 기어가 잠들지 않음(3회 중 2회)
+- 원인(정황): 래그돌 첫 단계들의 관절 위치 보정이 Δx/dt 속도가 되는데, 시간 늘이기 0.2배면 dt가 5배 작아 같은 보정이 5배 속도가 된다. 그 에너지가 바닥 접촉에서 전신 운동으로 바뀐다. 팩 에셋은 사망 자세에서 관절 위반이 커 증폭이 더 크다
+- 해결: 불량 팩 물리 에셋을 생성 에셋으로 교체(`Tools/MonsterAI/editor_make_ragdoll_physics_assets.py`, M3-39 Griffon·GriffonAlpha·MountainDragon) → 끝없는 떨림 사라짐, 3회 모두 정착. 남은 증폭(루트 +160~180cm, 슬로모 없으면 +33~37)은 진입 시점 문제라 M3-40(사망 시작 경로)에 넘김. 효과 없음: 래그돌 첫 0.4초 매 프레임 질량 중심 대비 상대 속도 600cm/s 제한(흉내), 바디 최대 각속도 720도/초(메모리 재정의) — 튐은 물리 단계 안에서 생긴다
+- 범위: UE 5.8 Chaos 전신 래그돌, 전역 시간 늘이기 1 미만에서 시작하는 래그돌(M3-37 보스 처치·승리·페이즈 슬로모), 서브스텝 꺼짐
+- 증거: `Docs/MonsterAI_CombatSim/measurements/M3-39/`(flight·flight-noslowmo·gen-flight·gen-flight-noslowmo·emu-flight·emu-angcap-flight report.json), 원본 `Saved/AgentOps/20261019/ragdoll-m3-39/`
+- 날짜·상태: 2026-10-19 부분 해결(물리 에셋), 증폭 자체는 미해결(M3-40)
+- 발견: claude

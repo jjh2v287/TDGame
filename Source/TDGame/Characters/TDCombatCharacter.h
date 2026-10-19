@@ -231,4 +231,5 @@ private:
 	bool bIsMovementFrozen = false;
 	bool bIsRagdolling = false;
 	bool bIsRagdollSettling = false;
+	bool bIsRagdollFirm = false;
 };

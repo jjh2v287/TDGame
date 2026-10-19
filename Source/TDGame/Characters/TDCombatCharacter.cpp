@@ -44,11 +44,14 @@ namespace TDCombatCharacterMovement
 	constexpr float RagdollSettleCheckSeconds = 0.1f;
 	constexpr float RagdollSettleMinSeconds = 1.f;
 	constexpr float RagdollSettleForceSeconds = 2.f;
+	constexpr float RagdollFirmSeconds = 2.4f;
 	constexpr float RagdollSleepCapSeconds = 3.f;
+	constexpr float RagdollSleepForceSeconds = 4.f;
 	constexpr float RagdollSettleMeanSpeed = 15.f;
 	constexpr float RagdollSleepBodySpeed = 20.f;
-	constexpr float RagdollSleepCapBodySpeed = 100.f;
+	constexpr float RagdollSleepCapBodySpeed = 30.f;
 	constexpr float RagdollSettleDamping = 4.f;
+	constexpr float RagdollFirmDamping = 12.f;
 	constexpr float StatusKillUpSpeedScale = 0.3f;
 
 	const FName& GetRagdollCollisionProfileName()
@@ -639,6 +642,7 @@ bool ATDCombatCharacter::StartRagdoll(const FVector& LinearVelocity)
 	}
 	RagdollStartSeconds = World->GetTimeSeconds();
 	bIsRagdollSettling = false;
+	bIsRagdollFirm = false;
 	World->GetTimerManager().SetTimer(RagdollSettleTimerHandle, this, &ATDCombatCharacter::UpdateRagdollSettle, TDCombatCharacterMovement::RagdollSettleCheckSeconds, true);
 	return true;
 }
@@ -668,9 +672,15 @@ void ATDCombatCharacter::UpdateRagdollSettle()
 		TDCombatCharacterMovement::SetRagdollDamping(*MeshComponent, TDCombatCharacterMovement::RagdollSettleDamping, TDCombatCharacterMovement::RagdollSettleDamping);
 		return;
 	}
+	if (!bIsRagdollFirm && ElapsedSeconds >= TDCombatCharacterMovement::RagdollFirmSeconds)
+	{
+		bIsRagdollFirm = true;
+		TDCombatCharacterMovement::SetRagdollDamping(*MeshComponent, TDCombatCharacterMovement::RagdollFirmDamping, TDCombatCharacterMovement::RagdollFirmDamping);
+	}
 	const bool bIsStill = Motion.MaxBodySpeed <= TDCombatCharacterMovement::RagdollSleepBodySpeed;
-	const bool bIsPastSleepCap = ElapsedSeconds >= TDCombatCharacterMovement::RagdollSleepCapSeconds && Motion.MaxBodySpeed <= TDCombatCharacterMovement::RagdollSleepCapBodySpeed;
-	if (bIsStill || bIsPastSleepCap)
+	const bool bIsStillPastSleepCap = ElapsedSeconds >= TDCombatCharacterMovement::RagdollSleepCapSeconds && Motion.MaxBodySpeed <= TDCombatCharacterMovement::RagdollSleepCapBodySpeed;
+	const bool bIsJitteringInPlace = ElapsedSeconds >= TDCombatCharacterMovement::RagdollSleepForceSeconds && Motion.MeanSpeed <= TDCombatCharacterMovement::RagdollSettleMeanSpeed;
+	if (bIsStill || bIsStillPastSleepCap || bIsJitteringInPlace)
 	{
 		MeshComponent->PutAllRigidBodiesToSleep();
 	}
@@ -679,6 +689,7 @@ void ATDCombatCharacter::UpdateRagdollSettle()
 void ATDCombatCharacter::StopRagdollSettle()
 {
 	bIsRagdollSettling = false;
+	bIsRagdollFirm = false;
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(RagdollSettleTimerHandle);

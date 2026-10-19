@@ -1,0 +1,340 @@
+{
+ "label": "gen-frozen-pile",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "distance": 350.0,
+ "kill_fraction": 0.25,
+ "count": 3,
+ "experiment": {
+  "body": {},
+  "self_collision_off": false,
+  "assist": null
+ },
+ "scenario": {
+  "freeze": true,
+  "pile_spacing_scale": 2.0
+ },
+ "cvars": {},
+ "kill_delay": 0.6,
+ "observe": 7.0,
+ "window": {
+  "land_speed_cm_s": 60.0,
+  "delay_seconds": 0.5,
+  "length_seconds": 2.5
+ },
+ "target": {
+  "position_rms_cm": 0.5,
+  "sleep_seconds": 3.0,
+  "freeze_body_speed_cm_s": 30.0
+ },
+ "results": [
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Swordsman",
+   "physics_asset": "/Game/MonsterAI/Physics/PA_TD_Swordsman_Ragdoll.PA_TD_Swordsman_Ragdoll",
+   "body_count": 14,
+   "bone_mass_kg": {
+    "Hips": 15.245,
+    "Spine1": 12.681,
+    "Spine2": 8.193,
+    "Neck": 8.514,
+    "LeftArm": 3.913,
+    "LeftHand": 3.058,
+    "RightArm": 3.913,
+    "RightHand": 3.058,
+    "LeftUpLeg": 8.568,
+    "LeftLeg": 4.708,
+    "LeftFoot": 3.088,
+    "RightUpLeg": 8.568,
+    "RightLeg": 4.708,
+    "RightFoot": 3.088
+   },
+   "frames": 262,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.6058,
+   "at_kill": {
+    "frozen": true,
+    "actor_dilation": 0.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.607,
+    "flying_seconds": null
+   },
+   "freeze_applied": {
+    "frozen": true,
+    "dilation": 0.0
+   },
+   "pile_spacing_cm": 80.0,
+   "pile_placed": [
+    [
+     -351.2,
+     -148.4,
+     92.2
+    ],
+    [
+     -325.5,
+     -62.7,
+     92.2
+    ]
+   ],
+   "pile_dropped_seconds": [],
+   "others_killed": 2,
+   "launch_speed_cm_s": 560.6,
+   "first_sleep_seconds": 3.0034,
+   "freeze_body_speed_cm_s": 54.1,
+   "pre_sleep_move_cm": 7.77,
+   "land_seconds": 1.5,
+   "sink_seconds": 5.7078,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.3972,
+   "sleep_seconds": 3.0034,
+   "fps": 37.3,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 2.979,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     3.003,
+     54.1
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 54.1,
+   "meets_sleep_target": false,
+   "others": [
+    {
+     "index": 0,
+     "ragdoll_after_target_kill_seconds": 0.606,
+     "sleep_seconds": 3.003,
+     "observed_seconds": 5.708,
+     "sleep_events": [
+      [
+       3.003,
+       66.6
+      ]
+     ],
+     "rewake_seconds": [],
+     "rewake_settle_seconds": [],
+     "max_freeze_body_speed_cm_s": 66.6,
+     "meets_sleep_target": false
+    },
+    {
+     "index": 1,
+     "ragdoll_after_target_kill_seconds": 0.606,
+     "sleep_seconds": 3.003,
+     "observed_seconds": 5.708,
+     "sleep_events": [
+      [
+       3.003,
+       28.0
+      ]
+     ],
+     "rewake_seconds": [],
+     "rewake_settle_seconds": [],
+     "max_freeze_body_speed_cm_s": 28.0,
+     "meets_sleep_target": true
+    }
+   ],
+   "render": {
+    "position_rms_cm": 1.0003,
+    "step_rms_cm": 0.2818,
+    "high_frequency_rms_cm": 0.0564
+   },
+   "physics": {
+    "position_rms_cm": 1.1003,
+    "step_rms_cm": 0.2875,
+    "high_frequency_rms_cm": 0.0557
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "LeftArm",
+     2.462
+    ],
+    [
+     "Neck",
+     2.222
+    ],
+    [
+     "RightArm",
+     0.8159
+    ],
+    [
+     "Spine2",
+     0.7799
+    ]
+   ],
+   "component_step_rms_cm": 0.5222,
+   "max_angular_deg_s": 606.89,
+   "max_linear_cm_s": 107.81,
+   "awake_fraction": 0.13,
+   "meets_target": false,
+   "target": "Swordsman-1",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": [
+    "Docs/MonsterAI_CombatSim/measurements/M3-39/gen-frozen-pile/Swordsman-1_shot1.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-39/gen-frozen-pile/Swordsman-1_shot2.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-39/gen-frozen-pile/Swordsman-1_shot3.png",
+    "Docs/MonsterAI_CombatSim/measurements/M3-39/gen-frozen-pile/Swordsman-1_shot4.png"
+   ]
+  },
+  {
+   "result": "ok",
+   "species": "DA_TDMonster_Swordsman",
+   "physics_asset": "/Game/MonsterAI/Physics/PA_TD_Swordsman_Ragdoll.PA_TD_Swordsman_Ragdoll",
+   "body_count": 14,
+   "bone_mass_kg": {
+    "Hips": 15.245,
+    "Spine1": 12.681,
+    "Spine2": 8.193,
+    "Neck": 8.514,
+    "LeftArm": 3.913,
+    "LeftHand": 3.058,
+    "RightArm": 3.913,
+    "RightHand": 3.058,
+    "LeftUpLeg": 8.568,
+    "LeftLeg": 4.708,
+    "LeftFoot": 3.088,
+    "RightUpLeg": 8.568,
+    "RightLeg": 4.708,
+    "RightFoot": 3.088
+   },
+   "frames": 309,
+   "ragdoll": true,
+   "ragdoll_delay_seconds": 0.5925,
+   "at_kill": {
+    "frozen": true,
+    "actor_dilation": 0.0,
+    "flying": false,
+    "height_cm": 0.0,
+    "wait_seconds": 0.613,
+    "flying_seconds": null
+   },
+   "freeze_applied": {
+    "frozen": true,
+    "dilation": 0.0
+   },
+   "pile_spacing_cm": 80.0,
+   "pile_placed": [
+    [
+     -413.9,
+     -118.9,
+     92.2
+    ],
+    [
+     -394.2,
+     -31.6,
+     92.2
+    ]
+   ],
+   "pile_dropped_seconds": [],
+   "others_killed": 2,
+   "launch_speed_cm_s": 963.7,
+   "first_sleep_seconds": 2.1005,
+   "freeze_body_speed_cm_s": 21.8,
+   "pre_sleep_move_cm": 14.87,
+   "land_seconds": 1.5,
+   "sink_seconds": 5.7256,
+   "window_seconds": [
+    2.0,
+    4.5
+   ],
+   "observed_seconds": 6.4105,
+   "sleep_seconds": 2.1005,
+   "fps": 44.0,
+   "min_time_dilation": 1.0,
+   "assist_sleep_seconds": null,
+   "sleep_real_seconds": 2.1005,
+   "ragdoll_in_slowmo": false,
+   "slowmo_after_ragdoll_real_seconds": 0.0,
+   "min_actor_dilation_after_ragdoll": 1.0,
+   "sleep_events": [
+    [
+     2.101,
+     21.8
+    ]
+   ],
+   "rewake_seconds": [],
+   "rewake_settle_seconds": [],
+   "max_freeze_body_speed_cm_s": 21.8,
+   "meets_sleep_target": true,
+   "others": [
+    {
+     "index": 0,
+     "ragdoll_after_target_kill_seconds": 0.592,
+     "sleep_seconds": 2.201,
+     "observed_seconds": 5.726,
+     "sleep_events": [
+      [
+       2.201,
+       21.0
+      ]
+     ],
+     "rewake_seconds": [],
+     "rewake_settle_seconds": [],
+     "max_freeze_body_speed_cm_s": 21.0,
+     "meets_sleep_target": true
+    },
+    {
+     "index": 1,
+     "ragdoll_after_target_kill_seconds": 0.592,
+     "sleep_seconds": 1.624,
+     "observed_seconds": 5.726,
+     "sleep_events": [
+      [
+       1.624,
+       9.9
+      ]
+     ],
+     "rewake_seconds": [],
+     "rewake_settle_seconds": [],
+     "max_freeze_body_speed_cm_s": 9.9,
+     "meets_sleep_target": true
+    }
+   ],
+   "render": {
+    "position_rms_cm": 0.1613,
+    "step_rms_cm": 0.0673,
+    "high_frequency_rms_cm": 0.0186
+   },
+   "physics": {
+    "position_rms_cm": 0.15,
+    "step_rms_cm": 0.0613,
+    "high_frequency_rms_cm": 0.017
+   },
+   "worst_bones_render_rms_cm": [
+    [
+     "LeftUpLeg",
+     0.3841
+    ],
+    [
+     "Hips",
+     0.2434
+    ],
+    [
+     "RightUpLeg",
+     0.1739
+    ],
+    [
+     "Spine1",
+     0.1412
+    ]
+   ],
+   "component_step_rms_cm": 0.315,
+   "max_angular_deg_s": 264.57,
+   "max_linear_cm_s": 38.29,
+   "awake_fraction": 0.036,
+   "meets_target": true,
+   "target": "Swordsman-2",
+   "kind": "monster",
+   "forced_ragdoll": false,
+   "shots": []
+  }
+ ]
+}

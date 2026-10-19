@@ -782,6 +782,19 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 기록: 2026-10-18 claude — 청구.
 - 기록: 2026-10-19 claude — 완료. 측정 장치(PIE 매 프레임 바디 렌더 위치·질량 중심·속도·깨어 있음, 정착 창 RMS·잠들기·최대 각속도·재우는 순간 바디 속도·연사) 기준선 12종+플레이어×2: 3초 안 잠들기 1/26, 위치 RMS 중앙값 1.22cm(Wukong 27.5·Greystone 5.5·Swordsman 6.6·StoneGolem 4.1), 창 최대 각속도 3801도/초, 시작 순간 말단 1300~2700cm/s 튐. 원인 판정: UAF·Mover·캡슐·M3-37 표현 오프셋은 아님(캡슐 고정·고주파 0.1cm 이하·오프셋 래그돌에서 0), 원인 = 팩 물리 에셋 바디 각감쇠 0 + 엔진 기본 잠들기 문턱(섬 단위)으로 미정착, StoneGolem 큰 상자 겹침·Paragon `*_Extents`(경계용 자유 관절)로 시작 튐. 실험(메모리 재정의, 저장 안 함) exp1~8로 각감쇠·재우기·생성 물리 에셋 효과 분리. 수정: 각감쇠 1.0 + 2단계 정착(1초 뒤 평균 15cm/s 이하 또는 2초 → 감쇠 4, 모든 바디 20cm/s 이하 → 재우기, 3초 뒤 100cm/s 이하면 재우기) + StoneGolem·Wukong·Greystone 생성 물리 에셋. 최종 `after-fix2`: 3초 안 잠들기 26/26(상한 사례 3.00~3.01초), RMS 0.5cm 이하 9→19/26, 중앙값 0.00cm, 창 최대 각속도 601, 재우는 순간 바디 속도 6~43cm/s. 반박 1회(불합격: 1단계 재우기가 떨어지는 팔다리를 얼림·RMS 0 과장 → 2단계 정착과 재우는 순간 속도 지표로 수정). 검증: 빌드 성공(M3-37 밀림 수정 포함), 헤드리스 TDGame 391/395(`Saved/AgentOps/20261019/m338-b3-tests.json`, 실패 = 기준선 CrossingStreams + FluidFX 세션 미추적 새 시험 3), GUI PIE `TDGame.PIE.Combat` FullLoop·BossLoop 통과, HitFeel 실패(받은 피해 5% 흔들림 6.94px < 7, M3-37 소관, `Saved/AgentOps/automation_tests_20261019-0143.json`), OP-33 두 검사 종료 0. 교훈 L-anim-21·L-editor-37·L-build-10. 결정 07#MD-60(proposed). 남은 것: Swordsman·Griffon·Wukong 일부 회차의 느린 구름(RMS 1.3~8.2cm, 고주파 0.08 이하), Griffon 시작 튐(생성 에셋은 효과 엇갈려 미채택), 시체 더미(`--count`)·빙결 중 사망·슬로모 중 처치 래그돌 미측정, Kwang 물리 에셋 없음.
 
+### M3-39 래그돌 정착 미측정 경우 측정·수정(비행 중 처치·시체 더미·빙결 중 처치·보스 처치 슬로모·Kwang 물리 에셋)
+- 상태: done
+- 담당: claude/2026-10-19
+- 우선순위: 중(M3-38 남은 것, 상위 세션 지시 2026-10-19)
+- 선행: M3-38(정착 규칙 MD-60·측정 도구), M3-34(그리폰 비행), M3-37(보스 처치 슬로모 0.2배), M3-33(종 표 `ragdoll_after_death`)
+- 목표: M3-38 도구로 ① 그리폰·그리폰 알파 실제 비행 중 처치 ② `--count 3` 시체 더미 ③ 빙결 중 처치 ④ 보스 처치 슬로모 중 래그돌을 측정하고, 결함이면 `ATDCombatCharacter::UpdateRagdollSettle` 상수나 종 `RagdollPhysicsAsset`으로 고친다. Kwang 생성 물리 에셋 여부 판단.
+- 완료 조건: 시나리오마다 report.json과 비교표(목표 3초 안 잠들기·재우는 순간 바디 속도 30cm/s 이하), 헤드리스 `TDGame.*` 통과 수 유지, PIE `TDGame.PIE.Combat` FullLoop·BossLoop 통과, OP-33 검사 0
+- 산출물: C++ `ATDCombatCharacter::UpdateRagdollSettle`(2.4초 감쇠 12·3초 상한 30cm/s·4초 제자리 떨림 정지, `bIsRagdollFirm`), 물리 에셋 `/Game/MonsterAI/Physics/PA_TD_{Griffon,MountainDragon,Swordsman,Kwang}_Ragdoll` + 종 `DA_TDMonster_{Griffon,GriffonAlpha,MountainDragon,Swordsman,Kwang}.RagdollPhysicsAsset`, 도구 `pie_measure_ragdoll_jitter.py`(`--task`·`--flight-hold`·`--freeze`·`--pile-spacing-scale`·`--pile-gaps`·`--cvar`·`--summarize`·`--emulate-*`)·`editor_ragdoll_jitter_sampler.py`(시나리오·역순 복원)·`editor_make_ragdoll_physics_assets.py`(`TD_RAGDOLL_DRY`·같은 메시 공용), 근거 [measurements/M3-39/](measurements/M3-39/README.md)
+- 검증: 래그돌 측정 도구 시나리오별; 헤드리스 `TDGame.*`; PIE FullLoop·BossLoop; OP-33 검사 0
+- 참조: [measurements/M3-38/](measurements/M3-38/README.md), 07#MD-60, 07#MD-61
+- 기록: 2026-10-19 claude — 청구.
+- 기록: 2026-10-19 claude — 완료. 측정(시나리오마다 report.json, `measurements/M3-39/README.md` 비교표): ③ 빙결 중 처치는 결함 아님(사망 때 OnDeath 전에 빙결 해제, 래그돌 중 액터 시간 배율 1.0). ① 일반 Griffon은 정의에 이륙이 없어 날지 않으므로 GriffonAlpha·MountainDragon 실제 비행 중 처치로 측정했고, 둘 다 boss라 ④ 슬로모와 겹침. 결함 3: (a) M3-38 3초 상한(100cm/s 이하면 재우기)이 35~130cm/s로 움직이는 바디를 멈춤(비행 6/6·빙결 Swordsman·더미 StoneGolem) (b) 슬로모 중 래그돌 시작은 내부 속도 1/dt 증폭(GriffonAlpha 2100~2400 대 700~780cm/s) (c) 팩 에셋 GriffonAlpha는 슬로모 처치 뒤 +265~390cm 튀고 2/3회 끝없이 떨며 기어감(L-anim-22). 메모리 실험: 생성 물리 에셋(`gen-*`)이 (c)를 없애고 시작 튐을 줄임, 감쇠 강화 흉내(`emu-*`)가 상한 직전 속도를 128→35cm/s 이하로, 시작 창 상대 속도 제한·최대 각속도 720은 (b)에 효과 없음. 수정: 생성 물리 에셋 4개(Griffon 70·GriffonAlpha 공용, MountainDragon 92, Swordsman 14, Kwang 23) + 정착 규칙(2.4초 감쇠 12, 3초 뒤 30cm/s 이하, 4초 뒤 평균 15cm/s 이하). 결과(빌드 뒤 `after-*`): 비행 목표 0/6→2/6·미정착 2→0·재우는 순간 최대 94→41cm/s, 동시 더미 6/8→8/8(다른 시체 69→28), 빙결 8/10→10/10(130→27), 순차 더미 4/4→3/4, M3-38 지상 세트 23/26→20/26(실제 구르는 바디를 기다린 3.1·3.7초 2건, 시료기 프레임 경계값 31~40cm/s 3건, 가라앉기 겹침 1건 — 맞바꿈은 MD-61), Kwang·GriffonAlpha 강제 4/4. Kwang은 물리 에셋만 붙이고 `ragdoll_after_death`는 표대로 False(사망 즉시 래그돌은 M3-40). 남은 증폭(b)은 진입 시점 문제라 M3-40에 근거와 함께 넘김. 측정 도구 결함 수정: 같은 종 여러 회차 강제 뒤 종 플래그가 True로 남음·모듈 재적재 때 바디 재정의 미복원(L-editor-39). 검증: 빌드 성공, 헤드리스 `TDGame.*` 394/395(`Saved/AgentOps/20261019/m339-b1-tests.json`, 실패 = 기준선 CrossingStreams), GUI PIE FullLoop 15.2초·BossLoop 55.8초 통과(`Saved/AgentOps/automation_tests_20261019-1045.json`·`-1046.json`), OP-33 두 검사 종료 0. 교훈 L-anim-22·L-editor-39(적중 L-repo-15). 남은 것: MountainDragon 날개 손가락 구속 다툼(평균 3~5·최대 34~60cm/s, 4초에 정지), 슬로모 증폭(M3-40), 동시 더미는 맞닿은 정도(높게 쌓인 더미는 순차로만 측정).
+
 ### 3.6 Phase 4 — 확장(조건부)
 ### M3-36 전투 한 사이클(아레나 조우: 봉쇄·졸개 웨이브·중간 보스·용 보스·승리·재도전)
 - 상태: done
@@ -1065,6 +1078,14 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 선택지: (a) 현행 (b) 재우기 대신 감쇠만(자연 잠들기 — 측정상 3초 안 잠들기 0/14) (c) 전역 잠들기 문턱 완화(다른 물리 객체 영향) (d) 모든 종 물리 에셋을 생성 에셋으로 교체
 - 권장: (a). 3초 안 잠들기 26/26, 재우는 순간 바디 속도 43cm/s 이하로 멈춤이 눈에 띄지 않음, 다른 물리에 영향 없음.
 - 영향: 07#M3-38, `Characters/TDCombatCharacter.cpp`(TDCombatCharacterMovement 상수), `MonsterAI/TDMonsterSpeciesAsset.h`, `Content/MonsterAI/Physics/`, `Tools/MonsterAI/editor_make_ragdoll_physics_assets.py`
+- 결정: (대기) — ②의 3초 뒤 100cm/s 문턱과 ③의 "Griffon은 유지"는 MD-61이 바꿈
+
+### MD-61 래그돌 정착 3단계와 생성 물리 에셋 확대(MD-60 ②·③ 일부 대체, 권장안 적용·재검토 가능)
+- 상태: proposed · 2026-10-19 claude(M3-39, 상위 세션 지시 "M3-38에서 측정 못 한 경우를 측정하고 필요하면 고친다" + 사용자 "묻지 말고 권장안")
+- 질문: ① 래그돌 2.4초부터 바디 감쇠 12(선·각) ② 3초 뒤 재우기 문턱 100 → 30cm/s(모든 바디), 4초 뒤엔 질량 가중 평균 속도 15cm/s 이하면 재우기(제자리 떨림 정지) ③ Griffon·GriffonAlpha(공용)·MountainDragon·Swordsman·Kwang 생성 물리 에셋 채택 ④ 슬로모 중 래그돌 시작 증폭은 정착 규칙으로 고치지 않고 진입 시점(M3-40)에서 다룸
+- 선택지: (a) 현행 (b) MD-60 상한(3초 100cm/s) 유지 — 3초 안 잠들기 우선, 멈추는 순간 최대 130cm/s (c) 3초 뒤 평균 5cm/s 이하면 바로 재우기 추가 — 산룡 비행 3초 정착, 제자리 떨림 34~66cm/s를 3초에 멈춤
+- 권장: (a). 비행·더미·빙결에서 멈추는 순간 최대 130→41cm/s·미정착 2→0. 대가로 3초에도 실제 움직이는 바디는 3.1~3.7초에 잠들고(지상 26회 중 2회), 산룡 비행은 4.0초 정착.
+- 영향: 07#M3-39, `Characters/TDCombatCharacter.cpp`(TDCombatCharacterMovement 상수·`UpdateRagdollSettle`), `Content/MonsterAI/Physics/PA_TD_*_Ragdoll`, 종 DA 5개, MD-50 (c)(Kwang 물리 에셋 — 마켓 메시를 고치지 않는 종 `RagdollPhysicsAsset` 방식으로 해결)
 - 결정: (대기)
 
 ## 5. 위험표(12)

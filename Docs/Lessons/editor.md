@@ -316,3 +316,12 @@
 - 증거: 2026-10-18 22:32 실행 3건 0초 통과(`Saved/AgentOps/automation_tests_20261018-2232.json`) → 주인 확인 추가 뒤 22:40 실행 BossLoop 66초·FullLoop 18초·HitFeel 265초(`automation_tests_20261018-2240.json`)
 - 날짜·상태: 2026-10-19 원인 미검증(현상과 해결은 검증)
 - 발견: claude
+
+### L-editor-39 메모리 실험으로 만든 물리 에셋을 `EditorAssetLibrary.rename_asset`으로 옮기면 저장하지 않아도 디스크에 파일이 생기고, 측정 도구의 종 플래그 복원은 역순이어야 한다
+- 증상: ① `SkeletalMeshEditorSubsystem.create_physics_asset` 뒤 `rename_asset`만 하고 `save_loaded_asset`을 부르지 않았는데 `Content/MonsterAI/Physics/PA_TD_*_Ragdoll.uasset`이 생김(`git status` 미추적) ② PIE 측정 뒤 `DA_TDMonster_Griffon` 등 4종의 `ragdoll_after_death_clip`이 표(False)와 달리 True로 남음 — 그대로 저장하면 사족 종이 사망 클립 뒤 래그돌로 굳는다 ③ 바디 재정의(`--body`)가 다음 실행에서 원래 값으로 안 돌아옴
+- 원인: ① 이름 바꾸기는 새 패키지를 저장한다 ② 같은 종을 여러 회차 강제하면 두 번째 기록의 원래 값이 이미 True라 앞에서부터 복원하면 마지막에 True가 남는다 ③ 시료기 모듈을 다시 올릴 때 종 플래그만 되돌리고 바디 재정의는 되돌리지 않았다
+- 해결: ① 미채택이면 그 파일을 지운다(`TD_RAGDOLL_DRY=1`은 종 연결만 저장 안 함) ② ③ `editor_ragdoll_jitter_sampler.py`가 역순으로 복원하고, `pie_measure_ragdoll_jitter.py`가 모듈을 다시 올릴 때 `restore_overrides()`도 부른다(M3-39). 종 에셋을 저장하기 전에 `species_table.json`의 `ragdoll_after_death`와 대조한다
+- 범위: UE 5.8 PythonScriptPlugin, `Tools/MonsterAI` 래그돌 측정·물리 에셋 도구
+- 증거: 2026-10-19 M3-39 세션(dirty 패키지 목록, 표 대조 출력)
+- 날짜·상태: 2026-10-19 active
+- 발견: claude

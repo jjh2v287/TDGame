@@ -14,6 +14,15 @@ namespace TDKnockback
 		const float Remaining = 1.f - FMath::Clamp(ElapsedMs / DurationMs, 0.f, 1.f);
 		return Remaining * Remaining;
 	}
+
+	float ComputeLinearScale(const float ElapsedMs, const float DurationMs)
+	{
+		if (DurationMs <= 0.f)
+		{
+			return 0.f;
+		}
+		return 1.f - FMath::Clamp(ElapsedMs / DurationMs, 0.f, 1.f);
+	}
 }
 
 FTDKnockbackLayeredMove::FTDKnockbackLayeredMove()
@@ -31,7 +40,7 @@ bool FTDKnockbackLayeredMove::GenerateMove(const FMoverTickStartData& StartState
 		return false;
 	}
 	const float ElapsedMs = static_cast<float>(TimeStep.BaseSimTimeMs - StartSimTimeMs);
-	OutProposedMove.LinearVelocity *= TDKnockback::ComputeScale(ElapsedMs, DurationMs);
+	OutProposedMove.LinearVelocity *= bUsesLinearDecay ? TDKnockback::ComputeLinearScale(ElapsedMs, DurationMs) : TDKnockback::ComputeScale(ElapsedMs, DurationMs);
 	return true;
 }
 

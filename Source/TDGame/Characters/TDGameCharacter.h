@@ -101,6 +101,14 @@ public:
 	void EndRollAnimation();
 	bool CanStartJump() const;
 	float GetRollStaminaCost() const { return RollStaminaCost; }
+	bool IsRollBlockedByCurrentAction() const;
+	bool CanRollCancelCurrentAction() const;
+	bool IsCancelRollLocked() const;
+	bool CanPlayRollAnimation() const;
+	void NotifyAttackCancelRollStarted();
+	bool TryCancelActionForMovement();
+	bool TryStartApproachStep(const AActor& TargetActor);
+	float ComputeApproachStepDistance(const AActor& TargetActor) const;
 
 protected:
 	virtual void HandleMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName) override;
@@ -192,10 +200,16 @@ private:
 	void ApplyAnimationSettings();
 	void RefreshJumpStateTag(bool bIsInAir) const;
 	bool CanStartRoll() const;
+	bool CanStartRollIgnoringCurrentAction() const;
+	bool TryBufferRoll(const FVector& RollDirection);
+	bool IsApproachStepPathClear(const AActor& TargetActor, const FVector& StepOffset) const;
+	bool WasDamagedWithin(double Seconds) const;
 	void HandleActionAnimationEnded(const UAnimSequence* Animation, bool bWasInterrupted);
 	void HandleDeath(const FTDDamageContext& Context);
 
 	FVector PendingRollDirection = FVector::ForwardVector;
+	double LastAttackCancelRollStartTimeSeconds = -1.0;
+	double LastDamagedTimeSeconds = -1.0;
 	bool bHasGrantedDefaultActionAbilities = false;
 	TSharedPtr<FStreamableHandle> DefaultDamageSpellsHandle;
 	TSharedPtr<FStreamableHandle> DamageSpellPresentationHandle;

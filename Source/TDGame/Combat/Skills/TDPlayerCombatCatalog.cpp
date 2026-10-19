@@ -16,6 +16,10 @@ namespace TDPlayerCombatCatalogDetail
 	constexpr float SwordSweepRadius = 18.f;
 	constexpr int32 SwordBladeSampleCount = 6;
 	constexpr float SwordAttackRatio = 1.f;
+	constexpr float InputBufferOpenSeconds = 0.12f;
+	constexpr float MovementCancelDelaySeconds = 0.15f;
+	constexpr float HitConfirmComboLeadSeconds = 0.05f;
+	constexpr float SwingSoundContactLeadSeconds = 0.07f;
 
 	struct FTDSwordComboStage
 	{
@@ -26,6 +30,8 @@ namespace TDPlayerCombatCatalogDetail
 		int32 SwingEndFrame = 1;
 		int32 BranchFrame = 1;
 		float BaseDamage = 0.f;
+		int32 ContactFrame = 1;
+		int32 RollCancelFrame = 1;
 	};
 
 	const FName& GetSwordGripSocketName()
@@ -38,10 +44,10 @@ namespace TDPlayerCombatCatalogDetail
 	{
 		return
 		{
-			{ TDGameplayTags::Action_Attack_Primary_01, TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo01.AS_TD_Player_SwordCombo01"), 86, 17, 22, 36, 14.f },
-			{ TDGameplayTags::Action_Attack_Primary_02, TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo02.AS_TD_Player_SwordCombo02"), 86, 16, 24, 36, 14.f },
-			{ TDGameplayTags::Action_Attack_Primary_03, TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo03.AS_TD_Player_SwordCombo03"), 92, 19, 21, 38, 14.f },
-			{ TDGameplayTags::Action_Attack_Primary_04, TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo04.AS_TD_Player_SwordCombo04"), 68, 17, 37, 68, 22.f }
+			{ TDGameplayTags::Action_Attack_Primary_01, TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo01.AS_TD_Player_SwordCombo01"), 86, 17, 22, 36, 14.f, 20, 36 },
+			{ TDGameplayTags::Action_Attack_Primary_02, TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo02.AS_TD_Player_SwordCombo02"), 86, 16, 24, 36, 14.f, 23, 36 },
+			{ TDGameplayTags::Action_Attack_Primary_03, TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo03.AS_TD_Player_SwordCombo03"), 92, 19, 21, 38, 14.f, 21, 38 },
+			{ TDGameplayTags::Action_Attack_Primary_04, TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordCombo04.AS_TD_Player_SwordCombo04"), 68, 17, 37, 68, 22.f, 35, 55 }
 		};
 	}
 
@@ -89,6 +95,8 @@ namespace TDPlayerCombatCatalogDetail
 		const float SwingStartSeconds = FrameToSeconds(Stage.SwingStartFrame);
 		const float SwingEndSeconds = FrameToSeconds(Stage.SwingEndFrame);
 		const float BranchSeconds = FrameToSeconds(Stage.BranchFrame);
+		const float ContactSeconds = FrameToSeconds(Stage.ContactFrame);
+		const float RollCancelSeconds = FMath::Min(FrameToSeconds(Stage.RollCancelFrame), ClipEndSeconds);
 
 		FTDCombatActionDefinition Definition;
 		Definition.DamageElement = ETDDamageElement::Physical;
@@ -101,6 +109,7 @@ namespace TDPlayerCombatCatalogDetail
 		HitWindow.Window.StartSeconds = FMath::Max(SwingStartSeconds - HitWindowLeadSeconds, 0.f);
 		HitWindow.Window.EndSeconds = FMath::Min(SwingEndSeconds + HitWindowTrailSeconds, ClipEndSeconds);
 		HitWindow.Sweep = MakeSwordSweep(Stage.BaseDamage);
+		Action.SwingSoundDelaySeconds = FMath::Max(ContactSeconds - SwingSoundContactLeadSeconds - HitWindow.Window.StartSeconds, 0.f);
 
 		if (BranchSeconds < ClipEndSeconds)
 		{
@@ -108,9 +117,16 @@ namespace TDPlayerCombatCatalogDetail
 			ComboWindow.Window.StartSeconds = BranchSeconds;
 			ComboWindow.Window.EndSeconds = ClipEndSeconds;
 			ComboWindow.Tags.AddTag(TDGameplayTags::State_ComboWindow);
+			Action.SkillCancelWindow.StartSeconds = BranchSeconds;
+			Action.SkillCancelWindow.EndSeconds = ClipEndSeconds;
+			Action.MovementCancelWindow.StartSeconds = FMath::Min(BranchSeconds + MovementCancelDelaySeconds, ClipEndSeconds);
+			Action.MovementCancelWindow.EndSeconds = ClipEndSeconds;
+			Action.HitConfirmLeadSeconds = HitConfirmComboLeadSeconds;
 		}
 
-		Action.InputBufferWindow.StartSeconds = SwingEndSeconds;
+		Action.RollCancelWindow.StartSeconds = RollCancelSeconds;
+		Action.RollCancelWindow.EndSeconds = ClipEndSeconds;
+		Action.InputBufferWindow.StartSeconds = FMath::Min(InputBufferOpenSeconds, ClipEndSeconds);
 		Action.InputBufferWindow.EndSeconds = ClipEndSeconds;
 		return Definition;
 	}

@@ -2,6 +2,7 @@
 
 #include "Animation/AnimSequence.h"
 #include "Characters/TDCombatCharacter.h"
+#include "Characters/TDGameCharacter.h"
 #include "Combat/GAS/TDAbilityTask_PlayActionTimeline.h"
 #include "Combat/GAS/TDCombatGameplayEffects.h"
 #include "Combat/Skills/TDCombatActionTypes.h"
@@ -62,6 +63,12 @@ bool UTDCombatActionAbility::CanActivateAbility(const FGameplayAbilitySpecHandle
 
 	const UTDCombatComponent* CombatComponent = Cast<UTDCombatComponent>(ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr);
 	if (CombatComponent && CombatComponent->IsFrozen())
+	{
+		return false;
+	}
+
+	const bool bIsAttackActive = CombatComponent && CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Attacking);
+	if (bCanCancelAttackInSkillCancelWindow && bIsAttackActive && !SkillComponent->IsActionCancelWindowOpen(ETDActionCancelType::Skill))
 	{
 		return false;
 	}
@@ -144,7 +151,17 @@ void UTDCombatActionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	}
 
 	AddAbilityStateTag(ActiveStateTag, bHasAddedActiveStateTag);
+	if (bCanCancelAttackInSkillCancelWindow)
+	{
+		SkillComponent->CancelCurrentAttackAction();
+	}
 	SkillComponent->BeginActionExecution(this, ActiveCombatActionTag, ResolvedTarget, ActionDefinition->HitExecutionType);
+
+	ATDGameCharacter* PlayerCharacter = Cast<ATDGameCharacter>(AvatarActor);
+	if (PlayerCharacter && ResolvedTarget && ActiveCombatActionTag.MatchesTag(TDGameplayTags::Action_Attack_Primary))
+	{
+		PlayerCharacter->TryStartApproachStep(*ResolvedTarget);
+	}
 
 	if (bHasActionAnimation)
 	{
@@ -414,9 +431,9 @@ UTDPlayerSkillQAbility::UTDPlayerSkillQAbility()
 	StaminaCost = 20.f;
 	CooldownTags.AddTag(TDGameplayTags::Cooldown_Skill_Q);
 	CooldownDuration = 0.6f;
+	bCanCancelAttackInSkillCancelWindow = true;
 
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Dead);
-	ActivationBlockedTags.AddTag(TDGameplayTags::State_Attacking);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Rolling);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Skill);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Stunned);
@@ -430,9 +447,9 @@ UTDPlayerSkillEAbility::UTDPlayerSkillEAbility()
 	StaminaCost = 35.f;
 	CooldownTags.AddTag(TDGameplayTags::Cooldown_Skill_E);
 	CooldownDuration = 0.75f;
+	bCanCancelAttackInSkillCancelWindow = true;
 
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Dead);
-	ActivationBlockedTags.AddTag(TDGameplayTags::State_Attacking);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Rolling);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Skill);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Stunned);

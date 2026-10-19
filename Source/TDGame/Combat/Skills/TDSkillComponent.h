@@ -74,6 +74,14 @@ public:
 	void BeginInputBufferWindow();
 	void EndInputBufferWindow();
 	void ClearCurrentActionContext();
+	bool IsPrimaryComboFinisherActive() const;
+	int32 GetActivePrimaryComboStageIndex() const;
+	FGameplayTag GetBufferedActionTag() const;
+	void BeginActionCancelWindow(ETDActionCancelType CancelType);
+	void EndActionCancelWindow(ETDActionCancelType CancelType);
+	bool IsActionCancelWindowOpen(ETDActionCancelType CancelType) const;
+	bool CancelCurrentAttackAction();
+	bool TryConsumePendingRoll();
 
 protected:
 	virtual void BeginPlay() override;
@@ -90,6 +98,8 @@ private:
 	void HandleOwnerDeath(const FTDDamageContext& Context);
 	bool TryConsumeBufferedInput();
 	bool HasBufferedInput() const;
+	bool HasBufferedRollExpired() const;
+	bool IsBufferedRollPending() const;
 	void PrefetchSkillSetAnimations();
 	bool IsReactionAnimationResident(FGameplayTag ReactionTag) const;
 	bool TryPlayResidentReaction(FGameplayTag ReactionTag);
@@ -125,5 +135,7 @@ private:
 	int32 ActiveInputBufferWindowCount = 0;
 	FGameplayTag BufferedActionTag;
 	TWeakObjectPtr<AActor> BufferedActionTarget;
+	double BufferedActionTimestamp = -1.0;
+	int32 ActiveCancelWindowCounts[TDActionCancelTypeCount] = {};
 	TSharedPtr<FStreamableHandle> SkillSetAnimationsHandle;
 };

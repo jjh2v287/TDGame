@@ -726,7 +726,7 @@ bool FTDSwordStyleCatalogIsConsistentTest::RunTest(const FString& Parameters)
 		const float BranchSeconds = SourceFrameToSeconds(Source, Source.BranchFrame);
 		TestEqual(FString::Printf(TEXT("Combo %d hit window opens just before the swing"), Step), HitWindow.StartSeconds, FMath::Max(SwingStartSeconds - 0.03f, 0.f), WindowTolerance);
 		TestEqual(FString::Printf(TEXT("Combo %d hit window closes just after the swing"), Step), HitWindow.EndSeconds, FMath::Min(SwingEndSeconds + 0.05f, ClipSeconds), WindowTolerance);
-		TestEqual(FString::Printf(TEXT("Combo %d input buffer opens at the swing end"), Step), Action.InputBufferWindow.StartSeconds, SwingEndSeconds, WindowTolerance);
+		TestEqual(FString::Printf(TEXT("Combo %d input buffer opens 0.12 s into the action"), Step), Action.InputBufferWindow.StartSeconds, 0.12f, WindowTolerance);
 		TestEqual(FString::Printf(TEXT("Combo %d input buffer lasts to the clip end"), Step), Action.InputBufferWindow.EndSeconds, ClipSeconds, WindowTolerance);
 
 		const FTDTagWindow* ComboWindow = Action.TagWindows.FindByPredicate([](const FTDTagWindow& TagWindow)

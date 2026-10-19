@@ -19,6 +19,7 @@ class UTDCombatAttributeSet;
 class UTDCombatComponent;
 class UTDDamageDefinition;
 class UUAFComponent;
+struct FTDDamageContext;
 struct FTDDamageResult;
 
 UENUM(BlueprintType)
@@ -114,12 +115,15 @@ public:
 	void SetHitFlashOverlay(UMaterialInterface* Material);
 	void SetPresentationOffset(const FVector& WorldOffset);
 	void ApplyKnockback(const FVector& PlanarVelocity, float Seconds);
+	void ApplyLinearKnockback(const FVector& PlanarVelocity, float Seconds);
+	void ClearDeferredKnockback();
 	bool StartRagdoll(const FVector& LinearVelocity);
 	FVector ComputeKillVelocity(const FTDDamageResult& Result) const;
 	bool IsRagdolling() const { return bIsRagdolling; }
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult) override;
 
 	UFUNCTION()
@@ -192,6 +196,19 @@ protected:
 	float RagdollUpSpeed = 160.f;
 
 private:
+	struct FTDDeferredKnockback
+	{
+		FVector PlanarVelocity = FVector::ZeroVector;
+		float Seconds = 0.f;
+		bool bUsesLinearDecay = false;
+	};
+
+	void ScheduleDeferredMovement();
+	void ResolveDeferredMovement();
+	void HandleDeferredMovementOwnerDeath(const FTDDamageContext& Context);
+	void ApplyImpulseVelocityNow(const FVector& VelocityChange);
+	void QueueKnockback(const FVector& PlanarVelocity, float Seconds, bool bUsesLinearDecay);
+	void ApplyKnockbackNow(const FVector& PlanarVelocity, float Seconds, bool bUsesLinearDecay);
 	void ApplyMovementSettings();
 	void LinkAnimationBeforeMovement();
 	FVector ConsumeMoveIntent();
@@ -203,8 +220,13 @@ private:
 	FVector DesiredFacingDirection = FVector::ZeroVector;
 	FVector LastPresentationOffsetLocal = FVector::ZeroVector;
 	FName MovementModeBeforeFreeze = NAME_None;
+	TArray<FVector, TInlineAllocator<2>> DeferredImpulseVelocities;
+	TArray<FTDDeferredKnockback, TInlineAllocator<2>> DeferredKnockbacks;
+
+	FTimerHandle DeferredMovementTimerHandle;
 	FTimerHandle RagdollSettleTimerHandle;
 	double RagdollStartSeconds = 0.0;
+
 	bool bIsMovementDisabled = false;
 	bool bIsMovementFrozen = false;
 	bool bIsRagdolling = false;

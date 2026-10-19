@@ -36,6 +36,9 @@ class TDGAME_API UTDCombatFeedbackSettings : public UDeveloperSettings
 public:
 	void CollectSoftObjectPaths(TArray<FSoftObjectPath>& OutPaths) const;
 	FLinearColor GetElementNumberColor(ETDDamageElement Element) const;
+	float GetEffectiveShakeScale() const;
+	float GetFlashIntensityScale() const;
+	bool IsSlowMotionEnabled() const;
 
 	UPROPERTY(Config, EditAnywhere, Category="Effects")
 	TMap<ETDDamageElement, TSoftObjectPtr<UNiagaraSystem>> ImpactEffects;
@@ -45,6 +48,9 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category="Effects", meta=(ClampMin="0.0"))
 	float LoopingEffectSeconds = 0.4f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Effects")
+	TSoftObjectPtr<UNiagaraSystem> MeleeSlashTrailEffect;
 
 	UPROPERTY(Config, EditAnywhere, Category="Sounds")
 	TMap<ETDDamageElement, FTDFeedbackSoundSet> ImpactSounds;
@@ -61,8 +67,20 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="Sounds")
 	FTDFeedbackSoundSet MeleeSwingSound;
 
+	UPROPERTY(Config, EditAnywhere, Category="Sounds")
+	FTDFeedbackSoundSet PlayerHitSounds;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds")
+	FTDFeedbackSoundSet MonsterSwingSounds;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds")
+	FTDFeedbackSoundSet PhaseAccentSound;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds")
+	FTDFeedbackSoundSet StatusTickSounds;
+
 	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="0.0", ClampMax="1.0"))
-	float StatusSoundVolumeScale = 0.4f;
+	float StatusSoundVolumeScale = 0.25f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
 	int32 ImpactSoundMaxCount = 10;
@@ -72,6 +90,27 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
 	int32 SwingSoundMaxCount = 3;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
+	int32 MonsterSwingSoundMaxCount = 2;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
+	int32 PlayerHitSoundMaxCount = 1;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
+	int32 StatusTickSoundMaxCount = 2;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="0.0"))
+	float PlayerHitSoundRetriggerSeconds = 0.2f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="0.0"))
+	float MonsterSwingSoundRadiusCm = 1500.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="0.0"))
+	float SameSoundBurstSeconds = 0.05f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="1"))
+	int32 SameSoundBurstMaxCount = 3;
 
 	UPROPERTY(Config, EditAnywhere, Category="Sounds", meta=(ClampMin="0.0"))
 	float SoundInnerRadiusCm = 1200.f;
@@ -98,7 +137,22 @@ public:
 	FLinearColor CriticalFlashColor = FLinearColor(1.f, 0.55f, 0.1f, 1.f);
 
 	UPROPERTY(Config, EditAnywhere, Category="Flash", meta=(ClampMin="0.0"))
-	float FlashSeconds = 0.12f;
+	float LightFlashSeconds = 0.08f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Flash", meta=(ClampMin="0.0"))
+	float HeavyFlashSeconds = 0.1f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Flash", meta=(ClampMin="0.0"))
+	float CriticalFlashSeconds = 0.12f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Flash", meta=(ClampMin="0.0"))
+	float PlayerFlashSeconds = 0.15f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Flash", meta=(ClampMin="0.0"))
+	float FlashMinIntervalSeconds = 0.33f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Flash", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float ReducedFlashScale = 0.5f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Flash", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float StatusFlashIntensity = 0.35f;
@@ -107,13 +161,40 @@ public:
 	float FlashOverlayHoldSeconds = 1.5f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
-	float LightHitStopSeconds = 0.05f;
+	float LightHitStopSeconds = 0.067f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
-	float HeavyHitStopSeconds = 0.09f;
+	float HeavyHitStopSeconds = 0.11f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
-	float AttackerHitStopSeconds = 0.f;
+	float AttackerHitStopSeconds = 0.033f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
+	float AttackerHeavyHitStopSeconds = 0.067f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
+	float AttackerKillHitStopSeconds = 0.05f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
+	float CriticalHitStopBonusSeconds = 0.033f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
+	float MaxVictimHitStopSeconds = 0.15f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float PlayerHitStopDamageRatio = 0.15f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
+	float PlayerHitStopSeconds = 0.04f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="1"))
+	int32 CrowdHitStopTargetCount = 3;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float CrowdHitStopScale = 0.6f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0"))
+	float CommittedMinionMaxHitStopSeconds = 0.067f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Hit Stop", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float HeavyDamageRatio = 0.12f;
@@ -133,6 +214,15 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="Wobble", meta=(ClampMin="0.0"))
 	float WobbleFrequencyHz = 9.f;
 
+	UPROPERTY(Config, EditAnywhere, Category="Wobble", meta=(ClampMin="0.0"))
+	float HitStopJitterCm = 8.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Wobble", meta=(ClampMin="0.0"))
+	float HitStopJitterFrequencyHz = 28.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Wobble", meta=(ClampMin="0.0"))
+	float CommittedJitterMaxCm = 3.f;
+
 	UPROPERTY(Config, EditAnywhere, Category="Camera")
 	bool bEnableCameraShake = true;
 
@@ -140,22 +230,148 @@ public:
 	bool bEnableForceFeedback = true;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float CameraShakeScale = 1.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera")
+	bool bRandomizeShakePhase = true;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float ShakeTraumaDecayPerSecond = 2.2f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float ShakeNoiseFrequency = 18.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float ShakeNoiseGain = 1.8f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera")
+	FRotator ShakeMaxRotationDegrees = FRotator(1.5f, 1.5f, 0.5f);
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float ShakeMaxLocationCm = 8.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="1.0"))
+	float ReferenceCameraArmLengthCm = 1100.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float MinArmLocationScale = 0.5f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float MaxArmLocationScale = 1.5f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float MaxShakeScreenOffsetPx = 29.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float ShakeOtherChannelWeight = 0.25f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float ShakeTraumaCap = 0.85f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float BossKillShakeTraumaCap = 1.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float TraumaDealt = 0.25f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
-	float TraumaDealtHeavy = 0.4f;
+	float TraumaDealtHeavy = 0.5f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
-	float TraumaKill = 0.5f;
+	float TraumaKill = 0.55f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
-	float TraumaReceivedMin = 0.2f;
+	float TraumaKillElite = 0.65f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float TraumaKillBoss = 0.88f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float HeavyTraumaDamageRatio = 0.25f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
-	float TraumaReceivedPerDamageRatio = 2.f;
+	float DealtSwingSeconds = 0.45f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
-	float TraumaReceivedMax = 0.7f;
+	float DealtExtraTargetTrauma = 0.03f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float MaxDealtExtraTargetTrauma = 0.09f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float DealtChannelTraumaCap = 0.6f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float KillExtraTrauma = 0.05f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float KillTraumaCap = 0.7f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float EliteKillTraumaCap = 0.75f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float SlowMotionDealtTraumaCap = 0.3f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float TraumaReceivedMin = 0.35f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float TraumaReceivedPerDamageRatio = 1.6f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float TraumaReceivedMax = 0.75f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float TraumaReceivedDeath = 0.8f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float ReceivedWindowSeconds = 0.5f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float ReceivedMinAccumulatedRatio = 0.03f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float ReceivedRefractorySeconds = 0.3f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float ReceivedRefractoryBonusTrauma = 0.03f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float ReceivedStrongSourceMinRatio = 0.01f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float ReceivedInjectionWindowSeconds = 1.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float MaxReceivedInjectionTrauma = 1.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float KickMinDegrees = 0.25f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float KickMaxDegrees = 0.5f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float KickMinDamageRatio = 0.1f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float KickMaxDamageRatio = 0.2f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.001"))
+	float KickRiseSeconds = 0.03f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.001"))
+	float KickReturnSeconds = 0.15f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float KickMinIntervalSeconds = 0.3f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0"))
+	float KickOppositeBlockSeconds = 0.5f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float PhaseEventTrauma = 0.6f;
 
 	UPROPERTY(Config, EditAnywhere, Category="Camera", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float RumbleDealtIntensity = 0.2f;
@@ -298,6 +514,36 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="Budget", meta=(ClampMin="0"))
 	int32 MaxNewSoundsPerFrame = 6;
 
+	UPROPERTY(Config, EditAnywhere, Category="Budget", meta=(ClampMin="0"))
+	int32 MaxStatusSoundsPerFrame = 2;
+
 	UPROPERTY(Config, EditAnywhere, Category="Budget", meta=(ClampMin="0.0"))
 	float MaxDeferredFeedbackSeconds = 0.1f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.0"))
+	float SlowMotionMaxRealSeconds = 1.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.0"))
+	float SlowMotionCooldownSeconds = 5.f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.01", ClampMax="1.0"))
+	float BossKillSlowMotionScale = 0.2f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.0"))
+	float BossKillSlowMotionSeconds = 0.6f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.0"))
+	float BossKillSlowMotionDelaySeconds = 0.05f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.01", ClampMax="1.0"))
+	float VictorySlowMotionScale = 0.3f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.0"))
+	float VictorySlowMotionSeconds = 0.3f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.01", ClampMax="1.0"))
+	float PhaseSlowMotionScale = 0.5f;
+
+	UPROPERTY(Config, EditAnywhere, Category="Slow Motion", meta=(ClampMin="0.0"))
+	float PhaseSlowMotionSeconds = 0.25f;
 };

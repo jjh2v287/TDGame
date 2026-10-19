@@ -7,6 +7,7 @@
 #include "DefaultMovementSet/CharacterMoverComponent.h"
 #include "DefaultMovementSet/LayeredMoves/RootMotionAttributeLayeredMove.h"
 #include "Engine/World.h"
+#include "GameFramework/WorldSettings.h"
 #include "Injection/InjectionUtils.h"
 #include "InstanceTaskContext.h"
 #include "Module/UAFWeakSystemReference.h"
@@ -30,6 +31,10 @@ namespace TDCharacterAnimationPlayback
 	constexpr int32 MaximumActionStopAttempts = 2;
 	constexpr float LocomotionBlendSeconds = 0.2f;
 	constexpr float ActionBlendInSeconds = 0.1f;
+	constexpr float ReactionBlendInSeconds = 0.04f;
+	constexpr float RateHitStopClockScale = 0.05f;
+	constexpr uint64 MaximumVictimHitStopWaitFrames = 3;
+	constexpr double RealTimeHitStopEndToleranceSeconds = 1e-4;
 	constexpr float ActionBlendOutSeconds = 0.15f;
 	constexpr float DeathBlendSeconds = 0.1f;
 	constexpr int32 InjectionWarmupTicks = 2;
@@ -89,9 +94,9 @@ namespace TDCharacterAnimationPlayback
 		return UE::UAF::FInjectionUtils::PlayAnim(&AnimationSystem, GetDefaultInjectionSite(), Animation, MoveTemp(PlayArgs), MakeBlendSettings(BlendInSeconds), MakeBlendSettings(BlendOutSeconds));
 	}
 
-	UE::UAF::FInjectionRequestPtr InjectActionSequence(UUAFComponent& AnimationSystem, UAnimSequence* Animation, const float PlayRate, const float StartSeconds)
+	UE::UAF::FInjectionRequestPtr InjectActionSequence(UUAFComponent& AnimationSystem, UAnimSequence* Animation, const float PlayRate, const float StartSeconds, const float BlendInSeconds)
 	{
-		return InjectSequence(AnimationSystem, Animation, PlayRate, StartSeconds, false, EAnimNextInjectionLifetimeType::Auto, ActionBlendInSeconds, ActionBlendOutSeconds);
+		return InjectSequence(AnimationSystem, Animation, PlayRate, StartSeconds, false, EAnimNextInjectionLifetimeType::Auto, BlendInSeconds, ActionBlendOutSeconds);
 	}
 
 	UE::UAF::FInjectionRequestPtr InjectDeathSequence(UUAFComponent& AnimationSystem, UAnimSequence* Animation, const float PlayRate)
@@ -127,6 +132,12 @@ namespace TDCharacterAnimationPlayback
 				SequencePlayer.PlayRate = PlayRate;
 			});
 		});
+	}
+
+	float GetTimeDilation(const UWorld& World)
+	{
+		const AWorldSettings* WorldSettings = World.GetWorldSettings(false, false);
+		return WorldSettings ? FMath::Max(WorldSettings->GetEffectiveTimeDilation(), UE_KINDA_SMALL_NUMBER) : 1.f;
 	}
 
 	float ComputeRunThreshold(const float WalkClipSpeed, const float RunClipSpeed)
@@ -206,6 +217,8 @@ void UTDCharacterAnimationComponent::BeginPlay()
 void UTDCharacterAnimationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	ClearHitStop();
+	ClearRateHitStops();
+	PendingVictimHitStopRealSeconds = 0.f;
 	TDCharacterAnimationPlayback::UninjectAndReset(ActionRequest);
 	TDCharacterAnimationPlayback::UninjectAndReset(LocomotionRequest);
 	ActiveAction = FTDActiveAction();
@@ -220,6 +233,8 @@ void UTDCharacterAnimationComponent::TickComponent(float DeltaTime, ELevelTick T
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	CancelPendingRootMotion();
+	ExpireRealTimeHitStops();
+	StartPendingVictimHitStop();
 	if (IsPoseHeld() || !bHasBaseAsset)
 	{
 		return;
@@ -312,6 +327,16 @@ void UTDCharacterAnimationComponent::UseAirborneClips(const FTDAirborneClipSet& 
 
 float UTDCharacterAnimationComponent::PlayAction(UAnimSequence* Animation, float PlayRate, float StartSeconds, float EndSeconds, bool bUseRootMotion)
 {
+	return StartAction(Animation, PlayRate, StartSeconds, EndSeconds, bUseRootMotion, TDCharacterAnimationPlayback::ActionBlendInSeconds);
+}
+
+float UTDCharacterAnimationComponent::PlayReactionAction(UAnimSequence* Animation, float PlayRate, float StartSeconds, float EndSeconds)
+{
+	return StartAction(Animation, PlayRate, StartSeconds, EndSeconds, false, TDCharacterAnimationPlayback::ReactionBlendInSeconds);
+}
+
+float UTDCharacterAnimationComponent::StartAction(UAnimSequence* Animation, float PlayRate, float StartSeconds, float EndSeconds, bool bUseRootMotion, float BlendInSeconds)
+{
 	UUAFComponent* AnimationSystem = ResolveUAFComponent();
 	if (!Animation || !AnimationSystem || !bHasBaseAsset || bIsPlayingDeath || bIsAnimationFrozen || bIsPoseHeldByDeath)
 	{
@@ -329,6 +354,7 @@ float UTDCharacterAnimationComponent::PlayAction(UAnimSequence* Animation, float
 	}
 
 	EndHitStop();
+	ClearRateHitStops();
 	for (int32 StopAttempt = 0; StopAttempt < TDCharacterAnimationPlayback::MaximumActionStopAttempts && IsPlayingAction(); ++StopAttempt)
 	{
 		StopAction(TDCharacterAnimationPlayback::ActionBlendOutSeconds);
@@ -346,7 +372,7 @@ float UTDCharacterAnimationComponent::PlayAction(UAnimSequence* Animation, float
 	}
 	else
 	{
-		ActionRequest = TDCharacterAnimationPlayback::InjectActionSequence(*AnimationSystem, Animation, SafePlayRate, StartTime);
+		ActionRequest = TDCharacterAnimationPlayback::InjectActionSequence(*AnimationSystem, Animation, SafePlayRate, StartTime, BlendInSeconds);
 		if (!ActionRequest)
 		{
 			return 0.f;
@@ -363,9 +389,33 @@ float UTDCharacterAnimationComponent::PlayAction(UAnimSequence* Animation, float
 	ActiveAction.EndSeconds = EndTime;
 	ActiveAction.AnimationTime = StartTime;
 	ActiveAction.PreviousAnimationTime = StartTime;
+	ActiveAction.InjectedPlayRate = SafePlayRate;
+	ActiveAction.BlendInSeconds = BlendInSeconds;
 	ActiveAction.bUsesRootMotion = bUseRootMotion;
 	SetRootMotionEnabled(bUseRootMotion);
 	return (EndTime - StartTime) / EffectivePlayRate;
+}
+
+void UTDCharacterAnimationComponent::SetActionPlayRate(float PlayRate)
+{
+	if (!IsPlayingAction())
+	{
+		return;
+	}
+	const float SafePlayRate = FMath::Max(PlayRate, TDCharacterAnimationPlayback::MinimumActionPlayRate);
+	ActiveAction.InjectedPlayRate = SafePlayRate;
+	ActiveAction.PlayRate = FMath::Max(SafePlayRate * ActiveAction.Animation->RateScale, TDCharacterAnimationPlayback::MinimumActionPlayRate);
+	ApplyActionPlaybackRate();
+}
+
+float UTDCharacterAnimationComponent::GetActionPlaybackSecondsUntil(float AnimationSeconds) const
+{
+	if (!IsPlayingAction())
+	{
+		return 0.f;
+	}
+	const float TargetSeconds = FMath::Min(AnimationSeconds, ActiveAction.EndSeconds);
+	return FMath::Max(TargetSeconds - ActiveAction.AnimationTime, 0.f) / ActiveAction.PlayRate;
 }
 
 void UTDCharacterAnimationComponent::StopAction(float BlendOutSeconds)
@@ -475,6 +525,7 @@ void UTDCharacterAnimationComponent::StartHitStop(float Seconds)
 	{
 		EndHitStop();
 	}), Seconds, false);
+	PoseHitStopRealEndSeconds = 0.0;
 	bIsHitStopped = true;
 	RefreshAnimationSystemActivation();
 }
@@ -492,10 +543,201 @@ void UTDCharacterAnimationComponent::EndHitStop()
 void UTDCharacterAnimationComponent::ClearHitStop()
 {
 	bIsHitStopped = false;
+	PoseHitStopRealEndSeconds = 0.0;
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(HitStopTimerHandle);
 	}
+}
+
+bool UTDCharacterAnimationComponent::StartAttackerHitStop(float RealSeconds)
+{
+	return StartRateHitStop(AttackerRateHitStop, RealSeconds);
+}
+
+bool UTDCharacterAnimationComponent::StartVictimHitStop(float RealSeconds)
+{
+	if (RealSeconds <= 0.f || !GetWorld() || bIsAnimationFrozen || bIsPlayingDeath || bIsPoseHeldByDeath)
+	{
+		return false;
+	}
+	PendingVictimHitStopRealSeconds = FMath::Max(PendingVictimHitStopRealSeconds, RealSeconds);
+	PendingVictimHitStopFrame = GFrameCounter;
+	return true;
+}
+
+bool UTDCharacterAnimationComponent::StartKillPoseHold(float RealSeconds)
+{
+	return StartRealTimePoseHitStop(RealSeconds);
+}
+
+float UTDCharacterAnimationComponent::GetHitStopRemainingSeconds() const
+{
+	return FMath::Max(GetVictimHitStopRemainingSeconds(), GetAttackerHitStopRemainingSeconds());
+}
+
+float UTDCharacterAnimationComponent::GetVictimHitStopRemainingSeconds() const
+{
+	const UWorld* World = GetWorld();
+	float RemainingRealSeconds = FMath::Max(PendingVictimHitStopRealSeconds, GetPoseHitStopRemainingSeconds());
+	if (World && VictimRateHitStop.bIsActive)
+	{
+		RemainingRealSeconds = FMath::Max(RemainingRealSeconds, static_cast<float>(VictimRateHitStop.RealEndSeconds - World->GetRealTimeSeconds()));
+	}
+	return RemainingRealSeconds;
+}
+
+float UTDCharacterAnimationComponent::GetAttackerHitStopRemainingSeconds() const
+{
+	const UWorld* World = GetWorld();
+	if (!World || !AttackerRateHitStop.bIsActive)
+	{
+		return 0.f;
+	}
+	return FMath::Max(static_cast<float>(AttackerRateHitStop.RealEndSeconds - World->GetRealTimeSeconds()), 0.f);
+}
+
+float UTDCharacterAnimationComponent::GetPoseHitStopRemainingSeconds() const
+{
+	const UWorld* World = GetWorld();
+	if (!World || !bIsHitStopped)
+	{
+		return 0.f;
+	}
+	if (PoseHitStopRealEndSeconds > 0.0)
+	{
+		return FMath::Max(static_cast<float>(PoseHitStopRealEndSeconds - World->GetRealTimeSeconds()), 0.f);
+	}
+	return FMath::Max(World->GetTimerManager().GetTimerRemaining(HitStopTimerHandle), 0.f) / TDCharacterAnimationPlayback::GetTimeDilation(*World);
+}
+
+float UTDCharacterAnimationComponent::ConvertRealToWorldSeconds(const UWorld& World, float RealSeconds)
+{
+	return RealSeconds * TDCharacterAnimationPlayback::GetTimeDilation(World);
+}
+
+void UTDCharacterAnimationComponent::ExpireRealTimeHitStops()
+{
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	const double NowSeconds = World->GetRealTimeSeconds() + TDCharacterAnimationPlayback::RealTimeHitStopEndToleranceSeconds;
+	if (AttackerRateHitStop.bIsActive && NowSeconds >= AttackerRateHitStop.RealEndSeconds)
+	{
+		EndRateHitStop(AttackerRateHitStop);
+	}
+	if (VictimRateHitStop.bIsActive && NowSeconds >= VictimRateHitStop.RealEndSeconds)
+	{
+		EndRateHitStop(VictimRateHitStop);
+	}
+	if (bIsHitStopped && PoseHitStopRealEndSeconds > 0.0 && NowSeconds >= PoseHitStopRealEndSeconds)
+	{
+		EndHitStop();
+	}
+}
+
+bool UTDCharacterAnimationComponent::StartRealTimePoseHitStop(float RealSeconds)
+{
+	UWorld* World = GetWorld();
+	if (RealSeconds <= 0.f || !World || bIsAnimationFrozen || bIsPlayingDeath || bIsPoseHeldByDeath)
+	{
+		return false;
+	}
+	if (bIsHitStopped && GetPoseHitStopRemainingSeconds() >= RealSeconds)
+	{
+		return true;
+	}
+	World->GetTimerManager().ClearTimer(HitStopTimerHandle);
+	PoseHitStopRealEndSeconds = World->GetRealTimeSeconds() + RealSeconds;
+	bIsHitStopped = true;
+	RefreshAnimationSystemActivation();
+	return true;
+}
+
+void UTDCharacterAnimationComponent::StartPendingVictimHitStop()
+{
+	if (!IsHitStopPending() || GFrameCounter <= PendingVictimHitStopFrame)
+	{
+		return;
+	}
+	const bool bIsWaitingForReactionPose = GFrameCounter - PendingVictimHitStopFrame < TDCharacterAnimationPlayback::MaximumVictimHitStopWaitFrames && IsActionInjectionPending();
+	if (bIsWaitingForReactionPose)
+	{
+		return;
+	}
+	const float RealSeconds = PendingVictimHitStopRealSeconds;
+	PendingVictimHitStopRealSeconds = 0.f;
+	if (IsPlayingRootMotionAction())
+	{
+		StartRateHitStop(VictimRateHitStop, RealSeconds);
+		return;
+	}
+	StartRealTimePoseHitStop(RealSeconds);
+}
+
+bool UTDCharacterAnimationComponent::IsActionInjectionPending() const
+{
+	if (PendingInjection.Animation.IsValid() && !PendingInjection.bIsDeath)
+	{
+		return true;
+	}
+	return ActionRequest && TDCharacterAnimationPlayback::IsInjectionPending(*ActionRequest);
+}
+
+bool UTDCharacterAnimationComponent::StartRateHitStop(FTDRateHitStop& RateHitStop, float RealSeconds)
+{
+	UWorld* World = GetWorld();
+	if (RealSeconds <= 0.f || !World || !IsPlayingAction() || bIsAnimationFrozen || bIsPlayingDeath || bIsPoseHeldByDeath)
+	{
+		return false;
+	}
+	const double EndSeconds = World->GetRealTimeSeconds() + RealSeconds;
+	if (RateHitStop.bIsActive && RateHitStop.RealEndSeconds >= EndSeconds)
+	{
+		return true;
+	}
+	const float PreviousClockScale = GetActionClockScale();
+	RateHitStop.RealEndSeconds = EndSeconds;
+	RateHitStop.bIsActive = true;
+	if (PreviousClockScale != GetActionClockScale())
+	{
+		ApplyActionPlaybackRate();
+	}
+	return true;
+}
+
+void UTDCharacterAnimationComponent::EndRateHitStop(FTDRateHitStop& RateHitStop)
+{
+	if (!RateHitStop.bIsActive)
+	{
+		return;
+	}
+	RateHitStop.bIsActive = false;
+	RateHitStop.RealEndSeconds = 0.0;
+	ApplyActionPlaybackRate();
+}
+
+void UTDCharacterAnimationComponent::ClearRateHitStops()
+{
+	AttackerRateHitStop = FTDRateHitStop();
+	VictimRateHitStop = FTDRateHitStop();
+}
+
+
+void UTDCharacterAnimationComponent::ApplyActionPlaybackRate()
+{
+	if (!ActionRequest || !IsPlayingAction())
+	{
+		return;
+	}
+	TDCharacterAnimationPlayback::SetInjectedSequencePlayRate(*ActionRequest, ActiveAction.InjectedPlayRate * GetActionClockScale());
+}
+
+float UTDCharacterAnimationComponent::GetActionClockScale() const
+{
+	return AttackerRateHitStop.bIsActive || VictimRateHitStop.bIsActive ? TDCharacterAnimationPlayback::RateHitStopClockScale : 1.f;
 }
 
 void UTDCharacterAnimationComponent::RefreshAnimationSystemActivation()
@@ -693,7 +935,7 @@ void UTDCharacterAnimationComponent::UpdateAirborneClips()
 void UTDCharacterAnimationComponent::AdvanceAction(float DeltaTime)
 {
 	ActiveAction.PreviousAnimationTime = ActiveAction.AnimationTime;
-	ActiveAction.AnimationTime = FMath::Min(ActiveAction.AnimationTime + DeltaTime * ActiveAction.PlayRate, ActiveAction.EndSeconds);
+	ActiveAction.AnimationTime = FMath::Min(ActiveAction.AnimationTime + DeltaTime * ActiveAction.PlayRate * GetActionClockScale(), ActiveAction.EndSeconds);
 	if (ActiveAction.AnimationTime < ActiveAction.EndSeconds)
 	{
 		return;
@@ -709,6 +951,7 @@ void UTDCharacterAnimationComponent::FinishAction(bool bWasInterrupted, float Bl
 	}
 	const UAnimSequence* EndedAnimation = ActiveAction.Animation;
 	PendingInjection = FTDPendingInjection();
+	ClearRateHitStops();
 
 	if (ActionRequest && TDCharacterAnimationPlayback::IsInjectionPending(*ActionRequest))
 	{
@@ -774,7 +1017,8 @@ void UTDCharacterAnimationComponent::FlushPendingInjection()
 	{
 		return;
 	}
-	ActionRequest = TDCharacterAnimationPlayback::InjectActionSequence(*AnimationSystem, Animation, PlayRate, ActiveAction.AnimationTime);
+	ActionRequest = TDCharacterAnimationPlayback::InjectActionSequence(*AnimationSystem, Animation, ActiveAction.InjectedPlayRate * GetActionClockScale(), ActiveAction.AnimationTime, ActiveAction.BlendInSeconds);
+
 	if (!ActionRequest)
 	{
 		FinishAction(true, TDCharacterAnimationPlayback::ActionBlendOutSeconds);

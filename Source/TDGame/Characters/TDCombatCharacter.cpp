@@ -18,6 +18,7 @@
 #include "DefaultMovementSet/NavMoverComponent.h"
 #include "DefaultMovementSet/Settings/CommonLegacyMovementSettings.h"
 #include "Engine/CollisionProfile.h"
+#include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "GameplayAbilitySpec.h"
 #include "GameplayEffect.h"
@@ -26,6 +27,7 @@
 #include "MovementMode.h"
 #include "PhysicsEngine/BodyInstance.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "TimerManager.h"
 
 const FName ATDCombatCharacter::CapsuleComponentName(TEXT("CollisionCylinder"));
 const FName ATDCombatCharacter::MeshComponentName(TEXT("CharacterMesh0"));
@@ -225,6 +227,13 @@ void ATDCombatCharacter::BeginPlay()
 	ApplyMovementSettings();
 	LinkAnimationBeforeMovement();
 	MoverComponent->OnMovementModeChanged.AddUniqueDynamic(this, &ThisClass::HandleMovementModeChanged);
+	CombatComponent->OnDeath.AddUObject(this, &ThisClass::HandleDeferredMovementOwnerDeath);
+}
+
+void ATDCombatCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ClearDeferredKnockback();
+	Super::EndPlay(EndPlayReason);
 }
 
 void ATDCombatCharacter::PossessedBy(AController* NewController)
@@ -353,6 +362,76 @@ void ATDCombatCharacter::EnableMovement()
 
 void ATDCombatCharacter::AddImpulseVelocity(const FVector& VelocityChange)
 {
+	if (VelocityChange.IsNearlyZero())
+	{
+		return;
+	}
+	DeferredImpulseVelocities.Add(VelocityChange);
+	ScheduleDeferredMovement();
+}
+
+void ATDCombatCharacter::ScheduleDeferredMovement()
+{
+	UWorld* World = GetWorld();
+	if (!World || World->GetTimerManager().TimerExists(DeferredMovementTimerHandle))
+	{
+		return;
+	}
+	DeferredMovementTimerHandle = World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &ThisClass::ResolveDeferredMovement));
+}
+
+void ATDCombatCharacter::ClearDeferredKnockback()
+{
+	DeferredImpulseVelocities.Reset();
+	DeferredKnockbacks.Reset();
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(DeferredMovementTimerHandle);
+	}
+	DeferredMovementTimerHandle.Invalidate();
+}
+
+void ATDCombatCharacter::HandleDeferredMovementOwnerDeath(const FTDDamageContext& Context)
+{
+	ClearDeferredKnockback();
+}
+
+void ATDCombatCharacter::ResolveDeferredMovement()
+{
+	DeferredMovementTimerHandle.Invalidate();
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	FTimerManager& TimerManager = World->GetTimerManager();
+	if (CharacterAnimation && CharacterAnimation->IsHitStopPending())
+	{
+		DeferredMovementTimerHandle = TimerManager.SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &ThisClass::ResolveDeferredMovement));
+		return;
+	}
+	const float HoldRealSeconds = CharacterAnimation && CharacterAnimation->IsVictimHitStopActive() ? CharacterAnimation->GetVictimHitStopRemainingSeconds() : 0.f;
+	if (HoldRealSeconds > 0.f)
+	{
+		TimerManager.SetTimer(DeferredMovementTimerHandle, FTimerDelegate::CreateUObject(this, &ThisClass::ResolveDeferredMovement), UTDCharacterAnimationComponent::ConvertRealToWorldSeconds(*World, HoldRealSeconds), false);
+		return;
+	}
+	const TArray<FVector, TInlineAllocator<2>> ImpulseVelocities = MoveTemp(DeferredImpulseVelocities);
+	const TArray<FTDDeferredKnockback, TInlineAllocator<2>> Knockbacks = MoveTemp(DeferredKnockbacks);
+	DeferredImpulseVelocities.Reset();
+	DeferredKnockbacks.Reset();
+	for (const FVector& ImpulseVelocity : ImpulseVelocities)
+	{
+		ApplyImpulseVelocityNow(ImpulseVelocity);
+	}
+	for (const FTDDeferredKnockback& Knockback : Knockbacks)
+	{
+		ApplyKnockbackNow(Knockback.PlanarVelocity, Knockback.Seconds, Knockback.bUsesLinearDecay);
+	}
+}
+
+void ATDCombatCharacter::ApplyImpulseVelocityNow(const FVector& VelocityChange)
+{
 	if (bIsMovementDisabled || bIsMovementFrozen || !TDCombatCharacterMovement::IsMoverReady(MoverComponent) || VelocityChange.IsNearlyZero())
 	{
 		return;
@@ -476,7 +555,29 @@ void ATDCombatCharacter::SetPresentationOffset(const FVector& WorldOffset)
 
 void ATDCombatCharacter::ApplyKnockback(const FVector& PlanarVelocity, float Seconds)
 {
+	QueueKnockback(PlanarVelocity, Seconds, false);
+}
+
+void ATDCombatCharacter::ApplyLinearKnockback(const FVector& PlanarVelocity, float Seconds)
+{
+	QueueKnockback(PlanarVelocity, Seconds, true);
+}
+
+void ATDCombatCharacter::QueueKnockback(const FVector& PlanarVelocity, float Seconds, bool bUsesLinearDecay)
+{
 	const FVector Velocity(PlanarVelocity.X, PlanarVelocity.Y, 0.f);
+	if (Velocity.IsNearlyZero() || Seconds <= 0.f)
+	{
+		return;
+	}
+	DeferredKnockbacks.Add(FTDDeferredKnockback{ Velocity, Seconds, bUsesLinearDecay });
+	ScheduleDeferredMovement();
+}
+
+void ATDCombatCharacter::ApplyKnockbackNow(const FVector& PlanarVelocity, float Seconds, bool bUsesLinearDecay)
+{
+	const FVector Velocity(PlanarVelocity.X, PlanarVelocity.Y, 0.f);
+
 	if (bIsMovementDisabled || bIsMovementFrozen || bIsRagdolling || !TDCombatCharacterMovement::IsMoverReady(MoverComponent) || Velocity.IsNearlyZero() || Seconds <= 0.f)
 	{
 		return;
@@ -488,6 +589,7 @@ void ATDCombatCharacter::ApplyKnockback(const FVector& PlanarVelocity, float Sec
 	const TSharedPtr<FTDKnockbackLayeredMove> KnockbackMove = MakeShared<FTDKnockbackLayeredMove>();
 	KnockbackMove->Velocity = Velocity;
 	KnockbackMove->DurationMs = Seconds * 1000.f;
+	KnockbackMove->bUsesLinearDecay = bUsesLinearDecay;
 	MoverComponent->QueueLayeredMove(KnockbackMove);
 }
 

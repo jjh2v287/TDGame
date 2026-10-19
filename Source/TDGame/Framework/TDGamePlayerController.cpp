@@ -46,7 +46,7 @@ namespace
 	const TCHAR* const MonsterSpeciesAssetPrefix = TEXT("DA_TDMonster_");
 	constexpr float ImmediateFacingYawThresholdDegrees = 10.f;
 
-	constexpr float ComboContinueExtraRangeCm = 150.f;
+	constexpr float ComboContinueExtraRangeCm = 80.f;
 
 	bool IsContinuingComboOnTarget(const ATDGameCharacter& PlayerCharacter, const AActor& TargetActor)
 	{
@@ -167,7 +167,11 @@ void ATDGamePlayerController::SetupInputComponent()
 void ATDGamePlayerController::OnInputStarted()
 {
 	StartPointerMovement(false);
-	if (LastAttackCommandFrame == GFrameCounter || (bAttackHostileOnClick && TryIssueAttackUnderCursor()))
+	if (LastAttackCommandFrame != GFrameCounter && bAttackHostileOnClick)
+	{
+		TryIssueAttackUnderCursor();
+	}
+	if (LastAttackCommandFrame == GFrameCounter)
 	{
 		SuppressPointerMovementUntilRelease();
 	}
@@ -353,6 +357,7 @@ void ATDGamePlayerController::PostProcessInput(const float DeltaTime, const bool
 		const FRotationMatrix CameraAxes(FRotator(0.f, CameraYaw, 0.f));
 		const FVector MoveDirection = CameraAxes.GetUnitAxis(EAxis::X) * KeyboardMoveInput.Y
 			+ CameraAxes.GetUnitAxis(EAxis::Y) * KeyboardMoveInput.X;
+		ControlledCharacter->TryCancelActionForMovement();
 		ControlledCharacter->AddMovementInput(MoveDirection, 1.f);
 		FaceMouseCursor(ControlledCharacter);
 		return;
@@ -369,6 +374,7 @@ void ATDGamePlayerController::PostProcessInput(const float DeltaTime, const bool
 		if (bHasValidPointerDestination)
 		{
 			const FVector MoveDirection = (CachedDestination - ControlledCharacter->GetActorLocation()).GetSafeNormal2D();
+			ControlledCharacter->TryCancelActionForMovement();
 			ControlledCharacter->AddMovementInput(MoveDirection, 1.f);
 		}
 	}
@@ -377,6 +383,7 @@ void ATDGamePlayerController::PostProcessInput(const float DeltaTime, const bool
 		if (!bShouldIgnorePointerUntilRelease && bHasValidPointerDestination && FollowTime <= ShortPressThreshold)
 		{
 			ClearQueuedAttack();
+			ControlledCharacter->TryCancelActionForMovement();
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::OneVector, true, true, ENCPoolMethod::None, true);
 		}
@@ -665,7 +672,8 @@ void ATDGamePlayerController::SetupCombatInputBindings(UEnhancedInputComponent* 
 
 void ATDGamePlayerController::OnPrimaryAttackStarted()
 {
-	if (TryIssueAttackUnderCursor())
+	TryIssueAttackUnderCursor();
+	if (LastAttackCommandFrame == GFrameCounter)
 	{
 		SuppressPointerMovementUntilRelease();
 	}

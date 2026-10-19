@@ -5,8 +5,10 @@
 #include "Algo/AllOf.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/BlendSpace.h"
+#include "Characters/TDApproachStepLayeredMove.h"
 #include "Characters/TDCapsuleModifierComponent.h"
 #include "Characters/TDCharacterAnimationComponent.h"
+#include "Characters/TDMonsterCharacter.h"
 #include "Combat/GAS/Abilities/TDCombatActionAbility.h"
 #include "Combat/GAS/Abilities/TDPlayerMovementAbilities.h"
 #include "Combat/GAS/Abilities/TDReactionAbility.h"
@@ -252,6 +254,11 @@ void ATDGameCharacter::ApplyWeaponMeshes()
 
 void ATDGameCharacter::HandleDamaged(const FTDDamageResult& Result, const FTDDamageContext& Context)
 {
+	const UWorld* World = GetWorld();
+	if (World && Result.AppliedDamage > 0.f && Result.Delivery != ETDDamageDelivery::Status)
+	{
+		LastDamagedTimeSeconds = World->GetTimeSeconds();
+	}
 	if (Result.AppliedDamage <= 0.f || Result.bWasKilled || Result.Delivery == ETDDamageDelivery::Status || !CombatComponent->IsAlive())
 	{
 		return;
@@ -343,6 +350,11 @@ bool ATDGameCharacter::ExecutePrimaryAttack(AActor* TargetActor)
 		return false;
 	}
 
+	if (SkillComponent->TryConsumePendingRoll())
+	{
+		return false;
+	}
+
 	int32 ComboStep = 0;
 	const FGameplayTag AttackTag = SkillComponent->ResolvePrimaryActionTag(ComboStep);
 	if (!AttackTag.IsValid() || !SkillComponent->CanUseAction(AttackTag))
@@ -360,6 +372,11 @@ bool ATDGameCharacter::ExecutePrimaryAttack(AActor* TargetActor)
 
 bool ATDGameCharacter::ExecuteSkillQ(AActor* TargetActor)
 {
+	if (SkillComponent && SkillComponent->TryConsumePendingRoll())
+	{
+		return false;
+	}
+
 	if (ActivateCombatAbility(TDGameplayTags::Action_Skill_Q, TargetActor))
 	{
 		return true;
@@ -370,6 +387,11 @@ bool ATDGameCharacter::ExecuteSkillQ(AActor* TargetActor)
 
 bool ATDGameCharacter::ExecuteSkillE(AActor* TargetActor)
 {
+	if (SkillComponent && SkillComponent->TryConsumePendingRoll())
+	{
+		return false;
+	}
+
 	if (ActivateCombatAbility(TDGameplayTags::Action_Skill_E, TargetActor))
 	{
 		return true;
@@ -382,7 +404,7 @@ bool ATDGameCharacter::TryStartRoll(const FVector& RollDirection)
 {
 	if (!CanStartRoll())
 	{
-		return false;
+		return TryBufferRoll(RollDirection);
 	}
 
 	PendingRollDirection = RollDirection;
@@ -434,12 +456,12 @@ bool ATDGameCharacter::ActivateCombatAbility(const FGameplayTag AbilityTag, AAct
 
 bool ATDGameCharacter::CanStartRoll() const
 {
-	if (!CombatComponent->IsAlive() || CombatComponent->IsFrozen() || RollAnimation.Get() == nullptr)
-	{
-		return false;
-	}
+	return CanStartRollIgnoringCurrentAction() && !IsRollBlockedByCurrentAction();
+}
 
-	if (IsRollPlaying())
+bool ATDGameCharacter::CanStartRollIgnoringCurrentAction() const
+{
+	if (!CombatComponent->IsAlive() || CombatComponent->IsFrozen() || !CanPlayRollAnimation())
 	{
 		return false;
 	}
@@ -449,19 +471,149 @@ bool ATDGameCharacter::CanStartRoll() const
 		return false;
 	}
 
-	if (CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Attacking) ||
-		CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Skill) ||
+	if (CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Skill) ||
 		CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Stunned))
 	{
 		return false;
 	}
 
-	if (CombatComponent->GetCurrentStamina() < RollStaminaCost)
+	return CombatComponent->GetCurrentStamina() >= RollStaminaCost;
+}
+
+bool ATDGameCharacter::CanPlayRollAnimation() const
+{
+	return RollAnimation.Get() != nullptr && CharacterAnimation && !CharacterAnimation->IsAnimationFrozen() && !IsRollPlaying();
+}
+
+bool ATDGameCharacter::TryBufferRoll(const FVector& RollDirection)
+{
+	if (!SkillComponent || !CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Attacking) || IsCancelRollLocked() || !CanStartRollIgnoringCurrentAction())
 	{
 		return false;
 	}
 
+	PendingRollDirection = RollDirection;
+	if (SkillComponent->BufferCombatInput(TDGameplayTags::Action_Roll, nullptr))
+	{
+		return true;
+	}
+	PendingRollDirection = FVector::ForwardVector;
+	return false;
+}
+
+bool ATDGameCharacter::IsRollBlockedByCurrentAction() const
+{
+	return CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Attacking) && !CanRollCancelCurrentAction();
+}
+
+bool ATDGameCharacter::CanRollCancelCurrentAction() const
+{
+	return SkillComponent && SkillComponent->IsActionCancelWindowOpen(ETDActionCancelType::Roll) && !IsCancelRollLocked();
+}
+
+bool ATDGameCharacter::IsCancelRollLocked() const
+{
+	const UWorld* World = GetWorld();
+	return World && LastAttackCancelRollStartTimeSeconds >= 0.0 && World->GetTimeSeconds() - LastAttackCancelRollStartTimeSeconds < TDPlayerRoll::CancelRollLockoutSeconds;
+}
+
+void ATDGameCharacter::NotifyAttackCancelRollStarted()
+{
+	const UWorld* World = GetWorld();
+	LastAttackCancelRollStartTimeSeconds = World ? World->GetTimeSeconds() : -1.0;
+}
+
+bool ATDGameCharacter::TryCancelActionForMovement()
+{
+	if (!SkillComponent || !SkillComponent->IsActionCancelWindowOpen(ETDActionCancelType::Movement))
+	{
+		return false;
+	}
+	return SkillComponent->CancelCurrentAttackAction();
+}
+
+bool ATDGameCharacter::TryStartApproachStep(const AActor& TargetActor)
+{
+	UCharacterMoverComponent* Mover = GetMoverComponent();
+	if (!Mover || !Mover->HasBegunPlay())
+	{
+		return false;
+	}
+
+	const float StepDistance = ComputeApproachStepDistance(TargetActor);
+	if (StepDistance <= 0.f)
+	{
+		return false;
+	}
+
+	const TSharedPtr<FTDApproachStepLayeredMove> StepMove = MakeShared<FTDApproachStepLayeredMove>();
+	StepMove->Velocity = (TargetActor.GetActorLocation() - GetActorLocation()).GetSafeNormal2D() * (StepDistance / TDApproachStep::DurationSeconds);
+	StepMove->DurationMs = TDApproachStep::DurationSeconds * 1000.f;
+	Mover->QueueLayeredMove(StepMove);
 	return true;
+}
+
+float ATDGameCharacter::ComputeApproachStepDistance(const AActor& TargetActor) const
+{
+	if (!IsMovingOnGround() || WasDamagedWithin(TDApproachStep::RecentHitSeconds))
+	{
+		return 0.f;
+	}
+
+	const ATDMonsterCharacter* TargetMonster = Cast<ATDMonsterCharacter>(&TargetActor);
+	if (TargetMonster && TargetMonster->IsInDangerWindup())
+	{
+		return 0.f;
+	}
+
+	const ATDCombatCharacter* TargetCharacter = Cast<ATDCombatCharacter>(&TargetActor);
+	const UCapsuleComponent* TargetCapsule = TargetCharacter ? TargetCharacter->GetCapsuleComponent() : TargetActor.FindComponentByClass<UCapsuleComponent>();
+	const float TargetRadius = TargetCapsule ? TargetCapsule->GetScaledCapsuleRadius() : 0.f;
+	const float SurfaceDistance = FVector::Dist2D(GetActorLocation(), TargetActor.GetActorLocation()) - GetCapsuleComponent()->GetScaledCapsuleRadius() - TargetRadius;
+	const float StepDistance = TDApproachStep::ComputeStepDistance(SurfaceDistance, TargetMonster && TargetMonster->IsBossMonster());
+	if (StepDistance <= 0.f)
+	{
+		return 0.f;
+	}
+
+	const FVector StepOffset = (TargetActor.GetActorLocation() - GetActorLocation()).GetSafeNormal2D() * StepDistance;
+	return IsApproachStepPathClear(TargetActor, StepOffset) ? StepDistance : 0.f;
+}
+
+bool ATDGameCharacter::IsApproachStepPathClear(const AActor& TargetActor, const FVector& StepOffset) const
+{
+	const UWorld* World = GetWorld();
+	const UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!World || !Capsule)
+	{
+		return false;
+	}
+
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDApproachStep), false, this);
+	QueryParams.AddIgnoredActor(&TargetActor);
+	const FVector StartLocation = GetActorLocation();
+	FHitResult SightHit;
+	if (World->LineTraceSingleByChannel(SightHit, StartLocation, TargetActor.GetActorLocation(), ECC_Visibility, QueryParams))
+	{
+		return false;
+	}
+
+	const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+	const FVector StepLocation = StartLocation + StepOffset;
+	const FVector FloorTraceEnd = StepLocation - FVector(0.f, 0.f, HalfHeight + TDApproachStep::MaxHeightDifferenceCm);
+	FHitResult FloorHit;
+	if (!World->LineTraceSingleByChannel(FloorHit, StepLocation, FloorTraceEnd, ECC_Visibility, QueryParams))
+	{
+		return false;
+	}
+	const float FootHeight = StartLocation.Z - HalfHeight;
+	return FMath::Abs(FloorHit.ImpactPoint.Z - FootHeight) <= TDApproachStep::MaxHeightDifferenceCm;
+}
+
+bool ATDGameCharacter::WasDamagedWithin(const double Seconds) const
+{
+	const UWorld* World = GetWorld();
+	return World && LastDamagedTimeSeconds >= 0.0 && World->GetTimeSeconds() - LastDamagedTimeSeconds <= Seconds;
 }
 
 FVector ATDGameCharacter::ConsumePendingRollDirection()

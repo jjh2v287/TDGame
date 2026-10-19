@@ -11,6 +11,8 @@
 #include "TDMonsterCharacter.generated.h"
 
 class ATDDamageEntity;
+class UAnimSequence;
+class UTDDamageDefinition;
 class UNiagaraComponent;
 class UTDSignificanceComponent;
 class UTDSkillComponent;
@@ -67,6 +69,16 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="MonsterAI")
 	bool IsBossMonster() const;
+
+	UFUNCTION(BlueprintPure, Category="MonsterAI")
+	bool IsEliteMonster() const;
+
+	bool IsInCommittedAttack() const;
+	bool IsInDangerWindup() const;
+	static float ComputeStaggerPushSpeed(bool bIsMeleeHit, bool bIsComboFinisher, int32 ComboStageIndex);
+	static float ComputeStaggerPushSeconds(bool bIsMeleeHit, bool bIsComboFinisher, int32 ComboStageIndex);
+	void PushBodyAwayFrom(const FVector& SourceLocation, float Speed, float Seconds);
+	static bool IsMeleeSwingSpell(const UTDDamageDefinition& Spell, float Range);
 
 	UFUNCTION(BlueprintCallable, Category="MonsterAI")
 	void EngageMonsterBrain(AActor* Target);
@@ -138,6 +150,9 @@ private:
 	void HandleMonsterDamaged(const FTDDamageResult& Result, const FTDDamageContext& Context);
 	void HandleMonsterFrozen(bool bIsFrozen);
 	void PlayDeathPresentation();
+	void PlayDeathClipOrRagdoll();
+	float ComputeKillPoseHoldSeconds() const;
+	void ReleaseKillPoseWhenHoldEnds();
 	void StartDeathRagdoll();
 	void ScheduleCorpseSink();
 	void BeginCorpseSink();
@@ -146,6 +161,11 @@ private:
 	FVector ComputeAbilityOrigin(const FTDMonsterAbilityRequest& Request) const;
 	float PlayAbilityClip(const FTDMonsterAbilityRequest& Request, float WindupSeconds, float& OutRecoverySeconds);
 	float PlaySpeciesClip(const FTDMonsterAnimClip& Clip, float PlayRate);
+	float PlaySpeciesReactionClip(const FTDMonsterAnimClip& Clip);
+	void ScheduleMeleeSwingMessage(const UTDDamageDefinition& Spell, float Range, float WindupSeconds);
+	void BroadcastMeleeSwingMessage();
+	void CatchUpAbilityClip();
+	void RestoreAbilityClipPlayRate();
 	void ApplyFlightMoveInput(const FVector2D& Direction, float SpeedScale);
 	void FinishBodyLandingIfArrived();
 	bool FindGroundHeight(const FVector& Location, const AActor* SpawnedActor, float& OutGroundZ) const;
@@ -158,6 +178,19 @@ private:
 	bool bHasAppliedMonsterStats = false;
 	float BaseMoveSpeed = 400.f;
 	float AbilityImpactTime = 0.f;
+	float DamageStaggerPushSpeed = 0.f;
+	float DamageStaggerPushSeconds = 0.f;
+	bool bIsAbilityDanger = false;
+
+	TWeakObjectPtr<UAnimSequence> AbilityClipAnimation;
+	float AbilityClipPlayRate = 1.f;
+	float AbilityClipImpactAnimationSeconds = 0.f;
+	float AbilityClipEndTime = 0.f;
+	FTimerHandle AbilityClipRestoreTimerHandle;
+	FTimerHandle MeleeSwingTimerHandle;
+	FTimerHandle KillPoseHoldTimerHandle;
+	bool bWasHitStopHoldingBody = false;
+
 	FTimerHandle DeathRagdollTimerHandle;
 	FTimerHandle CorpseSinkTimerHandle;
 	FVector CorpseSinkStartLocation = FVector::ZeroVector;

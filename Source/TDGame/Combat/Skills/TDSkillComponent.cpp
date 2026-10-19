@@ -9,6 +9,11 @@
 #include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 
+namespace
+{
+	constexpr double RollBufferLifetimeSeconds = 0.2;
+}
+
 UTDSkillComponent::UTDSkillComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -271,8 +276,15 @@ bool UTDSkillComponent::BufferCombatInput(const FGameplayTag RequestedActionTag,
 		return false;
 	}
 
+	if (IsBufferedRollPending() && RequestedActionTag != TDGameplayTags::Action_Roll)
+	{
+		return false;
+	}
+
+	const UWorld* World = GetWorld();
 	BufferedActionTag = RequestedActionTag;
 	BufferedActionTarget = TargetActor;
+	BufferedActionTimestamp = World ? World->GetTimeSeconds() : 0.0;
 	TryConsumeBufferedInput();
 	return true;
 }
@@ -281,6 +293,75 @@ void UTDSkillComponent::ClearBufferedInput()
 {
 	BufferedActionTag = FGameplayTag();
 	BufferedActionTarget.Reset();
+	BufferedActionTimestamp = -1.0;
+}
+
+FGameplayTag UTDSkillComponent::GetBufferedActionTag() const
+{
+	return HasBufferedInput() ? BufferedActionTag : FGameplayTag();
+}
+
+int32 UTDSkillComponent::GetActivePrimaryComboStageIndex() const
+{
+	const FGameplayTag ComboTags[] =
+	{
+		TDGameplayTags::Action_Attack_Primary_01,
+		TDGameplayTags::Action_Attack_Primary_02,
+		TDGameplayTags::Action_Attack_Primary_03,
+		TDGameplayTags::Action_Attack_Primary_04
+	};
+	for (int32 StageIndex = 0; StageIndex < static_cast<int32>(UE_ARRAY_COUNT(ComboTags)); ++StageIndex)
+	{
+		if (CurrentActionTag == ComboTags[StageIndex])
+		{
+			return StageIndex;
+		}
+	}
+	return CurrentActionTag == TDGameplayTags::Action_Attack_Primary ? 0 : INDEX_NONE;
+}
+
+bool UTDSkillComponent::IsPrimaryComboFinisherActive() const
+{
+	const int32 StageIndex = GetActivePrimaryComboStageIndex();
+	return StageIndex != INDEX_NONE && StageIndex >= MaxPrimaryComboCount - 1;
+}
+
+void UTDSkillComponent::BeginActionCancelWindow(const ETDActionCancelType CancelType)
+{
+	++ActiveCancelWindowCounts[static_cast<int32>(CancelType)];
+	TryConsumeBufferedInput();
+}
+
+void UTDSkillComponent::EndActionCancelWindow(const ETDActionCancelType CancelType)
+{
+	int32& WindowCount = ActiveCancelWindowCounts[static_cast<int32>(CancelType)];
+	WindowCount = FMath::Max(WindowCount - 1, 0);
+}
+
+bool UTDSkillComponent::IsActionCancelWindowOpen(const ETDActionCancelType CancelType) const
+{
+	return ActiveCancelWindowCounts[static_cast<int32>(CancelType)] > 0;
+}
+
+bool UTDSkillComponent::TryConsumePendingRoll()
+{
+	if (!IsBufferedRollPending())
+	{
+		return false;
+	}
+	TryConsumeBufferedInput();
+	return true;
+}
+
+bool UTDSkillComponent::CancelCurrentAttackAction()
+{
+	UGameplayAbility* OwningAbility = CurrentActionOwningAbility.Get();
+	if (!OwningAbility || !OwningAbility->IsActive() || !CurrentActionTag.MatchesTag(TDGameplayTags::Action_Attack_Primary))
+	{
+		return false;
+	}
+	OwningAbility->K2_CancelAbility();
+	return true;
 }
 
 void UTDSkillComponent::BeginInputBufferWindow()
@@ -454,7 +535,8 @@ bool UTDSkillComponent::TryConsumeBufferedInput()
 		ResolvedActionTag = ResolvePrimaryActionTag(ComboStep);
 	}
 
-	if (!ResolvedActionTag.IsValid() || !CanUseAction(ResolvedActionTag))
+	const bool bIsRollRequest = ResolvedActionTag == TDGameplayTags::Action_Roll;
+	if (!ResolvedActionTag.IsValid() || (!bIsRollRequest && !CanUseAction(ResolvedActionTag)))
 	{
 		const bool bHasTransientCombatState =
 			CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Attacking) ||
@@ -483,7 +565,18 @@ bool UTDSkillComponent::TryConsumeBufferedInput()
 
 bool UTDSkillComponent::HasBufferedInput() const
 {
-	return BufferedActionTag.IsValid();
+	return BufferedActionTag.IsValid() && !HasBufferedRollExpired();
+}
+
+bool UTDSkillComponent::HasBufferedRollExpired() const
+{
+	const UWorld* World = GetWorld();
+	return BufferedActionTag == TDGameplayTags::Action_Roll && World && World->GetTimeSeconds() - BufferedActionTimestamp > RollBufferLifetimeSeconds;
+}
+
+bool UTDSkillComponent::IsBufferedRollPending() const
+{
+	return BufferedActionTag == TDGameplayTags::Action_Roll && !HasBufferedRollExpired();
 }
 
 void UTDSkillComponent::PrefetchSkillSetAnimations()

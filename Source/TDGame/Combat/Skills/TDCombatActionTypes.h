@@ -15,6 +15,15 @@ enum class ETDCombatHitExecutionType : uint8
 	DirectDamage UMETA(DisplayName="Direct Damage")
 };
 
+enum class ETDActionCancelType : uint8
+{
+	Roll,
+	Skill,
+	Movement
+};
+
+constexpr int32 TDActionCancelTypeCount = 3;
+
 USTRUCT(BlueprintType)
 struct TDGAME_API FTDActionTimeWindow
 {
@@ -133,6 +142,21 @@ struct TDGAME_API FTDActionAnimation
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Timeline", meta=(ToolTip="Capsule jump modifier is active while the animation time is inside this window."))
 	FTDActionTimeWindow JumpCapsuleWindow;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Timeline|Cancel")
+	FTDActionTimeWindow RollCancelWindow;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Timeline|Cancel")
+	FTDActionTimeWindow SkillCancelWindow;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Timeline|Cancel")
+	FTDActionTimeWindow MovementCancelWindow;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Timeline|Cancel", meta=(ClampMin="0.0", ForceUnits="s"))
+	float HitConfirmLeadSeconds = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Timeline", meta=(ClampMin="0.0", ForceUnits="s"))
+	float SwingSoundDelaySeconds = 0.f;
 
 	bool HasAnimation() const { return !Animation.IsNull(); }
 };

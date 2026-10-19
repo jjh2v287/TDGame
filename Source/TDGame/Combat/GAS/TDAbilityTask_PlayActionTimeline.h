@@ -7,6 +7,7 @@
 #include "TDAbilityTask_PlayActionTimeline.generated.h"
 
 class UAnimSequence;
+class UNiagaraComponent;
 class UTDCharacterAnimationComponent;
 struct FStreamableHandle;
 
@@ -27,6 +28,7 @@ public:
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 	float GetPlaySeconds() const { return PlaySeconds; }
+	static FTDActionTimeWindow ResolveHitConfirmedWindow(const FTDActionTimeWindow& Window, float LeadSeconds, bool bHasConfirmedHit);
 
 	UPROPERTY(BlueprintAssignable)
 	FTDActionTimelineDelegate OnCompleted;
@@ -43,6 +45,13 @@ private:
 	void SetTagWindowActive(int32 WindowIndex, bool bIsActive);
 	void SetInputBufferActive(bool bIsActive);
 	void SetJumpCapsuleActive(bool bIsActive);
+	void SetCancelWindowActive(ETDActionCancelType CancelType, bool bIsActive);
+	void AdvanceCancelWindow(ETDActionCancelType CancelType, const FTDActionTimeWindow& Window, float PreviousAnimationTime, float AnimationTime);
+	FTDActionTimeWindow ResolveActionWindow(const FTDActionTimeWindow& Window) const;
+	void RefreshHitConfirmation(const FTDMeleeSweep& Sweep);
+	void BroadcastPendingSwingSound(int32 WindowIndex, float AnimationTime);
+	void StartSlashTrail(int32 WindowIndex, const FTDMeleeSweepSettings& SweepSettings);
+	void StopSlashTrail(int32 WindowIndex);
 	UTDCharacterAnimationComponent* ResolveCharacterAnimation() const;
 
 	FTDActionAnimation Action;
@@ -55,10 +64,14 @@ private:
 	TArray<FTDMeleeSweep> ActiveSweeps;
 	TArray<bool> ActiveSweepFlags;
 	TArray<bool> ActiveTagWindowFlags;
+	TArray<bool> PendingSwingSoundFlags;
+	TArray<TWeakObjectPtr<UNiagaraComponent>> SlashTrails;
+	bool ActiveCancelWindowFlags[TDActionCancelTypeCount] = {};
 	FDelegateHandle ActionEndedHandle;
 	float PlaySeconds = 0.f;
 	float LastProcessedAnimationTime = 0.f;
 	bool bIsInputBufferActive = false;
 	bool bIsJumpCapsuleActive = false;
+	bool bHasConfirmedHit = false;
 	bool bHasFinished = false;
 };

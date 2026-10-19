@@ -307,3 +307,12 @@
 - 증거: 2026-10-19 `Saved/AgentOps/20261018/ragdoll-jitter/physics-audit.json`, 무효 실험 `Docs/MonsterAI_CombatSim/measurements/M3-38/exp5-selfcol-off-assist/report.json`(RMS 650~999cm = 낙하)
 - 날짜·상태: 2026-10-19 active
 - 발견: claude
+
+### L-editor-38 `check_automation_tests.py`가 헤드리스 인스턴스에 붙으면 GUI 전용 PIE 시험이 0초 '통과'로 건너뛰어진다
+- 증상: `python Tools/check_automation_tests.py --filter TDGame.PIE.Combat` 결과가 `SUMMARY passed=3 failed=0`인데 시험별 duration이 0.0~0.1초이고 경고에 `... needs a rendering editor and was skipped`. GUI 에디터 로그(`Saved/Logs/TDGame.log`)에는 그 시험 흔적이 없다
+- 원인(추정, 정황 근거): 다른 세션의 헤드리스 `UnrealEditor-Cmd`(NullRHI)가 MCP 서버 포트 8000을 먼저 잡아, 도구가 GUI가 아닌 그 인스턴스에서 시험을 돌렸다(`FApp::CanEverRender()` 거짓). `ue_editor.py ensure`는 포트가 열려 있는지만 보고 주인은 확인하지 않는다
+- 해결: 시험 직전 `netstat -ano`의 `:8000 ... LISTENING` 주인 PID가 `tasklist`의 GUI `UnrealEditor.exe` PID와 같을 때까지 기다린 뒤 실행하고, 결과 JSON의 duration이 1초를 넘는지 확인한다(스크립트 예: `Saved/AgentOps/...` 대신 세션 스크래치의 hitfeel_final.sh 패턴)
+- 범위: GUI 전용 PIE 자동화 시험(TDGame.PIE.*), 여러 세션이 에디터를 번갈아 쓰는 환경
+- 증거: 2026-10-18 22:32 실행 3건 0초 통과(`Saved/AgentOps/automation_tests_20261018-2232.json`) → 주인 확인 추가 뒤 22:40 실행 BossLoop 66초·FullLoop 18초·HitFeel 265초(`automation_tests_20261018-2240.json`)
+- 날짜·상태: 2026-10-19 원인 미검증(현상과 해결은 검증)
+- 발견: claude

@@ -71,6 +71,9 @@ public:
 	void UseAirborneClips(const FTDAirborneClipSet& Clips);
 
 	float PlayAction(UAnimSequence* Animation, float PlayRate = 1.f, float StartSeconds = 0.f, float EndSeconds = 0.f, bool bUseRootMotion = false);
+	float PlayReactionAction(UAnimSequence* Animation, float PlayRate = 1.f, float StartSeconds = 0.f, float EndSeconds = 0.f);
+	void SetActionPlayRate(float PlayRate);
+	float GetActionPlaybackSecondsUntil(float AnimationSeconds) const;
 	void StopAction(float BlendOutSeconds = 0.15f);
 	bool IsPlayingAction() const { return ActiveAction.Animation != nullptr; }
 	bool IsPlayingAction(const UAnimSequence* Animation) const { return Animation && ActiveAction.Animation == Animation; }
@@ -91,6 +94,18 @@ public:
 	void StartHitStop(float Seconds);
 	bool IsHitStopped() const { return bIsHitStopped; }
 	bool IsPlayingRootMotionAction() const { return ActiveAction.Animation != nullptr && ActiveAction.bUsesRootMotion; }
+
+	bool StartAttackerHitStop(float RealSeconds);
+	bool IsAttackerHitStopActive() const { return AttackerRateHitStop.bIsActive; }
+	bool StartVictimHitStop(float RealSeconds);
+	bool StartKillPoseHold(float RealSeconds);
+	bool IsHitStopPending() const { return PendingVictimHitStopRealSeconds > 0.f; }
+	bool IsVictimHitStopActive() const { return bIsHitStopped || VictimRateHitStop.bIsActive; }
+	float GetHitStopRemainingSeconds() const;
+	float GetVictimHitStopRemainingSeconds() const;
+	float GetAttackerHitStopRemainingSeconds() const;
+
+	static float ConvertRealToWorldSeconds(const UWorld& World, float RealSeconds);
 
 	FTDOnActionAnimationEnded OnActionAnimationEnded;
 
@@ -118,7 +133,15 @@ private:
 		float EndSeconds = 0.f;
 		float AnimationTime = 0.f;
 		float PreviousAnimationTime = 0.f;
+		float InjectedPlayRate = 1.f;
+		float BlendInSeconds = 0.f;
 		bool bUsesRootMotion = false;
+	};
+
+	struct FTDRateHitStop
+	{
+		double RealEndSeconds = 0.0;
+		bool bIsActive = false;
 	};
 
 	struct FTDPendingInjection
@@ -129,6 +152,17 @@ private:
 	};
 
 	UUAFComponent* ResolveUAFComponent() const;
+	float StartAction(UAnimSequence* Animation, float PlayRate, float StartSeconds, float EndSeconds, bool bUseRootMotion, float BlendInSeconds);
+	void StartPendingVictimHitStop();
+	void ExpireRealTimeHitStops();
+	bool StartRealTimePoseHitStop(float RealSeconds);
+	float GetPoseHitStopRemainingSeconds() const;
+	bool IsActionInjectionPending() const;
+	bool StartRateHitStop(FTDRateHitStop& RateHitStop, float RealSeconds);
+	void EndRateHitStop(FTDRateHitStop& RateHitStop);
+	void ClearRateHitStops();
+	void ApplyActionPlaybackRate();
+	float GetActionClockScale() const;
 	bool IsPoseHeld() const { return bIsAnimationFrozen || bIsHitStopped || bIsPoseHeldByDeath; }
 	void AdvanceInjectionWarmup();
 	void FlushPendingInjection();
@@ -165,6 +199,12 @@ private:
 	FTDActiveAction ActiveAction;
 	FTDPendingInjection PendingInjection;
 	FTimerHandle HitStopTimerHandle;
+	double PoseHitStopRealEndSeconds = 0.0;
+
+	FTDRateHitStop AttackerRateHitStop;
+	FTDRateHitStop VictimRateHitStop;
+	float PendingVictimHitStopRealSeconds = 0.f;
+	uint64 PendingVictimHitStopFrame = 0;
 	TSharedPtr<UE::UAF::FInjectionRequest> ActionRequest;
 	TSharedPtr<UE::UAF::FInjectionRequest> LocomotionRequest;
 	ETDLocomotionPose CurrentLocomotionPose = ETDLocomotionPose::None;

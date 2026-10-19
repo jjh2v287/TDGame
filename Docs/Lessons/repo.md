@@ -130,3 +130,12 @@
 - 증거: 2026-10-18 M3-33 세션 정의 JSON 8개 작성·종 표 확장 명령 2회 실패 → Write 도구로 대체해 성공
 - 날짜·상태: 2026-10-18 미검증
 - 발견: claude
+
+### L-repo-16 `PYTHONUTF8=1`이면 `Tools/ue_editor.py`가 `'NoneType' object has no attribute 'splitlines'`로 죽어 에디터를 띄우지 못한다
+- 증상: `PYTHONIOENCODING=utf-8 PYTHONUTF8=1 python Tools/ue_editor.py ensure|status` → `editor_pids()`의 `out.splitlines()`에서 `AttributeError: 'NoneType' object has no attribute 'splitlines'`. 이어지는 `check_automation_tests.py`는 `URLError [WinError 10061]`(에디터 없음)로 실패하지만 스크립트 종료 코드는 0처럼 보일 수 있다
+- 원인: UTF-8 모드에서 `subprocess.run(..., text=True)`가 `tasklist`의 cp949 한글 출력("정보: ... 작업이 없습니다")을 UTF-8로 디코딩하다 Windows 읽기 스레드 안에서 실패하고, 예외 대신 `stdout=None`을 돌려준다
+- 해결: 에디터·MCP 도구(`ue_editor.py`·`check_automation_tests.py`·`run_in_editor.py`)는 `PYTHONIOENCODING=utf-8`만 붙이고 `PYTHONUTF8=1`은 붙이지 않는다. `build_and_test.py`의 한글 출력 오류(L-repo-10)는 `PYTHONIOENCODING`만으로 충분했다
+- 범위: Windows 한국어 로캘, 시스템 Python 3.12
+- 증거: 2026-10-18 M3-37 GUI PIE 1회차 실패(같은 명령에서 `PYTHONUTF8` 유무만 바꿔 재현: 있으면 예외, 없으면 `editor running: False pids=[]`)
+- 날짜·상태: 2026-10-18 검증
+- 발견: claude

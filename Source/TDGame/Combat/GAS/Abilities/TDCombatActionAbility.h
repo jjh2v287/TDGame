@@ -45,6 +45,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Combat")
 	bool bUseCurrentTarget = true;
 
+	UPROPERTY(EditDefaultsOnly, Category="Combat")
+	bool bCanCancelAttackInSkillCancelWindow = false;
+
 	UPROPERTY(EditDefaultsOnly, Category="Cooldown")
 	FGameplayTagContainer CooldownTags;
 

@@ -1,6 +1,7 @@
 #include "Combat/GAS/Abilities/TDPlayerMovementAbilities.h"
 
 #include "Characters/TDGameCharacter.h"
+#include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
 #include "Core/TDGameplayTags.h"
 #include "Engine/World.h"
@@ -16,7 +17,6 @@ UTDPlayerRollAbility::UTDPlayerRollAbility()
 	SetAssetTags(AssetTags);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Dead);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Rolling);
-	ActivationBlockedTags.AddTag(TDGameplayTags::State_Attacking);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Skill);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Stunned);
 }
@@ -31,7 +31,13 @@ bool UTDPlayerRollAbility::CanActivateAbility(const FGameplayAbilitySpecHandle H
 	}
 
 	const ATDGameCharacter* PlayerCharacter = ActorInfo ? Cast<ATDGameCharacter>(ActorInfo->AvatarActor.Get()) : nullptr;
-	if (!PlayerCharacter)
+	const UTDCombatComponent* CombatComponent = PlayerCharacter ? PlayerCharacter->GetCombatComponent() : nullptr;
+	if (!CombatComponent || CombatComponent->IsFrozen() || !PlayerCharacter->CanPlayRollAnimation())
+	{
+		return false;
+	}
+
+	if (PlayerCharacter->IsRollBlockedByCurrentAction())
 	{
 		return false;
 	}
@@ -60,9 +66,8 @@ void UTDPlayerRollAbility::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	}
 
 	CombatComponent->AddLooseGameplayTag(TDGameplayTags::State_Rolling);
-	CombatComponent->AddLooseGameplayTag(TDGameplayTags::State_Invulnerable);
 	bHasAddedRollingTag = true;
-	bHasAddedInvulnerableTag = true;
+	const bool bIsAttackCancelRoll = CombatComponent->HasMatchingGameplayTag(TDGameplayTags::State_Attacking);
 
 	const float RollDuration = PlayerCharacter->PlayRollAnimation(PlayerCharacter->ConsumePendingRollDirection());
 	if (RollDuration <= 0.f)
@@ -72,10 +77,23 @@ void UTDPlayerRollAbility::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 		return;
 	}
 
-	if (UWorld* World = GetWorld())
+	if (bIsAttackCancelRoll)
 	{
-		World->GetTimerManager().SetTimer(FinishAbilityTimerHandle, this, &ThisClass::HandleRollFinished, RollDuration, false);
+		if (UTDSkillComponent* SkillComponent = PlayerCharacter->GetSkillComponent())
+		{
+			SkillComponent->CancelCurrentAttackAction();
+		}
+		PlayerCharacter->NotifyAttackCancelRollStarted();
 	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	RollStartTimeSeconds = World->GetTimeSeconds();
+	World->GetTimerManager().SetTimer(FinishAbilityTimerHandle, this, &ThisClass::HandleRollFinished, RollDuration, false);
+	RefreshRollInvulnerability();
 }
 
 void UTDPlayerRollAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -100,11 +118,49 @@ void UTDPlayerRollAbility::HandleRollFinished()
 	K2_EndAbility();
 }
 
+void UTDPlayerRollAbility::RefreshRollInvulnerability()
+{
+	UWorld* World = GetWorld();
+	if (!World || !bHasAddedRollingTag)
+	{
+		return;
+	}
+
+	const double ElapsedSeconds = World->GetTimeSeconds() - RollStartTimeSeconds;
+	SetRollInvulnerable(TDPlayerRoll::IsInvulnerableAtElapsed(ElapsedSeconds));
+	if (ElapsedSeconds >= TDPlayerRoll::InvulnerabilityEndSeconds)
+	{
+		return;
+	}
+
+	const double NextBoundarySeconds = ElapsedSeconds < TDPlayerRoll::InvulnerabilityStartSeconds ? TDPlayerRoll::InvulnerabilityStartSeconds : TDPlayerRoll::InvulnerabilityEndSeconds;
+	const float DelaySeconds = static_cast<float>(FMath::Max(NextBoundarySeconds - ElapsedSeconds, static_cast<double>(UE_KINDA_SMALL_NUMBER)));
+	World->GetTimerManager().SetTimer(InvulnerabilityTimerHandle, this, &ThisClass::RefreshRollInvulnerability, DelaySeconds, false);
+}
+
+void UTDPlayerRollAbility::SetRollInvulnerable(const bool bIsInvulnerable)
+{
+	UTDCombatComponent* CombatComponent = GetCombatComponent();
+	if (!CombatComponent || bHasAddedInvulnerableTag == bIsInvulnerable)
+	{
+		return;
+	}
+
+	bHasAddedInvulnerableTag = bIsInvulnerable;
+	if (bIsInvulnerable)
+	{
+		CombatComponent->AddLooseGameplayTag(TDGameplayTags::State_Invulnerable);
+		return;
+	}
+	CombatComponent->RemoveLooseGameplayTag(TDGameplayTags::State_Invulnerable);
+}
+
 void UTDPlayerRollAbility::ClearRollState()
 {
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(FinishAbilityTimerHandle);
+		World->GetTimerManager().ClearTimer(InvulnerabilityTimerHandle);
 	}
 
 	if (ATDGameCharacter* PlayerCharacter = GetPlayerCharacter())

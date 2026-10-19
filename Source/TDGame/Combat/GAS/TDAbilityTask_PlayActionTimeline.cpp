@@ -5,6 +5,10 @@
 #include "Characters/TDCapsuleModifierComponent.h"
 #include "Characters/TDCharacterAnimationComponent.h"
 #include "Characters/TDCombatCharacter.h"
+#include "Characters/TDGameCharacter.h"
+#include "Combat/GAS/Abilities/TDReactionAbility.h"
+#include "Combat/Feedback/TDCombatFeedbackSettings.h"
+#include "Combat/Feedback/TDCombatFeedbackSubsystem.h"
 #include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -15,12 +19,17 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "TDGame.h"
+#include "TimerManager.h"
 
 namespace
 {
 	constexpr bool bSampleWithRootMotionExtracted = true;
 	constexpr float InterruptedWindowCloseTime = -1.f;
+	constexpr float SlashTrailLingerSeconds = 0.08f;
 
 	enum class ETDWindowTransition : uint8
 	{
@@ -145,7 +154,10 @@ void UTDAbilityTask_PlayActionTimeline::StartTimeline()
 	UTDCharacterAnimationComponent* CharacterAnimation = ResolveCharacterAnimation();
 	if (CharacterAnimation && LoadedAnimation)
 	{
-		PlaySeconds = CharacterAnimation->PlayAction(LoadedAnimation.Get(), Action.PlayRate, Action.StartSeconds, Action.EndSeconds, Action.bUseRootMotion);
+		const bool bShouldUseReactionBlend = Cast<UTDReactionAbility>(Ability) && !Action.bUseRootMotion;
+		PlaySeconds = bShouldUseReactionBlend
+			? CharacterAnimation->PlayReactionAction(LoadedAnimation.Get(), Action.PlayRate, Action.StartSeconds, Action.EndSeconds)
+			: CharacterAnimation->PlayAction(LoadedAnimation.Get(), Action.PlayRate, Action.StartSeconds, Action.EndSeconds, Action.bUseRootMotion);
 	}
 
 	if (PlaySeconds <= 0.f)
@@ -162,6 +174,8 @@ void UTDAbilityTask_PlayActionTimeline::StartTimeline()
 	ActiveSweeps.SetNum(Action.HitWindows.Num());
 	ActiveSweepFlags.Init(false, Action.HitWindows.Num());
 	ActiveTagWindowFlags.Init(false, Action.TagWindows.Num());
+	PendingSwingSoundFlags.Init(false, Action.HitWindows.Num());
+	SlashTrails.SetNum(Action.HitWindows.Num());
 	LastProcessedAnimationTime = CharacterAnimation->GetActionAnimationTime();
 	ActionEndedHandle = CharacterAnimation->OnActionAnimationEnded.AddUObject(this, &ThisClass::HandleActionAnimationEnded);
 	if (!CharacterAnimation->IsPlayingAction(LoadedAnimation.Get()))
@@ -291,10 +305,12 @@ void UTDAbilityTask_PlayActionTimeline::AdvanceWindows(const float PreviousAnima
 			const float SweepStartTime = FMath::Max(HitWindow.Window.StartSeconds, Action.StartSeconds);
 			if (Sweep.Begin(FindAvatarMesh(*Avatar), LoadedAnimation.Get(), HitWindow.Sweep, MakeWindowDamageContext(DamageContext, *Avatar), SweepStartTime, bSampleWithRootMotionExtracted))
 			{
-				BroadcastTimelineMeleeSwing(*Avatar);
+				PendingSwingSoundFlags[WindowIndex] = true;
+				StartSlashTrail(WindowIndex, HitWindow.Sweep);
 			}
 		}
 
+		BroadcastPendingSwingSound(WindowIndex, AnimationTime);
 		if (!Sweep.IsActive())
 		{
 			continue;
@@ -302,14 +318,19 @@ void UTDAbilityTask_PlayActionTimeline::AdvanceWindows(const float PreviousAnima
 		if (AnimationTime >= HitWindow.Window.EndSeconds)
 		{
 			Sweep.End(HitWindow.Window.EndSeconds);
+			RefreshHitConfirmation(Sweep);
+			StopSlashTrail(WindowIndex);
 			continue;
 		}
 		Sweep.Advance(AnimationTime);
+		RefreshHitConfirmation(Sweep);
 	}
 
 	for (int32 WindowIndex = 0; WindowIndex < Action.TagWindows.Num() && !bHasFinished; ++WindowIndex)
 	{
-		const ETDWindowTransition Transition = ResolveWindowTransition(Action.TagWindows[WindowIndex].Window, ActiveTagWindowFlags[WindowIndex], StepStartTime, AnimationTime);
+		const FTDTagWindow& TagWindow = Action.TagWindows[WindowIndex];
+		const FTDActionTimeWindow Window = TagWindow.Tags.HasTagExact(TDGameplayTags::State_ComboWindow) ? ResolveActionWindow(TagWindow.Window) : TagWindow.Window;
+		const ETDWindowTransition Transition = ResolveWindowTransition(Window, ActiveTagWindowFlags[WindowIndex], StepStartTime, AnimationTime);
 		ApplyWindowTransition(Transition, [this, WindowIndex](const bool bIsActive) { SetTagWindowActive(WindowIndex, bIsActive); });
 	}
 
@@ -326,6 +347,119 @@ void UTDAbilityTask_PlayActionTimeline::AdvanceWindows(const float PreviousAnima
 	}
 	const ETDWindowTransition JumpCapsuleTransition = ResolveWindowTransition(Action.JumpCapsuleWindow, bIsJumpCapsuleActive, StepStartTime, AnimationTime);
 	ApplyWindowTransition(JumpCapsuleTransition, [this](const bool bIsActive) { SetJumpCapsuleActive(bIsActive); });
+
+	AdvanceCancelWindow(ETDActionCancelType::Roll, ResolveActionWindow(Action.RollCancelWindow), StepStartTime, AnimationTime);
+	AdvanceCancelWindow(ETDActionCancelType::Skill, ResolveActionWindow(Action.SkillCancelWindow), StepStartTime, AnimationTime);
+	AdvanceCancelWindow(ETDActionCancelType::Movement, Action.MovementCancelWindow, StepStartTime, AnimationTime);
+}
+
+FTDActionTimeWindow UTDAbilityTask_PlayActionTimeline::ResolveHitConfirmedWindow(const FTDActionTimeWindow& Window, const float LeadSeconds, const bool bHasConfirmedHit)
+{
+	if (!bHasConfirmedHit || LeadSeconds <= 0.f || !Window.IsValid())
+	{
+		return Window;
+	}
+	FTDActionTimeWindow ConfirmedWindow = Window;
+	ConfirmedWindow.StartSeconds = FMath::Max(Window.StartSeconds - LeadSeconds, 0.f);
+	return ConfirmedWindow;
+}
+
+FTDActionTimeWindow UTDAbilityTask_PlayActionTimeline::ResolveActionWindow(const FTDActionTimeWindow& Window) const
+{
+	return ResolveHitConfirmedWindow(Window, Action.HitConfirmLeadSeconds, bHasConfirmedHit);
+}
+
+void UTDAbilityTask_PlayActionTimeline::AdvanceCancelWindow(const ETDActionCancelType CancelType, const FTDActionTimeWindow& Window, const float PreviousAnimationTime, const float AnimationTime)
+{
+	if (bHasFinished)
+	{
+		return;
+	}
+	const ETDWindowTransition Transition = ResolveWindowTransition(Window, ActiveCancelWindowFlags[static_cast<int32>(CancelType)], PreviousAnimationTime, AnimationTime);
+	ApplyWindowTransition(Transition, [this, CancelType](const bool bIsActive) { SetCancelWindowActive(CancelType, bIsActive); });
+}
+
+void UTDAbilityTask_PlayActionTimeline::SetCancelWindowActive(const ETDActionCancelType CancelType, const bool bIsActive)
+{
+	bool& bIsWindowActive = ActiveCancelWindowFlags[static_cast<int32>(CancelType)];
+	if (bIsWindowActive == bIsActive)
+	{
+		return;
+	}
+
+	bIsWindowActive = bIsActive;
+	const AActor* Avatar = GetAvatarActor();
+	UTDSkillComponent* SkillComponent = Avatar ? Avatar->FindComponentByClass<UTDSkillComponent>() : nullptr;
+	if (!SkillComponent)
+	{
+		return;
+	}
+
+	if (bIsActive)
+	{
+		SkillComponent->BeginActionCancelWindow(CancelType);
+		return;
+	}
+	SkillComponent->EndActionCancelWindow(CancelType);
+}
+
+void UTDAbilityTask_PlayActionTimeline::RefreshHitConfirmation(const FTDMeleeSweep& Sweep)
+{
+	if (Sweep.GetHitActorCount() > 0)
+	{
+		bHasConfirmedHit = true;
+	}
+}
+
+void UTDAbilityTask_PlayActionTimeline::BroadcastPendingSwingSound(const int32 WindowIndex, const float AnimationTime)
+{
+	AActor* Avatar = GetAvatarActor();
+	if (!Avatar || !PendingSwingSoundFlags.IsValidIndex(WindowIndex) || !PendingSwingSoundFlags[WindowIndex])
+	{
+		return;
+	}
+	if (AnimationTime < Action.HitWindows[WindowIndex].Window.StartSeconds + Action.SwingSoundDelaySeconds)
+	{
+		return;
+	}
+	PendingSwingSoundFlags[WindowIndex] = false;
+	BroadcastTimelineMeleeSwing(*Avatar);
+}
+
+void UTDAbilityTask_PlayActionTimeline::StartSlashTrail(const int32 WindowIndex, const FTDMeleeSweepSettings& SweepSettings)
+{
+	ATDGameCharacter* PlayerCharacter = Cast<ATDGameCharacter>(GetAvatarActor());
+	UWorld* World = PlayerCharacter ? PlayerCharacter->GetWorld() : nullptr;
+	if (!World || !World->GetSubsystem<UTDCombatFeedbackSubsystem>() || !SlashTrails.IsValidIndex(WindowIndex))
+	{
+		return;
+	}
+	UNiagaraSystem* SlashTrailEffect = GetDefault<UTDCombatFeedbackSettings>()->MeleeSlashTrailEffect.Get();
+	USkeletalMeshComponent* Mesh = PlayerCharacter->GetMesh();
+	if (!SlashTrailEffect || !Mesh)
+	{
+		return;
+	}
+	SlashTrails[WindowIndex] = UNiagaraFunctionLibrary::SpawnSystemAttached(SlashTrailEffect, Mesh, SweepSettings.WeaponTipSocketName, SweepSettings.TipLocalOffset,
+		FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, false, true, ENCPoolMethod::AutoRelease);
+}
+
+void UTDAbilityTask_PlayActionTimeline::StopSlashTrail(const int32 WindowIndex)
+{
+	UNiagaraComponent* SlashTrail = SlashTrails.IsValidIndex(WindowIndex) ? SlashTrails[WindowIndex].Get() : nullptr;
+	if (!SlashTrail)
+	{
+		return;
+	}
+	SlashTrails[WindowIndex].Reset();
+	UWorld* World = SlashTrail->GetWorld();
+	if (!World)
+	{
+		SlashTrail->Deactivate();
+		return;
+	}
+	FTimerHandle StopTrailTimerHandle;
+	World->GetTimerManager().SetTimer(StopTrailTimerHandle, FTimerDelegate::CreateWeakLambda(SlashTrail, [SlashTrail]() { SlashTrail->Deactivate(); }), SlashTrailLingerSeconds, false);
 }
 
 void UTDAbilityTask_PlayActionTimeline::CloseOpenWindows(const float AnimationTime)
@@ -337,6 +471,7 @@ void UTDAbilityTask_PlayActionTimeline::CloseOpenWindows(const float AnimationTi
 		{
 			Sweep.End(FMath::Min(AnimationTime, Action.HitWindows[WindowIndex].Window.EndSeconds));
 		}
+		StopSlashTrail(WindowIndex);
 	}
 
 	for (int32 WindowIndex = 0; WindowIndex < ActiveTagWindowFlags.Num(); ++WindowIndex)
@@ -345,6 +480,9 @@ void UTDAbilityTask_PlayActionTimeline::CloseOpenWindows(const float AnimationTi
 	}
 	SetInputBufferActive(false);
 	SetJumpCapsuleActive(false);
+	SetCancelWindowActive(ETDActionCancelType::Roll, false);
+	SetCancelWindowActive(ETDActionCancelType::Skill, false);
+	SetCancelWindowActive(ETDActionCancelType::Movement, false);
 }
 
 void UTDAbilityTask_PlayActionTimeline::SetTagWindowActive(const int32 WindowIndex, const bool bIsActive)

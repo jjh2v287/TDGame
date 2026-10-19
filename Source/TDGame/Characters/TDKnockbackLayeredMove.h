@@ -7,6 +7,7 @@
 namespace TDKnockback
 {
 	TDGAME_API float ComputeScale(float ElapsedMs, float DurationMs);
+	TDGAME_API float ComputeLinearScale(float ElapsedMs, float DurationMs);
 }
 
 USTRUCT()
@@ -21,6 +22,8 @@ struct TDGAME_API FTDKnockbackLayeredMove : public FLayeredMove_LinearVelocity
 	virtual FLayeredMoveBase* Clone() const override;
 	virtual UScriptStruct* GetScriptStruct() const override;
 	virtual FString ToSimpleString() const override;
+
+	bool bUsesLinearDecay = false;
 };
 
 template<>

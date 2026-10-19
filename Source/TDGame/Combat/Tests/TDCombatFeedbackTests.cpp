@@ -267,16 +267,42 @@ bool FTDFeedbackShakeAmountCurveTest::RunTest(const FString& Parameters)
 	}
 	TestTrue(TEXT("Shake grows with trauma"), bIsIncreasing);
 
-	const UTDHitCameraShake* Shake = NewObject<UTDHitCameraShake>(GetTransientPackage());
-	const UTDTraumaCameraShakePattern* Pattern = Cast<UTDTraumaCameraShakePattern>(Shake->GetRootShakePattern());
+	UTDCombatFeedbackSettings* LimitSettings = NewObject<UTDCombatFeedbackSettings>(GetTransientPackage());
+	LimitSettings->ShakeNoiseGain = 1000.f;
+	LimitSettings->ShakeTraumaDecayPerSecond = 0.f;
+	LimitSettings->CameraShakeScale = 1.f;
+	LimitSettings->MaxShakeScreenOffsetPx = 100000.f;
+	UTDHitCameraShake* Shake = NewObject<UTDHitCameraShake>(GetTransientPackage());
+	UTDTraumaCameraShakePattern* Pattern = Cast<UTDTraumaCameraShakePattern>(Shake->GetRootShakePattern());
 	if (!TestNotNull(TEXT("The hit shake owns a trauma pattern"), Pattern))
 	{
 		return false;
 	}
-	TestTrue(TEXT("The lateral offset limit is 28 cm"), FMath::IsNearlyEqual(Pattern->MaxLocationOffset.Y, 28.0));
-	TestTrue(TEXT("The vertical offset limit is 20 cm"), FMath::IsNearlyEqual(Pattern->MaxLocationOffset.Z, 20.0));
-	TestTrue(TEXT("The pitch limit is 1.2 degrees"), FMath::IsNearlyEqual(Pattern->MaxRotationOffset.Pitch, 1.2, 0.0001));
-	TestTrue(TEXT("The roll limit is 0.8 degrees"), FMath::IsNearlyEqual(Pattern->MaxRotationOffset.Roll, 0.8, 0.0001));
+	Pattern->SetFeedbackSettings(LimitSettings);
+	Pattern->SetCameraArmLength(LimitSettings->ReferenceCameraArmLengthCm);
+	Pattern->AllowFullTrauma();
+	Pattern->AddChannelTrauma(ETDShakeChannel::Event, 1.f, 1.f);
+
+	FRotator LargestRotation = FRotator::ZeroRotator;
+	FVector LargestLocation = FVector::ZeroVector;
+	FCameraShakePatternUpdateParams UpdateParams;
+	UpdateParams.DeltaTime = 1.f / 60.f;
+	for (int32 Step = 0; Step < 120; ++Step)
+	{
+		FCameraShakePatternUpdateResult Result;
+		Pattern->UpdateShakePattern(UpdateParams, Result);
+		LargestRotation.Pitch = FMath::Max(LargestRotation.Pitch, FMath::Abs(Result.Rotation.Pitch));
+		LargestRotation.Yaw = FMath::Max(LargestRotation.Yaw, FMath::Abs(Result.Rotation.Yaw));
+		LargestRotation.Roll = FMath::Max(LargestRotation.Roll, FMath::Abs(Result.Rotation.Roll));
+		LargestLocation.Y = FMath::Max(LargestLocation.Y, FMath::Abs(Result.Location.Y));
+		LargestLocation.Z = FMath::Max(LargestLocation.Z, FMath::Abs(Result.Location.Z));
+	}
+	const FRotator& RotationLimit = LimitSettings->ShakeMaxRotationDegrees;
+	TestTrue(TEXT("Full trauma reaches the pitch limit"), FMath::IsNearlyEqual(LargestRotation.Pitch, RotationLimit.Pitch, 0.001));
+	TestTrue(TEXT("Full trauma reaches the yaw limit"), FMath::IsNearlyEqual(LargestRotation.Yaw, RotationLimit.Yaw, 0.001));
+	TestTrue(TEXT("Full trauma reaches the roll limit"), FMath::IsNearlyEqual(LargestRotation.Roll, RotationLimit.Roll, 0.001));
+	TestTrue(TEXT("Full trauma reaches the lateral offset limit"), FMath::IsNearlyEqual(LargestLocation.Y, LimitSettings->ShakeMaxLocationCm, 0.001));
+	TestTrue(TEXT("Full trauma reaches the vertical offset limit"), FMath::IsNearlyEqual(LargestLocation.Z, LimitSettings->ShakeMaxLocationCm, 0.001));
 	return true;
 }
 
@@ -402,24 +428,24 @@ bool FTDFeedbackTraumaPatternDecaysTest::RunTest(const FString& Parameters)
 	}
 	TestTrue(TEXT("The hit shake restarts a single instance"), Shake->bSingleInstance);
 
-	const FCameraShakePatternStartParams StartParams;
-	Shake->ShakeScale = 0.4f;
-	Pattern->StartShakePattern(StartParams);
-	TestTrue(TEXT("Starting adds the shake scale as trauma"), FMath::IsNearlyEqual(Pattern->GetTrauma(), 0.4f));
-	Shake->ShakeScale = 0.8f;
-	Pattern->StartShakePattern(StartParams);
-	TestTrue(TEXT("Trauma accumulates and clamps at one"), FMath::IsNearlyEqual(Pattern->GetTrauma(), 1.f));
+	const UTDCombatFeedbackSettings* FeedbackSettings = GetDefault<UTDCombatFeedbackSettings>();
+	Pattern->AddChannelTrauma(ETDShakeChannel::Dealt, 0.4f, 1.f);
+	TestTrue(TEXT("Adding trauma raises the channel"), FMath::IsNearlyEqual(Pattern->GetTrauma(), 0.4f));
+	Pattern->AddChannelTrauma(ETDShakeChannel::Dealt, 0.8f, 1.f);
+	TestTrue(TEXT("Trauma accumulates and clamps at the absolute cap"), FMath::IsNearlyEqual(Pattern->GetTrauma(), FeedbackSettings->ShakeTraumaCap));
 	TestFalse(TEXT("A pattern with trauma is not finished"), Pattern->IsFinished());
 
 	FCameraShakePatternUpdateParams UpdateParams;
 	UpdateParams.DeltaTime = 0.1f;
 	FCameraShakePatternUpdateResult Result;
 	Pattern->UpdateShakePattern(UpdateParams, Result);
-	TestTrue(TEXT("Trauma decays by the decay rate"), FMath::IsNearlyEqual(Pattern->GetTrauma(), 1.f - Pattern->TraumaDecayPerSecond * 0.1f, 0.001f));
+	const float DecayedTrauma = FMath::Min(1.f - FeedbackSettings->ShakeTraumaDecayPerSecond * 0.1f, FeedbackSettings->ShakeTraumaCap);
+	TestTrue(TEXT("Trauma decays by the decay rate"), FMath::IsNearlyEqual(Pattern->GetTrauma(), DecayedTrauma, 0.001f));
 	TestTrue(TEXT("The pattern scales its own result"), EnumHasAnyFlags(Result.Flags, ECameraShakePatternUpdateResultFlags::SkipAutoScale));
-	TestTrue(TEXT("The lateral offset stays inside its limit"), FMath::Abs(Result.Location.Y) <= Pattern->MaxLocationOffset.Y + KINDA_SMALL_NUMBER);
-	TestTrue(TEXT("The vertical offset stays inside its limit"), FMath::Abs(Result.Location.Z) <= Pattern->MaxLocationOffset.Z + KINDA_SMALL_NUMBER);
-	TestTrue(TEXT("The roll offset stays inside its limit"), FMath::Abs(Result.Rotation.Roll) <= Pattern->MaxRotationOffset.Roll + KINDA_SMALL_NUMBER);
+	const float LocationLimitCm = FeedbackSettings->ShakeMaxLocationCm * FeedbackSettings->MaxArmLocationScale;
+	TestTrue(TEXT("The lateral offset stays inside its limit"), FMath::Abs(Result.Location.Y) <= LocationLimitCm + KINDA_SMALL_NUMBER);
+	TestTrue(TEXT("The vertical offset stays inside its limit"), FMath::Abs(Result.Location.Z) <= LocationLimitCm + KINDA_SMALL_NUMBER);
+	TestTrue(TEXT("The roll offset stays inside its limit"), FMath::Abs(Result.Rotation.Roll) <= FeedbackSettings->ShakeMaxRotationDegrees.Roll + KINDA_SMALL_NUMBER);
 
 	for (int32 Step = 0; Step < 100 && !Pattern->IsFinished(); ++Step)
 	{

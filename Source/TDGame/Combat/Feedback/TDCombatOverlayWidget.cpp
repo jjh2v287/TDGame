@@ -311,7 +311,12 @@ void UTDCombatOverlayWidget::ShowMonsterHealthBar(ATDCombatCharacter* Character,
 void UTDCombatOverlayWidget::PulseDamageVignette(const float Intensity)
 {
 	const double Now = GetOverlayTime();
-	DamageVignettePeakIntensity = FMath::Max(ComputeRemainingHitVignette(Now), FMath::Clamp(Intensity, 0.f, 1.f));
+	const float ClampedIntensity = FMath::Clamp(Intensity, 0.f, 1.f);
+	if (ClampedIntensity <= ComputeRemainingHitVignette(Now))
+	{
+		return;
+	}
+	DamageVignettePeakIntensity = ClampedIntensity;
 	DamageVignetteStartTime = Now;
 }
 

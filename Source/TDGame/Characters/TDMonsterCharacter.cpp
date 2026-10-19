@@ -10,6 +10,8 @@
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDDamageEntity.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
+#include "Combat/Damage/TDDamageTypes.h"
+#include "Combat/Feedback/TDCombatFeedbackSubsystem.h"
 #include "Combat/TDCombatComponent.h"
 #include "Combat/TDCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
@@ -52,6 +54,14 @@ namespace
 	constexpr float DefaultRecoverySeconds = 0.3f;
 	constexpr float MaxAnimationOverrunSeconds = 0.6f;
 	constexpr float StaggerImpulse = 450.f;
+	constexpr float ComboPushSpeed = 240.f;
+	constexpr float ComboPushSeconds = 0.2f;
+	constexpr float FinisherPushSpeed = 660.f;
+	constexpr float FinisherPushSeconds = 0.25f;
+	constexpr float KillPoseHoldRealSeconds = 0.07f;
+	constexpr float MinimumClipCatchUpScale = 0.5f;
+	constexpr float MaximumClipCatchUpScale = 2.f;
+	constexpr float ClipCatchUpScaleTolerance = 0.01f;
 	constexpr float MinimumClipPlayRate = 0.05f;
 	constexpr float WindupSpellMarginSeconds = 0.01f;
 	constexpr float FlightHeightGainCm = 120.f;
@@ -101,6 +111,17 @@ namespace
 		}
 		UTDDamageDefinition* WindupSpell = Library->FindOrCreateWindupSpell(Request.Spell, Request.WindupSeconds, Request.bIsDanger);
 		return WindupSpell ? WindupSpell : Request.Spell;
+	}
+
+	void ResolveHitStaggerPush(const FTDDamageContext& Context, float& OutSpeed, float& OutSeconds)
+	{
+		const AActor* Caster = Context.Caster.Get();
+		const UTDSkillComponent* CasterSkills = Caster ? Caster->FindComponentByClass<UTDSkillComponent>() : nullptr;
+		const bool bIsMeleeHit = CasterSkills && Context.Delivery == ETDDamageDelivery::Melee;
+		const bool bIsComboFinisher = bIsMeleeHit && CasterSkills->IsPrimaryComboFinisherActive();
+		const int32 ComboStageIndex = bIsMeleeHit ? CasterSkills->GetActivePrimaryComboStageIndex() : INDEX_NONE;
+		OutSpeed = ATDMonsterCharacter::ComputeStaggerPushSpeed(bIsMeleeHit, bIsComboFinisher, ComboStageIndex);
+		OutSeconds = ATDMonsterCharacter::ComputeStaggerPushSeconds(bIsMeleeHit, bIsComboFinisher, ComboStageIndex);
 	}
 
 	const TCHAR* ChannelEffectPath = TEXT("/Game/MegaMagicVFXBundle/VFX/MagicShieldsVFX/VFX/DefaultVersions/AquaShield/Systems/N_AquaShield.N_AquaShield");
@@ -371,7 +392,7 @@ void ATDMonsterCharacter::ApplyBodyMoveIntent(const FVector2D& Direction, const 
 		ApplyFlightMoveInput(Direction, SpeedScale);
 		return;
 	}
-	if (Direction.IsNearlyZero() || SpeedScale <= 0.f)
+	if (Direction.IsNearlyZero() || SpeedScale <= 0.f || CharacterAnimation->IsHitStopped())
 	{
 		return;
 	}
@@ -414,6 +435,8 @@ float ATDMonsterCharacter::BeginBodyAbility(const FTDMonsterAbilityRequest& Requ
 	ActiveAbilityEntity = Entity;
 	const float WindupSeconds = CastSpell->ActivationDelay + (CastSpell != Request.Spell ? Request.Spell->ActivationDelay : 0.f);
 	AbilityImpactTime = World->GetTimeSeconds() + WindupSeconds;
+	bIsAbilityDanger = Request.bIsDanger;
+	ScheduleMeleeSwingMessage(*CastSpell, Request.Range, WindupSeconds);
 	float RecoverySeconds = DefaultRecoverySeconds;
 	const float ClipSeconds = PlayAbilityClip(Request, WindupSeconds, RecoverySeconds);
 	const float CommittedSeconds = WindupSeconds + RecoverySeconds;
@@ -431,6 +454,13 @@ void ATDMonsterCharacter::CancelBodyAbility()
 	}
 	ActiveAbilityEntity.Reset();
 	AbilityImpactTime = 0.f;
+	bIsAbilityDanger = false;
+	AbilityClipAnimation.Reset();
+	if (World)
+	{
+		World->GetTimerManager().ClearTimer(MeleeSwingTimerHandle);
+		World->GetTimerManager().ClearTimer(AbilityClipRestoreTimerHandle);
+	}
 	CharacterAnimation->StopAction();
 }
 
@@ -440,11 +470,7 @@ void ATDMonsterCharacter::BeginBodyStagger(const FVector& SourceLocation, const 
 	{
 		return;
 	}
-	const FVector Away = (GetActorLocation() - SourceLocation).GetSafeNormal2D();
-	if (!Away.IsNearlyZero() && !CombatComponent->IsFrozen())
-	{
-		AddImpulseVelocity(Away * StaggerImpulse);
-	}
+	PushBodyAwayFrom(SourceLocation, DamageStaggerPushSpeed > 0.f ? DamageStaggerPushSpeed : StaggerImpulse, DamageStaggerPushSeconds);
 	if (!Species)
 	{
 		return;
@@ -455,12 +481,19 @@ void ATDMonsterCharacter::BeginBodyStagger(const FVector& SourceLocation, const 
 	const FTDMonsterAnimClip& HitClip = bIsLongStagger ? Species->StunClip : AirOrGroundHitClip;
 	if (HitClip.IsValidClip())
 	{
-		PlaySpeciesClip(HitClip, HitClip.PlayRate);
+		PlaySpeciesReactionClip(HitClip);
 	}
 }
 
 void ATDMonsterCharacter::PresentBody(const float DeltaSeconds, const ETDMonsterFsmState State)
 {
+	const bool bIsHitStopHoldingBody = CharacterAnimation->IsHitStopPending() || CharacterAnimation->IsVictimHitStopActive();
+	const bool bHasHitStopEnded = bWasHitStopHoldingBody && !bIsHitStopHoldingBody;
+	bWasHitStopHoldingBody = bIsHitStopHoldingBody;
+	if (bHasHitStopEnded)
+	{
+		CatchUpAbilityClip();
+	}
 }
 
 float ATDMonsterCharacter::BeginBodyFlight(const float AltitudeCm, const float Seconds)
@@ -617,6 +650,90 @@ bool ATDMonsterCharacter::IsBossMonster() const
 	}
 	const TSharedPtr<const FTDResolvedMonsterDefinition> Definition = Library->FindDefinition(Species->DefinitionId);
 	return Definition.IsValid() && Definition->bIsBoss;
+}
+
+bool ATDMonsterCharacter::IsEliteMonster() const
+{
+	UTDMonsterDefinitionLibrary* Library = UTDMonsterDefinitionLibrary::Get();
+	if (!Library || !Species || Species->DefinitionId.IsNone())
+	{
+		return false;
+	}
+	const TSharedPtr<const FTDResolvedMonsterDefinition> Definition = Library->FindDefinition(Species->DefinitionId);
+	return Definition.IsValid() && Definition->bIsElite;
+}
+
+bool ATDMonsterCharacter::IsInDangerWindup() const
+{
+	const UWorld* World = GetWorld();
+	return bIsAbilityDanger && World && World->GetTimeSeconds() < AbilityImpactTime;
+}
+
+bool ATDMonsterCharacter::IsMeleeSwingSpell(const UTDDamageDefinition& Spell, const float Range)
+{
+	if (Spell.Mode != ETDDamageEntityMode::Area)
+	{
+		return false;
+	}
+	const bool bIsSwingShape = Spell.AreaShape == ETDDamageAreaShape::Cone || Spell.AreaShape == ETDDamageAreaShape::Circle;
+	return bIsSwingShape && Range <= Spell.Radius;
+}
+
+bool ATDMonsterCharacter::IsInCommittedAttack() const
+{
+	const UWorld* World = GetWorld();
+	if (World && World->GetTimeSeconds() < AbilityImpactTime)
+	{
+		return true;
+	}
+	const UTDMonsterThinkSubsystem* ThinkSubsystem = GetThinkSubsystem();
+	if (!ThinkSubsystem || !BrainHandle.IsValid())
+	{
+		return false;
+	}
+	const ETDMonsterFsmState State = ThinkSubsystem->GetMonsterState(BrainHandle);
+	return State == ETDMonsterFsmState::Cast || State == ETDMonsterFsmState::Sequence;
+}
+
+float ATDMonsterCharacter::ComputeStaggerPushSpeed(const bool bIsMeleeHit, const bool bIsComboFinisher, const int32 ComboStageIndex)
+{
+	if (!bIsMeleeHit)
+	{
+		return StaggerImpulse;
+	}
+	if (bIsComboFinisher)
+	{
+		return FinisherPushSpeed;
+	}
+	return ComboStageIndex >= 0 ? ComboPushSpeed : StaggerImpulse;
+}
+
+float ATDMonsterCharacter::ComputeStaggerPushSeconds(const bool bIsMeleeHit, const bool bIsComboFinisher, const int32 ComboStageIndex)
+{
+	if (!bIsMeleeHit)
+	{
+		return 0.f;
+	}
+	if (bIsComboFinisher)
+	{
+		return FinisherPushSeconds;
+	}
+	return ComboStageIndex >= 0 ? ComboPushSeconds : 0.f;
+}
+
+void ATDMonsterCharacter::PushBodyAwayFrom(const FVector& SourceLocation, const float Speed, const float Seconds)
+{
+	const FVector Away = (GetActorLocation() - SourceLocation).GetSafeNormal2D();
+	if (Away.IsNearlyZero() || Speed <= 0.f || CombatComponent->IsFrozen())
+	{
+		return;
+	}
+	if (Seconds > 0.f)
+	{
+		ApplyLinearKnockback(Away * Speed, Seconds);
+		return;
+	}
+	AddImpulseVelocity(Away * Speed);
 }
 
 void ATDMonsterCharacter::EngageMonsterBrain(AActor* Target)
@@ -957,7 +1074,10 @@ void ATDMonsterCharacter::HandleMonsterDamaged(const FTDDamageResult& Result, co
 	}
 	const AActor* Caster = Context.Caster.Get();
 	const FVector SourceLocation = Caster ? Caster->GetActorLocation() : GetActorLocation() - GetActorForwardVector() * 100.f;
+	ResolveHitStaggerPush(Context, DamageStaggerPushSpeed, DamageStaggerPushSeconds);
 	ThinkSubsystem->NotifyMonsterDamaged(BrainHandle, Result.AppliedDamage, SourceLocation);
+	DamageStaggerPushSpeed = 0.f;
+	DamageStaggerPushSeconds = 0.f;
 }
 
 void ATDMonsterCharacter::HandleMonsterFrozen(const bool bIsFrozen)
@@ -977,6 +1097,43 @@ void ATDMonsterCharacter::PlayDeathPresentation()
 	if (Species->CorpseLifeSeconds > 0.f)
 	{
 		SetLifeSpan(Species->CorpseLifeSeconds);
+	}
+	const float HoldSeconds = ComputeKillPoseHoldSeconds();
+	if (HoldSeconds <= 0.f || !CharacterAnimation->StartKillPoseHold(HoldSeconds))
+	{
+		PlayDeathClipOrRagdoll();
+		return;
+	}
+	ReleaseKillPoseWhenHoldEnds();
+}
+
+void ATDMonsterCharacter::ReleaseKillPoseWhenHoldEnds()
+{
+	UWorld* World = GetWorld();
+	const float RemainingRealSeconds = CharacterAnimation->GetVictimHitStopRemainingSeconds();
+	if (!World || RemainingRealSeconds <= 0.f)
+	{
+		PlayDeathClipOrRagdoll();
+		return;
+	}
+	World->GetTimerManager().SetTimer(KillPoseHoldTimerHandle, FTimerDelegate::CreateUObject(this, &ThisClass::ReleaseKillPoseWhenHoldEnds), UTDCharacterAnimationComponent::ConvertRealToWorldSeconds(*World, RemainingRealSeconds), false);
+}
+
+float ATDMonsterCharacter::ComputeKillPoseHoldSeconds() const
+{
+	const UWorld* World = GetWorld();
+	if (!World || !World->GetSubsystem<UTDCombatFeedbackSubsystem>())
+	{
+		return 0.f;
+	}
+	return KillPoseHoldRealSeconds;
+}
+
+void ATDMonsterCharacter::PlayDeathClipOrRagdoll()
+{
+	if (!Species)
+	{
+		return;
 	}
 	if (bIsBodyFlying || bIsBodyLanding)
 	{
@@ -1133,7 +1290,13 @@ float ATDMonsterCharacter::PlayAbilityClip(const FTDMonsterAbilityRequest& Reque
 	OutRecoverySeconds = Clip->RecoverySeconds;
 	const bool bCanAlignImpact = Clip->ImpactSeconds > 0.f && WindupSeconds > 0.f;
 	const float PlayRate = bCanAlignImpact ? FMath::Clamp(Clip->ImpactSeconds / WindupSeconds, 0.5f, 2.f) : Clip->PlayRate;
-	return PlaySpeciesClip(*Clip, PlayRate);
+	const float ClipSeconds = PlaySpeciesClip(*Clip, PlayRate);
+	const UWorld* World = GetWorld();
+	AbilityClipAnimation = ClipSeconds > 0.f ? Cast<UAnimSequence>(Clip->Animation) : nullptr;
+	AbilityClipPlayRate = FMath::Max(PlayRate, MinimumClipPlayRate);
+	AbilityClipImpactAnimationSeconds = Clip->ImpactSeconds > 0.f ? Clip->StartSeconds + Clip->ImpactSeconds : 0.f;
+	AbilityClipEndTime = World ? World->GetTimeSeconds() + ClipSeconds : 0.f;
+	return ClipSeconds;
 }
 
 float ATDMonsterCharacter::PlaySpeciesClip(const FTDMonsterAnimClip& Clip, const float PlayRate)
@@ -1145,6 +1308,87 @@ float ATDMonsterCharacter::PlaySpeciesClip(const FTDMonsterAnimClip& Clip, const
 	}
 	return CharacterAnimation->PlayAction(Sequence, FMath::Max(PlayRate, MinimumClipPlayRate), Clip.StartSeconds, Clip.EndSeconds, false);
 }
+
+float ATDMonsterCharacter::PlaySpeciesReactionClip(const FTDMonsterAnimClip& Clip)
+{
+	UAnimSequence* Sequence = Cast<UAnimSequence>(Clip.Animation);
+	if (!Sequence)
+	{
+		return 0.f;
+	}
+	return CharacterAnimation->PlayReactionAction(Sequence, FMath::Max(Clip.PlayRate, MinimumClipPlayRate), Clip.StartSeconds, Clip.EndSeconds);
+}
+
+void ATDMonsterCharacter::ScheduleMeleeSwingMessage(const UTDDamageDefinition& Spell, const float Range, const float WindupSeconds)
+
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	World->GetTimerManager().ClearTimer(MeleeSwingTimerHandle);
+	if (!IsMeleeSwingSpell(Spell, Range))
+	{
+		return;
+	}
+	if (WindupSeconds <= 0.f)
+	{
+		BroadcastMeleeSwingMessage();
+		return;
+	}
+	World->GetTimerManager().SetTimer(MeleeSwingTimerHandle, FTimerDelegate::CreateUObject(this, &ThisClass::BroadcastMeleeSwingMessage), WindupSeconds, false);
+}
+
+void ATDMonsterCharacter::BroadcastMeleeSwingMessage()
+{
+	UWorld* World = GetWorld();
+	if (!World || !CombatComponent->IsAlive() || !UGameplayMessageSubsystem::HasInstance(World))
+	{
+		return;
+	}
+	FTDMeleeSwingMessage SwingMessage;
+	SwingMessage.Attacker = this;
+	SwingMessage.Location = GetActorLocation();
+	UGameplayMessageSubsystem::Get(World).BroadcastMessage(TDGameplayTags::Event_Combat_MeleeSwing, SwingMessage);
+}
+
+void ATDMonsterCharacter::CatchUpAbilityClip()
+{
+	UWorld* World = GetWorld();
+	const UAnimSequence* ClipAnimation = AbilityClipAnimation.Get();
+	if (!World || !ClipAnimation || !CharacterAnimation->IsPlayingAction(ClipAnimation) || !IsInCommittedAttack())
+	{
+		return;
+	}
+	const float NowSeconds = World->GetTimeSeconds();
+	const bool bIsBeforeImpact = NowSeconds < AbilityImpactTime && AbilityClipImpactAnimationSeconds > CharacterAnimation->GetActionAnimationTime();
+	const float TargetAnimationSeconds = bIsBeforeImpact ? AbilityClipImpactAnimationSeconds : TNumericLimits<float>::Max();
+	const float RemainingClipSeconds = CharacterAnimation->GetActionPlaybackSecondsUntil(TargetAnimationSeconds);
+	const float RemainingRealSeconds = (bIsBeforeImpact ? AbilityImpactTime : AbilityClipEndTime) - NowSeconds;
+	if (RemainingClipSeconds <= 0.f)
+	{
+		return;
+	}
+	const float CatchUpScale = RemainingRealSeconds > UE_KINDA_SMALL_NUMBER ? FMath::Clamp(RemainingClipSeconds / RemainingRealSeconds, MinimumClipCatchUpScale, MaximumClipCatchUpScale) : MaximumClipCatchUpScale;
+	if (FMath::IsNearlyEqual(CatchUpScale, 1.f, ClipCatchUpScaleTolerance))
+	{
+		return;
+	}
+	CharacterAnimation->SetActionPlayRate(AbilityClipPlayRate * CatchUpScale);
+	World->GetTimerManager().SetTimer(AbilityClipRestoreTimerHandle, FTimerDelegate::CreateUObject(this, &ThisClass::RestoreAbilityClipPlayRate), RemainingClipSeconds / CatchUpScale, false);
+}
+
+void ATDMonsterCharacter::RestoreAbilityClipPlayRate()
+{
+	const UAnimSequence* ClipAnimation = AbilityClipAnimation.Get();
+	if (!ClipAnimation || !CharacterAnimation->IsPlayingAction(ClipAnimation))
+	{
+		return;
+	}
+	CharacterAnimation->SetActionPlayRate(AbilityClipPlayRate);
+}
+
 
 void ATDMonsterCharacter::SetBodyChanneling(const bool bIsChanneling)
 {

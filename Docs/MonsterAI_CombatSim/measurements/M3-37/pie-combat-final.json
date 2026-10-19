@@ -1,0 +1,49 @@
+{
+ "filter": "TDGame.PIE.Combat",
+ "status": {
+  "state": "Ready",
+  "numEnabled": 3,
+  "numComplete": 3,
+  "numPassed": 3,
+  "numFailed": 0
+ },
+ "results": {
+  "tests": [
+   {
+    "name": "TDGame.PIE.Combat.BossLoop",
+    "state": "Success",
+    "duration": 66.1614761352539,
+    "errors": [],
+    "warnings": [
+     "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance",
+     "LogAbilitySystem: No GameplayCueNotifyPaths were specified in DefaultGame.ini under [/Script/GameplayAbilities.AbilitySystemGlobals]. Falling back to using all of /Game/. This may be slow on large projects. Consider specifying which paths are to be searched.",
+     "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+   },
+   {
+    "name": "TDGame.PIE.Combat.FullLoop",
+    "state": "Success",
+    "duration": 17.423763275146484,
+    "errors": [],
+    "warnings": [
+     "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance",
+     "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+   },
+   {
+    "name": "TDGame.PIE.Combat.HitFeel",
+    "state": "Success",
+    "duration": 338.2449951171875,
+    "errors": [],
+    "warnings": [
+     "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+   }
+  ],
+  "passed": 3,
+  "failed": 0,
+  "skipped": 0,
+  "total": 3,
+  "duration": 421.8302307128906
+ }
+}

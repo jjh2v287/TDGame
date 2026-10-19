@@ -4,9 +4,12 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Characters/TDCharacterAnimationComponent.h"
 #include "Characters/TDCombatCharacter.h"
+#include "Characters/TDGameCharacter.h"
+#include "Characters/TDMonsterCharacter.h"
 #include "Combat/Feedback/TDCombatFeedbackSettings.h"
 #include "Combat/Feedback/TDCombatOverlayWidget.h"
 #include "Combat/Feedback/TDHitCameraShake.h"
+#include "Combat/Skills/TDSkillComponent.h"
 #include "Combat/TDCombatComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -18,6 +21,8 @@
 #include "Engine/World.h"
 #include "Framework/TDGameGameMode.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/WorldSettings.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
@@ -32,6 +37,62 @@
 #include "Sound/SoundConcurrency.h"
 #include "TDGame.h"
 #include "TimerManager.h"
+
+namespace
+{
+	float ResolveUnclampedDamageRatio(const FTDDamageAppliedMessage& Message)
+	{
+		if (Message.DamageAmount <= 0.f || Message.UnclampedDamage <= Message.DamageAmount)
+		{
+			return Message.DamageRatio;
+		}
+		return Message.DamageRatio * Message.UnclampedDamage / Message.DamageAmount;
+	}
+
+	ETDKillRank ResolveKillRank(const FTDDamageAppliedMessage& Message)
+	{
+		if (!Message.bWasKilled)
+		{
+			return ETDKillRank::None;
+		}
+		const ATDMonsterCharacter* Monster = Cast<ATDMonsterCharacter>(Message.Target.Get());
+		if (!Monster)
+		{
+			return ETDKillRank::Normal;
+		}
+		if (Monster->IsBossMonster())
+		{
+			return ETDKillRank::Boss;
+		}
+		return Monster->IsEliteMonster() ? ETDKillRank::Elite : ETDKillRank::Normal;
+	}
+
+	float ResolveFlashSeconds(const UTDCombatFeedbackSettings& FeedbackSettings, const FTDHitFeel& HitFeel, const bool bWasCritical, const bool bIsLocalVictim)
+	{
+		if (bIsLocalVictim)
+		{
+			return FeedbackSettings.PlayerFlashSeconds;
+		}
+		if (bWasCritical)
+		{
+			return FeedbackSettings.CriticalFlashSeconds;
+		}
+		return HitFeel.Tier == ETDHitFeelTier::Heavy ? FeedbackSettings.HeavyFlashSeconds : FeedbackSettings.LightFlashSeconds;
+	}
+
+	float ResolveAttackerStopSeconds(const UTDCombatFeedbackSettings& FeedbackSettings, const FTDHitFeel& HitFeel)
+	{
+		if (!HitFeel.bIsPlayerMelee)
+		{
+			return 0.f;
+		}
+		if (HitFeel.KillRank != ETDKillRank::None)
+		{
+			return FeedbackSettings.AttackerKillHitStopSeconds;
+		}
+		return HitFeel.Tier == ETDHitFeelTier::Heavy ? FeedbackSettings.AttackerHeavyHitStopSeconds : FeedbackSettings.AttackerHitStopSeconds;
+	}
+}
 
 bool UTDCombatFeedbackSubsystem::ShouldEnableFeedback(const bool bCanEverRender, const EWorldType::Type WorldType, const bool bHasGameInstance)
 {
@@ -72,6 +133,37 @@ FTDHitPresentation UTDCombatFeedbackSubsystem::DescribeHitPresentation(const FTD
 	return Presentation;
 }
 
+float UTDCombatFeedbackSubsystem::ComputeDealtTrauma(const ETDHitFeelTier Tier, const int32 KillCountInSwing, const ETDKillRank KillRank)
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	if (KillRank == ETDKillRank::None)
+	{
+		return Tier == ETDHitFeelTier::Heavy ? FeedbackSettings.TraumaDealtHeavy : FeedbackSettings.TraumaDealt;
+	}
+
+	const float ExtraKillTrauma = FeedbackSettings.KillExtraTrauma * FMath::Max(KillCountInSwing - 1, 0);
+	switch (KillRank)
+	{
+	case ETDKillRank::Boss:
+		return FMath::Min(FeedbackSettings.TraumaKillBoss + ExtraKillTrauma, FMath::Max(FeedbackSettings.BossKillShakeTraumaCap, FeedbackSettings.TraumaKillBoss));
+	case ETDKillRank::Elite:
+		return FMath::Min(FeedbackSettings.TraumaKillElite + ExtraKillTrauma, FMath::Max(FeedbackSettings.EliteKillTraumaCap, FeedbackSettings.TraumaKillElite));
+	default:
+		return FMath::Min(FeedbackSettings.TraumaKill + ExtraKillTrauma, FMath::Max(FeedbackSettings.KillTraumaCap, FeedbackSettings.TraumaKill));
+	}
+}
+
+float UTDCombatFeedbackSubsystem::ComputeReceivedTrauma(const float AccumulatedRatio, const bool bIsDeath)
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	if (bIsDeath)
+	{
+		return FeedbackSettings.TraumaReceivedDeath;
+	}
+	const float Trauma = FeedbackSettings.TraumaReceivedMin + FeedbackSettings.TraumaReceivedPerDamageRatio * FMath::Max(AccumulatedRatio, 0.f);
+	return FMath::Clamp(Trauma, FeedbackSettings.TraumaReceivedMin, FeedbackSettings.TraumaReceivedMax);
+}
+
 bool UTDCombatFeedbackSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	if (!Super::ShouldCreateSubsystem(Outer))
@@ -110,9 +202,16 @@ void UTDCombatFeedbackSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	RegisterListeners(InWorld);
 }
 
+void UTDCombatFeedbackSubsystem::OnWorldEndPlay(UWorld& InWorld)
+{
+	Super::OnWorldEndPlay(InWorld);
+	RestoreSlowMotion();
+}
+
 void UTDCombatFeedbackSubsystem::Deinitialize()
 {
 	UnregisterListeners();
+	RestoreSlowMotion();
 	RestorePresentation();
 	if (OverlayWidget)
 	{
@@ -145,6 +244,7 @@ void UTDCombatFeedbackSubsystem::Tick(const float DeltaTime)
 	NumbersThisFrame = 0;
 	EffectsThisFrame = 0;
 	SoundsThisFrame = 0;
+	StatusSoundsThisFrame = 0;
 	OverlayChangesThisFrame = 0;
 
 	const double Now = GetFeedbackTime();
@@ -152,6 +252,25 @@ void UTDCombatFeedbackSubsystem::Tick(const float DeltaTime)
 	DrainDeferredFeedback(Now);
 	UpdateHitFlashes(Now);
 	UpdateWobbles(Now);
+	ApplyPendingAttackerHitStop();
+	UpdateSlowMotion();
+}
+
+void UTDCombatFeedbackSubsystem::RequestSlowMotion(const float Scale, const float RealSeconds)
+{
+	RequestSlowMotionWithRule(Scale, RealSeconds, false, true);
+}
+
+float UTDCombatFeedbackSubsystem::GetCameraTraumaForTest() const
+{
+	const UTDTraumaCameraShakePattern* ShakePattern = ActiveShakePattern.Get();
+	return ShakePattern ? ShakePattern->GetTrauma() : 0.f;
+}
+
+FVector2D UTDCombatFeedbackSubsystem::GetLastShakeScreenOffsetForTest() const
+{
+	const UTDTraumaCameraShakePattern* ShakePattern = ActiveShakePattern.Get();
+	return ShakePattern ? ShakePattern->GetLastScreenOffset() : FVector2D::ZeroVector;
 }
 
 void UTDCombatFeedbackSubsystem::RegisterListeners(UWorld& InWorld)
@@ -181,9 +300,12 @@ void UTDCombatFeedbackSubsystem::UnregisterListeners()
 
 void UTDCombatFeedbackSubsystem::CreateSoundSettings(const UTDCombatFeedbackSettings& FeedbackSettings)
 {
-	ImpactSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.ImpactSoundMaxCount);
-	AccentSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.AccentSoundMaxCount);
-	SwingSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.SwingSoundMaxCount);
+	ImpactSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.ImpactSoundMaxCount, 0.f);
+	AccentSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.AccentSoundMaxCount, 0.f);
+	SwingSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.SwingSoundMaxCount, 0.f);
+	MonsterSwingSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.MonsterSwingSoundMaxCount, 0.f);
+	StatusTickSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.StatusTickSoundMaxCount, 0.f);
+	PlayerHitSoundConcurrency = CreateSoundConcurrency(FeedbackSettings.PlayerHitSoundMaxCount, FeedbackSettings.PlayerHitSoundRetriggerSeconds);
 
 	SoundAttenuation = NewObject<USoundAttenuation>(this);
 	SoundAttenuation->Attenuation.bAttenuate = true;
@@ -201,17 +323,23 @@ USoundConcurrency* UTDCombatFeedbackSubsystem::GetSoundConcurrency(const ETDFeed
 		return AccentSoundConcurrency.Get();
 	case ETDFeedbackSoundChannel::Swing:
 		return SwingSoundConcurrency.Get();
+	case ETDFeedbackSoundChannel::MonsterSwing:
+		return MonsterSwingSoundConcurrency.Get();
+	case ETDFeedbackSoundChannel::PlayerHit:
+		return PlayerHitSoundConcurrency.Get();
+	case ETDFeedbackSoundChannel::StatusTick:
+		return StatusTickSoundConcurrency.Get();
 	default:
 		return ImpactSoundConcurrency.Get();
 	}
 }
 
-USoundConcurrency* UTDCombatFeedbackSubsystem::CreateSoundConcurrency(const int32 MaxCount)
+USoundConcurrency* UTDCombatFeedbackSubsystem::CreateSoundConcurrency(const int32 MaxCount, const float RetriggerSeconds)
 {
 	USoundConcurrency* SoundConcurrency = NewObject<USoundConcurrency>(this);
 	SoundConcurrency->Concurrency.MaxCount = FMath::Max(1, MaxCount);
 	SoundConcurrency->Concurrency.ResolutionRule = EMaxConcurrentResolutionRule::StopOldest;
-	SoundConcurrency->Concurrency.RetriggerTime = 0.f;
+	SoundConcurrency->Concurrency.RetriggerTime = FMath::Max(RetriggerSeconds, 0.f);
 	return SoundConcurrency;
 }
 
@@ -253,6 +381,7 @@ void UTDCombatFeedbackSubsystem::HandleDamageApplied(FGameplayTag Channel, const
 
 	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
 	const FTDHitPresentation Presentation = DescribeHitPresentation(Message, FeedbackSettings.HeavyDamageRatio);
+	const FTDHitFeel HitFeel = DescribeHitFeel(Message);
 	ATDCombatCharacter* Victim = Cast<ATDCombatCharacter>(Target);
 	APlayerController* LocalController = FindLocalPlayerController();
 	const APawn* LocalPawn = LocalController ? LocalController->GetPawn() : nullptr;
@@ -274,27 +403,32 @@ void UTDCombatFeedbackSubsystem::HandleDamageApplied(FGameplayTag Channel, const
 	PlayImpactSounds(Message, Presentation, Location, bIsLocalVictim);
 	if (Victim)
 	{
-		StartHitFlash(*Victim, Presentation, Message.bWasCritical, bIsLocalVictim);
+		StartHitFlash(*Victim, Presentation, HitFeel, Message.bWasCritical, bIsLocalVictim);
 		if (Presentation.bWobblesVictim)
 		{
 			StartWobble(*Victim, Presentation.Tier, Direction);
 		}
-		if (Presentation.bStopsVictim)
-		{
-			StartVictimHitStop(*Victim, Presentation.Tier);
-		}
 	}
-	if (Presentation.bStopsAttacker)
-	{
-		StartAttackerHitStop(Message.Instigator.Get());
-	}
+	ApplyHitStops(Message, Presentation, HitFeel, Victim, bIsLocalVictim);
 	if (LocalController && Presentation.bPlaysCameraFeedback)
 	{
-		PlayLocalCameraFeedback(*LocalController, Presentation.Tier, Message.DamageRatio, bIsLocalAttacker, bIsLocalVictim);
+		if (bIsLocalVictim)
+		{
+			PlayReceivedCameraFeedback(*LocalController, Message, HitFeel);
+		}
+		else if (bIsLocalAttacker)
+		{
+			PlayDealtCameraFeedback(*LocalController, Message, HitFeel);
+		}
 	}
-	if (bIsLocalVictim && OverlayWidget)
+	if (bIsLocalVictim && OverlayWidget && !Presentation.bIsStatus)
 	{
-		OverlayWidget->PulseDamageVignette(UTDCombatOverlayWidget::ComputeHitVignetteIntensity(Message.DamageRatio, Presentation.bIsStatus, FeedbackSettings));
+		const float VignetteIntensity = UTDCombatOverlayWidget::ComputeHitVignetteIntensity(Message.DamageRatio, Presentation.bIsStatus, FeedbackSettings);
+		OverlayWidget->PulseDamageVignette(VignetteIntensity * FeedbackSettings.GetFlashIntensityScale());
+	}
+	if (HitFeel.KillRank == ETDKillRank::Boss)
+	{
+		ScheduleBossKillSlowMotion(bIsLocalAttacker && HitFeel.bIsPlayerMelee ? DealtWindow.ComputeDesiredAttackerStopSeconds() : 0.f);
 	}
 	if (Victim && !bIsLocalVictim)
 	{
@@ -336,14 +470,20 @@ void UTDCombatFeedbackSubsystem::HandleActorDeath(FGameplayTag Channel, const FT
 void UTDCombatFeedbackSubsystem::HandleMeleeSwing(FGameplayTag Channel, const FTDMeleeSwingMessage& Message)
 {
 	const AActor* Attacker = Message.Attacker.Get();
-	const APlayerController* LocalController = FindLocalPlayerController();
-	const APawn* LocalPawn = LocalController ? LocalController->GetPawn() : nullptr;
-	if (!Attacker || Attacker != LocalPawn)
+	if (!Attacker)
 	{
 		return;
 	}
 
+	const APlayerController* LocalController = FindLocalPlayerController();
+	const APawn* LocalPawn = LocalController ? LocalController->GetPawn() : nullptr;
 	const FVector Location = Message.Location.IsNearlyZero() ? Attacker->GetActorLocation() : Message.Location;
+	if (Attacker != LocalPawn)
+	{
+		PlayMonsterSwingSound(*Attacker, LocalPawn, Location);
+		return;
+	}
+
 	if (PlayFeedbackSound(GetDefault<UTDCombatFeedbackSettings>()->MeleeSwingSound, Location, 1.f, ETDFeedbackSoundChannel::Swing))
 	{
 		++Stats.SwingsPlayed;
@@ -352,6 +492,11 @@ void UTDCombatFeedbackSubsystem::HandleMeleeSwing(FGameplayTag Channel, const FT
 
 void UTDCombatFeedbackSubsystem::HandleEncounterBanner(FGameplayTag Channel, const FTDEncounterBannerMessage& Message)
 {
+	if (Message.Style == ETDEncounterBannerStyle::Victory)
+	{
+		const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+		RequestSlowMotion(FeedbackSettings.VictorySlowMotionScale, FeedbackSettings.VictorySlowMotionSeconds);
+	}
 	if (!OverlayWidget)
 	{
 		return;
@@ -394,13 +539,39 @@ void UTDCombatFeedbackSubsystem::HandleBossHealthBar(FGameplayTag Channel, const
 void UTDCombatFeedbackSubsystem::HandleMonsterPhaseEntered(FGameplayTag Channel, const FTDMonsterPhaseMessage& Message)
 {
 	const AActor* Monster = Message.Monster.Get();
-	if (!Monster || !OverlayWidget || OverlayWidget->GetBossHealthBarTarget() != Monster)
+	if (!Monster)
+	{
+		return;
+	}
+
+	PlayBossPhaseAccent(*Monster);
+	if (!OverlayWidget || OverlayWidget->GetBossHealthBarTarget() != Monster)
 	{
 		return;
 	}
 
 	OverlayWidget->PulseBossPhase(Message.PhaseIndex);
 	++Stats.BossPhasePulses;
+}
+
+FTDHitFeel UTDCombatFeedbackSubsystem::DescribeHitFeel(const FTDDamageAppliedMessage& Message) const
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const ATDGameCharacter* PlayerAttacker = Cast<ATDGameCharacter>(Message.Instigator.Get());
+	const UTDSkillComponent* AttackerSkills = PlayerAttacker ? PlayerAttacker->GetSkillComponent() : nullptr;
+	const ATDMonsterCharacter* MonsterAttacker = Cast<ATDMonsterCharacter>(Message.Instigator.Get());
+
+	FTDHitFeel HitFeel;
+	HitFeel.bIsPlayerMelee = AttackerSkills && Message.Delivery == ETDDamageDelivery::Melee;
+	HitFeel.ComboStageIndex = AttackerSkills ? AttackerSkills->GetActivePrimaryComboStageIndex() : INDEX_NONE;
+	const bool bIsComboFinisher = HitFeel.bIsPlayerMelee && AttackerSkills->IsPrimaryComboFinisherActive();
+	HitFeel.Tier = bIsComboFinisher || Message.bWasCritical ? ETDHitFeelTier::Heavy : ETDHitFeelTier::Light;
+	const bool bIsHeavyForTrauma = HitFeel.Tier == ETDHitFeelTier::Heavy || Message.DamageRatio >= FeedbackSettings.HeavyTraumaDamageRatio;
+	HitFeel.TraumaTier = bIsHeavyForTrauma ? ETDHitFeelTier::Heavy : ETDHitFeelTier::Light;
+	HitFeel.KillRank = ResolveKillRank(Message);
+	HitFeel.UnclampedDamageRatio = ResolveUnclampedDamageRatio(Message);
+	HitFeel.bIsStrongSource = MonsterAttacker && (MonsterAttacker->IsBossMonster() || MonsterAttacker->IsEliteMonster());
+	return HitFeel;
 }
 
 void UTDCombatFeedbackSubsystem::ShowHitNumber(const FTDDamageAppliedMessage& Message, const FTDHitPresentation& Presentation, const FVector& Location, const bool bIsLocalVictim)
@@ -412,7 +583,7 @@ void UTDCombatFeedbackSubsystem::ShowHitNumber(const FTDDamageAppliedMessage& Me
 	Request.Element = Message.Element;
 	Request.bIsPlayerTarget = bIsLocalVictim;
 	Request.bWasCritical = Message.bWasCritical;
-	if (Presentation.Tier == ETDHitFeedbackTier::Kill)
+	if (Presentation.Tier == ETDHitFeedbackTier::Kill && !bIsLocalVictim)
 	{
 		Request.Style = ETDDamageNumberStyle::Kill;
 	}
@@ -508,10 +679,18 @@ void UTDCombatFeedbackSubsystem::DeactivateLoopingEffectLater(UNiagaraComponent&
 void UTDCombatFeedbackSubsystem::PlayImpactSounds(const FTDDamageAppliedMessage& Message, const FTDHitPresentation& Presentation, const FVector& Location, const bool bIsLocalVictim)
 {
 	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
-	const float VolumeScale = Presentation.bIsStatus ? FeedbackSettings.StatusSoundVolumeScale : 1.f;
-	if (const FTDFeedbackSoundSet* ImpactSound = FeedbackSettings.ImpactSounds.Find(Message.Element))
+	if (Presentation.bIsStatus)
 	{
-		PlayFeedbackSound(*ImpactSound, Location, VolumeScale, ETDFeedbackSoundChannel::Impact);
+		PlayFeedbackSound(FeedbackSettings.StatusTickSounds, Location, FeedbackSettings.StatusSoundVolumeScale, ETDFeedbackSoundChannel::StatusTick);
+		return;
+	}
+	if (bIsLocalVictim)
+	{
+		PlayFeedbackSound(FeedbackSettings.PlayerHitSounds, Location, 1.f, ETDFeedbackSoundChannel::PlayerHit);
+	}
+	else if (const FTDFeedbackSoundSet* ImpactSound = FeedbackSettings.ImpactSounds.Find(Message.Element))
+	{
+		PlayFeedbackSound(*ImpactSound, Location, 1.f, ETDFeedbackSoundChannel::Impact);
 	}
 	if (!Presentation.bPlaysAccentSounds)
 	{
@@ -532,11 +711,45 @@ void UTDCombatFeedbackSubsystem::PlayImpactSounds(const FTDDamageAppliedMessage&
 	}
 }
 
-void UTDCombatFeedbackSubsystem::StartHitFlash(ATDCombatCharacter& Victim, const FTDHitPresentation& Presentation, const bool bWasCritical, const bool bIsLocalVictim)
+void UTDCombatFeedbackSubsystem::PlayMonsterSwingSound(const AActor& Attacker, const APawn* LocalPawn, const FVector& Location)
+{
+	const ATDMonsterCharacter* Monster = Cast<ATDMonsterCharacter>(&Attacker);
+	if (!Monster || !LocalPawn || Monster->GetCurrentTarget() != LocalPawn)
+	{
+		return;
+	}
+
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	if (FVector::DistSquared(Monster->GetActorLocation(), LocalPawn->GetActorLocation()) > FMath::Square(FeedbackSettings.MonsterSwingSoundRadiusCm))
+	{
+		return;
+	}
+	PlayFeedbackSound(FeedbackSettings.MonsterSwingSounds, Location, 1.f, ETDFeedbackSoundChannel::MonsterSwing);
+}
+
+void UTDCombatFeedbackSubsystem::PlayBossPhaseAccent(const AActor& Monster)
+{
+	const ATDMonsterCharacter* BossMonster = Cast<ATDMonsterCharacter>(&Monster);
+	if (!BossMonster || !BossMonster->IsBossMonster())
+	{
+		return;
+	}
+
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	if (APlayerController* LocalController = FindLocalPlayerController())
+	{
+		AddCameraTrauma(*LocalController, ETDShakeChannel::Event, FeedbackSettings.PhaseEventTrauma, FeedbackSettings.PhaseEventTrauma, false, FRotator::ZeroRotator);
+	}
+	PlayFeedbackSound(FeedbackSettings.PhaseAccentSound, Monster.GetActorLocation(), 1.f, ETDFeedbackSoundChannel::Accent);
+	RequestSlowMotionWithRule(FeedbackSettings.PhaseSlowMotionScale, FeedbackSettings.PhaseSlowMotionSeconds, false, false);
+}
+
+void UTDCombatFeedbackSubsystem::StartHitFlash(ATDCombatCharacter& Victim, const FTDHitPresentation& Presentation, const FTDHitFeel& HitFeel, const bool bWasCritical, const bool bIsLocalVictim)
 {
 	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
-	const float PeakIntensity = Presentation.bIsStatus ? FeedbackSettings.StatusFlashIntensity : 1.f;
-	if (PeakIntensity <= 0.f || FeedbackSettings.FlashSeconds <= 0.f || FeedbackSettings.HitFlashMaterial.IsNull())
+	const float PeakIntensity = (Presentation.bIsStatus ? FeedbackSettings.StatusFlashIntensity : 1.f) * FeedbackSettings.GetFlashIntensityScale();
+	const float DurationSeconds = ResolveFlashSeconds(FeedbackSettings, HitFeel, bWasCritical, bIsLocalVictim);
+	if (PeakIntensity <= 0.f || DurationSeconds <= 0.f || FeedbackSettings.HitFlashMaterial.IsNull())
 	{
 		return;
 	}
@@ -545,6 +758,8 @@ void UTDCombatFeedbackSubsystem::StartHitFlash(ATDCombatCharacter& Victim, const
 	Request.Victim = &Victim;
 	Request.Color = bIsLocalVictim ? FeedbackSettings.PlayerFlashColor : (bWasCritical ? FeedbackSettings.CriticalFlashColor : FeedbackSettings.MonsterFlashColor);
 	Request.PeakIntensity = PeakIntensity;
+	Request.DurationSeconds = DurationSeconds;
+	Request.bIsLocalVictim = bIsLocalVictim;
 	if (TryStartHitFlash(Request))
 	{
 		return;
@@ -564,6 +779,14 @@ bool UTDCombatFeedbackSubsystem::TryStartHitFlash(const FTDHitFlashRequest& Requ
 	}
 
 	FTDHitFlashState* FlashState = FindHitFlash(*Victim);
+	if (Request.bIsLocalVictim && !PlayerFlashLimiter.CanStart(GetFeedbackRealTime()))
+	{
+		if (FlashState && FlashState->bIsOverlayApplied)
+		{
+			FlashState->PeakIntensity = FMath::Max(FlashState->PeakIntensity, Request.PeakIntensity);
+		}
+		return true;
+	}
 	if (FlashState && FlashState->bIsOverlayApplied)
 	{
 		RefreshHitFlash(*FlashState, Request);
@@ -601,7 +824,12 @@ void UTDCombatFeedbackSubsystem::RefreshHitFlash(FTDHitFlashState& FlashState, c
 	FlashState.Material->SetVectorParameterValue(FeedbackSettings.FlashColorParameterName, Request.Color);
 	FlashState.Material->SetScalarParameterValue(FeedbackSettings.FlashIntensityParameterName, Request.PeakIntensity);
 	FlashState.StartTime = GetFeedbackTime();
+	if (Request.bIsLocalVictim)
+	{
+		PlayerFlashLimiter.MarkStarted(GetFeedbackRealTime());
+	}
 	FlashState.PeakIntensity = Request.PeakIntensity;
+	FlashState.DurationSeconds = Request.DurationSeconds;
 	FlashState.bIsFading = true;
 	++Stats.FlashesStarted;
 }
@@ -615,10 +843,7 @@ void UTDCombatFeedbackSubsystem::StartWobble(ATDCombatCharacter& Victim, const E
 		return;
 	}
 
-	FTDWobbleState* WobbleState = Wobbles.FindByPredicate([&Victim](const FTDWobbleState& WobbleEntry)
-	{
-		return WobbleEntry.Character.Get() == &Victim;
-	});
+	FTDWobbleState* WobbleState = FindWobble(Victim);
 	if (!WobbleState)
 	{
 		WobbleState = &Wobbles.AddDefaulted_GetRef();
@@ -630,82 +855,272 @@ void UTDCombatFeedbackSubsystem::StartWobble(ATDCombatCharacter& Victim, const E
 	++Stats.WobblesStarted;
 }
 
-void UTDCombatFeedbackSubsystem::StartVictimHitStop(ATDCombatCharacter& Victim, const ETDHitFeedbackTier Tier)
+void UTDCombatFeedbackSubsystem::ApplyHitStops(const FTDDamageAppliedMessage& Message, const FTDHitPresentation& Presentation, const FTDHitFeel& HitFeel, ATDCombatCharacter* Victim, const bool bIsLocalVictim)
 {
-	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
-	const float Seconds = Tier == ETDHitFeedbackTier::Heavy ? FeedbackSettings.HeavyHitStopSeconds : FeedbackSettings.LightHitStopSeconds;
-	StartCharacterHitStop(Victim, Seconds);
-}
-
-void UTDCombatFeedbackSubsystem::StartAttackerHitStop(AActor* Instigator)
-{
-	const float Seconds = GetDefault<UTDCombatFeedbackSettings>()->AttackerHitStopSeconds;
-	ATDCombatCharacter* Attacker = Cast<ATDCombatCharacter>(Instigator);
-	if (!Attacker || Seconds <= 0.f)
+	if (Presentation.bIsStatus || !Victim)
 	{
 		return;
 	}
-	StartCharacterHitStop(*Attacker, Seconds);
-}
 
-bool UTDCombatFeedbackSubsystem::StartCharacterHitStop(ATDCombatCharacter& Character, const float Seconds)
-{
-	const UTDCombatComponent* Combat = Character.GetCombatComponent();
-	UTDCharacterAnimationComponent* Animation = Character.GetCharacterAnimation();
-	if (Seconds <= 0.f || !Combat || !Combat->IsAlive() || !Animation || Animation->IsPlayingRootMotionAction())
-	{
-		return false;
-	}
-
-	Animation->StartHitStop(Seconds);
-	if (!Animation->IsHitStopped())
-	{
-		return false;
-	}
-	++Stats.HitStopsStarted;
-	return true;
-}
-
-void UTDCombatFeedbackSubsystem::PlayLocalCameraFeedback(APlayerController& Controller, const ETDHitFeedbackTier Tier, const float DamageRatio, const bool bIsLocalAttacker, const bool bIsLocalVictim)
-{
 	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
-	float Trauma = 0.f;
-	float RumbleIntensity = 0.f;
-	float RumbleSeconds = 0.f;
-	bool bUsesLargeMotors = true;
 	if (bIsLocalVictim)
 	{
-		Trauma = FMath::Clamp(FeedbackSettings.TraumaReceivedMin + FeedbackSettings.TraumaReceivedPerDamageRatio * DamageRatio, FeedbackSettings.TraumaReceivedMin, FeedbackSettings.TraumaReceivedMax);
-		RumbleIntensity = FeedbackSettings.RumbleReceivedIntensity;
-		RumbleSeconds = FeedbackSettings.RumbleReceivedSeconds;
+		if (HitFeel.UnclampedDamageRatio < FeedbackSettings.PlayerHitStopDamageRatio && !Message.bWasCritical)
+		{
+			return;
+		}
+		if (ATDCombatCharacter* Attacker = Cast<ATDCombatCharacter>(Message.Instigator.Get()))
+		{
+			StartAttackerPlayRateStop(*Attacker, FeedbackSettings.PlayerHitStopSeconds);
+		}
+		if (Presentation.bStopsVictim)
+		{
+			StartVictimPoseStop(*Victim, FeedbackSettings.PlayerHitStopSeconds);
+		}
+		return;
 	}
-	else if (bIsLocalAttacker && Tier == ETDHitFeedbackTier::Kill)
-	{
-		Trauma = FeedbackSettings.TraumaKill;
-		RumbleIntensity = FeedbackSettings.RumbleKillIntensity;
-		RumbleSeconds = FeedbackSettings.RumbleKillSeconds;
-	}
-	else if (bIsLocalAttacker)
-	{
-		Trauma = Tier == ETDHitFeedbackTier::Heavy ? FeedbackSettings.TraumaDealtHeavy : FeedbackSettings.TraumaDealt;
-		RumbleIntensity = FeedbackSettings.RumbleDealtIntensity;
-		RumbleSeconds = FeedbackSettings.RumbleDealtSeconds;
-		bUsesLargeMotors = false;
-	}
-	else
+	if (!Presentation.bStopsVictim)
 	{
 		return;
 	}
 
-	if (FeedbackSettings.bEnableCameraShake && Controller.PlayerCameraManager && Trauma > 0.f)
+	float RealSeconds = HitFeel.Tier == ETDHitFeelTier::Heavy ? FeedbackSettings.HeavyHitStopSeconds : FeedbackSettings.LightHitStopSeconds;
+	if (Message.bWasCritical)
 	{
-		Controller.PlayerCameraManager->StartCameraShake(UTDHitCameraShake::StaticClass(), Trauma);
-		++Stats.ShakesStarted;
+		RealSeconds = FMath::Min(RealSeconds + FeedbackSettings.CriticalHitStopBonusSeconds, FeedbackSettings.MaxVictimHitStopSeconds);
 	}
-	if (FeedbackSettings.bEnableForceFeedback && RumbleIntensity > 0.f && RumbleSeconds > 0.f)
+	const ATDMonsterCharacter* Monster = Cast<ATDMonsterCharacter>(Victim);
+	const bool bIsCommitted = Monster && Monster->IsInCommittedAttack();
+	const bool bIsStrongCommitted = bIsCommitted && (Monster->IsBossMonster() || Monster->IsEliteMonster());
+	if (bIsStrongCommitted || (Monster && Monster->IsInDangerWindup()))
 	{
-		Controller.PlayDynamicForceFeedback(RumbleIntensity, RumbleSeconds, bUsesLargeMotors, true, bUsesLargeMotors, true);
+		StartHitStopJitter(*Victim, RealSeconds, false);
+		return;
 	}
+	if (bIsCommitted)
+	{
+		RealSeconds = FMath::Min(RealSeconds, FeedbackSettings.CommittedMinionMaxHitStopSeconds);
+	}
+	StartVictimPoseStop(*Victim, RealSeconds);
+}
+
+void UTDCombatFeedbackSubsystem::StartVictimPoseStop(ATDCombatCharacter& Victim, const float RealSeconds)
+{
+	const UTDCombatComponent* Combat = Victim.GetCombatComponent();
+	UTDCharacterAnimationComponent* Animation = Victim.GetCharacterAnimation();
+	if (RealSeconds <= 0.f || !Combat || !Combat->IsAlive() || !Animation || !Animation->StartVictimHitStop(RealSeconds))
+	{
+		return;
+	}
+	++Stats.HitStopsStarted;
+	StartHitStopJitter(Victim, RealSeconds, true);
+}
+
+void UTDCombatFeedbackSubsystem::StartAttackerPlayRateStop(ATDCombatCharacter& Attacker, const float RealSeconds)
+{
+	const UTDCombatComponent* Combat = Attacker.GetCombatComponent();
+	UTDCharacterAnimationComponent* Animation = Attacker.GetCharacterAnimation();
+	if (RealSeconds <= 0.f || !Combat || !Combat->IsAlive() || !Animation)
+	{
+		return;
+	}
+	if (Animation->IsAttackerHitStopActive() && Animation->GetAttackerHitStopRemainingSeconds() >= RealSeconds)
+	{
+		return;
+	}
+	if (!Animation->StartAttackerHitStop(RealSeconds))
+	{
+		return;
+	}
+	++Stats.HitStopsStarted;
+}
+
+void UTDCombatFeedbackSubsystem::StartHitStopJitter(ATDCombatCharacter& Victim, const float RealSeconds, const bool bFollowsHitStop)
+{
+	FTDWobbleState* WobbleState = FindWobble(Victim);
+	if (!WobbleState || RealSeconds <= 0.f)
+	{
+		return;
+	}
+
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const float ArmScale = TDHitCameraShakeMath::ComputeArmLocationScale(ResolveCameraArmLength(FindLocalPlayerController()), FeedbackSettings);
+	const float JitterAmplitude = FeedbackSettings.HitStopJitterCm * ArmScale * FeedbackSettings.GetEffectiveShakeScale();
+	WobbleState->JitterAmplitude = bFollowsHitStop ? JitterAmplitude : FMath::Min(JitterAmplitude, FeedbackSettings.CommittedJitterMaxCm);
+	WobbleState->JitterSeconds = RealSeconds;
+	WobbleState->JitterStartRealTime = GetFeedbackRealTime();
+	WobbleState->bFollowsHitStop = bFollowsHitStop;
+}
+
+void UTDCombatFeedbackSubsystem::ApplyPendingAttackerHitStop()
+{
+	ATDCombatCharacter* Attacker = SwingAttacker.Get();
+	if (!Attacker)
+	{
+		return;
+	}
+
+	const float DesiredSeconds = DealtWindow.ComputeDesiredAttackerStopSeconds();
+	if (DesiredSeconds <= DealtWindow.GrantedAttackerStopSeconds + KINDA_SMALL_NUMBER)
+	{
+		return;
+	}
+
+	const double RealNow = GetFeedbackRealTime();
+	if (DealtWindow.GrantedAttackerStopSeconds <= 0.f)
+	{
+		DealtWindow.AttackerStopStartTime = RealNow;
+	}
+	DealtWindow.GrantedAttackerStopSeconds = DesiredSeconds;
+	const float RemainingSeconds = DesiredSeconds - static_cast<float>(RealNow - DealtWindow.AttackerStopStartTime);
+	StartAttackerPlayRateStop(*Attacker, RemainingSeconds);
+}
+
+void UTDCombatFeedbackSubsystem::PlayReceivedCameraFeedback(APlayerController& Controller, const FTDDamageAppliedMessage& Message, const FTDHitFeel& HitFeel)
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const UTDTraumaCameraShakePattern* ShakePattern = ActiveShakePattern.Get();
+	const float CurrentTrauma = ShakePattern ? ShakePattern->GetChannelTrauma(ETDShakeChannel::Received) : 0.f;
+	const FTDReceivedTraumaResult Result = ReceivedHits.AddHit(GetFeedbackRealTime(), HitFeel.UnclampedDamageRatio, HitFeel.bIsStrongSource, Message.bWasKilled, CurrentTrauma, Message.HitDirection);
+	if (Result.TraumaIncrement <= 0.f)
+	{
+		return;
+	}
+
+	const FRotator KickRotation = Result.bShouldKick ? ComputeKickRotation(Controller, Message.HitDirection, ReceivedHits.ComputeAccumulatedRatio()) : FRotator::ZeroRotator;
+	AddCameraTrauma(Controller, ETDShakeChannel::Received, Result.TraumaIncrement, FeedbackSettings.ShakeTraumaCap, false, KickRotation);
+	if (Result.bStartsShake)
+	{
+		PlayRumble(Controller, FeedbackSettings.RumbleReceivedIntensity, FeedbackSettings.RumbleReceivedSeconds, true);
+	}
+}
+
+void UTDCombatFeedbackSubsystem::PlayDealtCameraFeedback(APlayerController& Controller, const FTDDamageAppliedMessage& Message, const FTDHitFeel& HitFeel)
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const float AttackerStopSeconds = ResolveAttackerStopSeconds(FeedbackSettings, HitFeel);
+	const UTDTraumaCameraShakePattern* ShakePattern = ActiveShakePattern.Get();
+	const float CurrentTrauma = ShakePattern ? ShakePattern->GetChannelTrauma(ETDShakeChannel::Dealt) : 0.f;
+	const float TraumaIncrement = DealtWindow.AddHit(GetFeedbackRealTime(), FObjectKey(Message.Instigator.Get()), HitFeel.ComboStageIndex, HitFeel.TraumaTier, HitFeel.KillRank, AttackerStopSeconds, IsSlowMotionActive(), CurrentTrauma);
+	if (HitFeel.bIsPlayerMelee)
+	{
+		SwingAttacker = Cast<ATDCombatCharacter>(Message.Instigator.Get());
+	}
+	AddCameraTrauma(Controller, ETDShakeChannel::Dealt, TraumaIncrement, DealtWindow.ComputeChannelCap(), HitFeel.KillRank == ETDKillRank::Boss, FRotator::ZeroRotator);
+
+	const bool bIsKill = HitFeel.KillRank != ETDKillRank::None;
+	const float RumbleIntensity = DealtWindow.MergeRumble(bIsKill ? FeedbackSettings.RumbleKillIntensity : FeedbackSettings.RumbleDealtIntensity);
+	PlayRumble(Controller, RumbleIntensity, bIsKill ? FeedbackSettings.RumbleKillSeconds : FeedbackSettings.RumbleDealtSeconds, bIsKill);
+}
+
+void UTDCombatFeedbackSubsystem::AddCameraTrauma(APlayerController& Controller, const ETDShakeChannel Channel, const float Amount, const float ChannelCap, const bool bAllowsFullTrauma, const FRotator& KickRotation)
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const bool bHasKick = !KickRotation.IsNearlyZero();
+	if (!FeedbackSettings.bEnableCameraShake || !Controller.PlayerCameraManager || (Amount <= 0.f && !bHasKick))
+	{
+		return;
+	}
+
+	UCameraShakeBase* Shake = Controller.PlayerCameraManager->StartCameraShake(UTDHitCameraShake::StaticClass(), 1.f);
+	UTDTraumaCameraShakePattern* ShakePattern = Shake ? Cast<UTDTraumaCameraShakePattern>(Shake->GetRootShakePattern()) : nullptr;
+	if (!ShakePattern)
+	{
+		return;
+	}
+
+	if (ShakePattern->GetTrauma() <= KINDA_SMALL_NUMBER && !ShakePattern->IsKicking())
+	{
+		ShakePattern->SetNoisePhase(FeedbackSettings.bRandomizeShakePhase ? static_cast<float>(FeedbackRandom.FRandRange(0.f, 1000.f)) : 0.f);
+	}
+	ShakePattern->SetCameraArmLength(ResolveCameraArmLength(&Controller));
+	if (bAllowsFullTrauma)
+	{
+		ShakePattern->AllowFullTrauma();
+	}
+	ShakePattern->AddChannelTrauma(Channel, Amount, ChannelCap);
+	if (bHasKick)
+	{
+		ShakePattern->AddKick(KickRotation);
+		++KickCount;
+	}
+	ActiveShakePattern = ShakePattern;
+	++Stats.ShakesStarted;
+}
+
+void UTDCombatFeedbackSubsystem::PlayRumble(APlayerController& Controller, const float Intensity, const float Seconds, const bool bUsesLargeMotors)
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const float ScaledIntensity = Intensity * FeedbackSettings.GetEffectiveShakeScale();
+	if (!FeedbackSettings.bEnableForceFeedback || ScaledIntensity <= 0.f || Seconds <= 0.f)
+	{
+		return;
+	}
+	Controller.PlayDynamicForceFeedback(ScaledIntensity, Seconds, bUsesLargeMotors, true, bUsesLargeMotors, true);
+}
+
+void UTDCombatFeedbackSubsystem::ScheduleBossKillSlowMotion(const float AttackerStopSeconds)
+{
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	FTDPendingSlowMotion& PendingSlowMotion = PendingSlowMotions.AddDefaulted_GetRef();
+	PendingSlowMotion.StartRealTime = GetFeedbackRealTime() + FMath::Max(AttackerStopSeconds, 0.f) + FeedbackSettings.BossKillSlowMotionDelaySeconds;
+	PendingSlowMotion.Scale = FeedbackSettings.BossKillSlowMotionScale;
+	PendingSlowMotion.RealSeconds = FeedbackSettings.BossKillSlowMotionSeconds;
+}
+
+void UTDCombatFeedbackSubsystem::UpdateSlowMotion()
+{
+	const double RealNow = GetFeedbackRealTime();
+	TArray<FTDPendingSlowMotion, TInlineAllocator<2>> DueSlowMotions;
+	for (int32 Index = PendingSlowMotions.Num() - 1; Index >= 0; --Index)
+	{
+		if (PendingSlowMotions[Index].StartRealTime > RealNow)
+		{
+			continue;
+		}
+		DueSlowMotions.Add(PendingSlowMotions[Index]);
+		PendingSlowMotions.RemoveAtSwap(Index);
+	}
+	for (const FTDPendingSlowMotion& DueSlowMotion : DueSlowMotions)
+	{
+		RequestSlowMotionWithRule(DueSlowMotion.Scale, DueSlowMotion.RealSeconds, true, true);
+	}
+	if (SlowMotion.RemoveExpired(RealNow))
+	{
+		ApplySlowMotionDilation();
+	}
+}
+
+void UTDCombatFeedbackSubsystem::RequestSlowMotionWithRule(const float Scale, const float RealSeconds, const bool bIgnoresCooldown, const bool bStartsCooldown)
+{
+	if (!GetWorld() || !SlowMotion.Request(GetFeedbackRealTime(), Scale, RealSeconds, bIgnoresCooldown, bStartsCooldown))
+	{
+		return;
+	}
+	ApplySlowMotionDilation();
+}
+
+void UTDCombatFeedbackSubsystem::ApplySlowMotionDilation()
+{
+	UWorld* CurrentWorld = GetWorld();
+	AWorldSettings* WorldSettings = CurrentWorld ? CurrentWorld->GetWorldSettings(false, false) : nullptr;
+	if (!WorldSettings)
+	{
+		return;
+	}
+
+	WorldSettings->SetTimeDilation(SlowMotion.GetScale());
+}
+
+void UTDCombatFeedbackSubsystem::RestoreSlowMotion()
+{
+	PendingSlowMotions.Reset();
+	if (!SlowMotion.IsActive())
+	{
+		return;
+	}
+	SlowMotion.ClearRequests();
+	ApplySlowMotionDilation();
 }
 
 void UTDCombatFeedbackSubsystem::ShowMonsterHealthBar(ATDCombatCharacter& Victim, const FTDDamageAppliedMessage& Message)
@@ -776,7 +1191,14 @@ void UTDCombatFeedbackSubsystem::DrainDeferredFeedback(const double Now)
 
 bool UTDCombatFeedbackSubsystem::PlayFeedbackSound(const FTDFeedbackSoundSet& SoundSet, const FVector& Location, const float VolumeScale, const ETDFeedbackSoundChannel Channel)
 {
-	if (Channel != ETDFeedbackSoundChannel::Accent && SoundsThisFrame >= GetDefault<UTDCombatFeedbackSettings>()->MaxNewSoundsPerFrame)
+	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
+	const bool bIsStatusTick = Channel == ETDFeedbackSoundChannel::StatusTick;
+	const bool bIsBudgetExempt = Channel == ETDFeedbackSoundChannel::Accent || Channel == ETDFeedbackSoundChannel::PlayerHit;
+	if (bIsStatusTick && StatusSoundsThisFrame >= FeedbackSettings.MaxStatusSoundsPerFrame)
+	{
+		return false;
+	}
+	if (!bIsStatusTick && !bIsBudgetExempt && SoundsThisFrame >= FeedbackSettings.MaxNewSoundsPerFrame)
 	{
 		return false;
 	}
@@ -786,10 +1208,22 @@ bool UTDCombatFeedbackSubsystem::PlayFeedbackSound(const FTDFeedbackSoundSet& So
 	{
 		return false;
 	}
+	const float BurstVolumeScale = Channel == ETDFeedbackSoundChannel::Impact ? ResolveBurstVolumeScale(SoundSet) : 1.f;
+	if (BurstVolumeScale <= 0.f)
+	{
+		return false;
+	}
 
-	++SoundsThisFrame;
+	if (bIsStatusTick)
+	{
+		++StatusSoundsThisFrame;
+	}
+	else if (Channel != ETDFeedbackSoundChannel::PlayerHit)
+	{
+		++SoundsThisFrame;
+	}
 	const float Pitch = static_cast<float>(FeedbackRandom.FRandRange(SoundSet.PitchMin, SoundSet.PitchMax));
-	const UAudioComponent* Audio = UGameplayStatics::SpawnSoundAtLocation(this, Sound, Location, FRotator::ZeroRotator, SoundSet.Volume * VolumeScale, Pitch, 0.f, SoundAttenuation, GetSoundConcurrency(Channel), true);
+	const UAudioComponent* Audio = UGameplayStatics::SpawnSoundAtLocation(this, Sound, Location, FRotator::ZeroRotator, SoundSet.Volume * VolumeScale * BurstVolumeScale, Pitch, 0.f, SoundAttenuation, GetSoundConcurrency(Channel), true);
 	if (!Audio)
 	{
 		return false;
@@ -813,6 +1247,11 @@ USoundBase* UTDCombatFeedbackSubsystem::PickSound(const FTDFeedbackSoundSet& Sou
 		return nullptr;
 	}
 	return LoadedSounds[FeedbackRandom.RandRange(0, LoadedSounds.Num() - 1)];
+}
+
+float UTDCombatFeedbackSubsystem::ResolveBurstVolumeScale(const FTDFeedbackSoundSet& SoundSet)
+{
+	return SoundBursts.FindOrAdd(&SoundSet).TryPlay(GetFeedbackRealTime());
 }
 
 void UTDCombatFeedbackSubsystem::UpdateOverlayOwner()
@@ -869,9 +1308,9 @@ void UTDCombatFeedbackSubsystem::UpdateHitFlashes(const double Now)
 		}
 
 		const float Elapsed = static_cast<float>(Now - FlashState.StartTime);
-		if (Elapsed < FeedbackSettings.FlashSeconds)
+		if (Elapsed < FlashState.DurationSeconds)
 		{
-			const float Intensity = FlashState.PeakIntensity * (1.f - Elapsed / FeedbackSettings.FlashSeconds);
+			const float Intensity = FlashState.PeakIntensity * (1.f - Elapsed / FlashState.DurationSeconds);
 			FlashState.Material->SetScalarParameterValue(FeedbackSettings.FlashIntensityParameterName, Intensity);
 			continue;
 		}
@@ -881,7 +1320,7 @@ void UTDCombatFeedbackSubsystem::UpdateHitFlashes(const double Now)
 			FlashState.Material->SetScalarParameterValue(FeedbackSettings.FlashIntensityParameterName, 0.f);
 			FlashState.bIsFading = false;
 		}
-		if (Elapsed < FeedbackSettings.FlashSeconds + FeedbackSettings.FlashOverlayHoldSeconds || OverlayChangesThisFrame >= FeedbackSettings.MaxOverlayChangesPerFrame)
+		if (Elapsed < FlashState.DurationSeconds + FeedbackSettings.FlashOverlayHoldSeconds || OverlayChangesThisFrame >= FeedbackSettings.MaxOverlayChangesPerFrame)
 		{
 			continue;
 		}
@@ -895,6 +1334,7 @@ void UTDCombatFeedbackSubsystem::UpdateWobbles(const double Now)
 {
 	const UTDCombatFeedbackSettings& FeedbackSettings = *GetDefault<UTDCombatFeedbackSettings>();
 	const float DecaySeconds = FMath::Max(FeedbackSettings.WobbleDecaySeconds, KINDA_SMALL_NUMBER);
+	const double RealNow = GetFeedbackRealTime();
 	for (int32 Index = Wobbles.Num() - 1; Index >= 0; --Index)
 	{
 		FTDWobbleState& WobbleState = Wobbles[Index];
@@ -904,9 +1344,20 @@ void UTDCombatFeedbackSubsystem::UpdateWobbles(const double Now)
 			Wobbles.RemoveAtSwap(Index);
 			continue;
 		}
+		if (Character->IsRagdolling())
+		{
+			Character->SetPresentationOffset(FVector::ZeroVector);
+			Wobbles.RemoveAtSwap(Index);
+			continue;
+		}
+		if (UpdateHitStopJitter(WobbleState, *Character, RealNow))
+		{
+			WobbleState.StartTime = Now;
+			continue;
+		}
 
 		const float Elapsed = static_cast<float>(Now - WobbleState.StartTime);
-		if (Elapsed >= FeedbackSettings.WobbleSeconds || Character->IsRagdolling())
+		if (Elapsed >= FeedbackSettings.WobbleSeconds)
 		{
 			Character->SetPresentationOffset(FVector::ZeroVector);
 			Wobbles.RemoveAtSwap(Index);
@@ -916,6 +1367,38 @@ void UTDCombatFeedbackSubsystem::UpdateWobbles(const double Now)
 		const float Envelope = FMath::Exp(-Elapsed / DecaySeconds) * FMath::Cos(static_cast<float>(UE_TWO_PI) * FeedbackSettings.WobbleFrequencyHz * Elapsed);
 		Character->SetPresentationOffset(WobbleState.Direction * (WobbleState.Amplitude * Envelope));
 	}
+}
+
+bool UTDCombatFeedbackSubsystem::UpdateHitStopJitter(FTDWobbleState& WobbleState, ATDCombatCharacter& Character, const double RealNow)
+{
+	if (WobbleState.JitterSeconds <= 0.f)
+	{
+		return false;
+	}
+
+	const float Elapsed = static_cast<float>(RealNow - WobbleState.JitterStartRealTime);
+	float RemainingSeconds = WobbleState.JitterSeconds - Elapsed;
+	if (WobbleState.bFollowsHitStop)
+	{
+		const UTDCharacterAnimationComponent* Animation = Character.GetCharacterAnimation();
+		if (Animation && Animation->IsHitStopPending() && RemainingSeconds > 0.f)
+		{
+			Character.SetPresentationOffset(FVector::ZeroVector);
+			return true;
+		}
+		RemainingSeconds = Animation ? Animation->GetVictimHitStopRemainingSeconds() : 0.f;
+	}
+	if (RemainingSeconds <= 0.f)
+	{
+		WobbleState.JitterSeconds = 0.f;
+		return false;
+	}
+
+	const float JitterFrequencyHz = GetDefault<UTDCombatFeedbackSettings>()->HitStopJitterFrequencyHz;
+	const float Fraction = FMath::Clamp(RemainingSeconds / WobbleState.JitterSeconds, 0.f, 1.f);
+	const float SquareWave = FMath::Sin(static_cast<float>(UE_TWO_PI) * JitterFrequencyHz * Elapsed) >= 0.f ? 1.f : -1.f;
+	Character.SetPresentationOffset(WobbleState.Direction * (WobbleState.JitterAmplitude * Fraction * SquareWave));
+	return true;
 }
 
 void UTDCombatFeedbackSubsystem::ReleaseHitFlash(FTDHitFlashState& FlashState)
@@ -964,11 +1447,41 @@ FTDHitFlashState* UTDCombatFeedbackSubsystem::FindHitFlash(const ATDCombatCharac
 	});
 }
 
+UTDCombatFeedbackSubsystem::FTDWobbleState* UTDCombatFeedbackSubsystem::FindWobble(const ATDCombatCharacter& Character)
+{
+	return Wobbles.FindByPredicate([&Character](const FTDWobbleState& WobbleState)
+	{
+		return WobbleState.Character.Get() == &Character;
+	});
+}
+
 APlayerController* UTDCombatFeedbackSubsystem::FindLocalPlayerController() const
 {
 	const UWorld* CurrentWorld = GetWorld();
 	APlayerController* Controller = CurrentWorld ? CurrentWorld->GetFirstPlayerController() : nullptr;
 	return Controller && Controller->IsLocalController() ? Controller : nullptr;
+}
+
+FRotator UTDCombatFeedbackSubsystem::ComputeKickRotation(const APlayerController& Controller, const FVector& HitDirection, const float DamageRatio) const
+{
+	const FVector Direction = HitDirection.GetSafeNormal2D();
+	if (Direction.IsNearlyZero() || !Controller.PlayerCameraManager)
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	const float KickDegrees = TDHitCameraShakeMath::ComputeKickDegrees(DamageRatio, *GetDefault<UTDCombatFeedbackSettings>());
+	const FRotationMatrix CameraBasis(FRotator(0.f, Controller.PlayerCameraManager->GetCameraRotation().Yaw, 0.f));
+	const double ForwardAmount = Direction | CameraBasis.GetUnitAxis(EAxis::X);
+	const double RightAmount = Direction | CameraBasis.GetUnitAxis(EAxis::Y);
+	return FRotator(KickDegrees * ForwardAmount, KickDegrees * RightAmount, 0.);
+}
+
+float UTDCombatFeedbackSubsystem::ResolveCameraArmLength(const APlayerController* Controller) const
+{
+	const APawn* Pawn = Controller ? Controller->GetPawn() : nullptr;
+	const USpringArmComponent* CameraBoom = Pawn ? Pawn->FindComponentByClass<USpringArmComponent>() : nullptr;
+	return CameraBoom ? CameraBoom->TargetArmLength : GetDefault<UTDCombatFeedbackSettings>()->ReferenceCameraArmLengthCm;
 }
 
 FVector UTDCombatFeedbackSubsystem::ResolveHitLocation(const FTDDamageAppliedMessage& Message) const
@@ -1003,4 +1516,10 @@ double UTDCombatFeedbackSubsystem::GetFeedbackTime() const
 {
 	const UWorld* CurrentWorld = GetWorld();
 	return CurrentWorld ? CurrentWorld->GetTimeSeconds() : 0.;
+}
+
+double UTDCombatFeedbackSubsystem::GetFeedbackRealTime() const
+{
+	const UWorld* CurrentWorld = GetWorld();
+	return CurrentWorld ? CurrentWorld->GetRealTimeSeconds() : 0.;
 }

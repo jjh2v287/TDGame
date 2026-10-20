@@ -28,7 +28,7 @@ namespace TDFluidHeatTestPrivate
 	constexpr int32 RestingFragmentCount = 64;
 	constexpr double RestingFragmentRingRadiusCm = 150.0;
 	const FVector2D ExplosionBurstPlaneCenter(0.0, -180.0);
-	constexpr float StageSmokeBurstRadiusScale = 1.75f;
+	constexpr float StageSmokeBurstRadiusScale = 1.5625f;
 	constexpr double StageHitPointHeightCm = 15.0;
 	constexpr double StageActorHeightCm = 50.0;
 	constexpr double StageWindowCenterOffsetRatio = 0.45;

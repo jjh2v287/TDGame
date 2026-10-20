@@ -72,6 +72,7 @@ int shadowStepTotal = (int)shadowStepCount;
 
 float noiseTileScale = NoiseScale * 0.25;
 float noiseErosion = max(NoiseErosion, 0.0);
+bool usesNoiseSoftAbs = NoiseSoftAbsEpsilon > 0.0;
 float grainAmplitudeCm = noiseAmplitudeCm * max(NoiseGrain, 0.0);
 float grainScale = max(NoiseGrainScale, 1.0);
 float3x3 grainRotation = float3x3(0.00, 0.80, 0.60, -0.80, 0.36, -0.48, -0.60, -0.48, 0.64);
@@ -98,7 +99,8 @@ bool haloCapsuleReady = false;
 #define TD_DENSITY(P) Texture2DSampleLevel(DensityPressureTexture, DensityPressureTextureSampler, TD_UV(P), 0)
 #define TD_FLOW(P) (float3(Texture2DSampleLevel(VelocityTexture, VelocityTextureSampler, TD_UV(P), 0).rg * 2.0 - 1.0, 0.0) * (velocityReferenceCmPerSec * NoiseFlowSpeed))
 #define TD_NOISE_FETCH(P, OFFSET) Texture3DSampleLevel(NoiseVolumeTexture, NoiseVolumeTextureSampler, (((P) - (OFFSET)) + noiseDrift) * noiseTileScale, 0)
-#define TD_SHIFT_OF(S) (0.78 * (2.0 * abs(2.0 * (S).r - 1.0) - 0.6) + 0.22 * (2.0 * abs(2.0 * (S).b - 1.0) - 0.6) - noiseErosion * max(2.0 * (S).g - 1.0, 0.0))
+#define TD_NOISE_ABS(X) (usesNoiseSoftAbs ? sqrt((X) * (X) + NoiseSoftAbsEpsilon) - NoiseSoftAbsMeanShift : abs(X))
+#define TD_SHIFT_OF(S) (0.78 * (2.0 * TD_NOISE_ABS(2.0 * (S).r - 1.0) - 0.6) + 0.22 * (2.0 * TD_NOISE_ABS(2.0 * (S).b - 1.0) - 0.6) - noiseErosion * max(2.0 * (S).g - 1.0, 0.0))
 #define TD_NOISE_SHIFT(P) (noiseAmplitudeCm * lerp(TD_SHIFT_OF(TD_NOISE_FETCH(P, TD_FLOW(P) * (phaseSecond * flowCycleSeconds))), TD_SHIFT_OF(TD_NOISE_FETCH(P, TD_FLOW(P) * (phaseFirst * flowCycleSeconds))), weightFirst))
 #define TD_GRAIN_FETCH(P, OFFSET) Texture3DSampleLevel(NoiseVolumeTexture, NoiseVolumeTextureSampler, mul(grainRotation, (((P) - (OFFSET)) + noiseDrift) * (noiseTileScale * grainScale)), 0)
 #define TD_GRAIN_OF(S) (1.2 * ((S).b - 0.5) + 0.8 * ((S).a - 0.5))
@@ -376,6 +378,7 @@ return float4(combinedColor / max(combinedAlpha, 0.0001), combinedAlpha * distan
 #undef TD_GRAIN_OF
 #undef TD_GRAIN_FETCH
 #undef TD_SHIFT_OF
+#undef TD_NOISE_ABS
 #undef TD_NOISE_FETCH
 #undef TD_RAW_DEPTH
 #undef TD_TOP_MARGIN

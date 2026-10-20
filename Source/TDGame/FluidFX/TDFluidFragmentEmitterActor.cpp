@@ -1,6 +1,7 @@
 #include "FluidFX/TDFluidFragmentEmitterActor.h"
 #include "Actors/TDBreakableActor.h"
 #include "Components/SceneComponent.h"
+#include "FluidFX/TDFluidBandLimitedNoise.h"
 #include "FluidFX/TDFluidEmberComponent.h"
 #include "FluidFX/TDFluidFireActor.h"
 #include "FluidFX/TDFluidLiveActor.h"
@@ -16,6 +17,8 @@ namespace
 	constexpr float SmokeBurstRadiusScale = 1.5f;
 	constexpr float FireStampSpacingRatio = 0.5f;
 	constexpr float BurstRingStampRadiusRatio = 0.5f;
+	constexpr double BurstLobeFirstSectorStartDegrees = -90.0;
+	constexpr double BurstLobeAngleJitterRatio = 0.6;
 
 	struct FTDFragmentCandidate
 	{
@@ -40,6 +43,54 @@ namespace
 		if (TargetActor && TargetActor->LiveComponent)
 		{
 			TargetActor->LiveComponent->SetSimulationAwake(true);
+		}
+	}
+
+	uint32 MakeBurstLobeRandomState(const FVector& CenterWorld, int32 Seed)
+	{
+		uint32 Hash = static_cast<uint32>(Seed);
+		Hash = TDFluidDeterministic::CombineHash(Hash, static_cast<uint32>(FMath::RoundToInt32(CenterWorld.X)));
+		Hash = TDFluidDeterministic::CombineHash(Hash, static_cast<uint32>(FMath::RoundToInt32(CenterWorld.Y)));
+		Hash = TDFluidDeterministic::CombineHash(Hash, static_cast<uint32>(FMath::RoundToInt32(CenterWorld.Z)));
+		return TDFluidDeterministic::MakeNonZeroState(static_cast<int32>(Hash));
+	}
+
+	void AppendFireBurstLobeStamps(
+		const FVector& CenterWorld,
+		const FTDFluidPlaneBasis& PlaneBasis,
+		const FTDFluidFragmentTrailSettings& Settings,
+		float CoreRadiusCm,
+		float DensityStrength,
+		float HeatStrength,
+		TArray<FTDFluidBrushStamp>& OutStamps)
+	{
+		const int32 LobeCount = FMath::Max(Settings.BurstLobeCount, 0);
+		if (LobeCount == 0)
+		{
+			return;
+		}
+
+		uint32 RandomState = MakeBurstLobeRandomState(CenterWorld, Settings.BurstLobeSeed);
+		const double SectorDegrees = 360.0 / static_cast<double>(LobeCount);
+		for (int32 LobeIndex = 0; LobeIndex < LobeCount; ++LobeIndex)
+		{
+			const float AngleDraw = TDFluidDeterministic::NextUnitFloat(RandomState);
+			const float CenterDraw = TDFluidDeterministic::NextUnitFloat(RandomState);
+			const float RadiusDraw = TDFluidDeterministic::NextUnitFloat(RandomState);
+			const float SpeedDraw = TDFluidDeterministic::NextUnitFloat(RandomState);
+			const double SectorPosition = 0.5 + BurstLobeAngleJitterRatio * (static_cast<double>(AngleDraw) - 0.5);
+			const double AngleRadians = FMath::DegreesToRadians(BurstLobeFirstSectorStartDegrees + SectorDegrees * (static_cast<double>(LobeIndex) + SectorPosition));
+			const FVector Outward = PlaneBasis.U * FMath::Cos(AngleRadians) + PlaneBasis.V * FMath::Sin(AngleRadians);
+			const float CenterDistanceCm = FMath::Lerp(Settings.BurstLobeCenterRatioMin, Settings.BurstLobeCenterRatioMax, CenterDraw) * CoreRadiusCm;
+			const float LobeRadiusCm = FMath::Lerp(Settings.BurstLobeRadiusRatioMin, Settings.BurstLobeRadiusRatioMax, RadiusDraw) * CoreRadiusCm;
+			const float LobeSpeedCmPerSec = FMath::Lerp(Settings.BurstLobeSpeedMinCmPerSec, Settings.BurstLobeSpeedMaxCmPerSec, SpeedDraw);
+			FTDFluidBrushStamp& LobeStamp = OutStamps.Add_GetRef(MakeTrailStamp(
+				CenterWorld + Outward * CenterDistanceCm,
+				Outward * LobeSpeedCmPerSec,
+				LobeRadiusCm,
+				DensityStrength,
+				ETDFluidBrushChannel::ChannelB_Fire));
+			LobeStamp.HeatStrength = HeatStrength;
 		}
 	}
 }
@@ -661,5 +712,10 @@ void ATDFluidFragmentEmitterActor::BuildBurstStamps(
 			DensityStrength,
 			Channel));
 		RingStamp.HeatStrength = HeatStrength;
+	}
+
+	if (Channel == ETDFluidBrushChannel::ChannelB_Fire)
+	{
+		AppendFireBurstLobeStamps(CenterWorld, PlaneBasis, Settings, Settings.BurstCoreRadiusCm * RadiusScale, DensityStrength, HeatStrength, OutStamps);
 	}
 }

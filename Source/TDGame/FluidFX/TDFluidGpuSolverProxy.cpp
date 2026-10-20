@@ -5,7 +5,7 @@
 
 namespace
 {
-	constexpr double FallbackExtentCm = 4000.0;
+	constexpr double ProxyFallbackExtentCm = 4000.0;
 	constexpr double MinimumExtentCm = 100.0;
 	constexpr int32 MaximumRecentSubmissionCount = 8;
 
@@ -24,7 +24,7 @@ namespace
 	{
 		if (!FMath::IsFinite(ExtentAxisCm))
 		{
-			return FallbackExtentCm;
+			return ProxyFallbackExtentCm;
 		}
 		return FMath::Max(ExtentAxisCm, MinimumExtentCm);
 	}

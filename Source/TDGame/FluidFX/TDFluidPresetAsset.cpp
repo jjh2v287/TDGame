@@ -466,7 +466,7 @@ FTDFluidFragmentTrailSettings UTDFluidPresetAsset::BuildFragmentTrailForPresetKi
 		return Trail;
 	}
 
-	Trail.BurstCoreRadiusCm = 200.0f;
+	Trail.BurstCoreRadiusCm = 224.0f;
 	Trail.BurstRingRadiusCm = 90.0f;
 	Trail.BurstRingStampCount = 0;
 	Trail.BurstRingSpeedCmPerSec = 450.0f;
@@ -503,6 +503,7 @@ FTDFluidVolumeRenderSettings UTDFluidPresetAsset::BuildVolumeRenderForPresetKind
 		VolumeRender.SoftFalloffCm = 40.0f;
 		VolumeRender.HeatEmissionIntensity = 6.0f;
 		VolumeRender.HeatEmissionColor = FLinearColor(1.0f, 0.06f, 0.01f, 1.0f);
+		VolumeRender.HeatEmissionExponent = 3.0f;
 		break;
 	case ETDFluidPresetKind::ExplosionGroundDust:
 		VolumeRender.bEnableTransmittance = true;

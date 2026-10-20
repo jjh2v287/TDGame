@@ -453,8 +453,10 @@ bool FTDFluidFireFamilyPresetTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Campfire smoke uses transmittance"), UTDFluidPresetAsset::BuildVolumeRenderForPresetKind(ETDFluidPresetKind::CampfireSmoke).bEnableTransmittance);
 	TestEqual(TEXT("Explosion resting fragments add density"), UTDFluidPresetAsset::BuildFragmentTrailForPresetKind(ETDFluidPresetKind::Explosion).RestingDensityStrength, 0.4f);
 	TestEqual(TEXT("Explosion burst has no ring stamps"), UTDFluidPresetAsset::BuildFragmentTrailForPresetKind(ETDFluidPresetKind::Explosion).BurstRingStampCount, 0);
-	TestEqual(TEXT("Explosion burst core radius is 200 cm"), UTDFluidPresetAsset::BuildFragmentTrailForPresetKind(ETDFluidPresetKind::Explosion).BurstCoreRadiusCm, 200.0f);
+	TestEqual(TEXT("Explosion burst core radius is 224 cm"), UTDFluidPresetAsset::BuildFragmentTrailForPresetKind(ETDFluidPresetKind::Explosion).BurstCoreRadiusCm, 224.0f);
 	TestEqual(TEXT("Explosion smoke heat glows deep red"), UTDFluidPresetAsset::BuildVolumeRenderForPresetKind(ETDFluidPresetKind::ExplosionSmoke).HeatEmissionColor, FLinearColor(1.0f, 0.06f, 0.01f, 1.0f));
+	TestEqual(TEXT("Explosion burst has no lobes"), UTDFluidPresetAsset::BuildFragmentTrailForPresetKind(ETDFluidPresetKind::Explosion).BurstLobeCount, 0);
+	TestEqual(TEXT("Explosion smoke heat emission falls off with exponent 3"), UTDFluidPresetAsset::BuildVolumeRenderForPresetKind(ETDFluidPresetKind::ExplosionSmoke).HeatEmissionExponent, 3.0f);
 	TestEqual(TEXT("Flame cards keep one scale per layer"), FTDFluidFlameCardLayerSettings().CardScaleStep, 1.0f);
 
 	const ETDFluidPresetKind OlderKinds[] = {

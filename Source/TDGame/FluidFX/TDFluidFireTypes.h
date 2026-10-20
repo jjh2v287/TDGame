@@ -161,6 +161,30 @@ struct TDGAME_API FTDFluidFragmentTrailSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
 	float BurstSustainSeconds = 0.35f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0", ClampMax = "12"))
+	int32 BurstLobeCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
+	float BurstLobeCenterRatioMin = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
+	float BurstLobeCenterRatioMax = 0.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.05"))
+	float BurstLobeRadiusRatioMin = 0.3f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.05"))
+	float BurstLobeRadiusRatioMax = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
+	float BurstLobeSpeedMinCmPerSec = 150.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
+	float BurstLobeSpeedMaxCmPerSec = 300.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
+	int32 BurstLobeSeed = 0;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0", ClampMax = "512"))
 	int32 EmberBurstCount = 80;
 

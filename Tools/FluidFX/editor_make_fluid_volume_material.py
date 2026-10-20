@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FX-8a 공용 3D 노이즈 볼륨 텍스처 T_TD_FluidNoiseVolume(Saved/FluidFX/fire_textures/T_TD_FluidNoiseAtlas.png 64³ 아틀라스)과 볼륨 레이마칭 마스터 재질 M_TD_FluidVolume(TDFluidVolumeRaymarch.hlsl)·가짜 볼륨 마스터 M_TD_FluidFakeVolume(TDFluidFakeVolume.hlsl) 및 인스턴스를 만든다.
 실행 명령: python Tools/FluidFX/make_fluid_fire_textures.py 다음 python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_volume_material.py (불꽃 재질 스크립트보다 먼저)
-출력: /Game/FluidFX/Textures/T_TD_FluidNoiseAtlas·T_TD_FluidNoiseVolume, /Game/FluidFX/Materials/M_TD_FluidVolume, MI_TD_FluidVolume_SmokeHard·SmokeSoft·SmokeSlab·SmokeBillow·GroundDust, M_TD_FluidFakeVolume, MI_TD_FluidFakeVolume_PurplePlasma·GrayFluff·BlueSmoke·RedSmoke·FloorPulse·PlasmaSphere·SmokeChamber, Saved/FluidFX/fluid_volume_material.json
-상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 볼륨 입력 73/73·PS 917 명령, 가짜 볼륨 38/38). FX-8c 3차(2026-10-20) 볼륨 입력 76개(HeatEmissionSurfaceScale·AmbientSideFloor·AmbientCreviceFloor, 기본값은 옛 출력과 같음)·디더 View.StateFrameIndexMod8 과 FX-8c 4차 G1(2026-10-20) 볼륨 입력 77개·가짜 볼륨 입력 39개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(볼륨 77/77 연결·PS 931 명령·표본기 6, 가짜 볼륨 39/39·PS 292 명령, 인스턴스 11개). FX-8c 5차 굽기(2026-10-20: SmokeBillow 에 HeatEmissionSurfaceScale 1, 새 MI_TD_FluidVolume_GroundDust 는 SmokeBillow 색과 HeatEmissionSurfaceScale 를 뺀 스칼라에 RenderMode 2)는 에디터 재실행 전. 기존 에셋은 Saved/FluidFX/fluid_volume_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(노이즈 텍스처도 다시 가져옴), 미저장 작업이 있으면 중단한다.
+출력: /Game/FluidFX/Textures/T_TD_FluidNoiseAtlas·T_TD_FluidNoiseVolume, /Game/FluidFX/Materials/M_TD_FluidVolume, MI_TD_FluidVolume_SmokeHard·SmokeSoft·SmokeSlab·SmokeBillow·GroundDust·ExplosionBillow, M_TD_FluidFakeVolume, MI_TD_FluidFakeVolume_PurplePlasma·GrayFluff·BlueSmoke·RedSmoke·FloorPulse·PlasmaSphere·SmokeChamber, Saved/FluidFX/fluid_volume_material.json
+상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 볼륨 입력 73/73·PS 917 명령, 가짜 볼륨 38/38). FX-8c 3차(2026-10-20) 볼륨 입력 76개(HeatEmissionSurfaceScale·AmbientSideFloor·AmbientCreviceFloor, 기본값은 옛 출력과 같음)·디더 View.StateFrameIndexMod8 과 FX-8c 4차 G1(2026-10-20) 볼륨 입력 77개·가짜 볼륨 입력 39개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(볼륨 77/77 연결·PS 931 명령·표본기 6, 가짜 볼륨 39/39·PS 292 명령, 인스턴스 11개). FX-8c 5차 굽기(2026-10-20: SmokeBillow 에 HeatEmissionSurfaceScale 1, 새 MI_TD_FluidVolume_GroundDust 는 SmokeBillow 색과 HeatEmissionSurfaceScale 를 뺀 스칼라에 RenderMode 2)는 6차 에디터 재실행(볼륨 77/77·PS 931 명령·인스턴스 12개)에서 반영. FX-8c 7차(2026-10-20) 볼륨 입력 79개(연기 노이즈 부드러운 절댓값 NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift, 기본 0 = 옛 abs 경로와 dxc 본문 동일, 인스턴스 값은 그대로)는 2026-10-20 16:14 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 12개). FX-8c 8차(2026-10-20) 폭발 연기 전용 MI_TD_FluidVolume_ExplosionBillow(SmokeBillow 값에 NoiseSoftAbsEpsilon 0.04·NoiseSoftAbsMeanShift 0.08456, SmokeBillow 은 0/0 그대로)는 2026-10-20 17:22 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 13개, 다시 읽기 ExplosionBillow ε 0.04·δ 0.08456, SmokeBillow 0/0). 기존 에셋은 Saved/FluidFX/fluid_volume_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(노이즈 텍스처도 다시 가져옴), 미저장 작업이 있으면 중단한다.
 """
 import hashlib
 import json
@@ -64,6 +64,8 @@ FX8C_VOLUME_SCALAR_DEFAULTS = (
     ("HeatEmissionSurfaceScale", 0.0),
     ("AmbientSideFloor", 0.35),
     ("AmbientCreviceFloor", 0.0),
+    ("NoiseSoftAbsEpsilon", 0.0),
+    ("NoiseSoftAbsMeanShift", 0.0),
 )
 
 VOLUME_MASTER = {
@@ -263,6 +265,12 @@ INSTANCE_SPECS = (
         "master": VOLUME_MASTER["name"],
         "vectors": {"SmokeColor": SLAB_SMOKE_COLOR, "ShadowColor": SLAB_SHADOW_COLOR, "AmbientColor": BILLOW_AMBIENT_COLOR, "ExtinctionTint": (1.0, 1.15, 1.35)},
         "scalars": {"RenderMode": 1.0, "ExtrudeSymmetric": 1.0, "DensityScale": 0.04, "NoiseStrength": 0.8, "NoiseScale": 0.012, "NoiseErosion": 0.3, "SurfaceSoftnessCm": 24.0, "HeatEmissionSurfaceScale": 1.0},
+    },
+    {
+        "name": "MI_TD_FluidVolume_ExplosionBillow",
+        "master": VOLUME_MASTER["name"],
+        "vectors": {"SmokeColor": SLAB_SMOKE_COLOR, "ShadowColor": SLAB_SHADOW_COLOR, "AmbientColor": BILLOW_AMBIENT_COLOR, "ExtinctionTint": (1.0, 1.15, 1.35)},
+        "scalars": {"RenderMode": 1.0, "ExtrudeSymmetric": 1.0, "DensityScale": 0.04, "NoiseStrength": 0.8, "NoiseScale": 0.012, "NoiseErosion": 0.3, "SurfaceSoftnessCm": 24.0, "HeatEmissionSurfaceScale": 1.0, "NoiseSoftAbsEpsilon": 0.04, "NoiseSoftAbsMeanShift": 0.08456},
     },
     {
         "name": "MI_TD_FluidVolume_GroundDust",

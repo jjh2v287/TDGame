@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 와 Windows Kits dxc.exe(ps_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_fire_hlsl.py [--root 프로젝트경로] [--dxc dxc경로]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(셰이더별 정적 표본 명령 수 포함), 하나라도 실패하면 종료 코드 1
-상태: 검증됨(2026-10-19 19/19 통과, 음성 대조 2건 검출. 2026-10-20 FX-8b 21/21, 투과율 상수 3곳 대조 추가. 2026-10-20 FX-8c 3차 22/22: View.StateFrameIndexMod8 스텁·볼륨 디더 회귀 검사·볼륨 표본 36. 2026-10-20 FX-8c 4차 G1 24/24: 불꽃·볼륨·가짜 볼륨의 위치 투영(화소·카메라·광원)은 PlaneCoordinateOffsetCm 을 더하고 방향 투영(광원 방향·월드 위)은 더하지 않는지 보는 규칙과 음성 대조 3건. 2026-10-20 FX-8c 5차 26/26: 불꽃 색 램프 끔 경로 정적 검사(흑체 색도·밝기·덮임·방출 줄 보호, 보호 변수 대입은 FlameColorRampMode 분기 안 chromaColor 만, 마스터 기본 0)와 음성 대조 10건). 불·연기 셰이더 5개(TDFluidFlameCard·Ember·CharredWood·VolumeRaymarch·FakeVolume.hlsl)를 재질 스크립트의 입력 목록으로 언리얼 Custom 노드 함수 형태로 감싸 컴파일·정적 검사한다. 에디터 화면 확인은 별도(FX-8a 룩데브).
+상태: 검증됨(2026-10-19 19/19 통과, 음성 대조 2건 검출. 2026-10-20 FX-8b 21/21, 투과율 상수 3곳 대조 추가. 2026-10-20 FX-8c 3차 22/22: View.StateFrameIndexMod8 스텁·볼륨 디더 회귀 검사·볼륨 표본 36. 2026-10-20 FX-8c 4차 G1 24/24: 불꽃·볼륨·가짜 볼륨의 위치 투영(화소·카메라·광원)은 PlaneCoordinateOffsetCm 을 더하고 방향 투영(광원 방향·월드 위)은 더하지 않는지 보는 규칙과 음성 대조 3건. 2026-10-20 FX-8c 5차 26/26: 불꽃 색 램프 끔 경로 정적 검사(흑체 색도·밝기·덮임·방출 줄 보호, 보호 변수 대입은 FlameColorRampMode 분기 안 chromaColor 만, 마스터 기본 0)와 음성 대조 10건. 2026-10-20 FX-8c 7차 30/30: 볼륨 노이즈 부드러운 절댓값 계약(NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift 기본 0, 인스턴스는 둘을 함께, TD_SHIFT_OF 두 항 모두 TD_NOISE_ABS), dxc -O3 자체 점검(엡실론 호출 인수 0 으로 접은 본문 = TD_NOISE_ABS 를 abs 로 바꾼 기준 본문, 0.04 는 다름)과 음성 대조 6건, --root 변형 사본 4개 중 4개 검출). 불·연기 셰이더 5개(TDFluidFlameCard·Ember·CharredWood·VolumeRaymarch·FakeVolume.hlsl)를 재질 스크립트의 입력 목록으로 언리얼 Custom 노드 함수 형태로 감싸 컴파일·정적 검사한다. 에디터 화면 확인은 별도(FX-8a 룩데브).
 """
 import argparse
 import glob
@@ -70,6 +70,15 @@ SOLVER_PLANE_MUTATIONS = (
     ("volume", "TD_TO_SOLVER_PLANE(VolumeLightPosition)", "TD_TO_PLANE(VolumeLightPosition)"),
     ("volume", "TD_TO_PLANE(VolumeLightDirection)", "TD_TO_SOLVER_PLANE(VolumeLightDirection)"),
     ("flame", ") + PlaneCoordinateOffsetCm.xy;", ");"),
+)
+SOFT_ABS_DEFAULTS = (("NoiseSoftAbsEpsilon", 0.0), ("NoiseSoftAbsMeanShift", 0.0))
+SOFT_ABS_DEFINE_PREFIX = "#define TD_NOISE_ABS(X) "
+SOFT_ABS_SHIFT_PREFIX = "#define TD_SHIFT_OF(S) "
+SOFT_ABS_REFERENCE_DEFINE = "#define TD_NOISE_ABS(X) abs(X)"
+SOFT_ABS_CALL_PATTERN = re.compile(r"^(return CustomExpression0\(.*)\bInput_NoiseSoftAbsEpsilon\b", re.MULTILINE)
+SOFT_ABS_DXC_MUTATIONS = (
+    ("켬 조건 >=", "NoiseSoftAbsEpsilon > 0.0", "NoiseSoftAbsEpsilon >= 0.0"),
+    ("끔 경로 abs → sqrt(X²)", ": abs(X))", ": sqrt((X) * (X)))"),
 )
 
 
@@ -185,11 +194,14 @@ def compile_source(dxc, source, label, optimize, work_folder):
     completed = subprocess.run(command, capture_output=True, text=True)
     text = disassembly.read_text(encoding="utf-8", errors="replace") if disassembly.exists() else ""
     first_error = next((line for line in (completed.stderr + completed.stdout).splitlines() if "error" in line), "")
+    body_start = text.find("define void @main()")
+    body_end = text.find("\n}\n", body_start)
     return {
         "exit": completed.returncode,
         "samples": len(SAMPLE_PATTERN.findall(text)),
         "warnings": completed.stderr.count("warning:"),
         "error": first_error,
+        "body": text[body_start:body_end] if 0 <= body_start < body_end else "",
     }
 
 
@@ -291,6 +303,53 @@ def find_undetected_ramp_mutations(code):
     return [name for name, original, mutated in RAMP_MUTATIONS if original not in code or not find_ramp_guard_problems(code.replace(original, mutated, 1))]
 
 
+def find_soft_abs_contract_problems(scalars, inputs, instances, code):
+    problems = []
+    shift_lines = [line for line in code.split("\n") if line.startswith(SOFT_ABS_SHIFT_PREFIX)]
+    if len(shift_lines) != 1 or shift_lines[0].count("TD_NOISE_ABS(") != 2 or re.search(r"\babs\(", shift_lines[0]):
+        problems.append("TD_SHIFT_OF 의 r·b 두 항이 모두 TD_NOISE_ABS 를 거치지 않음")
+    for name, expected in SOFT_ABS_DEFAULTS:
+        if name not in inputs:
+            problems.append(f"볼륨 입력에 {name} 없음")
+        if scalars.get(name) != expected:
+            problems.append(f"마스터 {name} 기본값 {scalars.get(name)}(기대 {expected})")
+    for instance in instances:
+        overrides = instance["scalars"]
+        if (overrides.get("NoiseSoftAbsEpsilon", 0.0) > 0.0) != (overrides.get("NoiseSoftAbsMeanShift", 0.0) > 0.0):
+            problems.append(f"{instance['name']}: NoiseSoftAbsEpsilon 과 NoiseSoftAbsMeanShift 는 함께 양수로 둔다")
+    return problems
+
+
+def find_undetected_soft_abs_contract_mutations(scalars, inputs, instances, code):
+    raw_abs_code = code.replace("2.0 * TD_NOISE_ABS(2.0 * (S).b - 1.0)", "2.0 * abs(2.0 * (S).b - 1.0)", 1)
+    mutations = (
+        ("마스터 엡실론 기본 0.04", dict(scalars, NoiseSoftAbsEpsilon=0.04), inputs, instances, code),
+        ("평균 변위 입력 누락", scalars, tuple(name for name in inputs if name != "NoiseSoftAbsMeanShift"), instances, code),
+        ("인스턴스가 엡실론만 덮어씀", scalars, inputs, list(instances) + [{"name": "synthetic", "scalars": {"NoiseSoftAbsEpsilon": 0.04}}], code),
+        ("TD_SHIFT_OF b 항이 abs 직접 사용", scalars, inputs, instances, raw_abs_code),
+    )
+    return [label for label, *arguments in mutations if not find_soft_abs_contract_problems(*arguments)]
+
+
+def soft_abs_reference_code(code):
+    lines = code.split("\n")
+    matches = [index for index, line in enumerate(lines) if line.startswith(SOFT_ABS_DEFINE_PREFIX)]
+    if len(matches) != 1:
+        return ""
+    lines[matches[0]] = SOFT_ABS_REFERENCE_DEFINE
+    return "\n".join(lines)
+
+
+def compile_folded_body(dxc, node, code, epsilon, label, work_folder):
+    if not code:
+        return ""
+    folded, count = SOFT_ABS_CALL_PATTERN.subn(rf"\g<1>{epsilon}", build_source(node, code, VOLUME_TEXTURE_NAMES))
+    if count != 1:
+        return ""
+    outcome = compile_source(dxc, folded, label, True, work_folder)
+    return outcome["body"] if outcome["exit"] == 0 else ""
+
+
 def read_transmittance_constants(root):
     constants = {}
     for relative, patterns in TRANSMITTANCE_CONSTANT_SOURCES:
@@ -359,6 +418,12 @@ def main():
         "볼륨 디더 프레임 = View.StateFrameIndexMod8(게임 시간 디더 없음)",
         "View.StateFrameIndexMod8" in volume_code and "ElapsedSeconds * 60.0" not in volume_code,
     )
+    volume_scalars = dict(volume.VOLUME_MASTER["scalars"])
+    volume_instances = [spec for spec in volume.INSTANCE_SPECS if spec["master"] == volume.VOLUME_MASTER["name"]]
+    soft_abs_problems = find_soft_abs_contract_problems(volume_scalars, volume.VOLUME_MASTER["inputs"], volume_instances, volume_code)
+    record("볼륨 노이즈 부드러운 절댓값 계약(NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift 등록, 마스터 기본 0, 인스턴스는 둘을 함께 양수로, TD_SHIFT_OF 두 항 모두 TD_NOISE_ABS)", not soft_abs_problems, "; ".join(soft_abs_problems))
+    undetected_soft_abs = find_undetected_soft_abs_contract_mutations(volume_scalars, volume.VOLUME_MASTER["inputs"], volume_instances, volume_code)
+    record("음성 대조: 부드러운 절댓값 계약 변형 4건(엡실론 기본 0.04·평균 변위 입력 누락·엡실론만 덮어씀·b 항 abs 직접 사용)을 잡음", not undetected_soft_abs, ", ".join(undetected_soft_abs))
 
     solver_plane_problems = []
     for label in SOLVER_PLANE_SHADER_LABELS:
@@ -409,6 +474,22 @@ def main():
             sample_counts.get("volume") == VOLUME_SAMPLE_BUDGET,
             f"{sample_counts.get('volume')}",
         )
+        volume_node = next(node for node in nodes if node["label"] == "volume")
+        reference_body = compile_folded_body(dxc, volume_node, soft_abs_reference_code(volume_code), "0.0", "soft_abs_reference", work_folder)
+        default_body = compile_folded_body(dxc, volume_node, volume_code, "0.0", "soft_abs_default", work_folder)
+        soft_body = compile_folded_body(dxc, volume_node, volume_code, "0.04", "soft_abs_on", work_folder)
+        record(
+            "볼륨 NoiseSoftAbsEpsilon 호출 인수를 0 으로 접은 dxc -O3 본문 = TD_NOISE_ABS 를 abs 로 바꾼 기준 본문(바이트 동일), 0.04 로 접으면 다름",
+            bool(reference_body) and default_body == reference_body and bool(soft_body) and soft_body != reference_body,
+            f"기준 {len(reference_body)}자, 0 {len(default_body)}자, 0.04 {len(soft_body)}자",
+        )
+        undetected_soft_abs_mutations = [
+            label
+            for index, (label, original, mutated) in enumerate(SOFT_ABS_DXC_MUTATIONS)
+            if original not in volume_code
+            or compile_folded_body(dxc, volume_node, volume_code.replace(original, mutated, 1), "0.0", f"soft_abs_mutant_{index}", work_folder) in ("", reference_body)
+        ]
+        record(f"음성 대조: 부드러운 절댓값 끔 경로 변형 {len(SOFT_ABS_DXC_MUTATIONS)}건(켬 조건 >=·끔 경로 sqrt(X²))은 0 본문이 기준과 달라 잡힘", not undetected_soft_abs_mutations, ", ".join(undetected_soft_abs_mutations))
         flame_node = next(node for node in nodes if node["label"] == "flame")
         control = compile_source(dxc, build_source(flame_node, codes["flame"], set()), "control_texture2d", False, work_folder)
         record("음성 대조: 노이즈를 Texture2D 로 선언하면 컴파일 실패", control["exit"] != 0, control["error"][:160])

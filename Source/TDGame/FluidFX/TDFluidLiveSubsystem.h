@@ -10,6 +10,9 @@
 #include "TDFluidLiveSubsystem.generated.h"
 
 class ATDFluidLiveActor;
+class ATDFluidRiverActor;
+class FTDFluidGpuSolverRenderState;
+class ULevel;
 class UMaterialInstanceDynamic;
 class UTDFluidPresetAsset;
 struct FTDActorDeathMessage;
@@ -25,7 +28,7 @@ public:
 	virtual void Deinitialize() override;
 
 	virtual void Tick(float DeltaTime) override;
-	virtual bool IsTickable() const override { return !RegisteredActors.IsEmpty(); }
+	virtual bool IsTickable() const override { return !RegisteredActors.IsEmpty() || !PendingReleasedGpuActorKeys.IsEmpty(); }
 	virtual bool IsTickableInEditor() const override { return false; }
 	virtual TStatId GetStatId() const override;
 
@@ -88,8 +91,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	int32 BindLandscapeMaterialViaTag(FName LiveActorTag, UMaterialInstanceDynamic* LandscapeMID);
 
+	void RegisterFlowGuideSource(ATDFluidRiverActor* River);
+	void UnregisterFlowGuideSource(ATDFluidRiverActor* River);
+	void CollectFlowGuidesInBounds(const FBox2D& BoundsXY, TArray<FTDFluidFlowGuide>& OutGuides) const;
+	void NotifyWaterSurfacesChanged();
+	int32 GetWaterRegistryVersion() const { return WaterRegistryVersion; }
+
 	int32 GetActiveActorCount() const;
 	int32 GetPooledInactiveActorCount() const;
+
+	uint64 AllocateGpuSolverActorKey();
+	void ReleaseGpuSolverActorKey(uint64 ActorKey);
+	uint32 GetLastGpuSolverFrameNumber() const { return LastGpuSolverFrameNumber; }
 
 	FRotator GetPlaneViewRotation() const;
 	void SetPlaneViewRotationOverrideForTests(const FRotator& ViewRotation);
@@ -118,9 +131,21 @@ private:
 		bool bHasKiller = false;
 	};
 
+	struct FRegisteredFlowGuide
+	{
+		TWeakObjectPtr<ATDFluidRiverActor> River;
+		FTDFluidFlowGuide Guide;
+		FBox2D BoundsXY = FBox2D(ForceInit);
+	};
+
+	void HandleLevelAddedOrRemoved(ULevel* ChangedLevel, UWorld* ChangedWorld);
+
 	void StepFluidWorld(float DeltaTime);
 	void RefreshPlaneViewRotation();
 	static void RunSolverSteps(TConstArrayView<ATDFluidLiveActor*> SolvingActors, float DeltaTime);
+	void SubmitGpuSolverSteps(TConstArrayView<ATDFluidLiveActor*> GpuSolvingActors);
+	void DistributeGpuSolverReadback();
+	void ReleaseGpuSolverRenderState();
 	void RecordTickCost(float DeltaTime, double TickSeconds);
 	void LogTickCostWindow() const;
 	void ResetTickCostWindow();
@@ -144,6 +169,15 @@ private:
 	FGameplayMessageListenerHandle ActorDeathListenerHandle;
 	TMap<FObjectKey, FQueuedCombatDamage> QueuedDamageByTarget;
 	TMap<FObjectKey, FQueuedCombatDeath> QueuedDeathByActor;
+	TArray<FRegisteredFlowGuide> RegisteredFlowGuides;
+	FDelegateHandle LevelAddedHandle;
+	FDelegateHandle LevelRemovedHandle;
+	int32 WaterRegistryVersion = 0;
+
+	TSharedPtr<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe> GpuSolverRenderState;
+	TArray<uint64> PendingReleasedGpuActorKeys;
+	uint64 LastGpuSolverActorKey = 0;
+	uint32 LastGpuSolverFrameNumber = 0;
 
 	FRotator CachedPlaneViewRotation = FRotator(-60.0, 0.0, 0.0);
 	TOptional<FRotator> PlaneViewRotationOverride;

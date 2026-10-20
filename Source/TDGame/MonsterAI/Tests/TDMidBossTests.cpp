@@ -18,7 +18,7 @@
 
 namespace TDMidBossTests
 {
-	constexpr float StepSeconds = 1.f / 64.f;
+	constexpr float MidBossStepSeconds = 1.f / 64.f;
 	constexpr float FloorHalfThickness = 50.f;
 	constexpr float BodyHeight = 95.f;
 	constexpr float TargetMaxHealth = 5000.f;
@@ -35,7 +35,7 @@ namespace TDMidBossTests
 
 	int32 SecondsToSteps(const float Seconds)
 	{
-		return FMath::Max(1, FMath::RoundToInt(Seconds / StepSeconds));
+		return FMath::Max(1, FMath::RoundToInt(Seconds / MidBossStepSeconds));
 	}
 
 	struct FMidBossWorld
@@ -112,7 +112,7 @@ namespace TDMidBossTests
 		{
 			FlushAsyncLoading();
 			++GFrameCounter;
-			World->Tick(LEVELTICK_All, StepSeconds);
+			World->Tick(LEVELTICK_All, MidBossStepSeconds);
 		}
 
 		void Tick(const float Duration)
@@ -283,7 +283,7 @@ namespace TDMidBossTests
 			CurrentSteps = Predicate(Sample) ? CurrentSteps + 1 : 0;
 			LongestSteps = FMath::Max(LongestSteps, CurrentSteps);
 		}
-		return LongestSteps * StepSeconds;
+		return LongestSteps * MidBossStepSeconds;
 	}
 
 	int32 FindFirstSampleIndex(const TArray<FBossSample>& Samples, const int32 StartIndex, TFunctionRef<bool(const FBossSample&)> Predicate)
@@ -334,7 +334,7 @@ namespace TDMidBossTests
 			Fixture.Step();
 			if (Boss->GetMoverComponent()->IsFlying() && Boss->GetActorLocation().Z - GroundZ >= AirborneAltitudeCm)
 			{
-				OutSeconds = (StepIndex + 1) * StepSeconds;
+				OutSeconds = (StepIndex + 1) * MidBossStepSeconds;
 				return true;
 			}
 		}
@@ -554,7 +554,7 @@ bool FTDMidBossCentaurBreakTest::RunTest(const FString& Parameters)
 			}
 			Fixture.Step();
 			KillOtherMonsters(*Fixture.World, Centaur, Target);
-			Samples.Add(SampleBoss(Fixture, Centaur, Target, Tracker, StepIndex * StepSeconds));
+			Samples.Add(SampleBoss(Fixture, Centaur, Target, Tracker, StepIndex * MidBossStepSeconds));
 			bHasStunned |= IsStunnedState(Samples.Last().State);
 		}
 		LongestStunSeconds[RunIndex] = FindLongestRunSeconds(Samples, [](const FBossSample& Sample) { return IsStunnedState(Sample.State); });
@@ -615,10 +615,10 @@ bool FTDMidBossCentaurChargeTest::RunTest(const FString& Parameters)
 		{
 			Fixture.Step();
 			KillOtherMonsters(*Fixture.World, Centaur, Target);
-			Samples.Add(SampleBoss(Fixture, Centaur, Target, Tracker, StepIndex * StepSeconds));
+			Samples.Add(SampleBoss(Fixture, Centaur, Target, Tracker, StepIndex * MidBossStepSeconds));
 			const FVector Location = Centaur->GetActorLocation();
 			FarthestX[RunIndex] = FMath::Max(FarthestX[RunIndex], Location.X);
-			FastestSpeed[RunIndex] = FMath::Max(FastestSpeed[RunIndex], FVector::Dist2D(Location, PreviousLocation) / StepSeconds);
+			FastestSpeed[RunIndex] = FMath::Max(FastestSpeed[RunIndex], FVector::Dist2D(Location, PreviousLocation) / MidBossStepSeconds);
 			PreviousLocation = Location;
 		}
 		LongestStunSeconds[RunIndex] = FindLongestRunSeconds(Samples, [](const FBossSample& Sample) { return IsStunnedState(Sample.State); });
@@ -654,7 +654,7 @@ bool FTDMidBossGriffonGroundTest::RunTest(const FString& Parameters)
 	for (int32 StepIndex = 0; StepIndex < SecondsToSteps(8.f); ++StepIndex)
 	{
 		Fixture.Step();
-		const FBossSample Sample = SampleBoss(Fixture, Griffon, Target, Tracker, StepIndex * StepSeconds);
+		const FBossSample Sample = SampleBoss(Fixture, Griffon, Target, Tracker, StepIndex * MidBossStepSeconds);
 		AttackDefinitions.Append(Sample.NewEntities);
 		HighestAltitude = FMath::Max(HighestAltitude, Sample.Location.Z - GroundZ);
 		bEverFlew |= Sample.bIsFlying;
@@ -694,7 +694,7 @@ bool FTDMidBossGriffonAirRaidTest::RunTest(const FString& Parameters)
 	for (int32 StepIndex = 0; StepIndex < SecondsToSteps(26.f); ++StepIndex)
 	{
 		Fixture.Step();
-		Samples.Add(SampleBoss(Fixture, Griffon, Target, Tracker, StepIndex * StepSeconds));
+		Samples.Add(SampleBoss(Fixture, Griffon, Target, Tracker, StepIndex * MidBossStepSeconds));
 	}
 	const int32 TouchdownIndex = FindFirstSampleIndex(Samples, 0, [GroundZ](const FBossSample& Sample) { return !Sample.bIsFlying && Sample.Location.Z - GroundZ <= GroundedAltitudeCm; });
 	if (!TestTrue(TEXT("The griffon lands again"), TouchdownIndex != INDEX_NONE))
@@ -751,7 +751,7 @@ bool FTDMidBossGriffonShotDownTest::RunTest(const FString& Parameters)
 			HitMonster(Griffon, Target, 50.f);
 		}
 		Fixture.Step();
-		Samples.Add(SampleBoss(Fixture, Griffon, Target, Tracker, StepIndex * StepSeconds));
+		Samples.Add(SampleBoss(Fixture, Griffon, Target, Tracker, StepIndex * MidBossStepSeconds));
 	}
 	const int32 TouchdownIndex = FindFirstSampleIndex(Samples, 0, [GroundZ](const FBossSample& Sample) { return !Sample.bIsFlying && Sample.Location.Z - GroundZ <= GroundedAltitudeCm; });
 	if (!TestTrue(TEXT("The volley shoots the griffon down"), TouchdownIndex != INDEX_NONE))

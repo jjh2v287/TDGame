@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불·폭발 무대 LV_TDFluidFireStage(장면 1 횃불을 든 폰, 장면 2 모닥불과 연기, 장면 3 폭발 블록)와 프리셋 5종·벽돌 지오메트리 컬렉션을 만든다. 먼저 editor_make_fluid_volume_material.py 와 editor_make_fluid_flame_material.py 가 성공하고 C++ 재빌드·에디터 재시작이 끝나 있어야 한다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불·폭발 무대 LV_TDFluidFireStage(장면 1 횃불을 든 폰, 장면 2 모닥불과 연기, 장면 3 폭발 블록)와 프리셋 6종·벽돌 지오메트리 컬렉션을 만든다. 먼저 editor_make_fluid_volume_material.py 와 editor_make_fluid_flame_material.py 가 성공하고 C++ 재빌드·에디터 재시작이 끝나 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fire_stage.py
-출력: /Game/FluidFX/Presets/DA_TDFluid_TorchFlame·CampfireFlame·CampfireSmoke·ExplosionFire·ExplosionSmoke, /Game/FluidFX/Destruction/GC_TD_FluidExplosionCube, /Game/FluidFX/Maps/LV_TDFluidFireStage, Saved/FluidFX/fluid_fire_stage.json
-상태: 검증됨(2026-10-18 FX-3 불 무대 생성·쇼케이스·탐침 성공). 에셋·맵이 이미 있으면 Saved/FluidFX/fluid_fire_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다.
+출력: /Game/FluidFX/Presets/DA_TDFluid_TorchFlame·CampfireFlame·CampfireSmoke·ExplosionFire·ExplosionSmoke·ExplosionGroundDust, /Game/FluidFX/Destruction/GC_TD_FluidExplosionCube, /Game/FluidFX/Maps/LV_TDFluidFireStage, Saved/FluidFX/fluid_fire_stage.json
+상태: 검증됨(2026-10-18 FX-3 불 무대 생성·쇼케이스·탐침 성공, 2026-10-20 FX-8b C++ 빌더 프리셋 6종·지면 먼지·조각 대상 배열로 재생성 17액터, 마지막 재생성 2026-10-20 10:53 생성 액터 18개). FX-8c 5차 굽기(2026-10-20: 모닥불 depth_bias 40→10, 폭발 조각 대상 burst_radius_scale 연기 2.5→1.75·먼지 1.6→1.12, 먼지 볼륨 재질 MI_TD_FluidVolume_GroundDust 와 위치 z 50→0, 횃불 막대 Transform 을 손 소켓 축 방향 위치 (-25.15, 15.69, -4.63)·길이 60cm 로, 불씨 source_offset_cm 을 같은 축 50cm (-41.91, 26.15, -7.71) 로 넣고 다시 읽어 확인)는 에디터 재실행 전이며 C++ 굽기 값(폭발 트레일 코어 200·고리 0, 폭발 연기 열 발광색, 카드 축소 1.0)이 들어간 재빌드가 먼저다. 에셋·맵이 이미 있으면 Saved/FluidFX/fluid_fire_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다.
 """
 import json
 import os
@@ -19,6 +19,7 @@ STAGE_MAP_PATH = f"{MAP_DIR}/LV_TDFluidFireStage"
 MATTE_MASTER_PATH = f"{MATERIAL_DIR}/M_TD_FluidFireMatte"
 FLOOR_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidFireFloor"
 WOOD_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidFireCharredWood"
+CHARRED_WOOD_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidCharredWood_Campfire"
 GEOMETRY_COLLECTION_NAME = "GC_TD_FluidExplosionCube"
 GEOMETRY_COLLECTION_PATH = f"{DESTRUCTION_DIR}/{GEOMETRY_COLLECTION_NAME}"
 GAME_MODE_PATH = "/Game/Combat/Blueprints/BP_TDCombatGameMode"
@@ -34,7 +35,8 @@ FLAME_INSTANCE_PATHS = {
     "explosion": f"{MATERIAL_DIR}/MI_TD_FluidFlame_Explosion",
 }
 EMBER_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidEmber_Default"
-SMOKE_SLAB_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidVolume_SmokeSlab"
+SMOKE_VOLUME_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidVolume_SmokeBillow"
+DUST_VOLUME_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidVolume_GroundDust"
 
 REQUEST_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_fire_stage_request.json")
 REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_fire_stage.json")
@@ -49,13 +51,20 @@ NAVIGATION_SCALE = (10.0, 28.0, 4.0)
 NAVIGATION_CENTER = (0.0, 1800.0, 100.0)
 NAVIGATION_MIN_EXTENT_CM = (900.0, 2500.0)
 EXPOSURE_EV100 = 2.0
+MOON_LUX = 3.0
+MOON_COLOR = (0.62, 0.68, 0.9)
+STAGE_FOG_LUMINANCE = (0.165, 0.17, 0.195)
+STAGE_FOG_DENSITY = 0.02
+STAGE_FOG_HEIGHT_FALLOFF = 0.2
+STAGE_FOG_START_DISTANCE_CM = 1500.0
 
 TORCH_LOCATION = (0.0, 0.0, 100.0)
 CAMPFIRE_FIRE_LOCATION = (0.0, 1600.0, 0.0)
 CAMPFIRE_SMOKE_LOCATION = (0.0, 1600.0, 80.0)
 EXPLOSION_BLOCK_LOCATION = (0.0, 3200.0, 50.0)
+EXPLOSION_DUST_LOCATION = (0.0, 3200.0, 0.0)
 EXPLOSION_HIT_OFFSET = (-55.0, 0.0, -35.0)
-BREAK_FORCE = 1100.0
+BREAK_FORCE = 650.0
 BREAK_FORCE_RADIUS = 260.0
 TORCH_SOCKET_NAME = "hand_l"
 
@@ -63,148 +72,82 @@ PRESET_SPECS = (
     {
         "name": "TorchFlame",
         "kind": "FIRE",
+        "cpp_kind": "TORCH",
         "channel": "CHANNEL_B_FIRE",
         "scene": "torch",
         "sort_priority": 1,
-        "plane": {"depth_bias": 35.0, "interaction_depth": 150.0, "center_offset": 0.3},
-        "config": {
-            "extent": (120.0, 160.0),
-            "grid_resolution": 96,
-            "density_dissipation": 1.0,
-            "vorticity_strength": 3.0,
-            "pressure_iterations": 10,
-            "buoyancy_cm_per_sec2": 700.0,
-            "outflow_band_ratio": 0.15,
-            "outflow_rate_per_sec": 6.0,
-            "flow_noise_acceleration_cm_per_sec2": 400.0,
-            "flow_noise_scale_cm": 14.0,
-            "flow_noise_speed": 1.5,
-            "border_fade_ratio": 0.08,
-        },
+        "plane": {"orientation": "CAMERA_FACING", "depth_bias": 35.0, "interaction_depth": 150.0, "center_offset": 0.3},
     },
     {
         "name": "CampfireFlame",
         "kind": "FIRE",
+        "cpp_kind": "CAMPFIRE",
         "channel": "CHANNEL_B_FIRE",
         "scene": "campfire",
         "sort_priority": 1,
-        "plane": {"depth_bias": 40.0, "interaction_depth": 150.0, "center_offset": 0.3},
-        "config": {
-            "flow_noise_speed": 1.5,
-            "extent": (180.0, 240.0),
-            "grid_resolution": 112,
-            "density_dissipation": 1.2,
-            "vorticity_strength": 2.0,
-            "buoyancy_cm_per_sec2": 1000.0,
-            "outflow_band_ratio": 0.15,
-            "outflow_rate_per_sec": 6.0,
-            "flow_noise_acceleration_cm_per_sec2": 700.0,
-            "flow_noise_scale_cm": 35.0,
-        },
+        "plane": {"orientation": "CAMERA_FACING", "depth_bias": 10.0, "interaction_depth": 150.0, "center_offset": 0.3},
     },
     {
         "name": "CampfireSmoke",
         "kind": "SMOKE",
+        "cpp_kind": "CAMPFIRE_SMOKE",
         "channel": "CHANNEL_R_MUD",
         "scene": "campfire",
         "sort_priority": 0,
-        "volume_height_cm": 160.0,
-        "plane": {"depth_bias": 0.0, "interaction_depth": 200.0, "center_offset": 0.4},
-        "config": {
-            "extent": (360.0, 480.0),
-            "grid_resolution": 96,
-            "density_dissipation": 0.25,
-            "vorticity_strength": 2.0,
-            "buoyancy_cm_per_sec2": 180.0,
-            "outflow_band_ratio": 0.2,
-            "outflow_rate_per_sec": 3.0,
-            "flow_noise_acceleration_cm_per_sec2": 300.0,
-            "flow_noise_scale_cm": 60.0,
-            "flow_noise_speed": 0.5,
-        },
+        "volume_height_cm": 200.0,
+        "plane": {"orientation": "CAMERA_FACING", "depth_bias": 0.0, "interaction_depth": 200.0, "center_offset": 0.4},
     },
     {
         "name": "ExplosionFire",
         "kind": "FIRE",
+        "cpp_kind": "EXPLOSION",
         "channel": "CHANNEL_B_FIRE",
         "scene": "explosion",
         "sort_priority": 1,
-        "plane": {"depth_bias": 60.0, "interaction_depth": 400.0, "center_offset": 0.15},
-        "config": {
-            "extent": (700.0, 700.0),
-            "grid_resolution": 128,
-            "density_dissipation": 1.3,
-            "vorticity_strength": 5.0,
-            "buoyancy_cm_per_sec2": 800.0,
-            "outflow_band_ratio": 0.15,
-            "outflow_rate_per_sec": 6.0,
-            "max_points_per_tick": 256,
-            "flow_noise_acceleration_cm_per_sec2": 1200.0,
-            "flow_noise_scale_cm": 60.0,
-            "flow_noise_speed": 1.2,
-        },
+        "plane": {"orientation": "CAMERA_FACING", "depth_bias": 60.0, "interaction_depth": 400.0, "center_offset": 0.45},
     },
     {
         "name": "ExplosionSmoke",
         "kind": "SMOKE",
+        "cpp_kind": "EXPLOSION_SMOKE",
         "channel": "CHANNEL_R_MUD",
         "scene": "explosion",
         "sort_priority": 0,
-        "volume_height_cm": 260.0,
-        "plane": {"depth_bias": 0.0, "interaction_depth": 400.0, "center_offset": 0.3},
-        "config": {
-            "extent": (1000.0, 1000.0),
-            "grid_resolution": 112,
-            "density_dissipation": 0.3,
-            "buoyancy_cm_per_sec2": 150.0,
-            "outflow_band_ratio": 0.2,
-            "outflow_rate_per_sec": 3.0,
-            "max_points_per_tick": 256,
-            "flow_noise_acceleration_cm_per_sec2": 250.0,
-            "flow_noise_scale_cm": 120.0,
-            "flow_noise_speed": 0.5,
-        },
+        "volume_height_cm": 320.0,
+        "plane": {"orientation": "CAMERA_FACING", "depth_bias": 0.0, "interaction_depth": 400.0, "center_offset": 0.3},
     },
+    {
+        "name": "ExplosionGroundDust",
+        "kind": "SMOKE",
+        "cpp_kind": "EXPLOSION_GROUND_DUST",
+        "channel": "CHANNEL_R_MUD",
+        "scene": "explosion",
+        "sort_priority": 0,
+        "volume_height_cm": 200.0,
+        "volume_material": "dust_volume",
+        "plane": {"orientation": "WORLD_FACING", "depth_bias": 0.0, "interaction_depth": 400.0, "center_offset": 0.0},
+    },
+)
+PRESET_KIND_BY_NAME = {spec["name"]: spec["cpp_kind"] for spec in PRESET_SPECS}
+EXPLOSION_TARGET_SPECS = (
+    {"actor": "fire", "channel": "CHANNEL_B_FIRE", "heat_scale": 1.0, "radius_scale": 1.0, "burst_radius_scale": 1.0, "lagged": False, "height_falloff": 0.0},
+    {"actor": "smoke", "channel": "CHANNEL_R_MUD", "heat_scale": 1.0, "radius_scale": 1.0, "burst_radius_scale": 1.75, "lagged": True, "height_falloff": 0.0},
+    {"actor": "dust", "channel": "CHANNEL_R_MUD", "heat_scale": 0.0, "radius_scale": 1.6, "burst_radius_scale": 1.12, "lagged": False, "height_falloff": 60.0},
 )
 
 FIRE_ACTOR_SPECS = {
     "TorchFire": {
         "preset": "TorchFlame",
-        "emitter": {
-            "stamp_count": 1,
-            "spread": 0.0,
-            "radius": 11.0,
-            "strength": 0.7,
-            "speed": 450.0,
-            "inertia": 0.35,
-            "flicker_amplitude": 0.25,
-            "flicker_frequency": 5.0,
-            "lead_seconds": 0.06,
-            "max_lead_ratio": 0.25,
-        },
         "light": {"candelas": 60.0, "reference_area": 1328.0, "shadows": False, "height_offset": 15.0},
         "ember": {"max": 64, "per_second": 10.0},
     },
     "CampfireFire": {
         "preset": "CampfireFlame",
-        "emitter": {
-            "stamp_count": 5,
-            "spread": 45.0,
-            "radius": 20.0,
-            "strength": 0.72,
-            "speed": 270.0,
-            "inertia": 0.3,
-            "flicker_amplitude": 0.3,
-            "flicker_frequency": 4.0,
-            "lead_seconds": 0.06,
-            "max_lead_ratio": 0.25,
-        },
         "light": {"candelas": 160.0, "reference_area": 5265.0, "shadows": True, "height_offset": 60.0},
         "ember": {"max": 256, "per_second": 40.0},
     },
     "ExplosionFire": {
         "preset": "ExplosionFire",
-        "emitter": None,
         "light": {"candelas": 120.0, "reference_area": 16029.0, "shadows": True, "height_offset": 60.0},
         "ember": {"max": 256, "per_second": 30.0},
     },
@@ -395,6 +338,12 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialProperty.MP_ROUGHNESS",
     "MaterialProperty.MP_METALLIC",
     "TDFluidPresetAsset.build_config_for_preset_kind",
+    "TDFluidPresetAsset.build_source_emitter_for_preset_kind",
+    "TDFluidPresetAsset.build_fragment_trail_for_preset_kind",
+    "TDFluidPresetAsset.build_volume_render_for_preset_kind",
+    "TDFluidPresetAsset.build_flame_card_layers_for_preset_kind",
+    "TDFluidPresetKind.EXPLOSION_GROUND_DUST",
+    "TDFluidFragmentTarget",
     "TDFluidPresetKind.CUSTOM",
     "TDFluidPresetKind.FIRE",
     "TDFluidPresetKind.SMOKE",
@@ -409,6 +358,7 @@ REQUIRED_UNREAL_NAMES = (
     "RecastNavMesh",
     "DirectionalLight",
     "SkyLight",
+    "ExponentialHeightFog",
     "PostProcessVolume",
     "PlayerStart",
 )
@@ -634,59 +584,46 @@ def load_or_create_preset(spec):
     return preset
 
 
-def build_simulation_config(spec):
-    config = unreal.TDFluidSimulationConfig()
-    values = dict(spec["config"])
-    extent = values.pop("extent")
-    config.set_editor_property("sim_extent_cm", unreal.Vector2D(extent[0], extent[1]))
-    config.set_editor_property("terrain_slope_gravity", 0.0)
-    for name, value in values.items():
-        config.set_editor_property(name, value)
-    return config
-
-
 def build_plane_settings(spec):
     settings = unreal.TDFluidPlaneSettings()
-    settings.set_editor_property("orientation", unreal.TDFluidPlaneOrientation.CAMERA_FACING)
+    settings.set_editor_property("orientation", getattr(unreal.TDFluidPlaneOrientation, spec["plane"]["orientation"]))
     settings.set_editor_property("camera_depth_bias_cm", spec["plane"]["depth_bias"])
     settings.set_editor_property("interaction_depth_cm", spec["plane"]["interaction_depth"])
     settings.set_editor_property("center_offset_along_up_ratio", spec["plane"]["center_offset"])
     return settings
 
 
+def resolve_preset_kind(spec):
+    return getattr(unreal.TDFluidPresetKind, spec["cpp_kind"])
+
+
 def configure_preset(spec, assets_by_name):
     preset = load_or_create_preset(spec)
     is_fire = spec["kind"] == "FIRE"
-    preset.set_editor_property("preset_kind", unreal.TDFluidPresetKind.CUSTOM)
-    preset.set_editor_property("override_preset_defaults", True)
+    kind = resolve_preset_kind(spec)
+    built_config = unreal.TDFluidPresetAsset.build_config_for_preset_kind(kind)
+    preset.set_editor_property("preset_kind", kind)
+    preset.set_editor_property("override_preset_defaults", False)
     preset.set_editor_property("default_channel", getattr(unreal.TDFluidBrushChannel, spec["channel"]))
-    preset.set_editor_property("simulation_config", build_simulation_config(spec))
+    preset.set_editor_property("simulation_config", built_config)
+    preset.set_editor_property("volume_render", unreal.TDFluidPresetAsset.build_volume_render_for_preset_kind(kind))
     preset.set_editor_property("plane_settings", build_plane_settings(spec))
     preset.set_editor_property("translucency_sort_priority", spec["sort_priority"])
     if is_fire:
         preset.set_editor_property("output_material", assets_by_name["flame_" + spec["scene"]])
         preset.set_editor_property("surface_mesh", assets_by_name["plane"])
     else:
-        preset.set_editor_property("volume_material", assets_by_name["smoke_slab"])
+        preset.set_editor_property("volume_material", assets_by_name[spec.get("volume_material", "smoke_volume")])
         preset.set_editor_property("volume_mesh", assets_by_name["cube"])
         preset.set_editor_property("volume_height_cm", spec["volume_height_cm"])
 
     effective = preset.resolve_effective_config()
-    expected = spec["config"]
-    extent = effective.get_editor_property("sim_extent_cm")
-    mismatches = []
-    if abs(extent.x - expected["extent"][0]) > 0.01 or abs(extent.y - expected["extent"][1]) > 0.01:
-        mismatches.append("sim_extent_cm")
-    for name, value in expected.items():
-        if name == "extent":
-            continue
-        stored = effective.get_editor_property(name)
-        if abs(float(stored) - float(value)) > 0.001:
-            mismatches.append(name)
+    checked_names = ("grid_resolution", "cpu_fallback_resolution", "density_dissipation", "enable_heat_channel", "heat_cooling_per_sec", "vortex_radial_drift_cm_per_sec")
+    mismatches = [name for name in checked_names if effective.get_editor_property(name) != built_config.get_editor_property(name)]
     if mismatches:
-        raise RuntimeError(f"프리셋 유효 구성이 명세와 다릅니다: {preset_asset_path(spec)} {mismatches}")
+        raise RuntimeError(f"프리셋 유효 구성이 C++ 정적 빌더와 다릅니다: {preset_asset_path(spec)} {mismatches}")
     stored_plane = preset.get_editor_property("plane_settings")
-    if stored_plane.get_editor_property("orientation") != unreal.TDFluidPlaneOrientation.CAMERA_FACING:
+    if stored_plane.get_editor_property("orientation") != getattr(unreal.TDFluidPlaneOrientation, spec["plane"]["orientation"]):
         raise RuntimeError(f"프리셋 평면 방향 설정 확인 실패: {preset_asset_path(spec)}")
     save_asset(preset, preset_asset_path(spec))
     return preset, effective
@@ -721,23 +658,6 @@ def find_missing_saved_files(asset_paths, map_path):
     return [path for path in expected if not os.path.isfile(path)]
 
 
-def build_emitter_settings(emitter):
-    settings = unreal.TDFluidSourceEmitterSettings()
-    settings.set_editor_property("is_enabled", True)
-    settings.set_editor_property("channel", unreal.TDFluidBrushChannel.CHANNEL_B_FIRE)
-    settings.set_editor_property("radius_cm", emitter["radius"])
-    settings.set_editor_property("density_strength", emitter["strength"])
-    settings.set_editor_property("emit_speed_cm_per_sec", emitter["speed"])
-    settings.set_editor_property("motion_inertia_scale", emitter["inertia"])
-    settings.set_editor_property("flicker_amplitude", emitter["flicker_amplitude"])
-    settings.set_editor_property("flicker_frequency_hz", emitter["flicker_frequency"])
-    settings.set_editor_property("source_stamp_count", emitter["stamp_count"])
-    settings.set_editor_property("source_spread_cm", emitter["spread"])
-    settings.set_editor_property("trail_lead_seconds", emitter["lead_seconds"])
-    settings.set_editor_property("max_trail_lead_ratio", emitter["max_lead_ratio"])
-    return settings
-
-
 def configure_live_component(actor, preset, effective):
     live_component = actor.get_editor_property("live_component")
     live_component.set_editor_property("active_preset", preset)
@@ -752,8 +672,11 @@ def configure_fire_actor(actor, actor_spec, preset, effective, assets_by_name):
     actor.set_editor_property("interaction_brush_channel", unreal.TDFluidBrushChannel.CHANNEL_B_FIRE)
     actor.set_editor_property("should_follow_player_pawn", False)
     actor.set_editor_property("should_harvest_interactions", False)
-    if actor_spec["emitter"] is not None:
-        actor.set_editor_property("source_emitter", build_emitter_settings(actor_spec["emitter"]))
+    kind = getattr(unreal.TDFluidPresetKind, PRESET_KIND_BY_NAME[actor_spec["preset"]])
+    emitter = unreal.TDFluidPresetAsset.build_source_emitter_for_preset_kind(kind)
+    if emitter.get_editor_property("is_enabled"):
+        actor.set_editor_property("source_emitter", emitter)
+    actor.set_editor_property("flame_card_layers", unreal.TDFluidPresetAsset.build_flame_card_layers_for_preset_kind(kind))
 
     light = actor.get_editor_property("fire_light_component")
     light.set_editor_property("is_driven_by_fluid", True)
@@ -776,6 +699,18 @@ def configure_smoke_actor(actor, preset, effective, light_actor):
     actor.set_editor_property("volume_light_actor", light_actor)
     if actor.get_editor_property("volume_light_actor") != light_actor:
         raise RuntimeError(f"볼륨 라이트 액터 지정 확인 실패: {actor.get_actor_label()}")
+
+
+def make_fragment_target(target_spec, target_actor):
+    target = unreal.TDFluidFragmentTarget()
+    target.set_editor_property("target_actor", target_actor)
+    target.set_editor_property("channel", getattr(unreal.TDFluidBrushChannel, target_spec["channel"]))
+    target.set_editor_property("heat_scale", target_spec["heat_scale"])
+    target.set_editor_property("radius_scale", target_spec["radius_scale"])
+    target.set_editor_property("burst_radius_scale", target_spec["burst_radius_scale"])
+    target.set_editor_property("uses_lagged_positions", target_spec["lagged"])
+    target.set_editor_property("height_falloff_cm", target_spec["height_falloff"])
+    return target
 
 
 def configure_post_process(volume):
@@ -834,7 +769,8 @@ def main():
         "sphere": assets.load_asset(SPHERE_MESH_PATH),
         "cylinder": assets.load_asset(CYLINDER_MESH_PATH),
         "ember_material": assets.load_asset(EMBER_INSTANCE_PATH),
-        "smoke_slab": assets.load_asset(SMOKE_SLAB_INSTANCE_PATH),
+        "smoke_volume": assets.load_asset(SMOKE_VOLUME_INSTANCE_PATH),
+        "dust_volume": assets.load_asset(DUST_VOLUME_INSTANCE_PATH),
     }
     for scene_name, instance_path in FLAME_INSTANCE_PATHS.items():
         assets_by_name["flame_" + scene_name] = assets.load_asset(instance_path)
@@ -853,6 +789,9 @@ def main():
     matte_master, matte_created = load_or_create_matte_master()
     floor_material = write_matte_instance(FLOOR_INSTANCE_PATH, matte_master, FLOOR_COLOR, 0.95)
     wood_material = write_matte_instance(WOOD_INSTANCE_PATH, matte_master, WOOD_COLOR, 0.9)
+    charred_wood_material = unreal.EditorAssetLibrary.load_asset(CHARRED_WOOD_INSTANCE_PATH) if unreal.EditorAssetLibrary.does_asset_exist(CHARRED_WOOD_INSTANCE_PATH) else None
+    if charred_wood_material is not None:
+        wood_material = charred_wood_material
 
     print("단계: 프리셋 생성")
     ensure_directory(PRESET_DIR)
@@ -898,12 +837,20 @@ def main():
 
     sun = spawn(unreal.DirectionalLight, (0, 0, 1500), "FireStageMoon", "Lighting", unreal.Rotator(pitch=-50, yaw=-35))
     sun.light_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
-    sun.light_component.set_intensity(0.5)
-    sun.light_component.set_light_color(unreal.LinearColor(0.45, 0.55, 1.0, 1.0))
+    sun.light_component.set_intensity(MOON_LUX)
+    sun.light_component.set_light_color(unreal.LinearColor(*MOON_COLOR, 1.0))
     sky = spawn(unreal.SkyLight, (0, 0, 1000), "FireStageSkyLight", "Lighting")
     sky.light_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     sky.light_component.set_editor_property("real_time_capture", True)
     sky.light_component.set_intensity(0.25)
+    fog = spawn(unreal.ExponentialHeightFog, (0, 1800, 0), "FireStageFog", "Lighting")
+    fog_component = fog.get_component_by_class(unreal.ExponentialHeightFogComponent)
+    fog_component.set_editor_property("fog_density", STAGE_FOG_DENSITY)
+    fog_component.set_editor_property("fog_height_falloff", STAGE_FOG_HEIGHT_FALLOFF)
+    fog_component.set_editor_property("fog_max_opacity", 1.0)
+    fog_component.set_editor_property("start_distance", STAGE_FOG_START_DISTANCE_CM)
+    fog_component.set_editor_property("fog_inscattering_luminance", unreal.LinearColor(*STAGE_FOG_LUMINANCE, 1.0))
+    fog_component.set_editor_property("enable_volumetric_fog", False)
     configure_post_process(spawn(unreal.PostProcessVolume, (0, 0, 0), "FireStageExposure", "Lighting"))
     spawn(unreal.PlayerStart, PLAYER_START, "FireStagePlayerStart", "Gameplay")
 
@@ -916,8 +863,20 @@ def main():
     torch.set_editor_property("source_prop_mesh_asset", assets_by_name["cylinder"])
     torch.set_editor_property(
         "source_prop_relative_transform",
-        unreal.Transform(unreal.Vector(0.0, 0.0, 18.0), unreal.Rotator(), unreal.Vector(0.04, 0.04, 0.36)),
+        unreal.Transform(
+            location=unreal.Vector(-25.15, 15.69, -4.63),
+            rotation=unreal.Rotator(roll=-98.87, pitch=0.0, yaw=-121.965),
+            scale=unreal.Vector(0.04, 0.04, 0.60),
+        ),
     )
+    torch_source_offset = unreal.Vector(-41.91, 26.15, -7.71)
+    torch_emitter = torch.get_editor_property("source_emitter")
+    torch_emitter.set_editor_property("source_offset_cm", torch_source_offset)
+    torch.set_editor_property("source_emitter", torch_emitter)
+    stored_offset = torch.get_editor_property("source_emitter").get_editor_property("source_offset_cm")
+    offset_error = max(abs(stored_offset.x - torch_source_offset.x), abs(stored_offset.y - torch_source_offset.y), abs(stored_offset.z - torch_source_offset.z))
+    if offset_error > 0.001:
+        raise RuntimeError(f"횃불 불씨 오프셋 지정 확인 실패: {stored_offset}")
 
     print("단계: 장면 2 모닥불")
     for label, location, rotation in (
@@ -932,6 +891,7 @@ def main():
     )
     campfire_smoke = spawn(classes["TDFluidLiveActor"], CAMPFIRE_SMOKE_LOCATION, "CampfireSmoke", "Scene2_Campfire")
     configure_smoke_actor(campfire_smoke, presets["CampfireSmoke"], effective_configs["CampfireSmoke"], campfire)
+    campfire_smoke.set_editor_property("cast_pawn_capsule_shadows", True)
     feed = unreal.TDFluidDownstreamFeedSettings()
     feed.set_editor_property("is_enabled", True)
     campfire.set_editor_property("downstream_smoke_actor", campfire_smoke)
@@ -955,10 +915,17 @@ def main():
     )
     explosion_smoke = spawn(classes["TDFluidLiveActor"], EXPLOSION_BLOCK_LOCATION, "ExplosionSmoke", "Scene3_Explosion")
     configure_smoke_actor(explosion_smoke, presets["ExplosionSmoke"], effective_configs["ExplosionSmoke"], explosion_fire)
+    explosion_dust = spawn(classes["TDFluidLiveActor"], EXPLOSION_DUST_LOCATION, "ExplosionGroundDust", "Scene3_Explosion")
+    configure_smoke_actor(explosion_dust, presets["ExplosionGroundDust"], effective_configs["ExplosionGroundDust"], explosion_fire)
     fragment_emitter = spawn(classes["TDFluidFragmentEmitterActor"], EXPLOSION_BLOCK_LOCATION, "ExplosionFragments", "Scene3_Explosion")
     fragment_emitter.set_editor_property("source_breakable_actor", breakable)
     fragment_emitter.set_editor_property("fire_target_actor", explosion_fire)
     fragment_emitter.set_editor_property("smoke_target_actor", explosion_smoke)
+    fragment_emitter.set_editor_property("trail_settings", unreal.TDFluidPresetAsset.build_fragment_trail_for_preset_kind(unreal.TDFluidPresetKind.EXPLOSION))
+    explosion_target_actors = {"fire": explosion_fire, "smoke": explosion_smoke, "dust": explosion_dust}
+    fragment_emitter.set_editor_property("targets", [make_fragment_target(target_spec, explosion_target_actors[target_spec["actor"]]) for target_spec in EXPLOSION_TARGET_SPECS])
+    if len(fragment_emitter.get_editor_property("targets")) != len(EXPLOSION_TARGET_SPECS):
+        raise RuntimeError("조각 방출 액터의 대상 배열 지정 확인 실패")
     if fragment_emitter.get_editor_property("fire_target_actor") != explosion_fire:
         raise RuntimeError("조각 방출 액터의 불 대상 지정 확인 실패")
 

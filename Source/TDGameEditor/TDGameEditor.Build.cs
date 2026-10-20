@@ -44,7 +44,9 @@ public class TDGameEditor : ModuleRules
 			"PCG",
 			"GameplayMessageRuntime",
 			"GeometryCollectionEngine",
-			"Chaos"
+			"Chaos",
+			"MeshDescription",
+			"StaticMeshDescription"
 		});
 	}
 }

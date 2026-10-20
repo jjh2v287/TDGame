@@ -10,6 +10,8 @@ class UFieldSystemComponent;
 class UGeometryCollectionComponent;
 class USphereComponent;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FTDBreakableBrokenNative, const FVector&);
+
 UCLASS(Blueprintable)
 class TDGAME_API ATDBreakableActor : public AActor
 {
@@ -27,6 +29,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Breakable")
 	void StartBreak(const FVector& HitLocation);
+
+	FTDBreakableBrokenNative OnBrokenNative;
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="Breakable")

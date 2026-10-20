@@ -12,6 +12,7 @@ public class TDGameEditorTarget : TargetRules
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
 		ExtraModuleNames.Add("TDGame");
 		ExtraModuleNames.Add("TDWorldGen");
+		ExtraModuleNames.Add("TDFluidGpu");
 		ExtraModuleNames.Add("TDGameEditor");
 	}
 }

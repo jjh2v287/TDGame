@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "FluidFX/TDFluidFireTypes.h"
 #include "FluidFX/TDFluidPlaneTypes.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "TDFluidPresetAsset.generated.h"
@@ -59,11 +60,29 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output", meta = (ClampMin = "-100", ClampMax = "100"))
 	int32 TranslucencySortPriority = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	FTDFluidVolumeRenderSettings VolumeRender;
+
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	FTDFluidSimulationConfig ResolveEffectiveConfig() const;
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	static FTDFluidSimulationConfig BuildConfigForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidSourceEmitterSettings BuildSourceEmitterForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidFragmentTrailSettings BuildFragmentTrailForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidVolumeRenderSettings BuildVolumeRenderForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidFlameCardLayerSettings BuildFlameCardLayersForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static bool IsFireFamilyPresetKind(ETDFluidPresetKind Kind);
 
 	static UTDFluidPresetAsset* CreateTransientPreset(UObject* Outer, ETDFluidPresetKind Kind);
 };

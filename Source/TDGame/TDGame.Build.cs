@@ -35,6 +35,8 @@ public class TDGame : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "PCG", "Json", "JsonUtilities", "UAFAnimGraph", "SlateCore", "PhysicsCore" });
 
+		PrivateDependencyModuleNames.AddRange(new string[] { "TDFluidGpu", "RenderCore", "RHI" });
+
 		PublicIncludePaths.AddRange(new string[] {
 			"TDGame"
 		});

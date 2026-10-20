@@ -4,10 +4,12 @@
 #include "Core/TDGameplayTags.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidPresetAsset.h"
+#include "FluidFX/TDFluidRiverActor.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
@@ -15,7 +17,11 @@
 #include "Async/ParallelFor.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+#include "RenderingThread.h"
 #include "TDGame.h"
+
+CSV_DEFINE_CATEGORY(TDFluid, true);
 
 namespace
 {
@@ -86,6 +92,18 @@ namespace
 	{
 		return FMath::IsFinite(DamageAmount) && DamageAmount > 0.0f;
 	}
+
+	FBox2D ComputeFlowGuideBoundsXY(const FTDFluidFlowGuide& Guide)
+	{
+		FBox2D BoundsXY(ForceInit);
+		for (const FTDFluidFlowGuidePoint& Point : Guide.Points)
+		{
+			const double HalfWidthCm = FMath::Max(Point.HalfWidthCm, 0.0f);
+			BoundsXY += FVector2D(Point.WorldLocation.X - HalfWidthCm, Point.WorldLocation.Y - HalfWidthCm);
+			BoundsXY += FVector2D(Point.WorldLocation.X + HalfWidthCm, Point.WorldLocation.Y + HalfWidthCm);
+		}
+		return BoundsXY;
+	}
 }
 
 UTDFluidLiveSubsystem* UTDFluidLiveSubsystem::GetFluidLiveSubsystem(const UObject* WorldContextObject)
@@ -108,6 +126,9 @@ void UTDFluidLiveSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
+	LevelAddedHandle = FWorldDelegates::LevelAddedToWorld.AddUObject(this, &UTDFluidLiveSubsystem::HandleLevelAddedOrRemoved);
+	LevelRemovedHandle = FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &UTDFluidLiveSubsystem::HandleLevelAddedOrRemoved);
+
 	if (UGameplayMessageSubsystem::HasInstance(&InWorld))
 	{
 		UGameplayMessageSubsystem& MessageSubsystem = UGameplayMessageSubsystem::Get(&InWorld);
@@ -126,10 +147,91 @@ void UTDFluidLiveSubsystem::Deinitialize()
 {
 	DamageAppliedListenerHandle.Unregister();
 	ActorDeathListenerHandle.Unregister();
+	FWorldDelegates::LevelAddedToWorld.Remove(LevelAddedHandle);
+	FWorldDelegates::LevelRemovedFromWorld.Remove(LevelRemovedHandle);
+	LevelAddedHandle.Reset();
+	LevelRemovedHandle.Reset();
 	QueuedDamageByTarget.Reset();
 	QueuedDeathByActor.Reset();
 	RegisteredActors.Reset();
+	RegisteredFlowGuides.Reset();
+	ReleaseGpuSolverRenderState();
 	Super::Deinitialize();
+}
+
+void UTDFluidLiveSubsystem::HandleLevelAddedOrRemoved(ULevel* ChangedLevel, UWorld* ChangedWorld)
+{
+	if (ChangedWorld != GetWorld())
+	{
+		return;
+	}
+
+	NotifyWaterSurfacesChanged();
+}
+
+void UTDFluidLiveSubsystem::RegisterFlowGuideSource(ATDFluidRiverActor* River)
+{
+	if (!River)
+	{
+		return;
+	}
+
+	FRegisteredFlowGuide NewEntry;
+	NewEntry.River = River;
+	River->BuildFlowGuide(NewEntry.Guide);
+	if (NewEntry.Guide.Points.Num() < 2)
+	{
+		UnregisterFlowGuideSource(River);
+		return;
+	}
+
+	NewEntry.BoundsXY = ComputeFlowGuideBoundsXY(NewEntry.Guide);
+	NotifyWaterSurfacesChanged();
+
+	for (FRegisteredFlowGuide& Entry : RegisteredFlowGuides)
+	{
+		if (Entry.River.Get(true) == River)
+		{
+			Entry = MoveTemp(NewEntry);
+			return;
+		}
+	}
+
+	RegisteredFlowGuides.Add(MoveTemp(NewEntry));
+}
+
+void UTDFluidLiveSubsystem::UnregisterFlowGuideSource(ATDFluidRiverActor* River)
+{
+	if (!River)
+	{
+		return;
+	}
+
+	const int32 RemovedCount = RegisteredFlowGuides.RemoveAll([River](const FRegisteredFlowGuide& Entry)
+	{
+		return !Entry.River.IsValid() || Entry.River.Get(true) == River;
+	});
+	if (RemovedCount > 0)
+	{
+		NotifyWaterSurfacesChanged();
+	}
+}
+
+void UTDFluidLiveSubsystem::CollectFlowGuidesInBounds(const FBox2D& BoundsXY, TArray<FTDFluidFlowGuide>& OutGuides) const
+{
+	OutGuides.Reset();
+	for (const FRegisteredFlowGuide& Entry : RegisteredFlowGuides)
+	{
+		if (Entry.River.IsValid() && Entry.BoundsXY.Intersect(BoundsXY))
+		{
+			OutGuides.Add(Entry.Guide);
+		}
+	}
+}
+
+void UTDFluidLiveSubsystem::NotifyWaterSurfacesChanged()
+{
+	++WaterRegistryVersion;
 }
 
 TStatId UTDFluidLiveSubsystem::GetStatId() const
@@ -253,7 +355,7 @@ void UTDFluidLiveSubsystem::LogTickCostWindow() const
 			continue;
 		}
 
-		const int32 Resolution = LiveActor->LiveComponent->GetSolver().GetResolution();
+		const int32 Resolution = LiveActor->LiveComponent->GetSimulationResolution();
 		++AwakeActorCount;
 		TotalCellCount += Resolution * Resolution;
 	}
@@ -308,16 +410,28 @@ void UTDFluidLiveSubsystem::StepFluidWorld(float DeltaTime)
 	}
 
 	TArray<ATDFluidLiveActor*, TInlineAllocator<16>> SolvingActors;
+	TArray<ATDFluidLiveActor*, TInlineAllocator<16>> GpuSolvingActors;
 	for (const FTDFluidActorStep& ActorStep : ActorSteps)
 	{
 		ATDFluidLiveActor* LiveActor = GetStillActiveActor(ActorStep);
-		if (ActorStep.bIsSolving && LiveActor)
+		if (!ActorStep.bIsSolving || !LiveActor)
 		{
-			SolvingActors.Add(LiveActor);
+			continue;
 		}
+
+		if (LiveActor->LiveComponent && LiveActor->LiveComponent->IsUsingGpuSolver())
+		{
+			GpuSolvingActors.Add(LiveActor);
+			continue;
+		}
+
+		SolvingActors.Add(LiveActor);
 	}
 
+	CSV_CUSTOM_STAT(TDFluid, StepCount, SolvingActors.Num() + GpuSolvingActors.Num(), ECsvCustomStatOp::Set);
 	RunSolverSteps(SolvingActors, DeltaTime);
+	SubmitGpuSolverSteps(GpuSolvingActors);
+	DistributeGpuSolverReadback();
 
 	for (const FTDFluidActorStep& ActorStep : ActorSteps)
 	{
@@ -348,6 +462,90 @@ void UTDFluidLiveSubsystem::RunSolverSteps(TConstArrayView<ATDFluidLiveActor*> S
 	{
 		SolvingActors[ActorIndex]->RunLiveActorSolverStep(DeltaTime);
 	}, Flags);
+}
+
+void UTDFluidLiveSubsystem::SubmitGpuSolverSteps(TConstArrayView<ATDFluidLiveActor*> GpuSolvingActors)
+{
+	if (GpuSolvingActors.IsEmpty() && PendingReleasedGpuActorKeys.IsEmpty())
+	{
+		return;
+	}
+
+	FTDFluidGpuFrameInputs FrameInputs;
+	FrameInputs.FrameNumber = ++LastGpuSolverFrameNumber;
+	FrameInputs.ReleasedActorKeys = MoveTemp(PendingReleasedGpuActorKeys);
+	PendingReleasedGpuActorKeys.Reset();
+	FrameInputs.Actors.Reserve(GpuSolvingActors.Num());
+	for (ATDFluidLiveActor* LiveActor : GpuSolvingActors)
+	{
+		LiveActor->LiveComponent->AppendPreparedGpuStep(*this, FrameInputs);
+	}
+
+	if (!GpuSolverRenderState)
+	{
+		GpuSolverRenderState = MakeShared<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe>();
+	}
+
+	ENQUEUE_RENDER_COMMAND(TDFluidGpuSolverStep)(
+		[RenderState = GpuSolverRenderState, SubmittedInputs = MoveTemp(FrameInputs)](FRHICommandListImmediate& RHICmdList)
+		{
+			RenderState->ExecuteFrame(RHICmdList, SubmittedInputs);
+		});
+}
+
+void UTDFluidLiveSubsystem::DistributeGpuSolverReadback()
+{
+	if (!GpuSolverRenderState)
+	{
+		return;
+	}
+
+	FTDFluidGpuReadbackFrame ReadbackFrame;
+	if (!GpuSolverRenderState->TakeLatestReadback(ReadbackFrame))
+	{
+		return;
+	}
+
+	for (const TWeakObjectPtr<ATDFluidLiveActor>& Entry : RegisteredActors)
+	{
+		ATDFluidLiveActor* LiveActor = Entry.Get();
+		if (!LiveActor || !LiveActor->LiveComponent)
+		{
+			continue;
+		}
+
+		LiveActor->LiveComponent->ConsumeGpuReadback(ReadbackFrame);
+	}
+}
+
+void UTDFluidLiveSubsystem::ReleaseGpuSolverRenderState()
+{
+	PendingReleasedGpuActorKeys.Reset();
+	if (!GpuSolverRenderState)
+	{
+		return;
+	}
+
+	ENQUEUE_RENDER_COMMAND(TDFluidGpuSolverRelease)(
+		[RenderState = MoveTemp(GpuSolverRenderState)](FRHICommandListImmediate&) mutable
+		{
+			RenderState.Reset();
+		});
+}
+
+uint64 UTDFluidLiveSubsystem::AllocateGpuSolverActorKey()
+{
+	return ++LastGpuSolverActorKey;
+}
+
+void UTDFluidLiveSubsystem::ReleaseGpuSolverActorKey(uint64 ActorKey)
+{
+	if (ActorKey == 0)
+	{
+		return;
+	}
+
+	PendingReleasedGpuActorKeys.AddUnique(ActorKey);
 }
 
 ATDFluidLiveActor* UTDFluidLiveSubsystem::SpawnPooledFluidActor(

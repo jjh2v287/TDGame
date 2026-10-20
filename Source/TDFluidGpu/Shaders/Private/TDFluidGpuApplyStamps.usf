@@ -1,0 +1,84 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+Texture2DArray<float> ObstacleSdf;
+Texture2DArray<float2> VelocityIn;
+Texture2DArray<float2> DensityIn;
+Texture2DArray<float> SurfaceDisplacementIn;
+RWTexture2DArray<float2> VelocityOut;
+RWTexture2DArray<float2> DensityOut;
+RWTexture2DArray<float> SurfaceDisplacementOut;
+Texture2DArray<float> HeatIn;
+RWTexture2DArray<float> HeatOut;
+
+void ApplyStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, bool bUsesHeat, inout float2 Velocity, inout float2 Density, inout float Displacement, inout float Heat)
+{
+	const FTDFluidGpuStampBinRange Range = TDFluidGpuGetStampBinRange(Actor, Cell);
+	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
+	for (uint EntryOffset = 0; EntryOffset < Range.Count; ++EntryOffset)
+	{
+		const FTDFluidGpuPackedStamp Stamp = Stamps[StampBinIndices[Range.FirstIndex + EntryOffset]];
+		float SmoothWeight;
+		float DistanceCm;
+		if (!TDFluidGpuTryComputeStampWeight(Stamp, CellCenter, SmoothWeight, DistanceCm))
+		{
+			continue;
+		}
+
+		TDFluidGpuApplyStampDensity(Actor, Stamp, SmoothWeight, Density, Displacement);
+		if (bUsesHeat)
+		{
+			TDFluidGpuApplyStampHeat(Actor, Stamp, SmoothWeight, Heat);
+		}
+		if (Stamp.VelocityStrength > 0.0f)
+		{
+			Velocity += (Stamp.TargetVelocityCmPerSec - Velocity) * (SmoothWeight * Actor.StampVelocityBlend);
+		}
+	}
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[DispatchThreadId.z];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	const bool bUsesHeat = TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_HEAT_CHANNEL);
+	if (TDFluidGpuIsSolidDistance(ObstacleSdf[Texel]))
+	{
+		VelocityOut[Texel] = float2(0.0f, 0.0f);
+		DensityOut[Texel] = float2(0.0f, 0.0f);
+		SurfaceDisplacementOut[Texel] = 0.0f;
+		if (bUsesHeat)
+		{
+			HeatOut[Texel] = 0.0f;
+		}
+		return;
+	}
+
+	float2 Velocity = TDFluidGpuClampVelocityMagnitude(VelocityIn[Texel]);
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_RASTERIZES_OBSTACLES))
+	{
+		Velocity = TDFluidGpuEnforceObstacleBoundary(ObstacleSdf, Actor, Cell, Velocity);
+	}
+
+	float2 Density = DensityIn[Texel];
+	float Displacement = SurfaceDisplacementIn[Texel];
+	float Heat = bUsesHeat ? HeatIn[Texel] : 0.0f;
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_HAS_STAMPS))
+	{
+		ApplyStampsToCell(Actor, Cell, bUsesHeat, Velocity, Density, Displacement, Heat);
+	}
+
+	VelocityOut[Texel] = Velocity;
+	DensityOut[Texel] = Density;
+	SurfaceDisplacementOut[Texel] = Displacement;
+	if (bUsesHeat)
+	{
+		HeatOut[Texel] = Heat;
+	}
+}

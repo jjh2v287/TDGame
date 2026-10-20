@@ -1,0 +1,17 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+StructuredBuffer<uint> EntryList;
+RWTexture2DArray<float> ObstacleSdfOut;
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryList[DispatchThreadId.z]];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	ObstacleSdfOut[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)] = TDFluidGpuComputeObstacleSignedDistance(Actor, Cell);
+}

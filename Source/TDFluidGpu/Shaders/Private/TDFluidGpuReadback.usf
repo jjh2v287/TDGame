@@ -1,0 +1,54 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+#ifndef TDFLUIDGPU_PAINTER
+#define TDFLUIDGPU_PAINTER 0
+#endif
+
+#if TDFLUIDGPU_PAINTER
+Texture2DArray<float> PainterPrimaryDensityIn;
+Texture2DArray<float> PainterSelectiveDensityIn;
+#else
+Texture2DArray<float2> VelocityIn;
+Texture2DArray<float2> DensityIn;
+#endif
+RWTexture2D<float4> ReadbackAtlasOut;
+
+int ComputeBlockStart(uint TileTexel, int Resolution)
+{
+	return int((TileTexel * uint(Resolution)) / TDFLUIDGPU_READBACK_TILE_RESOLUTION);
+}
+
+int ComputeBlockEnd(uint TileTexel, int Resolution)
+{
+	return max(ComputeBlockStart(TileTexel, Resolution) + 1, ComputeBlockStart(TileTexel + 1u, Resolution));
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[DispatchThreadId.z];
+	const uint2 TileTexel = DispatchThreadId.xy;
+	if (TileTexel.x >= TDFLUIDGPU_READBACK_TILE_RESOLUTION || TileTexel.y >= TDFLUIDGPU_READBACK_TILE_RESOLUTION)
+	{
+		return;
+	}
+
+	const int2 BlockStart = int2(ComputeBlockStart(TileTexel.x, Actor.Resolution), ComputeBlockStart(TileTexel.y, Actor.Resolution));
+	const int2 BlockEnd = int2(ComputeBlockEnd(TileTexel.x, Actor.Resolution), ComputeBlockEnd(TileTexel.y, Actor.Resolution));
+	float4 BlockSum = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	for (int CellY = BlockStart.y; CellY < BlockEnd.y; ++CellY)
+	{
+		for (int CellX = BlockStart.x; CellX < BlockEnd.x; ++CellX)
+		{
+			const uint3 Texel = TDFluidGpuMakeTexel(int2(CellX, CellY), Actor.SliceIndex);
+#if TDFLUIDGPU_PAINTER
+			BlockSum += float4(PainterPrimaryDensityIn[Texel], PainterSelectiveDensityIn[Texel], 0.0f, 0.0f);
+#else
+			BlockSum += float4(DensityIn[Texel], TDFluidGpuClampVelocityMagnitude(VelocityIn[Texel]));
+#endif
+		}
+	}
+
+	const int2 BlockSize = BlockEnd - BlockStart;
+	ReadbackAtlasOut[uint2(Actor.ReadbackTileOrigin) + TileTexel] = BlockSum / float(BlockSize.x * BlockSize.y);
+}

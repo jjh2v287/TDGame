@@ -60,12 +60,16 @@ FVector2D FTDFluidPlaneBasis::ProjectPoint(const FVector& WorldPoint) const
 	{
 		return FVector2D(WorldPoint.X, WorldPoint.Y);
 	}
-	return FVector2D(FVector::DotProduct(WorldPoint, U), FVector::DotProduct(WorldPoint, V));
+	return ProjectVector(WorldPoint) + PlaneCoordinateOffsetCm;
 }
 
 FVector2D FTDFluidPlaneBasis::ProjectVector(const FVector& WorldVector) const
 {
-	return ProjectPoint(WorldVector);
+	if (IsWorldFacing())
+	{
+		return FVector2D(WorldVector.X, WorldVector.Y);
+	}
+	return FVector2D(FVector::DotProduct(WorldVector, U), FVector::DotProduct(WorldVector, V));
 }
 
 double FTDFluidPlaneBasis::ProjectDepth(const FVector& WorldPoint) const
@@ -83,7 +87,7 @@ FVector FTDFluidPlaneBasis::UnprojectPoint(const FVector2D& PlanePoint, double D
 	{
 		return FVector(PlanePoint.X, PlanePoint.Y, DepthCm);
 	}
-	return U * PlanePoint.X + V * PlanePoint.Y + N * DepthCm;
+	return UnprojectVector(PlanePoint - PlaneCoordinateOffsetCm) + N * DepthCm;
 }
 
 FVector FTDFluidPlaneBasis::UnprojectVector(const FVector2D& PlaneVector) const
@@ -145,4 +149,14 @@ bool FTDFluidPlaneBasis::IsNearlyEqual(const FTDFluidPlaneBasis& Other, double T
 	const double YawDeltaDegrees = FMath::Abs(FMath::FindDeltaAngleDegrees(ResolveYawDegrees(*this), ResolveYawDegrees(Other)));
 	const double LeanDeltaDegrees = FMath::Abs(ResolveLeanDegrees(*this) - ResolveLeanDegrees(Other));
 	return YawDeltaDegrees <= ToleranceDegrees && LeanDeltaDegrees <= ToleranceDegrees;
+}
+
+void FTDFluidPlaneBasis::PreservePivotPlanePoint(const FTDFluidPlaneBasis& PreviousBasis, const FVector& PivotWorld)
+{
+	PlaneCoordinateOffsetCm = FVector2D::ZeroVector;
+	if (IsWorldFacing() || PreviousBasis.IsWorldFacing())
+	{
+		return;
+	}
+	PlaneCoordinateOffsetCm = PreviousBasis.ProjectPoint(PivotWorld) - ProjectVector(PivotWorld);
 }

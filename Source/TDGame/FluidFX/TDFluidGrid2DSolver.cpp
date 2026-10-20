@@ -1,5 +1,6 @@
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "Async/ParallelFor.h"
+#include "HAL/IConsoleManager.h"
 #include "Misc/Crc.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 
@@ -22,6 +23,11 @@ namespace
 	constexpr double NoiseFrequencyMinimum = 0.5;
 	constexpr int32 NoiseRowsPerBatch = 16;
 	constexpr int32 NoiseLatticeInlineCount = 1024;
+
+	TAutoConsoleVariable<int32> CVarSolverRowParallel(
+		TEXT("TD.FluidFX.SolverRowParallel"),
+		1,
+		TEXT("Run the heavy FluidFX solver passes as parallel row batches with bit-identical results. 0 = One thread, 1 = Parallel."));
 
 	float ClampFinite(float Value, float MinValue, float MaxValue)
 	{
@@ -65,6 +71,33 @@ namespace
 		InOutConfig.BuoyancyCmPerSec2 = ClampFinite(InOutConfig.BuoyancyCmPerSec2, 0.0f, 20000.0f);
 		InOutConfig.OutflowBandRatio = ClampFinite(InOutConfig.OutflowBandRatio, 0.0f, 0.45f);
 		InOutConfig.OutflowRatePerSec = ClampFinite(InOutConfig.OutflowRatePerSec, 0.0f, 50.0f);
+		InOutConfig.WaterDepthReferenceCm = ClampFinite(InOutConfig.WaterDepthReferenceCm, 1.0f, 100000.0f);
+		InOutConfig.FlowGuideResponsePerSec = ClampFinite(InOutConfig.FlowGuideResponsePerSec, 0.0f, 100.0f);
+		InOutConfig.FlowGuideBankFalloffCm = ClampFinite(InOutConfig.FlowGuideBankFalloffCm, 0.0f, 10000.0f);
+		InOutConfig.FlowGuideBankSpeedRatio = ClampFinite(InOutConfig.FlowGuideBankSpeedRatio, 0.0f, 1.0f);
+		InOutConfig.RapidsWhitewaterPerSec = ClampFinite(InOutConfig.RapidsWhitewaterPerSec, 0.0f, 1000.0f);
+		InOutConfig.WhitewaterFromVorticity = ClampFinite(InOutConfig.WhitewaterFromVorticity, 0.0f, 100.0f);
+		InOutConfig.WhitewaterVorticityThresholdPerSec = ClampFinite(InOutConfig.WhitewaterVorticityThresholdPerSec, 0.0f, 1000.0f);
+		InOutConfig.RippleWaveSpeedCmPerSec = ClampFinite(InOutConfig.RippleWaveSpeedCmPerSec, 0.0f, 2000.0f);
+		InOutConfig.RippleDampingPerSec = ClampFinite(InOutConfig.RippleDampingPerSec, 0.0f, 100.0f);
+		InOutConfig.RippleHeightReferenceCm = ClampFinite(InOutConfig.RippleHeightReferenceCm, 0.01f, 1000.0f);
+		InOutConfig.RippleFlowAdvection = ClampFinite(InOutConfig.RippleFlowAdvection, 0.0f, 4.0f);
+		InOutConfig.ActorBrushRippleImpulseCm = ClampFinite(InOutConfig.ActorBrushRippleImpulseCm, -100.0f, 100.0f);
+		InOutConfig.CoastWaveDepthSpacingCm = ClampFinite(InOutConfig.CoastWaveDepthSpacingCm, 1.0f, 100000.0f);
+		InOutConfig.CoastWavePeriodSeconds = ClampFinite(InOutConfig.CoastWavePeriodSeconds, 0.1f, 1000.0f);
+		InOutConfig.CoastWaveMaxDepthCm = ClampFinite(InOutConfig.CoastWaveMaxDepthCm, 0.0f, 100000.0f);
+		InOutConfig.SwashHeightCm = ClampFinite(InOutConfig.SwashHeightCm, 0.0f, 1000.0f);
+		InOutConfig.BankWetHeightCm = ClampFinite(InOutConfig.BankWetHeightCm, 0.0f, 1000.0f);
+		InOutConfig.WetnessDryingSeconds = ClampFinite(InOutConfig.WetnessDryingSeconds, 0.01f, 10000.0f);
+		InOutConfig.WetnessFromWhitewater = ClampFinite(InOutConfig.WetnessFromWhitewater, 0.0f, 1.0f);
+		InOutConfig.CpuFallbackResolution = FMath::Clamp(InOutConfig.CpuFallbackResolution, 0, MaxGridResolution);
+		InOutConfig.HeatCoolingPerSec = ClampFinite(InOutConfig.HeatCoolingPerSec, 0.0f, 50.0f);
+		InOutConfig.HeatBuoyancyCmPerSec2 = ClampFinite(InOutConfig.HeatBuoyancyCmPerSec2, 0.0f, 20000.0f);
+		InOutConfig.EdgeBounciness = ClampFinite(InOutConfig.EdgeBounciness, 0.0f, 1.0f);
+		InOutConfig.BorderFadeExponent = FMath::IsFinite(InOutConfig.BorderFadeExponent) ? FMath::Clamp(InOutConfig.BorderFadeExponent, 0.25f, 8.0f) : 1.0f;
+		InOutConfig.VortexTangentialAccelerationCmPerSec2 = FMath::IsFinite(InOutConfig.VortexTangentialAccelerationCmPerSec2) ? FMath::Clamp(InOutConfig.VortexTangentialAccelerationCmPerSec2, -20000.0f, 20000.0f) : 0.0f;
+		InOutConfig.VortexRadialDriftCmPerSec = FMath::IsFinite(InOutConfig.VortexRadialDriftCmPerSec) ? FMath::Clamp(InOutConfig.VortexRadialDriftCmPerSec, -MaxCellSpeedCmPerSec, MaxCellSpeedCmPerSec) : 0.0f;
+		InOutConfig.VortexRadiusRatio = ClampFinite(InOutConfig.VortexRadiusRatio, 0.01f, 0.5f);
 	}
 
 	bool IsFiniteBrushStamp(const FTDFluidBrushStamp& Stamp)
@@ -74,7 +107,9 @@ namespace
 			&& FMath::IsFinite(Stamp.RadiusCm)
 			&& FMath::IsFinite(Stamp.DensityStrength)
 			&& FMath::IsFinite(Stamp.VelocityStrength)
-			&& FMath::IsFinite(Stamp.RadialVelocityCmPerSec);
+			&& FMath::IsFinite(Stamp.RadialVelocityCmPerSec)
+			&& FMath::IsFinite(Stamp.RippleImpulseCm)
+			&& FMath::IsFinite(Stamp.HeatStrength);
 	}
 
 	bool IsPositiveZero(double Value)
@@ -132,6 +167,45 @@ namespace
 
 		uint32 CallerControlRegister;
 	};
+
+	void ForEachGridRow(const TCHAR* DebugName, int32 RowCount, TFunctionRef<void(int32)> RowBody)
+	{
+		const EParallelForFlags Flags = CVarSolverRowParallel.GetValueOnAnyThread() != 0 ? EParallelForFlags::None : EParallelForFlags::ForceSingleThread;
+		ParallelFor(DebugName, RowCount, NoiseRowsPerBatch, [&RowBody](int32 RowIndex)
+		{
+			const FTDFluidDenormalPreservingScope DenormalPreservingScope;
+			RowBody(RowIndex);
+		}, Flags);
+	}
+
+	template <typename ElementType>
+	void ShiftGridInPlace(ElementType* Values, int32 GridSize, int32 ShiftCellsX, int32 ShiftCellsY)
+	{
+		const int32 ClampedShiftX = FMath::Clamp(ShiftCellsX, -GridSize, GridSize);
+		const int32 ClampedShiftY = FMath::Clamp(ShiftCellsY, -GridSize, GridSize);
+		const int32 CopyWidth = GridSize - FMath::Abs(ClampedShiftX);
+		const int32 DestinationStartX = FMath::Max(-ClampedShiftX, 0);
+		const int32 SourceStartX = FMath::Max(ClampedShiftX, 0);
+		const int32 TailStartX = DestinationStartX + CopyWidth;
+		const int32 RowStep = ClampedShiftY >= 0 ? 1 : -1;
+		const int32 FirstRow = ClampedShiftY >= 0 ? 0 : GridSize - 1;
+
+		for (int32 RowOrder = 0; RowOrder < GridSize; ++RowOrder)
+		{
+			const int32 NewY = FirstRow + RowOrder * RowStep;
+			const int32 OldY = NewY + ClampedShiftY;
+			ElementType* NewRow = Values + NewY * GridSize;
+			if (CopyWidth <= 0 || OldY < 0 || OldY >= GridSize)
+			{
+				FMemory::Memzero(NewRow, sizeof(ElementType) * GridSize);
+				continue;
+			}
+
+			FMemory::Memmove(NewRow + DestinationStartX, Values + OldY * GridSize + SourceStartX, sizeof(ElementType) * CopyWidth);
+			FMemory::Memzero(NewRow, sizeof(ElementType) * DestinationStartX);
+			FMemory::Memzero(NewRow + TailStartX, sizeof(ElementType) * (GridSize - TailStartX));
+		}
+	}
 
 	float InterpolateBilinear(const float* Field, const FTDFluidBilinearSample& Sample)
 	{
@@ -283,6 +357,64 @@ namespace
 	}
 }
 
+namespace
+{
+	constexpr float FluidWaterUnknownTerrainSdfCm = 10000.0f;
+	constexpr float FluidWaterNoSurfaceSdfCm = -1.0f;
+	constexpr float FluidWaterMinimumTerrainSlope = 0.05f;
+	constexpr float FluidWaterSdfLimitCm = 10000.0f;
+	constexpr int32 FluidWaterMaxRippleSubsteps = 8;
+	constexpr float FluidWaterRippleSubstepSafety = 0.5f;
+	constexpr float FluidWaterRippleQuietThreshold = 0.0001f;
+	constexpr float FluidWaterRippleOvershootRatio = 0.25f;
+	constexpr float FluidWaterTerrainHeightScaleCm = 1000.0f;
+	constexpr float FluidWaterTerrainHeightLimit = 8.0f;
+	constexpr float FluidWaterSquareRootOfTwo = 1.41421356f;
+
+	float FluidWaterBankFalloffWeight(float DistanceCm, float HalfWidthCm, float FalloffCm)
+	{
+		if (DistanceCm >= HalfWidthCm)
+		{
+			return 0.0f;
+		}
+
+		const float EffectiveFalloffCm = FMath::Min(FalloffCm, HalfWidthCm);
+		if (EffectiveFalloffCm <= 0.0f || DistanceCm <= HalfWidthCm - EffectiveFalloffCm)
+		{
+			return 1.0f;
+		}
+
+		const float Fraction = (DistanceCm - (HalfWidthCm - EffectiveFalloffCm)) / EffectiveFalloffCm;
+		return 1.0f - Fraction * Fraction * (3.0f - 2.0f * Fraction);
+	}
+
+	void FluidWaterShiftDirtyFlags(TArray<uint8>& Flags, int32 ShiftCells)
+	{
+		const int32 FlagCount = Flags.Num();
+		TArray<uint8> ShiftedFlags;
+		ShiftedFlags.Init(1, FlagCount);
+		for (int32 FlagIndex = 0; FlagIndex < FlagCount; ++FlagIndex)
+		{
+			const int32 SourceIndex = FlagIndex + ShiftCells;
+			if (SourceIndex >= 0 && SourceIndex < FlagCount)
+			{
+				ShiftedFlags[FlagIndex] = Flags[SourceIndex];
+			}
+		}
+		Flags = MoveTemp(ShiftedFlags);
+	}
+
+	void FluidWaterBuildCubicWeights(float Fraction, float* OutWeights)
+	{
+		const float Square = Fraction * Fraction;
+		const float Cube = Square * Fraction;
+		OutWeights[0] = -0.5f * Cube + Square - 0.5f * Fraction;
+		OutWeights[1] = 1.5f * Cube - 2.5f * Square + 1.0f;
+		OutWeights[2] = -1.5f * Cube + 2.0f * Square + 0.5f * Fraction;
+		OutWeights[3] = 0.5f * Cube - 0.5f * Square;
+	}
+}
+
 void FTDFluidGrid2DSolver::Initialize(const FTDFluidSimulationConfig& InConfig, const FVector2D& InitialCenterWorld)
 {
 	Config = InConfig;
@@ -303,8 +435,11 @@ void FTDFluidGrid2DSolver::UpdateConfig(const FTDFluidSimulationConfig& InConfig
 		return;
 	}
 
+	const FTDFluidSimulationConfig PreviousConfig = Config;
 	Config = InConfig;
 	SanitizeConfig(Config);
+	SynchronizeWaterBuffersWithConfig(PreviousConfig);
+	SynchronizeHeatBuffersWithConfig();
 }
 
 void FTDFluidGrid2DSolver::ResetSimulation()
@@ -340,6 +475,10 @@ void FTDFluidGrid2DSolver::ResetSimulation()
 	TerrainElevation.Init(0.0f, CellCount);
 	TerrainSlope.Init(FVector2D::ZeroVector, CellCount);
 	bIsTerrainSlopeZero = true;
+	ResetWaterBuffers();
+	Heat.Reset();
+	ScratchHeat.Reset();
+	SynchronizeHeatBuffersWithConfig();
 	RefreshObstacleCellCache();
 }
 
@@ -363,66 +502,24 @@ bool FTDFluidGrid2DSolver::ShiftOriginForSlidingWindow(const FVector2D& DesiredC
 	CenterWorld.X += static_cast<float>(ShiftCellsX) * CellSizeX;
 	CenterWorld.Y += static_cast<float>(ShiftCellsY) * CellSizeY;
 
-	const int32 CellCount = Resolution * Resolution;
-	TArray<float> ShiftedPrimary;
-	TArray<float> ShiftedSelective;
-	TArray<float> ShiftedDisplacement;
-	TArray<float> ShiftedVelX;
-	TArray<float> ShiftedVelY;
-	TArray<float> ShiftedPressure;
-	TArray<float> ShiftedPressureSolution;
-	TArray<float> ShiftedElevation;
-	TArray<FVector2D> ShiftedSlope;
-
-	ShiftedPrimary.Init(0.0f, CellCount);
-	ShiftedSelective.Init(0.0f, CellCount);
-	ShiftedDisplacement.Init(0.0f, CellCount);
-	ShiftedVelX.Init(0.0f, CellCount);
-	ShiftedVelY.Init(0.0f, CellCount);
-	ShiftedPressure.Init(0.0f, CellCount);
-	ShiftedPressureSolution.Init(0.0f, CellCount);
-	ShiftedElevation.Init(0.0f, CellCount);
-	ShiftedSlope.Init(FVector2D::ZeroVector, CellCount);
-
-	for (int32 NewY = 0; NewY < Resolution; ++NewY)
+	ShiftGridInPlace(PrimaryDensity.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(SelectiveDensity.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(SurfaceDisplacement.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(VelocityX.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(VelocityY.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(Pressure.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(PressureSolution.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(TerrainElevation.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(TerrainSlope.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	if (!Heat.IsEmpty())
 	{
-		const int32 OldY = NewY + ShiftCellsY;
-		if (OldY < 0 || OldY >= Resolution)
-		{
-			continue;
-		}
-
-		for (int32 NewX = 0; NewX < Resolution; ++NewX)
-		{
-			const int32 OldX = NewX + ShiftCellsX;
-			if (OldX < 0 || OldX >= Resolution)
-			{
-				continue;
-			}
-
-			const int32 NewIdx = ToCellIndex(NewX, NewY);
-			const int32 OldIdx = ToCellIndex(OldX, OldY);
-			ShiftedPrimary[NewIdx] = PrimaryDensity[OldIdx];
-			ShiftedSelective[NewIdx] = SelectiveDensity[OldIdx];
-			ShiftedDisplacement[NewIdx] = SurfaceDisplacement[OldIdx];
-			ShiftedVelX[NewIdx] = VelocityX[OldIdx];
-			ShiftedVelY[NewIdx] = VelocityY[OldIdx];
-			ShiftedPressure[NewIdx] = Pressure[OldIdx];
-			ShiftedPressureSolution[NewIdx] = PressureSolution[OldIdx];
-			ShiftedElevation[NewIdx] = TerrainElevation[OldIdx];
-			ShiftedSlope[NewIdx] = TerrainSlope[OldIdx];
-		}
+		ShiftGridInPlace(Heat.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
 	}
 
-	PrimaryDensity = MoveTemp(ShiftedPrimary);
-	SelectiveDensity = MoveTemp(ShiftedSelective);
-	SurfaceDisplacement = MoveTemp(ShiftedDisplacement);
-	VelocityX = MoveTemp(ShiftedVelX);
-	VelocityY = MoveTemp(ShiftedVelY);
-	Pressure = MoveTemp(ShiftedPressure);
-	PressureSolution = MoveTemp(ShiftedPressureSolution);
-	TerrainElevation = MoveTemp(ShiftedElevation);
-	TerrainSlope = MoveTemp(ShiftedSlope);
+	if (IsWaterLayerActive())
+	{
+		ShiftWaterBuffers(ShiftCellsX, ShiftCellsY);
+	}
 
 	return true;
 }
@@ -448,7 +545,16 @@ void FTDFluidGrid2DSolver::SetTerrainElevationAtCell(int32 CellX, int32 CellY, f
 		return;
 	}
 
-	TerrainElevation[ToCellIndex(CellX, CellY)] = ElevationCm;
+	const int32 CellIndex = ToCellIndex(CellX, CellY);
+	TerrainElevation[CellIndex] = ElevationCm;
+
+	if (!IsWaterLayerActive() || TerrainKnownMask[CellIndex] != 0)
+	{
+		return;
+	}
+
+	TerrainKnownMask[CellIndex] = 1;
+	++TerrainKnownCellCount;
 }
 
 void FTDFluidGrid2DSolver::ComputeTerrainSlopeFromElevation()
@@ -480,6 +586,7 @@ void FTDFluidGrid2DSolver::ComputeTerrainSlopeFromElevation()
 		}
 	}
 	bIsTerrainSlopeZero = bAreAllSlopesZero;
+	bWaterDryDirty = true;
 }
 
 void FTDFluidGrid2DSolver::RasterizeSdfObstacles(const TArray<FTDFluidSdfObstacle>& Obstacles)
@@ -494,6 +601,12 @@ void FTDFluidGrid2DSolver::RasterizeSdfObstacles(const TArray<FTDFluidSdfObstacl
 
 	if (Obstacles.IsEmpty())
 	{
+		if (IsWaterLayerActive())
+		{
+			CommitWaterObstacleSdf();
+			return;
+		}
+
 		RefreshObstacleCellCache();
 		return;
 	}
@@ -530,6 +643,13 @@ void FTDFluidGrid2DSolver::RasterizeSdfObstacles(const TArray<FTDFluidSdfObstacl
 		}
 	}
 
+	if (IsWaterLayerActive())
+	{
+		CommitWaterObstacleSdf();
+		EnforceObstacleBoundaries();
+		return;
+	}
+
 	RefreshObstacleCellCache();
 	EnforceObstacleBoundaries();
 }
@@ -560,6 +680,10 @@ void FTDFluidGrid2DSolver::ApplyBrushStamps(const TArray<FTDFluidBrushStamp>& St
 		}
 
 		ApplyBrushStamp(Stamp, DeltaTime, VelocityBlend);
+		if (!Heat.IsEmpty())
+		{
+			ApplyHeatStamp(Stamp, DeltaTime);
+		}
 		++AppliedStampCount;
 	}
 }
@@ -588,7 +712,9 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 	const float DensityStrength = FMath::Max(Stamp.DensityStrength, 0.0f);
 	const float EraseRatePerSec = FMath::Abs(Stamp.DensityStrength) * BrushEraseRatePerSec;
 	const bool bWritesSelectiveDensity = Stamp.Channel == ETDFluidBrushChannel::ChannelG_Blood || Stamp.Channel == ETDFluidBrushChannel::ChannelB_Fire;
-	const bool bHasRadialVelocity = Stamp.RadialVelocityCmPerSec != 0.0f;
+	const bool bIsWaterLayerActive = IsWaterLayerActive();
+	const bool bWritesRipple = bIsWaterLayerActive && Stamp.RippleImpulseCm != 0.0f;
+	const bool bHasRadialVelocity = Stamp.RadialVelocityCmPerSec != 0.0f && !bIsWaterLayerActive;
 	const bool bDefersRadialVelocity = bHasRadialVelocity && Config.SimMode != ETDFluidSimMode::SimplePainter;
 	const bool bBlendsRadialVelocity = bHasRadialVelocity && !bDefersRadialVelocity;
 	const bool bInjectsVelocity = Stamp.VelocityStrength > 0.0f || bBlendsRadialVelocity;
@@ -619,6 +745,12 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 			const float SmoothWeight = NormalizedFalloff * NormalizedFalloff * (3.0f - 2.0f * NormalizedFalloff);
 			const int32 CellIdx = ToCellIndex(CellX, CellY);
 
+			if (bWritesRipple)
+			{
+				RippleHeight[CellIdx] -= Stamp.RippleImpulseCm * SmoothWeight;
+				bHasRippleActivity = true;
+			}
+
 			if (bErasesDensity)
 			{
 				const float RetainFactor = FMath::Exp(-EraseRatePerSec * SmoothWeight * DeltaTime);
@@ -632,7 +764,10 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 			{
 				const float DensityTarget = FMath::Clamp(DensityStrength * SmoothWeight, 0.0f, 1.0f);
 				PrimaryDensity[CellIdx] = FMath::Max(PrimaryDensity[CellIdx], DensityTarget);
-				SurfaceDisplacement[CellIdx] = FMath::Max(SurfaceDisplacement[CellIdx], DensityTarget * BrushDisplacementRatio);
+				if (!bIsWaterLayerActive)
+				{
+					SurfaceDisplacement[CellIdx] = FMath::Max(SurfaceDisplacement[CellIdx], DensityTarget * BrushDisplacementRatio);
+				}
 				if (bWritesSelectiveDensity)
 				{
 					SelectiveDensity[CellIdx] = FMath::Max(SelectiveDensity[CellIdx], DensityTarget);
@@ -680,6 +815,10 @@ void FTDFluidGrid2DSolver::StepSimulation(float DeltaTime)
 	if (Config.SimMode == ETDFluidSimMode::SimplePainter)
 	{
 		StepSimplePainter(ClampedDeltaTime);
+	}
+	else if (IsWaterLayerActive())
+	{
+		StepFluidSimWater(ClampedDeltaTime);
 	}
 	else
 	{
@@ -833,13 +972,24 @@ void FTDFluidGrid2DSolver::StepFluidSim(float DeltaTime)
 	ApplyTerrainSlopeAcceleration(DeltaTime);
 	ApplyFlowNoiseAcceleration(DeltaTime);
 	ApplyBuoyancyAcceleration(DeltaTime);
+	ApplyHeatBuoyancyAcceleration(DeltaTime);
+	ApplyVortexAcceleration(DeltaTime);
 	EnforceObstacleBoundaries();
 	ApplyVorticityConfinement(DeltaTime);
 	SolvePressureProjection();
 	AdvectVelocity(DeltaTime);
-	EnforceObstacleBoundaries();
+	if (Config.bReflectsAtBoundaries)
+	{
+		EnforceObstacleBoundariesWithReflection();
+		ApplyEdgeReflection();
+	}
+	else
+	{
+		EnforceObstacleBoundaries();
+	}
 	SolvePressureProjection();
 	EnforceObstacleBoundaries();
+	AccumulateVortexRadialDrift();
 
 	const bool bAppliesRadialPush = bHasPendingRadialPush;
 	if (bAppliesRadialPush)
@@ -849,7 +999,9 @@ void FTDFluidGrid2DSolver::StepFluidSim(float DeltaTime)
 	}
 
 	AdvectDensities(DeltaTime);
+	AdvectHeat(DeltaTime);
 	ApplyDirectionalOutflow(DeltaTime);
+	ApplyDirectionalOutflowToHeat(DeltaTime);
 
 	if (bAppliesRadialPush)
 	{
@@ -908,7 +1060,7 @@ void FTDFluidGrid2DSolver::ApplyTerrainSlopeAcceleration(float DeltaTime)
 		return;
 	}
 
-	const int32 CellCount = Resolution * Resolution;
+	const int32 GridSize = Resolution;
 	const float SlopeGravity = Config.TerrainSlopeGravity;
 	const uint8* SolidCells = SolidCellMask.GetData();
 	const FVector2D* SlopeValues = TerrainSlope.GetData();
@@ -917,17 +1069,22 @@ void FTDFluidGrid2DSolver::ApplyTerrainSlopeAcceleration(float DeltaTime)
 	float* VelX = VelocityX.GetData();
 	float* VelY = VelocityY.GetData();
 
-	for (int32 Idx = 0; Idx < CellCount; ++Idx)
+	ForEachGridRow(TEXT("TDFluidTerrainSlopeRows"), GridSize, [&](int32 Y)
 	{
-		if (SolidCells[Idx])
+		const int32 RowStart = Y * GridSize;
+		for (int32 X = 0; X < GridSize; ++X)
 		{
-			continue;
-		}
+			const int32 Idx = RowStart + X;
+			if (SolidCells[Idx])
+			{
+				continue;
+			}
 
-		const float ActiveFluidMask = FMath::Clamp(PrimaryValues[Idx] + SelectiveValues[Idx] + 0.1f, 0.0f, 1.0f);
-		VelX[Idx] -= SlopeValues[Idx].X * SlopeGravity * ActiveFluidMask * DeltaTime;
-		VelY[Idx] -= SlopeValues[Idx].Y * SlopeGravity * ActiveFluidMask * DeltaTime;
-	}
+			const float ActiveFluidMask = FMath::Clamp(PrimaryValues[Idx] + SelectiveValues[Idx] + 0.1f, 0.0f, 1.0f);
+			VelX[Idx] -= SlopeValues[Idx].X * SlopeGravity * ActiveFluidMask * DeltaTime;
+			VelY[Idx] -= SlopeValues[Idx].Y * SlopeGravity * ActiveFluidMask * DeltaTime;
+		}
+	});
 }
 
 void FTDFluidGrid2DSolver::ApplyFlowNoiseAcceleration(float DeltaTime)
@@ -1068,7 +1225,7 @@ void FTDFluidGrid2DSolver::EnforceObstacleBoundaries()
 	float* PressureValues = Pressure.GetData();
 	float* PressureSolutionValues = PressureSolution.GetData();
 
-	for (int32 Y = 0; Y < GridSize; ++Y)
+	ForEachGridRow(TEXT("TDFluidObstacleBoundaryRows"), GridSize, [&](int32 Y)
 	{
 		for (int32 X = 0; X < GridSize; ++X)
 		{
@@ -1117,7 +1274,7 @@ void FTDFluidGrid2DSolver::EnforceObstacleBoundaries()
 				VelY[Idx] = CurrentVelocity.Y;
 			}
 		}
-	}
+	});
 }
 
 void FTDFluidGrid2DSolver::ApplyVorticityConfinement(float DeltaTime)
@@ -1140,9 +1297,9 @@ void FTDFluidGrid2DSolver::ApplyVorticityConfinement(float DeltaTime)
 	float* VelY = VelocityY.GetData();
 	float* CurlValues = VorticityCurl.GetData();
 
-	for (int32 Y = 1; Y < GridSize - 1; ++Y)
+	ForEachGridRow(TEXT("TDFluidVorticityCurlRows"), GridSize - 2, [&](int32 RowIndex)
 	{
-		const int32 RowStart = Y * GridSize;
+		const int32 RowStart = (RowIndex + 1) * GridSize;
 		for (int32 X = 1; X < GridSize - 1; ++X)
 		{
 			const int32 Idx = RowStart + X;
@@ -1150,11 +1307,11 @@ void FTDFluidGrid2DSolver::ApplyVorticityConfinement(float DeltaTime)
 			const float DvXDy = 0.5f * (VelX[Idx + GridSize] - VelX[Idx - GridSize]) / SpacingY;
 			CurlValues[Idx] = DvYDx - DvXDy;
 		}
-	}
+	});
 
-	for (int32 Y = 2; Y < GridSize - 2; ++Y)
+	ForEachGridRow(TEXT("TDFluidVorticityApplyRows"), GridSize - 4, [&](int32 RowIndex)
 	{
-		const int32 RowStart = Y * GridSize;
+		const int32 RowStart = (RowIndex + 2) * GridSize;
 		for (int32 X = 2; X < GridSize - 2; ++X)
 		{
 			const int32 Idx = RowStart + X;
@@ -1178,7 +1335,7 @@ void FTDFluidGrid2DSolver::ApplyVorticityConfinement(float DeltaTime)
 			VelX[Idx] += CurlGrad.Y * Curl * VorticityStrength * DeltaTime;
 			VelY[Idx] += -CurlGrad.X * Curl * VorticityStrength * DeltaTime;
 		}
-	}
+	});
 }
 
 void FTDFluidGrid2DSolver::AdvectVelocity(float DeltaTime)
@@ -1203,7 +1360,7 @@ void FTDFluidGrid2DSolver::AdvectVelocity(float DeltaTime)
 	float* AdvectedVelX = ScratchVelocityX.GetData();
 	float* AdvectedVelY = ScratchVelocityY.GetData();
 
-	for (int32 Y = 0; Y < GridSize; ++Y)
+	ForEachGridRow(TEXT("TDFluidAdvectVelocityRows"), GridSize, [&](int32 Y)
 	{
 		for (int32 X = 0; X < GridSize; ++X)
 		{
@@ -1223,7 +1380,7 @@ void FTDFluidGrid2DSolver::AdvectVelocity(float DeltaTime)
 			AdvectedVelX[Idx] = InterpolateBilinear(VelX, Sample) * DampingFactor * BorderDamping;
 			AdvectedVelY[Idx] = InterpolateBilinear(VelY, Sample) * DampingFactor * BorderDamping;
 		}
-	}
+	});
 
 	Swap(VelocityX, ScratchVelocityX);
 	Swap(VelocityY, ScratchVelocityY);
@@ -1277,7 +1434,7 @@ void FTDFluidGrid2DSolver::ComputeVelocityDivergence(float SpacingX, float Spaci
 		DivergenceValues[Idx] = (VelRight - VelLeft) / DoubleSpacingX + (VelUp - VelDown) / DoubleSpacingY;
 	};
 
-	for (int32 Y = 0; Y < GridSize; ++Y)
+	ForEachGridRow(TEXT("TDFluidDivergenceRows"), GridSize, [&](int32 Y)
 	{
 		if (!SolidFreeRows[Y])
 		{
@@ -1285,7 +1442,7 @@ void FTDFluidGrid2DSolver::ComputeVelocityDivergence(float SpacingX, float Spaci
 			{
 				ComputeCellNearSolid(X, Y);
 			}
-			continue;
+			return;
 		}
 
 		const int32 RowStart = Y * GridSize;
@@ -1300,7 +1457,7 @@ void FTDFluidGrid2DSolver::ComputeVelocityDivergence(float SpacingX, float Spaci
 			RowDivergence[X] = (RowVelX[X + 1] - RowVelX[X - 1]) / DoubleSpacingX + (RowVelYUp[X] - RowVelYDown[X]) / DoubleSpacingY;
 		}
 		ComputeCellNearSolid(GridSize - 1, Y);
-	}
+	});
 }
 
 void FTDFluidGrid2DSolver::RelaxPressureJacobi(float InvSpacingXSquared, float InvSpacingYSquared, float InvNeighborWeightSum)
@@ -1333,7 +1490,7 @@ void FTDFluidGrid2DSolver::RelaxPressureJacobi(float InvSpacingXSquared, float I
 			TargetPressure[Idx] = ((PLeft + PRight) * InvSpacingXSquared + (PDown + PUp) * InvSpacingYSquared - DivergenceValues[Idx]) * InvNeighborWeightSum;
 		};
 
-		for (int32 Y = 0; Y < GridSize; ++Y)
+		ForEachGridRow(TEXT("TDFluidJacobiRows"), GridSize, [&](int32 Y)
 		{
 			if (!SolidFreeRows[Y])
 			{
@@ -1341,7 +1498,7 @@ void FTDFluidGrid2DSolver::RelaxPressureJacobi(float InvSpacingXSquared, float I
 				{
 					RelaxCellNearSolid(X, Y);
 				}
-				continue;
+				return;
 			}
 
 			const int32 RowStart = Y * GridSize;
@@ -1357,7 +1514,7 @@ void FTDFluidGrid2DSolver::RelaxPressureJacobi(float InvSpacingXSquared, float I
 				RowTarget[X] = ((RowPressure[X - 1] + RowPressure[X + 1]) * InvSpacingXSquared + (RowPressureDown[X] + RowPressureUp[X]) * InvSpacingYSquared - RowDivergence[X]) * InvNeighborWeightSum;
 			}
 			RelaxCellNearSolid(GridSize - 1, Y);
-		}
+		});
 		Swap(PressureSolution, ScratchPressure);
 	}
 }
@@ -1433,7 +1590,7 @@ void FTDFluidGrid2DSolver::SubtractPressureGradient(float SpacingX, float Spacin
 		PressureValues[Idx] = FMath::Clamp(CenterP * PressureDisplayScale, -1.0f, 1.0f);
 	};
 
-	for (int32 Y = 0; Y < GridSize; ++Y)
+	ForEachGridRow(TEXT("TDFluidGradientRows"), GridSize, [&](int32 Y)
 	{
 		if (!SolidFreeRows[Y])
 		{
@@ -1441,7 +1598,7 @@ void FTDFluidGrid2DSolver::SubtractPressureGradient(float SpacingX, float Spacin
 			{
 				SubtractCellNearSolid(X, Y);
 			}
-			continue;
+			return;
 		}
 
 		const int32 RowStart = Y * GridSize;
@@ -1460,7 +1617,7 @@ void FTDFluidGrid2DSolver::SubtractPressureGradient(float SpacingX, float Spacin
 			RowDisplayPressure[X] = FMath::Clamp(RowPressure[X] * PressureDisplayScale, -1.0f, 1.0f);
 		}
 		SubtractCellNearSolid(GridSize - 1, Y);
-	}
+	});
 }
 
 void FTDFluidGrid2DSolver::AdvectDensities(float DeltaTime)
@@ -1484,7 +1641,7 @@ void FTDFluidGrid2DSolver::AdvectDensities(float DeltaTime)
 	float* AdvectedSelective = ScratchSelectiveDensity.GetData();
 	float* AdvectedDisplacement = ScratchSurfaceDisplacement.GetData();
 
-	for (int32 Y = 0; Y < GridSize; ++Y)
+	ForEachGridRow(TEXT("TDFluidAdvectDensityRows"), GridSize, [&](int32 Y)
 	{
 		for (int32 X = 0; X < GridSize; ++X)
 		{
@@ -1505,7 +1662,7 @@ void FTDFluidGrid2DSolver::AdvectDensities(float DeltaTime)
 			AdvectedSelective[Idx] = FMath::Clamp(InterpolateBilinear(SelectiveValues, Sample) * DissipationFactor, 0.0f, 1.0f);
 			AdvectedDisplacement[Idx] = FMath::Clamp(InterpolateBilinear(DisplacementValues, Sample) * DissipationFactor, 0.0f, 1.0f);
 		}
-	}
+	});
 
 	Swap(PrimaryDensity, ScratchDensity);
 	Swap(SelectiveDensity, ScratchSelectiveDensity);
@@ -1662,6 +1819,23 @@ bool FTDFluidGrid2DSolver::SampleAtWorldPosition(const FVector2D& WorldPos, FTDF
 	OutSample.Velocity = FVector2D(SampleBilinear(VelocityX, GridX, GridY), SampleBilinear(VelocityY, GridX, GridY));
 	OutSample.VelocityCmPerSec = OutSample.Velocity;
 	OutSample.TerrainSlope = TerrainSlope[ToCellIndex(NearestX, NearestY)];
+	if (!Heat.IsEmpty())
+	{
+		OutSample.Heat = SampleBilinear(Heat, GridX, GridY);
+	}
+
+	if (!IsWaterLayerActive())
+	{
+		return true;
+	}
+
+	const int32 NearestIndex = ToCellIndex(NearestX, NearestY);
+	OutSample.FlowGuideWeight = SampleBilinear(FlowGuideWeight, GridX, GridY);
+	OutSample.FlowTargetVelocity = FVector2D(SampleBilinear(FlowTargetVelocityX, GridX, GridY), SampleBilinear(FlowTargetVelocityY, GridX, GridY));
+	OutSample.Wetness = SampleBilinear(Wetness, GridX, GridY);
+	OutSample.RippleHeightCm = SampleBilinear(RippleHeight, GridX, GridY);
+	OutSample.bIsTerrainKnown = TerrainKnownMask[NearestIndex] != 0;
+	OutSample.WaterDepthCm = ComputeWaterDepthAtIndex(NearestIndex);
 	return true;
 }
 
@@ -1681,6 +1855,22 @@ FTDFluidCellSample FTDFluidGrid2DSolver::SampleAtCell(int32 CellX, int32 CellY) 
 	Result.Velocity = FVector2D(VelocityX[Idx], VelocityY[Idx]);
 	Result.VelocityCmPerSec = Result.Velocity;
 	Result.TerrainSlope = TerrainSlope[Idx];
+	if (!Heat.IsEmpty())
+	{
+		Result.Heat = Heat[Idx];
+	}
+
+	if (!IsWaterLayerActive())
+	{
+		return Result;
+	}
+
+	Result.FlowGuideWeight = FlowGuideWeight[Idx];
+	Result.FlowTargetVelocity = FVector2D(FlowTargetVelocityX[Idx], FlowTargetVelocityY[Idx]);
+	Result.Wetness = Wetness[Idx];
+	Result.RippleHeightCm = RippleHeight[Idx];
+	Result.bIsTerrainKnown = TerrainKnownMask[Idx] != 0;
+	Result.WaterDepthCm = ComputeWaterDepthAtIndex(Idx);
 	return Result;
 }
 
@@ -1701,7 +1891,7 @@ void FTDFluidGrid2DSolver::PackOutputPixels(TArray<FFloat16Color>& OutDensityPre
 	OutVelocityPixels.SetNumUninitialized(CellCount);
 
 	float BorderFadeByCoordinate[MaxGridResolution];
-	BuildBorderFadeTable(BorderFadeByCoordinate);
+	BuildBorderAlphaTable(BorderFadeByCoordinate);
 
 	const float* SdfValues = ObstacleSdf.GetData();
 	const float* PressureValues = Pressure.GetData();
@@ -1761,5 +1951,1592 @@ uint32 FTDFluidGrid2DSolver::ComputeStateChecksum() const
 	{
 		Checksum = FCrc::MemCrc32(Field->GetData(), Field->Num() * sizeof(float), Checksum);
 	}
-	return FCrc::MemCrc32(TerrainSlope.GetData(), TerrainSlope.Num() * sizeof(FVector2D), Checksum);
+	const uint32 FieldChecksum = FCrc::MemCrc32(TerrainSlope.GetData(), TerrainSlope.Num() * sizeof(FVector2D), Checksum);
+	if (Heat.IsEmpty())
+	{
+		return FieldChecksum;
+	}
+
+	return FCrc::MemCrc32(Heat.GetData(), Heat.Num() * sizeof(float), FieldChecksum);
+}
+
+float FTDFluidGrid2DSolver::GetOutputSpeedReferenceCmPerSec()
+{
+	return OutputSpeedReferenceCmPerSec;
+}
+
+bool FTDFluidGrid2DSolver::ShouldAllocateWaterBuffers() const
+{
+	return Config.bEnableWaterLayer && Config.SimMode != ETDFluidSimMode::SimplePainter;
+}
+
+bool FTDFluidGrid2DSolver::IsWaterLayerActive() const
+{
+	return ShouldAllocateWaterBuffers() && Resolution > 0 && WaterSurfaceHeight.Num() == Resolution * Resolution;
+}
+
+void FTDFluidGrid2DSolver::ReleaseWaterBuffers()
+{
+	WaterSurfaceHeight.Empty();
+	WaterDrySdf.Empty();
+	ObstacleSdfRaw.Empty();
+	TerrainKnownMask.Empty();
+	FlowTargetVelocityX.Empty();
+	FlowTargetVelocityY.Empty();
+	FlowGuideWeight.Empty();
+	FlowGuideDescent.Empty();
+	Wetness.Empty();
+	RippleHeight.Empty();
+	RippleHeightVelocity.Empty();
+	ScratchRippleHeight.Empty();
+	ScratchRippleHeightVelocity.Empty();
+	WaterDirtyColumns.Empty();
+	WaterDirtyRows.Empty();
+	WaterRowSegmentOffsets.Empty();
+	WaterRowSegmentIndices.Empty();
+	TerrainKnownCellCount = 0;
+	bHasRippleActivity = false;
+}
+
+void FTDFluidGrid2DSolver::ResetWaterBuffers()
+{
+	if (!ShouldAllocateWaterBuffers())
+	{
+		ReleaseWaterBuffers();
+		return;
+	}
+
+	const int32 CellCount = Resolution * Resolution;
+	WaterSurfaceHeight.Init(NoWaterSurfaceHeight, CellCount);
+	WaterDrySdf.Init(FluidWaterUnknownTerrainSdfCm, CellCount);
+	ObstacleSdfRaw = ObstacleSdf;
+	TerrainKnownMask.Init(0, CellCount);
+	FlowTargetVelocityX.Init(0.0f, CellCount);
+	FlowTargetVelocityY.Init(0.0f, CellCount);
+	FlowGuideWeight.Init(0.0f, CellCount);
+	FlowGuideDescent.Init(0.0f, CellCount);
+	Wetness.Init(0.0f, CellCount);
+	RippleHeight.Init(0.0f, CellCount);
+	RippleHeightVelocity.Init(0.0f, CellCount);
+	ScratchRippleHeight.Init(0.0f, CellCount);
+	ScratchRippleHeightVelocity.Init(0.0f, CellCount);
+	WaterDirtyColumns.Init(0, Resolution);
+	WaterDirtyRows.Init(0, Resolution);
+	TerrainKnownCellCount = 0;
+	bWaterRasterFullDirty = true;
+	bWaterHasDirtyStrips = false;
+	bWaterDryDirty = true;
+	bWaterVelocityInitPending = true;
+	bHasRippleActivity = false;
+}
+
+void FTDFluidGrid2DSolver::SynchronizeWaterBuffersWithConfig(const FTDFluidSimulationConfig& PreviousConfig)
+{
+	if (!ShouldAllocateWaterBuffers())
+	{
+		ReleaseWaterBuffers();
+		return;
+	}
+
+	if (WaterSurfaceHeight.Num() != Resolution * Resolution)
+	{
+		ResetWaterBuffers();
+		return;
+	}
+
+	if (PreviousConfig.FlowGuideBankFalloffCm != Config.FlowGuideBankFalloffCm || PreviousConfig.FlowGuideBankSpeedRatio != Config.FlowGuideBankSpeedRatio)
+	{
+		bWaterRasterFullDirty = true;
+	}
+
+	if (PreviousConfig.bTreatDryCellsAsSolid != Config.bTreatDryCellsAsSolid)
+	{
+		bWaterDryDirty = true;
+	}
+}
+
+void FTDFluidGrid2DSolver::ShiftWaterBuffers(int32 ShiftCellsX, int32 ShiftCellsY)
+{
+	ShiftGridInPlace(WaterSurfaceHeight.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(WaterDrySdf.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(TerrainKnownMask.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(FlowTargetVelocityX.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(FlowTargetVelocityY.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(FlowGuideWeight.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(FlowGuideDescent.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(Wetness.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(RippleHeight.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	ShiftGridInPlace(RippleHeightVelocity.GetData(), Resolution, ShiftCellsX, ShiftCellsY);
+	FluidWaterShiftDirtyFlags(WaterDirtyColumns, ShiftCellsX);
+	FluidWaterShiftDirtyFlags(WaterDirtyRows, ShiftCellsY);
+	bWaterHasDirtyStrips = true;
+	bWaterDryDirty = true;
+
+	const int32 GridSize = Resolution;
+	int32 KnownCellCount = 0;
+	for (int32 CellY = 0; CellY < GridSize; ++CellY)
+	{
+		const int32 SourceY = CellY + ShiftCellsY;
+		const bool bIsNewRow = SourceY < 0 || SourceY >= GridSize;
+		for (int32 CellX = 0; CellX < GridSize; ++CellX)
+		{
+			const int32 SourceX = CellX + ShiftCellsX;
+			const int32 CellIndex = CellY * GridSize + CellX;
+			if (bIsNewRow || SourceX < 0 || SourceX >= GridSize)
+			{
+				WaterSurfaceHeight[CellIndex] = NoWaterSurfaceHeight;
+				WaterDrySdf[CellIndex] = FluidWaterUnknownTerrainSdfCm;
+			}
+			KnownCellCount += TerrainKnownMask[CellIndex];
+		}
+	}
+	TerrainKnownCellCount = KnownCellCount;
+}
+
+void FTDFluidGrid2DSolver::SetFlowGuides(const TArray<FTDFluidFlowGuide>& Guides)
+{
+	WaterGuideSegments.Reset();
+	for (int32 GuideIndex = 0; GuideIndex < Guides.Num(); ++GuideIndex)
+	{
+		const TArray<FTDFluidFlowGuidePoint>& Points = Guides[GuideIndex].Points;
+		for (int32 PointIndex = 0; PointIndex + 1 < Points.Num(); ++PointIndex)
+		{
+			const FTDFluidFlowGuidePoint& StartPoint = Points[PointIndex];
+			const FTDFluidFlowGuidePoint& EndPoint = Points[PointIndex + 1];
+			const bool bIsFinite = !StartPoint.WorldLocation.ContainsNaN() && !EndPoint.WorldLocation.ContainsNaN()
+				&& FMath::IsFinite(StartPoint.HalfWidthCm) && FMath::IsFinite(EndPoint.HalfWidthCm)
+				&& FMath::IsFinite(StartPoint.FlowSpeedCmPerSec) && FMath::IsFinite(EndPoint.FlowSpeedCmPerSec);
+			if (!bIsFinite)
+			{
+				continue;
+			}
+
+			const FVector2D Start(StartPoint.WorldLocation.X, StartPoint.WorldLocation.Y);
+			const FVector2D Offset(EndPoint.WorldLocation.X - Start.X, EndPoint.WorldLocation.Y - Start.Y);
+			const double Length = Offset.Size();
+			if (Length < UE_KINDA_SMALL_NUMBER)
+			{
+				continue;
+			}
+
+			FWaterGuideSegment Segment;
+			Segment.Start = Start;
+			Segment.Direction = Offset / Length;
+			Segment.LengthCm = Length;
+			Segment.StartSurfaceCm = static_cast<float>(StartPoint.WorldLocation.Z);
+			Segment.EndSurfaceCm = static_cast<float>(EndPoint.WorldLocation.Z);
+			Segment.StartHalfWidthCm = FMath::Max(StartPoint.HalfWidthCm, 0.0f);
+			Segment.EndHalfWidthCm = FMath::Max(EndPoint.HalfWidthCm, 0.0f);
+			Segment.StartSpeedCmPerSec = StartPoint.FlowSpeedCmPerSec;
+			Segment.EndSpeedCmPerSec = EndPoint.FlowSpeedCmPerSec;
+			Segment.DescentSlope = FMath::Max(0.0f, static_cast<float>((StartPoint.WorldLocation.Z - EndPoint.WorldLocation.Z) / Length));
+			Segment.GuideIndex = GuideIndex;
+
+			const double PaddingCm = FMath::Max(Segment.StartHalfWidthCm, Segment.EndHalfWidthCm);
+			const FVector2D End(EndPoint.WorldLocation.X, EndPoint.WorldLocation.Y);
+			Segment.MinimumX = FMath::Min(Start.X, End.X) - PaddingCm;
+			Segment.MaximumX = FMath::Max(Start.X, End.X) + PaddingCm;
+			Segment.MinimumY = FMath::Min(Start.Y, End.Y) - PaddingCm;
+			Segment.MaximumY = FMath::Max(Start.Y, End.Y) + PaddingCm;
+			WaterGuideSegments.Add(Segment);
+		}
+	}
+	bWaterRasterFullDirty = true;
+}
+
+void FTDFluidGrid2DSolver::SetWaterRegions(const TArray<FTDFluidWaterRegion>& Regions)
+{
+	WaterRegions.Reset();
+	for (const FTDFluidWaterRegion& Region : Regions)
+	{
+		if (Region.MinXY.ContainsNaN() || Region.MaxXY.ContainsNaN() || !FMath::IsFinite(Region.SurfaceHeightCm))
+		{
+			continue;
+		}
+
+		FTDFluidWaterRegion NormalizedRegion;
+		NormalizedRegion.MinXY = FVector2D(FMath::Min(Region.MinXY.X, Region.MaxXY.X), FMath::Min(Region.MinXY.Y, Region.MaxXY.Y));
+		NormalizedRegion.MaxXY = FVector2D(FMath::Max(Region.MinXY.X, Region.MaxXY.X), FMath::Max(Region.MinXY.Y, Region.MaxXY.Y));
+		NormalizedRegion.SurfaceHeightCm = Region.SurfaceHeightCm;
+		WaterRegions.Add(NormalizedRegion);
+	}
+	bWaterRasterFullDirty = true;
+}
+
+float FTDFluidGrid2DSolver::GetWaterSurfaceHeightAtCell(int32 CellX, int32 CellY) const
+{
+	if (!IsWaterLayerActive() || !IsValidCell(CellX, CellY))
+	{
+		return NoWaterSurfaceHeight;
+	}
+	return WaterSurfaceHeight[ToCellIndex(CellX, CellY)];
+}
+
+bool FTDFluidGrid2DSolver::IsTerrainSamplingCompleteForWater() const
+{
+	return IsWaterLayerActive() && TerrainKnownCellCount >= Resolution * Resolution;
+}
+
+float FTDFluidGrid2DSolver::ComputeWaterDepthAtIndex(int32 CellIndex) const
+{
+	const float SurfaceHeight = WaterSurfaceHeight[CellIndex];
+	if (SurfaceHeight == NoWaterSurfaceHeight || TerrainKnownMask[CellIndex] == 0)
+	{
+		return 0.0f;
+	}
+	return FMath::Max(0.0f, SurfaceHeight - TerrainElevation[CellIndex]);
+}
+
+void FTDFluidGrid2DSolver::CommitWaterObstacleSdf()
+{
+	ObstacleSdfRaw = ObstacleSdf;
+	ComposeWaterObstacleSdf();
+}
+
+void FTDFluidGrid2DSolver::ComposeWaterObstacleSdf()
+{
+	const int32 CellCount = Resolution * Resolution;
+	const float* RawValues = ObstacleSdfRaw.GetData();
+	const float* DryValues = WaterDrySdf.GetData();
+	float* SdfValues = ObstacleSdf.GetData();
+
+	if (Config.bTreatDryCellsAsSolid)
+	{
+		for (int32 CellIndex = 0; CellIndex < CellCount; ++CellIndex)
+		{
+			SdfValues[CellIndex] = FMath::Min(RawValues[CellIndex], DryValues[CellIndex]);
+		}
+	}
+	else
+	{
+		FMemory::Memcpy(SdfValues, RawValues, sizeof(float) * CellCount);
+	}
+
+	RefreshObstacleCellCache();
+}
+
+void FTDFluidGrid2DSolver::RefreshWaterDrySdf()
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_WaterDrySdf);
+
+	const int32 GridSize = Resolution;
+	const uint8* KnownValues = TerrainKnownMask.GetData();
+	const float* SurfaceValues = WaterSurfaceHeight.GetData();
+	const float* ElevationValues = TerrainElevation.GetData();
+	const FVector2D* SlopeValues = TerrainSlope.GetData();
+	float* DryValues = WaterDrySdf.GetData();
+
+	ForEachGridRow(TEXT("TDFluidWaterDrySdfRows"), GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			if (KnownValues[Idx] == 0)
+			{
+				DryValues[Idx] = FluidWaterUnknownTerrainSdfCm;
+				continue;
+			}
+
+			if (SurfaceValues[Idx] == NoWaterSurfaceHeight)
+			{
+				DryValues[Idx] = FluidWaterNoSurfaceSdfCm;
+				continue;
+			}
+
+			const float SlopeMagnitude = FMath::Max(static_cast<float>(SlopeValues[Idx].Size()), FluidWaterMinimumTerrainSlope);
+			const float SignedDistance = (SurfaceValues[Idx] - ElevationValues[Idx]) / SlopeMagnitude;
+			DryValues[Idx] = FMath::IsFinite(SignedDistance) ? FMath::Clamp(SignedDistance, -FluidWaterSdfLimitCm, FluidWaterSdfLimitCm) : FluidWaterUnknownTerrainSdfCm;
+		}
+	});
+}
+
+void FTDFluidGrid2DSolver::BuildWaterRowSegmentLists()
+{
+	const int32 GridSize = Resolution;
+	const double RowSlackCm = 0.5 * Config.SimExtentCm.Y / GridSize + Config.FlowGuideBankFalloffCm;
+
+	double RowWorldY[MaxGridResolution];
+	for (int32 Y = 0; Y < GridSize; ++Y)
+	{
+		RowWorldY[Y] = CellToWorldCenter(0, Y).Y;
+	}
+
+	WaterRowSegmentOffsets.Init(0, GridSize + 1);
+	for (const FWaterGuideSegment& Segment : WaterGuideSegments)
+	{
+		for (int32 Y = 0; Y < GridSize; ++Y)
+		{
+			if (RowWorldY[Y] >= Segment.MinimumY - RowSlackCm && RowWorldY[Y] <= Segment.MaximumY + RowSlackCm)
+			{
+				++WaterRowSegmentOffsets[Y + 1];
+			}
+		}
+	}
+
+	for (int32 Y = 0; Y < GridSize; ++Y)
+	{
+		WaterRowSegmentOffsets[Y + 1] += WaterRowSegmentOffsets[Y];
+	}
+
+	WaterRowSegmentIndices.SetNumUninitialized(WaterRowSegmentOffsets[GridSize]);
+	int32 RowCursors[MaxGridResolution];
+	for (int32 Y = 0; Y < GridSize; ++Y)
+	{
+		RowCursors[Y] = WaterRowSegmentOffsets[Y];
+	}
+
+	for (int32 SegmentIndex = 0; SegmentIndex < WaterGuideSegments.Num(); ++SegmentIndex)
+	{
+		const FWaterGuideSegment& Segment = WaterGuideSegments[SegmentIndex];
+		for (int32 Y = 0; Y < GridSize; ++Y)
+		{
+			if (RowWorldY[Y] >= Segment.MinimumY - RowSlackCm && RowWorldY[Y] <= Segment.MaximumY + RowSlackCm)
+			{
+				WaterRowSegmentIndices[RowCursors[Y]++] = SegmentIndex;
+			}
+		}
+	}
+}
+
+void FTDFluidGrid2DSolver::RasterizeWaterInputs()
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_RasterizeWater);
+
+	BuildWaterRowSegmentLists();
+
+	const int32 GridSize = Resolution;
+	const bool bRasterizesAllCells = bWaterRasterFullDirty;
+	const bool bInitializesAllVelocities = bWaterVelocityInitPending;
+	const float BankFalloffCm = Config.FlowGuideBankFalloffCm;
+	const float BankSpeedRatio = Config.FlowGuideBankSpeedRatio;
+	const int32* RowOffsets = WaterRowSegmentOffsets.GetData();
+	const int32* RowSegmentIndices = WaterRowSegmentIndices.GetData();
+	const FWaterGuideSegment* Segments = WaterGuideSegments.GetData();
+	const FTDFluidWaterRegion* Regions = WaterRegions.GetData();
+	const int32 RegionCount = WaterRegions.Num();
+	const uint8* DirtyColumns = WaterDirtyColumns.GetData();
+	const uint8* DirtyRows = WaterDirtyRows.GetData();
+	float* SurfaceValues = WaterSurfaceHeight.GetData();
+	float* TargetX = FlowTargetVelocityX.GetData();
+	float* TargetY = FlowTargetVelocityY.GetData();
+	float* WeightValues = FlowGuideWeight.GetData();
+	float* DescentValues = FlowGuideDescent.GetData();
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+
+	ForEachGridRow(TEXT("TDFluidRasterizeWaterRows"), GridSize, [&](int32 Y)
+	{
+		const bool bIsDirtyRow = DirtyRows[Y] != 0;
+		const int32 SegmentBegin = RowOffsets[Y];
+		const int32 SegmentEnd = RowOffsets[Y + 1];
+
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const bool bIsNewCell = bIsDirtyRow || DirtyColumns[X] != 0;
+			if (!bRasterizesAllCells && !bIsNewCell)
+			{
+				continue;
+			}
+
+			const FVector2D CellWorld = CellToWorldCenter(X, Y);
+			double WeightSum = 0.0;
+			double VelocitySumX = 0.0;
+			double VelocitySumY = 0.0;
+			float StrongestWeight = 0.0f;
+			float StrongestSurface = 0.0f;
+			float StrongestDescent = 0.0f;
+
+			int32 CurrentGuideIndex = INDEX_NONE;
+			const FWaterGuideSegment* NearestSegment = nullptr;
+			float NearestDistanceCm = TNumericLimits<float>::Max();
+			float NearestFraction = 0.0f;
+
+			const auto FlushGuide = [&]()
+			{
+				if (NearestSegment == nullptr)
+				{
+					return;
+				}
+
+				const float HalfWidthCm = FMath::Lerp(NearestSegment->StartHalfWidthCm, NearestSegment->EndHalfWidthCm, NearestFraction);
+				const float Weight = FluidWaterBankFalloffWeight(NearestDistanceCm, HalfWidthCm, BankFalloffCm);
+				if (Weight > 0.0f)
+				{
+					const float NormalizedDistance = FMath::Clamp(NearestDistanceCm / HalfWidthCm, 0.0f, 1.0f);
+					const float ProfileScale = BankSpeedRatio + (1.0f - BankSpeedRatio) * (1.0f - NormalizedDistance * NormalizedDistance);
+					const float Speed = FMath::Lerp(NearestSegment->StartSpeedCmPerSec, NearestSegment->EndSpeedCmPerSec, NearestFraction) * ProfileScale;
+					WeightSum += Weight;
+					VelocitySumX += Weight * NearestSegment->Direction.X * Speed;
+					VelocitySumY += Weight * NearestSegment->Direction.Y * Speed;
+					if (Weight > StrongestWeight)
+					{
+						StrongestWeight = Weight;
+						StrongestSurface = FMath::Lerp(NearestSegment->StartSurfaceCm, NearestSegment->EndSurfaceCm, NearestFraction);
+						StrongestDescent = NearestSegment->DescentSlope;
+					}
+				}
+
+				NearestSegment = nullptr;
+				NearestDistanceCm = TNumericLimits<float>::Max();
+			};
+
+			for (int32 ListIndex = SegmentBegin; ListIndex < SegmentEnd; ++ListIndex)
+			{
+				const FWaterGuideSegment& Segment = Segments[RowSegmentIndices[ListIndex]];
+				if (Segment.GuideIndex != CurrentGuideIndex)
+				{
+					FlushGuide();
+					CurrentGuideIndex = Segment.GuideIndex;
+				}
+
+				if (CellWorld.X < Segment.MinimumX || CellWorld.X > Segment.MaximumX)
+				{
+					continue;
+				}
+
+				const double AlongCm = FMath::Clamp(FVector2D::DotProduct(CellWorld - Segment.Start, Segment.Direction), 0.0, Segment.LengthCm);
+				const FVector2D ClosestPoint = Segment.Start + Segment.Direction * AlongCm;
+				const float DistanceCm = static_cast<float>((CellWorld - ClosestPoint).Size());
+				if (DistanceCm < NearestDistanceCm)
+				{
+					NearestSegment = &Segment;
+					NearestDistanceCm = DistanceCm;
+					NearestFraction = static_cast<float>(AlongCm / Segment.LengthCm);
+				}
+			}
+			FlushGuide();
+
+			const int32 Idx = Y * GridSize + X;
+			if (WeightSum > 0.0)
+			{
+				SurfaceValues[Idx] = StrongestSurface;
+				TargetX[Idx] = static_cast<float>(VelocitySumX / WeightSum);
+				TargetY[Idx] = static_cast<float>(VelocitySumY / WeightSum);
+				WeightValues[Idx] = StrongestWeight;
+				DescentValues[Idx] = StrongestDescent;
+			}
+			else
+			{
+				float RegionSurface = NoWaterSurfaceHeight;
+				for (int32 RegionIndex = 0; RegionIndex < RegionCount; ++RegionIndex)
+				{
+					const FTDFluidWaterRegion& Region = Regions[RegionIndex];
+					const bool bIsInsideRegion = CellWorld.X >= Region.MinXY.X && CellWorld.X <= Region.MaxXY.X
+						&& CellWorld.Y >= Region.MinXY.Y && CellWorld.Y <= Region.MaxXY.Y;
+					if (bIsInsideRegion)
+					{
+						RegionSurface = FMath::Max(RegionSurface, Region.SurfaceHeightCm);
+					}
+				}
+				SurfaceValues[Idx] = RegionSurface;
+				TargetX[Idx] = 0.0f;
+				TargetY[Idx] = 0.0f;
+				WeightValues[Idx] = 0.0f;
+				DescentValues[Idx] = 0.0f;
+			}
+
+			if (bInitializesAllVelocities || bIsNewCell)
+			{
+				VelX[Idx] = TargetX[Idx] * WeightValues[Idx];
+				VelY[Idx] = TargetY[Idx] * WeightValues[Idx];
+			}
+		}
+	});
+
+	WaterDirtyColumns.Init(0, GridSize);
+	WaterDirtyRows.Init(0, GridSize);
+	bWaterRasterFullDirty = false;
+	bWaterHasDirtyStrips = false;
+	bWaterVelocityInitPending = false;
+	bWaterDryDirty = true;
+}
+
+void FTDFluidGrid2DSolver::PrepareWaterInputs()
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_PrepareWaterInputs);
+
+	if (bWaterRasterFullDirty || bWaterHasDirtyStrips)
+	{
+		RasterizeWaterInputs();
+	}
+
+	if (!bWaterDryDirty)
+	{
+		return;
+	}
+
+	RefreshWaterDrySdf();
+	ComposeWaterObstacleSdf();
+	bWaterDryDirty = false;
+}
+
+void FTDFluidGrid2DSolver::StepFluidSimWater(float DeltaTime)
+{
+	PrepareWaterInputs();
+	ApplyTerrainSlopeAccelerationDryOnly(DeltaTime);
+	ApplyFlowNoiseAcceleration(DeltaTime);
+	ApplyFlowGuideAcceleration(DeltaTime);
+	EnforceObstacleBoundaries();
+	ApplyVorticityConfinement(DeltaTime);
+	SolvePressureProjectionWater();
+	AdvectVelocityWater(DeltaTime);
+	EnforceObstacleBoundaries();
+	SolvePressureProjectionWater();
+	EnforceObstacleBoundaries();
+	AdvectDensities(DeltaTime);
+	AddWhitewaterSources(DeltaTime);
+	StepRipples(DeltaTime);
+}
+
+void FTDFluidGrid2DSolver::ApplyTerrainSlopeAccelerationDryOnly(float DeltaTime)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_TerrainSlopeDryOnly);
+
+	if (Config.TerrainSlopeGravity <= 0.0f || bIsTerrainSlopeZero)
+	{
+		return;
+	}
+
+	const int32 GridSize = Resolution;
+	const float SlopeGravity = Config.TerrainSlopeGravity;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const uint8* KnownValues = TerrainKnownMask.GetData();
+	const float* SurfaceValues = WaterSurfaceHeight.GetData();
+	const float* ElevationValues = TerrainElevation.GetData();
+	const FVector2D* SlopeValues = TerrainSlope.GetData();
+	const float* PrimaryValues = PrimaryDensity.GetData();
+	const float* SelectiveValues = SelectiveDensity.GetData();
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+
+	ForEachGridRow(TEXT("TDFluidTerrainSlopeDryRows"), GridSize, [&](int32 Y)
+	{
+		const int32 RowStart = Y * GridSize;
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = RowStart + X;
+			if (SolidCells[Idx])
+			{
+				continue;
+			}
+
+			const bool bIsSubmerged = SurfaceValues[Idx] != NoWaterSurfaceHeight && (KnownValues[Idx] == 0 || SurfaceValues[Idx] > ElevationValues[Idx]);
+			if (bIsSubmerged)
+			{
+				continue;
+			}
+
+			const float ActiveFluidMask = FMath::Clamp(PrimaryValues[Idx] + SelectiveValues[Idx] + 0.1f, 0.0f, 1.0f);
+			VelX[Idx] -= SlopeValues[Idx].X * SlopeGravity * ActiveFluidMask * DeltaTime;
+			VelY[Idx] -= SlopeValues[Idx].Y * SlopeGravity * ActiveFluidMask * DeltaTime;
+		}
+	});
+}
+
+void FTDFluidGrid2DSolver::ApplyFlowGuideAcceleration(float DeltaTime)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_FlowGuide);
+
+	if (Config.FlowGuideResponsePerSec <= 0.0f)
+	{
+		return;
+	}
+
+	const int32 GridSize = Resolution;
+	const float ResponseBlend = 1.0f - FMath::Exp(-Config.FlowGuideResponsePerSec * DeltaTime);
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* TargetX = FlowTargetVelocityX.GetData();
+	const float* TargetY = FlowTargetVelocityY.GetData();
+	const float* WeightValues = FlowGuideWeight.GetData();
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+
+	ForEachGridRow(TEXT("TDFluidFlowGuideRows"), GridSize, [&](int32 Y)
+	{
+		const int32 RowStart = Y * GridSize;
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = RowStart + X;
+			if (SolidCells[Idx] || WeightValues[Idx] <= 0.0f)
+			{
+				continue;
+			}
+
+			const float CellBlend = ResponseBlend * WeightValues[Idx];
+			VelX[Idx] += (TargetX[Idx] - VelX[Idx]) * CellBlend;
+			VelY[Idx] += (TargetY[Idx] - VelY[Idx]) * CellBlend;
+		}
+	});
+}
+
+void FTDFluidGrid2DSolver::AdvectVelocityWater(float DeltaTime)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_AdvectVelocityWater);
+
+	const float CellSizeX = Config.SimExtentCm.X / static_cast<float>(Resolution);
+	const float CellSizeY = Config.SimExtentCm.Y / static_cast<float>(Resolution);
+	const float StepScaleX = (DeltaTime * Config.AdvectionSpeedScale) / CellSizeX;
+	const float StepScaleY = (DeltaTime * Config.AdvectionSpeedScale) / CellSizeY;
+	const float DampingFactor = 1.0f / (1.0f + Config.VelocityDamping * DeltaTime * 15.0f);
+
+	float BorderFadeByCoordinate[MaxGridResolution];
+	float BorderDampingByCoordinate[MaxGridResolution];
+	BuildBorderFadeTable(BorderFadeByCoordinate);
+	BuildBorderDampingTable(BorderFadeByCoordinate, DeltaTime, BorderDampingByCoordinate);
+
+	const int32 GridSize = Resolution;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* TargetX = FlowTargetVelocityX.GetData();
+	const float* TargetY = FlowTargetVelocityY.GetData();
+	const float* VelX = VelocityX.GetData();
+	const float* VelY = VelocityY.GetData();
+	float* AdvectedVelX = ScratchVelocityX.GetData();
+	float* AdvectedVelY = ScratchVelocityY.GetData();
+
+	ForEachGridRow(TEXT("TDFluidAdvectVelocityWaterRows"), GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			if (SolidCells[Idx])
+			{
+				AdvectedVelX[Idx] = 0.0f;
+				AdvectedVelY[Idx] = 0.0f;
+				continue;
+			}
+
+			const float BacktraceX = static_cast<float>(X) - VelX[Idx] * StepScaleX;
+			const float BacktraceY = static_cast<float>(Y) - VelY[Idx] * StepScaleY;
+			const float BorderDamping = BorderFadeByCoordinate[X] <= BorderFadeByCoordinate[Y] ? BorderDampingByCoordinate[X] : BorderDampingByCoordinate[Y];
+			const FTDFluidBilinearSample Sample = MakeBilinearSample(BacktraceX, BacktraceY, GridSize);
+
+			const float AdvectedX = InterpolateBilinear(VelX, Sample) * DampingFactor;
+			const float AdvectedY = InterpolateBilinear(VelY, Sample) * DampingFactor;
+			AdvectedVelX[Idx] = TargetX[Idx] + (AdvectedX - TargetX[Idx]) * BorderDamping;
+			AdvectedVelY[Idx] = TargetY[Idx] + (AdvectedY - TargetY[Idx]) * BorderDamping;
+		}
+	});
+
+	Swap(VelocityX, ScratchVelocityX);
+	Swap(VelocityY, ScratchVelocityY);
+}
+
+bool FTDFluidGrid2DSolver::HasOpenWaterBorderCell() const
+{
+	const int32 GridSize = Resolution;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* SurfaceValues = WaterSurfaceHeight.GetData();
+
+	const auto IsOpenCell = [&](int32 X, int32 Y)
+	{
+		const int32 Idx = Y * GridSize + X;
+		return SolidCells[Idx] == 0 && SurfaceValues[Idx] != NoWaterSurfaceHeight;
+	};
+
+	for (int32 EdgeIndex = 0; EdgeIndex < GridSize; ++EdgeIndex)
+	{
+		if (IsOpenCell(EdgeIndex, 0) || IsOpenCell(EdgeIndex, GridSize - 1) || IsOpenCell(0, EdgeIndex) || IsOpenCell(GridSize - 1, EdgeIndex))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void FTDFluidGrid2DSolver::SolvePressureProjectionWater()
+{
+	if (!Config.bOpenWaterBorders || !HasOpenWaterBorderCell())
+	{
+		SolvePressureProjection();
+		return;
+	}
+
+	float SpacingX = 1.0f;
+	float SpacingY = 1.0f;
+	ComputeRelativeCellSpacing(SpacingX, SpacingY);
+
+	const float InvSpacingXSquared = 1.0f / (SpacingX * SpacingX);
+	const float InvSpacingYSquared = 1.0f / (SpacingY * SpacingY);
+	const float InvNeighborWeightSum = 1.0f / (2.0f * (InvSpacingXSquared + InvSpacingYSquared));
+	const float SmallestCellSizeCm = static_cast<float>(FMath::Min(Config.SimExtentCm.X, Config.SimExtentCm.Y)) / static_cast<float>(Resolution);
+	const float PressureDisplayScale = SmallestCellSizeCm / (PressureNormalizationCmPerSec * PressureReferenceCellSizeCm);
+
+	ComputeVelocityDivergenceOpenBorders(SpacingX, SpacingY);
+	RelaxPressureJacobiOpenBorders(InvSpacingXSquared, InvSpacingYSquared, InvNeighborWeightSum);
+	SubtractPressureGradientOpenBorders(SpacingX, SpacingY, PressureDisplayScale);
+}
+
+void FTDFluidGrid2DSolver::ComputeVelocityDivergenceOpenBorders(float SpacingX, float SpacingY)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ProjectionDivergenceOpen);
+
+	const int32 GridSize = Resolution;
+	const float DoubleSpacingX = 2.0f * SpacingX;
+	const float DoubleSpacingY = 2.0f * SpacingY;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* SurfaceValues = WaterSurfaceHeight.GetData();
+	const float* VelX = VelocityX.GetData();
+	const float* VelY = VelocityY.GetData();
+	float* DivergenceValues = Divergence.GetData();
+	float* PressureSolutionValues = PressureSolution.GetData();
+
+	ForEachGridRow(TEXT("TDFluidDivergenceOpenRows"), GridSize, [&](int32 Y)
+	{
+		const int32 RowStart = Y * GridSize;
+		const bool bIsEdgeRow = Y == 0 || Y == GridSize - 1;
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = RowStart + X;
+			if (SolidCells[Idx])
+			{
+				DivergenceValues[Idx] = 0.0f;
+				PressureSolutionValues[Idx] = 0.0f;
+				continue;
+			}
+
+			const bool bIsEdgeCell = bIsEdgeRow || X == 0 || X == GridSize - 1;
+			const bool bIsOpenCell = bIsEdgeCell && SurfaceValues[Idx] != NoWaterSurfaceHeight;
+			const float GhostVelocityX = bIsOpenCell ? VelX[Idx] : 0.0f;
+			const float GhostVelocityY = bIsOpenCell ? VelY[Idx] : 0.0f;
+			const float VelRight = X + 1 < GridSize ? (SolidCells[Idx + 1] ? 0.0f : VelX[Idx + 1]) : GhostVelocityX;
+			const float VelLeft = X > 0 ? (SolidCells[Idx - 1] ? 0.0f : VelX[Idx - 1]) : GhostVelocityX;
+			const float VelUp = Y + 1 < GridSize ? (SolidCells[Idx + GridSize] ? 0.0f : VelY[Idx + GridSize]) : GhostVelocityY;
+			const float VelDown = Y > 0 ? (SolidCells[Idx - GridSize] ? 0.0f : VelY[Idx - GridSize]) : GhostVelocityY;
+			DivergenceValues[Idx] = (VelRight - VelLeft) / DoubleSpacingX + (VelUp - VelDown) / DoubleSpacingY;
+		}
+	});
+}
+
+void FTDFluidGrid2DSolver::RelaxPressureJacobiOpenBorders(float InvSpacingXSquared, float InvSpacingYSquared, float InvNeighborWeightSum)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ProjectionJacobiOpen);
+
+	const int32 GridSize = Resolution;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* SurfaceValues = WaterSurfaceHeight.GetData();
+	const float* DivergenceValues = Divergence.GetData();
+
+	for (int32 Iter = 0; Iter < Config.PressureIterations; ++Iter)
+	{
+		const float* SourcePressure = PressureSolution.GetData();
+		float* TargetPressure = ScratchPressure.GetData();
+
+		ForEachGridRow(TEXT("TDFluidJacobiOpenRows"), GridSize, [&](int32 Y)
+		{
+			const int32 RowStart = Y * GridSize;
+			const bool bIsEdgeRow = Y == 0 || Y == GridSize - 1;
+			for (int32 X = 0; X < GridSize; ++X)
+			{
+				const int32 Idx = RowStart + X;
+				if (SolidCells[Idx])
+				{
+					TargetPressure[Idx] = 0.0f;
+					continue;
+				}
+
+				const float CenterP = SourcePressure[Idx];
+				const bool bIsEdgeCell = bIsEdgeRow || X == 0 || X == GridSize - 1;
+				const bool bIsOpenCell = bIsEdgeCell && SurfaceValues[Idx] != NoWaterSurfaceHeight;
+				const float GhostP = bIsOpenCell ? 0.0f : CenterP;
+				const float PRight = X + 1 < GridSize ? (SolidCells[Idx + 1] ? CenterP : SourcePressure[Idx + 1]) : GhostP;
+				const float PLeft = X > 0 ? (SolidCells[Idx - 1] ? CenterP : SourcePressure[Idx - 1]) : GhostP;
+				const float PUp = Y + 1 < GridSize ? (SolidCells[Idx + GridSize] ? CenterP : SourcePressure[Idx + GridSize]) : GhostP;
+				const float PDown = Y > 0 ? (SolidCells[Idx - GridSize] ? CenterP : SourcePressure[Idx - GridSize]) : GhostP;
+				TargetPressure[Idx] = ((PLeft + PRight) * InvSpacingXSquared + (PDown + PUp) * InvSpacingYSquared - DivergenceValues[Idx]) * InvNeighborWeightSum;
+			}
+		});
+		Swap(PressureSolution, ScratchPressure);
+	}
+}
+
+void FTDFluidGrid2DSolver::SubtractPressureGradientOpenBorders(float SpacingX, float SpacingY, float PressureDisplayScale)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ProjectionGradientOpen);
+
+	const int32 GridSize = Resolution;
+	const float DoubleSpacingX = 2.0f * SpacingX;
+	const float DoubleSpacingY = 2.0f * SpacingY;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* SurfaceValues = WaterSurfaceHeight.GetData();
+	const float* PressureSolutionValues = PressureSolution.GetData();
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+	float* PressureValues = Pressure.GetData();
+
+	ForEachGridRow(TEXT("TDFluidGradientOpenRows"), GridSize, [&](int32 Y)
+	{
+		const int32 RowStart = Y * GridSize;
+		const bool bIsEdgeRow = Y == 0 || Y == GridSize - 1;
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = RowStart + X;
+			if (SolidCells[Idx])
+			{
+				VelX[Idx] = 0.0f;
+				VelY[Idx] = 0.0f;
+				PressureValues[Idx] = 0.0f;
+				continue;
+			}
+
+			const float CenterP = PressureSolutionValues[Idx];
+			const bool bIsEdgeCell = bIsEdgeRow || X == 0 || X == GridSize - 1;
+			const bool bIsOpenCell = bIsEdgeCell && SurfaceValues[Idx] != NoWaterSurfaceHeight;
+			const float GhostP = bIsOpenCell ? 0.0f : CenterP;
+			const float PRight = X + 1 < GridSize ? (SolidCells[Idx + 1] ? CenterP : PressureSolutionValues[Idx + 1]) : GhostP;
+			const float PLeft = X > 0 ? (SolidCells[Idx - 1] ? CenterP : PressureSolutionValues[Idx - 1]) : GhostP;
+			const float PUp = Y + 1 < GridSize ? (SolidCells[Idx + GridSize] ? CenterP : PressureSolutionValues[Idx + GridSize]) : GhostP;
+			const float PDown = Y > 0 ? (SolidCells[Idx - GridSize] ? CenterP : PressureSolutionValues[Idx - GridSize]) : GhostP;
+
+			VelX[Idx] -= (PRight - PLeft) / DoubleSpacingX;
+			VelY[Idx] -= (PUp - PDown) / DoubleSpacingY;
+			PressureValues[Idx] = FMath::Clamp(CenterP * PressureDisplayScale, -1.0f, 1.0f);
+		}
+	});
+}
+
+void FTDFluidGrid2DSolver::AddWhitewaterSources(float DeltaTime)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_Whitewater);
+
+	const float VorticityCoefficient = Config.WhitewaterFromVorticity;
+	const float RapidsCoefficient = Config.RapidsWhitewaterPerSec;
+	if (VorticityCoefficient <= 0.0f && RapidsCoefficient <= 0.0f)
+	{
+		return;
+	}
+
+	const int32 GridSize = Resolution;
+	const float CellSizeX = Config.SimExtentCm.X / static_cast<float>(Resolution);
+	const float CellSizeY = Config.SimExtentCm.Y / static_cast<float>(Resolution);
+	const float VorticityThreshold = Config.WhitewaterVorticityThresholdPerSec;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* SurfaceValues = WaterSurfaceHeight.GetData();
+	const float* WeightValues = FlowGuideWeight.GetData();
+	const float* DescentValues = FlowGuideDescent.GetData();
+	const float* VelX = VelocityX.GetData();
+	const float* VelY = VelocityY.GetData();
+	float* PrimaryValues = PrimaryDensity.GetData();
+
+	ForEachGridRow(TEXT("TDFluidWhitewaterRows"), GridSize, [&](int32 Y)
+	{
+		const int32 YMinus = FMath::Max(Y - 1, 0);
+		const int32 YPlus = FMath::Min(Y + 1, GridSize - 1);
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			if (SolidCells[Idx] || SurfaceValues[Idx] == NoWaterSurfaceHeight)
+			{
+				continue;
+			}
+
+			float Source = 0.0f;
+			if (VorticityCoefficient > 0.0f)
+			{
+				const int32 XMinus = FMath::Max(X - 1, 0);
+				const int32 XPlus = FMath::Min(X + 1, GridSize - 1);
+				const int32 RightIdx = Y * GridSize + XPlus;
+				const int32 LeftIdx = Y * GridSize + XMinus;
+				const int32 UpIdx = YPlus * GridSize + X;
+				const int32 DownIdx = YMinus * GridSize + X;
+				const float RightVelY = SolidCells[RightIdx] ? VelY[Idx] : VelY[RightIdx];
+				const float LeftVelY = SolidCells[LeftIdx] ? VelY[Idx] : VelY[LeftIdx];
+				const float UpVelX = SolidCells[UpIdx] ? VelX[Idx] : VelX[UpIdx];
+				const float DownVelX = SolidCells[DownIdx] ? VelX[Idx] : VelX[DownIdx];
+				const float DvYDx = (RightVelY - LeftVelY) / (static_cast<float>(XPlus - XMinus) * CellSizeX);
+				const float DvXDy = (UpVelX - DownVelX) / (static_cast<float>(YPlus - YMinus) * CellSizeY);
+				Source += VorticityCoefficient * FMath::Max(0.0f, FMath::Abs(DvYDx - DvXDy) - VorticityThreshold) * DeltaTime;
+			}
+
+			if (RapidsCoefficient > 0.0f)
+			{
+				Source += RapidsCoefficient * DescentValues[Idx] * WeightValues[Idx] * DeltaTime;
+			}
+
+			if (Source > 0.0f)
+			{
+				PrimaryValues[Idx] = FMath::Min(1.0f, PrimaryValues[Idx] + Source);
+			}
+		}
+	});
+}
+
+void FTDFluidGrid2DSolver::StepRipples(float DeltaTime)
+{
+	if (Config.RippleWaveSpeedCmPerSec <= 0.0f || !bHasRippleActivity)
+	{
+		return;
+	}
+
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_Ripples);
+
+	const int32 GridSize = Resolution;
+	const float CellSizeX = Config.SimExtentCm.X / static_cast<float>(Resolution);
+	const float CellSizeY = Config.SimExtentCm.Y / static_cast<float>(Resolution);
+	const float WaveSpeed = Config.RippleWaveSpeedCmPerSec;
+	const int32 SubstepCount = FMath::Clamp(FMath::CeilToInt(WaveSpeed * DeltaTime * FluidWaterSquareRootOfTwo / (FluidWaterRippleSubstepSafety * FMath::Min(CellSizeX, CellSizeY))), 1, FluidWaterMaxRippleSubsteps);
+	const float SubstepSeconds = DeltaTime / static_cast<float>(SubstepCount);
+	const float WaveSpeedSquared = WaveSpeed * WaveSpeed;
+	const float InvCellSizeXSquared = 1.0f / (CellSizeX * CellSizeX);
+	const float InvCellSizeYSquared = 1.0f / (CellSizeY * CellSizeY);
+	const float DampingPerSec = Config.RippleDampingPerSec;
+
+	float BorderFadeByCoordinate[MaxGridResolution];
+	float BorderDampingByCoordinate[MaxGridResolution];
+	BuildBorderFadeTable(BorderFadeByCoordinate);
+	BuildBorderDampingTable(BorderFadeByCoordinate, SubstepSeconds, BorderDampingByCoordinate);
+
+	const uint8* SolidCells = SolidCellMask.GetData();
+	float* Heights = RippleHeight.GetData();
+	float* Speeds = RippleHeightVelocity.GetData();
+
+	for (int32 Substep = 0; Substep < SubstepCount; ++Substep)
+	{
+		ForEachGridRow(TEXT("TDFluidRippleAccelerateRows"), GridSize, [&](int32 Y)
+		{
+			for (int32 X = 0; X < GridSize; ++X)
+			{
+				const int32 Idx = Y * GridSize + X;
+				if (SolidCells[Idx])
+				{
+					Speeds[Idx] = 0.0f;
+					continue;
+				}
+
+				const float Center = Heights[Idx];
+				const float Left = X > 0 ? Heights[Idx - 1] : Center;
+				const float Right = X + 1 < GridSize ? Heights[Idx + 1] : Center;
+				const float Down = Y > 0 ? Heights[Idx - GridSize] : Center;
+				const float Up = Y + 1 < GridSize ? Heights[Idx + GridSize] : Center;
+				const float Laplacian = (Left + Right - 2.0f * Center) * InvCellSizeXSquared + (Down + Up - 2.0f * Center) * InvCellSizeYSquared;
+				Speeds[Idx] += (WaveSpeedSquared * Laplacian - DampingPerSec * Speeds[Idx]) * SubstepSeconds;
+			}
+		});
+
+		ForEachGridRow(TEXT("TDFluidRippleIntegrateRows"), GridSize, [&](int32 Y)
+		{
+			for (int32 X = 0; X < GridSize; ++X)
+			{
+				const int32 Idx = Y * GridSize + X;
+				if (SolidCells[Idx])
+				{
+					Heights[Idx] = 0.0f;
+					Speeds[Idx] = 0.0f;
+					continue;
+				}
+
+				const float BorderDamping = BorderFadeByCoordinate[X] <= BorderFadeByCoordinate[Y] ? BorderDampingByCoordinate[X] : BorderDampingByCoordinate[Y];
+				Heights[Idx] = (Heights[Idx] + Speeds[Idx] * SubstepSeconds) * BorderDamping;
+				Speeds[Idx] *= BorderDamping;
+			}
+		});
+	}
+
+	if (Config.RippleFlowAdvection > 0.0f)
+	{
+		AdvectRipples(DeltaTime);
+		Heights = RippleHeight.GetData();
+		Speeds = RippleHeightVelocity.GetData();
+	}
+
+	const int32 CellCount = GridSize * GridSize;
+	float PeakMagnitude = 0.0f;
+	for (int32 Idx = 0; Idx < CellCount; ++Idx)
+	{
+		PeakMagnitude = FMath::Max(PeakMagnitude, FMath::Max(FMath::Abs(Heights[Idx]), FMath::Abs(Speeds[Idx])));
+	}
+
+	if (PeakMagnitude < FluidWaterRippleQuietThreshold)
+	{
+		FMemory::Memzero(Heights, sizeof(float) * CellCount);
+		FMemory::Memzero(Speeds, sizeof(float) * CellCount);
+		bHasRippleActivity = false;
+	}
+}
+
+void FTDFluidGrid2DSolver::AdvectRipples(float DeltaTime)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_RippleAdvect);
+
+	const int32 GridSize = Resolution;
+	const float CellSizeX = Config.SimExtentCm.X / static_cast<float>(Resolution);
+	const float CellSizeY = Config.SimExtentCm.Y / static_cast<float>(Resolution);
+	const float StepScaleX = (DeltaTime * Config.RippleFlowAdvection) / CellSizeX;
+	const float StepScaleY = (DeltaTime * Config.RippleFlowAdvection) / CellSizeY;
+	const float MaximumCoordinate = static_cast<float>(GridSize - 1);
+
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* VelX = VelocityX.GetData();
+	const float* VelY = VelocityY.GetData();
+	const float* Heights = RippleHeight.GetData();
+	const float* Speeds = RippleHeightVelocity.GetData();
+	float* AdvectedHeights = ScratchRippleHeight.GetData();
+	float* AdvectedSpeeds = ScratchRippleHeightVelocity.GetData();
+
+	ForEachGridRow(TEXT("TDFluidRippleAdvectRows"), GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			if (SolidCells[Idx])
+			{
+				AdvectedHeights[Idx] = 0.0f;
+				AdvectedSpeeds[Idx] = 0.0f;
+				continue;
+			}
+
+			const float BacktraceX = FMath::Clamp(static_cast<float>(X) - VelX[Idx] * StepScaleX, 0.0f, MaximumCoordinate);
+			const float BacktraceY = FMath::Clamp(static_cast<float>(Y) - VelY[Idx] * StepScaleY, 0.0f, MaximumCoordinate);
+			const int32 BaseX = FMath::FloorToInt(BacktraceX);
+			const int32 BaseY = FMath::FloorToInt(BacktraceY);
+
+			float WeightsX[4];
+			float WeightsY[4];
+			FluidWaterBuildCubicWeights(BacktraceX - static_cast<float>(BaseX), WeightsX);
+			FluidWaterBuildCubicWeights(BacktraceY - static_cast<float>(BaseY), WeightsY);
+
+			int32 IndicesX[4];
+			int32 IndicesY[4];
+			for (int32 TapIndex = 0; TapIndex < 4; ++TapIndex)
+			{
+				IndicesX[TapIndex] = FMath::Clamp(BaseX - 1 + TapIndex, 0, GridSize - 1);
+				IndicesY[TapIndex] = FMath::Clamp(BaseY - 1 + TapIndex, 0, GridSize - 1);
+			}
+
+			float HeightSum = 0.0f;
+			float SpeedSum = 0.0f;
+			float HeightMinimum = TNumericLimits<float>::Max();
+			float HeightMaximum = -TNumericLimits<float>::Max();
+			float SpeedMinimum = TNumericLimits<float>::Max();
+			float SpeedMaximum = -TNumericLimits<float>::Max();
+			for (int32 TapY = 0; TapY < 4; ++TapY)
+			{
+				const float* HeightRow = Heights + IndicesY[TapY] * GridSize;
+				const float* SpeedRow = Speeds + IndicesY[TapY] * GridSize;
+				float RowHeight = 0.0f;
+				float RowSpeed = 0.0f;
+				for (int32 TapX = 0; TapX < 4; ++TapX)
+				{
+					const float TapHeight = HeightRow[IndicesX[TapX]];
+					const float TapSpeed = SpeedRow[IndicesX[TapX]];
+					RowHeight += WeightsX[TapX] * TapHeight;
+					RowSpeed += WeightsX[TapX] * TapSpeed;
+					HeightMinimum = FMath::Min(HeightMinimum, TapHeight);
+					HeightMaximum = FMath::Max(HeightMaximum, TapHeight);
+					SpeedMinimum = FMath::Min(SpeedMinimum, TapSpeed);
+					SpeedMaximum = FMath::Max(SpeedMaximum, TapSpeed);
+				}
+				HeightSum += WeightsY[TapY] * RowHeight;
+				SpeedSum += WeightsY[TapY] * RowSpeed;
+			}
+
+			const float HeightMargin = FluidWaterRippleOvershootRatio * (HeightMaximum - HeightMinimum);
+			const float SpeedMargin = FluidWaterRippleOvershootRatio * (SpeedMaximum - SpeedMinimum);
+			AdvectedHeights[Idx] = FMath::Clamp(HeightSum, HeightMinimum - HeightMargin, HeightMaximum + HeightMargin);
+			AdvectedSpeeds[Idx] = FMath::Clamp(SpeedSum, SpeedMinimum - SpeedMargin, SpeedMaximum + SpeedMargin);
+		}
+	});
+
+	Swap(RippleHeight, ScratchRippleHeight);
+	Swap(RippleHeightVelocity, ScratchRippleHeightVelocity);
+}
+
+void FTDFluidGrid2DSolver::PackWaterSurfacePixels(TArray<FFloat16Color>& OutPixels, float TerrainReferenceZCm) const
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_PackWaterSurface);
+
+	if (!IsWaterLayerActive())
+	{
+		OutPixels.Reset();
+		return;
+	}
+
+	const int32 GridSize = Resolution;
+	OutPixels.SetNumUninitialized(GridSize * GridSize);
+
+	const float DepthReferenceCm = Config.WaterDepthReferenceCm;
+	const float RippleReferenceCm = Config.RippleHeightReferenceCm;
+	const uint8* KnownValues = TerrainKnownMask.GetData();
+	const float* ElevationValues = TerrainElevation.GetData();
+	const float* WetnessValues = Wetness.GetData();
+	const float* RippleValues = RippleHeight.GetData();
+	FFloat16Color* Pixels = OutPixels.GetData();
+
+	ParallelFor(GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			const float NormalizedDepth = FMath::Clamp(ComputeWaterDepthAtIndex(Idx) / DepthReferenceCm, 0.0f, 1.0f);
+			const float NormalizedWetness = FMath::Clamp(WetnessValues[Idx], 0.0f, 1.0f);
+			const float NormalizedRipple = 0.5f + 0.5f * FMath::Clamp(RippleValues[Idx] / RippleReferenceCm, -1.0f, 1.0f);
+			const float NormalizedTerrain = KnownValues[Idx] != 0
+				? FMath::Clamp((ElevationValues[Idx] - TerrainReferenceZCm) / FluidWaterTerrainHeightScaleCm, -FluidWaterTerrainHeightLimit, FluidWaterTerrainHeightLimit)
+				: FluidWaterTerrainHeightLimit;
+			Pixels[Idx] = FFloat16Color(FLinearColor(NormalizedDepth, NormalizedWetness, NormalizedRipple, NormalizedTerrain));
+		}
+	});
+}
+
+uint32 FTDFluidGrid2DSolver::ComputeWaterStateChecksum() const
+{
+	const TArray<float>* const WaterFields[] = {
+		&WaterSurfaceHeight,
+		&WaterDrySdf,
+		&ObstacleSdfRaw,
+		&FlowTargetVelocityX,
+		&FlowTargetVelocityY,
+		&FlowGuideWeight,
+		&FlowGuideDescent,
+		&Wetness,
+		&RippleHeight,
+		&RippleHeightVelocity,
+	};
+
+	uint32 Checksum = FCrc::MemCrc32(&TerrainKnownCellCount, sizeof(TerrainKnownCellCount));
+	for (const TArray<float>* Field : WaterFields)
+	{
+		Checksum = FCrc::MemCrc32(Field->GetData(), Field->Num() * sizeof(float), Checksum);
+	}
+	return FCrc::MemCrc32(TerrainKnownMask.GetData(), TerrainKnownMask.Num(), Checksum);
+}
+
+namespace
+{
+	bool TryComputeVortexWeight(float OffsetX, float OffsetY, float VortexRadiusCm, float& OutWeight, float& OutDistanceCm)
+	{
+		OutDistanceCm = FMath::Sqrt(OffsetX * OffsetX + OffsetY * OffsetY);
+		OutWeight = 0.0f;
+		if (!(OutDistanceCm > UE_KINDA_SMALL_NUMBER) || OutDistanceCm >= VortexRadiusCm)
+		{
+			return false;
+		}
+
+		const float RadiusRatio = OutDistanceCm / VortexRadiusCm;
+		const float Falloff = 1.0f - RadiusRatio * RadiusRatio;
+		OutWeight = Falloff * Falloff;
+		return true;
+	}
+
+	void ReflectOutwardVelocity(float& InOutVelocity, float OutwardSign, float ReflectionScale)
+	{
+		const float OutwardSpeed = InOutVelocity * OutwardSign;
+		if (OutwardSpeed <= 0.0f)
+		{
+			return;
+		}
+
+		InOutVelocity -= ReflectionScale * OutwardSpeed * OutwardSign;
+	}
+}
+
+bool FTDFluidGrid2DSolver::IsHeatChannelActive() const
+{
+	return Config.bEnableHeatChannel && Config.SimMode == ETDFluidSimMode::FluidSim && !Config.bEnableWaterLayer;
+}
+
+void FTDFluidGrid2DSolver::SynchronizeHeatBuffersWithConfig()
+{
+	const int32 CellCount = Resolution * Resolution;
+	if (CellCount <= 0 || !IsHeatChannelActive())
+	{
+		Heat.Empty();
+		ScratchHeat.Empty();
+		return;
+	}
+
+	if (Heat.Num() != CellCount)
+	{
+		Heat.Init(0.0f, CellCount);
+	}
+	if (ScratchHeat.Num() != CellCount)
+	{
+		ScratchHeat.Init(0.0f, CellCount);
+	}
+}
+
+void FTDFluidGrid2DSolver::ApplyHeatStamp(const FTDFluidBrushStamp& Stamp, float DeltaTime)
+{
+	const bool bErasesHeat = Stamp.DensityStrength < 0.0f;
+	if (!bErasesHeat && Stamp.HeatStrength <= 0.0f)
+	{
+		return;
+	}
+
+	const float CellSizeX = Config.SimExtentCm.X / static_cast<float>(Resolution);
+	const float CellSizeY = Config.SimExtentCm.Y / static_cast<float>(Resolution);
+	const float MinBoundsX = CenterWorld.X - 0.5f * Config.SimExtentCm.X;
+	const float MinBoundsY = CenterWorld.Y - 0.5f * Config.SimExtentCm.Y;
+	const float MinRadius = FMath::Max(CellSizeX, CellSizeY) * 0.5f;
+	const float MaxRadius = FMath::Max(Config.SimExtentCm.X, Config.SimExtentCm.Y);
+	const float EffectiveRadius = FMath::Clamp(Stamp.RadiusCm, MinRadius, MaxRadius);
+	const FVector2D StampCenter(Stamp.WorldLocation.X, Stamp.WorldLocation.Y);
+
+	const bool bIsOutsideGrid = StampCenter.X + EffectiveRadius < MinBoundsX
+		|| StampCenter.X - EffectiveRadius > MinBoundsX + Config.SimExtentCm.X
+		|| StampCenter.Y + EffectiveRadius < MinBoundsY
+		|| StampCenter.Y - EffectiveRadius > MinBoundsY + Config.SimExtentCm.Y;
+	if (bIsOutsideGrid)
+	{
+		return;
+	}
+
+	const float HeatStrength = FMath::Clamp(Stamp.HeatStrength, 0.0f, 1.0f);
+	const float EraseRatePerSec = FMath::Abs(Stamp.DensityStrength) * BrushEraseRatePerSec;
+	const int32 MinCellX = FMath::Clamp(FMath::FloorToInt((StampCenter.X - EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
+	const int32 MaxCellX = FMath::Clamp(FMath::CeilToInt((StampCenter.X + EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
+	const int32 MinCellY = FMath::Clamp(FMath::FloorToInt((StampCenter.Y - EffectiveRadius - MinBoundsY) / CellSizeY), 0, Resolution - 1);
+	const int32 MaxCellY = FMath::Clamp(FMath::CeilToInt((StampCenter.Y + EffectiveRadius - MinBoundsY) / CellSizeY), 0, Resolution - 1);
+	float* HeatValues = Heat.GetData();
+
+	for (int32 CellY = MinCellY; CellY <= MaxCellY; ++CellY)
+	{
+		for (int32 CellX = MinCellX; CellX <= MaxCellX; ++CellX)
+		{
+			if (IsSolidCell(CellX, CellY))
+			{
+				continue;
+			}
+
+			const float DistanceCm = FVector2D::Distance(CellToWorldCenter(CellX, CellY), StampCenter);
+			if (DistanceCm > EffectiveRadius)
+			{
+				continue;
+			}
+
+			const float NormalizedFalloff = 1.0f - (DistanceCm / EffectiveRadius);
+			const float SmoothWeight = NormalizedFalloff * NormalizedFalloff * (3.0f - 2.0f * NormalizedFalloff);
+			const int32 CellIdx = ToCellIndex(CellX, CellY);
+			if (bErasesHeat)
+			{
+				HeatValues[CellIdx] *= FMath::Exp(-EraseRatePerSec * SmoothWeight * DeltaTime);
+				continue;
+			}
+
+			HeatValues[CellIdx] = FMath::Max(HeatValues[CellIdx], FMath::Clamp(HeatStrength * SmoothWeight, 0.0f, 1.0f));
+		}
+	}
+}
+
+void FTDFluidGrid2DSolver::ApplyHeatBuoyancyAcceleration(float DeltaTime)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_HeatBuoyancy);
+
+	if (Heat.IsEmpty() || Config.HeatBuoyancyCmPerSec2 <= 0.0f || PlaneUpDirection.IsNearlyZero())
+	{
+		return;
+	}
+
+	const int32 CellCount = Resolution * Resolution;
+	const float VelocityStepX = static_cast<float>(PlaneUpDirection.X) * Config.HeatBuoyancyCmPerSec2 * DeltaTime;
+	const float VelocityStepY = static_cast<float>(PlaneUpDirection.Y) * Config.HeatBuoyancyCmPerSec2 * DeltaTime;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* HeatValues = Heat.GetData();
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+
+	for (int32 Idx = 0; Idx < CellCount; ++Idx)
+	{
+		if (SolidCells[Idx])
+		{
+			continue;
+		}
+
+		VelX[Idx] += VelocityStepX * HeatValues[Idx];
+		VelY[Idx] += VelocityStepY * HeatValues[Idx];
+	}
+}
+
+void FTDFluidGrid2DSolver::ApplyVortexAcceleration(float DeltaTime)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_VortexForce);
+
+	const float ExtentX = static_cast<float>(Config.SimExtentCm.X);
+	const float ExtentY = static_cast<float>(Config.SimExtentCm.Y);
+	const float VortexRadiusCm = Config.VortexRadiusRatio * FMath::Min(ExtentX, ExtentY);
+	if (Config.VortexTangentialAccelerationCmPerSec2 == 0.0f || VortexRadiusCm <= 0.0f)
+	{
+		return;
+	}
+
+	const int32 GridSize = Resolution;
+	const float CellSizeX = ExtentX / static_cast<float>(GridSize);
+	const float CellSizeY = ExtentY / static_cast<float>(GridSize);
+	const float TangentialStep = Config.VortexTangentialAccelerationCmPerSec2 * DeltaTime;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+
+	ForEachGridRow(TEXT("TDFluidVortexRows"), GridSize, [&](int32 Y)
+	{
+		const float OffsetY = (static_cast<float>(Y) + 0.5f) * CellSizeY - 0.5f * ExtentY;
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			if (SolidCells[Idx])
+			{
+				continue;
+			}
+
+			const float OffsetX = (static_cast<float>(X) + 0.5f) * CellSizeX - 0.5f * ExtentX;
+			float Weight = 0.0f;
+			float DistanceCm = 0.0f;
+			if (!TryComputeVortexWeight(OffsetX, OffsetY, VortexRadiusCm, Weight, DistanceCm))
+			{
+				continue;
+			}
+
+			const float Scale = Weight * TangentialStep / DistanceCm;
+			VelX[Idx] += -OffsetY * Scale;
+			VelY[Idx] += OffsetX * Scale;
+		}
+	});
+}
+
+void FTDFluidGrid2DSolver::AccumulateVortexRadialDrift()
+{
+	const float ExtentX = static_cast<float>(Config.SimExtentCm.X);
+	const float ExtentY = static_cast<float>(Config.SimExtentCm.Y);
+	const float VortexRadiusCm = Config.VortexRadiusRatio * FMath::Min(ExtentX, ExtentY);
+	if (Config.VortexRadialDriftCmPerSec == 0.0f || VortexRadiusCm <= 0.0f)
+	{
+		return;
+	}
+
+	const int32 GridSize = Resolution;
+	const float CellSizeX = ExtentX / static_cast<float>(GridSize);
+	const float CellSizeY = ExtentY / static_cast<float>(GridSize);
+	const float InwardDrift = Config.VortexRadialDriftCmPerSec;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	float* PushX = PendingRadialPushX.GetData();
+	float* PushY = PendingRadialPushY.GetData();
+
+	for (int32 Y = 0; Y < GridSize; ++Y)
+	{
+		const float OffsetY = (static_cast<float>(Y) + 0.5f) * CellSizeY - 0.5f * ExtentY;
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			if (SolidCells[Idx])
+			{
+				continue;
+			}
+
+			const float OffsetX = (static_cast<float>(X) + 0.5f) * CellSizeX - 0.5f * ExtentX;
+			float Weight = 0.0f;
+			float DistanceCm = 0.0f;
+			if (!TryComputeVortexWeight(OffsetX, OffsetY, VortexRadiusCm, Weight, DistanceCm))
+			{
+				continue;
+			}
+
+			const float Scale = InwardDrift * Weight / DistanceCm;
+			PushX[Idx] += -OffsetX * Scale;
+			PushY[Idx] += -OffsetY * Scale;
+			bHasPendingRadialPush = true;
+		}
+	}
+}
+
+void FTDFluidGrid2DSolver::EnforceObstacleBoundariesWithReflection()
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ObstacleReflection);
+
+	const float CellWorldSize = FMath::Max(Config.SimExtentCm.X, Config.SimExtentCm.Y) / static_cast<float>(Resolution);
+	if (ObstacleSdfMinimum >= CellWorldSize * 1.5f)
+	{
+		return;
+	}
+
+	float SpacingX = 1.0f;
+	float SpacingY = 1.0f;
+	ComputeRelativeCellSpacing(SpacingX, SpacingY);
+
+	const int32 GridSize = Resolution;
+	const float ReflectionScale = 1.0f + Config.EdgeBounciness;
+	const float* SdfValues = ObstacleSdf.GetData();
+	float* PrimaryValues = PrimaryDensity.GetData();
+	float* SelectiveValues = SelectiveDensity.GetData();
+	float* DisplacementValues = SurfaceDisplacement.GetData();
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+	float* PressureValues = Pressure.GetData();
+	float* PressureSolutionValues = PressureSolution.GetData();
+
+	ForEachGridRow(TEXT("TDFluidObstacleReflectionRows"), GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			const float SignedDistance = SdfValues[Idx];
+
+			if (SignedDistance <= 0.0f)
+			{
+				PrimaryValues[Idx] = 0.0f;
+				SelectiveValues[Idx] = 0.0f;
+				DisplacementValues[Idx] = 0.0f;
+				VelX[Idx] = 0.0f;
+				VelY[Idx] = 0.0f;
+				PressureValues[Idx] = 0.0f;
+				PressureSolutionValues[Idx] = 0.0f;
+				continue;
+			}
+
+			if (SignedDistance >= CellWorldSize * 1.5f)
+			{
+				continue;
+			}
+
+			const int32 XMinus = FMath::Max(X - 1, 0);
+			const int32 XPlus = FMath::Min(X + 1, GridSize - 1);
+			const int32 YMinus = FMath::Max(Y - 1, 0);
+			const int32 YPlus = FMath::Min(Y + 1, GridSize - 1);
+
+			const float GradientSpanX = static_cast<float>(XPlus - XMinus) * SpacingX;
+			const float GradientSpanY = static_cast<float>(YPlus - YMinus) * SpacingY;
+			FVector2D Normal(
+				(SdfValues[Y * GridSize + XPlus] - SdfValues[Y * GridSize + XMinus]) / GradientSpanX,
+				(SdfValues[YPlus * GridSize + X] - SdfValues[YMinus * GridSize + X]) / GradientSpanY);
+
+			if (!Normal.Normalize())
+			{
+				continue;
+			}
+
+			FVector2D CurrentVelocity(VelX[Idx], VelY[Idx]);
+			const float NormalDot = FVector2D::DotProduct(CurrentVelocity, Normal);
+			if (NormalDot < 0.0f)
+			{
+				CurrentVelocity -= Normal * (ReflectionScale * NormalDot);
+				VelX[Idx] = CurrentVelocity.X;
+				VelY[Idx] = CurrentVelocity.Y;
+			}
+		}
+	});
+}
+
+void FTDFluidGrid2DSolver::ApplyEdgeReflection()
+{
+	const int32 GridSize = Resolution;
+	const int32 LastCell = GridSize - 1;
+	const float ReflectionScale = 1.0f + Config.EdgeBounciness;
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+
+	for (int32 Y = 0; Y < GridSize; ++Y)
+	{
+		ReflectOutwardVelocity(VelX[Y * GridSize], -1.0f, ReflectionScale);
+		ReflectOutwardVelocity(VelX[Y * GridSize + LastCell], 1.0f, ReflectionScale);
+	}
+
+	for (int32 X = 0; X < GridSize; ++X)
+	{
+		ReflectOutwardVelocity(VelY[X], -1.0f, ReflectionScale);
+		ReflectOutwardVelocity(VelY[LastCell * GridSize + X], 1.0f, ReflectionScale);
+	}
+}
+
+void FTDFluidGrid2DSolver::AdvectHeat(float DeltaTime)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_AdvectHeat);
+
+	if (Heat.IsEmpty())
+	{
+		return;
+	}
+
+	const float CellSizeX = Config.SimExtentCm.X / static_cast<float>(Resolution);
+	const float CellSizeY = Config.SimExtentCm.Y / static_cast<float>(Resolution);
+	const float StepScaleX = (DeltaTime * Config.AdvectionSpeedScale) / CellSizeX;
+	const float StepScaleY = (DeltaTime * Config.AdvectionSpeedScale) / CellSizeY;
+	const float HeatDissipationFactor = 1.0f / (1.0f + Config.HeatCoolingPerSec * DeltaTime);
+
+	const int32 GridSize = Resolution;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	const float* VelX = VelocityX.GetData();
+	const float* VelY = VelocityY.GetData();
+	const float* HeatValues = Heat.GetData();
+	float* AdvectedHeat = ScratchHeat.GetData();
+
+	ForEachGridRow(TEXT("TDFluidAdvectHeatRows"), GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			if (SolidCells[Idx])
+			{
+				AdvectedHeat[Idx] = 0.0f;
+				continue;
+			}
+
+			const float BacktraceX = static_cast<float>(X) - VelX[Idx] * StepScaleX;
+			const float BacktraceY = static_cast<float>(Y) - VelY[Idx] * StepScaleY;
+			const FTDFluidBilinearSample Sample = MakeBilinearSample(BacktraceX, BacktraceY, GridSize);
+			AdvectedHeat[Idx] = FMath::Clamp(InterpolateBilinear(HeatValues, Sample) * HeatDissipationFactor, 0.0f, 1.0f);
+		}
+	});
+
+	Swap(Heat, ScratchHeat);
+}
+
+void FTDFluidGrid2DSolver::ApplyDirectionalOutflowToHeat(float DeltaTime)
+{
+	if (Heat.IsEmpty() || Config.OutflowRatePerSec <= 0.0f || Config.OutflowBandRatio <= 0.0f || PlaneUpDirection.IsNearlyZero())
+	{
+		return;
+	}
+
+	const float BandWidth = 2.0f * Config.OutflowBandRatio;
+	const float BandStart = 1.0f - BandWidth;
+	const float InverseResolution = 1.0f / static_cast<float>(Resolution);
+	const int32 GridSize = Resolution;
+	float* HeatValues = Heat.GetData();
+
+	for (int32 Y = 0; Y < GridSize; ++Y)
+	{
+		const float OffsetY = (static_cast<float>(Y) + 0.5f) * InverseResolution - 0.5f;
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const float OffsetX = (static_cast<float>(X) + 0.5f) * InverseResolution - 0.5f;
+			const float BandPosition = (OffsetX * static_cast<float>(PlaneUpDirection.X) + OffsetY * static_cast<float>(PlaneUpDirection.Y)) / 0.5f;
+			if (BandPosition <= BandStart)
+			{
+				continue;
+			}
+
+			const float BandWeight = FMath::Clamp((BandPosition - BandStart) / BandWidth, 0.0f, 1.0f);
+			HeatValues[Y * GridSize + X] *= FMath::Exp(-Config.OutflowRatePerSec * BandWeight * DeltaTime);
+		}
+	}
+}
+
+void FTDFluidGrid2DSolver::BuildBorderAlphaTable(float* OutAlphaByCoordinate) const
+{
+	BuildBorderFadeTable(OutAlphaByCoordinate);
+	if (Config.BorderFadeExponent == 1.0f)
+	{
+		return;
+	}
+
+	for (int32 Coordinate = 0; Coordinate < Resolution; ++Coordinate)
+	{
+		OutAlphaByCoordinate[Coordinate] = FMath::Pow(OutAlphaByCoordinate[Coordinate], Config.BorderFadeExponent);
+	}
+}
+
+void FTDFluidGrid2DSolver::PackAuxPixels(TArray<FFloat16Color>& OutAuxPixels) const
+{
+	if (!IsInitialized() || Heat.IsEmpty())
+	{
+		OutAuxPixels.Reset();
+		return;
+	}
+
+	const int32 CellCount = Resolution * Resolution;
+	OutAuxPixels.SetNumUninitialized(CellCount);
+	const float* HeatValues = Heat.GetData();
+	FFloat16Color* AuxPixels = OutAuxPixels.GetData();
+	for (int32 Idx = 0; Idx < CellCount; ++Idx)
+	{
+		AuxPixels[Idx] = FFloat16Color(FLinearColor(FMath::Clamp(HeatValues[Idx], 0.0f, 1.0f), 0.0f, 0.0f, 0.0f));
+	}
 }

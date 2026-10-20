@@ -1,0 +1,175 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+#ifndef TDFLUIDGPU_SHIFT_PHASE
+#define TDFLUIDGPU_SHIFT_PHASE 0
+#endif
+
+#ifndef TDFLUIDGPU_PAINTER
+#define TDFLUIDGPU_PAINTER 0
+#endif
+
+#define TDFLUIDGPU_SHIFT_PHASE_GATHER 0
+#define TDFLUIDGPU_SHIFT_PHASE_SCATTER 1
+#define TDFLUIDGPU_SHIFT_PHASE_RESET 2
+
+StructuredBuffer<uint> EntryList;
+StructuredBuffer<FTDFluidGpuPackedTerrainUpdate> TerrainUpdates;
+uint ShiftEntryCount;
+uint TerrainUpdateCount;
+RWTexture2DArray<float> TerrainElevationUpdateOut;
+
+#if TDFLUIDGPU_PAINTER
+#if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_GATHER
+Texture2DArray<float> PainterPrimaryDensityIn;
+Texture2DArray<float> PainterSelectiveDensityIn;
+RWTexture2DArray<float2> PainterStageOut;
+#else
+RWTexture2DArray<float> PainterPrimaryDensityOut;
+RWTexture2DArray<float> PainterSelectiveDensityOut;
+#if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_SCATTER
+Texture2DArray<float2> PainterStageIn;
+#endif
+#endif
+#else
+#if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_GATHER
+Texture2DArray<float2> VelocityIn;
+Texture2DArray<float2> DensityIn;
+Texture2DArray<float> SurfaceDisplacementIn;
+Texture2DArray<float> PressureSolutionIn;
+Texture2DArray<float> TerrainElevationIn;
+RWTexture2DArray<float2> VelocityStageOut;
+RWTexture2DArray<float2> DensityStageOut;
+RWTexture2DArray<float> SurfaceDisplacementStageOut;
+RWTexture2DArray<float> PressureSolutionStageOut;
+RWTexture2DArray<float> TerrainStageOut;
+Texture2DArray<float> HeatIn;
+RWTexture2DArray<float> HeatStageOut;
+#else
+RWTexture2DArray<float2> VelocityOut;
+RWTexture2DArray<float2> DensityOut;
+RWTexture2DArray<float> SurfaceDisplacementOut;
+RWTexture2DArray<float> PressureSolutionOut;
+RWTexture2DArray<float> TerrainElevationOut;
+RWTexture2DArray<float> ObstacleSdfOut;
+RWTexture2DArray<float> HeatOut;
+#if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_SCATTER
+Texture2DArray<float2> VelocityStageIn;
+Texture2DArray<float2> DensityStageIn;
+Texture2DArray<float> SurfaceDisplacementStageIn;
+Texture2DArray<float> PressureSolutionStageIn;
+Texture2DArray<float> TerrainStageIn;
+Texture2DArray<float> HeatStageIn;
+#endif
+#endif
+#endif
+
+[numthreads(64, 1, 1)]
+void TerrainUpdateCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (DispatchThreadId.x >= TerrainUpdateCount)
+	{
+		return;
+	}
+
+	const FTDFluidGpuPackedTerrainUpdate Update = TerrainUpdates[DispatchThreadId.x];
+	TerrainElevationUpdateOut[uint3(Update.CellX, Update.CellY, Update.SliceIndex)] = Update.ElevationCm;
+}
+
+#if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_GATHER
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint StageSlot = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryList[StageSlot]];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 StateTexel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	const uint3 CompactTexel = uint3(uint2(Cell), StageSlot);
+#if TDFLUIDGPU_PAINTER
+	PainterStageOut[CompactTexel] = float2(PainterPrimaryDensityIn[StateTexel], PainterSelectiveDensityIn[StateTexel]);
+#else
+	VelocityStageOut[StateTexel] = VelocityIn[StateTexel];
+	DensityStageOut[StateTexel] = DensityIn[StateTexel];
+	SurfaceDisplacementStageOut[StateTexel] = SurfaceDisplacementIn[StateTexel];
+	PressureSolutionStageOut[StateTexel] = PressureSolutionIn[StateTexel];
+	TerrainStageOut[CompactTexel] = TerrainElevationIn[StateTexel];
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_HEAT_CHANNEL))
+	{
+		HeatStageOut[StateTexel] = HeatIn[StateTexel];
+	}
+#endif
+}
+
+#else
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint ListIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryList[ListIndex]];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const bool bIsShiftEntry = ListIndex < ShiftEntryCount;
+	const int2 SourceCell = Cell + Actor.ShiftCells;
+	const bool bCopiesSourceCell = bIsShiftEntry && TDFluidGpuIsInsideGrid(SourceCell, Actor.Resolution);
+	const uint3 StateTexel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+
+#if TDFLUIDGPU_PAINTER
+	float2 PainterDensity = float2(0.0f, 0.0f);
+#if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_SCATTER
+	if (bCopiesSourceCell)
+	{
+		PainterDensity = PainterStageIn[uint3(uint2(SourceCell), ListIndex)];
+	}
+#endif
+	PainterPrimaryDensityOut[StateTexel] = PainterDensity.x;
+	PainterSelectiveDensityOut[StateTexel] = PainterDensity.y;
+#else
+	float2 Velocity = float2(0.0f, 0.0f);
+	float2 Density = float2(0.0f, 0.0f);
+	float Displacement = 0.0f;
+	float PressureSolution = 0.0f;
+	float TerrainElevation = TDFLUIDGPU_TERRAIN_UNKNOWN_ELEVATION_CM;
+	float Heat = 0.0f;
+	const bool bUsesHeat = TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_HEAT_CHANNEL);
+#if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_SCATTER
+	if (bCopiesSourceCell)
+	{
+		const uint3 SourceTexel = TDFluidGpuMakeTexel(SourceCell, Actor.SliceIndex);
+		if (bUsesHeat)
+		{
+			Heat = HeatStageIn[SourceTexel];
+		}
+		Velocity = VelocityStageIn[SourceTexel];
+		Density = DensityStageIn[SourceTexel];
+		Displacement = SurfaceDisplacementStageIn[SourceTexel];
+		PressureSolution = PressureSolutionStageIn[SourceTexel];
+		TerrainElevation = TerrainStageIn[uint3(uint2(SourceCell), ListIndex)];
+	}
+#endif
+	VelocityOut[StateTexel] = Velocity;
+	DensityOut[StateTexel] = Density;
+	SurfaceDisplacementOut[StateTexel] = Displacement;
+	PressureSolutionOut[StateTexel] = PressureSolution;
+	TerrainElevationOut[StateTexel] = TerrainElevation;
+	if (bUsesHeat)
+	{
+		HeatOut[StateTexel] = Heat;
+	}
+	if (!bIsShiftEntry)
+	{
+		ObstacleSdfOut[StateTexel] = TDFLUIDGPU_NO_OBSTACLE_DISTANCE_CM;
+	}
+#endif
+}
+
+#endif

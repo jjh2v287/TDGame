@@ -35,6 +35,43 @@ namespace
 	constexpr float MaxVolumeLightIntensityScale = 8.0f;
 	constexpr float FullSphereSteradians = static_cast<float>(4.0 * UE_PI);
 	constexpr float MouseBrushBaseDensityStrength = 1.0f;
+	constexpr int32 MaximumShadowCapsuleCount = 8;
+
+	FTDFluidShadowCapsuleBonePair MakeShadowCapsuleBonePair(const TCHAR* StartBoneName, const TCHAR* EndBoneName, float RadiusCm)
+	{
+		FTDFluidShadowCapsuleBonePair BonePair;
+		BonePair.StartBoneName = FName(StartBoneName);
+		BonePair.EndBoneName = FName(EndBoneName);
+		BonePair.RadiusCm = RadiusCm;
+		return BonePair;
+	}
+
+	void AppendActorShadowCapsules(const AActor& SourceActor, TConstArrayView<FTDFluidShadowCapsuleBonePair> BonePairs, TArray<FTDFluidShadowCapsule>& InOutCapsules)
+	{
+		const USkeletalMeshComponent* SkeletalMesh = SourceActor.FindComponentByClass<USkeletalMeshComponent>();
+		if (!SkeletalMesh)
+		{
+			return;
+		}
+
+		for (const FTDFluidShadowCapsuleBonePair& BonePair : BonePairs)
+		{
+			if (InOutCapsules.Num() >= MaximumShadowCapsuleCount)
+			{
+				return;
+			}
+
+			if (!SkeletalMesh->DoesSocketExist(BonePair.StartBoneName) || !SkeletalMesh->DoesSocketExist(BonePair.EndBoneName))
+			{
+				continue;
+			}
+
+			FTDFluidShadowCapsule& Capsule = InOutCapsules.AddDefaulted_GetRef();
+			Capsule.StartWorld = SkeletalMesh->GetSocketLocation(BonePair.StartBoneName);
+			Capsule.EndWorld = SkeletalMesh->GetSocketLocation(BonePair.EndBoneName);
+			Capsule.RadiusCm = BonePair.RadiusCm;
+		}
+	}
 
 	struct FTDFluidVolumeLightParameters
 	{
@@ -60,6 +97,7 @@ namespace
 	{
 		Stamp.DensityStrength *= Config.ActorBrushDensityStrength;
 		Stamp.RadialVelocityCmPerSec = Config.ActorBrushPunctureCmPerSec;
+		Stamp.RippleImpulseCm = Config.ActorBrushRippleImpulseCm;
 	}
 
 	void PlaceComponentIfChanged(USceneComponent& TargetComponent, const FVector& WorldLocation, const FQuat& WorldRotation)
@@ -137,6 +175,7 @@ ATDFluidLiveActor::ATDFluidLiveActor()
 	InternalSurfaceMesh->SetupAttachment(SceneRoot);
 	InternalSurfaceMesh->SetMobility(EComponentMobility::Movable);
 	InternalSurfaceMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	InternalSurfaceMesh->SetCastShadow(false);
 
 	VolumeMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VolumeMeshComponent"));
 	VolumeMeshComponent->SetupAttachment(SceneRoot);
@@ -147,6 +186,17 @@ ATDFluidLiveActor::ATDFluidLiveActor()
 	VolumeMeshComponent->SetGenerateOverlapEvents(false);
 	VolumeMeshComponent->SetCastShadow(false);
 	VolumeMeshComponent->SetVisibility(false);
+
+	ShadowCapsuleBones = {
+		MakeShadowCapsuleBonePair(TEXT("pelvis"), TEXT("spine_05"), 18.0f),
+		MakeShadowCapsuleBonePair(TEXT("spine_05"), TEXT("head"), 11.0f),
+		MakeShadowCapsuleBonePair(TEXT("thigh_l"), TEXT("calf_l"), 8.0f),
+		MakeShadowCapsuleBonePair(TEXT("calf_l"), TEXT("foot_l"), 7.0f),
+		MakeShadowCapsuleBonePair(TEXT("thigh_r"), TEXT("calf_r"), 8.0f),
+		MakeShadowCapsuleBonePair(TEXT("calf_r"), TEXT("foot_r"), 7.0f),
+		MakeShadowCapsuleBonePair(TEXT("upperarm_l"), TEXT("hand_l"), 6.0f),
+		MakeShadowCapsuleBonePair(TEXT("upperarm_r"), TEXT("hand_r"), 6.0f)
+	};
 
 	LiveComponent = CreateDefaultSubobject<UTDFluidLiveComponent>(TEXT("LiveComponent"));
 
@@ -328,14 +378,14 @@ bool ATDFluidLiveActor::BeginLiveActorStep(float DeltaTime)
 	InvalidateTerrainQueueIfSolverGridChanged();
 
 	const FVector2D DesiredCenter = ResolveDesiredSimulationCenter();
-	CenterBeforeSolverStep = LiveComponent->GetSolver().GetCenterWorld();
+	CenterBeforeSolverStep = LiveComponent->GetSimulationCenterWorld();
 	bHasPreparedSolverStep = LiveComponent->PrepareSimulationStep(DeltaTime, DesiredCenter, bShouldFollowPlayerPawn);
 
 	if (bShouldFollowPlayerPawn)
 	{
 		if (LiveComponent->GetPlaneBasis().IsWorldFacing())
 		{
-			const FVector2D SnappedCenter = LiveComponent->GetSolver().GetCenterWorld();
+			const FVector2D SnappedCenter = LiveComponent->GetSimulationCenterWorld();
 			const FVector CurrentLoc = GetActorLocation();
 			SetActorLocation(FVector(SnappedCenter.X, SnappedCenter.Y, CurrentLoc.Z));
 		}
@@ -346,6 +396,10 @@ bool ATDFluidLiveActor::BeginLiveActorStep(float DeltaTime)
 	}
 
 	PlaceChildrenOnSolverPlane();
+	if (bHasPreparedSolverStep)
+	{
+		PushVolumeTransmittanceSources();
+	}
 	return true;
 }
 
@@ -424,13 +478,12 @@ void ATDFluidLiveActor::SyncVolumeExtentsWithSimulation()
 		return;
 	}
 
-	const FTDFluidGrid2DSolver& Solver = LiveComponent->GetSolver();
-	if (!Solver.IsInitialized())
+	if (!LiveComponent->IsSimulationInitialized())
 	{
 		return;
 	}
 
-	const FVector2D ExtentCm = Solver.GetExtentCm();
+	const FVector2D ExtentCm = LiveComponent->GetSimulationExtentCm();
 	if (InteractionVolume)
 	{
 		const float InteractionHalfDepthCm = LiveComponent->GetPlaneBasis().IsWorldFacing()
@@ -801,22 +854,24 @@ void ATDFluidLiveActor::ClearInteractionState()
 
 void ATDFluidLiveActor::InvalidateTerrainQueueIfSolverGridChanged()
 {
-	const FTDFluidGrid2DSolver& Solver = LiveComponent->GetSolver();
-	if (!Solver.IsInitialized())
+	if (!LiveComponent->IsSimulationInitialized())
 	{
 		return;
 	}
 
-	const bool bHasSameLayout = Solver.GetResolution() == TerrainQueuedResolution && Solver.GetExtentCm().Equals(TerrainQueuedExtentCm, 0.01);
-	const bool bHasSameGeneration = Solver.GetReinitializationGeneration() == TerrainQueuedGeneration;
+	const int32 SimulationResolution = LiveComponent->GetSimulationResolution();
+	const FVector2D SimulationExtentCm = LiveComponent->GetSimulationExtentCm();
+	const int32 SimulationGeneration = LiveComponent->GetSimulationGeneration();
+	const bool bHasSameLayout = SimulationResolution == TerrainQueuedResolution && SimulationExtentCm.Equals(TerrainQueuedExtentCm, 0.01);
+	const bool bHasSameGeneration = SimulationGeneration == TerrainQueuedGeneration;
 	if (bHasSameLayout && bHasSameGeneration)
 	{
 		return;
 	}
 
-	TerrainQueuedResolution = Solver.GetResolution();
-	TerrainQueuedExtentCm = Solver.GetExtentCm();
-	TerrainQueuedGeneration = Solver.GetReinitializationGeneration();
+	TerrainQueuedResolution = SimulationResolution;
+	TerrainQueuedExtentCm = SimulationExtentCm;
+	TerrainQueuedGeneration = SimulationGeneration;
 	bIsTerrainQueueCurrent = false;
 }
 
@@ -827,15 +882,14 @@ void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBefor
 		return;
 	}
 
-	const FTDFluidGrid2DSolver& Solver = LiveComponent->GetSolver();
-	const int32 Resolution = Solver.GetResolution();
+	const int32 Resolution = LiveComponent->GetSimulationResolution();
 	if (Resolution <= 0)
 	{
 		return;
 	}
 
-	const FVector2D CellSizeCm = Solver.GetExtentCm() / static_cast<double>(Resolution);
-	const FVector2D CenterShift = Solver.GetCenterWorld() - CenterBeforeStep;
+	const FVector2D CellSizeCm = LiveComponent->GetSimulationExtentCm() / static_cast<double>(Resolution);
+	const FVector2D CenterShift = LiveComponent->GetSimulationCenterWorld() - CenterBeforeStep;
 	const FIntPoint ShiftCells(FMath::RoundToInt(CenterShift.X / CellSizeCm.X), FMath::RoundToInt(CenterShift.Y / CellSizeCm.Y));
 	if (ShiftCells == FIntPoint::ZeroValue)
 	{
@@ -883,15 +937,14 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 	}
 
 	UWorld* World = GetWorld();
-	FTDFluidGrid2DSolver& Solver = LiveComponent->GetMutableSolver();
-	if (!World || !Solver.IsInitialized())
+	if (!World || !LiveComponent->IsSimulationInitialized())
 	{
 		return;
 	}
 
 	if (!bIsTerrainQueueCurrent)
 	{
-		const int32 Resolution = Solver.GetResolution();
+		const int32 Resolution = LiveComponent->GetSimulationResolution();
 		PendingTerrainCells.Reset(Resolution * Resolution);
 		for (int32 CellY = 0; CellY < Resolution; ++CellY)
 		{
@@ -913,6 +966,7 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 	{
 		QueryParams.AddIgnoredActor(PlayerPawn);
 	}
+	AddTerrainTraceIgnoredActors(QueryParams);
 	const FCollisionObjectQueryParams ObjectQueryParams(ECC_WorldStatic);
 	const float BaseHeightCm = GetActorLocation().Z;
 
@@ -920,19 +974,20 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 	while (RemainingTraces > 0 && !PendingTerrainCells.IsEmpty())
 	{
 		const FIntPoint Cell = PendingTerrainCells.Pop(EAllowShrinking::No);
-		const FVector2D CellCenter = Solver.CellToWorldCenter(Cell.X, Cell.Y);
+		const FVector2D CellCenter = LiveComponent->CellToPlaneCenter(Cell.X, Cell.Y);
 		const FVector TraceStart(CellCenter.X, CellCenter.Y, BaseHeightCm + TerrainTraceStartHeightCm);
 		const FVector TraceEnd(CellCenter.X, CellCenter.Y, BaseHeightCm - TerrainTraceEndDepthCm);
 
 		FHitResult Hit;
 		const bool bDidHit = World->LineTraceSingleByObjectType(Hit, TraceStart, TraceEnd, ObjectQueryParams, QueryParams);
-		Solver.SetTerrainElevationAtCell(Cell.X, Cell.Y, bDidHit ? Hit.ImpactPoint.Z : BaseHeightCm);
+		LiveComponent->SetTerrainElevationAtCell(Cell.X, Cell.Y, bDidHit ? Hit.ImpactPoint.Z : ResolveTerrainMissElevationCm(Cell.X, Cell.Y));
 		--RemainingTraces;
 	}
 
 	if (PendingTerrainCells.IsEmpty())
 	{
-		Solver.ComputeTerrainSlopeFromElevation();
+		LiveComponent->CompleteTerrainElevationSampling();
+		OnTerrainSamplingCompleted();
 	}
 }
 
@@ -962,7 +1017,7 @@ FVector2D ATDFluidLiveActor::ResolveDesiredSimulationCenter() const
 		return FVector2D(AnchorLocation.X, AnchorLocation.Y);
 	}
 
-	const double CenterOffsetAlongUpCm = LiveComponent->GetPlaneSettings().CenterOffsetAlongUpRatio * LiveComponent->GetSolver().GetExtentCm().Y;
+	const double CenterOffsetAlongUpCm = LiveComponent->GetPlaneSettings().CenterOffsetAlongUpRatio * LiveComponent->GetSimulationExtentCm().Y;
 	return PlaneBasis.ProjectPoint(AnchorLocation) + FVector2D(0.0, CenterOffsetAlongUpCm) + GetDynamicCenterOffsetPlane();
 }
 
@@ -973,20 +1028,18 @@ void ATDFluidLiveActor::UpdatePlaneBasis()
 	const UTDFluidLiveSubsystem* FluidSubsystem = World ? World->GetSubsystem<UTDFluidLiveSubsystem>() : nullptr;
 	const FRotator ViewRotation = FluidSubsystem ? FluidSubsystem->GetPlaneViewRotation() : FTDFluidPlaneBasis::GetDefaultViewRotation();
 	const FTDFluidPlaneBasis PlaneBasis = FTDFluidPlaneBasis::MakeFromView(PlaneSettings.Orientation, ViewRotation, PlaneSettings.BillboardLeanBackDegrees);
-	const double PlaneDepthCm = PlaneBasis.ProjectDepth(ResolvePlaneAnchorWorldLocation()) - PlaneSettings.CameraDepthBiasCm;
-	LiveComponent->SetPlaneBasis(PlaneBasis, PlaneDepthCm);
+	LiveComponent->SetPlaneBasis(PlaneBasis, ResolvePlaneAnchorWorldLocation(), PlaneSettings.CameraDepthBiasCm);
 }
 
 void ATDFluidLiveActor::PlaceChildrenOnSolverPlane()
 {
 	const FTDFluidPlaneBasis& PlaneBasis = LiveComponent->GetPlaneBasis();
-	const FTDFluidGrid2DSolver& Solver = LiveComponent->GetSolver();
-	if (PlaneBasis.IsWorldFacing() || !Solver.IsInitialized())
+	if (PlaneBasis.IsWorldFacing() || !LiveComponent->IsSimulationInitialized())
 	{
 		return;
 	}
 
-	const FVector PlaneCenter = LiveComponent->UnprojectSolverPlaneToWorld(Solver.GetCenterWorld());
+	const FVector PlaneCenter = LiveComponent->UnprojectSolverPlaneToWorld(LiveComponent->GetSimulationCenterWorld());
 	const FQuat PlaneRotation = PlaneBasis.GetRotation();
 	if (InteractionVolume)
 	{
@@ -996,4 +1049,50 @@ void ATDFluidLiveActor::PlaceChildrenOnSolverPlane()
 	{
 		PlaceComponentIfChanged(*InternalSurfaceMesh, PlaneCenter, PlaneRotation);
 	}
+}
+
+void ATDFluidLiveActor::GatherShadowCapsules(TArray<FTDFluidShadowCapsule>& OutCapsules) const
+{
+	OutCapsules.Reset();
+	if (!bCastPawnCapsuleShadows)
+	{
+		return;
+	}
+
+	const UWorld* World = GetWorld();
+	if (const APawn* PlayerPawn = World ? UGameplayStatics::GetPlayerPawn(World, 0) : nullptr)
+	{
+		AppendActorShadowCapsules(*PlayerPawn, ShadowCapsuleBones, OutCapsules);
+	}
+
+	for (const TWeakObjectPtr<AActor>& RegisteredActor : RegisteredInteractingActors)
+	{
+		const AActor* InteractingActor = RegisteredActor.Get();
+		if (!InteractingActor || OutCapsules.Num() >= MaximumShadowCapsuleCount)
+		{
+			continue;
+		}
+
+		AppendActorShadowCapsules(*InteractingActor, ShadowCapsuleBones, OutCapsules);
+	}
+}
+
+void ATDFluidLiveActor::PushVolumeTransmittanceSources()
+{
+	if (!LiveComponent)
+	{
+		return;
+	}
+
+	const FTDFluidVolumeLightParameters Light = ResolveVolumeLightParameters(VolumeLightActor);
+	FTDFluidVolumeLightState LightState;
+	LightState.Mode = FMath::RoundToInt(Light.Mode);
+	LightState.RadiusCm = Light.Radius;
+	LightState.PositionWorld = Light.Position;
+	LightState.DirectionWorld = Light.Direction;
+	LightState.Color = Light.Color;
+
+	TArray<FTDFluidShadowCapsule> Capsules;
+	GatherShadowCapsules(Capsules);
+	LiveComponent->SetVolumeTransmittanceSources(LightState, Capsules);
 }

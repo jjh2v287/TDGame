@@ -26,6 +26,7 @@
 - 해결: 충돌한 쪽 이름을 파일 고유 이름으로 바꾼다(동작 변경 없음). 새 익명 네임스페이스 함수·구조체 이름에는 파일 역할을 넣는다(`PickLayoutWeightedIndex`). 패치 예: `Saved/AgentOps/20261013/B1_unity_collision_fix.patch`.
 - 범위: UE 5.8 UBT, 모든 모듈(특히 TDWorldGen)
 - 증거: `Saved/AgentOps/20261013/B1_build_1.log`(실패)·`B1_build_5.log`(패치 후 성공)
+- 변형(2026-10-20 claude FX-8b): 파일 범위 `using namespace X;`(줄 첫머리)가 있으면 묶음 뒤쪽 파일의 지역 변수가 X의 이름을 가려 `error C4459: 'StepSeconds' ... 전역 선언을 숨깁니다`(/we4459). 손대지 않은 `TDRealmLiftDeck.cpp`·`TDRealmSubsystem.cpp`에서 났고 원인은 `TDMidBossTests.cpp:395`. 해결은 같다(가려진 이름을 파일 고유 이름 `MidBossStepSeconds`로). 찾기: `rg -n "^using namespace" Source --glob "*.cpp"`. 증거 `Saved/AgentOps/20261020/fx8b-pre-build.log`
 - 날짜·상태: 2026-10-14 active
 - 발견: claude(P3-13 B1 하위 에이전트)
 - 재발(2026-10-18, TDGameEditor): FluidFX 묶음 C가 에디터 모듈에 .cpp 2개를 더하자 `TDWorldStatePieTests.cpp`(TDPieTestDungeonId 등)·`TDWorldBaker.cpp`(TagGen)·`TDSequencerAnimationTools.cpp`(Fail) 이름이 겹쳐 다른 세션 빌드까지 깨졌다. 빌더가 `bUseUnity = false`로 모듈 전체를 끈 것은 빌드 시간 비용이라 되돌리고 같은 해결(파일 고유 이름)로 고쳤다. 새 파일을 더한 빌더는 모듈 전체 끄기 대신 이 해결을 쓴다.
@@ -90,4 +91,13 @@
 - 증거: 2026-10-19 `Saved/AgentOps/20261019/m338-b1-build.log`(실패), `Saved/AgentOps/20261018/ragdoll-jitter/game-build-1.log`(게임 타깃 성공)
 - 날짜·상태: 2026-10-19 active
 - 후속(2026-10-19 M3-40): 같은 유형이 두 번 더 나왔다. `NewObject<UPhysicalMaterial>`(PhysicsCore, `TDGame.Build.cs` Private에 "PhysicsCore" 추가로 해결)과 시험의 `FlushRenderingCommands`(RenderCore, `LNK2019 __imp_?FlushRenderingCommands`, 호출 제거로 해결 — RenderCore 의존은 FluidFX가 따로 추가 예정). 엔진 모듈 함수를 새로 부르면 소속 모듈을 먼저 확인한다.
+- 발견: claude
+
+### L-build-11 자동화 시험 필터는 부분 문자열 일치라 `TDGame.FluidFX` 가 `TDGame.FluidFXRhi.*` 도 고르고, -NullRHI 에서 건너뛴 RHI 시험이 통과로 집계된다
+- 증상: `build_and_test.py --filter TDGame.FluidFX`(헤드리스 `-NullRHI`)가 GPU 가 필요한 `TDGame.FluidFXRhi.*` 시험까지 실행하고, 시험 안의 '렌더러 없음 → 경고 후 통과' 분기 때문에 성공으로 센다. 시험 수가 부풀고 합격 판정에 건너뜀이 섞인다
+- 원인: `RunTests` 인수에 `^`·`StartsWith:` 접두 기호가 없으면 `FAutomatedTestFilter` 가 `Contains` 비교(엔진 `AutomationCommandline.cpp:211-227`, `AutomationControllerSettings.h` PassesFilter). '접두사 일치'라는 가정이 틀렸다
+- 해결: GPU 가 필요한 시험에 `EAutomationTestFlags::NonNullRHI` 를 붙인다 — 명령줄에 `-nullrhi` 가 있으면 `GetValidTestNames` 가 목록에서 뺀다(`AutomationTest.cpp:840-866`, 예 `ExternalToolTest.cpp:83`). 렌더러가 없을 때는 경고 대신 오류로 실패시킨다. 실제 GPU 시험은 `python Tools/build_and_test.py --rhi offscreen --filter TDGame.FluidFXRhi` 로 돌리고 로그의 RUN 줄 수로 실행을 확인한다. 정적 검사 `Tools/FluidFX/check_fluid_gpu_shaders.py` 가 플래그 누락을 잡는다
+- 범위: UE 5.8 자동화 시험 명령줄, `Tools/build_and_test.py`
+- 증거: FX-4a 묶음 A 반박·수정(워크플로 wf_49547c3c-a57), 엔진 소스 대조. 실제 실행 확인은 모듈 등록 뒤(미검증)
+- 날짜·상태: 2026-10-19 active
 - 발견: claude

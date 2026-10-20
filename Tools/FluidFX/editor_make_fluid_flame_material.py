@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불꽃 카드 마스터 재질 M_TD_FluidFlame(Custom 노드에 Tools/FluidFX/Shaders/TDFluidFlameCard.hlsl)과 불티 재질 M_TD_FluidEmber(TDFluidEmber.hlsl) 및 인스턴스를 만든다.
-실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_flame_material.py
-출력: /Game/FluidFX/Materials/M_TD_FluidFlame, MI_TD_FluidFlame_Torch·Campfire·Explosion, M_TD_FluidEmber, MI_TD_FluidEmber_Default, Saved/FluidFX/fluid_flame_material.json
-상태: 검증됨(2026-10-18 FX-3 불 무대 생성·쇼케이스·탐침 성공). 기존 에셋은 Saved/FluidFX/fluid_flame_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(flame_blend_mode 가 "translucent" 이면 BLEND_TRANSLUCENT, 아니면 BLEND_ADDITIVE), 미저장 작업이 있으면 중단한다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불꽃 카드 마스터 재질 M_TD_FluidFlame(TDFluidFlameCard.hlsl, 3D 노이즈 능선·Catmull-Rom 밀도·온도 휘도 감쇠·선택형 색 램프(기본 끔)·프리멀티플라이드 연기 흡수)과 불티 재질 M_TD_FluidEmber(TDFluidEmber.hlsl), 장작 발광 균열 재질 M_TD_FluidCharredWood(TDFluidCharredWood.hlsl) 및 인스턴스를 만든다.
+실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_flame_material.py (editor_make_fluid_volume_material.py 가 /Game/FluidFX/Textures/T_TD_FluidNoiseVolume 을 만든 뒤)
+출력: /Game/FluidFX/Materials/M_TD_FluidFlame, MI_TD_FluidFlame_Torch·Campfire·Explosion, M_TD_FluidEmber, MI_TD_FluidEmber_Default, M_TD_FluidCharredWood, MI_TD_FluidCharredWood_Campfire, Saved/FluidFX/fluid_flame_material.json
+상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 불꽃 입력 10/10·PS 232 명령). FX-8c 3차(2026-10-20) 불꽃 입력 39개(FlameSpeedHeatFloor·FlameHeatScale·FlameHeatGate·FlameHeatGateLow·FlameHeatGateHigh·FlameFlowCycleSeconds·FlameNoiseBillow, 기본값은 옛 출력과 같음)와 FX-8c 4차 G1 입력 40개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(40/40 연결·PS 352 명령). FX-8c 5차(2026-10-20) 불꽃 색 램프 입력 8개를 더한 48개(FlameColorRampMode 기본 0 = 흑체 경로 그대로, FlameRampCoverageExponent·FlameRampWarmPosition·FlameRampHotPosition, 정점 색 FlameRampColdColor·FlameRampWarmColor·FlameRampHotColor·FlameRampCoreColor 는 셰이더가 휘도 1로 정규화하는 선형 RGB)는 2026-10-20 13:02 에디터 재실행(48/48 연결·PS 393 명령·표본기 5). FX-8c 5차 굽기(2026-10-20: 세 MI 모두 FlameColorRampMode 1, 폭발·횃불 MI 는 vector_overrides 로 FlameRampColdColor·FlameRampWarmColor 를 (1, 0.03, 0.03) 으로 덮어쓰고 다시 읽어 확인, 모닥불 MI 는 마스터 정점 그대로, 횃불 MI 는 T4 값 FlameIntensity 13·FlameTemperatureMaxKelvin 1900·FlameHeatGate 1·FlameSmokeOpacity 0)는 에디터 재실행 전. 기존 에셋은 Saved/FluidFX/fluid_flame_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(flame_blend_mode 가 "additive" 면 BLEND_ADDITIVE, "translucent" 면 BLEND_TRANSLUCENT, 그 밖은 BLEND_ALPHA_COMPOSITE), 미저장 작업이 있으면 중단한다.
 """
 import hashlib
 import json
@@ -15,56 +15,85 @@ FLUID_ROOT = "/Game/FluidFX"
 MATERIAL_DIR = f"{FLUID_ROOT}/Materials"
 FLAME_MASTER_NAME = "M_TD_FluidFlame"
 EMBER_MASTER_NAME = "M_TD_FluidEmber"
+WOOD_MASTER_NAME = "M_TD_FluidCharredWood"
 FLAME_MASTER_PATH = f"{MATERIAL_DIR}/{FLAME_MASTER_NAME}"
 EMBER_MASTER_PATH = f"{MATERIAL_DIR}/{EMBER_MASTER_NAME}"
+WOOD_MASTER_PATH = f"{MATERIAL_DIR}/{WOOD_MASTER_NAME}"
+NOISE_VOLUME_PATH = f"{FLUID_ROOT}/Textures/T_TD_FluidNoiseVolume"
+NOISE_TEXTURE_PARAMETER_NAME = "NoiseVolumeTexture"
 
 FLAME_HLSL_RELATIVE_PATH = ("Tools", "FluidFX", "Shaders", "TDFluidFlameCard.hlsl")
 EMBER_HLSL_RELATIVE_PATH = ("Tools", "FluidFX", "Shaders", "TDFluidEmber.hlsl")
+WOOD_HLSL_RELATIVE_PATH = ("Tools", "FluidFX", "Shaders", "TDFluidCharredWood.hlsl")
 REQUEST_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_flame_material_request.json")
 REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_flame_material.json")
 
 DEFAULT_TEXTURE_PATHS = ("/Engine/EngineResources/Black", "/Engine/EngineResources/DefaultTexture")
 FLAME_PARAMETER_GROUP = "TDFluidFlame"
 EMBER_PARAMETER_GROUP = "TDFluidEmber"
-TRANSLUCENT_BLEND_REQUEST = "translucent"
+WOOD_PARAMETER_GROUP = "TDFluidCharredWood"
+BLEND_NAME_BY_REQUEST = {"additive": "BLEND_ADDITIVE", "translucent": "BLEND_TRANSLUCENT", "premultiplied": "BLEND_ALPHA_COMPOSITE"}
+DEFAULT_BLEND_NAME = "BLEND_ALPHA_COMPOSITE"
 
 FLAME_INSTANCE_SPECS = (
     {
         "name": "MI_TD_FluidFlame_Torch",
         "scalar_overrides": {
-            "FlameIntensity": 10.0,
-            "FlameTemperatureMinKelvin": 1000.0,
-            "FlameTemperatureMaxKelvin": 2400.0,
-            "FlameErosion": 0.2,
+            "FlameIntensity": 13.0,
+            "FlameTemperatureMinKelvin": 650.0,
+            "FlameTemperatureMaxKelvin": 1900.0,
+            "FlameBrightnessExponent": 4.0,
+            "FlameHeatDensityExponent": 1.0,
+            "FlameFlowSpeed": 0.25,
+            "FlameErosion": 0.3,
             "FlameDepthFadeCm": 15.0,
             "FlameNoiseScale": 0.05,
             "FlameNoiseStrength": 2.0,
             "FlameOpacityScale": 8.0,
+            "FlameHeatGate": 1.0,
+            "FlameSmokeOpacity": 0.0,
+            "FlameColorRampMode": 1.0,
+        },
+        "vector_overrides": {
+            "FlameRampColdColor": (1.0, 0.03, 0.03, 1.0),
+            "FlameRampWarmColor": (1.0, 0.03, 0.03, 1.0),
         },
     },
     {
         "name": "MI_TD_FluidFlame_Campfire",
         "scalar_overrides": {
-            "FlameIntensity": 12.0,
-            "FlameTemperatureMinKelvin": 1000.0,
-            "FlameTemperatureMaxKelvin": 2500.0,
-            "FlameErosion": 0.15,
+            "FlameIntensity": 20.0,
+            "FlameTemperatureMinKelvin": 650.0,
+            "FlameTemperatureMaxKelvin": 1750.0,
+            "FlameBrightnessExponent": 4.0,
+            "FlameHeatDensityExponent": 1.0,
+            "FlameFlowSpeed": 0.25,
+            "FlameErosion": 0.25,
             "FlameDepthFadeCm": 10.0,
             "FlameNoiseScale": 0.03,
             "FlameNoiseStrength": 2.0,
             "FlameOpacityScale": 8.0,
+            "FlameColorRampMode": 1.0,
         },
     },
     {
         "name": "MI_TD_FluidFlame_Explosion",
         "scalar_overrides": {
-            "FlameIntensity": 10.0,
-            "FlameTemperatureMinKelvin": 1000.0,
-            "FlameTemperatureMaxKelvin": 2700.0,
+            "FlameIntensity": 8.0,
+            "FlameTemperatureMinKelvin": 650.0,
+            "FlameTemperatureMaxKelvin": 1750.0,
+            "FlameBrightnessExponent": 4.0,
+            "FlameHeatDensityExponent": 1.0,
+            "FlameFlowSpeed": 0.25,
             "FlameDepthFadeCm": 30.0,
             "FlameNoiseScale": 0.015,
             "FlameNoiseStrength": 12.0,
             "FlameOpacityScale": 6.0,
+            "FlameColorRampMode": 1.0,
+        },
+        "vector_overrides": {
+            "FlameRampColdColor": (1.0, 0.03, 0.03, 1.0),
+            "FlameRampWarmColor": (1.0, 0.03, 0.03, 1.0),
         },
     },
 )
@@ -75,6 +104,12 @@ FLAME_VECTOR_PARAMETER_DEFAULTS = (
     ("SimExtentsCm", (120.0, 160.0, 0.08, 0.0)),
     ("PlaneAxisU", (1.0, 0.0, 0.0, 0.0)),
     ("PlaneAxisV", (0.0, 1.0, 0.0, 0.0)),
+    ("PlaneCoordinateOffsetCm", (0.0, 0.0, 0.0, 0.0)),
+    ("FlameSmokeColor", (0.02, 0.01, 0.012, 1.0)),
+    ("FlameRampColdColor", (1.0, 0.084, 0.036, 1.0)),
+    ("FlameRampWarmColor", (1.0, 0.084, 0.036, 1.0)),
+    ("FlameRampHotColor", (1.0, 0.39, 0.005, 1.0)),
+    ("FlameRampCoreColor", (1.0, 0.79, 0.25, 1.0)),
 )
 FLAME_SCALAR_PARAMETER_DEFAULTS = (
     ("SimGridResolution", 96.0),
@@ -88,8 +123,27 @@ FLAME_SCALAR_PARAMETER_DEFAULTS = (
     ("FlameDensitySource", 0.0),
     ("FlameDepthFadeCm", 15.0),
     ("FlameOpacityScale", 4.0),
+    ("FlameTemperatureCurve", 1.4),
+    ("FlameBrightnessExponent", 1.5),
+    ("FlameRidgeSharpness", 3.0),
+    ("FlameSmokeOpacity", 0.25),
+    ("AuxHeatActive", 0.0),
+    ("FlameHeatDensityExponent", 0.5),
+    ("CardLayerIndex", 0.0),
+    ("CardIntensityScale", 1.0),
+    ("FlameSpeedHeatFloor", 0.8),
+    ("FlameHeatScale", 1.0),
+    ("FlameHeatGate", 0.0),
+    ("FlameHeatGateLow", 0.05),
+    ("FlameHeatGateHigh", 0.25),
+    ("FlameFlowCycleSeconds", 1.0),
+    ("FlameNoiseBillow", 0.0),
+    ("FlameColorRampMode", 0.0),
+    ("FlameRampCoverageExponent", 0.56),
+    ("FlameRampWarmPosition", 0.35),
+    ("FlameRampHotPosition", 0.47),
 )
-FLAME_TEXTURE_PARAMETER_NAMES = ("DensityPressureTexture", "VelocityTexture")
+FLAME_TEXTURE_PARAMETER_NAMES = ("DensityPressureTexture", "VelocityTexture", "AuxTexture")
 FLAME_BUILTIN_SOURCE_NAMES = ("PixelWorldPosition", "SceneDepthCm", "PixelDepthCm", "ElapsedSeconds")
 
 FLAME_CUSTOM_INPUT_NAMES = (
@@ -100,6 +154,7 @@ FLAME_CUSTOM_INPUT_NAMES = (
     "SimGridResolution",
     "PlaneAxisU",
     "PlaneAxisV",
+    "PlaneCoordinateOffsetCm",
     "PixelWorldPosition",
     "SceneDepthCm",
     "PixelDepthCm",
@@ -114,9 +169,35 @@ FLAME_CUSTOM_INPUT_NAMES = (
     "FlameDensitySource",
     "FlameDepthFadeCm",
     "FlameOpacityScale",
+    "NoiseVolumeTexture",
+    "FlameTemperatureCurve",
+    "FlameBrightnessExponent",
+    "FlameRidgeSharpness",
+    "FlameSmokeOpacity",
+    "FlameSmokeColor",
+    "AuxTexture",
+    "AuxHeatActive",
+    "FlameHeatDensityExponent",
+    "CardLayerIndex",
+    "CardIntensityScale",
+    "FlameSpeedHeatFloor",
+    "FlameHeatScale",
+    "FlameHeatGate",
+    "FlameHeatGateLow",
+    "FlameHeatGateHigh",
+    "FlameFlowCycleSeconds",
+    "FlameNoiseBillow",
+    "FlameColorRampMode",
+    "FlameRampCoverageExponent",
+    "FlameRampWarmPosition",
+    "FlameRampHotPosition",
+    "FlameRampColdColor",
+    "FlameRampWarmColor",
+    "FlameRampHotColor",
+    "FlameRampCoreColor",
 )
-FLAME_HLSL_SAMPLER_NAMES = ("DensityPressureTextureSampler", "VelocityTextureSampler")
-FLAME_HLSL_ENGINE_SYMBOLS = ("GradientNoise3D_ALU", "Texture2DSampleLevel")
+FLAME_HLSL_SAMPLER_NAMES = ("DensityPressureTextureSampler", "VelocityTextureSampler", "NoiseVolumeTextureSampler", "AuxTextureSampler")
+FLAME_HLSL_ENGINE_SYMBOLS = ("Texture2DSampleLevel", "Texture3DSampleLevel")
 
 EMBER_SCALAR_PARAMETER_DEFAULTS = (
     ("EmberIntensity", 6.0),
@@ -136,6 +217,37 @@ EMBER_CUSTOM_INPUT_NAMES = (
 )
 EMBER_HLSL_ENGINE_SYMBOLS = ()
 
+WOOD_VECTOR_PARAMETER_DEFAULTS = (
+    ("WoodGlowColor", (1.0, 0.16, 0.025, 1.0)),
+    ("WoodCharColor", (0.035, 0.03, 0.028, 1.0)),
+    ("FireCenterWorld", (0.0, 0.0, 0.0, 1.0)),
+)
+WOOD_SCALAR_PARAMETER_DEFAULTS = (
+    ("WoodCrackScale", 0.06),
+    ("WoodCrackWidth", 0.3),
+    ("WoodGlowIntensity", 6.0),
+    ("WoodFlickerRate", 0.8),
+    ("FireRadiusCm", 0.0),
+    ("WoodRoughness", 0.85),
+)
+WOOD_CUSTOM_INPUT_NAMES = (
+    "PixelWorldPosition",
+    "ElapsedSeconds",
+    "NoiseVolumeTexture",
+    "WoodCrackScale",
+    "WoodCrackWidth",
+    "WoodGlowColor",
+    "WoodGlowIntensity",
+    "WoodFlickerRate",
+    "FireCenterWorld",
+    "FireRadiusCm",
+)
+WOOD_HLSL_SAMPLER_NAMES = ("NoiseVolumeTextureSampler",)
+WOOD_HLSL_ENGINE_SYMBOLS = ("Texture3DSampleLevel",)
+WOOD_INSTANCE_SPECS = (
+    {"name": "MI_TD_FluidCharredWood_Campfire", "scalar_overrides": {"WoodGlowIntensity": 8.0, "WoodCrackWidth": 0.35}},
+)
+
 OPTIONAL_MATERIAL_SETTINGS = (
     ("use_translucency_vertex_fog", False),
     ("apply_cloud_fogging", False),
@@ -150,7 +262,9 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialEditingLibrary.get_scalar_parameter_names",
     "MaterialEditingLibrary.get_texture_parameter_names",
     "MaterialEditingLibrary.set_material_instance_parent",
+    "MaterialEditingLibrary.set_material_instance_vector_parameter_value",
     "MaterialEditingLibrary.set_material_instance_scalar_parameter_value",
+    "MaterialEditingLibrary.get_material_instance_vector_parameter_value",
     "MaterialEditingLibrary.get_material_instance_scalar_parameter_value",
     "MaterialEditingLibrary.update_material_instance",
     "MaterialEditingLibrary.set_material_usage",
@@ -177,15 +291,23 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialExpressionPerInstanceCustomData",
     "MaterialExpressionPixelNormalWS",
     "MaterialExpressionCameraVectorWS",
+    "MaterialExpressionMultiply",
+    "VolumeTexture",
     "BlendMode.BLEND_ADDITIVE",
     "BlendMode.BLEND_TRANSLUCENT",
+    "BlendMode.BLEND_ALPHA_COMPOSITE",
+    "BlendMode.BLEND_OPAQUE",
     "MaterialShadingModel.MSM_UNLIT",
+    "MaterialShadingModel.MSM_DEFAULT_LIT",
     "MaterialProperty.MP_EMISSIVE_COLOR",
     "MaterialProperty.MP_OPACITY",
+    "MaterialProperty.MP_BASE_COLOR",
+    "MaterialProperty.MP_ROUGHNESS",
     "MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES",
     "MaterialSamplerType.SAMPLERTYPE_COLOR",
     "MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR",
     "TextureCompressionSettings.TC_DEFAULT",
+    "TextureCompressionSettings.TC_VECTOR_DISPLACEMENTMAP",
 )
 
 IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
@@ -217,9 +339,7 @@ def read_request():
 
 
 def resolve_flame_blend_name(request):
-    if request.get("flame_blend_mode") == TRANSLUCENT_BLEND_REQUEST:
-        return "BLEND_TRANSLUCENT"
-    return "BLEND_ADDITIVE"
+    return BLEND_NAME_BY_REQUEST.get(request.get("flame_blend_mode"), DEFAULT_BLEND_NAME)
 
 
 def asset_path(name):
@@ -227,9 +347,10 @@ def asset_path(name):
 
 
 def collect_target_asset_paths():
-    names = [FLAME_MASTER_NAME, EMBER_MASTER_NAME]
+    names = [FLAME_MASTER_NAME, EMBER_MASTER_NAME, WOOD_MASTER_NAME]
     names.extend(spec["name"] for spec in FLAME_INSTANCE_SPECS)
     names.extend(spec["name"] for spec in EMBER_INSTANCE_SPECS)
+    names.extend(spec["name"] for spec in WOOD_INSTANCE_SPECS)
     return [asset_path(name) for name in names]
 
 
@@ -305,7 +426,7 @@ def choose_sampler_type(texture):
         is_srgb = bool(texture.get_editor_property("srgb"))
     except Exception:
         return None
-    if compression != unreal.TextureCompressionSettings.TC_DEFAULT:
+    if compression not in (unreal.TextureCompressionSettings.TC_DEFAULT, unreal.TextureCompressionSettings.TC_VECTOR_DISPLACEMENTMAP):
         return None
     if is_srgb:
         return unreal.MaterialSamplerType.SAMPLERTYPE_COLOR
@@ -321,6 +442,18 @@ def pick_default_texture():
             return texture_path, texture, sampler_type
         attempts.append(texture_path)
     raise RuntimeError("기본 텍스처로 쓸 수 있는 엔진 텍스처가 없음: " + ", ".join(attempts))
+
+
+def load_noise_volume_texture():
+    texture = unreal.EditorAssetLibrary.load_asset(NOISE_VOLUME_PATH)
+    if not isinstance(texture, unreal.VolumeTexture):
+        raise RuntimeError(
+            f"3D 노이즈 볼륨 텍스처 없음: {NOISE_VOLUME_PATH} (python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_volume_material.py 먼저)"
+        )
+    sampler_type = choose_sampler_type(texture)
+    if sampler_type is None:
+        raise RuntimeError(f"3D 노이즈 볼륨 텍스처 샘플러 형식을 정할 수 없음: {NOISE_VOLUME_PATH}")
+    return texture, sampler_type
 
 
 def has_editor_property(owner, property_name):
@@ -484,7 +617,21 @@ def verify_master_parameters(material, expected):
         raise RuntimeError("재질 파라미터 없음: " + ", ".join(missing))
 
 
-def build_flame_master_graph(material, code, default_texture, sampler_type, blend_name):
+def add_noise_texture_node(material, noise_texture, noise_sampler_type, group_name, x, y):
+    texture_node = add_node(
+        material,
+        unreal.MaterialExpressionTextureObjectParameter,
+        x,
+        y,
+        parameter_name=NOISE_TEXTURE_PARAMETER_NAME,
+        texture=noise_texture,
+        sampler_type=noise_sampler_type,
+    )
+    assign_parameter_group(texture_node, group_name)
+    return texture_node
+
+
+def build_flame_master_graph(material, code, default_texture, sampler_type, noise_texture, noise_sampler_type):
     sources = {}
     world_position = add_node(material, unreal.MaterialExpressionWorldPosition, -1500, -1100)
     sources["PixelWorldPosition"] = (truncate_if_available(material, world_position, -1300, -1100), "")
@@ -504,13 +651,15 @@ def build_flame_master_graph(material, code, default_texture, sampler_type, blen
         )
         assign_parameter_group(texture_node, FLAME_PARAMETER_GROUP)
         sources[texture_name] = (texture_node, "")
+    noise_node = add_noise_texture_node(material, noise_texture, noise_sampler_type, FLAME_PARAMETER_GROUP, -1300, -360)
+    sources[NOISE_TEXTURE_PARAMETER_NAME] = (noise_node, "")
 
     for row, (parameter_name, default_value) in enumerate(FLAME_VECTOR_PARAMETER_DEFAULTS):
         vector_node = add_node(
             material,
             unreal.MaterialExpressionVectorParameter,
             -1300,
-            -340 + row * 130,
+            -220 + row * 130,
             parameter_name=parameter_name,
             default_value=unreal.LinearColor(*default_value),
         )
@@ -522,7 +671,7 @@ def build_flame_master_graph(material, code, default_texture, sampler_type, blen
             material,
             unreal.MaterialExpressionScalarParameter,
             -1300,
-            240 + row * 110,
+            480 + row * 110,
             parameter_name=parameter_name,
             default_value=default_value,
         )
@@ -592,7 +741,7 @@ def build_ember_master_graph(material, code):
     return custom
 
 
-def create_flame_master(code, default_texture, sampler_type, overwrite, blend_name):
+def create_flame_master(code, default_texture, sampler_type, noise_texture, noise_sampler_type, overwrite, blend_name):
     material, was_created = prepare_master_material(FLAME_MASTER_NAME, FLAME_MASTER_PATH, overwrite)
     settings = apply_required_properties(
         material,
@@ -607,7 +756,7 @@ def create_flame_master(code, default_texture, sampler_type, overwrite, blend_na
     )
     optional_applied, skipped = apply_optional_properties(material)
     settings.update(optional_applied)
-    custom = build_flame_master_graph(material, code, default_texture, sampler_type, blend_name)
+    custom = build_flame_master_graph(material, code, default_texture, sampler_type, noise_texture, noise_sampler_type)
     connected = verify_custom_inputs_connected(material, custom, len(FLAME_CUSTOM_INPUT_NAMES))
     statistics = compile_master_material(material, "불꽃 카드 재질")
     verify_master_parameters(
@@ -615,7 +764,7 @@ def create_flame_master(code, default_texture, sampler_type, overwrite, blend_na
         {
             "vector": [name for name, _ in FLAME_VECTOR_PARAMETER_DEFAULTS],
             "scalar": [name for name, _ in FLAME_SCALAR_PARAMETER_DEFAULTS],
-            "texture": list(FLAME_TEXTURE_PARAMETER_NAMES),
+            "texture": list(FLAME_TEXTURE_PARAMETER_NAMES) + [NOISE_TEXTURE_PARAMETER_NAME],
         },
     )
     save_asset(material, FLAME_MASTER_PATH)
@@ -664,6 +813,99 @@ def create_ember_master(code, overwrite):
     }
 
 
+def build_wood_master_graph(material, code, noise_texture, noise_sampler_type):
+    sources = {}
+    world_position = add_node(material, unreal.MaterialExpressionWorldPosition, -1500, -700)
+    sources["PixelWorldPosition"] = (truncate_if_available(material, world_position, -1300, -700), "")
+    sources["ElapsedSeconds"] = (add_node(material, unreal.MaterialExpressionTime, -1300, -580), "")
+    sources[NOISE_TEXTURE_PARAMETER_NAME] = (
+        add_noise_texture_node(material, noise_texture, noise_sampler_type, WOOD_PARAMETER_GROUP, -1300, -460),
+        "",
+    )
+    vector_nodes = {}
+    for row, (parameter_name, default_value) in enumerate(WOOD_VECTOR_PARAMETER_DEFAULTS):
+        vector_node = add_node(
+            material,
+            unreal.MaterialExpressionVectorParameter,
+            -1300,
+            -300 + row * 130,
+            parameter_name=parameter_name,
+            default_value=unreal.LinearColor(*default_value),
+        )
+        assign_parameter_group(vector_node, WOOD_PARAMETER_GROUP)
+        vector_nodes[parameter_name] = vector_node
+        sources[parameter_name] = (vector_node, "RGB")
+    scalar_nodes = {}
+    for row, (parameter_name, default_value) in enumerate(WOOD_SCALAR_PARAMETER_DEFAULTS):
+        scalar_node = add_node(
+            material,
+            unreal.MaterialExpressionScalarParameter,
+            -1300,
+            120 + row * 110,
+            parameter_name=parameter_name,
+            default_value=default_value,
+        )
+        assign_parameter_group(scalar_node, WOOD_PARAMETER_GROUP)
+        scalar_nodes[parameter_name] = scalar_node
+        sources[parameter_name] = (scalar_node, "")
+
+    custom = build_custom_node(
+        material,
+        "TDFluidCharredWood",
+        unreal.CustomMaterialOutputType.CMOT_FLOAT4,
+        WOOD_CUSTOM_INPUT_NAMES,
+        code,
+        -300,
+        0,
+    )
+    for input_name in WOOD_CUSTOM_INPUT_NAMES:
+        source, source_output = sources[input_name]
+        link(source, custom, input_name, source_output)
+
+    emissive_mask = add_node(material, unreal.MaterialExpressionComponentMask, 200, -80, r=True, g=True, b=True, a=False)
+    link(custom, emissive_mask)
+    connect_material_output(emissive_mask, unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    char_mask = add_node(material, unreal.MaterialExpressionComponentMask, 200, 80, r=False, g=False, b=False, a=True)
+    link(custom, char_mask)
+    base_color = add_node(material, unreal.MaterialExpressionMultiply, 420, 80)
+    link(char_mask, base_color, "A")
+    link(vector_nodes["WoodCharColor"], base_color, "B", "RGB")
+    connect_material_output(base_color, unreal.MaterialProperty.MP_BASE_COLOR)
+    connect_material_output(scalar_nodes["WoodRoughness"], unreal.MaterialProperty.MP_ROUGHNESS)
+    return custom
+
+
+def create_wood_master(code, noise_texture, noise_sampler_type, overwrite):
+    material, was_created = prepare_master_material(WOOD_MASTER_NAME, WOOD_MASTER_PATH, overwrite)
+    settings = apply_required_properties(
+        material,
+        (
+            ("blend_mode", unreal.BlendMode.BLEND_OPAQUE),
+            ("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT),
+            ("two_sided", False),
+        ),
+    )
+    custom = build_wood_master_graph(material, code, noise_texture, noise_sampler_type)
+    connected = verify_custom_inputs_connected(material, custom, len(WOOD_CUSTOM_INPUT_NAMES))
+    statistics = compile_master_material(material, "장작 발광 균열 재질")
+    verify_master_parameters(
+        material,
+        {
+            "vector": [name for name, _ in WOOD_VECTOR_PARAMETER_DEFAULTS],
+            "scalar": [name for name, _ in WOOD_SCALAR_PARAMETER_DEFAULTS],
+            "texture": [NOISE_TEXTURE_PARAMETER_NAME],
+        },
+    )
+    save_asset(material, WOOD_MASTER_PATH)
+    return material, {
+        "created": was_created,
+        "blend_mode": "BLEND_OPAQUE",
+        "settings": settings,
+        "custom_inputs_connected": connected,
+        "statistics": statistics,
+    }
+
+
 def prepare_instance(spec, overwrite):
     assets = unreal.EditorAssetLibrary
     path = asset_path(spec["name"])
@@ -686,16 +928,26 @@ def create_material_instance(spec, master, overwrite):
     editing = unreal.MaterialEditingLibrary
     path = asset_path(spec["name"])
     instance = prepare_instance(spec, overwrite)
+    vector_overrides = spec.get("vector_overrides", {})
     editing.set_material_instance_parent(instance, master)
+    for parameter_name, rgba in vector_overrides.items():
+        editing.set_material_instance_vector_parameter_value(
+            instance, parameter_name, unreal.LinearColor(rgba[0], rgba[1], rgba[2], rgba[3])
+        )
     for parameter_name, value in spec["scalar_overrides"].items():
         editing.set_material_instance_scalar_parameter_value(instance, parameter_name, value)
     editing.update_material_instance(instance)
+    for parameter_name, rgba in vector_overrides.items():
+        stored = editing.get_material_instance_vector_parameter_value(instance, parameter_name)
+        error = max(abs(stored.r - rgba[0]), abs(stored.g - rgba[1]), abs(stored.b - rgba[2]), abs(stored.a - rgba[3]))
+        if error > 0.001:
+            raise RuntimeError(f"재질 인스턴스 색 설정 확인 실패: {path}.{parameter_name}")
     for parameter_name, value in spec["scalar_overrides"].items():
         stored = editing.get_material_instance_scalar_parameter_value(instance, parameter_name)
         if abs(stored - value) > 0.001:
             raise RuntimeError(f"재질 인스턴스 스칼라 설정 확인 실패: {path}.{parameter_name}")
     save_asset(instance, path)
-    return {"asset": path, "scalar_overrides": spec["scalar_overrides"]}
+    return {"asset": path, "scalar_overrides": spec["scalar_overrides"], "vector_overrides": vector_overrides}
 
 
 def write_report(report):
@@ -729,10 +981,12 @@ def main():
 
     flame_path, flame_code = load_hlsl_code(FLAME_HLSL_RELATIVE_PATH)
     ember_path, ember_code = load_hlsl_code(EMBER_HLSL_RELATIVE_PATH)
+    wood_path, wood_code = load_hlsl_code(WOOD_HLSL_RELATIVE_PATH)
     problems = validate_hlsl_code(
         flame_code, FLAME_CUSTOM_INPUT_NAMES, FLAME_HLSL_SAMPLER_NAMES, FLAME_HLSL_ENGINE_SYMBOLS
     )
     problems += validate_hlsl_code(ember_code, EMBER_CUSTOM_INPUT_NAMES, (), EMBER_HLSL_ENGINE_SYMBOLS)
+    problems += validate_hlsl_code(wood_code, WOOD_CUSTOM_INPUT_NAMES, WOOD_HLSL_SAMPLER_NAMES, WOOD_HLSL_ENGINE_SYMBOLS)
     if problems:
         raise RuntimeError("HLSL 자체 점검 실패: " + " | ".join(problems))
 
@@ -745,7 +999,7 @@ def main():
             "status": "기존 에셋이 있어 아무것도 바꾸지 않았습니다",
             "existing_assets": existing_paths,
             "overwrite_request_file": project_path(*REQUEST_RELATIVE_PATH),
-            "overwrite_request_content": {"overwrite": True, "flame_blend_mode": "additive"},
+            "overwrite_request_content": {"overwrite": True, "flame_blend_mode": "premultiplied"},
         }, ensure_ascii=False))
         raise RuntimeError("기존 에셋 보존: overwrite 요청 파일이 없어 중단합니다.")
 
@@ -755,16 +1009,23 @@ def main():
 
     print("단계: 기본 텍스처 선택")
     texture_path, default_texture, sampler_type = pick_default_texture()
+    noise_texture, noise_sampler_type = load_noise_volume_texture()
 
     print("단계: 불꽃 카드 마스터 재질")
-    flame_master, flame_summary = create_flame_master(flame_code, default_texture, sampler_type, overwrite, blend_name)
+    flame_master, flame_summary = create_flame_master(
+        flame_code, default_texture, sampler_type, noise_texture, noise_sampler_type, overwrite, blend_name
+    )
 
     print("단계: 불티 마스터 재질")
     ember_master, ember_summary = create_ember_master(ember_code, overwrite)
 
+    print("단계: 장작 발광 균열 마스터 재질")
+    wood_master, wood_summary = create_wood_master(wood_code, noise_texture, noise_sampler_type, overwrite)
+
     print("단계: 재질 인스턴스")
     flame_instances = [create_material_instance(spec, flame_master, overwrite) for spec in FLAME_INSTANCE_SPECS]
     ember_instances = [create_material_instance(spec, ember_master, overwrite) for spec in EMBER_INSTANCE_SPECS]
+    wood_instances = [create_material_instance(spec, wood_master, overwrite) for spec in WOOD_INSTANCE_SPECS]
 
     missing_files = find_missing_saved_files()
     if missing_files:
@@ -775,12 +1036,16 @@ def main():
         "overwrite": overwrite,
         "flame_hlsl": describe_hlsl(flame_path, flame_code),
         "ember_hlsl": describe_hlsl(ember_path, ember_code),
+        "wood_hlsl": describe_hlsl(wood_path, wood_code),
         "default_texture": texture_path,
+        "noise_texture": NOISE_VOLUME_PATH,
         "sampler_type": str(sampler_type),
         "flame_master": flame_summary,
         "ember_master": ember_summary,
+        "wood_master": wood_summary,
         "flame_instances": flame_instances,
         "ember_instances": ember_instances,
+        "wood_instances": wood_instances,
         "saved": True,
     }
     report_path = write_report(report)

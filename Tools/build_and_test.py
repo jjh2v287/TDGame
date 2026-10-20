@@ -1,5 +1,5 @@
 """실행 환경: 시스템 Python(에디터 밖). 다른 세션의 UnrealEditor·UnrealEditor-Cmd·UBT·UAT가 없을 때까지 기다린 뒤 TDGameEditor를 빌드하고 헤드리스 자동화 시험을 돌려 실패만 요약한다(L-build-05·08, L-repo-12).
-실행 명령: python Tools/build_and_test.py --filter TDGame.FluidFX [--filter TDGame.Combat] [--label 이름] [--no-build] [--no-test] [--wait-seconds 1800] [--holder 이름] | --acquire-hold 이름 --reason 사유 | --release-hold 이름 (Saved/AgentOps/build_hold.json {"owner","reason"}이 있으면 owner가 아닌 실행은 대기, 3시간 지나면 무시)
+실행 명령: python Tools/build_and_test.py --filter TDGame.FluidFX [--filter TDGame.Combat] [--label 이름] [--no-build] [--no-test] [--rhi null|offscreen] [--wait-seconds 1800] [--holder 이름] | --acquire-hold 이름 --reason 사유 | --release-hold 이름 (Saved/AgentOps/build_hold.json {"owner","reason"}이 있으면 owner가 아닌 실행은 대기, 3시간 지나면 무시)
 출력: 표준 출력 요약, Saved/AgentOps/<YYYYMMDD>/<label>-build.log·<label>-tests.log·<label>-tests.json. 종료 코드 0 성공 / 1 빌드 실패 / 2 시험 실패·시험 없음 / 3 대기 시간 초과 / 4 보류 획득·해제 거부
 상태: 현행
 """
@@ -122,6 +122,9 @@ def wait_for_quiet_machine(wait_seconds, holder=None):
     return False
 
 
+RHI_ARGUMENTS = {"null": "-NullRHI", "offscreen": "-RenderOffScreen"}
+
+
 def run_build(log_path):
     command = [BUILD_BAT, "TDGameEditor", "Win64", "Development", f"-Project={UPROJECT}", "-WaitMutex", "-NoHotReload"]
     with open(log_path, "w", encoding="utf-8", errors="replace") as log_file:
@@ -132,13 +135,13 @@ def run_build(log_path):
     return succeeded, error_lines[:15]
 
 
-def run_tests(test_filters, log_path):
+def run_tests(test_filters, log_path, rhi_mode="null"):
     test_command = "Automation RunTests " + "+".join(test_filters)
     command = [
         EDITOR_CMD_EXE, UPROJECT,
         f"-ExecCmds={test_command}",
         "-TestExit=Automation Test Queue Empty",
-        "-unattended", "-NullRHI", "-NoSplash", "-NoSound",
+        "-unattended", RHI_ARGUMENTS[rhi_mode], "-NoSplash", "-NoSound",
         f"-abslog={log_path}",
     ]
     completed_process = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -184,10 +187,11 @@ def parse_test_log(log_path):
 def main():
     sys.stdout.reconfigure(errors="replace")
     parser = argparse.ArgumentParser()
-    parser.add_argument("--filter", action="append", default=[], help="자동화 시험 이름 접두사(여러 번 지정 가능)")
+    parser.add_argument("--filter", action="append", default=[], help="자동화 시험 이름(엔진 RunTests 는 부분 문자열 일치, 여러 번 지정 가능)")
     parser.add_argument("--label", default="build-and-test")
     parser.add_argument("--no-build", action="store_true")
     parser.add_argument("--no-test", action="store_true")
+    parser.add_argument("--rhi", choices=sorted(RHI_ARGUMENTS), default="null", help="null: -NullRHI(기본, 헤드리스, EAutomationTestFlags::NonNullRHI 시험은 엔진이 목록에서 뺀다) / offscreen: -RenderOffScreen(실제 GPU, TDGame.FluidFXRhi 시험용). RunTests 필터는 부분 문자열 일치라 TDGame.FluidFX 는 TDGame.FluidFXRhi 도 고른다")
     parser.add_argument("--wait-seconds", type=int, default=1800)
     parser.add_argument("--holder", default=None, help="Saved/AgentOps/build_hold.json 의 owner와 같으면 보류를 통과")
     parser.add_argument("--acquire-hold", metavar="OWNER", default=None, help="보류 파일이 없을 때만 만든다(원자적), 종료 0 성공/4 이미 있음")
@@ -227,14 +231,14 @@ def main():
     if not wait_for_quiet_machine(args.wait_seconds, args.holder):
         return 3
 
-    run_summary = run_tests(args.filter, test_log)
+    run_summary = run_tests(args.filter, test_log, args.rhi)
     results = run_summary["results"]
     passed = [entry for entry in results if entry["result"] == "Success"]
     failed = [entry for entry in results if entry["result"] != "Success"]
     found_count = run_summary["found_count"]
     is_incomplete = found_count is None or len(results) < found_count
     has_crashed = bool(run_summary["crash_lines"]) or run_summary["engine_exit_code"] != 0
-    run_summary.update({"filters": args.filter, "log": test_log, "incomplete": is_incomplete, "crashed": has_crashed})
+    run_summary.update({"filters": args.filter, "rhi": args.rhi, "log": test_log, "incomplete": is_incomplete, "crashed": has_crashed})
     with open(test_json, "w", encoding="utf-8") as json_file:
         json.dump(run_summary, json_file, ensure_ascii=False, indent=1)
     print(f"TESTS {len(passed)}/{found_count if found_count is not None else '?'} passed (completed {len(results)}, engine exit {run_summary['engine_exit_code']}) -> {test_json}")

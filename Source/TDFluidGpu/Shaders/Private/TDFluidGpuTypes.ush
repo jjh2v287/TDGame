@@ -1,0 +1,162 @@
+#pragma once
+
+static const uint TDFLUIDGPU_ACTOR_FLAG_IS_SIMPLE_PAINTER = 1u << 0;
+static const uint TDFLUIDGPU_ACTOR_FLAG_NEEDS_RESET = 1u << 1;
+static const uint TDFLUIDGPU_ACTOR_FLAG_HAS_SHIFT = 1u << 2;
+static const uint TDFLUIDGPU_ACTOR_FLAG_RASTERIZES_OBSTACLES = 1u << 3;
+static const uint TDFLUIDGPU_ACTOR_FLAG_HAS_OBSTACLES = 1u << 4;
+static const uint TDFLUIDGPU_ACTOR_FLAG_HAS_TERRAIN_ELEVATION = 1u << 5;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_TERRAIN_SLOPE_ACCELERATION = 1u << 6;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_FLOW_NOISE = 1u << 7;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_BUOYANCY = 1u << 8;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_VORTICITY = 1u << 9;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_OUTFLOW = 1u << 10;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_AMBIENT_REFILL = 1u << 11;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_AMBIENT_NOISE = 1u << 12;
+static const uint TDFLUIDGPU_ACTOR_FLAG_HAS_STAMPS = 1u << 13;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_HEAT_CHANNEL = 1u << 14;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_BOUNDARY_REFLECTION = 1u << 15;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_VORTEX_FORCE = 1u << 16;
+static const uint TDFLUIDGPU_ACTOR_FLAG_WRITES_AUX_OUTPUT = 1u << 17;
+
+static const uint TDFLUIDGPU_STAMP_FLAG_WRITES_SELECTIVE_DENSITY = 1u << 0;
+static const uint TDFLUIDGPU_STAMP_FLAG_ERASES_DENSITY = 1u << 1;
+static const uint TDFLUIDGPU_STAMP_FLAG_WRITES_HEAT = 1u << 2;
+
+static const uint TDFLUIDGPU_STAMP_BINS_PER_AXIS = 16u;
+static const uint TDFLUIDGPU_STAMP_BIN_COUNT = 256u;
+static const uint TDFLUIDGPU_READBACK_TILE_RESOLUTION = 64u;
+
+static const float TDFLUIDGPU_BRUSH_DISPLACEMENT_RATIO = 0.5f;
+static const float TDFLUIDGPU_MAX_CELL_SPEED_CM_PER_SEC = 1200.0f;
+static const float TDFLUIDGPU_BORDER_VELOCITY_DAMPING_PER_SEC = 4.0f;
+static const float TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC = 600.0f;
+static const float TDFLUIDGPU_NO_OBSTACLE_DISTANCE_CM = 10000.0f;
+static const float TDFLUIDGPU_TERRAIN_UNKNOWN_ELEVATION_CM = -1.0e30f;
+static const float TDFLUIDGPU_TERRAIN_UNKNOWN_ELEVATION_THRESHOLD_CM = -1.0e29f;
+static const uint TDFLUIDGPU_FLOW_NOISE_SEED = 0x2F6E2B1Du;
+static const uint TDFLUIDGPU_AMBIENT_NOISE_SEED = 0x6B43A9B5u;
+
+struct FTDFluidGpuActorParameters
+{
+	int SliceIndex;
+	int Resolution;
+	uint Flags;
+	uint PressureIterations;
+
+	float2 ExtentCm;
+	float2 CellSizeCm;
+
+	float2 RelativeCellSpacing;
+	float InvSpacingXSquared;
+	float InvSpacingYSquared;
+
+	float InvNeighborWeightSum;
+	float PressureDisplayScale;
+	float ObstacleBoundaryBandCm;
+	float BorderFadeRatio;
+
+	float StampDeltaTimeSeconds;
+	float StepDeltaTimeSeconds;
+	float StampVelocityBlend;
+	float VorticityStrength;
+
+	float2 AdvectionStepScale;
+	float AdvectVelocityDampingFactor;
+	float DensityDissipationFactor;
+
+	float PainterVelocityDecay;
+	float TerrainSlopeGravity;
+	float FlowNoiseAccelerationCmPerSec2;
+	float AmbientNoiseAmount;
+
+	int2 FlowNoiseLatticeOrigin;
+	float2 FlowNoiseLatticeOffset;
+
+	float2 FlowNoiseLatticeStepPerCell;
+	float2 AmbientNoiseLatticeStepPerCell;
+
+	int2 AmbientNoiseLatticeOrigin;
+	float2 AmbientNoiseLatticeOffset;
+
+	uint NoiseTimeWholePart;
+	float NoiseTimeFractionPart;
+	float AmbientDensity;
+	float AmbientRefillBlend;
+
+	float2 BuoyancyVelocityStepCmPerSec;
+	float2 PlaneUpDirection;
+
+	float OutflowBandStart;
+	float OutflowBandWidth;
+	float OutflowRatePerSec;
+	uint StampBinSpanCells;
+
+	int2 ShiftCells;
+	int2 ReadbackTileOrigin;
+
+	uint StampBinTableOffset;
+	uint FirstObstacle;
+	uint ObstacleCount;
+	float HeatDissipationFactor;
+
+	float2 HeatBuoyancyVelocityStepCmPerSec;
+	float EdgeBounciness;
+	float BorderFadeExponent;
+
+	float VortexTangentialStepCmPerSec;
+	float VortexRadialDriftCmPerSec;
+	float VortexRadiusCm;
+	uint Padding0;
+};
+
+struct FTDFluidGpuPackedStamp
+{
+	float2 CenterFromWindowCenterCm;
+	float EffectiveRadiusCm;
+	float DensityStrength;
+
+	float2 TargetVelocityCmPerSec;
+	float VelocityStrength;
+	float RadialVelocityCmPerSec;
+
+	uint Flags;
+	uint SourceIndex;
+	float EraseRatePerSec;
+	float HeatStrength;
+};
+
+struct FTDFluidGpuStampBinRange
+{
+	uint FirstIndex;
+	uint Count;
+};
+
+struct FTDFluidGpuPackedObstacle
+{
+	float2 CenterFromWindowCenterCm;
+	float RadiusCm;
+	uint bIsBox;
+
+	float2 BoxHalfExtentsCm;
+	float Padding0;
+	float Padding1;
+};
+
+struct FTDFluidGpuPackedTerrainUpdate
+{
+	uint SliceIndex;
+	uint CellX;
+	uint CellY;
+	float ElevationCm;
+};
+
+bool TDFluidGpuHasActorFlag(FTDFluidGpuActorParameters Actor, uint Flag)
+{
+	return (Actor.Flags & Flag) != 0u;
+}
+
+bool TDFluidGpuIsTerrainElevationKnown(float ElevationCm)
+{
+	return ElevationCm > TDFLUIDGPU_TERRAIN_UNKNOWN_ELEVATION_THRESHOLD_CM;
+}

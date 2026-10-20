@@ -1,0 +1,71 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+#ifndef TDFLUIDGPU_WRITES_OUTPUT
+#define TDFLUIDGPU_WRITES_OUTPUT 0
+#endif
+
+RWTexture2DArray<float> PainterPrimaryDensity;
+RWTexture2DArray<float> PainterSelectiveDensity;
+uint EntryIndex;
+#if TDFLUIDGPU_WRITES_OUTPUT
+RWTexture2D<float4> DensityPressureOutput;
+#endif
+
+void ApplyPainterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout float2 Density)
+{
+	const FTDFluidGpuStampBinRange Range = TDFluidGpuGetStampBinRange(Actor, Cell);
+	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
+	float UnusedDisplacement = 0.0f;
+	for (uint EntryOffset = 0; EntryOffset < Range.Count; ++EntryOffset)
+	{
+		const FTDFluidGpuPackedStamp Stamp = Stamps[StampBinIndices[Range.FirstIndex + EntryOffset]];
+		float SmoothWeight;
+		float DistanceCm;
+		if (!TDFluidGpuTryComputeStampWeight(Stamp, CellCenter, SmoothWeight, DistanceCm))
+		{
+			continue;
+		}
+
+		TDFluidGpuApplyStampDensity(Actor, Stamp, SmoothWeight, Density, UnusedDisplacement);
+	}
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	const float SignedDistance = TDFluidGpuComputeObstacleSignedDistance(Actor, Cell);
+	const bool bIsSolidCell = TDFluidGpuIsSolidDistance(SignedDistance);
+	float2 Density = float2(0.0f, 0.0f);
+	float DecayedPrimaryDensity = 0.0f;
+	if (!bIsSolidCell)
+	{
+		Density = float2(PainterPrimaryDensity[Texel], PainterSelectiveDensity[Texel]);
+		if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_HAS_STAMPS))
+		{
+			ApplyPainterStampsToCell(Actor, Cell, Density);
+		}
+
+		Density *= Actor.DensityDissipationFactor;
+		DecayedPrimaryDensity = Density.x;
+		Density.x = TDFluidGpuApplyAmbientRefill(Actor, Cell, Density.x);
+	}
+
+	PainterPrimaryDensity[Texel] = Density.x;
+	PainterSelectiveDensity[Texel] = Density.y;
+
+#if TDFLUIDGPU_WRITES_OUTPUT
+	const float Displacement = DecayedPrimaryDensity * TDFLUIDGPU_BRUSH_DISPLACEMENT_RATIO;
+	const float SurfaceHeight = clamp(Displacement, -1.0f, 1.0f);
+	const float ObstacleMask = SignedDistance > 0.0f ? 1.0f : 0.0f;
+	const float Alpha = clamp(TDFluidGpuComputeBorderAlpha(Actor, Cell) * ObstacleMask, 0.0f, 1.0f);
+	DensityPressureOutput[uint2(Cell)] = float4(clamp(Density.x, 0.0f, 1.0f), SurfaceHeight * 0.5f + 0.5f, clamp(Density.y, 0.0f, 1.0f), Alpha);
+#endif
+}

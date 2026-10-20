@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidTypes.h"
@@ -14,9 +15,13 @@ class UMaterialParameterCollection;
 class UNiagaraComponent;
 class UNiagaraSystem;
 class UStaticMeshComponent;
+class UTDFluidLiveSubsystem;
 class UTDFluidPresetAsset;
+class UTexture;
 class UTexture2D;
+class UTextureRenderTarget2D;
 struct FStreamableHandle;
+struct FTDFluidTransmittanceInputs;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TDGAME_API UTDFluidLiveComponent : public UActorComponent
@@ -93,10 +98,31 @@ public:
 	bool ComputeDensityCentroidWorld(bool bUseSelectiveDensity, FVector& OutCentroidWorld, float& OutDensityAreaCm2) const;
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
-	UTexture2D* GetDensityPressureTexture() const { return DensityPressureTexture; }
+	UTexture* GetDensityPressureTexture() const;
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
-	UTexture2D* GetVelocityTexture() const { return VelocityTexture; }
+	UTexture* GetVelocityTexture() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	UTexture* GetAuxTexture() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	UTexture* GetTransmittanceTexture() const;
+
+	bool IsAuxOutputActive() const;
+	bool IsTransmittanceActive() const;
+	void SetVolumeTransmittanceSources(const FTDFluidVolumeLightState& LightState, TConstArrayView<FTDFluidShadowCapsule> Capsules);
+	const FTDFluidVolumeLightState& GetVolumeLightState() const { return CachedVolumeLightState; }
+	const TArray<FTDFluidShadowCapsule>& GetShadowCapsules() const { return CachedShadowCapsules; }
+	FTDFluidSimulationConfig MakeCpuSolverConfig() const;
+	bool BuildTransmittanceInputs(FTDFluidTransmittanceInputs& OutInputs) const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	UTexture2D* GetWaterSurfaceTexture() const { return WaterSurfaceTexture; }
+
+	void SetWaterLayerDisplayAlpha(float Alpha);
+	void SetTerrainReferenceZCm(float InTerrainReferenceZCm) { TerrainReferenceZCm = InTerrainReferenceZCm; }
+	float GetWaterLayerDisplayAlpha() const { return WaterLayerDisplayAlpha; }
 
 	void AdvanceSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift);
 	bool PrepareSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift);
@@ -104,7 +130,7 @@ public:
 	void FinishSimulationStep();
 	void PublishCurrentOutputs();
 
-	bool SetPlaneBasis(const FTDFluidPlaneBasis& InBasis, double InPlaneDepthCm);
+	bool SetPlaneBasis(const FTDFluidPlaneBasis& InBasis, const FVector& PivotWorld, double DepthBiasCm);
 	const FTDFluidPlaneBasis& GetPlaneBasis() const { return PlaneBasis; }
 	double GetPlaneDepthCm() const { return PlaneDepthCm; }
 	FTDFluidPlaneSettings GetPlaneSettings() const;
@@ -113,14 +139,39 @@ public:
 	FVector UnprojectSolverPlaneToWorld(const FVector2D& PlanePoint, double DepthOffsetCm = 0.0) const;
 	bool ComputeDensityCentroidPlane(bool bUseSelectiveDensity, FVector2D& OutCentroid, float& OutAreaCm2) const;
 
+	bool IsUsingGpuSolver() const { return bUsesGpuSolver; }
+	bool IsSimulationInitialized() const;
+	int32 GetSimulationResolution() const;
+	FVector2D GetSimulationExtentCm() const;
+	FVector2D GetSimulationCenterWorld() const;
+	int32 GetSimulationGeneration() const;
+	FVector2D CellToPlaneCenter(int32 CellX, int32 CellY) const;
+	FTDFluidCellSample SampleSimulationCell(int32 CellX, int32 CellY) const;
+	void SetTerrainElevationAtCell(int32 CellX, int32 CellY, float ElevationCm);
+	void CompleteTerrainElevationSampling();
+	const FTDFluidReadbackField& GetGpuReadbackField() const { return GpuSolverProxy.GetReadbackField(); }
+	bool AppendPreparedGpuStep(UTDFluidLiveSubsystem& FluidSubsystem, FTDFluidGpuFrameInputs& InOutFrameInputs);
+	void ConsumeGpuReadback(const FTDFluidGpuReadbackFrame& ReadbackFrame);
+
 	const FTDFluidGrid2DSolver& GetSolver() const { return Solver; }
 	FTDFluidGrid2DSolver& GetMutableSolver() { return Solver; }
 	int32 GetLastProcessedPointCount() const { return LastProcessedPointCount; }
 	const TArray<FFloat16Color>& GetPackedDensityPressurePixels() const { return PackedDensityPressurePixels; }
 	const TArray<FFloat16Color>& GetPackedVelocityPixels() const { return PackedVelocityPixels; }
+	const TArray<FFloat16Color>& GetPackedWaterSurfacePixels() const { return PackedWaterSurfacePixels; }
+	const TArray<FFloat16Color>& GetPackedAuxPixels() const { return PackedAuxPixels; }
+	const TArray<FFloat16Color>& GetPackedTransmittancePixels() const { return PackedTransmittancePixels; }
 	UNiagaraComponent* GetOwnedNiagaraComponent() const { return OwnedNiagaraComponent; }
 
 private:
+	FTDFluidGpuBackendDecision ResolveSolverBackend() const;
+	void InitializeSimulation(const FVector2D& CenterWorld);
+	void SyncSolverBackend(const FVector2D& FallbackCenterWorld);
+	bool PrepareGpuSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift);
+	void EnsureGpuOutputTargets();
+	void ClearGpuOutputTargets();
+	void ReleaseGpuSolverSlot();
+	bool IsWaterLayerEnabled() const;
 	void RequestAsyncAssetLoads();
 	void HandleAssetsLoaded();
 	void ApplyLoadedOutputsToBoundMesh();
@@ -138,6 +189,9 @@ private:
 	void PrioritizeAndClampPendingStamps();
 	void EnsureOutputTextures();
 	void UploadPixelsToTexture(UTexture2D* TargetTexture, const TArray<FFloat16Color>& SourcePixels);
+	void PackWaterSurfaceOutputs();
+	void RefreshMaterialTargets();
+	void ApplyParametersToExternalTargets();
 	void PushDirectDriveOutputs();
 	void DriveTaggedNiagaraComponents(UWorld* World);
 	void DriveOwnedNiagaraComponent();
@@ -146,8 +200,16 @@ private:
 	void DestroyOwnedNiagaraComponent();
 	void RefreshTaggedNiagaraComponentCache(UWorld* World);
 	void ApplyParametersToMID(UMaterialInstanceDynamic* TargetMID, float FloorHeightCm = 0.0f) const;
+	void PackAuxAndTransmittanceOutputs();
+	FTDFluidGpuTransmittanceInput BuildGpuTransmittanceInput() const;
+	void ApplyVolumeRenderParameters() const;
+	void UploadPixelsToSizedTexture(UTexture2D* TargetTexture, const TArray<FFloat16Color>& SourcePixels, int32 TextureSize);
+	FVector ToPlaneCoordinates(const FVector& WorldVector) const;
+	FVector ToSolverPlanePoint(const FVector& WorldPoint) const;
+	FVector ComputeVolumeBoxMinimumPlane() const;
 
 	FTDFluidGrid2DSolver Solver;
+	FTDFluidGpuSolverProxy GpuSolverProxy;
 	FTDFluidPlaneBasis PlaneBasis;
 	double PlaneDepthCm = 0.0;
 
@@ -162,6 +224,27 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> VelocityTexture;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTexture2D> WaterSurfaceTexture;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextureRenderTarget2D> GpuDensityPressureTarget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextureRenderTarget2D> GpuVelocityTarget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTexture2D> AuxTexture;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTexture2D> TransmittanceTexture;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextureRenderTarget2D> GpuAuxTarget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextureRenderTarget2D> GpuTransmittanceTarget;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UMaterialInstanceDynamic> InternalSurfaceMID;
@@ -189,8 +272,16 @@ private:
 
 	TArray<FFloat16Color> PackedDensityPressurePixels;
 	TArray<FFloat16Color> PackedVelocityPixels;
+	TArray<FFloat16Color> PackedWaterSurfacePixels;
+	TArray<FFloat16Color> PackedAuxPixels;
+	TArray<FFloat16Color> PackedTransmittancePixels;
+	FTDFluidVolumeLightState CachedVolumeLightState;
+	TArray<FTDFluidShadowCapsule> CachedShadowCapsules;
 
 	bool bIsSimulationAwake = true;
 	bool bHasPendingObstacleUpdate = false;
+	bool bUsesGpuSolver = false;
 	int32 LastProcessedPointCount = 0;
+	float WaterLayerDisplayAlpha = 0.0f;
+	float TerrainReferenceZCm = 0.0f;
 };

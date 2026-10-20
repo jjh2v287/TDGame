@@ -95,6 +95,7 @@ void ATDBreakableActor::StartBreak(const FVector& HitLocation)
 	}));
 
 	OnBreak(HitLocation);
+	OnBrokenNative.Broadcast(HitLocation);
 	ScheduleAutoDestroy();
 }
 
@@ -172,6 +173,7 @@ void ATDBreakableActor::OnChaosBreakEvent(const FChaosBreakEvent& BreakEvent)
 		bIsBroken = true;
 
 		OnBreak(GeometryCollectionComponent->GetComponentLocation());
+		OnBrokenNative.Broadcast(GeometryCollectionComponent->GetComponentLocation());
 		ScheduleAutoDestroy();
 	}
 

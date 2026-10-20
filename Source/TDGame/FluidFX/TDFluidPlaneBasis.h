@@ -9,6 +9,7 @@ struct TDGAME_API FTDFluidPlaneBasis
 	FVector U = FVector(1.0, 0.0, 0.0);
 	FVector V = FVector(0.0, 1.0, 0.0);
 	FVector N = FVector(0.0, 0.0, 1.0);
+	FVector2D PlaneCoordinateOffsetCm = FVector2D::ZeroVector;
 
 	static FTDFluidPlaneBasis MakeWorldFacing();
 	static FTDFluidPlaneBasis MakeFromView(ETDFluidPlaneOrientation InOrientation, const FRotator& ViewRotation, float LeanBackDegrees);
@@ -25,4 +26,5 @@ struct TDGAME_API FTDFluidPlaneBasis
 	FQuat GetRotation() const;
 	FVector2D GetPlaneUpDirection() const;
 	bool IsNearlyEqual(const FTDFluidPlaneBasis& Other, double ToleranceDegrees = 1.0) const;
+	void PreservePivotPlanePoint(const FTDFluidPlaneBasis& PreviousBasis, const FVector& PivotWorld);
 };

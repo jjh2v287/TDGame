@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/Texture2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidLiveComponent.h"
@@ -206,6 +207,19 @@ namespace TDFluidPerfNiagaraTest
 		return NiagaraComp.GetOverrideParameters().IndexOf(Variable) != INDEX_NONE;
 	}
 
+	EPixelFormat ResolveOutputPixelFormat(const UTexture* OutputTexture)
+	{
+		if (const UTexture2D* OutputTexture2D = Cast<UTexture2D>(OutputTexture))
+		{
+			return OutputTexture2D->GetPixelFormat();
+		}
+		if (const UTextureRenderTarget2D* OutputRenderTarget = Cast<UTextureRenderTarget2D>(OutputTexture))
+		{
+			return OutputRenderTarget->GetFormat();
+		}
+		return PF_Unknown;
+	}
+
 	void ExpectDrivenParameters(
 		FAutomationTestBase& Test,
 		const UNiagaraComponent& NiagaraComp,
@@ -228,15 +242,15 @@ namespace TDFluidPerfNiagaraTest
 		Test.TestNearlyEqual(*(Label + TEXT(" SimExtentsCm X is the solver extent X")), Extent.X, static_cast<float>(ExpectedExtent.X), 0.01f);
 		Test.TestNearlyEqual(*(Label + TEXT(" SimExtentsCm Y is the solver extent Y")), Extent.Y, static_cast<float>(ExpectedExtent.Y), 0.01f);
 
-		const UTexture2D* DensityTexture = FluidComponent.GetDensityPressureTexture();
-		const UTexture2D* VelocityTexture = FluidComponent.GetVelocityTexture();
+		const UTexture* DensityTexture = FluidComponent.GetDensityPressureTexture();
+		const UTexture* VelocityTexture = FluidComponent.GetVelocityTexture();
 		const bool bCanCreateTextures = !IsRunningCommandlet() && FApp::CanEverRender();
 		Test.TestTrue(*(Label + TEXT(" output textures exist only when rendering is possible")), (DensityTexture != nullptr && VelocityTexture != nullptr) == bCanCreateTextures);
 
 		if (DensityTexture && VelocityTexture)
 		{
-			Test.TestTrue(*(Label + TEXT(" DensityPressureTexture is half float RGBA")), DensityTexture->GetPixelFormat() == PF_FloatRGBA);
-			Test.TestTrue(*(Label + TEXT(" VelocityTexture is half float RGBA")), VelocityTexture->GetPixelFormat() == PF_FloatRGBA);
+			Test.TestTrue(*(Label + TEXT(" DensityPressureTexture is half float RGBA")), ResolveOutputPixelFormat(DensityTexture) == PF_FloatRGBA);
+			Test.TestTrue(*(Label + TEXT(" VelocityTexture is half float RGBA")), ResolveOutputPixelFormat(VelocityTexture) == PF_FloatRGBA);
 			Test.TestTrue(*(Label + TEXT(" DensityPressureTexture parameter is the output texture")), Parameters.GetUObject(MakeDensityTextureVariable()).Get() == static_cast<const UObject*>(DensityTexture));
 			Test.TestTrue(*(Label + TEXT(" VelocityTexture parameter is the output texture")), Parameters.GetUObject(MakeVelocityTextureVariable()).Get() == static_cast<const UObject*>(VelocityTexture));
 			return;
@@ -652,14 +666,15 @@ bool FTDFluidPerfStepCostTest::RunTest(const FString& Parameters)
 		const TCHAR* ModeName;
 		double MaximumAverageMillisecondsAt64;
 		double MaximumAverageMillisecondsAt128;
+		double MaximumAverageMillisecondsAt192;
 		double MaximumAverageMillisecondsAt256;
 	};
 
 	const FModeCase ModeCases[] = {
-		{ ETDFluidPresetKind::Water, TEXT("FluidSim"), 1.0, 3.0, 12.0 },
-		{ ETDFluidPresetKind::FootprintPainter, TEXT("SimplePainter"), 0.5, 1.5, 4.0 },
+		{ ETDFluidPresetKind::Water, TEXT("FluidSim"), 1.0, 3.0, 7.0, 12.0 },
+		{ ETDFluidPresetKind::FootprintPainter, TEXT("SimplePainter"), 0.5, 1.5, 2.5, 4.0 },
 	};
-	const int32 Resolutions[] = { 64, 128, 256 };
+	const int32 Resolutions[] = { 64, 128, 192, 256 };
 
 	for (const FModeCase& ModeCase : ModeCases)
 	{
@@ -704,6 +719,13 @@ bool FTDFluidPerfStepCostTest::RunTest(const FString& Parameters)
 				if (ModeCase.MaximumAverageMillisecondsAt128 > 0.0)
 				{
 					TestTrue(*FString::Printf(TEXT("%s 128 average step cost stays under %.1f ms"), ModeCase.ModeName, ModeCase.MaximumAverageMillisecondsAt128), Cost.AverageMilliseconds < ModeCase.MaximumAverageMillisecondsAt128);
+				}
+			}
+			else if (Resolution == 192)
+			{
+				if (ModeCase.MaximumAverageMillisecondsAt192 > 0.0)
+				{
+					TestTrue(*FString::Printf(TEXT("%s 192 average step cost stays under %.1f ms"), ModeCase.ModeName, ModeCase.MaximumAverageMillisecondsAt192), Cost.AverageMilliseconds < ModeCase.MaximumAverageMillisecondsAt192);
 				}
 			}
 			else if (Resolution == 256)

@@ -1,0 +1,570 @@
+#pragma once
+
+#include "/Engine/Public/Platform.ush"
+#include "/TDFluidGpu/Private/TDFluidGpuTypes.ush"
+
+#define TDFLUIDGPU_CELL_GROUP_SIZE 8
+#define TDFLUIDGPU_TILE_GROUP_SIZE 16
+
+static const float TDFLUIDGPU_TWO_PI = 6.28318530717958647692f;
+static const float TDFLUIDGPU_SMALL_NUMBER = 1.0e-8f;
+static const float TDFLUIDGPU_KINDA_SMALL_NUMBER = 1.0e-4f;
+
+StructuredBuffer<FTDFluidGpuActorParameters> ActorParameters;
+StructuredBuffer<FTDFluidGpuPackedStamp> Stamps;
+StructuredBuffer<FTDFluidGpuStampBinRange> StampBinRanges;
+StructuredBuffer<uint> StampBinIndices;
+StructuredBuffer<FTDFluidGpuPackedObstacle> Obstacles;
+
+struct FTDFluidGpuBilinearSample
+{
+	int2 Cell00;
+	int2 Cell11;
+	float2 Fraction;
+};
+
+struct FTDFluidGpuLatticeSample
+{
+	int2 Index;
+	float2 Fraction;
+};
+
+bool TDFluidGpuIsInsideGrid(int2 Cell, int Resolution)
+{
+	return Cell.x >= 0 && Cell.y >= 0 && Cell.x < Resolution && Cell.y < Resolution;
+}
+
+bool TDFluidGpuIsSolidDistance(float SignedDistanceCm)
+{
+	return SignedDistanceCm <= 0.0f;
+}
+
+uint3 TDFluidGpuMakeTexel(int2 Cell, int SliceIndex)
+{
+	return uint3(uint2(Cell), uint(SliceIndex));
+}
+
+float2 TDFluidGpuComputeCellCenterFromWindowCenter(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	return (float2(Cell) + 0.5f) * Actor.CellSizeCm - 0.5f * Actor.ExtentCm;
+}
+
+float TDFluidGpuComputeBorderFade(FTDFluidGpuActorParameters Actor, int Coordinate)
+{
+	if (Actor.BorderFadeRatio <= 0.0f)
+	{
+		return 1.0f;
+	}
+
+	const float NormalizedCoordinate = (float(Coordinate) + 0.5f) / float(Actor.Resolution);
+	const float EdgeDistance = min(NormalizedCoordinate, 1.0f - NormalizedCoordinate);
+	return saturate(EdgeDistance / Actor.BorderFadeRatio);
+}
+
+float TDFluidGpuComputeBorderAlpha(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	return min(TDFluidGpuComputeBorderFade(Actor, Cell.x), TDFluidGpuComputeBorderFade(Actor, Cell.y));
+}
+
+float TDFluidGpuComputeBorderDamping(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	const float BorderFade = TDFluidGpuComputeBorderAlpha(Actor, Cell);
+	if (BorderFade >= 1.0f)
+	{
+		return 1.0f;
+	}
+
+	return exp(-TDFLUIDGPU_BORDER_VELOCITY_DAMPING_PER_SEC * (1.0f - BorderFade) * Actor.StepDeltaTimeSeconds);
+}
+
+float2 TDFluidGpuClampToMaxSize(float2 Value, float MaxSize)
+{
+	const float SizeSquared = dot(Value, Value);
+	if (SizeSquared <= MaxSize * MaxSize)
+	{
+		return Value;
+	}
+
+	return Value * (MaxSize / sqrt(SizeSquared));
+}
+
+float2 TDFluidGpuClampVelocityMagnitude(float2 Velocity)
+{
+	const float SpeedSquared = Velocity.x * Velocity.x + Velocity.y * Velocity.y;
+	if (!isfinite(SpeedSquared))
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	return TDFluidGpuClampToMaxSize(Velocity, TDFLUIDGPU_MAX_CELL_SPEED_CM_PER_SEC);
+}
+
+uint TDFluidGpuHashLatticePoint(int2 Index, uint Seed)
+{
+	uint Hash = Seed ^ (asuint(Index.x) * 0x8DA6B343u) ^ (asuint(Index.y) * 0xD8163841u);
+	Hash ^= Hash >> 16;
+	Hash *= 0x7FEB352Du;
+	Hash ^= Hash >> 15;
+	Hash *= 0x846CA68Bu;
+	Hash ^= Hash >> 16;
+	return Hash;
+}
+
+float TDFluidGpuEvaluateLatticeValue(int2 Index, uint Seed, FTDFluidGpuActorParameters Actor)
+{
+	const uint Hash = TDFluidGpuHashLatticePoint(Index, Seed);
+	const uint FrequencyNumerator = 32768u + (Hash >> 16);
+	const float Phase = float(Hash & 0xFFFFu) / 65536.0f;
+	const float Frequency = float(FrequencyNumerator) / 65536.0f;
+	const float WholeTurns = float((FrequencyNumerator * Actor.NoiseTimeWholePart) & 0xFFFFu) / 65536.0f;
+	const float Turns = frac(Phase + WholeTurns + Frequency * Actor.NoiseTimeFractionPart);
+	return sin(TDFLUIDGPU_TWO_PI * Turns);
+}
+
+float TDFluidGpuEvaluateQuinticFade(float Fraction)
+{
+	return Fraction * Fraction * Fraction * (Fraction * (Fraction * 6.0f - 15.0f) + 10.0f);
+}
+
+float TDFluidGpuEvaluateQuinticFadeSlope(float Fraction)
+{
+	const float Complement = Fraction * (1.0f - Fraction);
+	return 30.0f * Complement * Complement;
+}
+
+FTDFluidGpuLatticeSample TDFluidGpuMakeLatticeSample(int2 Origin, float2 Offset, float2 StepPerCell, int2 Cell)
+{
+	const float2 LatticePosition = Offset + (float2(Cell) + 0.5f) * StepPerCell;
+	const float2 LatticeFloor = floor(LatticePosition);
+
+	FTDFluidGpuLatticeSample Sample;
+	Sample.Index = Origin + int2(LatticeFloor);
+	Sample.Fraction = LatticePosition - LatticeFloor;
+	return Sample;
+}
+
+float2 TDFluidGpuEvaluateFlowNoiseAcceleration(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	const FTDFluidGpuLatticeSample Sample = TDFluidGpuMakeLatticeSample(Actor.FlowNoiseLatticeOrigin, Actor.FlowNoiseLatticeOffset, Actor.FlowNoiseLatticeStepPerCell, Cell);
+	const float Value00 = TDFluidGpuEvaluateLatticeValue(Sample.Index, TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
+	const float Value10 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(1, 0), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
+	const float Value01 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(0, 1), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
+	const float Value11 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(1, 1), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
+	const float ColumnFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.x);
+	const float RowFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.y);
+	const float ColumnFadeSlope = TDFluidGpuEvaluateQuinticFadeSlope(Sample.Fraction.x);
+	const float RowFadeSlope = TDFluidGpuEvaluateQuinticFadeSlope(Sample.Fraction.y);
+	const float PotentialSlopeAlongX = ColumnFadeSlope * lerp(Value10 - Value00, Value11 - Value01, RowFade);
+	const float PotentialSlopeAlongY = RowFadeSlope * lerp(Value01 - Value00, Value11 - Value10, ColumnFade);
+	return float2(PotentialSlopeAlongY, -PotentialSlopeAlongX) * Actor.FlowNoiseAccelerationCmPerSec2;
+}
+
+float TDFluidGpuEvaluateAmbientNoiseValue(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	const FTDFluidGpuLatticeSample Sample = TDFluidGpuMakeLatticeSample(Actor.AmbientNoiseLatticeOrigin, Actor.AmbientNoiseLatticeOffset, Actor.AmbientNoiseLatticeStepPerCell, Cell);
+	const float Value00 = TDFluidGpuEvaluateLatticeValue(Sample.Index, TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
+	const float Value10 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(1, 0), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
+	const float Value01 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(0, 1), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
+	const float Value11 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(1, 1), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
+	const float ColumnFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.x);
+	const float RowFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.y);
+	const float LowerEdge = lerp(Value00, Value10, ColumnFade);
+	const float UpperEdge = lerp(Value01, Value11, ColumnFade);
+	return lerp(LowerEdge, UpperEdge, RowFade);
+}
+
+float TDFluidGpuApplyAmbientRefill(FTDFluidGpuActorParameters Actor, int2 Cell, float PrimaryDensity)
+{
+	if (!TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_AMBIENT_REFILL))
+	{
+		return PrimaryDensity;
+	}
+
+	float TargetDensity = Actor.AmbientDensity;
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_AMBIENT_NOISE))
+	{
+		const float NoiseValue = TDFluidGpuEvaluateAmbientNoiseValue(Actor, Cell);
+		TargetDensity = Actor.AmbientDensity * (1.0f - Actor.AmbientNoiseAmount * (0.5f + 0.5f * NoiseValue));
+	}
+
+	return PrimaryDensity + (TargetDensity - PrimaryDensity) * Actor.AmbientRefillBlend;
+}
+
+float TDFluidGpuComputeOutflowRetainFactor(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	if (!TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_OUTFLOW))
+	{
+		return 1.0f;
+	}
+
+	const float InverseResolution = 1.0f / float(Actor.Resolution);
+	const float2 Offset = (float2(Cell) + 0.5f) * InverseResolution - 0.5f;
+	const float BandPosition = (Offset.x * Actor.PlaneUpDirection.x + Offset.y * Actor.PlaneUpDirection.y) / 0.5f;
+	if (BandPosition <= Actor.OutflowBandStart)
+	{
+		return 1.0f;
+	}
+
+	const float BandWeight = saturate((BandPosition - Actor.OutflowBandStart) / Actor.OutflowBandWidth);
+	return exp(-Actor.OutflowRatePerSec * BandWeight * Actor.StepDeltaTimeSeconds);
+}
+
+FTDFluidGpuBilinearSample TDFluidGpuMakeBilinearSample(float2 GridPosition, int Resolution)
+{
+	const float2 ClampedPosition = clamp(GridPosition, 0.0f, float(Resolution - 1));
+	const int2 Cell0 = int2(floor(ClampedPosition));
+
+	FTDFluidGpuBilinearSample Sample;
+	Sample.Cell00 = Cell0;
+	Sample.Cell11 = min(Cell0 + 1, Resolution - 1);
+	Sample.Fraction = ClampedPosition - float2(Cell0);
+	return Sample;
+}
+
+float2 TDFluidGpuSampleBilinearFloat2(Texture2DArray<float2> Field, FTDFluidGpuBilinearSample Sample, int SliceIndex)
+{
+	const float2 Value00 = Field[TDFluidGpuMakeTexel(Sample.Cell00, SliceIndex)];
+	const float2 Value10 = Field[TDFluidGpuMakeTexel(int2(Sample.Cell11.x, Sample.Cell00.y), SliceIndex)];
+	const float2 Value01 = Field[TDFluidGpuMakeTexel(int2(Sample.Cell00.x, Sample.Cell11.y), SliceIndex)];
+	const float2 Value11 = Field[TDFluidGpuMakeTexel(Sample.Cell11, SliceIndex)];
+	const float2 TopValue = lerp(Value00, Value10, Sample.Fraction.x);
+	const float2 BottomValue = lerp(Value01, Value11, Sample.Fraction.x);
+	return lerp(TopValue, BottomValue, Sample.Fraction.y);
+}
+
+float TDFluidGpuSampleBilinearFloat(Texture2DArray<float> Field, FTDFluidGpuBilinearSample Sample, int SliceIndex)
+{
+	const float Value00 = Field[TDFluidGpuMakeTexel(Sample.Cell00, SliceIndex)];
+	const float Value10 = Field[TDFluidGpuMakeTexel(int2(Sample.Cell11.x, Sample.Cell00.y), SliceIndex)];
+	const float Value01 = Field[TDFluidGpuMakeTexel(int2(Sample.Cell00.x, Sample.Cell11.y), SliceIndex)];
+	const float Value11 = Field[TDFluidGpuMakeTexel(Sample.Cell11, SliceIndex)];
+	const float TopValue = lerp(Value00, Value10, Sample.Fraction.x);
+	const float BottomValue = lerp(Value01, Value11, Sample.Fraction.x);
+	return lerp(TopValue, BottomValue, Sample.Fraction.y);
+}
+
+float2 TDFluidGpuEnforceObstacleBoundary(Texture2DArray<float> ObstacleSdf, FTDFluidGpuActorParameters Actor, int2 Cell, float2 Velocity)
+{
+	const int LastCell = Actor.Resolution - 1;
+	const float SignedDistance = ObstacleSdf[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)];
+	if (TDFluidGpuIsSolidDistance(SignedDistance))
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	if (SignedDistance >= Actor.ObstacleBoundaryBandCm)
+	{
+		return Velocity;
+	}
+
+	const int2 MinusCell = max(Cell - 1, 0);
+	const int2 PlusCell = min(Cell + 1, LastCell);
+	const float GradientSpanX = float(PlusCell.x - MinusCell.x) * Actor.RelativeCellSpacing.x;
+	const float GradientSpanY = float(PlusCell.y - MinusCell.y) * Actor.RelativeCellSpacing.y;
+	float2 Normal = float2(
+		(ObstacleSdf[TDFluidGpuMakeTexel(int2(PlusCell.x, Cell.y), Actor.SliceIndex)] - ObstacleSdf[TDFluidGpuMakeTexel(int2(MinusCell.x, Cell.y), Actor.SliceIndex)]) / GradientSpanX,
+		(ObstacleSdf[TDFluidGpuMakeTexel(int2(Cell.x, PlusCell.y), Actor.SliceIndex)] - ObstacleSdf[TDFluidGpuMakeTexel(int2(Cell.x, MinusCell.y), Actor.SliceIndex)]) / GradientSpanY);
+	const float NormalLengthSquared = dot(Normal, Normal);
+	if (!(NormalLengthSquared > TDFLUIDGPU_SMALL_NUMBER))
+	{
+		return Velocity;
+	}
+
+	Normal *= rsqrt(NormalLengthSquared);
+	const float NormalDot = dot(Velocity, Normal);
+	if (NormalDot < 0.0f)
+	{
+		Velocity -= Normal * NormalDot;
+	}
+	return Velocity;
+}
+
+float TDFluidGpuComputeTerrainAxisSlope(float CenterElevationCm, float MinusElevationCm, float PlusElevationCm, int MinusDistance, int PlusDistance, float CellSizeCm)
+{
+	const bool bIsCenterKnown = TDFluidGpuIsTerrainElevationKnown(CenterElevationCm);
+	const bool bIsMinusKnown = TDFluidGpuIsTerrainElevationKnown(MinusElevationCm);
+	const bool bIsPlusKnown = TDFluidGpuIsTerrainElevationKnown(PlusElevationCm);
+	if (bIsMinusKnown && bIsPlusKnown && MinusDistance + PlusDistance > 0)
+	{
+		return (PlusElevationCm - MinusElevationCm) / (float(MinusDistance + PlusDistance) * CellSizeCm);
+	}
+
+	if (bIsCenterKnown && bIsPlusKnown && PlusDistance > 0)
+	{
+		return (PlusElevationCm - CenterElevationCm) / (float(PlusDistance) * CellSizeCm);
+	}
+
+	if (bIsCenterKnown && bIsMinusKnown && MinusDistance > 0)
+	{
+		return (CenterElevationCm - MinusElevationCm) / (float(MinusDistance) * CellSizeCm);
+	}
+
+	return 0.0f;
+}
+
+float2 TDFluidGpuComputeTerrainSlope(Texture2DArray<float> TerrainElevation, FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	if (!TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_HAS_TERRAIN_ELEVATION))
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	const int LastCell = Actor.Resolution - 1;
+	const int2 MinusCell = max(Cell - 1, 0);
+	const int2 PlusCell = min(Cell + 1, LastCell);
+	const float CenterElevation = TerrainElevation[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)];
+	const float SlopeX = TDFluidGpuComputeTerrainAxisSlope(
+		CenterElevation,
+		TerrainElevation[TDFluidGpuMakeTexel(int2(MinusCell.x, Cell.y), Actor.SliceIndex)],
+		TerrainElevation[TDFluidGpuMakeTexel(int2(PlusCell.x, Cell.y), Actor.SliceIndex)],
+		Cell.x - MinusCell.x,
+		PlusCell.x - Cell.x,
+		Actor.CellSizeCm.x);
+	const float SlopeY = TDFluidGpuComputeTerrainAxisSlope(
+		CenterElevation,
+		TerrainElevation[TDFluidGpuMakeTexel(int2(Cell.x, MinusCell.y), Actor.SliceIndex)],
+		TerrainElevation[TDFluidGpuMakeTexel(int2(Cell.x, PlusCell.y), Actor.SliceIndex)],
+		Cell.y - MinusCell.y,
+		PlusCell.y - Cell.y,
+		Actor.CellSizeCm.y);
+	return float2(SlopeX, SlopeY);
+}
+
+float TDFluidGpuComputeObstacleSignedDistance(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
+	float MinSignedDistance = TDFLUIDGPU_NO_OBSTACLE_DISTANCE_CM;
+	for (uint ObstacleOffset = 0; ObstacleOffset < Actor.ObstacleCount; ++ObstacleOffset)
+	{
+		const FTDFluidGpuPackedObstacle Obstacle = Obstacles[Actor.FirstObstacle + ObstacleOffset];
+		const float2 Delta = CellCenter - Obstacle.CenterFromWindowCenterCm;
+		float SignedDistance = length(Delta) - Obstacle.RadiusCm;
+		if (Obstacle.bIsBox != 0u)
+		{
+			const float2 BoxDifference = abs(Delta) - Obstacle.BoxHalfExtentsCm;
+			const float2 OutsideDistance = max(BoxDifference, 0.0f);
+			const float InsideDistance = min(max(BoxDifference.x, BoxDifference.y), 0.0f);
+			SignedDistance = length(OutsideDistance) + InsideDistance;
+		}
+		MinSignedDistance = min(MinSignedDistance, SignedDistance);
+	}
+	return MinSignedDistance;
+}
+
+FTDFluidGpuStampBinRange TDFluidGpuGetStampBinRange(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	const uint2 Bin = uint2(Cell) / Actor.StampBinSpanCells;
+	return StampBinRanges[Actor.StampBinTableOffset + Bin.y * TDFLUIDGPU_STAMP_BINS_PER_AXIS + Bin.x];
+}
+
+bool TDFluidGpuTryComputeStampWeight(FTDFluidGpuPackedStamp Stamp, float2 CellCenter, out float SmoothWeight, out float DistanceCm)
+{
+	DistanceCm = length(CellCenter - Stamp.CenterFromWindowCenterCm);
+	SmoothWeight = 0.0f;
+	if (DistanceCm > Stamp.EffectiveRadiusCm)
+	{
+		return false;
+	}
+
+	const float NormalizedFalloff = 1.0f - (DistanceCm / Stamp.EffectiveRadiusCm);
+	SmoothWeight = NormalizedFalloff * NormalizedFalloff * (3.0f - 2.0f * NormalizedFalloff);
+	return true;
+}
+
+bool TDFluidGpuHasStampFlag(FTDFluidGpuPackedStamp Stamp, uint Flag)
+{
+	return (Stamp.Flags & Flag) != 0u;
+}
+
+void TDFluidGpuApplyStampDensity(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedStamp Stamp, float SmoothWeight, inout float2 Density, inout float Displacement)
+{
+	const bool bWritesSelectiveDensity = TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_WRITES_SELECTIVE_DENSITY);
+	if (TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_ERASES_DENSITY))
+	{
+		const float RetainFactor = exp(-Stamp.EraseRatePerSec * SmoothWeight * Actor.StampDeltaTimeSeconds);
+		Density.x *= RetainFactor;
+		if (bWritesSelectiveDensity)
+		{
+			Density.y *= RetainFactor;
+		}
+		return;
+	}
+
+	const float DensityTarget = clamp(max(Stamp.DensityStrength, 0.0f) * SmoothWeight, 0.0f, 1.0f);
+	Density.x = max(Density.x, DensityTarget);
+	Displacement = max(Displacement, DensityTarget * TDFLUIDGPU_BRUSH_DISPLACEMENT_RATIO);
+	if (bWritesSelectiveDensity)
+	{
+		Density.y = max(Density.y, DensityTarget);
+	}
+}
+
+float2 TDFluidGpuAccumulateRadialPush(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	float2 RadialPush = float2(0.0f, 0.0f);
+	if (!TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_HAS_STAMPS))
+	{
+		return RadialPush;
+	}
+
+	const FTDFluidGpuStampBinRange Range = TDFluidGpuGetStampBinRange(Actor, Cell);
+	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
+	for (uint EntryOffset = 0; EntryOffset < Range.Count; ++EntryOffset)
+	{
+		const FTDFluidGpuPackedStamp Stamp = Stamps[StampBinIndices[Range.FirstIndex + EntryOffset]];
+		if (Stamp.RadialVelocityCmPerSec == 0.0f)
+		{
+			continue;
+		}
+
+		float SmoothWeight;
+		float DistanceCm;
+		if (!TDFluidGpuTryComputeStampWeight(Stamp, CellCenter, SmoothWeight, DistanceCm) || !(DistanceCm > TDFLUIDGPU_KINDA_SMALL_NUMBER))
+		{
+			continue;
+		}
+
+		const float2 OutwardDirection = (CellCenter - Stamp.CenterFromWindowCenterCm) / DistanceCm;
+		RadialPush += OutwardDirection * Stamp.RadialVelocityCmPerSec * SmoothWeight;
+	}
+	return RadialPush;
+}
+
+float TDFluidGpuComputeOutputBorderAlpha(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	const float BorderAlpha = TDFluidGpuComputeBorderAlpha(Actor, Cell);
+	if (Actor.BorderFadeExponent == 1.0f)
+	{
+		return BorderAlpha;
+	}
+
+	return pow(BorderAlpha, Actor.BorderFadeExponent);
+}
+
+float2 TDFluidGpuEnforceObstacleBoundaryWithReflection(Texture2DArray<float> ObstacleSdf, FTDFluidGpuActorParameters Actor, int2 Cell, float2 Velocity)
+{
+	const int LastCell = Actor.Resolution - 1;
+	const float SignedDistance = ObstacleSdf[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)];
+	if (TDFluidGpuIsSolidDistance(SignedDistance))
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	if (SignedDistance >= Actor.ObstacleBoundaryBandCm)
+	{
+		return Velocity;
+	}
+
+	const int2 MinusCell = max(Cell - 1, 0);
+	const int2 PlusCell = min(Cell + 1, LastCell);
+	const float GradientSpanX = float(PlusCell.x - MinusCell.x) * Actor.RelativeCellSpacing.x;
+	const float GradientSpanY = float(PlusCell.y - MinusCell.y) * Actor.RelativeCellSpacing.y;
+	float2 Normal = float2(
+		(ObstacleSdf[TDFluidGpuMakeTexel(int2(PlusCell.x, Cell.y), Actor.SliceIndex)] - ObstacleSdf[TDFluidGpuMakeTexel(int2(MinusCell.x, Cell.y), Actor.SliceIndex)]) / GradientSpanX,
+		(ObstacleSdf[TDFluidGpuMakeTexel(int2(Cell.x, PlusCell.y), Actor.SliceIndex)] - ObstacleSdf[TDFluidGpuMakeTexel(int2(Cell.x, MinusCell.y), Actor.SliceIndex)]) / GradientSpanY);
+	const float NormalLengthSquared = dot(Normal, Normal);
+	if (!(NormalLengthSquared > TDFLUIDGPU_SMALL_NUMBER))
+	{
+		return Velocity;
+	}
+
+	Normal *= rsqrt(NormalLengthSquared);
+	const float NormalDot = dot(Velocity, Normal);
+	if (NormalDot < 0.0f)
+	{
+		Velocity -= Normal * ((1.0f + Actor.EdgeBounciness) * NormalDot);
+	}
+	return Velocity;
+}
+
+float TDFluidGpuReflectOutwardVelocity(float Velocity, float OutwardSign, float ReflectionScale)
+{
+	const float OutwardSpeed = Velocity * OutwardSign;
+	if (OutwardSpeed <= 0.0f)
+	{
+		return Velocity;
+	}
+
+	return Velocity - ReflectionScale * OutwardSpeed * OutwardSign;
+}
+
+float2 TDFluidGpuApplyEdgeReflection(FTDFluidGpuActorParameters Actor, int2 Cell, float2 Velocity)
+{
+	const int LastCell = Actor.Resolution - 1;
+	const float ReflectionScale = 1.0f + Actor.EdgeBounciness;
+	if (Cell.x == 0)
+	{
+		Velocity.x = TDFluidGpuReflectOutwardVelocity(Velocity.x, -1.0f, ReflectionScale);
+	}
+	if (Cell.x == LastCell)
+	{
+		Velocity.x = TDFluidGpuReflectOutwardVelocity(Velocity.x, 1.0f, ReflectionScale);
+	}
+	if (Cell.y == 0)
+	{
+		Velocity.y = TDFluidGpuReflectOutwardVelocity(Velocity.y, -1.0f, ReflectionScale);
+	}
+	if (Cell.y == LastCell)
+	{
+		Velocity.y = TDFluidGpuReflectOutwardVelocity(Velocity.y, 1.0f, ReflectionScale);
+	}
+	return Velocity;
+}
+
+bool TDFluidGpuTryComputeVortexWeight(FTDFluidGpuActorParameters Actor, int2 Cell, out float2 Offset, out float Weight, out float DistanceCm)
+{
+	Offset = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
+	DistanceCm = sqrt(Offset.x * Offset.x + Offset.y * Offset.y);
+	Weight = 0.0f;
+	if (!(DistanceCm > TDFLUIDGPU_KINDA_SMALL_NUMBER) || DistanceCm >= Actor.VortexRadiusCm)
+	{
+		return false;
+	}
+
+	const float RadiusRatio = DistanceCm / Actor.VortexRadiusCm;
+	const float Falloff = 1.0f - RadiusRatio * RadiusRatio;
+	Weight = Falloff * Falloff;
+	return true;
+}
+
+float2 TDFluidGpuComputeVortexTangentialStep(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	float2 Offset;
+	float Weight;
+	float DistanceCm;
+	if (!TDFluidGpuTryComputeVortexWeight(Actor, Cell, Offset, Weight, DistanceCm))
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	const float Scale = Weight * Actor.VortexTangentialStepCmPerSec / DistanceCm;
+	return float2(-Offset.y, Offset.x) * Scale;
+}
+
+float2 TDFluidGpuComputeVortexRadialDrift(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	float2 Offset;
+	float Weight;
+	float DistanceCm;
+	if (Actor.VortexRadialDriftCmPerSec == 0.0f || !TDFluidGpuTryComputeVortexWeight(Actor, Cell, Offset, Weight, DistanceCm))
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	const float Scale = Actor.VortexRadialDriftCmPerSec * Weight / DistanceCm;
+	return -Offset * Scale;
+}
+
+void TDFluidGpuApplyStampHeat(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedStamp Stamp, float SmoothWeight, inout float Heat)
+{
+	if (TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_ERASES_DENSITY))
+	{
+		Heat *= exp(-Stamp.EraseRatePerSec * SmoothWeight * Actor.StampDeltaTimeSeconds);
+		return;
+	}
+
+	if (TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_WRITES_HEAT))
+	{
+		Heat = max(Heat, clamp(Stamp.HeatStrength * SmoothWeight, 0.0f, 1.0f));
+	}
+}

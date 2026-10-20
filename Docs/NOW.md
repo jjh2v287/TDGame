@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-10-19 19:25 claude
+갱신: 2026-10-20 14:50 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -10,7 +10,7 @@
 - M3-40 done(미커밋): 사망 즉시 래그돌·타격 방향 날림·렌더 굳음 수정(L-anim-23). 끄기 `TD.Death.ImmediateRagdoll 0`. 후속 M3-41 todo.
 - M3-34 done(6d80f296·5dfac56b): 체력 3000/2400·끊기 1.5초·그리폰 착지 수정.
 - 커밋 끝: M3-14·27~32, D-47(후속 c). 전술 끄기 `TD.MonsterAI.Tactics 0`.
-- FluidFX doing(D-52): W-1 강 탐침 통과, FX-4a GPU 솔버 통합(패리티 11/12, 512² 다중 격자 중). 미커밋.
+- FluidFX doing(D-52): FX-8c 굽기 수용(D-56, 색 램프·G1·도넛 제거, 시험 210·RHI 26). 다음 번짐·부엽. 미커밋.
 - M3-25·26 done(26 미커밋, PIE 육안 대기). P3-17·19·20 done.
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo.
@@ -30,8 +30,8 @@
 - M3-29 제안: AGENTS.md 14절 `AI/{CombatToken,NPC}/`→`AI/NPC/`(승인 필요). 종별 token_cost 미지정.
 - 길쭉한 형상 회피 MD-25~39·M3-18~24 미등록(승인 대기). M3-25 후속 MD-40~44.
 - 공개 저장소 Fab·Paragon·Manny 원본 비공개 전환·재저장 에셋 유지 판단.
-- 빌드 순서: `build_and_test.py --acquire-hold`·`--holder`(L-build-05·08, L-editor-38).
-- `TDGame.Combat` GUI 실행 크래시→헤드리스(L-editor-08).
+- 빌드 순서: `--acquire-hold`·`--holder`(L-build-05·08).
+- `TDGame.Combat` GUI 크래시→헤드리스(L-editor-08).
 
 ## ③ 다음 행동
 

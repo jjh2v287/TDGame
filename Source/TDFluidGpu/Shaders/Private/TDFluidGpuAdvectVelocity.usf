@@ -1,0 +1,35 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+Texture2DArray<float> ObstacleSdf;
+Texture2DArray<float2> VelocityIn;
+RWTexture2DArray<float2> VelocityOut;
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[DispatchThreadId.z];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	if (TDFluidGpuIsSolidDistance(ObstacleSdf[Texel]))
+	{
+		VelocityOut[Texel] = float2(0.0f, 0.0f);
+		return;
+	}
+
+	const float2 Velocity = VelocityIn[Texel];
+	const float2 BacktracePosition = float2(Cell) - Velocity * Actor.AdvectionStepScale;
+	const FTDFluidGpuBilinearSample Sample = TDFluidGpuMakeBilinearSample(BacktracePosition, Actor.Resolution);
+	const float2 AdvectedVelocity = TDFluidGpuSampleBilinearFloat2(VelocityIn, Sample, Actor.SliceIndex) * Actor.AdvectVelocityDampingFactor * TDFluidGpuComputeBorderDamping(Actor, Cell);
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_BOUNDARY_REFLECTION))
+	{
+		VelocityOut[Texel] = TDFluidGpuApplyEdgeReflection(Actor, Cell, TDFluidGpuEnforceObstacleBoundaryWithReflection(ObstacleSdf, Actor, Cell, AdvectedVelocity));
+		return;
+	}
+
+	VelocityOut[Texel] = TDFluidGpuEnforceObstacleBoundary(ObstacleSdf, Actor, Cell, AdvectedVelocity);
+}

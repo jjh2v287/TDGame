@@ -142,7 +142,7 @@ void UTDFluidEmberComponent::ActivateEmber(int32 SlotIndex, const FVector& Posit
 
 void UTDFluidEmberComponent::StepEmbers(const UTDFluidLiveComponent& LiveComponent, float DeltaTime)
 {
-	if (DeltaTime <= 0.0f || !GetStaticMesh() || !LiveComponent.GetSolver().IsInitialized())
+	if (DeltaTime <= 0.0f || !GetStaticMesh() || !LiveComponent.IsSimulationInitialized())
 	{
 		return;
 	}
@@ -168,10 +168,9 @@ void UTDFluidEmberComponent::SpawnEmbersFromDensity(const UTDFluidLiveComponent&
 	const int32 SpawnCount = FMath::FloorToInt(SpawnCarry);
 	SpawnCarry -= static_cast<float>(SpawnCount);
 
-	const FTDFluidGrid2DSolver& Solver = LiveComponent.GetSolver();
 	const FTDFluidPlaneBasis& PlaneBasis = LiveComponent.GetPlaneBasis();
-	const int32 Resolution = Solver.GetResolution();
-	const FVector2D CellSizeCm = Solver.GetExtentCm() / static_cast<double>(Resolution);
+	const int32 Resolution = LiveComponent.GetSimulationResolution();
+	const FVector2D CellSizeCm = LiveComponent.GetSimulationExtentCm() / static_cast<double>(Resolution);
 
 	for (int32 SpawnIndex = 0; SpawnIndex < SpawnCount; ++SpawnIndex)
 	{
@@ -185,7 +184,7 @@ void UTDFluidEmberComponent::SpawnEmbersFromDensity(const UTDFluidLiveComponent&
 		{
 			const int32 CellX = FMath::Min(FMath::FloorToInt(TDFluidDeterministic::NextUnitFloat(RandomState) * Resolution), Resolution - 1);
 			const int32 CellY = FMath::Min(FMath::FloorToInt(TDFluidDeterministic::NextUnitFloat(RandomState) * Resolution), Resolution - 1);
-			const FTDFluidCellSample Cell = Solver.SampleAtCell(CellX, CellY);
+			const FTDFluidCellSample Cell = LiveComponent.SampleSimulationCell(CellX, CellY);
 			const float AcceptanceDraw = TDFluidDeterministic::NextUnitFloat(RandomState);
 			if (AcceptanceDraw >= Cell.SelectiveDensity)
 			{
@@ -195,7 +194,7 @@ void UTDFluidEmberComponent::SpawnEmbersFromDensity(const UTDFluidLiveComponent&
 			const double JitterX = (TDFluidDeterministic::NextUnitFloat(RandomState) - 0.5) * CellSizeCm.X;
 			const double JitterY = (TDFluidDeterministic::NextUnitFloat(RandomState) - 0.5) * CellSizeCm.Y;
 			const double DepthJitter = (TDFluidDeterministic::NextUnitFloat(RandomState) * 2.0 - 1.0) * DepthJitterCm;
-			const FVector2D PlanePoint = Solver.CellToWorldCenter(CellX, CellY) + FVector2D(JitterX, JitterY);
+			const FVector2D PlanePoint = LiveComponent.CellToPlaneCenter(CellX, CellY) + FVector2D(JitterX, JitterY);
 			ActivateEmber(SlotIndex, LiveComponent.UnprojectSolverPlaneToWorld(PlanePoint, DepthJitter), PlaneBasis.UnprojectVector(Cell.VelocityCmPerSec));
 			break;
 		}
@@ -204,7 +203,6 @@ void UTDFluidEmberComponent::SpawnEmbersFromDensity(const UTDFluidLiveComponent&
 
 void UTDFluidEmberComponent::AdvanceEmbers(const UTDFluidLiveComponent& LiveComponent, float DeltaTime)
 {
-	const FTDFluidGrid2DSolver& Solver = LiveComponent.GetSolver();
 	const FTDFluidPlaneBasis& PlaneBasis = LiveComponent.GetPlaneBasis();
 	const float DragBlend = 1.0f - FMath::Exp(-FluidDragPerSec * DeltaTime);
 
@@ -217,7 +215,7 @@ void UTDFluidEmberComponent::AdvanceEmbers(const UTDFluidLiveComponent& LiveComp
 
 		FVector FluidVelocity = FVector::ZeroVector;
 		FTDFluidCellSample Cell;
-		if (Solver.SampleAtWorldPosition(LiveComponent.ProjectWorldToSolverPlane(Positions[SlotIndex]), Cell))
+		if (LiveComponent.SampleFluidAtWorldLocation(Positions[SlotIndex], Cell))
 		{
 			FluidVelocity = PlaneBasis.UnprojectVector(Cell.VelocityCmPerSec);
 		}

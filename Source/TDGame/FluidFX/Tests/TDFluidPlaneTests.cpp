@@ -3,6 +3,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
+#include "Engine/PointLight.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "FluidFX/TDFluidLiveActor.h"
@@ -12,6 +13,8 @@
 #include "FluidFX/TDFluidPlaneTypes.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidVolumeTransmittance.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/Package.h"
@@ -24,10 +27,23 @@ namespace TDFluidPlaneTestPrivate
 	const TCHAR* const CubeMeshPath = TEXT("/Engine/BasicShapes/Cube.Cube");
 	const TCHAR* const PlaneMeshPath = TEXT("/Engine/BasicShapes/Plane.Plane");
 	const TCHAR* const BasicMaterialPath = TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial");
+	const FVector FarAnchorLocations[] = { FVector(1500.0, 2300.0, 120.0), FVector(1.2e5, -8.0e4, 300.0) };
+	constexpr double MinimumPlaneCoordinateOffsetCm = 100.0;
+	constexpr double MaterialParameterToleranceCm = 0.05;
+	constexpr double MaterialUvTolerance = 1.0e-4;
+	constexpr float MatchingDensityTolerance = 2.0e-3f;
+	constexpr int32 ReanchorStampStepCount = 5;
+	constexpr int32 ReanchorTotalStepCount = 20;
+	const TCHAR* const PlaneCoordinateOffsetParameterName = TEXT("PlaneCoordinateOffsetCm");
 
 	FRotator GetPitchMinus60View()
 	{
 		return FRotator(-60.0, 0.0, 0.0);
+	}
+
+	FRotator GetReanchorView()
+	{
+		return FRotator(-35.0, 50.0, 0.0);
 	}
 
 	double NextSignedUnit(uint32& InOutState)
@@ -201,6 +217,114 @@ namespace TDFluidPlaneTestPrivate
 		AnchorRoot->RegisterComponent();
 		Anchor->SetActorLocation(Location);
 		return Anchor;
+	}
+
+	double MeasurePivotToleranceCm(const FVector& WorldPoint)
+	{
+		return GeometryTolerance * FMath::Max(1.0, WorldPoint.Size() / 1000.0);
+	}
+
+	FVector2D ProjectOntoPlaneAxes(const FTDFluidPlaneBasis& Basis, const FVector& WorldPoint)
+	{
+		return FVector2D(FVector::DotProduct(WorldPoint, Basis.U), FVector::DotProduct(WorldPoint, Basis.V));
+	}
+
+	FVector2D MeasureSolverPlaneOffset(const UTDFluidLiveComponent& LiveComponent, const FVector& WorldPoint)
+	{
+		return LiveComponent.ProjectWorldToSolverPlane(WorldPoint) - ProjectOntoPlaneAxes(LiveComponent.GetPlaneBasis(), WorldPoint);
+	}
+
+	UTDFluidPresetAsset* MakeStillPlanePreset(UObject* Outer)
+	{
+		UTDFluidPresetAsset* Preset = MakePlanePreset(Outer, ETDFluidPlaneOrientation::CameraFacing);
+		Preset->SimulationConfig.DensityDissipation = 0.0f;
+		Preset->SimulationConfig.FlowNoiseAccelerationCmPerSec2 = 0.0f;
+		Preset->SimulationConfig.AmbientNoiseAmount = 0.0f;
+		return Preset;
+	}
+
+	UTDFluidPresetAsset* MakeRenderedPlanePreset(UObject* Outer)
+	{
+		UTDFluidPresetAsset* Preset = MakeStillPlanePreset(Outer);
+		Preset->SurfaceMesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(PlaneMeshPath));
+		Preset->OutputMaterial = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(BasicMaterialPath));
+		Preset->VolumeMesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(CubeMeshPath));
+		Preset->VolumeMaterial = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(BasicMaterialPath));
+		Preset->VolumeHeightCm = 160.0f;
+		Preset->VolumeRender.bEnableTransmittance = true;
+		return Preset;
+	}
+
+	FLinearColor ReadMaterialVector(const UMaterialInstanceDynamic& MaterialInstance, const TCHAR* ParameterName)
+	{
+		FLinearColor Value = FLinearColor::Transparent;
+		MaterialInstance.GetVectorParameterValue(FHashedMaterialParameterInfo(ParameterName), Value);
+		return Value;
+	}
+
+	FVector2D ComputeMaterialPlaneUv(const UMaterialInstanceDynamic& MaterialInstance, const FVector& WorldPoint)
+	{
+		const FLinearColor AxisU = ReadMaterialVector(MaterialInstance, TEXT("PlaneAxisU"));
+		const FLinearColor AxisV = ReadMaterialVector(MaterialInstance, TEXT("PlaneAxisV"));
+		const FLinearColor Offset = ReadMaterialVector(MaterialInstance, PlaneCoordinateOffsetParameterName);
+		const FLinearColor Center = ReadMaterialVector(MaterialInstance, TEXT("SimCenterWorld"));
+		const FLinearColor Extents = ReadMaterialVector(MaterialInstance, TEXT("SimExtentsCm"));
+		const FVector2D PlaneCoordinate(
+			FVector::DotProduct(WorldPoint, FVector(AxisU.R, AxisU.G, AxisU.B)) + Offset.R,
+			FVector::DotProduct(WorldPoint, FVector(AxisV.R, AxisV.G, AxisV.B)) + Offset.G);
+		const FVector2D ExtentCm(FMath::Max(Extents.R, 1.0f), FMath::Max(Extents.G, 1.0f));
+		return (PlaneCoordinate - (FVector2D(Center.R, Center.G) - 0.5 * ExtentCm)) / ExtentCm;
+	}
+
+	FVector2D ComputeSolverPlaneUv(const UTDFluidLiveComponent& LiveComponent, const FVector& WorldPoint)
+	{
+		const FVector2D ExtentCm = LiveComponent.GetSimulationExtentCm();
+		return (LiveComponent.ProjectWorldToSolverPlane(WorldPoint) - (LiveComponent.GetSimulationCenterWorld() - 0.5 * ExtentCm)) / ExtentCm;
+	}
+
+	UMaterialInstanceDynamic* GetSurfaceMaterialInstance(const ATDFluidLiveActor* LiveActor)
+	{
+		return Cast<UMaterialInstanceDynamic>(LiveActor->InternalSurfaceMesh->GetMaterial(0));
+	}
+
+	UMaterialInstanceDynamic* GetVolumeMaterialInstance(const ATDFluidLiveActor* LiveActor)
+	{
+		return Cast<UMaterialInstanceDynamic>(LiveActor->VolumeMeshComponent->GetMaterial(0));
+	}
+
+	float SampleObstacleSdfAtSolverPoint(const UTDFluidLiveComponent& LiveComponent, const FVector2D& SolverPoint)
+	{
+		const FTDFluidGrid2DSolver& Solver = LiveComponent.GetSolver();
+		FVector2D GridUV;
+		if (!Solver.WorldToGridUV(SolverPoint, GridUV))
+		{
+			return TNumericLimits<float>::Max();
+		}
+
+		const int32 Resolution = Solver.GetResolution();
+		const int32 CellX = FMath::Clamp(FMath::FloorToInt(GridUV.X * Resolution), 0, Resolution - 1);
+		const int32 CellY = FMath::Clamp(FMath::FloorToInt(GridUV.Y * Resolution), 0, Resolution - 1);
+		return LiveComponent.SampleSimulationCell(CellX, CellY).ObstacleSdf;
+	}
+
+	double MeasureMaximumPixelDifference(TConstArrayView<FFloat16Color> LeftPixels, TConstArrayView<FFloat16Color> RightPixels)
+	{
+		if (LeftPixels.Num() != RightPixels.Num() || LeftPixels.IsEmpty())
+		{
+			return TNumericLimits<double>::Max();
+		}
+
+		double MaximumDifference = 0.0;
+		for (int32 PixelIndex = 0; PixelIndex < LeftPixels.Num(); ++PixelIndex)
+		{
+			const FLinearColor Left(LeftPixels[PixelIndex]);
+			const FLinearColor Right(RightPixels[PixelIndex]);
+			for (int32 Channel = 0; Channel < 4; ++Channel)
+			{
+				MaximumDifference = FMath::Max(MaximumDifference, static_cast<double>(FMath::Abs(Left.Component(Channel) - Right.Component(Channel))));
+			}
+		}
+		return MaximumDifference;
 	}
 }
 
@@ -743,6 +867,489 @@ bool FTDFluidPlaneSmallViewChangeTest::RunTest(const FString& Parameters)
 {
 	using namespace TDFluidPlaneTestPrivate;
 
+	for (const FVector& AnchorLocation : FarAnchorLocations)
+	{
+		FTDFluidPlaneTestWorld TestWorld;
+		if (!TestNotNull(TEXT("Fluid subsystem exists"), TestWorld.Subsystem))
+		{
+			return false;
+		}
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetPitchMinus60View());
+
+		ATDFluidLiveActor* LiveActor = SpawnPlaneActor(TestWorld, AnchorLocation, MakePlanePreset(TestWorld.World, ETDFluidPlaneOrientation::CameraFacing));
+		if (!TestNotNull(TEXT("Spawned live actor"), LiveActor))
+		{
+			return false;
+		}
+
+		const FString AnchorLabel = AnchorLocation.ToString();
+		LiveActor->StepLiveActor(StepSeconds);
+		UTDFluidLiveComponent* LiveComponent = LiveActor->LiveComponent;
+		LiveComponent->QueueBrushStamp(MakeStampAt(AnchorLocation));
+		LiveActor->StepLiveActor(StepSeconds);
+		LiveActor->StepLiveActor(StepSeconds);
+
+		const uint32 ChecksumBefore = LiveComponent->GetSolver().ComputeStateChecksum();
+		const int32 GenerationBefore = LiveComponent->GetSolver().GetReinitializationGeneration();
+		const FVector2D AnchorSolverPointBefore = LiveComponent->ProjectWorldToSolverPlane(AnchorLocation);
+		const float AnchorDensityBefore = SamplePrimaryDensity(LiveActor, AnchorLocation);
+		TestTrue(*FString::Printf(TEXT("The solver holds density at the anchor %s before the view changes"), *AnchorLabel), AnchorDensityBefore > 0.1f);
+
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(FRotator(-60.8, 0.9, 0.7));
+		LiveActor->BeginLiveActorStep(StepSeconds);
+		TestEqual(TEXT("A shake sized view change keeps the solver generation"), LiveComponent->GetSolver().GetReinitializationGeneration(), GenerationBefore);
+		TestEqual(TEXT("A shake sized view change keeps the solver state checksum"), LiveComponent->GetSolver().ComputeStateChecksum(), ChecksumBefore);
+
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(FRotator(-45.0, 25.0, 0.0));
+		LiveActor->BeginLiveActorStep(StepSeconds);
+		const FVector2D PlaneCoordinateOffset = MeasureSolverPlaneOffset(*LiveComponent, AnchorLocation);
+		TestTrue(*FString::Printf(TEXT("The rotation at %s needs a plane coordinate offset above 100 cm (%s)"), *AnchorLabel, *PlaneCoordinateOffset.ToString()), PlaneCoordinateOffset.Size() > MinimumPlaneCoordinateOffsetCm);
+		TestEqual(*FString::Printf(TEXT("A large view change keeps the solver generation at %s"), *AnchorLabel), LiveComponent->GetSolver().GetReinitializationGeneration(), GenerationBefore);
+		TestEqual(*FString::Printf(TEXT("A large view change keeps the solver state checksum at %s"), *AnchorLabel), LiveComponent->GetSolver().ComputeStateChecksum(), ChecksumBefore);
+		TestTrue(*FString::Printf(TEXT("The anchor %s keeps its solver plane point"), *AnchorLabel), (LiveComponent->ProjectWorldToSolverPlane(AnchorLocation) - AnchorSolverPointBefore).GetAbsMax() <= MeasurePivotToleranceCm(AnchorLocation));
+		TestNearlyEqual(*FString::Printf(TEXT("The anchor %s keeps its density"), *AnchorLabel), SamplePrimaryDensity(LiveActor, AnchorLocation), AnchorDensityBefore, 1.0e-6f);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneCoordinateOffsetRoundTripTest,
+	"TDGame.FluidFX.Plane.CoordinateOffsetRoundTrip",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneCoordinateOffsetRoundTripTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
+	const FRotator OffsetView(-60.0, 37.0, 0.0);
+	FTDFluidPlaneBasis OffsetBasis = FTDFluidPlaneBasis::MakeFromView(ETDFluidPlaneOrientation::CameraFacing, OffsetView, 0.0f);
+	OffsetBasis.PlaneCoordinateOffsetCm = FVector2D(1234.5, -678.25);
+
+	uint32 PointState = 362436069u;
+	double WorstProjectionErrorCm = 0.0;
+	double WorstVectorErrorCm = 0.0;
+	double WorstRoundTripRatio = 0.0;
+	for (int32 Index = 0; Index < 500; ++Index)
+	{
+		const FVector Point = NextPoint(PointState, 1.0e6, 1.0e6);
+		const FVector2D AxisCoordinate = ProjectOntoPlaneAxes(OffsetBasis, Point);
+		WorstProjectionErrorCm = FMath::Max(WorstProjectionErrorCm, (OffsetBasis.ProjectPoint(Point) - (AxisCoordinate + OffsetBasis.PlaneCoordinateOffsetCm)).GetAbsMax());
+		WorstVectorErrorCm = FMath::Max(WorstVectorErrorCm, (OffsetBasis.ProjectVector(Point) - AxisCoordinate).GetAbsMax());
+		const FVector RoundTrip = OffsetBasis.UnprojectPoint(OffsetBasis.ProjectPoint(Point), OffsetBasis.ProjectDepth(Point));
+		WorstRoundTripRatio = FMath::Max(WorstRoundTripRatio, (RoundTrip - Point).GetAbsMax() / FMath::Max(1.0, Point.GetAbsMax()));
+	}
+	TestTrue(*FString::Printf(TEXT("A point projects to the axis coordinates plus the offset (%.3e)"), WorstProjectionErrorCm), WorstProjectionErrorCm <= GeometryTolerance);
+	TestTrue(*FString::Printf(TEXT("A vector projection ignores the offset (%.3e)"), WorstVectorErrorCm), WorstVectorErrorCm <= GeometryTolerance);
+	TestTrue(*FString::Printf(TEXT("Projection and unprojection with an offset round trip within 1e-9 relative (%.3e)"), WorstRoundTripRatio), WorstRoundTripRatio <= 1.0e-9);
+
+	const FTDFluidPlaneBasis RotatedTemplate = FTDFluidPlaneBasis::MakeFromView(ETDFluidPlaneOrientation::CameraFacing, FRotator(-40.0, 77.0, 0.0), 0.0f);
+	const FVector Pivots[] = { FVector::ZeroVector, FVector(1500.0, 2300.0, 120.0), FVector(1.2e5, -8.0e4, 300.0), FVector(-3.3e5, 2.1e5, -900.0) };
+	for (const FVector& Pivot : Pivots)
+	{
+		const FString PivotLabel = Pivot.ToString();
+		FTDFluidPlaneBasis RotatedBasis = RotatedTemplate;
+		RotatedBasis.PreservePivotPlanePoint(OffsetBasis, Pivot);
+		TestTrue(*FString::Printf(TEXT("The pivot %s keeps its solver plane point"), *PivotLabel), (RotatedBasis.ProjectPoint(Pivot) - OffsetBasis.ProjectPoint(Pivot)).GetAbsMax() <= MeasurePivotToleranceCm(Pivot));
+		TestTrue(*FString::Printf(TEXT("Preserving the pivot %s keeps the new axes"), *PivotLabel), RotatedBasis.U == RotatedTemplate.U && RotatedBasis.V == RotatedTemplate.V && RotatedBasis.N == RotatedTemplate.N);
+		TestEqual(*FString::Printf(TEXT("The offset never changes the depth at %s"), *PivotLabel), RotatedBasis.ProjectDepth(Pivot), RotatedTemplate.ProjectDepth(Pivot));
+
+		FTDFluidPlaneBasis RestoredBasis = FTDFluidPlaneBasis::MakeFromView(ETDFluidPlaneOrientation::CameraFacing, OffsetView, 0.0f);
+		RestoredBasis.PreservePivotPlanePoint(RotatedBasis, Pivot);
+		TestTrue(*FString::Printf(TEXT("Rotating back about %s restores the original offset"), *PivotLabel), (RestoredBasis.PlaneCoordinateOffsetCm - OffsetBasis.PlaneCoordinateOffsetCm).GetAbsMax() <= MeasurePivotToleranceCm(Pivot));
+	}
+
+	const FVector WorldPivot(1500.0, 2300.0, 120.0);
+	FTDFluidPlaneBasis WorldBasis = FTDFluidPlaneBasis::MakeWorldFacing();
+	WorldBasis.PreservePivotPlanePoint(OffsetBasis, WorldPivot);
+	const FVector2D WorldProjection = WorldBasis.ProjectPoint(WorldPivot);
+	const FVector2D ExpectedWorldProjection(WorldPivot.X, WorldPivot.Y);
+	TestTrue(TEXT("A world facing basis keeps a zero offset"), WorldBasis.PlaneCoordinateOffsetCm.IsZero());
+	TestEqual(TEXT("A world facing basis projects bitwise to X and Y"), FMemory::Memcmp(&WorldProjection, &ExpectedWorldProjection, sizeof(FVector2D)), 0);
+
+	FTDFluidPlaneBasis FromWorldBasis = RotatedTemplate;
+	FromWorldBasis.PlaneCoordinateOffsetCm = FVector2D(5.0, 5.0);
+	FromWorldBasis.PreservePivotPlanePoint(FTDFluidPlaneBasis::MakeWorldFacing(), WorldPivot);
+	TestTrue(TEXT("Leaving a world facing basis starts from a zero offset"), FromWorldBasis.PlaneCoordinateOffsetCm.IsZero());
+
+	const FTDFluidPlaneBasis SameViewBasis = FTDFluidPlaneBasis::MakeFromView(ETDFluidPlaneOrientation::CameraFacing, OffsetView, 0.0f);
+	TestTrue(TEXT("The orientation comparison ignores the offset"), OffsetBasis.IsNearlyEqual(SameViewBasis) && SameViewBasis.IsNearlyEqual(OffsetBasis));
+	TestFalse(TEXT("The orientation comparison still sees a two degree yaw"), OffsetBasis.IsNearlyEqual(FTDFluidPlaneBasis::MakeFromView(ETDFluidPlaneOrientation::CameraFacing, OffsetView + FRotator(0.0, 2.0, 0.0), 0.0f)));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneReanchorMatchesFreshActorTest,
+	"TDGame.FluidFX.LiveActor.ReanchorMatchesFreshActor",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneReanchorMatchesFreshActorTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
+	for (const FVector& AnchorLocation : FarAnchorLocations)
+	{
+		FTDFluidPlaneTestWorld TestWorld;
+		if (!TestNotNull(TEXT("Fluid subsystem exists"), TestWorld.Subsystem))
+		{
+			return false;
+		}
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetPitchMinus60View());
+
+		const FString AnchorLabel = AnchorLocation.ToString();
+		APointLight* PointLightActor = TestWorld.World->SpawnActor<APointLight>(APointLight::StaticClass(), AnchorLocation + FVector(150.0, -80.0, 200.0), FRotator::ZeroRotator);
+		ATDFluidLiveActor* ReorientedActor = SpawnPlaneActor(TestWorld, AnchorLocation, MakeRenderedPlanePreset(TestWorld.World));
+		if (!TestNotNull(TEXT("Spawned point light"), PointLightActor) || !TestNotNull(TEXT("Spawned the actor that will be reoriented"), ReorientedActor)
+			|| !TestTrue(TEXT("The reoriented actor volume becomes visible"), WaitUntilVolumeVisible(TestWorld, ReorientedActor)))
+		{
+			return false;
+		}
+		ReorientedActor->VolumeLightActor = PointLightActor;
+		ReorientedActor->StepLiveActor(StepSeconds);
+		const int32 GenerationBeforeRotation = ReorientedActor->LiveComponent->GetSimulationGeneration();
+
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetReanchorView());
+		ATDFluidLiveActor* FreshActor = SpawnPlaneActor(TestWorld, AnchorLocation, MakeRenderedPlanePreset(TestWorld.World));
+		if (!TestNotNull(TEXT("Spawned the fresh actor"), FreshActor) || !TestTrue(TEXT("The fresh actor volume becomes visible"), WaitUntilVolumeVisible(TestWorld, FreshActor)))
+		{
+			return false;
+		}
+		FreshActor->VolumeLightActor = PointLightActor;
+		ReorientedActor->StepLiveActor(StepSeconds);
+		FreshActor->StepLiveActor(StepSeconds);
+
+		const UTDFluidLiveComponent* ReorientedComponent = ReorientedActor->LiveComponent;
+		const UTDFluidLiveComponent* FreshComponent = FreshActor->LiveComponent;
+		const FTDFluidPlaneBasis FreshBasis = FreshComponent->GetPlaneBasis();
+		const FVector StampLocations[] = { AnchorLocation, AnchorLocation + FreshBasis.U * 60.0, AnchorLocation + FreshBasis.V * 120.0 };
+		for (int32 StepIndex = 0; StepIndex < ReanchorTotalStepCount; ++StepIndex)
+		{
+			for (const FVector& StampLocation : StampLocations)
+			{
+				if (StepIndex < ReanchorStampStepCount)
+				{
+					ReorientedActor->LiveComponent->QueueBrushStamp(MakeStampAt(StampLocation));
+					FreshActor->LiveComponent->QueueBrushStamp(MakeStampAt(StampLocation));
+				}
+			}
+			ReorientedActor->StepLiveActor(StepSeconds);
+			FreshActor->StepLiveActor(StepSeconds);
+		}
+
+		const FVector2D PlaneCoordinateOffset = MeasureSolverPlaneOffset(*ReorientedComponent, AnchorLocation);
+		TestTrue(*FString::Printf(TEXT("The reoriented actor at %s carries a plane coordinate offset above 100 cm (%s)"), *AnchorLabel, *PlaneCoordinateOffset.ToString()), PlaneCoordinateOffset.Size() > MinimumPlaneCoordinateOffsetCm);
+		TestEqual(*FString::Printf(TEXT("The view change at %s did not reinitialize the solver"), *AnchorLabel), ReorientedComponent->GetSimulationGeneration(), GenerationBeforeRotation);
+		TestTrue(*FString::Printf(TEXT("The fresh actor holds density at the anchor %s"), *AnchorLabel), SamplePrimaryDensity(FreshActor, AnchorLocation) > 0.1f);
+
+		float WorstDensityDifference = 0.0f;
+		for (const double OffsetU : { -120.0, 0.0, 120.0 })
+		{
+			for (const double OffsetV : { -60.0, 60.0, 180.0 })
+			{
+				const FVector SamplePoint = AnchorLocation + FreshBasis.U * OffsetU + FreshBasis.V * OffsetV;
+				WorstDensityDifference = FMath::Max(WorstDensityDifference, FMath::Abs(SamplePrimaryDensity(ReorientedActor, SamplePoint) - SamplePrimaryDensity(FreshActor, SamplePoint)));
+			}
+		}
+		TestTrue(*FString::Printf(TEXT("Nine world samples match the fresh actor at %s (%.5f)"), *AnchorLabel, WorstDensityDifference), WorstDensityDifference <= MatchingDensityTolerance);
+
+		const double TransmittanceDifference = MeasureMaximumPixelDifference(ReorientedComponent->GetPackedTransmittancePixels(), FreshComponent->GetPackedTransmittancePixels());
+		TestTrue(*FString::Printf(TEXT("The transmittance matches the fresh actor at %s (%.5f)"), *AnchorLabel, TransmittanceDifference), TransmittanceDifference <= MatchingDensityTolerance);
+
+		const ATDFluidLiveActor* const ComparedActors[] = { ReorientedActor, FreshActor };
+		for (const ATDFluidLiveActor* ComparedActor : ComparedActors)
+		{
+			const FVector2D SolverUv = ComputeSolverPlaneUv(*ComparedActor->LiveComponent, AnchorLocation);
+			const UMaterialInstanceDynamic* const MaterialInstances[] = { GetSurfaceMaterialInstance(ComparedActor), GetVolumeMaterialInstance(ComparedActor) };
+			for (const UMaterialInstanceDynamic* MaterialInstance : MaterialInstances)
+			{
+				if (!TestNotNull(TEXT("The material instance exists"), MaterialInstance))
+				{
+					continue;
+				}
+				const FVector2D MaterialUv = ComputeMaterialPlaneUv(*MaterialInstance, AnchorLocation);
+				TestTrue(*FString::Printf(TEXT("%s samples the anchor at the solver UV (%s vs %s)"), *MaterialInstance->GetName(), *MaterialUv.ToString(), *SolverUv.ToString()), (MaterialUv - SolverUv).GetAbsMax() <= MaterialUvTolerance);
+			}
+		}
+
+		const USceneComponent* const ReorientedChildren[] = { ReorientedActor->InteractionVolume, ReorientedActor->InternalSurfaceMesh, ReorientedActor->VolumeMeshComponent };
+		const USceneComponent* const FreshChildren[] = { FreshActor->InteractionVolume, FreshActor->InternalSurfaceMesh, FreshActor->VolumeMeshComponent };
+		for (int32 ChildIndex = 0; ChildIndex < static_cast<int32>(UE_ARRAY_COUNT(ReorientedChildren)); ++ChildIndex)
+		{
+			const FString ChildName = FreshChildren[ChildIndex]->GetName();
+			TestTrue(*FString::Printf(TEXT("%s location matches the fresh actor at %s"), *ChildName, *AnchorLabel), AreVectorsNear(ReorientedChildren[ChildIndex]->GetComponentLocation(), FreshChildren[ChildIndex]->GetComponentLocation(), 0.05));
+			TestTrue(*FString::Printf(TEXT("%s rotation matches the fresh actor at %s"), *ChildName, *AnchorLabel), MeasureAngleDegrees(ReorientedChildren[ChildIndex]->GetComponentQuat(), FreshChildren[ChildIndex]->GetComponentQuat()) < 0.01);
+		}
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneReanchorSlidingWindowTest,
+	"TDGame.FluidFX.LiveActor.ReanchorKeepsPivotWithSlidingWindow",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneReanchorSlidingWindowTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
+	for (const FVector& AnchorLocation : FarAnchorLocations)
+	{
+		FTDFluidPlaneTestWorld TestWorld;
+		if (!TestNotNull(TEXT("Fluid subsystem exists"), TestWorld.Subsystem))
+		{
+			return false;
+		}
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetPitchMinus60View());
+
+		AActor* Anchor = SpawnMovableAnchor(TestWorld.World, AnchorLocation);
+		ATDFluidLiveActor* LiveActor = SpawnPlaneActor(TestWorld, AnchorLocation, MakeStillPlanePreset(TestWorld.World));
+		if (!TestNotNull(TEXT("Spawned anchor"), Anchor) || !TestNotNull(TEXT("Spawned live actor"), LiveActor))
+		{
+			return false;
+		}
+		LiveActor->bShouldFollowPlayerPawn = true;
+		LiveActor->FollowTargetActor = Anchor;
+
+		const FString AnchorLabel = AnchorLocation.ToString();
+		LiveActor->StepLiveActor(StepSeconds);
+		UTDFluidLiveComponent* LiveComponent = LiveActor->LiveComponent;
+		LiveComponent->QueueBrushStamp(MakeStampAt(AnchorLocation));
+		LiveActor->StepLiveActor(StepSeconds);
+
+		const int32 GenerationBefore = LiveComponent->GetSimulationGeneration();
+		const FVector2D AnchorSolverPointBefore = LiveComponent->ProjectWorldToSolverPlane(AnchorLocation);
+		const FVector2D CenterBefore = LiveComponent->GetSolver().GetCenterWorld();
+		const double CellSizeCm = LiveComponent->GetSolver().GetExtentCm().X / LiveComponent->GetSolver().GetResolution();
+		const float DensityBefore = SamplePrimaryDensity(LiveActor, AnchorLocation);
+		TestTrue(*FString::Printf(TEXT("The stamp wrote density at the anchor %s"), *AnchorLabel), DensityBefore > 0.1f);
+
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(FRotator(-60.0, 40.0, 0.0));
+		LiveActor->BeginLiveActorStep(StepSeconds);
+		const FVector2D PlaneCoordinateOffset = MeasureSolverPlaneOffset(*LiveComponent, AnchorLocation);
+		TestTrue(*FString::Printf(TEXT("The rotation at %s needs a plane coordinate offset above 100 cm (%s)"), *AnchorLabel, *PlaneCoordinateOffset.ToString()), PlaneCoordinateOffset.Size() > MinimumPlaneCoordinateOffsetCm);
+		TestEqual(*FString::Printf(TEXT("The rotation at %s keeps the solver generation"), *AnchorLabel), LiveComponent->GetSimulationGeneration(), GenerationBefore);
+		TestTrue(*FString::Printf(TEXT("The followed anchor %s keeps its solver plane point"), *AnchorLabel), (LiveComponent->ProjectWorldToSolverPlane(AnchorLocation) - AnchorSolverPointBefore).GetAbsMax() <= MeasurePivotToleranceCm(AnchorLocation));
+		TestTrue(*FString::Printf(TEXT("The rotation at %s moves the window by zero cells"), *AnchorLabel), (LiveComponent->GetSolver().GetCenterWorld() - CenterBefore).GetAbsMax() <= MeasurePivotToleranceCm(AnchorLocation));
+		TestNearlyEqual(*FString::Printf(TEXT("The stamp stays glued to the anchor %s"), *AnchorLabel), SamplePrimaryDensity(LiveActor, AnchorLocation), DensityBefore, 1.0e-5f);
+
+		const FTDFluidPlaneBasis Basis = LiveComponent->GetPlaneBasis();
+		const FVector AnchorTarget = AnchorLocation + Basis.UnprojectVector(FVector2D(2.4 * CellSizeCm, -1.3 * CellSizeCm)) + Basis.N * 30.0;
+		Anchor->SetActorLocation(AnchorTarget);
+		LiveActor->BeginLiveActorStep(StepSeconds);
+
+		const FVector2D CenterShift = LiveComponent->GetSolver().GetCenterWorld() - CenterBefore;
+		TestNearlyEqual(*FString::Printf(TEXT("After the rotation at %s the window moved two cells along U"), *AnchorLabel), CenterShift.X / CellSizeCm, 2.0, 1.0e-4);
+		TestNearlyEqual(*FString::Printf(TEXT("After the rotation at %s the window moved minus one cell along V"), *AnchorLabel), CenterShift.Y / CellSizeCm, -1.0, 1.0e-4);
+		TestNearlyEqual(*FString::Printf(TEXT("The slab depth follows the anchor %s on the stored basis"), *AnchorLabel), LiveComponent->GetPlaneDepthCm(), LiveComponent->GetPlaneBasis().ProjectDepth(AnchorTarget), MeasurePivotToleranceCm(AnchorTarget));
+		TestNearlyEqual(*FString::Printf(TEXT("A fixed world point at %s keeps its sample after the shift"), *AnchorLabel), SamplePrimaryDensity(LiveActor, AnchorLocation), DensityBefore, 1.0e-5f);
+		TestTrue(*FString::Printf(TEXT("The actor follows the anchor from %s"), *AnchorLabel), AreVectorsNear(LiveActor->GetActorLocation(), AnchorTarget, 0.01));
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneViewChangeKeepsQueuedStampsTest,
+	"TDGame.FluidFX.LiveComponent.ViewChangeKeepsQueuedStamps",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneViewChangeKeepsQueuedStampsTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
+	for (const FVector& AnchorLocation : FarAnchorLocations)
+	{
+		FTDFluidPlaneTestWorld TestWorld;
+		if (!TestNotNull(TEXT("Fluid subsystem exists"), TestWorld.Subsystem))
+		{
+			return false;
+		}
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetPitchMinus60View());
+
+		ATDFluidLiveActor* LiveActor = SpawnPlaneActor(TestWorld, AnchorLocation, MakeStillPlanePreset(TestWorld.World));
+		if (!TestNotNull(TEXT("Spawned live actor"), LiveActor))
+		{
+			return false;
+		}
+
+		const FString AnchorLabel = AnchorLocation.ToString();
+		LiveActor->StepLiveActor(StepSeconds);
+		UTDFluidLiveComponent* LiveComponent = LiveActor->LiveComponent;
+		const int32 GenerationBefore = LiveComponent->GetSimulationGeneration();
+		LiveComponent->QueueBrushStamp(MakeStampAt(AnchorLocation));
+
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(FRotator(-60.0, 30.0, 0.0));
+		LiveActor->StepLiveActor(StepSeconds);
+		const FVector2D PlaneCoordinateOffset = MeasureSolverPlaneOffset(*LiveComponent, AnchorLocation);
+		TestTrue(*FString::Printf(TEXT("The rotation at %s needs a plane coordinate offset above 100 cm (%s)"), *AnchorLabel, *PlaneCoordinateOffset.ToString()), PlaneCoordinateOffset.Size() > MinimumPlaneCoordinateOffsetCm);
+		TestEqual(*FString::Printf(TEXT("The rotation at %s keeps the solver generation"), *AnchorLabel), LiveComponent->GetSimulationGeneration(), GenerationBefore);
+		TestEqual(*FString::Printf(TEXT("The stamp queued before the rotation at %s is processed"), *AnchorLabel), LiveComponent->GetLastProcessedPointCount(), 1);
+		TestTrue(*FString::Printf(TEXT("The stamp queued before the rotation writes density at %s"), *AnchorLabel), SamplePrimaryDensity(LiveActor, AnchorLocation) > 0.1f);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneReanchorRasterizesObstaclesTest,
+	"TDGame.FluidFX.LiveComponent.ReanchorRasterizesObstacles",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneReanchorRasterizesObstaclesTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
+	for (const FVector& AnchorLocation : FarAnchorLocations)
+	{
+		FTDFluidPlaneTestWorld TestWorld;
+		if (!TestNotNull(TEXT("Fluid subsystem exists"), TestWorld.Subsystem))
+		{
+			return false;
+		}
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetPitchMinus60View());
+
+		ATDFluidLiveActor* LiveActor = SpawnPlaneActor(TestWorld, AnchorLocation, MakeStillPlanePreset(TestWorld.World));
+		if (!TestNotNull(TEXT("Spawned live actor"), LiveActor))
+		{
+			return false;
+		}
+
+		const FString AnchorLabel = AnchorLocation.ToString();
+		LiveActor->StepLiveActor(StepSeconds);
+		UTDFluidLiveComponent* LiveComponent = LiveActor->LiveComponent;
+		FTDFluidSdfObstacle Obstacle;
+		Obstacle.WorldCenter = AnchorLocation + LiveComponent->GetPlaneBasis().U * 100.0;
+		Obstacle.RadiusCm = 40.0f;
+		LiveComponent->SetSdfObstacles(TArray<FTDFluidSdfObstacle>({ Obstacle }));
+		LiveActor->StepLiveActor(StepSeconds);
+
+		const FVector2D ObstacleSolverPointBefore = LiveComponent->ProjectWorldToSolverPlane(Obstacle.WorldCenter);
+		TestTrue(*FString::Printf(TEXT("Control: the obstacle cell at %s is solid before the rotation"), *AnchorLabel), SampleObstacleSdfAtSolverPoint(*LiveComponent, ObstacleSolverPointBefore) < 0.0f);
+
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(FRotator(-60.0, 60.0, 0.0));
+		LiveActor->StepLiveActor(StepSeconds);
+		const FVector2D ObstacleSolverPointAfter = LiveComponent->ProjectWorldToSolverPlane(Obstacle.WorldCenter);
+		const FVector2D PlaneCoordinateOffset = MeasureSolverPlaneOffset(*LiveComponent, AnchorLocation);
+		TestTrue(*FString::Printf(TEXT("The rotation at %s needs a plane coordinate offset above 100 cm (%s)"), *AnchorLabel, *PlaneCoordinateOffset.ToString()), PlaneCoordinateOffset.Size() > MinimumPlaneCoordinateOffsetCm);
+		TestTrue(*FString::Printf(TEXT("The obstacle projection at %s moved more than 80 cm"), *AnchorLabel), (ObstacleSolverPointAfter - ObstacleSolverPointBefore).Size() > 80.0);
+		TestTrue(*FString::Printf(TEXT("The obstacle is rasterized at its new projection at %s"), *AnchorLabel), SampleObstacleSdfAtSolverPoint(*LiveComponent, ObstacleSolverPointAfter) < 0.0f);
+		TestTrue(*FString::Printf(TEXT("The old obstacle projection at %s is free again"), *AnchorLabel), SampleObstacleSdfAtSolverPoint(*LiveComponent, ObstacleSolverPointBefore) > 0.0f);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneMidCarriesPlaneCoordinateOffsetTest,
+	"TDGame.FluidFX.LiveComponent.MidCarriesPlaneCoordinateOffset",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneMidCarriesPlaneCoordinateOffsetTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
+	for (const FVector& AnchorLocation : FarAnchorLocations)
+	{
+		FTDFluidPlaneTestWorld TestWorld;
+		if (!TestNotNull(TEXT("Fluid subsystem exists"), TestWorld.Subsystem))
+		{
+			return false;
+		}
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetPitchMinus60View());
+
+		const FString AnchorLabel = AnchorLocation.ToString();
+		APointLight* PointLightActor = TestWorld.World->SpawnActor<APointLight>(APointLight::StaticClass(), AnchorLocation + FVector(150.0, -80.0, 200.0), FRotator(-30.0, 20.0, 0.0));
+		ATDFluidLiveActor* LiveActor = SpawnPlaneActor(TestWorld, AnchorLocation, MakeRenderedPlanePreset(TestWorld.World));
+		if (!TestNotNull(TEXT("Spawned point light"), PointLightActor) || !TestNotNull(TEXT("Spawned live actor"), LiveActor)
+			|| !TestTrue(TEXT("Volume mesh becomes visible after the async load"), WaitUntilVolumeVisible(TestWorld, LiveActor)))
+		{
+			return false;
+		}
+		LiveActor->VolumeLightActor = PointLightActor;
+		LiveActor->StepLiveActor(StepSeconds);
+
+		TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(FRotator(-45.0, 50.0, 0.0));
+		LiveActor->StepLiveActor(StepSeconds);
+
+		const UTDFluidLiveComponent* LiveComponent = LiveActor->LiveComponent;
+		const FTDFluidPlaneBasis& Basis = LiveComponent->GetPlaneBasis();
+		const FVector2D PlaneCoordinateOffset = MeasureSolverPlaneOffset(*LiveComponent, AnchorLocation);
+		const FVector2D SimulationCenter = LiveComponent->GetSimulationCenterWorld();
+		TestTrue(*FString::Printf(TEXT("The rotation at %s needs a plane coordinate offset above 100 cm (%s)"), *AnchorLabel, *PlaneCoordinateOffset.ToString()), PlaneCoordinateOffset.Size() > MinimumPlaneCoordinateOffsetCm);
+
+		const UMaterialInstanceDynamic* const MaterialInstances[] = { GetSurfaceMaterialInstance(LiveActor), GetVolumeMaterialInstance(LiveActor) };
+		for (const UMaterialInstanceDynamic* MaterialInstance : MaterialInstances)
+		{
+			if (!TestNotNull(TEXT("The material instance exists"), MaterialInstance))
+			{
+				continue;
+			}
+			const FString MaterialName = MaterialInstance->GetName();
+			FLinearColor OffsetValue = FLinearColor::Transparent;
+			TestTrue(*FString::Printf(TEXT("%s carries PlaneCoordinateOffsetCm"), *MaterialName), MaterialInstance->GetVectorParameterValue(FHashedMaterialParameterInfo(PlaneCoordinateOffsetParameterName), OffsetValue));
+			TestTrue(*FString::Printf(TEXT("%s offset equals the basis offset (%s vs %s)"), *MaterialName, *OffsetValue.ToString(), *PlaneCoordinateOffset.ToString()),
+				FMath::Abs(OffsetValue.R - PlaneCoordinateOffset.X) <= MaterialParameterToleranceCm && FMath::Abs(OffsetValue.G - PlaneCoordinateOffset.Y) <= MaterialParameterToleranceCm);
+			const FLinearColor CenterValue = ReadMaterialVector(*MaterialInstance, TEXT("SimCenterWorld"));
+			TestTrue(*FString::Printf(TEXT("%s SimCenterWorld is the solver center"), *MaterialName),
+				FMath::Abs(CenterValue.R - SimulationCenter.X) <= MaterialParameterToleranceCm && FMath::Abs(CenterValue.G - SimulationCenter.Y) <= MaterialParameterToleranceCm);
+		}
+
+		FTDFluidTransmittanceInputs TransmittanceInputs;
+		if (!TestTrue(TEXT("The transmittance inputs build"), LiveComponent->BuildTransmittanceInputs(TransmittanceInputs)))
+		{
+			continue;
+		}
+		const FVector LightLocation = PointLightActor->GetActorLocation();
+		const FVector LightDirection = PointLightActor->GetActorForwardVector();
+		const FVector2D ExtentCm = LiveComponent->GetSimulationExtentCm();
+		const FVector2D ExpectedLightPlane = LiveComponent->ProjectWorldToSolverPlane(LightLocation) - (SimulationCenter - 0.5 * ExtentCm);
+		const double ExpectedLightDepth = Basis.ProjectDepth(LightLocation) - (LiveComponent->GetPlaneDepthCm() - 0.5 * TransmittanceInputs.VolumeHeightCm);
+		const FVector ExpectedLightPosition(ExpectedLightPlane.X, ExpectedLightPlane.Y, ExpectedLightDepth);
+		const FVector ExpectedLightDirection(FVector::DotProduct(LightDirection, Basis.U), FVector::DotProduct(LightDirection, Basis.V), FVector::DotProduct(LightDirection, Basis.N));
+		TestTrue(*FString::Printf(TEXT("The transmittance light position uses solver plane coordinates at %s (%s vs %s)"), *AnchorLabel, *TransmittanceInputs.LightPositionLocalCm.ToString(), *ExpectedLightPosition.ToString()),
+			AreVectorsNear(TransmittanceInputs.LightPositionLocalCm, ExpectedLightPosition, MeasurePivotToleranceCm(LightLocation)));
+		TestTrue(*FString::Printf(TEXT("The transmittance light direction ignores the offset at %s"), *AnchorLabel), AreVectorsNear(TransmittanceInputs.LightDirectionLocal, ExpectedLightDirection, GeometryTolerance));
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneMaterialsExposePlaneCoordinateOffsetTest,
+	"TDGame.FluidFX.Plane.MaterialsExposePlaneCoordinateOffset",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneMaterialsExposePlaneCoordinateOffsetTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
+	const TCHAR* const MaterialPaths[] = {
+		TEXT("/Game/FluidFX/Materials/M_TD_FluidFlame.M_TD_FluidFlame"),
+		TEXT("/Game/FluidFX/Materials/M_TD_FluidVolume.M_TD_FluidVolume"),
+		TEXT("/Game/FluidFX/Materials/M_TD_FluidFakeVolume.M_TD_FluidFakeVolume"),
+	};
+	for (const TCHAR* MaterialPath : MaterialPaths)
+	{
+		const UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, MaterialPath);
+		if (!TestNotNull(*FString::Printf(TEXT("%s loads"), MaterialPath), Material))
+		{
+			continue;
+		}
+
+		FLinearColor DefaultValue = FLinearColor::White;
+		if (!TestTrue(*FString::Printf(TEXT("%s exposes PlaneCoordinateOffsetCm"), MaterialPath), Material->GetVectorParameterDefaultValue(FHashedMaterialParameterInfo(PlaneCoordinateOffsetParameterName), DefaultValue)))
+		{
+			continue;
+		}
+		TestTrue(*FString::Printf(TEXT("%s defaults the offset to zero"), MaterialPath), DefaultValue.R == 0.0f && DefaultValue.G == 0.0f);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneSubDegreeViewChangeDepthTest,
+	"TDGame.FluidFX.LiveComponent.SubDegreeViewChangeKeepsStoredBasisDepth",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneSubDegreeViewChangeDepthTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
 	FTDFluidPlaneTestWorld TestWorld;
 	if (!TestNotNull(TEXT("Fluid subsystem exists"), TestWorld.Subsystem))
 	{
@@ -750,7 +1357,11 @@ bool FTDFluidPlaneSmallViewChangeTest::RunTest(const FString& Parameters)
 	}
 	TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetPitchMinus60View());
 
-	ATDFluidLiveActor* LiveActor = SpawnPlaneActor(TestWorld, FVector::ZeroVector, MakePlanePreset(TestWorld.World, ETDFluidPlaneOrientation::CameraFacing));
+	const FVector AnchorLocation(2.0e4, 3.0e4, 0.0);
+	const double DepthBiasCm = 25.0;
+	UTDFluidPresetAsset* Preset = MakeStillPlanePreset(TestWorld.World);
+	Preset->PlaneSettings.CameraDepthBiasCm = static_cast<float>(DepthBiasCm);
+	ATDFluidLiveActor* LiveActor = SpawnPlaneActor(TestWorld, AnchorLocation, Preset);
 	if (!TestNotNull(TEXT("Spawned live actor"), LiveActor))
 	{
 		return false;
@@ -758,24 +1369,23 @@ bool FTDFluidPlaneSmallViewChangeTest::RunTest(const FString& Parameters)
 
 	LiveActor->StepLiveActor(StepSeconds);
 	UTDFluidLiveComponent* LiveComponent = LiveActor->LiveComponent;
-	LiveComponent->QueueBrushStamp(MakeStampAt(LiveComponent->UnprojectSolverPlaneToWorld(FVector2D::ZeroVector)));
+	const FTDFluidPlaneBasis StoredBasis = LiveComponent->GetPlaneBasis();
+	const int32 GenerationBefore = LiveComponent->GetSimulationGeneration();
+
+	const FRotator SubDegreeView(-60.0, 0.9, 0.0);
+	const FTDFluidPlaneBasis IncomingBasis = FTDFluidPlaneBasis::MakeFromView(ETDFluidPlaneOrientation::CameraFacing, SubDegreeView, 0.0f);
+	TestTrue(TEXT("Control: the sub degree view stays inside the orientation tolerance"), StoredBasis.IsNearlyEqual(IncomingBasis));
+	TestTrue(TEXT("Control: the incoming normal would move the anchor depth by more than the slab"), FMath::Abs(IncomingBasis.ProjectDepth(AnchorLocation) - StoredBasis.ProjectDepth(AnchorLocation)) > Preset->PlaneSettings.InteractionDepthCm + DepthBiasCm);
+
+	TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(SubDegreeView);
+	LiveComponent->QueueBrushStamp(MakeStampAt(AnchorLocation));
 	LiveActor->StepLiveActor(StepSeconds);
-	LiveActor->StepLiveActor(StepSeconds);
 
-	const uint32 ChecksumBefore = LiveComponent->GetSolver().ComputeStateChecksum();
-	const int32 GenerationBefore = LiveComponent->GetSolver().GetReinitializationGeneration();
-	TestTrue(TEXT("The solver holds density before the view changes"), SamplePrimaryDensity(LiveActor, LiveComponent->UnprojectSolverPlaneToWorld(FVector2D::ZeroVector)) > 0.1f);
-
-	TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(FRotator(-60.8, 0.9, 0.7));
-	LiveActor->BeginLiveActorStep(StepSeconds);
-	TestEqual(TEXT("A shake sized view change keeps the solver generation"), LiveComponent->GetSolver().GetReinitializationGeneration(), GenerationBefore);
-	TestEqual(TEXT("A shake sized view change keeps the solver state checksum"), LiveComponent->GetSolver().ComputeStateChecksum(), ChecksumBefore);
-
-	TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(FRotator(-45.0, 25.0, 0.0));
-	LiveActor->BeginLiveActorStep(StepSeconds);
-	TestEqual(TEXT("A large view change reinitializes the solver once"), LiveComponent->GetSolver().GetReinitializationGeneration(), GenerationBefore + 1);
-	TestTrue(TEXT("A large view change clears the state"), LiveComponent->GetSolver().ComputeStateChecksum() != ChecksumBefore);
-	TestNearlyEqual(TEXT("The cleared solver holds no density"), SamplePrimaryDensity(LiveActor, LiveComponent->UnprojectSolverPlaneToWorld(FVector2D::ZeroVector)), 0.0f, 1.0e-6f);
+	TestEqual(TEXT("A sub degree view change keeps the solver generation"), LiveComponent->GetSimulationGeneration(), GenerationBefore);
+	TestTrue(TEXT("A sub degree view change keeps the stored normal"), LiveComponent->GetPlaneBasis().N == StoredBasis.N);
+	TestNearlyEqual(TEXT("The plane depth is measured on the stored basis"), LiveComponent->GetPlaneDepthCm(), StoredBasis.ProjectDepth(AnchorLocation) - DepthBiasCm, GeometryTolerance);
+	TestEqual(TEXT("The anchor stamp stays inside the slab"), LiveComponent->GetLastProcessedPointCount(), 1);
+	TestTrue(TEXT("The anchor stamp writes density"), SamplePrimaryDensity(LiveActor, AnchorLocation) > 0.1f);
 	return true;
 }
 

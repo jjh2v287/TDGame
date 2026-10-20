@@ -6,6 +6,8 @@
 #include "UObject/ObjectKey.h"
 #include "TDFluidLiveActor.generated.h"
 
+struct FCollisionQueryParams;
+
 class APlayerController;
 class UBoxComponent;
 class USceneComponent;
@@ -42,6 +44,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveVolume")
 	TObjectPtr<AActor> VolumeLightActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveVolume")
+	bool bCastPawnCapsuleShadows = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveVolume")
+	TArray<FTDFluidShadowCapsuleBonePair> ShadowCapsuleBones;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveActivation")
 	bool bShouldUseActivationVolume = false;
@@ -115,6 +123,10 @@ protected:
 	virtual FVector2D GetDynamicCenterOffsetPlane() const { return FVector2D::ZeroVector; }
 	virtual void PrepareActorSpecificInputs(float DeltaTime) {}
 	virtual void FinishActorSpecificOutputs(float DeltaTime) {}
+	virtual float ResolveTerrainMissElevationCm(int32 CellX, int32 CellY) const { return static_cast<float>(GetActorLocation().Z); }
+	virtual void AddTerrainTraceIgnoredActors(FCollisionQueryParams& QueryParams) const {}
+	virtual void OnTerrainSamplingCompleted() {}
+	bool IsTerrainSamplingComplete() const { return bIsTerrainQueueCurrent && PendingTerrainCells.IsEmpty(); }
 
 private:
 	struct FTDFluidCombatBinding
@@ -133,6 +145,8 @@ private:
 	void PollMouseBrush(float DeltaTime);
 	void ResetMouseBrushStroke();
 	void ApplyVolumeLightToMaterial();
+	void GatherShadowCapsules(TArray<FTDFluidShadowCapsule>& OutCapsules) const;
+	void PushVolumeTransmittanceSources();
 	void ResetInteractionHistory();
 	void ClearInteractionState();
 	void InvalidateTerrainQueueIfSolverGridChanged();

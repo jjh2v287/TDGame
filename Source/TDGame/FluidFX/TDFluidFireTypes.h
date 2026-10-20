@@ -4,6 +4,8 @@
 #include "FluidFX/TDFluidTypes.h"
 #include "TDFluidFireTypes.generated.h"
 
+class ATDFluidLiveActor;
+
 USTRUCT(BlueprintType)
 struct TDGAME_API FTDFluidSourceEmitterSettings
 {
@@ -50,6 +52,21 @@ struct TDGAME_API FTDFluidSourceEmitterSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
 	int32 RandomSeed = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float HeatStrength = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "1", ClampMax = "4"))
+	int32 SubstepCount = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
+	float CoreRadiusCm = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float CoreDensityStrength = 0.85f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float CoreHeatStrength = 1.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -80,6 +97,9 @@ struct TDGAME_API FTDFluidDownstreamFeedSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "2.0"))
 	float VelocityInheritance = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float HeatScale = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -143,4 +163,82 @@ struct TDGAME_API FTDFluidFragmentTrailSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0", ClampMax = "512"))
 	int32 EmberBurstCount = 80;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float FireHeatStrength = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float SmokeHeatStrength = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
+	bool bSustainsBurstHeat = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
+	float BurstCenterHeightOffsetCm = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
+	float RestingHeatSeconds = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float RestingHeatStrength = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "1.0"))
+	float RestingHeatRadiusCm = 14.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float RestingDensityStrength = 0.0f;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidFragmentTarget
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail")
+	TObjectPtr<ATDFluidLiveActor> TargetActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail")
+	ETDFluidBrushChannel Channel = ETDFluidBrushChannel::ChannelR_Mud;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail", meta = (ClampMin = "0.0"))
+	float DensityScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail", meta = (ClampMin = "0.0"))
+	float HeatScale = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail", meta = (ClampMin = "0.1"))
+	float RadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail", meta = (ClampMin = "0.1"))
+	float BurstRadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail")
+	bool bReceivesBurst = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail")
+	bool bReceivesTrails = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail")
+	bool bUsesLaggedPositions = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail", meta = (ClampMin = "0.0"))
+	float HeightFalloffCm = 0.0f;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidFlameCardLayerSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireCards", meta = (ClampMin = "0", ClampMax = "2"))
+	int32 ExtraCardCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireCards", meta = (ClampMin = "0.0"))
+	float CardDepthSpacingCm = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireCards", meta = (ClampMin = "0.5", ClampMax = "1.5"))
+	float CardScaleStep = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireCards", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float CardIntensityScale = 0.7f;
 };

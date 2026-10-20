@@ -11,12 +11,16 @@
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Templates/Function.h"
 
 namespace
 {
 	constexpr float MaxEmitterSpeedCmPerSec = 3000.0f;
 	constexpr float FlickerVelocityRatio = 0.5f;
 	constexpr int32 MaxSourceStampCount = 8;
+	constexpr int32 MaxSourceSubstepCount = 4;
+	constexpr int32 MaxExtraFlameCardCount = 2;
 	constexpr int32 FeedSampleDivisor = 32;
 	constexpr int32 MinFeedSampleStride = 1;
 
@@ -35,6 +39,49 @@ namespace
 		}
 
 		return Density * (1.0f - FMath::SmoothStep(Settings.MinFeedDensity, Settings.FadedDensityThreshold, Density));
+	}
+
+	void CollectDownstreamFeedCells(
+		int32 Resolution,
+		const FTDFluidDownstreamFeedSettings& Settings,
+		TFunctionRef<float(int32, int32)> SampleSelectiveDensity,
+		TArray<FIntPoint>& OutCells)
+	{
+		const int32 Stride = FMath::Max(MinFeedSampleStride, Resolution / FeedSampleDivisor);
+		const int32 FirstRow = FMath::Clamp(FMath::CeilToInt(Settings.BandStartRatio * Resolution), 0, Resolution - 1);
+
+		TArray<FTDFluidFeedCandidate> Candidates;
+		for (int32 CellY = FirstRow; CellY < Resolution; CellY += Stride)
+		{
+			for (int32 CellX = 0; CellX < Resolution; CellX += Stride)
+			{
+				const float Weight = ComputeFeedWeight(SampleSelectiveDensity(CellX, CellY), Settings);
+				if (Weight <= 0.0f)
+				{
+					continue;
+				}
+
+				FTDFluidFeedCandidate& Candidate = Candidates.AddDefaulted_GetRef();
+				Candidate.Cell = FIntPoint(CellX, CellY);
+				Candidate.Weight = Weight;
+				Candidate.CellIndex = CellY * Resolution + CellX;
+			}
+		}
+
+		Candidates.Sort([](const FTDFluidFeedCandidate& Left, const FTDFluidFeedCandidate& Right)
+		{
+			if (Left.Weight != Right.Weight)
+			{
+				return Left.Weight > Right.Weight;
+			}
+			return Left.CellIndex < Right.CellIndex;
+		});
+
+		const int32 SelectedCount = FMath::Min(Candidates.Num(), Settings.MaxStampsPerStep);
+		for (int32 CandidateIndex = 0; CandidateIndex < SelectedCount; ++CandidateIndex)
+		{
+			OutCells.Add(Candidates[CandidateIndex].Cell);
+		}
 	}
 }
 
@@ -149,12 +196,12 @@ FVector2D ATDFluidFireActor::GetEmitterPlaneVelocity() const
 
 FVector2D ATDFluidFireActor::GetDynamicCenterOffsetPlane() const
 {
-	if (!LiveComponent || !SourceEmitter.bIsEnabled || !LiveComponent->GetSolver().IsInitialized())
+	if (!LiveComponent || !SourceEmitter.bIsEnabled || !LiveComponent->IsSimulationInitialized())
 	{
 		return FVector2D::ZeroVector;
 	}
 
-	const FVector2D ExtentCm = LiveComponent->GetSolver().GetExtentCm();
+	const FVector2D ExtentCm = LiveComponent->GetSimulationExtentCm();
 	const FVector2D MaxLeadCm = ExtentCm * SourceEmitter.MaxTrailLeadRatio;
 	const FVector2D LeadCm = GetEmitterPlaneVelocity() * SourceEmitter.TrailLeadSeconds;
 	return -FVector2D(FMath::Clamp(LeadCm.X, -MaxLeadCm.X, MaxLeadCm.X), FMath::Clamp(LeadCm.Y, -MaxLeadCm.Y, MaxLeadCm.Y));
@@ -169,6 +216,7 @@ void ATDFluidFireActor::PrepareActorSpecificInputs(float DeltaTime)
 	}
 
 	const FVector AnchorWorld = ResolvePlaneAnchorWorldLocation();
+	const FVector LastAnchorWorld = bHasPreviousAnchor ? PreviousAnchorWorld : AnchorWorld;
 	EmitterWorldVelocity = bHasPreviousAnchor ? (AnchorWorld - PreviousAnchorWorld) / DeltaTime : FVector::ZeroVector;
 	if (EmitterWorldVelocity.SizeSquared() > FMath::Square(MaxEmitterSpeedCmPerSec))
 	{
@@ -178,28 +226,128 @@ void ATDFluidFireActor::PrepareActorSpecificInputs(float DeltaTime)
 	PreviousAnchorWorld = AnchorWorld;
 	bHasPreviousAnchor = true;
 	FireSimulationTimeSeconds += DeltaTime;
-	QueueSourceEmitterStamps(AnchorWorld);
+	QueueSourceEmitterStamps(AnchorWorld, LastAnchorWorld);
+	QueueSourceCoreStamp(AnchorWorld);
 }
 
-void ATDFluidFireActor::QueueSourceEmitterStamps(const FVector& AnchorWorld)
+void ATDFluidFireActor::QueueSourceEmitterStamps(const FVector& AnchorWorld, const FVector& LastAnchorWorld)
 {
 	const FTDFluidPlaneBasis& PlaneBasis = LiveComponent->GetPlaneBasis();
 	const int32 StampCount = FMath::Clamp(SourceEmitter.SourceStampCount, 1, MaxSourceStampCount);
+	const int32 SubstepCount = FMath::Clamp(SourceEmitter.SubstepCount, 1, MaxSourceSubstepCount);
 	const FVector EmitDirection = PlaneBasis.UnprojectVector(FVector2D(0.0, 1.0));
-	for (int32 StampIndex = 0; StampIndex < StampCount; ++StampIndex)
+	for (int32 SubstepIndex = 1; SubstepIndex <= SubstepCount; ++SubstepIndex)
 	{
-		const double LateralRatio = StampCount == 1 ? 0.0 : static_cast<double>(StampIndex) / static_cast<double>(StampCount - 1) * 2.0 - 1.0;
-		const float Flicker = TDFluidDeterministic::EvaluateBandLimitedNoise(SourceEmitter.RandomSeed, StampIndex, FireSimulationTimeSeconds, SourceEmitter.FlickerFrequencyHz);
-		const float Multiplier = FMath::Max(0.0f, 1.0f + SourceEmitter.FlickerAmplitude * Flicker);
+		const FVector EmitAnchorWorld = SubstepIndex == SubstepCount
+			? AnchorWorld
+			: FMath::Lerp(LastAnchorWorld, AnchorWorld, static_cast<double>(SubstepIndex) / static_cast<double>(SubstepCount));
+		for (int32 StampIndex = 0; StampIndex < StampCount; ++StampIndex)
+		{
+			const double LateralRatio = StampCount == 1 ? 0.0 : static_cast<double>(StampIndex) / static_cast<double>(StampCount - 1) * 2.0 - 1.0;
+			const float Flicker = TDFluidDeterministic::EvaluateBandLimitedNoise(SourceEmitter.RandomSeed, StampIndex, FireSimulationTimeSeconds, SourceEmitter.FlickerFrequencyHz);
+			const float Multiplier = FMath::Max(0.0f, 1.0f + SourceEmitter.FlickerAmplitude * Flicker);
 
-		FTDFluidBrushStamp Stamp;
-		Stamp.WorldLocation = AnchorWorld + PlaneBasis.U * (LateralRatio * SourceEmitter.SourceSpreadCm);
-		Stamp.WorldVelocity = EmitDirection * SourceEmitter.EmitSpeedCmPerSec * (1.0f + FlickerVelocityRatio * Flicker) - EmitterWorldVelocity * SourceEmitter.MotionInertiaScale;
-		Stamp.RadiusCm = FMath::Max(SourceEmitter.RadiusCm * Multiplier, 1.0f);
-		Stamp.DensityStrength = SourceEmitter.DensityStrength * FMath::Min(1.0f, Multiplier);
-		Stamp.VelocityStrength = 1.0f;
-		Stamp.Channel = SourceEmitter.Channel;
-		LiveComponent->QueueBrushStamp(Stamp);
+			FTDFluidBrushStamp Stamp;
+			Stamp.WorldLocation = EmitAnchorWorld + PlaneBasis.U * (LateralRatio * SourceEmitter.SourceSpreadCm);
+			Stamp.WorldVelocity = EmitDirection * SourceEmitter.EmitSpeedCmPerSec * (1.0f + FlickerVelocityRatio * Flicker) - EmitterWorldVelocity * SourceEmitter.MotionInertiaScale;
+			Stamp.RadiusCm = FMath::Max(SourceEmitter.RadiusCm * Multiplier, 1.0f);
+			Stamp.DensityStrength = SourceEmitter.DensityStrength * FMath::Min(1.0f, Multiplier);
+			Stamp.VelocityStrength = 1.0f;
+			Stamp.Channel = SourceEmitter.Channel;
+			Stamp.HeatStrength = SourceEmitter.HeatStrength;
+			LiveComponent->QueueBrushStamp(Stamp);
+		}
+	}
+}
+
+void ATDFluidFireActor::QueueSourceCoreStamp(const FVector& AnchorWorld)
+{
+	if (SourceEmitter.CoreRadiusCm <= 0.0f)
+	{
+		return;
+	}
+
+	FTDFluidBrushStamp CoreStamp;
+	CoreStamp.WorldLocation = AnchorWorld;
+	CoreStamp.WorldVelocity = FVector::ZeroVector;
+	CoreStamp.RadiusCm = FMath::Max(SourceEmitter.CoreRadiusCm, 1.0f);
+	CoreStamp.DensityStrength = SourceEmitter.CoreDensityStrength;
+	CoreStamp.VelocityStrength = 0.0f;
+	CoreStamp.Channel = SourceEmitter.Channel;
+	CoreStamp.HeatStrength = SourceEmitter.CoreHeatStrength;
+	LiveComponent->QueueBrushStamp(CoreStamp);
+}
+
+int32 ATDFluidFireActor::GetExtraFlameCardCount() const
+{
+	return FMath::Clamp(FlameCardLayers.ExtraCardCount, 0, MaxExtraFlameCardCount);
+}
+
+void ATDFluidFireActor::EnsureExtraFlameCards()
+{
+	const int32 DesiredCardCount = GetExtraFlameCardCount();
+	if (ExtraFlameCardComponents.Num() >= DesiredCardCount || !InternalSurfaceMesh || !LiveComponent)
+	{
+		return;
+	}
+
+	UStaticMesh* CardMesh = InternalSurfaceMesh->GetStaticMesh();
+	UMaterialInterface* CardMaterial = LiveComponent->OutputMaterial.Get();
+	if (!CardMesh || !CardMaterial)
+	{
+		return;
+	}
+
+	while (ExtraFlameCardComponents.Num() < DesiredCardCount)
+	{
+		const int32 LayerIndex = ExtraFlameCardComponents.Num() + 1;
+		UStaticMeshComponent* CardComponent = NewObject<UStaticMeshComponent>(this, NAME_None, RF_Transient);
+		CardComponent->SetStaticMesh(CardMesh);
+		CardComponent->SetMobility(EComponentMobility::Movable);
+		CardComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		CardComponent->SetGenerateOverlapEvents(false);
+		CardComponent->SetCastShadow(false);
+		CardComponent->SetupAttachment(SceneRoot);
+		CardComponent->RegisterComponent();
+		CardComponent->SetTranslucentSortPriority(InternalSurfaceMesh->TranslucencySortPriority);
+
+		UMaterialInstanceDynamic* CardMaterialInstance = UMaterialInstanceDynamic::Create(CardMaterial, this);
+		CardMaterialInstance->SetScalarParameterValue(TEXT("CardLayerIndex"), static_cast<float>(LayerIndex));
+		CardMaterialInstance->SetScalarParameterValue(TEXT("CardIntensityScale"), FlameCardLayers.CardIntensityScale);
+		CardComponent->SetMaterial(0, CardMaterialInstance);
+		LiveComponent->RegisterExternalMaterialTarget(CardMaterialInstance);
+
+		ExtraFlameCardComponents.Add(CardComponent);
+		ExtraFlameCardMaterials.Add(CardMaterialInstance);
+	}
+}
+
+void ATDFluidFireActor::PlaceExtraFlameCards()
+{
+	if (ExtraFlameCardComponents.IsEmpty() || !InternalSurfaceMesh || !LiveComponent)
+	{
+		return;
+	}
+
+	const FTransform BaseTransform = InternalSurfaceMesh->GetComponentTransform();
+	const FVector PlaneNormal = LiveComponent->GetPlaneBasis().N;
+	const bool bIsBaseVisible = InternalSurfaceMesh->IsVisible();
+	for (int32 CardIndex = 0; CardIndex < ExtraFlameCardComponents.Num(); ++CardIndex)
+	{
+		UStaticMeshComponent* CardComponent = ExtraFlameCardComponents[CardIndex];
+		if (!CardComponent)
+		{
+			continue;
+		}
+
+		const int32 LayerIndex = CardIndex + 1;
+		const double DepthSide = LayerIndex % 2 == 1 ? 1.0 : -1.0;
+		const double DepthOffsetCm = DepthSide * FlameCardLayers.CardDepthSpacingCm * static_cast<double>((LayerIndex + 1) / 2);
+		FTransform CardTransform = BaseTransform;
+		CardTransform.AddToTranslation(PlaneNormal * DepthOffsetCm);
+		CardTransform.SetScale3D(BaseTransform.GetScale3D() * FMath::Pow(static_cast<double>(FlameCardLayers.CardScaleStep), static_cast<double>(LayerIndex)));
+		CardComponent->SetWorldTransform(CardTransform);
+		CardComponent->SetVisibility(bIsBaseVisible);
 	}
 }
 
@@ -218,6 +366,8 @@ void ATDFluidFireActor::UpdateSourcePropTransform()
 void ATDFluidFireActor::FinishActorSpecificOutputs(float DeltaTime)
 {
 	const FVector AnchorWorld = ResolvePlaneAnchorWorldLocation();
+	EnsureExtraFlameCards();
+	PlaceExtraFlameCards();
 	if (FireLightComponent)
 	{
 		FireLightComponent->UpdateFromFluid(*LiveComponent, AnchorWorld, DeltaTime);
@@ -239,42 +389,24 @@ void ATDFluidFireActor::SelectDownstreamFeedCells(const FTDFluidGrid2DSolver& So
 		return;
 	}
 
-	const int32 Resolution = Solver.GetResolution();
-	const int32 Stride = FMath::Max(MinFeedSampleStride, Resolution / FeedSampleDivisor);
-	const int32 FirstRow = FMath::Clamp(FMath::CeilToInt(Settings.BandStartRatio * Resolution), 0, Resolution - 1);
-
-	TArray<FTDFluidFeedCandidate> Candidates;
-	for (int32 CellY = FirstRow; CellY < Resolution; CellY += Stride)
+	CollectDownstreamFeedCells(Solver.GetResolution(), Settings, [&Solver](int32 CellX, int32 CellY)
 	{
-		for (int32 CellX = 0; CellX < Resolution; CellX += Stride)
-		{
-			const float Weight = ComputeFeedWeight(Solver.SampleAtCell(CellX, CellY).SelectiveDensity, Settings);
-			if (Weight <= 0.0f)
-			{
-				continue;
-			}
+		return Solver.SampleAtCell(CellX, CellY).SelectiveDensity;
+	}, OutCells);
+}
 
-			FTDFluidFeedCandidate& Candidate = Candidates.AddDefaulted_GetRef();
-			Candidate.Cell = FIntPoint(CellX, CellY);
-			Candidate.Weight = Weight;
-			Candidate.CellIndex = CellY * Resolution + CellX;
-		}
+void ATDFluidFireActor::SelectDownstreamFeedCells(const UTDFluidLiveComponent& FluidComponent, const FTDFluidDownstreamFeedSettings& Settings, TArray<FIntPoint>& OutCells)
+{
+	OutCells.Reset();
+	if (!FluidComponent.IsSimulationInitialized())
+	{
+		return;
 	}
 
-	Candidates.Sort([](const FTDFluidFeedCandidate& Left, const FTDFluidFeedCandidate& Right)
+	CollectDownstreamFeedCells(FluidComponent.GetSimulationResolution(), Settings, [&FluidComponent](int32 CellX, int32 CellY)
 	{
-		if (Left.Weight != Right.Weight)
-		{
-			return Left.Weight > Right.Weight;
-		}
-		return Left.CellIndex < Right.CellIndex;
-	});
-
-	const int32 SelectedCount = FMath::Min(Candidates.Num(), Settings.MaxStampsPerStep);
-	for (int32 CandidateIndex = 0; CandidateIndex < SelectedCount; ++CandidateIndex)
-	{
-		OutCells.Add(Candidates[CandidateIndex].Cell);
-	}
+		return FluidComponent.SampleSimulationCell(CellX, CellY).SelectiveDensity;
+	}, OutCells);
 }
 
 void ATDFluidFireActor::FeedDownstreamSmoke()
@@ -285,18 +417,17 @@ void ATDFluidFireActor::FeedDownstreamSmoke()
 	}
 
 	UTDFluidLiveComponent* SmokeComponent = DownstreamSmokeActor->LiveComponent;
-	const FTDFluidGrid2DSolver& FireSolver = LiveComponent->GetSolver();
 	TArray<FIntPoint> FeedCells;
-	SelectDownstreamFeedCells(FireSolver, DownstreamFeed, FeedCells);
+	SelectDownstreamFeedCells(*LiveComponent, DownstreamFeed, FeedCells);
 
 	const FTDFluidPlaneBasis& FireBasis = LiveComponent->GetPlaneBasis();
-	const int32 Resolution = FireSolver.GetResolution();
+	const int32 Resolution = LiveComponent->GetSimulationResolution();
 	const int32 Stride = FMath::Max(MinFeedSampleStride, Resolution / FeedSampleDivisor);
-	const float FeedRadiusCm = DownstreamFeed.RadiusScale * static_cast<float>(Stride) * static_cast<float>(FireSolver.GetExtentCm().X / Resolution);
+	const float FeedRadiusCm = DownstreamFeed.RadiusScale * static_cast<float>(Stride) * static_cast<float>(LiveComponent->GetSimulationExtentCm().X / Resolution);
 	for (const FIntPoint& Cell : FeedCells)
 	{
-		const FTDFluidCellSample Sample = FireSolver.SampleAtCell(Cell.X, Cell.Y);
-		const FVector CellWorld = LiveComponent->UnprojectSolverPlaneToWorld(FireSolver.CellToWorldCenter(Cell.X, Cell.Y));
+		const FTDFluidCellSample Sample = LiveComponent->SampleSimulationCell(Cell.X, Cell.Y);
+		const FVector CellWorld = LiveComponent->UnprojectSolverPlaneToWorld(LiveComponent->CellToPlaneCenter(Cell.X, Cell.Y));
 		const FVector2D SmokePlanePoint = SmokeComponent->ProjectWorldToSolverPlane(CellWorld);
 
 		FTDFluidBrushStamp Stamp;
@@ -306,6 +437,7 @@ void ATDFluidFireActor::FeedDownstreamSmoke()
 		Stamp.DensityStrength = DownstreamFeed.DensityScale * FMath::Clamp(Sample.SelectiveDensity / FMath::Max(DownstreamFeed.FadedDensityThreshold, UE_KINDA_SMALL_NUMBER), 0.0f, 1.0f);
 		Stamp.VelocityStrength = 1.0f;
 		Stamp.Channel = ETDFluidBrushChannel::ChannelR_Mud;
+		Stamp.HeatStrength = FMath::Clamp(Sample.Heat * DownstreamFeed.HeatScale, 0.0f, 1.0f);
 		SmokeComponent->QueueBrushStamp(Stamp);
 	}
 }

@@ -1,0 +1,418 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+#define TDFLUIDGPU_MG_COARSEST_RESOLUTION 32u
+#define TDFLUIDGPU_MG_COARSEST_CELL_COUNT (TDFLUIDGPU_MG_COARSEST_RESOLUTION * TDFLUIDGPU_MG_COARSEST_RESOLUTION)
+#define TDFLUIDGPU_MG_COARSE_THREAD_COUNT 256u
+#define TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD (TDFLUIDGPU_MG_COARSEST_CELL_COUNT / TDFLUIDGPU_MG_COARSE_THREAD_COUNT)
+#define TDFLUIDGPU_MG_COLOR_CELLS_PER_THREAD (TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD / 2u)
+#define TDFLUIDGPU_MG_COARSE_MINIMUM_RELAXATION_ITERATIONS 16u
+#define TDFLUIDGPU_MG_COARSE_MAXIMUM_RELAXATION_ITERATIONS 64u
+#define TDFLUIDGPU_MG_MAXIMUM_LABEL_PASSES TDFLUIDGPU_MG_COARSEST_CELL_COUNT
+#define TDFLUIDGPU_MG_MAXIMUM_COMPATIBLE_COMPONENTS 8u
+#define TDFLUIDGPU_MG_NO_LABEL 0xFFFFFFFFu
+#define TDFLUIDGPU_MG_COARSEST_PLANE_CELL_COUNT (TDFLUIDGPU_MG_COARSEST_CELL_COUNT / 2u)
+#define TDFLUIDGPU_MG_COARSEST_HALF_ROW (TDFLUIDGPU_MG_COARSEST_RESOLUTION / 2u)
+#define TDFLUIDGPU_MG_REDUCTION_LANE_COUNT 16u
+#define TDFLUIDGPU_MG_REDUCTION_SPAN (TDFLUIDGPU_MG_COARSE_THREAD_COUNT / TDFLUIDGPU_MG_REDUCTION_LANE_COUNT)
+#define TDFLUIDGPU_MG_LABEL_FLAG_COUNT 3u
+
+static const float TDFLUIDGPU_MG_COARSEST_AXIS_COSINE = 0.99518472667f;
+static const float TDFLUIDGPU_MG_COARSE_TARGET_ERROR_REDUCTION = 0.01f;
+
+Texture2DArray<float> RhsIn;
+Texture2DArray<float2> AperturesIn;
+RWTexture2DArray<float> CorrectionOut;
+RWTexture2DArray<uint> ComponentLabels;
+float LevelWeightScale;
+uint ComputesComponentLabels;
+
+groupshared float SharedColorSplitValue[TDFLUIDGPU_MG_COARSEST_CELL_COUNT];
+groupshared float SharedRhs[TDFLUIDGPU_MG_COARSEST_CELL_COUNT];
+groupshared float SharedApertureX[TDFLUIDGPU_MG_COARSEST_CELL_COUNT];
+groupshared float SharedApertureY[TDFLUIDGPU_MG_COARSEST_CELL_COUNT];
+groupshared uint SharedLabel[TDFLUIDGPU_MG_COARSEST_CELL_COUNT];
+groupshared float2 SharedSums[TDFLUIDGPU_MG_COARSE_THREAD_COUNT];
+groupshared uint SharedMinimumLabels[TDFLUIDGPU_MG_COARSE_THREAD_COUNT];
+groupshared float2 SharedPartialSums[TDFLUIDGPU_MG_REDUCTION_LANE_COUNT];
+groupshared uint SharedPartialMinimumLabels[TDFLUIDGPU_MG_REDUCTION_LANE_COUNT];
+groupshared uint SharedLabelChanged[TDFLUIDGPU_MG_LABEL_FLAG_COUNT];
+
+struct FTDFluidGpuCoarsestColorCell
+{
+	uint CellIndex;
+	uint ValueIndex;
+	uint NeighborBase;
+	uint ColumnParity;
+	float RightWeight;
+	float LeftWeight;
+	float UpWeight;
+	float DownWeight;
+	float Diagonal;
+	float Rhs;
+	float Value;
+};
+
+int2 ToCoarsestCell(uint CellIndex)
+{
+	return int2(int(CellIndex % TDFLUIDGPU_MG_COARSEST_RESOLUTION), int(CellIndex / TDFLUIDGPU_MG_COARSEST_RESOLUTION));
+}
+
+uint GetOwnedCellIndex(uint GroupIndex, uint Slot)
+{
+	return GroupIndex + Slot * TDFLUIDGPU_MG_COARSE_THREAD_COUNT;
+}
+
+float ReadRightAperture(uint CellIndex)
+{
+	if (CellIndex % TDFLUIDGPU_MG_COARSEST_RESOLUTION == TDFLUIDGPU_MG_COARSEST_RESOLUTION - 1u)
+	{
+		return 0.0f;
+	}
+
+	return SharedApertureX[CellIndex];
+}
+
+float ReadLeftAperture(uint CellIndex)
+{
+	if (CellIndex % TDFLUIDGPU_MG_COARSEST_RESOLUTION == 0u)
+	{
+		return 0.0f;
+	}
+
+	return SharedApertureX[CellIndex - 1u];
+}
+
+float ReadUpAperture(uint CellIndex)
+{
+	if (CellIndex >= TDFLUIDGPU_MG_COARSEST_CELL_COUNT - TDFLUIDGPU_MG_COARSEST_RESOLUTION)
+	{
+		return 0.0f;
+	}
+
+	return SharedApertureY[CellIndex];
+}
+
+float ReadDownAperture(uint CellIndex)
+{
+	if (CellIndex < TDFLUIDGPU_MG_COARSEST_RESOLUTION)
+	{
+		return 0.0f;
+	}
+
+	return SharedApertureY[CellIndex - TDFLUIDGPU_MG_COARSEST_RESOLUTION];
+}
+
+bool IsCoarsestCellActive(uint CellIndex)
+{
+	return (ReadRightAperture(CellIndex) + ReadLeftAperture(CellIndex)) + (ReadUpAperture(CellIndex) + ReadDownAperture(CellIndex)) > 0.0f;
+}
+
+uint FindSmallestNeighborLabel(uint CellIndex, uint Label)
+{
+	uint SmallestLabel = Label;
+	if (ReadRightAperture(CellIndex) > 0.0f)
+	{
+		SmallestLabel = min(SmallestLabel, SharedLabel[CellIndex + 1u]);
+	}
+	if (ReadLeftAperture(CellIndex) > 0.0f)
+	{
+		SmallestLabel = min(SmallestLabel, SharedLabel[CellIndex - 1u]);
+	}
+	if (ReadUpAperture(CellIndex) > 0.0f)
+	{
+		SmallestLabel = min(SmallestLabel, SharedLabel[CellIndex + TDFLUIDGPU_MG_COARSEST_RESOLUTION]);
+	}
+	if (ReadDownAperture(CellIndex) > 0.0f)
+	{
+		SmallestLabel = min(SmallestLabel, SharedLabel[CellIndex - TDFLUIDGPU_MG_COARSEST_RESOLUTION]);
+	}
+	return min(SmallestLabel, SharedLabel[SmallestLabel]);
+}
+
+void LabelConnectedComponents(uint GroupIndex)
+{
+	if (GroupIndex == 0u)
+	{
+		SharedLabelChanged[0] = 0u;
+		SharedLabelChanged[1] = 0u;
+	}
+	GroupMemoryBarrierWithGroupSync();
+
+	[loop]
+	for (uint LabelPass = 0; LabelPass < TDFLUIDGPU_MG_MAXIMUM_LABEL_PASSES; ++LabelPass)
+	{
+		if (GroupIndex == 0u)
+		{
+			SharedLabelChanged[(LabelPass + 1u) % TDFLUIDGPU_MG_LABEL_FLAG_COUNT] = 0u;
+		}
+
+		bool bHasChangedLabel = false;
+		for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
+		{
+			const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
+			const uint Label = SharedLabel[CellIndex];
+			if (Label == TDFLUIDGPU_MG_NO_LABEL)
+			{
+				continue;
+			}
+
+			const uint SmallestLabel = FindSmallestNeighborLabel(CellIndex, Label);
+			if (SmallestLabel < Label)
+			{
+				SharedLabel[CellIndex] = SmallestLabel;
+				bHasChangedLabel = true;
+			}
+		}
+		if (bHasChangedLabel)
+		{
+			SharedLabelChanged[LabelPass % TDFLUIDGPU_MG_LABEL_FLAG_COUNT] = 1u;
+		}
+		GroupMemoryBarrierWithGroupSync();
+
+		if (SharedLabelChanged[LabelPass % TDFLUIDGPU_MG_LABEL_FLAG_COUNT] == 0u)
+		{
+			break;
+		}
+	}
+}
+
+uint ReduceMinimumLabel(uint GroupIndex, uint Label)
+{
+	SharedMinimumLabels[GroupIndex] = Label;
+	GroupMemoryBarrierWithGroupSync();
+	if (GroupIndex < TDFLUIDGPU_MG_REDUCTION_LANE_COUNT)
+	{
+		uint PartialMinimum = TDFLUIDGPU_MG_NO_LABEL;
+		[unroll]
+		for (uint Offset = 0; Offset < TDFLUIDGPU_MG_REDUCTION_SPAN; ++Offset)
+		{
+			PartialMinimum = min(PartialMinimum, SharedMinimumLabels[GroupIndex * TDFLUIDGPU_MG_REDUCTION_SPAN + Offset]);
+		}
+		SharedPartialMinimumLabels[GroupIndex] = PartialMinimum;
+	}
+	GroupMemoryBarrierWithGroupSync();
+
+	uint Minimum = TDFLUIDGPU_MG_NO_LABEL;
+	[unroll]
+	for (uint Lane = 0; Lane < TDFLUIDGPU_MG_REDUCTION_LANE_COUNT; ++Lane)
+	{
+		Minimum = min(Minimum, SharedPartialMinimumLabels[Lane]);
+	}
+	return Minimum;
+}
+
+float2 ReduceSums(uint GroupIndex, float2 LocalSum)
+{
+	SharedSums[GroupIndex] = LocalSum;
+	GroupMemoryBarrierWithGroupSync();
+	if (GroupIndex < TDFLUIDGPU_MG_REDUCTION_LANE_COUNT)
+	{
+		float2 PartialSum = float2(0.0f, 0.0f);
+		[unroll]
+		for (uint Offset = 0; Offset < TDFLUIDGPU_MG_REDUCTION_SPAN; ++Offset)
+		{
+			PartialSum += SharedSums[GroupIndex * TDFLUIDGPU_MG_REDUCTION_SPAN + Offset];
+		}
+		SharedPartialSums[GroupIndex] = PartialSum;
+	}
+	GroupMemoryBarrierWithGroupSync();
+
+	float2 Sum = float2(0.0f, 0.0f);
+	[unroll]
+	for (uint Lane = 0; Lane < TDFLUIDGPU_MG_REDUCTION_LANE_COUNT; ++Lane)
+	{
+		Sum += SharedPartialSums[Lane];
+	}
+	return Sum;
+}
+
+uint FindNextComponentRoot(uint GroupIndex, uint FirstCandidate)
+{
+	uint SmallestRoot = TDFLUIDGPU_MG_NO_LABEL;
+	for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
+	{
+		const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
+		if (CellIndex >= FirstCandidate && SharedLabel[CellIndex] == CellIndex)
+		{
+			SmallestRoot = min(SmallestRoot, CellIndex);
+		}
+	}
+	return ReduceMinimumLabel(GroupIndex, SmallestRoot);
+}
+
+void SubtractComponentRhsMeans(uint GroupIndex)
+{
+	uint FirstCandidate = 0u;
+	[loop]
+	for (uint ComponentIndex = 0; ComponentIndex < TDFLUIDGPU_MG_MAXIMUM_COMPATIBLE_COMPONENTS; ++ComponentIndex)
+	{
+		const uint Root = FindNextComponentRoot(GroupIndex, FirstCandidate);
+		if (Root == TDFLUIDGPU_MG_NO_LABEL)
+		{
+			break;
+		}
+
+		float2 LocalSum = float2(0.0f, 0.0f);
+		for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
+		{
+			const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
+			if (SharedLabel[CellIndex] == Root)
+			{
+				LocalSum += float2(SharedRhs[CellIndex], 1.0f);
+			}
+		}
+		const float2 ComponentSum = ReduceSums(GroupIndex, LocalSum);
+		const float ComponentMean = ComponentSum.x / max(ComponentSum.y, 1.0f);
+		for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
+		{
+			const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
+			if (SharedLabel[CellIndex] == Root)
+			{
+				SharedRhs[CellIndex] -= ComponentMean;
+			}
+		}
+		FirstCandidate = Root + 1u;
+	}
+	GroupMemoryBarrierWithGroupSync();
+}
+
+float ComputeOverRelaxation(float2 Weights)
+{
+	const float StrongWeight = max(Weights.x, Weights.y);
+	const float WeakWeight = min(Weights.x, Weights.y);
+	const float SlowestJacobiEigenvalue = (StrongWeight + WeakWeight * TDFLUIDGPU_MG_COARSEST_AXIS_COSINE) / (StrongWeight + WeakWeight);
+	return 2.0f / (1.0f + sqrt(max(1.0f - SlowestJacobiEigenvalue * SlowestJacobiEigenvalue, 0.0f)));
+}
+
+uint ComputeRelaxationIterations(float OverRelaxation)
+{
+	const float SpectralRadius = clamp(OverRelaxation - 1.0f, 0.01f, 0.99f);
+	const float IterationCount = ceil(log2(TDFLUIDGPU_MG_COARSE_TARGET_ERROR_REDUCTION) / log2(SpectralRadius));
+	return clamp(uint(IterationCount), TDFLUIDGPU_MG_COARSE_MINIMUM_RELAXATION_ITERATIONS, TDFLUIDGPU_MG_COARSE_MAXIMUM_RELAXATION_ITERATIONS);
+}
+
+FTDFluidGpuCoarsestColorCell MakeColorCell(uint GroupIndex, uint Slot, uint Color, float2 Weights)
+{
+	const uint ColorIndex = GroupIndex + Slot * TDFLUIDGPU_MG_COARSE_THREAD_COUNT;
+	const uint Row = ColorIndex / TDFLUIDGPU_MG_COARSEST_HALF_ROW;
+
+	FTDFluidGpuCoarsestColorCell Cell;
+	Cell.ColumnParity = (Row + Color) & 1u;
+	Cell.CellIndex = Row * TDFLUIDGPU_MG_COARSEST_RESOLUTION + 2u * (ColorIndex % TDFLUIDGPU_MG_COARSEST_HALF_ROW) + Cell.ColumnParity;
+	Cell.ValueIndex = Color * TDFLUIDGPU_MG_COARSEST_PLANE_CELL_COUNT + ColorIndex;
+	Cell.NeighborBase = (1u - Color) * TDFLUIDGPU_MG_COARSEST_PLANE_CELL_COUNT + ColorIndex;
+	Cell.RightWeight = ReadRightAperture(Cell.CellIndex) * Weights.x;
+	Cell.LeftWeight = ReadLeftAperture(Cell.CellIndex) * Weights.x;
+	Cell.UpWeight = ReadUpAperture(Cell.CellIndex) * Weights.y;
+	Cell.DownWeight = ReadDownAperture(Cell.CellIndex) * Weights.y;
+	Cell.Diagonal = (Cell.RightWeight + Cell.LeftWeight) + (Cell.UpWeight + Cell.DownWeight);
+	Cell.Rhs = SharedRhs[Cell.CellIndex];
+	Cell.Value = 0.0f;
+	return Cell;
+}
+
+void RelaxColorCell(inout FTDFluidGpuCoarsestColorCell Cell, float OverRelaxation)
+{
+	if (!(Cell.Diagonal > 0.0f))
+	{
+		return;
+	}
+
+	float NeighborSum = 0.0f;
+	if (Cell.RightWeight > 0.0f)
+	{
+		NeighborSum += Cell.RightWeight * SharedColorSplitValue[Cell.NeighborBase + Cell.ColumnParity];
+	}
+	if (Cell.LeftWeight > 0.0f)
+	{
+		NeighborSum += Cell.LeftWeight * SharedColorSplitValue[Cell.NeighborBase + Cell.ColumnParity - 1u];
+	}
+	if (Cell.UpWeight > 0.0f)
+	{
+		NeighborSum += Cell.UpWeight * SharedColorSplitValue[Cell.NeighborBase + TDFLUIDGPU_MG_COARSEST_HALF_ROW];
+	}
+	if (Cell.DownWeight > 0.0f)
+	{
+		NeighborSum += Cell.DownWeight * SharedColorSplitValue[Cell.NeighborBase - TDFLUIDGPU_MG_COARSEST_HALF_ROW];
+	}
+
+	const float GaussSeidelValue = (NeighborSum - Cell.Rhs) / Cell.Diagonal;
+	Cell.Value = Cell.Value + OverRelaxation * (GaussSeidelValue - Cell.Value);
+	SharedColorSplitValue[Cell.ValueIndex] = Cell.Value;
+}
+
+[numthreads(TDFLUIDGPU_MG_COARSE_THREAD_COUNT, 1, 1)]
+void MultigridCoarseSolveCS(uint3 GroupId : SV_GroupID, uint GroupIndex : SV_GroupIndex)
+{
+	const uint EntryIndex = GroupId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const float2 Weights = float2(Actor.InvSpacingXSquared, Actor.InvSpacingYSquared) * LevelWeightScale;
+
+	for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
+	{
+		const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
+		const uint3 Texel = TDFluidGpuMakeTexel(ToCoarsestCell(CellIndex), int(EntryIndex));
+		const float2 Apertures = AperturesIn[Texel];
+		SharedApertureX[CellIndex] = Apertures.x;
+		SharedApertureY[CellIndex] = Apertures.y;
+		SharedRhs[CellIndex] = RhsIn[Texel];
+		SharedColorSplitValue[CellIndex] = 0.0f;
+	}
+	GroupMemoryBarrierWithGroupSync();
+
+	if (ComputesComponentLabels != 0u)
+	{
+		for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
+		{
+			const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
+			SharedLabel[CellIndex] = IsCoarsestCellActive(CellIndex) ? CellIndex : TDFLUIDGPU_MG_NO_LABEL;
+		}
+
+		LabelConnectedComponents(GroupIndex);
+		for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
+		{
+			const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
+			ComponentLabels[TDFluidGpuMakeTexel(ToCoarsestCell(CellIndex), int(EntryIndex))] = SharedLabel[CellIndex];
+		}
+	}
+	else
+	{
+		for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
+		{
+			const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
+			SharedLabel[CellIndex] = ComponentLabels[TDFluidGpuMakeTexel(ToCoarsestCell(CellIndex), int(EntryIndex))];
+		}
+	}
+	SubtractComponentRhsMeans(GroupIndex);
+
+	const float OverRelaxation = ComputeOverRelaxation(Weights);
+	const uint RelaxationIterations = ComputeRelaxationIterations(OverRelaxation);
+	FTDFluidGpuCoarsestColorCell ColorCells[2u * TDFLUIDGPU_MG_COLOR_CELLS_PER_THREAD];
+	[unroll]
+	for (uint ColorCellIndex = 0; ColorCellIndex < 2u * TDFLUIDGPU_MG_COLOR_CELLS_PER_THREAD; ++ColorCellIndex)
+	{
+		ColorCells[ColorCellIndex] = MakeColorCell(GroupIndex, ColorCellIndex % TDFLUIDGPU_MG_COLOR_CELLS_PER_THREAD, ColorCellIndex / TDFLUIDGPU_MG_COLOR_CELLS_PER_THREAD, Weights);
+	}
+
+	[loop]
+	for (uint Iteration = 0; Iteration < RelaxationIterations; ++Iteration)
+	{
+		[unroll]
+		for (uint Color = 0; Color < 2u; ++Color)
+		{
+			[unroll]
+			for (uint Slot = 0; Slot < TDFLUIDGPU_MG_COLOR_CELLS_PER_THREAD; ++Slot)
+			{
+				RelaxColorCell(ColorCells[Color * TDFLUIDGPU_MG_COLOR_CELLS_PER_THREAD + Slot], OverRelaxation);
+			}
+			GroupMemoryBarrierWithGroupSync();
+		}
+	}
+
+	[unroll]
+	for (uint OutputIndex = 0; OutputIndex < 2u * TDFLUIDGPU_MG_COLOR_CELLS_PER_THREAD; ++OutputIndex)
+	{
+		const FTDFluidGpuCoarsestColorCell Cell = ColorCells[OutputIndex];
+		CorrectionOut[TDFluidGpuMakeTexel(ToCoarsestCell(Cell.CellIndex), int(EntryIndex))] = isfinite(Cell.Value) ? Cell.Value : 0.0f;
+	}
+}

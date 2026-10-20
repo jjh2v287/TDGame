@@ -7,6 +7,7 @@
 
 class FTDFluidGrid2DSolver;
 class UStaticMesh;
+class UMaterialInstanceDynamic;
 class UStaticMeshComponent;
 class UTDFluidEmberComponent;
 class UTDFluidFireLightComponent;
@@ -35,6 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireDownstream")
 	FTDFluidDownstreamFeedSettings DownstreamFeed;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireCards")
+	FTDFluidFlameCardLayerSettings FlameCardLayers;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireSource")
 	TSoftObjectPtr<UStaticMesh> SourcePropMeshAsset;
 
@@ -54,8 +58,12 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	static void SelectDownstreamFeedCells(const FTDFluidGrid2DSolver& Solver, const FTDFluidDownstreamFeedSettings& Settings, TArray<FIntPoint>& OutCells);
+	static void SelectDownstreamFeedCells(const UTDFluidLiveComponent& FluidComponent, const FTDFluidDownstreamFeedSettings& Settings, TArray<FIntPoint>& OutCells);
 
 	FVector2D GetEmitterPlaneVelocity() const;
+	int32 GetExtraFlameCardCount() const;
+	const TArray<TObjectPtr<UStaticMeshComponent>>& GetExtraFlameCardComponents() const { return ExtraFlameCardComponents; }
+	const TArray<TObjectPtr<UMaterialInstanceDynamic>>& GetExtraFlameCardMaterials() const { return ExtraFlameCardMaterials; }
 
 protected:
 	virtual FVector ResolvePlaneAnchorWorldLocation() const override;
@@ -67,10 +75,19 @@ protected:
 private:
 	const AActor* ResolveFollowTarget() const;
 	bool ResolveSourceSocketTransform(FTransform& OutSocketTransform) const;
-	void QueueSourceEmitterStamps(const FVector& AnchorWorld);
+	void QueueSourceEmitterStamps(const FVector& AnchorWorld, const FVector& LastAnchorWorld);
+	void QueueSourceCoreStamp(const FVector& AnchorWorld);
+	void EnsureExtraFlameCards();
+	void PlaceExtraFlameCards();
 	void UpdateSourcePropTransform();
 	void HandleSourcePropLoaded();
 	void FeedDownstreamSmoke();
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UStaticMeshComponent>> ExtraFlameCardComponents;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> ExtraFlameCardMaterials;
 
 	TSharedPtr<FStreamableHandle> SourcePropLoadHandle;
 	FVector PreviousAnchorWorld = FVector::ZeroVector;

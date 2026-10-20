@@ -1,0 +1,101 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+#ifndef TDFLUIDGPU_WRITES_OUTPUT
+#define TDFLUIDGPU_WRITES_OUTPUT 0
+#endif
+
+Texture2DArray<float> ObstacleSdf;
+Texture2DArray<float> TerrainElevation;
+Texture2DArray<float2> VelocityIn;
+Texture2DArray<float2> DensityIn;
+Texture2DArray<float> SurfaceDisplacementIn;
+StructuredBuffer<float> MeanPressure;
+RWTexture2DArray<float2> DensityOut;
+RWTexture2DArray<float> SurfaceDisplacementOut;
+RWTexture2DArray<float> PressureSolution;
+Texture2DArray<float> HeatIn;
+RWTexture2DArray<float> HeatOut;
+uint EntryIndex;
+#if TDFLUIDGPU_WRITES_OUTPUT
+RWTexture2D<float4> DensityPressureOutput;
+RWTexture2D<float4> VelocityOutput;
+RWTexture2D<float4> AuxOutput;
+#endif
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	const float SignedDistance = ObstacleSdf[Texel];
+	const bool bIsSolidCell = TDFluidGpuIsSolidDistance(SignedDistance);
+	const float2 Velocity = VelocityIn[Texel];
+	const bool bUsesHeat = TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_HEAT_CHANNEL);
+
+	float2 Density = float2(0.0f, 0.0f);
+	float Displacement = 0.0f;
+	float Heat = 0.0f;
+	float Pressure = PressureSolution[Texel];
+	if (!bIsSolidCell)
+	{
+		float2 AdvectionVelocity = Velocity;
+		float2 RadialPush = TDFluidGpuAccumulateRadialPush(Actor, Cell);
+		if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_VORTEX_FORCE))
+		{
+			RadialPush += TDFluidGpuComputeVortexRadialDrift(Actor, Cell);
+		}
+		if (RadialPush.x != 0.0f || RadialPush.y != 0.0f)
+		{
+			AdvectionVelocity = TDFluidGpuClampToMaxSize(Velocity + RadialPush, TDFLUIDGPU_MAX_CELL_SPEED_CM_PER_SEC);
+			AdvectionVelocity = TDFluidGpuEnforceObstacleBoundary(ObstacleSdf, Actor, Cell, AdvectionVelocity);
+		}
+
+		const float2 BacktracePosition = float2(Cell) - AdvectionVelocity * Actor.AdvectionStepScale;
+		const FTDFluidGpuBilinearSample Sample = TDFluidGpuMakeBilinearSample(BacktracePosition, Actor.Resolution);
+		Density = clamp(TDFluidGpuSampleBilinearFloat2(DensityIn, Sample, Actor.SliceIndex) * Actor.DensityDissipationFactor, 0.0f, 1.0f);
+		Displacement = clamp(TDFluidGpuSampleBilinearFloat(SurfaceDisplacementIn, Sample, Actor.SliceIndex) * Actor.DensityDissipationFactor, 0.0f, 1.0f);
+
+		const float OutflowRetainFactor = TDFluidGpuComputeOutflowRetainFactor(Actor, Cell);
+		Density *= OutflowRetainFactor;
+		Displacement *= OutflowRetainFactor;
+		Density.x = TDFluidGpuApplyAmbientRefill(Actor, Cell, Density.x);
+		if (bUsesHeat)
+		{
+			Heat = clamp(TDFluidGpuSampleBilinearFloat(HeatIn, Sample, Actor.SliceIndex) * Actor.HeatDissipationFactor, 0.0f, 1.0f) * OutflowRetainFactor;
+		}
+
+		Pressure -= MeanPressure[EntryIndex];
+		PressureSolution[Texel] = Pressure;
+	}
+
+	DensityOut[Texel] = Density;
+	SurfaceDisplacementOut[Texel] = Displacement;
+	if (bUsesHeat)
+	{
+		HeatOut[Texel] = Heat;
+	}
+
+#if TDFLUIDGPU_WRITES_OUTPUT
+	const float DisplayPressure = bIsSolidCell ? 0.0f : clamp(Pressure * Actor.PressureDisplayScale, -1.0f, 1.0f);
+	const float SurfaceHeight = clamp(DisplayPressure + Displacement, -1.0f, 1.0f);
+	const float ObstacleMask = SignedDistance > 0.0f ? 1.0f : 0.0f;
+	const float Alpha = clamp(TDFluidGpuComputeOutputBorderAlpha(Actor, Cell) * ObstacleMask, 0.0f, 1.0f);
+	DensityPressureOutput[uint2(Cell)] = float4(clamp(Density.x, 0.0f, 1.0f), SurfaceHeight * 0.5f + 0.5f, clamp(Density.y, 0.0f, 1.0f), Alpha);
+
+	const float2 StoredVelocity = TDFluidGpuClampVelocityMagnitude(Velocity);
+	const float2 NormalizedVelocity = clamp(StoredVelocity / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, -1.0f, 1.0f) * 0.5f + 0.5f;
+	const float SpeedRatio = clamp(length(StoredVelocity) / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, 0.0f, 1.0f);
+	const float SlopeRatio = clamp(length(TDFluidGpuComputeTerrainSlope(TerrainElevation, Actor, Cell)), 0.0f, 1.0f);
+	VelocityOutput[uint2(Cell)] = float4(NormalizedVelocity, SpeedRatio, SlopeRatio);
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_WRITES_AUX_OUTPUT))
+	{
+		AuxOutput[uint2(Cell)] = float4(Heat, 0.0f, 0.0f, 0.0f);
+	}
+#endif
+}

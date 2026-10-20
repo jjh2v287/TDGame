@@ -46,7 +46,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTrail")
 	FTDFluidFragmentTrailSettings TrailSettings;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTargets")
+	TArray<FTDFluidFragmentTarget> Targets;
+
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
 
 	UFUNCTION(BlueprintCallable, Category = "FragmentTrail")
@@ -86,6 +90,43 @@ public:
 		float DensityStrength,
 		TArray<FTDFluidBrushStamp>& OutStamps);
 
+	static void BuildBurstStamps(
+		const FVector& CenterWorld,
+		const FTDFluidPlaneBasis& PlaneBasis,
+		const FTDFluidFragmentTrailSettings& Settings,
+		ETDFluidBrushChannel Channel,
+		float RadiusScale,
+		float DensityStrength,
+		float HeatStrength,
+		TArray<FTDFluidBrushStamp>& OutStamps);
+
+	static void BuildLegacyTargets(ATDFluidFireActor* FireTarget, ATDFluidLiveActor* SmokeTarget, TArray<FTDFluidFragmentTarget>& OutTargets);
+
+	static void BuildTargetTrailStamps(
+		const FTDFluidFragmentTarget& Target,
+		const TArray<FVector>& PreviousPositions,
+		const TArray<FVector>& CurrentPositions,
+		const TArray<FVector>& LaggedPositions,
+		float DeltaTime,
+		float BurstCenterZ,
+		const FTDFluidFragmentTrailSettings& Settings,
+		TArray<FTDFluidBrushStamp>& OutStamps,
+		TArray<int32>* OutStampedLeafIndices = nullptr);
+
+	static void BuildRestingHeatStamps(
+		const FTDFluidFragmentTarget& Target,
+		const TArray<FVector>& PreviousPositions,
+		const TArray<FVector>& CurrentPositions,
+		float DeltaTime,
+		float ElapsedSeconds,
+		const FTDFluidFragmentTrailSettings& Settings,
+		TArray<FTDFluidBrushStamp>& OutStamps);
+
+	static float ComputeTargetHeightWeight(const FTDFluidFragmentTarget& Target, double StampZ, double BurstCenterZ);
+
+	void ResolveActiveTargets(TArray<FTDFluidFragmentTarget>& OutTargets) const;
+	FVector GetBurstCenterWorld() const { return BurstCenterWorld; }
+
 private:
 	UGeometryCollectionComponent* ResolveGeometryCollectionComponent();
 	void PollForRootBreak();
@@ -94,7 +135,8 @@ private:
 	void CaptureLeafWorldPositions(UGeometryCollectionComponent& Component, TArray<FVector>& OutPositions) const;
 	void StampBurst(const FVector& CenterWorld);
 	void SustainBurst();
-	void QueueBurstOnTarget(ATDFluidLiveActor* TargetActor, const FVector& CenterWorld, ETDFluidBrushChannel Channel, float RadiusScale, float DensityStrength);
+	void QueueBurstOnTargets(float DensityRatio, float HeatRatio);
+	void HandleSourceBroken(const FVector& BreakLocation);
 	void StepFragmentTracking(float DeltaSeconds);
 	void QueueStampsOnTarget(ATDFluidLiveActor* TargetActor, const TArray<FTDFluidBrushStamp>& Stamps);
 	void RecordStampedLeaves(const TArray<int32>& StampedLeafIndices);
@@ -111,6 +153,8 @@ private:
 	int32 MovedLeafCount = 0;
 	int32 StampedLeafCount = 0;
 	int32 TotalStampCount = 0;
+	FDelegateHandle SourceBrokenDelegateHandle;
 	bool bHasStartedTracking = false;
 	bool bIsTracking = false;
+	bool bIsTriggeringBreak = false;
 };

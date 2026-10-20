@@ -1,0 +1,138 @@
+#include "/Engine/Public/Platform.ush"
+
+Texture2D<float4> DensityPressureTexture;
+RWTexture2D<float4> TransmittanceOutput;
+float4 VolumeBoxSizeCm;
+float4 LightPositionLocalCm;
+float4 LightDirectionLocal;
+int SimResolution;
+int OutputResolution;
+int MarchStepCount;
+int LightMode;
+uint IsSymmetric;
+float DensityScale;
+float SoftFalloffCm;
+
+static const int TDFLUIDGPU_TRANSMITTANCE_LEVEL_COUNT = 4;
+static const int TDFLUIDGPU_TRANSMITTANCE_POINT_LIGHT_MODE = 1;
+static const float TDFLUIDGPU_TRANSMITTANCE_EDGE_FADE_FRACTION = 0.24f;
+static const float TDFLUIDGPU_TRANSMITTANCE_COVERAGE_SCALE = 2.5f;
+static const float TDFLUIDGPU_TRANSMITTANCE_HEIGHT_SCALE_RATIO = 0.68f;
+static const float TDFLUIDGPU_TRANSMITTANCE_TOP_FADE_RATIO = 0.15f;
+static const float TDFLUIDGPU_TRANSMITTANCE_MIN_LIGHT_DISTANCE_CM = 1.0e-4f;
+static const float TDFLUIDGPU_TRANSMITTANCE_MIN_DIRECTION = 1.0e-6f;
+static const float TDFLUIDGPU_TRANSMITTANCE_NO_EXIT_CM = 3.0e38f;
+
+float TDFluidGpuSampleCoveredDensity(float2 Uv)
+{
+	const float MaxCoordinate = float(SimResolution - 1);
+	const float2 GridPosition = clamp(Uv * float(SimResolution) - 0.5f, 0.0f, MaxCoordinate);
+	const int2 Cell0 = int2(floor(GridPosition));
+	const int2 Cell1 = min(Cell0 + 1, SimResolution - 1);
+	const float2 Fraction = GridPosition - float2(Cell0);
+	const float4 Value00 = DensityPressureTexture.Load(int3(Cell0.x, Cell0.y, 0));
+	const float4 Value10 = DensityPressureTexture.Load(int3(Cell1.x, Cell0.y, 0));
+	const float4 Value01 = DensityPressureTexture.Load(int3(Cell0.x, Cell1.y, 0));
+	const float4 Value11 = DensityPressureTexture.Load(int3(Cell1.x, Cell1.y, 0));
+	const float4 Value = lerp(lerp(Value00, Value10, Fraction.x), lerp(Value01, Value11, Fraction.x), Fraction.y);
+	return Value.r * Value.a;
+}
+
+float TDFluidGpuComputeTransmittanceEdgeFade(float2 Uv)
+{
+	const float EdgeDistance = min(min(Uv.x, 1.0f - Uv.x), min(Uv.y, 1.0f - Uv.y));
+	return smoothstep(0.0f, TDFLUIDGPU_TRANSMITTANCE_EDGE_FADE_FRACTION, EdgeDistance);
+}
+
+float TDFluidGpuComputeBoxExitDistance(float3 Start, float3 Direction, float3 BoxSize)
+{
+	float ExitDistance = TDFLUIDGPU_TRANSMITTANCE_NO_EXIT_CM;
+	[unroll]
+	for (int Axis = 0; Axis < 3; ++Axis)
+	{
+		if (Direction[Axis] > TDFLUIDGPU_TRANSMITTANCE_MIN_DIRECTION)
+		{
+			ExitDistance = min(ExitDistance, (BoxSize[Axis] - Start[Axis]) / Direction[Axis]);
+		}
+		else if (Direction[Axis] < -TDFLUIDGPU_TRANSMITTANCE_MIN_DIRECTION)
+		{
+			ExitDistance = min(ExitDistance, -Start[Axis] / Direction[Axis]);
+		}
+	}
+	return ExitDistance;
+}
+
+float TDFluidGpuComputeTransmittanceExtinction(float3 Point, float3 BoxSize)
+{
+	const float2 Uv = Point.xy / BoxSize.xy;
+	if (Uv.x < 0.0f || Uv.x > 1.0f || Uv.y < 0.0f || Uv.y > 1.0f)
+	{
+		return 0.0f;
+	}
+
+	const float CoveredDensity = TDFluidGpuSampleCoveredDensity(Uv) * TDFluidGpuComputeTransmittanceEdgeFade(Uv);
+	const float Coverage = saturate(CoveredDensity * TDFLUIDGPU_TRANSMITTANCE_COVERAGE_SCALE);
+	if (Coverage <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	const bool bIsSymmetric = IsSymmetric != 0u;
+	const float HalfHeightCm = 0.5f * BoxSize.z;
+	const float CenterDistanceCm = abs(Point.z - HalfHeightCm);
+	const float HeightOffsetCm = bIsSymmetric ? CenterDistanceCm : Point.z;
+	const float TopMarginCm = bIsSymmetric ? HalfHeightCm - CenterDistanceCm : BoxSize.z - Point.z;
+	const float HeightScaleCm = TDFLUIDGPU_TRANSMITTANCE_HEIGHT_SCALE_RATIO * BoxSize.z * (bIsSymmetric ? 0.5f : 1.0f);
+	const float SurfaceDepthCm = CoveredDensity * HeightScaleCm - HeightOffsetCm;
+	const float TopFade = saturate(TopMarginCm / max(TDFLUIDGPU_TRANSMITTANCE_TOP_FADE_RATIO * BoxSize.z, 1.0e-4f));
+	return DensityScale * Coverage * TopFade * exp(min(SurfaceDepthCm, 0.0f) / max(SoftFalloffCm, 1.0f));
+}
+
+float TDFluidGpuComputeOpticalDepth(float3 Start, float3 BoxSize)
+{
+	const bool bIsPointLight = LightMode == TDFLUIDGPU_TRANSMITTANCE_POINT_LIGHT_MODE;
+	const float3 ToLight = bIsPointLight ? LightPositionLocalCm.xyz - Start : -LightDirectionLocal.xyz;
+	const float ToLightLength = length(ToLight);
+	if (!(ToLightLength > TDFLUIDGPU_TRANSMITTANCE_MIN_LIGHT_DISTANCE_CM))
+	{
+		return 0.0f;
+	}
+
+	const float3 Direction = ToLight / ToLightLength;
+	const float ExitDistance = TDFluidGpuComputeBoxExitDistance(Start, Direction, BoxSize);
+	const float PathLength = max(0.0f, bIsPointLight ? min(ToLightLength, ExitDistance) : ExitDistance);
+	if (!(PathLength > 0.0f) || PathLength >= TDFLUIDGPU_TRANSMITTANCE_NO_EXIT_CM)
+	{
+		return 0.0f;
+	}
+
+	const float StepLength = PathLength / float(MarchStepCount);
+	float OpticalDepth = 0.0f;
+	for (int StepIndex = 0; StepIndex < MarchStepCount; ++StepIndex)
+	{
+		const float3 Point = Start + Direction * ((float(StepIndex) + 0.5f) * StepLength);
+		OpticalDepth += TDFluidGpuComputeTransmittanceExtinction(Point, BoxSize) * StepLength;
+	}
+	return OpticalDepth;
+}
+
+[numthreads(8, 8, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const int2 Texel = int2(DispatchThreadId.xy);
+	if (Texel.x >= OutputResolution || Texel.y >= OutputResolution || LightMode <= 0)
+	{
+		return;
+	}
+
+	const float3 BoxSize = VolumeBoxSizeCm.xyz;
+	const float2 LocalPosition = (float2(Texel) + 0.5f) / float(OutputResolution) * BoxSize.xy;
+	float4 OpticalDepths = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	[unroll]
+	for (int LevelIndex = 0; LevelIndex < TDFLUIDGPU_TRANSMITTANCE_LEVEL_COUNT; ++LevelIndex)
+	{
+		const float LevelHeightCm = (float(LevelIndex) + 0.5f) / float(TDFLUIDGPU_TRANSMITTANCE_LEVEL_COUNT) * BoxSize.z;
+		OpticalDepths[LevelIndex] = TDFluidGpuComputeOpticalDepth(float3(LocalPosition, LevelHeightCm), BoxSize);
+	}
+	TransmittanceOutput[uint2(Texel)] = OpticalDepths;
+}

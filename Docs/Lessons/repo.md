@@ -149,3 +149,11 @@
 - 증거: 2026-10-19 `Saved/AgentOps/20261019/death-ragdoll/measure2/run-log.md`(sheet2 1회째 실패), `measure4/run-log.md`(Start-Process 안쪽 따옴표)
 - 날짜·상태: 2026-10-19 검증
 - 발견: claude
+### L-repo-18 Bash 도구에서 `grep -c $'\r$' 파일`이 LF 파일의 모든 줄을 세어 "전부 CRLF"로 잘못 판정한다
+- 증상: FX-8c G1 명세·반박이 "범위 파일이 모두 CRLF(줄 수 = CR 수)"라고 적었지만, 바이트로 세면 12개가 LF(CRLF 0)였다(`git ls-files --eol`도 `i/lf w/lf`). 같은 명령으로 28/28, 1700/1700을 받았다.
+- 원인: 이 환경의 Bash 도구가 명령 문자열의 이중 백슬래시를 하나로 줄여 넘긴다(2026-10-20 확인: heredoc 파이썬의 이중 백슬래시 r·n이 실제 CR·LF가 되고, 이중 백슬래시 따옴표가 문자열을 끝냈다). 또 이 PC는 `core.autocrlf=true`라 `git apply`·`git checkout`으로 쓴 LF 파일이 CRLF로 바뀐다.
+- 해결: 줄 끝은 파이썬으로 `data.count(b"\r\n")`·`data.count(b"\n")`를 세고, 명령 안에서 백슬래시가 필요하면 `chr(92)`·`bytes([13, 10])`로 만들거나 Write 도구로 스크립트 파일을 쓴 뒤 실행한다. 사본 통합은 `git apply` 대신 파일 복사 + sha256 확인으로 한다. 파이썬 `Path.read_text()`는 줄 끝을 바꾸므로 고쳐 쓸 때는 `read_bytes`/`write_bytes`를 쓴다.
+- 범위: Windows Claude Code Bash 도구, 이 저장소의 혼합 줄 끝 파일
+- 증거: `Saved/AgentOps/20261020/fx8c/round4/g1-builder.md` 6절, `round4/g1-refuter.md` M-1
+- 날짜·상태: 2026-10-20 active
+- 발견: claude(FX-8c g1-builder·g1-refuter)

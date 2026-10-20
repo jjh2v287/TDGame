@@ -1,15 +1,19 @@
 #define TD_TO_PLANE(P) float3(dot((P), PlaneAxisU), dot((P), PlaneAxisV), dot((P), PlaneAxisN))
+#define TD_TO_SOLVER_PLANE(P) (TD_TO_PLANE(P) + float3(PlaneCoordinateOffsetCm.xy, 0.0))
 
-float3 tdCameraPosition = TD_TO_PLANE(CameraWorldPosition);
-float3 tdPixelPosition = TD_TO_PLANE(PixelWorldPosition);
-float3 tdLightPosition = TD_TO_PLANE(VolumeLightPosition);
+float3 tdCameraPosition = TD_TO_SOLVER_PLANE(CameraWorldPosition);
+float3 tdPixelPosition = TD_TO_SOLVER_PLANE(PixelWorldPosition);
+float3 tdLightPosition = TD_TO_SOLVER_PLANE(VolumeLightPosition);
 float3 tdLightDirection = TD_TO_PLANE(VolumeLightDirection);
 float3 tdWorldUp = TD_TO_PLANE(float3(0.0, 0.0, 1.0));
 
 bool isSymmetric = ExtrudeSymmetric > 0.5;
-float boxFloorZ = isSymmetric ? SimCenterWorld.z - 0.5 * VolumeHeightCm : SimCenterWorld.z;
-float3 boxMin = float3(SimCenterWorld.xy - 0.5 * SimExtentsCm.xy, boxFloorZ);
-float3 boxMax = float3(SimCenterWorld.xy + 0.5 * SimExtentsCm.xy, boxFloorZ + VolumeHeightCm);
+float boxScale = max(VolumeBoxScale, 1.0);
+float boxCenterZ = SimCenterWorld.z + VolumeOffsetCm.z;
+float boxFloorZ = isSymmetric ? boxCenterZ - 0.5 * VolumeHeightCm : boxCenterZ;
+float2 simMinimum = SimCenterWorld.xy - 0.5 * SimExtentsCm.xy;
+float3 boxMin = float3(SimCenterWorld.xy + VolumeOffsetCm.xy - 0.5 * SimExtentsCm.xy * boxScale, boxFloorZ);
+float3 boxMax = float3(SimCenterWorld.xy + VolumeOffsetCm.xy + 0.5 * SimExtentsCm.xy * boxScale, boxFloorZ + VolumeHeightCm);
 float2 uvScale = 1.0 / max(SimExtentsCm.xy, 1.0);
 
 float3 toPixel = tdPixelPosition - tdCameraPosition;
@@ -34,7 +38,7 @@ if (rayEnd <= rayStart)
     return float4(0.0, 0.0, 0.0, 0.0);
 }
 
-float ditherFrame = floor(fmod(ElapsedSeconds * 60.0, 8.0));
+float ditherFrame = (float)View.StateFrameIndexMod8;
 float2 ditherCoord = Parameters.SvPosition.xy + 5.588238 * ditherFrame;
 float rayJitter = frac(52.9829189 * frac(dot(ditherCoord, float2(0.06711056, 0.00583715))));
 float shadowJitter = frac(rayJitter * 7.13 + 0.37);
@@ -58,7 +62,7 @@ bool isHardMode = RenderMode < 0.5;
 bool isVolumeMode = RenderMode > 1.5;
 float volumeCoreDepthCm = 0.6 * noiseAmplitudeCm;
 float noiseSkipDepth = isHardMode ? -noiseAmplitudeCm : -noiseAmplitudeCm - 4.0 * softFalloff;
-float distanceFade = saturate((4200.0 - rayStart) / 1600.0);
+float distanceFade = saturate((VolumeFadeEndCm - rayStart) / max(VolumeFadeLengthCm, 1.0));
 
 float lightModeValue = floor(VolumeLightMode + 0.5);
 bool hasLight = lightModeValue > 0.5;
@@ -66,15 +70,47 @@ bool isPointLight = lightModeValue > 0.5 && lightModeValue < 1.5;
 float shadowStepCount = clamp(floor(ShadowSteps + 0.5), 1.0, 16.0);
 int shadowStepTotal = (int)shadowStepCount;
 
-#define TD_UV(P) saturate(((P).xy - boxMin.xy) * uvScale)
+float noiseTileScale = NoiseScale * 0.25;
+float noiseErosion = max(NoiseErosion, 0.0);
+float grainAmplitudeCm = noiseAmplitudeCm * max(NoiseGrain, 0.0);
+float grainScale = max(NoiseGrainScale, 1.0);
+float3x3 grainRotation = float3x3(0.00, 0.80, 0.60, -0.80, 0.36, -0.48, -0.60, -0.48, 0.64);
+float phaseForwardG = clamp(PhaseForwardG, -0.95, 0.95);
+float phaseBackwardG = clamp(PhaseBackwardG, -0.95, 0.95);
+float phaseForwardWeight = saturate(PhaseForwardWeight);
+float multiScatter = saturate(MultiScatterStrength);
+bool usesTransmittance = TransmittanceActive > 0.5;
+bool usesHeatGlow = AuxHeatActive > 0.5 && HeatEmissionIntensity > 0.0;
+bool usesSurfaceHeatGlow = usesHeatGlow && HeatEmissionSurfaceScale > 0.0;
+int capsuleTotal = (int)clamp(floor(ShadowCapsuleCount + 0.5), 0.0, 8.0);
+bool usesHaloShadow = usesTransmittance || capsuleTotal > 0;
+float3 shadowTint = max(ExtinctionTint, float3(0.0, 0.0, 0.0));
+float octaveWeightTotal = 1.0 + multiScatter + multiScatter * multiScatter;
+float levelHeightScale = 4.0 / max(VolumeHeightCm, 1.0);
+float maximumCapsuleRayCm = 5000.0;
+float3 capsuleStarts[8] = { ShadowCapsuleStart0, ShadowCapsuleStart1, ShadowCapsuleStart2, ShadowCapsuleStart3, ShadowCapsuleStart4, ShadowCapsuleStart5, ShadowCapsuleStart6, ShadowCapsuleStart7 };
+float3 capsuleEnds[8] = { ShadowCapsuleEnd0, ShadowCapsuleEnd1, ShadowCapsuleEnd2, ShadowCapsuleEnd3, ShadowCapsuleEnd4, ShadowCapsuleEnd5, ShadowCapsuleEnd6, ShadowCapsuleEnd7 };
+float capsuleRadii[8] = { ShadowCapsuleRadiiA.x, ShadowCapsuleRadiiA.y, ShadowCapsuleRadiiA.z, ShadowCapsuleRadiiB.x, ShadowCapsuleRadiiB.y, ShadowCapsuleRadiiB.z, ShadowCapsuleRadiiC.x, ShadowCapsuleRadiiC.y };
+float haloCapsuleDepth = 0.0;
+bool haloCapsuleReady = false;
+
+#define TD_UV(P) saturate(((P).xy - simMinimum) * uvScale)
 #define TD_DENSITY(P) Texture2DSampleLevel(DensityPressureTexture, DensityPressureTextureSampler, TD_UV(P), 0)
 #define TD_FLOW(P) (float3(Texture2DSampleLevel(VelocityTexture, VelocityTextureSampler, TD_UV(P), 0).rg * 2.0 - 1.0, 0.0) * (velocityReferenceCmPerSec * NoiseFlowSpeed))
-#define TD_BILLOW(P, OFFSET, SCALE) (2.0 * abs(GradientNoise3D_ALU((((P) - (OFFSET)) + noiseDrift) * (NoiseScale * (SCALE)), false, 1.0)) - 0.6)
-#define TD_NOISE_SHIFT(P) (noiseAmplitudeCm * (0.78 * lerp(TD_BILLOW(P, TD_FLOW(P) * (phaseSecond * flowCycleSeconds), 1.0), TD_BILLOW(P, TD_FLOW(P) * (phaseFirst * flowCycleSeconds), 1.0), weightFirst) + 0.22 * TD_BILLOW(P, TD_FLOW(P) * (phaseFirst * flowCycleSeconds), 2.31)))
-#define TD_EDGE(P) smoothstep(0.0, edgeFadeFraction, min(min(TD_UV(P).x, 1.0 - TD_UV(P).x), min(TD_UV(P).y, 1.0 - TD_UV(P).y)) + edgeFadeFraction * (0.9 * GradientNoise3D_ALU(float3((P).xy * (NoiseScale * 0.55), 0.03 * ElapsedSeconds), false, 1.0) + 0.45 * GradientNoise3D_ALU(float3((P).xy * (NoiseScale * 1.6), 0.05 * ElapsedSeconds + 7.0), false, 1.0)))
+#define TD_NOISE_FETCH(P, OFFSET) Texture3DSampleLevel(NoiseVolumeTexture, NoiseVolumeTextureSampler, (((P) - (OFFSET)) + noiseDrift) * noiseTileScale, 0)
+#define TD_SHIFT_OF(S) (0.78 * (2.0 * abs(2.0 * (S).r - 1.0) - 0.6) + 0.22 * (2.0 * abs(2.0 * (S).b - 1.0) - 0.6) - noiseErosion * max(2.0 * (S).g - 1.0, 0.0))
+#define TD_NOISE_SHIFT(P) (noiseAmplitudeCm * lerp(TD_SHIFT_OF(TD_NOISE_FETCH(P, TD_FLOW(P) * (phaseSecond * flowCycleSeconds))), TD_SHIFT_OF(TD_NOISE_FETCH(P, TD_FLOW(P) * (phaseFirst * flowCycleSeconds))), weightFirst))
+#define TD_GRAIN_FETCH(P, OFFSET) Texture3DSampleLevel(NoiseVolumeTexture, NoiseVolumeTextureSampler, mul(grainRotation, (((P) - (OFFSET)) + noiseDrift) * (noiseTileScale * grainScale)), 0)
+#define TD_GRAIN_OF(S) (1.2 * ((S).b - 0.5) + 0.8 * ((S).a - 0.5))
+#define TD_GRAIN(P) (grainAmplitudeCm * lerp(TD_GRAIN_OF(TD_GRAIN_FETCH(P, TD_FLOW(P) * (phaseSecond * flowCycleSeconds))), TD_GRAIN_OF(TD_GRAIN_FETCH(P, TD_FLOW(P) * (phaseFirst * flowCycleSeconds))), weightFirst))
+#define TD_EDGE_OFFSET(S) (0.9 * (2.0 * (S).r - 1.0) + 0.45 * (2.0 * (S).b - 1.0))
+#define TD_EDGE_NOISE(P) Texture3DSampleLevel(NoiseVolumeTexture, NoiseVolumeTextureSampler, float3((P).xy * (noiseTileScale * 0.55), 0.0075 * ElapsedSeconds), 0)
+#define TD_EDGE(P) smoothstep(0.0, edgeFadeFraction, min(min(TD_UV(P).x, 1.0 - TD_UV(P).x), min(TD_UV(P).y, 1.0 - TD_UV(P).y)) + edgeFadeFraction * TD_EDGE_OFFSET(TD_EDGE_NOISE(P)))
+#define TD_HG(C, G) ((1.0 - (G) * (G)) / pow(max(1.0 + (G) * (G) - 2.0 * (G) * (C), 0.0001), 1.5))
+#define TD_PHASE(C, SCALE) lerp(TD_HG(C, phaseBackwardG * (SCALE)), TD_HG(C, phaseForwardG * (SCALE)), phaseForwardWeight)
 #define TD_COVERAGE(P, D) saturate((D).r * (D).a * TD_EDGE(P) * 2.5)
-#define TD_HEIGHT_OFFSET(P) (isSymmetric ? abs((P).z - SimCenterWorld.z) : ((P).z - boxMin.z))
-#define TD_TOP_MARGIN(P) (isSymmetric ? 0.5 * VolumeHeightCm - abs((P).z - SimCenterWorld.z) : boxMax.z - (P).z)
+#define TD_HEIGHT_OFFSET(P) (isSymmetric ? abs((P).z - boxCenterZ) : ((P).z - boxMin.z))
+#define TD_TOP_MARGIN(P) (isSymmetric ? 0.5 * VolumeHeightCm - abs((P).z - boxCenterZ) : boxMax.z - (P).z)
 #define TD_RAW_DEPTH(P, D) ((D).r * (D).a * TD_EDGE(P) * heightScaleCm - TD_HEIGHT_OFFSET(P))
 
 float hardStepCount = isHardMode ? clamp(floor(StepCount * 0.5 + 0.5), 8.0, 96.0) : clamp(floor(StepCount + 0.5), 8.0, 160.0);
@@ -121,9 +157,65 @@ for (int marchIndex = 0; marchIndex < hardStepTotal; marchIndex++)
                 float haloRatio = isPointLight ? haloLightLength / max(VolumeLightRadius, 1.0) : 0.0;
                 float haloWindow = saturate(1.0 - haloRatio * haloRatio * haloRatio * haloRatio);
                 float haloAttenuation = haloWindow * haloWindow / (1.0 + 6.0 * haloRatio * haloRatio);
-                haloLit = VolumeLightColor * (haloAttenuation * (0.6 + 1.6 * pow(saturate(dot(rayDirection, haloLightVector)), 4.0)));
+                if (usesHaloShadow)
+                {
+                    if (!haloCapsuleReady)
+                    {
+                        haloCapsuleReady = true;
+                        float3 haloSegment = haloLightVector * min(isPointLight ? haloLightLength : maximumCapsuleRayCm, maximumCapsuleRayCm);
+                        float haloSegmentLengthSquared = max(dot(haloSegment, haloSegment), 0.0001);
+                        [loop]
+                        for (int haloCapsuleIndex = 0; haloCapsuleIndex < capsuleTotal; haloCapsuleIndex++)
+                        {
+                            float3 haloAxis = capsuleEnds[haloCapsuleIndex] - capsuleStarts[haloCapsuleIndex];
+                            float3 haloOffset = marchPoint - capsuleStarts[haloCapsuleIndex];
+                            float haloAxisLengthSquared = max(dot(haloAxis, haloAxis), 0.0001);
+                            float haloSegmentAxis = dot(haloSegment, haloAxis);
+                            float haloSegmentOffset = dot(haloSegment, haloOffset);
+                            float haloAxisOffset = dot(haloAxis, haloOffset);
+                            float haloDenominator = haloSegmentLengthSquared * haloAxisLengthSquared - haloSegmentAxis * haloSegmentAxis;
+                            float haloSegmentParameter = haloDenominator > 0.0001 ? saturate((haloSegmentAxis * haloAxisOffset - haloSegmentOffset * haloAxisLengthSquared) / haloDenominator) : 0.0;
+                            float haloAxisParameter = (haloSegmentAxis * haloSegmentParameter + haloAxisOffset) / haloAxisLengthSquared;
+                            if (haloAxisParameter < 0.0)
+                            {
+                                haloAxisParameter = 0.0;
+                                haloSegmentParameter = saturate(-haloSegmentOffset / haloSegmentLengthSquared);
+                            }
+                            else if (haloAxisParameter > 1.0)
+                            {
+                                haloAxisParameter = 1.0;
+                                haloSegmentParameter = saturate((haloSegmentAxis - haloSegmentOffset) / haloSegmentLengthSquared);
+                            }
+                            float3 haloClosest = (marchPoint + haloSegment * haloSegmentParameter) - (capsuleStarts[haloCapsuleIndex] + haloAxis * haloAxisParameter);
+                            if (dot(haloClosest, haloClosest) <= capsuleRadii[haloCapsuleIndex] * capsuleRadii[haloCapsuleIndex])
+                            {
+                                haloCapsuleDepth += ShadowCapsuleOpticalDepth;
+                            }
+                        }
+                    }
+                    float haloOpticalDepth = haloCapsuleDepth;
+                    if (usesTransmittance)
+                    {
+                        float4 haloLevelDepths = Texture2DSampleLevel(TransmittanceTexture, TransmittanceTextureSampler, TD_UV(marchPoint), 0);
+                        float haloLevelCoordinate = clamp((marchPoint.z - boxMin.z) * levelHeightScale - 0.5, 0.0, 3.0);
+                        float4 haloLevelWeights = saturate(1.0 - abs(haloLevelCoordinate - float4(0.0, 1.0, 2.0, 3.0)));
+                        haloOpticalDepth += dot(haloLevelDepths, haloLevelWeights);
+                    }
+                    float3 haloDirect = exp(-haloOpticalDepth * shadowTint);
+                    float3 haloDiffuse = (haloDirect + multiScatter * exp(-0.5 * haloOpticalDepth * shadowTint) + (multiScatter * multiScatter) * exp(-0.25 * haloOpticalDepth * shadowTint)) / octaveWeightTotal;
+                    haloLit = VolumeLightColor * (haloAttenuation * PhaseScatterScale * (TD_PHASE(dot(rayDirection, haloLightVector), 1.0) * haloDirect + multiScatter * haloDiffuse));
+                }
+                else
+                {
+                    haloLit = VolumeLightColor * (haloAttenuation * PhaseScatterScale * (TD_PHASE(dot(rayDirection, haloLightVector), 1.0) + multiScatter));
+                }
             }
             float3 haloRadiance = SmokeColor * (AmbientColor * 0.9 + haloLit) + ShadowColor;
+            if (usesHeatGlow)
+            {
+                float haloHeat = Texture2DSampleLevel(AuxTexture, AuxTextureSampler, TD_UV(marchPoint), 0).r;
+                haloRadiance += HeatEmissionColor * (HeatEmissionIntensity * pow(saturate(haloHeat), max(HeatEmissionExponent, 0.05)));
+            }
             haloColor += haloRadiance * (haloTransmittance * haloAlpha);
             haloTransmittance *= 1.0 - haloAlpha;
             if (isVolumeMode && haloTransmittance < 0.01)
@@ -181,11 +273,11 @@ for (int axisIndex = 0; axisIndex < 3; axisIndex++)
     float3 axisUnit = float3(axisIndex == 0 ? 1.0 : 0.0, axisIndex == 1 ? 1.0 : 0.0, axisIndex == 2 ? 1.0 : 0.0);
     float3 tapPoint = surfacePoint + axisUnit * normalEpsilon;
     float4 tapDensity = TD_DENSITY(tapPoint);
-    float tapDepth = TD_RAW_DEPTH(tapPoint, tapDensity) + TD_COVERAGE(tapPoint, tapDensity) * TD_NOISE_SHIFT(tapPoint);
+    float tapDepth = TD_RAW_DEPTH(tapPoint, tapDensity) + TD_COVERAGE(tapPoint, tapDensity) * (TD_NOISE_SHIFT(tapPoint) + TD_GRAIN(tapPoint));
     depthGradient += axisUnit * (tapDepth / normalEpsilon);
 }
 float3 surfaceNormal = normalize(-depthGradient + float3(0.0, 0.0, 0.0001));
-float surfaceBillow = TD_NOISE_SHIFT(surfacePoint) / max(noiseAmplitudeCm, 0.001);
+float surfaceBillow = (TD_NOISE_SHIFT(surfacePoint) + TD_GRAIN(surfacePoint)) / max(noiseAmplitudeCm, 0.001);
 float crevice = saturate(0.62 + 0.38 * surfaceBillow);
 
 float3 hardLit = float3(0.0, 0.0, 0.0);
@@ -219,29 +311,80 @@ if (hasLight)
             hardOpticalDepth += DensityScale * 3.0 * TD_COVERAGE(shadowPoint, shadowDensity) * smoothstep(-surfaceSoftness, surfaceSoftness, shadowDepth) * shadowStepLength;
         }
 
-        float hardTransmittance = exp(-hardOpticalDepth);
+        float3 hardSegment = lightVector * min(lightDistance, maximumCapsuleRayCm);
+        float hardSegmentLengthSquared = max(dot(hardSegment, hardSegment), 0.0001);
+        [loop]
+        for (int hardCapsuleIndex = 0; hardCapsuleIndex < capsuleTotal; hardCapsuleIndex++)
+        {
+            float3 hardAxis = capsuleEnds[hardCapsuleIndex] - capsuleStarts[hardCapsuleIndex];
+            float3 hardOffset = shadowOrigin - capsuleStarts[hardCapsuleIndex];
+            float hardAxisLengthSquared = max(dot(hardAxis, hardAxis), 0.0001);
+            float hardSegmentAxis = dot(hardSegment, hardAxis);
+            float hardSegmentOffset = dot(hardSegment, hardOffset);
+            float hardAxisOffset = dot(hardAxis, hardOffset);
+            float hardDenominator = hardSegmentLengthSquared * hardAxisLengthSquared - hardSegmentAxis * hardSegmentAxis;
+            float hardSegmentParameter = hardDenominator > 0.0001 ? saturate((hardSegmentAxis * hardAxisOffset - hardSegmentOffset * hardAxisLengthSquared) / hardDenominator) : 0.0;
+            float hardAxisParameter = (hardSegmentAxis * hardSegmentParameter + hardAxisOffset) / hardAxisLengthSquared;
+            if (hardAxisParameter < 0.0)
+            {
+                hardAxisParameter = 0.0;
+                hardSegmentParameter = saturate(-hardSegmentOffset / hardSegmentLengthSquared);
+            }
+            else if (hardAxisParameter > 1.0)
+            {
+                hardAxisParameter = 1.0;
+                hardSegmentParameter = saturate((hardSegmentAxis - hardSegmentOffset) / hardSegmentLengthSquared);
+            }
+            float3 hardClosest = (shadowOrigin + hardSegment * hardSegmentParameter) - (capsuleStarts[hardCapsuleIndex] + hardAxis * hardAxisParameter);
+            if (dot(hardClosest, hardClosest) <= capsuleRadii[hardCapsuleIndex] * capsuleRadii[hardCapsuleIndex])
+            {
+                hardOpticalDepth += ShadowCapsuleOpticalDepth;
+            }
+        }
+
+        float3 extinctionTint = max(ExtinctionTint, float3(0.0, 0.0, 0.0));
+        float scatterCosine = dot(rayDirection, lightVector);
+        float3 octaveFirst = exp(-hardOpticalDepth * extinctionTint);
+        float3 octaveSecond = multiScatter * exp(-0.5 * hardOpticalDepth * extinctionTint);
+        float3 octaveThird = (multiScatter * multiScatter) * exp(-0.25 * hardOpticalDepth * extinctionTint);
+        float octaveWeightSum = 1.0 + multiScatter + multiScatter * multiScatter;
+        float3 diffuseTransmittance = (octaveFirst + octaveSecond + octaveThird) / octaveWeightSum;
+        float3 phaseTransmittance = (octaveFirst * TD_PHASE(scatterCosine, 1.0) + octaveSecond * TD_PHASE(scatterCosine, 0.5) + octaveThird * TD_PHASE(scatterCosine, 0.25)) / octaveWeightSum;
         float diffuseTerm = saturate((dot(surfaceNormal, lightVector) + 0.35) / 1.35);
-        float forwardGlow = pow(saturate(dot(rayDirection, lightVector)), 5.0) * (1.0 - surfaceAlpha * 0.5);
-        hardLit = VolumeLightColor * (lightAttenuation * (diffuseTerm * hardTransmittance + 0.8 * forwardGlow));
+        hardLit = VolumeLightColor * (lightAttenuation * (diffuseTerm * diffuseTransmittance + PhaseScatterScale * (1.0 - surfaceAlpha * 0.5) * phaseTransmittance));
     }
 }
 
-float ambientFactor = (0.35 + 0.65 * saturate(dot(surfaceNormal, tdWorldUp))) * crevice;
+float ambientSideFloor = saturate(AmbientSideFloor);
+float ambientFactor = (ambientSideFloor + (1.0 - ambientSideFloor) * saturate(dot(surfaceNormal, tdWorldUp))) * lerp(saturate(AmbientCreviceFloor), 1.0, crevice);
 float3 hardColor = SmokeColor * (AmbientColor * ambientFactor + hardLit * (0.55 + 0.45 * crevice)) + ShadowColor;
+if (usesSurfaceHeatGlow)
+{
+    float surfaceHeat = Texture2DSampleLevel(AuxTexture, AuxTextureSampler, TD_UV(surfacePoint), 0).r;
+    hardColor += HeatEmissionColor * (HeatEmissionIntensity * HeatEmissionSurfaceScale * pow(saturate(surfaceHeat), max(HeatEmissionExponent, 0.05)));
+}
 float coreAlpha = surfaceAlpha;
 float combinedAlpha = 1.0 - haloTransmittance * (1.0 - coreAlpha);
 float3 combinedColor = haloColor + haloTransmittance * hardColor * coreAlpha;
 return float4(combinedColor / max(combinedAlpha, 0.0001), combinedAlpha * distanceFade);
 
-
+#undef TD_PHASE
+#undef TD_HG
+#undef TD_EDGE_NOISE
+#undef TD_EDGE_OFFSET
+#undef TD_GRAIN
+#undef TD_GRAIN_OF
+#undef TD_GRAIN_FETCH
+#undef TD_SHIFT_OF
+#undef TD_NOISE_FETCH
 #undef TD_RAW_DEPTH
 #undef TD_TOP_MARGIN
 #undef TD_HEIGHT_OFFSET
 #undef TD_COVERAGE
 #undef TD_EDGE
 #undef TD_NOISE_SHIFT
-#undef TD_BILLOW
 #undef TD_FLOW
 #undef TD_DENSITY
 #undef TD_UV
+#undef TD_TO_SOLVER_PLANE
 #undef TD_TO_PLANE

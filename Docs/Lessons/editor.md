@@ -334,3 +334,72 @@
 - 증거: 2026-10-19 `Saved/AgentOps/20261019/death-ragdoll/measure/run-log.md`(끊김), `measure2/run-log.md`(고정 간격 뒤 60/60장 +16.7ms)
 - 날짜·상태: 2026-10-19 active
 - 발견: claude
+### L-editor-40 단일층 물(SLW)이 "안 나온다"는 판단은 아래를 보는 격자 탓이었다 — SLW 는 이 설정에서 정상
+- 증상: SLW 재질(레거시·Substrate·상수만 쓴 최소 재질)을 수면 격자에 씌우면 PIE·HighResShot 에 아무것도 안 보이고 ProfileGPU 에 SingleLayerWater 구간이 없다. Substrate SLW BSDF 만 넣으면 `RayTracingMaterialHitShaders.usf:560 error: use of undeclared identifier 'GetSingleLayerWaterMaterialOutput0'` 로 재질 컴파일 실패(SingleLayerWaterMaterialOutput 노드를 함께 넣으면 컴파일됨)
+- 원인: 격자 메시의 면이 아래를 향해 위에서 보는 카메라에서 전부 컬링됐다(L-editor-41). 그릴 SLW 프리미티브가 없으니 패스도 없었다. r.Substrate=True·ProjectGBufferFormat=0·r.RayTracing=True 조합은 원인이 아니다
+- 해결: 위를 보는 메시(엔진 평면 또는 새로 만든 C++ 격자)에 씌우면 SLW 가 그려진다. SLW 흡수·산란 계수는 **1/센티미터**다(엔진이 cm 깊이에 그대로 곱함: `SingleLayerWaterShading.ush` 206·221행 `exp(-Depth * ExtinctionCoeff)`). 예전 "1/미터"는 SLW 가 안 그려지던 때의 오판이며, ×100 하면 10cm 에서 불투명해진다(lookdev `20261019-121023` 불투명 대 `121241` 맑음, 맑은 호수 (0.006, 0.0016, 0.0011)/cm). SLW 수면은 그림자를 드리우므로 수면 컴포넌트 그림자를 끈다(단독 효과 미검증). 반투명 경로(`TLM_SURFACE_PER_PIXEL_LIGHTING`, 두께 = SceneDepth − PixelDepth)는 대체 경로로 남긴다
+- 범위: UE 5.8, 이 프로젝트 렌더 설정
+- 증거: `Saved/FluidFX/lookdev/20261019-114427`(엔진 평면 SLW·새 C++ 격자 SLW 둘 다 표시, 예전 격자는 불투명도 미표시), 과거 오판 `Saved/AgentOps/20261018/fluidfx/fxw/slw-invisible-debug.md`·`Saved/FluidFX/lookdev/20261019-104953`
+- 날짜·상태: 2026-10-19 active(원인 확정·정정)
+- 발견: claude
+
+### L-editor-41 파이썬·OBJ 로 만든 수면 격자가 반투명·SLW 패스에서 안 그려진다
+- 증상: ① `StaticMesh.build_from_static_mesh_descriptions` 로 만든 메시는 렌더 정점 0(원본 메시 설명이 소스 모델에 저장되지 않아 저장·재로드 뒤 비어 있음). ② 파이썬 `StaticMeshDescription.create_polygon(group, instances)` 은 `takes at most 1 argument` — 정점 인스턴스 배열을 출력 인자로 바인딩해 쓸 수 없음(삼각형은 `create_triangle(group, [i0,i1,i2])`). ③ OBJ 가져오기로 만든 격자는 재질 슬롯 0개라 컴포넌트에 반투명 재질을 덮어써도 반투명·SLW 패스에서 그려지지 않음(불투명은 그려짐), 슬롯을 넣어도 축 변환으로 면이 아래를 향해 단면 재질은 안 보임. ④ C++ `CreateMeshDescription`+`CommitMeshDescription`+`Build` 로 만든 격자도 GUI 에디터에서는 불투명조차 안 보임(헤드리스 시험의 렌더 데이터는 정상)
+- 원인(④, 2026-10-19 확정): 같은 이름 에셋이 이미 있으면 C++ 가 `FindObject` 로 그 객체를 제자리 재사용했는데, 저장된 결과의 메시 설명은 예전 OBJ 가져오기 것(꼭짓점 (-800,800)부터, 첫 삼각형 cross(P2−P0,P1−P0).z<0 = 아래를 봄)으로 남아 있었다. 같은 C++ 함수로 새 이름에 만든 격자는 반투명·불투명·기본·SLW 재질 모두 그려진다
+- 해결: `UTDFluidWaterMeshEditorLibrary::CreateGridStaticMesh` 가 기존 객체를 임시 패키지로 옮기고(`Rename(…, GetTransientPackage(), REN_DontCreateRedirectors)`, Public·Standalone 해제) 새 객체를 만든다. 판별은 파이썬 `get_static_mesh_description(0)` 첫 삼각형 감기를 엔진 평면(+z)과 비교한다(`Tools/scratch` 실험, 2026-10-19). 메시 렌더 여부는 같은 재질을 씌운 엔진 평면을 나란히 놓고 비교한다
+- 범위: UE 5.8 에디터 파이썬·OBJ 가져오기(Interchange)·C++ 메시 설명 생성
+- 증거: `Saved/FluidFX/lookdev/20261019-110724`(슬롯 0 격자 미표시)·`20261019-111049`(양면에서 뒷면 표시)·`20261019-112253`(엔진 평면 표시·C++ 격자 미표시)·`20261019-114427`(새 C++ 격자 표시, 재사용된 예전 격자 미표시)
+- 조사(td-debugger, `Saved/AgentOps/20261018/fluidfx/fxw/grid-mesh-render-debug.md`): 감기 순서·LOD 화면 크기·나나이트·섹션 재질은 배제. `-NullRHI` 헤드리스는 InitResources 를 건너뛰어(StaticMeshBuild.cpp:660) 시험이 그리기를 증명하지 못한다. 다음 판별: PIE 에서 `log LogStaticMesh Verbose` 뒤 메시 재지정 → "Skipping CreateSceneProxy" 이유 확인, 후보 수정은 FindObject 제자리 재사용 대신 새 객체, UVChannelData 갱신(엔진 CreateStaticMeshUtil.cpp:59·117)
+- 날짜·상태: 2026-10-19 active(④ 원인 확정·수정 빌드와 재생성 시험 통과 `fxw-grid-regen2`)
+- 발견: claude
+
+### L-editor-42 머티리얼 파이썬 이름 함정: 정적 스위치 핀은 True/False, 데칼 블렌드는 DBM_D_BUFFER_*, Surface ForwardShading 은 TLM_SURFACE_PER_PIXEL_LIGHTING
+- 증상: `connect_material_expressions(..., "A")` 가 MaterialExpressionStaticSwitchParameter 에 실패, `unreal.DecalBlendMode.DBM_DBUFFER_COLOR_NORMAL_ROUGHNESS`·`TranslucencyLightingMode.TLM_SURFACE_FORWARD_SHADING` 이름 없음, 재질 `decal_blend_mode` 속성 없음, 같은 마스터에 SingleLayerWaterMaterialOutput 이 남아 "only one Single Layer Water Material node"(표현식 일괄 삭제로 안 지워짐)
+- 해결: 정적 스위치 입력 이름 "True"/"False", 열거형은 `dir(unreal.<Enum>)` 로 확인(`DBM_D_BUFFER_COLOR_NORMAL_ROUGHNESS`, `TLM_SURFACE_PER_PIXEL_LIGHTING`), 5.8 디퍼드 데칼은 decal_blend_mode 없이 블렌드 모드·연결 출력으로 결정, 마스터를 다시 지을 때는 에셋을 지우고 새로 만들되 그 에셋을 쓰는 맵이 열려 있으면 다른 맵을 먼저 연다(메모리 참조로 삭제 실패·반쯤 삭제된 객체는 에디터 재시작)
+- 범위: UE 5.8 에디터 파이썬 MaterialEditingLibrary
+- 증거: `Saved/AgentOps/20261018/fluidfx/fxw/watermat-run1~20.log`
+- 날짜·상태: 2026-10-19 active
+- 발견: claude
+
+### L-editor-43 런타임에 만든 스플라인 메시가 물 재질 대신 어두운 바둑판(기본 재질)으로 그려진다
+- 증상: W-1 강 리본(USplineMeshComponent, RF_Transient·BeginPlay 비동기 생성)이 PIE 에서 어두운 바둑판으로 보임. 솔버·MID 수치 탐침은 모두 통과해서 수치 검사로는 못 잡음
+- 원인: 재질에 bUsedWithSplineMeshes 사용 플래그가 없으면 런타임 생성 스플라인 메시에는 엔진이 기본 재질로 대체한다(편집기에서 배치·저장할 때만 자동으로 플래그가 켜짐)
+- 해결: 재질 생성 스크립트에서 `used_with_spline_meshes = True` 를 설정하고 다시 컴파일(`Tools/FluidFX/editor_make_fluid_water_material.py` create_water_master). 런타임에 만드는 다른 메시 종류(나이아가라 메시 입자, 인스턴스 메시 등)도 같은 방식으로 사용 플래그를 먼저 켠다. 렌더 결과는 PIE 화면으로만 확인된다
+- 범위: UE 5.8 재질 사용 플래그, 런타임 생성 컴포넌트
+- 증거: `Saved/FluidFX/lookdev/20261019-180759`(바둑판) → `20261019-180907`(물)
+- 날짜·상태: 2026-10-19 active
+- 발견: claude
+
+### L-editor-44 언리얼 파이썬에서 bool 을 반환하고 출력 인자가 있는 함수는 튜플이 아니라 출력값만 돌려준다(실패면 None)
+- 증상: `component.sample_fluid_at_world_location(위치)`(C++ `bool SampleFluidAtWorldLocation(const FVector&, FTDFluidCellSample& OutSample) const`)를 `(성공, 표본)` 튜플로 받은 탐침이 모든 표본을 '없음'으로 처리해 판정 값이 전부 null
+- 원인: 파이썬 바인딩은 bool 반환을 성공 신호로 해석해 참이면 출력 인자만(여러 개면 튜플), 거짓이면 None 을 돌려준다
+- 해결: `outcome is None` 이면 실패, 튜플이면 첫 원소 검사, 아니면 출력값으로 받는 양쪽 처리(`Tools/FluidFX/pie_probe_fluid_water.py` read_cell). 원격 실행 출력은 긴 줄이 여러 줄로 나뉘고 줄마다 `[Info] ` 머리말이 붙으므로 결과 JSON 은 머리말을 지우고 이어 붙인 뒤 `json.JSONDecoder().raw_decode` 로 읽는다. 파이썬에서 `unreal.NavigationSystemV1` 정적 함수를 부르면 엔진이 CDO GetWorld ensure(`NavigationSystem.h:293`)를 한 번 낸다 — 무해, 로그 검사에서 이 블록만 제외
+- 범위: UE 5.8 PythonScriptPlugin, Tools/run_in_editor.py 원격 실행
+- 증거: `Docs/Validation/FluidFX/D-49-fxw1-probe-2026-10-19.json`(수정 전 전부 missing → 수정 뒤 연속 2회 통과)
+- 날짜·상태: 2026-10-19 active
+- 발견: claude
+
+### L-editor-46 볼륨·디더 재질이 스크린샷에서 2×2 체커·사선 점묘로 찍히고, settle 기반 PIE 촬영 시각이 1.3~2.2초씩 늦다
+- 증상: SOFT 볼륨 연기 가장자리에 주기 2열·약 3.2행의 사선 점묘(IGN 무늬)가 `HighResShot` 사진마다 그대로 남는다. 또 `pie_lookdev_fluid.py`에서 trigger 뒤 settle 0.3초로 찍은 '0.3초' 폭발 사진이 실제로는 약 1초 이상 지난 장면이었다(파일 시각 차 − settle = 장마다 고정 지연 1.33~2.25초).
+- 원인: ① `HighResShot`은 가짜 뷰포트로 `r.HighResScreenshotDelay`(기본 4) 프레임을 Draw만 하고 월드를 틱하지 않는다(UnrealClient.cpp:1684-1717). 그래서 게임 시간(`ElapsedSeconds` = View.GameTime)에서 디더 위상을 뽑는 재질은 네 프레임 모두 같은 위상이 되고, TSR(시간 누적 업스케일러)이 평균할 재료가 없다. 일시정지·시간 감속에서도 디더가 멈춘다. ② 원격 Python 호출마다 왕복 지연이 있어 '적용 → sleep(settle) → 촬영' 순서는 게임 시간과 어긋난다.
+- 해결: ① 디더 프레임은 `View.StateFrameIndexMod8`(재질 번역기도 쓰는 값)에서 뽑는다(`TDFluidVolumeRaymarch.hlsl`). ② 시각이 중요한 촬영은 한 번의 원격 호출 안에서 틱 콜백으로 게임 시간 기준 예약한다(`pie_lookdev_fluid.py` `schedule` 키, `t.OverrideFPS 60` 고정은 L-editor-45). 결과의 `shot_game_time`으로 라벨을 붙인다.
+- 범위: UE 5.8 GUI 에디터 PIE 스크린샷, 시간·디더에 의존하는 재질과 측정 도구
+- 증거: `Saved/AgentOps/20261020/fx8c/round2/smoke-light.md` 3절(스펙트럼 정점 IGN 일치, 엔진 코드), `round2/completeness.md` 1.1절(촬영 지연), `round3/lookdev-tool-verify.md`(예약 16장 모두 요청 시각 +1/60초)
+- 날짜·상태: 2026-10-20 active
+- 발견: claude(FX-8c 하위 에이전트 smoke-light·critic·completeness)
+### L-editor-47 안개(또는 밝은 배경) 무대에서 반투명 불·연기의 색 지표(따뜻함·채도·중성 바닥·짙은 빨강·M1)가 배경색에 끌려 무효가 된다
+- 증상: FX-8c 4차 폭발 64장 중 중성 바닥 G 60장·따뜻함 48장·채도 42장 불합격. 같은 셰이더에서 안개를 넣기 전보다 연기가 청회색 쪽으로 측정됐다.
+- 원인: 반투명 연기·불꽃 카드 너머 청회색 높이 안개(G≈37)가 합성되어 색 평균을 끈다. LIVE-2 목표 장면은 붉은 환경이라 같은 지표를 그대로 비교할 수 없다.
+- 해결: 색 지표는 같은 카메라의 안개 숨김 판(`pie_lookdev_fluid.py` `hide {"TDGen_FireStageFog": true}` 등)과 짝으로 재고, 휘도·대비는 안개 무대에서 잰다. 연기 마스크는 불·연기를 숨긴 깨끗한 판으로 만든다.
+- 범위: FluidFX 룩데브 측정(`measure_fx_look.py --targets`)
+- 증거: `Saved/AgentOps/20261020/fx8c/round4/judge.md` 4절 N3
+- 날짜·상태: 2026-10-20 active
+- 발견: claude(FX-8c judge)
+### L-editor-48 비율 지표 관문(번짐/불 면적 등)은 기준을 정한 판의 분모 결함까지 함께 고정되어, 결함을 고치면 거짓 불합격이 난다
+- 증상: FX-8c 굽기 확인에서 폭발 glow/flame 1.42~1.64가 기준 1.35(X10에서 정함)를 넘었다. 그런데 번짐 화소(분자)는 X10과 같았다(38~46k 대 41~47k).
+- 원인: X10의 불 면적(분모)이 이미 기각한 결함(고리 도넛, 바닥 노란 먼지 언덕)으로 부풀어 있었다. 결함을 없애자 분모만 20% 줄었다. '되돌림 규칙'(원인 추정 값 복원)을 런타임으로 시험하니 오히려 2.5~2.8로 나빠졌다.
+- 해결: 비율이 어긋나면 분자·분모·영역 띠(공중·바닥)를 따로 분해한다. 회귀 관문은 절대량(번짐 화소 ≤ 기준 판 최대)으로 두고, 목표 비율은 개선 과제의 수용 기준으로 분리한다. 되돌림 규칙은 그 전제를 측정으로 확인한 뒤에만 집행한다.
+- 범위: FluidFX 룩데브 지표(`measure_fx_look.py --targets`)와 수치 관문
+- 증거: `Saved/AgentOps/20261020/fx8c/round6/accept-judge.md` 0·2절, `scratch/accept-judge/glow_decompose.json`
+- 날짜·상태: 2026-10-20 active
+- 발견: claude(FX-8c accept-judge)

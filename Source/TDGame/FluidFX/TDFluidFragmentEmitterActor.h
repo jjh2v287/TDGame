@@ -9,6 +9,10 @@ class ATDBreakableActor;
 class ATDFluidFireActor;
 class ATDFluidLiveActor;
 class UGeometryCollectionComponent;
+class UMaterialInstanceDynamic;
+class UMaterialInterface;
+class UTDFluidLiveComponent;
+struct FStreamableHandle;
 struct FTDFluidPlaneBasis;
 
 struct TDGAME_API FTDFluidFragmentPositionHistory
@@ -48,6 +52,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentTargets")
 	TArray<FTDFluidFragmentTarget> Targets;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow")
+	TSoftObjectPtr<UMaterialInterface> FragmentGlowMaterialAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow")
+	FTDFluidFragmentGlowSettings GlowSettings;
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -124,8 +134,11 @@ public:
 
 	static float ComputeTargetHeightWeight(const FTDFluidFragmentTarget& Target, double StampZ, double BurstCenterZ);
 
+	static float ComputeFragmentGlowHeatRatio(const FTDFluidFragmentGlowSettings& Settings, float BreakAgeSeconds);
+
 	void ResolveActiveTargets(TArray<FTDFluidFragmentTarget>& OutTargets) const;
 	FVector GetBurstCenterWorld() const { return BurstCenterWorld; }
+	UMaterialInstanceDynamic* GetFragmentGlowMaterial() const { return FragmentGlowMaterial; }
 
 private:
 	UGeometryCollectionComponent* ResolveGeometryCollectionComponent();
@@ -142,13 +155,24 @@ private:
 	void RecordStampedLeaves(const TArray<int32>& StampedLeafIndices);
 	void UpdateMovedLeafCount(const TArray<FVector>& CurrentPositions);
 	void StopFragmentTracking();
+	void RequestFragmentGlowMaterial();
+	void HandleFragmentGlowMaterialLoaded();
+	void ApplyFragmentGlowMaterial();
+	void PushFragmentGlowParameters();
+	float GetFragmentGlowAgeSeconds() const;
+	UTDFluidLiveComponent* ResolveFragmentGlowHeatSource() const;
 
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInstanceDynamic> FragmentGlowMaterial;
+
+	TSharedPtr<FStreamableHandle> FragmentGlowLoadHandle;
 	TWeakObjectPtr<UGeometryCollectionComponent> GeometryCollectionComponent;
 	TArray<int32> LeafTransformIndices;
 	TArray<FVector> InitialLeafPositions;
 	TArray<bool> LeafStampedFlags;
 	FTDFluidFragmentPositionHistory PositionHistory;
 	float TrackingElapsedSeconds = 0.0f;
+	double FragmentBreakWorldSeconds = 0.0;
 	FVector BurstCenterWorld = FVector::ZeroVector;
 	int32 MovedLeafCount = 0;
 	int32 StampedLeafCount = 0;

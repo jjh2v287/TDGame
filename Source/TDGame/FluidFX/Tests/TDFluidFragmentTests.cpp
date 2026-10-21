@@ -12,8 +12,13 @@
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "GeometryCollection/GeometryCollectionComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
+#include "Misc/App.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/Package.h"
+#include "UObject/UObjectGlobals.h"
 
 #include <limits>
 
@@ -71,7 +76,7 @@ namespace TDFluidFragmentTestPrivate
 
 	struct FTDFluidFragmentRig
 	{
-		explicit FTDFluidFragmentRig(FTDFluidFragmentTestWorld& TestWorld, float TrackingDurationSeconds)
+		explicit FTDFluidFragmentRig(FTDFluidFragmentTestWorld& TestWorld, float TrackingDurationSeconds, const TCHAR* GlowMaterialPath = nullptr)
 		{
 			UWorld* World = TestWorld.World;
 			FireActor = World->SpawnActor<ATDFluidFireActor>(ATDFluidFireActor::StaticClass(), FVector(0.0, 0.0, 100.0), FRotator::ZeroRotator);
@@ -94,6 +99,10 @@ namespace TDFluidFragmentTestPrivate
 				Emitter->FireTargetActor = FireActor;
 				Emitter->SmokeTargetActor = SmokeActor;
 				Emitter->TrailSettings.TrackingDurationSeconds = TrackingDurationSeconds;
+				if (GlowMaterialPath)
+				{
+					Emitter->FragmentGlowMaterialAsset = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(GlowMaterialPath));
+				}
 				Emitter->FinishSpawning(EmitterTransform);
 			}
 		}
@@ -384,6 +393,206 @@ bool FTDFluidFragmentTrackerStopsTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("The source is still alive after the short tracking window"), IsValid(ShortRig.Source));
 	TestFalse(TEXT("Tracking stops when the duration ends"), ShortRig.Emitter->IsTrackingFragments());
 	TestFalse(TEXT("The emitter stops ticking when the duration ends"), ShortRig.Emitter->IsActorTickEnabled());
+	return true;
+}
+
+namespace TDFluidFragmentTestPrivate
+{
+	const TCHAR* const GlowMaterialPath = TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial");
+	constexpr float GlowTolerance = 1e-4f;
+	constexpr int32 GlowMissedFrameAllowance = 8;
+
+	bool WaitForGlowMaterial(FTDFluidFragmentTestWorld& TestWorld, const ATDFluidFragmentEmitterActor& Emitter)
+	{
+		for (int32 Attempt = 0; Attempt < 200 && !Emitter.FragmentGlowMaterialAsset.Get(); ++Attempt)
+		{
+			FlushAsyncLoading();
+			TestWorld.TickFrames(1);
+		}
+		return Emitter.FragmentGlowMaterialAsset.Get() != nullptr;
+	}
+
+	UGeometryCollectionComponent* FindSourceCollection(const FTDFluidFragmentRig& Rig)
+	{
+		return Rig.Source ? Rig.Source->FindComponentByClass<UGeometryCollectionComponent>() : nullptr;
+	}
+
+	float ReadGlowScalar(UMaterialInstanceDynamic* GlowMaterial, const TCHAR* ParameterName)
+	{
+		return GlowMaterial ? GlowMaterial->K2_GetScalarParameterValue(ParameterName) : -1.0f;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentGlowHeatRatioTest,
+	"TDGame.FluidFX.Fragment.GlowHeatRatioFollowsBreakAge",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentGlowHeatRatioTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	FTDFluidFragmentGlowSettings Settings;
+	Settings.HoldSeconds = 0.25f;
+	Settings.CoolSeconds = 2.0f;
+	Settings.CharredHeatRatio = 0.05f;
+	const auto RatioAt = [&Settings](float BreakAgeSeconds)
+	{
+		return ATDFluidFragmentEmitterActor::ComputeFragmentGlowHeatRatio(Settings, BreakAgeSeconds);
+	};
+
+	TestNearlyEqual(TEXT("An unbroken fragment has no glow"), RatioAt(-0.01f), 0.0f, GlowTolerance);
+	TestNearlyEqual(TEXT("A non-finite age has no glow"), RatioAt(std::numeric_limits<float>::quiet_NaN()), 0.0f, GlowTolerance);
+	TestNearlyEqual(TEXT("Glow is full at the break"), RatioAt(0.0f), 1.0f, GlowTolerance);
+	TestNearlyEqual(TEXT("Glow holds until the hold time ends"), RatioAt(0.25f), 1.0f, GlowTolerance);
+	TestNearlyEqual(TEXT("Halfway through cooling the glow is halfway to charred"), RatioAt(1.25f), 0.525f, GlowTolerance);
+	TestNearlyEqual(TEXT("Cooling ends at the charred ratio"), RatioAt(2.25f), 0.05f, GlowTolerance);
+	TestNearlyEqual(TEXT("A long-cooled fragment stays charred"), RatioAt(100.0f), 0.05f, GlowTolerance);
+	TestNearlyEqual(TEXT("The largest age stays charred"), RatioAt(TNumericLimits<float>::Max()), 0.05f, GlowTolerance);
+
+	bool bNeverRises = true;
+	float PreviousRatio = RatioAt(0.0f);
+	for (int32 FrameIndex = 1; FrameIndex <= 180; ++FrameIndex)
+	{
+		const float CurrentRatio = RatioAt(static_cast<float>(FrameIndex) * FixedStepSeconds);
+		bNeverRises &= CurrentRatio <= PreviousRatio + 1e-6f;
+		PreviousRatio = CurrentRatio;
+	}
+	TestTrue(TEXT("Glow never rises while the fragment cools"), bNeverRises);
+
+	FTDFluidFragmentGlowSettings InstantSettings = Settings;
+	InstantSettings.CoolSeconds = 0.0f;
+	TestNearlyEqual(TEXT("Zero cooling time keeps full glow during the hold"), ATDFluidFragmentEmitterActor::ComputeFragmentGlowHeatRatio(InstantSettings, 0.2f), 1.0f, GlowTolerance);
+	TestNearlyEqual(TEXT("Zero cooling time drops to charred after the hold"), ATDFluidFragmentEmitterActor::ComputeFragmentGlowHeatRatio(InstantSettings, 0.3f), 0.05f, GlowTolerance);
+
+	FTDFluidFragmentGlowSettings OverbrightSettings = Settings;
+	OverbrightSettings.CharredHeatRatio = 2.0f;
+	TestNearlyEqual(TEXT("The charred ratio is clamped to full glow"), ATDFluidFragmentEmitterActor::ComputeFragmentGlowHeatRatio(OverbrightSettings, 5.0f), 1.0f, GlowTolerance);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentGlowMaterialTest,
+	"TDGame.FluidFX.Fragment.GlowMaterialAppliesOnBreakAndCools",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentGlowMaterialTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	FTDFluidFragmentTestWorld TestWorld;
+	FTDFluidFragmentRig Rig(TestWorld, 10.0f, GlowMaterialPath);
+	if (!TestTrue(TEXT("The glow rig spawns"), Rig.IsComplete()))
+	{
+		return false;
+	}
+
+	UGeometryCollectionComponent* Collection = FindSourceCollection(Rig);
+	if (!TestNotNull(TEXT("The source has a geometry collection"), Collection))
+	{
+		return false;
+	}
+
+	if (!TestTrue(TEXT("The glow material loads asynchronously"), WaitForGlowMaterial(TestWorld, *Rig.Emitter)))
+	{
+		return false;
+	}
+
+	TestWorld.TickFrames(10);
+	TestNull(TEXT("No glow material exists before the break"), Rig.Emitter->GetFragmentGlowMaterial());
+	TestNull(TEXT("The intact collection keeps its own material"), Cast<UMaterialInstanceDynamic>(Collection->GetMaterial(0)));
+
+	Rig.Emitter->TriggerBreakAt(FVector(0.0, 400.0, 50.0));
+	UMaterialInstanceDynamic* GlowMaterial = Rig.Emitter->GetFragmentGlowMaterial();
+	if (!TestNotNull(TEXT("The break creates the glow material"), GlowMaterial))
+	{
+		return false;
+	}
+
+	const FTDFluidFragmentGlowSettings& Settings = Rig.Emitter->GlowSettings;
+	TestEqual(TEXT("The glow does not change the burst stamps"), Rig.Emitter->GetTotalStampCount(), 2 * (1 + Rig.Emitter->TrailSettings.BurstRingStampCount));
+	TestTrue(TEXT("The fragment slot uses the glow material"), Collection->GetMaterial(0) == GlowMaterial);
+	TestTrue(TEXT("The glow material derives from the configured asset"), GlowMaterial->Parent == Rig.Emitter->FragmentGlowMaterialAsset.Get());
+	TestNearlyEqual(TEXT("Glow is full at the break"), ReadGlowScalar(GlowMaterial, TEXT("FragmentHeatRatio")), 1.0f, GlowTolerance);
+	TestNearlyEqual(TEXT("Glow intensity is pushed"), ReadGlowScalar(GlowMaterial, TEXT("FragmentGlowIntensity")), Settings.GlowIntensity, GlowTolerance);
+	TestNearlyEqual(TEXT("Fire heat weight is pushed"), ReadGlowScalar(GlowMaterial, TEXT("FragmentFireHeatWeight")), Settings.FireHeatWeight, GlowTolerance);
+	TestNearlyEqual(TEXT("Fire heat slab is pushed"), ReadGlowScalar(GlowMaterial, TEXT("FragmentFireHeatSlabCm")), Settings.FireHeatSlabCm, GlowTolerance);
+	TestTrue(TEXT("Hot glow color is pushed"), GlowMaterial->K2_GetVectorParameterValue(TEXT("FragmentHotGlowColor")).Equals(Settings.HotGlowColor, GlowTolerance));
+	TestTrue(TEXT("Cold glow color is pushed"), GlowMaterial->K2_GetVectorParameterValue(TEXT("FragmentColdGlowColor")).Equals(Settings.ColdGlowColor, GlowTolerance));
+
+	const float FireResolution = static_cast<float>(Rig.FireActor->LiveComponent->GetSimulationResolution());
+	TestTrue(TEXT("The fire simulation is initialised"), FireResolution > 0.0f);
+	TestNearlyEqual(TEXT("The fire heat field drives the glow material"), ReadGlowScalar(GlowMaterial, TEXT("SimGridResolution")), FireResolution, GlowTolerance);
+
+	constexpr int32 CoolingFrames = 60;
+	TestWorld.TickFrames(CoolingFrames);
+	const float CoolingRatio = ReadGlowScalar(GlowMaterial, TEXT("FragmentHeatRatio"));
+	const float EarliestRatio = ATDFluidFragmentEmitterActor::ComputeFragmentGlowHeatRatio(Settings, static_cast<float>(CoolingFrames) * FixedStepSeconds);
+	const float LatestRatio = ATDFluidFragmentEmitterActor::ComputeFragmentGlowHeatRatio(Settings, static_cast<float>(CoolingFrames - GlowMissedFrameAllowance) * FixedStepSeconds);
+	TestTrue(TEXT("One second after the break the fragment is cooling"), CoolingRatio < 1.0f - GlowTolerance && CoolingRatio > Settings.CharredHeatRatio + GlowTolerance);
+	TestTrue(TEXT("The pushed glow follows the break age"), CoolingRatio >= EarliestRatio - 1e-3f && CoolingRatio <= LatestRatio + 1e-3f);
+
+	const bool bCanCreateTextures = !IsRunningCommandlet() && FApp::CanEverRender();
+	UTexture* FireDensityTexture = Rig.FireActor->LiveComponent->GetDensityPressureTexture();
+	UTexture* GlowDensityTexture = GlowMaterial->K2_GetTextureParameterValue(TEXT("DensityPressureTexture"));
+	TestTrue(TEXT("The glow density texture exists whenever rendering is possible"), (GlowDensityTexture != nullptr) == bCanCreateTextures);
+	TestTrue(TEXT("The glow material samples the fire density texture"), GlowDensityTexture == FireDensityTexture);
+
+	TestWorld.TickFrames(FMath::CeilToInt32((Settings.HoldSeconds + Settings.CoolSeconds) / FixedStepSeconds));
+	TestNearlyEqual(TEXT("A cooled fragment is charred"), ReadGlowScalar(GlowMaterial, TEXT("FragmentHeatRatio")), Settings.CharredHeatRatio, GlowTolerance);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentGlowDefaultsTest,
+	"TDGame.FluidFX.Fragment.GlowOffWithoutMaterialAndCharredAfterTracking",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentGlowDefaultsTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	FTDFluidFragmentTestWorld TestWorld;
+	FTDFluidFragmentRig PlainRig(TestWorld, 10.0f);
+	if (!TestTrue(TEXT("The plain rig spawns"), PlainRig.IsComplete()))
+	{
+		return false;
+	}
+
+	UGeometryCollectionComponent* PlainCollection = FindSourceCollection(PlainRig);
+	if (!TestNotNull(TEXT("The plain source has a geometry collection"), PlainCollection))
+	{
+		return false;
+	}
+
+	PlainRig.Emitter->TriggerBreakAt(FVector(0.0, 400.0, 50.0));
+	TestEqual(TEXT("Without a glow asset the burst stamps keep the tracker contract"), PlainRig.Emitter->GetTotalStampCount(), 2 * (1 + PlainRig.Emitter->TrailSettings.BurstRingStampCount));
+	TestWorld.TickFrames(30);
+	TestNull(TEXT("Without a glow asset no glow material is made"), PlainRig.Emitter->GetFragmentGlowMaterial());
+	TestNull(TEXT("Without a glow asset the collection material is untouched"), PlainCollection->GetMaterial(0));
+
+	FTDFluidFragmentRig ShortRig(TestWorld, 0.1f, GlowMaterialPath);
+	if (!TestTrue(TEXT("The short glow rig spawns"), ShortRig.IsComplete()))
+	{
+		return false;
+	}
+
+	if (!TestTrue(TEXT("The short rig glow material loads"), WaitForGlowMaterial(TestWorld, *ShortRig.Emitter)))
+	{
+		return false;
+	}
+
+	ShortRig.Emitter->TriggerBreakAt(FVector(0.0, 400.0, 50.0));
+	UMaterialInstanceDynamic* GlowMaterial = ShortRig.Emitter->GetFragmentGlowMaterial();
+	if (!TestNotNull(TEXT("The short rig creates the glow material"), GlowMaterial))
+	{
+		return false;
+	}
+
+	TestNearlyEqual(TEXT("The short rig glows at the break"), ReadGlowScalar(GlowMaterial, TEXT("FragmentHeatRatio")), 1.0f, GlowTolerance);
+	TestWorld.TickFrames(30);
+	TestFalse(TEXT("The short tracking window has ended"), ShortRig.Emitter->IsTrackingFragments());
+	TestNearlyEqual(TEXT("Glow is charred once tracking stops"), ReadGlowScalar(GlowMaterial, TEXT("FragmentHeatRatio")), ShortRig.Emitter->GlowSettings.CharredHeatRatio, GlowTolerance);
 	return true;
 }
 

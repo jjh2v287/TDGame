@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 와 Windows Kits dxc.exe(ps_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_fire_hlsl.py [--root 프로젝트경로] [--dxc dxc경로]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(셰이더별 정적 표본 명령 수 포함), 하나라도 실패하면 종료 코드 1
-상태: 검증됨(2026-10-19 19/19 통과, 음성 대조 2건 검출. 2026-10-20 FX-8b 21/21, 투과율 상수 3곳 대조 추가. 2026-10-20 FX-8c 3차 22/22: View.StateFrameIndexMod8 스텁·볼륨 디더 회귀 검사·볼륨 표본 36. 2026-10-20 FX-8c 4차 G1 24/24: 불꽃·볼륨·가짜 볼륨의 위치 투영(화소·카메라·광원)은 PlaneCoordinateOffsetCm 을 더하고 방향 투영(광원 방향·월드 위)은 더하지 않는지 보는 규칙과 음성 대조 3건. 2026-10-20 FX-8c 5차 26/26: 불꽃 색 램프 끔 경로 정적 검사(흑체 색도·밝기·덮임·방출 줄 보호, 보호 변수 대입은 FlameColorRampMode 분기 안 chromaColor 만, 마스터 기본 0)와 음성 대조 10건. 2026-10-20 FX-8c 7차 30/30: 볼륨 노이즈 부드러운 절댓값 계약(NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift 기본 0, 인스턴스는 둘을 함께, TD_SHIFT_OF 두 항 모두 TD_NOISE_ABS), dxc -O3 자체 점검(엡실론 호출 인수 0 으로 접은 본문 = TD_NOISE_ABS 를 abs 로 바꾼 기준 본문, 0.04 는 다름)과 음성 대조 6건, --root 변형 사본 4개 중 4개 검출). 불·연기 셰이더 5개(TDFluidFlameCard·Ember·CharredWood·VolumeRaymarch·FakeVolume.hlsl)를 재질 스크립트의 입력 목록으로 언리얼 Custom 노드 함수 형태로 감싸 컴파일·정적 검사한다. 에디터 화면 확인은 별도(FX-8a 룩데브).
+상태: 검증됨(2026-10-19 19/19 통과, 음성 대조 2건 검출. 2026-10-20 FX-8b 21/21, 투과율 상수 3곳 대조 추가. 2026-10-20 FX-8c 3차 22/22: View.StateFrameIndexMod8 스텁·볼륨 디더 회귀 검사·볼륨 표본 36. 2026-10-20 FX-8c 4차 G1 24/24: 불꽃·볼륨·가짜 볼륨의 위치 투영(화소·카메라·광원)은 PlaneCoordinateOffsetCm 을 더하고 방향 투영(광원 방향·월드 위)은 더하지 않는지 보는 규칙과 음성 대조 3건. 2026-10-20 FX-8c 5차 26/26: 불꽃 색 램프 끔 경로 정적 검사(흑체 색도·밝기·덮임·방출 줄 보호, 보호 변수 대입은 FlameColorRampMode 분기 안 chromaColor 만, 마스터 기본 0)와 음성 대조 10건. 2026-10-20 FX-8c 7차 30/30: 볼륨 노이즈 부드러운 절댓값 계약(NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift 기본 0, 인스턴스는 둘을 함께, TD_SHIFT_OF 두 항 모두 TD_NOISE_ABS), dxc -O3 자체 점검(엡실론 호출 인수 0 으로 접은 본문 = TD_NOISE_ABS 를 abs 로 바꾼 기준 본문, 0.04 는 다름)과 음성 대조 6건, --root 변형 사본 4개 중 4개 검출). 2026-10-20 FX-8c 10차 조각 발광 셰이더 TDFluidFragmentGlow.hlsl 추가(입력 원천·평면 오프셋·정적 표본 1·C++ 값 이름 계약: 방출 액터가 넣는 Fragment* 스칼라 4개와 색 벡터 FragmentColdGlowColor·FragmentHotGlowColor 는 마스터 기본값에 있고 FragmentHeatRatio 기본 0, 라이브 컴포넌트가 등록 MID 에 넣는 평면·Aux 이름이 셰이더 입력을 덮음, 음성 대조 5건, 조각 마스터 생성 함수가 지오메트리 컬렉션 사용 플래그 함수를 부르는지 보는 문자열 규칙과 음성 대조 1건), 정적 검사만 통과(사본 37/37)하고 에디터 미실행. 불·연기 셰이더 6개(TDFluidFlameCard·Ember·CharredWood·FragmentGlow·VolumeRaymarch·FakeVolume.hlsl)를 재질 스크립트의 입력 목록으로 언리얼 Custom 노드 함수 형태로 감싸 컴파일·정적 검사한다. 에디터 화면 확인은 별도(FX-8a 룩데브).
 """
 import argparse
 import glob
@@ -29,6 +29,7 @@ ABSOLUTE_PATH_PATTERN = re.compile(r"[A-Za-z]:[\\/]")
 DEFINE_PATTERN = re.compile(r"^#define\s+([A-Za-z_][A-Za-z0-9_]*)", re.MULTILINE)
 UNDEF_PATTERN = re.compile(r"^#undef\s+([A-Za-z_][A-Za-z0-9_]*)", re.MULTILINE)
 FLAME_CARD_SAMPLE_BUDGET = 12
+FRAGMENT_SAMPLE_BUDGET = 1
 VOLUME_SAMPLE_BUDGET = 36
 VOLUME_TEXTURE_NAMES = {"NoiseVolumeTexture"}
 TEXTURE_2D_NAMES = {"DensityPressureTexture", "VelocityTexture", "AuxTexture", "TransmittanceTexture"}
@@ -37,7 +38,7 @@ TRANSMITTANCE_CONSTANT_SOURCES = (
     ("Source/TDFluidGpu/Shaders/Private/TDFluidGpuTransmittance.usf", (r"EDGE_FADE_FRACTION = (\d+\.\d+)f", r"COVERAGE_SCALE = (\d+\.\d+)f", r"HEIGHT_SCALE_RATIO = (\d+\.\d+)f", r"TOP_FADE_RATIO = (\d+\.\d+)f", r"LEVEL_COUNT = (\d+);")),
     ("Source/TDGame/FluidFX/TDFluidVolumeTransmittance.h", (r"EdgeFadeFraction = (\d+\.\d+)f", r"CoverageScale = (\d+\.\d+)f", r"HeightScaleRatio = (\d+\.\d+)f", r"TopFadeRatio = (\d+\.\d+)f", r"LevelCount = (\d+);")),
 )
-NO_ALU_NOISE_SHADERS = ("TDFluidFlameCard.hlsl", "TDFluidVolumeRaymarch.hlsl", "TDFluidFakeVolume.hlsl", "TDFluidCharredWood.hlsl")
+NO_ALU_NOISE_SHADERS = ("TDFluidFlameCard.hlsl", "TDFluidVolumeRaymarch.hlsl", "TDFluidFakeVolume.hlsl", "TDFluidCharredWood.hlsl", "TDFluidFragmentGlow.hlsl")
 RAMP_GUARD_LINE = "if (FlameColorRampMode > 0.5)"
 RAMP_PROTECTED_LINES = (
     "float3 wavelengthMicrometers = float3(0.610, 0.550, 0.465);",
@@ -61,7 +62,7 @@ RAMP_MUTATIONS = (
     ("모드 강제 켬", "if (FlameColorRampMode > 0.5)", "FlameColorRampMode = 1.0;\nif (FlameColorRampMode > 0.5)"),
     ("분기 안 chromaColor 대입 제거", "    chromaColor = rampChroma /", "    float3 unusedChroma = rampChroma /"),
 )
-SOLVER_PLANE_SHADER_LABELS = ("flame", "volume", "fake")
+SOLVER_PLANE_SHADER_LABELS = ("flame", "volume", "fake", "fragment")
 POSITION_INPUT_NAMES = ("PixelWorldPosition", "CameraWorldPosition", "VolumeLightPosition")
 DIRECTION_INPUT_PATTERNS = ("VolumeLightDirection", "float3(0.0, 0.0, 1.0)")
 PLANE_PROJECTION_MARKERS = ("PlaneAxisU", "TD_TO_PLANE(", "TD_TO_SOLVER_PLANE(")
@@ -70,12 +71,27 @@ SOLVER_PLANE_MUTATIONS = (
     ("volume", "TD_TO_SOLVER_PLANE(VolumeLightPosition)", "TD_TO_PLANE(VolumeLightPosition)"),
     ("volume", "TD_TO_PLANE(VolumeLightDirection)", "TD_TO_SOLVER_PLANE(VolumeLightDirection)"),
     ("flame", ") + PlaneCoordinateOffsetCm.xy;", ");"),
+    ("fragment", ") + PlaneCoordinateOffsetCm.xy;", ");"),
 )
 SOFT_ABS_DEFAULTS = (("NoiseSoftAbsEpsilon", 0.0), ("NoiseSoftAbsMeanShift", 0.0))
 SOFT_ABS_DEFINE_PREFIX = "#define TD_NOISE_ABS(X) "
 SOFT_ABS_SHIFT_PREFIX = "#define TD_SHIFT_OF(S) "
 SOFT_ABS_REFERENCE_DEFINE = "#define TD_NOISE_ABS(X) abs(X)"
 SOFT_ABS_CALL_PATTERN = re.compile(r"^(return CustomExpression0\(.*)\bInput_NoiseSoftAbsEpsilon\b", re.MULTILINE)
+FRAGMENT_EMITTER_SOURCE = ("Source", "TDGame", "FluidFX", "TDFluidFragmentEmitterActor.cpp")
+LIVE_COMPONENT_SOURCE = ("Source", "TDGame", "FluidFX", "TDFluidLiveComponent.cpp")
+FRAGMENT_EMITTER_PUSH_PATTERN = re.compile(r'FragmentGlowMaterial->SetScalarParameterValue\(TEXT\("(\w+)"\)')
+LIVE_MID_PUSH_PATTERN = re.compile(r'TargetMID->Set(?:Scalar|Vector|Texture)ParameterValue\(TEXT\("(\w+)"\)')
+FRAGMENT_REGISTRATION_LINE = "RegisterExternalMaterialTarget(FragmentGlowMaterial)"
+FRAGMENT_EMITTER_SCALARS = ("FragmentHeatRatio", "FragmentGlowIntensity", "FragmentFireHeatWeight", "FragmentFireHeatSlabCm")
+FRAGMENT_EMITTER_VECTOR_PUSH_PATTERN = re.compile(r'FragmentGlowMaterial->SetVectorParameterValue\(TEXT\("(\w+)"\)')
+FRAGMENT_EMITTER_VECTORS = ("FragmentColdGlowColor", "FragmentHotGlowColor")
+FRAGMENT_MATERIAL_SCRIPT = ("Tools", "FluidFX", "editor_make_fluid_flame_material.py")
+FRAGMENT_MASTER_FUNCTION = "create_fragment_master"
+FRAGMENT_USAGE_FUNCTION = "enable_geometry_collection_usage"
+FRAGMENT_USAGE_CALL = "usage = enable_geometry_collection_usage(material)"
+FRAGMENT_USAGE_FLAG_CALL = "set_material_usage(material, unreal.MaterialUsage.MATUSAGE_GEOMETRY_COLLECTIONS)"
+FRAGMENT_REGISTRATION_INPUTS = ("SimCenterWorld", "SimExtentsCm", "PlaneAxisU", "PlaneAxisV", "PlaneAxisN", "PlaneCoordinateOffsetCm", "ExtrudeSymmetric", "AuxTexture", "AuxHeatActive")
 SOFT_ABS_DXC_MUTATIONS = (
     ("켬 조건 >=", "NoiseSoftAbsEpsilon > 0.0", "NoiseSoftAbsEpsilon >= 0.0"),
     ("끔 경로 abs → sqrt(X²)", ": abs(X))", ": sqrt((X) * (X)))"),
@@ -105,6 +121,7 @@ def describe_nodes(flame, volume):
     flame_vectors = {name for name, _ in flame.FLAME_VECTOR_PARAMETER_DEFAULTS} | {"PixelWorldPosition"}
     wood_vectors = {name for name, _ in flame.WOOD_VECTOR_PARAMETER_DEFAULTS} | {"PixelWorldPosition"}
     builtin_vectors = {"PixelWorldPosition", "CameraWorldPosition"}
+    fragment_vectors = {name for name, _ in flame.FRAGMENT_VECTOR_PARAMETER_DEFAULTS} | set(flame.FRAGMENT_BUILTIN_SOURCE_NAMES)
     return (
         {
             "label": "flame",
@@ -131,6 +148,14 @@ def describe_nodes(flame, volume):
             "vectors": wood_vectors,
             "output": "float4",
             "sources": wood_vectors | {name for name, _ in flame.WOOD_SCALAR_PARAMETER_DEFAULTS} | {"ElapsedSeconds", flame.NOISE_TEXTURE_PARAMETER_NAME},
+        },
+        {
+            "label": "fragment",
+            "hlsl": "TDFluidFragmentGlow.hlsl",
+            "inputs": flame.FRAGMENT_CUSTOM_INPUT_NAMES,
+            "vectors": fragment_vectors,
+            "output": "float3",
+            "sources": fragment_vectors | {name for name, _ in flame.FRAGMENT_SCALAR_PARAMETER_DEFAULTS} | set(flame.FRAGMENT_TEXTURE_PARAMETER_NAMES),
         },
         {
             "label": "volume",
@@ -267,6 +292,15 @@ def find_flame_contract_problems(flame, nodes):
         unknown = sorted(set(spec["scalar_overrides"]) - flame_scalars)
         if unknown:
             problems.append(f"{spec['name']} 덮어쓰기 이름이 마스터에 없음: " + ", ".join(unknown))
+    fragment_scalars = {name for name, _ in flame.FRAGMENT_SCALAR_PARAMETER_DEFAULTS}
+    fragment_vector_names = {name for name, _ in flame.FRAGMENT_VECTOR_PARAMETER_DEFAULTS}
+    for spec in flame.FRAGMENT_INSTANCE_SPECS:
+        unknown = sorted((set(spec["scalar_overrides"]) - fragment_scalars) | (set(spec.get("vector_overrides", {})) - fragment_vector_names))
+        if unknown:
+            problems.append(f"{spec['name']} 덮어쓰기 이름이 마스터에 없음: " + ", ".join(unknown))
+    missing_surface = sorted(set(flame.FRAGMENT_SURFACE_PARAMETER_NAMES) - fragment_scalars - fragment_vector_names)
+    if missing_surface:
+        problems.append("조각 표면 매개변수가 마스터에 없음: " + ", ".join(missing_surface))
     wood_scalars = {name for name, _ in flame.WOOD_SCALAR_PARAMETER_DEFAULTS}
     for spec in flame.WOOD_INSTANCE_SPECS:
         unknown = sorted(set(spec["scalar_overrides"]) - wood_scalars)
@@ -366,12 +400,86 @@ def read_transmittance_constants(root):
     return constants
 
 
+def find_fragment_push_problems(flame, emitter_text, live_text):
+    problems = []
+    scalars = dict(flame.FRAGMENT_SCALAR_PARAMETER_DEFAULTS)
+    pushed = set(FRAGMENT_EMITTER_PUSH_PATTERN.findall(emitter_text))
+    missing_pushes = sorted(set(FRAGMENT_EMITTER_SCALARS) - pushed)
+    if missing_pushes:
+        problems.append("방출 액터가 넣지 않는 조각 스칼라: " + ", ".join(missing_pushes))
+    unknown_pushes = sorted(pushed - set(scalars))
+    if unknown_pushes:
+        problems.append("방출 액터가 넣는 이름이 조각 마스터에 없음: " + ", ".join(unknown_pushes))
+    vector_names = {name for name, _ in flame.FRAGMENT_VECTOR_PARAMETER_DEFAULTS}
+    pushed_vectors = set(FRAGMENT_EMITTER_VECTOR_PUSH_PATTERN.findall(emitter_text))
+    missing_vector_pushes = sorted(set(FRAGMENT_EMITTER_VECTORS) - pushed_vectors)
+    if missing_vector_pushes:
+        problems.append("방출 액터가 넣지 않는 조각 색 벡터: " + ", ".join(missing_vector_pushes))
+    unknown_vector_pushes = sorted(pushed_vectors - vector_names)
+    if unknown_vector_pushes:
+        problems.append("방출 액터가 넣는 벡터 이름이 조각 마스터 벡터 기본값에 없음: " + ", ".join(unknown_vector_pushes))
+    if FRAGMENT_REGISTRATION_LINE not in emitter_text:
+        problems.append("방출 액터가 조각 MID 를 불 라이브 컴포넌트에 등록하지 않음")
+    registered = set(LIVE_MID_PUSH_PATTERN.findall(live_text))
+    missing_registered = sorted(set(FRAGMENT_REGISTRATION_INPUTS) - registered)
+    if missing_registered:
+        problems.append("라이브 컴포넌트가 등록 MID 에 넣지 않는 셰이더 입력: " + ", ".join(missing_registered))
+    not_inputs = sorted(set(FRAGMENT_REGISTRATION_INPUTS) - set(flame.FRAGMENT_CUSTOM_INPUT_NAMES))
+    if not_inputs:
+        problems.append("등록 이름이 조각 셰이더 입력에 없음: " + ", ".join(not_inputs))
+    if scalars.get("FragmentHeatRatio") != 0.0:
+        problems.append(f"마스터 FragmentHeatRatio 기본값 {scalars.get('FragmentHeatRatio')}(기대 0.0)")
+    return problems
+
+
+def find_undetected_fragment_push_mutations(flame, emitter_text, live_text):
+    mutations = (
+        ("열 비율 이름 오타", emitter_text.replace('TEXT("FragmentHeatRatio")', 'TEXT("FragmentHeatRatios")', 1), live_text, flame),
+        ("불 등록 누락", emitter_text.replace(FRAGMENT_REGISTRATION_LINE, "RegisterExternalMaterialTarget(nullptr)", 1), live_text, flame),
+        ("평면 법선 이름 누락", emitter_text, live_text.replace('TEXT("PlaneAxisN")', 'TEXT("PlaneAxisNormal")'), flame),
+        ("마스터 열 비율 기본 1", emitter_text, live_text, FragmentDefaultsOverride(flame, {"FragmentHeatRatio": 1.0})),
+        ("마스터 뜨거운 색 기본값 누락", emitter_text, live_text, FragmentDefaultsOverride(flame, dropped_vector="FragmentHotGlowColor")),
+    )
+    return [label for label, emitter, live, source in mutations if not find_fragment_push_problems(source, emitter, live)]
+
+
+class FragmentDefaultsOverride:
+    def __init__(self, flame, scalar_overrides=None, dropped_vector=""):
+        overrides = scalar_overrides or {}
+        self.FRAGMENT_SCALAR_PARAMETER_DEFAULTS = tuple((key, overrides.get(key, default)) for key, default in flame.FRAGMENT_SCALAR_PARAMETER_DEFAULTS)
+        self.FRAGMENT_VECTOR_PARAMETER_DEFAULTS = tuple((key, default) for key, default in flame.FRAGMENT_VECTOR_PARAMETER_DEFAULTS if key != dropped_vector)
+        self.FRAGMENT_CUSTOM_INPUT_NAMES = flame.FRAGMENT_CUSTOM_INPUT_NAMES
+
+
+def find_python_function_body(text, name):
+    start = text.find(f"\ndef {name}(")
+    if start < 0:
+        return ""
+    end = text.find("\ndef ", start + 1)
+    return text[start:] if end < 0 else text[start:end]
+
+
+def find_fragment_usage_problems(flame_text):
+    problems = []
+    if FRAGMENT_USAGE_CALL not in find_python_function_body(flame_text, FRAGMENT_MASTER_FUNCTION):
+        problems.append(f"{FRAGMENT_MASTER_FUNCTION} 가 {FRAGMENT_USAGE_FUNCTION} 를 부르지 않음")
+    if FRAGMENT_USAGE_FLAG_CALL not in find_python_function_body(flame_text, FRAGMENT_USAGE_FUNCTION):
+        problems.append(f"{FRAGMENT_USAGE_FUNCTION} 가 MATUSAGE_GEOMETRY_COLLECTIONS 를 켜지 않음")
+    return problems
+
+
+def read_project_text(root, parts):
+    path = root.joinpath(*parts)
+    return path.read_text(encoding="utf-8") if path.is_file() else ""
+
+
 def find_script_self_check_problems(flame, volume):
     problems = []
     for node_code, inputs, samplers, symbols in (
         (flame.FLAME_HLSL_RELATIVE_PATH, flame.FLAME_CUSTOM_INPUT_NAMES, flame.FLAME_HLSL_SAMPLER_NAMES, flame.FLAME_HLSL_ENGINE_SYMBOLS),
         (flame.EMBER_HLSL_RELATIVE_PATH, flame.EMBER_CUSTOM_INPUT_NAMES, (), flame.EMBER_HLSL_ENGINE_SYMBOLS),
         (flame.WOOD_HLSL_RELATIVE_PATH, flame.WOOD_CUSTOM_INPUT_NAMES, flame.WOOD_HLSL_SAMPLER_NAMES, flame.WOOD_HLSL_ENGINE_SYMBOLS),
+        (flame.FRAGMENT_HLSL_RELATIVE_PATH, flame.FRAGMENT_CUSTOM_INPUT_NAMES, flame.FRAGMENT_HLSL_SAMPLER_NAMES, flame.FRAGMENT_HLSL_ENGINE_SYMBOLS),
     ):
         _, code = flame.load_hlsl_code(node_code)
         problems += flame.validate_hlsl_code(code, inputs, samplers, symbols)
@@ -438,7 +546,18 @@ def main():
     self_problems = find_script_self_check_problems(flame, volume)
     record("재질 스크립트 자체 점검(입력 사용·샘플러·엔진 심볼·괄호·인스턴스 이름)", not self_problems, "; ".join(self_problems))
     contract_problems = find_flame_contract_problems(flame, nodes)
-    record("불꽃·불티·장작 입력 원천과 혼합 요청 사상", not contract_problems, "; ".join(contract_problems))
+    record("불꽃·불티·장작·조각 입력 원천과 혼합 요청 사상", not contract_problems, "; ".join(contract_problems))
+    emitter_text = read_project_text(root, FRAGMENT_EMITTER_SOURCE)
+    live_text = read_project_text(root, LIVE_COMPONENT_SOURCE)
+    fragment_push_problems = find_fragment_push_problems(flame, emitter_text, live_text)
+    record("조각 발광 C++ 값 이름 계약(방출 액터 Fragment* 스칼라 4개·색 벡터 2개가 마스터 기본값에 있음, MID 를 불 라이브 컴포넌트에 등록, 등록 MID 의 평면·Aux 이름 9개가 셰이더 입력, 마스터 FragmentHeatRatio 기본 0)", not fragment_push_problems, "; ".join(fragment_push_problems))
+    undetected_fragment_push = find_undetected_fragment_push_mutations(flame, emitter_text, live_text)
+    record("음성 대조: 조각 값 이름 계약 변형 5건(열 비율 이름 오타·불 등록 누락·평면 법선 이름 누락·마스터 열 비율 기본 1·마스터 뜨거운 색 기본값 누락)을 잡음", not undetected_fragment_push, ", ".join(undetected_fragment_push))
+    flame_text = read_project_text(root, FRAGMENT_MATERIAL_SCRIPT)
+    usage_problems = find_fragment_usage_problems(flame_text)
+    record("조각 마스터 생성 함수가 지오메트리 컬렉션 사용 플래그를 켬(create_fragment_master → enable_geometry_collection_usage → MATUSAGE_GEOMETRY_COLLECTIONS)", not usage_problems, "; ".join(usage_problems))
+    removed_usage_text = flame_text.replace(FRAGMENT_USAGE_CALL, 'usage = "MATUSAGE_GEOMETRY_COLLECTIONS"', 1)
+    record("음성 대조: 조각 마스터 생성 함수의 사용 플래그 호출 삭제를 잡음", removed_usage_text != flame_text and bool(find_fragment_usage_problems(removed_usage_text)))
     transmittance_constants = read_transmittance_constants(root)
     constant_values = set(transmittance_constants.values())
     record(
@@ -468,6 +587,11 @@ def main():
             f"불꽃 카드 정적 표본 수 = {FLAME_CARD_SAMPLE_BUDGET}(흐름 1·미리보기 밀도 1·노이즈 2위상×2·Catmull-Rom 5·Aux 열 1)",
             sample_counts.get("flame") == FLAME_CARD_SAMPLE_BUDGET,
             f"{sample_counts.get('flame')}",
+        )
+        record(
+            f"조각 발광 정적 표본 수 = {FRAGMENT_SAMPLE_BUDGET}(Aux 열 1)",
+            sample_counts.get("fragment") == FRAGMENT_SAMPLE_BUDGET,
+            f"{sample_counts.get('fragment')}",
         )
         record(
             f"볼륨 정적 표본 수 = {VOLUME_SAMPLE_BUDGET}(FX-8a 33 + 투과율 1 + Aux 껍질 1 + Aux 표면 1)",

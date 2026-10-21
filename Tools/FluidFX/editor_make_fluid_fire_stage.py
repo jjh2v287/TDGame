@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불·폭발 무대 LV_TDFluidFireStage(장면 1 횃불을 든 폰, 장면 2 모닥불과 연기, 장면 3 폭발 블록)와 프리셋 6종·벽돌 지오메트리 컬렉션을 만든다. 먼저 editor_make_fluid_volume_material.py 와 editor_make_fluid_flame_material.py 가 성공하고 C++ 재빌드·에디터 재시작이 끝나 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fire_stage.py
 출력: /Game/FluidFX/Presets/DA_TDFluid_TorchFlame·CampfireFlame·CampfireSmoke·ExplosionFire·ExplosionSmoke·ExplosionGroundDust, /Game/FluidFX/Destruction/GC_TD_FluidExplosionCube, /Game/FluidFX/Maps/LV_TDFluidFireStage, Saved/FluidFX/fluid_fire_stage.json
-상태: 검증됨(2026-10-18 FX-3 불 무대 생성·쇼케이스·탐침 성공, 2026-10-20 FX-8b C++ 빌더 프리셋 6종·지면 먼지·조각 대상 배열로 재생성 17액터, 2026-10-20 14:20 FX-8c 6차 재생성 생성 액터 18개). FX-8c 5차 굽기(2026-10-20: 모닥불 depth_bias 40→10, 폭발 조각 대상 burst_radius_scale 연기 2.5→1.75·먼지 1.6→1.12, 먼지 볼륨 재질 MI_TD_FluidVolume_GroundDust 와 위치 z 50→0, 횃불 막대 Transform 을 손 소켓 축 방향 위치 (-25.15, 15.69, -4.63)·길이 60cm 로, 불씨 source_offset_cm 을 같은 축 50cm (-41.91, 26.15, -7.71) 로 넣고 다시 읽어 확인)는 C++ 굽기 값(폭발 트레일 코어 200·고리 0, 폭발 연기 열 발광색, 카드 축소 1.0) 재빌드 뒤 6차 재생성에서 반영 통과(액터 18, 먼지 MI·z0, 횃불 막대·오프셋 다시 읽기). 에셋·맵이 이미 있으면 Saved/FluidFX/fluid_fire_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. FX-8c 7차 부엽(2026-10-20): C++ 폭발 트레일 코어 200→160·부엽 6개에 맞춰 폭발 조각 대상 burst_radius_scale 연기 1.75→2.1875·먼지 1.12→1.4(연기·먼지 버스트 반지름 350·224cm 그대로). FX-8c 8차(2026-10-20): 폭발 연기 ExplosionSmoke 만 볼륨 재질 MI_TD_FluidVolume_ExplosionBillow(soft-abs ε 0.04·평균 변위 δ 0.08456)를 쓰고 모닥불 연기는 MI_TD_FluidVolume_SmokeBillow 그대로다. 7차·8차는 C++ 재빌드 뒤 2026-10-20 17:22 재생성·다시 읽기 통과(트레일 코어 160·부엽 6·시드 0, 대상 burst_radius_scale 1.0·2.1875·1.4, 생성 액터 18), PIE 외형은 미검증. FX-8c 8차 묶음 A·B 굽기(2026-10-20): C++ 폭발 트레일 코어 160·부엽 6 → 코어 224·부엽 0 에 맞춰 폭발 조각 대상 burst_radius_scale 연기 2.1875→1.5625·먼지 1.4→1.0(연기·먼지 버스트 반지름 350·224cm 그대로), 불 액터 light 에 min_kelvin·max_kelvin 을 넣어 색온도 최소·최대를 설정(횃불·모닥불 1500/2100 = C++ 기본, 폭발 1100/1400), C++ 폭발 연기 열 발광 지수 3.0. 재빌드·재생성 전이다.
+상태: 검증됨(2026-10-18 FX-3 불 무대 생성·쇼케이스·탐침 성공, 2026-10-20 FX-8b C++ 빌더 프리셋 6종·지면 먼지·조각 대상 배열로 재생성 17액터, 2026-10-20 14:20 FX-8c 6차 재생성 생성 액터 18개). FX-8c 5차 굽기(2026-10-20: 모닥불 depth_bias 40→10, 폭발 조각 대상 burst_radius_scale 연기 2.5→1.75·먼지 1.6→1.12, 먼지 볼륨 재질 MI_TD_FluidVolume_GroundDust 와 위치 z 50→0, 횃불 막대 Transform 을 손 소켓 축 방향 위치 (-25.15, 15.69, -4.63)·길이 60cm 로, 불씨 source_offset_cm 을 같은 축 50cm (-41.91, 26.15, -7.71) 로 넣고 다시 읽어 확인)는 C++ 굽기 값(폭발 트레일 코어 200·고리 0, 폭발 연기 열 발광색, 카드 축소 1.0) 재빌드 뒤 6차 재생성에서 반영 통과(액터 18, 먼지 MI·z0, 횃불 막대·오프셋 다시 읽기). 에셋·맵이 이미 있으면 Saved/FluidFX/fluid_fire_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. FX-8c 7차 부엽(2026-10-20): C++ 폭발 트레일 코어 200→160·부엽 6개에 맞춰 폭발 조각 대상 burst_radius_scale 연기 1.75→2.1875·먼지 1.12→1.4(연기·먼지 버스트 반지름 350·224cm 그대로). FX-8c 8차(2026-10-20): 폭발 연기 ExplosionSmoke 만 볼륨 재질 MI_TD_FluidVolume_ExplosionBillow(soft-abs ε 0.04·평균 변위 δ 0.08456)를 쓰고 모닥불 연기는 MI_TD_FluidVolume_SmokeBillow 그대로다. 7차·8차는 C++ 재빌드 뒤 2026-10-20 17:22 재생성·다시 읽기 통과(트레일 코어 160·부엽 6·시드 0, 대상 burst_radius_scale 1.0·2.1875·1.4, 생성 액터 18), PIE 외형은 미검증. FX-8c 8차 묶음 A·B 굽기(2026-10-20): C++ 폭발 트레일 코어 160·부엽 6 → 코어 224·부엽 0 에 맞춰 폭발 조각 대상 burst_radius_scale 연기 2.1875→1.5625·먼지 1.4→1.0(연기·먼지 버스트 반지름 350·224cm 그대로), 불 액터 light 에 min_kelvin·max_kelvin 을 넣어 색온도 최소·최대를 설정(횃불·모닥불 1500/2100 = C++ 기본, 폭발 1100/1400), C++ 폭발 연기 열 발광 지수 3.0. 재빌드·재생성 전이다. FX-8c 10차 조각 발광(2026-10-20): 폭발 조각 방출 액터 fragment_glow_material_asset 에 MI_TD_FluidFragmentGlow_Explosion(editor_make_fluid_flame_material.py 가 먼저 만든다)을 소프트 참조로 넣고 다시 읽어 확인한다. C++ 가 부서진 뒤 비동기 로드한 재질로 MID 를 만들어 조각 컬렉션 슬롯에 넣고 나이 열 비율·폭발 불 Aux 열을 넣는다(glow_settings 는 C++ 기본). 재빌드·재질·재생성 전이다. FX-8c 10차 굽기(2026-10-21): 횃불·모닥불 light min_kelvin·max_kelvin 1500/2100 → 1100/1400(폭발과 같은 띠, runner10 L1: 모닥불 바닥 색상 35→15°, 폰 몸통 41→18°, 혀 곡선 13.2).
 """
 import json
 import os
@@ -35,6 +35,7 @@ FLAME_INSTANCE_PATHS = {
     "explosion": f"{MATERIAL_DIR}/MI_TD_FluidFlame_Explosion",
 }
 EMBER_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidEmber_Default"
+FRAGMENT_GLOW_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidFragmentGlow_Explosion"
 SMOKE_VOLUME_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidVolume_SmokeBillow"
 EXPLOSION_SMOKE_VOLUME_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidVolume_ExplosionBillow"
 DUST_VOLUME_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidVolume_GroundDust"
@@ -140,12 +141,12 @@ EXPLOSION_TARGET_SPECS = (
 FIRE_ACTOR_SPECS = {
     "TorchFire": {
         "preset": "TorchFlame",
-        "light": {"candelas": 60.0, "reference_area": 1328.0, "shadows": False, "height_offset": 15.0, "min_kelvin": 1500.0, "max_kelvin": 2100.0},
+        "light": {"candelas": 60.0, "reference_area": 1328.0, "shadows": False, "height_offset": 15.0, "min_kelvin": 1100.0, "max_kelvin": 1400.0},
         "ember": {"max": 64, "per_second": 10.0},
     },
     "CampfireFire": {
         "preset": "CampfireFlame",
-        "light": {"candelas": 160.0, "reference_area": 5265.0, "shadows": True, "height_offset": 60.0, "min_kelvin": 1500.0, "max_kelvin": 2100.0},
+        "light": {"candelas": 160.0, "reference_area": 5265.0, "shadows": True, "height_offset": 60.0, "min_kelvin": 1100.0, "max_kelvin": 1400.0},
         "ember": {"max": 256, "per_second": 40.0},
     },
     "ExplosionFire": {
@@ -221,6 +222,16 @@ STRUCT_CONTRACTS = {
         "burst_lobe_count",
         "ember_burst_count",
     ),
+    "TDFluidFragmentGlowSettings": (
+        "hold_seconds",
+        "cool_seconds",
+        "charred_heat_ratio",
+        "glow_intensity",
+        "fire_heat_weight",
+        "fire_heat_slab_cm",
+        "cold_glow_color",
+        "hot_glow_color",
+    ),
 }
 OBJECT_CONTRACTS = {
     "TDFluidPresetAsset": (
@@ -262,6 +273,8 @@ OBJECT_CONTRACTS = {
         "fire_target_actor",
         "smoke_target_actor",
         "trail_settings",
+        "fragment_glow_material_asset",
+        "glow_settings",
     ),
     "TDFluidFireLightComponent": (
         "is_driven_by_fluid",
@@ -774,6 +787,7 @@ def main():
         "sphere": assets.load_asset(SPHERE_MESH_PATH),
         "cylinder": assets.load_asset(CYLINDER_MESH_PATH),
         "ember_material": assets.load_asset(EMBER_INSTANCE_PATH),
+        "fragment_glow_material": assets.load_asset(FRAGMENT_GLOW_INSTANCE_PATH),
         "smoke_volume": assets.load_asset(SMOKE_VOLUME_INSTANCE_PATH),
         "explosion_smoke_volume": assets.load_asset(EXPLOSION_SMOKE_VOLUME_INSTANCE_PATH),
         "dust_volume": assets.load_asset(DUST_VOLUME_INSTANCE_PATH),
@@ -928,6 +942,9 @@ def main():
     fragment_emitter.set_editor_property("fire_target_actor", explosion_fire)
     fragment_emitter.set_editor_property("smoke_target_actor", explosion_smoke)
     fragment_emitter.set_editor_property("trail_settings", unreal.TDFluidPresetAsset.build_fragment_trail_for_preset_kind(unreal.TDFluidPresetKind.EXPLOSION))
+    fragment_emitter.set_editor_property("fragment_glow_material_asset", assets_by_name["fragment_glow_material"])
+    if fragment_emitter.get_editor_property("fragment_glow_material_asset") is None:
+        raise RuntimeError("조각 방출 액터의 조각 발광 재질 지정 확인 실패")
     explosion_target_actors = {"fire": explosion_fire, "smoke": explosion_smoke, "dust": explosion_dust}
     fragment_emitter.set_editor_property("targets", [make_fragment_target(target_spec, explosion_target_actors[target_spec["actor"]]) for target_spec in EXPLOSION_TARGET_SPECS])
     if len(fragment_emitter.get_editor_property("targets")) != len(EXPLOSION_TARGET_SPECS):
@@ -959,6 +976,7 @@ def main():
         "overwrite": overwrite,
         "created_matte_master": matte_created,
         "geometry_collection": GEOMETRY_COLLECTION_PATH,
+        "fragment_glow_material": FRAGMENT_GLOW_INSTANCE_PATH,
         "brick_count": list(BRICK_COUNT),
         "brick_size_cm": BRICK_SIZE_CM,
         "presets": {

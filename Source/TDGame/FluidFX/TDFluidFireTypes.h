@@ -266,3 +266,33 @@ struct TDGAME_API FTDFluidFlameCardLayerSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireCards", meta = (ClampMin = "0.0", ClampMax = "2.0"))
 	float CardIntensityScale = 0.7f;
 };
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidFragmentGlowSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.0"))
+	float HoldSeconds = 0.3f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.0"))
+	float CoolSeconds = 1.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float CharredHeatRatio = 0.04f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.0"))
+	float GlowIntensity = 4.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.0"))
+	float FireHeatWeight = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "1.0"))
+	float FireHeatSlabCm = 250.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow")
+	FLinearColor ColdGlowColor = FLinearColor(1.0f, 0.012f, 0.03f, 1.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow")
+	FLinearColor HotGlowColor = FLinearColor(1.0f, 0.03f, 0.035f, 1.0f);
+};

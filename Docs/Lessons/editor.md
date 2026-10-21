@@ -403,3 +403,11 @@
 - 증거: `Saved/AgentOps/20261020/fx8c/round6/accept-judge.md` 0·2절, `scratch/accept-judge/glow_decompose.json`
 - 날짜·상태: 2026-10-20 active
 - 발견: claude(FX-8c accept-judge)
+### L-editor-49 간격 틱(PrimaryActorTick.TickInterval)을 쓰는 액터의 DeltaSeconds 누적으로 '경과 시간'을 재면 틱 위상에 따라 최대 한 간격만큼 어긋난다
+- 증상: 조각 발광 나이를 DeltaSeconds 합으로 재자, 무장 폴 간격 0.1초인 방출 액터에서 부서진 뒤 60프레임 나이가 1.033~1.067초가 되어 시험 하한(비율 0.677)을 0.626~0.652로 놓쳤다(부서지는 프레임 10·11·12 모사 모두 실패).
+- 원인: UE 5.8 `TickTaskManager.cpp:2825-2846` CalculateDeltaTime은 bWasInterval이면 마지막 간격 틱 이후 시간을 돌려주고, bWasInterval은 1358-1368에서 참이 된 뒤 거짓으로 돌아오지 않는다. 그래서 간격을 끈 뒤 첫 DeltaSeconds에 이전 폴 이후 시간이 더해진다.
+- 해결: 사건 이후 경과 시간은 사건 시각의 `GetWorld()->GetTimeSeconds()`를 저장하고 현재 월드 시간과의 차로 잰다(일시정지·전역 시간 배율 반영, 액터별 CustomTimeDilation만 다름).
+- 범위: 틱 간격을 바꾸는 액터·컴포넌트의 시간 누적
+- 증거: `Saved/AgentOps/20261020/fx8c/round10/frag-refuter.md` 1절, `scratch/frag-fixer/tick_phase_sim_world_time.json`, 시험 `TDGame.FluidFX.Fragment.GlowMaterialAppliesOnBreakAndCools` 초록
+- 날짜·상태: 2026-10-21 active
+- 발견: claude(FX-8c frag-refuter)

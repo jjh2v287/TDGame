@@ -1,6 +1,9 @@
 #include "FluidFX/TDFluidFragmentEmitterActor.h"
 #include "Actors/TDBreakableActor.h"
 #include "Components/SceneComponent.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/World.h"
 #include "FluidFX/TDFluidBandLimitedNoise.h"
 #include "FluidFX/TDFluidEmberComponent.h"
 #include "FluidFX/TDFluidFireActor.h"
@@ -10,6 +13,8 @@
 #include "GeometryCollection/GeometryCollection.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
 #include "GeometryCollection/GeometryCollectionObject.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
 
 namespace
 {
@@ -159,6 +164,7 @@ void ATDFluidFragmentEmitterActor::BeginPlay()
 		return;
 	}
 
+	RequestFragmentGlowMaterial();
 	SetActorTickInterval(TrailSettings.ArmedPollIntervalSeconds);
 	SetActorTickEnabled(true);
 }
@@ -170,6 +176,11 @@ void ATDFluidFragmentEmitterActor::EndPlay(const EEndPlayReason::Type EndPlayRea
 		SourceBreakableActor->OnBrokenNative.Remove(SourceBrokenDelegateHandle);
 	}
 	SourceBrokenDelegateHandle.Reset();
+	if (FragmentGlowLoadHandle.IsValid())
+	{
+		FragmentGlowLoadHandle->CancelHandle();
+		FragmentGlowLoadHandle.Reset();
+	}
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -278,9 +289,12 @@ void ATDFluidFragmentEmitterActor::BeginFragmentTracking(const FVector& CenterWo
 	StampBurst(CenterWorld);
 
 	TrackingElapsedSeconds = 0.0f;
+	FragmentBreakWorldSeconds = GetWorld()->GetTimeSeconds();
 	bIsTracking = true;
 	SetActorTickInterval(0.0f);
 	SetActorTickEnabled(true);
+	RequestFragmentGlowMaterial();
+	ApplyFragmentGlowMaterial();
 }
 
 void ATDFluidFragmentEmitterActor::CollectLeafTransformIndices(const UGeometryCollectionComponent& Component)
@@ -427,6 +441,7 @@ void ATDFluidFragmentEmitterActor::StepFragmentTracking(float DeltaSeconds)
 	}
 	RecordStampedLeaves(StampedLeafIndices);
 	UpdateMovedLeafCount(CurrentPositions);
+	PushFragmentGlowParameters();
 
 	if (TrackingElapsedSeconds >= TrailSettings.TrackingDurationSeconds)
 	{
@@ -491,6 +506,120 @@ void ATDFluidFragmentEmitterActor::StopFragmentTracking()
 {
 	bIsTracking = false;
 	SetActorTickEnabled(false);
+	PushFragmentGlowParameters();
+}
+
+void ATDFluidFragmentEmitterActor::RequestFragmentGlowMaterial()
+{
+	if (FragmentGlowMaterialAsset.IsNull() || FragmentGlowLoadHandle.IsValid())
+	{
+		return;
+	}
+
+	FragmentGlowLoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		FragmentGlowMaterialAsset.ToSoftObjectPath(),
+		FStreamableDelegate::CreateUObject(this, &ATDFluidFragmentEmitterActor::HandleFragmentGlowMaterialLoaded));
+}
+
+void ATDFluidFragmentEmitterActor::HandleFragmentGlowMaterialLoaded()
+{
+	if (!bHasStartedTracking)
+	{
+		return;
+	}
+
+	ApplyFragmentGlowMaterial();
+}
+
+void ATDFluidFragmentEmitterActor::ApplyFragmentGlowMaterial()
+{
+	if (FragmentGlowMaterial)
+	{
+		return;
+	}
+
+	UMaterialInterface* LoadedGlowMaterial = FragmentGlowMaterialAsset.Get();
+	UGeometryCollectionComponent* Component = GeometryCollectionComponent.Get();
+	if (!LoadedGlowMaterial || !Component)
+	{
+		return;
+	}
+
+	FragmentGlowMaterial = UMaterialInstanceDynamic::Create(LoadedGlowMaterial, this);
+	const int32 MaterialSlotCount = FMath::Max(Component->GetNumMaterials(), 1);
+	for (int32 SlotIndex = 0; SlotIndex < MaterialSlotCount; ++SlotIndex)
+	{
+		Component->SetMaterial(SlotIndex, FragmentGlowMaterial);
+	}
+
+	if (UTDFluidLiveComponent* HeatSource = ResolveFragmentGlowHeatSource())
+	{
+		HeatSource->RegisterExternalMaterialTarget(FragmentGlowMaterial);
+	}
+	PushFragmentGlowParameters();
+}
+
+void ATDFluidFragmentEmitterActor::PushFragmentGlowParameters()
+{
+	if (!FragmentGlowMaterial)
+	{
+		return;
+	}
+
+	FragmentGlowMaterial->SetScalarParameterValue(TEXT("FragmentHeatRatio"), ComputeFragmentGlowHeatRatio(GlowSettings, GetFragmentGlowAgeSeconds()));
+	FragmentGlowMaterial->SetScalarParameterValue(TEXT("FragmentGlowIntensity"), GlowSettings.GlowIntensity);
+	FragmentGlowMaterial->SetScalarParameterValue(TEXT("FragmentFireHeatWeight"), GlowSettings.FireHeatWeight);
+	FragmentGlowMaterial->SetScalarParameterValue(TEXT("FragmentFireHeatSlabCm"), GlowSettings.FireHeatSlabCm);
+	FragmentGlowMaterial->SetVectorParameterValue(TEXT("FragmentColdGlowColor"), GlowSettings.ColdGlowColor);
+	FragmentGlowMaterial->SetVectorParameterValue(TEXT("FragmentHotGlowColor"), GlowSettings.HotGlowColor);
+}
+
+float ATDFluidFragmentEmitterActor::GetFragmentGlowAgeSeconds() const
+{
+	const UWorld* World = GetWorld();
+	if (!bIsTracking || !World)
+	{
+		return TNumericLimits<float>::Max();
+	}
+
+	return static_cast<float>(World->GetTimeSeconds() - FragmentBreakWorldSeconds);
+}
+
+UTDFluidLiveComponent* ATDFluidFragmentEmitterActor::ResolveFragmentGlowHeatSource() const
+{
+	TArray<FTDFluidFragmentTarget> ActiveTargets;
+	ResolveActiveTargets(ActiveTargets);
+	for (const FTDFluidFragmentTarget& Target : ActiveTargets)
+	{
+		if (Target.Channel == ETDFluidBrushChannel::ChannelB_Fire && Target.TargetActor && Target.TargetActor->LiveComponent)
+		{
+			return Target.TargetActor->LiveComponent;
+		}
+	}
+	return nullptr;
+}
+
+float ATDFluidFragmentEmitterActor::ComputeFragmentGlowHeatRatio(const FTDFluidFragmentGlowSettings& Settings, float BreakAgeSeconds)
+{
+	if (!FMath::IsFinite(BreakAgeSeconds) || BreakAgeSeconds < 0.0f)
+	{
+		return 0.0f;
+	}
+
+	const float CharredRatio = FMath::Clamp(Settings.CharredHeatRatio, 0.0f, 1.0f);
+	const float CoolingSeconds = BreakAgeSeconds - FMath::Max(Settings.HoldSeconds, 0.0f);
+	if (CoolingSeconds <= 0.0f)
+	{
+		return 1.0f;
+	}
+
+	if (Settings.CoolSeconds <= UE_SMALL_NUMBER)
+	{
+		return CharredRatio;
+	}
+
+	const float CoolingProgress = FMath::Clamp(CoolingSeconds / Settings.CoolSeconds, 0.0f, 1.0f);
+	return FMath::Lerp(1.0f, CharredRatio, FMath::SmoothStep(0.0f, 1.0f, CoolingProgress));
 }
 
 void ATDFluidFragmentEmitterActor::BuildFragmentTrailStamps(

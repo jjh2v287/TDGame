@@ -1,0 +1,16 @@
+float2 extentCm = max(SimExtentsCm.xy, float2(1.0, 1.0));
+float2 windowMinimum = SimCenterWorld.xy - 0.5 * extentCm;
+float2 planeCoordinate = float2(dot(PixelWorldPosition, PlaneAxisU), dot(PixelWorldPosition, PlaneAxisV)) + PlaneCoordinateOffsetCm.xy;
+float2 heatUv = (planeCoordinate - windowMinimum) / extentCm;
+float insideWindow = all(abs(heatUv - 0.5) <= 0.5) ? 1.0 : 0.0;
+float slabDistanceCm = ExtrudeSymmetric > 0.5 ? abs(dot(PixelWorldPosition, PlaneAxisN) - SimCenterWorld.z) : 0.0;
+float slabWeight = saturate(1.0 - slabDistanceCm / max(FragmentFireHeatSlabCm, 1.0));
+float fireHeat = AuxHeatActive > 0.5 ? Texture2DSampleLevel(AuxTexture, AuxTextureSampler, saturate(heatUv), 0).r : 0.0;
+float sampledHeat = saturate(fireHeat * max(FragmentFireHeatWeight, 0.0)) * slabWeight * insideWindow;
+float heat = max(saturate(FragmentHeatRatio), sampledHeat);
+float2 edgeDistance = min(FragmentUv.xy, 1.0 - FragmentUv.xy);
+float rimMask = 1.0 - smoothstep(0.0, max(FragmentEdgeCharWidth, 0.001), min(edgeDistance.x, edgeDistance.y));
+float rimFactor = 1.0 - saturate(FragmentEdgeCharStrength) * rimMask;
+float3 glowColor = lerp(FragmentColdGlowColor, FragmentHotGlowColor, heat * heat);
+float glowLevel = max(FragmentGlowIntensity, 0.0) * pow(heat, max(FragmentGlowExponent, 0.01));
+return glowColor * (glowLevel * rimFactor);

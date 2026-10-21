@@ -165,3 +165,12 @@
 - 증거: `Saved/AgentOps/20261020/fx8c/round9/` 워크플로 wf_5c6abd39-ab7 두 번 실행의 runner 결과
 - 날짜·상태: 2026-10-20 active
 - 발견: claude
+
+### L-repo-20 `git apply --cached --unidiff-zero`로 내 덩어리만 스테이징하면, 빈 줄 옆 삽입이 문맥 없이 옮겨져 다른 절(제목 아래)에 들어간다
+- 증상: 장부 decisions.md에서 D-56 상태 줄 앞에 넣은 11차 줄이 커밋본에서는 상태 줄 뒤·D-57 제목 바로 앞에 붙고 빈 줄이 사라졌다(f4f3ff29). 12차에도 같은 방식으로 스테이징하자 12차 줄이 `### D-57` 제목 아래로 들어갔다(`git show :Docs/Tasks/decisions.md`로 발견).
+- 원인: -U0 덩어리는 문맥 줄이 없어서, 같은 덩어리 안의 줄 이동(상태 줄 삭제 + 재추가)과 빈 줄 경계가 HEAD 줄 번호만으로 다시 놓인다. 다른 세션 덩어리를 빼고 적용하면 번호 기준이 어긋난다.
+- 해결: 섞인 장부는 덩어리 적용 대신 "HEAD(또는 작업 트리) 텍스트에서 남의 줄만 빼거나 내 줄만 넣은 블롭"을 만들어 `git hash-object -w --path <파일> <블롭>` → `git update-index --cacheinfo`로 스테이징한다. 어떤 방식이든 커밋 전에 `git show :<파일>`로 바뀐 절 주변 구조를 눈으로 확인한다.
+- 범위: 다른 세션 변경이 섞인 마크다운 장부(decisions·Lessons·NOW·README)의 부분 커밋
+- 증거: 12차 커밋 전 `git show :Docs/Tasks/decisions.md` 395-409행 확인, f4f3ff29의 decisions.md D-56/D-57 경계
+- 날짜·상태: 2026-10-21 active
+- 발견: claude(FX-8c 12차 커밋)

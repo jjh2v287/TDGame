@@ -470,8 +470,9 @@ FTDFluidFragmentTrailSettings UTDFluidPresetAsset::BuildFragmentTrailForPresetKi
 	Trail.BurstRingRadiusCm = 90.0f;
 	Trail.BurstRingStampCount = 0;
 	Trail.BurstRingSpeedCmPerSec = 450.0f;
-	Trail.BurstSustainSeconds = 0.2f;
+	Trail.BurstSustainSeconds = 0.14f;
 	Trail.bSustainsBurstHeat = true;
+	Trail.bShouldTrackWithWorldClock = true;
 	Trail.BurstCenterHeightOffsetCm = 160.0f;
 	Trail.FireHeatStrength = 1.0f;
 	Trail.SmokeHeatStrength = 0.6f;

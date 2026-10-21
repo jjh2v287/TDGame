@@ -270,6 +270,93 @@ namespace TDFluidPerfNiagaraTest
 		Test.TestTrue(*Label, NiagaraComp.IsActive() == bExpectActive);
 	}
 
+	constexpr float ExpectedVelocityReferenceCmPerSec = 600.0f;
+	const TCHAR* const PlaneBasisVariableNames[] = {
+		TEXT("SimCenterPlane"),
+		TEXT("PlaneAxisU"),
+		TEXT("PlaneAxisV"),
+		TEXT("PlaneAxisN"),
+		TEXT("PlaneCoordinateOffsetCm"),
+		TEXT("VelocityReferenceCmPerSec"),
+	};
+
+	class FTDNiagaraDriveWarningCapture : public FOutputDevice
+	{
+	public:
+		FTDNiagaraDriveWarningCapture()
+		{
+			GLog->AddOutputDevice(this);
+		}
+
+		virtual ~FTDNiagaraDriveWarningCapture() override
+		{
+			GLog->RemoveOutputDevice(this);
+		}
+
+		virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const FName& Category) override
+		{
+			if ((Verbosity & ELogVerbosity::VerbosityMask) > ELogVerbosity::Warning)
+			{
+				return;
+			}
+
+			const FString Line(Message);
+			for (const TCHAR* VariableName : PlaneBasisVariableNames)
+			{
+				if (Line.Contains(VariableName))
+				{
+					MatchedLines.Add(Line);
+					return;
+				}
+			}
+		}
+
+		TArray<FString> MatchedLines;
+	};
+
+	void ExpectVec2Parameter(FAutomationTestBase& Test, const UNiagaraComponent& NiagaraComp, const TCHAR* VariableName, const FVector2D& Expected, const FString& Label)
+	{
+		const FNiagaraVariable Variable(FNiagaraTypeDefinition::GetVec2Def(), FName(VariableName));
+		if (!Test.TestTrue(*FString::Printf(TEXT("%s has %s"), *Label, VariableName), HasDriveParameter(NiagaraComp, Variable)))
+		{
+			return;
+		}
+
+		const FVector2f Value = NiagaraComp.GetOverrideParameters().GetParameterValue<FVector2f>(Variable);
+		Test.TestNearlyEqual(*FString::Printf(TEXT("%s %s X"), *Label, VariableName), Value.X, static_cast<float>(Expected.X), 0.01f);
+		Test.TestNearlyEqual(*FString::Printf(TEXT("%s %s Y"), *Label, VariableName), Value.Y, static_cast<float>(Expected.Y), 0.01f);
+	}
+
+	void ExpectVec3Parameter(FAutomationTestBase& Test, const UNiagaraComponent& NiagaraComp, const TCHAR* VariableName, const FVector& Expected, const FString& Label)
+	{
+		const FNiagaraVariable Variable(FNiagaraTypeDefinition::GetVec3Def(), FName(VariableName));
+		if (!Test.TestTrue(*FString::Printf(TEXT("%s has %s"), *Label, VariableName), HasDriveParameter(NiagaraComp, Variable)))
+		{
+			return;
+		}
+
+		const FVector3f Value = NiagaraComp.GetOverrideParameters().GetParameterValue<FVector3f>(Variable);
+		Test.TestNearlyEqual(*FString::Printf(TEXT("%s %s X"), *Label, VariableName), Value.X, static_cast<float>(Expected.X), 1e-4f);
+		Test.TestNearlyEqual(*FString::Printf(TEXT("%s %s Y"), *Label, VariableName), Value.Y, static_cast<float>(Expected.Y), 1e-4f);
+		Test.TestNearlyEqual(*FString::Printf(TEXT("%s %s Z"), *Label, VariableName), Value.Z, static_cast<float>(Expected.Z), 1e-4f);
+	}
+
+	void ExpectPlaneBasisParameters(FAutomationTestBase& Test, const UNiagaraComponent& NiagaraComp, const UTDFluidLiveComponent& FluidComponent, const FString& Label)
+	{
+		const FTDFluidPlaneBasis& Basis = FluidComponent.GetPlaneBasis();
+		ExpectVec2Parameter(Test, NiagaraComp, TEXT("User.SimCenterPlane"), FluidComponent.GetSimulationCenterWorld(), Label);
+		ExpectVec3Parameter(Test, NiagaraComp, TEXT("User.PlaneAxisU"), Basis.U, Label);
+		ExpectVec3Parameter(Test, NiagaraComp, TEXT("User.PlaneAxisV"), Basis.V, Label);
+		ExpectVec3Parameter(Test, NiagaraComp, TEXT("User.PlaneAxisN"), Basis.N, Label);
+		ExpectVec2Parameter(Test, NiagaraComp, TEXT("User.PlaneCoordinateOffsetCm"), Basis.PlaneCoordinateOffsetCm, Label);
+
+		const FNiagaraVariable ReferenceVariable(FNiagaraTypeDefinition::GetFloatDef(), FName(TEXT("User.VelocityReferenceCmPerSec")));
+		if (Test.TestTrue(*(Label + TEXT(" has User.VelocityReferenceCmPerSec")), HasDriveParameter(NiagaraComp, ReferenceVariable)))
+		{
+			Test.TestNearlyEqual(*(Label + TEXT(" VelocityReferenceCmPerSec is the velocity texture encoding reference")), NiagaraComp.GetOverrideParameters().GetParameterValue<float>(ReferenceVariable), ExpectedVelocityReferenceCmPerSec, 1e-4f);
+		}
+	}
+
 	struct FStepCostResult
 	{
 		double AverageMilliseconds = 0.0;
@@ -362,6 +449,58 @@ bool FTDFluidNiagaraTaggedDriveTest::RunTest(const FString& Parameters)
 	TestWorld.TickWorld(0.1f);
 	ExpectDrivenParameters(*this, *TaggedNiagara, *LiveActor->LiveComponent, 905.0f, TEXT("Tagged component after moving"));
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidNiagaraPlaneBasisDriveTest,
+	"TDGame.FluidFX.Niagara.DrivesPlaneBasisAndVelocityReference",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidNiagaraPlaneBasisDriveTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPerfNiagaraTest;
+
+	FPerfTestWorld TestWorld;
+	UTDFluidLiveSubsystem* Subsystem = UTDFluidLiveSubsystem::GetFluidLiveSubsystem(TestWorld.World);
+	if (!TestNotNull(TEXT("UTDFluidLiveSubsystem exists"), Subsystem))
+	{
+		return false;
+	}
+
+	FTDNiagaraDriveWarningCapture WarningCapture;
+	UTDFluidPresetAsset* TaggedPreset = CreateWaterPreset(TestWorld.World, nullptr, DriveTagName);
+	ATDFluidLiveActor* TaggedLiveActor = Subsystem->SpawnPooledFluidActor(TaggedPreset, FVector(500.0f, -300.0f, 120.0f), 600.0f);
+	UNiagaraComponent* TaggedNiagara = nullptr;
+	AActor* TaggedActor = SpawnTaggedNiagaraActor(TestWorld.World, FVector(1200.0f, 800.0f, 777.0f), TaggedNiagara);
+	if (!TestNotNull(TEXT("Spawned the tagged-drive LiveActor"), TaggedLiveActor) || !TestNotNull(TEXT("Spawned tagged actor"), TaggedActor) || !TestNotNull(TEXT("Tagged actor has a Niagara component"), TaggedNiagara))
+	{
+		return false;
+	}
+
+	TestWorld.TickWorld(0.15f);
+	ExpectPlaneBasisParameters(*this, *TaggedNiagara, *TaggedLiveActor->LiveComponent, TEXT("Tagged component without a system"));
+
+	UTDFluidPresetAsset* OwnedPreset = CreateWaterPreset(TestWorld.World, WaterTrailSystemPath);
+	ATDFluidLiveActor* OwnedLiveActor = Subsystem->SpawnPooledFluidActor(OwnedPreset, FVector(-900.0f, 400.0f, 250.0f), 600.0f);
+	if (!TestNotNull(TEXT("Spawned the owned-system LiveActor"), OwnedLiveActor))
+	{
+		return false;
+	}
+
+	UNiagaraComponent* OwnedNiagara = WaitForOwnedNiagaraComponent(TestWorld, OwnedLiveActor);
+	if (!TestNotNull(TEXT("The preset Niagara system spawns an owned component after the async load"), OwnedNiagara))
+	{
+		return false;
+	}
+
+	TestWorld.TickWorld(0.15f);
+	GLog->FlushThreadedLogs();
+	for (const FString& Line : WarningCapture.MatchedLines)
+	{
+		AddInfo(TEXT("Captured plane user variable log: ") + Line);
+	}
+	TestEqual(TEXT("Setting plane user variables that a system lacks logs no warning or error"), WarningCapture.MatchedLines.Num(), 0);
 	return true;
 }
 

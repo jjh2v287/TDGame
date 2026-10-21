@@ -419,3 +419,20 @@
 - 증거: `Saved/AgentOps/20261021/niagara-agent/authoring-api.md`·`testability.md`·`external-tools.md`·`refute.md`
 - 날짜·상태: 2026-10-21 active(Sim Cache 수치 시험은 이 프로젝트에서 미실행)
 - 발견: claude(나이아가라 문의 검증 워크플로)
+### L-editor-51 나이아가라 GPU 이미터에서 "넓은 영역 균일 위치 + 밀도로 1회 거절" 스폰은 기대 생존 수가 스폰율 × 영역 평균 밀도라 거의 0이 될 수 있다
+- 증상: N0 불티 NS 오프스크린 시험에서 시스템·이미터는 Active이고 SpawnRate SpawnOutputInfo는 2초에 19개인데 Sim Cache의 Ember 입자 수가 모든 프레임 0(시드 같아 매번 0, 다른 실행 한 번만 1개).
+- 원인: 900cm 시뮬 창 전체에서 UV를 고르게 뽑고 불 선택 밀도(B 채널)로 한 번만 거절. 반지름 90cm 도장의 창 평균 b ≈ 0.0085~0.025라 초당 10개면 2초 생존 기대 0.1~0.5개. 거절된 입자는 Lifetime 0이라 같은 프레임에 죽는다. C++ ISM 불티는 같은 거절을 8회 재시도해 약 8배 남는다(TDFluidEmberComponent.cpp:13,183).
+- 해결: 시험은 User.EmberSpawnRate를 1000으로 넣어 확인(도장 15개·없음 0개). 제품 전환 때는 스폰율을 밀도 면적에 비례시키거나 중요도 표본(SampleTexture 중요도 UV)으로 바꾼다. 기대 수 = 스폰율 × 수명 × 창 평균 밀도로 먼저 계산한다.
+- 범위: 유체 RT를 표본해 거절하는 모든 나이아가라 스폰
+- 증거: `Saved/AgentOps/20261021/round12/n0-debug.md`·`n0-debug-ns.md`, 시험 로그 `Saved/AgentOps/20261021/fx8c12-green2-rhi-tests.json`
+- 날짜·상태: 2026-10-21 active
+- 발견: claude(N0 입자 0 디버그 워크플로)
+
+### L-editor-52 에디터 Python으로 머티리얼 DynamicParameter 노드 출력을 연결할 때 출력 이름은 매개변수 이름이 아니라 "R"·"G"·"B"·"A"다
+- 증상: `MaterialEditingLibrary.connect_material_expressions(dynamic_node, "EmberHeat", custom_node, ...)`가 'MaterialExpressionDynamicParameter_0[EmberHeat]' 연결 실패로 끝나 M_TD_FluidEmberNiagara 생성이 중단됐다.
+- 원인: DynamicParameter의 Outputs[]는 이름이 빈 문자열이고 R/G/B/A 마스크로만 구분된다. 연결 함수는 출력 이름을 마스크 문자로만 맞춘다.
+- 해결: 출력 이름에 `"RGBA"[index]`를 넘긴다(`Tools/FluidFX/editor_make_fluid_flame_material.py` only ember_niagara 경로). param_names는 표시용으로만 설정.
+- 범위: UE 5.8 에디터 Python 머티리얼 그래프 생성
+- 증거: `Saved/AgentOps/20261021/round12/n0-author.md` 4절, 수정 뒤 연결 10/10·저장
+- 날짜·상태: 2026-10-21 active
+- 발견: claude(N0 저작 하위 에이전트)

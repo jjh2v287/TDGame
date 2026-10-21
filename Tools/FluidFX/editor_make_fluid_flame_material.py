@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불꽃 카드 마스터 재질 M_TD_FluidFlame(TDFluidFlameCard.hlsl, 3D 노이즈 능선·Catmull-Rom 밀도·온도 휘도 감쇠·선택형 색 램프(기본 끔)·프리멀티플라이드 연기 흡수)과 불티 재질 M_TD_FluidEmber(TDFluidEmber.hlsl), 장작 발광 균열 재질 M_TD_FluidCharredWood(TDFluidCharredWood.hlsl), 폭발 조각 발광 재질 M_TD_FluidFragmentGlow(TDFluidFragmentGlow.hlsl, 불투명 기본 조명·지오메트리 컬렉션 사용 플래그, C++ 가 넣는 나이 열 비율과 폭발 불 Aux 열 표본 중 큰 값으로 발광) 및 인스턴스를 만든다.
-실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_flame_material.py (editor_make_fluid_volume_material.py 가 /Game/FluidFX/Textures/T_TD_FluidNoiseVolume 을 만든 뒤)
-출력: /Game/FluidFX/Materials/M_TD_FluidFlame, MI_TD_FluidFlame_Torch·Campfire·Explosion, M_TD_FluidEmber, MI_TD_FluidEmber_Default, M_TD_FluidCharredWood, MI_TD_FluidCharredWood_Campfire, M_TD_FluidFragmentGlow, MI_TD_FluidFragmentGlow_Explosion, Saved/FluidFX/fluid_flame_material.json
-상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 불꽃 입력 10/10·PS 232 명령). FX-8c 3차(2026-10-20) 불꽃 입력 39개(FlameSpeedHeatFloor·FlameHeatScale·FlameHeatGate·FlameHeatGateLow·FlameHeatGateHigh·FlameFlowCycleSeconds·FlameNoiseBillow, 기본값은 옛 출력과 같음)와 FX-8c 4차 G1 입력 40개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(40/40 연결·PS 352 명령). FX-8c 5차(2026-10-20) 불꽃 색 램프 입력 8개를 더한 48개(FlameColorRampMode 기본 0 = 흑체 경로 그대로, FlameRampCoverageExponent·FlameRampWarmPosition·FlameRampHotPosition, 정점 색 FlameRampColdColor·FlameRampWarmColor·FlameRampHotColor·FlameRampCoreColor 는 셰이더가 휘도 1로 정규화하는 선형 RGB)는 2026-10-20 13:02 에디터 재실행(48/48 연결·PS 393 명령·표본기 5). FX-8c 5차 굽기(2026-10-20: 세 MI 모두 FlameColorRampMode 1, 폭발·횃불 MI 는 vector_overrides 로 FlameRampColdColor·FlameRampWarmColor 를 (1, 0.03, 0.03) 으로 덮어쓰고 다시 읽어 확인, 모닥불 MI 는 마스터 정점 그대로, 횃불 MI 는 T4 값 FlameIntensity 13·FlameTemperatureMaxKelvin 1900·FlameHeatGate 1·FlameSmokeOpacity 0)는 에디터 재실행 전. FX-8c 10차(2026-10-20) 조각 발광 마스터(입력 20개, FragmentHeatRatio 기본 0 = C++ 가 넣기 전 발광 없음, 색 FragmentColdGlowColor·FragmentHotGlowColor 와 세기 FragmentGlowIntensity 는 C++ 설정 FTDFluidFragmentGlowSettings 가 매 틱 넣고 마스터 기본값은 그 C++ 기본값과 같은 진홍 (1, 0.012, 0.03)·(1, 0.03, 0.035)·세기 4, 표면색 FragmentCharColor·FragmentRoughness)와 MI_TD_FluidFragmentGlow_Explosion(덮어쓰기 없음)은 정적 검사만(check_fluid_fire_hlsl.py), 에디터 실행 전. 기존 에셋은 Saved/FluidFX/fluid_flame_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(flame_blend_mode 가 "additive" 면 BLEND_ADDITIVE, "translucent" 면 BLEND_TRANSLUCENT, 그 밖은 BLEND_ALPHA_COMPOSITE), 미저장 작업이 있으면 중단한다. FX-8c 10차 굽기(2026-10-21): 폭발 MI scalar_overrides 에 FlameErosion 0.35·FlameRampHotPosition 0.66(runner10 HP66ER35: 같은 세션 r2 +1.0~+1.9, 0.3초 노랑 −0.017). FX-8c 11차(2026-10-21): EmberTintBlend(기본 0)·EmberTintGreen·EmberTintBlue(0.03) 불티 입력 10개, FragmentFacingContrast(기본 0)·FragmentKeyCenterWorld·내장 PixelWorldNormal 조각 입력 23개는 2026-10-21 에디터 재실행(10/10·23/23 연결, 기존 MI 값 변경 0). 조각 EdgeChar* 는 C++ 가 매 틱 넣어 MI 덮어쓰기 무효. FX-8c 11차 단계 B(2026-10-21): FlameColdRidgeContrast(기본 0 = 옛 출력과 같음, 열 문 아래 차가운 불꽃만 능선 결로 깎음) 불꽃 입력 49개는 2026-10-21 에디터 재실행(49/49 연결). FX-8c 11차 굽기(2026-10-21): MI_TD_FluidEmber_Default scalar_overrides 에 EmberIntensity 4.5·EmberTintBlend 1.0(judge11b B2: 밝은 불씨 색상 24.7→3.3°, G−B 37.5→9, LIVE-2 진홍 띠), 재질 재실행 전.
+실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_flame_material.py (editor_make_fluid_volume_material.py 가 /Game/FluidFX/Textures/T_TD_FluidNoiseVolume 을 만든 뒤). 나이아가라 불티 재질만 새로 만들 때는 Saved/FluidFX/fluid_flame_material_request.json 을 {"only": ["ember_niagara"]} 로 두고 같은 명령
+출력: /Game/FluidFX/Materials/M_TD_FluidFlame, MI_TD_FluidFlame_Torch·Campfire·Explosion, M_TD_FluidEmber, MI_TD_FluidEmber_Default, M_TD_FluidCharredWood, MI_TD_FluidCharredWood_Campfire, M_TD_FluidFragmentGlow, MI_TD_FluidFragmentGlow_Explosion, Saved/FluidFX/fluid_flame_material.json. only 요청이면 M_TD_FluidEmberNiagara·MI_TD_FluidEmberNiagara_Default 와 Saved/FluidFX/fluid_ember_niagara_material.json 만
+상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 불꽃 입력 10/10·PS 232 명령). FX-8c 3차(2026-10-20) 불꽃 입력 39개(FlameSpeedHeatFloor·FlameHeatScale·FlameHeatGate·FlameHeatGateLow·FlameHeatGateHigh·FlameFlowCycleSeconds·FlameNoiseBillow, 기본값은 옛 출력과 같음)와 FX-8c 4차 G1 입력 40개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(40/40 연결·PS 352 명령). FX-8c 5차(2026-10-20) 불꽃 색 램프 입력 8개를 더한 48개(FlameColorRampMode 기본 0 = 흑체 경로 그대로, FlameRampCoverageExponent·FlameRampWarmPosition·FlameRampHotPosition, 정점 색 FlameRampColdColor·FlameRampWarmColor·FlameRampHotColor·FlameRampCoreColor 는 셰이더가 휘도 1로 정규화하는 선형 RGB)는 2026-10-20 13:02 에디터 재실행(48/48 연결·PS 393 명령·표본기 5). FX-8c 5차 굽기(2026-10-20: 세 MI 모두 FlameColorRampMode 1, 폭발·횃불 MI 는 vector_overrides 로 FlameRampColdColor·FlameRampWarmColor 를 (1, 0.03, 0.03) 으로 덮어쓰고 다시 읽어 확인, 모닥불 MI 는 마스터 정점 그대로, 횃불 MI 는 T4 값 FlameIntensity 13·FlameTemperatureMaxKelvin 1900·FlameHeatGate 1·FlameSmokeOpacity 0)는 에디터 재실행 전. FX-8c 10차(2026-10-20) 조각 발광 마스터(입력 20개, FragmentHeatRatio 기본 0 = C++ 가 넣기 전 발광 없음, 색 FragmentColdGlowColor·FragmentHotGlowColor 와 세기 FragmentGlowIntensity 는 C++ 설정 FTDFluidFragmentGlowSettings 가 매 틱 넣고 마스터 기본값은 그 C++ 기본값과 같은 진홍 (1, 0.012, 0.03)·(1, 0.03, 0.035)·세기 4, 표면색 FragmentCharColor·FragmentRoughness)와 MI_TD_FluidFragmentGlow_Explosion(덮어쓰기 없음)은 정적 검사만(check_fluid_fire_hlsl.py), 에디터 실행 전. 기존 에셋은 Saved/FluidFX/fluid_flame_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(flame_blend_mode 가 "additive" 면 BLEND_ADDITIVE, "translucent" 면 BLEND_TRANSLUCENT, 그 밖은 BLEND_ALPHA_COMPOSITE), 미저장 작업이 있으면 중단한다. FX-8c 10차 굽기(2026-10-21): 폭발 MI scalar_overrides 에 FlameErosion 0.35·FlameRampHotPosition 0.66(runner10 HP66ER35: 같은 세션 r2 +1.0~+1.9, 0.3초 노랑 −0.017). FX-8c 11차(2026-10-21): EmberTintBlend(기본 0)·EmberTintGreen·EmberTintBlue(0.03) 불티 입력 10개, FragmentFacingContrast(기본 0)·FragmentKeyCenterWorld·내장 PixelWorldNormal 조각 입력 23개는 2026-10-21 에디터 재실행(10/10·23/23 연결, 기존 MI 값 변경 0). 조각 EdgeChar* 는 C++ 가 매 틱 넣어 MI 덮어쓰기 무효. FX-8c 11차 단계 B(2026-10-21): FlameColdRidgeContrast(기본 0 = 옛 출력과 같음, 열 문 아래 차가운 불꽃만 능선 결로 깎음) 불꽃 입력 49개는 2026-10-21 에디터 재실행(49/49 연결). FX-8c 11차 굽기(2026-10-21): MI_TD_FluidEmber_Default scalar_overrides 에 EmberIntensity 4.5·EmberTintBlend 1.0(judge11b B2: 밝은 불씨 색상 24.7→3.3°, G−B 37.5→9, LIVE-2 진홍 띠), 재질 재실행 전. FX-8c 12차(2026-10-21, D-57 N0): 요청 키 "only": ["ember_niagara"] 는 M_TD_FluidEmberNiagara(같은 TDFluidEmber.hlsl, EmberHeat·EmberFade 를 DynamicParameter R·G 에서 받음, 나이아가라 메시 사용 플래그)와 MI_TD_FluidEmberNiagara_Default(MI_TD_FluidEmber_Default 와 같은 EmberIntensity 4.5·EmberTintBlend 1.0)만 새로 만들고 기존 에셋이 하나라도 있으면 덮어쓰지 않고 중단, only 가 없으면 기존 동작 그대로(가짜 unreal 호출 기록 대조). 미검증(정적 검사만, 에디터 실행 전).
 """
 import hashlib
 import json
@@ -104,6 +104,18 @@ FLAME_INSTANCE_SPECS = (
     },
 )
 EMBER_INSTANCE_SPECS = ({"name": "MI_TD_FluidEmber_Default", "scalar_overrides": {"EmberIntensity": 4.5, "EmberTintBlend": 1.0}},)
+EMBER_NIAGARA_REQUEST_KEY = "ember_niagara"
+EMBER_NIAGARA_MASTER_NAME = "M_TD_FluidEmberNiagara"
+EMBER_NIAGARA_MASTER_PATH = f"{MATERIAL_DIR}/{EMBER_NIAGARA_MASTER_NAME}"
+EMBER_NIAGARA_INSTANCE_SPECS = (
+    {"name": "MI_TD_FluidEmberNiagara_Default", "scalar_overrides": dict(EMBER_INSTANCE_SPECS[0]["scalar_overrides"])},
+)
+EMBER_NIAGARA_DYNAMIC_PARAMETER_NAMES = ("EmberHeat", "EmberFade", "Param3", "Param4")
+EMBER_NIAGARA_REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_ember_niagara_material.json")
+EMBER_NIAGARA_REQUIRED_UNREAL_NAMES = (
+    "MaterialExpressionDynamicParameter",
+    "MaterialUsage.MATUSAGE_NIAGARA_MESH_PARTICLES",
+)
 
 FLAME_VECTOR_PARAMETER_DEFAULTS = (
     ("SimCenterWorld", (0.0, 0.0, 0.0, 1.0)),
@@ -392,9 +404,9 @@ def project_path(*parts):
     return os.path.join(unreal.SystemLibrary.get_project_directory(), *parts)
 
 
-def find_missing_unreal_names():
+def find_missing_unreal_names(required_names=REQUIRED_UNREAL_NAMES):
     missing = []
-    for dotted_name in REQUIRED_UNREAL_NAMES:
+    for dotted_name in required_names:
         target = unreal
         for part in dotted_name.split("."):
             target = getattr(target, part, None)
@@ -415,6 +427,18 @@ def read_request():
 
 def resolve_flame_blend_name(request):
     return BLEND_NAME_BY_REQUEST.get(request.get("flame_blend_mode"), DEFAULT_BLEND_NAME)
+
+
+def is_ember_niagara_only_request(request):
+    if "only" not in request:
+        return False
+    if request["only"] != [EMBER_NIAGARA_REQUEST_KEY]:
+        raise RuntimeError(f'only 요청은 ["{EMBER_NIAGARA_REQUEST_KEY}"] 만 지원: {request["only"]!r}')
+    return True
+
+
+def collect_ember_niagara_asset_paths():
+    return [EMBER_NIAGARA_MASTER_PATH] + [asset_path(spec["name"]) for spec in EMBER_NIAGARA_INSTANCE_SPECS]
 
 
 def asset_path(name):
@@ -628,6 +652,14 @@ def enable_instanced_static_mesh_usage(material):
     return "MATUSAGE_INSTANCED_STATIC_MESHES"
 
 
+def enable_niagara_mesh_particle_usage(material):
+    editing = unreal.MaterialEditingLibrary
+    editing.set_material_usage(material, unreal.MaterialUsage.MATUSAGE_NIAGARA_MESH_PARTICLES)
+    if not editing.has_material_usage(material, unreal.MaterialUsage.MATUSAGE_NIAGARA_MESH_PARTICLES):
+        raise RuntimeError("불티 나이아가라 재질에 나이아가라 메시 입자 사용 플래그를 켜지 못함")
+    return "MATUSAGE_NIAGARA_MESH_PARTICLES"
+
+
 def enable_geometry_collection_usage(material):
     editing = unreal.MaterialEditingLibrary
     editing.set_material_usage(material, unreal.MaterialUsage.MATUSAGE_GEOMETRY_COLLECTIONS)
@@ -793,7 +825,23 @@ def build_ember_master_graph(material, code):
             raise RuntimeError("PerInstanceCustomData 노드에 data_index 속성이 없음")
         data_node.set_editor_property("data_index", data_index)
         sources[input_name] = (data_node, "")
+    return connect_ember_custom_node(material, code, sources)
 
+
+def build_ember_niagara_master_graph(material, code):
+    dynamic_node = add_node(material, unreal.MaterialExpressionDynamicParameter, -1000, -300)
+    dynamic_node.set_editor_property("param_names", list(EMBER_NIAGARA_DYNAMIC_PARAMETER_NAMES))
+    stored_names = [str(name) for name in dynamic_node.get_editor_property("param_names")]
+    if stored_names != list(EMBER_NIAGARA_DYNAMIC_PARAMETER_NAMES):
+        raise RuntimeError("DynamicParameter 이름 설정 확인 실패: " + ", ".join(stored_names))
+    sources = {
+        input_name: (dynamic_node, "RGBA"[data_index])
+        for input_name, data_index in EMBER_INSTANCE_DATA_NAMES
+    }
+    return connect_ember_custom_node(material, code, sources)
+
+
+def connect_ember_custom_node(material, code, sources):
     for row, (parameter_name, default_value) in enumerate(EMBER_SCALAR_PARAMETER_DEFAULTS):
         scalar_node = add_node(
             material,
@@ -892,6 +940,42 @@ def create_ember_master(code, overwrite):
         "settings": settings,
         "skipped_settings": skipped,
         "usage": usage,
+        "custom_inputs_connected": connected,
+        "statistics": statistics,
+    }
+
+
+def create_ember_niagara_master(code):
+    material, was_created = prepare_master_material(EMBER_NIAGARA_MASTER_NAME, EMBER_NIAGARA_MASTER_PATH, False)
+    settings = apply_required_properties(
+        material,
+        (
+            ("blend_mode", unreal.BlendMode.BLEND_ADDITIVE),
+            ("shading_model", unreal.MaterialShadingModel.MSM_UNLIT),
+            ("enable_responsive_aa", True),
+            ("output_translucent_velocity", True),
+        ),
+    )
+    optional_applied, skipped = apply_optional_properties(material)
+    settings.update(optional_applied)
+    usage = enable_niagara_mesh_particle_usage(material)
+    custom = build_ember_niagara_master_graph(material, code)
+    connected = verify_custom_inputs_connected(material, custom, len(EMBER_CUSTOM_INPUT_NAMES))
+    statistics = compile_master_material(material, "불티 나이아가라 재질")
+    verify_master_parameters(
+        material,
+        {"vector": [], "scalar": [name for name, _ in EMBER_SCALAR_PARAMETER_DEFAULTS], "texture": []},
+    )
+    if not unreal.MaterialEditingLibrary.has_material_usage(material, unreal.MaterialUsage.MATUSAGE_NIAGARA_MESH_PARTICLES):
+        raise RuntimeError("재질 컴파일 뒤 나이아가라 메시 입자 사용 플래그가 꺼져 있음")
+    save_asset(material, EMBER_NIAGARA_MASTER_PATH)
+    return material, {
+        "created": was_created,
+        "blend_mode": "BLEND_ADDITIVE",
+        "settings": settings,
+        "skipped_settings": skipped,
+        "usage": usage,
+        "dynamic_parameter_names": list(EMBER_NIAGARA_DYNAMIC_PARAMETER_NAMES),
         "custom_inputs_connected": connected,
         "statistics": statistics,
     }
@@ -1137,17 +1221,18 @@ def create_material_instance(spec, master, overwrite):
     return {"asset": path, "scalar_overrides": spec["scalar_overrides"], "vector_overrides": vector_overrides}
 
 
-def write_report(report):
-    report_path = project_path(*REPORT_RELATIVE_PATH)
+def write_report(report, relative_path=REPORT_RELATIVE_PATH):
+    report_path = project_path(*relative_path)
     os.makedirs(os.path.dirname(report_path), exist_ok=True)
     with open(report_path, "w", encoding="utf-8") as report_file:
         json.dump(report, report_file, ensure_ascii=False, indent=2, default=str)
     return report_path
 
 
-def find_missing_saved_files():
+def find_missing_saved_files(asset_paths=None):
     expected = [
-        project_path("Content", *path[len("/Game/"):].split("/")) + ".uasset" for path in collect_target_asset_paths()
+        project_path("Content", *path[len("/Game/"):].split("/")) + ".uasset"
+        for path in (collect_target_asset_paths() if asset_paths is None else asset_paths)
     ]
     return [path for path in expected if not os.path.isfile(path)]
 
@@ -1180,6 +1265,9 @@ def main():
         raise RuntimeError("HLSL 자체 점검 실패: " + " | ".join(problems))
 
     request = read_request()
+    if is_ember_niagara_only_request(request):
+        run_ember_niagara_only(ember_path, ember_code)
+        return
     overwrite = request.get("overwrite") is True
     blend_name = resolve_flame_blend_name(request)
     existing_paths = [path for path in collect_target_asset_paths() if assets.does_asset_exist(path)]
@@ -1249,11 +1337,55 @@ def main():
     print("보고서: " + report_path)
 
 
+def run_ember_niagara_only(ember_path, ember_code):
+    assets = unreal.EditorAssetLibrary
+    missing_names = find_missing_unreal_names(EMBER_NIAGARA_REQUIRED_UNREAL_NAMES)
+    if missing_names:
+        raise RuntimeError("언리얼 Python 이름 없음: " + ", ".join(missing_names))
+    target_paths = collect_ember_niagara_asset_paths()
+    existing_paths = [path for path in target_paths if assets.does_asset_exist(path)]
+    if existing_paths:
+        raise RuntimeError("기존 에셋 보존(only 요청은 덮어쓰지 않음, 삭제는 사용자 승인 뒤): " + ", ".join(existing_paths))
+    unsaved_names = find_unsaved_package_names(False)
+    if unsaved_names:
+        raise RuntimeError("미저장 작업을 보존합니다: " + ", ".join(unsaved_names))
+
+    print("단계: 불티 나이아가라 마스터 재질")
+    master, master_summary = create_ember_niagara_master(ember_code)
+    print("단계: 불티 나이아가라 재질 인스턴스")
+    instances = [create_material_instance(spec, master, False) for spec in EMBER_NIAGARA_INSTANCE_SPECS]
+
+    missing_files = find_missing_saved_files(target_paths)
+    if missing_files:
+        raise RuntimeError("저장 파일 확인 실패: " + ", ".join(missing_files))
+
+    report = {
+        "status": "ok",
+        "only": [EMBER_NIAGARA_REQUEST_KEY],
+        "overwrite": False,
+        "ember_hlsl": describe_hlsl(ember_path, ember_code),
+        "ember_niagara_master": master_summary,
+        "ember_niagara_instances": instances,
+        "saved": True,
+    }
+    report_path = write_report(report, EMBER_NIAGARA_REPORT_RELATIVE_PATH)
+    print(json.dumps(report, ensure_ascii=False, default=str))
+    print("보고서: " + report_path)
+
+
+def choose_failure_report_relative_path():
+    try:
+        request = read_request()
+    except Exception:
+        return REPORT_RELATIVE_PATH
+    return EMBER_NIAGARA_REPORT_RELATIVE_PATH if "only" in request else REPORT_RELATIVE_PATH
+
+
 def run_with_failure_report():
     try:
         main()
     except Exception as error:
-        write_report({"status": "failed", "error": str(error)})
+        write_report({"status": "failed", "error": str(error)}, choose_failure_report_relative_path())
         raise
 
 

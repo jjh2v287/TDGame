@@ -1113,6 +1113,12 @@ void UTDFluidLiveComponent::DriveNiagaraComponent(UNiagaraComponent& NiagaraComp
 		: UnprojectSolverPlaneToWorld(Center);
 	NiagaraComp.SetVariableVec3(FName(TEXT("User.SimCenterWorld")), SimCenterWorld);
 	NiagaraComp.SetVariableVec2(FName(TEXT("User.SimExtentsCm")), Extent);
+	NiagaraComp.SetVariableVec2(FName(TEXT("User.SimCenterPlane")), Center);
+	NiagaraComp.SetVariableVec3(FName(TEXT("User.PlaneAxisU")), PlaneBasis.U);
+	NiagaraComp.SetVariableVec3(FName(TEXT("User.PlaneAxisV")), PlaneBasis.V);
+	NiagaraComp.SetVariableVec3(FName(TEXT("User.PlaneAxisN")), PlaneBasis.N);
+	NiagaraComp.SetVariableVec2(FName(TEXT("User.PlaneCoordinateOffsetCm")), PlaneBasis.PlaneCoordinateOffsetCm);
+	NiagaraComp.SetVariableFloat(FName(TEXT("User.VelocityReferenceCmPerSec")), FTDFluidGrid2DSolver::GetOutputSpeedReferenceCmPerSec());
 	if (UTexture* DensityPressureOutput = GetDensityPressureTexture())
 	{
 		NiagaraComp.SetVariableTexture(FName(TEXT("User.DensityPressureTexture")), DensityPressureOutput);

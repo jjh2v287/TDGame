@@ -9,6 +9,7 @@
 #include "FluidFX/TDFluidFireActor.h"
 #include "FluidFX/TDFluidFireTypes.h"
 #include "FluidFX/TDFluidFragmentEmitterActor.h"
+#include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
@@ -19,6 +20,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Misc/App.h"
 #include "Misc/AutomationTest.h"
+#include "TDFluidGpuStampBins.h"
 #include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/UObjectHash.h"
@@ -61,6 +63,12 @@ namespace TDFluidFragmentTestPrivate
 				++GFrameCounter;
 				World->Tick(LEVELTICK_All, FixedStepSeconds);
 			}
+		}
+
+		void TickSeconds(float DeltaSeconds)
+		{
+			++GFrameCounter;
+			World->Tick(LEVELTICK_All, DeltaSeconds);
 		}
 
 		UWorld* World = nullptr;
@@ -913,6 +921,416 @@ bool FTDFluidFragmentEmberBurstHeightOffsetTest::RunTest(const FString& Paramete
 	TestEqual(TEXT("Both bursts are measured after the same frame count"), RaisedSample.SettleFrameCount, GroundSample.SettleFrameCount);
 	TestNearlyEqual(TEXT("The height offset raises the mean burst height"), RaisedSample.MeanHeightCm - GroundSample.MeanHeightCm, static_cast<double>(EmberBurstRaisedOffsetCm), EmberBurstHeightToleranceCm);
 	TestNearlyEqual(TEXT("The height offset leaves the fluid burst center where it was"), RaisedSample.BurstCenterWorld, GroundSample.BurstCenterWorld, KeyCenterToleranceCm);
+	return true;
+}
+
+namespace TDFluidFragmentTestPrivate
+{
+	constexpr float TrailScaleTestValue = 0.4f;
+	constexpr float WorldClockSustainSeconds = 0.2f;
+	constexpr float WorldClockFirstFrameSeconds = 0.117f;
+	constexpr int32 WorldClockPollGapFrames = 3;
+	constexpr int32 WorldClockMaxFrames = 30;
+	constexpr int32 BinBudgetMovingLeafCount = 128;
+	constexpr int32 BinBudgetRestingLeafCount = 128;
+	constexpr double BinBudgetMovingRingRadiusCm = 150.0;
+	constexpr double BinBudgetRestingRingRadiusCm = 220.0;
+	constexpr double BinBudgetLeafStepCm = 20.0;
+	constexpr int32 BurstFieldSettleFrames = 2;
+	constexpr double BurstFieldTolerance = 1e-4;
+	constexpr double BurstFieldControlRatio = 0.9;
+
+	FFloatProperty* FindTrailFloatProperty(FAutomationTestBase& Test, const TCHAR* PropertyName)
+	{
+		FFloatProperty* Property = FindFProperty<FFloatProperty>(FTDFluidFragmentTrailSettings::StaticStruct(), PropertyName);
+		Test.TestNotNull(FString::Printf(TEXT("FTDFluidFragmentTrailSettings has %s"), PropertyName), Property);
+		return Property;
+	}
+
+	void BuildTrailScaleScenario(TArray<FVector>& OutPrevious, TArray<FVector>& OutCurrent, TArray<FVector>& OutLagged)
+	{
+		for (int32 LeafIndex = 0; LeafIndex < 6; ++LeafIndex)
+		{
+			const FVector Start(LeafIndex * 300.0, 0.0, 100.0);
+			OutPrevious.Add(Start);
+			OutCurrent.Add(Start + FVector(0.0, 20.0 + LeafIndex * 5.0, 0.0));
+			OutLagged.Add(Start - FVector(0.0, 0.0, 40.0));
+		}
+	}
+
+	bool AreStampArraysIdentical(const TArray<FTDFluidBrushStamp>& Expected, const TArray<FTDFluidBrushStamp>& Actual)
+	{
+		if (Expected.Num() != Actual.Num())
+		{
+			return false;
+		}
+
+		for (int32 StampIndex = 0; StampIndex < Expected.Num(); ++StampIndex)
+		{
+			const FTDFluidBrushStamp& Left = Expected[StampIndex];
+			const FTDFluidBrushStamp& Right = Actual[StampIndex];
+			const bool bIsSame = Left.WorldLocation == Right.WorldLocation
+				&& Left.WorldVelocity == Right.WorldVelocity
+				&& Left.RadiusCm == Right.RadiusCm
+				&& Left.DensityStrength == Right.DensityStrength
+				&& Left.VelocityStrength == Right.VelocityStrength
+				&& Left.HeatStrength == Right.HeatStrength
+				&& Left.Channel == Right.Channel;
+			if (!bIsSame)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	void BuildBinBudgetLeaves(TArray<FVector>& OutPrevious, TArray<FVector>& OutCurrent)
+	{
+		for (int32 LeafIndex = 0; LeafIndex < BinBudgetMovingLeafCount; ++LeafIndex)
+		{
+			const double Angle = UE_DOUBLE_TWO_PI * static_cast<double>(LeafIndex) / static_cast<double>(BinBudgetMovingLeafCount);
+			const FVector Outward(FMath::Cos(Angle), FMath::Sin(Angle), 0.0);
+			OutPrevious.Add(Outward * BinBudgetMovingRingRadiusCm);
+			OutCurrent.Add(Outward * (BinBudgetMovingRingRadiusCm + BinBudgetLeafStepCm));
+		}
+
+		for (int32 LeafIndex = 0; LeafIndex < BinBudgetRestingLeafCount; ++LeafIndex)
+		{
+			const double Angle = UE_DOUBLE_TWO_PI * static_cast<double>(LeafIndex) / static_cast<double>(BinBudgetRestingLeafCount);
+			const FVector RestingPosition = FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0) * BinBudgetRestingRingRadiusCm;
+			OutPrevious.Add(RestingPosition);
+			OutCurrent.Add(RestingPosition);
+		}
+	}
+
+	void CountHeatWritingStamps(const FTDFluidGpuStampBinSet& BinSet, int32& OutKeptHeatStampCount, int32& OutHeatBinEntryCount)
+	{
+		const auto WritesHeat = [&BinSet](int32 StampIndex)
+		{
+			return BinSet.Stamps.IsValidIndex(StampIndex) && EnumHasAnyFlags(static_cast<ETDFluidGpuStampFlags>(BinSet.Stamps[StampIndex].Flags), ETDFluidGpuStampFlags::WritesHeat);
+		};
+
+		OutKeptHeatStampCount = 0;
+		for (int32 StampIndex = 0; StampIndex < BinSet.Stamps.Num(); ++StampIndex)
+		{
+			OutKeptHeatStampCount += WritesHeat(StampIndex) ? 1 : 0;
+		}
+
+		OutHeatBinEntryCount = 0;
+		for (const uint32 StampIndex : BinSet.BinStampIndices)
+		{
+			OutHeatBinEntryCount += WritesHeat(static_cast<int32>(StampIndex)) ? 1 : 0;
+		}
+	}
+
+	struct FTDBurstFieldTotals
+	{
+		double Heat = 0.0;
+		double Density = 0.0;
+		bool bIsMeasured = false;
+	};
+
+	FTDBurstFieldTotals MeasureBurstOnlyFireField(const FFloatProperty& HeatScaleProperty, const FFloatProperty& DensityScaleProperty, float TrailScale, float FireStrengthRatio)
+	{
+		FTDBurstFieldTotals Totals;
+		FTDFluidFragmentTestWorld TestWorld;
+		FTDFluidFragmentRig Rig(TestWorld, 10.0f);
+		if (!Rig.IsComplete())
+		{
+			return Totals;
+		}
+
+		UTDFluidPresetAsset* HeatedPreset = MakeTargetPreset(GetTransientPackage());
+		HeatedPreset->SimulationConfig.bEnableHeatChannel = true;
+		Rig.FireActor->InitializeFromPreset(HeatedPreset, 0.0f);
+		const UTDFluidLiveComponent& FireComponent = *Rig.FireActor->LiveComponent;
+		if (FireComponent.IsUsingGpuSolver())
+		{
+			return Totals;
+		}
+
+		FTDFluidFragmentTrailSettings& Settings = Rig.Emitter->TrailSettings;
+		Settings.BurstSustainSeconds = 0.0f;
+		Settings.RestingHeatSeconds = 0.0f;
+		Settings.FireHeatStrength *= FireStrengthRatio;
+		Settings.FireDensityStrength *= FireStrengthRatio;
+		HeatScaleProperty.SetPropertyValue_InContainer(&Settings, TrailScale);
+		DensityScaleProperty.SetPropertyValue_InContainer(&Settings, TrailScale);
+		FTDFluidFragmentTarget BurstOnlyTarget;
+		BurstOnlyTarget.TargetActor = Rig.FireActor;
+		BurstOnlyTarget.Channel = ETDFluidBrushChannel::ChannelB_Fire;
+		BurstOnlyTarget.HeatScale = 1.0f;
+		BurstOnlyTarget.bReceivesTrails = false;
+		Rig.Emitter->Targets = { BurstOnlyTarget };
+
+		TestWorld.TickFrames(1);
+		Rig.Emitter->TriggerBreakAt(Rig.FireActor->GetActorLocation());
+		TestWorld.TickFrames(BurstFieldSettleFrames);
+		const int32 Resolution = FireComponent.GetSimulationResolution();
+		for (int32 CellY = 0; CellY < Resolution; ++CellY)
+		{
+			for (int32 CellX = 0; CellX < Resolution; ++CellX)
+			{
+				const FTDFluidCellSample Sample = FireComponent.SampleSimulationCell(CellX, CellY);
+				Totals.Heat += Sample.Heat;
+				Totals.Density += Sample.PrimaryDensity + Sample.SelectiveDensity;
+			}
+		}
+		Totals.bIsMeasured = Resolution > 0;
+		return Totals;
+	}
+
+	double MeasureSustainEndAgeSeconds(FAutomationTestBase& Test, const FString& Label, const FBoolProperty* WorldClockProperty)
+	{
+		FTDFluidFragmentTestWorld TestWorld;
+		FTDFluidFragmentRig Rig(TestWorld, 10.0f);
+		if (!Test.TestTrue(*(Label + TEXT(": the rig spawns")), Rig.IsComplete()))
+		{
+			return -1.0;
+		}
+
+		if (WorldClockProperty)
+		{
+			WorldClockProperty->SetPropertyValue_InContainer(&Rig.Emitter->TrailSettings, true);
+		}
+		Rig.Emitter->TrailSettings.BurstSustainSeconds = WorldClockSustainSeconds;
+		FTDFluidFragmentTarget BurstOnlyTarget;
+		BurstOnlyTarget.TargetActor = Rig.FireActor;
+		BurstOnlyTarget.Channel = ETDFluidBrushChannel::ChannelB_Fire;
+		BurstOnlyTarget.HeatScale = 1.0f;
+		BurstOnlyTarget.bReceivesTrails = false;
+		Rig.Emitter->Targets = { BurstOnlyTarget };
+
+		double LastPollSeconds = Rig.Emitter->PrimaryActorTick.GetLastIntervalTickGameTime();
+		bool bSawFreshPoll = false;
+		for (int32 FrameIndex = 0; FrameIndex < WorldClockMaxFrames && !bSawFreshPoll; ++FrameIndex)
+		{
+			TestWorld.TickFrames(1);
+			const double PollSeconds = Rig.Emitter->PrimaryActorTick.GetLastIntervalTickGameTime();
+			bSawFreshPoll = PollSeconds >= 0.0 && PollSeconds != LastPollSeconds;
+			LastPollSeconds = PollSeconds;
+		}
+		if (!Test.TestTrue(*(Label + TEXT(": the armed emitter polls on its interval")), bSawFreshPoll))
+		{
+			return -1.0;
+		}
+
+		TestWorld.TickFrames(WorldClockPollGapFrames);
+		const double BreakWorldSeconds = TestWorld.World->GetTimeSeconds();
+		const double ClockLagSeconds = BreakWorldSeconds - Rig.Emitter->PrimaryActorTick.GetLastIntervalTickGameTime();
+		Test.AddInfo(FString::Printf(TEXT("%s sustain: the break lags the last armed poll by %.4f s"), *Label, ClockLagSeconds));
+		if (!Test.TestTrue(*(Label + TEXT(": the break lags the last armed poll by at least two frames")), ClockLagSeconds >= 2.0 * FixedStepSeconds - 1e-4))
+		{
+			return -1.0;
+		}
+
+		Rig.Emitter->TriggerBreakAt(FVector(0.0, 400.0, 50.0));
+		if (!Test.TestTrue(*(Label + TEXT(": the break starts tracking")), Rig.Emitter->IsTrackingFragments()))
+		{
+			return -1.0;
+		}
+
+		int32 PreviousStampCount = Rig.Emitter->GetTotalStampCount();
+		TestWorld.TickSeconds(WorldClockFirstFrameSeconds);
+		double SustainEndAgeSeconds = -1.0;
+		for (int32 FrameIndex = 0; FrameIndex < WorldClockMaxFrames; ++FrameIndex)
+		{
+			const int32 StampCount = Rig.Emitter->GetTotalStampCount();
+			if (StampCount == PreviousStampCount)
+			{
+				SustainEndAgeSeconds = TestWorld.World->GetTimeSeconds() - BreakWorldSeconds;
+				break;
+			}
+
+			PreviousStampCount = StampCount;
+			TestWorld.TickFrames(1);
+		}
+
+		Test.AddInfo(FString::Printf(TEXT("%s sustain: the first frame without burst stamps is %.4f s after the break"), *Label, SustainEndAgeSeconds));
+		return SustainEndAgeSeconds;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentFireTrailScaleTest,
+	"TDGame.FluidFX.Fragment.FireTrailScalesTouchOnlyTrailStamps",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentFireTrailScaleTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	FFloatProperty* HeatScaleProperty = FindTrailFloatProperty(*this, TEXT("FireTrailHeatScale"));
+	FFloatProperty* DensityScaleProperty = FindTrailFloatProperty(*this, TEXT("FireTrailDensityScale"));
+	if (!HeatScaleProperty || !DensityScaleProperty)
+	{
+		return false;
+	}
+
+	FTDFluidFragmentTrailSettings DefaultSettings;
+	DefaultSettings.SmokeHeatStrength = 0.5f;
+	TestTrue(TEXT("FireTrailHeatScale defaults to 1"), HeatScaleProperty->GetPropertyValue_InContainer(&DefaultSettings) == 1.0f);
+	TestTrue(TEXT("FireTrailDensityScale defaults to 1"), DensityScaleProperty->GetPropertyValue_InContainer(&DefaultSettings) == 1.0f);
+
+	FTDFluidFragmentTarget FireTarget;
+	FireTarget.Channel = ETDFluidBrushChannel::ChannelB_Fire;
+	FireTarget.HeatScale = 1.0f;
+	FTDFluidFragmentTarget SmokeTarget;
+	SmokeTarget.Channel = ETDFluidBrushChannel::ChannelR_Mud;
+	SmokeTarget.HeatScale = 1.0f;
+	SmokeTarget.bUsesLaggedPositions = true;
+
+	TArray<FVector> Previous;
+	TArray<FVector> Current;
+	TArray<FVector> Lagged;
+	BuildTrailScaleScenario(Previous, Current, Lagged);
+
+	TArray<FTDFluidBrushStamp> DefaultFireStamps;
+	TArray<FTDFluidBrushStamp> DefaultSmokeStamps;
+	ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(FireTarget, Previous, Current, Lagged, FixedStepSeconds, 0.0f, DefaultSettings, DefaultFireStamps);
+	ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(SmokeTarget, Previous, Current, Lagged, FixedStepSeconds, 0.0f, DefaultSettings, DefaultSmokeStamps);
+	if (!TestTrue(TEXT("The scenario produces fire and smoke trail stamps"), DefaultFireStamps.Num() > 0 && DefaultSmokeStamps.Num() > 0))
+	{
+		return false;
+	}
+
+	bool bDefaultKeepsHeadFormula = true;
+	for (const FTDFluidBrushStamp& Stamp : DefaultFireStamps)
+	{
+		bDefaultKeepsHeadFormula &= Stamp.DensityStrength == DefaultSettings.FireDensityStrength * FireTarget.DensityScale;
+		bDefaultKeepsHeadFormula &= Stamp.HeatStrength == FMath::Clamp(DefaultSettings.FireHeatStrength * FireTarget.HeatScale, 0.0f, 1.0f);
+	}
+	TestTrue(TEXT("Scale 1 keeps every fire trail stamp on the pre-scale formula bit for bit"), bDefaultKeepsHeadFormula);
+
+	FTDFluidFragmentTrailSettings ExplicitUnitSettings = DefaultSettings;
+	HeatScaleProperty->SetPropertyValue_InContainer(&ExplicitUnitSettings, 1.0f);
+	DensityScaleProperty->SetPropertyValue_InContainer(&ExplicitUnitSettings, 1.0f);
+	TArray<FTDFluidBrushStamp> UnitFireStamps;
+	ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(FireTarget, Previous, Current, Lagged, FixedStepSeconds, 0.0f, ExplicitUnitSettings, UnitFireStamps);
+	TestTrue(TEXT("Scale 1 gives the same fire trail stamp array"), AreStampArraysIdentical(DefaultFireStamps, UnitFireStamps));
+
+	FTDFluidFragmentTrailSettings ScaledSettings = DefaultSettings;
+	HeatScaleProperty->SetPropertyValue_InContainer(&ScaledSettings, TrailScaleTestValue);
+	DensityScaleProperty->SetPropertyValue_InContainer(&ScaledSettings, TrailScaleTestValue);
+	TArray<FTDFluidBrushStamp> ScaledFireStamps;
+	TArray<FTDFluidBrushStamp> ScaledSmokeStamps;
+	ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(FireTarget, Previous, Current, Lagged, FixedStepSeconds, 0.0f, ScaledSettings, ScaledFireStamps);
+	ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(SmokeTarget, Previous, Current, Lagged, FixedStepSeconds, 0.0f, ScaledSettings, ScaledSmokeStamps);
+
+	if (TestEqual(TEXT("Scaling keeps the fire trail stamp count"), ScaledFireStamps.Num(), DefaultFireStamps.Num()))
+	{
+		for (int32 StampIndex = 0; StampIndex < ScaledFireStamps.Num(); ++StampIndex)
+		{
+			TestTrue(TEXT("Scaling keeps fire trail stamp positions"), ScaledFireStamps[StampIndex].WorldLocation == DefaultFireStamps[StampIndex].WorldLocation);
+			TestNearlyEqual(TEXT("Fire trail heat is scaled by 0.4"), ScaledFireStamps[StampIndex].HeatStrength, DefaultFireStamps[StampIndex].HeatStrength * TrailScaleTestValue, 1e-6f);
+			TestNearlyEqual(TEXT("Fire trail density is scaled by 0.4"), ScaledFireStamps[StampIndex].DensityStrength, DefaultFireStamps[StampIndex].DensityStrength * TrailScaleTestValue, 1e-6f);
+		}
+	}
+	TestTrue(TEXT("Smoke trail stamps ignore the fire trail scales"), AreStampArraysIdentical(DefaultSmokeStamps, ScaledSmokeStamps));
+
+	const FTDBurstFieldTotals UnitBurst = MeasureBurstOnlyFireField(*HeatScaleProperty, *DensityScaleProperty, 1.0f, 1.0f);
+	const FTDBurstFieldTotals TrailScaledBurst = MeasureBurstOnlyFireField(*HeatScaleProperty, *DensityScaleProperty, TrailScaleTestValue, 1.0f);
+	const FTDBurstFieldTotals WeakerFireBurst = MeasureBurstOnlyFireField(*HeatScaleProperty, *DensityScaleProperty, 1.0f, TrailScaleTestValue);
+	AddInfo(FString::Printf(TEXT("Burst-only fire field after %d frames (trail scales 1 / trail scales 0.4 / fire strengths 0.4): heat %.4f / %.4f / %.4f, density %.4f / %.4f / %.4f"),
+		BurstFieldSettleFrames, UnitBurst.Heat, TrailScaledBurst.Heat, WeakerFireBurst.Heat, UnitBurst.Density, TrailScaledBurst.Density, WeakerFireBurst.Density));
+	if (!TestTrue(TEXT("The burst-only fire field is measured on the CPU solver in all three runs"), UnitBurst.bIsMeasured && TrailScaledBurst.bIsMeasured && WeakerFireBurst.bIsMeasured))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("The queued burst leaves heat and density in the fire field"), UnitBurst.Heat > 0.0 && UnitBurst.Density > 0.0);
+	TestTrue(TEXT("Weaker fire strengths lower the burst heat, so the field sees the queued burst strength"), WeakerFireBurst.Heat < UnitBurst.Heat * BurstFieldControlRatio);
+	TestTrue(TEXT("Weaker fire strengths lower the burst density, so the field sees the queued burst strength"), WeakerFireBurst.Density < UnitBurst.Density * BurstFieldControlRatio);
+	TestNearlyEqual(TEXT("Fire trail scales leave the queued burst heat unchanged"), TrailScaledBurst.Heat, UnitBurst.Heat, UnitBurst.Heat * BurstFieldTolerance);
+	TestNearlyEqual(TEXT("Fire trail scales leave the queued burst density unchanged"), TrailScaledBurst.Density, UnitBurst.Density, UnitBurst.Density * BurstFieldTolerance);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentWorldClockSustainTest,
+	"TDGame.FluidFX.Fragment.WorldClockEndsSustainAtBreakAge",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentWorldClockSustainTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	const double DefaultSustainEndAgeSeconds = MeasureSustainEndAgeSeconds(*this, TEXT("Default accumulator"), nullptr);
+	FBoolProperty* WorldClockProperty = FindFProperty<FBoolProperty>(FTDFluidFragmentTrailSettings::StaticStruct(), TEXT("bShouldTrackWithWorldClock"));
+	if (!TestNotNull(TEXT("FTDFluidFragmentTrailSettings has bShouldTrackWithWorldClock"), WorldClockProperty))
+	{
+		return false;
+	}
+
+	const FTDFluidFragmentTrailSettings DefaultSettings;
+	TestFalse(TEXT("bShouldTrackWithWorldClock defaults to false"), WorldClockProperty->GetPropertyValue_InContainer(&DefaultSettings));
+
+	const double WorldClockSustainEndAgeSeconds = MeasureSustainEndAgeSeconds(*this, TEXT("World clock"), WorldClockProperty);
+	if (!TestTrue(TEXT("Both sustained bursts end within the measured frames"), DefaultSustainEndAgeSeconds >= 0.0 && WorldClockSustainEndAgeSeconds >= 0.0))
+	{
+		return false;
+	}
+
+	const double OneFrameToleranceSeconds = static_cast<double>(FixedStepSeconds) + 1e-3;
+	TestNearlyEqual(TEXT("With the world clock the sustained burst ends 0.2 s after the break within one frame"), WorldClockSustainEndAgeSeconds, static_cast<double>(WorldClockSustainSeconds), OneFrameToleranceSeconds);
+	TestTrue(TEXT("The default accumulator misses 0.2 s by more than one frame here, so the scenario tells the two clocks apart"), FMath::Abs(DefaultSustainEndAgeSeconds - static_cast<double>(WorldClockSustainSeconds)) > OneFrameToleranceSeconds);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentExplosionStampBinBudgetTest,
+	"TDGame.FluidFX.Fragment.ExplosionStampBinBudget",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentExplosionStampBinBudgetTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	const FTDFluidFragmentTrailSettings Trail = UTDFluidPresetAsset::BuildFragmentTrailForPresetKind(ETDFluidPresetKind::Explosion);
+	const FTDFluidSimulationConfig Config = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Explosion);
+
+	TArray<FTDFluidBrushStamp> BurstStamps;
+	ATDFluidFragmentEmitterActor::BuildBurstStamps(FVector::ZeroVector, FTDFluidPlaneBasis::MakeWorldFacing(), Trail, ETDFluidBrushChannel::ChannelB_Fire, 1.0f, Trail.FireDensityStrength, Trail.FireHeatStrength, BurstStamps);
+
+	TArray<FVector> Previous;
+	TArray<FVector> Current;
+	BuildBinBudgetLeaves(Previous, Current);
+	TArray<FTDFluidFragmentTarget> LegacyTargets;
+	ATDFluidFragmentEmitterActor::BuildLegacyTargets(nullptr, nullptr, LegacyTargets);
+	TArray<FTDFluidBrushStamp> TrailStamps;
+	ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(LegacyTargets[0], Previous, Current, Previous, FixedStepSeconds, 0.0f, Trail, TrailStamps);
+	TArray<FTDFluidBrushStamp> RestingStamps;
+	ATDFluidFragmentEmitterActor::BuildRestingHeatStamps(LegacyTargets[0], Previous, Current, FixedStepSeconds, 0.0f, Trail, RestingStamps);
+
+	TArray<FTDFluidGpuStampInput> StampInputs;
+	const auto AppendStampInputs = [&StampInputs](const TArray<FTDFluidBrushStamp>& Stamps)
+	{
+		for (const FTDFluidBrushStamp& Stamp : Stamps)
+		{
+			StampInputs.Add(FTDFluidGpuSolverProxy::MakeStampInput(Stamp));
+		}
+	};
+	AppendStampInputs(BurstStamps);
+	AppendStampInputs(TrailStamps);
+	AppendStampInputs(RestingStamps);
+
+	FTDFluidGpuStampBinWindow Window;
+	Window.CenterPlaneCm = FVector2D::ZeroVector;
+	Window.ExtentCm = Config.SimExtentCm;
+	Window.Resolution = Config.GridResolution;
+	const FTDFluidGpuStampBinSet BinSet = FTDFluidGpuStampBins::Build(Window, StampInputs, FTDFluidGpuStampBinLimits());
+	uint32 FullestBinCount = 0;
+	for (const FTDFluidGpuStampBinRange& Range : BinSet.BinRanges)
+	{
+		FullestBinCount = FMath::Max(FullestBinCount, Range.Count);
+	}
+
+	int32 KeptHeatStampCount = 0;
+	int32 HeatBinEntryCount = 0;
+	CountHeatWritingStamps(BinSet, KeptHeatStampCount, HeatBinEntryCount);
+	AddInfo(FString::Printf(TEXT("Explosion stamp bin budget (fire target, one actor, one tick): leaves %d moving + %d resting, burst %d, trail %d, resting %d, kept %d, non-finite %d, outside window %d, over tick limit %d, bin overflow entries %d, fullest bin %u of %d, kept heat stamps %d, heat bin entries %d"),
+		BinBudgetMovingLeafCount, BinBudgetRestingLeafCount, BurstStamps.Num(), TrailStamps.Num(), RestingStamps.Num(), BinSet.Stamps.Num(), BinSet.NonFiniteStampCount, BinSet.OutsideWindowStampCount, BinSet.OverTickLimitStampCount, BinSet.BinOverflowEntryCount, FullestBinCount, TDFluidGpuSolverConstants::MaximumStampsPerBin, KeptHeatStampCount, HeatBinEntryCount));
+	TestEqual(TEXT("The bin table has one range per bin"), BinSet.BinRanges.Num(), TDFluidGpuSolverConstants::StampBinCount);
 	return true;
 }
 

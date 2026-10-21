@@ -404,13 +404,17 @@ void ATDFluidFragmentEmitterActor::ResolveActiveTargets(TArray<FTDFluidFragmentT
 
 void ATDFluidFragmentEmitterActor::StepFragmentTracking(float DeltaSeconds)
 {
-	if (DeltaSeconds <= UE_SMALL_NUMBER)
+	const UWorld* World = GetWorld();
+	const bool bTracksWorldClock = TrailSettings.bShouldTrackWithWorldClock && World != nullptr;
+	const float NextElapsedSeconds = bTracksWorldClock ? static_cast<float>(World->GetTimeSeconds() - FragmentBreakWorldSeconds) : TrackingElapsedSeconds + DeltaSeconds;
+	const float StepSeconds = bTracksWorldClock ? NextElapsedSeconds - TrackingElapsedSeconds : DeltaSeconds;
+	if (StepSeconds <= UE_SMALL_NUMBER)
 	{
 		return;
 	}
 
 	UGeometryCollectionComponent* Component = GeometryCollectionComponent.Get();
-	TrackingElapsedSeconds += DeltaSeconds;
+	TrackingElapsedSeconds = NextElapsedSeconds;
 
 	TArray<FVector> PreviousPositions;
 	PositionHistory.GetLaggedFrame(0, PreviousPositions);
@@ -431,11 +435,11 @@ void ATDFluidFragmentEmitterActor::StepFragmentTracking(float DeltaSeconds)
 		TArray<FTDFluidBrushStamp> TargetStamps;
 		if (Target.bReceivesTrails)
 		{
-			BuildTargetTrailStamps(Target, PreviousPositions, CurrentPositions, LaggedPositions, DeltaSeconds, static_cast<float>(BurstCenterWorld.Z), TrailSettings, TargetStamps, TargetIndex == 0 ? &StampedLeafIndices : nullptr);
+			BuildTargetTrailStamps(Target, PreviousPositions, CurrentPositions, LaggedPositions, StepSeconds, static_cast<float>(BurstCenterWorld.Z), TrailSettings, TargetStamps, TargetIndex == 0 ? &StampedLeafIndices : nullptr);
 		}
 
 		TArray<FTDFluidBrushStamp> RestingStamps;
-		BuildRestingHeatStamps(Target, PreviousPositions, CurrentPositions, DeltaSeconds, TrackingElapsedSeconds, TrailSettings, RestingStamps);
+		BuildRestingHeatStamps(Target, PreviousPositions, CurrentPositions, StepSeconds, TrackingElapsedSeconds, TrailSettings, RestingStamps);
 		TargetStamps.Append(RestingStamps);
 		QueueStampsOnTarget(Target.TargetActor, TargetStamps);
 	}
@@ -718,8 +722,8 @@ void ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(
 
 	const bool bUsesLaggedPositions = Target.bUsesLaggedPositions;
 	const float StampRadiusCm = (bUsesLaggedPositions ? Settings.SmokeStampRadiusCm : Settings.FireStampRadiusCm) * Target.RadiusScale;
-	const float DensityStrength = (bUsesLaggedPositions ? Settings.SmokeDensityStrength : Settings.FireDensityStrength) * Target.DensityScale;
-	const float HeatStrength = (bUsesLaggedPositions ? Settings.SmokeHeatStrength : Settings.FireHeatStrength) * Target.HeatScale;
+	const float DensityStrength = (bUsesLaggedPositions ? Settings.SmokeDensityStrength : Settings.FireDensityStrength * Settings.FireTrailDensityScale) * Target.DensityScale;
+	const float HeatStrength = (bUsesLaggedPositions ? Settings.SmokeHeatStrength : Settings.FireHeatStrength * Settings.FireTrailHeatScale) * Target.HeatScale;
 	const int32 SelectedCount = FMath::Min(Candidates.Num(), FMath::Max(Settings.MaxFragmentsPerStep, 0));
 	const int32 MaxStampsPerFragment = FMath::Max(Settings.MaxStampsPerFragment, 1);
 	for (int32 CandidateIndex = 0; CandidateIndex < SelectedCount; ++CandidateIndex)

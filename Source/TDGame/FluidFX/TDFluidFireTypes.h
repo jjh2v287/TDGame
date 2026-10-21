@@ -116,6 +116,9 @@ struct TDGAME_API FTDFluidFragmentTrailSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
 	bool bShouldCrumbleOnTrigger = true;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
+	bool bShouldTrackWithWorldClock = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
 	float MinFragmentSpeedCmPerSec = 120.0f;
 
@@ -127,6 +130,12 @@ struct TDGAME_API FTDFluidFragmentTrailSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float FireDensityStrength = 0.75f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float FireTrailHeatScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float FireTrailDensityScale = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "1.0"))
 	float SmokeStampRadiusCm = 30.0f;

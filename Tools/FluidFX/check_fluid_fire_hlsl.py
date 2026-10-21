@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 와 Windows Kits dxc.exe(ps_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_fire_hlsl.py [--root 프로젝트경로] [--dxc dxc경로]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(셰이더별 정적 표본 명령 수 포함), 하나라도 실패하면 종료 코드 1
-상태: 검증됨(2026-10-19 19/19 통과, 음성 대조 2건 검출. 2026-10-20 FX-8b 21/21, 투과율 상수 3곳 대조 추가. 2026-10-20 FX-8c 3차 22/22: View.StateFrameIndexMod8 스텁·볼륨 디더 회귀 검사·볼륨 표본 36. 2026-10-20 FX-8c 4차 G1 24/24: 불꽃·볼륨·가짜 볼륨의 위치 투영(화소·카메라·광원)은 PlaneCoordinateOffsetCm 을 더하고 방향 투영(광원 방향·월드 위)은 더하지 않는지 보는 규칙과 음성 대조 3건. 2026-10-20 FX-8c 5차 26/26: 불꽃 색 램프 끔 경로 정적 검사(흑체 색도·밝기·덮임·방출 줄 보호, 보호 변수 대입은 FlameColorRampMode 분기 안 chromaColor 만, 마스터 기본 0)와 음성 대조 10건. 2026-10-20 FX-8c 7차 30/30: 볼륨 노이즈 부드러운 절댓값 계약(NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift 기본 0, 인스턴스는 둘을 함께, TD_SHIFT_OF 두 항 모두 TD_NOISE_ABS), dxc -O3 자체 점검(엡실론 호출 인수 0 으로 접은 본문 = TD_NOISE_ABS 를 abs 로 바꾼 기준 본문, 0.04 는 다름)과 음성 대조 6건, --root 변형 사본 4개 중 4개 검출). 2026-10-20 FX-8c 10차 조각 발광 셰이더 TDFluidFragmentGlow.hlsl 추가(입력 원천·평면 오프셋·정적 표본 1·C++ 값 이름 계약: 방출 액터가 넣는 Fragment* 스칼라 4개와 색 벡터 FragmentColdGlowColor·FragmentHotGlowColor 는 마스터 기본값에 있고 FragmentHeatRatio 기본 0, 라이브 컴포넌트가 등록 MID 에 넣는 평면·Aux 이름이 셰이더 입력을 덮음, 음성 대조 5건, 조각 마스터 생성 함수가 지오메트리 컬렉션 사용 플래그 함수를 부르는지 보는 문자열 규칙과 음성 대조 1건), 정적 검사만 통과(사본 37/37)하고 에디터 미실행. 불·연기 셰이더 6개(TDFluidFlameCard·Ember·CharredWood·FragmentGlow·VolumeRaymarch·FakeVolume.hlsl)를 재질 스크립트의 입력 목록으로 언리얼 Custom 노드 함수 형태로 감싸 컴파일·정적 검사한다. 에디터 화면 확인은 별도(FX-8a 룩데브). 2026-10-21 FX-8c 11차: 조각 스칼라 7·벡터 3 계약, C++ 조각 기본 = 마스터 기본 계약, 항등 입력 기본 0·0 접기 dxc 본문 = 기준과 음성 대조. 2026-10-21 FX-8c 11차 단계 B: 항등 입력에 불꽃 FlameColdRidgeContrast(기준 = heatGate 의 coldRidgeTexture 곱 제거) 추가, 항등 기본 음성 대조는 변형이 원래 없던 문제를 새로 만들어야 잡음으로 셈. 2026-10-21 FX-8c 11차 굽기: 항등 입력의 MI 덮어쓰기 금지 조항을 뺌(굽기 B2 가 MI_TD_FluidEmber_Default 에 EmberTintBlend 1.0 을 넣음), 마스터 기본 0 계약과 그 음성 대조는 유지.
+상태: 검증됨(2026-10-19 19/19 통과, 음성 대조 2건 검출. 2026-10-20 FX-8b 21/21, 투과율 상수 3곳 대조 추가. 2026-10-20 FX-8c 3차 22/22: View.StateFrameIndexMod8 스텁·볼륨 디더 회귀 검사·볼륨 표본 36. 2026-10-20 FX-8c 4차 G1 24/24: 불꽃·볼륨·가짜 볼륨의 위치 투영(화소·카메라·광원)은 PlaneCoordinateOffsetCm 을 더하고 방향 투영(광원 방향·월드 위)은 더하지 않는지 보는 규칙과 음성 대조 3건. 2026-10-20 FX-8c 5차 26/26: 불꽃 색 램프 끔 경로 정적 검사(흑체 색도·밝기·덮임·방출 줄 보호, 보호 변수 대입은 FlameColorRampMode 분기 안 chromaColor 만, 마스터 기본 0)와 음성 대조 10건. 2026-10-20 FX-8c 7차 30/30: 볼륨 노이즈 부드러운 절댓값 계약(NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift 기본 0, 인스턴스는 둘을 함께, TD_SHIFT_OF 두 항 모두 TD_NOISE_ABS), dxc -O3 자체 점검(엡실론 호출 인수 0 으로 접은 본문 = TD_NOISE_ABS 를 abs 로 바꾼 기준 본문, 0.04 는 다름)과 음성 대조 6건, --root 변형 사본 4개 중 4개 검출). 2026-10-20 FX-8c 10차 조각 발광 셰이더 TDFluidFragmentGlow.hlsl 추가(입력 원천·평면 오프셋·정적 표본 1·C++ 값 이름 계약: 방출 액터가 넣는 Fragment* 스칼라 4개와 색 벡터 FragmentColdGlowColor·FragmentHotGlowColor 는 마스터 기본값에 있고 FragmentHeatRatio 기본 0, 라이브 컴포넌트가 등록 MID 에 넣는 평면·Aux 이름이 셰이더 입력을 덮음, 음성 대조 5건, 조각 마스터 생성 함수가 지오메트리 컬렉션 사용 플래그 함수를 부르는지 보는 문자열 규칙과 음성 대조 1건), 정적 검사만 통과(사본 37/37)하고 에디터 미실행. 불·연기 셰이더 6개(TDFluidFlameCard·Ember·CharredWood·FragmentGlow·VolumeRaymarch·FakeVolume.hlsl)를 재질 스크립트의 입력 목록으로 언리얼 Custom 노드 함수 형태로 감싸 컴파일·정적 검사한다. 에디터 화면 확인은 별도(FX-8a 룩데브). 2026-10-21 FX-8c 11차: 조각 스칼라 7·벡터 3 계약, C++ 조각 기본 = 마스터 기본 계약, 항등 입력 기본 0·0 접기 dxc 본문 = 기준과 음성 대조. 2026-10-21 FX-8c 11차 단계 B: 항등 입력에 불꽃 FlameColdRidgeContrast(기준 = heatGate 의 coldRidgeTexture 곱 제거) 추가, 항등 기본 음성 대조는 변형이 원래 없던 문제를 새로 만들어야 잡음으로 셈. 2026-10-21 FX-8c 11차 굽기: 항등 입력의 MI 덮어쓰기 금지 조항을 뺌(굽기 B2 가 MI_TD_FluidEmber_Default 에 EmberTintBlend 1.0 을 넣음), 마스터 기본 0 계약과 그 음성 대조는 유지. 2026-10-21 FX-8c 12차(D-57 N0): 재질 스크립트 only ember_niagara 계약(새 2개만·전체 목록과 겹침 없음·DynamicParameter R=EmberHeat G=EmberFade·MI = ISM 굽기·덮어쓰기 없음·나이아가라 메시 사용 플래그·요청 판별)과 음성 대조 5건 추가, 49/49(에디터 미실행).
 """
 import argparse
 import glob
@@ -97,6 +97,21 @@ FRAGMENT_SETTINGS_STRUCT_LINE = "struct TDGAME_API FTDFluidFragmentGlowSettings"
 CPP_FLOAT_DEFAULT_PATTERN = re.compile(r"float (\w+) = (-?[\d.]+)f;")
 FRAGMENT_CPP_DEFAULT_FIELDS = ("GlowIntensity", "FireHeatWeight", "FireHeatSlabCm", "FacingContrast", "EdgeCharWidth", "EdgeCharStrength")
 FRAGMENT_CPP_DEFAULT_MUTATION = ("0.12f", "0.2f")
+EMBER_NIAGARA_EXPECTED_ASSETS = ("/Game/FluidFX/Materials/M_TD_FluidEmberNiagara", "/Game/FluidFX/Materials/MI_TD_FluidEmberNiagara_Default")
+EMBER_NIAGARA_EXPECTED_OVERRIDES = {"EmberIntensity": 4.5, "EmberTintBlend": 1.0}
+EMBER_NIAGARA_TEXT_RULES = (
+    ("create_ember_niagara_master", "prepare_master_material(EMBER_NIAGARA_MASTER_NAME, EMBER_NIAGARA_MASTER_PATH, False)"),
+    ("create_ember_niagara_master", "usage = enable_niagara_mesh_particle_usage(material)"),
+    ("create_ember_niagara_master", "custom = build_ember_niagara_master_graph(material, code)"),
+    ("enable_niagara_mesh_particle_usage", "set_material_usage(material, unreal.MaterialUsage.MATUSAGE_NIAGARA_MESH_PARTICLES)"),
+    ("build_ember_niagara_master_graph", "unreal.MaterialExpressionDynamicParameter"),
+    ("run_ember_niagara_only", "create_material_instance(spec, master, False)"),
+    ("main", "run_ember_niagara_only(ember_path, ember_code)"),
+)
+EMBER_NIAGARA_TEXT_MUTATIONS = (
+    ("usage = enable_niagara_mesh_particle_usage(material)", 'usage = "MATUSAGE_NIAGARA_MESH_PARTICLES"'),
+    ("prepare_master_material(EMBER_NIAGARA_MASTER_NAME, EMBER_NIAGARA_MASTER_PATH, False)", "prepare_master_material(EMBER_NIAGARA_MASTER_NAME, EMBER_NIAGARA_MASTER_PATH, True)"),
+)
 IDENTITY_DEFAULT_INPUTS = (("ember", "EmberTintBlend"), ("fragment", "FragmentFacingContrast"), ("flame", "FlameColdRidgeContrast"))
 IDENTITY_REFERENCE_EDITS = {
     "ember": ("normalizedColor = lerp(normalizedColor, emberTintChroma, saturate(EmberTintBlend));\n", ""),
@@ -563,6 +578,68 @@ def find_fragment_usage_problems(flame_text):
     return problems
 
 
+def collect_ember_niagara_contract(flame):
+    return {
+        "assets": list(flame.collect_ember_niagara_asset_paths()),
+        "full_assets": list(flame.collect_target_asset_paths()),
+        "dynamic_names": list(flame.EMBER_NIAGARA_DYNAMIC_PARAMETER_NAMES),
+        "data_names": list(flame.EMBER_INSTANCE_DATA_NAMES),
+        "custom_inputs": list(flame.EMBER_CUSTOM_INPUT_NAMES),
+        "overrides": [dict(spec["scalar_overrides"]) for spec in flame.EMBER_NIAGARA_INSTANCE_SPECS],
+        "ism_overrides": dict(flame.EMBER_INSTANCE_SPECS[0]["scalar_overrides"]),
+        "scalars": [name for name, _ in flame.EMBER_SCALAR_PARAMETER_DEFAULTS],
+    }
+
+
+def find_ember_niagara_contract_problems(contract, flame_text):
+    problems = []
+    if contract["assets"] != list(EMBER_NIAGARA_EXPECTED_ASSETS):
+        problems.append(f"only 대상 에셋 {contract['assets']} ≠ {list(EMBER_NIAGARA_EXPECTED_ASSETS)}")
+    shared = sorted(set(contract["assets"]) & set(contract["full_assets"]))
+    if shared:
+        problems.append("only 대상이 전체 대상 목록과 겹침(only 없는 실행이 바뀜): " + ", ".join(shared))
+    names = contract["dynamic_names"]
+    if len(names) != 4 or len(set(names)) != 4:
+        problems.append(f"DynamicParameter 이름은 서로 다른 4개여야 함: {names}")
+    for input_name, data_index in contract["data_names"]:
+        if data_index >= len(names) or names[data_index] != input_name or input_name not in contract["custom_inputs"]:
+            problems.append(f"DynamicParameter 채널 {data_index} 이름이 셰이더 입력 {input_name} 와 다름")
+    for overrides in contract["overrides"]:
+        if overrides != contract["ism_overrides"] or overrides != EMBER_NIAGARA_EXPECTED_OVERRIDES:
+            problems.append(f"나이아가라 MI 덮어쓰기 {overrides} ≠ ISM 굽기 {contract['ism_overrides']}·{EMBER_NIAGARA_EXPECTED_OVERRIDES}")
+        unknown = sorted(set(overrides) - set(contract["scalars"]))
+        if unknown:
+            problems.append("나이아가라 MI 덮어쓰기 이름이 마스터에 없음: " + ", ".join(unknown))
+    for function_name, line in EMBER_NIAGARA_TEXT_RULES:
+        if line not in find_python_function_body(flame_text, function_name):
+            problems.append(f"{function_name} 에 '{line}' 없음")
+    return problems
+
+
+def find_ember_niagara_request_problems(flame):
+    problems = []
+    if flame.is_ember_niagara_only_request({}) is not False or flame.is_ember_niagara_only_request({"overwrite": True}) is not False:
+        problems.append("only 없는 요청이 only 경로로 감")
+    if flame.is_ember_niagara_only_request({"only": ["ember_niagara"]}) is not True:
+        problems.append('{"only": ["ember_niagara"]} 가 only 경로로 가지 않음')
+    try:
+        flame.is_ember_niagara_only_request({"only": ["flame"]})
+        problems.append("알 수 없는 only 대상을 거절하지 않음")
+    except RuntimeError:
+        pass
+    return problems
+
+
+def find_undetected_ember_niagara_mutations(contract, flame_text):
+    mutants = []
+    for original, mutated in EMBER_NIAGARA_TEXT_MUTATIONS:
+        mutants.append((f"문자열 {original[:40]}", contract, flame_text.replace(original, mutated, 1) if original in flame_text else flame_text))
+    mutants.append(("MI EmberIntensity 6.0", dict(contract, overrides=[dict(contract["overrides"][0], EmberIntensity=6.0)]), flame_text))
+    mutants.append(("DynamicParameter 채널 R·G 바뀜", dict(contract, dynamic_names=[contract["dynamic_names"][1], contract["dynamic_names"][0]] + contract["dynamic_names"][2:]), flame_text))
+    mutants.append(("전체 대상에 나이아가라 MI 추가", dict(contract, full_assets=contract["full_assets"] + contract["assets"][1:]), flame_text))
+    return [label for label, mutant_contract, mutant_text in mutants if not find_ember_niagara_contract_problems(mutant_contract, mutant_text)]
+
+
 def read_project_text(root, parts):
     path = root.joinpath(*parts)
     return path.read_text(encoding="utf-8") if path.is_file() else ""
@@ -666,6 +743,11 @@ def main():
     record("조각 마스터 생성 함수가 지오메트리 컬렉션 사용 플래그를 켬(create_fragment_master → enable_geometry_collection_usage → MATUSAGE_GEOMETRY_COLLECTIONS)", not usage_problems, "; ".join(usage_problems))
     removed_usage_text = flame_text.replace(FRAGMENT_USAGE_CALL, 'usage = "MATUSAGE_GEOMETRY_COLLECTIONS"', 1)
     record("음성 대조: 조각 마스터 생성 함수의 사용 플래그 호출 삭제를 잡음", removed_usage_text != flame_text and bool(find_fragment_usage_problems(removed_usage_text)))
+    ember_niagara_contract = collect_ember_niagara_contract(flame)
+    ember_niagara_problems = find_ember_niagara_contract_problems(ember_niagara_contract, flame_text) + find_ember_niagara_request_problems(flame)
+    record("불티 나이아가라 only 계약(새 2개만·전체 목록과 겹침 없음·DynamicParameter R=EmberHeat G=EmberFade·MI = ISM 굽기 4.5/1.0·덮어쓰기 없음·나이아가라 메시 사용 플래그·only 요청 판별)", not ember_niagara_problems, "; ".join(ember_niagara_problems))
+    undetected_ember_niagara = find_undetected_ember_niagara_mutations(ember_niagara_contract, flame_text)
+    record(f"음성 대조: 불티 나이아가라 계약 변형 {len(EMBER_NIAGARA_TEXT_MUTATIONS) + 3}건(사용 플래그 호출 삭제·덮어쓰기 True·MI 6.0·채널 R·G 바뀜·전체 목록 겹침)을 잡음", not undetected_ember_niagara, ", ".join(undetected_ember_niagara))
     transmittance_constants = read_transmittance_constants(root)
     constant_values = set(transmittance_constants.values())
     record(

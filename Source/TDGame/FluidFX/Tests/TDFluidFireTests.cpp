@@ -18,6 +18,7 @@
 #include "FluidFX/TDFluidTypes.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/Package.h"
+#include "UObject/UnrealType.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTDFluidFireCalibration, Display, All);
 
@@ -1224,6 +1225,132 @@ bool FTDFluidEmberDeterministicReplayTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("The same seed reproduces the ember state hash"), SecondRun.Key, FirstRun.Key);
 	TestEqual(TEXT("The same seed reproduces the alive ember count"), SecondRun.Value, FirstRun.Value);
 	TestNotEqual(TEXT("A different seed changes the ember state hash"), OtherSeedRun.Key, FirstRun.Key);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidEmberBurstDefaultHashTest,
+	"TDGame.FluidFX.Ember.BurstDefaultMatchesHeadHash",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidEmberBurstDefaultHashTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFireTestPrivate;
+
+	constexpr int32 ExpectedHeadHash = -1141597509;
+	constexpr int32 ExpectedHeadAliveCount = 127;
+	constexpr int32 BurstReplayMaxEmbers = 128;
+
+	FTDFluidEmberRig Rig(true, 7);
+	Rig.Ember->MaxEmbers = BurstReplayMaxEmbers;
+	Rig.RunFrames(30);
+	const int32 AliveBeforeBurst = Rig.Ember->GetAliveEmberCount();
+	Rig.Ember->SpawnBurst(FVector::ZeroVector, 20, 400.0f);
+	const int32 BurstAddedCount = Rig.Ember->GetAliveEmberCount() - AliveBeforeBurst;
+	Rig.RunFrames(60);
+	const int32 EmberStateHash = Rig.Ember->ComputeEmberStateHash();
+	const int32 AliveEmberCount = Rig.Ember->GetAliveEmberCount();
+	AddInfo(FString::Printf(TEXT("Ember burst replay seed 7: hash %d, alive %d, burst added %d"), EmberStateHash, AliveEmberCount, BurstAddedCount));
+	TestTrue(TEXT("The burst adds at least one ember so the hash sees burst directions"), BurstAddedCount >= 1);
+	TestEqual(TEXT("The default burst keeps the HEAD ember state hash"), EmberStateHash, ExpectedHeadHash);
+	TestEqual(TEXT("The default burst keeps the HEAD alive ember count"), AliveEmberCount, ExpectedHeadAliveCount);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidEmberBurstDirectionZeroRatioTest,
+	"TDGame.FluidFX.Ember.BurstDirectionRatioZeroMatchesSphere",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidEmberBurstDirectionZeroRatioTest::RunTest(const FString& Parameters)
+{
+	const float DirectionZValues[] = {-1.0f, -0.5f, -0.1f, 0.0f, 0.3f, 1.0f};
+	const float DirectionAngles[] = {0.0f, 1.0f, 2.5f, 5.0f};
+	for (const float DirectionZ : DirectionZValues)
+	{
+		for (const float DirectionAngle : DirectionAngles)
+		{
+			const float RingRadius = FMath::Sqrt(FMath::Max(0.0f, 1.0f - DirectionZ * DirectionZ));
+			const FVector SphereDirection(RingRadius * FMath::Cos(DirectionAngle), RingRadius * FMath::Sin(DirectionAngle), DirectionZ);
+			const FVector UpwardDirection(SphereDirection.X, SphereDirection.Y, FMath::Abs(DirectionZ));
+			const FVector HalfDirection(SphereDirection.X, SphereDirection.Y, (DirectionZ + FMath::Abs(DirectionZ)) * 0.5f);
+			TestTrue(FString::Printf(TEXT("Ratio 0 keeps the sphere direction (z %.2f, angle %.2f)"), DirectionZ, DirectionAngle), UTDFluidEmberComponent::MakeBurstDirection(DirectionZ, DirectionAngle, 0.0f).Equals(SphereDirection, 1.0e-6));
+			TestTrue(FString::Printf(TEXT("Ratio 1 mirrors the downward half up (z %.2f, angle %.2f)"), DirectionZ, DirectionAngle), UTDFluidEmberComponent::MakeBurstDirection(DirectionZ, DirectionAngle, 1.0f).Equals(UpwardDirection, 1.0e-6));
+			TestTrue(FString::Printf(TEXT("Ratio 0.5 flattens the downward half (z %.2f, angle %.2f)"), DirectionZ, DirectionAngle), UTDFluidEmberComponent::MakeBurstDirection(DirectionZ, DirectionAngle, 0.5f).Equals(HalfDirection, 1.0e-6));
+		}
+	}
+	return true;
+}
+
+namespace TDFluidFireTestPrivate
+{
+	constexpr int32 UpwardBurstEmberCount = 40;
+	constexpr int32 MinVisibleUpwardBurstEmbers = 30;
+	constexpr double UpwardBurstFloorCm = -0.01;
+	constexpr double SphereBurstDropCm = -1.0;
+	constexpr double MinDroppingBurstShare = 0.25;
+
+	struct FTDFluidEmberBurstSpread
+	{
+		int32 VisibleEmberCount = 0;
+		int32 BelowFloorCount = 0;
+		int32 DroppedCount = 0;
+	};
+
+	bool MeasureEmberBurstSpread(FAutomationTestBase& Test, float UpwardRatio, FTDFluidEmberBurstSpread& OutSpread)
+	{
+		FTDFluidEmberRig Rig(false, 3);
+		Rig.Ember->SpawnPerSecond = 0.0f;
+		FFloatProperty* Property = FindFProperty<FFloatProperty>(UTDFluidEmberComponent::StaticClass(), TEXT("BurstUpwardRatio"));
+		if (!Property)
+		{
+			Test.AddError(TEXT("UTDFluidEmberComponent has no float property BurstUpwardRatio"));
+			return false;
+		}
+		Property->SetPropertyValue_InContainer(Rig.Ember, UpwardRatio);
+
+		Rig.RunFrames(2);
+		Rig.Ember->SpawnBurst(FVector::ZeroVector, UpwardBurstEmberCount, 400.0f);
+		Rig.RunFrames(6);
+		for (int32 InstanceIndex = 0; InstanceIndex < Rig.Ember->GetInstanceCount(); ++InstanceIndex)
+		{
+			FTransform InstanceTransform;
+			Rig.Ember->GetInstanceTransform(InstanceIndex, InstanceTransform, true);
+			if (InstanceTransform.GetScale3D().X <= UE_KINDA_SMALL_NUMBER)
+			{
+				continue;
+			}
+
+			const double HeightCm = InstanceTransform.GetLocation().Z;
+			++OutSpread.VisibleEmberCount;
+			OutSpread.BelowFloorCount += HeightCm < UpwardBurstFloorCm ? 1 : 0;
+			OutSpread.DroppedCount += HeightCm < SphereBurstDropCm ? 1 : 0;
+		}
+		return true;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidEmberBurstUpwardRatioTest,
+	"TDGame.FluidFX.Ember.BurstUpwardRatioLiftsBurst",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidEmberBurstUpwardRatioTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFireTestPrivate;
+
+	FTDFluidEmberBurstSpread UpwardSpread;
+	FTDFluidEmberBurstSpread SphereSpread;
+	if (!MeasureEmberBurstSpread(*this, 1.0f, UpwardSpread) || !MeasureEmberBurstSpread(*this, 0.0f, SphereSpread))
+	{
+		return false;
+	}
+
+	AddInfo(FString::Printf(TEXT("Upward burst: %d visible, %d below the center. Sphere burst: %d visible, %d dropped"), UpwardSpread.VisibleEmberCount, UpwardSpread.BelowFloorCount, SphereSpread.VisibleEmberCount, SphereSpread.DroppedCount));
+	TestTrue(TEXT("The upward burst keeps enough embers visible"), UpwardSpread.VisibleEmberCount >= MinVisibleUpwardBurstEmbers);
+	TestEqual(TEXT("No upward burst ember sinks below the burst center"), UpwardSpread.BelowFloorCount, 0);
+	TestTrue(TEXT("The sphere burst keeps enough embers visible"), SphereSpread.VisibleEmberCount >= MinVisibleUpwardBurstEmbers);
+	TestTrue(TEXT("At least a quarter of the sphere burst falls below the center"), SphereSpread.DroppedCount >= MinDroppingBurstShare * SphereSpread.VisibleEmberCount);
 	return true;
 }
 

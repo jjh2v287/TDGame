@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불꽃 카드 마스터 재질 M_TD_FluidFlame(TDFluidFlameCard.hlsl, 3D 노이즈 능선·Catmull-Rom 밀도·온도 휘도 감쇠·선택형 색 램프(기본 끔)·프리멀티플라이드 연기 흡수)과 불티 재질 M_TD_FluidEmber(TDFluidEmber.hlsl), 장작 발광 균열 재질 M_TD_FluidCharredWood(TDFluidCharredWood.hlsl), 폭발 조각 발광 재질 M_TD_FluidFragmentGlow(TDFluidFragmentGlow.hlsl, 불투명 기본 조명·지오메트리 컬렉션 사용 플래그, C++ 가 넣는 나이 열 비율과 폭발 불 Aux 열 표본 중 큰 값으로 발광) 및 인스턴스를 만든다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_flame_material.py (editor_make_fluid_volume_material.py 가 /Game/FluidFX/Textures/T_TD_FluidNoiseVolume 을 만든 뒤)
 출력: /Game/FluidFX/Materials/M_TD_FluidFlame, MI_TD_FluidFlame_Torch·Campfire·Explosion, M_TD_FluidEmber, MI_TD_FluidEmber_Default, M_TD_FluidCharredWood, MI_TD_FluidCharredWood_Campfire, M_TD_FluidFragmentGlow, MI_TD_FluidFragmentGlow_Explosion, Saved/FluidFX/fluid_flame_material.json
-상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 불꽃 입력 10/10·PS 232 명령). FX-8c 3차(2026-10-20) 불꽃 입력 39개(FlameSpeedHeatFloor·FlameHeatScale·FlameHeatGate·FlameHeatGateLow·FlameHeatGateHigh·FlameFlowCycleSeconds·FlameNoiseBillow, 기본값은 옛 출력과 같음)와 FX-8c 4차 G1 입력 40개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(40/40 연결·PS 352 명령). FX-8c 5차(2026-10-20) 불꽃 색 램프 입력 8개를 더한 48개(FlameColorRampMode 기본 0 = 흑체 경로 그대로, FlameRampCoverageExponent·FlameRampWarmPosition·FlameRampHotPosition, 정점 색 FlameRampColdColor·FlameRampWarmColor·FlameRampHotColor·FlameRampCoreColor 는 셰이더가 휘도 1로 정규화하는 선형 RGB)는 2026-10-20 13:02 에디터 재실행(48/48 연결·PS 393 명령·표본기 5). FX-8c 5차 굽기(2026-10-20: 세 MI 모두 FlameColorRampMode 1, 폭발·횃불 MI 는 vector_overrides 로 FlameRampColdColor·FlameRampWarmColor 를 (1, 0.03, 0.03) 으로 덮어쓰고 다시 읽어 확인, 모닥불 MI 는 마스터 정점 그대로, 횃불 MI 는 T4 값 FlameIntensity 13·FlameTemperatureMaxKelvin 1900·FlameHeatGate 1·FlameSmokeOpacity 0)는 에디터 재실행 전. FX-8c 10차(2026-10-20) 조각 발광 마스터(입력 20개, FragmentHeatRatio 기본 0 = C++ 가 넣기 전 발광 없음, 색 FragmentColdGlowColor·FragmentHotGlowColor 와 세기 FragmentGlowIntensity 는 C++ 설정 FTDFluidFragmentGlowSettings 가 매 틱 넣고 마스터 기본값은 그 C++ 기본값과 같은 진홍 (1, 0.012, 0.03)·(1, 0.03, 0.035)·세기 4, 표면색 FragmentCharColor·FragmentRoughness)와 MI_TD_FluidFragmentGlow_Explosion(덮어쓰기 없음)은 정적 검사만(check_fluid_fire_hlsl.py), 에디터 실행 전. 기존 에셋은 Saved/FluidFX/fluid_flame_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(flame_blend_mode 가 "additive" 면 BLEND_ADDITIVE, "translucent" 면 BLEND_TRANSLUCENT, 그 밖은 BLEND_ALPHA_COMPOSITE), 미저장 작업이 있으면 중단한다. FX-8c 10차 굽기(2026-10-21): 폭발 MI scalar_overrides 에 FlameErosion 0.35·FlameRampHotPosition 0.66(runner10 HP66ER35: 같은 세션 r2 +1.0~+1.9, 0.3초 노랑 −0.017).
+상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 불꽃 입력 10/10·PS 232 명령). FX-8c 3차(2026-10-20) 불꽃 입력 39개(FlameSpeedHeatFloor·FlameHeatScale·FlameHeatGate·FlameHeatGateLow·FlameHeatGateHigh·FlameFlowCycleSeconds·FlameNoiseBillow, 기본값은 옛 출력과 같음)와 FX-8c 4차 G1 입력 40개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(40/40 연결·PS 352 명령). FX-8c 5차(2026-10-20) 불꽃 색 램프 입력 8개를 더한 48개(FlameColorRampMode 기본 0 = 흑체 경로 그대로, FlameRampCoverageExponent·FlameRampWarmPosition·FlameRampHotPosition, 정점 색 FlameRampColdColor·FlameRampWarmColor·FlameRampHotColor·FlameRampCoreColor 는 셰이더가 휘도 1로 정규화하는 선형 RGB)는 2026-10-20 13:02 에디터 재실행(48/48 연결·PS 393 명령·표본기 5). FX-8c 5차 굽기(2026-10-20: 세 MI 모두 FlameColorRampMode 1, 폭발·횃불 MI 는 vector_overrides 로 FlameRampColdColor·FlameRampWarmColor 를 (1, 0.03, 0.03) 으로 덮어쓰고 다시 읽어 확인, 모닥불 MI 는 마스터 정점 그대로, 횃불 MI 는 T4 값 FlameIntensity 13·FlameTemperatureMaxKelvin 1900·FlameHeatGate 1·FlameSmokeOpacity 0)는 에디터 재실행 전. FX-8c 10차(2026-10-20) 조각 발광 마스터(입력 20개, FragmentHeatRatio 기본 0 = C++ 가 넣기 전 발광 없음, 색 FragmentColdGlowColor·FragmentHotGlowColor 와 세기 FragmentGlowIntensity 는 C++ 설정 FTDFluidFragmentGlowSettings 가 매 틱 넣고 마스터 기본값은 그 C++ 기본값과 같은 진홍 (1, 0.012, 0.03)·(1, 0.03, 0.035)·세기 4, 표면색 FragmentCharColor·FragmentRoughness)와 MI_TD_FluidFragmentGlow_Explosion(덮어쓰기 없음)은 정적 검사만(check_fluid_fire_hlsl.py), 에디터 실행 전. 기존 에셋은 Saved/FluidFX/fluid_flame_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(flame_blend_mode 가 "additive" 면 BLEND_ADDITIVE, "translucent" 면 BLEND_TRANSLUCENT, 그 밖은 BLEND_ALPHA_COMPOSITE), 미저장 작업이 있으면 중단한다. FX-8c 10차 굽기(2026-10-21): 폭발 MI scalar_overrides 에 FlameErosion 0.35·FlameRampHotPosition 0.66(runner10 HP66ER35: 같은 세션 r2 +1.0~+1.9, 0.3초 노랑 −0.017). FX-8c 11차(2026-10-21): EmberTintBlend(기본 0)·EmberTintGreen·EmberTintBlue(0.03) 불티 입력 10개, FragmentFacingContrast(기본 0)·FragmentKeyCenterWorld·내장 PixelWorldNormal 조각 입력 23개는 2026-10-21 에디터 재실행(10/10·23/23 연결, 기존 MI 값 변경 0). 조각 EdgeChar* 는 C++ 가 매 틱 넣어 MI 덮어쓰기 무효. FX-8c 11차 단계 B(2026-10-21): FlameColdRidgeContrast(기본 0 = 옛 출력과 같음, 열 문 아래 차가운 불꽃만 능선 결로 깎음) 불꽃 입력 49개는 2026-10-21 에디터 재실행(49/49 연결). FX-8c 11차 굽기(2026-10-21): MI_TD_FluidEmber_Default scalar_overrides 에 EmberIntensity 4.5·EmberTintBlend 1.0(judge11b B2: 밝은 불씨 색상 24.7→3.3°, G−B 37.5→9, LIVE-2 진홍 띠), 재질 재실행 전.
 """
 import hashlib
 import json
@@ -103,7 +103,7 @@ FLAME_INSTANCE_SPECS = (
         },
     },
 )
-EMBER_INSTANCE_SPECS = ({"name": "MI_TD_FluidEmber_Default", "scalar_overrides": {}},)
+EMBER_INSTANCE_SPECS = ({"name": "MI_TD_FluidEmber_Default", "scalar_overrides": {"EmberIntensity": 4.5, "EmberTintBlend": 1.0}},)
 
 FLAME_VECTOR_PARAMETER_DEFAULTS = (
     ("SimCenterWorld", (0.0, 0.0, 0.0, 1.0)),
@@ -148,6 +148,7 @@ FLAME_SCALAR_PARAMETER_DEFAULTS = (
     ("FlameRampCoverageExponent", 0.56),
     ("FlameRampWarmPosition", 0.35),
     ("FlameRampHotPosition", 0.47),
+    ("FlameColdRidgeContrast", 0.0),
 )
 FLAME_TEXTURE_PARAMETER_NAMES = ("DensityPressureTexture", "VelocityTexture", "AuxTexture")
 FLAME_BUILTIN_SOURCE_NAMES = ("PixelWorldPosition", "SceneDepthCm", "PixelDepthCm", "ElapsedSeconds")
@@ -201,6 +202,7 @@ FLAME_CUSTOM_INPUT_NAMES = (
     "FlameRampWarmColor",
     "FlameRampHotColor",
     "FlameRampCoreColor",
+    "FlameColdRidgeContrast",
 )
 FLAME_HLSL_SAMPLER_NAMES = ("DensityPressureTextureSampler", "VelocityTextureSampler", "NoiseVolumeTextureSampler", "AuxTextureSampler")
 FLAME_HLSL_ENGINE_SYMBOLS = ("Texture2DSampleLevel", "Texture3DSampleLevel")
@@ -209,6 +211,9 @@ EMBER_SCALAR_PARAMETER_DEFAULTS = (
     ("EmberIntensity", 6.0),
     ("EmberTemperatureMinKelvin", 900.0),
     ("EmberTemperatureMaxKelvin", 2200.0),
+    ("EmberTintBlend", 0.0),
+    ("EmberTintGreen", 0.03),
+    ("EmberTintBlue", 0.03),
 )
 EMBER_INSTANCE_DATA_NAMES = (("EmberHeat", 0), ("EmberFade", 1))
 EMBER_ENGINE_VECTOR_NAMES = ("SurfaceNormal", "ViewVector")
@@ -218,6 +223,9 @@ EMBER_CUSTOM_INPUT_NAMES = (
     "EmberIntensity",
     "EmberTemperatureMinKelvin",
     "EmberTemperatureMaxKelvin",
+    "EmberTintBlend",
+    "EmberTintGreen",
+    "EmberTintBlue",
     "SurfaceNormal",
     "ViewVector",
 )
@@ -264,6 +272,7 @@ FRAGMENT_VECTOR_PARAMETER_DEFAULTS = (
     ("FragmentColdGlowColor", (1.0, 0.012, 0.03, 1.0)),
     ("FragmentHotGlowColor", (1.0, 0.03, 0.035, 1.0)),
     ("FragmentCharColor", (0.12, 0.1, 0.09, 1.0)),
+    ("FragmentKeyCenterWorld", (0.0, 0.0, 0.0, 1.0)),
 )
 FRAGMENT_SCALAR_PARAMETER_DEFAULTS = (
     ("AuxHeatActive", 0.0),
@@ -276,9 +285,10 @@ FRAGMENT_SCALAR_PARAMETER_DEFAULTS = (
     ("FragmentEdgeCharWidth", 0.12),
     ("FragmentEdgeCharStrength", 0.5),
     ("FragmentRoughness", 0.85),
+    ("FragmentFacingContrast", 0.0),
 )
 FRAGMENT_TEXTURE_PARAMETER_NAMES = ("AuxTexture",)
-FRAGMENT_BUILTIN_SOURCE_NAMES = ("PixelWorldPosition", "FragmentUv")
+FRAGMENT_BUILTIN_SOURCE_NAMES = ("PixelWorldPosition", "FragmentUv", "PixelWorldNormal")
 FRAGMENT_SURFACE_PARAMETER_NAMES = ("FragmentCharColor", "FragmentRoughness")
 FRAGMENT_CUSTOM_INPUT_NAMES = (
     "PixelWorldPosition",
@@ -301,6 +311,9 @@ FRAGMENT_CUSTOM_INPUT_NAMES = (
     "FragmentEdgeCharStrength",
     "FragmentColdGlowColor",
     "FragmentHotGlowColor",
+    "FragmentFacingContrast",
+    "FragmentKeyCenterWorld",
+    "PixelWorldNormal",
 )
 FRAGMENT_HLSL_SAMPLER_NAMES = ("AuxTextureSampler",)
 FRAGMENT_HLSL_ENGINE_SYMBOLS = ("Texture2DSampleLevel",)
@@ -982,6 +995,7 @@ def build_fragment_master_graph(material, code, default_texture, sampler_type):
     world_position = add_node(material, unreal.MaterialExpressionWorldPosition, -1500, -900)
     sources["PixelWorldPosition"] = (truncate_if_available(material, world_position, -1300, -900), "")
     sources["FragmentUv"] = (add_node(material, unreal.MaterialExpressionTextureCoordinate, -1300, -780, coordinate_index=0), "")
+    sources["PixelWorldNormal"] = (add_node(material, unreal.MaterialExpressionPixelNormalWS, -1300, -1020), "")
     for row, texture_name in enumerate(FRAGMENT_TEXTURE_PARAMETER_NAMES):
         texture_node = add_node(
             material,

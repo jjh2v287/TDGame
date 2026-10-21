@@ -282,11 +282,16 @@ void UTDFluidEmberComponent::SpawnBurst(FVector Center, int32 Count, float Speed
 
 		const float DirectionZ = TDFluidDeterministic::NextUnitFloat(RandomState) * 2.0f - 1.0f;
 		const float DirectionAngle = TDFluidDeterministic::NextUnitFloat(RandomState) * UE_TWO_PI;
-		const float RingRadius = FMath::Sqrt(FMath::Max(0.0f, 1.0f - DirectionZ * DirectionZ));
-		const FVector Direction(RingRadius * FMath::Cos(DirectionAngle), RingRadius * FMath::Sin(DirectionAngle), DirectionZ);
+		const FVector Direction = MakeBurstDirection(DirectionZ, DirectionAngle, BurstUpwardRatio);
 		const float SpeedRatio = BurstMinSpeedRatio + (1.0f - BurstMinSpeedRatio) * TDFluidDeterministic::NextUnitFloat(RandomState);
 		ActivateEmber(SlotIndex, Center, Direction * SpeedCmPerSec * SpeedRatio);
 	}
+}
+
+FVector UTDFluidEmberComponent::MakeBurstDirection(float DirectionZ, float DirectionAngle, float UpwardRatio)
+{
+	const float RingRadius = FMath::Sqrt(FMath::Max(0.0f, 1.0f - DirectionZ * DirectionZ));
+	return FVector(RingRadius * FMath::Cos(DirectionAngle), RingRadius * FMath::Sin(DirectionAngle), FMath::Lerp(DirectionZ, FMath::Abs(DirectionZ), FMath::Clamp(UpwardRatio, 0.0f, 1.0f)));
 }
 
 float UTDFluidEmberComponent::GetMeanEmberHeat() const

@@ -35,7 +35,7 @@ namespace
 	constexpr float MaxVolumeLightIntensityScale = 8.0f;
 	constexpr float FullSphereSteradians = static_cast<float>(4.0 * UE_PI);
 	constexpr float MouseBrushBaseDensityStrength = 1.0f;
-	constexpr int32 MaximumShadowCapsuleCount = 8;
+	constexpr int32 MaximumActorShadowCapsuleCount = 8;
 
 	FTDFluidShadowCapsuleBonePair MakeShadowCapsuleBonePair(const TCHAR* StartBoneName, const TCHAR* EndBoneName, float RadiusCm)
 	{
@@ -56,7 +56,7 @@ namespace
 
 		for (const FTDFluidShadowCapsuleBonePair& BonePair : BonePairs)
 		{
-			if (InOutCapsules.Num() >= MaximumShadowCapsuleCount)
+			if (InOutCapsules.Num() >= MaximumActorShadowCapsuleCount)
 			{
 				return;
 			}
@@ -1068,7 +1068,7 @@ void ATDFluidLiveActor::GatherShadowCapsules(TArray<FTDFluidShadowCapsule>& OutC
 	for (const TWeakObjectPtr<AActor>& RegisteredActor : RegisteredInteractingActors)
 	{
 		const AActor* InteractingActor = RegisteredActor.Get();
-		if (!InteractingActor || OutCapsules.Num() >= MaximumShadowCapsuleCount)
+		if (!InteractingActor || OutCapsules.Num() >= MaximumActorShadowCapsuleCount)
 		{
 			continue;
 		}

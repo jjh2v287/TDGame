@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06). FluidFX 무대 PIE 하나에서 변형(노출·조명·불빛·불꽃 카드/볼륨 재질 값·활성 프리셋 임시 복제본·폰 위치·카메라 거리·액터 위치·컴포넌트 숨김·콘솔 명령·깨어 있는 유체 액터·폭발 트리거)을 차례로 적용하고 정착 시간 뒤 또는 게임 시간 예약 시각마다 게임 화면을 찍어 이름표 붙은 비교 격자를 만든다.
-실행 명령: python Tools/FluidFX/pie_lookdev_fluid.py --variants <변형 JSON> [--level /Game/FluidFX/Maps/LV_TDFluidFireStage] [--settle-seconds 3] [--stop-pie] (PowerShell). 변형 JSON = {"base": {적용}, "variants": [{"name": "영문", "apply": {적용}, "settle": 초}]}, 적용 키(이 순서로 적용) = awake({라벨: bool}이면 적힌 것만, 목록이면 목록 외는 재움)·pawn·arm·view([pitch, yaw] 조종 회전, 붐이 따라감)·props({라벨: {속성: 값}} 액터 속성. 값이 dict면 현재 값이 구조체일 때 필드를 고쳐 되넣고, UObject(컴포넌트)면 그 객체의 필드만 고치고 되넣지 않으며, 배열이면 정수 문자열 키의 원소를 고쳐 배열을 되넣는다 예 {"targets": {"1": {"burst_radius_scale": 1.5}}})·hide({라벨: bool} 게임 숨김)·location({라벨: [x, y, z]} 액터 위치, null 성분은 현재 값 유지 예 [null, null, 0.0], 다시 읽은 값 기록)·hide_components({라벨 또는 "pawn": [컴포넌트 이름 일부(대소문자 무시)]} 맞는 씬 컴포넌트 set_visibility(False), 예 ShieldMesh)·preset({라벨: {점 경로 또는 중첩 dict: 값}} 라이브 컴포넌트 활성 프리셋의 임시 복제본을 고쳐 active_preset에 넣음, 원본 에셋은 건드리지 않음. plane_settings·volume_render·volume_height_cm은 C++가 매 스텝 다시 읽어 그대로 반영되고, 반영 여부는 다음 촬영의 preset_effect(볼륨 MID 매개변수 값, camera_depth_bias_cm은 내부 표면 메시 이동 거리)로 보고)·preset_reinit([라벨] 복제본으로 init_system_state_from_preset 재초기화, 시뮬 상태와 앞선 sim 편집이 초기화되므로 프리셋의 시뮬 설정·출력 재질처럼 초기화 때만 읽는 필드를 바꿀 때만)·exposure_ev100·lights·fire_light·flame(액터의 모든 불꽃 카드 MID)·volume(볼륨 MID)·sim(simulation_config 필드, apply_simulation_config)·emitter(source_emitter 필드)·surface_material(라이브 컴포넌트 출력 재질 교체 후 내부 메시 재연결)·console([명령] PIE 플레이어 컨트롤러로 실행, "이름 값" 꼴 cvar는 다시 읽은 값 기록, Shot 결과는 result.json console_screenshots)·move(내비 이동 목표)·speed·trigger(같은 호출의 게임 시간을 trigger_game_time으로 기록)·time_dilation(전역 시간 배율)·schedule({"times": [기준 뒤 게임 초], "reference": "trigger"|"now", "prefix": "영문", "fixed_fps": 60(0이면 끔, 예약 동안 t.OverrideFPS 고정 간격 뒤 복구 L-editor-45), "file_wait_ticks": 30(1이면 그려진 다음 틱에 바로 다음 장), "timeout": 초} 원격 호출 하나에서 슬레이트 틱 콜백을 걸어 기준 뒤 게임 시간마다 HighResShot을 요청하고, 앞 장이 그려지고 파일이 생기거나 틱 한도가 지나야 다음 장을 건 뒤 스스로 해제, 이 변형은 settle 촬영을 하지 않음, reference trigger는 같은 apply의 trigger 필요). props·emitter·sim·preset 값 변환: 현재 값이 Vector·Vector2D면 목록 [x, y(, z)], Rotator면 [pitch, yaw, roll], LinearColor면 [r, g, b(, a)], Transform이면 {"location": [], "rotation": [pitch, yaw, roll], "scale": []}(빠진 키는 현재 값 유지)
+실행 명령: python Tools/FluidFX/pie_lookdev_fluid.py --variants <변형 JSON> [--level /Game/FluidFX/Maps/LV_TDFluidFireStage] [--settle-seconds 3] [--stop-pie] (PowerShell). 변형 JSON = {"base": {적용}, "variants": [{"name": "영문", "apply": {적용}, "settle": 초}]}, 적용 키(이 순서로 적용) = awake({라벨: bool}이면 적힌 것만, 목록이면 목록 외는 재움)·pawn·arm·view([pitch, yaw] 조종 회전, 붐이 따라감)·props({라벨: {속성: 값}} 액터 속성. 값이 dict면 현재 값이 구조체일 때 필드를 고쳐 되넣고, UObject(컴포넌트)면 그 객체의 필드만 고치고 되넣지 않으며, 배열이면 정수 문자열 키의 원소를 고쳐 배열을 되넣는다 예 {"targets": {"1": {"burst_radius_scale": 1.5}}})·hide({라벨: bool} 게임 숨김)·location({라벨: [x, y, z]} 액터 위치, null 성분은 현재 값 유지 예 [null, null, 0.0], 다시 읽은 값 기록)·hide_components({라벨 또는 "pawn": [컴포넌트 이름 일부(대소문자 무시)]} 맞는 씬 컴포넌트 set_visibility(False), 예 ShieldMesh)·preset({라벨: {점 경로 또는 중첩 dict: 값}} 라이브 컴포넌트 활성 프리셋의 임시 복제본을 고쳐 active_preset에 넣음, 원본 에셋은 건드리지 않음. plane_settings·volume_render·volume_height_cm은 C++가 매 스텝 다시 읽어 그대로 반영되고, 반영 여부는 다음 촬영의 preset_effect(볼륨 MID 매개변수 값, camera_depth_bias_cm은 내부 표면 메시 이동 거리)로 보고)·preset_reinit([라벨] 복제본으로 init_system_state_from_preset 재초기화, 시뮬 상태와 앞선 sim 편집이 초기화되므로 프리셋의 시뮬 설정·출력 재질처럼 초기화 때만 읽는 필드를 바꿀 때만)·exposure_ev100·lights·fire_light·flame(액터의 모든 불꽃 카드 MID)·volume(볼륨 MID)·ember({라벨: {재질 매개변수: 값}} ember_component 0번 재질 사슬에 FluidEmber 필요, MID 아니면 만들어 설정, 부모에 없는 이름은 missing, settle 촬영마다 result.json에 ember_mid)·sim(simulation_config 필드, apply_simulation_config)·emitter(source_emitter 필드)·surface_material(라이브 컴포넌트 출력 재질 교체 후 내부 메시 재연결)·console([명령] PIE 플레이어 컨트롤러로 실행, "이름 값" 꼴 cvar는 다시 읽은 값 기록, Shot 결과는 result.json console_screenshots)·move(내비 이동 목표)·speed·trigger(같은 호출의 게임 시간을 trigger_game_time으로 기록)·time_dilation(전역 시간 배율)·schedule({"times": [기준 뒤 게임 초], "reference": "trigger"|"now", "prefix": "영문", "fixed_fps": 60(0이면 끔, 예약 동안 t.OverrideFPS 고정 간격 뒤 복구 L-editor-45), "file_wait_ticks": 30(1이면 그려진 다음 틱에 바로 다음 장), "timeout": 초} 원격 호출 하나에서 슬레이트 틱 콜백을 걸어 기준 뒤 게임 시간마다 HighResShot을 요청하고, 앞 장이 그려지고 파일이 생기거나 틱 한도가 지나야 다음 장을 건 뒤 스스로 해제, 이 변형은 settle 촬영을 하지 않음, reference trigger는 같은 apply의 trigger 필요). props·emitter·sim·preset 값 변환: 현재 값이 Vector·Vector2D면 목록 [x, y(, z)], Rotator면 [pitch, yaw, roll], LinearColor면 [r, g, b(, a)], Transform이면 {"location": [], "rotation": [pitch, yaw, roll], "scale": []}(빠진 키는 현재 값 유지)
 출력: Saved/FluidFX/lookdev/<시각>/<순번>_<이름>.png, 예약 촬영은 <순번>_<prefix>_<기준 뒤 ms>ms.png와 <순번>_<prefix>_schedule.json(장마다 요청·실제 찍힌 게임 시간, 늦음, 틱 사이 벽시계 간격 real_dt(요청 틱)·real_dt_mean(앞 장 뒤 촬영 대기 아닌 틱 평균, 실제 fps 대용)·capture_real_dt(촬영 끊김 포함), world_dt, 파일 대기 틱, 고정 간격 복구, preset_effect), grid.png, result.json(변형별 적용 결과·shot_game_time·preset_effect·schedule·console_screenshots). 종료 코드 0 기대한 장 전부 찍음/1 일부 실패/2 환경 문제
-상태: 검증됨(2026-10-18 모닥불·횃불·폭발 변형 9회 실행, campfire_v1~v5·torch_v1·explosion_v1. 2026-10-20 view·hide·props 추가와 flame 전 카드 적용으로 측면 룩데브 6회 실행). 2026-10-20 추가한 awake dict·game_time·time_dilation과 console·schedule·location·hide_components·preset·preset_reinit·값 변환·배열 원소·UObject 필드 편집은 미검증(PIE 미실행, 정적 검토만). PIE 런타임 값만 바꾸므로 에셋은 바뀌지 않는다. 고른 값은 재질·무대 생성 스크립트에 옮겨 적는다.
+상태: 검증됨(2026-10-18 모닥불·횃불·폭발 변형 9회 실행, campfire_v1~v5·torch_v1·explosion_v1. 2026-10-20 view·hide·props 추가와 flame 전 카드 적용으로 측면 룩데브 6회 실행). 2026-10-20 추가한 awake dict·game_time·time_dilation과 console·schedule·location·hide_components·preset·preset_reinit·값 변환·배열 원소·UObject 필드 편집은 미검증(PIE 미실행, 정적 검토만). PIE 런타임 값만 바꾸므로 에셋은 바뀌지 않는다. 고른 값은 재질·무대 생성 스크립트에 옮겨 적는다. 2026-10-21 FX-8c 11차 ember 키는 미검증(PIE 미실행), EmberTint* 는 재질 재생성 뒤에만 효과.
 """
 import argparse
 import json
@@ -123,6 +123,39 @@ def set_mesh_material_values(component, values):
     if component is None:
         return {"error": "컴포넌트 없음"}
     return set_material_values(component.get_material(0), values)
+
+
+def has_material_in_chain(material, token):
+    while material is not None:
+        if token in material.get_name():
+            return True
+        material = material.get_editor_property("parent") if isinstance(material, unreal.MaterialInstance) else None
+    return False
+
+
+def set_ember_material_values(component, values):
+    if component is None:
+        return {"error": "컴포넌트 없음"}
+    material = component.get_material(0)
+    if not has_material_in_chain(material, "FluidEmber"):
+        return {"error": "불티 재질 미로드: " + str(material)}
+    if not isinstance(material, unreal.MaterialInstanceDynamic):
+        material = component.create_dynamic_material_instance(0, material)
+    applied = set_material_values(material, values)
+    if "error" in applied:
+        return applied
+    base = material.get_base_material()
+    known = {str(name) for name in unreal.MaterialEditingLibrary.get_scalar_parameter_names(base)} | {str(name) for name in unreal.MaterialEditingLibrary.get_vector_parameter_names(base)}
+    return {"applied": applied, "mid": material.get_name(), "missing": [name for name in values if name not in known]}
+
+
+def describe_ember_materials(world):
+    names = {}
+    for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.TDFluidFireActor):
+        component = actor.get_editor_property("ember_component")
+        if component is not None and component.get_material(0) is not None:
+            names[actor.get_actor_label()] = component.get_material(0).get_name()
+    return names
 
 
 def make_rotator(value):
@@ -584,6 +617,8 @@ def action_lookdev_apply(world):
         outcome.setdefault("flame", {})[label] = {"cards": len(cards)}
     if "volume" in apply:
         outcome["volume"] = apply_component_values(world, apply["volume"], "volume_mesh_component", set_mesh_material_values)
+    if "ember" in apply:
+        outcome["ember"] = apply_component_values(world, apply["ember"], "ember_component", set_ember_material_values)
     apply_each_label(world, apply, outcome, "sim", apply_sim)
     apply_each_label(world, apply, outcome, "emitter", apply_emitter)
     for label, material_path in apply.get("surface_material", {}).items():
@@ -625,6 +660,7 @@ def action_lookdev_shot(world):
     game_time = unreal.GameplayStatics.get_time_seconds(world)
     unreal.SystemLibrary.execute_console_command(world, "HighResShot " + PARAMS["size"] + " filename=" + PARAMS["path"])
     outcome = {"game_time": game_time}
+    outcome["ember_mid"] = describe_ember_materials(world)
     effects = report_preset_effects(world)
     if effects:
         outcome["preset_effect"] = effects
@@ -784,6 +820,8 @@ def main():
             outcome["shot_game_time"] = shot.get("game_time") if isinstance(shot, dict) else None
             if isinstance(shot, dict) and "preset_effect" in shot:
                 outcome["preset_effect"] = shot["preset_effect"]
+            if isinstance(shot, dict) and "ember_mid" in shot:
+                outcome["ember_mid"] = shot["ember_mid"]
             is_saved = wait_for_file(path)
             if is_saved:
                 shots.append((variant["name"], path))

@@ -2,7 +2,9 @@
 
 #include "Actors/TDBreakableActor.h"
 #include "Engine/Engine.h"
+#include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "Field/FieldSystemObjects.h"
 #include "FluidFX/TDFluidEmberComponent.h"
 #include "FluidFX/TDFluidFireActor.h"
 #include "FluidFX/TDFluidFireTypes.h"
@@ -19,6 +21,8 @@
 #include "Misc/AutomationTest.h"
 #include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
+#include "UObject/UObjectHash.h"
+#include "UObject/UnrealType.h"
 
 #include <limits>
 
@@ -593,6 +597,322 @@ bool FTDFluidFragmentGlowDefaultsTest::RunTest(const FString& Parameters)
 	TestWorld.TickFrames(30);
 	TestFalse(TEXT("The short tracking window has ended"), ShortRig.Emitter->IsTrackingFragments());
 	TestNearlyEqual(TEXT("Glow is charred once tracking stops"), ReadGlowScalar(GlowMaterial, TEXT("FragmentHeatRatio")), ShortRig.Emitter->GlowSettings.CharredHeatRatio, GlowTolerance);
+	return true;
+}
+
+namespace TDFluidFragmentTestPrivate
+{
+	constexpr int32 FaceShadingValueCount = 3;
+	const TCHAR* const FaceShadingPropertyNames[FaceShadingValueCount] = {TEXT("FacingContrast"), TEXT("EdgeCharWidth"), TEXT("EdgeCharStrength")};
+	const TCHAR* const FaceShadingParameterNames[FaceShadingValueCount] = {TEXT("FragmentFacingContrast"), TEXT("FragmentEdgeCharWidth"), TEXT("FragmentEdgeCharStrength")};
+	constexpr float FaceShadingDefaultValues[FaceShadingValueCount] = {0.0f, 0.12f, 0.5f};
+	constexpr float FaceShadingTunedValues[FaceShadingValueCount] = {0.6f, 0.2f, 0.25f};
+	constexpr float KeyCenterToleranceCm = 0.01f;
+	constexpr float TunedBurstCenterHeightOffsetCm = 30.0f;
+
+	FFloatProperty* FindFaceShadingProperty(FAutomationTestBase& Test, const TCHAR* PropertyName)
+	{
+		FFloatProperty* Property = FindFProperty<FFloatProperty>(FTDFluidFragmentGlowSettings::StaticStruct(), PropertyName);
+		if (!Property)
+		{
+			Test.AddError(FString::Printf(TEXT("FTDFluidFragmentGlowSettings has no float property %s"), PropertyName));
+		}
+		return Property;
+	}
+
+	bool TestPushedFaceShading(FAutomationTestBase& Test, const ATDFluidFragmentEmitterActor& Emitter, const float (&ExpectedValues)[FaceShadingValueCount], const FVector& ExpectedKeyCenterWorld, const TCHAR* Moment)
+	{
+		UMaterialInstanceDynamic* GlowMaterial = Emitter.GetFragmentGlowMaterial();
+		if (!GlowMaterial)
+		{
+			Test.AddError(FString::Printf(TEXT("%s: the break made no glow material"), Moment));
+			return false;
+		}
+
+		bool bAllPushed = true;
+		for (int32 ValueIndex = 0; ValueIndex < FaceShadingValueCount; ++ValueIndex)
+		{
+			const float PushedValue = ReadGlowScalar(GlowMaterial, FaceShadingParameterNames[ValueIndex]);
+			bAllPushed &= Test.TestNearlyEqual(FString::Printf(TEXT("%s: %s is pushed"), Moment, FaceShadingParameterNames[ValueIndex]), PushedValue, ExpectedValues[ValueIndex], GlowTolerance);
+		}
+
+		const FLinearColor PushedKeyCenter = GlowMaterial->K2_GetVectorParameterValue(TEXT("FragmentKeyCenterWorld"));
+		const FVector PushedKeyCenterWorld(PushedKeyCenter.R, PushedKeyCenter.G, PushedKeyCenter.B);
+		bAllPushed &= Test.TestNearlyEqual(FString::Printf(TEXT("%s: the burst center is the hit raised by the burst height offset"), Moment), Emitter.GetBurstCenterWorld(), ExpectedKeyCenterWorld, KeyCenterToleranceCm);
+		bAllPushed &= Test.TestNearlyEqual(FString::Printf(TEXT("%s: the key center is the burst center"), Moment), PushedKeyCenterWorld, ExpectedKeyCenterWorld, KeyCenterToleranceCm);
+		return bAllPushed;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentFaceShadingDefaultsTest,
+	"TDGame.FluidFX.Fragment.FaceShadingDefaultsKeepLook",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentFaceShadingDefaultsTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	const FTDFluidFragmentGlowSettings DefaultSettings;
+	for (int32 ValueIndex = 0; ValueIndex < FaceShadingValueCount; ++ValueIndex)
+	{
+		const FFloatProperty* Property = FindFaceShadingProperty(*this, FaceShadingPropertyNames[ValueIndex]);
+		if (!Property)
+		{
+			return false;
+		}
+
+		TestTrue(FString::Printf(TEXT("%s is editable"), FaceShadingPropertyNames[ValueIndex]), Property->HasAnyPropertyFlags(CPF_Edit));
+		TestNearlyEqual(FString::Printf(TEXT("%s keeps the master material default"), FaceShadingPropertyNames[ValueIndex]), Property->GetPropertyValue_InContainer(&DefaultSettings), FaceShadingDefaultValues[ValueIndex], 1e-6f);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentGlowFaceShadingPushTest,
+	"TDGame.FluidFX.Fragment.GlowPushesFaceShading",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentGlowFaceShadingPushTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	FTDFluidFragmentTestWorld TestWorld;
+	FTDFluidFragmentRig DefaultRig(TestWorld, 10.0f, GlowMaterialPath);
+	if (!TestTrue(TEXT("The default glow rig spawns"), DefaultRig.IsComplete()))
+	{
+		return false;
+	}
+
+	if (!TestTrue(TEXT("The default rig glow material loads"), WaitForGlowMaterial(TestWorld, *DefaultRig.Emitter)))
+	{
+		return false;
+	}
+
+	const FVector DefaultHitLocation(0.0, 400.0, 50.0);
+	DefaultRig.Emitter->TriggerBreakAt(DefaultHitLocation);
+	TestPushedFaceShading(*this, *DefaultRig.Emitter, FaceShadingDefaultValues, DefaultHitLocation, TEXT("Default settings at the break"));
+
+	FTDFluidFragmentRig TunedRig(TestWorld, 10.0f, GlowMaterialPath);
+	if (!TestTrue(TEXT("The tuned glow rig spawns"), TunedRig.IsComplete()))
+	{
+		return false;
+	}
+
+	for (int32 ValueIndex = 0; ValueIndex < FaceShadingValueCount; ++ValueIndex)
+	{
+		const FFloatProperty* Property = FindFaceShadingProperty(*this, FaceShadingPropertyNames[ValueIndex]);
+		if (!Property)
+		{
+			return false;
+		}
+		Property->SetPropertyValue_InContainer(&TunedRig.Emitter->GlowSettings, FaceShadingTunedValues[ValueIndex]);
+	}
+
+	TunedRig.Emitter->TrailSettings.BurstCenterHeightOffsetCm = TunedBurstCenterHeightOffsetCm;
+	const FVector TunedHitLocation(40.0, 360.0, 70.0);
+	const FVector TunedKeyCenterWorld = TunedHitLocation + FVector::UpVector * TunedBurstCenterHeightOffsetCm;
+	TestFalse(TEXT("The tuned key center is not the source location"), TunedKeyCenterWorld.Equals(TunedRig.Source->GetActorLocation(), 1.0));
+
+	if (!TestTrue(TEXT("The tuned rig glow material loads"), WaitForGlowMaterial(TestWorld, *TunedRig.Emitter)))
+	{
+		return false;
+	}
+
+	TunedRig.Emitter->TriggerBreakAt(TunedHitLocation);
+	TestPushedFaceShading(*this, *TunedRig.Emitter, FaceShadingTunedValues, TunedKeyCenterWorld, TEXT("Tuned settings right after the break"));
+	TestWorld.TickFrames(10);
+	TestPushedFaceShading(*this, *TunedRig.Emitter, FaceShadingTunedValues, TunedKeyCenterWorld, TEXT("Tuned settings ten frames after the break"));
+	return true;
+}
+
+namespace TDFluidFragmentTestPrivate
+{
+	const TCHAR* const EmberCubeMeshPath = TEXT("/Engine/BasicShapes/Cube.Cube");
+	constexpr float EmberBurstRaisedOffsetCm = 100.0f;
+	constexpr double EmberBurstHeightToleranceCm = 5.0;
+	constexpr int32 MinVisibleBurstEmbers = 40;
+	constexpr int32 MaxBurstSettleFrames = 10;
+
+	FStructProperty* FindBreakDirectionOffsetProperty(FAutomationTestBase& Test)
+	{
+		FStructProperty* Property = FindFProperty<FStructProperty>(ATDBreakableActor::StaticClass(), TEXT("BreakDirectionOffsetCm"));
+		if (!Property || Property->Struct != TBaseStructure<FVector>::Get())
+		{
+			Test.AddError(TEXT("ATDBreakableActor has no FVector property BreakDirectionOffsetCm"));
+			return nullptr;
+		}
+		return Property;
+	}
+
+	struct FTDFluidEmberBurstHeightSample
+	{
+		int32 VisibleEmberCount = 0;
+		int32 SettleFrameCount = 0;
+		double MeanHeightCm = 0.0;
+		FVector BurstCenterWorld = FVector::ZeroVector;
+	};
+
+	void CollectVisibleEmberHeights(const UTDFluidEmberComponent& Ember, FTDFluidEmberBurstHeightSample& OutSample)
+	{
+		double HeightSumCm = 0.0;
+		OutSample.VisibleEmberCount = 0;
+		for (int32 InstanceIndex = 0; InstanceIndex < Ember.GetInstanceCount(); ++InstanceIndex)
+		{
+			FTransform InstanceTransform;
+			Ember.GetInstanceTransform(InstanceIndex, InstanceTransform, true);
+			if (InstanceTransform.GetScale3D().X <= UE_KINDA_SMALL_NUMBER)
+			{
+				continue;
+			}
+
+			HeightSumCm += InstanceTransform.GetLocation().Z;
+			++OutSample.VisibleEmberCount;
+		}
+		OutSample.MeanHeightCm = OutSample.VisibleEmberCount > 0 ? HeightSumCm / OutSample.VisibleEmberCount : 0.0;
+	}
+
+	bool MeasureEmberBurstHeight(FAutomationTestBase& Test, float HeightOffsetCm, FTDFluidEmberBurstHeightSample& OutSample)
+	{
+		FTDFluidFragmentTestWorld TestWorld;
+		FTDFluidFragmentRig Rig(TestWorld, 10.0f);
+		if (!Rig.IsComplete() || !Rig.FireActor->EmberComponent)
+		{
+			Test.AddError(TEXT("The ember height rig did not spawn"));
+			return false;
+		}
+
+		FFloatProperty* Property = FindFProperty<FFloatProperty>(FTDFluidFragmentTrailSettings::StaticStruct(), TEXT("EmberBurstHeightOffsetCm"));
+		if (!Property)
+		{
+			Test.AddError(TEXT("FTDFluidFragmentTrailSettings has no float property EmberBurstHeightOffsetCm"));
+			return false;
+		}
+		Property->SetPropertyValue_InContainer(&Rig.Emitter->TrailSettings, HeightOffsetCm);
+
+		UTDFluidEmberComponent* Ember = Rig.FireActor->EmberComponent;
+		Ember->SpawnPerSecond = 0.0f;
+		Ember->SpawnPerDensityArea = 0.0f;
+		Ember->BuoyancyCmPerSec2 = 0.0f;
+		Ember->GravityCmPerSec2 = 0.0f;
+		Ember->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, EmberCubeMeshPath));
+
+		Rig.Emitter->TriggerBreakAt(FVector(40.0, 360.0, 70.0));
+		for (OutSample.SettleFrameCount = 1; OutSample.SettleFrameCount <= MaxBurstSettleFrames; ++OutSample.SettleFrameCount)
+		{
+			TestWorld.TickFrames(1);
+			CollectVisibleEmberHeights(*Ember, OutSample);
+			if (OutSample.VisibleEmberCount >= MinVisibleBurstEmbers)
+			{
+				break;
+			}
+		}
+		OutSample.BurstCenterWorld = Rig.Emitter->GetBurstCenterWorld();
+		return true;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidBreakableDirectionOffsetDefaultTest,
+	"TDGame.FluidFX.Fragment.BreakDirectionOffsetDefaultsToHit",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidBreakableDirectionOffsetDefaultTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	const FStructProperty* Property = FindBreakDirectionOffsetProperty(*this);
+	if (!Property)
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("BreakDirectionOffsetCm is editable"), Property->HasAnyPropertyFlags(CPF_Edit));
+	TestTrue(TEXT("BreakDirectionOffsetCm defaults to zero so the push starts at the hit"), *Property->ContainerPtrToValuePtr<FVector>(GetDefault<ATDBreakableActor>()) == FVector::ZeroVector);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidBreakableDirectionOffsetFieldTest,
+	"TDGame.FluidFX.Fragment.BreakDirectionOffsetMovesOnlyRadialVector",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidBreakableDirectionOffsetFieldTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	const FStructProperty* Property = FindBreakDirectionOffsetProperty(*this);
+	if (!Property)
+	{
+		return false;
+	}
+
+	FTDFluidFragmentTestWorld TestWorld;
+	ATDBreakableActor* Breakable = TestWorld.World->SpawnActor<ATDBreakableActor>(ATDBreakableActor::StaticClass(), FVector(0.0, 400.0, 50.0), FRotator::ZeroRotator);
+	if (!TestNotNull(TEXT("The breakable spawns"), Breakable))
+	{
+		return false;
+	}
+
+	const FVector DirectionOffsetCm(0.0, 0.0, -200.0);
+	const FVector HitLocation(40.0, 360.0, 70.0);
+	*Property->ContainerPtrToValuePtr<FVector>(Breakable) = DirectionOffsetCm;
+	Breakable->StartBreak(HitLocation);
+	TestWorld.TickFrames(2);
+
+	TArray<const URadialVector*> RadialVectors;
+	TArray<const URadialFalloff*> RadialFalloffs;
+	ForEachObjectWithOuter(Breakable, [&RadialVectors, &RadialFalloffs](UObject* Object)
+	{
+		if (const URadialVector* RadialVector = Cast<URadialVector>(Object))
+		{
+			RadialVectors.Add(RadialVector);
+		}
+		if (const URadialFalloff* RadialFalloff = Cast<URadialFalloff>(Object))
+		{
+			RadialFalloffs.Add(RadialFalloff);
+		}
+	});
+
+	if (!TestTrue(TEXT("The break applies a radial vector field"), RadialVectors.Num() > 0) || !TestTrue(TEXT("The break applies a radial falloff"), RadialFalloffs.Num() > 0))
+	{
+		return false;
+	}
+
+	for (const URadialVector* RadialVector : RadialVectors)
+	{
+		TestNearlyEqual(TEXT("The radial push starts at the hit plus the direction offset"), RadialVector->Position, HitLocation + DirectionOffsetCm, KeyCenterToleranceCm);
+	}
+	for (const URadialFalloff* RadialFalloff : RadialFalloffs)
+	{
+		TestNearlyEqual(TEXT("The falloff stays centered on the hit"), RadialFalloff->Position, HitLocation, KeyCenterToleranceCm);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentEmberBurstHeightOffsetTest,
+	"TDGame.FluidFX.Fragment.EmberBurstHeightOffsetRaisesBurst",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentEmberBurstHeightOffsetTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	FTDFluidEmberBurstHeightSample GroundSample;
+	FTDFluidEmberBurstHeightSample RaisedSample;
+	if (!MeasureEmberBurstHeight(*this, 0.0f, GroundSample) || !MeasureEmberBurstHeight(*this, EmberBurstRaisedOffsetCm, RaisedSample))
+	{
+		return false;
+	}
+
+	AddInfo(FString::Printf(TEXT("Ember burst height: offset 0 mean %.2f cm over %d embers after %d frames, offset %.0f mean %.2f cm over %d embers after %d frames"),
+		GroundSample.MeanHeightCm, GroundSample.VisibleEmberCount, GroundSample.SettleFrameCount, EmberBurstRaisedOffsetCm, RaisedSample.MeanHeightCm, RaisedSample.VisibleEmberCount, RaisedSample.SettleFrameCount));
+	TestTrue(TEXT("The default burst shows enough embers"), GroundSample.VisibleEmberCount >= MinVisibleBurstEmbers);
+	TestTrue(TEXT("The raised burst shows enough embers"), RaisedSample.VisibleEmberCount >= MinVisibleBurstEmbers);
+	TestEqual(TEXT("Both bursts are measured after the same frame count"), RaisedSample.SettleFrameCount, GroundSample.SettleFrameCount);
+	TestNearlyEqual(TEXT("The height offset raises the mean burst height"), RaisedSample.MeanHeightCm - GroundSample.MeanHeightCm, static_cast<double>(EmberBurstRaisedOffsetCm), EmberBurstHeightToleranceCm);
+	TestNearlyEqual(TEXT("The height offset leaves the fluid burst center where it was"), RaisedSample.BurstCenterWorld, GroundSample.BurstCenterWorld, KeyCenterToleranceCm);
 	return true;
 }
 

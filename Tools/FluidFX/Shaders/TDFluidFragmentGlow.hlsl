@@ -13,4 +13,8 @@ float rimMask = 1.0 - smoothstep(0.0, max(FragmentEdgeCharWidth, 0.001), min(edg
 float rimFactor = 1.0 - saturate(FragmentEdgeCharStrength) * rimMask;
 float3 glowColor = lerp(FragmentColdGlowColor, FragmentHotGlowColor, heat * heat);
 float glowLevel = max(FragmentGlowIntensity, 0.0) * pow(heat, max(FragmentGlowExponent, 0.01));
-return glowColor * (glowLevel * rimFactor);
+float3 keyOffset = FragmentKeyCenterWorld - PixelWorldPosition;
+float3 keyDirection = keyOffset * rsqrt(max(dot(keyOffset, keyOffset), 1e-4));
+float3 surfaceNormal = PixelWorldNormal * rsqrt(max(dot(PixelWorldNormal, PixelWorldNormal), 1e-8));
+float faceFactor = max(1.0 + saturate(FragmentFacingContrast) * clamp(dot(surfaceNormal, keyDirection), -1.0, 1.0), 0.0);
+return glowColor * (glowLevel * rimFactor * faceFactor);

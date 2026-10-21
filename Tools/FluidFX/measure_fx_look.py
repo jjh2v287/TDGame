@@ -1,7 +1,7 @@
-"""시스템 Python으로 실행(numpy·Pillow, --targets 모드는 scipy 추가, 에디터 불필요): 기본 모드는 이미지와 영역 JSON으로 불·연기 M1~M5, 구름·안개, 물, 반짝임 비율, 두 프레임 차(잔상) 지표를 결정론으로 재고 같은 구도의 조건별(R16 안티에일리어싱 A/B 등) 비교표를 낸다(FX-7a). --targets 모드는 목표 JSON(LIVE-2 합격 범위)과 영역 JSON(이미지·이름 붙은 사각형/다각형 영역·kind fire|torch|smoke|plume|background·game_time 라벨)으로 FX-8c 지표(불 색 등급·색상 중앙값·M1 G/R·테두리/코어 색·가장자리 폭/등가 반지름·번짐 @16px·배경 p20·실루엣 변동계수·구조 텐서 결맞음·색 경계 밀도, 연기 백분위·미켈슨·따뜻함·중성 바닥·곧은 경계)를 재고 합격/불합격 격차표를 낸다(FX-8c C17).
+"""시스템 Python으로 실행(numpy·Pillow, --targets 모드는 scipy 추가, 에디터 불필요): 기본 모드는 이미지와 영역 JSON으로 불·연기 M1~M5, 구름·안개, 물, 반짝임 비율, 두 프레임 차(잔상) 지표를 결정론으로 재고 같은 구도의 조건별(R16 안티에일리어싱 A/B 등) 비교표를 낸다(FX-7a). --targets 모드는 목표 JSON(LIVE-2 합격 범위)과 영역 JSON(이미지·이름 붙은 사각형/다각형 영역·kind fire|torch|smoke|plume|background·game_time 라벨)으로 FX-8c 지표(불 색 등급·색상 중앙값·M1 G/R·테두리/코어 색·가장자리 폭/등가 반지름·번짐 @16px·배경 p20·실루엣 변동계수·구조 텐서 결맞음·색 경계 밀도·분홍 비율(pink_hi_fraction = 불 화소 중 색상<15°·휘도≥130, pink_hi145_fraction ≥145), 연기 백분위·미켈슨·따뜻함·중성 바닥·곧은 경계)를 재고 합격/불합격 격차표를 낸다(FX-8c C17). 목표 JSON 선택 키 kind_metrics {fire|torch: {지표 경로: 범위}}는 그 kind 영역에만 덧붙여 판정한다.
 실행: python Tools/FluidFX/measure_fx_look.py --regions <영역 JSON> --output <결과 JSON> [--targets <목표 JSON>] (PowerShell 또는 Git Bash, 인수와 JSON 안의 상대 경로는 프로젝트 루트 기준, --targets 영역 JSON 형식은 --help)
-출력: --output JSON(기본: images 이미지·영역별 지표와 comparisons 조건 비교표 / --targets: images 영역별 metrics·checks 판정·frame_fire C8 판정)과 표준 출력(기본: 요약 / --targets: 마크다운 격차표, X = 합격 범위 밖). 종료 코드 0 성공(불합격 지표가 있어도 0) / 1 출력이 Docs/ 아래인데 입력에 LIVE-2 갤러리 이미지가 있음(RR R-14) / 2 입력 오류(--targets인데 scipy 없음 포함)
-상태: 실험. 해석 선택: JPEG가 아닌 입력은 전체 프레임을 품질 95·4:2:0으로 다시 압축한 뒤 자름(LIVE-2 갤러리 JPEG 24장의 양자화표가 모두 IJG 품질 95 표·4:2:0과 같음, Pillow 11.2.1 대조), 흰 포화의 분모는 휘도 60 초과 화소(따뜻한 마스크 안에서는 정의상 0), 구름·안개 잡음과 물 국소 대비의 흐림은 8비트 내림 휘도에 Pillow GaussianBlur(반경 2·12), 미세/거친 비는 원본 대 1/4 LANCZOS 축소의 라플라시안 평균비, M3 물체 높이 기본값은 영역 높이. --targets 지표는 FX-8c 1·2차 스크립트(measure_targets·measure_r2·plume_r2)와 같은 정의이고 색 경계 밀도는 2차 정의, 플룸 = σ2 흐린 휘도 ≥6에서 불씨(따뜻함·V≥0.6·L>114.75, 3px 팽창) 제외, C8 = 프레임 전체 불 화소(V≥0.6) 최대 연결 덩어리가 200px 미만이면 연기의 따뜻함·채도·그림자 채도를 day_smoke(중성) 범위로 판정(이미지 fire_lit로 덮어씀), 중성 바닥 = 연기 화소 평균 G·B(manual 8~30), background 영역 휘도 p20은 불 주변 배경 범위(bg_luma)로 판정
+출력: --output JSON(기본: images 이미지·영역별 지표와 comparisons 조건 비교표 / --targets: images 영역별 metrics·checks 판정(kind_metrics 범위는 group kind_metrics.<kind>)·frame_fire C8 판정)과 표준 출력(기본: 요약 / --targets: 마크다운 격차표, X = 합격 범위 밖). 종료 코드 0 성공(불합격 지표가 있어도 0) / 1 출력이 Docs/ 아래인데 입력에 LIVE-2 갤러리 이미지가 있음(RR R-14) / 2 입력 오류(--targets인데 scipy 없음 포함)
+상태: 실험. 해석 선택: JPEG가 아닌 입력은 전체 프레임을 품질 95·4:2:0으로 다시 압축한 뒤 자름(LIVE-2 갤러리 JPEG 24장의 양자화표가 모두 IJG 품질 95 표·4:2:0과 같음, Pillow 11.2.1 대조), 흰 포화의 분모는 휘도 60 초과 화소(따뜻한 마스크 안에서는 정의상 0), 구름·안개 잡음과 물 국소 대비의 흐림은 8비트 내림 휘도에 Pillow GaussianBlur(반경 2·12), 미세/거친 비는 원본 대 1/4 LANCZOS 축소의 라플라시안 평균비, M3 물체 높이 기본값은 영역 높이. --targets 지표는 FX-8c 1·2차 스크립트(measure_targets·measure_r2·plume_r2)와 같은 정의이고 색 경계 밀도는 2차 정의, 플룸 = σ2 흐린 휘도 ≥6에서 불씨(따뜻함·V≥0.6·L>114.75, 3px 팽창) 제외, C8 = 프레임 전체 불 화소(V≥0.6) 최대 연결 덩어리가 200px 미만이면 연기의 따뜻함·채도·그림자 채도를 day_smoke(중성) 범위로 판정(이미지 fire_lit로 덮어씀), 중성 바닥 = 연기 화소 평균 G·B(manual 8~30), background 영역 휘도 p20은 불 주변 배경 범위(bg_luma)로 판정. FX-8c 11차(2026-10-21) 분홍 비율 2개와 kind_metrics 추가: kind_metrics 없는 목표 JSON에서 표준 출력과 기존 지표 값은 같고, 불 영역 metrics 끝에 키 2개만 붙는다(round11 torch-pink-metric run_tests 19/19).
 """
 import argparse
 import io
@@ -87,6 +87,10 @@ NEUTRAL_FLOOR_TARGET = "campfire_smoke_neutral_floor_GB_8bit"
 NEUTRAL_FLOOR_METRICS = ("neutral_floor_green", "neutral_floor_blue")
 BACKGROUND_TARGET_METRIC = "bg_luma"
 TORCH_MANUAL_TARGET = "torch_flame_height_over_character"
+KIND_TARGETS_KEY = "kind_metrics"
+PINK_HUE_END = 15
+PINK_LUMINANCE = 130
+PINK_STRICT_LUMINANCE = 145
 MANUAL_FLAME_METRICS = {
     "torch_flame_height_over_character": "flame_bbox_h_over_char",
     "fire_engulfing_pawn_bbox_height_over_character": "flame_bbox_h_over_char",
@@ -750,7 +754,13 @@ def read_targets(document):
     manual = {key: read_manual_band(entry, key) for key, entry in manual_entries.items()}
     if NEUTRAL_FLOOR_TARGET not in manual:
         raise InputError(f"목표 JSON: manual.{NEUTRAL_FLOOR_TARGET} 가 필요하다")
-    return {"groups": groups, "manual": manual}
+    return {"groups": groups, "manual": manual, "kinds": read_kind_targets(document.get(KIND_TARGETS_KEY, {}))}
+
+
+def read_kind_targets(entries):
+    if not isinstance(entries, dict) or any(kind not in FLAME_TARGET_KINDS or not isinstance(bands, dict) for kind, bands in entries.items()):
+        raise InputError(f"목표 JSON: {KIND_TARGETS_KEY} 는 {{{'|'.join(FLAME_TARGET_KINDS)}: {{지표 경로: 범위}}}} 객체여야 한다")
+    return {kind: {path: read_target_band(entry, f"{KIND_TARGETS_KEY}.{kind}.{path}") for path, entry in bands.items()} for kind, bands in entries.items()}
 
 
 def check_manual_targets(plan, targets):
@@ -1017,7 +1027,17 @@ def measure_target_flame(crop, mask, character_px):
     metrics.update(measure_color_interface(classes, flame, radius))
     metrics["edges"] = measure_straight_edges(unit_luminance * 255, mask)
     metrics["tool_flame"] = measure_flame(np.where(mask[..., None], crop, 0).astype(np.uint8))
+    metrics.update(measure_pink_fractions(hue, luminance(rgb), flame))
     return metrics
+
+
+def measure_pink_fractions(hue, luma, flame):
+    red = flame & (convert_to_signed_hue(hue) < PINK_HUE_END)
+    count = flame.sum()
+    return {
+        "pink_hi_fraction": float((red & (luma >= PINK_LUMINANCE)).sum() / count),
+        "pink_hi145_fraction": float((red & (luma >= PINK_STRICT_LUMINANCE)).sum() / count),
+    }
 
 
 def measure_warmth(crop, mask):
@@ -1174,6 +1194,8 @@ def build_region_checks(targets, region, metrics, fire_lit):
     for key in region["manual"]:
         path = MANUAL_FLAME_METRICS[key]
         checks.append(make_check("manual", path, key, targets["manual"][key], find_metric_value(metrics, path)))
+    for path, band in targets["kinds"].get(kind, {}).items():
+        checks.append(make_check(f"{KIND_TARGETS_KEY}.{kind}", path, band["label"], band, find_metric_value(metrics, path)))
     return checks
 
 
@@ -1328,7 +1350,8 @@ def parse_arguments():
             "\"regions\": [{\"name\", \"kind\": fire|torch|smoke|plume|background, \"box\": [x0,y0,x1,y1] 또는 \"polygon\": [[x,y],...](화소 중심 판정), "
             "\"exclude\"?: [사각형 [x0,y0,x1,y1] 또는 다각형], \"planes\"?: [[a,b,\"L\"|\"R\"]](L은 x<a+b·y-8, R은 x>a+b·y+8만 남김), "
             "\"char_px\"? 캐릭터 키 화소(torch 높이 판정), \"sky\"? smoke 의 하늘 화소 제외, \"manual\"?: [campfire_flame_height_over_width 등]}]}]}. "
-            "smoke 는 영역 전체(1차 상자 방식), plume 은 플룸 마스크(2차 방식) 안에서 잰다. 목표 JSON 은 FX-8c live2-targets 의 targets.json 형식"
+            "smoke 는 영역 전체(1차 상자 방식), plume 은 플룸 마스크(2차 방식) 안에서 잰다. 목표 JSON 은 FX-8c live2-targets 의 targets.json 형식. "
+            "목표 JSON 선택 키 kind_metrics: {fire|torch: {지표 경로: {pass_low, pass_high, label?}}}, 그 kind 영역에만 덧붙여 판정"
         ),
     )
     parser.add_argument("--regions", required=True, help="영역 JSON 경로(상대 경로는 프로젝트 루트 기준)")

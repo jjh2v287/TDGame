@@ -411,3 +411,11 @@
 - 증거: `Saved/AgentOps/20261020/fx8c/round10/frag-refuter.md` 1절, `scratch/frag-fixer/tick_phase_sim_world_time.json`, 시험 `TDGame.FluidFX.Fragment.GlowMaterialAppliesOnBreakAndCools` 초록
 - 날짜·상태: 2026-10-21 active
 - 발견: claude(FX-8c frag-refuter)
+### L-editor-50 UE 5.8 나이아가라는 공식 NiagaraToolsets(MCP)로 편집할 수 있지만 저장·컴파일 요청 도구가 없고, NullRHI 헤드리스에서는 켜지지 않는다
+- 증상: "나이아가라는 UFUNCTION이 없어 순정 에디터로는 에이전트가 편집 불가, 외부 브릿지 필요"라는 외부 문서 주장. 실제로 Python에는 시스템·이미터 편집 함수가 없다(NiagaraSystem.h·NiagaraEmitter.h UFUNCTION 0개).
+- 사실: 엔진 `Plugins/Experimental/Toolsets/NiagaraToolsets`가 AllToolsets(TDGame.uproject 45행)로 켜져 MCP `list_toolsets`에 NiagaraToolset_System·Component·Blueprint·Info·Assets가 보인다(2026-10-21 `python Tools/uemcp.py call list_toolsets '{}'`). System 툴셋에 CreateNiagaraSystem·AddEmitter·AddModule·AddRenderer·SetStackInputData(HLSL 식 포함)·AddUserVariables·GetSystemCompileState·GetStackIssues가 있고 저장·RequestCompile은 없다.
+- 해결: 편집 → 저장(run_in_editor Python, 저장 시 PreSave가 컴파일 요청) → GetSystemCompileState 순서. 편집 직후 상태 조회는 컴파일 대기로 120초 시간 초과가 날 수 있다(NiagaraToolset_System.cpp:485-517). 파티클 수치는 오프스크린·PIE에서 Sim Cache(CaptureNiagaraSimCacheImmediate·Read*Attribute, BlueprintCallable)로 읽는다. -NullRHI에서는 Activate가 즉시 반환한다(NiagaraComponent.cpp:1324-1333).
+- 범위: UE 5.8 나이아가라 저작·시험 자동화
+- 증거: `Saved/AgentOps/20261021/niagara-agent/authoring-api.md`·`testability.md`·`external-tools.md`·`refute.md`
+- 날짜·상태: 2026-10-21 active(Sim Cache 수치 시험은 이 프로젝트에서 미실행)
+- 발견: claude(나이아가라 문의 검증 워크플로)

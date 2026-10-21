@@ -71,6 +71,9 @@ private:
 	UPROPERTY(EditAnywhere, Category="Breakable|Force", meta=(EditCondition="bUseRadialForce", ClampMin="0.0"))
 	float BreakForceRadius = 500.0f;
 
+	UPROPERTY(EditAnywhere, Category="Breakable|Force", meta=(EditCondition="bUseRadialForce"))
+	FVector BreakDirectionOffsetCm = FVector::ZeroVector;
+
 	UPROPERTY(EditAnywhere, Category="Breakable|Optimization")
 	bool bUseObjectTypeFilter = true;
 

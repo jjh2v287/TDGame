@@ -27,6 +27,7 @@
 - 범위: UE 5.8 UBT, 모든 모듈(특히 TDWorldGen)
 - 증거: `Saved/AgentOps/20261013/B1_build_1.log`(실패)·`B1_build_5.log`(패치 후 성공)
 - 변형(2026-10-20 claude FX-8b): 파일 범위 `using namespace X;`(줄 첫머리)가 있으면 묶음 뒤쪽 파일의 지역 변수가 X의 이름을 가려 `error C4459: 'StepSeconds' ... 전역 선언을 숨깁니다`(/we4459). 손대지 않은 `TDRealmLiftDeck.cpp`·`TDRealmSubsystem.cpp`에서 났고 원인은 `TDMidBossTests.cpp:395`. 해결은 같다(가려진 이름을 파일 고유 이름 `MidBossStepSeconds`로). 찾기: `rg -n "^using namespace" Source --glob "*.cpp"`. 증거 `Saved/AgentOps/20261020/fx8b-pre-build.log`
+- 변형(2026-10-21 claude FX-8c 11차): 손대지 않은 `TDFluidLiveComponent.cpp:25`·`TDFluidLiveActor.cpp:38`의 익명 네임스페이스 상수 `MaximumShadowCapsuleCount`가 게임 타깃 `-DisableAdaptiveUnity` 빌드에서 C2374 재정의. 액터 쪽을 `MaximumActorShadowCapsuleCount`로 바꿈. 빌드 전 검사 `python -B Tools/check_unity_collisions.py`(모듈별 익명 네임스페이스 같은 이름이면 종료 1, 이 충돌·합성 3종 검출 확인)
 - 날짜·상태: 2026-10-14 active
 - 발견: claude(P3-13 B1 하위 에이전트)
 - 재발(2026-10-18, TDGameEditor): FluidFX 묶음 C가 에디터 모듈에 .cpp 2개를 더하자 `TDWorldStatePieTests.cpp`(TDPieTestDungeonId 등)·`TDWorldBaker.cpp`(TagGen)·`TDSequencerAnimationTools.cpp`(Fail) 이름이 겹쳐 다른 세션 빌드까지 깨졌다. 빌더가 `bUseUnity = false`로 모듈 전체를 끈 것은 빌드 시간 비용이라 되돌리고 같은 해결(파일 고유 이름)로 고쳤다. 새 파일을 더한 빌더는 모듈 전체 끄기 대신 이 해결을 쓴다.

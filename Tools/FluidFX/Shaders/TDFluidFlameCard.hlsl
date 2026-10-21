@@ -101,7 +101,9 @@ float temperatureBrightness = pow(saturate(temperatureKelvin / max(FlameTemperat
 float heatDensityExponent = clamp(FlameHeatDensityExponent, 0.05, 2.0);
 float emissionCoverage = usesHeat ? pow(max(erodedDensity - 1e-4, 0.0), heatDensityExponent) : erodedDensity;
 float heatGateRamp = smoothstep(0.0, 1.0, saturate((erodedHeat - FlameHeatGateLow) / max(FlameHeatGateHigh - FlameHeatGateLow, 0.001)));
-float heatGate = usesHeat ? lerp(1.0, heatGateRamp, saturate(FlameHeatGate)) : 1.0;
+float coldRidgeWeight = usesHeat ? saturate(FlameColdRidgeContrast) * (1.0 - heatGateRamp) : 0.0;
+float coldRidgeTexture = lerp(1.0, saturate(2.0 * ridgeValue), coldRidgeWeight);
+float heatGate = (usesHeat ? lerp(1.0, heatGateRamp, saturate(FlameHeatGate)) : 1.0) * coldRidgeTexture;
 if (FlameColorRampMode > 0.5)
 {
     float3 rampLuminanceWeights = float3(0.2126, 0.7152, 0.0722);

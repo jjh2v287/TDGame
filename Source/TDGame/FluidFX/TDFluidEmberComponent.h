@@ -62,6 +62,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
 	float DepthJitterCm = 10.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float BurstUpwardRatio = 0.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember")
 	int32 RandomSeed = 1;
 
@@ -72,6 +75,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ember")
 	void SpawnBurst(FVector Center, int32 Count, float SpeedCmPerSec);
+
+	static FVector MakeBurstDirection(float DirectionZ, float DirectionAngle, float UpwardRatio);
 
 	UFUNCTION(BlueprintPure, Category = "Ember")
 	int32 GetAliveEmberCount() const { return AliveEmberCount; }

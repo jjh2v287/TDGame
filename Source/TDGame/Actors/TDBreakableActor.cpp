@@ -114,7 +114,7 @@ void ATDBreakableActor::ApplyRadialBreakForce(const FVector& HitLocation)
 {
 	URadialVector* RadialVector = NewObject<URadialVector>(this);
 	RadialVector->Magnitude = BreakForce;
-	RadialVector->Position = HitLocation;
+	RadialVector->Position = HitLocation + BreakDirectionOffsetCm;
 
 	URadialFalloff* Falloff = NewObject<URadialFalloff>(this);
 	Falloff->Position = HitLocation;

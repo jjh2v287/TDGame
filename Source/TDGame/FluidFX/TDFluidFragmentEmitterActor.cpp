@@ -347,7 +347,7 @@ void ATDFluidFragmentEmitterActor::StampBurst(const FVector& CenterWorld)
 
 	if (FireTargetActor && FireTargetActor->EmberComponent)
 	{
-		FireTargetActor->EmberComponent->SpawnBurst(CenterWorld, TrailSettings.EmberBurstCount, TrailSettings.BurstRingSpeedCmPerSec);
+		FireTargetActor->EmberComponent->SpawnBurst(CenterWorld + FVector::UpVector * TrailSettings.EmberBurstHeightOffsetCm, TrailSettings.EmberBurstCount, TrailSettings.BurstRingSpeedCmPerSec);
 	}
 }
 
@@ -572,6 +572,10 @@ void ATDFluidFragmentEmitterActor::PushFragmentGlowParameters()
 	FragmentGlowMaterial->SetScalarParameterValue(TEXT("FragmentFireHeatSlabCm"), GlowSettings.FireHeatSlabCm);
 	FragmentGlowMaterial->SetVectorParameterValue(TEXT("FragmentColdGlowColor"), GlowSettings.ColdGlowColor);
 	FragmentGlowMaterial->SetVectorParameterValue(TEXT("FragmentHotGlowColor"), GlowSettings.HotGlowColor);
+	FragmentGlowMaterial->SetScalarParameterValue(TEXT("FragmentFacingContrast"), GlowSettings.FacingContrast);
+	FragmentGlowMaterial->SetScalarParameterValue(TEXT("FragmentEdgeCharWidth"), GlowSettings.EdgeCharWidth);
+	FragmentGlowMaterial->SetScalarParameterValue(TEXT("FragmentEdgeCharStrength"), GlowSettings.EdgeCharStrength);
+	FragmentGlowMaterial->SetVectorParameterValue(TEXT("FragmentKeyCenterWorld"), FLinearColor(BurstCenterWorld.X, BurstCenterWorld.Y, BurstCenterWorld.Z, 1.0f));
 }
 
 float ATDFluidFragmentEmitterActor::GetFragmentGlowAgeSeconds() const

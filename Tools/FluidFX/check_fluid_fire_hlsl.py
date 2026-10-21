@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 와 Windows Kits dxc.exe(ps_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_fire_hlsl.py [--root 프로젝트경로] [--dxc dxc경로]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(셰이더별 정적 표본 명령 수 포함), 하나라도 실패하면 종료 코드 1
-상태: 검증됨(2026-10-19 19/19 통과, 음성 대조 2건 검출. 2026-10-20 FX-8b 21/21, 투과율 상수 3곳 대조 추가. 2026-10-20 FX-8c 3차 22/22: View.StateFrameIndexMod8 스텁·볼륨 디더 회귀 검사·볼륨 표본 36. 2026-10-20 FX-8c 4차 G1 24/24: 불꽃·볼륨·가짜 볼륨의 위치 투영(화소·카메라·광원)은 PlaneCoordinateOffsetCm 을 더하고 방향 투영(광원 방향·월드 위)은 더하지 않는지 보는 규칙과 음성 대조 3건. 2026-10-20 FX-8c 5차 26/26: 불꽃 색 램프 끔 경로 정적 검사(흑체 색도·밝기·덮임·방출 줄 보호, 보호 변수 대입은 FlameColorRampMode 분기 안 chromaColor 만, 마스터 기본 0)와 음성 대조 10건. 2026-10-20 FX-8c 7차 30/30: 볼륨 노이즈 부드러운 절댓값 계약(NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift 기본 0, 인스턴스는 둘을 함께, TD_SHIFT_OF 두 항 모두 TD_NOISE_ABS), dxc -O3 자체 점검(엡실론 호출 인수 0 으로 접은 본문 = TD_NOISE_ABS 를 abs 로 바꾼 기준 본문, 0.04 는 다름)과 음성 대조 6건, --root 변형 사본 4개 중 4개 검출). 2026-10-20 FX-8c 10차 조각 발광 셰이더 TDFluidFragmentGlow.hlsl 추가(입력 원천·평면 오프셋·정적 표본 1·C++ 값 이름 계약: 방출 액터가 넣는 Fragment* 스칼라 4개와 색 벡터 FragmentColdGlowColor·FragmentHotGlowColor 는 마스터 기본값에 있고 FragmentHeatRatio 기본 0, 라이브 컴포넌트가 등록 MID 에 넣는 평면·Aux 이름이 셰이더 입력을 덮음, 음성 대조 5건, 조각 마스터 생성 함수가 지오메트리 컬렉션 사용 플래그 함수를 부르는지 보는 문자열 규칙과 음성 대조 1건), 정적 검사만 통과(사본 37/37)하고 에디터 미실행. 불·연기 셰이더 6개(TDFluidFlameCard·Ember·CharredWood·FragmentGlow·VolumeRaymarch·FakeVolume.hlsl)를 재질 스크립트의 입력 목록으로 언리얼 Custom 노드 함수 형태로 감싸 컴파일·정적 검사한다. 에디터 화면 확인은 별도(FX-8a 룩데브).
+상태: 검증됨(2026-10-19 19/19 통과, 음성 대조 2건 검출. 2026-10-20 FX-8b 21/21, 투과율 상수 3곳 대조 추가. 2026-10-20 FX-8c 3차 22/22: View.StateFrameIndexMod8 스텁·볼륨 디더 회귀 검사·볼륨 표본 36. 2026-10-20 FX-8c 4차 G1 24/24: 불꽃·볼륨·가짜 볼륨의 위치 투영(화소·카메라·광원)은 PlaneCoordinateOffsetCm 을 더하고 방향 투영(광원 방향·월드 위)은 더하지 않는지 보는 규칙과 음성 대조 3건. 2026-10-20 FX-8c 5차 26/26: 불꽃 색 램프 끔 경로 정적 검사(흑체 색도·밝기·덮임·방출 줄 보호, 보호 변수 대입은 FlameColorRampMode 분기 안 chromaColor 만, 마스터 기본 0)와 음성 대조 10건. 2026-10-20 FX-8c 7차 30/30: 볼륨 노이즈 부드러운 절댓값 계약(NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift 기본 0, 인스턴스는 둘을 함께, TD_SHIFT_OF 두 항 모두 TD_NOISE_ABS), dxc -O3 자체 점검(엡실론 호출 인수 0 으로 접은 본문 = TD_NOISE_ABS 를 abs 로 바꾼 기준 본문, 0.04 는 다름)과 음성 대조 6건, --root 변형 사본 4개 중 4개 검출). 2026-10-20 FX-8c 10차 조각 발광 셰이더 TDFluidFragmentGlow.hlsl 추가(입력 원천·평면 오프셋·정적 표본 1·C++ 값 이름 계약: 방출 액터가 넣는 Fragment* 스칼라 4개와 색 벡터 FragmentColdGlowColor·FragmentHotGlowColor 는 마스터 기본값에 있고 FragmentHeatRatio 기본 0, 라이브 컴포넌트가 등록 MID 에 넣는 평면·Aux 이름이 셰이더 입력을 덮음, 음성 대조 5건, 조각 마스터 생성 함수가 지오메트리 컬렉션 사용 플래그 함수를 부르는지 보는 문자열 규칙과 음성 대조 1건), 정적 검사만 통과(사본 37/37)하고 에디터 미실행. 불·연기 셰이더 6개(TDFluidFlameCard·Ember·CharredWood·FragmentGlow·VolumeRaymarch·FakeVolume.hlsl)를 재질 스크립트의 입력 목록으로 언리얼 Custom 노드 함수 형태로 감싸 컴파일·정적 검사한다. 에디터 화면 확인은 별도(FX-8a 룩데브). 2026-10-21 FX-8c 11차: 조각 스칼라 7·벡터 3 계약, C++ 조각 기본 = 마스터 기본 계약, 항등 입력 기본 0·0 접기 dxc 본문 = 기준과 음성 대조. 2026-10-21 FX-8c 11차 단계 B: 항등 입력에 불꽃 FlameColdRidgeContrast(기준 = heatGate 의 coldRidgeTexture 곱 제거) 추가, 항등 기본 음성 대조는 변형이 원래 없던 문제를 새로 만들어야 잡음으로 셈. 2026-10-21 FX-8c 11차 굽기: 항등 입력의 MI 덮어쓰기 금지 조항을 뺌(굽기 B2 가 MI_TD_FluidEmber_Default 에 EmberTintBlend 1.0 을 넣음), 마스터 기본 0 계약과 그 음성 대조는 유지.
 """
 import argparse
 import glob
@@ -83,15 +83,26 @@ LIVE_COMPONENT_SOURCE = ("Source", "TDGame", "FluidFX", "TDFluidLiveComponent.cp
 FRAGMENT_EMITTER_PUSH_PATTERN = re.compile(r'FragmentGlowMaterial->SetScalarParameterValue\(TEXT\("(\w+)"\)')
 LIVE_MID_PUSH_PATTERN = re.compile(r'TargetMID->Set(?:Scalar|Vector|Texture)ParameterValue\(TEXT\("(\w+)"\)')
 FRAGMENT_REGISTRATION_LINE = "RegisterExternalMaterialTarget(FragmentGlowMaterial)"
-FRAGMENT_EMITTER_SCALARS = ("FragmentHeatRatio", "FragmentGlowIntensity", "FragmentFireHeatWeight", "FragmentFireHeatSlabCm")
+FRAGMENT_EMITTER_SCALARS = ("FragmentHeatRatio", "FragmentGlowIntensity", "FragmentFireHeatWeight", "FragmentFireHeatSlabCm", "FragmentFacingContrast", "FragmentEdgeCharWidth", "FragmentEdgeCharStrength")
 FRAGMENT_EMITTER_VECTOR_PUSH_PATTERN = re.compile(r'FragmentGlowMaterial->SetVectorParameterValue\(TEXT\("(\w+)"\)')
-FRAGMENT_EMITTER_VECTORS = ("FragmentColdGlowColor", "FragmentHotGlowColor")
+FRAGMENT_EMITTER_VECTORS = ("FragmentColdGlowColor", "FragmentHotGlowColor", "FragmentKeyCenterWorld")
 FRAGMENT_MATERIAL_SCRIPT = ("Tools", "FluidFX", "editor_make_fluid_flame_material.py")
 FRAGMENT_MASTER_FUNCTION = "create_fragment_master"
 FRAGMENT_USAGE_FUNCTION = "enable_geometry_collection_usage"
 FRAGMENT_USAGE_CALL = "usage = enable_geometry_collection_usage(material)"
 FRAGMENT_USAGE_FLAG_CALL = "set_material_usage(material, unreal.MaterialUsage.MATUSAGE_GEOMETRY_COLLECTIONS)"
 FRAGMENT_REGISTRATION_INPUTS = ("SimCenterWorld", "SimExtentsCm", "PlaneAxisU", "PlaneAxisV", "PlaneAxisN", "PlaneCoordinateOffsetCm", "ExtrudeSymmetric", "AuxTexture", "AuxHeatActive")
+FIRE_TYPES_SOURCE = ("Source", "TDGame", "FluidFX", "TDFluidFireTypes.h")
+FRAGMENT_SETTINGS_STRUCT_LINE = "struct TDGAME_API FTDFluidFragmentGlowSettings"
+CPP_FLOAT_DEFAULT_PATTERN = re.compile(r"float (\w+) = (-?[\d.]+)f;")
+FRAGMENT_CPP_DEFAULT_FIELDS = ("GlowIntensity", "FireHeatWeight", "FireHeatSlabCm", "FacingContrast", "EdgeCharWidth", "EdgeCharStrength")
+FRAGMENT_CPP_DEFAULT_MUTATION = ("0.12f", "0.2f")
+IDENTITY_DEFAULT_INPUTS = (("ember", "EmberTintBlend"), ("fragment", "FragmentFacingContrast"), ("flame", "FlameColdRidgeContrast"))
+IDENTITY_REFERENCE_EDITS = {
+    "ember": ("normalizedColor = lerp(normalizedColor, emberTintChroma, saturate(EmberTintBlend));\n", ""),
+    "fragment": ("rimFactor * faceFactor)", "rimFactor)"),
+    "flame": (") * coldRidgeTexture;", ");"),
+}
 SOFT_ABS_DXC_MUTATIONS = (
     ("켬 조건 >=", "NoiseSoftAbsEpsilon > 0.0", "NoiseSoftAbsEpsilon >= 0.0"),
     ("끔 경로 abs → sqrt(X²)", ": abs(X))", ": sqrt((X) * (X)))"),
@@ -451,6 +462,90 @@ class FragmentDefaultsOverride:
         self.FRAGMENT_CUSTOM_INPUT_NAMES = flame.FRAGMENT_CUSTOM_INPUT_NAMES
 
 
+def read_fragment_cpp_defaults(header_text):
+    start = header_text.find(FRAGMENT_SETTINGS_STRUCT_LINE)
+    if start < 0:
+        return None
+    end = header_text.find("\n};", start)
+    block = header_text[start:] if end < 0 else header_text[start:end]
+    return {name: float(value) for name, value in CPP_FLOAT_DEFAULT_PATTERN.findall(block)}
+
+
+def find_fragment_cpp_default_problems(flame, header_text):
+    cpp_defaults = read_fragment_cpp_defaults(header_text)
+    if cpp_defaults is None:
+        return [f"{FRAGMENT_SETTINGS_STRUCT_LINE} 블록을 찾지 못함"]
+    master = dict(flame.FRAGMENT_SCALAR_PARAMETER_DEFAULTS)
+    problems = []
+    for field in FRAGMENT_CPP_DEFAULT_FIELDS:
+        parameter = "Fragment" + field
+        if field not in cpp_defaults:
+            problems.append(f"C++ 조각 설정에 {field} 기본값 없음")
+        elif parameter not in master:
+            problems.append(f"조각 마스터에 {parameter} 기본값 없음")
+        elif abs(cpp_defaults[field] - master[parameter]) > 1e-6:
+            problems.append(f"{field} C++ {cpp_defaults[field]} 와 마스터 {parameter} {master[parameter]} 다름")
+    return problems
+
+
+def replace_in_fragment_settings(header_text, original, mutated):
+    start = header_text.find(FRAGMENT_SETTINGS_STRUCT_LINE)
+    if start < 0:
+        return header_text
+    return header_text[:start] + header_text[start:].replace(original, mutated, 1)
+
+
+def collect_identity_sources(flame, nodes):
+    defaults = {
+        "flame": dict(flame.FLAME_SCALAR_PARAMETER_DEFAULTS),
+        "ember": dict(flame.EMBER_SCALAR_PARAMETER_DEFAULTS),
+        "fragment": dict(flame.FRAGMENT_SCALAR_PARAMETER_DEFAULTS),
+    }
+    instances = [spec for key, specs in vars(flame).items() if key.endswith("_INSTANCE_SPECS") for spec in specs]
+    inputs = {node["label"]: tuple(node["inputs"]) for node in nodes}
+    return defaults, instances, inputs
+
+
+def find_identity_default_problems(defaults, instances, inputs):
+    problems = []
+    for label, name in IDENTITY_DEFAULT_INPUTS:
+        if name not in inputs.get(label, ()):
+            problems.append(f"{label} 입력에 {name} 없음")
+        master_value = defaults.get(label, {}).get(name)
+        if master_value != 0.0:
+            problems.append(f"마스터 {name} 기본값 {master_value}(기대 0.0)")
+    return problems
+
+
+def find_undetected_identity_default_mutations(defaults, instances, inputs):
+    undetected = []
+    baseline_problems = set(find_identity_default_problems(defaults, instances, inputs))
+    for label, name in IDENTITY_DEFAULT_INPUTS:
+        mutated = {key: dict(values) for key, values in defaults.items()}
+        mutated.setdefault(label, {})[name] = 0.5
+        if set(find_identity_default_problems(mutated, instances, inputs)) <= baseline_problems:
+            undetected.append(name)
+    return undetected
+
+
+def identity_reference_code(label, code):
+    original, replacement = IDENTITY_REFERENCE_EDITS[label]
+    return code.replace(original, replacement, 1) if code.count(original) == 1 else ""
+
+
+def compile_identity_body(dxc, node, code, name, value, label, work_folder):
+    if not code:
+        return ""
+    source = build_source(node, code, VOLUME_TEXTURE_NAMES)
+    if value is not None:
+        pattern = re.compile(r"^(return (?:float4\()?CustomExpression0\(.*)\bInput_" + name + r"\b", re.MULTILINE)
+        source, count = pattern.subn(rf"\g<1>{value}", source)
+        if count != 1:
+            return ""
+    outcome = compile_source(dxc, source, label, True, work_folder)
+    return outcome["body"] if outcome["exit"] == 0 else ""
+
+
 def find_python_function_body(text, name):
     start = text.find(f"\ndef {name}(")
     if start < 0:
@@ -550,9 +645,22 @@ def main():
     emitter_text = read_project_text(root, FRAGMENT_EMITTER_SOURCE)
     live_text = read_project_text(root, LIVE_COMPONENT_SOURCE)
     fragment_push_problems = find_fragment_push_problems(flame, emitter_text, live_text)
-    record("조각 발광 C++ 값 이름 계약(방출 액터 Fragment* 스칼라 4개·색 벡터 2개가 마스터 기본값에 있음, MID 를 불 라이브 컴포넌트에 등록, 등록 MID 의 평면·Aux 이름 9개가 셰이더 입력, 마스터 FragmentHeatRatio 기본 0)", not fragment_push_problems, "; ".join(fragment_push_problems))
+    record("조각 발광 C++ 값 이름 계약(방출 액터 Fragment* 스칼라 7개·벡터 3개(색 2·키 중심 1)가 마스터 기본값에 있음, MID 를 불 라이브 컴포넌트에 등록, 등록 MID 의 평면·Aux 이름 9개가 셰이더 입력, 마스터 FragmentHeatRatio 기본 0)", not fragment_push_problems, "; ".join(fragment_push_problems))
     undetected_fragment_push = find_undetected_fragment_push_mutations(flame, emitter_text, live_text)
     record("음성 대조: 조각 값 이름 계약 변형 5건(열 비율 이름 오타·불 등록 누락·평면 법선 이름 누락·마스터 열 비율 기본 1·마스터 뜨거운 색 기본값 누락)을 잡음", not undetected_fragment_push, ", ".join(undetected_fragment_push))
+    header_text = read_project_text(root, FIRE_TYPES_SOURCE)
+    cpp_default_problems = find_fragment_cpp_default_problems(flame, header_text)
+    record(f"C++ 조각 기본 = 마스터 기본({', '.join(FRAGMENT_CPP_DEFAULT_FIELDS)} 와 Fragment+이름, 1e-6)", not cpp_default_problems, "; ".join(cpp_default_problems))
+    mutated_header_text = replace_in_fragment_settings(header_text, *FRAGMENT_CPP_DEFAULT_MUTATION)
+    record(
+        f"음성 대조: C++ 조각 설정 {FRAGMENT_CPP_DEFAULT_MUTATION[0]} → {FRAGMENT_CPP_DEFAULT_MUTATION[1]} 를 잡음",
+        mutated_header_text != header_text and bool(find_fragment_cpp_default_problems(flame, mutated_header_text)),
+    )
+    identity_defaults, identity_instances, identity_inputs = collect_identity_sources(flame, nodes)
+    identity_problems = find_identity_default_problems(identity_defaults, identity_instances, identity_inputs)
+    record(f"항등 입력 기본({', '.join(name for _, name in IDENTITY_DEFAULT_INPUTS)}: 셰이더 입력, 마스터 기본 0.0)", not identity_problems, "; ".join(identity_problems))
+    undetected_identity = find_undetected_identity_default_mutations(identity_defaults, identity_instances, identity_inputs)
+    record("음성 대조: 항등 입력 마스터 기본 0.5 를 잡음", not undetected_identity, ", ".join(undetected_identity))
     flame_text = read_project_text(root, FRAGMENT_MATERIAL_SCRIPT)
     usage_problems = find_fragment_usage_problems(flame_text)
     record("조각 마스터 생성 함수가 지오메트리 컬렉션 사용 플래그를 켬(create_fragment_master → enable_geometry_collection_usage → MATUSAGE_GEOMETRY_COLLECTIONS)", not usage_problems, "; ".join(usage_problems))
@@ -614,6 +722,24 @@ def main():
             or compile_folded_body(dxc, volume_node, volume_code.replace(original, mutated, 1), "0.0", f"soft_abs_mutant_{index}", work_folder) in ("", reference_body)
         ]
         record(f"음성 대조: 부드러운 절댓값 끔 경로 변형 {len(SOFT_ABS_DXC_MUTATIONS)}건(켬 조건 >=·끔 경로 sqrt(X²))은 0 본문이 기준과 달라 잡힘", not undetected_soft_abs_mutations, ", ".join(undetected_soft_abs_mutations))
+        nodes_by_label = {node["label"]: node for node in nodes}
+        for index, (label, name) in enumerate(IDENTITY_DEFAULT_INPUTS):
+            node = nodes_by_label[label]
+            code = codes[label]
+            reference_body = compile_identity_body(dxc, node, identity_reference_code(label, code), name, None, f"identity_reference_{index}", work_folder)
+            zero_body = compile_identity_body(dxc, node, code, name, "0.0", f"identity_zero_{index}", work_folder)
+            half_body = compile_identity_body(dxc, node, code, name, "0.5", f"identity_half_{index}", work_folder)
+            record(
+                f"항등 입력 {name} 호출 인수를 0 으로 접은 dxc -O3 본문 = 기준 본문({label} 기준 편집), 0.5 로 접으면 다름",
+                bool(reference_body) and zero_body == reference_body and bool(half_body) and half_body != reference_body,
+                f"기준 {len(reference_body)}자, 0 {len(zero_body)}자, 0.5 {len(half_body)}자",
+            )
+            mutant_code = code.replace(f"saturate({name})", f"saturate({name} + 0.05)", 1)
+            mutant_body = compile_identity_body(dxc, node, mutant_code, name, "0.0", f"identity_mutant_{index}", work_folder) if mutant_code != code else ""
+            record(
+                f"음성 대조: saturate({name}) → saturate({name} + 0.05) 는 0 접기 본문이 기준과 달라 잡힘",
+                bool(reference_body) and mutant_body not in ("", reference_body),
+            )
         flame_node = next(node for node in nodes if node["label"] == "flame")
         control = compile_source(dxc, build_source(flame_node, codes["flame"], set()), "control_texture2d", False, work_folder)
         record("음성 대조: 노이즈를 Texture2D 로 선언하면 컴파일 실패", control["exit"] != 0, control["error"][:160])

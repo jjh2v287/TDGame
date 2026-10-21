@@ -188,6 +188,9 @@ struct TDGAME_API FTDFluidFragmentTrailSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0", ClampMax = "512"))
 	int32 EmberBurstCount = 80;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0"))
+	float EmberBurstHeightOffsetCm = 0.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float FireHeatStrength = 1.0f;
 
@@ -295,4 +298,13 @@ struct TDGAME_API FTDFluidFragmentGlowSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow")
 	FLinearColor HotGlowColor = FLinearColor(1.0f, 0.03f, 0.035f, 1.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float FacingContrast = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.001", ClampMax = "0.5"))
+	float EdgeCharWidth = 0.12f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float EdgeCharStrength = 0.5f;
 };

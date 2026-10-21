@@ -1,0 +1,164 @@
+{
+ "name": "AS_TD_Player_SwordCombo_All",
+ "fps": 60,
+ "frames": [
+  1,
+  175
+ ],
+ "duration_s": 2.9,
+ "source": "Paragon Greystone Attack_PrimaryA (Epic, retargeted to UE5 Manny in C:/Project/PJGame), edited by Tools/BlenderAnimation/sword_attack01_author.py",
+ "author": {
+  "stages": [
+   {
+    "name": "TD_SwordCombo01",
+    "frames": 86,
+    "branch_frame": 36,
+    "travel_cm": 34.0,
+    "branch_travel_cm": 34.0,
+    "max_arm_over_cm": 0.12,
+    "max_leg_over_cm": 0.0
+   },
+   {
+    "name": "TD_SwordCombo02",
+    "frames": 86,
+    "branch_frame": 36,
+    "travel_cm": 36.0,
+    "branch_travel_cm": 36.0,
+    "max_arm_over_cm": 0.22,
+    "max_leg_over_cm": 0.0
+   },
+   {
+    "name": "TD_SwordCombo03",
+    "frames": 92,
+    "branch_frame": 38,
+    "travel_cm": 38.0,
+    "branch_travel_cm": 38.0,
+    "max_arm_over_cm": 0.2,
+    "max_leg_over_cm": 0.0
+   },
+   {
+    "name": "TD_SwordCombo04",
+    "frames": 68,
+    "branch_frame": 68,
+    "travel_cm": 54.0,
+    "branch_travel_cm": 54.0,
+    "max_arm_over_cm": 0.0,
+    "max_leg_over_cm": 0.0
+   }
+  ],
+  "chained_action": "TD_SwordCombo_All",
+  "chained_frames": 175,
+  "chained_total_travel_cm": 162.0
+ },
+ "measure": {
+  "action": "TD_SwordCombo_All",
+  "fps": 60.0,
+  "frames": [
+   1,
+   175
+  ],
+  "duration_s": 2.9,
+  "tip_peak_speed_m_s": 88.38,
+  "tip_peak_frame": 89,
+  "swing_frames_50pct": [
+   89,
+   91
+  ],
+  "swing_duration_s": 0.05,
+  "contact_frame": 91,
+  "contact_time_s": 1.5,
+  "contact_tip_cm": [
+   189.7,
+   -44.9,
+   100.3
+  ],
+  "contact_horizontal_radius_cm": 190.9,
+  "active_plane_rms_cm": 1.61,
+  "active_plane_tilt_deg": 71.0,
+  "active_direction": "R->L",
+  "active_drop_cm": 89.5,
+  "edge_alignment_min_deg": 82.2,
+  "edge_alignment_mean_deg": 89.8,
+  "blade_roll_active_max_deg": 23.4,
+  "elbow_at_contact_deg": 160.7,
+  "arm_blade_at_contact_deg": 144.8,
+  "shoulder_yaw_range_deg": 512.4,
+  "hip_yaw_range_deg": 444.5,
+  "tip_horizontal_sweep_active_deg": 142.5,
+  "pelvis_z_range_cm": 26.8,
+  "pelvis_z_min_frame": 97,
+  "angular_peak_frames": {
+   "pelvis": 87,
+   "spine_03": 87,
+   "spine_05": 88,
+   "upperarm_r": 91,
+   "lowerarm_r": 91,
+   "hand_r": 92
+  },
+  "wrist_flexion_range_deg": [
+   -77.4,
+   48.8
+  ],
+  "wrist_deviation_range_deg": [
+   -62.7,
+   13.1
+  ],
+  "hand_l_travel_max_cm": 162.3,
+  "tip_min_z_cm": 27.8,
+  "tip_min_z_frame": 166,
+  "root_travel_cm": [
+   162.0,
+   0.0,
+   0.0
+  ],
+  "root_speed_start_end_cm_per_frame": [
+   0.0,
+   0.0
+  ],
+  "pelvis_root_horizontal_max_cm": 23.3,
+  "max_bone_rotation_per_frame_deg": 80.0,
+  "feet": {
+   "ball_l": {
+    "max_slide_cm_per_frame_grounded": 0.0,
+    "grounded_frames": 108,
+    "min_z_cm": 1.22,
+    "travel_cm": 162.0
+   },
+   "ball_r": {
+    "max_slide_cm_per_frame_grounded": 0.0,
+    "grounded_frames": 115,
+    "min_z_cm": 0.41,
+    "travel_cm": 162.0
+   }
+  },
+  "blade_body_clearance_min_cm": {
+   "thigh_l": 45.5,
+   "calf_l": 47.7,
+   "thigh_r": 19.6,
+   "calf_r": 25.2,
+   "pelvis": 32.8,
+   "neck_01": 49.3,
+   "upperarm_l": 31.3,
+   "lowerarm_l": 14.5
+  },
+  "blade_body_clearance_worst_frame": {
+   "thigh_l": 118,
+   "calf_l": 118,
+   "thigh_r": 1,
+   "calf_r": 1,
+   "pelvis": 173,
+   "neck_01": 32,
+   "upperarm_l": 37,
+   "lowerarm_l": 37
+  }
+ },
+ "weapon": {
+  "socket": "HandGrip_R",
+  "static_mesh": "/Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Sword",
+  "relative_location_cm": [
+   0.0,
+   32.2,
+   -1.4
+  ]
+ }
+}

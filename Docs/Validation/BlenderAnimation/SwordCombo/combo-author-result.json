@@ -1,0 +1,43 @@
+{
+  "stages": [
+    {
+      "name": "TD_SwordCombo01",
+      "frames": 86,
+      "branch_frame": 36,
+      "travel_cm": 34.0,
+      "branch_travel_cm": 34.0,
+      "max_arm_over_cm": 0.12,
+      "max_leg_over_cm": 0.0
+    },
+    {
+      "name": "TD_SwordCombo02",
+      "frames": 86,
+      "branch_frame": 36,
+      "travel_cm": 36.0,
+      "branch_travel_cm": 36.0,
+      "max_arm_over_cm": 0.22,
+      "max_leg_over_cm": 0.0
+    },
+    {
+      "name": "TD_SwordCombo03",
+      "frames": 92,
+      "branch_frame": 38,
+      "travel_cm": 38.0,
+      "branch_travel_cm": 38.0,
+      "max_arm_over_cm": 0.2,
+      "max_leg_over_cm": 0.0
+    },
+    {
+      "name": "TD_SwordCombo04",
+      "frames": 104,
+      "branch_frame": 104,
+      "travel_cm": 54.0,
+      "branch_travel_cm": 54.0,
+      "max_arm_over_cm": 0.21,
+      "max_leg_over_cm": 0.0
+    }
+  ],
+  "chained_action": "TD_SwordCombo_All",
+  "chained_frames": 211,
+  "chained_total_travel_cm": 162.0
+}

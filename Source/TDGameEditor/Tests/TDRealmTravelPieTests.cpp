@@ -7,8 +7,10 @@
 #include "Engine/DirectionalLight.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/AutomationTest.h"
+#include "NavigationSystem.h"
 #include "TDWorldGenSettings.h"
 #include "Tests/TDPieWaitUntilCommand.h"
 #include "Tests/TDTravelStateRecorder.h"
@@ -50,6 +52,7 @@ namespace
 	constexpr double TDRealmWalkSettleSeconds = 1.0;
 	constexpr double TDRealmWalkStreamingTimeoutSeconds = 90.0;
 	constexpr double TDRealmWalkTimeoutSeconds = 180.0;
+	constexpr double TDRealmWalkNavigationTimeoutSeconds = 180.0;
 	constexpr double TDRealmWalkProgressReportSeconds = 10.0;
 
 	constexpr double TDRealmContinuityMaxStepCm = 5000.0;
@@ -600,9 +603,32 @@ namespace
 		return !World || World->GetTimeSeconds() - State.HoldStartWorldSeconds >= TDRealmWalkSettleSeconds;
 	}
 
+	bool IsNavigationBuildIdle()
+	{
+		UNavigationSystemV1* NavigationSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(TDPieTestUtils::GetPieWorld());
+		return !NavigationSystem || (!NavigationSystem->HasDirtyAreasQueued() && !NavigationSystem->IsNavigationBuildInProgress());
+	}
+
+	void IgnorePlayerInputDuringScriptedWalk(UWorld* World)
+	{
+		APlayerController* PlayerController = World ? World->GetFirstPlayerController() : nullptr;
+		if (!PlayerController)
+		{
+			return;
+		}
+
+		PlayerController->DisableInput(PlayerController);
+		if (!PlayerController->IsMoveInputIgnored())
+		{
+			PlayerController->SetIgnoreMoveInput(true);
+		}
+		PlayerController->StopMovement();
+	}
+
 	void BeginRealmWalkPhase(FTDRealmWalkState& State, bool bIsForward, const FTDGameCameraCutCounter& CameraCuts)
 	{
-		const UWorld* World = TDPieTestUtils::GetPieWorld();
+		UWorld* World = TDPieTestUtils::GetPieWorld();
+		IgnorePlayerInputDuringScriptedWalk(World);
 		State.bIsForward = bIsForward;
 		State.MissingGroundFrameCount = 0;
 		BeginRealmContinuity(State.Continuity, CameraCuts);
@@ -895,6 +921,10 @@ namespace
 		{
 			return State->Walk.bIsAborted || HasSettledOnWalkStart(State->Walk);
 		}, TDRealmWalkStreamingTimeoutSeconds, Abort);
+		EnqueueWaitUntil(Test, FString::Printf(TEXT("Navigation build settles before the walk through gate '%s'"), *Case.GateId.ToString()), [State]()
+		{
+			return State->Walk.bIsAborted || IsNavigationBuildIdle();
+		}, TDRealmWalkNavigationTimeoutSeconds, Abort);
 		EnqueueStep([&Test, State, Case]()
 		{
 			if (!State->Walk.bIsAborted)

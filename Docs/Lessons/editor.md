@@ -177,11 +177,38 @@
 
 ### L-editor-21 `TDGame.SeamlessTravel.RealmConnectorWalk`는 GUI 에디터 PIE에서 남서 관문 준비가 3~5초라 실패한다(헤드리스는 0초 통과)
 - 증상: `python Tools/check_automation_tests.py --filter TDGame.SeamlessTravel.RealmConnectorWalk` → `Gate 'SunkenStarfieldSouthwest' walk into the realm: destination became ready 6.68 s after entering the connector (<= 1.0)`. 같은 바이너리의 헤드리스(`-NullRHI`) 실행은 두 관문 모두 0.00초로 통과한다.
-- 원인: 준비 판정 `IsDestinationReady`는 월드 파티션 셀 활성화 질의와 내비 투영만 본다. GUI PIE(초당 12~17프레임)에서 남서 목적지 셀·내비가 늦게 준비된다. 셀과 내비 중 어느 쪽이 늦는지는 미확인. 변경 전 코드(HEAD 1495a34f)로 대조해도 남서 3.27·3.94·5.42초로 같아 비동기 로드 전환(D-47)과 무관하다.
-- 해결: 아직 없음. 이 시험의 1.0초 단언은 지금까지 헤드리스로만 검증됐으므로 GUI 실패를 회귀로 판정하기 전에 변경 전 바이너리와 대조한다(변경 파일 바이트 사본 보관 → `git show HEAD:<경로> > <경로>` → 빌드·시험 → 복원·체크섬).
-- 범위: 이계 연결 통로 PIE 시험, GUI 에디터
-- 증거: 2026-10-17 `Saved/AgentOps/20261017/async-load/baseline-ab/run-log.txt`·`before-run1~3.json`·`after-run1~3.json`
+- 원인(2026-10-18 실측): 셀이 아니라 내비다. `IsDestinationReady`의 두 조건을 매 틱 따로 기록하니 셀 Activated·Loaded는 매번 t=0이고, 목적지 `ProjectPointToNavigation`만 남서 5.73초 동안 실패했다(대기 타일 10985). 시험이 폰을 걷기 시작점으로 수백 m 순간이동하면 768 m 로딩 원의 셀이 한꺼번에 로드되어 동적 내비 타일 약 1만 개가 쌓인다(북동: 대기 0 → 순간이동 뒤 4840). 엔진은 틱당 (작업자×2)개까지만 타일을 시작하고 시간 예산이 없어 처리량이 프레임 수에 비례한다(`RecastNavMeshGenerator.cpp:5464`, `:5890`). 폰에서 가까운 타일부터 지으므로 272 m 떨어진 남서 도착점은 그 뒤에 선다. GUI(약 15프레임)는 초당 약 230개라 걷기 시작 때 목적지 타일이 남고, 헤드리스는 프레임이 높아 유지·정착 4초 안에 목적지까지의 가까운 타일을 다 짓는다(대기열 전체는 남을 수 있다: 헤드리스 남서 내비 대기 5.55초, 북동 0초). 엔진에는 특정 위치 타일을 먼저 짓는 공개 수단이 없다(유일한 확장점은 `GetSeedLocations` 재정의 = 내비 데이터 클래스 교체).
+- 해결: 시험이 걷기 전에 내비 빌드가 끝날 때까지 기다린다(`HasDirtyAreasQueued()`·`IsNavigationBuildInProgress()` 둘 다 false, 한도 180초). 셀 스트리밍 완료 대기와 같은 "걸어서 도착한 상태" 전제다. GUI 대기는 남서 32~37초·북동 12~14초, 그 뒤 두 관문 모두 0.00초. 감속은 경계 앞 25 m에서만 걸려 순간이동 직후에도 실제 플레이 영향은 없다. 프레임에 기대는 준비 단언이 GUI에서만 실패하면, 먼저 두 조건을 따로 재는 탐침으로 어느 쪽인지 가른다.
+- 범위: 이계 연결 통로 PIE 시험, GUI 에디터, 월드 파티션 + 동적 내비(D-06)
+- 증거: 2026-10-17 `Saved/AgentOps/20261017/async-load/baseline-ab/run-log.txt`(변경 전 대조), 2026-10-18 `Saved/AgentOps/20261017/sw-gate/findings.md`·`gui-probe-run1-2.log`(탐침)·`gui-final-run1~3.json`(수정 후 GUI 3/3)
+- 날짜·상태: 2026-10-17 발견 / 2026-10-18 해결
+- 발견: claude
+
+### L-editor-22 같은 에디터 프로세스에서 에셋을 다시 저장한 직후 에셋 레지스트리 의존 조회는 옛 하드 의존을 돌려준다
+- 증상: 하드→소프트 UPROPERTY 변경 뒤 파이썬 커맨드렛에서 DA 21개를 `save_loaded_asset`으로 저장하고 `scan_paths_synchronous(..., True)` 뒤 `get_dependencies`(하드만)를 다시 읽었더니 21개 모두 Niagara 하드 의존이 그대로 나왔다.
+- 원인: 같은 프로세스의 에셋 레지스트리가 저장 전 로드에서 모은 의존을 유지한다(강제 재검색으로도 갱신되지 않음, 엔진 코드 경로는 미확인). 파일 자체는 바뀌었다: 저장본 이름 표에 `NiagaraSystem`·`/Script/Niagara`가 없고 소프트 경로 문자열만 남았다.
+- 해결: 저장 결과는 새 프로세스에서 확인한다 — `Tools/editor_resave_assets.py --dry-run`을 다시 실행하면 하드 의존 0으로 나온다.
+- 범위: 에디터 Python·커맨드렛으로 에셋을 저장한 뒤 같은 프로세스에서 의존·참조를 검증할 때
+- 증거: 2026-10-17 `Saved/AgentOps/20261017/soft-damage/resave.json`(저장 프로세스, 하드 21) ↔ `resave-dryrun-after.json`(새 프로세스, 하드 0)
 - 날짜·상태: 2026-10-17 active
+- 발견: claude
+
+### L-editor-23 GUI PIE 자동화 시험 중 뷰포트 클릭은 순간이동 걷기와 싸워 연결로 방향을 매 프레임 뒤집는다
+- 증상: `TDGame.SeamlessTravel.RealmConnectorWalk` GUI 1회에서만 `Gate 'SunkenStarfieldSouthwest' walk back to the field: boundary crossings' to be 1, but it was 3`, `passage pacing engagements with default settings' to be 0, but it was 13`, 최대 폰 이동 223.6 cm(평소 62 cm). 로그에 `Realm: replacing unrequested preload ... (entry)`/`(field return)`가 프레임마다 번갈아 나온다.
+- 원인: 그 회차 로그에만 클릭 이동 표시 `FX_Cursor_Success ... initialized`가 3번 있었다(사람 클릭 → `SimpleMoveToLocation`). Mover 순간이동 효과(`FTeleportEffect`)는 속도를 유지하므로 시험이 매 프레임 순간이동해도 Mover가 클릭 목적지 쪽으로 v·dt만큼 더 민다. 프레임 길이가 고르면 드러나지 않지만 0.2/0.025 s처럼 들쭉날쭉하면 영역 서브시스템의 측정 속도 부호가 뒤집혀(`UpdatePassageDirection`) 예비 로드가 교체되고, 새 예비 로드가 그 틱에 준비 전이라 감속이 걸린다.
+- 해결: 시험이 폰을 직접 움직이는 걷기 시작(`BeginRealmWalkPhase`)에서 `DisableInput`·`SetIgnoreMoveInput(true)`·`StopMovement()`. 헤드리스 재현(귀환 중 `AddMovementInput` 안쪽 밀기 + 프레임 0.262/0.063 s 교대): 차단 전 감속 33회·경계 교차 3회, 차단 후 0회·1회. GUI 시험 로그에서 `FX_Cursor_Success`가 보이면 사람 입력 개입부터 의심한다.
+- 범위: GUI 에디터 PIE에서 시험이 순간이동으로 폰을 움직이는 자동화 시험(Mover 폰)
+- 증거: 2026-10-18 `Saved/AgentOps/20261017/sw-gate/gui-probe-run1.log`(클릭 3회·진동), `headless-osc-A-push-hitch.log`(재현), `headless-osc-A2-guard.log`(차단 후), `findings.md` 6절
+- 날짜·상태: 2026-10-18 active
+- 발견: claude
+
+### L-editor-24 헤드리스 `UnrealEditor-Cmd`도 Python 원격 실행 노드를 열어, 첫 노드를 고르던 `run_in_editor`·`ue_editor.py stop`이 헤드리스를 겨눌 수 있었다
+- 증상: GUI 에디터(PID 27380)와 헤드리스 시험(`UnrealEditor-Cmd ... -NullRHI`, PID 30188)을 함께 띄우면 원격 실행 노드가 2개(`project_root=C:/Project/TDGame/` 같음)로 보인다. 옛 `_find_node`는 `nodes[0]`을 그대로 써서, 발견 순서에 따라 `quit_editor()`나 편집 스크립트가 헤드리스로 갈 수 있었다.
+- 원인: 프로젝트 설정 `bRemoteExecution=True`는 헤드리스 에디터에도 적용된다. 노드 정보(user·machine·engine_version·engine_root·project_root·project_name)에는 PID가 없어(`PythonScriptRemoteExecution.cpp:262~270`) 정보만으로는 GUI와 헤드리스를 가를 수 없다.
+- 해결: `Tools/run_in_editor.py`가 같은 `project_root` 노드마다 `os.getpid()`를 물어 `UnrealEditor.exe` PID(`ue_editor.editor_pids()`)와 같은 노드만 고른다. 확인: 함께 띄운 상태에서 3회 실행 모두 GUI PID, `stop`은 GUI만 닫고 헤드리스 생존, 헤드리스만 있으면 `NO REMOTE NODES`로 거부.
+- 범위: 같은 기계에서 GUI 에디터와 헤드리스 시험·커맨드렛을 함께 쓰는 여러 세션 작업
+- 증거: 2026-10-18 이 세션 실측(노드 목록·PID 출력), `Saved/AgentOps/20261017/sw-gate/headless-node-check.log`(헤드리스)
+- 날짜·상태: 2026-10-18 active
 - 발견: claude
 
 ### L-editor-25 레벨을 연 직후 `is_navigation_being_built`는 빌드 시작 전에도 False라 내비 대기를 그냥 통과한다
@@ -256,15 +283,6 @@
 - 날짜·상태: 2026-10-18 active
 - 발견: claude
 
-### L-editor-22 같은 에디터 프로세스에서 에셋을 다시 저장한 직후 에셋 레지스트리 의존 조회는 옛 하드 의존을 돌려준다
-- 증상: 하드→소프트 UPROPERTY 변경 뒤 파이썬 커맨드렛에서 DA 21개를 `save_loaded_asset`으로 저장하고 `scan_paths_synchronous(..., True)` 뒤 `get_dependencies`(하드만)를 다시 읽었더니 21개 모두 Niagara 하드 의존이 그대로 나왔다.
-- 원인: 같은 프로세스의 에셋 레지스트리가 저장 전 로드에서 모은 의존을 유지한다(강제 재검색으로도 갱신되지 않음, 엔진 코드 경로는 미확인). 파일 자체는 바뀌었다: 저장본 이름 표에 `NiagaraSystem`·`/Script/Niagara`가 없고 소프트 경로 문자열만 남았다.
-- 해결: 저장 결과는 새 프로세스에서 확인한다 — `Tools/editor_resave_assets.py --dry-run`을 다시 실행하면 하드 의존 0으로 나온다.
-- 범위: 에디터 Python·커맨드렛으로 에셋을 저장한 뒤 같은 프로세스에서 의존·참조를 검증할 때
-- 증거: 2026-10-17 `Saved/AgentOps/20261017/soft-damage/resave.json`(저장 프로세스, 하드 21) ↔ `resave-dryrun-after.json`(새 프로세스, 하드 0)
-- 날짜·상태: 2026-10-17 active
-- 발견: claude
-
 ### L-editor-33 C++ PIE 자동화 시험의 `FScreenshotRequest::RequestScreenshot`이 절반쯤 레벨 편집기 뷰포트를 찍는다 → 요청 직후 PIE `UGameViewportClient::ProcessScreenShots`를 직접 부른다
 - 증상: `TDGame.PIE.Combat.BossLoop` 1회차 스크린샷 8장 가운데 4장(02·04·05·06)이 PIE 게임 창(2888×1656, UI 포함)이 아니라 조명·PlayerStart 아이콘이 보이는 편집기 뷰포트(2113×957)였다. M3-27 FullLoop의 "스크린샷 01 편집기 뷰포트 흔들림"도 같은 현상
 - 원인: 스크린샷 요청은 전역 플래그라 다음에 그려지는 뷰포트가 가져간다. 실시간 갱신 중인 레벨 편집기 뷰포트(`FEditorViewportClient::ProcessScreenShots`)가 PIE 게임 뷰포트보다 먼저 그리면 그쪽이 찍는다
@@ -326,14 +344,6 @@
 - 날짜·상태: 2026-10-19 active
 - 발견: claude
 
-### L-editor-45 PIE 중 `HighResShot`은 프레임 하나를 약 0.45초로 늘려 게임 시간이 그만큼 건너뛴다(시간을 지정한 스크린샷이 밀리거나 겹친다)
-- 증상: `pie_measure_ragdoll_jitter.py --screenshot-times 0,0.1,0.2,...`에서 t=0 촬영 직후 월드 프레임이 446ms였다. 래그돌 시작이 게임 시간 0.42초 밀렸고, +0.1초 사진은 0.44~0.49초에 찍혔으며, +0.2초 사진은 +0.35초와 같은 프레임에 겹쳐 빠졌다.
-- 원인: 고해상도 스크린샷의 읽기 되돌림이 그 프레임의 실시간을 늘린다. 다음 프레임 dt가 그만큼(최대 dt까지) 커지면서 게임 시간이 건너뛴다.
-- 해결: 촬영 작업 동안만 `t.OverrideFPS 60`(UnrealEngine.cpp:520·3203, Shipping 외)으로 고정 시간 간격을 쓰고 끝나면 이전 값으로 되돌린다(`--screenshot-fixed-fps`, 기본 60). 사진은 요청 시각 + 1프레임에 찍힌다. 촬영 실행과 지표·성능 실행은 나눈다. 열린 에셋 편집기 뷰포트가 대신 찍히므로 측정 전에 닫는다(도구가 물리 에셋·스켈레톤·애니·블루프린트 편집기를 닫는다).
-- 범위: GUI 에디터 PIE에서 시간을 지정해 촬영하는 측정 도구
-- 증거: 2026-10-19 `Saved/AgentOps/20261019/death-ragdoll/measure/run-log.md`(끊김), `measure2/run-log.md`(고정 간격 뒤 60/60장 +16.7ms)
-- 날짜·상태: 2026-10-19 active
-- 발견: claude
 ### L-editor-40 단일층 물(SLW)이 "안 나온다"는 판단은 아래를 보는 격자 탓이었다 — SLW 는 이 설정에서 정상
 - 증상: SLW 재질(레거시·Substrate·상수만 쓴 최소 재질)을 수면 격자에 씌우면 PIE·HighResShot 에 아무것도 안 보이고 ProfileGPU 에 SingleLayerWater 구간이 없다. Substrate SLW BSDF 만 넣으면 `RayTracingMaterialHitShaders.usf:560 error: use of undeclared identifier 'GetSingleLayerWaterMaterialOutput0'` 로 재질 컴파일 실패(SingleLayerWaterMaterialOutput 노드를 함께 넣으면 컴파일됨)
 - 원인: 격자 메시의 면이 아래를 향해 위에서 보는 카메라에서 전부 컬링됐다(L-editor-41). 그릴 SLW 프리미티브가 없으니 패스도 없었다. r.Substrate=True·ProjectGBufferFormat=0·r.RayTracing=True 조합은 원인이 아니다
@@ -379,6 +389,14 @@
 - 날짜·상태: 2026-10-19 active
 - 발견: claude
 
+### L-editor-45 PIE 중 `HighResShot`은 프레임 하나를 약 0.45초로 늘려 게임 시간이 그만큼 건너뛴다(시간을 지정한 스크린샷이 밀리거나 겹친다)
+- 증상: `pie_measure_ragdoll_jitter.py --screenshot-times 0,0.1,0.2,...`에서 t=0 촬영 직후 월드 프레임이 446ms였다. 래그돌 시작이 게임 시간 0.42초 밀렸고, +0.1초 사진은 0.44~0.49초에 찍혔으며, +0.2초 사진은 +0.35초와 같은 프레임에 겹쳐 빠졌다.
+- 원인: 고해상도 스크린샷의 읽기 되돌림이 그 프레임의 실시간을 늘린다. 다음 프레임 dt가 그만큼(최대 dt까지) 커지면서 게임 시간이 건너뛴다.
+- 해결: 촬영 작업 동안만 `t.OverrideFPS 60`(UnrealEngine.cpp:520·3203, Shipping 외)으로 고정 시간 간격을 쓰고 끝나면 이전 값으로 되돌린다(`--screenshot-fixed-fps`, 기본 60). 사진은 요청 시각 + 1프레임에 찍힌다. 촬영 실행과 지표·성능 실행은 나눈다. 열린 에셋 편집기 뷰포트가 대신 찍히므로 측정 전에 닫는다(도구가 물리 에셋·스켈레톤·애니·블루프린트 편집기를 닫는다).
+- 범위: GUI 에디터 PIE에서 시간을 지정해 촬영하는 측정 도구
+- 증거: 2026-10-19 `Saved/AgentOps/20261019/death-ragdoll/measure/run-log.md`(끊김), `measure2/run-log.md`(고정 간격 뒤 60/60장 +16.7ms)
+- 날짜·상태: 2026-10-19 active
+- 발견: claude
 ### L-editor-46 볼륨·디더 재질이 스크린샷에서 2×2 체커·사선 점묘로 찍히고, settle 기반 PIE 촬영 시각이 1.3~2.2초씩 늦다
 - 증상: SOFT 볼륨 연기 가장자리에 주기 2열·약 3.2행의 사선 점묘(IGN 무늬)가 `HighResShot` 사진마다 그대로 남는다. 또 `pie_lookdev_fluid.py`에서 trigger 뒤 settle 0.3초로 찍은 '0.3초' 폭발 사진이 실제로는 약 1초 이상 지난 장면이었다(파일 시각 차 − settle = 장마다 고정 지연 1.33~2.25초).
 - 원인: ① `HighResShot`은 가짜 뷰포트로 `r.HighResScreenshotDelay`(기본 4) 프레임을 Draw만 하고 월드를 틱하지 않는다(UnrealClient.cpp:1684-1717). 그래서 게임 시간(`ElapsedSeconds` = View.GameTime)에서 디더 위상을 뽑는 재질은 네 프레임 모두 같은 위상이 되고, TSR(시간 누적 업스케일러)이 평균할 재료가 없다. 일시정지·시간 감속에서도 디더가 멈춘다. ② 원격 Python 호출마다 왕복 지연이 있어 '적용 → sleep(settle) → 촬영' 순서는 게임 시간과 어긋난다.

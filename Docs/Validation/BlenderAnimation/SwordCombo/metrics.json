@@ -1,0 +1,512 @@
+{
+  "TD_SwordCombo01": {
+    "action": "TD_SwordCombo01",
+    "fps": 60.0,
+    "frames": [
+      1,
+      86
+    ],
+    "duration_s": 1.417,
+    "tip_peak_speed_m_s": 78.62,
+    "tip_peak_frame": 19,
+    "swing_frames_50pct": [
+      17,
+      22
+    ],
+    "swing_duration_s": 0.1,
+    "contact_frame": 20,
+    "contact_time_s": 0.317,
+    "contact_tip_cm": [
+      161.1,
+      -82.2,
+      113.4
+    ],
+    "contact_horizontal_radius_cm": 185.4,
+    "active_plane_rms_cm": 0.63,
+    "active_plane_tilt_deg": 90.0,
+    "active_direction": "R->L",
+    "active_drop_cm": -1.8,
+    "edge_alignment_min_deg": 56.8,
+    "edge_alignment_mean_deg": 75.5,
+    "blade_roll_active_max_deg": 34.2,
+    "elbow_at_contact_deg": 155.7,
+    "arm_blade_at_contact_deg": 154.0,
+    "shoulder_yaw_range_deg": 159.6,
+    "hip_yaw_range_deg": 54.5,
+    "tip_horizontal_sweep_active_deg": 224.6,
+    "pelvis_z_range_cm": 20.2,
+    "pelvis_z_min_frame": 15,
+    "angular_peak_frames": {
+      "pelvis": 17,
+      "spine_03": 18,
+      "spine_05": 18,
+      "upperarm_r": 21,
+      "lowerarm_r": 24,
+      "hand_r": 21
+    },
+    "wrist_flexion_range_deg": [
+      -77.4,
+      38.8
+    ],
+    "wrist_deviation_range_deg": [
+      -62.7,
+      13.1
+    ],
+    "hand_l_travel_max_cm": 40.4,
+    "tip_min_z_cm": 27.6,
+    "tip_min_z_frame": 75,
+    "root_travel_cm": [
+      34.0,
+      0.0,
+      0.0
+    ],
+    "root_speed_start_end_cm_per_frame": [
+      0.0,
+      0.0
+    ],
+    "pelvis_root_horizontal_max_cm": 23.3,
+    "max_bone_rotation_per_frame_deg": 52.3,
+    "feet": {
+      "ball_l": {
+        "max_slide_cm_per_frame_grounded": 0.001,
+        "grounded_frames": 73,
+        "min_z_cm": 1.22,
+        "travel_cm": 34.0
+      },
+      "ball_r": {
+        "max_slide_cm_per_frame_grounded": 0.001,
+        "grounded_frames": 64,
+        "min_z_cm": 0.41,
+        "travel_cm": 34.0
+      }
+    },
+    "blade_body_clearance_min_cm": {
+      "thigh_l": 26.7,
+      "calf_l": 28.9,
+      "thigh_r": 15.9,
+      "calf_r": 20.9,
+      "pelvis": 30.4,
+      "neck_01": 49.3,
+      "upperarm_l": 22.2,
+      "lowerarm_l": 10.2
+    },
+    "blade_body_clearance_worst_frame": {
+      "thigh_l": 61,
+      "calf_l": 61,
+      "thigh_r": 73,
+      "calf_r": 74,
+      "pelvis": 72,
+      "neck_01": 32,
+      "upperarm_l": 52,
+      "lowerarm_l": 39
+    }
+  },
+  "TD_SwordCombo02": {
+    "action": "TD_SwordCombo02",
+    "fps": 60.0,
+    "frames": [
+      1,
+      86
+    ],
+    "duration_s": 1.417,
+    "tip_peak_speed_m_s": 47.18,
+    "tip_peak_frame": 21,
+    "swing_frames_50pct": [
+      16,
+      24
+    ],
+    "swing_duration_s": 0.15,
+    "contact_frame": 23,
+    "contact_time_s": 0.367,
+    "contact_tip_cm": [
+      36.1,
+      161.7,
+      107.8
+    ],
+    "contact_horizontal_radius_cm": 154.7,
+    "active_plane_rms_cm": 0.57,
+    "active_plane_tilt_deg": 89.0,
+    "active_direction": "L->R",
+    "active_drop_cm": 0.9,
+    "edge_alignment_min_deg": 77.7,
+    "edge_alignment_mean_deg": 100.1,
+    "blade_roll_active_max_deg": 49.2,
+    "elbow_at_contact_deg": 128.2,
+    "arm_blade_at_contact_deg": 133.4,
+    "shoulder_yaw_range_deg": 165.8,
+    "hip_yaw_range_deg": 74.3,
+    "tip_horizontal_sweep_active_deg": 197.1,
+    "pelvis_z_range_cm": 16.0,
+    "pelvis_z_min_frame": 4,
+    "angular_peak_frames": {
+      "pelvis": 19,
+      "spine_03": 18,
+      "spine_05": 18,
+      "upperarm_r": 18,
+      "lowerarm_r": 25,
+      "hand_r": 16
+    },
+    "wrist_flexion_range_deg": [
+      -40.0,
+      48.8
+    ],
+    "wrist_deviation_range_deg": [
+      -35.8,
+      3.1
+    ],
+    "hand_l_travel_max_cm": 98.0,
+    "tip_min_z_cm": 28.1,
+    "tip_min_z_frame": 86,
+    "root_travel_cm": [
+      36.0,
+      0.0,
+      0.0
+    ],
+    "root_speed_start_end_cm_per_frame": [
+      0.0,
+      0.0
+    ],
+    "pelvis_root_horizontal_max_cm": 20.2,
+    "max_bone_rotation_per_frame_deg": 43.5,
+    "feet": {
+      "ball_l": {
+        "max_slide_cm_per_frame_grounded": 0.0,
+        "grounded_frames": 64,
+        "min_z_cm": 1.22,
+        "travel_cm": 36.0
+      },
+      "ball_r": {
+        "max_slide_cm_per_frame_grounded": 0.0,
+        "grounded_frames": 72,
+        "min_z_cm": 0.41,
+        "travel_cm": 51.3
+      }
+    },
+    "blade_body_clearance_min_cm": {
+      "thigh_l": 47.6,
+      "calf_l": 55.7,
+      "thigh_r": 19.6,
+      "calf_r": 25.3,
+      "pelvis": 32.8,
+      "neck_01": 49.4,
+      "upperarm_l": 30.9,
+      "lowerarm_l": 14.5
+    },
+    "blade_body_clearance_worst_frame": {
+      "thigh_l": 86,
+      "calf_l": 11,
+      "thigh_r": 86,
+      "calf_r": 86,
+      "pelvis": 86,
+      "neck_01": 1,
+      "upperarm_l": 1,
+      "lowerarm_l": 2
+    }
+  },
+  "TD_SwordCombo03": {
+    "action": "TD_SwordCombo03",
+    "fps": 60.0,
+    "frames": [
+      1,
+      92
+    ],
+    "duration_s": 1.517,
+    "tip_peak_speed_m_s": 88.38,
+    "tip_peak_frame": 19,
+    "swing_frames_50pct": [
+      19,
+      21
+    ],
+    "swing_duration_s": 0.05,
+    "contact_frame": 21,
+    "contact_time_s": 0.333,
+    "contact_tip_cm": [
+      189.7,
+      -44.9,
+      100.3
+    ],
+    "contact_horizontal_radius_cm": 190.9,
+    "active_plane_rms_cm": 1.61,
+    "active_plane_tilt_deg": 71.0,
+    "active_direction": "R->L",
+    "active_drop_cm": 89.5,
+    "edge_alignment_min_deg": 82.2,
+    "edge_alignment_mean_deg": 89.8,
+    "blade_roll_active_max_deg": 23.4,
+    "elbow_at_contact_deg": 160.7,
+    "arm_blade_at_contact_deg": 144.8,
+    "shoulder_yaw_range_deg": 194.1,
+    "hip_yaw_range_deg": 115.6,
+    "tip_horizontal_sweep_active_deg": 142.5,
+    "pelvis_z_range_cm": 26.8,
+    "pelvis_z_min_frame": 27,
+    "angular_peak_frames": {
+      "pelvis": 17,
+      "spine_03": 17,
+      "spine_05": 18,
+      "upperarm_r": 21,
+      "lowerarm_r": 21,
+      "hand_r": 22
+    },
+    "wrist_flexion_range_deg": [
+      -77.4,
+      36.9
+    ],
+    "wrist_deviation_range_deg": [
+      -56.5,
+      9.0
+    ],
+    "hand_l_travel_max_cm": 44.6,
+    "tip_min_z_cm": 28.0,
+    "tip_min_z_frame": 84,
+    "root_travel_cm": [
+      38.0,
+      0.0,
+      0.0
+    ],
+    "root_speed_start_end_cm_per_frame": [
+      0.0,
+      0.0
+    ],
+    "pelvis_root_horizontal_max_cm": 17.7,
+    "max_bone_rotation_per_frame_deg": 80.0,
+    "feet": {
+      "ball_l": {
+        "max_slide_cm_per_frame_grounded": 0.001,
+        "grounded_frames": 78,
+        "min_z_cm": 1.22,
+        "travel_cm": 54.2
+      },
+      "ball_r": {
+        "max_slide_cm_per_frame_grounded": 0.001,
+        "grounded_frames": 70,
+        "min_z_cm": 0.41,
+        "travel_cm": 38.0
+      }
+    },
+    "blade_body_clearance_min_cm": {
+      "thigh_l": 24.9,
+      "calf_l": 33.9,
+      "thigh_r": 19.4,
+      "calf_r": 24.6,
+      "pelvis": 26.8,
+      "neck_01": 40.5,
+      "upperarm_l": 24.1,
+      "lowerarm_l": 17.4
+    },
+    "blade_body_clearance_worst_frame": {
+      "thigh_l": 50,
+      "calf_l": 55,
+      "thigh_r": 87,
+      "calf_r": 86,
+      "pelvis": 50,
+      "neck_01": 55,
+      "upperarm_l": 54,
+      "lowerarm_l": 55
+    }
+  },
+  "TD_SwordCombo04": {
+    "action": "TD_SwordCombo04",
+    "fps": 60.0,
+    "frames": [
+      1,
+      68
+    ],
+    "duration_s": 1.117,
+    "tip_peak_speed_m_s": 41.32,
+    "tip_peak_frame": 34,
+    "swing_frames_50pct": [
+      17,
+      37
+    ],
+    "swing_duration_s": 0.35,
+    "contact_frame": 35,
+    "contact_time_s": 0.567,
+    "contact_tip_cm": [
+      139.1,
+      -87.2,
+      109.6
+    ],
+    "contact_horizontal_radius_cm": 162.8,
+    "active_plane_rms_cm": 1.54,
+    "active_plane_tilt_deg": 89.0,
+    "active_direction": "L->R",
+    "active_drop_cm": -3.7,
+    "edge_alignment_min_deg": 92.3,
+    "edge_alignment_mean_deg": 107.8,
+    "blade_roll_active_max_deg": 58.6,
+    "elbow_at_contact_deg": 155.3,
+    "arm_blade_at_contact_deg": 131.4,
+    "shoulder_yaw_range_deg": 512.4,
+    "hip_yaw_range_deg": 444.5,
+    "tip_horizontal_sweep_active_deg": 462.4,
+    "pelvis_z_range_cm": 26.2,
+    "pelvis_z_min_frame": 8,
+    "angular_peak_frames": {
+      "pelvis": 30,
+      "spine_03": 29,
+      "spine_05": 29,
+      "upperarm_r": 19,
+      "lowerarm_r": 39,
+      "hand_r": 17
+    },
+    "wrist_flexion_range_deg": [
+      -38.7,
+      37.4
+    ],
+    "wrist_deviation_range_deg": [
+      -32.4,
+      -5.0
+    ],
+    "hand_l_travel_max_cm": 81.8,
+    "tip_min_z_cm": 27.8,
+    "tip_min_z_frame": 59,
+    "root_travel_cm": [
+      54.0,
+      0.0,
+      0.0
+    ],
+    "root_speed_start_end_cm_per_frame": [
+      0.0,
+      0.0
+    ],
+    "pelvis_root_horizontal_max_cm": 10.7,
+    "max_bone_rotation_per_frame_deg": 26.2,
+    "feet": {
+      "ball_l": {
+        "max_slide_cm_per_frame_grounded": 0.0,
+        "grounded_frames": 38,
+        "min_z_cm": 1.22,
+        "travel_cm": 54.0
+      },
+      "ball_r": {
+        "max_slide_cm_per_frame_grounded": 0.0,
+        "grounded_frames": 42,
+        "min_z_cm": 0.41,
+        "travel_cm": 71.1
+      }
+    },
+    "blade_body_clearance_min_cm": {
+      "thigh_l": 45.5,
+      "calf_l": 47.7,
+      "thigh_r": 21.2,
+      "calf_r": 27.4,
+      "pelvis": 32.8,
+      "neck_01": 55.5,
+      "upperarm_l": 47.5,
+      "lowerarm_l": 26.1
+    },
+    "blade_body_clearance_worst_frame": {
+      "thigh_l": 11,
+      "calf_l": 11,
+      "thigh_r": 67,
+      "calf_r": 68,
+      "pelvis": 66,
+      "neck_01": 4,
+      "upperarm_l": 12,
+      "lowerarm_l": 14
+    }
+  },
+  "TD_SwordCombo_All": {
+    "action": "TD_SwordCombo_All",
+    "fps": 60.0,
+    "frames": [
+      1,
+      175
+    ],
+    "duration_s": 2.9,
+    "tip_peak_speed_m_s": 88.38,
+    "tip_peak_frame": 89,
+    "swing_frames_50pct": [
+      89,
+      91
+    ],
+    "swing_duration_s": 0.05,
+    "contact_frame": 91,
+    "contact_time_s": 1.5,
+    "contact_tip_cm": [
+      189.7,
+      -44.9,
+      100.3
+    ],
+    "contact_horizontal_radius_cm": 190.9,
+    "active_plane_rms_cm": 1.61,
+    "active_plane_tilt_deg": 71.0,
+    "active_direction": "R->L",
+    "active_drop_cm": 89.5,
+    "edge_alignment_min_deg": 82.2,
+    "edge_alignment_mean_deg": 89.8,
+    "blade_roll_active_max_deg": 23.4,
+    "elbow_at_contact_deg": 160.7,
+    "arm_blade_at_contact_deg": 144.8,
+    "shoulder_yaw_range_deg": 512.4,
+    "hip_yaw_range_deg": 444.5,
+    "tip_horizontal_sweep_active_deg": 142.5,
+    "pelvis_z_range_cm": 26.8,
+    "pelvis_z_min_frame": 97,
+    "angular_peak_frames": {
+      "pelvis": 87,
+      "spine_03": 87,
+      "spine_05": 88,
+      "upperarm_r": 91,
+      "lowerarm_r": 91,
+      "hand_r": 92
+    },
+    "wrist_flexion_range_deg": [
+      -77.4,
+      48.8
+    ],
+    "wrist_deviation_range_deg": [
+      -62.7,
+      13.1
+    ],
+    "hand_l_travel_max_cm": 162.3,
+    "tip_min_z_cm": 27.8,
+    "tip_min_z_frame": 166,
+    "root_travel_cm": [
+      162.0,
+      0.0,
+      0.0
+    ],
+    "root_speed_start_end_cm_per_frame": [
+      0.0,
+      0.0
+    ],
+    "pelvis_root_horizontal_max_cm": 23.3,
+    "max_bone_rotation_per_frame_deg": 80.0,
+    "feet": {
+      "ball_l": {
+        "max_slide_cm_per_frame_grounded": 0.0,
+        "grounded_frames": 108,
+        "min_z_cm": 1.22,
+        "travel_cm": 162.0
+      },
+      "ball_r": {
+        "max_slide_cm_per_frame_grounded": 0.0,
+        "grounded_frames": 115,
+        "min_z_cm": 0.41,
+        "travel_cm": 162.0
+      }
+    },
+    "blade_body_clearance_min_cm": {
+      "thigh_l": 45.5,
+      "calf_l": 47.7,
+      "thigh_r": 19.6,
+      "calf_r": 25.2,
+      "pelvis": 32.8,
+      "neck_01": 49.3,
+      "upperarm_l": 31.3,
+      "lowerarm_l": 14.5
+    },
+    "blade_body_clearance_worst_frame": {
+      "thigh_l": 118,
+      "calf_l": 118,
+      "thigh_r": 1,
+      "calf_r": 1,
+      "pelvis": 173,
+      "neck_01": 32,
+      "upperarm_l": 37,
+      "lowerarm_l": 37
+    }
+  }
+}

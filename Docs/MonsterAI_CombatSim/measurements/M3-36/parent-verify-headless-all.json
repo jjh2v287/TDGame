@@ -1,0 +1,1617 @@
+{
+ "results": [
+  {
+   "path": "TDGame.Combat.ActionTimelineHitsOnceInWindow",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.ActionTimelineWaitsForUnloadedAnimation",
+   "result": "Success",
+   "events": [
+    "Warning: LogTDGame: ActionTimeline: animation '/Game/TDTests/Missing/AS_TDMissingAction.AS_TDMissingAction' was not preloaded; waiting for it. [log]",
+    "Warning: LogStreaming: LoadPackage: SkipPackage: /Game/TDTests/Missing/AS_TDMissingAction (0xEC940F2E62DF7F81) - The package to load does not exist on disk or in the loader [log]"
+   ]
+  },
+  {
+   "path": "TDGame.Combat.CyclicSpawnsAndActionsRespectSharedBudget",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageCallbacksCannotReportStaleDeath",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.AvoidedSkipsStatusDelivery",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.AvoidedWithoutGameInstanceIsSafe",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.DirectionFallsBackToCasterVector",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.InvulnerableBlocksDamage",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.NoMessageSubsystemIsSafe",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.ResultCarriesHitInfo",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.ResultReturnsDamageRatio",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.RuleDeliveryFollowsSource",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.SpellProjectileCarriesImpact",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.StatusDeliveryMarked",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DamageEvent.UnclampedDamageOnKill",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.DefaultGameModeUsesNativeCombatClasses",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.FastShockwaveSweepsRingAndPreservesHole",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.ClassifyHitTier",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.DamageVignetteIntensity",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.DeferredQueueKeepsOrder",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.NumberPoolLifetimeAndFade",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.NumberPoolRecyclesOldest",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.ShakeAmountCurve",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.ShouldEnableFeedbackRules",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.SoundConcurrencyIsSplit",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.StatusKillIsQuiet",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.SubsystemSkippedWithoutRendering",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Feedback.TraumaPatternDecays",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.GAS.CleansingFreezeCancelsExpiryBurst",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.GAS.DamageAbilityUsesIndependentCooldowns",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.GAS.HealthUsesInstantOrPeriodicResourceEffects",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.GAS.RevivalDuringDeadTagApplicationIsConsistent",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.GAS.SharedCharactersAndLevelGrowth",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Homing.ApplyStopAndReapplyTimeline",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Homing.EqualDeadlineActionsPreserveAuthoredOrder",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Homing.ExpirationBoundaryExcludesDelayedActions",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Homing.FinishAndDestroyCancelOwnedDelayedActions",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Homing.LongFrameSplitsMotionAtActionDeadlines",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Homing.ReapplicationAndEventTargetSelection",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Homing.SpawnAndActivateHaveIndependentTiming",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Homing.TargetLossReacquiresOrContinuesStraight",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.InvalidDefinitionsAreRejected",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MegaMagic.AstralLancesLaunchSeekAndImpact",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MegaMagic.FactoryGraphsAreProductionReady",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MegaMagic.FinishDuringDamageCancelsRemainingActions",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MegaMagic.PhoenixDiveCreatesBlastWaveAndBurningGround",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MegaMagic.SavedAssetGraphsLoadAndValidate",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MegaMagic.ThunderCageTelegraphsPulsesAndDetonates",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MegaMagic.VenomBloomIgnoresAlliesAndLeavesPersistentDamage",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MegaMagic.VisualTailStopsGameplayAndExpires",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MeleeSweep.LocksBladeHeightToOwner",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MeleeSweep.SweepsBladePathDuringLongFrames",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MineWaitsForArmingAndTriggersOnce",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.MitigatedBuildupFreezesAndExpiresOnce",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.OverlappingFreezesPreserveExternalMovementChanges",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.ProjectileCreatesPeriodicAreaWithCasterSnapshot",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.ProjectileSweepsWallsAndPiercesEnemies",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.ComboWrapsToFirstStep",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.HitReactionThresholdsOnlyWhenEnabled",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.HitStopFreezesActionClock",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.KillVelocityFromHitDirection",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.KnockbackScaleDecays",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.LargeHitPlaysReaction",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.PlayerDeathWithoutGameInstanceIsSafe",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.SmallHitKeepsCombo",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.StatusDamageKeepsCombo",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.Reaction.SwordStyleCatalogIsConsistent",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.ResetAndDeathCancelStatusExpiry",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.ScalingMitigationAndCriticalBoundaries",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.SourceDestructionCancelsSpawnFanout",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Combat.TeamPolicyAndSpatialFiltering",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Encounter.Arena.BossDeathClearsLeftoverSummons",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Encounter.Arena.ChallengerDeathResetsEncounter",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Encounter.Arena.EmptyWaveFailsInsteadOfWinning",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Encounter.Arena.EntryZoneAndCheckpoint",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Encounter.Arena.RunIsDeterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Encounter.Arena.SpawnLocationsStayInsideArena",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Encounter.Arena.VanishedChallengerFailsEncounter",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Encounter.Arena.WavesAdvanceOnKills",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatBinding.DelegateCarriesElementLocationDirectionAndDelivery",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatIntegration.DamageAndDeathInjectFluidStamps",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.DeathStampsOncePerFrameAndStaysSeparateFromDamage",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.GameplayMessagesReachTheQueue",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.HitDirectionSteersStampVelocity",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.HitLocationDecidesStampPositionAndMergeKeepsLocation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.KilledDamageMessageStampsDeathWithoutDeathEvent",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.KnownElementOverridesUnknownElementOnTheSameTarget",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.MergedHitsUseMaximumDamage",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.MergesPerTargetAndKeepsKnownElementChannel",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.MessageCarriesLocationDirectionElementAndDelivery",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.MissingHitDirectionFallsBackToAttackerToTargetDirection",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.CombatQueue.StatusDeliveryNeverStampsAndOtherDeliveriesDo",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.FieldBuffer.SdfObstacleAndTerrainSlope",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.FluidSim.AdvectionPressureAndViscosity",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.ActivationSleepWakeAndActorTracking",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.CombatBindingStampsOncePerHitAndReleasesOnDestroy",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.OverlappingFluidActorsDoNotStampEachOther",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.PlaneScaleFollowsClampedSolverExtent",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.PoolReturnClearsOutputAndReuseClearsState",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.ReenteringActorDoesNotStampStaleDisplacement",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.RegisteredActorStampsJustBelowTeleportSpeedAndSkipsJustAboveIt",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.SleepWakeHysteresisAndWakeClearsHistory",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TeleportedRegisteredActorKeepsPositionWithoutStamp",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TerrainElevationDrivesDownhillFlow",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TerrainResamplesAfterGridLayoutChange",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TerrainResamplesAfterSimulationReset",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TerrainResamplesWhenWakingAfterGroundChanged",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TerrainSamplingContinuesAcrossTicksWithinBudget",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TerrainSlidingWindowTracesOnlyNewStrips",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TerrainTraceMissFallsBackToActorHeight",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveActor.TrackedBoneStampsFollowSkeletalMeshAndRejectTeleport",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveComponent.ObstaclesSurviveReinitialization",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveComponent.PackedPixelsFollowWorldAxes",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.LiveComponent.PresetSurfaceMeshLoadsAsyncAndRebinds",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Niagara.DestroyedTaggedActorOrComponentKeepsDriving",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Niagara.PresetSystemChangeOrNullDestroysOldComponent",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Niagara.PresetSystemComponentIsCleanedUpWithActor",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Niagara.PresetSystemSleepWakeAndPoolToggleActivation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Niagara.PresetSystemSpawnsAttachedOwnedComponent",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Niagara.TagAddedLaterIsDrivenAfterCacheRefresh",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Niagara.TaggedActorReceivesCenterExtentsAndTextures",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Perf.FollowChainSeesSameFrameMove",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Perf.ParallelActorStepsMatchSerialChecksums",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Perf.StepCostByResolution",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Perf.TickCostLogFollowsConsoleVariable",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SimplePainter.FootprintTrailAndFade",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SlidingWindow.WorldCoordinatePreservation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Solver.ReinitializationGenerationAdvancesOnResetAndResolutionChange",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.BorderBandRetainsFootprint",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.BrushFrameRateInvariance",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.DisplayPressureIsResolutionIndependent",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.ExtremeConfigIsClampedAndStaysFinite",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.GoldenStateChecksums",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.GridEdgeObstacleNormalIsTangential",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.MovingMudStampDisplacesSurface",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.MovingStampLeavesNoPressureAfterSettling",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.NonFiniteStampIsDiscarded",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.NonSquareFourToOneProjectionResidual",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.NonSquareProjectionResidual",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.PresetOverrideResolvesConfig",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.SampleReportsVelocityCmPerSec",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.StampVelocityIsCappedAtMaxSpeed",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.StationaryStateHasNoPressureResidue",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.SolverRegression.WaterBorderBandKeepsDensityAndFadesAlpha",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Subsystem.ParticleSplashCountsOnlyActorsThatReceiveParticles",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Subsystem.PooledReuseWithoutPresetMovesSolverCenter",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Subsystem.PresetPoolAndPointBudget",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Volume.AmbientDensityRefillsAndIsFrameRateInvariant",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Volume.ErasingBrushIsFrameRateInvariantAndChannelScoped",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Volume.PackedOutputKeepsEncodingInHalfFloat",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Volume.RadialVelocityBlendsOutwardIntoCells",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Volume.SmokeIsCutByActorStampAndRefills",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.Volume.SmokePresetAndVolumeFieldsMatchContract",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.VolumeActor.ActorBrushUsesEraseAndPunctureSettings",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.VolumeActor.BoxFitsSimulationRangeAndStaysWorldAligned",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.VolumeActor.LightActorDrivesLightParameters",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.VolumeActor.MaterialInstanceReceivesSimulationParameters",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.VolumeActor.MouseBrushStampsFromCursorMovement",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.FluidFX.VolumeActor.PresetWithoutVolumeHidesTheBox",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.ConeLineRingShapes",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.DangerAttacksNeverOverlap",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.DefinitionKeysResolve",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.PhaseEnteredNotifiesAndQueries",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.SummonMinionsSpawnsEngagedRing",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.TakeOffHoldsAltitudeThenLands",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Boss.WindupDelaysInstantSpell",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.ClearPathKeepsPreferredVelocity",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.EngagedTargetIsNotAnObstacle",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.HeadOnPairTurnsSameSide",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.HoldingAttackerDoesNotYield",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.HysteresisKeepsPreviousChoice",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.OverlapNeverApproaches",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.ProcessingOrderDoesNotMatter",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.Scene.CrossingStreams",
+   "result": "Fail",
+   "events": [
+    "Error: Expected 'Circle avoidance touches no more often than legacy separation' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\MonsterAI\\Tests\\TDCircleAvoidanceTests.cpp(1360)]"
+   ]
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.Scene.Deterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.Scene.PassThroughStandingGroup",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.StopChoiceHasZeroSpeedScale",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.CircleAvoidance.YieldSideFollowsCrossProduct",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.DefinitionErrorsNameTheFix",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.DefinitionTacticsKeys",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.BlockedReturnSettlesInPlace",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.HitKitingIsCappedByMaxChase",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.KitingDoesNotYoYo",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.ReturningIgnoresAllyAlert",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Engagement.ReturningIgnoresOutsideHits",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Fsm.FreezeHaltsThenResumes",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Fsm.PhasePlaysOnEnterSequence",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Grid.BuildInputsNeighborsUnchanged",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Grid.MatchesBruteForce",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Grid.SearchCost",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.HeavyHitInterruptsTelegraph",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.CentaurChargeIntoWallStuns",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.CentaurDrawSwordBreaksIntoStun",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.CentaurHoldsBandAndShoots",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.CentaurPhaseSummonsTwoHounds",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.CentaurSpeciesSwapsToSwordWhileAnimating",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.DefinitionsResolve",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.FightIsDeterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.FixtureWalksOnFloor",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.GriffonGroundMelee",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.GriffonShotDownFalls",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MidBoss.GriffonTakesOffAndLandsWithPunishWindow",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.MonsterTelegraphsThenHits",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.NoGlobalRandom",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.AlarmRipplesTwoHops",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.BurstLossesPanicSmallPack",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.ChargerCapDoesNotBlockMelee",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.ChargerRetaliationAllowsSecondHolder",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.ChargersTakeTurns",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.Deterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.EventOrderInvariant",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.LargePackHoldsNerve",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.LeaderDeathScattersPack",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.LoneSurvivorHoldsNerve",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.LowHealthFleeDoesNotLoop",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.OneShotKillAlertsNeighbors",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.OnlyFirstDiscovererCalls",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.PackDefinitionKeys",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.RalliedPackPanicsOnce",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.RangedBandFloorFormula",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.RangedHoldsBandBehindMeleeRing",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.SlowLossesDoNotPanic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.SupportCastsAlone",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.TacticsOffKeepsInstantAlarm",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.TimedRetreatEndsOnTime",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Pack.TimedRetreatEndsWhenCornered",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.ResponseCurves",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.ScorerTieBreakAndInertia",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Species.ClipsCoverDefinition",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Species.LocomotionClipsLoop",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.AttackStartsAreSpaced",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.AttackedWaiterRetaliates",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.BossLaneNotStarved",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.BudgetFormula",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.CirclingHolderIsNotStalled",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.ConcurrentAttackersFollowBudget",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.Deterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.DirectorCyclesUnderConstantPressure",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.EncounterResetRestoresGrace",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.EveryMonsterGetsATurn",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.FleeingMonsterDoesNotStallTokens",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.FleeingReservationIsRevoked",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.HoldingAttackerStillHoldsWithoutQueue",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.LoneMonsterEngagedFromFarNeverWaits",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.MercyWindowOpensOnce",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.RetaliationStealsFarReservation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.RoleClassification",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.TacticsOffKeepsLegacyCap",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.TokenReleasedOnInterrupt",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.TokenlessMonstersHoldTheWaitRing",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.UnreachableReservationIsReleased",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Tactics.WeightedTokenCosts",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.MonsterAI.Validate",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Movement.FreezeHaltsMovementAndAnimation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Movement.MonsterIdleKeepsLooping",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Movement.MonsterMoveIntentMovesPawn",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Movement.RootMotionActionMovesPawn",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.PIE.Combat.BossLoop",
+   "result": "Success",
+   "events": [
+    "Warning: TDGame.PIE.Combat.BossLoop needs a rendering editor and was skipped; run it in the GUI editor with check_automation_tests.py --filter TDGame.PIE.Combat. [C:\\Project\\TDGame\\Source\\TDGameEditor\\Tests\\TDBossLoopPieTests.cpp(986)]"
+   ]
+  },
+  {
+   "path": "TDGame.PIE.Combat.FullLoop",
+   "result": "Success",
+   "events": [
+    "Warning: TDGame.PIE.Combat.FullLoop needs a rendering editor and was skipped; run it in the GUI editor with check_automation_tests.py --filter TDGame.PIE.Combat. [C:\\Project\\TDGame\\Source\\TDGameEditor\\Tests\\TDCombatPieTests.cpp(1554)]"
+   ]
+  },
+  {
+   "path": "TDGame.Realm.ConnectorWeight",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.Realm.LiftShaftWeight",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Liner.RingPlacement",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Liner.TreadmillWindowCovered",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.AbyssScreenOnlyWithRider",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.AscentIsSymmetric",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.CallMovesWithoutReadiness",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.MakeFromGate",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.ReadyHysteresis",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.StopsExactlyAtLanding",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.TreadmillInvariant",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.TreadmillResumesOnModuleBoundary",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.Motion.TreadmillTimeoutProceeds",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.PassagePace.RateLimit",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.RealmLift.PassagePace.TargetTable",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.SeamlessTravel.PreloadCancelAllowsOtherTarget",
+   "result": "Success",
+   "events": [
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]",
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]"
+   ]
+  },
+  {
+   "path": "TDGame.SeamlessTravel.RealmConnectorWalk",
+   "result": "Success",
+   "events": [
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]"
+   ]
+  },
+  {
+   "path": "TDGame.SeamlessTravel.RealmLiftRide",
+   "result": "Success",
+   "events": [
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]"
+   ]
+  },
+  {
+   "path": "TDGame.SeamlessTravel.RealmLiftTreadmill",
+   "result": "Success",
+   "events": [
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]"
+   ]
+  },
+  {
+   "path": "TDGame.SeamlessTravel.RealmRoundTrip",
+   "result": "Success",
+   "events": [
+    "Warning: LogTDGame: Realm: pacing engaged gate=SunkenStarfieldSouthwest along=-6400 ready=0 elapsed=0.00 [log]",
+    "Warning: LogTDGame: Realm: pacing released gate=SunkenStarfieldSouthwest along=-6400 ready=0 elapsed=0.00 [log]",
+    "Warning: LogTDGame: Realm: pacing engaged gate=PaleHeightsNortheast along=-19657 ready=0 elapsed=0.00 [log]",
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]"
+   ]
+  },
+  {
+   "path": "TDGame.SeamlessTravel.RoundTripCompletesWithoutLoadingGap",
+   "result": "Success",
+   "events": [
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]"
+   ]
+  },
+  {
+   "path": "TDGame.Smoke.PortedClassesExist",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.TopDown.OcclusionFocusFollowsPawn",
+   "result": "Success",
+   "events": [
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]"
+   ]
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.AllFlowsSizesSeeds1To500SuccessRate",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.KeyLockSeeds1To500KeyBeforeLock",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.RemovedDoorFailsValidation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.SameSeedProducesSameHash",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.ThemeMissingRequiredRoleIsInvalid",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.ValidatorDeadEndExcessIsWarningNotError",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.ValidatorItemsCarryWorldLocationAndRoomId",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.ValidatorMissingBossRoomIsError",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Dungeon.ValidatorShortMainPathIsWarning",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.EncounterResolveIsDeterministic",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.EncounterRespectsDepthAndBudget",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.LockedAnchorsSurviveRegenerate",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.ConfiguredDefinitionsLoad",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.DataValidationRejectsBadGates",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.DestroyLandscapeWithTag",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.FindGateAndBounds",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.GatePassageGeometry",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.LiftDataValidation",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.LiftDefaults",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.LiftTravelDestination",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.Realm.ReflectedPropertyNames",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.RegionFilterLeavesOtherRegionsUntouched",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.FlatRegionPassRate",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.PlacementAvoidsWaterSteepSlopeAndAnchorExclusion",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.PlacementCountsWithinRegionRanges",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.RoadsFollowGentlePassThroughSteepBand",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.RoadsReachAllEntrancesFromTown",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.RoadsReachLandmarkAnchors",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.SameSeedProducesSameHash",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.StreamingSafetyDetectsTightAtlasSlots",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldGen.World.UnloadedDefinitionIsAnError",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldState.ActorRecordRoundTrip",
+   "result": "Success",
+   "events": []
+  },
+  {
+   "path": "TDGame.WorldState.ChestStateSurvivesStreaming",
+   "result": "Success",
+   "events": [
+    "Warning: LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance [log]"
+   ]
+  }
+ ],
+ "found_count": 315,
+ "crash_lines": [],
+ "engine_exit_code": 0,
+ "filters": [
+  "TDGame"
+ ],
+ "log": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261018\\final-verify-all-tests.log",
+ "incomplete": false,
+ "crashed": false
+}

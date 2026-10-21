@@ -18,12 +18,36 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import remote_execution as re_mod  # noqa: E402
 
 
+PROJECT_ROOT = os.path.normcase(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def _is_this_project(node):
+    return os.path.normcase(os.path.normpath(node.get("project_root", ""))) == PROJECT_ROOT
+
+
+def _read_node_pid(rex, node):
+    try:
+        rex.open_command_connection(node["node_id"])
+        res = rex.run_command("import os\nprint(os.getpid())", exec_mode=re_mod.MODE_EXEC_FILE)
+    except Exception:
+        return None
+    finally:
+        rex.close_command_connection()
+    for output in res.get("output", []):
+        text = str(output.get("output", "")).strip()
+        if text.isdigit():
+            return text
+    return None
+
+
 def _find_node(rex, timeout):
+    import ue_editor
     deadline = time.time() + timeout
     while time.time() < deadline:
-        nodes = rex.remote_nodes
-        if nodes:
-            return nodes[0]
+        gui_editor_pids = set(ue_editor.editor_pids())
+        for node in rex.remote_nodes:
+            if _is_this_project(node) and _read_node_pid(rex, node) in gui_editor_pids:
+                return node
         time.sleep(0.5)
     return None
 

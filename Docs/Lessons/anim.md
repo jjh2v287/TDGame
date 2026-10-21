@@ -127,6 +127,15 @@
 - 날짜·상태: 2026-10-16 active
 - 발견: claude
 
+### L-anim-16 백핸드 횡베기 수평 평면화 손목 뒤집힘·루트 모션 이중 이동·360° 시계방향 회전 다리 꼬임·후속 동작 역방향 상쇄 정지
+- 증상: ① 경사 백핸드 베기(`Attack_PrimaryB`, 칼날 옆면 법선이 `-UP`)를 수평 횡베기(`tilt 89~90°`)로 만들 때 `hand_r` 월드 회전을 `+UP` 법선 기준으로 덮어쓰면 손목이 프레임 사이 `172.9°` 뒤집힌다. ② 월드 공간 뼈 행렬(`results`)을 `write_action`에서 아마추어 로컬 기저로 분해할 때 `armature.location`에도 `root_travel`을 키잉하면 `root_travel`이 2중 적용되어 접지된 발이 프레임당 `1.0~1.3cm` 앞으로 끌린다. ③ `360°+` 시계방향 전신 회전 베기(`TD_SwordCombo04`)에서 무릎 폴 각도를 `math.remainder(f_yaw - spin_yaw, tau)`로 계산하면 `-180°` 경계(`f38·f42`)에서 허벅지·종아리가 한 프레임에 `173.0°` 뒤집히고, `180°` 회전 지점에서 오른발을 `+Right`·왼발을 `-Left`에 두면 회전된 골반(왼엉덩이=`+Right`, 오른엉덩이=`-Left`)과 어긋나 두 다리가 X자로 교차한다. ④ `TD_SwordCombo_All` `f150~160`(`TD_SwordCombo04` `f43~53`)에서 회전 베기 직후 검과 몸이 멈칫한 뒤 거꾸로 되감긴다(사용자 시각 보고).
+- 원인: ① 백핸드(회내) 쥐기에서 칼날 면 법선은 `-UP`이므로 `+UP` 기준 좌표계 정렬이 손목을 `180°` 반전시킨다. ② `armature.location = (0, -root_travel*0.01, 0)`이 이미 전신을 `+FORWARD * root_travel`만큼 옮기므로 `rest` 대비 로컬 분해 전에 월드 포즈에서 `-FORWARD * root_travel`을 빼야 한다. ③ 연속 언래핑된 회전각에 `remainder(..., 2π)`를 씌우면 `±π` 분기 절단이 생기며, 시계방향 `180°`에서 골반 좌우가 반전된다. ④ `Attack_PrimaryB` 원본 `sf=29.0~68.0`은 검 끝을 몸 뒤쪽(`Y=+25.6cm`)과 바닥(`Z=20cm`)으로 넘기는데, 복귀 목표(`READY_POSE`, `tip.y=-55.3cm`, `wrist.y=+24.7cm`)와 블렌딩할 때 `(1-w)*A'(t)`(`+Y` 진행)와 `w'*(B-A(t))`(`-Y` 복귀)가 서로 반대 방향이어서 `f150~160` 구간에서 속도가 상쇄(`wrist 1.0cm/f`)되고 방향이 역전된다.
+- 해결: ① 2단계 구면 고도각 보정(`level_right_arm_plane_in_pose`): 어깨(`upperarm_r`)를 축으로 팔 전체(`upperarm_r·lowerarm_r·hand_r`)의 수직 고도각만 회전해 손목 높이를 맞추고, 손목(`hand_r`)을 축으로 칼날 수직 평면 안에서 검 끝 높이만 회전해 내부 팔꿈치·손목 비틀림을 100% 보존한다(`active_plane_tilt_deg 89~90°`, `RMS 0.60~1.54cm`). ② `write_action`에서 `pose = shift_pose(world_pose, -FORWARD * root_travel[index])`로 변환 뒤 분해한다(접지 미끄러짐 `0.000cm/f`). ③ 무릎 폴 각도는 언래핑된 두 각의 가중합(`0.45 * spin_yaw + 0.55 * f_yaw`)으로 두고, `180°` 중간 디딤발을 왼발 `+Right(15cm)`·오른발 `-Left(-14cm)`에 배치한다(프레임당 최대 뼈 회전 `173.0° → 26.2°`). ④ `PrimaryB` 샘플링을 우전방 팔로우스루 직후(`sf=28.0~28.2`, `tip.y=-66cm`)에서 멈추고 `extra_spin_yaw`를 오버슈트 없이 `360°`로 단조 감속(`68f`)시켜 `A'(t)`와 `B-A(t)`가 같은 방향을 향하게 한다(`tip·wrist·pelvis` 전 구간 단조 감속, 방향 역전 0회).
+- 범위: `Tools/BlenderAnimation/blender_author_sword_shield_combo.py`
+- 증거: `Docs/Validation/BlenderAnimation/SwordCombo/metrics.json`, `Saved/BlenderAnimation/SwordAttack01/measure_TD_SwordCombo01..04.json`
+- 날짜·상태: 2026-10-18 active
+- 발견: antigravity(④는 사용자 시각 확인에서 시작)
+
 ### L-anim-17 UAF로 포즈를 쓰는 메시를 래그돌로 바꾸면 물리는 도는데 화면 포즈가 굳어 한 덩어리로 미끄러진다
 - 증상: 사망 래그돌에서 몬스터 메시가 마지막 애니 포즈 그대로 날아가거나 미끄러진다. PIE 측정 골반은 203cm 이동, 골반 대비 손·머리 위치 변화 1e-13cm(포즈 고정)
 - 원인: 물리 블렌드(`PerformBlendPhysicsBones`)는 편집 버퍼에 쓰고 `FinalizeBoneTransform → FlipEditableSpaceBases`가 `bNeedToFlipSpaceBaseBuffers`일 때만 읽기 버퍼로 넘긴다. 그 플래그는 애님BP 경로(`SkeletalMeshComponent.cpp:3327·3798`)에서만 서서, `SetEnableAnimation(false)`+UAF 메시는 래그돌 결과가 렌더·`GetBoneLocation`에 안 보인다(`PhysAnim.cpp:420-460`, `SkinnedMeshComponent.cpp:4900`)

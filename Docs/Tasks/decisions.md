@@ -340,6 +340,7 @@
 - 상태: accepted (2026-10-17, 방향은 사용자 요청·세부는 claude 판정)
 - 근거: `Saved/AgentOps/20261017/async-load/spec-final.md`(조사 보고 8개·반박 3개 반영)
 - 영향: `AGENTS.md` 7절, OP-33, `Tools/check_sync_loads.py`, `Config/DefaultEngine.ini`·`DefaultGame.ini`, 캐릭터·전투 GAS·몬스터 AI·이계 스트리밍·월드 생성 런타임 코드와 시험, 개발 빌드 동기 로드 경고 서브시스템
+- 후속(2026-10-17 claude): (c) 완료 — `UTDDamageDefinition`의 `VisualEffect`·`Mesh`·`Material`을 소프트 참조로 바꾸고 엔티티(패턴 A)·플레이어·몬스터 정의 라이브러리(패턴 B)에서 비동기로 요청, 꼬리 수명은 경로 기준. MegaMagic DA 21개 재저장(사용자 승인, `Tools/editor_resave_assets.py`). 기준 목록에서 저작 공장 1을 지워 4개(생성자 기본값 2, 결정론 관문 대기 2). 근거 `Saved/AgentOps/20261017/soft-damage/`
 - 후속(2026-10-18 claude): 쿠킹 보장 — 코드 안 경로로만 여는 마네킹 `Anims/Unarmed`·`Anims/Sword` 폴더를 `DefaultGame.ini` 항상 쿠킹에 추가(쿠킹 게임 SkipPackage 0, 근접 공격 재생 확인), 런타임 C++의 `/Game` 경로 쿠킹 근거 검사 `Tools/check_cook_coverage.py`(종료 0, 근거 없는 경로 0). 제안(규칙 변경이라 사용자 승인 필요): `AGENTS.md` 7절과 OP-33의 판정 명령에 `python Tools/check_cook_coverage.py`를 `check_sync_loads.py`와 함께 넣는다. 근거 `Saved/AgentOps/20261018/cook-path-audit/`
 - 후속(2026-10-18 사용자 승인, claude 반영): `AGENTS.md` 7절과 OP-33의 판정 명령에 `python Tools/check_cook_coverage.py`를 `check_sync_loads.py`와 함께 넣었다. OP-33에는 코드 안 `/Game` 경로의 쿠킹 보장 문장(L-build-07)을 더했다.
 

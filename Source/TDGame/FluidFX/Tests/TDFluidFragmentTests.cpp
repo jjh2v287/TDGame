@@ -1247,6 +1247,186 @@ bool FTDFluidFragmentFireTrailScaleTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFragmentFireTrailHeadStemSplitTest,
+	"TDGame.FluidFX.Fragment.FireTrailHeadStemSplit",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFragmentFireTrailHeadStemSplitTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFragmentTestPrivate;
+
+	constexpr float SplitStemHeatScale = 0.4f;
+	constexpr float SplitStemDensityScale = 0.6f;
+	constexpr float SplitHeadRadiusScale = 0.5f;
+	constexpr float SplitSustainSeconds = 0.35f;
+	constexpr float PostSustainElapsedSeconds = 10.0f;
+	constexpr float InSustainElapsedSeconds = 0.05f;
+	constexpr float CombinedTrailHeatScale = 0.5f;
+	constexpr float MinimumHeadRadiusScale = 0.1f;
+	constexpr double HeadLocationToleranceCm = 1e-3;
+	constexpr double HeadOnlyLeafStepCm = 6.0;
+	constexpr double SlowLeafStepCm = 1.0;
+	constexpr int32 ExpectedStampCount = 23;
+
+	FFloatProperty* TrailHeatScaleProperty = FindTrailFloatProperty(*this, TEXT("FireTrailHeatScale"));
+	FFloatProperty* StemHeatScaleProperty = FindTrailFloatProperty(*this, TEXT("FireTrailStemHeatScale"));
+	FFloatProperty* StemDensityScaleProperty = FindTrailFloatProperty(*this, TEXT("FireTrailStemDensityScale"));
+	FFloatProperty* HeadRadiusScaleProperty = FindTrailFloatProperty(*this, TEXT("FireTrailHeadRadiusScale"));
+	if (!TrailHeatScaleProperty || !StemHeatScaleProperty || !StemDensityScaleProperty || !HeadRadiusScaleProperty)
+	{
+		return false;
+	}
+
+	FTDFluidFragmentTrailSettings DefaultSettings;
+	DefaultSettings.SmokeHeatStrength = 0.5f;
+	DefaultSettings.BurstSustainSeconds = SplitSustainSeconds;
+	TestTrue(TEXT("FireTrailStemHeatScale defaults to 1"), StemHeatScaleProperty->GetPropertyValue_InContainer(&DefaultSettings) == 1.0f);
+	TestTrue(TEXT("FireTrailStemDensityScale defaults to 1"), StemDensityScaleProperty->GetPropertyValue_InContainer(&DefaultSettings) == 1.0f);
+	TestTrue(TEXT("FireTrailHeadRadiusScale defaults to 1"), HeadRadiusScaleProperty->GetPropertyValue_InContainer(&DefaultSettings) == 1.0f);
+
+	FTDFluidFragmentTarget FireTarget;
+	FireTarget.Channel = ETDFluidBrushChannel::ChannelB_Fire;
+	FireTarget.HeatScale = 1.0f;
+	FTDFluidFragmentTarget MudTarget;
+	MudTarget.Channel = ETDFluidBrushChannel::ChannelR_Mud;
+	MudTarget.HeatScale = 1.0f;
+	FTDFluidFragmentTarget SmokeTarget;
+	SmokeTarget.Channel = ETDFluidBrushChannel::ChannelR_Mud;
+	SmokeTarget.HeatScale = 1.0f;
+	SmokeTarget.bUsesLaggedPositions = true;
+
+	TArray<FVector> Previous;
+	TArray<FVector> Current;
+	TArray<FVector> Lagged;
+	BuildTrailScaleScenario(Previous, Current, Lagged);
+	const auto AppendLeaf = [&Previous, &Current, &Lagged](const FVector& Start, double StepCm)
+	{
+		Previous.Add(Start);
+		Current.Add(Start + FVector(0.0, StepCm, 0.0));
+		Lagged.Add(Start - FVector(0.0, 0.0, 40.0));
+	};
+	AppendLeaf(FVector(1800.0, 0.0, 100.0), HeadOnlyLeafStepCm);
+	AppendLeaf(FVector(2100.0, 0.0, 100.0), SlowLeafStepCm);
+	const int32 SlowLeafIndex = Current.Num() - 1;
+
+	const auto BuildStamps = [&Previous, &Current, &Lagged](const FTDFluidFragmentTarget& Target, const FTDFluidFragmentTrailSettings& Settings, float ElapsedSeconds)
+	{
+		TArray<FTDFluidBrushStamp> Stamps;
+		ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(Target, Previous, Current, Lagged, FixedStepSeconds, 0.0f, Settings, Stamps, nullptr, ElapsedSeconds);
+		return Stamps;
+	};
+
+	TArray<FTDFluidBrushStamp> DefaultFireStamps;
+	ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(FireTarget, Previous, Current, Lagged, FixedStepSeconds, 0.0f, DefaultSettings, DefaultFireStamps);
+	if (!TestEqual(TEXT("The scenario gives 1 + 3 + 3 + 4 + 4 + 4 + 4 fire trail stamps and none for the 60 cm/s leaf"), DefaultFireStamps.Num(), ExpectedStampCount))
+	{
+		return false;
+	}
+
+	TArray<bool> HeadFlags;
+	TArray<int32> HeadCountsByLeaf;
+	HeadCountsByLeaf.Init(0, Current.Num());
+	for (const FTDFluidBrushStamp& Stamp : DefaultFireStamps)
+	{
+		bool bIsHead = false;
+		for (int32 LeafIndex = 0; LeafIndex < Current.Num(); ++LeafIndex)
+		{
+			if (FVector::Dist(Stamp.WorldLocation, Current[LeafIndex]) <= HeadLocationToleranceCm)
+			{
+				++HeadCountsByLeaf[LeafIndex];
+				bIsHead = true;
+			}
+		}
+		HeadFlags.Add(bIsHead);
+	}
+
+	bool bHasOneHeadPerMovingLeaf = HeadCountsByLeaf[SlowLeafIndex] == 0;
+	for (int32 LeafIndex = 0; LeafIndex < SlowLeafIndex; ++LeafIndex)
+	{
+		bHasOneHeadPerMovingLeaf &= HeadCountsByLeaf[LeafIndex] == 1;
+	}
+	if (!TestTrue(TEXT("Every moving leaf has exactly one head stamp at its current position and the slow leaf has none"), bHasOneHeadPerMovingLeaf))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("Default settings give the same fire stamps at 0.05 s"), AreStampArraysIdentical(DefaultFireStamps, BuildStamps(FireTarget, DefaultSettings, InSustainElapsedSeconds)));
+	TestTrue(TEXT("Default settings give the same fire stamps at 10 s"), AreStampArraysIdentical(DefaultFireStamps, BuildStamps(FireTarget, DefaultSettings, PostSustainElapsedSeconds)));
+
+	FTDFluidFragmentTrailSettings ExplicitUnitSettings = DefaultSettings;
+	StemHeatScaleProperty->SetPropertyValue_InContainer(&ExplicitUnitSettings, 1.0f);
+	StemDensityScaleProperty->SetPropertyValue_InContainer(&ExplicitUnitSettings, 1.0f);
+	HeadRadiusScaleProperty->SetPropertyValue_InContainer(&ExplicitUnitSettings, 1.0f);
+	TestTrue(TEXT("Explicit 1 head and stem scales give the same fire stamps at 10 s"), AreStampArraysIdentical(DefaultFireStamps, BuildStamps(FireTarget, ExplicitUnitSettings, PostSustainElapsedSeconds)));
+
+	const auto CheckSplitStamps = [this, &DefaultFireStamps, &HeadFlags](const TCHAR* Label, const TArray<FTDFluidBrushStamp>& SplitStamps, float HeadHeatRatio, float StemHeatRatio, float StemDensityRatio, float HeadRadiusRatio)
+	{
+		if (!TestEqual(FString::Printf(TEXT("%s keeps the stamp count"), Label), SplitStamps.Num(), DefaultFireStamps.Num()))
+		{
+			return;
+		}
+
+		for (int32 StampIndex = 0; StampIndex < SplitStamps.Num(); ++StampIndex)
+		{
+			const FTDFluidBrushStamp& Expected = DefaultFireStamps[StampIndex];
+			const FTDFluidBrushStamp& Actual = SplitStamps[StampIndex];
+			const bool bIsHead = HeadFlags[StampIndex];
+			const TCHAR* Part = bIsHead ? TEXT("head") : TEXT("stem");
+			TestTrue(FString::Printf(TEXT("%s keeps %s stamp %d position and velocity"), Label, Part, StampIndex), Actual.WorldLocation == Expected.WorldLocation && Actual.WorldVelocity == Expected.WorldVelocity);
+			TestNearlyEqual(FString::Printf(TEXT("%s %s stamp %d heat"), Label, Part, StampIndex), Actual.HeatStrength, Expected.HeatStrength * (bIsHead ? HeadHeatRatio : StemHeatRatio), 1e-6f);
+			TestNearlyEqual(FString::Printf(TEXT("%s %s stamp %d density"), Label, Part, StampIndex), Actual.DensityStrength, Expected.DensityStrength * (bIsHead ? 1.0f : StemDensityRatio), 1e-6f);
+			TestNearlyEqual(FString::Printf(TEXT("%s %s stamp %d radius"), Label, Part, StampIndex), Actual.RadiusCm, Expected.RadiusCm * (bIsHead ? HeadRadiusRatio : 1.0f), 1e-6f);
+		}
+	};
+
+	FTDFluidFragmentTrailSettings SplitSettings = DefaultSettings;
+	StemHeatScaleProperty->SetPropertyValue_InContainer(&SplitSettings, SplitStemHeatScale);
+	StemDensityScaleProperty->SetPropertyValue_InContainer(&SplitSettings, SplitStemDensityScale);
+	HeadRadiusScaleProperty->SetPropertyValue_InContainer(&SplitSettings, SplitHeadRadiusScale);
+	CheckSplitStamps(TEXT("Split after the sustain"), BuildStamps(FireTarget, SplitSettings, PostSustainElapsedSeconds), 1.0f, SplitStemHeatScale, SplitStemDensityScale, SplitHeadRadiusScale);
+	CheckSplitStamps(TEXT("Split at the sustain boundary"), BuildStamps(FireTarget, SplitSettings, SplitSustainSeconds), 1.0f, SplitStemHeatScale, SplitStemDensityScale, SplitHeadRadiusScale);
+	TestTrue(TEXT("Split settings inside the sustain give the default fire stamps"), AreStampArraysIdentical(DefaultFireStamps, BuildStamps(FireTarget, SplitSettings, InSustainElapsedSeconds)));
+
+	FTDFluidFragmentTrailSettings NoSustainSplitSettings = SplitSettings;
+	NoSustainSplitSettings.BurstSustainSeconds = 0.0f;
+	CheckSplitStamps(TEXT("Split without a sustain at 0 s"), BuildStamps(FireTarget, NoSustainSplitSettings, 0.0f), 1.0f, SplitStemHeatScale, SplitStemDensityScale, SplitHeadRadiusScale);
+
+	FTDFluidFragmentTrailSettings CombinedHeatSettings = DefaultSettings;
+	TrailHeatScaleProperty->SetPropertyValue_InContainer(&CombinedHeatSettings, CombinedTrailHeatScale);
+	StemHeatScaleProperty->SetPropertyValue_InContainer(&CombinedHeatSettings, SplitStemHeatScale);
+	CheckSplitStamps(TEXT("Trail heat 0.5 with stem heat 0.4"), BuildStamps(FireTarget, CombinedHeatSettings, PostSustainElapsedSeconds), CombinedTrailHeatScale, CombinedTrailHeatScale * SplitStemHeatScale, 1.0f, 1.0f);
+
+	TestTrue(TEXT("Lagged smoke trail stamps ignore the head and stem split"), AreStampArraysIdentical(BuildStamps(SmokeTarget, DefaultSettings, PostSustainElapsedSeconds), BuildStamps(SmokeTarget, SplitSettings, PostSustainElapsedSeconds)));
+	TestTrue(TEXT("Non-lagged mud trail stamps ignore the head and stem split"), AreStampArraysIdentical(BuildStamps(MudTarget, DefaultSettings, PostSustainElapsedSeconds), BuildStamps(MudTarget, SplitSettings, PostSustainElapsedSeconds)));
+	bool bSlowLeafStaysUnstamped = true;
+	for (const FTDFluidBrushStamp& Stamp : BuildStamps(FireTarget, SplitSettings, PostSustainElapsedSeconds))
+	{
+		bSlowLeafStaysUnstamped &= FVector::Dist(Stamp.WorldLocation, Current[SlowLeafIndex]) > HeadLocationToleranceCm && FVector::Dist(Stamp.WorldLocation, Previous[SlowLeafIndex]) > HeadLocationToleranceCm;
+	}
+	TestTrue(TEXT("The 60 cm/s leaf gets no trail stamp with the split settings"), bSlowLeafStaysUnstamped);
+
+	FTDFluidFragmentTrailSettings ZeroHeadSettings = DefaultSettings;
+	HeadRadiusScaleProperty->SetPropertyValue_InContainer(&ZeroHeadSettings, 0.0f);
+	const float BaseStampRadiusCm = DefaultSettings.FireStampRadiusCm * FireTarget.RadiusScale;
+	const TArray<FTDFluidBrushStamp> ZeroHeadStamps = BuildStamps(FireTarget, ZeroHeadSettings, PostSustainElapsedSeconds);
+	if (TestEqual(TEXT("Head radius 0 keeps the stamp count"), ZeroHeadStamps.Num(), DefaultFireStamps.Num()))
+	{
+		for (int32 StampIndex = 0; StampIndex < ZeroHeadStamps.Num(); ++StampIndex)
+		{
+			const float ExpectedRadiusCm = HeadFlags[StampIndex] ? BaseStampRadiusCm * MinimumHeadRadiusScale : BaseStampRadiusCm;
+			TestNearlyEqual(FString::Printf(TEXT("Head radius 0 is clamped to 0.1 R on heads only, stamp %d"), StampIndex), ZeroHeadStamps[StampIndex].RadiusCm, ExpectedRadiusCm, 1e-6f);
+		}
+	}
+
+	TArray<FTDFluidBrushStamp> DefaultBurstStamps;
+	TArray<FTDFluidBrushStamp> SplitBurstStamps;
+	ATDFluidFragmentEmitterActor::BuildBurstStamps(FVector::ZeroVector, FTDFluidPlaneBasis::MakeWorldFacing(), DefaultSettings, ETDFluidBrushChannel::ChannelB_Fire, 1.0f, DefaultSettings.FireDensityStrength, DefaultSettings.FireHeatStrength, DefaultBurstStamps);
+	ATDFluidFragmentEmitterActor::BuildBurstStamps(FVector::ZeroVector, FTDFluidPlaneBasis::MakeWorldFacing(), SplitSettings, ETDFluidBrushChannel::ChannelB_Fire, 1.0f, SplitSettings.FireDensityStrength, SplitSettings.FireHeatStrength, SplitBurstStamps);
+	TestTrue(TEXT("Burst stamps ignore the head and stem split"), DefaultBurstStamps.Num() > 0 && AreStampArraysIdentical(DefaultBurstStamps, SplitBurstStamps));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidFragmentWorldClockSustainTest,
 	"TDGame.FluidFX.Fragment.WorldClockEndsSustainAtBreakAge",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

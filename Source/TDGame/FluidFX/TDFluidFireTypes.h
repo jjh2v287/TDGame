@@ -137,6 +137,15 @@ struct TDGAME_API FTDFluidFragmentTrailSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float FireTrailDensityScale = 1.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float FireTrailStemHeatScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float FireTrailStemDensityScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.1", ClampMax = "1.0"))
+	float FireTrailHeadRadiusScale = 1.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "1.0"))
 	float SmokeStampRadiusCm = 30.0f;
 

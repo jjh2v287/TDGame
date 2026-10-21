@@ -81,6 +81,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FragmentTrail")
 	int32 GetTotalStampCount() const { return TotalStampCount; }
 
+	UFUNCTION(BlueprintPure, Category = "FragmentTrail")
+	int32 GetPostSustainFireTrailStampCount() const { return PostSustainFireTrailStampCount; }
+
+	UFUNCTION(BlueprintPure, Category = "FragmentTrail")
+	int32 GetPostSustainFireStemStampCount() const { return PostSustainFireStemStampCount; }
+
+	UFUNCTION(BlueprintPure, Category = "FragmentTrail")
+	int32 GetFireRestingStampCount() const { return FireRestingStampCount; }
+
 	static void BuildFragmentTrailStamps(
 		const TArray<FVector>& PreviousPositions,
 		const TArray<FVector>& CurrentPositions,
@@ -121,7 +130,8 @@ public:
 		float BurstCenterZ,
 		const FTDFluidFragmentTrailSettings& Settings,
 		TArray<FTDFluidBrushStamp>& OutStamps,
-		TArray<int32>* OutStampedLeafIndices = nullptr);
+		TArray<int32>* OutStampedLeafIndices = nullptr,
+		float ElapsedSeconds = 0.0f);
 
 	static void BuildRestingHeatStamps(
 		const FTDFluidFragmentTarget& Target,
@@ -153,6 +163,7 @@ private:
 	void StepFragmentTracking(float DeltaSeconds);
 	void QueueStampsOnTarget(ATDFluidLiveActor* TargetActor, const TArray<FTDFluidBrushStamp>& Stamps);
 	void RecordStampedLeaves(const TArray<int32>& StampedLeafIndices);
+	void RecordFireStampCounts(int32 TrailStampCount, int32 HeadStampCount, int32 RestingStampCount);
 	void UpdateMovedLeafCount(const TArray<FVector>& CurrentPositions);
 	void StopFragmentTracking();
 	void RequestFragmentGlowMaterial();
@@ -177,6 +188,9 @@ private:
 	int32 MovedLeafCount = 0;
 	int32 StampedLeafCount = 0;
 	int32 TotalStampCount = 0;
+	int32 PostSustainFireTrailStampCount = 0;
+	int32 PostSustainFireStemStampCount = 0;
+	int32 FireRestingStampCount = 0;
 	FDelegateHandle SourceBrokenDelegateHandle;
 	bool bHasStartedTracking = false;
 	bool bIsTracking = false;

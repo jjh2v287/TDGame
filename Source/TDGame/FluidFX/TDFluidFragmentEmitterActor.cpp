@@ -43,6 +43,11 @@ namespace
 		return Stamp;
 	}
 
+	bool HasBurstSustainEnded(const FTDFluidFragmentTrailSettings& Settings, float ElapsedSeconds)
+	{
+		return Settings.BurstSustainSeconds <= UE_SMALL_NUMBER || ElapsedSeconds >= Settings.BurstSustainSeconds;
+	}
+
 	void WakeTarget(ATDFluidLiveActor* TargetActor)
 	{
 		if (TargetActor && TargetActor->LiveComponent)
@@ -435,11 +440,15 @@ void ATDFluidFragmentEmitterActor::StepFragmentTracking(float DeltaSeconds)
 		TArray<FTDFluidBrushStamp> TargetStamps;
 		if (Target.bReceivesTrails)
 		{
-			BuildTargetTrailStamps(Target, PreviousPositions, CurrentPositions, LaggedPositions, StepSeconds, static_cast<float>(BurstCenterWorld.Z), TrailSettings, TargetStamps, TargetIndex == 0 ? &StampedLeafIndices : nullptr);
+			BuildTargetTrailStamps(Target, PreviousPositions, CurrentPositions, LaggedPositions, StepSeconds, static_cast<float>(BurstCenterWorld.Z), TrailSettings, TargetStamps, TargetIndex == 0 ? &StampedLeafIndices : nullptr, TrackingElapsedSeconds);
 		}
 
 		TArray<FTDFluidBrushStamp> RestingStamps;
 		BuildRestingHeatStamps(Target, PreviousPositions, CurrentPositions, StepSeconds, TrackingElapsedSeconds, TrailSettings, RestingStamps);
+		if (TargetIndex == 0 && Target.Channel == ETDFluidBrushChannel::ChannelB_Fire)
+		{
+			RecordFireStampCounts(TargetStamps.Num(), StampedLeafIndices.Num(), RestingStamps.Num());
+		}
 		TargetStamps.Append(RestingStamps);
 		QueueStampsOnTarget(Target.TargetActor, TargetStamps);
 	}
@@ -491,6 +500,18 @@ void ATDFluidFragmentEmitterActor::RecordStampedLeaves(const TArray<int32>& Stam
 		LeafStampedFlags[LeafIndex] = true;
 		++StampedLeafCount;
 	}
+}
+
+void ATDFluidFragmentEmitterActor::RecordFireStampCounts(int32 TrailStampCount, int32 HeadStampCount, int32 RestingStampCount)
+{
+	FireRestingStampCount += RestingStampCount;
+	if (!HasBurstSustainEnded(TrailSettings, TrackingElapsedSeconds))
+	{
+		return;
+	}
+
+	PostSustainFireTrailStampCount += TrailStampCount;
+	PostSustainFireStemStampCount += FMath::Max(TrailStampCount - HeadStampCount, 0);
 }
 
 void ATDFluidFragmentEmitterActor::UpdateMovedLeafCount(const TArray<FVector>& CurrentPositions)
@@ -683,7 +704,8 @@ void ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(
 	float BurstCenterZ,
 	const FTDFluidFragmentTrailSettings& Settings,
 	TArray<FTDFluidBrushStamp>& OutStamps,
-	TArray<int32>* OutStampedLeafIndices)
+	TArray<int32>* OutStampedLeafIndices,
+	float ElapsedSeconds)
 {
 	OutStamps.Reset();
 	if (OutStampedLeafIndices)
@@ -726,6 +748,10 @@ void ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(
 	const float HeatStrength = (bUsesLaggedPositions ? Settings.SmokeHeatStrength : Settings.FireHeatStrength * Settings.FireTrailHeatScale) * Target.HeatScale;
 	const int32 SelectedCount = FMath::Min(Candidates.Num(), FMath::Max(Settings.MaxFragmentsPerStep, 0));
 	const int32 MaxStampsPerFragment = FMath::Max(Settings.MaxStampsPerFragment, 1);
+	const bool bSplitsHeadAndStem = !bUsesLaggedPositions && Target.Channel == ETDFluidBrushChannel::ChannelB_Fire && HasBurstSustainEnded(Settings, ElapsedSeconds);
+	const float StemHeatScale = bSplitsHeadAndStem ? Settings.FireTrailStemHeatScale : 1.0f;
+	const float StemDensityScale = bSplitsHeadAndStem ? Settings.FireTrailStemDensityScale : 1.0f;
+	const float HeadRadiusCm = bSplitsHeadAndStem ? StampRadiusCm * FMath::Clamp(Settings.FireTrailHeadRadiusScale, 0.1f, 1.0f) : StampRadiusCm;
 	for (int32 CandidateIndex = 0; CandidateIndex < SelectedCount; ++CandidateIndex)
 	{
 		const int32 LeafIndex = Candidates[CandidateIndex].LeafIndex;
@@ -756,8 +782,12 @@ void ATDFluidFragmentEmitterActor::BuildTargetTrailStamps(
 					continue;
 				}
 
-				FTDFluidBrushStamp& Stamp = OutStamps.Add_GetRef(MakeTrailStamp(StampLocation, StampVelocity, StampRadiusCm, DensityStrength * HeightWeight, Target.Channel));
-				Stamp.HeatStrength = FMath::Clamp(HeatStrength * HeightWeight, 0.0f, 1.0f);
+				const bool bIsHeadStamp = SubStepIndex == SubStepCount;
+				const float StampRadius = bIsHeadStamp ? HeadRadiusCm : StampRadiusCm;
+				const float StampDensityScale = bIsHeadStamp ? 1.0f : StemDensityScale;
+				const float StampHeatScale = bIsHeadStamp ? 1.0f : StemHeatScale;
+				FTDFluidBrushStamp& Stamp = OutStamps.Add_GetRef(MakeTrailStamp(StampLocation, StampVelocity, StampRadius, DensityStrength * StampDensityScale * HeightWeight, Target.Channel));
+				Stamp.HeatStrength = FMath::Clamp(HeatStrength * StampHeatScale * HeightWeight, 0.0f, 1.0f);
 			}
 		}
 

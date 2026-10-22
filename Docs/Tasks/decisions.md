@@ -422,3 +422,10 @@
 - 근거: `Saved/AgentOps/20261022/preset-data/`(spec-pd-b·build-report·refute-code·refute-rules), 변경 전·후 빌더 덤프 비트 동일, 민감도(ExplosionPair 유지 0.15) 2칸만 변화, 시험 235/235·RHI 29/29.
 - 위험·후속: 값 회귀 시험은 빌더 = JSON 자기 참조라 의도치 않은 값 변경은 JSON diff와 덤프 대조로 잡음. 패키징 빌드 NonUFS 스테이징·첫 읽기 미검증, 첫 읽기 실패 뒤 PIE는 ensure 1회 후 헤더 기본값으로 조용히 돎, C++ 검증기는 Clamp·대소문자만 다른 중복 키를 보지 않음(Python 검사기가 잡음), 물·옛 종류는 회귀 시험 숫자 고정이라 굽기 때 C++ 시험 갱신.
 - 상태: proposed (2026-10-22 claude, "권장안으로 진행")
+### D-59 FX-7p 성능 기준선 부분 종결과 재측정 FX-7p-r(D-52·D-54)
+- 질문: FX-7p(RM:452) 측정 결과를 어떻게 닫고 D-54②·MG-6·FX-8a '+10%'·측정 체제·FX-4b 순서를 어떻게 정할 것인가. 사용자 "묻지 말고 권장안으로 진행", "커밋까지 알아서"(2026-10-22).
+- 결과: PIE 32장면 합본(측정 4회, 2회차는 리드백 링 수정 바이너리). 20행 = 사전 통과 5(J4·J5.x4·J8.transmittance·J8.explosion·J9)·사전 미달 1(J3.solver 49×256² GPU 7.515>4.0)·사후 참고 미달 쪽 7(J2·J3.game·J3.render·J3 기울기 2·J5.x1·J5.p95)·판정 불가 7(J1·J6·J7 전부·J8.campfire_tick). 주원인은 장면 FrameTime 단일 안정 관문과 GT 묶임 PIE, 1회차 10장면 설정 오염(P1). 기준선 33·참고값 23.
+- 결정(권장안): (a) FX-7p 부분 기준선 종결, 재측정 FX-7p-r(규칙 사전 등록: judge-final 5.1절 + judge-closure 2절, 체제 관문 A·B 두 측) (b) MG-6 0.45 유지(미달 폭 안정값 오프스크린 무표식 0.462 기준 0.012), 사전 지표 0.488(변동 39%)의 spec-b:68 매핑 0.55 개정에서 벗어난 편차(512 소비 프리셋 없음·FX-16 먼저) (c) D-54② Auto '>256' 유지·판정 불가(프리셋이 Auto를 안 씀), 프리셋별 GPU 지정은 FX-7p-r·RM:904 화면 승인 뒤 JSON으로 (d) FX-8a '+10%'는 소급 판정 불가, 절대 예산, 회차 간 재현성 확인 뒤 사용 (e) 측정 체제: PIE 체제 관문(SP 상향) → 미달이면 패키지 Test 빌드 → 그래도 안 되면 J1·J2 판정 불가로 닫고 D-52 지표 개정을 사용자 결정으로 (f) FX-4b는 설계·사본 구현까지, 통합·수용 전에 FX-4a 수용 3 재판정(RM:532 순서 편차) (g) 측정 편차 기록: 셰이더 관문 3%→10%, F1·F2·F4 1200프레임, J6 지표 FT→tick·GT (h) GPU 리드백 링 크래시 ①·② 종결: 커밋 9cdea12e, 판별 시험 G(GPU 타일 2→4)가 수정 전 판에서 같은 서명으로 크래시·수정 판 3/3 무사고.
+- 근거: `Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md`·`judge-closure.md`(3판, 우선)·`refute-*`, `Saved/AgentOps/20261022/fx7p/crash-r1.md`, 증거 `Docs/Validation/FluidFX/FX-7p-baseline-2026-10-22.json`·`FX-4a-gpu-2026-10-22.json`(공식·정정 값 병기). 도구 결함 L-editor-54·55.
+- 위험·후속: 1회차 단일 회차 기준선 값은 다른 회차 재현 전, GPU 병목 체제 FT는 미측정, 모닥불 CPU tick 1.99~2.22 경계, MG p95 정의 미확정. FX-7p-r 묶음 R-A1~R-E(약 1.5시간, 클럭 잠금 불필요).
+- 상태: proposed (2026-10-23 claude, 권장안으로 진행)

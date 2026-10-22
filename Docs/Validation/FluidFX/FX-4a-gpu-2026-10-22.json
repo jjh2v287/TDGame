@@ -1,0 +1,3743 @@
+{
+ "tool": {
+  "official": "pie_profile_fluid --analyze",
+  "final": "make_evidence.py 정정판"
+ },
+ "run": "fx7p-merged-20261022",
+ "date": "2026-10-22",
+ "corrected": "2026-10-23 00:19:44",
+ "corrected_by": "Saved/AgentOps/20261022/fx7p/run2-judge/evidence/make_evidence.py",
+ "basis": [
+  "run2-judge/judge-final.md",
+  "run2-judge/validity.md",
+  "run2-judge/instability.md",
+  "run2-judge/gpu.md",
+  "run2-judge/refute-numbers.md",
+  "run2-judge/refute-logic.md",
+  "run2-judge/rerefute-numbers.md",
+  "run2-judge/rerefute-logic.md"
+ ],
+ "category_definitions": {
+  "priority_rule": [
+   "0 재현성: 같은 상태를 다른 회차에서 잰 값이 10%(RM:452) 넘게 다르고 한도가 그 사이에 있으면 판정 불가(회차 간 재현 실패). 1보다 먼저 본다",
+   "1 사전: 사전 규칙(spec-b·spec·scope, 사전* 편차 표시)을 유효 측정·한 회차에 그대로 적용해 통과/미달이 나오면 사전 근거 통과/미달(R0_own 포함)",
+   "2 사후: 사전 결과가 null이거나 적용 불가(사전 입력 장면 무효·사전 정의 값 없음)면 같은 구성 개념을 잰 유효 대체(지표·점 집합·규칙)를 본다",
+   "2a 측정 전에 구조상 결과가 정해지는 비교(예: CPU 경로 GPU 몫 0 대 GPU 경로 Sol을 명명 통계 잡음 폭으로 비교)는 방향 근거에서 뺀다",
+   "2b 남은 대체가 모두 한쪽(쌍 구간 전체가 한도 한쪽)이고 반대 쪽 유효 대체가 없으면 사후 참고(그 쪽). 걸치는 대체는 정보 없음으로 보고 반대로 세지 않는다",
+   "2c 유효 대체끼리 반대이거나 남은 대체가 모두 걸치면 판정 불가",
+   "3 불가: 구성 개념을 잰 유효 측정이 없으면 판정 불가(설정 오염 P1·설계 결함 P8·점유 정의 미확정 P2·P3·기준선 없음·병목 체제 불일치)"
+  ],
+  "construct": {
+   "J1·J2": "GPU 병목 장면의 효과 차분 FT(D-52·RM:48·RM:900)",
+   "J3.game·slope_game": "게임 스레드 비용(tick은 그 일부[추정]라 하한 대리)",
+   "J5.p95": "PressureSolveCost512 MG x1 p95, 이동 프레임 분리(scope.md:13·D-54)",
+   "J6": "체제 미지정 '지지 않음'(spec-b:69, 지표는 도구가 FT로 정함)"
+  },
+  "사전 근거 통과": "규칙 1로 통과",
+  "사전 근거 미달": "규칙 1로 미달. 사전 식을 J가 지정한 지표에 적용(R0_own)한 경우 포함",
+  "사후 참고(통과 쪽)": "규칙 2b로 통과 쪽",
+  "사후 참고(미달 쪽)": "규칙 2b로 미달 쪽",
+  "판정 불가": "규칙 0·2c·3"
+ },
+ "field_rule": "공식 판정과 다른 칸은 {official, final}로 둘 다 남긴다. pass.final은 최종 범주 문자열이다. 공식 원본의 비유한 값(Infinity)은 엄격 JSON을 위해 문자열 '+inf'로 적는다",
+ "conditions": {
+  "official": null,
+  "final": {
+   "hold": {
+    "fx7p-run1-20261022123641": {
+     "owner": "pd-integrate",
+     "reason": "FluidFX preset JSON data integration: editor dump, red/green builds, stage regen",
+     "since": "2026-10-22 09:21",
+     "age_seconds": 86
+    },
+    "fx7p-run2b-20261022150437": {
+     "owner": "fx7p-crash",
+     "reason": "FluidFX GPU readback ring crash fix: red/green builds, RHI tests, FX-7p run2",
+     "since": "2026-10-22 14:17",
+     "age_seconds": 46
+    }
+   },
+   "build_gate": {
+    "fx7p-run1-20261022123641": {
+     "passed": true,
+     "dll": "Binaries/Win64/UnrealEditor-TDGame.dll",
+     "dll_modified": "2026-10-22T09:27:11",
+     "newer_sources": [],
+     "newer_source_count": 0
+    },
+    "fx7p-run2b-20261022150437": {
+     "passed": true,
+     "dll": "Binaries/Win64/UnrealEditor-TDGame.dll",
+     "dll_modified": "2026-10-22T14:21:32",
+     "newer_sources": [],
+     "newer_source_count": 0
+    }
+   },
+   "source_runs": {
+    "per_run": {
+     "fx7p-run1-20261022123641": {
+      "short": "r1",
+      "started": "2026-10-22 12:36:41",
+      "finished": null,
+      "environment_error": null,
+      "plan": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261022\\fx7p\\scratch\\measure\\plan_run1.json",
+      "holder": "pd-integrate",
+      "hold": {
+       "owner": "pd-integrate",
+       "reason": "FluidFX preset JSON data integration: editor dump, red/green builds, stage regen",
+       "since": "2026-10-22 09:21",
+       "age_seconds": 86
+      },
+      "build_gate": {
+       "passed": true,
+       "dll": "Binaries/Win64/UnrealEditor-TDGame.dll",
+       "dll_modified": "2026-10-22T09:27:11",
+       "newer_sources": [],
+       "newer_source_count": 0
+      },
+      "asset_hashes": {
+       "Content/FluidFX/Maps/LV_TDFluidFireStage.umap": "d1f948a068746853fe437d31b571cb0bd85064f1",
+       "Content/FluidFX/Materials/MI_TD_FluidFireCharredWood.uasset": "bcc944aa5010c8ef91daf2f606cc29c10cb39210",
+       "Content/FluidFX/Materials/MI_TD_FluidFireFloor.uasset": "60c914cf1b34c9b08b891e1e67f11471df2ecdef",
+       "Content/FluidFX/Destruction/GC_TD_FluidExplosionCube.uasset": "56123f57205208e2ddf5483a0f5b7a240f5e5b34"
+      },
+      "pie_sessions": [
+       {
+        "index": 1,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+        "started": "2026-10-22 12:36:53",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       },
+       {
+        "index": 2,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+        "started": "2026-10-22 13:11:28",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       }
+      ]
+     },
+     "fx7p-run2b-20261022150437": {
+      "short": "r2b",
+      "started": "2026-10-22 15:04:37",
+      "finished": "2026-10-22 15:33:06",
+      "environment_error": null,
+      "plan": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261022\\fx7p\\plan_run2b.json",
+      "holder": "fx7p-crash",
+      "hold": {
+       "owner": "fx7p-crash",
+       "reason": "FluidFX GPU readback ring crash fix: red/green builds, RHI tests, FX-7p run2",
+       "since": "2026-10-22 14:17",
+       "age_seconds": 46
+      },
+      "build_gate": {
+       "passed": true,
+       "dll": "Binaries/Win64/UnrealEditor-TDGame.dll",
+       "dll_modified": "2026-10-22T14:21:32",
+       "newer_sources": [],
+       "newer_source_count": 0
+      },
+      "asset_hashes": {
+       "Content/FluidFX/Maps/LV_TDFluidFireStage.umap": "d1f948a068746853fe437d31b571cb0bd85064f1",
+       "Content/FluidFX/Materials/MI_TD_FluidFireCharredWood.uasset": "bcc944aa5010c8ef91daf2f606cc29c10cb39210",
+       "Content/FluidFX/Materials/MI_TD_FluidFireFloor.uasset": "60c914cf1b34c9b08b891e1e67f11471df2ecdef",
+       "Content/FluidFX/Destruction/GC_TD_FluidExplosionCube.uasset": "56123f57205208e2ddf5483a0f5b7a240f5e5b34"
+      },
+      "pie_sessions": [
+       {
+        "index": 1,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+        "started": "2026-10-22 15:04:47",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       },
+       {
+        "index": 2,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+        "started": "2026-10-22 15:12:28",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       },
+       {
+        "index": 3,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+        "started": "2026-10-22 15:15:59",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       },
+       {
+        "index": 4,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+        "started": "2026-10-22 15:19:37",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       },
+       {
+        "index": 5,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+        "started": "2026-10-22 15:24:25",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       },
+       {
+        "index": 6,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+        "started": "2026-10-22 15:26:51",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       },
+       {
+        "index": 7,
+        "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+        "started": "2026-10-22 15:29:59",
+        "viewport": [
+         2139.0,
+         982.0
+        ],
+        "r.VolumetricFog": 1.0
+       }
+      ]
+     }
+    },
+    "binaries": {
+     "09:27:11": [
+      "r1",
+      "오프스크린·헤드리스(13:27~13:33 KST)"
+     ],
+     "14:21:32": [
+      "r2b"
+     ]
+    },
+    "binary_note": "9cdea12e(리드백 링 5줄, TDFluidGpuStepPasses.cpp:1665-1668) 전후. 오프라인 시험 시각은 로그 첫 줄(UTC+9)로 정했고 14:21:32 dll 생성 전이다",
+    "offline": {
+     "offscreen": [
+      {
+       "log": "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-offscreen1-tests.log",
+       "started_kst": "2026-10-22 13:26:59"
+      },
+      {
+       "log": "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-offscreen2-tests.log",
+       "started_kst": "2026-10-22 13:28:06"
+      },
+      {
+       "log": "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-offscreen3-tests.log",
+       "started_kst": "2026-10-22 13:29:12"
+      }
+     ],
+     "headless": [
+      {
+       "log": "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-null1-tests.log",
+       "started_kst": "2026-10-22 13:30:19"
+      },
+      {
+       "log": "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-null2-tests.log",
+       "started_kst": "2026-10-22 13:31:15"
+      },
+      {
+       "log": "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-null3-tests.log",
+       "started_kst": "2026-10-22 13:32:11"
+      }
+     ]
+    },
+    "merged_note": "합본 session.json 머리말(run_token 20261022123641·holder pd-integrate·dll 09:27:11)은 1회차 것이다. 장면별 source_run으로 읽는다(validity.md:139-149)"
+   },
+   "clock_median_mhz": 1935.0,
+   "clock_samples": 32014,
+   "clock_gpu_judgment_blocks_mhz": [
+    1920.0,
+    1950.0
+   ],
+   "viewport": [
+    2139,
+    982
+   ],
+   "screen_percentage": 100,
+   "volumetric_fog": 1,
+   "restored_variables": null,
+   "asset_hashes_official": {
+    "Content/FluidFX/Maps/LV_TDFluidFireStage.umap": "d1f948a068746853fe437d31b571cb0bd85064f1",
+    "Content/FluidFX/Materials/MI_TD_FluidFireCharredWood.uasset": "bcc944aa5010c8ef91daf2f606cc29c10cb39210",
+    "Content/FluidFX/Materials/MI_TD_FluidFireFloor.uasset": "60c914cf1b34c9b08b891e1e67f11471df2ecdef",
+    "Content/FluidFX/Destruction/GC_TD_FluidExplosionCube.uasset": "56123f57205208e2ddf5483a0f5b7a240f5e5b34"
+   }
+  }
+ },
+ "acceptance_3_primary_status": "미충족(RM:900): J1 판정 불가(구성 개념 GPU 병목 FT 미측정, 0절 3), J2 사후 참고(미달 쪽). 재판정 경로: R-C(J1)·R-D(J2)를 체제 관문(Q-e D)으로, PIE에서 관문 실패면 Test 빌드(RM:46)",
+ "verdicts": [
+  {
+   "id": "J1",
+   "limit": null,
+   "blocks": [
+    "F1",
+    "F2"
+   ],
+   "value": {
+    "official": null,
+    "final": {
+     "F2_gpu_FT_d": 1.148,
+     "F1_cpu_FT_d": 2.6841,
+     "noise_width": 0.7791,
+     "F2_p95_d": 1.297,
+     "F1_p95_d": 2.4554,
+     "R2a_delta": [
+      -2.872,
+      -1.3139
+     ],
+     "GPUTime_d": {
+      "F2": 1.1509,
+      "F1": 0.209
+     },
+     "named_gpu_d": {
+      "F2_Sol_plus_Tr": 0.8402,
+      "F1_Tr": 0.6485,
+      "Tr_noise_width": 0.0129
+     },
+     "B_side_GT_vs_GPUTime": {
+      "F1": [
+       19.0155,
+       18.4473
+      ],
+      "F2": [
+       19.0446,
+       18.4016
+      ]
+     },
+     "GPUTime_noise_width": 0.7956,
+     "GPUTime_R2a_delta": [
+      -0.3213,
+      1.2698
+     ]
+    }
+   },
+   "pass": {
+    "official": null,
+    "final": "판정 불가"
+   },
+   "reason": {
+    "official": "불안정({'kind': 'relative', 'value': 0.3637})",
+    "final": "0절 규칙 3(체제 불일치)·2c(남은 대체는 걸침). F1·F2 블록 1200프레임은 spec-b:19(300) 편차(F1·F4만 tools.md:16 사유)"
+   },
+   "source_runs": [
+    "r1"
+   ],
+   "pre_rule_result": "null: spec-b:64 식(FT p50·p95)의 안정 관문(spec-b:61) 불충족(F2 상대 0.364, F1 0.425). R0_own도 같은 지표라 null",
+   "post_reference_result": "구성 개념(GPU 병목 FT d) 미측정: B측 GT−GPUTime F1 0.57·F2 0.64(GT 쪽 거의 균형). FT d는 통과 쪽(최악 쌍도 GPU 1.31ms 앞섬)이나 구성 개념 밖(참고). GPUTime d 1.151 대 0.209는 R2a Δ −0.321~1.270이 잡음 폭 0.796에 걸쳐 정보 없음. 명명 GPU(Sol+Tr) 비교는 CPU 경로 Sol이 0이라 구조상 GPU 짐(0절 2a, 방향 근거 아님). 명명 통계는 안정하지만 FT 대리 타당성은 미확인(F1 Tr d 0.6485 > GPUTime d 0.209, CSV GPU 값은 바쁨+대기 spec.md:8)",
+   "final_category": "판정 불가"
+  },
+  {
+   "id": "J2",
+   "limit": 1.7,
+   "blocks": [
+    "S6"
+   ],
+   "value": {
+    "official": null,
+    "final": {
+     "FT_d": -0.1211,
+     "FT_pairs": [
+      -0.939,
+      2.2973
+     ],
+     "GPUTime_d": 3.2604,
+     "GPUTime_pairs": [
+      2.9338,
+      3.7658
+     ],
+     "Sol_plus_Tr_d": 2.5924,
+     "A_side_GT": 18.599,
+     "A_side_GPUTime": 16.5921
+    }
+   },
+   "pass": {
+    "official": null,
+    "final": "사후 참고(미달 쪽)"
+   },
+   "reason": {
+    "official": "불안정({'kind': 'absolute_ms', 'value': 3.2363})",
+    "final": "0절 2b: 구성 개념(GPU 병목 FT d) 미측정(A GT 18.60 > A GPUTime 16.59). 대체 GPUTime·Sol+Tr이 모두 >1.7이고 절대 한도라 구조상 정해진 비교가 아님"
+   },
+   "source_runs": [
+    "r2b"
+   ],
+   "pre_rule_result": "null: FT 쌍 범위 3.236ms(|d|<0.2라 절대 0.05 기준), R0_own 동일",
+   "post_reference_result": "미달 쪽: GPUTime d 6쌍 2.93~3.77 모두 >1.7, Sol+Tr 2.59 >1.7. FT R2a는 null(−0.94~2.30)",
+   "final_category": "사후 참고(미달 쪽)"
+  },
+  {
+   "id": "J3.solver",
+   "limit": 4.0,
+   "blocks": [
+    "S9"
+   ],
+   "value": {
+    "official": null,
+    "final": {
+     "Sol_d": 7.515,
+     "pairs": [
+      7.4679,
+      7.5255
+     ],
+     "relative": 0.0077
+    }
+   },
+   "pass": {
+    "official": null,
+    "final": "사전 근거 미달"
+   },
+   "reason": {
+    "official": "불안정({'kind': 'relative', 'value': 0.4878})",
+    "final": "사전 식을 J가 지정한 지표에 그대로 적용한 결과(지표 선택만 해석, refute-logic 1.2 동의)"
+   },
+   "source_runs": [
+    "r2b"
+   ],
+   "pre_rule_result": "R0(FT 관문) null / R0_own(spec-b:61 식을 spec-b:66 지정 지표 Sol에): 안정(0.77%)·7.515 > 4.0 미달",
+   "post_reference_result": "R1·R2a·R2b 모두 미달(6쌍 7.468~7.526)",
+   "final_category": "사전 근거 미달"
+  },
+  {
+   "id": "J3.game",
+   "limit": 2.0,
+   "blocks": [
+    "S9"
+   ],
+   "value": {
+    "official": null,
+    "final": {
+     "GT_d": 3.9238,
+     "GT_pairs": [
+      1.2171,
+      6.5921
+     ],
+     "tick_d": 2.6511,
+     "tick_pairs": [
+      2.5539,
+      2.7918
+     ]
+    }
+   },
+   "pass": {
+    "official": null,
+    "final": "사후 참고(미달 쪽)"
+   },
+   "reason": {
+    "official": "불안정({'kind': 'relative', 'value': 0.4878})",
+    "final": "대체 지표(tick)·사후 규칙으로만 성립. J2와 같은 범주"
+   },
+   "source_runs": [
+    "r2b"
+   ],
+   "pre_rule_result": "null: GT 쌍 상대 변동 1.37(R0_own), R0도 null",
+   "post_reference_result": "미달 쪽: tick 6쌍 2.55~2.79 모두 >2.0(tick⊂GT는 [추정]), ABBA 대비 4.10·3.90·3.90. GT R2a는 null(1.22~6.59)",
+   "final_category": "사후 참고(미달 쪽)"
+  },
+  {
+   "id": "J3.render",
+   "limit": 0.3,
+   "blocks": [
+    "S9"
+   ],
+   "value": {
+    "official": null,
+    "final": {
+     "RT_sum_d": 2.138,
+     "pairs": [
+      1.8839,
+      2.4195
+     ],
+     "relative": 0.2505
+    }
+   },
+   "pass": {
+    "official": null,
+    "final": "사후 참고(미달 쪽)"
+   },
+   "reason": {
+    "official": "불안정({'kind': 'relative', 'value': 0.4878})",
+    "final": "사후 규칙으로만 성립(refute-logic 1.2 J3.render)"
+   },
+   "source_runs": [
+    "r2b"
+   ],
+   "pre_rule_result": "null: RT합 쌍 상대 변동 0.25(R0_own). 지표 RT합(EventWait 제외)은 사전*(tools-fix.md:11, 1회차 열 고장 뒤·2회차 전)",
+   "post_reference_result": "미달 쪽: R1(F≥1.0)·R2a·R2b 모두 미달(6쌍 최소 1.884, 한도 0.3의 6배)",
+   "final_category": "사후 참고(미달 쪽)"
+  },
+  {
+   "id": "J3.slope_game",
+   "limit": 0.04,
+   "blocks": [
+    "S4",
+    "S8",
+    "S9",
+    "S11"
+   ],
+   "value": {
+    "official": null,
+    "final": {
+     "GT_3pt": {
+      "points": [
+       {
+        "scene": "S11",
+        "count": 4,
+        "d": 0.3906
+       },
+       {
+        "scene": "S8",
+        "count": 16,
+        "d": 2.6825
+       },
+       {
+        "scene": "S9",
+        "count": 49,
+        "d": 3.9238
+       }
+      ],
+      "ols_slope": 0.06981,
+      "ols_intercept": 0.7266,
+      "envelope": [
+       -0.01437,
+       0.20901
+      ]
+     },
+     "tick_3pt": {
+      "points": [
+       {
+        "scene": "S11",
+        "count": 4,
+        "d": 0.2823
+       },
+       {
+        "scene": "S8",
+        "count": 16,
+        "d": 0.9551
+       },
+       {
+        "scene": "S9",
+        "count": 49,
+        "d": 2.6512
+       }
+      ],
+      "ols_slope": 0.05238,
+      "ols_intercept": 0.0916,
+      "envelope": [
+       0.04967,
+       0.05628
+      ]
+     },
+     "GT_3pt_bootstrap95": [
+      0.0350457182320442,
+      0.13319116367403314
+     ],
+     "GT_4pt_with_S4_bootstrap95": [
+      0.042125209627329185,
+      0.11543648033126293
+     ]
+    }
+   },
+   "pass": {
+    "official": null,
+    "final": "사후 참고(미달 쪽)"
+   },
+   "reason": {
+    "official": "S4: 불안정({'kind': 'relative', 'value': 2.8987}); S8: 불안정({'kind': 'relative', 'value': 1.3429}); S9: 불안정({'kind': 'relative', 'value': 0.4878}); S11: 불안정({'kind': 'absolute_ms', 'value': 3.5392})",
+    "final": "0절 2b: 대체 점 집합(3점) + 대체 지표 tick(GT의 일부[추정]라 GT 기울기의 하한 대리)으로만 성립"
+   },
+   "source_runs": [
+    "r2b"
+   ],
+   "pre_rule_result": "적용 불가: 사전 점 집합(spec-b:66 S4·S11·S7(GPU)=S8·S9)의 S4가 P1 무효, R0도 null",
+   "post_reference_result": "미달 쪽(tick 대리 한정): tick 3점 OLS 0.0524, 포락선 0.0497~0.0563 모두 >0.04. GT 3점은 부트스트랩 0.035~0.133·포락선 −0.014~0.209로 걸침(정보 없음)",
+   "final_category": "사후 참고(미달 쪽)"
+  },
+  {
+   "id": "J3.slope_render",
+   "limit": 0.006,
+   "blocks": [
+    "S4",
+    "S8",
+    "S9",
+    "S11"
+   ],
+   "value": {
+    "official": null,
+    "final": {
+     "RT_sum_3pt": {
+      "points": [
+       {
+        "scene": "S11",
+        "count": 4,
+        "d": 0.0615
+       },
+       {
+        "scene": "S8",
+        "count": 16,
+        "d": 0.828
+       },
+       {
+        "scene": "S9",
+        "count": 49,
+        "d": 2.138
+       }
+      ],
+      "ols_slope": 0.04477,
+      "ols_intercept": -0.0206,
+      "envelope": [
+       0.02223,
+       0.06174
+      ]
+     },
+     "RT_sum_3pt_bootstrap95": [
+      0.03251574585635359,
+      0.0520584714548803
+     ],
+     "RT_sum_4pt_with_S4_envelope": [
+      0.021623498964803263,
+      0.05735678053830228
+     ],
+     "S11_RT_side_variation": {
+      "A": 0.1402,
+      "B": 0.1206
+     }
+    }
+   },
+   "pass": {
+    "official": null,
+    "final": "사후 참고(미달 쪽)"
+   },
+   "reason": {
+    "official": "S4: 불안정({'kind': 'relative', 'value': 2.8987}); S8: 불안정({'kind': 'relative', 'value': 1.3429}); S9: 불안정({'kind': 'relative', 'value': 0.4878}); S11: 불안정({'kind': 'absolute_ms', 'value': 3.5392})",
+    "final": "0절 2b. R2a 한정(R2b로는 null)이라 약함"
+   },
+   "source_runs": [
+    "r2b"
+   ],
+   "pre_rule_result": "적용 불가: 사전 점 집합의 S4 무효(P1), R0 null",
+   "post_reference_result": "미달 쪽(약): 3점 OLS 0.0448, 포락선 0.0222~0.0618 모두 >0.006(R2a). R2b는 S11 RT합 측 변동 A 14.0%·B 12.1%로 관문 탈락 → null",
+   "final_category": "사후 참고(미달 쪽)"
+  },
+  {
+   "id": "J5",
+   "limit": {
+    "x1_median_ms": 0.45,
+    "x1_p95_ms": 0.55,
+    "x4_median_ms": 1.6
+   },
+   "blocks": [
+    "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-offscreen1-tests.log",
+    "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-offscreen2-tests.log",
+    "Saved/AgentOps/20261022/fx7p/scratch/measure/fx7p-offscreen3-tests.log"
+   ],
+   "value": {
+    "official": {
+     "x1_median_ms": 0.488,
+     "x1_p95_ms": 1.275,
+     "x4_median_ms": 1.494,
+     "runs": 3,
+     "proposed_x1_budget_ms": 0.55
+    },
+    "final": {
+     "runs": [
+      {
+       "x1_median": 0.488,
+       "x1_unmarked_median": 0.461,
+       "x1_p95_with_shift": 1.275,
+       "x1_steady_p95_marked": 1.158,
+       "x1_unmarked_p95": 1.063,
+       "x4_median": 1.496,
+       "x4_unmarked_median": 1.771
+      },
+      {
+       "x1_median": 0.485,
+       "x1_unmarked_median": 0.463,
+       "x1_p95_with_shift": 1.371,
+       "x1_steady_p95_marked": 1.423,
+       "x1_unmarked_p95": 1.071,
+       "x4_median": 1.491,
+       "x4_unmarked_median": 1.52
+      },
+      {
+       "x1_median": 0.677,
+       "x1_unmarked_median": 0.462,
+       "x1_p95_with_shift": 1.27,
+       "x1_steady_p95_marked": 1.374,
+       "x1_unmarked_p95": 1.158,
+       "x4_median": 1.494,
+       "x4_unmarked_median": 1.525
+      }
+     ],
+     "x1_variation": {
+      "median": 0.488,
+      "values": [
+       0.488,
+       0.485,
+       0.677
+      ],
+      "kind": "relative",
+      "value": 0.3934,
+      "accepted": false
+     },
+     "x1_unmarked_variation": {
+      "median": 0.462,
+      "values": [
+       0.461,
+       0.463,
+       0.462
+      ],
+      "kind": "relative",
+      "value": 0.0043,
+      "accepted": true
+     },
+     "x4_variation": {
+      "median": 1.494,
+      "values": [
+       1.496,
+       1.491,
+       1.494
+      ],
+      "kind": "relative",
+      "value": 0.0033,
+      "accepted": true
+     },
+     "p95_with_shift_variation": {
+      "median": 1.275,
+      "values": [
+       1.275,
+       1.371,
+       1.27
+      ],
+      "kind": "relative",
+      "value": 0.0792,
+      "accepted": true
+     },
+     "steady_p95_variation": {
+      "median": 1.374,
+      "values": [
+       1.158,
+       1.423,
+       1.374
+      ],
+      "kind": "relative",
+      "value": 0.1929,
+      "accepted": false
+     },
+     "marker_overhead_median": [
+      0.106,
+      0.102,
+      0.12
+     ],
+     "steady_p95_minus_marker_overhead": [
+      1.052,
+      1.321,
+      1.254
+     ],
+     "revision_formula_spec_b_68": {
+      "from_0.488": 0.55,
+      "from_0.462_unmarked": 0.5
+     }
+    }
+   },
+   "pass": {
+    "official": false,
+    "final": "x1 사후 참고(미달 쪽) / p95 사후 참고(미달 쪽) / x4 사전 근거 통과"
+   },
+   "reason": {
+    "official": "0.45~0.50: 예산 개정 제안 0.55ms(FX-16)",
+    "final": "공식 false는 '셋 다 한도 이하여야 통과'(pie_profile_fluid.py:2190-2204)에서 나왔고 3회 변동 검사가 없었다"
+   },
+   "source_runs": [
+    "offline-09:27 바이너리(13:27~13:29 KST)"
+   ],
+   "final_category": "x1 사후 참고(미달 쪽) / p95 사후 참고(미달 쪽) / x4 사전 근거 통과",
+   "sub": {
+    "x1_median": {
+     "pre_rule_result": "spec-b:68 식만 보면 0.488 > 0.45(개정 제안 구간). 그러나 scope.md:7·42 수용 관문(3회 변동 ≤10%, 넘으면 5회) 불충족: 변동 39.3%, 5회 미실시 → 불안정(null)",
+     "post_reference_result": "미달 쪽: 3회 모두 >0.45(최소 0.485), 안정한 PassTiming 무표식 0.461~0.463(0.43%)·PIE S12 B 0.4947도 >0.45",
+     "final_category": "사후 참고(미달 쪽)"
+    },
+    "x1_p95": {
+     "pre_rule_result": "적용 불가: 사전 정의(scope.md:13·D-54 이동 프레임 분리)의 PressureSolveCost512 값이 없음(1.275는 이동 프레임 포함)",
+     "post_reference_result": "미달 쪽: 구성 개념과 맞는 값은 PassTiming 표식 steady p95 1.158·1.423·1.374(3회 변동 19.3%, scope.md:42 5회 미실시)이고, 표식 부담(표식−무표식 중앙값 0.10~0.12)을 빼도 1.05~1.32 > 0.55. 이동 포함 1.27~1.37·무표식 1.063~1.158은 정의가 달라 방향 근거에서 뺌",
+     "validity_hints": "원인 미상 돌출은 p95가 재는 대상 자체라 측정 무효 사유가 아니다. 오프스크린 클럭 미기록: 같은 실행 무표식 중앙값 0.461~0.463이 PIE(1935MHz) 0.4947보다 낮아 p95를 절반으로 줄일 만한 클럭 저하 신호가 없다[추정]",
+     "final_category": "사후 참고(미달 쪽)",
+     "reason": "0절 2b"
+    },
+    "x4_median": {
+     "pre_rule_result": "통과: 1.491~1.496(변동 0.33%) ≤1.6",
+     "post_reference_result": "같음. 단 PIE 4×512 Sol 2.04~2.14는 1.6 초과(형식상 오프스크린만, spec-b:68)",
+     "final_category": "사전 근거 통과"
+    }
+   }
+  }
+ ],
+ "scenes": {
+  "F1": {
+   "id": "F1",
+   "kind": "csv",
+   "meta": {
+    "backend": "Cpu",
+    "scene": "campfire"
+   },
+   "metric": "FrameTime",
+   "rounds": 3,
+   "error": null,
+   "pairs": [
+    {
+     "order": 1,
+     "a": "F1_r1_1A",
+     "b": "F1_r1_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      2
+     ]
+    },
+    {
+     "order": 2,
+     "a": "F1_r1_4A",
+     "b": "F1_r1_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      1,
+      0
+     ]
+    },
+    {
+     "order": 3,
+     "a": "F1_r2_1A",
+     "b": "F1_r2_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      1
+     ]
+    },
+    {
+     "order": 4,
+     "a": "F1_r2_4A",
+     "b": "F1_r2_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 5,
+     "a": "F1_r3_1A",
+     "b": "F1_r3_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      1
+     ]
+    },
+    {
+     "order": 6,
+     "a": "F1_r3_4A",
+     "b": "F1_r3_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      1,
+      0
+     ]
+    }
+   ],
+   "discarded_pairs": 0,
+   "clock_null": false,
+   "diff": {
+    "FrameTime": {
+     "p50": 2.6841,
+     "pairs_p50": [
+      3.7208,
+      2.6405,
+      2.7272,
+      2.5802,
+      2.641,
+      2.8075
+     ],
+     "range_p50": 1.1406,
+     "p95": 2.4554,
+     "pairs_p95": [
+      2.7999,
+      2.2661,
+      1.8162,
+      2.7877,
+      1.8346,
+      2.6447
+     ],
+     "range_p95": 0.9837
+    },
+    "GameThreadTime": {
+     "p50": 2.7035,
+     "pairs_p50": [
+      4.5092,
+      2.6851,
+      2.7219,
+      2.5386,
+      2.5785,
+      2.7681
+     ],
+     "range_p50": 1.9706,
+     "p95": 2.0467,
+     "pairs_p95": [
+      2.3716,
+      1.9131,
+      1.4761,
+      2.1803,
+      1.2913,
+      2.5544
+     ],
+     "range_p95": 1.2631
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 0.413,
+     "pairs_p50": [
+      0.4527,
+      0.2968,
+      0.416,
+      0.4099,
+      0.3323,
+      0.4263
+     ],
+     "range_p50": 0.1559,
+     "p95": 0.7098,
+     "pairs_p95": [
+      0.8771,
+      0.6776,
+      0.741,
+      0.8874,
+      0.422,
+      0.6786
+     ],
+     "range_p95": 0.4654
+    },
+    "GPUTime": {
+     "p50": 0.209,
+     "pairs_p50": [
+      1.1321,
+      0.1237,
+      0.2495,
+      0.033,
+      0.1685,
+      0.264
+     ],
+     "range_p50": 1.0991,
+     "p95": 0.3377,
+     "pairs_p95": [
+      0.7178,
+      0.2671,
+      0.3526,
+      0.3228,
+      0.2574,
+      0.3867
+     ],
+     "range_p95": 0.4604
+    },
+    "GPU/Translucency": {
+     "p50": 0.6485,
+     "pairs_p50": [
+      0.6423,
+      0.6549,
+      0.6487,
+      0.6484,
+      0.6491,
+      0.6414
+     ],
+     "range_p50": 0.0135,
+     "p95": 1.2739,
+     "pairs_p95": [
+      1.2822,
+      1.2303,
+      1.2657,
+      1.3312,
+      1.3147,
+      1.2208
+     ],
+     "range_p95": 0.1104
+    },
+    "TDFluid/StepCount": {
+     "p50": 2.0,
+     "pairs_p50": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+     ],
+     "range_p50": 0.0,
+     "p95": 2.0,
+     "pairs_p95": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+     ],
+     "range_p95": 0.0
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 0.0,
+     "pairs_p50": [
+      0.0,
+      0.25,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "range_p50": 0.25,
+     "p95": 0.0,
+     "pairs_p95": [
+      0.0,
+      0.25,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "range_p95": 0.25
+    },
+    "tick_ms": {
+     "p50": 2.1977,
+     "pairs_p50": [
+      2.2001,
+      2.2138,
+      2.1831,
+      2.1953,
+      2.1851,
+      2.2073
+     ],
+     "range_p50": 0.0307,
+     "p95": null,
+     "pairs_p95": [],
+     "range_p95": null
+    }
+   },
+   "a": {
+    "FrameTime": {
+     "p50": 22.0127,
+     "p95": 26.3866,
+     "max": 77.0204,
+     "blocks": 6
+    },
+    "GameThreadTime": {
+     "p50": 21.6727,
+     "p95": 26.5096,
+     "max": 74.5422,
+     "blocks": 6
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 7.4087,
+     "p95": 10.4731,
+     "max": 14.7008,
+     "blocks": 6
+    },
+    "GPUTime": {
+     "p50": 18.6563,
+     "p95": 21.3788,
+     "max": 24.1235,
+     "blocks": 6
+    },
+    "GPU/Translucency": {
+     "p50": 0.7177,
+     "p95": 1.5467,
+     "max": 2.7021,
+     "blocks": 6
+    },
+    "TDFluid/StepCount": {
+     "p50": 2.0,
+     "p95": 2.0,
+     "max": 2.0,
+     "blocks": 6
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 2902.7031,
+     "p95": 2902.7031,
+     "max": 2902.7031,
+     "blocks": 6
+    },
+    "tick_ms": {
+     "p50": 2.2234,
+     "p95": null,
+     "max": 4.9927,
+     "blocks": 6
+    }
+   },
+   "b": {
+    "FrameTime": {
+     "p50": 19.32,
+     "p95": 24.2066,
+     "max": 76.2882,
+     "blocks": 6
+    },
+    "GameThreadTime": {
+     "p50": 19.0155,
+     "p95": 24.6014,
+     "max": 80.8596,
+     "blocks": 6
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 7.0474,
+     "p95": 9.7658,
+     "max": 15.8001,
+     "blocks": 6
+    },
+    "GPUTime": {
+     "p50": 18.4473,
+     "p95": 21.0004,
+     "max": 24.3909,
+     "blocks": 6
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0,
+     "blocks": 6
+    },
+    "GPU/Translucency": {
+     "p50": 0.0694,
+     "p95": 0.2745,
+     "max": 1.4868,
+     "blocks": 6
+    },
+    "TDFluid/StepCount": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0,
+     "blocks": 6
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 2902.7031,
+     "p95": 2902.7031,
+     "max": 2902.7031,
+     "blocks": 6
+    },
+    "tick_ms": {
+     "p50": 0.0261,
+     "p95": null,
+     "max": 0.389,
+     "blocks": 6
+    }
+   },
+   "variation": {
+    "kind": "relative",
+    "value": 0.4249
+   },
+   "stable": false,
+   "missing_columns": [],
+   "occupancy_px": null,
+   "ms_per_mpx": null,
+   "occupancy_note": "점유 측정 없음",
+   "occupancy": null,
+   "backend_check": {
+    "expected": "Cpu",
+    "awake_targets": 2,
+    "density_texture_classes": [
+     "Texture2D"
+    ],
+    "solver_p50": null,
+    "step_count_max_a": 2.0,
+    "step_count_max_b": 0.0,
+    "backend_ok": true,
+    "step_count_ok": true
+   },
+   "assumed_zero": [
+    "GPU/TDFluidGpuSolver"
+   ],
+   "shader_gate": {
+    "passed": true,
+    "attempts": [
+     {
+      "block_id": "F1_warm1",
+      "p50": 22.0441,
+      "spikes": 1,
+      "passed": false
+     },
+     {
+      "block_id": "F1_warm2",
+      "p50": 22.0838,
+      "spikes": 0,
+      "passed": true
+     },
+     {
+      "block_id": "F1_warm3",
+      "p50": 22.4327,
+      "spikes": 0,
+      "passed": true
+     }
+    ]
+   },
+   "cap_gate": null,
+   "transmittance_check": null,
+   "fresh_pie": null,
+   "source_run": "fx7p-run1-20261022123641",
+   "source_binary_dll": "2026-10-22T09:27:11",
+   "source_hold_owner": "pd-integrate",
+   "validity": {
+    "class": "annotated",
+    "reason": "FireStage 스냅숏은 그 실행에서 새로 잡음(설정 유효[추정]), FT 상대 변동 0.42, tick 안정. J8 모닥불은 회차 간 경계(P11)",
+    "ref": "validity.md:51·68·163-165"
+   },
+   "judgments": {
+    "J1": "판정 불가",
+    "J8.campfire_tick": "판정 불가"
+   },
+   "use": "판정 근거",
+   "metric_stability_spec_b61": {
+    "FrameTime": {
+     "d": 2.6841,
+     "min": 2.5802,
+     "max": 3.7208,
+     "range": 1.1406,
+     "kind": "relative",
+     "value": 0.4249,
+     "stable": false,
+     "side_A": {
+      "median": 22.0127,
+      "values": [
+       22.0473,
+       21.963,
+       22.1423,
+       21.978,
+       21.9585,
+       22.0741
+      ],
+      "kind": "relative",
+      "value": 0.0083,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 19.32,
+      "values": [
+       18.3265,
+       19.3225,
+       19.4151,
+       19.3978,
+       19.3175,
+       19.2666
+      ],
+      "kind": "relative",
+      "value": 0.0563,
+      "accepted": true
+     }
+    },
+    "GameThreadTime": {
+     "d": 2.7035,
+     "min": 2.5386,
+     "max": 4.5092,
+     "range": 1.9706,
+     "kind": "relative",
+     "value": 0.7289,
+     "stable": false,
+     "side_A": {
+      "median": 21.6727,
+      "values": [
+       21.5901,
+       21.6182,
+       21.7661,
+       21.6106,
+       21.7272,
+       21.7548
+      ],
+      "kind": "relative",
+      "value": 0.0081,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 19.0154,
+      "values": [
+       17.0809,
+       18.9331,
+       19.0442,
+       19.072,
+       19.1487,
+       18.9867
+      ],
+      "kind": "relative",
+      "value": 0.1087,
+      "accepted": false
+     }
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "d": 0.4129,
+     "min": 0.2968,
+     "max": 0.4527,
+     "range": 0.1559,
+     "kind": "relative",
+     "value": 0.3775,
+     "stable": false,
+     "side_A": {
+      "median": 7.4086,
+      "values": [
+       7.4173,
+       7.4,
+       7.464,
+       7.3599,
+       7.3994,
+       7.4732
+      ],
+      "kind": "relative",
+      "value": 0.0153,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 7.0474,
+      "values": [
+       6.9646,
+       7.1033,
+       7.048,
+       6.9502,
+       7.0671,
+       7.0468
+      ],
+      "kind": "relative",
+      "value": 0.0217,
+      "accepted": true
+     }
+    },
+    "GPUTime": {
+     "d": 0.209,
+     "min": 0.033,
+     "max": 1.1321,
+     "range": 1.0991,
+     "kind": "relative",
+     "value": 5.2589,
+     "stable": false,
+     "side_A": {
+      "median": 18.6563,
+      "values": [
+       18.6934,
+       18.6907,
+       18.6767,
+       18.5087,
+       18.6359,
+       18.5907
+      ],
+      "kind": "relative",
+      "value": 0.0099,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 18.4473,
+      "values": [
+       17.5613,
+       18.567,
+       18.4272,
+       18.4757,
+       18.4674,
+       18.3267
+      ],
+      "kind": "relative",
+      "value": 0.0545,
+      "accepted": true
+     }
+    },
+    "GPU/Translucency": {
+     "d": 0.6485,
+     "min": 0.6414,
+     "max": 0.6549,
+     "range": 0.0135,
+     "kind": "relative",
+     "value": 0.0208,
+     "stable": true,
+     "side_A": {
+      "median": 0.7177,
+      "values": [
+       0.7117,
+       0.7244,
+       0.7178,
+       0.7176,
+       0.7186,
+       0.7108
+      ],
+      "kind": "relative",
+      "value": 0.0189,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 0.0694,
+      "values": [
+       0.0694,
+       0.0695,
+       0.0691,
+       0.0692,
+       0.0695,
+       0.0694
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0004,
+      "accepted": true
+     }
+    },
+    "tick_ms": {
+     "d": 2.1977,
+     "min": 2.1831,
+     "max": 2.2138,
+     "range": 0.0307,
+     "kind": "relative",
+     "value": 0.014,
+     "stable": true,
+     "side_A": {
+      "median": 2.2235,
+      "values": [
+       2.2255,
+       2.2405,
+       2.2093,
+       2.2214,
+       2.2114,
+       2.2332
+      ],
+      "kind": "relative",
+      "value": 0.014,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 0.0261,
+      "values": [
+       0.0254,
+       0.0267,
+       0.0262,
+       0.0261,
+       0.0263,
+       0.0259
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0012,
+      "accepted": true
+     }
+    }
+   }
+  },
+  "F2": {
+   "id": "F2",
+   "kind": "csv",
+   "meta": {
+    "backend": "Gpu",
+    "scene": "campfire"
+   },
+   "metric": "FrameTime",
+   "rounds": 3,
+   "error": null,
+   "pairs": [
+    {
+     "order": 1,
+     "a": "F2_r1_1A",
+     "b": "F2_r1_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      1,
+      0
+     ]
+    },
+    {
+     "order": 2,
+     "a": "F2_r1_4A",
+     "b": "F2_r1_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      1
+     ]
+    },
+    {
+     "order": 3,
+     "a": "F2_r2_1A",
+     "b": "F2_r2_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      1,
+      0
+     ]
+    },
+    {
+     "order": 4,
+     "a": "F2_r2_4A",
+     "b": "F2_r2_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      1
+     ]
+    },
+    {
+     "order": 5,
+     "a": "F2_r3_1A",
+     "b": "F2_r3_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      1,
+      0
+     ]
+    },
+    {
+     "order": 6,
+     "a": "F2_r3_4A",
+     "b": "F2_r3_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      1
+     ]
+    }
+   ],
+   "discarded_pairs": 0,
+   "clock_null": false,
+   "diff": {
+    "FrameTime": {
+     "p50": 1.148,
+     "pairs_p50": [
+      1.2028,
+      1.2421,
+      0.8488,
+      1.0931,
+      1.2663,
+      0.9394
+     ],
+     "range_p50": 0.4175,
+     "p95": 1.297,
+     "pairs_p95": [
+      1.4366,
+      1.1752,
+      -4.4939,
+      1.6291,
+      1.3266,
+      1.2673
+     ],
+     "range_p95": 6.123
+    },
+    "GameThreadTime": {
+     "p50": 1.0413,
+     "pairs_p50": [
+      1.3095,
+      1.1483,
+      -0.4438,
+      1.0253,
+      1.0574,
+      0.803
+     ],
+     "range_p50": 1.7533,
+     "p95": 1.1518,
+     "pairs_p95": [
+      1.1414,
+      1.572,
+      -5.4293,
+      1.1623,
+      1.3183,
+      0.6074
+     ],
+     "range_p95": 7.0013
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 0.9295,
+     "pairs_p50": [
+      0.8574,
+      1.1129,
+      1.2388,
+      0.8273,
+      1.0017,
+      0.8427
+     ],
+     "range_p50": 0.4115,
+     "p95": 0.7712,
+     "pairs_p95": [
+      0.5459,
+      1.1026,
+      0.4128,
+      1.1915,
+      0.7665,
+      0.7759
+     ],
+     "range_p95": 0.7787
+    },
+    "GPUTime": {
+     "p50": 1.1509,
+     "pairs_p50": [
+      1.2024,
+      1.038,
+      1.3028,
+      1.0993,
+      1.2441,
+      0.8108
+     ],
+     "range_p50": 0.492,
+     "p95": 0.9404,
+     "pairs_p95": [
+      0.879,
+      1.0227,
+      -0.2574,
+      1.1865,
+      0.8819,
+      0.9989
+     ],
+     "range_p95": 1.4439
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 0.183,
+     "pairs_p50": [
+      0.1832,
+      0.183,
+      0.183,
+      0.1829,
+      0.1829,
+      0.1828
+     ],
+     "range_p50": 0.0004,
+     "p95": 0.3869,
+     "pairs_p95": [
+      0.3867,
+      0.3891,
+      0.1878,
+      0.3875,
+      0.387,
+      0.3854
+     ],
+     "range_p95": 0.2013
+    },
+    "GPU/Translucency": {
+     "p50": 0.6572,
+     "pairs_p50": [
+      0.6588,
+      0.661,
+      0.6526,
+      0.6555,
+      0.6649,
+      0.6539
+     ],
+     "range_p50": 0.0123,
+     "p95": 1.2813,
+     "pairs_p95": [
+      1.3621,
+      1.1439,
+      1.3118,
+      1.312,
+      1.2509,
+      1.2159
+     ],
+     "range_p95": 0.2182
+    },
+    "TDFluid/StepCount": {
+     "p50": 2.0,
+     "pairs_p50": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+     ],
+     "range_p50": 0.0,
+     "p95": 2.0,
+     "pairs_p95": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+     ],
+     "range_p95": 0.0
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 0.0,
+     "pairs_p50": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "range_p50": 0.0,
+     "p95": 0.0,
+     "pairs_p95": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "range_p95": 0.0
+    },
+    "tick_ms": {
+     "p50": 0.3464,
+     "pairs_p50": [
+      0.3453,
+      0.3503,
+      0.342,
+      0.3449,
+      0.3475,
+      0.3534
+     ],
+     "range_p50": 0.0114,
+     "p95": null,
+     "pairs_p95": [],
+     "range_p95": null
+    }
+   },
+   "a": {
+    "FrameTime": {
+     "p50": 20.487,
+     "p95": 25.7826,
+     "max": 71.9848,
+     "blocks": 6
+    },
+    "GameThreadTime": {
+     "p50": 20.1184,
+     "p95": 25.9412,
+     "max": 79.3174,
+     "blocks": 6
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 7.9969,
+     "p95": 10.6344,
+     "max": 16.9073,
+     "blocks": 6
+    },
+    "GPUTime": {
+     "p50": 19.4952,
+     "p95": 21.9799,
+     "max": 25.3288,
+     "blocks": 6
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 0.183,
+     "p95": 0.3869,
+     "max": 1.4173,
+     "blocks": 6
+    },
+    "GPU/Translucency": {
+     "p50": 0.7266,
+     "p95": 1.6202,
+     "max": 2.6644,
+     "blocks": 6
+    },
+    "TDFluid/StepCount": {
+     "p50": 2.0,
+     "p95": 2.0,
+     "max": 2.0,
+     "blocks": 6
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 2908.1992,
+     "p95": 2908.1992,
+     "max": 2908.1992,
+     "blocks": 6
+    },
+    "tick_ms": {
+     "p50": 0.3729,
+     "p95": null,
+     "max": 3.0209,
+     "blocks": 6
+    }
+   },
+   "b": {
+    "FrameTime": {
+     "p50": 19.2839,
+     "p95": 24.4856,
+     "max": 63.3029,
+     "blocks": 6
+    },
+    "GameThreadTime": {
+     "p50": 19.0446,
+     "p95": 24.8133,
+     "max": 67.5912,
+     "blocks": 6
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 7.0659,
+     "p95": 9.8346,
+     "max": 15.5496,
+     "blocks": 6
+    },
+    "GPUTime": {
+     "p50": 18.4016,
+     "p95": 20.9991,
+     "max": 23.7352,
+     "blocks": 6
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0,
+     "blocks": 6
+    },
+    "GPU/Translucency": {
+     "p50": 0.0696,
+     "p95": 0.3297,
+     "max": 1.5231,
+     "blocks": 6
+    },
+    "TDFluid/StepCount": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0,
+     "blocks": 6
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 2908.1992,
+     "p95": 2908.1992,
+     "max": 2908.1992,
+     "blocks": 6
+    },
+    "tick_ms": {
+     "p50": 0.0264,
+     "p95": null,
+     "max": 0.9091,
+     "blocks": 6
+    }
+   },
+   "variation": {
+    "kind": "relative",
+    "value": 0.3637
+   },
+   "stable": false,
+   "missing_columns": [],
+   "occupancy_px": null,
+   "ms_per_mpx": null,
+   "occupancy_note": "점유 측정 없음",
+   "occupancy": null,
+   "backend_check": {
+    "expected": "Gpu",
+    "awake_targets": 2,
+    "density_texture_classes": [
+     "TextureRenderTarget2D"
+    ],
+    "solver_p50": 0.183,
+    "step_count_max_a": 2.0,
+    "step_count_max_b": 0.0,
+    "backend_ok": true,
+    "step_count_ok": true
+   },
+   "assumed_zero": [
+    "GPU/TDFluidGpuSolver"
+   ],
+   "shader_gate": {
+    "passed": true,
+    "attempts": [
+     {
+      "block_id": "F2_warm1",
+      "p50": 20.428,
+      "spikes": 0,
+      "passed": false
+     },
+     {
+      "block_id": "F2_warm2",
+      "p50": 20.7512,
+      "spikes": 0,
+      "passed": true
+     },
+     {
+      "block_id": "F2_warm3",
+      "p50": 20.5861,
+      "spikes": 0,
+      "passed": true
+     }
+    ]
+   },
+   "cap_gate": null,
+   "transmittance_check": null,
+   "fresh_pie": null,
+   "source_run": "fx7p-run1-20261022123641",
+   "source_binary_dll": "2026-10-22T09:27:11",
+   "source_hold_owner": "pd-integrate",
+   "validity": {
+    "class": "annotated",
+    "reason": "FireStage 설정 유효[추정], FT 상대 변동 0.36",
+    "ref": "validity.md:52·170"
+   },
+   "judgments": {
+    "J1": "판정 불가"
+   },
+   "use": "판정 근거",
+   "metric_stability_spec_b61": {
+    "FrameTime": {
+     "d": 1.148,
+     "min": 0.8488,
+     "max": 1.2663,
+     "range": 0.4175,
+     "kind": "relative",
+     "value": 0.3637,
+     "stable": false,
+     "side_A": {
+      "median": 20.487,
+      "values": [
+       20.4943,
+       20.4798,
+       18.7747,
+       20.4947,
+       20.5427,
+       20.2446
+      ],
+      "kind": "relative",
+      "value": 0.0863,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 19.2839,
+      "values": [
+       19.2915,
+       19.2377,
+       17.9259,
+       19.4016,
+       19.2764,
+       19.3052
+      ],
+      "kind": "relative",
+      "value": 0.0765,
+      "accepted": true
+     }
+    },
+    "GameThreadTime": {
+     "d": 1.0413,
+     "min": -0.4438,
+     "max": 1.3095,
+     "range": 1.7533,
+     "kind": "relative",
+     "value": 1.6837,
+     "stable": false,
+     "side_A": {
+      "median": 20.1184,
+      "values": [
+       20.2169,
+       20.2321,
+       15.8938,
+       20.0873,
+       20.1495,
+       19.8302
+      ],
+      "kind": "relative",
+      "value": 0.2156,
+      "accepted": false
+     },
+     "side_B": {
+      "median": 19.0446,
+      "values": [
+       18.9074,
+       19.0838,
+       16.3376,
+       19.062,
+       19.0921,
+       19.0272
+      ],
+      "kind": "relative",
+      "value": 0.1446,
+      "accepted": false
+     }
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "d": 0.9296,
+     "min": 0.8273,
+     "max": 1.2388,
+     "range": 0.4115,
+     "kind": "relative",
+     "value": 0.4427,
+     "stable": false,
+     "side_A": {
+      "median": 7.9969,
+      "values": [
+       8.0072,
+       8.0533,
+       8.4202,
+       7.8855,
+       7.9865,
+       7.9163
+      ],
+      "kind": "relative",
+      "value": 0.0669,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 7.0659,
+      "values": [
+       7.1498,
+       6.9404,
+       7.1814,
+       7.0583,
+       6.9848,
+       7.0736
+      ],
+      "kind": "relative",
+      "value": 0.0341,
+      "accepted": true
+     }
+    },
+    "GPUTime": {
+     "d": 1.1508,
+     "min": 0.8108,
+     "max": 1.3028,
+     "range": 0.492,
+     "kind": "relative",
+     "value": 0.4275,
+     "stable": false,
+     "side_A": {
+      "median": 19.4953,
+      "values": [
+       19.6098,
+       19.485,
+       18.2109,
+       19.5055,
+       19.641,
+       19.1506
+      ],
+      "kind": "relative",
+      "value": 0.0734,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 18.4016,
+      "values": [
+       18.4074,
+       18.447,
+       16.9081,
+       18.4062,
+       18.3969,
+       18.3398
+      ],
+      "kind": "relative",
+      "value": 0.0836,
+      "accepted": true
+     }
+    },
+    "GPU/TDFluidGpuSolver": {
+     "d": 0.183,
+     "min": 0.1828,
+     "max": 0.1832,
+     "range": 0.0004,
+     "kind": "absolute_ms",
+     "value": 0.0004,
+     "stable": true,
+     "side_A": {
+      "median": 0.183,
+      "values": [
+       0.1832,
+       0.183,
+       0.183,
+       0.1829,
+       0.1829,
+       0.1828
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0005,
+      "accepted": true
+     },
+     "side_B": null
+    },
+    "GPU/Translucency": {
+     "d": 0.6572,
+     "min": 0.6526,
+     "max": 0.6649,
+     "range": 0.0123,
+     "kind": "relative",
+     "value": 0.0187,
+     "stable": true,
+     "side_A": {
+      "median": 0.7266,
+      "values": [
+       0.7284,
+       0.7309,
+       0.7215,
+       0.7248,
+       0.7345,
+       0.7238
+      ],
+      "kind": "relative",
+      "value": 0.0179,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 0.0696,
+      "values": [
+       0.0696,
+       0.0699,
+       0.0689,
+       0.0693,
+       0.0696,
+       0.0699
+      ],
+      "kind": "absolute_ms",
+      "value": 0.001,
+      "accepted": true
+     }
+    },
+    "tick_ms": {
+     "d": 0.3464,
+     "min": 0.342,
+     "max": 0.3534,
+     "range": 0.0114,
+     "kind": "relative",
+     "value": 0.0329,
+     "stable": true,
+     "side_A": {
+      "median": 0.3729,
+      "values": [
+       0.3721,
+       0.3769,
+       0.3677,
+       0.3711,
+       0.3737,
+       0.38
+      ],
+      "kind": "relative",
+      "value": 0.0328,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 0.0264,
+      "values": [
+       0.0268,
+       0.0266,
+       0.0257,
+       0.0262,
+       0.0262,
+       0.0266
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0011,
+      "accepted": true
+     }
+    }
+   }
+  },
+  "S6": {
+   "id": "S6",
+   "kind": "csv",
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 512,
+    "count": 4,
+    "visible": true
+   },
+   "metric": "FrameTime",
+   "rounds": 3,
+   "error": null,
+   "pairs": [
+    {
+     "order": 1,
+     "a": "S6_r1_1A",
+     "b": "S6_r1_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 2,
+     "a": "S6_r1_4A",
+     "b": "S6_r1_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      1
+     ]
+    },
+    {
+     "order": 3,
+     "a": "S6_r2_1A",
+     "b": "S6_r2_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 4,
+     "a": "S6_r2_4A",
+     "b": "S6_r2_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      1,
+      0
+     ]
+    },
+    {
+     "order": 5,
+     "a": "S6_r3_1A",
+     "b": "S6_r3_2B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 6,
+     "a": "S6_r3_4A",
+     "b": "S6_r3_3B",
+     "clock_mhz": [
+      1935.0,
+      1935.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    }
+   ],
+   "discarded_pairs": 0,
+   "clock_null": false,
+   "diff": {
+    "FrameTime": {
+     "p50": -0.1211,
+     "pairs_p50": [
+      1.7049,
+      -0.939,
+      0.3523,
+      2.2973,
+      -0.6931,
+      -0.5945
+     ],
+     "range_p50": 3.2363,
+     "p95": 0.5647,
+     "pairs_p95": [
+      1.5347,
+      -0.0213,
+      0.9919,
+      1.399,
+      0.1374,
+      -0.7313
+     ],
+     "range_p95": 2.266
+    },
+    "GameThreadTime": {
+     "p50": 0.1832,
+     "pairs_p50": [
+      1.0604,
+      -0.296,
+      0.1243,
+      2.151,
+      0.2422,
+      -0.3155
+     ],
+     "range_p50": 2.4665,
+     "p95": 0.3081,
+     "pairs_p95": [
+      0.9062,
+      -0.7479,
+      0.6986,
+      2.1823,
+      -0.4615,
+      -0.0824
+     ],
+     "range_p95": 2.9302
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": -0.057,
+     "pairs_p50": [
+      0.4279,
+      -0.4282,
+      -0.0791,
+      0.9178,
+      -0.4992,
+      -0.035
+     ],
+     "range_p50": 1.417,
+     "p95": -0.1761,
+     "pairs_p95": [
+      -0.1988,
+      -0.1535,
+      -1.1045,
+      2.4517,
+      -0.3793,
+      -0.037
+     ],
+     "range_p95": 3.5562
+    },
+    "GPUTime": {
+     "p50": 3.2604,
+     "pairs_p50": [
+      3.7658,
+      3.1294,
+      3.4397,
+      2.9338,
+      3.0951,
+      3.3915
+     ],
+     "range_p50": 0.832,
+     "p95": 3.1864,
+     "pairs_p95": [
+      3.7088,
+      2.9625,
+      3.201,
+      2.9447,
+      3.1718,
+      3.4336
+     ],
+     "range_p95": 0.7641
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 2.1395,
+     "pairs_p50": [
+      2.0722,
+      2.1762,
+      2.1029,
+      2.04,
+      2.2097,
+      2.2156
+     ],
+     "range_p50": 0.1756,
+     "p95": 2.6102,
+     "pairs_p95": [
+      2.5835,
+      2.6497,
+      2.4985,
+      2.5677,
+      2.7664,
+      2.637
+     ],
+     "range_p95": 0.2679
+    },
+    "GPU/Translucency": {
+     "p50": 0.4529,
+     "pairs_p50": [
+      0.4535,
+      0.4514,
+      0.452,
+      0.4522,
+      0.4548,
+      0.4616
+     ],
+     "range_p50": 0.0102,
+     "p95": 0.6744,
+     "pairs_p95": [
+      0.6696,
+      0.8295,
+      0.6667,
+      0.6756,
+      0.6733,
+      0.8662
+     ],
+     "range_p95": 0.1995
+    },
+    "TDFluid/StepCount": {
+     "p50": 4.0,
+     "pairs_p50": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+     ],
+     "range_p50": 0.0,
+     "p95": 4.0,
+     "pairs_p95": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+     ],
+     "range_p95": 0.0
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 0.0,
+     "pairs_p50": [
+      1.25,
+      0.0,
+      -0.0625,
+      0.0625,
+      -0.0625,
+      0.0
+     ],
+     "range_p50": 1.3125,
+     "p95": 0.0,
+     "pairs_p95": [
+      1.25,
+      0.0,
+      -0.0625,
+      0.0625,
+      -0.0625,
+      0.0
+     ],
+     "range_p95": 1.3125
+    },
+    "tick_ms": {
+     "p50": 0.2828,
+     "pairs_p50": [
+      0.2826,
+      0.283,
+      0.286,
+      0.3204,
+      0.2777,
+      0.2663
+     ],
+     "range_p50": 0.0541,
+     "p95": null,
+     "pairs_p95": [],
+     "range_p95": null
+    }
+   },
+   "a": {
+    "FrameTime": {
+     "p50": 18.868,
+     "p95": 25.6759,
+     "max": 66.8012,
+     "blocks": 6
+    },
+    "GameThreadTime": {
+     "p50": 18.599,
+     "p95": 26.2902,
+     "max": 64.9651,
+     "blocks": 6
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 6.3569,
+     "p95": 10.1239,
+     "max": 15.106,
+     "blocks": 6
+    },
+    "GPUTime": {
+     "p50": 16.5921,
+     "p95": 17.584,
+     "max": 18.8317,
+     "blocks": 6
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 2.1395,
+     "p95": 2.6102,
+     "max": 3.2302,
+     "blocks": 6
+    },
+    "GPU/Translucency": {
+     "p50": 0.4621,
+     "p95": 0.686,
+     "max": 1.579,
+     "blocks": 6
+    },
+    "TDFluid/StepCount": {
+     "p50": 4.0,
+     "p95": 4.0,
+     "max": 4.0,
+     "blocks": 6
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 2944.3984,
+     "p95": 2944.3984,
+     "max": 2945.5234,
+     "blocks": 6
+    },
+    "tick_ms": {
+     "p50": 0.2938,
+     "p95": null,
+     "max": 1.5409,
+     "blocks": 6
+    }
+   },
+   "b": {
+    "FrameTime": {
+     "p50": 19.0454,
+     "p95": 25.1035,
+     "max": 66.6996,
+     "blocks": 6
+    },
+    "GameThreadTime": {
+     "p50": 18.5765,
+     "p95": 26.304,
+     "max": 70.0459,
+     "blocks": 6
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 6.4063,
+     "p95": 10.1264,
+     "max": 14.2402,
+     "blocks": 6
+    },
+    "GPUTime": {
+     "p50": 13.4135,
+     "p95": 14.4284,
+     "max": 15.4053,
+     "blocks": 6
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0,
+     "blocks": 6
+    },
+    "GPU/Translucency": {
+     "p50": 0.0092,
+     "p95": 0.0115,
+     "max": 0.7475,
+     "blocks": 6
+    },
+    "TDFluid/StepCount": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0,
+     "blocks": 6
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 2944.3359,
+     "p95": 2944.3359,
+     "max": 2944.4609,
+     "blocks": 6
+    },
+    "tick_ms": {
+     "p50": 0.011,
+     "p95": null,
+     "max": 0.0535,
+     "blocks": 6
+    }
+   },
+   "variation": {
+    "kind": "absolute_ms",
+    "value": 3.2363
+   },
+   "stable": false,
+   "missing_columns": [],
+   "occupancy_px": null,
+   "ms_per_mpx": null,
+   "occupancy_note": "점유 측정 없음",
+   "occupancy": null,
+   "backend_check": {
+    "expected": "Gpu",
+    "awake_targets": 4,
+    "density_texture_classes": [
+     "TextureRenderTarget2D"
+    ],
+    "solver_p50": 2.1395,
+    "step_count_max_a": 4.0,
+    "step_count_max_b": 0.0,
+    "backend_ok": true,
+    "step_count_ok": true
+   },
+   "assumed_zero": [
+    "GPU/TDFluidGpuSolver"
+   ],
+   "shader_gate": {
+    "passed": true,
+    "attempts": [
+     {
+      "block_id": "S6_warm1",
+      "p50": 19.925,
+      "spikes": 0,
+      "passed": false
+     },
+     {
+      "block_id": "S6_warm2",
+      "p50": 18.3629,
+      "spikes": 0,
+      "passed": true
+     },
+     {
+      "block_id": "S6_warm3",
+      "p50": 18.362,
+      "spikes": 0,
+      "passed": true
+     }
+    ],
+    "p50_tolerance": 0.1
+   },
+   "cap_gate": null,
+   "transmittance_check": null,
+   "fresh_pie": "after_gpu",
+   "source_run": "fx7p-run2b-20261022150437",
+   "source_binary_dll": "2026-10-22T14:21:32",
+   "source_hold_owner": "fx7p-crash",
+   "validity": {
+    "class": "annotated",
+    "reason": "사전 지표 FT가 GT 묶임에서 GPU 비용을 담지 못함(P6), GPU 지표(Sol·GPUTime)만 유효",
+    "ref": "validity.md:31·111-118"
+   },
+   "judgments": {
+    "J2": "사후 참고(미달 쪽)"
+   },
+   "use": "판정 근거",
+   "metric_stability_spec_b61": {
+    "FrameTime": {
+     "d": -0.1211,
+     "min": -0.939,
+     "max": 2.2973,
+     "range": 3.2363,
+     "kind": "absolute_ms",
+     "value": 3.2363,
+     "stable": false,
+     "side_A": {
+      "median": 18.868,
+      "values": [
+       19.4695,
+       18.8377,
+       18.8982,
+       21.8697,
+       18.5838,
+       18.2194
+      ],
+      "kind": "relative",
+      "value": 0.1935,
+      "accepted": false
+     },
+     "side_B": {
+      "median": 19.0454,
+      "values": [
+       17.7646,
+       19.7767,
+       18.5459,
+       19.5724,
+       19.2769,
+       18.8139
+      ],
+      "kind": "relative",
+      "value": 0.1056,
+      "accepted": false
+     }
+    },
+    "GameThreadTime": {
+     "d": 0.1832,
+     "min": -0.3155,
+     "max": 2.151,
+     "range": 2.4665,
+     "kind": "absolute_ms",
+     "value": 2.4665,
+     "stable": false,
+     "side_A": {
+      "median": 18.599,
+      "values": [
+       18.5486,
+       18.6495,
+       18.8195,
+       21.7096,
+       18.2187,
+       18.1424
+      ],
+      "kind": "relative",
+      "value": 0.1918,
+      "accepted": false
+     },
+     "side_B": {
+      "median": 18.5765,
+      "values": [
+       17.4882,
+       18.9455,
+       18.6952,
+       19.5586,
+       17.9765,
+       18.4579
+      ],
+      "kind": "relative",
+      "value": 0.1115,
+      "accepted": false
+     }
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "d": -0.0571,
+     "min": -0.4992,
+     "max": 0.9178,
+     "range": 1.417,
+     "kind": "absolute_ms",
+     "value": 1.417,
+     "stable": false,
+     "side_A": {
+      "median": 6.3569,
+      "values": [
+       6.5156,
+       6.1066,
+       6.471,
+       7.1712,
+       6.0928,
+       6.2427
+      ],
+      "kind": "relative",
+      "value": 0.1696,
+      "accepted": false
+     },
+     "side_B": {
+      "median": 6.4063,
+      "values": [
+       6.0877,
+       6.5348,
+       6.55,
+       6.2535,
+       6.5919,
+       6.2778
+      ],
+      "kind": "relative",
+      "value": 0.0787,
+      "accepted": true
+     }
+    },
+    "GPUTime": {
+     "d": 3.2605,
+     "min": 2.9338,
+     "max": 3.7658,
+     "range": 0.832,
+     "kind": "relative",
+     "value": 0.2552,
+     "stable": false,
+     "side_A": {
+      "median": 16.592,
+      "values": [
+       16.6116,
+       16.5919,
+       16.5793,
+       16.4132,
+       16.5922,
+       16.7559
+      ],
+      "kind": "relative",
+      "value": 0.0207,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 13.4135,
+      "values": [
+       12.8458,
+       13.4625,
+       13.1396,
+       13.4794,
+       13.4971,
+       13.3644
+      ],
+      "kind": "relative",
+      "value": 0.0486,
+      "accepted": true
+     }
+    },
+    "GPU/TDFluidGpuSolver": {
+     "d": 2.1395,
+     "min": 2.04,
+     "max": 2.2156,
+     "range": 0.1756,
+     "kind": "relative",
+     "value": 0.0821,
+     "stable": true,
+     "side_A": {
+      "median": 2.1395,
+      "values": [
+       2.0722,
+       2.1762,
+       2.1029,
+       2.04,
+       2.2097,
+       2.2156
+      ],
+      "kind": "relative",
+      "value": 0.0821,
+      "accepted": true
+     },
+     "side_B": null
+    },
+    "GPU/Translucency": {
+     "d": 0.4528,
+     "min": 0.4514,
+     "max": 0.4616,
+     "range": 0.0102,
+     "kind": "relative",
+     "value": 0.0225,
+     "stable": true,
+     "side_A": {
+      "median": 0.462,
+      "values": [
+       0.4626,
+       0.4606,
+       0.4612,
+       0.4615,
+       0.4642,
+       0.4708
+      ],
+      "kind": "relative",
+      "value": 0.0222,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 0.0092,
+      "values": [
+       0.0091,
+       0.0092,
+       0.0092,
+       0.0093,
+       0.0094,
+       0.0092
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0003,
+      "accepted": true
+     }
+    },
+    "tick_ms": {
+     "d": 0.2828,
+     "min": 0.2663,
+     "max": 0.3204,
+     "range": 0.0541,
+     "kind": "relative",
+     "value": 0.1913,
+     "stable": false,
+     "side_A": {
+      "median": 0.2937,
+      "values": [
+       0.2933,
+       0.2942,
+       0.2967,
+       0.3318,
+       0.2886,
+       0.2774
+      ],
+      "kind": "relative",
+      "value": 0.1853,
+      "accepted": false
+     },
+     "side_B": {
+      "median": 0.011,
+      "values": [
+       0.0107,
+       0.0112,
+       0.0107,
+       0.0114,
+       0.0109,
+       0.0111
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0007,
+      "accepted": true
+     }
+    }
+   }
+  },
+  "S9": {
+   "id": "S9",
+   "kind": "csv",
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 256,
+    "count": 49,
+    "visible": false,
+    "slope": true
+   },
+   "metric": "FrameTime",
+   "rounds": 3,
+   "error": null,
+   "pairs": [
+    {
+     "order": 1,
+     "a": "S9_r1_1A",
+     "b": "S9_r1_2B",
+     "clock_mhz": [
+      1928.5,
+      1920.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 2,
+     "a": "S9_r1_4A",
+     "b": "S9_r1_3B",
+     "clock_mhz": [
+      1920.0,
+      1920.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 3,
+     "a": "S9_r2_1A",
+     "b": "S9_r2_2B",
+     "clock_mhz": [
+      1920.0,
+      1920.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 4,
+     "a": "S9_r2_4A",
+     "b": "S9_r2_3B",
+     "clock_mhz": [
+      1920.0,
+      1920.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 5,
+     "a": "S9_r3_1A",
+     "b": "S9_r3_2B",
+     "clock_mhz": [
+      1920.0,
+      1920.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    },
+    {
+     "order": 6,
+     "a": "S9_r3_4A",
+     "b": "S9_r3_3B",
+     "clock_mhz": [
+      1920.0,
+      1920.0
+     ],
+     "discarded": false,
+     "spikes": [
+      0,
+      0
+     ]
+    }
+   ],
+   "discarded_pairs": 0,
+   "clock_null": false,
+   "diff": {
+    "FrameTime": {
+     "p50": 4.9308,
+     "pairs_p50": [
+      4.6875,
+      5.1742,
+      3.6697,
+      6.075,
+      3.8649,
+      5.2069
+     ],
+     "range_p50": 2.4053,
+     "p95": 4.9009,
+     "pairs_p95": [
+      4.5974,
+      6.1936,
+      2.6235,
+      5.2044,
+      3.6749,
+      6.5445
+     ],
+     "range_p95": 3.921
+    },
+    "GameThreadTime": {
+     "p50": 3.9238,
+     "pairs_p50": [
+      4.4533,
+      3.7518,
+      1.2171,
+      6.5921,
+      4.0957,
+      3.7048
+     ],
+     "range_p50": 5.375,
+     "p95": 4.4046,
+     "pairs_p95": [
+      4.3573,
+      5.0482,
+      0.6413,
+      4.4518,
+      2.4054,
+      4.6335
+     ],
+     "range_p95": 4.4069
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 2.138,
+     "pairs_p50": [
+      2.2405,
+      1.8839,
+      1.8855,
+      2.4195,
+      2.11,
+      2.1659
+     ],
+     "range_p50": 0.5356,
+     "p95": 0.7226,
+     "pairs_p95": [
+      0.6341,
+      -0.003,
+      0.4542,
+      1.1703,
+      0.8111,
+      2.1507
+     ],
+     "range_p95": 2.1537
+    },
+    "GPUTime": {
+     "p50": 7.8514,
+     "pairs_p50": [
+      7.8452,
+      7.9436,
+      7.7802,
+      7.9657,
+      7.8081,
+      7.8576
+     ],
+     "range_p50": 0.1855,
+     "p95": 7.676,
+     "pairs_p95": [
+      7.7768,
+      7.5781,
+      7.6039,
+      7.6924,
+      7.7369,
+      7.6597
+     ],
+     "range_p95": 0.1987
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 7.515,
+     "pairs_p50": [
+      7.4679,
+      7.5255,
+      7.5139,
+      7.4971,
+      7.5161,
+      7.5213
+     ],
+     "range_p50": 0.0576,
+     "p95": 8.209,
+     "pairs_p95": [
+      8.2797,
+      8.1519,
+      8.3091,
+      8.2254,
+      8.114,
+      8.1925
+     ],
+     "range_p95": 0.1951
+    },
+    "GPU/Translucency": {
+     "p50": 0.0002,
+     "pairs_p50": [
+      0.0002,
+      0.0001,
+      0.0003,
+      0.0,
+      0.0001,
+      0.0002
+     ],
+     "range_p50": 0.0003,
+     "p95": 0.0008,
+     "pairs_p95": [
+      0.0016,
+      -0.0007,
+      0.0006,
+      0.0004,
+      0.0009,
+      0.0019
+     ],
+     "range_p95": 0.0026
+    },
+    "TDFluid/StepCount": {
+     "p50": 49.0,
+     "pairs_p50": [
+      49.0,
+      49.0,
+      49.0,
+      49.0,
+      49.0,
+      49.0
+     ],
+     "range_p50": 0.0,
+     "p95": 49.0,
+     "pairs_p95": [
+      49.0,
+      49.0,
+      49.0,
+      49.0,
+      49.0,
+      49.0
+     ],
+     "range_p95": 0.0
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 0.0,
+     "pairs_p50": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "range_p50": 0.0,
+     "p95": 0.0,
+     "pairs_p95": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "range_p95": 0.0
+    },
+    "tick_ms": {
+     "p50": 2.6511,
+     "pairs_p50": [
+      2.6131,
+      2.7222,
+      2.5539,
+      2.6892,
+      2.6109,
+      2.7918
+     ],
+     "range_p50": 0.2379,
+     "p95": null,
+     "pairs_p95": [],
+     "range_p95": null
+    }
+   },
+   "a": {
+    "FrameTime": {
+     "p50": 24.4204,
+     "p95": 31.3288,
+     "max": 56.5278,
+     "blocks": 6
+    },
+    "GameThreadTime": {
+     "p50": 23.5988,
+     "p95": 31.1596,
+     "max": 56.2867,
+     "blocks": 6
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 8.0374,
+     "p95": 10.8097,
+     "max": 15.7566,
+     "blocks": 6
+    },
+    "GPUTime": {
+     "p50": 23.6671,
+     "p95": 24.5938,
+     "max": 25.421,
+     "blocks": 6
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 7.515,
+     "p95": 8.209,
+     "max": 8.9054,
+     "blocks": 6
+    },
+    "GPU/Translucency": {
+     "p50": 0.0094,
+     "p95": 0.0143,
+     "max": 0.7631,
+     "blocks": 6
+    },
+    "TDFluid/StepCount": {
+     "p50": 49.0,
+     "p95": 49.0,
+     "max": 49.0,
+     "blocks": 6
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 3070.8984,
+     "p95": 3070.8984,
+     "max": 3070.8984,
+     "blocks": 6
+    },
+    "tick_ms": {
+     "p50": 2.7017,
+     "p95": null,
+     "max": 6.5506,
+     "blocks": 6
+    }
+   },
+   "b": {
+    "FrameTime": {
+     "p50": 19.5237,
+     "p95": 26.7203,
+     "max": 33.4117,
+     "blocks": 6
+    },
+    "GameThreadTime": {
+     "p50": 19.4962,
+     "p95": 27.2614,
+     "max": 69.0364,
+     "blocks": 6
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "p50": 5.9298,
+     "p95": 9.8567,
+     "max": 14.1771,
+     "blocks": 6
+    },
+    "GPUTime": {
+     "p50": 15.757,
+     "p95": 16.8967,
+     "max": 18.1821,
+     "blocks": 6
+    },
+    "GPU/TDFluidGpuSolver": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0,
+     "blocks": 6
+    },
+    "GPU/Translucency": {
+     "p50": 0.0093,
+     "p95": 0.0133,
+     "max": 0.6689,
+     "blocks": 6
+    },
+    "TDFluid/StepCount": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0,
+     "blocks": 6
+    },
+    "GPUMem/LocalUsedMB": {
+     "p50": 3070.8984,
+     "p95": 3070.8984,
+     "max": 3070.8984,
+     "blocks": 6
+    },
+    "tick_ms": {
+     "p50": 0.0504,
+     "p95": null,
+     "max": 0.2937,
+     "blocks": 6
+    }
+   },
+   "variation": {
+    "kind": "relative",
+    "value": 0.4878
+   },
+   "stable": false,
+   "missing_columns": [],
+   "occupancy_px": null,
+   "ms_per_mpx": null,
+   "occupancy_note": "점유 측정 없음",
+   "occupancy": null,
+   "backend_check": {
+    "expected": "Gpu",
+    "awake_targets": 49,
+    "density_texture_classes": [
+     "TextureRenderTarget2D"
+    ],
+    "solver_p50": 7.515,
+    "step_count_max_a": 49.0,
+    "step_count_max_b": 0.0,
+    "backend_ok": true,
+    "step_count_ok": true
+   },
+   "assumed_zero": [
+    "GPU/TDFluidGpuSolver"
+   ],
+   "shader_gate": {
+    "passed": true,
+    "attempts": [
+     {
+      "block_id": "S9_warm1",
+      "p50": 24.1493,
+      "spikes": 0,
+      "passed": false
+     },
+     {
+      "block_id": "S9_warm2",
+      "p50": 23.9196,
+      "spikes": 0,
+      "passed": true
+     },
+     {
+      "block_id": "S9_warm3",
+      "p50": 24.0028,
+      "spikes": 0,
+      "passed": true
+     }
+    ],
+    "p50_tolerance": 0.1
+   },
+   "cap_gate": null,
+   "transmittance_check": null,
+   "fresh_pie": "after_gpu",
+   "source_run": "fx7p-run2b-20261022150437",
+   "source_binary_dll": "2026-10-22T14:21:32",
+   "source_hold_owner": "fx7p-crash",
+   "validity": {
+    "class": "annotated",
+    "reason": "FT 관문(P7)으로 공식 null, 지표별(Sol·tick·RT합) 안정",
+    "ref": "validity.md:35·120-133"
+   },
+   "judgments": {
+    "J3.solver": "사전 근거 미달",
+    "J3.game": "사후 참고(미달 쪽)",
+    "J3.render": "사후 참고(미달 쪽)",
+    "J3.slope_game": "사후 참고(미달 쪽)",
+    "J3.slope_render": "사후 참고(미달 쪽)",
+    "J4": "사전 근거 통과"
+   },
+   "use": "판정 근거",
+   "metric_stability_spec_b61": {
+    "FrameTime": {
+     "d": 4.9308,
+     "min": 3.6697,
+     "max": 6.075,
+     "range": 2.4053,
+     "kind": "relative",
+     "value": 0.4878,
+     "stable": false,
+     "side_A": {
+      "median": 24.4204,
+      "values": [
+       24.5802,
+       24.329,
+       24.5033,
+       24.6161,
+       24.3376,
+       23.8221
+      ],
+      "kind": "relative",
+      "value": 0.0325,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 19.5237,
+      "values": [
+       19.8927,
+       19.1548,
+       20.8336,
+       18.5411,
+       20.4727,
+       18.6152
+      ],
+      "kind": "relative",
+      "value": 0.1174,
+      "accepted": false
+     }
+    },
+    "GameThreadTime": {
+     "d": 3.9238,
+     "min": 1.2171,
+     "max": 6.5921,
+     "range": 5.375,
+     "kind": "relative",
+     "value": 1.3699,
+     "stable": false,
+     "side_A": {
+      "median": 23.5988,
+      "values": [
+       24.2962,
+       22.9014,
+       22.223,
+       25.1498,
+       24.4939,
+       22.3961
+      ],
+      "kind": "relative",
+      "value": 0.124,
+      "accepted": false
+     },
+     "side_B": {
+      "median": 19.4962,
+      "values": [
+       19.8429,
+       19.1496,
+       21.0059,
+       18.5577,
+       20.3982,
+       18.6913
+      ],
+      "kind": "relative",
+      "value": 0.1256,
+      "accepted": false
+     }
+    },
+    "Exclusive/RenderThread/* 합(EventWait 제외)": {
+     "d": 2.138,
+     "min": 1.8839,
+     "max": 2.4195,
+     "range": 0.5356,
+     "kind": "relative",
+     "value": 0.2505,
+     "stable": false,
+     "side_A": {
+      "median": 8.0375,
+      "values": [
+       8.1893,
+       7.9982,
+       8.0541,
+       8.0821,
+       8.0208,
+       7.9785
+      ],
+      "kind": "relative",
+      "value": 0.0262,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 5.9298,
+      "values": [
+       5.9487,
+       6.1143,
+       6.1686,
+       5.6626,
+       5.9109,
+       5.8126
+      ],
+      "kind": "relative",
+      "value": 0.0853,
+      "accepted": true
+     }
+    },
+    "GPUTime": {
+     "d": 7.8514,
+     "min": 7.7802,
+     "max": 7.9657,
+     "range": 0.1855,
+     "kind": "relative",
+     "value": 0.0236,
+     "stable": true,
+     "side_A": {
+      "median": 23.6671,
+      "values": [
+       23.5128,
+       23.6933,
+       23.6908,
+       23.7142,
+       23.6435,
+       23.6219
+      ],
+      "kind": "relative",
+      "value": 0.0085,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 15.757,
+      "values": [
+       15.6676,
+       15.7497,
+       15.9106,
+       15.7485,
+       15.8354,
+       15.7643
+      ],
+      "kind": "relative",
+      "value": 0.0154,
+      "accepted": true
+     }
+    },
+    "GPU/TDFluidGpuSolver": {
+     "d": 7.515,
+     "min": 7.4679,
+     "max": 7.5255,
+     "range": 0.0576,
+     "kind": "relative",
+     "value": 0.0077,
+     "stable": true,
+     "side_A": {
+      "median": 7.515,
+      "values": [
+       7.4679,
+       7.5255,
+       7.5139,
+       7.4971,
+       7.5161,
+       7.5213
+      ],
+      "kind": "relative",
+      "value": 0.0077,
+      "accepted": true
+     },
+     "side_B": null
+    },
+    "GPU/Translucency": {
+     "d": 0.0002,
+     "min": 0.0,
+     "max": 0.0003,
+     "range": 0.0003,
+     "kind": "absolute_ms",
+     "value": 0.0003,
+     "stable": true,
+     "side_A": {
+      "median": 0.0094,
+      "values": [
+       0.0094,
+       0.0094,
+       0.0096,
+       0.0093,
+       0.0094,
+       0.0094
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0003,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 0.0093,
+      "values": [
+       0.0092,
+       0.0093,
+       0.0093,
+       0.0093,
+       0.0093,
+       0.0092
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0001,
+      "accepted": true
+     }
+    },
+    "tick_ms": {
+     "d": 2.6512,
+     "min": 2.5539,
+     "max": 2.7918,
+     "range": 0.2379,
+     "kind": "relative",
+     "value": 0.0897,
+     "stable": true,
+     "side_A": {
+      "median": 2.7017,
+      "values": [
+       2.6628,
+       2.7721,
+       2.6069,
+       2.7401,
+       2.6633,
+       2.8388
+      ],
+      "kind": "relative",
+      "value": 0.0858,
+      "accepted": true
+     },
+     "side_B": {
+      "median": 0.0504,
+      "values": [
+       0.0497,
+       0.0499,
+       0.053,
+       0.0509,
+       0.0524,
+       0.047
+      ],
+      "kind": "absolute_ms",
+      "value": 0.0059,
+      "accepted": true
+     }
+    }
+   }
+  }
+ },
+ "slope_point_scenes": {
+  "S4": {
+   "source_run": "fx7p-run1-20261022123641",
+   "validity": "invalid",
+   "validity_reason": "P1 설정 오염 + P9 보임 조건·회차 혼합(J3 기울기 점)",
+   "diff_p50": {
+    "GameThreadTime": 0.4491,
+    "tick_ms": 0.0993,
+    "Exclusive/RenderThread/* 합(EventWait 제외)": 0.5771,
+    "GPU/TDFluidGpuSolver": 0.0282
+   },
+   "pairs_p50": {
+    "GameThreadTime": [
+     0.6382,
+     -0.1455,
+     0.1843,
+     0.26,
+     0.6914,
+     0.9316
+    ],
+    "tick_ms": [
+     0.0997,
+     0.0966,
+     0.0999,
+     0.099,
+     0.0986,
+     0.1012
+    ],
+    "Exclusive/RenderThread/* 합(EventWait 제외)": [
+     0.6634,
+     -0.1339,
+     0.5776,
+     0.5766,
+     0.1361,
+     0.8789
+    ]
+   }
+  },
+  "S11": {
+   "source_run": "fx7p-run2b-20261022150437",
+   "validity": "annotated",
+   "validity_reason": "FT 범위 3.54, tick·Sol 안정",
+   "diff_p50": {
+    "GameThreadTime": 0.3906,
+    "tick_ms": 0.2823,
+    "Exclusive/RenderThread/* 합(EventWait 제외)": 0.0615,
+    "GPU/TDFluidGpuSolver": 0.4977
+   },
+   "pairs_p50": {
+    "GameThreadTime": [
+     -3.1124,
+     0.8592,
+     -2.5515,
+     0.5533,
+     0.228,
+     0.5796
+    ],
+    "tick_ms": [
+     0.2715,
+     0.277,
+     0.2654,
+     0.2896,
+     0.2876,
+     0.2878
+    ],
+    "Exclusive/RenderThread/* 합(EventWait 제외)": [
+     -0.1285,
+     0.2083,
+     -0.4028,
+     0.868,
+     0.4795,
+     -0.0853
+    ]
+   }
+  },
+  "S8": {
+   "source_run": "fx7p-run2b-20261022150437",
+   "validity": "annotated",
+   "validity_reason": "FT 범위 3.25 > d 2.42, Sol·tick 안정",
+   "diff_p50": {
+    "GameThreadTime": 2.6825,
+    "tick_ms": 0.9551,
+    "Exclusive/RenderThread/* 합(EventWait 제외)": 0.828,
+    "GPU/TDFluidGpuSolver": 2.4845
+   },
+   "pairs_p50": {
+    "GameThreadTime": [
+     0.506,
+     2.4395,
+     2.9256,
+     2.1386,
+     4.4178,
+     3.1853
+    ],
+    "tick_ms": [
+     0.9494,
+     0.9511,
+     0.9842,
+     0.9592,
+     0.9942,
+     0.9177
+    ],
+    "Exclusive/RenderThread/* 합(EventWait 제외)": [
+     0.7957,
+     0.8604,
+     0.5187,
+     0.5009,
+     1.1922,
+     1.0416
+    ]
+   }
+  }
+ },
+ "closure": {
+  "judge_closure": "Saved/AgentOps/20261022/fx7p/run2-judge/judge-closure.md(3판, judge-final.md와 다르면 우선). 결정 기록 Docs/Tasks/decisions.md D-59",
+  "copied_from": "Saved/AgentOps/20261022/fx7p/run2-judge/evidence/ 정정판(make_evidence.py로 재현 가능)을 Docs로 옮김. 본문의 'Saved, 커밋 전 검토용'·corrected_by·basis 경로는 그 원본 위치를 가리킨다. 공식(도구) 원본은 run2-judge/superseded-validation/",
+  "status": "FX-7p 부분 기준선 종결(proposed, D-59), 재측정 FX-7p-r",
+  "crash": "크래시 ①·② 모두 GPU 리드백 링 스테이징 크기 고정 결함, 커밋 9cdea12e로 종결(proposed). 판별 시험 G(GPU 타일 2→4): 수정 전 판 G1 크래시(PCallStackHash C94287A2…), 수정 판 G1~G3 무사고",
+  "known_notes": [
+   "FX-4a 수용 3(RM:900) 1차는 미충족(J1 판정 불가·J2 사후 미달 쪽). FX-4b는 설계·사본 구현까지 진행하고 통합·수용 판정 전에 FX-7p-r(체제 관문 → Test 빌드)로 재판정한다(D-59 f)"
+  ]
+ }
+}

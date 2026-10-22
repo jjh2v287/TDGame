@@ -463,3 +463,21 @@
 - 증거: `Saved/AgentOps/20261022/fx7p/crash-code.md`·`crash-spec.md`, 빨강 `Saved/AgentOps/20261022/fx7p-crash-red-A-tests.log`·`-red-B-tests.log`, 초록 RHI 31/31
 - 날짜·상태: 2026-10-22 active
 - 발견: claude(FX-7p 측정 중 크래시 2회 → 디버그 워크플로)
+
+### L-editor-54 원격 실행(remote_execution) 출력은 print 한 번이라도 긴 인수(약 30KB)가 별도 출력 항목으로 쪼개져 표식과 JSON이 다른 줄에 온다
+- 증상: `pie_profile_fluid.py --csv-gpu` S10(유체 액터 49개)에서 `configure 실패: 결과 표식 뒤 JSON을 읽지 못했다: TD_FLUID_PERF_RESULT ` 로 실행 종료(exit 2). 에디터 로그에도 표식 줄과 JSON 줄이 따로 찍힌다. 액터 16개(약 8KB)까지는 한 줄이었다.
+- 원인: `print(MARKER, big_json)`의 인수별 쓰기가 에디터 stdout 리디렉터에서 따로 플러시되어 `run_command` 결과 output 항목이 `[Info] MARKER ` 와 `[Info] {json}` 둘로 나뉜다. `run_in_editor.run_code`는 항목마다 `[type] ` 접두어를 붙인다.
+- 해결: 표식 뒤 텍스트와 이후 항목(접두어 `^\[[A-Za-z]+\] ` 제거)을 이어 `json.JSONDecoder().raw_decode`로 첫 JSON 값만 읽는다(`Tools/FluidFX/pie_profile_fluid.py` run_editor_action). 실제 에디터에 36KB 출력 시험으로 재현·확인.
+- 범위: 원격 실행으로 큰 결과를 표식+JSON 한 줄로 돌려받는 모든 도구(같은 패턴의 다른 Tools 스크립트도 큰 결과에서 같은 실패 가능). 두 번째 발생: 같은 사실이 L-editor-44 해결 줄(`pie_probe_fluid_water.py`)에 묻혀 있어 검색에 안 걸렸으므로 별도 항목으로 승격
+- 증거: `Saved/AgentOps/20261022/fx7p/run2.log`·`run2b.log`, 에디터 로그 표식 뒤 빈 줄(2026-10-22 15:01:06)
+- 날짜·상태: 2026-10-22 active
+- 발견: claude(FX-7p 2회차 측정)
+
+### L-editor-55 에디터 Python `component.get_editor_property("<구조체 프로퍼티>")`는 사본이 아니라 객체 메모리 참조라, 나중에 되돌릴 원래 값으로 저장하면 이후 변경을 따라가고 객체가 사라지면 쓰레기 값이 된다
+- 증상: `pie_profile_fluid.py --csv-gpu` 의 reset 이 `reapplied_config` 를 보고했는데 모닥불이 GPU 로 남음(재현 R1, 2026-10-22 22:08). PIE 종료 뒤 같은 스냅숏을 읽으면 `PythonizeEnumEntry: Cannot pythonize '179' (int64) as 'TDFluidSolverBackend'`. 1회차 SmokeStage 장면들이 grid 0·525 같은 비프리셋 값으로 돈 오염도 같은 기전[추정].
+- 원인: UObject 의 USTRUCT 프로퍼티를 get_editor_property 로 받은 래퍼는 소유 객체 메모리를 가리킨다. 스냅숏에 넣은 뒤 configure 가 같은 프로퍼티를 바꾸면 스냅숏도 바뀌고, PIE 가 끝나 컴포넌트가 해제되면 매달린 참조가 된다.
+- 해결: 저장할 때 `.copy()`(StructBase, 독립 사본 확인: 사본 수정이 원본에 안 미침)로 떼어 둔다(`Tools/FluidFX/pie_profile_fluid.py` fx7p_snapshot). 받은 즉시 고쳐 apply 하는 패턴(같은 호출 안)은 문제없다.
+- 범위: 에디터 Python 으로 구조체 값을 보관했다가 나중에 되돌리는 모든 도구. 오프라인 가짜 unreal 하네스는 값 의미론이라 이 결함을 못 잡는다
+- 증거: `Saved/AgentOps/20261022/fx7p/crash_r1_timeline.txt`(reset 뒤 DESCRIBE GPU128), 프로브 `probe_snapshot.py`·`probe_copy2.py` 결과(세션 스크래치), `Saved/FluidFX/fx7p/fx7p-crashR1-20261022220446`
+- 날짜·상태: 2026-10-22 active
+- 발견: claude(FX-7p 크래시 ② R1 재현)

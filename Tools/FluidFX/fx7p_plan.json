@@ -1,0 +1,2217 @@
+{
+ "run_label": "fx7p",
+ "offscreen_logs": [
+  "Saved/AgentOps/2026102*/fx7p/scratch/measure/fx7p-offscreen*-tests.log"
+ ],
+ "headless_logs": [
+  "Saved/AgentOps/2026102*/fx7p/scratch/measure/fx7p-null*-tests.log"
+ ],
+ "bench_outputs": [
+  "Saved/AgentOps/2026102*/fx7p/scratch/measure/fx7p-bench*-passes.json"
+ ],
+ "scenes": [
+  {
+   "id": "S1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 128
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1800.0,
+     "pitch": -25.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 128,
+    "count": 1,
+    "visible": true
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "S2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 128
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1800.0,
+     "pitch": -25.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 128,
+    "count": 1,
+    "visible": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ]
+  },
+  {
+   "id": "S3",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 256
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1800.0,
+     "pitch": -25.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 256,
+    "count": 1,
+    "visible": true
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "S4",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 256
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1800.0,
+     "pitch": -25.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 256,
+    "count": 1,
+    "visible": true,
+    "slope": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ]
+  },
+  {
+   "id": "S5",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 512
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 512,
+    "count": 1,
+    "visible": false,
+    "record_only": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ],
+   "metric": "GPU/TDFluidGpuSolver"
+  },
+  {
+   "id": "S6",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 3,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "wait",
+     "seconds": 1.0
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 512,
+     "stagger_seconds": 1.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1800.0,
+     "pitch": -25.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 512,
+    "count": 4,
+    "visible": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ]
+  },
+  {
+   "id": "S6h",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 3,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "wait",
+     "seconds": 1.0
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 512,
+     "stagger_seconds": 1.0
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 512,
+    "count": 4,
+    "visible": false,
+    "record_only": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ]
+  },
+  {
+   "id": "S7",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 15,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 256
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 256,
+    "count": 16,
+    "visible": false
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "S8",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 15,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "wait",
+     "seconds": 1.0
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 256,
+     "stagger_seconds": 1.0
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 256,
+    "count": 16,
+    "visible": false,
+    "slope": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ]
+  },
+  {
+   "id": "S9",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 48,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "wait",
+     "seconds": 1.0
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 256,
+     "stagger_seconds": 1.0
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 256,
+    "count": 49,
+    "visible": false,
+    "slope": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ]
+  },
+  {
+   "id": "S10",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 48,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 256
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 256,
+    "count": 49,
+    "visible": false
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "S11",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 3,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "wait",
+     "seconds": 1.0
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 256,
+     "stagger_seconds": 1.0
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 256,
+    "count": 4,
+    "visible": false,
+    "slope": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ]
+  },
+  {
+   "id": "D1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 96
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1800.0,
+     "pitch": -25.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 96,
+    "count": 1,
+    "visible": true
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "D2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 192
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1800.0,
+     "pitch": -25.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 192,
+    "count": 1,
+    "visible": true
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "D3",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 15,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 96
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 96,
+    "count": 16,
+    "visible": false
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "D4",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 15,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 128
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 128,
+    "count": 16,
+    "visible": false
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "D5",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 15,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 192
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "resolution": 192,
+    "count": 16,
+    "visible": false
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "D6",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard",
+    "spawned"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "spawn",
+     "source": "TDGen_SmokeHard",
+     "count": 15,
+     "spacing_cm": 1500.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    },
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "wait",
+     "seconds": 1.0
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 128,
+     "stagger_seconds": 1.0
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 128,
+    "count": 16,
+    "visible": false
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ]
+  },
+  {
+   "id": "S12",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "grid_resolution": 512
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    },
+    {
+     "action": "light",
+     "visible": true
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "a": [
+    {
+     "action": "transmittance",
+     "enabled": true
+    }
+   ],
+   "b": [
+    {
+     "action": "transmittance",
+     "enabled": false
+    }
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "resolution": 512,
+    "count": 1,
+    "transmittance_ab": true
+   },
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ],
+   "metric": "GPU/TDFluidGpuSolver"
+  },
+  {
+   "id": "V1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "parts": [
+      "cards",
+      "embers"
+     ],
+     "visible": false
+    },
+    {
+     "action": "light",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": false
+    }
+   ],
+   "occupancy": {
+    "camera": {
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1500.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    },
+    "target_fraction": [
+     0.2,
+     0.3
+    ],
+    "mask_light": true
+   },
+   "metric": "GPU/Translucency",
+   "occupancy_metric": "GPU/Translucency",
+   "required_columns": [
+    "FrameTime",
+    "GPU/Translucency"
+   ],
+   "gpu_clock": true,
+   "meta": {
+    "material": "HARD",
+    "light": "none",
+    "fog": true,
+    "record_only": false
+   }
+  },
+  {
+   "id": "V2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "parts": [
+      "cards",
+      "embers"
+     ],
+     "visible": false
+    },
+    {
+     "action": "light",
+     "visible": true
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": false
+    }
+   ],
+   "occupancy": {
+    "camera": {
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1500.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    },
+    "target_fraction": [
+     0.2,
+     0.3
+    ]
+   },
+   "metric": "GPU/Translucency",
+   "occupancy_metric": "GPU/Translucency",
+   "required_columns": [
+    "FrameTime",
+    "GPU/Translucency"
+   ],
+   "gpu_clock": true,
+   "meta": {
+    "material": "HARD",
+    "light": "point",
+    "fog": false,
+    "record_only": false
+   }
+  },
+  {
+   "id": "V3",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeSoft"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "parts": [
+      "cards",
+      "embers"
+     ],
+     "visible": false
+    },
+    {
+     "action": "light",
+     "visible": false
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": false
+    }
+   ],
+   "occupancy": {
+    "camera": {
+     "target": "TDGen_SmokeSoft",
+     "distance_cm": 1500.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    },
+    "target_fraction": [
+     0.2,
+     0.3
+    ]
+   },
+   "metric": "GPU/Translucency",
+   "occupancy_metric": "GPU/Translucency",
+   "required_columns": [
+    "FrameTime",
+    "GPU/Translucency"
+   ],
+   "gpu_clock": true,
+   "meta": {
+    "material": "SOFT",
+    "light": "none",
+    "fog": false,
+    "record_only": false
+   }
+  },
+  {
+   "id": "V4",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeSoft"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "parts": [
+      "cards",
+      "embers"
+     ],
+     "visible": false
+    },
+    {
+     "action": "light",
+     "visible": true
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": false
+    }
+   ],
+   "occupancy": {
+    "camera": {
+     "target": "TDGen_SmokeSoft",
+     "distance_cm": 1500.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    },
+    "target_fraction": [
+     0.2,
+     0.3
+    ]
+   },
+   "metric": "GPU/Translucency",
+   "occupancy_metric": "GPU/Translucency",
+   "required_columns": [
+    "FrameTime",
+    "GPU/Translucency"
+   ],
+   "gpu_clock": true,
+   "meta": {
+    "material": "SOFT",
+    "light": "point",
+    "fog": false,
+    "record_only": false
+   }
+  },
+  {
+   "id": "V5",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "parts": [
+      "cards",
+      "embers"
+     ],
+     "visible": false
+    },
+    {
+     "action": "light",
+     "visible": false
+    },
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog 1"
+     ],
+     "restore": true
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": false
+    }
+   ],
+   "occupancy": {
+    "camera": {
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1500.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    },
+    "target_fraction": [
+     0.2,
+     0.3
+    ],
+    "mask_light": true
+   },
+   "metric": "GPU/Translucency",
+   "occupancy_metric": "GPU/Translucency",
+   "required_columns": [
+    "FrameTime",
+    "GPU/Translucency"
+   ],
+   "gpu_clock": true,
+   "meta": {
+    "material": "HARD",
+    "light": "none",
+    "fog": true,
+    "record_only": true
+   }
+  },
+  {
+   "id": "V1f0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "targets": [
+    "TDGen_SmokeHard"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "parts": [
+      "cards",
+      "embers"
+     ],
+     "visible": false
+    },
+    {
+     "action": "light",
+     "visible": false
+    },
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog 0"
+     ],
+     "restore": true
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "parts": [
+      "volumes"
+     ],
+     "visible": false
+    }
+   ],
+   "occupancy": {
+    "camera": {
+     "target": "TDGen_SmokeHard",
+     "distance_cm": 1500.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    },
+    "target_fraction": [
+     0.2,
+     0.3
+    ],
+    "mask_light": true
+   },
+   "metric": "GPU/Translucency",
+   "occupancy_metric": "GPU/Translucency",
+   "required_columns": [
+    "FrameTime",
+    "GPU/Translucency"
+   ],
+   "gpu_clock": true,
+   "meta": {
+    "material": "HARD",
+    "light": "none",
+    "fog": false,
+    "record_only": true
+   }
+  },
+  {
+   "id": "F1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+   "targets": [
+    "TDGen_CampfireFire",
+    "TDGen_CampfireSmoke"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu"
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_CampfireFire",
+     "distance_cm": 700.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 120.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "block_frames": 1200,
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "scene": "campfire"
+   }
+  },
+  {
+   "id": "F2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+   "targets": [
+    "TDGen_CampfireFire",
+    "TDGen_CampfireSmoke"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "wait",
+     "seconds": 1.0
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu",
+     "stagger_seconds": 1.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_CampfireFire",
+     "distance_cm": 700.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 120.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "block_frames": 1200,
+   "gpu_clock": true,
+   "required_columns": [
+    "FrameTime",
+    "GPU/TDFluidGpuSolver"
+   ],
+   "meta": {
+    "backend": "Gpu",
+    "scene": "campfire"
+   }
+  },
+  {
+   "id": "F3",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+   "targets": [
+    "TDGen_CampfireFire",
+    "TDGen_CampfireSmoke"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "parts": [
+      "cards"
+     ],
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "parts": [
+      "cards"
+     ],
+     "visible": false
+    }
+   ],
+   "occupancy": {
+    "camera": {
+     "target": "TDGen_CampfireFire",
+     "distance_cm": 700.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 120.0
+    }
+   },
+   "metric": "GPU/Translucency",
+   "occupancy_metric": "GPU/Translucency",
+   "required_columns": [
+    "FrameTime",
+    "GPU/Translucency"
+   ],
+   "gpu_clock": true,
+   "meta": {
+    "scene": "campfire_cards"
+   }
+  },
+  {
+   "id": "F4",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+   "targets": [
+    "TDGen_CampfireFire"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Cpu",
+     "grid_resolution": 128
+    }
+   ],
+   "a": [
+    {
+     "action": "configure",
+     "enable_heat_channel": true
+    }
+   ],
+   "b": [
+    {
+     "action": "configure",
+     "enable_heat_channel": false
+    }
+   ],
+   "block_frames": 1200,
+   "metric": "GameThreadTime",
+   "meta": {
+    "backend": "Cpu",
+    "scene": "campfire_heat_ab"
+   }
+  },
+  {
+   "id": "F5",
+   "kind": "trace",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+   "targets": [
+    "TDGen_TorchFire"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "configure",
+     "backend": "Gpu"
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "camera",
+     "mode": "pawn"
+    },
+    {
+     "action": "pawn",
+     "x": -300.0,
+     "y": -300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    }
+   ],
+   "trace_steps": [
+    {
+     "action": "wait",
+     "seconds": 20.0
+    },
+    {
+     "action": "pawn",
+     "goal_x": 300.0,
+     "goal_y": -300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 2.5
+    },
+    {
+     "action": "pawn",
+     "goal_x": 300.0,
+     "goal_y": 300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 2.5
+    },
+    {
+     "action": "pawn",
+     "goal_x": -300.0,
+     "goal_y": 300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 2.5
+    },
+    {
+     "action": "pawn",
+     "goal_x": -300.0,
+     "goal_y": -300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 2.5
+    }
+   ],
+   "repeats": 3,
+   "meta": {
+    "backend": "Gpu",
+    "scene": "torch"
+   }
+  },
+  {
+   "id": "F5c",
+   "kind": "trace",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+   "targets": [
+    "TDGen_TorchFire"
+   ],
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "camera",
+     "mode": "pawn"
+    },
+    {
+     "action": "pawn",
+     "x": -300.0,
+     "y": -300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    }
+   ],
+   "trace_steps": [
+    {
+     "action": "wait",
+     "seconds": 20.0
+    },
+    {
+     "action": "pawn",
+     "goal_x": 300.0,
+     "goal_y": -300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 2.5
+    },
+    {
+     "action": "pawn",
+     "goal_x": 300.0,
+     "goal_y": 300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 2.5
+    },
+    {
+     "action": "pawn",
+     "goal_x": -300.0,
+     "goal_y": 300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 2.5
+    },
+    {
+     "action": "pawn",
+     "goal_x": -300.0,
+     "goal_y": -300.0
+    },
+    {
+     "action": "wait",
+     "seconds": 2.5
+    }
+   ],
+   "repeats": 1,
+   "meta": {
+    "backend": "Cpu",
+    "scene": "torch"
+   }
+  },
+  {
+   "id": "F6",
+   "kind": "trace",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+   "targets": [
+    "TDGen_ExplosionFire",
+    "TDGen_ExplosionSmoke"
+   ],
+   "fresh_pie": true,
+   "pie_per_repeat": true,
+   "repeats": 3,
+   "setup": [
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "targets": "others",
+     "visible": false
+    },
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "camera",
+     "mode": "pawn"
+    },
+    {
+     "action": "pawn",
+     "x": -600.0,
+     "y": 3200.0
+    },
+    {
+     "action": "wait",
+     "seconds": 3.0
+    }
+   ],
+   "trace_steps": [
+    {
+     "action": "trigger",
+     "hit_dx": -55.0,
+     "hit_dy": 0.0,
+     "hit_dz": -35.0
+    },
+    {
+     "action": "wait",
+     "seconds": 8.0
+    }
+   ],
+   "meta": {
+    "scene": "explosion"
+   }
+  }
+ ],
+ "fresh_pie_after_gpu": true,
+ "_fx7p_tools_fix": "2026-10-22 fx7p-tools-fix: 라벨 TDGen_*, 스폰 뒤 3초, GPU 재구성 전 재우기·1초·액터별 1초 간격, GPU 장면 다음 새 PIE, S12 광원 켬, V1·V5·V1f0 점유는 광원 대리 마스크"
+}

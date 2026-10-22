@@ -19,6 +19,7 @@
 #include "InputCoreTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 namespace
 {
@@ -383,6 +384,8 @@ bool ATDFluidLiveActor::BeginLiveActorStep(float DeltaTime)
 
 	if (bShouldFollowPlayerPawn)
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ActorWindowMove);
+
 		if (LiveComponent->GetPlaneBasis().IsWorldFacing())
 		{
 			const FVector2D SnappedCenter = LiveComponent->GetSimulationCenterWorld();
@@ -902,6 +905,8 @@ void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBefor
 		return;
 	}
 
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ShiftTerrainQueue);
+
 	for (int32 Index = PendingTerrainCells.Num() - 1; Index >= 0; --Index)
 	{
 		const FIntPoint ShiftedCell = PendingTerrainCells[Index] - ShiftCells;
@@ -913,16 +918,16 @@ void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBefor
 		PendingTerrainCells[Index] = ShiftedCell;
 	}
 
+	const int32 NewColumnBegin = ShiftCells.X > 0 ? Resolution - ShiftCells.X : 0;
+	const int32 NewColumnEnd = ShiftCells.X > 0 ? Resolution : -ShiftCells.X;
 	for (int32 CellY = 0; CellY < Resolution; ++CellY)
 	{
 		const bool bIsNewRow = ShiftCells.Y > 0 ? CellY >= Resolution - ShiftCells.Y : CellY < -ShiftCells.Y;
-		for (int32 CellX = 0; CellX < Resolution; ++CellX)
+		const int32 FirstCellX = bIsNewRow ? 0 : NewColumnBegin;
+		const int32 EndCellX = bIsNewRow ? Resolution : NewColumnEnd;
+		for (int32 CellX = FirstCellX; CellX < EndCellX; ++CellX)
 		{
-			const bool bIsNewColumn = ShiftCells.X > 0 ? CellX >= Resolution - ShiftCells.X : CellX < -ShiftCells.X;
-			if (bIsNewRow || bIsNewColumn)
-			{
-				PendingTerrainCells.Add(FIntPoint(CellX, CellY));
-			}
+			PendingTerrainCells.Add(FIntPoint(CellX, CellY));
 		}
 	}
 }
@@ -941,6 +946,8 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 	{
 		return;
 	}
+
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_SampleTerrainQueue);
 
 	if (!bIsTerrainQueueCurrent)
 	{

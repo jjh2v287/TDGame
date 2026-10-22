@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, C++ 콘솔 변수 TD.FluidFX.LogTickCost가 들어간 빌드), 에디터 쪽 조작은 이 파일의 EDITOR_CODE를 원격 실행으로 보낸다. --csv-gpu는 계획 JSON 장면마다 무대 PIE를 열고 효과 켬(A)·끔(B) csvprofile 블록을 ABBA로 찍으며 nvidia-smi 클럭을 함께 기록하고(build_hold.json owner가 --holder와 같아야 하며 장면마다 보류 시각을 갱신), --analyze는 에디터 없이 실행 폴더만 읽는다(utrace는 UnrealInsights로 내보냄). GPU 재구성 크래시(FX-4a 결함, 2026-10-22) 대비로 계획 fresh_pie_after_gpu는 GPU로 재구성한 장면 다음에 액터를 재운 뒤 새 PIE를 열고, configure 단계 stagger_seconds는 액터를 한 번에 하나씩 재구성한다.
 실행 명령: python Tools/FluidFX/pie_profile_fluid.py [--phase-seconds 10] (PowerShell, 측정 동안 에디터 창을 앞창으로 두기: 백그라운드 PIE는 3fps로 제한된다 L-editor-06) | --csv-gpu PLAN.json --holder 이름 (예 Tools/FluidFX/fx7p_plan.json 전체·fx7p_plan_run2.json 2회차, PowerShell, 빌드·헤드리스 시험과 동시 금지) | --analyze Saved/FluidFX/fx7p/<run>
 출력: Saved/FluidFX/fluid_pie_perf.json, Docs/Validation/FluidFX/D-48-pie-perf-<날짜>.json(측정이 이뤄진 경우, 그날 파일이 이미 있으면 덮지 않고 -<시분초>를 붙임), 표준 출력 구간별 표. 종료 코드 0 전 구간에 TDFluidPerf 줄 있음·나이아가라 활성 토글 통과/1 줄 없는 구간·구간 오염·나이아가라 실패 있음/2 환경 문제(에디터·MCP·PIE·콘솔 변수). --csv-gpu는 Saved/FluidFX/fx7p/<run>/session.json·plan.json·csv/·shots/·traces/·clock.csv·editor.log·result.json(증거 파일은 쓰지 않음), --analyze는 같은 폴더 result.json(J1~J9 verdicts·J6 표, 렌더 스레드는 Exclusive/RenderThread 합(EventWait 제외), S12는 A·B 투과율 텍스처 확인이 없으면 J8 null)과 Docs/Validation/FluidFX/FX-7p-baseline-<날짜>.json·FX-4a-gpu-<날짜>.json(J1·J2·J3·J5 발췌, 그날 파일이 있으면 -<시분초>). 두 경로의 종료 코드 0 완료/1 불안정·A 블록 필수 열 없음·클럭 폐기 과다·추적 분석 실패/2 환경(보류·빌드·셰이더·프레임 상한 관문, 에디터·PIE·CSV 시간 초과)
-상태: 현행(2026-10-18 첫 성공, 증거 Docs/Validation/FluidFX/D-48-perf-2026-10-18.md). --csv-gpu·--analyze는 부분 검증(명세 Saved/AgentOps/20261022/fx7p/spec-b.md): 2026-10-22 1회차 PIE 31장면 중 15장면 측정(Saved/FluidFX/fx7p/fx7p-run1-20261022123641, 카메라·스폰·라벨·관문 10%는 그 측정 사본과 같음), GPU 재구성 뒤 에디터 크래시 2회로 중단(리드백 링 결함, 9cdea12e로 수정). 2회차 run2·run2b·run2c로 나머지 장면을 재서 32장면 합본(장면마다 오류 없는 마지막 기록)·--analyze 완료(판정 정본 Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md·judge-closure.md). 2026-10-22 고침: 큰 결과의 원격 출력 분할 읽기(L-editor-54), 스냅숏 설정 `.copy()`(L-editor-55, 이전 판 reset은 configure 설정을 되돌리지 못했다). 남은 한계: 안정 관문이 장면 FrameTime 하나라 GT 묶임 PIE에서 null이 많다(J별 규칙으로 바꾸는 것은 FX-7p-r)
+상태: 현행(2026-10-18 첫 성공, 증거 Docs/Validation/FluidFX/D-48-perf-2026-10-18.md). --csv-gpu·--analyze는 부분 검증(명세 Saved/AgentOps/20261022/fx7p/spec-b.md): 2026-10-22 1회차 PIE 31장면 중 15장면 측정(Saved/FluidFX/fx7p/fx7p-run1-20261022123641, 카메라·스폰·라벨·관문 10%는 그 측정 사본과 같음), GPU 재구성 뒤 에디터 크래시 2회로 중단(리드백 링 결함, 9cdea12e로 수정). 2회차 run2·run2b·run2c로 나머지 장면을 재서 32장면 합본(장면마다 오류 없는 마지막 기록)·--analyze 완료(판정 정본 Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md·judge-closure.md). 2026-10-22 고침: 큰 결과의 원격 출력 분할 읽기(L-editor-54), 스냅숏 설정 `.copy()`(L-editor-55, 이전 판 reset은 configure 설정을 되돌리지 못했다). 남은 한계: 안정 관문이 장면 FrameTime 하나라 GT 묶임 PIE에서 null이 많다(J별 규칙으로 바꾸는 것은 FX-7p-r). 2026-10-23 W-1 관문 확장(미검증, 계획 Saved/AgentOps/20261023/w1gate/plan_w1perf.json): 계획 키 extra_columns(블록 통계·차분에 더할 CSV 열)·write_fx7p_evidence(false면 --analyze가 FX-7p·FX-4a 증거를 쓰지 않음)·장면 refill_frames·steady_frames, 동작 view(폰 붐 길이·카메라 16:9 고정)·pawn z·speed, 준비 확인은 --csv-gpu에서만 깨어 있는 액터 기준(깨어 있는 액터가 0개면 미준비), 추적 분석은 표식 창 길이로 자르고(L-editor-32) 창 이동 프레임(TDFluid_RasterizeWater 포함)·깨어남 구간을 따로 내며, 계획 표식 profilegpu:<장면>뒤 ProfileGPU 압축 출력(r.ProfileGPU.TableFormatting 0)의 SingleLayerWater 포함 시간을 표식 라벨별로 모아 셰이더 관문 끝 이후 표본만 요약해 장면 profilegpu에 라벨 키로 붙이고, 점유 측정에 16:9 중앙 비율과 setup 뒤 조건 기준 occupancy_px_internal·ms_per_mpx_internal을 더한다. 2026-10-23 추적 창 자르기 도입으로 FX-7p J8.explosion·J9 재분석 값이 미세 변동(통과 여부 동일)
 """
 import argparse
 import bisect
@@ -114,7 +114,9 @@ def run_setup(world):
     if not actors:
         return {"error": "게임 월드에 TDFluidLiveActor가 없다"}
     entries = describe_actors(actors)
-    if not all(entry["has_runtime_texture"] for entry in entries):
+    awake_only = bool(PARAMS.get("awake_only"))
+    required = [entry for entry in entries if entry["awake"]] if awake_only else entries
+    if (awake_only and not required) or not all(entry["has_runtime_texture"] for entry in required):
         return {"ready": False, "actors": entries}
     unreal.SystemLibrary.execute_console_command(world, CONSOLE_VARIABLE + " 1")
     for actor in actors:
@@ -487,16 +489,40 @@ def run_fx7p_camera(world):
 def run_fx7p_pawn(world):
     pawn = unreal.GameplayStatics.get_player_pawn(world, 0)
     controller = unreal.GameplayStatics.get_player_controller(world, 0)
+    if PARAMS.get("speed") is not None:
+        if not hasattr(pawn, "set_max_move_speed"):
+            return {"error": "폰에 set_max_move_speed가 없다"}
+        pawn.set_max_move_speed(float(PARAMS["speed"]))
     if PARAMS.get("x") is not None:
         if controller is not None:
             controller.stop_movement()
         location = pawn.get_actor_location()
-        pawn.set_actor_location(unreal.Vector(float(PARAMS["x"]), float(PARAMS["y"]), location.z), False, True)
+        target_z = float(PARAMS["z"]) if PARAMS.get("z") is not None else location.z
+        pawn.set_actor_location(unreal.Vector(float(PARAMS["x"]), float(PARAMS["y"]), target_z), False, True)
     if PARAMS.get("goal_x") is not None:
         goal = unreal.Vector(float(PARAMS["goal_x"]), float(PARAMS["goal_y"]), pawn.get_actor_location().z)
         unreal.AIHelperLibrary.simple_move_to_location(controller, goal)
     location = pawn.get_actor_location()
-    return {"pawn": [location.x, location.y, location.z]}
+    velocity = pawn.get_velocity()
+    speed = pawn.get_max_move_speed() if hasattr(pawn, "get_max_move_speed") else None
+    return {"pawn": [location.x, location.y, location.z], "speed_2d": (velocity.x ** 2 + velocity.y ** 2) ** 0.5, "max_move_speed": speed}
+
+
+def run_fx7p_view(world):
+    pawn = unreal.GameplayStatics.get_player_pawn(world, 0)
+    boom = pawn.get_component_by_class(unreal.SpringArmComponent) if pawn is not None else None
+    camera = pawn.get_component_by_class(unreal.CameraComponent) if pawn is not None else None
+    if boom is None or camera is None:
+        return {"error": "폰에 SpringArm·Camera 컴포넌트가 없다"}
+    if PARAMS.get("arm_cm") is not None:
+        boom.set_editor_property("target_arm_length", float(PARAMS["arm_cm"]))
+    if PARAMS.get("aspect_ratio") is not None:
+        camera.set_aspect_ratio(float(PARAMS["aspect_ratio"]))
+    if PARAMS.get("constrain_aspect") is not None:
+        camera.set_constraint_aspect_ratio(bool(PARAMS["constrain_aspect"]))
+    size = unreal.WidgetLayoutLibrary.get_viewport_size(world)
+    return {"arm_cm": boom.get_editor_property("target_arm_length"), "constrain_aspect": bool(camera.get_editor_property("constrain_aspect_ratio")),
+            "aspect_ratio": camera.get_editor_property("aspect_ratio"), "field_of_view": camera.get_editor_property("field_of_view"), "viewport": [size.x, size.y]}
 
 
 def run_fx7p_console(world):
@@ -580,7 +606,7 @@ def run_fx7p_marker(world):
 
 
 FX7P_HANDLERS = {"snapshot": run_fx7p_snapshot, "reset": run_fx7p_reset, "configure": run_fx7p_configure, "spawn": run_fx7p_spawn, "despawn": run_fx7p_despawn,
-                 "visibility": run_fx7p_visibility, "sleep": run_fx7p_sleep, "light": run_fx7p_light, "camera": run_fx7p_camera, "pawn": run_fx7p_pawn,
+                 "visibility": run_fx7p_visibility, "sleep": run_fx7p_sleep, "light": run_fx7p_light, "camera": run_fx7p_camera, "pawn": run_fx7p_pawn, "view": run_fx7p_view,
                  "console": run_fx7p_console, "conditions": run_fx7p_conditions, "csv": run_fx7p_csv, "shot": run_fx7p_shot, "trace": run_fx7p_trace,
                  "trigger": run_fx7p_trigger, "transmittance": run_fx7p_transmittance, "marker": run_fx7p_marker}
 
@@ -721,11 +747,11 @@ def build_resolution_targets(resolution_rule, original_entries):
     return {entry["path"]: resolution_rule for entry in original_entries}
 
 
-def wait_for_fluid_setup():
+def wait_for_fluid_setup(awake_only=False):
     started = time.monotonic()
     result = {"error": "유체 액터 준비를 확인하지 못했다"}
     while time.monotonic() - started < SETUP_TIMEOUT_SECONDS:
-        result = run_editor_action("setup")
+        result = run_editor_action("setup", awake_only=awake_only)
         if "error" in result or result.get("ready"):
             return result
         time.sleep(SETUP_POLL_SECONDS)
@@ -918,9 +944,19 @@ FX7P_METRIC_COLUMNS = (FRAME_COLUMN, "GameThreadTime", RENDER_THREAD_SUM_COLUMN,
 FX7P_CLOCK_COMMAND = ["nvidia-smi", "--query-gpu=timestamp,clocks.gr,clocks.mem,temperature.gpu,power.draw,pstate", "--format=csv,noheader,nounits"]
 FX7P_STEP_TIMER = "TDFluid_StepFluidWorld"
 FX7P_SOLVER_TIMER = "TDFluid_RunSolverSteps"
+FX7P_SHIFT_TIMER = "TDFluid_RasterizeWater"
+FX7P_SIMULATION_TIMER = "TDFluid_StepSimulation"
+FX7P_PROFILEGPU_PREFIX = "profilegpu:"
+FX7P_PROFILEGPU_EVENTS = ("SingleLayerWater", "SingleLayerWaterDepthPrepass", "SLW::LumenReflections")
+FX7P_PROFILEGPU_TSR_PREFIX = "TemporalSuperResolution"
+FX7P_PROFILEGPU_LINE_PATTERN = re.compile(r"LogRHI: Display:\s+([\d.]+)%\s+([\d.]+)ms(?: \+ [\d.]+ Wait)?\s+(\S.*?)\s*$")
+FX7P_DEFAULT_REFILL_FRAMES = 36
+FX7P_DEFAULT_STEADY_FRAMES = (90, 210)
 FX7P_RECONFIGURE_ACTIONS = ("configure", "spawn", "despawn", "transmittance")
 FX7P_LOG_TIME_PATTERN = re.compile(r"^\[(\d{4})\.(\d{2})\.(\d{2})-(\d{2})\.(\d{2})\.(\d{2}):(\d{3})\]")
 FX7P_MARK_PATTERN = re.compile(r"TD_FX7P_MARK (\S+)")
+FX7P_WARM_MARK_PATTERN = re.compile(r"block_begin:(.+)_warm\d+$")
+FX7P_OCCUPANCY_BASIS = "occupancy_px·ms_per_mpx는 setup 전 조건(전체 뷰포트 x r.ScreenPercentage)이라 view 제약·setup SP 장면은 occupancy_px_internal·ms_per_mpx_internal을 쓴다"
 FX7P_BUDGET_PATTERN = re.compile(r"TDFluidGpuPressureBudget: multigrid1_x1_median_ms=([\d.]+).*?multigrid1_x1_p95_ms=([\d.]+).*?multigrid1_x4_median_ms=([\d.]+)")
 FX7P_TEST_RESULT_PATTERN = re.compile(r"Test Completed\. Result=\{(\w+)\} Name=\{([^}]*)\}")
 FX7P_SVOL_BUDGET_MS = {("HARD", "none"): 1.0, ("HARD", "point"): 2.0, ("SOFT", "none"): 4.0, ("SOFT", "point"): 4.0}
@@ -947,8 +983,14 @@ FX7P_DEFAULTS = {
     "stability": {"relative": 0.10, "small_diff_ms": 0.2, "absolute_ms": 0.05},
     "occupancy": {"threshold": 2, "max_iterations": 3, "min_distance_cm": 500.0, "max_step_ratio": 2.0},
     "offscreen_logs": [], "headless_logs": [], "bench_outputs": [],
+    "extra_columns": [], "write_fx7p_evidence": True,
     "scenes": [],
 }
+
+
+def fx7p_metric_columns(config):
+    extra = [name for name in config.get("extra_columns", []) if name not in FX7P_METRIC_COLUMNS]
+    return FX7P_METRIC_COLUMNS + tuple(extra)
 
 
 def fx7p_percentile(values, fraction):
@@ -1060,10 +1102,10 @@ def count_fx7p_spikes(frames, ratio):
     return sum(1 for value in frames if value > ratio * median)
 
 
-def describe_fx7p_csv(path, discard_rows, spike_ratio):
+def describe_fx7p_csv(path, discard_rows, spike_ratio, metric_columns=FX7P_METRIC_COLUMNS):
     columns = read_csv_columns(path, discard_rows)
     frames = columns.get(FRAME_COLUMN) or []
-    stats = {name: summarize_fx7p_values(columns[name]) for name in FX7P_METRIC_COLUMNS if columns.get(name)}
+    stats = {name: summarize_fx7p_values(columns[name]) for name in metric_columns if columns.get(name)}
     return {"rows": len(frames), "spikes": count_fx7p_spikes(frames, spike_ratio), "stats": stats, "frames": frames}
 
 
@@ -1304,7 +1346,7 @@ def ensure_fx7p_pie(context, level, fresh):
     if not pie_check_fluid.wait_for_pie_state(True, pie_check_fluid.PIE_START_WAIT_SECONDS):
         return "PIE 게임 월드가 나타나지 않았다"
     context["pie_session"] += 1
-    setup = wait_for_fluid_setup()
+    setup = wait_for_fluid_setup(awake_only=True)
     if "error" in setup:
         return f"유체 액터 준비 실패: {setup['error']}"
     config = context["config"]
@@ -1363,7 +1405,7 @@ def capture_fx7p_csv(context, scene, block_id, frames, discard_rows):
         return None, f"{block_id}: {context['config']['csv_timeout_seconds']:.0f}초 안에 CSV가 완성되지 않았다(Saved/Profiling/CSV)"
     target = context["run_dir"] / "csv" / f"{block_id}.csv"
     shutil.copy2(source, target)
-    description = describe_fx7p_csv(target, discard_rows, context["config"]["warmup"]["spike_ratio"])
+    description = describe_fx7p_csv(target, discard_rows, context["config"]["warmup"]["spike_ratio"], fx7p_metric_columns(context["config"]))
     block = {"block_id": block_id, "scene": scene["id"], "csv": target.relative_to(context["run_dir"]).as_posix(), "source_csv": source,
              "t_start": round(started, 3), "t_end": round(finished, 3), "rows": description["rows"], "spikes": description["spikes"],
              "stats": description["stats"], "actors": result.get("actors")}
@@ -1473,7 +1515,11 @@ def measure_fx7p_occupancy(path_a, path_b, threshold):
     mask = numpy.abs(pixels_a - pixels_b).max(axis=2) > threshold
     opened = dilate_fx7p_mask(erode_fx7p_mask(mask))
     height, width = mask.shape
-    return {"fraction": round(float(opened.sum()) / mask.size, 5), "pixels": int(opened.sum()), "raw_pixels": int(mask.sum()), "image": [width, height]}
+    center_width = min(width, round(height * 16 / 9))
+    left = (width - center_width) // 2
+    center = opened[:, left:left + center_width]
+    return {"fraction": round(float(opened.sum()) / mask.size, 5), "pixels": int(opened.sum()), "raw_pixels": int(mask.sum()), "image": [width, height],
+            "center_16x9_fraction": round(float(center.sum()) / center.size, 5), "center_16x9_box": [left, 0, left + center_width, height]}
 
 
 def shift_fx7p_windows(mask, fill):
@@ -1785,7 +1831,7 @@ def summarize_fx7p_block(block, context):
         return summary
     columns = read_csv_columns(path, config["discard_frames"])
     frames = columns.get(FRAME_COLUMN) or []
-    stats = {name: summarize_fx7p_values(columns[name]) for name in FX7P_METRIC_COLUMNS if columns.get(name)}
+    stats = {name: summarize_fx7p_values(columns[name]) for name in fx7p_metric_columns(config) if columns.get(name)}
     if block["side"] == "B":
         if STEP_COUNT_COLUMN not in stats:
             stats[STEP_COUNT_COLUMN] = fx7p_zero_stats()
@@ -1903,11 +1949,46 @@ def compute_fx7p_occupancy(plan_scene, record, diff):
     if not percentage or percentage <= 0:
         return None, None, "r.ScreenPercentage가 자동(≤0)이라 내부 화소를 모른다"
     internal_pixels = viewport[0] * viewport[1] * (percentage / 100.0) ** 2
-    occupancy_px = final["fraction"] * internal_pixels
+    return compute_fx7p_ms_per_mpx(plan_scene, diff, final["fraction"] * internal_pixels)
+
+
+def compute_fx7p_ms_per_mpx(plan_scene, diff, occupancy_px):
     metric_diff = (diff.get(plan_scene.get("occupancy_metric", TRANSLUCENCY_COLUMN)) or {}).get("p50")
     if metric_diff is None or occupancy_px <= 0:
         return round(occupancy_px), None, "차분 또는 점유 화소 없음"
     return round(occupancy_px), round(metric_diff / (occupancy_px / 1e6), 4), None
+
+
+def find_fx7p_setup_screen_state(record):
+    percentage = None
+    constrained = False
+    for step in record.get("steps", []):
+        result = step.get("result") or {}
+        readback_percentage = (result.get("readback") or {}).get("r.ScreenPercentage")
+        if readback_percentage is not None:
+            percentage = readback_percentage
+        if step["action"] == "view" and "constrain_aspect" in result:
+            constrained = bool(result["constrain_aspect"])
+    if percentage is None:
+        percentage = ((record.get("conditions") or {}).get("variables") or {}).get("r.ScreenPercentage")
+    return percentage, constrained
+
+
+def compute_fx7p_internal_occupancy(plan_scene, record, diff):
+    empty = {"occupancy_px_internal": None, "ms_per_mpx_internal": None, "occupancy_internal_basis": None}
+    final = (record.get("occupancy") or {}).get("final")
+    if not final or "center_16x9_box" not in final:
+        return {**empty, "occupancy_internal_note": "점유 측정 없음 또는 구판 기록(center_16x9_box 없음)"}
+    percentage, constrained = find_fx7p_setup_screen_state(record)
+    if not percentage or percentage <= 0:
+        return {**empty, "occupancy_internal_note": "r.ScreenPercentage가 자동(≤0)이거나 기록에 없다"}
+    left, top, right, bottom = final["center_16x9_box"]
+    width, height = final["image"]
+    fraction, region_pixels = (final["center_16x9_fraction"], (right - left) * (bottom - top)) if constrained else (final["fraction"], width * height)
+    basis = ("중앙 16:9 비율 x 제약 사각형 화소 x (setup 뒤 r.ScreenPercentage/100)^2" if constrained
+             else "전체 화면 점유 비율 x 스크린숏 화소 x (setup 뒤 r.ScreenPercentage/100)^2")
+    occupancy_px, ms_per_mpx, note = compute_fx7p_ms_per_mpx(plan_scene, diff, fraction * region_pixels * (percentage / 100.0) ** 2)
+    return {"occupancy_px_internal": occupancy_px, "ms_per_mpx_internal": ms_per_mpx, "occupancy_internal_basis": basis, "occupancy_internal_note": note}
 
 
 def analyze_fx7p_csv_scene(plan_scene, record, context):
@@ -1933,7 +2014,7 @@ def analyze_fx7p_csv_scene(plan_scene, record, context):
             valid_pairs.append((a, b))
     a_blocks = [a for a, _ in valid_pairs]
     b_blocks = [b for _, b in valid_pairs]
-    metrics = FX7P_METRIC_COLUMNS + (TICK_METRIC,)
+    metrics = fx7p_metric_columns(config) + (TICK_METRIC,)
     diff = {metric: compute_fx7p_diff(valid_pairs, metric) for metric in metrics}
     diff = {metric: entry for metric, entry in diff.items() if entry is not None}
     a_values = {metric: collect_fx7p_side_values(a_blocks, metric) for metric in metrics}
@@ -1952,7 +2033,9 @@ def analyze_fx7p_csv_scene(plan_scene, record, context):
             "variation": variation, "stable": stable, "missing_columns": missing_columns, "occupancy_px": occupancy_px, "ms_per_mpx": ms_per_mpx,
             "occupancy_note": occupancy_note, "occupancy": record.get("occupancy"), "backend_check": check_fx7p_backend(plan_scene, a_blocks, b_blocks, a_values),
             "assumed_zero": sorted({column for block in b_blocks for column in block["assumed_zero"]}), "shader_gate": record.get("shader_gate"),
-            "cap_gate": record.get("cap_gate"), "transmittance_check": transmittance_check, "fresh_pie": record.get("fresh_pie")}
+            "cap_gate": record.get("cap_gate"), "transmittance_check": transmittance_check, "fresh_pie": record.get("fresh_pie"),
+            "profilegpu": select_fx7p_scene_profilegpu(context.get("profilegpu"), record["id"]),
+            "occupancy_basis": FX7P_OCCUPANCY_BASIS, **compute_fx7p_internal_occupancy(plan_scene, record, diff)}
 
 
 def export_fx7p_trace_events(utrace_path):
@@ -1968,10 +2051,18 @@ def export_fx7p_trace_events(utrace_path):
     return events_path, None
 
 
+def has_fx7p_event_inside(starts, start, end):
+    first = bisect.bisect_left(starts, start)
+    return first < len(starts) and starts[first] <= end
+
+
 def measure_fx7p_trace_frames(events):
-    steps = sorted((start, end) for name, start, end in events if name == FX7P_STEP_TIMER)
-    solvers = sorted((start, end) for name, start, end in events if name == FX7P_SOLVER_TIMER)
+    finite = [(name, start, end) for name, start, end in events if math.isfinite(start) and math.isfinite(end)]
+    steps = sorted((start, end) for name, start, end in finite if name == FX7P_STEP_TIMER)
+    solvers = sorted((start, end) for name, start, end in finite if name == FX7P_SOLVER_TIMER)
     solver_starts = [start for start, _ in solvers]
+    shift_starts = sorted(start for name, start, _ in finite if name == FX7P_SHIFT_TIMER)
+    simulation_starts = sorted(start for name, start, _ in finite if name == FX7P_SIMULATION_TIMER)
     frames = []
     for start, end in steps:
         first = bisect.bisect_left(solver_starts, start)
@@ -1981,19 +2072,69 @@ def measure_fx7p_trace_frames(events):
                 break
             if solver_end <= end:
                 inner += solver_end - solver_start
-        frames.append({"step_ms": (end - start) * 1000.0, "outside_ms": (end - start - inner) * 1000.0})
+        frames.append({"start": start, "end": end, "step_ms": (end - start) * 1000.0, "outside_ms": (end - start - inner) * 1000.0,
+                       "shift": has_fx7p_event_inside(shift_starts, start, end), "solving": has_fx7p_event_inside(simulation_starts, start, end)})
     return frames
 
 
-def analyze_fx7p_trace(context, trace):
+def clip_fx7p_trace_frames(frames, window):
+    if not frames or window is None:
+        return frames, None
+    duration = window[1] - window[0]
+    cutoff = max(frame["end"] for frame in frames) - duration
+    return [frame for frame in frames if frame["start"] >= cutoff], round(duration, 3)
+
+
+def summarize_fx7p_frame_values(values):
+    if not values:
+        return None
+    return {"n": len(values), "mean": fx7p_round(sum(values) / len(values)), "p50": fx7p_round(fx7p_median(values)),
+            "p95": fx7p_round(fx7p_percentile(values, 0.95)), "max": fx7p_round(max(values))}
+
+
+def summarize_fx7p_shift_frames(frames):
+    awake = [frame for frame in frames if frame["solving"]]
+    shifted = [frame for frame in awake if frame["shift"]]
+    all_step = summarize_fx7p_frame_values([frame["step_ms"] for frame in awake])
+    shift_step = summarize_fx7p_frame_values([frame["step_ms"] for frame in shifted])
+    ratio = None
+    if all_step and shift_step and all_step["mean"]:
+        ratio = fx7p_round(shift_step["p95"] / all_step["mean"])
+    return {"awake_frames": len(awake), "shift_frames": len(shifted), "shift_share": fx7p_round(len(shifted) / len(awake)) if awake else None,
+            "step_awake": all_step, "step_shift": shift_step, "outside_shift": summarize_fx7p_frame_values([frame["outside_ms"] for frame in shifted]),
+            "outside_awake": summarize_fx7p_frame_values([frame["outside_ms"] for frame in awake]), "shift_p95_over_awake_mean": ratio}
+
+
+def summarize_fx7p_wake(frames, refill_frames, steady_frames):
+    wake_index = next((index for index in range(1, len(frames)) if frames[index]["solving"] and not frames[index - 1]["solving"]), None)
+    if wake_index is None:
+        return None
+    refill = frames[wake_index:wake_index + refill_frames]
+    steady = frames[wake_index + steady_frames[0]:wake_index + steady_frames[1]]
+    refill_outside = summarize_fx7p_frame_values([frame["outside_ms"] for frame in refill])
+    steady_outside = summarize_fx7p_frame_values([frame["outside_ms"] for frame in steady])
+    delta = None
+    if refill_outside and steady_outside:
+        delta = fx7p_round(refill_outside["mean"] - steady_outside["mean"])
+    return {"wake_frame_index": wake_index, "refill_frames": len(refill), "steady_frames": len(steady),
+            "refill_step": summarize_fx7p_frame_values([frame["step_ms"] for frame in refill]), "steady_step": summarize_fx7p_frame_values([frame["step_ms"] for frame in steady]),
+            "refill_outside": refill_outside, "steady_outside": steady_outside, "refill_outside_minus_steady_mean_ms": delta}
+
+
+def analyze_fx7p_trace(context, trace, plan_scene=None):
     utrace_path = context["run_dir"] / trace["path"]
     events_path, error = export_fx7p_trace_events(utrace_path)
     if error is not None:
         return {"label": trace["label"], "error": error}
     import profile_fluid_bench
-    frames = measure_fx7p_trace_frames(profile_fluid_bench.read_timing_events(str(events_path)))
+    window = context.get("trace_windows", {}).get(trace["label"])
+    frames, clipped_seconds = clip_fx7p_trace_frames(measure_fx7p_trace_frames(profile_fluid_bench.read_timing_events(str(events_path))), window)
     if not frames:
         return {"label": trace["label"], "error": f"{FX7P_STEP_TIMER} 범위가 없다"}
+    plan_scene = plan_scene or {}
+    steady_frames = tuple(plan_scene.get("steady_frames", FX7P_DEFAULT_STEADY_FRAMES))
+    shift_summary = summarize_fx7p_shift_frames(frames)
+    wake_summary = summarize_fx7p_wake(frames, int(plan_scene.get("refill_frames", FX7P_DEFAULT_REFILL_FRAMES)), steady_frames)
     step_values = [frame["step_ms"] for frame in frames]
     outside_values = [frame["outside_ms"] for frame in frames]
     step_mean = sum(step_values) / len(step_values)
@@ -2003,16 +2144,34 @@ def analyze_fx7p_trace(context, trace):
         distortion = abs(step_mean - tick["avg_tick_ms"]) / tick["avg_tick_ms"] > 0.2
     return {"label": trace["label"], "frames": len(frames), "step_ms_mean": round(step_mean, 4), "step_ms_p50": fx7p_round(fx7p_median(step_values)),
             "outside_ms_p50": fx7p_round(fx7p_median(outside_values)), "outside_ms_p95": fx7p_round(fx7p_percentile(outside_values, 0.95)),
-            "tick": tick, "trace_distortion": distortion, "events": events_path.relative_to(context["run_dir"]).as_posix()}
+            "tick": tick, "trace_distortion": distortion, "events": events_path.relative_to(context["run_dir"]).as_posix(),
+            "clipped_window_seconds": clipped_seconds, "shift": shift_summary, "wake": wake_summary}
+
+
+def collect_fx7p_trace_values(measured, section, key):
+    values = []
+    for trace in measured:
+        entry = trace.get(section) or {}
+        value = entry.get(key) if not isinstance(key, tuple) else (entry.get(key[0]) or {}).get(key[1])
+        if value is not None:
+            values.append(value)
+    return values
 
 
 def analyze_fx7p_trace_scene(plan_scene, record, context):
-    traces = [analyze_fx7p_trace(context, trace) for trace in record.get("traces", [])]
+    traces = [analyze_fx7p_trace(context, trace, plan_scene) for trace in record.get("traces", [])]
     measured = [trace for trace in traces if "error" not in trace]
+    ratios = collect_fx7p_trace_values(measured, "shift", "shift_p95_over_awake_mean")
+    wake_deltas = collect_fx7p_trace_values(measured, "wake", "refill_outside_minus_steady_mean_ms")
     return {"id": record["id"], "kind": "trace", "meta": plan_scene.get("meta", {}), "error": record.get("error"), "traces": traces,
             "outside_ms_p50": fx7p_round(fx7p_median([trace["outside_ms_p50"] for trace in measured])),
             "step_ms_mean": fx7p_round(fx7p_median([trace["step_ms_mean"] for trace in measured])),
-            "trace_distortion": any(trace["trace_distortion"] for trace in measured) if measured else None}
+            "trace_distortion": any(trace["trace_distortion"] for trace in measured) if measured else None,
+            "shift_p95_over_awake_mean": {"median": fx7p_round(fx7p_median(ratios)), "max": fx7p_round(max(ratios)) if ratios else None, "traces": len(ratios)},
+            "shift_step_p95_ms": fx7p_round(fx7p_median(collect_fx7p_trace_values(measured, "shift", ("step_shift", "p95")))),
+            "awake_step_mean_ms": fx7p_round(fx7p_median(collect_fx7p_trace_values(measured, "shift", ("step_awake", "mean")))),
+            "wake_refill_outside_minus_steady_ms": {"median": fx7p_round(fx7p_median(wake_deltas)), "max": fx7p_round(max(wake_deltas)) if wake_deltas else None,
+                                                    "traces": len(wake_deltas)}}
 
 
 def expand_fx7p_globs(patterns):
@@ -2279,6 +2438,67 @@ def compute_fx7p_exit_code(scenes):
     return 0
 
 
+def collect_fx7p_profilegpu_dumps(entries):
+    dumps = []
+    current = None
+    for stamp, text in entries:
+        mark = FX7P_MARK_PATTERN.search(text)
+        if mark is not None:
+            if mark.group(1).startswith(FX7P_PROFILEGPU_PREFIX):
+                current = {"label": mark.group(1)[len(FX7P_PROFILEGPU_PREFIX):], "stamp": stamp, "passes_ms": {}, "tsr_event": None}
+                dumps.append(current)
+            continue
+        line = FX7P_PROFILEGPU_LINE_PATTERN.search(text) if current is not None else None
+        if line is None:
+            continue
+        event = line.group(3)
+        if event in FX7P_PROFILEGPU_EVENTS and event not in current["passes_ms"]:
+            current["passes_ms"][event] = float(line.group(2))
+        elif event.startswith(FX7P_PROFILEGPU_TSR_PREFIX) and current["tsr_event"] is None:
+            current["tsr_event"] = event
+    return dumps
+
+
+def collect_fx7p_shader_gate_end_stamps(entries):
+    stamps = {}
+    for stamp, text in entries:
+        mark = FX7P_MARK_PATTERN.search(text)
+        match = FX7P_WARM_MARK_PATTERN.match(mark.group(1)) if mark is not None and stamp is not None else None
+        if match is not None:
+            stamps[match.group(1)] = stamp
+    return stamps
+
+
+def find_fx7p_profilegpu_base_stamp(gate_end_stamps, label):
+    scene_ids = [scene_id for scene_id in gate_end_stamps if label == scene_id or label.startswith(scene_id + "_")]
+    if not scene_ids:
+        return None
+    return gate_end_stamps[max(scene_ids, key=len)]
+
+
+def summarize_fx7p_profilegpu(entries):
+    by_label = {}
+    for dump in collect_fx7p_profilegpu_dumps(entries):
+        by_label.setdefault(dump["label"], []).append(dump)
+    gate_end_stamps = collect_fx7p_shader_gate_end_stamps(entries)
+    summaries = {}
+    for label, dumps in by_label.items():
+        base_stamp = find_fx7p_profilegpu_base_stamp(gate_end_stamps, label)
+        measured = [dump for dump in dumps if base_stamp is None or (dump["stamp"] is not None and dump["stamp"] >= base_stamp)]
+        passes = {}
+        for event in FX7P_PROFILEGPU_EVENTS:
+            values = [dump["passes_ms"][event] for dump in measured if event in dump["passes_ms"]]
+            passes[event] = {"n": len(values), "median": fx7p_round(fx7p_median(values)), "max": fx7p_round(max(values)) if values else None, "values": values}
+        summaries[label] = {"dumps_total": len(dumps), "dumps_after_shader_gate": len(measured), "inclusive_ms": passes,
+                            "tsr_events": sorted({dump["tsr_event"] for dump in measured if dump["tsr_event"]})}
+    return summaries
+
+
+def select_fx7p_scene_profilegpu(profilegpu, scene_id):
+    selected = {label: summary for label, summary in (profilegpu or {}).items() if label == scene_id or label.startswith(scene_id + "_")}
+    return selected or None
+
+
 def write_fx7p_evidence(result):
     stamp = date.today().isoformat()
     written = []
@@ -2315,7 +2535,7 @@ def analyze_fx7p_run(run_dir, write_evidence):
     clock_samples = read_fx7p_clock_samples(run_dir / FX7P_CLOCK_NAME)
     context = {"config": config, "run_dir": run_dir, "perf_lines": collect_fx7p_perf_lines(entries), "block_windows": find_fx7p_block_windows(entries),
                "trace_windows": find_fx7p_trace_windows(entries), "clock_samples": clock_samples,
-               "clock_median": compute_fx7p_clock_median(session, plan_scenes, clock_samples)}
+               "clock_median": compute_fx7p_clock_median(session, plan_scenes, clock_samples), "profilegpu": summarize_fx7p_profilegpu(entries)}
     scenes = {}
     for record in session["scenes"]:
         plan_scene = plan_scenes.get(record["id"], {})
@@ -2332,7 +2552,7 @@ def analyze_fx7p_run(run_dir, write_evidence):
                              "clock_median_mhz": fx7p_round(context["clock_median"], 1), "clock_samples": len(clock_samples)},
               "environment_error": session.get("environment_error"), "warnings": session.get("warnings", []), "headless": headless,
               "verdicts": verdicts, "threshold_table": threshold_table, "scenes": scenes, "exit_code": exit_code, "evidence": []}
-    if write_evidence:
+    if write_evidence and config.get("write_fx7p_evidence", True):
         result["evidence"] = write_fx7p_evidence(result)
     write_fx7p_json(run_dir / FX7P_RESULT_NAME, result)
     print_fx7p_summary(result)

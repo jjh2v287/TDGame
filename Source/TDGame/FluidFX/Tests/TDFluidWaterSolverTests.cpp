@@ -680,6 +680,77 @@ bool FTDFluidWaterLayerParallelEqualsSerialTest::RunTest(const FString& Paramete
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWaterWindowShiftParallelEqualsSerialTest,
+	"TDGame.FluidFX.Water.WindowShiftParallelEqualsSerial",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWaterWindowShiftParallelEqualsSerialTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidWaterSolverTestPrivate;
+
+	FWaterRowParallelScope RowParallelVariable;
+	if (!TestNotNull(TEXT("TD.FluidFX.SolverRowParallel console variable exists"), RowParallelVariable.Variable))
+	{
+		return false;
+	}
+
+	struct FWindowShiftStep
+	{
+		FIntPoint ShiftCells;
+		bool bResamplesTerrain;
+	};
+
+	const FWindowShiftStep ShiftSteps[] = {
+		{ FIntPoint(1, 0), true },
+		{ FIntPoint(1, 1), true },
+		{ FIntPoint(0, -1), false },
+		{ FIntPoint(5, -3), true },
+		{ FIntPoint(-7, 4), false },
+		{ FIntPoint(-2, -9), true },
+	};
+	constexpr int32 StepsBetweenShifts = 6;
+
+	auto RunShiftScenario = [this, &ShiftSteps]() -> FWaterSnapshot
+	{
+		FTDFluidGrid2DSolver Solver;
+		StartScenario(Solver, MakeScenarioConfig());
+		const TArray<FTDFluidSdfObstacle> Obstacles = MakeScenarioObstacles();
+		int32 StepIndex = 0;
+		RunSteps(Solver, 20);
+		for (const FWindowShiftStep& ShiftStep : ShiftSteps)
+		{
+			const FVector2D DesiredCenter = Solver.GetCenterWorld() + FVector2D(ShiftStep.ShiftCells.X * SquareCellSizeCm, ShiftStep.ShiftCells.Y * SquareCellSizeCm);
+			TestTrue(*FString::Printf(TEXT("Window shifts by %d, %d cells"), ShiftStep.ShiftCells.X, ShiftStep.ShiftCells.Y), Solver.ShiftOriginForSlidingWindow(DesiredCenter));
+			if (ShiftStep.bResamplesTerrain)
+			{
+				ApplyTerrainElevation(Solver, BankedBedElevationCm);
+			}
+			Solver.RasterizeSdfObstacles(Obstacles);
+			for (int32 StepsSinceShift = 0; StepsSinceShift < StepsBetweenShifts; ++StepsSinceShift)
+			{
+				Solver.ApplyBrushStamps(MakeWaterScenarioStamps(Solver.GetCenterWorld(), StepIndex), StepSeconds);
+				Solver.StepSimulation(StepSeconds);
+				++StepIndex;
+			}
+		}
+		return CaptureWaterSnapshot(Solver);
+	};
+
+	RowParallelVariable.SetValue(0);
+	const FWaterSnapshot SerialSnapshot = RunShiftScenario();
+	RowParallelVariable.SetValue(1);
+	const FWaterSnapshot ParallelSnapshot = RunShiftScenario();
+	const FWaterSnapshot RepeatedParallelSnapshot = RunShiftScenario();
+
+	ReportLine(*this, FString::Printf(TEXT("TDFluidWaterWindowShift: state=0x%08X water=0x%08X maxSpeed=%.2f solid=%d"), SerialSnapshot.StateChecksum, SerialSnapshot.WaterChecksum, SerialSnapshot.MaximumSpeed, SerialSnapshot.SolidCellCount));
+	TestTrue(TEXT("Window shift scenario carries flow"), SerialSnapshot.MaximumSpeed > 10.0);
+	TestTrue(TEXT("Window shift scenario has solid cells"), SerialSnapshot.SolidCellCount > 0);
+	ExpectIdenticalSnapshots(*this, TEXT("Window shifts parallel equals serial:"), SerialSnapshot, ParallelSnapshot);
+	ExpectIdenticalSnapshots(*this, TEXT("Window shifts repeated parallel equals serial:"), SerialSnapshot, RepeatedParallelSnapshot);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidWaterLayerDeterministicChecksumTest,
 	"TDGame.FluidFX.Water.WaterLayer.DeterministicChecksum",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -1546,6 +1617,137 @@ bool FTDFluidWaterRippleAdvectionKeepsAmplitudeTest::RunTest(const FString& Para
 	TestTrue(TEXT("The sinusoid was written"), InitialAmplitude > 0.9 * AmplitudeCm);
 	TestTrue(TEXT("The flow advects at about 0.2 cells per step"), FlowSample.Velocity.X > 200.0f && FlowSample.Velocity.X < 270.0f);
 	TestTrue(TEXT("An 8 cell wave keeps at least 70 percent amplitude after 60 advection steps"), FinalAmplitude >= 0.7 * InitialAmplitude);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWaterRippleStepAdvectionOvershootStaysBoundedTest,
+	"TDGame.FluidFX.Water.Ripple.StepAdvectionOvershootStaysBounded",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWaterRippleStepAdvectionOvershootStaysBoundedTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidWaterSolverTestPrivate;
+
+	constexpr int32 Resolution = 64;
+	constexpr int32 StepCornerCellX = 32;
+	constexpr int32 StepCornerCellY = 24;
+	constexpr float StepHeightCm = 1.0f;
+	constexpr float FlowSpeedCmPerSec = 250.0f;
+	constexpr float GuideHalfWidthCm = 5000.0f;
+	constexpr double GuideHalfLengthCm = 1500.0;
+	constexpr int32 StepsPerFlowDirection = 60;
+	constexpr int32 FlowCycleCount = 3;
+	constexpr float ExtremumToleranceCm = 0.0001f;
+	constexpr float ClampMarginRatio = 0.25f;
+	const FVector2D FlowDirections[] = { FVector2D(1.0, 1.0), FVector2D(-1.0, 1.0), FVector2D(-1.0, -1.0), FVector2D(1.0, -1.0) };
+
+	FTDFluidSimulationConfig Config = MakeWaterTestConfig(Resolution);
+	Config.BorderFadeRatio = 0.0f;
+	Config.VorticityStrength = 0.0f;
+	Config.RippleWaveSpeedCmPerSec = 0.001f;
+	Config.RippleDampingPerSec = 0.0f;
+	Config.RippleFlowAdvection = 1.0f;
+
+	FTDFluidGrid2DSolver Solver;
+	Solver.Initialize(Config, FVector2D::ZeroVector);
+
+	TArray<FTDFluidBrushStamp> Stamps;
+	for (int32 CellY = StepCornerCellY; CellY < Resolution; ++CellY)
+	{
+		for (int32 CellX = StepCornerCellX; CellX < Resolution; ++CellX)
+		{
+			const FVector2D CellWorld = Solver.CellToWorldCenter(CellX, CellY);
+			FTDFluidBrushStamp Stamp;
+			Stamp.WorldLocation = FVector(CellWorld.X, CellWorld.Y, 0.0);
+			Stamp.RadiusCm = 5.0f;
+			Stamp.DensityStrength = 0.0f;
+			Stamp.VelocityStrength = 0.0f;
+			Stamp.RippleImpulseCm = -StepHeightCm;
+			Stamp.Channel = ETDFluidBrushChannel::ChannelA_Water;
+			Stamps.Add(Stamp);
+			if (Stamps.Num() == Config.MaxPointsPerTick)
+			{
+				Solver.ApplyBrushStamps(Stamps, StepSeconds);
+				Stamps.Reset();
+			}
+		}
+	}
+	Solver.ApplyBrushStamps(Stamps, StepSeconds);
+
+	int32 NonFiniteSampleCount = 0;
+	const auto IncludeRippleHeights = [&Solver, &NonFiniteSampleCount](FFloatInterval& RangeCm)
+	{
+		const int32 GridResolution = Solver.GetResolution();
+		for (int32 CellY = 0; CellY < GridResolution; ++CellY)
+		{
+			for (int32 CellX = 0; CellX < GridResolution; ++CellX)
+			{
+				const float HeightCm = Solver.SampleAtCell(CellX, CellY).RippleHeightCm;
+				if (!FMath::IsFinite(HeightCm))
+				{
+					++NonFiniteSampleCount;
+					continue;
+				}
+				RangeCm.Include(HeightCm);
+			}
+		}
+	};
+
+	FFloatInterval InitialRangeCm;
+	IncludeRippleHeights(InitialRangeCm);
+	const float ClampMarginCm = ClampMarginRatio * (InitialRangeCm.Max - InitialRangeCm.Min);
+	const float UpperLimitCm = InitialRangeCm.Max + ClampMarginCm + ExtremumToleranceCm;
+	const float LowerLimitCm = InitialRangeCm.Min - ClampMarginCm - ExtremumToleranceCm;
+
+	FFloatInterval VisitedRangeCm = InitialRangeCm;
+	FVector2D FirstFlowVelocity = FVector2D::ZeroVector;
+	int32 SimulatedStepCount = 0;
+	int32 FirstEscapeStep = INDEX_NONE;
+	TArray<float> CycleOvershootCm;
+	for (int32 Cycle = 0; Cycle < FlowCycleCount; ++Cycle)
+	{
+		FFloatInterval CycleRangeCm = InitialRangeCm;
+		for (const FVector2D& FlowDirection : FlowDirections)
+		{
+			TArray<FTDFluidFlowGuide> Guides;
+			Guides.Add(MakeStraightGuide(-FlowDirection * GuideHalfLengthCm, FlowDirection * GuideHalfLengthCm, GuideHalfWidthCm, FlowSpeedCmPerSec));
+			Solver.SetFlowGuides(Guides);
+			for (int32 Step = 0; Step < StepsPerFlowDirection; ++Step)
+			{
+				Solver.StepSimulation(StepSeconds);
+				++SimulatedStepCount;
+				IncludeRippleHeights(VisitedRangeCm);
+				IncludeRippleHeights(CycleRangeCm);
+				const bool bHasEscapedRange = VisitedRangeCm.Max > UpperLimitCm || VisitedRangeCm.Min < LowerLimitCm;
+				if (bHasEscapedRange && FirstEscapeStep == INDEX_NONE)
+				{
+					FirstEscapeStep = SimulatedStepCount;
+				}
+			}
+			if (SimulatedStepCount == StepsPerFlowDirection)
+			{
+				FirstFlowVelocity = Solver.SampleAtCell(Resolution / 2, Resolution / 2).Velocity;
+			}
+		}
+		CycleOvershootCm.Add(FMath::Max(CycleRangeCm.Max - InitialRangeCm.Max, InitialRangeCm.Min - CycleRangeCm.Min));
+	}
+
+	FFloatInterval FinalRangeCm;
+	IncludeRippleHeights(FinalRangeCm);
+	ReportLine(*this, FString::Printf(TEXT("TDFluidWaterRipple: step_advection steps=%d initial=[%.6f, %.6f] visited=[%.6f, %.6f] final=[%.6f, %.6f] first_escape_step=%d cycle_overshoot=[%s] first_flow=(%.1f, %.1f)"), SimulatedStepCount, InitialRangeCm.Min, InitialRangeCm.Max, VisitedRangeCm.Min, VisitedRangeCm.Max, FinalRangeCm.Min, FinalRangeCm.Max, FirstEscapeStep, *FString::JoinBy(CycleOvershootCm, TEXT(", "), [](float Value) { return FString::Printf(TEXT("%.6f"), Value); }), FirstFlowVelocity.X, FirstFlowVelocity.Y));
+	TestEqual(TEXT("The step starts at zero"), InitialRangeCm.Min, 0.0f);
+	TestEqual(TEXT("The step plateau starts at the step height"), InitialRangeCm.Max, StepHeightCm);
+	TestTrue(TEXT("The first flow runs diagonally on both axes"), FirstFlowVelocity.X > 100.0 && FirstFlowVelocity.Y > 100.0);
+	TestEqual(TEXT("Every sampled ripple height stays finite"), NonFiniteSampleCount, 0);
+	TestTrue(TEXT("The step still spans both plateaus after the long advection"), FinalRangeCm.Max >= 0.99f * StepHeightCm && FinalRangeCm.Min <= 0.01f * StepHeightCm);
+	TestTrue(*FString::Printf(TEXT("No ripple height rises above the initial maximum plus the clamp margin %.4f cm (highest %.6f cm)"), ClampMarginCm, VisitedRangeCm.Max), VisitedRangeCm.Max <= UpperLimitCm);
+	TestTrue(*FString::Printf(TEXT("No ripple height falls below the initial minimum minus the clamp margin %.4f cm (lowest %.6f cm)"), ClampMarginCm, VisitedRangeCm.Min), VisitedRangeCm.Min >= LowerLimitCm);
+	TestEqual(TEXT("Every flow cycle reports its overshoot"), CycleOvershootCm.Num(), FlowCycleCount);
+	for (int32 Cycle = 1; Cycle < CycleOvershootCm.Num(); ++Cycle)
+	{
+		TestTrue(*FString::Printf(TEXT("Cycle %d overshoot %.6f cm does not grow past cycle %d overshoot %.6f cm"), Cycle, CycleOvershootCm[Cycle], Cycle - 1, CycleOvershootCm[Cycle - 1]), CycleOvershootCm[Cycle] <= CycleOvershootCm[Cycle - 1] + ExtremumToleranceCm);
+	}
 	return true;
 }
 

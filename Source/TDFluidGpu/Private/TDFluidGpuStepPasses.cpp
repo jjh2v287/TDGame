@@ -1662,6 +1662,11 @@ bool FTDFluidGpuReadbackRing::Enqueue(FRDGBuilder& GraphBuilder, const FTDFluidG
 		return false;
 	}
 
+	if (FreeSlot->Layout.GetAtlasSize() != FrameOutputs.ReadbackLayout.GetAtlasSize())
+	{
+		FreeSlot->Readback = MakeUnique<FRHIGPUTextureReadback>(TEXT("TDFluidGpu.ReadbackAtlas"));
+	}
+
 	AddEnqueueCopyPass(GraphBuilder, FreeSlot->Readback.Get(), FrameOutputs.ReadbackAtlas);
 	FreeSlot->Layout = FrameOutputs.ReadbackLayout;
 	FreeSlot->FrameNumber = FrameOutputs.FrameNumber;

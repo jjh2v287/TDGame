@@ -454,3 +454,12 @@
 - 증거: `Saved/AgentOps/20261021/round12/n0-author.md` 4절, 수정 뒤 연결 10/10·저장
 - 날짜·상태: 2026-10-21 active
 - 발견: claude(N0 저작 하위 에이전트)
+
+### L-editor-53 `FRHIGPUTextureReadback`는 첫 복사 때 원본 크기로 스테이징을 만들고 이후 크기를 비교하지 않아, 원본이 커지면 D3D12 명령 목록 Close가 E_INVALIDARG로 죽는다
+- 증상: PIE에서 GPU 유체 액터 수가 늘면(해상도·백엔드 재구성, 스냅숏 복원) 1~3프레임 안에 `D3D12CommandList.cpp:244 ... with error E_INVALIDARG` 치명 오류, 흔적 `TDFluidGpuSolverFrame`.
+- 원인: 리드백 링 슬롯이 같은 `FRHIGPUTextureReadback`을 재사용하는데 엔진은 스테이징이 있으면 크기를 보지 않고 원본 전체를 복사한다(엔진 RHIGPUReadback.cpp:118-132). 아틀라스 폭 = 64×GPU 액터 수라 1개(64x64) 뒤 4개(256x64)면 범위 밖 복사가 기록된다.
+- 해결: `FTDFluidGpuReadbackRing::Enqueue`에서 슬롯 Layout 아틀라스 크기가 이번 프레임과 다르면 리드백 객체를 새로 만든다(빈 슬롯만 교체라 경합 없음). 빨강 재현은 `TDGame.FluidFXRhi.ReadbackRingGrowsWithActorCount`·`LiveReconfigureKeepsReadbackValid`를 `--rhi offscreen`으로 필터 하나씩(먼저 도는 시험이 프로세스를 죽인다). `-RHIValidation`이면 "can't perform scaling operations"로 원인이 바로 보인다(미실측).
+- 범위: 크기가 바뀔 수 있는 원본을 재사용 `FRHIGPUTextureReadback`/`FRHIGPUBufferReadback`으로 읽는 모든 코드
+- 증거: `Saved/AgentOps/20261022/fx7p/crash-code.md`·`crash-spec.md`, 빨강 `Saved/AgentOps/20261022/fx7p-crash-red-A-tests.log`·`-red-B-tests.log`, 초록 RHI 31/31
+- 날짜·상태: 2026-10-22 active
+- 발견: claude(FX-7p 측정 중 크래시 2회 → 디버그 워크플로)

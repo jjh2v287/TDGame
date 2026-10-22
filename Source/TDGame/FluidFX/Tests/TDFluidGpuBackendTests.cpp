@@ -2332,6 +2332,129 @@ bool FTDFluidGpuReadbackLatencyTest::RunTest(const FString& Parameters)
 
 namespace TDFluidGpuBackendTestPrivate
 {
+	constexpr double ReconfigureActorSpacingCm = 8000.0;
+
+	FVector ResolveReconfigureAnchor(int32 ActorIndex)
+	{
+		return ParityAnchorLocation + FVector(ReconfigureActorSpacingCm * ActorIndex, 0.0, 0.0);
+	}
+
+	void StepReconfiguredActors(FTDFluidGpuBackendTestWorld& TestWorld, const TArray<ATDFluidLiveActor*>& LiveActors, int32 StepCount, int32& InOutStampStep)
+	{
+		TArray<FTDFluidBrushStamp> StepStamps;
+		for (int32 StepIndex = 0; StepIndex < StepCount; ++StepIndex)
+		{
+			for (int32 ActorIndex = 0; ActorIndex < LiveActors.Num(); ++ActorIndex)
+			{
+				StepStamps.Reset();
+				AppendParityStamps(InOutStampStep, ResolveReconfigureAnchor(ActorIndex), LiveActors[ActorIndex]->LiveComponent->GetSimulationExtentCm().X, StepStamps);
+				QueueStampsOnActor(*LiveActors[ActorIndex], StepStamps);
+			}
+			TestWorld.StepWorld(BackendTestStepSeconds, true);
+			++InOutStampStep;
+		}
+	}
+
+	void ExpectReadbacksAfterStage(FAutomationTestBase& Test, const TCHAR* StageLabel, const TArray<ATDFluidLiveActor*>& LiveActors, const TArray<bool>& ExpectedGpuFlags, uint32 FrameBeforeStage)
+	{
+		for (int32 ActorIndex = 0; ActorIndex < LiveActors.Num(); ++ActorIndex)
+		{
+			const UTDFluidLiveComponent& Component = *LiveActors[ActorIndex]->LiveComponent;
+			const bool bExpectsGpu = ExpectedGpuFlags.IsValidIndex(ActorIndex) && ExpectedGpuFlags[ActorIndex];
+			const FString ActorLabel = FString::Printf(TEXT("%s: actor %d"), StageLabel, ActorIndex);
+			Test.TestTrue(*(ActorLabel + (bExpectsGpu ? TEXT(" uses the GPU solver") : TEXT(" uses the CPU solver"))), Component.IsUsingGpuSolver() == bExpectsGpu);
+			if (!bExpectsGpu)
+			{
+				continue;
+			}
+
+			const FTDFluidReadbackField& Field = Component.GetGpuReadbackField();
+			Test.TestTrue(*(ActorLabel + TEXT(" has a valid readback field")), Field.IsValid());
+			Test.TestTrue(*FString::Printf(TEXT("%s readback frame %u is newer than frame %u before the stage"), *ActorLabel, Field.FrameNumber, FrameBeforeStage), Field.FrameNumber > FrameBeforeStage);
+		}
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidGpuLiveReconfigureReadbackTest,
+	"TDGame.FluidFXRhi.LiveReconfigureKeepsReadbackValid",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidGpuLiveReconfigureReadbackTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidGpuBackendTestPrivate;
+	if (!CanRunRhiParityTest(*this, TEXT("TDGame.FluidFXRhi.LiveReconfigureKeepsReadbackValid")))
+	{
+		return false;
+	}
+
+	FTDFluidSolverBackendVariableScope BackendScope(0);
+	FTDFluidGpuBackendTestWorld TestWorld;
+	const UTDFluidLiveSubsystem* FluidSubsystem = TestWorld.GetFluidSubsystem();
+	if (!TestNotNull(TEXT("Reconfigure world has a fluid subsystem"), FluidSubsystem))
+	{
+		return false;
+	}
+
+	TArray<ATDFluidLiveActor*> LiveActors;
+	LiveActors.Add(SpawnConfiguredLiveActor(*TestWorld.World, ResolveReconfigureAnchor(0), MakeSmokeParityConfig(128, ETDFluidSolverBackend::Gpu)));
+	if (!TestNotNull(TEXT("Spawned reconfigure actor A"), LiveActors[0]))
+	{
+		return false;
+	}
+
+	int32 StampStep = 0;
+	const auto RunStage = [this, &TestWorld, FluidSubsystem, &LiveActors, &StampStep](const TCHAR* StageLabel, int32 StepCount, const TArray<bool>& ExpectedGpuFlags)
+	{
+		const uint32 FrameBeforeStage = FluidSubsystem->GetLastGpuSolverFrameNumber();
+		StepReconfiguredActors(TestWorld, LiveActors, StepCount, StampStep);
+		ExpectReadbacksAfterStage(*this, StageLabel, LiveActors, ExpectedGpuFlags, FrameBeforeStage);
+	};
+	const auto ApplyConfig = [&LiveActors](int32 ActorIndex, int32 Resolution, ETDFluidSolverBackend Backend)
+	{
+		LiveActors[ActorIndex]->LiveComponent->ApplySimulationConfig(MakeSmokeParityConfig(Resolution, Backend));
+	};
+
+	RunStage(TEXT("A spawned at GPU 128"), 6, { true });
+	ApplyConfig(0, 512, ETDFluidSolverBackend::Gpu);
+	RunStage(TEXT("A reconfigured 128 to 512"), 4, { true });
+	ApplyConfig(0, 128, ETDFluidSolverBackend::Gpu);
+	RunStage(TEXT("A reconfigured 512 to 128"), 4, { true });
+	ApplyConfig(0, 128, ETDFluidSolverBackend::Cpu);
+	RunStage(TEXT("A reconfigured GPU to CPU"), 2, { false });
+	ApplyConfig(0, 128, ETDFluidSolverBackend::Gpu);
+	RunStage(TEXT("A reconfigured CPU to GPU"), 4, { true });
+
+	for (int32 ActorIndex = 1; ActorIndex < 4; ++ActorIndex)
+	{
+		ATDFluidLiveActor* CpuActor = SpawnConfiguredLiveActor(*TestWorld.World, ResolveReconfigureAnchor(ActorIndex), MakeSmokeParityConfig(128, ETDFluidSolverBackend::Cpu));
+		if (!TestNotNull(*FString::Printf(TEXT("Spawned reconfigure actor %d on the CPU"), ActorIndex), CpuActor))
+		{
+			return false;
+		}
+		LiveActors.Add(CpuActor);
+	}
+	RunStage(TEXT("B, C and D spawned at CPU 128"), 4, { true, false, false, false });
+	for (int32 ActorIndex = 1; ActorIndex < 4; ++ActorIndex)
+	{
+		ApplyConfig(ActorIndex, 512, ETDFluidSolverBackend::Gpu);
+	}
+	RunStage(TEXT("B, C and D reconfigured to GPU 512 in one tick"), 4, { true, true, true, true });
+
+	for (int32 ActorIndex = 0; ActorIndex < 4; ++ActorIndex)
+	{
+		ApplyConfig(ActorIndex, 128, ETDFluidSolverBackend::Gpu);
+	}
+	RunStage(TEXT("All four reconfigured to GPU 128"), 4, { true, true, true, true });
+	ApplyConfig(1, 128, ETDFluidSolverBackend::Cpu);
+	RunStage(TEXT("B reconfigured GPU to CPU"), 4, { true, false, true, true });
+	ApplyConfig(1, 128, ETDFluidSolverBackend::Gpu);
+	RunStage(TEXT("B reconfigured CPU to GPU"), 4, { true, true, true, true });
+	return !HasAnyErrors();
+}
+
+namespace TDFluidGpuBackendTestPrivate
+{
 	constexpr int32 HeatHistogramBinCount = 16;
 	constexpr float HeatPresenceThreshold = 0.01f;
 	constexpr double HeatTotalParityTolerance = 0.03;

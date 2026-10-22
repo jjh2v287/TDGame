@@ -1110,6 +1110,124 @@ bool FTDFluidGpuResolution512RunsWithinMemoryTest::RunTest(const FString& Parame
 	return !HasAnyErrors();
 }
 
+namespace TDFluidGpuRhiTestSupport
+{
+	struct FTDFluidGpuReadbackGrowthStage
+	{
+		int32 ActorCount = 0;
+		int32 FrameCount = 0;
+	};
+
+	struct FTDFluidGpuReadbackGrowthResult
+	{
+		bool bHasReadback = false;
+		FTDFluidGpuReadbackFrame Readback;
+		int32 DroppedCount = 0;
+	};
+
+	struct FTDFluidGpuReadbackGrowthState
+	{
+		TArray<FTDFluidGpuBatch> Batches;
+		TUniquePtr<FTDFluidGpuReadbackRing> ReadbackRing = MakeUnique<FTDFluidGpuReadbackRing>();
+		TArray<FTDFluidGpuReadbackGrowthResult> StageResults;
+	};
+
+	TArray<FTDFluidGpuReadbackGrowthResult> RunReadbackGrowthStages(const TArray<FTDFluidGpuReadbackGrowthStage>& Stages)
+	{
+		TSharedRef<FTDFluidGpuReadbackGrowthState, ESPMode::ThreadSafe> GrowthState = MakeShared<FTDFluidGpuReadbackGrowthState, ESPMode::ThreadSafe>();
+		ENQUEUE_RENDER_COMMAND(TDFluidGpuRhiReadbackGrowth)(
+			[GrowthState, Stages](FRHICommandListImmediate& RHICmdList)
+			{
+				TArray<int32> ActorJoinFrames;
+				int32 PreviousActorCount = 0;
+				int32 FrameIndex = 0;
+				for (const FTDFluidGpuReadbackGrowthStage& Stage : Stages)
+				{
+					ActorJoinFrames.SetNumZeroed(FMath::Max(ActorJoinFrames.Num(), Stage.ActorCount));
+					for (int32 ActorIndex = PreviousActorCount; ActorIndex < Stage.ActorCount; ++ActorIndex)
+					{
+						ActorJoinFrames[ActorIndex] = FrameIndex;
+					}
+					PreviousActorCount = Stage.ActorCount;
+
+					for (int32 StageFrame = 0; StageFrame < Stage.FrameCount; ++StageFrame)
+					{
+						FTDFluidGpuFrameInputs FrameInputs;
+						FrameInputs.FrameNumber = static_cast<uint32>(FrameIndex);
+						for (int32 ActorIndex = 0; ActorIndex < Stage.ActorCount; ++ActorIndex)
+						{
+							FrameInputs.Actors.Add(MakeRichFluidActor(static_cast<uint64>(ActorIndex + 1), ActorIndex, FrameIndex - ActorJoinFrames[ActorIndex]));
+						}
+
+						FRDGBuilder GraphBuilder(RHICmdList, RDG_EVENT_NAME("TDFluidGpuRhiReadbackGrowth"));
+						const FTDFluidGpuFrameOutputs Outputs = AddTDFluidGpuFramePasses(GraphBuilder, FrameInputs, GrowthState->Batches);
+						GrowthState->ReadbackRing->Enqueue(GraphBuilder, Outputs);
+						GraphBuilder.Execute();
+						RHICmdList.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+						++FrameIndex;
+					}
+
+					RHICmdList.SubmitAndBlockUntilGPUIdle();
+					FTDFluidGpuReadbackGrowthResult& StageResult = GrowthState->StageResults.AddDefaulted_GetRef();
+					StageResult.bHasReadback = GrowthState->ReadbackRing->TryReadLatest(StageResult.Readback);
+					StageResult.DroppedCount = GrowthState->ReadbackRing->GetDroppedCount();
+				}
+
+				GrowthState->Batches.Empty();
+				GrowthState->ReadbackRing.Reset();
+			});
+		FlushRenderingCommands();
+		return GrowthState->StageResults;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidGpuReadbackRingGrowsWithActorCountTest,
+	"TDGame.FluidFXRhi.ReadbackRingGrowsWithActorCount",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidGpuReadbackRingGrowsWithActorCountTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidGpuRhiTestSupport;
+
+	if (!CanRunRhiTest(*this, TEXT("ReadbackRingGrowsWithActorCount")))
+	{
+		return true;
+	}
+
+	const TArray<FTDFluidGpuReadbackGrowthStage> Stages = { { 1, 3 }, { 4, 3 }, { 1, 2 }, { 9, 2 } };
+	const FIntPoint ExpectedAtlasSizes[] = { FIntPoint(64, 64), FIntPoint(256, 64), FIntPoint(64, 64), FIntPoint(512, 128) };
+	const TArray<FTDFluidGpuReadbackGrowthResult> StageResults = RunReadbackGrowthStages(Stages);
+	if (!TestEqual(TEXT("Every stage produced a readback result"), StageResults.Num(), Stages.Num()))
+	{
+		return false;
+	}
+
+	for (int32 StageIndex = 1; StageIndex < Stages.Num(); ++StageIndex)
+	{
+		const FTDFluidGpuReadbackGrowthStage& Stage = Stages[StageIndex];
+		const FTDFluidGpuReadbackGrowthResult& StageResult = StageResults[StageIndex];
+		const FString StageLabel = FString::Printf(TEXT("Stage %d with %d actors"), StageIndex + 1, Stage.ActorCount);
+		TestEqual(*(StageLabel + TEXT(" drops no readback")), StageResult.DroppedCount, 0);
+		if (!TestTrue(*(StageLabel + TEXT(" has a readback after the GPU idled")), StageResult.bHasReadback))
+		{
+			continue;
+		}
+
+		const FTDFluidGpuReadbackFrame& Readback = StageResult.Readback;
+		const FIntPoint AtlasSize = Readback.Layout.GetAtlasSize();
+		TestEqual(*(StageLabel + TEXT(" tile count matches the actor count")), Readback.Layout.TileCount, Stage.ActorCount);
+		TestEqual(*(StageLabel + TEXT(" atlas width")), AtlasSize.X, ExpectedAtlasSizes[StageIndex].X);
+		TestEqual(*(StageLabel + TEXT(" atlas height")), AtlasSize.Y, ExpectedAtlasSizes[StageIndex].Y);
+		TestEqual(*(StageLabel + TEXT(" texel count covers the atlas")), Readback.Texels.Num(), AtlasSize.X * AtlasSize.Y);
+		for (int32 TileIndex = 0; TileIndex < Stage.ActorCount; ++TileIndex)
+		{
+			TestTrue(*FString::Printf(TEXT("%s tile %d holds density"), *StageLabel, TileIndex), FindMaximumPrimaryDensity(ExtractTile(Readback, TileIndex)) > 0.0f);
+		}
+	}
+	return !HasAnyErrors();
+}
+
 
 namespace TDFluidGpuMultigridTestSupport
 {

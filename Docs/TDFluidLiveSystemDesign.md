@@ -278,3 +278,12 @@ LIVE-2 구조 요약(공개 자료): GPU 2D 시뮬레이션(나이아가라 시�
 수용 공통: 같은 구도의 LIVE-2 이미지와 나란한 비교 시트(Saved 전용) 육안 승인 + FX-7a 지표 + 효과 차분 프레임 시간(중앙값·p95) + 헤드리스·RHI 시험·CPU 골든 해시 유지 + FX-7d 미대응 0건. 엔진 제약: 볼류메트릭 클라우드는 장면당 1개(다층은 재질 하나), Nanite 꺼짐이라 테셀레이션 변위 불가(눈·모래는 자국 버퍼 + POM + 근거리 변형 메시), VSM 에서 WPO 는 그림자 캐시 무효화. FX-6 은 FX-8b·FX-8n·FX-9·FX-16 으로 흡수.
 
 진행(2026-10-19 23:10): 파동 0 도구 FX-7a·7d 완료. W-1 강 코드·PIE 탐침 연속 2회 통과. FX-4a 묶음 A·B 통합(TDFluidGpu 모듈, GPU 패리티 18/18, 512² 다중 격자 V(1,2) 1사이클, 1액터 0.475ms·4액터 1.468ms, D-54). W-2r 물 외형·FX-8a 불·연기 렌더 외형 에디터 적용. 다음: FX-8b(열 채널·투과율·불 규모) → FX-4b(GPU 물 계층), FX-7p 성능 기준선.
+
+### 9.1 프리셋 값 굽기(D-58, 2026-10-22)
+
+- 정본: `Content/FluidFX/PresetData/TDFluidPresetTuning.json`(StructDefaults → Groups → Kinds 순서로 덮어씀, 같은 (종류·구조체·필드)는 한 곳에서만). C++ 빌더 `Build*ForPresetKind` 5개는 `UTDFluidPresetTuningSubsystem` 이 읽은 표를 적용만 한다.
+- 굽기(컴파일 없음): ① JSON 의 해당 필드를 고친다(폭발은 `Groups.ExplosionPair` 한 곳 — Explosion·PlasmaExplosion 공유) ② `python Tools/check_fluid_preset_data.py` 오류 0 ③ 에디터 콘솔 `TD.FluidFX.ReloadPresetTuning` 또는 무대 스크립트 재실행(시작 때 다시 읽음) ④ 해당 무대 재생성(DA·액터에 사본으로 들어가는 값: 볼륨 렌더·트레일·분출기·불꽃 카드) ⑤ `--stage-report` 로 STALE 0 확인 뒤 PIE.
+- 구조체에 필드를 추가·개명하면 같은 커밋에서 JSON StructDefaults 를 고친다(빠지면 표 전체 거부: 에디터 ensure, 쿠킹 빌드 Fatal; 시험 StructDefaultsMatchHeader·LoadsWithoutErrors 가 빨강).
+- 값 회귀 경비: 시험 `BuildersMatchTuningFile` 은 빌더 = JSON 만 본다. 의도하지 않은 값 변경은 JSON 의 git diff 와 굽기 전후 `editor_dump_fluid_preset_builders.py` 덤프 비교로 잡는다(덤프 golden 은 Saved 아래라 커밋되지 않음).
+- 예외: 물 계열·옛 종류는 회귀 시험(SolverRegressionTests·WaterActorTests·GoldenHash)이 숫자를 고정하므로 그 종류를 구우면 C++ 시험도 고친다.
+- 미검증: 패키징 빌드의 NonUFS 스테이징·첫 읽기, 첫 읽기 실패 뒤 PIE 가 헤더 기본값으로 조용히 도는 경우의 경고(지금은 ensure 1회).

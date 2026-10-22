@@ -412,3 +412,10 @@
 - 대가: 헤드리스 시험 → 오프스크린·PIE, 비트 결정론 → 통계 판정, uasset 리뷰 → 생성 스크립트·JSON 덤프.
 - N0 관문 결과(2026-10-21 12차): `Tools/FluidFX/editor_make_fluid_ember_niagara.py`가 MCP로 `/Game/FluidFX/Niagara/NS_TD_FluidEmber`(GPU, SampleTexture 밀도 거절·속도 끌림, User 14, 구 메시 + `MI_TD_FluidEmberNiagara_Default`)를 생성, 같은 세션 두 번·재시작 뒤 한 번 생성의 정규화 덤프 11절 sha256 동일, 반증(크기 값 하나)은 UserVariables 절만 다름. 오프스크린 `TDGame.FluidFXRhi.Niagara.Ember.*` 3종 통과(도장 15개·없음 0개, 결합 방향, 같은 시드 11=11·시드 반증 10). 남음: 재시작 뒤 툴셋 컴파일 상태 조회 시간 초과, 거절 1회 스폰이라 C++ ISM(재시도 8회) 대비 수용 약 1/8 — P-16 전환 때 스폰율을 밀도 면적 비례로 맞춤(proposed), PIE A/B·성능 미측정. 재현성 사본 `/Game/FluidFX/Niagara/Repro/` 5개는 커밋하지 않고 삭제는 사용자 승인 대기.
 - 상태: proposed (2026-10-21 claude, "권장안으로 진행")
+### D-58 FluidFX 프리셋 굽기 값 JSON 정본화(FX-8c)
+- 질문: 프리셋 굽기 값(시뮬·분출기·조각 꼬리·볼륨 렌더·불꽃 카드)을 C++ 리터럴에 둘 것인가, 컴파일 없이 바꿀 데이터로 뺄 것인가. 사용자 "네 권장으로 진행"(2026-10-22, 굽기 무컴파일 제안에 대한 답).
+- 선택지: (A) 무대 스크립트 표(override False DA는 런타임에 C++ 빌더를 다시 불러 무시되므로 기각) (B) 데이터 에셋 정본(이진 diff·빌더의 에셋 로드 필요로 기각) (C) 텍스트 JSON 정본 + 엔진 서브시스템이 읽고 빌더 5개는 적용만.
+- 결정(권장안): (C). 정본 `Content/FluidFX/PresetData/TDFluidPresetTuning.json`(StructDefaults → Groups → Kinds, 같은 필드는 한 곳에서만, 폭발은 Groups.ExplosionPair), `UTDFluidPresetTuningSubsystem`(콘솔 `TD.FluidFX.ReloadPresetTuning`, 첫 읽기 실패 시 에디터 ensure·쿠킹 빌드 Fatal, 다시 읽기 실패 시 이전 표 유지), 검사 `Tools/check_fluid_preset_data.py`, `Config/DefaultGame.ini` NonUFS 스테이징, 무대 스크립트 4개는 시작 때 검사·다시 읽기·보고 sha256. 굽기 절차 정본은 `Docs/TDFluidLiveSystemDesign.md` 9.1절.
+- 근거: `Saved/AgentOps/20261022/preset-data/`(spec-pd-b·build-report·refute-code·refute-rules), 변경 전·후 빌더 덤프 비트 동일, 민감도(ExplosionPair 유지 0.15) 2칸만 변화, 시험 235/235·RHI 29/29.
+- 위험·후속: 값 회귀 시험은 빌더 = JSON 자기 참조라 의도치 않은 값 변경은 JSON diff와 덤프 대조로 잡음. 패키징 빌드 NonUFS 스테이징·첫 읽기 미검증, 첫 읽기 실패 뒤 PIE는 ensure 1회 후 헤더 기본값으로 조용히 돎, C++ 검증기는 Clamp·대소문자만 다른 중복 키를 보지 않음(Python 검사기가 잡음), 물·옛 종류는 회귀 시험 숫자 고정이라 굽기 때 C++ 시험 갱신.
+- 상태: proposed (2026-10-22 claude, "권장안으로 진행")

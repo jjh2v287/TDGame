@@ -1,0 +1,628 @@
+{
+  "StructDefaults": {
+    "TDFluidSimulationConfig": {
+      "SimMode": "FluidSim",
+      "GridResolution": 64,
+      "SimExtentCm": {
+        "X": 4000.0,
+        "Y": 4000.0
+      },
+      "VelocityDamping": 0.05,
+      "DensityDissipation": 0.15,
+      "PressureIterations": 6,
+      "VorticityStrength": 1.0,
+      "TerrainSlopeGravity": 400.0,
+      "AdvectionSpeedScale": 1.0,
+      "BorderFadeRatio": 0.1,
+      "MaxPointsPerTick": 64,
+      "AmbientDensity": 0.0,
+      "AmbientRefillPerSec": 0.0,
+      "ActorBrushDensityStrength": 1.0,
+      "ActorBrushPunctureCmPerSec": 0.0,
+      "FlowNoiseAccelerationCmPerSec2": 0.0,
+      "FlowNoiseScaleCm": 200.0,
+      "FlowNoiseSpeed": 0.12,
+      "AmbientNoiseAmount": 0.0,
+      "BuoyancyCmPerSec2": 0.0,
+      "OutflowBandRatio": 0.0,
+      "OutflowRatePerSec": 0.0,
+      "bEnableWaterLayer": false,
+      "bOpenWaterBorders": true,
+      "bTreatDryCellsAsSolid": true,
+      "WaterDepthReferenceCm": 300.0,
+      "FlowGuideResponsePerSec": 3.0,
+      "FlowGuideBankFalloffCm": 150.0,
+      "FlowGuideBankSpeedRatio": 0.35,
+      "RapidsWhitewaterPerSec": 0.0,
+      "WhitewaterFromVorticity": 0.0,
+      "WhitewaterVorticityThresholdPerSec": 2.0,
+      "RippleWaveSpeedCmPerSec": 0.0,
+      "RippleDampingPerSec": 1.2,
+      "RippleHeightReferenceCm": 8.0,
+      "RippleFlowAdvection": 1.0,
+      "ActorBrushRippleImpulseCm": 0.0,
+      "CoastWaveDepthSpacingCm": 60.0,
+      "CoastWavePeriodSeconds": 6.0,
+      "CoastWaveMaxDepthCm": 250.0,
+      "SwashHeightCm": 0.0,
+      "BankWetHeightCm": 0.0,
+      "WetnessDryingSeconds": 8.0,
+      "WetnessFromWhitewater": 0.5,
+      "SolverBackend": "Cpu",
+      "CpuFallbackResolution": 0,
+      "bEnableHeatChannel": false,
+      "HeatCoolingPerSec": 2.0,
+      "HeatBuoyancyCmPerSec2": 0.0,
+      "bReflectsAtBoundaries": false,
+      "EdgeBounciness": 0.0,
+      "BorderFadeExponent": 1.0,
+      "VortexTangentialAccelerationCmPerSec2": 0.0,
+      "VortexRadialDriftCmPerSec": 0.0,
+      "VortexRadiusRatio": 0.35
+    },
+    "TDFluidSourceEmitterSettings": {
+      "bIsEnabled": false,
+      "Channel": "ChannelB_Fire",
+      "RadiusCm": 8.0,
+      "DensityStrength": 0.7,
+      "EmitSpeedCmPerSec": 200.0,
+      "MotionInertiaScale": 0.3,
+      "FlickerAmplitude": 0.25,
+      "FlickerFrequencyHz": 5.0,
+      "SourceOffsetCm": {
+        "X": 0.0,
+        "Y": 0.0,
+        "Z": 0.0
+      },
+      "SourceStampCount": 1,
+      "SourceSpreadCm": 0.0,
+      "TrailLeadSeconds": 0.06,
+      "MaxTrailLeadRatio": 0.25,
+      "RandomSeed": 1,
+      "HeatStrength": 1.0,
+      "SubstepCount": 1,
+      "CoreRadiusCm": 0.0,
+      "CoreDensityStrength": 0.85,
+      "CoreHeatStrength": 1.0
+    },
+    "TDFluidFragmentTrailSettings": {
+      "TrackingDurationSeconds": 2.5,
+      "ArmedPollIntervalSeconds": 0.1,
+      "bShouldCrumbleOnTrigger": true,
+      "bShouldTrackWithWorldClock": false,
+      "MinFragmentSpeedCmPerSec": 120.0,
+      "MaxFragmentSpeedCmPerSec": 3000.0,
+      "FireStampRadiusCm": 18.0,
+      "FireDensityStrength": 0.75,
+      "FireTrailHeatScale": 1.0,
+      "FireTrailDensityScale": 1.0,
+      "FireTrailStemHeatScale": 1.0,
+      "FireTrailStemDensityScale": 1.0,
+      "FireTrailHeadRadiusScale": 1.0,
+      "SmokeStampRadiusCm": 30.0,
+      "SmokeDensityStrength": 0.6,
+      "SmokeTrailLagFrames": 6,
+      "MaxFragmentsPerStep": 48,
+      "MaxStampsPerFragment": 4,
+      "VelocityInheritance": 0.4,
+      "BurstCoreRadiusCm": 60.0,
+      "BurstRingRadiusCm": 70.0,
+      "BurstRingStampCount": 8,
+      "BurstRingSpeedCmPerSec": 700.0,
+      "BurstSustainSeconds": 0.35,
+      "BurstLobeCount": 0,
+      "BurstLobeCenterRatioMin": 0.5,
+      "BurstLobeCenterRatioMax": 0.8,
+      "BurstLobeRadiusRatioMin": 0.3,
+      "BurstLobeRadiusRatioMax": 0.5,
+      "BurstLobeSpeedMinCmPerSec": 150.0,
+      "BurstLobeSpeedMaxCmPerSec": 300.0,
+      "BurstLobeSeed": 0,
+      "EmberBurstCount": 80,
+      "EmberBurstHeightOffsetCm": 0.0,
+      "FireHeatStrength": 1.0,
+      "SmokeHeatStrength": 0.0,
+      "bSustainsBurstHeat": false,
+      "BurstCenterHeightOffsetCm": 0.0,
+      "RestingHeatSeconds": 0.0,
+      "RestingHeatStrength": 0.5,
+      "RestingHeatRadiusCm": 14.0,
+      "RestingDensityStrength": 0.0
+    },
+    "TDFluidVolumeRenderSettings": {
+      "bEnableTransmittance": false,
+      "DensityScale": 0.035,
+      "SoftFalloffCm": 28.0,
+      "MarchStepCount": 12,
+      "CapsuleShadowStrength": 0.85,
+      "VolumeFadeEndCm": 4200.0,
+      "VolumeFadeLengthCm": 1600.0,
+      "VolumeSizeMultiplier": 1.0,
+      "VolumePositionOffsetCm": {
+        "X": 0.0,
+        "Y": 0.0,
+        "Z": 0.0
+      },
+      "HeatEmissionColor": {
+        "R": 1.0,
+        "G": 0.25,
+        "B": 0.05,
+        "A": 1.0
+      },
+      "HeatEmissionIntensity": 0.0,
+      "HeatEmissionExponent": 2.0
+    },
+    "TDFluidFlameCardLayerSettings": {
+      "ExtraCardCount": 0,
+      "CardDepthSpacingCm": 10.0,
+      "CardScaleStep": 1.0,
+      "CardIntensityScale": 0.7
+    }
+  },
+  "Groups": {
+    "FireFamily": {
+      "Kinds": [
+        "Torch",
+        "Campfire",
+        "CampfireSmoke",
+        "Explosion",
+        "ExplosionSmoke",
+        "ExplosionGroundDust",
+        "Candle",
+        "Fireball",
+        "PlasmaExplosion",
+        "SteamPuff",
+        "Vortex",
+        "InvertedVortex",
+        "PortalVortex"
+      ],
+      "TDFluidSimulationConfig": {
+        "TerrainSlopeGravity": 0.0
+      }
+    },
+    "WaterLayer": {
+      "Kinds": [
+        "River",
+        "Sea"
+      ],
+      "TDFluidSimulationConfig": {
+        "GridResolution": 192,
+        "SimExtentCm": {
+          "X": 3600.0,
+          "Y": 3600.0
+        },
+        "VelocityDamping": 0.02,
+        "DensityDissipation": 0.35,
+        "PressureIterations": 12,
+        "VorticityStrength": 0.3,
+        "TerrainSlopeGravity": 0.0,
+        "ActorBrushDensityStrength": 0.6,
+        "bEnableWaterLayer": true,
+        "ActorBrushRippleImpulseCm": 2.5
+      }
+    },
+    "VortexTrio": {
+      "Kinds": [
+        "Vortex",
+        "InvertedVortex",
+        "PortalVortex"
+      ],
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 600.0,
+          "Y": 600.0
+        },
+        "VelocityDamping": 0.1,
+        "DensityDissipation": 0.05,
+        "PressureIterations": 8,
+        "MaxPointsPerTick": 128
+      }
+    },
+    "ExplosionPair": {
+      "Kinds": [
+        "Explosion",
+        "PlasmaExplosion"
+      ],
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 900.0,
+          "Y": 900.0
+        },
+        "VelocityDamping": 0.12,
+        "DensityDissipation": 0.9,
+        "PressureIterations": 12,
+        "VorticityStrength": 4.0,
+        "MaxPointsPerTick": 256,
+        "FlowNoiseAccelerationCmPerSec2": 300.0,
+        "FlowNoiseScaleCm": 120.0,
+        "FlowNoiseSpeed": 1.0,
+        "OutflowBandRatio": 0.12,
+        "OutflowRatePerSec": 4.0,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "bEnableHeatChannel": true,
+        "HeatCoolingPerSec": 0.7,
+        "HeatBuoyancyCmPerSec2": 2000.0
+      },
+      "TDFluidFragmentTrailSettings": {
+        "TrackingDurationSeconds": 8.0,
+        "bShouldTrackWithWorldClock": true,
+        "FireStampRadiusCm": 20.0,
+        "SmokeStampRadiusCm": 40.0,
+        "SmokeDensityStrength": 0.75,
+        "MaxFragmentsPerStep": 64,
+        "BurstCoreRadiusCm": 224.0,
+        "BurstRingRadiusCm": 90.0,
+        "BurstRingStampCount": 0,
+        "BurstRingSpeedCmPerSec": 450.0,
+        "BurstSustainSeconds": 0.14,
+        "SmokeHeatStrength": 0.6,
+        "bSustainsBurstHeat": true,
+        "BurstCenterHeightOffsetCm": 160.0,
+        "RestingHeatSeconds": 8.0,
+        "RestingHeatStrength": 1.0,
+        "RestingHeatRadiusCm": 16.0,
+        "RestingDensityStrength": 0.4
+      },
+      "TDFluidFlameCardLayerSettings": {
+        "ExtraCardCount": 1,
+        "CardDepthSpacingCm": 30.0
+      }
+    }
+  },
+  "Kinds": {
+    "Water": {
+      "TDFluidSimulationConfig": {
+        "VelocityDamping": 0.02,
+        "DensityDissipation": 0.2,
+        "PressureIterations": 8,
+        "VorticityStrength": 0.8,
+        "TerrainSlopeGravity": 600.0,
+        "AdvectionSpeedScale": 1.2
+      }
+    },
+    "Mud": {
+      "TDFluidSimulationConfig": {
+        "SimExtentCm": {
+          "X": 3200.0,
+          "Y": 3200.0
+        },
+        "VelocityDamping": 0.65,
+        "DensityDissipation": 0.01,
+        "VorticityStrength": 0.15,
+        "TerrainSlopeGravity": 120.0,
+        "AdvectionSpeedScale": 0.35
+      }
+    },
+    "Blood": {
+      "TDFluidSimulationConfig": {
+        "SimExtentCm": {
+          "X": 2400.0,
+          "Y": 2400.0
+        },
+        "VelocityDamping": 0.45,
+        "DensityDissipation": 0.01,
+        "VorticityStrength": 0.3,
+        "TerrainSlopeGravity": 450.0,
+        "AdvectionSpeedScale": 0.55,
+        "BorderFadeRatio": 0.12,
+        "MaxPointsPerTick": 48
+      }
+    },
+    "Fire": {
+      "TDFluidSimulationConfig": {
+        "SimExtentCm": {
+          "X": 2800.0,
+          "Y": 2800.0
+        },
+        "VelocityDamping": 0.15,
+        "DensityDissipation": 0.45,
+        "VorticityStrength": 2.5,
+        "TerrainSlopeGravity": 200.0,
+        "AdvectionSpeedScale": 1.35,
+        "BorderFadeRatio": 0.15
+      }
+    },
+    "FootprintPainter": {
+      "TDFluidSimulationConfig": {
+        "SimMode": "SimplePainter",
+        "VelocityDamping": 1.0,
+        "DensityDissipation": 0.01,
+        "PressureIterations": 1,
+        "VorticityStrength": 0.0,
+        "TerrainSlopeGravity": 0.0,
+        "AdvectionSpeedScale": 0.0
+      }
+    },
+    "Smoke": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 700.0,
+          "Y": 700.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.5,
+        "ActorBrushDensityStrength": -1.0,
+        "ActorBrushPunctureCmPerSec": 380.0,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 220.0,
+        "AmbientNoiseAmount": 0.45
+      }
+    },
+    "River": {
+      "TDFluidSimulationConfig": {
+        "FlowNoiseAccelerationCmPerSec2": 150.0,
+        "RapidsWhitewaterPerSec": 2.0,
+        "WhitewaterFromVorticity": 0.3,
+        "RippleWaveSpeedCmPerSec": 120.0,
+        "BankWetHeightCm": 10.0
+      }
+    },
+    "Sea": {
+      "TDFluidSimulationConfig": {
+        "WhitewaterFromVorticity": 0.15,
+        "RippleWaveSpeedCmPerSec": 100.0,
+        "SwashHeightCm": 25.0
+      }
+    },
+    "Torch": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 96,
+        "SimExtentCm": {
+          "X": 110.0,
+          "Y": 170.0
+        },
+        "VelocityDamping": 0.2,
+        "DensityDissipation": 1.0,
+        "PressureIterations": 8,
+        "VorticityStrength": 3.0,
+        "MaxPointsPerTick": 128,
+        "FlowNoiseAccelerationCmPerSec2": 400.0,
+        "FlowNoiseScaleCm": 14.0,
+        "FlowNoiseSpeed": 1.5,
+        "OutflowBandRatio": 0.15,
+        "OutflowRatePerSec": 6.0,
+        "bEnableHeatChannel": true,
+        "HeatCoolingPerSec": 11.0,
+        "HeatBuoyancyCmPerSec2": 600.0
+      },
+      "TDFluidSourceEmitterSettings": {
+        "bIsEnabled": true,
+        "RadiusCm": 10.0,
+        "EmitSpeedCmPerSec": 300.0,
+        "MotionInertiaScale": 0.2,
+        "HeatStrength": 0.9,
+        "SubstepCount": 3,
+        "CoreRadiusCm": 9.0
+      },
+      "TDFluidFlameCardLayerSettings": {
+        "ExtraCardCount": 2,
+        "CardDepthSpacingCm": 6.0
+      }
+    },
+    "Campfire": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 240.0,
+          "Y": 340.0
+        },
+        "VelocityDamping": 0.15,
+        "DensityDissipation": 1.0,
+        "PressureIterations": 10,
+        "VorticityStrength": 1.5,
+        "MaxPointsPerTick": 128,
+        "FlowNoiseAccelerationCmPerSec2": 300.0,
+        "FlowNoiseScaleCm": 35.0,
+        "FlowNoiseSpeed": 1.5,
+        "OutflowBandRatio": 0.15,
+        "OutflowRatePerSec": 6.0,
+        "bEnableHeatChannel": true,
+        "HeatCoolingPerSec": 0.6,
+        "HeatBuoyancyCmPerSec2": 1600.0
+      },
+      "TDFluidSourceEmitterSettings": {
+        "bIsEnabled": true,
+        "RadiusCm": 26.0,
+        "DensityStrength": 0.8,
+        "EmitSpeedCmPerSec": 300.0,
+        "SourceStampCount": 5,
+        "SourceSpreadCm": 60.0,
+        "HeatStrength": 0.9,
+        "CoreRadiusCm": 30.0
+      },
+      "TDFluidFlameCardLayerSettings": {
+        "ExtraCardCount": 1,
+        "CardDepthSpacingCm": 14.0
+      }
+    },
+    "CampfireSmoke": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 96,
+        "SimExtentCm": {
+          "X": 400.0,
+          "Y": 560.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.2,
+        "PressureIterations": 8,
+        "VorticityStrength": 2.0,
+        "MaxPointsPerTick": 128,
+        "FlowNoiseAccelerationCmPerSec2": 300.0,
+        "FlowNoiseScaleCm": 60.0,
+        "FlowNoiseSpeed": 0.5,
+        "BuoyancyCmPerSec2": 160.0,
+        "OutflowBandRatio": 0.2,
+        "OutflowRatePerSec": 3.0
+      },
+      "TDFluidVolumeRenderSettings": {
+        "bEnableTransmittance": true
+      }
+    },
+    "ExplosionSmoke": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 1200.0,
+          "Y": 1200.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.12,
+        "PressureIterations": 10,
+        "VorticityStrength": 2.0,
+        "MaxPointsPerTick": 256,
+        "FlowNoiseAccelerationCmPerSec2": 250.0,
+        "FlowNoiseScaleCm": 120.0,
+        "FlowNoiseSpeed": 0.5,
+        "OutflowBandRatio": 0.2,
+        "OutflowRatePerSec": 2.0,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 112,
+        "bEnableHeatChannel": true,
+        "HeatCoolingPerSec": 0.6,
+        "HeatBuoyancyCmPerSec2": 150.0
+      },
+      "TDFluidVolumeRenderSettings": {
+        "bEnableTransmittance": true,
+        "DensityScale": 0.03,
+        "SoftFalloffCm": 40.0,
+        "HeatEmissionColor": {
+          "R": 1.0,
+          "G": 0.06,
+          "B": 0.01,
+          "A": 1.0
+        },
+        "HeatEmissionIntensity": 6.0,
+        "HeatEmissionExponent": 3.0
+      }
+    },
+    "ExplosionGroundDust": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 1200.0,
+          "Y": 1200.0
+        },
+        "VelocityDamping": 0.1,
+        "DensityDissipation": 0.2,
+        "PressureIterations": 8,
+        "VorticityStrength": 1.5,
+        "MaxPointsPerTick": 256,
+        "FlowNoiseAccelerationCmPerSec2": 200.0,
+        "FlowNoiseScaleCm": 150.0,
+        "FlowNoiseSpeed": 0.4,
+        "OutflowBandRatio": 0.25,
+        "OutflowRatePerSec": 2.0
+      },
+      "TDFluidVolumeRenderSettings": {
+        "bEnableTransmittance": true,
+        "DensityScale": 0.025,
+        "SoftFalloffCm": 30.0
+      }
+    },
+    "Candle": {
+      "TDFluidSimulationConfig": {
+        "SimExtentCm": {
+          "X": 40.0,
+          "Y": 70.0
+        },
+        "VelocityDamping": 0.2,
+        "DensityDissipation": 1.2,
+        "VorticityStrength": 1.5,
+        "MaxPointsPerTick": 128,
+        "FlowNoiseAccelerationCmPerSec2": 150.0,
+        "FlowNoiseScaleCm": 6.0,
+        "FlowNoiseSpeed": 1.2,
+        "OutflowBandRatio": 0.15,
+        "OutflowRatePerSec": 6.0,
+        "bEnableHeatChannel": true,
+        "HeatCoolingPerSec": 12.0,
+        "HeatBuoyancyCmPerSec2": 400.0
+      },
+      "TDFluidSourceEmitterSettings": {
+        "bIsEnabled": true,
+        "RadiusCm": 3.0,
+        "EmitSpeedCmPerSec": 120.0,
+        "HeatStrength": 0.9,
+        "SubstepCount": 2,
+        "CoreRadiusCm": 3.0
+      }
+    },
+    "Fireball": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 400.0,
+          "Y": 400.0
+        },
+        "VelocityDamping": 0.12,
+        "DensityDissipation": 0.8,
+        "PressureIterations": 8,
+        "VorticityStrength": 3.0,
+        "MaxPointsPerTick": 128,
+        "FlowNoiseAccelerationCmPerSec2": 600.0,
+        "FlowNoiseScaleCm": 40.0,
+        "FlowNoiseSpeed": 1.0,
+        "OutflowBandRatio": 0.12,
+        "OutflowRatePerSec": 4.0,
+        "bEnableHeatChannel": true,
+        "HeatCoolingPerSec": 1.2,
+        "HeatBuoyancyCmPerSec2": 600.0
+      },
+      "TDFluidSourceEmitterSettings": {
+        "bIsEnabled": true,
+        "RadiusCm": 40.0,
+        "CoreRadiusCm": 50.0
+      }
+    },
+    "SteamPuff": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 500.0,
+          "Y": 500.0
+        },
+        "VelocityDamping": 0.1,
+        "DensityDissipation": 0.6,
+        "PressureIterations": 8,
+        "VorticityStrength": 2.0,
+        "MaxPointsPerTick": 128,
+        "FlowNoiseAccelerationCmPerSec2": 300.0,
+        "FlowNoiseScaleCm": 60.0,
+        "FlowNoiseSpeed": 0.6,
+        "BuoyancyCmPerSec2": 250.0,
+        "OutflowBandRatio": 0.2,
+        "OutflowRatePerSec": 3.0
+      },
+      "TDFluidVolumeRenderSettings": {
+        "bEnableTransmittance": true,
+        "DensityScale": 0.02
+      }
+    },
+    "Vortex": {
+      "TDFluidSimulationConfig": {
+        "VortexTangentialAccelerationCmPerSec2": 600.0,
+        "VortexRadialDriftCmPerSec": 60.0
+      }
+    },
+    "InvertedVortex": {
+      "TDFluidSimulationConfig": {
+        "VortexTangentialAccelerationCmPerSec2": -600.0,
+        "VortexRadialDriftCmPerSec": -60.0
+      }
+    },
+    "PortalVortex": {
+      "TDFluidSimulationConfig": {
+        "VortexTangentialAccelerationCmPerSec2": 900.0,
+        "VortexRadialDriftCmPerSec": 250.0
+      }
+    }
+  }
+}

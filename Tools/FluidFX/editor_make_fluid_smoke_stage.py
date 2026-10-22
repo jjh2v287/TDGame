@@ -1,8 +1,10 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 볼륨 연기 무대(HARD·SOFT 나란히, 연기 위를 도는 포인트 라이트)를 만든다. 먼저 editor_make_fluid_volume_material.py 가 성공해 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_smoke_stage.py
 출력: /Game/FluidFX/Presets/DA_TDFluid_SmokeHard·SmokeSoft, /Game/FluidFX/Blueprints/BP_TDFluidLightPivot, /Game/FluidFX/Maps/LV_TDFluidSmokeStage, Saved/FluidFX/fluid_smoke_stage.json
-상태: 검증됨(2026-10-18 FX-1 LV_TDFluidSmokeStage 생성·쇼케이스 성공, D-49). 프리셋·맵이 이미 있으면 Saved/FluidFX/fluid_smoke_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), 미저장 작업이 있으면 중단한다.
+상태: 검증됨(2026-10-18 FX-1 LV_TDFluidSmokeStage 생성·쇼케이스 성공, D-49). 프리셋·맵이 이미 있으면 Saved/FluidFX/fluid_smoke_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), 미저장 작업이 있으면 중단한다. FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 이 무대는 2026-10-22 데이터화 뒤 재생성 전(빌더 값은 비트 동일이라 결과는 같음, 이전 보고에는 sha 가 없어 check_fluid_preset_data.py --stage-report 가 STALE 을 낸다).
 """
+import hashlib
+import importlib.util
 import json
 import os
 
@@ -94,6 +96,10 @@ CONFIG_REQUIRED_PROPERTIES = (
 )
 
 REQUIRED_UNREAL_NAMES = (
+    "get_engine_subsystem",
+    "TDFluidPresetTuningSubsystem",
+    "TDFluidPresetTuningSubsystem.reload_preset_tuning",
+    "TDFluidPresetTuningSubsystem.get_load_errors",
     "EditorAssetLibrary.load_blueprint_class",
     "EditorAssetLibrary.load_asset",
     "MaterialEditingLibrary.recompile_material",
@@ -398,6 +404,41 @@ def find_missing_saved_files(asset_paths, map_path):
     return [path for path in expected if not os.path.isfile(path)]
 
 
+PRESET_TUNING_RELATIVE_PATH = ("Content", "FluidFX", "PresetData", "TDFluidPresetTuning.json")
+PRESET_CHECKER_RELATIVE_PATH = ("Tools", "check_fluid_preset_data.py")
+
+
+def load_preset_checker():
+    checker_path = project_path(*PRESET_CHECKER_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("check_fluid_preset_data", checker_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"프리셋 정본 검사기 없음: {checker_path}")
+    checker = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(checker)
+    return checker
+
+
+def reload_preset_tuning():
+    tuning_path = project_path(*PRESET_TUNING_RELATIVE_PATH)
+    if not os.path.isfile(tuning_path):
+        raise RuntimeError(f"프리셋 정본 JSON 없음: {tuning_path}")
+    with open(tuning_path, "rb") as tuning_file:
+        tuning_bytes = tuning_file.read()
+    problems = load_preset_checker().check_tuning_file(tuning_path)
+    if problems:
+        raise RuntimeError("프리셋 정본 JSON 검사 실패(python Tools/check_fluid_preset_data.py): " + " | ".join(problems))
+    tuning = unreal.get_engine_subsystem(unreal.TDFluidPresetTuningSubsystem)
+    if tuning is None:
+        raise RuntimeError("TDFluidPresetTuningSubsystem 없음(재빌드와 에디터 재시작 필요)")
+    error_count = tuning.reload_preset_tuning()
+    if error_count != 0:
+        raise RuntimeError(f"프리셋 정본 다시 읽기 오류 {error_count}건: " + " | ".join(tuning.get_load_errors()))
+    with open(tuning_path, "rb") as tuning_file:
+        if tuning_file.read() != tuning_bytes:
+            raise RuntimeError("프리셋 정본 JSON 이 검사·다시 읽기 도중 바뀌었습니다. 다시 실행하세요.")
+    return hashlib.sha256(tuning_bytes).hexdigest()
+
+
 def main():
     assets = unreal.EditorAssetLibrary
     levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
@@ -426,6 +467,9 @@ def main():
     unsaved_names = find_unsaved_package_names(overwrite)
     if unsaved_names:
         raise RuntimeError("미저장 작업을 보존합니다: " + ", ".join(unsaved_names))
+
+    print("단계: 프리셋 정본 검사·다시 읽기")
+    preset_tuning_sha256 = reload_preset_tuning()
 
     game_mode = assets.load_blueprint_class(GAME_MODE_PATH)
     cube = assets.load_asset(CUBE_MESH_PATH)
@@ -607,6 +651,7 @@ def main():
         raise RuntimeError("저장 파일 확인 실패: " + ", ".join(missing_files))
 
     report = {
+        "preset_tuning_sha256": preset_tuning_sha256,
         "map": STAGE_MAP_PATH,
         "overwrite": overwrite,
         "created_floor_material": floor_created,

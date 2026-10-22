@@ -1,9 +1,11 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 물 무대 LV_TDFluidWaterStage 를 만든다. 장면 0(호수 분지 0~220cm, 물가 완경사, 잠긴 바위 14개(DarkFantasyTopDown), 물결 모래 재질, 역광 해(반짝임), 수면은 100cm 192칸 격자, 프리셋 DA_TDFluid_WaterLook0)과 장면 1(강: 폭 8m·깊이 1.2m·기울기 0.5%·굽이 1개, 폭 절반 여울 구간 수심 40cm, 바위 3개 중 1개 잠김+TDFluidObstacle 태그, 프리셋 DA_TDFluid_River). 먼저 editor_make_fluid_water_material.py 가 성공해야 하고, 장면 1 은 C++ 묶음 B1(ATDFluidWaterActor·ATDFluidRiverActor) 재빌드와 에디터 재시작 뒤에만 만든다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_stage.py (요청 파일 Saved/FluidFX/fluid_water_stage_request.json 의 {"overwrite": true, "scenes": [0, 1]}, B1 전이면 scenes 를 [0] 으로)
 출력: /Game/FluidFX/Presets/DA_TDFluid_WaterLook0·DA_TDFluid_River, /Game/FluidFX/Materials/M_TD_FluidWaterMatte·M_TD_FluidWaterSandRipple·MI_TD_FluidWaterSand·MI_TD_FluidWaterStone, /Game/FluidFX/Maps/LV_TDFluidWaterStage, Saved/FluidFX/water_stage/heightmap.r16, Saved/FluidFX/fluid_water_stage.json(강 배치·탐침 좌표 포함, pie_probe_fluid_water.py 가 읽는다)
-상태: 장면 0 은 실행 검증됨, 장면 1 은 미검증(C1 작성분, B1 C++ 계약은 명세 이름으로 가정하고 첫머리에서 점검). 에셋·맵이 이미 있으면 요청 파일에 overwrite true 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. W-2r: 모래 젖은 띠의 수위를 호수 반경(LakeWetReachCm) 밖에서는 강 수면 고도(RiverLevelStartXCm·RiverLevelSlopePerCm·RiverLevelStartZCm, 강 시작~끝 평균 경사)로 바꿔 하류 강둑 위에 뜨던 Z=0 띠를 없앤다(무대 다시 짓기 필요).
+상태: 장면 0 은 실행 검증됨, 장면 1 은 미검증(C1 작성분, B1 C++ 계약은 명세 이름으로 가정하고 첫머리에서 점검). 에셋·맵이 이미 있으면 요청 파일에 overwrite true 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. W-2r: 모래 젖은 띠의 수위를 호수 반경(LakeWetReachCm) 밖에서는 강 수면 고도(RiverLevelStartXCm·RiverLevelSlopePerCm·RiverLevelStartZCm, 강 시작~끝 평균 경사)로 바꿔 하류 강둑 위에 뜨던 Z=0 띠를 없앤다(무대 다시 짓기 필요). FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 이 무대는 2026-10-22 데이터화 뒤 재생성 전(빌더 값은 비트 동일이라 결과는 같음, 이전 보고에는 sha 가 없어 check_fluid_preset_data.py --stage-report 가 STALE 을 낸다).
 """
 import array
+import hashlib
+import importlib.util
 import json
 import math
 import os
@@ -272,6 +274,10 @@ CLASS_PATHS = {
 }
 
 REQUIRED_UNREAL_NAMES = (
+    "get_engine_subsystem",
+    "TDFluidPresetTuningSubsystem",
+    "TDFluidPresetTuningSubsystem.reload_preset_tuning",
+    "TDFluidPresetTuningSubsystem.get_load_errors",
     "EditorAssetLibrary.load_blueprint_class",
     "EditorAssetLibrary.load_asset",
     "MaterialEditingLibrary.recompile_material",
@@ -1306,6 +1312,41 @@ def find_missing_saved_files(asset_paths, map_path):
     return [path for path in expected if not os.path.isfile(path)]
 
 
+PRESET_TUNING_RELATIVE_PATH = ("Content", "FluidFX", "PresetData", "TDFluidPresetTuning.json")
+PRESET_CHECKER_RELATIVE_PATH = ("Tools", "check_fluid_preset_data.py")
+
+
+def load_preset_checker():
+    checker_path = project_path(*PRESET_CHECKER_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("check_fluid_preset_data", checker_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"프리셋 정본 검사기 없음: {checker_path}")
+    checker = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(checker)
+    return checker
+
+
+def reload_preset_tuning():
+    tuning_path = project_path(*PRESET_TUNING_RELATIVE_PATH)
+    if not os.path.isfile(tuning_path):
+        raise RuntimeError(f"프리셋 정본 JSON 없음: {tuning_path}")
+    with open(tuning_path, "rb") as tuning_file:
+        tuning_bytes = tuning_file.read()
+    problems = load_preset_checker().check_tuning_file(tuning_path)
+    if problems:
+        raise RuntimeError("프리셋 정본 JSON 검사 실패(python Tools/check_fluid_preset_data.py): " + " | ".join(problems))
+    tuning = unreal.get_engine_subsystem(unreal.TDFluidPresetTuningSubsystem)
+    if tuning is None:
+        raise RuntimeError("TDFluidPresetTuningSubsystem 없음(재빌드와 에디터 재시작 필요)")
+    error_count = tuning.reload_preset_tuning()
+    if error_count != 0:
+        raise RuntimeError(f"프리셋 정본 다시 읽기 오류 {error_count}건: " + " | ".join(tuning.get_load_errors()))
+    with open(tuning_path, "rb") as tuning_file:
+        if tuning_file.read() != tuning_bytes:
+            raise RuntimeError("프리셋 정본 JSON 이 검사·다시 읽기 도중 바뀌었습니다. 다시 실행하세요.")
+    return hashlib.sha256(tuning_bytes).hexdigest()
+
+
 def main():
     assets = unreal.EditorAssetLibrary
     levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
@@ -1346,6 +1387,9 @@ def main():
     unsaved_names = find_unsaved_package_names(overwrite)
     if unsaved_names:
         raise RuntimeError("미저장 작업을 보존합니다: " + ", ".join(unsaved_names))
+
+    print("단계: 프리셋 정본 검사·다시 읽기")
+    preset_tuning_sha256 = reload_preset_tuning()
 
     game_mode = assets.load_blueprint_class(GAME_MODE_PATH)
     lake_material = assets.load_asset(LAKE_INSTANCE_PATH)
@@ -1492,6 +1536,7 @@ def main():
         raise RuntimeError("저장 파일 확인 실패: " + ", ".join(missing_files))
 
     report = {
+        "preset_tuning_sha256": preset_tuning_sha256,
         "status": "ok",
         "map": STAGE_MAP_PATH,
         "scenes": list(scenes),

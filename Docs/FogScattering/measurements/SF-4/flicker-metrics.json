@@ -1,0 +1,10 @@
+{
+ "weight_frames": 4,
+ "weight_mean": 56.178062438964844,
+ "weight_std_mean": 0.8163203001022339,
+ "weight_std_p99": 4.636809349060059,
+ "weight_range_p99": 11.0,
+ "weight_range_max": 191.0,
+ "view_absdiff_mean": 4.495974540710449,
+ "view_absdiff_p99": 85.0
+}

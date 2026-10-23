@@ -51,3 +51,9 @@
 - 사용자 확인 화면(TSR 켠 기본 렌더): `measurements/SF-4/showcase_top_field.png`·`toggle_top_field.gif`(탑다운 필드), `showcase_top_pale.png`, `showcase_third.png`·`toggle_third.gif`(3인칭 자연 안개·SSFS 동등 기본값). `showcase_top_star.png`는 안개 색을 바꾸지 않은 흉내라 화면이 하얗게 덮여 참고용 — 실제 별밭은 어두운 남색 안개(`Saved/WorldGen/PieShots/p3-19_spots/S06_se_slot_end_plaza.png`).
 - 한계: 값은 흉내 장면 기준이라 실제 `L_TDWorld_Main` 화면 확인이 남음(월드 콘텐츠 로드 문제 해결 뒤), 아레나 확대(암 ×1.4)는 더 멀어 효과가 조금 커짐(미측정). 3인칭으로 바꾸면 ini 한 줄을 지운다.
 - 정적 반박: 치명 0·중요 1(이계 `layout.json`에 배율 키 없음 → `editor_build_realm.py` 재실행 시 1로 회귀 — 두 `Saved/WorldGen/Realms/*/layout.json`에 키 추가로 해소)·경미 6(복원은 현재 값이 내가 적용한 값일 때만, 볼류메트릭 포그 거리 배율을 강도 앞에 적용, 명세 문구 정정 반영 / 비 Win64 타깃 의존·`DistanceScale 32`의 반정밀도 투과율 양자화로 움직임 중 깜박임 가능성은 기록). 수정 뒤 공용 빌드·이계 진입 56·복원 32 재확인.
+
+## 7. 후속 확인 (2026-10-24)
+
+- 게임 타깃: `Build.bat TDGame Win64 Development` 성공(플러그인 모듈 의존 링크 정상) — 반박 6번 해소(Win64 한정).
+- 실제 월드 화면: 지점 도구(`pie_capture_spots.py --ids F01,F03,F06`, 효과 끔/켬 두 실행)로도 `L_TDWorld_Main`에 지형이 로드되지 않음 → 10-16 이후 월드 회귀로 판정(L-editor-58 재정정, 근거 `measurements/SF-4/world_main_f01_regression.png`). 실제 월드 확인은 그 회귀가 풀린 뒤.
+- 움직임 깜박임(반박 7번): 필드 흉내·`DistanceScale 32`·시간 정상·측정용 AA 끔에서 가중치 진단 4장 연속 → 화소 변동 평균 0.82/255, 상위 1% 4.6/255(같은 시간 장면 자체 변화 평균 4.5/255보다 작음), 큰 변동은 바람에 흔들리는 풀 위치뿐 → 양자화 깜박임 우려 낮음(`measurements/SF-4/flicker-metrics.json`).

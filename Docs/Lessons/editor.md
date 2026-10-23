@@ -491,11 +491,11 @@
 - 날짜·상태: 2026-10-23 active
 - 발견: claude(SSFS·FSSS 가능성 분석, 반박에서 적발)
 
-### L-editor-58 `pie_lookdev_fluid.py --level /Game/World/Maps/L_TDWorld_Main`로 연 PIE에는 월드 콘텐츠(지형·바위·마을)가 로드되지 않아 어느 지점이든 평평한 "바닥"에 점 무늬 덩어리만 보인다 — 화면 공간 효과 측정이 무효가 된다
-- 증상: F01·F02·F07·B01·F03(캐릭터를 지면 높이로 옮겨도) 모두 같은 파란 평면 + 흰 점 무늬 격자. 진단 보기(`r.TDFogScattering.DebugView 2` 깊이÷100m)에서 평면은 깊이 100m 이상(그려진 기하 없음), 점 무늬 덩어리와 캐릭터만 실제 깊이. 같은 지점을 `Tools/WorldGen/pie_capture_spots.py`(P3-20 run, 에디터에 이미 열린 레벨로 StartPIE·스트리밍 완료 대기)로 찍은 사진에는 지형·바위가 있다
-- 원인(미검증): 촬영기는 `LevelEditorSubsystem.load_level`로 레벨을 연 뒤 바로 StartPIE 한다. 월드 파티션 스트리밍 완료나 이계 서브시스템의 게임플레이 데이터 레이어 활성화를 기다리지 않는 차이로 추정. 첫 기록(2026-10-23 15:50)의 "F01 지점만 지형 미렌더"·"캐릭터가 지면 아래" 가설은 위 다지점 시험으로 기각
-- 해결: 게임 월드에서 화면을 찍을 때는 `pie_capture_spots.py` 경로(스트리밍 완료 대기)를 쓰고, 찍기 전 깊이 진단으로 실제 기하인지 확인한다. 안개 산란 조정은 실제 지형이 있는 `LV_DarkFantasy_OpenWorld`에서 안개 컴포넌트(`TDGen_HeightFog`, Movable)를 게임 필드·이계 안개 값과 지면 대비 높이로 바꿔 흉내 낸다(`Tools/FogScattering/lookdev_fog_scattering_sf4_emulated.json`). 측정용 AA 끔 화면은 디더 머티리얼이 점 무늬로 보이니 사용자 확인용은 TSR 켠 촬영을 따로
-- 범위: `L_TDWorld_Main` PIE(2026-10-23 상태). 월드 콘텐츠 로드 원인 조사는 월드 대장 쪽 일
-- 증거: `Docs/FogScattering/measurements/SF-1/world_main_f01_debug_views.png`, `Saved/FluidFX/lookdev/20261023-170841/`(다지점 깊이), `Saved/WorldGen/PieShots/p3-20_spots_ev3/B01_sw_boundary.png`(지형 있음)
-- 날짜·상태: 2026-10-23 active(같은 날 원인 정정)
+### L-editor-58 `L_TDWorld_Main` PIE에 월드 콘텐츠(지형·바위·마을)가 로드되지 않아 어느 지점이든 평평한 "바닥"에 점 무늬 덩어리 격자만 보인다(2026-10-16 이후 회귀) — 화면 공간 효과 측정이 무효가 된다
+- 증상: 2026-10-23~24 F01·F02·F03·F06·F07·B01 모두 같은 파란 평면 + 흰 점 무늬 격자. 진단 보기(`r.TDFogScattering.DebugView 2` 깊이÷100m)에서 평면은 깊이 100m 이상(그려진 기하 없음), 덩어리와 캐릭터만 실제 깊이. 촬영기(`pie_lookdev_fluid.py --level`)와 지점 도구(`Tools/WorldGen/pie_capture_spots.py`, 스트리밍 완료 대기) **둘 다** 같다. 같은 지점 도구의 2026-10-16 01:06 촬영(`Saved/WorldGen/PieShots/sun205_p65/F01_village.png`)에는 지형·모닥불·물웅덩이가 있다
+- 원인(미검증): 10-16 이후 월드 쪽 회귀. 그 뒤 월드 관련 커밋은 `43bc2f97`(10-16 01:51 연속 세계 전환)·`3794ad14`(10-17 에셋 로드 비동기 전환 D-47, `TDRealmSubsystem` 정의·데이터 레이어 경로 포함) 등. 첫 기록의 "F01만 지형 미렌더"·"캐릭터가 지면 아래"·"촬영기 경로 탓" 가설은 모두 기각
+- 해결: 월드 대장에서 원인 조사(10-16 정상 촬영과 대조, D-47 전후 커밋으로 이분 탐색). 그때까지 화면 공간 효과는 실제 지형 맵 `LV_DarkFantasy_OpenWorld`에서 안개 값을 흉내 내 측정(`Tools/FogScattering/lookdev_fog_scattering_sf4_emulated.json`)하고, 찍기 전 깊이 진단으로 실제 기하인지 확인한다
+- 범위: `L_TDWorld_Main` PIE 전체(2026-10-24 확인). 측정용 AA 끔 화면은 디더 머티리얼이 점 무늬로 보이는 점도 주의
+- 증거: `Docs/FogScattering/measurements/SF-4/world_main_f01_regression.png`(10-16 정상 / 10-24 끔 / 켬), `Saved/WorldGen/PieShots/sf4_world_off|on/`, `Saved/FluidFX/lookdev/20261023-170841/`
+- 날짜·상태: 2026-10-23 active(10-24 원인 범위 재정정)
 - 발견: claude(SF-1·SF-4 안개 산란 측정)

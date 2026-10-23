@@ -1,0 +1,363 @@
+{
+  "blocks": [
+    {
+      "path": "C:\\Project\\TDGame\\Saved\\Profiling\\CSV\\Profile(20261023_154317).csv",
+      "rows": 420,
+      "stats": {
+        "GPU/TDFogScattering": {
+          "n": 420,
+          "p50": 0.4157,
+          "p95": 0.6282,
+          "mean": 0.4947,
+          "max": 1.0706
+        },
+        "GPUTime": {
+          "n": 420,
+          "p50": 23.694,
+          "p95": 24.4004,
+          "mean": 23.6949,
+          "max": 25.1
+        },
+        "FrameTime": {
+          "n": 420,
+          "p50": 24.2358,
+          "p95": 28.7909,
+          "mean": 24.5285,
+          "max": 111.6888
+        }
+      },
+      "variant": "gpu_top_1_on",
+      "group": "gpu_top",
+      "state": "on"
+    },
+    {
+      "path": "C:\\Project\\TDGame\\Saved\\Profiling\\CSV\\Profile(20261023_154336).csv",
+      "rows": 420,
+      "stats": {
+        "GPU/TDFogScattering": {
+          "n": 420,
+          "p50": 0.0,
+          "p95": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        },
+        "GPUTime": {
+          "n": 420,
+          "p50": 23.2948,
+          "p95": 24.0571,
+          "mean": 23.2944,
+          "max": 24.6221
+        },
+        "FrameTime": {
+          "n": 420,
+          "p50": 23.8717,
+          "p95": 27.8283,
+          "mean": 24.1572,
+          "max": 107.6475
+        }
+      },
+      "variant": "gpu_top_2_off",
+      "group": "gpu_top",
+      "state": "off"
+    },
+    {
+      "path": "C:\\Project\\TDGame\\Saved\\Profiling\\CSV\\Profile(20261023_154354).csv",
+      "rows": 420,
+      "stats": {
+        "GPU/TDFogScattering": null,
+        "GPUTime": {
+          "n": 420,
+          "p50": 23.2679,
+          "p95": 23.9775,
+          "mean": 23.257,
+          "max": 24.5492
+        },
+        "FrameTime": {
+          "n": 420,
+          "p50": 23.7698,
+          "p95": 27.8684,
+          "mean": 24.0747,
+          "max": 103.9567
+        }
+      },
+      "variant": "gpu_top_3_off",
+      "group": "gpu_top",
+      "state": "off"
+    },
+    {
+      "path": "C:\\Project\\TDGame\\Saved\\Profiling\\CSV\\Profile(20261023_154413).csv",
+      "rows": 420,
+      "stats": {
+        "GPU/TDFogScattering": {
+          "n": 420,
+          "p50": 0.4155,
+          "p95": 0.6281,
+          "mean": 0.4885,
+          "max": 1.1114
+        },
+        "GPUTime": {
+          "n": 420,
+          "p50": 23.7021,
+          "p95": 24.3753,
+          "mean": 23.6911,
+          "max": 25.2318
+        },
+        "FrameTime": {
+          "n": 420,
+          "p50": 24.2255,
+          "p95": 28.8079,
+          "mean": 24.5109,
+          "max": 104.7689
+        }
+      },
+      "variant": "gpu_top_4_on",
+      "group": "gpu_top",
+      "state": "on"
+    },
+    {
+      "path": "C:\\Project\\TDGame\\Saved\\Profiling\\CSV\\Profile(20261023_154528).csv",
+      "rows": 420,
+      "stats": {
+        "GPU/TDFogScattering": {
+          "n": 420,
+          "p50": 0.3831,
+          "p95": 0.5871,
+          "mean": 0.4079,
+          "max": 0.77
+        },
+        "GPUTime": {
+          "n": 420,
+          "p50": 33.0049,
+          "p95": 33.5736,
+          "mean": 33.0225,
+          "max": 34.095
+        },
+        "FrameTime": {
+          "n": 420,
+          "p50": 33.6235,
+          "p95": 36.2285,
+          "mean": 33.9024,
+          "max": 141.9798
+        }
+      },
+      "variant": "gpu_third_1_on",
+      "group": "gpu_third",
+      "state": "on"
+    },
+    {
+      "path": "C:\\Project\\TDGame\\Saved\\Profiling\\CSV\\Profile(20261023_154547).csv",
+      "rows": 420,
+      "stats": {
+        "GPU/TDFogScattering": {
+          "n": 420,
+          "p50": 0.0,
+          "p95": 0.0,
+          "mean": 0.0,
+          "max": 0.0
+        },
+        "GPUTime": {
+          "n": 420,
+          "p50": 32.6025,
+          "p95": 33.1776,
+          "mean": 32.592,
+          "max": 33.8484
+        },
+        "FrameTime": {
+          "n": 420,
+          "p50": 33.236,
+          "p95": 36.9746,
+          "mean": 33.5063,
+          "max": 142.2518
+        }
+      },
+      "variant": "gpu_third_2_off",
+      "group": "gpu_third",
+      "state": "off"
+    },
+    {
+      "path": "C:\\Project\\TDGame\\Saved\\Profiling\\CSV\\Profile(20261023_154606).csv",
+      "rows": 420,
+      "stats": {
+        "GPU/TDFogScattering": null,
+        "GPUTime": {
+          "n": 420,
+          "p50": 32.5914,
+          "p95": 33.1526,
+          "mean": 32.5754,
+          "max": 33.8854
+        },
+        "FrameTime": {
+          "n": 420,
+          "p50": 33.2532,
+          "p95": 36.6897,
+          "mean": 33.483,
+          "max": 127.6402
+        }
+      },
+      "variant": "gpu_third_3_off",
+      "group": "gpu_third",
+      "state": "off"
+    },
+    {
+      "path": "C:\\Project\\TDGame\\Saved\\Profiling\\CSV\\Profile(20261023_154625).csv",
+      "rows": 420,
+      "stats": {
+        "GPU/TDFogScattering": {
+          "n": 420,
+          "p50": 0.3831,
+          "p95": 0.5858,
+          "mean": 0.4075,
+          "max": 0.9897
+        },
+        "GPUTime": {
+          "n": 420,
+          "p50": 33.0084,
+          "p95": 33.5803,
+          "mean": 33.02,
+          "max": 33.9996
+        },
+        "FrameTime": {
+          "n": 420,
+          "p50": 33.6469,
+          "p95": 36.3931,
+          "mean": 33.9383,
+          "max": 142.6251
+        }
+      },
+      "variant": "gpu_third_4_on",
+      "group": "gpu_third",
+      "state": "on"
+    }
+  ],
+  "groups": {
+    "gpu_top": {
+      "stats": {
+        "on": {
+          "GPU/TDFogScattering": {
+            "n": 840,
+            "p50": 0.4155,
+            "p95": 0.6282,
+            "mean": 0.4916,
+            "max": 1.1114
+          },
+          "GPUTime": {
+            "n": 840,
+            "p50": 23.6968,
+            "p95": 24.4004,
+            "mean": 23.693,
+            "max": 25.2318
+          },
+          "FrameTime": {
+            "n": 840,
+            "p50": 24.2332,
+            "p95": 28.8079,
+            "mean": 24.5197,
+            "max": 111.6888
+          }
+        },
+        "off": {
+          "GPU/TDFogScattering": {
+            "n": 420,
+            "p50": 0.0,
+            "p95": 0.0,
+            "mean": 0.0,
+            "max": 0.0
+          },
+          "GPUTime": {
+            "n": 840,
+            "p50": 23.2826,
+            "p95": 24.015,
+            "mean": 23.2757,
+            "max": 24.6221
+          },
+          "FrameTime": {
+            "n": 840,
+            "p50": 23.8316,
+            "p95": 27.8647,
+            "mean": 24.116,
+            "max": 107.6475
+          }
+        }
+      },
+      "delta_on_minus_off": {
+        "GPU/TDFogScattering": {
+          "p50": 0.4155,
+          "p95": 0.6282
+        },
+        "GPUTime": {
+          "p50": 0.4142,
+          "p95": 0.3854
+        },
+        "FrameTime": {
+          "p50": 0.4016,
+          "p95": 0.9432
+        }
+      }
+    },
+    "gpu_third": {
+      "stats": {
+        "on": {
+          "GPU/TDFogScattering": {
+            "n": 840,
+            "p50": 0.3831,
+            "p95": 0.5868,
+            "mean": 0.4077,
+            "max": 0.9897
+          },
+          "GPUTime": {
+            "n": 840,
+            "p50": 33.0074,
+            "p95": 33.5767,
+            "mean": 33.0212,
+            "max": 34.095
+          },
+          "FrameTime": {
+            "n": 840,
+            "p50": 33.6277,
+            "p95": 36.3708,
+            "mean": 33.9203,
+            "max": 142.6251
+          }
+        },
+        "off": {
+          "GPU/TDFogScattering": {
+            "n": 420,
+            "p50": 0.0,
+            "p95": 0.0,
+            "mean": 0.0,
+            "max": 0.0
+          },
+          "GPUTime": {
+            "n": 840,
+            "p50": 32.5943,
+            "p95": 33.1672,
+            "mean": 32.5837,
+            "max": 33.8854
+          },
+          "FrameTime": {
+            "n": 840,
+            "p50": 33.2464,
+            "p95": 36.8943,
+            "mean": 33.4947,
+            "max": 142.2518
+          }
+        }
+      },
+      "delta_on_minus_off": {
+        "GPU/TDFogScattering": {
+          "p50": 0.3831,
+          "p95": 0.5868
+        },
+        "GPUTime": {
+          "p50": 0.4131,
+          "p95": 0.4095
+        },
+        "FrameTime": {
+          "p50": 0.3813,
+          "p95": -0.5235
+        }
+      }
+    }
+  },
+  "warnings": []
+}

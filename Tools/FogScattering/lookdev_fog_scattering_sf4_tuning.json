@@ -1,0 +1,596 @@
+{
+ "base": {
+  "console": [
+   "r.ProfileGPU.ShowUI 0",
+   "r.AntiAliasingMethod 0"
+  ]
+ },
+ "variants": [
+  {
+   "name": "f01_place",
+   "apply": {
+    "time_dilation": 1.0,
+    "pawn": [
+     -11000,
+     2000
+    ],
+    "location": {
+     "BP_TDCombatCharacter0": [
+      null,
+      null,
+      690
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 14
+  },
+  {
+   "name": "f01_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "f01_depth",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 2"
+    ]
+   }
+  },
+  {
+   "name": "f01_media",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 4"
+    ]
+   }
+  },
+  {
+   "name": "f01_view",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 0"
+    ]
+   }
+  },
+  {
+   "name": "f01_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "f01_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "f01_on2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_k2_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 2",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_k4_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 4",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_k8_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_k16_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 16",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_k1_p07",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 0.7"
+    ]
+   }
+  },
+  {
+   "name": "f01_k1_p05",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 0.5"
+    ]
+   }
+  },
+  {
+   "name": "f01_k4_p07",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 4",
+     "r.TDFogScattering.WeightPower 0.7"
+    ]
+   }
+  },
+  {
+   "name": "f01_k8_p07",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.WeightPower 0.7"
+    ]
+   }
+  },
+  {
+   "name": "f01_reset",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_weight_k8",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.DebugView 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_weight_reset",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   }
+  },
+  {
+   "name": "f03_place",
+   "apply": {
+    "time_dilation": 1.0,
+    "pawn": [
+     1000,
+     -33000
+    ],
+    "location": {
+     "BP_TDCombatCharacter0": [
+      null,
+      null,
+      525
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 14
+  },
+  {
+   "name": "f03_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "f03_depth",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 2"
+    ]
+   }
+  },
+  {
+   "name": "f03_media",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 4"
+    ]
+   }
+  },
+  {
+   "name": "f03_view",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 0"
+    ]
+   }
+  },
+  {
+   "name": "f03_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "f03_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "f03_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "f03_on2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "f03_k4_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 4",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "f03_k8_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "f03_k8_p07",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.WeightPower 0.7"
+    ]
+   }
+  },
+  {
+   "name": "f03_k16_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 16",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "f03_reset",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "p01_place",
+   "apply": {
+    "time_dilation": 1.0,
+    "pawn": [
+     59300,
+     49100
+    ],
+    "location": {
+     "BP_TDCombatCharacter0": [
+      null,
+      null,
+      2595
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 14
+  },
+  {
+   "name": "p01_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "p01_depth",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 2"
+    ]
+   }
+  },
+  {
+   "name": "p01_media",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 4"
+    ]
+   }
+  },
+  {
+   "name": "p01_view",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 0"
+    ]
+   }
+  },
+  {
+   "name": "p01_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "p01_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "p01_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "p01_on2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "p01_k4_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 4",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "p01_k8_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "p01_k8_p07",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.WeightPower 0.7"
+    ]
+   }
+  },
+  {
+   "name": "p01_k16_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 16",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "p01_reset",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "s06_place",
+   "apply": {
+    "time_dilation": 1.0,
+    "pawn": [
+     893,
+     -56107
+    ],
+    "location": {
+     "BP_TDCombatCharacter0": [
+      null,
+      null,
+      -3240
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 14
+  },
+  {
+   "name": "s06_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "s06_depth",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 2"
+    ]
+   }
+  },
+  {
+   "name": "s06_media",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 4"
+    ]
+   }
+  },
+  {
+   "name": "s06_view",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DebugView 0"
+    ]
+   }
+  },
+  {
+   "name": "s06_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "s06_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "s06_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "s06_on2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "s06_k4_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 4",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "s06_k8_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "s06_k8_p07",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8",
+     "r.TDFogScattering.WeightPower 0.7"
+    ]
+   }
+  },
+  {
+   "name": "s06_k16_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 16",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "s06_reset",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1"
+    ]
+   }
+  },
+  {
+   "name": "restore",
+   "apply": {
+    "time_dilation": 1.0,
+    "console": [
+     "r.TDFogScattering.DebugView 0",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.AntiAliasingMethod 4"
+    ]
+   }
+  }
+ ]
+}

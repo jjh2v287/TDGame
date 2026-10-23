@@ -1,0 +1,356 @@
+{
+ "base": {
+  "console": [
+   "r.ProfileGPU.ShowUI 0",
+   "r.AntiAliasingMethod 0"
+  ]
+ },
+ "variants": [
+  {
+   "name": "warm",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 5
+  },
+  {
+   "name": "field_setup",
+   "apply": {
+    "time_dilation": 1.0,
+    "props": {
+     "TDGen_HeightFog": {
+      "component": {
+       "fog_density": 0.005,
+       "fog_height_falloff": 0.03,
+       "fog_max_opacity": 1.0,
+       "start_distance": 0.0,
+       "volumetric_fog_distance": 6000.0,
+       "volumetric_fog_extinction_scale": 1.0,
+       "second_fog_data": {
+        "fog_density": 0.0,
+        "fog_height_falloff": 0.2,
+        "fog_height_offset": 0.0
+       }
+      }
+     }
+    },
+    "location": {
+     "TDGen_HeightFog": [
+      null,
+      null,
+      -6720.0
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 8
+  },
+  {
+   "name": "field_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "field_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "field_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "field_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "field_k24_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 24",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   }
+  },
+  {
+   "name": "field_k32_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 32"
+    ]
+   }
+  },
+  {
+   "name": "field_reset",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   }
+  },
+  {
+   "name": "pale_setup",
+   "apply": {
+    "time_dilation": 1.0,
+    "props": {
+     "TDGen_HeightFog": {
+      "component": {
+       "fog_density": 0.03,
+       "fog_height_falloff": 0.6,
+       "fog_max_opacity": 0.9,
+       "start_distance": 800.0,
+       "volumetric_fog_distance": 6000.0,
+       "volumetric_fog_extinction_scale": 0.8,
+       "second_fog_data": {
+        "fog_density": 0.25,
+        "fog_height_falloff": 3.0,
+        "fog_height_offset": -1500.0
+       }
+      }
+     }
+    },
+    "location": {
+     "TDGen_HeightFog": [
+      null,
+      null,
+      -4908.0
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 8
+  },
+  {
+   "name": "pale_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "pale_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "pale_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "pale_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "pale_k32_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 32",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   }
+  },
+  {
+   "name": "pale_k48_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 48"
+    ]
+   }
+  },
+  {
+   "name": "pale_k64_p1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 64"
+    ]
+   }
+  },
+  {
+   "name": "pale_reset",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   }
+  },
+  {
+   "name": "star_setup",
+   "apply": {
+    "time_dilation": 1.0,
+    "props": {
+     "TDGen_HeightFog": {
+      "component": {
+       "fog_density": 0.02,
+       "fog_height_falloff": 0.25,
+       "fog_max_opacity": 0.95,
+       "start_distance": 2500.0,
+       "volumetric_fog_distance": 6000.0,
+       "volumetric_fog_extinction_scale": 1.0,
+       "second_fog_data": {
+        "fog_density": 0.1,
+        "fog_height_falloff": 2.0,
+        "fog_height_offset": -300.0
+       }
+      }
+     }
+    },
+    "location": {
+     "TDGen_HeightFog": [
+      null,
+      null,
+      3730.0
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 8
+  },
+  {
+   "name": "star_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "star_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "star_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "star_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "star_k1_i100",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   }
+  },
+  {
+   "name": "star_k1_i60",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.Intensity 0.6"
+    ]
+   }
+  },
+  {
+   "name": "star_k1_i45",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.Intensity 0.45"
+    ]
+   }
+  },
+  {
+   "name": "star_k1_i35",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.Intensity 0.35"
+    ]
+   }
+  },
+  {
+   "name": "star_k2_i35",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 2",
+     "r.TDFogScattering.Intensity 0.35"
+    ]
+   }
+  },
+  {
+   "name": "star_reset",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   }
+  },
+  {
+   "name": "restore",
+   "apply": {
+    "time_dilation": 1.0,
+    "console": [
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1",
+     "r.AntiAliasingMethod 4"
+    ]
+   }
+  }
+ ]
+}

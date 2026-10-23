@@ -481,3 +481,21 @@
 - 증거: `Saved/AgentOps/20261022/fx7p/crash_r1_timeline.txt`(reset 뒤 DESCRIBE GPU128), 프로브 `probe_snapshot.py`·`probe_copy2.py` 결과(세션 스크래치), `Saved/FluidFX/fx7p/fx7p-crashR1-20261022220446`
 - 날짜·상태: 2026-10-22 active
 - 발견: claude(FX-7p 크래시 ② R1 재현)
+
+### L-editor-57 UE 높이 안개 투과율은 밑 2(`exp2`)라, 자연지수로 계산하면 안개 불투명도가 약 2배로 과대 추정된다
+- 증상: 안개 산란 분석 초안의 불투명도 표(밀도 0.02, 탑다운 1.6~4.2%, 수평 1km 85.5%)를 반박자 2명이 엔진 식으로 다시 계산해 0.8~2.4%, 60.9%를 얻음
+- 원인: 밀도 접힘 `Density/1000 · 2^(−Falloff/1000·(카메라Z−안개높이))`(`Renderer/Private/FogRendering.cpp:397-406`), 선적분 `(1−2^(−F))/F`(F→0이면 ln2, `Shaders/Private/HeightFogCommon.ush:207-214`), 투과율 `exp2(−선적분)`(394행). 수평 광선의 자연 광학두께 = (ln2)²·밀도/1000·거리(cm) ≈ 0.48배
+- 해결: 안개 불투명도·광학두께(FSSS W 등)는 위 엔진 식 그대로 계산한다. 볼류메트릭 포그가 켜진 맵은 가까운 구간을 볼류메트릭 결과가 대체하므로(`HeightFogPixelShader.usf:184`) 높이 안개 단독 값임을 표기
+- 범위: UE 5.8 Exponential Height Fog 수치 추정 전체
+- 증거: `Saved/AgentOps/20261023/ssfs/refute-numbers.md` R1, `refute-engine.md` 치명 2, 정정본 `Docs/FogScattering/01-ssfs-fsss-feasibility.md` 5절
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(SSFS·FSSS 가능성 분석, 반박에서 적발)
+
+### L-editor-58 `pie_lookdev_fluid.py --level /Game/World/Maps/L_TDWorld_Main`로 연 PIE에는 월드 콘텐츠(지형·바위·마을)가 로드되지 않아 어느 지점이든 평평한 "바닥"에 점 무늬 덩어리만 보인다 — 화면 공간 효과 측정이 무효가 된다
+- 증상: F01·F02·F07·B01·F03(캐릭터를 지면 높이로 옮겨도) 모두 같은 파란 평면 + 흰 점 무늬 격자. 진단 보기(`r.TDFogScattering.DebugView 2` 깊이÷100m)에서 평면은 깊이 100m 이상(그려진 기하 없음), 점 무늬 덩어리와 캐릭터만 실제 깊이. 같은 지점을 `Tools/WorldGen/pie_capture_spots.py`(P3-20 run, 에디터에 이미 열린 레벨로 StartPIE·스트리밍 완료 대기)로 찍은 사진에는 지형·바위가 있다
+- 원인(미검증): 촬영기는 `LevelEditorSubsystem.load_level`로 레벨을 연 뒤 바로 StartPIE 한다. 월드 파티션 스트리밍 완료나 이계 서브시스템의 게임플레이 데이터 레이어 활성화를 기다리지 않는 차이로 추정. 첫 기록(2026-10-23 15:50)의 "F01 지점만 지형 미렌더"·"캐릭터가 지면 아래" 가설은 위 다지점 시험으로 기각
+- 해결: 게임 월드에서 화면을 찍을 때는 `pie_capture_spots.py` 경로(스트리밍 완료 대기)를 쓰고, 찍기 전 깊이 진단으로 실제 기하인지 확인한다. 안개 산란 조정은 실제 지형이 있는 `LV_DarkFantasy_OpenWorld`에서 안개 컴포넌트(`TDGen_HeightFog`, Movable)를 게임 필드·이계 안개 값과 지면 대비 높이로 바꿔 흉내 낸다(`Tools/FogScattering/lookdev_fog_scattering_sf4_emulated.json`). 측정용 AA 끔 화면은 디더 머티리얼이 점 무늬로 보이니 사용자 확인용은 TSR 켠 촬영을 따로
+- 범위: `L_TDWorld_Main` PIE(2026-10-23 상태). 월드 콘텐츠 로드 원인 조사는 월드 대장 쪽 일
+- 증거: `Docs/FogScattering/measurements/SF-1/world_main_f01_debug_views.png`, `Saved/FluidFX/lookdev/20261023-170841/`(다지점 깊이), `Saved/WorldGen/PieShots/p3-20_spots_ev3/B01_sw_boundary.png`(지형 있음)
+- 날짜·상태: 2026-10-23 active(같은 날 원인 정정)
+- 발견: claude(SF-1·SF-4 안개 산란 측정)

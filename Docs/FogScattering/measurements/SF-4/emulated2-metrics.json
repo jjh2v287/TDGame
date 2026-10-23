@@ -1,0 +1,146 @@
+[
+ {
+  "spot": "field",
+  "setting": "off2",
+  "luma": 1.0,
+  "loss_top": 0.0,
+  "loss_mid": 0.0,
+  "loss_bottom": -0.002,
+  "changed": 0.308
+ },
+ {
+  "spot": "field",
+  "setting": "on",
+  "luma": 1.0002,
+  "loss_top": 0.005,
+  "loss_mid": 0.001,
+  "loss_bottom": -0.002,
+  "changed": 0.308
+ },
+ {
+  "spot": "field",
+  "setting": "k24_p1",
+  "luma": 1.0089,
+  "loss_top": 0.125,
+  "loss_mid": 0.088,
+  "loss_bottom": 0.074,
+  "changed": 0.473
+ },
+ {
+  "spot": "field",
+  "setting": "k32_p1",
+  "luma": 1.0118,
+  "loss_top": 0.16,
+  "loss_mid": 0.116,
+  "loss_bottom": 0.097,
+  "changed": 0.529
+ },
+ {
+  "spot": "pale",
+  "setting": "off2",
+  "luma": 1.0,
+  "loss_top": 0.001,
+  "loss_mid": 0.001,
+  "loss_bottom": 0.001,
+  "changed": 0.321
+ },
+ {
+  "spot": "pale",
+  "setting": "on",
+  "luma": 1.0001,
+  "loss_top": 0.001,
+  "loss_mid": 0.002,
+  "loss_bottom": 0.003,
+  "changed": 0.323
+ },
+ {
+  "spot": "pale",
+  "setting": "k32_p1",
+  "luma": 1.0071,
+  "loss_top": 0.093,
+  "loss_mid": 0.068,
+  "loss_bottom": 0.061,
+  "changed": 0.43
+ },
+ {
+  "spot": "pale",
+  "setting": "k48_p1",
+  "luma": 1.0106,
+  "loss_top": 0.136,
+  "loss_mid": 0.098,
+  "loss_bottom": 0.087,
+  "changed": 0.508
+ },
+ {
+  "spot": "pale",
+  "setting": "k64_p1",
+  "luma": 1.0139,
+  "loss_top": 0.176,
+  "loss_mid": 0.13,
+  "loss_bottom": 0.113,
+  "changed": 0.569
+ },
+ {
+  "spot": "star",
+  "setting": "off2",
+  "luma": 1.0002,
+  "loss_top": 0.053,
+  "loss_mid": -0.025,
+  "loss_bottom": 0.053,
+  "changed": 0.099
+ },
+ {
+  "spot": "star",
+  "setting": "on",
+  "luma": 1.0113,
+  "loss_top": 0.357,
+  "loss_mid": 0.432,
+  "loss_bottom": 0.224,
+  "changed": 0.767
+ },
+ {
+  "spot": "star",
+  "setting": "k1_i100",
+  "luma": 1.0113,
+  "loss_top": 0.397,
+  "loss_mid": 0.43,
+  "loss_bottom": 0.257,
+  "changed": 0.766
+ },
+ {
+  "spot": "star",
+  "setting": "k1_i60",
+  "luma": 1.007,
+  "loss_top": 0.299,
+  "loss_mid": 0.304,
+  "loss_bottom": 0.171,
+  "changed": 0.498
+ },
+ {
+  "spot": "star",
+  "setting": "k1_i45",
+  "luma": 1.0054,
+  "loss_top": 0.247,
+  "loss_mid": 0.288,
+  "loss_bottom": 0.155,
+  "changed": 0.352
+ },
+ {
+  "spot": "star",
+  "setting": "k1_i35",
+  "luma": 1.0043,
+  "loss_top": 0.213,
+  "loss_mid": 0.218,
+  "loss_bottom": 0.137,
+  "changed": 0.259
+ },
+ {
+  "spot": "star",
+  "setting": "k2_i35",
+  "luma": 1.0047,
+  "loss_top": 0.266,
+  "loss_mid": 0.306,
+  "loss_bottom": 0.135,
+  "changed": 0.293
+ }
+]

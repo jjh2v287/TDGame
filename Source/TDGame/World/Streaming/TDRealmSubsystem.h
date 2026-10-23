@@ -94,6 +94,9 @@ private:
 	void ApplySun(UDirectionalLightComponent& Sun, const FTDRealmAtmosphere& Atmosphere);
 	void ApplySunRotation(const FRotator& SunRotation);
 	void ApplyFog(UExponentialHeightFogComponent& Fog, const FTDRealmAtmosphere& Atmosphere);
+	void CaptureFieldFogScattering();
+	void ApplyFogScattering(const FTDRealmAtmosphere& Atmosphere);
+	void RestoreFieldFogScattering();
 	bool RefreshRealmPostProcessVolumes();
 	void ApplyPostProcessWeights();
 	void RecoverFallenPawnIfNeeded(APawn& Pawn);
@@ -156,6 +159,12 @@ private:
 	double NextPostProcessScanSeconds = 0.0;
 	bool bHasBegunPlay = false;
 	bool bHasCapturedFieldAtmosphere = false;
+	bool bHasCapturedFieldFogScattering = false;
+	bool bHasAppliedFogScattering = false;
+	float FieldFogScatteringIntensity = 1.0f;
+	float FieldFogScatteringDistanceScale = 1.0f;
+	float FieldFogScatteringWeightPower = 1.0f;
+	FVector3f AppliedFogScattering = FVector3f::ZeroVector;
 	bool bHasWarnedStaticSun = false;
 	bool bHasWarnedStaticFog = false;
 };

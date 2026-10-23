@@ -18,6 +18,7 @@
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "TDFogScatteringSubsystem.h"
 #include "TDGame.h"
 #include "TDWorldGenSettings.h"
 #include "World/Streaming/TDRealmLiftDeck.h"
@@ -118,6 +119,7 @@ void UTDRealmSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	Super::OnWorldBeginPlay(InWorld);
 	RequestRealmDefinitions();
 	CaptureFieldAtmosphere();
+	CaptureFieldFogScattering();
 	if (!bHasCapturedFieldAtmosphere)
 	{
 		UE_LOG(LogTDGame, Log, TEXT("Realm: no directional light, sky light, sky atmosphere or height fog found at begin play; capture is retried on demand."));
@@ -138,6 +140,7 @@ void UTDRealmSubsystem::Deinitialize()
 	}
 	RealmLiftAssetsHandle.Reset();
 	bHasBegunPlay = false;
+	RestoreFieldFogScattering();
 	RestorePassagePace();
 	PacedCharacter.Reset();
 	LoadedRealmDefinitions.Reset();
@@ -882,6 +885,9 @@ FTDRealmAtmosphere UTDRealmSubsystem::MakeBlendedAtmosphere(const UTDRealmDefini
 	Blended.VolumetricFogAlbedo = FMath::Lerp(Field.VolumetricFogAlbedo, Target.VolumetricFogAlbedo, Weight);
 	Blended.VolumetricFogEmissive = FMath::Lerp(Field.VolumetricFogEmissive, Target.VolumetricFogEmissive, Weight);
 	Blended.VolumetricFogExtinctionScale = FMath::Lerp(Field.VolumetricFogExtinctionScale, Target.VolumetricFogExtinctionScale, Weight);
+	Blended.FogScatteringIntensityMultiplier = FMath::Lerp(Field.FogScatteringIntensityMultiplier, Target.FogScatteringIntensityMultiplier, Weight);
+	Blended.FogScatteringDistanceMultiplier = FMath::Lerp(Field.FogScatteringDistanceMultiplier, Target.FogScatteringDistanceMultiplier, Weight);
+	Blended.FogScatteringWeightPowerMultiplier = FMath::Lerp(Field.FogScatteringWeightPowerMultiplier, Target.FogScatteringWeightPowerMultiplier, Weight);
 	return Blended;
 }
 
@@ -906,6 +912,66 @@ void UTDRealmSubsystem::ApplyAtmosphere(const FTDRealmAtmosphere& Atmosphere)
 	{
 		ApplyFog(*Fog, Atmosphere);
 	}
+	ApplyFogScattering(Atmosphere);
+}
+
+void UTDRealmSubsystem::CaptureFieldFogScattering()
+{
+	const UTDFogScatteringSubsystem* FogScattering = GEngine ? GEngine->GetEngineSubsystem<UTDFogScatteringSubsystem>() : nullptr;
+	if (!FogScattering || bHasCapturedFieldFogScattering)
+	{
+		return;
+	}
+
+	FieldFogScatteringIntensity = FogScattering->GetFogScatteringIntensity();
+	FieldFogScatteringDistanceScale = FogScattering->GetFogScatteringDistanceScale();
+	FieldFogScatteringWeightPower = FogScattering->GetFogScatteringWeightPower();
+	AppliedFogScattering = FVector3f(FieldFogScatteringIntensity, FieldFogScatteringDistanceScale, FieldFogScatteringWeightPower);
+	bHasCapturedFieldFogScattering = true;
+}
+
+void UTDRealmSubsystem::ApplyFogScattering(const FTDRealmAtmosphere& Atmosphere)
+{
+	UTDFogScatteringSubsystem* FogScattering = GEngine ? GEngine->GetEngineSubsystem<UTDFogScatteringSubsystem>() : nullptr;
+	if (!FogScattering || !bHasCapturedFieldFogScattering)
+	{
+		return;
+	}
+
+	const FVector3f Target(
+		FieldFogScatteringIntensity * Atmosphere.FogScatteringIntensityMultiplier,
+		FieldFogScatteringDistanceScale * Atmosphere.FogScatteringDistanceMultiplier,
+		FieldFogScatteringWeightPower * Atmosphere.FogScatteringWeightPowerMultiplier);
+	if (Target.Equals(AppliedFogScattering, KINDA_SMALL_NUMBER))
+	{
+		return;
+	}
+
+	FogScattering->SetFogScatteringIntensity(Target.X);
+	FogScattering->SetFogScatteringDistanceScale(Target.Y);
+	FogScattering->SetFogScatteringWeightPower(Target.Z);
+	AppliedFogScattering = Target;
+	bHasAppliedFogScattering = true;
+}
+
+void UTDRealmSubsystem::RestoreFieldFogScattering()
+{
+	UTDFogScatteringSubsystem* FogScattering = GEngine ? GEngine->GetEngineSubsystem<UTDFogScatteringSubsystem>() : nullptr;
+	if (!FogScattering || !bHasAppliedFogScattering)
+	{
+		return;
+	}
+
+	bHasAppliedFogScattering = false;
+	const FVector3f Current(FogScattering->GetFogScatteringIntensity(), FogScattering->GetFogScatteringDistanceScale(), FogScattering->GetFogScatteringWeightPower());
+	if (!Current.Equals(AppliedFogScattering, KINDA_SMALL_NUMBER))
+	{
+		return;
+	}
+
+	FogScattering->SetFogScatteringIntensity(FieldFogScatteringIntensity);
+	FogScattering->SetFogScatteringDistanceScale(FieldFogScatteringDistanceScale);
+	FogScattering->SetFogScatteringWeightPower(FieldFogScatteringWeightPower);
 }
 
 void UTDRealmSubsystem::ApplySun(UDirectionalLightComponent& Sun, const FTDRealmAtmosphere& Atmosphere)

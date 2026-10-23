@@ -1,0 +1,115 @@
+#pragma once
+
+SamplerState MediaSampler;
+float MediaSkyAtmosphereIntensity;
+Texture3D MediaVolumetricFogTexture;
+float MediaVolumetricFogIntensity;
+float MediaVolumetricFogStartDistance;
+float MediaVolumetricFogRendered;
+Texture2D MediaVolumetricCloudTexture;
+float MediaVolumetricCloudIntensity;
+float2 MediaVolumetricCloudUVScale;
+float2 MediaVolumetricCloudUVMax;
+Texture2D MediaHeterogeneousVolumeTexture;
+float MediaHeterogeneousVolumeIntensity;
+int2 MediaHeterogeneousVolumeTextureSize;
+uint MediaHeterogeneousVolumeDownsampleFactor;
+
+static const float TDMediaCentimetersToKilometers = 0.00001f;
+static const float TDMediaSkyHalfSliceDepth = 0.70710678f;
+static const float TDMediaSkyNearFadeInverseKilometers = 100000.0f;
+static const float TDMediaVolumetricFogStartStepScale = 100000000.0f;
+static const float TDMediaVolumetricFogMinimumSliceArgument = 0.000001f;
+static const float TDMediaMinimumViewCosine = 0.001f;
+static const float TDMediaMinimumLengthSquared = 0.00000001f;
+
+float ApplyTDMediaIntensity(float Transmittance, float Intensity)
+{
+	return 1.0f - saturate(Intensity * (1.0f - Transmittance));
+}
+
+float GetTDMediaHeightFogExcludeDistance(float3 CameraToReceiver)
+{
+	if (MediaVolumetricFogRendered <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	const float LengthSquared = dot(CameraToReceiver, CameraToReceiver);
+	const float ViewCosine = dot(CameraToReceiver, View.ViewForward) * rsqrt(max(LengthSquared, TDMediaMinimumLengthSquared));
+	return View.VolumetricFogMaxDistance * (ViewCosine > TDMediaMinimumViewCosine ? rcp(ViewCosine) : 0.0f);
+}
+
+float GetTDMediaSkyAtmosphereTransmittance(float2 ScreenPosition, float DeviceZ, float3 CameraToReceiver)
+{
+	if (MediaSkyAtmosphereIntensity <= 0.0f || DeviceZ == 0.0f)
+	{
+		return 1.0f;
+	}
+
+	if (View.SkyAtmosphereApplyCameraAerialPerspectiveVolume <= 0.0f || !IsSkyAtmosphereRenderedInMain(View.EnvironmentComponentsFlags))
+	{
+		return 1.0f;
+	}
+
+	const float DistanceKilometers = length(CameraToReceiver) * TDMediaCentimetersToKilometers;
+	const float DepthKilometers = max(0.0f, DistanceKilometers - View.SkyAtmosphereAerialPerspectiveStartDepthKm);
+	const float LinearW = DepthKilometers * View.SkyAtmosphereCameraAerialPerspectiveVolumeDepthSliceLengthKmInv * View.SkyAtmosphereCameraAerialPerspectiveVolumeDepthResolutionInv;
+	const float NonLinearW = saturate(sqrt(LinearW));
+	const float NonLinearSlice = NonLinearW * View.SkyAtmosphereCameraAerialPerspectiveVolumeDepthResolution;
+
+	float Weight = NonLinearSlice < TDMediaSkyHalfSliceDepth ? saturate(NonLinearSlice * NonLinearSlice * 2.0f) : 1.0f;
+	Weight *= saturate(DepthKilometers * TDMediaSkyNearFadeInverseKilometers);
+
+	const float2 VolumeUV = ScreenPosition * float2(0.5f, -0.5f) + 0.5f;
+	const float VolumeTransmittance = Texture3DSampleLevel(View.CameraAerialPerspectiveVolume, View.CameraAerialPerspectiveVolumeSampler, float3(VolumeUV, NonLinearW), 0.0f).a;
+	return ApplyTDMediaIntensity(1.0f - Weight * (1.0f - VolumeTransmittance), MediaSkyAtmosphereIntensity);
+}
+
+float GetTDMediaVolumetricFogTransmittance(uint2 ViewPixelPosition, float SceneDepth, float DistanceScale)
+{
+	if (MediaVolumetricFogIntensity <= 0.0f || DistanceScale <= 0.0f)
+	{
+		return 1.0f;
+	}
+
+	const float SliceArgument = max(SceneDepth * View.VolumetricFogGridZParams.x + View.VolumetricFogGridZParams.y, TDMediaVolumetricFogMinimumSliceArgument);
+	const float ZSlice = log2(SliceArgument) * View.VolumetricFogGridZParams.z * View.VolumetricFogInvGridSize.z;
+	const float2 VolumeUV = min(((float2)ViewPixelPosition + 0.5f - View.ViewRectMin.xy) * View.VolumetricFogSVPosToVolumeUV, View.VolumetricFogUVMax);
+	const float VolumeTransmittance = MediaVolumetricFogTexture.SampleLevel(MediaSampler, float3(VolumeUV, ZSlice), 0).a;
+	const float Transmittance = lerp(1.0f, VolumeTransmittance, saturate((SceneDepth - MediaVolumetricFogStartDistance) * TDMediaVolumetricFogStartStepScale));
+	return ApplyTDMediaIntensity(pow(Transmittance, DistanceScale), MediaVolumetricFogIntensity);
+}
+
+float GetTDMediaVolumetricCloudTransmittance(uint2 ViewPixelPosition)
+{
+	if (MediaVolumetricCloudIntensity <= 0.0f)
+	{
+		return 1.0f;
+	}
+
+	const float2 CloudUV = min(((float2)ViewPixelPosition + 0.5f - View.ViewRectMin.xy) * View.ViewSizeAndInvSize.zw * MediaVolumetricCloudUVScale, MediaVolumetricCloudUVMax);
+	const float CloudTransmittance = MediaVolumetricCloudTexture.SampleLevel(MediaSampler, CloudUV, 0).a;
+	return ApplyTDMediaIntensity(CloudTransmittance, MediaVolumetricCloudIntensity);
+}
+
+float GetTDMediaHeterogeneousVolumeTransmittance(uint2 ViewPixelPosition)
+{
+	if (MediaHeterogeneousVolumeIntensity <= 0.0f)
+	{
+		return 1.0f;
+	}
+
+	const int2 TexelPosition = clamp((int2)(ViewPixelPosition / max(MediaHeterogeneousVolumeDownsampleFactor, 1u)), int2(0, 0), MediaHeterogeneousVolumeTextureSize - 1);
+	const float VolumeTransmittance = MediaHeterogeneousVolumeTexture.Load(int3(TexelPosition, 0)).a;
+	return ApplyTDMediaIntensity(VolumeTransmittance, MediaHeterogeneousVolumeIntensity);
+}
+
+float GetTDMediaTransmittance(uint2 ViewPixelPosition, float2 ScreenPosition, float DeviceZ, float SceneDepth, float3 CameraToReceiver, float DistanceScale)
+{
+	float Transmittance = GetTDMediaSkyAtmosphereTransmittance(ScreenPosition, DeviceZ, CameraToReceiver);
+	Transmittance *= GetTDMediaVolumetricFogTransmittance(ViewPixelPosition, SceneDepth, DistanceScale);
+	Transmittance *= GetTDMediaVolumetricCloudTransmittance(ViewPixelPosition);
+	Transmittance *= GetTDMediaHeterogeneousVolumeTransmittance(ViewPixelPosition);
+	return Transmittance;
+}

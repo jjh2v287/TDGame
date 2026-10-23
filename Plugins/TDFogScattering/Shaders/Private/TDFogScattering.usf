@@ -1,0 +1,286 @@
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Shared/EnvironmentComponentsFlags.h"
+#include "/Plugin/TDFogScattering/Private/TDFogScatteringFog.ush"
+#include "/Plugin/TDFogScattering/Private/TDFogScatteringMedia.ush"
+
+Texture2D InputTexture;
+int2 InputRectMinimum;
+int2 InputRectMaximum;
+Texture2D DetailTexture;
+Texture2D BlurTexture;
+SamplerState BlurSampler;
+float2 BlurExtentInverse;
+float UpsampleRadius;
+Texture2D SceneColorTexture;
+Texture2D SceneDepthTexture;
+int2 SceneColorRectMinimum;
+int2 SceneColorRectSize;
+float4 ExponentialFogParameters;
+float4 ExponentialFogParameters2;
+float4 ExponentialFogParameters3;
+float FogMaxOpacity;
+float FogEndDistance;
+float FogDistanceScale;
+float FogOnlyOnRenderedOpaque;
+float ScatteringIntensity;
+float ScatteringWeightPower;
+int DebugView;
+int2 OutputSize;
+RWTexture2D<float4> OutputTexture;
+
+static const float3 TDLuminanceWeights = float3(0.2126f, 0.7152f, 0.0722f);
+static const float TDMaximumColorValue = 65000.0f;
+
+float SanitizeChannel(float Value)
+{
+	return IsFinite(Value) ? clamp(Value, 0.0f, TDMaximumColorValue) : 0.0f;
+}
+
+float3 SanitizeColor(float3 Color)
+{
+	return float3(SanitizeChannel(Color.x), SanitizeChannel(Color.y), SanitizeChannel(Color.z));
+}
+
+float3 LoadInputClamped(int2 TexelPosition)
+{
+	int2 ClampedPosition = clamp(TexelPosition, InputRectMinimum, InputRectMaximum - 1);
+	return SanitizeColor(InputTexture.Load(int3(ClampedPosition, 0)).rgb);
+}
+
+float3 SampleInputBox(int2 CornerPosition)
+{
+	float3 Sum = LoadInputClamped(CornerPosition + int2(-1, -1));
+	Sum += LoadInputClamped(CornerPosition + int2(0, -1));
+	Sum += LoadInputClamped(CornerPosition + int2(-1, 0));
+	Sum += LoadInputClamped(CornerPosition);
+	return Sum * 0.25f;
+}
+
+float3 AverageFourBoxes(float3 BoxA, float3 BoxB, float3 BoxC, float3 BoxD)
+{
+	return (BoxA + BoxB + BoxC + BoxD) * 0.25f;
+}
+
+float GetKarisWeight(float BaseWeight, float3 GroupColor)
+{
+#if LUMINANCE_WEIGHTING
+	return BaseWeight * rcp(1.0f + dot(GroupColor, TDLuminanceWeights));
+#else
+	return BaseWeight;
+#endif
+}
+
+void AccumulateDownsampleTap(float3 TapColor, float BaseWeight, inout float3 WeightedColor, inout float WeightSum)
+{
+	const float TapWeight = GetKarisWeight(BaseWeight, TapColor);
+	WeightedColor += TapColor * TapWeight;
+	WeightSum += TapWeight;
+}
+
+float3 DownsampleInput(int2 Corner)
+{
+#if DOWNSAMPLE_TAP_COUNT == 4
+	float3 WeightedColor = float3(0.0f, 0.0f, 0.0f);
+	float WeightSum = 0.0f;
+
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(-1, -1)), 0.25f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(1, -1)), 0.25f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(-1, 1)), 0.25f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(1, 1)), 0.25f, WeightedColor, WeightSum);
+
+	return WeightedColor * rcp(WeightSum);
+#elif DOWNSAMPLE_TAP_COUNT == 8
+	float3 WeightedColor = float3(0.0f, 0.0f, 0.0f);
+	float WeightSum = 0.0f;
+
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(-1, -1)), 0.125f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(1, -1)), 0.125f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(-1, 1)), 0.125f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(1, 1)), 0.125f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(-2, 0)), 0.125f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(2, 0)), 0.125f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(0, -2)), 0.125f, WeightedColor, WeightSum);
+	AccumulateDownsampleTap(SampleInputBox(Corner + int2(0, 2)), 0.125f, WeightedColor, WeightSum);
+
+	return WeightedColor * rcp(WeightSum);
+#else
+	const float3 BoxCenter = SampleInputBox(Corner);
+	const float3 BoxTopCenter = SampleInputBox(Corner + int2(0, -2));
+	const float3 BoxBottomCenter = SampleInputBox(Corner + int2(0, 2));
+	const float3 BoxCenterLeft = SampleInputBox(Corner + int2(-2, 0));
+	const float3 BoxCenterRight = SampleInputBox(Corner + int2(2, 0));
+
+	const float3 InnerGroup = AverageFourBoxes(
+		SampleInputBox(Corner + int2(-1, -1)),
+		SampleInputBox(Corner + int2(1, -1)),
+		SampleInputBox(Corner + int2(-1, 1)),
+		SampleInputBox(Corner + int2(1, 1)));
+	const float3 TopLeftGroup = AverageFourBoxes(SampleInputBox(Corner + int2(-2, -2)), BoxTopCenter, BoxCenterLeft, BoxCenter);
+	const float3 TopRightGroup = AverageFourBoxes(BoxTopCenter, SampleInputBox(Corner + int2(2, -2)), BoxCenter, BoxCenterRight);
+	const float3 BottomLeftGroup = AverageFourBoxes(BoxCenterLeft, BoxCenter, SampleInputBox(Corner + int2(-2, 2)), BoxBottomCenter);
+	const float3 BottomRightGroup = AverageFourBoxes(BoxCenter, BoxCenterRight, BoxBottomCenter, SampleInputBox(Corner + int2(2, 2)));
+
+	const float InnerWeight = GetKarisWeight(0.5f, InnerGroup);
+	const float TopLeftWeight = GetKarisWeight(0.125f, TopLeftGroup);
+	const float TopRightWeight = GetKarisWeight(0.125f, TopRightGroup);
+	const float BottomLeftWeight = GetKarisWeight(0.125f, BottomLeftGroup);
+	const float BottomRightWeight = GetKarisWeight(0.125f, BottomRightGroup);
+	const float WeightSum = InnerWeight + TopLeftWeight + TopRightWeight + BottomLeftWeight + BottomRightWeight;
+
+	const float3 WeightedColor =
+		InnerGroup * InnerWeight
+		+ TopLeftGroup * TopLeftWeight
+		+ TopRightGroup * TopRightWeight
+		+ BottomLeftGroup * BottomLeftWeight
+		+ BottomRightGroup * BottomRightWeight;
+
+	return WeightedColor * rcp(WeightSum);
+#endif
+}
+
+float3 SampleBlurTexel(float2 BlurPosition)
+{
+	return BlurTexture.SampleLevel(BlurSampler, BlurPosition * BlurExtentInverse, 0).rgb;
+}
+
+float3 SampleBlurKernel(float2 BlurPosition)
+{
+#if UPSAMPLE_TAP_COUNT == 5
+	float3 Sum = 4.0f * SampleBlurTexel(BlurPosition);
+	Sum += SampleBlurTexel(BlurPosition + float2(0.0f, -1.0f));
+	Sum += SampleBlurTexel(BlurPosition + float2(-1.0f, 0.0f));
+	Sum += SampleBlurTexel(BlurPosition + float2(1.0f, 0.0f));
+	Sum += SampleBlurTexel(BlurPosition + float2(0.0f, 1.0f));
+	return Sum * (1.0f / 8.0f);
+#else
+	float3 Sum = 1.0f * SampleBlurTexel(BlurPosition + float2(-1.0f, -1.0f));
+	Sum += 2.0f * SampleBlurTexel(BlurPosition + float2(0.0f, -1.0f));
+	Sum += 1.0f * SampleBlurTexel(BlurPosition + float2(1.0f, -1.0f));
+	Sum += 2.0f * SampleBlurTexel(BlurPosition + float2(-1.0f, 0.0f));
+	Sum += 4.0f * SampleBlurTexel(BlurPosition);
+	Sum += 2.0f * SampleBlurTexel(BlurPosition + float2(1.0f, 0.0f));
+	Sum += 1.0f * SampleBlurTexel(BlurPosition + float2(-1.0f, 1.0f));
+	Sum += 2.0f * SampleBlurTexel(BlurPosition + float2(0.0f, 1.0f));
+	Sum += 1.0f * SampleBlurTexel(BlurPosition + float2(1.0f, 1.0f));
+	return Sum * (1.0f / 16.0f);
+#endif
+}
+
+float2 GetBlurPositionFromThread(uint2 ThreadPosition)
+{
+	return ((float2)ThreadPosition + 0.5f) * 0.5f;
+}
+
+float GetDebugValue(float BlendWeight, float SceneDepth, float DeviceZ, float MediaTransmittance)
+{
+	if (DebugView == 1)
+	{
+		return BlendWeight;
+	}
+
+	if (DebugView == 2)
+	{
+		return saturate(SceneDepth / 10000.0f);
+	}
+
+	if (DebugView == 4)
+	{
+		return saturate(1.0f - MediaTransmittance);
+	}
+
+	return saturate(DeviceZ * 100.0f);
+}
+
+[numthreads(THREADGROUP_SIZE, THREADGROUP_SIZE, 1)]
+void MainDownsampleCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (any((int2)DispatchThreadId.xy >= OutputSize))
+	{
+		return;
+	}
+
+	const int2 Corner = InputRectMinimum + (int2)DispatchThreadId.xy * 2 + 1;
+
+	OutputTexture[DispatchThreadId.xy] = float4(DownsampleInput(Corner), 1.0f);
+}
+
+[numthreads(THREADGROUP_SIZE, THREADGROUP_SIZE, 1)]
+void MainUpsampleCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (any((int2)DispatchThreadId.xy >= OutputSize))
+	{
+		return;
+	}
+
+	const float3 Detail = DetailTexture.Load(int3(DispatchThreadId.xy, 0)).rgb;
+	const float3 Blur = SampleBlurKernel(GetBlurPositionFromThread(DispatchThreadId.xy));
+
+	OutputTexture[DispatchThreadId.xy] = float4(lerp(Detail, Blur, UpsampleRadius), 1.0f);
+}
+
+[numthreads(THREADGROUP_SIZE, THREADGROUP_SIZE, 1)]
+void MainCompositeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (any((int2)DispatchThreadId.xy >= SceneColorRectSize))
+	{
+		return;
+	}
+
+	ResolvedView = ResolveView();
+
+	const int2 PixelPosition = SceneColorRectMinimum + (int2)DispatchThreadId.xy;
+	const float4 SceneColor = SceneColorTexture.Load(int3(PixelPosition, 0));
+
+	if (!IsExponentialFogRenderedInMain(View.EnvironmentComponentsFlags))
+	{
+		OutputTexture[PixelPosition] = SceneColor;
+		return;
+	}
+
+	const int2 ViewPixelPosition = (int2)View.ViewRectMin.xy + (int2)DispatchThreadId.xy;
+	const float DeviceZ = SceneDepthTexture.Load(int3(ViewPixelPosition, 0)).r;
+
+	if (FogOnlyOnRenderedOpaque > 0.0f && DeviceZ == 0.0f)
+	{
+		OutputTexture[PixelPosition] = SceneColor;
+		return;
+	}
+
+	const float SceneDepth = ConvertFromDeviceZ(DeviceZ);
+
+	const float4 ScreenPosition = SvPositionToScreenPosition(float4((float2)ViewPixelPosition + 0.5f, 0.5f, 1.0f));
+	const float3 ScreenVector = ScreenVectorFromScreenRect(float4(ScreenPosition.xy, 1.0f, 0.0f));
+	const float3 CameraToReceiver = ScreenVector * SceneDepth;
+	const float WorldCameraOriginZ = DFHackToFloat(ResolvedView.WorldCameraOrigin).z;
+
+	const float ExcludeDistance = max(ExponentialFogParameters.w, GetTDMediaHeightFogExcludeDistance(CameraToReceiver));
+	const float HeightTransmittance = ComputeTDFogTransmittance(
+		CameraToReceiver,
+		WorldCameraOriginZ,
+		ExponentialFogParameters,
+		ExponentialFogParameters2,
+		ExponentialFogParameters3,
+		FogMaxOpacity,
+		FogEndDistance,
+		FogDistanceScale,
+		ExcludeDistance);
+	const float MediaTransmittance = GetTDMediaTransmittance((uint2)ViewPixelPosition, ScreenPosition.xy, DeviceZ, SceneDepth, CameraToReceiver, FogDistanceScale);
+	const float BlendWeight = pow(saturate(ScatteringIntensity * (1.0f - HeightTransmittance * MediaTransmittance)), ScatteringWeightPower);
+
+	if (DebugView > 0)
+	{
+		const float DebugValue = GetDebugValue(BlendWeight, SceneDepth, DeviceZ, MediaTransmittance);
+		OutputTexture[PixelPosition] = float4(DebugValue.xxx, SceneColor.a);
+		return;
+	}
+
+	if (BlendWeight <= 0.0f)
+	{
+		OutputTexture[PixelPosition] = SceneColor;
+		return;
+	}
+
+	const float3 Blur = SampleBlurKernel(GetBlurPositionFromThread(DispatchThreadId.xy));
+
+	OutputTexture[PixelPosition] = float4(lerp(SanitizeColor(SceneColor.rgb), Blur, BlendWeight), SceneColor.a);
+}

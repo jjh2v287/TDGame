@@ -1,0 +1,39 @@
+{
+  "luminance_tolerance": 0.03,
+  "pairs": [
+    {
+      "mean_luma_off": 143.412,
+      "mean_luma_on": 135.171,
+      "luminance_ratio": 0.94253,
+      "luminance_ok": false,
+      "changed_pixel_ratio": 0.40807,
+      "max_difference": 87.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 21902.359,
+          "laplacian_variance_on": 39292.127,
+          "variance_ratio": 1.79397,
+          "sharpness_loss": -0.79397
+        },
+        "middle": {
+          "laplacian_variance_off": 19288.933,
+          "laplacian_variance_on": 35907.698,
+          "variance_ratio": 1.86157,
+          "sharpness_loss": -0.86157
+        },
+        "bottom": {
+          "laplacian_variance_off": 19911.408,
+          "laplacian_variance_on": 37294.136,
+          "variance_ratio": 1.873,
+          "sharpness_loss": -0.873
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261023-145540\\02_top_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261023-145540\\07_top_fsss_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "base": {
+    "console": [
+      "r.ProfileGPU.ShowUI 0",
+      "r.DefaultFeature.AutoExposure 0"
+    ]
+  },
+  "variants": [
+    {
+      "name": "warm",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      },
+      "settle": 20
+    },
+    {
+      "name": "top_off",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 0"
+        ]
+      }
+    },
+    {
+      "name": "top_on",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      }
+    },
+    {
+      "name": "top_ds8",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DistanceScale 8"
+        ]
+      }
+    },
+    {
+      "name": "top_ds_reset",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DistanceScale 1"
+        ]
+      }
+    },
+    {
+      "name": "top_fsss_on",
+      "apply": {
+        "props": {
+          "ExponentialHeightFog": {
+            "component": {
+              "enable_fsss": true
+            }
+          }
+        },
+        "console": [
+          "r.TDFogScattering 0"
+        ]
+      }
+    },
+    {
+      "name": "top_fsss_off",
+      "apply": {
+        "props": {
+          "ExponentialHeightFog": {
+            "component": {
+              "enable_fsss": false
+            }
+          }
+        },
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      }
+    },
+    {
+      "name": "gpu_top_1_on",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering 1",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_top_2_off",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering 0",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_top_3_off",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering 0",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_top_4_on",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering 1",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "third_off",
+      "apply": {
+        "arm": 300,
+        "view": [
+          -10,
+          0
+        ],
+        "console": [
+          "r.TDFogScattering 0"
+        ]
+      },
+      "settle": 6
+    },
+    {
+      "name": "third_on",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      }
+    },
+    {
+      "name": "gpu_third_1_on",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering 1",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_third_2_off",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering 0",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_third_3_off",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering 0",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_third_4_on",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering 1",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "fsss_on",
+      "apply": {
+        "props": {
+          "ExponentialHeightFog": {
+            "component": {
+              "enable_fsss": true
+            }
+          }
+        },
+        "console": [
+          "r.TDFogScattering 0"
+        ]
+      }
+    },
+    {
+      "name": "restore",
+      "apply": {
+        "props": {
+          "ExponentialHeightFog": {
+            "component": {
+              "enable_fsss": false
+            }
+          }
+        },
+        "console": [
+          "r.TDFogScattering 1",
+          "r.TDFogScattering.DistanceScale 1",
+          "r.DefaultFeature.AutoExposure 1"
+        ]
+      }
+    }
+  ]
+}

@@ -174,3 +174,12 @@
 - 증거: 12차 커밋 전 `git show :Docs/Tasks/decisions.md` 395-409행 확인, f4f3ff29의 decisions.md D-56/D-57 경계
 - 날짜·상태: 2026-10-21 active
 - 발견: claude(FX-8c 12차 커밋)
+
+### L-repo-24 `td-researcher`·`td-scout`에는 Write 도구가 없어 "보고서를 `Saved/AgentOps`에 쓰고 경로만 반환" 계약이 실패하고, `td-researcher`는 넓은 엔진 조사에서 maxTurns 40에 걸려 보고서 없이 멈춘다
+- 증상: 2026-10-23 SSFS 분석에서 td-researcher 3회 모두 "Write 도구가 없어 파일을 만들지 못했다"며 전문을 반환(400자 한도 초과). 엔진 조사 1회는 "stopped at its 40-turn limit ... had produced no report"(도구 69회, 약 20만 토큰)
+- 원인: `.claude/agents/td-researcher.md` tools `Read, Grep, Glob, WebSearch, WebFetch`·maxTurns 40, `td-scout.md` tools `Read, Grep, Glob`·maxTurns 25. 파일 쓰기 가능한 정의는 td-builder(Write)·td-refuter·td-debugger·td-test-runner(PowerShell)
+- 해결: 보고서 파일이 필요한 조사는 td-refuter(PowerShell로 쓰기)나 general-purpose에 맡기고, td-researcher에는 "본문으로 반환, 질문별 구조" + "도구 호출 30회를 넘으면 탐색을 멈추고 보고"를 넣는다. 턴 한도로 멈추면 SendMessage로 "추가 10회 안에 보고"를 지시(이번에 그대로 회수됨)
+- 범위: 이 프로젝트 `.claude/agents/` 정의. CLAUDE.md "전체 파일은 Saved/AgentOps에 두게 한 뒤 경로만 받는다"와 충돌하므로, 정의·규칙 조정은 사용자 승인 사항
+- 증거: 이 세션 위임 4건의 반환문(2026-10-23)
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(SSFS·FSSS 가능성 분석)

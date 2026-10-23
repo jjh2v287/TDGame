@@ -37,6 +37,8 @@ public class TDGame : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "TDFluidGpu", "RenderCore", "RHI" });
 
+		PrivateDependencyModuleNames.Add("TDFogScattering");
+
 		PublicIncludePaths.AddRange(new string[] {
 			"TDGame"
 		});

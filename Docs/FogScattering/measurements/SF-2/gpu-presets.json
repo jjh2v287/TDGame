@@ -1,0 +1,18 @@
+{
+ "map": "LV_DarkFantasy_OpenWorld",
+ "view": "third arm 300 pitch -10",
+ "gpu": "RTX 2060 editor PIE render resolution",
+ "stat": "GPU/TDFogScattering p50 ms",
+ "preset_p50_ms": {
+  "0": 0.3092,
+  "1": 0.3324,
+  "2": 0.4119,
+  "3": 0.453
+ },
+ "source_csv": [
+  "Profile(20261023_161705).csv",
+  "Profile(20261023_161724).csv",
+  "Profile(20261023_161743).csv",
+  "Profile(20261023_161802).csv"
+ ]
+}

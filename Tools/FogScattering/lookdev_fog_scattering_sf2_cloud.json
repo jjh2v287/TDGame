@@ -1,0 +1,89 @@
+{
+  "base": {
+    "console": [
+      "r.ProfileGPU.ShowUI 0",
+      "r.AntiAliasingMethod 0"
+    ]
+  },
+  "variants": [
+    {
+      "name": "warm",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      },
+      "settle": 20
+    },
+    {
+      "name": "third_setup",
+      "apply": {
+        "arm": 300,
+        "view": [
+          -10,
+          0
+        ]
+      },
+      "settle": 6
+    },
+    {
+      "name": "freeze",
+      "apply": {
+        "time_dilation": 0.0001
+      },
+      "settle": 3
+    },
+    {
+      "name": "cloud_off",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.VolumetricCloud 0"
+        ]
+      }
+    },
+    {
+      "name": "cloud_on",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.VolumetricCloud 1"
+        ]
+      }
+    },
+    {
+      "name": "cloud_media",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 4"
+        ]
+      }
+    },
+    {
+      "name": "cloud_weight",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 1"
+        ]
+      }
+    },
+    {
+      "name": "cloud_off_media",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.VolumetricCloud 0",
+          "r.TDFogScattering.DebugView 4"
+        ]
+      }
+    },
+    {
+      "name": "restore",
+      "apply": {
+        "time_dilation": 1.0,
+        "console": [
+          "r.TDFogScattering.DebugView 0",
+          "r.TDFogScattering.VolumetricCloud 0",
+          "r.AntiAliasingMethod 4"
+        ]
+      }
+    }
+  ]
+}

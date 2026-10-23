@@ -1,0 +1,110 @@
+{
+  "base": {
+    "console": [
+      "r.ProfileGPU.ShowUI 0",
+      "r.AntiAliasingMethod 0"
+    ]
+  },
+  "variants": [
+    {
+      "name": "warm",
+      "apply": {
+        "pawn": [
+          -11000,
+          2000
+        ],
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      },
+      "settle": 20
+    },
+    {
+      "name": "freeze",
+      "apply": {
+        "time_dilation": 0.0001
+      },
+      "settle": 3
+    },
+    {
+      "name": "top_weight",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 1"
+        ]
+      }
+    },
+    {
+      "name": "top_depth",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 2"
+        ]
+      }
+    },
+    {
+      "name": "top_devicez",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 3"
+        ]
+      }
+    },
+    {
+      "name": "third_setup",
+      "apply": {
+        "arm": 300,
+        "view": [
+          -10,
+          0
+        ],
+        "time_dilation": 1.0,
+        "console": [
+          "r.TDFogScattering.DebugView 0"
+        ]
+      },
+      "settle": 6
+    },
+    {
+      "name": "third_freeze",
+      "apply": {
+        "time_dilation": 0.0001
+      },
+      "settle": 3
+    },
+    {
+      "name": "third_weight",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 1"
+        ]
+      }
+    },
+    {
+      "name": "third_depth",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 2"
+        ]
+      }
+    },
+    {
+      "name": "third_devicez",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 3"
+        ]
+      }
+    },
+    {
+      "name": "restore",
+      "apply": {
+        "time_dilation": 1.0,
+        "console": [
+          "r.TDFogScattering.DebugView 0",
+          "r.AntiAliasingMethod 4"
+        ]
+      }
+    }
+  ]
+}

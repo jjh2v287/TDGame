@@ -1,0 +1,39 @@
+{
+  "luminance_tolerance": 0.03,
+  "pairs": [
+    {
+      "mean_luma_off": 122.854,
+      "mean_luma_on": 122.83,
+      "luminance_ratio": 0.99981,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.35897,
+      "max_difference": 197.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 419.796,
+          "laplacian_variance_on": 416.302,
+          "variance_ratio": 0.99168,
+          "sharpness_loss": 0.00832
+        },
+        "middle": {
+          "laplacian_variance_off": 5126.623,
+          "laplacian_variance_on": 5123.181,
+          "variance_ratio": 0.99933,
+          "sharpness_loss": 0.00067
+        },
+        "bottom": {
+          "laplacian_variance_off": 1493.155,
+          "laplacian_variance_on": 1490.932,
+          "variance_ratio": 0.99851,
+          "sharpness_loss": 0.00149
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261023-161322\\08_third_on.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261023-161322\\15_sky_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "TD Fog Scattering",
+	"Description": "Height fog transmittance weighted mip pyramid blur composited before depth of field.",
+	"Category": "Rendering",
+	"CreatedBy": "TDGame",
+	"CanContainContent": false,
+	"EnabledByDefault": true,
+	"IsBetaVersion": true,
+	"SupportedTargetPlatforms": [
+		"Win64"
+	],
+	"Modules": [
+		{
+			"Name": "TDFogScattering",
+			"Type": "Runtime",
+			"LoadingPhase": "PostConfigInit"
+		}
+	]
+}

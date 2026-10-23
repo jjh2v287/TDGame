@@ -1,0 +1,19 @@
+#include "/Engine/Private/Common.ush"
+
+RWTexture2D<float4> OutputTexture;
+Texture2D<float4> InputTexture;
+float2 InvOutputSize;
+
+[numthreads(THREADGROUP_SIZE, THREADGROUP_SIZE, 1)]
+void MainFixtureCS(uint2 DispatchThreadId : SV_DispatchThreadID)
+{
+	ResolvedView = ResolveView();
+	float2 UV = (DispatchThreadId + 0.5) * InvOutputSize;
+	float3 Color = InputTexture.Load(int3(DispatchThreadId, 0)).rgb;
+#if LUMINANCE_WEIGHTING
+	Color *= rcp(1.0 + dot(Color, float3(0.2126, 0.7152, 0.0722)));
+#endif
+	Color = UndefinedFogFunction(Color);
+	float3 CameraRelative = ResolvedView.TranslatedWorldCameraOrigin + View.ViewSizeAndInvSize.xyy * UV.x;
+	OutputTexture[DispatchThreadId] = float4(Color + CameraRelative * 0.0, 1.0);
+}

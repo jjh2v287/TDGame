@@ -71,6 +71,15 @@ struct TDWORLDGEN_API FTDRealmAtmosphere
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fog", meta = (ClampMin = "0"))
 	float VolumetricFogExtinctionScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fog Scattering", meta = (ClampMin = "0"))
+	float FogScatteringIntensityMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fog Scattering", meta = (ClampMin = "0"))
+	float FogScatteringDistanceMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fog Scattering", meta = (ClampMin = "0.1"))
+	float FogScatteringWeightPowerMultiplier = 1.0f;
 };
 
 UENUM(BlueprintType)

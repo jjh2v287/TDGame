@@ -1,0 +1,302 @@
+{
+ "base": {
+  "console": [
+   "r.ProfileGPU.ShowUI 0"
+  ]
+ },
+ "variants": [
+  {
+   "name": "warm",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.Intensity 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 15
+  },
+  {
+   "name": "third_setup",
+   "apply": {
+    "arm": 300,
+    "view": [
+     -10,
+     0
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "third_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "third_off_shot",
+   "apply": {
+    "console": [
+     "Shot"
+    ]
+   },
+   "settle": 3
+  },
+  {
+   "name": "third_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "third_on_shot",
+   "apply": {
+    "console": [
+     "Shot"
+    ]
+   },
+   "settle": 3
+  },
+  {
+   "name": "top_field_setup",
+   "apply": {
+    "props": {
+     "TDGen_HeightFog": {
+      "component": {
+       "fog_density": 0.005,
+       "fog_height_falloff": 0.03,
+       "fog_max_opacity": 1.0,
+       "start_distance": 0.0,
+       "volumetric_fog_distance": 6000.0,
+       "volumetric_fog_extinction_scale": 1.0,
+       "second_fog_data": {
+        "fog_density": 0.0,
+        "fog_height_falloff": 0.2,
+        "fog_height_offset": 0.0
+       }
+      }
+     }
+    },
+    "location": {
+     "TDGen_HeightFog": [
+      null,
+      null,
+      -6720.0
+     ]
+    },
+    "arm": 1100,
+    "view": [
+     -50,
+     45
+    ],
+    "console": [
+     "r.TDFogScattering 0",
+     "r.TDFogScattering.DistanceScale 32",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   },
+   "settle": 8
+  },
+  {
+   "name": "top_field_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "top_field_off_shot",
+   "apply": {
+    "console": [
+     "Shot"
+    ]
+   },
+   "settle": 3
+  },
+  {
+   "name": "top_field_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 32",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "top_field_on_shot",
+   "apply": {
+    "console": [
+     "Shot"
+    ]
+   },
+   "settle": 3
+  },
+  {
+   "name": "top_pale_setup",
+   "apply": {
+    "props": {
+     "TDGen_HeightFog": {
+      "component": {
+       "fog_density": 0.03,
+       "fog_height_falloff": 0.6,
+       "fog_max_opacity": 0.9,
+       "start_distance": 800.0,
+       "volumetric_fog_distance": 6000.0,
+       "volumetric_fog_extinction_scale": 0.8,
+       "second_fog_data": {
+        "fog_density": 0.25,
+        "fog_height_falloff": 3.0,
+        "fog_height_offset": -1500.0
+       }
+      }
+     }
+    },
+    "location": {
+     "TDGen_HeightFog": [
+      null,
+      null,
+      -4908.0
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 0",
+     "r.TDFogScattering.DistanceScale 56",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   },
+   "settle": 8
+  },
+  {
+   "name": "top_pale_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "top_pale_off_shot",
+   "apply": {
+    "console": [
+     "Shot"
+    ]
+   },
+   "settle": 3
+  },
+  {
+   "name": "top_pale_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 56",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "top_pale_on_shot",
+   "apply": {
+    "console": [
+     "Shot"
+    ]
+   },
+   "settle": 3
+  },
+  {
+   "name": "top_star_setup",
+   "apply": {
+    "props": {
+     "TDGen_HeightFog": {
+      "component": {
+       "fog_density": 0.02,
+       "fog_height_falloff": 0.25,
+       "fog_max_opacity": 0.95,
+       "start_distance": 2500.0,
+       "volumetric_fog_distance": 6000.0,
+       "volumetric_fog_extinction_scale": 1.0,
+       "second_fog_data": {
+        "fog_density": 0.1,
+        "fog_height_falloff": 2.0,
+        "fog_height_offset": -300.0
+       }
+      }
+     }
+    },
+    "location": {
+     "TDGen_HeightFog": [
+      null,
+      null,
+      3730.0
+     ]
+    },
+    "console": [
+     "r.TDFogScattering 0",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.Intensity 0.35"
+    ]
+   },
+   "settle": 8
+  },
+  {
+   "name": "top_star_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "top_star_off_shot",
+   "apply": {
+    "console": [
+     "Shot"
+    ]
+   },
+   "settle": 3
+  },
+  {
+   "name": "top_star_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.Intensity 0.35"
+    ]
+   },
+   "settle": 6
+  },
+  {
+   "name": "top_star_on_shot",
+   "apply": {
+    "console": [
+     "Shot"
+    ]
+   },
+   "settle": 3
+  },
+  {
+   "name": "restore",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 32",
+     "r.TDFogScattering.Intensity 1"
+    ]
+   }
+  }
+ ]
+}

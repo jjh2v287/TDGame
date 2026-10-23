@@ -1,0 +1,74 @@
+#pragma once
+
+static const float TDFogLineIntegralTaylorThreshold = 0.01f;
+static const float TDFogMinimumExponent = -127.0f;
+
+float CalculateTDFogLineIntegral(float FogHeightFalloff, float RayDirectionZ, float RayOriginTerms)
+{
+	float Falloff = max(TDFogMinimumExponent, FogHeightFalloff * RayDirectionZ);
+	float LineIntegral = (1.0f - exp2(-Falloff)) / Falloff;
+	float LineIntegralTaylor = log(2.0f) - (0.5f * Pow2(log(2.0f))) * Falloff;
+	return RayOriginTerms * (abs(Falloff) > TDFogLineIntegralTaylorThreshold ? LineIntegral : LineIntegralTaylor);
+}
+
+float ComputeTDFogTransmittance(
+	float3 CameraToReceiver,
+	float WorldCameraOriginZ,
+	float4 ExponentialFogParameters,
+	float4 ExponentialFogParameters2,
+	float4 ExponentialFogParameters3,
+	float FogMaxOpacity,
+	float FogEndDistance,
+	float DistanceScale,
+	float ExcludeDistance)
+{
+	const float MinimumFogOpacity = 1.0f - FogMaxOpacity;
+	const float MaxWorldObserverHeight = ExponentialFogParameters.z;
+	const float WorldObserverOriginZ = min(WorldCameraOriginZ, MaxWorldObserverHeight);
+
+	const float CameraToReceiverLengthXYSqr = dot(CameraToReceiver.xy, CameraToReceiver.xy);
+	if (FogEndDistance > 0.0f && CameraToReceiverLengthXYSqr > FogEndDistance * FogEndDistance)
+	{
+		CameraToReceiver *= FogEndDistance / sqrt(max(1.0f, CameraToReceiverLengthXYSqr));
+	}
+
+	CameraToReceiver.z += WorldCameraOriginZ - WorldObserverOriginZ;
+	const float CameraToReceiverLengthSqr = dot(CameraToReceiver, CameraToReceiver);
+	const float CameraToReceiverLengthInv = rsqrt(max(CameraToReceiverLengthSqr, 0.00000001f));
+	const float CameraToReceiverLength = CameraToReceiverLengthSqr * CameraToReceiverLengthInv;
+
+	const float FogCutoffDistance = ExponentialFogParameters3.w;
+	if (FogCutoffDistance > 0.0f && CameraToReceiverLength > FogCutoffDistance)
+	{
+		return 1.0f;
+	}
+
+	float RayOriginTerms = ExponentialFogParameters.x;
+	float RayOriginTermsSecond = ExponentialFogParameters2.x;
+	float RayLength = CameraToReceiverLength;
+	float RayDirectionZ = CameraToReceiver.z;
+
+	if (ExcludeDistance > 0.0f)
+	{
+		const float ExcludeIntersectionTime = ExcludeDistance * CameraToReceiverLengthInv;
+		const float CameraToExclusionIntersectionZ = ExcludeIntersectionTime * CameraToReceiver.z;
+		const float ExclusionIntersectionZ = WorldObserverOriginZ + CameraToExclusionIntersectionZ;
+		const float ExclusionIntersectionToReceiverZ = CameraToReceiver.z - CameraToExclusionIntersectionZ;
+
+		RayLength = (1.0f - ExcludeIntersectionTime) * CameraToReceiverLength;
+		RayDirectionZ = ExclusionIntersectionToReceiverZ;
+
+		const float Exponent = max(TDFogMinimumExponent, ExponentialFogParameters.y * (ExclusionIntersectionZ - ExponentialFogParameters3.y));
+		RayOriginTerms = ExponentialFogParameters3.x * exp2(-Exponent);
+
+		const float ExponentSecond = max(TDFogMinimumExponent, ExponentialFogParameters2.y * (ExclusionIntersectionZ - ExponentialFogParameters2.w));
+		RayOriginTermsSecond = ExponentialFogParameters2.z * exp2(-ExponentSecond);
+	}
+
+	const float LineIntegralShared =
+		CalculateTDFogLineIntegral(ExponentialFogParameters.y, RayDirectionZ, RayOriginTerms)
+		+ CalculateTDFogLineIntegral(ExponentialFogParameters2.y, RayDirectionZ, RayOriginTermsSecond);
+	const float LineIntegral = LineIntegralShared * RayLength * DistanceScale;
+
+	return max(saturate(exp2(-LineIntegral)), MinimumFogOpacity);
+}

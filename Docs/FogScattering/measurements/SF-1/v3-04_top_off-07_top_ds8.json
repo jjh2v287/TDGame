@@ -1,0 +1,39 @@
+{
+  "luminance_tolerance": 0.03,
+  "pairs": [
+    {
+      "mean_luma_off": 113.34,
+      "mean_luma_on": 114.937,
+      "luminance_ratio": 1.01409,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.57234,
+      "max_difference": 161.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 3515.498,
+          "laplacian_variance_on": 2824.859,
+          "variance_ratio": 0.80354,
+          "sharpness_loss": 0.19646
+        },
+        "middle": {
+          "laplacian_variance_off": 2456.052,
+          "laplacian_variance_on": 2148.313,
+          "variance_ratio": 0.8747,
+          "sharpness_loss": 0.1253
+        },
+        "bottom": {
+          "laplacian_variance_off": 775.087,
+          "laplacian_variance_on": 689.611,
+          "variance_ratio": 0.88972,
+          "sharpness_loss": 0.11028
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261023-154117\\04_top_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261023-154117\\07_top_ds8.png",
+      "size": [
+        1280,
+        720
+      ]
+    }
+  ]
+}

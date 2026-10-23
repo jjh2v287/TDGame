@@ -1,0 +1,328 @@
+{
+  "base": {
+    "console": [
+      "r.ProfileGPU.ShowUI 0",
+      "r.AntiAliasingMethod 0"
+    ]
+  },
+  "variants": [
+    {
+      "name": "warm",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      },
+      "settle": 20
+    },
+    {
+      "name": "freeze",
+      "apply": {
+        "time_dilation": 0.0001
+      },
+      "settle": 3
+    },
+    {
+      "name": "top_media",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 4"
+        ]
+      }
+    },
+    {
+      "name": "top_weight",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 1"
+        ]
+      }
+    },
+    {
+      "name": "top_view",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 0"
+        ]
+      }
+    },
+    {
+      "name": "third_setup",
+      "apply": {
+        "arm": 300,
+        "view": [
+          -10,
+          0
+        ],
+        "time_dilation": 1.0
+      },
+      "settle": 6
+    },
+    {
+      "name": "third_freeze",
+      "apply": {
+        "time_dilation": 0.0001
+      },
+      "settle": 3
+    },
+    {
+      "name": "third_off",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 0"
+        ]
+      }
+    },
+    {
+      "name": "third_on",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      }
+    },
+    {
+      "name": "third_off2",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 0"
+        ]
+      }
+    },
+    {
+      "name": "third_on2",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      }
+    },
+    {
+      "name": "third_media",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 4"
+        ]
+      }
+    },
+    {
+      "name": "third_weight",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 1"
+        ]
+      }
+    },
+    {
+      "name": "sky_media",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.SkyAtmosphere 1",
+          "r.TDFogScattering.DebugView 4"
+        ]
+      }
+    },
+    {
+      "name": "sky_weight",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 1"
+        ]
+      }
+    },
+    {
+      "name": "sky_on",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 0"
+        ]
+      }
+    },
+    {
+      "name": "sky_reset",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.SkyAtmosphere 0"
+        ]
+      }
+    },
+    {
+      "name": "vf_ils0_media",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.VolumetricFogILSIntensity 0",
+          "r.TDFogScattering.DebugView 4"
+        ]
+      }
+    },
+    {
+      "name": "vf_ils0",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 0"
+        ]
+      }
+    },
+    {
+      "name": "vf_ils1",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.VolumetricFogILSIntensity 1"
+        ]
+      }
+    },
+    {
+      "name": "q0",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.QualityPreset 0"
+        ]
+      }
+    },
+    {
+      "name": "q1",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.QualityPreset 1"
+        ]
+      }
+    },
+    {
+      "name": "q2",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.QualityPreset 2"
+        ]
+      }
+    },
+    {
+      "name": "q3",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.QualityPreset 3"
+        ]
+      }
+    },
+    {
+      "name": "q2_reset",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.QualityPreset 2"
+        ]
+      }
+    },
+    {
+      "name": "fmt0",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.Format 0"
+        ]
+      }
+    },
+    {
+      "name": "fmt1",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.Format 1"
+        ]
+      }
+    },
+    {
+      "name": "fmt_inherit",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.Format -1"
+        ]
+      }
+    },
+    {
+      "name": "gpu_q0_1_on",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering.QualityPreset 0",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_q1_1_on",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering.QualityPreset 1",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_q2_1_on",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering.QualityPreset 2",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "gpu_q3_1_on",
+      "apply": {
+        "console": [
+          "r.GPUCsvStatsEnabled 1",
+          "r.TDFogScattering.QualityPreset 3",
+          "csvprofile frames=480"
+        ]
+      },
+      "settle": 16
+    },
+    {
+      "name": "q_restore",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.QualityPreset 2"
+        ]
+      }
+    },
+    {
+      "name": "split_create",
+      "apply": {
+        "time_dilation": 1.0,
+        "console": [
+          "DebugCreatePlayer 1"
+        ]
+      },
+      "settle": 8
+    },
+    {
+      "name": "split_on",
+      "apply": {
+        "console": [
+          "r.TDFogScattering 1"
+        ]
+      }
+    },
+    {
+      "name": "split_weight",
+      "apply": {
+        "console": [
+          "r.TDFogScattering.DebugView 1"
+        ]
+      }
+    },
+    {
+      "name": "restore",
+      "apply": {
+        "time_dilation": 1.0,
+        "console": [
+          "r.TDFogScattering.DebugView 0",
+          "r.TDFogScattering 1",
+          "r.AntiAliasingMethod 4"
+        ]
+      }
+    }
+  ]
+}

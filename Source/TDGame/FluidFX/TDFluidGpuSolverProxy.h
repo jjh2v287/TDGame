@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FluidFX/TDFluidGpuWaterFieldState.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "HAL/CriticalSection.h"
 #include "TDFluidGpuBackendSelection.h"
@@ -46,7 +47,7 @@ class FTDFluidGpuSolverProxy
 public:
 	static ETDFluidGpuSolverPreference ToSolverPreference(ETDFluidSolverBackend SolverBackend);
 	static FTDFluidGpuSimulationSettings MakeSimulationSettings(const FTDFluidSimulationConfig& Config, int32 InResolution);
-	static FTDFluidGpuStampInput MakeStampInput(const FTDFluidBrushStamp& PlaneStamp);
+	static FTDFluidGpuStampInput MakeStampInput(const FTDFluidBrushStamp& PlaneStamp, bool bCarriesRippleImpulse = false);
 	static FTDFluidGpuObstacleInput MakeObstacleInput(const FTDFluidSdfObstacle& PlaneObstacle);
 	static int64 EstimateActorMemoryBytes(ETDFluidSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel = false, bool bUsesTransmittance = false);
 
@@ -72,6 +73,15 @@ public:
 	void SetTerrainElevationAtCell(int32 CellX, int32 CellY, float ElevationCm);
 	void MarkTerrainSamplingComplete() { bIsTerrainElevationActive = true; }
 
+	bool UsesWaterLayer() const { return Settings.bUsesWaterLayer; }
+	int32 GetWaterFieldResolution() const;
+	FVector2D WaterFieldCellToPlaneCenter(int32 FieldX, int32 FieldY) const;
+	float GetWaterSurfaceHeightAtFieldCell(int32 FieldX, int32 FieldY) const;
+	void SetWaterInputs(const TArray<FTDFluidFlowGuide>& Guides, const TArray<FTDFluidWaterRegion>& Regions);
+	void SetWaterTerrainReferenceZCm(float InTerrainReferenceZCm) { WaterTerrainReferenceZCm = InTerrainReferenceZCm; }
+	void SetWaterProbePlanePoints(TConstArrayView<FVector2D> PlanePoints, int32 InProbeGeneration);
+	bool TryGetWaterProbeSamples(TArray<FTDFluidGpuWaterProbeSample>& OutSamples, uint32& OutFrameNumber) const;
+
 	void PrepareStep(float DeltaTime, TConstArrayView<FTDFluidBrushStamp> PlaneStamps, const FVector2D& PlaneUpDirection, bool bAllowsTerrainElevation);
 	bool HasPreparedStep() const { return bHasPreparedStep; }
 	bool GatherStep(
@@ -81,13 +91,15 @@ public:
 		FTextureRenderTargetResource* VelocityOutput,
 		FTDFluidGpuActorInput& OutActorInput,
 		FTextureRenderTargetResource* AuxOutput = nullptr,
-		FTextureRenderTargetResource* TransmittanceOutput = nullptr);
+		FTextureRenderTargetResource* TransmittanceOutput = nullptr,
+		FTextureRenderTargetResource* WaterSurfaceOutput = nullptr,
+		int32 WaterProbeFirstSlot = 0);
 	void SetTransmittanceInput(const FTDFluidGpuTransmittanceInput& Input) { PendingTransmittanceInput = Input; }
 	bool ConsumeReadbackFrame(const FTDFluidGpuReadbackFrame& ReadbackFrame);
 
 	bool HasActorKey() const { return ActorKey != 0; }
 	uint64 GetActorKey() const { return ActorKey; }
-	void AssignActorKey(uint64 InActorKey) { ActorKey = InActorKey; }
+	void AssignActorKey(uint64 InActorKey);
 	uint64 ReleaseActorKey();
 
 private:
@@ -97,11 +109,16 @@ private:
 		int32 TileIndex = INDEX_NONE;
 		FVector2D WindowCenterPlaneCm = FVector2D::ZeroVector;
 		FVector2D ExtentCm = FVector2D::ZeroVector;
+		int32 WaterProbeFirstSlot = 0;
+		int32 WaterProbeCount = 0;
+		int32 WaterProbeGeneration = 0;
 	};
 
 	bool IsValidCell(int32 CellX, int32 CellY) const;
 	void ShiftPendingTerrainUpdates(const FIntPoint& ShiftCells);
-	void RecordSubmission(uint32 FrameNumber, int32 TileIndex);
+	void RecordSubmission(uint32 FrameNumber, int32 TileIndex, int32 WaterProbeFirstSlot, int32 WaterProbeCount);
+	int32 GatherWaterStep(FTDFluidGpuActorInput& OutActorInput, FTextureRenderTargetResource* WaterSurfaceOutput, int32 WaterProbeFirstSlot);
+	void ConsumeWaterProbeSamples(const FTDFluidGpuReadbackFrame& ReadbackFrame, const FTDFluidGpuSubmissionRecord& Submission);
 	void AdvanceSimulationTime(float DeltaTime);
 
 	FTDFluidGpuSimulationSettings Settings;
@@ -124,6 +141,16 @@ private:
 	bool bIsTerrainElevationActive = false;
 	bool bPreparedAllowsTerrainElevation = false;
 	bool bHasPreparedStep = false;
+	FTDFluidGpuWaterFieldState WaterFieldState;
+	FTDFluidSimulationConfig WaterFieldConfig;
+	float WaterTerrainReferenceZCm = 0.0f;
+	TArray<FVector2D> WaterProbePlanePoints;
+	int32 WaterProbeGeneration = 0;
+	TArray<FTDFluidGpuWaterProbeSample> LatestWaterProbeSamples;
+	uint32 LatestWaterProbeFrameNumber = 0;
+	int32 LatestWaterProbeGeneration = -1;
+	FTDFluidGpuBatchKey LastGatheredBatchKey;
+	bool bHasGatheredBatchKey = false;
 };
 
 class FTDFluidGpuSolverRenderState

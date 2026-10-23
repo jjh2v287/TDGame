@@ -17,7 +17,11 @@
 #include "Misc/App.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+#include "TDFluidGpuBatch.h"
 #include "TextureResource.h"
+
+CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
 namespace
 {
@@ -51,6 +55,7 @@ namespace
 	constexpr int32 PainterVelocityTargetSize = 4;
 	const FLinearColor EmptyDensityPressureColor(0.0f, 0.5f, 0.0f, 0.0f);
 	const FLinearColor EmptyVelocityColor(0.5f, 0.5f, 0.0f, 0.0f);
+	const FLinearColor EmptyWaterSurfaceColor(0.0f, 0.0f, 0.5f, TDFluidGpuSolverConstants::WaterTerrainHeightLimit);
 
 	void EnsureGpuOutputTarget(TObjectPtr<UTextureRenderTarget2D>& InOutTarget, UObject* TargetOuter, int32 TargetSize, const FLinearColor& EmptyColor)
 	{
@@ -75,6 +80,28 @@ namespace
 	FTextureRenderTargetResource* ResolveRenderTargetResource(UTextureRenderTarget2D* Target)
 	{
 		return Target ? Target->GameThread_GetRenderTargetResource() : nullptr;
+	}
+
+	FIntPoint LiveComponentMapWaterProbeGridUVToCell(const FVector2D& GridUV, int32 GridResolution)
+	{
+		const float GridX = GridUV.X * static_cast<float>(GridResolution) - 0.5f;
+		const float GridY = GridUV.Y * static_cast<float>(GridResolution) - 0.5f;
+		return FIntPoint(
+			FMath::Clamp(FMath::RoundToInt(GridX), 0, GridResolution - 1),
+			FMath::Clamp(FMath::RoundToInt(GridY), 0, GridResolution - 1));
+	}
+
+	bool LiveComponentHasWaterProbeFlag(uint32 Flags, ETDFluidGpuWaterProbeFlags Flag)
+	{
+		return (Flags & static_cast<uint32>(Flag)) != 0;
+	}
+
+	FTDFluidWaterPointSample MakeOutsideWaterPointSample(const FVector& WorldLocation, int32 FrameAge)
+	{
+		FTDFluidWaterPointSample PointSample;
+		PointSample.WorldLocation = WorldLocation;
+		PointSample.FrameAge = FrameAge;
+		return PointSample;
 	}
 }
 
@@ -992,7 +1019,7 @@ void UTDFluidLiveComponent::PackWaterSurfaceOutputs()
 
 void UTDFluidLiveComponent::RefreshMaterialTargets()
 {
-	if (!IsWaterLayerEnabled())
+	if (!IsWaterMaterialActive())
 	{
 		return;
 	}
@@ -1127,9 +1154,9 @@ void UTDFluidLiveComponent::DriveNiagaraComponent(UNiagaraComponent& NiagaraComp
 	{
 		NiagaraComp.SetVariableTexture(FName(TEXT("User.VelocityTexture")), VelocityOutput);
 	}
-	if (WaterSurfaceTexture)
+	if (UTexture* WaterSurfaceOutput = GetWaterSurfaceOutputTexture())
 	{
-		NiagaraComp.SetVariableTexture(FName(TEXT("User.WaterSurfaceTexture")), WaterSurfaceTexture);
+		NiagaraComp.SetVariableTexture(FName(TEXT("User.WaterSurfaceTexture")), WaterSurfaceOutput);
 	}
 	if (UTexture* AuxOutput = GetAuxTexture())
 	{
@@ -1227,19 +1254,20 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 	}
 	TargetMID->SetScalarParameterValue(TEXT("AuxHeatActive"), AuxOutput ? 1.0f : 0.0f);
 
-	if (!IsWaterLayerEnabled())
+	if (!IsWaterMaterialActive())
 	{
 		return;
 	}
 
-	const FTDFluidSimulationConfig& SolverConfig = Solver.GetConfig();
+	const FTDFluidSimulationConfig& SolverConfig = bUsesGpuSolver ? SimulationConfig : Solver.GetConfig();
 
-	if (WaterSurfaceTexture)
+	if (UTexture* WaterSurfaceOutput = GetWaterSurfaceOutputTexture())
 	{
-		TargetMID->SetTextureParameterValue(TEXT("WaterSurfaceTexture"), WaterSurfaceTexture);
+		TargetMID->SetTextureParameterValue(TEXT("WaterSurfaceTexture"), WaterSurfaceOutput);
 	}
+	const double WaterTimeSeconds = bUsesGpuSolver ? GpuSolverProxy.GetSimulationTimeSeconds() : Solver.GetSimulationTimeSeconds();
 	const double CoastWavePeriodSeconds = FMath::Max(static_cast<double>(SolverConfig.CoastWavePeriodSeconds), 0.1);
-	const float CoastWavePhase = static_cast<float>(FMath::Frac(Solver.GetSimulationTimeSeconds() / CoastWavePeriodSeconds));
+	const float CoastWavePhase = static_cast<float>(FMath::Frac(WaterTimeSeconds / CoastWavePeriodSeconds));
 	TargetMID->SetScalarParameterValue(TEXT("WaterDepthReferenceCm"), SolverConfig.WaterDepthReferenceCm);
 	TargetMID->SetScalarParameterValue(TEXT("RippleHeightReferenceCm"), SolverConfig.RippleHeightReferenceCm);
 	TargetMID->SetScalarParameterValue(TEXT("VelocitySpeedReferenceCmPerSec"), FTDFluidGrid2DSolver::GetOutputSpeedReferenceCmPerSec());
@@ -1344,8 +1372,24 @@ bool UTDFluidLiveComponent::AppendPreparedGpuStep(UTDFluidLiveSubsystem& FluidSu
 	FTextureRenderTargetResource* AuxOutput = IsAuxOutputActive() ? ResolveRenderTargetResource(GpuAuxTarget.Get()) : nullptr;
 	FTextureRenderTargetResource* TransmittanceOutput = IsTransmittanceActive() ? ResolveRenderTargetResource(GpuTransmittanceTarget.Get()) : nullptr;
 	GpuSolverProxy.SetTransmittanceInput(BuildGpuTransmittanceInput());
+	FTextureRenderTargetResource* WaterSurfaceOutput = nullptr;
+	int32 WaterProbeFirstSlot = 0;
+	if (GpuSolverProxy.UsesWaterLayer())
+	{
+		WaterSurfaceOutput = ResolveRenderTargetResource(GpuWaterSurfaceTarget.Get());
+		GpuSolverProxy.SetWaterTerrainReferenceZCm(TerrainReferenceZCm);
+		{
+			CSV_SCOPED_TIMING_STAT(TDFluid, WaterProbeMapping);
+			SubmitGpuWaterProbePlanePoints();
+		}
+		for (const FTDFluidGpuActorInput& PreviousActorInput : InOutFrameInputs.Actors)
+		{
+			WaterProbeFirstSlot += PreviousActorInput.WaterProbeCells.Num();
+		}
+	}
+
 	FTDFluidGpuActorInput ActorInput;
-	if (!GpuSolverProxy.GatherStep(InOutFrameInputs.FrameNumber, InOutFrameInputs.Actors.Num(), DensityPressureOutput, VelocityOutput, ActorInput, AuxOutput, TransmittanceOutput))
+	if (!GpuSolverProxy.GatherStep(InOutFrameInputs.FrameNumber, InOutFrameInputs.Actors.Num(), DensityPressureOutput, VelocityOutput, ActorInput, AuxOutput, TransmittanceOutput, WaterSurfaceOutput, WaterProbeFirstSlot))
 	{
 		return false;
 	}
@@ -1371,6 +1415,7 @@ FTDFluidGpuBackendDecision UTDFluidLiveComponent::ResolveSolverBackend() const
 	BackendQuery.bIsWaterLayerActive = SimulationConfig.bEnableWaterLayer;
 	BackendQuery.RequestedResolution = SimulationConfig.GridResolution;
 	BackendQuery.CpuFallbackResolution = SimulationConfig.CpuFallbackResolution;
+	BackendQuery.bIsSimplePainter = SimulationConfig.SimMode == ETDFluidSimMode::SimplePainter;
 	return FTDFluidGpuBackendSelection::Decide(BackendQuery, FTDFluidGpuBackendSelection::CaptureEnvironment());
 }
 
@@ -1386,10 +1431,17 @@ void UTDFluidLiveComponent::InitializeSimulation(const FVector2D& CenterWorld)
 			GpuVelocityTarget = nullptr;
 			GpuAuxTarget = nullptr;
 			GpuTransmittanceTarget = nullptr;
+			GpuWaterSurfaceTarget = nullptr;
 			bUsesGpuSolver = false;
 		}
 
 		Solver.Initialize(MakeCpuSolverConfig(), CenterWorld);
+		if (bHasWaterInputsMissingOnCpu)
+		{
+			Solver.SetFlowGuides(LastWaterGuides);
+			Solver.SetWaterRegions(LastWaterRegions);
+			bHasWaterInputsMissingOnCpu = false;
+		}
 		return;
 	}
 
@@ -1400,6 +1452,10 @@ void UTDFluidLiveComponent::InitializeSimulation(const FVector2D& CenterWorld)
 	AuxTexture = nullptr;
 	TransmittanceTexture = nullptr;
 	GpuSolverProxy.Initialize(SimulationConfig, BackendDecision.Resolution, CenterWorld);
+	if (bHasLastWaterInputs && GpuSolverProxy.UsesWaterLayer())
+	{
+		GpuSolverProxy.SetWaterInputs(LastWaterGuides, LastWaterRegions);
+	}
 }
 
 void UTDFluidLiveComponent::SyncSolverBackend(const FVector2D& FallbackCenterWorld)
@@ -1465,6 +1521,14 @@ void UTDFluidLiveComponent::EnsureGpuOutputTargets()
 	{
 		GpuTransmittanceTarget = nullptr;
 	}
+	if (GpuSolverProxy.UsesWaterLayer())
+	{
+		EnsureGpuOutputTarget(GpuWaterSurfaceTarget, this, GpuResolution, EmptyWaterSurfaceColor);
+	}
+	else
+	{
+		GpuWaterSurfaceTarget = nullptr;
+	}
 	WaterSurfaceTexture = nullptr;
 }
 
@@ -1485,6 +1549,10 @@ void UTDFluidLiveComponent::ClearGpuOutputTargets()
 	if (GpuTransmittanceTarget)
 	{
 		GpuTransmittanceTarget->UpdateResourceImmediate(true);
+	}
+	if (GpuWaterSurfaceTarget)
+	{
+		GpuWaterSurfaceTarget->UpdateResourceImmediate(true);
 	}
 }
 
@@ -1508,6 +1576,178 @@ void UTDFluidLiveComponent::ReleaseGpuSolverSlot()
 bool UTDFluidLiveComponent::IsWaterLayerEnabled() const
 {
 	return !bUsesGpuSolver && Solver.GetConfig().bEnableWaterLayer;
+}
+
+bool UTDFluidLiveComponent::IsWaterMaterialActive() const
+{
+	return IsWaterLayerEnabled() || IsUsingGpuWaterLayer();
+}
+
+bool UTDFluidLiveComponent::IsUsingGpuWaterLayer() const
+{
+	return bUsesGpuSolver && GpuSolverProxy.UsesWaterLayer();
+}
+
+UTexture* UTDFluidLiveComponent::GetWaterSurfaceOutputTexture() const
+{
+	if (bUsesGpuSolver)
+	{
+		return GpuWaterSurfaceTarget.Get();
+	}
+	return WaterSurfaceTexture.Get();
+}
+
+bool UTDFluidLiveComponent::CanReceiveWaterInputs() const
+{
+	return bUsesGpuSolver ? (GpuSolverProxy.IsInitialized() && GpuSolverProxy.UsesWaterLayer()) : (Solver.IsInitialized() && Solver.GetConfig().bEnableWaterLayer);
+}
+
+void UTDFluidLiveComponent::SetWaterGuidesAndRegions(const TArray<FTDFluidFlowGuide>& Guides, const TArray<FTDFluidWaterRegion>& Regions)
+{
+	LastWaterGuides = Guides;
+	LastWaterRegions = Regions;
+	bHasLastWaterInputs = true;
+	if (IsUsingGpuWaterLayer())
+	{
+		GpuSolverProxy.SetWaterInputs(Guides, Regions);
+		bHasWaterInputsMissingOnCpu = true;
+		return;
+	}
+
+	Solver.SetFlowGuides(Guides);
+	Solver.SetWaterRegions(Regions);
+	bHasWaterInputsMissingOnCpu = false;
+}
+
+int32 UTDFluidLiveComponent::GetTerrainSampleResolution() const
+{
+	return IsUsingGpuWaterLayer() ? GpuSolverProxy.GetWaterFieldResolution() : GetSimulationResolution();
+}
+
+FVector2D UTDFluidLiveComponent::TerrainSampleCellToPlaneCenter(int32 CellX, int32 CellY) const
+{
+	return IsUsingGpuWaterLayer() ? GpuSolverProxy.WaterFieldCellToPlaneCenter(CellX, CellY) : CellToPlaneCenter(CellX, CellY);
+}
+
+float UTDFluidLiveComponent::GetWaterSurfaceHeightAtTerrainSampleCell(int32 CellX, int32 CellY) const
+{
+	return IsUsingGpuWaterLayer() ? GpuSolverProxy.GetWaterSurfaceHeightAtFieldCell(CellX, CellY) : Solver.GetWaterSurfaceHeightAtCell(CellX, CellY);
+}
+
+void UTDFluidLiveComponent::SetWaterProbeLocations(const TArray<FVector>& WorldLocations)
+{
+	const int32 KeptProbeCount = FMath::Min(WorldLocations.Num(), TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame);
+	WaterProbeWorldLocations.Reset(KeptProbeCount);
+	WaterProbeWorldLocations.Append(WorldLocations.GetData(), KeptProbeCount);
+	++WaterProbeGeneration;
+	if (IsUsingGpuWaterLayer())
+	{
+		SubmitGpuWaterProbePlanePoints();
+	}
+}
+
+bool UTDFluidLiveComponent::GetWaterProbeSamples(TArray<FTDFluidWaterPointSample>& OutSamples) const
+{
+	OutSamples.Reset();
+	if (bUsesGpuSolver)
+	{
+		return GetGpuWaterProbeSamples(OutSamples);
+	}
+	return GetCpuWaterProbeSamples(OutSamples);
+}
+
+void UTDFluidLiveComponent::SubmitGpuWaterProbePlanePoints()
+{
+	TArray<FVector2D, TInlineAllocator<TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame>> PlanePoints;
+	for (const FVector& WorldLocation : WaterProbeWorldLocations)
+	{
+		PlanePoints.Add(ProjectWorldToSolverPlane(WorldLocation));
+	}
+	GpuSolverProxy.SetWaterProbePlanePoints(PlanePoints, WaterProbeGeneration);
+}
+
+bool UTDFluidLiveComponent::GetCpuWaterProbeSamples(TArray<FTDFluidWaterPointSample>& OutSamples) const
+{
+	if (!Solver.IsInitialized() || !Solver.GetConfig().bEnableWaterLayer)
+	{
+		return false;
+	}
+
+	const int32 SolverResolution = Solver.GetResolution();
+	OutSamples.Reserve(WaterProbeWorldLocations.Num());
+	for (const FVector& WorldLocation : WaterProbeWorldLocations)
+	{
+		FTDFluidWaterPointSample& PointSample = OutSamples.Add_GetRef(MakeOutsideWaterPointSample(WorldLocation, 0));
+		FVector2D GridUV;
+		if (!Solver.WorldToGridUV(ProjectWorldToSolverPlane(WorldLocation), GridUV))
+		{
+			continue;
+		}
+
+		const FIntPoint Cell = LiveComponentMapWaterProbeGridUVToCell(GridUV, SolverResolution);
+		const FTDFluidCellSample CellSample = Solver.SampleAtCell(Cell.X, Cell.Y);
+		const float SurfaceHeightCm = Solver.GetWaterSurfaceHeightAtCell(Cell.X, Cell.Y);
+		PointSample.bIsInsideWindow = true;
+		PointSample.bHasWaterSurface = SurfaceHeightCm != FTDFluidGrid2DSolver::NoWaterSurfaceHeight;
+		PointSample.bIsTerrainKnown = CellSample.bIsTerrainKnown;
+		PointSample.WaterSurfaceHeightCm = PointSample.bHasWaterSurface ? SurfaceHeightCm : 0.0f;
+		PointSample.WaterDepthCm = CellSample.WaterDepthCm;
+		PointSample.VelocityCmPerSec = CellSample.VelocityCmPerSec;
+		PointSample.FlowTargetVelocityCmPerSec = CellSample.FlowTargetVelocity;
+		PointSample.FlowGuideWeight = CellSample.FlowGuideWeight;
+		PointSample.Whitewater = CellSample.PrimaryDensity;
+		PointSample.RippleHeightCm = CellSample.RippleHeightCm;
+		PointSample.ObstacleSdfCm = CellSample.ObstacleSdf;
+		PointSample.Wetness = CellSample.Wetness;
+	}
+	return true;
+}
+
+bool UTDFluidLiveComponent::GetGpuWaterProbeSamples(TArray<FTDFluidWaterPointSample>& OutSamples) const
+{
+	if (!IsUsingGpuWaterLayer())
+	{
+		return false;
+	}
+
+	if (WaterProbeWorldLocations.IsEmpty())
+	{
+		return true;
+	}
+
+	TArray<FTDFluidGpuWaterProbeSample> ProbeSamples;
+	uint32 SampleFrameNumber = 0;
+	if (!GpuSolverProxy.TryGetWaterProbeSamples(ProbeSamples, SampleFrameNumber))
+	{
+		return false;
+	}
+
+	const UTDFluidLiveSubsystem* FluidSubsystem = UTDFluidLiveSubsystem::GetFluidLiveSubsystem(this);
+	const int32 FrameAge = FluidSubsystem ? static_cast<int32>(FluidSubsystem->GetLastGpuSolverFrameNumber() - SampleFrameNumber) : 0;
+	OutSamples.Reserve(WaterProbeWorldLocations.Num());
+	for (int32 ProbeIndex = 0; ProbeIndex < WaterProbeWorldLocations.Num(); ++ProbeIndex)
+	{
+		FTDFluidWaterPointSample& PointSample = OutSamples.Add_GetRef(MakeOutsideWaterPointSample(WaterProbeWorldLocations[ProbeIndex], FrameAge));
+		if (!ProbeSamples.IsValidIndex(ProbeIndex) || !LiveComponentHasWaterProbeFlag(ProbeSamples[ProbeIndex].Flags, ETDFluidGpuWaterProbeFlags::IsInsideWindow))
+		{
+			continue;
+		}
+
+		const FTDFluidGpuWaterProbeSample& ProbeSample = ProbeSamples[ProbeIndex];
+		PointSample.bIsInsideWindow = true;
+		PointSample.bHasWaterSurface = LiveComponentHasWaterProbeFlag(ProbeSample.Flags, ETDFluidGpuWaterProbeFlags::HasWaterSurface);
+		PointSample.bIsTerrainKnown = LiveComponentHasWaterProbeFlag(ProbeSample.Flags, ETDFluidGpuWaterProbeFlags::IsTerrainKnown);
+		PointSample.WaterSurfaceHeightCm = PointSample.bHasWaterSurface ? ProbeSample.WaterSurfaceHeightCm : 0.0f;
+		PointSample.WaterDepthCm = ProbeSample.WaterDepthCm;
+		PointSample.VelocityCmPerSec = FVector2D(ProbeSample.VelocityCmPerSec);
+		PointSample.FlowTargetVelocityCmPerSec = FVector2D(ProbeSample.FlowTargetVelocityCmPerSec);
+		PointSample.FlowGuideWeight = ProbeSample.FlowGuideWeight;
+		PointSample.Whitewater = ProbeSample.Whitewater;
+		PointSample.RippleHeightCm = ProbeSample.RippleHeightCm;
+		PointSample.ObstacleSdfCm = ProbeSample.ObstacleSdfCm;
+		PointSample.Wetness = ProbeSample.Wetness;
+	}
+	return true;
 }
 
 UTexture* UTDFluidLiveComponent::GetAuxTexture() const

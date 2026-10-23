@@ -1,0 +1,125 @@
+#include "/TDFluidGpu/Private/TDFluidGpuWaterCommon.ush"
+
+#ifndef TDFLUIDGPU_WATER_SHIFT_PHASE
+#define TDFLUIDGPU_WATER_SHIFT_PHASE 0
+#endif
+
+#define TDFLUIDGPU_WATER_SHIFT_PHASE_GATHER 0
+#define TDFLUIDGPU_WATER_SHIFT_PHASE_SCATTER 1
+#define TDFLUIDGPU_WATER_SHIFT_PHASE_RESET 2
+
+StructuredBuffer<uint> EntryList;
+uint ShiftEntryCount;
+
+#if TDFLUIDGPU_WATER_SHIFT_PHASE == TDFLUIDGPU_WATER_SHIFT_PHASE_GATHER
+Texture2DArray<float2> VelocityIn;
+Texture2DArray<float2> DensityIn;
+Texture2DArray<float2> RippleIn;
+Texture2DArray<float> PressureIn;
+RWTexture2DArray<float2> VelocityStageOut;
+RWTexture2DArray<float2> DensityStageOut;
+RWTexture2DArray<float2> RippleStageOut;
+RWTexture2DArray<float> PressureStageOut;
+#else
+RWTexture2DArray<float2> VelocityOut;
+RWTexture2DArray<float2> DensityOut;
+RWTexture2DArray<float2> RippleOut;
+RWTexture2DArray<float> PressureOut;
+RWTexture2DArray<float> ObstacleSdfOut;
+RWTexture2DArray<float4> WaterGuideFieldOut;
+RWTexture2DArray<float> WaterSurfaceHeightFieldOut;
+RWTexture2DArray<float> WaterTerrainFieldOut;
+#if TDFLUIDGPU_WATER_SHIFT_PHASE == TDFLUIDGPU_WATER_SHIFT_PHASE_SCATTER
+Texture2DArray<float2> VelocityStageIn;
+Texture2DArray<float2> DensityStageIn;
+Texture2DArray<float2> RippleStageIn;
+Texture2DArray<float> PressureStageIn;
+#endif
+#endif
+
+#if TDFLUIDGPU_WATER_SHIFT_PHASE == TDFLUIDGPU_WATER_SHIFT_PHASE_GATHER
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = EntryList[DispatchThreadId.z];
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 StateTexel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	VelocityStageOut[StateTexel] = VelocityIn[StateTexel];
+	DensityStageOut[StateTexel] = DensityIn[StateTexel];
+	RippleStageOut[StateTexel] = RippleIn[StateTexel];
+	if (TDFluidGpuIsInsideGrid(Cell, Water.PressureResolution))
+	{
+		PressureStageOut[StateTexel] = PressureIn[StateTexel];
+	}
+}
+
+#else
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint ListIndex = DispatchThreadId.z;
+	const uint EntryIndex = EntryList[ListIndex];
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const bool bIsShiftEntry = ListIndex < ShiftEntryCount;
+	const uint3 StateTexel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	float2 Velocity = float2(0.0f, 0.0f);
+	float2 Density = float2(0.0f, 0.0f);
+	float2 Ripple = float2(0.0f, 0.0f);
+#if TDFLUIDGPU_WATER_SHIFT_PHASE == TDFLUIDGPU_WATER_SHIFT_PHASE_SCATTER
+	const int2 SourceCell = Cell + Actor.ShiftCells;
+	if (bIsShiftEntry && TDFluidGpuIsInsideGrid(SourceCell, Actor.Resolution))
+	{
+		const uint3 SourceTexel = TDFluidGpuMakeTexel(SourceCell, Actor.SliceIndex);
+		Velocity = VelocityStageIn[SourceTexel];
+		Density = DensityStageIn[SourceTexel];
+		Ripple = RippleStageIn[SourceTexel];
+	}
+#endif
+	VelocityOut[StateTexel] = Velocity;
+	DensityOut[StateTexel] = Density;
+	RippleOut[StateTexel] = Ripple;
+
+	if (TDFluidGpuIsInsideGrid(Cell, Water.PressureResolution))
+	{
+		float Pressure = 0.0f;
+#if TDFLUIDGPU_WATER_SHIFT_PHASE == TDFLUIDGPU_WATER_SHIFT_PHASE_SCATTER
+		const int2 PressureSourceCell = Cell + Actor.ShiftCells / max(Water.PressureDivisor, 1);
+		if (bIsShiftEntry && TDFluidGpuIsInsideGrid(PressureSourceCell, Water.PressureResolution))
+		{
+			Pressure = PressureStageIn[TDFluidGpuMakeTexel(PressureSourceCell, Actor.SliceIndex)];
+		}
+#endif
+		PressureOut[StateTexel] = Pressure;
+	}
+
+	if (bIsShiftEntry)
+	{
+		return;
+	}
+
+	ObstacleSdfOut[StateTexel] = TDFLUIDGPU_NO_OBSTACLE_DISTANCE_CM;
+	if (TDFluidGpuIsInsideGrid(Cell, Water.FieldResolution))
+	{
+		WaterGuideFieldOut[StateTexel] = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		WaterSurfaceHeightFieldOut[StateTexel] = TDFLUIDGPU_WATER_NO_SURFACE_HEIGHT_CM;
+		WaterTerrainFieldOut[StateTexel] = TDFLUIDGPU_TERRAIN_UNKNOWN_ELEVATION_CM;
+	}
+}
+
+#endif

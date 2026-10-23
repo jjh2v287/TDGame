@@ -364,6 +364,54 @@ struct TDGAME_API FTDFluidCellSample
 };
 
 USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidWaterPointSample
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	FVector WorldLocation = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	bool bIsInsideWindow = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	bool bHasWaterSurface = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	bool bIsTerrainKnown = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	float WaterSurfaceHeightCm = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	float WaterDepthCm = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	FVector2D VelocityCmPerSec = FVector2D::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	FVector2D FlowTargetVelocityCmPerSec = FVector2D::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	float FlowGuideWeight = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	float Whitewater = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	float RippleHeightCm = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	float ObstacleSdfCm = 10000.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	float Wetness = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	int32 FrameAge = 0;
+};
+
+USTRUCT(BlueprintType)
 struct TDGAME_API FTDFluidShadowCapsule
 {
 	GENERATED_BODY()

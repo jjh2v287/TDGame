@@ -1,0 +1,178 @@
+#include "/TDFluidGpu/Private/TDFluidGpuWaterCommon.ush"
+
+#ifndef TDFLUIDGPU_WATER_INTERPOLATES_FIELD
+#define TDFLUIDGPU_WATER_INTERPOLATES_FIELD 0
+#endif
+
+#define TDFLUIDGPU_WATER_UPDATE_GROUP_SIZE 64
+#define TDFLUIDGPU_WATER_BORDER_SCAN_THREAD_COUNT 64
+
+StructuredBuffer<FTDFluidGpuPackedWaterGuideUpdate> GuideUpdates;
+uint GuideUpdateCount;
+StructuredBuffer<FTDFluidGpuPackedWaterTerrainUpdate> TerrainUpdates;
+uint TerrainUpdateCount;
+RWTexture2DArray<float4> WaterGuideFieldOut;
+RWTexture2DArray<float> WaterSurfaceHeightFieldOut;
+RWTexture2DArray<float> WaterTerrainFieldOut;
+Texture2DArray<float> WaterSurfaceHeightField;
+Texture2DArray<float> WaterTerrainField;
+RWTexture2DArray<float> FieldDrySdfOut;
+Texture2DArray<float> ObstacleSdf;
+Texture2DArray<float> FieldDrySdf;
+RWTexture2DArray<float> CompositeSdfOut;
+Texture2DArray<float> CompositeSdf;
+RWStructuredBuffer<uint> WaterOpenBorderFlagsOut;
+
+groupshared uint SharedOpenBorderVotes[TDFLUIDGPU_WATER_BORDER_SCAN_THREAD_COUNT];
+
+[numthreads(TDFLUIDGPU_WATER_UPDATE_GROUP_SIZE, 1, 1)]
+void GuideUpdateCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (DispatchThreadId.x >= GuideUpdateCount)
+	{
+		return;
+	}
+
+	const FTDFluidGpuPackedWaterGuideUpdate Update = GuideUpdates[DispatchThreadId.x];
+	const FTDFluidGpuActorParameters Actor = ActorParameters[Update.EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[Update.EntryIndex];
+	const int2 FieldCell = int2(Update.FieldCellX, Update.FieldCellY);
+	if (!TDFluidGpuIsInsideGrid(FieldCell, Water.FieldResolution))
+	{
+		return;
+	}
+
+	const uint3 FieldTexel = TDFluidGpuWaterMakeFieldTexel(Water, FieldCell, Actor.SliceIndex);
+	WaterGuideFieldOut[FieldTexel] = Update.GuideValues;
+	WaterSurfaceHeightFieldOut[FieldTexel] = Update.SurfaceHeightCm;
+}
+
+[numthreads(TDFLUIDGPU_WATER_UPDATE_GROUP_SIZE, 1, 1)]
+void TerrainUpdateCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (DispatchThreadId.x >= TerrainUpdateCount)
+	{
+		return;
+	}
+
+	const FTDFluidGpuPackedWaterTerrainUpdate Update = TerrainUpdates[DispatchThreadId.x];
+	const FTDFluidGpuActorParameters Actor = ActorParameters[Update.EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[Update.EntryIndex];
+	const int2 FieldCell = int2(Update.FieldCellX, Update.FieldCellY);
+	if (!TDFluidGpuIsInsideGrid(FieldCell, Water.FieldResolution))
+	{
+		return;
+	}
+
+	WaterTerrainFieldOut[TDFluidGpuWaterMakeFieldTexel(Water, FieldCell, Actor.SliceIndex)] = Update.ElevationCm;
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void FieldDryCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 FieldCell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(FieldCell, Water.FieldResolution))
+	{
+		return;
+	}
+
+	const uint3 FieldTexel = TDFluidGpuWaterMakeFieldTexel(Water, FieldCell, Actor.SliceIndex);
+	const float SurfaceHeight = WaterSurfaceHeightField[FieldTexel];
+	const float TerrainElevation = WaterTerrainField[FieldTexel];
+	const float2 TerrainSlope = TDFluidGpuWaterComputeFieldSlope(WaterTerrainField, Water, Actor, FieldCell);
+	FieldDrySdfOut[TDFluidGpuMakeTexel(FieldCell, Actor.SliceIndex)] = TDFluidGpuWaterComputeDrySdf(SurfaceHeight, TerrainElevation, TerrainSlope);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void ComposeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	const float RawSignedDistance = ObstacleSdf[Texel];
+	if (!TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_TREATS_DRY_CELLS_AS_SOLID))
+	{
+		CompositeSdfOut[Texel] = RawSignedDistance;
+		return;
+	}
+
+#if TDFLUIDGPU_WATER_INTERPOLATES_FIELD
+	const float DrySignedDistance = TDFluidGpuWaterSampleFieldDrySdf(FieldDrySdf, Water, Actor, Cell);
+#else
+	const float DrySignedDistance = FieldDrySdf[Texel];
+#endif
+	CompositeSdfOut[Texel] = min(RawSignedDistance, DrySignedDistance);
+}
+
+int2 GetWaterBorderCell(uint BorderIndex, int Resolution)
+{
+	const uint RowLength = uint(Resolution);
+	if (BorderIndex < RowLength)
+	{
+		return int2(int(BorderIndex), 0);
+	}
+
+	if (BorderIndex < 2u * RowLength)
+	{
+		return int2(int(BorderIndex - RowLength), Resolution - 1);
+	}
+
+	const uint SideLength = RowLength - 2u;
+	const uint SideIndex = BorderIndex - 2u * RowLength;
+	if (SideIndex < SideLength)
+	{
+		return int2(0, int(SideIndex) + 1);
+	}
+
+	return int2(Resolution - 1, int(SideIndex - SideLength) + 1);
+}
+
+[numthreads(TDFLUIDGPU_WATER_BORDER_SCAN_THREAD_COUNT, 1, 1)]
+void OpenBorderScanCS(uint3 GroupId : SV_GroupID, uint GroupIndex : SV_GroupIndex)
+{
+	const uint EntryIndex = GroupId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const uint BorderCellCount = 4u * uint(Actor.Resolution) - 4u;
+
+	uint OpenBorderVote = 0u;
+	for (uint BorderIndex = GroupIndex; BorderIndex < BorderCellCount; BorderIndex += TDFLUIDGPU_WATER_BORDER_SCAN_THREAD_COUNT)
+	{
+		const int2 Cell = GetWaterBorderCell(BorderIndex, Actor.Resolution);
+		const bool bIsFluid = !TDFluidGpuIsSolidDistance(CompositeSdf[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)]);
+		if (bIsFluid && TDFluidGpuWaterHasSurface(TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell)))
+		{
+			OpenBorderVote = 1u;
+		}
+	}
+	SharedOpenBorderVotes[GroupIndex] = OpenBorderVote;
+	GroupMemoryBarrierWithGroupSync();
+
+	[unroll]
+	for (uint Stride = TDFLUIDGPU_WATER_BORDER_SCAN_THREAD_COUNT / 2u; Stride > 0u; Stride >>= 1u)
+	{
+		if (GroupIndex < Stride)
+		{
+			SharedOpenBorderVotes[GroupIndex] = SharedOpenBorderVotes[GroupIndex] | SharedOpenBorderVotes[GroupIndex + Stride];
+		}
+		GroupMemoryBarrierWithGroupSync();
+	}
+
+	if (GroupIndex != 0u)
+	{
+		return;
+	}
+
+	const bool bUsesOpenBorders = TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_OPEN_BORDERS);
+	WaterOpenBorderFlagsOut[EntryIndex] = bUsesOpenBorders ? SharedOpenBorderVotes[0] : 0u;
+}

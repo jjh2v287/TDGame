@@ -53,6 +53,27 @@ namespace TDFluidGpuSolverConstants
 	inline constexpr float TransmittanceCoverageScale = 2.5f;
 	inline constexpr float TransmittanceHeightScaleRatio = 0.68f;
 	inline constexpr float TransmittanceTopFadeRatio = 0.15f;
+	inline constexpr int32 MaximumWaterProbesPerFrame = 64;
+	inline constexpr float WaterNoSurfaceHeightCm = -1.0e30f;
+	inline constexpr float WaterNoSurfaceHeightThresholdCm = -1.0e29f;
+	inline constexpr int32 MaximumWaterRippleSubsteps = 8;
+	inline constexpr float WaterRippleSubstepSafety = 0.5f;
+	inline constexpr float WaterUnknownTerrainSdfCm = 10000.0f;
+	inline constexpr float WaterNoSurfaceSdfCm = -1.0f;
+	inline constexpr float WaterMinimumTerrainSlope = 0.05f;
+	inline constexpr float WaterSdfLimitCm = 10000.0f;
+	inline constexpr float WaterTerrainHeightScaleCm = 1000.0f;
+	inline constexpr float WaterTerrainHeightLimit = 8.0f;
+	inline constexpr float WaterRippleOvershootRatio = 0.25f;
+	inline constexpr int32 WaterPowerOfTwoTierMaximumSmallResolution = 64;
+	inline constexpr int32 WaterExactTierGranularity = 64;
+	inline constexpr int32 WaterExactTierMaximumResolution = 256;
+	inline constexpr int32 WaterHalfPressureMinimumResolution = 512;
+	inline constexpr int32 WaterQuarterFieldMinimumResolution = 1024;
+	inline constexpr int32 MaximumGpuOnlyWaterRippleSubsteps = 16;
+	inline constexpr float WaterRippleCourantLimitRaw = 32.0f;
+	inline constexpr float WaterRippleCourantTargetRaw = 28.8f;
+	inline constexpr float WaterHalfPressureDirichletBaseScale = 0.5f;
 }
 
 enum class ETDFluidGpuSimMode : uint8
@@ -71,6 +92,7 @@ struct FTDFluidGpuStampInput
 	float RadialVelocityCmPerSec = 0.0f;
 	float HeatStrength = 0.0f;
 	bool bWritesSelectiveDensity = false;
+	float RippleImpulseCm = 0.0f;
 };
 
 struct FTDFluidGpuObstacleInput
@@ -118,6 +140,25 @@ struct FTDFluidGpuSimulationSettings
 	float VortexTangentialAccelerationCmPerSec2 = 0.0f;
 	float VortexRadialDriftCmPerSec = 0.0f;
 	float VortexRadiusRatio = 0.35f;
+	bool bUsesWaterLayer = false;
+	bool bOpenWaterBorders = true;
+	bool bTreatDryCellsAsSolid = true;
+	float WaterDepthReferenceCm = 300.0f;
+	float FlowGuideResponsePerSec = 3.0f;
+	float WhitewaterFromVorticity = 0.0f;
+	float WhitewaterVorticityThresholdPerSec = 2.0f;
+	float RapidsWhitewaterPerSec = 0.0f;
+	float RippleWaveSpeedCmPerSec = 0.0f;
+	float RippleDampingPerSec = 1.2f;
+	float RippleHeightReferenceCm = 8.0f;
+	float RippleFlowAdvection = 1.0f;
+	bool bUsesFloat32WaterVelocity = false;
+	bool bUsesFloat32Ripple = false;
+	uint8 WaterPressureModeRequest = 0;
+	int32 WaterKernelRadius = 4;
+	float WaterKernelFeedback = 0.98f;
+	float WaterKernelScale = 1.0f;
+	int32 WaterMultigridCycles = 1;
 };
 
 struct FTDFluidGpuTransmittanceInput
@@ -132,6 +173,36 @@ struct FTDFluidGpuTransmittanceInput
 	float SoftFalloffCm = 28.0f;
 	int32 MarchStepCount = 12;
 };
+
+struct FTDFluidGpuWaterGuideCellUpdate
+{
+	FIntPoint FieldCell = FIntPoint::ZeroValue;
+	float SurfaceHeightCm = TDFluidGpuSolverConstants::WaterNoSurfaceHeightCm;
+	FVector2f TargetVelocityCmPerSec = FVector2f::ZeroVector;
+	float GuideWeight = 0.0f;
+	float GuideDescent = 0.0f;
+};
+
+struct alignas(16) FTDFluidGpuWaterProbeSample
+{
+	FVector2f VelocityCmPerSec = FVector2f::ZeroVector;
+	FVector2f FlowTargetVelocityCmPerSec = FVector2f::ZeroVector;
+	float WaterSurfaceHeightCm = TDFluidGpuSolverConstants::WaterNoSurfaceHeightCm;
+	float WaterDepthCm = 0.0f;
+	float Whitewater = 0.0f;
+	float SelectiveDensity = 0.0f;
+	float RippleHeightCm = 0.0f;
+	float FlowGuideWeight = 0.0f;
+	float ObstacleSdfCm = TDFluidGpuSolverConstants::NoObstacleDistanceCm;
+	float TerrainElevationCm = TDFluidGpuSolverConstants::TerrainUnknownElevationCm;
+	float Wetness = 0.0f;
+	uint32 ProbeSlot = 0;
+	uint32 Flags = 0;
+	uint32 Padding0 = 0;
+};
+static_assert(sizeof(FTDFluidGpuWaterProbeSample) == 64, "FTDFluidGpuWaterProbeSample must match the 64 byte shader layout.");
+static_assert(offsetof(FTDFluidGpuWaterProbeSample, WaterSurfaceHeightCm) == 16, "FTDFluidGpuWaterProbeSample::WaterSurfaceHeightCm must stay at byte 16.");
+static_assert(offsetof(FTDFluidGpuWaterProbeSample, ProbeSlot) == 52, "FTDFluidGpuWaterProbeSample::ProbeSlot must stay at byte 52.");
 
 struct FTDFluidGpuActorInput
 {
@@ -153,6 +224,13 @@ struct FTDFluidGpuActorInput
 	FTextureRenderTargetResource* AuxOutput = nullptr;
 	FTextureRenderTargetResource* TransmittanceOutput = nullptr;
 	FTDFluidGpuTransmittanceInput Transmittance;
+	FIntPoint WaterFieldOrigin = FIntPoint::ZeroValue;
+	float WaterTerrainReferenceZCm = 0.0f;
+	TArray<FTDFluidGpuWaterGuideCellUpdate> WaterGuideUpdates;
+	TArray<FTDFluidGpuTerrainCellUpdate> WaterTerrainUpdates;
+	TArray<FIntPoint> WaterProbeCells;
+	int32 WaterProbeFirstSlot = 0;
+	FTextureRenderTargetResource* WaterSurfaceOutput = nullptr;
 };
 
 struct FTDFluidGpuFrameInputs

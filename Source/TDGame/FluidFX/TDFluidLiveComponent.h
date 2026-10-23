@@ -120,6 +120,24 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	UTexture2D* GetWaterSurfaceTexture() const { return WaterSurfaceTexture; }
 
+	UFUNCTION(BlueprintCallable, Category = "FluidFX")
+	void SetWaterProbeLocations(const TArray<FVector>& WorldLocations);
+
+	UFUNCTION(BlueprintCallable, Category = "FluidFX")
+	bool GetWaterProbeSamples(TArray<FTDFluidWaterPointSample>& OutSamples) const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	UTexture* GetWaterSurfaceOutputTexture() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	bool IsUsingGpuWaterLayer() const;
+
+	void SetWaterGuidesAndRegions(const TArray<FTDFluidFlowGuide>& Guides, const TArray<FTDFluidWaterRegion>& Regions);
+	bool CanReceiveWaterInputs() const;
+	int32 GetTerrainSampleResolution() const;
+	FVector2D TerrainSampleCellToPlaneCenter(int32 CellX, int32 CellY) const;
+	float GetWaterSurfaceHeightAtTerrainSampleCell(int32 CellX, int32 CellY) const;
+
 	void SetWaterLayerDisplayAlpha(float Alpha);
 	void SetTerrainReferenceZCm(float InTerrainReferenceZCm) { TerrainReferenceZCm = InTerrainReferenceZCm; }
 	float GetWaterLayerDisplayAlpha() const { return WaterLayerDisplayAlpha; }
@@ -172,6 +190,10 @@ private:
 	void ClearGpuOutputTargets();
 	void ReleaseGpuSolverSlot();
 	bool IsWaterLayerEnabled() const;
+	bool IsWaterMaterialActive() const;
+	void SubmitGpuWaterProbePlanePoints();
+	bool GetCpuWaterProbeSamples(TArray<FTDFluidWaterPointSample>& OutSamples) const;
+	bool GetGpuWaterProbeSamples(TArray<FTDFluidWaterPointSample>& OutSamples) const;
 	void RequestAsyncAssetLoads();
 	void HandleAssetsLoaded();
 	void ApplyLoadedOutputsToBoundMesh();
@@ -247,6 +269,9 @@ private:
 	TObjectPtr<UTextureRenderTarget2D> GpuTransmittanceTarget;
 
 	UPROPERTY(Transient)
+	TObjectPtr<UTextureRenderTarget2D> GpuWaterSurfaceTarget;
+
+	UPROPERTY(Transient)
 	TObjectPtr<UMaterialInstanceDynamic> InternalSurfaceMID;
 
 	UPROPERTY(Transient)
@@ -277,6 +302,12 @@ private:
 	TArray<FFloat16Color> PackedTransmittancePixels;
 	FTDFluidVolumeLightState CachedVolumeLightState;
 	TArray<FTDFluidShadowCapsule> CachedShadowCapsules;
+	TArray<FVector> WaterProbeWorldLocations;
+	int32 WaterProbeGeneration = 0;
+	TArray<FTDFluidFlowGuide> LastWaterGuides;
+	TArray<FTDFluidWaterRegion> LastWaterRegions;
+	bool bHasLastWaterInputs = false;
+	bool bHasWaterInputsMissingOnCpu = false;
 
 	bool bIsSimulationAwake = true;
 	bool bHasPendingObstacleUpdate = false;

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidWaterInputRaster.h"
 #include "Math/Float16Color.h"
 
 class TDGAME_API FTDFluidGrid2DSolver
@@ -50,25 +51,6 @@ public:
 	bool IsTerrainSamplingCompleteForWater() const;
 
 private:
-	struct FWaterGuideSegment
-	{
-		FVector2D Start = FVector2D::ZeroVector;
-		FVector2D Direction = FVector2D::ZeroVector;
-		double LengthCm = 0.0;
-		double MinimumX = 0.0;
-		double MaximumX = 0.0;
-		double MinimumY = 0.0;
-		double MaximumY = 0.0;
-		float StartSurfaceCm = 0.0f;
-		float EndSurfaceCm = 0.0f;
-		float StartHalfWidthCm = 0.0f;
-		float EndHalfWidthCm = 0.0f;
-		float StartSpeedCmPerSec = 0.0f;
-		float EndSpeedCmPerSec = 0.0f;
-		float DescentSlope = 0.0f;
-		int32 GuideIndex = 0;
-	};
-
 	int32 ToCellIndex(int32 CellX, int32 CellY) const { return CellY * Resolution + CellX; }
 	bool IsValidCell(int32 CellX, int32 CellY) const { return CellX >= 0 && CellX < Resolution && CellY >= 0 && CellY < Resolution; }
 	bool IsSolidCell(int32 CellX, int32 CellY) const { return !IsValidCell(CellX, CellY) || SolidCellMask.GetData()[ToCellIndex(CellX, CellY)] != 0; }
@@ -121,7 +103,6 @@ private:
 	float ComputeWaterDepthAtIndex(int32 CellIndex) const;
 	void StepFluidSimWater(float DeltaTime);
 	void PrepareWaterInputs();
-	void BuildWaterRowSegmentLists();
 	void RasterizeWaterInputs();
 	void RefreshWaterDrySdf();
 	void ApplyTerrainSlopeAccelerationDryOnly(float DeltaTime);
@@ -187,10 +168,7 @@ private:
 	TArray<float> ScratchRippleHeightVelocity;
 	TArray<uint8> WaterDirtyColumns;
 	TArray<uint8> WaterDirtyRows;
-	TArray<int32> WaterRowSegmentOffsets;
-	TArray<int32> WaterRowSegmentIndices;
-	TArray<FWaterGuideSegment> WaterGuideSegments;
-	TArray<FTDFluidWaterRegion> WaterRegions;
+	FTDFluidWaterInputRaster WaterInputRaster;
 	int32 TerrainKnownCellCount = 0;
 	bool bWaterRasterFullDirty = true;
 	bool bWaterHasDirtyStrips = false;

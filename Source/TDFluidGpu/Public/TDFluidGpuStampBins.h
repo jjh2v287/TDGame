@@ -57,6 +57,7 @@ struct FTDFluidGpuStampBinSet
 	TArray<FTDFluidGpuPackedStamp> Stamps;
 	TArray<FTDFluidGpuStampBinRange> BinRanges;
 	TArray<uint32> BinStampIndices;
+	TArray<float> RippleImpulsesCm;
 	int32 NonFiniteStampCount = 0;
 	int32 OutsideWindowStampCount = 0;
 	int32 OverTickLimitStampCount = 0;

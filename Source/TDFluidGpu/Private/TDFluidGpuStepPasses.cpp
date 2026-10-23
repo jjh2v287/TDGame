@@ -2,11 +2,13 @@
 
 #include "TDFluidGpuMultigridProbeReadbacks.h"
 #include "TDFluidGpuPassTimestamps.h"
+#include "TDFluidGpuWaterPressureProbeReadbacks.h"
 
 #include "DataDrivenShaderPlatformInfo.h"
 #include "GlobalShader.h"
 #include "HAL/IConsoleManager.h"
 #include "PooledRenderTarget.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 #include "ProfilingDebugging/RealtimeGPUProfiler.h"
 #include "RHIGPUReadback.h"
 #include "RenderGraphBuilder.h"
@@ -16,6 +18,9 @@
 #include "TextureResource.h"
 
 DECLARE_GPU_STAT(TDFluidGpuSolver);
+DECLARE_GPU_STAT(TDFluidGpuWater);
+DECLARE_GPU_STAT(TDFluidGpuWaterPressure);
+CSV_DEFINE_CATEGORY(TDFluidGpu, true);
 
 namespace
 {
@@ -43,6 +48,19 @@ namespace
 	constexpr EPixelFormat MultigridComponentLabelFormat = PF_R32_UINT;
 	constexpr EPixelFormat HeatFormat = PF_R32_FLOAT;
 	constexpr int32 TransmittanceGroupSize = 8;
+	constexpr EPixelFormat WaterGuideFieldFormat = PF_A32B32G32R32F;
+	constexpr EPixelFormat WaterScalarFieldFormat = PF_R32_FLOAT;
+	constexpr EPixelFormat WaterCompositeSdfFormat = PF_R16F;
+	constexpr EPixelFormat WaterRippleHalfFormat = PF_G16R16F;
+	constexpr EPixelFormat WaterRippleFloatFormat = PF_G32R32F;
+	constexpr EPixelFormat WaterVelocityFloatFormat = PF_G32R32F;
+	constexpr EPixelFormat WaterOpenBoundaryFormat = PF_G16R16F;
+	constexpr EPixelFormat WaterUpsampledPressureFormat = PF_R32_FLOAT;
+	constexpr EPixelFormat WaterFieldDrySdfFormat = PF_R16F;
+	constexpr int32 WaterLinearGroupSize = 64;
+	constexpr int32 WaterHalfPressureLevel = 1;
+	constexpr int32 MaximumWaterHalfPostSmoothIterations = 16;
+	constexpr uint32 WaterProbeReadbackBytes = static_cast<uint32>(TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame * sizeof(FTDFluidGpuWaterProbeSample));
 }
 
 class FTDFluidGpuComputeShader : public FGlobalShader
@@ -195,7 +213,8 @@ class FTDFluidGpuJacobiTileCS : public FTDFluidGpuComputeShader
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuJacobiTileCS, FTDFluidGpuComputeShader);
 
 	class FComputesDivergenceDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_COMPUTES_DIVERGENCE");
-	using FPermutationDomain = TShaderPermutationDomain<FComputesDivergenceDimension>;
+	class FOpenWaterBordersDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_OPEN_WATER_BORDERS");
+	using FPermutationDomain = TShaderPermutationDomain<FComputesDivergenceDimension, FOpenWaterBordersDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -206,6 +225,9 @@ class FTDFluidGpuJacobiTileCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureIn)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureOut)
 		SHADER_PARAMETER(uint32, IterationCount)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, WaterOpenBorderFlags)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuJacobiTileCS, "/TDFluidGpu/Private/TDFluidGpuPressure.usf", "JacobiTileCS", SF_Compute);
@@ -215,6 +237,9 @@ class FTDFluidGpuSubtractGradientCS : public FTDFluidGpuComputeShader
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuSubtractGradientCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuSubtractGradientCS, FTDFluidGpuComputeShader);
 
+	class FOpenWaterBordersDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_OPEN_WATER_BORDERS");
+	using FPermutationDomain = TShaderPermutationDomain<FOpenWaterBordersDimension>;
+
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, ObstacleSdf)
@@ -222,6 +247,9 @@ class FTDFluidGpuSubtractGradientCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityOut)
 		SHADER_PARAMETER(uint32, EnforcesObstacleBoundaries)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, WaterOpenBorderFlags)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuSubtractGradientCS, "/TDFluidGpu/Private/TDFluidGpuPressure.usf", "SubtractGradientCS", SF_Compute);
@@ -254,7 +282,19 @@ class FTDFluidGpuMultigridDownCS : public FTDFluidGpuComputeShader
 
 	class FFinestLevelDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_MG_IS_FINEST_LEVEL");
 	class FWritesCoarseAperturesDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_MG_WRITES_COARSE_APERTURES");
-	using FPermutationDomain = TShaderPermutationDomain<FFinestLevelDimension, FWritesCoarseAperturesDimension>;
+	class FOpenBoundaryDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_MG_OPEN_BOUNDARY");
+	using FPermutationDomain = TShaderPermutationDomain<FFinestLevelDimension, FWritesCoarseAperturesDimension, FOpenBoundaryDimension>;
+
+	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+	{
+		const FPermutationDomain PermutationVector(Parameters.PermutationId);
+		if (PermutationVector.Get<FOpenBoundaryDimension>() && PermutationVector.Get<FFinestLevelDimension>())
+		{
+			return false;
+		}
+
+		return FTDFluidGpuComputeShader::ShouldCompilePermutation(Parameters);
+	}
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -269,6 +309,9 @@ class FTDFluidGpuMultigridDownCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER(float, LevelWeightScale)
 		SHADER_PARAMETER(float, WarmStartScale)
 		SHADER_PARAMETER(int32, LevelResolution)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, OpenBoundaryIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, CoarseOpenBoundaryOut)
+		SHADER_PARAMETER(float, OpenBoundaryDirichletScale)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuMultigridDownCS, "/TDFluidGpu/Private/TDFluidGpuMultigrid.usf", "MultigridDownCS", SF_Compute);
@@ -280,7 +323,19 @@ class FTDFluidGpuMultigridUpCS : public FTDFluidGpuComputeShader
 
 	class FFinestLevelDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_MG_IS_FINEST_LEVEL");
 	class FWritesPressurePartialSumsDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_MG_WRITES_PRESSURE_PARTIAL_SUMS");
-	using FPermutationDomain = TShaderPermutationDomain<FFinestLevelDimension, FWritesPressurePartialSumsDimension>;
+	class FOpenBoundaryDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_MG_OPEN_BOUNDARY");
+	using FPermutationDomain = TShaderPermutationDomain<FFinestLevelDimension, FWritesPressurePartialSumsDimension, FOpenBoundaryDimension>;
+
+	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+	{
+		const FPermutationDomain PermutationVector(Parameters.PermutationId);
+		if (PermutationVector.Get<FOpenBoundaryDimension>() && PermutationVector.Get<FFinestLevelDimension>())
+		{
+			return false;
+		}
+
+		return FTDFluidGpuComputeShader::ShouldCompilePermutation(Parameters);
+	}
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -297,6 +352,8 @@ class FTDFluidGpuMultigridUpCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER(int32, LevelResolution)
 		SHADER_PARAMETER(uint32, TilesPerSlice)
 		SHADER_PARAMETER(uint32, TilesPerRow)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, OpenBoundaryIn)
+		SHADER_PARAMETER(float, OpenBoundaryDirichletScale)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuMultigridUpCS, "/TDFluidGpu/Private/TDFluidGpuMultigrid.usf", "MultigridUpCS", SF_Compute);
@@ -306,6 +363,9 @@ class FTDFluidGpuMultigridCoarseSolveCS : public FTDFluidGpuComputeShader
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuMultigridCoarseSolveCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuMultigridCoarseSolveCS, FTDFluidGpuComputeShader);
 
+	class FOpenBoundaryDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_MG_OPEN_BOUNDARY");
+	using FPermutationDomain = TShaderPermutationDomain<FOpenBoundaryDimension>;
+
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, RhsIn)
@@ -314,6 +374,8 @@ class FTDFluidGpuMultigridCoarseSolveCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<uint>, ComponentLabels)
 		SHADER_PARAMETER(float, LevelWeightScale)
 		SHADER_PARAMETER(uint32, ComputesComponentLabels)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, OpenBoundaryIn)
+		SHADER_PARAMETER(float, OpenBoundaryDirichletScale)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuMultigridCoarseSolveCS, "/TDFluidGpu/Private/TDFluidGpuMultigridCoarse.usf", "MultigridCoarseSolveCS", SF_Compute);
@@ -427,6 +489,341 @@ class FTDFluidGpuPainterStepCS : public FTDFluidGpuComputeShader
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuPainterStepCS, "/TDFluidGpu/Private/TDFluidGpuPainter.usf", "MainCS", SF_Compute);
 
+class FTDFluidGpuWaterShiftCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterShiftCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterShiftCS, FTDFluidGpuComputeShader);
+
+	class FPhaseDimension : SHADER_PERMUTATION_INT("TDFLUIDGPU_WATER_SHIFT_PHASE", 3);
+	using FPermutationDomain = TShaderPermutationDomain<FPhaseDimension>;
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, EntryList)
+		SHADER_PARAMETER(uint32, ShiftEntryCount)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityStageOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, DensityStageOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, RippleStageOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureStageOut)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityStageIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityStageIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleStageIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureStageIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, DensityOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, RippleOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, ObstacleSdfOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float4>, WaterGuideFieldOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, WaterSurfaceHeightFieldOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, WaterTerrainFieldOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterShiftCS, "/TDFluidGpu/Private/TDFluidGpuWaterShift.usf", "MainCS", SF_Compute);
+
+class FTDFluidGpuWaterGuideUpdateCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterGuideUpdateCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterGuideUpdateCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedWaterGuideUpdate>, GuideUpdates)
+		SHADER_PARAMETER(uint32, GuideUpdateCount)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float4>, WaterGuideFieldOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, WaterSurfaceHeightFieldOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterGuideUpdateCS, "/TDFluidGpu/Private/TDFluidGpuWaterFields.usf", "GuideUpdateCS", SF_Compute);
+
+class FTDFluidGpuWaterTerrainUpdateCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterTerrainUpdateCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterTerrainUpdateCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedWaterTerrainUpdate>, TerrainUpdates)
+		SHADER_PARAMETER(uint32, TerrainUpdateCount)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, WaterTerrainFieldOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterTerrainUpdateCS, "/TDFluidGpu/Private/TDFluidGpuWaterFields.usf", "TerrainUpdateCS", SF_Compute);
+
+class FTDFluidGpuWaterFieldDryCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterFieldDryCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterFieldDryCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterTerrainField)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, FieldDrySdfOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterFieldDryCS, "/TDFluidGpu/Private/TDFluidGpuWaterFields.usf", "FieldDryCS", SF_Compute);
+
+class FTDFluidGpuWaterComposeCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterComposeCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterComposeCS, FTDFluidGpuComputeShader);
+
+	class FInterpolatesFieldDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WATER_INTERPOLATES_FIELD");
+	using FPermutationDomain = TShaderPermutationDomain<FInterpolatesFieldDimension>;
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, ObstacleSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, FieldDrySdf)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, CompositeSdfOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterComposeCS, "/TDFluidGpu/Private/TDFluidGpuWaterFields.usf", "ComposeCS", SF_Compute);
+
+class FTDFluidGpuWaterOpenBorderScanCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterOpenBorderScanCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterOpenBorderScanCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, WaterOpenBorderFlagsOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterOpenBorderScanCS, "/TDFluidGpu/Private/TDFluidGpuWaterFields.usf", "OpenBorderScanCS", SF_Compute);
+
+class FTDFluidGpuWaterStampsCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterStampsCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterStampsCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedStamp>, Stamps)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuStampBinRange>, StampBinRanges)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, StampBinIndices)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<float>, StampRippleImpulses)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, DensityOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, RippleOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterStampsCS, "/TDFluidGpu/Private/TDFluidGpuWaterStep.usf", "StampsCS", SF_Compute);
+
+class FTDFluidGpuWaterForcesCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterForcesCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterForcesCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterTerrainField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterForcesCS, "/TDFluidGpu/Private/TDFluidGpuWaterStep.usf", "ForcesCS", SF_Compute);
+
+class FTDFluidGpuWaterAdvectVelocityCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterAdvectVelocityCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterAdvectVelocityCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterAdvectVelocityCS, "/TDFluidGpu/Private/TDFluidGpuWaterStep.usf", "AdvectVelocityCS", SF_Compute);
+
+class FTDFluidGpuWaterRippleSubstepCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterRippleSubstepCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterRippleSubstepCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, RippleOut)
+		SHADER_PARAMETER(uint32, SubstepIndex)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterRippleSubstepCS, "/TDFluidGpu/Private/TDFluidGpuWaterRipple.usf", "RippleSubstepCS", SF_Compute);
+
+class FTDFluidGpuWaterFinalizeCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterFinalizeCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterFinalizeCS, FTDFluidGpuComputeShader);
+
+	class FWritesOutputDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WATER_WRITES_OUTPUT");
+	class FHalfPressureDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WATER_HALF_PRESSURE");
+	using FPermutationDomain = TShaderPermutationDomain<FWritesOutputDimension, FHalfPressureDimension>;
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterTerrainField)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, WaterOpenBorderFlags)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<float>, MeanPressure)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, DensityOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, RippleOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureSolution)
+		SHADER_PARAMETER(uint32, EntryIndex)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureFull)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, DensityPressureOutput)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, VelocityOutput)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, WaterSurfaceOutput)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterFinalizeCS, "/TDFluidGpu/Private/TDFluidGpuWaterFinalize.usf", "FinalizeCS", SF_Compute);
+
+class FTDFluidGpuWaterProbeCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterProbeCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterProbeCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterProbeRequest>, ProbeRequests)
+		SHADER_PARAMETER(uint32, ProbeRequestCount)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterTerrainField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleIn)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<FTDFluidGpuWaterProbeSample>, ProbeSamplesOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterProbeCS, "/TDFluidGpu/Private/TDFluidGpuWaterFinalize.usf", "ProbeCS", SF_Compute);
+
+class FTDFluidGpuWaterHalfPressurePrepareCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterHalfPressurePrepareCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterHalfPressurePrepareCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, WaterOpenBorderFlags)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureIn)
+		SHADER_PARAMETER(float, ClosedWarmStartScale)
+		SHADER_PARAMETER(float, OpenBoundaryDirichletScale)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, RhsOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, AperturesOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, OpenBoundaryOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterHalfPressurePrepareCS, "/TDFluidGpu/Private/TDFluidGpuWaterPressure.usf", "HalfPrepareCS", SF_Compute);
+
+class FTDFluidGpuWaterHalfPressureApplyCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterHalfPressureApplyCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterHalfPressureApplyCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CorrectionIn)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, WaterOpenBorderFlags)
+		SHADER_PARAMETER(float, ClosedWarmStartScale)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureSolution)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterHalfPressureApplyCS, "/TDFluidGpu/Private/TDFluidGpuWaterPressure.usf", "HalfApplyCS", SF_Compute);
+
+class FTDFluidGpuWaterUpsamplePressureCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterUpsamplePressureCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterUpsamplePressureCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, AperturesIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, WaterOpenBorderFlags)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureFullOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterUpsamplePressureCS, "/TDFluidGpu/Private/TDFluidGpuWaterPressure.usf", "UpsampleCS", SF_Compute);
+
+class FTDFluidGpuWaterHalfRhsMeanTilesCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterHalfRhsMeanTilesCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterHalfRhsMeanTilesCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, HalfRhsIn)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float2>, HalfRhsPartialSumsOut)
+		SHADER_PARAMETER(uint32, TilesPerSlice)
+		SHADER_PARAMETER(uint32, TilesPerRow)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterHalfRhsMeanTilesCS, "/TDFluidGpu/Private/TDFluidGpuWaterPressure.usf", "HalfRhsMeanTilesCS", SF_Compute);
+
+class FTDFluidGpuWaterHalfRhsSubtractMeanCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterHalfRhsSubtractMeanCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterHalfRhsSubtractMeanCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuWaterParameters>, WaterParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, WaterOpenBorderFlags)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<float>, HalfRhsMeanIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, HalfRhsInOut)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterHalfRhsSubtractMeanCS, "/TDFluidGpu/Private/TDFluidGpuWaterPressure.usf", "HalfRhsSubtractMeanCS", SF_Compute);
+
 namespace
 {
 	struct FTDFluidGpuFrameResources
@@ -436,6 +833,8 @@ namespace
 		FRDGBufferSRVRef StampBinIndices = nullptr;
 		FRDGTextureRef ReadbackAtlas = nullptr;
 		FRDGTextureUAVRef ReadbackAtlasUAV = nullptr;
+		FRDGBufferSRVRef StampRippleImpulses = nullptr;
+		FRDGBufferRef WaterProbeSamples = nullptr;
 	};
 
 	struct FTDFluidGpuBatchGraphTextures
@@ -491,6 +890,32 @@ namespace
 	{
 		int32 EntryIndex = INDEX_NONE;
 		FRDGTextureRef DensityPressure = nullptr;
+	};
+
+	struct FTDFluidGpuWaterGraphTextures
+	{
+		FRDGTextureRef Ripple[2] = { nullptr, nullptr };
+		FRDGTextureRef GuideField = nullptr;
+		FRDGTextureRef SurfaceHeightField = nullptr;
+		FRDGTextureRef TerrainField = nullptr;
+		FRDGTextureRef FieldDrySdf = nullptr;
+		FRDGTextureRef CompositeSdf = nullptr;
+		FRDGBufferRef OpenBorderFlags = nullptr;
+		FRDGBufferSRVRef WaterParameters = nullptr;
+	};
+
+	struct FTDFluidGpuWaterPressureBindings
+	{
+		FRDGBufferSRVRef WaterParameters = nullptr;
+		FRDGTextureRef SurfaceHeightField = nullptr;
+		FRDGBufferRef OpenBorderFlags = nullptr;
+	};
+
+	struct FTDFluidGpuWaterOutputTargets
+	{
+		FRDGTextureRef DensityPressure = nullptr;
+		FRDGTextureRef Velocity = nullptr;
+		FRDGTextureRef WaterSurface = nullptr;
 	};
 
 	void AddPassTimestamp(FRDGBuilder& GraphBuilder, FTDFluidGpuPassTimestamps* PassTimestamps, const TCHAR* Label, int32 LevelSuffix = INDEX_NONE)
@@ -708,12 +1133,31 @@ namespace
 		return Targets;
 	}
 
+	void CreateWaterFrameResources(FRDGBuilder& GraphBuilder, const FTDFluidGpuPreparedFrame& PreparedFrame, FTDFluidGpuFrameResources& InOutResources)
+	{
+		if (!PreparedFrame.bHasWaterEntries)
+		{
+			return;
+		}
+
+		InOutResources.StampRippleImpulses = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampRippleImpulses"), PreparedFrame.StampBins.RippleImpulsesCm));
+		if (PreparedFrame.WaterProbeSlotCount <= 0)
+		{
+			return;
+		}
+
+		TArray<FTDFluidGpuWaterProbeSample> DefaultProbeSamples;
+		DefaultProbeSamples.Init(FTDFluidGpuWaterProbeSample(), TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame);
+		InOutResources.WaterProbeSamples = CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.WaterProbeSamples"), MoveTemp(DefaultProbeSamples));
+	}
+
 	FTDFluidGpuFrameResources CreateFrameResources(FRDGBuilder& GraphBuilder, const FTDFluidGpuPreparedFrame& PreparedFrame)
 	{
 		FTDFluidGpuFrameResources Resources;
 		Resources.Stamps = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.Stamps"), PreparedFrame.StampBins.Stamps));
 		Resources.StampBinRanges = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampBinRanges"), PreparedFrame.StampBins.BinRanges));
 		Resources.StampBinIndices = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampBinIndices"), PreparedFrame.StampBins.BinStampIndices));
+		CreateWaterFrameResources(GraphBuilder, PreparedFrame, Resources);
 
 		const FIntPoint AtlasSize = PreparedFrame.ReadbackLayout.GetAtlasSize();
 		if (AtlasSize.X <= 0 || AtlasSize.Y <= 0)
@@ -924,15 +1368,33 @@ namespace
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.Vorticity"), Shader, Parameters, MakeTileGroupCount(Context.Resolution, Context.EntryCount));
 	}
 
-	int32 AddJacobiPasses(const FTDFluidGpuBatchPassContext& Context, FRDGTextureRef ProjectedVelocity, int32 CurrentPressureIndex)
+	template <typename TWaterBoundParameters>
+	void BindWaterPressureParameters(FRDGBuilder& GraphBuilder, const FTDFluidGpuWaterPressureBindings* WaterBindings, TWaterBoundParameters& InOutParameters)
+	{
+		if (!WaterBindings)
+		{
+			return;
+		}
+
+		InOutParameters.WaterParameters = WaterBindings->WaterParameters;
+		InOutParameters.WaterSurfaceHeightField = MakeSRV(GraphBuilder, WaterBindings->SurfaceHeightField);
+		InOutParameters.WaterOpenBorderFlags = GraphBuilder.CreateSRV(WaterBindings->OpenBorderFlags);
+	}
+
+	int32 AddJacobiPassesOnTextures(const FTDFluidGpuBatchPassContext& Context, FRDGTextureRef ProjectedVelocity, FRDGTextureRef (&PressureTextures)[2], int32 CurrentPressureIndex, int32 IterationCount, const FTDFluidGpuWaterPressureBindings* WaterBindings)
 	{
 		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
 		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
-		const int32 PressureIterations = FMath::Max(Context.Batch.GetKey().PressureIterations, 1);
+		const int32 PressureIterations = IterationCount;
 		const int32 DispatchCount = FMath::DivideAndRoundUp(PressureIterations, JacobiIterationsPerDispatch);
 		FRDGTextureRef Divergence = GraphBuilder.CreateTexture(MakeStateArrayDesc(Context.Resolution, Context.Batch.StateTextures.SliceCapacity, DivergenceFormat), TEXT("TDFluidGpu.Divergence"));
-		TShaderMapRef<FTDFluidGpuJacobiTileCS> DivergenceShader(Context.ShaderMap, FTDFluidGpuJacobiTileCS::FPermutationDomain(true));
-		TShaderMapRef<FTDFluidGpuJacobiTileCS> RelaxShader(Context.ShaderMap, FTDFluidGpuJacobiTileCS::FPermutationDomain(false));
+		FTDFluidGpuJacobiTileCS::FPermutationDomain DivergenceDomain;
+		DivergenceDomain.Set<FTDFluidGpuJacobiTileCS::FComputesDivergenceDimension>(true);
+		DivergenceDomain.Set<FTDFluidGpuJacobiTileCS::FOpenWaterBordersDimension>(WaterBindings != nullptr);
+		FTDFluidGpuJacobiTileCS::FPermutationDomain RelaxDomain = DivergenceDomain;
+		RelaxDomain.Set<FTDFluidGpuJacobiTileCS::FComputesDivergenceDimension>(false);
+		TShaderMapRef<FTDFluidGpuJacobiTileCS> DivergenceShader(Context.ShaderMap, DivergenceDomain);
+		TShaderMapRef<FTDFluidGpuJacobiTileCS> RelaxShader(Context.ShaderMap, RelaxDomain);
 
 		for (int32 DispatchIndex = 0; DispatchIndex < DispatchCount; ++DispatchIndex)
 		{
@@ -941,8 +1403,8 @@ namespace
 			FTDFluidGpuJacobiTileCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuJacobiTileCS::FParameters>();
 			Parameters->ActorParameters = Context.ActorParameters;
 			Parameters->ObstacleSdf = MakeSRV(GraphBuilder, Textures.ObstacleSdf);
-			Parameters->PressureIn = MakeSRV(GraphBuilder, Textures.PressureSolution[CurrentPressureIndex]);
-			Parameters->PressureOut = MakeUAV(GraphBuilder, Textures.PressureSolution[TargetPressureIndex]);
+			Parameters->PressureIn = MakeSRV(GraphBuilder, PressureTextures[CurrentPressureIndex]);
+			Parameters->PressureOut = MakeUAV(GraphBuilder, PressureTextures[TargetPressureIndex]);
 			Parameters->IterationCount = static_cast<uint32>(FMath::Min(JacobiIterationsPerDispatch, PressureIterations - DispatchIndex * JacobiIterationsPerDispatch));
 			if (bComputesDivergence)
 			{
@@ -953,6 +1415,7 @@ namespace
 			{
 				Parameters->DivergenceIn = MakeSRV(GraphBuilder, Divergence);
 			}
+			BindWaterPressureParameters(GraphBuilder, WaterBindings, *Parameters);
 
 			FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.JacobiTile"), bComputesDivergence ? DivergenceShader : RelaxShader, Parameters, MakeTileGroupCount(Context.Resolution, Context.EntryCount));
 			CurrentPressureIndex = TargetPressureIndex;
@@ -960,7 +1423,13 @@ namespace
 		return CurrentPressureIndex;
 	}
 
-	void AddSubtractGradientPass(const FTDFluidGpuBatchPassContext& Context, FRDGTextureRef Pressure, FRDGTextureRef VelocityIn, FRDGTextureRef VelocityOut, bool bEnforcesObstacleBoundaries)
+	int32 AddJacobiPasses(const FTDFluidGpuBatchPassContext& Context, FRDGTextureRef ProjectedVelocity, int32 CurrentPressureIndex, const FTDFluidGpuWaterPressureBindings* WaterBindings = nullptr)
+	{
+		FRDGTextureRef PressureTextures[2] = { Context.Textures.PressureSolution[0], Context.Textures.PressureSolution[1] };
+		return AddJacobiPassesOnTextures(Context, ProjectedVelocity, PressureTextures, CurrentPressureIndex, FMath::Max(Context.Batch.GetKey().PressureIterations, 1), WaterBindings);
+	}
+
+	void AddSubtractGradientPass(const FTDFluidGpuBatchPassContext& Context, FRDGTextureRef Pressure, FRDGTextureRef VelocityIn, FRDGTextureRef VelocityOut, bool bEnforcesObstacleBoundaries, const FTDFluidGpuWaterPressureBindings* WaterBindings = nullptr)
 	{
 		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
 		FTDFluidGpuSubtractGradientCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuSubtractGradientCS::FParameters>();
@@ -970,8 +1439,11 @@ namespace
 		Parameters->VelocityIn = MakeSRV(GraphBuilder, VelocityIn);
 		Parameters->VelocityOut = MakeUAV(GraphBuilder, VelocityOut);
 		Parameters->EnforcesObstacleBoundaries = bEnforcesObstacleBoundaries ? 1u : 0u;
+		BindWaterPressureParameters(GraphBuilder, WaterBindings, *Parameters);
 
-		TShaderMapRef<FTDFluidGpuSubtractGradientCS> Shader(Context.ShaderMap);
+		FTDFluidGpuSubtractGradientCS::FPermutationDomain Domain;
+		Domain.Set<FTDFluidGpuSubtractGradientCS::FOpenWaterBordersDimension>(WaterBindings != nullptr);
+		TShaderMapRef<FTDFluidGpuSubtractGradientCS> Shader(Context.ShaderMap, Domain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.SubtractGradient"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
 	}
 
@@ -1029,6 +1501,7 @@ namespace
 		FRDGTextureRef Apertures = nullptr;
 		FRDGTextureRef Correction[2] = { nullptr, nullptr };
 		FRDGTextureRef ComponentLabels = nullptr;
+		FRDGTextureRef OpenBoundary = nullptr;
 	};
 
 	using FTDFluidGpuMultigridLevels = TArray<FTDFluidGpuMultigridLevelTextures, TInlineAllocator<8>>;
@@ -1042,6 +1515,7 @@ namespace
 		int32 Resolution = 0;
 		int32 EntryCount = 0;
 		FTDFluidGpuPassTimestamps* PassTimestamps = nullptr;
+		bool bUsesOpenBoundary = false;
 	};
 
 	bool IsMultigridBatch(const FTDFluidGpuBatch& Batch)
@@ -1052,6 +1526,12 @@ namespace
 	float ComputeMultigridLevelWeightScale(int32 Level)
 	{
 		return 1.0f / static_cast<float>(1 << (2 * Level));
+	}
+
+	float ComputeWaterDirichletScale(int32 Level)
+	{
+		const float LevelCellWidth = static_cast<float>(1 << Level);
+		return LevelCellWidth / (0.5f * LevelCellWidth + TDFluidGpuSolverConstants::WaterHalfPressureDirichletBaseScale);
 	}
 
 	FTDFluidGpuMultigridLevels CreateMultigridLevels(const FTDFluidGpuMultigridPassContext& Context)
@@ -1074,6 +1554,10 @@ namespace
 			else
 			{
 				LevelTextures.ComponentLabels = GraphBuilder.CreateTexture(MakeStateArrayDesc(LevelResolution, Context.EntryCount, MultigridComponentLabelFormat), TEXT("TDFluidGpu.MultigridComponentLabels"));
+			}
+			if (Context.bUsesOpenBoundary)
+			{
+				LevelTextures.OpenBoundary = GraphBuilder.CreateTexture(MakeStateArrayDesc(LevelResolution, Context.EntryCount, WaterOpenBoundaryFormat), TEXT("TDFluidGpu.WaterMultigridOpenBoundary"));
 			}
 		}
 		return Levels;
@@ -1109,10 +1593,20 @@ namespace
 			Parameters->AperturesIn = MakeSRV(GraphBuilder, FineLevel.Apertures);
 			Parameters->ValueOut = MakeUAV(GraphBuilder, FineLevel.Correction[0]);
 		}
+		if (Context.bUsesOpenBoundary)
+		{
+			Parameters->OpenBoundaryIn = MakeSRV(GraphBuilder, Levels[Level].OpenBoundary);
+			Parameters->OpenBoundaryDirichletScale = ComputeWaterDirichletScale(Level);
+			if (bWritesCoarseApertures)
+			{
+				Parameters->CoarseOpenBoundaryOut = MakeUAV(GraphBuilder, CoarseLevel.OpenBoundary);
+			}
+		}
 
 		FTDFluidGpuMultigridDownCS::FPermutationDomain PermutationVector;
 		PermutationVector.Set<FTDFluidGpuMultigridDownCS::FFinestLevelDimension>(bIsFinestLevel);
 		PermutationVector.Set<FTDFluidGpuMultigridDownCS::FWritesCoarseAperturesDimension>(bWritesCoarseApertures);
+		PermutationVector.Set<FTDFluidGpuMultigridDownCS::FOpenBoundaryDimension>(Context.bUsesOpenBoundary);
 		TShaderMapRef<FTDFluidGpuMultigridDownCS> Shader(Context.ShaderMap, PermutationVector);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.MultigridDown L%d", Level), Shader, Parameters, MakeTileGroupCount(LevelResolution, Context.EntryCount));
 	}
@@ -1130,8 +1624,15 @@ namespace
 		Parameters->ComponentLabels = MakeUAV(GraphBuilder, Coarsest.ComponentLabels);
 		Parameters->LevelWeightScale = ComputeMultigridLevelWeightScale(CoarsestLevel);
 		Parameters->ComputesComponentLabels = bComputesComponentLabels ? 1u : 0u;
+		if (Context.bUsesOpenBoundary)
+		{
+			Parameters->OpenBoundaryIn = MakeSRV(GraphBuilder, Coarsest.OpenBoundary);
+			Parameters->OpenBoundaryDirichletScale = ComputeWaterDirichletScale(CoarsestLevel);
+		}
 
-		TShaderMapRef<FTDFluidGpuMultigridCoarseSolveCS> Shader(Context.ShaderMap);
+		FTDFluidGpuMultigridCoarseSolveCS::FPermutationDomain Domain;
+		Domain.Set<FTDFluidGpuMultigridCoarseSolveCS::FOpenBoundaryDimension>(Context.bUsesOpenBoundary);
+		TShaderMapRef<FTDFluidGpuMultigridCoarseSolveCS> Shader(Context.ShaderMap, Domain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.MultigridCoarseSolve"), Shader, Parameters, FIntVector(1, 1, Context.EntryCount));
 	}
 
@@ -1172,10 +1673,16 @@ namespace
 			Parameters->TilesPerSlice = static_cast<uint32>(TilesPerRow * TilesPerRow);
 			Parameters->TilesPerRow = static_cast<uint32>(TilesPerRow);
 		}
+		if (Context.bUsesOpenBoundary)
+		{
+			Parameters->OpenBoundaryIn = MakeSRV(GraphBuilder, Levels[Level].OpenBoundary);
+			Parameters->OpenBoundaryDirichletScale = ComputeWaterDirichletScale(Level);
+		}
 
 		FTDFluidGpuMultigridUpCS::FPermutationDomain PermutationVector;
 		PermutationVector.Set<FTDFluidGpuMultigridUpCS::FFinestLevelDimension>(bIsFinestLevel);
 		PermutationVector.Set<FTDFluidGpuMultigridUpCS::FWritesPressurePartialSumsDimension>(bWritesPressurePartialSums);
+		PermutationVector.Set<FTDFluidGpuMultigridUpCS::FOpenBoundaryDimension>(Context.bUsesOpenBoundary);
 		TShaderMapRef<FTDFluidGpuMultigridUpCS> Shader(Context.ShaderMap, PermutationVector);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.MultigridUp L%d", Level), Shader, Parameters, MakeTileGroupCount(LevelResolution, Context.EntryCount));
 	}
@@ -1213,6 +1720,31 @@ namespace
 	FTDFluidGpuMultigridPassContext MakeMultigridPassContext(const FTDFluidGpuBatchPassContext& Context)
 	{
 		return FTDFluidGpuMultigridPassContext{ Context.GraphBuilder, Context.ShaderMap, Context.ActorParameters, Context.Textures.ObstacleSdf, Context.Resolution, Context.EntryCount, Context.PassTimestamps };
+	}
+
+	FTDFluidGpuMultigridPassContext MakeWaterMultigridPassContext(const FTDFluidGpuBatchPassContext& Context)
+	{
+		FTDFluidGpuMultigridPassContext MultigridContext = MakeMultigridPassContext(Context);
+		MultigridContext.bUsesOpenBoundary = true;
+		return MultigridContext;
+	}
+
+	void AddWaterMultigridCyclePasses(const FTDFluidGpuMultigridPassContext& Context, const FTDFluidGpuMultigridLevels& Levels, bool bWritesCoarseApertures)
+	{
+		const int32 CoarsestLevel = Levels.Num() - 1;
+		for (int32 Level = WaterHalfPressureLevel; Level < CoarsestLevel; ++Level)
+		{
+			AddMultigridDownPass(Context, Levels, Level, nullptr, nullptr, nullptr, bWritesCoarseApertures, 1.0f);
+			AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("mg_down_L"), Level);
+		}
+
+		AddMultigridCoarseSolvePass(Context, Levels, bWritesCoarseApertures);
+		AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("mg_coarse"));
+		for (int32 Level = CoarsestLevel - 1; Level >= WaterHalfPressureLevel; --Level)
+		{
+			AddMultigridUpPass(Context, Levels, Level, nullptr, nullptr, nullptr, nullptr);
+			AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("mg_up_L"), Level);
+		}
 	}
 
 	int32 AddPressureSolvePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuMultigridLevels& MultigridLevels, FRDGTextureRef ProjectedVelocity, int32 PressureIndex, bool bIsFirstProjection, FRDGBufferRef PressurePartialSums)
@@ -1478,11 +2010,731 @@ namespace
 		AddReadbackDownsamplePass(Context);
 	}
 
+	bool IsWaterHalfPressureGraph(const FTDFluidGpuBatch& Batch)
+	{
+		return Batch.GetKey().WaterPressureMode != ETDFluidGpuWaterPressureMode::JacobiOpenBorders;
+	}
+
+	int32 ComputeWaterGraphFieldResolution(const FTDFluidGpuBatch& Batch)
+	{
+		const int32 ResolutionTier = Batch.GetKey().ResolutionTier;
+		return ResolutionTier / FTDFluidGpuBatch::ComputeWaterFieldDivisor(ResolutionTier);
+	}
+
+	int32 ComputeWaterGraphPressureResolution(const FTDFluidGpuBatch& Batch)
+	{
+		const int32 ResolutionTier = Batch.GetKey().ResolutionTier;
+		return IsWaterHalfPressureGraph(Batch) ? ResolutionTier / 2 : ResolutionTier;
+	}
+
+	FTDFluidGpuBatchGraphTextures RegisterWaterBatchStateTextures(FRDGBuilder& GraphBuilder, FTDFluidGpuBatch& Batch, FTDFluidGpuWaterGraphTextures& OutWaterTextures)
+	{
+		const FTDFluidGpuBatchKey& Key = Batch.GetKey();
+		const int32 Resolution = Key.ResolutionTier;
+		const int32 FieldResolution = ComputeWaterGraphFieldResolution(Batch);
+		const int32 PressureResolution = ComputeWaterGraphPressureResolution(Batch);
+		const int32 SliceCapacity = FMath::Max(Batch.StateTextures.SliceCapacity, Batch.GetRequiredSliceCapacity());
+		const EPixelFormat SelectedVelocityFormat = Key.bUsesFloat32WaterVelocity ? WaterVelocityFloatFormat : VelocityFormat;
+		const EPixelFormat SelectedRippleFormat = Key.bUsesFloat32Ripple ? WaterRippleFloatFormat : WaterRippleHalfFormat;
+		FTDFluidGpuBatchStateTextures& State = Batch.StateTextures;
+		State.SurfaceDisplacement[0].SafeRelease();
+		State.SurfaceDisplacement[1].SafeRelease();
+		State.TerrainElevation.SafeRelease();
+		State.Heat[0].SafeRelease();
+		State.Heat[1].SafeRelease();
+		State.PainterPrimaryDensity.SafeRelease();
+		State.PainterSelectiveDensity.SafeRelease();
+
+		FTDFluidGpuBatchGraphTextures Textures;
+		Textures.Velocity[0] = RegisterOrGrowStateTexture(GraphBuilder, State.Velocity[0], Resolution, SliceCapacity, SelectedVelocityFormat, true, TEXT("TDFluidGpu.WaterVelocity"));
+		Textures.Velocity[1] = RegisterOrGrowStateTexture(GraphBuilder, State.Velocity[1], Resolution, SliceCapacity, SelectedVelocityFormat, false, TEXT("TDFluidGpu.WaterVelocityScratch"));
+		Textures.Density[0] = RegisterOrGrowStateTexture(GraphBuilder, State.Density[0], Resolution, SliceCapacity, DensityFormat, true, TEXT("TDFluidGpu.WaterDensity"));
+		Textures.Density[1] = RegisterOrGrowStateTexture(GraphBuilder, State.Density[1], Resolution, SliceCapacity, DensityFormat, false, TEXT("TDFluidGpu.WaterDensityScratch"));
+		Textures.PressureSolution[0] = RegisterOrGrowStateTexture(GraphBuilder, State.PressureSolution[0], PressureResolution, SliceCapacity, PressureSolutionFormat, true, TEXT("TDFluidGpu.WaterPressureSolution"));
+		Textures.PressureSolution[1] = RegisterOrGrowStateTexture(GraphBuilder, State.PressureSolution[1], PressureResolution, SliceCapacity, PressureSolutionFormat, false, TEXT("TDFluidGpu.WaterPressureSolutionScratch"));
+		Textures.ObstacleSdf = RegisterOrGrowStateTexture(GraphBuilder, State.ObstacleSdf, Resolution, SliceCapacity, ObstacleSdfFormat, true, TEXT("TDFluidGpu.WaterObstacleSdf"));
+		OutWaterTextures.Ripple[0] = RegisterOrGrowStateTexture(GraphBuilder, State.Ripple[0], Resolution, SliceCapacity, SelectedRippleFormat, true, TEXT("TDFluidGpu.WaterRipple"));
+		OutWaterTextures.Ripple[1] = RegisterOrGrowStateTexture(GraphBuilder, State.Ripple[1], Resolution, SliceCapacity, SelectedRippleFormat, false, TEXT("TDFluidGpu.WaterRippleScratch"));
+		OutWaterTextures.GuideField = RegisterOrGrowStateTexture(GraphBuilder, State.WaterGuideField, FieldResolution, SliceCapacity, WaterGuideFieldFormat, true, TEXT("TDFluidGpu.WaterGuideField"));
+		OutWaterTextures.SurfaceHeightField = RegisterOrGrowStateTexture(GraphBuilder, State.WaterSurfaceHeightField, FieldResolution, SliceCapacity, WaterScalarFieldFormat, true, TEXT("TDFluidGpu.WaterSurfaceHeightField"));
+		OutWaterTextures.TerrainField = RegisterOrGrowStateTexture(GraphBuilder, State.WaterTerrainField, FieldResolution, SliceCapacity, WaterScalarFieldFormat, true, TEXT("TDFluidGpu.WaterTerrainField"));
+		State.SliceCapacity = SliceCapacity;
+		return Textures;
+	}
+
+	FTDFluidGpuWaterPressureBindings MakeWaterPressureBindings(const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		FTDFluidGpuWaterPressureBindings Bindings;
+		Bindings.WaterParameters = Water.WaterParameters;
+		Bindings.SurfaceHeightField = Water.SurfaceHeightField;
+		Bindings.OpenBorderFlags = Water.OpenBorderFlags;
+		return Bindings;
+	}
+
+	void AddWaterShiftGatherPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
+		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+
+		FTDFluidGpuWaterShiftCS::FPermutationDomain Permutation;
+		Permutation.Set<FTDFluidGpuWaterShiftCS::FPhaseDimension>(ShiftPhaseGather);
+
+		FTDFluidGpuWaterShiftCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterShiftCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->EntryList = UploadEntryList(GraphBuilder, TEXT("TDFluidGpu.WaterShiftEntries"), TArray<uint32>(Frame.ShiftEntryIndices));
+		Parameters->ShiftEntryCount = static_cast<uint32>(Frame.ShiftEntryIndices.Num());
+		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
+		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[0]);
+		Parameters->RippleIn = MakeSRV(GraphBuilder, Water.Ripple[0]);
+		Parameters->PressureIn = MakeSRV(GraphBuilder, Textures.PressureSolution[0]);
+		Parameters->VelocityStageOut = MakeUAV(GraphBuilder, Textures.Velocity[1]);
+		Parameters->DensityStageOut = MakeUAV(GraphBuilder, Textures.Density[1]);
+		Parameters->RippleStageOut = MakeUAV(GraphBuilder, Water.Ripple[1]);
+		Parameters->PressureStageOut = MakeUAV(GraphBuilder, Textures.PressureSolution[1]);
+
+		TShaderMapRef<FTDFluidGpuWaterShiftCS> Shader(Context.ShaderMap, Permutation);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterShiftGather"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Frame.ShiftEntryIndices.Num()));
+	}
+
+	void AddWaterShiftAndResetPasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
+		const int32 ShiftCount = Frame.ShiftEntryIndices.Num();
+		const int32 ScatterCount = ShiftCount + Frame.ResetEntryIndices.Num();
+		if (ScatterCount == 0)
+		{
+			return;
+		}
+
+		if (ShiftCount > 0)
+		{
+			AddWaterShiftGatherPass(Context, Water);
+		}
+
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+		TArray<uint32> ScatterEntries(Frame.ShiftEntryIndices);
+		ScatterEntries.Append(Frame.ResetEntryIndices);
+
+		FTDFluidGpuWaterShiftCS::FPermutationDomain Permutation;
+		Permutation.Set<FTDFluidGpuWaterShiftCS::FPhaseDimension>(ShiftCount > 0 ? ShiftPhaseScatter : ShiftPhaseResetOnly);
+
+		FTDFluidGpuWaterShiftCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterShiftCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->EntryList = UploadEntryList(GraphBuilder, TEXT("TDFluidGpu.WaterShiftScatterEntries"), MoveTemp(ScatterEntries));
+		Parameters->ShiftEntryCount = static_cast<uint32>(ShiftCount);
+		Parameters->VelocityOut = MakeUAV(GraphBuilder, Textures.Velocity[0]);
+		Parameters->DensityOut = MakeUAV(GraphBuilder, Textures.Density[0]);
+		Parameters->RippleOut = MakeUAV(GraphBuilder, Water.Ripple[0]);
+		Parameters->PressureOut = MakeUAV(GraphBuilder, Textures.PressureSolution[0]);
+		Parameters->ObstacleSdfOut = MakeUAV(GraphBuilder, Textures.ObstacleSdf);
+		Parameters->WaterGuideFieldOut = MakeUAV(GraphBuilder, Water.GuideField);
+		Parameters->WaterSurfaceHeightFieldOut = MakeUAV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->WaterTerrainFieldOut = MakeUAV(GraphBuilder, Water.TerrainField);
+		if (ShiftCount > 0)
+		{
+			Parameters->VelocityStageIn = MakeSRV(GraphBuilder, Textures.Velocity[1]);
+			Parameters->DensityStageIn = MakeSRV(GraphBuilder, Textures.Density[1]);
+			Parameters->RippleStageIn = MakeSRV(GraphBuilder, Water.Ripple[1]);
+			Parameters->PressureStageIn = MakeSRV(GraphBuilder, Textures.PressureSolution[1]);
+		}
+
+		TShaderMapRef<FTDFluidGpuWaterShiftCS> Shader(Context.ShaderMap, Permutation);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterShiftScatter"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, ScatterCount));
+	}
+
+	void AddWaterGuideUpdatePass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		const TArray<FTDFluidGpuPackedWaterGuideUpdate>& Updates = Context.Batch.GetFrame().WaterGuideUpdates;
+		if (Updates.IsEmpty())
+		{
+			return;
+		}
+
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FTDFluidGpuWaterGuideUpdateCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterGuideUpdateCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->GuideUpdates = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.WaterGuideUpdates"), Updates));
+		Parameters->GuideUpdateCount = static_cast<uint32>(Updates.Num());
+		Parameters->WaterGuideFieldOut = MakeUAV(GraphBuilder, Water.GuideField);
+		Parameters->WaterSurfaceHeightFieldOut = MakeUAV(GraphBuilder, Water.SurfaceHeightField);
+
+		TShaderMapRef<FTDFluidGpuWaterGuideUpdateCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterGuideUpdate"), Shader, Parameters, FComputeShaderUtils::GetGroupCount(Updates.Num(), WaterLinearGroupSize));
+	}
+
+	void AddWaterTerrainUpdatePass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		const TArray<FTDFluidGpuPackedWaterTerrainUpdate>& Updates = Context.Batch.GetFrame().WaterTerrainUpdates;
+		if (Updates.IsEmpty())
+		{
+			return;
+		}
+
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FTDFluidGpuWaterTerrainUpdateCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterTerrainUpdateCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->TerrainUpdates = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.WaterTerrainUpdates"), Updates));
+		Parameters->TerrainUpdateCount = static_cast<uint32>(Updates.Num());
+		Parameters->WaterTerrainFieldOut = MakeUAV(GraphBuilder, Water.TerrainField);
+
+		TShaderMapRef<FTDFluidGpuWaterTerrainUpdateCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterTerrainUpdate"), Shader, Parameters, FComputeShaderUtils::GetGroupCount(Updates.Num(), WaterLinearGroupSize));
+	}
+
+	void AddWaterFieldUpdatePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		AddWaterGuideUpdatePass(Context, Water);
+		AddWaterTerrainUpdatePass(Context, Water);
+	}
+
+	void AddWaterFieldDryPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FTDFluidGpuWaterFieldDryCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterFieldDryCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->WaterSurfaceHeightField = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->WaterTerrainField = MakeSRV(GraphBuilder, Water.TerrainField);
+		Parameters->FieldDrySdfOut = MakeUAV(GraphBuilder, Water.FieldDrySdf);
+
+		TShaderMapRef<FTDFluidGpuWaterFieldDryCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterFieldDry"), Shader, Parameters, MakeCellGroupCount(ComputeWaterGraphFieldResolution(Context.Batch), Context.EntryCount));
+	}
+
+	void AddWaterComposeSdfPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FTDFluidGpuWaterComposeCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterComposeCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->ObstacleSdf = MakeSRV(GraphBuilder, Context.Textures.ObstacleSdf);
+		Parameters->FieldDrySdf = MakeSRV(GraphBuilder, Water.FieldDrySdf);
+		Parameters->CompositeSdfOut = MakeUAV(GraphBuilder, Water.CompositeSdf);
+
+		FTDFluidGpuWaterComposeCS::FPermutationDomain Permutation;
+		Permutation.Set<FTDFluidGpuWaterComposeCS::FInterpolatesFieldDimension>(FTDFluidGpuBatch::ComputeWaterFieldDivisor(Context.Resolution) > 1);
+		TShaderMapRef<FTDFluidGpuWaterComposeCS> Shader(Context.ShaderMap, Permutation);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterCompose"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
+	}
+
+	void AddWaterOpenBorderScanPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FTDFluidGpuWaterOpenBorderScanCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterOpenBorderScanCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		Parameters->WaterSurfaceHeightField = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->WaterOpenBorderFlagsOut = GraphBuilder.CreateUAV(Water.OpenBorderFlags);
+
+		TShaderMapRef<FTDFluidGpuWaterOpenBorderScanCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterOpenBorderScan"), Shader, Parameters, FIntVector(1, 1, Context.EntryCount));
+	}
+
+	void AddWaterComposePasses(const FTDFluidGpuBatchPassContext& Context, FTDFluidGpuWaterGraphTextures& InOutWater)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const int32 SliceCapacity = Context.Batch.StateTextures.SliceCapacity;
+		InOutWater.FieldDrySdf = GraphBuilder.CreateTexture(MakeStateArrayDesc(ComputeWaterGraphFieldResolution(Context.Batch), SliceCapacity, WaterFieldDrySdfFormat), TEXT("TDFluidGpu.WaterFieldDrySdf"));
+		InOutWater.CompositeSdf = GraphBuilder.CreateTexture(MakeStateArrayDesc(Context.Resolution, SliceCapacity, WaterCompositeSdfFormat), TEXT("TDFluidGpu.WaterCompositeSdf"));
+		InOutWater.OpenBorderFlags = GraphBuilder.CreateBuffer(FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), static_cast<uint32>(Context.EntryCount)), TEXT("TDFluidGpu.WaterOpenBorderFlags"));
+
+		AddWaterFieldDryPass(Context, InOutWater);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_field_dry"));
+		AddWaterComposeSdfPass(Context, InOutWater);
+		AddWaterOpenBorderScanPass(Context, InOutWater);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_compose"));
+	}
+
+	void AddWaterStampsPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+		FTDFluidGpuWaterStampsCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterStampsCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->Stamps = Context.FrameResources.Stamps;
+		Parameters->StampBinRanges = Context.FrameResources.StampBinRanges;
+		Parameters->StampBinIndices = Context.FrameResources.StampBinIndices;
+		Parameters->StampRippleImpulses = Context.FrameResources.StampRippleImpulses;
+		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		Parameters->WaterGuideField = MakeSRV(GraphBuilder, Water.GuideField);
+		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
+		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[0]);
+		Parameters->RippleIn = MakeSRV(GraphBuilder, Water.Ripple[0]);
+		Parameters->VelocityOut = MakeUAV(GraphBuilder, Textures.Velocity[1]);
+		Parameters->DensityOut = MakeUAV(GraphBuilder, Textures.Density[1]);
+		Parameters->RippleOut = MakeUAV(GraphBuilder, Water.Ripple[1]);
+
+		TShaderMapRef<FTDFluidGpuWaterStampsCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterStamps"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
+	}
+
+	void AddWaterForcesPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+		FTDFluidGpuWaterForcesCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterForcesCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		Parameters->WaterGuideField = MakeSRV(GraphBuilder, Water.GuideField);
+		Parameters->WaterSurfaceHeightField = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->WaterTerrainField = MakeSRV(GraphBuilder, Water.TerrainField);
+		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[1]);
+		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[1]);
+		Parameters->VelocityOut = MakeUAV(GraphBuilder, Textures.Velocity[0]);
+
+		TShaderMapRef<FTDFluidGpuWaterForcesCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterForces"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
+	}
+
+	FRDGTextureRef GetWaterHalfPressureCorrection(const FTDFluidGpuMultigridLevels& Levels)
+	{
+		const FTDFluidGpuMultigridLevelTextures& HalfLevel = Levels[WaterHalfPressureLevel];
+		return Levels.Num() - 1 > WaterHalfPressureLevel ? HalfLevel.Correction[1] : HalfLevel.Correction[0];
+	}
+
+	void AddWaterHalfPressurePreparePass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, const FTDFluidGpuMultigridLevels& Levels, FRDGTextureRef ProjectedVelocity, FRDGTextureRef HalfPressure, float ClosedWarmStartScale)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuMultigridLevelTextures& HalfLevel = Levels[WaterHalfPressureLevel];
+		FTDFluidGpuWaterHalfPressurePrepareCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterHalfPressurePrepareCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		Parameters->WaterSurfaceHeightField = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->WaterOpenBorderFlags = GraphBuilder.CreateSRV(Water.OpenBorderFlags);
+		Parameters->VelocityIn = MakeSRV(GraphBuilder, ProjectedVelocity);
+		Parameters->PressureIn = MakeSRV(GraphBuilder, HalfPressure);
+		Parameters->ClosedWarmStartScale = ClosedWarmStartScale;
+		Parameters->OpenBoundaryDirichletScale = ComputeWaterDirichletScale(WaterHalfPressureLevel);
+		Parameters->RhsOut = MakeUAV(GraphBuilder, HalfLevel.Rhs);
+		Parameters->AperturesOut = MakeUAV(GraphBuilder, HalfLevel.Apertures);
+		Parameters->OpenBoundaryOut = MakeUAV(GraphBuilder, HalfLevel.OpenBoundary);
+
+		TShaderMapRef<FTDFluidGpuWaterHalfPressurePrepareCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterHalfPressurePrepare"), Shader, Parameters, MakeCellGroupCount(Context.Resolution / 2, Context.EntryCount));
+	}
+
+	void AddWaterHalfPressureApplyPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, const FTDFluidGpuMultigridLevels& Levels, FRDGTextureRef HalfPressure, float ClosedWarmStartScale)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FTDFluidGpuWaterHalfPressureApplyCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterHalfPressureApplyCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->CorrectionIn = MakeSRV(GraphBuilder, GetWaterHalfPressureCorrection(Levels));
+		Parameters->WaterOpenBorderFlags = GraphBuilder.CreateSRV(Water.OpenBorderFlags);
+		Parameters->ClosedWarmStartScale = ClosedWarmStartScale;
+		Parameters->PressureSolution = MakeUAV(GraphBuilder, HalfPressure);
+
+		TShaderMapRef<FTDFluidGpuWaterHalfPressureApplyCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterHalfPressureApply"), Shader, Parameters, MakeCellGroupCount(Context.Resolution / 2, Context.EntryCount));
+	}
+
+	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuClosedHalfRhsMean(
+		TEXT("TD.FluidFX.WaterGpuClosedHalfRhsMean"),
+		1,
+		TEXT("GPU water half resolution multigrid subtracts the mean of the half resolution right hand side for entries without open borders, which keeps the closed pocket problem compatible. 0 keeps the previous behavior."),
+		ECVF_RenderThreadSafe);
+
+	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuHalfPostSmoothIterations(
+		TEXT("TD.FluidFX.WaterGpuHalfPostSmoothIterations"),
+		4,
+		TEXT("Full resolution Jacobi iterations applied to the upsampled half resolution pressure before the second projection gradient, clamped to 0..16. 0 keeps the previous behavior."),
+		ECVF_RenderThreadSafe);
+
+	bool HasClosedWaterEntry(const FTDFluidGpuBatch& Batch)
+	{
+		for (const FTDFluidGpuWaterParameters& WaterParameters : Batch.GetFrame().WaterParameters)
+		{
+			if (!EnumHasAnyFlags(static_cast<ETDFluidGpuWaterFlags>(WaterParameters.WaterFlags), ETDFluidGpuWaterFlags::UsesOpenBorders))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void AddWaterHalfRhsMeanPasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, const FTDFluidGpuMultigridLevels& Levels)
+	{
+		if (CVarTDFluidWaterGpuClosedHalfRhsMean.GetValueOnAnyThread() == 0 || !HasClosedWaterEntry(Context.Batch))
+		{
+			return;
+		}
+
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const int32 HalfResolution = Context.Resolution / 2;
+		const int32 TilesPerRow = ComputePressureMeanTilesPerRow(HalfResolution);
+		const int32 TilesPerSlice = TilesPerRow * TilesPerRow;
+		FRDGTextureRef HalfRhs = Levels[WaterHalfPressureLevel].Rhs;
+		FRDGBufferRef PartialSums = CreatePressurePartialSums(GraphBuilder, HalfResolution, Context.EntryCount);
+		FRDGBufferRef MeanRhs = GraphBuilder.CreateBuffer(FRDGBufferDesc::CreateStructuredDesc(sizeof(float), static_cast<uint32>(Context.EntryCount)), TEXT("TDFluidGpu.WaterHalfRhsMean"));
+
+		FTDFluidGpuWaterHalfRhsMeanTilesCS::FParameters* TileParameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterHalfRhsMeanTilesCS::FParameters>();
+		TileParameters->ActorParameters = Context.ActorParameters;
+		TileParameters->WaterParameters = Water.WaterParameters;
+		TileParameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		TileParameters->HalfRhsIn = MakeSRV(GraphBuilder, HalfRhs);
+		TileParameters->HalfRhsPartialSumsOut = GraphBuilder.CreateUAV(PartialSums);
+		TileParameters->TilesPerSlice = static_cast<uint32>(TilesPerSlice);
+		TileParameters->TilesPerRow = static_cast<uint32>(TilesPerRow);
+		TShaderMapRef<FTDFluidGpuWaterHalfRhsMeanTilesCS> TileShader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterHalfRhsMeanTiles"), TileShader, TileParameters, MakeTileGroupCount(HalfResolution, Context.EntryCount));
+
+		FTDFluidGpuPressureMeanCS::FParameters* FinalParameters = GraphBuilder.AllocParameters<FTDFluidGpuPressureMeanCS::FParameters>();
+		FinalParameters->PressurePartialSumsIn = GraphBuilder.CreateSRV(PartialSums);
+		FinalParameters->MeanPressureOut = GraphBuilder.CreateUAV(MeanRhs);
+		FinalParameters->TilesPerSlice = static_cast<uint32>(TilesPerSlice);
+		FinalParameters->TilesPerRow = static_cast<uint32>(TilesPerRow);
+		TShaderMapRef<FTDFluidGpuPressureMeanCS> FinalShader(Context.ShaderMap, FTDFluidGpuPressureMeanCS::FPermutationDomain(1));
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterHalfRhsMeanFinal"), FinalShader, FinalParameters, FIntVector(1, 1, Context.EntryCount));
+
+		FTDFluidGpuWaterHalfRhsSubtractMeanCS::FParameters* SubtractParameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterHalfRhsSubtractMeanCS::FParameters>();
+		SubtractParameters->ActorParameters = Context.ActorParameters;
+		SubtractParameters->WaterParameters = Water.WaterParameters;
+		SubtractParameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		SubtractParameters->WaterOpenBorderFlags = GraphBuilder.CreateSRV(Water.OpenBorderFlags);
+		SubtractParameters->HalfRhsMeanIn = GraphBuilder.CreateSRV(MeanRhs);
+		SubtractParameters->HalfRhsInOut = MakeUAV(GraphBuilder, HalfRhs);
+		TShaderMapRef<FTDFluidGpuWaterHalfRhsSubtractMeanCS> SubtractShader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterHalfRhsSubtractMean"), SubtractShader, SubtractParameters, MakeCellGroupCount(HalfResolution, Context.EntryCount));
+	}
+
+	void AddWaterHalfPressureCyclePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, const FTDFluidGpuMultigridPassContext& MultigridContext, const FTDFluidGpuMultigridLevels& Levels, FRDGTextureRef ProjectedVelocity, FRDGTextureRef HalfPressure, float ClosedWarmStartScale, bool bWritesCoarseApertures)
+	{
+		AddWaterHalfPressurePreparePass(Context, Water, Levels, ProjectedVelocity, HalfPressure, ClosedWarmStartScale);
+		AddWaterHalfRhsMeanPasses(Context, Water, Levels);
+		AddWaterMultigridCyclePasses(MultigridContext, Levels, bWritesCoarseApertures);
+		AddWaterHalfPressureApplyPass(Context, Water, Levels, HalfPressure, ClosedWarmStartScale);
+	}
+
+	FRDGTextureRef AddWaterUpsamplePressurePass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, const FTDFluidGpuMultigridLevels& Levels, FRDGTextureRef HalfPressure)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FRDGTextureRef PressureFull = GraphBuilder.CreateTexture(MakeStateArrayDesc(Context.Resolution, Context.Batch.StateTextures.SliceCapacity, WaterUpsampledPressureFormat), TEXT("TDFluidGpu.WaterPressureFull"));
+		FTDFluidGpuWaterUpsamplePressureCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterUpsamplePressureCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->PressureIn = MakeSRV(GraphBuilder, HalfPressure);
+		Parameters->AperturesIn = MakeSRV(GraphBuilder, Levels[WaterHalfPressureLevel].Apertures);
+		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		Parameters->WaterSurfaceHeightField = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->WaterOpenBorderFlags = GraphBuilder.CreateSRV(Water.OpenBorderFlags);
+		Parameters->PressureFullOut = MakeUAV(GraphBuilder, PressureFull);
+
+		TShaderMapRef<FTDFluidGpuWaterUpsamplePressureCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterUpsamplePressure"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
+		return PressureFull;
+	}
+
+	FRDGTextureRef AddWaterHalfPostSmoothPasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, FRDGTextureRef ProjectedVelocity, FRDGTextureRef UpsampledPressure)
+	{
+		const int32 IterationCount = ComputeTDFluidGpuWaterHalfPostSmoothIterations();
+		if (IterationCount == 0)
+		{
+			return UpsampledPressure;
+		}
+
+		RDG_EVENT_SCOPE_STAT(Context.GraphBuilder, TDFluidGpuWaterPressure, "TDFluidGpuWaterPressure");
+		FRDGTextureRef SmoothedPressure = Context.GraphBuilder.CreateTexture(MakeStateArrayDesc(Context.Resolution, Context.Batch.StateTextures.SliceCapacity, WaterUpsampledPressureFormat), TEXT("TDFluidGpu.WaterPressureFullSmoothed"));
+		FRDGTextureRef PressureTextures[2] = { UpsampledPressure, SmoothedPressure };
+		const FTDFluidGpuWaterPressureBindings WaterBindings = MakeWaterPressureBindings(Water);
+		const int32 SmoothedPressureIndex = AddJacobiPassesOnTextures(Context, ProjectedVelocity, PressureTextures, 0, IterationCount, &WaterBindings);
+		return PressureTextures[SmoothedPressureIndex];
+	}
+
+	FRDGTextureRef AddWaterPressurePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, const FTDFluidGpuMultigridLevels& Levels, FRDGTextureRef ProjectedVelocity, int32& InOutPressureIndex, bool bIsFirstProjection)
+	{
+		RDG_EVENT_SCOPE_STAT(Context.GraphBuilder, TDFluidGpuWaterPressure, "TDFluidGpuWaterPressure");
+		if (!IsWaterHalfPressureGraph(Context.Batch))
+		{
+			const FTDFluidGpuWaterPressureBindings WaterBindings = MakeWaterPressureBindings(Water);
+			InOutPressureIndex = AddJacobiPasses(Context, ProjectedVelocity, InOutPressureIndex, &WaterBindings);
+			return Context.Textures.PressureSolution[InOutPressureIndex];
+		}
+
+		const FTDFluidGpuMultigridPassContext MultigridContext = MakeWaterMultigridPassContext(Context);
+		FRDGTextureRef HalfPressure = Context.Textures.PressureSolution[InOutPressureIndex];
+		const int32 CycleCount = FMath::Max(Context.Batch.GetKey().MultigridCycles, 1);
+		const float FirstCycleWarmStartScale = bIsFirstProjection ? ComputeMultigridWarmStartScale() : 1.0f;
+		for (int32 CycleIndex = 0; CycleIndex < CycleCount; ++CycleIndex)
+		{
+			AddWaterHalfPressureCyclePasses(Context, Water, MultigridContext, Levels, ProjectedVelocity, HalfPressure, CycleIndex == 0 ? FirstCycleWarmStartScale : 1.0f, bIsFirstProjection && CycleIndex == 0);
+		}
+		return AddWaterUpsamplePressurePass(Context, Water, Levels, HalfPressure);
+	}
+
+	void AddWaterAdvectVelocityPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+		FTDFluidGpuWaterAdvectVelocityCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterAdvectVelocityCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		Parameters->WaterGuideField = MakeSRV(GraphBuilder, Water.GuideField);
+		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
+		Parameters->VelocityOut = MakeUAV(GraphBuilder, Textures.Velocity[1]);
+
+		TShaderMapRef<FTDFluidGpuWaterAdvectVelocityCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterAdvectVelocity"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
+	}
+
+	int32 ComputeWaterRippleDispatchCount(const FTDFluidGpuBatch& Batch)
+	{
+		const int32 SubstepMaximum = FMath::Max(Batch.GetFrame().WaterRippleSubstepMaximum, 0);
+		return SubstepMaximum + SubstepMaximum % 2;
+	}
+
+	void AddWaterRipplePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		const int32 DispatchCount = ComputeWaterRippleDispatchCount(Context.Batch);
+		if (DispatchCount == 0)
+		{
+			return;
+		}
+
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FRDGTextureSRVRef CompositeSdfSRV = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		TShaderMapRef<FTDFluidGpuWaterRippleSubstepCS> Shader(Context.ShaderMap);
+		for (int32 SubstepIndex = 0; SubstepIndex < DispatchCount; ++SubstepIndex)
+		{
+			const bool bReadsScratch = SubstepIndex % 2 == 0;
+			FTDFluidGpuWaterRippleSubstepCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterRippleSubstepCS::FParameters>();
+			Parameters->ActorParameters = Context.ActorParameters;
+			Parameters->WaterParameters = Water.WaterParameters;
+			Parameters->CompositeSdf = CompositeSdfSRV;
+			Parameters->RippleIn = MakeSRV(GraphBuilder, bReadsScratch ? Water.Ripple[1] : Water.Ripple[0]);
+			Parameters->RippleOut = MakeUAV(GraphBuilder, bReadsScratch ? Water.Ripple[0] : Water.Ripple[1]);
+			Parameters->SubstepIndex = static_cast<uint32>(SubstepIndex);
+			FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterRippleSubstep %d", SubstepIndex), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
+		}
+	}
+
+	FTDFluidGpuWaterOutputTargets RegisterWaterOutputTargets(FRDGBuilder& GraphBuilder, const FTDFluidGpuActorInput& Actor, int32 Resolution)
+	{
+		FTDFluidGpuWaterOutputTargets Targets;
+		FRDGTextureRef DensityPressureTarget = RegisterOutputTexture(GraphBuilder, Actor.DensityPressureOutput, Resolution, TEXT("TDFluidGpu.DensityPressureOutput"));
+		if (!DensityPressureTarget)
+		{
+			return Targets;
+		}
+
+		FRDGTextureRef VelocityTarget = RegisterOutputTexture(GraphBuilder, Actor.VelocityOutput, Resolution, TEXT("TDFluidGpu.VelocityOutput"));
+		if (!VelocityTarget)
+		{
+			return Targets;
+		}
+
+		FRDGTextureRef WaterSurfaceTarget = RegisterOutputTexture(GraphBuilder, Actor.WaterSurfaceOutput, Resolution, TEXT("TDFluidGpu.WaterSurfaceOutput"));
+		if (!WaterSurfaceTarget)
+		{
+			return Targets;
+		}
+
+		Targets.DensityPressure = DensityPressureTarget;
+		Targets.Velocity = VelocityTarget;
+		Targets.WaterSurface = WaterSurfaceTarget;
+		return Targets;
+	}
+
+	void AddWaterFinalizePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, FRDGTextureRef PressureFull, int32 PressureIndex, FRDGBufferRef MeanPressure, FTDFluidGpuFrameOutputs& InOutOutputs)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
+		const bool bUsesHalfPressure = PressureFull != nullptr;
+		FRDGBufferSRVRef MeanPressureSRV = GraphBuilder.CreateSRV(MeanPressure);
+		FRDGBufferSRVRef OpenBorderFlagsSRV = GraphBuilder.CreateSRV(Water.OpenBorderFlags);
+		FRDGTextureSRVRef CompositeSdfSRV = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		FRDGTextureSRVRef GuideFieldSRV = MakeSRV(GraphBuilder, Water.GuideField);
+		FRDGTextureSRVRef SurfaceHeightFieldSRV = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		FRDGTextureSRVRef TerrainFieldSRV = MakeSRV(GraphBuilder, Water.TerrainField);
+		FRDGTextureSRVRef VelocitySRV = MakeSRV(GraphBuilder, Textures.Velocity[0]);
+		FRDGTextureSRVRef DensitySRV = MakeSRV(GraphBuilder, Textures.Density[1]);
+		FRDGTextureSRVRef RippleSRV = MakeSRV(GraphBuilder, Water.Ripple[1]);
+		FRDGTextureSRVRef PressureFullSRV = bUsesHalfPressure ? MakeSRV(GraphBuilder, PressureFull) : nullptr;
+		FRDGTextureUAVRef DensityUAV = MakeUnorderedUAV(GraphBuilder, Textures.Density[0]);
+		FRDGTextureUAVRef RippleUAV = MakeUnorderedUAV(GraphBuilder, Water.Ripple[0]);
+		FRDGTextureUAVRef PressureUAV = MakeUnorderedUAV(GraphBuilder, Textures.PressureSolution[PressureIndex]);
+
+		for (int32 EntryIndex = 0; EntryIndex < Context.EntryCount; ++EntryIndex)
+		{
+			const FTDFluidGpuActorInput& Actor = Context.FrameInputs.Actors[Frame.Entries[EntryIndex].ActorInputIndex];
+			const FTDFluidGpuWaterOutputTargets Targets = RegisterWaterOutputTargets(GraphBuilder, Actor, Context.Resolution);
+			const bool bWritesOutput = Targets.DensityPressure != nullptr;
+
+			FTDFluidGpuWaterFinalizeCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterFinalizeCS::FParameters>();
+			Parameters->ActorParameters = Context.ActorParameters;
+			Parameters->WaterParameters = Water.WaterParameters;
+			Parameters->CompositeSdf = CompositeSdfSRV;
+			Parameters->WaterGuideField = GuideFieldSRV;
+			Parameters->WaterSurfaceHeightField = SurfaceHeightFieldSRV;
+			Parameters->WaterTerrainField = TerrainFieldSRV;
+			Parameters->WaterOpenBorderFlags = OpenBorderFlagsSRV;
+			Parameters->MeanPressure = MeanPressureSRV;
+			Parameters->VelocityIn = VelocitySRV;
+			Parameters->DensityIn = DensitySRV;
+			Parameters->RippleIn = RippleSRV;
+			Parameters->DensityOut = DensityUAV;
+			Parameters->RippleOut = RippleUAV;
+			Parameters->PressureSolution = PressureUAV;
+			Parameters->EntryIndex = static_cast<uint32>(EntryIndex);
+			Parameters->PressureFull = PressureFullSRV;
+			if (bWritesOutput)
+			{
+				Parameters->DensityPressureOutput = MakeUAV(GraphBuilder, Targets.DensityPressure);
+				Parameters->VelocityOutput = MakeUAV(GraphBuilder, Targets.Velocity);
+				Parameters->WaterSurfaceOutput = MakeUAV(GraphBuilder, Targets.WaterSurface);
+				++InOutOutputs.WrittenOutputCount;
+			}
+			else
+			{
+				++InOutOutputs.SkippedOutputCount;
+			}
+
+			FTDFluidGpuWaterFinalizeCS::FPermutationDomain Permutation;
+			Permutation.Set<FTDFluidGpuWaterFinalizeCS::FWritesOutputDimension>(bWritesOutput);
+			Permutation.Set<FTDFluidGpuWaterFinalizeCS::FHalfPressureDimension>(bUsesHalfPressure);
+			TShaderMapRef<FTDFluidGpuWaterFinalizeCS> Shader(Context.ShaderMap, Permutation);
+			FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterFinalize"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, 1));
+		}
+	}
+
+	void AddWaterProbePass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		const TArray<FTDFluidGpuWaterProbeRequest>& Requests = Context.Batch.GetFrame().WaterProbeRequests;
+		if (Requests.IsEmpty() || !Context.FrameResources.WaterProbeSamples)
+		{
+			return;
+		}
+
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+		FTDFluidGpuWaterProbeCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterProbeCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->ProbeRequests = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.WaterProbeRequests"), Requests));
+		Parameters->ProbeRequestCount = static_cast<uint32>(Requests.Num());
+		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
+		Parameters->WaterGuideField = MakeSRV(GraphBuilder, Water.GuideField);
+		Parameters->WaterSurfaceHeightField = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->WaterTerrainField = MakeSRV(GraphBuilder, Water.TerrainField);
+		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
+		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[0]);
+		Parameters->RippleIn = MakeSRV(GraphBuilder, Water.Ripple[0]);
+		Parameters->ProbeSamplesOut = GraphBuilder.CreateUAV(Context.FrameResources.WaterProbeSamples);
+
+		TShaderMapRef<FTDFluidGpuWaterProbeCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterProbe"), Shader, Parameters, FComputeShaderUtils::GetGroupCount(Requests.Num(), WaterLinearGroupSize));
+	}
+
+	void AddWaterBatchPasses(const FTDFluidGpuBatchPassContext& Context, FTDFluidGpuWaterGraphTextures& Water, FTDFluidGpuFrameOutputs& InOutOutputs)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		AddWaterShiftAndResetPasses(Context, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_shift"));
+		AddRasterizeObstaclesPass(Context);
+		AddWaterFieldUpdatePasses(Context, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_fields"));
+		AddWaterComposePasses(Context, Water);
+
+		FTDFluidGpuBatchGraphTextures SolverTextures = Context.Textures;
+		SolverTextures.ObstacleSdf = Water.CompositeSdf;
+		const FTDFluidGpuBatchPassContext SolverContext(GraphBuilder, Context.ShaderMap, Context.FrameInputs, Context.FrameResources, Context.Batch, SolverTextures, Context.ActorParameters, Context.Obstacles, Context.PassTimestamps);
+		AddWaterStampsPass(SolverContext, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_stamps"));
+		AddWaterForcesPass(SolverContext, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_forces"));
+		AddVorticityPass(SolverContext);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("vorticity"));
+
+		const bool bUsesHalfPressure = IsWaterHalfPressureGraph(Context.Batch);
+		const FTDFluidGpuMultigridLevels MultigridLevels = bUsesHalfPressure ? CreateMultigridLevels(MakeWaterMultigridPassContext(SolverContext)) : FTDFluidGpuMultigridLevels();
+		const FTDFluidGpuWaterPressureBindings WaterBindings = MakeWaterPressureBindings(Water);
+		int32 PressureIndex = 0;
+		FRDGTextureRef FirstPressure = AddWaterPressurePasses(SolverContext, Water, MultigridLevels, SolverTextures.Velocity[1], PressureIndex, true);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_pressure1"));
+		AddSubtractGradientPass(SolverContext, FirstPressure, SolverTextures.Velocity[1], SolverTextures.Velocity[0], false, &WaterBindings);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("subtract_gradient"));
+		AddWaterAdvectVelocityPass(SolverContext, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_advect"));
+		FRDGTextureRef SecondPressure = AddWaterPressurePasses(SolverContext, Water, MultigridLevels, SolverTextures.Velocity[1], PressureIndex, false);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_pressure2"));
+		FRDGBufferRef MeanPressure = AddPressureMeanPasses(SolverContext, SecondPressure, nullptr);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("pressure_mean"));
+		FRDGTextureRef GradientPressure = bUsesHalfPressure ? AddWaterHalfPostSmoothPasses(SolverContext, Water, SolverTextures.Velocity[1], SecondPressure) : SecondPressure;
+		if (bUsesHalfPressure && ComputeTDFluidGpuWaterHalfPostSmoothIterations() > 0)
+		{
+			AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_post_smooth"));
+		}
+		AddSubtractGradientPass(SolverContext, GradientPressure, SolverTextures.Velocity[1], SolverTextures.Velocity[0], true, &WaterBindings);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("subtract_gradient"));
+		AddWaterRipplePasses(SolverContext, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_ripple"));
+		AddWaterFinalizePasses(SolverContext, Water, bUsesHalfPressure ? GradientPressure : nullptr, PressureIndex, MeanPressure, InOutOutputs);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_finalize"));
+		AddReadbackDownsamplePass(SolverContext);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("readback_downsample"));
+		AddWaterProbePass(SolverContext, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_probe"));
+	}
+
+	void AddWaterBatchGraphPasses(FRDGBuilder& GraphBuilder, FGlobalShaderMap* ShaderMap, const FTDFluidGpuFrameInputs& FrameInputs, const FTDFluidGpuFrameResources& FrameResources, FTDFluidGpuBatch& Batch, FTDFluidGpuFrameOutputs& InOutOutputs, FTDFluidGpuPassTimestamps* PassTimestamps)
+	{
+		const FTDFluidGpuBatchFrame& Frame = Batch.GetFrame();
+		RDG_EVENT_SCOPE(GraphBuilder, "TDFluidGpuWaterBatch %dx%d x%d mode %d", Batch.GetKey().ResolutionTier, Batch.GetKey().ResolutionTier, Frame.Entries.Num(), static_cast<int32>(Batch.GetKey().WaterPressureMode));
+		FTDFluidGpuWaterGraphTextures WaterTextures;
+		const FTDFluidGpuBatchGraphTextures Textures = RegisterWaterBatchStateTextures(GraphBuilder, Batch, WaterTextures);
+		FRDGBufferSRVRef ActorParameters = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.ActorParameters"), Frame.Parameters));
+		FRDGBufferSRVRef Obstacles = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.Obstacles"), Frame.Obstacles));
+		WaterTextures.WaterParameters = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.WaterParameters"), Frame.WaterParameters));
+		const FTDFluidGpuBatchPassContext Context(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, Textures, ActorParameters, Obstacles, PassTimestamps);
+
+		InOutOutputs.SteppedEntryCount += Context.EntryCount;
+		AddWaterBatchPasses(Context, WaterTextures, InOutOutputs);
+	}
+
+	void RecordWaterFrameCsvStats(const TArray<FTDFluidGpuBatch>& Batches)
+	{
+		int32 RippleSubstepMaximum = 0;
+		int32 RippleSubstepCapHitCount = 0;
+		int32 PressureModeMaximum = 0;
+		for (const FTDFluidGpuBatch& Batch : Batches)
+		{
+			if (!Batch.GetKey().bUsesWaterLayer || Batch.GetFrame().Entries.IsEmpty())
+			{
+				continue;
+			}
+
+			RippleSubstepMaximum = FMath::Max(RippleSubstepMaximum, Batch.GetFrame().WaterRippleSubstepMaximum);
+			RippleSubstepCapHitCount += Batch.GetFrame().WaterRippleSubstepCapHitCount;
+			PressureModeMaximum = FMath::Max(PressureModeMaximum, static_cast<int32>(Batch.GetKey().WaterPressureMode));
+		}
+
+		CSV_CUSTOM_STAT(TDFluidGpu, WaterRippleSubsteps, RippleSubstepMaximum, ECsvCustomStatOp::Max);
+		CSV_CUSTOM_STAT(TDFluidGpu, WaterRippleSubstepCapHits, RippleSubstepCapHitCount, ECsvCustomStatOp::Accumulate);
+		CSV_CUSTOM_STAT(TDFluidGpu, WaterPressureMode, PressureModeMaximum, ECsvCustomStatOp::Max);
+	}
+
 	void AddBatchPasses(FRDGBuilder& GraphBuilder, FGlobalShaderMap* ShaderMap, const FTDFluidGpuFrameInputs& FrameInputs, const FTDFluidGpuFrameResources& FrameResources, FTDFluidGpuBatch& Batch, FTDFluidGpuFrameOutputs& InOutOutputs, FTDFluidGpuPassTimestamps* PassTimestamps)
 	{
 		const FTDFluidGpuBatchFrame& Frame = Batch.GetFrame();
 		if (Frame.Entries.IsEmpty())
 		{
+			return;
+		}
+
+		if (Batch.GetKey().bUsesWaterLayer)
+		{
+			AddWaterBatchGraphPasses(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, InOutOutputs, PassTimestamps);
 			return;
 		}
 
@@ -1535,17 +2787,38 @@ namespace
 			return Outputs;
 		}
 
-		RDG_EVENT_SCOPE_STAT(GraphBuilder, TDFluidGpuSolver, "TDFluidGpuStep");
 		FGlobalShaderMap* ShaderMap = GetGlobalShaderMap(GMaxRHIFeatureLevel);
-		AddPassTimestamp(GraphBuilder, PassTimestamps, TEXT("graph_begin"));
-		const FTDFluidGpuFrameResources FrameResources = CreateFrameResources(GraphBuilder, PreparedFrame);
-		AddPassTimestamp(GraphBuilder, PassTimestamps, TEXT("frame_resources"));
-		for (FTDFluidGpuBatch& Batch : InOutBatches)
+		FTDFluidGpuFrameResources FrameResources;
 		{
-			AddBatchPasses(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, Outputs, PassTimestamps);
+			RDG_EVENT_SCOPE_STAT(GraphBuilder, TDFluidGpuSolver, "TDFluidGpuStep");
+			AddPassTimestamp(GraphBuilder, PassTimestamps, TEXT("graph_begin"));
+			FrameResources = CreateFrameResources(GraphBuilder, PreparedFrame);
+			AddPassTimestamp(GraphBuilder, PassTimestamps, TEXT("frame_resources"));
+			for (FTDFluidGpuBatch& Batch : InOutBatches)
+			{
+				if (!Batch.GetKey().bUsesWaterLayer)
+				{
+					AddBatchPasses(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, Outputs, PassTimestamps);
+				}
+			}
+		}
+
+		if (PreparedFrame.bHasWaterEntries)
+		{
+			RDG_EVENT_SCOPE_STAT(GraphBuilder, TDFluidGpuWater, "TDFluidGpuWaterStep");
+			RecordWaterFrameCsvStats(InOutBatches);
+			for (FTDFluidGpuBatch& Batch : InOutBatches)
+			{
+				if (Batch.GetKey().bUsesWaterLayer)
+				{
+					AddBatchPasses(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, Outputs, PassTimestamps);
+				}
+			}
 		}
 
 		Outputs.ReadbackAtlas = FrameResources.ReadbackAtlas;
+		Outputs.WaterProbeSamples = FrameResources.WaterProbeSamples;
+		Outputs.WaterProbeSlotCount = PreparedFrame.WaterProbeSlotCount;
 		return Outputs;
 	}
 }
@@ -1610,6 +2883,80 @@ void AddTDFluidGpuMultigridProbePasses(FRDGBuilder& GraphBuilder, FTDFluidGpuBat
 	}
 }
 
+void AddTDFluidGpuWaterPressureProbePasses(FRDGBuilder& GraphBuilder, FTDFluidGpuBatch& Batch, int32 EntryIndex, const TArray<int32>& RecordedCycleCounts, FTDFluidGpuWaterPressureProbeReadbacks& OutReadbacks)
+{
+	const FTDFluidGpuBatchFrame& Frame = Batch.GetFrame();
+	const FTDFluidGpuBatchStateTextures& State = Batch.StateTextures;
+	const bool bIsHalfPressureWaterBatch = Batch.GetKey().bUsesWaterLayer && IsWaterHalfPressureGraph(Batch);
+	const bool bHasWaterStateTextures = State.Velocity[1].IsValid() && State.ObstacleSdf.IsValid() && State.WaterGuideField.IsValid() && State.WaterSurfaceHeightField.IsValid() && State.WaterTerrainField.IsValid();
+	const bool bHasEntryParameters = Frame.Parameters.IsValidIndex(EntryIndex) && Frame.WaterParameters.Num() == Frame.Parameters.Num() && Frame.Entries.Num() == Frame.Parameters.Num();
+	if (!bIsHalfPressureWaterBatch || !bHasWaterStateTextures || !bHasEntryParameters)
+	{
+		return;
+	}
+
+	const uint32 SliceIndex = static_cast<uint32>(Frame.Parameters[EntryIndex].SliceIndex);
+	FTDFluidGpuBatchGraphTextures RawTextures;
+	RawTextures.Velocity[1] = GraphBuilder.RegisterExternalTexture(State.Velocity[1], TEXT("TDFluidGpu.WaterProbeVelocity"));
+	RawTextures.ObstacleSdf = GraphBuilder.RegisterExternalTexture(State.ObstacleSdf, TEXT("TDFluidGpu.WaterProbeObstacleSdf"));
+	RawTextures.PressureSolution[0] = GraphBuilder.CreateTexture(MakeStateArrayDesc(ComputeWaterGraphPressureResolution(Batch), State.SliceCapacity, PressureSolutionFormat), TEXT("TDFluidGpu.WaterProbeHalfPressure"));
+	AddClearUAVPass(GraphBuilder, MakeUAV(GraphBuilder, RawTextures.PressureSolution[0]), 0.0f);
+
+	FTDFluidGpuWaterGraphTextures WaterTextures;
+	WaterTextures.GuideField = GraphBuilder.RegisterExternalTexture(State.WaterGuideField, TEXT("TDFluidGpu.WaterProbeGuideField"));
+	WaterTextures.SurfaceHeightField = GraphBuilder.RegisterExternalTexture(State.WaterSurfaceHeightField, TEXT("TDFluidGpu.WaterProbeSurfaceHeightField"));
+	WaterTextures.TerrainField = GraphBuilder.RegisterExternalTexture(State.WaterTerrainField, TEXT("TDFluidGpu.WaterProbeTerrainField"));
+	WaterTextures.WaterParameters = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.WaterProbeWaterParameters"), Frame.WaterParameters));
+
+	FGlobalShaderMap* ShaderMap = GetGlobalShaderMap(GMaxRHIFeatureLevel);
+	FRDGBufferSRVRef ActorParameters = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.WaterProbeActorParameters"), Frame.Parameters));
+	const FTDFluidGpuFrameInputs ProbeFrameInputs;
+	const FTDFluidGpuFrameResources ProbeFrameResources;
+	const FTDFluidGpuBatchPassContext RawContext(GraphBuilder, ShaderMap, ProbeFrameInputs, ProbeFrameResources, Batch, RawTextures, ActorParameters, nullptr, nullptr);
+	AddWaterComposePasses(RawContext, WaterTextures);
+
+	FTDFluidGpuBatchGraphTextures SolverTextures = RawTextures;
+	SolverTextures.ObstacleSdf = WaterTextures.CompositeSdf;
+	const FTDFluidGpuBatchPassContext SolverContext(GraphBuilder, ShaderMap, ProbeFrameInputs, ProbeFrameResources, Batch, SolverTextures, ActorParameters, nullptr, nullptr);
+	const FTDFluidGpuMultigridPassContext MultigridContext = MakeWaterMultigridPassContext(SolverContext);
+	const FTDFluidGpuMultigridLevels Levels = CreateMultigridLevels(MultigridContext);
+
+	OutReadbacks.SliceIndex = SliceIndex;
+	OutReadbacks.Velocity = MakeUnique<FRHIGPUTextureReadback>(TEXT("TDFluidGpu.WaterProbeVelocityReadback"));
+	OutReadbacks.CompositeSdf = MakeUnique<FRHIGPUTextureReadback>(TEXT("TDFluidGpu.WaterProbeCompositeSdfReadback"));
+	OutReadbacks.SurfaceHeightField = MakeUnique<FRHIGPUTextureReadback>(TEXT("TDFluidGpu.WaterProbeSurfaceHeightFieldReadback"));
+	OutReadbacks.OpenBorderFlags = MakeUnique<FRHIGPUBufferReadback>(TEXT("TDFluidGpu.WaterProbeOpenBorderFlagsReadback"));
+	AddEnqueueCopyPass(GraphBuilder, OutReadbacks.Velocity.Get(), RawTextures.Velocity[1], FResolveRect(), SliceIndex);
+	AddEnqueueCopyPass(GraphBuilder, OutReadbacks.CompositeSdf.Get(), WaterTextures.CompositeSdf, FResolveRect(), SliceIndex);
+	AddEnqueueCopyPass(GraphBuilder, OutReadbacks.SurfaceHeightField.Get(), WaterTextures.SurfaceHeightField, FResolveRect(), SliceIndex);
+	AddEnqueueCopyPass(GraphBuilder, OutReadbacks.OpenBorderFlags.Get(), WaterTextures.OpenBorderFlags, static_cast<uint32>(Frame.Entries.Num() * sizeof(uint32)));
+
+	int32 LastCycleCount = 0;
+	for (const int32 RecordedCycleCount : RecordedCycleCounts)
+	{
+		LastCycleCount = FMath::Max(LastCycleCount, RecordedCycleCount);
+	}
+
+	for (int32 CycleCount = 1; CycleCount <= LastCycleCount; ++CycleCount)
+	{
+		AddWaterHalfPressureCyclePasses(SolverContext, WaterTextures, MultigridContext, Levels, RawTextures.Velocity[1], RawTextures.PressureSolution[0], 1.0f, CycleCount == 1);
+		if (!RecordedCycleCounts.Contains(CycleCount))
+		{
+			continue;
+		}
+
+		FRDGTextureRef PressureFull = AddWaterUpsamplePressurePass(SolverContext, WaterTextures, Levels, RawTextures.PressureSolution[0]);
+		TUniquePtr<FRHIGPUTextureReadback>& Readback = OutReadbacks.PressureFullByCycle.Add_GetRef(MakeUnique<FRHIGPUTextureReadback>(TEXT("TDFluidGpu.WaterProbePressureFullReadback")));
+		AddEnqueueCopyPass(GraphBuilder, Readback.Get(), PressureFull, FResolveRect(), SliceIndex);
+		OutReadbacks.RecordedCycleCounts.Add(CycleCount);
+	}
+}
+
+int32 ComputeTDFluidGpuWaterHalfPostSmoothIterations()
+{
+	return FMath::Clamp(CVarTDFluidWaterGpuHalfPostSmoothIterations.GetValueOnAnyThread(), 0, MaximumWaterHalfPostSmoothIterations);
+}
+
 int64 ComputeTDFluidGpuBatchStateBytes(const FTDFluidGpuBatch& Batch)
 {
 	const FTDFluidGpuBatchStateTextures& State = Batch.StateTextures;
@@ -1621,12 +2968,37 @@ int64 ComputeTDFluidGpuBatchStateBytes(const FTDFluidGpuBatch& Batch)
 		TotalBytes += ComputePooledTextureBytes(State.SurfaceDisplacement[PingPongIndex]);
 		TotalBytes += ComputePooledTextureBytes(State.PressureSolution[PingPongIndex]);
 		TotalBytes += ComputePooledTextureBytes(State.Heat[PingPongIndex]);
+		TotalBytes += ComputePooledTextureBytes(State.Ripple[PingPongIndex]);
 	}
 	TotalBytes += ComputePooledTextureBytes(State.ObstacleSdf);
 	TotalBytes += ComputePooledTextureBytes(State.TerrainElevation);
 	TotalBytes += ComputePooledTextureBytes(State.PainterPrimaryDensity);
 	TotalBytes += ComputePooledTextureBytes(State.PainterSelectiveDensity);
+	TotalBytes += ComputePooledTextureBytes(State.WaterGuideField);
+	TotalBytes += ComputePooledTextureBytes(State.WaterSurfaceHeightField);
+	TotalBytes += ComputePooledTextureBytes(State.WaterTerrainField);
 	return TotalBytes;
+}
+
+namespace
+{
+	void CopyWaterProbeSamples(FRHIGPUBufferReadback* Readback, int32 SlotCount, TArray<FTDFluidGpuWaterProbeSample>& OutSamples)
+	{
+		OutSamples.Reset();
+		if (!Readback || SlotCount <= 0)
+		{
+			return;
+		}
+
+		const FTDFluidGpuWaterProbeSample* Samples = static_cast<const FTDFluidGpuWaterProbeSample*>(Readback->Lock(WaterProbeReadbackBytes));
+		if (!Samples)
+		{
+			return;
+		}
+
+		OutSamples.Append(Samples, FMath::Min(SlotCount, TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame));
+		Readback->Unlock();
+	}
 }
 
 FTDFluidGpuReadbackRing::FTDFluidGpuReadbackRing()
@@ -1634,6 +3006,7 @@ FTDFluidGpuReadbackRing::FTDFluidGpuReadbackRing()
 	for (FTDFluidGpuReadbackSlot& Slot : Slots)
 	{
 		Slot.Readback = MakeUnique<FRHIGPUTextureReadback>(TEXT("TDFluidGpu.ReadbackAtlas"));
+		Slot.WaterProbeReadback = MakeUnique<FRHIGPUBufferReadback>(TEXT("TDFluidGpu.WaterProbeReadback"));
 	}
 }
 
@@ -1668,6 +3041,12 @@ bool FTDFluidGpuReadbackRing::Enqueue(FRDGBuilder& GraphBuilder, const FTDFluidG
 	}
 
 	AddEnqueueCopyPass(GraphBuilder, FreeSlot->Readback.Get(), FrameOutputs.ReadbackAtlas);
+	FreeSlot->WaterProbeSlotCount = 0;
+	if (FrameOutputs.WaterProbeSamples && FrameOutputs.WaterProbeSlotCount > 0)
+	{
+		AddEnqueueCopyPass(GraphBuilder, FreeSlot->WaterProbeReadback.Get(), FrameOutputs.WaterProbeSamples, WaterProbeReadbackBytes);
+		FreeSlot->WaterProbeSlotCount = FMath::Min(FrameOutputs.WaterProbeSlotCount, TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame);
+	}
 	FreeSlot->Layout = FrameOutputs.ReadbackLayout;
 	FreeSlot->FrameNumber = FrameOutputs.FrameNumber;
 	FreeSlot->EnqueueOrder = NextEnqueueOrder++;
@@ -1680,7 +3059,8 @@ bool FTDFluidGpuReadbackRing::TryReadLatest(FTDFluidGpuReadbackFrame& OutFrame)
 	FTDFluidGpuReadbackSlot* LatestReadySlot = nullptr;
 	for (FTDFluidGpuReadbackSlot& Slot : Slots)
 	{
-		const bool bIsNewerReadySlot = Slot.bIsPending && Slot.Readback->IsReady() && (!LatestReadySlot || Slot.EnqueueOrder > LatestReadySlot->EnqueueOrder);
+		const bool bIsWaterProbeReady = Slot.WaterProbeSlotCount == 0 || Slot.WaterProbeReadback->IsReady();
+		const bool bIsNewerReadySlot = Slot.bIsPending && Slot.Readback->IsReady() && bIsWaterProbeReady && (!LatestReadySlot || Slot.EnqueueOrder > LatestReadySlot->EnqueueOrder);
 		if (bIsNewerReadySlot)
 		{
 			LatestReadySlot = &Slot;
@@ -1710,6 +3090,7 @@ bool FTDFluidGpuReadbackRing::TryReadLatest(FTDFluidGpuReadbackFrame& OutFrame)
 		FMemory::Memcpy(OutFrame.Texels.GetData() + RowIndex * AtlasSize.X, SourceTexels + RowIndex * RowPitchInPixels, sizeof(FFloat16Color) * AtlasSize.X);
 	}
 	LatestReadySlot->Readback->Unlock();
+	CopyWaterProbeSamples(LatestReadySlot->WaterProbeReadback.Get(), LatestReadySlot->WaterProbeSlotCount, OutFrame.WaterProbeSamples);
 
 	const uint64 ConsumedOrder = LatestReadySlot->EnqueueOrder;
 	for (FTDFluidGpuReadbackSlot& Slot : Slots)

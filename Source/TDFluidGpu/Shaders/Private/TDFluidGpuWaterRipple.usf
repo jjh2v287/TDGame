@@ -1,0 +1,54 @@
+#include "/TDFluidGpu/Private/TDFluidGpuWaterCommon.ush"
+
+Texture2DArray<float> CompositeSdf;
+Texture2DArray<float2> RippleIn;
+RWTexture2DArray<float2> RippleOut;
+uint SubstepIndex;
+
+float LoadRippleNeighborHeight(FTDFluidGpuActorParameters Actor, int2 NeighborCell, float CenterHeight)
+{
+	if (!TDFluidGpuIsInsideGrid(NeighborCell, Actor.Resolution))
+	{
+		return CenterHeight;
+	}
+
+	return RippleIn[TDFluidGpuMakeTexel(NeighborCell, Actor.SliceIndex)].x;
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void RippleSubstepCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	const float2 Ripple = RippleIn[Texel];
+	if (!TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_RIPPLES) || SubstepIndex >= Water.RippleSubstepCount)
+	{
+		RippleOut[Texel] = Ripple;
+		return;
+	}
+
+	if (TDFluidGpuIsSolidDistance(CompositeSdf[Texel]))
+	{
+		RippleOut[Texel] = float2(0.0f, 0.0f);
+		return;
+	}
+
+	const float CenterHeight = Ripple.x;
+	const float LeftHeight = LoadRippleNeighborHeight(Actor, Cell - int2(1, 0), CenterHeight);
+	const float RightHeight = LoadRippleNeighborHeight(Actor, Cell + int2(1, 0), CenterHeight);
+	const float DownHeight = LoadRippleNeighborHeight(Actor, Cell - int2(0, 1), CenterHeight);
+	const float UpHeight = LoadRippleNeighborHeight(Actor, Cell + int2(0, 1), CenterHeight);
+	const float Laplacian = (LeftHeight + RightHeight - 2.0f * CenterHeight) * Water.InvCellSizeSquaredCm.x + (DownHeight + UpHeight - 2.0f * CenterHeight) * Water.InvCellSizeSquaredCm.y;
+	const float SubstepSeconds = Water.RippleSubstepSeconds;
+	const float HeightSpeed = Ripple.y + (Water.RippleWaveSpeedSquared * Laplacian - Water.RippleDampingPerSec * Ripple.y) * SubstepSeconds;
+	const float BorderDamping = TDFluidGpuWaterComputeBorderDamping(Actor, Cell, SubstepSeconds);
+	RippleOut[Texel] = float2((CenterHeight + HeightSpeed * SubstepSeconds) * BorderDamping, HeightSpeed * BorderDamping);
+}

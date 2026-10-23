@@ -44,7 +44,8 @@ namespace
 			&& FMath::IsFinite(Stamp.DensityStrength)
 			&& FMath::IsFinite(Stamp.VelocityStrength)
 			&& FMath::IsFinite(Stamp.RadialVelocityCmPerSec)
-			&& FMath::IsFinite(Stamp.HeatStrength);
+			&& FMath::IsFinite(Stamp.HeatStrength)
+			&& FMath::IsFinite(Stamp.RippleImpulseCm);
 	}
 
 	FTDFluidGpuStampWindowGeometry MakeWindowGeometry(const FTDFluidGpuStampBinWindow& Window)
@@ -253,9 +254,12 @@ FTDFluidGpuStampBinSet FTDFluidGpuStampBins::Build(const FTDFluidGpuStampBinWind
 	KeepNearestCandidates(Candidates, MaxStampsPerTick, BinSet);
 
 	BinSet.Stamps.Reserve(Candidates.Num());
+	BinSet.RippleImpulsesCm.Reserve(Candidates.Num());
 	for (const FTDFluidGpuStampCandidate& Candidate : Candidates)
 	{
-		BinSet.Stamps.Add(PackStamp(Window, Stamps[Candidate.SourceIndex], Candidate));
+		const FTDFluidGpuStampInput& Stamp = Stamps[Candidate.SourceIndex];
+		BinSet.Stamps.Add(PackStamp(Window, Stamp, Candidate));
+		BinSet.RippleImpulsesCm.Add(Stamp.RippleImpulseCm);
 	}
 
 	FillBins(Geometry, Candidates, Stamps, MaxStampsPerBin, BinSet);
@@ -269,6 +273,7 @@ uint32 FTDFluidGpuStampBins::AppendToFrame(const FTDFluidGpuStampBinSet& ActorBi
 	const uint32 EntryOffset = static_cast<uint32>(InOutFrameBins.BinStampIndices.Num());
 
 	InOutFrameBins.Stamps.Append(ActorBins.Stamps);
+	InOutFrameBins.RippleImpulsesCm.Append(ActorBins.RippleImpulsesCm);
 
 	InOutFrameBins.BinRanges.Reserve(InOutFrameBins.BinRanges.Num() + ActorBins.BinRanges.Num());
 	for (const FTDFluidGpuStampBinRange& Range : ActorBins.BinRanges)

@@ -16,6 +16,10 @@
 #define TDFLUIDGPU_MG_REDUCTION_SPAN (TDFLUIDGPU_MG_COARSE_THREAD_COUNT / TDFLUIDGPU_MG_REDUCTION_LANE_COUNT)
 #define TDFLUIDGPU_MG_LABEL_FLAG_COUNT 3u
 
+#ifndef TDFLUIDGPU_MG_OPEN_BOUNDARY
+#define TDFLUIDGPU_MG_OPEN_BOUNDARY 0
+#endif
+
 static const float TDFLUIDGPU_MG_COARSEST_AXIS_COSINE = 0.99518472667f;
 static const float TDFLUIDGPU_MG_COARSE_TARGET_ERROR_REDUCTION = 0.01f;
 
@@ -25,6 +29,10 @@ RWTexture2DArray<float> CorrectionOut;
 RWTexture2DArray<uint> ComponentLabels;
 float LevelWeightScale;
 uint ComputesComponentLabels;
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+Texture2DArray<float2> OpenBoundaryIn;
+float OpenBoundaryDirichletScale;
+#endif
 
 groupshared float SharedColorSplitValue[TDFLUIDGPU_MG_COARSEST_CELL_COUNT];
 groupshared float SharedRhs[TDFLUIDGPU_MG_COARSEST_CELL_COUNT];
@@ -36,6 +44,9 @@ groupshared uint SharedMinimumLabels[TDFLUIDGPU_MG_COARSE_THREAD_COUNT];
 groupshared float2 SharedPartialSums[TDFLUIDGPU_MG_REDUCTION_LANE_COUNT];
 groupshared uint SharedPartialMinimumLabels[TDFLUIDGPU_MG_REDUCTION_LANE_COUNT];
 groupshared uint SharedLabelChanged[TDFLUIDGPU_MG_LABEL_FLAG_COUNT];
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+groupshared float SharedDirichletWeight[TDFLUIDGPU_MG_COARSEST_CELL_COUNT];
+#endif
 
 struct FTDFluidGpuCoarsestColorCell
 {
@@ -253,22 +264,36 @@ void SubtractComponentRhsMeans(uint GroupIndex)
 		}
 
 		float2 LocalSum = float2(0.0f, 0.0f);
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+		float2 LocalDirichletSum = float2(0.0f, 0.0f);
+#endif
 		for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
 		{
 			const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
 			if (SharedLabel[CellIndex] == Root)
 			{
 				LocalSum += float2(SharedRhs[CellIndex], 1.0f);
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+				LocalDirichletSum += float2(SharedDirichletWeight[CellIndex], 0.0f);
+#endif
 			}
 		}
 		const float2 ComponentSum = ReduceSums(GroupIndex, LocalSum);
 		const float ComponentMean = ComponentSum.x / max(ComponentSum.y, 1.0f);
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+		const float2 ComponentDirichletSum = ReduceSums(GroupIndex, LocalDirichletSum);
+		const float SubtractedComponentMean = ComponentDirichletSum.x > 0.0f ? 0.0f : ComponentMean;
+#endif
 		for (uint Slot = 0; Slot < TDFLUIDGPU_MG_OWNED_CELLS_PER_THREAD; ++Slot)
 		{
 			const uint CellIndex = GetOwnedCellIndex(GroupIndex, Slot);
 			if (SharedLabel[CellIndex] == Root)
 			{
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+				SharedRhs[CellIndex] -= SubtractedComponentMean;
+#else
 				SharedRhs[CellIndex] -= ComponentMean;
+#endif
 			}
 		}
 		FirstCandidate = Root + 1u;
@@ -306,6 +331,9 @@ FTDFluidGpuCoarsestColorCell MakeColorCell(uint GroupIndex, uint Slot, uint Colo
 	Cell.UpWeight = ReadUpAperture(Cell.CellIndex) * Weights.y;
 	Cell.DownWeight = ReadDownAperture(Cell.CellIndex) * Weights.y;
 	Cell.Diagonal = (Cell.RightWeight + Cell.LeftWeight) + (Cell.UpWeight + Cell.DownWeight);
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+	Cell.Diagonal += SharedDirichletWeight[Cell.CellIndex];
+#endif
 	Cell.Rhs = SharedRhs[Cell.CellIndex];
 	Cell.Value = 0.0f;
 	return Cell;
@@ -357,6 +385,10 @@ void MultigridCoarseSolveCS(uint3 GroupId : SV_GroupID, uint GroupIndex : SV_Gro
 		SharedApertureY[CellIndex] = Apertures.y;
 		SharedRhs[CellIndex] = RhsIn[Texel];
 		SharedColorSplitValue[CellIndex] = 0.0f;
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+		const float2 OpenBoundary = OpenBoundaryIn[Texel];
+		SharedDirichletWeight[CellIndex] = OpenBoundaryDirichletScale * (OpenBoundary.x * Weights.x + OpenBoundary.y * Weights.y);
+#endif
 	}
 	GroupMemoryBarrierWithGroupSync();
 

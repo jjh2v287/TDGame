@@ -155,7 +155,7 @@ void ATDFluidWaterActor::PrepareActorSpecificInputs(float DeltaTime)
 
 void ATDFluidWaterActor::FinishActorSpecificOutputs(float DeltaTime)
 {
-	const int32 SolverGeneration = LiveComponent->GetSolver().GetReinitializationGeneration();
+	const int32 SolverGeneration = LiveComponent->GetSimulationGeneration();
 	if (SolverGeneration != TrackedSolverGeneration)
 	{
 		ResetWaterLayerFade();
@@ -174,7 +174,7 @@ void ATDFluidWaterActor::FinishActorSpecificOutputs(float DeltaTime)
 
 float ATDFluidWaterActor::ResolveTerrainMissElevationCm(int32 CellX, int32 CellY) const
 {
-	const float SurfaceHeightCm = LiveComponent->GetSolver().GetWaterSurfaceHeightAtCell(CellX, CellY);
+	const float SurfaceHeightCm = LiveComponent->GetWaterSurfaceHeightAtTerrainSampleCell(CellX, CellY);
 	if (SurfaceHeightCm == FTDFluidGrid2DSolver::NoWaterSurfaceHeight)
 	{
 		return Super::ResolveTerrainMissElevationCm(CellX, CellY);
@@ -196,7 +196,7 @@ void ATDFluidWaterActor::AddTerrainTraceIgnoredActors(FCollisionQueryParams& Que
 
 void ATDFluidWaterActor::OnTerrainSamplingCompleted()
 {
-	TrackedSolverGeneration = LiveComponent->GetSolver().GetReinitializationGeneration();
+	TrackedSolverGeneration = LiveComponent->GetSimulationGeneration();
 	bTerrainSamplingFinished = true;
 }
 
@@ -366,15 +366,14 @@ UMaterialInterface* ATDFluidWaterActor::ResolveSharedMaterialParent(UMaterialInt
 
 void ATDFluidWaterActor::RefreshSolverWaterInputs()
 {
-	FTDFluidGrid2DSolver& Solver = LiveComponent->GetMutableSolver();
-	if (!Solver.IsInitialized() || !Solver.GetConfig().bEnableWaterLayer)
+	if (!LiveComponent->CanReceiveWaterInputs())
 	{
 		return;
 	}
 
 	const FVector AnchorLocation = ResolvePlaneAnchorWorldLocation();
 	const FVector2D AnchorXY(AnchorLocation.X, AnchorLocation.Y);
-	const double RecollectDistanceCm = Solver.GetExtentCm().GetMax() * WaterActorGuideRecollectExtentRatio;
+	const double RecollectDistanceCm = LiveComponent->GetSimulationExtentCm().GetMax() * WaterActorGuideRecollectExtentRatio;
 	const bool bHasMovedFar = FVector2D::DistSquared(AnchorXY, GuideCollectionCenter) > FMath::Square(RecollectDistanceCm);
 	if (bHasCollectedGuides && !bAreWaterInputsDirty && !bHasMovedFar)
 	{
@@ -400,8 +399,7 @@ void ATDFluidWaterActor::RefreshSolverWaterInputs()
 		}
 	}
 
-	Solver.SetFlowGuides(Guides);
-	Solver.SetWaterRegions(Regions);
+	LiveComponent->SetWaterGuidesAndRegions(Guides, Regions);
 	GuideCollectionCenter = AnchorXY;
 	bHasCollectedGuides = true;
 	bAreWaterInputsDirty = false;

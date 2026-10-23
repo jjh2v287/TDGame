@@ -120,3 +120,12 @@
 - 증거: `Saved/AgentOps/20261023/w1gate-stage2-final-tests.log`·`w1gate-perf-rerun-tests.log`(실패) 대 `w1gate-asynctests-tests.log`(0.2603 통과)
 - 날짜·상태: 2026-10-23 active(두 번째 발생)
 - 발견: claude(W-1 관문 2단계 회귀 시험)
+
+### L-build-16 설치판(런처) UE 5.8에는 Win64 Test 게임 구성이 없어 Test 빌드·패키지를 만들 수 없다 — 성능 '최종 판정 Test 빌드' 규칙은 이 기계에서 실행 불가
+- 증상: 로드맵·판정 규칙(RM:46, FX-7p judge-closure Q-e ②)이 'PIE 체제 관문 미달이면 패키지 Test 빌드에서 판정'을 요구했으나 Test 경로가 없다. UBT 예외 문구(소스): "Targets cannot be built in the {Test} configuration with this engine distribution."
+- 원인: 설치판 `Engine/Config/BaseEngine.ini` Win64 게임 구성 목록이 DebugGame·Development·Shipping뿐(Test 0건), UBT가 목록 밖 구성을 거부. Test 엔진 오브젝트가 없어 소스 엔진 빌드 없이는 우회 불가. 에디터 바이너리 `-game`도 막힘(L-editor-12)
+- 해결: 성능 판정은 PIE에서 SP(`r.ScreenPercentage` ≤200, TSR 상한)로 GPU 병목 체제를 만들어 하고, 패키지가 꼭 필요하면 Development 쿠킹 게임 + C++ 측정 실행기(빌드 3~5시간 추정)를 쓴다. Development는 CSV GPU 통계·로그·콘솔이 모두 동작
+- 범위: 이 기계의 설치판 엔진을 쓰는 모든 성능 측정·패키징 계획(FluidFX FX-7p-r, 그 밖의 '최종 Test 빌드' 문구)
+- 증거: `Saved/AgentOps/20261023/fx7pr/understand-package.md` 1절(엔진 설정·UBT 소스 근거, 실제 Test 빌드 실행 재현은 하지 않음 — 미검증 실행)
+- 날짜·상태: 2026-10-24 active
+- 발견: claude(FluidFX FX-7p-r)

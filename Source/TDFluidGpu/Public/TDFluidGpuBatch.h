@@ -30,6 +30,39 @@ enum class ETDFluidGpuActorFlags : uint32
 };
 ENUM_CLASS_FLAGS(ETDFluidGpuActorFlags);
 
+enum class ETDFluidGpuWaterFlags : uint32
+{
+	None = 0,
+	UsesOpenBorders = 1u << 0,
+	TreatsDryCellsAsSolid = 1u << 1,
+	InitializesAllVelocities = 1u << 2,
+	UsesRipples = 1u << 3,
+	UsesRippleAdvection = 1u << 4,
+	UsesFlowGuides = 1u << 5,
+	UsesWhitewaterFromVorticity = 1u << 6,
+	UsesRapidsWhitewater = 1u << 7,
+	UsesTerrainSlopeDryOnly = 1u << 8,
+	ReachedRippleSubstepCap = 1u << 9
+};
+ENUM_CLASS_FLAGS(ETDFluidGpuWaterFlags);
+
+enum class ETDFluidGpuWaterProbeFlags : uint32
+{
+	None = 0,
+	IsInsideWindow = 1u << 0,
+	HasWaterSurface = 1u << 1,
+	IsTerrainKnown = 1u << 2,
+	IsSolid = 1u << 3
+};
+ENUM_CLASS_FLAGS(ETDFluidGpuWaterProbeFlags);
+
+enum class ETDFluidGpuWaterPressureMode : uint8
+{
+	JacobiOpenBorders,
+	HalfResolutionMultigrid,
+	HalfResolutionKernelFeedback
+};
+
 struct alignas(16) FTDFluidGpuActorParameters
 {
 	int32 SliceIndex = 0;
@@ -137,6 +170,76 @@ struct alignas(16) FTDFluidGpuPackedTerrainUpdate
 };
 static_assert(sizeof(FTDFluidGpuPackedTerrainUpdate) == 16, "FTDFluidGpuPackedTerrainUpdate must match the 16 byte shader layout.");
 
+struct alignas(16) FTDFluidGpuWaterParameters
+{
+	uint32 WaterFlags = 0;
+	int32 FieldResolution = 0;
+	int32 FieldDivisor = 1;
+	int32 PressureResolution = 0;
+
+	FIntPoint FieldOrigin = FIntPoint::ZeroValue;
+	int32 PressureDivisor = 1;
+	uint32 RippleSubstepCount = 0;
+
+	float FlowGuideResponseBlend = 0.0f;
+	float RippleSubstepSeconds = 0.0f;
+	float RippleWaveSpeedSquared = 0.0f;
+	float RippleDampingPerSec = 0.0f;
+
+	FVector2f InvCellSizeSquaredCm = FVector2f::ZeroVector;
+	FVector2f RippleAdvectionStepScale = FVector2f::ZeroVector;
+
+	float WhitewaterVorticityStep = 0.0f;
+	float WhitewaterVorticityThresholdPerSec = 0.0f;
+	float RapidsWhitewaterStep = 0.0f;
+	float WaterDepthReferenceCm = 300.0f;
+
+	float RippleHeightReferenceCm = 8.0f;
+	float TerrainReferenceZCm = 0.0f;
+	float KernelFeedback = 0.0f;
+	float KernelDivergenceScale = 0.0f;
+
+	uint32 KernelRadius = 0;
+	uint32 Padding0 = 0;
+	uint32 Padding1 = 0;
+	uint32 Padding2 = 0;
+};
+static_assert(sizeof(FTDFluidGpuWaterParameters) == 112, "FTDFluidGpuWaterParameters must match the 112 byte shader layout.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, FieldOrigin) == 16, "FTDFluidGpuWaterParameters::FieldOrigin must stay at byte 16.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, FlowGuideResponseBlend) == 32, "FTDFluidGpuWaterParameters::FlowGuideResponseBlend must stay at byte 32.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, InvCellSizeSquaredCm) == 48, "FTDFluidGpuWaterParameters::InvCellSizeSquaredCm must stay at byte 48.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, WhitewaterVorticityStep) == 64, "FTDFluidGpuWaterParameters::WhitewaterVorticityStep must stay at byte 64.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, RippleHeightReferenceCm) == 80, "FTDFluidGpuWaterParameters::RippleHeightReferenceCm must stay at byte 80.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, KernelRadius) == 96, "FTDFluidGpuWaterParameters::KernelRadius must stay at byte 96.");
+
+struct alignas(16) FTDFluidGpuPackedWaterGuideUpdate
+{
+	uint32 EntryIndex = 0;
+	uint32 FieldCellX = 0;
+	uint32 FieldCellY = 0;
+	float SurfaceHeightCm = TDFluidGpuSolverConstants::WaterNoSurfaceHeightCm;
+	FVector4f GuideValues = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
+};
+static_assert(sizeof(FTDFluidGpuPackedWaterGuideUpdate) == 32, "FTDFluidGpuPackedWaterGuideUpdate must match the 32 byte shader layout.");
+
+struct alignas(16) FTDFluidGpuPackedWaterTerrainUpdate
+{
+	uint32 EntryIndex = 0;
+	uint32 FieldCellX = 0;
+	uint32 FieldCellY = 0;
+	float ElevationCm = TDFluidGpuSolverConstants::TerrainUnknownElevationCm;
+};
+static_assert(sizeof(FTDFluidGpuPackedWaterTerrainUpdate) == 16, "FTDFluidGpuPackedWaterTerrainUpdate must match the 16 byte shader layout.");
+
+struct alignas(16) FTDFluidGpuWaterProbeRequest
+{
+	uint32 EntryIndex = 0;
+	uint32 ProbeSlot = 0;
+	int32 CellX = -1;
+	int32 CellY = -1;
+};
+static_assert(sizeof(FTDFluidGpuWaterProbeRequest) == 16, "FTDFluidGpuWaterProbeRequest must match the 16 byte shader layout.");
+
 enum class ETDFluidGpuPressureSolver : uint8
 {
 	Jacobi,
@@ -151,6 +254,10 @@ struct FTDFluidGpuBatchKey
 	ETDFluidGpuPressureSolver PressureSolver = ETDFluidGpuPressureSolver::Jacobi;
 	int32 MultigridCycles = 0;
 	bool bUsesHeatChannel = false;
+	bool bUsesWaterLayer = false;
+	ETDFluidGpuWaterPressureMode WaterPressureMode = ETDFluidGpuWaterPressureMode::JacobiOpenBorders;
+	bool bUsesFloat32WaterVelocity = false;
+	bool bUsesFloat32Ripple = false;
 
 	bool operator==(const FTDFluidGpuBatchKey& Other) const
 	{
@@ -159,7 +266,11 @@ struct FTDFluidGpuBatchKey
 			&& SimMode == Other.SimMode
 			&& PressureSolver == Other.PressureSolver
 			&& MultigridCycles == Other.MultigridCycles
-			&& bUsesHeatChannel == Other.bUsesHeatChannel;
+			&& bUsesHeatChannel == Other.bUsesHeatChannel
+			&& bUsesWaterLayer == Other.bUsesWaterLayer
+			&& WaterPressureMode == Other.WaterPressureMode
+			&& bUsesFloat32WaterVelocity == Other.bUsesFloat32WaterVelocity
+			&& bUsesFloat32Ripple == Other.bUsesFloat32Ripple;
 	}
 };
 
@@ -179,6 +290,12 @@ struct FTDFluidGpuBatchFrame
 	TArray<uint32> ObstacleEntryIndices;
 	TArray<FTDFluidGpuPackedObstacle> Obstacles;
 	TArray<FTDFluidGpuPackedTerrainUpdate> TerrainUpdates;
+	TArray<FTDFluidGpuWaterParameters> WaterParameters;
+	TArray<FTDFluidGpuPackedWaterGuideUpdate> WaterGuideUpdates;
+	TArray<FTDFluidGpuPackedWaterTerrainUpdate> WaterTerrainUpdates;
+	TArray<FTDFluidGpuWaterProbeRequest> WaterProbeRequests;
+	int32 WaterRippleSubstepMaximum = 0;
+	int32 WaterRippleSubstepCapHitCount = 0;
 };
 
 struct FTDFluidGpuBatchStateTextures
@@ -193,6 +310,10 @@ struct FTDFluidGpuBatchStateTextures
 	TRefCountPtr<IPooledRenderTarget> PainterPrimaryDensity;
 	TRefCountPtr<IPooledRenderTarget> PainterSelectiveDensity;
 	TRefCountPtr<IPooledRenderTarget> Heat[2];
+	TRefCountPtr<IPooledRenderTarget> Ripple[2];
+	TRefCountPtr<IPooledRenderTarget> WaterGuideField;
+	TRefCountPtr<IPooledRenderTarget> WaterSurfaceHeightField;
+	TRefCountPtr<IPooledRenderTarget> WaterTerrainField;
 };
 
 struct FTDFluidGpuReadbackAtlasLayout
@@ -235,6 +356,8 @@ struct FTDFluidGpuPreparedFrame
 {
 	FTDFluidGpuStampBinSet StampBins;
 	FTDFluidGpuReadbackAtlasLayout ReadbackLayout;
+	int32 WaterProbeSlotCount = 0;
+	bool bHasWaterEntries = false;
 };
 
 struct FTDFluidGpuMemoryEstimate
@@ -264,6 +387,14 @@ public:
 	static FTDFluidGpuMemoryEstimate EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel = false, bool bUsesTransmittance = false);
 	static int32 ComputeTransmittanceResolution(int32 ResolutionTier);
 	static void PrepareFrame(const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPreparedFrame& OutPreparedFrame);
+	static int32 ResolveWaterResolutionTier(int32 RequestedResolution);
+	static int32 ComputeWaterFieldDivisor(int32 ResolutionTier);
+	static int32 ComputeWaterShiftQuantumCells(int32 ResolutionTier);
+	static ETDFluidGpuWaterPressureMode ResolveWaterPressureMode(const FTDFluidGpuSimulationSettings& Settings);
+	static int32 ComputeWaterRippleSubstepCount(float WaveSpeedCmPerSec, float StepDeltaTimeSeconds, float SmallestCellSizeCm, int32 ResolutionTier, bool& bOutReachedCap, float& OutWaveSpeedScale);
+	static void ApplyWaterConsoleOverrides(FTDFluidGpuSimulationSettings& InOutSettings);
+	static int64 ComputeWaterMultigridOpenBoundaryBytes(int32 ResolutionTier);
+	static FTDFluidGpuMemoryEstimate EstimateWaterActorMemory(const FTDFluidGpuBatchKey& WaterKey);
 
 	const FTDFluidGpuBatchKey& GetKey() const { return Key; }
 	const FTDFluidGpuBatchFrame& GetFrame() const { return Frame; }

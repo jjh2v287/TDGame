@@ -8,6 +8,7 @@
 #include "TDFluidGpuInputs.h"
 
 class FRHIGPUTextureReadback;
+class FRHIGPUBufferReadback;
 
 struct FTDFluidGpuFrameOutputs
 {
@@ -17,17 +18,22 @@ struct FTDFluidGpuFrameOutputs
 	int32 SteppedEntryCount = 0;
 	int32 WrittenOutputCount = 0;
 	int32 SkippedOutputCount = 0;
+	FRDGBufferRef WaterProbeSamples = nullptr;
+	int32 WaterProbeSlotCount = 0;
 };
 
 TDFLUIDGPU_API FTDFluidGpuFrameOutputs AddTDFluidGpuFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches);
 
 TDFLUIDGPU_API int64 ComputeTDFluidGpuBatchStateBytes(const FTDFluidGpuBatch& Batch);
 
+TDFLUIDGPU_API int32 ComputeTDFluidGpuWaterHalfPostSmoothIterations();
+
 struct FTDFluidGpuReadbackFrame
 {
 	uint32 FrameNumber = 0;
 	FTDFluidGpuReadbackAtlasLayout Layout;
 	TArray<FFloat16Color> Texels;
+	TArray<FTDFluidGpuWaterProbeSample> WaterProbeSamples;
 };
 
 class TDFLUIDGPU_API FTDFluidGpuReadbackRing
@@ -49,6 +55,8 @@ private:
 		uint32 FrameNumber = 0;
 		uint64 EnqueueOrder = 0;
 		bool bIsPending = false;
+		TUniquePtr<FRHIGPUBufferReadback> WaterProbeReadback;
+		int32 WaterProbeSlotCount = 0;
 	};
 
 	FTDFluidGpuReadbackSlot Slots[TDFluidGpuSolverConstants::ReadbackRingSize];

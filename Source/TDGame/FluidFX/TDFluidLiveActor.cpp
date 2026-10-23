@@ -20,6 +20,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+
+CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
 namespace
 {
@@ -867,7 +870,7 @@ void ATDFluidLiveActor::InvalidateTerrainQueueIfSolverGridChanged()
 		return;
 	}
 
-	const int32 SimulationResolution = LiveComponent->GetSimulationResolution();
+	const int32 SimulationResolution = LiveComponent->GetTerrainSampleResolution();
 	const FVector2D SimulationExtentCm = LiveComponent->GetSimulationExtentCm();
 	const int32 SimulationGeneration = LiveComponent->GetSimulationGeneration();
 	const bool bHasSameLayout = SimulationResolution == TerrainQueuedResolution && SimulationExtentCm.Equals(TerrainQueuedExtentCm, 0.01);
@@ -885,12 +888,13 @@ void ATDFluidLiveActor::InvalidateTerrainQueueIfSolverGridChanged()
 
 void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBeforeStep)
 {
+	CSV_SCOPED_TIMING_STAT(TDFluid, TerrainQueueShift);
 	if (!bSampleTerrainElevation || !bIsTerrainQueueCurrent)
 	{
 		return;
 	}
 
-	const int32 Resolution = LiveComponent->GetSimulationResolution();
+	const int32 Resolution = LiveComponent->GetTerrainSampleResolution();
 	if (Resolution <= 0)
 	{
 		return;
@@ -950,6 +954,7 @@ void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBefor
 
 void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 {
+	CSV_SCOPED_TIMING_STAT(TDFluid, TerrainQueueSample);
 	if (!bSampleTerrainElevation)
 	{
 		PendingTerrainCells.Reset();
@@ -968,7 +973,7 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 	if (!bIsTerrainQueueCurrent)
 	{
 		DiscardTerrainTraceSlots();
-		const int32 Resolution = LiveComponent->GetSimulationResolution();
+		const int32 Resolution = LiveComponent->GetTerrainSampleResolution();
 		PendingTerrainCells.Reset(Resolution * Resolution);
 		for (int32 CellY = 0; CellY < Resolution; ++CellY)
 		{
@@ -999,7 +1004,7 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 	while (RemainingTraces > 0 && !PendingTerrainCells.IsEmpty())
 	{
 		const FIntPoint Cell = PendingTerrainCells.Pop(EAllowShrinking::No);
-		const FVector2D CellCenter = LiveComponent->CellToPlaneCenter(Cell.X, Cell.Y);
+		const FVector2D CellCenter = LiveComponent->TerrainSampleCellToPlaneCenter(Cell.X, Cell.Y);
 		const FVector TraceStart(CellCenter.X, CellCenter.Y, BaseHeightCm + TerrainTraceStartHeightCm);
 		const FVector TraceEnd(CellCenter.X, CellCenter.Y, BaseHeightCm - TerrainTraceEndDepthCm);
 
@@ -1043,7 +1048,7 @@ void ATDFluidLiveActor::RequestQueuedTerrainTraces(UWorld& World)
 		while (RemainingRequests > 0 && !PendingTerrainCells.IsEmpty())
 		{
 			const FIntPoint Cell = PendingTerrainCells.Pop(EAllowShrinking::No);
-			const FVector2D CellCenter = LiveComponent->CellToPlaneCenter(Cell.X, Cell.Y);
+			const FVector2D CellCenter = LiveComponent->TerrainSampleCellToPlaneCenter(Cell.X, Cell.Y);
 			const FVector TraceStart(CellCenter.X, CellCenter.Y, BaseHeightCm + TerrainTraceStartHeightCm);
 			const FVector TraceEnd(CellCenter.X, CellCenter.Y, BaseHeightCm - TerrainTraceEndDepthCm);
 			const uint32 Serial = TerrainTraceFirstSerial + static_cast<uint32>(TerrainTraceSlots.Num());
@@ -1084,6 +1089,7 @@ void ATDFluidLiveActor::OnTerrainTraceFinished(const FTraceHandle& TraceHandle, 
 
 void ATDFluidLiveActor::ApplyDeliveredTerrainTraceResults()
 {
+	CSV_SCOPED_TIMING_STAT(TDFluid, TerrainQueueApply);
 	if (TerrainTraceSlots.IsEmpty())
 	{
 		return;

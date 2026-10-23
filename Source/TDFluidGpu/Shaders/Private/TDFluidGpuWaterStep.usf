@@ -1,0 +1,172 @@
+#include "/TDFluidGpu/Private/TDFluidGpuWaterCommon.ush"
+
+StructuredBuffer<float> StampRippleImpulses;
+Texture2DArray<float> CompositeSdf;
+Texture2DArray<float4> WaterGuideField;
+Texture2DArray<float> WaterSurfaceHeightField;
+Texture2DArray<float> WaterTerrainField;
+Texture2DArray<float2> VelocityIn;
+Texture2DArray<float2> DensityIn;
+Texture2DArray<float2> RippleIn;
+RWTexture2DArray<float2> VelocityOut;
+RWTexture2DArray<float2> DensityOut;
+RWTexture2DArray<float2> RippleOut;
+
+void ApplyWaterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout float2 Velocity, inout float2 Density, inout float RippleHeight)
+{
+	const FTDFluidGpuStampBinRange Range = TDFluidGpuGetStampBinRange(Actor, Cell);
+	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
+	for (uint EntryOffset = 0; EntryOffset < Range.Count; ++EntryOffset)
+	{
+		const uint StampIndex = StampBinIndices[Range.FirstIndex + EntryOffset];
+		const FTDFluidGpuPackedStamp Stamp = Stamps[StampIndex];
+		float SmoothWeight;
+		float DistanceCm;
+		if (!TDFluidGpuTryComputeStampWeight(Stamp, CellCenter, SmoothWeight, DistanceCm))
+		{
+			continue;
+		}
+
+		float DiscardedDisplacement = 0.0f;
+		TDFluidGpuApplyStampDensity(Actor, Stamp, SmoothWeight, Density, DiscardedDisplacement);
+		if (Stamp.VelocityStrength > 0.0f)
+		{
+			Velocity += (Stamp.TargetVelocityCmPerSec - Velocity) * (SmoothWeight * Actor.StampVelocityBlend);
+		}
+		RippleHeight -= StampRippleImpulses[StampIndex] * SmoothWeight;
+	}
+}
+
+bool ShouldSeedWaterVelocity(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, int2 Cell)
+{
+	if (TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_INITIALIZES_ALL_VELOCITIES))
+	{
+		return true;
+	}
+
+	return TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_HAS_SHIFT) && !TDFluidGpuIsInsideGrid(Cell + Actor.ShiftCells, Actor.Resolution);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void StampsCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	float2 Ripple = RippleIn[Texel];
+	if (TDFluidGpuIsSolidDistance(CompositeSdf[Texel]))
+	{
+		VelocityOut[Texel] = float2(0.0f, 0.0f);
+		DensityOut[Texel] = float2(0.0f, 0.0f);
+		RippleOut[Texel] = Ripple;
+		return;
+	}
+
+	float2 Velocity = TDFluidGpuClampVelocityMagnitude(VelocityIn[Texel]);
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_RASTERIZES_OBSTACLES))
+	{
+		Velocity = TDFluidGpuEnforceObstacleBoundary(CompositeSdf, Actor, Cell, Velocity);
+	}
+
+	float2 Density = DensityIn[Texel];
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_HAS_STAMPS))
+	{
+		ApplyWaterStampsToCell(Actor, Cell, Velocity, Density, Ripple.x);
+	}
+
+	if (ShouldSeedWaterVelocity(Actor, Water, Cell))
+	{
+		const float4 Guide = TDFluidGpuWaterLoadGuide(WaterGuideField, Water, Actor, Cell);
+		Velocity = Guide.xy * Guide.z;
+	}
+
+	VelocityOut[Texel] = Velocity;
+	DensityOut[Texel] = Density;
+	RippleOut[Texel] = Ripple;
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void ForcesCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	if (TDFluidGpuIsSolidDistance(CompositeSdf[Texel]))
+	{
+		VelocityOut[Texel] = float2(0.0f, 0.0f);
+		return;
+	}
+
+	float2 Velocity = VelocityIn[Texel];
+	const float2 Density = DensityIn[Texel];
+	if (TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_TERRAIN_SLOPE_DRY_ONLY))
+	{
+		const float SurfaceHeight = TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell);
+		const float TerrainElevation = TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell);
+		const bool bIsSubmerged = TDFluidGpuWaterHasSurface(SurfaceHeight) && (!TDFluidGpuIsTerrainElevationKnown(TerrainElevation) || SurfaceHeight > TerrainElevation);
+		if (!bIsSubmerged)
+		{
+			const float2 TerrainSlope = TDFluidGpuWaterComputeFieldSlope(WaterTerrainField, Water, Actor, TDFluidGpuWaterToFieldCell(Water, Cell));
+			const float ActiveFluidMask = clamp(Density.x + Density.y + 0.1f, 0.0f, 1.0f);
+			Velocity -= TerrainSlope * Actor.TerrainSlopeGravity * ActiveFluidMask * Actor.StepDeltaTimeSeconds;
+		}
+	}
+
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_FLOW_NOISE))
+	{
+		Velocity += TDFluidGpuEvaluateFlowNoiseAcceleration(Actor, Cell) * Actor.StepDeltaTimeSeconds;
+	}
+
+	if (TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_FLOW_GUIDES))
+	{
+		const float4 Guide = TDFluidGpuWaterLoadGuide(WaterGuideField, Water, Actor, Cell);
+		if (Guide.z > 0.0f)
+		{
+			Velocity += (Guide.xy - Velocity) * (Water.FlowGuideResponseBlend * Guide.z);
+		}
+	}
+
+	VelocityOut[Texel] = TDFluidGpuEnforceObstacleBoundary(CompositeSdf, Actor, Cell, Velocity);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void AdvectVelocityCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	if (TDFluidGpuIsSolidDistance(CompositeSdf[Texel]))
+	{
+		VelocityOut[Texel] = float2(0.0f, 0.0f);
+		return;
+	}
+
+	const float2 Velocity = VelocityIn[Texel];
+	const float2 BacktracePosition = float2(Cell) - Velocity * Actor.AdvectionStepScale;
+	const FTDFluidGpuBilinearSample Sample = TDFluidGpuMakeBilinearSample(BacktracePosition, Actor.Resolution);
+	const float2 AdvectedVelocity = TDFluidGpuSampleBilinearFloat2(VelocityIn, Sample, Actor.SliceIndex) * Actor.AdvectVelocityDampingFactor;
+	const float2 TargetVelocity = TDFluidGpuWaterLoadGuide(WaterGuideField, Water, Actor, Cell).xy;
+	const float BorderDamping = TDFluidGpuWaterComputeBorderDamping(Actor, Cell, Actor.StepDeltaTimeSeconds);
+	VelocityOut[Texel] = TDFluidGpuEnforceObstacleBoundary(CompositeSdf, Actor, Cell, TargetVelocity + (AdvectedVelocity - TargetVelocity) * BorderDamping);
+}

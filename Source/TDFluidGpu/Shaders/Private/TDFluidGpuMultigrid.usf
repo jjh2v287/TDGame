@@ -12,6 +12,10 @@
 #define TDFLUIDGPU_MG_WRITES_PRESSURE_PARTIAL_SUMS 0
 #endif
 
+#ifndef TDFLUIDGPU_MG_OPEN_BOUNDARY
+#define TDFLUIDGPU_MG_OPEN_BOUNDARY 0
+#endif
+
 #define TDFLUIDGPU_MG_REDUCES_PRESSURE_SUMS (TDFLUIDGPU_MG_IS_FINEST_LEVEL && TDFLUIDGPU_MG_WRITES_PRESSURE_PARTIAL_SUMS)
 
 #define TDFLUIDGPU_MG_DOWN_HALF_SWEEP_COUNT 2
@@ -48,6 +52,11 @@ uint TilesPerRow;
 float LevelWeightScale;
 float WarmStartScale;
 int LevelResolution;
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+Texture2DArray<float2> OpenBoundaryIn;
+RWTexture2DArray<float2> CoarseOpenBoundaryOut;
+float OpenBoundaryDirichletScale;
+#endif
 
 groupshared float SharedValue[TDFLUIDGPU_MG_REGION_CAPACITY];
 #if TDFLUIDGPU_MG_IS_FINEST_LEVEL
@@ -66,6 +75,10 @@ groupshared float2 SharedCoarseApertures[TDFLUIDGPU_MG_THREAD_COUNT];
 groupshared float2 SharedPressureSums[TDFLUIDGPU_MG_THREAD_COUNT];
 groupshared float2 SharedPressureColumnSums[TDFLUIDGPU_TILE_GROUP_SIZE];
 #endif
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+groupshared float SharedOpenBoundaryX[TDFLUIDGPU_MG_REGION_CAPACITY];
+groupshared float SharedOpenBoundaryY[TDFLUIDGPU_MG_REGION_CAPACITY];
+#endif
 
 struct FTDFluidGpuMultigridOwnedCell
 {
@@ -82,6 +95,9 @@ struct FTDFluidGpuMultigridOwnedCell
 	float DownWeight;
 	float Diagonal;
 	float Rhs;
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+	float DirichletWeight;
+#endif
 };
 
 int2 ToLocalCell(uint RegionIndex, int RegionSize)
@@ -152,6 +168,14 @@ void LoadRegion(FTDFluidGpuActorParameters Actor, uint EntryIndex, int2 RegionOr
 			SharedValue[SplitIndex] = (bIsInside && bLoadsValue) ? LoadedValue : 0.0f;
 		}
 #endif
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+		const float2 LoadedOpenBoundary = OpenBoundaryIn[Texel];
+		if (RegionIndex < RegionCellCount)
+		{
+			SharedOpenBoundaryX[SplitIndex] = bIsInside ? LoadedOpenBoundary.x : 0.0f;
+			SharedOpenBoundaryY[SplitIndex] = bIsInside ? LoadedOpenBoundary.y : 0.0f;
+		}
+#endif
 	}
 }
 
@@ -205,6 +229,11 @@ FTDFluidGpuMultigridOwnedCell MakeOwnedCell(FTDFluidGpuActorParameters Actor, fl
 	Cell.UpWeight = UpAperture * Weights.y;
 	Cell.DownWeight = DownAperture * Weights.y;
 	Cell.Diagonal = (Cell.RightWeight + Cell.LeftWeight) + (Cell.UpWeight + Cell.DownWeight);
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+	Cell.DirichletWeight = OpenBoundaryDirichletScale * (SharedOpenBoundaryX[Cell.ValueIndex] * Weights.x + SharedOpenBoundaryY[Cell.ValueIndex] * Weights.y);
+	Cell.Diagonal += Cell.DirichletWeight;
+	Cell.bIsActive = Cell.bIsActive || Cell.DirichletWeight > 0.0f;
+#endif
 	return Cell;
 }
 
@@ -232,7 +261,11 @@ float ComputeOwnedResidual(FTDFluidGpuMultigridOwnedCell Cell, int RegionSize)
 	const float CenterValue = SharedValue[Cell.ValueIndex];
 	const float AppliedOperator = (Cell.RightWeight * (SharedValue[Cell.NeighborBase + Cell.ColumnParity] - CenterValue) + Cell.LeftWeight * (SharedValue[Cell.NeighborBase + Cell.ColumnParity - 1u] - CenterValue))
 		+ (Cell.UpWeight * (SharedValue[Cell.NeighborBase + HalfRowCellCount] - CenterValue) + Cell.DownWeight * (SharedValue[Cell.NeighborBase - HalfRowCellCount] - CenterValue));
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+	return Cell.Rhs - (AppliedOperator - Cell.DirichletWeight * CenterValue);
+#else
 	return Cell.Rhs - AppliedOperator;
+#endif
 }
 
 float ReadRegionApertureX(int2 LocalCell, int RegionSize)
@@ -254,6 +287,14 @@ float ReadRegionApertureY(int2 LocalCell, int RegionSize)
 	return SharedApertureY[ToColorSplitIndex(LocalCell, RegionSize)];
 #endif
 }
+
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+float2 ReadRegionOpenBoundary(int2 LocalCell, int RegionSize)
+{
+	const uint SplitIndex = ToColorSplitIndex(LocalCell, RegionSize);
+	return float2(SharedOpenBoundaryX[SplitIndex], SharedOpenBoundaryY[SplitIndex]);
+}
+#endif
 
 [numthreads(TDFLUIDGPU_TILE_GROUP_SIZE, TDFLUIDGPU_TILE_GROUP_SIZE, 1)]
 void MultigridDownCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, uint GroupIndex : SV_GroupIndex)
@@ -317,6 +358,11 @@ void MultigridDownCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupT
 	const float CoarseApertureX = 0.5f * (ReadRegionApertureX(ChildLocalCell + int2(1, 0), TDFLUIDGPU_MG_DOWN_REGION) + ReadRegionApertureX(ChildLocalCell + int2(1, 1), TDFLUIDGPU_MG_DOWN_REGION));
 	const float CoarseApertureY = 0.5f * (ReadRegionApertureY(ChildLocalCell + int2(0, 1), TDFLUIDGPU_MG_DOWN_REGION) + ReadRegionApertureY(ChildLocalCell + int2(1, 1), TDFLUIDGPU_MG_DOWN_REGION));
 	CoarseAperturesOut[CoarseTexel] = float2(CoarseApertureX, CoarseApertureY);
+#if TDFLUIDGPU_MG_OPEN_BOUNDARY
+	const float2 LowerOpenBoundarySum = ReadRegionOpenBoundary(ChildLocalCell, TDFLUIDGPU_MG_DOWN_REGION) + ReadRegionOpenBoundary(ChildLocalCell + int2(1, 0), TDFLUIDGPU_MG_DOWN_REGION);
+	const float2 UpperOpenBoundarySum = ReadRegionOpenBoundary(ChildLocalCell + int2(0, 1), TDFLUIDGPU_MG_DOWN_REGION) + ReadRegionOpenBoundary(ChildLocalCell + int2(1, 1), TDFLUIDGPU_MG_DOWN_REGION);
+	CoarseOpenBoundaryOut[CoarseTexel] = 0.5f * (LowerOpenBoundarySum + UpperOpenBoundarySum);
+#endif
 #endif
 }
 

@@ -21,6 +21,7 @@ struct FTDFluidGpuBackendEnvironment
 	bool bHasRenderingRhi = false;
 	bool bSupportsShaderModel5 = false;
 	ETDFluidGpuBackendOverride Override = ETDFluidGpuBackendOverride::FollowPreset;
+	bool bAllowsWaterLayerOnGpu = false;
 };
 
 struct FTDFluidGpuBackendQuery
@@ -29,6 +30,7 @@ struct FTDFluidGpuBackendQuery
 	bool bIsWaterLayerActive = false;
 	int32 RequestedResolution = 64;
 	int32 CpuFallbackResolution = 0;
+	bool bIsSimplePainter = false;
 };
 
 struct FTDFluidGpuBackendDecision

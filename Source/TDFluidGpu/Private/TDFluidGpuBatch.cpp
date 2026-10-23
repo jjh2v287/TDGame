@@ -1,5 +1,7 @@
 #include "TDFluidGpuBatch.h"
 
+#include "TDFluidGpuStepPasses.h"
+
 #include "HAL/IConsoleManager.h"
 
 namespace
@@ -34,6 +36,30 @@ namespace
 	constexpr int64 AuxOutputBytesPerCell = RgbaHalfFloatBytes;
 	constexpr int32 ForcedJacobiSolverMode = 1;
 	constexpr int32 ForcedMultigridSolverMode = 2;
+	constexpr float BatchWaterSquareRootOfTwo = 1.41421356f;
+	constexpr int32 BatchWaterPressureModeRequestMaximum = 2;
+	constexpr int32 BatchWaterKernelMinimumRadius = 2;
+	constexpr int32 BatchWaterKernelMaximumRadius = 7;
+	constexpr float BatchWaterKernelMaximumScale = 100.0f;
+	constexpr int32 BatchWaterHalfPressureDivisor = 2;
+	constexpr int32 BatchWaterHalfFieldDivisor = 2;
+	constexpr int32 BatchWaterQuarterFieldDivisor = 4;
+	constexpr int32 BatchWaterConsoleFloat16Request = 0;
+	constexpr int32 BatchWaterConsoleFloat32Request = 1;
+	constexpr bool bBatchWaterVelocityAutomaticallyUsesFloat32 = true;
+	constexpr int64 BatchWaterHalfPairBytesPerTexel = 2 * HalfFloatBytes;
+	constexpr int64 BatchWaterFloatPairBytesPerTexel = 2 * FloatBytes;
+	constexpr int64 BatchWaterFieldBytesPerCell = 4 * FloatBytes + FloatBytes + FloatBytes;
+	constexpr int64 BatchWaterOutputBytesPerCell = 3 * RgbaHalfFloatBytes;
+	constexpr int64 BatchWaterCompositeSdfBytesPerCell = HalfFloatBytes;
+	constexpr int64 BatchWaterFieldDrySdfBytesPerCell = HalfFloatBytes;
+	constexpr int64 BatchWaterUpsampledPressureBytesPerCell = FloatBytes;
+	constexpr int64 BatchWaterPostSmoothBytesPerCell = HalfFloatBytes + FloatBytes;
+	constexpr int64 BatchWaterHalfRhsMeanTileResolution = 16;
+	constexpr int64 BatchWaterHalfRhsMeanPartialSumBytes = 2 * FloatBytes;
+	constexpr int64 BatchWaterOpenBoundaryBytesPerCell = 2 * HalfFloatBytes;
+	constexpr int64 BatchWaterKernelBytesPerHalfCell = 4 * FloatBytes + FloatBytes + FloatBytes + 2 * HalfFloatBytes + 2 * HalfFloatBytes;
+	constexpr int64 BatchWaterProbeReadbackBytes = static_cast<int64>(TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame) * static_cast<int64>(sizeof(FTDFluidGpuWaterProbeSample)) * TDFluidGpuSolverConstants::ReadbackRingSize;
 
 	TAutoConsoleVariable<int32> CVarTDFluidGpuPressureSolver(
 		TEXT("TD.FluidFX.GpuPressureSolver"),
@@ -46,6 +72,42 @@ namespace
 		TDFluidGpuSolverConstants::DefaultMultigridCycles,
 		TEXT("Multigrid V cycles per GPU fluid pressure projection, clamped to 1..4. Changing it resets multigrid GPU fluid actors."),
 		ECVF_RenderThreadSafe);
+
+	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuPressureMode(
+		TEXT("TD.FluidFX.WaterGpuPressureMode"),
+		0,
+		TEXT("GPU water pressure at the 512 tier and above. 0: default choice (half resolution multigrid), 1: half resolution multigrid, 2: half resolution kernel feedback on square windows. Changing it moves GPU water actors into new batches and resets their state."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuVelocityFloat32(
+		TEXT("TD.FluidFX.WaterGpuVelocityFloat32"),
+		-1,
+		TEXT("GPU water velocity texture format. -1: automatic (RG32F at every tier), 0: RG16F, 1: RG32F. Changing it resets GPU water actors."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuRippleFloat32(
+		TEXT("TD.FluidFX.WaterGpuRippleFloat32"),
+		-1,
+		TEXT("GPU water ripple texture format. -1: automatic (RG32F up to the 256 tier, RG16F above), 0: RG16F, 1: RG32F. Changing it resets GPU water actors."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuKernelRadius(
+		TEXT("TD.FluidFX.WaterGpuKernelRadius"),
+		4,
+		TEXT("Kernel feedback pressure radius in half resolution texels, clamped to 2..7."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<float> CVarTDFluidWaterGpuKernelFeedback(
+		TEXT("TD.FluidFX.WaterGpuKernelFeedback"),
+		0.98f,
+		TEXT("Kernel feedback pressure feedback factor, clamped to 0..1."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<float> CVarTDFluidWaterGpuKernelScale(
+		TEXT("TD.FluidFX.WaterGpuKernelScale"),
+		1.0f,
+		TEXT("Multiplier on the kernel feedback pressure divergence scale."),
+		ECVF_Default);
 
 	struct FTDFluidGpuNoiseLatticePlacement
 	{
@@ -85,10 +147,41 @@ namespace
 		return FMath::IsFinite(DeltaTimeSeconds) && DeltaTimeSeconds > 0.0f;
 	}
 
+	bool IsBatchWaterLayerSettings(const FTDFluidGpuSimulationSettings& Settings)
+	{
+		return Settings.bUsesWaterLayer && Settings.SimMode == ETDFluidGpuSimMode::FluidSim;
+	}
+
+	bool ResolveBatchWaterFloat32Request(int32 ConsoleValue, bool bAutomaticChoice)
+	{
+		if (ConsoleValue == BatchWaterConsoleFloat16Request)
+		{
+			return false;
+		}
+		if (ConsoleValue == BatchWaterConsoleFloat32Request)
+		{
+			return true;
+		}
+		return bAutomaticChoice;
+	}
+
+	uint8 ClampBatchWaterPressureModeRequest(int32 Request)
+	{
+		return static_cast<uint8>(FMath::Clamp(Request, 0, BatchWaterPressureModeRequestMaximum));
+	}
+
+	float SanitizeBatchWaterKernelScale(float KernelScale)
+	{
+		return FMath::IsFinite(KernelScale) ? FMath::Clamp(KernelScale, 0.0f, BatchWaterKernelMaximumScale) : 1.0f;
+	}
+
 	FTDFluidGpuSimulationSettings SanitizeSettings(const FTDFluidGpuSimulationSettings& Settings)
 	{
 		FTDFluidGpuSimulationSettings Sanitized = Settings;
-		Sanitized.Resolution = FTDFluidGpuBatch::ResolveResolutionTier(Settings.Resolution);
+		Sanitized.bUsesWaterLayer = IsBatchWaterLayerSettings(Settings);
+		Sanitized.Resolution = Sanitized.bUsesWaterLayer
+			? FTDFluidGpuBatch::ResolveWaterResolutionTier(Settings.Resolution)
+			: FTDFluidGpuBatch::ResolveResolutionTier(Settings.Resolution);
 		Sanitized.ExtentCm.X = ClampExtentCm(Settings.ExtentCm.X);
 		Sanitized.ExtentCm.Y = ClampExtentCm(Settings.ExtentCm.Y);
 		Sanitized.VelocityDamping = ClampFinite(Settings.VelocityDamping, 0.0f, 10.0f);
@@ -115,7 +208,20 @@ namespace
 		Sanitized.VortexTangentialAccelerationCmPerSec2 = FMath::IsFinite(Settings.VortexTangentialAccelerationCmPerSec2) ? FMath::Clamp(Settings.VortexTangentialAccelerationCmPerSec2, -20000.0f, 20000.0f) : 0.0f;
 		Sanitized.VortexRadialDriftCmPerSec = FMath::IsFinite(Settings.VortexRadialDriftCmPerSec) ? FMath::Clamp(Settings.VortexRadialDriftCmPerSec, -TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec, TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec) : 0.0f;
 		Sanitized.VortexRadiusRatio = ClampFinite(Settings.VortexRadiusRatio, 0.01f, 0.5f);
-		Sanitized.bUsesHeatChannel = Settings.bUsesHeatChannel && Settings.SimMode == ETDFluidGpuSimMode::FluidSim;
+		Sanitized.bUsesHeatChannel = Settings.bUsesHeatChannel && Settings.SimMode == ETDFluidGpuSimMode::FluidSim && !Sanitized.bUsesWaterLayer;
+		Sanitized.WaterDepthReferenceCm = ClampFinite(Settings.WaterDepthReferenceCm, 1.0f, 100000.0f);
+		Sanitized.FlowGuideResponsePerSec = ClampFinite(Settings.FlowGuideResponsePerSec, 0.0f, 100.0f);
+		Sanitized.RapidsWhitewaterPerSec = ClampFinite(Settings.RapidsWhitewaterPerSec, 0.0f, 1000.0f);
+		Sanitized.WhitewaterFromVorticity = ClampFinite(Settings.WhitewaterFromVorticity, 0.0f, 100.0f);
+		Sanitized.WhitewaterVorticityThresholdPerSec = ClampFinite(Settings.WhitewaterVorticityThresholdPerSec, 0.0f, 1000.0f);
+		Sanitized.RippleWaveSpeedCmPerSec = ClampFinite(Settings.RippleWaveSpeedCmPerSec, 0.0f, 2000.0f);
+		Sanitized.RippleDampingPerSec = ClampFinite(Settings.RippleDampingPerSec, 0.0f, 100.0f);
+		Sanitized.RippleHeightReferenceCm = ClampFinite(Settings.RippleHeightReferenceCm, 0.01f, 1000.0f);
+		Sanitized.RippleFlowAdvection = ClampFinite(Settings.RippleFlowAdvection, 0.0f, 4.0f);
+		Sanitized.WaterPressureModeRequest = ClampBatchWaterPressureModeRequest(Settings.WaterPressureModeRequest);
+		Sanitized.WaterKernelRadius = FMath::Clamp(Settings.WaterKernelRadius, BatchWaterKernelMinimumRadius, BatchWaterKernelMaximumRadius);
+		Sanitized.WaterKernelFeedback = ClampFinite(Settings.WaterKernelFeedback, 0.0f, 1.0f);
+		Sanitized.WaterKernelScale = SanitizeBatchWaterKernelScale(Settings.WaterKernelScale);
 		return Sanitized;
 	}
 
@@ -321,6 +427,247 @@ namespace
 
 		return InOutBatches.Emplace_GetRef(Key);
 	}
+
+	void ApplyBatchWaterPressureKey(const FTDFluidGpuSimulationSettings& Settings, FTDFluidGpuBatchKey& InOutKey)
+	{
+		if (InOutKey.WaterPressureMode == ETDFluidGpuWaterPressureMode::JacobiOpenBorders)
+		{
+			InOutKey.PressureSolver = ETDFluidGpuPressureSolver::Jacobi;
+			InOutKey.PressureIterations = FMath::Clamp(Settings.PressureIterations, TDFluidGpuSolverConstants::MinimumPressureIterations, TDFluidGpuSolverConstants::MaximumPressureIterations);
+			return;
+		}
+
+		if (InOutKey.WaterPressureMode == ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid)
+		{
+			InOutKey.PressureSolver = ETDFluidGpuPressureSolver::Multigrid;
+			InOutKey.MultigridCycles = FMath::Clamp(Settings.WaterMultigridCycles, TDFluidGpuSolverConstants::MinimumMultigridCycles, TDFluidGpuSolverConstants::MaximumMultigridCycles);
+			return;
+		}
+
+		InOutKey.PressureSolver = ETDFluidGpuPressureSolver::Jacobi;
+		InOutKey.PressureIterations = 0;
+		InOutKey.MultigridCycles = 0;
+	}
+
+	int64 ComputeBatchWaterHalfPressureExtraBytes(int32 ResolutionTier)
+	{
+		const int64 Resolution = ResolutionTier;
+		const int64 HalfResolution = Resolution / BatchWaterHalfPressureDivisor;
+		const int64 TilesPerRow = FMath::DivideAndRoundUp<int64>(HalfResolution, BatchWaterHalfRhsMeanTileResolution);
+		const int64 HalfRhsMeanBytes = TilesPerRow * TilesPerRow * BatchWaterHalfRhsMeanPartialSumBytes + FloatBytes;
+		const int64 PostSmoothBytes = ComputeTDFluidGpuWaterHalfPostSmoothIterations() > 0 ? Resolution * Resolution * BatchWaterPostSmoothBytesPerCell : 0;
+		return HalfRhsMeanBytes + PostSmoothBytes;
+	}
+
+	int64 ComputeBatchWaterPressureTransientBytes(ETDFluidGpuWaterPressureMode PressureMode, int32 ResolutionTier)
+	{
+		const int64 Resolution = ResolutionTier;
+		const int64 CellCount = Resolution * Resolution;
+		if (PressureMode == ETDFluidGpuWaterPressureMode::JacobiOpenBorders)
+		{
+			return CellCount * DivergenceCurlBytesPerCell;
+		}
+
+		const int64 UpsampledPressureBytes = CellCount * BatchWaterUpsampledPressureBytesPerCell + ComputeBatchWaterHalfPressureExtraBytes(ResolutionTier);
+		if (PressureMode == ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid)
+		{
+			return UpsampledPressureBytes
+				+ FTDFluidGpuBatch::ComputeMultigridTransientBytes(ResolutionTier)
+				+ FTDFluidGpuBatch::ComputeWaterMultigridOpenBoundaryBytes(ResolutionTier);
+		}
+
+		const int64 HalfResolution = Resolution / BatchWaterHalfPressureDivisor;
+		return UpsampledPressureBytes + HalfResolution * HalfResolution * BatchWaterKernelBytesPerHalfCell;
+	}
+
+	void AddBatchWaterFlagIf(ETDFluidGpuWaterFlags& InOutFlags, ETDFluidGpuWaterFlags Flag, bool bCondition)
+	{
+		if (!bCondition)
+		{
+			return;
+		}
+
+		InOutFlags |= Flag;
+	}
+
+	ETDFluidGpuWaterFlags ResolveBatchWaterFlags(const FTDFluidGpuSimulationSettings& Settings, bool bNeedsReset, bool bReachedRippleSubstepCap)
+	{
+		const bool bUsesRipples = Settings.RippleWaveSpeedCmPerSec > 0.0f;
+
+		ETDFluidGpuWaterFlags Flags = ETDFluidGpuWaterFlags::None;
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesOpenBorders, Settings.bOpenWaterBorders);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::TreatsDryCellsAsSolid, Settings.bTreatDryCellsAsSolid);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::InitializesAllVelocities, bNeedsReset);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesRipples, bUsesRipples);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesRippleAdvection, bUsesRipples && Settings.RippleFlowAdvection > 0.0f);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesFlowGuides, Settings.FlowGuideResponsePerSec > 0.0f);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesWhitewaterFromVorticity, Settings.WhitewaterFromVorticity > 0.0f);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesRapidsWhitewater, Settings.RapidsWhitewaterPerSec > 0.0f);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesTerrainSlopeDryOnly, Settings.TerrainSlopeGravity > 0.0f);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::ReachedRippleSubstepCap, bReachedRippleSubstepCap);
+		return Flags;
+	}
+
+	FTDFluidGpuWaterParameters MakeWaterParameters(const FTDFluidGpuBatchKey& Key, const FTDFluidGpuActorInput& Actor, const FTDFluidGpuSimulationSettings& Settings, bool bNeedsReset)
+	{
+		const int32 ResolutionTier = Key.ResolutionTier;
+		const float ResolutionAsFloat = static_cast<float>(ResolutionTier);
+		const float CellSizeX = static_cast<float>(Settings.ExtentCm.X / ResolutionAsFloat);
+		const float CellSizeY = static_cast<float>(Settings.ExtentCm.Y / ResolutionAsFloat);
+		const float StepDeltaTime = FMath::Min(Actor.DeltaTimeSeconds, TDFluidGpuSolverConstants::MaximumStepDeltaTimeSeconds);
+		const bool bUsesJacobiPressure = Key.WaterPressureMode == ETDFluidGpuWaterPressureMode::JacobiOpenBorders;
+		const bool bUsesKernelPressure = Key.WaterPressureMode == ETDFluidGpuWaterPressureMode::HalfResolutionKernelFeedback;
+		const int32 FieldDivisor = FTDFluidGpuBatch::ComputeWaterFieldDivisor(ResolutionTier);
+		const int32 PressureDivisor = bUsesJacobiPressure ? 1 : BatchWaterHalfPressureDivisor;
+		const float RippleWaveSpeed = Settings.RippleWaveSpeedCmPerSec;
+
+		bool bReachedRippleSubstepCap = false;
+		float RippleWaveSpeedScale = 1.0f;
+		const int32 RippleSubstepCount = FTDFluidGpuBatch::ComputeWaterRippleSubstepCount(RippleWaveSpeed, StepDeltaTime, FMath::Min(CellSizeX, CellSizeY), ResolutionTier, bReachedRippleSubstepCap, RippleWaveSpeedScale);
+		const float ScaledRippleWaveSpeed = RippleWaveSpeed * RippleWaveSpeedScale;
+
+		FTDFluidGpuWaterParameters WaterParameters;
+		WaterParameters.WaterFlags = static_cast<uint32>(ResolveBatchWaterFlags(Settings, bNeedsReset, bReachedRippleSubstepCap));
+		WaterParameters.FieldResolution = ResolutionTier / FieldDivisor;
+		WaterParameters.FieldDivisor = FieldDivisor;
+		WaterParameters.PressureResolution = ResolutionTier / PressureDivisor;
+		WaterParameters.FieldOrigin = Actor.WaterFieldOrigin;
+		WaterParameters.PressureDivisor = PressureDivisor;
+		WaterParameters.RippleSubstepCount = static_cast<uint32>(RippleSubstepCount);
+		WaterParameters.FlowGuideResponseBlend = 1.0f - FMath::Exp(-Settings.FlowGuideResponsePerSec * StepDeltaTime);
+		WaterParameters.RippleSubstepSeconds = RippleSubstepCount > 0 ? StepDeltaTime / static_cast<float>(RippleSubstepCount) : 0.0f;
+		WaterParameters.RippleWaveSpeedSquared = ScaledRippleWaveSpeed * ScaledRippleWaveSpeed;
+		WaterParameters.RippleDampingPerSec = Settings.RippleDampingPerSec;
+		WaterParameters.InvCellSizeSquaredCm = FVector2f(1.0f / (CellSizeX * CellSizeX), 1.0f / (CellSizeY * CellSizeY));
+		WaterParameters.RippleAdvectionStepScale = FVector2f((StepDeltaTime * Settings.RippleFlowAdvection) / CellSizeX, (StepDeltaTime * Settings.RippleFlowAdvection) / CellSizeY);
+		WaterParameters.WhitewaterVorticityStep = Settings.WhitewaterFromVorticity * StepDeltaTime;
+		WaterParameters.WhitewaterVorticityThresholdPerSec = Settings.WhitewaterVorticityThresholdPerSec;
+		WaterParameters.RapidsWhitewaterStep = Settings.RapidsWhitewaterPerSec * StepDeltaTime;
+		WaterParameters.WaterDepthReferenceCm = Settings.WaterDepthReferenceCm;
+		WaterParameters.RippleHeightReferenceCm = Settings.RippleHeightReferenceCm;
+		WaterParameters.TerrainReferenceZCm = FMath::IsFinite(Actor.WaterTerrainReferenceZCm) ? Actor.WaterTerrainReferenceZCm : 0.0f;
+		if (!bUsesKernelPressure)
+		{
+			return WaterParameters;
+		}
+
+		const float KernelRadius = static_cast<float>(Settings.WaterKernelRadius);
+		WaterParameters.KernelRadius = static_cast<uint32>(Settings.WaterKernelRadius);
+		WaterParameters.KernelFeedback = Settings.WaterKernelFeedback;
+		WaterParameters.KernelDivergenceScale = 0.5f * KernelRadius * KernelRadius * Settings.WaterKernelScale;
+		return WaterParameters;
+	}
+
+	bool IsBatchWaterFieldCellInside(const FIntPoint& FieldCell, int32 FieldResolution)
+	{
+		return FieldCell.X >= 0 && FieldCell.X < FieldResolution && FieldCell.Y >= 0 && FieldCell.Y < FieldResolution;
+	}
+
+	bool IsFiniteBatchWaterGuideUpdate(const FTDFluidGpuWaterGuideCellUpdate& Update)
+	{
+		return FMath::IsFinite(Update.SurfaceHeightCm)
+			&& !Update.TargetVelocityCmPerSec.ContainsNaN()
+			&& FMath::IsFinite(Update.GuideWeight)
+			&& FMath::IsFinite(Update.GuideDescent);
+	}
+
+	void AppendBatchWaterGuideUpdates(TConstArrayView<FTDFluidGpuWaterGuideCellUpdate> Updates, int32 EntryIndex, int32 FieldResolution, TArray<FTDFluidGpuPackedWaterGuideUpdate>& InOutUpdates)
+	{
+		TMap<FIntPoint, int32> UpdateIndexByFieldCell;
+		UpdateIndexByFieldCell.Reserve(Updates.Num());
+		for (const FTDFluidGpuWaterGuideCellUpdate& Update : Updates)
+		{
+			if (!IsBatchWaterFieldCellInside(Update.FieldCell, FieldResolution) || !IsFiniteBatchWaterGuideUpdate(Update))
+			{
+				continue;
+			}
+
+			FTDFluidGpuPackedWaterGuideUpdate Packed;
+			Packed.EntryIndex = static_cast<uint32>(EntryIndex);
+			Packed.FieldCellX = static_cast<uint32>(Update.FieldCell.X);
+			Packed.FieldCellY = static_cast<uint32>(Update.FieldCell.Y);
+			Packed.SurfaceHeightCm = Update.SurfaceHeightCm;
+			Packed.GuideValues = FVector4f(Update.TargetVelocityCmPerSec.X, Update.TargetVelocityCmPerSec.Y, Update.GuideWeight, Update.GuideDescent);
+			if (const int32* ExistingIndex = UpdateIndexByFieldCell.Find(Update.FieldCell))
+			{
+				InOutUpdates[*ExistingIndex] = Packed;
+				continue;
+			}
+
+			UpdateIndexByFieldCell.Add(Update.FieldCell, InOutUpdates.Add(Packed));
+		}
+	}
+
+	void AppendBatchWaterTerrainUpdates(TConstArrayView<FTDFluidGpuTerrainCellUpdate> Updates, int32 EntryIndex, int32 FieldResolution, TArray<FTDFluidGpuPackedWaterTerrainUpdate>& InOutUpdates)
+	{
+		TMap<FIntPoint, int32> UpdateIndexByFieldCell;
+		UpdateIndexByFieldCell.Reserve(Updates.Num());
+		for (const FTDFluidGpuTerrainCellUpdate& Update : Updates)
+		{
+			if (!IsBatchWaterFieldCellInside(Update.Cell, FieldResolution) || !FMath::IsFinite(Update.ElevationCm))
+			{
+				continue;
+			}
+
+			FTDFluidGpuPackedWaterTerrainUpdate Packed;
+			Packed.EntryIndex = static_cast<uint32>(EntryIndex);
+			Packed.FieldCellX = static_cast<uint32>(Update.Cell.X);
+			Packed.FieldCellY = static_cast<uint32>(Update.Cell.Y);
+			Packed.ElevationCm = Update.ElevationCm;
+			if (const int32* ExistingIndex = UpdateIndexByFieldCell.Find(Update.Cell))
+			{
+				InOutUpdates[*ExistingIndex] = Packed;
+				continue;
+			}
+
+			UpdateIndexByFieldCell.Add(Update.Cell, InOutUpdates.Add(Packed));
+		}
+	}
+
+	void AppendBatchWaterProbeRequests(const FTDFluidGpuActorInput& Actor, int32 EntryIndex, int32 Resolution, TArray<FTDFluidGpuWaterProbeRequest>& InOutRequests)
+	{
+		for (int32 ProbeIndex = 0; ProbeIndex < Actor.WaterProbeCells.Num(); ++ProbeIndex)
+		{
+			const int32 ProbeSlot = Actor.WaterProbeFirstSlot + ProbeIndex;
+			if (ProbeSlot < 0 || ProbeSlot >= TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame)
+			{
+				continue;
+			}
+
+			const FIntPoint& ProbeCell = Actor.WaterProbeCells[ProbeIndex];
+			const bool bIsInsideWindow = ProbeCell.X >= 0 && ProbeCell.X < Resolution && ProbeCell.Y >= 0 && ProbeCell.Y < Resolution;
+
+			FTDFluidGpuWaterProbeRequest& Request = InOutRequests.AddDefaulted_GetRef();
+			Request.EntryIndex = static_cast<uint32>(EntryIndex);
+			Request.ProbeSlot = static_cast<uint32>(ProbeSlot);
+			Request.CellX = bIsInsideWindow ? ProbeCell.X : -1;
+			Request.CellY = bIsInsideWindow ? ProbeCell.Y : -1;
+		}
+	}
+
+	void AppendBatchWaterEntry(const FTDFluidGpuBatchKey& Key, int32 EntryIndex, const FTDFluidGpuSliceEntry& Entry, const FTDFluidGpuActorInput& Actor, const FTDFluidGpuSimulationSettings& Settings, FTDFluidGpuBatchFrame& InOutFrame)
+	{
+		const FTDFluidGpuWaterParameters& WaterParameters = InOutFrame.WaterParameters.Add_GetRef(MakeWaterParameters(Key, Actor, Settings, Entry.bNeedsReset));
+		InOutFrame.WaterRippleSubstepMaximum = FMath::Max(InOutFrame.WaterRippleSubstepMaximum, static_cast<int32>(WaterParameters.RippleSubstepCount));
+		if (EnumHasAnyFlags(static_cast<ETDFluidGpuWaterFlags>(WaterParameters.WaterFlags), ETDFluidGpuWaterFlags::ReachedRippleSubstepCap))
+		{
+			++InOutFrame.WaterRippleSubstepCapHitCount;
+		}
+
+		AppendBatchWaterGuideUpdates(Actor.WaterGuideUpdates, EntryIndex, WaterParameters.FieldResolution, InOutFrame.WaterGuideUpdates);
+		AppendBatchWaterTerrainUpdates(Actor.WaterTerrainUpdates, EntryIndex, WaterParameters.FieldResolution, InOutFrame.WaterTerrainUpdates);
+		AppendBatchWaterProbeRequests(Actor, EntryIndex, Key.ResolutionTier, InOutFrame.WaterProbeRequests);
+	}
+
+	int32 ComputeBatchWaterProbeSlotCount(const FTDFluidGpuFrameInputs& FrameInputs)
+	{
+		int32 ProbeSlotCount = 0;
+		for (const FTDFluidGpuActorInput& Actor : FrameInputs.Actors)
+		{
+			ProbeSlotCount = FMath::Max(ProbeSlotCount, Actor.WaterProbeFirstSlot + Actor.WaterProbeCells.Num());
+		}
+		return FMath::Min(ProbeSlotCount, TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame);
+	}
 }
 
 FTDFluidGpuBatch::FTDFluidGpuBatch(const FTDFluidGpuBatchKey& InKey)
@@ -341,6 +688,17 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 	BatchKey.ResolutionTier = ResolveResolutionTier(Settings.Resolution);
 	if (Settings.SimMode == ETDFluidGpuSimMode::SimplePainter)
 	{
+		return BatchKey;
+	}
+
+	if (Settings.bUsesWaterLayer)
+	{
+		BatchKey.bUsesWaterLayer = true;
+		BatchKey.ResolutionTier = ResolveWaterResolutionTier(Settings.Resolution);
+		BatchKey.WaterPressureMode = ResolveWaterPressureMode(Settings);
+		BatchKey.bUsesFloat32WaterVelocity = Settings.bUsesFloat32WaterVelocity;
+		BatchKey.bUsesFloat32Ripple = Settings.bUsesFloat32Ripple;
+		ApplyBatchWaterPressureKey(Settings, BatchKey);
 		return BatchKey;
 	}
 
@@ -440,6 +798,126 @@ FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMo
 	return Estimate;
 }
 
+int32 FTDFluidGpuBatch::ResolveWaterResolutionTier(int32 RequestedResolution)
+{
+	const int32 ClampedResolution = FMath::Clamp(RequestedResolution, TDFluidGpuSolverConstants::MinimumResolution, TDFluidGpuSolverConstants::MaximumResolution);
+	const bool bUsesExactTier = ClampedResolution > TDFluidGpuSolverConstants::WaterPowerOfTwoTierMaximumSmallResolution
+		&& ClampedResolution <= TDFluidGpuSolverConstants::WaterExactTierMaximumResolution;
+	if (!bUsesExactTier)
+	{
+		return ResolveResolutionTier(ClampedResolution);
+	}
+
+	return FMath::DivideAndRoundUp(ClampedResolution, TDFluidGpuSolverConstants::WaterExactTierGranularity) * TDFluidGpuSolverConstants::WaterExactTierGranularity;
+}
+
+int32 FTDFluidGpuBatch::ComputeWaterFieldDivisor(int32 ResolutionTier)
+{
+	if (ResolutionTier <= TDFluidGpuSolverConstants::WaterExactTierMaximumResolution)
+	{
+		return 1;
+	}
+	if (ResolutionTier < TDFluidGpuSolverConstants::WaterQuarterFieldMinimumResolution)
+	{
+		return BatchWaterHalfFieldDivisor;
+	}
+	return BatchWaterQuarterFieldDivisor;
+}
+
+int32 FTDFluidGpuBatch::ComputeWaterShiftQuantumCells(int32 ResolutionTier)
+{
+	return ComputeWaterFieldDivisor(ResolutionTier);
+}
+
+ETDFluidGpuWaterPressureMode FTDFluidGpuBatch::ResolveWaterPressureMode(const FTDFluidGpuSimulationSettings& Settings)
+{
+	if (ResolveWaterResolutionTier(Settings.Resolution) <= TDFluidGpuSolverConstants::WaterExactTierMaximumResolution)
+	{
+		return ETDFluidGpuWaterPressureMode::JacobiOpenBorders;
+	}
+
+	return ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid;
+}
+
+int32 FTDFluidGpuBatch::ComputeWaterRippleSubstepCount(float WaveSpeedCmPerSec, float StepDeltaTimeSeconds, float SmallestCellSizeCm, int32 ResolutionTier, bool& bOutReachedCap, float& OutWaveSpeedScale)
+{
+	bOutReachedCap = false;
+	OutWaveSpeedScale = 1.0f;
+	if (WaveSpeedCmPerSec <= 0.0f)
+	{
+		return 0;
+	}
+
+	const float RawSubstepCount = WaveSpeedCmPerSec * StepDeltaTimeSeconds * BatchWaterSquareRootOfTwo / (TDFluidGpuSolverConstants::WaterRippleSubstepSafety * SmallestCellSizeCm);
+	const int32 RoundedSubstepCount = FMath::CeilToInt(RawSubstepCount);
+	if (ResolutionTier <= TDFluidGpuSolverConstants::WaterExactTierMaximumResolution)
+	{
+		bOutReachedCap = RoundedSubstepCount > TDFluidGpuSolverConstants::MaximumWaterRippleSubsteps;
+		return FMath::Clamp(RoundedSubstepCount, 1, TDFluidGpuSolverConstants::MaximumWaterRippleSubsteps);
+	}
+
+	bOutReachedCap = RoundedSubstepCount > TDFluidGpuSolverConstants::MaximumGpuOnlyWaterRippleSubsteps;
+	if (RawSubstepCount > TDFluidGpuSolverConstants::WaterRippleCourantTargetRaw)
+	{
+		OutWaveSpeedScale = TDFluidGpuSolverConstants::WaterRippleCourantTargetRaw / RawSubstepCount;
+	}
+	return FMath::Clamp(RoundedSubstepCount, 1, TDFluidGpuSolverConstants::MaximumGpuOnlyWaterRippleSubsteps);
+}
+
+void FTDFluidGpuBatch::ApplyWaterConsoleOverrides(FTDFluidGpuSimulationSettings& InOutSettings)
+{
+	if (!IsBatchWaterLayerSettings(InOutSettings))
+	{
+		return;
+	}
+
+	const bool bIsParityTier = ResolveWaterResolutionTier(InOutSettings.Resolution) <= TDFluidGpuSolverConstants::WaterExactTierMaximumResolution;
+	InOutSettings.bUsesFloat32WaterVelocity = ResolveBatchWaterFloat32Request(CVarTDFluidWaterGpuVelocityFloat32.GetValueOnGameThread(), bBatchWaterVelocityAutomaticallyUsesFloat32);
+	InOutSettings.bUsesFloat32Ripple = ResolveBatchWaterFloat32Request(CVarTDFluidWaterGpuRippleFloat32.GetValueOnGameThread(), bIsParityTier);
+	InOutSettings.WaterPressureModeRequest = ClampBatchWaterPressureModeRequest(CVarTDFluidWaterGpuPressureMode.GetValueOnGameThread());
+	InOutSettings.WaterKernelRadius = FMath::Clamp(CVarTDFluidWaterGpuKernelRadius.GetValueOnGameThread(), BatchWaterKernelMinimumRadius, BatchWaterKernelMaximumRadius);
+	InOutSettings.WaterKernelFeedback = ClampFinite(CVarTDFluidWaterGpuKernelFeedback.GetValueOnGameThread(), 0.0f, 1.0f);
+	InOutSettings.WaterKernelScale = SanitizeBatchWaterKernelScale(CVarTDFluidWaterGpuKernelScale.GetValueOnGameThread());
+	InOutSettings.WaterMultigridCycles = FMath::Clamp(CVarTDFluidGpuPressureCycles.GetValueOnGameThread(), TDFluidGpuSolverConstants::MinimumMultigridCycles, TDFluidGpuSolverConstants::MaximumMultigridCycles);
+}
+
+int64 FTDFluidGpuBatch::ComputeWaterMultigridOpenBoundaryBytes(int32 ResolutionTier)
+{
+	int64 TotalBytes = 0;
+	const int32 LevelCount = ComputeMultigridLevelCount(ResolutionTier);
+	for (int32 Level = 1; Level < LevelCount; ++Level)
+	{
+		const int64 LevelResolution = ResolutionTier >> Level;
+		TotalBytes += LevelResolution * LevelResolution * BatchWaterOpenBoundaryBytesPerCell;
+	}
+	return TotalBytes;
+}
+
+FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateWaterActorMemory(const FTDFluidGpuBatchKey& WaterKey)
+{
+	const int32 ResolutionTier = ResolveWaterResolutionTier(WaterKey.ResolutionTier);
+	const int64 Resolution = ResolutionTier;
+	const int64 CellCount = Resolution * Resolution;
+	const bool bUsesJacobiPressure = WaterKey.WaterPressureMode == ETDFluidGpuWaterPressureMode::JacobiOpenBorders;
+	const int64 PressureResolution = bUsesJacobiPressure ? Resolution : Resolution / BatchWaterHalfPressureDivisor;
+	const int64 FieldResolution = Resolution / ComputeWaterFieldDivisor(ResolutionTier);
+	const int64 FieldCellCount = FieldResolution * FieldResolution;
+	const int64 VelocityBytesPerTexel = WaterKey.bUsesFloat32WaterVelocity ? BatchWaterFloatPairBytesPerTexel : BatchWaterHalfPairBytesPerTexel;
+	const int64 RippleBytesPerTexel = WaterKey.bUsesFloat32Ripple ? BatchWaterFloatPairBytesPerTexel : BatchWaterHalfPairBytesPerTexel;
+	const int64 ReadbackTileTexelCount = static_cast<int64>(TDFluidGpuSolverConstants::ReadbackTileResolution) * TDFluidGpuSolverConstants::ReadbackTileResolution;
+
+	FTDFluidGpuMemoryEstimate Estimate;
+	Estimate.StateBytes = CellCount * (PingPongTextureCount * VelocityBytesPerTexel + DensityBytesPerCell + PingPongTextureCount * RippleBytesPerTexel + ObstacleSdfBytesPerCell)
+		+ PressureResolution * PressureResolution * PressureSolutionBytesPerCell
+		+ FieldCellCount * BatchWaterFieldBytesPerCell;
+	Estimate.OutputBytes = CellCount * BatchWaterOutputBytesPerCell;
+	Estimate.TransientBytes = CellCount * BatchWaterCompositeSdfBytesPerCell
+		+ FieldCellCount * BatchWaterFieldDrySdfBytesPerCell
+		+ ComputeBatchWaterPressureTransientBytes(WaterKey.WaterPressureMode, ResolutionTier);
+	Estimate.ReadbackBytes = ReadbackTileTexelCount * RgbaHalfFloatBytes * TDFluidGpuSolverConstants::ReadbackRingSize + BatchWaterProbeReadbackBytes;
+	return Estimate;
+}
+
 void FTDFluidGpuBatch::PrepareFrame(const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPreparedFrame& OutPreparedFrame)
 {
 	OutPreparedFrame = FTDFluidGpuPreparedFrame();
@@ -488,6 +966,12 @@ void FTDFluidGpuBatch::PrepareFrame(const FTDFluidGpuFrameInputs& FrameInputs, T
 	{
 		Batch.BuildFrameParameters(FrameInputs, OutPreparedFrame);
 	}
+
+	OutPreparedFrame.WaterProbeSlotCount = ComputeBatchWaterProbeSlotCount(FrameInputs);
+	OutPreparedFrame.bHasWaterEntries = InOutBatches.ContainsByPredicate([](const FTDFluidGpuBatch& Batch)
+	{
+		return Batch.GetKey().bUsesWaterLayer && !Batch.GetFrame().Entries.IsEmpty();
+	});
 }
 
 int32 FTDFluidGpuBatch::FindSlice(uint64 ActorKey) const
@@ -499,7 +983,7 @@ int32 FTDFluidGpuBatch::FindSlice(uint64 ActorKey) const
 int32 FTDFluidGpuBatch::GetRequiredSliceCapacity() const
 {
 	const int32 HighestOccupiedSlice = SliceOccupancy.FindLast(true);
-	if (Key.ResolutionTier >= ExactSliceCapacityMinimumResolution)
+	if (Key.ResolutionTier >= ExactSliceCapacityMinimumResolution || Key.bUsesWaterLayer)
 	{
 		return HighestOccupiedSlice + 1;
 	}
@@ -575,6 +1059,10 @@ void FTDFluidGpuBatch::BuildFrameParameters(const FTDFluidGpuFrameInputs& FrameI
 		return Left.SliceIndex < Right.SliceIndex;
 	});
 	Frame.Parameters.Reserve(Frame.Entries.Num());
+	if (Key.bUsesWaterLayer)
+	{
+		Frame.WaterParameters.Reserve(Frame.Entries.Num());
+	}
 
 	for (int32 EntryIndex = 0; EntryIndex < Frame.Entries.Num(); ++EntryIndex)
 	{
@@ -624,6 +1112,10 @@ void FTDFluidGpuBatch::BuildFrameParameters(const FTDFluidGpuFrameInputs& FrameI
 		if (EnumHasAnyFlags(Flags, ETDFluidGpuActorFlags::HasTerrainElevation))
 		{
 			AppendPackedTerrainUpdates(Actor.TerrainElevationUpdates, Entry.SliceIndex, Key.ResolutionTier, Frame.TerrainUpdates);
+		}
+		if (Key.bUsesWaterLayer)
+		{
+			AppendBatchWaterEntry(Key, EntryIndex, Entry, Actor, Settings, Frame);
 		}
 	}
 }

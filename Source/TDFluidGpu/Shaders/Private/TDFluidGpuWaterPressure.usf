@@ -1,0 +1,337 @@
+#include "/TDFluidGpu/Private/TDFluidGpuWaterCommon.ush"
+
+static const float TDFLUIDGPU_WATER_HALF_LEVEL_WEIGHT_SCALE = 0.25f;
+
+Texture2DArray<float> CompositeSdf;
+Texture2DArray<float> WaterSurfaceHeightField;
+StructuredBuffer<uint> WaterOpenBorderFlags;
+Texture2DArray<float2> VelocityIn;
+Texture2DArray<float> PressureIn;
+float ClosedWarmStartScale;
+float OpenBoundaryDirichletScale;
+RWTexture2DArray<float> RhsOut;
+RWTexture2DArray<float2> AperturesOut;
+RWTexture2DArray<float2> OpenBoundaryOut;
+Texture2DArray<float> CorrectionIn;
+RWTexture2DArray<float> PressureSolution;
+Texture2DArray<float2> AperturesIn;
+RWTexture2DArray<float> PressureFullOut;
+
+bool IsWaterFluidCell(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	return TDFluidGpuIsInsideGrid(Cell, Actor.Resolution) && !TDFluidGpuIsSolidDistance(CompositeSdf[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)]);
+}
+
+bool IsOpenWaterEdgeCell(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, uint OpenBorderFlag, int2 Cell)
+{
+	return TDFluidGpuWaterIsOpenBorderCell(Water, Actor, WaterSurfaceHeightField, OpenBorderFlag, Cell, IsWaterFluidCell(Actor, Cell));
+}
+
+float2 LoadOpenWaterNeighborVelocity(FTDFluidGpuActorParameters Actor, int2 NeighborCell, float2 GhostVelocity)
+{
+	if (!TDFluidGpuIsInsideGrid(NeighborCell, Actor.Resolution))
+	{
+		return GhostVelocity;
+	}
+
+	return IsWaterFluidCell(Actor, NeighborCell) ? VelocityIn[TDFluidGpuMakeTexel(NeighborCell, Actor.SliceIndex)] : float2(0.0f, 0.0f);
+}
+
+float ComputeOpenWaterDivergence(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, uint OpenBorderFlag, int2 Cell)
+{
+	if (!IsWaterFluidCell(Actor, Cell))
+	{
+		return 0.0f;
+	}
+
+	const bool bIsOpenEdgeCell = TDFluidGpuWaterIsOpenBorderCell(Water, Actor, WaterSurfaceHeightField, OpenBorderFlag, Cell, true);
+	const float2 GhostVelocity = bIsOpenEdgeCell ? VelocityIn[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)] : float2(0.0f, 0.0f);
+	const float VelocityRight = LoadOpenWaterNeighborVelocity(Actor, Cell + int2(1, 0), GhostVelocity).x;
+	const float VelocityLeft = LoadOpenWaterNeighborVelocity(Actor, Cell - int2(1, 0), GhostVelocity).x;
+	const float VelocityUp = LoadOpenWaterNeighborVelocity(Actor, Cell + int2(0, 1), GhostVelocity).y;
+	const float VelocityDown = LoadOpenWaterNeighborVelocity(Actor, Cell - int2(0, 1), GhostVelocity).y;
+	return (VelocityRight - VelocityLeft) / (2.0f * Actor.RelativeCellSpacing.x) + (VelocityUp - VelocityDown) / (2.0f * Actor.RelativeCellSpacing.y);
+}
+
+float2 ComputeHalfCellApertures(FTDFluidGpuActorParameters Actor, int2 HalfCell)
+{
+	const int2 ChildOrigin = HalfCell * 2;
+	const bool bIsFluid10 = IsWaterFluidCell(Actor, ChildOrigin + int2(1, 0));
+	const bool bIsFluid01 = IsWaterFluidCell(Actor, ChildOrigin + int2(0, 1));
+	const bool bIsFluid11 = IsWaterFluidCell(Actor, ChildOrigin + int2(1, 1));
+	const bool bIsOpenRightLower = bIsFluid10 && IsWaterFluidCell(Actor, ChildOrigin + int2(2, 0));
+	const bool bIsOpenRightUpper = bIsFluid11 && IsWaterFluidCell(Actor, ChildOrigin + int2(2, 1));
+	const bool bIsOpenUpLeft = bIsFluid01 && IsWaterFluidCell(Actor, ChildOrigin + int2(0, 2));
+	const bool bIsOpenUpRight = bIsFluid11 && IsWaterFluidCell(Actor, ChildOrigin + int2(1, 2));
+	return float2(
+		0.5f * ((bIsOpenRightLower ? 1.0f : 0.0f) + (bIsOpenRightUpper ? 1.0f : 0.0f)),
+		0.5f * ((bIsOpenUpLeft ? 1.0f : 0.0f) + (bIsOpenUpRight ? 1.0f : 0.0f)));
+}
+
+float2 ComputeHalfCellOpenBoundary(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, uint OpenBorderFlag, int2 HalfCell)
+{
+	const int LastCell = Actor.Resolution - 1;
+	float2 OpenBoundary = float2(0.0f, 0.0f);
+	[unroll]
+	for (int ChildIndex = 0; ChildIndex < 4; ++ChildIndex)
+	{
+		const int2 ChildCell = HalfCell * 2 + int2(ChildIndex & 1, ChildIndex >> 1);
+		if (!IsOpenWaterEdgeCell(Actor, Water, OpenBorderFlag, ChildCell))
+		{
+			continue;
+		}
+
+		OpenBoundary.x += (ChildCell.x == 0 || ChildCell.x == LastCell) ? 1.0f : 0.0f;
+		OpenBoundary.y += (ChildCell.y == 0 || ChildCell.y == LastCell) ? 1.0f : 0.0f;
+	}
+	return 0.5f * OpenBoundary;
+}
+
+float LoadScaledHalfPressure(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, int2 HalfCell, float WarmStartScale, float CenterPressure)
+{
+	if (!TDFluidGpuIsInsideGrid(HalfCell, Water.PressureResolution))
+	{
+		return CenterPressure;
+	}
+
+	return PressureIn[TDFluidGpuMakeTexel(HalfCell, Actor.SliceIndex)] * WarmStartScale;
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void HalfPrepareCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 HalfCell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(HalfCell, Water.PressureResolution))
+	{
+		return;
+	}
+
+	const uint OpenBorderFlag = WaterOpenBorderFlags[EntryIndex];
+	const float WarmStartScale = OpenBorderFlag == 0u ? ClosedWarmStartScale : 1.0f;
+	const int2 ChildOrigin = HalfCell * 2;
+	const float Divergence00 = ComputeOpenWaterDivergence(Actor, Water, OpenBorderFlag, ChildOrigin);
+	const float Divergence10 = ComputeOpenWaterDivergence(Actor, Water, OpenBorderFlag, ChildOrigin + int2(1, 0));
+	const float Divergence01 = ComputeOpenWaterDivergence(Actor, Water, OpenBorderFlag, ChildOrigin + int2(0, 1));
+	const float Divergence11 = ComputeOpenWaterDivergence(Actor, Water, OpenBorderFlag, ChildOrigin + int2(1, 1));
+	const float RawRhs = 0.25f * ((Divergence00 + Divergence10) + (Divergence01 + Divergence11));
+
+	const float2 Apertures = ComputeHalfCellApertures(Actor, HalfCell);
+	const float LeftAperture = ComputeHalfCellApertures(Actor, HalfCell - int2(1, 0)).x;
+	const float DownAperture = ComputeHalfCellApertures(Actor, HalfCell - int2(0, 1)).y;
+	const float2 OpenBoundary = ComputeHalfCellOpenBoundary(Actor, Water, OpenBorderFlag, HalfCell);
+	const float2 Weights = float2(Actor.InvSpacingXSquared, Actor.InvSpacingYSquared) * TDFLUIDGPU_WATER_HALF_LEVEL_WEIGHT_SCALE;
+	const float RightWeight = Apertures.x * Weights.x;
+	const float LeftWeight = LeftAperture * Weights.x;
+	const float UpWeight = Apertures.y * Weights.y;
+	const float DownWeight = DownAperture * Weights.y;
+	const float DirichletWeight = OpenBoundaryDirichletScale * (OpenBoundary.x * Weights.x + OpenBoundary.y * Weights.y);
+
+	const float CenterPressure = PressureIn[TDFluidGpuMakeTexel(HalfCell, Actor.SliceIndex)] * WarmStartScale;
+	const float RightPressure = LoadScaledHalfPressure(Actor, Water, HalfCell + int2(1, 0), WarmStartScale, CenterPressure);
+	const float LeftPressure = LoadScaledHalfPressure(Actor, Water, HalfCell - int2(1, 0), WarmStartScale, CenterPressure);
+	const float UpPressure = LoadScaledHalfPressure(Actor, Water, HalfCell + int2(0, 1), WarmStartScale, CenterPressure);
+	const float DownPressure = LoadScaledHalfPressure(Actor, Water, HalfCell - int2(0, 1), WarmStartScale, CenterPressure);
+	const float AppliedOperator = ((RightWeight * (RightPressure - CenterPressure) + LeftWeight * (LeftPressure - CenterPressure))
+		+ (UpWeight * (UpPressure - CenterPressure) + DownWeight * (DownPressure - CenterPressure)))
+		- DirichletWeight * CenterPressure;
+
+	const uint3 LevelTexel = TDFluidGpuMakeTexel(HalfCell, int(EntryIndex));
+	RhsOut[LevelTexel] = RawRhs - AppliedOperator;
+	AperturesOut[LevelTexel] = Apertures;
+	OpenBoundaryOut[LevelTexel] = OpenBoundary;
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void HalfApplyCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 HalfCell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(HalfCell, Water.PressureResolution))
+	{
+		return;
+	}
+
+	const float WarmStartScale = WaterOpenBorderFlags[EntryIndex] == 0u ? ClosedWarmStartScale : 1.0f;
+	const float Correction = CorrectionIn[TDFluidGpuMakeTexel(HalfCell, int(EntryIndex))];
+	const uint3 StateTexel = TDFluidGpuMakeTexel(HalfCell, Actor.SliceIndex);
+	PressureSolution[StateTexel] = PressureSolution[StateTexel] * WarmStartScale + Correction;
+}
+
+float LoadHalfStatePressure(FTDFluidGpuActorParameters Actor, int2 HalfCell)
+{
+	return PressureIn[TDFluidGpuMakeTexel(HalfCell, Actor.SliceIndex)];
+}
+
+float2 LoadHalfApertures(int2 HalfCell, uint EntryIndex)
+{
+	return AperturesIn[TDFluidGpuMakeTexel(HalfCell, int(EntryIndex))];
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void UpsampleCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	if (!IsWaterFluidCell(Actor, Cell))
+	{
+		PressureFullOut[Texel] = 0.0f;
+		return;
+	}
+
+	const int HalfResolution = Water.PressureResolution;
+	const int2 Parent = Cell >> 1;
+	const int2 Step = int2((Cell.x & 1) != 0 ? 1 : -1, (Cell.y & 1) != 0 ? 1 : -1);
+	const int2 NeighborX = Parent + int2(Step.x, 0);
+	const int2 NeighborY = Parent + int2(0, Step.y);
+	const int2 NeighborDiagonal = Parent + Step;
+	const bool bIsNeighborXInside = TDFluidGpuIsInsideGrid(NeighborX, HalfResolution);
+	const bool bIsNeighborYInside = TDFluidGpuIsInsideGrid(NeighborY, HalfResolution);
+	const bool bIsOpenEdgeCell = IsOpenWaterEdgeCell(Actor, Water, WaterOpenBorderFlags[EntryIndex], Cell);
+	const float ParentPressure = LoadHalfStatePressure(Actor, Parent);
+
+	bool bUsesNeighborX = bIsOpenEdgeCell;
+	float NeighborXPressure = -ParentPressure / 3.0f;
+	if (bIsNeighborXInside)
+	{
+		bUsesNeighborX = LoadHalfApertures(Step.x > 0 ? Parent : NeighborX, EntryIndex).x > 0.0f;
+		NeighborXPressure = LoadHalfStatePressure(Actor, NeighborX);
+	}
+
+	bool bUsesNeighborY = bIsOpenEdgeCell;
+	float NeighborYPressure = -ParentPressure / 3.0f;
+	if (bIsNeighborYInside)
+	{
+		bUsesNeighborY = LoadHalfApertures(Step.y > 0 ? Parent : NeighborY, EntryIndex).y > 0.0f;
+		NeighborYPressure = LoadHalfStatePressure(Actor, NeighborY);
+	}
+
+	bool bUsesDiagonal = bUsesNeighborX && bUsesNeighborY;
+	float DiagonalPressure = ParentPressure / 9.0f;
+	if (bIsNeighborXInside && bIsNeighborYInside)
+	{
+		const bool bReachesDiagonal = LoadHalfApertures(Step.y > 0 ? NeighborX : NeighborDiagonal, EntryIndex).y > 0.0f
+			|| LoadHalfApertures(Step.x > 0 ? NeighborY : NeighborDiagonal, EntryIndex).x > 0.0f;
+		bUsesDiagonal = bUsesDiagonal && bReachesDiagonal;
+		DiagonalPressure = bUsesDiagonal ? LoadHalfStatePressure(Actor, NeighborDiagonal) : 0.0f;
+	}
+	else if (bIsNeighborXInside)
+	{
+		DiagonalPressure = -NeighborXPressure / 3.0f;
+	}
+	else if (bIsNeighborYInside)
+	{
+		DiagonalPressure = -NeighborYPressure / 3.0f;
+	}
+
+	float WeightedSum = 9.0f * ParentPressure;
+	float WeightSum = 9.0f;
+	if (bUsesNeighborX)
+	{
+		WeightedSum += 3.0f * NeighborXPressure;
+		WeightSum += 3.0f;
+	}
+	if (bUsesNeighborY)
+	{
+		WeightedSum += 3.0f * NeighborYPressure;
+		WeightSum += 3.0f;
+	}
+	if (bUsesDiagonal)
+	{
+		WeightedSum += DiagonalPressure;
+		WeightSum += 1.0f;
+	}
+	PressureFullOut[Texel] = WeightedSum / WeightSum;
+}
+
+#define TDFLUIDGPU_WATER_HALF_RHS_THREAD_COUNT (TDFLUIDGPU_TILE_GROUP_SIZE * TDFLUIDGPU_TILE_GROUP_SIZE)
+
+Texture2DArray<float> HalfRhsIn;
+StructuredBuffer<float> HalfRhsMeanIn;
+RWStructuredBuffer<float2> HalfRhsPartialSumsOut;
+RWTexture2DArray<float> HalfRhsInOut;
+uint TilesPerSlice;
+uint TilesPerRow;
+
+groupshared float2 SharedHalfRhsSums[TDFLUIDGPU_WATER_HALF_RHS_THREAD_COUNT];
+
+bool IsActiveHalfCell(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, int2 HalfCell)
+{
+	if (!TDFluidGpuIsInsideGrid(HalfCell, Water.PressureResolution))
+	{
+		return false;
+	}
+
+	const int2 ChildOrigin = HalfCell * 2;
+	return IsWaterFluidCell(Actor, ChildOrigin)
+		|| IsWaterFluidCell(Actor, ChildOrigin + int2(1, 0))
+		|| IsWaterFluidCell(Actor, ChildOrigin + int2(0, 1))
+		|| IsWaterFluidCell(Actor, ChildOrigin + int2(1, 1));
+}
+
+void ReduceSharedHalfRhsSums(uint GroupIndex)
+{
+	for (uint Stride = TDFLUIDGPU_WATER_HALF_RHS_THREAD_COUNT / 2u; Stride > 0u; Stride >>= 1u)
+	{
+		if (GroupIndex < Stride)
+		{
+			SharedHalfRhsSums[GroupIndex] += SharedHalfRhsSums[GroupIndex + Stride];
+		}
+		GroupMemoryBarrierWithGroupSync();
+	}
+}
+
+[numthreads(TDFLUIDGPU_TILE_GROUP_SIZE, TDFLUIDGPU_TILE_GROUP_SIZE, 1)]
+void HalfRhsMeanTilesCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, uint GroupIndex : SV_GroupIndex)
+{
+	const uint EntryIndex = GroupId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 HalfCell = int2(GroupId.xy) * TDFLUIDGPU_TILE_GROUP_SIZE + int2(GroupThreadId.xy);
+	float2 RhsSum = float2(0.0f, 0.0f);
+	if (IsActiveHalfCell(Actor, Water, HalfCell))
+	{
+		RhsSum = float2(HalfRhsIn[TDFluidGpuMakeTexel(HalfCell, int(EntryIndex))], 1.0f);
+	}
+	SharedHalfRhsSums[GroupIndex] = RhsSum;
+	GroupMemoryBarrierWithGroupSync();
+
+	ReduceSharedHalfRhsSums(GroupIndex);
+	if (GroupIndex == 0u)
+	{
+		HalfRhsPartialSumsOut[EntryIndex * TilesPerSlice + GroupId.y * TilesPerRow + GroupId.x] = SharedHalfRhsSums[0];
+	}
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void HalfRhsSubtractMeanCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	if (WaterOpenBorderFlags[EntryIndex] != 0u)
+	{
+		return;
+	}
+
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const int2 HalfCell = int2(DispatchThreadId.xy);
+	if (!IsActiveHalfCell(Actor, Water, HalfCell))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(HalfCell, int(EntryIndex));
+	HalfRhsInOut[Texel] = HalfRhsInOut[Texel] - HalfRhsMeanIn[EntryIndex];
+}

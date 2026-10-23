@@ -404,23 +404,6 @@ namespace
 	constexpr float FluidWaterTerrainHeightLimit = 8.0f;
 	constexpr float FluidWaterSquareRootOfTwo = 1.41421356f;
 
-	float FluidWaterBankFalloffWeight(float DistanceCm, float HalfWidthCm, float FalloffCm)
-	{
-		if (DistanceCm >= HalfWidthCm)
-		{
-			return 0.0f;
-		}
-
-		const float EffectiveFalloffCm = FMath::Min(FalloffCm, HalfWidthCm);
-		if (EffectiveFalloffCm <= 0.0f || DistanceCm <= HalfWidthCm - EffectiveFalloffCm)
-		{
-			return 1.0f;
-		}
-
-		const float Fraction = (DistanceCm - (HalfWidthCm - EffectiveFalloffCm)) / EffectiveFalloffCm;
-		return 1.0f - Fraction * Fraction * (3.0f - 2.0f * Fraction);
-	}
-
 	void FluidWaterShiftDirtyFlags(TArray<uint8>& Flags, int32 ShiftCells)
 	{
 		const int32 FlagCount = Flags.Num();
@@ -2078,8 +2061,7 @@ void FTDFluidGrid2DSolver::ReleaseWaterBuffers()
 	ScratchRippleHeightVelocity.Empty();
 	WaterDirtyColumns.Empty();
 	WaterDirtyRows.Empty();
-	WaterRowSegmentOffsets.Empty();
-	WaterRowSegmentIndices.Empty();
+	WaterInputRaster.ReleaseRowSegmentLists();
 	TerrainKnownCellCount = 0;
 	bHasRippleActivity = false;
 }
@@ -2182,71 +2164,13 @@ void FTDFluidGrid2DSolver::ShiftWaterBuffers(int32 ShiftCellsX, int32 ShiftCells
 
 void FTDFluidGrid2DSolver::SetFlowGuides(const TArray<FTDFluidFlowGuide>& Guides)
 {
-	WaterGuideSegments.Reset();
-	for (int32 GuideIndex = 0; GuideIndex < Guides.Num(); ++GuideIndex)
-	{
-		const TArray<FTDFluidFlowGuidePoint>& Points = Guides[GuideIndex].Points;
-		for (int32 PointIndex = 0; PointIndex + 1 < Points.Num(); ++PointIndex)
-		{
-			const FTDFluidFlowGuidePoint& StartPoint = Points[PointIndex];
-			const FTDFluidFlowGuidePoint& EndPoint = Points[PointIndex + 1];
-			const bool bIsFinite = !StartPoint.WorldLocation.ContainsNaN() && !EndPoint.WorldLocation.ContainsNaN()
-				&& FMath::IsFinite(StartPoint.HalfWidthCm) && FMath::IsFinite(EndPoint.HalfWidthCm)
-				&& FMath::IsFinite(StartPoint.FlowSpeedCmPerSec) && FMath::IsFinite(EndPoint.FlowSpeedCmPerSec);
-			if (!bIsFinite)
-			{
-				continue;
-			}
-
-			const FVector2D Start(StartPoint.WorldLocation.X, StartPoint.WorldLocation.Y);
-			const FVector2D Offset(EndPoint.WorldLocation.X - Start.X, EndPoint.WorldLocation.Y - Start.Y);
-			const double Length = Offset.Size();
-			if (Length < UE_KINDA_SMALL_NUMBER)
-			{
-				continue;
-			}
-
-			FWaterGuideSegment Segment;
-			Segment.Start = Start;
-			Segment.Direction = Offset / Length;
-			Segment.LengthCm = Length;
-			Segment.StartSurfaceCm = static_cast<float>(StartPoint.WorldLocation.Z);
-			Segment.EndSurfaceCm = static_cast<float>(EndPoint.WorldLocation.Z);
-			Segment.StartHalfWidthCm = FMath::Max(StartPoint.HalfWidthCm, 0.0f);
-			Segment.EndHalfWidthCm = FMath::Max(EndPoint.HalfWidthCm, 0.0f);
-			Segment.StartSpeedCmPerSec = StartPoint.FlowSpeedCmPerSec;
-			Segment.EndSpeedCmPerSec = EndPoint.FlowSpeedCmPerSec;
-			Segment.DescentSlope = FMath::Max(0.0f, static_cast<float>((StartPoint.WorldLocation.Z - EndPoint.WorldLocation.Z) / Length));
-			Segment.GuideIndex = GuideIndex;
-
-			const double PaddingCm = FMath::Max(Segment.StartHalfWidthCm, Segment.EndHalfWidthCm);
-			const FVector2D End(EndPoint.WorldLocation.X, EndPoint.WorldLocation.Y);
-			Segment.MinimumX = FMath::Min(Start.X, End.X) - PaddingCm;
-			Segment.MaximumX = FMath::Max(Start.X, End.X) + PaddingCm;
-			Segment.MinimumY = FMath::Min(Start.Y, End.Y) - PaddingCm;
-			Segment.MaximumY = FMath::Max(Start.Y, End.Y) + PaddingCm;
-			WaterGuideSegments.Add(Segment);
-		}
-	}
+	WaterInputRaster.SetFlowGuides(Guides);
 	bWaterRasterFullDirty = true;
 }
 
 void FTDFluidGrid2DSolver::SetWaterRegions(const TArray<FTDFluidWaterRegion>& Regions)
 {
-	WaterRegions.Reset();
-	for (const FTDFluidWaterRegion& Region : Regions)
-	{
-		if (Region.MinXY.ContainsNaN() || Region.MaxXY.ContainsNaN() || !FMath::IsFinite(Region.SurfaceHeightCm))
-		{
-			continue;
-		}
-
-		FTDFluidWaterRegion NormalizedRegion;
-		NormalizedRegion.MinXY = FVector2D(FMath::Min(Region.MinXY.X, Region.MaxXY.X), FMath::Min(Region.MinXY.Y, Region.MaxXY.Y));
-		NormalizedRegion.MaxXY = FVector2D(FMath::Max(Region.MinXY.X, Region.MaxXY.X), FMath::Max(Region.MinXY.Y, Region.MaxXY.Y));
-		NormalizedRegion.SurfaceHeightCm = Region.SurfaceHeightCm;
-		WaterRegions.Add(NormalizedRegion);
-	}
+	WaterInputRaster.SetWaterRegions(Regions);
 	bWaterRasterFullDirty = true;
 }
 
@@ -2344,70 +2268,24 @@ void FTDFluidGrid2DSolver::RefreshWaterDrySdf()
 	});
 }
 
-void FTDFluidGrid2DSolver::BuildWaterRowSegmentLists()
-{
-	const int32 GridSize = Resolution;
-	const double RowSlackCm = 0.5 * Config.SimExtentCm.Y / GridSize + Config.FlowGuideBankFalloffCm;
-
-	double RowWorldY[MaxGridResolution];
-	for (int32 Y = 0; Y < GridSize; ++Y)
-	{
-		RowWorldY[Y] = CellToWorldCenter(0, Y).Y;
-	}
-
-	WaterRowSegmentOffsets.Init(0, GridSize + 1);
-	for (const FWaterGuideSegment& Segment : WaterGuideSegments)
-	{
-		for (int32 Y = 0; Y < GridSize; ++Y)
-		{
-			if (RowWorldY[Y] >= Segment.MinimumY - RowSlackCm && RowWorldY[Y] <= Segment.MaximumY + RowSlackCm)
-			{
-				++WaterRowSegmentOffsets[Y + 1];
-			}
-		}
-	}
-
-	for (int32 Y = 0; Y < GridSize; ++Y)
-	{
-		WaterRowSegmentOffsets[Y + 1] += WaterRowSegmentOffsets[Y];
-	}
-
-	WaterRowSegmentIndices.SetNumUninitialized(WaterRowSegmentOffsets[GridSize]);
-	int32 RowCursors[MaxGridResolution];
-	for (int32 Y = 0; Y < GridSize; ++Y)
-	{
-		RowCursors[Y] = WaterRowSegmentOffsets[Y];
-	}
-
-	for (int32 SegmentIndex = 0; SegmentIndex < WaterGuideSegments.Num(); ++SegmentIndex)
-	{
-		const FWaterGuideSegment& Segment = WaterGuideSegments[SegmentIndex];
-		for (int32 Y = 0; Y < GridSize; ++Y)
-		{
-			if (RowWorldY[Y] >= Segment.MinimumY - RowSlackCm && RowWorldY[Y] <= Segment.MaximumY + RowSlackCm)
-			{
-				WaterRowSegmentIndices[RowCursors[Y]++] = SegmentIndex;
-			}
-		}
-	}
-}
-
 void FTDFluidGrid2DSolver::RasterizeWaterInputs()
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_RasterizeWater);
 
-	BuildWaterRowSegmentLists();
-
 	const int32 GridSize = Resolution;
+	TArray<double> RowWorldY;
+	RowWorldY.SetNumUninitialized(GridSize);
+	for (int32 Y = 0; Y < GridSize; ++Y)
+	{
+		RowWorldY[Y] = CellToWorldCenter(0, Y).Y;
+	}
+	const double RowSlackCm = 0.5 * Config.SimExtentCm.Y / GridSize + Config.FlowGuideBankFalloffCm;
+	WaterInputRaster.BuildRowSegmentLists(RowWorldY, RowSlackCm);
+
 	const bool bRasterizesAllCells = bWaterRasterFullDirty;
 	const bool bInitializesAllVelocities = bWaterVelocityInitPending;
 	const float BankFalloffCm = Config.FlowGuideBankFalloffCm;
 	const float BankSpeedRatio = Config.FlowGuideBankSpeedRatio;
-	const int32* RowOffsets = WaterRowSegmentOffsets.GetData();
-	const int32* RowSegmentIndices = WaterRowSegmentIndices.GetData();
-	const FWaterGuideSegment* Segments = WaterGuideSegments.GetData();
-	const FTDFluidWaterRegion* Regions = WaterRegions.GetData();
-	const int32 RegionCount = WaterRegions.Num();
 	const uint8* DirtyColumns = WaterDirtyColumns.GetData();
 	const uint8* DirtyRows = WaterDirtyRows.GetData();
 	float* SurfaceValues = WaterSurfaceHeight.GetData();
@@ -2421,8 +2299,6 @@ void FTDFluidGrid2DSolver::RasterizeWaterInputs()
 	ForEachGridRow(TEXT("TDFluidRasterizeWaterRows"), GridSize, [&](int32 Y)
 	{
 		const bool bIsDirtyRow = DirtyRows[Y] != 0;
-		const int32 SegmentBegin = RowOffsets[Y];
-		const int32 SegmentEnd = RowOffsets[Y + 1];
 
 		for (int32 X = 0; X < GridSize; ++X)
 		{
@@ -2433,101 +2309,14 @@ void FTDFluidGrid2DSolver::RasterizeWaterInputs()
 			}
 
 			const FVector2D CellWorld = CellToWorldCenter(X, Y);
-			double WeightSum = 0.0;
-			double VelocitySumX = 0.0;
-			double VelocitySumY = 0.0;
-			float StrongestWeight = 0.0f;
-			float StrongestSurface = 0.0f;
-			float StrongestDescent = 0.0f;
-
-			int32 CurrentGuideIndex = INDEX_NONE;
-			const FWaterGuideSegment* NearestSegment = nullptr;
-			float NearestDistanceCm = TNumericLimits<float>::Max();
-			float NearestFraction = 0.0f;
-
-			const auto FlushGuide = [&]()
-			{
-				if (NearestSegment == nullptr)
-				{
-					return;
-				}
-
-				const float HalfWidthCm = FMath::Lerp(NearestSegment->StartHalfWidthCm, NearestSegment->EndHalfWidthCm, NearestFraction);
-				const float Weight = FluidWaterBankFalloffWeight(NearestDistanceCm, HalfWidthCm, BankFalloffCm);
-				if (Weight > 0.0f)
-				{
-					const float NormalizedDistance = FMath::Clamp(NearestDistanceCm / HalfWidthCm, 0.0f, 1.0f);
-					const float ProfileScale = BankSpeedRatio + (1.0f - BankSpeedRatio) * (1.0f - NormalizedDistance * NormalizedDistance);
-					const float Speed = FMath::Lerp(NearestSegment->StartSpeedCmPerSec, NearestSegment->EndSpeedCmPerSec, NearestFraction) * ProfileScale;
-					WeightSum += Weight;
-					VelocitySumX += Weight * NearestSegment->Direction.X * Speed;
-					VelocitySumY += Weight * NearestSegment->Direction.Y * Speed;
-					if (Weight > StrongestWeight)
-					{
-						StrongestWeight = Weight;
-						StrongestSurface = FMath::Lerp(NearestSegment->StartSurfaceCm, NearestSegment->EndSurfaceCm, NearestFraction);
-						StrongestDescent = NearestSegment->DescentSlope;
-					}
-				}
-
-				NearestSegment = nullptr;
-				NearestDistanceCm = TNumericLimits<float>::Max();
-			};
-
-			for (int32 ListIndex = SegmentBegin; ListIndex < SegmentEnd; ++ListIndex)
-			{
-				const FWaterGuideSegment& Segment = Segments[RowSegmentIndices[ListIndex]];
-				if (Segment.GuideIndex != CurrentGuideIndex)
-				{
-					FlushGuide();
-					CurrentGuideIndex = Segment.GuideIndex;
-				}
-
-				if (CellWorld.X < Segment.MinimumX || CellWorld.X > Segment.MaximumX)
-				{
-					continue;
-				}
-
-				const double AlongCm = FMath::Clamp(FVector2D::DotProduct(CellWorld - Segment.Start, Segment.Direction), 0.0, Segment.LengthCm);
-				const FVector2D ClosestPoint = Segment.Start + Segment.Direction * AlongCm;
-				const float DistanceCm = static_cast<float>((CellWorld - ClosestPoint).Size());
-				if (DistanceCm < NearestDistanceCm)
-				{
-					NearestSegment = &Segment;
-					NearestDistanceCm = DistanceCm;
-					NearestFraction = static_cast<float>(AlongCm / Segment.LengthCm);
-				}
-			}
-			FlushGuide();
+			const FTDFluidWaterRasterCell RasterCell = WaterInputRaster.RasterizeCell(CellWorld, Y, BankFalloffCm, BankSpeedRatio, NoWaterSurfaceHeight);
 
 			const int32 Idx = Y * GridSize + X;
-			if (WeightSum > 0.0)
-			{
-				SurfaceValues[Idx] = StrongestSurface;
-				TargetX[Idx] = static_cast<float>(VelocitySumX / WeightSum);
-				TargetY[Idx] = static_cast<float>(VelocitySumY / WeightSum);
-				WeightValues[Idx] = StrongestWeight;
-				DescentValues[Idx] = StrongestDescent;
-			}
-			else
-			{
-				float RegionSurface = NoWaterSurfaceHeight;
-				for (int32 RegionIndex = 0; RegionIndex < RegionCount; ++RegionIndex)
-				{
-					const FTDFluidWaterRegion& Region = Regions[RegionIndex];
-					const bool bIsInsideRegion = CellWorld.X >= Region.MinXY.X && CellWorld.X <= Region.MaxXY.X
-						&& CellWorld.Y >= Region.MinXY.Y && CellWorld.Y <= Region.MaxXY.Y;
-					if (bIsInsideRegion)
-					{
-						RegionSurface = FMath::Max(RegionSurface, Region.SurfaceHeightCm);
-					}
-				}
-				SurfaceValues[Idx] = RegionSurface;
-				TargetX[Idx] = 0.0f;
-				TargetY[Idx] = 0.0f;
-				WeightValues[Idx] = 0.0f;
-				DescentValues[Idx] = 0.0f;
-			}
+			SurfaceValues[Idx] = RasterCell.SurfaceHeightCm;
+			TargetX[Idx] = RasterCell.TargetVelocityX;
+			TargetY[Idx] = RasterCell.TargetVelocityY;
+			WeightValues[Idx] = RasterCell.GuideWeight;
+			DescentValues[Idx] = RasterCell.GuideDescent;
 
 			if (bInitializesAllVelocities || bIsNewCell)
 			{

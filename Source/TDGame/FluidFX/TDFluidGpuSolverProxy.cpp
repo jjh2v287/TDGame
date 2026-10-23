@@ -1,13 +1,19 @@
 #include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 #include "RenderGraphBuilder.h"
 #include "TDFluidGpuBatch.h"
+
+CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
 namespace
 {
 	constexpr double ProxyFallbackExtentCm = 4000.0;
 	constexpr double MinimumExtentCm = 100.0;
 	constexpr int32 MaximumRecentSubmissionCount = 8;
+	constexpr int32 ProxyWaterFullUploadGatherCount = 3;
+	constexpr int32 ProxyWaterMaximumStampsPerTick = 512;
+	const FIntPoint ProxyWaterProbeOutsideCell(-1, -1);
 
 	struct FTDFluidReadbackBilinearWeights
 	{
@@ -37,6 +43,25 @@ namespace
 	int32 ComputeReadbackBlockEnd(int32 FieldTexel, int32 SimulationResolution)
 	{
 		return FMath::Max(ComputeReadbackBlockStart(FieldTexel, SimulationResolution) + 1, ComputeReadbackBlockStart(FieldTexel + 1, SimulationResolution));
+	}
+
+	FIntPoint ProxyMapWaterProbeGridUVToCell(const FVector2D& GridUV, int32 GridResolution)
+	{
+		const float GridX = GridUV.X * static_cast<float>(GridResolution) - 0.5f;
+		const float GridY = GridUV.Y * static_cast<float>(GridResolution) - 0.5f;
+		return FIntPoint(
+			FMath::Clamp(FMath::RoundToInt(GridX), 0, GridResolution - 1),
+			FMath::Clamp(FMath::RoundToInt(GridY), 0, GridResolution - 1));
+	}
+
+	FIntPoint ProxyMapWaterProbePlanePointToCell(const FTDFluidGpuSolverProxy& Proxy, const FVector2D& PlanePoint)
+	{
+		FVector2D GridUV;
+		if (PlanePoint.ContainsNaN() || !Proxy.PlanePointToGridUV(PlanePoint, GridUV))
+		{
+			return ProxyWaterProbeOutsideCell;
+		}
+		return ProxyMapWaterProbeGridUVToCell(GridUV, Proxy.GetResolution());
 	}
 
 	FTDFluidReadbackBilinearWeights MakeReadbackBilinearWeights(double GridX, double GridY, int32 FieldResolution)
@@ -320,10 +345,26 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.VortexTangentialAccelerationCmPerSec2 = Config.VortexTangentialAccelerationCmPerSec2;
 	SimulationSettings.VortexRadialDriftCmPerSec = Config.VortexRadialDriftCmPerSec;
 	SimulationSettings.VortexRadiusRatio = Config.VortexRadiusRatio;
+	SimulationSettings.bUsesWaterLayer = Config.bEnableWaterLayer && Config.SimMode == ETDFluidSimMode::FluidSim;
+	SimulationSettings.bOpenWaterBorders = Config.bOpenWaterBorders;
+	SimulationSettings.bTreatDryCellsAsSolid = Config.bTreatDryCellsAsSolid;
+	SimulationSettings.WaterDepthReferenceCm = Config.WaterDepthReferenceCm;
+	SimulationSettings.FlowGuideResponsePerSec = Config.FlowGuideResponsePerSec;
+	SimulationSettings.WhitewaterFromVorticity = Config.WhitewaterFromVorticity;
+	SimulationSettings.WhitewaterVorticityThresholdPerSec = Config.WhitewaterVorticityThresholdPerSec;
+	SimulationSettings.RapidsWhitewaterPerSec = Config.RapidsWhitewaterPerSec;
+	SimulationSettings.RippleWaveSpeedCmPerSec = Config.RippleWaveSpeedCmPerSec;
+	SimulationSettings.RippleDampingPerSec = Config.RippleDampingPerSec;
+	SimulationSettings.RippleHeightReferenceCm = Config.RippleHeightReferenceCm;
+	SimulationSettings.RippleFlowAdvection = Config.RippleFlowAdvection;
+	if (SimulationSettings.bUsesWaterLayer)
+	{
+		SimulationSettings.MaxStampsPerTick = FMath::Clamp(Config.MaxPointsPerTick, 1, ProxyWaterMaximumStampsPerTick);
+	}
 	return SimulationSettings;
 }
 
-FTDFluidGpuStampInput FTDFluidGpuSolverProxy::MakeStampInput(const FTDFluidBrushStamp& PlaneStamp)
+FTDFluidGpuStampInput FTDFluidGpuSolverProxy::MakeStampInput(const FTDFluidBrushStamp& PlaneStamp, bool bCarriesRippleImpulse)
 {
 	FTDFluidGpuStampInput StampInput;
 	StampInput.CenterPlaneCm = FVector2D(PlaneStamp.WorldLocation.X, PlaneStamp.WorldLocation.Y);
@@ -334,6 +375,7 @@ FTDFluidGpuStampInput FTDFluidGpuSolverProxy::MakeStampInput(const FTDFluidBrush
 	StampInput.RadialVelocityCmPerSec = PlaneStamp.RadialVelocityCmPerSec;
 	StampInput.HeatStrength = PlaneStamp.HeatStrength;
 	StampInput.bWritesSelectiveDensity = PlaneStamp.Channel == ETDFluidBrushChannel::ChannelG_Blood || PlaneStamp.Channel == ETDFluidBrushChannel::ChannelB_Fire;
+	StampInput.RippleImpulseCm = bCarriesRippleImpulse ? PlaneStamp.RippleImpulseCm : 0.0f;
 	return StampInput;
 }
 
@@ -355,9 +397,15 @@ int64 FTDFluidGpuSolverProxy::EstimateActorMemoryBytes(ETDFluidSimMode SimMode, 
 
 void FTDFluidGpuSolverProxy::Initialize(const FTDFluidSimulationConfig& Config, int32 InResolution, const FVector2D& InitialCenterPlaneCm)
 {
-	Resolution = FTDFluidGpuBatch::ResolveResolutionTier(InResolution);
+	const bool bUsesWaterResolutionTier = Config.bEnableWaterLayer && Config.SimMode != ETDFluidSimMode::SimplePainter;
+	Resolution = bUsesWaterResolutionTier ? FTDFluidGpuBatch::ResolveWaterResolutionTier(InResolution) : FTDFluidGpuBatch::ResolveResolutionTier(InResolution);
 	Settings = MakeSimulationSettings(Config, Resolution);
+	WaterFieldConfig = Config;
 	CenterPlaneCm = InitialCenterPlaneCm.ContainsNaN() ? FVector2D::ZeroVector : InitialCenterPlaneCm;
+	if (!Settings.bUsesWaterLayer)
+	{
+		WaterFieldState.Release();
+	}
 	ResetState();
 }
 
@@ -368,7 +416,26 @@ void FTDFluidGpuSolverProxy::UpdateSettings(const FTDFluidSimulationConfig& Conf
 		return;
 	}
 
+	const bool bPreviouslyUsedWaterLayer = Settings.bUsesWaterLayer;
 	Settings = MakeSimulationSettings(Config, Resolution);
+	WaterFieldConfig = Config;
+	if (bPreviouslyUsedWaterLayer && Settings.bUsesWaterLayer)
+	{
+		WaterFieldState.UpdateConfig(Config);
+		return;
+	}
+
+	if (Settings.bUsesWaterLayer)
+	{
+		WaterFieldState.Initialize(Config, Resolution, FTDFluidGpuBatch::ComputeWaterFieldDivisor(Resolution), CenterPlaneCm, Settings.ExtentCm);
+		WaterFieldState.RequestFullUpload(ProxyWaterFullUploadGatherCount);
+		return;
+	}
+
+	if (bPreviouslyUsedWaterLayer)
+	{
+		WaterFieldState.Release();
+	}
 }
 
 void FTDFluidGpuSolverProxy::ResetState()
@@ -383,6 +450,57 @@ void FTDFluidGpuSolverProxy::ResetState()
 	PendingTerrainUpdates.Reset();
 	RecentSubmissions.Reset();
 	ReadbackField.Reset();
+	LatestWaterProbeSamples.Reset();
+	LatestWaterProbeFrameNumber = 0;
+	LatestWaterProbeGeneration = -1;
+	if (!Settings.bUsesWaterLayer)
+	{
+		return;
+	}
+
+	WaterFieldState.Initialize(WaterFieldConfig, Resolution, FTDFluidGpuBatch::ComputeWaterFieldDivisor(Resolution), CenterPlaneCm, Settings.ExtentCm);
+	WaterFieldState.RequestFullUpload(ProxyWaterFullUploadGatherCount);
+}
+
+int32 FTDFluidGpuSolverProxy::GetWaterFieldResolution() const
+{
+	return WaterFieldState.GetFieldResolution();
+}
+
+FVector2D FTDFluidGpuSolverProxy::WaterFieldCellToPlaneCenter(int32 FieldX, int32 FieldY) const
+{
+	return WaterFieldState.FieldCellToPlaneCenter(FieldX, FieldY);
+}
+
+float FTDFluidGpuSolverProxy::GetWaterSurfaceHeightAtFieldCell(int32 FieldX, int32 FieldY) const
+{
+	return WaterFieldState.GetSurfaceHeightAtFieldCell(FieldX, FieldY);
+}
+
+void FTDFluidGpuSolverProxy::SetWaterInputs(const TArray<FTDFluidFlowGuide>& Guides, const TArray<FTDFluidWaterRegion>& Regions)
+{
+	WaterFieldState.SetFlowGuidesAndRegions(Guides, Regions);
+}
+
+void FTDFluidGpuSolverProxy::SetWaterProbePlanePoints(TConstArrayView<FVector2D> PlanePoints, int32 InProbeGeneration)
+{
+	WaterProbePlanePoints.Reset(PlanePoints.Num());
+	WaterProbePlanePoints.Append(PlanePoints.GetData(), PlanePoints.Num());
+	WaterProbeGeneration = InProbeGeneration;
+}
+
+bool FTDFluidGpuSolverProxy::TryGetWaterProbeSamples(TArray<FTDFluidGpuWaterProbeSample>& OutSamples, uint32& OutFrameNumber) const
+{
+	OutSamples.Reset();
+	OutFrameNumber = 0;
+	if (!Settings.bUsesWaterLayer || LatestWaterProbeGeneration != WaterProbeGeneration || LatestWaterProbeSamples.IsEmpty())
+	{
+		return false;
+	}
+
+	OutSamples = LatestWaterProbeSamples;
+	OutFrameNumber = LatestWaterProbeFrameNumber;
+	return true;
 }
 
 FVector2D FTDFluidGpuSolverProxy::CellToPlaneCenter(int32 CellX, int32 CellY) const
@@ -434,9 +552,10 @@ FIntPoint FTDFluidGpuSolverProxy::ShiftWindowTowards(const FVector2D& DesiredCen
 
 	const float CellSizeX = Settings.ExtentCm.X / static_cast<float>(Resolution);
 	const float CellSizeY = Settings.ExtentCm.Y / static_cast<float>(Resolution);
+	const int32 ShiftQuantumCells = Settings.bUsesWaterLayer ? FTDFluidGpuBatch::ComputeWaterShiftQuantumCells(Resolution) : 1;
 	const FIntPoint ShiftCells(
-		FMath::RoundToInt32((DesiredCenterPlaneCm.X - CenterPlaneCm.X) / CellSizeX),
-		FMath::RoundToInt32((DesiredCenterPlaneCm.Y - CenterPlaneCm.Y) / CellSizeY));
+		FMath::RoundToInt32((DesiredCenterPlaneCm.X - CenterPlaneCm.X) / CellSizeX / ShiftQuantumCells) * ShiftQuantumCells,
+		FMath::RoundToInt32((DesiredCenterPlaneCm.Y - CenterPlaneCm.Y) / CellSizeY / ShiftQuantumCells) * ShiftQuantumCells);
 	if (ShiftCells == FIntPoint::ZeroValue)
 	{
 		return FIntPoint::ZeroValue;
@@ -446,6 +565,10 @@ FIntPoint FTDFluidGpuSolverProxy::ShiftWindowTowards(const FVector2D& DesiredCen
 	CenterPlaneCm.Y += static_cast<float>(ShiftCells.Y) * CellSizeY;
 	PendingShiftCells += ShiftCells;
 	ShiftPendingTerrainUpdates(ShiftCells);
+	if (Settings.bUsesWaterLayer)
+	{
+		WaterFieldState.ShiftWindow(ShiftCells, CenterPlaneCm);
+	}
 	return ShiftCells;
 }
 
@@ -461,6 +584,17 @@ void FTDFluidGpuSolverProxy::SetObstacles(TConstArrayView<FTDFluidSdfObstacle> P
 
 void FTDFluidGpuSolverProxy::SetTerrainElevationAtCell(int32 CellX, int32 CellY, float ElevationCm)
 {
+	if (Settings.bUsesWaterLayer)
+	{
+		if (!WaterFieldState.IsValidFieldCell(CellX, CellY))
+		{
+			return;
+		}
+
+		WaterFieldState.SetTerrainElevationAtFieldCell(CellX, CellY, ElevationCm);
+		return;
+	}
+
 	if (!IsValidCell(CellX, CellY))
 	{
 		return;
@@ -479,7 +613,11 @@ void FTDFluidGpuSolverProxy::PrepareStep(float DeltaTime, TConstArrayView<FTDFlu
 	PreparedStamps.Reserve(PreparedStamps.Num() + PlaneStamps.Num());
 	for (const FTDFluidBrushStamp& PlaneStamp : PlaneStamps)
 	{
-		PreparedStamps.Add(MakeStampInput(PlaneStamp));
+		PreparedStamps.Add(MakeStampInput(PlaneStamp, Settings.bUsesWaterLayer));
+	}
+	if (Settings.bUsesWaterLayer)
+	{
+		WaterFieldState.RasterizeDirtyCells();
 	}
 	bHasPreparedStep = true;
 }
@@ -491,7 +629,9 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 	FTextureRenderTargetResource* VelocityOutput,
 	FTDFluidGpuActorInput& OutActorInput,
 	FTextureRenderTargetResource* AuxOutput,
-	FTextureRenderTargetResource* TransmittanceOutput)
+	FTextureRenderTargetResource* TransmittanceOutput,
+	FTextureRenderTargetResource* WaterSurfaceOutput,
+	int32 WaterProbeFirstSlot)
 {
 	if (!bHasPreparedStep || !IsInitialized() || !HasActorKey())
 	{
@@ -520,7 +660,14 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 	OutActorInput.TransmittanceOutput = TransmittanceOutput;
 	OutActorInput.Transmittance = PendingTransmittanceInput;
 
-	RecordSubmission(FrameNumber, TileIndex);
+	int32 SubmittedWaterProbeCount = 0;
+	if (Settings.bUsesWaterLayer)
+	{
+		CSV_SCOPED_TIMING_STAT(TDFluid, WaterGatherStep);
+		SubmittedWaterProbeCount = GatherWaterStep(OutActorInput, WaterSurfaceOutput, WaterProbeFirstSlot);
+	}
+
+	RecordSubmission(FrameNumber, TileIndex, WaterProbeFirstSlot, SubmittedWaterProbeCount);
 	AdvanceSimulationTime(PreparedDeltaTimeSeconds);
 	PreparedStamps.Reset();
 	PendingShiftCells = FIntPoint::ZeroValue;
@@ -543,13 +690,24 @@ bool FTDFluidGpuSolverProxy::ConsumeReadbackFrame(const FTDFluidGpuReadbackFrame
 
 	const FTDFluidGpuSubmissionRecord Submission = RecentSubmissions[RecordIndex];
 	RecentSubmissions.RemoveAt(0, RecordIndex + 1, EAllowShrinking::No);
-	return ReadbackField.CopyFromAtlasTile(
+	const bool bHasCopiedTile = ReadbackField.CopyFromAtlasTile(
 		ReadbackFrame.Texels,
 		ReadbackFrame.Layout.GetAtlasSize(),
 		ReadbackFrame.Layout.GetTileOrigin(Submission.TileIndex),
 		ReadbackFrame.FrameNumber,
 		Submission.WindowCenterPlaneCm,
 		Submission.ExtentCm);
+	ConsumeWaterProbeSamples(ReadbackFrame, Submission);
+	return bHasCopiedTile;
+}
+
+void FTDFluidGpuSolverProxy::AssignActorKey(uint64 InActorKey)
+{
+	ActorKey = InActorKey;
+	if (Settings.bUsesWaterLayer)
+	{
+		WaterFieldState.RequestFullUpload(ProxyWaterFullUploadGatherCount);
+	}
 }
 
 uint64 FTDFluidGpuSolverProxy::ReleaseActorKey()
@@ -577,7 +735,7 @@ void FTDFluidGpuSolverProxy::ShiftPendingTerrainUpdates(const FIntPoint& ShiftCe
 	});
 }
 
-void FTDFluidGpuSolverProxy::RecordSubmission(uint32 FrameNumber, int32 TileIndex)
+void FTDFluidGpuSolverProxy::RecordSubmission(uint32 FrameNumber, int32 TileIndex, int32 WaterProbeFirstSlot, int32 WaterProbeCount)
 {
 	if (RecentSubmissions.Num() >= MaximumRecentSubmissionCount)
 	{
@@ -589,6 +747,59 @@ void FTDFluidGpuSolverProxy::RecordSubmission(uint32 FrameNumber, int32 TileInde
 	Submission.TileIndex = TileIndex;
 	Submission.WindowCenterPlaneCm = CenterPlaneCm;
 	Submission.ExtentCm = Settings.ExtentCm;
+	Submission.WaterProbeFirstSlot = WaterProbeFirstSlot;
+	Submission.WaterProbeCount = WaterProbeCount;
+	Submission.WaterProbeGeneration = WaterProbeGeneration;
+}
+
+int32 FTDFluidGpuSolverProxy::GatherWaterStep(FTDFluidGpuActorInput& OutActorInput, FTextureRenderTargetResource* WaterSurfaceOutput, int32 WaterProbeFirstSlot)
+{
+	FTDFluidGpuBatch::ApplyWaterConsoleOverrides(OutActorInput.Settings);
+	const FTDFluidGpuBatchKey GatheredKey = FTDFluidGpuBatch::MakeKey(OutActorInput.Settings);
+	if (!bHasGatheredBatchKey || !(GatheredKey == LastGatheredBatchKey))
+	{
+		WaterFieldState.RequestFullUpload(ProxyWaterFullUploadGatherCount);
+		LastGatheredBatchKey = GatheredKey;
+		bHasGatheredBatchKey = true;
+	}
+
+	if (!FMath::IsFinite(PreparedDeltaTimeSeconds) || PreparedDeltaTimeSeconds <= 0.0f)
+	{
+		return 0;
+	}
+
+	WaterFieldState.MoveUpdatesInto(OutActorInput);
+	OutActorInput.WaterTerrainReferenceZCm = WaterTerrainReferenceZCm;
+	OutActorInput.WaterSurfaceOutput = WaterSurfaceOutput;
+	OutActorInput.WaterProbeFirstSlot = WaterProbeFirstSlot;
+
+	const int32 ProbeSlotCapacity = FMath::Max(TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame - WaterProbeFirstSlot, 0);
+	const int32 ProbeCount = FMath::Min(WaterProbePlanePoints.Num(), ProbeSlotCapacity);
+	OutActorInput.WaterProbeCells.Reset(ProbeCount);
+	for (int32 ProbeIndex = 0; ProbeIndex < ProbeCount; ++ProbeIndex)
+	{
+		OutActorInput.WaterProbeCells.Add(ProxyMapWaterProbePlanePointToCell(*this, WaterProbePlanePoints[ProbeIndex]));
+	}
+	return ProbeCount;
+}
+
+void FTDFluidGpuSolverProxy::ConsumeWaterProbeSamples(const FTDFluidGpuReadbackFrame& ReadbackFrame, const FTDFluidGpuSubmissionRecord& Submission)
+{
+	if (Submission.WaterProbeCount <= 0 || Submission.WaterProbeFirstSlot < 0)
+	{
+		return;
+	}
+
+	const int32 EndSlot = Submission.WaterProbeFirstSlot + Submission.WaterProbeCount;
+	if (ReadbackFrame.WaterProbeSamples.Num() < EndSlot)
+	{
+		return;
+	}
+
+	LatestWaterProbeSamples.Reset(Submission.WaterProbeCount);
+	LatestWaterProbeSamples.Append(ReadbackFrame.WaterProbeSamples.GetData() + Submission.WaterProbeFirstSlot, Submission.WaterProbeCount);
+	LatestWaterProbeFrameNumber = ReadbackFrame.FrameNumber;
+	LatestWaterProbeGeneration = Submission.WaterProbeGeneration;
 }
 
 void FTDFluidGpuSolverProxy::AdvanceSimulationTime(float DeltaTime)

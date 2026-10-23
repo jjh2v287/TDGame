@@ -16,6 +16,12 @@ namespace
 		TEXT("FluidFX solver backend. 0 = Follow the preset setting, 1 = Use the GPU solver when possible, 2 = Force the CPU solver."),
 		ECVF_Default);
 
+	TAutoConsoleVariable<int32> CVarTDFluidWaterGpu(
+		TEXT("TD.FluidFX.WaterGpu"),
+		0,
+		TEXT("1 lets FluidFX actors with the water layer run on the GPU solver when the other backend rules allow it. 0 keeps every water layer actor on the CPU solver."),
+		ECVF_Default);
+
 	ETDFluidGpuBackendOverride ResolveBackendOverride(int32 ConsoleValue)
 	{
 		if (ConsoleValue == 1)
@@ -43,7 +49,7 @@ namespace
 		{
 			return false;
 		}
-		if (Query.bIsWaterLayerActive)
+		if (Query.bIsWaterLayerActive && !Environment.bAllowsWaterLayerOnGpu)
 		{
 			return false;
 		}
@@ -63,6 +69,7 @@ FTDFluidGpuBackendEnvironment FTDFluidGpuBackendSelection::CaptureEnvironment()
 {
 	FTDFluidGpuBackendEnvironment Environment;
 	Environment.Override = ResolveBackendOverride(CVarFluidSolverBackend.GetValueOnAnyThread());
+	Environment.bAllowsWaterLayerOnGpu = CVarTDFluidWaterGpu.GetValueOnAnyThread() == 1;
 	Environment.bHasRenderingRhi = !GUsingNullRHI && FApp::CanEverRender();
 	if (!Environment.bHasRenderingRhi)
 	{
@@ -87,6 +94,8 @@ FTDFluidGpuBackendDecision FTDFluidGpuBackendSelection::Decide(const FTDFluidGpu
 	}
 
 	Decision.bUsesGpu = true;
-	Decision.Resolution = FTDFluidGpuBatch::ResolveResolutionTier(Query.RequestedResolution);
+	Decision.Resolution = (Query.bIsWaterLayerActive && !Query.bIsSimplePainter)
+		? FTDFluidGpuBatch::ResolveWaterResolutionTier(Query.RequestedResolution)
+		: FTDFluidGpuBatch::ResolveResolutionTier(Query.RequestedResolution);
 	return Decision;
 }

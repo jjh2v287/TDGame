@@ -7,6 +7,8 @@
 #include "TDFluidLiveActor.generated.h"
 
 struct FCollisionQueryParams;
+struct FTraceDatum;
+struct FTraceHandle;
 
 class APlayerController;
 class UBoxComponent;
@@ -15,6 +17,7 @@ class UStaticMeshComponent;
 class UTDCombatComponent;
 class UTDFluidLiveComponent;
 class UTDFluidPresetAsset;
+class UWorld;
 
 UCLASS()
 class TDGAME_API ATDFluidLiveActor : public AActor
@@ -90,6 +93,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveTerrain", meta = (ClampMin = "1"))
 	int32 MaxTerrainTracesPerTick = 512;
 
+	UPROPERTY(EditAnywhere, Category = "FluidFX")
+	bool bUseAsyncTerrainTraces = true;
+
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -126,7 +132,7 @@ protected:
 	virtual float ResolveTerrainMissElevationCm(int32 CellX, int32 CellY) const { return static_cast<float>(GetActorLocation().Z); }
 	virtual void AddTerrainTraceIgnoredActors(FCollisionQueryParams& QueryParams) const {}
 	virtual void OnTerrainSamplingCompleted() {}
-	bool IsTerrainSamplingComplete() const { return bIsTerrainQueueCurrent && PendingTerrainCells.IsEmpty(); }
+	bool IsTerrainSamplingComplete() const { return bIsTerrainQueueCurrent && PendingTerrainCells.IsEmpty() && TerrainTraceSlots.IsEmpty() && !bShouldCompleteTerrainSampling; }
 
 private:
 	struct FTDFluidCombatBinding
@@ -134,6 +140,15 @@ private:
 		TWeakObjectPtr<UTDCombatComponent> CombatComponent;
 		FDelegateHandle DamageHandle;
 		FDelegateHandle DeathHandle;
+	};
+
+	struct FTDFluidTerrainTraceSlot
+	{
+		FIntPoint Cell = FIntPoint::ZeroValue;
+		float ImpactZ = 0.0f;
+		bool bIsDelivered = false;
+		bool bDidHit = false;
+		bool bIsSettled = false;
 	};
 
 	void SyncVolumeExtentsWithSimulation();
@@ -152,6 +167,12 @@ private:
 	void InvalidateTerrainQueueIfSolverGridChanged();
 	void ShiftTerrainQueueWithWindow(const FVector2D& CenterBeforeStep);
 	void SampleQueuedTerrainWithinBudget();
+	FCollisionQueryParams BuildTerrainTraceQueryParams(const UWorld& World) const;
+	void RequestQueuedTerrainTraces(UWorld& World);
+	void OnTerrainTraceFinished(const FTraceHandle& TraceHandle, FTraceDatum& TraceDatum);
+	void ApplyDeliveredTerrainTraceResults();
+	void DiscardTerrainTraceSlots();
+	void CompleteTerrainSamplingIfSettled();
 	FVector2D ResolveDesiredSimulationCenter() const;
 	void UpdatePlaneBasis();
 	void PlaceChildrenOnSolverPlane();
@@ -164,9 +185,12 @@ private:
 	TMap<TPair<FObjectKey, FName>, FVector> CurrentBoneLocations;
 	TMap<FObjectKey, FTDFluidCombatBinding> CombatBindings;
 	TArray<FIntPoint> PendingTerrainCells;
+	TArray<FTDFluidTerrainTraceSlot> TerrainTraceSlots;
 	FVector2D TerrainQueuedExtentCm = FVector2D::ZeroVector;
 	int32 TerrainQueuedResolution = 0;
 	int32 TerrainQueuedGeneration = 0;
+	int32 AwaitedTerrainTraceCount = 0;
+	uint32 TerrainTraceFirstSerial = 0;
 	FVector2D CenterBeforeSolverStep = FVector2D::ZeroVector;
 	FVector PreviousMouseBrushLocation = FVector::ZeroVector;
 
@@ -175,6 +199,7 @@ private:
 	bool bHasFiniteLifetime = false;
 	bool bHasSteppedWhileAwake = false;
 	bool bIsTerrainQueueCurrent = false;
+	bool bShouldCompleteTerrainSampling = false;
 	bool bHasPreparedSolverStep = false;
 	float RemainingLifetimeSeconds = 0.0f;
 	float LastStepDeltaSeconds = 0.0f;

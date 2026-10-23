@@ -286,6 +286,111 @@ namespace TDFluidWaterActorTestPrivate
 		TestWorld.TickWorld(0.4f);
 		return SampleWaterAt(WaterActor, FVector2D::ZeroVector).WaterDepthCm;
 	}
+
+	struct FTDFluidTerrainGridSnapshot
+	{
+		TArray<FTDFluidCellSample> Samples;
+		int32 TicksUntilAllKnown = INDEX_NONE;
+	};
+
+	FTDFluidTerrainGridSnapshot CaptureTerrainGridSnapshot(bool bUseAsyncTerrainTraces, int32 TickCount)
+	{
+		FTDFluidTerrainGridSnapshot Snapshot;
+		FTDFluidWaterActorTestWorld TestWorld;
+		UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, CubeMeshPath);
+		if (!CubeMesh)
+		{
+			return Snapshot;
+		}
+
+		AActor* Anchor = SpawnFollowAnchor(TestWorld.World, FVector::ZeroVector);
+		SpawnWaterRegionBox(TestWorld.World, FVector2D::ZeroVector, 250.0f, 0.0f);
+		SpawnCollidingBlock(TestWorld.World, CubeMesh, FVector(0.0, 0.0, -150.0), FVector(20.0, 20.0, 1.0), NAME_None);
+		SpawnCollidingBlock(TestWorld.World, CubeMesh, FVector(0.0, 0.0, -70.0), FVector(2.0, 2.0, 1.0), NAME_None);
+		ATDFluidWaterActor* WaterActor = SpawnWaterActor(TestWorld.World, Anchor, MakeWaterTestPreset(TestWorld.World, ETDFluidPresetKind::River), FVector::ZeroVector);
+		if (!WaterActor)
+		{
+			return Snapshot;
+		}
+
+		WaterActor->bUseAsyncTerrainTraces = bUseAsyncTerrainTraces;
+		const FTDFluidGrid2DSolver& Solver = WaterActor->LiveComponent->GetSolver();
+		for (int32 Tick = 1; Tick <= TickCount; ++Tick)
+		{
+			TestWorld.TickWorld(StepSeconds);
+			if (Snapshot.TicksUntilAllKnown == INDEX_NONE && Solver.IsTerrainSamplingCompleteForWater())
+			{
+				Snapshot.TicksUntilAllKnown = Tick;
+			}
+		}
+
+		for (int32 CellY = 0; CellY < TestGridResolution; ++CellY)
+		{
+			for (int32 CellX = 0; CellX < TestGridResolution; ++CellX)
+			{
+				Snapshot.Samples.Add(Solver.SampleAtCell(CellX, CellY));
+			}
+		}
+		return Snapshot;
+	}
+
+	struct FTDFluidStripSlopeTiming
+	{
+		int32 FirstInWindowTick = INDEX_NONE;
+		int32 SlopeUpdatedTick = INDEX_NONE;
+	};
+
+	FTDFluidStripSlopeTiming MeasureStripSlopeTiming()
+	{
+		constexpr int32 StationaryTickCount = 3;
+		constexpr int32 TotalTickCount = 16;
+		constexpr double SlabEdgeProbeXCm = 405.0;
+		constexpr double SlabEdgeSlopeThreshold = 1.0;
+		constexpr float CellSizeCm = TestExtentCm / TestGridResolution;
+
+		FTDFluidStripSlopeTiming Timing;
+		FTDFluidWaterActorTestWorld TestWorld;
+		UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, CubeMeshPath);
+		if (!CubeMesh)
+		{
+			return Timing;
+		}
+
+		AActor* Anchor = SpawnFollowAnchor(TestWorld.World, FVector::ZeroVector);
+		SpawnWaterRegionBox(TestWorld.World, FVector2D::ZeroVector, 250.0f, 0.0f);
+		SpawnCollidingBlock(TestWorld.World, CubeMesh, FVector(0.0, 0.0, -150.0), FVector(20.0, 20.0, 1.0), NAME_None);
+		SpawnCollidingBlock(TestWorld.World, CubeMesh, FVector(600.0, 0.0, -70.0), FVector(4.0, 4.0, 1.0), NAME_None);
+		ATDFluidWaterActor* WaterActor = SpawnWaterActor(TestWorld.World, Anchor, MakeWaterTestPreset(TestWorld.World, ETDFluidPresetKind::River), FVector::ZeroVector);
+		if (!WaterActor)
+		{
+			return Timing;
+		}
+
+		WaterActor->bUseAsyncTerrainTraces = true;
+		const FTDFluidGrid2DSolver& Solver = WaterActor->LiveComponent->GetSolver();
+		for (int32 Tick = 1; Tick <= TotalTickCount; ++Tick)
+		{
+			const int32 ShiftCount = FMath::Max(Tick - StationaryTickCount, 0);
+			Anchor->SetActorLocation(FVector(CellSizeCm * ShiftCount, 0.0, 0.0));
+			TestWorld.TickWorld(StepSeconds);
+
+			FTDFluidCellSample Sample;
+			if (!Solver.SampleAtWorldPosition(FVector2D(SlabEdgeProbeXCm, 0.0), Sample))
+			{
+				continue;
+			}
+
+			if (Timing.FirstInWindowTick == INDEX_NONE)
+			{
+				Timing.FirstInWindowTick = Tick;
+			}
+			if (Timing.SlopeUpdatedTick == INDEX_NONE && Sample.TerrainSlope.X > SlabEdgeSlopeThreshold)
+			{
+				Timing.SlopeUpdatedTick = Tick;
+			}
+		}
+		return Timing;
+	}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -504,6 +609,456 @@ bool FTDFluidWaterActorTraceIgnoresTaggedActorsTest::RunTest(const FString& Para
 
 	TestNearlyEqual(TEXT("Untagged blockers above the water hide the depth"), DepthWithoutTags, 0.0f, 0.01f);
 	TestNearlyEqual(TEXT("Tagged surface and trace-ignore blockers leave the ground depth"), DepthWithTags, 100.0f, 0.5f);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWaterActorAsyncTerrainTracesTest,
+	"TDGame.FluidFX.WaterActor.AsyncTerrainTracesMatchSync",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWaterActorAsyncTerrainTracesTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidWaterActorTestPrivate;
+
+	constexpr int32 SnapshotTickCount = 8;
+	constexpr int32 MaximumAsyncTicksUntilAllKnown = 3;
+	constexpr int32 CellCount = TestGridResolution * TestGridResolution;
+
+	const FTDFluidTerrainGridSnapshot SyncSnapshot = CaptureTerrainGridSnapshot(false, SnapshotTickCount);
+	const FTDFluidTerrainGridSnapshot AsyncSnapshot = CaptureTerrainGridSnapshot(true, SnapshotTickCount);
+	if (!TestEqual(TEXT("Sync snapshot covers the grid"), SyncSnapshot.Samples.Num(), CellCount) || !TestEqual(TEXT("Async snapshot covers the grid"), AsyncSnapshot.Samples.Num(), CellCount))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("The synchronous run knows every cell"), SyncSnapshot.TicksUntilAllKnown != INDEX_NONE);
+	TestTrue(*FString::Printf(TEXT("The asynchronous run knows every cell within %d ticks (%d)"), MaximumAsyncTicksUntilAllKnown, AsyncSnapshot.TicksUntilAllKnown), AsyncSnapshot.TicksUntilAllKnown != INDEX_NONE && AsyncSnapshot.TicksUntilAllKnown <= MaximumAsyncTicksUntilAllKnown);
+	TestTrue(*FString::Printf(TEXT("Asynchronous results arrive at least one tick after the synchronous ones (%d vs %d)"), AsyncSnapshot.TicksUntilAllKnown, SyncSnapshot.TicksUntilAllKnown), AsyncSnapshot.TicksUntilAllKnown >= SyncSnapshot.TicksUntilAllKnown + 1);
+
+	int32 MismatchedCellCount = 0;
+	for (int32 CellIndex = 0; CellIndex < CellCount; ++CellIndex)
+	{
+		const FTDFluidCellSample& SyncSample = SyncSnapshot.Samples[CellIndex];
+		const FTDFluidCellSample& AsyncSample = AsyncSnapshot.Samples[CellIndex];
+		const bool bIsSame = SyncSample.bIsTerrainKnown == AsyncSample.bIsTerrainKnown
+			&& FMath::IsNearlyEqual(SyncSample.WaterDepthCm, AsyncSample.WaterDepthCm, 0.01f)
+			&& SyncSample.TerrainSlope.Equals(AsyncSample.TerrainSlope, 0.0001);
+		MismatchedCellCount += bIsSame ? 0 : 1;
+	}
+	TestEqual(TEXT("Every cell holds the same terrain depth and slope as the synchronous run"), MismatchedCellCount, 0);
+
+	const int32 CenterCellIndex = (TestGridResolution / 2) * TestGridResolution + TestGridResolution / 2;
+	const int32 GroundCellIndex = (TestGridResolution / 2) * TestGridResolution + 4;
+	const int32 SlabEdgeCellIndex = (TestGridResolution / 2) * TestGridResolution + 10;
+	TestNearlyEqual(TEXT("The raised slab leaves 20 cm of water at the center"), AsyncSnapshot.Samples[CenterCellIndex].WaterDepthCm, 20.0f, 0.5f);
+	TestNearlyEqual(TEXT("The ground leaves 100 cm of water away from the slab"), AsyncSnapshot.Samples[GroundCellIndex].WaterDepthCm, 100.0f, 0.5f);
+	TestTrue(TEXT("The slab edge produced a terrain slope"), AsyncSnapshot.Samples[SlabEdgeCellIndex].TerrainSlope.X > 1.0);
+
+	constexpr int32 MaximumStripSlopeTicks = 2;
+	const FTDFluidStripSlopeTiming StripTiming = MeasureStripSlopeTiming();
+	TestTrue(TEXT("The slab edge enters the window while it follows the moving anchor"), StripTiming.FirstInWindowTick != INDEX_NONE);
+	TestTrue(
+		*FString::Printf(TEXT("During repeated window shifts the slope of a newly sampled strip cell updates within %d ticks (in window at tick %d, slope at tick %d)"), MaximumStripSlopeTicks, StripTiming.FirstInWindowTick, StripTiming.SlopeUpdatedTick),
+		StripTiming.SlopeUpdatedTick != INDEX_NONE && StripTiming.SlopeUpdatedTick - StripTiming.FirstInWindowTick <= MaximumStripSlopeTicks);
+	return true;
+}
+
+namespace TDFluidAsyncTerrainTestPrivate
+{
+	using namespace TDFluidWaterActorTestPrivate;
+
+	constexpr float AsyncTestCellSizeCm = TestExtentCm / TestGridResolution;
+	constexpr float SettleSeconds = 0.4f;
+	constexpr int32 MeasuredTickCount = 10;
+	constexpr int32 PartialBedTickCount = 8;
+	constexpr int32 WakeGridResolution = 48;
+	constexpr int32 WakeMeasuredTickCount = 16;
+	constexpr float PartialBedDeepFallbackDepthCm = 250.0f;
+
+	struct FTDFluidAsyncTerrainRun
+	{
+		TArray<FTDFluidCellSample> Samples;
+		FVector2D WindowCenterWorld = FVector2D::ZeroVector;
+		float WaterLayerDisplayAlpha = 0.0f;
+		int32 TicksUntilAllKnown = INDEX_NONE;
+		bool bIsSceneReady = false;
+	};
+
+	struct FTDFluidAsyncTerrainScene
+	{
+		AActor* Anchor = nullptr;
+		UTDFluidPresetAsset* Preset = nullptr;
+		ATDFluidWaterActor* WaterActor = nullptr;
+	};
+
+	FTDFluidAsyncTerrainScene SpawnLargeWaterScene(UWorld* World, UStaticMesh* CubeMesh, const FVector& SlabCenter, const FVector& SlabScale, bool bUseAsyncTerrainTraces)
+	{
+		FTDFluidAsyncTerrainScene Scene;
+		Scene.Anchor = SpawnFollowAnchor(World, FVector::ZeroVector);
+		SpawnWaterRegionBox(World, FVector2D::ZeroVector, 1000.0f, 0.0f);
+		SpawnCollidingBlock(World, CubeMesh, FVector(0.0, 0.0, -150.0), FVector(20.0, 20.0, 1.0), NAME_None);
+		SpawnCollidingBlock(World, CubeMesh, SlabCenter, SlabScale, NAME_None);
+		Scene.Preset = MakeWaterTestPreset(World, ETDFluidPresetKind::River);
+		Scene.WaterActor = SpawnWaterActor(World, Scene.Anchor, Scene.Preset, FVector::ZeroVector);
+		if (Scene.WaterActor)
+		{
+			Scene.WaterActor->bUseAsyncTerrainTraces = bUseAsyncTerrainTraces;
+		}
+		return Scene;
+	}
+
+	void RecordTicksUntilAllKnown(FTDFluidWaterActorTestWorld& TestWorld, ATDFluidWaterActor& WaterActor, int32 TickCount, FTDFluidAsyncTerrainRun& InOutRun)
+	{
+		const FTDFluidGrid2DSolver& Solver = WaterActor.LiveComponent->GetSolver();
+		for (int32 Tick = 1; Tick <= TickCount; ++Tick)
+		{
+			TestWorld.TickWorld(StepSeconds);
+			const bool bIsAllKnown = WaterActor.LiveComponent->IsSimulationAwake() && Solver.IsTerrainSamplingCompleteForWater();
+			if (InOutRun.TicksUntilAllKnown == INDEX_NONE && bIsAllKnown)
+			{
+				InOutRun.TicksUntilAllKnown = Tick;
+			}
+		}
+	}
+
+	void ReadGridSamples(ATDFluidWaterActor& WaterActor, FTDFluidAsyncTerrainRun& InOutRun)
+	{
+		const FTDFluidGrid2DSolver& Solver = WaterActor.LiveComponent->GetSolver();
+		const int32 Resolution = Solver.GetResolution();
+		InOutRun.Samples.Reset(Resolution * Resolution);
+		for (int32 CellY = 0; CellY < Resolution; ++CellY)
+		{
+			for (int32 CellX = 0; CellX < Resolution; ++CellX)
+			{
+				InOutRun.Samples.Add(Solver.SampleAtCell(CellX, CellY));
+			}
+		}
+		InOutRun.WindowCenterWorld = Solver.GetCenterWorld();
+		InOutRun.WaterLayerDisplayAlpha = WaterActor.GetWaterLayerDisplayAlpha();
+	}
+
+	int32 CountMismatchedCells(const FTDFluidAsyncTerrainRun& Reference, const FTDFluidAsyncTerrainRun& Candidate, int32& OutFirstMismatchIndex)
+	{
+		OutFirstMismatchIndex = INDEX_NONE;
+		const int32 CellCount = FMath::Min(Reference.Samples.Num(), Candidate.Samples.Num());
+		int32 MismatchedCellCount = 0;
+		for (int32 CellIndex = 0; CellIndex < CellCount; ++CellIndex)
+		{
+			const FTDFluidCellSample& ReferenceSample = Reference.Samples[CellIndex];
+			const FTDFluidCellSample& CandidateSample = Candidate.Samples[CellIndex];
+			const bool bIsSame = ReferenceSample.bIsTerrainKnown == CandidateSample.bIsTerrainKnown
+				&& FMath::IsNearlyEqual(ReferenceSample.WaterDepthCm, CandidateSample.WaterDepthCm, 0.01f)
+				&& ReferenceSample.TerrainSlope.Equals(CandidateSample.TerrainSlope, 0.0001);
+			if (bIsSame)
+			{
+				continue;
+			}
+
+			if (OutFirstMismatchIndex == INDEX_NONE)
+			{
+				OutFirstMismatchIndex = CellIndex;
+			}
+			++MismatchedCellCount;
+		}
+		return MismatchedCellCount;
+	}
+
+	int32 CountKnownCells(const FTDFluidAsyncTerrainRun& Run)
+	{
+		int32 KnownCellCount = 0;
+		for (const FTDFluidCellSample& Sample : Run.Samples)
+		{
+			KnownCellCount += Sample.bIsTerrainKnown ? 1 : 0;
+		}
+		return KnownCellCount;
+	}
+
+	void ReactivateWaterActor(FTDFluidWaterActorTestWorld& TestWorld, ATDFluidWaterActor& WaterActor, UTDFluidPresetAsset* Preset)
+	{
+		WaterActor.SetPooledInactive(true);
+		WaterActor.SetPooledInactive(false);
+		WaterActor.InitializeFromPreset(Preset, 0.0f);
+		TestWorld.GetFluidSubsystem()->NotifyWaterSurfacesChanged();
+	}
+
+	FTDFluidAsyncTerrainRun CapturePartialBedRun(bool bUseAsyncTerrainTraces)
+	{
+		FTDFluidAsyncTerrainRun Run;
+		FTDFluidWaterActorTestWorld TestWorld;
+		UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, CubeMeshPath);
+		if (!CubeMesh)
+		{
+			return Run;
+		}
+
+		AActor* Anchor = SpawnFollowAnchor(TestWorld.World, FVector::ZeroVector);
+		SpawnWaterRegionBox(TestWorld.World, FVector2D::ZeroVector, 200.0f, 0.0f);
+		SpawnCollidingBlock(TestWorld.World, CubeMesh, FVector(-150.0, 0.0, -150.0), FVector(3.0, 20.0, 1.0), NAME_None);
+		ATDFluidWaterActor* WaterActor = SpawnWaterActor(TestWorld.World, Anchor, MakeWaterTestPreset(TestWorld.World, ETDFluidPresetKind::River), FVector::ZeroVector);
+		if (!WaterActor)
+		{
+			return Run;
+		}
+
+		WaterActor->bUseAsyncTerrainTraces = bUseAsyncTerrainTraces;
+		WaterActor->DeepWaterFallbackDepthCm = PartialBedDeepFallbackDepthCm;
+		RecordTicksUntilAllKnown(TestWorld, *WaterActor, PartialBedTickCount, Run);
+		ReadGridSamples(*WaterActor, Run);
+		return Run;
+	}
+
+	FTDFluidAsyncTerrainRun CaptureWakeRefillRun(bool bUseAsyncTerrainTraces)
+	{
+		FTDFluidAsyncTerrainRun Run;
+		FTDFluidWaterActorTestWorld TestWorld;
+		UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, CubeMeshPath);
+		if (!CubeMesh)
+		{
+			return Run;
+		}
+
+		AActor* Anchor = SpawnFollowAnchor(TestWorld.World, FVector::ZeroVector);
+		SpawnCollidingBlock(TestWorld.World, CubeMesh, FVector(0.0, 0.0, -150.0), FVector(20.0, 20.0, 1.0), NAME_None);
+		SpawnCollidingBlock(TestWorld.World, CubeMesh, FVector(0.0, 0.0, -70.0), FVector(2.0, 2.0, 1.0), NAME_None);
+		UTDFluidPresetAsset* Preset = MakeWaterTestPreset(TestWorld.World, ETDFluidPresetKind::River);
+		Preset->SimulationConfig.GridResolution = WakeGridResolution;
+		ATDFluidWaterActor* WaterActor = SpawnWaterActor(TestWorld.World, Anchor, Preset, FVector::ZeroVector);
+		if (!WaterActor)
+		{
+			return Run;
+		}
+
+		WaterActor->bUseAsyncTerrainTraces = bUseAsyncTerrainTraces;
+		WaterActor->SleepDelaySeconds = 0.1f;
+		TestWorld.TickWorld(1.0f);
+		Run.bIsSceneReady = !WaterActor->LiveComponent->IsSimulationAwake();
+
+		SpawnWaterRegionBox(TestWorld.World, FVector2D::ZeroVector, 1000.0f, 0.0f);
+		TestWorld.GetFluidSubsystem()->NotifyWaterSurfacesChanged();
+		RecordTicksUntilAllKnown(TestWorld, *WaterActor, WakeMeasuredTickCount, Run);
+		ReadGridSamples(*WaterActor, Run);
+		return Run;
+	}
+
+	FTDFluidAsyncTerrainRun CaptureInFlightWindowShiftRun(bool bUseAsyncTerrainTraces)
+	{
+		constexpr int32 FirstShiftCellCount = 3;
+		constexpr int32 SecondShiftCellCount = 2;
+
+		FTDFluidAsyncTerrainRun Run;
+		FTDFluidWaterActorTestWorld TestWorld;
+		UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, CubeMeshPath);
+		if (!CubeMesh)
+		{
+			return Run;
+		}
+
+		const FTDFluidAsyncTerrainScene Scene = SpawnLargeWaterScene(TestWorld.World, CubeMesh, FVector(305.0, 0.0, -70.0), FVector(1.1, 20.0, 1.0), bUseAsyncTerrainTraces);
+		if (!Scene.WaterActor)
+		{
+			return Run;
+		}
+
+		TestWorld.TickWorld(SettleSeconds);
+		Run.bIsSceneReady = Scene.WaterActor->LiveComponent->GetSolver().IsTerrainSamplingCompleteForWater();
+
+		Scene.Anchor->SetActorLocation(FVector(FirstShiftCellCount * AsyncTestCellSizeCm, 0.0, 0.0));
+		Scene.WaterActor->StepLiveActor(StepSeconds);
+		Scene.Anchor->SetActorLocation(FVector((FirstShiftCellCount + SecondShiftCellCount) * AsyncTestCellSizeCm, 0.0, 0.0));
+		RecordTicksUntilAllKnown(TestWorld, *Scene.WaterActor, MeasuredTickCount, Run);
+		ReadGridSamples(*Scene.WaterActor, Run);
+		return Run;
+	}
+
+	FTDFluidAsyncTerrainRun CaptureInFlightReactivationRun(bool bUseAsyncTerrainTraces)
+	{
+		constexpr int32 ReactivationShiftCellCount = 8;
+
+		FTDFluidAsyncTerrainRun Run;
+		FTDFluidWaterActorTestWorld TestWorld;
+		UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, CubeMeshPath);
+		if (!CubeMesh)
+		{
+			return Run;
+		}
+
+		const FTDFluidAsyncTerrainScene Scene = SpawnLargeWaterScene(TestWorld.World, CubeMesh, FVector(0.0, 0.0, -70.0), FVector(2.0, 2.0, 1.0), bUseAsyncTerrainTraces);
+		if (!Scene.WaterActor)
+		{
+			return Run;
+		}
+
+		TestWorld.TickWorld(SettleSeconds);
+		Run.bIsSceneReady = Scene.WaterActor->LiveComponent->GetSolver().IsTerrainSamplingCompleteForWater();
+
+		ReactivateWaterActor(TestWorld, *Scene.WaterActor, Scene.Preset);
+		Scene.WaterActor->StepLiveActor(StepSeconds);
+		Scene.Anchor->SetActorLocation(FVector(ReactivationShiftCellCount * AsyncTestCellSizeCm, 0.0, 0.0));
+		ReactivateWaterActor(TestWorld, *Scene.WaterActor, Scene.Preset);
+		RecordTicksUntilAllKnown(TestWorld, *Scene.WaterActor, MeasuredTickCount, Run);
+		ReadGridSamples(*Scene.WaterActor, Run);
+		return Run;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWaterActorAsyncTerrainMissTest,
+	"TDGame.FluidFX.WaterActor.AsyncTerrainMissMatchesSync",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWaterActorAsyncTerrainMissTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidWaterActorTestPrivate;
+	using namespace TDFluidAsyncTerrainTestPrivate;
+
+	constexpr int32 MaximumAsyncTicksUntilAllKnown = 3;
+	constexpr int32 CellCount = TestGridResolution * TestGridResolution;
+	constexpr int32 CenterRowOffset = (TestGridResolution / 2) * TestGridResolution;
+	constexpr int32 BedColumn = 10;
+	constexpr int32 BedEdgeColumn = 15;
+	constexpr int32 MissInsideColumn = 22;
+	constexpr int32 RegionEdgeColumn = 26;
+	constexpr int32 MissOutsideColumn = 29;
+
+	const FTDFluidAsyncTerrainRun SyncRun = CapturePartialBedRun(false);
+	const FTDFluidAsyncTerrainRun AsyncRun = CapturePartialBedRun(true);
+	if (!TestEqual(TEXT("Sync run covers the grid"), SyncRun.Samples.Num(), CellCount) || !TestEqual(TEXT("Async run covers the grid"), AsyncRun.Samples.Num(), CellCount))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("The synchronous run knows every cell"), SyncRun.TicksUntilAllKnown != INDEX_NONE);
+	TestTrue(*FString::Printf(TEXT("The asynchronous run knows every cell within %d ticks (%d)"), MaximumAsyncTicksUntilAllKnown, AsyncRun.TicksUntilAllKnown), AsyncRun.TicksUntilAllKnown != INDEX_NONE && AsyncRun.TicksUntilAllKnown <= MaximumAsyncTicksUntilAllKnown);
+
+	int32 FirstMismatchIndex = INDEX_NONE;
+	const int32 MismatchedCellCount = CountMismatchedCells(SyncRun, AsyncRun, FirstMismatchIndex);
+	TestEqual(*FString::Printf(TEXT("Every cell holds the same knowledge, depth and slope as the synchronous run (first mismatch at cell %d)"), FirstMismatchIndex), MismatchedCellCount, 0);
+
+	const FTDFluidCellSample& BedSample = AsyncRun.Samples[CenterRowOffset + BedColumn];
+	const FTDFluidCellSample& BedEdgeSample = AsyncRun.Samples[CenterRowOffset + BedEdgeColumn];
+	const FTDFluidCellSample& MissInsideSample = AsyncRun.Samples[CenterRowOffset + MissInsideColumn];
+	const FTDFluidCellSample& RegionEdgeSample = AsyncRun.Samples[CenterRowOffset + RegionEdgeColumn];
+	const FTDFluidCellSample& MissOutsideSample = AsyncRun.Samples[CenterRowOffset + MissOutsideColumn];
+	TestNearlyEqual(TEXT("A traced bed cell inside the region leaves 100 cm of water"), BedSample.WaterDepthCm, 100.0f, 0.5f);
+	TestNearlyEqual(TEXT("A missed cell inside the region gets the deep fallback depth"), MissInsideSample.WaterDepthCm, PartialBedDeepFallbackDepthCm, 0.5f);
+	TestTrue(TEXT("A missed cell outside the region is known"), MissOutsideSample.bIsTerrainKnown);
+	TestNearlyEqual(TEXT("A missed cell outside the region stays dry"), MissOutsideSample.WaterDepthCm, 0.0f, 0.01f);
+	TestTrue(*FString::Printf(TEXT("The bed edge drops toward the deep fallback elevation (%.3f)"), BedEdgeSample.TerrainSlope.X), BedEdgeSample.TerrainSlope.X < -1.0);
+	TestTrue(*FString::Printf(TEXT("The region edge rises from the deep fallback to the actor height (%.3f)"), RegionEdgeSample.TerrainSlope.X), RegionEdgeSample.TerrainSlope.X > 1.0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWaterActorAsyncTerrainWakeRefillTest,
+	"TDGame.FluidFX.WaterActor.AsyncTerrainWakeRefillMatchesSync",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWaterActorAsyncTerrainWakeRefillTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidWaterActorTestPrivate;
+	using namespace TDFluidAsyncTerrainTestPrivate;
+
+	constexpr int32 MaximumExtraAsyncTicks = 2;
+	constexpr int32 CellCount = WakeGridResolution * WakeGridResolution;
+	constexpr int32 CenterRowOffset = (WakeGridResolution / 2) * WakeGridResolution;
+	constexpr int32 SlabEdgeColumn = 15;
+
+	const FTDFluidAsyncTerrainRun SyncRun = CaptureWakeRefillRun(false);
+	const FTDFluidAsyncTerrainRun AsyncRun = CaptureWakeRefillRun(true);
+	if (!TestTrue(TEXT("Both water actors fell asleep before the water appeared"), SyncRun.bIsSceneReady && AsyncRun.bIsSceneReady)
+		|| !TestEqual(TEXT("Sync run covers the larger grid"), SyncRun.Samples.Num(), CellCount)
+		|| !TestEqual(TEXT("Async run covers the larger grid"), AsyncRun.Samples.Num(), CellCount))
+	{
+		return false;
+	}
+
+	TestTrue(*FString::Printf(TEXT("The woken grid needs more than one trace budget (synchronous ticks %d)"), SyncRun.TicksUntilAllKnown), SyncRun.TicksUntilAllKnown >= 2);
+	TestTrue(
+		*FString::Printf(TEXT("The asynchronous refill knows every cell within %d ticks of the synchronous one (%d vs %d)"), MaximumExtraAsyncTicks, AsyncRun.TicksUntilAllKnown, SyncRun.TicksUntilAllKnown),
+		AsyncRun.TicksUntilAllKnown != INDEX_NONE && AsyncRun.TicksUntilAllKnown <= SyncRun.TicksUntilAllKnown + MaximumExtraAsyncTicks);
+	TestEqual(TEXT("Every cell is known after the asynchronous refill"), CountKnownCells(AsyncRun), CellCount);
+
+	int32 FirstMismatchIndex = INDEX_NONE;
+	const int32 MismatchedCellCount = CountMismatchedCells(SyncRun, AsyncRun, FirstMismatchIndex);
+	TestEqual(*FString::Printf(TEXT("Every cell holds the same knowledge, depth and slope as the synchronous run (first mismatch at cell %d)"), FirstMismatchIndex), MismatchedCellCount, 0);
+
+	TestTrue(TEXT("The synchronous water layer fades in after the refill"), SyncRun.WaterLayerDisplayAlpha > 0.0f);
+	TestTrue(TEXT("The asynchronous water layer fades in after the refill"), AsyncRun.WaterLayerDisplayAlpha > 0.0f);
+
+	const double SlabEdgeSlope = FMath::Max(AsyncRun.Samples[CenterRowOffset + SlabEdgeColumn].TerrainSlope.X, AsyncRun.Samples[CenterRowOffset + SlabEdgeColumn + 1].TerrainSlope.X);
+	TestTrue(*FString::Printf(TEXT("The slab edge produced a terrain slope after the refill (%.3f)"), SlabEdgeSlope), SlabEdgeSlope > 1.0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWaterActorAsyncTerrainStaleResultsTest,
+	"TDGame.FluidFX.WaterActor.AsyncTerrainStaleResultsAreDiscarded",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWaterActorAsyncTerrainStaleResultsTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidWaterActorTestPrivate;
+	using namespace TDFluidAsyncTerrainTestPrivate;
+
+	constexpr int32 MaximumAsyncTicksUntilAllKnown = 4;
+	constexpr int32 CellCount = TestGridResolution * TestGridResolution;
+	constexpr int32 CenterRowOffset = (TestGridResolution / 2) * TestGridResolution;
+	constexpr double ShiftedWindowCenterX = 5.0 * AsyncTestCellSizeCm;
+	constexpr double ReactivatedWindowCenterX = 8.0 * AsyncTestCellSizeCm;
+
+	const FTDFluidAsyncTerrainRun SyncShiftRun = CaptureInFlightWindowShiftRun(false);
+	const FTDFluidAsyncTerrainRun AsyncShiftRun = CaptureInFlightWindowShiftRun(true);
+	if (!TestTrue(TEXT("Both window shift runs finished their first terrain pass"), SyncShiftRun.bIsSceneReady && AsyncShiftRun.bIsSceneReady)
+		|| !TestEqual(TEXT("Sync shift run covers the grid"), SyncShiftRun.Samples.Num(), CellCount)
+		|| !TestEqual(TEXT("Async shift run covers the grid"), AsyncShiftRun.Samples.Num(), CellCount))
+	{
+		return false;
+	}
+
+	TestNearlyEqual(TEXT("The synchronous window followed both shifts"), SyncShiftRun.WindowCenterWorld.X, ShiftedWindowCenterX, 0.5);
+	TestNearlyEqual(TEXT("The asynchronous window followed both shifts"), AsyncShiftRun.WindowCenterWorld.X, ShiftedWindowCenterX, 0.5);
+	TestTrue(*FString::Printf(TEXT("Window shift: the synchronous run knows every cell (%d)"), SyncShiftRun.TicksUntilAllKnown), SyncShiftRun.TicksUntilAllKnown != INDEX_NONE);
+	TestTrue(
+		*FString::Printf(TEXT("Window shift: results still in flight during the second shift land on the moved cells within %d ticks (%d)"), MaximumAsyncTicksUntilAllKnown, AsyncShiftRun.TicksUntilAllKnown),
+		AsyncShiftRun.TicksUntilAllKnown != INDEX_NONE && AsyncShiftRun.TicksUntilAllKnown <= MaximumAsyncTicksUntilAllKnown);
+	TestTrue(
+		*FString::Printf(TEXT("Window shift: the asynchronous results arrive after the synchronous ones (%d vs %d)"), AsyncShiftRun.TicksUntilAllKnown, SyncShiftRun.TicksUntilAllKnown),
+		AsyncShiftRun.TicksUntilAllKnown > SyncShiftRun.TicksUntilAllKnown);
+
+	int32 FirstShiftMismatchIndex = INDEX_NONE;
+	const int32 ShiftMismatchedCellCount = CountMismatchedCells(SyncShiftRun, AsyncShiftRun, FirstShiftMismatchIndex);
+	TestEqual(*FString::Printf(TEXT("Window shift: every cell matches the synchronous run (first mismatch at cell %d)"), FirstShiftMismatchIndex), ShiftMismatchedCellCount, 0);
+	TestNearlyEqual(TEXT("Window shift: a strip cell requested before the second shift keeps the slab depth (column 27)"), AsyncShiftRun.Samples[CenterRowOffset + 27].WaterDepthCm, 20.0f, 0.5f);
+	TestNearlyEqual(TEXT("Window shift: a strip cell requested before the second shift keeps the slab depth (column 28)"), AsyncShiftRun.Samples[CenterRowOffset + 28].WaterDepthCm, 20.0f, 0.5f);
+	TestNearlyEqual(TEXT("Window shift: a strip cell requested after the second shift sees the ground"), AsyncShiftRun.Samples[CenterRowOffset + 31].WaterDepthCm, 100.0f, 0.5f);
+
+	const FTDFluidAsyncTerrainRun SyncReactivationRun = CaptureInFlightReactivationRun(false);
+	const FTDFluidAsyncTerrainRun AsyncReactivationRun = CaptureInFlightReactivationRun(true);
+	if (!TestTrue(TEXT("Both reactivation runs finished their first terrain pass"), SyncReactivationRun.bIsSceneReady && AsyncReactivationRun.bIsSceneReady)
+		|| !TestEqual(TEXT("Sync reactivation run covers the grid"), SyncReactivationRun.Samples.Num(), CellCount)
+		|| !TestEqual(TEXT("Async reactivation run covers the grid"), AsyncReactivationRun.Samples.Num(), CellCount))
+	{
+		return false;
+	}
+
+	TestNearlyEqual(TEXT("The synchronous window followed the anchor after reactivation"), SyncReactivationRun.WindowCenterWorld.X, ReactivatedWindowCenterX, 0.5);
+	TestNearlyEqual(TEXT("The asynchronous window followed the anchor after reactivation"), AsyncReactivationRun.WindowCenterWorld.X, ReactivatedWindowCenterX, 0.5);
+	TestTrue(*FString::Printf(TEXT("Reactivation: the synchronous run knows every cell (%d)"), SyncReactivationRun.TicksUntilAllKnown), SyncReactivationRun.TicksUntilAllKnown != INDEX_NONE);
+	TestTrue(
+		*FString::Printf(TEXT("Reactivation: the new request knows every cell within %d ticks (%d)"), MaximumAsyncTicksUntilAllKnown, AsyncReactivationRun.TicksUntilAllKnown),
+		AsyncReactivationRun.TicksUntilAllKnown != INDEX_NONE && AsyncReactivationRun.TicksUntilAllKnown <= MaximumAsyncTicksUntilAllKnown);
+	TestTrue(
+		*FString::Printf(TEXT("Reactivation: the asynchronous results arrive after the synchronous ones (%d vs %d)"), AsyncReactivationRun.TicksUntilAllKnown, SyncReactivationRun.TicksUntilAllKnown),
+		AsyncReactivationRun.TicksUntilAllKnown > SyncReactivationRun.TicksUntilAllKnown);
+
+	int32 FirstReactivationMismatchIndex = INDEX_NONE;
+	const int32 ReactivationMismatchedCellCount = CountMismatchedCells(SyncReactivationRun, AsyncReactivationRun, FirstReactivationMismatchIndex);
+	TestEqual(*FString::Printf(TEXT("Reactivation: only the new request shaped the grid, every cell matches the synchronous run (first mismatch at cell %d)"), FirstReactivationMismatchIndex), ReactivationMismatchedCellCount, 0);
+
+	constexpr int32 SlabEdgeColumn = 2;
+	const double SlabEdgeSlope = FMath::Max(AsyncReactivationRun.Samples[CenterRowOffset + SlabEdgeColumn].TerrainSlope.X, AsyncReactivationRun.Samples[CenterRowOffset + SlabEdgeColumn + 1].TerrainSlope.X);
+	TestTrue(*FString::Printf(TEXT("Reactivation: the slab edge sits where the moved window sees it (%.3f)"), SlabEdgeSlope), SlabEdgeSlope > 1.0);
 	return true;
 }
 

@@ -700,7 +700,9 @@ bool FTDFluidPlaneModeDisablesTerrainTest::RunTest(const FString& Parameters)
 		return false;
 	}
 	GroundActor->bSampleTerrainElevation = true;
+	GroundActor->bUseAsyncTerrainTraces = false;
 	PlaneActor->bSampleTerrainElevation = true;
+	PlaneActor->bUseAsyncTerrainTraces = false;
 
 	TestWorld.TickWorld(0.05f * 12.0f);
 

@@ -1598,6 +1598,7 @@ bool FTDFluidLiveActorTerrainSlopeTest::RunTest(const FString& Parameters)
 		return false;
 	}
 	TerrainFluid->bSampleTerrainElevation = true;
+	TerrainFluid->bUseAsyncTerrainTraces = false;
 
 	TickLiveActorSteps(TestWorld, 12);
 
@@ -1666,6 +1667,7 @@ bool FTDFluidLiveActorTerrainBudgetTest::RunTest(const FString& Parameters)
 	constexpr int32 TraceBudget = 256;
 	TerrainFluid->MaxTerrainTracesPerTick = TraceBudget;
 	TerrainFluid->bSampleTerrainElevation = true;
+	TerrainFluid->bUseAsyncTerrainTraces = false;
 
 	const int32 TicksNeeded = FMath::DivideAndRoundUp(Resolution * Resolution, TraceBudget);
 	TickLiveActorSteps(TestWorld, TicksNeeded - 2);
@@ -1708,6 +1710,7 @@ bool FTDFluidLiveActorTerrainMissTest::RunTest(const FString& Parameters)
 		return false;
 	}
 	TerrainFluid->bSampleTerrainElevation = true;
+	TerrainFluid->bUseAsyncTerrainTraces = false;
 	TickLiveActorSteps(TestWorld, 12);
 
 	const float CellSizeCm = TerrainFluid->LiveComponent->GetSolver().GetExtentCm().X / TerrainFluid->LiveComponent->GetSolver().GetResolution();
@@ -1756,6 +1759,7 @@ bool FTDFluidLiveActorTerrainSlidingWindowTest::RunTest(const FString& Parameter
 	constexpr int32 TraceBudget = 256;
 	TerrainFluid->MaxTerrainTracesPerTick = TraceBudget;
 	TerrainFluid->bSampleTerrainElevation = true;
+	TerrainFluid->bUseAsyncTerrainTraces = false;
 	TerrainFluid->bShouldFollowPlayerPawn = true;
 	TerrainFluid->FollowTargetActor = FollowTarget;
 

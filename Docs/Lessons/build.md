@@ -111,3 +111,12 @@
 - 증거: `Saved/AgentOps/20261023/w1gate-d53-green-tests.log`(변이 값) 대 `w1gate-d53-green2-tests.log`(시각 갱신 뒤 정상)
 - 날짜·상태: 2026-10-23 active
 - 발견: claude(W-1 종결 관문 D-53 시험)
+
+### L-build-13 `TDGame.FluidFX.Perf.TransmittanceCpuCost`(CPU 투과율 96격자 ≤0.3ms 중앙값)는 평소 0.26ms라 여유가 13%뿐이고, 원격 데스크톱 호스트 같은 배경 부하가 있으면 0.31~0.39ms로 실패한다
+- 증상: 코드 변경과 무관하게 `Expected 'CPU transmittance for a 96 grid stays under 0.3 ms' to be true`(TDFluidTransmittanceTests.cpp:194). 2026-10-22(재실행 통과)·2026-10-23(연속 2회 실패, median_ms 0.3893·0.3554). 같은 날 앞선 8회는 0.258~0.267.
+- 원인: 시간 단언이 실행 기계 부하에 민감하다. 2026-10-23 실패 때 `remoting_host`(원격 데스크톱)가 CPU 상위였다. 투과율 코드는 바뀌지 않았다.
+- 해결: 실패하면 먼저 `Get-Process | Sort-Object CPU -Descending`으로 배경 부하를 보고, 로그의 `TDFluidTransmittancePerf: ... median_ms=` 값을 같은 날 이전 실행과 비교한다. 회귀 판정은 다른 시험 결과와 이 값의 추세로 한다. 시험 자체를 덜 민감하게(최솟값·하위 백분위, 또는 한도 재설정) 바꾸는 것은 FluidFX 후속 결정 후보.
+- 범위: FluidFX 헤드리스 시간 단언 시험 전반(TDGame.FluidFX.Perf.*)
+- 증거: `Saved/AgentOps/20261023/w1gate-stage2-final-tests.log`·`w1gate-perf-rerun-tests.log`(실패) 대 `w1gate-asynctests-tests.log`(0.2603 통과)
+- 날짜·상태: 2026-10-23 active(두 번째 발생)
+- 발견: claude(W-1 관문 2단계 회귀 시험)

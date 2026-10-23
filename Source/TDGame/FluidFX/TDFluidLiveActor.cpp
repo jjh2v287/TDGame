@@ -27,6 +27,7 @@ namespace
 	constexpr float SleepDistanceRatio = 1.1f;
 	constexpr float TerrainTraceStartHeightCm = 2000.0f;
 	constexpr float TerrainTraceEndDepthCm = 4000.0f;
+	constexpr int32 MaxQueuedTerrainTraceBatches = 2;
 	constexpr float PlaneMeshBaseSizeCm = 100.0f;
 	constexpr float InteractionVolumeHalfHeightCm = 300.0f;
 	constexpr float ActivationVolumeHalfHeightCm = 1000.0f;
@@ -171,6 +172,7 @@ ATDFluidLiveActor::ATDFluidLiveActor()
 	InteractionVolume->SetBoxExtent(FVector(2000.0f, 2000.0f, 300.0f));
 	InteractionVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	InteractionVolume->SetCollisionResponseToAllChannels(ECR_Overlap);
+	InteractionVolume->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
 
 	InternalSurfaceMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InternalSurfaceMesh"));
 	InternalSurfaceMesh->SetupAttachment(SceneRoot);
@@ -242,6 +244,7 @@ void ATDFluidLiveActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	ClearInteractionState();
 	PendingTerrainCells.Reset();
+	DiscardTerrainTraceSlots();
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -377,6 +380,7 @@ bool ATDFluidLiveActor::BeginLiveActorStep(float DeltaTime)
 	}
 	PollMouseBrush(DeltaTime);
 	InvalidateTerrainQueueIfSolverGridChanged();
+	ApplyDeliveredTerrainTraceResults();
 
 	const FVector2D DesiredCenter = ResolveDesiredSimulationCenter();
 	CenterBeforeSolverStep = LiveComponent->GetSimulationCenterWorld();
@@ -444,6 +448,7 @@ void ATDFluidLiveActor::SetPooledInactive(bool bInactive)
 	bHasPreparedSolverStep = false;
 	bIsTerrainQueueCurrent = false;
 	PendingTerrainCells.Reset();
+	DiscardTerrainTraceSlots();
 
 	if (bInactive)
 	{
@@ -918,6 +923,17 @@ void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBefor
 		PendingTerrainCells[Index] = ShiftedCell;
 	}
 
+	for (FTDFluidTerrainTraceSlot& Slot : TerrainTraceSlots)
+	{
+		if (Slot.bIsSettled)
+		{
+			continue;
+		}
+
+		Slot.Cell -= ShiftCells;
+		Slot.bIsSettled = IsCellOutsideGrid(Slot.Cell, Resolution);
+	}
+
 	const int32 NewColumnBegin = ShiftCells.X > 0 ? Resolution - ShiftCells.X : 0;
 	const int32 NewColumnEnd = ShiftCells.X > 0 ? Resolution : -ShiftCells.X;
 	for (int32 CellY = 0; CellY < Resolution; ++CellY)
@@ -951,6 +967,7 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 
 	if (!bIsTerrainQueueCurrent)
 	{
+		DiscardTerrainTraceSlots();
 		const int32 Resolution = LiveComponent->GetSimulationResolution();
 		PendingTerrainCells.Reset(Resolution * Resolution);
 		for (int32 CellY = 0; CellY < Resolution; ++CellY)
@@ -963,17 +980,18 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 		bIsTerrainQueueCurrent = true;
 	}
 
+	if (bUseAsyncTerrainTraces)
+	{
+		RequestQueuedTerrainTraces(*World);
+		return;
+	}
+
 	if (PendingTerrainCells.IsEmpty())
 	{
 		return;
 	}
 
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDFluidTerrainSample), false, this);
-	if (const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(World, 0))
-	{
-		QueryParams.AddIgnoredActor(PlayerPawn);
-	}
-	AddTerrainTraceIgnoredActors(QueryParams);
+	const FCollisionQueryParams QueryParams = BuildTerrainTraceQueryParams(*World);
 	const FCollisionObjectQueryParams ObjectQueryParams(ECC_WorldStatic);
 	const float BaseHeightCm = GetActorLocation().Z;
 
@@ -996,6 +1014,128 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 		LiveComponent->CompleteTerrainElevationSampling();
 		OnTerrainSamplingCompleted();
 	}
+}
+
+FCollisionQueryParams ATDFluidLiveActor::BuildTerrainTraceQueryParams(const UWorld& World) const
+{
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDFluidTerrainSample), false, this);
+	if (const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(&World, 0))
+	{
+		QueryParams.AddIgnoredActor(PlayerPawn);
+	}
+	AddTerrainTraceIgnoredActors(QueryParams);
+	return QueryParams;
+}
+
+void ATDFluidLiveActor::RequestQueuedTerrainTraces(UWorld& World)
+{
+	const int32 TraceBudget = FMath::Max(MaxTerrainTracesPerTick, 1);
+	int32 RemainingRequests = FMath::Min(TraceBudget, TraceBudget * MaxQueuedTerrainTraceBatches - AwaitedTerrainTraceCount);
+
+	if (RemainingRequests > 0 && !PendingTerrainCells.IsEmpty())
+	{
+		const FCollisionQueryParams QueryParams = BuildTerrainTraceQueryParams(World);
+		const FCollisionObjectQueryParams ObjectQueryParams(ECC_WorldStatic);
+		const FTraceDelegate TraceDelegate = FTraceDelegate::CreateUObject(this, &ATDFluidLiveActor::OnTerrainTraceFinished);
+		const float BaseHeightCm = GetActorLocation().Z;
+
+		TerrainTraceSlots.Reserve(TerrainTraceSlots.Num() + RemainingRequests);
+		while (RemainingRequests > 0 && !PendingTerrainCells.IsEmpty())
+		{
+			const FIntPoint Cell = PendingTerrainCells.Pop(EAllowShrinking::No);
+			const FVector2D CellCenter = LiveComponent->CellToPlaneCenter(Cell.X, Cell.Y);
+			const FVector TraceStart(CellCenter.X, CellCenter.Y, BaseHeightCm + TerrainTraceStartHeightCm);
+			const FVector TraceEnd(CellCenter.X, CellCenter.Y, BaseHeightCm - TerrainTraceEndDepthCm);
+			const uint32 Serial = TerrainTraceFirstSerial + static_cast<uint32>(TerrainTraceSlots.Num());
+
+			TerrainTraceSlots.AddDefaulted_GetRef().Cell = Cell;
+			++AwaitedTerrainTraceCount;
+			World.AsyncLineTraceByObjectType(EAsyncTraceType::Single, TraceStart, TraceEnd, ObjectQueryParams, QueryParams, &TraceDelegate, Serial);
+			--RemainingRequests;
+		}
+		bShouldCompleteTerrainSampling = true;
+	}
+}
+
+void ATDFluidLiveActor::OnTerrainTraceFinished(const FTraceHandle& TraceHandle, FTraceDatum& TraceDatum)
+{
+	const uint32 SlotIndex = TraceDatum.UserData - TerrainTraceFirstSerial;
+	if (SlotIndex >= static_cast<uint32>(TerrainTraceSlots.Num()))
+	{
+		return;
+	}
+
+	FTDFluidTerrainTraceSlot& Slot = TerrainTraceSlots[SlotIndex];
+	if (Slot.bIsDelivered)
+	{
+		return;
+	}
+
+	Slot.bIsDelivered = true;
+	--AwaitedTerrainTraceCount;
+	if (Slot.bIsSettled)
+	{
+		return;
+	}
+
+	Slot.bDidHit = !TraceDatum.OutHits.IsEmpty();
+	Slot.ImpactZ = Slot.bDidHit ? TraceDatum.OutHits[0].ImpactPoint.Z : 0.0f;
+}
+
+void ATDFluidLiveActor::ApplyDeliveredTerrainTraceResults()
+{
+	if (TerrainTraceSlots.IsEmpty())
+	{
+		return;
+	}
+
+	if (!bSampleTerrainElevation || !bIsTerrainQueueCurrent)
+	{
+		DiscardTerrainTraceSlots();
+		return;
+	}
+
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ApplyTerrainTraceResults);
+
+	for (FTDFluidTerrainTraceSlot& Slot : TerrainTraceSlots)
+	{
+		if (!Slot.bIsDelivered || Slot.bIsSettled)
+		{
+			continue;
+		}
+
+		Slot.bIsSettled = true;
+		LiveComponent->SetTerrainElevationAtCell(Slot.Cell.X, Slot.Cell.Y, Slot.bDidHit ? Slot.ImpactZ : ResolveTerrainMissElevationCm(Slot.Cell.X, Slot.Cell.Y));
+	}
+
+	if (AwaitedTerrainTraceCount > 0)
+	{
+		return;
+	}
+
+	TerrainTraceFirstSerial += static_cast<uint32>(TerrainTraceSlots.Num());
+	TerrainTraceSlots.Reset();
+	CompleteTerrainSamplingIfSettled();
+}
+
+void ATDFluidLiveActor::DiscardTerrainTraceSlots()
+{
+	TerrainTraceFirstSerial += static_cast<uint32>(TerrainTraceSlots.Num());
+	TerrainTraceSlots.Reset();
+	AwaitedTerrainTraceCount = 0;
+	bShouldCompleteTerrainSampling = false;
+}
+
+void ATDFluidLiveActor::CompleteTerrainSamplingIfSettled()
+{
+	if (!bShouldCompleteTerrainSampling || !PendingTerrainCells.IsEmpty() || !TerrainTraceSlots.IsEmpty())
+	{
+		return;
+	}
+
+	bShouldCompleteTerrainSampling = false;
+	LiveComponent->CompleteTerrainElevationSampling();
+	OnTerrainSamplingCompleted();
 }
 
 FVector ATDFluidLiveActor::ResolvePlaneAnchorWorldLocation() const

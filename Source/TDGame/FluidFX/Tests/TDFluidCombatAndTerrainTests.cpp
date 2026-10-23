@@ -630,6 +630,7 @@ bool FTDFluidTerrainResampleAfterResetTest::RunTest(const FString& Parameters)
 		return false;
 	}
 	TerrainFluid->bSampleTerrainElevation = true;
+	TerrainFluid->bUseAsyncTerrainTraces = false;
 	TestWorld.TickSteps(12);
 
 	const float ExpectedSlope = FMath::Tan(FMath::DegreesToRadians(RampPitchDegrees));
@@ -686,6 +687,7 @@ bool FTDFluidTerrainResampleOnWakeTest::RunTest(const FString& Parameters)
 		return false;
 	}
 	TerrainFluid->bSampleTerrainElevation = true;
+	TerrainFluid->bUseAsyncTerrainTraces = false;
 	TestWorld.TickSteps(12);
 
 	const float ExpectedSlope = FMath::Tan(FMath::DegreesToRadians(RampPitchDegrees));
@@ -747,6 +749,7 @@ bool FTDFluidTerrainResampleOnLayoutChangeTest::RunTest(const FString& Parameter
 		return false;
 	}
 	TerrainFluid->bSampleTerrainElevation = true;
+	TerrainFluid->bUseAsyncTerrainTraces = false;
 	TestWorld.TickSteps(12);
 
 	const FTDFluidGrid2DSolver& Solver = TerrainFluid->LiveComponent->GetSolver();

@@ -491,11 +491,19 @@
 - 날짜·상태: 2026-10-23 active
 - 발견: claude(SSFS·FSSS 가능성 분석, 반박에서 적발)
 
-### L-editor-58 `L_TDWorld_Main` PIE에 월드 콘텐츠(지형·바위·마을)가 로드되지 않아 어느 지점이든 평평한 "바닥"에 점 무늬 덩어리 격자만 보인다(2026-10-16 이후 회귀) — 화면 공간 효과 측정이 무효가 된다
-- 증상: 2026-10-23~24 F01·F02·F03·F06·F07·B01 모두 같은 파란 평면 + 흰 점 무늬 격자. 진단 보기(`r.TDFogScattering.DebugView 2` 깊이÷100m)에서 평면은 깊이 100m 이상(그려진 기하 없음), 덩어리와 캐릭터만 실제 깊이. 촬영기(`pie_lookdev_fluid.py --level`)와 지점 도구(`Tools/WorldGen/pie_capture_spots.py`, 스트리밍 완료 대기) **둘 다** 같다. 같은 지점 도구의 2026-10-16 01:06 촬영(`Saved/WorldGen/PieShots/sun205_p65/F01_village.png`)에는 지형·모닥불·물웅덩이가 있다
-- 원인(미검증): 10-16 이후 월드 쪽 회귀. 그 뒤 월드 관련 커밋은 `43bc2f97`(10-16 01:51 연속 세계 전환)·`3794ad14`(10-17 에셋 로드 비동기 전환 D-47, `TDRealmSubsystem` 정의·데이터 레이어 경로 포함) 등. 첫 기록의 "F01만 지형 미렌더"·"캐릭터가 지면 아래"·"촬영기 경로 탓" 가설은 모두 기각
-- 해결: 월드 대장에서 원인 조사(10-16 정상 촬영과 대조, D-47 전후 커밋으로 이분 탐색). 그때까지 화면 공간 효과는 실제 지형 맵 `LV_DarkFantasy_OpenWorld`에서 안개 값을 흉내 내 측정(`Tools/FogScattering/lookdev_fog_scattering_sf4_emulated.json`)하고, 찍기 전 깊이 진단으로 실제 기하인지 확인한다
-- 범위: `L_TDWorld_Main` PIE 전체(2026-10-24 확인). 측정용 AA 끔 화면은 디더 머티리얼이 점 무늬로 보이는 점도 주의
-- 증거: `Docs/FogScattering/measurements/SF-4/world_main_f01_regression.png`(10-16 정상 / 10-24 끔 / 켬), `Saved/WorldGen/PieShots/sf4_world_off|on/`, `Saved/FluidFX/lookdev/20261023-170841/`
-- 날짜·상태: 2026-10-23 active(10-24 원인 범위 재정정)
-- 발견: claude(SF-1·SF-4 안개 산란 측정)
+### L-editor-58 `L_TDWorld_Main`은 1단계 월드 파티션 시험 맵이다 — 실제 필드(마을·지점 목록·이계 연속 지형)는 `LV_DarkFantasy_OpenWorld`. 맵을 잘못 열고 "10-16 이후 월드 회귀"로 오판했다
+- 증상: 2026-10-23~24 `L_TDWorld_Main` PIE에서 F01·F02·F03·F06·F07·B01 모두 파란 평면 + 흰 점 무늬 격자(지점 도구 `ground_z` 0.0). 깊이 진단(`r.TDFogScattering.DebugView 2`)에서 평면은 100m 이상(그려진 기하 없음). 같은 지점 도구의 2026-10-16 촬영(`Saved/WorldGen/PieShots/sun205_p65/F01_village.png`)에는 지형·모닥불·물웅덩이가 있어 회귀로 판정했었다
+- 원인(확인 2026-10-24): 맵이 다르다. `L_TDWorld_Main`(외부 액터 605개, 09-17 이후 변경 없음)은 P1 심리스 스트리밍 시험 맵이고, 점 무늬는 PIE 시작 때 `SurfaceSampler` 포인트 초과 오류를 내는 PCG 시험 볼륨 쪽으로 추정. P3 메인 지역(마을·`Tools/WorldGen/topdown_spots.json` 좌표·이계 연속 지형 `43bc2f97`)은 `/Game/Level/LV_DarkFantasy_OpenWorld`이고, 지점 도구는 에디터에 열린 레벨로 PIE를 시작하므로 10-16에는 이 맵이 열려 있었다. 시작 맵 설정은 `LV-World`(GQ-11 미정)
+- 해결: 필드·이계 측정 전에 `LevelEditorSubsystem.load_level('/Game/Level/LV_DarkFantasy_OpenWorld')`로 연다 → 같은 지점 도구가 10-16과 같은 화면(`Saved/WorldGen/PieShots/wr_field_off/`). "회귀"로 판정하기 전에 대상 맵의 `git log -- <맵·외부 액터 경로>`와 대장 산출물 경로부터 본다
+- 범위: 화면·안개 측정 전부. 이 오판으로 SF-4 v1 필드 값(`DistanceScale` 32)이 `L_TDWorld_Main` 안개(밀도 0.005·감쇠 0.03)를 흉내 낸 장면에서 정해져 실제 필드에서는 과했다(위 띠 손실 0.94) → 실측 재결정(`Docs/FogScattering/04-sf4-spec.md` 8절)
+- 증거: `Docs/FogScattering/measurements/SF-4/world_main_f01_regression.png`(오판 당시), `Saved/WorldGen/PieShots/wr_field_off|on/`, `Docs/FogScattering/measurements/SF-4/real/`
+- 날짜·상태: 2026-10-23 발견 / 2026-10-24 resolved(회귀 아님, 맵 오선택)
+- 발견: claude(SF-4 안개 산란 측정)
+### L-editor-59 `pie_lookdev_fluid.py`의 `pawn: [x, y]`는 현재 z를 유지한다 — 높이가 다른 지형(하얀 고원 2438cm·별밭 −3391cm)에서는 폰이 바닥 아래나 공중에 놓여 측정이 무효가 된다
+- 증상: 2026-10-24 P01·S01·F01로 옮긴 뒤 폰 z가 세 곳 모두 629(시작 위치 높이). 고원 P01 화면이 고원면 아래 구름층을 비추고, 안개 산란 끔/켬 차이가 `DistanceScale`과 무관하게 나왔다
+- 원인: `pie_showcase_fluid.teleport_pawn`은 평평한 FluidFX 무대용이라 `set_actor_location(x, y, 현재 z)`만 한다
+- 해결: `pawn: [x, y, z]`(2026-10-24 추가). z = `pie_capture_spots.build_ground_lookup` 지면 + 150cm. 측정 뒤 폰 높이를 읽어 확인한다
+- 범위: `Tools/FluidFX/pie_lookdev_fluid.py`를 FluidFX 무대 밖 지형에 쓸 때
+- 날짜·상태: 2026-10-24 active
+- 발견: claude(SF-4 실측 재결정)
+

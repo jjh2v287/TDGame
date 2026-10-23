@@ -151,7 +151,7 @@ SUNKEN_CONFIG = {
         "fog_max_opacity": 0.95, "fog_start_distance_cm": 2500.0,
         "second_fog_density": 0.10, "second_fog_height_falloff": 2.0, "second_fog_height_offset_cm": -300.0,
         "volumetric_fog_albedo": [0.5, 0.55, 1.0], "volumetric_fog_emissive": [0.004, 0.005, 0.02], "volumetric_fog_extinction_scale": 1.0,
-        "fog_scattering_intensity_multiplier": 0.35, "fog_scattering_distance_multiplier": 0.03125, "fog_scattering_weight_power_multiplier": 1.0,
+        "fog_scattering_intensity_multiplier": 1.0, "fog_scattering_distance_multiplier": 1.5, "fog_scattering_weight_power_multiplier": 1.0,
     },
     "post_process": {
         "priority": 10, "z_local_cm": [-6000.0, 9000.0],
@@ -205,7 +205,7 @@ PALE_CONFIG = {
         "fog_max_opacity": 0.9, "fog_start_distance_cm": 800.0,
         "second_fog_density": 0.25, "second_fog_height_falloff": 3.0, "second_fog_height_offset_cm": -1500.0,
         "volumetric_fog_albedo": [0.95, 0.95, 1.0], "volumetric_fog_emissive": [0.0, 0.0, 0.0], "volumetric_fog_extinction_scale": 0.8,
-        "fog_scattering_intensity_multiplier": 1.0, "fog_scattering_distance_multiplier": 1.75, "fog_scattering_weight_power_multiplier": 1.0,
+        "fog_scattering_intensity_multiplier": 1.0, "fog_scattering_distance_multiplier": 10.0, "fog_scattering_weight_power_multiplier": 1.0,
     },
     "post_process": {
         "priority": 10, "z_local_cm": [-6000.0, 8000.0],

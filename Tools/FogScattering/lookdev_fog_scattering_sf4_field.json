@@ -1,0 +1,236 @@
+{
+ "base": {
+  "console": [
+   "r.ProfileGPU.ShowUI 0",
+   "r.AntiAliasingMethod 0"
+  ]
+ },
+ "variants": [
+  {
+   "name": "warm",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 5
+  },
+  {
+   "name": "f01_setup",
+   "apply": {
+    "pawn": [
+     -11000.0,
+     2000.0
+    ],
+    "time_dilation": 1.0,
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 10
+  },
+  {
+   "name": "f01_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "f01_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "f01_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "f01_k1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "f01_k2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 2"
+    ]
+   }
+  },
+  {
+   "name": "f01_k3",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 3"
+    ]
+   }
+  },
+  {
+   "name": "f01_k4",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 4"
+    ]
+   }
+  },
+  {
+   "name": "f01_k6",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 6"
+    ]
+   }
+  },
+  {
+   "name": "f01_k8",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8"
+    ]
+   }
+  },
+  {
+   "name": "f01_k32",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 32"
+    ]
+   }
+  },
+  {
+   "name": "f01_reset",
+   "apply": {
+    "time_dilation": 1.0,
+    "console": [
+     "r.TDFogScattering.DistanceScale 32"
+    ]
+   },
+   "settle": 2
+  },
+  {
+   "name": "f06_setup",
+   "apply": {
+    "pawn": [
+     -25000.0,
+     -15000.0
+    ],
+    "time_dilation": 1.0,
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DistanceScale 1",
+     "r.TDFogScattering.WeightPower 1",
+     "r.TDFogScattering.Intensity 1",
+     "r.TDFogScattering.DebugView 0"
+    ]
+   },
+   "settle": 10
+  },
+  {
+   "name": "f06_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "f06_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "f06_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "f06_k1",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "f06_k2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 2"
+    ]
+   }
+  },
+  {
+   "name": "f06_k3",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 3"
+    ]
+   }
+  },
+  {
+   "name": "f06_k4",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 4"
+    ]
+   }
+  },
+  {
+   "name": "f06_k6",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 6"
+    ]
+   }
+  },
+  {
+   "name": "f06_k8",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 8"
+    ]
+   }
+  },
+  {
+   "name": "f06_k32",
+   "apply": {
+    "console": [
+     "r.TDFogScattering.DistanceScale 32"
+    ]
+   }
+  },
+  {
+   "name": "f06_reset",
+   "apply": {
+    "time_dilation": 1.0,
+    "console": [
+     "r.TDFogScattering.DistanceScale 32"
+    ]
+   },
+   "settle": 2
+  }
+ ]
+}

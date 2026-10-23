@@ -1,0 +1,117 @@
+{
+ "id": "FX-7p-r-a",
+ "date": "2026-10-23",
+ "purpose": "FX-4a 수용 3 1차(RM:900) 재판정: J1(F2 GPU 대 F1 CPU 모닥불+연기)·J2(S6 512²×4 GPU 보임 ≤1.7ms)",
+ "spec": "Saved/AgentOps/20261023/fx7pr/spec-fx7pr-a.md (v2 10절 우선)",
+ "prereg_lock": [
+  "locked 2026-10-23 23:30:51 (pilot results not yet opened)",
+  "11c47fa31c4c7462346414ffa07cd589ca782277c5c766ac34da25e38a51df18 *Saved/AgentOps/20261023/fx7pr/spec-fx7pr-a.md",
+  "e8d69c382e992bbba92c3e6eb4b218dc9db5bd956e51009dfb2cd927555dfae4 *Tools/FluidFX/fx7pr_judge.py",
+  "58628daf51d942365a10a57adba626a3d66c32cb605cceef1cc50e7bfed64e41 *Saved/AgentOps/20261023/fx7pr/make_plans.py",
+  "15b7e26017f732d272e80f311cb0ed79adfcda5da845d9387237007729e89290 *Saved/AgentOps/20261023/fx7pr/judge-fixtures/run_fixtures.py",
+  "relock 2026-10-23 23:50:29 analyzer spec-conformance fix (refute-judge.md R01 R02 R05), judge results not yet opened",
+  "e636132a09658b723e977e71b5e86a6f1f594ca8129cd44a896fefb8dbc2af8d *Tools/FluidFX/fx7pr_judge.py",
+  "b2f90398f27ec4a865a85270eeb7f73f541d7bd8248b7d4042290ce99354b6b9 *Saved/AgentOps/20261023/fx7pr/judge-fixtures/run_fixtures.py",
+  "11c47fa31c4c7462346414ffa07cd589ca782277c5c766ac34da25e38a51df18 *Saved/AgentOps/20261023/fx7pr/spec-fx7pr-a.md"
+ ],
+ "analyzer": "Tools/FluidFX/fx7pr_judge.py",
+ "runs": {
+  "pilot": "Saved/FluidFX/fx7p/fx7pr-pilot-20261023230741",
+  "judge": "Saved/FluidFX/fx7p/fx7pr-judge-20261023233113"
+ },
+ "editor_pid": 20140,
+ "binaries_sha256": {
+  "UnrealEditor-TDGame.dll": "04fac690bd7b673024673f4185325e2d3a26df39f4a0f556b2a4769f48187c53",
+  "UnrealEditor-TDFluidGpu.dll": "22b99e10310c1e565dd74519b958448748855b92d3bd7fe77b54b74a4143f34e"
+ },
+ "conditions": {
+  "r.TDFogScattering": 0,
+  "fresh_pie_after_gpu": false,
+  "block_frames": 300,
+  "rounds": 5,
+  "crash_guard": "TDGame.FluidFXRhi.ReadbackRingGrowsWithActorCount 1/1 통과(같은 바이너리)"
+ },
+ "pilot_choice": {
+  "S6": {
+   "screen_percentage": 130,
+   "criterion": "강",
+   "rule": "측 중앙값 ≥ +1.5ms 그리고 모든 블록 > +0.5ms"
+  },
+  "F1_F2": {
+   "screen_percentage": 100,
+   "criterion": "강",
+   "rule": "측 중앙값 ≥ +1.5ms 그리고 모든 블록 > +0.5ms"
+  }
+ },
+ "verdicts": {
+  "REF": {
+   "status": "유효",
+   "solver_a_p50_ms": 0.4929,
+   "band_ms": [
+    0.4,
+    0.6
+   ]
+  },
+  "J2": {
+   "verdict": "미달",
+   "sp": 130,
+   "rounds": 3,
+   "limit_ms": 1.7,
+   "ft_d_interval_6pairs": [
+    2.6557,
+    2.7413
+   ],
+   "sp100_scaled_interval": [
+    2.4153,
+    2.4924
+   ],
+   "records": {
+    "solver_a_p50": 1.846,
+    "gpu_time_d_p50": 2.6379,
+    "solver_translucency_d_p50": 2.4434,
+    "ft_d_p50": 2.6959,
+    "occupancy_recorded": false
+   }
+  },
+  "J1": {
+   "verdict": "미달",
+   "sp": 100,
+   "f2_d": {
+    "p50": 1.06,
+    "p95": 1.0587
+   },
+   "limit": {
+    "p50": {
+     "limit": 1.02595,
+     "noise_width": 0.18075,
+     "f1_d": 0.8452
+    },
+    "p95": {
+     "limit": 5.4122,
+     "noise_width": 4.5859,
+     "f1_d": 0.8263
+    }
+   },
+   "p50_ok": false,
+   "p95_ok": true,
+   "f2_solver_a_p50_ms": 0.1815
+  },
+  "acceptance_3_primary": "미충족"
+ },
+ "consequence": "명세 2절(사전 등록): FX-4b는 기본 꺼짐(TD.FluidFX.WaterGpu 0)으로 통합, FX-4b 수용은 FX-4a 수용 3 충족 또는 사용자 결정 뒤",
+ "deviations": [
+  "E1 1부(J1·J2)·2부 분리",
+  "E2 결과 무관 FX-4b 기본 꺼짐 통합",
+  "E3 Test 빌드 불가(설치판 엔진), Development 쿠킹 대체는 미착수",
+  "E4 FireStage 유효성 (a)→(d) 하한 0.046",
+  "E5 유효성 (b) 압력 반복·SimMode·장애물 미기록",
+  "E6 항상 5라운드 측정",
+  "E7 체제 관문 통계 정의",
+  "E8 F1·F2 1200→300프레임",
+  "E9 r.TDFogScattering 0",
+  "분석기 명세 적합 수정 1회(판정 결과 열기 전, prereg-lock relock)",
+  "분석기 7.4(b) 부분 구현, 이번 실행은 수동 대조로 보완"
+ ],
+ "full_output": "Saved/AgentOps/20261023/fx7pr/judge-verdict.json",
+ "validity_b_manual": "통과: 판정 실행 session.json 블록 80개 액터 기록 직접 대조 — REF·S6(스폰 3 포함) GPU 512 heat 끔 RenderTarget, F1 CPU 128(불 heat 켬)·96(연기), F2 GPU 같은 격자, A 깨움·B 재움. 분석기 7.4(b)는 backend·명시 grid만 보고 heat·밀도 클래스·F1/F2 grid는 미대조(반박 refute-judge.md V01~V04) → 2부 전에 보완"
+}

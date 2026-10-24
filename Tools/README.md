@@ -137,6 +137,7 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 내비메시 설정 `Tools/WorldGen/editor_setup_navmesh_dynamic.py`(채택, D-06) / `editor_setup_navmesh_wp.py`(정적 월드 파티션, 보류), 영속 상자 배치 `editor_place_test_chest.py`, PIE 걸어서 입장 `pie_walkin_check.py`, PIE 상자 상태 `pie_chest_check.py` | P1 검증 스크립트 |
 | `python Tools/WorldGen/pie_p1_checks.py [--ids MainCrypt,<관문 ID>…]` (에디터 밖) | PIE 켜고 목적지마다 걸어 들어가기 왕복 ×3(이계 관문은 이계 상자, 승강 관문은 하단 착지 근처로 판정, 귀환은 필드 상자 ±50400cm) + 상자 열림·세이브/로드 검사 → `Saved/WorldGen/pie_p1_checks.md` |
 | `python Tools/tasks_recount.py` | 할 일 대장 상태 표 재계산 |
+| `python Tools/workflow_journal_dump.py <워크플로 실행 폴더 또는 journal.jsonl> <출력 폴더>` | Workflow 에이전트 결과를 라벨별 `.md`로 나눔(수만 자 결과를 필요한 갈래만 읽기), 표준 출력은 라벨·글자 수 |
 | 정의 에셋 `Tools/WorldGen/editor_make_definitions.py`, 룸 모듈 레벨 `Tools/DungeonGen/editor_make_room_modules.py`, C++ 베이크 `Tools/DungeonGen/editor_bake_dungeons_cpp.py`, 던전 안 출구 배치 `Tools/WorldGen/editor_place_dungeon_entrances.py`(D-41: 필드 입구는 만들지 않음), PIE 왕복 `Tools/WorldGen/pie_travel_check.py` | 에디터 스크립트 |
 
 ## 3c. 애니메이션·기타 도구 (상태·등록 대기)
@@ -208,6 +209,17 @@ Cascadeur 2026.2.3 내장 MCP 스크립트 서버(`http://127.0.0.1:8765/mcp`, �
 | `python Tools/run_in_editor.py Tools/MonsterAI/editor_make_monster_species.py` (표의 `hit` 항목) | 종 자산의 Hit 클립을 표에서 연결(옛 `Combat/editor_set_species_hit_clips.py` 삭제, 스켈레톤 호환은 종마다 로그) | 현행 (2026-10-18, M3-33) |
 | `Tools/MonsterAI/editor_retarget_monster_anims.py` + `TD_ONLY_CLIPS=['HitReact']` | 맨손 피격을 고블린·골렘·해골 경비병으로 리타깃(그 클립만, 바뀐 에셋만 저장, `TD_ONLY_TARGETS`로 대상 선택 가능) | 현행 (2026-10-18 확장) |
 | `Tools/BlenderAnimation/CombatHit/` 9개(`hit_scene`·`hit_author`·`hit_review`·`hit_export`·`hyena_author`·`hyena_review`·`hyena_export`·`shield_attach`·`roundtrip`, `blender_run.py`로 실행) | 피격 모션 저작: 원본 MM_HitReact 모캡 몸통·다리 보존 + 칼·방패/맨손 팔 교체, 하이에나 0.45초 반동, 측정·시트·FBX 내보내기·왕복 검증, 방패 부착값 계산 | 현행 (2026-10-18) |
+
+## 3h. 무한 세계 측정 도구 (`InfiniteWorld/`, 문서 `Docs/InfiniteWorld_Plan.md`)
+상태: 실험 재현용(2026-10-23 가능성 검토). 게임 코드가 아니며 TDGame 빌드·에디터를 쓰지 않는다.
+| 호출 | 용도 |
+|---|---|
+| `python Tools/InfiniteWorld/proto/run_proto.py [--out <폴더>] [--quick]` | 정수 해시 청크 생성 프로토(`chunkgen.py`): 이음매·순서 무관·먼 좌표 비트 일치, 구조물 4청크, float32 정밀도 그림 |
+| `python Tools/InfiniteWorld/proto/budget_model.py --out <폴더>` | 탑다운 카메라 지면 투영·청크 상주·처리량·세이브 크기 예산 모델 |
+| `python Tools/InfiniteWorld/fpdet/run_fpdet.py --work <임시 폴더> [--out <폴더>]` | `chunkgen_port.cpp`를 MSVC `/fp`·`/arch` 변형(UE Game·Editor 조합 포함)으로 빌드해 Python 결과와 비트 대조·속도 측정(VS 2022 필요, L-build-14) |
+| `Build.bat IWBenchEditor Win64 Development -Project="<절대경로>/Tools/InfiniteWorld/IWBench/IWBench.uproject" -WaitMutex -NoHotReloadFromIDE` | TDGame과 분리된 벤치 프로젝트 빌드(build_hold 무관, L-build-15). 생성물(Binaries 등)은 git 제외 |
+| `powershell -File Tools/InfiniteWorld/bench/run_bench.ps1 -Suite terrain\|ism\|stream\|nav [-Tag r1] [-Render] [-Root <작업 폴더>]` / `run_dynamic.ps1` | 벤치 실행(`-game -NullRHI`, 기본 출력 `Saved/AgentOps/IWBench/{logs,results}`), 동적 스위트 일괄 약 38분 |
+| `python Tools/InfiniteWorld/bench/summarize_static.py [--results <폴더>] --out <md>` / `summarize_dynamic.py [결과 폴더] [로그 폴더] > <md>` | 결과 json → 표(측정 정본 `Docs/InfiniteWorld/measurements/bench/`) |
 
 ## 4. 도구가 없을 때 만드는 규칙 (에이전트 공통)
 규칙 전문은 `Docs/AgentRules.md` OP-12(만들기 전 검색)·OP-13(위치)·OP-14(이름)·OP-15(docstring 4줄)·OP-16(등록)·OP-17(`Tools/scratch/`)·OP-19(절대 경로 금지)·OP-20(노출 경로). 접두어: `editor_`(에디터 안, run_in_editor.py), `pie_`(PIE 검사), `blender_`(Blender 안 bpy), 없음(시스템 파이썬 3.12). 권장 동사: generate build make validate check inspect capture export import author render prepare place setup select find. 금지 동의어: create→make, bake→build, verify/test→validate/check.

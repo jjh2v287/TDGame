@@ -482,6 +482,15 @@
 - 날짜·상태: 2026-10-22 active
 - 발견: claude(FX-7p 크래시 ② R1 재현)
 
+### L-editor-56 NarshaMCP 0.13.7 `ue_manage_niagara` 오프라인(바이너리 파서) 읽기는 구조 목록은 맞지만 사용자 매개변수·값·일부 플래그·모듈 단계 배치가 틀려, 생성 결과의 정답 판정에 쓰면 안 된다
+- 증상: 정답이 알려진 `/Game/FluidFX/Niagara/NS_TD_FluidEmber`(생성 스크립트 상수 + 에디터 정규화 덤프 `Saved/FluidFX/niagara/NS_TD_FluidEmber.dump.json`)를 읽혔더니 `get_parameters` User 3개(실제 14개, 벡터·텍스처 누락)·값 전부 0(실제 EmberSpawnRate 10·VelocityReferenceCmPerSec 600), `requires_persistent_ids: false`(실제 true), `SampleTexture.Mip Level` 형식 NiagaraInt32·값 23040(덤프는 NiagaraFloat), `get_execution_flow` 모듈이 단계 "unknown" 한 칸에 중복 제거돼 나옴(SampleTexture 2개 → 1개, 순서·단계 소속 없음), `performance_audit`는 asset_path를 무시하고 227개 전체를 훑으며 요약 `gpu_simulation_systems: 0`(이 시스템은 GPU)
+- 맞은 것: GPU 시뮬·고정 경계 ±600·결정론·메시 렌더러·재질·`validate`(재질 사용 플래그 대조 포함)·SetVariables 노드 9개 수
+- 해결: 생성·편집 결과의 정답은 에디터 쪽 정규화 덤프(공식 NiagaraToolset 조회, `editor_make_fluid_ember_niagara.py --dump-only`)로 판정하고, NarshaMCP 오프라인 읽기는 에디터 없이 하는 1차 점검(렌더러·재질 플래그·GPU에 CPU 전용 DI·경계)과 목록 조사에만 쓴다
+- 범위: NarshaMCP 0.13.7 나이아가라 오프라인 작업 전체(UE 5.8, niagara_custom_version 93). 판올림 뒤 같은 에셋으로 다시 대조
+- 증거: 이 세션 호출 결과(2026-10-23), 대조 근거 `Docs/AgentCollaboration/research/narsha-adk.md` 4절
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(NarshaADK 활용 검토)
+
 ### L-editor-57 UE 높이 안개 투과율은 밑 2(`exp2`)라, 자연지수로 계산하면 안개 불투명도가 약 2배로 과대 추정된다
 - 증상: 안개 산란 분석 초안의 불투명도 표(밀도 0.02, 탑다운 1.6~4.2%, 수평 1km 85.5%)를 반박자 2명이 엔진 식으로 다시 계산해 0.8~2.4%, 60.9%를 얻음
 - 원인: 밀도 접힘 `Density/1000 · 2^(−Falloff/1000·(카메라Z−안개높이))`(`Renderer/Private/FogRendering.cpp:397-406`), 선적분 `(1−2^(−F))/F`(F→0이면 ln2, `Shaders/Private/HeightFogCommon.ush:207-214`), 투과율 `exp2(−선적분)`(394행). 수평 광선의 자연 광학두께 = (ln2)²·밀도/1000·거리(cm) ≈ 0.48배
@@ -499,6 +508,7 @@
 - 증거: `Docs/FogScattering/measurements/SF-4/world_main_f01_regression.png`(오판 당시), `Saved/WorldGen/PieShots/wr_field_off|on/`, `Docs/FogScattering/measurements/SF-4/real/`
 - 날짜·상태: 2026-10-23 발견 / 2026-10-24 resolved(회귀 아님, 맵 오선택)
 - 발견: claude(SF-4 안개 산란 측정)
+
 ### L-editor-59 `pie_lookdev_fluid.py`의 `pawn: [x, y]`는 현재 z를 유지한다 — 높이가 다른 지형(하얀 고원 2438cm·별밭 −3391cm)에서는 폰이 바닥 아래나 공중에 놓여 측정이 무효가 된다
 - 증상: 2026-10-24 P01·S01·F01로 옮긴 뒤 폰 z가 세 곳 모두 629(시작 위치 높이). 고원 P01 화면이 고원면 아래 구름층을 비추고, 안개 산란 끔/켬 차이가 `DistanceScale`과 무관하게 나왔다
 - 원인: `pie_showcase_fluid.teleport_pawn`은 평평한 FluidFX 무대용이라 `set_actor_location(x, y, 현재 z)`만 한다
@@ -506,4 +516,3 @@
 - 범위: `Tools/FluidFX/pie_lookdev_fluid.py`를 FluidFX 무대 밖 지형에 쓸 때
 - 날짜·상태: 2026-10-24 active
 - 발견: claude(SF-4 실측 재결정)
-

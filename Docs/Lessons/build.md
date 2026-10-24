@@ -121,6 +121,24 @@
 - 날짜·상태: 2026-10-23 active(두 번째 발생)
 - 발견: claude(W-1 관문 2단계 회귀 시험)
 
+### L-build-14 Game 타깃은 `/fp:fast`, Editor 타깃은 `/fp:precise`로 컴파일되어 같은 결정론 생성 코드의 결과 비트가 다르다 — 헤드리스(Editor) 시험은 출시 빌드 차이를 잡지 못한다
+- 증상: 정수 해시 노이즈 생성기를 cl 19.38로 UE 5.8 Game·Editor 플래그 조합으로 빌드하자 Game 기본은 높이 표본 46~48%가 Python float64와 달랐다(최대 1.85e-13m), `/fp:fast`+AVX2는 82~85%. Editor 기본·precise·strict는 0/1,148,488.
+- 원인: VCToolChain.cs:1313-1335 — Editor·Program 타깃과 V7은 Precise, 그 밖은 `/fp:fast`(재결합·역수 치환, AVX2에서 FMA 융합). 프로젝트에 FPSemantics 지정 0건. `/fp:precise`로도 CRT 초월 함수의 FMA3 경로 차이(sin 0.94%, tan 2.6%)는 막지 못한다.
+- 해결: 생성 결과가 저장 차분·골든 해시의 기준이 되는 모듈에 `FPSemantics = FPSemanticsMode.Precise`(ModuleRules.cs:784-790, 실행 비용 잡음 수준), 정체성(존재·칸·ID)은 정수 해시, 저장값은 양자화한 절대값, 생성 경로에서 CRT 초월 함수·`*Est`·엔진 비인라인 수학 금지. 1mm 양자화 뒤 불일치는 0건이었지만 확률(표본당 약 1e-11)이지 보장이 아니다.
+- 범위: Win64 MSVC, 결정론이 필요한 모든 C++(월드 생성, 전투 시뮬 골든 해시 — 04-combat-simulator.md의 '부동소수점 모드 미확인'에 해당). UE 빌드 결과물(PCH·인라인 맥락)은 단독 cl로 대신 측정했다.
+- 증거: `Docs/InfiniteWorld/measurements/fpdet/02-fp-determinism.md`·`compare.json`·`asm_stats.json`, 재현 `Tools/InfiniteWorld/fpdet/run_fpdet.py`
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(무한 세계 가능성 검토)
+
+### L-build-15 같은 설치판 엔진의 다른 편집기가 라이브 코딩 중이면, 별도 프로젝트의 편집기 대상 빌드도 "Unable to build while Live Coding is active"로 실패한다
+- 증상: TDGame 에디터가 떠 있는 동안 분리 벤치 프로젝트 `IWBenchEditor` Build.bat이 `Unable to build while Live Coding is active. Exit the editor and game, or press Ctrl+Alt+F11 ...`로 종료.
+- 원인: UBT의 라이브 코딩 검사(HotReload.cs:271-278)가 프로젝트가 아니라 같은 엔진 설치의 실행 중 편집기를 본다.
+- 해결: 빌드 명령에 `-NoHotReloadFromIDE`(BuildConfiguration.cs:160)를 붙인다. 다른 세션 UBT와는 `-WaitMutex`로 순서를 기다린다. TDGame 바이너리·빌드 보류(build_hold)와 무관하게 별도 프로젝트를 빌드할 수 있다.
+- 범위: UE 5.8 런처 설치판, 여러 세션이 한 엔진을 쓰는 기계
+- 증거: `Saved/AgentOps/20261023/infinite-world/bench/logs/build1.log`(실패)·`build3.log`(성공), 실행 스크립트 `Tools/InfiniteWorld/bench/run_bench.ps1`
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(무한 세계 가능성 검토)
+
 ### L-build-16 설치판(런처) UE 5.8에는 Win64 Test 게임 구성이 없어 Test 빌드·패키지를 만들 수 없다 — 성능 '최종 판정 Test 빌드' 규칙은 이 기계에서 실행 불가
 - 증상: 로드맵·판정 규칙(RM:46, FX-7p judge-closure Q-e ②)이 'PIE 체제 관문 미달이면 패키지 Test 빌드에서 판정'을 요구했으나 Test 경로가 없다. UBT 예외 문구(소스): "Targets cannot be built in the {Test} configuration with this engine distribution."
 - 원인: 설치판 `Engine/Config/BaseEngine.ini` Win64 게임 구성 목록이 DebugGame·Development·Shipping뿐(Test 0건), UBT가 목록 밖 구성을 거부. Test 엔진 오브젝트가 없어 소스 엔진 빌드 없이는 우회 불가. 에디터 바이너리 `-game`도 막힘(L-editor-12)

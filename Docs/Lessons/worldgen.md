@@ -55,3 +55,20 @@
 - 증거: `Saved/WorldGen/PieShots/sun038_before`·`sun225_p55`·`sun225_p65`·`sun205_p65`·`sun205_p70`, `Saved/AgentOps/20261016/sun/geometry.md`, `Docs/Validation/P3-20-sun.md`
 - 날짜·상태: 2026-10-16 active
 - 발견: claude
+
+### L-worldgen-07 런타임에 스폰한 `ANavMeshBoundsVolume`은 경계가 0이라 오류 없이 내비 타일 0개로 끝나고, 인보커가 활성인 동안 경계를 추가하면 경계 안 모든 타일을 한 프레임에 순회해 멈춘다
+- 증상: 무한 세계 벤치(IWBench)에서 런타임 스폰 경계 볼륨 `registered_bounds_box ... Min=(0,0,0) Max=(0,0,0)`, 타일 0, 30m 앞 경로 0/9, 로그 오류 0줄. 인보커 활성 중 ±1e6cm 경계를 추가하자 단일 프레임 89~113ms(타일 798·988cm), 35~39ms(1596cm).
+- 원인: 경계는 `GetComponentsBoundingBox(true)`(NavigationSystem.cpp:4163-4179)인데 런타임 스폰 볼륨은 브러시가 없다. 경계가 더러워지면 생성기가 활성 타일 집합과 상관없이 경계 상자 전 타일 이중 루프를 돈다(RecastNavMeshGenerator.cpp:6804-6815, 타일당 17~22ns). `RebuildAll`도 `MarkNavBoundsDirty`로 같은 경로를 탄다(:5785-5806, :6697-6712).
+- 해결: 볼륨에 박스 컴포넌트(±1.1e8cm)를 붙여 등록한 뒤 공개 `OnNavigationBoundsUpdated`(NavigationSystem.h:1096)를 부른다. 거대 경계는 인보커 등록 전에 한 번만 만들고 바꾸지 않으며, 인보커 활성 중 RebuildAll·RebuildNavigation 콘솔 명령을 쓰지 않는다. `bFixedTilePoolSize=True`(풀 1024)에서 'too large' 오류 0건.
+- 범위: UE 5.8 Dynamic 내비 + 인보커 전용 생성, 런타임 생성 세계(에디터 배치 볼륨은 해당 없음). ±1.1e8 경계 활성 중 추가는 외삽(380~1,330초)만 했다.
+- 증거: `Docs/InfiniteWorld/measurements/bench/results/nav-smoke.json`·`nav-T{800,1000,1600}-r{1,2}.json`, `Docs/InfiniteWorld/measurements/bench/REPORT-dynamic.md`, 소스 `Tools/InfiniteWorld/IWBench/Source/IWBench/TDBenchStream.cpp`(SpawnBoundsVolume·TickLateBounds)
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(무한 세계 가능성 검토)
+
+### L-worldgen-08 런타임 메시 지형 충돌 함정 4가지: 비동기 쿠킹 순서, 삼각형 감김, `FHeightField` 경계 캐시, 정점에 구운 원거리 오프셋
+- 증상: ① `UDynamicMeshComponent`에서 비동기 쿠킹을 켜고 SetMesh → RegisterComponent 순서면 등록 때 동기 쿠킹이 한 번 더 일어났다(33x33 등록 2.43ms ≈ 동기 2.49ms). ② 삼각형을 (V00,V10,V11)·(V00,V11,V01)로 감으면 위→아래 수직 트레이스 0/200 적중, 아래→위만 맞는다. ③ `Chaos::FHeightField`를 생성자만으로 만들면 Raycast 0/200. ④ 원거리 오프셋을 정점 좌표에 구우면 1e8cm에서 트레이스 오차 1.7cm, 1e9cm에서 11.6~13.4cm.
+- 해결: ① RegisterComponent → SetMesh 순서(등록 0.05~0.07ms, DynamicMeshComponent.cpp:1601-1666, 비동기는 게임 월드에서만). ② (V00,V11,V10)·(V00,V01,V11)로 감아 위를 향하게 한다(bCullsBackFaceRaycast=false인데도 한쪽 면만 맞음, 원인 미확인). ③ 생성 뒤 `BoundingBox()`를 한 번 호출해 CachedBounds를 채운다(HeightField.h:342-347) → 200/200, 오차 ≤0.04cm. ④ 정점은 청크 국소 좌표, 오프셋은 액터 변환에 둔다 → 1e9cm까지 0.0001cm.
+- 범위: UE 5.8 런타임 생성 지형(동적 메시·Chaos 높이장), 편집기 빌드 -game 측정. 렌더 정밀도는 미측정.
+- 증거: `Docs/InfiniteWorld/measurements/bench/REPORT-static.md`, `.../bench/results/terrain-r{1,2}.json`·`diag-r{1,2}.json`
+- 날짜·상태: 2026-10-23 active(②는 원인 미확인)
+- 발견: claude(무한 세계 가능성 검토)

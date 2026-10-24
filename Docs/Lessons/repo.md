@@ -175,6 +175,35 @@
 - 날짜·상태: 2026-10-21 active
 - 발견: claude(FX-8c 12차 커밋)
 
+### L-repo-21 서드파티 UE 에이전트 플러그인(NarshaMCP 0.13.7) 설치기는 첫 빌드와 에디터 시작마다 `.mcp.json`·`.claude/`·사용자 홈 설정을 다시 쓴다
+- 증상: Fab 플러그인을 `Plugins/Marketplace/`에 넣고 빌드한 뒤 `.mcp.json`·`.cursor/mcp.json`이 키 순서가 바뀐 채 다시 쓰이고(끝 줄바꿈 제거), `.claude/settings.local.json`(플러그인 7개 활성·`enableAllProjectMcpServers: true`)·`.claude/agents/unreal-specialist.md`·`.claude/skills/routing.json`·`.antigravity/`가 생기며, 홈의 `~/.codex/config.toml`·`~/.gemini/antigravity/mcp_config.json`·`~/.claude/plugins`(프로젝트 에이전트 7개 바이트 동일 복사본 포함)가 바뀌었다.
+- 원인: 에디터 모듈이 시작할 때마다 `narshamcp.exe setup`을 분리 프로세스로 실행한다(Plugins/Marketplace/NarshaMCP/Source/NarshaMCP/Private/CUModule.cpp:301-340). 무엇을 썼는지는 `Intermediate/NarshaMCP/auto_setup_build.log`에 남는다.
+- 해결: 도입 전에 설치 로그를 먼저 읽고 바뀐 파일을 `git status`·홈 설정 diff로 확인한다. 설정을 끈 뒤에는 다음 에디터 시작 뒤 되살아나는지 다시 본다(미검증). 자세한 표는 `Docs/AgentCollaboration/research/narsha-adk.md` 2·6절.
+- 범위: 에디터 시작 시 외부 실행 파일로 설치·설정을 하는 서드파티 에디터 플러그인
+- 증거: `Saved/AgentOps/20261023/narsha-adk/package-audit.md` ①절, 이 세션 `git diff -- .mcp.json .cursor/mcp.json`
+- 재확인(2026-10-23 18:18, 다른 세션이 에디터를 켬): `.mcp.json`·`.cursor/mcp.json` narshamcp env가 `RUST_LOG`만 남고(추가한 `NARSHA_TELEMETRY_DISABLED`·`NARSHAMCP_CONFIG_PATH`·`timeout` 삭제), `~/.codex/config.toml` NARSHA 항목 삭제, `.claude/settings.local.json` `enableAllProjectMcpServers`가 true로 복귀. 플러그인 false·서버 목록·Gemini 설정은 유지. 에디터 모듈은 조건 없이 매번 `setup`을 부르고(CUModule.cpp:105·301-340) setup에는 환경 변수 보존 옵션이 없다(`setup --help`).
+- 조치(2026-10-23 23:05): `TDGame.uproject`에 `{"Name": "NarshaMCP", "Enabled": false}`를 넣어 에디터 모듈과 빌드 때 setup을 끔(오프라인 MCP 서버는 플러그인 폴더의 exe라 그대로 동작). 효과는 다음 에디터 시작 뒤 `.mcp.json`·`.claude/settings.local.json` 수정 시각으로 확인.
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(NarshaADK 활용 검토)
+
+### L-repo-22 NarshaMCP 0.13.7 데몬 연결이 흔들리면 도구 호출이 응답 없이 Claude Code MCP 유휴 제한(1800초)까지 멈춘다
+- 증상: `ue_cache_control get_engine_config`가 "sent no response or progress for 1800s; aborting"으로 30분 뒤 끝났다. 같은 시간 `~/.narshamcp/logs/daemon-exits.jsonl`에 `daemon_eof`("connect bridge observed EOF or IO error")가 11:44~11:56(KST)에 177회(약 4초 간격) 쌓였고, 데몬(포트 19709)이 11:44에 새로 떠 있었다. 이후 호출은 정상.
+- 해결: `.mcp.json` narshamcp에 서버별 `timeout`(밀리초, 180000)을 넣어 멈춤을 3분에 끊는다(효과 미검증, 오류 문구가 안내한 방법). 멈추면 같은 호출을 반복하기 전에 `daemon-exits.jsonl` 끝을 보고 흔들림이 멎었는지 확인한다. 상태 점검 `ue_check_health`는 10초 디스패처 제한으로 자주 실패하므로 가벼운 `ue_glob` 한 번으로 응답을 본다.
+- 범위: NarshaMCP `connect` 브리지 + 데몬 구조의 모든 도구 호출
+- 증거: 이 세션 오류 원문, `~/.narshamcp/logs/daemon-exits.jsonl`(2026-10-23T02:44:37Z~02:56:29Z)
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(D-61 적용)
+
+### L-repo-23 Fab 마켓플레이스 경로(`Plugins/Marketplace/NarshaMCP`)에 설치된 NarshaMCP는 설정 파일을 못 찾아 `set_engine_config`가 저장되지 않고, `ue_grep` 엔진 텍스트 검색도 켜지지 않는다
+- 증상: `ue_cache_control set_engine_config {engine_source_scan: true, confirm: true}` 응답이 `"persisted": false`, `"persist_reason": "no config.ini at resolved path; mode applies for this session only"`. 엔진 호출 그래프는 만들어졌지만(390초, `Intermediate/NarshaMCP/engine_call_graph_*.bincode.zst` 87MB, `find_callers`의 call_graph_stats engine_call_graph_enabled true) `ue_grep scope=engine|all`은 계속 `engine_not_indexed ... state: project_only`.
+- 원인(추정): exe가 찾는 경로는 `NARSHAMCP_CONFIG_PATH` 환경 변수, `Plugins/NarshaMCP/MCP/config/config.ini`, `Plugins/NarshaMCP/Config/config.ini` 등이고 Fab은 `Plugins/Marketplace/NarshaMCP/MCP/config/config.ini`에 설치한다(설치 로그 "Memory Mode: config.ini not found under C:\Project\TDGame"). 엔진 텍스트 계층이 저장된 설정을 데몬 시작 때만 읽는지는 미확인.
+- 해결(미검증): narshamcp 서버 env에 `NARSHAMCP_CONFIG_PATH`를 실제 경로로 주고 데몬을 다시 띄운 뒤 다시 켠다. 저장되면 데몬이 뜰 때마다 스캔이 다시 돌 수 있으니 첫 재시작 비용을 잰다. 실측 비용(2026-10-23, UE 5.8·에셋 1.2만): 여유 메모리 최저 45.4→42.5GB, 390초.
+- 범위: Fab으로 설치한 NarshaMCP 0.13.7의 설정 저장(엔진 설정·메모리 모드)
+- 증거: 이 세션 응답 원문, `~/.narshamcp/logs/rust_mcp.log.2026-10-23` 46·63행, exe 문자열
+- 재확인(2026-10-23 20:15~20:33): `NARSHAMCP_CONFIG_PATH`를 준 프로세스에서는 `persisted: true`("written to config.ini [EngineIndexing]")이고 새 프로세스가 `engine_source_scan: true`를 읽는다. 그 새 프로세스(재시작과 같음)는 3.2초에 초기화된 뒤 엔진 호출 그래프를 약 4.5분 동안 다시 만들고(새 캐시 파일, 이전 캐시 재사용 안 함) 메모리가 13.5GB까지 올랐다. `ue_grep scope=engine`은 15분 동안 계속 `engine_not_indexed`였다 — 설정을 저장해도 엔진 텍스트 검색은 켜지지 않고 호출 그래프만 늘어난다. 환경 변수 없이 다른 클라이언트·에디터가 띄운 공유 데몬은 저장된 설정을 못 읽는다.
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(D-61 엔진 스캔)
+
 ### L-repo-24 `td-researcher`·`td-scout`에는 Write 도구가 없어 "보고서를 `Saved/AgentOps`에 쓰고 경로만 반환" 계약이 실패하고, `td-researcher`는 넓은 엔진 조사에서 maxTurns 40에 걸려 보고서 없이 멈춘다
 - 증상: 2026-10-23 SSFS 분석에서 td-researcher 3회 모두 "Write 도구가 없어 파일을 만들지 못했다"며 전문을 반환(400자 한도 초과). 엔진 조사 1회는 "stopped at its 40-turn limit ... had produced no report"(도구 69회, 약 20만 토큰)
 - 원인: `.claude/agents/td-researcher.md` tools `Read, Grep, Glob, WebSearch, WebFetch`·maxTurns 40, `td-scout.md` tools `Read, Grep, Glob`·maxTurns 25. 파일 쓰기 가능한 정의는 td-builder(Write)·td-refuter·td-debugger·td-test-runner(PowerShell)
@@ -183,3 +212,20 @@
 - 증거: 이 세션 위임 4건의 반환문(2026-10-23)
 - 날짜·상태: 2026-10-23 active
 - 발견: claude(SSFS·FSSS 가능성 분석)
+
+### L-repo-25 워크플로 하위 에이전트의 보고서 파일(`REPORT-*.md`) Write가 하네스에 "Subagents should return findings as text, not write report files"로 거부된다 — 같은 워크플로의 다른 에이전트 `.md` 쓰기는 성공한다
+- 증상: 2026-10-23 무한 세계 2단 워크플로에서 벤치 에이전트 2개가 `bench/REPORT-static.md`·`REPORT-dynamic.md` 쓰기를 거부당해 '부분'으로 보고했다. 같은 실행의 설계·초안·반박 에이전트는 `02-design-*.md`·`02-draft.md`·`02-refute-*.md`를 썼다.
+- 원인: 미확인(파일 이름·내용이 보고서처럼 보이면 거부하는 하네스 판정으로 추정).
+- 해결: 측정 에이전트에는 표를 결과 json에서 다시 만드는 요약 스크립트(`summarize_*.py --out`)를 남기게 하고 서술은 구조화 출력에 담게 한다. 부모가 스크립트로 보고서를 만든다. 문서형 산출물 프롬프트에는 "쓰기가 거부되면 전문을 구조화 출력 `full_text`에 담아 반환"을 넣는다. 수만 자 워크플로 결과는 `python Tools/workflow_journal_dump.py <실행 폴더> <출력 폴더>`로 갈래별 파일로 나눠 읽는다.
+- 범위: Claude Code Workflow 하위 에이전트(기본 워크플로 에이전트)
+- 증거: 실행 wf_fa306c31-451 journal(bench-static·bench-dynamic caveats)
+- 날짜·상태: 2026-10-23 active(원인 미확인)
+- 발견: claude(무한 세계 가능성 검토)
+
+### L-repo-24 서드파티 MCP 플러그인(NarshaMCP 0.13.7) 제거는 제조사 `uninstall --dry-run` 확인 → 모든 연결 프로세스 종료 → exe 사본으로 실행 → JSON 설정을 HEAD와 의미 비교해 복원 순서로 한다
+- 증상: 데몬만 멈추면 다른 세션·에디터가 띄운 `connect` 연결 프로세스가 1초 안에 데몬을 다시 띄운다. 실행 중인 exe는 플러그인 폴더째 지울 수 없다. 제조사 `uninstall`은 `TDGame.uproject`·`.mcp.json`·`.cursor/mcp.json`을 키 정렬로 다시 써서 의미는 같아도 파일 전체 diff가 생긴다.
+- 해결: ① `narshamcp.exe uninstall --dry-run --project-path <프로젝트> --plugin-dir <실제 경로>`로 대상 확인(이번에는 AGENTS.md·td-* 에이전트·사용자 스킬은 보존 대상이었음) ② `unregister-protocol` ③ 모든 `narshamcp.exe` 종료(`Stop-Process`) ④ exe를 임시 폴더에 복사해 그 사본으로 `--no-gui uninstall` ⑤ JSON 파일을 `git show HEAD:<파일>`과 의미 비교 후 같으면 `git checkout HEAD -- <파일>` ⑥ 남는 것(`~/.narshamcp`, `~/.claude/plugins/data/core-narsha-adk`, 설치기가 만든 `.claude/settings.local.json`, `~/.codex/skills`의 프로젝트 스킬 복사본)을 수동 삭제.
+- 범위: NarshaMCP처럼 설치기가 프로젝트·홈 설정 여러 곳을 쓰는 서드파티 에이전트 도구 제거
+- 증거: 이 세션 dry-run·실행 결과(16단계 전부 OK), `git status`에서 관련 파일 diff 없음
+- 날짜·상태: 2026-10-23 active
+- 발견: claude(NarshaADK 제거)

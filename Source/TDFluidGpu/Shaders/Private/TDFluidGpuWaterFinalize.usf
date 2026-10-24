@@ -8,6 +8,10 @@
 #define TDFLUIDGPU_WATER_HALF_PRESSURE 0
 #endif
 
+#ifndef TDFLUIDGPU_WATER_SOLID_FIRST_READS
+#define TDFLUIDGPU_WATER_SOLID_FIRST_READS 0
+#endif
+
 #define TDFLUIDGPU_WATER_PROBE_GROUP_SIZE 64
 
 static const float TDFLUIDGPU_WATER_LARGEST_FLOAT = 3.402823466e+38f;
@@ -159,6 +163,22 @@ void FinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 
 	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
 	const float SignedDistance = CompositeSdf[Texel];
+#if TDFLUIDGPU_WATER_SOLID_FIRST_READS
+	if (TDFluidGpuIsSolidDistance(SignedDistance))
+	{
+		float2 SolidRipple = float2(0.0f, 0.0f);
+		if (!TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_RIPPLES))
+		{
+			SolidRipple = RippleIn[Texel];
+		}
+		DensityOut[Texel] = float2(0.0f, 0.0f);
+		RippleOut[Texel] = SolidRipple;
+#if TDFLUIDGPU_WATER_WRITES_OUTPUT
+		WriteWaterOutputs(Actor, Water, Cell, SignedDistance, float2(0.0f, 0.0f), 0.0f, float2(0.0f, 0.0f), SolidRipple.x, TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell), TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell));
+#endif
+		return;
+	}
+#endif
 	const float2 Velocity = VelocityIn[Texel];
 	const float2 PreviousRipple = RippleIn[Texel];
 	const float SurfaceHeight = TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell);
@@ -168,6 +188,7 @@ void FinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 #else
 	float Pressure = PressureSolution[Texel];
 #endif
+#if !TDFLUIDGPU_WATER_SOLID_FIRST_READS
 	if (TDFluidGpuIsSolidDistance(SignedDistance))
 	{
 		const float2 SolidRipple = TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_RIPPLES) ? float2(0.0f, 0.0f) : PreviousRipple;
@@ -178,6 +199,7 @@ void FinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 #endif
 		return;
 	}
+#endif
 
 	if (OpenBorderFlag == 0u)
 	{

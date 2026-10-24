@@ -1,7 +1,9 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "DynamicRHI.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "HAL/FileManager.h"
+#include "HAL/IConsoleManager.h"
 #include "Misc/App.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/DateTime.h"
@@ -14,6 +16,9 @@
 #include "TDFluidGpuInputs.h"
 #include "TDFluidGpuPassTimestamps.h"
 #include "TDFluidGpuStepPasses.h"
+#include "TextureResource.h"
+#include "UObject/Package.h"
+#include "UObject/StrongObjectPtr.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTDFluidGpuWaterPerfRhiTests, Log, All);
 
@@ -77,6 +82,19 @@ namespace TDFluidGpuWaterPerfRhiTestPrivate
 		bool bUsesWaterLayer = true;
 		float StepSeconds = PerfSixtyHertzStepSeconds;
 		bool bIsVerdictCondition = true;
+		bool bWritesOutputs = false;
+		bool bShiftsEveryFrame = false;
+		int32 CrowdedStampCount = 0;
+	};
+
+	struct FTDWaterPerfOutputTargets
+	{
+		TStrongObjectPtr<UTextureRenderTarget2D> DensityPressure;
+		TStrongObjectPtr<UTextureRenderTarget2D> Velocity;
+		TStrongObjectPtr<UTextureRenderTarget2D> WaterSurface;
+		FTextureRenderTargetResource* DensityPressureResource = nullptr;
+		FTextureRenderTargetResource* VelocityResource = nullptr;
+		FTextureRenderTargetResource* WaterSurfaceResource = nullptr;
 	};
 
 	struct FTDWaterPerfCaseResult
@@ -320,14 +338,61 @@ namespace TDFluidGpuWaterPerfRhiTestPrivate
 		return Settings;
 	}
 
-	FTDFluidGpuActorInput MakePerfWaterActor(const FTDFluidGpuSimulationSettings& Settings, float StepSeconds, int32 FrameIndex)
+	TStrongObjectPtr<UTextureRenderTarget2D> CreatePerfOutputTarget(int32 Resolution)
 	{
+		UTextureRenderTarget2D* Target = NewObject<UTextureRenderTarget2D>(GetTransientPackage());
+		Target->bSupportsUAV = true;
+		Target->bCanCreateUAV = true;
+		Target->InitCustomFormat(Resolution, Resolution, PF_FloatRGBA, true);
+		Target->UpdateResourceImmediate(true);
+		return TStrongObjectPtr<UTextureRenderTarget2D>(Target);
+	}
+
+	FTDWaterPerfOutputTargets CreatePerfOutputTargets(const FTDWaterPerfCase& Case)
+	{
+		FTDWaterPerfOutputTargets Targets;
+		if (!Case.bWritesOutputs)
+		{
+			return Targets;
+		}
+
+		const int32 ResolutionTier = FTDFluidGpuBatch::ResolveWaterResolutionTier(Case.Resolution);
+		Targets.DensityPressure = CreatePerfOutputTarget(ResolutionTier);
+		Targets.Velocity = CreatePerfOutputTarget(ResolutionTier);
+		Targets.WaterSurface = CreatePerfOutputTarget(ResolutionTier);
+		Targets.DensityPressureResource = Targets.DensityPressure->GameThread_GetRenderTargetResource();
+		Targets.VelocityResource = Targets.Velocity->GameThread_GetRenderTargetResource();
+		Targets.WaterSurfaceResource = Targets.WaterSurface->GameThread_GetRenderTargetResource();
+		FlushRenderingCommands();
+		return Targets;
+	}
+
+	void AddPerfCrowdedStamps(const FVector2D& WindowCenterPlaneCm, int32 StampCount, const FVector2D& CellSize, FTDFluidGpuActorInput& InOutActor)
+	{
+		constexpr double CrowdedRadiusCm = 200.0;
+		constexpr double GoldenAngleRadians = 2.39996322972865332;
+		for (int32 StampIndex = 0; StampIndex < StampCount; ++StampIndex)
+		{
+			const double Angle = StampIndex * GoldenAngleRadians;
+			const double Distance = CrowdedRadiusCm * FMath::Sqrt((StampIndex + 0.5) / StampCount);
+			FTDFluidGpuStampInput& Stamp = InOutActor.Stamps.AddDefaulted_GetRef();
+			Stamp.CenterPlaneCm = WindowCenterPlaneCm + FVector2D(Distance * FMath::Cos(Angle), Distance * FMath::Sin(Angle));
+			Stamp.RadiusCm = 3.0f * static_cast<float>(CellSize.X);
+			Stamp.DensityStrength = 0.3f;
+			Stamp.VelocityStrength = 0.0f;
+			Stamp.RippleImpulseCm = 0.2f;
+		}
+	}
+
+	FTDFluidGpuActorInput MakePerfWaterActor(const FTDFluidGpuSimulationSettings& Settings, const FTDWaterPerfCase& Case, const FTDWaterPerfOutputTargets& Outputs, int32 FrameIndex)
+	{
+		const float StepSeconds = Case.StepSeconds;
 		const int32 ResolutionTier = FTDFluidGpuBatch::ResolveWaterResolutionTier(Settings.Resolution);
 		const int32 FieldDivisor = FTDFluidGpuBatch::ComputeWaterFieldDivisor(ResolutionTier);
 		const int32 FieldResolution = ResolutionTier / FieldDivisor;
 		const FVector2D CellSize = Settings.ExtentCm / static_cast<double>(ResolutionTier);
-		const int32 ShiftCount = FrameIndex / PerfShiftIntervalFrames;
-		const bool bShiftsThisFrame = FrameIndex > 0 && FrameIndex % PerfShiftIntervalFrames == 0;
+		const int32 ShiftCount = Case.bShiftsEveryFrame ? FrameIndex : FrameIndex / PerfShiftIntervalFrames;
+		const bool bShiftsThisFrame = FrameIndex > 0 && (Case.bShiftsEveryFrame || FrameIndex % PerfShiftIntervalFrames == 0);
 
 		FTDFluidGpuActorInput Actor;
 		Actor.ActorKey = PerfWaterActorKey;
@@ -368,6 +433,17 @@ namespace TDFluidGpuWaterPerfRhiTestPrivate
 		Stamp.DensityStrength = 0.6f;
 		Stamp.VelocityStrength = 0.0f;
 		Stamp.RippleImpulseCm = 0.5f;
+		if (Case.CrowdedStampCount > 1)
+		{
+			AddPerfCrowdedStamps(Actor.WindowCenterPlaneCm, Case.CrowdedStampCount - 1, CellSize, Actor);
+		}
+
+		if (Case.bWritesOutputs)
+		{
+			Actor.DensityPressureOutput = Outputs.DensityPressureResource;
+			Actor.VelocityOutput = Outputs.VelocityResource;
+			Actor.WaterSurfaceOutput = Outputs.WaterSurfaceResource;
+		}
 
 		const int32 ProbeRow = ResolutionTier / 2;
 		for (int32 ProbeIndex = 0; ProbeIndex < PerfProbeCount; ++ProbeIndex)
@@ -413,7 +489,7 @@ namespace TDFluidGpuWaterPerfRhiTestPrivate
 		return Actor;
 	}
 
-	FTDWaterPerfFrameBuilder MakePerfFrameBuilder(const FTDWaterPerfCase& Case)
+	FTDWaterPerfFrameBuilder MakePerfFrameBuilder(const FTDWaterPerfCase& Case, const FTDWaterPerfOutputTargets& Outputs)
 	{
 		if (!Case.bUsesWaterLayer)
 		{
@@ -426,10 +502,11 @@ namespace TDFluidGpuWaterPerfRhiTestPrivate
 		}
 
 		const FTDFluidGpuSimulationSettings Settings = MakePerfWaterSettings(Case.Resolution);
-		const float StepSeconds = Case.StepSeconds;
-		return [Settings, StepSeconds](int32 FrameIndex, FTDFluidGpuFrameInputs& OutFrame)
+		const FTDWaterPerfCase CaseCopy = Case;
+		const FTDWaterPerfOutputTargets* OutputTargets = &Outputs;
+		return [Settings, CaseCopy, OutputTargets](int32 FrameIndex, FTDFluidGpuFrameInputs& OutFrame)
 		{
-			OutFrame.Actors.Add(MakePerfWaterActor(Settings, StepSeconds, FrameIndex));
+			OutFrame.Actors.Add(MakePerfWaterActor(Settings, CaseCopy, *OutputTargets, FrameIndex));
 		};
 	}
 
@@ -506,6 +583,11 @@ namespace TDFluidGpuWaterPerfRhiTestPrivate
 		if (FTDFluidGpuBatch::ResolveWaterResolutionTier(Case.Resolution) >= TDFluidGpuSolverConstants::WaterHalfPressureMinimumResolution)
 		{
 			Labels.Append({ TEXT("mg_down_L1"), TEXT("mg_coarse"), TEXT("mg_up_L1") });
+			const IConsoleVariable* SingleProjectionVariable = IConsoleManager::Get().FindConsoleVariable(TEXT("TD.FluidFX.WaterGpuSingleProjection"));
+			if (SingleProjectionVariable && SingleProjectionVariable->GetInt() != 0)
+			{
+				Labels.Remove(FString(TEXT("water_pressure2")));
+			}
 		}
 		return Labels;
 	}
@@ -515,7 +597,8 @@ namespace TDFluidGpuWaterPerfRhiTestPrivate
 		FTDWaterPerfCaseResult Result;
 		Result.Case = Case;
 		Result.WarmupFrameCount = FMath::CeilToInt(PerfWarmupSeconds / Case.StepSeconds);
-		const FTDWaterPerfFrameBuilder BuildFrame = MakePerfFrameBuilder(Case);
+		const FTDWaterPerfOutputTargets OutputTargets = CreatePerfOutputTargets(Case);
+		const FTDWaterPerfFrameBuilder BuildFrame = MakePerfFrameBuilder(Case, OutputTargets);
 		for (int32 RunIndex = 0; RunIndex < PerfBaseRunCount; ++RunIndex)
 		{
 			Result.Runs.Add(MeasurePerfRun(Result.WarmupFrameCount, BuildFrame));
@@ -678,6 +761,9 @@ bool FTDFluidGpuWaterPerfPassTimingProfileTest::RunTest(const FString& Parameter
 		{ TEXT("water512_144hz"), 512, true, PerfHundredFortyFourHertzStepSeconds, false },
 		{ TEXT("water1024_144hz"), 1024, true, PerfHundredFortyFourHertzStepSeconds, false },
 		{ TEXT("nonwater512_60hz"), 512, false, PerfSixtyHertzStepSeconds, false },
+		{ TEXT("water1024_60hz_outputs"), 1024, true, PerfSixtyHertzStepSeconds, false, true, false, 0 },
+		{ TEXT("water1024_60hz_moving"), 1024, true, PerfSixtyHertzStepSeconds, false, false, true, 0 },
+		{ TEXT("water1024_60hz_stamps512"), 1024, true, PerfSixtyHertzStepSeconds, false, false, false, 512 },
 	};
 
 	TArray<FTDWaterPerfCaseResult> Results;

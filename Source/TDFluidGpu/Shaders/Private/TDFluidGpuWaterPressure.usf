@@ -1,5 +1,9 @@
 #include "/TDFluidGpu/Private/TDFluidGpuWaterCommon.ush"
 
+#ifndef TDFLUIDGPU_WATER_SHARED_APERTURES
+#define TDFLUIDGPU_WATER_SHARED_APERTURES 0
+#endif
+
 static const float TDFLUIDGPU_WATER_HALF_LEVEL_WEIGHT_SCALE = 0.25f;
 
 Texture2DArray<float> CompositeSdf;
@@ -97,13 +101,29 @@ float LoadScaledHalfPressure(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterP
 	return PressureIn[TDFluidGpuMakeTexel(HalfCell, Actor.SliceIndex)] * WarmStartScale;
 }
 
+#if TDFLUIDGPU_WATER_SHARED_APERTURES
+#define TDFLUIDGPU_WATER_HALF_APERTURE_REGION (TDFLUIDGPU_CELL_GROUP_SIZE + 1)
+#define TDFLUIDGPU_WATER_HALF_APERTURE_THREAD_COUNT (TDFLUIDGPU_CELL_GROUP_SIZE * TDFLUIDGPU_CELL_GROUP_SIZE)
+
+groupshared float2 SharedHalfApertures[TDFLUIDGPU_WATER_HALF_APERTURE_REGION * TDFLUIDGPU_WATER_HALF_APERTURE_REGION];
+#endif
+
 [numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
-void HalfPrepareCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+void HalfPrepareCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, uint GroupIndex : SV_GroupIndex)
 {
 	const uint EntryIndex = DispatchThreadId.z;
 	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
 	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
 	const int2 HalfCell = int2(DispatchThreadId.xy);
+#if TDFLUIDGPU_WATER_SHARED_APERTURES
+	const int2 ApertureRegionOrigin = int2(GroupId.xy) * TDFLUIDGPU_CELL_GROUP_SIZE - 1;
+	for (uint RegionIndex = GroupIndex; RegionIndex < TDFLUIDGPU_WATER_HALF_APERTURE_REGION * TDFLUIDGPU_WATER_HALF_APERTURE_REGION; RegionIndex += TDFLUIDGPU_WATER_HALF_APERTURE_THREAD_COUNT)
+	{
+		const int2 RegionCell = int2(RegionIndex % TDFLUIDGPU_WATER_HALF_APERTURE_REGION, RegionIndex / TDFLUIDGPU_WATER_HALF_APERTURE_REGION);
+		SharedHalfApertures[RegionIndex] = ComputeHalfCellApertures(Actor, ApertureRegionOrigin + RegionCell);
+	}
+	GroupMemoryBarrierWithGroupSync();
+#endif
 	if (!TDFluidGpuIsInsideGrid(HalfCell, Water.PressureResolution))
 	{
 		return;
@@ -118,9 +138,16 @@ void HalfPrepareCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const float Divergence11 = ComputeOpenWaterDivergence(Actor, Water, OpenBorderFlag, ChildOrigin + int2(1, 1));
 	const float RawRhs = 0.25f * ((Divergence00 + Divergence10) + (Divergence01 + Divergence11));
 
+#if TDFLUIDGPU_WATER_SHARED_APERTURES
+	const uint ApertureIndex = (GroupThreadId.y + 1u) * TDFLUIDGPU_WATER_HALF_APERTURE_REGION + GroupThreadId.x + 1u;
+	const float2 Apertures = SharedHalfApertures[ApertureIndex];
+	const float LeftAperture = SharedHalfApertures[ApertureIndex - 1u].x;
+	const float DownAperture = SharedHalfApertures[ApertureIndex - TDFLUIDGPU_WATER_HALF_APERTURE_REGION].y;
+#else
 	const float2 Apertures = ComputeHalfCellApertures(Actor, HalfCell);
 	const float LeftAperture = ComputeHalfCellApertures(Actor, HalfCell - int2(1, 0)).x;
 	const float DownAperture = ComputeHalfCellApertures(Actor, HalfCell - int2(0, 1)).y;
+#endif
 	const float2 OpenBoundary = ComputeHalfCellOpenBoundary(Actor, Water, OpenBorderFlag, HalfCell);
 	const float2 Weights = float2(Actor.InvSpacingXSquared, Actor.InvSpacingYSquared) * TDFLUIDGPU_WATER_HALF_LEVEL_WEIGHT_SCALE;
 	const float RightWeight = Apertures.x * Weights.x;
@@ -261,6 +288,7 @@ void UpsampleCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 Texture2DArray<float> HalfRhsIn;
 StructuredBuffer<float> HalfRhsMeanIn;
 RWStructuredBuffer<float2> HalfRhsPartialSumsOut;
+RWStructuredBuffer<float2> WaterPressurePartialSumsOut;
 RWTexture2DArray<float> HalfRhsInOut;
 uint TilesPerSlice;
 uint TilesPerRow;
@@ -312,6 +340,37 @@ void HalfRhsMeanTilesCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_Gro
 	if (GroupIndex == 0u)
 	{
 		HalfRhsPartialSumsOut[EntryIndex * TilesPerSlice + GroupId.y * TilesPerRow + GroupId.x] = SharedHalfRhsSums[0];
+	}
+}
+
+[numthreads(TDFLUIDGPU_TILE_GROUP_SIZE, TDFLUIDGPU_TILE_GROUP_SIZE, 1)]
+void WaterPressureMeanTilesCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, uint GroupIndex : SV_GroupIndex)
+{
+	const uint EntryIndex = GroupId.z;
+	const uint PartialIndex = EntryIndex * TilesPerSlice + GroupId.y * TilesPerRow + GroupId.x;
+	if (WaterOpenBorderFlags[EntryIndex] != 0u)
+	{
+		if (GroupIndex == 0u)
+		{
+			WaterPressurePartialSumsOut[PartialIndex] = float2(0.0f, 0.0f);
+		}
+		return;
+	}
+
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const int2 Cell = int2(GroupId.xy) * TDFLUIDGPU_TILE_GROUP_SIZE + int2(GroupThreadId.xy);
+	float2 PressureSum = float2(0.0f, 0.0f);
+	if (IsWaterFluidCell(Actor, Cell))
+	{
+		PressureSum = float2(PressureIn[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)], 1.0f);
+	}
+	SharedHalfRhsSums[GroupIndex] = PressureSum;
+	GroupMemoryBarrierWithGroupSync();
+
+	ReduceSharedHalfRhsSums(GroupIndex);
+	if (GroupIndex == 0u)
+	{
+		WaterPressurePartialSumsOut[PartialIndex] = SharedHalfRhsSums[0];
 	}
 }
 

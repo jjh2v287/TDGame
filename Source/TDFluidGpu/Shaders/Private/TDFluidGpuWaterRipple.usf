@@ -1,5 +1,9 @@
 #include "/TDFluidGpu/Private/TDFluidGpuWaterCommon.ush"
 
+#ifndef TDFLUIDGPU_WATER_SOLID_FIRST_READS
+#define TDFLUIDGPU_WATER_SOLID_FIRST_READS 0
+#endif
+
 Texture2DArray<float> CompositeSdf;
 Texture2DArray<float2> RippleIn;
 RWTexture2DArray<float2> RippleOut;
@@ -28,6 +32,21 @@ void RippleSubstepCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	}
 
 	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+#if TDFLUIDGPU_WATER_SOLID_FIRST_READS
+	const bool bAdvancesSubstep = TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_RIPPLES) && SubstepIndex < Water.RippleSubstepCount;
+	if (bAdvancesSubstep && TDFluidGpuIsSolidDistance(CompositeSdf[Texel]))
+	{
+		RippleOut[Texel] = float2(0.0f, 0.0f);
+		return;
+	}
+
+	const float2 Ripple = RippleIn[Texel];
+	if (!bAdvancesSubstep)
+	{
+		RippleOut[Texel] = Ripple;
+		return;
+	}
+#else
 	const float2 Ripple = RippleIn[Texel];
 	if (!TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_RIPPLES) || SubstepIndex >= Water.RippleSubstepCount)
 	{
@@ -40,6 +59,7 @@ void RippleSubstepCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		RippleOut[Texel] = float2(0.0f, 0.0f);
 		return;
 	}
+#endif
 
 	const float CenterHeight = Ripple.x;
 	const float LeftHeight = LoadRippleNeighborHeight(Actor, Cell - int2(1, 0), CenterHeight);

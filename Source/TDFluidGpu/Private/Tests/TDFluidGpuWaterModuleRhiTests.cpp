@@ -79,6 +79,7 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 		VelocityScratch,
 		Density,
 		Ripple,
+		RippleScratch,
 		Pressure,
 		PressureScratch,
 		GuideField,
@@ -271,6 +272,8 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 			return State.Density[0];
 		case ETDWaterGpuStateTexture::Ripple:
 			return State.Ripple[0];
+		case ETDWaterGpuStateTexture::RippleScratch:
+			return State.Ripple[1];
 		case ETDWaterGpuStateTexture::Pressure:
 			return State.PressureSolution[0];
 		case ETDWaterGpuStateTexture::PressureScratch:
@@ -1639,6 +1642,139 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 		}
 		return DifferenceCount;
 	}
+
+	const TCHAR* const OptimizationVariableNames[] = {
+		TEXT("TD.FluidFX.WaterGpuWideOpenBorderScan"),
+		TEXT("TD.FluidFX.WaterGpuSolidFirstReads"),
+		TEXT("TD.FluidFX.WaterGpuSkipOpenPressureMean"),
+		TEXT("TD.FluidFX.WaterGpuSkipRippleParityCopy"),
+		TEXT("TD.FluidFX.WaterGpuSkipDryPressureTiles"),
+		TEXT("TD.FluidFX.WaterGpuFusedPressureTail"),
+		TEXT("TD.FluidFX.WaterGpuFusedPrestep"),
+		TEXT("TD.FluidFX.WaterGpuSharedHalfApertures"),
+		TEXT("TD.FluidFX.WaterGpuSkipInactiveMultigridTiles"),
+	};
+	constexpr float OptimizationStepSeconds[] = { 1.0f / 60.0f, 1.0f / 30.0f, 1.0f / 144.0f, 0.1f };
+	constexpr int32 OptimizationFrameCount = 24;
+	constexpr int32 OptimizationShiftFrameIndex = 9;
+
+	struct FTDWaterGpuOptimizationCase
+	{
+		const TCHAR* Label = TEXT("");
+		int32 Resolution = 0;
+		bool bOpensWaterBorders = true;
+		bool bTreatsDryCellsAsSolid = true;
+		float RippleWaveSpeedCmPerSec = 120.0f;
+		bool bShiftsWindow = false;
+		int32 PressureIterations = 0;
+	};
+
+	using FTDWaterGpuOptimizationVariableScopes = TArray<TUniquePtr<FTDWaterGpuConsoleVariableScope>>;
+
+	FTDWaterGpuOptimizationVariableScopes ApplyOptimizationVariables(int32 Value)
+	{
+		FTDWaterGpuOptimizationVariableScopes Scopes;
+		for (const TCHAR* VariableName : OptimizationVariableNames)
+		{
+			Scopes.Add(MakeUnique<FTDWaterGpuConsoleVariableScope>(VariableName, Value));
+		}
+		return Scopes;
+	}
+
+	bool AreOptimizationVariablesApplied(const FTDWaterGpuOptimizationVariableScopes& Scopes)
+	{
+		for (const TUniquePtr<FTDWaterGpuConsoleVariableScope>& Scope : Scopes)
+		{
+			if (!Scope->IsValid())
+			{
+				return false;
+			}
+		}
+		return !Scopes.IsEmpty();
+	}
+
+	FTDWaterGpuChannelScene MakeOptimizationScene(const FTDWaterGpuOptimizationCase& Case)
+	{
+		FTDWaterGpuChannelScene Scene;
+		Scene.Settings = MakeModuleWaterSettings(Case.Resolution, Case.bOpensWaterBorders);
+		Scene.Settings.bTreatDryCellsAsSolid = Case.bTreatsDryCellsAsSolid;
+		Scene.Settings.TerrainSlopeGravity = Case.bTreatsDryCellsAsSolid ? 0.0f : 300.0f;
+		Scene.Settings.RippleWaveSpeedCmPerSec = Case.RippleWaveSpeedCmPerSec;
+		Scene.Settings.VorticityStrength = 0.3f;
+		Scene.RockRadiusCm = 216.0f;
+		if (Case.PressureIterations > 0)
+		{
+			Scene.Settings.PressureIterations = Case.PressureIterations;
+		}
+		return Scene;
+	}
+
+	float GetOptimizationStepSeconds(int32 FrameIndex)
+	{
+		return OptimizationStepSeconds[FrameIndex % UE_ARRAY_COUNT(OptimizationStepSeconds)];
+	}
+
+	int32 ComputeOptimizationRippleSubstepCount(const FTDWaterGpuChannelScene& Scene, int32 FrameIndex)
+	{
+		const FVector2D CellSize = ComputeWaterCellSize(Scene.Settings);
+		bool bReachedCap = false;
+		float WaveSpeedScale = 1.0f;
+		const float StepSeconds = FMath::Min(GetOptimizationStepSeconds(FrameIndex), TDFluidGpuSolverConstants::MaximumStepDeltaTimeSeconds);
+		return FTDFluidGpuBatch::ComputeWaterRippleSubstepCount(Scene.Settings.RippleWaveSpeedCmPerSec, StepSeconds, static_cast<float>(FMath::Min(CellSize.X, CellSize.Y)), GetWaterTier(Scene.Settings), bReachedCap, WaveSpeedScale);
+	}
+
+	FTDFluidGpuActorInput MakeOptimizationActor(const FTDWaterGpuOptimizationCase& Case, const FTDWaterGpuChannelScene& Scene, int32 FrameIndex)
+	{
+		const FVector2D CellSize = ComputeWaterCellSize(Scene.Settings);
+		const int32 FieldDivisor = GetWaterFieldDivisor(Scene.Settings);
+		const int32 FieldResolution = GetWaterFieldResolution(Scene.Settings);
+		FTDFluidGpuActorInput Actor = MakeChannelActor(Scene, FrameIndex);
+		Actor.DeltaTimeSeconds = GetOptimizationStepSeconds(FrameIndex);
+		if (!Case.bTreatsDryCellsAsSolid)
+		{
+			for (FTDFluidGpuTerrainCellUpdate& TerrainUpdate : Actor.WaterTerrainUpdates)
+			{
+				TerrainUpdate.ElevationCm = 3.0f * static_cast<float>(TerrainUpdate.Cell.X) - 50.0f;
+			}
+		}
+
+		if (Case.bShiftsWindow && FrameIndex >= OptimizationShiftFrameIndex)
+		{
+			Actor.WindowCenterPlaneCm = FVector2D(FieldDivisor * CellSize.X, 0.0);
+			Actor.WaterFieldOrigin = FIntPoint(1 % FieldResolution, 0);
+			Actor.ShiftCells = FrameIndex == OptimizationShiftFrameIndex ? FIntPoint(FieldDivisor, 0) : FIntPoint::ZeroValue;
+			Actor.bHasObstacleListChanged = Actor.bHasObstacleListChanged || FrameIndex == OptimizationShiftFrameIndex;
+		}
+
+		const double Phase = FrameIndex * 0.31;
+		FTDFluidGpuStampInput Stamp = MakeModuleWaterStamp(Actor.WindowCenterPlaneCm + FVector2D(500.0 * FMath::Cos(Phase), 200.0 * FMath::Sin(Phase)), 3.0f * static_cast<float>(CellSize.X), 0.6f, 1.5f);
+		Stamp.VelocityPlaneCmPerSec = FVector2D(-200.0 * FMath::Sin(Phase), 200.0 * FMath::Cos(Phase));
+		Stamp.VelocityStrength = 0.5f;
+		Actor.Stamps.Add(Stamp);
+		Actor.Stamps.Add(MakeModuleWaterStamp(Actor.WindowCenterPlaneCm + FVector2D(-300.0 * FMath::Cos(Phase), 100.0 * FMath::Sin(Phase)), 4.0f * static_cast<float>(CellSize.X), 0.0f, -2.0f));
+		return Actor;
+	}
+
+	const TCHAR* GetStateTextureLabel(ETDWaterGpuStateTexture TextureKind)
+	{
+		switch (TextureKind)
+		{
+		case ETDWaterGpuStateTexture::Velocity:
+			return TEXT("Velocity");
+		case ETDWaterGpuStateTexture::VelocityScratch:
+			return TEXT("VelocityScratch");
+		case ETDWaterGpuStateTexture::Density:
+			return TEXT("Density");
+		case ETDWaterGpuStateTexture::Ripple:
+			return TEXT("Ripple");
+		case ETDWaterGpuStateTexture::RippleScratch:
+			return TEXT("RippleScratch");
+		case ETDWaterGpuStateTexture::Pressure:
+			return TEXT("Pressure");
+		default:
+			return TEXT("Other");
+		}
+	}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -2114,6 +2250,115 @@ bool FTDFluidGpuWaterModuleRhiMultigridOpenBoundaryConvergesTest::RunTest(const 
 	}
 
 	AddInfo(TEXT("TDFluidGpuWaterMultigridConvergence: S8 (e) is covered by the FX-4a multigrid tests TDGame.FluidFXRhi.Multigrid* run in the same RHI suite"));
+	return !HasAnyErrors();
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidGpuWaterModuleRhiOptimizationsMatchLegacyTest,
+	"TDGame.FluidFXRhi.Water.Module.OptimizationsMatchLegacy",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidGpuWaterModuleRhiOptimizationsMatchLegacyTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidGpuWaterModuleRhiTestPrivate;
+
+	if (!CanRunWaterModuleRhiTest(*this, TEXT("Water.Module.OptimizationsMatchLegacy")))
+	{
+		return true;
+	}
+
+	const FTDWaterGpuOptimizationCase Cases[] = {
+		{ TEXT("192 open fast ripple moving"), 192, true, true, 1200.0f, true },
+		{ TEXT("192 closed slow ripple"), 192, false, true, 120.0f, false },
+		{ TEXT("192 open dry cells fluid slope gravity"), 192, true, false, 120.0f, false },
+		{ TEXT("512 open slow ripple moving"), 512, true, true, 120.0f, true },
+		{ TEXT("512 closed fast ripple"), 512, false, true, 1200.0f, false },
+		{ TEXT("1024 open slow ripple moving"), 1024, true, true, 120.0f, true },
+		{ TEXT("1024 closed slow ripple"), 1024, false, true, 120.0f, false },
+		{ TEXT("192 open iterations 13 moving"), 192, true, true, 120.0f, true, 13 },
+		{ TEXT("192 closed iterations 5"), 192, false, true, 120.0f, false, 5 },
+		{ TEXT("192 open dry cells iterations 16"), 192, true, false, 120.0f, false, 16 },
+	};
+	const TArray<ETDWaterGpuStateTexture> ComparedTextures = { ETDWaterGpuStateTexture::Velocity, ETDWaterGpuStateTexture::VelocityScratch, ETDWaterGpuStateTexture::Density, ETDWaterGpuStateTexture::Ripple, ETDWaterGpuStateTexture::RippleScratch, ETDWaterGpuStateTexture::Pressure };
+
+	bool bSawOddRippleSubstepCount = false;
+	bool bSawEvenRippleSubstepCount = false;
+	for (const FTDWaterGpuOptimizationCase& Case : Cases)
+	{
+		const FTDWaterGpuChannelScene Scene = MakeOptimizationScene(Case);
+		FString SubstepSeries;
+		for (int32 FrameIndex = 0; FrameIndex < OptimizationFrameCount; ++FrameIndex)
+		{
+			const int32 SubstepCount = ComputeOptimizationRippleSubstepCount(Scene, FrameIndex);
+			bSawOddRippleSubstepCount |= SubstepCount % 2 == 1;
+			bSawEvenRippleSubstepCount |= SubstepCount > 0 && SubstepCount % 2 == 0;
+			if (FrameIndex < 4)
+			{
+				SubstepSeries += FString::Printf(TEXT("%s%d"), SubstepSeries.IsEmpty() ? TEXT("") : TEXT(","), SubstepCount);
+			}
+		}
+
+		FTDWaterGpuRunRequest Request;
+		Request.FrameCount = OptimizationFrameCount;
+		Request.SnapshotFrameCounts = { 1, OptimizationShiftFrameIndex + 1, OptimizationShiftFrameIndex + 2, OptimizationFrameCount };
+		Request.SnapshotTextures = ComparedTextures;
+		FTDWaterGpuRunResult Runs[2];
+		bool bRanBothModes = true;
+		for (int32 ModeIndex = 0; ModeIndex < 2 && bRanBothModes; ++ModeIndex)
+		{
+			const FTDWaterGpuOptimizationVariableScopes Scopes = ApplyOptimizationVariables(ModeIndex);
+			if (!TestTrue(*FString::Printf(TEXT("%s mode %d optimization console variables are registered"), Case.Label, ModeIndex), AreOptimizationVariablesApplied(Scopes)))
+			{
+				bRanBothModes = false;
+				break;
+			}
+
+			Runs[ModeIndex] = RunWaterGpuFrames(Request, [Case, Scene](int32 FrameIndex, FTDFluidGpuFrameInputs& OutFrame)
+			{
+				OutFrame.Actors.Add(MakeOptimizationActor(Case, Scene, FrameIndex));
+			});
+			bRanBothModes = TestTrue(*FString::Printf(TEXT("%s mode %d read every state snapshot"), Case.Label, ModeIndex), Runs[ModeIndex].bHasWaterBatch && Runs[ModeIndex].bHasReadAllSnapshots && Runs[ModeIndex].Snapshots.Num() == Request.SnapshotFrameCounts.Num());
+		}
+		if (!bRanBothModes)
+		{
+			continue;
+		}
+
+		const FTDWaterGpuStateSnapshot& FinalSnapshot = Runs[1].Snapshots.Last();
+		TestTrue(*FString::Printf(TEXT("%s final velocity is nonzero"), Case.Label), FindSliceMaximumMagnitude(GetSnapshotTexture(FinalSnapshot, ETDWaterGpuStateTexture::Velocity), 0) > 0.0);
+		TestTrue(*FString::Printf(TEXT("%s final ripple height is nonzero"), Case.Label), FindSliceMaximumMagnitude(GetSnapshotTexture(FinalSnapshot, ETDWaterGpuStateTexture::Ripple), 0) > 0.0);
+
+		int32 TotalDifferenceCount = 0;
+		for (int32 SnapshotIndex = 0; SnapshotIndex < Runs[0].Snapshots.Num(); ++SnapshotIndex)
+		{
+			for (const ETDWaterGpuStateTexture TextureKind : ComparedTextures)
+			{
+				const int32 DifferenceCount = CountSliceByteDifferences(GetSnapshotTexture(Runs[0].Snapshots[SnapshotIndex], TextureKind), GetSnapshotTexture(Runs[1].Snapshots[SnapshotIndex], TextureKind));
+				TotalDifferenceCount += DifferenceCount;
+				if (!TestEqual(*FString::Printf(TEXT("%s: optimized water state differs from legacy (%s, frame %d, texture %s)"), Case.Label, Case.Label, Runs[0].Snapshots[SnapshotIndex].FrameCount, GetStateTextureLabel(TextureKind)), DifferenceCount, 0))
+				{
+					break;
+				}
+			}
+		}
+
+		const FString CaseLine = FString::Printf(TEXT("TDFluidGpuWaterOptimizations: case=%s tier=%d borders=%d dry_solid=%d wave=%.0f moving=%d first_substeps=%s snapshots=%d textures=%d difference_count=%d"),
+			Case.Label,
+			Case.Resolution,
+			Case.bOpensWaterBorders ? 1 : 0,
+			Case.bTreatsDryCellsAsSolid ? 1 : 0,
+			Case.RippleWaveSpeedCmPerSec,
+			Case.bShiftsWindow ? 1 : 0,
+			*SubstepSeries,
+			Runs[0].Snapshots.Num(),
+			ComparedTextures.Num(),
+			TotalDifferenceCount);
+		UE_LOG(LogTDFluidGpuWaterModuleRhiTests, Display, TEXT("%s"), *CaseLine);
+		AddInfo(CaseLine);
+	}
+
+	TestTrue(TEXT("The scenes include odd ripple substep counts"), bSawOddRippleSubstepCount);
+	TestTrue(TEXT("The scenes include even ripple substep counts"), bSawEvenRippleSubstepCount);
 	return !HasAnyErrors();
 }
 

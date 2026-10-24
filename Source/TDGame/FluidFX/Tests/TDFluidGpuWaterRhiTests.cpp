@@ -4198,4 +4198,133 @@ bool FTDFluidGpuWaterRhiNoSurfaceStripStaysSolidTest::RunTest(const FString& Par
 	return !HasAnyErrors();
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidGpuWaterRhiOptimizationsKeepOutputsTest,
+	"TDGame.FluidFXRhi.Water.OptimizationsKeepOutputs",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidGpuWaterRhiOptimizationsKeepOutputsTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidGpuWaterRhiTestPrivate;
+
+	const FString CaseLabel = TEXT("TDGame.FluidFXRhi.Water.OptimizationsKeepOutputs");
+	if (!CanRunWaterRhiTest(*this, CaseLabel))
+	{
+		return false;
+	}
+
+	FTDWaterGpuConsoleVariableScope SolverBackendScope(SolverBackendVariableName, 0);
+	FTDWaterGpuConsoleVariableScope WaterGpuScope(WaterGpuVariableName, 1);
+	if (!ExpectWaterGpuRegistered(*this, CaseLabel, WaterGpuScope))
+	{
+		return false;
+	}
+
+	static constexpr int32 OptimizationStepCount = 120;
+	const TCHAR* const OptimizationVariableNames[] = {
+		TEXT("TD.FluidFX.WaterGpuWideOpenBorderScan"),
+		TEXT("TD.FluidFX.WaterGpuSolidFirstReads"),
+		TEXT("TD.FluidFX.WaterGpuSkipOpenPressureMean"),
+		TEXT("TD.FluidFX.WaterGpuSkipRippleParityCopy"),
+		TEXT("TD.FluidFX.WaterGpuSkipDryPressureTiles"),
+		TEXT("TD.FluidFX.WaterGpuFusedPressureTail"),
+		TEXT("TD.FluidFX.WaterGpuFusedPrestep"),
+		TEXT("TD.FluidFX.WaterGpuSharedHalfApertures"),
+		TEXT("TD.FluidFX.WaterGpuSkipInactiveMultigridTiles"),
+	};
+	const int32 VariableCount = static_cast<int32>(UE_ARRAY_COUNT(OptimizationVariableNames));
+	const float StepCycle[] = { StepSeconds60, StepSeconds144, LargeStepSeconds, StepSeconds60, StepSeconds144 };
+
+	struct FTDWaterOptimizationMode
+	{
+		FString Label;
+		TArray<int32> Values;
+	};
+	const auto MakeUniformMode = [VariableCount](const TCHAR* Label, int32 Value)
+	{
+		FTDWaterOptimizationMode Mode;
+		Mode.Label = Label;
+		Mode.Values.Init(Value, VariableCount);
+		return Mode;
+	};
+
+	for (const int32 Resolution : { ParityResolution, 1024 })
+	{
+		FTDFluidWaterSceneSpec OptimizationScene = MakeRockRiverScene(Resolution, FVector2D(-200.0, 0.0));
+		OptimizationScene.Config.RippleWaveSpeedCmPerSec = 120.0f;
+		OptimizationScene.Config.RippleDampingPerSec = 1.2f;
+		OptimizationScene.Config.RippleFlowAdvection = 1.0f;
+
+		TArray<FTDWaterOptimizationMode> Modes;
+		Modes.Add(MakeUniformMode(TEXT("all off"), 0));
+		Modes.Add(MakeUniformMode(TEXT("all on"), 1));
+		if (Resolution == ParityResolution)
+		{
+			for (int32 VariableIndex = 0; VariableIndex < VariableCount; ++VariableIndex)
+			{
+				FTDWaterOptimizationMode& SingleMode = Modes.AddDefaulted_GetRef();
+				SingleMode = MakeUniformMode(TEXT(""), 0);
+				SingleMode.Label = FString::Printf(TEXT("only %s"), OptimizationVariableNames[VariableIndex]);
+				SingleMode.Values[VariableIndex] = 1;
+			}
+		}
+
+		TArray<FTDFluidWaterRiverArm> Arms;
+		Arms.SetNum(Modes.Num());
+		for (int32 ModeIndex = 0; ModeIndex < Modes.Num(); ++ModeIndex)
+		{
+			TArray<TUniquePtr<FTDWaterGpuConsoleVariableScope>> Scopes;
+			for (int32 VariableIndex = 0; VariableIndex < VariableCount; ++VariableIndex)
+			{
+				Scopes.Add(MakeUnique<FTDWaterGpuConsoleVariableScope>(OptimizationVariableNames[VariableIndex], Modes[ModeIndex].Values[VariableIndex]));
+				if (!TestTrue(*FString::Printf(TEXT("%s GPU %d registered %s"), *CaseLabel, Resolution, OptimizationVariableNames[VariableIndex]), Scopes.Last()->IsValid()))
+				{
+					return false;
+				}
+			}
+
+			const FString RunLabel = FString::Printf(TEXT("%s GPU %d %s"), *CaseLabel, Resolution, *Modes[ModeIndex].Label);
+			FTDFluidWaterRiverArm& Arm = Arms[ModeIndex];
+			const bool bRan = RunWaterActorArm(*this, RunLabel, OptimizationScene, ETDFluidSolverBackend::Gpu, [&Arm, &StepCycle](FTDFluidWaterArmContext& ArmContext) -> bool
+			{
+				for (int32 StepIndex = 0; StepIndex < OptimizationStepCount; ++StepIndex)
+				{
+					for (const FTDFluidBrushStamp& Stamp : MakeOrbitWaterStamps(ArmContext.GetComponent().GetSimulationCenterWorld(), StepIndex))
+					{
+						ArmContext.QueueStamp(Stamp);
+					}
+					ArmContext.StepFor(StepCycle[StepIndex % UE_ARRAY_COUNT(StepCycle)]);
+				}
+				Arm.Outputs = ArmContext.Capture();
+				Arm.Oracle = ArmContext.BuildOracle();
+				Arm.Targets = ArmContext.DescribeTargets();
+				return true;
+			});
+			if (!bRan || !ExpectGpuArmOutputs(*this, RunLabel, Arm.Targets, Arm.Outputs, Resolution))
+			{
+				return false;
+			}
+		}
+
+		const FString ResolutionLabel = FString::Printf(TEXT("%s GPU %d"), *CaseLabel, Resolution);
+		if (!ExpectFlowActivity(*this, ResolutionLabel, Arms[0].Outputs, Arms[0].Oracle))
+		{
+			return false;
+		}
+
+		for (int32 ModeIndex = 1; ModeIndex < Modes.Num(); ++ModeIndex)
+		{
+			const FString ModeLabel = ResolutionLabel + TEXT(" ") + Modes[ModeIndex].Label;
+			const bool bDensityMatches = ArePixelsBitIdentical(Arms[0].Outputs.DensityPixels, Arms[ModeIndex].Outputs.DensityPixels);
+			const bool bVelocityMatches = ArePixelsBitIdentical(Arms[0].Outputs.VelocityPixels, Arms[ModeIndex].Outputs.VelocityPixels);
+			const bool bSurfaceMatches = ArePixelsBitIdentical(Arms[0].Outputs.SurfacePixels, Arms[ModeIndex].Outputs.SurfacePixels);
+			ReportLine(*this, FString::Printf(TEXT("TDFluidGpuWaterOptimizations: %s density_identical=%d velocity_identical=%d surface_identical=%d"), *ModeLabel, bDensityMatches ? 1 : 0, bVelocityMatches ? 1 : 0, bSurfaceMatches ? 1 : 0));
+			TestTrue(*(ModeLabel + TEXT(" density-pressure output is bit-identical to all off")), bDensityMatches);
+			TestTrue(*(ModeLabel + TEXT(" velocity output is bit-identical to all off")), bVelocityMatches);
+			TestTrue(*(ModeLabel + TEXT(" water surface output is bit-identical to all off")), bSurfaceMatches);
+		}
+	}
+	return !HasAnyErrors();
+}
+
 #endif

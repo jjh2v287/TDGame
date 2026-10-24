@@ -1,0 +1,112 @@
+{
+ "fast_avx2": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "fast_sse2": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "precise_avx2": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "precise_contract_avx2": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "precise_sse2": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "strict_avx2": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "strict_sse2": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "ue_editor_default": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "ue_game_avx": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "ue_game_avx2": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "ue_game_default": {
+  "seam_1m": true,
+  "seam_05m": true,
+  "grid_1m_equals_05m_subsample": [
+   true,
+   true,
+   true,
+   true
+  ]
+ }
+}

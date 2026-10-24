@@ -1,0 +1,1466 @@
+{
+ "precise_sse2": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.3344,
+    "p10_ms": 0.3114,
+    "p90_ms": 0.5327,
+    "mean_ms": 0.3961,
+    "ns_per_sample": 307.1
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.3244,
+    "p10_ms": 1.2209,
+    "p90_ms": 1.9402,
+    "mean_ms": 1.4451,
+    "ns_per_sample": 313.5
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.4298,
+    "p10_ms": 4.7848,
+    "p90_ms": 7.0391,
+    "mean_ms": 5.6699,
+    "ns_per_sample": 326.3
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.2385,
+    "p10_ms": 4.9275,
+    "p90_ms": 7.7912,
+    "mean_ms": 5.862,
+    "ns_per_sample": 314.8
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.4573,
+    "p10_ms": 0.4164,
+    "p90_ms": 0.7177,
+    "mean_ms": 0.5422,
+    "ns_per_sample": 419.9
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.8405,
+    "p10_ms": 1.6447,
+    "p90_ms": 2.7458,
+    "mean_ms": 2.0526,
+    "ns_per_sample": 435.6
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.2697,
+    "p10_ms": 6.474,
+    "p90_ms": 10.0682,
+    "mean_ms": 7.851,
+    "ns_per_sample": 436.9
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.1774,
+    "p10_ms": 6.5059,
+    "p90_ms": 8.6069,
+    "mean_ms": 7.4179,
+    "ns_per_sample": 431.3
+   }
+  ],
+  "threads": [],
+  "checksum": 41441493.992754,
+  "cpu_load_before_percent": "79",
+  "cpu_load_after_percent": "48",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 3.26
+ },
+ "fast_sse2": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.3853,
+    "p10_ms": 0.3066,
+    "p90_ms": 0.4964,
+    "mean_ms": 0.4153,
+    "ns_per_sample": 353.8
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.2921,
+    "p10_ms": 1.1893,
+    "p90_ms": 1.8449,
+    "mean_ms": 1.4356,
+    "ns_per_sample": 305.8
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.262,
+    "p10_ms": 4.7297,
+    "p90_ms": 6.7085,
+    "mean_ms": 5.5727,
+    "ns_per_sample": 316.2
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.1033,
+    "p10_ms": 4.7832,
+    "p90_ms": 6.8307,
+    "mean_ms": 5.4664,
+    "ns_per_sample": 306.7
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.4189,
+    "p10_ms": 0.3939,
+    "p90_ms": 0.6298,
+    "mean_ms": 0.4716,
+    "ns_per_sample": 384.7
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.6596,
+    "p10_ms": 1.541,
+    "p90_ms": 2.5071,
+    "mean_ms": 1.839,
+    "ns_per_sample": 392.8
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.1976,
+    "p10_ms": 6.4092,
+    "p90_ms": 9.1313,
+    "mean_ms": 7.5425,
+    "ns_per_sample": 432.5
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 6.7541,
+    "p10_ms": 6.1678,
+    "p90_ms": 8.5339,
+    "mean_ms": 7.1446,
+    "ns_per_sample": 405.9
+   }
+  ],
+  "threads": [],
+  "checksum": 41441493.992754,
+  "cpu_load_before_percent": "49",
+  "cpu_load_after_percent": "69",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 3.12
+ },
+ "strict_sse2": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.3568,
+    "p10_ms": 0.319,
+    "p90_ms": 0.5234,
+    "mean_ms": 0.4097,
+    "ns_per_sample": 327.6
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.313,
+    "p10_ms": 1.2336,
+    "p90_ms": 1.8998,
+    "mean_ms": 1.45,
+    "ns_per_sample": 310.8
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.5971,
+    "p10_ms": 4.9277,
+    "p90_ms": 7.3762,
+    "mean_ms": 5.895,
+    "ns_per_sample": 336.3
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.8732,
+    "p10_ms": 5.0795,
+    "p90_ms": 7.632,
+    "mean_ms": 6.085,
+    "ns_per_sample": 352.9
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.4445,
+    "p10_ms": 0.4219,
+    "p90_ms": 0.6886,
+    "mean_ms": 0.503,
+    "ns_per_sample": 408.2
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.8028,
+    "p10_ms": 1.6549,
+    "p90_ms": 2.5781,
+    "mean_ms": 1.9721,
+    "ns_per_sample": 426.7
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.6384,
+    "p10_ms": 6.6433,
+    "p90_ms": 9.5156,
+    "mean_ms": 7.8427,
+    "ns_per_sample": 459.0
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.6562,
+    "p10_ms": 6.7804,
+    "p90_ms": 10.1218,
+    "mean_ms": 8.0524,
+    "ns_per_sample": 460.1
+   }
+  ],
+  "threads": [
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 1,
+    "chunks": 1600,
+    "wall_s": 3.3338,
+    "chunks_per_s": 479.9,
+    "ms_per_chunk_effective": 2.0836
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 2,
+    "chunks": 1600,
+    "wall_s": 1.6768,
+    "chunks_per_s": 954.2,
+    "ms_per_chunk_effective": 1.048
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 4,
+    "chunks": 1600,
+    "wall_s": 0.9395,
+    "chunks_per_s": 1703.0,
+    "ms_per_chunk_effective": 0.5872
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 8,
+    "chunks": 1600,
+    "wall_s": 0.5605,
+    "chunks_per_s": 2854.8,
+    "ms_per_chunk_effective": 0.3503
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 16,
+    "chunks": 1600,
+    "wall_s": 0.3858,
+    "chunks_per_s": 4147.0,
+    "ms_per_chunk_effective": 0.2411
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 1,
+    "chunks": 400,
+    "wall_s": 3.2699,
+    "chunks_per_s": 122.3,
+    "ms_per_chunk_effective": 8.1747
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 2,
+    "chunks": 400,
+    "wall_s": 1.5926,
+    "chunks_per_s": 251.2,
+    "ms_per_chunk_effective": 3.9814
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 4,
+    "chunks": 400,
+    "wall_s": 0.9042,
+    "chunks_per_s": 442.4,
+    "ms_per_chunk_effective": 2.2604
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 8,
+    "chunks": 400,
+    "wall_s": 0.5543,
+    "chunks_per_s": 721.7,
+    "ms_per_chunk_effective": 1.3856
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 16,
+    "chunks": 400,
+    "wall_s": 0.384,
+    "chunks_per_s": 1041.5,
+    "ms_per_chunk_effective": 0.9601
+   }
+  ],
+  "checksum": 1165413748.619651,
+  "cpu_load_before_percent": "72",
+  "cpu_load_after_percent": "51",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 16.93
+ },
+ "precise_avx2": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.2989,
+    "p10_ms": 0.2853,
+    "p90_ms": 0.4439,
+    "mean_ms": 0.33,
+    "ns_per_sample": 274.5
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.164,
+    "p10_ms": 1.1018,
+    "p90_ms": 1.7141,
+    "mean_ms": 1.2818,
+    "ns_per_sample": 275.5
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 4.952,
+    "p10_ms": 4.4481,
+    "p90_ms": 6.7256,
+    "mean_ms": 5.2895,
+    "ns_per_sample": 297.6
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.1854,
+    "p10_ms": 4.4116,
+    "p90_ms": 6.8862,
+    "mean_ms": 5.4187,
+    "ns_per_sample": 311.6
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.4662,
+    "p10_ms": 0.3853,
+    "p90_ms": 0.6163,
+    "mean_ms": 0.5055,
+    "ns_per_sample": 428.1
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.637,
+    "p10_ms": 1.5045,
+    "p90_ms": 2.4201,
+    "mean_ms": 1.816,
+    "ns_per_sample": 387.5
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.0632,
+    "p10_ms": 6.0089,
+    "p90_ms": 9.117,
+    "mean_ms": 7.3276,
+    "ns_per_sample": 424.4
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 6.9938,
+    "p10_ms": 6.0845,
+    "p90_ms": 9.0297,
+    "mean_ms": 7.3307,
+    "ns_per_sample": 420.3
+   }
+  ],
+  "threads": [],
+  "checksum": 41441493.992754,
+  "cpu_load_before_percent": "39",
+  "cpu_load_after_percent": "56",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 3.03
+ },
+ "fast_avx2": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.2675,
+    "p10_ms": 0.2593,
+    "p90_ms": 0.3317,
+    "mean_ms": 0.2819,
+    "ns_per_sample": 245.6
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.0927,
+    "p10_ms": 1.0151,
+    "p90_ms": 1.6818,
+    "mean_ms": 1.2239,
+    "ns_per_sample": 258.6
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 4.4702,
+    "p10_ms": 4.0464,
+    "p90_ms": 5.5193,
+    "mean_ms": 4.7216,
+    "ns_per_sample": 268.6
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 4.6229,
+    "p10_ms": 4.1356,
+    "p90_ms": 6.4388,
+    "mean_ms": 4.9955,
+    "ns_per_sample": 277.8
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.3714,
+    "p10_ms": 0.3466,
+    "p90_ms": 0.6028,
+    "mean_ms": 0.4446,
+    "ns_per_sample": 341.0
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.5115,
+    "p10_ms": 1.3555,
+    "p90_ms": 2.2656,
+    "mean_ms": 1.6849,
+    "ns_per_sample": 357.8
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.9383,
+    "p10_ms": 5.4304,
+    "p90_ms": 8.3648,
+    "mean_ms": 6.4744,
+    "ns_per_sample": 356.8
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 6.2397,
+    "p10_ms": 5.5357,
+    "p90_ms": 8.5043,
+    "mean_ms": 6.6701,
+    "ns_per_sample": 375.0
+   }
+  ],
+  "threads": [],
+  "checksum": 41441493.992754,
+  "cpu_load_before_percent": "65",
+  "cpu_load_after_percent": "65",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 2.74
+ },
+ "strict_avx2": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.3367,
+    "p10_ms": 0.3076,
+    "p90_ms": 0.5232,
+    "mean_ms": 0.4063,
+    "ns_per_sample": 309.2
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.3239,
+    "p10_ms": 1.2213,
+    "p90_ms": 2.0099,
+    "mean_ms": 1.4429,
+    "ns_per_sample": 313.3
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.4448,
+    "p10_ms": 4.8076,
+    "p90_ms": 7.4064,
+    "mean_ms": 5.8875,
+    "ns_per_sample": 327.2
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.49,
+    "p10_ms": 4.9311,
+    "p90_ms": 6.9694,
+    "mean_ms": 5.7671,
+    "ns_per_sample": 329.9
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.4685,
+    "p10_ms": 0.4173,
+    "p90_ms": 0.6765,
+    "mean_ms": 0.5358,
+    "ns_per_sample": 430.2
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.7547,
+    "p10_ms": 1.6384,
+    "p90_ms": 2.5909,
+    "mean_ms": 1.9351,
+    "ns_per_sample": 415.3
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.465,
+    "p10_ms": 6.5672,
+    "p90_ms": 9.61,
+    "mean_ms": 7.813,
+    "ns_per_sample": 448.6
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.4364,
+    "p10_ms": 6.6925,
+    "p90_ms": 10.2405,
+    "mean_ms": 7.927,
+    "ns_per_sample": 446.9
+   }
+  ],
+  "threads": [],
+  "checksum": 41441493.992754,
+  "cpu_load_before_percent": "82",
+  "cpu_load_after_percent": "66",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 3.29
+ },
+ "precise_contract_avx2": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.29,
+    "p10_ms": 0.2726,
+    "p90_ms": 0.4481,
+    "mean_ms": 0.3385,
+    "ns_per_sample": 266.3
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.1651,
+    "p10_ms": 1.0666,
+    "p90_ms": 1.8435,
+    "mean_ms": 1.3631,
+    "ns_per_sample": 275.8
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 4.8327,
+    "p10_ms": 4.2193,
+    "p90_ms": 6.5374,
+    "mean_ms": 5.0577,
+    "ns_per_sample": 290.4
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 4.7174,
+    "p10_ms": 4.2877,
+    "p90_ms": 6.6829,
+    "mean_ms": 5.1134,
+    "ns_per_sample": 283.5
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.3881,
+    "p10_ms": 0.3699,
+    "p90_ms": 0.6202,
+    "mean_ms": 0.4517,
+    "ns_per_sample": 356.4
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.5728,
+    "p10_ms": 1.4461,
+    "p90_ms": 2.3503,
+    "mean_ms": 1.7744,
+    "ns_per_sample": 372.3
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 6.2678,
+    "p10_ms": 5.7378,
+    "p90_ms": 7.8047,
+    "mean_ms": 6.5942,
+    "ns_per_sample": 376.6
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 6.7404,
+    "p10_ms": 5.9021,
+    "p90_ms": 8.9128,
+    "mean_ms": 7.1625,
+    "ns_per_sample": 405.0
+   }
+  ],
+  "threads": [],
+  "checksum": 41441493.992754,
+  "cpu_load_before_percent": "65",
+  "cpu_load_after_percent": "76",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 2.91
+ },
+ "ue_game_default": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.3795,
+    "p10_ms": 0.3091,
+    "p90_ms": 0.4905,
+    "mean_ms": 0.4012,
+    "ns_per_sample": 348.5
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.3551,
+    "p10_ms": 1.1962,
+    "p90_ms": 1.887,
+    "mean_ms": 1.4799,
+    "ns_per_sample": 320.7
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.9748,
+    "p10_ms": 4.9668,
+    "p90_ms": 7.6649,
+    "mean_ms": 6.1765,
+    "ns_per_sample": 359.0
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.154,
+    "p10_ms": 5.1386,
+    "p90_ms": 10.3413,
+    "mean_ms": 7.9449,
+    "ns_per_sample": 429.9
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.5765,
+    "p10_ms": 0.4065,
+    "p90_ms": 0.6841,
+    "mean_ms": 0.5653,
+    "ns_per_sample": 529.4
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 2.6188,
+    "p10_ms": 2.031,
+    "p90_ms": 5.7017,
+    "mean_ms": 3.4658,
+    "ns_per_sample": 619.8
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 9.1513,
+    "p10_ms": 7.2978,
+    "p90_ms": 11.0635,
+    "mean_ms": 9.2712,
+    "ns_per_sample": 549.9
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 9.1552,
+    "p10_ms": 7.6632,
+    "p90_ms": 10.4635,
+    "mean_ms": 9.1353,
+    "ns_per_sample": 550.2
+   }
+  ],
+  "threads": [
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 1,
+    "chunks": 1600,
+    "wall_s": 3.3901,
+    "chunks_per_s": 472.0,
+    "ms_per_chunk_effective": 2.1188
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 2,
+    "chunks": 1600,
+    "wall_s": 1.8026,
+    "chunks_per_s": 887.6,
+    "ms_per_chunk_effective": 1.1266
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 4,
+    "chunks": 1600,
+    "wall_s": 0.9531,
+    "chunks_per_s": 1678.7,
+    "ms_per_chunk_effective": 0.5957
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 8,
+    "chunks": 1600,
+    "wall_s": 0.5516,
+    "chunks_per_s": 2900.9,
+    "ms_per_chunk_effective": 0.3447
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 16,
+    "chunks": 1600,
+    "wall_s": 0.3742,
+    "chunks_per_s": 4276.3,
+    "ms_per_chunk_effective": 0.2338
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 1,
+    "chunks": 400,
+    "wall_s": 3.1108,
+    "chunks_per_s": 128.6,
+    "ms_per_chunk_effective": 7.777
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 2,
+    "chunks": 400,
+    "wall_s": 1.7356,
+    "chunks_per_s": 230.5,
+    "ms_per_chunk_effective": 4.339
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 4,
+    "chunks": 400,
+    "wall_s": 0.9584,
+    "chunks_per_s": 417.4,
+    "ms_per_chunk_effective": 2.3961
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 8,
+    "chunks": 400,
+    "wall_s": 0.6089,
+    "chunks_per_s": 656.9,
+    "ms_per_chunk_effective": 1.5222
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 16,
+    "chunks": 400,
+    "wall_s": 0.4453,
+    "chunks_per_s": 898.2,
+    "ms_per_chunk_effective": 1.1133
+   }
+  ],
+  "checksum": 1165413748.619651,
+  "cpu_load_before_percent": "87",
+  "cpu_load_after_percent": "85",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 17.99
+ },
+ "ue_editor_default": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.488,
+    "p10_ms": 0.3262,
+    "p90_ms": 0.5412,
+    "mean_ms": 0.4737,
+    "ns_per_sample": 448.1
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.8456,
+    "p10_ms": 1.3186,
+    "p90_ms": 2.2338,
+    "mean_ms": 1.8364,
+    "ns_per_sample": 436.8
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 6.8227,
+    "p10_ms": 5.3907,
+    "p90_ms": 8.3664,
+    "mean_ms": 6.8582,
+    "ns_per_sample": 410.0
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 6.8507,
+    "p10_ms": 5.6205,
+    "p90_ms": 8.1329,
+    "mean_ms": 7.0185,
+    "ns_per_sample": 411.7
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.6398,
+    "p10_ms": 0.4274,
+    "p90_ms": 0.7259,
+    "mean_ms": 0.614,
+    "ns_per_sample": 587.5
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 2.5075,
+    "p10_ms": 1.7701,
+    "p90_ms": 3.1956,
+    "mean_ms": 2.4935,
+    "ns_per_sample": 593.5
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 9.3179,
+    "p10_ms": 7.7977,
+    "p90_ms": 10.7054,
+    "mean_ms": 9.3019,
+    "ns_per_sample": 559.9
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 9.1229,
+    "p10_ms": 7.8099,
+    "p90_ms": 11.2206,
+    "mean_ms": 9.3224,
+    "ns_per_sample": 548.2
+   }
+  ],
+  "threads": [
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 1,
+    "chunks": 1600,
+    "wall_s": 3.7164,
+    "chunks_per_s": 430.5,
+    "ms_per_chunk_effective": 2.3228
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 2,
+    "chunks": 1600,
+    "wall_s": 1.8247,
+    "chunks_per_s": 876.9,
+    "ms_per_chunk_effective": 1.1404
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 4,
+    "chunks": 1600,
+    "wall_s": 1.0021,
+    "chunks_per_s": 1596.7,
+    "ms_per_chunk_effective": 0.6263
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 8,
+    "chunks": 1600,
+    "wall_s": 0.5951,
+    "chunks_per_s": 2688.8,
+    "ms_per_chunk_effective": 0.3719
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 16,
+    "chunks": 1600,
+    "wall_s": 0.4361,
+    "chunks_per_s": 3669.2,
+    "ms_per_chunk_effective": 0.2725
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 1,
+    "chunks": 400,
+    "wall_s": 3.3644,
+    "chunks_per_s": 118.9,
+    "ms_per_chunk_effective": 8.4111
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 2,
+    "chunks": 400,
+    "wall_s": 1.7933,
+    "chunks_per_s": 223.1,
+    "ms_per_chunk_effective": 4.4833
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 4,
+    "chunks": 400,
+    "wall_s": 0.9899,
+    "chunks_per_s": 404.1,
+    "ms_per_chunk_effective": 2.4748
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 8,
+    "chunks": 400,
+    "wall_s": 0.5931,
+    "chunks_per_s": 674.4,
+    "ms_per_chunk_effective": 1.4828
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 16,
+    "chunks": 400,
+    "wall_s": 0.4208,
+    "chunks_per_s": 950.6,
+    "ms_per_chunk_effective": 1.052
+   }
+  ],
+  "checksum": 1165413748.619651,
+  "cpu_load_before_percent": "79",
+  "cpu_load_after_percent": "65",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 18.7
+ },
+ "ue_game_avx": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.2788,
+    "p10_ms": 0.2694,
+    "p90_ms": 0.4008,
+    "mean_ms": 0.3117,
+    "ns_per_sample": 256.0
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.0549,
+    "p10_ms": 1.03,
+    "p90_ms": 1.2553,
+    "mean_ms": 1.1081,
+    "ns_per_sample": 249.7
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 4.9123,
+    "p10_ms": 4.1551,
+    "p90_ms": 6.3349,
+    "mean_ms": 5.1302,
+    "ns_per_sample": 295.2
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.6634,
+    "p10_ms": 4.4212,
+    "p90_ms": 6.7255,
+    "mean_ms": 5.6428,
+    "ns_per_sample": 340.3
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.4239,
+    "p10_ms": 0.3622,
+    "p90_ms": 0.5983,
+    "mean_ms": 0.4756,
+    "ns_per_sample": 389.3
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.6577,
+    "p10_ms": 1.4069,
+    "p90_ms": 2.2717,
+    "mean_ms": 1.8215,
+    "ns_per_sample": 392.4
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.7185,
+    "p10_ms": 6.0937,
+    "p90_ms": 8.6848,
+    "mean_ms": 7.4463,
+    "ns_per_sample": 463.8
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.0673,
+    "p10_ms": 5.9634,
+    "p90_ms": 8.416,
+    "mean_ms": 7.1839,
+    "ns_per_sample": 424.7
+   }
+  ],
+  "threads": [],
+  "checksum": 41441493.992754,
+  "cpu_load_before_percent": "69",
+  "cpu_load_after_percent": "80",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 2.99
+ },
+ "ue_game_avx2": {
+  "single": [
+   {
+    "config": "32m@1m",
+    "mode": "height",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.3921,
+    "p10_ms": 0.2707,
+    "p90_ms": 0.447,
+    "mean_ms": 0.3726,
+    "ns_per_sample": 360.1
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.4186,
+    "p10_ms": 1.0644,
+    "p90_ms": 1.7092,
+    "mean_ms": 1.4034,
+    "ns_per_sample": 335.8
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.2002,
+    "p10_ms": 4.3276,
+    "p90_ms": 6.6115,
+    "mean_ms": 5.4201,
+    "ns_per_sample": 312.5
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 5.5495,
+    "p10_ms": 4.3834,
+    "p90_ms": 6.5966,
+    "mean_ms": 5.5383,
+    "ns_per_sample": 333.5
+   },
+   {
+    "config": "32m@1m",
+    "mode": "height+climate",
+    "samples": 1089,
+    "count": 301,
+    "median_ms": 0.5024,
+    "p10_ms": 0.3582,
+    "p90_ms": 0.5985,
+    "mean_ms": 0.4903,
+    "ns_per_sample": 461.3
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "samples": 4225,
+    "count": 201,
+    "median_ms": 1.8864,
+    "p10_ms": 1.4137,
+    "p90_ms": 2.3361,
+    "mean_ms": 1.9092,
+    "ns_per_sample": 446.5
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.3458,
+    "p10_ms": 6.0373,
+    "p90_ms": 8.574,
+    "mean_ms": 7.3218,
+    "ns_per_sample": 441.4
+   },
+   {
+    "config": "128m@1m",
+    "mode": "height+climate",
+    "samples": 16641,
+    "count": 81,
+    "median_ms": 7.362,
+    "p10_ms": 6.085,
+    "p90_ms": 8.6118,
+    "mean_ms": 7.3901,
+    "ns_per_sample": 442.4
+   }
+  ],
+  "threads": [
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 1,
+    "chunks": 1600,
+    "wall_s": 3.0231,
+    "chunks_per_s": 529.2,
+    "ms_per_chunk_effective": 1.8895
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 2,
+    "chunks": 1600,
+    "wall_s": 1.6003,
+    "chunks_per_s": 999.8,
+    "ms_per_chunk_effective": 1.0002
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 4,
+    "chunks": 1600,
+    "wall_s": 0.92,
+    "chunks_per_s": 1739.2,
+    "ms_per_chunk_effective": 0.575
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 8,
+    "chunks": 1600,
+    "wall_s": 0.5319,
+    "chunks_per_s": 3007.8,
+    "ms_per_chunk_effective": 0.3325
+   },
+   {
+    "config": "64m@1m",
+    "mode": "height+climate",
+    "threads": 16,
+    "chunks": 1600,
+    "wall_s": 0.4026,
+    "chunks_per_s": 3974.1,
+    "ms_per_chunk_effective": 0.2516
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 1,
+    "chunks": 400,
+    "wall_s": 2.9673,
+    "chunks_per_s": 134.8,
+    "ms_per_chunk_effective": 7.4181
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 2,
+    "chunks": 400,
+    "wall_s": 1.4023,
+    "chunks_per_s": 285.3,
+    "ms_per_chunk_effective": 3.5056
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 4,
+    "chunks": 400,
+    "wall_s": 0.8606,
+    "chunks_per_s": 464.8,
+    "ms_per_chunk_effective": 2.1514
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 8,
+    "chunks": 400,
+    "wall_s": 0.5269,
+    "chunks_per_s": 759.2,
+    "ms_per_chunk_effective": 1.3172
+   },
+   {
+    "config": "64m@0.5m",
+    "mode": "height+climate",
+    "threads": 16,
+    "chunks": 400,
+    "wall_s": 0.301,
+    "chunks_per_s": 1328.9,
+    "ms_per_chunk_effective": 0.7525
+   }
+  ],
+  "checksum": 1165413748.619651,
+  "cpu_load_before_percent": "79",
+  "cpu_load_after_percent": "76",
+  "busy_processes_before": {
+   "UnrealEditor.exe": 1
+  },
+  "run_seconds": 15.65
+ }
+}

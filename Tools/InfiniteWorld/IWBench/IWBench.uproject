@@ -1,0 +1,13 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.8",
+	"Category": "",
+	"Description": "Infinite world static cost bench (separate from TDGame)",
+	"Modules": [
+		{
+			"Name": "IWBench",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

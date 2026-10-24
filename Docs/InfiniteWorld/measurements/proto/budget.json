@@ -1,0 +1,1030 @@
+{
+ "footprints": {
+  "1100_16:9": {
+   "arm_cm": 1100.0,
+   "pitch_deg": -50.0,
+   "screen_aspect": 1.7777777777777777,
+   "horizontal_fov_deg": 89.99999283802799,
+   "vertical_fov_deg": 58.71550096496573,
+   "camera_height_m": 9.326488874308758,
+   "camera_back_m": 7.070663706551933,
+   "near_edge_behind_pawn_m": 5.318139617667391,
+   "far_edge_ahead_m": 17.686611635869195,
+   "near_width_m": 16.54200942422356,
+   "far_width_m": 46.11634386682015,
+   "area_m2": 720.719915708338,
+   "view_radius_m": 29.06020516219326,
+   "tall_object_radius_m": 33.060205162193256,
+   "corners_m": [
+    [
+     -5.318139617667391,
+     -8.27100471211178
+    ],
+    [
+     -5.318139617667391,
+     8.27100471211178
+    ],
+    [
+     17.686611635869195,
+     23.058171933410076
+    ],
+    [
+     17.686611635869195,
+     -23.058171933410076
+    ]
+   ],
+   "camera_ground_m": [
+    -7.070663706551933,
+    0.0
+   ]
+  },
+  "1100_21:9": {
+   "arm_cm": 1100.0,
+   "pitch_deg": -50.0,
+   "screen_aspect": 2.3333333333333335,
+   "horizontal_fov_deg": 105.39209653894669,
+   "vertical_fov_deg": 58.71550096496573,
+   "camera_height_m": 9.326488874308758,
+   "camera_back_m": 7.070663706551933,
+   "near_edge_behind_pawn_m": 5.318139617667391,
+   "far_edge_ahead_m": 17.686611635869195,
+   "near_width_m": 21.711387369293426,
+   "far_width_m": 60.52770132520146,
+   "area_m2": 945.9448893671939,
+   "view_radius_m": 35.053058184504565,
+   "tall_object_radius_m": 39.053058184504565,
+   "corners_m": [
+    [
+     -5.318139617667391,
+     -10.855693684646713
+    ],
+    [
+     -5.318139617667391,
+     10.855693684646713
+    ],
+    [
+     17.686611635869195,
+     30.26385066260073
+    ],
+    [
+     17.686611635869195,
+     -30.26385066260073
+    ]
+   ],
+   "camera_ground_m": [
+    -7.070663706551933,
+    0.0
+   ]
+  },
+  "1540_16:9": {
+   "arm_cm": 1540.0,
+   "pitch_deg": -50.0,
+   "screen_aspect": 1.7777777777777777,
+   "horizontal_fov_deg": 89.99999283802799,
+   "vertical_fov_deg": 58.71550096496573,
+   "camera_height_m": 12.697084424032262,
+   "camera_back_m": 9.898929189172707,
+   "near_edge_behind_pawn_m": 7.5130424303289125,
+   "far_edge_ahead_m": 23.80563202009924,
+   "near_width_m": 22.520296012047815,
+   "far_width_m": 62.78280275631767,
+   "area_m2": 1335.7899899695785,
+   "view_radius_m": 39.39705821963166,
+   "tall_object_radius_m": 43.39705821963166,
+   "corners_m": [
+    [
+     -7.5130424303289125,
+     -11.260148006023908
+    ],
+    [
+     -7.5130424303289125,
+     11.260148006023908
+    ],
+    [
+     23.80563202009924,
+     31.391401378158836
+    ],
+    [
+     23.80563202009924,
+     -31.391401378158836
+    ]
+   ],
+   "camera_ground_m": [
+    -9.898929189172707,
+    0.0
+   ]
+  },
+  "1540_21:9": {
+   "arm_cm": 1540.0,
+   "pitch_deg": -50.0,
+   "screen_aspect": 2.3333333333333335,
+   "horizontal_fov_deg": 105.39209653894669,
+   "vertical_fov_deg": 58.71550096496573,
+   "camera_height_m": 12.697084424032262,
+   "camera_back_m": 9.898929189172707,
+   "near_edge_behind_pawn_m": 7.5130424303289125,
+   "far_edge_ahead_m": 23.80563202009924,
+   "near_width_m": 29.55788851581276,
+   "far_width_m": 82.40242861766696,
+   "area_m2": 1753.2243618350722,
+   "view_radius_m": 47.58411685004565,
+   "tall_object_radius_m": 51.58411685004565,
+   "corners_m": [
+    [
+     -7.5130424303289125,
+     -14.77894425790638
+    ],
+    [
+     -7.5130424303289125,
+     14.77894425790638
+    ],
+    [
+     23.80563202009924,
+     41.20121430883348
+    ],
+    [
+     23.80563202009924,
+     -41.20121430883348
+    ]
+   ],
+   "camera_ground_m": [
+    -9.898929189172707,
+    0.0
+   ]
+  },
+  "800_16:9": {
+   "arm_cm": 800.0,
+   "pitch_deg": -60.0,
+   "screen_aspect": 1.7777777777777777,
+   "horizontal_fov_deg": 89.99999283802799,
+   "vertical_fov_deg": 58.71550096496573,
+   "camera_height_m": 7.828203230275509,
+   "camera_back_m": 4.000000000000001,
+   "near_edge_behind_pawn_m": 3.9122471083203214,
+   "far_edge_ahead_m": 9.214519599393341,
+   "near_width_m": 13.64659691266705,
+   "far_width_m": 26.77336197953508,
+   "area_m2": 265.29168535665684,
+   "view_radius_m": 16.25147991320814,
+   "tall_object_radius_m": 20.25147991320814,
+   "corners_m": [
+    [
+     -3.9122471083203214,
+     -6.823298456333525
+    ],
+    [
+     -3.9122471083203214,
+     6.823298456333525
+    ],
+    [
+     9.214519599393341,
+     13.38668098976754
+    ],
+    [
+     9.214519599393341,
+     -13.38668098976754
+    ]
+   ],
+   "camera_ground_m": [
+    -4.000000000000001,
+    0.0
+   ]
+  }
+ },
+ "worst_view_radius_m": 47.58411685004565,
+ "worst_tall_radius_m": 51.58411685004565,
+ "shadow_lengths_m": {
+  "20": 54.94954838909245,
+  "25": 42.89013841019117,
+  "35": 28.562960134842292,
+  "50": 16.781992623545598
+ },
+ "needed_radii": [
+  [
+   "화면+키 큰 물체",
+   39.053058184504565
+  ],
+  [
+   "화면+그림자(20m·태양 25도)",
+   77.94319659469573
+  ],
+  [
+   "몬스터 활성 50m",
+   50.0
+  ],
+  [
+   "몬스터 활성 100m",
+   100.0
+  ]
+ ],
+ "chunk_memory": {
+  "32": {
+   "components": {
+    "height_cpu_16bit": 2178.0,
+    "height_gpu_rgba8_with_mips": 5808.0,
+    "weight_cpu_4layers_8bit": 4356.0,
+    "weight_gpu_rgba8_with_mips": 5808.0,
+    "heightfield_collision": 4356.0,
+    "instance_cpu": 7208.96,
+    "instance_gpu": 10813.44,
+    "large_instance_collision": 10485.76,
+    "nav_tiles": 335544.32000000007,
+    "fixed_overhead": 65536
+   },
+   "vertices": 1089.0,
+   "large_instances": 10.24,
+   "small_instances": 102.4,
+   "nav_tiles_area_equivalent": 10.240000000000002,
+   "nav_tiles_touched_unaligned_worst": 25,
+   "nav_tiles_touched_800cm_aligned": 16.0,
+   "full_bytes": 452094.48000000004,
+   "simulation_bytes": 418100.0800000001,
+   "mesh_terrain_full_bytes": 505710.48000000004,
+   "voxel_dense_64m_range_bytes": 1048576.0,
+   "voxel_surface_band_8m_bytes": 131072.0
+  },
+  "64": {
+   "components": {
+    "height_cpu_16bit": 8450.0,
+    "height_gpu_rgba8_with_mips": 22533.333333333332,
+    "weight_cpu_4layers_8bit": 16900.0,
+    "weight_gpu_rgba8_with_mips": 22533.333333333332,
+    "heightfield_collision": 16900.0,
+    "instance_cpu": 28835.84,
+    "instance_gpu": 43253.76,
+    "large_instance_collision": 41943.04,
+    "nav_tiles": 1342177.2800000003,
+    "fixed_overhead": 65536
+   },
+   "vertices": 4225.0,
+   "large_instances": 40.96,
+   "small_instances": 409.6,
+   "nav_tiles_area_equivalent": 40.96000000000001,
+   "nav_tiles_touched_unaligned_worst": 64,
+   "nav_tiles_touched_800cm_aligned": 64.0,
+   "full_bytes": 1609062.586666667,
+   "simulation_bytes": 1475006.3200000003,
+   "mesh_terrain_full_bytes": 1820033.2533333336,
+   "voxel_dense_64m_range_bytes": 4194304.0,
+   "voxel_surface_band_8m_bytes": 524288.0
+  },
+  "128": {
+   "components": {
+    "height_cpu_16bit": 33282.0,
+    "height_gpu_rgba8_with_mips": 88752.0,
+    "weight_cpu_4layers_8bit": 66564.0,
+    "weight_gpu_rgba8_with_mips": 88752.0,
+    "heightfield_collision": 66564.0,
+    "instance_cpu": 115343.36,
+    "instance_gpu": 173015.04,
+    "large_instance_collision": 167772.16,
+    "nav_tiles": 5368709.120000001,
+    "fixed_overhead": 65536
+   },
+   "vertices": 16641.0,
+   "large_instances": 163.84,
+   "small_instances": 1638.4,
+   "nav_tiles_area_equivalent": 163.84000000000003,
+   "nav_tiles_touched_unaligned_worst": 196,
+   "nav_tiles_touched_800cm_aligned": 256.0,
+   "full_bytes": 6234289.680000001,
+   "simulation_bytes": 5701863.280000001,
+   "mesh_terrain_full_bytes": 7071265.680000001,
+   "voxel_dense_64m_range_bytes": 16777216.0,
+   "voxel_surface_band_8m_bytes": 2097152.0
+  }
+ },
+ "resident": {
+  "32": {
+   "화면+키 큰 물체": {
+    "needed_radius_m": 39.053058184504565,
+    "loading_radius_m": 64.05305818450456,
+    "chunks_worst": 23,
+    "chunks_mean": 21.6875,
+    "full_mb": 10.398173040000001,
+    "mesh_terrain_full_mb": 11.63134104,
+    "voxel_band_extra_mb": 3.014656,
+    "voxel_dense_extra_mb": 24.117248
+   },
+   "화면+그림자(20m·태양 25도)": {
+    "needed_radius_m": 77.94319659469573,
+    "loading_radius_m": 102.94319659469573,
+    "chunks_worst": 50,
+    "chunks_mean": 46.5,
+    "full_mb": 22.604724000000004,
+    "mesh_terrain_full_mb": 25.285524000000002,
+    "voxel_band_extra_mb": 6.5536,
+    "voxel_dense_extra_mb": 52.4288
+   },
+   "몬스터 활성 50m": {
+    "needed_radius_m": 50.0,
+    "loading_radius_m": 75.0,
+    "chunks_worst": 32,
+    "chunks_mean": 27.9375,
+    "full_mb": 14.46702336,
+    "mesh_terrain_full_mb": 16.182735360000002,
+    "voxel_band_extra_mb": 4.194304,
+    "voxel_dense_extra_mb": 33.554432
+   },
+   "몬스터 활성 100m": {
+    "needed_radius_m": 100.0,
+    "loading_radius_m": 125.0,
+    "chunks_worst": 69,
+    "chunks_mean": 64.5,
+    "full_mb": 31.194519120000002,
+    "mesh_terrain_full_mb": 34.89402312000001,
+    "voxel_band_extra_mb": 9.043968,
+    "voxel_dense_extra_mb": 72.351744
+   },
+   "tiered": {
+    "render_chunks": 50,
+    "simulation_only_chunks": 19,
+    "total_mb": 30.54862552
+   },
+   "current_world_partition_768m": {
+    "chunks_worst": 1911,
+    "full_mb": 863.9525512800001
+   }
+  },
+  "64": {
+   "화면+키 큰 물체": {
+    "needed_radius_m": 39.053058184504565,
+    "loading_radius_m": 64.05305818450456,
+    "chunks_worst": 9,
+    "chunks_mean": 8.25,
+    "full_mb": 14.481563280000001,
+    "mesh_terrain_full_mb": 16.380299280000003,
+    "voxel_band_extra_mb": 4.718592,
+    "voxel_dense_extra_mb": 37.748736
+   },
+   "화면+그림자(20m·태양 25도)": {
+    "needed_radius_m": 77.94319659469573,
+    "loading_radius_m": 102.94319659469573,
+    "chunks_worst": 17,
+    "chunks_mean": 15.6875,
+    "full_mb": 27.354063973333336,
+    "mesh_terrain_full_mb": 30.940565306666674,
+    "voxel_band_extra_mb": 8.912896,
+    "voxel_dense_extra_mb": 71.303168
+   },
+   "몬스터 활성 50m": {
+    "needed_radius_m": 50.0,
+    "loading_radius_m": 75.0,
+    "chunks_worst": 12,
+    "chunks_mean": 9.8125,
+    "full_mb": 19.308751040000004,
+    "mesh_terrain_full_mb": 21.84039904,
+    "voxel_band_extra_mb": 6.291456,
+    "voxel_dense_extra_mb": 50.331648
+   },
+   "몬스터 활성 100m": {
+    "needed_radius_m": 100.0,
+    "loading_radius_m": 125.0,
+    "chunks_worst": 22,
+    "chunks_mean": 21.0625,
+    "full_mb": 35.399376906666674,
+    "mesh_terrain_full_mb": 40.04073157333334,
+    "voxel_band_extra_mb": 11.534336,
+    "voxel_dense_extra_mb": 92.274688
+   },
+   "tiered": {
+    "render_chunks": 17,
+    "simulation_only_chunks": 5,
+    "total_mb": 34.72909557333334
+   },
+   "current_world_partition_768m": {
+    "chunks_worst": 504,
+    "full_mb": 810.9675436800001
+   }
+  },
+  "128": {
+   "화면+키 큰 물체": {
+    "needed_radius_m": 39.053058184504565,
+    "loading_radius_m": 64.05305818450456,
+    "chunks_worst": 4,
+    "chunks_mean": 3.8125,
+    "full_mb": 24.937158720000003,
+    "mesh_terrain_full_mb": 28.285062720000003,
+    "voxel_band_extra_mb": 8.388608,
+    "voxel_dense_extra_mb": 67.108864
+   },
+   "화면+그림자(20m·태양 25도)": {
+    "needed_radius_m": 77.94319659469573,
+    "loading_radius_m": 102.94319659469573,
+    "chunks_worst": 9,
+    "chunks_mean": 5.9375,
+    "full_mb": 56.10860712,
+    "mesh_terrain_full_mb": 63.64139112,
+    "voxel_band_extra_mb": 18.874368,
+    "voxel_dense_extra_mb": 150.994944
+   },
+   "몬스터 활성 50m": {
+    "needed_radius_m": 50.0,
+    "loading_radius_m": 75.0,
+    "chunks_worst": 6,
+    "chunks_mean": 4.5625,
+    "full_mb": 37.405738080000006,
+    "mesh_terrain_full_mb": 42.427594080000006,
+    "voxel_band_extra_mb": 12.582912,
+    "voxel_dense_extra_mb": 100.663296
+   },
+   "몬스터 활성 100m": {
+    "needed_radius_m": 100.0,
+    "loading_radius_m": 125.0,
+    "chunks_worst": 9,
+    "chunks_mean": 8.0,
+    "full_mb": 56.10860712,
+    "mesh_terrain_full_mb": 63.64139112,
+    "voxel_band_extra_mb": 18.874368,
+    "voxel_dense_extra_mb": 150.994944
+   },
+   "tiered": {
+    "render_chunks": 9,
+    "simulation_only_chunks": 0,
+    "total_mb": 56.10860712
+   },
+   "current_world_partition_768m": {
+    "chunks_worst": 141,
+    "full_mb": 879.0348448800002
+   }
+  }
+ },
+ "rates": {
+  "32": {
+   "65": {
+    "6.0": {
+     "loading_radius_m": 102.94319659469573,
+     "axis_per_s": 1.3125,
+     "diagonal_per_s": 1.46484375,
+     "max_per_s": 1.46484375,
+     "analytic_per_s": 1.4715306280390459,
+     "single_worker_budget_ms_per_chunk": 682.6666666666666,
+     "vertices_per_s": 1595.21484375,
+     "instances_per_s": 165.0,
+     "nav_tiles_per_s_area": 12.353183591363488,
+     "data_mb_per_s": 0.6622477734375
+    },
+    "9.0": {
+     "loading_radius_m": 107.44319659469573,
+     "axis_per_s": 1.96875,
+     "diagonal_per_s": 2.2060546875,
+     "max_per_s": 2.2060546875,
+     "analytic_per_s": 2.286397504558569,
+     "single_worker_budget_ms_per_chunk": 453.2979194333776,
+     "vertices_per_s": 2402.3935546875,
+     "instances_per_s": 248.49,
+     "nav_tiles_per_s_area": 19.339775387045233,
+     "data_mb_per_s": 0.997345146796875
+    },
+    "15.0": {
+     "loading_radius_m": 116.44319659469573,
+     "axis_per_s": 4.21875,
+     "diagonal_per_s": 3.9697265625,
+     "max_per_s": 4.21875,
+     "analytic_per_s": 4.074334382597615,
+     "single_worker_budget_ms_per_chunk": 237.03703703703704,
+     "vertices_per_s": 4594.21875,
+     "instances_per_s": 475.2,
+     "nav_tiles_per_s_area": 34.93295897840872,
+     "data_mb_per_s": 1.9072735875000002
+    },
+    "50.0": {
+     "loading_radius_m": 168.94319659469573,
+     "axis_per_s": 17.1875,
+     "diagonal_per_s": 18.896484375,
+     "max_per_s": 18.896484375,
+     "analytic_per_s": 18.708067733658716,
+     "single_worker_budget_ms_per_chunk": 52.91989664082687,
+     "vertices_per_s": 20578.271484375,
+     "instances_per_s": 2128.5,
+     "nav_tiles_per_s_area": 168.94319659469573,
+     "data_mb_per_s": 8.54299627734375
+    }
+   },
+   "100": {
+    "6.0": {
+     "loading_radius_m": 125.0,
+     "axis_per_s": 1.6875,
+     "diagonal_per_s": 1.716796875,
+     "max_per_s": 1.716796875,
+     "analytic_per_s": 1.7300087929449555,
+     "single_worker_budget_ms_per_chunk": 582.4800910125142,
+     "vertices_per_s": 1869.591796875,
+     "instances_per_s": 193.38,
+     "nav_tiles_per_s_area": 15.0,
+     "data_mb_per_s": 0.77615439046875
+    },
+    "9.0": {
+     "loading_radius_m": 129.5,
+     "axis_per_s": 2.53125,
+     "diagonal_per_s": 2.583984375,
+     "max_per_s": 2.583984375,
+     "analytic_per_s": 2.674114751917433,
+     "single_worker_budget_ms_per_chunk": 386.9992441421013,
+     "vertices_per_s": 2813.958984375,
+     "instances_per_s": 291.06,
+     "nav_tiles_per_s_area": 23.31,
+     "data_mb_per_s": 1.1682050723437503
+    },
+    "15.0": {
+     "loading_radius_m": 138.5,
+     "axis_per_s": 4.21875,
+     "diagonal_per_s": 4.6875,
+     "max_per_s": 4.6875,
+     "analytic_per_s": 4.720529794862388,
+     "single_worker_budget_ms_per_chunk": 213.33333333333334,
+     "vertices_per_s": 5104.6875,
+     "instances_per_s": 528.0,
+     "nav_tiles_per_s_area": 41.55,
+     "data_mb_per_s": 2.119192875
+    },
+    "50.0": {
+     "loading_radius_m": 191.0,
+     "axis_per_s": 20.3125,
+     "diagonal_per_s": 20.8984375,
+     "max_per_s": 20.8984375,
+     "analytic_per_s": 20.86205244120796,
+     "single_worker_budget_ms_per_chunk": 47.850467289719624,
+     "vertices_per_s": 22758.3984375,
+     "instances_per_s": 2354.0,
+     "nav_tiles_per_s_area": 191.0,
+     "data_mb_per_s": 9.448068234375
+    }
+   }
+  },
+  "64": {
+   "65": {
+    "6.0": {
+     "loading_radius_m": 102.94319659469573,
+     "axis_per_s": 0.375,
+     "diagonal_per_s": 0.46875,
+     "max_per_s": 0.46875,
+     "analytic_per_s": 0.43417391774600034,
+     "single_worker_budget_ms_per_chunk": 2133.3333333333335,
+     "vertices_per_s": 1980.46875,
+     "instances_per_s": 211.2,
+     "nav_tiles_per_s_area": 12.353183591363488,
+     "data_mb_per_s": 0.7542480875000002
+    },
+    "9.0": {
+     "loading_radius_m": 107.44319659469573,
+     "axis_per_s": 0.703125,
+     "diagonal_per_s": 0.685546875,
+     "max_per_s": 0.703125,
+     "analytic_per_s": 0.6710362672440005,
+     "single_worker_budget_ms_per_chunk": 1422.2222222222222,
+     "vertices_per_s": 2970.703125,
+     "instances_per_s": 316.8,
+     "nav_tiles_per_s_area": 19.339775387045233,
+     "data_mb_per_s": 1.13137213125
+    },
+    "15.0": {
+     "loading_radius_m": 116.44319659469573,
+     "axis_per_s": 1.171875,
+     "diagonal_per_s": 1.142578125,
+     "max_per_s": 1.171875,
+     "analytic_per_s": 1.1843117474900007,
+     "single_worker_budget_ms_per_chunk": 853.3333333333334,
+     "vertices_per_s": 4951.171875,
+     "instances_per_s": 528.0,
+     "nav_tiles_per_s_area": 34.93295897840872,
+     "data_mb_per_s": 1.8856202187500002
+    },
+    "50.0": {
+     "loading_radius_m": 168.94319659469573,
+     "axis_per_s": 5.46875,
+     "diagonal_per_s": 5.029296875,
+     "max_per_s": 5.46875,
+     "analytic_per_s": 5.229444106216669,
+     "single_worker_budget_ms_per_chunk": 182.85714285714286,
+     "vertices_per_s": 23105.46875,
+     "instances_per_s": 2464.0,
+     "nav_tiles_per_s_area": 168.94319659469573,
+     "data_mb_per_s": 8.799561020833334
+    }
+   },
+   "100": {
+    "6.0": {
+     "loading_radius_m": 125.0,
+     "axis_per_s": 0.46875,
+     "diagonal_per_s": 0.521484375,
+     "max_per_s": 0.521484375,
+     "analytic_per_s": 0.4987934589724776,
+     "single_worker_budget_ms_per_chunk": 1917.6029962546816,
+     "vertices_per_s": 2203.271484375,
+     "instances_per_s": 234.96,
+     "nav_tiles_per_s_area": 15.0,
+     "data_mb_per_s": 0.8391009973437501
+    },
+    "9.0": {
+     "loading_radius_m": 129.5,
+     "axis_per_s": 0.703125,
+     "diagonal_per_s": 0.7822265625,
+     "max_per_s": 0.7822265625,
+     "analytic_per_s": 0.7679655790837164,
+     "single_worker_budget_ms_per_chunk": 1278.401997503121,
+     "vertices_per_s": 3304.9072265625,
+     "instances_per_s": 352.44,
+     "nav_tiles_per_s_area": 23.31,
+     "data_mb_per_s": 1.258651496015625
+    },
+    "15.0": {
+     "loading_radius_m": 138.5,
+     "axis_per_s": 1.171875,
+     "diagonal_per_s": 1.318359375,
+     "max_per_s": 1.318359375,
+     "analytic_per_s": 1.3458606005561942,
+     "single_worker_budget_ms_per_chunk": 758.5185185185185,
+     "vertices_per_s": 5570.068359375,
+     "instances_per_s": 594.0,
+     "nav_tiles_per_s_area": 41.55,
+     "data_mb_per_s": 2.1213227460937505
+    },
+    "50.0": {
+     "loading_radius_m": 191.0,
+     "axis_per_s": 5.46875,
+     "diagonal_per_s": 5.37109375,
+     "max_per_s": 5.46875,
+     "analytic_per_s": 5.7679402831039805,
+     "single_worker_budget_ms_per_chunk": 182.85714285714286,
+     "vertices_per_s": 23105.46875,
+     "instances_per_s": 2464.0,
+     "nav_tiles_per_s_area": 191.0,
+     "data_mb_per_s": 8.799561020833334
+    }
+   }
+  },
+  "128": {
+   "65": {
+    "6.0": {
+     "loading_radius_m": 102.94319659469573,
+     "axis_per_s": 0.140625,
+     "diagonal_per_s": 0.12890625,
+     "max_per_s": 0.140625,
+     "analytic_per_s": 0.1416891098046195,
+     "single_worker_budget_ms_per_chunk": 7111.111111111111,
+     "vertices_per_s": 2340.140625,
+     "instances_per_s": 253.44,
+     "nav_tiles_per_s_area": 12.353183591363488,
+     "data_mb_per_s": 0.87669698625
+    },
+    "9.0": {
+     "loading_radius_m": 107.44319659469573,
+     "axis_per_s": 0.2109375,
+     "diagonal_per_s": 0.193359375,
+     "max_per_s": 0.2109375,
+     "analytic_per_s": 0.21747751236317925,
+     "single_worker_budget_ms_per_chunk": 4740.740740740741,
+     "vertices_per_s": 3510.2109375,
+     "instances_per_s": 380.16,
+     "nav_tiles_per_s_area": 19.339775387045233,
+     "data_mb_per_s": 1.3150454793750002
+    },
+    "15.0": {
+     "loading_radius_m": 116.44319659469573,
+     "axis_per_s": 0.3515625,
+     "diagonal_per_s": 0.40283203125,
+     "max_per_s": 0.40283203125,
+     "analytic_per_s": 0.3789420127927987,
+     "single_worker_budget_ms_per_chunk": 2482.4242424242425,
+     "vertices_per_s": 6703.52783203125,
+     "instances_per_s": 726.0,
+     "nav_tiles_per_s_area": 34.93295897840872,
+     "data_mb_per_s": 2.511371575195313
+    },
+    "50.0": {
+     "loading_radius_m": 168.94319659469573,
+     "axis_per_s": 1.171875,
+     "diagonal_per_s": 1.7333984375,
+     "max_per_s": 1.7333984375,
+     "analytic_per_s": 1.5835746129551624,
+     "single_worker_budget_ms_per_chunk": 576.9014084507043,
+     "vertices_per_s": 28845.4833984375,
+     "instances_per_s": 3124.0,
+     "nav_tiles_per_s_area": 168.94319659469573,
+     "data_mb_per_s": 10.806507990234376
+    }
+   },
+   "100": {
+    "6.0": {
+     "loading_radius_m": 125.0,
+     "axis_per_s": 0.140625,
+     "diagonal_per_s": 0.1611328125,
+     "max_per_s": 0.1611328125,
+     "analytic_per_s": 0.1578439951112388,
+     "single_worker_budget_ms_per_chunk": 6206.060606060606,
+     "vertices_per_s": 2681.4111328125,
+     "instances_per_s": 290.4,
+     "nav_tiles_per_s_area": 15.0,
+     "data_mb_per_s": 1.004548630078125
+    },
+    "9.0": {
+     "loading_radius_m": 129.5,
+     "axis_per_s": 0.2109375,
+     "diagonal_per_s": 0.24169921875,
+     "max_per_s": 0.24169921875,
+     "analytic_per_s": 0.24170984032310824,
+     "single_worker_budget_ms_per_chunk": 4137.373737373738,
+     "vertices_per_s": 4022.11669921875,
+     "instances_per_s": 435.6,
+     "nav_tiles_per_s_area": 23.31,
+     "data_mb_per_s": 1.5068229451171877
+    },
+    "15.0": {
+     "loading_radius_m": 138.5,
+     "axis_per_s": 0.3515625,
+     "diagonal_per_s": 0.41015625,
+     "max_per_s": 0.41015625,
+     "analytic_per_s": 0.4193292260593471,
+     "single_worker_budget_ms_per_chunk": 2438.095238095238,
+     "vertices_per_s": 6825.41015625,
+     "instances_per_s": 739.2,
+     "nav_tiles_per_s_area": 41.55,
+     "data_mb_per_s": 2.5570328765625003
+    },
+    "50.0": {
+     "loading_radius_m": 191.0,
+     "axis_per_s": 1.5625,
+     "diagonal_per_s": 1.6845703125,
+     "max_per_s": 1.6845703125,
+     "analytic_per_s": 1.7181986571769903,
+     "single_worker_budget_ms_per_chunk": 593.6231884057971,
+     "vertices_per_s": 28032.9345703125,
+     "instances_per_s": 3036.0,
+     "nav_tiles_per_s_area": 191.0,
+     "data_mb_per_s": 10.502099314453126
+    }
+   }
+  }
+ },
+ "nav_invoker": {
+  "30": {
+   "resident_tiles": 50.26548245743669,
+   "tiles_per_s": {
+    "6.0": 3.6,
+    "9.0": 5.4,
+    "15.0": 9.0,
+    "50.0": 30.0
+   }
+  },
+  "100": {
+   "resident_tiles": 380.132711084365,
+   "tiles_per_s": {
+    "6.0": 12.0,
+    "9.0": 18.0,
+    "15.0": 30.0,
+    "50.0": 100.0
+   }
+  }
+ },
+ "prototype": {
+  "seam_exact": {
+   "0e+00": true,
+   "1e+04": true,
+   "1e+06": true,
+   "1e+08": true
+  },
+  "time_ms_per_chunk": {
+   "32": 2.2803400000157126,
+   "64": 4.23149749994991,
+   "128": 16.737205000026734
+  },
+  "scatter_density_check_per_m2": 0.0098876953125,
+  "coordinate_precision": {
+   "1e+03": {
+    "float32_spacing_cm": 0.0078125,
+    "float64_spacing_cm": 1.4551915228366852e-11
+   },
+   "1e+04": {
+    "float32_spacing_cm": 0.0625,
+    "float64_spacing_cm": 1.1641532182693481e-10
+   },
+   "1e+05": {
+    "float32_spacing_cm": 1.0,
+    "float64_spacing_cm": 1.862645149230957e-09
+   },
+   "1e+06": {
+    "float32_spacing_cm": 8.0,
+    "float64_spacing_cm": 1.4901161193847656e-08
+   },
+   "1e+07": {
+    "float32_spacing_cm": 64.0,
+    "float64_spacing_cm": 1.1920928955078125e-07
+   },
+   "4e+10": {
+    "float32_spacing_cm": 262144.0,
+    "float64_spacing_cm": 0.00048828125
+   }
+  }
+ },
+ "save_64m": {
+  "가벼움-B": {
+   "edits": 50000,
+   "explored_chunks": 16479.4921875,
+   "explored_area_km2": 67.5,
+   "touched_chunks": 5016.0,
+   "record_bytes": 680000.0,
+   "explored_bitmap_bytes": 2059.9365234375,
+   "explored_state_bytes": 52734.375,
+   "total_bytes": 935434.3115234375,
+   "placed_objects_in_base": 10000.0,
+   "placed_objects_per_base_chunk": 625.0
+  },
+  "건축가-B": {
+   "edits": 500000,
+   "explored_chunks": 16479.4921875,
+   "explored_area_km2": 67.5,
+   "touched_chunks": 16495.4921875,
+   "record_bytes": 9400000.0,
+   "explored_bitmap_bytes": 2059.9365234375,
+   "explored_state_bytes": 52734.375,
+   "total_bytes": 10114613.999023438,
+   "placed_objects_in_base": 244999.99999999997,
+   "placed_objects_per_base_chunk": 15312.499999999998
+  },
+  "가벼움-C": {
+   "edits": 50000,
+   "explored_chunks": 16479.4921875,
+   "explored_area_km2": 67.5,
+   "touched_chunks": 5016.0,
+   "record_bytes": 1930000.0,
+   "explored_bitmap_bytes": 2059.9365234375,
+   "explored_state_bytes": 52734.375,
+   "total_bytes": 2185434.3115234375,
+   "placed_objects_in_base": 7500.0,
+   "placed_objects_per_base_chunk": 468.75
+  },
+  "건축가-C": {
+   "edits": 500000,
+   "explored_chunks": 16479.4921875,
+   "explored_area_km2": 67.5,
+   "touched_chunks": 16495.4921875,
+   "record_bytes": 14805728.0,
+   "explored_bitmap_bytes": 2059.9365234375,
+   "explored_state_bytes": 52734.375,
+   "total_bytes": 15520341.999023438,
+   "placed_objects_in_base": 157500.0,
+   "placed_objects_per_base_chunk": 9843.75
+  }
+ },
+ "save_by_chunk": {
+  "32": {
+   "가벼움-B": {
+    "edits": 50000,
+    "explored_chunks": 65917.96875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 5064.0,
+    "record_bytes": 680000.0,
+    "explored_bitmap_bytes": 8239.74609375,
+    "explored_state_bytes": 210937.5,
+    "total_bytes": 1101737.24609375,
+    "placed_objects_in_base": 10000.0,
+    "placed_objects_per_base_chunk": 156.25
+   },
+   "건축가-B": {
+    "edits": 500000,
+    "explored_chunks": 65917.96875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 30064.0,
+    "record_bytes": 9400000.0,
+    "explored_bitmap_bytes": 8239.74609375,
+    "explored_state_bytes": 210937.5,
+    "total_bytes": 10821737.24609375,
+    "placed_objects_in_base": 244999.99999999997,
+    "placed_objects_per_base_chunk": 3828.1249999999995
+   },
+   "가벼움-C": {
+    "edits": 50000,
+    "explored_chunks": 65917.96875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 5064.0,
+    "record_bytes": 1930000.0,
+    "explored_bitmap_bytes": 8239.74609375,
+    "explored_state_bytes": 210937.5,
+    "total_bytes": 2351737.24609375,
+    "placed_objects_in_base": 7500.0,
+    "placed_objects_per_base_chunk": 117.1875
+   },
+   "건축가-C": {
+    "edits": 500000,
+    "explored_chunks": 65917.96875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 30064.0,
+    "record_bytes": 14805728.0,
+    "explored_bitmap_bytes": 8239.74609375,
+    "explored_state_bytes": 210937.5,
+    "total_bytes": 16227465.24609375,
+    "placed_objects_in_base": 157500.0,
+    "placed_objects_per_base_chunk": 2460.9375
+   }
+  },
+  "64": {
+   "가벼움-B": {
+    "edits": 50000,
+    "explored_chunks": 16479.4921875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 5016.0,
+    "record_bytes": 680000.0,
+    "explored_bitmap_bytes": 2059.9365234375,
+    "explored_state_bytes": 52734.375,
+    "total_bytes": 935434.3115234375,
+    "placed_objects_in_base": 10000.0,
+    "placed_objects_per_base_chunk": 625.0
+   },
+   "건축가-B": {
+    "edits": 500000,
+    "explored_chunks": 16479.4921875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 16495.4921875,
+    "record_bytes": 9400000.0,
+    "explored_bitmap_bytes": 2059.9365234375,
+    "explored_state_bytes": 52734.375,
+    "total_bytes": 10114613.999023438,
+    "placed_objects_in_base": 244999.99999999997,
+    "placed_objects_per_base_chunk": 15312.499999999998
+   },
+   "가벼움-C": {
+    "edits": 50000,
+    "explored_chunks": 16479.4921875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 5016.0,
+    "record_bytes": 1930000.0,
+    "explored_bitmap_bytes": 2059.9365234375,
+    "explored_state_bytes": 52734.375,
+    "total_bytes": 2185434.3115234375,
+    "placed_objects_in_base": 7500.0,
+    "placed_objects_per_base_chunk": 468.75
+   },
+   "건축가-C": {
+    "edits": 500000,
+    "explored_chunks": 16479.4921875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 16495.4921875,
+    "record_bytes": 14805728.0,
+    "explored_bitmap_bytes": 2059.9365234375,
+    "explored_state_bytes": 52734.375,
+    "total_bytes": 15520341.999023438,
+    "placed_objects_in_base": 157500.0,
+    "placed_objects_per_base_chunk": 9843.75
+   }
+  },
+  "128": {
+   "가벼움-B": {
+    "edits": 50000,
+    "explored_chunks": 4119.873046875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 4123.873046875,
+    "record_bytes": 680000.0,
+    "explored_bitmap_bytes": 514.984130859375,
+    "explored_state_bytes": 13183.59375,
+    "total_bytes": 858653.4997558594,
+    "placed_objects_in_base": 10000.0,
+    "placed_objects_per_base_chunk": 2500.0
+   },
+   "건축가-B": {
+    "edits": 500000,
+    "explored_chunks": 4119.873046875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 4123.873046875,
+    "record_bytes": 9400000.0,
+    "explored_bitmap_bytes": 514.984130859375,
+    "explored_state_bytes": 13183.59375,
+    "total_bytes": 9578653.49975586,
+    "placed_objects_in_base": 244999.99999999997,
+    "placed_objects_per_base_chunk": 61249.99999999999
+   },
+   "가벼움-C": {
+    "edits": 50000,
+    "explored_chunks": 4119.873046875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 4123.873046875,
+    "record_bytes": 1930000.0,
+    "explored_bitmap_bytes": 514.984130859375,
+    "explored_state_bytes": 13183.59375,
+    "total_bytes": 2108653.4997558594,
+    "placed_objects_in_base": 7500.0,
+    "placed_objects_per_base_chunk": 1875.0
+   },
+   "건축가-C": {
+    "edits": 500000,
+    "explored_chunks": 4119.873046875,
+    "explored_area_km2": 67.5,
+    "touched_chunks": 4123.873046875,
+    "record_bytes": 14805728.0,
+    "explored_bitmap_bytes": 514.984130859375,
+    "explored_state_bytes": 13183.59375,
+    "total_bytes": 14984381.49975586,
+    "placed_objects_in_base": 157500.0,
+    "placed_objects_per_base_chunk": 39375.0
+   }
+  }
+ },
+ "save_base_chunks_64m": 16,
+ "voxel_chunk_cap_bytes_64m": 196608.0,
+ "world_limit": {
+  "half_world_km": 43980465.11104,
+  "hours_to_edge_walk": 2036132.6440296296,
+  "hours_to_edge_fast_travel": 244335.91728355558,
+  "int32_chunk_index_limit_km_at_32m": 68719476.736
+ }
+}

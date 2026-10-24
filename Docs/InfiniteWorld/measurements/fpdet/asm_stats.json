@@ -1,0 +1,206 @@
+{
+ "precise_sse2": {
+  "counts": {
+   "fma": 0,
+   "div": 25,
+   "mul": 60,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 0
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "?ClassifyClimate@@YA?AUFTDClimateSample@@AEBUFTDWorldLayers@@_J1N@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?EvaluateBaseHeight@@YANAEBUFTDWorldLayers@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z",
+   "?CornerDot@@YAN_K_J1NN@Z",
+   "?Fade@@YANN@Z"
+  ]
+ },
+ "fast_sse2": {
+  "counts": {
+   "fma": 0,
+   "div": 10,
+   "mul": 80,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 0
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "?ClassifyClimate@@YA?AUFTDClimateSample@@AEBUFTDWorldLayers@@_J1N@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?EvaluateBaseHeight@@YANAEBUFTDWorldLayers@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z",
+   "?CornerDot@@YAN_K_J1NN@Z",
+   "?Fade@@YANN@Z"
+  ]
+ },
+ "strict_sse2": {
+  "counts": {
+   "fma": 0,
+   "div": 27,
+   "mul": 59,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 0
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "?ClassifyClimate@@YA?AUFTDClimateSample@@AEBUFTDWorldLayers@@_J1N@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?EvaluateBaseHeight@@YANAEBUFTDWorldLayers@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z",
+   "?CornerDot@@YAN_K_J1NN@Z",
+   "?Fade@@YANN@Z"
+  ]
+ },
+ "precise_avx2": {
+  "counts": {
+   "fma": 0,
+   "div": 25,
+   "mul": 60,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 8
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "?ClassifyClimate@@YA?AUFTDClimateSample@@AEBUFTDWorldLayers@@_J1N@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?EvaluateBaseHeight@@YANAEBUFTDWorldLayers@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z",
+   "?CornerDot@@YAN_K_J1NN@Z",
+   "?Fade@@YANN@Z"
+  ]
+ },
+ "fast_avx2": {
+  "counts": {
+   "fma": 40,
+   "div": 10,
+   "mul": 40,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 8
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "?ClassifyClimate@@YA?AUFTDClimateSample@@AEBUFTDWorldLayers@@_J1N@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?EvaluateBaseHeight@@YANAEBUFTDWorldLayers@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z",
+   "?CornerDot@@YAN_K_J1NN@Z",
+   "?Fade@@YANN@Z"
+  ]
+ },
+ "strict_avx2": {
+  "counts": {
+   "fma": 0,
+   "div": 27,
+   "mul": 59,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 0
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "?ClassifyClimate@@YA?AUFTDClimateSample@@AEBUFTDWorldLayers@@_J1N@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?EvaluateBaseHeight@@YANAEBUFTDWorldLayers@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z",
+   "?CornerDot@@YAN_K_J1NN@Z",
+   "?Fade@@YANN@Z"
+  ]
+ },
+ "precise_contract_avx2": {
+  "counts": {
+   "fma": 37,
+   "div": 25,
+   "mul": 23,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 8
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "?ClassifyClimate@@YA?AUFTDClimateSample@@AEBUFTDWorldLayers@@_J1N@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?EvaluateBaseHeight@@YANAEBUFTDWorldLayers@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z",
+   "?CornerDot@@YAN_K_J1NN@Z",
+   "?Fade@@YANN@Z"
+  ]
+ },
+ "ue_game_default": {
+  "counts": {
+   "fma": 0,
+   "div": 10,
+   "mul": 67,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 0
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z"
+  ]
+ },
+ "ue_editor_default": {
+  "counts": {
+   "fma": 0,
+   "div": 25,
+   "mul": 47,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 0
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z"
+  ]
+ },
+ "ue_game_avx": {
+  "counts": {
+   "fma": 0,
+   "div": 10,
+   "mul": 67,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 8
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z"
+  ]
+ },
+ "ue_game_avx2": {
+  "counts": {
+   "fma": 33,
+   "div": 10,
+   "mul": 34,
+   "rcp_or_rsqrt": 0,
+   "roundsd": 8
+  },
+  "procedures": [
+   "?GenerateChunk@@YAXAEBUFTDWorldLayers@@AEBUFTDChunkSpec@@_NAEAUFTDChunkBuffers@@@Z",
+   "??$EvaluateFbm@$01@@YANAEBU?$FTDFbmLayer@$01@@_J1@Z",
+   "??$EvaluateWarpedFbm@$07@@YANAEBU?$FTDFbmLayer@$07@@_J1NN@Z",
+   "??$EvaluateFbm@$02@@YANAEBU?$FTDFbmLayer@$02@@_J1@Z",
+   "?GradientNoise@@YAN_K_J1NN@Z"
+  ]
+ }
+}

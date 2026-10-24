@@ -1,0 +1,84 @@
+== cl banner ==
+Microsoft (R) C/C++ 최적화 컴파일러 버전 19.38.33135(x64)
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+사용법: cl [ option... ] filename... [ /link linkoption... ]
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== precise_sse2 (exit 0) ==
+cl /nologo /std:c++17 /EHsc /O2 /fp:precise /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_sse2\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_sse2\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_sse2\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== fast_sse2 (exit 0) ==
+cl /nologo /std:c++17 /EHsc /O2 /fp:fast /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\fast_sse2\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\fast_sse2\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\fast_sse2\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== strict_sse2 (exit 0) ==
+cl /nologo /std:c++17 /EHsc /O2 /fp:strict /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\strict_sse2\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\strict_sse2\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\strict_sse2\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== precise_avx2 (exit 0) ==
+cl /nologo /std:c++17 /EHsc /O2 /fp:precise /arch:AVX2 /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_avx2\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_avx2\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_avx2\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== fast_avx2 (exit 0) ==
+cl /nologo /std:c++17 /EHsc /O2 /fp:fast /arch:AVX2 /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\fast_avx2\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\fast_avx2\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\fast_avx2\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== strict_avx2 (exit 0) ==
+cl /nologo /std:c++17 /EHsc /O2 /fp:strict /arch:AVX2 /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\strict_avx2\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\strict_avx2\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\strict_avx2\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== precise_contract_avx2 (exit 0) ==
+cl /nologo /std:c++17 /EHsc /O2 /fp:precise /fp:contract /arch:AVX2 /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_contract_avx2\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_contract_avx2\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\precise_contract_avx2\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== ue_game_default (exit 0) ==
+cl /nologo /std:c++17 /EHsc /Ox /Ot /Oi /GF /Gw /Gy /GS- /permissive- /Zc:inline /fp:fast /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_default\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_default\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_default\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== ue_editor_default (exit 0) ==
+cl /nologo /std:c++17 /EHsc /Ox /Ot /Oi /GF /Gw /Gy /GS- /permissive- /Zc:inline /fp:precise /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_editor_default\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_editor_default\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_editor_default\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== ue_game_avx (exit 0) ==
+cl /nologo /std:c++17 /EHsc /Ox /Ot /Oi /GF /Gw /Gy /GS- /permissive- /Zc:inline /fp:fast /arch:AVX /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_avx\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_avx\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_avx\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+== ue_game_avx2 (exit 0) ==
+cl /nologo /std:c++17 /EHsc /Ox /Ot /Oi /GF /Gw /Gy /GS- /permissive- /Zc:inline /fp:fast /arch:AVX2 /FAs /Fa"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_avx2\port.asm" /Fo"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_avx2\port.obj" /Fe"C:\Users\jjh\AppData\Local\Temp\claude\C--Project-TDGame\2a751048-9127-481f-a165-791ef3538420\scratchpad\fpdet_work\ue_game_avx2\chunkgen_port.exe" "C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp"
+chunkgen_port.cpp
+C:\Project\TDGame\Tools\scratch\infinite_world\fpdet\chunkgen_port.cpp(1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+'vswhere.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.

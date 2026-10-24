@@ -1,0 +1,109 @@
+{
+ "numpy": "2.2.5",
+ "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+ "variants": {
+  "precise_sse2": [
+   "/O2",
+   "/fp:precise"
+  ],
+  "fast_sse2": [
+   "/O2",
+   "/fp:fast"
+  ],
+  "strict_sse2": [
+   "/O2",
+   "/fp:strict"
+  ],
+  "precise_avx2": [
+   "/O2",
+   "/fp:precise",
+   "/arch:AVX2"
+  ],
+  "fast_avx2": [
+   "/O2",
+   "/fp:fast",
+   "/arch:AVX2"
+  ],
+  "strict_avx2": [
+   "/O2",
+   "/fp:strict",
+   "/arch:AVX2"
+  ],
+  "precise_contract_avx2": [
+   "/O2",
+   "/fp:precise",
+   "/fp:contract",
+   "/arch:AVX2"
+  ],
+  "ue_game_default": [
+   "/Ox",
+   "/Ot",
+   "/Oi",
+   "/GF",
+   "/Gw",
+   "/Gy",
+   "/GS-",
+   "/permissive-",
+   "/Zc:inline",
+   "/fp:fast"
+  ],
+  "ue_editor_default": [
+   "/Ox",
+   "/Ot",
+   "/Oi",
+   "/GF",
+   "/Gw",
+   "/Gy",
+   "/GS-",
+   "/permissive-",
+   "/Zc:inline",
+   "/fp:precise"
+  ],
+  "ue_game_avx": [
+   "/Ox",
+   "/Ot",
+   "/Oi",
+   "/GF",
+   "/Gw",
+   "/Gy",
+   "/GS-",
+   "/permissive-",
+   "/Zc:inline",
+   "/fp:fast",
+   "/arch:AVX"
+  ],
+  "ue_game_avx2": [
+   "/Ox",
+   "/Ot",
+   "/Oi",
+   "/GF",
+   "/Gw",
+   "/Gy",
+   "/GS-",
+   "/permissive-",
+   "/Zc:inline",
+   "/fp:fast",
+   "/arch:AVX2"
+  ]
+ },
+ "world_seed": 20261023,
+ "chunks": [
+  [
+   0,
+   0
+  ],
+  [
+   -1,
+   0
+  ],
+  [
+   10000000,
+   -3000000
+  ],
+  [
+   1099511627776,
+   5
+  ]
+ ],
+ "wide": "8x8 chunks (-4..3) at 64m@0.5m"
+}

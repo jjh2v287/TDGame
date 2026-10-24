@@ -1,0 +1,635 @@
+{
+	"suite": "nav",
+	"status": "complete",
+	"meta":
+	{
+		"engine_version": "5.8.3-58210709+++UE5+Release-5.8",
+		"can_ever_render": false,
+		"with_editor": true,
+		"build_configuration": "Development",
+		"task_graph_worker_threads": 14,
+		"logical_cores": 16,
+		"skip_ddc_threshold": 1073741824,
+		"repetitions": 20,
+		"warmup_repetitions": 2,
+		"total_frames": 11731,
+		"total_seconds": 197.79317349940538,
+		"average_frame_ms": 16.860725726656327,
+		"steps_completed": 2,
+		"steps_total": 2,
+		"command_line": "-unattended -nosplash -nosound -log -abslog=C:/Project/TDGame/Saved/AgentOps/20261023/infinite-world/bench/logs/nav-T1000-r1.log -TDBenchSuite=nav -TDBenchOut=C:/Project/TDGame/Saved/AgentOps/20261023/infinite-world/bench/results/nav-T1000-r1.json -NullRHI -TDBenchCases=x6i4000,x6i6000,f6i4000 -ini:Engine:[/Script/NavigationSystem.RecastNavMesh]:TileSizeUU=1000 -game"
+	},
+	"results": [
+		{
+			"name": "nav.setup",
+			"nav_system_present": true,
+			"bounds_spawn_ms": 0.19980239868164062,
+			"volume_components_box": "IsValid=true, Min=(X=-110000000.000 Y=-110000000.000 Z=-100000.000), Max=(X=110000000.000 Y=110000000.000 Z=100000.000)",
+			"volume_brush_only_box": "IsValid=true, Min=(X=0.000 Y=0.000 Z=0.000), Max=(X=0.000 Y=0.000 Z=0.000)",
+			"active_tiles_generation": 1,
+			"navmesh_present": true,
+			"navmesh_spawn_s": 0.016960397720336914,
+			"setup_max_frame_cpu_ms": 4.6526007354259491,
+			"registered_bounds_count": 1,
+			"registered_bounds_box": "IsValid=true, Min=(X=-110000000.000 Y=-110000000.000 Z=-100000.000), Max=(X=110000000.000 Y=110000000.000 Z=100000.000)",
+			"tile_size_uu": 988,
+			"fixed_tile_pool": 1,
+			"tile_pool_size": 1024,
+			"runtime_generation": 2,
+			"active_tiles_at_setup": 0
+		},
+		{
+			"name": "nav.case",
+			"case": "x6i4000",
+			"speed_mps": 6,
+			"direction": "X=1.000 Y=0.000",
+			"start_x_cm": 0,
+			"start_y_cm": 500000,
+			"duration_s": 60,
+			"frames": 3598,
+			"prefill_s": 0.81908129882812497,
+			"prefill_chunks": 14,
+			"prefill_timed_out": false,
+			"manager_ms":
+			{
+				"n": 3598,
+				"p50": 0.0039005279541015625,
+				"p95": 0.0093994140625,
+				"p99": 2.5785007476806641,
+				"max": 3.2688999176025391,
+				"mean": 0.064954280058101124
+			},
+			"frame_cpu_ms":
+			{
+				"n": 3596,
+				"p50": 1.4871023595333099,
+				"p95": 3.0645988881587982,
+				"p99": 7.1726962924003601,
+				"max": 33.138703554868698,
+				"mean": 1.801287900403689
+			},
+			"frame_delta_ms":
+			{
+				"n": 3596,
+				"p50": 16.666702926158905,
+				"p95": 16.666799783706665,
+				"p99": 16.666803508996964,
+				"max": 33.138703554868698,
+				"mean": 16.675622970097852
+			},
+			"bench_overhead_ms":
+			{
+				"n": 3598,
+				"p50": 0.037000656127929688,
+				"p95": 0.08950042724609375,
+				"p99": 0.14799880981445312,
+				"max": 0.4375,
+				"mean": 0.045962517098495206
+			},
+			"item_terrain_ms":
+			{
+				"n": 23,
+				"p50": 0.46590042114257812,
+				"p95": 0.55789947509765625,
+				"p99": 0.56609916687011719,
+				"max": 0.56609916687011719,
+				"mean": 0.47997881018597149
+			},
+			"item_batch128_ms":
+			{
+				"n": 184,
+				"p50": 0.88119888305664062,
+				"p95": 1.1886997222900391,
+				"p99": 1.5516014099121094,
+				"max": 1.5522994995117188,
+				"mean": 0.92678812275762146
+			},
+			"item_release_ms":
+			{
+				"n": 19,
+				"p50": 1.6410007476806641,
+				"p95": 3.054901123046875,
+				"p99": 3.054901123046875,
+				"max": 3.054901123046875,
+				"mean": 1.8062159889622738
+			},
+			"worker_build_ms":
+			{
+				"n": 23,
+				"p50": 2.5040988922119141,
+				"p95": 2.8155002593994141,
+				"p99": 2.9927978515625,
+				"max": 2.9927978515625,
+				"mean": 2.549151793770168
+			},
+			"latency_request_to_build_ms":
+			{
+				"n": 23,
+				"p50": 16.60009765625,
+				"p95": 16.753997802734375,
+				"p99": 16.780801773071289,
+				"max": 16.780801773071289,
+				"mean": 16.466069760529891
+			},
+			"latency_request_to_collision_ms":
+			{
+				"n": 23,
+				"p50": 36.072000503540039,
+				"p95": 36.560600280761719,
+				"p99": 36.857099533081055,
+				"max": 36.857099533081055,
+				"mean": 35.988791009654172
+			},
+			"latency_request_to_instances_ms":
+			{
+				"n": 23,
+				"p50": 53.231201171875,
+				"p95": 69.204799652099609,
+				"p99": 69.21080207824707,
+				"max": 69.21080207824707,
+				"mean": 58.298512997834578
+			},
+			"max_game_thread_queue_items": 10,
+			"max_worker_in_flight": 1,
+			"chunks_requested": 23,
+			"terrain_spawned": 23,
+			"chunks_released": 19,
+			"shells_spawned_total": 18,
+			"unready_frames": 0,
+			"unready_episodes": 0,
+			"unready_ms_total": 0,
+			"tile_size_uu": 988,
+			"invoker_generation_cm": 4000,
+			"invoker_removal_cm": 6000,
+			"nav_warm_s": 2.0142544994354248,
+			"nav_warm_active_tiles": 72,
+			"nav_warm_timed_out": false,
+			"tiles_built_during_move": 336,
+			"tiles_built_per_s":
+			{
+				"n": 59,
+				"p50": 6,
+				"p95": 8,
+				"p99": 8,
+				"max": 8,
+				"mean": 5.6101694915254239
+			},
+			"active_tiles":
+			{
+				"n": 59,
+				"p50": 97,
+				"p95": 99,
+				"p99": 99,
+				"max": 99,
+				"mean": 96.237288135593218
+			},
+			"max_remaining_nav_tasks": 69,
+			"path_attempts": 59,
+			"path_complete": 59,
+			"path_partial": 0,
+			"path_no_ground": 0,
+			"path_project_start_fail": 0,
+			"path_project_end_fail": 0,
+			"path_search_fail": 0,
+			"path_query_ms":
+			{
+				"n": 59,
+				"p50": 0.090398788452148438,
+				"p95": 0.17679786682128906,
+				"p99": 0.36319732666015625,
+				"max": 0.36319732666015625,
+				"mean": 0.10122742087154066
+			},
+			"nav_update_component_ms":
+			{
+				"n": 23,
+				"p50": 0.013799667358398438,
+				"p95": 0.036199569702148438,
+				"p99": 0.054899215698242188,
+				"max": 0.054899215698242188,
+				"mean": 0.018095762833305027
+			},
+			"latency_request_to_nav_ms":
+			{
+				"n": 6,
+				"p50": 17086.428899765015,
+				"p95": 17153.804899215698,
+				"p99": 17153.804899215698,
+				"max": 17153.804899215698,
+				"mean": 14501.353982289633
+			},
+			"latency_ready_in_range_to_nav_ms":
+			{
+				"n": 6,
+				"p50": 0,
+				"p95": 0,
+				"p99": 0,
+				"max": 0,
+				"mean": 0
+			},
+			"nav_already_at_range_entry": 6,
+			"in_range_radius_cm": 3506,
+			"nav_memory_max_bytes": 1091224,
+			"nav_memory_final_bytes": 1064360
+		},
+		{
+			"name": "nav.case",
+			"case": "x6i6000",
+			"speed_mps": 6,
+			"direction": "X=1.000 Y=0.000",
+			"start_x_cm": 0,
+			"start_y_cm": 1000000,
+			"duration_s": 60,
+			"frames": 3598,
+			"prefill_s": 0.88351530265808109,
+			"prefill_chunks": 14,
+			"prefill_timed_out": false,
+			"manager_ms":
+			{
+				"n": 3598,
+				"p50": 0.0039005279541015625,
+				"p95": 0.010498046875,
+				"p99": 2.5771007537841797,
+				"max": 3.5381031036376953,
+				"mean": 0.066381260446206014
+			},
+			"frame_cpu_ms":
+			{
+				"n": 3596,
+				"p50": 1.4742985367774963,
+				"p95": 3.1629018485546112,
+				"p99": 6.9302022457122803,
+				"max": 24.897497147321701,
+				"mean": 1.8202373416093618
+			},
+			"frame_delta_ms":
+			{
+				"n": 3596,
+				"p50": 16.666702926158905,
+				"p95": 16.666799783706665,
+				"p99": 16.666900366544724,
+				"max": 24.897497147321701,
+				"mean": 16.673918047897079
+			},
+			"bench_overhead_ms":
+			{
+				"n": 3598,
+				"p50": 0.037302017211914062,
+				"p95": 0.096902847290039062,
+				"p99": 0.15849876403808594,
+				"max": 0.37690353393554688,
+				"mean": 0.047448380911860481
+			},
+			"item_terrain_ms":
+			{
+				"n": 23,
+				"p50": 0.45939826965332031,
+				"p95": 0.72349929809570312,
+				"p99": 0.85470008850097656,
+				"max": 0.85470008850097656,
+				"mean": 0.51081740337869397
+			},
+			"item_batch128_ms":
+			{
+				"n": 184,
+				"p50": 0.89419937133789062,
+				"p95": 1.1306991577148438,
+				"p99": 1.7768993377685547,
+				"max": 1.8318958282470703,
+				"mean": 0.92263476744942041
+			},
+			"item_release_ms":
+			{
+				"n": 20,
+				"p50": 1.6874008178710938,
+				"p95": 3.4351024627685547,
+				"p99": 3.4461994171142578,
+				"max": 3.4461994171142578,
+				"mean": 1.9437703132629394
+			},
+			"worker_build_ms":
+			{
+				"n": 23,
+				"p50": 2.4626998901367188,
+				"p95": 3.1701984405517578,
+				"p99": 3.6833000183105469,
+				"max": 3.6833000183105469,
+				"mean": 2.5760955810546875
+			},
+			"latency_request_to_build_ms":
+			{
+				"n": 23,
+				"p50": 16.662702560424805,
+				"p95": 16.800302505493164,
+				"p99": 16.820003509521484,
+				"max": 16.820003509521484,
+				"mean": 16.643487432728644
+			},
+			"latency_request_to_collision_ms":
+			{
+				"n": 23,
+				"p50": 36.091695785522461,
+				"p95": 36.655702590942383,
+				"p99": 36.660600662231445,
+				"max": 36.660600662231445,
+				"mean": 36.071090864098593
+			},
+			"latency_request_to_instances_ms":
+			{
+				"n": 23,
+				"p50": 53.169403076171875,
+				"p95": 68.193099975585938,
+				"p99": 68.750999450683594,
+				"max": 68.750999450683594,
+				"mean": 58.215269337529719
+			},
+			"max_game_thread_queue_items": 9,
+			"max_worker_in_flight": 1,
+			"chunks_requested": 23,
+			"terrain_spawned": 23,
+			"chunks_released": 20,
+			"shells_spawned_total": 18,
+			"unready_frames": 0,
+			"unready_episodes": 0,
+			"unready_ms_total": 0,
+			"tile_size_uu": 988,
+			"invoker_generation_cm": 6000,
+			"invoker_removal_cm": 8000,
+			"nav_warm_s": 2.0148411979675291,
+			"nav_warm_active_tiles": 146,
+			"nav_warm_timed_out": false,
+			"tiles_built_during_move": 471,
+			"tiles_built_per_s":
+			{
+				"n": 59,
+				"p50": 9,
+				"p95": 11,
+				"p99": 11,
+				"max": 11,
+				"mean": 7.8644067796610173
+			},
+			"active_tiles":
+			{
+				"n": 59,
+				"p50": 181,
+				"p95": 184,
+				"p99": 184,
+				"max": 184,
+				"mean": 180.15254237288136
+			},
+			"max_remaining_nav_tasks": 146,
+			"path_attempts": 59,
+			"path_complete": 59,
+			"path_partial": 0,
+			"path_no_ground": 0,
+			"path_project_start_fail": 0,
+			"path_project_end_fail": 0,
+			"path_search_fail": 0,
+			"path_query_ms":
+			{
+				"n": 59,
+				"p50": 0.090799331665039062,
+				"p95": 0.17039871215820312,
+				"p99": 0.18019866943359375,
+				"max": 0.18019866943359375,
+				"mean": 0.095699730565992458
+			},
+			"nav_update_component_ms":
+			{
+				"n": 23,
+				"p50": 0.01560211181640625,
+				"p95": 0.03479766845703125,
+				"p99": 0.087696075439453125,
+				"max": 0.087696075439453125,
+				"mean": 0.020451835964037025
+			},
+			"latency_request_to_nav_ms":
+			{
+				"n": 13,
+				"p50": 12602.860300064087,
+				"p95": 16677.779302597046,
+				"p99": 16677.779302597046,
+				"max": 16677.779302597046,
+				"mean": 11597.470299207247
+			},
+			"latency_ready_in_range_to_nav_ms":
+			{
+				"n": 13,
+				"p50": 0,
+				"p95": 0,
+				"p99": 0,
+				"max": 0,
+				"mean": 0
+			},
+			"nav_already_at_range_entry": 13,
+			"in_range_radius_cm": 5506,
+			"nav_memory_max_bytes": 2026688,
+			"nav_memory_final_bytes": 2022576
+		},
+		{
+			"name": "nav.case",
+			"case": "f6i4000",
+			"speed_mps": 6,
+			"direction": "X=1.000 Y=0.000",
+			"start_x_cm": 100000000,
+			"start_y_cm": 1500000,
+			"duration_s": 60,
+			"frames": 3598,
+			"prefill_s": 0.90947220039367671,
+			"prefill_chunks": 14,
+			"prefill_timed_out": false,
+			"manager_ms":
+			{
+				"n": 3598,
+				"p50": 0.0038013458251953125,
+				"p95": 0.009998321533203125,
+				"p99": 2.5701007843017578,
+				"max": 3.1226978302001953,
+				"mean": 0.068241306514856617
+			},
+			"frame_cpu_ms":
+			{
+				"n": 3596,
+				"p50": 1.4888010919094086,
+				"p95": 3.1901001930236816,
+				"p99": 7.3163993656635284,
+				"max": 24.09440279006958,
+				"mean": 1.8194940840375835
+			},
+			"frame_delta_ms":
+			{
+				"n": 3596,
+				"p50": 16.666702926158905,
+				"p95": 16.666799783706665,
+				"p99": 16.666803508996964,
+				"max": 24.09440279006958,
+				"mean": 16.675522969465899
+			},
+			"bench_overhead_ms":
+			{
+				"n": 3598,
+				"p50": 0.037298202514648438,
+				"p95": 0.092599868774414062,
+				"p99": 0.15080451965332031,
+				"max": 0.2884979248046875,
+				"mean": 0.046519381261786334
+			},
+			"item_terrain_ms":
+			{
+				"n": 23,
+				"p50": 0.47099876403808594,
+				"p95": 0.82089996337890625,
+				"p99": 0.91740036010742188,
+				"max": 0.91740036010742188,
+				"mean": 0.5570997984512992
+			},
+			"item_batch128_ms":
+			{
+				"n": 184,
+				"p50": 0.9001007080078125,
+				"p95": 1.3592014312744141,
+				"p99": 1.6295986175537109,
+				"max": 2.0038013458251953,
+				"mean": 0.96418305065320886
+			},
+			"item_release_ms":
+			{
+				"n": 20,
+				"p50": 1.7139987945556641,
+				"p95": 2.2702999114990234,
+				"p99": 2.7784976959228516,
+				"max": 2.7784976959228516,
+				"mean": 1.8588799476623534
+			},
+			"worker_build_ms":
+			{
+				"n": 23,
+				"p50": 2.5503005981445312,
+				"p95": 3.0086956024169922,
+				"p99": 3.8187007904052734,
+				"max": 3.8187007904052734,
+				"mean": 2.6506474536398184
+			},
+			"latency_request_to_build_ms":
+			{
+				"n": 23,
+				"p50": 16.669198989868164,
+				"p95": 16.889200210571289,
+				"p99": 17.001401901245117,
+				"max": 17.001401901245117,
+				"mean": 16.684117856233016
+			},
+			"latency_request_to_collision_ms":
+			{
+				"n": 23,
+				"p50": 36.105701446533203,
+				"p95": 36.392601013183594,
+				"p99": 38.097702026367188,
+				"max": 38.097702026367188,
+				"mean": 36.145139942998469
+			},
+			"latency_request_to_instances_ms":
+			{
+				"n": 23,
+				"p50": 67.636802673339844,
+				"p95": 69.346599578857422,
+				"p99": 69.431402206420898,
+				"max": 69.431402206420898,
+				"mean": 62.973378554634429
+			},
+			"max_game_thread_queue_items": 9,
+			"max_worker_in_flight": 1,
+			"chunks_requested": 23,
+			"terrain_spawned": 23,
+			"chunks_released": 20,
+			"shells_spawned_total": 18,
+			"unready_frames": 0,
+			"unready_episodes": 0,
+			"unready_ms_total": 0,
+			"tile_size_uu": 988,
+			"invoker_generation_cm": 4000,
+			"invoker_removal_cm": 6000,
+			"nav_warm_s": 2.0162812995910646,
+			"nav_warm_active_tiles": 70,
+			"nav_warm_timed_out": false,
+			"tiles_built_during_move": 336,
+			"tiles_built_per_s":
+			{
+				"n": 59,
+				"p50": 6,
+				"p95": 8,
+				"p99": 8,
+				"max": 8,
+				"mean": 5.593220338983051
+			},
+			"active_tiles":
+			{
+				"n": 59,
+				"p50": 96,
+				"p95": 99,
+				"p99": 99,
+				"max": 99,
+				"mean": 95.762711864406782
+			},
+			"max_remaining_nav_tasks": 70,
+			"path_attempts": 59,
+			"path_complete": 59,
+			"path_partial": 0,
+			"path_no_ground": 0,
+			"path_project_start_fail": 0,
+			"path_project_end_fail": 0,
+			"path_search_fail": 0,
+			"path_query_ms":
+			{
+				"n": 59,
+				"p50": 0.087499618530273438,
+				"p95": 0.13719749450683594,
+				"p99": 0.16039848327636719,
+				"max": 0.16039848327636719,
+				"mean": 0.091278237811589641
+			},
+			"nav_update_component_ms":
+			{
+				"n": 23,
+				"p50": 0.016599655151367188,
+				"p95": 0.052598953247070312,
+				"p99": 0.053201675415039062,
+				"max": 0.053201675415039062,
+				"mean": 0.022843236508576767
+			},
+			"latency_request_to_nav_ms":
+			{
+				"n": 7,
+				"p50": 15672.452699661255,
+				"p95": 15738.67610168457,
+				"p99": 15738.67610168457,
+				"max": 15738.67610168457,
+				"mean": 11678.658371789115
+			},
+			"latency_ready_in_range_to_nav_ms":
+			{
+				"n": 7,
+				"p50": 0,
+				"p95": 0,
+				"p99": 0,
+				"max": 0,
+				"mean": 0
+			},
+			"nav_already_at_range_entry": 7,
+			"in_range_radius_cm": 3506,
+			"nav_memory_max_bytes": 1087568,
+			"nav_memory_final_bytes": 1066944
+		},
+		{
+			"name": "nav.late_bounds",
+			"half_extent_cm": 1000000,
+			"tile_size_uu": 988,
+			"tiles_in_box": 4097756.0687767384,
+			"spawn_ms": 0.42149734497070312,
+			"max_frame_cpu_ms": 91.964598745107651,
+			"max_frame_delta_ms": 91.964598745107651,
+			"baseline_max_frame_cpu_ms": 2.7934983372688293,
+			"active_tiles_at_spawn": 98
+		}
+	]
+}

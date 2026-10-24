@@ -1,0 +1,62 @@
+[
+ {
+  "config": "32m@1m",
+  "mode": "height",
+  "median_ms": 5.929
+ },
+ {
+  "config": "64m@1m",
+  "mode": "height",
+  "median_ms": 12.368
+ },
+ {
+  "config": "64m@0.5m",
+  "mode": "height",
+  "median_ms": 53.15
+ },
+ {
+  "config": "128m@1m",
+  "mode": "height",
+  "median_ms": 52.698
+ },
+ {
+  "config": "32m@1m",
+  "mode": "height+climate",
+  "median_ms": 8.214
+ },
+ {
+  "config": "64m@1m",
+  "mode": "height+climate",
+  "median_ms": 15.965
+ },
+ {
+  "config": "64m@0.5m",
+  "mode": "height+climate",
+  "median_ms": 68.929
+ },
+ {
+  "config": "128m@1m",
+  "mode": "height+climate",
+  "median_ms": 73.706
+ },
+ {
+  "config": "32m@1m",
+  "mode": "height+climate+structures",
+  "median_ms": 8.438
+ },
+ {
+  "config": "64m@1m",
+  "mode": "height+climate+structures",
+  "median_ms": 17.028
+ },
+ {
+  "config": "64m@0.5m",
+  "mode": "height+climate+structures",
+  "median_ms": 76.895
+ },
+ {
+  "config": "128m@1m",
+  "mode": "height+climate+structures",
+  "median_ms": 72.858
+ }
+]

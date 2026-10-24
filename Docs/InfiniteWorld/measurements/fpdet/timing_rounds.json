@@ -1,0 +1,734 @@
+{
+ "loads": [
+  {
+   "round": 0,
+   "cpu_load_percent": "85",
+   "busy": {
+    "UnrealEditor.exe": 1
+   }
+  },
+  {
+   "round": 1,
+   "cpu_load_percent": "67",
+   "busy": {
+    "UnrealEditor.exe": 1
+   }
+  },
+  {
+   "round": 2,
+   "cpu_load_percent": "65",
+   "busy": {
+    "UnrealEditor.exe": 1
+   }
+  },
+  {
+   "round": 3,
+   "cpu_load_percent": "30",
+   "busy": {
+    "UnrealEditor.exe": 1
+   }
+  },
+  {
+   "round": 4,
+   "cpu_load_percent": "71",
+   "busy": {
+    "UnrealEditor.exe": 1
+   }
+  },
+  {
+   "round": 5,
+   "cpu_load_percent": "74",
+   "busy": {
+    "UnrealEditor.exe": 1
+   }
+  }
+ ],
+ "summary": {
+  "precise_sse2": {
+   "32m@1m|height": {
+    "min_of_medians_ms": 0.3456,
+    "median_of_medians_ms": 0.3887,
+    "rounds": [
+     0.3552,
+     0.3787,
+     0.3987,
+     0.4432,
+     0.4718,
+     0.3456
+    ]
+   },
+   "64m@1m|height": {
+    "min_of_medians_ms": 1.415,
+    "median_of_medians_ms": 1.7257500000000001,
+    "rounds": [
+     1.7158,
+     1.7357,
+     1.5799,
+     1.8233,
+     1.7766,
+     1.415
+    ]
+   },
+   "64m@0.5m|height": {
+    "min_of_medians_ms": 5.9671,
+    "median_of_medians_ms": 6.4143,
+    "rounds": [
+     6.2789,
+     6.4329,
+     6.4595,
+     6.8835,
+     6.3957,
+     5.9671
+    ]
+   },
+   "128m@1m|height": {
+    "min_of_medians_ms": 5.1289,
+    "median_of_medians_ms": 6.5016,
+    "rounds": [
+     6.13,
+     7.3353,
+     6.9803,
+     6.837,
+     5.1289,
+     6.1662
+    ]
+   },
+   "32m@1m|height+climate": {
+    "min_of_medians_ms": 0.4336,
+    "median_of_medians_ms": 0.5714999999999999,
+    "rounds": [
+     0.4864,
+     0.5939,
+     0.5917,
+     0.5882,
+     0.4336,
+     0.5548
+    ]
+   },
+   "64m@1m|height+climate": {
+    "min_of_medians_ms": 1.7946,
+    "median_of_medians_ms": 2.08595,
+    "rounds": [
+     2.0633,
+     2.5712,
+     2.1086,
+     2.2493,
+     1.7946,
+     1.9525
+    ]
+   },
+   "64m@0.5m|height+climate": {
+    "min_of_medians_ms": 8.2926,
+    "median_of_medians_ms": 9.0899,
+    "rounds": [
+     8.5206,
+     9.4042,
+     8.2926,
+     9.1468,
+     9.033,
+     12.6048
+    ]
+   },
+   "128m@1m|height+climate": {
+    "min_of_medians_ms": 8.2287,
+    "median_of_medians_ms": 8.8586,
+    "rounds": [
+     8.2287,
+     8.719,
+     8.9982,
+     9.1492,
+     9.1461,
+     8.6749
+    ]
+   }
+  },
+  "fast_sse2": {
+   "32m@1m|height": {
+    "min_of_medians_ms": 0.362,
+    "median_of_medians_ms": 0.4143,
+    "rounds": [
+     0.4032,
+     0.4265,
+     0.3727,
+     0.4416,
+     0.4254,
+     0.362
+    ]
+   },
+   "64m@1m|height": {
+    "min_of_medians_ms": 1.4595,
+    "median_of_medians_ms": 1.54325,
+    "rounds": [
+     1.5475,
+     1.4595,
+     1.7865,
+     1.6111,
+     1.539,
+     1.4637
+    ]
+   },
+   "64m@0.5m|height": {
+    "min_of_medians_ms": 6.0162,
+    "median_of_medians_ms": 6.34975,
+    "rounds": [
+     7.2489,
+     6.1037,
+     6.3872,
+     7.099,
+     6.0162,
+     6.3123
+    ]
+   },
+   "128m@1m|height": {
+    "min_of_medians_ms": 6.011,
+    "median_of_medians_ms": 6.3229,
+    "rounds": [
+     7.1422,
+     6.011,
+     6.4326,
+     7.317,
+     6.1375,
+     6.2132
+    ]
+   },
+   "32m@1m|height+climate": {
+    "min_of_medians_ms": 0.4399,
+    "median_of_medians_ms": 0.49755000000000005,
+    "rounds": [
+     0.4676,
+     0.4774,
+     0.5405,
+     0.584,
+     0.5177,
+     0.4399
+    ]
+   },
+   "64m@1m|height+climate": {
+    "min_of_medians_ms": 1.7764,
+    "median_of_medians_ms": 2.02845,
+    "rounds": [
+     2.0471,
+     2.0098,
+     2.2665,
+     2.3162,
+     1.8037,
+     1.7764
+    ]
+   },
+   "64m@0.5m|height+climate": {
+    "min_of_medians_ms": 7.2277,
+    "median_of_medians_ms": 8.183,
+    "rounds": [
+     8.2119,
+     8.1853,
+     8.0828,
+     8.8254,
+     8.1807,
+     7.2277
+    ]
+   },
+   "128m@1m|height+climate": {
+    "min_of_medians_ms": 7.5729,
+    "median_of_medians_ms": 8.17865,
+    "rounds": [
+     8.155,
+     9.8242,
+     7.7564,
+     8.4464,
+     8.2023,
+     7.5729
+    ]
+   }
+  },
+  "strict_sse2": {
+   "32m@1m|height": {
+    "min_of_medians_ms": 0.3623,
+    "median_of_medians_ms": 0.39675000000000005,
+    "rounds": [
+     0.4127,
+     0.4707,
+     0.3808,
+     0.439,
+     0.3728,
+     0.3623
+    ]
+   },
+   "64m@1m|height": {
+    "min_of_medians_ms": 1.4305,
+    "median_of_medians_ms": 1.5957,
+    "rounds": [
+     1.6037,
+     1.8005,
+     1.5235,
+     1.5877,
+     1.6053,
+     1.4305
+    ]
+   },
+   "64m@0.5m|height": {
+    "min_of_medians_ms": 5.566,
+    "median_of_medians_ms": 6.3976500000000005,
+    "rounds": [
+     6.4789,
+     6.7591,
+     6.317,
+     6.445,
+     6.3503,
+     5.566
+    ]
+   },
+   "128m@1m|height": {
+    "min_of_medians_ms": 5.68,
+    "median_of_medians_ms": 6.4429,
+    "rounds": [
+     6.5734,
+     6.619,
+     6.3124,
+     6.6078,
+     6.0388,
+     5.68
+    ]
+   },
+   "32m@1m|height+climate": {
+    "min_of_medians_ms": 0.4618,
+    "median_of_medians_ms": 0.5379499999999999,
+    "rounds": [
+     0.6531,
+     0.5395,
+     0.5236,
+     0.547,
+     0.5364,
+     0.4618
+    ]
+   },
+   "64m@1m|height+climate": {
+    "min_of_medians_ms": 2.0086,
+    "median_of_medians_ms": 2.1471999999999998,
+    "rounds": [
+     2.2105,
+     2.155,
+     2.0408,
+     2.1638,
+     2.1394,
+     2.0086
+    ]
+   },
+   "64m@0.5m|height+climate": {
+    "min_of_medians_ms": 8.3577,
+    "median_of_medians_ms": 8.76515,
+    "rounds": [
+     9.2558,
+     8.7528,
+     8.3602,
+     9.474,
+     8.7775,
+     8.3577
+    ]
+   },
+   "128m@1m|height+climate": {
+    "min_of_medians_ms": 8.32,
+    "median_of_medians_ms": 9.063849999999999,
+    "rounds": [
+     9.1556,
+     9.1588,
+     8.32,
+     11.7304,
+     8.9721,
+     8.7598
+    ]
+   }
+  },
+  "ue_game_default": {
+   "32m@1m|height": {
+    "min_of_medians_ms": 0.3287,
+    "median_of_medians_ms": 0.36255,
+    "rounds": [
+     0.3873,
+     0.3423,
+     0.3287,
+     0.3417,
+     0.3828,
+     0.393
+    ]
+   },
+   "64m@1m|height": {
+    "min_of_medians_ms": 1.3446,
+    "median_of_medians_ms": 1.41605,
+    "rounds": [
+     1.4146,
+     1.6351,
+     1.4048,
+     1.3446,
+     1.4729,
+     1.4175
+    ]
+   },
+   "64m@0.5m|height": {
+    "min_of_medians_ms": 4.9812,
+    "median_of_medians_ms": 5.97605,
+    "rounds": [
+     6.7718,
+     7.3984,
+     5.8671,
+     5.8002,
+     6.085,
+     4.9812
+    ]
+   },
+   "128m@1m|height": {
+    "min_of_medians_ms": 5.0476,
+    "median_of_medians_ms": 5.9933,
+    "rounds": [
+     6.9223,
+     6.404,
+     5.8486,
+     5.611,
+     6.138,
+     5.0476
+    ]
+   },
+   "32m@1m|height+climate": {
+    "min_of_medians_ms": 0.4196,
+    "median_of_medians_ms": 0.5081,
+    "rounds": [
+     0.5054,
+     0.5108,
+     0.4776,
+     0.4196,
+     0.5354,
+     0.5269
+    ]
+   },
+   "64m@1m|height+climate": {
+    "min_of_medians_ms": 1.8396,
+    "median_of_medians_ms": 2.0116,
+    "rounds": [
+     2.0861,
+     2.1796,
+     1.8396,
+     2.4716,
+     1.9371,
+     1.879
+    ]
+   },
+   "64m@0.5m|height+climate": {
+    "min_of_medians_ms": 7.4581,
+    "median_of_medians_ms": 8.16715,
+    "rounds": [
+     8.244,
+     8.6371,
+     7.9483,
+     8.385,
+     8.0903,
+     7.4581
+    ]
+   },
+   "128m@1m|height+climate": {
+    "min_of_medians_ms": 7.5176,
+    "median_of_medians_ms": 8.2776,
+    "rounds": [
+     8.0884,
+     9.0546,
+     7.6769,
+     8.4668,
+     8.9559,
+     7.5176
+    ]
+   }
+  },
+  "ue_editor_default": {
+   "32m@1m|height": {
+    "min_of_medians_ms": 0.3438,
+    "median_of_medians_ms": 0.3797,
+    "rounds": [
+     0.3438,
+     0.4236,
+     0.3625,
+     0.351,
+     0.4127,
+     0.3969
+    ]
+   },
+   "64m@1m|height": {
+    "min_of_medians_ms": 1.4793,
+    "median_of_medians_ms": 1.5739,
+    "rounds": [
+     1.5757,
+     1.5721,
+     1.4793,
+     1.5487,
+     1.6867,
+     1.6301
+    ]
+   },
+   "64m@0.5m|height": {
+    "min_of_medians_ms": 6.1131,
+    "median_of_medians_ms": 6.2970500000000005,
+    "rounds": [
+     6.1131,
+     6.6231,
+     6.23,
+     6.4762,
+     6.1216,
+     6.3641
+    ]
+   },
+   "128m@1m|height": {
+    "min_of_medians_ms": 5.6639,
+    "median_of_medians_ms": 6.5347,
+    "rounds": [
+     6.4913,
+     6.6076,
+     6.6902,
+     5.6639,
+     6.5781,
+     6.3489
+    ]
+   },
+   "32m@1m|height+climate": {
+    "min_of_medians_ms": 0.5051,
+    "median_of_medians_ms": 0.5435000000000001,
+    "rounds": [
+     0.537,
+     0.55,
+     0.5812,
+     0.6688,
+     0.5051,
+     0.5341
+    ]
+   },
+   "64m@1m|height+climate": {
+    "min_of_medians_ms": 1.9465,
+    "median_of_medians_ms": 2.0728,
+    "rounds": [
+     2.1867,
+     2.1015,
+     1.9465,
+     2.0441,
+     2.1531,
+     2.0327
+    ]
+   },
+   "64m@0.5m|height+climate": {
+    "min_of_medians_ms": 7.7888,
+    "median_of_medians_ms": 8.290099999999999,
+    "rounds": [
+     8.1709,
+     8.431,
+     8.0229,
+     7.7888,
+     8.4093,
+     8.5987
+    ]
+   },
+   "128m@1m|height+climate": {
+    "min_of_medians_ms": 7.0761,
+    "median_of_medians_ms": 8.666450000000001,
+    "rounds": [
+     8.8691,
+     8.7818,
+     7.0761,
+     8.3068,
+     8.5511,
+     8.8415
+    ]
+   }
+  },
+  "ue_game_avx2": {
+   "32m@1m|height": {
+    "min_of_medians_ms": 0.2736,
+    "median_of_medians_ms": 0.3225,
+    "rounds": [
+     0.3036,
+     0.4147,
+     0.2879,
+     0.2736,
+     0.3414,
+     0.3915
+    ]
+   },
+   "64m@1m|height": {
+    "min_of_medians_ms": 1.0869,
+    "median_of_medians_ms": 1.2765,
+    "rounds": [
+     1.2913,
+     1.6142,
+     1.0869,
+     1.2617,
+     1.19,
+     1.3145
+    ]
+   },
+   "64m@0.5m|height": {
+    "min_of_medians_ms": 4.3822,
+    "median_of_medians_ms": 5.11425,
+    "rounds": [
+     5.3938,
+     5.9305,
+     4.3822,
+     4.8451,
+     4.4187,
+     5.3834
+    ]
+   },
+   "128m@1m|height": {
+    "min_of_medians_ms": 4.5298,
+    "median_of_medians_ms": 5.31855,
+    "rounds": [
+     5.2582,
+     5.5237,
+     4.5298,
+     4.9202,
+     5.5574,
+     5.3789
+    ]
+   },
+   "32m@1m|height+climate": {
+    "min_of_medians_ms": 0.361,
+    "median_of_medians_ms": 0.4634,
+    "rounds": [
+     0.4427,
+     0.5047,
+     0.361,
+     0.4197,
+     0.4841,
+     0.5456
+    ]
+   },
+   "64m@1m|height+climate": {
+    "min_of_medians_ms": 1.445,
+    "median_of_medians_ms": 1.7825,
+    "rounds": [
+     1.7904,
+     1.7746,
+     1.445,
+     1.594,
+     1.9296,
+     2.1085
+    ]
+   },
+   "64m@0.5m|height+climate": {
+    "min_of_medians_ms": 5.9669,
+    "median_of_medians_ms": 7.1798,
+    "rounds": [
+     7.0137,
+     7.1271,
+     5.9669,
+     7.5477,
+     7.2325,
+     7.353
+    ]
+   },
+   "128m@1m|height+climate": {
+    "min_of_medians_ms": 6.9075,
+    "median_of_medians_ms": 7.3406,
+    "rounds": [
+     6.9814,
+     7.302,
+     6.9075,
+     7.4435,
+     7.3792,
+     7.799
+    ]
+   }
+  },
+  "precise_avx2": {
+   "32m@1m|height": {
+    "min_of_medians_ms": 0.295,
+    "median_of_medians_ms": 0.3504,
+    "rounds": [
+     0.3836,
+     0.3032,
+     0.3509,
+     0.295,
+     0.378,
+     0.3499
+    ]
+   },
+   "64m@1m|height": {
+    "min_of_medians_ms": 1.197,
+    "median_of_medians_ms": 1.33935,
+    "rounds": [
+     1.3265,
+     1.3645,
+     1.2162,
+     1.197,
+     1.4197,
+     1.3522
+    ]
+   },
+   "64m@0.5m|height": {
+    "min_of_medians_ms": 4.9865,
+    "median_of_medians_ms": 5.79415,
+    "rounds": [
+     6.2288,
+     6.0518,
+     4.9865,
+     5.1369,
+     5.8188,
+     5.7695
+    ]
+   },
+   "128m@1m|height": {
+    "min_of_medians_ms": 4.8225,
+    "median_of_medians_ms": 5.47865,
+    "rounds": [
+     5.7596,
+     5.3834,
+     4.8225,
+     4.9132,
+     6.0433,
+     5.5739
+    ]
+   },
+   "32m@1m|height+climate": {
+    "min_of_medians_ms": 0.3967,
+    "median_of_medians_ms": 0.45235000000000003,
+    "rounds": [
+     0.439,
+     0.4616,
+     0.3967,
+     0.4431,
+     0.5635,
+     0.465
+    ]
+   },
+   "64m@1m|height+climate": {
+    "min_of_medians_ms": 1.5873,
+    "median_of_medians_ms": 1.86305,
+    "rounds": [
+     2.0066,
+     1.8198,
+     1.5873,
+     1.9625,
+     1.9063,
+     1.8162
+    ]
+   },
+   "64m@0.5m|height+climate": {
+    "min_of_medians_ms": 6.4556,
+    "median_of_medians_ms": 7.362500000000001,
+    "rounds": [
+     7.4629,
+     7.6861,
+     6.4556,
+     6.8329,
+     7.2621,
+     7.4948
+    ]
+   },
+   "128m@1m|height+climate": {
+    "min_of_medians_ms": 6.6452,
+    "median_of_medians_ms": 7.4795,
+    "rounds": [
+     7.1803,
+     8.7214,
+     6.6452,
+     7.0486,
+     7.7787,
+     8.2794
+    ]
+   }
+  }
+ }
+}

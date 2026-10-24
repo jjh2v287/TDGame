@@ -1,0 +1,143 @@
+{
+	"suite": "stream",
+	"status": "complete",
+	"meta":
+	{
+		"engine_version": "5.8.3-58210709+++UE5+Release-5.8",
+		"can_ever_render": false,
+		"with_editor": true,
+		"build_configuration": "Development",
+		"task_graph_worker_threads": 14,
+		"logical_cores": 16,
+		"skip_ddc_threshold": 1073741824,
+		"repetitions": 20,
+		"warmup_repetitions": 2,
+		"total_frames": 1856,
+		"total_seconds": 32.760552801191807,
+		"average_frame_ms": 17.65115991443524,
+		"steps_completed": 2,
+		"steps_total": 2,
+		"command_line": "-unattended -nosplash -nosound -log -abslog=C:/Project/TDGame/Saved/AgentOps/20261023/infinite-world/bench/logs/stream-diag-terraincol0.log -TDBenchSuite=stream -TDBenchOut=C:/Project/TDGame/Saved/AgentOps/20261023/infinite-world/bench/results/stream-diag-terraincol0.json -NullRHI -TDBenchCases=x15 -TDBenchCaseSeconds=30 -TDBenchTerrainCollision=0 -game"
+	},
+	"results": [
+		{
+			"name": "stream.case",
+			"case": "x15",
+			"speed_mps": 15,
+			"direction": "X=1.000 Y=0.000",
+			"start_x_cm": 0,
+			"start_y_cm": 500000,
+			"duration_s": 30,
+			"frames": 1799,
+			"ism_collision": true,
+			"terrain_collision": false,
+			"instance_batches": 8,
+			"prefill_s": 0.85071059989929199,
+			"prefill_chunks": 14,
+			"prefill_timed_out": false,
+			"manager_ms":
+			{
+				"n": 1799,
+				"p50": 0.0040988922119140625,
+				"p95": 1.5817031860351562,
+				"p99": 2.6501007080078125,
+				"max": 3.8311004638671875,
+				"mean": 0.14488089382814129
+			},
+			"frame_cpu_ms":
+			{
+				"n": 1797,
+				"p50": 1.4471001923084259,
+				"p95": 5.404103547334671,
+				"p99": 7.7829994261264801,
+				"max": 13.542100787162781,
+				"mean": 1.9191496517834692
+			},
+			"frame_delta_ms":
+			{
+				"n": 1797,
+				"p50": 16.666702926158905,
+				"p95": 16.666799783706665,
+				"p99": 16.666900366544724,
+				"max": 19.894000142812729,
+				"mean": 16.671181803089283
+			},
+			"bench_overhead_ms":
+			{
+				"n": 1799,
+				"p50": 0.019901275634765625,
+				"p95": 0.045101165771484375,
+				"p99": 0.058099746704101562,
+				"max": 0.096399307250976562,
+				"mean": 0.022538078566800891
+			},
+			"item_terrain_ms":
+			{
+				"n": 29,
+				"p50": 0.21580314636230469,
+				"p95": 0.37689971923828125,
+				"p99": 0.39590072631835938,
+				"max": 0.39590072631835938,
+				"mean": 0.23932417507829337
+			},
+			"item_batch128_ms":
+			{
+				"n": 232,
+				"p50": 0.81660079956054688,
+				"p95": 1.1868000030517578,
+				"p99": 1.5897979736328125,
+				"max": 2.2103004455566406,
+				"mean": 0.87716765239320948
+			},
+			"item_release_ms":
+			{
+				"n": 27,
+				"p50": 1.4321022033691406,
+				"p95": 2.0135002136230469,
+				"p99": 2.7392978668212891,
+				"max": 2.7392978668212891,
+				"mean": 1.5113111425329138
+			},
+			"worker_build_ms":
+			{
+				"n": 29,
+				"p50": 2.4836997985839844,
+				"p95": 3.09320068359375,
+				"p99": 3.29949951171875,
+				"max": 3.29949951171875,
+				"mean": 2.56455868688123
+			},
+			"latency_request_to_build_ms":
+			{
+				"n": 29,
+				"p50": 16.652498245239258,
+				"p95": 16.795900344848633,
+				"p99": 17.006200790405273,
+				"max": 17.006200790405273,
+				"mean": 16.640831388276197
+			},
+			"latency_request_to_collision_ms":
+			{
+				"n": 0
+			},
+			"latency_request_to_instances_ms":
+			{
+				"n": 29,
+				"p50": 52.331998825073242,
+				"p95": 85.052900314331055,
+				"p99": 101.2638988494873,
+				"max": 101.2638988494873,
+				"mean": 60.331013778160361
+			},
+			"max_game_thread_queue_items": 15,
+			"max_worker_in_flight": 1,
+			"chunks_requested": 29,
+			"terrain_spawned": 29,
+			"chunks_released": 27,
+			"shells_spawned_total": 18,
+			"unready_frames": 1799,
+			"unready_episodes": 1,
+			"unready_ms_total": 29991.447299718857
+		}
+	]
+}

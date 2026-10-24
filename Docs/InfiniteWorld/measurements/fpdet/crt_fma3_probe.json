@@ -1,0 +1,17 @@
+{
+  "initial_fma3_enable": 1,
+  "samples": 1000000,
+  "functions": [
+    {"name": "sin", "differing": 9370, "max_relative_diff": 2.220e-16},
+    {"name": "cos", "differing": 9524, "max_relative_diff": 2.220e-16},
+    {"name": "tan", "differing": 26491, "max_relative_diff": 2.220e-16},
+    {"name": "exp", "differing": 1498, "max_relative_diff": 2.216e-16},
+    {"name": "log", "differing": 0, "max_relative_diff": 0.000e+00},
+    {"name": "pow", "differing": 1197, "max_relative_diff": 2.219e-16},
+    {"name": "atan2", "differing": 0, "max_relative_diff": 0.000e+00},
+    {"name": "sqrt", "differing": 0, "max_relative_diff": 0.000e+00},
+    {"name": "sinf", "differing": 0, "max_relative_diff": 0.000e+00},
+    {"name": "expf", "differing": 0, "max_relative_diff": 0.000e+00},
+    {"name": "powf", "differing": 0, "max_relative_diff": 0.000e+00}
+  ]
+}

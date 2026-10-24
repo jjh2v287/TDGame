@@ -1,0 +1,2852 @@
+{
+  "date": "2026-10-25",
+  "level": "/Game/FluidFX/Maps/LV_TDFluidWaterStage",
+  "stage_report": "Saved/FluidFX/fluid_water_stage.json",
+  "status": {
+    "map": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidWaterStage.LV_TDFluidWaterStage",
+    "water_actor_count": 1,
+    "water_actor": "TDGen_WaterRiverSimulation",
+    "sleep_delay_seconds": 5.0,
+    "fade_in_seconds": 1.0,
+    "missing_sample_properties": [],
+    "live_actors": {
+      "TDGen_WaterLook0": true,
+      "TDGen_WaterRiverSimulation": false
+    }
+  },
+  "environment": {
+    "navigation_ready": true,
+    "river_navigation_ready": true,
+    "river_navigation_state": {
+      "projected": [
+        true,
+        true,
+        true
+      ],
+      "building": false
+    }
+  },
+  "backend": {
+    "requested_backend": "cpu",
+    "requested_grid": 192,
+    "configured": {
+      "applied": false,
+      "solver_backend": "<TDFluidSolverBackend.CPU: 0>",
+      "grid_resolution": 192,
+      "uses_gpu_water_layer": false,
+      "density_texture_class": "Texture2D",
+      "awake": false
+    },
+    "state": {
+      "applied": false,
+      "solver_backend": "<TDFluidSolverBackend.CPU: 0>",
+      "grid_resolution": 192,
+      "uses_gpu_water_layer": false,
+      "density_texture_class": "Texture2D",
+      "awake": false
+    },
+    "gate": {
+      "point": [
+        2300.0,
+        3400.0,
+        100.74336351214001
+      ],
+      "passed": true,
+      "has_sample": true,
+      "waited_seconds": 1.5629999999999882,
+      "checks": {
+        "inside_window": true,
+        "water_depth_positive": true,
+        "terrain_known": true,
+        "flow_guide_weight_positive": true
+      },
+      "cell": {
+        "vx": 210.7158660888672,
+        "vy": -7.333995819091797,
+        "tx": 249.91073608398438,
+        "ty": -6.330785254249349e-05,
+        "density": 0.016995949670672417,
+        "ripple": 0.0,
+        "wetness": 0.0,
+        "depth": 119.85774230957031,
+        "guide": 1.0,
+        "sdf": 2397.15478515625,
+        "known": true
+      },
+      "frame_age": 0
+    },
+    "restored": {
+      "configuration": {
+        "restored": false,
+        "solver_backend": "<TDFluidSolverBackend.CPU: 0>",
+        "grid_resolution": 192,
+        "uses_gpu_water_layer": false,
+        "density_texture_class": "Texture2D",
+        "awake": true
+      }
+    }
+  },
+  "layout": {
+    "x_range_cm": [
+      -6200.0,
+      6200.0
+    ],
+    "base_y_cm": 3400.0,
+    "bend": {
+      "start_x_cm": -3600.0,
+      "length_cm": 4800.0,
+      "amplitude_cm": 700.0
+    },
+    "width_cm": 800.0,
+    "depth_cm": 120.0,
+    "drop_per_cm": 0.005,
+    "start_surface_z_cm": 0.0,
+    "freeboard_cm": 40.0,
+    "bank_run_cm": 150.0,
+    "riffle": {
+      "x_cm": [
+        3200.0,
+        3900.0,
+        4800.0,
+        5500.0
+      ],
+      "width_scale": 0.5,
+      "depth_cm": 40.0,
+      "half_width_cm": 200.0
+    },
+    "flow_speed_cm_per_sec": 250.0,
+    "expected_riffle_speed_cm_per_sec": 500.0
+  },
+  "runs": [
+    {
+      "failed": [],
+      "rules": {
+        "flow_matches_target_center_3pts": {
+          "passed": true,
+          "value": [
+            0.15593645781346133,
+            0.1437129713926877,
+            0.122735300036221
+          ],
+          "detail": "수로 중심 3점 상대 오차 ≤ 0.25",
+          "required": true
+        },
+        "riffle_speed_ratio": {
+          "passed": true,
+          "value": {
+            "ratio": 2.150426841565233,
+            "wide_cm_per_sec": 218.44579813130304,
+            "riffle_cm_per_sec": 469.7517077286945
+          },
+          "detail": "여울 중심 속력 / 넓은 구간 ≥ 1.5",
+          "required": true
+        },
+        "channel_depth_matches_stage": {
+          "passed": true,
+          "value": {
+            "wide_cm": 119.8229268391927,
+            "riffle_cm": 39.76098378499349
+          },
+          "detail": "무대 지형 수심(120·40cm)이 트레이스로 솔버에 전달됨",
+          "required": true
+        },
+        "dry_bank_velocity_zero": {
+          "passed": true,
+          "value": {
+            "speed_cm_per_sec": [
+              0.0,
+              0.0
+            ],
+            "known_fraction": [
+              1.0,
+              1.0
+            ]
+          },
+          "detail": "마른 기슭 셀 속도 ≤ 0.5",
+          "required": true
+        },
+        "bank_band_wetness": {
+          "passed": null,
+          "value": {
+            "water_cell_wetness": 0.0
+          },
+          "detail": "물 셀 젖음이 0이라 젖음 갱신(W-2 A2)이 아직 없음: 판정 보류",
+          "required": false
+        },
+        "rock_wake_density": {
+          "passed": true,
+          "value": 0.4905477562483321,
+          "detail": "바위 하류 3m 안 시간 평균 흰 물보라 최대 ≥ 0.3",
+          "required": true
+        },
+        "rock_flank_lateral_opposite": {
+          "passed": true,
+          "value": {
+            "left_cm_per_sec": 79.73538970947266,
+            "right_cm_per_sec": -116.57419091082633
+          },
+          "detail": "바위 양옆(상류 어깨) 횡속도 부호 반대",
+          "required": true
+        },
+        "rock_interior_velocity_zero": {
+          "passed": true,
+          "value": 0.0,
+          "detail": "수면 위 바위 안 속도 0",
+          "required": false
+        },
+        "submerged_rock_is_solid": {
+          "passed": true,
+          "value": {
+            "sdf_min": -71.73580169677734,
+            "depth_mean": 20.216642379760742
+          },
+          "detail": "잠긴 바위 중심 셀이 장애물 태그 경로로 고체",
+          "required": true
+        },
+        "crossing_ripple_height": {
+          "passed": true,
+          "value": {
+            "max_abs_ripple_cm": 52.4981689453125,
+            "seconds_in_water": 0.5123949013650417,
+            "reached_goal": true
+          },
+          "detail": "폰 1m 안 |RippleHeightCm| ≥ 1.0cm",
+          "required": true
+        },
+        "crossing_foam_centroid_shift": {
+          "passed": true,
+          "value": {
+            "shift_cm": 700.0,
+            "centroid_shift_cm": 568.5717964373198,
+            "elapsed_seconds": 2.0789118967950344,
+            "required_cm": 150.0,
+            "first_mass": 2.7349496632814407,
+            "second_mass": 10.939897671341896
+          },
+          "detail": "진단: 물을 벗어난 직후 잡음 문턱 위 거품(R) 하류 분포의 상호상관 이동(여울 급류 흰 물보라가 같은 채널을 채워 PIE 에서는 분리 불가, 수용은 헤드리스 TDGame.FluidFX.Water.FlowGuide.FoamBlobDriftsDownstream)",
+          "required": false
+        },
+        "shared_mid_count": {
+          "passed": true,
+          "value": {
+            "unique_mid_count": 1,
+            "shared_material_count": 1,
+            "driven_surface_count": 32
+          },
+          "detail": "공유 수면 MID 수 1~4, 구동 표면 1개 이상",
+          "required": true
+        },
+        "water_surface_texture_bound": {
+          "passed": true,
+          "value": {
+            "component_texture": true,
+            "mid_textures": [
+              true
+            ]
+          },
+          "detail": "WaterSurfaceTexture 가 컴포넌트와 모든 MID 에 연결",
+          "required": true
+        },
+        "mid_parameters_declared": {
+          "passed": true,
+          "value": [
+            []
+          ],
+          "detail": "C++ 구동 파라미터가 MID 의 부모 재질에 모두 선언됨",
+          "required": true
+        },
+        "mid_parameter_values": {
+          "passed": true,
+          "value": [],
+          "detail": "안정 뒤 FluidWaterLayerActive 1, 해안 위상 0~1, 기준 길이·속도·해상도 양수",
+          "required": true
+        },
+        "ribbon_actor_has_no_region_tag": {
+          "passed": true,
+          "value": {
+            "surface_actors": 1,
+            "region_tagged": []
+          },
+          "detail": "강 리본 액터에 수역 태그 없음",
+          "required": true
+        },
+        "wake_layer_alpha_ramp": {
+          "passed": true,
+          "value": {
+            "sample_count": 463,
+            "was_asleep_at_start": true,
+            "awake_after_seconds": 1.2767628990113735,
+            "alpha_at_first_awake": 0.0,
+            "terrain_wait_seconds": 0.6554873995482922,
+            "ramp_seconds": 0.9855860024690628,
+            "monotone": true,
+            "final_alpha": 1.0,
+            "mean_dt_seconds": 0.017481824628542104,
+            "duration_seconds": 8.083479199558496
+          },
+          "detail": "잠들었다 깨어난 직후 FluidWaterLayerActive 0, 지형 완료 뒤 1초에 걸쳐 1",
+          "required": true
+        },
+        "awake_tick_cost": {
+          "passed": true,
+          "value": {
+            "lines": 4,
+            "avg_tick_ms": 1.5480859688195991,
+            "max_tick_ms": 1.9537,
+            "avg_frame_ms": 17.87044543429844,
+            "awake_actors_max": 1,
+            "awake_actors_min": 1,
+            "total_cells": 36864
+          },
+          "detail": "깨어 있을 때 TDFluidPerf 틱 평균 ≤ 3.0ms, 깨어 있는 액터 1개",
+          "required": true
+        },
+        "asleep_tick_cost": {
+          "passed": true,
+          "value": {
+            "cpu": {
+              "lines": 3,
+              "avg_tick_ms": 0.007166666666666667,
+              "max_tick_ms": 0.0156,
+              "avg_frame_ms": 15.234333333333334,
+              "awake_actors_max": 0,
+              "awake_actors_min": 0,
+              "total_cells": 0
+            },
+            "state": {
+              "awake": false,
+              "layer_alpha": 0.0,
+              "game_time": 25.138217192143202
+            }
+          },
+          "detail": "잠들었을 때 틱 평균 ≤ 0.01ms, 깨어 있는 액터 0개",
+          "required": true
+        },
+        "no_log_errors": {
+          "passed": true,
+          "value": {
+            "count": 0,
+            "first": [],
+            "ignored_python_navigation_ensures": 1
+          },
+          "detail": "실행 중 로그에 오류·단언 실패 없음",
+          "required": true
+        }
+      },
+      "data": {
+        "asleep": {
+          "state": {
+            "awake": false,
+            "layer_alpha": 0.0,
+            "game_time": 25.138217192143202
+          },
+          "cpu": {
+            "lines": 3,
+            "avg_tick_ms": 0.007166666666666667,
+            "max_tick_ms": 0.0156,
+            "avg_frame_ms": 15.234333333333334,
+            "awake_actors_max": 0,
+            "awake_actors_min": 0,
+            "total_cells": 0
+          }
+        },
+        "wake": {
+          "sample_count": 463,
+          "was_asleep_at_start": true,
+          "awake_after_seconds": 1.2767628990113735,
+          "alpha_at_first_awake": 0.0,
+          "terrain_wait_seconds": 0.6554873995482922,
+          "ramp_seconds": 0.9855860024690628,
+          "monotone": true,
+          "final_alpha": 1.0,
+          "mean_dt_seconds": 0.017481824628542104,
+          "duration_seconds": 8.083479199558496
+        },
+        "flow": {
+          "wide_0": {
+            "count": 66,
+            "velocity": [
+              212.23924948952416,
+              9.976669251185024
+            ],
+            "target": [
+              249.91073608398438,
+              -6.330785254249349e-05
+            ],
+            "speed_mean": 212.70825760192065,
+            "target_speed": 249.9107360839924,
+            "relative_error": 0.15593645781346133,
+            "density_mean": 0.028667435586226708,
+            "density_max": 0.028734436258673668,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.85774230957031,
+            "guide_mean": 1.0,
+            "sdf_min": 2397.15478515625,
+            "sdf_mean": 2397.15478515625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wide_1": {
+            "count": 66,
+            "velocity": [
+              214.33859784675366,
+              -4.954100695523349
+            ],
+            "target": [
+              249.91073608398438,
+              -0.0003165392845403403
+            ],
+            "speed_mean": 219.36847994138972,
+            "target_speed": 249.91073608418483,
+            "relative_error": 0.1437129713926877,
+            "density_mean": 0.03333807302018007,
+            "density_max": 0.06119077280163765,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.78388977050781,
+            "guide_mean": 1.0,
+            "sdf_min": 2395.677734375,
+            "sdf_mean": 2395.677734375,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wide_2": {
+            "count": 66,
+            "velocity": [
+              221.851750460538,
+              -12.763385261550095
+            ],
+            "target": [
+              249.71670532226562,
+              0.0001897757319966331
+            ],
+            "speed_mean": 223.2606568505987,
+            "target_speed": 249.71670532233773,
+            "relative_error": 0.122735300036221,
+            "density_mean": 0.030974506908519703,
+            "density_max": 0.044814229011535645,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.8271484375,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.54296875,
+            "sdf_mean": 2396.54296875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_0": {
+            "count": 66,
+            "velocity": [
+              461.74330786502725,
+              0.7189090859257814
+            ],
+            "target": [
+              500.1028747558594,
+              0.0001900346833281219
+            ],
+            "speed_mean": 462.0024960026673,
+            "target_speed": 500.10287475589547,
+            "relative_error": 0.07671681433925623,
+            "density_mean": 0.035731065425683155,
+            "density_max": 0.04757886007428169,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.723968505859375,
+            "guide_mean": 1.0,
+            "sdf_min": 794.4793701171875,
+            "sdf_mean": 794.4793701171875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_1": {
+            "count": 66,
+            "velocity": [
+              471.3668638287169,
+              2.2081850586515483
+            ],
+            "target": [
+              500.32861328125,
+              0.0
+            ],
+            "speed_mean": 472.41922276042413,
+            "target_speed": 500.32861328125,
+            "relative_error": 0.05805346345117028,
+            "density_mean": 0.03980438831742063,
+            "density_max": 0.05566328018903732,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.80698776245117,
+            "guide_mean": 1.0,
+            "sdf_min": 796.1397705078125,
+            "sdf_mean": 796.1397705078125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_2": {
+            "count": 66,
+            "velocity": [
+              473.1931674841679,
+              -32.14212153897141
+            ],
+            "target": [
+              503.7872314453125,
+              0.0
+            ],
+            "speed_mean": 474.83340442299186,
+            "target_speed": 503.7872314453125,
+            "relative_error": 0.08808219597857755,
+            "density_mean": 0.03992667325744123,
+            "density_max": 0.053151845932006836,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.75199508666992,
+            "guide_mean": 1.0,
+            "sdf_min": 795.0399169921875,
+            "sdf_mean": 795.0399169921875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_wet_band_south": {
+            "count": 66,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_wet_band_north": {
+            "count": 66,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_dry_mid_south": {
+            "count": 66,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_dry_far_south": {
+            "count": 66,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 66,
+          "mean_dt_seconds": 0.10596208336452644,
+          "duration_seconds": 6.978384200483561,
+          "frame_age": {
+            "max": 0,
+            "mean": 0.0,
+            "waiting_ticks": 0
+          },
+          "cpu": {
+            "lines": 4,
+            "avg_tick_ms": 1.5480859688195991,
+            "max_tick_ms": 1.9537,
+            "avg_frame_ms": 17.87044543429844,
+            "awake_actors_max": 1,
+            "awake_actors_min": 1,
+            "total_cells": 36864
+          },
+          "mid": {
+            "awake": true,
+            "layer_alpha": 1.0,
+            "driven_surface_count": 32,
+            "shared_material_count": 1,
+            "surface_texture_bound": true,
+            "surface_actors": [
+              {
+                "actor": "TDGen_WaterRiver",
+                "has_region_tag": false,
+                "components": 32,
+                "non_mid_slots": 0
+              }
+            ],
+            "unique_mid_count": 1,
+            "mids": [
+              {
+                "name": "MID_MI_TD_FluidWater_River_0",
+                "parent": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidWaterStage.LV_TDFluidWaterStage:PersistentLevel.TDFluidWaterActor_1.MID_MI_TD_FluidWater_River_0",
+                "base_material": "/Game/FluidFX/Materials/M_TD_FluidWater.M_TD_FluidWater",
+                "scalars": {
+                  "SimGridResolution": 192.0,
+                  "WaterDepthReferenceCm": 300.0,
+                  "RippleHeightReferenceCm": 8.0,
+                  "VelocitySpeedReferenceCmPerSec": 600.0,
+                  "FluidWaterLayerActive": 1.0,
+                  "CoastWavePhase": 0.9994627833366394,
+                  "CoastWaveDepthSpacingCm": 60.0,
+                  "CoastWaveMaxDepthCm": 250.0,
+                  "SwashHeightCm": 0.0
+                },
+                "vectors": {
+                  "SimCenterWorld": [
+                    3487.5,
+                    2631.25,
+                    0.0,
+                    1.0
+                  ],
+                  "SimExtentsCm": [
+                    3600.0,
+                    3600.0,
+                    0.10000000149011612,
+                    0.0
+                  ]
+                },
+                "textures": {
+                  "DensityPressureTexture": true,
+                  "VelocityTexture": true,
+                  "WaterSurfaceTexture": true
+                },
+                "undeclared_in_material": []
+              }
+            ]
+          }
+        },
+        "rock": {
+          "center": {
+            "count": 47,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              249.91073608398438,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 249.91073608398438,
+            "relative_error": 1.0,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 1.0,
+            "sdf_min": -93.5893783569336,
+            "sdf_mean": -93.5893783569336,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_left_up": {
+            "count": 47,
+            "velocity": [
+              214.86261473310753,
+              79.73538970947266
+            ],
+            "target": [
+              242.76962280273438,
+              0.0
+            ],
+            "speed_mean": 230.420346199946,
+            "target_speed": 242.76962280273438,
+            "relative_error": 0.347976014748258,
+            "density_mean": 0.05661801201231936,
+            "density_max": 0.13120722770690918,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 114.49307250976562,
+            "guide_mean": 1.0,
+            "sdf_min": 915.864990234375,
+            "sdf_mean": 915.864990234375,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_right_up": {
+            "count": 47,
+            "velocity": [
+              265.1510662322349,
+              -116.57419091082633
+            ],
+            "target": [
+              242.76962280273438,
+              0.0
+            ],
+            "speed_mean": 291.1267589540791,
+            "target_speed": 242.76962280273438,
+            "relative_error": 0.48895445968693113,
+            "density_mean": 0.06057475959049895,
+            "density_max": 0.08290448039770126,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 114.493408203125,
+            "guide_mean": 1.0,
+            "sdf_min": 915.8658447265625,
+            "sdf_mean": 915.8658447265625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_left_down": {
+            "count": 47,
+            "velocity": [
+              221.1832392266456,
+              -41.43563250277905
+            ],
+            "target": [
+              242.76962280273438,
+              0.0
+            ],
+            "speed_mean": 225.25391695189532,
+            "target_speed": 242.76962280273438,
+            "relative_error": 0.19245134257080887,
+            "density_mean": 0.10493144186887335,
+            "density_max": 0.15564215183258057,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 114.61126708984375,
+            "guide_mean": 1.0,
+            "sdf_min": 916.4796752929688,
+            "sdf_mean": 916.4796752929688,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_right_down": {
+            "count": 47,
+            "velocity": [
+              313.14178694055437,
+              42.890555686139045
+            ],
+            "target": [
+              242.76962280273438,
+              0.0
+            ],
+            "speed_mean": 316.2881335902655,
+            "target_speed": 242.76962280273438,
+            "relative_error": 0.3394684517787153,
+            "density_mean": 0.20638608544113787,
+            "density_max": 0.29639506340026855,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 114.61126708984375,
+            "guide_mean": 1.0,
+            "sdf_min": 916.5437622070312,
+            "sdf_mean": 916.5437622070312,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_c": {
+            "count": 47,
+            "velocity": [
+              120.35636950553732,
+              -17.713780373968977
+            ],
+            "target": [
+              249.91050720214844,
+              -0.1174124926328659
+            ],
+            "speed_mean": 124.2053512235083,
+            "target_speed": 249.91053478340706,
+            "relative_error": 0.5231618917006696,
+            "density_mean": 0.1170551856147482,
+            "density_max": 0.19164632260799408,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.82129669189453,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.42578125,
+            "sdf_mean": 2396.42578125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_l": {
+            "count": 47,
+            "velocity": [
+              135.2920170236141,
+              -47.98427352499455
+            ],
+            "target": [
+              247.76739501953125,
+              -0.11640562117099762
+            ],
+            "speed_mean": 144.90053265354996,
+            "target_speed": 247.76742236426702,
+            "relative_error": 0.49335643196165185,
+            "density_mean": 0.2050215590824472,
+            "density_max": 0.4488031268119812,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.29766082763672,
+            "guide_mean": 1.0,
+            "sdf_min": 1640.3416748046875,
+            "sdf_mean": 1640.3416748046875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_r": {
+            "count": 47,
+            "velocity": [
+              160.9541113021526,
+              43.54539331476739
+            ],
+            "target": [
+              247.76934814453125,
+              -0.11640653759241104
+            ],
+            "speed_mean": 167.83136566339076,
+            "target_speed": 247.769375489482,
+            "relative_error": 0.3922047455357353,
+            "density_mean": 0.4905477562483321,
+            "density_max": 0.7501543164253235,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.29743957519531,
+            "guide_mean": 1.0,
+            "sdf_min": 1640.140380859375,
+            "sdf_mean": 1640.140380859375,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_c": {
+            "count": 47,
+            "velocity": [
+              165.14141715841092,
+              -7.556649058423144
+            ],
+            "target": [
+              249.90875244140625,
+              -0.4893691837787628
+            ],
+            "speed_mean": 166.2530995342258,
+            "target_speed": 249.90923158022414,
+            "relative_error": 0.3403693156491994,
+            "density_mean": 0.11480954178470246,
+            "density_max": 0.1916435956954956,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.87262725830078,
+            "guide_mean": 1.0,
+            "sdf_min": 2397.452392578125,
+            "sdf_mean": 2397.452392578125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_l": {
+            "count": 47,
+            "velocity": [
+              160.89783526481466,
+              -26.443272296418534
+            ],
+            "target": [
+              247.7604522705078,
+              -0.4851624071598053
+            ],
+            "speed_mean": 163.8284253796894,
+            "target_speed": 247.76092729049893,
+            "relative_error": 0.3659106302048734,
+            "density_mean": 0.15493937375697683,
+            "density_max": 0.3349032998085022,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.34860229492188,
+            "guide_mean": 1.0,
+            "sdf_min": 1644.7232666015625,
+            "sdf_mean": 1644.7232666015625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_r": {
+            "count": 47,
+            "velocity": [
+              182.09261403185255,
+              24.36564244615271
+            ],
+            "target": [
+              247.77540588378906,
+              -0.4851917028427124
+            ],
+            "speed_mean": 184.26896886896876,
+            "target_speed": 247.7758809324768,
+            "relative_error": 0.2834284198831071,
+            "density_mean": 0.3845747228949628,
+            "density_max": 0.6369511485099792,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.3476791381836,
+            "guide_mean": 1.0,
+            "sdf_min": 1644.7174072265625,
+            "sdf_mean": 1644.7174072265625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_c": {
+            "count": 47,
+            "velocity": [
+              195.54573968116273,
+              2.8838293907490185
+            ],
+            "target": [
+              249.90565490722656,
+              -0.40328049659729004
+            ],
+            "speed_mean": 196.35624379758914,
+            "target_speed": 249.90598030012956,
+            "relative_error": 0.2179187917353067,
+            "density_mean": 0.10182476709497736,
+            "density_max": 0.16969671845436096,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.82911682128906,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.582275390625,
+            "sdf_mean": 2396.582275390625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_l": {
+            "count": 47,
+            "velocity": [
+              182.06972454963847,
+              -6.371455392304887
+            ],
+            "target": [
+              247.74459838867188,
+              -0.3997931182384491
+            ],
+            "speed_mean": 182.892360307088,
+            "target_speed": 247.74492096771976,
+            "relative_error": 0.26618430498837053,
+            "density_mean": 0.13536410041629,
+            "density_max": 0.3356645107269287,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.30735778808594,
+            "guide_mean": 1.0,
+            "sdf_min": 1639.6744384765625,
+            "sdf_mean": 1639.6744384765625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_r": {
+            "count": 47,
+            "velocity": [
+              196.0696758513755,
+              16.97457658737264
+            ],
+            "target": [
+              247.79144287109375,
+              -0.3998687267303467
+            ],
+            "speed_mean": 197.47123631858545,
+            "target_speed": 247.79176551115884,
+            "relative_error": 0.22019297617496622,
+            "density_mean": 0.2955817885379842,
+            "density_max": 0.5260080695152283,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.30660247802734,
+            "guide_mean": 1.0,
+            "sdf_min": 1639.461181640625,
+            "sdf_mean": 1639.461181640625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_c": {
+            "count": 47,
+            "velocity": [
+              206.6715230738863,
+              21.364423006138903
+            ],
+            "target": [
+              249.90455627441406,
+              0.09117894619703293
+            ],
+            "speed_mean": 212.195505873354,
+            "target_speed": 249.90457290796425,
+            "relative_error": 0.19280744679960599,
+            "density_mean": 0.10548877922144342,
+            "density_max": 0.14848288893699646,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.8405990600586,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.81201171875,
+            "sdf_mean": 2396.81201171875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_l": {
+            "count": 47,
+            "velocity": [
+              190.9444128807555,
+              16.088275001404135
+            ],
+            "target": [
+              247.7379913330078,
+              0.0903884619474411
+            ],
+            "speed_mean": 195.99786365240917,
+            "target_speed": 247.73800782235153,
+            "relative_error": 0.23816996842388902,
+            "density_mean": 0.1270559991293765,
+            "density_max": 0.3265240490436554,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.31846618652344,
+            "guide_mean": 1.0,
+            "sdf_min": 1645.0743408203125,
+            "sdf_mean": 1645.0743408203125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_r": {
+            "count": 47,
+            "velocity": [
+              202.76148240109708,
+              29.330156311075736
+            ],
+            "target": [
+              247.798583984375,
+              0.09041057527065277
+            ],
+            "speed_mean": 209.07310115170014,
+            "target_speed": 247.79860047775384,
+            "relative_error": 0.21669371315609967,
+            "density_mean": 0.21277979721731327,
+            "density_max": 0.46492302417755127,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.31863403320312,
+            "guide_mean": 1.0,
+            "sdf_min": 1645.07666015625,
+            "sdf_mean": 1645.07666015625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_c": {
+            "count": 47,
+            "velocity": [
+              213.47405486411236,
+              23.766109854617017
+            ],
+            "target": [
+              249.9043731689453,
+              0.8876314163208008
+            ],
+            "speed_mean": 218.2180906944927,
+            "target_speed": 249.90594954601363,
+            "relative_error": 0.1721388298490729,
+            "density_mean": 0.10401165279302191,
+            "density_max": 0.1730792373418808,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.81396484375,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.279296875,
+            "sdf_mean": 2396.279296875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_l": {
+            "count": 47,
+            "velocity": [
+              196.7352437770113,
+              20.09942832145285
+            ],
+            "target": [
+              247.7432098388672,
+              0.8799551725387573
+            ],
+            "speed_mean": 201.2512030673911,
+            "target_speed": 247.7447725833396,
+            "relative_error": 0.22001966463218703,
+            "density_mean": 0.12368542764415132,
+            "density_max": 0.3090778589248657,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.28956604003906,
+            "guide_mean": 1.0,
+            "sdf_min": 1639.1722412109375,
+            "sdf_mean": 1639.1722412109375,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_r": {
+            "count": 47,
+            "velocity": [
+              207.44891065232298,
+              28.7328775689957
+            ],
+            "target": [
+              247.79039001464844,
+              0.8801227807998657
+            ],
+            "speed_mean": 212.87547881535625,
+            "target_speed": 247.7919530568353,
+            "relative_error": 0.1978375587819621,
+            "density_mean": 0.1513244851314007,
+            "density_max": 0.39778611063957214,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.29122924804688,
+            "guide_mean": 1.0,
+            "sdf_min": 1639.803466796875,
+            "sdf_mean": 1639.803466796875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 47,
+          "mean_dt_seconds": 0.10610477872034337,
+          "duration_seconds": 4.973773900419474,
+          "frame_age": {
+            "max": 0,
+            "mean": 0.0,
+            "waiting_ticks": 0
+          }
+        },
+        "submerged": {
+          "center": {
+            "count": 37,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              248.15451049804688,
+              -30.194246292114258
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 249.9847067115789,
+            "relative_error": 1.0,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 20.216642379760742,
+            "guide_mean": 1.0,
+            "sdf_min": -71.73580169677734,
+            "sdf_mean": -71.73580169677734,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "beside_left": {
+            "count": 37,
+            "velocity": [
+              301.803484942462,
+              -34.15048681723105
+            ],
+            "target": [
+              231.47695922851562,
+              -28.165002822875977
+            ],
+            "speed_mean": 303.8830311549771,
+            "target_speed": 233.1841547740594,
+            "relative_error": 0.3026825650803865,
+            "density_mean": 0.052183288174706535,
+            "density_max": 0.09234245121479034,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 107.60943603515625,
+            "guide_mean": 1.0,
+            "sdf_min": 51.92625427246094,
+            "sdf_mean": 51.92625427246094,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "beside_right": {
+            "count": 37,
+            "velocity": [
+              309.0720627243454,
+              -37.32802344657279
+            ],
+            "target": [
+              229.4032745361328,
+              -27.91268539428711
+            ],
+            "speed_mean": 311.35896319917714,
+            "target_speed": 231.09517600724766,
+            "relative_error": 0.34714362060573706,
+            "density_mean": 0.04768367061341131,
+            "density_max": 0.0624539814889431,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 105.82131958007812,
+            "guide_mean": 1.0,
+            "sdf_min": 60.132328033447266,
+            "sdf_mean": 60.132328033447266,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 37,
+          "mean_dt_seconds": 0.10720828376911781,
+          "duration_seconds": 3.9545975998044014,
+          "frame_age": {
+            "max": 0,
+            "mean": 0.0,
+            "waiting_ticks": 0
+          }
+        },
+        "crossing": {
+          "baseline": {
+            "points": 507,
+            "missing": 0,
+            "baseline_mass": 90.86387558560818,
+            "baseline_max": 1.0,
+            "game_time": 95.00333089381456,
+            "noise": {
+              "points": 507,
+              "missing": 0,
+              "noise_threshold": 0.37860381066799165,
+              "game_time": 97.0782009921968
+            }
+          },
+          "move": {
+            "mode": "navigation",
+            "goal": [
+              4350.0,
+              4000.0
+            ]
+          },
+          "foam_first": {
+            "points": 507,
+            "missing": 0,
+            "excess_mass": 2.7349496632814407,
+            "excess_max": 0.6755694299936295,
+            "centroid_s_cm": -11.152693320040635,
+            "profile_s_cm": [
+              -400.0,
+              -350.0,
+              -300.0,
+              -250.0,
+              -200.0,
+              -150.0,
+              -100.0,
+              -50.0,
+              0.0,
+              50.0,
+              100.0,
+              150.0,
+              200.0,
+              250.0,
+              300.0,
+              350.0,
+              400.0,
+              450.0,
+              500.0,
+              550.0,
+              600.0,
+              650.0,
+              700.0,
+              750.0,
+              800.0,
+              850.0,
+              900.0,
+              950.0,
+              1000.0,
+              1050.0,
+              1100.0,
+              1150.0,
+              1200.0,
+              1250.0,
+              1300.0,
+              1350.0,
+              1400.0,
+              1450.0,
+              1500.0
+            ],
+            "profile": [
+              0.0,
+              0.0,
+              0.5833534002304077,
+              0.6755694299936295,
+              0.6043279767036438,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4390244483947754,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4326744079589844,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "game_time": 103.03205240145326
+          },
+          "foam_second": {
+            "points": 507,
+            "missing": 0,
+            "excess_mass": 10.939897671341896,
+            "excess_max": 0.7081722021102905,
+            "centroid_s_cm": 557.4191031172792,
+            "profile_s_cm": [
+              -400.0,
+              -350.0,
+              -300.0,
+              -250.0,
+              -200.0,
+              -150.0,
+              -100.0,
+              -50.0,
+              0.0,
+              50.0,
+              100.0,
+              150.0,
+              200.0,
+              250.0,
+              300.0,
+              350.0,
+              400.0,
+              450.0,
+              500.0,
+              550.0,
+              600.0,
+              650.0,
+              700.0,
+              750.0,
+              800.0,
+              850.0,
+              900.0,
+              950.0,
+              1000.0,
+              1050.0,
+              1100.0,
+              1150.0,
+              1200.0,
+              1250.0,
+              1300.0,
+              1350.0,
+              1400.0,
+              1450.0,
+              1500.0
+            ],
+            "profile": [
+              0.0,
+              0.0,
+              0.0,
+              0.41839809715747833,
+              0.7027220726013184,
+              0.6896317303180695,
+              0.5148329436779022,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4390244483947754,
+              0.40679144859313965,
+              0.4490025043487549,
+              0.4645664095878601,
+              0.4925759434700012,
+              0.5200215876102448,
+              0.4449702203273773,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4763365387916565,
+              1.7374252080917358,
+              1.8747284412384033,
+              0.8469550013542175,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4619150757789612,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "game_time": 105.11096429824829
+          },
+          "reached_goal": true,
+          "crossing": {
+            "ticks": 158,
+            "ticks_in_water": 9,
+            "seconds_in_water": 0.5123949013650417,
+            "max_abs_ripple_cm": 52.4981689453125,
+            "max_center_depth_cm": 39.75748825073242,
+            "pawn_start": [
+              4350.0,
+              2800.0
+            ],
+            "pawn_end": [
+              4350.017399897263,
+              3965.1266574211472
+            ],
+            "duration_seconds": 9.007020406425,
+            "sample_count": 158,
+            "mean_dt_seconds": 0.057094031048915056,
+            "frame_age": {
+              "max": 0,
+              "mean": 0.0,
+              "waiting_ticks": 0
+            }
+          }
+        },
+        "log_problems": {
+          "count": 0,
+          "first": [],
+          "ignored_python_navigation_ensures": 1
+        }
+      }
+    },
+    {
+      "failed": [],
+      "rules": {
+        "flow_matches_target_center_3pts": {
+          "passed": true,
+          "value": [
+            0.1548260913274186,
+            0.1408953413300591,
+            0.12006145125476402
+          ],
+          "detail": "수로 중심 3점 상대 오차 ≤ 0.25",
+          "required": true
+        },
+        "riffle_speed_ratio": {
+          "passed": true,
+          "value": {
+            "ratio": 2.146640963414483,
+            "wide_cm_per_sec": 218.77213797191493,
+            "riffle_cm_per_sec": 469.62523302427763
+          },
+          "detail": "여울 중심 속력 / 넓은 구간 ≥ 1.5",
+          "required": true
+        },
+        "channel_depth_matches_stage": {
+          "passed": true,
+          "value": {
+            "wide_cm": 119.8229268391927,
+            "riffle_cm": 39.76098378499349
+          },
+          "detail": "무대 지형 수심(120·40cm)이 트레이스로 솔버에 전달됨",
+          "required": true
+        },
+        "dry_bank_velocity_zero": {
+          "passed": true,
+          "value": {
+            "speed_cm_per_sec": [
+              0.0,
+              0.0
+            ],
+            "known_fraction": [
+              1.0,
+              1.0
+            ]
+          },
+          "detail": "마른 기슭 셀 속도 ≤ 0.5",
+          "required": true
+        },
+        "bank_band_wetness": {
+          "passed": null,
+          "value": {
+            "water_cell_wetness": 0.0
+          },
+          "detail": "물 셀 젖음이 0이라 젖음 갱신(W-2 A2)이 아직 없음: 판정 보류",
+          "required": false
+        },
+        "rock_wake_density": {
+          "passed": true,
+          "value": 0.4922877784739149,
+          "detail": "바위 하류 3m 안 시간 평균 흰 물보라 최대 ≥ 0.3",
+          "required": true
+        },
+        "rock_flank_lateral_opposite": {
+          "passed": true,
+          "value": {
+            "left_cm_per_sec": 79.42967987060547,
+            "right_cm_per_sec": -117.38263385853868
+          },
+          "detail": "바위 양옆(상류 어깨) 횡속도 부호 반대",
+          "required": true
+        },
+        "rock_interior_velocity_zero": {
+          "passed": true,
+          "value": 0.0,
+          "detail": "수면 위 바위 안 속도 0",
+          "required": false
+        },
+        "submerged_rock_is_solid": {
+          "passed": true,
+          "value": {
+            "sdf_min": -71.73580169677734,
+            "depth_mean": 20.216642379760742
+          },
+          "detail": "잠긴 바위 중심 셀이 장애물 태그 경로로 고체",
+          "required": true
+        },
+        "crossing_ripple_height": {
+          "passed": true,
+          "value": {
+            "max_abs_ripple_cm": 51.39594268798828,
+            "seconds_in_water": 0.5056207999587059,
+            "reached_goal": true
+          },
+          "detail": "폰 1m 안 |RippleHeightCm| ≥ 1.0cm",
+          "required": true
+        },
+        "crossing_foam_centroid_shift": {
+          "passed": true,
+          "value": {
+            "shift_cm": 700.0,
+            "centroid_shift_cm": 607.2629634151808,
+            "elapsed_seconds": 2.0689232982695103,
+            "required_cm": 150.0,
+            "first_mass": 3.0901860296726227,
+            "second_mass": 11.679006323218346
+          },
+          "detail": "진단: 물을 벗어난 직후 잡음 문턱 위 거품(R) 하류 분포의 상호상관 이동(여울 급류 흰 물보라가 같은 채널을 채워 PIE 에서는 분리 불가, 수용은 헤드리스 TDGame.FluidFX.Water.FlowGuide.FoamBlobDriftsDownstream)",
+          "required": false
+        },
+        "shared_mid_count": {
+          "passed": true,
+          "value": {
+            "unique_mid_count": 1,
+            "shared_material_count": 1,
+            "driven_surface_count": 32
+          },
+          "detail": "공유 수면 MID 수 1~4, 구동 표면 1개 이상",
+          "required": true
+        },
+        "water_surface_texture_bound": {
+          "passed": true,
+          "value": {
+            "component_texture": true,
+            "mid_textures": [
+              true
+            ]
+          },
+          "detail": "WaterSurfaceTexture 가 컴포넌트와 모든 MID 에 연결",
+          "required": true
+        },
+        "mid_parameters_declared": {
+          "passed": true,
+          "value": [
+            []
+          ],
+          "detail": "C++ 구동 파라미터가 MID 의 부모 재질에 모두 선언됨",
+          "required": true
+        },
+        "mid_parameter_values": {
+          "passed": true,
+          "value": [],
+          "detail": "안정 뒤 FluidWaterLayerActive 1, 해안 위상 0~1, 기준 길이·속도·해상도 양수",
+          "required": true
+        },
+        "ribbon_actor_has_no_region_tag": {
+          "passed": true,
+          "value": {
+            "surface_actors": 1,
+            "region_tagged": []
+          },
+          "detail": "강 리본 액터에 수역 태그 없음",
+          "required": true
+        },
+        "wake_layer_alpha_ramp": {
+          "passed": true,
+          "value": {
+            "sample_count": 465,
+            "was_asleep_at_start": true,
+            "awake_after_seconds": 1.1193755008280277,
+            "alpha_at_first_awake": 0.0,
+            "terrain_wait_seconds": 0.6742978990077972,
+            "ramp_seconds": 0.9938004016876221,
+            "monotone": true,
+            "final_alpha": 1.0,
+            "mean_dt_seconds": 0.01738583440742185,
+            "duration_seconds": 8.074032098054886
+          },
+          "detail": "잠들었다 깨어난 직후 FluidWaterLayerActive 0, 지형 완료 뒤 1초에 걸쳐 1",
+          "required": true
+        },
+        "awake_tick_cost": {
+          "passed": true,
+          "value": {
+            "lines": 4,
+            "avg_tick_ms": 1.549775,
+            "max_tick_ms": 1.8992,
+            "avg_frame_ms": 17.813499999999998,
+            "awake_actors_max": 1,
+            "awake_actors_min": 1,
+            "total_cells": 36864
+          },
+          "detail": "깨어 있을 때 TDFluidPerf 틱 평균 ≤ 3.0ms, 깨어 있는 액터 1개",
+          "required": true
+        },
+        "asleep_tick_cost": {
+          "passed": true,
+          "value": {
+            "cpu": {
+              "lines": 2,
+              "avg_tick_ms": 0.007300000000000001,
+              "max_tick_ms": 0.0417,
+              "avg_frame_ms": 15.102500000000001,
+              "awake_actors_max": 0,
+              "awake_actors_min": 0,
+              "total_cells": 0
+            },
+            "state": {
+              "awake": false,
+              "layer_alpha": 0.0,
+              "game_time": 118.32505069673061
+            }
+          },
+          "detail": "잠들었을 때 틱 평균 ≤ 0.01ms, 깨어 있는 액터 0개",
+          "required": true
+        },
+        "no_log_errors": {
+          "passed": true,
+          "value": {
+            "count": 0,
+            "first": [],
+            "ignored_python_navigation_ensures": 0
+          },
+          "detail": "실행 중 로그에 오류·단언 실패 없음",
+          "required": true
+        }
+      },
+      "data": {
+        "asleep": {
+          "state": {
+            "awake": false,
+            "layer_alpha": 0.0,
+            "game_time": 118.32505069673061
+          },
+          "cpu": {
+            "lines": 2,
+            "avg_tick_ms": 0.007300000000000001,
+            "max_tick_ms": 0.0417,
+            "avg_frame_ms": 15.102500000000001,
+            "awake_actors_max": 0,
+            "awake_actors_min": 0,
+            "total_cells": 0
+          }
+        },
+        "wake": {
+          "sample_count": 465,
+          "was_asleep_at_start": true,
+          "awake_after_seconds": 1.1193755008280277,
+          "alpha_at_first_awake": 0.0,
+          "terrain_wait_seconds": 0.6742978990077972,
+          "ramp_seconds": 0.9938004016876221,
+          "monotone": true,
+          "final_alpha": 1.0,
+          "mean_dt_seconds": 0.01738583440742185,
+          "duration_seconds": 8.074032098054886
+        },
+        "flow": {
+          "wide_0": {
+            "count": 66,
+            "velocity": [
+              212.49246562610972,
+              9.848706093475673
+            ],
+            "target": [
+              249.91073608398438,
+              -6.330785254249349e-05
+            ],
+            "speed_mean": 212.9555361677225,
+            "target_speed": 249.9107360839924,
+            "relative_error": 0.1548260913274186,
+            "density_mean": 0.028669123622504147,
+            "density_max": 0.02875569649040699,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.85774230957031,
+            "guide_mean": 1.0,
+            "sdf_min": 2397.15478515625,
+            "sdf_mean": 2397.15478515625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wide_1": {
+            "count": 66,
+            "velocity": [
+              214.99760460131097,
+              -4.572621493628531
+            ],
+            "target": [
+              249.91073608398438,
+              -0.0003165392845403403
+            ],
+            "speed_mean": 219.95073784802722,
+            "target_speed": 249.91073608418483,
+            "relative_error": 0.1408953413300591,
+            "density_mean": 0.033808833016364864,
+            "density_max": 0.061223868280649185,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.78388977050781,
+            "guide_mean": 1.0,
+            "sdf_min": 2395.677734375,
+            "sdf_mean": 2395.677734375,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wide_2": {
+            "count": 66,
+            "velocity": [
+              222.0864144527551,
+              -11.638039337866234
+            ],
+            "target": [
+              249.71670532226562,
+              0.0001897757319966331
+            ],
+            "speed_mean": 223.4101398999951,
+            "target_speed": 249.71670532233773,
+            "relative_error": 0.12006145125476402,
+            "density_mean": 0.031298567399834144,
+            "density_max": 0.047147564589977264,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.8271484375,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.54296875,
+            "sdf_mean": 2396.54296875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_0": {
+            "count": 66,
+            "velocity": [
+              461.76489211573744,
+              1.4685592046289733
+            ],
+            "target": [
+              500.1028747558594,
+              0.0001900346833281219
+            ],
+            "speed_mean": 462.0156207372943,
+            "target_speed": 500.10287475589547,
+            "relative_error": 0.07671639978366707,
+            "density_mean": 0.035415868190201844,
+            "density_max": 0.04761596396565437,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.723968505859375,
+            "guide_mean": 1.0,
+            "sdf_min": 794.4793701171875,
+            "sdf_mean": 794.4793701171875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_1": {
+            "count": 66,
+            "velocity": [
+              471.1312463933771,
+              1.9720487919720737
+            ],
+            "target": [
+              500.32861328125,
+              0.0
+            ],
+            "speed_mean": 472.2134646766224,
+            "target_speed": 500.32861328125,
+            "relative_error": 0.058489337602894195,
+            "density_mean": 0.0396322077422431,
+            "density_max": 0.055708155035972595,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.80698776245117,
+            "guide_mean": 1.0,
+            "sdf_min": 796.1397705078125,
+            "sdf_mean": 796.1397705078125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_2": {
+            "count": 66,
+            "velocity": [
+              472.99977296771425,
+              -32.25732225360292
+            ],
+            "target": [
+              503.7872314453125,
+              0.0
+            ],
+            "speed_mean": 474.6466136589162,
+            "target_speed": 503.7872314453125,
+            "relative_error": 0.08851257746485675,
+            "density_mean": 0.04005790109548605,
+            "density_max": 0.053155459463596344,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.75199508666992,
+            "guide_mean": 1.0,
+            "sdf_min": 795.0399169921875,
+            "sdf_mean": 795.0399169921875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_wet_band_south": {
+            "count": 66,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_wet_band_north": {
+            "count": 66,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_dry_mid_south": {
+            "count": 66,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_dry_far_south": {
+            "count": 66,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 66,
+          "mean_dt_seconds": 0.10564394244416193,
+          "duration_seconds": 6.957879200577736,
+          "frame_age": {
+            "max": 0,
+            "mean": 0.0,
+            "waiting_ticks": 0
+          },
+          "cpu": {
+            "lines": 4,
+            "avg_tick_ms": 1.549775,
+            "max_tick_ms": 1.8992,
+            "avg_frame_ms": 17.813499999999998,
+            "awake_actors_max": 1,
+            "awake_actors_min": 1,
+            "total_cells": 36864
+          },
+          "mid": {
+            "awake": true,
+            "layer_alpha": 1.0,
+            "driven_surface_count": 32,
+            "shared_material_count": 1,
+            "surface_texture_bound": true,
+            "surface_actors": [
+              {
+                "actor": "TDGen_WaterRiver",
+                "has_region_tag": false,
+                "components": 32,
+                "non_mid_slots": 0
+              }
+            ],
+            "unique_mid_count": 1,
+            "mids": [
+              {
+                "name": "MID_MI_TD_FluidWater_River_0",
+                "parent": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidWaterStage.LV_TDFluidWaterStage:PersistentLevel.TDFluidWaterActor_1.MID_MI_TD_FluidWater_River_0",
+                "base_material": "/Game/FluidFX/Materials/M_TD_FluidWater.M_TD_FluidWater",
+                "scalars": {
+                  "SimGridResolution": 192.0,
+                  "WaterDepthReferenceCm": 300.0,
+                  "RippleHeightReferenceCm": 8.0,
+                  "VelocitySpeedReferenceCmPerSec": 600.0,
+                  "FluidWaterLayerActive": 1.0,
+                  "CoastWavePhase": 0.022423651069402695,
+                  "CoastWaveDepthSpacingCm": 60.0,
+                  "CoastWaveMaxDepthCm": 250.0,
+                  "SwashHeightCm": 0.0
+                },
+                "vectors": {
+                  "SimCenterWorld": [
+                    3487.5,
+                    2631.25,
+                    0.0,
+                    1.0
+                  ],
+                  "SimExtentsCm": [
+                    3600.0,
+                    3600.0,
+                    0.10000000149011612,
+                    0.0
+                  ]
+                },
+                "textures": {
+                  "DensityPressureTexture": true,
+                  "VelocityTexture": true,
+                  "WaterSurfaceTexture": true
+                },
+                "undeclared_in_material": []
+              }
+            ]
+          }
+        },
+        "rock": {
+          "center": {
+            "count": 47,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              249.91073608398438,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 249.91073608398438,
+            "relative_error": 1.0,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 1.0,
+            "sdf_min": -93.5893783569336,
+            "sdf_mean": -93.5893783569336,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_left_up": {
+            "count": 47,
+            "velocity": [
+              217.19841295607546,
+              79.42967987060547
+            ],
+            "target": [
+              242.76962280273438,
+              0.0
+            ],
+            "speed_mean": 232.47563124171467,
+            "target_speed": 242.76962280273438,
+            "relative_error": 0.3437182817569373,
+            "density_mean": 0.05496945358971332,
+            "density_max": 0.13108643889427185,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 114.49307250976562,
+            "guide_mean": 1.0,
+            "sdf_min": 915.864990234375,
+            "sdf_mean": 915.864990234375,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_right_up": {
+            "count": 47,
+            "velocity": [
+              264.6023338804854,
+              -117.38263385853868
+            ],
+            "target": [
+              242.76962280273438,
+              0.0
+            ],
+            "speed_mean": 290.9044143815523,
+            "target_speed": 242.76962280273438,
+            "relative_error": 0.4918068788223747,
+            "density_mean": 0.06093495545235086,
+            "density_max": 0.08284760266542435,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 114.493408203125,
+            "guide_mean": 1.0,
+            "sdf_min": 915.8658447265625,
+            "sdf_mean": 915.8658447265625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_left_down": {
+            "count": 47,
+            "velocity": [
+              224.47521940190742,
+              -41.495859836010226
+            ],
+            "target": [
+              242.76962280273438,
+              0.0
+            ],
+            "speed_mean": 228.51197724429338,
+            "target_speed": 242.76962280273438,
+            "relative_error": 0.18680120916121964,
+            "density_mean": 0.10507628123493905,
+            "density_max": 0.1572096198797226,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 114.61126708984375,
+            "guide_mean": 1.0,
+            "sdf_min": 916.4796752929688,
+            "sdf_mean": 916.4796752929688,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_right_down": {
+            "count": 47,
+            "velocity": [
+              311.75435232608874,
+              42.726550244270484
+            ],
+            "target": [
+              242.76962280273438,
+              0.0
+            ],
+            "speed_mean": 314.89732639903855,
+            "target_speed": 242.76962280273438,
+            "relative_error": 0.3342454019551508,
+            "density_mean": 0.2076497976767256,
+            "density_max": 0.296305775642395,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 114.61126708984375,
+            "guide_mean": 1.0,
+            "sdf_min": 916.5437622070312,
+            "sdf_mean": 916.5437622070312,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_c": {
+            "count": 47,
+            "velocity": [
+              120.28470936227352,
+              -18.34739005438825
+            ],
+            "target": [
+              249.91050720214844,
+              -0.1174124926328659
+            ],
+            "speed_mean": 124.053485521412,
+            "target_speed": 249.91053478340706,
+            "relative_error": 0.5237930912760858,
+            "density_mean": 0.1182225780918243,
+            "density_max": 0.19153675436973572,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.82129669189453,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.42578125,
+            "sdf_mean": 2396.42578125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_l": {
+            "count": 47,
+            "velocity": [
+              135.77532910286112,
+              -48.549422061189695
+            ],
+            "target": [
+              247.76739501953125,
+              -0.11640562117099762
+            ],
+            "speed_mean": 145.46231501290532,
+            "target_speed": 247.76742236426702,
+            "relative_error": 0.49246308837150377,
+            "density_mean": 0.20803712974203395,
+            "density_max": 0.47862207889556885,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.29766082763672,
+            "guide_mean": 1.0,
+            "sdf_min": 1640.3416748046875,
+            "sdf_mean": 1640.3416748046875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_r": {
+            "count": 47,
+            "velocity": [
+              160.54894370221078,
+              43.040649657553814
+            ],
+            "target": [
+              247.76934814453125,
+              -0.11640653759241104
+            ],
+            "speed_mean": 167.2449611142022,
+            "target_speed": 247.769375489482,
+            "relative_error": 0.3927586590017484,
+            "density_mean": 0.4922877784739149,
+            "density_max": 0.7498834729194641,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.29743957519531,
+            "guide_mean": 1.0,
+            "sdf_min": 1640.140380859375,
+            "sdf_mean": 1640.140380859375,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_c": {
+            "count": 47,
+            "velocity": [
+              165.14606816717918,
+              -8.104413984937871
+            ],
+            "target": [
+              249.90875244140625,
+              -0.4893691837787628
+            ],
+            "speed_mean": 166.23021120656608,
+            "target_speed": 249.90923158022414,
+            "relative_error": 0.3405398933913016,
+            "density_mean": 0.11663818311818103,
+            "density_max": 0.19154170155525208,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.87262725830078,
+            "guide_mean": 1.0,
+            "sdf_min": 2397.452392578125,
+            "sdf_mean": 2397.452392578125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_l": {
+            "count": 47,
+            "velocity": [
+              160.58505265256193,
+              -26.857599456259546
+            ],
+            "target": [
+              247.7604522705078,
+              -0.4851624071598053
+            ],
+            "speed_mean": 163.5438662834259,
+            "target_speed": 247.76092729049893,
+            "relative_error": 0.36760112888968993,
+            "density_mean": 0.15444837145982904,
+            "density_max": 0.3202071189880371,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.34860229492188,
+            "guide_mean": 1.0,
+            "sdf_min": 1644.7232666015625,
+            "sdf_mean": 1644.7232666015625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_r": {
+            "count": 47,
+            "velocity": [
+              182.09359124366273,
+              24.006897692984722
+            ],
+            "target": [
+              247.77540588378906,
+              -0.4851917028427124
+            ],
+            "speed_mean": 184.18601898922103,
+            "target_speed": 247.7758809324768,
+            "relative_error": 0.28291561733373066,
+            "density_mean": 0.3871735323299753,
+            "density_max": 0.6372470855712891,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.3476791381836,
+            "guide_mean": 1.0,
+            "sdf_min": 1644.7174072265625,
+            "sdf_mean": 1644.7174072265625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_c": {
+            "count": 47,
+            "velocity": [
+              195.6371424248878,
+              2.1831135737135057
+            ],
+            "target": [
+              249.90565490722656,
+              -0.40328049659729004
+            ],
+            "speed_mean": 196.48460923057044,
+            "target_speed": 249.90598030012956,
+            "relative_error": 0.2174022014161759,
+            "density_mean": 0.10368330570611548,
+            "density_max": 0.1750558763742447,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.82911682128906,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.582275390625,
+            "sdf_mean": 2396.582275390625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_l": {
+            "count": 47,
+            "velocity": [
+              181.10167872652093,
+              -6.954673531207632
+            ],
+            "target": [
+              247.74459838867188,
+              -0.3997931182384491
+            ],
+            "speed_mean": 181.97827567466524,
+            "target_speed": 247.74492096771976,
+            "relative_error": 0.27029618505474845,
+            "density_mean": 0.132204338828934,
+            "density_max": 0.324098140001297,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.30735778808594,
+            "guide_mean": 1.0,
+            "sdf_min": 1639.6744384765625,
+            "sdf_mean": 1639.6744384765625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_r": {
+            "count": 47,
+            "velocity": [
+              196.3612855951837,
+              16.363802345509225
+            ],
+            "target": [
+              247.79144287109375,
+              -0.3998687267303467
+            ],
+            "speed_mean": 197.7441694370114,
+            "target_speed": 247.79176551115884,
+            "relative_error": 0.21830131777872996,
+            "density_mean": 0.29898615022923086,
+            "density_max": 0.5258905291557312,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.30660247802734,
+            "guide_mean": 1.0,
+            "sdf_min": 1639.461181640625,
+            "sdf_mean": 1639.461181640625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_c": {
+            "count": 47,
+            "velocity": [
+              206.70265002960855,
+              19.73912771965595
+            ],
+            "target": [
+              249.90455627441406,
+              0.09117894619703293
+            ],
+            "speed_mean": 212.45509649899816,
+            "target_speed": 249.90457290796425,
+            "relative_error": 0.1899122801578199,
+            "density_mean": 0.10659116078564461,
+            "density_max": 0.14854347705841064,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.8405990600586,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.81201171875,
+            "sdf_mean": 2396.81201171875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_l": {
+            "count": 47,
+            "velocity": [
+              189.52948452563996,
+              14.647676016422029
+            ],
+            "target": [
+              247.7379913330078,
+              0.0903884619474411
+            ],
+            "speed_mean": 194.82804945981275,
+            "target_speed": 247.73800782235153,
+            "relative_error": 0.24219621323347115,
+            "density_mean": 0.12260045237997745,
+            "density_max": 0.3127519190311432,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.31846618652344,
+            "guide_mean": 1.0,
+            "sdf_min": 1645.0743408203125,
+            "sdf_mean": 1645.0743408203125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_r": {
+            "count": 47,
+            "velocity": [
+              203.17835219362948,
+              27.712188817085103
+            ],
+            "target": [
+              247.798583984375,
+              0.09041057527065277
+            ],
+            "speed_mean": 209.62760699573903,
+            "target_speed": 247.79860047775384,
+            "relative_error": 0.21177633073639995,
+            "density_mean": 0.21536633657648208,
+            "density_max": 0.46441274881362915,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.31863403320312,
+            "guide_mean": 1.0,
+            "sdf_min": 1645.07666015625,
+            "sdf_mean": 1645.07666015625,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_c": {
+            "count": 47,
+            "velocity": [
+              213.42079195063164,
+              22.35489490438015
+            ],
+            "target": [
+              249.9043731689453,
+              0.8876314163208008
+            ],
+            "speed_mean": 218.34895501669436,
+            "target_speed": 249.90594954601363,
+            "relative_error": 0.16938685142601356,
+            "density_mean": 0.10414719010921235,
+            "density_max": 0.1732599139213562,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.81396484375,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.279296875,
+            "sdf_mean": 2396.279296875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_l": {
+            "count": 47,
+            "velocity": [
+              194.82292305155002,
+              18.852519187521427
+            ],
+            "target": [
+              247.7432098388672,
+              0.8799551725387573
+            ],
+            "speed_mean": 199.5533869137601,
+            "target_speed": 247.7447725833396,
+            "relative_error": 0.22559065683126467,
+            "density_mean": 0.1189363919832605,
+            "density_max": 0.2994495928287506,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.28956604003906,
+            "guide_mean": 1.0,
+            "sdf_min": 1639.1722412109375,
+            "sdf_mean": 1639.1722412109375,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_r": {
+            "count": 47,
+            "velocity": [
+              207.91510788937833,
+              27.309636045009533
+            ],
+            "target": [
+              247.79039001464844,
+              0.8801227807998657
+            ],
+            "speed_mean": 213.4658395547889,
+            "target_speed": 247.7919530568353,
+            "relative_error": 0.193060619831122,
+            "density_mean": 0.15287617617782126,
+            "density_max": 0.3962238132953644,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.29122924804688,
+            "guide_mean": 1.0,
+            "sdf_min": 1639.803466796875,
+            "sdf_mean": 1639.803466796875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 47,
+          "mean_dt_seconds": 0.10621337235925045,
+          "duration_seconds": 4.980011198669672,
+          "frame_age": {
+            "max": 0,
+            "mean": 0.0,
+            "waiting_ticks": 0
+          }
+        },
+        "submerged": {
+          "center": {
+            "count": 37,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              248.15451049804688,
+              -30.194246292114258
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 249.9847067115789,
+            "relative_error": 1.0,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 20.216642379760742,
+            "guide_mean": 1.0,
+            "sdf_min": -71.73580169677734,
+            "sdf_mean": -71.73580169677734,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "beside_left": {
+            "count": 37,
+            "velocity": [
+              302.1686145679371,
+              -32.76804088901829
+            ],
+            "target": [
+              231.47695922851562,
+              -28.165002822875977
+            ],
+            "speed_mean": 304.12843110096674,
+            "target_speed": 233.1841547740594,
+            "relative_error": 0.30380005326425585,
+            "density_mean": 0.0541617606539984,
+            "density_max": 0.10030289739370346,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 107.60943603515625,
+            "guide_mean": 1.0,
+            "sdf_min": 51.92625427246094,
+            "sdf_mean": 51.92625427246094,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "beside_right": {
+            "count": 37,
+            "velocity": [
+              307.6103622848923,
+              -37.59598654669684
+            ],
+            "target": [
+              229.4032745361328,
+              -27.91268539428711
+            ],
+            "speed_mean": 309.948594837354,
+            "target_speed": 231.09517600724766,
+            "relative_error": 0.3410035794606046,
+            "density_mean": 0.04817723362026988,
+            "density_max": 0.06404218077659607,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 105.82131958007812,
+            "guide_mean": 1.0,
+            "sdf_min": 60.132328033447266,
+            "sdf_mean": 60.132328033447266,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 37,
+          "mean_dt_seconds": 0.10790542150671417,
+          "duration_seconds": 3.9793100990355015,
+          "frame_age": {
+            "max": 0,
+            "mean": 0.0,
+            "waiting_ticks": 0
+          }
+        },
+        "crossing": {
+          "baseline": {
+            "points": 507,
+            "missing": 0,
+            "baseline_mass": 91.18925740756094,
+            "baseline_max": 1.0,
+            "game_time": 188.160134896636,
+            "noise": {
+              "points": 507,
+              "missing": 0,
+              "noise_threshold": 0.3790686523914337,
+              "game_time": 190.24346919730306
+            }
+          },
+          "move": {
+            "mode": "navigation",
+            "goal": [
+              4350.0,
+              4000.0
+            ]
+          },
+          "foam_first": {
+            "points": 507,
+            "missing": 0,
+            "excess_mass": 3.0901860296726227,
+            "excess_max": 0.6892908215522766,
+            "centroid_s_cm": -43.56556975036908,
+            "profile_s_cm": [
+              -400.0,
+              -350.0,
+              -300.0,
+              -250.0,
+              -200.0,
+              -150.0,
+              -100.0,
+              -50.0,
+              0.0,
+              50.0,
+              100.0,
+              150.0,
+              200.0,
+              250.0,
+              300.0,
+              350.0,
+              400.0,
+              450.0,
+              500.0,
+              550.0,
+              600.0,
+              650.0,
+              700.0,
+              750.0,
+              800.0,
+              850.0,
+              900.0,
+              950.0,
+              1000.0,
+              1050.0,
+              1100.0,
+              1150.0,
+              1200.0,
+              1250.0,
+              1300.0,
+              1350.0,
+              1400.0,
+              1450.0,
+              1500.0
+            ],
+            "profile": [
+              0.0,
+              0.0,
+              0.5923313796520233,
+              0.6892908215522766,
+              0.6224073171615601,
+              0.3918912410736084,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.39407479763031006,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.40019047260284424,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "game_time": 195.85823039710522
+          },
+          "foam_second": {
+            "points": 507,
+            "missing": 0,
+            "excess_mass": 11.679006323218346,
+            "excess_max": 0.7186627388000488,
+            "centroid_s_cm": 563.6973936648118,
+            "profile_s_cm": [
+              -400.0,
+              -350.0,
+              -300.0,
+              -250.0,
+              -200.0,
+              -150.0,
+              -100.0,
+              -50.0,
+              0.0,
+              50.0,
+              100.0,
+              150.0,
+              200.0,
+              250.0,
+              300.0,
+              350.0,
+              400.0,
+              450.0,
+              500.0,
+              550.0,
+              600.0,
+              650.0,
+              700.0,
+              750.0,
+              800.0,
+              850.0,
+              900.0,
+              950.0,
+              1000.0,
+              1050.0,
+              1100.0,
+              1150.0,
+              1200.0,
+              1250.0,
+              1300.0,
+              1350.0,
+              1400.0,
+              1450.0,
+              1500.0
+            ],
+            "profile": [
+              0.0,
+              0.0,
+              0.0,
+              0.38613682985305786,
+              0.6780042052268982,
+              0.7186627388000488,
+              0.5484619736671448,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.39407479763031006,
+              0.4189774990081787,
+              0.4716731309890747,
+              0.4937054514884949,
+              0.5212624371051788,
+              0.5451169908046722,
+              0.8873903751373291,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4037931561470032,
+              2.025594472885132,
+              1.844110518693924,
+              0.888611376285553,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4534303694963455,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "game_time": 197.92715369537473
+          },
+          "reached_goal": true,
+          "crossing": {
+            "ticks": 155,
+            "ticks_in_water": 9,
+            "seconds_in_water": 0.5056207999587059,
+            "max_abs_ripple_cm": 51.39594268798828,
+            "max_center_depth_cm": 39.75748825073242,
+            "pawn_start": [
+              4350.0,
+              2800.0
+            ],
+            "pawn_end": [
+              4349.9462621232105,
+              3963.5912934136077
+            ],
+            "duration_seconds": 8.81990209966898,
+            "sample_count": 155,
+            "mean_dt_seconds": 0.05698908774122115,
+            "frame_age": {
+              "max": 0,
+              "mean": 0.0,
+              "waiting_ticks": 0
+            }
+          }
+        },
+        "log_problems": {
+          "count": 0,
+          "first": [],
+          "ignored_python_navigation_ensures": 0
+        }
+      }
+    }
+  ],
+  "all_runs_passed": true,
+  "notes": [
+    "화면 항목(태양 반점 포화 비율, TSR 번짐, 창 경계 이음매, 바닥 비침·커스틱)은 이 탐침이 재지 않는다",
+    "창 이동 프레임 틱 p95와 SingleLayerWater GPU 시간은 C++ 계측과 ProfileGPU 로 따로 잰다",
+    "bank_band_wetness 는 물 셀 젖음이 0이면(W-2 A2 미구현) 판정을 보류한다"
+  ]
+}

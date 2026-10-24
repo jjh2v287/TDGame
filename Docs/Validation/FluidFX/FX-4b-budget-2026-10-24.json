@@ -1,0 +1,281 @@
+{
+ "id": "FX-4b-budget",
+ "date": "2026-10-24",
+ "purpose": "RM:533 FX-4b 예산 PIE 판정: 192² GPU ≤0.10ms, 1024² ≤0.9ms, 게임 스레드 ≤0.3ms",
+ "spec": "Saved/AgentOps/20261024/fx4b-acc/spec-fx4b-budget.md (6절 v2 정정 우선)",
+ "prereg_lock": [
+  "locked 2026-10-24 11:52:26 (budget pilot results not yet opened)",
+  "4ba7cc55e1868c3cc0824dd668e5d884a32c2a95b1c48b88f341b2fdf2521b8e *Saved/AgentOps/20261024/fx4b-acc/spec-fx4b-budget.md",
+  "fb37fdbf94ba38d90cf284df1be660584fd76db983c921eac95cedf96aceda9a *Tools/FluidFX/fx4b_budget_judge.py",
+  "e636132a09658b723e977e71b5e86a6f1f594ca8129cd44a896fefb8dbc2af8d *Tools/FluidFX/fx7pr_judge.py",
+  "671b1f445852dbc4deb231e96592b23aa4d185189a533a9dc4e942caaee045da *Saved/AgentOps/20261024/fx4b-acc/make_budget_plans.py",
+  "74e15e6669fc9ce6b5fd165472b44aee45dc743951fa13c4fd1d2ca2851b0520 *Saved/AgentOps/20261024/fx4b-acc/plan_budget_pilot.json",
+  "5f90e44908410563a2a010e84ca01ad0b2ab754f5ad6d3fd4b8d7ca2ced916cf *Saved/AgentOps/20261024/fx4b-acc/plan_budget_judge.json"
+ ],
+ "analyzer": "Tools/FluidFX/fx4b_budget_judge.py",
+ "binary_commit": "11b943cd",
+ "binaries_sha256": {
+  "UnrealEditor-TDGame.dll": "8858c189e771d00e63ec9b89bba89bc0f67c0413f4373b1eb64b4ae94cd34e46",
+  "UnrealEditor-TDFluidGpu.dll": "9d544f8c48d4036985654369eb6612aeb56ddc6923dbc37d1137bac4c10a843c"
+ },
+ "runs": {
+  "pilot": "Saved/FluidFX/fx7p/fx4b-budget-pilot-20261024115311",
+  "judge": "Saved/FluidFX/fx7p/fx4b-budget-judge-20261024120142"
+ },
+ "offscreen_after_levers_ms": {
+  "192": 0.135,
+  "512": 0.318,
+  "1024": 0.982,
+  "1024_outputs": 1.088,
+  "1024_moving": 1.214
+ },
+ "verdicts": {
+  "WQ0": {},
+  "B192": {
+   "verdict": "미달",
+   "reason": null,
+   "reasons": [],
+   "limit_ms": 0.1,
+   "stage_rounds": 3,
+   "outcome": {
+    "pairs": 6,
+    "values": [
+     0.1314,
+     0.1318,
+     0.13185,
+     0.1315,
+     0.13165,
+     0.1317
+    ],
+    "interval": {
+     "lower": 0.1314,
+     "upper": 0.13185,
+     "rank": 1,
+     "state": "미달"
+    },
+    "state": "미달"
+   },
+   "records": {
+    "pairs": 6,
+    "valid_pairs": 6,
+    "pdh_ratio_min": 0.9833,
+    "pdh_ratio_a": [
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833
+    ],
+    "named_a_p50": 0.1317,
+    "named_b_p50": 0.0,
+    "named_d_p50": 0.1317,
+    "named_d_range": 0.0005,
+    "substeps_a_p50": 1.0,
+    "substeps_a_max": 1.0,
+    "pressure_mode_max": 0.0,
+    "game_thread_water_a_p50": 0.0032,
+    "game_thread_water_a_p95": 0.004
+   }
+  },
+  "B1024": {
+   "verdict": "미달",
+   "reason": null,
+   "reasons": [],
+   "limit_ms": 0.9,
+   "stage_rounds": 3,
+   "outcome": {
+    "pairs": 6,
+    "values": [
+     1.2275,
+     1.2273,
+     1.2265,
+     1.22655,
+     1.22745,
+     1.22675
+    ],
+    "interval": {
+     "lower": 1.2265,
+     "upper": 1.2275,
+     "rank": 1,
+     "state": "미달"
+    },
+    "state": "미달"
+   },
+   "records": {
+    "pairs": 6,
+    "valid_pairs": 6,
+    "pdh_ratio_min": 0.9625,
+    "pdh_ratio_a": [
+     0.9833,
+     0.9833,
+     0.9625,
+     0.9833,
+     0.9833,
+     0.9833
+    ],
+    "named_a_p50": 1.227,
+    "named_b_p50": 0.0,
+    "named_d_p50": 1.227,
+    "named_d_range": 0.001,
+    "substeps_a_p50": 2.0,
+    "substeps_a_max": 5.0,
+    "pressure_mode_max": 1.0,
+    "game_thread_water_a_p50": 0.0033,
+    "game_thread_water_a_p95": 0.0039
+   }
+  },
+  "G192": {
+   "verdict": "통과",
+   "reason": null,
+   "reasons": [],
+   "limit_ms": 0.3,
+   "stage_rounds": 3,
+   "outcome": {
+    "pairs": 6,
+    "values": [
+     0.0032,
+     0.0032,
+     0.0032,
+     0.0033,
+     0.0032,
+     0.0033
+    ],
+    "interval": {
+     "lower": 0.0032,
+     "upper": 0.0033,
+     "rank": 1,
+     "state": "통과"
+    },
+    "state": "통과"
+   },
+   "records": {
+    "pairs": 6,
+    "valid_pairs": 6,
+    "pdh_ratio_min": 0.9833,
+    "pdh_ratio_a": [
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833
+    ],
+    "named_a_p50": 0.1317,
+    "named_b_p50": 0.0,
+    "named_d_p50": 0.1317,
+    "named_d_range": 0.0005,
+    "substeps_a_p50": 1.0,
+    "substeps_a_max": 1.0,
+    "pressure_mode_max": 0.0,
+    "game_thread_water_a_p50": 0.0032,
+    "game_thread_water_a_p95": 0.004
+   }
+  },
+  "G1024": {
+   "verdict": "통과",
+   "reason": null,
+   "reasons": [],
+   "limit_ms": 0.3,
+   "stage_rounds": 3,
+   "outcome": {
+    "pairs": 6,
+    "values": [
+     0.0033,
+     0.0033,
+     0.0032,
+     0.0032,
+     0.0033,
+     0.0033
+    ],
+    "interval": {
+     "lower": 0.0032,
+     "upper": 0.0033,
+     "rank": 1,
+     "state": "통과"
+    },
+    "state": "통과"
+   },
+   "records": {
+    "pairs": 6,
+    "valid_pairs": 6,
+    "pdh_ratio_min": 0.9625,
+    "pdh_ratio_a": [
+     0.9833,
+     0.9833,
+     0.9625,
+     0.9833,
+     0.9833,
+     0.9833
+    ],
+    "named_a_p50": 1.227,
+    "named_b_p50": 0.0,
+    "named_d_p50": 1.227,
+    "named_d_range": 0.001,
+    "substeps_a_p50": 2.0,
+    "substeps_a_max": 5.0,
+    "pressure_mode_max": 1.0,
+    "game_thread_water_a_p50": 0.0033,
+    "game_thread_water_a_p95": 0.0039
+   }
+  },
+  "GW": {
+   "verdict": "미달",
+   "reason": null,
+   "reasons": [],
+   "limit_ms": 0.3,
+   "stage_rounds": 3,
+   "outcome": {
+    "pairs": 6,
+    "values": [
+     0.0161,
+     0.0162,
+     0.0164,
+     0.01635,
+     0.0166,
+     0.0165
+    ],
+    "interval": {
+     "lower": 0.0161,
+     "upper": 0.0166,
+     "rank": 1,
+     "state": "통과"
+    },
+    "state": "통과"
+   },
+   "records": {
+    "pairs": 6,
+    "valid_pairs": 6,
+    "pdh_ratio_min": 0.9833,
+    "pdh_ratio_a": [
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833,
+     0.9833
+    ],
+    "named_a_p50": 1.2605,
+    "named_b_p50": 0.0,
+    "named_d_p50": 1.2605,
+    "named_d_range": 0.0066,
+    "substeps_a_p50": 2.0,
+    "substeps_a_max": 2.0,
+    "pressure_mode_max": 1.0,
+    "game_thread_water_a_p50": 0.0164,
+    "game_thread_water_a_p95": 0.6383
+   }
+  }
+ },
+ "summary": {
+  "B192": "미달 [0.1314, 0.1318] > 0.10",
+  "B1024": "미달 [1.2265, 1.2275] > 0.9",
+  "G192": "통과 0.0033 (사후 열 이름 정정)",
+  "G1024": "통과 0.0033 (사후 열 이름 정정)",
+  "GW": "미달: 게임 스레드 0.0166 통과, 이동 프레임 명명 GPU p95 2.156 > 평균×1.5 2.104 (사후 열 이름 정정 뒤 판정)",
+  "WQ4_2048": "기록: 하위 스텝 >2로 PD-H 통과 0%",
+  "WQ1_cpu192_gt_d": 1.8751
+ },
+ "post_lock_change": "게임 스레드 물 타이머 CSV 열 이름이 TDFluid/GameThread/<이름>인데 명세 표·분석기가 TDFluid/<이름>으로 찾아 G행이 '필수 열 없음'이었다. 판정 결과를 연 뒤 열 이름 대응만 고쳤다(지표 정의 불변). G행 판정은 사후로 표시한다.",
+ "full_output": "Saved/AgentOps/20261024/fx4b-acc/budget-verdict.json"
+}

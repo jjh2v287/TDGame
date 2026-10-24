@@ -20,8 +20,8 @@ PRESSURE = "GPU/TDFluidGpuWaterPressure"
 NAMED_GPU_COLUMNS = (SOLVER, WATER, PRESSURE)
 SUBSTEPS = "TDFluidGpu/WaterRippleSubsteps"
 PRESSURE_MODE = "TDFluidGpu/WaterPressureMode"
-GAME_THREAD_WATER_COLUMNS = ("TDFluid/WaterRasterDirtyCells", "TDFluid/WaterGatherStep", "TDFluid/WaterProbeMapping",
-                             "TDFluid/TerrainQueueApply", "TDFluid/TerrainQueueShift", "TDFluid/TerrainQueueSample")
+GAME_THREAD_WATER_COLUMNS = ("TDFluid/GameThread/WaterRasterDirtyCells", "TDFluid/GameThread/WaterGatherStep", "TDFluid/GameThread/WaterProbeMapping",
+                             "TDFluid/GameThread/TerrainQueueApply", "TDFluid/GameThread/TerrainQueueShift", "TDFluid/GameThread/TerrainQueueSample")
 TICKABLES = "Exclusive/GameThread/Tickables"
 WALK_SPEED = "View/Speed2D"
 WANTED_COLUMNS = (FRAME, GAME_THREAD, STEP_COUNT, SUBSTEPS, PRESSURE_MODE, TICKABLES, WALK_SPEED) + NAMED_GPU_COLUMNS + GAME_THREAD_WATER_COLUMNS

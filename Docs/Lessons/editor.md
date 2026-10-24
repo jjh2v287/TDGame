@@ -516,3 +516,12 @@
 - 범위: `Tools/FluidFX/pie_lookdev_fluid.py`를 FluidFX 무대 밖 지형에 쓸 때
 - 날짜·상태: 2026-10-24 active
 - 발견: claude(SF-4 실측 재결정)
+
+### L-editor-60 CSV 프로파일러의 `CSV_SCOPED_TIMING_STAT(범주, 이름)` 열은 `범주/<스레드>/이름`(예 `TDFluid/GameThread/WaterGatherStep`)으로 기록된다 — `범주/이름`으로 찾으면 '열 없음'
+- 증상: FX-4b 예산 PIE 판정에서 게임 스레드 물 타이머 6개가 모든 장면에서 "필수 열 없음"(`TDFluid/WaterRasterDirtyCells` 등). CSV 머리글에는 `TDFluid/GameThread/WaterRasterDirtyCells`가 있었다
+- 원인: 타이밍 통계는 스레드 이름이 가운데 붙는다. 사용자 정의 값(`CSV_CUSTOM_STAT`, 예 `TDFluidGpu/WaterRippleSubsteps`)과 범주 통계(`TDFluid/StepCount`)는 스레드 이름이 없다. 명세 표(spec-v3 2.8)도 `범주/이름`으로 적혀 있었다
+- 해결: 분석기·계획의 열 이름을 `범주/GameThread/이름`으로 쓴다(`Tools/FluidFX/fx4b_budget_judge.py`). 측정 전 시운전 1블록으로 CSV 머리글을 대조한다
+- 범위: CSV 블록을 읽는 모든 측정 도구(pie_profile_fluid.py extra_columns 포함)
+- 증거: `Saved/FluidFX/fx7p/fx4b-budget-judge-20261024120142/csv/WQ5_r1_1A*.csv` 머리글 168~174열
+- 날짜·상태: 2026-10-25 active
+- 발견: claude(FluidFX FX-4b 수용 측정)

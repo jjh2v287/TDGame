@@ -1,0 +1,2488 @@
+{
+  "date": "2026-10-25",
+  "level": "/Game/FluidFX/Maps/LV_TDFluidWaterStage",
+  "stage_report": "Saved/FluidFX/fluid_water_stage.json",
+  "status": {
+    "map": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidWaterStage.LV_TDFluidWaterStage",
+    "water_actor_count": 1,
+    "water_actor": "TDGen_WaterRiverSimulation",
+    "sleep_delay_seconds": 5.0,
+    "fade_in_seconds": 1.0,
+    "missing_sample_properties": [],
+    "live_actors": {
+      "TDGen_WaterLook0": true,
+      "TDGen_WaterRiverSimulation": false
+    }
+  },
+  "environment": {
+    "navigation_ready": true,
+    "river_navigation_ready": true,
+    "river_navigation_state": {
+      "projected": [
+        true,
+        true,
+        true
+      ],
+      "building": false
+    }
+  },
+  "backend": {
+    "requested_backend": "gpu",
+    "requested_grid": 1024,
+    "water_gpu_variable": {
+      "name": "TD.FluidFX.WaterGpu",
+      "original": 0,
+      "current": 1
+    },
+    "configured": {
+      "applied": true,
+      "solver_backend": "<TDFluidSolverBackend.GPU: 1>",
+      "grid_resolution": 1024,
+      "uses_gpu_water_layer": true,
+      "density_texture_class": null,
+      "awake": false
+    },
+    "state": {
+      "applied": true,
+      "solver_backend": "<TDFluidSolverBackend.GPU: 1>",
+      "grid_resolution": 1024,
+      "uses_gpu_water_layer": true,
+      "density_texture_class": null,
+      "awake": false
+    },
+    "gate": {
+      "point": [
+        2300.0,
+        3400.0,
+        100.74336351214001
+      ],
+      "passed": true,
+      "has_sample": true,
+      "waited_seconds": 1.6720000000000255,
+      "checks": {
+        "inside_window": true,
+        "water_depth_positive": true,
+        "terrain_known": true,
+        "flow_guide_weight_positive": true
+      },
+      "cell": {
+        "vx": 231.4214324951172,
+        "vy": -12.626989364624023,
+        "tx": 249.9497833251953,
+        "ty": -6.331774056889117e-05,
+        "density": 0.017400089651346207,
+        "ripple": 0.0,
+        "wetness": 0.0,
+        "depth": 119.90457153320312,
+        "guide": 1.0,
+        "sdf": 2398.0,
+        "known": true
+      },
+      "frame_age": 3
+    },
+    "restored": {
+      "configuration": {
+        "restored": true,
+        "solver_backend": "<TDFluidSolverBackend.CPU: 0>",
+        "grid_resolution": 192,
+        "uses_gpu_water_layer": false,
+        "density_texture_class": null,
+        "awake": true
+      },
+      "water_gpu_variable": {
+        "name": "TD.FluidFX.WaterGpu",
+        "original": 1,
+        "current": 0
+      }
+    }
+  },
+  "layout": {
+    "x_range_cm": [
+      -6200.0,
+      6200.0
+    ],
+    "base_y_cm": 3400.0,
+    "bend": {
+      "start_x_cm": -3600.0,
+      "length_cm": 4800.0,
+      "amplitude_cm": 700.0
+    },
+    "width_cm": 800.0,
+    "depth_cm": 120.0,
+    "drop_per_cm": 0.005,
+    "start_surface_z_cm": 0.0,
+    "freeboard_cm": 40.0,
+    "bank_run_cm": 150.0,
+    "riffle": {
+      "x_cm": [
+        3200.0,
+        3900.0,
+        4800.0,
+        5500.0
+      ],
+      "width_scale": 0.5,
+      "depth_cm": 40.0,
+      "half_width_cm": 200.0
+    },
+    "flow_speed_cm_per_sec": 250.0,
+    "expected_riffle_speed_cm_per_sec": 500.0
+  },
+  "runs": [
+    {
+      "failed": [],
+      "rules": {
+        "flow_matches_target_center_3pts": {
+          "passed": true,
+          "value": [
+            0.09265533587495729,
+            0.0920590178980063,
+            0.09531450239015393
+          ],
+          "detail": "수로 중심 3점 상대 오차 ≤ 0.25",
+          "required": true
+        },
+        "riffle_speed_ratio": {
+          "passed": true,
+          "value": {
+            "ratio": 1.9811013631489645,
+            "wide_cm_per_sec": 230.72983526690987,
+            "riffle_cm_per_sec": 457.0991911664112
+          },
+          "detail": "여울 중심 속력 / 넓은 구간 ≥ 1.5",
+          "required": true
+        },
+        "channel_depth_matches_stage": {
+          "passed": true,
+          "value": {
+            "wide_cm": 119.87449137369792,
+            "riffle_cm": 39.81170654296875
+          },
+          "detail": "무대 지형 수심(120·40cm)이 트레이스로 솔버에 전달됨",
+          "required": true
+        },
+        "dry_bank_velocity_zero": {
+          "passed": true,
+          "value": {
+            "speed_cm_per_sec": [
+              0.0,
+              0.0
+            ],
+            "known_fraction": [
+              1.0,
+              1.0
+            ]
+          },
+          "detail": "마른 기슭 셀 속도 ≤ 0.5",
+          "required": true
+        },
+        "bank_band_wetness": {
+          "passed": null,
+          "value": {
+            "water_cell_wetness": 0.0
+          },
+          "detail": "물 셀 젖음이 0이라 젖음 갱신(W-2 A2)이 아직 없음: 판정 보류",
+          "required": false
+        },
+        "rock_wake_density": {
+          "passed": true,
+          "value": 0.632401721382683,
+          "detail": "바위 하류 3m 안 시간 평균 흰 물보라 최대 ≥ 0.3",
+          "required": true
+        },
+        "rock_flank_lateral_opposite": {
+          "passed": true,
+          "value": {
+            "left_cm_per_sec": 56.49808949185067,
+            "right_cm_per_sec": -104.7044195064805
+          },
+          "detail": "바위 양옆(상류 어깨) 횡속도 부호 반대",
+          "required": true
+        },
+        "rock_interior_velocity_zero": {
+          "passed": true,
+          "value": 0.0,
+          "detail": "수면 위 바위 안 속도 0",
+          "required": false
+        },
+        "submerged_rock_is_solid": {
+          "passed": true,
+          "value": {
+            "sdf_min": -75.75,
+            "depth_mean": 20.603124618530273
+          },
+          "detail": "잠긴 바위 중심 셀이 장애물 태그 경로로 고체",
+          "required": true
+        },
+        "crossing_ripple_height": {
+          "passed": true,
+          "value": {
+            "max_abs_ripple_cm": 58.65625,
+            "seconds_in_water": 0.4086309000849724,
+            "reached_goal": true
+          },
+          "detail": "폰 1m 안 |RippleHeightCm| ≥ 1.0cm",
+          "required": true
+        },
+        "crossing_foam_centroid_shift": {
+          "passed": null,
+          "value": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7",
+          "detail": "gpu 실행은 거품 격자를 읽지 않아 판정 보류(진단 항목)",
+          "required": false
+        },
+        "shared_mid_count": {
+          "passed": true,
+          "value": {
+            "unique_mid_count": 1,
+            "shared_material_count": 1,
+            "driven_surface_count": 32
+          },
+          "detail": "공유 수면 MID 수 1~4, 구동 표면 1개 이상",
+          "required": true
+        },
+        "water_surface_texture_bound": {
+          "passed": true,
+          "value": {
+            "component_texture": true,
+            "mid_textures": [
+              true
+            ]
+          },
+          "detail": "WaterSurfaceTexture 가 컴포넌트와 모든 MID 에 연결",
+          "required": true
+        },
+        "mid_parameters_declared": {
+          "passed": true,
+          "value": [
+            []
+          ],
+          "detail": "C++ 구동 파라미터가 MID 의 부모 재질에 모두 선언됨",
+          "required": true
+        },
+        "mid_parameter_values": {
+          "passed": true,
+          "value": [],
+          "detail": "안정 뒤 FluidWaterLayerActive 1, 해안 위상 0~1, 기준 길이·속도·해상도 양수",
+          "required": true
+        },
+        "ribbon_actor_has_no_region_tag": {
+          "passed": true,
+          "value": {
+            "surface_actors": 1,
+            "region_tagged": []
+          },
+          "detail": "강 리본 액터에 수역 태그 없음",
+          "required": true
+        },
+        "wake_layer_alpha_ramp": {
+          "passed": true,
+          "value": {
+            "sample_count": 444,
+            "was_asleep_at_start": true,
+            "awake_after_seconds": 1.202070202678442,
+            "alpha_at_first_awake": 0.0,
+            "terrain_wait_seconds": 1.2525031976401806,
+            "ramp_seconds": 0.9955707006156445,
+            "monotone": true,
+            "final_alpha": 1.0,
+            "mean_dt_seconds": 0.018402994148903066,
+            "duration_seconds": 8.160369202494621
+          },
+          "detail": "잠들었다 깨어난 직후 FluidWaterLayerActive 0, 지형 완료 뒤 1초에 걸쳐 1",
+          "required": true
+        },
+        "awake_tick_cost": {
+          "passed": true,
+          "value": {
+            "lines": 5,
+            "avg_tick_ms": 0.11245416666666666,
+            "max_tick_ms": 0.3027,
+            "avg_frame_ms": 18.996026515151517,
+            "awake_actors_max": 1,
+            "awake_actors_min": 1,
+            "total_cells": 1048576
+          },
+          "detail": "깨어 있을 때 TDFluidPerf 틱 평균 ≤ 3.0ms(CPU 192² 예산), 깨어 있는 액터 1개: GPU 실행은 기록만, GPU 게임 스레드 0.3ms 는 CSV GT 로 판정",
+          "required": false
+        },
+        "asleep_tick_cost": {
+          "passed": true,
+          "value": {
+            "cpu": {
+              "lines": 3,
+              "avg_tick_ms": 0.007966666666666667,
+              "max_tick_ms": 0.024,
+              "avg_frame_ms": 14.758333333333335,
+              "awake_actors_max": 0,
+              "awake_actors_min": 0,
+              "total_cells": 0
+            },
+            "state": {
+              "awake": false,
+              "layer_alpha": 0.0,
+              "game_time": 25.09473329037428
+            }
+          },
+          "detail": "잠들었을 때 틱 평균 ≤ 0.01ms, 깨어 있는 액터 0개",
+          "required": true
+        },
+        "no_log_errors": {
+          "passed": true,
+          "value": {
+            "count": 0,
+            "first": [],
+            "ignored_python_navigation_ensures": 0
+          },
+          "detail": "실행 중 로그에 오류·단언 실패 없음",
+          "required": true
+        }
+      },
+      "data": {
+        "asleep": {
+          "state": {
+            "awake": false,
+            "layer_alpha": 0.0,
+            "game_time": 25.09473329037428
+          },
+          "cpu": {
+            "lines": 3,
+            "avg_tick_ms": 0.007966666666666667,
+            "max_tick_ms": 0.024,
+            "avg_frame_ms": 14.758333333333335,
+            "awake_actors_max": 0,
+            "awake_actors_min": 0,
+            "total_cells": 0
+          }
+        },
+        "wake": {
+          "sample_count": 444,
+          "was_asleep_at_start": true,
+          "awake_after_seconds": 1.202070202678442,
+          "alpha_at_first_awake": 0.0,
+          "terrain_wait_seconds": 1.2525031976401806,
+          "ramp_seconds": 0.9955707006156445,
+          "monotone": true,
+          "final_alpha": 1.0,
+          "mean_dt_seconds": 0.018402994148903066,
+          "duration_seconds": 8.160369202494621
+        },
+        "flow": {
+          "wide_0": {
+            "count": 62,
+            "velocity": [
+              229.04090241462953,
+              9.958167925236687
+            ],
+            "target": [
+              249.9497833251953,
+              -6.331774056889117e-05
+            ],
+            "speed_mean": 229.4441589102252,
+            "target_speed": 249.94978332520333,
+            "relative_error": 0.09265533587495729,
+            "density_mean": 0.028718287275443153,
+            "density_max": 0.028745677322149277,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.90457153320312,
+            "guide_mean": 1.0,
+            "sdf_min": 2398.0,
+            "sdf_mean": 2398.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wide_1": {
+            "count": 62,
+            "velocity": [
+              227.64825636340726,
+              -5.666713182003267
+            ],
+            "target": [
+              249.9497833251953,
+              -0.0003165887319482863
+            ],
+            "speed_mean": 232.86704404119988,
+            "target_speed": 249.9497833253958,
+            "relative_error": 0.0920590178980063,
+            "density_mean": 0.039588654053307346,
+            "density_max": 0.10090619325637817,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.83967590332031,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wide_2": {
+            "count": 62,
+            "velocity": [
+              228.59634374803113,
+              -10.966963349811492
+            ],
+            "target": [
+              249.72119140625,
+              0.00018977915169671178
+            ],
+            "speed_mean": 229.87830284930456,
+            "target_speed": 249.7211914063221,
+            "relative_error": 0.09531450239015393,
+            "density_mean": 0.034279047541560664,
+            "density_max": 0.08599104732275009,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.87922668457031,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_0": {
+            "count": 62,
+            "velocity": [
+              451.00757131268904,
+              1.3914052882502157
+            ],
+            "target": [
+              500.52960205078125,
+              0.0001901968353195116
+            ],
+            "speed_mean": 451.31467516557836,
+            "target_speed": 500.5296020508174,
+            "relative_error": 0.09897829874799871,
+            "density_mean": 0.035701786498388934,
+            "density_max": 0.05154936760663986,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.77080535888672,
+            "guide_mean": 1.0,
+            "sdf_min": 795.0,
+            "sdf_mean": 795.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_1": {
+            "count": 62,
+            "velocity": [
+              458.75216527138986,
+              -1.584302879148914
+            ],
+            "target": [
+              500.79046630859375,
+              0.0
+            ],
+            "speed_mean": 459.8320207580131,
+            "target_speed": 500.79046630859375,
+            "relative_error": 0.08400348486638778,
+            "density_mean": 0.036741738598192894,
+            "density_max": 0.055502552539110184,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.85683059692383,
+            "guide_mean": 1.0,
+            "sdf_min": 797.0,
+            "sdf_mean": 797.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_2": {
+            "count": 62,
+            "velocity": [
+              458.3793187295237,
+              -30.95444564377108
+            ],
+            "target": [
+              504.0138244628906,
+              -0.0005107111064717174
+            ],
+            "speed_mean": 460.15087757564214,
+            "target_speed": 504.0138244631494,
+            "relative_error": 0.10940598175493675,
+            "density_mean": 0.036934718129134944,
+            "density_max": 0.05342059209942818,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.8074836730957,
+            "guide_mean": 1.0,
+            "sdf_min": 795.5,
+            "sdf_mean": 795.5,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_wet_band_south": {
+            "count": 62,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_wet_band_north": {
+            "count": 62,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_dry_mid_south": {
+            "count": 62,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_dry_far_south": {
+            "count": 62,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 62,
+          "mean_dt_seconds": 0.11201658063838558,
+          "duration_seconds": 6.931584600359201,
+          "frame_age": {
+            "max": 3,
+            "mean": 3.0,
+            "waiting_ticks": 3
+          },
+          "cpu": {
+            "lines": 5,
+            "avg_tick_ms": 0.11245416666666666,
+            "max_tick_ms": 0.3027,
+            "avg_frame_ms": 18.996026515151517,
+            "awake_actors_max": 1,
+            "awake_actors_min": 1,
+            "total_cells": 1048576
+          },
+          "mid": {
+            "awake": true,
+            "layer_alpha": 1.0,
+            "driven_surface_count": 32,
+            "shared_material_count": 1,
+            "surface_texture_bound": true,
+            "surface_actors": [
+              {
+                "actor": "TDGen_WaterRiver",
+                "has_region_tag": false,
+                "components": 32,
+                "non_mid_slots": 0
+              }
+            ],
+            "unique_mid_count": 1,
+            "mids": [
+              {
+                "name": "MID_MI_TD_FluidWater_River_0",
+                "parent": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidWaterStage.LV_TDFluidWaterStage:PersistentLevel.TDFluidWaterActor_1.MID_MI_TD_FluidWater_River_0",
+                "base_material": "/Game/FluidFX/Materials/M_TD_FluidWater.M_TD_FluidWater",
+                "scalars": {
+                  "SimGridResolution": 1024.0,
+                  "WaterDepthReferenceCm": 300.0,
+                  "RippleHeightReferenceCm": 8.0,
+                  "VelocitySpeedReferenceCmPerSec": 600.0,
+                  "FluidWaterLayerActive": 1.0,
+                  "CoastWavePhase": 0.037443533539772034,
+                  "CoastWaveDepthSpacingCm": 60.0,
+                  "CoastWaveMaxDepthCm": 250.0,
+                  "SwashHeightCm": 0.0
+                },
+                "vectors": {
+                  "SimCenterWorld": [
+                    3487.5,
+                    2640.625,
+                    0.0,
+                    1.0
+                  ],
+                  "SimExtentsCm": [
+                    3600.0,
+                    3600.0,
+                    0.10000000149011612,
+                    0.0
+                  ]
+                },
+                "textures": {
+                  "DensityPressureTexture": true,
+                  "VelocityTexture": true,
+                  "WaterSurfaceTexture": true
+                },
+                "undeclared_in_material": []
+              }
+            ]
+          }
+        },
+        "rock": {
+          "center": {
+            "count": 44,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              249.9497833251953,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 249.9497833251953,
+            "relative_error": 1.0,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 1.0,
+            "sdf_min": -169.25,
+            "sdf_mean": -169.25,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_left_up": {
+            "count": 44,
+            "velocity": [
+              231.90609429099342,
+              56.49832448092374
+            ],
+            "target": [
+              243.92446899414062,
+              0.00024716719053685665
+            ],
+            "speed_mean": 239.809512811488,
+            "target_speed": 243.92446899426585,
+            "relative_error": 0.23680371360936625,
+            "density_mean": 0.056626645255495205,
+            "density_max": 0.25103306770324707,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 115.43107604980469,
+            "guide_mean": 1.0,
+            "sdf_min": 930.5,
+            "sdf_mean": 930.5,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_right_up": {
+            "count": 44,
+            "velocity": [
+              273.7305644642223,
+              -104.70414213700728
+            ],
+            "target": [
+              243.92446899414062,
+              0.00024716719053685665
+            ],
+            "speed_mean": 294.74700820232323,
+            "target_speed": 243.92446899426585,
+            "relative_error": 0.4463028789834929,
+            "density_mean": 0.03610752590677955,
+            "density_max": 0.042534053325653076,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 115.43107604980469,
+            "guide_mean": 1.0,
+            "sdf_min": 930.5,
+            "sdf_mean": 930.5,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_left_down": {
+            "count": 44,
+            "velocity": [
+              214.5102979486639,
+              -39.95247962258079
+            ],
+            "target": [
+              243.92446899414062,
+              0.0
+            ],
+            "speed_mean": 218.38367748615582,
+            "target_speed": 243.92446899414062,
+            "relative_error": 0.20339262818036707,
+            "density_mean": 0.06217870878225023,
+            "density_max": 0.15715929865837097,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 115.53117370605469,
+            "guide_mean": 1.0,
+            "sdf_min": 931.0,
+            "sdf_mean": 931.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_right_down": {
+            "count": 44,
+            "velocity": [
+              309.7437549937855,
+              42.34625534577803
+            ],
+            "target": [
+              243.92446899414062,
+              0.0
+            ],
+            "speed_mean": 312.87401437620633,
+            "target_speed": 243.92446899414062,
+            "relative_error": 0.32085682586103337,
+            "density_mean": 0.03747729440643029,
+            "density_max": 0.04877886548638344,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 115.53117370605469,
+            "guide_mean": 1.0,
+            "sdf_min": 931.5,
+            "sdf_mean": 931.5,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_c": {
+            "count": 44,
+            "velocity": [
+              131.90415711836383,
+              -9.064079016447067
+            ],
+            "target": [
+              249.9495391845703,
+              -0.11743082851171494
+            ],
+            "speed_mean": 135.1354457944174,
+            "target_speed": 249.94956677013573,
+            "relative_error": 0.47363126463078836,
+            "density_mean": 0.632401721382683,
+            "density_max": 0.8621573448181152,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.87409973144531,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_l": {
+            "count": 44,
+            "velocity": [
+              156.04189404574308,
+              -39.58895263482224
+            ],
+            "target": [
+              248.74371337890625,
+              -0.11686431616544724
+            ],
+            "speed_mean": 162.21688154080823,
+            "target_speed": 248.7437408313943,
+            "relative_error": 0.4050574739928718,
+            "density_mean": 0.17530744294212622,
+            "density_max": 0.5372425317764282,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.9654769897461,
+            "guide_mean": 1.0,
+            "sdf_min": 2042.0,
+            "sdf_mean": 2042.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_r": {
+            "count": 44,
+            "velocity": [
+              188.01291066950017,
+              38.99843640760942
+            ],
+            "target": [
+              248.7456512451172,
+              -0.11686522513628006
+            ],
+            "speed_mean": 192.91789792955487,
+            "target_speed": 248.74567869781842,
+            "relative_error": 0.2904130707702503,
+            "density_mean": 0.6053984998302027,
+            "density_max": 1.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.9653091430664,
+            "guide_mean": 1.0,
+            "sdf_min": 2041.0,
+            "sdf_mean": 2041.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_c": {
+            "count": 44,
+            "velocity": [
+              183.7593994140625,
+              0.7846706739880822
+            ],
+            "target": [
+              249.94796752929688,
+              -0.4894459843635559
+            ],
+            "speed_mean": 184.7257333803594,
+            "target_speed": 249.94844674331955,
+            "relative_error": 0.2648579380547868,
+            "density_mean": 0.5032530745322054,
+            "density_max": 0.807349443435669,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.88121795654297,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_l": {
+            "count": 44,
+            "velocity": [
+              172.29502799294212,
+              -14.98179577426477
+            ],
+            "target": [
+              248.73764038085938,
+              -0.48707592487335205
+            ],
+            "speed_mean": 173.46249316037162,
+            "target_speed": 248.7381172743621,
+            "relative_error": 0.3127976183750491,
+            "density_mean": 0.16435971602120183,
+            "density_max": 0.6380689144134521,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.97364044189453,
+            "guide_mean": 1.0,
+            "sdf_min": 2052.0,
+            "sdf_mean": 2052.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_r": {
+            "count": 44,
+            "velocity": [
+              200.4546723799272,
+              17.598472129214894
+            ],
+            "target": [
+              248.75083923339844,
+              -0.4871017634868622
+            ],
+            "speed_mean": 201.70123377027713,
+            "target_speed": 248.75131615219252,
+            "relative_error": 0.20732105243862253,
+            "density_mean": 0.447404325093058,
+            "density_max": 0.9420573115348816,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.97294616699219,
+            "guide_mean": 1.0,
+            "sdf_min": 2052.0,
+            "sdf_mean": 2052.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_c": {
+            "count": 44,
+            "velocity": [
+              204.24039736661044,
+              2.839475244283676
+            ],
+            "target": [
+              249.9458770751953,
+              -0.5976063013076782
+            ],
+            "speed_mean": 204.70408004676335,
+            "target_speed": 249.9465914954233,
+            "relative_error": 0.18337730717783904,
+            "density_mean": 0.3749321070923047,
+            "density_max": 0.729672372341156,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.85895538330078,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_l": {
+            "count": 44,
+            "velocity": [
+              186.8588849847967,
+              -5.115388703617183
+            ],
+            "target": [
+              248.72821044921875,
+              -0.594694972038269
+            ],
+            "speed_mean": 187.23240729018028,
+            "target_speed": 248.72892138909103,
+            "relative_error": 0.24940511632906842,
+            "density_mean": 0.1862650150856511,
+            "density_max": 0.6614572405815125,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.95160675048828,
+            "guide_mean": 1.0,
+            "sdf_min": 2041.0,
+            "sdf_mean": 2041.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_r": {
+            "count": 44,
+            "velocity": [
+              205.5034942626953,
+              10.131499209187247
+            ],
+            "target": [
+              248.7597198486328,
+              -0.5947703123092651
+            ],
+            "speed_mean": 206.07245328645365,
+            "target_speed": 248.7604308785758,
+            "relative_error": 0.17915343906462125,
+            "density_mean": 0.37105243593793025,
+            "density_max": 0.8382169008255005,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.95076751708984,
+            "guide_mean": 1.0,
+            "sdf_min": 2041.0,
+            "sdf_mean": 2041.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_c": {
+            "count": 44,
+            "velocity": [
+              213.62720108032227,
+              19.1451129804958
+            ],
+            "target": [
+              249.9451141357422,
+              0.09119374305009842
+            ],
+            "speed_mean": 219.23596497555718,
+            "target_speed": 249.94513077199156,
+            "relative_error": 0.16408686622415614,
+            "density_mean": 0.24179287627339363,
+            "density_max": 0.6639857888221741,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.87264251708984,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_l": {
+            "count": 44,
+            "velocity": [
+              194.94472087513316,
+              15.313040901314128
+            ],
+            "target": [
+              248.72193908691406,
+              0.09074746072292328
+            ],
+            "speed_mean": 200.21491522089556,
+            "target_speed": 248.72195564174913,
+            "relative_error": 0.22470930190485316,
+            "density_mean": 0.2546041720038788,
+            "density_max": 0.666049063205719,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.9658203125,
+            "guide_mean": 1.0,
+            "sdf_min": 2054.0,
+            "sdf_mean": 2054.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_r": {
+            "count": 44,
+            "velocity": [
+              209.17526418512517,
+              22.874202568422664
+            ],
+            "target": [
+              248.76727294921875,
+              0.09076400101184845
+            ],
+            "speed_mean": 214.86835911345352,
+            "target_speed": 248.7672895070712,
+            "relative_error": 0.1836232205253702,
+            "density_mean": 0.2730343324894255,
+            "density_max": 0.7545391917228699,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.96595001220703,
+            "guide_mean": 1.0,
+            "sdf_min": 2054.0,
+            "sdf_mean": 2054.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_c": {
+            "count": 44,
+            "velocity": [
+              218.26196809248492,
+              23.89867163246328
+            ],
+            "target": [
+              249.94471740722656,
+              0.8877747058868408
+            ],
+            "speed_mean": 224.02060232706498,
+            "target_speed": 249.94629403875297,
+            "relative_error": 0.1566630509997668,
+            "density_mean": 0.15532575619660996,
+            "density_max": 0.5857577323913574,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.8610610961914,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_l": {
+            "count": 44,
+            "velocity": [
+              198.80927450006658,
+              21.539997657591645
+            ],
+            "target": [
+              248.72601318359375,
+              0.8834460377693176
+            ],
+            "speed_mean": 204.46362888558824,
+            "target_speed": 248.72758212773047,
+            "relative_error": 0.21719334807513915,
+            "density_mean": 0.27904935739934444,
+            "density_max": 0.6268988251686096,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.9518814086914,
+            "guide_mean": 1.0,
+            "sdf_min": 2041.0,
+            "sdf_mean": 2041.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_r": {
+            "count": 44,
+            "velocity": [
+              212.16186939586294,
+              25.919078826904297
+            ],
+            "target": [
+              248.7602081298828,
+              0.8835675120353699
+            ],
+            "speed_mean": 218.20800602520356,
+            "target_speed": 248.7617772897817,
+            "relative_error": 0.17825095951971962,
+            "density_mean": 0.17531860708682376,
+            "density_max": 0.6766878962516785,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.95313262939453,
+            "guide_mean": 1.0,
+            "sdf_min": 2042.0,
+            "sdf_mean": 2042.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 44,
+          "mean_dt_seconds": 0.11219115453687581,
+          "duration_seconds": 4.9214038997888565,
+          "frame_age": {
+            "max": 3,
+            "mean": 3.0,
+            "waiting_ticks": 3
+          }
+        },
+        "submerged": {
+          "center": {
+            "count": 35,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              248.12722778320312,
+              -30.190927505493164
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 249.95722288227543,
+            "relative_error": 1.0,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 20.603124618530273,
+            "guide_mean": 1.0,
+            "sdf_min": -75.75,
+            "sdf_mean": -75.75,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "beside_left": {
+            "count": 35,
+            "velocity": [
+              296.1312779017857,
+              -43.88250754220145
+            ],
+            "target": [
+              229.8484649658203,
+              -27.966856002807617
+            ],
+            "speed_mean": 300.11679684844665,
+            "target_speed": 231.54365005723156,
+            "relative_error": 0.2944017192065434,
+            "density_mean": 0.045592408254742624,
+            "density_max": 0.0642852932214737,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 106.50598907470703,
+            "guide_mean": 1.0,
+            "sdf_min": 53.46875,
+            "sdf_mean": 53.46875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "beside_right": {
+            "count": 35,
+            "velocity": [
+              309.12716326032364,
+              -39.15098244803293
+            ],
+            "target": [
+              230.11431884765625,
+              -27.999202728271484
+            ],
+            "speed_mean": 311.6504190447855,
+            "target_speed": 231.81146453991366,
+            "relative_error": 0.34422774767824266,
+            "density_mean": 0.0337432751165969,
+            "density_max": 0.05104835331439972,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 106.3238296508789,
+            "guide_mean": 1.0,
+            "sdf_min": 55.03125,
+            "sdf_mean": 55.03125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 35,
+          "mean_dt_seconds": 0.11351100004145077,
+          "duration_seconds": 3.953726500272751,
+          "frame_age": {
+            "max": 3,
+            "mean": 3.0,
+            "waiting_ticks": 3
+          }
+        },
+        "crossing": {
+          "baseline": {
+            "error": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7",
+            "noise": {
+              "error": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7"
+            }
+          },
+          "move": {
+            "mode": "navigation",
+            "goal": [
+              4350.0,
+              4000.0
+            ]
+          },
+          "foam_first": {
+            "error": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7"
+          },
+          "foam_second": {
+            "error": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7"
+          },
+          "reached_goal": true,
+          "crossing": {
+            "ticks": 50,
+            "ticks_in_water": 3,
+            "seconds_in_water": 0.4086309000849724,
+            "max_abs_ripple_cm": 58.65625,
+            "max_center_depth_cm": 39.77193069458008,
+            "pawn_start": [
+              4350.0,
+              2800.0
+            ],
+            "pawn_end": [
+              4349.973768290775,
+              3973.6996570718884
+            ],
+            "duration_seconds": 6.501613300293684,
+            "sample_count": 50,
+            "mean_dt_seconds": 0.13040503598749636,
+            "frame_age": {
+              "max": 3,
+              "mean": 3.0,
+              "waiting_ticks": 200
+            }
+          }
+        },
+        "log_problems": {
+          "count": 0,
+          "first": [],
+          "ignored_python_navigation_ensures": 0
+        }
+      }
+    },
+    {
+      "failed": [],
+      "rules": {
+        "flow_matches_target_center_3pts": {
+          "passed": true,
+          "value": [
+            0.09286979801006194,
+            0.09294090807070314,
+            0.0963436897470711
+          ],
+          "detail": "수로 중심 3점 상대 오차 ≤ 0.25",
+          "required": true
+        },
+        "riffle_speed_ratio": {
+          "passed": true,
+          "value": {
+            "ratio": 1.9821374584433338,
+            "wide_cm_per_sec": 230.65245114953152,
+            "riffle_cm_per_sec": 457.1848633052576
+          },
+          "detail": "여울 중심 속력 / 넓은 구간 ≥ 1.5",
+          "required": true
+        },
+        "channel_depth_matches_stage": {
+          "passed": true,
+          "value": {
+            "wide_cm": 119.87449137369792,
+            "riffle_cm": 39.81170654296875
+          },
+          "detail": "무대 지형 수심(120·40cm)이 트레이스로 솔버에 전달됨",
+          "required": true
+        },
+        "dry_bank_velocity_zero": {
+          "passed": true,
+          "value": {
+            "speed_cm_per_sec": [
+              0.0,
+              0.0
+            ],
+            "known_fraction": [
+              1.0,
+              1.0
+            ]
+          },
+          "detail": "마른 기슭 셀 속도 ≤ 0.5",
+          "required": true
+        },
+        "bank_band_wetness": {
+          "passed": null,
+          "value": {
+            "water_cell_wetness": 0.0
+          },
+          "detail": "물 셀 젖음이 0이라 젖음 갱신(W-2 A2)이 아직 없음: 판정 보류",
+          "required": false
+        },
+        "rock_wake_density": {
+          "passed": true,
+          "value": 0.6327018758112734,
+          "detail": "바위 하류 3m 안 시간 평균 흰 물보라 최대 ≥ 0.3",
+          "required": true
+        },
+        "rock_flank_lateral_opposite": {
+          "passed": true,
+          "value": {
+            "left_cm_per_sec": 56.51871956677511,
+            "right_cm_per_sec": -104.65036108883183
+          },
+          "detail": "바위 양옆(상류 어깨) 횡속도 부호 반대",
+          "required": true
+        },
+        "rock_interior_velocity_zero": {
+          "passed": true,
+          "value": 0.0,
+          "detail": "수면 위 바위 안 속도 0",
+          "required": false
+        },
+        "submerged_rock_is_solid": {
+          "passed": true,
+          "value": {
+            "sdf_min": -75.75,
+            "depth_mean": 20.603124618530273
+          },
+          "detail": "잠긴 바위 중심 셀이 장애물 태그 경로로 고체",
+          "required": true
+        },
+        "crossing_ripple_height": {
+          "passed": true,
+          "value": {
+            "max_abs_ripple_cm": 56.625,
+            "seconds_in_water": 0.5409669019281864,
+            "reached_goal": true
+          },
+          "detail": "폰 1m 안 |RippleHeightCm| ≥ 1.0cm",
+          "required": true
+        },
+        "crossing_foam_centroid_shift": {
+          "passed": null,
+          "value": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7",
+          "detail": "gpu 실행은 거품 격자를 읽지 않아 판정 보류(진단 항목)",
+          "required": false
+        },
+        "shared_mid_count": {
+          "passed": true,
+          "value": {
+            "unique_mid_count": 1,
+            "shared_material_count": 1,
+            "driven_surface_count": 32
+          },
+          "detail": "공유 수면 MID 수 1~4, 구동 표면 1개 이상",
+          "required": true
+        },
+        "water_surface_texture_bound": {
+          "passed": true,
+          "value": {
+            "component_texture": true,
+            "mid_textures": [
+              true
+            ]
+          },
+          "detail": "WaterSurfaceTexture 가 컴포넌트와 모든 MID 에 연결",
+          "required": true
+        },
+        "mid_parameters_declared": {
+          "passed": true,
+          "value": [
+            []
+          ],
+          "detail": "C++ 구동 파라미터가 MID 의 부모 재질에 모두 선언됨",
+          "required": true
+        },
+        "mid_parameter_values": {
+          "passed": true,
+          "value": [],
+          "detail": "안정 뒤 FluidWaterLayerActive 1, 해안 위상 0~1, 기준 길이·속도·해상도 양수",
+          "required": true
+        },
+        "ribbon_actor_has_no_region_tag": {
+          "passed": true,
+          "value": {
+            "surface_actors": 1,
+            "region_tagged": []
+          },
+          "detail": "강 리본 액터에 수역 태그 없음",
+          "required": true
+        },
+        "wake_layer_alpha_ramp": {
+          "passed": true,
+          "value": {
+            "sample_count": 444,
+            "was_asleep_at_start": true,
+            "awake_after_seconds": 1.1670644991099834,
+            "alpha_at_first_awake": 0.0,
+            "terrain_wait_seconds": 1.2519499026238918,
+            "ramp_seconds": 0.9801749996840954,
+            "monotone": true,
+            "final_alpha": 1.0,
+            "mean_dt_seconds": 0.01826937545325842,
+            "duration_seconds": 8.09977950155735
+          },
+          "detail": "잠들었다 깨어난 직후 FluidWaterLayerActive 0, 지형 완료 뒤 1초에 걸쳐 1",
+          "required": true
+        },
+        "awake_tick_cost": {
+          "passed": true,
+          "value": {
+            "lines": 4,
+            "avg_tick_ms": 0.109,
+            "max_tick_ms": 0.1889,
+            "avg_frame_ms": 18.8495,
+            "awake_actors_max": 1,
+            "awake_actors_min": 1,
+            "total_cells": 1048576
+          },
+          "detail": "깨어 있을 때 TDFluidPerf 틱 평균 ≤ 3.0ms(CPU 192² 예산), 깨어 있는 액터 1개: GPU 실행은 기록만, GPU 게임 스레드 0.3ms 는 CSV GT 로 판정",
+          "required": false
+        },
+        "asleep_tick_cost": {
+          "passed": true,
+          "value": {
+            "cpu": {
+              "lines": 3,
+              "avg_tick_ms": 0.007933906633906633,
+              "max_tick_ms": 0.0181,
+              "avg_frame_ms": 14.77551597051597,
+              "awake_actors_max": 0,
+              "awake_actors_min": 0,
+              "total_cells": 0
+            },
+            "state": {
+              "awake": false,
+              "layer_alpha": 0.0,
+              "game_time": 113.83587369322777
+            }
+          },
+          "detail": "잠들었을 때 틱 평균 ≤ 0.01ms, 깨어 있는 액터 0개",
+          "required": true
+        },
+        "no_log_errors": {
+          "passed": true,
+          "value": {
+            "count": 0,
+            "first": [],
+            "ignored_python_navigation_ensures": 0
+          },
+          "detail": "실행 중 로그에 오류·단언 실패 없음",
+          "required": true
+        }
+      },
+      "data": {
+        "asleep": {
+          "state": {
+            "awake": false,
+            "layer_alpha": 0.0,
+            "game_time": 113.83587369322777
+          },
+          "cpu": {
+            "lines": 3,
+            "avg_tick_ms": 0.007933906633906633,
+            "max_tick_ms": 0.0181,
+            "avg_frame_ms": 14.77551597051597,
+            "awake_actors_max": 0,
+            "awake_actors_min": 0,
+            "total_cells": 0
+          }
+        },
+        "wake": {
+          "sample_count": 444,
+          "was_asleep_at_start": true,
+          "awake_after_seconds": 1.1670644991099834,
+          "alpha_at_first_awake": 0.0,
+          "terrain_wait_seconds": 1.2519499026238918,
+          "ramp_seconds": 0.9801749996840954,
+          "monotone": true,
+          "final_alpha": 1.0,
+          "mean_dt_seconds": 0.01826937545325842,
+          "duration_seconds": 8.09977950155735
+        },
+        "flow": {
+          "wide_0": {
+            "count": 62,
+            "velocity": [
+              228.984617171749,
+              9.964636222970102
+            ],
+            "target": [
+              249.9497833251953,
+              -6.331774056889117e-05
+            ],
+            "speed_mean": 229.388491241266,
+            "target_speed": 249.94978332520333,
+            "relative_error": 0.09286979801006194,
+            "density_mean": 0.0287168936263169,
+            "density_max": 0.02874504216015339,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.90457153320312,
+            "guide_mean": 1.0,
+            "sdf_min": 2398.0,
+            "sdf_mean": 2398.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wide_1": {
+            "count": 62,
+            "velocity": [
+              227.49236888270224,
+              -5.943669747921728
+            ],
+            "target": [
+              249.9497833251953,
+              -0.0003165887319482863
+            ],
+            "speed_mean": 232.7296625952208,
+            "target_speed": 249.9497833253958,
+            "relative_error": 0.09294090807070314,
+            "density_mean": 0.03935321495537796,
+            "density_max": 0.10107555240392685,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.83967590332031,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wide_2": {
+            "count": 62,
+            "velocity": [
+              228.52360559278918,
+              -11.379650786999733
+            ],
+            "target": [
+              249.72119140625,
+              0.00018977915169671178
+            ],
+            "speed_mean": 229.8391996121077,
+            "target_speed": 249.7211914063221,
+            "relative_error": 0.0963436897470711,
+            "density_mean": 0.03394291342626656,
+            "density_max": 0.08646708726882935,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.87922668457031,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_0": {
+            "count": 62,
+            "velocity": [
+              451.0438896917528,
+              1.2919343753207115
+            ],
+            "target": [
+              500.52960205078125,
+              0.0001901968353195116
+            ],
+            "speed_mean": 451.35183959619053,
+            "target_speed": 500.5296020508174,
+            "relative_error": 0.09890038217023386,
+            "density_mean": 0.03585032860357915,
+            "density_max": 0.051873818039894104,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.77080535888672,
+            "guide_mean": 1.0,
+            "sdf_min": 795.0,
+            "sdf_mean": 795.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_1": {
+            "count": 62,
+            "velocity": [
+              458.91573998235884,
+              -1.660258097033347
+            ],
+            "target": [
+              500.79046630859375,
+              0.0
+            ],
+            "speed_mean": 459.98309401292386,
+            "target_speed": 500.79046630859375,
+            "relative_error": 0.08368295595659,
+            "density_mean": 0.03690940324938105,
+            "density_max": 0.05546153709292412,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.85683059692383,
+            "guide_mean": 1.0,
+            "sdf_min": 797.0,
+            "sdf_mean": 797.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "riffle_2": {
+            "count": 62,
+            "velocity": [
+              458.4403425647366,
+              -31.038209322960146
+            ],
+            "target": [
+              504.0138244628906,
+              -0.0005107111064717174
+            ],
+            "speed_mean": 460.2196563066583,
+            "target_speed": 504.0138244631494,
+            "relative_error": 0.10939926723172219,
+            "density_mean": 0.036981090512727535,
+            "density_max": 0.053602058440446854,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 39.8074836730957,
+            "guide_mean": 1.0,
+            "sdf_min": 795.5,
+            "sdf_mean": 795.5,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_wet_band_south": {
+            "count": 62,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_wet_band_north": {
+            "count": 62,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_dry_mid_south": {
+            "count": 62,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "bank_dry_far_south": {
+            "count": 62,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              0.0,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 0.0,
+            "relative_error": null,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 0.0,
+            "sdf_min": -1.0,
+            "sdf_mean": -1.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 62,
+          "mean_dt_seconds": 0.11181946285068989,
+          "duration_seconds": 6.918058697134256,
+          "frame_age": {
+            "max": 3,
+            "mean": 2.9838709677419355,
+            "waiting_ticks": 3
+          },
+          "cpu": {
+            "lines": 4,
+            "avg_tick_ms": 0.109,
+            "max_tick_ms": 0.1889,
+            "avg_frame_ms": 18.8495,
+            "awake_actors_max": 1,
+            "awake_actors_min": 1,
+            "total_cells": 1048576
+          },
+          "mid": {
+            "awake": true,
+            "layer_alpha": 1.0,
+            "driven_surface_count": 32,
+            "shared_material_count": 1,
+            "surface_texture_bound": true,
+            "surface_actors": [
+              {
+                "actor": "TDGen_WaterRiver",
+                "has_region_tag": false,
+                "components": 32,
+                "non_mid_slots": 0
+              }
+            ],
+            "unique_mid_count": 1,
+            "mids": [
+              {
+                "name": "MID_MI_TD_FluidWater_River_0",
+                "parent": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFluidWaterStage.LV_TDFluidWaterStage:PersistentLevel.TDFluidWaterActor_1.MID_MI_TD_FluidWater_River_0",
+                "base_material": "/Game/FluidFX/Materials/M_TD_FluidWater.M_TD_FluidWater",
+                "scalars": {
+                  "SimGridResolution": 1024.0,
+                  "WaterDepthReferenceCm": 300.0,
+                  "RippleHeightReferenceCm": 8.0,
+                  "VelocitySpeedReferenceCmPerSec": 600.0,
+                  "FluidWaterLayerActive": 1.0,
+                  "CoastWavePhase": 0.032343633472919464,
+                  "CoastWaveDepthSpacingCm": 60.0,
+                  "CoastWaveMaxDepthCm": 250.0,
+                  "SwashHeightCm": 0.0
+                },
+                "vectors": {
+                  "SimCenterWorld": [
+                    3487.5,
+                    2640.625,
+                    0.0,
+                    1.0
+                  ],
+                  "SimExtentsCm": [
+                    3600.0,
+                    3600.0,
+                    0.10000000149011612,
+                    0.0
+                  ]
+                },
+                "textures": {
+                  "DensityPressureTexture": true,
+                  "VelocityTexture": true,
+                  "WaterSurfaceTexture": true
+                },
+                "undeclared_in_material": []
+              }
+            ]
+          }
+        },
+        "rock": {
+          "center": {
+            "count": 44,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              249.9497833251953,
+              0.0
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 249.9497833251953,
+            "relative_error": 1.0,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 0.0,
+            "guide_mean": 1.0,
+            "sdf_min": -169.25,
+            "sdf_mean": -169.25,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_left_up": {
+            "count": 44,
+            "velocity": [
+              231.80206298828125,
+              56.5189544504339
+            ],
+            "target": [
+              243.92446899414062,
+              0.00024716719053685665
+            ],
+            "speed_mean": 239.7177593230923,
+            "target_speed": 243.92446899426585,
+            "relative_error": 0.23697551291830513,
+            "density_mean": 0.05708669388497418,
+            "density_max": 0.2519880533218384,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 115.43107604980469,
+            "guide_mean": 1.0,
+            "sdf_min": 930.5,
+            "sdf_mean": 930.5,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_right_up": {
+            "count": 44,
+            "velocity": [
+              273.73460388183594,
+              -104.65008371526545
+            ],
+            "target": [
+              243.92446899414062,
+              0.00024716719053685665
+            ],
+            "speed_mean": 294.7374255807755,
+            "target_speed": 243.92446899426585,
+            "relative_error": 0.44609426835948546,
+            "density_mean": 0.036127471407367426,
+            "density_max": 0.04255964607000351,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 115.43107604980469,
+            "guide_mean": 1.0,
+            "sdf_min": 930.5,
+            "sdf_mean": 930.5,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_left_down": {
+            "count": 44,
+            "velocity": [
+              214.4034097844904,
+              -39.94654924219305
+            ],
+            "target": [
+              243.92446899414062,
+              0.0
+            ],
+            "speed_mean": 218.2773914118103,
+            "target_speed": 243.92446899414062,
+            "relative_error": 0.2036331815667144,
+            "density_mean": 0.06263293050737544,
+            "density_max": 0.16017407178878784,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 115.53117370605469,
+            "guide_mean": 1.0,
+            "sdf_min": 931.0,
+            "sdf_mean": 931.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "flank_right_down": {
+            "count": 44,
+            "velocity": [
+              309.75939698652786,
+              42.361967910419814
+            ],
+            "target": [
+              243.92446899414062,
+              0.0
+            ],
+            "speed_mean": 312.89178083627314,
+            "target_speed": 243.92446899414062,
+            "relative_error": 0.3209456085510631,
+            "density_mean": 0.03751542249863798,
+            "density_max": 0.048778098076581955,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 115.53117370605469,
+            "guide_mean": 1.0,
+            "sdf_min": 931.5,
+            "sdf_mean": 931.5,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_c": {
+            "count": 44,
+            "velocity": [
+              131.92564097317782,
+              -9.015909167175943
+            ],
+            "target": [
+              249.9495391845703,
+              -0.11743082851171494
+            ],
+            "speed_mean": 135.16587118167126,
+            "target_speed": 249.94956677013573,
+            "relative_error": 0.4735310297455945,
+            "density_mean": 0.6327018758112734,
+            "density_max": 0.8623371720314026,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.87409973144531,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_l": {
+            "count": 44,
+            "velocity": [
+              156.0224699540572,
+              -39.547525787895374
+            ],
+            "target": [
+              248.74371337890625,
+              -0.11686431616544724
+            ],
+            "speed_mean": 162.19361287856734,
+            "target_speed": 248.7437408313943,
+            "relative_error": 0.4050641170317462,
+            "density_mean": 0.17538834405554968,
+            "density_max": 0.5325956344604492,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.9654769897461,
+            "guide_mean": 1.0,
+            "sdf_min": 2042.0,
+            "sdf_mean": 2042.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_0_r": {
+            "count": 44,
+            "velocity": [
+              188.0153957713734,
+              39.031439326026224
+            ],
+            "target": [
+              248.7456512451172,
+              -0.11686522513628006
+            ],
+            "speed_mean": 192.9311595354885,
+            "target_speed": 248.74567869781842,
+            "relative_error": 0.2904765359806432,
+            "density_mean": 0.6053104265169664,
+            "density_max": 1.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.9653091430664,
+            "guide_mean": 1.0,
+            "sdf_min": 2041.0,
+            "sdf_mean": 2041.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_c": {
+            "count": 44,
+            "velocity": [
+              183.76609247381037,
+              0.8128473894162611
+            ],
+            "target": [
+              249.94796752929688,
+              -0.4894459843635559
+            ],
+            "speed_mean": 184.7345870076381,
+            "target_speed": 249.94844674331955,
+            "relative_error": 0.26483335908736966,
+            "density_mean": 0.5032364671880548,
+            "density_max": 0.8065298199653625,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.88121795654297,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_l": {
+            "count": 44,
+            "velocity": [
+              172.3102385781028,
+              -14.95593384179202
+            ],
+            "target": [
+              248.73764038085938,
+              -0.48707592487335205
+            ],
+            "speed_mean": 173.47738861063283,
+            "target_speed": 248.7381172743621,
+            "relative_error": 0.3127181813857629,
+            "density_mean": 0.16617494271221486,
+            "density_max": 0.6646395921707153,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.97364044189453,
+            "guide_mean": 1.0,
+            "sdf_min": 2052.0,
+            "sdf_mean": 2052.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_1_r": {
+            "count": 44,
+            "velocity": [
+              200.43928319757634,
+              17.616823440248314
+            ],
+            "target": [
+              248.75083923339844,
+              -0.4871017634868622
+            ],
+            "speed_mean": 201.68907587815238,
+            "target_speed": 248.75131615219252,
+            "relative_error": 0.20740486630456495,
+            "density_mean": 0.4472810234874487,
+            "density_max": 0.9422364830970764,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.97294616699219,
+            "guide_mean": 1.0,
+            "sdf_min": 2052.0,
+            "sdf_mean": 2052.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_c": {
+            "count": 44,
+            "velocity": [
+              204.23583325472745,
+              2.8568532968109306
+            ],
+            "target": [
+              249.9458770751953,
+              -0.5976063013076782
+            ],
+            "speed_mean": 204.69925530383446,
+            "target_speed": 249.9465914954233,
+            "relative_error": 0.18340074246268923,
+            "density_mean": 0.3753922859376127,
+            "density_max": 0.7293815612792969,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.85895538330078,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_l": {
+            "count": 44,
+            "velocity": [
+              186.8961303017356,
+              -5.10085172273896
+            ],
+            "target": [
+              248.72821044921875,
+              -0.594694972038269
+            ],
+            "speed_mean": 187.26911248175963,
+            "target_speed": 248.72892138909103,
+            "relative_error": 0.24925151723469807,
+            "density_mean": 0.18854142276739533,
+            "density_max": 0.6716833710670471,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.95160675048828,
+            "guide_mean": 1.0,
+            "sdf_min": 2041.0,
+            "sdf_mean": 2041.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_2_r": {
+            "count": 44,
+            "velocity": [
+              205.48351114446467,
+              10.146349394863302
+            ],
+            "target": [
+              248.7597198486328,
+              -0.5947703123092651
+            ],
+            "speed_mean": 206.0530601065938,
+            "target_speed": 248.7604308785758,
+            "relative_error": 0.17924578049604428,
+            "density_mean": 0.3709319113245742,
+            "density_max": 0.8385199904441833,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.95076751708984,
+            "guide_mean": 1.0,
+            "sdf_min": 2041.0,
+            "sdf_mean": 2041.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_c": {
+            "count": 44,
+            "velocity": [
+              213.62376230413264,
+              19.193005009131
+            ],
+            "target": [
+              249.9451141357422,
+              0.09119374305009842
+            ],
+            "speed_mean": 219.22316295539443,
+            "target_speed": 249.94513077199156,
+            "relative_error": 0.1641881499640033,
+            "density_mean": 0.24272856996818024,
+            "density_max": 0.6640080213546753,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.87264251708984,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_l": {
+            "count": 44,
+            "velocity": [
+              194.99917221069336,
+              15.354651499878276
+            ],
+            "target": [
+              248.72193908691406,
+              0.09074746072292328
+            ],
+            "speed_mean": 200.25961988671696,
+            "target_speed": 248.72195564174913,
+            "relative_error": 0.22454432750918943,
+            "density_mean": 0.25482346498492087,
+            "density_max": 0.6586740016937256,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.9658203125,
+            "guide_mean": 1.0,
+            "sdf_min": 2054.0,
+            "sdf_mean": 2054.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_3_r": {
+            "count": 44,
+            "velocity": [
+              209.15944290161133,
+              22.92422939701514
+            ],
+            "target": [
+              248.76727294921875,
+              0.09076400101184845
+            ],
+            "speed_mean": 214.84567422072558,
+            "target_speed": 248.7672895070712,
+            "relative_error": 0.18377870077287778,
+            "density_mean": 0.27283236443657766,
+            "density_max": 0.7544324994087219,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.96595001220703,
+            "guide_mean": 1.0,
+            "sdf_min": 2054.0,
+            "sdf_mean": 2054.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_c": {
+            "count": 44,
+            "velocity": [
+              218.262226451527,
+              23.939406416632913
+            ],
+            "target": [
+              249.94471740722656,
+              0.8877747058868408
+            ],
+            "speed_mean": 224.0109958407219,
+            "target_speed": 249.94629403875297,
+            "relative_error": 0.15675804272094468,
+            "density_mean": 0.1558670713989572,
+            "density_max": 0.5868040323257446,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 119.8610610961914,
+            "guide_mean": 1.0,
+            "sdf_min": 2396.0,
+            "sdf_mean": 2396.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_l": {
+            "count": 44,
+            "velocity": [
+              198.8799601468173,
+              21.575857999649916
+            ],
+            "target": [
+              248.72601318359375,
+              0.8834460377693176
+            ],
+            "speed_mean": 204.52348430828658,
+            "target_speed": 248.72758212773047,
+            "relative_error": 0.21698601868043374,
+            "density_mean": 0.27888676574961707,
+            "density_max": 0.6262765526771545,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.9518814086914,
+            "guide_mean": 1.0,
+            "sdf_min": 2041.0,
+            "sdf_mean": 2041.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "wake_4_r": {
+            "count": 44,
+            "velocity": [
+              212.15015515414152,
+              25.962188839912415
+            ],
+            "target": [
+              248.7602081298828,
+              0.8835675120353699
+            ],
+            "speed_mean": 218.18788158192464,
+            "target_speed": 248.7617772897817,
+            "relative_error": 0.17838770839090004,
+            "density_mean": 0.17520295532250946,
+            "density_max": 0.6776241064071655,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 118.95313262939453,
+            "guide_mean": 1.0,
+            "sdf_min": 2042.0,
+            "sdf_mean": 2042.0,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 44,
+          "mean_dt_seconds": 0.11222535913640802,
+          "duration_seconds": 4.92197610065341,
+          "frame_age": {
+            "max": 3,
+            "mean": 3.0,
+            "waiting_ticks": 3
+          }
+        },
+        "submerged": {
+          "center": {
+            "count": 35,
+            "velocity": [
+              0.0,
+              0.0
+            ],
+            "target": [
+              248.12722778320312,
+              -30.190927505493164
+            ],
+            "speed_mean": 0.0,
+            "target_speed": 249.95722288227543,
+            "relative_error": 1.0,
+            "density_mean": 0.0,
+            "density_max": 0.0,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 20.603124618530273,
+            "guide_mean": 1.0,
+            "sdf_min": -75.75,
+            "sdf_mean": -75.75,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "beside_left": {
+            "count": 35,
+            "velocity": [
+              297.1469491141183,
+              -42.282095772879465
+            ],
+            "target": [
+              229.8484649658203,
+              -27.966856002807617
+            ],
+            "speed_mean": 300.97257270719734,
+            "target_speed": 231.54365005723156,
+            "relative_error": 0.2971541532582265,
+            "density_mean": 0.0449698768556118,
+            "density_max": 0.06410524994134903,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 106.50598907470703,
+            "guide_mean": 1.0,
+            "sdf_min": 53.46875,
+            "sdf_mean": 53.46875,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "beside_right": {
+            "count": 35,
+            "velocity": [
+              308.50326450892857,
+              -39.33246350969587
+            ],
+            "target": [
+              230.11431884765625,
+              -27.999202728271484
+            ],
+            "speed_mean": 311.063708108221,
+            "target_speed": 231.81146453991366,
+            "relative_error": 0.3416741049303396,
+            "density_mean": 0.03399799604501043,
+            "density_max": 0.05117056518793106,
+            "ripple_abs_max": 0.0,
+            "wetness_mean": 0.0,
+            "depth_mean": 106.3238296508789,
+            "guide_mean": 1.0,
+            "sdf_min": 55.03125,
+            "sdf_mean": 55.03125,
+            "known_fraction": 1.0,
+            "missing": 0
+          },
+          "sample_count": 35,
+          "mean_dt_seconds": 0.11345502840621131,
+          "duration_seconds": 3.9586921967566013,
+          "frame_age": {
+            "max": 3,
+            "mean": 3.0,
+            "waiting_ticks": 3
+          }
+        },
+        "crossing": {
+          "baseline": {
+            "error": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7",
+            "noise": {
+              "error": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7"
+            }
+          },
+          "move": {
+            "mode": "navigation",
+            "goal": [
+              4350.0,
+              4000.0
+            ]
+          },
+          "foam_first": {
+            "error": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7"
+          },
+          "foam_second": {
+            "error": "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7"
+          },
+          "reached_goal": true,
+          "crossing": {
+            "ticks": 50,
+            "ticks_in_water": 4,
+            "seconds_in_water": 0.5409669019281864,
+            "max_abs_ripple_cm": 56.625,
+            "max_center_depth_cm": 38.56087112426758,
+            "pawn_start": [
+              4350.0,
+              2800.0
+            ],
+            "pawn_end": [
+              4350.004336220347,
+              3968.8381548187585
+            ],
+            "duration_seconds": 6.524659398943186,
+            "sample_count": 50,
+            "mean_dt_seconds": 0.13088312193751336,
+            "frame_age": {
+              "max": 3,
+              "mean": 2.92,
+              "waiting_ticks": 197
+            }
+          }
+        },
+        "log_problems": {
+          "count": 0,
+          "first": [],
+          "ignored_python_navigation_ensures": 0
+        }
+      }
+    }
+  ],
+  "all_runs_passed": true,
+  "notes": [
+    "화면 항목(태양 반점 포화 비율, TSR 번짐, 창 경계 이음매, 바닥 비침·커스틱)은 이 탐침이 재지 않는다",
+    "창 이동 프레임 틱 p95와 SingleLayerWater GPU 시간은 C++ 계측과 ProfileGPU 로 따로 잰다",
+    "bank_band_wetness 는 물 셀 젖음이 0이면(W-2 A2 미구현) 판정을 보류한다",
+    "gpu 실행: awake_tick_cost 는 CPU 192² 예산이라 기록만 한다(GPU 게임 스레드 0.3ms 는 CSV GT 로 판정)",
+    "gpu 실행: 거품 격자(점 507개)는 탐침점 한도 64개·리드백 지연 때문에 읽지 않아 crossing_foam_centroid_shift 는 판정 보류다(수용은 헤드리스 R7)"
+  ]
+}

@@ -762,8 +762,10 @@ def open_stage_level():
         "    levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)\n"
         f"    exists = unreal.EditorAssetLibrary.does_asset_exist('{WATER_LEVEL_PATH}')\n"
         "    pie_running = editor.get_game_world() is not None\n"
-        f"    loaded = exists and not pie_running and (editor.get_editor_world().get_path_name().startswith('{WATER_LEVEL_PATH}') or levels.load_level('{WATER_LEVEL_PATH}'))\n"
-        f"    print('{pie_check_fluid.RESULT_MARKER}', json.dumps({{'exists': exists, 'pie_running': pie_running, 'loaded': bool(loaded), 'world': editor.get_editor_world().get_path_name()}}))\n"
+        "    editor_world = editor.get_editor_world()\n"
+        "    world_name = editor_world.get_path_name() if editor_world else ''\n"
+        f"    loaded = exists and not pie_running and (world_name.startswith('{WATER_LEVEL_PATH}') or levels.load_level('{WATER_LEVEL_PATH}'))\n"
+        f"    print('{pie_check_fluid.RESULT_MARKER}', json.dumps({{'exists': exists, 'pie_running': pie_running, 'loaded': bool(loaded), 'world': world_name}}))\n"
         "open_stage()\n"
     )
     return pie_check_fluid.parse_marker(pie_check_fluid.run_editor_code(code), pie_check_fluid.RESULT_MARKER)

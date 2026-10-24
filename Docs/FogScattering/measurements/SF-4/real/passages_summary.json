@@ -1,0 +1,812 @@
+[
+ {
+  "name": "pale_w000",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 0.0,
+  "distance_m": 0.0,
+  "pawn_target": [
+   31508.0,
+   41131.0,
+   399.2
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085350",
+  "state": {
+   "pie": true,
+   "pawn": [
+    31508.0,
+    41131.0,
+    399.2
+   ],
+   "active_realm": "None",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 4.0,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.0109,
+    "top": 0.09103,
+    "middle": 0.09102,
+    "bottom": 0.08326
+   },
+   "noise": {
+    "luminance_ratio": 1.00002,
+    "top": -0.0006,
+    "middle": 3e-05,
+    "bottom": -0.00219
+   }
+  }
+ },
+ {
+  "name": "pale_w010",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 0.1,
+  "distance_m": 56.44,
+  "pawn_target": [
+   36933.5,
+   42686.8,
+   850.7
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085501",
+  "state": {
+   "pie": true,
+   "pawn": [
+    36933.5,
+    42686.8,
+    850.7
+   ],
+   "active_realm": "None",
+   "weights": {
+    "PaleHeights": 0.1,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 7.375,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00793,
+    "top": 0.15035,
+    "middle": 0.11538,
+    "bottom": 0.07398
+   },
+   "noise": {
+    "luminance_ratio": 0.99982,
+    "top": -0.00211,
+    "middle": -0.00203,
+    "bottom": -0.00052
+   }
+  }
+ },
+ {
+  "name": "pale_w025",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 0.25,
+  "distance_m": 98.28,
+  "pawn_target": [
+   40955.5,
+   43840.2,
+   1185.3
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085546",
+  "state": {
+   "pie": true,
+   "pawn": [
+    40955.5,
+    43840.2,
+    1185.3
+   ],
+   "active_realm": "None",
+   "weights": {
+    "PaleHeights": 0.25,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 13.0,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.01212,
+    "top": 0.22659,
+    "middle": 0.13695,
+    "bottom": 0.10468
+   },
+   "noise": {
+    "luminance_ratio": 0.99987,
+    "top": 0.0007,
+    "middle": 0.00082,
+    "bottom": -0.00157
+   }
+  }
+ },
+ {
+  "name": "pale_w040",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 0.4,
+  "distance_m": 140.12,
+  "pawn_target": [
+   44977.5,
+   44993.6,
+   1520.0
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085631",
+  "state": {
+   "pie": true,
+   "pawn": [
+    44977.5,
+    44993.6,
+    1520.0
+   ],
+   "active_realm": "None",
+   "weights": {
+    "PaleHeights": 0.4,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 18.625,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.01305,
+    "top": 0.24032,
+    "middle": 0.16007,
+    "bottom": 0.10325
+   },
+   "noise": {
+    "luminance_ratio": 1.00007,
+    "top": 0.00055,
+    "middle": 8e-05,
+    "bottom": -0.00207
+   }
+  }
+ },
+ {
+  "name": "pale_w050",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 0.5,
+  "distance_m": 196.57,
+  "pawn_target": [
+   50400.0,
+   46560.0,
+   1945.6
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085709",
+  "state": {
+   "pie": true,
+   "pawn": [
+    50400.0,
+    46560.0,
+    1945.6
+   ],
+   "active_realm": "PaleHeights",
+   "weights": {
+    "PaleHeights": 0.5,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 22.0,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.02861,
+    "top": 0.17072,
+    "middle": 0.14499,
+    "bottom": 0.10272
+   },
+   "noise": {
+    "luminance_ratio": 0.99998,
+    "top": 0.00487,
+    "middle": -0.00074,
+    "bottom": 0.00186
+   }
+  }
+ },
+ {
+  "name": "pale_w060",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 0.6,
+  "distance_m": 223.14,
+  "pawn_target": [
+   52953.2,
+   47297.6,
+   2146.0
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085751",
+  "state": {
+   "pie": true,
+   "pawn": [
+    52953.2,
+    47297.6,
+    2146.0
+   ],
+   "active_realm": "PaleHeights",
+   "weights": {
+    "PaleHeights": 0.6,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 25.375,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.01683,
+    "top": 0.17946,
+    "middle": 0.17177,
+    "bottom": 0.09564
+   },
+   "noise": {
+    "luminance_ratio": 1.00002,
+    "top": -4e-05,
+    "middle": -0.00377,
+    "bottom": -0.00546
+   }
+  }
+ },
+ {
+  "name": "pale_w075",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 0.75,
+  "distance_m": 242.84,
+  "pawn_target": [
+   54847.2,
+   47839.8,
+   2285.7
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085829",
+  "state": {
+   "pie": true,
+   "pawn": [
+    54847.2,
+    47839.8,
+    2285.7
+   ],
+   "active_realm": "PaleHeights",
+   "weights": {
+    "PaleHeights": 0.75,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 31.0,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00825,
+    "top": 0.20289,
+    "middle": 0.1355,
+    "bottom": 0.08764
+   },
+   "noise": {
+    "luminance_ratio": 1.00001,
+    "top": 0.00595,
+    "middle": 0.00563,
+    "bottom": 0.00487
+   }
+  }
+ },
+ {
+  "name": "pale_w090",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 0.9,
+  "distance_m": 262.54,
+  "pawn_target": [
+   56742.8,
+   48376.3,
+   2414.5
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085908",
+  "state": {
+   "pie": true,
+   "pawn": [
+    56742.8,
+    48376.3,
+    2414.5
+   ],
+   "active_realm": "PaleHeights",
+   "weights": {
+    "PaleHeights": 0.9,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 36.625,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00704,
+    "top": 0.18477,
+    "middle": 0.11841,
+    "bottom": 0.08548
+   },
+   "noise": {
+    "luminance_ratio": 0.99993,
+    "top": 0.00732,
+    "middle": 0.00311,
+    "bottom": 0.00179
+   }
+  }
+ },
+ {
+  "name": "pale_w100",
+  "realm": "PaleHeights",
+  "gate": "PaleHeightsNortheast",
+  "expected_weight": 1.0,
+  "distance_m": 289.12,
+  "pawn_target": [
+   59299.9,
+   49100.0,
+   2588.3
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-085951",
+  "state": {
+   "pie": true,
+   "pawn": [
+    59299.9,
+    49100.0,
+    2588.3
+   ],
+   "active_realm": "PaleHeights",
+   "weights": {
+    "PaleHeights": 1.0,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 40.0,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00801,
+    "top": 0.18037,
+    "middle": 0.12481,
+    "bottom": 0.08155
+   },
+   "noise": {
+    "luminance_ratio": 1.0,
+    "top": 0.00202,
+    "middle": 4e-05,
+    "bottom": 0.00049
+   }
+  }
+ },
+ {
+  "name": "sunk_w000",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 0.0,
+  "distance_m": 0.0,
+  "pawn_target": [
+   -25000.0,
+   -44000.0,
+   1394.5
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090034",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -44000.0,
+    1394.5
+   ],
+   "active_realm": "None",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 4.0,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00532,
+    "top": 0.09493,
+    "middle": 0.05098,
+    "bottom": 0.03709
+   },
+   "noise": {
+    "luminance_ratio": 1.00002,
+    "top": 0.00045,
+    "middle": -0.00035,
+    "bottom": 0.00041
+   }
+  }
+ },
+ {
+  "name": "sunk_w010",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 0.1,
+  "distance_m": 18.38,
+  "pawn_target": [
+   -25000.0,
+   -45837.7,
+   1027.0
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090116",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -45837.7,
+    1027.0
+   ],
+   "active_realm": "None",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.1
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 4.1875,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00411,
+    "top": 0.05114,
+    "middle": 0.04195,
+    "bottom": 0.04372
+   },
+   "noise": {
+    "luminance_ratio": 0.99998,
+    "top": -0.0038,
+    "middle": -0.00185,
+    "bottom": 0.00245
+   }
+  }
+ },
+ {
+  "name": "sunk_w025",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 0.25,
+  "distance_m": 32.0,
+  "pawn_target": [
+   -25000.0,
+   -47200.0,
+   754.5
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090202",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -47200.0,
+    754.5
+   ],
+   "active_realm": "None",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.25
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 4.5,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00417,
+    "top": 0.0657,
+    "middle": 0.04049,
+    "bottom": 0.02627
+   },
+   "noise": {
+    "luminance_ratio": 1.00002,
+    "top": 0.0014,
+    "middle": -0.00102,
+    "bottom": -0.00102
+   }
+  }
+ },
+ {
+  "name": "sunk_w040",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 0.4,
+  "distance_m": 45.62,
+  "pawn_target": [
+   -25000.0,
+   -48562.3,
+   482.1
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090248",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -48562.3,
+    482.1
+   ],
+   "active_realm": "None",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.4
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 4.8125,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00449,
+    "top": 0.03485,
+    "middle": 0.02006,
+    "bottom": 0.01628
+   },
+   "noise": {
+    "luminance_ratio": 0.99988,
+    "top": -0.00178,
+    "middle": 0.00099,
+    "bottom": 0.00014
+   }
+  }
+ },
+ {
+  "name": "sunk_w050",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 0.5,
+  "distance_m": 64.0,
+  "pawn_target": [
+   -25000.0,
+   -50400.0,
+   114.6
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090334",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -50400.0,
+    114.6
+   ],
+   "active_realm": "SunkenStarfield",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.5
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 5.0,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00335,
+    "top": 0.04457,
+    "middle": 0.01823,
+    "bottom": 0.01635
+   },
+   "noise": {
+    "luminance_ratio": 0.99983,
+    "top": 0.00147,
+    "middle": -0.00141,
+    "bottom": -0.00142
+   }
+  }
+ },
+ {
+  "name": "sunk_w060",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 0.6,
+  "distance_m": 112.34,
+  "pawn_target": [
+   -25000.0,
+   -55233.7,
+   -852.2
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090416",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -55233.7,
+    -852.2
+   ],
+   "active_realm": "SunkenStarfield",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.6
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 5.1875,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 0.98497,
+    "top": 0.10428,
+    "middle": 0.03767,
+    "bottom": 0.03148
+   },
+   "noise": {
+    "luminance_ratio": 0.99969,
+    "top": 0.00223,
+    "middle": 0.00062,
+    "bottom": 0.0005
+   }
+  }
+ },
+ {
+  "name": "sunk_w075",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 0.75,
+  "distance_m": 148.17,
+  "pawn_target": [
+   -25000.0,
+   -58817.0,
+   -1050.0
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090502",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -58817.0,
+    -1050.0
+   ],
+   "active_realm": "SunkenStarfield",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.75
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 5.5,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 0.99433,
+    "top": 0.0652,
+    "middle": 0.04294,
+    "bottom": 0.02756
+   },
+   "noise": {
+    "luminance_ratio": 0.99999,
+    "top": 0.00061,
+    "middle": 0.00039,
+    "bottom": -0.00119
+   }
+  }
+ },
+ {
+  "name": "sunk_w090",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 0.9,
+  "distance_m": 184.0,
+  "pawn_target": [
+   -25000.0,
+   -62400.3,
+   -1954.9
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090547",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -62400.3,
+    -1954.9
+   ],
+   "active_realm": "SunkenStarfield",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 0.9
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 5.8125,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.00445,
+    "top": 0.11644,
+    "middle": 0.10775,
+    "bottom": 0.04537
+   },
+   "noise": {
+    "luminance_ratio": 1.00006,
+    "top": 0.00151,
+    "middle": -0.00158,
+    "bottom": -0.00045
+   }
+  }
+ },
+ {
+  "name": "sunk_w100",
+  "realm": "SunkenStarfield",
+  "gate": "SunkenStarfieldSouthwest",
+  "expected_weight": 1.0,
+  "distance_m": 232.34,
+  "pawn_target": [
+   -25000.0,
+   -67234.0,
+   -3250.0
+  ],
+  "lookdev": "Saved\\FluidFX\\lookdev\\20261024-090632",
+  "state": {
+   "pie": true,
+   "pawn": [
+    -25000.0,
+    -67234.0,
+    -3250.0
+   ],
+   "active_realm": "SunkenStarfield",
+   "weights": {
+    "PaleHeights": 0.0,
+    "SunkenStarfield": 1.0
+   },
+   "cvars": {
+    "r.TDFogScattering.DistanceScale": 6.0,
+    "r.TDFogScattering.WeightPower": 1.5,
+    "r.TDFogScattering.Intensity": 1.0
+   }
+  },
+  "metrics": {
+   "on": {
+    "luminance_ratio": 1.01028,
+    "top": 0.16967,
+    "middle": 0.10126,
+    "bottom": 0.08126
+   },
+   "noise": {
+    "luminance_ratio": 1.00001,
+    "top": 0.00096,
+    "middle": 0.00119,
+    "bottom": 0.00019
+   }
+  }
+ }
+]

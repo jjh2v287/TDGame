@@ -1,0 +1,98 @@
+{
+ "base": {
+  "console": [
+   "r.ProfileGPU.ShowUI 0",
+   "r.AntiAliasingMethod 0"
+  ]
+ },
+ "variants": [
+  {
+   "name": "arena_setup",
+   "apply": {
+    "time_dilation": 1.0,
+    "arm": 1100.0,
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering.DebugView 0"
+    ],
+    "pawn": [
+     0.0,
+     0.0,
+     250.0
+    ]
+   },
+   "settle": 10
+  },
+  {
+   "name": "arena_freeze",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "arena_a1100_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "arena_a1100_off2",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1",
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "arena_a1100_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "arena_zoom",
+   "apply": {
+    "time_dilation": 1.0,
+    "arm": 1540.0
+   },
+   "settle": 5
+  },
+  {
+   "name": "arena_freeze2",
+   "apply": {
+    "time_dilation": 0.0001
+   },
+   "settle": 3
+  },
+  {
+   "name": "arena_a1540_off",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 0"
+    ]
+   }
+  },
+  {
+   "name": "arena_a1540_on",
+   "apply": {
+    "console": [
+     "r.TDFogScattering 1"
+    ]
+   }
+  },
+  {
+   "name": "arena_resume",
+   "apply": {
+    "time_dilation": 1.0,
+    "arm": 1100.0
+   },
+   "settle": 2
+  }
+ ]
+}

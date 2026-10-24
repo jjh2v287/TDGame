@@ -1,0 +1,107 @@
+{
+  "luminance_tolerance": 0.03,
+  "pairs": [
+    {
+      "mean_luma_off": 103.882,
+      "mean_luma_on": 103.884,
+      "luminance_ratio": 1.00002,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.00148,
+      "max_difference": 24.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 218.484,
+          "laplacian_variance_on": 218.207,
+          "variance_ratio": 0.99873,
+          "sharpness_loss": 0.00127
+        },
+        "middle": {
+          "laplacian_variance_off": 52.642,
+          "laplacian_variance_on": 52.476,
+          "variance_ratio": 0.99684,
+          "sharpness_loss": 0.00316
+        },
+        "bottom": {
+          "laplacian_variance_off": 1.372,
+          "laplacian_variance_on": 1.37,
+          "variance_ratio": 0.99857,
+          "sharpness_loss": 0.00143
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090841\\02_arena_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090841\\03_arena_a1100_off2.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 103.882,
+      "mean_luma_on": 103.885,
+      "luminance_ratio": 1.00003,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.00143,
+      "max_difference": 63.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 218.484,
+          "laplacian_variance_on": 218.478,
+          "variance_ratio": 0.99997,
+          "sharpness_loss": 3e-05
+        },
+        "middle": {
+          "laplacian_variance_off": 52.642,
+          "laplacian_variance_on": 52.292,
+          "variance_ratio": 0.99336,
+          "sharpness_loss": 0.00664
+        },
+        "bottom": {
+          "laplacian_variance_off": 1.372,
+          "laplacian_variance_on": 1.373,
+          "variance_ratio": 1.00026,
+          "sharpness_loss": -0.00026
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090841\\02_arena_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090841\\04_arena_a1100_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 96.033,
+      "mean_luma_on": 96.033,
+      "luminance_ratio": 1.0,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.00139,
+      "max_difference": 21.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 308.163,
+          "laplacian_variance_on": 308.247,
+          "variance_ratio": 1.00027,
+          "sharpness_loss": -0.00027
+        },
+        "middle": {
+          "laplacian_variance_off": 109.242,
+          "laplacian_variance_on": 109.491,
+          "variance_ratio": 1.00228,
+          "sharpness_loss": -0.00228
+        },
+        "bottom": {
+          "laplacian_variance_off": 12.134,
+          "laplacian_variance_on": 12.16,
+          "variance_ratio": 1.00219,
+          "sharpness_loss": -0.00219
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090841\\07_arena_a1540_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090841\\08_arena_a1540_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    }
+  ]
+}

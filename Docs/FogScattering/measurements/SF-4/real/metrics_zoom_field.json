@@ -1,0 +1,413 @@
+{
+  "luminance_tolerance": 0.03,
+  "pairs": [
+    {
+      "mean_luma_off": 125.004,
+      "mean_luma_on": 125.023,
+      "luminance_ratio": 1.00015,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.3294,
+      "max_difference": 162.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 2960.596,
+          "laplacian_variance_on": 2955.033,
+          "variance_ratio": 0.99812,
+          "sharpness_loss": 0.00188
+        },
+        "middle": {
+          "laplacian_variance_off": 4329.042,
+          "laplacian_variance_on": 4327.36,
+          "variance_ratio": 0.99961,
+          "sharpness_loss": 0.00039
+        },
+        "bottom": {
+          "laplacian_variance_off": 2100.344,
+          "laplacian_variance_on": 2100.025,
+          "variance_ratio": 0.99985,
+          "sharpness_loss": 0.00015
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\02_f01_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\03_f01_a1100_off2.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 125.004,
+      "mean_luma_on": 126.167,
+      "luminance_ratio": 1.00931,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.52688,
+      "max_difference": 183.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 2960.596,
+          "laplacian_variance_on": 2484.302,
+          "variance_ratio": 0.83912,
+          "sharpness_loss": 0.16088
+        },
+        "middle": {
+          "laplacian_variance_off": 4329.042,
+          "laplacian_variance_on": 3896.03,
+          "variance_ratio": 0.89998,
+          "sharpness_loss": 0.10002
+        },
+        "bottom": {
+          "laplacian_variance_off": 2100.344,
+          "laplacian_variance_on": 1953.933,
+          "variance_ratio": 0.93029,
+          "sharpness_loss": 0.06971
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\02_f01_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\04_f01_a1100_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 124.319,
+      "mean_luma_on": 125.536,
+      "luminance_ratio": 1.00979,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.58614,
+      "max_difference": 150.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 4072.013,
+          "laplacian_variance_on": 3291.397,
+          "variance_ratio": 0.8083,
+          "sharpness_loss": 0.1917
+        },
+        "middle": {
+          "laplacian_variance_off": 5994.143,
+          "laplacian_variance_on": 5256.695,
+          "variance_ratio": 0.87697,
+          "sharpness_loss": 0.12303
+        },
+        "bottom": {
+          "laplacian_variance_off": 4399.029,
+          "laplacian_variance_on": 4024.359,
+          "variance_ratio": 0.91483,
+          "sharpness_loss": 0.08517
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\07_f01_a1540_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\08_f01_a1540_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 130.901,
+      "mean_luma_on": 130.911,
+      "luminance_ratio": 1.00008,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.39302,
+      "max_difference": 179.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 10431.38,
+          "laplacian_variance_on": 10436.607,
+          "variance_ratio": 1.0005,
+          "sharpness_loss": -0.0005
+        },
+        "middle": {
+          "laplacian_variance_off": 14870.279,
+          "laplacian_variance_on": 14868.892,
+          "variance_ratio": 0.99991,
+          "sharpness_loss": 9e-05
+        },
+        "bottom": {
+          "laplacian_variance_off": 8406.951,
+          "laplacian_variance_on": 8410.925,
+          "variance_ratio": 1.00047,
+          "sharpness_loss": -0.00047
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\12_f06_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\13_f06_a1100_off2.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 130.901,
+      "mean_luma_on": 132.428,
+      "luminance_ratio": 1.01167,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.64197,
+      "max_difference": 178.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 10431.38,
+          "laplacian_variance_on": 8700.573,
+          "variance_ratio": 0.83408,
+          "sharpness_loss": 0.16592
+        },
+        "middle": {
+          "laplacian_variance_off": 14870.279,
+          "laplacian_variance_on": 13146.972,
+          "variance_ratio": 0.88411,
+          "sharpness_loss": 0.11589
+        },
+        "bottom": {
+          "laplacian_variance_off": 8406.951,
+          "laplacian_variance_on": 7689.801,
+          "variance_ratio": 0.9147,
+          "sharpness_loss": 0.0853
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\12_f06_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\14_f06_a1100_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 127.638,
+      "mean_luma_on": 129.474,
+      "luminance_ratio": 1.01438,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.70179,
+      "max_difference": 185.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 10771.887,
+          "laplacian_variance_on": 8508.469,
+          "variance_ratio": 0.78988,
+          "sharpness_loss": 0.21012
+        },
+        "middle": {
+          "laplacian_variance_off": 14960.695,
+          "laplacian_variance_on": 12801.246,
+          "variance_ratio": 0.85566,
+          "sharpness_loss": 0.14434
+        },
+        "bottom": {
+          "laplacian_variance_off": 8110.219,
+          "laplacian_variance_on": 7212.089,
+          "variance_ratio": 0.88926,
+          "sharpness_loss": 0.11074
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\17_f06_a1540_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\18_f06_a1540_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 153.706,
+      "mean_luma_on": 153.704,
+      "luminance_ratio": 0.99998,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.37035,
+      "max_difference": 206.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 17072.493,
+          "laplacian_variance_on": 17031.467,
+          "variance_ratio": 0.9976,
+          "sharpness_loss": 0.0024
+        },
+        "middle": {
+          "laplacian_variance_off": 11370.068,
+          "laplacian_variance_on": 11383.921,
+          "variance_ratio": 1.00122,
+          "sharpness_loss": -0.00122
+        },
+        "bottom": {
+          "laplacian_variance_off": 3524.293,
+          "laplacian_variance_on": 3522.028,
+          "variance_ratio": 0.99936,
+          "sharpness_loss": 0.00064
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\22_p01_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\23_p01_a1100_off2.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 153.706,
+      "mean_luma_on": 154.962,
+      "luminance_ratio": 1.00817,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.48247,
+      "max_difference": 208.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 17072.493,
+          "laplacian_variance_on": 13945.869,
+          "variance_ratio": 0.81686,
+          "sharpness_loss": 0.18314
+        },
+        "middle": {
+          "laplacian_variance_off": 11370.068,
+          "laplacian_variance_on": 9914.331,
+          "variance_ratio": 0.87197,
+          "sharpness_loss": 0.12803
+        },
+        "bottom": {
+          "laplacian_variance_off": 3524.293,
+          "laplacian_variance_on": 3236.797,
+          "variance_ratio": 0.91842,
+          "sharpness_loss": 0.08158
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\22_p01_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\24_p01_a1100_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 150.023,
+      "mean_luma_on": 151.829,
+      "luminance_ratio": 1.01204,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.51024,
+      "max_difference": 194.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 15528.582,
+          "laplacian_variance_on": 11929.588,
+          "variance_ratio": 0.76823,
+          "sharpness_loss": 0.23177
+        },
+        "middle": {
+          "laplacian_variance_off": 11032.737,
+          "laplacian_variance_on": 9155.947,
+          "variance_ratio": 0.82989,
+          "sharpness_loss": 0.17011
+        },
+        "bottom": {
+          "laplacian_variance_off": 3861.543,
+          "laplacian_variance_on": 3445.393,
+          "variance_ratio": 0.89223,
+          "sharpness_loss": 0.10777
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\27_p01_a1540_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\28_p01_a1540_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 68.862,
+      "mean_luma_on": 68.853,
+      "luminance_ratio": 0.99987,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.35256,
+      "max_difference": 209.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 7224.374,
+          "laplacian_variance_on": 7218.299,
+          "variance_ratio": 0.99916,
+          "sharpness_loss": 0.00084
+        },
+        "middle": {
+          "laplacian_variance_off": 6402.591,
+          "laplacian_variance_on": 6403.73,
+          "variance_ratio": 1.00018,
+          "sharpness_loss": -0.00018
+        },
+        "bottom": {
+          "laplacian_variance_off": 11145.73,
+          "laplacian_variance_on": 11148.818,
+          "variance_ratio": 1.00028,
+          "sharpness_loss": -0.00028
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\32_s01_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\33_s01_a1100_off2.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 68.862,
+      "mean_luma_on": 69.575,
+      "luminance_ratio": 1.01036,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.64598,
+      "max_difference": 210.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 7224.374,
+          "laplacian_variance_on": 6006.269,
+          "variance_ratio": 0.83139,
+          "sharpness_loss": 0.16861
+        },
+        "middle": {
+          "laplacian_variance_off": 6402.591,
+          "laplacian_variance_on": 5757.717,
+          "variance_ratio": 0.89928,
+          "sharpness_loss": 0.10072
+        },
+        "bottom": {
+          "laplacian_variance_off": 11145.73,
+          "laplacian_variance_on": 10233.805,
+          "variance_ratio": 0.91818,
+          "sharpness_loss": 0.08182
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\32_s01_a1100_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\34_s01_a1100_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    },
+    {
+      "mean_luma_off": 66.749,
+      "mean_luma_on": 67.688,
+      "luminance_ratio": 1.01407,
+      "luminance_ok": true,
+      "changed_pixel_ratio": 0.71636,
+      "max_difference": 195.0,
+      "bands": {
+        "top": {
+          "laplacian_variance_off": 7342.827,
+          "laplacian_variance_on": 5795.269,
+          "variance_ratio": 0.78924,
+          "sharpness_loss": 0.21076
+        },
+        "middle": {
+          "laplacian_variance_off": 8413.83,
+          "laplacian_variance_on": 7310.611,
+          "variance_ratio": 0.86888,
+          "sharpness_loss": 0.13112
+        },
+        "bottom": {
+          "laplacian_variance_off": 12258.934,
+          "laplacian_variance_on": 10904.206,
+          "variance_ratio": 0.88949,
+          "sharpness_loss": 0.11051
+        }
+      },
+      "off": "Saved\\FluidFX\\lookdev\\20261024-090947\\37_s01_a1540_off.png",
+      "on": "Saved\\FluidFX\\lookdev\\20261024-090947\\38_s01_a1540_on.png",
+      "size": [
+        1280,
+        720
+      ]
+    }
+  ]
+}

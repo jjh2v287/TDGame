@@ -33,6 +33,7 @@
 | 7g | [research/concurrency.md](AgentCollaboration/research/concurrency.md) | 같은 작업 트리 동시 작업: 파일 동시성·단일 자원 잠금·git |
 | 7h | [research/vendor-native.md](AgentCollaboration/research/vendor-native.md) | 벤더 내장 연속성 기능(자동 메모리·재개·체크포인트)의 범위 |
 | 7i | [research/academic-sota.md](AgentCollaboration/research/academic-sota.md) | 학계·업계 에이전트 메모리 최신 동향과 실무 적용 가능성 |
+| 7j | [research/narsha-adk.md](AgentCollaboration/research/narsha-adk.md) | NarshaADK(NarshaMCP) 활용 검토: 오프라인 읽기 정확도 실측, 규칙 충돌, 에이전트 나이아가라 제작 단계별 판정 |
 | 8 | [02 최종 설계안](AgentCollaboration/02-design-final.md) | 워크플로가 종합한 설계안 원문(규칙 32·파일 배치·절차·이관 11단계) |
 | 9 | [03 설계안 3개와 심사](AgentCollaboration/03-design-alternatives-and-judging.md) | 최소 변경·LLM Wiki 중심·강제력 중심 안과 3렌즈 채점 |
 | 10 | [04 반박 검증과 비평](AgentCollaboration/04-verification.md) | 반박 3렌즈 지적과 수정, 근거 정정 목록, 사용자 결정 목록 |

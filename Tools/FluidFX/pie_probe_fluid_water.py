@@ -1,7 +1,7 @@
-"""실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, C++ 묶음 B1 재빌드·재시작과 editor_make_fluid_water_material.py·editor_make_fluid_water_stage.py(scenes [0, 1]) 성공 뒤, 에디터 앞창 유지 L-editor-06). LV_TDFluidWaterStage 장면 1(강) PIE 에서 명세 acceptance [W-1 강, PIE 수치]를 셀 표본 직접 단언으로 잰다.
-실행 명령: python Tools/FluidFX/pie_probe_fluid_water.py [--runs 2] [--stop-pie] (PowerShell, 좌표는 Saved/FluidFX/fluid_water_stage.json 의 river.probe_points)
-출력: Docs/Validation/FluidFX/D-49-fxw1-probe-<날짜>.json(실행마다 판정 항목·측정값, 연속 통과 판정). 종료 코드 0 모든 실행 모든 항목 통과/1 실패 항목 있음/2 환경 문제
-상태: 미검증(C1 작성분, B1 C++ 이름은 명세 가정). 화면 항목(태양 반점 포화 비율·TSR 번짐·창 경계 이음매)과 창 이동 프레임 p95·GPU 시간은 재지 않고 부모가 PIE 화면과 ProfileGPU 로 판정한다.
+"""실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, C++ 묶음 B1 재빌드·재시작과 editor_make_fluid_water_material.py·editor_make_fluid_water_stage.py(scenes [0, 1]) 성공 뒤, 에디터 앞창 유지 L-editor-06). LV_TDFluidWaterStage 장면 1(강) PIE 에서 명세 acceptance [W-1 강, PIE 수치]를 물 탐침 질의(set_water_probe_locations·get_water_probe_samples)로 CPU·GPU 백엔드 공통 9필드 단언으로 잰다(FX-4b 통합 d00a3f54 뒤 빌드).
+실행 명령: python Tools/FluidFX/pie_probe_fluid_water.py [--backend cpu|gpu] [--grid N] [--runs 2] [--stop-pie] (PowerShell, 좌표는 Saved/FluidFX/fluid_water_stage.json 의 river.probe_points). 기본 cpu·프리셋 해상도이며 gpu 는 콘솔 TD.FluidFX.WaterGpu 1 을 먼저 켜고 끝나면 원래 콘솔 값과 원래 simulation_config 사본으로 되돌린다
+출력: Docs/Validation/FluidFX/FX-4b-probe-<backend><grid>-<날짜>.json(실행마다 판정 항목·측정값·표본 프레임 나이, 연속 통과 판정). 종료 코드 0 모든 실행 모든 항목 통과/1 실패 항목 있음/2 환경 문제(gpu 인데 is_using_gpu_water_layer 거짓, 필드 완전성 관문 실패 포함)
+상태: 탐침 질의·백엔드 선택·관문은 오프라인 가짜 unreal 시험만 통과, 실제 PIE 미검증(2026-10-24). 화면 항목(태양 반점 포화 비율·TSR 번짐·창 경계 이음매)과 창 이동 프레임 p95·GPU 시간은 재지 않고 부모가 PIE 화면과 ProfileGPU 로 판정한다. gpu 실행은 awake_tick_cost 를 기록만 하고 거품 격자는 읽지 않는다.
 """
 import argparse
 import ast
@@ -23,7 +23,9 @@ import uemcp
 LOG_PATH = ROOT / "Saved" / "Logs" / "TDGame.log"
 STAGE_REPORT_PATH = ROOT / "Saved" / "FluidFX" / "fluid_water_stage.json"
 MATERIAL_SCRIPT_PATH = ROOT / "Tools" / "FluidFX" / "editor_make_fluid_water_material.py"
-EVIDENCE_PATH = ROOT / "Docs" / "Validation" / "FluidFX" / f"D-49-fxw1-probe-{date.today().isoformat()}.json"
+EVIDENCE_DIRECTORY = ROOT / "Docs" / "Validation" / "FluidFX"
+WATER_GPU_CONSOLE_VARIABLE = "TD.FluidFX.WaterGpu"
+BACKEND_CHOICES = ("cpu", "gpu")
 WATER_LEVEL_PATH = "/Game/FluidFX/Maps/LV_TDFluidWaterStage"
 RESULT_MARKER = "TD_FLUID_WATER_PROBE_RESULT"
 NAVIGATION_MARKER = "TD_FLUID_WATER_NAV"
@@ -77,6 +79,11 @@ CROSSING_GOAL_TOLERANCE_CM = 80.0
 FOAM_SNAPSHOT_GAP_SECONDS = 1.0
 NAVIGATION_WAIT_SECONDS = 150.0
 NAVIGATION_POLL_SECONDS = 5.0
+BACKEND_WAIT_SECONDS = 10.0
+BACKEND_POLL_SECONDS = 0.5
+GATE_TIMEOUT_SECONDS = 20.0
+GATE_POLL_SECONDS = 0.5
+FOAM_GRID_GPU_SKIP_REASON = "GPU 백엔드는 거품 격자(점 507개)를 한 프레임에 읽지 못해(탐침점 한도 64개·리드백 지연) 건너뜀, 수용은 헤드리스 R7"
 ROCK_WAKE_DISTANCES_CM = (60.0, 120.0, 180.0, 240.0, 300.0)
 ROCK_WAKE_LATERALS_CM = (("c", 0.0), ("l", 40.0), ("r", -40.0))
 EXIT_FAILED = 1
@@ -98,16 +105,20 @@ FOAM_BASELINE_ATTRIBUTE = "td_water_probe_foam_baseline"
 FOAM_NOISE_ATTRIBUTE = "td_water_probe_foam_noise"
 FOAM_NOISE_MARGIN = 0.01
 FOAM_NOISE_PERCENTILE = 0.95
+ORIGINAL_CONFIG_ATTRIBUTE = "td_water_probe_original_config"
+PROBE_LIMIT = 64
 SAMPLE_PROPERTIES = (
-    "primary_density",
-    "obstacle_sdf",
+    "is_inside_window",
+    "whitewater",
+    "obstacle_sdf_cm",
     "velocity_cm_per_sec",
     "water_depth_cm",
     "wetness",
     "flow_guide_weight",
-    "flow_target_velocity",
+    "flow_target_velocity_cm_per_sec",
     "ripple_height_cm",
     "is_terrain_known",
+    "frame_age",
 )
 RING_RADII_CM = (50.0, 100.0)
 RING_DIRECTIONS = 8
@@ -154,30 +165,53 @@ def mean(values):
     return sum(values) / len(values) if values else None
 
 
-def read_cell(component, x_cm, y_cm, z_cm):
-    outcome = component.sample_fluid_at_world_location(unreal.Vector(x_cm, y_cm, z_cm))
-    if outcome is None:
+def to_cell(sample):
+    if not sample.get_editor_property("is_inside_window"):
         return None
-    if isinstance(outcome, tuple):
-        if not outcome[0]:
-            return None
-        outcome = outcome[1]
-    sample = outcome
     velocity = sample.get_editor_property("velocity_cm_per_sec")
-    target = sample.get_editor_property("flow_target_velocity")
+    target = sample.get_editor_property("flow_target_velocity_cm_per_sec")
     return {
         "vx": float(velocity.x),
         "vy": float(velocity.y),
         "tx": float(target.x),
         "ty": float(target.y),
-        "density": float(sample.get_editor_property("primary_density")),
+        "density": float(sample.get_editor_property("whitewater")),
         "ripple": float(sample.get_editor_property("ripple_height_cm")),
         "wetness": float(sample.get_editor_property("wetness")),
         "depth": float(sample.get_editor_property("water_depth_cm")),
         "guide": float(sample.get_editor_property("flow_guide_weight")),
-        "sdf": float(sample.get_editor_property("obstacle_sdf")),
+        "sdf": float(sample.get_editor_property("obstacle_sdf_cm")),
         "known": bool(sample.get_editor_property("is_terrain_known")),
     }
+
+
+def submit_probe_points(component, locations):
+    component.set_water_probe_locations([unreal.Vector(point[0], point[1], point[2]) for point in locations])
+
+
+def collect_probe_cells(component, expected_count):
+    outcome = component.get_water_probe_samples()
+    if isinstance(outcome, tuple):
+        if not outcome[0]:
+            return None
+        outcome = outcome[1]
+    samples = list(outcome) if outcome is not None else []
+    if len(samples) != expected_count:
+        return None
+    ages = [int(sample.get_editor_property("frame_age")) for sample in samples]
+    return [to_cell(sample) for sample in samples], max(ages, default=0)
+
+
+def read_cells_in_batches(component, locations):
+    cells = []
+    for start in range(0, len(locations), PROBE_LIMIT):
+        batch = locations[start:start + PROBE_LIMIT]
+        submit_probe_points(component, batch)
+        collected = collect_probe_cells(component, len(batch))
+        if collected is None:
+            return None
+        cells.extend(collected[0])
+    return cells
 
 
 def aggregate(records):
@@ -214,7 +248,7 @@ def game_time(world):
 
 def action_status(world):
     actor = water_actor(world)
-    sample_struct = unreal.TDFluidCellSample()
+    sample_struct = unreal.TDFluidWaterPointSample()
     live = {}
     for live_actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.TDFluidLiveActor):
         live[live_actor.get_actor_label()] = bool(live_actor.get_editor_property("live_component").is_simulation_awake())
@@ -294,16 +328,24 @@ def stop_sampler():
 
 def make_points_sampler(world, meta):
     component = water_component(world)
-    points = meta["points"]
+    names = list(meta["points"])
+    if len(names) > PROBE_LIMIT:
+        raise ValueError("물 탐침점은 한 번에 64개까지다")
     z_cm = meta["z"]
+    submit_probe_points(component, [(point[0], point[1], z_cm) for point in meta["points"].values()])
 
     def sample(delta_seconds):
         current_world = game_world()
         if current_world is None:
             return None
-        record = {"t": game_time(current_world), "dt": delta_seconds}
-        for name, point in points.items():
-            record[name] = read_cell(component, point[0], point[1], z_cm)
+        collected = collect_probe_cells(component, len(names))
+        if collected is None:
+            meta["waiting_ticks"] += 1
+            return None
+        cells, frame_age = collected
+        record = {"t": game_time(current_world), "dt": delta_seconds, "frame_age": frame_age}
+        for name, cell in zip(names, cells):
+            record[name] = cell
         return record
 
     return sample
@@ -332,18 +374,27 @@ def make_crossing_sampler(world, meta):
     pawn, controller = pawn_and_controller(world)
     offsets = ring_offsets()
     z_cm = meta["z"]
+    submitted_pawn = []
 
     def sample(delta_seconds):
         current_world = game_world()
         if current_world is None:
             return None
-        location = pawn.get_actor_location()
-        cells = [read_cell(component, location.x + dx, location.y + dy, z_cm) for dx, dy in offsets]
+        if not submitted_pawn:
+            location = pawn.get_actor_location()
+            submit_probe_points(component, [(location.x + dx, location.y + dy, z_cm) for dx, dy in offsets])
+            submitted_pawn.append([location.x, location.y])
+        collected = collect_probe_cells(component, len(offsets))
+        if collected is None:
+            meta["waiting_ticks"] += 1
+            return None
+        cells, frame_age = collected
         valid = [cell for cell in cells if cell is not None]
         return {
             "t": game_time(current_world),
             "dt": delta_seconds,
-            "pawn": [location.x, location.y],
+            "pawn": submitted_pawn.pop(),
+            "frame_age": frame_age,
             "center_depth": cells[0]["depth"] if cells[0] is not None else None,
             "ripple_abs_max": max(abs(cell["ripple"]) for cell in valid) if valid else None,
             "density_max": max(cell["density"] for cell in valid) if valid else None,
@@ -358,6 +409,7 @@ SAMPLER_FACTORIES = {"points": make_points_sampler, "wake": make_wake_sampler, "
 def action_sampler_start(world):
     stop_sampler()
     meta = {key: value for key, value in PARAMS.items() if key != "action"}
+    meta["waiting_ticks"] = 0
     samples = []
     setattr(unreal, SAMPLES_ATTRIBUTE, samples)
     setattr(unreal, META_ATTRIBUTE, meta)
@@ -373,10 +425,11 @@ def action_sampler_start(world):
         elapsed = delta_seconds if last_time[0] is None else now - last_time[0]
         if last_time[0] is not None and elapsed < interval:
             return
-        last_time[0] = now
         record = sample(elapsed)
-        if record is not None:
-            samples.append(record)
+        if record is None:
+            return
+        last_time[0] = now
+        samples.append(record)
 
     setattr(unreal, HANDLE_ATTRIBUTE, unreal.register_slate_post_tick_callback(tick))
     return {"started": True, "kind": meta["kind"]}
@@ -446,6 +499,9 @@ def action_sampler_stop(world):
     result["sample_count"] = len(samples)
     result["mean_dt_seconds"] = mean([record["dt"] for record in samples])
     result["duration_seconds"] = samples[-1]["t"] - samples[0]["t"]
+    ages = [record["frame_age"] for record in samples if "frame_age" in record]
+    if ages:
+        result["frame_age"] = {"max": max(ages), "mean": mean(ages), "waiting_ticks": meta["waiting_ticks"]}
     return result
 
 
@@ -463,10 +519,12 @@ def action_foam_grid(world):
             grid.append((distance, origin[0] + tangent[0] * distance + normal[0] * lateral, origin[1] + tangent[1] * distance + normal[1] * lateral))
             lateral += step
         distance += step
+    cells = read_cells_in_batches(component, [(x_cm, y_cm, PARAMS["z"]) for _, x_cm, y_cm in grid])
+    if cells is None:
+        return {"error": "물 탐침 표본을 같은 프레임에 읽지 못했다(GPU 리드백 지연)"}
     densities = []
     missing = 0
-    for _, x_cm, y_cm in grid:
-        cell = read_cell(component, x_cm, y_cm, PARAMS["z"])
+    for cell in cells:
         if cell is None:
             missing += 1
         densities.append(cell["density"] if cell is not None else 0.0)
@@ -566,11 +624,89 @@ def action_mid_state(world):
         "layer_alpha": float(actor.get_water_layer_display_alpha()),
         "driven_surface_count": int(actor.get_driven_surface_count()),
         "shared_material_count": int(actor.get_shared_surface_material_count()),
-        "surface_texture_bound": component.get_water_surface_texture() is not None,
+        "surface_texture_bound": water_surface_texture(component) is not None,
         "surface_actors": surface_actors,
         "unique_mid_count": len(mids),
         "mids": [describe_material_instance(mid) for mid in mids.values()],
     }
+
+
+def water_surface_texture(component):
+    getter = getattr(component, "get_water_surface_output_texture", None) or component.get_water_surface_texture
+    return getter()
+
+
+def backend_value(name):
+    return getattr(unreal.TDFluidSolverBackend, name.upper())
+
+
+def describe_backend(component):
+    configuration = component.get_editor_property("simulation_config")
+    texture = component.get_density_pressure_texture()
+    uses_gpu = getattr(component, "is_using_gpu_water_layer", None)
+    return {
+        "solver_backend": str(configuration.get_editor_property("solver_backend")),
+        "grid_resolution": int(configuration.get_editor_property("grid_resolution")),
+        "uses_gpu_water_layer": bool(uses_gpu()) if uses_gpu is not None else None,
+        "density_texture_class": texture.get_class().get_name() if texture is not None else None,
+        "awake": bool(component.is_simulation_awake()),
+    }
+
+
+def action_console_variable(world):
+    name = PARAMS["name"]
+    original = unreal.SystemLibrary.get_console_variable_int_value(name)
+    if PARAMS.get("value") is not None:
+        unreal.SystemLibrary.execute_console_command(world, name + " " + str(PARAMS["value"]))
+    return {"name": name, "original": original, "current": unreal.SystemLibrary.get_console_variable_int_value(name)}
+
+
+def action_configure_backend(world):
+    component = water_component(world)
+    live = component.get_editor_property("simulation_config")
+    stored = getattr(unreal, ORIGINAL_CONFIG_ATTRIBUTE, None)
+    has_stored = stored is not None and stored["component"] == component.get_path_name()
+    base = stored["config"] if has_stored else live
+    wanted = backend_value(PARAMS["backend"])
+    grid = int(PARAMS["grid"]) if PARAMS.get("grid") else int(base.get_editor_property("grid_resolution"))
+    is_unchanged = live.get_editor_property("solver_backend") == wanted and int(live.get_editor_property("grid_resolution")) == grid
+    if is_unchanged and not PARAMS["force"]:
+        return {"applied": False, **describe_backend(component)}
+    if not has_stored:
+        setattr(unreal, ORIGINAL_CONFIG_ATTRIBUTE, {"component": component.get_path_name(), "config": live.copy()})
+    configuration = base.copy()
+    configuration.set_editor_property("solver_backend", wanted)
+    configuration.set_editor_property("grid_resolution", grid)
+    component.apply_simulation_config(configuration)
+    return {"applied": True, **describe_backend(component)}
+
+
+def action_restore_backend(world):
+    component = water_component(world)
+    component.set_water_probe_locations([])
+    stored = getattr(unreal, ORIGINAL_CONFIG_ATTRIBUTE, None)
+    setattr(unreal, ORIGINAL_CONFIG_ATTRIBUTE, None)
+    if stored is None or stored["component"] != component.get_path_name():
+        return {"restored": False, **describe_backend(component)}
+    component.apply_simulation_config(stored["config"].copy())
+    return {"restored": True, **describe_backend(component)}
+
+
+def action_backend_state(world):
+    return describe_backend(water_component(world))
+
+
+def action_gate_submit(world):
+    submit_probe_points(water_component(world), [PARAMS["point"]])
+    return {"submitted": True}
+
+
+def action_gate_collect(world):
+    collected = collect_probe_cells(water_component(world), 1)
+    if collected is None:
+        return {"ready": False}
+    cells, frame_age = collected
+    return {"ready": True, "cell": cells[0], "frame_age": frame_age}
 
 
 def run():
@@ -816,14 +952,20 @@ def run_submerged_leg(rock):
     return editor_action("sampler_stop")
 
 
-def run_crossing_leg(crossing):
+def read_foam_grid(backend, mode, grid):
+    if backend == "gpu":
+        return {"error": FOAM_GRID_GPU_SKIP_REASON}
+    return editor_action("foam_grid", mode=mode, **grid)
+
+
+def run_crossing_leg(crossing, backend="cpu"):
     start, goal, box = crossing["start"], crossing["goal"], crossing["foam_box"]
     teleport(start)
     time.sleep(CROSSING_SETTLE_SECONDS)
     grid = {"origin": box["origin"], "tangent": crossing["tangent"], "s0": box["s_range_cm"][0], "s1": box["s_range_cm"][1], "half": box["half_width_cm"], "step": box["step_cm"], "z": start[2]}
-    baseline = editor_action("foam_grid", mode="baseline", **grid)
+    baseline = read_foam_grid(backend, "baseline", grid)
     time.sleep(FOAM_SNAPSHOT_GAP_SECONDS)
-    baseline["noise"] = editor_action("foam_grid", mode="noise", **grid)
+    baseline["noise"] = read_foam_grid(backend, "noise", grid)
     editor_action("sampler_start", kind="crossing", z=start[2], min_depth=CROSSING_MINIMUM_DEPTH_CM, interval=CROSSING_SAMPLE_INTERVAL_SECONDS)
     move = editor_action("move", goal_x=goal[0], goal_y=goal[1])
     result = {"baseline": baseline, "move": move}
@@ -838,9 +980,9 @@ def run_crossing_leg(crossing):
         if state.get("y") is not None and state["y"] >= water_exit_y:
             break
         time.sleep(CROSSING_POLL_SECONDS)
-    result["foam_first"] = editor_action("foam_grid", mode="compare", **grid)
+    result["foam_first"] = read_foam_grid(backend, "compare", grid)
     time.sleep(FOAM_SNAPSHOT_GAP_SECONDS)
-    result["foam_second"] = editor_action("foam_grid", mode="compare", **grid)
+    result["foam_second"] = read_foam_grid(backend, "compare", grid)
     while time.monotonic() < deadline:
         state = editor_action("pawn_state")
         if state.get("y") is not None and state["y"] >= goal[1] - CROSSING_GOAL_TOLERANCE_CM:
@@ -966,6 +1108,8 @@ def best_profile_shift_cm(first, second):
 
 def judge_foam_shift(crossing_leg):
     first, second = crossing_leg.get("foam_first"), crossing_leg.get("foam_second")
+    if first and first.get("error") == FOAM_GRID_GPU_SKIP_REASON:
+        return rule(None, FOAM_GRID_GPU_SKIP_REASON, "gpu 실행은 거품 격자를 읽지 않아 판정 보류(진단 항목)", required=False)
     if not first or not second or "error" in first or "error" in second:
         return rule(None, {"first": first, "second": second}, "거품 격자 표본 없음")
     elapsed = second["game_time"] - first["game_time"]
@@ -1038,10 +1182,12 @@ def judge_wake(wake):
     return rule(passed, wake, "잠들었다 깨어난 직후 FluidWaterLayerActive 0, 지형 완료 뒤 1초에 걸쳐 1")
 
 
-def judge_awake_cost(flow):
+def judge_awake_cost(flow, backend="cpu"):
     cpu = flow.get("cpu", {})
     average = cpu.get("avg_tick_ms")
     passed = average is not None and average <= AWAKE_TICK_BUDGET_MS and cpu.get("awake_actors_max") == 1
+    if backend == "gpu":
+        return rule(passed, cpu, f"깨어 있을 때 TDFluidPerf 틱 평균 ≤ {AWAKE_TICK_BUDGET_MS}ms(CPU 192² 예산), 깨어 있는 액터 1개: GPU 실행은 기록만, GPU 게임 스레드 0.3ms 는 CSV GT 로 판정", required=False)
     return rule(passed, cpu, f"깨어 있을 때 TDFluidPerf 틱 평균 ≤ {AWAKE_TICK_BUDGET_MS}ms, 깨어 있는 액터 1개")
 
 
@@ -1056,7 +1202,7 @@ def judge_log(problems):
     return rule(problems["count"] == 0, problems, "실행 중 로그에 오류·단언 실패 없음")
 
 
-def judge_run(run_data, layout):
+def judge_run(run_data, layout, backend="cpu"):
     flow = run_data["flow"]
     mid = flow.get("mid", {})
     return {
@@ -1077,7 +1223,7 @@ def judge_run(run_data, layout):
         "mid_parameter_values": judge_mid_values(mid),
         "ribbon_actor_has_no_region_tag": judge_no_region_tag(mid),
         "wake_layer_alpha_ramp": judge_wake(run_data["wake"]),
-        "awake_tick_cost": judge_awake_cost(flow),
+        "awake_tick_cost": judge_awake_cost(flow, backend),
         "asleep_tick_cost": judge_asleep_cost(run_data["asleep"]),
         "no_log_errors": judge_log(run_data["log_problems"]),
     }
@@ -1087,7 +1233,88 @@ def count_failures(rules):
     return [name for name, item in rules.items() if item["required"] and item["passed"] is not True]
 
 
-def run_once(points, layout, contract, sleep_delay_seconds):
+def has_expected_backend(state, backend):
+    uses_gpu = state.get("uses_gpu_water_layer")
+    if backend == "gpu":
+        return uses_gpu is True
+    return uses_gpu is not True
+
+
+def prepare_backend(setup, backend, grid):
+    if backend == "gpu":
+        setup["water_gpu_variable"] = editor_action("console_variable", name=WATER_GPU_CONSOLE_VARIABLE, value=1)
+    state = editor_action("configure_backend", backend=backend, grid=grid, force=backend == "gpu")
+    setup["configured"] = state
+    deadline = time.monotonic() + BACKEND_WAIT_SECONDS
+    while "error" not in state:
+        if has_expected_backend(state, backend):
+            break
+        if time.monotonic() >= deadline:
+            state = {**state, "error": "is_using_gpu_water_layer 가 " + ("참이 아니다" if backend == "gpu" else "거짓이 아니다")}
+            break
+        time.sleep(BACKEND_POLL_SECONDS)
+        state = editor_action("backend_state")
+    setup["state"] = state
+    return "error" not in state
+
+
+def restore_backend(setup):
+    restored = {"configuration": editor_action("restore_backend")}
+    variable = setup.get("water_gpu_variable") or {}
+    if variable.get("original") is not None:
+        restored["water_gpu_variable"] = editor_action("console_variable", name=WATER_GPU_CONSOLE_VARIABLE, value=variable["original"])
+    return restored
+
+
+def warn_if_restore_failed(setup):
+    restored = setup["restored"]
+    if setup.get("configured", {}).get("applied") and restored["configuration"].get("restored") is not True:
+        print("경고: simulation_config 를 원래 사본으로 되돌리지 못했다(에디터에서 확인):", json.dumps(restored["configuration"], ensure_ascii=False, default=str)[:300])
+    original = (setup.get("water_gpu_variable") or {}).get("original")
+    current = (restored.get("water_gpu_variable") or {}).get("current")
+    if original is not None and current != original:
+        print("경고:", WATER_GPU_CONSOLE_VARIABLE, "를 원래 값으로 되돌리지 못했다:", original, current)
+
+
+def evaluate_field_gate(cell):
+    if cell is None:
+        return {"passed": False, "checks": {"inside_window": False}}
+    checks = {"inside_window": True, "water_depth_positive": cell["depth"] > 0.0, "terrain_known": cell["known"], "flow_guide_weight_positive": cell["guide"] > 0.0}
+    return {"passed": all(checks.values()), "checks": checks, "cell": cell}
+
+
+def wait_for_field_completeness(points):
+    center = points["wide_center"][0]
+    point = [center[0], center[1], points["flow_pawn"][2]]
+    gate = {"point": point, "passed": False, "has_sample": False, "waited_seconds": 0.0}
+    teleport(points["flow_pawn"])
+    started = time.monotonic()
+    submitted = editor_action("gate_submit", point=point)
+    if "error" in submitted:
+        gate["error"] = submitted["error"]
+        return gate
+    while gate["waited_seconds"] < GATE_TIMEOUT_SECONDS:
+        time.sleep(GATE_POLL_SECONDS)
+        gate["waited_seconds"] = time.monotonic() - started
+        collected = editor_action("gate_collect")
+        if "error" in collected:
+            gate["error"] = collected["error"]
+            return gate
+        if not collected.get("ready"):
+            continue
+        gate["has_sample"] = True
+        gate.update(evaluate_field_gate(collected["cell"]))
+        gate["frame_age"] = collected["frame_age"]
+        if gate["passed"]:
+            break
+    return gate
+
+
+def evidence_path(backend, grid):
+    return EVIDENCE_DIRECTORY / f"FX-4b-probe-{backend}{grid}-{date.today().isoformat()}.json"
+
+
+def run_once(points, layout, contract, sleep_delay_seconds, backend="cpu"):
     log_offset = log_size()
     run_data = {}
     run_data["asleep"] = run_asleep_leg(points, sleep_delay_seconds)
@@ -1095,9 +1322,9 @@ def run_once(points, layout, contract, sleep_delay_seconds):
     run_data["flow"] = run_flow_leg(points, contract)
     run_data["rock"] = run_rock_leg(points["rock_primary"])
     run_data["submerged"] = run_submerged_leg(points["rock_submerged"])
-    run_data["crossing"] = run_crossing_leg(points["crossing"])
+    run_data["crossing"] = run_crossing_leg(points["crossing"], backend)
     run_data["log_problems"] = find_problem_lines(read_log_since(log_offset))
-    rules = judge_run(run_data, layout)
+    rules = judge_run(run_data, layout, backend)
     return {"data": run_data, "rules": rules, "failed": count_failures(rules)}
 
 
@@ -1105,7 +1332,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs", type=int, default=2, help="연속 실행 횟수(명세는 연속 2회 통과)")
     parser.add_argument("--stop-pie", action="store_true", help="끝난 뒤 PIE를 끈다(기본은 켜 둔다)")
+    parser.add_argument("--backend", choices=BACKEND_CHOICES, default="cpu", help="물 솔버 백엔드(gpu는 TD.FluidFX.WaterGpu 1을 먼저 켠다)")
+    parser.add_argument("--grid", type=int, default=None, help="simulation_config.grid_resolution 요청값(기본은 프리셋 값)")
     arguments = parser.parse_args()
+    if arguments.grid is not None and arguments.grid <= 0:
+        parser.error("--grid 는 양의 정수여야 한다")
     print("경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).", flush=True)
 
     stage_report = read_stage_report()
@@ -1144,14 +1375,26 @@ def main():
         return EXIT_ENVIRONMENT
 
     runs = []
-    editor_action("isolate")
-    editor_action("console", command=f"{PERF_CONSOLE_VARIABLE} 1")
+    setup = {"requested_backend": arguments.backend, "requested_grid": arguments.grid}
     try:
-        for _ in range(max(arguments.runs, 1)):
-            runs.append(run_once(points, layout, contract, status["sleep_delay_seconds"]))
+        if not prepare_backend(setup, arguments.backend, arguments.grid):
+            print("백엔드를 확인하지 못했다:", json.dumps({"state": setup.get("state"), "water_gpu_variable": setup.get("water_gpu_variable")}, ensure_ascii=False, default=str)[:600])
+            return EXIT_ENVIRONMENT
+        editor_action("isolate")
+        setup["gate"] = wait_for_field_completeness(points)
+        if not setup["gate"]["passed"]:
+            print("필드 완전성 관문 실패(측정 연산자 없음):", json.dumps(setup["gate"], ensure_ascii=False, default=str)[:600])
+            return EXIT_ENVIRONMENT
+        editor_action("console", command=f"{PERF_CONSOLE_VARIABLE} 1")
+        try:
+            for _ in range(max(arguments.runs, 1)):
+                runs.append(run_once(points, layout, contract, status["sleep_delay_seconds"], arguments.backend))
+        finally:
+            editor_action("console", command=f"{PERF_CONSOLE_VARIABLE} 0")
+            editor_action("sampler_stop")
     finally:
-        editor_action("console", command=f"{PERF_CONSOLE_VARIABLE} 0")
-        editor_action("sampler_stop")
+        setup["restored"] = restore_backend(setup)
+        warn_if_restore_failed(setup)
         if arguments.stop_pie:
             pie_check_fluid.stop_pie(session, environment)
 
@@ -1162,6 +1405,7 @@ def main():
         "stage_report": STAGE_REPORT_PATH.relative_to(ROOT).as_posix(),
         "status": status,
         "environment": environment,
+        "backend": setup,
         "layout": layout,
         "runs": [{"failed": item["failed"], "rules": item["rules"], "data": item["data"]} for item in runs],
         "all_runs_passed": consecutive,
@@ -1171,9 +1415,13 @@ def main():
             "bank_band_wetness 는 물 셀 젖음이 0이면(W-2 A2 미구현) 판정을 보류한다",
         ],
     }
-    EVIDENCE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    EVIDENCE_PATH.write_text(json.dumps(evidence, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
-    print("증거", EVIDENCE_PATH.relative_to(ROOT).as_posix())
+    if arguments.backend == "gpu":
+        evidence["notes"].append("gpu 실행: awake_tick_cost 는 CPU 192² 예산이라 기록만 한다(GPU 게임 스레드 0.3ms 는 CSV GT 로 판정)")
+        evidence["notes"].append("gpu 실행: 거품 격자(점 507개)는 탐침점 한도 64개·리드백 지연 때문에 읽지 않아 crossing_foam_centroid_shift 는 판정 보류다(수용은 헤드리스 R7)")
+    evidence_file = evidence_path(arguments.backend, setup["state"]["grid_resolution"])
+    evidence_file.parent.mkdir(parents=True, exist_ok=True)
+    evidence_file.write_text(json.dumps(evidence, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    print("증거", evidence_file.relative_to(ROOT).as_posix())
     for index, item in enumerate(runs):
         for name in item["failed"]:
             print(f"실패(실행 {index + 1}):", name, json.dumps(item["rules"][name], ensure_ascii=False, default=str)[:260])

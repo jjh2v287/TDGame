@@ -1,6 +1,6 @@
 {
   "id": "campfire_vorticity",
-  "note": "spec-wave0-data-bridge-v2 3.9 수용 (가): 불 무대 모닥불, 소유 위치 Kinds.Campfire(지금 1.5), A/B/A 대조, LIVE-2 목표 kind fire 대조",
+  "note": "spec-wave0-data-bridge-v2 3.9 수용 (가): 불 무대 모닥불, 소유 위치 Kinds.Campfire(지금 1.5), A/B/A 대조, LIVE-2 목표 kind fire 대조, 점수·대조 판정은 metrics.targets(구조·실루엣 지표 6개, 범위는 LIVE-2 합격 범위)만, 색·밝기 지표는 소용돌이보다 열·발광이 정하므로 진단으로만 둔다",
   "scenes": [
     {
       "name": "campfire",
@@ -28,5 +28,16 @@
   "repeats": 2,
   "control_every": 0,
   "reset": "reinit",
-  "metrics": {"sources": ["look"], "noise_floor": {}}
+  "metrics": {
+    "sources": ["look"],
+    "noise_floor": {},
+    "targets": [
+      {"metric": "0.campfire.interior_billow_contrast_s4_s24", "weight": 1.0, "tolerance": 0.0017, "basis": "소용돌이가 만드는 내부 잔물결 대비, 허용은 LIVE-2 범위 반폭의 2%"},
+      {"metric": "0.campfire.interior_coherence_s1w4", "weight": 1.0, "tolerance": 0.0025, "basis": "내부 줄무늬 결맞음"},
+      {"metric": "0.campfire.interface_x_req", "weight": 1.0, "tolerance": 0.072, "basis": "반지름 방향 색 조각 변화 수"},
+      {"metric": "0.campfire.rim_width_over_req", "weight": 1.0, "tolerance": 0.0033, "basis": "가장자리 10-90 폭"},
+      {"metric": "0.campfire.sil_luma_cv", "weight": 1.0, "tolerance": 0.0026, "basis": "실루엣 안 밝기 변동"},
+      {"metric": "0.campfire.sil_hot_frac_L200", "weight": 1.0, "tolerance": 0.0029, "basis": "실루엣 안 밝은 면적 비"}
+    ]
+  }
 }

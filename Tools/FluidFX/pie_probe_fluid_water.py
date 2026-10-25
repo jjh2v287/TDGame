@@ -1,5 +1,5 @@
 """실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, C++ 묶음 B1 재빌드·재시작과 editor_make_fluid_water_material.py·editor_make_fluid_water_stage.py(scenes [0, 1]) 성공 뒤, 에디터 앞창 유지 L-editor-06). LV_TDFluidWaterStage 장면 1(강) PIE 에서 명세 acceptance [W-1 강, PIE 수치]를 물 탐침 질의(set_water_probe_locations·get_water_probe_samples)로 CPU·GPU 백엔드 공통 9필드 단언으로 잰다(FX-4b 통합 d00a3f54 뒤 빌드).
-실행 명령: python Tools/FluidFX/pie_probe_fluid_water.py [--backend cpu|gpu] [--grid N] [--runs 2] [--stop-pie] (PowerShell, 좌표는 Saved/FluidFX/fluid_water_stage.json 의 river.probe_points). 기본 cpu·프리셋 해상도이며 gpu 는 콘솔 TD.FluidFX.WaterGpu 1 을 먼저 켜고 끝나면 원래 콘솔 값과 원래 simulation_config 사본으로 되돌린다
+실행 명령: python Tools/FluidFX/pie_probe_fluid_water.py [--backend cpu|gpu] [--grid N] [--runs 2] [--window-scale 1.0] [--stop-pie] (PowerShell, 좌표는 Saved/FluidFX/fluid_water_stage.json 의 river.probe_points). 기본 cpu·프리셋 해상도이며 --window-scale(0 초과, 기본 1.0)은 정착·측정 대기 시간만 곱한다(잠들기 지연·이동 제한 시간은 그대로, 보정 스윕 calib_sweep 의 짧은 창용). gpu 는 콘솔 TD.FluidFX.WaterGpu 1 을 먼저 켜고 끝나면 원래 콘솔 값과 원래 simulation_config 사본으로 되돌린다
 출력: Docs/Validation/FluidFX/FX-4b-probe-<backend><grid>-<날짜>.json(실행마다 판정 항목·측정값·표본 프레임 나이, 연속 통과 판정). 종료 코드 0 모든 실행 모든 항목 통과/1 실패 항목 있음/2 환경 문제(gpu 인데 is_using_gpu_water_layer 거짓, 필드 완전성 관문 실패 포함)
 상태: 탐침 질의·백엔드 선택·관문은 오프라인 가짜 unreal 시험만 통과, 실제 PIE 미검증(2026-10-24). 화면 항목(태양 반점 포화 비율·TSR 번짐·창 경계 이음매)과 창 이동 프레임 p95·GPU 시간은 재지 않고 부모가 PIE 화면과 ProfileGPU 로 판정한다. gpu 실행은 awake_tick_cost 를 기록만 하고 거품 격자는 읽지 않는다.
 """
@@ -911,46 +911,50 @@ def build_submerged_points(rock):
     }
 
 
-def run_asleep_leg(points, sleep_delay_seconds):
+def scaled_sleep(seconds, window_scale):
+    time.sleep(seconds * window_scale)
+
+
+def run_asleep_leg(points, sleep_delay_seconds, window_scale=1.0):
     teleport(points["asleep_pawn"])
     time.sleep(sleep_delay_seconds + SLEEP_MARGIN_SECONDS)
     state = editor_action("water_state")
     offset = log_size()
-    time.sleep(PERF_MEASURE_SECONDS)
+    scaled_sleep(PERF_MEASURE_SECONDS, window_scale)
     return {"state": state, "cpu": summarize_perf_lines(read_log_since(offset))}
 
 
-def run_wake_leg(points):
+def run_wake_leg(points, window_scale=1.0):
     editor_action("sampler_start", kind="wake")
     teleport(points["flow_pawn"])
-    time.sleep(WAKE_OBSERVE_SECONDS)
+    scaled_sleep(WAKE_OBSERVE_SECONDS, window_scale)
     return editor_action("sampler_stop")
 
 
-def run_flow_leg(points, contract):
-    time.sleep(FLOW_SETTLE_SECONDS)
+def run_flow_leg(points, contract, window_scale=1.0):
+    scaled_sleep(FLOW_SETTLE_SECONDS, window_scale)
     offset = log_size()
     editor_action("sampler_start", kind="points", points=build_flow_points(points), z=points["flow_pawn"][2], interval=POINT_SAMPLE_INTERVAL_SECONDS)
-    time.sleep(FLOW_MEASURE_SECONDS)
+    scaled_sleep(FLOW_MEASURE_SECONDS, window_scale)
     summary = editor_action("sampler_stop")
     summary["cpu"] = summarize_perf_lines(read_log_since(offset))
     summary["mid"] = editor_action("mid_state", surface_tag=SURFACE_TAG, region_tag=REGION_TAG, **contract)
     return summary
 
 
-def run_rock_leg(rock):
+def run_rock_leg(rock, window_scale=1.0):
     teleport(rock["pawn"])
-    time.sleep(ROCK_SETTLE_SECONDS)
+    scaled_sleep(ROCK_SETTLE_SECONDS, window_scale)
     editor_action("sampler_start", kind="points", points=build_rock_points(rock), z=rock["pawn"][2], interval=POINT_SAMPLE_INTERVAL_SECONDS)
-    time.sleep(ROCK_MEASURE_SECONDS)
+    scaled_sleep(ROCK_MEASURE_SECONDS, window_scale)
     return editor_action("sampler_stop")
 
 
-def run_submerged_leg(rock):
+def run_submerged_leg(rock, window_scale=1.0):
     teleport(rock["pawn"])
-    time.sleep(SUBMERGED_SETTLE_SECONDS)
+    scaled_sleep(SUBMERGED_SETTLE_SECONDS, window_scale)
     editor_action("sampler_start", kind="points", points=build_submerged_points(rock), z=rock["pawn"][2], interval=POINT_SAMPLE_INTERVAL_SECONDS)
-    time.sleep(SUBMERGED_MEASURE_SECONDS)
+    scaled_sleep(SUBMERGED_MEASURE_SECONDS, window_scale)
     return editor_action("sampler_stop")
 
 
@@ -960,10 +964,10 @@ def read_foam_grid(backend, mode, grid):
     return editor_action("foam_grid", mode=mode, **grid)
 
 
-def run_crossing_leg(crossing, backend="cpu"):
+def run_crossing_leg(crossing, backend="cpu", window_scale=1.0):
     start, goal, box = crossing["start"], crossing["goal"], crossing["foam_box"]
     teleport(start)
-    time.sleep(CROSSING_SETTLE_SECONDS)
+    scaled_sleep(CROSSING_SETTLE_SECONDS, window_scale)
     grid = {"origin": box["origin"], "tangent": crossing["tangent"], "s0": box["s_range_cm"][0], "s1": box["s_range_cm"][1], "half": box["half_width_cm"], "step": box["step_cm"], "z": start[2]}
     baseline = read_foam_grid(backend, "baseline", grid)
     time.sleep(FOAM_SNAPSHOT_GAP_SECONDS)
@@ -1316,15 +1320,15 @@ def evidence_path(backend, grid):
     return EVIDENCE_DIRECTORY / f"FX-4b-probe-{backend}{grid}-{date.today().isoformat()}.json"
 
 
-def run_once(points, layout, contract, sleep_delay_seconds, backend="cpu"):
+def run_once(points, layout, contract, sleep_delay_seconds, backend="cpu", window_scale=1.0):
     log_offset = log_size()
     run_data = {}
-    run_data["asleep"] = run_asleep_leg(points, sleep_delay_seconds)
-    run_data["wake"] = run_wake_leg(points)
-    run_data["flow"] = run_flow_leg(points, contract)
-    run_data["rock"] = run_rock_leg(points["rock_primary"])
-    run_data["submerged"] = run_submerged_leg(points["rock_submerged"])
-    run_data["crossing"] = run_crossing_leg(points["crossing"], backend)
+    run_data["asleep"] = run_asleep_leg(points, sleep_delay_seconds, window_scale)
+    run_data["wake"] = run_wake_leg(points, window_scale)
+    run_data["flow"] = run_flow_leg(points, contract, window_scale)
+    run_data["rock"] = run_rock_leg(points["rock_primary"], window_scale)
+    run_data["submerged"] = run_submerged_leg(points["rock_submerged"], window_scale)
+    run_data["crossing"] = run_crossing_leg(points["crossing"], backend, window_scale)
     run_data["log_problems"] = find_problem_lines(read_log_since(log_offset))
     rules = judge_run(run_data, layout, backend)
     return {"data": run_data, "rules": rules, "failed": count_failures(rules)}
@@ -1336,7 +1340,10 @@ def main():
     parser.add_argument("--stop-pie", action="store_true", help="끝난 뒤 PIE를 끈다(기본은 켜 둔다)")
     parser.add_argument("--backend", choices=BACKEND_CHOICES, default="cpu", help="물 솔버 백엔드(gpu는 TD.FluidFX.WaterGpu 1을 먼저 켠다)")
     parser.add_argument("--grid", type=int, default=None, help="simulation_config.grid_resolution 요청값(기본은 프리셋 값)")
+    parser.add_argument("--window-scale", type=float, default=1.0, help="정착·측정 대기 시간 배율(0 초과, 기본 1.0)")
     arguments = parser.parse_args()
+    if arguments.window_scale <= 0:
+        parser.error("--window-scale 은 0 보다 커야 한다")
     if arguments.grid is not None and arguments.grid <= 0:
         parser.error("--grid 는 양의 정수여야 한다")
     print("경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).", flush=True)
@@ -1390,7 +1397,7 @@ def main():
         editor_action("console", command=f"{PERF_CONSOLE_VARIABLE} 1")
         try:
             for _ in range(max(arguments.runs, 1)):
-                runs.append(run_once(points, layout, contract, status["sleep_delay_seconds"], arguments.backend))
+                runs.append(run_once(points, layout, contract, status["sleep_delay_seconds"], arguments.backend, arguments.window_scale))
         finally:
             editor_action("console", command=f"{PERF_CONSOLE_VARIABLE} 0")
             editor_action("sampler_stop")

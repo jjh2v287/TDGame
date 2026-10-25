@@ -1,7 +1,7 @@
-"""실행 환경: 시스템 Python 3(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06, A·C 묶음이 든 빌드). 계획 JSON(장면×파라미터)을 읽어 변형마다 fluid_tuning_patch 로 Saved 아래 조절 사본을 만들고, 장면마다 pie_lookdev_fluid.py 를 tuning_reload 변형으로 돌려(물 탐침 장면은 같은 다시 읽기 뒤 pie_probe_fluid_water.run_once) 변형 유효성(ChangedFieldCount·실효 값 다시 읽기, 대조 A/B/A)을 단언한다(spec-wave0-data-bridge-v2 3.9, M8).
+"""실행 환경: 시스템 Python 3(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06, A·C 묶음이 든 빌드). 계획 JSON(장면×파라미터)을 읽어 변형마다 fluid_tuning_patch 로 Saved 아래 조절 사본을 만들고, 장면마다 pie_lookdev_fluid.py 를 tuning_reload 변형으로 돌려(물 탐침 장면은 같은 다시 읽기 뒤 pie_probe_fluid_water.run_once) 변형 유효성(ChangedFieldCount·실효 값 다시 읽기, 대조 A/B/A)을 단언한다(spec-wave0-data-bridge-v2 3.9, M8). 속도 키: 장면 settle(변경 뒤 대기 초)·probe_window_scale(물 탐침 정착·측정 대기 배율, 0 초과 기본 1.0), 계획 control_middle(거짓이면 대조를 처음·끝 두 번만, 기본 참).
 실행 명령: python Tools/FluidFX/calib_sweep.py --plan Tools/FluidFX/calib/plans/<id>.json [--dry-run] [--run-dir Saved/FluidFX/calib/<run>] (PowerShell, L-repo-01). --dry-run 은 사본·룩데브 변형 JSON·sweep.json 만 만들고 PIE 를 돌리지 않는다. --assert-scene <장면>=<result.json> 은 이미 있는 룩데브 결과로 단언만 다시 한다
 출력: <run-dir>/v<k>/(조절·모양 사본, variant.json), <run-dir>/<장면>/lookdev_spec.json·룩데브 출력(result.json·png)·water_probe.json, <run-dir>/sweep.json(계획 sha256, 변형·순서·단계별 유효성·이미지·탐침 규칙, 정본 sha256 전후). 종료 코드 0 모든 단계 유효·정본 불변 / 1 무효 변형·룩데브 실패·정본 바뀜 / 2 계획 입력 오류
-상태: 오프라인(가짜 unreal·가짜 룩데브 결과)만 검사, 실제 PIE 스윕 미실행(2026-10-25). 물 탐침 장면의 PIE 순서(isolate 뒤 reinit)와 다시 읽기 대기 시간은 미검증.
+상태: 오프라인(가짜 unreal·가짜 룩데브 결과)만 검사, 실제 PIE 스윕 미실행(2026-10-25). 물 탐침 장면의 PIE 순서(isolate 뒤 reinit)와 다시 읽기 대기 시간, 짧은 창(probe_window_scale)에서의 지표 값 변화는 미검증.
 """
 import argparse
 import copy
@@ -79,11 +79,35 @@ def validate_scene(scene, index, sources):
     require("tuning_reload" not in scene["camera"], f"{path}.camera: tuning_reload 는 스윕이 넣는다")
     require(is_number(scene.get("settle")) and scene["settle"] > 0, f"{path}.settle: 양수 초여야 한다")
     require(is_number(scene.get("time_dilation", 1.0)) and scene.get("time_dilation", 1.0) > 0, f"{path}.time_dilation: 양수여야 한다")
+    require(is_number(scene.get("probe_window_scale", 1.0)) and scene.get("probe_window_scale", 1.0) > 0, f"{path}.probe_window_scale: 양수여야 한다")
     require(scene.get("schedule") is None or isinstance(scene["schedule"], dict), f"{path}.schedule: null 또는 룩데브 schedule 객체여야 한다")
     require(isinstance(scene.get("live2_refs", []), list), f"{path}.live2_refs: 목록이어야 한다")
     if "look" in sources:
         for key in ("regions_template", "targets"):
             require(isinstance(scene.get(key), str) and project_path(scene[key]).is_file(), f"{path}.{key}: look 지표에 필요한 파일이 없다: {scene.get(key)}")
+
+
+def validate_targets(plan):
+    metrics = plan["metrics"]
+    targets = metrics.get("targets")
+    require(isinstance(targets, list) and targets, "metrics.targets: 목표 지표 목록(1개 이상)이어야 한다")
+    scene_names = {scene["name"] for scene in plan["scenes"]}
+    needs_range = "look" not in metrics["sources"]
+    seen = set()
+    for index, target in enumerate(targets):
+        path = f"metrics.targets[{index}]"
+        require(isinstance(target, dict) and isinstance(target.get("metric"), str) and target["metric"], f"{path}.metric: 지표 이름 문자열이어야 한다")
+        require(is_number(target.get("weight", 1.0)) and target.get("weight", 1.0) > 0, f"{path}.weight: 양수여야 한다")
+        require(is_number(target.get("tolerance", 0.0)) and target.get("tolerance", 0.0) >= 0, f"{path}.tolerance: 0 이상 수(대조 표류 절대 허용)여야 한다")
+        require("scene" not in target or target["scene"] in scene_names, f"{path}.scene: 계획 장면 이름이어야 한다")
+        has_low, has_high = "low" in target, "high" in target
+        require(has_low == has_high, f"{path}: low 와 high 는 함께 쓴다")
+        require(has_low or not needs_range, f"{path}: look 지표가 없는 계획은 low·high(목표 범위)가 필요하다")
+        if has_low:
+            require(is_number(target["low"]) and is_number(target["high"]) and target["low"] < target["high"], f"{path}: low < high 인 수여야 한다")
+        key = (target.get("scene"), target["metric"])
+        require(key not in seen, f"{path}: 같은 지표가 두 번 있다")
+        seen.add(key)
 
 
 def validate_plan(plan):
@@ -95,6 +119,7 @@ def validate_plan(plan):
     require(isinstance(plan["repeats"], int) and not isinstance(plan["repeats"], bool) and plan["repeats"] >= 1, "repeats: 1 이상 정수")
     require(isinstance(plan["control_every"], int) and not isinstance(plan["control_every"], bool) and plan["control_every"] >= 0, "control_every: 0 이상 정수(0이면 처음·중간·끝만)")
     require(plan["reset"] in RESET_MODES, f"reset: {'|'.join(RESET_MODES)}")
+    require(isinstance(plan.get("control_middle", True), bool), "control_middle: 불(거짓이면 대조를 처음·끝 두 번만)")
     metrics = plan["metrics"]
     require(isinstance(metrics, dict) and isinstance(metrics.get("sources"), list) and metrics["sources"], "metrics.sources: 지표 출처 목록(look|water_probe)이어야 한다")
     require(all(source in METRIC_SOURCES for source in metrics["sources"]), f"metrics.sources: {'|'.join(METRIC_SOURCES)} 만")
@@ -104,6 +129,7 @@ def validate_plan(plan):
         validate_scene(scene, index, metrics["sources"])
     names = [scene["name"] for scene in plan["scenes"]]
     require(len(set(names)) == len(names), "scenes: name 중복")
+    validate_targets(plan)
     require(isinstance(plan["params"], list) and plan["params"], "params: 1개 이상")
     for index, param in enumerate(plan["params"]):
         path = f"params[{index}]"
@@ -167,12 +193,12 @@ def build_variants(plan, params):
     return variants
 
 
-def build_sequence(variant_ids, repeats, control_every):
+def build_sequence(variant_ids, repeats, control_every, control_middle=True):
     items = [variant_id for _ in range(repeats) for variant_id in variant_ids]
     middle = len(items) // 2
     sequence = [CONTROL_ID]
     for index, item in enumerate(items):
-        wants_control = index > 0 and (index == middle or (control_every and index % control_every == 0))
+        wants_control = index > 0 and ((control_middle and index == middle) or (control_every and index % control_every == 0))
         if wants_control and sequence[-1] != CONTROL_ID:
             sequence.append(CONTROL_ID)
         sequence.append(item)
@@ -336,14 +362,15 @@ def run_water_probe_scene(scene, plan, sequence, variants_by_id, scene_dir):
         probe.editor_action("console", command=f"{probe.PERF_CONSOLE_VARIABLE} 1")
         for index, variant_id in enumerate(sequence):
             variant = variants_by_id[variant_id]
+            started = time.monotonic()
             reload_outcome = pie_lookdev_fluid.run_tuning_reload(tuning_reload_request(variant, plan["reset"]))
             errors = judge_step(variant, {"tuning_reload": reload_outcome})
             run = None
             if not errors:
                 time.sleep(scene["settle"])
-                run = probe.run_once(points, layout, contract, status["sleep_delay_seconds"], setup["requested_backend"])
+                run = probe.run_once(points, layout, contract, status["sleep_delay_seconds"], setup["requested_backend"], scene.get("probe_window_scale", 1.0))
             steps.append({"step": index, "name": step_name(index, variant_id), "variant": variant_id, "valid": not errors, "errors": errors, "images": [],
-                          "report": reload_outcome.get("report"), "water_probe": None if run is None else {"rules": run["rules"], "failed": run["failed"]}})
+                          "report": reload_outcome.get("report"), "elapsed_seconds": round(time.monotonic() - started, 1), "water_probe": None if run is None else {"rules": run["rules"], "failed": run["failed"]}})
     finally:
         canonical = pie_lookdev_fluid.editor_action("lookdev_tuning_load", tuning="", look="")
         probe.editor_action("console", command=f"{probe.PERF_CONSOLE_VARIABLE} 0")
@@ -363,7 +390,7 @@ def prepare_sweep(plan_path, run_dir):
     document = fluid_tuning_patch.load_canonical_document(ROOT)
     params = describe_params(plan, document, schema)
     variants = build_variants(plan, params)
-    sequence = build_sequence([variant["id"] for variant in variants if not variant["is_control"]], plan["repeats"], plan["control_every"])
+    sequence = build_sequence([variant["id"] for variant in variants if not variant["is_control"]], plan["repeats"], plan["control_every"], plan.get("control_middle", True))
     write_variant_copies(variants, run_dir, schema)
     sweep = {"tool": "calib_sweep", "plan": relative_text(plan_path), "plan_sha256": file_sha256(plan_path), "plan_id": plan["id"], "run_dir": relative_text(run_dir),
              "params": params, "variants": variants, "sequence": sequence, "metrics": plan["metrics"], "scenes": []}
@@ -373,7 +400,8 @@ def prepare_sweep(plan_path, run_dir):
         spec_path = scene_dir / LOOKDEV_SPEC_NAME
         spec_path.write_text(json.dumps(make_lookdev_spec(scene, plan, sequence, {variant["id"]: variant for variant in variants}), ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
         sweep["scenes"].append({"name": scene["name"], "level": scene["level"], "spec": relative_text(spec_path), "output_dir": relative_text(scene_dir), "regions_template": scene.get("regions_template"),
-                                "targets": scene.get("targets"), "live2_refs": scene.get("live2_refs", []), "uses_water_probe": "water_probe" in plan["metrics"]["sources"], "steps": []})
+                                "targets": scene.get("targets"), "live2_refs": scene.get("live2_refs", []), "uses_water_probe": "water_probe" in plan["metrics"]["sources"],
+                                "settle": scene["settle"], "probe_window_scale": scene.get("probe_window_scale", 1.0), "steps": []})
     return plan, sweep
 
 

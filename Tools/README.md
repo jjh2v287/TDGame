@@ -66,7 +66,8 @@ Serena가 내려받는 clangd 19.1.2는 UE 5.8 엔진 헤더를 파싱하다 종
 | `FluidFX/fx4b_budget_judge.py` | FX-4b 예산 PIE 판정 분석기(명세 `Saved/AgentOps/20261024/fx4b-acc/spec-fx4b-budget.md`): `pilot <run>`·`judge <run> --water-ref-ms <값>`. 명명 GPU(Solver+Water+WaterPressure) 프레임 합·PD-H 하위 스텝 거르기·게임 스레드 물 타이머 6개 합·순서통계 구간 판정(fx7pr_judge 재사용). fixture `Saved/AgentOps/20261024/fx4b-acc/budget-fixtures/run_fixtures.py` |
 | `FluidFX/fluid_tuning_patch.py` | 파동 0 데이터 다리(D-64): 조절 JSON 사본 변형 `variant --out-dir … --set <경로>=<값>`(소유 위치 쓰기·검사기 종료 0 확인), 정본 되쓰기 `write-canonical`(백업·복원). 일괄 보정의 값 바꾸기 단위 |
 | `FluidFX/calib_sweep.py` | 장면×파라미터 스윕 PIE 촬영(PowerShell): 계획 `Tools/FluidFX/calib/plans/<id>.json` → 변형마다 조절·모양 사본, `pie_lookdev_fluid.py` 촬영(A/B/A, 실효 값 다시 읽기 단언, 무효 변형 종료 1), 물 장면은 탐침. `--dry-run` |
-| `FluidFX/calib_judge.py` | 스윕 판정: 사전 잠금(`prereg_lock.py`) 필수, 장면별 잡음 바닥·표류·대조·곡선·후보 값·LIVE-2 대조 시트(Saved만) |
+| `FluidFX/calib_judge.py` | 스윕 판정: 사전 잠금(`prereg_lock.py`) 필수. 계획 `metrics.targets`(지표·low/high·weight·tolerance)에만 대조 판정(허용 max(2×잡음 바닥, tolerance))과 연속 점수 Σweight×\|값−중앙\|/반폭, 후보 = 최소 점수 변형, 유의 = 대조−최소 > 점수 잡음. 나머지 지표 표류는 진단. LIVE-2 대조 시트(Saved만) |
+| `FluidFX/calib_offline_test.py` | 보정 도구 오프라인 하네스(가짜 unreal, 67항목): 스윕 거부 단언·판정 규칙·연속 점수·수용 시험 산출 재판정. 종료 0 전부 통과 |
 | `FluidFX/prereg_lock.py` | 보정 계획·영역·목표·판정기·지표 도구 sha256 잠금(`lock`)·검증(`verify`) |
 | `FluidFX/fluid_material_look.py` | 재질 값 정본 `Content/FluidFX/PresetData/TDFluidMaterialLook.json` 형식 검사(`check`)와 덤프 대조(`compare`, 차이 0이어야 함) |
 | `FluidFX/editor_dump_fluid_material_look.py` | 에디터에서 /Game/FluidFX 재질 인스턴스 덮어쓰기 값·나이아가라 User 값을 `Saved/FluidFX/material_look_dump.json`으로 덤프(PowerShell, run_in_editor) |

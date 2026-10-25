@@ -1,6 +1,6 @@
 {
   "id": "river_vorticity",
-  "note": "spec-wave0-data-bridge-v2 3.9 수용 (나): 강, Groups.WaterLayer 소유 VorticityStrength(0.3)를 split_group 으로 River 만 바꿈, 물 수치 탐침만(measure_fx_look 에 물 kind 가 없어 LIVE-2 화면 대조 안 함)",
+  "note": "spec-wave0-data-bridge-v2 3.9 수용 (나): 강, Groups.WaterLayer 소유 VorticityStrength(0.3)를 split_group 으로 River 만 바꿈, 물 수치 탐침만(measure_fx_look 에 물 kind 가 없어 LIVE-2 화면 대조 안 함), 점수·대조 판정은 metrics.targets 의 W-1 탐침 문턱 범위(상한은 임시)만, 속도는 control_middle false·settle 1.0·probe_window_scale 0.5",
   "scenes": [
     {
       "name": "river",
@@ -9,7 +9,8 @@
       "backend": "cpu",
       "time_dilation": 1.0,
       "schedule": null,
-      "settle": 3.0,
+      "settle": 1.0,
+      "probe_window_scale": 0.5,
       "regions_template": null,
       "targets": null,
       "live2_refs": []
@@ -22,5 +23,17 @@
   "repeats": 2,
   "control_every": 0,
   "reset": "reinit",
-  "metrics": {"sources": ["water_probe"], "noise_floor": {}}
+  "control_middle": false,
+  "metrics": {
+    "sources": ["water_probe"],
+    "noise_floor": {},
+    "targets": [
+      {"metric": "flow_matches_target_center_3pts[0]", "low": -0.25, "high": 0.25, "weight": 0.3333, "tolerance": 0.005, "basis": "W-1 유속 상대 오차 ≤0.25, 중앙 0"},
+      {"metric": "flow_matches_target_center_3pts[1]", "low": -0.25, "high": 0.25, "weight": 0.3333, "tolerance": 0.005, "basis": "W-1 유속 상대 오차 ≤0.25, 중앙 0"},
+      {"metric": "flow_matches_target_center_3pts[2]", "low": -0.25, "high": 0.25, "weight": 0.3333, "tolerance": 0.005, "basis": "W-1 유속 상대 오차 ≤0.25, 중앙 0"},
+      {"metric": "riffle_speed_ratio.ratio", "low": 1.5, "high": 4.5, "weight": 1.0, "tolerance": 0.03, "basis": "W-1 여울 속력 비 ≥1.5, 상한 4.5 는 임시(수로 깊이 120:40 연속 방정식 비 3.0 이 중앙)"},
+      {"metric": "rock_wake_density", "low": 0.3, "high": 1.0, "weight": 1.0, "tolerance": 0.007, "basis": "W-1 바위 흰 물보라 밀도 ≥0.3, 상한 1.0 은 임시(밀도 최대)"},
+      {"metric": "crossing_ripple_height.max_abs_ripple_cm", "low": 1.0, "high": 100.0, "weight": 0.25, "tolerance": 1.0, "basis": "W-1 물결 ≥1cm, 상한 100cm 는 임시, 소용돌이와 약하게 이어지므로 가중치 0.25"}
+    ]
+  }
 }

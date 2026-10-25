@@ -1,7 +1,7 @@
-"""실행 환경: 시스템 Python 3(에디터 불필요, look 지표는 measure_fx_look.py 의 numpy·Pillow·scipy 필요). calib_sweep.py 의 sweep.json 을 사전 등록 잠금(prereg_lock.py) 확인 뒤 판정한다: look 장면은 단계 이미지를 영역 틀로 measure_fx_look.py --targets 에 넣어 LIVE-2 목표 격차(gap_bands)를, 물 장면은 pie_probe_fluid_water 규칙 값을 지표로 삼아 파라미터 곡선·후보 값·잡음 바닥·대조 표류·LIVE-2 대조 시트를 낸다(spec-wave0-data-bridge-v2 3.9 5·6단계).
+"""실행 환경: 시스템 Python 3(에디터 불필요, look 지표는 measure_fx_look.py 의 numpy·Pillow·scipy 필요). calib_sweep.py 의 sweep.json 을 사전 등록 잠금(prereg_lock.py) 확인 뒤 판정한다: look 장면은 단계 이미지를 영역 틀로 measure_fx_look.py --targets 에 넣어 LIVE-2 목표 범위를, 물 장면은 pie_probe_fluid_water 규칙 값(숫자·숫자 목록·숫자 사전 항목을 이름.키·이름[번호]로 펼침)을 지표로 삼는다. 계획 metrics.targets(목표 지표 목록)만 대조 판정과 점수에 쓴다(spec-wave0-data-bridge-v2 3.9 5·6단계).
 실행 명령: python Tools/FluidFX/calib_judge.py --sweep Saved/FluidFX/calib/<run>/sweep.json --lock Saved/FluidFX/calib/<id>-prereg-lock.json [--output Saved/FluidFX/calib/<run>/judge.json]
-출력: --output JSON(장면별 noise_floor·drift·control_check·curves·candidate·live2_sheet, 기본 <run>/judge.json, Saved 밖 거부)과 장면별 measure 결과 <run>/judge/<장면>_measure.json, 표준 출력 요약. 종료 코드 0 판정 완료·대조 표류가 잡음 바닥 안 / 1 스윕 무효·대조 표류 초과 또는 판정 불가 / 2 잠금 없음·불일치·입력 오류
-상태: 오프라인(합성 이미지·가짜 탐침 규칙)만 검사, 실제 스윕 결과 판정 미실행(2026-10-25). 잡음 바닥은 계획 metrics.noise_floor 가 없으면 비대조 변형 반복 간 최대 범위(반복 2 이상 필요).
+출력: --output JSON(장면별 targets 표·noise_floor·drift·control_allowed·control_check·curves·candidate·live2_sheet, 기본 <run>/judge.json, Saved 밖 거부)과 장면별 measure 결과 <run>/judge/<장면>_measure.json, 표준 출력 요약. 종료 코드 0 판정 완료·대조 표류가 허용 안 / 1 스윕 무효·대조 표류 초과 또는 판정 불가 / 2 잠금 없음·불일치·입력 오류. 점수 score = 목표 지표별 가중치 × |값 − 목표 중앙| / 목표 범위 반폭의 합(작을수록 좋음), 후보는 단계 점수 중앙값이 최소인 변형이고 유의 = 대조 점수 − 최소 점수 > Σ 가중치 × 지표 잡음 바닥 / 반폭. 대조 허용 = max(2 × 잡음 바닥, 목표의 tolerance), 목표 밖 지표 표류는 진단(diagnostic_drift_over_allowed)만. rule_score(look 은 gap_bands 합, 물은 필수 규칙 실패 수)는 보조로만 남긴다.
+상태: 오프라인(합성 탐침 규칙·합성 단계 점수·2026-10-25 수용 시험 산출 재판정)만 검사, 새 규칙의 실제 PIE 스윕 판정 미실행(2026-10-25). 잡음 바닥은 계획 metrics.noise_floor 가 없으면 비대조 변형 반복 간 최대 범위(반복 2 이상 필요).
 """
 import argparse
 import json
@@ -19,6 +19,8 @@ MEASURE_SCRIPT = ROOT / "Tools" / "FluidFX" / "measure_fx_look.py"
 SAVED_DIR = ROOT / "Saved"
 CONTROL_ID = "v00"
 SCORE_METRIC = "score"
+RULE_METRIC = "rule_score"
+CONTROL_NOISE_FACTOR = 2.0
 KIND_GROUP_PREFIX = "kind_metrics."
 TOLERANCE = 1e-12
 EXIT_REJECTED = 1
@@ -99,18 +101,25 @@ def measure_look_scene(scene, steps, work_dir):
                     gaps.append(check["gap_bands"])
                     values.setdefault(f"band.{region['name']}.{check['metric']}", [check["group"], check["pass_low"], check["pass_high"]])
         metrics = {name: value for name, value in values.items() if not name.startswith("band.")}
-        items.append({"step": step["step"], "variant": step["variant"], "metrics": metrics, SCORE_METRIC: sum(gaps), "bands": {name[5:]: value for name, value in values.items() if name.startswith("band.")}})
+        items.append({"step": step["step"], "variant": step["variant"], "metrics": metrics, RULE_METRIC: sum(gaps), "bands": {name[5:]: value for name, value in values.items() if name.startswith("band.")}})
     return items, load_json(live2_path), relative(output_path)
+
+
+def flatten_numbers(name, value, metrics):
+    if is_number(value):
+        metrics[name] = value
+    elif isinstance(value, list):
+        metrics.update({f"{name}[{index}]": item for index, item in enumerate(value) if is_number(item)})
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            flatten_numbers(f"{name}.{key}", item, metrics)
 
 
 def water_rule_metrics(rules):
     metrics = {}
     for name, rule in rules.items():
-        value = rule.get("value") if isinstance(rule, dict) else None
-        if is_number(value):
-            metrics[name] = value
-        elif isinstance(value, list):
-            metrics.update({f"{name}[{index}]": item for index, item in enumerate(value) if is_number(item)})
+        if isinstance(rule, dict):
+            flatten_numbers(name, rule.get("value"), metrics)
     return metrics
 
 
@@ -121,8 +130,53 @@ def measure_water_scene(steps):
         if not isinstance(probe, dict):
             raise JudgeError(f"{step['name']}: 물 탐침 결과가 없다")
         failed_required = sum(1 for rule in probe["rules"].values() if isinstance(rule, dict) and rule.get("passed") is False and rule.get("required", True))
-        items.append({"step": step["step"], "variant": step["variant"], "metrics": water_rule_metrics(probe["rules"]), SCORE_METRIC: failed_required})
+        items.append({"step": step["step"], "variant": step["variant"], "metrics": water_rule_metrics(probe["rules"]), RULE_METRIC: failed_required, "bands": {}})
     return items
+
+
+def resolve_targets(sweep, scene_name, items):
+    planned = sweep["metrics"].get("targets")
+    if not isinstance(planned, list) or not planned:
+        raise JudgeError("스윕의 계획에 metrics.targets(목표 지표 목록)가 없다")
+    bands = {}
+    known = set()
+    for item in items:
+        bands.update(item.get("bands", {}))
+        known.update(item["metrics"])
+    resolved = []
+    for target in planned:
+        if target.get("scene", scene_name) != scene_name:
+            continue
+        metric = target["metric"]
+        if metric not in known:
+            raise JudgeError(f"{scene_name}: 목표 지표 {metric} 이 측정값에 없다")
+        low, high = target.get("low"), target.get("high")
+        if low is None or high is None:
+            band = bands.get(metric.split(".", 1)[-1])
+            if band is None:
+                raise JudgeError(f"{scene_name}: 목표 지표 {metric} 의 목표 범위(low·high)가 계획에도 LIVE-2 목표에도 없다")
+            low, high = band[1], band[2]
+        if not high > low:
+            raise JudgeError(f"{scene_name}: 목표 지표 {metric} 의 low {low} 가 high {high} 보다 작지 않다")
+        resolved.append({"metric": metric, "weight": float(target.get("weight", 1.0)), "tolerance": float(target.get("tolerance", 0.0)), "low": low, "high": high,
+                         "center": (low + high) / 2, "half_width": (high - low) / 2})
+    if not resolved:
+        raise JudgeError(f"{scene_name}: 이 장면에 걸리는 목표 지표가 없다")
+    return resolved
+
+
+def normalized_distance(value, target):
+    return abs(value - target["center"]) / target["half_width"]
+
+
+def score_item(item, targets):
+    total = 0.0
+    for target in targets:
+        value = item["metrics"].get(target["metric"])
+        if not is_number(value):
+            return None
+        total += target["weight"] * normalized_distance(value, target)
+    return total
 
 
 def spread(values):
@@ -130,35 +184,66 @@ def spread(values):
 
 
 def metric_values(items, name):
-    return [item["metrics"][name] if name != SCORE_METRIC else item[SCORE_METRIC] for item in items if name == SCORE_METRIC or is_number(item["metrics"].get(name))]
+    if name in (SCORE_METRIC, RULE_METRIC):
+        return [item[name] for item in items if is_number(item.get(name))]
+    return [item["metrics"][name] for item in items if is_number(item["metrics"].get(name))]
 
 
-def aggregate(items, sweep):
+def score_noise_floor(targets, noise_floor):
+    total = 0.0
+    for target in targets:
+        floor = noise_floor.get(target["metric"])
+        if floor is None:
+            return None
+        total += target["weight"] * floor / target["half_width"]
+    return total
+
+
+def check_controls(targets, drift, noise_floor):
+    control_check = {}
+    control_allowed = {}
+    for target in targets:
+        name = target["metric"]
+        floor = noise_floor.get(name)
+        if drift.get(name) is None or (floor is None and target["tolerance"] <= 0):
+            control_check[name] = "undetermined"
+            control_allowed[name] = None
+            continue
+        control_allowed[name] = max(CONTROL_NOISE_FACTOR * (floor or 0.0), target["tolerance"])
+        control_check[name] = "pass" if drift[name] <= control_allowed[name] + TOLERANCE else "fail"
+    return control_check, control_allowed
+
+
+def aggregate(items, sweep, targets):
+    for item in items:
+        item[SCORE_METRIC] = score_item(item, targets)
     by_variant = defaultdict(list)
     for item in sorted(items, key=lambda entry: entry["step"]):
         by_variant[item["variant"]].append(item)
-    names = sorted(set().union(*[set(item["metrics"]) for item in items])) + [SCORE_METRIC] if items else [SCORE_METRIC]
+    metric_names = sorted(set().union(*[set(item["metrics"]) for item in items])) if items else []
+    names = metric_names + [SCORE_METRIC, RULE_METRIC]
     planned = sweep["metrics"].get("noise_floor", {})
     noise_floor = {}
     for name in names:
+        if name == SCORE_METRIC:
+            continue
         if name in planned:
             noise_floor[name] = planned[name]
             continue
         spreads = [spread(metric_values(group, name)) for variant, group in by_variant.items() if variant != CONTROL_ID and len(metric_values(group, name)) >= 2]
         noise_floor[name] = max(spreads) if spreads else None
+    noise_floor[SCORE_METRIC] = score_noise_floor(targets, noise_floor)
     controls = by_variant.get(CONTROL_ID, [])
     drift = {}
-    control_check = {}
     for name in names:
         values = metric_values(controls, name)
         drift[name] = max(abs(value - values[0]) for value in values) if len(values) >= 2 else None
-        if drift[name] is None or noise_floor[name] is None:
-            control_check[name] = "undetermined"
-        else:
-            control_check[name] = "pass" if drift[name] <= noise_floor[name] + TOLERANCE else "fail"
+    control_check, control_allowed = check_controls(targets, drift, noise_floor)
+    target_names = {target["metric"] for target in targets}
+    diagnostic_over = [name for name in metric_names if name not in target_names and drift[name] is not None and noise_floor[name] is not None and drift[name] > CONTROL_NOISE_FACTOR * noise_floor[name] + TOLERANCE]
     medians = {variant: {name: statistics.median(metric_values(group, name)) for name in names if metric_values(group, name)} for variant, group in by_variant.items()}
-    return {"noise_floor": noise_floor, "drift": drift, "control_check": control_check, "control_ok": all(status == "pass" for status in control_check.values()),
-            "medians": medians, "repeat_counts": {variant: len(group) for variant, group in by_variant.items()}}
+    return {"noise_floor": noise_floor, "drift": drift, "control_check": control_check, "control_allowed": control_allowed, "control_ok": bool(control_check) and all(status == "pass" for status in control_check.values()),
+            "diagnostic_drift_over_allowed": diagnostic_over, "medians": medians, "repeat_counts": {variant: len(group) for variant, group in by_variant.items()}}
 
 
 def variant_values(sweep):
@@ -174,9 +259,20 @@ def build_curves(sweep, medians):
         for variant_id, values in values_by_variant.items():
             others_at_base = all(value == base for position, (value, base) in enumerate(zip(values, base_values)) if position != index)
             if others_at_base and variant_id in medians:
-                points.append({"value": values[index], "variant": variant_id, SCORE_METRIC: medians[variant_id].get(SCORE_METRIC), "metrics": {name: value for name, value in medians[variant_id].items() if name != SCORE_METRIC}})
+                points.append({"value": values[index], "variant": variant_id, SCORE_METRIC: medians[variant_id].get(SCORE_METRIC), RULE_METRIC: medians[variant_id].get(RULE_METRIC),
+                               "metrics": {name: value for name, value in medians[variant_id].items() if name not in (SCORE_METRIC, RULE_METRIC)}})
         curves.append({"json_path": param["json_path"], "base_value": param["base_value"], "points": sorted(points, key=lambda point: json.dumps(point["value"]))})
     return curves
+
+
+def build_target_table(targets, aggregated):
+    table = []
+    for target in targets:
+        name = target["metric"]
+        distances = {variant: normalized_distance(values[name], target) for variant, values in aggregated["medians"].items() if name in values}
+        table.append({**target, "noise_floor": aggregated["noise_floor"].get(name), "drift": aggregated["drift"].get(name), "allowed": aggregated["control_allowed"].get(name),
+                      "control_check": aggregated["control_check"].get(name), "distance_by_variant": distances})
+    return table
 
 
 def choose_candidate(sweep, aggregated):
@@ -189,7 +285,9 @@ def choose_candidate(sweep, aggregated):
     floor = aggregated["noise_floor"].get(SCORE_METRIC)
     is_significant = best != CONTROL_ID and floor is not None and improvement > floor + TOLERANCE
     return {"variant": best, "values": variant_values(sweep)[best], SCORE_METRIC: scored[best], "control_score": scored[CONTROL_ID], "improvement": improvement,
-            "score_noise_floor": floor, "is_significant": is_significant, "assignments": next(variant["assignments"] for variant in sweep["variants"] if variant["id"] == best)}
+            "score_noise_floor": floor, "is_significant": is_significant, "scores": scored,
+            RULE_METRIC: medians[best].get(RULE_METRIC), "control_rule_score": medians[CONTROL_ID].get(RULE_METRIC),
+            "assignments": next(variant["assignments"] for variant in sweep["variants"] if variant["id"] == best)}
 
 
 def live2_band(live2, group, metric):
@@ -226,10 +324,12 @@ def judge_scene(scene, sweep, work_dir):
         items, live2, measure_path, source = measure_water_scene(steps), None, None, "water_probe"
     else:
         (items, live2, measure_path), source = measure_look_scene(scene, steps, work_dir), "look"
-    aggregated = aggregate(items, sweep)
+    targets = resolve_targets(sweep, scene["name"], items)
+    aggregated = aggregate(items, sweep, targets)
     candidate = choose_candidate(sweep, aggregated)
-    result = {"name": scene["name"], "source": source, "measure": measure_path, "noise_floor": aggregated["noise_floor"], "drift": aggregated["drift"],
-              "control_check": aggregated["control_check"], "control_ok": aggregated["control_ok"], "repeat_counts": aggregated["repeat_counts"],
+    result = {"name": scene["name"], "source": source, "measure": measure_path, "targets": build_target_table(targets, aggregated), "noise_floor": aggregated["noise_floor"], "drift": aggregated["drift"],
+              "control_allowed": aggregated["control_allowed"], "control_check": aggregated["control_check"], "control_ok": aggregated["control_ok"],
+              "diagnostic_drift_over_allowed": aggregated["diagnostic_drift_over_allowed"], "repeat_counts": aggregated["repeat_counts"],
               "curves": build_curves(sweep, aggregated["medians"]), "candidate": candidate}
     if live2 is not None:
         result["live2_sheet"] = build_live2_sheet(items, live2, aggregated["medians"], candidate.get("variant"))
@@ -271,7 +371,7 @@ def main():
     for scene in scenes:
         candidate = scene["candidate"]
         failing = [name for name, status in scene["control_check"].items() if status != "pass"]
-        print(f"{scene['name']}({scene['source']}): 대조 {'통과' if scene['control_ok'] else '실패 ' + ', '.join(failing[:6])}, 후보 {candidate.get('variant')} {candidate.get('values')} 점수 {candidate.get(SCORE_METRIC)} (대조 {candidate.get('control_score')}, 유의 {candidate.get('is_significant')})")
+        print(f"{scene['name']}({scene['source']}): 대조 {'통과' if scene['control_ok'] else '실패 ' + ', '.join(failing[:6])}, 후보 {candidate.get('variant')} {candidate.get('values')} 점수 {candidate.get(SCORE_METRIC)} (대조 {candidate.get('control_score')}, 잡음 {candidate.get('score_noise_floor')}, 유의 {candidate.get('is_significant')})")
     print("판정", relative(output_path))
     return 0 if report["accepted"] else EXIT_REJECTED
 

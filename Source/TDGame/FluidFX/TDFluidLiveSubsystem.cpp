@@ -4,11 +4,14 @@
 #include "Core/TDGameplayTags.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "FluidFX/TDFluidFragmentEmitterActor.h"
 #include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidPresetAsset.h"
+#include "FluidFX/TDFluidPresetTuningSubsystem.h"
 #include "FluidFX/TDFluidRiverActor.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
@@ -128,6 +131,10 @@ void UTDFluidLiveSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 	LevelAddedHandle = FWorldDelegates::LevelAddedToWorld.AddUObject(this, &UTDFluidLiveSubsystem::HandleLevelAddedOrRemoved);
 	LevelRemovedHandle = FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &UTDFluidLiveSubsystem::HandleLevelAddedOrRemoved);
+	if (UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr)
+	{
+		PresetTuningReloadedHandle = TuningSubsystem->OnPresetTuningReloaded.AddUObject(this, &UTDFluidLiveSubsystem::HandlePresetTuningReloaded);
+	}
 
 	if (UGameplayMessageSubsystem::HasInstance(&InWorld))
 	{
@@ -151,6 +158,12 @@ void UTDFluidLiveSubsystem::Deinitialize()
 	FWorldDelegates::LevelRemovedFromWorld.Remove(LevelRemovedHandle);
 	LevelAddedHandle.Reset();
 	LevelRemovedHandle.Reset();
+	if (UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr)
+	{
+		TuningSubsystem->OnPresetTuningReloaded.Remove(PresetTuningReloadedHandle);
+	}
+	PresetTuningReloadedHandle.Reset();
+	PendingReapplyTableGeneration = INDEX_NONE;
 	QueuedDamageByTarget.Reset();
 	QueuedDeathByActor.Reset();
 	RegisteredActors.Reset();
@@ -279,6 +292,7 @@ void UTDFluidLiveSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	ReapplyPendingPresetTuning();
 	RefreshPlaneViewRotation();
 
 	if (CVarLogTickCost.GetValueOnGameThread() == 0)
@@ -294,6 +308,123 @@ void UTDFluidLiveSubsystem::Tick(float DeltaTime)
 	const uint64 StartCycles = FPlatformTime::Cycles64();
 	StepFluidWorld(DeltaTime);
 	RecordTickCost(DeltaTime, FPlatformTime::ToSeconds64(FPlatformTime::Cycles64() - StartCycles));
+}
+
+void UTDFluidLiveSubsystem::HandlePresetTuningReloaded(int32 TableGeneration)
+{
+	PendingReapplyTableGeneration = TableGeneration;
+}
+
+void UTDFluidLiveSubsystem::ReapplyPendingPresetTuning()
+{
+	if (PendingReapplyTableGeneration == INDEX_NONE)
+	{
+		return;
+	}
+
+	FTDFluidPresetReapplyReport Report;
+	Report.TableGeneration = PendingReapplyTableGeneration;
+	PendingReapplyTableGeneration = INDEX_NONE;
+	UWorld* World = GetWorld();
+	if (!World || !World->IsGameWorld())
+	{
+		return;
+	}
+
+	if (const UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr)
+	{
+		Report.TableGeneration = TuningSubsystem->GetTableGeneration();
+		Report.TuningSourcePath = TuningSubsystem->GetTuningSourcePath();
+		Report.LookSourcePath = TuningSubsystem->GetLookSourcePath();
+	}
+
+	for (const TWeakObjectPtr<ATDFluidLiveActor>& Entry : RegisteredActors)
+	{
+		ATDFluidLiveActor* LiveActor = Entry.Get();
+		if (!LiveActor || LiveActor->IsPooledInactive())
+		{
+			continue;
+		}
+
+		LiveActor->ReapplyPresetTuning(Report);
+		++Report.ReappliedActorCount;
+	}
+
+	for (TActorIterator<ATDFluidFragmentEmitterActor> It(World); It; ++It)
+	{
+		It->ReapplyPresetTuning(Report);
+		++Report.ReappliedActorCount;
+	}
+
+	Report.ReappliedMaterialKeys.Reset();
+	LastReapplyReport = MoveTemp(Report);
+	UE_LOG(LogTDGame, Log, TEXT("FluidFX preset tuning generation %d reapplied (%s, %s): %d actors, %d reset, %d changed fields, %d live materials, %d bake-only changes"),
+		LastReapplyReport.TableGeneration,
+		*LastReapplyReport.TuningSourcePath,
+		*LastReapplyReport.LookSourcePath,
+		LastReapplyReport.ReappliedActorCount,
+		LastReapplyReport.StateResetActorCount,
+		LastReapplyReport.ChangedFieldCount,
+		LastReapplyReport.LiveMaterialCount,
+		LastReapplyReport.BakeOnlyChangedCount);
+}
+
+void FTDFluidPresetReapplyReport::ApplyLiveMaterialLook(UMaterialInstanceDynamic* Material)
+{
+	if (!Material)
+	{
+		return;
+	}
+
+	bool bIsAlreadyReapplied = false;
+	ReappliedMaterialKeys.Add(FObjectKey(Material), &bIsAlreadyReapplied);
+	if (bIsAlreadyReapplied)
+	{
+		return;
+	}
+
+	if (UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*Material) > 0)
+	{
+		++LiveMaterialCount;
+	}
+
+#if WITH_EDITORONLY_DATA
+	const UMaterialInterface* ParentMaterial = Material->Parent;
+	const FTDFluidMaterialLookEntry* Look = ParentMaterial ? UTDFluidPresetTuningSubsystem::FindMaterialLook(ParentMaterial->GetPackage()->GetFName()) : nullptr;
+	if (!Look)
+	{
+		return;
+	}
+
+	for (const TPair<FName, bool>& Switch : Look->Switches)
+	{
+		bool bBakedValue = false;
+		FGuid ExpressionGuid;
+		if (Material->GetStaticSwitchParameterValue(FHashedMaterialParameterInfo(Switch.Key), bBakedValue, ExpressionGuid) && bBakedValue != Switch.Value)
+		{
+			++BakeOnlyChangedCount;
+		}
+	}
+#endif
+}
+
+int32 FTDFluidPresetReapplyReport::AssignStructAndCountChangedFields(const UScriptStruct& Struct, void* Target, const void* Source)
+{
+	int32 ChangedPropertyCount = 0;
+	for (TFieldIterator<FProperty> It(&Struct); It; ++It)
+	{
+		const FProperty* Property = *It;
+		void* TargetValue = Property->ContainerPtrToValuePtr<void>(Target);
+		const void* SourceValue = Property->ContainerPtrToValuePtr<void>(Source);
+		if (Property->Identical(TargetValue, SourceValue, PPF_None))
+		{
+			continue;
+		}
+
+		Property->CopyCompleteValue(TargetValue, SourceValue);
+		++ChangedPropertyCount;
+	}
+	return ChangedPropertyCount;
 }
 
 FRotator UTDFluidLiveSubsystem::GetPlaneViewRotation() const

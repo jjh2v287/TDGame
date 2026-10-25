@@ -8,6 +8,7 @@ class UMaterialInterface;
 class UStaticMesh;
 class UTDFluidLiveComponent;
 struct FStreamableHandle;
+struct FTDFluidEmberSettings;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TDGAME_API UTDFluidEmberComponent : public UInstancedStaticMeshComponent
@@ -72,6 +73,7 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void StepEmbers(const UTDFluidLiveComponent& LiveComponent, float DeltaTime);
+	int32 ApplyEmberSettings(const FTDFluidEmberSettings& Settings);
 
 	UFUNCTION(BlueprintCallable, Category = "Ember")
 	void SpawnBurst(FVector Center, int32 Count, float SpeedCmPerSec);

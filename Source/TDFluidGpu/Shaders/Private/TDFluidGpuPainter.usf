@@ -62,7 +62,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	PainterSelectiveDensity[Texel] = Density.y;
 
 #if TDFLUIDGPU_WRITES_OUTPUT
-	const float Displacement = DecayedPrimaryDensity * TDFLUIDGPU_BRUSH_DISPLACEMENT_RATIO;
+	const float Displacement = DecayedPrimaryDensity * Actor.BrushDisplacementRatio;
 	const float SurfaceHeight = clamp(Displacement, -1.0f, 1.0f);
 	const float ObstacleMask = SignedDistance > 0.0f ? 1.0f : 0.0f;
 	const float Alpha = clamp(TDFluidGpuComputeBorderAlpha(Actor, Cell) * ObstacleMask, 0.0f, 1.0f);

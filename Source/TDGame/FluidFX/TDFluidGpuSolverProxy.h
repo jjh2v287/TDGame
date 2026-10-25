@@ -49,13 +49,14 @@ public:
 	static FTDFluidGpuSimulationSettings MakeSimulationSettings(const FTDFluidSimulationConfig& Config, int32 InResolution);
 	static FTDFluidGpuStampInput MakeStampInput(const FTDFluidBrushStamp& PlaneStamp, bool bCarriesRippleImpulse = false);
 	static FTDFluidGpuObstacleInput MakeObstacleInput(const FTDFluidSdfObstacle& PlaneObstacle);
-	static int64 EstimateActorMemoryBytes(ETDFluidSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel = false, bool bUsesTransmittance = false);
+	static int64 EstimateActorMemoryBytes(ETDFluidSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel = false, bool bUsesTransmittance = false, ETDFluidGpuPressureSolverMode PressureSolverMode = ETDFluidGpuPressureSolverMode::Auto);
 
 	void Initialize(const FTDFluidSimulationConfig& Config, int32 InResolution, const FVector2D& InitialCenterPlaneCm);
 	void UpdateSettings(const FTDFluidSimulationConfig& Config);
 	void ResetState();
 
 	bool IsInitialized() const { return Resolution > 0; }
+	bool WasLastSettingsUpdateReset() const { return bWasLastSettingsUpdateReset; }
 	int32 GetResolution() const { return Resolution; }
 	FVector2D GetExtentCm() const { return Settings.ExtentCm; }
 	FVector2D GetCenterPlaneCm() const { return CenterPlaneCm; }
@@ -152,6 +153,7 @@ private:
 	FTDFluidGpuBatchKey LastGatheredBatchKey;
 	bool bHasGatheredBatchKey = false;
 	bool bWasUpdatingWaterWetness = false;
+	bool bWasLastSettingsUpdateReset = false;
 };
 
 class FTDFluidGpuSolverRenderState

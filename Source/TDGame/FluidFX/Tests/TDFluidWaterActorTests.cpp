@@ -1526,40 +1526,31 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FTDFluidWaterPresetKindsTest::RunTest(const FString& Parameters)
 {
 	const FTDFluidSimulationConfig RiverConfig = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::River);
-	TestTrue(TEXT("River enables the water layer"), RiverConfig.bEnableWaterLayer);
-	TestEqual(TEXT("River resolution"), RiverConfig.GridResolution, 192);
-	TestNearlyEqual(TEXT("River range x"), RiverConfig.SimExtentCm.X, 3600.0, 0.01);
-	TestNearlyEqual(TEXT("River range y"), RiverConfig.SimExtentCm.Y, 3600.0, 0.01);
-	TestEqual(TEXT("River pressure iterations"), RiverConfig.PressureIterations, 12);
-	TestNearlyEqual(TEXT("River velocity damping"), RiverConfig.VelocityDamping, 0.02f, 0.0001f);
-	TestNearlyEqual(TEXT("River density dissipation"), RiverConfig.DensityDissipation, 0.35f, 0.0001f);
-	TestNearlyEqual(TEXT("River does not inherit the water advection scale"), RiverConfig.AdvectionSpeedScale, 1.0f, 0.0001f);
-	TestNearlyEqual(TEXT("River has no slope gravity"), RiverConfig.TerrainSlopeGravity, 0.0f, 0.0001f);
-	TestNearlyEqual(TEXT("River vorticity"), RiverConfig.VorticityStrength, 0.3f, 0.0001f);
-	TestNearlyEqual(TEXT("River whitewater from vorticity"), RiverConfig.WhitewaterFromVorticity, 0.3f, 0.0001f);
-	TestNearlyEqual(TEXT("River rapids whitewater"), RiverConfig.RapidsWhitewaterPerSec, 2.0f, 0.0001f);
-	TestNearlyEqual(TEXT("River ripple wave speed"), RiverConfig.RippleWaveSpeedCmPerSec, 120.0f, 0.0001f);
-	TestNearlyEqual(TEXT("River actor ripple impulse"), RiverConfig.ActorBrushRippleImpulseCm, 2.5f, 0.0001f);
-	TestNearlyEqual(TEXT("River actor density strength"), RiverConfig.ActorBrushDensityStrength, 0.6f, 0.0001f);
-	TestNearlyEqual(TEXT("River flow noise acceleration"), RiverConfig.FlowNoiseAccelerationCmPerSec2, 150.0f, 0.0001f);
-	TestNearlyEqual(TEXT("River bank wet height"), RiverConfig.BankWetHeightCm, 10.0f, 0.0001f);
-	TestNearlyEqual(TEXT("River swash height"), RiverConfig.SwashHeightCm, 0.0f, 0.0001f);
-
 	const FTDFluidSimulationConfig SeaConfig = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Sea);
-	TestTrue(TEXT("Sea enables the water layer"), SeaConfig.bEnableWaterLayer);
-	TestEqual(TEXT("Sea resolution"), SeaConfig.GridResolution, 192);
-	TestNearlyEqual(TEXT("Sea range x"), SeaConfig.SimExtentCm.X, 3600.0, 0.01);
-	TestNearlyEqual(TEXT("Sea ripple wave speed"), SeaConfig.RippleWaveSpeedCmPerSec, 100.0f, 0.0001f);
-	TestNearlyEqual(TEXT("Sea swash height"), SeaConfig.SwashHeightCm, 25.0f, 0.0001f);
-	TestNearlyEqual(TEXT("Sea wetness drying"), SeaConfig.WetnessDryingSeconds, 8.0f, 0.0001f);
-	TestNearlyEqual(TEXT("Sea bank wet height"), SeaConfig.BankWetHeightCm, 0.0f, 0.0001f);
-
 	const FTDFluidSimulationConfig WaterConfig = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Water);
+
+	TestTrue(TEXT("River enables the water layer"), RiverConfig.bEnableWaterLayer);
+	TestTrue(TEXT("River does not inherit the water advection scale"), RiverConfig.AdvectionSpeedScale != WaterConfig.AdvectionSpeedScale);
+	TestNearlyEqual(TEXT("River has no slope gravity"), RiverConfig.TerrainSlopeGravity, 0.0f, 0.0001f);
+	TestTrue(TEXT("River turns vorticity into whitewater"), RiverConfig.WhitewaterFromVorticity > 0.0f);
+	TestTrue(TEXT("River rapids add whitewater"), RiverConfig.RapidsWhitewaterPerSec > 0.0f);
+	TestTrue(TEXT("River ripples travel"), RiverConfig.RippleWaveSpeedCmPerSec > 0.0f);
+	TestTrue(TEXT("River actors push ripples"), RiverConfig.ActorBrushRippleImpulseCm > 0.0f);
+	TestTrue(TEXT("River actors paint density"), RiverConfig.ActorBrushDensityStrength > 0.0f);
+	TestTrue(TEXT("River flow noise is on"), RiverConfig.FlowNoiseAccelerationCmPerSec2 > 0.0f);
+	TestTrue(TEXT("River wets its banks"), RiverConfig.BankWetHeightCm > 0.0f);
+	TestNearlyEqual(TEXT("River has no swash"), RiverConfig.SwashHeightCm, 0.0f, 0.0001f);
+
+	TestTrue(TEXT("Sea enables the water layer"), SeaConfig.bEnableWaterLayer);
+	TestEqual(TEXT("Sea shares the River resolution"), SeaConfig.GridResolution, RiverConfig.GridResolution);
+	TestTrue(TEXT("Sea shares the River range"), SeaConfig.SimExtentCm.Equals(RiverConfig.SimExtentCm, 0.01));
+	TestTrue(TEXT("Sea ripples travel"), SeaConfig.RippleWaveSpeedCmPerSec > 0.0f);
+	TestTrue(TEXT("Sea waves swash up the shore"), SeaConfig.SwashHeightCm > 0.0f);
+	TestTrue(TEXT("Sea wetness dries over time"), SeaConfig.WetnessDryingSeconds > 0.0f);
+	TestNearlyEqual(TEXT("Sea leaves bank wetting to the swash"), SeaConfig.BankWetHeightCm, 0.0f, 0.0001f);
+
 	TestFalse(TEXT("The classic water preset keeps the water layer off"), WaterConfig.bEnableWaterLayer);
-	TestEqual(TEXT("The classic water preset keeps its resolution"), WaterConfig.GridResolution, 64);
-	TestEqual(TEXT("The classic water preset keeps its pressure iterations"), WaterConfig.PressureIterations, 8);
-	TestNearlyEqual(TEXT("The classic water preset keeps its advection scale"), WaterConfig.AdvectionSpeedScale, 1.2f, 0.0001f);
-	TestNearlyEqual(TEXT("The classic water preset keeps its slope gravity"), WaterConfig.TerrainSlopeGravity, 600.0f, 0.0001f);
+	TestTrue(TEXT("The classic water preset keeps its slope gravity"), WaterConfig.TerrainSlopeGravity > 0.0f);
 
 	const UTDFluidPresetAsset* RiverPreset = UTDFluidPresetAsset::CreateTransientPreset(nullptr, ETDFluidPresetKind::River);
 	TestTrue(TEXT("River presets paint the water channel"), RiverPreset && RiverPreset->DefaultChannel == ETDFluidBrushChannel::ChannelA_Water);

@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불·폭발 무대 LV_TDFluidFireStage(장면 1 횃불을 든 폰, 장면 2 모닥불과 연기, 장면 3 폭발 블록)와 프리셋 6종·벽돌 지오메트리 컬렉션을 만든다. 먼저 editor_make_fluid_volume_material.py 와 editor_make_fluid_flame_material.py 가 성공하고 C++ 재빌드·에디터 재시작이 끝나 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fire_stage.py
 출력: /Game/FluidFX/Presets/DA_TDFluid_TorchFlame·CampfireFlame·CampfireSmoke·ExplosionFire·ExplosionSmoke·ExplosionGroundDust, /Game/FluidFX/Destruction/GC_TD_FluidExplosionCube, /Game/FluidFX/Maps/LV_TDFluidFireStage, Saved/FluidFX/fluid_fire_stage.json
-상태: 검증됨(2026-10-18 FX-3 불 무대 생성·쇼케이스·탐침 성공, 2026-10-20 FX-8b C++ 빌더 프리셋 6종·지면 먼지·조각 대상 배열로 재생성 17액터, 2026-10-20 14:20 FX-8c 6차 재생성 생성 액터 18개). FX-8c 5차 굽기(2026-10-20: 모닥불 depth_bias 40→10, 폭발 조각 대상 burst_radius_scale 연기 2.5→1.75·먼지 1.6→1.12, 먼지 볼륨 재질 MI_TD_FluidVolume_GroundDust 와 위치 z 50→0, 횃불 막대 Transform 을 손 소켓 축 방향 위치 (-25.15, 15.69, -4.63)·길이 60cm 로, 불씨 source_offset_cm 을 같은 축 50cm (-41.91, 26.15, -7.71) 로 넣고 다시 읽어 확인)는 C++ 굽기 값(폭발 트레일 코어 200·고리 0, 폭발 연기 열 발광색, 카드 축소 1.0) 재빌드 뒤 6차 재생성에서 반영 통과(액터 18, 먼지 MI·z0, 횃불 막대·오프셋 다시 읽기). 에셋·맵이 이미 있으면 Saved/FluidFX/fluid_fire_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. FX-8c 7차 부엽(2026-10-20): C++ 폭발 트레일 코어 200→160·부엽 6개에 맞춰 폭발 조각 대상 burst_radius_scale 연기 1.75→2.1875·먼지 1.12→1.4(연기·먼지 버스트 반지름 350·224cm 그대로). FX-8c 8차(2026-10-20): 폭발 연기 ExplosionSmoke 만 볼륨 재질 MI_TD_FluidVolume_ExplosionBillow(soft-abs ε 0.04·평균 변위 δ 0.08456)를 쓰고 모닥불 연기는 MI_TD_FluidVolume_SmokeBillow 그대로다. 7차·8차는 C++ 재빌드 뒤 2026-10-20 17:22 재생성·다시 읽기 통과(트레일 코어 160·부엽 6·시드 0, 대상 burst_radius_scale 1.0·2.1875·1.4, 생성 액터 18), PIE 외형은 미검증. FX-8c 8차 묶음 A·B 굽기(2026-10-20): C++ 폭발 트레일 코어 160·부엽 6 → 코어 224·부엽 0 에 맞춰 폭발 조각 대상 burst_radius_scale 연기 2.1875→1.5625·먼지 1.4→1.0(연기·먼지 버스트 반지름 350·224cm 그대로), 불 액터 light 에 min_kelvin·max_kelvin 을 넣어 색온도 최소·최대를 설정(횃불·모닥불 1500/2100 = C++ 기본, 폭발 1100/1400), C++ 폭발 연기 열 발광 지수 3.0. 재빌드·재생성 전이다. FX-8c 10차 조각 발광(2026-10-20): 폭발 조각 방출 액터 fragment_glow_material_asset 에 MI_TD_FluidFragmentGlow_Explosion(editor_make_fluid_flame_material.py 가 먼저 만든다)을 소프트 참조로 넣고 다시 읽어 확인한다. C++ 가 부서진 뒤 비동기 로드한 재질로 MID 를 만들어 조각 컬렉션 슬롯에 넣고 나이 열 비율·폭발 불 Aux 열을 넣는다(glow_settings 는 C++ 기본). 재빌드·재질·재생성 전이다. FX-8c 10차 굽기(2026-10-21): 횃불·모닥불 light min_kelvin·max_kelvin 1500/2100 → 1100/1400(폭발과 같은 띠, runner10 L1: 모닥불 바닥 색상 35→15°, 폰 몸통 41→18°, 혀 곡선 13.2). FX-8c 11차 굽기(2026-10-21): 모닥불 ember base_scale 0.025(judge11a B1: 불티 지름 3.91→2.52px, LIVE-2 2.2~3.3px), 폭발은 0.04(C++ 기본) 그대로, 2026-10-21 무대 재생성·다시 읽기 확인. 횃불 ember base_scale 0.010(judge11b B3: 큰 덩어리 2.3→0/장, 작은 불씨 1.4→3.4/장), 2026-10-21 재생성·다시 읽기 확인. FX-8c 12차(2026-10-21): C++ 계약 목록 TDFluidFragmentTrailSettings 에 fire_trail_heat_scale·fire_trail_density_scale·should_track_with_world_clock 을 더했고, 12차 빌드 뒤 재생성·다시 읽기 통과(폭발 트레일 burst_sustain_seconds 0.14·should_track_with_world_clock true 는 C++ 프리셋 WC14 굽기, 배율 1·1). FX-8c 13차(2026-10-21): C++ 계약 목록에 fire_trail_stem_heat_scale·fire_trail_stem_density_scale·fire_trail_head_radius_scale(기본 1, 굽기 없음)을 더했고 13차 빌드 뒤 재생성·다시 읽기 통과. FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 2026-10-22 새 빌드로 재생성 검증(무대·DA 값 export 덤프가 변경 전 golden 과 동일, sha dc4f79d2).
+상태: 검증됨(2026-10-18 FX-3 불 무대 생성·쇼케이스·탐침 성공, 2026-10-20 FX-8b C++ 빌더 프리셋 6종·지면 먼지·조각 대상 배열로 재생성 17액터, 2026-10-20 14:20 FX-8c 6차 재생성 생성 액터 18개). FX-8c 5차 굽기(2026-10-20: 모닥불 depth_bias 40→10, 폭발 조각 대상 burst_radius_scale 연기 2.5→1.75·먼지 1.6→1.12, 먼지 볼륨 재질 MI_TD_FluidVolume_GroundDust 와 위치 z 50→0, 횃불 막대 Transform 을 손 소켓 축 방향 위치 (-25.15, 15.69, -4.63)·길이 60cm 로, 불씨 source_offset_cm 을 같은 축 50cm (-41.91, 26.15, -7.71) 로 넣고 다시 읽어 확인)는 C++ 굽기 값(폭발 트레일 코어 200·고리 0, 폭발 연기 열 발광색, 카드 축소 1.0) 재빌드 뒤 6차 재생성에서 반영 통과(액터 18, 먼지 MI·z0, 횃불 막대·오프셋 다시 읽기). 에셋·맵이 이미 있으면 Saved/FluidFX/fluid_fire_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. FX-8c 7차 부엽(2026-10-20): C++ 폭발 트레일 코어 200→160·부엽 6개에 맞춰 폭발 조각 대상 burst_radius_scale 연기 1.75→2.1875·먼지 1.12→1.4(연기·먼지 버스트 반지름 350·224cm 그대로). FX-8c 8차(2026-10-20): 폭발 연기 ExplosionSmoke 만 볼륨 재질 MI_TD_FluidVolume_ExplosionBillow(soft-abs ε 0.04·평균 변위 δ 0.08456)를 쓰고 모닥불 연기는 MI_TD_FluidVolume_SmokeBillow 그대로다. 7차·8차는 C++ 재빌드 뒤 2026-10-20 17:22 재생성·다시 읽기 통과(트레일 코어 160·부엽 6·시드 0, 대상 burst_radius_scale 1.0·2.1875·1.4, 생성 액터 18), PIE 외형은 미검증. FX-8c 8차 묶음 A·B 굽기(2026-10-20): C++ 폭발 트레일 코어 160·부엽 6 → 코어 224·부엽 0 에 맞춰 폭발 조각 대상 burst_radius_scale 연기 2.1875→1.5625·먼지 1.4→1.0(연기·먼지 버스트 반지름 350·224cm 그대로), 불 액터 light 에 min_kelvin·max_kelvin 을 넣어 색온도 최소·최대를 설정(횃불·모닥불 1500/2100 = C++ 기본, 폭발 1100/1400), C++ 폭발 연기 열 발광 지수 3.0. 재빌드·재생성 전이다. FX-8c 10차 조각 발광(2026-10-20): 폭발 조각 방출 액터 fragment_glow_material_asset 에 MI_TD_FluidFragmentGlow_Explosion(editor_make_fluid_flame_material.py 가 먼저 만든다)을 소프트 참조로 넣고 다시 읽어 확인한다. C++ 가 부서진 뒤 비동기 로드한 재질로 MID 를 만들어 조각 컬렉션 슬롯에 넣고 나이 열 비율·폭발 불 Aux 열을 넣는다(glow_settings 는 C++ 기본). 재빌드·재질·재생성 전이다. FX-8c 10차 굽기(2026-10-21): 횃불·모닥불 light min_kelvin·max_kelvin 1500/2100 → 1100/1400(폭발과 같은 띠, runner10 L1: 모닥불 바닥 색상 35→15°, 폰 몸통 41→18°, 혀 곡선 13.2). FX-8c 11차 굽기(2026-10-21): 모닥불 ember base_scale 0.025(judge11a B1: 불티 지름 3.91→2.52px, LIVE-2 2.2~3.3px), 폭발은 0.04(C++ 기본) 그대로, 2026-10-21 무대 재생성·다시 읽기 확인. 횃불 ember base_scale 0.010(judge11b B3: 큰 덩어리 2.3→0/장, 작은 불씨 1.4→3.4/장), 2026-10-21 재생성·다시 읽기 확인. FX-8c 12차(2026-10-21): C++ 계약 목록 TDFluidFragmentTrailSettings 에 fire_trail_heat_scale·fire_trail_density_scale·should_track_with_world_clock 을 더했고, 12차 빌드 뒤 재생성·다시 읽기 통과(폭발 트레일 burst_sustain_seconds 0.14·should_track_with_world_clock true 는 C++ 프리셋 WC14 굽기, 배율 1·1). FX-8c 13차(2026-10-21): C++ 계약 목록에 fire_trail_stem_heat_scale·fire_trail_stem_density_scale·fire_trail_head_radius_scale(기본 1, 굽기 없음)을 더했고 13차 빌드 뒤 재생성·다시 읽기 통과. FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 2026-10-22 새 빌드로 재생성 검증(무대·DA 값 export 덤프가 변경 전 golden 과 동일, sha dc4f79d2). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 단색 인스턴스 MI_TD_FluidFireFloor·MI_TD_FluidFireCharredWood 의 BaseColor·Roughness·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽는다(FLOOR_COLOR·WOOD_COLOR 상수 삭제).
 """
 import hashlib
 import importlib.util
@@ -48,8 +48,7 @@ REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_fire_stage.json")
 BRICK_COUNT = (4, 4, 4)
 BRICK_SIZE_CM = 25.0
 
-FLOOR_COLOR = (0.17, 0.145, 0.12)
-WOOD_COLOR = (0.03, 0.024, 0.02)
+MATERIAL_LOOK_MODULE_RELATIVE_PATH = ("Tools", "FluidFX", "fluid_material_look.py")
 PLAYER_START = (0.0, 0.0, 96.0)
 NAVIGATION_SCALE = (10.0, 28.0, 4.0)
 NAVIGATION_CENTER = (0.0, 1800.0, 100.0)
@@ -396,6 +395,16 @@ def project_path(*parts):
     return os.path.join(unreal.SystemLibrary.get_project_directory(), *parts)
 
 
+def load_material_look_table():
+    module_path = project_path(*MATERIAL_LOOK_MODULE_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("fluid_material_look", module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"모양 정본 모듈 없음: {module_path}")
+    material_look = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(material_look)
+    return material_look.TDMaterialLookTable.read_project(unreal.SystemLibrary.get_project_directory())
+
+
 def asset_disk_path(path, extension):
     return project_path("Content", *path[len("/Game/"):].split("/")) + extension
 
@@ -575,9 +584,8 @@ def load_or_create_matte_master():
     return material, True
 
 
-def write_matte_instance(path, master, color_rgb, roughness_value):
+def write_matte_instance(path, master, look_table):
     assets = unreal.EditorAssetLibrary
-    editing = unreal.MaterialEditingLibrary
     if assets.does_asset_exist(path):
         instance = assets.load_asset(path)
     else:
@@ -587,10 +595,7 @@ def write_matte_instance(path, master, color_rgb, roughness_value):
         )
     if not isinstance(instance, unreal.MaterialInstanceConstant):
         raise RuntimeError(f"재질 인스턴스 생성 실패: {path}")
-    editing.set_material_instance_parent(instance, master)
-    editing.set_material_instance_vector_parameter_value(instance, "BaseColor", unreal.LinearColor(color_rgb[0], color_rgb[1], color_rgb[2], 1.0))
-    editing.set_material_instance_scalar_parameter_value(instance, "Roughness", roughness_value)
-    editing.update_material_instance(instance)
+    look_table.apply_to_instance(unreal.MaterialEditingLibrary, unreal.LinearColor, instance, path, master)
     save_asset(instance, path)
     return instance
 
@@ -831,6 +836,7 @@ def main():
 
     print("단계: 프리셋 정본 검사·다시 읽기")
     preset_tuning_sha256 = reload_preset_tuning()
+    look_table = load_material_look_table()
 
     game_mode = assets.load_blueprint_class(GAME_MODE_PATH)
     assets_by_name = {
@@ -859,8 +865,8 @@ def main():
 
     print("단계: 재질 준비")
     matte_master, matte_created = load_or_create_matte_master()
-    floor_material = write_matte_instance(FLOOR_INSTANCE_PATH, matte_master, FLOOR_COLOR, 0.95)
-    wood_material = write_matte_instance(WOOD_INSTANCE_PATH, matte_master, WOOD_COLOR, 0.9)
+    floor_material = write_matte_instance(FLOOR_INSTANCE_PATH, matte_master, look_table)
+    wood_material = write_matte_instance(WOOD_INSTANCE_PATH, matte_master, look_table)
     charred_wood_material = unreal.EditorAssetLibrary.load_asset(CHARRED_WOOD_INSTANCE_PATH) if unreal.EditorAssetLibrary.does_asset_exist(CHARRED_WOOD_INSTANCE_PATH) else None
     if charred_wood_material is not None:
         wood_material = charred_wood_material

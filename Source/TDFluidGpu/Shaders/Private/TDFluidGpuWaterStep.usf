@@ -73,7 +73,7 @@ FTDFluidGpuWaterStampedCell ComputeWaterStampedCell(FTDFluidGpuActorParameters A
 		return Stamped;
 	}
 
-	float2 Velocity = TDFluidGpuClampVelocityMagnitude(VelocityIn[Texel]);
+	float2 Velocity = TDFluidGpuClampVelocityMagnitude(VelocityIn[Texel], Actor.MaxCellSpeedCmPerSec);
 	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_RASTERIZES_OBSTACLES))
 	{
 		Velocity = TDFluidGpuEnforceObstacleBoundary(CompositeSdf, Actor, Cell, Velocity);

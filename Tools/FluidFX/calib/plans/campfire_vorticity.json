@@ -1,0 +1,32 @@
+{
+  "id": "campfire_vorticity",
+  "note": "spec-wave0-data-bridge-v2 3.9 수용 (가): 불 무대 모닥불, 소유 위치 Kinds.Campfire(지금 1.5), A/B/A 대조, LIVE-2 목표 kind fire 대조",
+  "scenes": [
+    {
+      "name": "campfire",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+      "camera": {
+        "awake": {"TDGen_TorchFire": true, "TDGen_CampfireFire": true, "TDGen_CampfireSmoke": true, "TDGen_ExplosionFire": false, "TDGen_ExplosionSmoke": false, "TDGen_ExplosionGroundDust": false},
+        "exposure_ev100": 2.0,
+        "pawn": [120, 1150],
+        "arm": 300.0,
+        "view": [-3.0, 80.0],
+        "hide": {"TDGen_TorchFire": true, "TDGen_ExplosionBlock": true}
+      },
+      "time_dilation": 1.0,
+      "schedule": null,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/campfire_fire_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/campfire_live2_fire.json",
+      "live2_refs": []
+    }
+  ],
+  "params": [
+    {"json_path": "Kinds.Campfire.TDFluidSimulationConfig.VorticityStrength", "values": [1.2, 1.5, 1.8], "split_group": false}
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "metrics": {"sources": ["look"], "noise_floor": {}}
+}

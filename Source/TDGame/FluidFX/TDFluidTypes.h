@@ -54,6 +54,22 @@ enum class ETDFluidPresetKind : uint8
 	PortalVortex
 };
 
+UENUM(BlueprintType)
+enum class ETDFluidGpuPressureSolverMode : uint8
+{
+	Auto,
+	Jacobi,
+	MultigridFrom64
+};
+
+UENUM(BlueprintType)
+enum class ETDFluidWaterGpuPressureMode : uint8
+{
+	Default,
+	HalfMultigrid,
+	HalfKernelFeedback
+};
+
 USTRUCT(BlueprintType)
 struct TDGAME_API FTDFluidBrushStamp
 {
@@ -322,6 +338,72 @@ struct TDGAME_API FTDFluidSimulationConfig
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vortex", meta = (ClampMin = "0.01", ClampMax = "0.5"))
 	float VortexRadiusRatio = 0.35f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver", meta = (ClampMin = "1.0"))
+	float MaxCellSpeedCmPerSec = 1200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver", meta = (ClampMin = "0.0"))
+	float BrushVelocityResponsePerSec = 12.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver", meta = (ClampMin = "0.0"))
+	float BrushDisplacementRatio = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver", meta = (ClampMin = "0.0"))
+	float BrushEraseRatePerSec = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure")
+	ETDFluidGpuPressureSolverMode GpuPressureSolverMode = ETDFluidGpuPressureSolverMode::Auto;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure", meta = (ClampMin = "1", ClampMax = "4"))
+	int32 GpuMultigridCycles = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure")
+	ETDFluidWaterGpuPressureMode WaterGpuPressureMode = ETDFluidWaterGpuPressureMode::Default;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure", meta = (ClampMin = "2", ClampMax = "7"))
+	int32 PressureKernelRadiusTexels = 4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float PressureKernelFeedback = 0.98f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure", meta = (ClampMin = "0.0", ClampMax = "100.0"))
+	float PressureKernelScale = 1.0f;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidInputBrushSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0"))
+	float PivotDensityStrength = 0.75f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0"))
+	float BoneDensityStrength = 0.9f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0"))
+	float ParticleDensityStrength = 0.85f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0"))
+	float MouseBrushDensityStrength = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0"))
+	float TeleportSpeedCmPerSec = 3000.0f;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidRuntimeOpsSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0"))
+	float SleepDistanceRatio = 1.1f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "1.0"))
+	float InteractionVolumeHalfHeightCm = 300.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0"))
+	double NiagaraCacheRefreshIntervalSeconds = 1.0;
 };
 
 USTRUCT(BlueprintType)

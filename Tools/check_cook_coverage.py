@@ -1,7 +1,7 @@
-"""시스템 Python으로 실행: 런타임 C++(`Source/`·`Plugins/*/Source/`, 에디터 모듈·Tests 폴더·WITH_EDITOR 블록·주석 제외)의 `/Game` 문자열 경로마다 쿠킹 보장 근거(DefaultGame.ini 패키징 섹션의 항상 쿠킹 폴더·런타임 설정 ini 값·ConstructorHelpers 시작 로드·그 두 근거에 속한 패키지의 직접 참조·예외 목록)를 판정하고, 근거 없는 경로·쿠킹 제외 폴더 안 경로·사라진 예외 목록 항목을 실패로 보고한다(OP-33, L-build-07). 이어붙이기·Printf·Format·Combine 경로와 없는 패키지 이름의 접두는 폴더 단위로 판정한다.
+"""시스템 Python으로 실행: 런타임 C++(`Source/`·`Plugins/*/Source/`, 에디터 모듈·Tests 폴더·WITH_EDITOR 블록·주석 제외)의 `/Game` 문자열 경로마다 쿠킹 보장 근거(DefaultGame.ini 패키징 섹션의 항상 쿠킹 폴더·런타임 설정 ini 값·ConstructorHelpers 시작 로드·그 두 근거에 속한 패키지의 직접 참조·예외 목록)를 판정하고, 근거 없는 경로·쿠킹 제외 폴더 안 경로·사라진 예외 목록 항목을 실패로 보고한다(OP-33, L-build-07). 이어붙이기·Printf·Format·Combine 경로와 없는 패키지 이름의 접두는 폴더 단위로 판정한다. FluidFX 조절 JSON 은 등록 구조체의 소프트 경로 필드 값만(헤더 형식으로 식별, check_fluid_preset_data.py) 같은 판정에 넣고, 모양 파일 키·Parent 는 로드하지 않는 이름 대조용이라 넣지 않는다(spec-wave0-data-bridge-v2 2.5 M7).
 실행: python Tools/check_cook_coverage.py [--list-all] [--report <JSON 경로>] [--root <프로젝트 루트>] (PowerShell 또는 Git Bash, 에디터·쿠킹 불필요)
 출력: 표준 출력(UNCOVERED·NEVER_COOK·MISSING·STALE 줄과 SUMMARY 한 줄), --report 지정 시 JSON(관례 Saved/AgentOps/<YYYYMMDD>/cook_coverage.json). 종료 코드 0 위반 없음 / 1 UNCOVERED·NEVER_COOK·STALE / 2 입력 오류
-상태: 현행
+상태: 현행(2026-10-25 파동 0 P2 --root fixture: 모양 파일 /Game 키·Parent 는 판정에 들어가지 않고, 등록 구조체 소프트 경로 필드는 쿠킹 폴더 밖이면 UNCOVERED·항상 쿠킹 폴더 안이면 통과, 실제 트리 uncovered 0)
 """
 import argparse
 import json
@@ -9,6 +9,7 @@ import re
 import sys
 from pathlib import Path
 
+import check_fluid_preset_data as fluid_preset_data
 import check_sync_loads as sync_loads
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +19,7 @@ PACKAGING_SECTION = "/Script/UnrealEd.ProjectPackagingSettings"
 PRINTED_CATEGORIES = ("UNCOVERED", "NEVER_COOK", "MISSING")
 CATEGORIES = ("ALWAYS_COOK", "CONFIG", "STARTUP", "REFERENCED", "ACCEPTED", "MISSING", "NEVER_COOK", "UNCOVERED")
 STALE_GUIDANCE = "예외 목록 항목이 더 이상 없음: 목록에서 지운다"
+FLUID_TUNING_RELATIVE_PATH = "/".join(fluid_preset_data.TUNING_RELATIVE_PATH)
 
 GAME_PATH_LITERAL = re.compile(r'(?<![A-Za-z0-9_])"(/Game(?:/[^"]*)?)"')
 RAW_GAME_PATH_LITERAL = re.compile(r'R"([^ ()\\\t\v\f\n]{0,16})\((/Game(?:/[^)]*)?)\)\1"')
@@ -30,6 +32,7 @@ COOK_DIRECTORY_ENTRY = re.compile(r'^([+-])DirectoriesTo(AlwaysCook|NeverCook)=\
 
 ACCEPTED_ENTRIES = [
     ("Source/TDGame/Combat/Damage/TDMegaMagicDamageExamples.cpp", "/Game/MegaMagicVFXBundle/VFX/", "예시 주문 생성: 런타임 호출은 WITH_EDITOR 대체 경로와 명령렛뿐, 쿠킹 게임의 VFX는 MegaMagic DA 소프트 참조로 쿠킹"),
+    ("Source/TDGame/FluidFX/TDFluidPresetTuningSubsystem.cpp", "/Game/", "조절·모양 JSON 문자열의 /Game/ 경로 형식 검사용 접두(StartsWith 비교), 이 경로로 아무것도 로드하지 않음"),
 ]
 
 
@@ -238,6 +241,19 @@ def collect_categorized_literals(root, source_files, module_folders, context, ac
     return entries
 
 
+def collect_fluid_tuning_entries(root, context, accepted_usage):
+    try:
+        soft_paths = fluid_preset_data.collect_tuning_soft_paths(root)
+    except (fluid_preset_data.InputError, OSError, ValueError) as error:
+        sync_loads.stop_with_input_error(root / FLUID_TUNING_RELATIVE_PATH, f"등록 구조체 소프트 경로 필드를 읽을 수 없음 ({error})")
+    entries = []
+    for json_path, literal in soft_paths:
+        target = literal.split(".", 1)[0]
+        category = categorize_literal(root, FLUID_TUNING_RELATIVE_PATH, literal, "package", target, "", context, accepted_usage)
+        entries.append({"path": FLUID_TUNING_RELATIVE_PATH, "line": json_path, "literal": literal, "kind": "package", "target": target, "category": category})
+    return entries
+
+
 def write_report(report_path, summary, entries):
     try:
         report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -269,6 +285,7 @@ def main():
     source_files = sync_loads.collect_source_files(root)
     accepted_usage = [False] * len(ACCEPTED_ENTRIES)
     entries = collect_categorized_literals(root, source_files, module_folders, context, accepted_usage)
+    entries += collect_fluid_tuning_entries(root, context, accepted_usage)
     stale_entries = [entry for entry, is_used in zip(ACCEPTED_ENTRIES, accepted_usage) if not is_used]
 
     for entry in entries:

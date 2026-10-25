@@ -1,9 +1,10 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 물 수면 마스터 재질 M_TD_FluidWater(Substrate 단일층 물)·M_TD_FluidWaterLite(DefaultLit)와 인스턴스 5종(강·호수·바다·폭풍·늪), 젖음 DBuffer 데칼 재질 M_TD_FluidWetnessDecal(TDFluidWaterWetDecal.hlsl), 텍스처 3장, 격자 메시 2개, 0단계 확인 3건을 만든다. Custom 노드 2개(표면·정점 오프셋)에 Tools/FluidFX/Shaders/TDFluidWaterCommon·Surface·Offset.hlsl 을 노드별로 조립해 넣는다.
 실행 명령: python Tools/FluidFX/make_fluid_water_textures.py 다음 python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_material.py (젖음 데칼 재질 하나만 다시 만들 때는 요청 파일 Saved/FluidFX/fluid_water_material_request.json 에 {"wet_decal_only": true})
 출력: /Game/FluidFX/Materials/M_TD_FluidWater·M_TD_FluidWaterLite·MI_TD_FluidWater_River·Lake·Sea·SeaStorm·Swamp·M_TD_FluidWaterDecalProbe·M_TD_FluidWetnessDecal, /Game/FluidFX/Textures/T_TD_FluidWaterDetailN·T_TD_FluidFoamNoise·T_TD_FluidFlowPhaseNoise·T_TD_FluidCaustics, /Game/FluidFX/Meshes/SM_TD_FluidWaterGrid64·SM_TD_FluidWaterGridUnit, Saved/FluidFX/fluid_water_material.json
-상태: 검증 중(2026-10-19). 기본 경로는 단일층 물(legacy = MSM_SINGLE_LAYER_WATER, 굴절 Pixel Normal Offset, 흡수·산란 계수는 1/cm 그대로 = 엔진이 cm 깊이에 곱함, SingleLayerWaterShading.ush 206·221행). SLW 가 안 보이던 것은 아래를 보는 격자 탓이었다(L-editor-40·41 정정). 코스틱 텍스처 min 결합(ColorScaleBehindWater)·미세 법선·해 반짝임 방출(SkyAtmosphereLightDirection·Illuminance)·레이스 거품 문턱. {"water_path": "substrate"|"translucent"} 로 다른 경로(반투명은 두께 = SceneDepth − PixelDepth). C1 추가분: RibbonTangentWS·RibbonFlowCmPerSec(CPD 0번)·MID_DRIVEN_* 계약 대조. 기존 에셋은 {"overwrite": true} 일 때만 다시 짓고(격자는 지운 뒤 새로), 물 무대가 열려 있으면 불 무대로 옮긴 뒤 짓는다. 미저장 작업이 있으면 중단한다. W-2r 추가분(새 파라미터 기본값은 기존 화면과 같음): 거품 문턱(FoamDensityThreshold·FoamFromDensity·FoamSpeedThreshold)·프루드 수 흰 물(FoamFromFroude·FoamFroudeThreshold)·카메라 거리 거품 페이드(FoamFadeStartCm·FoamFadeLengthCm)·선택 밀도 염료(DyeColor·DyeOpacity)·리본 로컬 UV 정적 스위치 3개(bRibbonLocalFlowDetail·Caustics·Tiling, RibbonSegmentLengthCm·RibbonWidthCm·RibbonStretchAlong, 인스턴스 "switches"), 강 MI 청록·거품 재조정. W-2s-a(미검증): 젖음 데칼 HLSL 높이 관문(입력 TerrainReferenceZCm·WetHeightToleranceCm 추가, WetOpacity 기본 0.20 = 일괄 보정 전 임시값)과 {"wet_decal_only": true} 요청(M_TD_FluidWetnessDecal 하나만 덮어쓰고 텍스처·격자 메시·물 마스터·인스턴스·물 무대는 건드리지 않으며 보고서는 이 요청의 결과로 덮어쓴다).
+상태: 검증 중(2026-10-19). 기본 경로는 단일층 물(legacy = MSM_SINGLE_LAYER_WATER, 굴절 Pixel Normal Offset, 흡수·산란 계수는 1/cm 그대로 = 엔진이 cm 깊이에 곱함, SingleLayerWaterShading.ush 206·221행). SLW 가 안 보이던 것은 아래를 보는 격자 탓이었다(L-editor-40·41 정정). 코스틱 텍스처 min 결합(ColorScaleBehindWater)·미세 법선·해 반짝임 방출(SkyAtmosphereLightDirection·Illuminance)·레이스 거품 문턱. {"water_path": "substrate"|"translucent"} 로 다른 경로(반투명은 두께 = SceneDepth − PixelDepth). C1 추가분: RibbonTangentWS·RibbonFlowCmPerSec(CPD 0번)·MID_DRIVEN_* 계약 대조. 기존 에셋은 {"overwrite": true} 일 때만 다시 짓고(격자는 지운 뒤 새로), 물 무대가 열려 있으면 불 무대로 옮긴 뒤 짓는다. 미저장 작업이 있으면 중단한다. W-2r 추가분(새 파라미터 기본값은 기존 화면과 같음): 거품 문턱(FoamDensityThreshold·FoamFromDensity·FoamSpeedThreshold)·프루드 수 흰 물(FoamFromFroude·FoamFroudeThreshold)·카메라 거리 거품 페이드(FoamFadeStartCm·FoamFadeLengthCm)·선택 밀도 염료(DyeColor·DyeOpacity)·리본 로컬 UV 정적 스위치 3개(bRibbonLocalFlowDetail·Caustics·Tiling, RibbonSegmentLengthCm·RibbonWidthCm·RibbonStretchAlong, 인스턴스 "switches"), 강 MI 청록·거품 재조정. W-2s-a(미검증): 젖음 데칼 HLSL 높이 관문(입력 TerrainReferenceZCm·WetHeightToleranceCm 추가, WetOpacity 기본 0.20 = 일괄 보정 전 임시값)과 {"wet_decal_only": true} 요청(M_TD_FluidWetnessDecal 하나만 덮어쓰고 텍스처·격자 메시·물 마스터·인스턴스·물 무대는 건드리지 않으며 보고서는 이 요청의 결과로 덮어쓴다). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 5종의 스칼라·벡터[r,g,b,a]·정적 스위치와 부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, 표 INSTANCE_SPECS 에는 이름만 남는다(알파 0 강제 삭제, 정본 값 그대로).
 """
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -325,99 +326,13 @@ LEGACY_WATER_OUTPUT_PIN_CANDIDATES = {
 }
 
 INSTANCE_SPECS = (
-    {
-        "name": "MI_TD_FluidWater_River",
-        "vectors": {
-            "WaterExtinctionPerCm": (0.028, 0.0068, 0.0042),
-            "WaterScatteringAlbedo": (0.04, 0.3, 0.45),
-            "DetailNormalTilingCm": (200.0, 640.0, 0.0),
-        },
-        "scalars": {
-            "PassiveWaveAmplitudeCm": 1.5,
-            "CoastFoamStrength": 0.0,
-            "ShoreFoamDepthCm": 6.0,
-            "ShoreFoamAmount": 0.7,
-            "EdgeSoftnessCm": 3.0,
-            "FoamFromSpeed": 0.0,
-            "FoamDensityThreshold": 0.08,
-            "FoamFromDensity": 1.6,
-            "FoamFromFroude": 0.32,
-            "FoamFroudeThreshold": 1.2,
-            "FoamCoverageMax": 0.7,
-            "FoamTilingCm": 180.0,
-            "FoamFadeStartCm": 2200.0,
-            "FoamFadeLengthCm": 2000.0,
-            "DetailNormalStrength": 0.22,
-            "MicroNormalStrength": 0.12,
-            "MicroNormalTilingCm": 30.0,
-            "WaterRoughness": 0.03,
-            "GlintSharpness": 1500.0,
-            "GlintHotspotSharpness": 6.0,
-            "GlintIntensity": 10.0,
-            "CausticsStrength": 0.45,
-            "CausticsTilingCm": 180.0,
-            "CausticsMaxDepthCm": 160.0,
-            "FlowPhasePeriodSeconds": 1.0,
-            "RibbonSegmentLengthCm": 395.0,
-            "RibbonWidthCm": 800.0,
-            "RibbonStretchAlong": 3.0,
-            "DyeOpacity": 0.8,
-        },
-        "switches": {"bRibbonLocalFlowDetail": True, "bRibbonLocalCaustics": True, "bRibbonLocalTiling": True},
-    },
-    {
-        "name": "MI_TD_FluidWater_Lake",
-        "vectors": {
-            "WaterExtinctionPerCm": (0.006, 0.0016, 0.0011),
-            "WaterScatteringAlbedo": (0.05, 0.35, 0.55),
-            "DetailNormalTilingCm": (320.0, 900.0, 0.0),
-        },
-        "scalars": {
-            "PassiveWaveAmplitudeCm": 3.0,
-            "CoastFoamStrength": 0.0,
-            "ShoreFoamDepthCm": 8.0,
-            "ShoreFoamAmount": 0.15,
-            "DetailNormalStrength": 0.17,
-            "MicroNormalStrength": 0.07,
-            "CausticsStrength": 1.6,
-            "CausticsTilingCm": 340.0,
-            "FoamCoverageMax": 0.85,
-            "FoamFromSpeed": 1.1,
-        },
-    },
-    {
-        "name": "MI_TD_FluidWater_Sea",
-        "vectors": {"WaterExtinctionPerCm": (0.004, 0.0009, 0.0006), "WaterScatteringAlbedo": (0.03, 0.3, 0.6)},
-        "scalars": {"PassiveWaveAmplitudeCm": 12.0, "ShoreFoamDepthCm": 25.0},
-    },
-    {
-        "name": "MI_TD_FluidWater_SeaStorm",
-        "vectors": {"WaterExtinctionPerCm": (0.009, 0.0035, 0.003), "WaterScatteringAlbedo": (0.08, 0.35, 0.45)},
-        "scalars": {"PassiveWaveAmplitudeCm": 40.0, "ShoreFoamDepthCm": 25.0},
-    },
-    {
-        "name": "MI_TD_FluidWater_Swamp",
-        "vectors": {
-            "WaterExtinctionPerCm": (0.02, 0.018, 0.026),
-            "WaterScatteringAlbedo": (0.32, 0.3, 0.16),
-            "FoamColor": (0.55, 0.52, 0.4),
-            "DetailNormalTilingCm": (320.0, 900.0, 0.0),
-        },
-        "scalars": {
-            "PassiveWaveAmplitudeCm": 0.5,
-            "CoastFoamStrength": 0.0,
-            "ShoreFoamDepthCm": 4.0,
-            "ShoreFoamAmount": 0.3,
-            "EdgeSoftnessCm": 3.0,
-            "FoamCoverageMax": 0.4,
-            "DetailNormalStrength": 0.08,
-            "MicroNormalStrength": 0.03,
-            "WaterRoughness": 0.08,
-            "CausticsStrength": 0.0,
-            "GlintIntensity": 4.0,
-        },
-    },
+    {"name": "MI_TD_FluidWater_River"},
+    {"name": "MI_TD_FluidWater_Lake"},
+    {"name": "MI_TD_FluidWater_Sea"},
+    {"name": "MI_TD_FluidWater_SeaStorm"},
+    {"name": "MI_TD_FluidWater_Swamp"},
 )
+MATERIAL_LOOK_MODULE_RELATIVE_PATH = ("Tools", "FluidFX", "fluid_material_look.py")
 
 REQUIRED_UNREAL_NAMES = (
     "EditorAssetLibrary.load_asset",
@@ -433,6 +348,7 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialEditingLibrary.set_material_instance_static_switch_parameter_value",
     "MaterialEditingLibrary.get_material_instance_static_switch_parameter_value",
     "MaterialEditingLibrary.get_material_instance_scalar_parameter_value",
+    "MaterialEditingLibrary.get_material_instance_vector_parameter_value",
     "MaterialEditingLibrary.update_material_instance",
     "EditorLoadingAndSavingUtils.get_dirty_map_packages",
     "EditorLoadingAndSavingUtils.get_dirty_content_packages",
@@ -498,6 +414,16 @@ DEFINE_PATTERN = re.compile(r"^[ \t]*#define[ \t]+(TD_WATER_[A-Za-z0-9_]+)", re.
 
 def project_path(*parts):
     return os.path.join(unreal.SystemLibrary.get_project_directory(), *parts)
+
+
+def load_material_look_table():
+    module_path = project_path(*MATERIAL_LOOK_MODULE_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("fluid_material_look", module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"모양 정본 모듈 없음: {module_path}")
+    material_look = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(material_look)
+    return material_look.TDMaterialLookTable.read_project(unreal.SystemLibrary.get_project_directory())
 
 
 def find_missing_unreal_names(names):
@@ -1143,16 +1069,16 @@ def verify_master_parameters(material, uses_water_phase):
     return sorted(found)
 
 
-def collect_instance_override_names():
+def collect_instance_override_names(look_table):
     names = set()
     for spec in INSTANCE_SPECS:
-        names |= set(spec["vectors"]) | set(spec["scalars"])
+        names |= look_table.override_names(asset_path(spec["name"]))
     return names
 
 
-def find_shadowed_mid_parameters():
+def find_shadowed_mid_parameters(look_table):
     driven = set(MID_DRIVEN_TEXTURE_NAMES) | set(MID_DRIVEN_VECTOR_NAMES) | set(MID_DRIVEN_SCALAR_NAMES)
-    return sorted(driven & collect_instance_override_names())
+    return sorted(driven & collect_instance_override_names(look_table))
 
 
 def verify_primitive_data_parameters(factory):
@@ -1337,28 +1263,12 @@ def prepare_instance(name, overwrite):
     return instance
 
 
-def create_material_instance(spec, master, overwrite):
-    editing = unreal.MaterialEditingLibrary
+def create_material_instance(spec, master, overwrite, look_table):
     path = asset_path(spec["name"])
     instance = prepare_instance(spec["name"], overwrite)
-    editing.set_material_instance_parent(instance, master)
-    for parameter_name, value in spec["vectors"].items():
-        editing.set_material_instance_vector_parameter_value(instance, parameter_name, unreal.LinearColor(value[0], value[1], value[2], 0.0))
-    for parameter_name, value in spec["scalars"].items():
-        editing.set_material_instance_scalar_parameter_value(instance, parameter_name, value)
-    switches = spec.get("switches", {})
-    for parameter_name, value in switches.items():
-        editing.set_material_instance_static_switch_parameter_value(instance, parameter_name, value)
-    editing.update_material_instance(instance)
-    for parameter_name, value in spec["scalars"].items():
-        stored = editing.get_material_instance_scalar_parameter_value(instance, parameter_name)
-        if abs(stored - value) > 0.001:
-            raise RuntimeError(f"재질 인스턴스 스칼라 설정 확인 실패: {path}.{parameter_name}")
-    for parameter_name, value in switches.items():
-        if editing.get_material_instance_static_switch_parameter_value(instance, parameter_name) != value:
-            raise RuntimeError(f"재질 인스턴스 정적 스위치 설정 확인 실패: {path}.{parameter_name}")
+    entry = look_table.apply_to_instance(unreal.MaterialEditingLibrary, unreal.LinearColor, instance, path, master)
     save_asset(instance, path)
-    return {"asset": path, "scalars": spec["scalars"], "vectors": spec["vectors"], "switches": switches}
+    return {"asset": path, "scalars": entry["Scalars"], "vectors": entry["Vectors"], "switches": entry["Switches"]}
 
 
 def write_report(report):
@@ -1432,7 +1342,8 @@ def main():
         raise RuntimeError("PIE를 종료한 뒤 실행하세요.")
     if request.get("wet_decal_only") is True:
         return rebuild_wet_decal_only()
-    shadowed_parameters = find_shadowed_mid_parameters()
+    look_table = load_material_look_table()
+    shadowed_parameters = find_shadowed_mid_parameters(look_table)
     if shadowed_parameters:
         raise RuntimeError("인스턴스가 C++ 구동 파라미터를 덮어쓰고 있음: " + ", ".join(shadowed_parameters))
 
@@ -1490,7 +1401,7 @@ def main():
     lite_master, lite_summary = create_water_master(True, codes, texture_defaults, overwrite, water_path)
 
     print("단계: 재질 인스턴스")
-    instances = [create_material_instance(spec, water_master, overwrite) for spec in INSTANCE_SPECS]
+    instances = [create_material_instance(spec, water_master, overwrite, look_table) for spec in INSTANCE_SPECS]
 
     missing_files = find_missing_saved_files(phase_zero["dbuffer_decal_with_substrate"]["ok"], wetness_decal["ok"])
     if missing_files:

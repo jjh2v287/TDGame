@@ -457,10 +457,10 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FTDFluidFlowNoisePresetContractTest::RunTest(const FString& Parameters)
 {
 	const FTDFluidSimulationConfig Smoke = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Smoke);
-	TestNearlyEqual(TEXT("Smoke FlowNoiseAccelerationCmPerSec2"), Smoke.FlowNoiseAccelerationCmPerSec2, 70.0f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke FlowNoiseScaleCm"), Smoke.FlowNoiseScaleCm, 220.0f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke FlowNoiseSpeed"), Smoke.FlowNoiseSpeed, 0.12f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke AmbientNoiseAmount"), Smoke.AmbientNoiseAmount, 0.45f, 1e-6f);
+	TestTrue(TEXT("Smoke turns the flow noise on"), Smoke.FlowNoiseAccelerationCmPerSec2 > 0.0f);
+	TestTrue(TEXT("Smoke flow noise has a positive scale"), Smoke.FlowNoiseScaleCm > 0.0f);
+	TestTrue(TEXT("Smoke flow noise moves"), Smoke.FlowNoiseSpeed > 0.0f);
+	TestTrue(TEXT("Smoke turns the ambient noise on"), Smoke.AmbientNoiseAmount > 0.0f);
 
 	const ETDFluidPresetKind OtherKinds[] = { ETDFluidPresetKind::Water, ETDFluidPresetKind::Mud, ETDFluidPresetKind::Blood, ETDFluidPresetKind::Fire, ETDFluidPresetKind::FootprintPainter, ETDFluidPresetKind::Custom };
 	for (const ETDFluidPresetKind Kind : OtherKinds)

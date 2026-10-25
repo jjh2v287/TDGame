@@ -1,9 +1,10 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 불꽃 카드 마스터 재질 M_TD_FluidFlame(TDFluidFlameCard.hlsl, 3D 노이즈 능선·Catmull-Rom 밀도·온도 휘도 감쇠·선택형 색 램프(기본 끔)·프리멀티플라이드 연기 흡수)과 불티 재질 M_TD_FluidEmber(TDFluidEmber.hlsl), 장작 발광 균열 재질 M_TD_FluidCharredWood(TDFluidCharredWood.hlsl), 폭발 조각 발광 재질 M_TD_FluidFragmentGlow(TDFluidFragmentGlow.hlsl, 불투명 기본 조명·지오메트리 컬렉션 사용 플래그, C++ 가 넣는 나이 열 비율과 폭발 불 Aux 열 표본 중 큰 값으로 발광) 및 인스턴스를 만든다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_flame_material.py (editor_make_fluid_volume_material.py 가 /Game/FluidFX/Textures/T_TD_FluidNoiseVolume 을 만든 뒤). 나이아가라 불티 재질만 새로 만들 때는 Saved/FluidFX/fluid_flame_material_request.json 을 {"only": ["ember_niagara"]} 로 두고 같은 명령
 출력: /Game/FluidFX/Materials/M_TD_FluidFlame, MI_TD_FluidFlame_Torch·Campfire·Explosion, M_TD_FluidEmber, MI_TD_FluidEmber_Default, M_TD_FluidCharredWood, MI_TD_FluidCharredWood_Campfire, M_TD_FluidFragmentGlow, MI_TD_FluidFragmentGlow_Explosion, Saved/FluidFX/fluid_flame_material.json. only 요청이면 M_TD_FluidEmberNiagara·MI_TD_FluidEmberNiagara_Default 와 Saved/FluidFX/fluid_ember_niagara_material.json 만
-상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 불꽃 입력 10/10·PS 232 명령). FX-8c 3차(2026-10-20) 불꽃 입력 39개(FlameSpeedHeatFloor·FlameHeatScale·FlameHeatGate·FlameHeatGateLow·FlameHeatGateHigh·FlameFlowCycleSeconds·FlameNoiseBillow, 기본값은 옛 출력과 같음)와 FX-8c 4차 G1 입력 40개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(40/40 연결·PS 352 명령). FX-8c 5차(2026-10-20) 불꽃 색 램프 입력 8개를 더한 48개(FlameColorRampMode 기본 0 = 흑체 경로 그대로, FlameRampCoverageExponent·FlameRampWarmPosition·FlameRampHotPosition, 정점 색 FlameRampColdColor·FlameRampWarmColor·FlameRampHotColor·FlameRampCoreColor 는 셰이더가 휘도 1로 정규화하는 선형 RGB)는 2026-10-20 13:02 에디터 재실행(48/48 연결·PS 393 명령·표본기 5). FX-8c 5차 굽기(2026-10-20: 세 MI 모두 FlameColorRampMode 1, 폭발·횃불 MI 는 vector_overrides 로 FlameRampColdColor·FlameRampWarmColor 를 (1, 0.03, 0.03) 으로 덮어쓰고 다시 읽어 확인, 모닥불 MI 는 마스터 정점 그대로, 횃불 MI 는 T4 값 FlameIntensity 13·FlameTemperatureMaxKelvin 1900·FlameHeatGate 1·FlameSmokeOpacity 0)는 에디터 재실행 전. FX-8c 10차(2026-10-20) 조각 발광 마스터(입력 20개, FragmentHeatRatio 기본 0 = C++ 가 넣기 전 발광 없음, 색 FragmentColdGlowColor·FragmentHotGlowColor 와 세기 FragmentGlowIntensity 는 C++ 설정 FTDFluidFragmentGlowSettings 가 매 틱 넣고 마스터 기본값은 그 C++ 기본값과 같은 진홍 (1, 0.012, 0.03)·(1, 0.03, 0.035)·세기 4, 표면색 FragmentCharColor·FragmentRoughness)와 MI_TD_FluidFragmentGlow_Explosion(덮어쓰기 없음)은 정적 검사만(check_fluid_fire_hlsl.py), 에디터 실행 전. 기존 에셋은 Saved/FluidFX/fluid_flame_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(flame_blend_mode 가 "additive" 면 BLEND_ADDITIVE, "translucent" 면 BLEND_TRANSLUCENT, 그 밖은 BLEND_ALPHA_COMPOSITE), 미저장 작업이 있으면 중단한다. FX-8c 10차 굽기(2026-10-21): 폭발 MI scalar_overrides 에 FlameErosion 0.35·FlameRampHotPosition 0.66(runner10 HP66ER35: 같은 세션 r2 +1.0~+1.9, 0.3초 노랑 −0.017). FX-8c 11차(2026-10-21): EmberTintBlend(기본 0)·EmberTintGreen·EmberTintBlue(0.03) 불티 입력 10개, FragmentFacingContrast(기본 0)·FragmentKeyCenterWorld·내장 PixelWorldNormal 조각 입력 23개는 2026-10-21 에디터 재실행(10/10·23/23 연결, 기존 MI 값 변경 0). 조각 EdgeChar* 는 C++ 가 매 틱 넣어 MI 덮어쓰기 무효. FX-8c 11차 단계 B(2026-10-21): FlameColdRidgeContrast(기본 0 = 옛 출력과 같음, 열 문 아래 차가운 불꽃만 능선 결로 깎음) 불꽃 입력 49개는 2026-10-21 에디터 재실행(49/49 연결). FX-8c 11차 굽기(2026-10-21): MI_TD_FluidEmber_Default scalar_overrides 에 EmberIntensity 4.5·EmberTintBlend 1.0(judge11b B2: 밝은 불씨 색상 24.7→3.3°, G−B 37.5→9, LIVE-2 진홍 띠), 재질 재실행 전. FX-8c 12차(2026-10-21, D-57 N0): 요청 키 "only": ["ember_niagara"] 는 M_TD_FluidEmberNiagara(같은 TDFluidEmber.hlsl, EmberHeat·EmberFade 를 DynamicParameter R·G 에서 받음, 나이아가라 메시 사용 플래그)와 MI_TD_FluidEmberNiagara_Default(MI_TD_FluidEmber_Default 와 같은 EmberIntensity 4.5·EmberTintBlend 1.0)만 새로 만들고 기존 에셋이 하나라도 있으면 덮어쓰지 않고 중단, only 가 없으면 기존 동작 그대로(가짜 unreal 호출 기록 대조). 미검증(정적 검사만, 에디터 실행 전).
+상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 불꽃 입력 10/10·PS 232 명령). FX-8c 3차(2026-10-20) 불꽃 입력 39개(FlameSpeedHeatFloor·FlameHeatScale·FlameHeatGate·FlameHeatGateLow·FlameHeatGateHigh·FlameFlowCycleSeconds·FlameNoiseBillow, 기본값은 옛 출력과 같음)와 FX-8c 4차 G1 입력 40개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(40/40 연결·PS 352 명령). FX-8c 5차(2026-10-20) 불꽃 색 램프 입력 8개를 더한 48개(FlameColorRampMode 기본 0 = 흑체 경로 그대로, FlameRampCoverageExponent·FlameRampWarmPosition·FlameRampHotPosition, 정점 색 FlameRampColdColor·FlameRampWarmColor·FlameRampHotColor·FlameRampCoreColor 는 셰이더가 휘도 1로 정규화하는 선형 RGB)는 2026-10-20 13:02 에디터 재실행(48/48 연결·PS 393 명령·표본기 5). FX-8c 5차 굽기(2026-10-20: 세 MI 모두 FlameColorRampMode 1, 폭발·횃불 MI 는 vector_overrides 로 FlameRampColdColor·FlameRampWarmColor 를 (1, 0.03, 0.03) 으로 덮어쓰고 다시 읽어 확인, 모닥불 MI 는 마스터 정점 그대로, 횃불 MI 는 T4 값 FlameIntensity 13·FlameTemperatureMaxKelvin 1900·FlameHeatGate 1·FlameSmokeOpacity 0)는 에디터 재실행 전. FX-8c 10차(2026-10-20) 조각 발광 마스터(입력 20개, FragmentHeatRatio 기본 0 = C++ 가 넣기 전 발광 없음, 색 FragmentColdGlowColor·FragmentHotGlowColor 와 세기 FragmentGlowIntensity 는 C++ 설정 FTDFluidFragmentGlowSettings 가 매 틱 넣고 마스터 기본값은 그 C++ 기본값과 같은 진홍 (1, 0.012, 0.03)·(1, 0.03, 0.035)·세기 4, 표면색 FragmentCharColor·FragmentRoughness)와 MI_TD_FluidFragmentGlow_Explosion(덮어쓰기 없음)은 정적 검사만(check_fluid_fire_hlsl.py), 에디터 실행 전. 기존 에셋은 Saved/FluidFX/fluid_flame_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(flame_blend_mode 가 "additive" 면 BLEND_ADDITIVE, "translucent" 면 BLEND_TRANSLUCENT, 그 밖은 BLEND_ALPHA_COMPOSITE), 미저장 작업이 있으면 중단한다. FX-8c 10차 굽기(2026-10-21): 폭발 MI scalar_overrides 에 FlameErosion 0.35·FlameRampHotPosition 0.66(runner10 HP66ER35: 같은 세션 r2 +1.0~+1.9, 0.3초 노랑 −0.017). FX-8c 11차(2026-10-21): EmberTintBlend(기본 0)·EmberTintGreen·EmberTintBlue(0.03) 불티 입력 10개, FragmentFacingContrast(기본 0)·FragmentKeyCenterWorld·내장 PixelWorldNormal 조각 입력 23개는 2026-10-21 에디터 재실행(10/10·23/23 연결, 기존 MI 값 변경 0). 조각 EdgeChar* 는 C++ 가 매 틱 넣어 MI 덮어쓰기 무효. FX-8c 11차 단계 B(2026-10-21): FlameColdRidgeContrast(기본 0 = 옛 출력과 같음, 열 문 아래 차가운 불꽃만 능선 결로 깎음) 불꽃 입력 49개는 2026-10-21 에디터 재실행(49/49 연결). FX-8c 11차 굽기(2026-10-21): MI_TD_FluidEmber_Default scalar_overrides 에 EmberIntensity 4.5·EmberTintBlend 1.0(judge11b B2: 밝은 불씨 색상 24.7→3.3°, G−B 37.5→9, LIVE-2 진홍 띠), 재질 재실행 전. FX-8c 12차(2026-10-21, D-57 N0): 요청 키 "only": ["ember_niagara"] 는 M_TD_FluidEmberNiagara(같은 TDFluidEmber.hlsl, EmberHeat·EmberFade 를 DynamicParameter R·G 에서 받음, 나이아가라 메시 사용 플래그)와 MI_TD_FluidEmberNiagara_Default(MI_TD_FluidEmber_Default 와 같은 EmberIntensity 4.5·EmberTintBlend 1.0)만 새로 만들고 기존 에셋이 하나라도 있으면 덮어쓰지 않고 중단, only 가 없으면 기존 동작 그대로(가짜 unreal 호출 기록 대조). 미검증(정적 검사만, 에디터 실행 전). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 불꽃·불티·불티 나이아가라·장작·조각 인스턴스의 스칼라·벡터·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, *_INSTANCE_SPECS 에는 이름만 남는다.
 """
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -40,76 +41,16 @@ BLEND_NAME_BY_REQUEST = {"additive": "BLEND_ADDITIVE", "translucent": "BLEND_TRA
 DEFAULT_BLEND_NAME = "BLEND_ALPHA_COMPOSITE"
 
 FLAME_INSTANCE_SPECS = (
-    {
-        "name": "MI_TD_FluidFlame_Torch",
-        "scalar_overrides": {
-            "FlameIntensity": 13.0,
-            "FlameTemperatureMinKelvin": 650.0,
-            "FlameTemperatureMaxKelvin": 1900.0,
-            "FlameBrightnessExponent": 4.0,
-            "FlameHeatDensityExponent": 1.0,
-            "FlameFlowSpeed": 0.25,
-            "FlameErosion": 0.3,
-            "FlameDepthFadeCm": 15.0,
-            "FlameNoiseScale": 0.05,
-            "FlameNoiseStrength": 2.0,
-            "FlameOpacityScale": 8.0,
-            "FlameHeatGate": 1.0,
-            "FlameSmokeOpacity": 0.0,
-            "FlameColorRampMode": 1.0,
-        },
-        "vector_overrides": {
-            "FlameRampColdColor": (1.0, 0.03, 0.03, 1.0),
-            "FlameRampWarmColor": (1.0, 0.03, 0.03, 1.0),
-        },
-    },
-    {
-        "name": "MI_TD_FluidFlame_Campfire",
-        "scalar_overrides": {
-            "FlameIntensity": 20.0,
-            "FlameTemperatureMinKelvin": 650.0,
-            "FlameTemperatureMaxKelvin": 1750.0,
-            "FlameBrightnessExponent": 4.0,
-            "FlameHeatDensityExponent": 1.0,
-            "FlameFlowSpeed": 0.25,
-            "FlameErosion": 0.25,
-            "FlameDepthFadeCm": 10.0,
-            "FlameNoiseScale": 0.03,
-            "FlameNoiseStrength": 2.0,
-            "FlameOpacityScale": 8.0,
-            "FlameColorRampMode": 1.0,
-        },
-    },
-    {
-        "name": "MI_TD_FluidFlame_Explosion",
-        "scalar_overrides": {
-            "FlameIntensity": 8.0,
-            "FlameTemperatureMinKelvin": 650.0,
-            "FlameTemperatureMaxKelvin": 1750.0,
-            "FlameBrightnessExponent": 4.0,
-            "FlameHeatDensityExponent": 1.0,
-            "FlameFlowSpeed": 0.25,
-            "FlameErosion": 0.35,
-            "FlameDepthFadeCm": 30.0,
-            "FlameNoiseScale": 0.015,
-            "FlameNoiseStrength": 12.0,
-            "FlameOpacityScale": 6.0,
-            "FlameColorRampMode": 1.0,
-            "FlameRampHotPosition": 0.66,
-        },
-        "vector_overrides": {
-            "FlameRampColdColor": (1.0, 0.03, 0.03, 1.0),
-            "FlameRampWarmColor": (1.0, 0.03, 0.03, 1.0),
-        },
-    },
+    {"name": "MI_TD_FluidFlame_Torch"},
+    {"name": "MI_TD_FluidFlame_Campfire"},
+    {"name": "MI_TD_FluidFlame_Explosion"},
 )
-EMBER_INSTANCE_SPECS = ({"name": "MI_TD_FluidEmber_Default", "scalar_overrides": {"EmberIntensity": 4.5, "EmberTintBlend": 1.0}},)
+EMBER_INSTANCE_SPECS = ({"name": "MI_TD_FluidEmber_Default"},)
 EMBER_NIAGARA_REQUEST_KEY = "ember_niagara"
 EMBER_NIAGARA_MASTER_NAME = "M_TD_FluidEmberNiagara"
 EMBER_NIAGARA_MASTER_PATH = f"{MATERIAL_DIR}/{EMBER_NIAGARA_MASTER_NAME}"
-EMBER_NIAGARA_INSTANCE_SPECS = (
-    {"name": "MI_TD_FluidEmberNiagara_Default", "scalar_overrides": dict(EMBER_INSTANCE_SPECS[0]["scalar_overrides"])},
-)
+EMBER_NIAGARA_INSTANCE_SPECS = ({"name": "MI_TD_FluidEmberNiagara_Default"},)
+MATERIAL_LOOK_MODULE_RELATIVE_PATH = ("Tools", "FluidFX", "fluid_material_look.py")
 EMBER_NIAGARA_DYNAMIC_PARAMETER_NAMES = ("EmberHeat", "EmberFade", "Param3", "Param4")
 EMBER_NIAGARA_REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_ember_niagara_material.json")
 EMBER_NIAGARA_REQUIRED_UNREAL_NAMES = (
@@ -271,7 +212,7 @@ WOOD_CUSTOM_INPUT_NAMES = (
 WOOD_HLSL_SAMPLER_NAMES = ("NoiseVolumeTextureSampler",)
 WOOD_HLSL_ENGINE_SYMBOLS = ("Texture3DSampleLevel",)
 WOOD_INSTANCE_SPECS = (
-    {"name": "MI_TD_FluidCharredWood_Campfire", "scalar_overrides": {"WoodGlowIntensity": 8.0, "WoodCrackWidth": 0.35}},
+    {"name": "MI_TD_FluidCharredWood_Campfire"},
 )
 
 FRAGMENT_VECTOR_PARAMETER_DEFAULTS = (
@@ -330,7 +271,7 @@ FRAGMENT_CUSTOM_INPUT_NAMES = (
 FRAGMENT_HLSL_SAMPLER_NAMES = ("AuxTextureSampler",)
 FRAGMENT_HLSL_ENGINE_SYMBOLS = ("Texture2DSampleLevel",)
 FRAGMENT_INSTANCE_SPECS = (
-    {"name": "MI_TD_FluidFragmentGlow_Explosion", "scalar_overrides": {}},
+    {"name": "MI_TD_FluidFragmentGlow_Explosion"},
 )
 
 OPTIONAL_MATERIAL_SETTINGS = (
@@ -402,6 +343,16 @@ IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 def project_path(*parts):
     return os.path.join(unreal.SystemLibrary.get_project_directory(), *parts)
+
+
+def load_material_look_table():
+    module_path = project_path(*MATERIAL_LOOK_MODULE_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("fluid_material_look", module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"모양 정본 모듈 없음: {module_path}")
+    material_look = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(material_look)
+    return material_look.TDMaterialLookTable.read_project(unreal.SystemLibrary.get_project_directory())
 
 
 def find_missing_unreal_names(required_names=REQUIRED_UNREAL_NAMES):
@@ -1195,30 +1146,12 @@ def prepare_instance(spec, overwrite):
     return instance
 
 
-def create_material_instance(spec, master, overwrite):
-    editing = unreal.MaterialEditingLibrary
+def create_material_instance(spec, master, overwrite, look_table):
     path = asset_path(spec["name"])
     instance = prepare_instance(spec, overwrite)
-    vector_overrides = spec.get("vector_overrides", {})
-    editing.set_material_instance_parent(instance, master)
-    for parameter_name, rgba in vector_overrides.items():
-        editing.set_material_instance_vector_parameter_value(
-            instance, parameter_name, unreal.LinearColor(rgba[0], rgba[1], rgba[2], rgba[3])
-        )
-    for parameter_name, value in spec["scalar_overrides"].items():
-        editing.set_material_instance_scalar_parameter_value(instance, parameter_name, value)
-    editing.update_material_instance(instance)
-    for parameter_name, rgba in vector_overrides.items():
-        stored = editing.get_material_instance_vector_parameter_value(instance, parameter_name)
-        error = max(abs(stored.r - rgba[0]), abs(stored.g - rgba[1]), abs(stored.b - rgba[2]), abs(stored.a - rgba[3]))
-        if error > 0.001:
-            raise RuntimeError(f"재질 인스턴스 색 설정 확인 실패: {path}.{parameter_name}")
-    for parameter_name, value in spec["scalar_overrides"].items():
-        stored = editing.get_material_instance_scalar_parameter_value(instance, parameter_name)
-        if abs(stored - value) > 0.001:
-            raise RuntimeError(f"재질 인스턴스 스칼라 설정 확인 실패: {path}.{parameter_name}")
+    entry = look_table.apply_to_instance(unreal.MaterialEditingLibrary, unreal.LinearColor, instance, path, master)
     save_asset(instance, path)
-    return {"asset": path, "scalar_overrides": spec["scalar_overrides"], "vector_overrides": vector_overrides}
+    return {"asset": path, "scalar_overrides": entry["Scalars"], "vector_overrides": entry["Vectors"], "switches": entry["Switches"]}
 
 
 def write_report(report, relative_path=REPORT_RELATIVE_PATH):
@@ -1265,8 +1198,9 @@ def main():
         raise RuntimeError("HLSL 자체 점검 실패: " + " | ".join(problems))
 
     request = read_request()
+    look_table = load_material_look_table()
     if is_ember_niagara_only_request(request):
-        run_ember_niagara_only(ember_path, ember_code)
+        run_ember_niagara_only(ember_path, ember_code, look_table)
         return
     overwrite = request.get("overwrite") is True
     blend_name = resolve_flame_blend_name(request)
@@ -1303,10 +1237,10 @@ def main():
     fragment_master, fragment_summary = create_fragment_master(fragment_code, default_texture, sampler_type, overwrite)
 
     print("단계: 재질 인스턴스")
-    flame_instances = [create_material_instance(spec, flame_master, overwrite) for spec in FLAME_INSTANCE_SPECS]
-    ember_instances = [create_material_instance(spec, ember_master, overwrite) for spec in EMBER_INSTANCE_SPECS]
-    wood_instances = [create_material_instance(spec, wood_master, overwrite) for spec in WOOD_INSTANCE_SPECS]
-    fragment_instances = [create_material_instance(spec, fragment_master, overwrite) for spec in FRAGMENT_INSTANCE_SPECS]
+    flame_instances = [create_material_instance(spec, flame_master, overwrite, look_table) for spec in FLAME_INSTANCE_SPECS]
+    ember_instances = [create_material_instance(spec, ember_master, overwrite, look_table) for spec in EMBER_INSTANCE_SPECS]
+    wood_instances = [create_material_instance(spec, wood_master, overwrite, look_table) for spec in WOOD_INSTANCE_SPECS]
+    fragment_instances = [create_material_instance(spec, fragment_master, overwrite, look_table) for spec in FRAGMENT_INSTANCE_SPECS]
 
     missing_files = find_missing_saved_files()
     if missing_files:
@@ -1337,7 +1271,7 @@ def main():
     print("보고서: " + report_path)
 
 
-def run_ember_niagara_only(ember_path, ember_code):
+def run_ember_niagara_only(ember_path, ember_code, look_table):
     assets = unreal.EditorAssetLibrary
     missing_names = find_missing_unreal_names(EMBER_NIAGARA_REQUIRED_UNREAL_NAMES)
     if missing_names:
@@ -1353,7 +1287,7 @@ def run_ember_niagara_only(ember_path, ember_code):
     print("단계: 불티 나이아가라 마스터 재질")
     master, master_summary = create_ember_niagara_master(ember_code)
     print("단계: 불티 나이아가라 재질 인스턴스")
-    instances = [create_material_instance(spec, master, False) for spec in EMBER_NIAGARA_INSTANCE_SPECS]
+    instances = [create_material_instance(spec, master, False, look_table) for spec in EMBER_NIAGARA_INSTANCE_SPECS]
 
     missing_files = find_missing_saved_files(target_paths)
     if missing_files:

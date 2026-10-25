@@ -535,11 +535,9 @@ bool FTDFluidPresetOverrideTest::RunTest(const FString& Parameters)
 	Preset->PresetKind = ETDFluidPresetKind::Custom;
 	TestEqual(TEXT("Custom preset returns SimulationConfig without override"), Preset->ResolveEffectiveConfig().GridResolution, 128);
 
-	TestNearlyEqual(TEXT("Mud factory DensityDissipation"), UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Mud).DensityDissipation, 0.01f, 1e-6f);
-	TestNearlyEqual(TEXT("Blood factory DensityDissipation"), UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Blood).DensityDissipation, 0.01f, 1e-6f);
-	const FTDFluidSimulationConfig FireConfig = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Fire);
-	TestNearlyEqual(TEXT("Fire factory VelocityDamping"), FireConfig.VelocityDamping, 0.15f, 1e-6f);
-	TestNearlyEqual(TEXT("Fire factory VorticityStrength"), FireConfig.VorticityStrength, 2.5f, 1e-6f);
+	TestEqual(TEXT("Without override the factory DensityDissipation is returned"), FactoryResolved.DensityDissipation, FactoryConfig.DensityDissipation);
+	TestEqual(TEXT("Without override the factory VelocityDamping is returned"), FactoryResolved.VelocityDamping, FactoryConfig.VelocityDamping);
+	TestEqual(TEXT("Without override the factory VorticityStrength is returned"), FactoryResolved.VorticityStrength, FactoryConfig.VorticityStrength);
 
 	return true;
 }

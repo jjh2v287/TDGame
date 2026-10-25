@@ -3,6 +3,7 @@
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/Tests/TDFluidGoldenPresetSnapshots.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
 #include "Math/Float16Color.h"
@@ -402,7 +403,7 @@ namespace TDFluidSolverParallelTestPrivate
 
 	FTDFluidSimulationConfig BuildShiftConfig()
 	{
-		FTDFluidSimulationConfig Config = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Water);
+		FTDFluidSimulationConfig Config = TDFluidGoldenPresetSnapshots::MakeSimulationConfig(ETDFluidPresetKind::Water);
 		Config.GridResolution = ShiftResolution;
 		Config.SimExtentCm = ShiftExtentCm;
 		return Config;

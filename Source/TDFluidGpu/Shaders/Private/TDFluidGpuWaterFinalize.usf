@@ -192,7 +192,7 @@ void WriteWaterOutputs(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParamet
 	const float Alpha = clamp(TDFluidGpuComputeOutputBorderAlpha(Actor, Cell) * ObstacleMask, 0.0f, 1.0f);
 	DensityPressureOutput[uint2(Cell)] = float4(clamp(Density.x, 0.0f, 1.0f), SurfaceDisplay * 0.5f + 0.5f, clamp(Density.y, 0.0f, 1.0f), Alpha);
 
-	const float2 StoredVelocity = TDFluidGpuClampVelocityMagnitude(Velocity);
+	const float2 StoredVelocity = TDFluidGpuClampVelocityMagnitude(Velocity, Actor.MaxCellSpeedCmPerSec);
 	const float2 NormalizedVelocity = clamp(StoredVelocity / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, -1.0f, 1.0f) * 0.5f + 0.5f;
 	const float SpeedRatio = clamp(length(StoredVelocity) / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, 0.0f, 1.0f);
 	const float2 TerrainSlope = TDFluidGpuWaterComputeFieldSlope(WaterTerrainField, Water, Actor, TDFluidGpuWaterToFieldCell(Water, Cell));
@@ -346,7 +346,7 @@ void ProbeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const float SurfaceHeight = TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell);
 	const float TerrainElevation = TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell);
 	const float4 Guide = TDFluidGpuWaterLoadGuide(WaterGuideField, Water, Actor, Cell);
-	Sample.VelocityCmPerSec = TDFluidGpuClampVelocityMagnitude(VelocityIn[Texel]);
+	Sample.VelocityCmPerSec = TDFluidGpuClampVelocityMagnitude(VelocityIn[Texel], Actor.MaxCellSpeedCmPerSec);
 	Sample.FlowTargetVelocityCmPerSec = Guide.xy;
 	Sample.WaterSurfaceHeightCm = SurfaceHeight;
 	Sample.WaterDepthCm = TDFluidGpuWaterComputeDepth(SurfaceHeight, TerrainElevation);

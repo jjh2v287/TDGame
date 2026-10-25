@@ -1,9 +1,10 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FX-8a 공용 3D 노이즈 볼륨 텍스처 T_TD_FluidNoiseVolume(Saved/FluidFX/fire_textures/T_TD_FluidNoiseAtlas.png 64³ 아틀라스)과 볼륨 레이마칭 마스터 재질 M_TD_FluidVolume(TDFluidVolumeRaymarch.hlsl)·가짜 볼륨 마스터 M_TD_FluidFakeVolume(TDFluidFakeVolume.hlsl) 및 인스턴스를 만든다.
 실행 명령: python Tools/FluidFX/make_fluid_fire_textures.py 다음 python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_volume_material.py (불꽃 재질 스크립트보다 먼저)
 출력: /Game/FluidFX/Textures/T_TD_FluidNoiseAtlas·T_TD_FluidNoiseVolume, /Game/FluidFX/Materials/M_TD_FluidVolume, MI_TD_FluidVolume_SmokeHard·SmokeSoft·SmokeSlab·SmokeBillow·GroundDust·ExplosionBillow, M_TD_FluidFakeVolume, MI_TD_FluidFakeVolume_PurplePlasma·GrayFluff·BlueSmoke·RedSmoke·FloorPulse·PlasmaSphere·SmokeChamber, Saved/FluidFX/fluid_volume_material.json
-상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 볼륨 입력 73/73·PS 917 명령, 가짜 볼륨 38/38). FX-8c 3차(2026-10-20) 볼륨 입력 76개(HeatEmissionSurfaceScale·AmbientSideFloor·AmbientCreviceFloor, 기본값은 옛 출력과 같음)·디더 View.StateFrameIndexMod8 과 FX-8c 4차 G1(2026-10-20) 볼륨 입력 77개·가짜 볼륨 입력 39개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(볼륨 77/77 연결·PS 931 명령·표본기 6, 가짜 볼륨 39/39·PS 292 명령, 인스턴스 11개). FX-8c 5차 굽기(2026-10-20: SmokeBillow 에 HeatEmissionSurfaceScale 1, 새 MI_TD_FluidVolume_GroundDust 는 SmokeBillow 색과 HeatEmissionSurfaceScale 를 뺀 스칼라에 RenderMode 2)는 6차 에디터 재실행(볼륨 77/77·PS 931 명령·인스턴스 12개)에서 반영. FX-8c 7차(2026-10-20) 볼륨 입력 79개(연기 노이즈 부드러운 절댓값 NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift, 기본 0 = 옛 abs 경로와 dxc 본문 동일, 인스턴스 값은 그대로)는 2026-10-20 16:14 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 12개). FX-8c 8차(2026-10-20) 폭발 연기 전용 MI_TD_FluidVolume_ExplosionBillow(SmokeBillow 값에 NoiseSoftAbsEpsilon 0.04·NoiseSoftAbsMeanShift 0.08456, SmokeBillow 은 0/0 그대로)는 2026-10-20 17:22 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 13개, 다시 읽기 ExplosionBillow ε 0.04·δ 0.08456, SmokeBillow 0/0). 기존 에셋은 Saved/FluidFX/fluid_volume_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(노이즈 텍스처도 다시 가져옴), 미저장 작업이 있으면 중단한다.
+상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 볼륨 입력 73/73·PS 917 명령, 가짜 볼륨 38/38). FX-8c 3차(2026-10-20) 볼륨 입력 76개(HeatEmissionSurfaceScale·AmbientSideFloor·AmbientCreviceFloor, 기본값은 옛 출력과 같음)·디더 View.StateFrameIndexMod8 과 FX-8c 4차 G1(2026-10-20) 볼륨 입력 77개·가짜 볼륨 입력 39개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(볼륨 77/77 연결·PS 931 명령·표본기 6, 가짜 볼륨 39/39·PS 292 명령, 인스턴스 11개). FX-8c 5차 굽기(2026-10-20: SmokeBillow 에 HeatEmissionSurfaceScale 1, 새 MI_TD_FluidVolume_GroundDust 는 SmokeBillow 색과 HeatEmissionSurfaceScale 를 뺀 스칼라에 RenderMode 2)는 6차 에디터 재실행(볼륨 77/77·PS 931 명령·인스턴스 12개)에서 반영. FX-8c 7차(2026-10-20) 볼륨 입력 79개(연기 노이즈 부드러운 절댓값 NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift, 기본 0 = 옛 abs 경로와 dxc 본문 동일, 인스턴스 값은 그대로)는 2026-10-20 16:14 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 12개). FX-8c 8차(2026-10-20) 폭발 연기 전용 MI_TD_FluidVolume_ExplosionBillow(SmokeBillow 값에 NoiseSoftAbsEpsilon 0.04·NoiseSoftAbsMeanShift 0.08456, SmokeBillow 은 0/0 그대로)는 2026-10-20 17:22 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 13개, 다시 읽기 ExplosionBillow ε 0.04·δ 0.08456, SmokeBillow 0/0). 기존 에셋은 Saved/FluidFX/fluid_volume_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(노이즈 텍스처도 다시 가져옴), 미저장 작업이 있으면 중단한다. 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 13종의 스칼라·벡터[r,g,b,a]·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, INSTANCE_SPECS 에는 이름·마스터만 남는다(알파 1 강제 삭제, 정본 값 그대로). 마스터 기본값 표는 그대로다.
 """
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -34,11 +35,6 @@ DEFAULT_TEXTURE_PATHS = ("/Engine/EngineResources/Black", "/Engine/EngineResourc
 SMOKE_COLOR = (0.88, 0.12, 0.045)
 SHADOW_COLOR = (0.018, 0.002, 0.001)
 AMBIENT_COLOR = (0.16, 0.07, 0.05)
-SLAB_SMOKE_COLOR = (0.35, 0.33, 0.31)
-SLAB_AMBIENT_COLOR = (0.05, 0.05, 0.06)
-SLAB_SHADOW_COLOR = (0.01, 0.009, 0.008)
-BILLOW_AMBIENT_COLOR = (0.2, 0.2, 0.22)
-RED_SMOKE_COLORS = {"SmokeColor": SMOKE_COLOR, "ShadowColor": SHADOW_COLOR, "AmbientColor": AMBIENT_COLOR}
 
 BUILTIN_SOURCE_NAMES = ("PixelWorldPosition", "CameraWorldPosition", "SceneDepthCm", "PixelDepthCm", "ElapsedSeconds")
 FLUID_TEXTURE_PARAMETER_NAMES = ("DensityPressureTexture", "VelocityTexture", "TransmittanceTexture", "AuxTexture")
@@ -252,75 +248,21 @@ FAKE_MASTER = {
 MASTER_SPECS = (VOLUME_MASTER, FAKE_MASTER)
 
 INSTANCE_SPECS = (
-    {"name": "MI_TD_FluidVolume_SmokeHard", "master": VOLUME_MASTER["name"], "vectors": RED_SMOKE_COLORS, "scalars": {"RenderMode": 0.0}},
-    {"name": "MI_TD_FluidVolume_SmokeSoft", "master": VOLUME_MASTER["name"], "vectors": RED_SMOKE_COLORS, "scalars": {"RenderMode": 1.0}},
-    {
-        "name": "MI_TD_FluidVolume_SmokeSlab",
-        "master": VOLUME_MASTER["name"],
-        "vectors": {"SmokeColor": SLAB_SMOKE_COLOR, "ShadowColor": SLAB_SHADOW_COLOR, "AmbientColor": SLAB_AMBIENT_COLOR, "ExtinctionTint": (1.0, 1.15, 1.35)},
-        "scalars": {"RenderMode": 2.0, "ExtrudeSymmetric": 1.0, "DensityScale": 0.04, "NoiseStrength": 0.8, "NoiseScale": 0.012, "NoiseErosion": 0.5},
-    },
-    {
-        "name": "MI_TD_FluidVolume_SmokeBillow",
-        "master": VOLUME_MASTER["name"],
-        "vectors": {"SmokeColor": SLAB_SMOKE_COLOR, "ShadowColor": SLAB_SHADOW_COLOR, "AmbientColor": BILLOW_AMBIENT_COLOR, "ExtinctionTint": (1.0, 1.15, 1.35)},
-        "scalars": {"RenderMode": 1.0, "ExtrudeSymmetric": 1.0, "DensityScale": 0.04, "NoiseStrength": 0.8, "NoiseScale": 0.012, "NoiseErosion": 0.3, "SurfaceSoftnessCm": 24.0, "HeatEmissionSurfaceScale": 1.0},
-    },
-    {
-        "name": "MI_TD_FluidVolume_ExplosionBillow",
-        "master": VOLUME_MASTER["name"],
-        "vectors": {"SmokeColor": SLAB_SMOKE_COLOR, "ShadowColor": SLAB_SHADOW_COLOR, "AmbientColor": BILLOW_AMBIENT_COLOR, "ExtinctionTint": (1.0, 1.15, 1.35)},
-        "scalars": {"RenderMode": 1.0, "ExtrudeSymmetric": 1.0, "DensityScale": 0.04, "NoiseStrength": 0.8, "NoiseScale": 0.012, "NoiseErosion": 0.3, "SurfaceSoftnessCm": 24.0, "HeatEmissionSurfaceScale": 1.0, "NoiseSoftAbsEpsilon": 0.04, "NoiseSoftAbsMeanShift": 0.08456},
-    },
-    {
-        "name": "MI_TD_FluidVolume_GroundDust",
-        "master": VOLUME_MASTER["name"],
-        "vectors": {"SmokeColor": SLAB_SMOKE_COLOR, "ShadowColor": SLAB_SHADOW_COLOR, "AmbientColor": BILLOW_AMBIENT_COLOR, "ExtinctionTint": (1.0, 1.15, 1.35)},
-        "scalars": {"RenderMode": 2.0, "ExtrudeSymmetric": 1.0, "DensityScale": 0.04, "NoiseStrength": 0.8, "NoiseScale": 0.012, "NoiseErosion": 0.3, "SurfaceSoftnessCm": 24.0},
-    },
-    {
-        "name": "MI_TD_FluidFakeVolume_PurplePlasma",
-        "master": FAKE_MASTER["name"],
-        "vectors": {"SmokeColor": (0.22, 0.08, 0.4), "AmbientColor": (0.05, 0.03, 0.08), "EmissionColor": (1.2, 0.25, 2.4), "ExtinctionTint": (1.2, 1.6, 1.0)},
-        "scalars": {"DensityScale": 0.012, "FakeThicknessCm": 80.0, "EmissionPower": 2.5, "PulseRate": 1.5, "PulseDepth": 0.15},
-    },
-    {
-        "name": "MI_TD_FluidFakeVolume_GrayFluff",
-        "master": FAKE_MASTER["name"],
-        "vectors": {"SmokeColor": (0.62, 0.62, 0.64), "AmbientColor": (0.1, 0.11, 0.13)},
-        "scalars": {"DensityScale": 0.03, "FakeThicknessCm": 140.0, "NoiseStrength": 0.7, "PhaseForwardG": 0.45, "ShadowSteps": 10.0},
-    },
-    {
-        "name": "MI_TD_FluidFakeVolume_BlueSmoke",
-        "master": FAKE_MASTER["name"],
-        "vectors": {"SmokeColor": (0.16, 0.3, 0.62), "AmbientColor": (0.04, 0.06, 0.12), "ExtinctionTint": (1.6, 1.2, 1.0)},
-        "scalars": {"DensityScale": 0.025, "FakeThicknessCm": 100.0},
-    },
-    {
-        "name": "MI_TD_FluidFakeVolume_RedSmoke",
-        "master": FAKE_MASTER["name"],
-        "vectors": {"SmokeColor": (0.78, 0.12, 0.045), "AmbientColor": (0.12, 0.04, 0.03), "ExtinctionTint": (1.0, 1.5, 2.2)},
-        "scalars": {"DensityScale": 0.03, "FakeThicknessCm": 100.0},
-    },
-    {
-        "name": "MI_TD_FluidFakeVolume_FloorPulse",
-        "master": FAKE_MASTER["name"],
-        "vectors": {"SmokeColor": (0.2, 0.24, 0.3), "EmissionColor": (0.15, 0.9, 1.3)},
-        "scalars": {"DensityScale": 0.02, "FakeThicknessCm": 40.0, "EmissionPower": 1.5, "PulseRate": 3.5, "PulseDepth": 0.8},
-    },
-    {
-        "name": "MI_TD_FluidFakeVolume_PlasmaSphere",
-        "master": FAKE_MASTER["name"],
-        "vectors": {"SmokeColor": (0.3, 0.12, 0.5), "EmissionColor": (2.0, 0.7, 3.0)},
-        "scalars": {"DensityScale": 0.008, "FakeThicknessCm": 160.0, "EmissionPower": 1.2, "PulseRate": 2.2, "PulseDepth": 0.35},
-    },
-    {
-        "name": "MI_TD_FluidFakeVolume_SmokeChamber",
-        "master": FAKE_MASTER["name"],
-        "vectors": {"SmokeColor": (0.09, 0.085, 0.08), "AmbientColor": (0.04, 0.04, 0.05), "ExtinctionTint": (1.0, 1.1, 1.25)},
-        "scalars": {"DensityScale": 0.06, "FakeThicknessCm": 220.0, "ShadowSteps": 12.0, "FakeShadowLengthCm": 500.0},
-    },
+    {"name": "MI_TD_FluidVolume_SmokeHard", "master": VOLUME_MASTER["name"]},
+    {"name": "MI_TD_FluidVolume_SmokeSoft", "master": VOLUME_MASTER["name"]},
+    {"name": "MI_TD_FluidVolume_SmokeSlab", "master": VOLUME_MASTER["name"]},
+    {"name": "MI_TD_FluidVolume_SmokeBillow", "master": VOLUME_MASTER["name"]},
+    {"name": "MI_TD_FluidVolume_ExplosionBillow", "master": VOLUME_MASTER["name"]},
+    {"name": "MI_TD_FluidVolume_GroundDust", "master": VOLUME_MASTER["name"]},
+    {"name": "MI_TD_FluidFakeVolume_PurplePlasma", "master": FAKE_MASTER["name"]},
+    {"name": "MI_TD_FluidFakeVolume_GrayFluff", "master": FAKE_MASTER["name"]},
+    {"name": "MI_TD_FluidFakeVolume_BlueSmoke", "master": FAKE_MASTER["name"]},
+    {"name": "MI_TD_FluidFakeVolume_RedSmoke", "master": FAKE_MASTER["name"]},
+    {"name": "MI_TD_FluidFakeVolume_FloorPulse", "master": FAKE_MASTER["name"]},
+    {"name": "MI_TD_FluidFakeVolume_PlasmaSphere", "master": FAKE_MASTER["name"]},
+    {"name": "MI_TD_FluidFakeVolume_SmokeChamber", "master": FAKE_MASTER["name"]},
 )
+MATERIAL_LOOK_MODULE_RELATIVE_PATH = ("Tools", "FluidFX", "fluid_material_look.py")
 
 OPTIONAL_MATERIAL_SETTINGS = (
     ("use_translucency_vertex_fog", False),
@@ -381,6 +323,16 @@ IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 def project_path(*parts):
     return os.path.join(unreal.SystemLibrary.get_project_directory(), *parts)
+
+
+def load_material_look_table():
+    module_path = project_path(*MATERIAL_LOOK_MODULE_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("fluid_material_look", module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"모양 정본 모듈 없음: {module_path}")
+    material_look = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(material_look)
+    return material_look.TDMaterialLookTable.read_project(unreal.SystemLibrary.get_project_directory())
 
 
 def find_missing_unreal_names():
@@ -502,13 +454,14 @@ def find_unresolved_inputs(spec):
     return [name for name in spec["inputs"] if name not in resolvable]
 
 
-def find_unknown_instance_overrides():
+def find_unknown_instance_overrides(look_table):
     declared = {
         spec["name"]: {name for name, _ in spec["vectors"]} | {name for name, _ in spec["scalars"]} for spec in MASTER_SPECS
     }
     unknown = []
     for instance in INSTANCE_SPECS:
-        names = set(instance["vectors"]) | set(instance["scalars"])
+        entry = look_table.material(material_asset_path(instance["name"]), material_asset_path(instance["master"]))
+        names = set(entry["Vectors"]) | set(entry["Scalars"])
         unknown.extend(f"{instance['name']}.{name}" for name in sorted(names - declared[instance["master"]]))
     return unknown
 
@@ -866,30 +819,12 @@ def prepare_instance(spec, overwrite):
     return instance
 
 
-def create_material_instance(spec, master, overwrite):
-    editing = unreal.MaterialEditingLibrary
+def create_material_instance(spec, master, overwrite, look_table):
     asset_path = material_asset_path(spec["name"])
     instance = prepare_instance(spec, overwrite)
-    editing.set_material_instance_parent(instance, master)
-    for parameter_name, rgb in spec["vectors"].items():
-        editing.set_material_instance_vector_parameter_value(
-            instance, parameter_name, unreal.LinearColor(rgb[0], rgb[1], rgb[2], 1.0)
-        )
-    for parameter_name, value in spec["scalars"].items():
-        editing.set_material_instance_scalar_parameter_value(instance, parameter_name, value)
-    editing.update_material_instance(instance)
-
-    for parameter_name, rgb in spec["vectors"].items():
-        stored = editing.get_material_instance_vector_parameter_value(instance, parameter_name)
-        error = max(abs(stored.r - rgb[0]), abs(stored.g - rgb[1]), abs(stored.b - rgb[2]))
-        if error > 0.001:
-            raise RuntimeError(f"재질 인스턴스 색 설정 확인 실패: {asset_path}.{parameter_name}")
-    for parameter_name, value in spec["scalars"].items():
-        stored = editing.get_material_instance_scalar_parameter_value(instance, parameter_name)
-        if abs(stored - value) > 0.001:
-            raise RuntimeError(f"재질 인스턴스 스칼라 설정 확인 실패: {asset_path}.{parameter_name}")
+    entry = look_table.apply_to_instance(unreal.MaterialEditingLibrary, unreal.LinearColor, instance, asset_path, master)
     save_asset(instance, asset_path)
-    return {"asset": asset_path, "master": spec["master"], "vectors": spec["vectors"], "scalars": spec["scalars"]}
+    return {"asset": asset_path, "master": spec["master"], "vectors": entry["Vectors"], "scalars": entry["Scalars"]}
 
 
 def write_report(report):
@@ -907,7 +842,7 @@ def find_missing_saved_files():
     return [path for path in expected if not os.path.isfile(path)]
 
 
-def load_and_check_all_hlsl():
+def load_and_check_all_hlsl(look_table):
     codes = {}
     problems = []
     for spec in MASTER_SPECS:
@@ -917,7 +852,7 @@ def load_and_check_all_hlsl():
         unresolved = find_unresolved_inputs(spec)
         if unresolved:
             problems.append(f"{spec['name']} 입력의 원천 없음: " + ", ".join(unresolved))
-    unknown = find_unknown_instance_overrides()
+    unknown = find_unknown_instance_overrides(look_table)
     if unknown:
         problems.append("인스턴스 덮어쓰기 이름이 마스터에 없음: " + ", ".join(unknown))
     return codes, problems
@@ -937,7 +872,8 @@ def main():
     if editor.get_game_world() is not None:
         raise RuntimeError("PIE를 종료한 뒤 실행하세요.")
 
-    codes, problems = load_and_check_all_hlsl()
+    look_table = load_material_look_table()
+    codes, problems = load_and_check_all_hlsl(look_table)
     if problems:
         raise RuntimeError("HLSL 자체 점검 실패: " + " | ".join(problems))
 
@@ -979,7 +915,7 @@ def main():
         master_summaries.append(summary)
 
     print("단계: 재질 인스턴스 생성")
-    instances = [create_material_instance(spec, masters[spec["master"]], overwrite) for spec in INSTANCE_SPECS]
+    instances = [create_material_instance(spec, masters[spec["master"]], overwrite, look_table) for spec in INSTANCE_SPECS]
 
     missing_files = find_missing_saved_files()
     if missing_files:

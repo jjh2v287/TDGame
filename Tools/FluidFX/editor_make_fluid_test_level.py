@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 마스터 재질·재질 인스턴스·프리셋 5종·전투 유체 테스트 레벨을 생성한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_test_level.py
 출력: /Game/FluidFX/Materials, /Game/FluidFX/Presets/DA_TDFluid_*, /Game/FluidFX/Maps/LV_TDFluidTestArena, Saved/FluidFX/fluid_test_level.json
-상태: 현행(2026-10-18 첫 성공, 증거 Docs/Validation/FluidFX/D-48-*). 기존 에셋은 Saved/FluidFX/fluid_test_level_request.json 의 {"overwrite": true} 가 있을 때만 덮어쓰고, 미저장 작업이 있으면 중단한다. FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 이 무대는 2026-10-22 데이터화 뒤 재생성 전(빌더 값은 비트 동일이라 결과는 같음, 이전 보고에는 sha 가 없어 check_fluid_preset_data.py --stage-report 가 STALE 을 낸다).
+상태: 현행(2026-10-18 첫 성공, 증거 Docs/Validation/FluidFX/D-48-*). 기존 에셋은 Saved/FluidFX/fluid_test_level_request.json 의 {"overwrite": true} 가 있을 때만 덮어쓰고, 미저장 작업이 있으면 중단한다. FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 이 무대는 2026-10-22 데이터화 뒤 재생성 전(빌더 값은 비트 동일이라 결과는 같음, 이전 보고에는 sha 가 없어 check_fluid_preset_data.py --stage-report 가 STALE 을 낸다). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 MI_TD_Fluid_<이름> 5종의 틴트 벡터[r,g,b,a]·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, PRESET_SPECS 의 tints 는 지웠다(알파 1 강제 삭제, 정본 값 그대로).
 """
 import hashlib
 import importlib.util
@@ -39,37 +39,34 @@ PRESET_SPECS = (
         "kind": "WATER",
         "channel": "CHANNEL_A_WATER",
         "extent_cm": (800.0, 640.0),
-        "tints": {"BaseTint": (0.05, 0.28, 0.55)},
     },
     {
         "name": "Mud",
         "kind": "MUD",
         "channel": "CHANNEL_R_MUD",
         "extent_cm": (800.0, 640.0),
-        "tints": {"BaseTint": (0.22, 0.13, 0.06)},
     },
     {
         "name": "Blood",
         "kind": "BLOOD",
         "channel": "CHANNEL_G_BLOOD",
         "extent_cm": (1000.0, 700.0),
-        "tints": {"BaseTint": (0.10, 0.08, 0.07), "SelectiveTint": (0.55, 0.02, 0.03)},
     },
     {
         "name": "Fire",
         "kind": "FIRE",
         "channel": "CHANNEL_B_FIRE",
         "extent_cm": (800.0, 640.0),
-        "tints": {"BaseTint": (0.08, 0.07, 0.07), "SelectiveTint": (1.0, 0.35, 0.04)},
     },
     {
         "name": "Footprint",
         "kind": "FOOTPRINT_PAINTER",
         "channel": "CHANNEL_R_MUD",
         "extent_cm": (1000.0, 1000.0),
-        "tints": {"BaseTint": (0.35, 0.25, 0.14)},
     },
 )
+
+MATERIAL_LOOK_MODULE_RELATIVE_PATH = ("Tools", "FluidFX", "fluid_material_look.py")
 
 RAMP_CENTER_XY = (1000.0, 820.0)
 RAMP_LENGTH_CM = 900.0
@@ -186,6 +183,16 @@ REQUIRED_UNREAL_NAMES = (
 
 def project_path(*parts):
     return os.path.join(unreal.SystemLibrary.get_project_directory(), *parts)
+
+
+def load_material_look_table():
+    module_path = project_path(*MATERIAL_LOOK_MODULE_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("fluid_material_look", module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"모양 정본 모듈 없음: {module_path}")
+    material_look = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(material_look)
+    return material_look.TDMaterialLookTable.read_project(unreal.SystemLibrary.get_project_directory())
 
 
 def asset_disk_path(asset_path, extension):
@@ -636,8 +643,7 @@ def create_fluid_surface_material():
     raise RuntimeError("유체 표면 재질 컴파일 실패: " + " | ".join(attempts))
 
 
-def create_material_instance(surface_material, spec):
-    editing = unreal.MaterialEditingLibrary
+def create_material_instance(surface_material, spec, look_table):
     asset_name = instance_asset_name(spec["name"])
     asset_path = f"{MATERIAL_DIR}/{asset_name}"
     instance = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
@@ -645,19 +651,7 @@ def create_material_instance(surface_material, spec):
     )
     if instance is None:
         raise RuntimeError(f"재질 인스턴스 생성 실패: {asset_path}")
-
-    editing.set_material_instance_parent(instance, surface_material)
-    for parameter_name, rgb in spec["tints"].items():
-        editing.set_material_instance_vector_parameter_value(
-            instance, parameter_name, unreal.LinearColor(rgb[0], rgb[1], rgb[2], 1.0)
-        )
-    editing.update_material_instance(instance)
-
-    for parameter_name, rgb in spec["tints"].items():
-        stored = editing.get_material_instance_vector_parameter_value(instance, parameter_name)
-        error = max(abs(stored.r - rgb[0]), abs(stored.g - rgb[1]), abs(stored.b - rgb[2]))
-        if error > 0.001:
-            raise RuntimeError(f"재질 인스턴스 색 설정 확인 실패: {asset_path}.{parameter_name}")
+    look_table.apply_to_instance(unreal.MaterialEditingLibrary, unreal.LinearColor, instance, asset_path, surface_material)
     save_asset(instance, asset_path)
     return instance
 
@@ -850,6 +844,7 @@ def main():
 
     print("단계: 프리셋 정본 검사·다시 읽기")
     preset_tuning_sha256 = reload_preset_tuning()
+    look_table = load_material_look_table()
 
     game_mode = assets.load_blueprint_class(GAME_MODE_PATH)
     cube = assets.load_asset("/Engine/BasicShapes/Cube")
@@ -885,7 +880,7 @@ def main():
     floor_mat = create_matte_material(FLOOR_MAT_PATH, (0.06, 0.07, 0.08))
     wall_mat = create_matte_material(WALL_MAT_PATH, (0.10, 0.11, 0.13))
     fluid_surface_mat, surface_summary = create_fluid_surface_material()
-    material_instances = {spec["name"]: create_material_instance(fluid_surface_mat, spec) for spec in PRESET_SPECS}
+    material_instances = {spec["name"]: create_material_instance(fluid_surface_mat, spec, look_table) for spec in PRESET_SPECS}
 
     print("단계: 프리셋 생성")
     presets = create_fluid_presets(material_instances, plane)

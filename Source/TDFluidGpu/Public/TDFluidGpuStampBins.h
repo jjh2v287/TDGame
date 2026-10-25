@@ -52,6 +52,12 @@ struct FTDFluidGpuStampBinLimits
 	int32 MaxStampsPerBin = TDFluidGpuSolverConstants::MaximumStampsPerBin;
 };
 
+struct FTDFluidGpuStampResponse
+{
+	float MaxCellSpeedCmPerSec = TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec;
+	float BrushEraseRatePerSec = TDFluidGpuSolverConstants::BrushEraseRatePerSec;
+};
+
 struct FTDFluidGpuStampBinSet
 {
 	TArray<FTDFluidGpuPackedStamp> Stamps;
@@ -66,7 +72,7 @@ struct FTDFluidGpuStampBinSet
 
 struct TDFLUIDGPU_API FTDFluidGpuStampBins
 {
-	static FTDFluidGpuStampBinSet Build(const FTDFluidGpuStampBinWindow& Window, TConstArrayView<FTDFluidGpuStampInput> Stamps, const FTDFluidGpuStampBinLimits& Limits);
+	static FTDFluidGpuStampBinSet Build(const FTDFluidGpuStampBinWindow& Window, TConstArrayView<FTDFluidGpuStampInput> Stamps, const FTDFluidGpuStampBinLimits& Limits, const FTDFluidGpuStampResponse& Response = FTDFluidGpuStampResponse());
 	static uint32 AppendToFrame(const FTDFluidGpuStampBinSet& ActorBins, FTDFluidGpuStampBinSet& InOutFrameBins);
 	static int32 GetBinSpanCells(int32 Resolution);
 	static float ComputeEffectiveRadiusCm(const FTDFluidGpuStampBinWindow& Window, float RadiusCm);

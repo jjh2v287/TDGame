@@ -1,0 +1,6 @@
+{
+  "note": "LIVE-2 목표 선택: measure_fx_look --targets 형식의 LIVE-2 목표 파일(Saved 에만 둠)에서 kind fire 영역 검사만 점수(gap_bands 합)에 넣는다. metrics 가 비면 그 kind 의 모든 측정 검사",
+  "live2_targets": "Saved/AgentOps/20261020/fx8c/scratch/live2-targets/targets.json",
+  "kinds": ["fire"],
+  "metrics": []
+}

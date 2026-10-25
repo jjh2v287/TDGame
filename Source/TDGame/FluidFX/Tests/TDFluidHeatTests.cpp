@@ -5,6 +5,7 @@
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/Tests/TDFluidGoldenPresetSnapshots.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Crc.h"
 
@@ -183,15 +184,19 @@ namespace TDFluidHeatTestPrivate
 		bool bUsesHeat = false;
 	};
 
-	FTDFluidSimulationConfig MakeCpuFallbackConfig(ETDFluidPresetKind Kind)
+	FTDFluidSimulationConfig ApplyCpuFallback(FTDFluidSimulationConfig Config)
 	{
-		FTDFluidSimulationConfig Config = UTDFluidPresetAsset::BuildConfigForPresetKind(Kind);
 		if (Config.CpuFallbackResolution > 0)
 		{
 			Config.GridResolution = Config.CpuFallbackResolution;
 		}
 		Config.SolverBackend = ETDFluidSolverBackend::Cpu;
 		return Config;
+	}
+
+	FTDFluidSimulationConfig MakeCpuFallbackConfig(ETDFluidPresetKind Kind)
+	{
+		return ApplyCpuFallback(UTDFluidPresetAsset::BuildConfigForPresetKind(Kind));
 	}
 
 	void InitializeExplosionRun(FTDExplosionRun& Run, bool bUsesFx8bValues)
@@ -744,7 +749,7 @@ bool FTDFluidHeatGoldenChecksumsTest::RunTest(const FString& Parameters)
 		auto RunGolden = [&Expectation](uint32& OutAuxChecksum)
 		{
 			FTDFluidGrid2DSolver Solver;
-			Solver.Initialize(MakeCpuFallbackConfig(Expectation.Kind), FVector2D::ZeroVector);
+			Solver.Initialize(ApplyCpuFallback(TDFluidGoldenPresetSnapshots::MakeSimulationConfig(Expectation.Kind)), FVector2D::ZeroVector);
 			Solver.SetPlaneUpDirection(FVector2D(0.0, 1.0));
 			RunOrbitScenario(Solver, 45, 1.0f);
 			OutAuxChecksum = ComputeAuxChecksum(Solver);

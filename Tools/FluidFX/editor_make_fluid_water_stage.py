@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 물 무대 LV_TDFluidWaterStage 를 만든다. 장면 0(호수 분지 0~220cm, 물가 완경사, 잠긴 바위 14개(DarkFantasyTopDown), 물결 모래 재질, 역광 해(반짝임), 수면은 100cm 192칸 격자, 프리셋 DA_TDFluid_WaterLook0)과 장면 1(강: 폭 8m·깊이 1.2m·기울기 0.5%·굽이 1개, 폭 절반 여울 구간 수심 40cm, 바위 3개 중 1개 잠김+TDFluidObstacle 태그, 프리셋 DA_TDFluid_River). 먼저 editor_make_fluid_water_material.py 가 성공해야 하고, 장면 1 은 C++ 묶음 B1(ATDFluidWaterActor·ATDFluidRiverActor) 재빌드와 에디터 재시작 뒤에만 만든다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_stage.py (요청 파일 Saved/FluidFX/fluid_water_stage_request.json 의 {"overwrite": true, "scenes": [0, 1]}, B1 전이면 scenes 를 [0] 으로). 해변 무대 LV_TDFluidCoastStage(W-2s-a)는 장면 0·1 과 따로 {"overwrite": true, "scenes": [2]} 단독 요청으로만 만든다
 출력: /Game/FluidFX/Presets/DA_TDFluid_WaterLook0·DA_TDFluid_River, /Game/FluidFX/Materials/M_TD_FluidWaterMatte·M_TD_FluidWaterSandRipple·MI_TD_FluidWaterSand·MI_TD_FluidWaterStone, /Game/FluidFX/Maps/LV_TDFluidWaterStage, Saved/FluidFX/water_stage/heightmap.r16, Saved/FluidFX/fluid_water_stage.json(강 배치·탐침 좌표 포함, pie_probe_fluid_water.py 가 읽는다). 해변(scenes [2]): /Game/FluidFX/Presets/DA_TDFluid_Sea, /Game/FluidFX/Materials/MI_TD_FluidWaterSandCoast, /Game/FluidFX/Maps/LV_TDFluidCoastStage, Saved/FluidFX/water_stage/coast_heightmap.r16, Saved/FluidFX/fluid_coast_stage.json
-상태: 장면 0 은 실행 검증됨, 장면 1 은 미검증(C1 작성분, B1 C++ 계약은 명세 이름으로 가정하고 첫머리에서 점검). 에셋·맵이 이미 있으면 요청 파일에 overwrite true 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. W-2r: 모래 젖은 띠의 수위를 호수 반경(LakeWetReachCm) 밖에서는 강 수면 고도(RiverLevelStartXCm·RiverLevelSlopePerCm·RiverLevelStartZCm, 강 시작~끝 평균 경사)로 바꿔 하류 강둑 위에 뜨던 Z=0 띠를 없앤다(무대 다시 짓기 필요). FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 이 무대는 2026-10-22 데이터화 뒤 재생성 전(빌더 값은 비트 동일이라 결과는 같음, 이전 보고에는 sha 가 없어 check_fluid_preset_data.py --stage-report 가 STALE 을 낸다). W-2s-a 해변 무대(scenes [2] 단독, 미검증): 5도 모래 경사 126m 지형·Sea 프리셋 물 액터(젖은 띠 데칼 켬)·수면 타일 5x8·수동 노출(AEM_MANUAL, EV100 = EXPOSURE_EV100)·내비를 별도 맵에 만들고, 공유 모래 마스터 M_TD_FluidWaterSandRipple 은 불러오기만 하며(없으면 중단), LV_TDFluidWaterStage 와 fluid_water_stage.json 은 성공이든 실패든 건드리지 않는다(실패 보고도 fluid_coast_stage.json). 먼저 editor_make_fluid_water_material.py 의 {"wet_decal_only": true} 와 장면 0·1 무대가 있어야 하고 C++ 묶음(젖음 필드·데칼 속성) 재빌드와 에디터 재시작 뒤에만 만든다.
+상태: 장면 0 은 실행 검증됨, 장면 1 은 미검증(C1 작성분, B1 C++ 계약은 명세 이름으로 가정하고 첫머리에서 점검). 에셋·맵이 이미 있으면 요청 파일에 overwrite true 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. W-2r: 모래 젖은 띠의 수위를 호수 반경(LakeWetReachCm) 밖에서는 강 수면 고도(RiverLevelStartXCm·RiverLevelSlopePerCm·RiverLevelStartZCm, 강 시작~끝 평균 경사)로 바꿔 하류 강둑 위에 뜨던 Z=0 띠를 없앤다(무대 다시 짓기 필요). FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 이 무대는 2026-10-22 데이터화 뒤 재생성 전(빌더 값은 비트 동일이라 결과는 같음, 이전 보고에는 sha 가 없어 check_fluid_preset_data.py --stage-report 가 STALE 을 낸다). W-2s-a 해변 무대(scenes [2] 단독, 미검증): 5도 모래 경사 126m 지형·Sea 프리셋 물 액터(젖은 띠 데칼 켬)·수면 타일 5x8·수동 노출(AEM_MANUAL, EV100 = EXPOSURE_EV100)·내비를 별도 맵에 만들고, 공유 모래 마스터 M_TD_FluidWaterSandRipple 은 불러오기만 하며(없으면 중단), LV_TDFluidWaterStage 와 fluid_water_stage.json 은 성공이든 실패든 건드리지 않는다(실패 보고도 fluid_coast_stage.json). 먼저 editor_make_fluid_water_material.py 의 {"wet_decal_only": true} 와 장면 0·1 무대가 있어야 하고 C++ 묶음(젖음 필드·데칼 속성) 재빌드와 에디터 재시작 뒤에만 만든다. 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 단색·모래 인스턴스 MI_TD_FluidWaterSand·MI_TD_FluidWaterStone·MI_TD_FluidWaterSandCoast 의 BaseColor·Roughness·해변 WetBandHeightCm·WaterLevelZCm·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고(STONE_COLOR·COAST_SAND_WET_BAND_CM 삭제, SAND_COLOR 는 모래 마스터 기본값으로 남음), 정본 WaterLevelZCm 이 해수면 COAST_SEA_LEVEL_Z_CM 과 다르면 에셋을 바꾸기 전에 멈춘다.
 """
 import array
 import hashlib
@@ -78,7 +78,7 @@ BANK_WIDTH_CM = 500.0
 BED_NOISE_CM = 2.5
 
 SAND_COLOR = (0.55, 0.45, 0.30)
-STONE_COLOR = (0.30, 0.29, 0.27)
+MATERIAL_LOOK_MODULE_RELATIVE_PATH = ("Tools", "FluidFX", "fluid_material_look.py")
 STONE_COUNT = 14
 STONE_RING_CM = (300.0, 1450.0)
 STONE_RANDOM_SEED = 20261018
@@ -320,6 +320,16 @@ def project_path(*parts):
     return os.path.join(unreal.SystemLibrary.get_project_directory(), *parts)
 
 
+def load_material_look_table():
+    module_path = project_path(*MATERIAL_LOOK_MODULE_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("fluid_material_look", module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"모양 정본 모듈 없음: {module_path}")
+    material_look = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(material_look)
+    return material_look.TDMaterialLookTable.read_project(unreal.SystemLibrary.get_project_directory())
+
+
 def asset_disk_path(path, extension):
     return project_path("Content", *path[len("/Game/"):].split("/")) + extension
 
@@ -505,9 +515,8 @@ def load_or_create_matte_master():
     return material, True
 
 
-def write_matte_instance(path, master, color_rgb, roughness_value):
+def write_matte_instance(path, master, look_table):
     assets = unreal.EditorAssetLibrary
-    editing = unreal.MaterialEditingLibrary
     if assets.does_asset_exist(path):
         instance = assets.load_asset(path)
     else:
@@ -517,10 +526,7 @@ def write_matte_instance(path, master, color_rgb, roughness_value):
         )
     if not isinstance(instance, unreal.MaterialInstanceConstant):
         raise RuntimeError(f"재질 인스턴스 생성 실패: {path}")
-    editing.set_material_instance_parent(instance, master)
-    editing.set_material_instance_vector_parameter_value(instance, "BaseColor", unreal.LinearColor(color_rgb[0], color_rgb[1], color_rgb[2], 1.0))
-    editing.set_material_instance_scalar_parameter_value(instance, "Roughness", roughness_value)
-    editing.update_material_instance(instance)
+    look_table.apply_to_instance(unreal.MaterialEditingLibrary, unreal.LinearColor, instance, path, master)
     save_asset(instance, path)
     return instance
 
@@ -1363,7 +1369,6 @@ COAST_SHORE_X_CM = 0.0
 COAST_SLOPE_DEGREES = 5.0
 COAST_SLOPE_TANGENT = math.tan(math.radians(COAST_SLOPE_DEGREES))
 COAST_TERRAIN_X_RANGE_CM = (-3200.0, 2600.0)
-COAST_SAND_WET_BAND_CM = 0.01
 COAST_SAND_PARAMETER_NAMES = ("WetBandHeightCm", "WaterLevelZCm")
 COAST_TILE_SIZE_CM = 1600.0
 COAST_TILE_COUNT_X = 5
@@ -1484,16 +1489,13 @@ def load_coast_resources(assets):
     return resources
 
 
-def write_coast_sand_overrides(instance):
-    editing = unreal.MaterialEditingLibrary
-    overrides = (("WetBandHeightCm", COAST_SAND_WET_BAND_CM), ("WaterLevelZCm", COAST_SEA_LEVEL_Z_CM))
-    for name, value in overrides:
-        editing.set_material_instance_scalar_parameter_value(instance, name, value)
-    editing.update_material_instance(instance)
-    for name, value in overrides:
-        if abs(editing.get_material_instance_scalar_parameter_value(instance, name) - value) > 0.001:
-            raise RuntimeError(f"해변 모래 인스턴스 스칼라 설정 확인 실패: {COAST_SAND_INSTANCE_PATH}.{name}")
-    save_asset(instance, COAST_SAND_INSTANCE_PATH)
+def require_coast_sand_look(look_table):
+    scalars = look_table.material(COAST_SAND_INSTANCE_PATH)["Scalars"]
+    missing = [name for name in COAST_SAND_PARAMETER_NAMES if name not in scalars]
+    if missing:
+        raise RuntimeError(f"모양 정본 해변 모래 스칼라 없음: {COAST_SAND_INSTANCE_PATH} " + ", ".join(missing))
+    if abs(scalars["WaterLevelZCm"] - COAST_SEA_LEVEL_Z_CM) > 0.001:
+        raise RuntimeError(f"모양 정본 해변 모래 WaterLevelZCm {scalars['WaterLevelZCm']} ≠ 해수면 {COAST_SEA_LEVEL_Z_CM}: {COAST_SAND_INSTANCE_PATH}")
 
 
 def configure_coast_preset(surface_material, surface_mesh):
@@ -1667,7 +1669,7 @@ def create_coast_spawners(actors, created):
     return finish, spawn
 
 
-def describe_coast_constants():
+def describe_coast_constants(look_table):
     return {
         "scene": COAST_SCENE,
         "map": COAST_MAP_PATH,
@@ -1682,7 +1684,7 @@ def describe_coast_constants():
             "z_scale": LANDSCAPE_Z_SCALE,
             "half_span_cm": LANDSCAPE_HALF_SPAN_CM,
         },
-        "sand_wet_band_cm": COAST_SAND_WET_BAND_CM,
+        "sand_wet_band_cm": look_table.material(COAST_SAND_INSTANCE_PATH)["Scalars"]["WetBandHeightCm"],
         "tiles": {
             "size_cm": COAST_TILE_SIZE_CM,
             "count_x": COAST_TILE_COUNT_X,
@@ -1741,11 +1743,12 @@ def build_coast_stage(request):
 
     print("단계: 프리셋 정본 검사·다시 읽기")
     preset_tuning_sha256 = reload_preset_tuning()
+    look_table = load_material_look_table()
+    require_coast_sand_look(look_table)
     resources = load_coast_resources(assets)
 
     print("단계: 해변 재질·프리셋")
-    sand_instance = write_matte_instance(COAST_SAND_INSTANCE_PATH, resources["sand_master"], SAND_COLOR, 0.9)
-    write_coast_sand_overrides(sand_instance)
+    sand_instance = write_matte_instance(COAST_SAND_INSTANCE_PATH, resources["sand_master"], look_table)
     preset, effective, effective_summary = configure_coast_preset(resources["sea_material"], resources["surface_mesh"])
 
     print("단계: 해변 지형 높이 파일")
@@ -1799,7 +1802,7 @@ def build_coast_stage(request):
         "scenes": [COAST_SCENE],
         "overwrite": overwrite,
         "preset_tuning_sha256": preset_tuning_sha256,
-        "constants": describe_coast_constants(),
+        "constants": describe_coast_constants(look_table),
         "preset": COAST_PRESET_PATH,
         "preset_effective": effective_summary,
         "sand_instance": COAST_SAND_INSTANCE_PATH,
@@ -1882,6 +1885,7 @@ def main():
 
     print("단계: 프리셋 정본 검사·다시 읽기")
     preset_tuning_sha256 = reload_preset_tuning()
+    look_table = load_material_look_table()
 
     game_mode = assets.load_blueprint_class(GAME_MODE_PATH)
     lake_material = assets.load_asset(LAKE_INSTANCE_PATH)
@@ -1914,8 +1918,8 @@ def main():
 
     print("단계: 재질 준비")
     matte_master, matte_created = load_or_create_matte_master()
-    sand_material = write_matte_instance(SAND_INSTANCE_PATH, build_sand_master(), SAND_COLOR, 0.9)
-    stone_material = write_matte_instance(STONE_INSTANCE_PATH, matte_master, STONE_COLOR, 0.75)
+    sand_material = write_matte_instance(SAND_INSTANCE_PATH, build_sand_master(), look_table)
+    stone_material = write_matte_instance(STONE_INSTANCE_PATH, matte_master, look_table)
 
     print("단계: 프리셋")
     preset, effective = configure_preset(lake_material, surface_mesh)

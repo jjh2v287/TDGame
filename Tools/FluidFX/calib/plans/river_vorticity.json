@@ -1,0 +1,26 @@
+{
+  "id": "river_vorticity",
+  "note": "spec-wave0-data-bridge-v2 3.9 수용 (나): 강, Groups.WaterLayer 소유 VorticityStrength(0.3)를 split_group 으로 River 만 바꿈, 물 수치 탐침만(measure_fx_look 에 물 kind 가 없어 LIVE-2 화면 대조 안 함)",
+  "scenes": [
+    {
+      "name": "river",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidWaterStage",
+      "camera": {},
+      "backend": "cpu",
+      "time_dilation": 1.0,
+      "schedule": null,
+      "settle": 3.0,
+      "regions_template": null,
+      "targets": null,
+      "live2_refs": []
+    }
+  ],
+  "params": [
+    {"json_path": "Kinds.River.TDFluidSimulationConfig.VorticityStrength", "values": [0.2, 0.3, 0.4], "split_group": true}
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "metrics": {"sources": ["water_probe"], "noise_floor": {}}
+}

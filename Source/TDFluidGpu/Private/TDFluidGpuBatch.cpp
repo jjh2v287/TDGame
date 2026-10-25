@@ -64,20 +64,20 @@ namespace
 
 	TAutoConsoleVariable<int32> CVarTDFluidGpuPressureSolver(
 		TEXT("TD.FluidFX.GpuPressureSolver"),
-		0,
-		TEXT("GPU fluid pressure solver. 0: automatic (multigrid V cycles at the 512 tier and above, Jacobi below), 1: Jacobi everywhere, 2: multigrid at the 64 tier and above. Changing it moves GPU fluid actors into new batches and resets their state."),
+		-1,
+		TEXT("GPU fluid pressure solver. Negative: follow the preset field GpuPressureSolverMode, 0: automatic (multigrid V cycles at the 512 tier and above, Jacobi below), 1: Jacobi everywhere, 2: multigrid at the 64 tier and above. Changing it moves GPU fluid actors into new batches and resets their state."),
 		ECVF_RenderThreadSafe);
 
 	TAutoConsoleVariable<int32> CVarTDFluidGpuPressureCycles(
 		TEXT("TD.FluidFX.GpuPressureCycles"),
-		TDFluidGpuSolverConstants::DefaultMultigridCycles,
-		TEXT("Multigrid V cycles per GPU fluid pressure projection, clamped to 1..4. Changing it resets multigrid GPU fluid actors."),
+		-1,
+		TEXT("Multigrid V cycles per GPU fluid pressure projection, clamped to 1..4. Negative: follow the preset field GpuMultigridCycles. Changing it resets multigrid GPU fluid actors."),
 		ECVF_RenderThreadSafe);
 
 	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuPressureMode(
 		TEXT("TD.FluidFX.WaterGpuPressureMode"),
-		0,
-		TEXT("GPU water pressure at the 512 tier and above. 0: default choice (half resolution multigrid), 1: half resolution multigrid, 2: half resolution kernel feedback on square windows. Changing it moves GPU water actors into new batches and resets their state."),
+		-1,
+		TEXT("GPU water pressure at the 512 tier and above. Negative: follow the preset field WaterGpuPressureMode, 0: default choice (half resolution multigrid), 1: half resolution multigrid, 2: half resolution kernel feedback on square windows. Changing it moves GPU water actors into new batches and resets their state."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuVelocityFloat32(
@@ -94,20 +94,20 @@ namespace
 
 	TAutoConsoleVariable<int32> CVarTDFluidWaterGpuKernelRadius(
 		TEXT("TD.FluidFX.WaterGpuKernelRadius"),
-		4,
-		TEXT("Kernel feedback pressure radius in half resolution texels, clamped to 2..7."),
+		-1,
+		TEXT("Kernel feedback pressure radius in half resolution texels, clamped to 2..7. Negative: follow the preset field PressureKernelRadiusTexels."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<float> CVarTDFluidWaterGpuKernelFeedback(
 		TEXT("TD.FluidFX.WaterGpuKernelFeedback"),
-		0.98f,
-		TEXT("Kernel feedback pressure feedback factor, clamped to 0..1."),
+		-1.0f,
+		TEXT("Kernel feedback pressure feedback factor, clamped to 0..1. Negative: follow the preset field PressureKernelFeedback."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<float> CVarTDFluidWaterGpuKernelScale(
 		TEXT("TD.FluidFX.WaterGpuKernelScale"),
-		1.0f,
-		TEXT("Multiplier on the kernel feedback pressure divergence scale."),
+		-1.0f,
+		TEXT("Multiplier on the kernel feedback pressure divergence scale. Negative: follow the preset field PressureKernelScale."),
 		ECVF_Default);
 
 	struct FTDFluidGpuNoiseLatticePlacement
@@ -176,9 +176,20 @@ namespace
 		return FMath::IsFinite(KernelScale) ? FMath::Clamp(KernelScale, 0.0f, BatchWaterKernelMaximumScale) : 1.0f;
 	}
 
+	int32 ResolveIntegerConsoleOverride(int32 ConsoleValue, int32 PresetValue)
+	{
+		return ConsoleValue >= 0 ? ConsoleValue : PresetValue;
+	}
+
+	float ResolveFloatConsoleOverride(float ConsoleValue, float PresetValue)
+	{
+		return ConsoleValue >= 0.0f ? ConsoleValue : PresetValue;
+	}
+
 	FTDFluidGpuSimulationSettings SanitizeSettings(const FTDFluidGpuSimulationSettings& Settings)
 	{
 		FTDFluidGpuSimulationSettings Sanitized = Settings;
+		Sanitized.MaxCellSpeedCmPerSec = ClampFinite(Settings.MaxCellSpeedCmPerSec, 1.0f, TNumericLimits<float>::Max());
 		Sanitized.bUsesWaterLayer = IsBatchWaterLayerSettings(Settings);
 		Sanitized.Resolution = Sanitized.bUsesWaterLayer
 			? FTDFluidGpuBatch::ResolveWaterResolutionTier(Settings.Resolution)
@@ -207,7 +218,10 @@ namespace
 		Sanitized.EdgeBounciness = ClampFinite(Settings.EdgeBounciness, 0.0f, 1.0f);
 		Sanitized.BorderFadeExponent = FMath::IsFinite(Settings.BorderFadeExponent) ? FMath::Clamp(Settings.BorderFadeExponent, 0.25f, 8.0f) : 1.0f;
 		Sanitized.VortexTangentialAccelerationCmPerSec2 = FMath::IsFinite(Settings.VortexTangentialAccelerationCmPerSec2) ? FMath::Clamp(Settings.VortexTangentialAccelerationCmPerSec2, -20000.0f, 20000.0f) : 0.0f;
-		Sanitized.VortexRadialDriftCmPerSec = FMath::IsFinite(Settings.VortexRadialDriftCmPerSec) ? FMath::Clamp(Settings.VortexRadialDriftCmPerSec, -TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec, TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec) : 0.0f;
+		Sanitized.VortexRadialDriftCmPerSec = FMath::IsFinite(Settings.VortexRadialDriftCmPerSec) ? FMath::Clamp(Settings.VortexRadialDriftCmPerSec, -Sanitized.MaxCellSpeedCmPerSec, Sanitized.MaxCellSpeedCmPerSec) : 0.0f;
+		Sanitized.BrushVelocityResponsePerSec = ClampFinite(Settings.BrushVelocityResponsePerSec, 0.0f, TNumericLimits<float>::Max());
+		Sanitized.BrushDisplacementRatio = ClampFinite(Settings.BrushDisplacementRatio, 0.0f, TNumericLimits<float>::Max());
+		Sanitized.BrushEraseRatePerSec = ClampFinite(Settings.BrushEraseRatePerSec, 0.0f, TNumericLimits<float>::Max());
 		Sanitized.VortexRadiusRatio = ClampFinite(Settings.VortexRadiusRatio, 0.01f, 0.5f);
 		Sanitized.bUsesHeatChannel = Settings.bUsesHeatChannel && Settings.SimMode == ETDFluidGpuSimMode::FluidSim && !Sanitized.bUsesWaterLayer;
 		Sanitized.WaterDepthReferenceCm = ClampFinite(Settings.WaterDepthReferenceCm, 1.0f, 100000.0f);
@@ -305,7 +319,7 @@ namespace
 		Parameters.BorderFadeRatio = Settings.BorderFadeRatio;
 		Parameters.StampDeltaTimeSeconds = StampDeltaTime;
 		Parameters.StepDeltaTimeSeconds = StepDeltaTime;
-		Parameters.StampVelocityBlend = FMath::Min(1.0f, TDFluidGpuSolverConstants::BrushVelocityResponsePerSec * StampDeltaTime);
+		Parameters.StampVelocityBlend = FMath::Min(1.0f, Settings.BrushVelocityResponsePerSec * StampDeltaTime);
 		Parameters.VorticityStrength = Settings.VorticityStrength;
 		Parameters.AdvectionStepScale = FVector2f((StepDeltaTime * Settings.AdvectionSpeedScale) / CellSizeX, (StepDeltaTime * Settings.AdvectionSpeedScale) / CellSizeY);
 		Parameters.AdvectVelocityDampingFactor = 1.0f / (1.0f + Settings.VelocityDamping * StepDeltaTime * AdvectVelocityDampingScale);
@@ -342,6 +356,8 @@ namespace
 		Parameters.VortexTangentialStepCmPerSec = Settings.VortexTangentialAccelerationCmPerSec2 * StepDeltaTime;
 		Parameters.VortexRadialDriftCmPerSec = Settings.VortexRadialDriftCmPerSec;
 		Parameters.VortexRadiusCm = Settings.VortexRadiusRatio * SmallestExtentCm;
+		Parameters.MaxCellSpeedCmPerSec = Settings.MaxCellSpeedCmPerSec;
+		Parameters.BrushDisplacementRatio = Settings.BrushDisplacementRatio;
 		return Parameters;
 	}
 
@@ -720,10 +736,10 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 	}
 
 	BatchKey.bUsesHeatChannel = Settings.bUsesHeatChannel;
-	BatchKey.PressureSolver = ResolvePressureSolver(BatchKey.ResolutionTier);
+	BatchKey.PressureSolver = ResolvePressureSolver(BatchKey.ResolutionTier, Settings.PressureSolverModeRequest);
 	if (BatchKey.PressureSolver == ETDFluidGpuPressureSolver::Multigrid)
 	{
-		BatchKey.MultigridCycles = FMath::Clamp(CVarTDFluidGpuPressureCycles.GetValueOnAnyThread(), TDFluidGpuSolverConstants::MinimumMultigridCycles, TDFluidGpuSolverConstants::MaximumMultigridCycles);
+		BatchKey.MultigridCycles = FMath::Clamp(ResolveIntegerConsoleOverride(CVarTDFluidGpuPressureCycles.GetValueOnAnyThread(), Settings.MultigridCyclesRequest), TDFluidGpuSolverConstants::MinimumMultigridCycles, TDFluidGpuSolverConstants::MaximumMultigridCycles);
 		return BatchKey;
 	}
 
@@ -731,9 +747,9 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 	return BatchKey;
 }
 
-ETDFluidGpuPressureSolver FTDFluidGpuBatch::ResolvePressureSolver(int32 ResolutionTier)
+ETDFluidGpuPressureSolver FTDFluidGpuBatch::ResolvePressureSolver(int32 ResolutionTier, uint8 PressureSolverModeRequest)
 {
-	const int32 SolverMode = CVarTDFluidGpuPressureSolver.GetValueOnAnyThread();
+	const int32 SolverMode = ResolveIntegerConsoleOverride(CVarTDFluidGpuPressureSolver.GetValueOnAnyThread(), PressureSolverModeRequest);
 	if (SolverMode == ForcedJacobiSolverMode)
 	{
 		return ETDFluidGpuPressureSolver::Jacobi;
@@ -782,7 +798,7 @@ int32 FTDFluidGpuBatch::ComputeTransmittanceResolution(int32 ResolutionTier)
 	return FMath::Max(TDFluidGpuSolverConstants::MinimumTransmittanceResolution, FMath::DivideAndRoundUp(FMath::Max(ResolutionTier, 1), TDFluidGpuSolverConstants::TransmittanceResolutionDivisor));
 }
 
-FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel, bool bUsesTransmittance)
+FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel, bool bUsesTransmittance, uint8 PressureSolverModeRequest)
 {
 	const int64 Resolution = ResolveResolutionTier(RequestedResolution);
 	const int64 CellCount = Resolution * Resolution;
@@ -798,7 +814,7 @@ FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMo
 	}
 
 	Estimate.StateBytes = CellCount * (VelocityBytesPerCell + DensityBytesPerCell + SurfaceDisplacementBytesPerCell + PressureSolutionBytesPerCell + ObstacleSdfBytesPerCell + TerrainElevationBytesPerCell);
-	Estimate.TransientBytes = ResolvePressureSolver(static_cast<int32>(Resolution)) == ETDFluidGpuPressureSolver::Multigrid
+	Estimate.TransientBytes = ResolvePressureSolver(static_cast<int32>(Resolution), PressureSolverModeRequest) == ETDFluidGpuPressureSolver::Multigrid
 		? ComputeMultigridTransientBytes(static_cast<int32>(Resolution))
 		: CellCount * DivergenceCurlBytesPerCell;
 	Estimate.OutputBytes = CellCount * FluidOutputBytesPerCell;
@@ -891,11 +907,11 @@ void FTDFluidGpuBatch::ApplyWaterConsoleOverrides(FTDFluidGpuSimulationSettings&
 	const bool bIsParityTier = ResolveWaterResolutionTier(InOutSettings.Resolution) <= TDFluidGpuSolverConstants::WaterExactTierMaximumResolution;
 	InOutSettings.bUsesFloat32WaterVelocity = ResolveBatchWaterFloat32Request(CVarTDFluidWaterGpuVelocityFloat32.GetValueOnGameThread(), bBatchWaterVelocityAutomaticallyUsesFloat32);
 	InOutSettings.bUsesFloat32Ripple = ResolveBatchWaterFloat32Request(CVarTDFluidWaterGpuRippleFloat32.GetValueOnGameThread(), bIsParityTier);
-	InOutSettings.WaterPressureModeRequest = ClampBatchWaterPressureModeRequest(CVarTDFluidWaterGpuPressureMode.GetValueOnGameThread());
-	InOutSettings.WaterKernelRadius = FMath::Clamp(CVarTDFluidWaterGpuKernelRadius.GetValueOnGameThread(), BatchWaterKernelMinimumRadius, BatchWaterKernelMaximumRadius);
-	InOutSettings.WaterKernelFeedback = ClampFinite(CVarTDFluidWaterGpuKernelFeedback.GetValueOnGameThread(), 0.0f, 1.0f);
-	InOutSettings.WaterKernelScale = SanitizeBatchWaterKernelScale(CVarTDFluidWaterGpuKernelScale.GetValueOnGameThread());
-	InOutSettings.WaterMultigridCycles = FMath::Clamp(CVarTDFluidGpuPressureCycles.GetValueOnGameThread(), TDFluidGpuSolverConstants::MinimumMultigridCycles, TDFluidGpuSolverConstants::MaximumMultigridCycles);
+	InOutSettings.WaterPressureModeRequest = ClampBatchWaterPressureModeRequest(ResolveIntegerConsoleOverride(CVarTDFluidWaterGpuPressureMode.GetValueOnGameThread(), InOutSettings.WaterPressureModeRequest));
+	InOutSettings.WaterKernelRadius = FMath::Clamp(ResolveIntegerConsoleOverride(CVarTDFluidWaterGpuKernelRadius.GetValueOnGameThread(), InOutSettings.WaterKernelRadius), BatchWaterKernelMinimumRadius, BatchWaterKernelMaximumRadius);
+	InOutSettings.WaterKernelFeedback = ClampFinite(ResolveFloatConsoleOverride(CVarTDFluidWaterGpuKernelFeedback.GetValueOnGameThread(), InOutSettings.WaterKernelFeedback), 0.0f, 1.0f);
+	InOutSettings.WaterKernelScale = SanitizeBatchWaterKernelScale(ResolveFloatConsoleOverride(CVarTDFluidWaterGpuKernelScale.GetValueOnGameThread(), InOutSettings.WaterKernelScale));
+	InOutSettings.WaterMultigridCycles = FMath::Clamp(ResolveIntegerConsoleOverride(CVarTDFluidGpuPressureCycles.GetValueOnGameThread(), InOutSettings.WaterMultigridCycles), TDFluidGpuSolverConstants::MinimumMultigridCycles, TDFluidGpuSolverConstants::MaximumMultigridCycles);
 }
 
 int64 FTDFluidGpuBatch::ComputeWaterMultigridOpenBoundaryBytes(int32 ResolutionTier)
@@ -1096,7 +1112,10 @@ void FTDFluidGpuBatch::BuildFrameParameters(const FTDFluidGpuFrameInputs& FrameI
 
 		FTDFluidGpuStampBinLimits StampLimits;
 		StampLimits.MaxStampsPerTick = Settings.MaxStampsPerTick;
-		const FTDFluidGpuStampBinSet ActorStampBins = FTDFluidGpuStampBins::Build(StampWindow, Actor.Stamps, StampLimits);
+		FTDFluidGpuStampResponse StampResponse;
+		StampResponse.MaxCellSpeedCmPerSec = Settings.MaxCellSpeedCmPerSec;
+		StampResponse.BrushEraseRatePerSec = Settings.BrushEraseRatePerSec;
+		const FTDFluidGpuStampBinSet ActorStampBins = FTDFluidGpuStampBins::Build(StampWindow, Actor.Stamps, StampLimits, StampResponse);
 
 		const int32 FirstObstacle = Frame.Obstacles.Num();
 		AppendPackedObstacles(Actor.Obstacles, WindowCenter, Frame.Obstacles);

@@ -1,13 +1,47 @@
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidPresetTuningSubsystem.h"
 
+namespace
+{
+	template <typename TSettings>
+	TSettings TDFluidBuildTunedSettings(ETDFluidPresetKind Kind)
+	{
+		TSettings Settings;
+		UTDFluidPresetTuningSubsystem::ApplyPresetTuning(Kind, TSettings::StaticStruct(), &Settings);
+		return Settings;
+	}
+}
+
+bool UTDFluidPresetAsset::UsesOwnPresetCopies() const
+{
+	return PresetKind == ETDFluidPresetKind::Custom || bOverridePresetDefaults;
+}
+
 FTDFluidSimulationConfig UTDFluidPresetAsset::ResolveEffectiveConfig() const
 {
-	if (PresetKind == ETDFluidPresetKind::Custom || bOverridePresetDefaults)
+	if (UsesOwnPresetCopies())
 	{
 		return SimulationConfig;
 	}
 	return BuildConfigForPresetKind(PresetKind);
+}
+
+FTDFluidPlaneSettings UTDFluidPresetAsset::ResolveEffectivePlaneSettings() const
+{
+	if (UsesOwnPresetCopies())
+	{
+		return PlaneSettings;
+	}
+	return BuildPlaneSettingsForPresetKind(PresetKind);
+}
+
+FTDFluidVolumeRenderSettings UTDFluidPresetAsset::ResolveEffectiveVolumeRender() const
+{
+	if (UsesOwnPresetCopies())
+	{
+		return VolumeRender;
+	}
+	return BuildVolumeRenderForPresetKind(PresetKind);
 }
 
 FTDFluidSimulationConfig UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind Kind)
@@ -48,6 +82,41 @@ FTDFluidFlameCardLayerSettings UTDFluidPresetAsset::BuildFlameCardLayersForPrese
 	FTDFluidFlameCardLayerSettings CardLayers;
 	UTDFluidPresetTuningSubsystem::ApplyPresetTuning(Kind, FTDFluidFlameCardLayerSettings::StaticStruct(), &CardLayers);
 	return CardLayers;
+}
+
+FTDFluidPlaneSettings UTDFluidPresetAsset::BuildPlaneSettingsForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidPlaneSettings>(Kind);
+}
+
+FTDFluidDownstreamFeedSettings UTDFluidPresetAsset::BuildDownstreamFeedForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidDownstreamFeedSettings>(Kind);
+}
+
+FTDFluidFragmentGlowSettings UTDFluidPresetAsset::BuildFragmentGlowForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidFragmentGlowSettings>(Kind);
+}
+
+FTDFluidInputBrushSettings UTDFluidPresetAsset::BuildInputBrushForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidInputBrushSettings>(Kind);
+}
+
+FTDFluidRuntimeOpsSettings UTDFluidPresetAsset::BuildRuntimeOpsForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidRuntimeOpsSettings>(Kind);
+}
+
+FTDFluidEmberSettings UTDFluidPresetAsset::BuildEmberSettingsForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidEmberSettings>(Kind);
+}
+
+FTDFluidFireLightSettings UTDFluidPresetAsset::BuildFireLightSettingsForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidFireLightSettings>(Kind);
 }
 
 UTDFluidPresetAsset* UTDFluidPresetAsset::CreateTransientPreset(UObject* Outer, ETDFluidPresetKind Kind)

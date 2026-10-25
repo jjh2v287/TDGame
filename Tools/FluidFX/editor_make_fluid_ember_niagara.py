@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3. 에디터가 이 프로젝트를 열고 MCP 8000(NiagaraToolsets)·원격 실행이 살아 있어야 한다. 공식 NiagaraToolset_System 으로 GPU 불티 나이아가라 시스템(D-57 N0: 결정론 시드·고정 경계·영속 ID, User 변수 14개, SampleTexture 밀도 거절·속도 끌림, 구 메시 렌더러 + MI_TD_FluidEmberNiagara_Default)을 상수표 하나와 고정 호출 순서로 만들고, 저장(run_in_editor)·컴파일·스택 확인 뒤 정규화 덤프를 남긴다. 덮어쓰기·삭제는 하지 않는다.
 실행 명령: python -B Tools/FluidFX/editor_make_fluid_ember_niagara.py [--probe] [--dump-only] [--asset <경로>] [--ember-base-scale 0.025] (--probe 단독 = 단계 0a 쓰기 없음, --probe --asset <새 경로> = 단계 0b 시범 생성·바인딩 왕복, 생성은 0b 통과와 editor_make_fluid_flame_material.py 의 {"only": ["ember_niagara"]} 실행 뒤)
 출력: Saved/FluidFX/niagara/probe.json(0a·0b), --asset(기본 /Game/FluidFX/Niagara/NS_TD_FluidEmber) 의 나이아가라 시스템, Saved/FluidFX/niagara/<에셋 이름>.dump.json(정규화 절 + 절별 sha256)·<에셋 이름>.report.json(단계·확인). 종료 0 = 통과, 1 = 단계·확인 실패, 2 = 에디터·MCP 연결 실패, 3 = 선행 조건(에셋 있음·0b 미통과·재질 없음)
-상태: 검증됨(2026-10-21 FX-8c 12차 N0-a 에디터 실행: 0a 실패 호출 0, 0b 실패 단계 0·바인딩 왕복 2/2, 생성 확인 9/9, ReproA=B=C 절별 해시 같음·ReproScale 은 UserVariables 만 다름). 빈 템플릿은 거부되어 DefaultSystem 템플릿의 Fountain 이미터를 지운다. 에디터 재시작 뒤 불러온 시스템은 GetSystemCompileState·GetStackIssues 가 컴파일 대기 시간 초과(NeedsRequestCompile, 미해결)."""
+상태: 검증됨(2026-10-21 FX-8c 12차 N0-a 에디터 실행: 0a 실패 호출 0, 0b 실패 단계 0·바인딩 왕복 2/2, 생성 확인 9/9, ReproA=B=C 절별 해시 같음·ReproScale 은 UserVariables 만 다름). 빈 템플릿은 거부되어 DefaultSystem 템플릿의 Fountain 이미터를 지운다. 에디터 재시작 뒤 불러온 시스템은 GetSystemCompileState·GetStackIssues 가 컴파일 대기 시간 초과(NeedsRequestCompile, 미해결). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 클라이언트 검사만): User 변수 기본값(텍스처 제외 10개)은 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json 의 NiagaraSystems(--asset 이 정본에 없으면 NS_TD_FluidEmber 항목)에서 읽고, --ember-base-scale 은 주었을 때만 User.EmberBaseScale 을 덮어쓴다. 정본에 없거나 모르는 User 변수가 있으면 종료 3."""
 import argparse
 import copy
 import json
@@ -16,6 +16,7 @@ sys.path.insert(0, str(TOOLS_ROOT))
 sys.path.insert(0, str(TOOLS_ROOT / "FluidFX"))
 import uemcp
 import compare_niagara_dumps
+import fluid_material_look
 
 OUTPUT_DIR = PROJECT_ROOT / "Saved" / "FluidFX" / "niagara"
 PROBE_PATH = OUTPUT_DIR / "probe.json"
@@ -29,7 +30,7 @@ EMITTER_NAME = "Ember"
 SYSTEM_RANDOM_SEED = 1
 EMITTER_RANDOM_SEED = 1
 FIXED_BOUNDS_HALF_EXTENT_CM = 600.0
-DEFAULT_EMBER_BASE_SCALE = 0.025
+EMBER_BASE_SCALE_NAME = "User.EmberBaseScale"
 
 EMPTY_TEMPLATE_SYSTEM = ""
 DEFAULT_TEMPLATE_SYSTEM = "/Niagara/DefaultAssets/DefaultSystem.DefaultSystem"
@@ -72,21 +73,22 @@ RANDOM_MAXIMUM_INPUT = "Maximum"
 SAMPLED_COLOR = "Particles.SampleTexture.SampledColor"
 
 USER_VARIABLES = (
-    ("User.SimCenterWorld", VECTOR3_TYPE, (0.0, 0.0, 0.0)),
-    ("User.SimExtentsCm", VECTOR2_TYPE, (0.0, 0.0)),
-    ("User.DensityPressureTexture", TEXTURE_CLASS, None),
-    ("User.VelocityTexture", TEXTURE_CLASS, None),
-    ("User.AuxTexture", TEXTURE_CLASS, None),
-    ("User.WaterSurfaceTexture", TEXTURE_CLASS, None),
-    ("User.SimCenterPlane", VECTOR2_TYPE, (0.0, 0.0)),
-    ("User.PlaneAxisU", VECTOR3_TYPE, (1.0, 0.0, 0.0)),
-    ("User.PlaneAxisV", VECTOR3_TYPE, (0.0, 1.0, 0.0)),
-    ("User.PlaneAxisN", VECTOR3_TYPE, (0.0, 0.0, 1.0)),
-    ("User.PlaneCoordinateOffsetCm", VECTOR2_TYPE, (0.0, 0.0)),
-    ("User.VelocityReferenceCmPerSec", FLOAT_TYPE, 600.0),
-    ("User.EmberSpawnRate", FLOAT_TYPE, 10.0),
-    ("User.EmberBaseScale", FLOAT_TYPE, DEFAULT_EMBER_BASE_SCALE),
+    ("User.SimCenterWorld", VECTOR3_TYPE),
+    ("User.SimExtentsCm", VECTOR2_TYPE),
+    ("User.DensityPressureTexture", TEXTURE_CLASS),
+    ("User.VelocityTexture", TEXTURE_CLASS),
+    ("User.AuxTexture", TEXTURE_CLASS),
+    ("User.WaterSurfaceTexture", TEXTURE_CLASS),
+    ("User.SimCenterPlane", VECTOR2_TYPE),
+    ("User.PlaneAxisU", VECTOR3_TYPE),
+    ("User.PlaneAxisV", VECTOR3_TYPE),
+    ("User.PlaneAxisN", VECTOR3_TYPE),
+    ("User.PlaneCoordinateOffsetCm", VECTOR2_TYPE),
+    ("User.VelocityReferenceCmPerSec", FLOAT_TYPE),
+    ("User.EmberSpawnRate", FLOAT_TYPE),
+    ("User.EmberBaseScale", FLOAT_TYPE),
 )
+LOOK_SECTION_BY_TYPE = {FLOAT_TYPE: "Floats", VECTOR2_TYPE: "Vectors2", VECTOR3_TYPE: "Vectors3"}
 
 PLANE_UV_EXPRESSION = (
     "saturate((float2(dot(Particles.Position, User.PlaneAxisU), dot(Particles.Position, User.PlaneAxisV))"
@@ -524,10 +526,38 @@ def add_sample_texture(client, system_path, step, binding_report):
     return module_name
 
 
-def build_user_variables(ember_base_scale):
+def read_look_user_entry(system_path):
+    try:
+        look_table = fluid_material_look.TDMaterialLookTable.read_project(str(PROJECT_ROOT))
+        systems = look_table.look["NiagaraSystems"]
+        return look_table.niagara(system_path if system_path in systems else DEFAULT_ASSET_PATH)
+    except (OSError, ValueError, RuntimeError) as error:
+        raise TDPreconditionError(f"모양 정본 읽기 실패: {error}") from error
+
+
+def read_user_defaults(system_path, ember_base_scale_override):
+    entry = read_look_user_entry(system_path)
+    known_names = {name for name, _ in USER_VARIABLES}
+    unknown_names = sorted(name for section in fluid_material_look.NIAGARA_SECTIONS for name in entry[section] if name not in known_names)
+    if unknown_names:
+        raise TDPreconditionError("모양 정본에 스크립트가 모르는 User 변수: " + ", ".join(unknown_names))
+    defaults = {}
+    for name, type_path in USER_VARIABLES:
+        if type_path == TEXTURE_CLASS:
+            continue
+        section = entry[LOOK_SECTION_BY_TYPE[type_path]]
+        if name not in section:
+            raise TDPreconditionError(f"모양 정본에 User 변수 없음: {LOOK_SECTION_BY_TYPE[type_path]}.{name}")
+        defaults[name] = section[name]
+    if ember_base_scale_override is not None:
+        defaults[EMBER_BASE_SCALE_NAME] = ember_base_scale_override
+    return defaults
+
+
+def build_user_variables(user_defaults):
     variables = []
-    for name, type_path, value in USER_VARIABLES:
-        default = ember_base_scale if name == "User.EmberBaseScale" else value
+    for name, type_path in USER_VARIABLES:
+        default = user_defaults.get(name)
         variables.append({"name": name, "type": type_definition(type_path), "description": "", "defaultValue": instanced_value(type_path, default)})
     return variables
 
@@ -568,7 +598,7 @@ def remove_template_emitters(client, system_path):
     return removed
 
 
-def build_system(client, system_path, template, material_path, ember_base_scale, recorder, should_create=True):
+def build_system(client, system_path, template, material_path, user_defaults, recorder, should_create=True):
     binding_report = []
     sample_module_names = {}
     if should_create:
@@ -582,7 +612,7 @@ def build_system(client, system_path, template, material_path, ember_base_scale,
         "SetEmitterData", emitter=stack_ref(system_path, EMITTER_NAME), emitterData={"propertyValues": json.dumps(EMITTER_DATA)}))
     topology = recorder.run("2 이미터 토폴로지", lambda: client.call("GetEmitterTopology", emitterRef=stack_ref(system_path, EMITTER_NAME)))
     recorder.run("3 User 변수 14", lambda: client.call(
-        "AddUserVariables", system=reference(object_path(system_path)), variablesToAdd=build_user_variables(ember_base_scale)))
+        "AddUserVariables", system=reference(object_path(system_path)), variablesToAdd=build_user_variables(user_defaults)))
     builders = {
         "set": lambda step: add_set_parameters(client, system_path, step, sample_module_names),
         "module": lambda step: add_module(client, system_path, step)[0],
@@ -869,7 +899,7 @@ def is_binding_roundtrip_ok(binding_report):
     return len(binding_report) == 2 and all(item["stored"] == item["requested"] for item in binding_report)
 
 
-def run_stage0b(client, probe_asset, ember_base_scale):
+def run_stage0b(client, probe_asset, user_defaults):
     if editor_asset_exists(probe_asset):
         raise TDPreconditionError(f"0b 경로에 에셋이 이미 있음(덮어쓰기 안 함): {probe_asset}")
     template = EMPTY_TEMPLATE_SYSTEM
@@ -883,7 +913,7 @@ def run_stage0b(client, probe_asset, ember_base_scale):
             raise TDPreconditionError(f"빈 템플릿 실패 뒤 에셋이 남음, 새 경로로 다시: {probe_asset}")
     recorder = TDStepRecorder(strict=False)
     material = EMBER_MATERIAL_ASSET if editor_asset_exists(EMBER_MATERIAL_ASSET) else ""
-    built = build_system(client, probe_asset, template, material, ember_base_scale, recorder, should_create=bool(empty_template_error))
+    built = build_system(client, probe_asset, template, material, user_defaults, recorder, should_create=bool(empty_template_error))
     recorder.run("6 저장", lambda: editor_save_asset(probe_asset))
     emitter_data = call_for_section(client, "GetEmitterData", {"emitterRef": stack_ref(probe_asset, EMITTER_NAME)})
     system_data = call_for_section(client, "GetSystemData", {"system": reference(object_path(probe_asset))})
@@ -904,12 +934,12 @@ def run_stage0b(client, probe_asset, ember_base_scale):
     }
 
 
-def run_probe(client, probe_asset, ember_base_scale):
+def run_probe(client, probe_asset, user_defaults):
     probe = read_probe()
     probe["stage0a"] = run_stage0a(client)
     write_json(PROBE_PATH, probe)
     if probe_asset:
-        probe["stage0b"] = run_stage0b(client, probe_asset, ember_base_scale)
+        probe["stage0b"] = run_stage0b(client, probe_asset, user_defaults)
         write_json(PROBE_PATH, probe)
     print("프로브: " + str(PROBE_PATH))
     stage0b = probe.get("stage0b") if probe_asset else None
@@ -920,16 +950,16 @@ def run_probe(client, probe_asset, ember_base_scale):
     return 0 if passed else 1
 
 
-def run_create(client, system_path, ember_base_scale):
+def run_create(client, system_path, user_defaults):
     template = require_stage0b()
     if editor_asset_exists(system_path):
         raise TDPreconditionError(f"에셋이 이미 있음(덮어쓰기 안 함, 새 경로 사용): {system_path}")
     if not editor_asset_exists(EMBER_MATERIAL_ASSET):
         raise TDPreconditionError(f"재질 없음: {EMBER_MATERIAL_ASSET}(editor_make_fluid_flame_material.py only 요청 먼저)")
     recorder = TDStepRecorder(strict=True)
-    report = {"asset": system_path, "template_system": template, "ember_base_scale": ember_base_scale}
+    report = {"asset": system_path, "template_system": template, "ember_base_scale": user_defaults[EMBER_BASE_SCALE_NAME], "user_defaults": user_defaults}
     try:
-        built = build_system(client, system_path, template, EMBER_MATERIAL_ASSET, ember_base_scale, recorder)
+        built = build_system(client, system_path, template, EMBER_MATERIAL_ASSET, user_defaults, recorder)
         recorder.run("6 저장", lambda: editor_save_asset(system_path))
         emitter_data = recorder.run("7 이미터 데이터 재읽기", lambda: client.call("GetEmitterData", emitterRef=stack_ref(system_path, EMITTER_NAME)))
         system_data = recorder.run("7 시스템 데이터 재읽기", lambda: client.call("GetSystemData", system=reference(object_path(system_path))))
@@ -949,7 +979,7 @@ def parse_arguments(argv):
     parser.add_argument("--probe", action="store_true")
     parser.add_argument("--dump-only", action="store_true")
     parser.add_argument("--asset", default="")
-    parser.add_argument("--ember-base-scale", type=float, default=DEFAULT_EMBER_BASE_SCALE)
+    parser.add_argument("--ember-base-scale", type=float, default=None)
     arguments = parser.parse_args(argv)
     if arguments.probe and arguments.dump_only:
         parser.error("--probe 와 --dump-only 는 함께 쓸 수 없음")
@@ -964,11 +994,11 @@ def main(argv=None):
             validate_asset_path(system_path)
         client = TDNiagaraToolsetClient()
         if arguments.probe:
-            return run_probe(client, system_path, arguments.ember_base_scale)
+            return run_probe(client, system_path, read_user_defaults(system_path or DEFAULT_ASSET_PATH, arguments.ember_base_scale))
         if arguments.dump_only:
             dump_system(client, system_path)
             return 0
-        return run_create(client, system_path, arguments.ember_base_scale)
+        return run_create(client, system_path, read_user_defaults(system_path, arguments.ember_base_scale))
     except TDEditorConnectionError as error:
         print("연결 실패: " + str(error))
         return 2

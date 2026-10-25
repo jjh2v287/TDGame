@@ -18,6 +18,48 @@ class UTDFluidPresetAsset;
 struct FTDActorDeathMessage;
 struct FTDDamageAppliedMessage;
 
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidPresetReapplyReport
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "FluidFX")
+	int32 TableGeneration = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FluidFX")
+	FString TuningSourcePath;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FluidFX")
+	FString LookSourcePath;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FluidFX")
+	int32 ReappliedActorCount = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FluidFX")
+	int32 StateResetActorCount = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FluidFX")
+	int32 ChangedFieldCount = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FluidFX")
+	int32 LiveMaterialCount = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FluidFX")
+	int32 BakeOnlyChangedCount = 0;
+
+	template <typename TStruct>
+	void AssignTrackedStruct(TStruct& Target, const TStruct& Source)
+	{
+		ChangedFieldCount += AssignStructAndCountChangedFields(*TStruct::StaticStruct(), &Target, &Source);
+	}
+
+	void ApplyLiveMaterialLook(UMaterialInstanceDynamic* Material);
+
+	static int32 AssignStructAndCountChangedFields(const UScriptStruct& Struct, void* Target, const void* Source);
+
+	TSet<FObjectKey> ReappliedMaterialKeys;
+};
+
 UCLASS()
 class TDGAME_API UTDFluidLiveSubsystem : public UTickableWorldSubsystem
 {
@@ -28,7 +70,7 @@ public:
 	virtual void Deinitialize() override;
 
 	virtual void Tick(float DeltaTime) override;
-	virtual bool IsTickable() const override { return !RegisteredActors.IsEmpty() || !PendingReleasedGpuActorKeys.IsEmpty(); }
+	virtual bool IsTickable() const override { return !RegisteredActors.IsEmpty() || !PendingReleasedGpuActorKeys.IsEmpty() || PendingReapplyTableGeneration != INDEX_NONE; }
 	virtual bool IsTickableInEditor() const override { return false; }
 	virtual TStatId GetStatId() const override;
 
@@ -108,6 +150,9 @@ public:
 	void SetPlaneViewRotationOverrideForTests(const FRotator& ViewRotation);
 	void ClearPlaneViewRotationOverrideForTests();
 
+	UFUNCTION(BlueprintCallable, Category = "FluidFX")
+	FTDFluidPresetReapplyReport GetLastReapplyReport() const { return LastReapplyReport; }
+
 protected:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
@@ -139,6 +184,8 @@ private:
 	};
 
 	void HandleLevelAddedOrRemoved(ULevel* ChangedLevel, UWorld* ChangedWorld);
+	void HandlePresetTuningReloaded(int32 TableGeneration);
+	void ReapplyPendingPresetTuning();
 
 	void StepFluidWorld(float DeltaTime);
 	void RefreshPlaneViewRotation();
@@ -172,6 +219,9 @@ private:
 	TArray<FRegisteredFlowGuide> RegisteredFlowGuides;
 	FDelegateHandle LevelAddedHandle;
 	FDelegateHandle LevelRemovedHandle;
+	FDelegateHandle PresetTuningReloadedHandle;
+	FTDFluidPresetReapplyReport LastReapplyReport;
+	int32 PendingReapplyTableGeneration = INDEX_NONE;
 	int32 WaterRegistryVersion = 0;
 
 	TSharedPtr<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe> GpuSolverRenderState;

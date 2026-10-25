@@ -1,6 +1,8 @@
 #include "FluidFX/TDFluidFireLightComponent.h"
 #include "FluidFX/TDFluidBandLimitedNoise.h"
+#include "FluidFX/TDFluidFireTypes.h"
 #include "FluidFX/TDFluidLiveComponent.h"
+#include "FluidFX/TDFluidPresetTuningSubsystem.h"
 
 namespace
 {
@@ -16,6 +18,11 @@ UTDFluidFireLightComponent::UTDFluidFireLightComponent()
 	AttenuationRadius = DefaultAttenuationRadiusCm;
 	SourceRadius = DefaultSourceRadiusCm;
 	Intensity = 0.0f;
+}
+
+int32 UTDFluidFireLightComponent::ApplyFireLightSettings(const FTDFluidFireLightSettings& Settings)
+{
+	return UTDFluidPresetTuningSubsystem::CopyMatchingProperties(FTDFluidFireLightSettings::StaticStruct(), &Settings, *this);
 }
 
 void UTDFluidFireLightComponent::UpdateFromFluid(const UTDFluidLiveComponent& LiveComponent, const FVector& AnchorWorld, float DeltaTime)

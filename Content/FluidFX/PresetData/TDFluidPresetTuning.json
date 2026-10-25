@@ -61,7 +61,17 @@
       "BorderFadeExponent": 1.0,
       "VortexTangentialAccelerationCmPerSec2": 0.0,
       "VortexRadialDriftCmPerSec": 0.0,
-      "VortexRadiusRatio": 0.35
+      "VortexRadiusRatio": 0.35,
+      "MaxCellSpeedCmPerSec": 1200.0,
+      "BrushVelocityResponsePerSec": 12.0,
+      "BrushDisplacementRatio": 0.5,
+      "BrushEraseRatePerSec": 8.0,
+      "GpuPressureSolverMode": "Auto",
+      "GpuMultigridCycles": 1,
+      "WaterGpuPressureMode": "Default",
+      "PressureKernelRadiusTexels": 4,
+      "PressureKernelFeedback": 0.98,
+      "PressureKernelScale": 1.0
     },
     "TDFluidSourceEmitterSettings": {
       "bIsEnabled": false,
@@ -160,6 +170,93 @@
       "CardDepthSpacingCm": 10.0,
       "CardScaleStep": 1.0,
       "CardIntensityScale": 0.7
+    },
+    "TDFluidPlaneSettings": {
+      "Orientation": "WorldFacing",
+      "BillboardLeanBackDegrees": 0.0,
+      "CameraDepthBiasCm": 0.0,
+      "InteractionDepthCm": 150.0,
+      "CenterOffsetAlongUpRatio": 0.0
+    },
+    "TDFluidDownstreamFeedSettings": {
+      "bIsEnabled": false,
+      "BandStartRatio": 0.4,
+      "MinFeedDensity": 0.02,
+      "FadedDensityThreshold": 0.25,
+      "MaxStampsPerStep": 24,
+      "DensityScale": 0.7,
+      "RadiusScale": 1.5,
+      "VelocityInheritance": 1.0,
+      "HeatScale": 0.0
+    },
+    "TDFluidFragmentGlowSettings": {
+      "HoldSeconds": 0.3,
+      "CoolSeconds": 1.8,
+      "CharredHeatRatio": 0.04,
+      "GlowIntensity": 4.0,
+      "FireHeatWeight": 1.0,
+      "FireHeatSlabCm": 250.0,
+      "ColdGlowColor": {
+        "R": 1.0,
+        "G": 0.012,
+        "B": 0.03,
+        "A": 1.0
+      },
+      "HotGlowColor": {
+        "R": 1.0,
+        "G": 0.03,
+        "B": 0.035,
+        "A": 1.0
+      },
+      "FacingContrast": 0.0,
+      "EdgeCharWidth": 0.12,
+      "EdgeCharStrength": 0.5
+    },
+    "TDFluidInputBrushSettings": {
+      "PivotDensityStrength": 0.75,
+      "BoneDensityStrength": 0.9,
+      "ParticleDensityStrength": 0.85,
+      "MouseBrushDensityStrength": 1.0,
+      "TeleportSpeedCmPerSec": 3000.0
+    },
+    "TDFluidRuntimeOpsSettings": {
+      "SleepDistanceRatio": 1.1,
+      "InteractionVolumeHalfHeightCm": 300.0,
+      "NiagaraCacheRefreshIntervalSeconds": 1.0
+    },
+    "TDFluidEmberSettings": {
+      "MaxEmbers": 256,
+      "SpawnPerSecond": 10.0,
+      "SpawnPerDensityArea": 0.0,
+      "LifetimeRangeSeconds": {
+        "X": 1.2,
+        "Y": 2.2
+      },
+      "FluidDragPerSec": 6.0,
+      "BuoyancyCmPerSec2": 250.0,
+      "GravityCmPerSec2": 400.0,
+      "CoolingPerSec": 0.6,
+      "MinSpeedKillCmPerSec": 20.0,
+      "SlowKillSeconds": 0.25,
+      "StretchPerCmPerSec": 0.004,
+      "BaseScale": 0.04,
+      "DepthJitterCm": 10.0,
+      "BurstUpwardRatio": 0.0,
+      "RandomSeed": 1
+    },
+    "TDFluidFireLightSettings": {
+      "bIsDrivenByFluid": false,
+      "bUsesSelectiveDensity": true,
+      "MaxIntensityCandelas": 40.0,
+      "ReferenceDensityAreaCm2": 2000.0,
+      "ResponsePerSec": 20.0,
+      "FlickerNoiseAmplitude": 0.12,
+      "FlickerNoiseFrequencyHz": 7.0,
+      "MinColorTemperatureKelvin": 1500.0,
+      "MaxColorTemperatureKelvin": 2100.0,
+      "HeightOffsetCm": 10.0,
+      "MoveThresholdCm": 2.0,
+      "RandomSeed": 1
     }
   },
   "Groups": {
@@ -404,6 +501,11 @@
         "RadiusCm": 10.0,
         "EmitSpeedCmPerSec": 300.0,
         "MotionInertiaScale": 0.2,
+        "SourceOffsetCm": {
+          "X": -41.91,
+          "Y": 26.15,
+          "Z": -7.71
+        },
         "HeatStrength": 0.9,
         "SubstepCount": 3,
         "CoreRadiusCm": 9.0
@@ -411,6 +513,23 @@
       "TDFluidFlameCardLayerSettings": {
         "ExtraCardCount": 2,
         "CardDepthSpacingCm": 6.0
+      },
+      "TDFluidEmberSettings": {
+        "MaxEmbers": 64,
+        "BaseScale": 0.01
+      },
+      "TDFluidFireLightSettings": {
+        "bIsDrivenByFluid": true,
+        "MaxIntensityCandelas": 60.0,
+        "ReferenceDensityAreaCm2": 1328.0,
+        "MinColorTemperatureKelvin": 1100.0,
+        "MaxColorTemperatureKelvin": 1400.0,
+        "HeightOffsetCm": 15.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "CameraFacing",
+        "CameraDepthBiasCm": 35.0,
+        "CenterOffsetAlongUpRatio": 0.3
       }
     },
     "Campfire": {
@@ -447,6 +566,26 @@
       "TDFluidFlameCardLayerSettings": {
         "ExtraCardCount": 1,
         "CardDepthSpacingCm": 14.0
+      },
+      "TDFluidDownstreamFeedSettings": {
+        "bIsEnabled": true
+      },
+      "TDFluidEmberSettings": {
+        "SpawnPerSecond": 40.0,
+        "BaseScale": 0.025
+      },
+      "TDFluidFireLightSettings": {
+        "bIsDrivenByFluid": true,
+        "MaxIntensityCandelas": 160.0,
+        "ReferenceDensityAreaCm2": 5265.0,
+        "MinColorTemperatureKelvin": 1100.0,
+        "MaxColorTemperatureKelvin": 1400.0,
+        "HeightOffsetCm": 60.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "CameraFacing",
+        "CameraDepthBiasCm": 10.0,
+        "CenterOffsetAlongUpRatio": 0.3
       }
     },
     "CampfireSmoke": {
@@ -470,6 +609,30 @@
       },
       "TDFluidVolumeRenderSettings": {
         "bEnableTransmittance": true
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "CameraFacing",
+        "InteractionDepthCm": 200.0,
+        "CenterOffsetAlongUpRatio": 0.4
+      }
+    },
+    "Explosion": {
+      "TDFluidEmberSettings": {
+        "SpawnPerSecond": 30.0
+      },
+      "TDFluidFireLightSettings": {
+        "bIsDrivenByFluid": true,
+        "MaxIntensityCandelas": 120.0,
+        "ReferenceDensityAreaCm2": 16029.0,
+        "MinColorTemperatureKelvin": 1100.0,
+        "MaxColorTemperatureKelvin": 1400.0,
+        "HeightOffsetCm": 60.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "CameraFacing",
+        "CameraDepthBiasCm": 60.0,
+        "InteractionDepthCm": 400.0,
+        "CenterOffsetAlongUpRatio": 0.45
       }
     },
     "ExplosionSmoke": {
@@ -507,6 +670,11 @@
         },
         "HeatEmissionIntensity": 6.0,
         "HeatEmissionExponent": 3.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "CameraFacing",
+        "InteractionDepthCm": 400.0,
+        "CenterOffsetAlongUpRatio": 0.3
       }
     },
     "ExplosionGroundDust": {
@@ -531,6 +699,9 @@
         "bEnableTransmittance": true,
         "DensityScale": 0.025,
         "SoftFalloffCm": 30.0
+      },
+      "TDFluidPlaneSettings": {
+        "InteractionDepthCm": 400.0
       }
     },
     "Candle": {
@@ -630,5 +801,6 @@
         "VortexRadialDriftCmPerSec": 250.0
       }
     }
-  }
+  },
+  "Globals": {}
 }

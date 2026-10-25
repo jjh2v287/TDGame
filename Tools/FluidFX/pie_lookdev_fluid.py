@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06). FluidFX 무대 PIE 하나에서 변형(노출·조명·불빛·불꽃 카드/볼륨 재질 값·활성 프리셋 임시 복제본·폰 위치·카메라 거리·액터 위치·컴포넌트 숨김·콘솔 명령·깨어 있는 유체 액터·폭발 트리거)을 차례로 적용하고 정착 시간 뒤 또는 게임 시간 예약 시각마다 게임 화면을 찍어 이름표 붙은 비교 격자를 만든다.
-실행 명령: python Tools/FluidFX/pie_lookdev_fluid.py --variants <변형 JSON> [--level /Game/FluidFX/Maps/LV_TDFluidFireStage] [--settle-seconds 3] [--stop-pie] (PowerShell). 변형 JSON = {"base": {적용}, "variants": [{"name": "영문", "apply": {적용}, "settle": 초}]}, 적용 키(이 순서로 적용) = awake({라벨: bool}이면 적힌 것만, 목록이면 목록 외는 재움)·pawn([x, y]면 현재 z 유지, [x, y, z]면 그 높이로)·arm·view([pitch, yaw] 조종 회전, 붐이 따라감)·props({라벨: {속성: 값}} 액터 속성. 값이 dict면 현재 값이 구조체일 때 필드를 고쳐 되넣고, UObject(컴포넌트)면 그 객체의 필드만 고치고 되넣지 않으며, 배열이면 정수 문자열 키의 원소를 고쳐 배열을 되넣는다 예 {"targets": {"1": {"burst_radius_scale": 1.5}}}, "append:<i>" 키는 같은 호출의 정수 키 편집 전 i번 원소를 복제(구조체 copy, UObject 원소는 오류)해 고친 뒤 끝에 붙인다 예 {"targets": {"0": {"receives_trails": false}, "append:0": {"receives_burst": false, "heat_scale": 0.4}}})·hide({라벨: bool} 게임 숨김)·location({라벨: [x, y, z]} 액터 위치, null 성분은 현재 값 유지 예 [null, null, 0.0], 다시 읽은 값 기록)·hide_components({라벨 또는 "pawn": [컴포넌트 이름 일부(대소문자 무시)]} 맞는 씬 컴포넌트 set_visibility(False), 예 ShieldMesh)·preset({라벨: {점 경로 또는 중첩 dict: 값}} 라이브 컴포넌트 활성 프리셋의 임시 복제본을 고쳐 active_preset에 넣음, 원본 에셋은 건드리지 않음. plane_settings·volume_render·volume_height_cm은 C++가 매 스텝 다시 읽어 그대로 반영되고, 반영 여부는 다음 촬영의 preset_effect(볼륨 MID 매개변수 값, camera_depth_bias_cm은 내부 표면 메시 이동 거리)로 보고)·preset_reinit([라벨] 복제본으로 init_system_state_from_preset 재초기화, 시뮬 상태와 앞선 sim 편집이 초기화되므로 프리셋의 시뮬 설정·출력 재질처럼 초기화 때만 읽는 필드를 바꿀 때만)·exposure_ev100·lights·fire_light·flame(액터의 모든 불꽃 카드 MID)·volume(볼륨 MID)·ember({라벨: {재질 매개변수: 값}} ember_component 0번 재질 사슬에 FluidEmber 필요, MID 아니면 만들어 설정, 부모에 없는 이름은 missing, settle 촬영마다 result.json에 ember_mid)·sim(simulation_config 필드, apply_simulation_config)·emitter(source_emitter 필드)·surface_material(라이브 컴포넌트 출력 재질 교체 후 내부 메시 재연결)·console([명령] PIE 플레이어 컨트롤러로 실행, "이름 값" 꼴 cvar는 다시 읽은 값 기록, Shot 결과는 result.json console_screenshots)·move(내비 이동 목표)·speed·trigger(같은 호출의 게임 시간을 trigger_game_time으로 기록)·time_dilation(전역 시간 배율)·schedule({"times": [기준 뒤 게임 초], "reference": "trigger"|"now", "prefix": "영문", "fixed_fps": 60(0이면 끔, 예약 동안 t.OverrideFPS 고정 간격 뒤 복구 L-editor-45), "file_wait_ticks": 30(1이면 그려진 다음 틱에 바로 다음 장), "timeout": 초} 원격 호출 하나에서 슬레이트 틱 콜백을 걸어 기준 뒤 게임 시간마다 HighResShot을 요청하고, 앞 장이 그려지고 파일이 생기거나 틱 한도가 지나야 다음 장을 건 뒤 스스로 해제, 이 변형은 settle 촬영을 하지 않음, reference trigger는 같은 apply의 trigger 필요). props·emitter·sim·preset 값 변환: 현재 값이 Vector·Vector2D면 목록 [x, y(, z)], Rotator면 [pitch, yaw, roll], LinearColor면 [r, g, b(, a)], Transform이면 {"location": [], "rotation": [pitch, yaw, roll], "scale": []}(빠진 키는 현재 값 유지)
-출력: Saved/FluidFX/lookdev/<시각>/<순번>_<이름>.png, 예약 촬영은 <순번>_<prefix>_<기준 뒤 ms>ms.png와 <순번>_<prefix>_schedule.json(장마다 요청·실제 찍힌 게임 시간, 늦음, 틱 사이 벽시계 간격 real_dt(요청 틱)·real_dt_mean(앞 장 뒤 촬영 대기 아닌 틱 평균, 실제 fps 대용)·capture_real_dt(촬영 끊김 포함), world_dt, 파일 대기 틱, 고정 간격 복구, preset_effect), grid.png, result.json(변형별 적용 결과·shot_game_time·preset_effect·schedule·console_screenshots). 종료 코드 0 기대한 장 전부 찍음/1 일부 실패/2 환경 문제
-상태: 검증됨(2026-10-18 모닥불·횃불·폭발 변형 9회 실행, campfire_v1~v5·torch_v1·explosion_v1. 2026-10-20 view·hide·props 추가와 flame 전 카드 적용으로 측면 룩데브 6회 실행). 2026-10-20 추가한 awake dict·game_time·time_dilation과 console·schedule·location·hide_components·preset·preset_reinit·값 변환·배열 원소·UObject 필드 편집은 미검증(PIE 미실행, 정적 검토만). PIE 런타임 값만 바꾸므로 에셋은 바뀌지 않는다. 고른 값은 재질·무대 생성 스크립트에 옮겨 적는다. 2026-10-21 FX-8c 11차 ember 키는 미검증(PIE 미실행), EmberTint* 는 재질 재생성 뒤에만 효과. 2026-10-21 FX-8c 12차 props 배열 "append:<i>" 키는 2026-10-21 FX-8c 12차 AP 세션 PIE 9회에서 확인(복제 원소가 배열 끝에 붙고 수정 필드가 다시 읽기와 같음, 가짜 unreal 오프라인 시험에서 기존 정수 키 결과 불변).
+실행 명령: python Tools/FluidFX/pie_lookdev_fluid.py --variants <변형 JSON> [--level /Game/FluidFX/Maps/LV_TDFluidFireStage] [--settle-seconds 3] [--stop-pie] [--output-dir <폴더>] (PowerShell). 변형 JSON = {"base": {적용}, "variants": [{"name": "영문", "apply": {적용}, "settle": 초}]}, 적용 키(이 순서로 적용) = tuning_reload({"tuning": 조절 사본, "look": 모양 사본(빈 문자열이면 정본, 둘 다 Saved 아래), "reset": "reinit"(기본, 모든 라이브 액터 init_system_state_from_preset)|"keep", "relative_to_base": true(기본, 먼저 정본을 다시 읽어 보고서 세대를 기다림), "read_back": [{"struct", "field", "kinds": [종류]}] 그 종류 액터의 실효 값을 다시 읽음} 다른 키보다 먼저 ReloadPresetTuningFromPaths 뒤 GetLastReapplyReport 세대를 기다리고, 하나라도 쓰면 실행 끝 finally 에서 정본을 다시 읽음)·awake({라벨: bool}이면 적힌 것만, 목록이면 목록 외는 재움)·pawn([x, y]면 현재 z 유지, [x, y, z]면 그 높이로)·arm·view([pitch, yaw] 조종 회전, 붐이 따라감)·props({라벨: {속성: 값}} 액터 속성. 값이 dict면 현재 값이 구조체일 때 필드를 고쳐 되넣고, UObject(컴포넌트)면 그 객체의 필드만 고치고 되넣지 않으며, 배열이면 정수 문자열 키의 원소를 고쳐 배열을 되넣는다 예 {"targets": {"1": {"burst_radius_scale": 1.5}}}, "append:<i>" 키는 같은 호출의 정수 키 편집 전 i번 원소를 복제(구조체 copy, UObject 원소는 오류)해 고친 뒤 끝에 붙인다 예 {"targets": {"0": {"receives_trails": false}, "append:0": {"receives_burst": false, "heat_scale": 0.4}}})·hide({라벨: bool} 게임 숨김)·location({라벨: [x, y, z]} 액터 위치, null 성분은 현재 값 유지 예 [null, null, 0.0], 다시 읽은 값 기록)·hide_components({라벨 또는 "pawn": [컴포넌트 이름 일부(대소문자 무시)]} 맞는 씬 컴포넌트 set_visibility(False), 예 ShieldMesh)·preset({라벨: {점 경로 또는 중첩 dict: 값}} 라이브 컴포넌트 활성 프리셋의 임시 복제본을 고쳐 active_preset에 넣음, 원본 에셋은 건드리지 않음. simulation_config·plane_settings·volume_render 는 비 Custom·비 override 프리셋이면 R2 로 무시되므로 오류(종료 1)이고 "force_override": true 면 복제본의 override_preset_defaults 를 켬. plane_settings·volume_render·volume_height_cm은 C++가 매 스텝 다시 읽어 그대로 반영되고, 반영 여부는 다음 촬영의 preset_effect(볼륨 MID 매개변수 값, camera_depth_bias_cm은 내부 표면 메시 이동 거리)로 보고)·preset_reinit([라벨] 복제본으로 init_system_state_from_preset 재초기화, 시뮬 상태와 앞선 sim 편집이 초기화되므로 프리셋의 시뮬 설정·출력 재질처럼 초기화 때만 읽는 필드를 바꿀 때만)·exposure_ev100·lights·fire_light·flame(액터의 모든 불꽃 카드 MID)·volume(볼륨 MID)·ember({라벨: {재질 매개변수: 값}} ember_component 0번 재질 사슬에 FluidEmber 필요, MID 아니면 만들어 설정, 부모에 없는 이름은 missing, settle 촬영마다 result.json에 ember_mid)·sim(simulation_config 필드, apply_simulation_config)·emitter(source_emitter 필드, 비 Custom·비 override 프리셋이면 오류(종료 1), "force_override": true 면 override 켠 프리셋 복제본을 active_preset 에 넣고 진행)·surface_material(라이브 컴포넌트 출력 재질 교체 후 내부 메시 재연결)·console([명령] PIE 플레이어 컨트롤러로 실행, "이름 값" 꼴 cvar는 다시 읽은 값 기록, Shot 결과는 result.json console_screenshots)·move(내비 이동 목표)·speed·trigger(같은 호출의 게임 시간을 trigger_game_time으로 기록)·time_dilation(전역 시간 배율)·schedule({"times": [기준 뒤 게임 초], "reference": "trigger"|"now", "prefix": "영문", "fixed_fps": 60(0이면 끔, 예약 동안 t.OverrideFPS 고정 간격 뒤 복구 L-editor-45), "file_wait_ticks": 30(1이면 그려진 다음 틱에 바로 다음 장), "timeout": 초} 원격 호출 하나에서 슬레이트 틱 콜백을 걸어 기준 뒤 게임 시간마다 HighResShot을 요청하고, 앞 장이 그려지고 파일이 생기거나 틱 한도가 지나야 다음 장을 건 뒤 스스로 해제, 이 변형은 settle 촬영을 하지 않음, reference trigger는 같은 apply의 trigger 필요). props·emitter·sim·preset 값 변환: 현재 값이 Vector·Vector2D면 목록 [x, y(, z)], Rotator면 [pitch, yaw, roll], LinearColor면 [r, g, b(, a)], Transform이면 {"location": [], "rotation": [pitch, yaw, roll], "scale": []}(빠진 키는 현재 값 유지)
+출력: Saved/FluidFX/lookdev/<시각>/<순번>_<이름>.png, 예약 촬영은 <순번>_<prefix>_<기준 뒤 ms>ms.png와 <순번>_<prefix>_schedule.json(장마다 요청·실제 찍힌 게임 시간, 늦음, 틱 사이 벽시계 간격 real_dt(요청 틱)·real_dt_mean(앞 장 뒤 촬영 대기 아닌 틱 평균, 실제 fps 대용)·capture_real_dt(촬영 끊김 포함), world_dt, 파일 대기 틱, 고정 간격 복구, preset_effect), grid.png, result.json(변형별 적용 결과·shot_game_time·preset_effect·schedule·console_screenshots). result.json 에 tuning_reload(보고서·다시 읽기)·canonical_reload·key_errors. 종료 코드 0 기대한 장 전부 찍음·키 오류 없음/1 일부 실패 또는 키 오류(tuning_reload 실패·R2 무시 키)/2 환경 문제
+상태: 검증됨(2026-10-18 모닥불·횃불·폭발 변형 9회 실행, campfire_v1~v5·torch_v1·explosion_v1. 2026-10-20 view·hide·props 추가와 flame 전 카드 적용으로 측면 룩데브 6회 실행). 2026-10-20 추가한 awake dict·game_time·time_dilation과 console·schedule·location·hide_components·preset·preset_reinit·값 변환·배열 원소·UObject 필드 편집은 미검증(PIE 미실행, 정적 검토만). PIE 런타임 값만 바꾸므로 에셋은 바뀌지 않는다. 고른 값은 재질·무대 생성 스크립트에 옮겨 적는다. 2026-10-21 FX-8c 11차 ember 키는 미검증(PIE 미실행), EmberTint* 는 재질 재생성 뒤에만 효과. 2026-10-21 FX-8c 12차 props 배열 "append:<i>" 키는 2026-10-21 FX-8c 12차 AP 세션 PIE 9회에서 확인(복제 원소가 배열 끝에 붙고 수정 필드가 다시 읽기와 같음, 가짜 unreal 오프라인 시험에서 기존 정수 키 결과 불변). 2026-10-25 P3(spec-wave0-data-bridge-v2 3.9) tuning_reload·--output-dir·R2 무시 키 오류·force_override 는 가짜 unreal 오프라인 시험만(PIE 미실행).
 """
 import argparse
 import json
@@ -32,6 +32,9 @@ SCHEDULE_POLL_SECONDS = 0.5
 SCHEDULE_POLL_MARGIN_SECONDS = 15.0
 EXIT_PARTIAL = 1
 EXIT_ENVIRONMENT = 2
+TUNING_RELOAD_WAIT_SECONDS = 20.0
+TUNING_RELOAD_POLL_SECONDS = 0.25
+TUNING_RESET_MODES = ("reinit", "keep")
 
 LOOKDEV_ACTIONS = r'''
 import inspect
@@ -47,6 +50,17 @@ PRESET_FIELD_NAMES = ("preset_kind", "override_preset_defaults", "simulation_con
 VOLUME_PARAMETER_NAMES = {"volume_size_multiplier": "VolumeBoxScale"}
 TRANSFORM_KEYS = {"location", "rotation", "scale"}
 APPEND_KEY_PREFIX = "append:"
+CUSTOM_KIND_NAME = "CUSTOM"
+R2_COPY_FIELDS = ("simulation_config", "plane_settings", "volume_render")
+REAPPLY_REPORT_FIELDS = ("table_generation", "tuning_source_path", "look_source_path", "reapplied_actor_count", "state_reset_actor_count", "changed_field_count", "live_material_count", "bake_only_changed_count")
+READ_BACK_SOURCES = {
+    "TDFluidSimulationConfig": ("live_component", "simulation_config"),
+    "TDFluidSourceEmitterSettings": (None, "source_emitter"),
+    "TDFluidDownstreamFeedSettings": (None, "downstream_feed"),
+    "TDFluidFlameCardLayerSettings": (None, "flame_card_layers"),
+    "TDFluidEmberSettings": ("ember_component", None),
+    "TDFluidFireLightSettings": ("fire_light_component", None),
+}
 
 
 def find_actor_by_label(world, label):
@@ -280,15 +294,40 @@ def apply_sim(world, label, values):
     return values
 
 
+def normalized_enum_name(value):
+    return str(getattr(value, "name", value)).split(".")[-1].replace("_", "").upper()
+
+
+def uses_own_preset_copies(preset):
+    return normalized_enum_name(preset.get_editor_property("preset_kind")) == CUSTOM_KIND_NAME or bool(preset.get_editor_property("override_preset_defaults"))
+
+
+def ignored_copy_error(source, ignored_paths):
+    return {"error": "R2: 비 Custom·비 override 프리셋이면 이 사본 값은 무시되고 조절 표 값이 쓰인다(force_override true 면 임시 복제의 override 를 켠다)",
+            "ignored_copy_paths": ignored_paths, "source": source.get_path_name()}
+
+
 def apply_emitter(world, label, values):
     actor = find_actor_by_label(world, label)
     if actor is None:
         return "액터 없음"
+    values = dict(values)
+    force_override = bool(values.pop("force_override", False))
+    live = actor.get_editor_property("live_component")
+    preset = live.get_editor_property("active_preset")
+    is_forced = False
+    if preset is not None and not uses_own_preset_copies(preset):
+        if not force_override:
+            return ignored_copy_error(preset, sorted("source_emitter." + name for name in values))
+        clone, _ = clone_preset(preset)
+        clone.set_editor_property("override_preset_defaults", True)
+        live.set_editor_property("active_preset", clone)
+        is_forced = True
     emitter = actor.get_editor_property("source_emitter")
     for name, value in values.items():
         assign_field(emitter, name, value)
     actor.set_editor_property("source_emitter", emitter)
-    return values
+    return dict(values, forced_override=True) if is_forced else values
 
 
 def flatten_paths(values, prefix=""):
@@ -358,11 +397,20 @@ def apply_preset(world, label, edits, reinitialized_labels):
     source = live.get_editor_property("active_preset")
     if source is None:
         return {"error": "활성 프리셋 없음"}
+    edits = dict(edits)
+    force_override = bool(edits.pop("force_override", False))
     paths = flatten_paths(edits)
     previous = {path: read_path(source, path) for path in paths}
     clone, copy_failures = clone_preset(source)
     for path, value in paths.items():
         assign_path(clone, path.split("."), value)
+    ignored_paths = sorted(path for path in paths if path.split(".")[0] in R2_COPY_FIELDS)
+    is_forced = False
+    if ignored_paths and not uses_own_preset_copies(clone):
+        if not force_override:
+            return ignored_copy_error(source, ignored_paths)
+        clone.set_editor_property("override_preset_defaults", True)
+        is_forced = True
     bias_path = "plane_settings.camera_depth_bias_cm"
     check = {"clone": clone.get_name(), "volume": volume_expectations(paths), "surface_location": surface_location(actor),
              "depth_bias_shift_cm": abs(float(paths[bias_path]) - float(previous[bias_path])) if bias_path in paths else None}
@@ -376,7 +424,7 @@ def apply_preset(world, label, edits, reinitialized_labels):
     active = live.get_editor_property("active_preset")
     return {"source": source.get_path_name(), "clone": clone.get_name(), "assigned": active is not None and active.get_name() == clone.get_name(),
             "values": {path: {"before": previous[path], "after": read_path(clone, path)} for path in paths},
-            "reinitialized": should_reinitialize, "copy_failures": copy_failures}
+            "reinitialized": should_reinitialize, "copy_failures": copy_failures, "forced_override": is_forced}
 
 
 def measure_preset_effect(actor, check):
@@ -686,6 +734,95 @@ def action_lookdev_schedule_stop(world):
     return stop_schedule("바깥 Python 대기 시간 초과") or {"stopped": False}
 
 
+def action_lookdev_tuning_load(world):
+    subsystem = unreal.get_engine_subsystem(unreal.TDFluidPresetTuningSubsystem)
+    error_count = int(subsystem.reload_preset_tuning_from_paths(PARAMS["tuning"], PARAMS["look"]))
+    return {"error_count": error_count, "load_errors": [str(line) for line in subsystem.get_load_errors()] if error_count else [],
+            "table_generation": subsystem.get_table_generation(), "tuning_source_path": subsystem.get_tuning_source_path(),
+            "look_source_path": subsystem.get_look_source_path(), "is_using_override_paths": subsystem.is_using_override_paths()}
+
+
+def action_lookdev_reapply_report(world):
+    live = unreal.TDFluidLiveSubsystem.get_fluid_live_subsystem(world)
+    if live is None:
+        return {"error": "TDFluidLiveSubsystem 없음"}
+    report = live.get_last_reapply_report()
+    return {name: report.get_editor_property(name) for name in REAPPLY_REPORT_FIELDS}
+
+
+def live_actors_with_presets(world):
+    pairs = []
+    for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.TDFluidLiveActor):
+        live = actor.get_editor_property("live_component")
+        preset = live.get_editor_property("active_preset") if live is not None else None
+        if preset is not None:
+            pairs.append((actor, live, preset))
+    return pairs
+
+
+def action_lookdev_tuning_reinit(world):
+    reinitialized = []
+    for actor, live, preset in live_actors_with_presets(world):
+        live.init_system_state_from_preset(preset)
+        reinitialized.append(actor.get_actor_label())
+    return {"reinitialized": reinitialized}
+
+
+def python_attribute_for(owner, field_name):
+    wanted = (field_name[1:] if len(field_name) > 1 and field_name[0] == "b" and field_name[1].isupper() else field_name).lower()
+    for name in dir(owner):
+        if not name.startswith("_") and name.replace("_", "").lower() == wanted:
+            return name
+    return None
+
+
+def describe_read_value(value):
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, unreal.EnumBase):
+        return str(value.name)
+    if isinstance(value, unreal.Vector2D):
+        return {"X": value.x, "Y": value.y}
+    if isinstance(value, unreal.Vector):
+        return {"X": value.x, "Y": value.y, "Z": value.z}
+    if isinstance(value, unreal.LinearColor):
+        return {"R": value.r, "G": value.g, "B": value.b, "A": value.a}
+    return str(value)
+
+
+def read_effective_field(actor, struct_name, field_name):
+    component_name, property_name = READ_BACK_SOURCES[struct_name]
+    owner = actor.get_editor_property(component_name) if component_name else actor
+    if property_name:
+        owner = owner.get_editor_property(property_name)
+    attribute = python_attribute_for(owner, field_name)
+    if attribute is None:
+        return {"error": f"{struct_name}.{field_name}: 파이썬 속성 없음"}
+    return {"value": describe_read_value(owner.get_editor_property(attribute))}
+
+
+def action_lookdev_tuning_read_back(world):
+    pairs = live_actors_with_presets(world)
+    results = []
+    for request in PARAMS["requests"]:
+        entry = {"struct": request["struct"], "field": request["field"], "kinds": request["kinds"], "actors": {}}
+        results.append(entry)
+        if request["struct"] not in READ_BACK_SOURCES:
+            entry["error"] = "다시 읽기 미지원 구조체"
+            continue
+        wanted = {normalized_enum_name(kind) for kind in request["kinds"]}
+        for actor, live, preset in pairs:
+            kind = normalized_enum_name(preset.get_editor_property("preset_kind"))
+            if kind not in wanted:
+                continue
+            try:
+                read = read_effective_field(actor, request["struct"], request["field"])
+            except Exception as error:
+                read = {"error": str(error)[-200:]}
+            entry["actors"][actor.get_actor_label()] = dict(read, kind=kind, uses_own_copies=uses_own_preset_copies(preset))
+    return {"read_back": results}
+
+
 def run():'''
 
 
@@ -707,6 +844,84 @@ def editor_action(action, **fields):
 
 def apply_variant(apply, tag):
     return editor_action("lookdev_apply", apply=apply, tag=tag, output=OUTPUT_DIRECTORY.as_posix(), size=SHOT_SIZE)
+
+
+def resolve_tuning_path(path):
+    if not path:
+        return ""
+    candidate = Path(path)
+    return (candidate if candidate.is_absolute() else ROOT / candidate).resolve().as_posix()
+
+
+def load_tuning_and_wait(tuning, look):
+    loaded = editor_action("lookdev_tuning_load", tuning=tuning, look=look)
+    if "error" in loaded:
+        return loaded
+    if loaded.get("error_count"):
+        return dict(loaded, error="조절·모양 표 다시 읽기 실패(이전 표 유지)")
+    target_generation = loaded["table_generation"]
+    deadline = time.monotonic() + TUNING_RELOAD_WAIT_SECONDS
+    while time.monotonic() < deadline:
+        report = editor_action("lookdev_reapply_report")
+        if "error" in report:
+            return dict(loaded, error=report["error"])
+        if report.get("table_generation", -1) >= target_generation:
+            return dict(loaded, report=report)
+        time.sleep(TUNING_RELOAD_POLL_SECONDS)
+    return dict(loaded, error=f"재적용 보고서가 {TUNING_RELOAD_WAIT_SECONDS:g}초 안에 세대 {target_generation} 에 닿지 않았다")
+
+
+def run_tuning_reload(request):
+    if not isinstance(request, dict) or not all(isinstance(request.get(key, ""), str) for key in ("tuning", "look")):
+        return {"error": "tuning_reload 는 {tuning, look, reset, read_back} 객체여야 한다"}
+    reset = request.get("reset", TUNING_RESET_MODES[0])
+    if reset not in TUNING_RESET_MODES:
+        return {"error": f"tuning_reload.reset 은 {'|'.join(TUNING_RESET_MODES)}: {reset}"}
+    outcome = {"reset": reset, "tuning": resolve_tuning_path(request.get("tuning", "")), "look": resolve_tuning_path(request.get("look", ""))}
+    if request.get("relative_to_base", True) and (outcome["tuning"] or outcome["look"]):
+        outcome["base"] = load_tuning_and_wait("", "")
+        if "error" in outcome["base"]:
+            return dict(outcome, error="정본 다시 읽기: " + str(outcome["base"]["error"]))
+    outcome["load"] = load_tuning_and_wait(outcome["tuning"], outcome["look"])
+    if "error" in outcome["load"]:
+        return dict(outcome, error=str(outcome["load"]["error"]))
+    outcome["report"] = outcome["load"]["report"]
+    if reset == TUNING_RESET_MODES[0]:
+        outcome["reinit"] = editor_action("lookdev_tuning_reinit")
+        if "error" in outcome["reinit"]:
+            return dict(outcome, error="재초기화: " + str(outcome["reinit"]["error"]))
+    if request.get("read_back"):
+        read_back = editor_action("lookdev_tuning_read_back", requests=request["read_back"])
+        if "error" in read_back:
+            return dict(outcome, error="실효 값 다시 읽기: " + str(read_back["error"]))
+        outcome["read_back"] = read_back["read_back"]
+    return outcome
+
+
+def find_key_errors(outcome):
+    if not isinstance(outcome, dict):
+        return []
+    errors = []
+    reload_outcome = outcome.get("tuning_reload")
+    if isinstance(reload_outcome, dict) and "error" in reload_outcome:
+        errors.append("tuning_reload: " + str(reload_outcome["error"]))
+    for key in ("preset", "emitter"):
+        for label, entry in (outcome.get(key) or {}).items():
+            if isinstance(entry, dict) and entry.get("ignored_copy_paths"):
+                errors.append(f"{key}.{label}: R2 로 무시되는 사본 키 {', '.join(entry['ignored_copy_paths'])}")
+    return errors
+
+
+def apply_variant_with_tuning(apply, tag, run_state):
+    reload_outcome = None
+    if "tuning_reload" in apply:
+        run_state["uses_tuning_reload"] = True
+        reload_outcome = run_tuning_reload(apply["tuning_reload"])
+    outcome = apply_variant({key: value for key, value in apply.items() if key != "tuning_reload"}, tag)
+    if reload_outcome is not None:
+        outcome = dict(outcome, tuning_reload=reload_outcome)
+    run_state["key_errors"].extend(f"{tag}: {line}" for line in find_key_errors(outcome))
+    return outcome
 
 
 def wait_for_file(path):
@@ -785,7 +1000,11 @@ def main():
     parser.add_argument("--level", default=DEFAULT_LEVEL_PATH)
     parser.add_argument("--settle-seconds", type=float, default=3.0)
     parser.add_argument("--stop-pie", action="store_true")
+    parser.add_argument("--output-dir", type=Path, help="출력 폴더(기본 Saved/FluidFX/lookdev/<시각>, 상대 경로는 프로젝트 루트 기준)")
     arguments = parser.parse_args()
+    global OUTPUT_DIRECTORY
+    if arguments.output_dir is not None:
+        OUTPUT_DIRECTORY = arguments.output_dir if arguments.output_dir.is_absolute() else ROOT / arguments.output_dir
     specification = json.loads(arguments.variants.read_text(encoding="utf-8"))
     print("경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).", flush=True)
     OUTPUT_DIRECTORY.mkdir(parents=True, exist_ok=True)
@@ -810,42 +1029,49 @@ def main():
 
     shots = []
     base_apply = specification.get("base", {})
-    result = {"level": arguments.level, "base": apply_variant(base_apply, "base"), "variants": []}
+    run_state = {"uses_tuning_reload": False, "key_errors": []}
+    result = {"level": arguments.level, "base": None, "variants": []}
     expected_shots = scheduled_shot_count(base_apply)
-    base_schedule = collect_schedule_shots(result["base"], "base", shots)
-    if base_schedule is not None:
-        result["base_schedule"] = base_schedule
-    for index, variant in enumerate(specification["variants"]):
-        apply = variant.get("apply", {})
-        screenshots_before = list_editor_screenshots()
-        outcome = apply_variant(apply, f"{index:02d}")
-        entry = {"name": variant["name"], "apply": outcome}
-        if "schedule" in apply:
-            expected = scheduled_shot_count(apply)
-            expected_shots += expected
-            shots_before = len(shots)
-            entry["schedule"] = collect_schedule_shots(outcome, variant["name"], shots)
-            entry["saved"] = len(shots) - shots_before == expected
-            summary = f"예약 {len(shots) - shots_before}/{expected}장"
-        else:
-            expected_shots += 1
-            time.sleep(variant.get("settle", arguments.settle_seconds))
-            path = OUTPUT_DIRECTORY / f"{index:02d}_{variant['name']}.png"
-            shot = editor_action("lookdev_shot", size=SHOT_SIZE, path=path.as_posix())
-            outcome["shot_game_time"] = shot.get("game_time") if isinstance(shot, dict) else None
-            if isinstance(shot, dict) and "preset_effect" in shot:
-                outcome["preset_effect"] = shot["preset_effect"]
-            if isinstance(shot, dict) and "ember_mid" in shot:
-                outcome["ember_mid"] = shot["ember_mid"]
-            is_saved = wait_for_file(path)
-            if is_saved:
-                shots.append((variant["name"], path))
-            entry["saved"] = is_saved
-            summary = "찍음" if is_saved else "실패"
-        if "console" in apply:
-            entry["console_screenshots"] = sorted(path.relative_to(ROOT).as_posix() for path in list_editor_screenshots() - screenshots_before)
-        result["variants"].append(entry)
-        print(variant["name"], summary, json.dumps(outcome, ensure_ascii=False)[:200], flush=True)
+    try:
+        result["base"] = apply_variant_with_tuning(base_apply, "base", run_state)
+        base_schedule = collect_schedule_shots(result["base"], "base", shots)
+        if base_schedule is not None:
+            result["base_schedule"] = base_schedule
+        for index, variant in enumerate(specification["variants"]):
+            apply = variant.get("apply", {})
+            screenshots_before = list_editor_screenshots()
+            outcome = apply_variant_with_tuning(apply, f"{index:02d}", run_state)
+            entry = {"name": variant["name"], "apply": outcome}
+            if "schedule" in apply:
+                expected = scheduled_shot_count(apply)
+                expected_shots += expected
+                shots_before = len(shots)
+                entry["schedule"] = collect_schedule_shots(outcome, variant["name"], shots)
+                entry["saved"] = len(shots) - shots_before == expected
+                summary = f"예약 {len(shots) - shots_before}/{expected}장"
+            else:
+                expected_shots += 1
+                time.sleep(variant.get("settle", arguments.settle_seconds))
+                path = OUTPUT_DIRECTORY / f"{index:02d}_{variant['name']}.png"
+                shot = editor_action("lookdev_shot", size=SHOT_SIZE, path=path.as_posix())
+                outcome["shot_game_time"] = shot.get("game_time") if isinstance(shot, dict) else None
+                if isinstance(shot, dict) and "preset_effect" in shot:
+                    outcome["preset_effect"] = shot["preset_effect"]
+                if isinstance(shot, dict) and "ember_mid" in shot:
+                    outcome["ember_mid"] = shot["ember_mid"]
+                is_saved = wait_for_file(path)
+                if is_saved:
+                    shots.append((variant["name"], path))
+                entry["saved"] = is_saved
+                summary = "찍음" if is_saved else "실패"
+            if "console" in apply:
+                entry["console_screenshots"] = sorted(path.relative_to(ROOT).as_posix() for path in list_editor_screenshots() - screenshots_before)
+            result["variants"].append(entry)
+            print(variant["name"], summary, json.dumps(outcome, ensure_ascii=False)[:200], flush=True)
+    finally:
+        if run_state["uses_tuning_reload"]:
+            result["canonical_reload"] = editor_action("lookdev_tuning_load", tuning="", look="")
+    result["key_errors"] = run_state["key_errors"]
 
     has_grid = build_grid(shots, OUTPUT_DIRECTORY / "grid.png")
     (OUTPUT_DIRECTORY / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -853,8 +1079,10 @@ def main():
         if session is None:
             session = uemcp.connect()
         pie_check_fluid.stop_pie(session, environment)
-    print("격자", (OUTPUT_DIRECTORY / "grid.png").relative_to(ROOT).as_posix() if has_grid else "없음")
-    return 0 if len(shots) == expected_shots else EXIT_PARTIAL
+    print("격자", (OUTPUT_DIRECTORY / "grid.png").as_posix() if has_grid else "없음")
+    for line in run_state["key_errors"]:
+        print("키 오류:", line)
+    return 0 if len(shots) == expected_shots and not run_state["key_errors"] else EXIT_PARTIAL
 
 
 if __name__ == "__main__":

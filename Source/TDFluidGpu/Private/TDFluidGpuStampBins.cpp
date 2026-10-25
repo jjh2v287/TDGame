@@ -84,9 +84,9 @@ namespace
 		return BinCell;
 	}
 
-	FTDFluidGpuPackedStamp PackStamp(const FTDFluidGpuStampBinWindow& Window, const FTDFluidGpuStampInput& Stamp, const FTDFluidGpuStampCandidate& Candidate)
+	FTDFluidGpuPackedStamp PackStamp(const FTDFluidGpuStampBinWindow& Window, const FTDFluidGpuStampInput& Stamp, const FTDFluidGpuStampCandidate& Candidate, const FTDFluidGpuStampResponse& Response)
 	{
-		const FVector2D TargetVelocity = (Stamp.VelocityPlaneCmPerSec * Stamp.VelocityStrength).GetClampedToMaxSize(TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec);
+		const FVector2D TargetVelocity = (Stamp.VelocityPlaneCmPerSec * Stamp.VelocityStrength).GetClampedToMaxSize(Response.MaxCellSpeedCmPerSec);
 
 		ETDFluidGpuStampFlags Flags = ETDFluidGpuStampFlags::None;
 		if (Stamp.bWritesSelectiveDensity)
@@ -111,7 +111,7 @@ namespace
 		Packed.RadialVelocityCmPerSec = Stamp.RadialVelocityCmPerSec;
 		Packed.Flags = static_cast<uint32>(Flags);
 		Packed.SourceIndex = static_cast<uint32>(Candidate.SourceIndex);
-		Packed.EraseRatePerSec = FMath::Abs(Stamp.DensityStrength) * TDFluidGpuSolverConstants::BrushEraseRatePerSec;
+		Packed.EraseRatePerSec = FMath::Abs(Stamp.DensityStrength) * Response.BrushEraseRatePerSec;
 		Packed.HeatStrength = FMath::Clamp(Stamp.HeatStrength, 0.0f, 1.0f);
 		return Packed;
 	}
@@ -236,7 +236,7 @@ namespace
 	}
 }
 
-FTDFluidGpuStampBinSet FTDFluidGpuStampBins::Build(const FTDFluidGpuStampBinWindow& Window, TConstArrayView<FTDFluidGpuStampInput> Stamps, const FTDFluidGpuStampBinLimits& Limits)
+FTDFluidGpuStampBinSet FTDFluidGpuStampBins::Build(const FTDFluidGpuStampBinWindow& Window, TConstArrayView<FTDFluidGpuStampInput> Stamps, const FTDFluidGpuStampBinLimits& Limits, const FTDFluidGpuStampResponse& Response)
 {
 	FTDFluidGpuStampBinSet BinSet;
 	BinSet.BinRanges.SetNum(TDFluidGpuSolverConstants::StampBinCount);
@@ -258,7 +258,7 @@ FTDFluidGpuStampBinSet FTDFluidGpuStampBins::Build(const FTDFluidGpuStampBinWind
 	for (const FTDFluidGpuStampCandidate& Candidate : Candidates)
 	{
 		const FTDFluidGpuStampInput& Stamp = Stamps[Candidate.SourceIndex];
-		BinSet.Stamps.Add(PackStamp(Window, Stamp, Candidate));
+		BinSet.Stamps.Add(PackStamp(Window, Stamp, Candidate, Response));
 		BinSet.RippleImpulsesCm.Add(Stamp.RippleImpulseCm);
 	}
 

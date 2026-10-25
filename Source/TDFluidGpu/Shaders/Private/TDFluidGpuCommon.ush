@@ -88,7 +88,7 @@ float2 TDFluidGpuClampToMaxSize(float2 Value, float MaxSize)
 	return Value * (MaxSize / sqrt(SizeSquared));
 }
 
-float2 TDFluidGpuClampVelocityMagnitude(float2 Velocity)
+float2 TDFluidGpuClampVelocityMagnitude(float2 Velocity, float MaxSpeed)
 {
 	const float SpeedSquared = Velocity.x * Velocity.x + Velocity.y * Velocity.y;
 	if (!isfinite(SpeedSquared))
@@ -96,7 +96,7 @@ float2 TDFluidGpuClampVelocityMagnitude(float2 Velocity)
 		return float2(0.0f, 0.0f);
 	}
 
-	return TDFluidGpuClampToMaxSize(Velocity, TDFLUIDGPU_MAX_CELL_SPEED_CM_PER_SEC);
+	return TDFluidGpuClampToMaxSize(Velocity, MaxSpeed);
 }
 
 uint TDFluidGpuHashLatticePoint(int2 Index, uint Seed)
@@ -392,7 +392,7 @@ void TDFluidGpuApplyStampDensity(FTDFluidGpuActorParameters Actor, FTDFluidGpuPa
 
 	const float DensityTarget = clamp(max(Stamp.DensityStrength, 0.0f) * SmoothWeight, 0.0f, 1.0f);
 	Density.x = max(Density.x, DensityTarget);
-	Displacement = max(Displacement, DensityTarget * TDFLUIDGPU_BRUSH_DISPLACEMENT_RATIO);
+	Displacement = max(Displacement, DensityTarget * Actor.BrushDisplacementRatio);
 	if (bWritesSelectiveDensity)
 	{
 		Density.y = max(Density.y, DensityTarget);

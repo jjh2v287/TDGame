@@ -10,6 +10,9 @@
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
+#include "FluidFX/TDFluidLiveSubsystem.h"
+#include "FluidFX/TDFluidPresetAsset.h"
+#include "FluidFX/TDFluidPresetTuningSubsystem.h"
 #include "GeometryCollection/GeometryCollection.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
 #include "GeometryCollection/GeometryCollectionObject.h"
@@ -159,6 +162,7 @@ ATDFluidFragmentEmitterActor::ATDFluidFragmentEmitterActor()
 void ATDFluidFragmentEmitterActor::BeginPlay()
 {
 	Super::BeginPlay();
+	ApplyEffectiveFragmentSettings(nullptr);
 	if (IsValid(SourceBreakableActor))
 	{
 		SourceBrokenDelegateHandle = SourceBreakableActor->OnBrokenNative.AddUObject(this, &ATDFluidFragmentEmitterActor::HandleSourceBroken);
@@ -571,6 +575,7 @@ void ATDFluidFragmentEmitterActor::ApplyFragmentGlowMaterial()
 	}
 
 	FragmentGlowMaterial = UMaterialInstanceDynamic::Create(LoadedGlowMaterial, this);
+	UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*FragmentGlowMaterial);
 	const int32 MaterialSlotCount = FMath::Max(Component->GetNumMaterials(), 1);
 	for (int32 SlotIndex = 0; SlotIndex < MaterialSlotCount; ++SlotIndex)
 	{
@@ -582,6 +587,32 @@ void ATDFluidFragmentEmitterActor::ApplyFragmentGlowMaterial()
 		HeatSource->RegisterExternalMaterialTarget(FragmentGlowMaterial);
 	}
 	PushFragmentGlowParameters();
+}
+
+void ATDFluidFragmentEmitterActor::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport)
+{
+	ApplyEffectiveFragmentSettings(&InOutReport);
+	InOutReport.ApplyLiveMaterialLook(FragmentGlowMaterial);
+	PushFragmentGlowParameters();
+	if (!bIsTracking && IsActorTickEnabled())
+	{
+		SetActorTickInterval(TrailSettings.ArmedPollIntervalSeconds);
+	}
+}
+
+void ATDFluidFragmentEmitterActor::ApplyEffectiveFragmentSettings(FTDFluidPresetReapplyReport* InOutReport)
+{
+	const UTDFluidLiveComponent* FireComponent = FireTargetActor ? FireTargetActor->LiveComponent.Get() : nullptr;
+	const UTDFluidPresetAsset* Preset = FireComponent ? FireComponent->ActivePreset.Get() : nullptr;
+	if (!Preset || Preset->UsesOwnPresetCopies())
+	{
+		return;
+	}
+
+	FTDFluidPresetReapplyReport UntrackedReport;
+	FTDFluidPresetReapplyReport& Report = InOutReport ? *InOutReport : UntrackedReport;
+	Report.AssignTrackedStruct(TrailSettings, UTDFluidPresetAsset::BuildFragmentTrailForPresetKind(Preset->PresetKind));
+	Report.AssignTrackedStruct(GlowSettings, UTDFluidPresetAsset::BuildFragmentGlowForPresetKind(Preset->PresetKind));
 }
 
 void ATDFluidFragmentEmitterActor::PushFragmentGlowParameters()

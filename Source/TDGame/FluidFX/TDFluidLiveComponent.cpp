@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidPresetAsset.h"
+#include "FluidFX/TDFluidPresetTuningSubsystem.h"
 #include "FluidFX/TDFluidVolumeTransmittance.h"
 #include "FluidFX/TDFluidWaterWetnessRules.h"
 #include "GameFramework/Actor.h"
@@ -26,7 +27,6 @@ CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
 namespace
 {
-	constexpr double NiagaraCacheRefreshIntervalSeconds = 1.0;
 	constexpr int32 MaximumShadowCapsuleCount = 8;
 	constexpr float MaximumCapsuleShadowStrength = 0.99f;
 
@@ -97,6 +97,24 @@ namespace
 		return (Flags & static_cast<uint32>(Flag)) != 0;
 	}
 
+	template <typename TStruct>
+	void AssignEffectiveStruct(TStruct& Target, const TStruct& Source, FTDFluidPresetReapplyReport* InOutReport)
+	{
+		if (InOutReport)
+		{
+			InOutReport->AssignTrackedStruct(Target, Source);
+			return;
+		}
+
+		Target = Source;
+	}
+
+	int32 GetPresetTuningTableGeneration()
+	{
+		const UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr;
+		return TuningSubsystem ? TuningSubsystem->GetTableGeneration() : INDEX_NONE;
+	}
+
 	FTDFluidWaterPointSample MakeOutsideWaterPointSample(const FVector& WorldLocation, int32 FrameAge)
 	{
 		FTDFluidWaterPointSample PointSample;
@@ -115,6 +133,7 @@ void UTDFluidLiveComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	RefreshEffectivePresetSettings(nullptr);
 	if (bShouldInitSystemStateFromPreset && ActivePreset)
 	{
 		InitSystemStateFromPreset(ActivePreset);
@@ -151,6 +170,8 @@ void UTDFluidLiveComponent::InitSystemStateFromPreset(UTDFluidPresetAsset* InPre
 
 	ActivePreset = InPreset;
 	SimulationConfig = InPreset->ResolveEffectiveConfig();
+	bIsSimulationConfigFromPreset = true;
+	RefreshEffectivePresetSettings(nullptr);
 	OutputMaterial = InPreset->OutputMaterial;
 	ParameterCollection = InPreset->ParameterCollection;
 	ExternalNiagaraSystem = InPreset->ExternalNiagaraSystem;
@@ -168,16 +189,26 @@ void UTDFluidLiveComponent::InitSystemStateFromPreset(UTDFluidPresetAsset* InPre
 
 void UTDFluidLiveComponent::ApplySimulationConfig(const FTDFluidSimulationConfig& InConfig)
 {
+	bIsSimulationConfigFromPreset = false;
+	ApplySimulationConfigAndDetectReset(InConfig);
+}
+
+bool UTDFluidLiveComponent::ApplySimulationConfigAndDetectReset(const FTDFluidSimulationConfig& InConfig)
+{
 	SimulationConfig = InConfig;
+	const int32 GenerationBefore = GetSimulationGeneration();
 	const FTDFluidGpuBackendDecision BackendDecision = ResolveSolverBackend();
 	const bool bKeepsGpuState = bUsesGpuSolver && BackendDecision.bUsesGpu && BackendDecision.Resolution == GpuSolverProxy.GetResolution();
+	bool bWasStateReset = false;
 	if (bKeepsGpuState)
 	{
 		GpuSolverProxy.UpdateSettings(SimulationConfig);
+		bWasStateReset = GpuSolverProxy.WasLastSettingsUpdateReset();
 	}
 	else if (bUsesGpuSolver || BackendDecision.bUsesGpu)
 	{
 		InitializeSimulation(IsSimulationInitialized() ? GetSimulationCenterWorld() : ResolveOwnerCenterWorld());
+		bWasStateReset = true;
 	}
 	else if (Solver.IsInitialized())
 	{
@@ -186,9 +217,84 @@ void UTDFluidLiveComponent::ApplySimulationConfig(const FTDFluidSimulationConfig
 	else
 	{
 		Solver.Initialize(MakeCpuSolverConfig(), ResolveOwnerCenterWorld());
+		bWasStateReset = true;
 	}
 
 	ReapplyActiveObstacles();
+	return bWasStateReset || GetSimulationGeneration() != GenerationBefore;
+}
+
+void UTDFluidLiveComponent::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport)
+{
+	RefreshEffectivePresetSettings(&InOutReport);
+	if (bIsSimulationConfigFromPreset && ActivePreset)
+	{
+		FTDFluidSimulationConfig PresetConfig = SimulationConfig;
+		InOutReport.AssignTrackedStruct(PresetConfig, ActivePreset->ResolveEffectiveConfig());
+		if (ApplySimulationConfigAndDetectReset(PresetConfig))
+		{
+			++InOutReport.StateResetActorCount;
+		}
+	}
+	else
+	{
+		ReapplyActiveObstacles();
+	}
+
+	ReapplyMaterialLooks(InOutReport);
+	ApplyPlaneRenderFlags();
+	ApplyParametersToMID(InternalSurfaceMID);
+	FitVolumeMeshToSimulation();
+	ApplyVolumeParameters();
+	ApplyParametersToExternalTargets();
+}
+
+void UTDFluidLiveComponent::ReapplyMaterialLooks(FTDFluidPresetReapplyReport& InOutReport)
+{
+	InOutReport.ApplyLiveMaterialLook(InternalSurfaceMID);
+	InOutReport.ApplyLiveMaterialLook(VolumeMID);
+	for (const TWeakObjectPtr<UMaterialInstanceDynamic>& ExternalTarget : ExternalMaterialTargets)
+	{
+		InOutReport.ApplyLiveMaterialLook(ExternalTarget.Get());
+	}
+}
+
+bool UTDFluidLiveComponent::HasFreshEffectivePresetSettings() const
+{
+	if (!bHasEffectivePresetSettings || EffectiveSettingsPreset.Get() != ActivePreset)
+	{
+		return false;
+	}
+
+	return !ActivePreset || ActivePreset->PresetKind == EffectiveSettingsPresetKind;
+}
+
+void UTDFluidLiveComponent::RefreshEffectivePresetSettings(FTDFluidPresetReapplyReport* InOutReport)
+{
+	const ETDFluidPresetKind PresetKind = ActivePreset ? ActivePreset->PresetKind : ETDFluidPresetKind::Custom;
+	AssignEffectiveStruct(EffectivePlaneSettings, ActivePreset ? ActivePreset->ResolveEffectivePlaneSettings() : FTDFluidPlaneSettings(), InOutReport);
+	AssignEffectiveStruct(EffectiveVolumeRender, ActivePreset ? ActivePreset->ResolveEffectiveVolumeRender() : FTDFluidVolumeRenderSettings(), InOutReport);
+	AssignEffectiveStruct(InputBrushSettings, UTDFluidPresetAsset::BuildInputBrushForPresetKind(PresetKind), InOutReport);
+	AssignEffectiveStruct(RuntimeOpsSettings, UTDFluidPresetAsset::BuildRuntimeOpsForPresetKind(PresetKind), InOutReport);
+	EffectiveSettingsPreset = ActivePreset;
+	EffectiveSettingsPresetKind = PresetKind;
+	TableGeneration = GetPresetTuningTableGeneration();
+	bHasEffectivePresetSettings = true;
+}
+
+FTDFluidVolumeRenderSettings UTDFluidLiveComponent::GetVolumeRenderSettings() const
+{
+	if (!ActivePreset)
+	{
+		return FTDFluidVolumeRenderSettings();
+	}
+
+	if (ActivePreset->UsesOwnPresetCopies())
+	{
+		return ActivePreset->VolumeRender;
+	}
+
+	return HasFreshEffectivePresetSettings() ? EffectiveVolumeRender : ActivePreset->ResolveEffectiveVolumeRender();
 }
 
 void UTDFluidLiveComponent::ResetSimulationState()
@@ -236,7 +342,7 @@ void UTDFluidLiveComponent::QueueNiagaraParticleStamps(
 		Stamp.WorldLocation = ParticlePositions[Idx];
 		Stamp.WorldVelocity = ParticleVelocities.IsValidIndex(Idx) ? ParticleVelocities[Idx] : FVector::ZeroVector;
 		Stamp.RadiusCm = BrushRadiusCm;
-		Stamp.DensityStrength = 0.85f;
+		Stamp.DensityStrength = InputBrushSettings.ParticleDensityStrength;
 		Stamp.VelocityStrength = 1.0f;
 		Stamp.Channel = Channel;
 		PendingBrushStamps.Add(Stamp);
@@ -377,7 +483,17 @@ bool UTDFluidLiveComponent::SetPlaneBasis(const FTDFluidPlaneBasis& InBasis, con
 
 FTDFluidPlaneSettings UTDFluidLiveComponent::GetPlaneSettings() const
 {
-	return ActivePreset ? ActivePreset->PlaneSettings : FTDFluidPlaneSettings();
+	if (!ActivePreset)
+	{
+		return FTDFluidPlaneSettings();
+	}
+
+	if (ActivePreset->UsesOwnPresetCopies())
+	{
+		return ActivePreset->PlaneSettings;
+	}
+
+	return HasFreshEffectivePresetSettings() ? EffectivePlaneSettings : ActivePreset->ResolveEffectivePlaneSettings();
 }
 
 FVector2D UTDFluidLiveComponent::ProjectWorldToSolverPlane(const FVector& WorldPoint) const
@@ -466,6 +582,11 @@ void UTDFluidLiveComponent::AdvanceSimulationStep(float DeltaTime, const FVector
 
 bool UTDFluidLiveComponent::PrepareSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift)
 {
+	if (!HasFreshEffectivePresetSettings())
+	{
+		RefreshEffectivePresetSettings(nullptr);
+	}
+
 	if (!bIsSimulationAwake || DeltaTime <= 0.0f)
 	{
 		return false;
@@ -648,6 +769,7 @@ void UTDFluidLiveComponent::DestroyOwnedNiagaraComponent()
 		return;
 	}
 
+	NiagaraLookGenerationByComponent.Remove(FObjectKey(OwnedNiagaraComponent));
 	OwnedNiagaraComponent->DestroyComponent();
 	OwnedNiagaraComponent = nullptr;
 }
@@ -685,6 +807,7 @@ void UTDFluidLiveComponent::ApplyLoadedOutputsToBoundMesh()
 	if (!InternalSurfaceMID || InternalSurfaceMID->Parent != LoadedMaterial)
 	{
 		InternalSurfaceMID = UMaterialInstanceDynamic::Create(LoadedMaterial, this);
+		UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*InternalSurfaceMID);
 	}
 	InternalMesh->SetMaterial(0, InternalSurfaceMID);
 	ApplyParametersToMID(InternalSurfaceMID);
@@ -720,6 +843,7 @@ void UTDFluidLiveComponent::ApplyLoadedOutputsToVolumeMesh()
 	if (!VolumeMID || VolumeMID->Parent != LoadedMaterial)
 	{
 		VolumeMID = UMaterialInstanceDynamic::Create(LoadedMaterial, this);
+		UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*VolumeMID);
 	}
 	VolumeMesh->SetMaterial(0, VolumeMID);
 
@@ -751,7 +875,7 @@ void UTDFluidLiveComponent::FitVolumeMeshToSimulation()
 	const double HeightCm = ActivePreset->VolumeHeightCm;
 	const double FloorHeightCm = OwnerActor->GetActorLocation().Z;
 
-	const FTDFluidVolumeRenderSettings& VolumeRender = ActivePreset->VolumeRender;
+	const FTDFluidVolumeRenderSettings VolumeRender = GetVolumeRenderSettings();
 	const double SizeMultiplier = VolumeRender.VolumeSizeMultiplier;
 	const FVector DesiredScale = SizeMultiplier == 1.0
 		? FVector(ExtentCm.X, ExtentCm.Y, HeightCm) / MeshSize
@@ -1129,7 +1253,56 @@ void UTDFluidLiveComponent::DriveOwnedNiagaraComponent()
 		return;
 	}
 
+	ApplyNiagaraLookIfStale(*OwnedNiagaraComponent);
 	DriveNiagaraComponent(*OwnedNiagaraComponent, *OwnerActor);
+}
+
+void UTDFluidLiveComponent::ApplyNiagaraLookIfStale(UNiagaraComponent& NiagaraComp)
+{
+	const UFXSystemAsset* NiagaraSystem = NiagaraComp.GetFXSystemAsset();
+	const int32 CurrentTableGeneration = GetPresetTuningTableGeneration();
+	if (!NiagaraSystem || CurrentTableGeneration == INDEX_NONE)
+	{
+		return;
+	}
+
+	int32& AppliedTableGeneration = NiagaraLookGenerationByComponent.FindOrAdd(FObjectKey(&NiagaraComp), INDEX_NONE);
+	if (AppliedTableGeneration == CurrentTableGeneration)
+	{
+		return;
+	}
+
+	AppliedTableGeneration = CurrentTableGeneration;
+	const FTDFluidNiagaraLookEntry* Look = UTDFluidPresetTuningSubsystem::FindNiagaraLook(NiagaraSystem->GetPackage()->GetFName());
+	if (!Look)
+	{
+		return;
+	}
+
+	for (const TPair<FName, float>& Variable : Look->Floats)
+	{
+		NiagaraComp.SetVariableFloat(Variable.Key, Variable.Value);
+	}
+	for (const TPair<FName, int32>& Variable : Look->Ints)
+	{
+		NiagaraComp.SetVariableInt(Variable.Key, Variable.Value);
+	}
+	for (const TPair<FName, bool>& Variable : Look->Bools)
+	{
+		NiagaraComp.SetVariableBool(Variable.Key, Variable.Value);
+	}
+	for (const TPair<FName, FVector2D>& Variable : Look->Vectors2)
+	{
+		NiagaraComp.SetVariableVec2(Variable.Key, Variable.Value);
+	}
+	for (const TPair<FName, FVector>& Variable : Look->Vectors3)
+	{
+		NiagaraComp.SetVariableVec3(Variable.Key, Variable.Value);
+	}
+	for (const TPair<FName, FLinearColor>& Variable : Look->Colors)
+	{
+		NiagaraComp.SetVariableLinearColor(Variable.Key, Variable.Value);
+	}
 }
 
 void UTDFluidLiveComponent::DriveNiagaraComponent(UNiagaraComponent& NiagaraComp, const AActor& HeightSourceActor) const
@@ -1175,7 +1348,7 @@ void UTDFluidLiveComponent::DriveTaggedNiagaraComponents(UWorld* World)
 		return;
 	}
 
-	const bool bIsCacheStale = FMath::Abs(World->GetTimeSeconds() - LastNiagaraCacheRefreshSeconds) >= NiagaraCacheRefreshIntervalSeconds;
+	const bool bIsCacheStale = FMath::Abs(World->GetTimeSeconds() - LastNiagaraCacheRefreshSeconds) >= RuntimeOpsSettings.NiagaraCacheRefreshIntervalSeconds;
 	if (CachedNiagaraActorTag != DriveNiagaraComponentInTaggedActors || bIsCacheStale)
 	{
 		RefreshTaggedNiagaraComponentCache(World);
@@ -1190,6 +1363,7 @@ void UTDFluidLiveComponent::DriveTaggedNiagaraComponents(UWorld* World)
 			continue;
 		}
 
+		ApplyNiagaraLookIfStale(*NiagaraComp);
 		DriveNiagaraComponent(*NiagaraComp, *TaggedActor);
 	}
 }
@@ -1797,7 +1971,7 @@ bool UTDFluidLiveComponent::IsAuxOutputActive() const
 bool UTDFluidLiveComponent::IsTransmittanceActive() const
 {
 	return ActivePreset
-		&& ActivePreset->VolumeRender.bEnableTransmittance
+		&& GetVolumeRenderSettings().bEnableTransmittance
 		&& CachedVolumeLightState.Mode > 0
 		&& SimulationConfig.SimMode == ETDFluidSimMode::FluidSim
 		&& IsSimulationInitialized();
@@ -1859,7 +2033,7 @@ FVector UTDFluidLiveComponent::ComputeVolumeBoxMinimumPlane() const
 	const bool bIsWorldFacing = PlaneBasis.IsWorldFacing();
 	const double CenterDepthCm = bIsWorldFacing ? (OwnerActor ? OwnerActor->GetActorLocation().Z : 0.0) : PlaneDepthCm;
 	const double FloorCm = bIsWorldFacing ? CenterDepthCm : CenterDepthCm - 0.5 * HeightCm;
-	const double OffsetZ = ActivePreset ? ActivePreset->VolumeRender.VolumePositionOffsetCm.Z : 0.0;
+	const double OffsetZ = ActivePreset ? GetVolumeRenderSettings().VolumePositionOffsetCm.Z : 0.0;
 	return FVector(Center.X - 0.5 * Extent.X, Center.Y - 0.5 * Extent.Y, FloorCm + OffsetZ);
 }
 
@@ -1870,7 +2044,7 @@ bool UTDFluidLiveComponent::BuildTransmittanceInputs(FTDFluidTransmittanceInputs
 		return false;
 	}
 
-	const FTDFluidVolumeRenderSettings& VolumeRender = ActivePreset->VolumeRender;
+	const FTDFluidVolumeRenderSettings VolumeRender = GetVolumeRenderSettings();
 	const FVector BoxMinimumPlane = ComputeVolumeBoxMinimumPlane();
 	OutInputs.SimResolution = GetSimulationResolution();
 	OutInputs.ExtentCm = GetSimulationExtentCm();
@@ -1913,7 +2087,7 @@ void UTDFluidLiveComponent::ApplyVolumeRenderParameters() const
 		return;
 	}
 
-	const FTDFluidVolumeRenderSettings& VolumeRender = ActivePreset->VolumeRender;
+	const FTDFluidVolumeRenderSettings VolumeRender = GetVolumeRenderSettings();
 	VolumeMID->SetScalarParameterValue(TEXT("VolumeFadeEndCm"), VolumeRender.VolumeFadeEndCm);
 	VolumeMID->SetScalarParameterValue(TEXT("VolumeFadeLengthCm"), VolumeRender.VolumeFadeLengthCm);
 	VolumeMID->SetScalarParameterValue(TEXT("VolumeBoxScale"), VolumeRender.VolumeSizeMultiplier);

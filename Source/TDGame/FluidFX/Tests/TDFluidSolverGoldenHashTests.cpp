@@ -3,6 +3,7 @@
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/Tests/TDFluidGoldenPresetSnapshots.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Crc.h"
 
@@ -133,7 +134,7 @@ namespace TDFluidGoldenHashPrivate
 
 	FTDFluidScenarioChecksums RunGoldenScenario(const FTDFluidGoldenScenario& Scenario, float SlopeGravityOverride = -1.0f)
 	{
-		FTDFluidSimulationConfig Config = UTDFluidPresetAsset::BuildConfigForPresetKind(Scenario.PresetKind);
+		FTDFluidSimulationConfig Config = TDFluidGoldenPresetSnapshots::MakeSimulationConfig(Scenario.PresetKind);
 		Config.GridResolution = Scenario.Resolution;
 		Config.SimExtentCm = Scenario.ExtentCm;
 		if (Scenario.bDisablesOptionalForces)

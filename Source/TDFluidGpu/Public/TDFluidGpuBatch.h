@@ -136,8 +136,15 @@ struct alignas(16) FTDFluidGpuActorParameters
 	float VortexRadialDriftCmPerSec = 0.0f;
 	float VortexRadiusCm = 0.0f;
 	float WhitewaterDissipationFactor = 1.0f;
+
+	float MaxCellSpeedCmPerSec = TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec;
+	float BrushDisplacementRatio = TDFluidGpuSolverConstants::BrushDisplacementRatio;
+	float Padding0 = 0.0f;
+	float Padding1 = 0.0f;
 };
-static_assert(sizeof(FTDFluidGpuActorParameters) == 272, "FTDFluidGpuActorParameters must match the 272 byte shader layout.");
+static_assert(sizeof(FTDFluidGpuActorParameters) == 288, "FTDFluidGpuActorParameters must match the 288 byte shader layout.");
+static_assert(offsetof(FTDFluidGpuActorParameters, MaxCellSpeedCmPerSec) == 272, "FTDFluidGpuActorParameters::MaxCellSpeedCmPerSec must stay at byte 272.");
+static_assert(offsetof(FTDFluidGpuActorParameters, BrushDisplacementRatio) == 276, "FTDFluidGpuActorParameters::BrushDisplacementRatio must stay at byte 276.");
 static_assert(offsetof(FTDFluidGpuActorParameters, WhitewaterDissipationFactor) == 268, "FTDFluidGpuActorParameters::WhitewaterDissipationFactor must stay at byte 268.");
 static_assert(offsetof(FTDFluidGpuActorParameters, HeatDissipationFactor) == 236, "FTDFluidGpuActorParameters::HeatDissipationFactor must stay at byte 236.");
 static_assert(offsetof(FTDFluidGpuActorParameters, HeatBuoyancyVelocityStepCmPerSec) == 240, "FTDFluidGpuActorParameters::HeatBuoyancyVelocityStepCmPerSec must stay at byte 240.");
@@ -391,11 +398,11 @@ public:
 
 	static int32 ResolveResolutionTier(int32 RequestedResolution);
 	static FTDFluidGpuBatchKey MakeKey(const FTDFluidGpuSimulationSettings& Settings);
-	static ETDFluidGpuPressureSolver ResolvePressureSolver(int32 ResolutionTier);
+	static ETDFluidGpuPressureSolver ResolvePressureSolver(int32 ResolutionTier, uint8 PressureSolverModeRequest = 0);
 	static int32 ComputeMultigridLevelCount(int32 ResolutionTier);
 	static int64 ComputeMultigridTransientBytes(int32 ResolutionTier);
 	static int32 RoundUpSliceCapacity(int32 SliceCount);
-	static FTDFluidGpuMemoryEstimate EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel = false, bool bUsesTransmittance = false);
+	static FTDFluidGpuMemoryEstimate EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel = false, bool bUsesTransmittance = false, uint8 PressureSolverModeRequest = 0);
 	static int32 ComputeTransmittanceResolution(int32 ResolutionTier);
 	static void PrepareFrame(const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPreparedFrame& OutPreparedFrame);
 	static int32 ResolveWaterResolutionTier(int32 RequestedResolution);

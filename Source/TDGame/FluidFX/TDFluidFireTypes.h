@@ -326,3 +326,96 @@ struct TDGAME_API FTDFluidFragmentGlowSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FragmentGlow", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float EdgeCharStrength = 0.5f;
 };
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidEmberSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "1", ClampMax = "512"))
+	int32 MaxEmbers = 256;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
+	float SpawnPerSecond = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
+	float SpawnPerDensityArea = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember")
+	FVector2D LifetimeRangeSeconds = FVector2D(1.2, 2.2);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
+	float FluidDragPerSec = 6.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember")
+	float BuoyancyCmPerSec2 = 250.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember")
+	float GravityCmPerSec2 = 400.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
+	float CoolingPerSec = 0.6f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
+	float MinSpeedKillCmPerSec = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
+	float SlowKillSeconds = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
+	float StretchPerCmPerSec = 0.004f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.001"))
+	float BaseScale = 0.04f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0"))
+	float DepthJitterCm = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float BurstUpwardRatio = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ember")
+	int32 RandomSeed = 1;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidFireLightSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight")
+	bool bIsDrivenByFluid = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight")
+	bool bUsesSelectiveDensity = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight", meta = (ClampMin = "0.0"))
+	float MaxIntensityCandelas = 40.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight", meta = (ClampMin = "1.0"))
+	float ReferenceDensityAreaCm2 = 2000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight", meta = (ClampMin = "0.1"))
+	float ResponsePerSec = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float FlickerNoiseAmplitude = 0.12f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight", meta = (ClampMin = "0.1", ClampMax = "30.0"))
+	float FlickerNoiseFrequencyHz = 7.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight", meta = (ClampMin = "1000.0", ClampMax = "12000.0"))
+	float MinColorTemperatureKelvin = 1500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight", meta = (ClampMin = "1000.0", ClampMax = "12000.0"))
+	float MaxColorTemperatureKelvin = 2100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight")
+	float HeightOffsetCm = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight", meta = (ClampMin = "0.0"))
+	float MoveThresholdCm = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLight")
+	int32 RandomSeed = 1;
+};

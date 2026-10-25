@@ -6,6 +6,7 @@
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "UObject/ObjectKey.h"
 #include "TDFluidLiveComponent.generated.h"
 
 class AActor;
@@ -21,6 +22,7 @@ class UTexture;
 class UTexture2D;
 class UTextureRenderTarget2D;
 struct FStreamableHandle;
+struct FTDFluidPresetReapplyReport;
 struct FTDFluidTransmittanceInputs;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -63,6 +65,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void ResetSimulationState();
+
+	void ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport);
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void QueueBrushStamp(const FTDFluidBrushStamp& Stamp);
@@ -152,6 +156,9 @@ public:
 	const FTDFluidPlaneBasis& GetPlaneBasis() const { return PlaneBasis; }
 	double GetPlaneDepthCm() const { return PlaneDepthCm; }
 	FTDFluidPlaneSettings GetPlaneSettings() const;
+	FTDFluidVolumeRenderSettings GetVolumeRenderSettings() const;
+	const FTDFluidInputBrushSettings& GetInputBrushSettings() const { return InputBrushSettings; }
+	const FTDFluidRuntimeOpsSettings& GetRuntimeOpsSettings() const { return RuntimeOpsSettings; }
 	FVector2D ProjectWorldToSolverPlane(const FVector& WorldPoint) const;
 	bool TryProjectWorldPointIntoSlab(const FVector& WorldPoint, FVector2D& OutPlanePoint) const;
 	FVector UnprojectSolverPlaneToWorld(const FVector2D& PlanePoint, double DepthOffsetCm = 0.0) const;
@@ -184,6 +191,11 @@ public:
 
 private:
 	FTDFluidGpuBackendDecision ResolveSolverBackend() const;
+	bool ApplySimulationConfigAndDetectReset(const FTDFluidSimulationConfig& InConfig);
+	bool HasFreshEffectivePresetSettings() const;
+	void RefreshEffectivePresetSettings(FTDFluidPresetReapplyReport* InOutReport);
+	void ReapplyMaterialLooks(FTDFluidPresetReapplyReport& InOutReport);
+	void ApplyNiagaraLookIfStale(UNiagaraComponent& NiagaraComp);
 	void InitializeSimulation(const FVector2D& CenterWorld);
 	void SyncSolverBackend(const FVector2D& FallbackCenterWorld);
 	bool PrepareGpuSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift);
@@ -302,12 +314,22 @@ private:
 	TArray<FFloat16Color> PackedAuxPixels;
 	TArray<FFloat16Color> PackedTransmittancePixels;
 	FTDFluidVolumeLightState CachedVolumeLightState;
+	FTDFluidPlaneSettings EffectivePlaneSettings;
+	FTDFluidVolumeRenderSettings EffectiveVolumeRender;
+	FTDFluidInputBrushSettings InputBrushSettings;
+	FTDFluidRuntimeOpsSettings RuntimeOpsSettings;
+	TWeakObjectPtr<UTDFluidPresetAsset> EffectiveSettingsPreset;
+	ETDFluidPresetKind EffectiveSettingsPresetKind = ETDFluidPresetKind::Custom;
+	int32 TableGeneration = INDEX_NONE;
+	TMap<FObjectKey, int32> NiagaraLookGenerationByComponent;
 	TArray<FTDFluidShadowCapsule> CachedShadowCapsules;
 	TArray<FVector> WaterProbeWorldLocations;
 	int32 WaterProbeGeneration = 0;
 	TArray<FTDFluidFlowGuide> LastWaterGuides;
 	TArray<FTDFluidWaterRegion> LastWaterRegions;
 	bool bHasLastWaterInputs = false;
+	bool bHasEffectivePresetSettings = false;
+	bool bIsSimulationConfigFromPreset = false;
 	bool bHasWaterInputsMissingOnCpu = false;
 
 	bool bIsSimulationAwake = true;

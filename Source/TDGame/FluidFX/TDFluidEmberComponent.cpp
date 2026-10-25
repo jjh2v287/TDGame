@@ -3,6 +3,8 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/StreamableManager.h"
 #include "FluidFX/TDFluidBandLimitedNoise.h"
+#include "FluidFX/TDFluidFireTypes.h"
+#include "FluidFX/TDFluidPresetTuningSubsystem.h"
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/Crc.h"
@@ -138,6 +140,17 @@ void UTDFluidEmberComponent::ActivateEmber(int32 SlotIndex, const FVector& Posit
 	Lifetimes[SlotIndex] = FMath::Max(FMath::Lerp(static_cast<float>(LifetimeRangeSeconds.X), static_cast<float>(LifetimeRangeSeconds.Y), LifetimeBlend), UE_KINDA_SMALL_NUMBER);
 	SlowSeconds[SlotIndex] = 0.0f;
 	++AliveEmberCount;
+}
+
+int32 UTDFluidEmberComponent::ApplyEmberSettings(const FTDFluidEmberSettings& Settings)
+{
+	const int32 PreviousRandomSeed = RandomSeed;
+	const int32 ChangedPropertyCount = UTDFluidPresetTuningSubsystem::CopyMatchingProperties(FTDFluidEmberSettings::StaticStruct(), &Settings, *this);
+	if (RandomSeed != PreviousRandomSeed)
+	{
+		bIsRandomStateReady = false;
+	}
+	return ChangedPropertyCount;
 }
 
 void UTDFluidEmberComponent::StepEmbers(const UTDFluidLiveComponent& LiveComponent, float DeltaTime)

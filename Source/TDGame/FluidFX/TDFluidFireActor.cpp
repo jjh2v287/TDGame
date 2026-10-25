@@ -1,4 +1,11 @@
 #include "FluidFX/TDFluidFireActor.h"
+#include "FluidFX/TDFluidEmberComponent.h"
+#include "FluidFX/TDFluidFireLightComponent.h"
+#include "FluidFX/TDFluidLiveComponent.h"
+#include "FluidFX/TDFluidLiveSubsystem.h"
+#include "FluidFX/TDFluidPresetAsset.h"
+#include "FluidFX/TDFluidPresetTuningSubsystem.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/AssetManager.h"
@@ -105,6 +112,7 @@ ATDFluidFireActor::ATDFluidFireActor()
 void ATDFluidFireActor::BeginPlay()
 {
 	Super::BeginPlay();
+	ApplyEffectiveFireSettings(nullptr);
 
 	if (SourcePropMeshAsset.IsNull())
 	{
@@ -125,6 +133,50 @@ void ATDFluidFireActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void ATDFluidFireActor::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport)
+{
+	Super::ReapplyPresetTuning(InOutReport);
+	ApplyEffectiveFireSettings(&InOutReport);
+	TrimExtraFlameCards();
+	EnsureExtraFlameCards();
+	for (int32 CardIndex = 0; CardIndex < ExtraFlameCardMaterials.Num(); ++CardIndex)
+	{
+		UMaterialInstanceDynamic* CardMaterial = ExtraFlameCardMaterials[CardIndex];
+		if (!CardMaterial)
+		{
+			continue;
+		}
+
+		InOutReport.ApplyLiveMaterialLook(CardMaterial);
+		ApplyFlameCardParameters(*CardMaterial, CardIndex + 1);
+	}
+	PlaceExtraFlameCards();
+}
+
+void ATDFluidFireActor::ApplyEffectiveFireSettings(FTDFluidPresetReapplyReport* InOutReport)
+{
+	const UTDFluidPresetAsset* Preset = LiveComponent ? LiveComponent->ActivePreset.Get() : nullptr;
+	if (!Preset || Preset->UsesOwnPresetCopies())
+	{
+		return;
+	}
+
+	const ETDFluidPresetKind PresetKind = Preset->PresetKind;
+	FTDFluidPresetReapplyReport UntrackedReport;
+	FTDFluidPresetReapplyReport& Report = InOutReport ? *InOutReport : UntrackedReport;
+	Report.AssignTrackedStruct(SourceEmitter, UTDFluidPresetAsset::BuildSourceEmitterForPresetKind(PresetKind));
+	Report.AssignTrackedStruct(DownstreamFeed, UTDFluidPresetAsset::BuildDownstreamFeedForPresetKind(PresetKind));
+	Report.AssignTrackedStruct(FlameCardLayers, UTDFluidPresetAsset::BuildFlameCardLayersForPresetKind(PresetKind));
+	if (EmberComponent)
+	{
+		Report.ChangedFieldCount += EmberComponent->ApplyEmberSettings(UTDFluidPresetAsset::BuildEmberSettingsForPresetKind(PresetKind));
+	}
+	if (FireLightComponent)
+	{
+		Report.ChangedFieldCount += FireLightComponent->ApplyFireLightSettings(UTDFluidPresetAsset::BuildFireLightSettingsForPresetKind(PresetKind));
+	}
 }
 
 void ATDFluidFireActor::HandleSourcePropLoaded()
@@ -312,14 +364,39 @@ void ATDFluidFireActor::EnsureExtraFlameCards()
 		CardComponent->SetTranslucentSortPriority(InternalSurfaceMesh->TranslucencySortPriority);
 
 		UMaterialInstanceDynamic* CardMaterialInstance = UMaterialInstanceDynamic::Create(CardMaterial, this);
-		CardMaterialInstance->SetScalarParameterValue(TEXT("CardLayerIndex"), static_cast<float>(LayerIndex));
-		CardMaterialInstance->SetScalarParameterValue(TEXT("CardIntensityScale"), FlameCardLayers.CardIntensityScale);
+		UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*CardMaterialInstance);
+		ApplyFlameCardParameters(*CardMaterialInstance, LayerIndex);
 		CardComponent->SetMaterial(0, CardMaterialInstance);
 		LiveComponent->RegisterExternalMaterialTarget(CardMaterialInstance);
 
 		ExtraFlameCardComponents.Add(CardComponent);
 		ExtraFlameCardMaterials.Add(CardMaterialInstance);
 	}
+}
+
+void ATDFluidFireActor::TrimExtraFlameCards()
+{
+	const int32 DesiredCardCount = GetExtraFlameCardCount();
+	if (ExtraFlameCardComponents.Num() <= DesiredCardCount)
+	{
+		return;
+	}
+
+	for (int32 CardIndex = ExtraFlameCardComponents.Num() - 1; CardIndex >= DesiredCardCount; --CardIndex)
+	{
+		if (UStaticMeshComponent* CardComponent = ExtraFlameCardComponents[CardIndex])
+		{
+			CardComponent->DestroyComponent();
+		}
+	}
+	ExtraFlameCardComponents.SetNum(DesiredCardCount);
+	ExtraFlameCardMaterials.SetNum(FMath::Min(ExtraFlameCardMaterials.Num(), DesiredCardCount));
+}
+
+void ATDFluidFireActor::ApplyFlameCardParameters(UMaterialInstanceDynamic& CardMaterial, int32 LayerIndex) const
+{
+	CardMaterial.SetScalarParameterValue(TEXT("CardLayerIndex"), static_cast<float>(LayerIndex));
+	CardMaterial.SetScalarParameterValue(TEXT("CardIntensityScale"), FlameCardLayers.CardIntensityScale);
 }
 
 void ATDFluidFireActor::PlaceExtraFlameCards()

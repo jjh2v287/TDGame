@@ -12,6 +12,7 @@ class UStaticMeshComponent;
 class UTDFluidEmberComponent;
 class UTDFluidFireLightComponent;
 struct FStreamableHandle;
+struct FTDFluidPresetReapplyReport;
 
 UCLASS()
 class TDGAME_API ATDFluidFireActor : public ATDFluidLiveActor
@@ -56,6 +57,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport) override;
 
 	static void SelectDownstreamFeedCells(const FTDFluidGrid2DSolver& Solver, const FTDFluidDownstreamFeedSettings& Settings, TArray<FIntPoint>& OutCells);
 	static void SelectDownstreamFeedCells(const UTDFluidLiveComponent& FluidComponent, const FTDFluidDownstreamFeedSettings& Settings, TArray<FIntPoint>& OutCells);
@@ -77,7 +79,10 @@ private:
 	bool ResolveSourceSocketTransform(FTransform& OutSocketTransform) const;
 	void QueueSourceEmitterStamps(const FVector& AnchorWorld, const FVector& LastAnchorWorld);
 	void QueueSourceCoreStamp(const FVector& AnchorWorld);
+	void ApplyEffectiveFireSettings(FTDFluidPresetReapplyReport* InOutReport);
 	void EnsureExtraFlameCards();
+	void TrimExtraFlameCards();
+	void ApplyFlameCardParameters(UMaterialInstanceDynamic& CardMaterial, int32 LayerIndex) const;
 	void PlaceExtraFlameCards();
 	void UpdateSourcePropTransform();
 	void HandleSourcePropLoaded();

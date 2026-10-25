@@ -13,6 +13,7 @@
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/Tests/TDFluidGoldenPresetSnapshots.h"
 #include "GameFramework/Actor.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/App.h"
@@ -1269,7 +1270,7 @@ namespace TDFluidGpuBackendTestPrivate
 
 	FTDFluidQueryScenarioResult RunQueryGoldenScenario(const FTDFluidQueryGoldenScenario& Scenario)
 	{
-		FTDFluidSimulationConfig Config = UTDFluidPresetAsset::BuildConfigForPresetKind(Scenario.PresetKind);
+		FTDFluidSimulationConfig Config = TDFluidGoldenPresetSnapshots::MakeSimulationConfig(Scenario.PresetKind);
 		Config.GridResolution = Scenario.Resolution;
 		Config.SimExtentCm = Scenario.ExtentCm;
 		if (Scenario.bDisablesOptionalForces)
@@ -2759,6 +2760,7 @@ bool FTDFluidGpuTransmittanceParityTest::RunTest(const FString& Parameters)
 	}
 
 	UTDFluidPresetAsset* SmokePreset = UTDFluidPresetAsset::CreateTransientPreset(GetTransientPackage(), ETDFluidPresetKind::CampfireSmoke);
+	SmokePreset->bOverridePresetDefaults = true;
 	TStrongObjectPtr<UTDFluidPresetAsset> PresetGuard(SmokePreset);
 	FTDFluidParityRunSettings Settings = MakeSmokeParitySettings(128, 128);
 	Settings.ConfigureActor = [SmokePreset](ATDFluidLiveActor& LiveActor)

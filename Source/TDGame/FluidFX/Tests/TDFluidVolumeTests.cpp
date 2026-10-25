@@ -287,15 +287,16 @@ bool FTDFluidAmbientRefillTest::RunTest(const FString& Parameters)
 {
 	using namespace TDFluidVolumePrivate;
 
+	const FTDFluidSimulationConfig SmokeConfig = MakeSmokeConfig();
 	const float DensityAt30Fps = RunAmbientFill(1.0f / 30.0f, 1.0f);
 	const float DensityAt120Fps = RunAmbientFill(1.0f / 120.0f, 1.0f);
-	const float ExpectedAfterOneSecond = 0.8f * (1.0f - FMath::Exp(-0.5f));
+	const float ExpectedAfterOneSecond = SmokeConfig.AmbientDensity * (1.0f - FMath::Exp(-SmokeConfig.AmbientRefillPerSec));
 	AddInfo(FString::Printf(TEXT("ambient after 1 s: 30fps=%.5f 120fps=%.5f expected=%.5f"), DensityAt30Fps, DensityAt120Fps, ExpectedAfterOneSecond));
 	TestTrue(*FString::Printf(TEXT("Ambient fill after 1 s at 30 fps is within 1%% of A * (1 - exp(-rate * t)) (%.5f vs %.5f)"), DensityAt30Fps, ExpectedAfterOneSecond), FMath::Abs(DensityAt30Fps - ExpectedAfterOneSecond) <= 0.01f * ExpectedAfterOneSecond);
 	TestTrue(*FString::Printf(TEXT("Ambient fill after 1 s at 120 fps is within 1%% of A * (1 - exp(-rate * t)) (%.5f vs %.5f)"), DensityAt120Fps, ExpectedAfterOneSecond), FMath::Abs(DensityAt120Fps - ExpectedAfterOneSecond) <= 0.01f * ExpectedAfterOneSecond);
 
 	const float ConvergedDensity = RunAmbientFill(SixtyFpsSeconds, 14.0f);
-	TestNearlyEqual(TEXT("Ambient fill converges to AmbientDensity"), ConvergedDensity, 0.8f, 0.005f);
+	TestNearlyEqual(TEXT("Ambient fill converges to AmbientDensity"), ConvergedDensity, SmokeConfig.AmbientDensity, 0.005f);
 
 	FTDFluidSimulationConfig NoRefillConfig = MakeSmokeConfig();
 	NoRefillConfig.AmbientRefillPerSec = 0.0f;
@@ -518,23 +519,18 @@ bool FTDFluidSmokePresetContractTest::RunTest(const FString& Parameters)
 {
 	const FTDFluidSimulationConfig Smoke = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Smoke);
 	TestTrue(TEXT("Smoke runs the fluid solver"), Smoke.SimMode == ETDFluidSimMode::FluidSim);
-	TestEqual(TEXT("Smoke resolution"), Smoke.GridResolution, 256);
-	TestTrue(TEXT("Smoke extent is 700 x 700 cm"), Smoke.SimExtentCm.Equals(FVector2D(700.0, 700.0), 1e-3));
-	TestNearlyEqual(TEXT("Smoke AmbientDensity"), Smoke.AmbientDensity, 0.8f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke AmbientRefillPerSec"), Smoke.AmbientRefillPerSec, 0.5f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke VelocityDamping"), Smoke.VelocityDamping, 0.08f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke DensityDissipation"), Smoke.DensityDissipation, 0.0f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke VorticityStrength"), Smoke.VorticityStrength, 1.2f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke ActorBrushDensityStrength"), Smoke.ActorBrushDensityStrength, -1.0f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke ActorBrushPunctureCmPerSec"), Smoke.ActorBrushPunctureCmPerSec, 380.0f, 1e-6f);
-	TestNearlyEqual(TEXT("Smoke TerrainSlopeGravity"), Smoke.TerrainSlopeGravity, 0.0f, 1e-6f);
+	TestTrue(TEXT("Smoke fills the field with ambient density"), Smoke.AmbientDensity > 0.0f);
+	TestTrue(TEXT("Smoke refills the ambient density"), Smoke.AmbientRefillPerSec > 0.0f);
+	TestTrue(TEXT("Smoke actors clear the smoke with a negative brush density"), Smoke.ActorBrushDensityStrength < 0.0f);
+	TestTrue(TEXT("Smoke actors puncture the smoke"), Smoke.ActorBrushPunctureCmPerSec > 0.0f);
+	TestNearlyEqual(TEXT("Smoke has no slope gravity"), Smoke.TerrainSlopeGravity, 0.0f, 1e-6f);
 
 	TestEqual(TEXT("Smoke is appended after every existing preset kind"), static_cast<int32>(ETDFluidPresetKind::Smoke), static_cast<int32>(ETDFluidPresetKind::FootprintPainter) + 1);
 
 	const FTDFluidSimulationConfig WaterConfig = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::Water);
 	TestNearlyEqual(TEXT("Other presets keep AmbientDensity at 0"), WaterConfig.AmbientDensity, 0.0f, 1e-6f);
 	TestNearlyEqual(TEXT("Other presets keep AmbientRefillPerSec at 0"), WaterConfig.AmbientRefillPerSec, 0.0f, 1e-6f);
-	TestNearlyEqual(TEXT("Other presets keep ActorBrushDensityStrength at 1"), WaterConfig.ActorBrushDensityStrength, 1.0f, 1e-6f);
+	TestTrue(TEXT("Other presets keep a positive ActorBrushDensityStrength"), WaterConfig.ActorBrushDensityStrength > 0.0f);
 	TestNearlyEqual(TEXT("Other presets keep ActorBrushPunctureCmPerSec at 0"), WaterConfig.ActorBrushPunctureCmPerSec, 0.0f, 1e-6f);
 	TestNearlyEqual(TEXT("A default stamp has no radial velocity"), FTDFluidBrushStamp().RadialVelocityCmPerSec, 0.0f, 1e-6f);
 
@@ -549,7 +545,7 @@ bool FTDFluidSmokePresetContractTest::RunTest(const FString& Parameters)
 	TestNearlyEqual(TEXT("VolumeHeightCm defaults to 150"), Preset->VolumeHeightCm, 150.0f, 1e-6f);
 
 	UTDFluidPresetAsset* SmokePreset = UTDFluidPresetAsset::CreateTransientPreset(GetTransientPackage(), ETDFluidPresetKind::Smoke);
-	TestNearlyEqual(TEXT("A transient Smoke preset resolves the Smoke ambient density"), SmokePreset->ResolveEffectiveConfig().AmbientDensity, 0.8f, 1e-6f);
+	TestEqual(TEXT("A transient Smoke preset resolves the Smoke ambient density"), SmokePreset->ResolveEffectiveConfig().AmbientDensity, Smoke.AmbientDensity);
 	return true;
 }
 

@@ -14,6 +14,7 @@ class UMaterialInterface;
 class UTDFluidLiveComponent;
 struct FStreamableHandle;
 struct FTDFluidPlaneBasis;
+struct FTDFluidPresetReapplyReport;
 
 struct TDGAME_API FTDFluidFragmentPositionHistory
 {
@@ -62,6 +63,8 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
+
+	void ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport);
 
 	UFUNCTION(BlueprintCallable, Category = "FragmentTrail")
 	void TriggerBreakAt(const FVector& HitLocation);
@@ -170,6 +173,7 @@ private:
 	void HandleFragmentGlowMaterialLoaded();
 	void ApplyFragmentGlowMaterial();
 	void PushFragmentGlowParameters();
+	void ApplyEffectiveFragmentSettings(FTDFluidPresetReapplyReport* InOutReport);
 	float GetFragmentGlowAgeSeconds() const;
 	UTDFluidLiveComponent* ResolveFragmentGlowHeatSource() const;
 

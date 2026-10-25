@@ -67,6 +67,15 @@ public:
 	FTDFluidSimulationConfig ResolveEffectiveConfig() const;
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidPlaneSettings ResolveEffectivePlaneSettings() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidVolumeRenderSettings ResolveEffectiveVolumeRender() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	bool UsesOwnPresetCopies() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	static FTDFluidSimulationConfig BuildConfigForPresetKind(ETDFluidPresetKind Kind);
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
@@ -80,6 +89,27 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	static FTDFluidFlameCardLayerSettings BuildFlameCardLayersForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidPlaneSettings BuildPlaneSettingsForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidDownstreamFeedSettings BuildDownstreamFeedForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidFragmentGlowSettings BuildFragmentGlowForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidInputBrushSettings BuildInputBrushForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidRuntimeOpsSettings BuildRuntimeOpsForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidEmberSettings BuildEmberSettingsForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidFireLightSettings BuildFireLightSettingsForPresetKind(ETDFluidPresetKind Kind);
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	static bool IsFireFamilyPresetKind(ETDFluidPresetKind Kind);

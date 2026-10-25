@@ -90,6 +90,12 @@ namespace
 		const ValueType Upper = FMath::Lerp(Values[RowStart1 + Weights.X0], Values[RowStart1 + Weights.X1], Weights.FractionX);
 		return FMath::Lerp(Lower, Upper, Weights.FractionY);
 	}
+
+	FTDFluidGpuBatchKey MakeEffectiveBatchKey(FTDFluidGpuSimulationSettings SimulationSettings)
+	{
+		FTDFluidGpuBatch::ApplyWaterConsoleOverrides(SimulationSettings);
+		return FTDFluidGpuBatch::MakeKey(SimulationSettings);
+	}
 }
 
 bool FTDFluidReadbackField::IsValid() const
@@ -346,6 +352,17 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.VortexTangentialAccelerationCmPerSec2 = Config.VortexTangentialAccelerationCmPerSec2;
 	SimulationSettings.VortexRadialDriftCmPerSec = Config.VortexRadialDriftCmPerSec;
 	SimulationSettings.VortexRadiusRatio = Config.VortexRadiusRatio;
+	SimulationSettings.MaxCellSpeedCmPerSec = Config.MaxCellSpeedCmPerSec;
+	SimulationSettings.BrushVelocityResponsePerSec = Config.BrushVelocityResponsePerSec;
+	SimulationSettings.BrushDisplacementRatio = Config.BrushDisplacementRatio;
+	SimulationSettings.BrushEraseRatePerSec = Config.BrushEraseRatePerSec;
+	SimulationSettings.PressureSolverModeRequest = static_cast<uint8>(Config.GpuPressureSolverMode);
+	SimulationSettings.MultigridCyclesRequest = Config.GpuMultigridCycles;
+	SimulationSettings.WaterPressureModeRequest = static_cast<uint8>(Config.WaterGpuPressureMode);
+	SimulationSettings.WaterKernelRadius = Config.PressureKernelRadiusTexels;
+	SimulationSettings.WaterKernelFeedback = Config.PressureKernelFeedback;
+	SimulationSettings.WaterKernelScale = Config.PressureKernelScale;
+	SimulationSettings.WaterMultigridCycles = Config.GpuMultigridCycles;
 	SimulationSettings.bUsesWaterLayer = Config.bEnableWaterLayer && Config.SimMode == ETDFluidSimMode::FluidSim;
 	SimulationSettings.bOpenWaterBorders = Config.bOpenWaterBorders;
 	SimulationSettings.bTreatDryCellsAsSolid = Config.bTreatDryCellsAsSolid;
@@ -398,10 +415,10 @@ FTDFluidGpuObstacleInput FTDFluidGpuSolverProxy::MakeObstacleInput(const FTDFlui
 	return ObstacleInput;
 }
 
-int64 FTDFluidGpuSolverProxy::EstimateActorMemoryBytes(ETDFluidSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel, bool bUsesTransmittance)
+int64 FTDFluidGpuSolverProxy::EstimateActorMemoryBytes(ETDFluidSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel, bool bUsesTransmittance, ETDFluidGpuPressureSolverMode PressureSolverMode)
 {
 	const ETDFluidGpuSimMode GpuSimMode = SimMode == ETDFluidSimMode::SimplePainter ? ETDFluidGpuSimMode::SimplePainter : ETDFluidGpuSimMode::FluidSim;
-	return FTDFluidGpuBatch::EstimateActorMemory(GpuSimMode, RequestedResolution, bUsesHeatChannel, bUsesTransmittance).GetTotalBytes();
+	return FTDFluidGpuBatch::EstimateActorMemory(GpuSimMode, RequestedResolution, bUsesHeatChannel, bUsesTransmittance, static_cast<uint8>(PressureSolverMode)).GetTotalBytes();
 }
 
 void FTDFluidGpuSolverProxy::Initialize(const FTDFluidSimulationConfig& Config, int32 InResolution, const FVector2D& InitialCenterPlaneCm)
@@ -420,13 +437,16 @@ void FTDFluidGpuSolverProxy::Initialize(const FTDFluidSimulationConfig& Config, 
 
 void FTDFluidGpuSolverProxy::UpdateSettings(const FTDFluidSimulationConfig& Config)
 {
+	bWasLastSettingsUpdateReset = false;
 	if (!IsInitialized())
 	{
 		return;
 	}
 
 	const bool bPreviouslyUsedWaterLayer = Settings.bUsesWaterLayer;
+	const FTDFluidGpuBatchKey PreviousBatchKey = MakeEffectiveBatchKey(Settings);
 	Settings = MakeSimulationSettings(Config, Resolution);
+	bWasLastSettingsUpdateReset = !(MakeEffectiveBatchKey(Settings) == PreviousBatchKey);
 	WaterFieldConfig = Config;
 	if (bPreviouslyUsedWaterLayer && Settings.bUsesWaterLayer)
 	{

@@ -5,6 +5,7 @@
 #include "TDFluidFireLightComponent.generated.h"
 
 class UTDFluidLiveComponent;
+struct FTDFluidFireLightSettings;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TDGAME_API UTDFluidFireLightComponent : public UPointLightComponent
@@ -51,6 +52,7 @@ public:
 	int32 RandomSeed = 1;
 
 	void UpdateFromFluid(const UTDFluidLiveComponent& LiveComponent, const FVector& AnchorWorld, float DeltaTime);
+	int32 ApplyFireLightSettings(const FTDFluidFireLightSettings& Settings);
 
 	UFUNCTION(BlueprintPure, Category = "FireLight")
 	float GetLastDensityAreaCm2() const { return LastDensityAreaCm2; }

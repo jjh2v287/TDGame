@@ -10,11 +10,7 @@ CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
 namespace
 {
-	constexpr float BrushVelocityResponsePerSec = 12.0f;
-	constexpr float MaxCellSpeedCmPerSec = 1200.0f;
 	constexpr float BorderVelocityDampingPerSec = 4.0f;
-	constexpr float BrushDisplacementRatio = 0.5f;
-	constexpr float BrushEraseRatePerSec = 8.0f;
 	constexpr float PressureNormalizationCmPerSec = 600.0f;
 	constexpr float PressureReferenceCellSizeCm = 50.0f;
 	constexpr float OutputSpeedReferenceCmPerSec = 600.0f;
@@ -59,6 +55,10 @@ namespace
 
 	void SanitizeConfig(FTDFluidSimulationConfig& InOutConfig)
 	{
+		InOutConfig.MaxCellSpeedCmPerSec = ClampFinite(InOutConfig.MaxCellSpeedCmPerSec, 1.0f, TNumericLimits<float>::Max());
+		InOutConfig.BrushVelocityResponsePerSec = ClampFinite(InOutConfig.BrushVelocityResponsePerSec, 0.0f, TNumericLimits<float>::Max());
+		InOutConfig.BrushDisplacementRatio = ClampFinite(InOutConfig.BrushDisplacementRatio, 0.0f, TNumericLimits<float>::Max());
+		InOutConfig.BrushEraseRatePerSec = ClampFinite(InOutConfig.BrushEraseRatePerSec, 0.0f, TNumericLimits<float>::Max());
 		InOutConfig.GridResolution = FMath::Clamp(InOutConfig.GridResolution, MinGridResolution, MaxGridResolution);
 		InOutConfig.SimExtentCm.X = ClampExtentCm(InOutConfig.SimExtentCm.X);
 		InOutConfig.SimExtentCm.Y = ClampExtentCm(InOutConfig.SimExtentCm.Y);
@@ -73,7 +73,7 @@ namespace
 		InOutConfig.AmbientDensity = ClampFinite(InOutConfig.AmbientDensity, 0.0f, 1.0f);
 		InOutConfig.AmbientRefillPerSec = ClampFinite(InOutConfig.AmbientRefillPerSec, 0.0f, 100.0f);
 		InOutConfig.ActorBrushDensityStrength = FMath::IsFinite(InOutConfig.ActorBrushDensityStrength) ? FMath::Clamp(InOutConfig.ActorBrushDensityStrength, -10.0f, 10.0f) : 0.0f;
-		InOutConfig.ActorBrushPunctureCmPerSec = FMath::IsFinite(InOutConfig.ActorBrushPunctureCmPerSec) ? FMath::Clamp(InOutConfig.ActorBrushPunctureCmPerSec, -MaxCellSpeedCmPerSec, MaxCellSpeedCmPerSec) : 0.0f;
+		InOutConfig.ActorBrushPunctureCmPerSec = FMath::IsFinite(InOutConfig.ActorBrushPunctureCmPerSec) ? FMath::Clamp(InOutConfig.ActorBrushPunctureCmPerSec, -InOutConfig.MaxCellSpeedCmPerSec, InOutConfig.MaxCellSpeedCmPerSec) : 0.0f;
 		InOutConfig.FlowNoiseAccelerationCmPerSec2 = ClampFinite(InOutConfig.FlowNoiseAccelerationCmPerSec2, 0.0f, 10000.0f);
 		InOutConfig.FlowNoiseScaleCm = ClampFinite(InOutConfig.FlowNoiseScaleCm, 1.0f, 100000.0f);
 		InOutConfig.FlowNoiseSpeed = ClampFinite(InOutConfig.FlowNoiseSpeed, 0.0f, 100.0f);
@@ -107,7 +107,7 @@ namespace
 		InOutConfig.EdgeBounciness = ClampFinite(InOutConfig.EdgeBounciness, 0.0f, 1.0f);
 		InOutConfig.BorderFadeExponent = FMath::IsFinite(InOutConfig.BorderFadeExponent) ? FMath::Clamp(InOutConfig.BorderFadeExponent, 0.25f, 8.0f) : 1.0f;
 		InOutConfig.VortexTangentialAccelerationCmPerSec2 = FMath::IsFinite(InOutConfig.VortexTangentialAccelerationCmPerSec2) ? FMath::Clamp(InOutConfig.VortexTangentialAccelerationCmPerSec2, -20000.0f, 20000.0f) : 0.0f;
-		InOutConfig.VortexRadialDriftCmPerSec = FMath::IsFinite(InOutConfig.VortexRadialDriftCmPerSec) ? FMath::Clamp(InOutConfig.VortexRadialDriftCmPerSec, -MaxCellSpeedCmPerSec, MaxCellSpeedCmPerSec) : 0.0f;
+		InOutConfig.VortexRadialDriftCmPerSec = FMath::IsFinite(InOutConfig.VortexRadialDriftCmPerSec) ? FMath::Clamp(InOutConfig.VortexRadialDriftCmPerSec, -InOutConfig.MaxCellSpeedCmPerSec, InOutConfig.MaxCellSpeedCmPerSec) : 0.0f;
 		InOutConfig.VortexRadiusRatio = ClampFinite(InOutConfig.VortexRadiusRatio, 0.01f, 0.5f);
 	}
 
@@ -730,7 +730,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamps(const TArray<FTDFluidBrushStamp>& St
 		return;
 	}
 
-	const float VelocityBlend = FMath::Min(1.0f, BrushVelocityResponsePerSec * DeltaTime);
+	const float VelocityBlend = FMath::Min(1.0f, Config.BrushVelocityResponsePerSec * DeltaTime);
 	int32 AppliedStampCount = 0;
 
 	for (const FTDFluidBrushStamp& Stamp : Stamps)
@@ -776,7 +776,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 
 	const bool bErasesDensity = Stamp.DensityStrength < 0.0f;
 	const float DensityStrength = FMath::Max(Stamp.DensityStrength, 0.0f);
-	const float EraseRatePerSec = FMath::Abs(Stamp.DensityStrength) * BrushEraseRatePerSec;
+	const float EraseRatePerSec = FMath::Abs(Stamp.DensityStrength) * Config.BrushEraseRatePerSec;
 	const bool bWritesSelectiveDensity = Stamp.Channel == ETDFluidBrushChannel::ChannelG_Blood || Stamp.Channel == ETDFluidBrushChannel::ChannelB_Fire;
 	const bool bIsWaterLayerActive = IsWaterLayerActive();
 	const bool bWritesRipple = bIsWaterLayerActive && Stamp.RippleImpulseCm != 0.0f;
@@ -784,7 +784,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 	const bool bDefersRadialVelocity = bHasRadialVelocity && Config.SimMode != ETDFluidSimMode::SimplePainter;
 	const bool bBlendsRadialVelocity = bHasRadialVelocity && !bDefersRadialVelocity;
 	const bool bInjectsVelocity = Stamp.VelocityStrength > 0.0f || bBlendsRadialVelocity;
-	const FVector2D TargetVelocity = (FVector2D(Stamp.WorldVelocity.X, Stamp.WorldVelocity.Y) * Stamp.VelocityStrength).GetClampedToMaxSize(MaxCellSpeedCmPerSec);
+	const FVector2D TargetVelocity = (FVector2D(Stamp.WorldVelocity.X, Stamp.WorldVelocity.Y) * Stamp.VelocityStrength).GetClampedToMaxSize(Config.MaxCellSpeedCmPerSec);
 
 	const int32 MinCellX = FMath::Clamp(FMath::FloorToInt((StampCenter.X - EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
 	const int32 MaxCellX = FMath::Clamp(FMath::CeilToInt((StampCenter.X + EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
@@ -832,7 +832,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 				PrimaryDensity[CellIdx] = FMath::Max(PrimaryDensity[CellIdx], DensityTarget);
 				if (!bIsWaterLayerActive)
 				{
-					SurfaceDisplacement[CellIdx] = FMath::Max(SurfaceDisplacement[CellIdx], DensityTarget * BrushDisplacementRatio);
+					SurfaceDisplacement[CellIdx] = FMath::Max(SurfaceDisplacement[CellIdx], DensityTarget * Config.BrushDisplacementRatio);
 				}
 				if (bWritesSelectiveDensity)
 				{
@@ -857,7 +857,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 			if (bBlendsRadialVelocity && DistanceCm > UE_KINDA_SMALL_NUMBER)
 			{
 				const FVector2D OutwardDirection = (CellCenter - StampCenter) / DistanceCm;
-				CellTargetVelocity = (TargetVelocity + OutwardDirection * Stamp.RadialVelocityCmPerSec).GetClampedToMaxSize(MaxCellSpeedCmPerSec);
+				CellTargetVelocity = (TargetVelocity + OutwardDirection * Stamp.RadialVelocityCmPerSec).GetClampedToMaxSize(Config.MaxCellSpeedCmPerSec);
 			}
 
 			const float CellBlend = SmoothWeight * VelocityBlend;
@@ -1098,7 +1098,7 @@ void FTDFluidGrid2DSolver::ApplyPendingRadialPush()
 
 		if (!SolidCells[Idx])
 		{
-			const FVector2D PushedVelocity = (FVector2D(VelX[Idx] + PushX[Idx], VelY[Idx] + PushY[Idx])).GetClampedToMaxSize(MaxCellSpeedCmPerSec);
+			const FVector2D PushedVelocity = (FVector2D(VelX[Idx] + PushX[Idx], VelY[Idx] + PushY[Idx])).GetClampedToMaxSize(Config.MaxCellSpeedCmPerSec);
 			VelX[Idx] = static_cast<float>(PushedVelocity.X);
 			VelY[Idx] = static_cast<float>(PushedVelocity.Y);
 		}
@@ -1741,6 +1741,8 @@ void FTDFluidGrid2DSolver::ClampVelocityMagnitudes()
 	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ClampVelocity);
 
 	const int32 CellCount = Resolution * Resolution;
+	const float MaxCellSpeedCmPerSec = Config.MaxCellSpeedCmPerSec;
+	const float MaxCellSpeedSquared = MaxCellSpeedCmPerSec * MaxCellSpeedCmPerSec;
 	float* VelX = VelocityX.GetData();
 	float* VelY = VelocityY.GetData();
 
@@ -1754,7 +1756,7 @@ void FTDFluidGrid2DSolver::ClampVelocityMagnitudes()
 			continue;
 		}
 
-		if (SpeedSquared <= MaxCellSpeedCmPerSec * MaxCellSpeedCmPerSec)
+		if (SpeedSquared <= MaxCellSpeedSquared)
 		{
 			continue;
 		}
@@ -3182,7 +3184,7 @@ void FTDFluidGrid2DSolver::ApplyHeatStamp(const FTDFluidBrushStamp& Stamp, float
 	}
 
 	const float HeatStrength = FMath::Clamp(Stamp.HeatStrength, 0.0f, 1.0f);
-	const float EraseRatePerSec = FMath::Abs(Stamp.DensityStrength) * BrushEraseRatePerSec;
+	const float EraseRatePerSec = FMath::Abs(Stamp.DensityStrength) * Config.BrushEraseRatePerSec;
 	const int32 MinCellX = FMath::Clamp(FMath::FloorToInt((StampCenter.X - EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
 	const int32 MaxCellX = FMath::Clamp(FMath::CeilToInt((StampCenter.X + EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
 	const int32 MinCellY = FMath::Clamp(FMath::FloorToInt((StampCenter.Y - EffectiveRadius - MinBoundsY) / CellSizeY), 0, Resolution - 1);

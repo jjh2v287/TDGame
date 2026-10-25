@@ -140,6 +140,12 @@ struct FTDFluidGpuSimulationSettings
 	float VortexTangentialAccelerationCmPerSec2 = 0.0f;
 	float VortexRadialDriftCmPerSec = 0.0f;
 	float VortexRadiusRatio = 0.35f;
+	float MaxCellSpeedCmPerSec = TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec;
+	float BrushVelocityResponsePerSec = TDFluidGpuSolverConstants::BrushVelocityResponsePerSec;
+	float BrushDisplacementRatio = TDFluidGpuSolverConstants::BrushDisplacementRatio;
+	float BrushEraseRatePerSec = TDFluidGpuSolverConstants::BrushEraseRatePerSec;
+	uint8 PressureSolverModeRequest = 0;
+	int32 MultigridCyclesRequest = TDFluidGpuSolverConstants::DefaultMultigridCycles;
 	bool bUsesWaterLayer = false;
 	bool bOpenWaterBorders = true;
 	bool bTreatDryCellsAsSolid = true;

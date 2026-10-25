@@ -10,6 +10,7 @@
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
+#include "FluidFX/TDFluidPresetTuningSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
@@ -359,6 +360,7 @@ void ATDFluidWaterActor::RebuildSharedSurfaceMaterials(const TArray<AActor*>& Su
 			if (!SharedMaterial)
 			{
 				SharedMaterial = UMaterialInstanceDynamic::Create(ParentMaterial, this);
+				UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*SharedMaterial);
 				LiveComponent->RegisterExternalMaterialTarget(SharedMaterial.Get());
 			}
 			UMaterialInstanceDynamic* SharedMaterialInstance = SharedMaterial.Get();
@@ -531,6 +533,7 @@ void ATDFluidWaterActor::ApplyLoadedWetDecalMaterial()
 	}
 
 	WetDecalMID = UMaterialInstanceDynamic::Create(LoadedMaterial, this);
+	UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*WetDecalMID);
 	WetDecal->SetDecalMaterial(WetDecalMID);
 	LiveComponent->RegisterExternalMaterialTarget(WetDecalMID);
 }

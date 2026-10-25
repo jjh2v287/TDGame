@@ -26,20 +26,16 @@ CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
 namespace
 {
-	constexpr float TeleportSpeedCmPerSec = 3000.0f;
-	constexpr float SleepDistanceRatio = 1.1f;
 	constexpr float TerrainTraceStartHeightCm = 2000.0f;
 	constexpr float TerrainTraceEndDepthCm = 4000.0f;
 	constexpr int32 MaxQueuedTerrainTraceBatches = 2;
 	constexpr float PlaneMeshBaseSizeCm = 100.0f;
-	constexpr float InteractionVolumeHalfHeightCm = 300.0f;
 	constexpr float ActivationVolumeHalfHeightCm = 1000.0f;
 	constexpr float UnitlessLightIntensityReference = 1000.0f;
 	constexpr float CandelasLightIntensityReference = 10.0f;
 	constexpr float DirectionalLightIntensityReference = 10.0f;
 	constexpr float MaxVolumeLightIntensityScale = 8.0f;
 	constexpr float FullSphereSteradians = static_cast<float>(4.0 * UE_PI);
-	constexpr float MouseBrushBaseDensityStrength = 1.0f;
 	constexpr int32 MaximumActorShadowCapsuleCount = 8;
 
 	FTDFluidShadowCapsuleBonePair MakeShadowCapsuleBonePair(const TCHAR* StartBoneName, const TCHAR* EndBoneName, float RadiusCm)
@@ -87,7 +83,7 @@ namespace
 		FLinearColor Color = FLinearColor::Black;
 	};
 
-	bool IsStampableVelocity(const FVector& Velocity, float MinSpeedCmPerSec)
+	bool IsStampableVelocity(const FVector& Velocity, float MinSpeedCmPerSec, float TeleportSpeedCmPerSec)
 	{
 		const float PlanarSpeed = Velocity.Size2D();
 		return PlanarSpeed >= MinSpeedCmPerSec && PlanarSpeed <= TeleportSpeedCmPerSec;
@@ -274,6 +270,17 @@ void ATDFluidLiveActor::InitializeFromPreset(UTDFluidPresetAsset* InPreset, floa
 	SyncVolumeExtentsWithSimulation();
 }
 
+void ATDFluidLiveActor::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport)
+{
+	if (!LiveComponent)
+	{
+		return;
+	}
+
+	LiveComponent->ReapplyPresetTuning(InOutReport);
+	SyncVolumeExtentsWithSimulation();
+}
+
 void ATDFluidLiveActor::RegisterInteractingActor(AActor* InteractingActor)
 {
 	if (!InteractingActor || InteractingActor == this)
@@ -315,7 +322,7 @@ void ATDFluidLiveActor::EvaluateActivationProximity(const FVector& ObserverWorld
 		return;
 	}
 
-	const float ThresholdCm = LiveComponent->IsSimulationAwake() ? ActivationDistanceCm * SleepDistanceRatio : ActivationDistanceCm;
+	const float ThresholdCm = LiveComponent->IsSimulationAwake() ? ActivationDistanceCm * LiveComponent->GetRuntimeOpsSettings().SleepDistanceRatio : ActivationDistanceCm;
 	const float DistanceSq = FVector::DistSquared2D(GetActorLocation(), ObserverWorldLocation);
 	LiveComponent->SetSimulationAwake(DistanceSq <= FMath::Square(ThresholdCm));
 }
@@ -498,7 +505,7 @@ void ATDFluidLiveActor::SyncVolumeExtentsWithSimulation()
 	if (InteractionVolume)
 	{
 		const float InteractionHalfDepthCm = LiveComponent->GetPlaneBasis().IsWorldFacing()
-			? InteractionVolumeHalfHeightCm
+			? LiveComponent->GetRuntimeOpsSettings().InteractionVolumeHalfHeightCm
 			: LiveComponent->GetPlaneSettings().InteractionDepthCm;
 		const FVector DesiredExtent(ExtentCm.X * 0.5f, ExtentCm.Y * 0.5f, InteractionHalfDepthCm);
 		if (!InteractionVolume->GetUnscaledBoxExtent().Equals(DesiredExtent, 0.01f))
@@ -566,17 +573,18 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 
 	const FObjectKey ActorKey(TargetActor);
 	const FVector CurrentLocation = TargetActor->GetActorLocation();
+	const FTDFluidInputBrushSettings& InputBrushSettings = LiveComponent->GetInputBrushSettings();
 
 	if (const FVector* PreviousLocation = PreviousActorLocations.Find(ActorKey))
 	{
 		const FVector ComputedVelocity = (CurrentLocation - *PreviousLocation) / DeltaTime;
-		if (IsStampableVelocity(ComputedVelocity, MinInteractionSpeedCmPerSec))
+		if (IsStampableVelocity(ComputedVelocity, MinInteractionSpeedCmPerSec, InputBrushSettings.TeleportSpeedCmPerSec))
 		{
 			FTDFluidBrushStamp PivotStamp;
 			PivotStamp.WorldLocation = CurrentLocation;
 			PivotStamp.WorldVelocity = ComputedVelocity;
 			PivotStamp.RadiusCm = ActorPivotBrushRadiusCm;
-			PivotStamp.DensityStrength = 0.75f;
+			PivotStamp.DensityStrength = InputBrushSettings.PivotDensityStrength;
 			PivotStamp.VelocityStrength = 1.0f;
 			PivotStamp.Channel = InteractionBrushChannel;
 			ApplyActorBrushSettings(PivotStamp, LiveComponent->SimulationConfig);
@@ -612,13 +620,13 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 			if (const FVector* PrevBoneLoc = PreviousBoneLocations.Find(BoneKey))
 			{
 				const FVector BoneVelocity = (BoneLocation - *PrevBoneLoc) / DeltaTime;
-				if (IsStampableVelocity(BoneVelocity, MinInteractionSpeedCmPerSec))
+				if (IsStampableVelocity(BoneVelocity, MinInteractionSpeedCmPerSec, InputBrushSettings.TeleportSpeedCmPerSec))
 				{
 					FTDFluidBrushStamp BoneStamp;
 					BoneStamp.WorldLocation = BoneLocation;
 					BoneStamp.WorldVelocity = BoneVelocity;
 					BoneStamp.RadiusCm = BoneBrushRadiusCm;
-					BoneStamp.DensityStrength = 0.9f;
+					BoneStamp.DensityStrength = InputBrushSettings.BoneDensityStrength;
 					BoneStamp.VelocityStrength = 1.0f;
 					BoneStamp.Channel = InteractionBrushChannel;
 					ApplyActorBrushSettings(BoneStamp, LiveComponent->SimulationConfig);
@@ -760,7 +768,8 @@ void ATDFluidLiveActor::QueueMouseBrushAt(const FVector& CursorWorldLocation, fl
 	const FVector2D PlaneDelta = PlaneBasis.ProjectVector(CursorDelta);
 	const FVector2D PlaneVelocity(PlaneDelta.X / DeltaTime, PlaneDelta.Y / DeltaTime);
 	const FVector PlanarVelocity(PlaneVelocity.X, PlaneVelocity.Y, 0.0f);
-	if (!IsStampableVelocity(PlanarVelocity, MinInteractionSpeedCmPerSec))
+	const FTDFluidInputBrushSettings& InputBrushSettings = LiveComponent->GetInputBrushSettings();
+	if (!IsStampableVelocity(PlanarVelocity, MinInteractionSpeedCmPerSec, InputBrushSettings.TeleportSpeedCmPerSec))
 	{
 		return;
 	}
@@ -769,7 +778,7 @@ void ATDFluidLiveActor::QueueMouseBrushAt(const FVector& CursorWorldLocation, fl
 	MouseStamp.WorldLocation = CursorWorldLocation;
 	MouseStamp.WorldVelocity = PlaneBasis.UnprojectVector(PlaneVelocity);
 	MouseStamp.RadiusCm = MouseBrushRadiusCm;
-	MouseStamp.DensityStrength = MouseBrushBaseDensityStrength;
+	MouseStamp.DensityStrength = InputBrushSettings.MouseBrushDensityStrength;
 	MouseStamp.VelocityStrength = 1.0f;
 	MouseStamp.Channel = InteractionBrushChannel;
 	ApplyActorBrushSettings(MouseStamp, LiveComponent->SimulationConfig);

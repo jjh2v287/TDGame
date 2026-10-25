@@ -7,6 +7,7 @@
 #include "TDFluidLiveActor.generated.h"
 
 struct FCollisionQueryParams;
+struct FTDFluidPresetReapplyReport;
 struct FTraceDatum;
 struct FTraceHandle;
 
@@ -101,6 +102,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void InitializeFromPreset(UTDFluidPresetAsset* InPreset, float InActiveDurationSeconds = 0.0f);
+	virtual void ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport);
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void RegisterInteractingActor(AActor* InteractingActor);

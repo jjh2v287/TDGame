@@ -692,6 +692,8 @@ bool FTDFluidPlaneModeDisablesTerrainTest::RunTest(const FString& Parameters)
 
 	UTDFluidPresetAsset* FlatPreset = UTDFluidPresetAsset::CreateTransientPreset(TestWorld.World, ETDFluidPresetKind::Water);
 	UTDFluidPresetAsset* PlanePreset = UTDFluidPresetAsset::CreateTransientPreset(TestWorld.World, ETDFluidPresetKind::Water);
+	FlatPreset->bOverridePresetDefaults = true;
+	PlanePreset->bOverridePresetDefaults = true;
 	PlanePreset->PlaneSettings.Orientation = ETDFluidPlaneOrientation::CameraFacing;
 	ATDFluidLiveActor* GroundActor = TestWorld.Subsystem->SpawnPooledFluidActor(FlatPreset, FVector::ZeroVector, 120.0f);
 	ATDFluidLiveActor* PlaneActor = TestWorld.Subsystem->SpawnPooledFluidActor(PlanePreset, FVector::ZeroVector, 120.0f);

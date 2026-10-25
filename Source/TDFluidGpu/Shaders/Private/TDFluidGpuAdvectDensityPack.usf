@@ -52,7 +52,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		}
 		if (RadialPush.x != 0.0f || RadialPush.y != 0.0f)
 		{
-			AdvectionVelocity = TDFluidGpuClampToMaxSize(Velocity + RadialPush, TDFLUIDGPU_MAX_CELL_SPEED_CM_PER_SEC);
+			AdvectionVelocity = TDFluidGpuClampToMaxSize(Velocity + RadialPush, Actor.MaxCellSpeedCmPerSec);
 			AdvectionVelocity = TDFluidGpuEnforceObstacleBoundary(ObstacleSdf, Actor, Cell, AdvectionVelocity);
 		}
 
@@ -88,7 +88,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const float Alpha = clamp(TDFluidGpuComputeOutputBorderAlpha(Actor, Cell) * ObstacleMask, 0.0f, 1.0f);
 	DensityPressureOutput[uint2(Cell)] = float4(clamp(Density.x, 0.0f, 1.0f), SurfaceHeight * 0.5f + 0.5f, clamp(Density.y, 0.0f, 1.0f), Alpha);
 
-	const float2 StoredVelocity = TDFluidGpuClampVelocityMagnitude(Velocity);
+	const float2 StoredVelocity = TDFluidGpuClampVelocityMagnitude(Velocity, Actor.MaxCellSpeedCmPerSec);
 	const float2 NormalizedVelocity = clamp(StoredVelocity / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, -1.0f, 1.0f) * 0.5f + 0.5f;
 	const float SpeedRatio = clamp(length(StoredVelocity) / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, 0.0f, 1.0f);
 	const float SlopeRatio = clamp(length(TDFluidGpuComputeTerrainSlope(TerrainElevation, Actor, Cell)), 0.0f, 1.0f);

@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 와 Windows Kits dxc.exe(ps_6_0·vs_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_hlsl.py [--root 프로젝트경로] [--dxc dxc경로]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약, 하나라도 실패하면 종료 코드 1
-상태: 미검증(첫 성공 전). 물 셰이더 3개(TDFluidWaterCommon·Surface·Offset.hlsl)를 재질 스크립트와 같은 조립 함수로 노드별 조립해 엔진 순서(정점 오프셋이 먼저)대로 한 파일에 이어 붙여 컴파일하고, 정점용 매크로가 표면 함수로 새면(표본 명령 수가 단독 합과 다르면) 실패한다. 매크로를 지우지 않는 조립을 음성 대조로 넣어 검사의 검출력을 함께 확인한다. C1 추가분: 리본 입력(RibbonTangentWS·RibbonFlowCmPerSec)·C++ 구동 파라미터 계약(MID_DRIVEN_*)·무대 강 배치 자체 점검(validate_river_layout)도 함께 본다. W-2r 추가분: 젖음 데칼 HLSL(TDFluidWaterWetDecal.hlsl) 텍스트·자체 점검·dxc 컴파일, 리본 로컬 UV 정적 스위치 0·1 순열 컴파일(표본 수 불변), 인스턴스 정적 스위치 이름 대조.
+상태: 미검증(첫 성공 전). 물 셰이더 3개(TDFluidWaterCommon·Surface·Offset.hlsl)를 재질 스크립트와 같은 조립 함수로 노드별 조립해 엔진 순서(정점 오프셋이 먼저)대로 한 파일에 이어 붙여 컴파일하고, 정점용 매크로가 표면 함수로 새면(표본 명령 수가 단독 합과 다르면) 실패한다. 매크로를 지우지 않는 조립을 음성 대조로 넣어 검사의 검출력을 함께 확인한다. C1 추가분: 리본 입력(RibbonTangentWS·RibbonFlowCmPerSec)·C++ 구동 파라미터 계약(MID_DRIVEN_*)·무대 강 배치 자체 점검(validate_river_layout)도 함께 본다. W-2r 추가분: 젖음 데칼 HLSL(TDFluidWaterWetDecal.hlsl) 텍스트·자체 점검·dxc 컴파일, 리본 로컬 UV 정적 스위치 0·1 순열 컴파일(표본 수 불변), 인스턴스 정적 스위치 이름 대조. 파동 0 P1(2026-10-25): 인스턴스 덮어쓰기 이름·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(fluid_material_look.TDMaterialLookTable)에서 읽는다.
 """
 import argparse
 import glob
@@ -153,7 +153,7 @@ def run_shader_text_checks(root, shader_names):
     return failures
 
 
-def run_contract_checks(material):
+def run_contract_checks(material, look_table):
     failures = []
     resolvable = set(material.BUILTIN_SOURCE_NAMES) | set(material.TEXTURE_PARAMETER_NAMES)
     resolvable |= {name for name, _ in material.VECTOR_PARAMETER_DEFAULTS}
@@ -178,7 +178,7 @@ def run_contract_checks(material):
         unused = [name for name in driven_names if name not in surface_and_offset]
         if unused:
             failures.append(f"C++ 구동 {label} 파라미터가 셰이더 입력에 없음: " + ", ".join(unused))
-    shadowed = material.find_shadowed_mid_parameters()
+    shadowed = material.find_shadowed_mid_parameters(look_table)
     if shadowed:
         failures.append("인스턴스가 C++ 구동 파라미터를 덮어씀: " + ", ".join(shadowed))
     primitive_indices = material.PRIMITIVE_DATA_INDEX_BY_PARAMETER
@@ -189,11 +189,12 @@ def run_contract_checks(material):
     if primitive_not_scalar:
         failures.append("Custom Primitive Data 이름이 스칼라 선언에 없음: " + ", ".join(primitive_not_scalar))
     for spec in material.INSTANCE_SPECS:
+        entry = look_table.material(material.asset_path(spec["name"]), material.WATER_MASTER_PATH)
         overridable = {name for name, _ in material.VECTOR_PARAMETER_DEFAULTS} | {name for name, _ in material.SCALAR_PARAMETER_DEFAULTS}
-        unknown = sorted((set(spec["vectors"]) | set(spec["scalars"])) - overridable)
+        unknown = sorted((set(entry["Vectors"]) | set(entry["Scalars"])) - overridable)
         if unknown:
             failures.append(f"{spec['name']} 덮어쓰기 이름이 마스터에 없음: " + ", ".join(unknown))
-        unknown_switches = sorted(set(spec.get("switches", {})) - set(material.STATIC_SWITCH_NAMES))
+        unknown_switches = sorted(set(entry["Switches"]) - set(material.STATIC_SWITCH_NAMES))
         if unknown_switches:
             failures.append(f"{spec['name']} 정적 스위치 이름이 마스터에 없음: " + ", ".join(unknown_switches))
     return failures
@@ -214,6 +215,7 @@ def main():
     sys.modules["unreal"] = mock.MagicMock()
     material = load_script(root, "editor_make_fluid_water_material")
     record("재질 스크립트 unreal 스텁 임포트", True)
+    look_table = load_script(root, "fluid_material_look").TDMaterialLookTable.read_project(str(root))
     stage_path = root / "Tools" / "FluidFX" / "editor_make_fluid_water_stage.py"
     if stage_path.is_file():
         stage = load_script(root, "editor_make_fluid_water_stage")
@@ -227,7 +229,7 @@ def main():
     text_failures = run_shader_text_checks(root, shader_names)
     record("셰이더 텍스트(주석·절대 경로·ASCII·LF)", not text_failures, "; ".join(text_failures))
 
-    contract_failures = run_contract_checks(material)
+    contract_failures = run_contract_checks(material, look_table)
     record("입력·파라미터 계약", not contract_failures, "; ".join(contract_failures))
 
     sources = material.read_shader_sources(str(root))

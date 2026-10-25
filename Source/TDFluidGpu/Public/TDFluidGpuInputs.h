@@ -159,6 +159,14 @@ struct FTDFluidGpuSimulationSettings
 	float WaterKernelFeedback = 0.98f;
 	float WaterKernelScale = 1.0f;
 	int32 WaterMultigridCycles = 1;
+	bool bUsesWaterWetness = false;
+	bool bUsesWhitewaterDissipation = false;
+	float WhitewaterDissipation = 0.0f;
+	float BankWetHeightCm = 0.0f;
+	float WetnessFromWhitewater = 0.5f;
+	float SwashHeightCm = 0.0f;
+	float CoastWavePeriodSeconds = 6.0f;
+	float WetnessDryingSeconds = 8.0f;
 };
 
 struct FTDFluidGpuTransmittanceInput
@@ -231,6 +239,10 @@ struct FTDFluidGpuActorInput
 	TArray<FIntPoint> WaterProbeCells;
 	int32 WaterProbeFirstSlot = 0;
 	FTextureRenderTargetResource* WaterSurfaceOutput = nullptr;
+	bool bUpdatesWaterWetness = false;
+	bool bResetsWaterWetness = false;
+	float WaterWetnessRetainFactor = 1.0f;
+	float WaterSwashReachCm = 0.0f;
 };
 
 struct FTDFluidGpuFrameInputs

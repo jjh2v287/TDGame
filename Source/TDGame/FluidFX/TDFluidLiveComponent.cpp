@@ -9,6 +9,7 @@
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidVolumeTransmittance.h"
+#include "FluidFX/TDFluidWaterWetnessRules.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -194,6 +195,7 @@ void UTDFluidLiveComponent::ResetSimulationState()
 {
 	PendingBrushStamps.Reset();
 	LastProcessedPointCount = 0;
+	bHasSampledTerrainRange = false;
 	if (bUsesGpuSolver)
 	{
 		ReleaseGpuSolverSlot();
@@ -1266,8 +1268,7 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 		TargetMID->SetTextureParameterValue(TEXT("WaterSurfaceTexture"), WaterSurfaceOutput);
 	}
 	const double WaterTimeSeconds = bUsesGpuSolver ? GpuSolverProxy.GetSimulationTimeSeconds() : Solver.GetSimulationTimeSeconds();
-	const double CoastWavePeriodSeconds = FMath::Max(static_cast<double>(SolverConfig.CoastWavePeriodSeconds), 0.1);
-	const float CoastWavePhase = static_cast<float>(FMath::Frac(WaterTimeSeconds / CoastWavePeriodSeconds));
+	const float CoastWavePhase = FTDFluidWaterWetnessRules::ComputeCoastWavePhase(WaterTimeSeconds, SolverConfig.CoastWavePeriodSeconds);
 	TargetMID->SetScalarParameterValue(TEXT("WaterDepthReferenceCm"), SolverConfig.WaterDepthReferenceCm);
 	TargetMID->SetScalarParameterValue(TEXT("RippleHeightReferenceCm"), SolverConfig.RippleHeightReferenceCm);
 	TargetMID->SetScalarParameterValue(TEXT("VelocitySpeedReferenceCmPerSec"), FTDFluidGrid2DSolver::GetOutputSpeedReferenceCmPerSec());
@@ -1332,8 +1333,27 @@ FTDFluidCellSample UTDFluidLiveComponent::SampleSimulationCell(int32 CellX, int3
 	return bUsesGpuSolver ? GpuSolverProxy.SampleSimulationCell(CellX, CellY) : Solver.SampleAtCell(CellX, CellY);
 }
 
+bool UTDFluidLiveComponent::TryGetSampledTerrainRangeCm(float& OutMinCm, float& OutMaxCm) const
+{
+	if (!bHasSampledTerrainRange)
+	{
+		return false;
+	}
+
+	OutMinCm = SampledTerrainMinCm;
+	OutMaxCm = SampledTerrainMaxCm;
+	return true;
+}
+
 void UTDFluidLiveComponent::SetTerrainElevationAtCell(int32 CellX, int32 CellY, float ElevationCm)
 {
+	if (FMath::IsFinite(ElevationCm))
+	{
+		SampledTerrainMinCm = bHasSampledTerrainRange ? FMath::Min(SampledTerrainMinCm, ElevationCm) : ElevationCm;
+		SampledTerrainMaxCm = bHasSampledTerrainRange ? FMath::Max(SampledTerrainMaxCm, ElevationCm) : ElevationCm;
+		bHasSampledTerrainRange = true;
+	}
+
 	if (bUsesGpuSolver)
 	{
 		GpuSolverProxy.SetTerrainElevationAtCell(CellX, CellY, ElevationCm);
@@ -1421,6 +1441,7 @@ FTDFluidGpuBackendDecision UTDFluidLiveComponent::ResolveSolverBackend() const
 
 void UTDFluidLiveComponent::InitializeSimulation(const FVector2D& CenterWorld)
 {
+	bHasSampledTerrainRange = false;
 	const FTDFluidGpuBackendDecision BackendDecision = ResolveSolverBackend();
 	if (!BackendDecision.bUsesGpu)
 	{

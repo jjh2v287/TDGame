@@ -42,7 +42,9 @@ enum class ETDFluidGpuWaterFlags : uint32
 	UsesWhitewaterFromVorticity = 1u << 6,
 	UsesRapidsWhitewater = 1u << 7,
 	UsesTerrainSlopeDryOnly = 1u << 8,
-	ReachedRippleSubstepCap = 1u << 9
+	ReachedRippleSubstepCap = 1u << 9,
+	UpdatesWetness = 1u << 10,
+	ResetsWetness = 1u << 11
 };
 ENUM_CLASS_FLAGS(ETDFluidGpuWaterFlags);
 
@@ -133,9 +135,10 @@ struct alignas(16) FTDFluidGpuActorParameters
 	float VortexTangentialStepCmPerSec = 0.0f;
 	float VortexRadialDriftCmPerSec = 0.0f;
 	float VortexRadiusCm = 0.0f;
-	uint32 Padding0 = 0;
+	float WhitewaterDissipationFactor = 1.0f;
 };
 static_assert(sizeof(FTDFluidGpuActorParameters) == 272, "FTDFluidGpuActorParameters must match the 272 byte shader layout.");
+static_assert(offsetof(FTDFluidGpuActorParameters, WhitewaterDissipationFactor) == 268, "FTDFluidGpuActorParameters::WhitewaterDissipationFactor must stay at byte 268.");
 static_assert(offsetof(FTDFluidGpuActorParameters, HeatDissipationFactor) == 236, "FTDFluidGpuActorParameters::HeatDissipationFactor must stay at byte 236.");
 static_assert(offsetof(FTDFluidGpuActorParameters, HeatBuoyancyVelocityStepCmPerSec) == 240, "FTDFluidGpuActorParameters::HeatBuoyancyVelocityStepCmPerSec must stay at byte 240.");
 static_assert(offsetof(FTDFluidGpuActorParameters, VortexTangentialStepCmPerSec) == 256, "FTDFluidGpuActorParameters::VortexTangentialStepCmPerSec must stay at byte 256.");
@@ -200,17 +203,24 @@ struct alignas(16) FTDFluidGpuWaterParameters
 	float KernelDivergenceScale = 0.0f;
 
 	uint32 KernelRadius = 0;
+	float WetnessRetainFactor = 1.0f;
+	float SwashReachCm = 0.0f;
+	float BankWetHeightCm = 0.0f;
+
+	float InvBankWetHeightCm = 0.0f;
+	float WetnessFromWhitewater = 0.0f;
 	uint32 Padding0 = 0;
 	uint32 Padding1 = 0;
-	uint32 Padding2 = 0;
 };
-static_assert(sizeof(FTDFluidGpuWaterParameters) == 112, "FTDFluidGpuWaterParameters must match the 112 byte shader layout.");
+static_assert(sizeof(FTDFluidGpuWaterParameters) == 128, "FTDFluidGpuWaterParameters must match the 128 byte shader layout.");
 static_assert(offsetof(FTDFluidGpuWaterParameters, FieldOrigin) == 16, "FTDFluidGpuWaterParameters::FieldOrigin must stay at byte 16.");
 static_assert(offsetof(FTDFluidGpuWaterParameters, FlowGuideResponseBlend) == 32, "FTDFluidGpuWaterParameters::FlowGuideResponseBlend must stay at byte 32.");
 static_assert(offsetof(FTDFluidGpuWaterParameters, InvCellSizeSquaredCm) == 48, "FTDFluidGpuWaterParameters::InvCellSizeSquaredCm must stay at byte 48.");
 static_assert(offsetof(FTDFluidGpuWaterParameters, WhitewaterVorticityStep) == 64, "FTDFluidGpuWaterParameters::WhitewaterVorticityStep must stay at byte 64.");
 static_assert(offsetof(FTDFluidGpuWaterParameters, RippleHeightReferenceCm) == 80, "FTDFluidGpuWaterParameters::RippleHeightReferenceCm must stay at byte 80.");
 static_assert(offsetof(FTDFluidGpuWaterParameters, KernelRadius) == 96, "FTDFluidGpuWaterParameters::KernelRadius must stay at byte 96.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, WetnessRetainFactor) == 100, "FTDFluidGpuWaterParameters::WetnessRetainFactor must stay at byte 100.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, InvBankWetHeightCm) == 112, "FTDFluidGpuWaterParameters::InvBankWetHeightCm must stay at byte 112.");
 
 struct alignas(16) FTDFluidGpuPackedWaterGuideUpdate
 {
@@ -314,6 +324,7 @@ struct FTDFluidGpuBatchStateTextures
 	TRefCountPtr<IPooledRenderTarget> WaterGuideField;
 	TRefCountPtr<IPooledRenderTarget> WaterSurfaceHeightField;
 	TRefCountPtr<IPooledRenderTarget> WaterTerrainField;
+	TRefCountPtr<IPooledRenderTarget> WaterWetness;
 };
 
 struct FTDFluidGpuReadbackAtlasLayout

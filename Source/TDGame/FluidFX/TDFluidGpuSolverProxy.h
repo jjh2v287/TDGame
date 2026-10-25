@@ -151,6 +151,7 @@ private:
 	int32 LatestWaterProbeGeneration = -1;
 	FTDFluidGpuBatchKey LastGatheredBatchKey;
 	bool bHasGatheredBatchKey = false;
+	bool bWasUpdatingWaterWetness = false;
 };
 
 class FTDFluidGpuSolverRenderState

@@ -50,6 +50,7 @@ namespace
 	constexpr int64 BatchWaterHalfPairBytesPerTexel = 2 * HalfFloatBytes;
 	constexpr int64 BatchWaterFloatPairBytesPerTexel = 2 * FloatBytes;
 	constexpr int64 BatchWaterFieldBytesPerCell = 4 * FloatBytes + FloatBytes + FloatBytes;
+	constexpr int64 BatchWaterWetnessBytesPerCell = FloatBytes;
 	constexpr int64 BatchWaterOutputBytesPerCell = 3 * RgbaHalfFloatBytes;
 	constexpr int64 BatchWaterCompositeSdfBytesPerCell = HalfFloatBytes;
 	constexpr int64 BatchWaterFieldDrySdfBytesPerCell = HalfFloatBytes;
@@ -222,6 +223,12 @@ namespace
 		Sanitized.WaterKernelRadius = FMath::Clamp(Settings.WaterKernelRadius, BatchWaterKernelMinimumRadius, BatchWaterKernelMaximumRadius);
 		Sanitized.WaterKernelFeedback = ClampFinite(Settings.WaterKernelFeedback, 0.0f, 1.0f);
 		Sanitized.WaterKernelScale = SanitizeBatchWaterKernelScale(Settings.WaterKernelScale);
+		Sanitized.WhitewaterDissipation = ClampFinite(Settings.WhitewaterDissipation, 0.0f, 10.0f);
+		Sanitized.BankWetHeightCm = ClampFinite(Settings.BankWetHeightCm, 0.0f, 1000.0f);
+		Sanitized.WetnessFromWhitewater = ClampFinite(Settings.WetnessFromWhitewater, 0.0f, 1.0f);
+		Sanitized.SwashHeightCm = ClampFinite(Settings.SwashHeightCm, 0.0f, 1000.0f);
+		Sanitized.CoastWavePeriodSeconds = ClampFinite(Settings.CoastWavePeriodSeconds, 0.1f, 1000.0f);
+		Sanitized.WetnessDryingSeconds = ClampFinite(Settings.WetnessDryingSeconds, 0.01f, 10000.0f);
 		return Sanitized;
 	}
 
@@ -303,6 +310,7 @@ namespace
 		Parameters.AdvectionStepScale = FVector2f((StepDeltaTime * Settings.AdvectionSpeedScale) / CellSizeX, (StepDeltaTime * Settings.AdvectionSpeedScale) / CellSizeY);
 		Parameters.AdvectVelocityDampingFactor = 1.0f / (1.0f + Settings.VelocityDamping * StepDeltaTime * AdvectVelocityDampingScale);
 		Parameters.DensityDissipationFactor = 1.0f / (1.0f + Settings.DensityDissipation * StepDeltaTime);
+		Parameters.WhitewaterDissipationFactor = Settings.bUsesWhitewaterDissipation ? 1.0f / (1.0f + Settings.WhitewaterDissipation * StepDeltaTime) : Parameters.DensityDissipationFactor;
 		Parameters.PainterVelocityDecay = 1.0f / (1.0f + Settings.VelocityDamping * StepDeltaTime * PainterVelocityDampingScale);
 		Parameters.TerrainSlopeGravity = Settings.TerrainSlopeGravity;
 		Parameters.FlowNoiseAccelerationCmPerSec2 = Settings.FlowNoiseAccelerationCmPerSec2;
@@ -490,7 +498,7 @@ namespace
 		InOutFlags |= Flag;
 	}
 
-	ETDFluidGpuWaterFlags ResolveBatchWaterFlags(const FTDFluidGpuSimulationSettings& Settings, bool bNeedsReset, bool bReachedRippleSubstepCap)
+	ETDFluidGpuWaterFlags ResolveBatchWaterFlags(const FTDFluidGpuSimulationSettings& Settings, bool bNeedsReset, bool bReachedRippleSubstepCap, bool bUpdatesWetness, bool bResetsWetness)
 	{
 		const bool bUsesRipples = Settings.RippleWaveSpeedCmPerSec > 0.0f;
 
@@ -505,6 +513,8 @@ namespace
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesRapidsWhitewater, Settings.RapidsWhitewaterPerSec > 0.0f);
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesTerrainSlopeDryOnly, Settings.TerrainSlopeGravity > 0.0f);
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::ReachedRippleSubstepCap, bReachedRippleSubstepCap);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UpdatesWetness, bUpdatesWetness);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::ResetsWetness, bResetsWetness);
 		return Flags;
 	}
 
@@ -525,9 +535,11 @@ namespace
 		float RippleWaveSpeedScale = 1.0f;
 		const int32 RippleSubstepCount = FTDFluidGpuBatch::ComputeWaterRippleSubstepCount(RippleWaveSpeed, StepDeltaTime, FMath::Min(CellSizeX, CellSizeY), ResolutionTier, bReachedRippleSubstepCap, RippleWaveSpeedScale);
 		const float ScaledRippleWaveSpeed = RippleWaveSpeed * RippleWaveSpeedScale;
+		const bool bUpdatesWetness = Actor.bUpdatesWaterWetness;
+		const bool bResetsWetness = bUpdatesWetness && (bNeedsReset || Actor.bResetsWaterWetness);
 
 		FTDFluidGpuWaterParameters WaterParameters;
-		WaterParameters.WaterFlags = static_cast<uint32>(ResolveBatchWaterFlags(Settings, bNeedsReset, bReachedRippleSubstepCap));
+		WaterParameters.WaterFlags = static_cast<uint32>(ResolveBatchWaterFlags(Settings, bNeedsReset, bReachedRippleSubstepCap, bUpdatesWetness, bResetsWetness));
 		WaterParameters.FieldResolution = ResolutionTier / FieldDivisor;
 		WaterParameters.FieldDivisor = FieldDivisor;
 		WaterParameters.PressureResolution = ResolutionTier / PressureDivisor;
@@ -546,6 +558,11 @@ namespace
 		WaterParameters.WaterDepthReferenceCm = Settings.WaterDepthReferenceCm;
 		WaterParameters.RippleHeightReferenceCm = Settings.RippleHeightReferenceCm;
 		WaterParameters.TerrainReferenceZCm = FMath::IsFinite(Actor.WaterTerrainReferenceZCm) ? Actor.WaterTerrainReferenceZCm : 0.0f;
+		WaterParameters.WetnessRetainFactor = Actor.WaterWetnessRetainFactor;
+		WaterParameters.SwashReachCm = Actor.WaterSwashReachCm;
+		WaterParameters.BankWetHeightCm = Settings.BankWetHeightCm;
+		WaterParameters.InvBankWetHeightCm = Settings.BankWetHeightCm > 0.0f ? 1.0f / Settings.BankWetHeightCm : 0.0f;
+		WaterParameters.WetnessFromWhitewater = Settings.WetnessFromWhitewater;
 		if (!bUsesKernelPressure)
 		{
 			return WaterParameters;
@@ -907,7 +924,7 @@ FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateWaterActorMemory(const FTDFl
 	const int64 ReadbackTileTexelCount = static_cast<int64>(TDFluidGpuSolverConstants::ReadbackTileResolution) * TDFluidGpuSolverConstants::ReadbackTileResolution;
 
 	FTDFluidGpuMemoryEstimate Estimate;
-	Estimate.StateBytes = CellCount * (PingPongTextureCount * VelocityBytesPerTexel + DensityBytesPerCell + PingPongTextureCount * RippleBytesPerTexel + ObstacleSdfBytesPerCell)
+	Estimate.StateBytes = CellCount * (PingPongTextureCount * VelocityBytesPerTexel + DensityBytesPerCell + PingPongTextureCount * RippleBytesPerTexel + ObstacleSdfBytesPerCell + BatchWaterWetnessBytesPerCell)
 		+ PressureResolution * PressureResolution * PressureSolutionBytesPerCell
 		+ FieldCellCount * BatchWaterFieldBytesPerCell;
 	Estimate.OutputBytes = CellCount * BatchWaterOutputBytesPerCell;

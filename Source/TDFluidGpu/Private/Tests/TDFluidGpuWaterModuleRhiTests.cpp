@@ -602,7 +602,7 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 		const int64 RippleBytes = bUsesFloat32Ripple ? 8 : 4;
 		const int64 PressureCellCount = static_cast<int64>(PressureResolution) * PressureResolution;
 		const int64 FieldCellCount = static_cast<int64>(FieldResolution) * FieldResolution;
-		return CellCount * (2 * VelocityBytes + 16 + 2 * RippleBytes + 2) + PressureCellCount * 8 + FieldCellCount * 24;
+		return CellCount * (2 * VelocityBytes + 16 + 2 * RippleBytes + 2) + CellCount * 4 + PressureCellCount * 8 + FieldCellCount * 24;
 	}
 
 	struct FTDWaterGpuShearScene
@@ -1798,8 +1798,8 @@ bool FTDFluidGpuWaterModuleRhiStateBytesMatchTableTest::RunTest(const FString& P
 		int64 DefaultTableStateBytes = 0;
 	};
 	const FTDWaterStateBytesCase Cases[] = {
-		{ TEXT("192"), 192, 3022848 },
-		{ TEXT("1024"), 1024, 47710208 },
+		{ TEXT("192"), 192, 3170304 },
+		{ TEXT("1024"), 1024, 51904512 },
 	};
 
 	for (const FTDWaterStateBytesCase& Case : Cases)

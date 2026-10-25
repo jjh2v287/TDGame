@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 물 무대 LV_TDFluidWaterStage 를 만든다. 장면 0(호수 분지 0~220cm, 물가 완경사, 잠긴 바위 14개(DarkFantasyTopDown), 물결 모래 재질, 역광 해(반짝임), 수면은 100cm 192칸 격자, 프리셋 DA_TDFluid_WaterLook0)과 장면 1(강: 폭 8m·깊이 1.2m·기울기 0.5%·굽이 1개, 폭 절반 여울 구간 수심 40cm, 바위 3개 중 1개 잠김+TDFluidObstacle 태그, 프리셋 DA_TDFluid_River). 먼저 editor_make_fluid_water_material.py 가 성공해야 하고, 장면 1 은 C++ 묶음 B1(ATDFluidWaterActor·ATDFluidRiverActor) 재빌드와 에디터 재시작 뒤에만 만든다.
-실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_stage.py (요청 파일 Saved/FluidFX/fluid_water_stage_request.json 의 {"overwrite": true, "scenes": [0, 1]}, B1 전이면 scenes 를 [0] 으로)
-출력: /Game/FluidFX/Presets/DA_TDFluid_WaterLook0·DA_TDFluid_River, /Game/FluidFX/Materials/M_TD_FluidWaterMatte·M_TD_FluidWaterSandRipple·MI_TD_FluidWaterSand·MI_TD_FluidWaterStone, /Game/FluidFX/Maps/LV_TDFluidWaterStage, Saved/FluidFX/water_stage/heightmap.r16, Saved/FluidFX/fluid_water_stage.json(강 배치·탐침 좌표 포함, pie_probe_fluid_water.py 가 읽는다)
-상태: 장면 0 은 실행 검증됨, 장면 1 은 미검증(C1 작성분, B1 C++ 계약은 명세 이름으로 가정하고 첫머리에서 점검). 에셋·맵이 이미 있으면 요청 파일에 overwrite true 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. W-2r: 모래 젖은 띠의 수위를 호수 반경(LakeWetReachCm) 밖에서는 강 수면 고도(RiverLevelStartXCm·RiverLevelSlopePerCm·RiverLevelStartZCm, 강 시작~끝 평균 경사)로 바꿔 하류 강둑 위에 뜨던 Z=0 띠를 없앤다(무대 다시 짓기 필요). FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 이 무대는 2026-10-22 데이터화 뒤 재생성 전(빌더 값은 비트 동일이라 결과는 같음, 이전 보고에는 sha 가 없어 check_fluid_preset_data.py --stage-report 가 STALE 을 낸다).
+실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_stage.py (요청 파일 Saved/FluidFX/fluid_water_stage_request.json 의 {"overwrite": true, "scenes": [0, 1]}, B1 전이면 scenes 를 [0] 으로). 해변 무대 LV_TDFluidCoastStage(W-2s-a)는 장면 0·1 과 따로 {"overwrite": true, "scenes": [2]} 단독 요청으로만 만든다
+출력: /Game/FluidFX/Presets/DA_TDFluid_WaterLook0·DA_TDFluid_River, /Game/FluidFX/Materials/M_TD_FluidWaterMatte·M_TD_FluidWaterSandRipple·MI_TD_FluidWaterSand·MI_TD_FluidWaterStone, /Game/FluidFX/Maps/LV_TDFluidWaterStage, Saved/FluidFX/water_stage/heightmap.r16, Saved/FluidFX/fluid_water_stage.json(강 배치·탐침 좌표 포함, pie_probe_fluid_water.py 가 읽는다). 해변(scenes [2]): /Game/FluidFX/Presets/DA_TDFluid_Sea, /Game/FluidFX/Materials/MI_TD_FluidWaterSandCoast, /Game/FluidFX/Maps/LV_TDFluidCoastStage, Saved/FluidFX/water_stage/coast_heightmap.r16, Saved/FluidFX/fluid_coast_stage.json
+상태: 장면 0 은 실행 검증됨, 장면 1 은 미검증(C1 작성분, B1 C++ 계약은 명세 이름으로 가정하고 첫머리에서 점검). 에셋·맵이 이미 있으면 요청 파일에 overwrite true 가 있을 때만 갱신하고(맵은 지우지 않고 열어서 액터만 비움), C++ 계약 속성이 하나라도 없거나 미저장 작업이 있으면 중단한다. W-2r: 모래 젖은 띠의 수위를 호수 반경(LakeWetReachCm) 밖에서는 강 수면 고도(RiverLevelStartXCm·RiverLevelSlopePerCm·RiverLevelStartZCm, 강 시작~끝 평균 경사)로 바꿔 하류 강둑 위에 뜨던 Z=0 띠를 없앤다(무대 다시 짓기 필요). FX-8c 프리셋 데이터(2026-10-22): 프리셋 값 정본은 Content/FluidFX/PresetData/TDFluidPresetTuning.json 이고, 시작 때(덮어쓰기·미저장 가드 뒤, 에셋 변경 전) Tools/check_fluid_preset_data.py 검사와 TDFluidPresetTuningSubsystem 다시 읽기를 하며, 보고에 preset_tuning_sha256(파일 바이트)을 남긴다. 이 무대는 2026-10-22 데이터화 뒤 재생성 전(빌더 값은 비트 동일이라 결과는 같음, 이전 보고에는 sha 가 없어 check_fluid_preset_data.py --stage-report 가 STALE 을 낸다). W-2s-a 해변 무대(scenes [2] 단독, 미검증): 5도 모래 경사 126m 지형·Sea 프리셋 물 액터(젖은 띠 데칼 켬)·수면 타일 5x8·수동 노출(AEM_MANUAL, EV100 = EXPOSURE_EV100)·내비를 별도 맵에 만들고, 공유 모래 마스터 M_TD_FluidWaterSandRipple 은 불러오기만 하며(없으면 중단), LV_TDFluidWaterStage 와 fluid_water_stage.json 은 성공이든 실패든 건드리지 않는다(실패 보고도 fluid_coast_stage.json). 먼저 editor_make_fluid_water_material.py 의 {"wet_decal_only": true} 와 장면 0·1 무대가 있어야 하고 C++ 묶음(젖음 필드·데칼 속성) 재빌드와 에디터 재시작 뒤에만 만든다.
 """
 import array
 import hashlib
@@ -1347,6 +1347,496 @@ def reload_preset_tuning():
     return hashlib.sha256(tuning_bytes).hexdigest()
 
 
+COAST_SCENE = 2
+COAST_MAP_PATH = f"{MAP_DIR}/LV_TDFluidCoastStage"
+COAST_REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_coast_stage.json")
+COAST_HEIGHTMAP_RELATIVE_PATH = ("Saved", "FluidFX", "water_stage", "coast_heightmap.r16")
+COAST_PRESET_NAME = "DA_TDFluid_Sea"
+COAST_PRESET_PATH = f"{PRESET_DIR}/{COAST_PRESET_NAME}"
+COAST_SAND_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidWaterSandCoast"
+COAST_SEA_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidWater_Sea"
+COAST_TILE_MESH_PATH = f"{MESH_DIR}/SM_TD_FluidWaterGrid64"
+COAST_WET_DECAL_MATERIAL_PATH = f"{MATERIAL_DIR}/M_TD_FluidWetnessDecal.M_TD_FluidWetnessDecal"
+COAST_GUARDED_ASSET_PATHS = (COAST_PRESET_PATH, COAST_SAND_INSTANCE_PATH, COAST_MAP_PATH)
+COAST_SEA_LEVEL_Z_CM = 100.0
+COAST_SHORE_X_CM = 0.0
+COAST_SLOPE_DEGREES = 5.0
+COAST_SLOPE_TANGENT = math.tan(math.radians(COAST_SLOPE_DEGREES))
+COAST_TERRAIN_X_RANGE_CM = (-3200.0, 2600.0)
+COAST_SAND_WET_BAND_CM = 0.01
+COAST_SAND_PARAMETER_NAMES = ("WetBandHeightCm", "WaterLevelZCm")
+COAST_TILE_SIZE_CM = 1600.0
+COAST_TILE_COUNT_X = 5
+COAST_TILE_COUNT_Y = 8
+COAST_TILE_MIN_XY_CM = (-6400.0, -6400.0)
+COAST_PLAYER_START_XY_CM = (300.0, 0.0)
+COAST_NAVIGATION_SCALE = (15.0, 15.0, 8.0)
+COAST_NAVIGATION_HALF_EXTENT_CM = 1500.0
+COAST_EXPOSURE_FSTOP = 2.0
+COAST_EXPOSURE_ISO = 100.0
+COAST_EXPOSURE_SHUTTER_SPEED = (2.0 ** EXPOSURE_EV100) * COAST_EXPOSURE_ISO / (COAST_EXPOSURE_FSTOP ** 2 * 100.0)
+COAST_BLOOM_INTENSITY = 0.3
+COAST_VIGNETTE_INTENSITY = 0.15
+COAST_WALK_LINE_X_CM = -457.0
+COAST_WALK_LINE_Y_RANGE_CM = (-400.0, 400.0)
+COAST_WALK_SPEED_CM_PER_SEC = 150.0
+COAST_WET_ROI_Y_RANGE_CM = (-50.0, 50.0)
+COAST_WET_ROI_S_RANGE_M = (0.0, 4.0)
+COAST_WET_ROI_BIN_CM = 10.0
+COAST_CAMERA_POSES = (
+    {"name": "G-K", "pawn_xy_cm": (COAST_WALK_LINE_X_CM, COAST_WALK_LINE_Y_RANGE_CM[0]), "arm_length_cm": 800.0, "pitch_degrees": -60.0, "yaw_degrees": 0.0},
+    {"name": "G-B", "pawn_xy_cm": (450.0, 0.0), "arm_length_cm": 800.0, "pitch_degrees": -60.0, "yaw_degrees": 0.0},
+    {"name": "R8", "pawn_xy_cm": (450.0, 0.0), "arm_length_cm": 600.0, "pitch_degrees": -12.0, "yaw_degrees": 160.0},
+    {"name": "R22", "pawn_xy_cm": (-100.0, 0.0), "arm_length_cm": 600.0, "pitch_degrees": -25.0, "yaw_degrees": -20.0},
+)
+COAST_REQUIRED_UNREAL_NAMES = (
+    "StaticMeshActor",
+    "CollisionEnabled.NO_COLLISION",
+    "AutoExposureMethod.AEM_MANUAL",
+    "MaterialInstanceConstant",
+    "MaterialEditingLibrary.get_scalar_parameter_names",
+    "MaterialEditingLibrary.set_material_instance_scalar_parameter_value",
+    "MaterialEditingLibrary.get_material_instance_scalar_parameter_value",
+    "MaterialEditingLibrary.update_material_instance",
+    "TDFluidPlaneSettings",
+)
+COAST_PRESET_KIND_NAMES = ("SEA",)
+COAST_CONFIG_PROPERTY_NAMES = ("enable_water_layer", "enable_water_wetness", "use_whitewater_dissipation", "whitewater_dissipation")
+COAST_WATER_ACTOR_PROPERTY_NAMES = RIVER_OBJECT_CONTRACTS["TDFluidWaterActor"] + ("enable_wet_decal", "wet_decal_material")
+COAST_EFFECTIVE_REPORT_NAMES = RIVER_EFFECTIVE_REPORT_NAMES + (
+    "swash_height_cm",
+    "wetness_drying_seconds",
+    "wetness_from_whitewater",
+    "enable_water_wetness",
+    "use_whitewater_dissipation",
+    "whitewater_dissipation",
+)
+
+
+def compute_coast_terrain_height_cm(x_cm):
+    clamped_x_cm = min(max(x_cm, COAST_TERRAIN_X_RANGE_CM[0]), COAST_TERRAIN_X_RANGE_CM[1])
+    return COAST_SEA_LEVEL_Z_CM + (clamped_x_cm - COAST_SHORE_X_CM) * COAST_SLOPE_TANGENT
+
+
+def redirect_report_to_coast():
+    global REPORT_RELATIVE_PATH
+    REPORT_RELATIVE_PATH = COAST_REPORT_RELATIVE_PATH
+
+
+def find_missing_coast_unreal_names():
+    missing = find_missing_unreal_names((0,))
+    for dotted_name in COAST_REQUIRED_UNREAL_NAMES:
+        target = unreal
+        for part in dotted_name.split("."):
+            target = getattr(target, part, None)
+            if target is None:
+                missing.append(dotted_name)
+                break
+    return missing
+
+
+def check_coast_cpp_contract():
+    problems = check_cpp_contract((0,))
+    if problems:
+        return problems
+    problems.extend(f"TDFluidPresetKind.{name}" for name in find_missing_members(unreal.TDFluidPresetKind, COAST_PRESET_KIND_NAMES))
+    problems.extend(f"TDFluidSimulationConfig.{name}" for name in find_missing_properties(unreal.TDFluidSimulationConfig(), COAST_CONFIG_PROPERTY_NAMES))
+    water_class = getattr(unreal, "TDFluidWaterActor", None)
+    if water_class is None:
+        problems.append("TDFluidWaterActor")
+        return problems
+    water_defaults = unreal.get_default_object(water_class)
+    problems.extend(f"TDFluidWaterActor.{name}" for name in find_missing_properties(water_defaults, COAST_WATER_ACTOR_PROPERTY_NAMES))
+    return problems
+
+
+def open_empty_coast_level(levels, actors):
+    if not unreal.EditorAssetLibrary.does_asset_exist(COAST_MAP_PATH):
+        if not levels.new_level(COAST_MAP_PATH):
+            raise RuntimeError(f"해변 무대 레벨 생성 실패: {COAST_MAP_PATH}")
+        return
+    if not levels.load_level(COAST_MAP_PATH):
+        raise RuntimeError(f"기존 해변 무대 레벨 열기 실패: {COAST_MAP_PATH}")
+    for actor in actors.get_all_level_actors():
+        if isinstance(actor, unreal.WorldSettings) or type(actor) is unreal.Brush:
+            continue
+        if not actors.destroy_actor(actor):
+            raise RuntimeError(f"기존 해변 무대 레벨 액터 제거 실패: {actor.get_actor_label()}")
+
+
+def load_coast_resources(assets):
+    resources = {
+        "game_mode": assets.load_blueprint_class(GAME_MODE_PATH),
+        "sand_master": assets.load_asset(SAND_MASTER_PATH),
+        "sea_material": assets.load_asset(COAST_SEA_INSTANCE_PATH),
+        "tile_mesh": assets.load_asset(COAST_TILE_MESH_PATH),
+        "surface_mesh": assets.load_asset(SURFACE_MESH_PATH),
+        "wet_decal_material": assets.load_asset(COAST_WET_DECAL_MATERIAL_PATH),
+        "water_actor_class": unreal.load_class(None, CLASS_PATHS["TDFluidWaterActor"]),
+    }
+    missing = [name for name, value in resources.items() if value is None]
+    if missing:
+        raise RuntimeError("필수 에셋 또는 클래스 없음(editor_make_fluid_water_material.py 와 장면 0·1 무대 먼저): " + ", ".join(missing))
+    sand_parameters = {str(name) for name in unreal.MaterialEditingLibrary.get_scalar_parameter_names(resources["sand_master"])}
+    missing_parameters = [name for name in COAST_SAND_PARAMETER_NAMES if name not in sand_parameters]
+    if missing_parameters:
+        raise RuntimeError("모래 마스터에 파라미터 없음(공유 에셋이라 다시 만들지 않음): " + ", ".join(missing_parameters))
+    return resources
+
+
+def write_coast_sand_overrides(instance):
+    editing = unreal.MaterialEditingLibrary
+    overrides = (("WetBandHeightCm", COAST_SAND_WET_BAND_CM), ("WaterLevelZCm", COAST_SEA_LEVEL_Z_CM))
+    for name, value in overrides:
+        editing.set_material_instance_scalar_parameter_value(instance, name, value)
+    editing.update_material_instance(instance)
+    for name, value in overrides:
+        if abs(editing.get_material_instance_scalar_parameter_value(instance, name) - value) > 0.001:
+            raise RuntimeError(f"해변 모래 인스턴스 스칼라 설정 확인 실패: {COAST_SAND_INSTANCE_PATH}.{name}")
+    save_asset(instance, COAST_SAND_INSTANCE_PATH)
+
+
+def configure_coast_preset(surface_material, surface_mesh):
+    preset = load_or_create_preset(COAST_PRESET_NAME, COAST_PRESET_PATH)
+    preset.set_editor_property("preset_kind", unreal.TDFluidPresetKind.SEA)
+    preset.set_editor_property("override_preset_defaults", False)
+    preset.set_editor_property("default_channel", unreal.TDFluidBrushChannel.CHANNEL_A_WATER)
+    plane = unreal.TDFluidPlaneSettings()
+    plane.set_editor_property("orientation", unreal.TDFluidPlaneOrientation.WORLD_FACING)
+    plane.set_editor_property("camera_depth_bias_cm", 0.0)
+    plane.set_editor_property("center_offset_along_up_ratio", 0.0)
+    preset.set_editor_property("plane_settings", plane)
+    preset.set_editor_property("output_material", surface_material)
+    preset.set_editor_property("surface_mesh", surface_mesh)
+    preset.set_editor_property("translucency_sort_priority", 0)
+
+    effective = preset.resolve_effective_config()
+    extent = effective.get_editor_property("sim_extent_cm")
+    problems = []
+    if not effective.get_editor_property("enable_water_layer"):
+        problems.append("enable_water_layer")
+    if not effective.get_editor_property("enable_water_wetness"):
+        problems.append("enable_water_wetness")
+    if abs(extent.x - 2.0 * WINDOW_HALF_CM) > 0.01 or abs(extent.y - 2.0 * WINDOW_HALF_CM) > 0.01:
+        problems.append("sim_extent_cm")
+    if problems:
+        raise RuntimeError(f"바다 프리셋 유효 구성이 명세와 다릅니다(PJ 프리셋 통합·에디터 재시작 필요): {COAST_PRESET_PATH} {problems}")
+    save_asset(preset, COAST_PRESET_PATH)
+    summary = {name: effective.get_editor_property(name) for name in COAST_EFFECTIVE_REPORT_NAMES if has_editor_property(effective, name)}
+    return preset, effective, summary
+
+
+def write_coast_heightmap(path):
+    vertices_per_side = LANDSCAPE_COMPONENTS * LANDSCAPE_QUADS_PER_SECTION + 1
+    origin = -0.5 * (vertices_per_side - 1) * LANDSCAPE_XY_SCALE_CM
+    row_values = array.array("H")
+    for column in range(vertices_per_side):
+        x_cm = origin + column * LANDSCAPE_XY_SCALE_CM
+        encoded = round(HEIGHT_ZERO_VALUE + compute_coast_terrain_height_cm(x_cm) * HEIGHT_UNITS_PER_CM)
+        row_values.append(min(max(encoded, 0), 65535))
+    values = row_values * vertices_per_side
+    if values.itemsize != 2:
+        raise RuntimeError("uint16 배열 크기 확인 실패")
+    if sys_is_big_endian():
+        values.byteswap()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as raw_file:
+        values.tofile(raw_file)
+    with open(path, "rb") as raw_file:
+        digest = hashlib.sha256(raw_file.read()).hexdigest()
+    return vertices_per_side, digest
+
+
+def configure_coast_post_process(volume):
+    volume.set_editor_property("unbound", True)
+    settings = volume.settings
+    for name, value in (
+        ("auto_exposure_method", unreal.AutoExposureMethod.AEM_MANUAL),
+        ("auto_exposure_apply_physical_camera_exposure", True),
+        ("camera_shutter_speed", COAST_EXPOSURE_SHUTTER_SPEED),
+        ("camera_iso", COAST_EXPOSURE_ISO),
+        ("depth_of_field_fstop", COAST_EXPOSURE_FSTOP),
+        ("auto_exposure_bias", 0.0),
+        ("bloom_intensity", COAST_BLOOM_INTENSITY),
+        ("vignette_intensity", COAST_VIGNETTE_INTENSITY),
+    ):
+        settings.set_editor_property("override_" + name, True)
+        settings.set_editor_property(name, value)
+    volume.set_editor_property("settings", settings)
+    stored = volume.settings
+    fixed_ev100 = math.log2(
+        stored.get_editor_property("depth_of_field_fstop") ** 2
+        * stored.get_editor_property("camera_shutter_speed")
+        * 100.0
+        / stored.get_editor_property("camera_iso")
+    )
+    if abs(fixed_ev100 - EXPOSURE_EV100) > 0.01:
+        raise RuntimeError(f"수동 노출 EV100 불일치: 기대 {EXPOSURE_EV100} 실제 {fixed_ev100}")
+    return fixed_ev100
+
+
+def spawn_coast_lighting(spawn):
+    sun = spawn(unreal.DirectionalLight, (0, 0, 1500), "CoastStageSun", "Lighting", unreal.Rotator(pitch=SUN_ROTATION[0], yaw=SUN_ROTATION[1]))
+    sun.light_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+    sun.light_component.set_intensity(SUN_LUX)
+    spawn(unreal.SkyAtmosphere, (0, 0, 0), "CoastStageSkyAtmosphere", "Lighting")
+    sky = spawn(unreal.SkyLight, (0, 0, 1000), "CoastStageSkyLight", "Lighting")
+    sky.light_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+    sky.light_component.set_editor_property("real_time_capture", False)
+    sky.light_component.set_intensity(1.0)
+    return configure_coast_post_process(spawn(unreal.PostProcessVolume, (0, 0, 0), "CoastStageExposure", "Lighting"))
+
+
+def spawn_coast_navigation(spawn, world):
+    navigation = spawn(unreal.NavMeshBoundsVolume, (0.0, 0.0, COAST_SEA_LEVEL_Z_CM), "CoastStageNavigation", "Gameplay")
+    navigation.set_actor_scale3d(unreal.Vector(*COAST_NAVIGATION_SCALE))
+    nav_origin, nav_extent = navigation.get_actor_bounds(False)
+    minimum_extent_cm = COAST_NAVIGATION_HALF_EXTENT_CM - 1.0
+    if nav_extent.x < minimum_extent_cm or nav_extent.y < minimum_extent_cm:
+        raise RuntimeError(f"해변 내비게이션 브러시 범위 검증 실패: {nav_extent}")
+    for nav_mesh in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.RecastNavMesh):
+        nav_mesh.set_editor_property("runtime_generation", unreal.RuntimeGenerationType.DYNAMIC)
+        nav_mesh.set_editor_property("is_world_partitioned", False)
+    return [nav_extent.x, nav_extent.y, nav_extent.z]
+
+
+def spawn_coast_water_tiles(actors, finish, tile_mesh, sea_material):
+    minimum = [math.inf, math.inf, math.inf]
+    maximum = [-math.inf, -math.inf, -math.inf]
+    tile_count = 0
+    for column in range(COAST_TILE_COUNT_X):
+        for row in range(COAST_TILE_COUNT_Y):
+            x_cm = COAST_TILE_MIN_XY_CM[0] + COAST_TILE_SIZE_CM * (column + 0.5)
+            y_cm = COAST_TILE_MIN_XY_CM[1] + COAST_TILE_SIZE_CM * (row + 0.5)
+            tile = actors.spawn_actor_from_object(tile_mesh, unreal.Vector(x_cm, y_cm, COAST_SEA_LEVEL_Z_CM), unreal.Rotator())
+            finish(tile, f"CoastStageWaterTile_{column}_{row}", "Scene2_Coast/WaterTiles")
+            component = tile.static_mesh_component
+            component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+            component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+            component.set_cast_shadow(False)
+            component.set_material(0, sea_material)
+            add_actor_tag(tile, TAG_WATER_SURFACE)
+            add_actor_tag(tile, TAG_WATER_REGION)
+            origin, extent = tile.get_actor_bounds(False)
+            centers = (origin.x, origin.y, origin.z)
+            half_sizes = (extent.x, extent.y, extent.z)
+            for axis in range(3):
+                minimum[axis] = min(minimum[axis], centers[axis] - half_sizes[axis])
+                maximum[axis] = max(maximum[axis], centers[axis] + half_sizes[axis])
+            tile_count += 1
+    expected_minimum = (COAST_TILE_MIN_XY_CM[0], COAST_TILE_MIN_XY_CM[1], COAST_SEA_LEVEL_Z_CM)
+    expected_maximum = (
+        COAST_TILE_MIN_XY_CM[0] + COAST_TILE_SIZE_CM * COAST_TILE_COUNT_X,
+        COAST_TILE_MIN_XY_CM[1] + COAST_TILE_SIZE_CM * COAST_TILE_COUNT_Y,
+        COAST_SEA_LEVEL_Z_CM,
+    )
+    mismatched_axes = [
+        axis for axis in range(3) if abs(minimum[axis] - expected_minimum[axis]) > 1.0 or abs(maximum[axis] - expected_maximum[axis]) > 1.0
+    ]
+    if mismatched_axes:
+        raise RuntimeError(f"수역 상자 검증 실패: 축 {mismatched_axes} 최소 {minimum} 최대 {maximum}")
+    return {"tile_count": tile_count, "min_cm": minimum, "max_cm": maximum, "surface_z_cm": maximum[2]}
+
+
+def configure_coast_water_actor(water, preset, effective, wet_decal_material):
+    properties = configure_water_actor(water, preset, effective)
+    water.set_editor_property("enable_wet_decal", True)
+    water.set_editor_property("wet_decal_material", wet_decal_material)
+    if not water.get_editor_property("enable_wet_decal"):
+        raise RuntimeError("물 액터 enable_wet_decal 설정 확인 실패")
+    if "M_TD_FluidWetnessDecal" not in str(water.get_editor_property("wet_decal_material")):
+        raise RuntimeError("물 액터 wet_decal_material 설정 확인 실패")
+    properties["enable_wet_decal"] = "True"
+    properties["wet_decal_material"] = COAST_WET_DECAL_MATERIAL_PATH
+    return properties
+
+
+def create_coast_spawners(actors, created):
+    def finish(actor, label, folder):
+        if actor is None:
+            raise RuntimeError(f"액터 생성 실패: {label}")
+        actor.set_actor_label("TDGen_" + label)
+        actor.set_folder_path("TDGen/FluidFX/CoastStage/" + folder)
+        created.append(actor)
+        return actor
+
+    def spawn(actor_class, location, label, folder, rotation=None):
+        actor = actors.spawn_actor_from_class(actor_class, unreal.Vector(*location), rotation or unreal.Rotator())
+        return finish(actor, label, folder)
+
+    return finish, spawn
+
+
+def describe_coast_constants():
+    return {
+        "scene": COAST_SCENE,
+        "map": COAST_MAP_PATH,
+        "sea_level_z_cm": COAST_SEA_LEVEL_Z_CM,
+        "shore_x_cm": COAST_SHORE_X_CM,
+        "slope_degrees": COAST_SLOPE_DEGREES,
+        "terrain_x_range_cm": list(COAST_TERRAIN_X_RANGE_CM),
+        "landscape": {
+            "components": LANDSCAPE_COMPONENTS,
+            "quads_per_section": LANDSCAPE_QUADS_PER_SECTION,
+            "xy_scale_cm": LANDSCAPE_XY_SCALE_CM,
+            "z_scale": LANDSCAPE_Z_SCALE,
+            "half_span_cm": LANDSCAPE_HALF_SPAN_CM,
+        },
+        "sand_wet_band_cm": COAST_SAND_WET_BAND_CM,
+        "tiles": {
+            "size_cm": COAST_TILE_SIZE_CM,
+            "count_x": COAST_TILE_COUNT_X,
+            "count_y": COAST_TILE_COUNT_Y,
+            "min_xy_cm": list(COAST_TILE_MIN_XY_CM),
+        },
+        "window": {"half_cm": WINDOW_HALF_CM, "fade_cm": WINDOW_FADE_CM, "look_ahead_cm": WINDOW_LOOK_AHEAD_CM},
+        "player_start_xy_cm": list(COAST_PLAYER_START_XY_CM),
+        "player_start_clearance_cm": PLAYER_START_CLEARANCE_CM,
+        "navigation_scale": list(COAST_NAVIGATION_SCALE),
+        "sun": {"rotation": list(SUN_ROTATION), "lux": SUN_LUX},
+        "exposure": {
+            "ev100": EXPOSURE_EV100,
+            "fstop": COAST_EXPOSURE_FSTOP,
+            "iso": COAST_EXPOSURE_ISO,
+            "shutter_speed": COAST_EXPOSURE_SHUTTER_SPEED,
+        },
+        "bloom_intensity": COAST_BLOOM_INTENSITY,
+        "vignette_intensity": COAST_VIGNETTE_INTENSITY,
+    }
+
+
+def build_coast_stage(request):
+    redirect_report_to_coast()
+    assets = unreal.EditorAssetLibrary
+    levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    editor = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+
+    missing_names = find_missing_coast_unreal_names()
+    if missing_names:
+        raise RuntimeError("언리얼 Python 이름 없음: " + ", ".join(missing_names))
+    if editor.get_game_world() is not None:
+        raise RuntimeError("PIE를 종료한 뒤 실행하세요.")
+    if editor.get_editor_world() is None:
+        raise RuntimeError("에디터 월드가 없습니다.")
+
+    contract_problems = check_coast_cpp_contract()
+    if contract_problems:
+        raise RuntimeError("C++ 계약 이름 없음(재빌드와 에디터 재시작 필요): " + ", ".join(contract_problems))
+
+    overwrite = request.get("overwrite") is True
+    existing_paths = [path for path in COAST_GUARDED_ASSET_PATHS if assets.does_asset_exist(path)]
+    if existing_paths and not overwrite:
+        print(json.dumps({
+            "status": "기존 에셋이 있어 아무것도 바꾸지 않았습니다",
+            "existing_assets": existing_paths,
+            "overwrite_request_file": project_path(*REQUEST_RELATIVE_PATH),
+            "overwrite_request_content": {"overwrite": True, "scenes": [COAST_SCENE]},
+        }, ensure_ascii=False))
+        raise RuntimeError("기존 에셋 보존: overwrite 요청 파일이 없어 중단합니다.")
+
+    unsaved_names = find_unsaved_package_names(overwrite)
+    if unsaved_names:
+        raise RuntimeError("미저장 작업을 보존합니다: " + ", ".join(unsaved_names))
+
+    print("단계: 프리셋 정본 검사·다시 읽기")
+    preset_tuning_sha256 = reload_preset_tuning()
+    resources = load_coast_resources(assets)
+
+    print("단계: 해변 재질·프리셋")
+    sand_instance = write_matte_instance(COAST_SAND_INSTANCE_PATH, resources["sand_master"], SAND_COLOR, 0.9)
+    write_coast_sand_overrides(sand_instance)
+    preset, effective, effective_summary = configure_coast_preset(resources["sea_material"], resources["surface_mesh"])
+
+    print("단계: 해변 지형 높이 파일")
+    heightmap_path = project_path(*COAST_HEIGHTMAP_RELATIVE_PATH)
+    vertices_per_side, heightmap_sha256 = write_coast_heightmap(heightmap_path)
+
+    print("단계: 레벨 비우기")
+    ensure_directory(MAP_DIR)
+    open_empty_coast_level(levels, actors)
+
+    world = editor.get_editor_world()
+    world.get_world_settings().set_editor_property("default_game_mode", resources["game_mode"])
+    created = []
+    finish, spawn = create_coast_spawners(actors, created)
+
+    print("단계: 지형")
+    landscape = finish(create_landscape(world, sand_instance, heightmap_path), "CoastStageLandscape", "Stage")
+
+    print("단계: 조명·노출")
+    fixed_ev100 = spawn_coast_lighting(spawn)
+
+    start_height = compute_coast_terrain_height_cm(COAST_PLAYER_START_XY_CM[0])
+    player_start_location = (COAST_PLAYER_START_XY_CM[0], COAST_PLAYER_START_XY_CM[1], start_height + PLAYER_START_CLEARANCE_CM)
+    spawn(unreal.PlayerStart, player_start_location, "CoastStagePlayerStart", "Gameplay")
+
+    print("단계: 수면 타일")
+    water_region = spawn_coast_water_tiles(actors, finish, resources["tile_mesh"], resources["sea_material"])
+
+    print("단계: 바다 물 액터")
+    water = spawn(resources["water_actor_class"], (0.0, 0.0, COAST_SEA_LEVEL_Z_CM), "CoastStageWaterSea", "Scene2_Coast")
+    water_properties = configure_coast_water_actor(water, preset, effective, resources["wet_decal_material"])
+
+    print("단계: 내비게이션")
+    navigation_extent = spawn_coast_navigation(spawn, world)
+
+    landscape_origin, landscape_extent = landscape.get_actor_bounds(False)
+    expected_half_extent = 0.5 * (vertices_per_side - 1) * LANDSCAPE_XY_SCALE_CM
+    if abs(landscape_extent.x - expected_half_extent) > LANDSCAPE_XY_SCALE_CM * 2.0:
+        raise RuntimeError(f"지형 범위 검증 실패: 기대 반폭 {expected_half_extent} 실제 {landscape_extent.x}")
+
+    print("단계: 레벨 저장")
+    if not levels.save_current_level():
+        raise RuntimeError(f"해변 무대 레벨 저장 실패: {COAST_MAP_PATH}")
+    missing_files = find_missing_saved_files([COAST_PRESET_PATH, COAST_SAND_INSTANCE_PATH], COAST_MAP_PATH)
+    if missing_files:
+        raise RuntimeError("저장 파일 확인 실패: " + ", ".join(missing_files))
+
+    report = {
+        "status": "ok",
+        "map": COAST_MAP_PATH,
+        "scenes": [COAST_SCENE],
+        "overwrite": overwrite,
+        "preset_tuning_sha256": preset_tuning_sha256,
+        "constants": describe_coast_constants(),
+        "preset": COAST_PRESET_PATH,
+        "preset_effective": effective_summary,
+        "sand_instance": COAST_SAND_INSTANCE_PATH,
+        "heightmap": {
+            "path": heightmap_path,
+            "sha256": heightmap_sha256,
+            "vertices_per_side": vertices_per_side,
+            "start_height_cm": start_height,
+        },
+        "landscape_half_extent_cm": [landscape_extent.x, landscape_extent.y, landscape_extent.z],
+        "water_region": water_region,
+        "water_actor": water.get_actor_label(),
+        "water_actor_properties": water_properties,
+        "wet_decal": {"enabled": True, "material": COAST_WET_DECAL_MATERIAL_PATH},
+        "player_start": list(player_start_location),
+        "navigation_extent": navigation_extent,
+        "exposure_ev100": fixed_ev100,
+        "walk_line": {
+            "x_cm": COAST_WALK_LINE_X_CM,
+            "y_range_cm": list(COAST_WALK_LINE_Y_RANGE_CM),
+            "speed_cm_per_sec": COAST_WALK_SPEED_CM_PER_SEC,
+            "water_depth_cm": COAST_SEA_LEVEL_Z_CM - compute_coast_terrain_height_cm(COAST_WALK_LINE_X_CM),
+        },
+        "wet_band_roi": {
+            "y_range_cm": list(COAST_WET_ROI_Y_RANGE_CM),
+            "s_range_m": list(COAST_WET_ROI_S_RANGE_M),
+            "bin_cm": COAST_WET_ROI_BIN_CM,
+        },
+        "poses": list(COAST_CAMERA_POSES),
+        "created_actors": len(created),
+        "saved": True,
+    }
+    report_path = write_report(report)
+    print(json.dumps(report, ensure_ascii=False, default=str))
+    print("보고서: " + report_path)
+
+
 def main():
     assets = unreal.EditorAssetLibrary
     levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
@@ -1354,6 +1844,8 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 
     request = read_request()
+    if request.get("scenes") == [COAST_SCENE]:
+        return build_coast_stage(request)
     scenes = read_requested_scenes(request)
     include_river = 1 in scenes
 

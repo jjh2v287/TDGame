@@ -2298,6 +2298,7 @@ namespace TDFluidGpuWaterRhiTestPrivate
 			MakeStateArrayDesc(PressureResolution, PF_R32_FLOAT),
 			MakeStateArrayDesc(PressureResolution, PF_R32_FLOAT),
 			MakeStateArrayDesc(Resolution, PF_R16F),
+			MakeStateArrayDesc(Resolution, PF_R32_FLOAT),
 			MakeStateArrayDesc(FieldResolution, PF_A32B32G32R32F),
 			MakeStateArrayDesc(FieldResolution, PF_R32_FLOAT),
 			MakeStateArrayDesc(FieldResolution, PF_R32_FLOAT),
@@ -2316,7 +2317,7 @@ namespace TDFluidGpuWaterRhiTestPrivate
 
 	int64 GetTableLinearStateBytes(int32 Resolution)
 	{
-		return Resolution <= 256 ? (Resolution == 192 ? 3022848 : 5373952) : (Resolution == 512 ? 13107200 : 47710208);
+		return Resolution <= 256 ? (Resolution == 192 ? 3170304 : 5636096) : (Resolution == 512 ? 14155776 : 51904512);
 	}
 
 	FTDFluidWaterSceneSpec MakeNoSurfaceStripScene(int32 Resolution)

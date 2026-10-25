@@ -281,6 +281,15 @@ struct TDGAME_API FTDFluidSimulationConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float WetnessFromWhitewater = 0.5f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water")
+	bool bEnableWaterWetness = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water")
+	bool bUseWhitewaterDissipation = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+	float WhitewaterDissipation = 0.12f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
 	ETDFluidSolverBackend SolverBackend = ETDFluidSolverBackend::Cpu;
 

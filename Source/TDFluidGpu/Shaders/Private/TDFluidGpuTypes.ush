@@ -107,7 +107,7 @@ struct FTDFluidGpuActorParameters
 	float VortexTangentialStepCmPerSec;
 	float VortexRadialDriftCmPerSec;
 	float VortexRadiusCm;
-	uint Padding0;
+	float WhitewaterDissipationFactor;
 };
 
 struct FTDFluidGpuPackedStamp

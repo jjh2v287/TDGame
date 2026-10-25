@@ -12,6 +12,8 @@ static const uint TDFLUIDGPU_WATER_FLAG_USES_WHITEWATER_FROM_VORTICITY = 1u << 6
 static const uint TDFLUIDGPU_WATER_FLAG_USES_RAPIDS_WHITEWATER = 1u << 7;
 static const uint TDFLUIDGPU_WATER_FLAG_USES_TERRAIN_SLOPE_DRY_ONLY = 1u << 8;
 static const uint TDFLUIDGPU_WATER_FLAG_REACHED_RIPPLE_SUBSTEP_CAP = 1u << 9;
+static const uint TDFLUIDGPU_WATER_FLAG_UPDATES_WETNESS = 1u << 10;
+static const uint TDFLUIDGPU_WATER_FLAG_RESETS_WETNESS = 1u << 11;
 
 static const uint TDFLUIDGPU_WATER_PROBE_FLAG_IS_INSIDE_WINDOW = 1u << 0;
 static const uint TDFLUIDGPU_WATER_PROBE_FLAG_HAS_WATER_SURFACE = 1u << 1;
@@ -59,9 +61,14 @@ struct FTDFluidGpuWaterParameters
 	float KernelDivergenceScale;
 
 	uint KernelRadius;
+	float WetnessRetainFactor;
+	float SwashReachCm;
+	float BankWetHeightCm;
+
+	float InvBankWetHeightCm;
+	float WetnessFromWhitewater;
 	uint Padding0;
 	uint Padding1;
-	uint Padding2;
 };
 
 struct FTDFluidGpuPackedWaterGuideUpdate

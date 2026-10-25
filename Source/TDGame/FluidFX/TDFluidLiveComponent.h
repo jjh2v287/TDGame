@@ -166,6 +166,7 @@ public:
 	FVector2D CellToPlaneCenter(int32 CellX, int32 CellY) const;
 	FTDFluidCellSample SampleSimulationCell(int32 CellX, int32 CellY) const;
 	void SetTerrainElevationAtCell(int32 CellX, int32 CellY, float ElevationCm);
+	bool TryGetSampledTerrainRangeCm(float& OutMinCm, float& OutMaxCm) const;
 	void CompleteTerrainElevationSampling();
 	const FTDFluidReadbackField& GetGpuReadbackField() const { return GpuSolverProxy.GetReadbackField(); }
 	bool AppendPreparedGpuStep(UTDFluidLiveSubsystem& FluidSubsystem, FTDFluidGpuFrameInputs& InOutFrameInputs);
@@ -312,7 +313,10 @@ private:
 	bool bIsSimulationAwake = true;
 	bool bHasPendingObstacleUpdate = false;
 	bool bUsesGpuSolver = false;
+	bool bHasSampledTerrainRange = false;
 	int32 LastProcessedPointCount = 0;
 	float WaterLayerDisplayAlpha = 0.0f;
 	float TerrainReferenceZCm = 0.0f;
+	float SampledTerrainMinCm = 0.0f;
+	float SampledTerrainMaxCm = 0.0f;
 };

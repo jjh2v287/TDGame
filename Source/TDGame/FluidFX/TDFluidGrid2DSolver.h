@@ -42,6 +42,7 @@ public:
 
 	static constexpr float NoWaterSurfaceHeight = -TNumericLimits<float>::Max();
 	static float GetOutputSpeedReferenceCmPerSec();
+	static bool IsWaterWetnessConsoleEnabled();
 	double GetSimulationTimeSeconds() const { return SimulationTimeSeconds; }
 	void SetFlowGuides(const TArray<FTDFluidFlowGuide>& Guides);
 	void SetWaterRegions(const TArray<FTDFluidWaterRegion>& Regions);
@@ -102,6 +103,9 @@ private:
 	void ComposeWaterObstacleSdf();
 	float ComputeWaterDepthAtIndex(int32 CellIndex) const;
 	void StepFluidSimWater(float DeltaTime);
+	void UpdateWetnessIfEnabled(float DeltaTime);
+	void UpdateWetness(float DeltaTime);
+	float ComputeWetnessSourceAtCell(int32 CellX, int32 CellY, float SwashReachCm, float InvBankWetHeightCm) const;
 	void PrepareWaterInputs();
 	void RasterizeWaterInputs();
 	void RefreshWaterDrySdf();
@@ -175,4 +179,5 @@ private:
 	bool bWaterDryDirty = true;
 	bool bWaterVelocityInitPending = true;
 	bool bHasRippleActivity = false;
+	bool bIsWetnessUpdating = false;
 };

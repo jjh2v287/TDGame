@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-10-25 03:02 claude
+갱신: 2026-10-25 13:25 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -8,7 +8,7 @@
 - M3-37 done(로컬 커밋): 타격감 7종. 끄기 `TD.Feedback.ShakeScale 0`.
 - M3-38~40 done(로컬 커밋): 래그돌 정착·물리 에셋 7종·사망 즉시 래그돌(L-anim-23). 끄기 `TD.Death.ImmediateRagdoll 0`. 후속 M3-41 todo.
 - 커밋 끝: M3-14·27~32·34, D-47(후속 c). 전술 끄기 `TD.MonsterAI.Tactics 0`.
-- FluidFX doing(D-52): FX-4b 예산 미달·개정 제안, 1024 화면 승인 대기.
+- FluidFX doing(D-52·D-64): W-2s-a 통합, 파동 0 데이터 다리 착수.
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴.
 - 게임플레이 분석(미커밋)·M3-25·26 done(26 미커밋·PIE 육안 대기).

@@ -1,5 +1,6 @@
 #include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
+#include "FluidFX/TDFluidWaterWetnessRules.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 #include "RenderGraphBuilder.h"
 #include "TDFluidGpuBatch.h"
@@ -357,6 +358,14 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.RippleDampingPerSec = Config.RippleDampingPerSec;
 	SimulationSettings.RippleHeightReferenceCm = Config.RippleHeightReferenceCm;
 	SimulationSettings.RippleFlowAdvection = Config.RippleFlowAdvection;
+	SimulationSettings.bUsesWaterWetness = Config.bEnableWaterWetness && SimulationSettings.bUsesWaterLayer;
+	SimulationSettings.bUsesWhitewaterDissipation = Config.bUseWhitewaterDissipation && SimulationSettings.bUsesWaterLayer;
+	SimulationSettings.WhitewaterDissipation = FMath::Clamp(Config.WhitewaterDissipation, 0.0f, 10.0f);
+	SimulationSettings.BankWetHeightCm = FMath::Clamp(Config.BankWetHeightCm, 0.0f, 1000.0f);
+	SimulationSettings.WetnessFromWhitewater = FMath::Clamp(Config.WetnessFromWhitewater, 0.0f, 1.0f);
+	SimulationSettings.SwashHeightCm = FTDFluidWaterWetnessRules::SanitizeSwashHeightCm(Config.SwashHeightCm);
+	SimulationSettings.CoastWavePeriodSeconds = FTDFluidWaterWetnessRules::SanitizeCoastWavePeriodSeconds(Config.CoastWavePeriodSeconds);
+	SimulationSettings.WetnessDryingSeconds = FTDFluidWaterWetnessRules::SanitizeDryingSeconds(Config.WetnessDryingSeconds);
 	if (SimulationSettings.bUsesWaterLayer)
 	{
 		SimulationSettings.MaxStampsPerTick = FMath::Clamp(Config.MaxPointsPerTick, 1, ProxyWaterMaximumStampsPerTick);
@@ -443,6 +452,7 @@ void FTDFluidGpuSolverProxy::ResetState()
 	++Generation;
 	SimulationTimeSeconds = 0.0;
 	bNeedsReset = true;
+	bWasUpdatingWaterWetness = false;
 	bIsTerrainElevationActive = false;
 	bHasPreparedStep = false;
 	PendingShiftCells = FIntPoint::ZeroValue;
@@ -770,6 +780,13 @@ int32 FTDFluidGpuSolverProxy::GatherWaterStep(FTDFluidGpuActorInput& OutActorInp
 
 	WaterFieldState.MoveUpdatesInto(OutActorInput);
 	OutActorInput.WaterTerrainReferenceZCm = WaterTerrainReferenceZCm;
+	const float StepDeltaTime = FMath::Min(PreparedDeltaTimeSeconds, TDFluidGpuSolverConstants::MaximumStepDeltaTimeSeconds);
+	const bool bUpdatesWetness = OutActorInput.Settings.bUsesWaterWetness && FTDFluidGrid2DSolver::IsWaterWetnessConsoleEnabled();
+	OutActorInput.bUpdatesWaterWetness = bUpdatesWetness;
+	OutActorInput.bResetsWaterWetness = bUpdatesWetness && !bWasUpdatingWaterWetness;
+	bWasUpdatingWaterWetness = bUpdatesWetness;
+	OutActorInput.WaterWetnessRetainFactor = FTDFluidWaterWetnessRules::ComputeRetainFactor(StepDeltaTime, OutActorInput.Settings.WetnessDryingSeconds);
+	OutActorInput.WaterSwashReachCm = FTDFluidWaterWetnessRules::ComputeSwashReachCm(OutActorInput.Settings.SwashHeightCm, FTDFluidWaterWetnessRules::ComputeCoastWavePhase(SimulationTimeSeconds + StepDeltaTime, OutActorInput.Settings.CoastWavePeriodSeconds));
 	OutActorInput.WaterSurfaceOutput = WaterSurfaceOutput;
 	OutActorInput.WaterProbeFirstSlot = WaterProbeFirstSlot;
 

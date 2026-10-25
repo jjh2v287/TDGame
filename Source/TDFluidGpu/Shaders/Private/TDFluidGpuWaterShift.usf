@@ -16,15 +16,18 @@ Texture2DArray<float2> VelocityIn;
 Texture2DArray<float2> DensityIn;
 Texture2DArray<float2> RippleIn;
 Texture2DArray<float> PressureIn;
+Texture2DArray<float> WetnessIn;
 RWTexture2DArray<float2> VelocityStageOut;
 RWTexture2DArray<float2> DensityStageOut;
 RWTexture2DArray<float2> RippleStageOut;
 RWTexture2DArray<float> PressureStageOut;
+RWTexture2DArray<float> WetnessStageOut;
 #else
 RWTexture2DArray<float2> VelocityOut;
 RWTexture2DArray<float2> DensityOut;
 RWTexture2DArray<float2> RippleOut;
 RWTexture2DArray<float> PressureOut;
+RWTexture2DArray<float> WetnessOut;
 RWTexture2DArray<float> ObstacleSdfOut;
 RWTexture2DArray<float4> WaterGuideFieldOut;
 RWTexture2DArray<float> WaterSurfaceHeightFieldOut;
@@ -34,6 +37,7 @@ Texture2DArray<float2> VelocityStageIn;
 Texture2DArray<float2> DensityStageIn;
 Texture2DArray<float2> RippleStageIn;
 Texture2DArray<float> PressureStageIn;
+Texture2DArray<float> WetnessStageIn;
 #endif
 #endif
 
@@ -55,6 +59,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	VelocityStageOut[StateTexel] = VelocityIn[StateTexel];
 	DensityStageOut[StateTexel] = DensityIn[StateTexel];
 	RippleStageOut[StateTexel] = RippleIn[StateTexel];
+	WetnessStageOut[StateTexel] = WetnessIn[StateTexel];
 	if (TDFluidGpuIsInsideGrid(Cell, Water.PressureResolution))
 	{
 		PressureStageOut[StateTexel] = PressureIn[StateTexel];
@@ -81,6 +86,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	float2 Velocity = float2(0.0f, 0.0f);
 	float2 Density = float2(0.0f, 0.0f);
 	float2 Ripple = float2(0.0f, 0.0f);
+	float Wetness = 0.0f;
 #if TDFLUIDGPU_WATER_SHIFT_PHASE == TDFLUIDGPU_WATER_SHIFT_PHASE_SCATTER
 	const int2 SourceCell = Cell + Actor.ShiftCells;
 	if (bIsShiftEntry && TDFluidGpuIsInsideGrid(SourceCell, Actor.Resolution))
@@ -89,11 +95,13 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		Velocity = VelocityStageIn[SourceTexel];
 		Density = DensityStageIn[SourceTexel];
 		Ripple = RippleStageIn[SourceTexel];
+		Wetness = WetnessStageIn[SourceTexel];
 	}
 #endif
 	VelocityOut[StateTexel] = Velocity;
 	DensityOut[StateTexel] = Density;
 	RippleOut[StateTexel] = Ripple;
+	WetnessOut[StateTexel] = Wetness;
 
 	if (TDFluidGpuIsInsideGrid(Cell, Water.PressureResolution))
 	{

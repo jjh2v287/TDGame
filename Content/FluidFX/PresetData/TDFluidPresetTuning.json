@@ -48,6 +48,9 @@
       "BankWetHeightCm": 0.0,
       "WetnessDryingSeconds": 8.0,
       "WetnessFromWhitewater": 0.5,
+      "bEnableWaterWetness": false,
+      "bUseWhitewaterDissipation": false,
+      "WhitewaterDissipation": 0.12,
       "SolverBackend": "Cpu",
       "CpuFallbackResolution": 0,
       "bEnableHeatChannel": false,
@@ -198,6 +201,7 @@
         "TerrainSlopeGravity": 0.0,
         "ActorBrushDensityStrength": 0.6,
         "bEnableWaterLayer": true,
+        "bEnableWaterWetness": true,
         "ActorBrushRippleImpulseCm": 2.5
       }
     },
@@ -369,7 +373,9 @@
       "TDFluidSimulationConfig": {
         "WhitewaterFromVorticity": 0.15,
         "RippleWaveSpeedCmPerSec": 100.0,
-        "SwashHeightCm": 25.0
+        "SwashHeightCm": 25.0,
+        "bUseWhitewaterDissipation": true,
+        "WhitewaterDissipation": 0.12
       }
     },
     "Torch": {

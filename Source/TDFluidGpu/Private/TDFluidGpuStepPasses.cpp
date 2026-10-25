@@ -50,6 +50,7 @@ namespace
 	constexpr int32 TransmittanceGroupSize = 8;
 	constexpr EPixelFormat WaterGuideFieldFormat = PF_A32B32G32R32F;
 	constexpr EPixelFormat WaterScalarFieldFormat = PF_R32_FLOAT;
+	constexpr EPixelFormat WaterWetnessFormat = PF_R32_FLOAT;
 	constexpr EPixelFormat WaterCompositeSdfFormat = PF_R16F;
 	constexpr EPixelFormat WaterRippleHalfFormat = PF_G16R16F;
 	constexpr EPixelFormat WaterRippleFloatFormat = PF_G32R32F;
@@ -543,18 +544,22 @@ class FTDFluidGpuWaterShiftCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WetnessIn)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityStageOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, DensityStageOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, RippleStageOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureStageOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, WetnessStageOut)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityStageIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityStageIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleStageIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureStageIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WetnessStageIn)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, DensityOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, RippleOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureOut)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, WetnessOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, ObstacleSdfOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float4>, WaterGuideFieldOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, WaterSurfaceHeightFieldOut)
@@ -777,6 +782,7 @@ class FTDFluidGpuWaterFinalizeCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, DensityOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, RippleOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PressureSolution)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, WetnessState)
 		SHADER_PARAMETER(uint32, EntryIndex)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PressureFull)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, DensityPressureOutput)
@@ -803,6 +809,7 @@ class FTDFluidGpuWaterProbeCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, RippleIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WetnessIn)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<FTDFluidGpuWaterProbeSample>, ProbeSamplesOut)
 	END_SHADER_PARAMETER_STRUCT()
 };
@@ -992,6 +999,7 @@ namespace
 		FRDGTextureRef GuideField = nullptr;
 		FRDGTextureRef SurfaceHeightField = nullptr;
 		FRDGTextureRef TerrainField = nullptr;
+		FRDGTextureRef Wetness = nullptr;
 		FRDGTextureRef FieldDrySdf = nullptr;
 		FRDGTextureRef CompositeSdf = nullptr;
 		FRDGBufferRef OpenBorderFlags = nullptr;
@@ -2193,6 +2201,7 @@ namespace
 		OutWaterTextures.GuideField = RegisterOrGrowStateTexture(GraphBuilder, State.WaterGuideField, FieldResolution, SliceCapacity, WaterGuideFieldFormat, true, TEXT("TDFluidGpu.WaterGuideField"));
 		OutWaterTextures.SurfaceHeightField = RegisterOrGrowStateTexture(GraphBuilder, State.WaterSurfaceHeightField, FieldResolution, SliceCapacity, WaterScalarFieldFormat, true, TEXT("TDFluidGpu.WaterSurfaceHeightField"));
 		OutWaterTextures.TerrainField = RegisterOrGrowStateTexture(GraphBuilder, State.WaterTerrainField, FieldResolution, SliceCapacity, WaterScalarFieldFormat, true, TEXT("TDFluidGpu.WaterTerrainField"));
+		OutWaterTextures.Wetness = RegisterOrGrowStateTexture(GraphBuilder, State.WaterWetness, Resolution, SliceCapacity, WaterWetnessFormat, true, TEXT("TDFluidGpu.WaterWetness"));
 		State.SliceCapacity = SliceCapacity;
 		return Textures;
 	}
@@ -2206,7 +2215,7 @@ namespace
 		return Bindings;
 	}
 
-	void AddWaterShiftGatherPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	void AddWaterShiftGatherPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, FRDGTextureRef WetnessShiftStage)
 	{
 		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
 		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
@@ -2224,10 +2233,12 @@ namespace
 		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[0]);
 		Parameters->RippleIn = MakeSRV(GraphBuilder, Water.Ripple[0]);
 		Parameters->PressureIn = MakeSRV(GraphBuilder, Textures.PressureSolution[0]);
+		Parameters->WetnessIn = MakeSRV(GraphBuilder, Water.Wetness);
 		Parameters->VelocityStageOut = MakeUAV(GraphBuilder, Textures.Velocity[1]);
 		Parameters->DensityStageOut = MakeUAV(GraphBuilder, Textures.Density[1]);
 		Parameters->RippleStageOut = MakeUAV(GraphBuilder, Water.Ripple[1]);
 		Parameters->PressureStageOut = MakeUAV(GraphBuilder, Textures.PressureSolution[1]);
+		Parameters->WetnessStageOut = MakeUAV(GraphBuilder, WetnessShiftStage);
 
 		TShaderMapRef<FTDFluidGpuWaterShiftCS> Shader(Context.ShaderMap, Permutation);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterShiftGather"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Frame.ShiftEntryIndices.Num()));
@@ -2243,12 +2254,14 @@ namespace
 			return;
 		}
 
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FRDGTextureRef WetnessShiftStage = nullptr;
 		if (ShiftCount > 0)
 		{
-			AddWaterShiftGatherPass(Context, Water);
+			WetnessShiftStage = GraphBuilder.CreateTexture(MakeStateArrayDesc(Context.Resolution, Context.Batch.StateTextures.SliceCapacity, WaterWetnessFormat), TEXT("TDFluidGpu.WaterWetnessShiftStage"));
+			AddWaterShiftGatherPass(Context, Water, WetnessShiftStage);
 		}
 
-		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
 		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
 		TArray<uint32> ScatterEntries(Frame.ShiftEntryIndices);
 		ScatterEntries.Append(Frame.ResetEntryIndices);
@@ -2265,6 +2278,7 @@ namespace
 		Parameters->DensityOut = MakeUAV(GraphBuilder, Textures.Density[0]);
 		Parameters->RippleOut = MakeUAV(GraphBuilder, Water.Ripple[0]);
 		Parameters->PressureOut = MakeUAV(GraphBuilder, Textures.PressureSolution[0]);
+		Parameters->WetnessOut = MakeUAV(GraphBuilder, Water.Wetness);
 		Parameters->ObstacleSdfOut = MakeUAV(GraphBuilder, Textures.ObstacleSdf);
 		Parameters->WaterGuideFieldOut = MakeUAV(GraphBuilder, Water.GuideField);
 		Parameters->WaterSurfaceHeightFieldOut = MakeUAV(GraphBuilder, Water.SurfaceHeightField);
@@ -2275,6 +2289,7 @@ namespace
 			Parameters->DensityStageIn = MakeSRV(GraphBuilder, Textures.Density[1]);
 			Parameters->RippleStageIn = MakeSRV(GraphBuilder, Water.Ripple[1]);
 			Parameters->PressureStageIn = MakeSRV(GraphBuilder, Textures.PressureSolution[1]);
+			Parameters->WetnessStageIn = MakeSRV(GraphBuilder, WetnessShiftStage);
 		}
 
 		TShaderMapRef<FTDFluidGpuWaterShiftCS> Shader(Context.ShaderMap, Permutation);
@@ -2823,6 +2838,7 @@ namespace
 		FRDGTextureUAVRef DensityUAV = MakeUnorderedUAV(GraphBuilder, Textures.Density[0]);
 		FRDGTextureUAVRef RippleUAV = MakeUnorderedUAV(GraphBuilder, Water.Ripple[FinalRippleIndex]);
 		FRDGTextureUAVRef PressureUAV = MakeUnorderedUAV(GraphBuilder, Textures.PressureSolution[PressureIndex]);
+		FRDGTextureUAVRef WetnessUAV = MakeUnorderedUAV(GraphBuilder, Water.Wetness);
 
 		for (int32 EntryIndex = 0; EntryIndex < Context.EntryCount; ++EntryIndex)
 		{
@@ -2845,6 +2861,7 @@ namespace
 			Parameters->DensityOut = DensityUAV;
 			Parameters->RippleOut = RippleUAV;
 			Parameters->PressureSolution = PressureUAV;
+			Parameters->WetnessState = WetnessUAV;
 			Parameters->EntryIndex = static_cast<uint32>(EntryIndex);
 			Parameters->PressureFull = PressureFullSRV;
 			if (bWritesOutput)
@@ -2890,6 +2907,7 @@ namespace
 		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
 		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[0]);
 		Parameters->RippleIn = MakeSRV(GraphBuilder, Water.Ripple[FinalRippleIndex]);
+		Parameters->WetnessIn = MakeSRV(GraphBuilder, Water.Wetness);
 		Parameters->ProbeSamplesOut = GraphBuilder.CreateUAV(Context.FrameResources.WaterProbeSamples);
 
 		TShaderMapRef<FTDFluidGpuWaterProbeCS> Shader(Context.ShaderMap);
@@ -3303,6 +3321,7 @@ int64 ComputeTDFluidGpuBatchStateBytes(const FTDFluidGpuBatch& Batch)
 	TotalBytes += ComputePooledTextureBytes(State.WaterGuideField);
 	TotalBytes += ComputePooledTextureBytes(State.WaterSurfaceHeightField);
 	TotalBytes += ComputePooledTextureBytes(State.WaterTerrainField);
+	TotalBytes += ComputePooledTextureBytes(State.WaterWetness);
 	return TotalBytes;
 }
 

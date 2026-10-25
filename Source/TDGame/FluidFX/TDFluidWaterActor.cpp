@@ -1,6 +1,9 @@
 #include "FluidFX/TDFluidWaterActor.h"
 #include "CollisionQueryParams.h"
+#include "Components/DecalComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
@@ -54,11 +57,18 @@ ATDFluidWaterActor::ATDFluidWaterActor()
 	bSampleTerrainElevation = true;
 	MaxTerrainTracesPerTick = WaterActorTerrainTracesPerTick;
 	InternalSurfaceMesh->SetVisibility(false);
+
+	WetDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("WetDecal"));
+	WetDecal->SetupAttachment(SceneRoot);
+	WetDecal->SetAbsolute(true, true, true);
+	WetDecal->SetVisibility(false);
 }
 
 void ATDFluidWaterActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	RequestWetDecalMaterial();
 
 	UWorld* World = GetWorld();
 	if (!World || !LiveComponent)
@@ -81,10 +91,38 @@ void ATDFluidWaterActor::BeginPlay()
 	}
 }
 
+void ATDFluidWaterActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	HideWetDecal();
+	if (WetDecalLoadHandle.IsValid())
+	{
+		WetDecalLoadHandle->CancelHandle();
+		WetDecalLoadHandle.Reset();
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+bool ATDFluidWaterActor::IsWetDecalVisible() const
+{
+	return WetDecal && WetDecal->IsVisible() && !WetDecal->bHiddenInGame;
+}
+
+UMaterialInstanceDynamic* ATDFluidWaterActor::GetWetDecalMaterialInstance() const
+{
+	return WetDecalMID;
+}
+
 void ATDFluidWaterActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	TickWaterLayer(DeltaSeconds);
+	UpdateWetDecalPlacement();
+}
+
+void ATDFluidWaterActor::TickWaterLayer(float DeltaSeconds)
+{
 	if (!LiveComponent || IsPooledInactive())
 	{
 		return;
@@ -464,4 +502,97 @@ void ATDFluidWaterActor::ResetWaterLayerFade()
 	FadeElapsedSeconds = 0.0f;
 	WaterLayerDisplayAlpha = 0.0f;
 	LiveComponent->SetWaterLayerDisplayAlpha(0.0f);
+}
+
+void ATDFluidWaterActor::RequestWetDecalMaterial()
+{
+	if (!bEnableWetDecal || WetDecalMaterial.IsNull() || !WetDecal || WetDecalMID)
+	{
+		return;
+	}
+
+	if (WetDecalLoadHandle.IsValid())
+	{
+		WetDecalLoadHandle->CancelHandle();
+		WetDecalLoadHandle.Reset();
+	}
+
+	WetDecalLoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		WetDecalMaterial.ToSoftObjectPath(),
+		FStreamableDelegate::CreateUObject(this, &ATDFluidWaterActor::ApplyLoadedWetDecalMaterial));
+}
+
+void ATDFluidWaterActor::ApplyLoadedWetDecalMaterial()
+{
+	UMaterialInterface* LoadedMaterial = WetDecalMaterial.Get();
+	if (!LoadedMaterial || !WetDecal || !LiveComponent || WetDecalMID)
+	{
+		return;
+	}
+
+	WetDecalMID = UMaterialInstanceDynamic::Create(LoadedMaterial, this);
+	WetDecal->SetDecalMaterial(WetDecalMID);
+	LiveComponent->RegisterExternalMaterialTarget(WetDecalMID);
+}
+
+void ATDFluidWaterActor::UpdateWetDecalPlacement()
+{
+	if (!WetDecal)
+	{
+		return;
+	}
+
+	float TerrainMinimumCm = 0.0f;
+	float TerrainMaximumCm = 0.0f;
+	const bool bCanShowDecal = bEnableWetDecal
+		&& WetDecalMID
+		&& LiveComponent
+		&& !IsPooledInactive()
+		&& LiveComponent->IsSimulationAwake()
+		&& LiveComponent->SimulationConfig.bEnableWaterLayer
+		&& !bIsDormantDuplicate
+		&& !bIsSleepingForMissingWater
+		&& LiveComponent->TryGetSampledTerrainRangeCm(TerrainMinimumCm, TerrainMaximumCm);
+	if (!bCanShowDecal)
+	{
+		HideWetDecal();
+		return;
+	}
+
+	const FVector2D WindowCenter = LiveComponent->GetSimulationCenterWorld();
+	const FVector2D WindowExtent = LiveComponent->GetSimulationExtentCm();
+	const FVector DecalLocation(WindowCenter.X, WindowCenter.Y, 0.5 * (TerrainMinimumCm + TerrainMaximumCm));
+	const FVector DecalSize(0.5 * (TerrainMaximumCm - TerrainMinimumCm) + WetDecalVerticalMarginCm, 0.5 * WindowExtent.Y, 0.5 * WindowExtent.X);
+	PlaceWetDecalIfChanged(DecalLocation, DecalSize);
+
+	if (!WetDecal->IsVisible())
+	{
+		WetDecal->SetVisibility(true);
+	}
+}
+
+void ATDFluidWaterActor::HideWetDecal()
+{
+	if (WetDecal && WetDecal->IsVisible())
+	{
+		WetDecal->SetVisibility(false);
+	}
+}
+
+void ATDFluidWaterActor::PlaceWetDecalIfChanged(const FVector& WorldLocation, const FVector& DecalSize)
+{
+	const FQuat DownwardRotation = FRotator(-90.0, 0.0, 0.0).Quaternion();
+	if (!WetDecal->GetComponentLocation().Equals(WorldLocation, 0.01) || !WetDecal->GetComponentQuat().Equals(DownwardRotation, 0.0001))
+	{
+		WetDecal->SetWorldLocationAndRotation(WorldLocation, DownwardRotation);
+	}
+
+	if (WetDecal->DecalSize.Equals(DecalSize, 0.01))
+	{
+		return;
+	}
+
+	WetDecal->DecalSize = DecalSize;
+	WetDecal->UpdateBounds();
+	WetDecal->MarkRenderStateDirty();
 }

@@ -1,8 +1,12 @@
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "Async/ParallelFor.h"
+#include "FluidFX/TDFluidWaterWetnessRules.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/Crc.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+
+CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
 namespace
 {
@@ -28,6 +32,12 @@ namespace
 		TEXT("TD.FluidFX.SolverRowParallel"),
 		1,
 		TEXT("Run the heavy FluidFX solver passes as parallel row batches with bit-identical results. 0 = One thread, 1 = Parallel."));
+
+	TAutoConsoleVariable<int32> CVarTDFluidWaterWetness(
+		TEXT("TD.FluidFX.WaterWetness"),
+		1,
+		TEXT("0 skips wetness updates on both water backends and clears wetness output."),
+		ECVF_Default);
 
 	float ClampFinite(float Value, float MinValue, float MaxValue)
 	{
@@ -90,6 +100,7 @@ namespace
 		InOutConfig.BankWetHeightCm = ClampFinite(InOutConfig.BankWetHeightCm, 0.0f, 1000.0f);
 		InOutConfig.WetnessDryingSeconds = ClampFinite(InOutConfig.WetnessDryingSeconds, 0.01f, 10000.0f);
 		InOutConfig.WetnessFromWhitewater = ClampFinite(InOutConfig.WetnessFromWhitewater, 0.0f, 1.0f);
+		InOutConfig.WhitewaterDissipation = ClampFinite(InOutConfig.WhitewaterDissipation, 0.0f, 10.0f);
 		InOutConfig.CpuFallbackResolution = FMath::Clamp(InOutConfig.CpuFallbackResolution, 0, MaxGridResolution);
 		InOutConfig.HeatCoolingPerSec = ClampFinite(InOutConfig.HeatCoolingPerSec, 0.0f, 50.0f);
 		InOutConfig.HeatBuoyancyCmPerSec2 = ClampFinite(InOutConfig.HeatBuoyancyCmPerSec2, 0.0f, 20000.0f);
@@ -1684,6 +1695,7 @@ void FTDFluidGrid2DSolver::AdvectDensities(float DeltaTime)
 	const float StepScaleX = (DeltaTime * Config.AdvectionSpeedScale) / CellSizeX;
 	const float StepScaleY = (DeltaTime * Config.AdvectionSpeedScale) / CellSizeY;
 	const float DissipationFactor = 1.0f / (1.0f + Config.DensityDissipation * DeltaTime);
+	const float PrimaryDissipationFactor = (IsWaterLayerActive() && Config.bUseWhitewaterDissipation) ? 1.0f / (1.0f + Config.WhitewaterDissipation * DeltaTime) : DissipationFactor;
 
 	const int32 GridSize = Resolution;
 	const uint8* SolidCells = SolidCellMask.GetData();
@@ -1713,7 +1725,7 @@ void FTDFluidGrid2DSolver::AdvectDensities(float DeltaTime)
 			const float BacktraceY = static_cast<float>(Y) - VelY[Idx] * StepScaleY;
 			const FTDFluidBilinearSample Sample = MakeBilinearSample(BacktraceX, BacktraceY, GridSize);
 
-			AdvectedPrimary[Idx] = FMath::Clamp(InterpolateBilinear(PrimaryValues, Sample) * DissipationFactor, 0.0f, 1.0f);
+			AdvectedPrimary[Idx] = FMath::Clamp(InterpolateBilinear(PrimaryValues, Sample) * PrimaryDissipationFactor, 0.0f, 1.0f);
 			AdvectedSelective[Idx] = FMath::Clamp(InterpolateBilinear(SelectiveValues, Sample) * DissipationFactor, 0.0f, 1.0f);
 			AdvectedDisplacement[Idx] = FMath::Clamp(InterpolateBilinear(DisplacementValues, Sample) * DissipationFactor, 0.0f, 1.0f);
 		}
@@ -2034,6 +2046,11 @@ float FTDFluidGrid2DSolver::GetOutputSpeedReferenceCmPerSec()
 	return OutputSpeedReferenceCmPerSec;
 }
 
+bool FTDFluidGrid2DSolver::IsWaterWetnessConsoleEnabled()
+{
+	return CVarTDFluidWaterWetness.GetValueOnAnyThread() != 0;
+}
+
 bool FTDFluidGrid2DSolver::ShouldAllocateWaterBuffers() const
 {
 	return Config.bEnableWaterLayer && Config.SimMode != ETDFluidSimMode::SimplePainter;
@@ -2064,6 +2081,7 @@ void FTDFluidGrid2DSolver::ReleaseWaterBuffers()
 	WaterInputRaster.ReleaseRowSegmentLists();
 	TerrainKnownCellCount = 0;
 	bHasRippleActivity = false;
+	bIsWetnessUpdating = false;
 }
 
 void FTDFluidGrid2DSolver::ResetWaterBuffers()
@@ -2096,6 +2114,7 @@ void FTDFluidGrid2DSolver::ResetWaterBuffers()
 	bWaterDryDirty = true;
 	bWaterVelocityInitPending = true;
 	bHasRippleActivity = false;
+	bIsWetnessUpdating = false;
 }
 
 void FTDFluidGrid2DSolver::SynchronizeWaterBuffersWithConfig(const FTDFluidSimulationConfig& PreviousConfig)
@@ -2366,9 +2385,108 @@ void FTDFluidGrid2DSolver::StepFluidSimWater(float DeltaTime)
 	EnforceObstacleBoundaries();
 	SolvePressureProjectionWater();
 	EnforceObstacleBoundaries();
+	UpdateWetnessIfEnabled(DeltaTime);
 	AdvectDensities(DeltaTime);
 	AddWhitewaterSources(DeltaTime);
 	StepRipples(DeltaTime);
+}
+
+void FTDFluidGrid2DSolver::UpdateWetnessIfEnabled(float DeltaTime)
+{
+	const bool bShouldUpdate = Config.bEnableWaterWetness && IsWaterWetnessConsoleEnabled();
+	if (!bShouldUpdate)
+	{
+		if (bIsWetnessUpdating)
+		{
+			Wetness.Init(0.0f, Wetness.Num());
+			bIsWetnessUpdating = false;
+		}
+		return;
+	}
+
+	CSV_SCOPED_TIMING_STAT(TDFluid, WaterWetness);
+	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_UpdateWetness);
+
+	if (!bIsWetnessUpdating)
+	{
+		Wetness.Init(0.0f, Wetness.Num());
+		bIsWetnessUpdating = true;
+	}
+
+	UpdateWetness(DeltaTime);
+}
+
+void FTDFluidGrid2DSolver::UpdateWetness(float DeltaTime)
+{
+	const float RetainFactor = FTDFluidWaterWetnessRules::ComputeRetainFactor(DeltaTime, Config.WetnessDryingSeconds);
+	const float CoastWavePhase = FTDFluidWaterWetnessRules::ComputeCoastWavePhase(SimulationTimeSeconds + DeltaTime, Config.CoastWavePeriodSeconds);
+	const float SwashReachCm = FTDFluidWaterWetnessRules::ComputeSwashReachCm(Config.SwashHeightCm, CoastWavePhase);
+	const float InvBankWetHeightCm = FTDFluidWaterWetnessRules::ComputeInverseHeight(Config.BankWetHeightCm);
+
+	const int32 GridSize = Resolution;
+	float* WetnessValues = Wetness.GetData();
+	ForEachGridRow(TEXT("TDFluidWetnessRows"), GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = Y * GridSize + X;
+			const float Source = ComputeWetnessSourceAtCell(X, Y, SwashReachCm, InvBankWetHeightCm);
+			WetnessValues[Idx] = FMath::Clamp(FMath::Max(WetnessValues[Idx] * RetainFactor, Source), 0.0f, 1.0f);
+		}
+	});
+}
+
+float FTDFluidGrid2DSolver::ComputeWetnessSourceAtCell(int32 CellX, int32 CellY, float SwashReachCm, float InvBankWetHeightCm) const
+{
+	const int32 CellIndex = ToCellIndex(CellX, CellY);
+	if (ComputeWaterDepthAtIndex(CellIndex) > 0.0f)
+	{
+		return 1.0f;
+	}
+
+	float Source = 0.0f;
+	if (Config.WetnessFromWhitewater > 0.0f)
+	{
+		const int32 GridSize = Resolution;
+		const float* PrimaryValues = PrimaryDensity.GetData();
+		float NeighborDensity = 0.0f;
+		if (CellX > 0)
+		{
+			NeighborDensity = FMath::Max(NeighborDensity, PrimaryValues[CellIndex - 1]);
+		}
+		if (CellX + 1 < GridSize)
+		{
+			NeighborDensity = FMath::Max(NeighborDensity, PrimaryValues[CellIndex + 1]);
+		}
+		if (CellY > 0)
+		{
+			NeighborDensity = FMath::Max(NeighborDensity, PrimaryValues[CellIndex - GridSize]);
+		}
+		if (CellY + 1 < GridSize)
+		{
+			NeighborDensity = FMath::Max(NeighborDensity, PrimaryValues[CellIndex + GridSize]);
+		}
+		Source = Config.WetnessFromWhitewater * NeighborDensity;
+	}
+
+	const float SurfaceHeight = WaterSurfaceHeight[CellIndex];
+	if (SurfaceHeight == NoWaterSurfaceHeight || TerrainKnownMask[CellIndex] == 0)
+	{
+		return Source;
+	}
+
+	const float HeightAboveSurfaceCm = TerrainElevation[CellIndex] - SurfaceHeight;
+	if (HeightAboveSurfaceCm < SwashReachCm)
+	{
+		return 1.0f;
+	}
+
+	if (HeightAboveSurfaceCm < Config.BankWetHeightCm)
+	{
+		return FMath::Max(Source, 1.0f - HeightAboveSurfaceCm * InvBankWetHeightCm);
+	}
+
+	return Source;
 }
 
 void FTDFluidGrid2DSolver::ApplyTerrainSlopeAccelerationDryOnly(float DeltaTime)

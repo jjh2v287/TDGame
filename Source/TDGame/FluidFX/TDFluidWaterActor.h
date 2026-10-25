@@ -5,8 +5,10 @@
 #include "FluidFX/TDFluidTypes.h"
 #include "TDFluidWaterActor.generated.h"
 
+class UDecalComponent;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
+struct FStreamableHandle;
 
 UCLASS()
 class TDGAME_API ATDFluidWaterActor : public ATDFluidLiveActor
@@ -43,8 +45,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", meta = (ClampMin = "0.0"))
 	float WaterLayerFadeInSeconds = 1.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water|Wetness")
+	bool bEnableWetDecal = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water|Wetness")
+	TSoftObjectPtr<UMaterialInterface> WetDecalMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water|Wetness", meta = (ClampMin = "0.0"))
+	float WetDecalVerticalMarginCm = 30.0f;
+
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
+
+	UFUNCTION(BlueprintPure, Category = "Water|Wetness")
+	bool IsWetDecalVisible() const;
+
+	UFUNCTION(BlueprintPure, Category = "Water|Wetness")
+	UMaterialInstanceDynamic* GetWetDecalMaterialInstance() const;
 
 	UFUNCTION(BlueprintPure, Category = "Water")
 	int32 GetDrivenSurfaceCount() const { return DrivenSurfaceCount; }
@@ -64,6 +82,12 @@ protected:
 	virtual void OnTerrainSamplingCompleted() override;
 
 private:
+	void TickWaterLayer(float DeltaSeconds);
+	void RequestWetDecalMaterial();
+	void ApplyLoadedWetDecalMaterial();
+	void UpdateWetDecalPlacement();
+	void HideWetDecal();
+	void PlaceWetDecalIfChanged(const FVector& WorldLocation, const FVector& DecalSize);
 	const AActor* ResolveFollowedActor() const;
 	FVector ComputeLookAheadOffset() const;
 	FBox2D ComputeWindowBoundsXY(double HalfExtentScale) const;
@@ -80,6 +104,14 @@ private:
 
 	UPROPERTY(Transient)
 	TMap<TObjectPtr<UMaterialInterface>, TObjectPtr<UMaterialInstanceDynamic>> SharedSurfaceMaterials;
+
+	UPROPERTY(VisibleAnywhere, Category = "Water|Wetness")
+	TObjectPtr<UDecalComponent> WetDecal;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInstanceDynamic> WetDecalMID;
+
+	TSharedPtr<FStreamableHandle> WetDecalLoadHandle;
 
 	TArray<TWeakObjectPtr<AActor>> TraceIgnoredActors;
 	TArray<FTDFluidWaterRegion> CachedWaterRegions;

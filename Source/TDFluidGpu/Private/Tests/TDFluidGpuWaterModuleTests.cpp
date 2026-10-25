@@ -572,14 +572,14 @@ bool FTDFluidGpuWaterModuleMemoryEstimateMatchesTableTest::RunTest(const FString
 	using namespace TDFluidGpuWaterModuleTestPrivate;
 
 	const FTDWaterMemoryTableRow Rows[] = {
-		{ TEXT("192 Jacobi 32 bit"), 192, ETDFluidGpuWaterPressureMode::JacobiOpenBorders, true, true, 3022848, 884736, 221184, 4128768 },
-		{ TEXT("192 Jacobi 16 bit"), 192, ETDFluidGpuWaterPressureMode::JacobiOpenBorders, false, false, 2433024, 884736, 221184, 3538944 },
-		{ TEXT("256 Jacobi 32 bit"), 256, ETDFluidGpuWaterPressureMode::JacobiOpenBorders, true, true, 5373952, 1572864, 393216, 7340032 },
-		{ TEXT("512 multigrid 16 bit"), 512, ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid, false, false, 11010048, 6291456, 5019652, 22321156 },
-		{ TEXT("1024 multigrid 16 bit"), 1024, ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid, false, false, 39321600, 25165824, 19705860, 84193284 },
-		{ TEXT("1024 kernel 16 bit"), 1024, ETDFluidGpuWaterPressureMode::HalfResolutionKernelFeedback, false, false, 39321600, 25165824, 21110788, 85598212 },
-		{ TEXT("1024 multigrid 32 bit velocity"), 1024, ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid, true, false, 47710208, 25165824, 19705860, 92581892 },
-		{ TEXT("1024 multigrid 32 bit velocity and ripple"), 1024, ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid, true, true, 56098816, 25165824, 19705860, 100970500 }
+		{ TEXT("192 Jacobi 32 bit"), 192, ETDFluidGpuWaterPressureMode::JacobiOpenBorders, true, true, 3170304, 884736, 221184, 4276224 },
+		{ TEXT("192 Jacobi 16 bit"), 192, ETDFluidGpuWaterPressureMode::JacobiOpenBorders, false, false, 2580480, 884736, 221184, 3686400 },
+		{ TEXT("256 Jacobi 32 bit"), 256, ETDFluidGpuWaterPressureMode::JacobiOpenBorders, true, true, 5636096, 1572864, 393216, 7602176 },
+		{ TEXT("512 multigrid 16 bit"), 512, ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid, false, false, 12058624, 6291456, 5019652, 23369732 },
+		{ TEXT("1024 multigrid 16 bit"), 1024, ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid, false, false, 43515904, 25165824, 19705860, 88387588 },
+		{ TEXT("1024 kernel 16 bit"), 1024, ETDFluidGpuWaterPressureMode::HalfResolutionKernelFeedback, false, false, 43515904, 25165824, 21110788, 89792516 },
+		{ TEXT("1024 multigrid 32 bit velocity"), 1024, ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid, true, false, 51904512, 25165824, 19705860, 96776196 },
+		{ TEXT("1024 multigrid 32 bit velocity and ripple"), 1024, ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid, true, true, 60293120, 25165824, 19705860, 105164804 }
 	};
 
 	FTDWaterGpuConsoleVariableScope PostSmoothScope(TEXT("TD.FluidFX.WaterGpuHalfPostSmoothIterations"), 4);
@@ -598,7 +598,7 @@ bool FTDFluidGpuWaterModuleMemoryEstimateMatchesTableTest::RunTest(const FString
 	}
 
 	const FTDFluidGpuMemoryEstimate DefaultEstimate = FTDFluidGpuBatch::EstimateWaterActorMemory(FTDFluidGpuBatch::MakeKey(DefaultSettings));
-	TestEqual(TEXT("Default 192 water actor matches the 32 bit row"), DefaultEstimate.GetTotalBytes() - DefaultEstimate.ReadbackBytes, static_cast<int64>(4128768));
+	TestEqual(TEXT("Default 192 water actor matches the 32 bit row"), DefaultEstimate.GetTotalBytes() - DefaultEstimate.ReadbackBytes, static_cast<int64>(4276224));
 	return !HasAnyErrors();
 }
 

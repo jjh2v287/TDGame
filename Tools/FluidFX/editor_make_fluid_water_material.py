@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 물 수면 마스터 재질 M_TD_FluidWater(Substrate 단일층 물)·M_TD_FluidWaterLite(DefaultLit)와 인스턴스 5종(강·호수·바다·폭풍·늪), 젖음 DBuffer 데칼 재질 M_TD_FluidWetnessDecal(TDFluidWaterWetDecal.hlsl), 텍스처 3장, 격자 메시 2개, 0단계 확인 3건을 만든다. Custom 노드 2개(표면·정점 오프셋)에 Tools/FluidFX/Shaders/TDFluidWaterCommon·Surface·Offset.hlsl 을 노드별로 조립해 넣는다.
-실행 명령: python Tools/FluidFX/make_fluid_water_textures.py 다음 python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_material.py
+실행 명령: python Tools/FluidFX/make_fluid_water_textures.py 다음 python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_material.py (젖음 데칼 재질 하나만 다시 만들 때는 요청 파일 Saved/FluidFX/fluid_water_material_request.json 에 {"wet_decal_only": true})
 출력: /Game/FluidFX/Materials/M_TD_FluidWater·M_TD_FluidWaterLite·MI_TD_FluidWater_River·Lake·Sea·SeaStorm·Swamp·M_TD_FluidWaterDecalProbe·M_TD_FluidWetnessDecal, /Game/FluidFX/Textures/T_TD_FluidWaterDetailN·T_TD_FluidFoamNoise·T_TD_FluidFlowPhaseNoise·T_TD_FluidCaustics, /Game/FluidFX/Meshes/SM_TD_FluidWaterGrid64·SM_TD_FluidWaterGridUnit, Saved/FluidFX/fluid_water_material.json
-상태: 검증 중(2026-10-19). 기본 경로는 단일층 물(legacy = MSM_SINGLE_LAYER_WATER, 굴절 Pixel Normal Offset, 흡수·산란 계수는 1/cm 그대로 = 엔진이 cm 깊이에 곱함, SingleLayerWaterShading.ush 206·221행). SLW 가 안 보이던 것은 아래를 보는 격자 탓이었다(L-editor-40·41 정정). 코스틱 텍스처 min 결합(ColorScaleBehindWater)·미세 법선·해 반짝임 방출(SkyAtmosphereLightDirection·Illuminance)·레이스 거품 문턱. {"water_path": "substrate"|"translucent"} 로 다른 경로(반투명은 두께 = SceneDepth − PixelDepth). C1 추가분: RibbonTangentWS·RibbonFlowCmPerSec(CPD 0번)·MID_DRIVEN_* 계약 대조. 기존 에셋은 {"overwrite": true} 일 때만 다시 짓고(격자는 지운 뒤 새로), 물 무대가 열려 있으면 불 무대로 옮긴 뒤 짓는다. 미저장 작업이 있으면 중단한다. W-2r 추가분(새 파라미터 기본값은 기존 화면과 같음): 거품 문턱(FoamDensityThreshold·FoamFromDensity·FoamSpeedThreshold)·프루드 수 흰 물(FoamFromFroude·FoamFroudeThreshold)·카메라 거리 거품 페이드(FoamFadeStartCm·FoamFadeLengthCm)·선택 밀도 염료(DyeColor·DyeOpacity)·리본 로컬 UV 정적 스위치 3개(bRibbonLocalFlowDetail·Caustics·Tiling, RibbonSegmentLengthCm·RibbonWidthCm·RibbonStretchAlong, 인스턴스 "switches"), 강 MI 청록·거품 재조정.
+상태: 검증 중(2026-10-19). 기본 경로는 단일층 물(legacy = MSM_SINGLE_LAYER_WATER, 굴절 Pixel Normal Offset, 흡수·산란 계수는 1/cm 그대로 = 엔진이 cm 깊이에 곱함, SingleLayerWaterShading.ush 206·221행). SLW 가 안 보이던 것은 아래를 보는 격자 탓이었다(L-editor-40·41 정정). 코스틱 텍스처 min 결합(ColorScaleBehindWater)·미세 법선·해 반짝임 방출(SkyAtmosphereLightDirection·Illuminance)·레이스 거품 문턱. {"water_path": "substrate"|"translucent"} 로 다른 경로(반투명은 두께 = SceneDepth − PixelDepth). C1 추가분: RibbonTangentWS·RibbonFlowCmPerSec(CPD 0번)·MID_DRIVEN_* 계약 대조. 기존 에셋은 {"overwrite": true} 일 때만 다시 짓고(격자는 지운 뒤 새로), 물 무대가 열려 있으면 불 무대로 옮긴 뒤 짓는다. 미저장 작업이 있으면 중단한다. W-2r 추가분(새 파라미터 기본값은 기존 화면과 같음): 거품 문턱(FoamDensityThreshold·FoamFromDensity·FoamSpeedThreshold)·프루드 수 흰 물(FoamFromFroude·FoamFroudeThreshold)·카메라 거리 거품 페이드(FoamFadeStartCm·FoamFadeLengthCm)·선택 밀도 염료(DyeColor·DyeOpacity)·리본 로컬 UV 정적 스위치 3개(bRibbonLocalFlowDetail·Caustics·Tiling, RibbonSegmentLengthCm·RibbonWidthCm·RibbonStretchAlong, 인스턴스 "switches"), 강 MI 청록·거품 재조정. W-2s-a(미검증): 젖음 데칼 HLSL 높이 관문(입력 TerrainReferenceZCm·WetHeightToleranceCm 추가, WetOpacity 기본 0.20 = 일괄 보정 전 임시값)과 {"wet_decal_only": true} 요청(M_TD_FluidWetnessDecal 하나만 덮어쓰고 텍스처·격자 메시·물 마스터·인스턴스·물 무대는 건드리지 않으며 보고서는 이 요청의 결과로 덮어쓴다).
 """
 import hashlib
 import json
@@ -134,8 +134,10 @@ SCALAR_PARAMETER_DEFAULTS = (
     ("RibbonWidthCm", 800.0),
     ("RibbonStretchAlong", 1.0),
     ("WetRoughness", 0.25),
-    ("WetOpacity", 0.45),
+    ("WetOpacity", 0.20),
     ("WetSubmergedFadeCm", 2.0),
+    ("TerrainReferenceZCm", 0.0),
+    ("WetHeightToleranceCm", 30.0),
 )
 PRIMITIVE_DATA_INDEX_BY_PARAMETER = {"RibbonFlowCmPerSec": 0}
 STATIC_SWITCH_DEFAULTS = (
@@ -296,6 +298,8 @@ WET_DECAL_INPUT_NAMES = (
     "WaterDepthReferenceCm",
     "WetSubmergedFadeCm",
     "WetOpacity",
+    "TerrainReferenceZCm",
+    "WetHeightToleranceCm",
 )
 WET_DECAL_SAMPLER_NAMES = ("WaterSurfaceTextureSampler",)
 WET_DECAL_ENGINE_SYMBOLS = ("Texture2DSampleLevel",)
@@ -1383,6 +1387,29 @@ def describe_codes(codes):
     return {name: {"characters": len(code), "sha256": hashlib.sha256(code.encode("utf-8")).hexdigest()} for name, code in codes.items()}
 
 
+def rebuild_wet_decal_only():
+    unsaved_names = find_unsaved_package_names(True)
+    if unsaved_names:
+        raise RuntimeError("미저장 작업을 보존합니다: " + ", ".join(unsaved_names))
+
+    print("단계: 기본 텍스처 선택")
+    texture_path, default_texture, default_sampler = pick_default_texture()
+    texture_defaults = {name: (default_texture, default_sampler) for name in SIMULATION_TEXTURE_PARAMETERS}
+
+    print("단계: 젖음 DBuffer 데칼 재질만 다시 만들기")
+    wetness_decal = create_wetness_decal(texture_defaults, True)
+    if not wetness_decal["ok"]:
+        raise RuntimeError("젖음 데칼 재질 생성 실패: " + wetness_decal["detail"])
+    saved_path = project_path("Content", *WET_DECAL_PATH[len("/Game/"):].split("/")) + ".uasset"
+    if not os.path.isfile(saved_path):
+        raise RuntimeError(f"저장 파일 확인 실패: {saved_path}")
+
+    report = {"status": "ok", "wet_decal_only": True, "default_texture": texture_path, "wetness_decal": wetness_decal, "saved": True}
+    report_path = write_report(report)
+    print(json.dumps(report, ensure_ascii=False, default=str))
+    print("보고서: " + report_path)
+
+
 def main():
     editor = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
     assets = unreal.EditorAssetLibrary
@@ -1403,6 +1430,8 @@ def main():
         raise RuntimeError("언리얼 Python 이름 없음(0단계 확인 실패면 요청 파일에 water_path legacy): " + ", ".join(missing_names))
     if editor.get_game_world() is not None:
         raise RuntimeError("PIE를 종료한 뒤 실행하세요.")
+    if request.get("wet_decal_only") is True:
+        return rebuild_wet_decal_only()
     shadowed_parameters = find_shadowed_mid_parameters()
     if shadowed_parameters:
         raise RuntimeError("인스턴스가 C++ 구동 파라미터를 덮어쓰고 있음: " + ", ".join(shadowed_parameters))

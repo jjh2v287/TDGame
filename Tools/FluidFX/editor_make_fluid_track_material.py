@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 자국 층 마스터 M_TD_FluidTrackLayer(불투명 Masked·월드 공간 법선, Custom 노드 2개 = 정점 WPO TDFluidTrackOffset·화소 TDFluidTrackSurface, 공용 TDFluidTrackCommon), 지형용 MF_TD_FluidTrackSample, 창 MPC_TD_FluidTrackWindow, 격자 SM_TD_FluidTrackGridUnit256, 텍스처 2장, MI 5개(자국 3·먼지 2)를 만든다. 먼저 python Tools/FluidFX/make_fluid_track_textures.py 를 돌리고, 모양 정본에 MI 5개가 병합되어 있어야 한다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 자국 층 마스터 M_TD_FluidTrackLayer(불투명 Masked·월드 공간 법선, Custom 노드 2개 = 정점 WPO TDFluidTrackOffset·화소 TDFluidTrackSurface, 공용 TDFluidTrackCommon, 출력은 MakeMaterialAttributes 하나를 MP_MATERIAL_ATTRIBUTES 에 연결), 지형용 MF_TD_FluidTrackSample, 창 MPC_TD_FluidTrackWindow, 격자 SM_TD_FluidTrackGridUnit256, 텍스처 2장, MI 5개(자국 3·먼지 2)를 만든다. 먼저 python Tools/FluidFX/make_fluid_track_textures.py 를 돌리고, 모양 정본에 MI 5개가 병합되어 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_track_material.py (기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_track_material_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Materials/M_TD_FluidTrackLayer·MF_TD_FluidTrackSample·MPC_TD_FluidTrackWindow·MI_TD_FluidTrack_Snow·SnowSlope·Sand·MI_TD_FluidVolume_SnowDust·SandDust, /Game/FluidFX/Textures/T_TD_FluidDuneHeight·T_TD_FluidSnowDetailN, /Game/FluidFX/Meshes/SM_TD_FluidTrackGridUnit256, Saved/FluidFX/fluid_track_material.json
-상태: 미검증(2026-10-25 FX-12r 작성: py_compile·가짜 unreal·check_fluid_track_hlsl.py 만, 에디터 실행 전). 구동(MID, SimGridResolution > 0.5) = 내부 표면 평면(창 안 층 높이·잔차 POM·자기 그림자·PDO), 정적(MI) = 바닥(MPC 창 안 클립, TrackUsesWindowMask 0 이면 비탈용으로 클립 끔). 층 기준면은 셰이더 오프셋을 뺀 월드 위치(평면·바닥 메시 높이)다. MI 값은 모양 정본(apply_to_instance)만, 모래 MI 의 세부 법선 텍스처(T_TD_FluidSandRipplesN)는 에셋 연결로 넣는다(반박 S4). 사구 높이 PNG 16비트는 TC_HALF_FLOAT·선형 표본기(반박 S3). 정점 WPO 에 카메라 거리 페이드가 있고 바닥 클립이 MPC 창을 따라가므로 VSM Rigid 를 쓰지 않는다(반박 S2).
+상태: 검증(2026-10-26 에디터 2회차 status ok·재질 컴파일 오류 0·자국 무대 stale 0, 2026-10-25 FX-12r 작성. 2026-10-26 고침: UE 5.8 Python 에 MP_PIXEL_DEPTH_OFFSET 이 없어(L-editor-64) BaseColor·OpacityMask·Normal·PDO·Roughness·WPO 를 MakeMaterialAttributes 로 모으고 use_material_attributes 를 켠다. Substrate 프로젝트에서는 FrontMaterial 미연결 재질을 번역기가 숨은 변환으로 컴파일한다. 2026-10-26 고침 2: UE 5.8 set_material_instance_texture_parameter_value 는 늘 False 를 돌려주므로 MI 텍스처 연결은 다시 읽어 판정한다). 구동(MID, SimGridResolution > 0.5) = 내부 표면 평면(창 안 층 높이·잔차 POM·자기 그림자·PDO), 정적(MI) = 바닥(MPC 창 안 클립, TrackUsesWindowMask 0 이면 비탈용으로 클립 끔). 층 기준면은 셰이더 오프셋을 뺀 월드 위치(평면·바닥 메시 높이)다. MI 값은 모양 정본(apply_to_instance)만, 모래 MI 의 세부 법선 텍스처(T_TD_FluidSandRipplesN)는 에셋 연결로 넣는다(반박 S4). 사구 높이 PNG 16비트는 TC_HALF_FLOAT·선형 표본기(반박 S3). 정점 WPO 에 카메라 거리 페이드가 있고 바닥 클립이 MPC 창을 따라가므로 VSM Rigid 를 쓰지 않는다(반박 S2).
 """
 import hashlib
 import importlib.util
@@ -119,6 +119,7 @@ SURFACE_INPUT_NAMES = COMMON_INPUT_NAMES + (
 )
 SAMPLE_INPUT_NAMES = COMMON_INPUT_NAMES + ("TrackNormalStrength",)
 SURFACE_OUTPUT_SPECS = (("TrackNormalWS", "CMOT_FLOAT3"), ("TrackPixelDepthOffsetCm", "CMOT_FLOAT1"))
+MASTER_ATTRIBUTE_INPUT_NAMES = ("BaseColor", "OpacityMask", "Normal", "PixelDepthOffset", "Roughness", "WorldPositionOffset")
 SAMPLE_OUTPUT_SPECS = (("TrackSampleNormalWS", "CMOT_FLOAT3"),)
 SAMPLE_FUNCTION_OUTPUTS = (("WindowMask", "R"), ("TrackDepth", "G"), ("HeightCm", "B"))
 COMMON_SAMPLER_NAMES = ("DensityPressureTextureSampler", "TrackDuneHeightTextureSampler")
@@ -154,6 +155,7 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialEditingLibrary.get_scalar_parameter_names",
     "MaterialEditingLibrary.get_texture_parameter_names",
     "MaterialEditingLibrary.set_material_instance_texture_parameter_value",
+    "MaterialEditingLibrary.get_material_instance_texture_parameter_value",
     "MaterialEditingLibrary.get_material_default_scalar_parameter_value",
     "Material",
     "MaterialFactoryNew",
@@ -182,12 +184,8 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialExpressionComponentMask",
     "BlendMode.BLEND_MASKED",
     "MaterialShadingModel.MSM_DEFAULT_LIT",
-    "MaterialProperty.MP_BASE_COLOR",
-    "MaterialProperty.MP_NORMAL",
-    "MaterialProperty.MP_ROUGHNESS",
-    "MaterialProperty.MP_OPACITY_MASK",
-    "MaterialProperty.MP_WORLD_POSITION_OFFSET",
-    "MaterialProperty.MP_PIXEL_DEPTH_OFFSET",
+    "MaterialExpressionMakeMaterialAttributes",
+    "MaterialProperty.MP_MATERIAL_ATTRIBUTES",
     "MaterialSamplerType.SAMPLERTYPE_COLOR",
     "MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR",
     "MaterialSamplerType.SAMPLERTYPE_NORMAL",
@@ -643,7 +641,7 @@ def verify_master_parameters(material):
 
 def create_master(codes, textures, collection, overwrite):
     material, was_created = prepare_master(overwrite)
-    for name, value in (("blend_mode", unreal.BlendMode.BLEND_MASKED), ("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT), ("tangent_space_normal", False), ("two_sided", False)):
+    for name, value in (("blend_mode", unreal.BlendMode.BLEND_MASKED), ("shading_model", unreal.MaterialShadingModel.MSM_DEFAULT_LIT), ("tangent_space_normal", False), ("two_sided", False), ("use_material_attributes", True)):
         material.set_editor_property(name, value)
     factory = SourceFactory(lambda expression_class, x, y: unreal.MaterialEditingLibrary.create_material_expression(material, expression_class, x, y), textures, collection)
     offset = build_custom_node(factory, "TDFluidTrackOffset", unreal.CustomMaterialOutputType.CMOT_FLOAT3, OFFSET_INPUT_NAMES, codes["offset"], -500, 700, ())
@@ -653,18 +651,27 @@ def create_master(codes, textures, collection, overwrite):
     link(surface, color)
     link(surface, opacity)
     roughness_source, _ = factory.get("TrackRoughness")
-    connect_material_output(color, unreal.MaterialProperty.MP_BASE_COLOR)
-    connect_material_output(opacity, unreal.MaterialProperty.MP_OPACITY_MASK)
-    connect_material_output(surface, unreal.MaterialProperty.MP_NORMAL, "TrackNormalWS")
-    connect_material_output(surface, unreal.MaterialProperty.MP_PIXEL_DEPTH_OFFSET, "TrackPixelDepthOffsetCm")
-    connect_material_output(roughness_source, unreal.MaterialProperty.MP_ROUGHNESS)
-    connect_material_output(offset, unreal.MaterialProperty.MP_WORLD_POSITION_OFFSET)
+    attributes = factory.node(unreal.MaterialExpressionMakeMaterialAttributes, 200, 0)
+    sources_by_attribute = {
+        "BaseColor": (color, ""),
+        "OpacityMask": (opacity, ""),
+        "Normal": (surface, "TrackNormalWS"),
+        "PixelDepthOffset": (surface, "TrackPixelDepthOffsetCm"),
+        "Roughness": (roughness_source, ""),
+        "WorldPositionOffset": (offset, ""),
+    }
+    for attribute_name in MASTER_ATTRIBUTE_INPUT_NAMES:
+        source, source_output = sources_by_attribute[attribute_name]
+        link(source, attributes, attribute_name, source_output)
+    connect_material_output(attributes, unreal.MaterialProperty.MP_MATERIAL_ATTRIBUTES)
+    if not material.get_editor_property("use_material_attributes"):
+        raise RuntimeError(f"{MASTER_NAME} use_material_attributes 설정 확인 실패")
     errors = [str(item) for item in unreal.MaterialEditingLibrary.recompile_material(material) or []]
     if errors:
         raise RuntimeError("M_TD_FluidTrackLayer 컴파일 실패(Saved/Logs/TDGame.log 의 LogMaterial 확인): " + " | ".join(errors))
     verify_master_parameters(material)
     save_asset(material, MASTER_PATH)
-    return material, {"asset": MASTER_PATH, "created": was_created, "statistics": read_material_statistics(material), "pom_taps_per_pixel": POM_TAP_FORMULA}
+    return material, {"asset": MASTER_PATH, "created": was_created, "material_attributes": list(MASTER_ATTRIBUTE_INPUT_NAMES), "statistics": read_material_statistics(material), "pom_taps_per_pixel": POM_TAP_FORMULA}
 
 
 def create_sample_function(codes, textures, collection, overwrite):
@@ -719,7 +726,9 @@ def create_instances(look_table, track_master, volume_master, overwrite):
             texture = unreal.EditorAssetLibrary.load_asset(texture_path)
             if texture is None:
                 raise RuntimeError(f"MI 텍스처 연결 대상 없음: {texture_path}")
-            if not unreal.MaterialEditingLibrary.set_material_instance_texture_parameter_value(instance, parameter_name, texture):
+            unreal.MaterialEditingLibrary.set_material_instance_texture_parameter_value(instance, parameter_name, texture)
+            assigned_texture = unreal.MaterialEditingLibrary.get_material_instance_texture_parameter_value(instance, parameter_name)
+            if assigned_texture is None or assigned_texture.get_path_name() != texture.get_path_name():
                 raise RuntimeError(f"MI 텍스처 연결 실패: {name}.{parameter_name}")
             texture_overrides[parameter_name] = texture_path
         if texture_overrides:

@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3. 생성·프로브·덤프는 에디터가 이 프로젝트를 열고 MCP 8000(NiagaraToolsets)·원격 실행이 살아 있어야 하고, --fake-calls 는 에디터 없이 돈다. 구조 명세(Tools/FluidFX/niagara_specs/NS_TD_*.json, spec-fx8n 2.2)를 fluid_niagara_drive 로 스택 계획으로 바꿔 공식 NiagaraToolset_System 으로 GPU 유체 구동 나이아가라 시스템을 만든다(덮어쓰기·삭제 안 함).
 실행 명령: python -B Tools/FluidFX/editor_make_fluid_driven_niagara.py --spec <명세.json> [--asset <경로>] [--look <모양 JSON>] [--probe] [--dump-only] [--fake-calls <출력.json>] (--probe 단독 = 0a 스키마 기록, --probe --asset /Game/Repro/FluidFX/<새 이름> = 0b 비엄격 시범, 생성은 그 명세의 0b 통과 뒤. 모양 키는 늘 명세 asset 이고 --asset 은 만들 경로만 바꾼다(반박 M3), 재현 사본은 /Game/FluidFX 밖 /Game/Repro/FluidFX/ 에만(반박 M1))
-출력: Saved/FluidFX/niagara/driven-probe.json(0a·명세별 0b), 나이아가라 시스템, Saved/FluidFX/niagara/<이름>.dump.json(v1 과 같은 정규화 절 + 절별 sha256)·<이름>.report.json(단계·확인 항목), --fake-calls 는 호출 기록 JSON(User 기본값은 <look> 자리표시, 반박 S1). 종료 0 = 통과, 1 = 단계·확인 실패, 2 = 에디터·MCP 연결 실패, 3 = 선행 조건(명세 오류·에셋 있음·0b 미통과·재질 없음·모양 항목 없음·모르는 User 변수)
-상태: 미검증(2026-10-25 FX-8n B1 작성: py_compile·가짜 클라이언트 호출 기록·검사기만, 에디터 실행 전). User 기본값은 런타임 비텍스처 8개(v1 관례, 반박 M1)와 조절 등록표 이름 전부를 모양 항목 NiagaraSystems[<명세 asset>] 에서 읽는다.
+출력: Saved/FluidFX/niagara/driven-probe.json(0a·명세별 0b, 계획 sha256·로그 판정 포함), 나이아가라 시스템, Saved/FluidFX/niagara/<이름>.dump.json(v1 과 같은 정규화 절 + 절별 sha256)·<이름>.report.json(단계·확인 항목·에디터 로그 구간 집계), --fake-calls 는 호출 기록 JSON(User 기본값은 <look> 자리표시, 반박 S1). 판정: ① 스크립트별 컴파일 상태 UpToDate·오류 0 ② 에디터 로그(표지로 찾은 실제 파일, 생성 전후 오프셋 구간)에 'There were issues for compilation of script "<이름>/' 줄 0 ③ 오프스크린 TDGame.FluidFXRhi.Niagara 통과(이 도구 밖, TODO 로 출력). 종료 0 = ①② 통과, 1 = 단계·확인 실패, 2 = 에디터·MCP 연결 실패, 3 = 선행 조건(명세 오류·에셋 있음·0b 미통과(로그 판정·계획 sha256 포함)·재질 없음·모양 항목 없음·모르는 User 변수)
+상태: 2026-10-26 수정·검증(0b 7종·생성 7종 GPU 로그 문제 0, Niagara 오프스크린 12/12). '스택 오류 0'(GetStackIssues 는 외부 편집 문맥에서 늘 측정 불가) 판정을 ①②③ 으로 바꿈. User 기본값은 런타임 비텍스처 8개(v1 관례, 반박 M1)와 조절 등록표 이름 전부를 모양 항목 NiagaraSystems[<명세 asset>] 에서 읽는다.
 """
 import argparse
 import hashlib
@@ -21,6 +21,7 @@ TOOL_NAME = "editor_make_fluid_driven_niagara"
 OUTPUT_DIR = PROJECT_ROOT / "Saved" / "FluidFX" / "niagara"
 PROBE_PATH = OUTPUT_DIR / "driven-probe.json"
 REPRO_ASSET_ROOT = "/Game/Repro/FluidFX/"
+OFFSCREEN_PENDING_CHECK = "③ 오프스크린 시험 통과: python Tools/build_and_test.py --no-build --rhi offscreen --filter TDGame.FluidFXRhi.Niagara (에디터 닫은 뒤)"
 
 
 def load_valid_spec(spec_path):
@@ -75,7 +76,7 @@ def build_system(client, system_path, spec, user_defaults, recorder, template, s
     system_ref = toolset.reference(toolset.object_path(system_path))
     binding_report = []
     state_report = []
-    placeholders = {}
+    sample_sources = {}
     if should_create:
         recorder.run("1 시스템 생성", lambda: toolset.create_system(client, system_path, template))
     removed = recorder.run("1 템플릿 이미터 제거", lambda: toolset.remove_template_emitters(client, system_path, emitter))
@@ -87,7 +88,7 @@ def build_system(client, system_path, spec, user_defaults, recorder, template, s
     user_variables = build_user_variables(spec, user_defaults)
     recorder.run(f"3 User 변수 {len(user_variables)}", lambda: client.call("AddUserVariables", system=system_ref, variablesToAdd=user_variables))
     builders = {
-        "set": lambda step: toolset.add_set_parameters(client, system_path, emitter, step, placeholders.setdefault(step["script"], {})),
+        "set": lambda step: toolset.add_set_parameters(client, system_path, emitter, step, drive.SAMPLE_COPY_ATTRIBUTES, sample_sources.get(step["script"], {})),
         "module": lambda step: toolset.add_module(client, system_path, emitter, step)[0],
         "expression_module": lambda step: toolset.add_expression_module(client, system_path, emitter, step),
         "linked_inputs_module": lambda step: toolset.add_linked_inputs_module(client, system_path, emitter, step),
@@ -98,10 +99,10 @@ def build_system(client, system_path, spec, user_defaults, recorder, template, s
     for step in drive.build_stack_plan(spec):
         module_names[step["label"]] = recorder.run(f"4 {step['script']} {step['label']}", lambda step=step: builders[step["kind"]](step))
         if step["kind"] == "sample" and module_names[step["label"]]:
-            placeholders.setdefault(step["script"], {})[step["placeholder"]] = toolset.sampled_color_attribute(module_names[step["label"]])
+            sample_sources.setdefault(step["script"], {})[step["placeholder"]] = toolset.sampled_color_attribute(module_names[step["label"]])
     recorder.run("5 렌더러", lambda: toolset.replace_renderer(client, system_path, emitter, drive.renderer_class_of(spec), drive.build_renderer_data(spec)))
     return {"template_topology": topology, "removed_template_emitters": removed, "module_names": module_names,
-            "placeholders": placeholders, "binding": binding_report, "state": state_report}
+            "sample_sources": sample_sources, "binding": binding_report, "state": state_report}
 
 
 def record_fake_calls(spec):
@@ -111,11 +112,31 @@ def record_fake_calls(spec):
     return client.records
 
 
-def verify_system(spec, dump, raw_emitter_data, raw_system_data, built):
+def plan_sha256(spec):
+    return hashlib.sha256(toolset.format_call_records(record_fake_calls(spec)).encode("utf-8")).hexdigest()
+
+
+def begin_log_capture(recorder):
+    path = recorder.run("0 에디터 로그 위치", toolset.editor_log_path)
+    offset = recorder.run("0 에디터 로그 시작 오프셋", lambda: toolset.editor_log_size(path)) if path else None
+    return {"path": path, "offset": offset}
+
+
+def finish_log_capture(recorder, capture, system_path):
+    if capture["offset"] is None:
+        return None
+    text = recorder.run("8 에디터 로그 구간 읽기", lambda: toolset.read_editor_log_since(capture["path"], capture["offset"]))
+    if text is None:
+        return None
+    return dict(capture, **toolset.summarize_compile_log(text, system_path))
+
+
+def verify_system(spec, dump, raw_emitter_data, raw_system_data, built, log_report):
     sections = dump["sections"]
     emitter = spec["emitter_name"]
     plan = drive.build_stack_plan(spec)
     statuses = toolset.collect_compile_statuses(sections.get("CompileState"))
+    compile_problems = toolset.find_compile_problems(sections.get("CompileState"), [f"{emitter}.{drive.GPU_COMPUTE_SCRIPT}"])
     user_names = [str(toolset.field(item, "name")) for item in toolset.as_list(sections.get("UserVariables"), "userVariables") if isinstance(item, dict)]
     renderer_texts = [json.dumps(value) for key, value in sections.items() if ".Renderer." in key]
     emitter_names = [str(toolset.field(item, "emitterName")) for item in toolset.as_list(sections.get("SystemSummary"), "emitters") if isinstance(item, dict)]
@@ -124,17 +145,16 @@ def verify_system(spec, dump, raw_emitter_data, raw_system_data, built):
         f"이미터 = {emitter} 하나": emitter_names == [emitter],
         "이미터 데이터 재읽기 = 요청(GPU·공간·고정 경계·결정론·시드·영속 ID·FixedCount)": toolset.values_match(toolset.read_property_values(raw_emitter_data), drive.build_emitter_data(spec)),
         "시스템 데이터 재읽기 = 요청(결정론·시드·그림자)": toolset.values_match(toolset.read_property_values(raw_system_data), drive.build_system_data(spec)),
-        "GPU 계산 스크립트 UpToDate": statuses.get(f"{emitter}.{drive.GPU_COMPUTE_SCRIPT}") in toolset.UP_TO_DATE_STATUSES,
-        "컴파일 오류 없음": toolset.find_first(sections.get("CompileState"), "hasErrors") is False,
-        "스택 오류 0": toolset.count_error_issues(sections.get("StackIssues")) == 0,
+        "① 스크립트별 컴파일 상태 UpToDate·오류 0(GPU 계산 스크립트 포함)": not compile_problems,
+        f"② 에디터 로그 '{toolset.COMPILE_ISSUE_TEXT}{toolset.asset_name(dump['asset'])}/' 줄 0(이번 생성분, 컴파일 줄 1개 이상)": toolset.is_compile_log_clean(log_report),
         f"User 변수 수 = {len(drive.build_user_variable_plan(spec))}": len(user_names) == len(drive.build_user_variable_plan(spec)),
         f"SampleTexture 바인딩 왕복 {sample_count}개": toolset.is_binding_roundtrip_ok(built["binding"], sample_count),
         "렌더러·메시·재질 재읽기": any(all(path in text for path in drive.expected_renderer_paths(spec)) for text in renderer_texts),
     }
     state_count = drive.count_state_enums(plan)
     if state_count:
-        checks[f"EmitterState 열거 재읽기 {state_count}개(Self·Once)"] = toolset.is_state_roundtrip_ok(built["state"], state_count)
-    return [{"check": name, "passed": bool(passed)} for name, passed in checks.items()], statuses
+        checks[f"EmitterState 열거 재읽기 {state_count}개(enumName·표시 이름 Self·Once)"] = toolset.is_state_roundtrip_ok(built["state"], state_count)
+    return [{"check": name, "passed": bool(passed)} for name, passed in checks.items()], statuses, compile_problems
 
 
 def read_probe():
@@ -149,6 +169,10 @@ def require_stage0b(spec):
         raise toolset.TDPreconditionError(f"단계 0b 결과 없음({spec['asset']}): --probe --asset {REPRO_ASSET_ROOT}<새 이름> 를 먼저 실행")
     if stage.get("failed_steps") or not stage.get("binding_roundtrip_ok") or not stage.get("state_roundtrip_ok", True):
         raise toolset.TDPreconditionError(f"단계 0b 미통과(failed_steps={stage.get('failed_steps')}): 계획을 고치고 새 경로로 0b 재실행")
+    if stage.get("gpu_log_ok") is not True or stage.get("compile_problems"):
+        raise toolset.TDPreconditionError(f"단계 0b 컴파일 판정 미통과(①{stage.get('compile_problems')} ②{stage.get('gpu_log_ok')}): 새 경로로 0b 재실행")
+    if stage.get("plan_sha256") != plan_sha256(spec):
+        raise toolset.TDPreconditionError(f"단계 0b 계획 sha256 이 현재 계획과 다름({stage.get('plan_sha256')}): 새 경로로 0b 재실행")
     return stage["template_system"]
 
 
@@ -188,6 +212,8 @@ def run_stage0a(client):
 def run_stage0b(client, spec, probe_asset, user_defaults):
     if toolset.editor_asset_exists(probe_asset):
         raise toolset.TDPreconditionError(f"0b 경로에 에셋이 이미 있음(덮어쓰기 안 함): {probe_asset}")
+    log_recorder = toolset.TDStepRecorder(strict=False)
+    log_capture = begin_log_capture(log_recorder)
     template = drive.EMPTY_TEMPLATE_SYSTEM
     empty_template_error = ""
     try:
@@ -203,17 +229,22 @@ def run_stage0b(client, spec, probe_asset, user_defaults):
     emitter_data = toolset.call_for_section(client, "GetEmitterData", {"emitterRef": toolset.stack_ref(probe_asset, spec["emitter_name"])})
     system_data = toolset.call_for_section(client, "GetSystemData", {"system": toolset.reference(toolset.object_path(probe_asset))})
     dump = toolset.dump_system(client, probe_asset, spec["emitter_name"], OUTPUT_DIR, TOOL_NAME)
-    checks, statuses = verify_system(spec, dump, emitter_data, system_data, built)
+    log_report = finish_log_capture(log_recorder, log_capture, probe_asset)
+    checks, statuses, compile_problems = verify_system(spec, dump, emitter_data, system_data, built, log_report)
     plan = drive.build_stack_plan(spec)
     return {
         "spec_asset": spec["asset"],
         "asset": probe_asset,
         "template_system": template,
         "empty_template_error": empty_template_error,
-        "steps": recorder.steps,
+        "plan_sha256": plan_sha256(spec),
+        "steps": log_recorder.steps + recorder.steps,
         "failed_steps": recorder.failed_steps(),
         "binding_roundtrip_ok": toolset.is_binding_roundtrip_ok(built["binding"], drive.count_sample_steps(plan)),
         "state_roundtrip_ok": toolset.is_state_roundtrip_ok(built["state"], drive.count_state_enums(plan)),
+        "compile_problems": compile_problems,
+        "gpu_log_ok": toolset.is_compile_log_clean(log_report),
+        "gpu_log": log_report,
         "checks": checks,
         "compile_statuses": statuses,
         "built": built,
@@ -232,11 +263,15 @@ def run_probe(client, spec, probe_asset, user_defaults):
         toolset.write_json(PROBE_PATH, probe)
     print("프로브: " + str(PROBE_PATH))
     passed = not probe["stage0a"]["failed_calls"] and (
-        stage0b is None or (not stage0b["failed_steps"] and stage0b["binding_roundtrip_ok"] and stage0b["state_roundtrip_ok"]))
+        stage0b is None or (not stage0b["failed_steps"] and stage0b["binding_roundtrip_ok"] and stage0b["state_roundtrip_ok"]
+                            and not stage0b["compile_problems"] and stage0b["gpu_log_ok"]))
     print(json.dumps({"stage0a_failed_calls": probe["stage0a"]["failed_calls"],
                       "stage0b_failed_steps": stage0b["failed_steps"] if stage0b else None,
                       "binding_roundtrip_ok": stage0b["binding_roundtrip_ok"] if stage0b else None,
-                      "state_roundtrip_ok": stage0b["state_roundtrip_ok"] if stage0b else None}, ensure_ascii=False))
+                      "state_roundtrip_ok": stage0b["state_roundtrip_ok"] if stage0b else None,
+                      "compile_problems": stage0b["compile_problems"] if stage0b else None,
+                      "gpu_log_ok": stage0b["gpu_log_ok"] if stage0b else None,
+                      "gpu_log_issue_lines": (stage0b["gpu_log"] or {}).get("issue_lines") if stage0b else None}, ensure_ascii=False))
     return 0 if passed else 1
 
 
@@ -249,20 +284,25 @@ def run_create(client, spec, system_path, user_defaults, look_path):
         raise toolset.TDPreconditionError(f"재질 없음: {material}(editor_make_fluid_particle_material.py 먼저)")
     recorder = toolset.TDStepRecorder(strict=True)
     report = {"asset": system_path, "spec_asset": spec["asset"], "template_system": template, "look_path": str(look_path),
-              "look_sha256": hashlib.sha256(pathlib.Path(look_path).read_bytes()).hexdigest(), "user_defaults": user_defaults, "checks": []}
+              "look_sha256": hashlib.sha256(pathlib.Path(look_path).read_bytes()).hexdigest(), "user_defaults": user_defaults,
+              "plan_sha256": plan_sha256(spec), "checks": [], "pending_checks": [OFFSCREEN_PENDING_CHECK]}
     try:
+        log_capture = begin_log_capture(recorder)
         built = build_system(client, system_path, spec, user_defaults, recorder, template)
         recorder.run("6 저장", lambda: toolset.editor_save_asset(system_path))
         emitter_data = recorder.run("7 이미터 데이터 재읽기", lambda: client.call("GetEmitterData", emitterRef=toolset.stack_ref(system_path, spec["emitter_name"])))
         system_data = recorder.run("7 시스템 데이터 재읽기", lambda: client.call("GetSystemData", system=toolset.reference(toolset.object_path(system_path))))
         dump = toolset.dump_system(client, system_path, spec["emitter_name"], OUTPUT_DIR, TOOL_NAME)
-        checks, statuses = verify_system(spec, dump, emitter_data, system_data, built)
-        report.update({"built": built, "checks": checks, "compile_statuses": statuses, "sha256": dump["sha256"], "sha256_all": dump["sha256_all"]})
+        log_report = finish_log_capture(recorder, log_capture, system_path)
+        checks, statuses, compile_problems = verify_system(spec, dump, emitter_data, system_data, built, log_report)
+        report.update({"built": built, "checks": checks, "compile_statuses": statuses, "compile_problems": compile_problems, "gpu_log": log_report,
+                       "sha256": dump["sha256"], "sha256_all": dump["sha256_all"]})
     finally:
         report["steps"] = recorder.steps
         toolset.write_json(OUTPUT_DIR / f"{toolset.asset_name(system_path)}.report.json", report)
     for check in report["checks"]:
         print(("PASS " if check["passed"] else "FAIL ") + check["check"])
+    print("TODO " + OFFSCREEN_PENDING_CHECK)
     return 0 if report["checks"] and all(check["passed"] for check in report["checks"]) else 1
 
 

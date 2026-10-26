@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 모듈(editor_make_fluid_driven_niagara.py·check_fluid_niagara_specs.py 가 가져온다). 언리얼 MCP 8000(NiagaraToolsets)·원격 실행은 실제 클라이언트를 만들 때만 필요하고, 가짜 클라이언트와 정규화 함수는 에디터 없이 돈다.
 실행 명령: 직접 실행하지 않는다(import fluid_niagara_toolset).
-출력: 없음. 공용 MCP 호출(TDNiagaraToolsetClient)·호출 기록 가짜 클라이언트(TDFakeNiagaraToolsetClient)·스택 조작(Set Parameters·모듈·동적 입력·텍스처 바인딩 왕복·열거 입력)·렌더러 교체·덤프 정규화(v1 editor_make_fluid_ember_niagara.py 188-760 을 이미터 이름 인수로 옮긴 사본, 덤프 형식 sections.UserVariables.userVariables 동일)를 준다.
-상태: 미검증(2026-10-25 FX-8n B1 작성: py_compile·가짜 클라이언트 호출 기록만, 에디터 실행 전). 색·정수 User 값 형식, 열거 입력 값 형식, GetEmitterInputValues 의 모듈·입력 구조는 [추정]이고 단계 0b 가 확정한다.
+출력: 없음. 공용 MCP 호출(TDNiagaraToolsetClient)·호출 기록 가짜 클라이언트(TDFakeNiagaraToolsetClient)·스택 조작(Set Parameters·모듈·동적 입력·표본 출력 연결·텍스처 바인딩 왕복·열거 입력)·렌더러 교체·덤프 정규화(v1 editor_make_fluid_ember_niagara.py 188-760 을 이미터 이름 인수로 옮긴 사본, 덤프 형식 sections.UserVariables.userVariables 동일)·컴파일 상태 문제 목록·에디터 로그(FLUSHLOG 뒤 오프셋 구간) 컴파일 문제 줄 집계를 준다.
+상태: 2026-10-26 수정·검증(에디터 0b 7회·생성 7회에서 동작, Niagara 오프스크린 12/12). 열거 입력은 엔진 형식 NiagaraExt_StackInputData_Enum{enum, enumName}(NiagaraExternalSystemEditorUtilities.h:556-571·.cpp:2985-2993, 0b 덤프 재읽기와 같은 꼴)으로 확정. 색·정수 값·GetEmitterInputValues 구조는 0b 확정. 로그 경로 표지 탐색·컴파일 문제 줄 집계는 생성 7회에서 GPU 문제 줄 0으로 동작 확인.
 """
 import copy
 import json
@@ -9,6 +9,7 @@ import math
 import pathlib
 import re
 import sys
+import uuid
 
 TOOLS_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PROJECT_ROOT = TOOLS_ROOT.parent
@@ -33,6 +34,9 @@ LINKED_INPUT_STRUCT = "/Script/NiagaraEditor.NiagaraExt_StackInputData_Linked"
 EXPRESSION_INPUT_STRUCT = "/Script/NiagaraEditor.NiagaraExt_StackInputData_HlslExpression"
 DYNAMIC_INPUT_STRUCT = "/Script/NiagaraEditor.NiagaraExt_StackInputData_DynamicInput"
 DATA_INTERFACE_INPUT_STRUCT = "/Script/NiagaraEditor.NiagaraExt_StackInputData_DataInterface"
+ENUM_INPUT_STRUCT = "/Script/NiagaraEditor.NiagaraExt_StackInputData_Enum"
+LIFE_CYCLE_ENUM = "/Niagara/Enums/ENiagaraEmitterLifeCycleMode.ENiagaraEmitterLifeCycleMode"
+LOOP_BEHAVIOR_ENUM = "/Niagara/Enums/ENiagara_EmitterStateOptions.ENiagara_EmitterStateOptions"
 COMPONENT_NAMES_BY_TYPE = {
     VECTOR2_TYPE: ("x", "y"),
     VECTOR3_TYPE: ("x", "y", "z"),
@@ -66,8 +70,16 @@ FAKE_MODULE_INPUTS = {
     "SpawnBurst_Instantaneous": ("Module.Spawn Count",),
     "Collision": ("Module.Restitution", "Module.Friction"),
 }
-FAKE_STATE_INPUTS = ("Module.Life Cycle Mode", "Module.Loop Behavior", "Module.Loop Duration")
+FAKE_STATE_INPUTS = (("Module.Life Cycle Mode", LIFE_CYCLE_ENUM), ("Module.Loop Behavior", LOOP_BEHAVIOR_ENUM), ("Module.Loop Duration", ""))
 FAKE_TEMPLATE_EMITTER = "Fountain"
+
+COMPILE_ISSUE_TEXT = 'There were issues for compilation of script "'
+COMPILE_LINE_TEXT = "Compiling System NiagaraSystem "
+SHADER_ERROR_TEXT = ": error:"
+LOG_MARKER = "TD_NIAGARA_LOG_MARK"
+LOG_RECENT_SECONDS = 600
+LOG_TAIL_BYTES = 4 * 1024 * 1024
+MAX_REPORTED_LOG_LINES = 20
 
 
 class TDNiagaraToolError(Exception):
@@ -176,7 +188,8 @@ class TDFakeNiagaraToolsetClient:
         return {"renderers": [{"index": index} for index in range(self.renderer_count)]}
 
     def fake_GetEmitterInputValues(self, arguments):
-        return {"modules": [{"moduleName": "EmitterState", "scriptName": "EmitterUpdateScript", "inputs": [{"name": name} for name in FAKE_STATE_INPUTS]}]}
+        inputs = [{"name": name, "value": enum_value(enum_path, "") if enum_path else {}} for name, enum_path in FAKE_STATE_INPUTS]
+        return {"modules": [{"moduleName": "EmitterState", "scriptName": "EmitterUpdateScript", "inputs": inputs}]}
 
     def fake_AddSetParametersModule(self, arguments):
         names = [parameter["variable"]["name"] for parameter in arguments["parameters"]]
@@ -296,8 +309,8 @@ def instanced_value(type_path, value):
     return {"struct": reference(type_path), "value": plain_value(type_path, value)}
 
 
-def enum_value(enum_path, value_name):
-    return {"struct": reference(enum_path), "value": {"enumValueName": value_name}}
+def enum_value(enum_path, enum_name):
+    return {"struct": reference(ENUM_INPUT_STRUCT), "value": {"enum": reference(enum_path), "enumName": enum_name}}
 
 
 def linked_input(variable_name, type_path):
@@ -429,7 +442,7 @@ def replace_placeholders(expression, placeholders):
     return expression
 
 
-def set_entry_input(client, system_path, emitter, script, module_name, topology, entry, placeholders):
+def set_entry_input(client, system_path, emitter, script, module_name, topology, entry, placeholders, sample_sources):
     variable_name, type_path, kind, payload = entry
     if kind == "value":
         return
@@ -438,6 +451,11 @@ def set_entry_input(client, system_path, emitter, script, module_name, topology,
     if kind == "expression":
         client.call("SetStackInputData", stackInputRef=base, inputData=expression_input(replace_placeholders(payload, placeholders)))
         return
+    if kind == "sample_link":
+        if payload not in sample_sources:
+            raise TDNiagaraToolError(f"{variable_name}: 표본 {payload} 의 모듈 출력이 없음(앞 표본 단계 실패)")
+        client.call("SetStackInputData", stackInputRef=base, inputData=linked_input(sample_sources[payload], type_path))
+        return
     asset, minimum, maximum = payload
     client.call("SetStackInputData", stackInputRef=base, inputData=dynamic_input(asset))
     for nested_name, nested_value in ((RANDOM_MINIMUM_INPUT, minimum), (RANDOM_MAXIMUM_INPUT, maximum)):
@@ -445,7 +463,7 @@ def set_entry_input(client, system_path, emitter, script, module_name, topology,
         client.call("SetStackInputData", stackInputRef=nested, inputData=instanced_value(type_path, nested_value))
 
 
-def add_set_parameters(client, system_path, emitter, step, placeholders):
+def add_set_parameters(client, system_path, emitter, step, placeholders, sample_sources):
     script = step["script"]
     parameters = [
         {"variable": {"name": name, "type": type_definition(type_path)},
@@ -455,7 +473,7 @@ def add_set_parameters(client, system_path, emitter, step, placeholders):
     topology = client.call("AddSetParametersModule", moduleLocationRef=stack_ref(system_path, emitter, script), parameters=parameters)
     module_name = require_module_name(topology, step["label"])
     for entry in step["entries"]:
-        set_entry_input(client, system_path, emitter, script, module_name, topology, entry, placeholders)
+        set_entry_input(client, system_path, emitter, script, module_name, topology, entry, placeholders, sample_sources)
     return module_name
 
 
@@ -491,24 +509,40 @@ def read_input_data(client, input_ref):
     return client.call("GetStackInputData", stackInputRef=input_ref)
 
 
+def find_input_entry(module_entry, input_name):
+    for item in field(module_entry, "inputs") or []:
+        if isinstance(item, dict) and str(field(item, "name")) == input_name:
+            return item
+    return None
+
+
+def read_enum_path(value):
+    return field(find_first(value, "enum"), "refPath")
+
+
 def set_state_enums(client, system_path, emitter, step, state_report):
     values = client.call("GetEmitterInputValues", emitterRef=stack_ref(system_path, emitter))
     entries = find_module_entries(values, step["module_fragment"])
     if len(entries) != 1:
         raise TDNiagaraToolError(f"{step['label']}: '{step['module_fragment']}' 모듈 1개 기대, 찾음 {len(entries)}")
     module_name = str(field(entries[0], "moduleName"))
-    for wanted, enum_path, value_name in step["enums"]:
+    for wanted, enum_path, enum_name, display_name in step["enums"]:
         input_name = resolve_input_name(entries[0], wanted)
+        current_enum = read_enum_path(find_input_entry(entries[0], input_name))
+        if current_enum != enum_path:
+            raise TDNiagaraToolError(f"{step['label']}: 입력 '{input_name}' 의 열거 형식 {current_enum!r} ≠ 기대 {enum_path!r}")
         input_ref = stack_ref(system_path, emitter, step["script"], module_name, inputs=(input_name,))
-        client.call("SetStackInputData", stackInputRef=input_ref, inputData=enum_value(enum_path, value_name))
+        client.call("SetStackInputData", stackInputRef=input_ref, inputData=enum_value(enum_path, enum_name))
         stored = read_input_data(client, input_ref)
-        state_report.append({"step": step["label"], "input": input_name, "requested": value_name,
+        state_report.append({"step": step["label"], "input": input_name, "requested": enum_name, "requested_display": display_name,
+                             "stored_enum_name": find_first(stored, "enumName"), "stored_display": find_first(stored, "displayName"),
                              "stored_text": json.dumps(stored, ensure_ascii=False)[:500]})
     return module_name
 
 
 def is_state_roundtrip_ok(state_report, expected_count):
-    return len(state_report) == expected_count and all(item["requested"] in item["stored_text"] for item in state_report)
+    return len(state_report) == expected_count and all(
+        item["stored_enum_name"] == item["requested"] and item["stored_display"] == item["requested_display"] for item in state_report)
 
 
 def read_data_interface_values(client, input_ref):
@@ -745,13 +779,69 @@ def collect_compile_statuses(compile_state):
     return statuses
 
 
-def count_error_issues(stack_issues):
-    if not isinstance(stack_issues, (dict, list)) or field(stack_issues, "error") is not None:
-        return -1
-    issues = as_list(stack_issues, "issues")
-    counted = sum(1 for item in issues if isinstance(item, dict) and str(field(item, "severity")).split("::")[-1] == "Error")
-    declared = find_first(stack_issues, "numErrors")
-    return max(counted, int(declared)) if isinstance(declared, (int, float)) else counted
+def find_compile_problems(compile_state, required_scripts):
+    statuses = collect_compile_statuses(compile_state)
+    problems = [] if statuses else ["스크립트 컴파일 상태 없음"]
+    problems.extend(f"{key} 없음" for key in required_scripts if key not in statuses)
+    problems.extend(f"{key} = {status}" for key, status in sorted(statuses.items()) if status not in UP_TO_DATE_STATUSES)
+    if find_first(compile_state, "hasErrors") is not False:
+        problems.append(f"hasErrors = {find_first(compile_state, 'hasErrors')!r}")
+    for item in as_list(compile_state, "scripts"):
+        summary = field(item, "errorSummary") if isinstance(item, dict) else None
+        if summary:
+            problems.append(f"{field(item, 'emitterName')}.{field(item, 'scriptName')}: {str(summary)[:300]}")
+    return problems
+
+
+def editor_log_path():
+    marker = f"{LOG_MARKER} {uuid.uuid4().hex}"
+    code = (
+        "import os, time, unreal\n"
+        f"unreal.log({marker!r})\n"
+        "unreal.SystemLibrary.execute_console_command(None, 'FLUSHLOG')\n"
+        "folder = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_log_dir())\n"
+        "default = os.path.normpath(os.path.join(folder, unreal.SystemLibrary.get_game_name() + '.log'))\n"
+        "paths = [os.path.normpath(os.path.join(folder, name)) for name in os.listdir(folder) if name.lower().endswith(('.log', '.txt'))]\n"
+        f"recent = sorted((path for path in paths if time.time() - os.path.getmtime(path) < {LOG_RECENT_SECONDS}), key=lambda path: path != default)\n"
+        "def has_marker(path):\n"
+        "    with open(path, 'rb') as handle:\n"
+        f"        handle.seek(max(0, os.path.getsize(path) - {LOG_TAIL_BYTES}))\n"
+        f"        return {marker!r}.encode() in handle.read()\n"
+        "found = [path for path in recent if has_marker(path)]\n"
+        "print('TD_LOG_PATH', found[0] if found else '')\n"
+    )
+    path = read_marker(run_editor_code(code), "TD_LOG_PATH")
+    if not path or not pathlib.Path(path).is_file():
+        raise TDNiagaraToolError(f"에디터 로그 파일을 표지로 찾지 못함(ProjectLogDir 최근 {LOG_RECENT_SECONDS}초 .log): {path!r}")
+    return path
+
+
+def editor_log_size(path):
+    run_editor_code("import unreal\nunreal.SystemLibrary.execute_console_command(None, 'FLUSHLOG')\n")
+    return pathlib.Path(path).stat().st_size
+
+
+def read_editor_log_since(path, offset):
+    size = editor_log_size(path)
+    if size < offset:
+        raise TDNiagaraToolError(f"에디터 로그가 생성 전 오프셋 {offset} 보다 짧음({size}, 재시작·회전): {path}")
+    with open(path, "rb") as handle:
+        handle.seek(offset)
+        return handle.read(size - offset).decode("utf-8", errors="replace")
+
+
+def summarize_compile_log(text, system_path):
+    lines = text.splitlines()
+    issue_prefix = f"{COMPILE_ISSUE_TEXT}{asset_name(system_path)}/"
+    compile_prefix = f"{COMPILE_LINE_TEXT}{object_path(system_path)} "
+    issues = [line.strip() for line in lines if issue_prefix in line]
+    errors = [line.strip() for line in lines if SHADER_ERROR_TEXT in line]
+    return {"issue_count": len(issues), "compile_count": sum(1 for line in lines if compile_prefix in line),
+            "issue_lines": issues[:MAX_REPORTED_LOG_LINES], "error_lines": errors[:MAX_REPORTED_LOG_LINES]}
+
+
+def is_compile_log_clean(log_report):
+    return isinstance(log_report, dict) and log_report.get("compile_count", 0) > 0 and log_report.get("issue_count") == 0
 
 
 def probe_call(client, label, tool, arguments, results):

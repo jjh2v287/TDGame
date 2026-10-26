@@ -39,6 +39,8 @@ namespace TDFluidNiagaraDriveTestPrivate
 	const FName PositionAttributeName(TEXT("Position"));
 	const FName UniqueIdAttributeName(TEXT("UniqueID"));
 	const FName NormalizedAgeAttributeName(TEXT("NormalizedAge"));
+	const FName AgeAttributeName(TEXT("Age"));
+	const FName LifetimeAttributeName(TEXT("Lifetime"));
 	const FName ScaleAttributeName(TEXT("Scale"));
 	const FName DynamicParameterAttributeName(TEXT("DynamicMaterialParameter"));
 	const FVector DriveAnchorLocation(310.0, -145.0, 100.0);
@@ -193,12 +195,16 @@ namespace TDFluidNiagaraDriveTestPrivate
 		}
 
 		UTDFluidPresetAsset* Preset = UTDFluidPresetAsset::CreateTransientPreset(TestWorld.World, Settings.PresetKind);
+		Preset->bOverridePresetDefaults = true;
+		Preset->SimulationConfig.SolverBackend = ETDFluidSolverBackend::Gpu;
+		Preset->PlaneSettings = UTDFluidPresetAsset::BuildPlaneSettingsForPresetKind(Settings.PresetKind);
 		Preset->SimulationConfig.FlowNoiseAccelerationCmPerSec2 = 0.0f;
 		Preset->SimulationConfig.AmbientNoiseAmount = 0.0f;
 		Preset->SimulationConfig.AmbientDensity = 0.0f;
 		if (Settings.bDisablesBuoyancy)
 		{
 			Preset->SimulationConfig.BuoyancyCmPerSec2 = 0.0f;
+			Preset->SimulationConfig.HeatBuoyancyCmPerSec2 = 0.0f;
 		}
 		Preset->ExternalNiagaraSystem = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(Settings.SystemPath));
 		ATDFluidLiveActor* LiveActor = Subsystem->SpawnPooledFluidActor(Preset, DriveAnchorLocation, ActiveDurationSeconds);
@@ -303,6 +309,26 @@ namespace TDFluidNiagaraDriveTestPrivate
 		TArray<FVector> Positions;
 		Result.SimCache->ReadPositionAttribute(Positions, PositionAttributeName, EmitterName, true, Result.SimCache->GetNumFrames() - 1);
 		return Positions;
+	}
+
+	int32 CountFinalLiveParticles(const FTDDriveRunResult& Result, FName EmitterName)
+	{
+		const int32 LastFrame = Result.SimCache->GetNumFrames() - 1;
+		TArray<float> Ages;
+		TArray<float> Lifetimes;
+		Result.SimCache->ReadFloatAttribute(Ages, AgeAttributeName, EmitterName, LastFrame);
+		Result.SimCache->ReadFloatAttribute(Lifetimes, LifetimeAttributeName, EmitterName, LastFrame);
+		if (Ages.Num() != Lifetimes.Num())
+		{
+			return INDEX_NONE;
+		}
+
+		int32 LiveCount = 0;
+		for (int32 ParticleIndex = 0; ParticleIndex < Ages.Num(); ++ParticleIndex)
+		{
+			LiveCount += Ages[ParticleIndex] < Lifetimes[ParticleIndex] ? 1 : 0;
+		}
+		return LiveCount;
 	}
 
 	FVector ComputeCentroid(const TArray<FVector>& Positions)
@@ -738,9 +764,9 @@ bool FTDFluidNiagaraEmberHeatSpawnTest::RunTest(const FString& Parameters)
 		return false;
 	}
 
-	TestTrue(TEXT("Heat stamps spawn embers"), HeatRun.FinalParticleCount > 0);
-	TestEqual(TEXT("Without heat and with no density fallback weight there are no embers"), NoHeatRun.FinalParticleCount, 0);
-	TestTrue(TEXT("The density fallback weight spawns embers without heat"), DensityFallbackRun.FinalParticleCount > 0);
+	TestTrue(TEXT("Heat stamps spawn live embers"), CountFinalLiveParticles(HeatRun, EmberEmitterName) > 0);
+	TestEqual(TEXT("Without heat and with no density fallback weight there are no live embers"), CountFinalLiveParticles(NoHeatRun, EmberEmitterName), 0);
+	TestTrue(TEXT("The density fallback weight spawns live embers without heat"), CountFinalLiveParticles(DensityFallbackRun, EmberEmitterName) > 0);
 	return true;
 }
 
@@ -836,8 +862,8 @@ bool FTDFluidNiagaraEmberHeatRestTest::RunTest(const FString& Parameters)
 		return false;
 	}
 
-	TestEqual(TEXT("Without ground rest every slow ember dies within 0.5 s after spawning stops"), NoRestRun.FinalParticleCount, 0);
-	TestTrue(TEXT("A one second ground rest keeps slow embers alive 0.5 s after spawning stops"), RestRun.FinalParticleCount > 0);
+	TestEqual(TEXT("Without ground rest every slow ember dies within 0.5 s after spawning stops"), CountFinalLiveParticles(NoRestRun, EmberEmitterName), 0);
+	TestTrue(TEXT("A one second ground rest keeps slow embers alive 0.5 s after spawning stops"), CountFinalLiveParticles(RestRun, EmberEmitterName) > 0);
 	return true;
 }
 

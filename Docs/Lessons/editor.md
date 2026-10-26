@@ -541,7 +541,7 @@
 - 해결: 표본 단계마다 출력을 고유 이름 입자 속성(예 `Particles.TDDriveSampleDensity`)으로 복사하는 Set 단계를 두고, 한 식에 표본 출력이 둘 이상 들어가지 않게 생성한다. 검사기에 같은 규칙(식마다 빠지는 변수 0)을 둔다
 - 범위: Sample Texture·Sample Grid 출력을 사용자 정의 HLSL 식에서 둘 이상 읽는 모든 나이아가라 시스템(UE 5.8)
 - 증거: `Saved/AgentOps/20261026/wave1-int/assets-fx8n/`(index.md 10절, simulate_custom_hlsl_alias_drop.py, simulate-alias-drop.stdout)
-- 날짜·상태: 2026-10-26 미검증(수정 생성기로 재생성해 확인 예정)
+- 날짜·상태: 2026-10-26 active(표본 출력을 고유 속성으로 복사하는 생성기로 7종 재생성 → GPU 로그 문제 0·Niagara 오프스크린 12/12, `Saved/AgentOps/20261026/wave1-assets/niagara/`)
 - 발견: claude(FluidFX FX-8n 에셋 생성)
 
 ### L-editor-63 나이아가라 `GetSystemCompileState`가 UpToDate·오류 없음이어도 GPU 계산 셰이더는 따로 실패할 수 있다 — GPU 판정은 에디터 로그로 한다
@@ -570,3 +570,30 @@
 - 증거: `Saved/AgentOps/20261026/wave1-int/assets-fog-track/index.md` 11·12절
 - 날짜·상태: 2026-10-26 active
 - 발견: claude(FluidFX FX-10r 안개 무대)
+
+### L-editor-66 UE 5.8 `set_material_instance_texture_parameter_value`(스칼라 판도)는 값을 설정해도 늘 False를 돌려준다
+- 증상: `editor_make_fluid_track_material.py`가 MI_TD_FluidTrack_Sand 텍스처 연결 단계에서 실패로 멈춤. 에디터에서 다시 읽으면 값은 들어가 있다
+- 원인: `Engine/Source/Editor/MaterialEditor/Private/MaterialEditingLibrary.cpp:1485·1507`이 값을 설정하고도 `bResult`를 true로 바꾸지 않는다
+- 해결: 반환값 대신 `get_material_instance_*_parameter_value`로 다시 읽어 판정한다(L-editor-36의 set_material_usage 반환값과 같은 계열)
+- 범위: 에디터 Python으로 재질 인스턴스 매개변수를 쓰는 모든 스크립트
+- 증거: `Saved/AgentOps/20261026/wave1-assets/track/index.md` 13·60행
+- 날짜·상태: 2026-10-26 active
+- 발견: claude(FluidFX FX-12r 자국 재질)
+
+### L-editor-67 L-editor-10 재발: 마스터 재질 `delete_asset`이 True인데 에디터가 .uasset 핸들을 쥐고 있어 디스크 삭제가 Error Code 5로 실패하고 재생성이 막힌다
+- 증상: `LogFileManager: Warning: Error deleting file: .../Content/FluidFX/Materials/M_TD_FluidWater.uasset (Error Code 5)` 다음 `The asset 'M_TD_FluidWater' already exists ... CanCreateAsset cannot ask the user as the application is running unattended and will return false`
+- 원인: 방금 컴파일·저장한 마스터 재질 패키지를 에디터 프로세스가 열어 둔 채라 삭제가 거부된다(L-editor-10은 몽타주에서 같은 증상)
+- 해결: 에디터를 멈추고(미저장 0 확인) 이 세션이 만든 미커밋 파일만 디스크에서 지운 뒤 재실행했다. 스크립트 쪽 고침 권장: 삭제 뒤 디스크 잔존을 확인하고 L-editor-10 경로(unload_packages → collect_garbage → os.remove → scan)로 처리
+- 범위: overwrite로 기존 재질·에셋을 지우고 다시 만드는 에디터 스크립트(`editor_make_fluid_water_material.py` prepare_master_material 등)
+- 증거: `Saved/AgentOps/20261026/wave1-assets/water/index.md` 13행
+- 날짜·상태: 2026-10-26 active(스크립트 고침은 후속)
+- 발견: claude(FluidFX 파동 1 물 재질 재생성)
+
+### L-editor-68 나이아가라 GPU 사용자 정의 식 입력에서 `Engine.ExecIndex`는 늘 0이고, sim cache JSON 덤프의 벡터는 성분 우선(x 전부 → y 전부 → z 전부)이다
+- 증상: NS_TD_FluidDriveMeshArray 2048개가 한 점(-339.06,-339.06,0)에 모여 HeightFollowsDensity 실패. 덤프를 입자별 (x,y,z)로 읽으면 'x=y=z·원점 682개'처럼 보이는 착시
+- 원인: GPU 식 입력의 실행 첨자가 0으로 들어온다(생성 단계 첨자를 쓰려면 다른 입력이 필요). sim cache 덤프는 성분별 배열을 이어 붙인다
+- 해결: 격자 UV를 `Particles.UniqueID % 격자수²`로 만든다(`Tools/FluidFX/fluid_niagara_drive.py`). 덤프는 성분 우선으로 해석한다
+- 범위: GPU 시뮬 나이아가라 이미터의 사용자 정의 식, sim cache 덤프를 읽는 측정 도구
+- 증거: `Saved/AgentOps/20261026/wave1-assets/niagara/index.md` 18·26·29행
+- 날짜·상태: 2026-10-26 active
+- 발견: claude(FluidFX FX-8n 재생성)

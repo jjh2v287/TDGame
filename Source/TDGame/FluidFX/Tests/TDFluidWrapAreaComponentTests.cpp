@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Camera/PlayerCameraManager.h"
 #include "Engine/Engine.h"
 #include "Engine/Texture2D.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -10,6 +11,9 @@
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "GameFramework/PlayerController.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
 #include "Misc/App.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Crc.h"
@@ -535,6 +539,122 @@ bool FTDFluidWrapAreaGpuRepeatAndAddressTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Two GPU wrap runs read back the same field"), FirstHash, SecondHash);
 	TestEqual(TEXT("The wrap actor render target wraps"), static_cast<int32>(FirstWrapAddress), static_cast<int32>(TA_Wrap));
 	TestEqual(TEXT("The clamp actor render target clamps"), static_cast<int32>(FirstClampAddress), static_cast<int32>(TA_Clamp));
+	return true;
+}
+
+namespace TDFluidWrapAreaComponentTestPrivate
+{
+	const TCHAR* SeaWaterInstancePath = TEXT("/Game/FluidFX/Materials/MI_TD_FluidWater_Sea.MI_TD_FluidWater_Sea");
+	const FVector TileMapObserverLocation(-52345.0, 31234.0, 900.0);
+	constexpr int32 TileMapStepCount = 6;
+	constexpr float TileMapParameterToleranceCm = 0.01f;
+
+	bool ReadTileMapVector(FAutomationTestBase& Test, const UMaterialInstanceDynamic& TargetMID, const TCHAR* ParameterName, FLinearColor& OutValue)
+	{
+		const bool bHasParameter = TargetMID.GetVectorParameterValue(FHashedMaterialParameterInfo(ParameterName), OutValue);
+		return Test.TestTrue(FString::Printf(TEXT("The sea water instance exposes %s"), ParameterName), bHasParameter);
+	}
+
+	bool IsLinearColorNear(const FLinearColor& Actual, const FLinearColor& Expected, float Tolerance)
+	{
+		return FMath::IsNearlyEqual(Actual.R, Expected.R, Tolerance) && FMath::IsNearlyEqual(Actual.G, Expected.G, Tolerance)
+			&& FMath::IsNearlyEqual(Actual.B, Expected.B, Tolerance) && FMath::IsNearlyEqual(Actual.A, Expected.A, Tolerance);
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWrapAreaTileMapTargetParametersTest,
+	"TDGame.FluidFXRhi.WrapArea.TileMapTargetParameters",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWrapAreaTileMapTargetParametersTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidWrapAreaComponentTestPrivate;
+
+	if (!HasRenderingRhi())
+	{
+		AddInfo(TEXT("TDGame.FluidFXRhi.WrapArea.TileMapTargetParameters needs a rendering RHI; skipped under the null RHI."));
+		return true;
+	}
+
+	UMaterialInterface* SeaWaterInstance = LoadObject<UMaterialInterface>(nullptr, SeaWaterInstancePath);
+	if (!TestNotNull(TEXT("Loaded the sea water instance"), SeaWaterInstance))
+	{
+		return false;
+	}
+
+	FTDFluidWrapComponentTestWorld TestWorld;
+	ATDFluidLiveActor* WrapActor = SpawnConfiguredLiveActor(*TestWorld.World, GpuActorLocation, MakeWrapComponentConfig(ParityResolution, ETDFluidAreaAddressMode::Wrap, ETDFluidSolverBackend::Gpu));
+	ATDFluidLiveActor* ClampActor = SpawnConfiguredLiveActor(*TestWorld.World, CpuActorLocation, MakeWrapComponentConfig(ParityResolution, ETDFluidAreaAddressMode::Clamp, ETDFluidSolverBackend::Gpu));
+	APlayerController* ObserverController = TestWorld.World->SpawnActor<APlayerController>();
+	UMaterialInstanceDynamic* WrapTargetMID = UMaterialInstanceDynamic::Create(SeaWaterInstance, GetTransientPackage());
+	UMaterialInstanceDynamic* ClampTargetMID = UMaterialInstanceDynamic::Create(SeaWaterInstance, GetTransientPackage());
+	if (!TestNotNull(TEXT("Spawned the GPU wrap actor"), WrapActor) || !TestNotNull(TEXT("Spawned the GPU clamp actor"), ClampActor)
+		|| !TestNotNull(TEXT("Spawned the observer controller"), ObserverController) || !TestNotNull(TEXT("Created the wrap target MID"), WrapTargetMID)
+		|| !TestNotNull(TEXT("Created the clamp target MID"), ClampTargetMID))
+	{
+		return false;
+	}
+
+	APlayerCameraManager* ObserverCamera = ObserverController->PlayerCameraManager;
+	if (!TestNotNull(TEXT("The observer controller owns a camera manager"), ObserverCamera))
+	{
+		return false;
+	}
+
+	WrapActor->LiveComponent->RegisterTileMapTarget(WrapTargetMID);
+	ClampActor->LiveComponent->RegisterTileMapTarget(ClampTargetMID);
+
+	FMinimalViewInfo ObserverView;
+	ObserverView.Location = TileMapObserverLocation;
+	for (int32 StepIndex = 0; StepIndex < TileMapStepCount; ++StepIndex)
+	{
+		ObserverCamera->SetCameraCachePOV(ObserverView);
+		QueueSeamStamp(*WrapActor, GpuActorLocation);
+		TestWorld.StepWorld(true);
+	}
+
+	const UTDFluidLiveComponent& WrapComponent = *WrapActor->LiveComponent;
+	if (!TestTrue(TEXT("The wrap actor runs on the GPU"), WrapComponent.IsUsingGpuSolver()) || !TestTrue(TEXT("The wrap actor is wrapped"), WrapComponent.IsAreaWrapped()))
+	{
+		return false;
+	}
+
+	const FVector2D PeriodCm = WrapComponent.GetSimulationExtentCm();
+	const FVector2D AnchorCm = WrapComponent.GetSimulationCenterWorld() - 0.5 * PeriodCm;
+	const FVector2D ObserverCm(TileMapObserverLocation.X, TileMapObserverLocation.Y);
+	const FVector2D ExpectedOriginCm = UTDFluidLiveComponent::ComputeTileMapOriginCm(AnchorCm, PeriodCm, ObserverCm);
+	const FLinearColor ExpectedOrigin(static_cast<float>(ExpectedOriginCm.X), static_cast<float>(ExpectedOriginCm.Y), 0.0f, 0.0f);
+	const FLinearColor ExpectedPeriod(static_cast<float>(PeriodCm.X), static_cast<float>(PeriodCm.Y), static_cast<float>(WrapComponent.GetSimulationResolution()), 0.0f);
+
+	FLinearColor WrapOrigin;
+	FLinearColor WrapPeriod;
+	FLinearColor ClampPeriod;
+	if (!ReadTileMapVector(*this, *WrapTargetMID, TEXT("TileMap1OriginCm"), WrapOrigin) || !ReadTileMapVector(*this, *WrapTargetMID, TEXT("TileMap1PeriodCm"), WrapPeriod)
+		|| !ReadTileMapVector(*this, *ClampTargetMID, TEXT("TileMap1PeriodCm"), ClampPeriod))
+	{
+		return false;
+	}
+
+	UTexture* WrapTileTexture = nullptr;
+	UTexture* ClampTileTexture = nullptr;
+	const bool bWrapHasTexture = WrapTargetMID->GetTextureParameterValue(FHashedMaterialParameterInfo(TEXT("TileMap1Texture")), WrapTileTexture);
+	const bool bClampHasTexture = ClampTargetMID->GetTextureParameterValue(FHashedMaterialParameterInfo(TEXT("TileMap1Texture")), ClampTileTexture);
+	UTexture* WrapSourceTexture = WrapComponent.GetDensityPressureTexture();
+
+	AddInfo(FString::Printf(TEXT("TDFluidTileMapTarget: anchor=(%.3f, %.3f) period=(%.3f, %.3f, %.0f) observer=(%.3f, %.3f) expected_origin=(%.3f, %.3f) origin=(%.3f, %.3f, %.3f, %.3f) clamp_period=(%.3f, %.3f, %.3f, %.3f)"),
+		AnchorCm.X, AnchorCm.Y, WrapPeriod.R, WrapPeriod.G, WrapPeriod.B, ObserverCm.X, ObserverCm.Y, ExpectedOriginCm.X, ExpectedOriginCm.Y,
+		WrapOrigin.R, WrapOrigin.G, WrapOrigin.B, WrapOrigin.A, ClampPeriod.R, ClampPeriod.G, ClampPeriod.B, ClampPeriod.A));
+
+	const FVector2D ObserverInTileCm = ObserverCm - ExpectedOriginCm;
+	TestTrue(TEXT("The observer lies inside the tile that starts at the expected origin"), ObserverInTileCm.X >= 0.0 && ObserverInTileCm.X < PeriodCm.X && ObserverInTileCm.Y >= 0.0 && ObserverInTileCm.Y < PeriodCm.Y);
+	TestFalse(TEXT("The observer sits whole periods away from the anchor tile"), ExpectedOriginCm.Equals(AnchorCm, 1.0));
+	TestTrue(TEXT("The wrap target origin matches the pure tile origin function for the camera observer"), IsLinearColorNear(WrapOrigin, ExpectedOrigin, TileMapParameterToleranceCm));
+	TestTrue(TEXT("The wrap target period carries the wrap extent and grid resolution"), IsLinearColorNear(WrapPeriod, ExpectedPeriod, TileMapParameterToleranceCm));
+	TestTrue(TEXT("The wrap source publishes a density pressure texture"), WrapSourceTexture != nullptr);
+	TestTrue(TEXT("The wrap target samples the wrap source output texture"), bWrapHasTexture && WrapTileTexture == WrapSourceTexture);
+	TestTrue(TEXT("The clamp target keeps a zero tile period"), IsLinearColorNear(ClampPeriod, FLinearColor::Transparent, 0.0f));
+	TestTrue(TEXT("The clamp target never receives the clamp source texture"), !bClampHasTexture || ClampTileTexture != ClampActor->LiveComponent->GetDensityPressureTexture());
 	return true;
 }
 

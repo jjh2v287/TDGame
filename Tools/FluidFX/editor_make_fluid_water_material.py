@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 물 수면 마스터 재질 M_TD_FluidWater(Substrate 단일층 물)·M_TD_FluidWaterLite(DefaultLit)와 인스턴스 5종(강·호수·바다·폭풍·늪), 젖음 DBuffer 데칼 재질 M_TD_FluidWetnessDecal(TDFluidWaterWetDecal.hlsl), 텍스처 3장, 격자 메시 2개, 0단계 확인 3건을 만든다. Custom 노드 2개(표면·정점 오프셋)에 Tools/FluidFX/Shaders/TDFluidWaterCommon·Surface·Offset.hlsl 을 노드별로 조립해 넣는다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 물 수면 마스터 재질 M_TD_FluidWater(Substrate 단일층 물)·M_TD_FluidWaterLite(DefaultLit)와 인스턴스 5종(강·호수·바다·폭풍·늪), 젖음 DBuffer 데칼 재질 M_TD_FluidWetnessDecal(TDFluidWaterWetDecal.hlsl), 텍스처 6장, 격자 메시 3개, 0단계 확인 3건을 만든다. Custom 노드 2개(표면·정점 오프셋)에 Tools/FluidFX/Shaders/TDFluidWaterCommon·Surface·Offset.hlsl 을 노드별로 조립해 넣는다.
 실행 명령: python Tools/FluidFX/make_fluid_water_textures.py 다음 python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_material.py (젖음 데칼 재질 하나만 다시 만들 때는 요청 파일 Saved/FluidFX/fluid_water_material_request.json 에 {"wet_decal_only": true})
-출력: /Game/FluidFX/Materials/M_TD_FluidWater·M_TD_FluidWaterLite·MI_TD_FluidWater_River·Lake·Sea·SeaStorm·Swamp·M_TD_FluidWaterDecalProbe·M_TD_FluidWetnessDecal, /Game/FluidFX/Textures/T_TD_FluidWaterDetailN·T_TD_FluidFoamNoise·T_TD_FluidFlowPhaseNoise·T_TD_FluidCaustics, /Game/FluidFX/Meshes/SM_TD_FluidWaterGrid64·SM_TD_FluidWaterGridUnit, Saved/FluidFX/fluid_water_material.json
-상태: 검증 중(2026-10-19). 기본 경로는 단일층 물(legacy = MSM_SINGLE_LAYER_WATER, 굴절 Pixel Normal Offset, 흡수·산란 계수는 1/cm 그대로 = 엔진이 cm 깊이에 곱함, SingleLayerWaterShading.ush 206·221행). SLW 가 안 보이던 것은 아래를 보는 격자 탓이었다(L-editor-40·41 정정). 코스틱 텍스처 min 결합(ColorScaleBehindWater)·미세 법선·해 반짝임 방출(SkyAtmosphereLightDirection·Illuminance)·레이스 거품 문턱. {"water_path": "substrate"|"translucent"} 로 다른 경로(반투명은 두께 = SceneDepth − PixelDepth). C1 추가분: RibbonTangentWS·RibbonFlowCmPerSec(CPD 0번)·MID_DRIVEN_* 계약 대조. 기존 에셋은 {"overwrite": true} 일 때만 다시 짓고(격자는 지운 뒤 새로), 물 무대가 열려 있으면 불 무대로 옮긴 뒤 짓는다. 미저장 작업이 있으면 중단한다. W-2r 추가분(새 파라미터 기본값은 기존 화면과 같음): 거품 문턱(FoamDensityThreshold·FoamFromDensity·FoamSpeedThreshold)·프루드 수 흰 물(FoamFromFroude·FoamFroudeThreshold)·카메라 거리 거품 페이드(FoamFadeStartCm·FoamFadeLengthCm)·선택 밀도 염료(DyeColor·DyeOpacity)·리본 로컬 UV 정적 스위치 3개(bRibbonLocalFlowDetail·Caustics·Tiling, RibbonSegmentLengthCm·RibbonWidthCm·RibbonStretchAlong, 인스턴스 "switches"), 강 MI 청록·거품 재조정. W-2s-a(미검증): 젖음 데칼 HLSL 높이 관문(입력 TerrainReferenceZCm·WetHeightToleranceCm 추가, WetOpacity 기본 0.20 = 일괄 보정 전 임시값)과 {"wet_decal_only": true} 요청(M_TD_FluidWetnessDecal 하나만 덮어쓰고 텍스처·격자 메시·물 마스터·인스턴스·물 무대는 건드리지 않으며 보고서는 이 요청의 결과로 덮어쓴다). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 5종의 스칼라·벡터[r,g,b,a]·정적 스위치와 부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, 표 INSTANCE_SPECS 에는 이름만 남는다(알파 0 강제 삭제, 정본 값 그대로).
+출력: /Game/FluidFX/Materials/M_TD_FluidWater·M_TD_FluidWaterLite·MI_TD_FluidWater_River·Lake·Sea·SeaStorm·Swamp·M_TD_FluidWaterDecalProbe·M_TD_FluidWetnessDecal, /Game/FluidFX/Textures/T_TD_FluidWaterDetailN·T_TD_FluidFoamNoise·T_TD_FluidFlowPhaseNoise·T_TD_FluidCaustics·T_TD_FluidSandRipplesN·T_TD_FluidSandDetail, /Game/FluidFX/Meshes/SM_TD_FluidWaterGrid64·SM_TD_FluidWaterGridUnit·SM_TD_FluidWaterLodPatch16, Saved/FluidFX/fluid_water_material.json
+상태: 검증 중(2026-10-19). 기본 경로는 단일층 물(legacy = MSM_SINGLE_LAYER_WATER, 굴절 Pixel Normal Offset, 흡수·산란 계수는 1/cm 그대로 = 엔진이 cm 깊이에 곱함, SingleLayerWaterShading.ush 206·221행). SLW 가 안 보이던 것은 아래를 보는 격자 탓이었다(L-editor-40·41 정정). 코스틱 텍스처 min 결합(ColorScaleBehindWater)·미세 법선·해 반짝임 방출(SkyAtmosphereLightDirection·Illuminance)·레이스 거품 문턱. {"water_path": "substrate"|"translucent"} 로 다른 경로(반투명은 두께 = SceneDepth − PixelDepth). C1 추가분: RibbonTangentWS·RibbonFlowCmPerSec(CPD 0번)·MID_DRIVEN_* 계약 대조. 기존 에셋은 {"overwrite": true} 일 때만 다시 짓고(격자는 지운 뒤 새로), 물 무대가 열려 있으면 불 무대로 옮긴 뒤 짓는다. 미저장 작업이 있으면 중단한다. W-2r 추가분(새 파라미터 기본값은 기존 화면과 같음): 거품 문턱(FoamDensityThreshold·FoamFromDensity·FoamSpeedThreshold)·프루드 수 흰 물(FoamFromFroude·FoamFroudeThreshold)·카메라 거리 거품 페이드(FoamFadeStartCm·FoamFadeLengthCm)·선택 밀도 염료(DyeColor·DyeOpacity)·리본 로컬 UV 정적 스위치 3개(bRibbonLocalFlowDetail·Caustics·Tiling, RibbonSegmentLengthCm·RibbonWidthCm·RibbonStretchAlong, 인스턴스 "switches"), 강 MI 청록·거품 재조정. W-2s-a(미검증): 젖음 데칼 HLSL 높이 관문(입력 TerrainReferenceZCm·WetHeightToleranceCm 추가, WetOpacity 기본 0.20 = 일괄 보정 전 임시값)과 {"wet_decal_only": true} 요청(M_TD_FluidWetnessDecal 하나만 덮어쓰고 텍스처·격자 메시·물 마스터·인스턴스·물 무대는 건드리지 않으며 보고서는 이 요청의 결과로 덮어쓴다). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 5종의 스칼라·벡터[r,g,b,a]·정적 스위치와 부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, 표 INSTANCE_SPECS 에는 이름만 남는다(알파 0 강제 삭제, 정본 값 그대로). 파동 1 L-editor-61 고침(2026-10-26 검증: 에디터 실행 status ok, Lite 크래시 0, ISM 사용 true): 물·Lite 마스터의 인스턴스드 스태틱 메시 사용 플래그는 노드 생성 전 재질 속성 used_with_instanced_static_meshes 로 켜고(set_material_usage 를 부르지 않음), has_material_usage 확인은 compile_material 뒤에서만 한다.
 """
 import hashlib
 import importlib.util
@@ -417,6 +417,8 @@ REQUIRED_UNREAL_NAMES = (
     "EditorAssetLibrary.load_asset",
     "EditorAssetLibrary.save_loaded_asset",
     "MaterialEditingLibrary.recompile_material",
+    "MaterialEditingLibrary.has_material_usage",
+    "MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES",
     "MaterialEditingLibrary.delete_all_material_expressions",
     "MaterialEditingLibrary.get_vector_parameter_names",
     "MaterialEditingLibrary.get_scalar_parameter_names",
@@ -1201,11 +1203,9 @@ def verify_mid_contract(material):
     }
 
 
-def enable_instanced_static_mesh_usage(material, master_name):
-    editing = unreal.MaterialEditingLibrary
-    editing.set_material_usage(material, unreal.MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES)
-    if not editing.has_material_usage(material, unreal.MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES):
-        raise RuntimeError(f"인스턴스드 스태틱 메시 사용 플래그를 켜지 못함: {master_name}")
+def verify_instanced_static_mesh_usage(material, master_name):
+    if not unreal.MaterialEditingLibrary.has_material_usage(material, unreal.MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES):
+        raise RuntimeError(f"재질 컴파일 뒤 인스턴스드 스태틱 메시 사용 플래그가 꺼져 있음: {master_name}")
 
 
 def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path):
@@ -1225,6 +1225,7 @@ def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path)
             ("translucency_lighting_mode", unreal.TranslucencyLightingMode.TLM_SURFACE_PER_PIXEL_LIGHTING),
         ]
     assignments.append(("used_with_spline_meshes", True))
+    assignments.append(("used_with_instanced_static_meshes", True))
     settings = apply_required_properties(material, assignments)
 
     factory = SourceFactory(material, texture_defaults, is_lite, water_path)
@@ -1244,7 +1245,6 @@ def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path)
     link_custom_inputs(surface, SURFACE_INPUT_NAMES, factory)
     link_custom_inputs(offset, OFFSET_INPUT_NAMES, factory)
     connect_material_output(offset, unreal.MaterialProperty.MP_WORLD_POSITION_OFFSET)
-    enable_instanced_static_mesh_usage(material, master_name)
 
     pins = {}
     if is_lite:
@@ -1259,6 +1259,7 @@ def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path)
     surface_connected = verify_custom_inputs_connected(material, surface, len(SURFACE_INPUT_NAMES))
     offset_connected = verify_custom_inputs_connected(material, offset, len(OFFSET_INPUT_NAMES))
     statistics = compile_material(material, "물 수면 재질" + (" Lite" if is_lite else ""))
+    verify_instanced_static_mesh_usage(material, master_name)
     parameter_names = verify_master_parameters(material, not is_lite and water_path != TRANSLUCENT_WATER_PATH)
     mid_contract = verify_mid_contract(material)
     primitive_data = verify_primitive_data_parameters(factory)

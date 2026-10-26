@@ -1,11 +1,12 @@
-"""실행 환경: 시스템 Python 3(에디터 없이). 유체 구동 나이아가라 구조 명세(Tools/FluidFX/niagara_specs/NS_TD_*.json)와 가짜 호출 기록 정답(golden/*.calls.json)·모양 항목(TDFluidMaterialLook.json NiagaraSystems)을 오프라인으로 검사한다(spec-fx8n 2.5 ①~⑥, 반박 M1 반영: 런타임 이름은 기준선 굽기 8개만 모양에 허용).
+"""실행 환경: 시스템 Python 3(에디터 없이). 유체 구동 나이아가라 구조 명세(Tools/FluidFX/niagara_specs/NS_TD_*.json)와 가짜 호출 기록 정답(golden/*.calls.json)·모양 항목(TDFluidMaterialLook.json NiagaraSystems)을 오프라인으로 검사한다(spec-fx8n 2.5 ①~⑥, 반박 M1 반영: 런타임 이름은 기준선 굽기 8개만 모양에 허용). ⑦ 은 엔진 ProcessCustomHlsl(NiagaraHlslTranslator.cpp:8687-8693·9161-9175) 병렬 배열 어긋남 모의로, 식마다 원래 별칭 기준 고유 변수 수가 실제 고유 변수 수보다 적으면(L-editor-62) 외부 상수(User·Engine·System·Emitter) 누락을 보고한다.
 실행 명령: python -B Tools/FluidFX/check_fluid_niagara_specs.py [--root <명세 폴더>] [--look <모양 JSON>] [--update-golden] | --fixtures Tools/FluidFX/niagara_specs/fixtures (병합 전에는 --look <병합 사본>)
-출력: 표준 출력 ERROR [코드] ①~⑥ 줄과 SUMMARY. 코드 spec·golden·look_missing·look_type·look_range·look_extra·runtime_name·token·runtime_list. --fixtures 는 하위 폴더마다 expect.json 의 코드가 모두 검출되는지 PASS·FAIL. 종료 0 = 통과(또는 fixture 전부 검출), 1 = 위반, 2 = 입력 오류
-상태: 미검증(2026-10-25 FX-8n B1 작성: 실제 트리 7종 + fixture 9종 오프라인 실행만, 에디터 생성 전).
+출력: 표준 출력 ERROR [코드] ①~⑦ 줄과 SUMMARY. 코드 spec·golden·look_missing·look_type·look_range·look_extra·runtime_name·token·runtime_list·alias_drop. --fixtures 는 하위 폴더마다 expect.json 의 코드가 모두 검출되는지 PASS·FAIL. 종료 0 = 통과(또는 fixture 전부 검출), 1 = 위반, 2 = 입력 오류
+상태: 2026-10-26 ⑦ 추가(실제 트리 7종 + fixture 10종 오프라인 실행, 옛 생성 덤프 6종의 관측 GPU 누락과 대조). 에디터 생성 7종의 GPU 로그 문제 줄 0으로 ⑦ 규칙 확인(2026-10-26).
 """
 import argparse
 import json
 import pathlib
+import re
 import sys
 
 TOOLS_ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -24,6 +25,10 @@ GOLDEN_FOLDER = "golden"
 FIXTURE_LOOK_NAME = "look.json"
 FIXTURE_EXPECT_NAME = "expect.json"
 GOLDEN_SUFFIX = ".calls.json"
+CUSTOM_HLSL_SEPARATORS = frozenset("!;/*+-=)(?:, []<>\"\t\r\n{}")
+READ_NAMESPACES = ("User", "Engine", "Particles", "System", "Emitter")
+EXTERNAL_NAMESPACES = ("User", "Engine", "System", "Emitter")
+SWIZZLE_PATTERN = re.compile(r"^(?:[xyzw]{1,4}|[rgba]{1,4})$")
 
 
 class TDCheckInputError(Exception):
@@ -105,13 +110,66 @@ def collect_expressions(records):
     return expressions
 
 
+def split_custom_hlsl_tokens(expression):
+    tokens, current = [], ""
+    for character in expression:
+        if character not in CUSTOM_HLSL_SEPARATORS:
+            current += character
+            continue
+        if current:
+            tokens.append(current)
+        current = ""
+    if current:
+        tokens.append(current)
+    return tokens
+
+
+def parameter_of(token):
+    parts = token.split(".")
+    if len(parts) >= 3 and not SWIZZLE_PATTERN.match(parts[2]):
+        return ".".join(parts[:3])
+    return ".".join(parts[:2])
+
+
+def alias_intact_of(parameter):
+    parts = parameter.split(".")
+    if len(parts) == 3 and parts[0] != "Engine":
+        return f"{parts[0]}.Module.{parts[2]}"
+    return parameter
+
+
+def find_alias_drops(expression):
+    actual, intact = [], []
+    for token in split_custom_hlsl_tokens(expression):
+        if "." not in token or token.split(".")[0] not in READ_NAMESPACES:
+            continue
+        parameter = parameter_of(token)
+        if alias_intact_of(parameter) not in intact:
+            intact.append(alias_intact_of(parameter))
+        if parameter not in actual:
+            actual.append(parameter)
+    if len(actual) == len(intact):
+        return None
+    return [name for name in actual[len(intact):] if name.split(".")[0] in EXTERNAL_NAMESPACES]
+
+
+def check_alias_drops(spec, expressions, label, findings):
+    for expression in expressions:
+        dropped = find_alias_drops(expression)
+        if dropped is None:
+            continue
+        findings.add("alias_drop", "⑦", f"{spec['asset']} {label}: 원래 별칭이 겹쳐 등록 안 되는 외부 상수 {dropped or '없음(짝 어긋남만)'} ← {expression[:160]}")
+
+
 def check_tokens(spec, records, label, findings):
     plan = drive.build_stack_plan(spec)
     user_names = {name for name, _ in drive.build_user_variable_plan(spec)}
     particle_names = drive.collect_declared_particle_names(plan)
-    for expression in collect_expressions(records):
+    expressions = collect_expressions(records)
+    for expression in expressions:
         for problem in drive.find_token_problems(expression, user_names, particle_names):
             findings.add("token", "⑤", f"{spec['asset']} {label}: {problem}")
+    check_alias_drops(spec, expressions, label, findings)
 
 
 def read_golden(path, findings, spec):

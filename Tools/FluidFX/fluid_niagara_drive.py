@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 순수 모듈(unreal·MCP 없음, editor_make_fluid_driven_niagara.py·check_fluid_niagara_specs.py 가 가져온다).
 실행 명령: 직접 실행하지 않는다(import fluid_niagara_drive).
-출력: 없음. 구조 명세 Tools/FluidFX/niagara_specs/NS_TD_*.json(spec-fx8n 2.2) 검사와, 명세 → User 변수(런타임 12 + 조절 등록표)·STACK_PLAN(입력 단위 HLSL 식, 3절)·시스템/이미터/렌더러 데이터 변환을 준다. 조절 등록표는 이름·형·범위만 두고 값은 모양 정본 TDFluidMaterialLook.json NiagaraSystems 에만 둔다(반박 S5).
-상태: 미검증(2026-10-25 FX-8n B1 작성: py_compile·검사기 오프라인만, 에디터 단계 0b 전). Engine.ExecIndex·Engine.Owner.SystemLocalToWorld/WorldToLocal 식 접근, SpawnBurst 개수 입력 이름, Collision 모듈 경로·입력 이름, EmitterState 열거 입력(Life Cycle Mode Self·Loop Behavior Once, 반박 M2)은 [추정]이고 0b 가 확정한다.
+출력: 없음. 구조 명세 Tools/FluidFX/niagara_specs/NS_TD_*.json(spec-fx8n 2.2) 검사와, 명세 → User 변수(런타임 12 + 조절 등록표)·STACK_PLAN(입력 단위 HLSL 식, 3절)·시스템/이미터/렌더러 데이터 변환을 준다. 표본 모듈마다 SampledColor 를 고유 입자 속성(SAMPLE_COPY_ATTRIBUTES)으로 연결 복사하고 $D·$A·$V 는 그 속성을 가리킨다(L-editor-62, 한 식이 표본 모듈 출력을 둘 이상 읽지 않음). 조절 등록표는 이름·형·범위만 두고 값은 모양 정본 TDFluidMaterialLook.json NiagaraSystems 에만 둔다(반박 S5).
+상태: 2026-10-26 수정(격자 UV 를 Engine.ExecIndex 대신 Particles.UniqueID % 격자수² 로: GPU 식 입력에서 Engine.ExecIndex 가 늘 0 이라 2048개가 한 점에 모였음, sim cache 실측. 수정 뒤 MeshArray 0b·생성·HeightFollowsDensity 통과). 식 접근·SpawnBurst·Collision 은 0b 확정. EmitterState 열거 값은 엔진 Niagara 콘텐츠 Enums 에셋 표시 이름 표 해독으로 확정(Self = ENiagaraEmitterLifeCycleMode::NewEnumerator1, Once = ENiagara_EmitterStateOptions::NewEnumerator1)하고 생성기가 재읽기 표시 이름으로 다시 확인한다.
 """
 import json
 import pathlib
@@ -39,8 +39,9 @@ INITIALIZE_PARTICLE_MODULE = "/Niagara/Modules/Spawn/Initialization/V2/Initializ
 RANDOM_RANGE_FLOAT = "/Niagara/DynamicInputs/UniformRange/V2/RandomRangeFloat.RandomRangeFloat"
 RANDOM_RANGE_VECTOR2D = "/Niagara/DynamicInputs/UniformRange/V2/RandomRangeVector2D.RandomRangeVector2D"
 TEXTURE_DATA_INTERFACE_CLASS = "/Script/Niagara.NiagaraDataInterfaceTexture"
-LIFE_CYCLE_ENUM = "/Script/Niagara.ENiagaraEmitterLifeCycleMode"
-LOOP_BEHAVIOR_ENUM = "/Script/Niagara.ENiagaraLoopBehavior"
+LIFE_CYCLE_SELF = ("Life Cycle Mode", toolset.LIFE_CYCLE_ENUM, "ENiagaraEmitterLifeCycleMode::NewEnumerator1", "Self")
+LOOP_BEHAVIOR_ONCE = ("Loop Behavior", toolset.LOOP_BEHAVIOR_ENUM, "ENiagara_EmitterStateOptions::NewEnumerator1", "Once")
+SAMPLE_COPY_ATTRIBUTES = {"$D": "Particles.TDDriveSampleDensity", "$A": "Particles.TDDriveSampleAux", "$V": "Particles.TDDriveSampleVelocity"}
 
 EMITTER_UPDATE_SCRIPT = "EmitterUpdateScript"
 PARTICLE_SPAWN_SCRIPT = "ParticleSpawnScript"
@@ -275,7 +276,7 @@ def emitter_spawn_steps(spec):
     if spec["spawn"] == "grid_burst":
         return [
             {"script": EMITTER_UPDATE_SCRIPT, "kind": "state_enums", "label": "loop_once", "module_fragment": "EmitterState",
-             "enums": (("Life Cycle Mode", LIFE_CYCLE_ENUM, "Self"), ("Loop Behavior", LOOP_BEHAVIOR_ENUM, "Once"))},
+             "enums": (LIFE_CYCLE_SELF, LOOP_BEHAVIOR_ONCE)},
             {"script": EMITTER_UPDATE_SCRIPT, "kind": "expression_module", "label": "spawn_burst", "module": SPAWN_BURST_MODULE,
              "input": "Spawn Count", "expression": "User.DriveGridCount * User.DriveGridCount"},
         ]
@@ -286,7 +287,8 @@ def emitter_spawn_steps(spec):
 def spawn_uv_expression(spec):
     if spec["spawn"] == "grid_burst":
         count = "max(User.DriveGridCount, 1)"
-        return f"(float2(Engine.ExecIndex % {count}, Engine.ExecIndex / {count}) + 0.5) / {count}"
+        index = f"(Particles.UniqueID % ({count} * {count}))"
+        return f"(float2({index} % {count}, {index} / {count}) + 0.5) / {count}"
     prefix = prefix_of(spec)
     return f"lerp(User.{prefix}SpawnUvMin, User.{prefix}SpawnUvMax, Particles.TDDriveSpawnRoll)"
 
@@ -316,8 +318,11 @@ def shape_entry(spec, is_spawn):
     return ("Particles.Scale", toolset.VECTOR3_TYPE, "expression", f"float3(User.DriveMeshScale * {stretch_factor}, User.DriveMeshScale, User.DriveMeshScale)")
 
 
-def sample_step(script, label, texture, placeholder):
-    return {"script": script, "kind": "sample", "label": label, "texture": texture, "placeholder": placeholder}
+def sample_steps(script, label, texture, placeholder):
+    return [
+        {"script": script, "kind": "sample", "label": label, "texture": texture, "placeholder": placeholder},
+        set_step(script, label + "_copy", (SAMPLE_COPY_ATTRIBUTES[placeholder], toolset.COLOR_TYPE, "sample_link", placeholder)),
+    ]
 
 
 def set_step(script, label, *entries):
@@ -350,8 +355,8 @@ def spawn_steps(spec):
     if not is_rate:
         return steps
     steps.append(set_step(PARTICLE_SPAWN_SCRIPT, "spawn_plane_uv", (toolset.PLANE_UV_ATTRIBUTE, toolset.VECTOR2_TYPE, "expression", plane_uv_expression(spec))))
-    steps.append(sample_step(PARTICLE_SPAWN_SCRIPT, "spawn_density_sample", "User.DensityPressureTexture", "$D"))
-    steps.append(sample_step(PARTICLE_SPAWN_SCRIPT, "spawn_aux_sample", "User.AuxTexture", "$A"))
+    steps.extend(sample_steps(PARTICLE_SPAWN_SCRIPT, "spawn_density_sample", "User.DensityPressureTexture", "$D"))
+    steps.extend(sample_steps(PARTICLE_SPAWN_SCRIPT, "spawn_aux_sample", "User.AuxTexture", "$A"))
     if is_ember:
         signal = "max($A.r, max($D.r, $D.b) * User.EmberDensitySpawnWeight)"
     else:
@@ -397,13 +402,11 @@ def ember_motion_expression():
 def update_steps(spec):
     is_ember = spec["profile"] == "ember"
     prefix = prefix_of(spec)
-    steps = [
-        set_step(PARTICLE_UPDATE_SCRIPT, "update_plane_uv", (toolset.PLANE_UV_ATTRIBUTE, toolset.VECTOR2_TYPE, "expression", plane_uv_expression(spec))),
-        sample_step(PARTICLE_UPDATE_SCRIPT, "update_velocity_sample", "User.VelocityTexture", "$V"),
-        sample_step(PARTICLE_UPDATE_SCRIPT, "update_density_sample", "User.DensityPressureTexture", "$D"),
-    ]
+    steps = [set_step(PARTICLE_UPDATE_SCRIPT, "update_plane_uv", (toolset.PLANE_UV_ATTRIBUTE, toolset.VECTOR2_TYPE, "expression", plane_uv_expression(spec)))]
+    steps.extend(sample_steps(PARTICLE_UPDATE_SCRIPT, "update_velocity_sample", "User.VelocityTexture", "$V"))
+    steps.extend(sample_steps(PARTICLE_UPDATE_SCRIPT, "update_density_sample", "User.DensityPressureTexture", "$D"))
     if is_ember:
-        steps.append(sample_step(PARTICLE_UPDATE_SCRIPT, "update_aux_sample", "User.AuxTexture", "$A"))
+        steps.extend(sample_steps(PARTICLE_UPDATE_SCRIPT, "update_aux_sample", "User.AuxTexture", "$A"))
         steps.append(set_step(PARTICLE_UPDATE_SCRIPT, "update_motion",
                               ("Particles.Velocity", toolset.VECTOR3_TYPE, "expression", ember_motion_expression()),
                               ("Particles.TDEmberHeat", toolset.FLOAT_TYPE, "expression", "Particles.TDEmberHeat - User.EmberCoolingPerSec * Engine.DeltaTime")))

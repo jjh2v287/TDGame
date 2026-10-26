@@ -229,3 +229,12 @@
 - 증거: 이 세션 dry-run·실행 결과(16단계 전부 OK), `git status`에서 관련 파일 diff 없음
 - 날짜·상태: 2026-10-23 active
 - 발견: claude(NarshaADK 제거)
+
+### L-repo-26 새 git 작업 트리(worktree)에는 무시된 시험 기준 파일 `Saved/FluidFX/fx4b-nonwater-baseline.json`이 없어 물 RHI 시험 하나가 실패한다
+- 증상: 새 작업 트리 첫 오프스크린 실행에서 `TDGame.FluidFXRhi.Water.NonWaterMultigridMatchesHeadBaseline` 실패, `nonwater baseline JSON is missing outside capture mode`(Water 46/47)
+- 원인: 기준 JSON이 `Saved/`(git 무시)에만 있어 `git worktree add`로 따라오지 않는다. 같은 종류의 `fx8b-gpu-baseline.json`은 첫 실행 때 자동 기록되지만 이 파일은 캡처 모드에서만 기록된다
+- 해결: 본 트리 `Saved/FluidFX/fx4b-nonwater-baseline.json`(sha eb466c63…)을 새 작업 트리 같은 경로로 복사한 뒤 실행하면 47/47
+- 범위: FluidFX 격리 작업 트리(파동마다 새로 만드는 `C:/Project/TDGame-wave*-wt`)
+- 증거: `Saved/AgentOps/20261026/wave2/baseline/index.md`(w2-base-rhi-water2)
+- 날짜·상태: 2026-10-26 active
+- 발견: claude(FluidFX 파동 2 기준선)

@@ -57,6 +57,7 @@
       "HeatCoolingPerSec": 2.0,
       "HeatBuoyancyCmPerSec2": 0.0,
       "bReflectsAtBoundaries": false,
+      "AreaAddressMode": "Clamp",
       "EdgeBounciness": 0.0,
       "BorderFadeExponent": 1.0,
       "VortexTangentialAccelerationCmPerSec2": 0.0,
@@ -71,7 +72,9 @@
       "WaterGpuPressureMode": "Default",
       "PressureKernelRadiusTexels": 4,
       "PressureKernelFeedback": 0.98,
-      "PressureKernelScale": 1.0
+      "PressureKernelScale": 1.0,
+      "bOutputObstacleDistance": false,
+      "ObstacleDistanceOutputRangeCm": 400.0
     },
     "TDFluidSourceEmitterSettings": {
       "bIsEnabled": false,
@@ -217,7 +220,10 @@
       "BoneDensityStrength": 0.9,
       "ParticleDensityStrength": 0.85,
       "MouseBrushDensityStrength": 1.0,
-      "TeleportSpeedCmPerSec": 3000.0
+      "TeleportSpeedCmPerSec": 3000.0,
+      "RingInnerRadiusRatio": 0.0,
+      "RingSideArcWeight": 0.3,
+      "RingInnerEraseRatePerSec": 0.0
     },
     "TDFluidRuntimeOpsSettings": {
       "SleepDistanceRatio": 1.1,
@@ -257,6 +263,37 @@
       "HeightOffsetCm": 10.0,
       "MoveThresholdCm": 2.0,
       "RandomSeed": 1
+    },
+    "TDFluidWaterLodGridSettings": {
+      "bEnableLodGrid": false,
+      "BaseQuadSizeCm": 18.75,
+      "BaseRangeCm": 2400.0,
+      "LevelCount": 7,
+      "PatchQuads": 16,
+      "MorphStartRatio": 0.75,
+      "VertexWaveFilterRatio": 2.0,
+      "TotalVertexBudget": 300000,
+      "ReselectDistanceCm": 50.0,
+      "CoverageMarginCm": 0.0
+    },
+    "TDFluidWaterNearRippleSettings": {
+      "bEnabled": false,
+      "Resolution": 256,
+      "ExtentCm": 600.0,
+      "WaveSpeedCmPerSec": 40.0,
+      "DampingPerSec": 2.0,
+      "EdgeFadeRatio": 0.15,
+      "EdgeAbsorptionStrength": 4.0,
+      "MovingImpulseCmPerSec": 20.0,
+      "MovingReferenceSpeedCmPerSec": 150.0,
+      "MovingSpeedExponent": 1.6,
+      "SourceRadiusScale": 0.25,
+      "IdleContactAmplitudeCm": 0.3,
+      "IdleContactHz": 1.5,
+      "IdleContactRadiusCm": 12.0,
+      "MinWaterDepthCm": 1.0,
+      "MaxSourcesPerFrame": 32,
+      "MaxSubsteps": 4
     }
   },
   "Groups": {
@@ -299,7 +336,11 @@
         "ActorBrushDensityStrength": 0.6,
         "bEnableWaterLayer": true,
         "bEnableWaterWetness": true,
-        "ActorBrushRippleImpulseCm": 2.5
+        "ActorBrushRippleImpulseCm": 2.5,
+        "bOutputObstacleDistance": true
+      },
+      "TDFluidWaterNearRippleSettings": {
+        "bEnabled": true
       }
     },
     "VortexTrio": {
@@ -799,6 +840,28 @@
       "TDFluidSimulationConfig": {
         "VortexTangentialAccelerationCmPerSec2": 900.0,
         "VortexRadialDriftCmPerSec": 250.0
+      }
+    },
+    "TileWaves": {
+      "TDFluidSimulationConfig": {
+        "AreaAddressMode": "Wrap",
+        "GridResolution": 256,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "SimExtentCm": {
+          "X": 3000.0,
+          "Y": 3000.0
+        },
+        "BorderFadeRatio": 0.0,
+        "TerrainSlopeGravity": 0.0,
+        "PressureIterations": 12,
+        "FlowNoiseAccelerationCmPerSec2": 150.0,
+        "FlowNoiseScaleCm": 400.0,
+        "VorticityStrength": 0.8,
+        "DensityDissipation": 0.05,
+        "AmbientDensity": 0.5,
+        "AmbientRefillPerSec": 0.3,
+        "AmbientNoiseAmount": 0.6
       }
     }
   },

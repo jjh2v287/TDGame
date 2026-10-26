@@ -9,4 +9,4 @@ if (waterLayerBlend > 0.0 && SwashHeightCm > 0.0 && simField[0].z >= 0.0)
     swashOffsetCm = SwashHeightCm * max(0.0, sin(swashPhase)) * swashShoal * simFade * waterLayerBlend;
 }
 
-return float3(waveDisplacementCm.xy, waveDisplacementCm.z + rippleHeightCm + swashOffsetCm);
+return float3(waveDisplacementCm.xy + lodMorphDeltaXY, waveDisplacementCm.z + rippleHeightCm + swashOffsetCm + tileMapHeightCm);

@@ -1,0 +1,14 @@
+{
+ "Materials": {
+  "/Game/T/MI_A": {
+   "Scalars": {
+    "Foo": 2.0,
+    "Bar": 0.5,
+    "Baz": 8
+   }
+  },
+  "/Game/T/MI_B": {
+   "Parent": "/Game/T/M_One"
+  }
+ }
+}

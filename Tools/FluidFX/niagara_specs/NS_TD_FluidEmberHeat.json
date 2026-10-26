@@ -1,0 +1,21 @@
+{
+ "asset": "/Game/FluidFX/Niagara/NS_TD_FluidEmberHeat",
+ "emitter_name": "Ember",
+ "profile": "ember",
+ "space": "world",
+ "spawn": "rate_reject",
+ "features": [
+  "collision"
+ ],
+ "renderer": {
+  "kind": "mesh",
+  "material": "/Game/FluidFX/Materials/MI_TD_FluidEmberNiagara_Default",
+  "alignment": null,
+  "mesh": "/Engine/BasicShapes/Sphere.Sphere",
+  "mesh_facing": "Velocity"
+ },
+ "cast_shadow": false,
+ "max_particles": 3000,
+ "fixed_bounds_half_extent_cm": 600.0,
+ "random_seed": 1
+}

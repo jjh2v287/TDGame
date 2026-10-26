@@ -94,6 +94,13 @@ namespace
 		return Cell.X < 0 || Cell.X >= Resolution || Cell.Y < 0 || Cell.Y >= Resolution;
 	}
 
+	void ApplyRingBrushSettings(FTDFluidBrushStamp& Stamp, const FTDFluidInputBrushSettings& BrushSettings)
+	{
+		Stamp.RingInnerRadiusRatio = BrushSettings.RingInnerRadiusRatio;
+		Stamp.RingSideArcWeight = BrushSettings.RingSideArcWeight;
+		Stamp.RingInnerEraseRatePerSec = BrushSettings.RingInnerEraseRatePerSec;
+	}
+
 	void ApplyActorBrushSettings(FTDFluidBrushStamp& Stamp, const FTDFluidSimulationConfig& Config)
 	{
 		Stamp.DensityStrength *= Config.ActorBrushDensityStrength;
@@ -438,6 +445,11 @@ void ATDFluidLiveActor::FinishLiveActorStep()
 		LiveComponent->FinishSimulationStep();
 		ApplyVolumeLightToMaterial();
 		FinishActorSpecificOutputs(LastStepDeltaSeconds);
+		LiveComponent->SubmitNearRippleStep(ResolveNearRippleCenter(), LastStepDeltaSeconds);
+	}
+	else
+	{
+		LiveComponent->DiscardNearRippleSources();
 	}
 
 	if (!LiveComponent->GetPlaneBasis().IsWorldFacing())
@@ -588,7 +600,12 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 			PivotStamp.VelocityStrength = 1.0f;
 			PivotStamp.Channel = InteractionBrushChannel;
 			ApplyActorBrushSettings(PivotStamp, LiveComponent->SimulationConfig);
+			ApplyRingBrushSettings(PivotStamp, InputBrushSettings);
 			LiveComponent->QueueBrushStamp(PivotStamp);
+		}
+		else if (ComputedVelocity.Size2D() < MinInteractionSpeedCmPerSec && TargetActor->IsA<APawn>())
+		{
+			LiveComponent->QueueNearRippleIdleContact(CurrentLocation);
 		}
 	}
 	CurrentActorLocations.Add(ActorKey, CurrentLocation);
@@ -630,6 +647,7 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 					BoneStamp.VelocityStrength = 1.0f;
 					BoneStamp.Channel = InteractionBrushChannel;
 					ApplyActorBrushSettings(BoneStamp, LiveComponent->SimulationConfig);
+					ApplyRingBrushSettings(BoneStamp, InputBrushSettings);
 					LiveComponent->QueueBrushStamp(BoneStamp);
 				}
 			}
@@ -898,7 +916,7 @@ void ATDFluidLiveActor::InvalidateTerrainQueueIfSolverGridChanged()
 void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBeforeStep)
 {
 	CSV_SCOPED_TIMING_STAT(TDFluid, TerrainQueueShift);
-	if (!bSampleTerrainElevation || !bIsTerrainQueueCurrent)
+	if (!ShouldSampleTerrainElevation() || !bIsTerrainQueueCurrent)
 	{
 		return;
 	}
@@ -961,10 +979,15 @@ void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBefor
 	}
 }
 
+bool ATDFluidLiveActor::ShouldSampleTerrainElevation() const
+{
+	return bSampleTerrainElevation && !(LiveComponent && LiveComponent->IsAreaWrapped());
+}
+
 void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 {
 	CSV_SCOPED_TIMING_STAT(TDFluid, TerrainQueueSample);
-	if (!bSampleTerrainElevation)
+	if (!ShouldSampleTerrainElevation())
 	{
 		PendingTerrainCells.Reset();
 		bIsTerrainQueueCurrent = false;
@@ -1104,7 +1127,7 @@ void ATDFluidLiveActor::ApplyDeliveredTerrainTraceResults()
 		return;
 	}
 
-	if (!bSampleTerrainElevation || !bIsTerrainQueueCurrent)
+	if (!ShouldSampleTerrainElevation() || !bIsTerrainQueueCurrent)
 	{
 		DiscardTerrainTraceSlots();
 		return;
@@ -1168,6 +1191,20 @@ FVector ATDFluidLiveActor::ResolvePlaneAnchorWorldLocation() const
 	const UWorld* World = GetWorld();
 	const APawn* PlayerPawn = World ? UGameplayStatics::GetPlayerPawn(World, 0) : nullptr;
 	return PlayerPawn ? PlayerPawn->GetActorLocation() : GetActorLocation();
+}
+
+FVector2D ATDFluidLiveActor::ResolveNearRippleCenter() const
+{
+	const UWorld* World = GetWorld();
+	const APlayerController* PlayerController = World ? World->GetFirstPlayerController() : nullptr;
+	const APawn* PlayerPawn = PlayerController ? PlayerController->GetPawn() : nullptr;
+	if (!PlayerPawn)
+	{
+		return ResolveDesiredSimulationCenter();
+	}
+
+	const FVector PawnLocation = PlayerPawn->GetActorLocation();
+	return FVector2D(PawnLocation.X, PawnLocation.Y);
 }
 
 FVector2D ATDFluidLiveActor::ResolveDesiredSimulationCenter() const

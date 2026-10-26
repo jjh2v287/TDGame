@@ -10,6 +10,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
+#include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidLiveComponent.h"
@@ -38,6 +39,7 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
+#include "TDFluidGpuBatch.h"
 #include "TextureResource.h"
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
@@ -2315,6 +2317,22 @@ namespace TDFluidGpuWaterRhiTestPrivate
 		return Descs;
 	}
 
+	TArray<FRDGTextureDesc> MakeNearRippleStateDescs(int32 Resolution)
+	{
+		if (Resolution <= 0)
+		{
+			return {};
+		}
+
+		const FRDGTextureDesc Desc = FRDGTextureDesc::Create2D(FIntPoint(Resolution, Resolution), PF_G32R32F, FClearValueBinding::Black, TexCreate_ShaderResource | TexCreate_UAV);
+		return { Desc, Desc };
+	}
+
+	int32 ResolveActiveNearRippleResolution(const UTDFluidLiveComponent& Component)
+	{
+		return Component.IsNearRippleActive() ? FTDFluidNearRippleLayer::SanitizeResolution(Component.GetNearRippleSettings().Resolution) : 0;
+	}
+
 	int64 GetTableLinearStateBytes(int32 Resolution)
 	{
 		return Resolution <= 256 ? (Resolution == 192 ? 3170304 : 5636096) : (Resolution == 512 ? 14155776 : 51904512);
@@ -3685,20 +3703,31 @@ bool FTDFluidGpuWaterRhiMemoryAllocationMatchesPlatformSizeTest::RunTest(const F
 
 		const FTDFluidPoolUsage WaterUsage = ReadPoolUsage();
 		const TArray<FRDGTextureDesc> StateDescs = MakeWaterStateDescs(WaterResolution);
+		const int32 NearRippleResolution = ResolveActiveNearRippleResolution(*WaterActor->LiveComponent);
+		const TArray<FRDGTextureDesc> NearRippleDescs = MakeNearRippleStateDescs(NearRippleResolution);
+		FTDFluidGpuBatchKey EstimateKey;
+		EstimateKey.ResolutionTier = WaterResolution;
+		EstimateKey.bUsesWaterLayer = true;
+		const int64 NearRippleEstimateBytes = FTDFluidGpuBatch::EstimateWaterActorMemory(EstimateKey, NearRippleResolution).NearRippleStateBytes;
 		const int64 MeasuredBytes = (static_cast<int64>(WaterUsage.UsedKb) - static_cast<int64>(BaselineUsage.UsedKb)) * 1024;
-		const int64 ExpectedPlatformBytes = SumPlatformBytes(StateDescs);
+		const int64 NearRipplePlatformBytes = SumPlatformBytes(NearRippleDescs);
+		const int64 ExpectedPlatformBytes = SumPlatformBytes(StateDescs) + NearRipplePlatformBytes;
 		const int64 LinearBytes = SumLinearBytes(StateDescs);
 		ReportLine(*this, FString::Printf(
-			TEXT("TDFluidGpuWaterMemory: %s state_measured=%lld state_platform=%lld state_linear=%lld output_platform=%lld transient_platform_partial=%lld whole_pool_kb_before=%u whole_pool_kb_after=%u"),
+			TEXT("TDFluidGpuWaterMemory: %s state_measured=%lld expected_platform=%lld state_linear=%lld near_ripple_resolution=%d near_ripple_platform=%lld near_ripple_estimate=%lld output_platform=%lld transient_platform_partial=%lld whole_pool_kb_before=%u whole_pool_kb_after=%u"),
 			*StageLabel,
 			MeasuredBytes,
 			ExpectedPlatformBytes,
 			LinearBytes,
+			NearRippleResolution,
+			NearRipplePlatformBytes,
+			NearRippleEstimateBytes,
 			SumPlatformBytes({ MakeOutputTargetDesc(WaterResolution), MakeOutputTargetDesc(WaterResolution), MakeOutputTargetDesc(WaterResolution) }),
 			SumPlatformBytes(MakeWaterTransientDescs(WaterResolution)),
 			BaselineUsage.WholePoolKb,
 			WaterUsage.WholePoolKb));
-		TestTrue(*FString::Printf(TEXT("%s pool usage difference %lld matches the platform size of the water state textures %lld within 64 KB"), *StageLabel, MeasuredBytes, ExpectedPlatformBytes), FMath::Abs(MeasuredBytes - ExpectedPlatformBytes) <= PoolUsageToleranceBytes);
+		TestTrue(*FString::Printf(TEXT("%s pool usage difference %lld matches the platform size of the water and near ripple state textures %lld within 64 KB"), *StageLabel, MeasuredBytes, ExpectedPlatformBytes), FMath::Abs(MeasuredBytes - ExpectedPlatformBytes) <= PoolUsageToleranceBytes);
+		TestEqual(*(StageLabel + TEXT(" near ripple linear state bytes equal the memory estimate")), SumLinearBytes(NearRippleDescs), NearRippleEstimateBytes);
 		TestEqual(*(StageLabel + TEXT(" linear state bytes equal the VRAM table")), LinearBytes, GetTableLinearStateBytes(WaterResolution));
 
 		MemoryWorld.World->DestroyActor(WaterActor);
@@ -4325,6 +4354,328 @@ bool FTDFluidGpuWaterRhiOptimizationsKeepOutputsTest::RunTest(const FString& Par
 			TestTrue(*(ModeLabel + TEXT(" water surface output is bit-identical to all off")), bSurfaceMatches);
 		}
 	}
+	return !HasAnyErrors();
+}
+
+namespace TDFluidGpuWaterRhiTestPrivate
+{
+	constexpr float AuxDistanceRangeCm = 400.0f;
+	constexpr float AuxDistanceTolerance = 0.003f;
+	constexpr int32 AuxUnchangedStepCount = 4;
+	constexpr int32 AuxTerrainSettleStepCount = 2;
+	constexpr float AuxWaterSurfaceHeightCm = 0.0f;
+	constexpr float AuxSubmergedTerrainElevationCm = -120.0f;
+	constexpr float AuxDryBandTerrainElevationCm = 60.0f;
+	constexpr float AuxUnknownTerrainSurfaceOutput = 8.0f;
+	const FLinearColor AuxSentinelColor(0.25f, 0.75f, 0.5f, 1.0f);
+
+	UTextureRenderTarget2D* CreateAuxTestTarget(int32 Resolution)
+	{
+		UTextureRenderTarget2D* Target = NewObject<UTextureRenderTarget2D>(GetTransientPackage(), NAME_None, RF_Transient);
+		Target->RenderTargetFormat = RTF_RGBA16f;
+		Target->ClearColor = FLinearColor::Transparent;
+		Target->bAutoGenerateMips = false;
+		Target->bSupportsUAV = true;
+		Target->bCanCreateUAV = true;
+		Target->InitCustomFormat(Resolution, Resolution, PF_FloatRGBA, true);
+		Target->UpdateResourceImmediate(true);
+		return Target;
+	}
+
+	TArray<FTDFluidSdfObstacle> MakeAuxFirstObstacles(const FVector2D& WindowCenter)
+	{
+		FTDFluidSdfObstacle Circle;
+		Circle.WorldCenter = FVector(WindowCenter.X - 420.0, WindowCenter.Y + 260.0, 0.0);
+		Circle.RadiusCm = 150.0f;
+		FTDFluidSdfObstacle Box;
+		Box.WorldCenter = FVector(WindowCenter.X + 510.0, WindowCenter.Y - 230.0, 0.0);
+		Box.BoxHalfExtentsCm = FVector2D(200.0, 120.0);
+		Box.bIsBox = true;
+		return { Circle, Box };
+	}
+
+	TArray<FTDFluidSdfObstacle> MakeAuxSecondObstacles(const FVector2D& WindowCenter)
+	{
+		FTDFluidSdfObstacle Circle;
+		Circle.WorldCenter = FVector(WindowCenter.X + 140.0, WindowCenter.Y + 610.0, 0.0);
+		Circle.RadiusCm = 90.0f;
+		return { Circle };
+	}
+
+	TArray<FFloat16Color> PackCpuAuxPixels(const FTDFluidSimulationConfig& Config, const FVector2D& WindowCenter, const TArray<FTDFluidSdfObstacle>& Obstacles)
+	{
+		FTDFluidSimulationConfig CpuConfig = Config;
+		CpuConfig.SolverBackend = ETDFluidSolverBackend::Cpu;
+		FTDFluidGrid2DSolver Solver;
+		Solver.Initialize(CpuConfig, WindowCenter);
+		Solver.RasterizeSdfObstacles(Obstacles);
+		TArray<FFloat16Color> AuxPixels;
+		Solver.PackAuxPixels(AuxPixels);
+		return AuxPixels;
+	}
+
+	struct FTDFluidAuxGpuArm
+	{
+		FTDFluidAuxGpuArm() = default;
+		FTDFluidAuxGpuArm(const FTDFluidAuxGpuArm&) = delete;
+		FTDFluidAuxGpuArm& operator=(const FTDFluidAuxGpuArm&) = delete;
+
+		~FTDFluidAuxGpuArm()
+		{
+			ENQUEUE_RENDER_COMMAND(TDFluidAuxRhiRelease)([State = MoveTemp(RenderState)](FRHICommandListImmediate&) mutable
+			{
+				State.Reset();
+			});
+			FlushRenderingCommands();
+		}
+
+		bool StepAndReportRefresh(bool& bOutRefreshed)
+		{
+			bOutRefreshed = false;
+			Proxy.PrepareStep(StepSeconds60, TConstArrayView<FTDFluidBrushStamp>(), FVector2D::ZeroVector, bAllowsTerrainElevation);
+			FTDFluidGpuFrameInputs FrameInputs;
+			FrameInputs.FrameNumber = ++FrameNumber;
+			FTDFluidGpuActorInput& ActorInput = FrameInputs.Actors.AddDefaulted_GetRef();
+			if (!Proxy.GatherStep(FrameInputs.FrameNumber, 0, DensityTarget->GameThread_GetRenderTargetResource(), VelocityTarget->GameThread_GetRenderTargetResource(), ActorInput, AuxTarget->GameThread_GetRenderTargetResource(), nullptr, SurfaceTarget->GameThread_GetRenderTargetResource(), 0))
+			{
+				return false;
+			}
+
+			bOutRefreshed = ActorInput.bRefreshesObstacleDistanceAux;
+			ENQUEUE_RENDER_COMMAND(TDFluidAuxRhiStep)([State = RenderState, SubmittedInputs = MoveTemp(FrameInputs)](FRHICommandListImmediate& RHICmdList)
+			{
+				State->ExecuteFrame(RHICmdList, SubmittedInputs);
+				RHICmdList.SubmitAndBlockUntilGPUIdle();
+			});
+			FlushRenderingCommands();
+			return true;
+		}
+
+		void PoisonAuxTarget()
+		{
+			AuxTarget->ClearColor = AuxSentinelColor;
+			AuxTarget->UpdateResourceImmediate(true);
+			FlushRenderingCommands();
+		}
+
+		FTDFluidGpuSolverProxy Proxy;
+		TSharedPtr<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe> RenderState = MakeShared<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe>();
+		TStrongObjectPtr<UTextureRenderTarget2D> DensityTarget;
+		TStrongObjectPtr<UTextureRenderTarget2D> VelocityTarget;
+		TStrongObjectPtr<UTextureRenderTarget2D> AuxTarget;
+		TStrongObjectPtr<UTextureRenderTarget2D> SurfaceTarget;
+		uint32 FrameNumber = 0;
+		bool bAllowsTerrainElevation = false;
+	};
+
+	void ApplyAuxDryBandTerrain(FTDFluidGpuSolverProxy& Proxy)
+	{
+		const FVector2D CenterPlaneCm = Proxy.GetCenterPlaneCm();
+		const FVector2D ExtentCm = Proxy.GetExtentCm();
+		Proxy.SetWaterInputs(TArray<FTDFluidFlowGuide>(), { MakeRegion(CenterPlaneCm - ExtentCm, CenterPlaneCm + ExtentCm, AuxWaterSurfaceHeightCm) });
+
+		const int32 FieldResolution = Proxy.GetWaterFieldResolution();
+		const int32 BandFirstColumn = FieldResolution * 2 / 5;
+		const int32 BandEndColumn = FieldResolution * 3 / 5;
+		for (int32 FieldY = 0; FieldY < FieldResolution; ++FieldY)
+		{
+			for (int32 FieldX = 0; FieldX < FieldResolution; ++FieldX)
+			{
+				const bool bIsInDryBand = FieldX >= BandFirstColumn && FieldX < BandEndColumn;
+				Proxy.SetTerrainElevationAtCell(FieldX, FieldY, bIsInDryBand ? AuxDryBandTerrainElevationCm : AuxSubmergedTerrainElevationCm);
+			}
+		}
+		Proxy.MarkTerrainSamplingComplete();
+	}
+
+	void ExpectAuxMatchesCpu(FAutomationTestBase& Test, const FString& StageLabel, UTextureRenderTarget2D& AuxTarget, const TArray<FFloat16Color>& CpuPixels)
+	{
+		TArray<FFloat16Color> GpuPixels;
+		if (!Test.TestTrue(*(StageLabel + TEXT(" read the GPU Aux target")), ReadRenderTargetPixels(&AuxTarget, GpuPixels)))
+		{
+			return;
+		}
+		if (!Test.TestEqual(*(StageLabel + TEXT(" GPU and CPU Aux hold the same cell count")), GpuPixels.Num(), CpuPixels.Num()))
+		{
+			return;
+		}
+
+		float MaximumDifference = 0.0f;
+		int32 NonZeroRedCount = 0;
+		int32 NegativeCount = 0;
+		int32 SaturatedCount = 0;
+		for (int32 PixelIndex = 0; PixelIndex < GpuPixels.Num(); ++PixelIndex)
+		{
+			const FLinearColor GpuPixel = GpuPixels[PixelIndex].GetFloats();
+			const FLinearColor CpuPixel = CpuPixels[PixelIndex].GetFloats();
+			MaximumDifference = FMath::Max(MaximumDifference, FMath::Abs(GpuPixel.G - CpuPixel.G));
+			NonZeroRedCount += GpuPixel.R != 0.0f ? 1 : 0;
+			NegativeCount += CpuPixel.G < 0.0f ? 1 : 0;
+			SaturatedCount += CpuPixel.G >= 1.0f ? 1 : 0;
+		}
+		ReportLine(Test, FString::Printf(TEXT("TDFluidAuxDistance: %s max_g_difference=%.6f cpu_negative=%d cpu_saturated=%d cells=%d"), *StageLabel, MaximumDifference, NegativeCount, SaturatedCount, GpuPixels.Num()));
+		Test.TestTrue(*FString::Printf(TEXT("%s GPU G matches CPU raw obstacle distance within %.3f (max %.6f)"), *StageLabel, AuxDistanceTolerance, MaximumDifference), MaximumDifference <= AuxDistanceTolerance);
+		Test.TestEqual(*(StageLabel + TEXT(" GPU R stays zero")), NonZeroRedCount, 0);
+		Test.TestTrue(*(StageLabel + TEXT(" CPU reference has obstacle interior and open water cells")), NegativeCount > 0 && SaturatedCount > 0);
+	}
+
+	void ExpectAuxDryCellsMatchCpu(FAutomationTestBase& Test, const FString& StageLabel, UTextureRenderTarget2D& SurfaceTarget, UTextureRenderTarget2D& AuxTarget, const TArray<FFloat16Color>& CpuPixels)
+	{
+		TArray<FFloat16Color> SurfacePixels;
+		TArray<FFloat16Color> AuxPixels;
+		if (!Test.TestTrue(*(StageLabel + TEXT(" read the GPU water surface and Aux targets")), ReadRenderTargetPixels(&SurfaceTarget, SurfacePixels) && ReadRenderTargetPixels(&AuxTarget, AuxPixels)))
+		{
+			return;
+		}
+		if (!Test.TestTrue(*(StageLabel + TEXT(" GPU surface, GPU Aux and CPU Aux hold the same cell count")), SurfacePixels.Num() == CpuPixels.Num() && AuxPixels.Num() == CpuPixels.Num()))
+		{
+			return;
+		}
+
+		int32 DryCount = 0;
+		int32 DryOpenCount = 0;
+		float DryMaximumDifference = 0.0f;
+		for (int32 PixelIndex = 0; PixelIndex < SurfacePixels.Num(); ++PixelIndex)
+		{
+			const FLinearColor SurfacePixel = SurfacePixels[PixelIndex].GetFloats();
+			const bool bIsTerrainKnown = SurfacePixel.A < AuxUnknownTerrainSurfaceOutput;
+			const bool bIsAboveWaterSurface = SurfacePixel.R <= 0.0f;
+			if (!bIsTerrainKnown || !bIsAboveWaterSurface)
+			{
+				continue;
+			}
+
+			const float CpuDistance = CpuPixels[PixelIndex].GetFloats().G;
+			++DryCount;
+			DryOpenCount += CpuDistance > 0.0f ? 1 : 0;
+			DryMaximumDifference = FMath::Max(DryMaximumDifference, FMath::Abs(AuxPixels[PixelIndex].GetFloats().G - CpuDistance));
+		}
+		ReportLine(Test, FString::Printf(TEXT("TDFluidAuxDistance: %s dry_cells=%d dry_open_cells=%d dry_max_g_difference=%.6f cells=%d"), *StageLabel, DryCount, DryOpenCount, DryMaximumDifference, SurfacePixels.Num()));
+		Test.TestTrue(*(StageLabel + TEXT(" GPU output has dry cells with known terrain above the water surface")), DryCount > 0);
+		Test.TestTrue(*(StageLabel + TEXT(" dry cells include open cells where the raw and composite distances differ")), DryOpenCount > 0);
+		Test.TestTrue(*FString::Printf(TEXT("%s dry cells keep the CPU raw obstacle distance within %.3f (max %.6f)"), *StageLabel, AuxDistanceTolerance, DryMaximumDifference), DryMaximumDifference <= AuxDistanceTolerance);
+	}
+
+	void ExpectAuxKeepsSentinel(FAutomationTestBase& Test, const FString& StageLabel, UTextureRenderTarget2D& AuxTarget, const TArray<FFloat16Color>& SentinelPixels)
+	{
+		TArray<FFloat16Color> GpuPixels;
+		if (!Test.TestTrue(*(StageLabel + TEXT(" read the GPU Aux target")), ReadRenderTargetPixels(&AuxTarget, GpuPixels)))
+		{
+			return;
+		}
+		Test.TestTrue(*(StageLabel + TEXT(" Aux target is untouched without a repack condition")), ArePixelsBitIdentical(SentinelPixels, GpuPixels));
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidGpuWaterRhiAuxObstacleDistanceMatchesCpuTest,
+	"TDGame.FluidFXRhi.Water.AuxObstacleDistanceMatchesCpu",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidGpuWaterRhiAuxObstacleDistanceMatchesCpuTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidGpuWaterRhiTestPrivate;
+
+	const FString CaseLabel = TEXT("TDGame.FluidFXRhi.Water.AuxObstacleDistanceMatchesCpu");
+	if (!CanRunWaterRhiTest(*this, CaseLabel))
+	{
+		return false;
+	}
+
+	FTDWaterGpuConsoleVariableScope WaterGpuScope(WaterGpuVariableName, 1);
+	if (!ExpectWaterGpuRegistered(*this, CaseLabel, WaterGpuScope))
+	{
+		return false;
+	}
+
+	FTDFluidSimulationConfig Config = MakeWaterArmConfig(ParityResolution, ParityExtentCm);
+	Config.SolverBackend = ETDFluidSolverBackend::Gpu;
+	Config.bOutputObstacleDistance = true;
+	Config.ObstacleDistanceOutputRangeCm = AuxDistanceRangeCm;
+	const FVector2D InitialCenter(310.0, -145.0);
+	const TArray<FTDFluidSdfObstacle> FirstObstacles = MakeAuxFirstObstacles(InitialCenter);
+	const TArray<FTDFluidSdfObstacle> SecondObstacles = MakeAuxSecondObstacles(InitialCenter);
+
+	FTDFluidAuxGpuArm Arm;
+	Arm.DensityTarget.Reset(CreateAuxTestTarget(ParityResolution));
+	Arm.VelocityTarget.Reset(CreateAuxTestTarget(ParityResolution));
+	Arm.AuxTarget.Reset(CreateAuxTestTarget(ParityResolution));
+	Arm.SurfaceTarget.Reset(CreateAuxTestTarget(ParityResolution));
+	FlushRenderingCommands();
+	Arm.Proxy.Initialize(Config, ParityResolution, InitialCenter);
+	if (!TestTrue(*(CaseLabel + TEXT(" proxy writes the obstacle distance Aux")), Arm.Proxy.GetSettings().bWritesObstacleDistanceAux && Arm.Proxy.UsesWaterLayer()))
+	{
+		return false;
+	}
+	Arm.Proxy.SetObstacles(FirstObstacles);
+	Arm.Proxy.AssignActorKey(1);
+
+	bool bRefreshed = false;
+	if (!TestTrue(*(CaseLabel + TEXT(" first step gathered")), Arm.StepAndReportRefresh(bRefreshed)))
+	{
+		return false;
+	}
+	TestTrue(*(CaseLabel + TEXT(" first step repacks the Aux")), bRefreshed);
+	ExpectAuxMatchesCpu(*this, CaseLabel + TEXT(" initial"), *Arm.AuxTarget, PackCpuAuxPixels(Config, InitialCenter, FirstObstacles));
+
+	Arm.PoisonAuxTarget();
+	TArray<FFloat16Color> SentinelPixels;
+	if (!TestTrue(*(CaseLabel + TEXT(" read the sentinel Aux")), ReadRenderTargetPixels(Arm.AuxTarget.Get(), SentinelPixels)))
+	{
+		return false;
+	}
+	for (int32 StepIndex = 0; StepIndex < AuxUnchangedStepCount; ++StepIndex)
+	{
+		Arm.StepAndReportRefresh(bRefreshed);
+		TestFalse(*FString::Printf(TEXT("%s unchanged step %d does not repack"), *CaseLabel, StepIndex), bRefreshed);
+	}
+	ExpectAuxKeepsSentinel(*this, CaseLabel + TEXT(" unchanged steps"), *Arm.AuxTarget, SentinelPixels);
+
+	Arm.Proxy.SetObstacles(SecondObstacles);
+	Arm.StepAndReportRefresh(bRefreshed);
+	TestTrue(*(CaseLabel + TEXT(" obstacle change repacks the Aux")), bRefreshed);
+	ExpectAuxMatchesCpu(*this, CaseLabel + TEXT(" obstacle change"), *Arm.AuxTarget, PackCpuAuxPixels(Config, Arm.Proxy.GetCenterPlaneCm(), SecondObstacles));
+
+	Arm.PoisonAuxTarget();
+	const int32 ShiftQuantumCells = FTDFluidGpuBatch::ComputeWaterShiftQuantumCells(Arm.Proxy.GetResolution());
+	const FVector2D ShiftOffsetCm(4.0 * ShiftQuantumCells * ParityCellSizeCm, -2.0 * ShiftQuantumCells * ParityCellSizeCm);
+	const FIntPoint ShiftCells = Arm.Proxy.ShiftWindowTowards(Arm.Proxy.GetCenterPlaneCm() + ShiftOffsetCm);
+	TestTrue(*(CaseLabel + TEXT(" window shift moved the grid")), ShiftCells != FIntPoint::ZeroValue);
+	Arm.StepAndReportRefresh(bRefreshed);
+	TestTrue(*(CaseLabel + TEXT(" window shift repacks the Aux")), bRefreshed);
+	ExpectAuxMatchesCpu(*this, CaseLabel + TEXT(" window shift"), *Arm.AuxTarget, PackCpuAuxPixels(Config, Arm.Proxy.GetCenterPlaneCm(), SecondObstacles));
+
+	Arm.PoisonAuxTarget();
+	Arm.Proxy.ResetState();
+	Arm.StepAndReportRefresh(bRefreshed);
+	TestTrue(*(CaseLabel + TEXT(" reset repacks the Aux")), bRefreshed);
+	ExpectAuxMatchesCpu(*this, CaseLabel + TEXT(" reset"), *Arm.AuxTarget, PackCpuAuxPixels(Config, Arm.Proxy.GetCenterPlaneCm(), SecondObstacles));
+
+	Arm.PoisonAuxTarget();
+	if (!TestTrue(*(CaseLabel + TEXT(" read the second sentinel Aux")), ReadRenderTargetPixels(Arm.AuxTarget.Get(), SentinelPixels)))
+	{
+		return false;
+	}
+	for (int32 StepIndex = 0; StepIndex < AuxUnchangedStepCount; ++StepIndex)
+	{
+		Arm.StepAndReportRefresh(bRefreshed);
+		TestFalse(*FString::Printf(TEXT("%s settled step %d does not repack"), *CaseLabel, StepIndex), bRefreshed);
+	}
+	ExpectAuxKeepsSentinel(*this, CaseLabel + TEXT(" settled steps"), *Arm.AuxTarget, SentinelPixels);
+
+	ApplyAuxDryBandTerrain(Arm.Proxy);
+	Arm.bAllowsTerrainElevation = true;
+	for (int32 StepIndex = 0; StepIndex < AuxTerrainSettleStepCount; ++StepIndex)
+	{
+		Arm.StepAndReportRefresh(bRefreshed);
+	}
+	Arm.PoisonAuxTarget();
+	Arm.Proxy.SetObstacles(FirstObstacles);
+	Arm.StepAndReportRefresh(bRefreshed);
+	TestTrue(*(CaseLabel + TEXT(" obstacle change over the dry band repacks the Aux")), bRefreshed);
+	const TArray<FFloat16Color> DryBandCpuPixels = PackCpuAuxPixels(Config, Arm.Proxy.GetCenterPlaneCm(), FirstObstacles);
+	ExpectAuxMatchesCpu(*this, CaseLabel + TEXT(" dry band"), *Arm.AuxTarget, DryBandCpuPixels);
+	ExpectAuxDryCellsMatchCpu(*this, CaseLabel + TEXT(" dry band"), *Arm.SurfaceTarget, *Arm.AuxTarget, DryBandCpuPixels);
 	return !HasAnyErrors();
 }
 

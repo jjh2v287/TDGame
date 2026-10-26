@@ -347,6 +347,7 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.HeatCoolingPerSec = Config.HeatCoolingPerSec;
 	SimulationSettings.HeatBuoyancyCmPerSec2 = Config.HeatBuoyancyCmPerSec2;
 	SimulationSettings.bReflectsAtBoundaries = Config.bReflectsAtBoundaries;
+	SimulationSettings.AreaAddressModeRequest = Config.AreaAddressMode == ETDFluidAreaAddressMode::Wrap ? TDFluidGpuSolverConstants::WrapAreaAddressModeRequest : 0;
 	SimulationSettings.EdgeBounciness = Config.EdgeBounciness;
 	SimulationSettings.BorderFadeExponent = Config.BorderFadeExponent;
 	SimulationSettings.VortexTangentialAccelerationCmPerSec2 = Config.VortexTangentialAccelerationCmPerSec2;
@@ -376,6 +377,8 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.RippleHeightReferenceCm = Config.RippleHeightReferenceCm;
 	SimulationSettings.RippleFlowAdvection = Config.RippleFlowAdvection;
 	SimulationSettings.bUsesWaterWetness = Config.bEnableWaterWetness && SimulationSettings.bUsesWaterLayer;
+	SimulationSettings.bWritesObstacleDistanceAux = Config.bOutputObstacleDistance && SimulationSettings.bUsesWaterLayer;
+	SimulationSettings.ObstacleDistanceOutputRangeCm = FMath::Clamp(Config.ObstacleDistanceOutputRangeCm, 20.0f, 2000.0f);
 	SimulationSettings.bUsesWhitewaterDissipation = Config.bUseWhitewaterDissipation && SimulationSettings.bUsesWaterLayer;
 	SimulationSettings.WhitewaterDissipation = FMath::Clamp(Config.WhitewaterDissipation, 0.0f, 10.0f);
 	SimulationSettings.BankWetHeightCm = FMath::Clamp(Config.BankWetHeightCm, 0.0f, 1000.0f);
@@ -402,6 +405,9 @@ FTDFluidGpuStampInput FTDFluidGpuSolverProxy::MakeStampInput(const FTDFluidBrush
 	StampInput.HeatStrength = PlaneStamp.HeatStrength;
 	StampInput.bWritesSelectiveDensity = PlaneStamp.Channel == ETDFluidBrushChannel::ChannelG_Blood || PlaneStamp.Channel == ETDFluidBrushChannel::ChannelB_Fire;
 	StampInput.RippleImpulseCm = bCarriesRippleImpulse ? PlaneStamp.RippleImpulseCm : 0.0f;
+	StampInput.RingInnerRadiusRatio = PlaneStamp.RingInnerRadiusRatio;
+	StampInput.RingSideArcWeight = PlaneStamp.RingSideArcWeight;
+	StampInput.RingInnerEraseRatePerSec = PlaneStamp.RingInnerEraseRatePerSec;
 	return StampInput;
 }
 
@@ -575,7 +581,7 @@ FTDFluidCellSample FTDFluidGpuSolverProxy::SampleSimulationCell(int32 CellX, int
 
 FIntPoint FTDFluidGpuSolverProxy::ShiftWindowTowards(const FVector2D& DesiredCenterPlaneCm)
 {
-	if (!IsInitialized() || DesiredCenterPlaneCm.ContainsNaN())
+	if (!IsInitialized() || DesiredCenterPlaneCm.ContainsNaN() || Settings.AreaAddressModeRequest == TDFluidGpuSolverConstants::WrapAreaAddressModeRequest)
 	{
 		return FIntPoint::ZeroValue;
 	}
@@ -686,7 +692,8 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 	}
 	OutActorInput.DensityPressureOutput = DensityPressureOutput;
 	OutActorInput.VelocityOutput = VelocityOutput;
-	OutActorInput.AuxOutput = Settings.bUsesHeatChannel ? AuxOutput : nullptr;
+	OutActorInput.AuxOutput = Settings.bUsesHeatChannel || Settings.bWritesObstacleDistanceAux ? AuxOutput : nullptr;
+	OutActorInput.bRefreshesObstacleDistanceAux = Settings.bWritesObstacleDistanceAux && (bHasObstacleListChanged || PendingShiftCells != FIntPoint::ZeroValue || bNeedsReset || bNeedsObstacleDistanceAuxRefresh);
 	OutActorInput.TransmittanceOutput = TransmittanceOutput;
 	OutActorInput.Transmittance = PendingTransmittanceInput;
 
@@ -703,6 +710,7 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 	PendingShiftCells = FIntPoint::ZeroValue;
 	bNeedsReset = false;
 	bHasObstacleListChanged = false;
+	bNeedsObstacleDistanceAuxRefresh = false;
 	bHasPreparedStep = false;
 	return true;
 }

@@ -5,6 +5,7 @@
 #endif
 
 StructuredBuffer<float> StampRippleImpulses;
+StructuredBuffer<FTDFluidGpuPackedRingShape> StampRingShapes;
 Texture2DArray<float> CompositeSdf;
 Texture2DArray<float4> WaterGuideField;
 Texture2DArray<float> WaterSurfaceHeightField;
@@ -15,6 +16,46 @@ Texture2DArray<float2> RippleIn;
 RWTexture2DArray<float2> VelocityOut;
 RWTexture2DArray<float2> DensityOut;
 RWTexture2DArray<float2> RippleOut;
+
+float TDFluidGpuWaterComputeRingDensityWeight(FTDFluidGpuPackedRingShape RingShape, float2 OffsetFromCenter, float DistanceCm, float EffectiveRadiusCm)
+{
+	const float InnerRadiusCm = RingShape.InnerRadiusRatio * EffectiveRadiusCm;
+	const float CenterRadiusCm = 0.5f * (InnerRadiusCm + EffectiveRadiusCm);
+	const float HalfWidthCm = max(0.5f * (EffectiveRadiusCm - InnerRadiusCm), TDFLUIDGPU_KINDA_SMALL_NUMBER);
+	const float BandFalloff = saturate(1.0f - abs(DistanceCm - CenterRadiusCm) / HalfWidthCm);
+	const float BandWeight = BandFalloff * BandFalloff * (3.0f - 2.0f * BandFalloff);
+	if (all(RingShape.MotionDirection == 0.0f) || !(DistanceCm > TDFLUIDGPU_KINDA_SMALL_NUMBER))
+	{
+		return BandWeight;
+	}
+
+	return BandWeight * saturate(RingShape.SideArcWeight + dot(OffsetFromCenter / DistanceCm, RingShape.MotionDirection));
+}
+
+float TDFluidGpuWaterComputeRingInnerRetain(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedRingShape RingShape, float DistanceCm, float EffectiveRadiusCm)
+{
+	const float InnerRadiusCm = RingShape.InnerRadiusRatio * EffectiveRadiusCm;
+	if (RingShape.InnerEraseRatePerSec <= 0.0f || DistanceCm >= InnerRadiusCm)
+	{
+		return 1.0f;
+	}
+
+	const float InnerFalloff = 1.0f - DistanceCm / InnerRadiusCm;
+	return exp(-RingShape.InnerEraseRatePerSec * InnerFalloff * InnerFalloff * (3.0f - 2.0f * InnerFalloff) * Actor.StampDeltaTimeSeconds);
+}
+
+void ApplyWaterRingStampDensity(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedStamp Stamp, FTDFluidGpuPackedRingShape RingShape, float2 CellCenter, float DistanceCm, inout float2 Density)
+{
+	float DiscardedDisplacement = 0.0f;
+	const float RingWeight = TDFluidGpuWaterComputeRingDensityWeight(RingShape, CellCenter - Stamp.CenterFromWindowCenterCm, DistanceCm, Stamp.EffectiveRadiusCm);
+	TDFluidGpuApplyStampDensity(Actor, Stamp, RingWeight, Density, DiscardedDisplacement);
+	const float RetainFactor = TDFluidGpuWaterComputeRingInnerRetain(Actor, RingShape, DistanceCm, Stamp.EffectiveRadiusCm);
+	Density.x *= RetainFactor;
+	if (TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_WRITES_SELECTIVE_DENSITY))
+	{
+		Density.y *= RetainFactor;
+	}
+}
 
 void ApplyWaterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout float2 Velocity, inout float2 Density, inout float RippleHeight)
 {
@@ -31,8 +72,16 @@ void ApplyWaterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout f
 			continue;
 		}
 
-		float DiscardedDisplacement = 0.0f;
-		TDFluidGpuApplyStampDensity(Actor, Stamp, SmoothWeight, Density, DiscardedDisplacement);
+		const FTDFluidGpuPackedRingShape RingShape = StampRingShapes[StampIndex];
+		if (RingShape.InnerRadiusRatio > 0.0f && !TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_ERASES_DENSITY))
+		{
+			ApplyWaterRingStampDensity(Actor, Stamp, RingShape, CellCenter, DistanceCm, Density);
+		}
+		else
+		{
+			float DiscardedDisplacement = 0.0f;
+			TDFluidGpuApplyStampDensity(Actor, Stamp, SmoothWeight, Density, DiscardedDisplacement);
+		}
 		if (Stamp.VelocityStrength > 0.0f)
 		{
 			Velocity += (Stamp.TargetVelocityCmPerSec - Velocity) * (SmoothWeight * Actor.StampVelocityBlend);

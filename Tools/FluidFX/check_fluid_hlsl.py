@@ -130,10 +130,10 @@ def compile_source(dxc, source, label, profile, optimize, work_folder):
     return {"exit": completed.returncode, "samples": sample_count, "warnings": warnings, "error": first_error}
 
 
-def naive_entries(common_code, node_codes):
+def naive_entries(sources):
     return {
-        "offset": "#define TD_WATER_VERTEX 1\n" + common_code + "\n" + node_codes["offset"],
-        "surface": common_code + "\n" + node_codes["surface"],
+        "offset": "#define TD_WATER_VERTEX 1\n" + sources["lod_morph"] + "\n" + sources["common"] + "\n#define TD_TILEMAP_HEIGHT_ONLY 1\n" + sources["tile_map"] + "\n" + sources["offset"],
+        "surface": sources["lod_morph"] + "\n" + sources["common"] + "\n" + sources["tile_map"] + "\n" + sources["surface"],
     }
 
 
@@ -225,7 +225,7 @@ def main():
     else:
         record("무대 스크립트 unreal 스텁 임포트", False, "editor_make_fluid_water_stage.py 없음")
 
-    shader_names = (material.COMMON_HLSL_NAME, material.SURFACE_HLSL_NAME, material.OFFSET_HLSL_NAME, material.WET_DECAL_HLSL_NAME)
+    shader_names = (material.COMMON_HLSL_NAME, material.SURFACE_HLSL_NAME, material.OFFSET_HLSL_NAME, material.WET_DECAL_HLSL_NAME, material.TILE_MAP_HLSL_NAME, material.LOD_MORPH_HLSL_NAME)
     text_failures = run_shader_text_checks(root, shader_names)
     record("셰이더 텍스트(주석·절대 경로·ASCII·LF)", not text_failures, "; ".join(text_failures))
 
@@ -296,7 +296,7 @@ def main():
             passed = combined["exit"] == 0 and combined["samples"] == expected_total
             record(f"매크로 새지 않음({'→'.join(order)})", passed, combined["error"] or f"합 {combined['samples']} 기대 {expected_total}")
 
-        control_entries = naive_entries(sources["common"], {"offset": sources["offset"], "surface": sources["surface"]})
+        control_entries = naive_entries(sources)
         control = compile_source(dxc, build_source(declarations, control_entries, ("offset", "surface")), "control_naive", "ps_6_0", False, work_folder)
         record(
             "음성 대조: 매크로를 지우지 않는 조립은 누수를 검출",

@@ -1,0 +1,14 @@
+{
+ "Materials": {
+  "/Game/T/MI_A": {
+   "Parent": "/Game/T/M_Base",
+   "Scalars": {
+    "Bar": 0.5,
+    "Foo": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  }
+ },
+ "NiagaraSystems": {}
+}

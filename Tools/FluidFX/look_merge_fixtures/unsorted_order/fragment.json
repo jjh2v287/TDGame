@@ -1,0 +1,13 @@
+{
+ "Materials": {
+  "/Game/T/MI_C": {
+   "Scalars": {
+    "Omega": 3.0,
+    "Beta": 4.0
+   }
+  },
+  "/Game/T/MI_B": {
+   "Parent": "/Game/T/M_Base"
+  }
+ }
+}

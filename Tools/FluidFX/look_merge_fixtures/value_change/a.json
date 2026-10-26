@@ -1,0 +1,14 @@
+{
+ "Materials": {
+  "/Game/T/MI_A": {
+   "Parent": "/Game/T/M_New",
+   "Scalars": {
+    "Foo": 2,
+    "Keep": 0.3
+   },
+   "Switches": {
+    "bFlag": true
+   }
+  }
+ }
+}

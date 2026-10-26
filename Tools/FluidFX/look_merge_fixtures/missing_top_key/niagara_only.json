@@ -1,0 +1,9 @@
+{
+ "NiagaraSystems": {
+  "/Game/T/NS_A": {
+   "Floats": {
+    "User.Lifetime": 3.5
+   }
+  }
+ }
+}

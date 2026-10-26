@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, 모래 무대 초안. dune_fft = 사구 주 파장·방향 영역",
+ "regions": [
+  {
+   "name": "dune_fft",
+   "kind": "dust",
+   "box": [
+    128,
+    296,
+    1152,
+    712
+   ]
+  },
+  {
+   "name": "sand_dust",
+   "kind": "dust",
+   "box": [
+    880,
+    200,
+    1180,
+    400
+   ]
+  },
+  {
+   "name": "groove_line",
+   "kind": "dust",
+   "box": [
+    300,
+    560,
+    980,
+    580
+   ]
+  }
+ ]
+}

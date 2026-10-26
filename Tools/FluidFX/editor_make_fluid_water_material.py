@@ -29,6 +29,8 @@ SHADER_DIRECTORY = ("Tools", "FluidFX", "Shaders")
 COMMON_HLSL_NAME = "TDFluidWaterCommon.hlsl"
 SURFACE_HLSL_NAME = "TDFluidWaterSurface.hlsl"
 OFFSET_HLSL_NAME = "TDFluidWaterOffset.hlsl"
+TILE_MAP_HLSL_NAME = "TDFluidTileMap.hlsl"
+LOD_MORPH_HLSL_NAME = "TDFluidWaterLodMorph.hlsl"
 WET_DECAL_HLSL_NAME = "TDFluidWaterWetDecal.hlsl"
 TEXTURE_SOURCE_DIRECTORY = ("Saved", "FluidFX", "water_textures")
 REQUEST_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_water_material_request.json")
@@ -53,7 +55,7 @@ OWN_TEXTURE_PARAMETERS = {
     "FlowPhaseNoiseTexture": "T_TD_FluidFlowPhaseNoise",
     "CausticsTexture": "T_TD_FluidCaustics",
 }
-SIMULATION_TEXTURE_PARAMETERS = ("DensityPressureTexture", "VelocityTexture", "WaterSurfaceTexture")
+SIMULATION_TEXTURE_PARAMETERS = ("DensityPressureTexture", "VelocityTexture", "WaterSurfaceTexture", "TileMap1Texture", "NearRippleTexture", "AuxTexture")
 TEXTURE_PARAMETER_NAMES = SIMULATION_TEXTURE_PARAMETERS + tuple(OWN_TEXTURE_PARAMETERS)
 
 WATER_STAGE_MAP_PATH = "/Game/FluidFX/Maps/LV_TDFluidWaterStage"
@@ -62,6 +64,7 @@ GRID_DEFAULT_MATERIAL_PATH = "/Engine/EngineMaterials/WorldGridMaterial"
 MESH_SPECS = (
     {"name": "SM_TD_FluidWaterGrid64", "size_cm": 1600.0, "quads": 64},
     {"name": "SM_TD_FluidWaterGridUnit", "size_cm": 100.0, "quads": 192},
+    {"name": "SM_TD_FluidWaterLodPatch16", "size_cm": 100.0, "quads": 16, "bounds_extension_cm": (50.0, 50.0, 300.0)},
 )
 
 VECTOR_PARAMETER_DEFAULTS = (
@@ -74,6 +77,10 @@ VECTOR_PARAMETER_DEFAULTS = (
     ("DetailNormalTilingCm", (140.0, 430.0, 0.0, 0.0)),
     ("DyeColor", (0.3, 0.02, 0.015, 0.0)),
     ("WetDarkColor", (0.09, 0.07, 0.045, 0.0)),
+    ("TileMap1OriginCm", (0.0, 0.0, 0.0, 0.0)),
+    ("TileMap1PeriodCm", (0.0, 0.0, 0.0, 0.0)),
+    ("LodObserverWorld", (0.0, 0.0, 0.0, 0.0)),
+    ("NearRippleWindow", (0.0, 0.0, 600.0, 0.15)),
 )
 SCALAR_PARAMETER_DEFAULTS = (
     ("SimGridResolution", 0.0),
@@ -139,6 +146,33 @@ SCALAR_PARAMETER_DEFAULTS = (
     ("WetSubmergedFadeCm", 2.0),
     ("TerrainReferenceZCm", 0.0),
     ("WetHeightToleranceCm", 30.0),
+    ("TileMap1HeightCm", 0.0),
+    ("TileMap1DensityHeightCm", 0.0),
+    ("TileMap1NormalStrength", 0.0),
+    ("TileMap1FoamStrength", 0.0),
+    ("TileMap1FadeStartCm", 3000.0),
+    ("TileMap1FadeLengthCm", 5000.0),
+    ("LodBaseRangeCm", 2400.0),
+    ("LodBaseQuadSizeCm", 18.75),
+    ("LodMorphStartRatio", 0.75),
+    ("LodVertexWaveFilterRatio", 2.0),
+    ("NearRippleActive", 0.0),
+    ("AuxObstacleDistanceActive", 0.0),
+    ("ObstacleDistanceRangeCm", 400.0),
+    ("NearRippleNormalStrength", 1.0),
+    ("ObstacleRingWavelengthCm", 10.0),
+    ("ObstacleRingCount", 3.0),
+    ("ObstacleRingFalloffCm", 30.0),
+    ("ObstacleRingSpeedCmPerSec", 15.0),
+    ("ObstacleRingNormalStrength", 0.0),
+    ("ObstacleRingFlowSkew", 0.5),
+    ("ObstacleRingFlowSpeedCmPerSec", 150.0),
+    ("ObstacleWakeFoamStrength", 0.0),
+    ("ObstacleWakeLengthCm", 300.0),
+    ("ObstacleWakeConeSharpness", 8.0),
+    ("FoamAnisotropyMax", 1.0),
+    ("FoamAnisotropySpeedCmPerSec", 150.0),
+    ("FoamAnisotropyFeatureTiles", 0.08),
 )
 PRIMITIVE_DATA_INDEX_BY_PARAMETER = {"RibbonFlowCmPerSec": 0}
 STATIC_SWITCH_DEFAULTS = (
@@ -156,9 +190,10 @@ BUILTIN_SOURCE_NAMES = BUILTIN_VECTOR_SOURCE_NAMES + BUILTIN_FLOAT2_SOURCE_NAMES
     "SceneDepthWithoutWaterCm",
     "ElapsedSeconds",
     "LiteDepthMode",
+    "LodInstanceSpacingCm",
 )
-MID_DRIVEN_TEXTURE_NAMES = ("DensityPressureTexture", "VelocityTexture", "WaterSurfaceTexture")
-MID_DRIVEN_VECTOR_NAMES = ("SimCenterWorld", "SimExtentsCm")
+MID_DRIVEN_TEXTURE_NAMES = ("DensityPressureTexture", "VelocityTexture", "WaterSurfaceTexture", "TileMap1Texture", "NearRippleTexture", "AuxTexture")
+MID_DRIVEN_VECTOR_NAMES = ("SimCenterWorld", "SimExtentsCm", "TileMap1OriginCm", "TileMap1PeriodCm", "LodObserverWorld", "NearRippleWindow")
 MID_DRIVEN_SCALAR_NAMES = (
     "SimGridResolution",
     "WaterDepthReferenceCm",
@@ -169,6 +204,13 @@ MID_DRIVEN_SCALAR_NAMES = (
     "CoastWaveDepthSpacingCm",
     "CoastWaveMaxDepthCm",
     "SwashHeightCm",
+    "LodBaseRangeCm",
+    "LodBaseQuadSizeCm",
+    "LodMorphStartRatio",
+    "LodVertexWaveFilterRatio",
+    "NearRippleActive",
+    "AuxObstacleDistanceActive",
+    "ObstacleDistanceRangeCm",
 )
 DECAL_ONLY_MID_SCALAR_NAMES = ("TerrainReferenceZCm",)
 
@@ -185,6 +227,14 @@ COMMON_INPUT_NAMES = (
     "PassiveWaveDirectionDegrees",
     "PressureNormalStrength",
     "RippleHeightReferenceCm",
+    "CameraWorldPosition",
+    "TileMap1Texture",
+    "TileMap1OriginCm",
+    "TileMap1PeriodCm",
+    "TileMap1HeightCm",
+    "TileMap1DensityHeightCm",
+    "TileMap1FadeStartCm",
+    "TileMap1FadeLengthCm",
 )
 OFFSET_INPUT_NAMES = COMMON_INPUT_NAMES + (
     "SwashHeightCm",
@@ -192,6 +242,12 @@ OFFSET_INPUT_NAMES = COMMON_INPUT_NAMES + (
     "CoastWaveMaxDepthCm",
     "CoastWaveDepthSpacingCm",
     "CoastWavePhase",
+    "LodInstanceSpacingCm",
+    "LodObserverWorld",
+    "LodBaseRangeCm",
+    "LodBaseQuadSizeCm",
+    "LodMorphStartRatio",
+    "LodVertexWaveFilterRatio",
 )
 SURFACE_INPUT_NAMES = COMMON_INPUT_NAMES + (
     "VelocityTexture",
@@ -200,7 +256,8 @@ SURFACE_INPUT_NAMES = COMMON_INPUT_NAMES + (
     "FoamNoiseTexture",
     "SceneDepthWithoutWaterCm",
     "PixelDepthCm",
-    "CameraWorldPosition",
+    "TileMap1NormalStrength",
+    "TileMap1FoamStrength",
     "VelocitySpeedReferenceCmPerSec",
     "WaterDepthReferenceCm",
     "RibbonTangentWS",
@@ -267,6 +324,26 @@ SURFACE_INPUT_NAMES = COMMON_INPUT_NAMES + (
     "LiteBedColor",
     "LiteDepthMode",
     "LiteFallbackThicknessCm",
+    "NearRippleTexture",
+    "AuxTexture",
+    "NearRippleWindow",
+    "NearRippleActive",
+    "AuxObstacleDistanceActive",
+    "ObstacleDistanceRangeCm",
+    "NearRippleNormalStrength",
+    "ObstacleRingWavelengthCm",
+    "ObstacleRingCount",
+    "ObstacleRingFalloffCm",
+    "ObstacleRingSpeedCmPerSec",
+    "ObstacleRingNormalStrength",
+    "ObstacleRingFlowSkew",
+    "ObstacleRingFlowSpeedCmPerSec",
+    "ObstacleWakeFoamStrength",
+    "ObstacleWakeLengthCm",
+    "ObstacleWakeConeSharpness",
+    "FoamAnisotropyMax",
+    "FoamAnisotropySpeedCmPerSec",
+    "FoamAnisotropyFeatureTiles",
 )
 SURFACE_OUTPUT_SPECS = (
     ("OutNormalWS", "CMOT_FLOAT3"),
@@ -280,13 +357,15 @@ SURFACE_OUTPUT_SPECS = (
     ("OutTranslucentColor", "CMOT_FLOAT3"),
     ("OutEmissive", "CMOT_FLOAT3"),
 )
-COMMON_SAMPLER_NAMES = ("DensityPressureTextureSampler", "WaterSurfaceTextureSampler")
+COMMON_SAMPLER_NAMES = ("DensityPressureTextureSampler", "WaterSurfaceTextureSampler", "TileMap1TextureSampler")
 SURFACE_SAMPLER_NAMES = COMMON_SAMPLER_NAMES + (
     "VelocityTextureSampler",
     "FlowPhaseNoiseTextureSampler",
     "WaterDetailNormalTextureSampler",
     "FoamNoiseTextureSampler",
     "CausticsTextureSampler",
+    "NearRippleTextureSampler",
+    "AuxTextureSampler",
 )
 OFFSET_SAMPLER_NAMES = COMMON_SAMPLER_NAMES
 SURFACE_ENGINE_SYMBOLS = ("GradientNoise3D_ALU", "Texture2DSample", "Texture2DSampleLevel")
@@ -409,7 +488,7 @@ LEGACY_REQUIRED_NAMES = (
 PHASE_ZERO_RESULTS = {}
 
 IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-DEFINE_PATTERN = re.compile(r"^[ \t]*#define[ \t]+(TD_WATER_[A-Za-z0-9_]+)", re.MULTILINE)
+DEFINE_PATTERN = re.compile(r"^[ \t]*#define[ \t]+(TD_(?:WATER|TILEMAP)_[A-Za-z0-9_]+)", re.MULTILINE)
 
 
 def project_path(*parts):
@@ -451,6 +530,8 @@ def read_shader_sources(project_root):
         "common": read_text_file(os.path.join(shader_root, COMMON_HLSL_NAME)),
         "surface": read_text_file(os.path.join(shader_root, SURFACE_HLSL_NAME)),
         "offset": read_text_file(os.path.join(shader_root, OFFSET_HLSL_NAME)),
+        "tile_map": read_text_file(os.path.join(shader_root, TILE_MAP_HLSL_NAME)),
+        "lod_morph": read_text_file(os.path.join(shader_root, LOD_MORPH_HLSL_NAME)),
     }
 
 
@@ -463,9 +544,11 @@ def assemble_node_code(common_code, node_code, is_vertex):
 
 
 def assemble_all_node_codes(sources):
+    surface_prefix = sources["common"] + "\n" + sources["tile_map"]
+    offset_prefix = sources["lod_morph"] + "\n" + sources["common"] + "\n#define TD_TILEMAP_HEIGHT_ONLY 1\n" + sources["tile_map"]
     return {
-        "surface": assemble_node_code(sources["common"], sources["surface"], False),
-        "offset": assemble_node_code(sources["common"], sources["offset"], True),
+        "surface": assemble_node_code(surface_prefix, sources["surface"], False),
+        "offset": assemble_node_code(offset_prefix, sources["offset"], True),
     }
 
 
@@ -642,6 +725,10 @@ def create_grid_mesh(spec, overwrite):
     )
     if not isinstance(mesh, unreal.StaticMesh):
         raise RuntimeError(f"격자 메시 생성 실패(UTDFluidWaterMeshEditorLibrary): {path}")
+    if "bounds_extension_cm" in spec:
+        extension = unreal.Vector(*spec["bounds_extension_cm"])
+        mesh.set_editor_property("positive_bounds_extension", extension)
+        mesh.set_editor_property("negative_bounds_extension", extension)
     vertex_total = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem).get_number_verts(mesh, 0)
     expected_vertices = (spec["quads"] + 1) ** 2
     if vertex_total != expected_vertices:
@@ -849,6 +936,8 @@ class SourceFactory:
             return add_node(material, unreal.MaterialExpressionSceneDepthWithoutWater, x, y), ""
         if name == "LiteDepthMode":
             return add_node(material, unreal.MaterialExpressionConstant, x, y, r=1.0 if self.is_lite else 0.0), ""
+        if name == "LodInstanceSpacingCm":
+            return add_node(material, unreal.MaterialExpressionPerInstanceCustomData, x, y, data_index=0, const_default_value=0.0), ""
         if name in self.texture_defaults:
             texture, sampler_type = self.texture_defaults[name]
             node = add_node(
@@ -1112,6 +1201,13 @@ def verify_mid_contract(material):
     }
 
 
+def enable_instanced_static_mesh_usage(material, master_name):
+    editing = unreal.MaterialEditingLibrary
+    editing.set_material_usage(material, unreal.MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES)
+    if not editing.has_material_usage(material, unreal.MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES):
+        raise RuntimeError(f"인스턴스드 스태틱 메시 사용 플래그를 켜지 못함: {master_name}")
+
+
 def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path):
     master_name = LITE_MASTER_NAME if is_lite else WATER_MASTER_NAME
     master_path = LITE_MASTER_PATH if is_lite else WATER_MASTER_PATH
@@ -1148,6 +1244,7 @@ def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path)
     link_custom_inputs(surface, SURFACE_INPUT_NAMES, factory)
     link_custom_inputs(offset, OFFSET_INPUT_NAMES, factory)
     connect_material_output(offset, unreal.MaterialProperty.MP_WORLD_POSITION_OFFSET)
+    enable_instanced_static_mesh_usage(material, master_name)
 
     pins = {}
     if is_lite:

@@ -1,0 +1,31 @@
+{
+ "Materials": {
+  "/Game/T/MI_B": {
+   "Parent": "/Game/T/M_Other",
+   "Scalars": {
+    "Zeta": 0.25,
+    "Alpha": 4
+   }
+  },
+  "/Game/T/MI_A": {
+   "Scalars": {
+    "Delta": 2.0,
+    "Beta": 0.5
+   }
+  }
+ },
+ "NiagaraSystems": {
+  "/Game/T/NS_A": {
+   "Floats": {
+    "User.Size": 1.5
+   },
+   "Vectors3": {
+    "User.Offset": [
+     0,
+     0,
+     10
+    ]
+   }
+  }
+ }
+}

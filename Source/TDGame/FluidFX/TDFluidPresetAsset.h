@@ -112,6 +112,12 @@ public:
 	static FTDFluidFireLightSettings BuildFireLightSettingsForPresetKind(ETDFluidPresetKind Kind);
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidWaterLodGridSettings BuildWaterLodGridSettingsForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidWaterNearRippleSettings BuildWaterNearRippleSettingsForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	static bool IsFireFamilyPresetKind(ETDFluidPresetKind Kind);
 
 	static UTDFluidPresetAsset* CreateTransientPreset(UObject* Outer, ETDFluidPresetKind Kind);

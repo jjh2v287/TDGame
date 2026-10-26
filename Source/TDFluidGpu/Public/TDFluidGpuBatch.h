@@ -139,10 +139,12 @@ struct alignas(16) FTDFluidGpuActorParameters
 
 	float MaxCellSpeedCmPerSec = TDFluidGpuSolverConstants::MaxCellSpeedCmPerSec;
 	float BrushDisplacementRatio = TDFluidGpuSolverConstants::BrushDisplacementRatio;
-	float Padding0 = 0.0f;
-	float Padding1 = 0.0f;
+	uint32 FlowNoiseLatticePeriodPacked = 0;
+	uint32 AmbientNoiseLatticePeriodPacked = 0;
 };
 static_assert(sizeof(FTDFluidGpuActorParameters) == 288, "FTDFluidGpuActorParameters must match the 288 byte shader layout.");
+static_assert(offsetof(FTDFluidGpuActorParameters, FlowNoiseLatticePeriodPacked) == 280, "FTDFluidGpuActorParameters::FlowNoiseLatticePeriodPacked must stay at byte 280.");
+static_assert(offsetof(FTDFluidGpuActorParameters, AmbientNoiseLatticePeriodPacked) == 284, "FTDFluidGpuActorParameters::AmbientNoiseLatticePeriodPacked must stay at byte 284.");
 static_assert(offsetof(FTDFluidGpuActorParameters, MaxCellSpeedCmPerSec) == 272, "FTDFluidGpuActorParameters::MaxCellSpeedCmPerSec must stay at byte 272.");
 static_assert(offsetof(FTDFluidGpuActorParameters, BrushDisplacementRatio) == 276, "FTDFluidGpuActorParameters::BrushDisplacementRatio must stay at byte 276.");
 static_assert(offsetof(FTDFluidGpuActorParameters, WhitewaterDissipationFactor) == 268, "FTDFluidGpuActorParameters::WhitewaterDissipationFactor must stay at byte 268.");
@@ -275,6 +277,7 @@ struct FTDFluidGpuBatchKey
 	ETDFluidGpuWaterPressureMode WaterPressureMode = ETDFluidGpuWaterPressureMode::JacobiOpenBorders;
 	bool bUsesFloat32WaterVelocity = false;
 	bool bUsesFloat32Ripple = false;
+	bool bWrapsArea = false;
 
 	bool operator==(const FTDFluidGpuBatchKey& Other) const
 	{
@@ -287,7 +290,8 @@ struct FTDFluidGpuBatchKey
 			&& bUsesWaterLayer == Other.bUsesWaterLayer
 			&& WaterPressureMode == Other.WaterPressureMode
 			&& bUsesFloat32WaterVelocity == Other.bUsesFloat32WaterVelocity
-			&& bUsesFloat32Ripple == Other.bUsesFloat32Ripple;
+			&& bUsesFloat32Ripple == Other.bUsesFloat32Ripple
+			&& bWrapsArea == Other.bWrapsArea;
 	}
 };
 
@@ -384,10 +388,11 @@ struct FTDFluidGpuMemoryEstimate
 	int64 TransientBytes = 0;
 	int64 OutputBytes = 0;
 	int64 ReadbackBytes = 0;
+	int64 NearRippleStateBytes = 0;
 
 	int64 GetTotalBytes() const
 	{
-		return StateBytes + TransientBytes + OutputBytes + ReadbackBytes;
+		return StateBytes + TransientBytes + OutputBytes + ReadbackBytes + NearRippleStateBytes;
 	}
 };
 
@@ -412,7 +417,7 @@ public:
 	static int32 ComputeWaterRippleSubstepCount(float WaveSpeedCmPerSec, float StepDeltaTimeSeconds, float SmallestCellSizeCm, int32 ResolutionTier, bool& bOutReachedCap, float& OutWaveSpeedScale);
 	static void ApplyWaterConsoleOverrides(FTDFluidGpuSimulationSettings& InOutSettings);
 	static int64 ComputeWaterMultigridOpenBoundaryBytes(int32 ResolutionTier);
-	static FTDFluidGpuMemoryEstimate EstimateWaterActorMemory(const FTDFluidGpuBatchKey& WaterKey);
+	static FTDFluidGpuMemoryEstimate EstimateWaterActorMemory(const FTDFluidGpuBatchKey& WaterKey, int32 NearRippleResolution = 0);
 
 	const FTDFluidGpuBatchKey& GetKey() const { return Key; }
 	const FTDFluidGpuBatchFrame& GetFrame() const { return Frame; }

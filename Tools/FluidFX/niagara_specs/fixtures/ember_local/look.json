@@ -1,0 +1,46 @@
+{
+ "Materials": {},
+ "NiagaraSystems": {
+  "/Game/FluidFX/Niagara/NS_TD_FluidEmberHeat": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {
+    "User.EmberAmbientHeatBuoyancyCmPerSec2": 0.0,
+    "User.EmberBaseScale": 0.025,
+    "User.EmberBuoyancyCmPerSec2": 250.0,
+    "User.EmberCollisionFriction": 0.6,
+    "User.EmberCollisionRestitution": 0.2,
+    "User.EmberCoolingPerSec": 0.6,
+    "User.EmberDensitySpawnWeight": 0.0,
+    "User.EmberDepthJitterCm": 10.0,
+    "User.EmberDragPerSec": 6.0,
+    "User.EmberFadePerSec": 4.0,
+    "User.EmberGravityCmPerSec2": 400.0,
+    "User.EmberGroundRestSeconds": 1.0,
+    "User.EmberLifetimeMaxSeconds": 2.2,
+    "User.EmberLifetimeMinSeconds": 1.2,
+    "User.EmberSlowKillSeconds": 0.25,
+    "User.EmberSlowKillSpeedCmPerSec": 20.0,
+    "User.EmberSpawnHeatFloor": 0.6,
+    "User.EmberSpawnPerHeatM2PerSec": 400.0,
+    "User.EmberSpawnThreshold": 0.1,
+    "User.EmberStretchPerCmPerSec": 0.004,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.EmberSpawnUvMax": [1.0, 1.0],
+    "User.EmberSpawnUvMin": [0.0, 0.0],
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  }
+ }
+}

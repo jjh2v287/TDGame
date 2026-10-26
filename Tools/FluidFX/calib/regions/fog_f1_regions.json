@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, fog_f1_layer 카메라 기준 초안 박스(첫 촬영 뒤 맞춤). kind fog = measure_fx_look 대기 지표",
+ "regions": [
+  {
+   "name": "fog_near",
+   "kind": "fog",
+   "box": [
+    320,
+    360,
+    960,
+    620
+   ]
+  },
+  {
+   "name": "fog_far",
+   "kind": "fog",
+   "box": [
+    320,
+    200,
+    960,
+    340
+   ]
+  },
+  {
+   "name": "sky",
+   "kind": "background",
+   "box": [
+    40,
+    20,
+    300,
+    160
+   ]
+  }
+ ]
+}

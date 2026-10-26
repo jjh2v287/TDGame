@@ -1,0 +1,19 @@
+{
+ "asset": "/Game/FluidFX/Niagara/NS_TD_FluidDriveSpriteLocal",
+ "emitter_name": "Drive",
+ "profile": "drive",
+ "space": "local",
+ "spawn": "rate_reject",
+ "features": [],
+ "renderer": {
+  "kind": "sprite",
+  "material": "/Game/FluidFX/Materials/MI_TD_FluidDrivenParticle_Default",
+  "alignment": "VelocityAligned",
+  "mesh": null,
+  "mesh_facing": null
+ },
+ "cast_shadow": false,
+ "max_particles": 4000,
+ "fixed_bounds_half_extent_cm": 800.0,
+ "random_seed": 1
+}

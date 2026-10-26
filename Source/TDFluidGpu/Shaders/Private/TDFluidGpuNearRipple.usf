@@ -1,0 +1,206 @@
+#include "/Engine/Public/Platform.ush"
+
+struct FTDFluidGpuNearRippleSource
+{
+	float2 PositionCm;
+	float RadiusCm;
+	float ImpulseCmPerSec;
+	float IdleWeight;
+	float Padding0;
+	float Padding1;
+	float Padding2;
+};
+
+Texture2D<float2> StateIn;
+RWTexture2D<float2> StateOut;
+RWTexture2D<float4> OutputTarget;
+Texture2D WaterSurfaceTexture;
+SamplerState WaterSurfaceSampler;
+Texture2D AuxTexture;
+SamplerState AuxSampler;
+StructuredBuffer<FTDFluidGpuNearRippleSource> Sources;
+int2 WindowMinCell;
+int2 PreviousWindowMinCell;
+int Resolution;
+uint SourceCount;
+uint ClearsCellsOutsidePreviousWindow;
+float CellSizeCm;
+float SubstepDeltaSeconds;
+float WaveSpeedCmPerSec;
+float DampingPerSec;
+float EdgeFadeCells;
+float EdgeAbsorptionStrength;
+float IdleContactAmplitudeCm;
+float IdleContactPhase;
+float MinWaterDepthCm;
+float2 MainWindowCenterFromOriginCm;
+float2 MainWindowExtentCm;
+float MainWaterDepthReferenceCm;
+float ObstacleDistanceOutputRangeCm;
+uint HasObstacleDistanceAux;
+
+int2 ComputeLocalCell(int2 StorageCell)
+{
+	return ((StorageCell - WindowMinCell) % Resolution + Resolution) % Resolution;
+}
+
+int2 ComputeStorageCell(int2 LocalCell)
+{
+	return ((WindowMinCell + LocalCell) % Resolution + Resolution) % Resolution;
+}
+
+bool IsInsideWindow(int2 LocalCell)
+{
+	return all(LocalCell >= 0) && all(LocalCell < Resolution);
+}
+
+float2 ComputeLocalPositionCm(int2 LocalCell)
+{
+	return (float2(LocalCell) + 0.5f) * CellSizeCm;
+}
+
+bool IsWaterCell(int2 LocalCell)
+{
+	const float2 MainUv = (ComputeLocalPositionCm(LocalCell) - MainWindowCenterFromOriginCm) / MainWindowExtentCm + 0.5f;
+	if (any(MainUv < 0.0f) || any(MainUv > 1.0f))
+	{
+		return false;
+	}
+
+	const float DepthRatio = WaterSurfaceTexture.SampleLevel(WaterSurfaceSampler, MainUv, 0).b;
+	if (!(DepthRatio * MainWaterDepthReferenceCm >= MinWaterDepthCm))
+	{
+		return false;
+	}
+
+	return HasObstacleDistanceAux == 0u || AuxTexture.SampleLevel(AuxSampler, MainUv, 0).g * ObstacleDistanceOutputRangeCm > 0.0f;
+}
+
+float2 ReadState(int2 LocalCell)
+{
+	if (ClearsCellsOutsidePreviousWindow != 0u && !IsInsideWindow(WindowMinCell + LocalCell - PreviousWindowMinCell))
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	return StateIn.Load(int3(ComputeStorageCell(LocalCell), 0));
+}
+
+float ReadNeighborHeight(int2 LocalCell, float CenterHeight)
+{
+	if (!IsInsideWindow(LocalCell) || !IsWaterCell(LocalCell))
+	{
+		return CenterHeight;
+	}
+
+	return ReadState(LocalCell).x;
+}
+
+float ComputeEdgeDistanceCells(int2 LocalCell)
+{
+	const int2 FarDistance = Resolution - 1 - LocalCell;
+	return float(min(min(LocalCell.x, LocalCell.y), min(FarDistance.x, FarDistance.y))) + 0.5f;
+}
+
+[numthreads(8, 8, 1)]
+void NearRippleStepCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const int2 StorageCell = int2(DispatchThreadId.xy);
+	if (any(StorageCell >= Resolution))
+	{
+		return;
+	}
+
+	const int2 LocalCell = ComputeLocalCell(StorageCell);
+	if (!IsWaterCell(LocalCell))
+	{
+		StateOut[StorageCell] = float2(0.0f, 0.0f);
+		return;
+	}
+
+	const float2 State = ReadState(LocalCell);
+	float Height = State.x;
+	float Velocity = State.y;
+	const float NeighborSum = ReadNeighborHeight(LocalCell + int2(1, 0), Height)
+		+ ReadNeighborHeight(LocalCell - int2(1, 0), Height)
+		+ ReadNeighborHeight(LocalCell + int2(0, 1), Height)
+		+ ReadNeighborHeight(LocalCell - int2(0, 1), Height);
+	const float Laplacian = (NeighborSum - 4.0f * Height) / (CellSizeCm * CellSizeCm);
+	Velocity += (WaveSpeedCmPerSec * WaveSpeedCmPerSec * Laplacian - DampingPerSec * Velocity) * SubstepDeltaSeconds;
+	Height += Velocity * SubstepDeltaSeconds;
+
+	const float EdgeDistanceCells = ComputeEdgeDistanceCells(LocalCell);
+	if (EdgeDistanceCells < EdgeFadeCells)
+	{
+		const float Absorption = exp(-EdgeAbsorptionStrength * (1.0f - EdgeDistanceCells / EdgeFadeCells) * SubstepDeltaSeconds * WaveSpeedCmPerSec / CellSizeCm);
+		Height *= Absorption;
+		Velocity *= Absorption;
+	}
+
+	const float2 PositionCm = ComputeLocalPositionCm(LocalCell);
+	const float IdleTargetHeight = IdleContactAmplitudeCm * sin(IdleContactPhase);
+	for (uint SourceIndex = 0; SourceIndex < SourceCount; ++SourceIndex)
+	{
+		const FTDFluidGpuNearRippleSource Source = Sources[SourceIndex];
+		const float Falloff = saturate(1.0f - length(PositionCm - Source.PositionCm) / Source.RadiusCm);
+		if (Falloff <= 0.0f)
+		{
+			continue;
+		}
+
+		const float Weight = Falloff * Falloff * (3.0f - 2.0f * Falloff);
+		Height -= Source.ImpulseCmPerSec * Weight * SubstepDeltaSeconds;
+		Height = lerp(Height, IdleTargetHeight, Weight * Source.IdleWeight);
+	}
+
+	StateOut[StorageCell] = float2(Height, Velocity);
+}
+
+float ReadFinalHeight(int2 LocalCell, out bool bIsValid)
+{
+	bIsValid = IsInsideWindow(LocalCell) && IsWaterCell(LocalCell);
+	return bIsValid ? StateIn.Load(int3(ComputeStorageCell(LocalCell), 0)).x : 0.0f;
+}
+
+float ComputeAxisSlope(int2 LocalCell, int2 Axis, float Height)
+{
+	bool bHasPlus;
+	bool bHasMinus;
+	const float PlusHeight = ReadFinalHeight(LocalCell + Axis, bHasPlus);
+	const float MinusHeight = ReadFinalHeight(LocalCell - Axis, bHasMinus);
+	if (bHasPlus && bHasMinus)
+	{
+		return (PlusHeight - MinusHeight) / (2.0f * CellSizeCm);
+	}
+	if (bHasPlus)
+	{
+		return (PlusHeight - Height) / CellSizeCm;
+	}
+	if (bHasMinus)
+	{
+		return (Height - MinusHeight) / CellSizeCm;
+	}
+	return 0.0f;
+}
+
+[numthreads(8, 8, 1)]
+void NearRippleFinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const int2 StorageCell = int2(DispatchThreadId.xy);
+	if (any(StorageCell >= Resolution))
+	{
+		return;
+	}
+
+	const int2 LocalCell = ComputeLocalCell(StorageCell);
+	if (!IsWaterCell(LocalCell))
+	{
+		OutputTarget[StorageCell] = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		return;
+	}
+
+	const float Height = StateIn.Load(int3(StorageCell, 0)).x;
+	const float Fade = saturate(ComputeEdgeDistanceCells(LocalCell) / EdgeFadeCells);
+	const float2 Slope = float2(ComputeAxisSlope(LocalCell, int2(1, 0), Height), ComputeAxisSlope(LocalCell, int2(0, 1), Height));
+	OutputTarget[StorageCell] = float4(Height, Slope * Fade, Fade);
+}

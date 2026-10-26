@@ -1,0 +1,13 @@
+{
+ "fragments": [
+  "fragment.json"
+ ],
+ "exit": 1,
+ "conflicts": [],
+ "problems": [
+  "fragment.json: 모르는 최상위 키 Textures",
+  "fragment.json: Materials./Game/T/MI_A: 모르는 키 Colors",
+  "fragment.json: Materials./Game/T/MI_A.Switches.bFlag: 불이 아님",
+  "fragment.json: Materials./Game/T/MI_B.Parent: /Game 패키지 경로가 아님"
+ ]
+}

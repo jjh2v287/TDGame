@@ -8,6 +8,8 @@
 #include "Math/RandomStream.h"
 #include "Misc/App.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "RHIGlobals.h"
 #include "RHIGPUReadback.h"
 #include "RenderGraphBuilder.h"
@@ -2591,6 +2593,112 @@ bool FTDFluidGpuMultigridClosedPocketLongRunTest::RunTest(const FString& Paramet
 	const double FirstMagnitude = DefaultHealth[0].MaximumMagnitude;
 	const double LastMagnitude = DefaultHealth.Last().MaximumMagnitude;
 	TestTrue(*FString::Printf(TEXT("Pressure magnitude stops growing: frame %d %.4e is at most %.1f times frame %d %.4e"), SnapshotFrameCounts.Last(), LastMagnitude, MaximumLateGrowthRatio, SnapshotFrameCounts[0], FirstMagnitude), LastMagnitude <= MaximumLateGrowthRatio * FirstMagnitude);
+	return !HasAnyErrors();
+}
+
+namespace TDFluidGpuWrapAreaTimingTestSupport
+{
+	using namespace TDFluidGpuMultigridTestSupport;
+
+	constexpr uint64 WrappedTileActorKey = 4100;
+	constexpr double WrappedTileExtentCm = 3000.0;
+
+	FTDFluidGpuActorInput MakeWrappedTileActor(int32 Resolution, int32 FrameIndex)
+	{
+		FTDFluidGpuActorInput Actor;
+		Actor.ActorKey = WrappedTileActorKey;
+		Actor.Settings.SimMode = ETDFluidGpuSimMode::FluidSim;
+		Actor.Settings.AreaAddressModeRequest = TDFluidGpuSolverConstants::WrapAreaAddressModeRequest;
+		Actor.Settings.Resolution = Resolution;
+		Actor.Settings.ExtentCm = FVector2D(WrappedTileExtentCm, WrappedTileExtentCm);
+		Actor.Settings.PressureIterations = 12;
+		Actor.Settings.VorticityStrength = 0.8f;
+		Actor.Settings.DensityDissipation = 0.05f;
+		Actor.Settings.FlowNoiseAccelerationCmPerSec2 = 150.0f;
+		Actor.Settings.FlowNoiseScaleCm = 400.0f;
+		Actor.Settings.AmbientDensity = 0.5f;
+		Actor.Settings.AmbientRefillPerSec = 0.3f;
+		Actor.Settings.AmbientNoiseAmount = 0.6f;
+		Actor.PlaneUpDirection = FVector2D(0.0, 1.0);
+		Actor.DeltaTimeSeconds = SixtyHertzDeltaTime;
+		Actor.SimulationTimeSeconds = FrameIndex * static_cast<double>(SixtyHertzDeltaTime);
+		AddRichStamps(Actor, FrameIndex);
+		return Actor;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidGpuWrapAreaTileSimPassTimingTest,
+	"TDGame.FluidFXRhi.WrapArea.TileSimPassTiming",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidGpuWrapAreaTileSimPassTimingTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidGpuModuleTestSupport;
+	using namespace TDFluidGpuWrapAreaTimingTestSupport;
+
+	if (!CanRunRhiTest(*this, TEXT("WrapAreaTileSimPassTiming")))
+	{
+		return true;
+	}
+
+	constexpr int32 WarmupFrameCount = 8;
+	constexpr int32 MeasuredFrameCount = 96;
+	const int32 Resolutions[] = { 128, 256 };
+	FString CostJson = FString::Printf(TEXT("{\n  \"test\": \"TDGame.FluidFXRhi.WrapArea.TileSimPassTiming\",\n  \"rhi\": \"%s\",\n  \"warmup_frames\": %d,\n  \"measured_frames\": %d,\n  \"cases\": [\n"),
+		GDynamicRHI ? GDynamicRHI->GetName() : TEXT("none"),
+		WarmupFrameCount,
+		MeasuredFrameCount);
+	for (int32 CaseIndex = 0; CaseIndex < UE_ARRAY_COUNT(Resolutions); ++CaseIndex)
+	{
+		const int32 Resolution = Resolutions[CaseIndex];
+		const FTDFluidGpuActorInput FirstFrameActor = MakeWrappedTileActor(Resolution, 0);
+		const FTDFluidGpuBatchKey BatchKey = FTDFluidGpuBatch::MakeKey(FirstFrameActor.Settings);
+		TestTrue(*FString::Printf(TEXT("%d squared tile uses the wrapped batch key"), Resolution), BatchKey.bWrapsArea);
+
+		const FTDFluidGpuRhiFrameBuilder BuildFrame = [Resolution](int32 FrameIndex, FTDFluidGpuFrameInputs& OutFrame)
+		{
+			OutFrame.Actors.Add(MakeWrappedTileActor(Resolution, FrameIndex));
+		};
+		const FTDFluidGpuPassTimingProfile Profile = MeasureGpuPassTimings(WarmupFrameCount, MeasuredFrameCount, BuildFrame);
+		const FTDFluidGpuTimingSummary Summary = SummarizeTimings(Profile.FrameMilliseconds);
+		const double MeanMilliseconds = ComputeMeanMilliseconds(Profile.FrameMilliseconds);
+		FString SegmentJson;
+		for (int32 SegmentIndex = 0; SegmentIndex < Profile.Segments.Num(); ++SegmentIndex)
+		{
+			const FTDFluidGpuPassSegmentSamples& Segment = Profile.Segments[SegmentIndex];
+			const FTDFluidGpuTimingSummary SegmentSummary = SummarizeTimings(Segment.Milliseconds);
+			SegmentJson += FString::Printf(TEXT("        {\"name\": \"%s\", \"median_ms\": %.5f, \"mean_ms\": %.5f}%s\n"),
+				*Segment.Name,
+				SegmentSummary.MedianMilliseconds,
+				ComputeMeanMilliseconds(Segment.Milliseconds),
+				SegmentIndex + 1 < Profile.Segments.Num() ? TEXT(",") : TEXT(""));
+		}
+
+		const FString CostLine = FString::Printf(TEXT("TDFluidGpuWrapTileCost: resolution=%d frames=%d rejected=%d segments=%d median_ms=%.4f mean_ms=%.4f p95_ms=%.4f"),
+			Resolution,
+			Profile.FrameMilliseconds.Num(),
+			Profile.RejectedFrameCount,
+			Profile.Segments.Num(),
+			Summary.MedianMilliseconds,
+			MeanMilliseconds,
+			Summary.P95Milliseconds);
+		UE_LOG(LogTDFluidGpuRhiTests, Display, TEXT("%s"), *CostLine);
+		AddInfo(CostLine);
+		CostJson += FString::Printf(TEXT("    {\"resolution\": %d, \"frames\": %d, \"rejected\": %d, \"median_ms\": %.5f, \"mean_ms\": %.5f, \"p95_ms\": %.5f, \"segments\": [\n%s      ]}%s\n"),
+			Resolution,
+			Profile.FrameMilliseconds.Num(),
+			Profile.RejectedFrameCount,
+			Summary.MedianMilliseconds,
+			MeanMilliseconds,
+			Summary.P95Milliseconds,
+			*SegmentJson,
+			CaseIndex + 1 < UE_ARRAY_COUNT(Resolutions) ? TEXT(",") : TEXT(""));
+		TestEqual(*FString::Printf(TEXT("%d squared tile read every measured frame"), Resolution), Profile.FrameMilliseconds.Num(), MeasuredFrameCount);
+	}
+	CostJson += TEXT("  ]\n}\n");
+	const FString CostPath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("FluidFX"), TEXT("w2s-bc-wrap-cost.json"));
+	TestTrue(TEXT("Saved the wrapped tile cost record"), FFileHelper::SaveStringToFile(CostJson, *CostPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM));
 	return !HasAnyErrors();
 }
 

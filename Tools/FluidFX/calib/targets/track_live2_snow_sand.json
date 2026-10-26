@@ -1,0 +1,51 @@
+{
+ "note": "LIVE-2 목표(ICF:156-163, IWI:79-81). 홈 폭 목표는 붓 반경 몫(반박 M7). atmosphere·groove_profile·dune_fft 출처 확장(P3) 뒤 사용",
+ "kind_metrics": {
+  "snow": {
+   "atmosphere.p95_over_p5": [
+    2.04,
+    3.4
+   ],
+   "atmosphere.fine_detail": [
+    0.067,
+    0.111
+   ],
+   "atmosphere.warmth_dark": [
+    -0.32,
+    -0.19
+   ]
+  },
+  "dust": {
+   "atmosphere.p95_over_p5": [
+    1.23,
+    2.08
+   ],
+   "atmosphere.fine_over_coarse": [
+    0.85,
+    2.03
+   ],
+   "atmosphere.warmth_bright": [
+    0.23,
+    0.3
+   ]
+  }
+ },
+ "region_metrics": {
+  "groove_line": {
+   "groove_width_cm": [
+    25.0,
+    40.0
+   ]
+  },
+  "dune_fft": {
+   "dominant_wavelength_relative_error": [
+    0.0,
+    0.25
+   ],
+   "direction_error_degrees": [
+    0.0,
+    15.0
+   ]
+  }
+ }
+}

@@ -1,0 +1,12 @@
+{
+  "note": "LIVE-2 목표 선택(calib 형식): kind embers 영역 검사만 점수에 넣는다. live2_targets 는 Saved 에만 두고 G2 해소 때 만든다(지금 없음)",
+  "live2_targets": "Saved/AgentOps/20261025/wave1/fx8n/live2-targets/targets.json",
+  "kinds": [
+    "embers"
+  ],
+  "metrics": [
+    "count",
+    "median_area_px",
+    "median_elongation"
+  ]
+}

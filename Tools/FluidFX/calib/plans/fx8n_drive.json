@@ -1,0 +1,127 @@
+{
+  "id": "fx8n_drive",
+  "note": "FX-8n C12 장면 P2(Smoke·DriveSprite)·P4(Vortex·DriveMeshFloat) 덩어리 수·크기 + 비교 시트, C12-v 는 오프스크린 RHI(D2) 재실행으로 잰다. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2)",
+  "scenes": [
+    {
+      "name": "p2_smoke_sprite",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidParticleStage",
+      "camera": {
+        "awake": {
+          "TDGen_ParticleP2_Fluid": true
+        },
+        "exposure_ev100": 2.0,
+        "pawn": [
+          1500.0,
+          -900.0
+        ],
+        "arm": 900.0,
+        "view": [
+          -35.0,
+          0.0
+        ]
+      },
+      "time_dilation": 1.0,
+      "schedule": null,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx8n_live2_drive.json",
+      "live2_refs": []
+    },
+    {
+      "name": "p4_vortex_mesh",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidParticleStage",
+      "camera": {
+        "awake": {
+          "TDGen_ParticleP4_Fluid": true
+        },
+        "exposure_ev100": 2.0,
+        "pawn": [
+          4500.0,
+          -900.0
+        ],
+        "arm": 900.0,
+        "view": [
+          -35.0,
+          0.0
+        ]
+      },
+      "time_dilation": 1.0,
+      "schedule": null,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx8n_live2_drive.json",
+      "live2_refs": []
+    }
+  ],
+  "params": [
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidDriveSprite.Floats.User.DriveVelocityDragPerSec",
+      "values": [
+        3,
+        6,
+        12
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidDriveSprite.Floats.User.DriveSpawnPerM2PerSec",
+      "values": [
+        12.5,
+        25,
+        50
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidDriveMeshFloat.Floats.User.DrivePressureToHeightCm",
+      "values": [
+        15,
+        30,
+        60
+      ],
+      "split_group": false
+    }
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "noise_floor": {},
+    "targets": [
+      {
+        "metric": "0.particles.count",
+        "scene": "p2_smoke_sprite",
+        "weight": 1.0,
+        "tolerance": 20.0,
+        "basis": "C12 덩어리 수(목표 범위는 비교 시트 승인 뒤)"
+      },
+      {
+        "metric": "0.particles.median_area_px",
+        "scene": "p2_smoke_sprite",
+        "weight": 1.0,
+        "tolerance": 0.5,
+        "basis": "C12 덩어리 크기"
+      },
+      {
+        "metric": "0.particles.count",
+        "scene": "p4_vortex_mesh",
+        "weight": 1.0,
+        "tolerance": 20.0,
+        "low": 300.0,
+        "high": 4000.0,
+        "basis": "C12-f 부유 메시 ≥300(IMG 16)"
+      },
+      {
+        "metric": "0.particles.median_area_px",
+        "scene": "p4_vortex_mesh",
+        "weight": 1.0,
+        "tolerance": 0.5,
+        "basis": "C12-f 메시 크기"
+      }
+    ]
+  }
+}

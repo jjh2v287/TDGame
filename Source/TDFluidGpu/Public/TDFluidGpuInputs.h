@@ -9,6 +9,8 @@ namespace TDFluidGpuSolverConstants
 	inline constexpr int32 MinimumResolution = 16;
 	inline constexpr int32 MaximumResolution = 2048;
 	inline constexpr int32 CpuMaximumResolution = 256;
+	inline constexpr int32 WrapAreaMaximumResolution = 256;
+	inline constexpr uint8 WrapAreaAddressModeRequest = 1;
 	inline constexpr int32 MinimumPressureIterations = 1;
 	inline constexpr int32 MaximumPressureIterations = 32;
 	inline constexpr int32 MultigridMinimumResolution = 64;
@@ -93,6 +95,9 @@ struct FTDFluidGpuStampInput
 	float HeatStrength = 0.0f;
 	bool bWritesSelectiveDensity = false;
 	float RippleImpulseCm = 0.0f;
+	float RingInnerRadiusRatio = 0.0f;
+	float RingSideArcWeight = 0.3f;
+	float RingInnerEraseRatePerSec = 0.0f;
 };
 
 struct FTDFluidGpuObstacleInput
@@ -145,6 +150,7 @@ struct FTDFluidGpuSimulationSettings
 	float BrushDisplacementRatio = TDFluidGpuSolverConstants::BrushDisplacementRatio;
 	float BrushEraseRatePerSec = TDFluidGpuSolverConstants::BrushEraseRatePerSec;
 	uint8 PressureSolverModeRequest = 0;
+	uint8 AreaAddressModeRequest = 0;
 	int32 MultigridCyclesRequest = TDFluidGpuSolverConstants::DefaultMultigridCycles;
 	bool bUsesWaterLayer = false;
 	bool bOpenWaterBorders = true;
@@ -173,6 +179,8 @@ struct FTDFluidGpuSimulationSettings
 	float SwashHeightCm = 0.0f;
 	float CoastWavePeriodSeconds = 6.0f;
 	float WetnessDryingSeconds = 8.0f;
+	bool bWritesObstacleDistanceAux = false;
+	float ObstacleDistanceOutputRangeCm = 400.0f;
 };
 
 struct FTDFluidGpuTransmittanceInput
@@ -230,6 +238,7 @@ struct FTDFluidGpuActorInput
 	bool bShouldResetState = false;
 	bool bHasTerrainElevation = false;
 	bool bHasObstacleListChanged = false;
+	bool bRefreshesObstacleDistanceAux = false;
 	TArray<FTDFluidGpuStampInput> Stamps;
 	TArray<FTDFluidGpuObstacleInput> Obstacles;
 	TArray<FTDFluidGpuTerrainCellUpdate> TerrainElevationUpdates;

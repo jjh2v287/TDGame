@@ -1,0 +1,45 @@
+{
+ "Materials": {},
+ "NiagaraSystems": {
+  "/Game/FluidFX/Niagara/NS_TD_FluidDriveSprite": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {
+    "User.DriveDensityBuoyancyCmPerSec2": 0.0,
+    "User.DriveDepthJitterCm": 0.0,
+    "User.DriveGravityCmPerSec2": 0.0,
+    "User.DriveLifetimeMaxSeconds": 2.2,
+    "User.DriveLifetimeMinSeconds": 1.2,
+    "User.DriveRestSeconds": 0.0,
+    "User.DriveSlowKillSeconds": 0.25,
+    "User.DriveSlowKillSpeedCmPerSec": 20.0,
+    "User.DriveSpawnPerM2PerSec": 25.0,
+    "User.DriveSpawnRatePerSec": 0.0,
+    "User.DriveSpawnWeightHeat": 0.0,
+    "User.DriveSpawnWeightPrimary": 0.0,
+    "User.DriveSpawnWeightSelective": 0.0,
+    "User.DriveSpawnWeightUniform": 1.0,
+    "User.DriveSpriteSizeCm": 4.0,
+    "User.DriveStretchPerCmPerSec": 0.004,
+    "User.DriveVelocityAccelerationPerSec": 0.0,
+    "User.DriveVelocityDragPerSec": 6.0,
+    "User.DriveVelocityFollowScale": 1.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.DriveSpawnUvMax": [1.0, 1.0],
+    "User.DriveSpawnUvMin": [0.0, 0.0],
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  }
+ }
+}

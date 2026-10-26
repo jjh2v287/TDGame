@@ -51,7 +51,8 @@ enum class ETDFluidPresetKind : uint8
 	SteamPuff,
 	Vortex,
 	InvertedVortex,
-	PortalVortex
+	PortalVortex,
+	TileWaves
 };
 
 UENUM(BlueprintType)
@@ -60,6 +61,13 @@ enum class ETDFluidGpuPressureSolverMode : uint8
 	Auto,
 	Jacobi,
 	MultigridFrom64
+};
+
+UENUM(BlueprintType)
+enum class ETDFluidAreaAddressMode : uint8
+{
+	Clamp,
+	Wrap
 };
 
 UENUM(BlueprintType)
@@ -101,6 +109,15 @@ struct TDGAME_API FTDFluidBrushStamp
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float HeatStrength = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "0.9"))
+	float RingInnerRadiusRatio = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float RingSideArcWeight = 0.3f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "200.0"))
+	float RingInnerEraseRatePerSec = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -324,6 +341,9 @@ struct TDGAME_API FTDFluidSimulationConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bounds")
 	bool bReflectsAtBoundaries = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bounds")
+	ETDFluidAreaAddressMode AreaAddressMode = ETDFluidAreaAddressMode::Clamp;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bounds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float EdgeBounciness = 0.0f;
 
@@ -368,6 +388,12 @@ struct TDGAME_API FTDFluidSimulationConfig
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure", meta = (ClampMin = "0.0", ClampMax = "100.0"))
 	float PressureKernelScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water")
+	bool bOutputObstacleDistance = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", meta = (ClampMin = "20.0", ClampMax = "2000.0"))
+	float ObstacleDistanceOutputRangeCm = 400.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -389,6 +415,15 @@ struct TDGAME_API FTDFluidInputBrushSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0"))
 	float TeleportSpeedCmPerSec = 3000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "0.9"))
+	float RingInnerRadiusRatio = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float RingSideArcWeight = 0.3f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "200.0"))
+	float RingInnerEraseRatePerSec = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -404,6 +439,99 @@ struct TDGAME_API FTDFluidRuntimeOpsSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0"))
 	double NiagaraCacheRefreshIntervalSeconds = 1.0;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidWaterLodGridSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid")
+	bool bEnableLodGrid = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "10.0", ClampMax = "40.0"))
+	float BaseQuadSizeCm = 18.75f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "1000.0", ClampMax = "8000.0"))
+	float BaseRangeCm = 2400.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "1", ClampMax = "10"))
+	int32 LevelCount = 7;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "4", ClampMax = "64"))
+	int32 PatchQuads = 16;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "0.55", ClampMax = "0.9"))
+	float MorphStartRatio = 0.75f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "0.0", ClampMax = "8.0"))
+	float VertexWaveFilterRatio = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "20000", ClampMax = "1000000"))
+	int32 TotalVertexBudget = 300000;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "1.0", ClampMax = "500.0"))
+	float ReselectDistanceCm = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WaterLodGrid", meta = (ClampMin = "0.0", ClampMax = "500000.0"))
+	float CoverageMarginCm = 0.0f;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidWaterNearRippleSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple")
+	bool bEnabled = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "64", ClampMax = "512"))
+	int32 Resolution = 256;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "200.0", ClampMax = "1200.0"))
+	float ExtentCm = 600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "10.0", ClampMax = "80.0"))
+	float WaveSpeedCmPerSec = 40.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+	float DampingPerSec = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.02", ClampMax = "0.4"))
+	float EdgeFadeRatio = 0.15f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.0", ClampMax = "20.0"))
+	float EdgeAbsorptionStrength = 4.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.0", ClampMax = "200.0"))
+	float MovingImpulseCmPerSec = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "1.0", ClampMax = "1000.0"))
+	float MovingReferenceSpeedCmPerSec = 150.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.5", ClampMax = "4.0"))
+	float MovingSpeedExponent = 1.6f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.05", ClampMax = "1.0"))
+	float SourceRadiusScale = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float IdleContactAmplitudeCm = 0.3f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.0", ClampMax = "4.0"))
+	float IdleContactHz = 1.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "2.0", ClampMax = "50.0"))
+	float IdleContactRadiusCm = 12.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "0.0", ClampMax = "50.0"))
+	float MinWaterDepthCm = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "1", ClampMax = "64"))
+	int32 MaxSourcesPerFrame = 32;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NearRipple", meta = (ClampMin = "1", ClampMax = "8"))
+	int32 MaxSubsteps = 4;
 };
 
 USTRUCT(BlueprintType)

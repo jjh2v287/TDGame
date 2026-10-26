@@ -56,6 +56,8 @@ namespace TDFluidPresetTuningTestPrivate
 		Builders.Add(FTDFluidRuntimeOpsSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildRuntimeOpsForPresetKind));
 		Builders.Add(FTDFluidEmberSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildEmberSettingsForPresetKind));
 		Builders.Add(FTDFluidFireLightSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildFireLightSettingsForPresetKind));
+		Builders.Add(FTDFluidWaterLodGridSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildWaterLodGridSettingsForPresetKind));
+		Builders.Add(FTDFluidWaterNearRippleSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildWaterNearRippleSettingsForPresetKind));
 		return Builders;
 	}
 

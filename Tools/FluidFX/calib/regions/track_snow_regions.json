@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, 눈 무대 피치 -12도 초안. groove_line = 홈 단면 선 표본 위치",
+ "regions": [
+  {
+   "name": "snow_surface",
+   "kind": "snow",
+   "box": [
+    200,
+    380,
+    1080,
+    700
+   ]
+  },
+  {
+   "name": "snow_dust",
+   "kind": "dust",
+   "box": [
+    880,
+    220,
+    1180,
+    420
+   ]
+  },
+  {
+   "name": "groove_line",
+   "kind": "snow",
+   "box": [
+    300,
+    520,
+    980,
+    540
+   ]
+  }
+ ]
+}

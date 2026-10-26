@@ -109,8 +109,18 @@ struct FTDFluidGpuActorParameters
 
 	float MaxCellSpeedCmPerSec;
 	float BrushDisplacementRatio;
+	uint FlowNoiseLatticePeriodPacked;
+	uint AmbientNoiseLatticePeriodPacked;
+};
+
+struct FTDFluidGpuPackedRingShape
+{
+	float InnerRadiusRatio;
+	float SideArcWeight;
+	float InnerEraseRatePerSec;
 	float Padding0;
-	float Padding1;
+	float2 MotionDirection;
+	float2 Padding1;
 };
 
 struct FTDFluidGpuPackedStamp

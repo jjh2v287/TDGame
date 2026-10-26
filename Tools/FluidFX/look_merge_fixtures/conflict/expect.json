@@ -1,0 +1,11 @@
+{
+ "fragments": [
+  "a.json",
+  "b.json"
+ ],
+ "exit": 1,
+ "conflicts": [
+  "Materials./Game/T/MI_A.Scalars.Foo",
+  "Materials./Game/T/MI_B.Parent"
+ ]
+}

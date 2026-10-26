@@ -1,5 +1,10 @@
 #define TD_WATER_TWO_PI 6.28318530718
 #if TD_WATER_VERTEX
+float3 waterPosition = WaterWorldPosition + float3(lodMorphDeltaXY, 0.0);
+#else
+float3 waterPosition = WaterWorldPosition;
+#endif
+#if TD_WATER_VERTEX
 #define TD_WATER_SIM_TAP_COUNT 1
 #define TD_WATER_WAVE_PASS_COUNT 1
 #else
@@ -10,7 +15,7 @@
 
 float waterGridResolution = max(SimGridResolution, 2.0);
 float2 waterExtentCm = max(SimExtentsCm.xy, float2(1.0, 1.0));
-float2 windowUv = (WaterWorldPosition.xy - SimCenterWorld.xy) / waterExtentCm + 0.5;
+float2 windowUv = (waterPosition.xy - SimCenterWorld.xy) / waterExtentCm + 0.5;
 float2 windowEdgeDistance = min(windowUv, 1.0 - windowUv);
 float windowFade = saturate(min(windowEdgeDistance.x, windowEdgeDistance.y) / max(SimExtentsCm.z, 0.0001));
 float simIsDriven = step(15.5, SimGridResolution);
@@ -27,7 +32,7 @@ const float gravityCmPerSecondSquared = 980.0;
 
 float waveAmplitudeCm = PassiveWaveAmplitudeCm * (1.0 - 0.5 * simFade);
 float waveBaseAngle = radians(PassiveWaveDirectionDegrees);
-float2 waveRestXY = WaterWorldPosition.xy;
+float2 waveRestXY = waterPosition.xy;
 float3 waveDisplacementCm = float3(0.0, 0.0, 0.0);
 float2 waveSlope = float2(0.0, 0.0);
 float waveFoldDeterminant = 1.0;
@@ -46,6 +51,9 @@ for (int wavePass = 0; wavePass < TD_WATER_WAVE_PASS_COUNT; ++wavePass)
         float waveAngle = waveBaseAngle + radians(waveAngleOffsetDegrees[waveIndex]);
         float2 waveDirection = float2(cos(waveAngle), sin(waveAngle));
         float waveAmplitudeLocal = waveAmplitudeCm * waveAmplitudeShare[waveIndex];
+#if TD_WATER_VERTEX
+        waveAmplitudeLocal *= lodWaveFilterSpacingCm > 0.0 ? saturate(waveLengthCm[waveIndex] / lodWaveFilterSpacingCm - 1.0) : 1.0;
+#endif
         float wavePhase = waveNumber * dot(waveDirection, waveRestXY) - sqrt(gravityCmPerSecondSquared * waveNumber) * waveTimeScale * ElapsedSeconds + wavePhaseOffset[waveIndex];
         float waveSine = 0.0;
         float waveCosine = 0.0;
@@ -59,7 +67,7 @@ for (int wavePass = 0; wavePass < TD_WATER_WAVE_PASS_COUNT; ++wavePass)
     waveDisplacementCm = passDisplacement;
     waveSlope = passSlope;
     waveFoldDeterminant = (1.0 - passFold.x) * (1.0 - passFold.y) - passFold.z * passFold.z;
-    waveRestXY = WaterWorldPosition.xy - passDisplacement.xy;
+    waveRestXY = waterPosition.xy - passDisplacement.xy;
 }
 
 const float2 simTapOffset[5] = { float2(0.0, 0.0), float2(1.0, 0.0), float2(-1.0, 0.0), float2(0.0, 1.0), float2(0.0, -1.0) };
@@ -116,3 +124,5 @@ float simMask = simIsDriven * min(windowFade, simField[0].w);
 float foamDensity = simField[0].x * simMask;
 float rippleHeightCm = simField[0].y * RippleHeightReferenceCm * simMask;
 float2 rippleSlope = float2(simField[1].y - simField[2].y, simField[3].y - simField[4].y) * (RippleHeightReferenceCm * waterGridResolution) / waterExtentCm * simMask;
+float3 tileSamplePositionCm = waterPosition;
+float3 tileCameraPositionCm = CameraWorldPosition;

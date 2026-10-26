@@ -104,7 +104,41 @@ if (MicroNormalStrength > 0.0)
     microSlope = TD_WATER_DECODE_SLOPE(microSample.rg * 2.0 - 1.0) * MicroNormalStrength;
 }
 
-float2 totalSlope = waveSlope + rippleSlope * RippleNormalStrength + detailSlope * DetailNormalStrength + microSlope;
+float nearWindowExtentCm = max(NearRippleWindow.z, 1.0);
+float2 nearWindowOffsetCm = abs(WaterWorldPosition.xy - NearRippleWindow.xy);
+float nearWindowInside = step(nearWindowOffsetCm.x, 0.5 * nearWindowExtentCm) * step(nearWindowOffsetCm.y, 0.5 * nearWindowExtentCm);
+float2 nearSlope = float2(0.0, 0.0);
+if (NearRippleActive * nearWindowInside > 0.5)
+{
+    float4 nearSample = Texture2DSampleLevel(NearRippleTexture, NearRippleTextureSampler, frac(WaterWorldPosition.xy / nearWindowExtentCm), 0);
+    nearSlope = nearSample.gb * NearRippleNormalStrength;
+}
+
+float2 ringSlope = float2(0.0, 0.0);
+float wakeFoam = 0.0;
+if (AuxObstacleDistanceActive > 0.5)
+{
+    float auxRangeCm = max(ObstacleDistanceRangeCm, 1.0);
+    float obstacleDistanceCm = Texture2DSampleLevel(AuxTexture, AuxTextureSampler, windowUv, 0).g * auxRangeCm;
+    float obstacleDistancePlusX = Texture2DSampleLevel(AuxTexture, AuxTextureSampler, windowUv + float2(gradientStepUv, 0.0), 0).g * auxRangeCm;
+    float obstacleDistancePlusY = Texture2DSampleLevel(AuxTexture, AuxTextureSampler, windowUv + float2(0.0, gradientStepUv), 0).g * auxRangeCm;
+    float2 obstacleGradient = float2(obstacleDistancePlusX, obstacleDistancePlusY) - obstacleDistanceCm;
+    float2 obstacleNormal = obstacleGradient / max(length(obstacleGradient), 0.0001);
+    float obstacleFlowSpeedCm = length(flowCm);
+    float2 obstacleFlowDirection = flowCm / max(obstacleFlowSpeedCm, 0.0001);
+    float ringFlowRatio = saturate(obstacleFlowSpeedCm / max(ObstacleRingFlowSpeedCmPerSec, 1.0));
+    float ringWavelengthCm = max(ObstacleRingWavelengthCm, 1.0);
+    float ringCount = max(ObstacleRingCount, 1.0);
+    float outsideDistanceCm = max(obstacleDistanceCm, 0.0);
+    float ringCompression = 1.0 + ObstacleRingFlowSkew * ringFlowRatio * (-dot(obstacleNormal, obstacleFlowDirection));
+    float ringDistanceCm = outsideDistanceCm * ringCompression;
+    float ringPhase = TD_WATER_TWO_PI * (ringDistanceCm / ringWavelengthCm - frac(ObstacleRingSpeedCmPerSec * ElapsedSeconds / ringWavelengthCm));
+    float ringEnvelope = smoothstep(0.0, 0.5 * ringWavelengthCm, obstacleDistanceCm) * exp(-outsideDistanceCm / max(ObstacleRingFalloffCm, 1.0)) * (1.0 - smoothstep((ringCount - 0.5) * ringWavelengthCm, (ringCount + 0.5) * ringWavelengthCm, ringDistanceCm));
+    ringSlope = ObstacleRingNormalStrength * ringEnvelope * cos(ringPhase) * obstacleNormal * simMask;
+    wakeFoam = ObstacleWakeFoamStrength * pow(saturate(dot(obstacleNormal, obstacleFlowDirection)), max(ObstacleWakeConeSharpness, 1.0)) * exp(-outsideDistanceCm / max(ObstacleWakeLengthCm, 1.0)) * ringFlowRatio * step(0.0, obstacleDistanceCm) * simMask;
+}
+
+float2 totalSlope = waveSlope + rippleSlope * RippleNormalStrength + detailSlope * DetailNormalStrength + microSlope + tileMapSlope + nearSlope + ringSlope;
 float3 surfaceNormal = normalize(float3(-totalSlope, 1.0));
 
 float foamTilingSafeCm = max(FoamTilingCm, 10.0);
@@ -113,6 +147,15 @@ float2 foamUvFirst = lerp((WaterWorldPosition.xy - flowOffsetFirst) / foamTiling
 float2 foamUvSecond = lerp((WaterWorldPosition.xy - flowOffsetSecond) / foamTilingSafeCm, TD_WATER_RIBBON_UV(foamRibbonScale, alongOffsetSecondCm), localTilingWeight);
 float3 foamSampleFirst = Texture2DSample(FoamNoiseTexture, FoamNoiseTextureSampler, foamUvFirst).rgb;
 float3 foamSampleSecond = Texture2DSample(FoamNoiseTexture, FoamNoiseTextureSampler, foamUvSecond).rgb;
+if (FoamAnisotropyMax > 1.0001)
+{
+    float streakFlowSpeedCm = length(flowCm);
+    float2 streakDirection = streakFlowSpeedCm < 1.0 ? passiveDirection : flowCm / streakFlowSpeedCm;
+    float streakAnisotropy = lerp(1.0, FoamAnisotropyMax, saturate(streakFlowSpeedCm / max(FoamAnisotropySpeedCmPerSec, 1.0)));
+    float2 streakOffsetUv = lerp(streakDirection, float2(1.0, 0.0), localTilingWeight) * (0.5 * (streakAnisotropy - 1.0) * max(FoamAnisotropyFeatureTiles, 0.001));
+    foamSampleFirst = (foamSampleFirst + Texture2DSample(FoamNoiseTexture, FoamNoiseTextureSampler, foamUvFirst + streakOffsetUv).rgb + Texture2DSample(FoamNoiseTexture, FoamNoiseTextureSampler, foamUvFirst - streakOffsetUv).rgb) / 3.0;
+    foamSampleSecond = (foamSampleSecond + Texture2DSample(FoamNoiseTexture, FoamNoiseTextureSampler, foamUvSecond + streakOffsetUv).rgb + Texture2DSample(FoamNoiseTexture, FoamNoiseTextureSampler, foamUvSecond - streakOffsetUv).rgb) / 3.0;
+}
 float foamNoise = saturate(0.5 + (dot(lerp(foamSampleSecond, foamSampleFirst, flowWeightFirst), foamChannelWeights) - 0.5) * 1.5 * phaseVarianceBoost);
 
 float shoreFoam = (1.0 - smoothstep(0.15 * ShoreFoamDepthCm, max(ShoreFoamDepthCm, 0.01), verticalThicknessCm)) * ShoreFoamAmount;
@@ -128,11 +171,12 @@ if (CoastWaveMaxDepthCm > 0.0 && CoastFoamStrength > 0.0)
 }
 
 float whitecapFoam = saturate((WhitecapJacobianThreshold - waveFoldDeterminant) / 0.2);
+foamDensity = saturate(foamDensity + tileMapFoam);
 float densityFoam = saturate((foamDensity - FoamDensityThreshold) / max(1.0 - FoamDensityThreshold, 0.01)) * FoamFromDensity;
 float speedFoam = saturate(simSpeedRatio - FoamSpeedThreshold) * FoamFromSpeed;
 float froudeNumber = length(flowCm) * rsqrt(gravityCmPerSecondSquared * max(verticalThicknessCm, froudeMinimumDepthCm));
 float froudeFoam = saturate(froudeNumber - FoamFroudeThreshold) * FoamFromFroude;
-float foamAmount = min(saturate(densityFoam + speedFoam + froudeFoam + shoreFoam + coastFoam + whitecapFoam), FoamCoverageMax);
+float foamAmount = min(saturate(densityFoam + speedFoam + froudeFoam + shoreFoam + coastFoam + whitecapFoam + wakeFoam), FoamCoverageMax);
 float foamLaceMask = smoothstep(1.0 - foamAmount, 1.0 - foamAmount + max(FoamEdgeSoftness, 0.02), foamNoise);
 float foamFarBlend = saturate((PixelDepthCm - FoamFadeStartCm) / max(FoamFadeLengthCm, 1.0));
 float foamMask = lerp(foamLaceMask, foamAmount * farFoamOpacity, foamFarBlend);

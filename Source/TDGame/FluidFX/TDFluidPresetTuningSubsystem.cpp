@@ -674,7 +674,9 @@ const TArray<FTDFluidPresetTuningRegisteredStruct>& UTDFluidPresetTuningSubsyste
 		{ FTDFluidInputBrushSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
 		{ FTDFluidRuntimeOpsSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
 		{ FTDFluidEmberSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
-		{ FTDFluidFireLightSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind }
+		{ FTDFluidFireLightSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidWaterLodGridSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidWaterNearRippleSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind }
 	};
 	return RegisteredStructs;
 }

@@ -1,0 +1,25 @@
+{
+ "note": "1280x720, fog_f2_passive 카메라 기준 초안. window_seam = 창 경계 띠(D14 5% 이하)",
+ "regions": [
+  {
+   "name": "passive_field",
+   "kind": "fog",
+   "box": [
+    100,
+    300,
+    1180,
+    600
+   ]
+  },
+  {
+   "name": "window_seam",
+   "kind": "fog",
+   "box": [
+    560,
+    320,
+    720,
+    600
+   ]
+  }
+ ]
+}

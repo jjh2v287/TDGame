@@ -18,6 +18,7 @@ public:
 	FVector2D GetCenterWorld() const { return CenterWorld; }
 	FVector2D GetExtentCm() const { return Config.SimExtentCm; }
 	const FTDFluidSimulationConfig& GetConfig() const { return Config; }
+	bool IsAreaWrapped() const { return Config.AreaAddressMode == ETDFluidAreaAddressMode::Wrap; }
 
 	bool ShiftOriginForSlidingWindow(const FVector2D& DesiredCenterWorld);
 	void SetUniformTerrainSlope(const FVector2D& InSlopeGradient);
@@ -38,6 +39,9 @@ public:
 	void PackOutputPixels(TArray<FFloat16Color>& OutDensityPressurePixels, TArray<FFloat16Color>& OutVelocityPixels) const;
 	uint32 ComputeStateChecksum() const;
 	void PackAuxPixels(TArray<FFloat16Color>& OutAuxPixels) const;
+	void PackObstacleDistanceAuxPixels(TArray<FFloat16Color>& OutAuxPixels) const;
+	int32 GetObstacleSdfRawGeneration() const { return ObstacleSdfRawGeneration; }
+	static constexpr float ObstacleDistanceEmptySdfCm = 10000.0f;
 	bool IsHeatChannelActive() const;
 
 	static constexpr float NoWaterSurfaceHeight = -TNumericLimits<float>::Max();
@@ -55,6 +59,9 @@ private:
 	int32 ToCellIndex(int32 CellX, int32 CellY) const { return CellY * Resolution + CellX; }
 	bool IsValidCell(int32 CellX, int32 CellY) const { return CellX >= 0 && CellX < Resolution && CellY >= 0 && CellY < Resolution; }
 	bool IsSolidCell(int32 CellX, int32 CellY) const { return !IsValidCell(CellX, CellY) || SolidCellMask.GetData()[ToCellIndex(CellX, CellY)] != 0; }
+	int32 WrapCoordinate(int32 Coordinate) const { return (Coordinate + Resolution) % Resolution; }
+	void ResolveWrappedNeighborIndices(int32 CellX, int32 CellY, int32& OutRightIndex, int32& OutLeftIndex, int32& OutUpIndex, int32& OutDownIndex) const;
+	void ApplyVorticityConfinementWrapped(float DeltaTime, float SpacingX, float SpacingY);
 	void RefreshObstacleCellCache();
 	void BuildBorderFadeTable(float* OutFadeByCoordinate) const;
 	void BuildBorderDampingTable(const float* FadeByCoordinate, float DeltaTime, float* OutDampingByCoordinate) const;
@@ -160,6 +167,7 @@ private:
 	TArray<float> WaterSurfaceHeight;
 	TArray<float> WaterDrySdf;
 	TArray<float> ObstacleSdfRaw;
+	int32 ObstacleSdfRawGeneration = 0;
 	TArray<uint8> TerrainKnownMask;
 	TArray<float> FlowTargetVelocityX;
 	TArray<float> FlowTargetVelocityY;

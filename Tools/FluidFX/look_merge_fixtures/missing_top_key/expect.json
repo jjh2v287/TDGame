@@ -1,0 +1,11 @@
+{
+ "fragments": [
+  "materials_only.json",
+  "niagara_only.json"
+ ],
+ "exit": 0,
+ "conflicts": [],
+ "changes": [],
+ "added_entries": [],
+ "output": "expected.json"
+}

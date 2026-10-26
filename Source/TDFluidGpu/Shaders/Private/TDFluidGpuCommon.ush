@@ -3,6 +3,29 @@
 #include "/Engine/Public/Platform.ush"
 #include "/TDFluidGpu/Private/TDFluidGpuTypes.ush"
 
+#ifndef TDFLUIDGPU_WRAP_AREA
+#define TDFLUIDGPU_WRAP_AREA 0
+#endif
+
+int2 TDFluidGpuResolveNeighborCell(int2 Cell, int Resolution)
+{
+#if TDFLUIDGPU_WRAP_AREA
+	return Cell & (Resolution - 1);
+#else
+	return Cell;
+#endif
+}
+
+int2 TDFluidGpuResolveLatticeIndex(int2 Index, uint PeriodPacked)
+{
+#if TDFLUIDGPU_WRAP_AREA
+	const int2 Period = int2(int(PeriodPacked & 0xFFFFu), int(PeriodPacked >> 16));
+	return ((Index % Period) + Period) % Period;
+#else
+	return Index;
+#endif
+}
+
 #define TDFLUIDGPU_CELL_GROUP_SIZE 8
 #define TDFLUIDGPU_TILE_GROUP_SIZE 16
 
@@ -146,10 +169,10 @@ FTDFluidGpuLatticeSample TDFluidGpuMakeLatticeSample(int2 Origin, float2 Offset,
 float2 TDFluidGpuEvaluateFlowNoiseAcceleration(FTDFluidGpuActorParameters Actor, int2 Cell)
 {
 	const FTDFluidGpuLatticeSample Sample = TDFluidGpuMakeLatticeSample(Actor.FlowNoiseLatticeOrigin, Actor.FlowNoiseLatticeOffset, Actor.FlowNoiseLatticeStepPerCell, Cell);
-	const float Value00 = TDFluidGpuEvaluateLatticeValue(Sample.Index, TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
-	const float Value10 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(1, 0), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
-	const float Value01 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(0, 1), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
-	const float Value11 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(1, 1), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
+	const float Value00 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index, Actor.FlowNoiseLatticePeriodPacked), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
+	const float Value10 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(1, 0), Actor.FlowNoiseLatticePeriodPacked), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
+	const float Value01 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(0, 1), Actor.FlowNoiseLatticePeriodPacked), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
+	const float Value11 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(1, 1), Actor.FlowNoiseLatticePeriodPacked), TDFLUIDGPU_FLOW_NOISE_SEED, Actor);
 	const float ColumnFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.x);
 	const float RowFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.y);
 	const float ColumnFadeSlope = TDFluidGpuEvaluateQuinticFadeSlope(Sample.Fraction.x);
@@ -162,10 +185,10 @@ float2 TDFluidGpuEvaluateFlowNoiseAcceleration(FTDFluidGpuActorParameters Actor,
 float TDFluidGpuEvaluateAmbientNoiseValue(FTDFluidGpuActorParameters Actor, int2 Cell)
 {
 	const FTDFluidGpuLatticeSample Sample = TDFluidGpuMakeLatticeSample(Actor.AmbientNoiseLatticeOrigin, Actor.AmbientNoiseLatticeOffset, Actor.AmbientNoiseLatticeStepPerCell, Cell);
-	const float Value00 = TDFluidGpuEvaluateLatticeValue(Sample.Index, TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
-	const float Value10 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(1, 0), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
-	const float Value01 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(0, 1), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
-	const float Value11 = TDFluidGpuEvaluateLatticeValue(Sample.Index + int2(1, 1), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
+	const float Value00 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index, Actor.AmbientNoiseLatticePeriodPacked), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
+	const float Value10 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(1, 0), Actor.AmbientNoiseLatticePeriodPacked), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
+	const float Value01 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(0, 1), Actor.AmbientNoiseLatticePeriodPacked), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
+	const float Value11 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(1, 1), Actor.AmbientNoiseLatticePeriodPacked), TDFLUIDGPU_AMBIENT_NOISE_SEED, Actor);
 	const float ColumnFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.x);
 	const float RowFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.y);
 	const float LowerEdge = lerp(Value00, Value10, ColumnFade);
@@ -211,6 +234,18 @@ float TDFluidGpuComputeOutflowRetainFactor(FTDFluidGpuActorParameters Actor, int
 
 FTDFluidGpuBilinearSample TDFluidGpuMakeBilinearSample(float2 GridPosition, int Resolution)
 {
+#if TDFLUIDGPU_WRAP_AREA
+	const float Period = float(Resolution);
+	const float2 WrappedPosition = GridPosition - Period * floor(GridPosition / Period);
+	const float2 FloorPosition = floor(WrappedPosition);
+	const int2 WrappedCell0 = int2(FloorPosition) & (Resolution - 1);
+
+	FTDFluidGpuBilinearSample WrappedSample;
+	WrappedSample.Cell00 = WrappedCell0;
+	WrappedSample.Cell11 = (WrappedCell0 + 1) & (Resolution - 1);
+	WrappedSample.Fraction = WrappedPosition - FloorPosition;
+	return WrappedSample;
+#else
 	const float2 ClampedPosition = clamp(GridPosition, 0.0f, float(Resolution - 1));
 	const int2 Cell0 = int2(floor(ClampedPosition));
 
@@ -219,6 +254,7 @@ FTDFluidGpuBilinearSample TDFluidGpuMakeBilinearSample(float2 GridPosition, int 
 	Sample.Cell11 = min(Cell0 + 1, Resolution - 1);
 	Sample.Fraction = ClampedPosition - float2(Cell0);
 	return Sample;
+#endif
 }
 
 float2 TDFluidGpuSampleBilinearFloat2(Texture2DArray<float2> Field, FTDFluidGpuBilinearSample Sample, int SliceIndex)
@@ -257,10 +293,17 @@ float2 TDFluidGpuEnforceObstacleBoundary(Texture2DArray<float> ObstacleSdf, FTDF
 		return Velocity;
 	}
 
+#if TDFLUIDGPU_WRAP_AREA
+	const int2 MinusCell = TDFluidGpuResolveNeighborCell(Cell - 1, Actor.Resolution);
+	const int2 PlusCell = TDFluidGpuResolveNeighborCell(Cell + 1, Actor.Resolution);
+	const float GradientSpanX = 2.0f * Actor.RelativeCellSpacing.x;
+	const float GradientSpanY = 2.0f * Actor.RelativeCellSpacing.y;
+#else
 	const int2 MinusCell = max(Cell - 1, 0);
 	const int2 PlusCell = min(Cell + 1, LastCell);
 	const float GradientSpanX = float(PlusCell.x - MinusCell.x) * Actor.RelativeCellSpacing.x;
 	const float GradientSpanY = float(PlusCell.y - MinusCell.y) * Actor.RelativeCellSpacing.y;
+#endif
 	float2 Normal = float2(
 		(ObstacleSdf[TDFluidGpuMakeTexel(int2(PlusCell.x, Cell.y), Actor.SliceIndex)] - ObstacleSdf[TDFluidGpuMakeTexel(int2(MinusCell.x, Cell.y), Actor.SliceIndex)]) / GradientSpanX,
 		(ObstacleSdf[TDFluidGpuMakeTexel(int2(Cell.x, PlusCell.y), Actor.SliceIndex)] - ObstacleSdf[TDFluidGpuMakeTexel(int2(Cell.x, MinusCell.y), Actor.SliceIndex)]) / GradientSpanY);
@@ -455,10 +498,17 @@ float2 TDFluidGpuEnforceObstacleBoundaryWithReflection(Texture2DArray<float> Obs
 		return Velocity;
 	}
 
+#if TDFLUIDGPU_WRAP_AREA
+	const int2 MinusCell = TDFluidGpuResolveNeighborCell(Cell - 1, Actor.Resolution);
+	const int2 PlusCell = TDFluidGpuResolveNeighborCell(Cell + 1, Actor.Resolution);
+	const float GradientSpanX = 2.0f * Actor.RelativeCellSpacing.x;
+	const float GradientSpanY = 2.0f * Actor.RelativeCellSpacing.y;
+#else
 	const int2 MinusCell = max(Cell - 1, 0);
 	const int2 PlusCell = min(Cell + 1, LastCell);
 	const float GradientSpanX = float(PlusCell.x - MinusCell.x) * Actor.RelativeCellSpacing.x;
 	const float GradientSpanY = float(PlusCell.y - MinusCell.y) * Actor.RelativeCellSpacing.y;
+#endif
 	float2 Normal = float2(
 		(ObstacleSdf[TDFluidGpuMakeTexel(int2(PlusCell.x, Cell.y), Actor.SliceIndex)] - ObstacleSdf[TDFluidGpuMakeTexel(int2(MinusCell.x, Cell.y), Actor.SliceIndex)]) / GradientSpanX,
 		(ObstacleSdf[TDFluidGpuMakeTexel(int2(Cell.x, PlusCell.y), Actor.SliceIndex)] - ObstacleSdf[TDFluidGpuMakeTexel(int2(Cell.x, MinusCell.y), Actor.SliceIndex)]) / GradientSpanY);

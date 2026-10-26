@@ -467,6 +467,7 @@ bool FTDFluidFireFamilyPresetTest::RunTest(const FString& Parameters)
 		TestEqual(*(Label + TEXT(" keeps the CPU fallback resolution unset")), Config.CpuFallbackResolution, 0);
 		TestEqual(*(Label + TEXT(" keeps transmittance at the default")), UTDFluidPresetAsset::BuildVolumeRenderForPresetKind(Kind).bEnableTransmittance, DefaultVolumeRender.bEnableTransmittance);
 	}
+	TestFalse(TEXT("TileWaves is not a fire family kind"), UTDFluidPresetAsset::IsFireFamilyPresetKind(ETDFluidPresetKind::TileWaves));
 	return true;
 }
 

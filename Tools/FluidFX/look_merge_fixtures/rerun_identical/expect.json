@@ -1,0 +1,10 @@
+{
+ "fragments": [
+  "fragment.json"
+ ],
+ "exit": 0,
+ "conflicts": [],
+ "changes": [],
+ "added_entries": [],
+ "output": "canonical.json"
+}

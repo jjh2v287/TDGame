@@ -17,6 +17,7 @@ namespace
 	constexpr double FallbackExtentCm = 4000.0;
 	constexpr int32 MinGridResolution = 16;
 	constexpr int32 MaxGridResolution = 256;
+	constexpr int32 WrapGhostStampCountMultiplier = 4;
 	constexpr uint32 FlowNoiseSeed = 0x2F6E2B1Du;
 	constexpr uint32 AmbientNoiseSeed = 0x6B43A9B5u;
 	constexpr float AmbientNoiseScaleMultiplier = 1.7f;
@@ -51,6 +52,32 @@ namespace
 			return FallbackExtentCm;
 		}
 		return FMath::Max(Value, 100.0);
+	}
+
+	int32 ResolveGridResolution(const FTDFluidSimulationConfig& InConfig)
+	{
+		const int32 ClampedResolution = FMath::Clamp(InConfig.GridResolution, MinGridResolution, MaxGridResolution);
+		if (InConfig.AreaAddressMode != ETDFluidAreaAddressMode::Wrap)
+		{
+			return ClampedResolution;
+		}
+		return static_cast<int32>(FMath::RoundUpToPowerOfTwo(static_cast<uint32>(ClampedResolution)));
+	}
+
+	void ApplyWrappedAreaRules(FTDFluidSimulationConfig& InOutConfig)
+	{
+		if (InOutConfig.AreaAddressMode != ETDFluidAreaAddressMode::Wrap)
+		{
+			return;
+		}
+		InOutConfig.SimMode = ETDFluidSimMode::FluidSim;
+		InOutConfig.bEnableWaterLayer = false;
+		InOutConfig.bEnableWaterWetness = false;
+		InOutConfig.bReflectsAtBoundaries = false;
+		InOutConfig.TerrainSlopeGravity = 0.0f;
+		InOutConfig.OutflowBandRatio = 0.0f;
+		InOutConfig.BorderFadeRatio = 0.0f;
+		InOutConfig.GridResolution = ResolveGridResolution(InOutConfig);
 	}
 
 	void SanitizeConfig(FTDFluidSimulationConfig& InOutConfig)
@@ -109,6 +136,7 @@ namespace
 		InOutConfig.VortexTangentialAccelerationCmPerSec2 = FMath::IsFinite(InOutConfig.VortexTangentialAccelerationCmPerSec2) ? FMath::Clamp(InOutConfig.VortexTangentialAccelerationCmPerSec2, -20000.0f, 20000.0f) : 0.0f;
 		InOutConfig.VortexRadialDriftCmPerSec = FMath::IsFinite(InOutConfig.VortexRadialDriftCmPerSec) ? FMath::Clamp(InOutConfig.VortexRadialDriftCmPerSec, -InOutConfig.MaxCellSpeedCmPerSec, InOutConfig.MaxCellSpeedCmPerSec) : 0.0f;
 		InOutConfig.VortexRadiusRatio = ClampFinite(InOutConfig.VortexRadiusRatio, 0.01f, 0.5f);
+		ApplyWrappedAreaRules(InOutConfig);
 	}
 
 	bool IsFiniteBrushStamp(const FTDFluidBrushStamp& Stamp)
@@ -161,6 +189,37 @@ namespace
 		Sample.FracX = ClampedX - static_cast<float>(X0);
 		Sample.FracY = ClampedY - static_cast<float>(Y0);
 		return Sample;
+	}
+
+	FTDFluidBilinearSample MakeWrappedBilinearSample(float GridX, float GridY, int32 Resolution)
+	{
+		const float Period = static_cast<float>(Resolution);
+		const float WrappedX = GridX - Period * FMath::FloorToFloat(GridX / Period);
+		const float WrappedY = GridY - Period * FMath::FloorToFloat(GridY / Period);
+		const float FloorX = FMath::FloorToFloat(WrappedX);
+		const float FloorY = FMath::FloorToFloat(WrappedY);
+		const int32 X0 = static_cast<int32>(FloorX) % Resolution;
+		const int32 Y0 = static_cast<int32>(FloorY) % Resolution;
+		const int32 X1 = (X0 + 1) % Resolution;
+		const int32 Y1 = (Y0 + 1) % Resolution;
+
+		FTDFluidBilinearSample Sample;
+		Sample.Index00 = Y0 * Resolution + X0;
+		Sample.Index10 = Y0 * Resolution + X1;
+		Sample.Index01 = Y1 * Resolution + X0;
+		Sample.Index11 = Y1 * Resolution + X1;
+		Sample.FracX = WrappedX - FloorX;
+		Sample.FracY = WrappedY - FloorY;
+		return Sample;
+	}
+
+	FTDFluidBilinearSample MakeAreaBilinearSample(float GridX, float GridY, int32 Resolution, ETDFluidAreaAddressMode AddressMode)
+	{
+		if (AddressMode == ETDFluidAreaAddressMode::Wrap)
+		{
+			return MakeWrappedBilinearSample(GridX, GridY, Resolution);
+		}
+		return MakeBilinearSample(GridX, GridY, Resolution);
 	}
 
 	struct FTDFluidDenormalPreservingScope
@@ -331,10 +390,42 @@ namespace
 		return FMath::Max(Config.FlowNoiseScaleCm, LargestCellSizeCm) * ScaleMultiplier;
 	}
 
+	int32 ResolvePeriodicLatticeCount(double ExtentCm, float SpacingCm)
+	{
+		return FMath::Max(1, FMath::RoundToInt(static_cast<float>(ExtentCm) / SpacingCm));
+	}
+
+	void BuildPeriodicNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, float SpacingCm, uint32 Seed, double NoiseTime)
+	{
+		const int32 PeriodX = ResolvePeriodicLatticeCount(Config.SimExtentCm.X, SpacingCm);
+		const int32 PeriodY = ResolvePeriodicLatticeCount(Config.SimExtentCm.Y, SpacingCm);
+		const int32 MinIndexX = BuildNoiseAxis(OutLattice.Columns, Resolution, 0.0, static_cast<double>(PeriodX) / Resolution, 1.0);
+		const int32 MinIndexY = BuildNoiseAxis(OutLattice.Rows, Resolution, 0.0, static_cast<double>(PeriodY) / Resolution, 1.0);
+
+		const int32 Width = OutLattice.Columns[Resolution - 1].LatticeIndex + 2;
+		const int32 Height = OutLattice.Rows[Resolution - 1].LatticeIndex + 2;
+		OutLattice.Width = Width;
+		OutLattice.Values.SetNumUninitialized(Width * Height);
+
+		float* Values = OutLattice.Values.GetData();
+		for (int32 RowIndex = 0; RowIndex < Height; ++RowIndex)
+		{
+			for (int32 ColumnIndex = 0; ColumnIndex < Width; ++ColumnIndex)
+			{
+				Values[RowIndex * Width + ColumnIndex] = EvaluateLatticeValue((MinIndexX + ColumnIndex) % PeriodX, (MinIndexY + RowIndex) % PeriodY, Seed, NoiseTime);
+			}
+		}
+	}
+
 	void BuildNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, const FVector2D& CenterWorld, float SpacingCm, uint32 Seed, double SimulationTimeSeconds)
 	{
 		const double InverseSpacing = 1.0 / static_cast<double>(SpacingCm);
 		const double NoiseTime = static_cast<double>(Config.FlowNoiseSpeed) * SimulationTimeSeconds;
+		if (Config.AreaAddressMode == ETDFluidAreaAddressMode::Wrap)
+		{
+			BuildPeriodicNoiseLattice(OutLattice, Config, Resolution, SpacingCm, Seed, NoiseTime);
+			return;
+		}
 		const int32 MinIndexX = BuildNoiseAxis(OutLattice.Columns, Resolution, CenterWorld.X - 0.5 * Config.SimExtentCm.X, Config.SimExtentCm.X / Resolution, InverseSpacing);
 		const int32 MinIndexY = BuildNoiseAxis(OutLattice.Rows, Resolution, CenterWorld.Y - 0.5 * Config.SimExtentCm.Y, Config.SimExtentCm.Y / Resolution, InverseSpacing);
 
@@ -455,8 +546,8 @@ void FTDFluidGrid2DSolver::Initialize(const FTDFluidSimulationConfig& InConfig, 
 
 void FTDFluidGrid2DSolver::UpdateConfig(const FTDFluidSimulationConfig& InConfig)
 {
-	const int32 ClampedResolution = FMath::Clamp(InConfig.GridResolution, MinGridResolution, MaxGridResolution);
-	if (ClampedResolution != Resolution || !IsInitialized())
+	const int32 ClampedResolution = ResolveGridResolution(InConfig);
+	if (ClampedResolution != Resolution || !IsInitialized() || InConfig.AreaAddressMode != Config.AreaAddressMode)
 	{
 		Initialize(InConfig, CenterWorld);
 		return;
@@ -511,7 +602,7 @@ void FTDFluidGrid2DSolver::ResetSimulation()
 
 bool FTDFluidGrid2DSolver::ShiftOriginForSlidingWindow(const FVector2D& DesiredCenterWorld)
 {
-	if (!IsInitialized())
+	if (!IsInitialized() || IsAreaWrapped())
 	{
 		return false;
 	}
@@ -720,6 +811,61 @@ void FTDFluidGrid2DSolver::RasterizeSdfObstacles(const TArray<FTDFluidSdfObstacl
 	EnforceObstacleBoundaries();
 }
 
+namespace
+{
+	constexpr double TDFluidRingMotionMinimumSpeedCmPerSec = 1.0;
+
+	struct FTDFluidRingStampShape
+	{
+		float InnerRadiusCm = 0.0f;
+		float SideArcWeight = 0.0f;
+		float InnerEraseRatePerSec = 0.0f;
+		FVector2D MotionDirection = FVector2D::ZeroVector;
+	};
+
+	FTDFluidRingStampShape MakeTDFluidRingStampShape(const FTDFluidBrushStamp& Stamp, float EffectiveRadius)
+	{
+		FTDFluidRingStampShape Shape;
+		Shape.InnerRadiusCm = FMath::Clamp(Stamp.RingInnerRadiusRatio, 0.0f, 0.9f) * EffectiveRadius;
+		Shape.SideArcWeight = FMath::Clamp(Stamp.RingSideArcWeight, 0.0f, 2.0f);
+		Shape.InnerEraseRatePerSec = FMath::Clamp(Stamp.RingInnerEraseRatePerSec, 0.0f, 200.0f);
+		const FVector2D PlaneVelocity(Stamp.WorldVelocity.X, Stamp.WorldVelocity.Y);
+		const double PlaneSpeed = PlaneVelocity.Size();
+		if (PlaneSpeed >= TDFluidRingMotionMinimumSpeedCmPerSec)
+		{
+			Shape.MotionDirection = PlaneVelocity / PlaneSpeed;
+		}
+		return Shape;
+	}
+
+	float ComputeTDFluidRingStampDensityWeight(const FTDFluidRingStampShape& Shape, const FVector2D& OffsetFromCenter, float DistanceCm, float EffectiveRadius)
+	{
+		const float CenterRadiusCm = 0.5f * (Shape.InnerRadiusCm + EffectiveRadius);
+		const float HalfWidthCm = FMath::Max(0.5f * (EffectiveRadius - Shape.InnerRadiusCm), UE_KINDA_SMALL_NUMBER);
+		const float BandFalloff = FMath::Clamp(1.0f - FMath::Abs(DistanceCm - CenterRadiusCm) / HalfWidthCm, 0.0f, 1.0f);
+		const float BandWeight = BandFalloff * BandFalloff * (3.0f - 2.0f * BandFalloff);
+		if (Shape.MotionDirection.IsZero() || DistanceCm <= UE_KINDA_SMALL_NUMBER)
+		{
+			return BandWeight;
+		}
+
+		const float Alignment = static_cast<float>(FVector2D::DotProduct(OffsetFromCenter / DistanceCm, Shape.MotionDirection));
+		return BandWeight * FMath::Clamp(Shape.SideArcWeight + Alignment, 0.0f, 1.0f);
+	}
+
+	float ComputeTDFluidRingInnerRetainFactor(const FTDFluidRingStampShape& Shape, float DistanceCm, float DeltaTime)
+	{
+		if (Shape.InnerEraseRatePerSec <= 0.0f || DistanceCm >= Shape.InnerRadiusCm)
+		{
+			return 1.0f;
+		}
+
+		const float InnerFalloff = 1.0f - DistanceCm / Shape.InnerRadiusCm;
+		const float InnerWeight = InnerFalloff * InnerFalloff * (3.0f - 2.0f * InnerFalloff);
+		return FMath::Exp(-Shape.InnerEraseRatePerSec * InnerWeight * DeltaTime);
+	}
+}
+
 void FTDFluidGrid2DSolver::ApplyBrushStamps(const TArray<FTDFluidBrushStamp>& Stamps, float DeltaTime)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ApplyBrushStamps);
@@ -731,11 +877,12 @@ void FTDFluidGrid2DSolver::ApplyBrushStamps(const TArray<FTDFluidBrushStamp>& St
 	}
 
 	const float VelocityBlend = FMath::Min(1.0f, Config.BrushVelocityResponsePerSec * DeltaTime);
+	const int32 MaxAppliedStampCount = IsAreaWrapped() ? Config.MaxPointsPerTick * WrapGhostStampCountMultiplier : Config.MaxPointsPerTick;
 	int32 AppliedStampCount = 0;
 
 	for (const FTDFluidBrushStamp& Stamp : Stamps)
 	{
-		if (AppliedStampCount >= Config.MaxPointsPerTick)
+		if (AppliedStampCount >= MaxAppliedStampCount)
 		{
 			break;
 		}
@@ -780,6 +927,8 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 	const bool bWritesSelectiveDensity = Stamp.Channel == ETDFluidBrushChannel::ChannelG_Blood || Stamp.Channel == ETDFluidBrushChannel::ChannelB_Fire;
 	const bool bIsWaterLayerActive = IsWaterLayerActive();
 	const bool bWritesRipple = bIsWaterLayerActive && Stamp.RippleImpulseCm != 0.0f;
+	const bool bUsesRingStamp = bIsWaterLayerActive && !bErasesDensity && Stamp.RingInnerRadiusRatio > 0.0f;
+	const FTDFluidRingStampShape RingShape = bUsesRingStamp ? MakeTDFluidRingStampShape(Stamp, EffectiveRadius) : FTDFluidRingStampShape();
 	const bool bHasRadialVelocity = Stamp.RadialVelocityCmPerSec != 0.0f && !bIsWaterLayerActive;
 	const bool bDefersRadialVelocity = bHasRadialVelocity && Config.SimMode != ETDFluidSimMode::SimplePainter;
 	const bool bBlendsRadialVelocity = bHasRadialVelocity && !bDefersRadialVelocity;
@@ -828,7 +977,8 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 			}
 			else
 			{
-				const float DensityTarget = FMath::Clamp(DensityStrength * SmoothWeight, 0.0f, 1.0f);
+				const float DensityWeight = bUsesRingStamp ? ComputeTDFluidRingStampDensityWeight(RingShape, CellCenter - StampCenter, DistanceCm, EffectiveRadius) : SmoothWeight;
+				const float DensityTarget = FMath::Clamp(DensityStrength * DensityWeight, 0.0f, 1.0f);
 				PrimaryDensity[CellIdx] = FMath::Max(PrimaryDensity[CellIdx], DensityTarget);
 				if (!bIsWaterLayerActive)
 				{
@@ -837,6 +987,15 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 				if (bWritesSelectiveDensity)
 				{
 					SelectiveDensity[CellIdx] = FMath::Max(SelectiveDensity[CellIdx], DensityTarget);
+				}
+				if (bUsesRingStamp)
+				{
+					const float RingRetainFactor = ComputeTDFluidRingInnerRetainFactor(RingShape, DistanceCm, DeltaTime);
+					PrimaryDensity[CellIdx] *= RingRetainFactor;
+					if (bWritesSelectiveDensity)
+					{
+						SelectiveDensity[CellIdx] *= RingRetainFactor;
+					}
 				}
 			}
 
@@ -1281,6 +1440,7 @@ void FTDFluidGrid2DSolver::EnforceObstacleBoundaries()
 	float SpacingY = 1.0f;
 	ComputeRelativeCellSpacing(SpacingX, SpacingY);
 
+	const bool bWrapsArea = IsAreaWrapped();
 	const int32 GridSize = Resolution;
 	const float* SdfValues = ObstacleSdf.GetData();
 	float* PrimaryValues = PrimaryDensity.GetData();
@@ -1315,13 +1475,13 @@ void FTDFluidGrid2DSolver::EnforceObstacleBoundaries()
 				continue;
 			}
 
-			const int32 XMinus = FMath::Max(X - 1, 0);
-			const int32 XPlus = FMath::Min(X + 1, GridSize - 1);
-			const int32 YMinus = FMath::Max(Y - 1, 0);
-			const int32 YPlus = FMath::Min(Y + 1, GridSize - 1);
+			const int32 XMinus = bWrapsArea ? WrapCoordinate(X - 1) : FMath::Max(X - 1, 0);
+			const int32 XPlus = bWrapsArea ? WrapCoordinate(X + 1) : FMath::Min(X + 1, GridSize - 1);
+			const int32 YMinus = bWrapsArea ? WrapCoordinate(Y - 1) : FMath::Max(Y - 1, 0);
+			const int32 YPlus = bWrapsArea ? WrapCoordinate(Y + 1) : FMath::Min(Y + 1, GridSize - 1);
 
-			const float GradientSpanX = static_cast<float>(XPlus - XMinus) * SpacingX;
-			const float GradientSpanY = static_cast<float>(YPlus - YMinus) * SpacingY;
+			const float GradientSpanX = (bWrapsArea ? 2.0f : static_cast<float>(XPlus - XMinus)) * SpacingX;
+			const float GradientSpanY = (bWrapsArea ? 2.0f : static_cast<float>(YPlus - YMinus)) * SpacingY;
 			FVector2D Normal(
 				(SdfValues[Y * GridSize + XPlus] - SdfValues[Y * GridSize + XMinus]) / GradientSpanX,
 				(SdfValues[YPlus * GridSize + X] - SdfValues[YMinus * GridSize + X]) / GradientSpanY);
@@ -1355,6 +1515,11 @@ void FTDFluidGrid2DSolver::ApplyVorticityConfinement(float DeltaTime)
 	float SpacingX = 1.0f;
 	float SpacingY = 1.0f;
 	ComputeRelativeCellSpacing(SpacingX, SpacingY);
+	if (IsAreaWrapped())
+	{
+		ApplyVorticityConfinementWrapped(DeltaTime, SpacingX, SpacingY);
+		return;
+	}
 
 	const int32 GridSize = Resolution;
 	const float VorticityStrength = Config.VorticityStrength;
@@ -1404,6 +1569,66 @@ void FTDFluidGrid2DSolver::ApplyVorticityConfinement(float DeltaTime)
 	});
 }
 
+void FTDFluidGrid2DSolver::ResolveWrappedNeighborIndices(int32 CellX, int32 CellY, int32& OutRightIndex, int32& OutLeftIndex, int32& OutUpIndex, int32& OutDownIndex) const
+{
+	OutRightIndex = ToCellIndex(WrapCoordinate(CellX + 1), CellY);
+	OutLeftIndex = ToCellIndex(WrapCoordinate(CellX - 1), CellY);
+	OutUpIndex = ToCellIndex(CellX, WrapCoordinate(CellY + 1));
+	OutDownIndex = ToCellIndex(CellX, WrapCoordinate(CellY - 1));
+}
+
+void FTDFluidGrid2DSolver::ApplyVorticityConfinementWrapped(float DeltaTime, float SpacingX, float SpacingY)
+{
+	const int32 GridSize = Resolution;
+	const float VorticityStrength = Config.VorticityStrength;
+	const uint8* SolidCells = SolidCellMask.GetData();
+	float* VelX = VelocityX.GetData();
+	float* VelY = VelocityY.GetData();
+	float* CurlValues = VorticityCurl.GetData();
+
+	ForEachGridRow(TEXT("TDFluidVorticityCurlRowsWrapped"), GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			int32 RightIndex = 0;
+			int32 LeftIndex = 0;
+			int32 UpIndex = 0;
+			int32 DownIndex = 0;
+			ResolveWrappedNeighborIndices(X, Y, RightIndex, LeftIndex, UpIndex, DownIndex);
+			const float DvYDx = 0.5f * (VelY[RightIndex] - VelY[LeftIndex]) / SpacingX;
+			const float DvXDy = 0.5f * (VelX[UpIndex] - VelX[DownIndex]) / SpacingY;
+			CurlValues[ToCellIndex(X, Y)] = DvYDx - DvXDy;
+		}
+	});
+
+	ForEachGridRow(TEXT("TDFluidVorticityApplyRowsWrapped"), GridSize, [&](int32 Y)
+	{
+		for (int32 X = 0; X < GridSize; ++X)
+		{
+			const int32 Idx = ToCellIndex(X, Y);
+			if (SolidCells[Idx])
+			{
+				continue;
+			}
+
+			int32 RightIndex = 0;
+			int32 LeftIndex = 0;
+			int32 UpIndex = 0;
+			int32 DownIndex = 0;
+			ResolveWrappedNeighborIndices(X, Y, RightIndex, LeftIndex, UpIndex, DownIndex);
+			FVector2D CurlGrad(0.5f * (FMath::Abs(CurlValues[RightIndex]) - FMath::Abs(CurlValues[LeftIndex])) / SpacingX, 0.5f * (FMath::Abs(CurlValues[UpIndex]) - FMath::Abs(CurlValues[DownIndex])) / SpacingY);
+			if (!CurlGrad.Normalize())
+			{
+				continue;
+			}
+
+			const float Curl = CurlValues[Idx];
+			VelX[Idx] += CurlGrad.Y * Curl * VorticityStrength * DeltaTime;
+			VelY[Idx] += -CurlGrad.X * Curl * VorticityStrength * DeltaTime;
+		}
+	});
+}
+
 void FTDFluidGrid2DSolver::AdvectVelocity(float DeltaTime)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_AdvectVelocity);
@@ -1441,7 +1666,7 @@ void FTDFluidGrid2DSolver::AdvectVelocity(float DeltaTime)
 			const float BacktraceX = static_cast<float>(X) - VelX[Idx] * StepScaleX;
 			const float BacktraceY = static_cast<float>(Y) - VelY[Idx] * StepScaleY;
 			const float BorderDamping = BorderFadeByCoordinate[X] <= BorderFadeByCoordinate[Y] ? BorderDampingByCoordinate[X] : BorderDampingByCoordinate[Y];
-			const FTDFluidBilinearSample Sample = MakeBilinearSample(BacktraceX, BacktraceY, GridSize);
+			const FTDFluidBilinearSample Sample = MakeAreaBilinearSample(BacktraceX, BacktraceY, GridSize, Config.AreaAddressMode);
 
 			AdvectedVelX[Idx] = InterpolateBilinear(VelX, Sample) * DampingFactor * BorderDamping;
 			AdvectedVelY[Idx] = InterpolateBilinear(VelY, Sample) * DampingFactor * BorderDamping;
@@ -1483,6 +1708,7 @@ void FTDFluidGrid2DSolver::ComputeVelocityDivergence(float SpacingX, float Spaci
 	float* DivergenceValues = Divergence.GetData();
 	float* PressureSolutionValues = PressureSolution.GetData();
 
+	const bool bWrapsArea = IsAreaWrapped();
 	const auto ComputeCellNearSolid = [&](int32 X, int32 Y)
 	{
 		const int32 Idx = Y * GridSize + X;
@@ -1493,6 +1719,21 @@ void FTDFluidGrid2DSolver::ComputeVelocityDivergence(float SpacingX, float Spaci
 			return;
 		}
 
+		if (bWrapsArea)
+		{
+			int32 RightIndex = 0;
+			int32 LeftIndex = 0;
+			int32 UpIndex = 0;
+			int32 DownIndex = 0;
+			ResolveWrappedNeighborIndices(X, Y, RightIndex, LeftIndex, UpIndex, DownIndex);
+			const uint8* SolidCells = SolidCellMask.GetData();
+			const float WrappedVelRight = SolidCells[RightIndex] ? 0.0f : VelX[RightIndex];
+			const float WrappedVelLeft = SolidCells[LeftIndex] ? 0.0f : VelX[LeftIndex];
+			const float WrappedVelUp = SolidCells[UpIndex] ? 0.0f : VelY[UpIndex];
+			const float WrappedVelDown = SolidCells[DownIndex] ? 0.0f : VelY[DownIndex];
+			DivergenceValues[Idx] = (WrappedVelRight - WrappedVelLeft) / DoubleSpacingX + (WrappedVelUp - WrappedVelDown) / DoubleSpacingY;
+			return;
+		}
 		const float VelRight = IsSolidCell(X + 1, Y) ? 0.0f : VelX[Idx + 1];
 		const float VelLeft = IsSolidCell(X - 1, Y) ? 0.0f : VelX[Idx - 1];
 		const float VelUp = IsSolidCell(X, Y + 1) ? 0.0f : VelY[Idx + GridSize];
@@ -1534,6 +1775,7 @@ void FTDFluidGrid2DSolver::RelaxPressureJacobi(float InvSpacingXSquared, float I
 	const uint8* SolidFreeRows = SolidFreeStencilRows.GetData();
 	const float* DivergenceValues = Divergence.GetData();
 
+	const bool bWrapsArea = IsAreaWrapped();
 	for (int32 Iter = 0; Iter < Config.PressureIterations; ++Iter)
 	{
 		const float* SourcePressure = PressureSolution.GetData();
@@ -1549,6 +1791,21 @@ void FTDFluidGrid2DSolver::RelaxPressureJacobi(float InvSpacingXSquared, float I
 			}
 
 			const float CenterP = SourcePressure[Idx];
+			if (bWrapsArea)
+			{
+				int32 RightIndex = 0;
+				int32 LeftIndex = 0;
+				int32 UpIndex = 0;
+				int32 DownIndex = 0;
+				ResolveWrappedNeighborIndices(X, Y, RightIndex, LeftIndex, UpIndex, DownIndex);
+				const uint8* SolidCells = SolidCellMask.GetData();
+				const float WrappedRight = SolidCells[RightIndex] ? CenterP : SourcePressure[RightIndex];
+				const float WrappedLeft = SolidCells[LeftIndex] ? CenterP : SourcePressure[LeftIndex];
+				const float WrappedUp = SolidCells[UpIndex] ? CenterP : SourcePressure[UpIndex];
+				const float WrappedDown = SolidCells[DownIndex] ? CenterP : SourcePressure[DownIndex];
+				TargetPressure[Idx] = ((WrappedLeft + WrappedRight) * InvSpacingXSquared + (WrappedDown + WrappedUp) * InvSpacingYSquared - DivergenceValues[Idx]) * InvNeighborWeightSum;
+				return;
+			}
 			const float PRight = IsSolidCell(X + 1, Y) ? CenterP : SourcePressure[Idx + 1];
 			const float PLeft = IsSolidCell(X - 1, Y) ? CenterP : SourcePressure[Idx - 1];
 			const float PUp = IsSolidCell(X, Y + 1) ? CenterP : SourcePressure[Idx + GridSize];
@@ -1634,6 +1891,7 @@ void FTDFluidGrid2DSolver::SubtractPressureGradient(float SpacingX, float Spacin
 	float* VelY = VelocityY.GetData();
 	float* PressureValues = Pressure.GetData();
 
+	const bool bWrapsArea = IsAreaWrapped();
 	const auto SubtractCellNearSolid = [&](int32 X, int32 Y)
 	{
 		const int32 Idx = Y * GridSize + X;
@@ -1646,6 +1904,23 @@ void FTDFluidGrid2DSolver::SubtractPressureGradient(float SpacingX, float Spacin
 		}
 
 		const float CenterP = PressureSolutionValues[Idx];
+		if (bWrapsArea)
+		{
+			int32 RightIndex = 0;
+			int32 LeftIndex = 0;
+			int32 UpIndex = 0;
+			int32 DownIndex = 0;
+			ResolveWrappedNeighborIndices(X, Y, RightIndex, LeftIndex, UpIndex, DownIndex);
+			const uint8* SolidCells = SolidCellMask.GetData();
+			const float WrappedRight = SolidCells[RightIndex] ? CenterP : PressureSolutionValues[RightIndex];
+			const float WrappedLeft = SolidCells[LeftIndex] ? CenterP : PressureSolutionValues[LeftIndex];
+			const float WrappedUp = SolidCells[UpIndex] ? CenterP : PressureSolutionValues[UpIndex];
+			const float WrappedDown = SolidCells[DownIndex] ? CenterP : PressureSolutionValues[DownIndex];
+			VelX[Idx] -= (WrappedRight - WrappedLeft) / DoubleSpacingX;
+			VelY[Idx] -= (WrappedUp - WrappedDown) / DoubleSpacingY;
+			PressureValues[Idx] = FMath::Clamp(CenterP * PressureDisplayScale, -1.0f, 1.0f);
+			return;
+		}
 		const float PRight = IsSolidCell(X + 1, Y) ? CenterP : PressureSolutionValues[Idx + 1];
 		const float PLeft = IsSolidCell(X - 1, Y) ? CenterP : PressureSolutionValues[Idx - 1];
 		const float PUp = IsSolidCell(X, Y + 1) ? CenterP : PressureSolutionValues[Idx + GridSize];
@@ -1723,7 +1998,7 @@ void FTDFluidGrid2DSolver::AdvectDensities(float DeltaTime)
 
 			const float BacktraceX = static_cast<float>(X) - VelX[Idx] * StepScaleX;
 			const float BacktraceY = static_cast<float>(Y) - VelY[Idx] * StepScaleY;
-			const FTDFluidBilinearSample Sample = MakeBilinearSample(BacktraceX, BacktraceY, GridSize);
+			const FTDFluidBilinearSample Sample = MakeAreaBilinearSample(BacktraceX, BacktraceY, GridSize, Config.AreaAddressMode);
 
 			AdvectedPrimary[Idx] = FMath::Clamp(InterpolateBilinear(PrimaryValues, Sample) * PrimaryDissipationFactor, 0.0f, 1.0f);
 			AdvectedSelective[Idx] = FMath::Clamp(InterpolateBilinear(SelectiveValues, Sample) * DissipationFactor, 0.0f, 1.0f);
@@ -1853,7 +2128,7 @@ void FTDFluidGrid2DSolver::ComputeRelativeCellSpacing(float& OutSpacingX, float&
 
 float FTDFluidGrid2DSolver::SampleBilinear(const TArray<float>& Field, float GridX, float GridY) const
 {
-	return InterpolateBilinear(Field.GetData(), MakeBilinearSample(GridX, GridY, Resolution));
+	return InterpolateBilinear(Field.GetData(), MakeAreaBilinearSample(GridX, GridY, Resolution, Config.AreaAddressMode));
 }
 
 bool FTDFluidGrid2DSolver::WorldToGridUV(const FVector2D& WorldPos, FVector2D& OutUV) const
@@ -2068,6 +2343,7 @@ void FTDFluidGrid2DSolver::ReleaseWaterBuffers()
 	WaterSurfaceHeight.Empty();
 	WaterDrySdf.Empty();
 	ObstacleSdfRaw.Empty();
+	++ObstacleSdfRawGeneration;
 	TerrainKnownMask.Empty();
 	FlowTargetVelocityX.Empty();
 	FlowTargetVelocityY.Empty();
@@ -2098,6 +2374,7 @@ void FTDFluidGrid2DSolver::ResetWaterBuffers()
 	WaterSurfaceHeight.Init(NoWaterSurfaceHeight, CellCount);
 	WaterDrySdf.Init(FluidWaterUnknownTerrainSdfCm, CellCount);
 	ObstacleSdfRaw = ObstacleSdf;
+	++ObstacleSdfRawGeneration;
 	TerrainKnownMask.Init(0, CellCount);
 	FlowTargetVelocityX.Init(0.0f, CellCount);
 	FlowTargetVelocityY.Init(0.0f, CellCount);
@@ -2224,6 +2501,7 @@ void FTDFluidGrid2DSolver::CommitWaterObstacleSdf()
 	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_CommitObstacleSdf);
 
 	ObstacleSdfRaw = ObstacleSdf;
+	++ObstacleSdfRawGeneration;
 	ComposeWaterObstacleSdf();
 }
 
@@ -2611,7 +2889,7 @@ void FTDFluidGrid2DSolver::AdvectVelocityWater(float DeltaTime)
 			const float BacktraceX = static_cast<float>(X) - VelX[Idx] * StepScaleX;
 			const float BacktraceY = static_cast<float>(Y) - VelY[Idx] * StepScaleY;
 			const float BorderDamping = BorderFadeByCoordinate[X] <= BorderFadeByCoordinate[Y] ? BorderDampingByCoordinate[X] : BorderDampingByCoordinate[Y];
-			const FTDFluidBilinearSample Sample = MakeBilinearSample(BacktraceX, BacktraceY, GridSize);
+			const FTDFluidBilinearSample Sample = MakeAreaBilinearSample(BacktraceX, BacktraceY, GridSize, Config.AreaAddressMode);
 
 			const float AdvectedX = InterpolateBilinear(VelX, Sample) * DampingFactor;
 			const float AdvectedY = InterpolateBilinear(VelY, Sample) * DampingFactor;
@@ -3080,6 +3358,20 @@ void FTDFluidGrid2DSolver::PackWaterSurfacePixels(TArray<FFloat16Color>& OutPixe
 	});
 }
 
+void FTDFluidGrid2DSolver::PackObstacleDistanceAuxPixels(TArray<FFloat16Color>& OutAuxPixels) const
+{
+	const int32 CellCount = Resolution * Resolution;
+	const bool bHasRawSdf = ObstacleSdfRaw.Num() == CellCount;
+	const float InverseRangeCm = 1.0f / FMath::Clamp(Config.ObstacleDistanceOutputRangeCm, 20.0f, 2000.0f);
+	OutAuxPixels.SetNumUninitialized(CellCount);
+	FFloat16Color* AuxPixels = OutAuxPixels.GetData();
+	for (int32 Idx = 0; Idx < CellCount; ++Idx)
+	{
+		const float RawSdfCm = bHasRawSdf ? ObstacleSdfRaw[Idx] : ObstacleDistanceEmptySdfCm;
+		AuxPixels[Idx] = FFloat16Color(FLinearColor(0.0f, FMath::Clamp(RawSdfCm * InverseRangeCm, -1.0f, 1.0f), 0.0f, 0.0f));
+	}
+}
+
 uint32 FTDFluidGrid2DSolver::ComputeWaterStateChecksum() const
 {
 	const TArray<float>* const WaterFields[] = {
@@ -3473,7 +3765,7 @@ void FTDFluidGrid2DSolver::AdvectHeat(float DeltaTime)
 
 			const float BacktraceX = static_cast<float>(X) - VelX[Idx] * StepScaleX;
 			const float BacktraceY = static_cast<float>(Y) - VelY[Idx] * StepScaleY;
-			const FTDFluidBilinearSample Sample = MakeBilinearSample(BacktraceX, BacktraceY, GridSize);
+			const FTDFluidBilinearSample Sample = MakeAreaBilinearSample(BacktraceX, BacktraceY, GridSize, Config.AreaAddressMode);
 			AdvectedHeat[Idx] = FMath::Clamp(InterpolateBilinear(HeatValues, Sample) * HeatDissipationFactor, 0.0f, 1.0f);
 		}
 	});
@@ -3528,6 +3820,12 @@ void FTDFluidGrid2DSolver::BuildBorderAlphaTable(float* OutAlphaByCoordinate) co
 
 void FTDFluidGrid2DSolver::PackAuxPixels(TArray<FFloat16Color>& OutAuxPixels) const
 {
+	if (IsInitialized() && Heat.IsEmpty() && Config.bOutputObstacleDistance && IsWaterLayerActive())
+	{
+		PackObstacleDistanceAuxPixels(OutAuxPixels);
+		return;
+	}
+
 	if (!IsInitialized() || Heat.IsEmpty())
 	{
 		OutAuxPixels.Reset();

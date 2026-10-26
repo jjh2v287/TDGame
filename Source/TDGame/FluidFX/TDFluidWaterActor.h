@@ -3,11 +3,13 @@
 #include "CoreMinimal.h"
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidWaterLodGridComponent.h"
 #include "TDFluidWaterActor.generated.h"
 
 class UDecalComponent;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
+class UStaticMesh;
 struct FStreamableHandle;
 
 UCLASS()
@@ -54,9 +56,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water|Wetness", meta = (ClampMin = "0.0"))
 	float WetDecalVerticalMarginCm = 30.0f;
 
+	UPROPERTY(VisibleAnywhere, Category = "Water|LodGrid")
+	TObjectPtr<UTDFluidWaterLodGridComponent> LodGridComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Water|LodGrid")
+	TSoftObjectPtr<UStaticMesh> LodGridPatchMesh;
+
+	UPROPERTY(EditInstanceOnly, Category = "Water|TileMap")
+	TObjectPtr<ATDFluidLiveActor> TileMapSourceActor;
+
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport) override;
+
+	UFUNCTION(BlueprintPure, Category = "Water|LodGrid")
+	FTDFluidWaterLodGridStats GetLodGridStats() const { return LodGridStats; }
 
 	UFUNCTION(BlueprintPure, Category = "Water|Wetness")
 	bool IsWetDecalVisible() const;
@@ -101,6 +116,17 @@ private:
 	void SleepForMissingWater();
 	void WakeForPresentWater();
 	void ResetWaterLayerFade();
+	void RequestLodGridPatchMesh();
+	void UpdateLodGrid();
+	bool CanUseLodGrid() const;
+	bool PrepareLodGridPatchMesh();
+	bool CollectLodGridCoverage(FBox2D& OutCoverageCm, double& OutSurfaceHeightCm) const;
+	UMaterialInstanceDynamic* ResolveLodGridMaterial(const FBox2D& CoverageCm, TArray<AActor*>& OutCoveredSurfaceActors) const;
+	FVector ResolveLodGridObserverWorld() const;
+	bool ShouldReselectLodGrid(const FVector& ObserverWorld) const;
+	void PushLodGridMaterialParameters(UMaterialInstanceDynamic& LodMaterial, const FVector& ObserverWorld, double EffectiveBaseRangeCm) const;
+	void SetTaggedSurfacesHiddenInGame(const TArray<AActor*>& SurfaceActors, bool bShouldHide);
+	void DisableLodGrid();
 
 	UPROPERTY(Transient)
 	TMap<TObjectPtr<UMaterialInterface>, TObjectPtr<UMaterialInstanceDynamic>> SharedSurfaceMaterials;
@@ -112,6 +138,16 @@ private:
 	TObjectPtr<UMaterialInstanceDynamic> WetDecalMID;
 
 	TSharedPtr<FStreamableHandle> WetDecalLoadHandle;
+	TSharedPtr<FStreamableHandle> LodGridMeshLoadHandle;
+	TArray<TWeakObjectPtr<AActor>> LodHiddenSurfaceActors;
+	FTDFluidWaterLodGridSettings LodGridSettings;
+	FTDFluidWaterLodGridStats LodGridStats;
+	FVector LastLodObserverWorld = FVector::ZeroVector;
+	int32 LodAppliedRegistryVersion = INDEX_NONE;
+	bool bIsLodGridActive = false;
+	bool bIsLodSelectionDirty = true;
+	bool bHasLodGridSettings = false;
+	bool bHasWarnedLodGridMesh = false;
 
 	TArray<TWeakObjectPtr<AActor>> TraceIgnoredActors;
 	TArray<FTDFluidWaterRegion> CachedWaterRegions;

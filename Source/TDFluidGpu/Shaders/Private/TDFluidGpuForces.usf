@@ -85,7 +85,7 @@ void VorticityCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThrea
 	for (uint VelocityIndex = GroupIndex; VelocityIndex < TDFLUIDGPU_VORTICITY_VELOCITY_TILE * TDFLUIDGPU_VORTICITY_VELOCITY_TILE; VelocityIndex += TDFLUIDGPU_VORTICITY_THREAD_COUNT)
 	{
 		const int2 LocalCell = int2(VelocityIndex % TDFLUIDGPU_VORTICITY_VELOCITY_TILE, VelocityIndex / TDFLUIDGPU_VORTICITY_VELOCITY_TILE);
-		const int2 GlobalCell = TileOrigin - TDFLUIDGPU_VORTICITY_HALO_CELLS + LocalCell;
+		const int2 GlobalCell = TDFluidGpuResolveNeighborCell(TileOrigin - TDFLUIDGPU_VORTICITY_HALO_CELLS + LocalCell, Resolution);
 		float2 Velocity = float2(0.0f, 0.0f);
 		if (TDFluidGpuIsInsideGrid(GlobalCell, Resolution))
 		{
@@ -100,7 +100,11 @@ void VorticityCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThrea
 		const int2 LocalCell = int2(CurlIndex % TDFLUIDGPU_VORTICITY_CURL_TILE, CurlIndex / TDFLUIDGPU_VORTICITY_CURL_TILE);
 		const int2 GlobalCell = TileOrigin - 1 + LocalCell;
 		float Curl = 0.0f;
+#if TDFLUIDGPU_WRAP_AREA
+		const bool bIsInteriorCell = true;
+#else
 		const bool bIsInteriorCell = GlobalCell.x >= 1 && GlobalCell.y >= 1 && GlobalCell.x <= Resolution - 2 && GlobalCell.y <= Resolution - 2;
+#endif
 		if (bIsInteriorCell)
 		{
 			const int2 VelocityCell = LocalCell + 1;
@@ -125,7 +129,11 @@ void VorticityCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThrea
 	const int2 LocalVelocityCell = int2(GroupThreadId.xy) + TDFLUIDGPU_VORTICITY_HALO_CELLS;
 	float2 Velocity = SharedVorticityVelocity[ToVorticityVelocityIndex(LocalVelocityCell)];
 	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+#if TDFLUIDGPU_WRAP_AREA
+	const bool bIsConfinedCell = true;
+#else
 	const bool bIsConfinedCell = Cell.x >= 2 && Cell.y >= 2 && Cell.x <= Resolution - 3 && Cell.y <= Resolution - 3;
+#endif
 	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_VORTICITY) && bIsConfinedCell && !TDFluidGpuIsSolidDistance(ObstacleSdf[Texel]))
 	{
 		const int2 LocalCurlCell = int2(GroupThreadId.xy) + 1;

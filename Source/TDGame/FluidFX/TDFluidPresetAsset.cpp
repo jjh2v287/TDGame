@@ -53,6 +53,10 @@ FTDFluidSimulationConfig UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidP
 
 bool UTDFluidPresetAsset::IsFireFamilyPresetKind(ETDFluidPresetKind Kind)
 {
+	if (Kind == ETDFluidPresetKind::TileWaves)
+	{
+		return false;
+	}
 	return static_cast<uint8>(Kind) >= static_cast<uint8>(ETDFluidPresetKind::Torch);
 }
 
@@ -117,6 +121,16 @@ FTDFluidEmberSettings UTDFluidPresetAsset::BuildEmberSettingsForPresetKind(ETDFl
 FTDFluidFireLightSettings UTDFluidPresetAsset::BuildFireLightSettingsForPresetKind(ETDFluidPresetKind Kind)
 {
 	return TDFluidBuildTunedSettings<FTDFluidFireLightSettings>(Kind);
+}
+
+FTDFluidWaterLodGridSettings UTDFluidPresetAsset::BuildWaterLodGridSettingsForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidWaterLodGridSettings>(Kind);
+}
+
+FTDFluidWaterNearRippleSettings UTDFluidPresetAsset::BuildWaterNearRippleSettingsForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidWaterNearRippleSettings>(Kind);
 }
 
 UTDFluidPresetAsset* UTDFluidPresetAsset::CreateTransientPreset(UObject* Outer, ETDFluidPresetKind Kind)

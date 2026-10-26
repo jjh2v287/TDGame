@@ -1,0 +1,1306 @@
+{
+ "run_label": "fx10",
+ "note": "FX-10r F3 격자 행렬 측정 계획(pie_profile_fluid.py --csv-gpu, fx7p_plan.json 형식). 9조합 × r.TDFogScattering {0,1}, 효과 A/B = FogAmbient·200 m 상자 숨김. 결과는 P-29 사용자 결정 자료, 측정 조건(높이 안개 볼류메트릭·sg.ShadowQuality)도 기록. 초안: 열 이름은 시운전 1블록으로 대조(L-editor-60)",
+ "offscreen_logs": [],
+ "headless_logs": [],
+ "bench_outputs": [],
+ "scenes": [
+  {
+   "id": "G16x64_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 16",
+      "r.VolumetricFog.GridSizeZ 64",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 16,
+    "grid_size_z": 64,
+    "td_fog_scattering": 0,
+    "cells_1080p": 522240,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G16x64_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 16",
+      "r.VolumetricFog.GridSizeZ 64",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 16,
+    "grid_size_z": 64,
+    "td_fog_scattering": 1,
+    "cells_1080p": 522240,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G16x128_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 16",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 16,
+    "grid_size_z": 128,
+    "td_fog_scattering": 0,
+    "cells_1080p": 1044480,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G16x128_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 16",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 16,
+    "grid_size_z": 128,
+    "td_fog_scattering": 1,
+    "cells_1080p": 1044480,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G16x256_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 16",
+      "r.VolumetricFog.GridSizeZ 256",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 16,
+    "grid_size_z": 256,
+    "td_fog_scattering": 0,
+    "cells_1080p": 2088960,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G16x256_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 16",
+      "r.VolumetricFog.GridSizeZ 256",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 16,
+    "grid_size_z": 256,
+    "td_fog_scattering": 1,
+    "cells_1080p": 2088960,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G8x64_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 64",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 8,
+    "grid_size_z": 64,
+    "td_fog_scattering": 0,
+    "cells_1080p": 2073600,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G8x64_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 64",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 8,
+    "grid_size_z": 64,
+    "td_fog_scattering": 1,
+    "cells_1080p": 2073600,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G8x128_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 8,
+    "grid_size_z": 128,
+    "td_fog_scattering": 0,
+    "cells_1080p": 4147200,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G8x128_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 8,
+    "grid_size_z": 128,
+    "td_fog_scattering": 1,
+    "cells_1080p": 4147200,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G8x256_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 256",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 8,
+    "grid_size_z": 256,
+    "td_fog_scattering": 0,
+    "cells_1080p": 8294400,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G8x256_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 256",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 8,
+    "grid_size_z": 256,
+    "td_fog_scattering": 1,
+    "cells_1080p": 8294400,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G5x64_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 5",
+      "r.VolumetricFog.GridSizeZ 64",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 5,
+    "grid_size_z": 64,
+    "td_fog_scattering": 0,
+    "cells_1080p": 5308416,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G5x64_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 5",
+      "r.VolumetricFog.GridSizeZ 64",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 5,
+    "grid_size_z": 64,
+    "td_fog_scattering": 1,
+    "cells_1080p": 5308416,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G5x128_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 5",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 5,
+    "grid_size_z": 128,
+    "td_fog_scattering": 0,
+    "cells_1080p": 10616832,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G5x128_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 5",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 5,
+    "grid_size_z": 128,
+    "td_fog_scattering": 1,
+    "cells_1080p": 10616832,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G5x256_s0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 5",
+      "r.VolumetricFog.GridSizeZ 256",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 5,
+    "grid_size_z": 256,
+    "td_fog_scattering": 0,
+    "cells_1080p": 21233664,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  },
+  {
+   "id": "G5x256_s1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+   "targets": [
+    "TDGen_FogAmbient",
+    "TDGen_FogPassiveField"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "r.VolumetricFog.GridPixelSize 5",
+      "r.VolumetricFog.GridSizeZ 256",
+      "r.TDFogScattering 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "pawn",
+     "x": 8000.0,
+     "y": 25000.0
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_FogAmbient",
+     "distance_cm": 1800.0,
+     "pitch": -15.0,
+     "yaw": 0.0,
+     "height_cm": 200.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    },
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    },
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "grid_pixel_size": 5,
+    "grid_size_z": 256,
+    "td_fog_scattering": 1,
+    "cells_1080p": 21233664,
+    "box_size_cm": [
+     20000,
+     20000,
+     1300
+    ]
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime"
+   ]
+  }
+ ],
+ "fresh_pie_after_gpu": true
+}

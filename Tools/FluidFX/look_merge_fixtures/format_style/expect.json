@@ -1,0 +1,15 @@
+{
+ "fragments": [
+  "fragment.json"
+ ],
+ "exit": 0,
+ "conflicts": [],
+ "changes": [],
+ "added_entries": [],
+ "style": {
+  "indent": "  ",
+  "newline": "\r\n",
+  "has_final_newline": false
+ },
+ "output": "expected.json"
+}

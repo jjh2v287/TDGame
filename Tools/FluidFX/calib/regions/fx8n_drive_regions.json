@@ -1,0 +1,25 @@
+{
+  "note": "1280x720 촬영, fx8n_drive 카메라(장면 중심에서 -Y 900·붐 900·시선 [-35, 0]) 기준 영역 초안. 작은 덩어리 검출은 embers kind 를 빌린다(G2)",
+  "regions": [
+    {
+      "name": "particles",
+      "kind": "embers",
+      "box": [
+        240,
+        120,
+        1040,
+        640
+      ]
+    },
+    {
+      "name": "sky",
+      "kind": "background",
+      "box": [
+        1050,
+        20,
+        1270,
+        110
+      ]
+    }
+  ]
+}

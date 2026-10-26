@@ -2,6 +2,20 @@
 
 namespace
 {
+	FTDFluidGpuPackedRingShape PackRingShape(const FTDFluidGpuStampInput& Stamp)
+	{
+		FTDFluidGpuPackedRingShape RingShape;
+		RingShape.InnerRadiusRatio = FMath::Clamp(Stamp.RingInnerRadiusRatio, 0.0f, 0.9f);
+		RingShape.SideArcWeight = FMath::Clamp(Stamp.RingSideArcWeight, 0.0f, 2.0f);
+		RingShape.InnerEraseRatePerSec = FMath::Clamp(Stamp.RingInnerEraseRatePerSec, 0.0f, 200.0f);
+		const double PlaneSpeed = Stamp.VelocityPlaneCmPerSec.Size();
+		if (PlaneSpeed >= 1.0)
+		{
+			RingShape.MotionDirection = FVector2f(Stamp.VelocityPlaneCmPerSec / PlaneSpeed);
+		}
+		return RingShape;
+	}
+
 	struct FTDFluidGpuStampWindowGeometry
 	{
 		int32 Resolution = 0;
@@ -255,11 +269,13 @@ FTDFluidGpuStampBinSet FTDFluidGpuStampBins::Build(const FTDFluidGpuStampBinWind
 
 	BinSet.Stamps.Reserve(Candidates.Num());
 	BinSet.RippleImpulsesCm.Reserve(Candidates.Num());
+	BinSet.RingShapes.Reserve(Candidates.Num());
 	for (const FTDFluidGpuStampCandidate& Candidate : Candidates)
 	{
 		const FTDFluidGpuStampInput& Stamp = Stamps[Candidate.SourceIndex];
 		BinSet.Stamps.Add(PackStamp(Window, Stamp, Candidate, Response));
 		BinSet.RippleImpulsesCm.Add(Stamp.RippleImpulseCm);
+		BinSet.RingShapes.Add(PackRingShape(Stamp));
 	}
 
 	FillBins(Geometry, Candidates, Stamps, MaxStampsPerBin, BinSet);
@@ -274,6 +290,7 @@ uint32 FTDFluidGpuStampBins::AppendToFrame(const FTDFluidGpuStampBinSet& ActorBi
 
 	InOutFrameBins.Stamps.Append(ActorBins.Stamps);
 	InOutFrameBins.RippleImpulsesCm.Append(ActorBins.RippleImpulsesCm);
+	InOutFrameBins.RingShapes.Append(ActorBins.RingShapes);
 
 	InOutFrameBins.BinRanges.Reserve(InOutFrameBins.BinRanges.Num() + ActorBins.BinRanges.Num());
 	for (const FTDFluidGpuStampBinRange& Range : ActorBins.BinRanges)

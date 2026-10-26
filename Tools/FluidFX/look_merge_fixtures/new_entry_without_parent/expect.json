@@ -1,0 +1,10 @@
+{
+ "fragments": [
+  "fragment.json"
+ ],
+ "exit": 1,
+ "conflicts": [],
+ "problems": [
+  "Materials./Game/T/MI_New: 키 없음 Parent"
+ ]
+}

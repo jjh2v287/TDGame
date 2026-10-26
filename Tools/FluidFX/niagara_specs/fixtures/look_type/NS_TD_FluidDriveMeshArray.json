@@ -1,0 +1,22 @@
+{
+ "asset": "/Game/FluidFX/Niagara/NS_TD_FluidDriveMeshArray",
+ "emitter_name": "Drive",
+ "profile": "drive",
+ "space": "local",
+ "spawn": "grid_burst",
+ "features": [
+  "height",
+  "color"
+ ],
+ "renderer": {
+  "kind": "mesh",
+  "material": "/Game/FluidFX/Materials/MI_TD_FluidDrivenParticleMesh_Default",
+  "alignment": null,
+  "mesh": "/Engine/BasicShapes/Cube.Cube",
+  "mesh_facing": "Default"
+ },
+ "cast_shadow": true,
+ "max_particles": 4096,
+ "fixed_bounds_half_extent_cm": 800.0,
+ "random_seed": 1
+}

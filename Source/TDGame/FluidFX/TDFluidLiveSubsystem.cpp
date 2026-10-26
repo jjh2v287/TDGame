@@ -738,7 +738,7 @@ int32 UTDFluidLiveSubsystem::InjectCombatBrushStamp(const FTDFluidBrushStamp& St
 			continue;
 		}
 
-		if (LiveActor->IsPooledInactive() || !LiveActor->LiveComponent || !LiveActor->LiveComponent->IsSimulationAwake())
+		if (LiveActor->IsPooledInactive() || !LiveActor->LiveComponent || !LiveActor->LiveComponent->IsSimulationAwake() || LiveActor->LiveComponent->IsAreaWrapped())
 		{
 			continue;
 		}
@@ -776,7 +776,7 @@ int32 UTDFluidLiveSubsystem::InjectCombatParticleSplash(
 	for (const TWeakObjectPtr<ATDFluidLiveActor>& Entry : RegisteredActors)
 	{
 		ATDFluidLiveActor* LiveActor = Entry.Get();
-		if (!LiveActor || LiveActor->IsPooledInactive() || !LiveActor->LiveComponent || !LiveActor->LiveComponent->IsSimulationAwake())
+		if (!LiveActor || LiveActor->IsPooledInactive() || !LiveActor->LiveComponent || !LiveActor->LiveComponent->IsSimulationAwake() || LiveActor->LiveComponent->IsAreaWrapped())
 		{
 			continue;
 		}

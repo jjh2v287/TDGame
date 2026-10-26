@@ -154,10 +154,13 @@ class FTDFluidGpuRasterizeObstaclesCS : public FTDFluidGpuComputeShader
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuRasterizeObstaclesCS, "/TDFluidGpu/Private/TDFluidGpuRasterizeObstacles.usf", "MainCS", SF_Compute);
 
+class FTDFluidGpuWrapAreaDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WRAP_AREA");
+
 class FTDFluidGpuApplyStampsCS : public FTDFluidGpuComputeShader
 {
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuApplyStampsCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuApplyStampsCS, FTDFluidGpuComputeShader);
+	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -181,6 +184,7 @@ class FTDFluidGpuForcesCS : public FTDFluidGpuComputeShader
 {
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuForcesCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuForcesCS, FTDFluidGpuComputeShader);
+	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -198,6 +202,7 @@ class FTDFluidGpuVorticityCS : public FTDFluidGpuComputeShader
 {
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuVorticityCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuVorticityCS, FTDFluidGpuComputeShader);
+	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -217,12 +222,16 @@ class FTDFluidGpuJacobiTileCS : public FTDFluidGpuComputeShader
 	class FOpenWaterBordersDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_OPEN_WATER_BORDERS");
 	class FTileSkipDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_JACOBI_TILE_SKIP");
 	class FFusedTailDimension : SHADER_PERMUTATION_INT("TDFLUIDGPU_WATER_JACOBI_TAIL", 3);
-	using FPermutationDomain = TShaderPermutationDomain<FComputesDivergenceDimension, FOpenWaterBordersDimension, FTileSkipDimension, FFusedTailDimension>;
+	using FPermutationDomain = TShaderPermutationDomain<FComputesDivergenceDimension, FOpenWaterBordersDimension, FTileSkipDimension, FFusedTailDimension, FTDFluidGpuWrapAreaDimension>;
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
 	{
 		const FPermutationDomain PermutationVector(Parameters.PermutationId);
 		const bool bUsesOpenWaterBorders = PermutationVector.Get<FOpenWaterBordersDimension>();
+		if (PermutationVector.Get<FTDFluidGpuWrapAreaDimension>() && (bUsesOpenWaterBorders || PermutationVector.Get<FTileSkipDimension>() || PermutationVector.Get<FFusedTailDimension>() != 0))
+		{
+			return false;
+		}
 		if (PermutationVector.Get<FTileSkipDimension>() && !bUsesOpenWaterBorders)
 		{
 			return false;
@@ -264,7 +273,16 @@ class FTDFluidGpuSubtractGradientCS : public FTDFluidGpuComputeShader
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuSubtractGradientCS, FTDFluidGpuComputeShader);
 
 	class FOpenWaterBordersDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_OPEN_WATER_BORDERS");
-	using FPermutationDomain = TShaderPermutationDomain<FOpenWaterBordersDimension>;
+	using FPermutationDomain = TShaderPermutationDomain<FOpenWaterBordersDimension, FTDFluidGpuWrapAreaDimension>;
+	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+	{
+		const FPermutationDomain PermutationVector(Parameters.PermutationId);
+		if (PermutationVector.Get<FTDFluidGpuWrapAreaDimension>() && PermutationVector.Get<FOpenWaterBordersDimension>())
+		{
+			return false;
+		}
+		return FTDFluidGpuComputeShader::ShouldCompilePermutation(Parameters);
+	}
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -422,6 +440,7 @@ class FTDFluidGpuAdvectVelocityCS : public FTDFluidGpuComputeShader
 {
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuAdvectVelocityCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuAdvectVelocityCS, FTDFluidGpuComputeShader);
+	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -438,7 +457,7 @@ class FTDFluidGpuAdvectDensityPackCS : public FTDFluidGpuComputeShader
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuAdvectDensityPackCS, FTDFluidGpuComputeShader);
 
 	class FWritesOutputDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WRITES_OUTPUT");
-	using FPermutationDomain = TShaderPermutationDomain<FWritesOutputDimension>;
+	using FPermutationDomain = TShaderPermutationDomain<FWritesOutputDimension, FTDFluidGpuWrapAreaDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -662,6 +681,7 @@ class FTDFluidGpuWaterStampsCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuStampBinRange>, StampBinRanges)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, StampBinIndices)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<float>, StampRippleImpulses)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedRingShape>, StampRingShapes)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
@@ -673,6 +693,21 @@ class FTDFluidGpuWaterStampsCS : public FTDFluidGpuComputeShader
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterStampsCS, "/TDFluidGpu/Private/TDFluidGpuWaterStep.usf", "StampsCS", SF_Compute);
+
+class FTDFluidGpuWaterAuxPackCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterAuxPackCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterAuxPackCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, ObstacleSdf)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, AuxOutput)
+		SHADER_PARAMETER(uint32, SliceIndex)
+		SHADER_PARAMETER(uint32, Resolution)
+		SHADER_PARAMETER(float, InverseRangeCm)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuWaterAuxPackCS, "/TDFluidGpu/Private/TDFluidGpuWaterAux.usf", "WaterAuxPackCS", SF_Compute);
 
 class FTDFluidGpuWaterStampsForcesVorticityCS : public FTDFluidGpuComputeShader
 {
@@ -686,6 +721,7 @@ class FTDFluidGpuWaterStampsForcesVorticityCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuStampBinRange>, StampBinRanges)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, StampBinIndices)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<float>, StampRippleImpulses)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedRingShape>, StampRingShapes)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
@@ -935,6 +971,7 @@ namespace
 		FRDGTextureRef ReadbackAtlas = nullptr;
 		FRDGTextureUAVRef ReadbackAtlasUAV = nullptr;
 		FRDGBufferSRVRef StampRippleImpulses = nullptr;
+		FRDGBufferSRVRef StampRingShapes = nullptr;
 		FRDGBufferRef WaterProbeSamples = nullptr;
 	};
 
@@ -1243,6 +1280,7 @@ namespace
 		}
 
 		InOutResources.StampRippleImpulses = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampRippleImpulses"), PreparedFrame.StampBins.RippleImpulsesCm));
+		InOutResources.StampRingShapes = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampRingShapes"), PreparedFrame.StampBins.RingShapes));
 		if (PreparedFrame.WaterProbeSlotCount <= 0)
 		{
 			return;
@@ -1435,7 +1473,9 @@ namespace
 		Parameters->HeatIn = MakeSRV(GraphBuilder, Textures.Heat[0]);
 		Parameters->HeatOut = MakeUAV(GraphBuilder, Textures.Heat[1]);
 
-		TShaderMapRef<FTDFluidGpuApplyStampsCS> Shader(Context.ShaderMap);
+		FTDFluidGpuApplyStampsCS::FPermutationDomain StampDomain;
+		StampDomain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
+		TShaderMapRef<FTDFluidGpuApplyStampsCS> Shader(Context.ShaderMap, StampDomain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.ApplyStamps"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
 	}
 
@@ -1452,7 +1492,9 @@ namespace
 		Parameters->HeatIn = MakeSRV(GraphBuilder, Textures.Heat[1]);
 		Parameters->VelocityOut = MakeUAV(GraphBuilder, Textures.Velocity[0]);
 
-		TShaderMapRef<FTDFluidGpuForcesCS> Shader(Context.ShaderMap);
+		FTDFluidGpuForcesCS::FPermutationDomain ForcesDomain;
+		ForcesDomain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
+		TShaderMapRef<FTDFluidGpuForcesCS> Shader(Context.ShaderMap, ForcesDomain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.Forces"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
 	}
 
@@ -1466,7 +1508,9 @@ namespace
 		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
 		Parameters->VelocityOut = MakeUAV(GraphBuilder, Textures.Velocity[1]);
 
-		TShaderMapRef<FTDFluidGpuVorticityCS> Shader(Context.ShaderMap);
+		FTDFluidGpuVorticityCS::FPermutationDomain VorticityDomain;
+		VorticityDomain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
+		TShaderMapRef<FTDFluidGpuVorticityCS> Shader(Context.ShaderMap, VorticityDomain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.Vorticity"), Shader, Parameters, MakeTileGroupCount(Context.Resolution, Context.EntryCount));
 	}
 
@@ -1519,6 +1563,7 @@ namespace
 			Domain.Set<FTDFluidGpuJacobiTileCS::FOpenWaterBordersDimension>(WaterBindings != nullptr);
 			Domain.Set<FTDFluidGpuJacobiTileCS::FTileSkipDimension>(bSkipsTiles && !bIsFusedTailDispatch);
 			Domain.Set<FTDFluidGpuJacobiTileCS::FFusedTailDimension>(bIsFusedTailDispatch ? (FusedTail->PressurePartialSums != nullptr ? 2 : 1) : 0);
+			Domain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
 			TShaderMapRef<FTDFluidGpuJacobiTileCS> Shader(Context.ShaderMap, Domain);
 			FTDFluidGpuJacobiTileCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuJacobiTileCS::FParameters>();
 			Parameters->ActorParameters = Context.ActorParameters;
@@ -1576,6 +1621,7 @@ namespace
 
 		FTDFluidGpuSubtractGradientCS::FPermutationDomain Domain;
 		Domain.Set<FTDFluidGpuSubtractGradientCS::FOpenWaterBordersDimension>(WaterBindings != nullptr);
+		Domain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
 		TShaderMapRef<FTDFluidGpuSubtractGradientCS> Shader(Context.ShaderMap, Domain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.SubtractGradient"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
 	}
@@ -1922,7 +1968,9 @@ namespace
 		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
 		Parameters->VelocityOut = MakeUAV(GraphBuilder, Textures.Velocity[1]);
 
-		TShaderMapRef<FTDFluidGpuAdvectVelocityCS> Shader(Context.ShaderMap);
+		FTDFluidGpuAdvectVelocityCS::FPermutationDomain AdvectDomain;
+		AdvectDomain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
+		TShaderMapRef<FTDFluidGpuAdvectVelocityCS> Shader(Context.ShaderMap, AdvectDomain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.AdvectVelocity"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
 	}
 
@@ -1994,7 +2042,10 @@ namespace
 				++InOutOutputs.SkippedOutputCount;
 			}
 
-			TShaderMapRef<FTDFluidGpuAdvectDensityPackCS> Shader(Context.ShaderMap, FTDFluidGpuAdvectDensityPackCS::FPermutationDomain(bWritesOutput));
+			FTDFluidGpuAdvectDensityPackCS::FPermutationDomain DensityPackDomain;
+			DensityPackDomain.Set<FTDFluidGpuAdvectDensityPackCS::FWritesOutputDimension>(bWritesOutput);
+			DensityPackDomain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
+			TShaderMapRef<FTDFluidGpuAdvectDensityPackCS> Shader(Context.ShaderMap, DensityPackDomain);
 			FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.AdvectDensityPack"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, 1));
 		}
 	}
@@ -2476,6 +2527,7 @@ namespace
 		Parameters->StampBinRanges = Context.FrameResources.StampBinRanges;
 		Parameters->StampBinIndices = Context.FrameResources.StampBinIndices;
 		Parameters->StampRippleImpulses = Context.FrameResources.StampRippleImpulses;
+		Parameters->StampRingShapes = Context.FrameResources.StampRingShapes;
 		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
 		Parameters->WaterGuideField = MakeSRV(GraphBuilder, Water.GuideField);
 		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
@@ -2500,6 +2552,7 @@ namespace
 		Parameters->StampBinRanges = Context.FrameResources.StampBinRanges;
 		Parameters->StampBinIndices = Context.FrameResources.StampBinIndices;
 		Parameters->StampRippleImpulses = Context.FrameResources.StampRippleImpulses;
+		Parameters->StampRingShapes = Context.FrameResources.StampRingShapes;
 		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
 		Parameters->WaterGuideField = MakeSRV(GraphBuilder, Water.GuideField);
 		Parameters->WaterSurfaceHeightField = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
@@ -3022,6 +3075,40 @@ namespace
 		return FinalRippleIndex;
 	}
 
+	void AddWaterObstacleDistanceAuxPasses(const FTDFluidGpuBatchPassContext& Context)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
+		FRDGTextureSRVRef ObstacleSdfSRV = nullptr;
+		for (int32 EntryIndex = 0; EntryIndex < Context.EntryCount; ++EntryIndex)
+		{
+			const FTDFluidGpuActorInput& Actor = Context.FrameInputs.Actors[Frame.Entries[EntryIndex].ActorInputIndex];
+			if (!Actor.AuxOutput || !Actor.Settings.bWritesObstacleDistanceAux || !Actor.bRefreshesObstacleDistanceAux)
+			{
+				continue;
+			}
+
+			FRDGTextureRef AuxTarget = RegisterOutputTexture(GraphBuilder, Actor.AuxOutput, Context.Resolution, TEXT("TDFluidGpu.WaterAuxOutput"));
+			if (!AuxTarget)
+			{
+				continue;
+			}
+
+			if (!ObstacleSdfSRV)
+			{
+				ObstacleSdfSRV = MakeSRV(GraphBuilder, Context.Textures.ObstacleSdf);
+			}
+			FTDFluidGpuWaterAuxPackCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterAuxPackCS::FParameters>();
+			Parameters->ObstacleSdf = ObstacleSdfSRV;
+			Parameters->AuxOutput = MakeUAV(GraphBuilder, AuxTarget);
+			Parameters->SliceIndex = static_cast<uint32>(Frame.Parameters[EntryIndex].SliceIndex);
+			Parameters->Resolution = static_cast<uint32>(Context.Resolution);
+			Parameters->InverseRangeCm = 1.0f / FMath::Clamp(Actor.Settings.ObstacleDistanceOutputRangeCm, 20.0f, 2000.0f);
+			TShaderMapRef<FTDFluidGpuWaterAuxPackCS> Shader(Context.ShaderMap);
+			FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterAuxPack"), Shader, Parameters, FComputeShaderUtils::GetGroupCount(FIntPoint(Context.Resolution, Context.Resolution), 8));
+		}
+	}
+
 	void AddWaterBatchGraphPasses(FRDGBuilder& GraphBuilder, FGlobalShaderMap* ShaderMap, const FTDFluidGpuFrameInputs& FrameInputs, const FTDFluidGpuFrameResources& FrameResources, FTDFluidGpuBatch& Batch, FTDFluidGpuFrameOutputs& InOutOutputs, FTDFluidGpuPassTimestamps* PassTimestamps)
 	{
 		const FTDFluidGpuBatchFrame& Frame = Batch.GetFrame();
@@ -3036,6 +3123,7 @@ namespace
 		InOutOutputs.SteppedEntryCount += Context.EntryCount;
 		bool bSwapsVelocityStates = false;
 		const int32 FinalRippleIndex = AddWaterBatchPasses(Context, WaterTextures, InOutOutputs, bSwapsVelocityStates);
+		AddWaterObstacleDistanceAuxPasses(Context);
 		if (FinalRippleIndex == 1)
 		{
 			Swap(Batch.StateTextures.Ripple[0], Batch.StateTextures.Ripple[1]);

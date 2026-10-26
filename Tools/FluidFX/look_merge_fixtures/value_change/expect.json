@@ -1,0 +1,17 @@
+{
+ "fragments": [
+  "a.json",
+  "b.json"
+ ],
+ "exit": 0,
+ "conflicts": [],
+ "added_entries": [],
+ "changes": [
+  "Materials./Game/T/MI_A.Parent",
+  "Materials./Game/T/MI_A.Scalars.Foo",
+  "Materials./Game/T/MI_A.Switches.bFlag",
+  "Materials./Game/T/MI_A.Vectors.Tint",
+  "NiagaraSystems./Game/T/NS_A.Ints.User.Count"
+ ],
+ "output": "expected.json"
+}

@@ -1,0 +1,14 @@
+{
+ "Textures": {},
+ "Materials": {
+  "/Game/T/MI_A": {
+   "Switches": {
+    "bFlag": 1
+   },
+   "Colors": {}
+  },
+  "/Game/T/MI_B": {
+   "Parent": "/Game/T/M_Base.M_Base"
+  }
+ }
+}

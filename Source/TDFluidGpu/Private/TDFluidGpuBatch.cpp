@@ -1,5 +1,6 @@
 #include "TDFluidGpuBatch.h"
 
+#include "TDFluidGpuNearRipple.h"
 #include "TDFluidGpuStepPasses.h"
 
 #include "HAL/IConsoleManager.h"
@@ -115,6 +116,7 @@ namespace
 		FIntPoint Origin = FIntPoint::ZeroValue;
 		FVector2f Offset = FVector2f::ZeroVector;
 		FVector2f StepPerCell = FVector2f::ZeroVector;
+		uint32 PeriodPacked = 0;
 	};
 
 	struct FTDFluidGpuNoiseTime
@@ -186,6 +188,24 @@ namespace
 		return ConsoleValue >= 0.0f ? ConsoleValue : PresetValue;
 	}
 
+	void ApplyWrappedAreaRules(const FTDFluidGpuSimulationSettings& Settings, FTDFluidGpuSimulationSettings& InOutSanitized)
+	{
+		if (Settings.AreaAddressModeRequest != TDFluidGpuSolverConstants::WrapAreaAddressModeRequest)
+		{
+			InOutSanitized.AreaAddressModeRequest = 0;
+			return;
+		}
+		InOutSanitized.SimMode = ETDFluidGpuSimMode::FluidSim;
+		InOutSanitized.bUsesWaterLayer = false;
+		InOutSanitized.bUsesWaterWetness = false;
+		InOutSanitized.bReflectsAtBoundaries = false;
+		InOutSanitized.TerrainSlopeGravity = 0.0f;
+		InOutSanitized.OutflowBandRatio = 0.0f;
+		InOutSanitized.BorderFadeRatio = 0.0f;
+		InOutSanitized.Resolution = FTDFluidGpuBatch::ResolveResolutionTier(FMath::Min(Settings.Resolution, TDFluidGpuSolverConstants::WrapAreaMaximumResolution));
+		InOutSanitized.bUsesHeatChannel = Settings.bUsesHeatChannel;
+	}
+
 	FTDFluidGpuSimulationSettings SanitizeSettings(const FTDFluidGpuSimulationSettings& Settings)
 	{
 		FTDFluidGpuSimulationSettings Sanitized = Settings;
@@ -243,6 +263,7 @@ namespace
 		Sanitized.SwashHeightCm = ClampFinite(Settings.SwashHeightCm, 0.0f, 1000.0f);
 		Sanitized.CoastWavePeriodSeconds = ClampFinite(Settings.CoastWavePeriodSeconds, 0.1f, 1000.0f);
 		Sanitized.WetnessDryingSeconds = ClampFinite(Settings.WetnessDryingSeconds, 0.01f, 10000.0f);
+		ApplyWrappedAreaRules(Settings, Sanitized);
 		return Sanitized;
 	}
 
@@ -256,10 +277,31 @@ namespace
 		return PlaneUpDirection.GetSafeNormal();
 	}
 
+	int32 ResolvePeriodicLatticeCount(double ExtentCm, float SpacingCm)
+	{
+		return FMath::Max(1, FMath::RoundToInt(static_cast<float>(ExtentCm) / SpacingCm));
+	}
+
+	FTDFluidGpuNoiseLatticePlacement MakePeriodicNoiseLatticePlacement(const FTDFluidGpuSimulationSettings& Settings, int32 Resolution, float SpacingCm)
+	{
+		const int32 PeriodX = ResolvePeriodicLatticeCount(Settings.ExtentCm.X, SpacingCm);
+		const int32 PeriodY = ResolvePeriodicLatticeCount(Settings.ExtentCm.Y, SpacingCm);
+		FTDFluidGpuNoiseLatticePlacement Placement;
+		Placement.StepPerCell = FVector2f(
+			static_cast<float>(static_cast<double>(PeriodX) / Resolution),
+			static_cast<float>(static_cast<double>(PeriodY) / Resolution));
+		Placement.PeriodPacked = static_cast<uint32>(PeriodX) | (static_cast<uint32>(PeriodY) << 16);
+		return Placement;
+	}
+
 	FTDFluidGpuNoiseLatticePlacement MakeNoiseLatticePlacement(const FTDFluidGpuSimulationSettings& Settings, const FVector2D& WindowCenter, int32 Resolution, float ScaleMultiplier)
 	{
 		const float LargestCellSizeCm = static_cast<float>(FMath::Max(Settings.ExtentCm.X, Settings.ExtentCm.Y)) / static_cast<float>(Resolution);
 		const float SpacingCm = FMath::Max(Settings.FlowNoiseScaleCm, LargestCellSizeCm) * ScaleMultiplier;
+		if (Settings.AreaAddressModeRequest == TDFluidGpuSolverConstants::WrapAreaAddressModeRequest)
+		{
+			return MakePeriodicNoiseLatticePlacement(Settings, Resolution, SpacingCm);
+		}
 		const double InverseSpacing = 1.0 / static_cast<double>(SpacingCm);
 		const double LatticeStartX = (WindowCenter.X - 0.5 * Settings.ExtentCm.X) * InverseSpacing;
 		const double LatticeStartY = (WindowCenter.Y - 0.5 * Settings.ExtentCm.Y) * InverseSpacing;
@@ -335,6 +377,8 @@ namespace
 		Parameters.AmbientNoiseLatticeStepPerCell = AmbientNoiseLattice.StepPerCell;
 		Parameters.AmbientNoiseLatticeOrigin = AmbientNoiseLattice.Origin;
 		Parameters.AmbientNoiseLatticeOffset = AmbientNoiseLattice.Offset;
+		Parameters.FlowNoiseLatticePeriodPacked = FlowNoiseLattice.PeriodPacked;
+		Parameters.AmbientNoiseLatticePeriodPacked = AmbientNoiseLattice.PeriodPacked;
 		Parameters.NoiseTimeWholePart = NoiseTime.WholePart;
 		Parameters.NoiseTimeFractionPart = NoiseTime.FractionPart;
 		Parameters.AmbientDensity = Settings.AmbientDensity;
@@ -719,6 +763,11 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 	FTDFluidGpuBatchKey BatchKey;
 	BatchKey.SimMode = Settings.SimMode;
 	BatchKey.ResolutionTier = ResolveResolutionTier(Settings.Resolution);
+	BatchKey.bWrapsArea = Settings.AreaAddressModeRequest == TDFluidGpuSolverConstants::WrapAreaAddressModeRequest && !Settings.bUsesWaterLayer;
+	if (BatchKey.bWrapsArea)
+	{
+		BatchKey.ResolutionTier = ResolveResolutionTier(FMath::Min(Settings.Resolution, TDFluidGpuSolverConstants::WrapAreaMaximumResolution));
+	}
 	if (Settings.SimMode == ETDFluidGpuSimMode::SimplePainter)
 	{
 		return BatchKey;
@@ -736,6 +785,12 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 	}
 
 	BatchKey.bUsesHeatChannel = Settings.bUsesHeatChannel;
+	if (BatchKey.bWrapsArea)
+	{
+		BatchKey.PressureSolver = ETDFluidGpuPressureSolver::Jacobi;
+		BatchKey.PressureIterations = FMath::Clamp(Settings.PressureIterations, TDFluidGpuSolverConstants::MinimumPressureIterations, TDFluidGpuSolverConstants::MaximumPressureIterations);
+		return BatchKey;
+	}
 	BatchKey.PressureSolver = ResolvePressureSolver(BatchKey.ResolutionTier, Settings.PressureSolverModeRequest);
 	if (BatchKey.PressureSolver == ETDFluidGpuPressureSolver::Multigrid)
 	{
@@ -926,7 +981,7 @@ int64 FTDFluidGpuBatch::ComputeWaterMultigridOpenBoundaryBytes(int32 ResolutionT
 	return TotalBytes;
 }
 
-FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateWaterActorMemory(const FTDFluidGpuBatchKey& WaterKey)
+FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateWaterActorMemory(const FTDFluidGpuBatchKey& WaterKey, int32 NearRippleResolution)
 {
 	const int32 ResolutionTier = ResolveWaterResolutionTier(WaterKey.ResolutionTier);
 	const int64 Resolution = ResolutionTier;
@@ -948,6 +1003,7 @@ FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateWaterActorMemory(const FTDFl
 		+ FieldCellCount * BatchWaterFieldDrySdfBytesPerCell
 		+ ComputeBatchWaterPressureTransientBytes(WaterKey.WaterPressureMode, ResolutionTier);
 	Estimate.ReadbackBytes = ReadbackTileTexelCount * RgbaHalfFloatBytes * TDFluidGpuSolverConstants::ReadbackRingSize + BatchWaterProbeReadbackBytes;
+	Estimate.NearRippleStateBytes = FTDFluidGpuNearRippleState::EstimateStateBytes(NearRippleResolution);
 	return Estimate;
 }
 

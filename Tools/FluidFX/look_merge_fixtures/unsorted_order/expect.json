@@ -1,0 +1,12 @@
+{
+ "fragments": [
+  "fragment.json"
+ ],
+ "exit": 0,
+ "conflicts": [],
+ "changes": [],
+ "added_entries": [
+  "Materials./Game/T/MI_B"
+ ],
+ "output": "expected.json"
+}

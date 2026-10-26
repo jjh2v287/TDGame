@@ -91,6 +91,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveTerrain")
 	bool bSampleTerrainElevation = false;
 
+	bool ShouldSampleTerrainElevation() const;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveTerrain", meta = (ClampMin = "1"))
 	int32 MaxTerrainTracesPerTick = 512;
 
@@ -176,6 +178,7 @@ private:
 	void DiscardTerrainTraceSlots();
 	void CompleteTerrainSamplingIfSettled();
 	FVector2D ResolveDesiredSimulationCenter() const;
+	FVector2D ResolveNearRippleCenter() const;
 	void UpdatePlaneBasis();
 	void PlaceChildrenOnSolverPlane();
 	bool ResolveMouseBrushWorldLocation(const APlayerController& Controller, FVector& OutLocation) const;

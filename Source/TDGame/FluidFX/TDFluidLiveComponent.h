@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Engine/TextureDefines.h"
 #include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
+#include "FluidFX/TDFluidNearRippleLayer.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "UObject/ObjectKey.h"
@@ -24,6 +26,13 @@ class UTextureRenderTarget2D;
 struct FStreamableHandle;
 struct FTDFluidPresetReapplyReport;
 struct FTDFluidTransmittanceInputs;
+
+struct FTDFluidTileMapTarget
+{
+	TWeakObjectPtr<UMaterialInstanceDynamic> TargetMID;
+	TWeakObjectPtr<UTexture> LastTexture;
+	bool bWasActive = false;
+};
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TDGAME_API UTDFluidLiveComponent : public UActorComponent
@@ -70,6 +79,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void QueueBrushStamp(const FTDFluidBrushStamp& Stamp);
+	void QueueNearRippleIdleContact(const FVector& WorldLocation);
+	void SubmitNearRippleStep(const FVector2D& CenterWorldXY, float DeltaTime);
+	void DiscardNearRippleSources();
+	bool IsNearRippleActive() const;
+	UTexture* GetNearRippleTexture() const;
+	const FTDFluidWaterNearRippleSettings& GetNearRippleSettings() const { return NearRippleSettings; }
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void QueueNiagaraParticleStamps(
@@ -89,6 +104,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void RegisterExternalMaterialTarget(UMaterialInstanceDynamic* TargetMID);
+
+	void RegisterTileMapTarget(UMaterialInstanceDynamic* TargetMID);
+
+	bool IsAreaWrapped() const;
+
+	static FVector2D ComputeTileMapOriginCm(const FVector2D& AnchorCm, const FVector2D& PeriodCm, const FVector2D& ObserverCm);
+
+	static FVector2D WrapPlanePointIntoWindow(const FVector2D& PlanePoint, const FVector2D& WindowMinimumCm, const FVector2D& WindowExtentCm);
+
+	static void AppendWrappedStampGhosts(TArray<FTDFluidBrushStamp>& InOutStamps, const FVector2D& WindowMinimumCm, const FVector2D& WindowExtentCm);
+
+	static void AppendWrappedObstacleGhosts(TArray<FTDFluidSdfObstacle>& InOutObstacles, const FVector2D& WindowMinimumCm, const FVector2D& WindowExtentCm);
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void BindInternalMeshComponent(UStaticMeshComponent* InMeshComponent);
@@ -114,6 +141,8 @@ public:
 	UTexture* GetTransmittanceTexture() const;
 
 	bool IsAuxOutputActive() const;
+	bool IsHeatAuxOutputActive() const;
+	bool IsObstacleDistanceAuxActive() const;
 	bool IsTransmittanceActive() const;
 	void SetVolumeTransmittanceSources(const FTDFluidVolumeLightState& LightState, TConstArrayView<FTDFluidShadowCapsule> Capsules);
 	const FTDFluidVolumeLightState& GetVolumeLightState() const { return CachedVolumeLightState; }
@@ -218,6 +247,12 @@ private:
 	void ReinitializeSolverAtOwnerLocation();
 	FVector2D ResolveOwnerCenterWorld() const;
 	void ConvertPendingStampsToSolverPlane();
+	FVector2D ResolveWrapWindowMinimumCm() const;
+	void WrapPendingStampsIntoWindow();
+	void WrapObstaclesIntoWindow(TArray<FTDFluidSdfObstacle>& InOutObstacles) const;
+	void ApplyTileMapTargets();
+	FVector2D ResolveTileMapObserverWorld(const FVector2D& FallbackWorldCm) const;
+	TextureAddress ResolveOutputTextureAddress() const;
 	void BuildSolverPlaneObstacles(TArray<FTDFluidSdfObstacle>& OutObstacles) const;
 	void RasterizeActiveObstacles();
 	void ApplyPlaneRenderFlags();
@@ -279,6 +314,9 @@ private:
 	TObjectPtr<UTextureRenderTarget2D> GpuAuxTarget;
 
 	UPROPERTY(Transient)
+	TObjectPtr<UTextureRenderTarget2D> NearRippleTarget;
+
+	UPROPERTY(Transient)
 	TObjectPtr<UTextureRenderTarget2D> GpuTransmittanceTarget;
 
 	UPROPERTY(Transient)
@@ -303,6 +341,7 @@ private:
 	TObjectPtr<UNiagaraSystem> OwnedNiagaraSystem;
 
 	TArray<TWeakObjectPtr<UMaterialInstanceDynamic>> ExternalMaterialTargets;
+	TArray<FTDFluidTileMapTarget> TileMapTargets;
 	TArray<TWeakObjectPtr<UNiagaraComponent>> CachedTaggedNiagaraComponents;
 	FName CachedNiagaraActorTag = NAME_None;
 	double LastNiagaraCacheRefreshSeconds = -1.0e9;
@@ -312,6 +351,9 @@ private:
 	TArray<FFloat16Color> PackedVelocityPixels;
 	TArray<FFloat16Color> PackedWaterSurfacePixels;
 	TArray<FFloat16Color> PackedAuxPixels;
+	int32 PackedAuxObstacleGeneration = INDEX_NONE;
+	FTDFluidNearRippleLayer NearRippleLayer;
+	FTDFluidWaterNearRippleSettings NearRippleSettings;
 	TArray<FFloat16Color> PackedTransmittancePixels;
 	FTDFluidVolumeLightState CachedVolumeLightState;
 	FTDFluidPlaneSettings EffectivePlaneSettings;

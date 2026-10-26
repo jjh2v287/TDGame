@@ -11,6 +11,10 @@
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidPresetTuningSubsystem.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Engine/StaticMesh.h"
+#include "FluidFX/TDFluidPresetAsset.h"
+#include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
@@ -24,6 +28,7 @@ namespace
 	constexpr double WaterActorGuideCollectExtentScale = 2.0;
 	constexpr float WaterActorMinimumFadeSeconds = 0.01f;
 	constexpr double WaterActorRoundObstacleAspectLimit = 1.5;
+	constexpr float WaterActorLodSurfaceHeightToleranceCm = 1.0f;
 
 	void CollectWaterActorTaggedActors(const UWorld& World, FName Tag, TArray<AActor*>& OutActors)
 	{
@@ -63,6 +68,9 @@ ATDFluidWaterActor::ATDFluidWaterActor()
 	WetDecal->SetupAttachment(SceneRoot);
 	WetDecal->SetAbsolute(true, true, true);
 	WetDecal->SetVisibility(false);
+
+	LodGridComponent = CreateDefaultSubobject<UTDFluidWaterLodGridComponent>(TEXT("LodGrid"));
+	LodGridComponent->SetupAttachment(SceneRoot);
 }
 
 void ATDFluidWaterActor::BeginPlay()
@@ -70,6 +78,7 @@ void ATDFluidWaterActor::BeginPlay()
 	Super::BeginPlay();
 
 	RequestWetDecalMaterial();
+	RequestLodGridPatchMesh();
 
 	UWorld* World = GetWorld();
 	if (!World || !LiveComponent)
@@ -100,6 +109,12 @@ void ATDFluidWaterActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		WetDecalLoadHandle->CancelHandle();
 		WetDecalLoadHandle.Reset();
 	}
+	if (LodGridMeshLoadHandle.IsValid())
+	{
+		LodGridMeshLoadHandle->CancelHandle();
+		LodGridMeshLoadHandle.Reset();
+	}
+	DisableLodGrid();
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -120,6 +135,273 @@ void ATDFluidWaterActor::Tick(float DeltaSeconds)
 
 	TickWaterLayer(DeltaSeconds);
 	UpdateWetDecalPlacement();
+	UpdateLodGrid();
+}
+
+void ATDFluidWaterActor::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport)
+{
+	Super::ReapplyPresetTuning(InOutReport);
+	bHasLodGridSettings = false;
+	bIsLodSelectionDirty = true;
+}
+
+void ATDFluidWaterActor::RequestLodGridPatchMesh()
+{
+	if (LodGridPatchMesh.IsNull() || LodGridPatchMesh.Get() || LodGridMeshLoadHandle.IsValid())
+	{
+		return;
+	}
+
+	LodGridMeshLoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(LodGridPatchMesh.ToSoftObjectPath());
+}
+
+bool ATDFluidWaterActor::CanUseLodGrid() const
+{
+	const UWorld* World = GetWorld();
+	return World && World->IsGameWorld() && LodGridComponent && LiveComponent && !bIsDormantDuplicate && !IsPooledInactive()
+		&& UTDFluidWaterLodGridComponent::ResolveLodGridEnabled(LodGridSettings.bEnableLodGrid);
+}
+
+bool ATDFluidWaterActor::PrepareLodGridPatchMesh()
+{
+	if (LodGridPatchMesh.IsNull())
+	{
+		if (!bHasWarnedLodGridMesh)
+		{
+			UE_LOG(LogTDGame, Warning, TEXT("TDFluidWaterLodGrid %s stays off because it has no patch mesh"), *GetName());
+			bHasWarnedLodGridMesh = true;
+		}
+		return false;
+	}
+
+	UStaticMesh* PatchMesh = LodGridPatchMesh.Get();
+	if (!PatchMesh)
+	{
+		RequestLodGridPatchMesh();
+		return false;
+	}
+
+	if (LodGridComponent->GetStaticMesh() == PatchMesh)
+	{
+		return true;
+	}
+
+	const int32 ExpectedVertexCount = (LodGridSettings.PatchQuads + 1) * (LodGridSettings.PatchQuads + 1);
+	if (PatchMesh->GetNumVertices(0) != ExpectedVertexCount)
+	{
+		if (!bHasWarnedLodGridMesh)
+		{
+			UE_LOG(LogTDGame, Error, TEXT("TDFluidWaterLodGrid %s stays off because %s has %d vertices instead of %d"), *GetName(), *PatchMesh->GetName(), PatchMesh->GetNumVertices(0), ExpectedVertexCount);
+			bHasWarnedLodGridMesh = true;
+		}
+		return false;
+	}
+
+	LodGridComponent->SetStaticMesh(PatchMesh);
+	return true;
+}
+
+bool ATDFluidWaterActor::CollectLodGridCoverage(FBox2D& OutCoverageCm, double& OutSurfaceHeightCm) const
+{
+	OutCoverageCm = FBox2D(ForceInit);
+	if (CachedWaterRegions.IsEmpty())
+	{
+		return false;
+	}
+
+	OutSurfaceHeightCm = CachedWaterRegions[0].SurfaceHeightCm;
+	for (const FTDFluidWaterRegion& Region : CachedWaterRegions)
+	{
+		if (FMath::Abs(Region.SurfaceHeightCm - OutSurfaceHeightCm) > WaterActorLodSurfaceHeightToleranceCm)
+		{
+			continue;
+		}
+		OutCoverageCm += FBox2D(Region.MinXY, Region.MaxXY);
+	}
+	return OutCoverageCm.bIsValid;
+}
+
+UMaterialInstanceDynamic* ATDFluidWaterActor::ResolveLodGridMaterial(const FBox2D& CoverageCm, TArray<AActor*>& OutCoveredSurfaceActors) const
+{
+	OutCoveredSurfaceActors.Reset();
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	TArray<AActor*> SurfaceActors;
+	CollectWaterActorTaggedActors(*World, WaterSurfaceActorTag, SurfaceActors);
+	UMaterialInstanceDynamic* LodMaterial = nullptr;
+	for (AActor* SurfaceActor : SurfaceActors)
+	{
+		const FBox Bounds = SurfaceActor->GetComponentsBoundingBox(true);
+		if (!Bounds.IsValid || !CoverageCm.Intersect(FBox2D(FVector2D(Bounds.Min.X, Bounds.Min.Y), FVector2D(Bounds.Max.X, Bounds.Max.Y))))
+		{
+			continue;
+		}
+
+		OutCoveredSurfaceActors.Add(SurfaceActor);
+		if (LodMaterial)
+		{
+			continue;
+		}
+
+		TInlineComponentArray<UStaticMeshComponent*> MeshComponents(SurfaceActor);
+		for (const UStaticMeshComponent* MeshComponent : MeshComponents)
+		{
+			LodMaterial = Cast<UMaterialInstanceDynamic>(MeshComponent->GetMaterial(0));
+			if (LodMaterial)
+			{
+				break;
+			}
+		}
+	}
+	return LodMaterial;
+}
+
+FVector ATDFluidWaterActor::ResolveLodGridObserverWorld() const
+{
+	const UWorld* World = GetWorld();
+	const APlayerController* PlayerController = World ? World->GetFirstPlayerController() : nullptr;
+	if (PlayerController && PlayerController->PlayerCameraManager)
+	{
+		return PlayerController->PlayerCameraManager->GetCameraLocation();
+	}
+
+	if (const AActor* FollowedActor = ResolveFollowedActor())
+	{
+		return FollowedActor->GetActorLocation();
+	}
+
+	return GetActorLocation();
+}
+
+bool ATDFluidWaterActor::ShouldReselectLodGrid(const FVector& ObserverWorld) const
+{
+	if (!bIsLodGridActive || bIsLodSelectionDirty || LodAppliedRegistryVersion != AppliedRegistryVersion)
+	{
+		return true;
+	}
+
+	return FVector::DistSquared(ObserverWorld, LastLodObserverWorld) > FMath::Square(static_cast<double>(LodGridSettings.ReselectDistanceCm));
+}
+
+void ATDFluidWaterActor::PushLodGridMaterialParameters(UMaterialInstanceDynamic& LodMaterial, const FVector& ObserverWorld, double EffectiveBaseRangeCm) const
+{
+	LodMaterial.SetVectorParameterValue(TEXT("LodObserverWorld"), FLinearColor(static_cast<float>(ObserverWorld.X), static_cast<float>(ObserverWorld.Y), static_cast<float>(ObserverWorld.Z), 0.0f));
+	LodMaterial.SetScalarParameterValue(TEXT("LodBaseRangeCm"), static_cast<float>(EffectiveBaseRangeCm));
+	LodMaterial.SetScalarParameterValue(TEXT("LodBaseQuadSizeCm"), LodGridSettings.BaseQuadSizeCm);
+	LodMaterial.SetScalarParameterValue(TEXT("LodMorphStartRatio"), LodGridSettings.MorphStartRatio);
+	LodMaterial.SetScalarParameterValue(TEXT("LodVertexWaveFilterRatio"), LodGridSettings.VertexWaveFilterRatio);
+}
+
+void ATDFluidWaterActor::SetTaggedSurfacesHiddenInGame(const TArray<AActor*>& SurfaceActors, bool bShouldHide)
+{
+	if (!bShouldHide)
+	{
+		for (const TWeakObjectPtr<AActor>& HiddenActor : LodHiddenSurfaceActors)
+		{
+			if (AActor* SurfaceActor = HiddenActor.Get())
+			{
+				SurfaceActor->SetActorHiddenInGame(false);
+			}
+		}
+		LodHiddenSurfaceActors.Reset();
+		return;
+	}
+
+	for (AActor* SurfaceActor : SurfaceActors)
+	{
+		if (SurfaceActor->IsHidden())
+		{
+			continue;
+		}
+		SurfaceActor->SetActorHiddenInGame(true);
+		LodHiddenSurfaceActors.Add(SurfaceActor);
+	}
+}
+
+void ATDFluidWaterActor::DisableLodGrid()
+{
+	SetTaggedSurfacesHiddenInGame(TArray<AActor*>(), false);
+	if (LodGridComponent)
+	{
+		LodGridComponent->ClearPatches();
+	}
+	bIsLodGridActive = false;
+	LodGridStats.PatchCount = 0;
+	LodGridStats.VertexCount = 0;
+	LodGridStats.MaxLevel = 0;
+}
+
+void ATDFluidWaterActor::UpdateLodGrid()
+{
+	if (!bHasLodGridSettings)
+	{
+		const ETDFluidPresetKind PresetKind = LiveComponent && LiveComponent->ActivePreset ? LiveComponent->ActivePreset->PresetKind : ETDFluidPresetKind::Custom;
+		LodGridSettings = UTDFluidWaterLodGridComponent::SanitizeSettings(UTDFluidPresetAsset::BuildWaterLodGridSettingsForPresetKind(PresetKind));
+		bHasLodGridSettings = true;
+	}
+
+	if (!CanUseLodGrid() || !PrepareLodGridPatchMesh())
+	{
+		DisableLodGrid();
+		return;
+	}
+
+	const FVector ObserverWorld = ResolveLodGridObserverWorld();
+	if (!ShouldReselectLodGrid(ObserverWorld))
+	{
+		return;
+	}
+
+	FBox2D CoverageCm;
+	double SurfaceHeightCm = 0.0;
+	TArray<AActor*> CoveredSurfaceActors;
+	UMaterialInstanceDynamic* LodMaterial = CollectLodGridCoverage(CoverageCm, SurfaceHeightCm) ? ResolveLodGridMaterial(CoverageCm, CoveredSurfaceActors) : nullptr;
+	if (!LodMaterial)
+	{
+		DisableLodGrid();
+		return;
+	}
+
+	FTDFluidWaterLodSelectionInput SelectionInput;
+	SelectionInput.ObserverWorld = ObserverWorld;
+	SelectionInput.CoverageCm = CoverageCm;
+	SelectionInput.SurfaceHeightCm = SurfaceHeightCm;
+	SelectionInput.Settings = LodGridSettings;
+	const double SelectionStartSeconds = FPlatformTime::Seconds();
+	const FTDFluidWaterLodSelectionResult SelectionResult = UTDFluidWaterLodGridComponent::SelectPatches(SelectionInput);
+	const double SelectionSeconds = FPlatformTime::Seconds() - SelectionStartSeconds;
+	if (SelectionResult.bReachedBudget && !bIsLodGridActive)
+	{
+		UE_LOG(LogTDGame, Warning, TEXT("TDFluidWaterLodGrid %s exceeds the vertex budget with %d patches"), *GetName(), SelectionResult.Patches.Num());
+	}
+
+	LodGridComponent->ApplyPatches(SelectionResult, SurfaceHeightCm, LodGridSettings.PatchQuads);
+	if (LodGridComponent->GetMaterial(0) != LodMaterial)
+	{
+		LodGridComponent->SetMaterial(0, LodMaterial);
+	}
+	PushLodGridMaterialParameters(*LodMaterial, ObserverWorld, SelectionResult.EffectiveBaseRangeCm);
+	SetTaggedSurfacesHiddenInGame(CoveredSurfaceActors, true);
+
+	int32 MaxLevel = 0;
+	for (const FTDFluidWaterLodPatch& Patch : SelectionResult.Patches)
+	{
+		MaxLevel = FMath::Max(MaxLevel, Patch.Level);
+	}
+	LodGridStats.PatchCount = SelectionResult.Patches.Num();
+	LodGridStats.VertexCount = SelectionResult.Patches.Num() * (LodGridSettings.PatchQuads + 1) * (LodGridSettings.PatchQuads + 1);
+	LodGridStats.MaxLevel = MaxLevel;
+	LodGridStats.EffectiveBaseRangeCm = static_cast<float>(SelectionResult.EffectiveBaseRangeCm);
+	LodGridStats.LastSelectionMilliseconds = static_cast<float>(SelectionSeconds * 1000.0);
+	++LodGridStats.SelectionCount;
+	LastLodObserverWorld = ObserverWorld;
+	LodAppliedRegistryVersion = AppliedRegistryVersion;
+	bIsLodSelectionDirty = false;
+	bIsLodGridActive = true;
 }
 
 void ATDFluidWaterActor::TickWaterLayer(float DeltaSeconds)
@@ -362,6 +644,10 @@ void ATDFluidWaterActor::RebuildSharedSurfaceMaterials(const TArray<AActor*>& Su
 				SharedMaterial = UMaterialInstanceDynamic::Create(ParentMaterial, this);
 				UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*SharedMaterial);
 				LiveComponent->RegisterExternalMaterialTarget(SharedMaterial.Get());
+				if (TileMapSourceActor && TileMapSourceActor->LiveComponent)
+				{
+					TileMapSourceActor->LiveComponent->RegisterTileMapTarget(SharedMaterial.Get());
+				}
 			}
 			UMaterialInstanceDynamic* SharedMaterialInstance = SharedMaterial.Get();
 			if (!SharedMaterialInstance)

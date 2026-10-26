@@ -525,3 +525,48 @@
 - 증거: `Saved/FluidFX/fx7p/fx4b-budget-judge-20261024120142/csv/WQ5_r1_1A*.csv` 머리글 168~174열
 - 날짜·상태: 2026-10-25 active
 - 발견: claude(FluidFX FX-4b 수용 측정)
+
+### L-editor-61 WPO를 연결한 직후·재컴파일 전에 `set_material_usage`를 부르면 DefaultLit 재질에서 셰이더 맵 어서션으로 에디터가 죽는다
+- 증상: `editor_make_fluid_water_material.py`가 Lite 마스터에서 크래시(`ConnectionResetError 10054`). `Assertion failed: ShaderMapId.ContainsShaderType(ShaderType, kUniqueShaderPermutationId) [MaterialShader.cpp Line 2567] Material shader map M_TD_FluidWaterLite ... is missing expected shader type TShadowDepthPSCombined. DIFF [bHasVertexPositionOffsetConnected]: Conservative Parameters=false vs Compilation Parameters=true` ← `UMaterial::SetMaterialUsage`
+- 원인: 사용 플래그를 켜면 즉시 셰이더 작업을 제출하는데, 캐시된 식 데이터(WPO 미연결)와 실제 번역(WPO 연결)이 어긋난다. 번역이 먼저 실패하는 재질(단일층 물 출력 노드 없음)은 우연히 통과한다. 결정론적이라 재실행해도 같다
+- 해결: 사용 플래그는 노드 생성 전에 재질 속성(`used_with_instanced_static_meshes` 등 assignments)으로 켜거나 `compile_material` 뒤에 켠다. `has_material_usage` 확인도 컴파일 뒤에만(L-editor-36)
+- 범위: 에디터 Python으로 재질 그래프를 만들고 사용 플래그를 켜는 모든 스크립트
+- 증거: `Saved/AgentOps/20261026/wave1-int/assets-water/`(editor-crash-excerpt.txt, repro-ism), 크래시 덤프 `Saved/Crashes/UECC-Windows-D2B1031C4F1310F8E4BE0F9DCADA108E_0000`
+- 날짜·상태: 2026-10-26 active
+- 발견: claude(FluidFX 파동 1 물 재질 재생성)
+
+### L-editor-62 나이아가라 사용자 정의 HLSL 식 하나가 Sample Texture 출력 두 개를 읽으면 GPU 구조체 멤버 하나가 빠져 GPU 컴파일이 실패한다
+- 증상: 생성한 NS_TD_FluidDrive*·NS_TD_FluidEmberHeat 6종이 오프스크린 시험에서 `the owned Niagara component never appeared`, 에디터 로그에 `There were issues for compilation of script "<시스템>/...` 와 `FParamMap0_User`에 없는 멤버(Uniform·Gravity·EmberDensitySpawnWeight) 오류. CPU 컴파일 상태는 정상
+- 원인(정적 판독 + 결정론 모의 6/6 일치, 직접 실험 전): `TNiagaraHlslTranslator::FinalResolveNamespacedTokens`(NiagaraHlslTranslator.cpp:8687·8691·8693)가 `UniqueParameterMapEntriesAliasesIntact`와 `UniqueParameterMapEntries`를 따로 `AddUnique`하고 `ProcessCustomHlsl`(9161)은 두 배열을 같은 첨자로 짝짓는다. Sample Texture 출력은 원래 별칭이 모두 `Particles.Module.SampledColor`라 별칭 배열이 하나 짧아지고, 그 식에서 마지막으로 처음 나온 이름공간 변수가 등록되지 않는다. 토큰 순서만 바꾸면 다른 변수(로컬 계열 `Engine.Owner.SystemWorldToLocal`)가 조용히 0이 될 수 있다
+- 해결: 표본 단계마다 출력을 고유 이름 입자 속성(예 `Particles.TDDriveSampleDensity`)으로 복사하는 Set 단계를 두고, 한 식에 표본 출력이 둘 이상 들어가지 않게 생성한다. 검사기에 같은 규칙(식마다 빠지는 변수 0)을 둔다
+- 범위: Sample Texture·Sample Grid 출력을 사용자 정의 HLSL 식에서 둘 이상 읽는 모든 나이아가라 시스템(UE 5.8)
+- 증거: `Saved/AgentOps/20261026/wave1-int/assets-fx8n/`(index.md 10절, simulate_custom_hlsl_alias_drop.py, simulate-alias-drop.stdout)
+- 날짜·상태: 2026-10-26 미검증(수정 생성기로 재생성해 확인 예정)
+- 발견: claude(FluidFX FX-8n 에셋 생성)
+
+### L-editor-63 나이아가라 `GetSystemCompileState`가 UpToDate·오류 없음이어도 GPU 계산 셰이더는 따로 실패할 수 있다 — GPU 판정은 에디터 로그로 한다
+- 증상: MCP NiagaraToolset_System `GetSystemCompileState`는 UpToDate·hasErrors=false인데 오프스크린 시험에서 시스템이 뜨지 않음. `GetStackIssues`는 늘 "compile in flight"(새 시스템) 또는 300초 시간 초과(재시작 뒤 불러온 시스템)
+- 원인: 컴파일 상태는 CPU 스크립트만 본다. `GetStackIssues`는 외부 편집 문맥이 뷰모델을 만들며 컴파일 요청을 다시 세운다
+- 해결: 생성·0b 시범 뒤 `Saved/Logs/TDGame.log`에서 `There were issues for compilation of script "<시스템>/` 줄이 0인지 grep하고, 최종 판정은 오프스크린 시험으로 한다
+- 범위: 에디터 Python·MCP로 나이아가라 시스템을 만드는 모든 도구
+- 증거: `Saved/AgentOps/20261026/wave1-int/assets-fx8n/index.md` 8·10절
+- 날짜·상태: 2026-10-26 active
+- 발견: claude(FluidFX FX-8n 에셋 생성)
+
+### L-editor-64 UE 5.8 Python `unreal.MaterialProperty`에는 Hidden 항목(픽셀 깊이 오프셋·Displacement·CustomizedUVs)이 없다
+- 증상: `editor_make_fluid_track_material.py` 시작 점검 `RuntimeError: 언리얼 Python 이름 없음: MaterialProperty.MP_PIXEL_DEPTH_OFFSET`
+- 원인: `Engine/Source/Runtime/Engine/Public/SceneTypes.h:177·181`이 `MP_PixelDepthOffset UMETA(Hidden)` 등으로 숨겨 Python 열거에 노출되지 않는다(노출 18개, MP_MATERIAL_ATTRIBUTES·MP_FRONT_MATERIAL은 있음)
+- 해결: MakeMaterialAttributes 노드에 PixelDepthOffset을 모으고 `use_material_attributes=True` 뒤 MP_MATERIAL_ATTRIBUTES 하나로 연결하거나, C++ 에디터 함수로 연결한다
+- 범위: Python으로 PDO·Displacement·CustomizedUV를 연결하는 재질 스크립트(`Tools/WorldGen/editor_make_topdown_materials.py` 41행도 목록에 둠, 영향 미확인)
+- 증거: `Saved/AgentOps/20261026/wave1-int/assets-fog-track/`(track-material.stdout, material-property-names.stdout)
+- 날짜·상태: 2026-10-26 active
+- 발견: claude(FluidFX FX-12r 자국 재질)
+
+### L-editor-65 Python으로 볼륨 도메인 재질을 만들면 도메인 변경 직후 `Volume materials must use an Additive blend mode` 경고가 한 번 남는다 — 최종 컴파일 오류 0이면 무해, 블루프린트 CDO에서는 SCS 컴포넌트가 None
+- 증상: ① 안개 볼륨 재질 생성 로그에 위 경고 한 줄 ② 교반기 블루프린트 기본 객체(CDO)에서 RotatingMovement를 찾으면 None
+- 원인: ① 블렌드 모드를 바꾸기 전 중간 상태 검사 ② 컴포넌트가 SimpleConstructionScript에 있어 CDO에는 없다
+- 해결: ① 로그 grep 판정에서 이 줄은 실패로 세지 않고 최종 재컴파일 오류 수로 판정 ② 컴포넌트 확인은 배치한 액터에서 하거나 SCS 노드를 읽는다
+- 범위: FluidFX 안개·볼륨 재질 스크립트, 블루프린트 컴포넌트를 검사하는 에디터 스크립트
+- 증거: `Saved/AgentOps/20261026/wave1-int/assets-fog-track/index.md` 11·12절
+- 날짜·상태: 2026-10-26 active
+- 발견: claude(FluidFX FX-10r 안개 무대)

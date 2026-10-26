@@ -1,0 +1,19 @@
+#include "/Engine/Public/Platform.ush"
+
+Texture2DArray<float> ObstacleSdf;
+RWTexture2D<float4> AuxOutput;
+uint SliceIndex;
+uint Resolution;
+float InverseRangeCm;
+
+[numthreads(8, 8, 1)]
+void WaterAuxPackCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (any(DispatchThreadId.xy >= Resolution))
+	{
+		return;
+	}
+
+	const float SdfCm = ObstacleSdf.Load(int4(DispatchThreadId.xy, SliceIndex, 0));
+	AuxOutput[DispatchThreadId.xy] = float4(0.0f, clamp(SdfCm * InverseRangeCm, -1.0f, 1.0f), 0.0f, 0.0f);
+}

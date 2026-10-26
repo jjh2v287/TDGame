@@ -1,0 +1,102 @@
+{
+  "id": "fx8n_embers",
+  "note": "FX-8n E7 수·크기·줄무늬, 불티 무대 E-B(모닥불 + NS_TD_FluidEmberHeat, ISM 숨김), FX-7b 구도. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2)",
+  "scenes": [
+    {
+      "name": "ember_campfire_niagara",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidEmberStage",
+      "camera": {
+        "awake": {
+          "TDGen_EmberA_Campfire": false,
+          "TDGen_EmberB_Campfire": true,
+          "TDGen_EmberC_Torch": false
+        },
+        "exposure_ev100": 2.0,
+        "pawn": [
+          1320.0,
+          -450.0
+        ],
+        "arm": 300.0,
+        "view": [
+          -3.0,
+          80.0
+        ],
+        "hide": {
+          "TDGen_EmberA_Campfire": true,
+          "TDGen_EmberC_Torch": true
+        }
+      },
+      "time_dilation": 1.0,
+      "schedule": null,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fx8n_ember_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx8n_live2_embers.json",
+      "live2_refs": []
+    }
+  ],
+  "params": [
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidEmberHeat.Floats.User.EmberSpawnPerHeatM2PerSec",
+      "values": [
+        200,
+        400,
+        800
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidEmberHeat.Floats.User.EmberBaseScale",
+      "values": [
+        0.015,
+        0.025,
+        0.035
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidEmberHeat.Floats.User.EmberStretchPerCmPerSec",
+      "values": [
+        0.002,
+        0.004,
+        0.008
+      ],
+      "split_group": false
+    }
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "noise_floor": {},
+    "targets": [
+      {
+        "metric": "0.embers.count",
+        "weight": 1.0,
+        "tolerance": 15.0,
+        "low": 300.0,
+        "high": 1000.0,
+        "basis": "E7-n 화면당 불티 ≥300(IMG 0)·500~600(IMG 17), IFS:134·195"
+      },
+      {
+        "metric": "0.embers.median_area_px",
+        "weight": 1.0,
+        "tolerance": 0.5,
+        "low": 0.0,
+        "high": 7.0,
+        "basis": "E7-s 720p 중앙 크기 ≤3px(면적 ≤7px² [유추])"
+      },
+      {
+        "metric": "0.embers.median_elongation",
+        "weight": 1.0,
+        "tolerance": 0.2,
+        "low": 1.5,
+        "high": 6.0,
+        "basis": "E7-e 줄무늬 늘어남 1.5~6 [제안]"
+      }
+    ]
+  }
+}

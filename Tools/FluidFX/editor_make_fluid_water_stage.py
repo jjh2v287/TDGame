@@ -1359,11 +1359,23 @@ COAST_REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_coast_stage.json")
 COAST_HEIGHTMAP_RELATIVE_PATH = ("Saved", "FluidFX", "water_stage", "coast_heightmap.r16")
 COAST_PRESET_NAME = "DA_TDFluid_Sea"
 COAST_PRESET_PATH = f"{PRESET_DIR}/{COAST_PRESET_NAME}"
+COAST_TILE_PRESET_NAME = "DA_TDFluid_TileWaves"
+COAST_TILE_PRESET_PATH = f"{PRESET_DIR}/{COAST_TILE_PRESET_NAME}"
+COAST_TILE_SIMULATION_LABEL = "CoastStageTileWaves"
+COAST_TILE_SIMULATION_LOCATION_CM = (-2400.0, 0.0, -5000.0)
+COAST_TILE_SIMULATION_FLAGS = (
+    ("should_follow_player_pawn", False),
+    ("should_use_activation_volume", False),
+    ("sample_terrain_elevation", False),
+    ("accept_mouse_brush", False),
+)
+COAST_LOD_PATCH_MESH_NAME = "SM_TD_FluidWaterLodPatch16"
+COAST_LOD_PATCH_MESH_PATH = f"{MESH_DIR}/{COAST_LOD_PATCH_MESH_NAME}"
 COAST_SAND_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidWaterSandCoast"
 COAST_SEA_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidWater_Sea"
 COAST_TILE_MESH_PATH = f"{MESH_DIR}/SM_TD_FluidWaterGrid64"
 COAST_WET_DECAL_MATERIAL_PATH = f"{MATERIAL_DIR}/M_TD_FluidWetnessDecal.M_TD_FluidWetnessDecal"
-COAST_GUARDED_ASSET_PATHS = (COAST_PRESET_PATH, COAST_SAND_INSTANCE_PATH, COAST_MAP_PATH)
+COAST_GUARDED_ASSET_PATHS = (COAST_PRESET_PATH, COAST_TILE_PRESET_PATH, COAST_SAND_INSTANCE_PATH, COAST_MAP_PATH)
 COAST_SEA_LEVEL_Z_CM = 100.0
 COAST_SHORE_X_CM = 0.0
 COAST_SLOPE_DEGREES = 5.0
@@ -1405,9 +1417,9 @@ COAST_REQUIRED_UNREAL_NAMES = (
     "MaterialEditingLibrary.update_material_instance",
     "TDFluidPlaneSettings",
 )
-COAST_PRESET_KIND_NAMES = ("SEA",)
+COAST_PRESET_KIND_NAMES = ("SEA", "TILE_WAVES")
 COAST_CONFIG_PROPERTY_NAMES = ("enable_water_layer", "enable_water_wetness", "use_whitewater_dissipation", "whitewater_dissipation")
-COAST_WATER_ACTOR_PROPERTY_NAMES = RIVER_OBJECT_CONTRACTS["TDFluidWaterActor"] + ("enable_wet_decal", "wet_decal_material")
+COAST_WATER_ACTOR_PROPERTY_NAMES = RIVER_OBJECT_CONTRACTS["TDFluidWaterActor"] + ("enable_wet_decal", "wet_decal_material", "tile_map_source_actor", "lod_grid_patch_mesh")
 COAST_EFFECTIVE_REPORT_NAMES = RIVER_EFFECTIVE_REPORT_NAMES + (
     "swash_height_cm",
     "wetness_drying_seconds",
@@ -1478,6 +1490,8 @@ def load_coast_resources(assets):
         "surface_mesh": assets.load_asset(SURFACE_MESH_PATH),
         "wet_decal_material": assets.load_asset(COAST_WET_DECAL_MATERIAL_PATH),
         "water_actor_class": unreal.load_class(None, CLASS_PATHS["TDFluidWaterActor"]),
+        "live_actor_class": unreal.load_class(None, CLASS_PATHS["TDFluidLiveActor"]),
+        "lod_patch_mesh": assets.load_asset(COAST_LOD_PATCH_MESH_PATH),
     }
     missing = [name for name, value in resources.items() if value is None]
     if missing:
@@ -1653,6 +1667,42 @@ def configure_coast_water_actor(water, preset, effective, wet_decal_material):
     return properties
 
 
+def configure_coast_tile_preset():
+    preset = load_or_create_preset(COAST_TILE_PRESET_NAME, COAST_TILE_PRESET_PATH)
+    preset.set_editor_property("preset_kind", unreal.TDFluidPresetKind.TILE_WAVES)
+    preset.set_editor_property("override_preset_defaults", False)
+    plane = unreal.TDFluidPlaneSettings()
+    plane.set_editor_property("orientation", unreal.TDFluidPlaneOrientation.WORLD_FACING)
+    preset.set_editor_property("plane_settings", plane)
+    preset.set_editor_property("output_material", None)
+    preset.set_editor_property("surface_mesh", None)
+    effective = preset.resolve_effective_config()
+    if effective.get_editor_property("area_address_mode") != unreal.TDFluidAreaAddressMode.WRAP:
+        raise RuntimeError(f"타일 파도 프리셋이 감싸기 주소가 아닙니다(프리셋 표 확인·에디터 재시작 필요): {COAST_TILE_PRESET_PATH}")
+    save_asset(preset, COAST_TILE_PRESET_PATH)
+    return preset
+
+
+def spawn_coast_tile_simulation(spawn, live_actor_class, tile_preset):
+    tile_actor = spawn(live_actor_class, COAST_TILE_SIMULATION_LOCATION_CM, COAST_TILE_SIMULATION_LABEL, "Scene2_Coast")
+    for name, value in COAST_TILE_SIMULATION_FLAGS:
+        tile_actor.set_editor_property(name, value)
+    live_component = tile_actor.get_editor_property("live_component")
+    live_component.set_editor_property("active_preset", tile_preset)
+    live_component.set_editor_property("should_init_system_state_from_preset", True)
+    return tile_actor
+
+
+def configure_coast_lod_grid(water, tile_actor, lod_patch_mesh):
+    water.set_editor_property("tile_map_source_actor", tile_actor)
+    water.set_editor_property("lod_grid_patch_mesh", lod_patch_mesh)
+    if water.get_editor_property("tile_map_source_actor") != tile_actor:
+        raise RuntimeError("물 액터 tile_map_source_actor 설정 확인 실패")
+    if COAST_LOD_PATCH_MESH_NAME not in str(water.get_editor_property("lod_grid_patch_mesh")):
+        raise RuntimeError("물 액터 lod_grid_patch_mesh 설정 확인 실패")
+    return {"tile_map_source_actor": tile_actor.get_actor_label(), "lod_grid_patch_mesh": COAST_LOD_PATCH_MESH_PATH}
+
+
 def create_coast_spawners(actors, created):
     def finish(actor, label, folder):
         if actor is None:
@@ -1781,6 +1831,10 @@ def build_coast_stage(request):
     water = spawn(resources["water_actor_class"], (0.0, 0.0, COAST_SEA_LEVEL_Z_CM), "CoastStageWaterSea", "Scene2_Coast")
     water_properties = configure_coast_water_actor(water, preset, effective, resources["wet_decal_material"])
 
+    print("단계: 타일 파도 시뮬")
+    tile_actor = spawn_coast_tile_simulation(spawn, resources["live_actor_class"], configure_coast_tile_preset())
+    water_properties.update(configure_coast_lod_grid(water, tile_actor, resources["lod_patch_mesh"]))
+
     print("단계: 내비게이션")
     navigation_extent = spawn_coast_navigation(spawn, world)
 
@@ -1816,6 +1870,9 @@ def build_coast_stage(request):
         "water_region": water_region,
         "water_actor": water.get_actor_label(),
         "water_actor_properties": water_properties,
+        "tile_map_source_actor": water_properties["tile_map_source_actor"],
+        "lod_grid_patch_mesh": water_properties["lod_grid_patch_mesh"],
+        "tile_preset": COAST_TILE_PRESET_PATH,
         "wet_decal": {"enabled": True, "material": COAST_WET_DECAL_MATERIAL_PATH},
         "player_start": list(player_start_location),
         "navigation_extent": navigation_extent,

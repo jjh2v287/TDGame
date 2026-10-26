@@ -1,0 +1,27 @@
+{
+ "Materials": {
+  "/Game/T/MI_A": {
+   "Parent": "/Game/T/M_Base",
+   "Scalars": {
+    "Foo": 1.0,
+    "Soft": 0.15
+   },
+   "Switches": {},
+   "Vectors": {
+    "Tint": [0.2, 0.4, 0.6, 1.0]
+   }
+  }
+ },
+ "NiagaraSystems": {
+  "/Game/T/NS_A": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {},
+   "Ints": {},
+   "Vectors2": {
+    "User.Size": [1.0, 2.0]
+   },
+   "Vectors3": {}
+  }
+ }
+}

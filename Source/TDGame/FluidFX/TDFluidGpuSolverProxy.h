@@ -85,6 +85,7 @@ public:
 
 	void PrepareStep(float DeltaTime, TConstArrayView<FTDFluidBrushStamp> PlaneStamps, const FVector2D& PlaneUpDirection, bool bAllowsTerrainElevation);
 	bool HasPreparedStep() const { return bHasPreparedStep; }
+	void MarkObstacleDistanceAuxStale() { bNeedsObstacleDistanceAuxRefresh = true; }
 	bool GatherStep(
 		uint32 FrameNumber,
 		int32 TileIndex,
@@ -139,6 +140,7 @@ private:
 	float PreparedDeltaTimeSeconds = 0.0f;
 	bool bNeedsReset = false;
 	bool bHasObstacleListChanged = false;
+	bool bNeedsObstacleDistanceAuxRefresh = true;
 	bool bIsTerrainElevationActive = false;
 	bool bPreparedAllowsTerrainElevation = false;
 	bool bHasPreparedStep = false;

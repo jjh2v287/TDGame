@@ -1,0 +1,55 @@
+{
+ "Materials": {
+  "/Game/T/MI_A": {
+   "Parent": "/Game/T/M_Base",
+   "Scalars": {
+    "Beta": 0.5,
+    "Delta": 2.0,
+    "Gamma": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/T/MI_B": {
+   "Parent": "/Game/T/M_Other",
+   "Scalars": {
+    "Alpha": 4.0,
+    "Zeta": 0.25
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/T/MI_C": {
+   "Parent": "/Game/T/M_Base",
+   "Scalars": {},
+   "Switches": {
+    "bUseFoam": false
+   },
+   "Vectors": {}
+  }
+ },
+ "NiagaraSystems": {
+  "/Game/T/NS_A": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {
+    "User.Size": 1.5
+   },
+   "Ints": {},
+   "Vectors2": {},
+   "Vectors3": {
+    "User.Offset": [0.0, 0.0, 10.0]
+   }
+  },
+  "/Game/T/NS_B": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {
+    "User.Rate": 2.0
+   },
+   "Ints": {},
+   "Vectors2": {},
+   "Vectors3": {}
+  }
+ }
+}

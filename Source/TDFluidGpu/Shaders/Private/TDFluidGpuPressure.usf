@@ -73,15 +73,18 @@ groupshared uint SharedTileNeedsWork;
 
 bool IsFluidCell(FTDFluidGpuActorParameters Actor, int2 Cell)
 {
+#if TDFLUIDGPU_WRAP_AREA
+	Cell = TDFluidGpuResolveNeighborCell(Cell, Actor.Resolution);
+#endif
 	return TDFluidGpuIsInsideGrid(Cell, Actor.Resolution) && !TDFluidGpuIsSolidDistance(ObstacleSdf[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)]);
 }
 
 float ComputeCellDivergence(FTDFluidGpuActorParameters Actor, int2 Cell)
 {
-	const float VelocityRight = IsFluidCell(Actor, Cell + int2(1, 0)) ? VelocityIn[TDFluidGpuMakeTexel(Cell + int2(1, 0), Actor.SliceIndex)].x : 0.0f;
-	const float VelocityLeft = IsFluidCell(Actor, Cell - int2(1, 0)) ? VelocityIn[TDFluidGpuMakeTexel(Cell - int2(1, 0), Actor.SliceIndex)].x : 0.0f;
-	const float VelocityUp = IsFluidCell(Actor, Cell + int2(0, 1)) ? VelocityIn[TDFluidGpuMakeTexel(Cell + int2(0, 1), Actor.SliceIndex)].y : 0.0f;
-	const float VelocityDown = IsFluidCell(Actor, Cell - int2(0, 1)) ? VelocityIn[TDFluidGpuMakeTexel(Cell - int2(0, 1), Actor.SliceIndex)].y : 0.0f;
+	const float VelocityRight = IsFluidCell(Actor, Cell + int2(1, 0)) ? VelocityIn[TDFluidGpuMakeTexel(TDFluidGpuResolveNeighborCell(Cell + int2(1, 0), Actor.Resolution), Actor.SliceIndex)].x : 0.0f;
+	const float VelocityLeft = IsFluidCell(Actor, Cell - int2(1, 0)) ? VelocityIn[TDFluidGpuMakeTexel(TDFluidGpuResolveNeighborCell(Cell - int2(1, 0), Actor.Resolution), Actor.SliceIndex)].x : 0.0f;
+	const float VelocityUp = IsFluidCell(Actor, Cell + int2(0, 1)) ? VelocityIn[TDFluidGpuMakeTexel(TDFluidGpuResolveNeighborCell(Cell + int2(0, 1), Actor.Resolution), Actor.SliceIndex)].y : 0.0f;
+	const float VelocityDown = IsFluidCell(Actor, Cell - int2(0, 1)) ? VelocityIn[TDFluidGpuMakeTexel(TDFluidGpuResolveNeighborCell(Cell - int2(0, 1), Actor.Resolution), Actor.SliceIndex)].y : 0.0f;
 	return (VelocityRight - VelocityLeft) / (2.0f * Actor.RelativeCellSpacing.x) + (VelocityUp - VelocityDown) / (2.0f * Actor.RelativeCellSpacing.y);
 }
 
@@ -199,7 +202,7 @@ void JacobiTileCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThre
 	for (uint RegionIndex = GroupIndex; RegionIndex < TDFLUIDGPU_JACOBI_REGION_CELL_COUNT; RegionIndex += TDFLUIDGPU_TILE_THREAD_COUNT)
 	{
 		const int2 LocalCell = int2(RegionIndex % TDFLUIDGPU_JACOBI_REGION, RegionIndex / TDFLUIDGPU_JACOBI_REGION);
-		const int2 GlobalCell = RegionOrigin + LocalCell;
+		const int2 GlobalCell = TDFluidGpuResolveNeighborCell(RegionOrigin + LocalCell, Actor.Resolution);
 		const bool bIsFluidCell = IsFluidCell(Actor, GlobalCell);
 		float Pressure = 0.0f;
 		float Divergence = 0.0f;
@@ -374,10 +377,10 @@ void SubtractGradientCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const float PressureUp = LoadOpenWaterNeighborPressure(Actor, Cell + int2(0, 1), CenterPressure, GhostPressure);
 	const float PressureDown = LoadOpenWaterNeighborPressure(Actor, Cell - int2(0, 1), CenterPressure, GhostPressure);
 #else
-	const float PressureRight = IsFluidCell(Actor, Cell + int2(1, 0)) ? PressureIn[TDFluidGpuMakeTexel(Cell + int2(1, 0), Actor.SliceIndex)] : CenterPressure;
-	const float PressureLeft = IsFluidCell(Actor, Cell - int2(1, 0)) ? PressureIn[TDFluidGpuMakeTexel(Cell - int2(1, 0), Actor.SliceIndex)] : CenterPressure;
-	const float PressureUp = IsFluidCell(Actor, Cell + int2(0, 1)) ? PressureIn[TDFluidGpuMakeTexel(Cell + int2(0, 1), Actor.SliceIndex)] : CenterPressure;
-	const float PressureDown = IsFluidCell(Actor, Cell - int2(0, 1)) ? PressureIn[TDFluidGpuMakeTexel(Cell - int2(0, 1), Actor.SliceIndex)] : CenterPressure;
+	const float PressureRight = IsFluidCell(Actor, Cell + int2(1, 0)) ? PressureIn[TDFluidGpuMakeTexel(TDFluidGpuResolveNeighborCell(Cell + int2(1, 0), Actor.Resolution), Actor.SliceIndex)] : CenterPressure;
+	const float PressureLeft = IsFluidCell(Actor, Cell - int2(1, 0)) ? PressureIn[TDFluidGpuMakeTexel(TDFluidGpuResolveNeighborCell(Cell - int2(1, 0), Actor.Resolution), Actor.SliceIndex)] : CenterPressure;
+	const float PressureUp = IsFluidCell(Actor, Cell + int2(0, 1)) ? PressureIn[TDFluidGpuMakeTexel(TDFluidGpuResolveNeighborCell(Cell + int2(0, 1), Actor.Resolution), Actor.SliceIndex)] : CenterPressure;
+	const float PressureDown = IsFluidCell(Actor, Cell - int2(0, 1)) ? PressureIn[TDFluidGpuMakeTexel(TDFluidGpuResolveNeighborCell(Cell - int2(0, 1), Actor.Resolution), Actor.SliceIndex)] : CenterPressure;
 #endif
 
 	float2 Velocity = VelocityIn[Texel];

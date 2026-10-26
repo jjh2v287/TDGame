@@ -9,6 +9,22 @@
    "Switches": {},
    "Vectors": {}
   },
+  "/Game/FluidFX/Materials/MI_TD_FluidDrivenParticleMesh_Default": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidDrivenParticleMesh",
+   "Scalars": {
+    "ParticleRoughness": 0.6
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidDrivenParticle_Default": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidDrivenParticle",
+   "Scalars": {
+    "ParticleEmissive": 4.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
   "/Game/FluidFX/Materials/MI_TD_FluidEmberNiagara_Default": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidEmberNiagara",
    "Scalars": {
@@ -216,11 +232,195 @@
     "FlameRampWarmColor": [1.0, 0.03, 0.03, 1.0]
    }
   },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_CylA": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogExtrudeHeightCm": 600.0,
+    "FogNoiseSubtract": 0.0,
+    "FogShape": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_CylB": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogExtrudeHeightCm": 600.0,
+    "FogNoiseSubtract": 0.5,
+    "FogShape": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Hollow": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogNoiseSubtract": 0.4,
+    "FogShape": 2.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Passive0": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogExtrudeHeightCm": 60.0,
+    "FogPassiveCoverage": 0.6
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Passive1": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogNoiseScaleCm": 1500.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "FogNoiseWindCmPerSec": [80.0, 0.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Passive2": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogPassiveCoverage": 0.35
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Passive3": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogExtinctionPerM": 0.35,
+    "FogExtrudeHeightCm": 300.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Passive4": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogExtinctionPerM": 0.05,
+    "FogExtrudeHeightCm": 800.0,
+    "FogTopFadeCm": 300.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Passive5": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogNoiseScaleCm": 800.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "FogNoiseWindCmPerSec": [200.0, 40.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Passive6": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogExtinctionPerM": 0.4,
+    "FogExtrudeHeightCm": 120.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "FogAlbedo": [0.6, 0.7, 0.55, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_PassiveField": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogPassiveCoverage": 0.5,
+    "FogShapeSoftCm": 3000.0,
+    "FogUsesWindowMask": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_Sim": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {},
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_SimCharacter": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogExtrudeHeightCm": 120.0,
+    "FogTopFadeCm": 30.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFog_SimTrail": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
+   "Scalars": {
+    "FogNoiseSubtract": 0.15
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
   "/Game/FluidFX/Materials/MI_TD_FluidFragmentGlow_Explosion": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidFragmentGlow",
    "Scalars": {},
    "Switches": {},
    "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidTrack_Sand": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidTrackLayer",
+   "Scalars": {
+    "TileMapHeightCm": 20.0,
+    "TileMapNormalStrength": 0.8,
+    "TrackBankHeightCm": 2.0,
+    "TrackBankRadiusCm": 10.0,
+    "TrackLayerThicknessCm": 3.0,
+    "TrackPomMaxDepthCm": 6.0,
+    "TrackRoughness": 0.9,
+    "TrackSparkleIntensity": 0.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "TrackGrooveColor": [0.48, 0.38, 0.27, 1.0],
+    "TrackSurfaceColor": [0.62, 0.5, 0.36, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidTrack_Snow": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidTrackLayer",
+   "Scalars": {
+    "TileMapHeightCm": 0.0,
+    "TileMapNormalStrength": 0.0,
+    "TrackBankHeightCm": 6.0,
+    "TrackBankRadiusCm": 15.0,
+    "TrackLayerThicknessCm": 20.0,
+    "TrackPomMaxDepthCm": 25.0,
+    "TrackRoughness": 0.75,
+    "TrackSparkleIntensity": 0.6
+   },
+   "Switches": {},
+   "Vectors": {
+    "TrackGrooveColor": [0.7, 0.75, 0.82, 1.0],
+    "TrackSurfaceColor": [0.85, 0.88, 0.92, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidTrack_SnowSlope": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidTrackLayer",
+   "Scalars": {
+    "TileMapHeightCm": 0.0,
+    "TileMapNormalStrength": 0.0,
+    "TrackBankHeightCm": 6.0,
+    "TrackBankRadiusCm": 15.0,
+    "TrackLayerThicknessCm": 20.0,
+    "TrackPomMaxDepthCm": 25.0,
+    "TrackRoughness": 0.75,
+    "TrackSparkleIntensity": 0.6,
+    "TrackUsesWindowMask": 0.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "TrackGrooveColor": [0.7, 0.75, 0.82, 1.0],
+    "TrackSurfaceColor": [0.85, 0.88, 0.92, 1.0]
+   }
   },
   "/Game/FluidFX/Materials/MI_TD_FluidVolume_ExplosionBillow": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidVolume",
@@ -261,6 +461,24 @@
     "ExtinctionTint": [1.0, 1.15, 1.35, 1.0],
     "ShadowColor": [0.01, 0.009, 0.008, 1.0],
     "SmokeColor": [0.35, 0.33, 0.31, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidVolume_SandDust": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidVolume",
+   "Scalars": {
+    "DensityScale": 0.04,
+    "NoiseErosion": 0.3,
+    "NoiseScale": 0.012,
+    "NoiseStrength": 0.8,
+    "RenderMode": 2.0,
+    "SurfaceSoftnessCm": 24.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "AmbientColor": [0.2, 0.2, 0.22, 1.0],
+    "ExtinctionTint": [1.0, 1.15, 1.35, 1.0],
+    "ShadowColor": [0.01, 0.009, 0.008, 1.0],
+    "SmokeColor": [0.65, 0.52, 0.36, 1.0]
    }
   },
   "/Game/FluidFX/Materials/MI_TD_FluidVolume_SmokeBillow": {
@@ -325,6 +543,24 @@
     "SmokeColor": [0.88, 0.12, 0.045, 1.0]
    }
   },
+  "/Game/FluidFX/Materials/MI_TD_FluidVolume_SnowDust": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidVolume",
+   "Scalars": {
+    "DensityScale": 0.04,
+    "NoiseErosion": 0.3,
+    "NoiseScale": 0.012,
+    "NoiseStrength": 0.8,
+    "RenderMode": 2.0,
+    "SurfaceSoftnessCm": 24.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "AmbientColor": [0.35, 0.38, 0.42, 1.0],
+    "ExtinctionTint": [1.0, 1.15, 1.35, 1.0],
+    "ShadowColor": [0.01, 0.009, 0.008, 1.0],
+    "SmokeColor": [0.9, 0.92, 0.95, 1.0]
+   }
+  },
   "/Game/FluidFX/Materials/MI_TD_FluidWaterSand": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidWaterSandRipple",
    "Scalars": {
@@ -367,6 +603,7 @@
     "FoamCoverageMax": 0.85,
     "FoamFromSpeed": 1.1,
     "MicroNormalStrength": 0.07,
+    "ObstacleRingNormalStrength": 0.2,
     "PassiveWaveAmplitudeCm": 3.0,
     "ShoreFoamAmount": 0.15,
     "ShoreFoamDepthCm": 8.0
@@ -403,6 +640,8 @@
     "GlintSharpness": 1500.0,
     "MicroNormalStrength": 0.12,
     "MicroNormalTilingCm": 30.0,
+    "ObstacleRingNormalStrength": 0.2,
+    "ObstacleWakeFoamStrength": 0.6,
     "PassiveWaveAmplitudeCm": 1.5,
     "RibbonSegmentLengthCm": 395.0,
     "RibbonStretchAlong": 3.0,
@@ -425,8 +664,15 @@
   "/Game/FluidFX/Materials/MI_TD_FluidWater_Sea": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidWater",
    "Scalars": {
+    "ObstacleRingNormalStrength": 0.15,
     "PassiveWaveAmplitudeCm": 12.0,
-    "ShoreFoamDepthCm": 25.0
+    "ShoreFoamDepthCm": 25.0,
+    "TileMap1DensityHeightCm": 4.0,
+    "TileMap1FadeLengthCm": 5000.0,
+    "TileMap1FadeStartCm": 3000.0,
+    "TileMap1FoamStrength": 0.3,
+    "TileMap1HeightCm": 8.0,
+    "TileMap1NormalStrength": 0.6
    },
    "Switches": {},
    "Vectors": {
@@ -437,6 +683,7 @@
   "/Game/FluidFX/Materials/MI_TD_FluidWater_SeaStorm": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidWater",
    "Scalars": {
+    "ObstacleRingNormalStrength": 0.1,
     "PassiveWaveAmplitudeCm": 40.0,
     "ShoreFoamDepthCm": 25.0
    },
@@ -456,6 +703,7 @@
     "FoamCoverageMax": 0.4,
     "GlintIntensity": 4.0,
     "MicroNormalStrength": 0.03,
+    "ObstacleRingNormalStrength": 0.15,
     "PassiveWaveAmplitudeCm": 0.5,
     "ShoreFoamAmount": 0.3,
     "ShoreFoamDepthCm": 4.0,
@@ -513,6 +761,276 @@
   }
  },
  "NiagaraSystems": {
+  "/Game/FluidFX/Niagara/NS_TD_FluidDriveDensityLocal": {
+   "Bools": {},
+   "Colors": {
+    "User.DriveColorHigh": [1.0, 1.0, 1.0, 1.0],
+    "User.DriveColorLow": [0.05, 0.05, 0.05, 1.0]
+   },
+   "Floats": {
+    "User.DriveDensityBuoyancyCmPerSec2": 80.0,
+    "User.DriveDensityToAlpha": 1.0,
+    "User.DriveDensityToColor": 1.0,
+    "User.DriveDepthJitterCm": 0.0,
+    "User.DriveFadePerSec": 4.0,
+    "User.DriveGravityCmPerSec2": 0.0,
+    "User.DriveLifetimeMaxSeconds": 2.2,
+    "User.DriveLifetimeMinSeconds": 1.2,
+    "User.DriveRestSeconds": 0.0,
+    "User.DriveSlowKillSeconds": 0.25,
+    "User.DriveSlowKillSpeedCmPerSec": 20.0,
+    "User.DriveSpawnPerM2PerSec": 50.0,
+    "User.DriveSpawnRatePerSec": 0.0,
+    "User.DriveSpawnThreshold": 0.05,
+    "User.DriveSpawnWeightHeat": 0.0,
+    "User.DriveSpawnWeightPrimary": 1.0,
+    "User.DriveSpawnWeightSelective": 1.0,
+    "User.DriveSpawnWeightUniform": 0.0,
+    "User.DriveSpriteSizeCm": 4.0,
+    "User.DriveStretchPerCmPerSec": 0.004,
+    "User.DriveVelocityAccelerationPerSec": 0.0,
+    "User.DriveVelocityDragPerSec": 6.0,
+    "User.DriveVelocityFollowScale": 1.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.DriveSpawnUvMax": [1.0, 1.0],
+    "User.DriveSpawnUvMin": [0.0, 0.0],
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidDriveMeshArray": {
+   "Bools": {},
+   "Colors": {
+    "User.DriveColorHigh": [1.0, 1.0, 1.0, 1.0],
+    "User.DriveColorLow": [0.05, 0.05, 0.05, 1.0]
+   },
+   "Floats": {
+    "User.DriveDensityBuoyancyCmPerSec2": 0.0,
+    "User.DriveDensityToAlpha": 1.0,
+    "User.DriveDensityToColor": 1.0,
+    "User.DriveDensityToHeightCm": 100.0,
+    "User.DriveDepthJitterCm": 0.0,
+    "User.DriveFadePerSec": 4.0,
+    "User.DriveGravityCmPerSec2": 0.0,
+    "User.DriveHeightFollowPerSec": 20.0,
+    "User.DriveHeightOffsetCm": 0.0,
+    "User.DriveLifetimeMaxSeconds": 100000.0,
+    "User.DriveMeshScale": 0.1,
+    "User.DrivePressureToHeightCm": 0.0,
+    "User.DriveRestSeconds": 0.0,
+    "User.DriveSlowKillSeconds": 0.0,
+    "User.DriveSlowKillSpeedCmPerSec": 20.0,
+    "User.DriveStretchPerCmPerSec": 0.004,
+    "User.DriveVelocityAccelerationPerSec": 0.0,
+    "User.DriveVelocityDragPerSec": 0.0,
+    "User.DriveVelocityFollowScale": 0.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {
+    "User.DriveGridCount": 32
+   },
+   "Vectors2": {
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidDriveMeshFloat": {
+   "Bools": {},
+   "Colors": {
+    "User.DriveColorHigh": [0.8, 0.05, 0.04, 1.0],
+    "User.DriveColorLow": [0.8, 0.05, 0.04, 1.0]
+   },
+   "Floats": {
+    "User.DriveDensityBuoyancyCmPerSec2": 0.0,
+    "User.DriveDensityToAlpha": 1.0,
+    "User.DriveDensityToColor": 1.0,
+    "User.DriveDensityToHeightCm": 0.0,
+    "User.DriveDepthJitterCm": 0.0,
+    "User.DriveFadePerSec": 4.0,
+    "User.DriveGravityCmPerSec2": 0.0,
+    "User.DriveHeightFollowPerSec": 8.0,
+    "User.DriveHeightOffsetCm": 0.0,
+    "User.DriveLifetimeMaxSeconds": 2.2,
+    "User.DriveLifetimeMinSeconds": 1.2,
+    "User.DriveMeshScale": 0.1,
+    "User.DrivePressureToHeightCm": 30.0,
+    "User.DriveRestSeconds": 0.0,
+    "User.DriveSlowKillSeconds": 0.25,
+    "User.DriveSlowKillSpeedCmPerSec": 20.0,
+    "User.DriveSpawnPerM2PerSec": 50.0,
+    "User.DriveSpawnRatePerSec": 0.0,
+    "User.DriveSpawnThreshold": 0.0,
+    "User.DriveSpawnWeightHeat": 0.0,
+    "User.DriveSpawnWeightPrimary": 0.0,
+    "User.DriveSpawnWeightSelective": 0.0,
+    "User.DriveSpawnWeightUniform": 1.0,
+    "User.DriveStretchPerCmPerSec": 0.004,
+    "User.DriveVelocityAccelerationPerSec": 0.0,
+    "User.DriveVelocityDragPerSec": 6.0,
+    "User.DriveVelocityFollowScale": 1.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.DriveSpawnUvMax": [1.0, 1.0],
+    "User.DriveSpawnUvMin": [0.0, 0.0],
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidDriveSprite": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {
+    "User.DriveDensityBuoyancyCmPerSec2": 0.0,
+    "User.DriveDepthJitterCm": 0.0,
+    "User.DriveGravityCmPerSec2": 0.0,
+    "User.DriveLifetimeMaxSeconds": 2.2,
+    "User.DriveLifetimeMinSeconds": 1.2,
+    "User.DriveRestSeconds": 0.0,
+    "User.DriveSlowKillSeconds": 0.25,
+    "User.DriveSlowKillSpeedCmPerSec": 20.0,
+    "User.DriveSpawnPerM2PerSec": 25.0,
+    "User.DriveSpawnRatePerSec": 0.0,
+    "User.DriveSpawnThreshold": 0.0,
+    "User.DriveSpawnWeightHeat": 0.0,
+    "User.DriveSpawnWeightPrimary": 0.0,
+    "User.DriveSpawnWeightSelective": 0.0,
+    "User.DriveSpawnWeightUniform": 1.0,
+    "User.DriveSpriteSizeCm": 4.0,
+    "User.DriveStretchPerCmPerSec": 0.004,
+    "User.DriveVelocityAccelerationPerSec": 0.0,
+    "User.DriveVelocityDragPerSec": 6.0,
+    "User.DriveVelocityFollowScale": 1.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.DriveSpawnUvMax": [1.0, 1.0],
+    "User.DriveSpawnUvMin": [0.0, 0.0],
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidDriveSpriteLocal": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {
+    "User.DriveDensityBuoyancyCmPerSec2": 0.0,
+    "User.DriveDepthJitterCm": 0.0,
+    "User.DriveGravityCmPerSec2": 0.0,
+    "User.DriveLifetimeMaxSeconds": 2.2,
+    "User.DriveLifetimeMinSeconds": 1.2,
+    "User.DriveRestSeconds": 0.0,
+    "User.DriveSlowKillSeconds": 0.25,
+    "User.DriveSlowKillSpeedCmPerSec": 20.0,
+    "User.DriveSpawnPerM2PerSec": 25.0,
+    "User.DriveSpawnRatePerSec": 0.0,
+    "User.DriveSpawnThreshold": 0.0,
+    "User.DriveSpawnWeightHeat": 0.0,
+    "User.DriveSpawnWeightPrimary": 0.0,
+    "User.DriveSpawnWeightSelective": 0.0,
+    "User.DriveSpawnWeightUniform": 1.0,
+    "User.DriveSpriteSizeCm": 4.0,
+    "User.DriveStretchPerCmPerSec": 0.004,
+    "User.DriveVelocityAccelerationPerSec": 0.0,
+    "User.DriveVelocityDragPerSec": 6.0,
+    "User.DriveVelocityFollowScale": 1.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.DriveSpawnUvMax": [1.0, 1.0],
+    "User.DriveSpawnUvMin": [0.0, 0.0],
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidDriveStroke": {
+   "Bools": {},
+   "Colors": {
+    "User.DriveColorHigh": [1.0, 1.0, 1.0, 1.0],
+    "User.DriveColorLow": [0.05, 0.05, 0.05, 1.0]
+   },
+   "Floats": {
+    "User.DriveDensityBuoyancyCmPerSec2": 0.0,
+    "User.DriveDensityToAlpha": 1.0,
+    "User.DriveDensityToColor": 1.0,
+    "User.DriveDepthJitterCm": 0.0,
+    "User.DriveFadePerSec": 4.0,
+    "User.DriveGravityCmPerSec2": 0.0,
+    "User.DriveLifetimeMaxSeconds": 10.0,
+    "User.DriveLifetimeMinSeconds": 6.0,
+    "User.DriveRestSeconds": 0.0,
+    "User.DriveSlowKillSeconds": 0.0,
+    "User.DriveSlowKillSpeedCmPerSec": 20.0,
+    "User.DriveSpawnPerM2PerSec": 50.0,
+    "User.DriveSpawnRatePerSec": 0.0,
+    "User.DriveSpawnThreshold": 0.05,
+    "User.DriveSpawnWeightHeat": 0.0,
+    "User.DriveSpawnWeightPrimary": 1.0,
+    "User.DriveSpawnWeightSelective": 1.0,
+    "User.DriveSpawnWeightUniform": 0.0,
+    "User.DriveSpriteSizeCm": 4.0,
+    "User.DriveStretchPerCmPerSec": 0.004,
+    "User.DriveVelocityAccelerationPerSec": 0.0,
+    "User.DriveVelocityDragPerSec": 3.0,
+    "User.DriveVelocityFollowScale": 1.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.DriveSpawnUvMax": [1.0, 1.0],
+    "User.DriveSpawnUvMin": [0.0, 0.0],
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  },
   "/Game/FluidFX/Niagara/NS_TD_FluidEmber": {
    "Bools": {},
    "Colors": {},
@@ -523,6 +1041,47 @@
    },
    "Ints": {},
    "Vectors2": {
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidEmberHeat": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {
+    "User.EmberAmbientHeatBuoyancyCmPerSec2": 0.0,
+    "User.EmberBaseScale": 0.025,
+    "User.EmberBuoyancyCmPerSec2": 250.0,
+    "User.EmberCollisionFriction": 0.6,
+    "User.EmberCollisionRestitution": 0.2,
+    "User.EmberCoolingPerSec": 0.6,
+    "User.EmberDensitySpawnWeight": 0.0,
+    "User.EmberDepthJitterCm": 10.0,
+    "User.EmberDragPerSec": 6.0,
+    "User.EmberFadePerSec": 4.0,
+    "User.EmberGravityCmPerSec2": 400.0,
+    "User.EmberGroundRestSeconds": 1.0,
+    "User.EmberLifetimeMaxSeconds": 2.2,
+    "User.EmberLifetimeMinSeconds": 1.2,
+    "User.EmberSlowKillSeconds": 0.25,
+    "User.EmberSlowKillSpeedCmPerSec": 20.0,
+    "User.EmberSpawnHeatFloor": 0.6,
+    "User.EmberSpawnPerHeatM2PerSec": 400.0,
+    "User.EmberSpawnThreshold": 0.1,
+    "User.EmberStretchPerCmPerSec": 0.004,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.EmberSpawnUvMax": [1.0, 1.0],
+    "User.EmberSpawnUvMin": [0.0, 0.0],
     "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
     "User.SimCenterPlane": [0.0, 0.0],
     "User.SimExtentsCm": [0.0, 0.0]

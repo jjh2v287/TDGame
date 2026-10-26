@@ -39,6 +39,18 @@ struct FTDFluidGpuStampBinRange
 };
 static_assert(sizeof(FTDFluidGpuStampBinRange) == 8, "FTDFluidGpuStampBinRange must match the 8 byte shader layout.");
 
+struct alignas(16) FTDFluidGpuPackedRingShape
+{
+	float InnerRadiusRatio = 0.0f;
+	float SideArcWeight = 0.0f;
+	float InnerEraseRatePerSec = 0.0f;
+	float Padding0 = 0.0f;
+	FVector2f MotionDirection = FVector2f::ZeroVector;
+	FVector2f Padding1 = FVector2f::ZeroVector;
+};
+
+static_assert(sizeof(FTDFluidGpuPackedRingShape) == 32, "FTDFluidGpuPackedRingShape must match the 32 byte shader layout.");
+
 struct FTDFluidGpuStampBinWindow
 {
 	FVector2D CenterPlaneCm = FVector2D::ZeroVector;
@@ -64,6 +76,7 @@ struct FTDFluidGpuStampBinSet
 	TArray<FTDFluidGpuStampBinRange> BinRanges;
 	TArray<uint32> BinStampIndices;
 	TArray<float> RippleImpulsesCm;
+	TArray<FTDFluidGpuPackedRingShape> RingShapes;
 	int32 NonFiniteStampCount = 0;
 	int32 OutsideWindowStampCount = 0;
 	int32 OverTickLimitStampCount = 0;

@@ -238,3 +238,12 @@
 - 증거: `Saved/AgentOps/20261026/wave2/baseline/index.md`(w2-base-rhi-water2)
 - 날짜·상태: 2026-10-26 active
 - 발견: claude(FluidFX 파동 2 기준선)
+
+### L-repo-27 FluidFX 파동 검사·생성 순서 맹점: 무대 뒤 재질 값 조각 병합은 모든 무대 보고를 STALE로, 날짜 박힌 Saved 조각 기본값은 병합 뒤 거짓 실패, 검사기 일부는 범위가 좁다
+- 증상: A5-h에서 조각 1항목을 무대 생성 뒤 병합하자 HVOL·안개·자국·식생 무대 보고가 `material_look_sha256` 3d18192a ≠ 정본 706f803d로 STALE. `check_fluid_hvol_hlsl.py`가 병합 뒤 "FAIL 조각과 정본 키 서로소"로 종료 1
+- 원인·맹점: ① 무대 보고는 재질 값 파일 전체 해시를 적는다 ② 검사기 기본값이 `Saved/AgentOps/<날짜>/…/look-fragment-*.json`을 자동으로 읽었다 ③ `check_fluid_value_independence.py` 헤더 목록에 `TDFluidVolumeDriverTypes.h`가 없어 그룹 2개를 건너뜀 ④ `check_fluid_gpu_shaders.py`는 ApplyStampsCS를 기본 순열로만 컴파일(MASS_INPUT 순열은 RHI 시험으로만 확인) ⑤ 골든 추출 정규식 `0x[0-9A-F]{8}u`가 `RhiActorKey = 0x4D415353ull`도 잡아 45로 셈(실제 44) ⑥ 새 시험 파일에 `WITH_DEV_AUTOMATION_TESTS` 가드가 없으면 check_sync_loads 실패
+- 해결: 모든 조각 병합을 무대 생성 앞에 둔다(늦게 병합했으면 그 뒤 무대를 다시 만든다). ②③은 고침(커밋 e6a5e729), ④⑤는 판정 때 알고 쓴다, ⑥은 IB 확인에 check_sync_loads를 넣는다
+- 범위: FluidFX 파동 에셋 단계 계획(cross-plan 5절 형식)과 Tools/FluidFX 검사기
+- 증거: `Saved/AgentOps/20261027/wave2-assets/refute-final.md` (c)절, `Saved/AgentOps/20261027/wave2-int/main-check/index.md`, `Saved/AgentOps/20261026/wave2/ib2/`(골든 45)
+- 날짜·상태: 2026-10-27 active
+- 발견: claude(FluidFX 파동 2)

@@ -597,3 +597,53 @@
 - 증거: `Saved/AgentOps/20261026/wave1-assets/niagara/index.md` 18·26·29행
 - 날짜·상태: 2026-10-26 active
 - 발견: claude(FluidFX FX-8n 재생성)
+
+### L-editor-69 `-nullrhi` 헤드리스 시험에서는 `FApp::CanEverRender()`가 거짓이라 FluidFX 출력 텍스처(밀도·수면)가 만들어지지 않는다 — 출력을 읽는 시험은 `TDGame.FluidFXRhi.*` + NonNullRHI로 둔다
+- 증상: `TDGame.FluidFX.Track.Wetness.SourceBinding` 수면 출력 null(IB4 c2·c3), `TDGame.FluidFX.FogTile.CpuWrapVolumeParameters` "Expected 'The wrap source publishes a density pressure texture' to be true"(TDFluidFogInputTests.cpp:408). 둘 다 오프스크린에서는 통과
+- 원인: `EnsureOutputTextures`(TDFluidLiveComponent.cpp:1617)가 `FApp::CanEverRender()`(엔진 App.h:405)가 참일 때만 텍스처를 만든다. 에셋 부재로 오인하기 쉽다(두 번째 발생)
+- 해결: 시험을 `TDGame.FluidFXRhi.` 이름 + `EditorContext|NonNullRHI|EngineFilter`로 옮기고, RHI가 없으면 `AddError` 후 false(건너뜀 통과 금지). 선례 `TDFluidTrackInputTests.cpp` SourceBinding
+- 범위: FluidFX 출력 텍스처·MID 매개변수·SRV를 읽는 모든 자동화 시험
+- 증거: `Saved/AgentOps/20261026/wave2/ib4/`(SourceBinding), `Saved/AgentOps/20261027/wave2-assets/a7-tests/index.md` 1번
+- 날짜·상태: 2026-10-27 active
+- 발견: claude(FluidFX 파동 2 IB4·A7)
+
+### L-editor-70 Python으로 만든 나이아가라 시스템이 UpToDate인데 영원히 활성화되지 않는다 — 시스템 Spawn·Update 스크립트의 VM 속성 집합이 다르면 `IsReadyToRunInternal`이 거짓, 편집기 빌드는 경고가 없다
+- 증상: 질량 NS 3종이 시험에서 아무것도 산출하지 않음(R6 target_splats=0, R7 latency.json cpu·gpu -1, R8b 디스패치 프레임 0). 진단 빌드 결과 시스템 인스턴스 0·Complete 상태, Spawn 속성 20개 대 Update 19개(Spawn에만 `System.CurrentLoopDelay`, Update에만 `SpawnBurst_Instantaneous.SpawnBurst`)
+- 원인: 스택 편집 뒤 부분 재컴파일만 되어 두 시스템 스크립트의 속성 표가 어긋난 채 저장된다. 에디터 저장·컴파일 상태 검사로는 드러나지 않는다(L-editor-63과 별개)
+- 해결: 저장 전에 `RequestCompile(true)` + `WaitForCompilationComplete`로 강제 전체 재컴파일하고 두 스크립트 속성 집합이 같은지 확인한다(`TDFluidNiagaraModuleEditorLibrary` `RecompileNiagaraSystemFully`, 생성기 판정 ④). 재컴파일 뒤 19=19·22=22, R6 58368 스플랫
+- 범위: `editor_make_fluid_driven_niagara.py`·`fluid_niagara_toolset.py`로 만드는 모든 나이아가라 시스템
+- 증거: `Saved/AgentOps/20261027/wave2-fix/tests-fix/index.md`, `Saved/AgentOps/20261027/wave2-fix/tests/v1.md`
+- 날짜·상태: 2026-10-27 active
+- 발견: claude(FluidFX 파동 2 마무리)
+
+### L-editor-71 MD_Volume 재질을 볼류메트릭 클라우드에 쓸 때 `used_with_volumetric_cloud`가 꺼져 있으면 PIE에서 `VolumetricCloudRendering.cpp:1434` assert로 에디터가 크래시한다(그림자 없는 시험 월드에서는 조용히 통과)
+- 증상: `LV_TDFluidCloudStage` PIE 2/2 크래시. 먼저 ensure "Pass ApplyLowerHemisphereColor has a read dependency on SkyLight.LowResCloudTexture, but it was never written to.", 이어서 "Assertion failed: Material->GetMaterialDomain() == MD_Volume [VolumetricCloudRendering.cpp:1434]". `CloudLayers` RHI 시험 2개는 통과(비용 수치는 무효)
+- 원인: 사용 플래그가 없어 구름 셰이더가 컴파일되지 않는다. 진입 검사(cpp:1974)는 도메인만 보므로 그림자 패스가 돌고 대체 재질이 표면 기본 재질이 되어 assert. 구름 그리기는 2477에서 조기 반환해 LowResCloudTexture가 쓰이지 않는다
+- 해결: 생성기에서 블렌드 Additive를 먼저, 도메인 Volume을 뒤에 두고 노드 생성 전에 `used_with_volumetric_cloud=True`, 재컴파일 뒤 `has_material_usage(MATUSAGE_VOLUMETRIC_CLOUD)`가 거짓이면 실패(`editor_make_fluid_cloud_material.py`). PIE는 셰이더 컴파일이 끝난 뒤 시작한다(컴파일 중이면 같은 대체 경로로 assert 가능, 엔진 경합)
+- 범위: 볼류메트릭 클라우드 컴포넌트에 넣는 모든 재질·MID
+- 증거: `Saved/AgentOps/20261027/wave2-fix/diag-cloud.md`, `Saved/AgentOps/20261027/wave2-assets/a6-pie/index.md` 44·45행, `Saved/AgentOps/20261027/wave2-fix/editor-stages/index.md`(재생성 뒤 PIE 오류 0)
+- 날짜·상태: 2026-10-27 active
+- 발견: claude(FluidFX FX-11r 에셋)
+
+### L-editor-72 에셋 존재를 판정하는 자동화 시험에서 `CreateTransientPreset`은 출력 재질 슬롯이 비어 있고, 동기 `RunTest` 안의 `RequestAsyncLoad` 완료 대리자는 `FlushAsyncLoading` 뒤에도 불리지 않는다
+- 증상: HVOL 에셋이 다 있는데 `TDGame.FluidFXRhi.VolumeDriver.HeterogeneousDriven`·`OffscreenCost`가 "the HVOL slot assets are missing ... material ''"(TDFluidVolumeDriverRhiTests.cpp:436·496). DA를 읽게 고친 뒤에도 차가운 재질이 60스텝 동안 적용되지 않음(:488)
+- 원인: ① 일시 프리셋(TDFluidPresetAsset.cpp:191~)은 `OutputMaterials`를 채우지 않는다 ② `s.StreamableDelegateDelayFrames` 기본 1이라 완료 대리자가 월드 없는 `FTickableGameObject`로 미뤄지고, 그 틱은 에디터 엔진 틱에서만 돈다
+- 해결: 무대 DA(`DA_TDFluid_Hvol*`)를 불러 슬롯을 읽고, 시험 시작 때 슬롯 재질·볼륨 메시를 `WITH_DEV_AUTOMATION_TESTS` 가드 안에서 `LoadSynchronous`로 미리 불러 둔다(`PreloadVolumeDriverAssets`, check_sync_loads new 0)
+- 범위: 런타임이 비동기 로드하는 에셋을 같은 시험 안에서 바로 쓰는 FluidFX 시험
+- 증거: `Saved/AgentOps/20261027/wave2-fix/fix-code/index.md`, `Saved/AgentOps/20261027/wave2-assets/a7-tests/index.md` 3번
+- 날짜·상태: 2026-10-27 active
+- 발견: claude(FluidFX 파동 2 마무리)
+
+### L-editor-73 UE 5.8 에디터 Python 이름·동작 함정 묶음(파동 2 생성기 6곳 수정)
+- 증상·해결
+  - 열거 이름은 단어마다 `_`: `MSM_TWOSIDED_FOLIAGE` 없음 → `MSM_TWO_SIDED_FOLIAGE`(editor_make_fluid_foliage_material.py)
+  - `unreal.Class`에 `is_child_of` 없음 → `unreal.MathLibrary.class_is_child_of`(editor_bake_fluid_height_cache.py)
+  - 높이 안개 속성은 `volumetric_fog`가 아니라 `enable_volumetric_fog`(editor_make_fluid_cloud_stage.py)
+  - `EditorLevelLibrary`/`LevelEditorSubsystem` `new_level`은 맵을 바로 저장하므로 재실행에는 덮어쓰기 요청이 필요하다
+  - C++ 라이브러리 함수가 성공이면 문자열, 실패면 None을 돌려줘 메시지가 버려졌다(editor_make_fluid_mass_input_assets.py `unpack_result`)
+  - 나이아가라 CPU(VM) 시뮬 사용자 식은 정수 `%`를 거부 → `fmod`·`floor`(fluid_niagara_drive.py)
+  - `run_in_editor.py`는 스크립트가 FAIL을 출력해도 SUCCESS를 낼 수 있다 → 출력 본문으로 판정
+- 범위: Tools/FluidFX 에디터 생성기 전반
+- 증거: `Saved/AgentOps/20261027/wave2-assets/{a3-hvol-foliage-cloud,a4-mass-input,a5-stages-1,a5-stages-2}/index.md`, `Saved/AgentOps/20261027/wave2-assets/refute-final.md` (e)절
+- 날짜·상태: 2026-10-27 active
+- 발견: claude(FluidFX 파동 2 에셋 단계)

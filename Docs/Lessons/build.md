@@ -147,3 +147,11 @@
 - 증거: `Saved/AgentOps/20261023/fx7pr/understand-package.md` 1절(엔진 설정·UBT 소스 근거, 실제 Test 빌드 실행 재현은 하지 않음 — 미검증 실행)
 - 날짜·상태: 2026-10-24 active
 - 발견: claude(FluidFX FX-7p-r)
+
+### L-build-17 나이아가라 에디터·데이터 채널 C++ 함정 3가지: `SNiagaraModuleWizard.h` 포함 시 C2491, NDC 판독기 `FVector3f`는 StaticStruct 오류, `NewObject`로 만든 데이터 채널은 `PostLoad` 전까지 `IsValid` 거짓
+- 증상: ① TDGameEditor에서 `SNiagaraModuleWizard.h`를 포함하면 error C2491(dllimport 함수 정의 불가, 원문 미보존) ② NDC 판독기 구조체 필드를 `FVector3f`로 두면 StaticStruct 관련 컴파일 오류 ③ 시험에서 리플렉션으로 만든 데이터 채널 에셋이 `IsValid` 거짓이라 쓰기·읽기가 0
+- 해결: ① 헤더 대신 필요한 내보낸 함수 2개를 직접 선언 ② `FVector`를 쓰고 float 지역 변수는 `TLWCType`으로 ③ 시험에서 만든 뒤 `PostLoad()`를 불러 초기화(H5 DataChannelRoutesByChannel)
+- 범위: TDGameEditor 나이아가라 모듈 라이브러리, TDGame 데이터 채널 판독기·시험
+- 증거: `Saved/AgentOps/20261026/wave2/fx5/`(빌더 r0~r5 기록), `Saved/AgentOps/20261026/wave2/ib2/`
+- 날짜·상태: 2026-10-27 active(①②는 원문 오류 줄 미보존 — 미검증 문구)
+- 발견: claude(FluidFX FX-5 빌더)

@@ -4,6 +4,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "TDFluidNiagaraModuleEditorLibrary.generated.h"
 
+class UNiagaraSystem;
+
 UCLASS()
 class TDGAMEEDITOR_API UTDFluidNiagaraModuleEditorLibrary : public UBlueprintFunctionLibrary
 {
@@ -18,4 +20,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "TD|FluidFX")
 	static bool CreateDataChannelAppendModuleScript(const FString& PackagePath, const FString& DataChannelPath, FString& OutReport);
+
+	UFUNCTION(BlueprintCallable, Category = "TD|FluidFX")
+	static FString RecompileNiagaraSystemFully(UNiagaraSystem* System);
 };

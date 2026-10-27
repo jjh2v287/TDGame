@@ -193,7 +193,7 @@ void UTDFluidSplatDataInterface::GetFunctionsInternal(TArray<FNiagaraFunctionSig
 	FNiagaraFunctionSignature& Signature = OutFunctions.AddDefaulted_GetRef();
 	Signature.Name = TDFluidSplatInterface::SplatPointFunctionName;
 	Signature.Inputs.Add(FNiagaraVariable(FNiagaraTypeDefinition(GetClass()), TEXT("SplatInterface")));
-	Signature.Inputs.Add_GetRef(FNiagaraVariable(FNiagaraTypeDefinition::GetBoolDef(), TEXT("Execute"))).SetValue(true);
+	Signature.Inputs.Add_GetRef(FNiagaraVariable(FNiagaraTypeDefinition::GetBoolDef(), TEXT("bExecute"))).SetValue(true);
 	Signature.Inputs.Add(FNiagaraVariable(FNiagaraTypeDefinition::GetPositionDef(), TEXT("Position")));
 	Signature.Inputs.Add(FNiagaraVariable(FNiagaraTypeDefinition::GetVec3Def(), TEXT("Velocity")));
 	Signature.Inputs.Add(FNiagaraVariable(FNiagaraTypeDefinition::GetFloatDef(), TEXT("RadiusCm")));

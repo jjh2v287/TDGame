@@ -20,6 +20,20 @@
 #include "NiagaraDataChannel_Global.h"
 #include "NiagaraDataChannelVariable.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Dom/JsonObject.h"
+#include "HAL/FileManager.h"
+#include "Misc/DateTime.h"
+#include "Misc/FileHelper.h"
+#include "Misc/PackageName.h"
+#include "Misc/Paths.h"
+#include "NiagaraComponent.h"
+#include "NiagaraGPUProfilerInterface.h"
+#include "NiagaraSystem.h"
+#include "RHIGlobals.h"
+#include "RenderingThread.h"
+#include "Serialization/JsonSerializer.h"
+#include "Tickable.h"
+#include "UObject/Package.h"
 
 namespace TDFluidMassInputTestPrivate
 {
@@ -93,7 +107,7 @@ bool FTDFluidMassInputDefaultsKeepLegacyTest::RunTest(const FString& Parameters)
 
 	const FTDFluidMassInputSettings Bench = UTDFluidPresetAsset::BuildMassInputForPresetKind(ETDFluidPresetKind::MassInputBench);
 	TestTrue(TEXT("MassInputBench reads the data channel"), Bench.bReadDataChannel);
-	TestTrue(TEXT("MassInputBench data channel path stays empty until the asset exists"), Bench.DataChannel.IsNull());
+	TestEqual(TEXT("MassInputBench data channel path matches the tuning JSON"), Bench.DataChannel.ToSoftObjectPath().ToString(), FString(TEXT("/Game/FluidFX/Niagara/DataChannels/NDC_TD_FluidMassInput.NDC_TD_FluidMassInput")));
 	TestTrue(TEXT("Flamethrower projects oriented obstacles"), UTDFluidPresetAsset::BuildPlaneSettingsForPresetKind(ETDFluidPresetKind::Flamethrower).bProjectOrientedObstacles);
 	return true;
 }
@@ -386,6 +400,436 @@ bool FTDFluidMassInputDataChannelRoutesByChannelTest::RunTest(const FString& Par
 	TestEqual(TEXT("Channel A actor receives the three written points exactly once"), FirstProcessedPointCount, 3);
 	TestEqual(TEXT("Channel B actor receives no points"), SecondProcessedPointCount, 0);
 	return true;
+}
+
+namespace TDFluidMassInputNiagaraRhiTestPrivate
+{
+	const TCHAR* const SplatBench1kSystemPath = TEXT("/Game/FluidFX/Niagara/NS_TD_FluidMassBench1k.NS_TD_FluidMassBench1k");
+	const TCHAR* const SplatBench10kSystemPath = TEXT("/Game/FluidFX/Niagara/NS_TD_FluidMassBench.NS_TD_FluidMassBench");
+	const TCHAR* const DataChannelBenchSystemPath = TEXT("/Game/FluidFX/Niagara/NS_TD_FluidMassNdcBench.NS_TD_FluidMassNdcBench");
+	const TCHAR* const LatencyRecordRelativePath = TEXT("FluidFX/fx5/latency.json");
+	const TCHAR* const CostRecordRelativePath = TEXT("FluidFX/fx5/cost-mass-input.json");
+	const FName OtherChannelName(TEXT("TDMassOtherChannel"));
+	const FVector BenchAnchorLocation(0.0, 0.0, 100.0);
+	constexpr float BenchStepSeconds = 1.0f / 60.0f;
+	constexpr float ActiveDurationSeconds = 600.0f;
+	constexpr int32 MaxSetupStepCount = 400;
+	constexpr int32 SettleStepCount = 10;
+	constexpr int32 SplatCaptureStepCount = 60;
+	constexpr int32 MaxLatencyStepCount = 30;
+	constexpr int32 MaxCpuLatencyFrames = 2;
+	constexpr int32 CostWarmupStepCount = 30;
+	constexpr int32 CostFrameCount = 120;
+
+	struct FTDMassNiagaraWorld
+	{
+		FTDMassNiagaraWorld()
+		{
+			const FName WorldName = MakeUniqueObjectName(GetTransientPackage(), UWorld::StaticClass(), TEXT("TDFluidMassNiagaraWorld"));
+			World = UWorld::CreateWorld(EWorldType::Game, false, WorldName, GetTransientPackage());
+			GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+			World->InitializeActorsForPlay(FURL());
+			World->BeginPlay();
+			World->SetBegunPlay(true);
+		}
+
+		~FTDMassNiagaraWorld()
+		{
+			if (!World)
+			{
+				return;
+			}
+
+			GEngine->DestroyWorldContext(World);
+			World->DestroyWorld(false);
+			FlushRenderingCommands();
+		}
+
+		void StepWorld()
+		{
+			++GFrameCounter;
+			World->Tick(LEVELTICK_All, BenchStepSeconds);
+			FTickableGameObject::TickObjects(nullptr, LEVELTICK_All, false, BenchStepSeconds);
+			ENQUEUE_RENDER_COMMAND(TDFluidMassNiagaraWaitForGpu)([](FRHICommandListImmediate& RHICmdList)
+			{
+				RHICmdList.SubmitAndBlockUntilGPUIdle();
+			});
+			FlushRenderingCommands();
+		}
+
+		UWorld* World = nullptr;
+	};
+
+	struct FTDMassBench
+	{
+		ATDFluidLiveActor* LiveActor = nullptr;
+		UNiagaraComponent* NiagaraComp = nullptr;
+	};
+
+	struct FTDMassCostCase
+	{
+		const TCHAR* SystemPath = nullptr;
+		const TCHAR* SectionKey = nullptr;
+		bool bExpectsGpuDispatch = true;
+	};
+
+	struct FTDMassCostRecord
+	{
+		int32 DispatchFrameCount = 0;
+		double DispatchMicrosecondsMean = 0.0;
+		double ReadMillisecondsMean = 0.0;
+		double PublishMillisecondsMean = 0.0;
+	};
+
+	bool CanRunMassNiagaraTest(FAutomationTestBase& Test, const TCHAR* TestLabel)
+	{
+		if (!GUsingNullRHI)
+		{
+			return true;
+		}
+
+		Test.AddError(FString::Printf(TEXT("%s needs a rendering RHI."), TestLabel));
+		return false;
+	}
+
+	bool HasSystemAsset(FAutomationTestBase& Test, const TCHAR* SystemPath)
+	{
+		if (FPackageName::DoesPackageExist(FSoftObjectPath(SystemPath).GetLongPackageName()))
+		{
+			return true;
+		}
+
+		Test.AddError(FString::Printf(TEXT("%s is missing; run editor_make_fluid_mass_input_assets.py and the mass Niagara specs first"), SystemPath));
+		return false;
+	}
+
+	ATDFluidLiveActor* SpawnBenchActor(FTDMassNiagaraWorld& TestWorld, const TCHAR* SystemPath)
+	{
+		UTDFluidLiveSubsystem* Subsystem = UTDFluidLiveSubsystem::GetFluidLiveSubsystem(TestWorld.World);
+		if (!Subsystem)
+		{
+			return nullptr;
+		}
+
+		UTDFluidPresetAsset* Preset = UTDFluidPresetAsset::CreateTransientPreset(TestWorld.World, ETDFluidPresetKind::MassInputBench);
+		Preset->bOverridePresetDefaults = true;
+		Preset->SimulationConfig.SolverBackend = ETDFluidSolverBackend::Gpu;
+		Preset->PlaneSettings = UTDFluidPresetAsset::BuildPlaneSettingsForPresetKind(ETDFluidPresetKind::MassInputBench);
+		if (SystemPath)
+		{
+			Preset->ExternalNiagaraSystem = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(SystemPath));
+		}
+		return Subsystem->SpawnPooledFluidActor(Preset, BenchAnchorLocation, ActiveDurationSeconds);
+	}
+
+	UNiagaraComponent* WaitForOwnedComponent(FTDMassNiagaraWorld& TestWorld, const ATDFluidLiveActor& LiveActor)
+	{
+		UNiagaraComponent* NiagaraComp = LiveActor.LiveComponent->GetOwnedNiagaraComponent();
+		for (int32 StepIndex = 0; StepIndex < MaxSetupStepCount && !NiagaraComp; ++StepIndex)
+		{
+			FlushAsyncLoading();
+			TestWorld.StepWorld();
+			NiagaraComp = LiveActor.LiveComponent->GetOwnedNiagaraComponent();
+		}
+		return NiagaraComp;
+	}
+
+	bool StartBench(FAutomationTestBase& Test, FTDMassNiagaraWorld& TestWorld, const TCHAR* SystemPath, const FString& Label, FTDMassBench& OutBench)
+	{
+		OutBench.LiveActor = SpawnBenchActor(TestWorld, SystemPath);
+		if (!Test.TestNotNull(*(Label + TEXT(": spawned the bench actor")), OutBench.LiveActor))
+		{
+			return false;
+		}
+
+		OutBench.NiagaraComp = WaitForOwnedComponent(TestWorld, *OutBench.LiveActor);
+		if (!OutBench.NiagaraComp)
+		{
+			Test.AddError(FString::Printf(TEXT("%s: the owned Niagara component never appeared; %s failed to load"), *Label, SystemPath));
+			return false;
+		}
+
+		OutBench.NiagaraComp->DeactivateImmediate();
+		for (int32 StepIndex = 0; StepIndex < SettleStepCount; ++StepIndex)
+		{
+			TestWorld.StepWorld();
+		}
+		const UTDFluidLiveComponent& Component = *OutBench.LiveActor->LiveComponent;
+		return Test.TestTrue(*(Label + TEXT(": the bench actor runs the GPU solver and accepts mass input")), Component.IsUsingGpuSolver() && Component.AcceptsMassInput());
+	}
+
+	bool HasReflectedDataChannelPoints(const UTDFluidLiveComponent& Component)
+	{
+		return Component.GetLastUploadedMassPointCount() > 0;
+	}
+
+	bool HasReflectedSplats(const UTDFluidLiveComponent& Component)
+	{
+		return Component.GetMassInputCounters().SplatCount > 0;
+	}
+
+	int32 MeasureReflectionFrames(FAutomationTestBase& Test, const TCHAR* SystemPath, const FString& Label, bool (*HasReflected)(const UTDFluidLiveComponent&))
+	{
+		FTDMassNiagaraWorld TestWorld;
+		FTDMassBench Bench;
+		if (!StartBench(Test, TestWorld, SystemPath, Label, Bench))
+		{
+			return INDEX_NONE;
+		}
+		if (!Test.TestFalse(*(Label + TEXT(": nothing is reflected before the emitter starts")), HasReflected(*Bench.LiveActor->LiveComponent)))
+		{
+			return INDEX_NONE;
+		}
+
+		Bench.NiagaraComp->Activate(true);
+		for (int32 FrameIndex = 1; FrameIndex <= MaxLatencyStepCount; ++FrameIndex)
+		{
+			TestWorld.StepWorld();
+			if (HasReflected(*Bench.LiveActor->LiveComponent))
+			{
+				return FrameIndex;
+			}
+		}
+		return INDEX_NONE;
+	}
+
+	bool WriteRecordSection(const TCHAR* RelativePath, const FString& SectionName, const TSharedRef<FJsonObject>& Section)
+	{
+		const FString Path = FPaths::Combine(FPaths::ProjectSavedDir(), RelativePath);
+		TSharedPtr<FJsonObject> Root;
+		FString ExistingText;
+		if (FFileHelper::LoadFileToString(ExistingText, *Path))
+		{
+			const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ExistingText);
+			FJsonSerializer::Deserialize(Reader, Root);
+		}
+		if (!Root.IsValid())
+		{
+			Root = MakeShared<FJsonObject>();
+		}
+		Root->SetObjectField(SectionName, Section);
+		FString OutputText;
+		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputText);
+		FJsonSerializer::Serialize(Root.ToSharedRef(), Writer);
+		IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path), true);
+		return FFileHelper::SaveStringToFile(OutputText, *Path);
+	}
+
+#if WITH_NIAGARA_GPU_PROFILER
+	bool RecordBenchCost(FAutomationTestBase& Test, const FTDMassCostCase& CostCase, FTDMassCostRecord& OutRecord)
+	{
+		FTDMassNiagaraWorld TestWorld;
+		FTDMassBench Bench;
+		if (!StartBench(Test, TestWorld, CostCase.SystemPath, CostCase.SectionKey, Bench))
+		{
+			return false;
+		}
+
+		UTDFluidLiveSubsystem* Subsystem = UTDFluidLiveSubsystem::GetFluidLiveSubsystem(TestWorld.World);
+		Bench.NiagaraComp->Activate(true);
+		for (int32 StepIndex = 0; StepIndex < CostWarmupStepCount; ++StepIndex)
+		{
+			TestWorld.StepWorld();
+		}
+
+		TArray<double> FrameMicroseconds;
+		TWeakObjectPtr<UNiagaraComponent> WeakComponent(Bench.NiagaraComp);
+		FNiagaraGpuProfilerListener Listener;
+		Listener.SetHandler([&FrameMicroseconds, WeakComponent](const FNiagaraGpuFrameResultsPtr& Results)
+		{
+			if (!Results.IsValid())
+			{
+				return;
+			}
+
+			double ComponentMicroseconds = 0.0;
+			for (const FNiagaraGpuFrameResults::FDispatchResults& Dispatch : Results->DispatchResults)
+			{
+				if (Dispatch.OwnerComponent.Get() == WeakComponent.Get())
+				{
+					ComponentMicroseconds += static_cast<double>(Dispatch.DurationMicroseconds);
+				}
+			}
+			FrameMicroseconds.Add(ComponentMicroseconds);
+		});
+		Listener.SetEnabled(true);
+
+		double ReadSecondsSum = 0.0;
+		double PublishSecondsSum = 0.0;
+		for (int32 FrameIndex = 0; FrameIndex < CostFrameCount; ++FrameIndex)
+		{
+			TestWorld.StepWorld();
+			ReadSecondsSum += Subsystem->GetLastMassInputReadSeconds();
+			PublishSecondsSum += Subsystem->GetLastMassInputPublishSeconds();
+		}
+		Listener.SetEnabled(false);
+
+		double DispatchMicrosecondsSum = 0.0;
+		for (const double Microseconds : FrameMicroseconds)
+		{
+			DispatchMicrosecondsSum += Microseconds;
+		}
+		OutRecord.DispatchFrameCount = FrameMicroseconds.Num();
+		OutRecord.DispatchMicrosecondsMean = FrameMicroseconds.IsEmpty() ? 0.0 : DispatchMicrosecondsSum / FrameMicroseconds.Num();
+		OutRecord.ReadMillisecondsMean = ReadSecondsSum * 1000.0 / CostFrameCount;
+		OutRecord.PublishMillisecondsMean = PublishSecondsSum * 1000.0 / CostFrameCount;
+		return true;
+	}
+#endif
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidMassInputNiagaraSplatReachesTargetRhiTest,
+	"TDGame.FluidFXRhi.MassInput.NiagaraSplatReachesTarget",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidMassInputNiagaraSplatReachesTargetRhiTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidMassInputNiagaraRhiTestPrivate;
+	if (!CanRunMassNiagaraTest(*this, TEXT("TDGame.FluidFXRhi.MassInput.NiagaraSplatReachesTarget")) || !HasSystemAsset(*this, SplatBench1kSystemPath))
+	{
+		return false;
+	}
+
+	FTDMassNiagaraWorld TestWorld;
+	ATDFluidLiveActor* OtherChannelActor = SpawnBenchActor(TestWorld, nullptr);
+	FTDMassBench Bench;
+	if (!TestNotNull(TEXT("Spawned the other channel actor"), OtherChannelActor) || !StartBench(*this, TestWorld, SplatBench1kSystemPath, TEXT("Splat"), Bench))
+	{
+		return false;
+	}
+
+	UTDFluidLiveComponent& OtherComponent = *OtherChannelActor->LiveComponent;
+	FTDFluidMassInputSettings OtherSettings = OtherComponent.GetMassInputSettings();
+	OtherSettings.MassInputChannelName = OtherChannelName;
+	OtherComponent.SetMassInputSettingsForTests(OtherSettings);
+	if (!TestTrue(TEXT("The other channel actor runs the GPU solver"), OtherComponent.IsUsingGpuSolver()))
+	{
+		return false;
+	}
+
+	Bench.NiagaraComp->Activate(true);
+	uint64 TargetSplatCount = 0;
+	uint64 TargetOutsideCount = 0;
+	uint64 OtherChannelCount = 0;
+	for (int32 StepIndex = 0; StepIndex < SplatCaptureStepCount; ++StepIndex)
+	{
+		TestWorld.StepWorld();
+		const FTDFluidGpuMassInputCounters TargetCounters = Bench.LiveActor->LiveComponent->GetMassInputCounters();
+		const FTDFluidGpuMassInputCounters OtherCounters = OtherComponent.GetMassInputCounters();
+		TargetSplatCount += TargetCounters.SplatCount;
+		TargetOutsideCount += TargetCounters.OutsideCount;
+		OtherChannelCount += static_cast<uint64>(OtherCounters.SplatCount) + OtherCounters.OutsideCount;
+	}
+
+	AddInfo(FString::Printf(TEXT("TDFluidMassNiagaraSplat: target_splats=%llu target_outside=%llu other_channel=%llu"), TargetSplatCount, TargetOutsideCount, OtherChannelCount));
+	TestTrue(TEXT("Niagara splats land inside the target grid"), TargetSplatCount > 0);
+	TestTrue(TEXT("No Niagara splat falls outside the target grid"), TargetOutsideCount == 0);
+	TestTrue(TEXT("The other channel actor receives no splat"), OtherChannelCount == 0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidMassInputDataChannelLatencyRecordRhiTest,
+	"TDGame.FluidFXRhi.MassInput.DataChannelLatencyRecord",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidMassInputDataChannelLatencyRecordRhiTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidMassInputNiagaraRhiTestPrivate;
+	if (!CanRunMassNiagaraTest(*this, TEXT("TDGame.FluidFXRhi.MassInput.DataChannelLatencyRecord")))
+	{
+		return false;
+	}
+	const bool bHasCpuSystem = HasSystemAsset(*this, DataChannelBenchSystemPath);
+	const bool bHasGpuSystem = HasSystemAsset(*this, SplatBench1kSystemPath);
+	if (!bHasCpuSystem || !bHasGpuSystem)
+	{
+		return false;
+	}
+
+	const int32 CpuFrames = MeasureReflectionFrames(*this, DataChannelBenchSystemPath, TEXT("CPU data channel emitter"), &HasReflectedDataChannelPoints);
+	const int32 GpuFrames = MeasureReflectionFrames(*this, SplatBench1kSystemPath, TEXT("GPU splat emitter"), &HasReflectedSplats);
+	TSharedRef<FJsonObject> Section = MakeShared<FJsonObject>();
+	Section->SetStringField(TEXT("cpu_system"), DataChannelBenchSystemPath);
+	Section->SetStringField(TEXT("gpu_system"), SplatBench1kSystemPath);
+	Section->SetNumberField(TEXT("cpu_emitter_frames"), CpuFrames);
+	Section->SetNumberField(TEXT("gpu_emitter_frames"), GpuFrames);
+	Section->SetBoolField(TEXT("cpu_finite"), CpuFrames != INDEX_NONE);
+	Section->SetBoolField(TEXT("gpu_finite"), GpuFrames != INDEX_NONE);
+	Section->SetNumberField(TEXT("max_frames"), MaxLatencyStepCount);
+	Section->SetNumberField(TEXT("step_seconds"), BenchStepSeconds);
+	Section->SetStringField(TEXT("recorded_utc"), FDateTime::UtcNow().ToIso8601());
+	TestTrue(TEXT("Writes Saved/FluidFX/fx5/latency.json"), WriteRecordSection(LatencyRecordRelativePath, TEXT("data_channel_latency"), Section));
+
+	AddInfo(FString::Printf(TEXT("TDFluidMassLatency: cpu_frames=%d gpu_frames=%d"), CpuFrames, GpuFrames));
+	TestTrue(TEXT("The CPU emitter reflection frame is finite"), CpuFrames != INDEX_NONE);
+	TestTrue(TEXT("The GPU emitter reflection frame is finite"), GpuFrames != INDEX_NONE);
+	TestTrue(*FString::Printf(TEXT("The CPU emitter reflects within %d frames (%d)"), MaxCpuLatencyFrames, CpuFrames), CpuFrames != INDEX_NONE && CpuFrames <= MaxCpuLatencyFrames);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidMassInputNiagaraAndGameThreadCostRhiTest,
+	"TDGame.FluidFXRhi.MassInput.NiagaraAndGameThreadCostRecord",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidMassInputNiagaraAndGameThreadCostRhiTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidMassInputNiagaraRhiTestPrivate;
+	if (!CanRunMassNiagaraTest(*this, TEXT("TDGame.FluidFXRhi.MassInput.NiagaraAndGameThreadCostRecord")))
+	{
+		return false;
+	}
+
+#if WITH_NIAGARA_GPU_PROFILER
+	const FTDMassCostCase CostCases[] = {
+		{ SplatBench10kSystemPath, TEXT("niagara_splat_10k") },
+		{ SplatBench1kSystemPath, TEXT("niagara_splat_1k") },
+		{ DataChannelBenchSystemPath, TEXT("data_channel_1k"), false },
+	};
+	bool bHasAllSystems = true;
+	for (const FTDMassCostCase& CostCase : CostCases)
+	{
+		bHasAllSystems &= HasSystemAsset(*this, CostCase.SystemPath);
+	}
+	if (!bHasAllSystems)
+	{
+		return false;
+	}
+
+	TSharedRef<FJsonObject> Section = MakeShared<FJsonObject>();
+	bool bAllFinite = true;
+	bool bEveryGpuCaseDispatched = true;
+	for (const FTDMassCostCase& CostCase : CostCases)
+	{
+		FTDMassCostRecord Record;
+		if (!RecordBenchCost(*this, CostCase, Record))
+		{
+			return false;
+		}
+
+		TSharedRef<FJsonObject> CaseObject = MakeShared<FJsonObject>();
+		CaseObject->SetStringField(TEXT("system"), CostCase.SystemPath);
+		CaseObject->SetNumberField(TEXT("frames"), CostFrameCount);
+		CaseObject->SetNumberField(TEXT("di_dispatch_result_frames"), Record.DispatchFrameCount);
+		CaseObject->SetNumberField(TEXT("di_dispatch_microseconds_mean"), Record.DispatchMicrosecondsMean);
+		CaseObject->SetNumberField(TEXT("game_thread_mass_input_read_ms_mean"), Record.ReadMillisecondsMean);
+		CaseObject->SetNumberField(TEXT("game_thread_mass_input_publish_ms_mean"), Record.PublishMillisecondsMean);
+		Section->SetObjectField(CostCase.SectionKey, CaseObject);
+		bEveryGpuCaseDispatched &= !CostCase.bExpectsGpuDispatch || Record.DispatchFrameCount > 0;
+		bAllFinite &= FMath::IsFinite(Record.DispatchMicrosecondsMean) && FMath::IsFinite(Record.ReadMillisecondsMean) && FMath::IsFinite(Record.PublishMillisecondsMean);
+		AddInfo(FString::Printf(TEXT("TDFluidMassCost %s: dispatch_us=%.3f (%d frames) read_ms=%.4f publish_ms=%.4f"), CostCase.SectionKey, Record.DispatchMicrosecondsMean, Record.DispatchFrameCount, Record.ReadMillisecondsMean, Record.PublishMillisecondsMean));
+	}
+	Section->SetStringField(TEXT("recorded_utc"), FDateTime::UtcNow().ToIso8601());
+	TestTrue(TEXT("Writes the Niagara and game thread section of cost-mass-input.json"), WriteRecordSection(CostRecordRelativePath, TEXT("niagara_and_game_thread"), Section));
+	TestTrue(TEXT("Every recorded cost is finite"), bAllFinite);
+	TestTrue(TEXT("Every GPU splat case profiles at least one dispatch frame"), bEveryGpuCaseDispatched);
+	return true;
+#else
+	AddError(TEXT("WITH_NIAGARA_GPU_PROFILER is off in this build, so the dispatch cost cannot be recorded."));
+	return false;
+#endif
 }
 
 #endif

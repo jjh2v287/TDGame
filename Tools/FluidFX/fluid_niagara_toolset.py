@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 모듈(editor_make_fluid_driven_niagara.py·check_fluid_niagara_specs.py 가 가져온다). 언리얼 MCP 8000(NiagaraToolsets)·원격 실행은 실제 클라이언트를 만들 때만 필요하고, 가짜 클라이언트와 정규화 함수는 에디터 없이 돈다.
 실행 명령: 직접 실행하지 않는다(import fluid_niagara_toolset).
 출력: 없음. 공용 MCP 호출(TDNiagaraToolsetClient)·호출 기록 가짜 클라이언트(TDFakeNiagaraToolsetClient)·스택 조작(Set Parameters·모듈·동적 입력·표본 출력 연결·텍스처 바인딩 왕복·열거 입력)·렌더러 교체·덤프 정규화(v1 editor_make_fluid_ember_niagara.py 188-760 을 이미터 이름 인수로 옮긴 사본, 덤프 형식 sections.UserVariables.userVariables 동일)·컴파일 상태 문제 목록·에디터 로그(FLUSHLOG 뒤 오프셋 구간) 컴파일 문제 줄 집계를 준다.
-상태: 2026-10-26 FX-5 추가(미검증, 가짜 클라이언트만): 데이터 인터페이스 입력 모듈(속성 값 쓰기·재읽기 왕복 + 연결·식 입력), KillParticlesInVolume 열거(Kill Shape, 표시 이름 Box 재읽기), 렌더러 전부 제거(none). 이전: 2026-10-26 수정·검증(에디터 0b 7회·생성 7회에서 동작, Niagara 오프스크린 12/12). 열거 입력은 엔진 형식 NiagaraExt_StackInputData_Enum{enum, enumName}(NiagaraExternalSystemEditorUtilities.h:556-571·.cpp:2985-2993, 0b 덤프 재읽기와 같은 꼴)으로 확정. 색·정수 값·GetEmitterInputValues 구조는 0b 확정. 로그 경로 표지 탐색·컴파일 문제 줄 집계는 생성 7회에서 GPU 문제 줄 0으로 동작 확인.
+상태: 2026-10-27 editor_recompile_system_fully(저장 전 강제 전체 재컴파일, 시스템 Spawn·Update 속성 집합 일치·실행 준비 보고) 추가. 이전: 2026-10-26 FX-5 추가(미검증, 가짜 클라이언트만): 데이터 인터페이스 입력 모듈(속성 값 쓰기·재읽기 왕복 + 연결·식 입력), KillParticlesInVolume 열거(Kill Shape, 표시 이름 Box 재읽기), 렌더러 전부 제거(none). 이전: 2026-10-26 수정·검증(에디터 0b 7회·생성 7회에서 동작, Niagara 오프스크린 12/12). 열거 입력은 엔진 형식 NiagaraExt_StackInputData_Enum{enum, enumName}(NiagaraExternalSystemEditorUtilities.h:556-571·.cpp:2985-2993, 0b 덤프 재읽기와 같은 꼴)으로 확정. 색·정수 값·GetEmitterInputValues 구조는 0b 확정. 로그 경로 표지 탐색·컴파일 문제 줄 집계는 생성 7회에서 GPU 문제 줄 0으로 동작 확인.
 """
 import copy
 import json
@@ -274,6 +274,26 @@ def editor_save_asset(path):
     )
     if read_marker(run_editor_code(code), "TD_SAVED") != "True":
         raise TDNiagaraToolError(f"저장 실패: {path}")
+
+
+def parse_recompile_report(text):
+    return dict(item.split("=", 1) for item in text.split() if "=" in item)
+
+
+def editor_recompile_system_fully(path):
+    code = (
+        "import unreal\n"
+        f"asset = unreal.EditorAssetLibrary.load_asset({path!r})\n"
+        "print('TD_RECOMPILE', unreal.TDFluidNiagaraModuleEditorLibrary.recompile_niagara_system_fully(asset))\n"
+    )
+    report = parse_recompile_report(read_marker(run_editor_code(code), "TD_RECOMPILE"))
+    if not report:
+        raise TDNiagaraToolError(f"강제 전체 재컴파일 보고 없음: {path}")
+    return report
+
+
+def is_system_attributes_match(report):
+    return isinstance(report, dict) and report.get("attributes_match") == "1" and report.get("ready_to_run") == "1"
 
 
 def object_path(asset_path):

@@ -21,6 +21,7 @@
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
+#include "Misc/ScopeExit.h"
 #include "Async/ParallelFor.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -1030,6 +1031,11 @@ void UTDFluidLiveSubsystem::DistributeCollectedObstacles()
 void UTDFluidLiveSubsystem::ReadMassInputDataChannels()
 {
 	CSV_SCOPED_TIMING_STAT(TDFluid, MassInputRead);
+	const double ReadStartSeconds = FPlatformTime::Seconds();
+	ON_SCOPE_EXIT
+	{
+		LastMassInputReadSeconds = FPlatformTime::Seconds() - ReadStartSeconds;
+	};
 	if (!TDFluidMassInput::IsAllowedByConsole())
 	{
 		return;
@@ -1118,6 +1124,11 @@ void UTDFluidLiveSubsystem::ReadMassInputDataChannels()
 void UTDFluidLiveSubsystem::PublishMassInputTargets(TConstArrayView<ATDFluidLiveActor*> GpuSolvingActors)
 {
 	CSV_SCOPED_TIMING_STAT(TDFluid, MassInputPublish);
+	const double PublishStartSeconds = FPlatformTime::Seconds();
+	ON_SCOPE_EXIT
+	{
+		LastMassInputPublishSeconds = FPlatformTime::Seconds() - PublishStartSeconds;
+	};
 	TArray<FTDFluidMassInputTarget> Targets;
 	int32 UploadedPointCount = 0;
 	int32 SplatCount = 0;

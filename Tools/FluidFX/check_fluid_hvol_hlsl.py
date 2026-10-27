@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(numpy·Pillow) 와 Windows Kits dxc.exe(ps_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_hvol_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json] [--output 요약.json]
-출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(dxc 명령·표본 수, 거울 시험 sha256), 하나라도 실패하면 종료 코드 1
-상태: 미검증(2026-10-26 FX-9 묶음 E 작성). TDFluidVolumeDensityCommon.hlsl + TDFluidHeterogeneousVolume.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점(M4 오프셋, P-04 단면 v)·이름 계약(MI 덮어쓰기에 C++ 구동·런타임 이름 R7 없음)·안개 파일 창 UV·탭 규약 대조(위험 7·X-17)·dxc ps_6_0 O3/Od 와 역할(구동·수동)×단면 모드(0~3) 상수 접기 순열을 보고, 무대 배치·굽기 요청 초안 검사, numpy 거울 V1 방사 단면 회전 불변·V2 무효 지형 = 바닥·V3 0·극값 NaN 0·V4 대칭 두께 = T·V5 근·원 페이드 합 1·V6 흑체 R/B 단조·V7 M4 오프셋 창 중심·V8 P-04 단면 규약·V9 높이 캐시 부호화 왕복을 두 번 돌려 sha256 이 같은지 본다.
+출력: 항목별 PASS/FAIL 줄(조각 대조 3항목은 --look-fragment 를 줄 때만)과 마지막 줄 JSON 요약(dxc 명령·표본 수, 거울 시험 sha256), 하나라도 실패하면 종료 코드 1
+상태: 2026-10-27 날짜 박힌 Saved 조각 기본값 제거(조각은 인수로만), 2026-10-26 FX-9 묶음 E 작성. TDFluidVolumeDensityCommon.hlsl + TDFluidHeterogeneousVolume.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점(M4 오프셋, P-04 단면 v)·이름 계약(MI 덮어쓰기에 C++ 구동·런타임 이름 R7 없음)·안개 파일 창 UV·탭 규약 대조(위험 7·X-17)·dxc ps_6_0 O3/Od 와 역할(구동·수동)×단면 모드(0~3) 상수 접기 순열을 보고, 무대 배치·굽기 요청 초안 검사, numpy 거울 V1 방사 단면 회전 불변·V2 무효 지형 = 바닥·V3 0·극값 NaN 0·V4 대칭 두께 = T·V5 근·원 페이드 합 1·V6 흑체 R/B 단조·V7 M4 오프셋 창 중심·V8 P-04 단면 규약·V9 높이 캐시 부호화 왕복을 두 번 돌려 sha256 이 같은지 본다.
 """
 import argparse
 import glob
@@ -374,11 +374,6 @@ def find_runtime_name_hits(fragment_entries, runtime_names):
     return hits
 
 
-def default_fragment_path(root):
-    candidate = root.parent / "TDGame" / "Saved" / "AgentOps" / "20261026" / "wave2" / "look-fragment-fx9.json"
-    return str(candidate) if candidate.is_file() else ""
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=str(pathlib.Path(__file__).resolve().parents[2]))
@@ -388,7 +383,7 @@ def main():
     arguments = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     root = pathlib.Path(arguments.root)
-    fragment_path = arguments.look_fragment or default_fragment_path(root)
+    fragment_path = arguments.look_fragment
     results = []
     summary = {"look_fragment": fragment_path}
 
@@ -441,11 +436,12 @@ def main():
     entries, fragment_entries, overlap = collect_look_entries(root, fragment_path)
     override_problems = material.find_instance_override_problems(entries)
     record("MI 이름 계약(부모·마스터 이름·C++ 구동·조건부 이름 없음, MI 7개)", not override_problems, "; ".join(override_problems))
-    record("조각과 정본 키 서로소", not overlap, ", ".join(overlap))
-    runtime_hits = find_runtime_name_hits(fragment_entries, collect_runtime_names(root))
-    record("조각에 C++ 런타임 이름 없음(R7, TerrainHeight* 계획 이름 포함)", not runtime_hits, "; ".join(runtime_hits))
-    extra_entries = sorted(path for path in fragment_entries if path.rsplit("/", 1)[-1] not in material.INSTANCE_NAMES)
-    record("조각 항목 = HVOL MI 7개만", not extra_entries and len(fragment_entries) == len(material.INSTANCE_NAMES), ", ".join(extra_entries) or f"{len(fragment_entries)}개")
+    if fragment_path:
+        record("조각과 정본 키 서로소", not overlap, ", ".join(overlap))
+        runtime_hits = find_runtime_name_hits(fragment_entries, collect_runtime_names(root))
+        record("조각에 C++ 런타임 이름 없음(R7, TerrainHeight* 계획 이름 포함)", not runtime_hits, "; ".join(runtime_hits))
+        extra_entries = sorted(path for path in fragment_entries if path.rsplit("/", 1)[-1] not in material.INSTANCE_NAMES)
+        record("조각 항목 = HVOL MI 7개만", not extra_entries and len(fragment_entries) == len(material.INSTANCE_NAMES), ", ".join(extra_entries) or f"{len(fragment_entries)}개")
 
     outcomes_first, digest_first = run_mirror_tests(sections, bake)
     outcomes_second, digest_second = run_mirror_tests(generator.make_sections(generator.DEFAULT_SEED), bake)

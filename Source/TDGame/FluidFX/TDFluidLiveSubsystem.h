@@ -73,6 +73,8 @@ public:
 	void RegisterObstacleSource(UTDFluidObstacleComponent* ObstacleSource);
 	void UnregisterObstacleSource(UTDFluidObstacleComponent* ObstacleSource);
 	void MarkObstacleSourcesDirty() { bObstacleSourcesDirty = true; }
+	double GetLastMassInputReadSeconds() const { return LastMassInputReadSeconds; }
+	double GetLastMassInputPublishSeconds() const { return LastMassInputPublishSeconds; }
 	int32 GetObstacleSourceCount() const;
 	static void SelectNearestObstacles(TConstArrayView<FTDFluidSdfObstacle> SourceObstacles, const FVector& CenterWorld, int32 MaxObstacleCount, TArray<FTDFluidSdfObstacle>& OutObstacles);
 
@@ -241,6 +243,8 @@ private:
 	TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe> MassInputHub;
 	TArray<TWeakObjectPtr<UTDFluidObstacleComponent>> ObstacleSources;
 	bool bObstacleSourcesDirty = false;
+	double LastMassInputReadSeconds = 0.0;
+	double LastMassInputPublishSeconds = 0.0;
 	TArray<uint64> PendingReleasedGpuActorKeys;
 	uint64 LastGpuSolverActorKey = 0;
 	uint32 LastGpuSolverFrameNumber = 0;

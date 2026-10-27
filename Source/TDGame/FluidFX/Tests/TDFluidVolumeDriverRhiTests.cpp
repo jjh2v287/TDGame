@@ -113,6 +113,40 @@ namespace TDFluidVolumeDriverRhiTestPrivate
 		return Subsystem->SpawnPooledFluidActor(Preset, Location, 120.0f);
 	}
 
+	const TCHAR* FindStageHvolPresetPath(ETDFluidPresetKind Kind)
+	{
+		if (Kind == ETDFluidPresetKind::SmokeHeterogeneous)
+		{
+			return TEXT("/Game/FluidFX/Presets/DA_TDFluid_HvolSlope.DA_TDFluid_HvolSlope");
+		}
+		if (Kind == ETDFluidPresetKind::SmokeCameraFacing)
+		{
+			return TEXT("/Game/FluidFX/Presets/DA_TDFluid_HvolCameraFacing.DA_TDFluid_HvolCameraFacing");
+		}
+		return nullptr;
+	}
+
+	UTDFluidPresetAsset* LoadStageHvolPreset(ETDFluidPresetKind Kind)
+	{
+		const TCHAR* PresetPath = FindStageHvolPresetPath(Kind);
+		if (!PresetPath || !FPackageName::DoesPackageExist(FSoftObjectPath(PresetPath).GetLongPackageName()))
+		{
+			return nullptr;
+		}
+		return LoadObject<UTDFluidPresetAsset>(nullptr, PresetPath);
+	}
+
+	ATDFluidLiveActor* SpawnStageHvolLiveActor(FDriverRhiTestWorld& TestWorld, ETDFluidPresetKind Kind, const FVector& Location)
+	{
+		UTDFluidLiveSubsystem* Subsystem = TestWorld.GetFluidSubsystem();
+		UTDFluidPresetAsset* Preset = LoadStageHvolPreset(Kind);
+		if (!Subsystem || !Preset)
+		{
+			return nullptr;
+		}
+		return Subsystem->SpawnPooledFluidActor(Preset, Location, 120.0f);
+	}
+
 	bool StepUntil(FDriverRhiTestWorld& TestWorld, TFunctionRef<bool()> IsReady)
 	{
 		for (int32 StepIndex = 0; StepIndex < DriverSettleStepLimit; ++StepIndex)
@@ -162,10 +196,27 @@ namespace TDFluidVolumeDriverRhiTestPrivate
 			: Component.UnprojectSolverPlaneToWorld(CenterCm);
 	}
 
+	void PreloadVolumeDriverAssets(const UTDFluidPresetAsset& Preset)
+	{
+		for (const TArray<TSoftObjectPtr<UMaterialInterface>>* SlotMaterials : { &Preset.PrimaryOutputMaterials, &Preset.SecondaryOutputMaterials, &Preset.TertiaryOutputMaterials })
+		{
+			for (const TSoftObjectPtr<UMaterialInterface>& SlotMaterial : *SlotMaterials)
+			{
+				SlotMaterial.LoadSynchronous();
+			}
+		}
+		Preset.VolumeMesh.LoadSynchronous();
+	}
+
 	bool HasVolumeSlotAsset(ETDFluidPresetKind Kind, FString& OutDescription)
 	{
-		UTDFluidPresetAsset* Preset = UTDFluidPresetAsset::CreateTransientPreset(GetTransientPackage(), Kind);
-		TStrongObjectPtr<UTDFluidPresetAsset> PresetGuard(Preset);
+		const UTDFluidPresetAsset* Preset = LoadStageHvolPreset(Kind);
+		if (!Preset)
+		{
+			OutDescription = FString::Printf(TEXT("stage preset '%s' is missing"), FindStageHvolPresetPath(Kind) ? FindStageHvolPresetPath(Kind) : TEXT("none"));
+			return false;
+		}
+		PreloadVolumeDriverAssets(*Preset);
 		const FTDFluidVolumeDriverSettings DriverSettings = UTDFluidPresetAsset::BuildVolumeDriverForPresetKind(Kind);
 		const TSoftObjectPtr<UMaterialInterface> SlotMaterial = Preset->ResolveSlotMaterial(DriverSettings.HeterogeneousVolumeMaterialSlot, 0);
 		const FString PackageName = SlotMaterial.ToSoftObjectPath().GetLongPackageName();
@@ -446,7 +497,7 @@ bool FTDFluidVolumeDriverHeterogeneousDrivenRhiTest::RunTest(const FString& Para
 	const FRotator InitialViewRotation(-60.0, 0.0, 0.0);
 	FluidSubsystem->SetPlaneViewRotationOverrideForTests(InitialViewRotation);
 
-	ATDFluidLiveActor* WorldActor = SpawnKindLiveActor(TestWorld, ETDFluidPresetKind::SmokeHeterogeneous, FVector(0.0, 0.0, 50.0));
+	ATDFluidLiveActor* WorldActor = SpawnStageHvolLiveActor(TestWorld, ETDFluidPresetKind::SmokeHeterogeneous, FVector(0.0, 0.0, 50.0));
 	if (!TestNotNull(TEXT("Spawned the world-facing HVOL actor"), WorldActor) || !WaitForVolumeMaterial(*this, TestWorld, *WorldActor, TEXT("World-facing")))
 	{
 		return false;
@@ -456,7 +507,7 @@ bool FTDFluidVolumeDriverHeterogeneousDrivenRhiTest::RunTest(const FString& Para
 	const FVector2D ExtentCm = WorldActor->LiveComponent->GetSimulationExtentCm();
 	TestTrue(*FString::Printf(TEXT("World-facing bounds cover the window (%s vs %s)"), *VolumeBounds.GetSize().ToString(), *ExtentCm.ToString()), VolumeBounds.GetSize().X >= ExtentCm.X - 1.0 && VolumeBounds.GetSize().Y >= ExtentCm.Y - 1.0);
 
-	ATDFluidLiveActor* CameraActor = SpawnKindLiveActor(TestWorld, ETDFluidPresetKind::SmokeCameraFacing, FVector(3000.0, 0.0, 50.0));
+	ATDFluidLiveActor* CameraActor = SpawnStageHvolLiveActor(TestWorld, ETDFluidPresetKind::SmokeCameraFacing, FVector(3000.0, 0.0, 50.0));
 	if (!TestNotNull(TEXT("Spawned the camera-facing HVOL actor"), CameraActor) || !WaitForVolumeMaterial(*this, TestWorld, *CameraActor, TEXT("Camera-facing")))
 	{
 		return false;
@@ -498,7 +549,7 @@ bool FTDFluidVolumeDriverOffscreenCostRhiTest::RunTest(const FString& Parameters
 	}
 
 	FDriverRhiTestWorld TestWorld;
-	ATDFluidLiveActor* LiveActor = SpawnKindLiveActor(TestWorld, ETDFluidPresetKind::SmokeHeterogeneous, FVector::ZeroVector);
+	ATDFluidLiveActor* LiveActor = SpawnStageHvolLiveActor(TestWorld, ETDFluidPresetKind::SmokeHeterogeneous, FVector::ZeroVector);
 	if (!TestNotNull(TEXT("Spawned the HVOL cost actor"), LiveActor) || !WaitForVolumeMaterial(*this, TestWorld, *LiveActor, TEXT("Cost")))
 	{
 		return false;

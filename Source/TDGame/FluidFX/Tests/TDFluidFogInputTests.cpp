@@ -358,12 +358,18 @@ bool FTDFluidFogTileSelfWrapUvTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidFogTileCpuWrapVolumeParametersTest,
-	"TDGame.FluidFX.FogTile.CpuWrapVolumeParameters",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	"TDGame.FluidFXRhi.FogTile.CpuWrapVolumeParameters",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
 
 bool FTDFluidFogTileCpuWrapVolumeParametersTest::RunTest(const FString& Parameters)
 {
 	using namespace TDFluidFogInputTestPrivate;
+
+	if (!HasRenderingRhi())
+	{
+		AddError(TEXT("TDGame.FluidFXRhi.FogTile.CpuWrapVolumeParameters needs a rendering RHI."));
+		return false;
+	}
 
 	UMaterialInterface* FogTileInstance = LoadObject<UMaterialInterface>(nullptr, FogTileSyncInstancePath);
 	if (!TestNotNull(TEXT("Loaded the fog tile sync instance (made by the fog material step)"), FogTileInstance))

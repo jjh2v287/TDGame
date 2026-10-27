@@ -20,6 +20,7 @@
 #include "NiagaraScript.h"
 #include "NiagaraScriptSource.h"
 #include "NiagaraScriptVariable.h"
+#include "NiagaraSystem.h"
 #include "NiagaraTypes.h"
 #include "UObject/Package.h"
 #include "UObject/SoftObjectPath.h"
@@ -455,4 +456,19 @@ bool UTDFluidNiagaraModuleEditorLibrary::CreateDataChannelAppendModuleScript(con
 	OutReport = FString::Printf(TEXT("created %s function=%s channel=%s module_inputs=%d defaults_not_set=%s"), *PackagePath, *AppendFunctionName.ToString(),
 		*DataChannelPath, Channel->GetVariables().Num() + 2, *DescribeDefaultsNotSet(DefaultsNotSet));
 	return true;
+}
+
+FString UTDFluidNiagaraModuleEditorLibrary::RecompileNiagaraSystemFully(UNiagaraSystem* System)
+{
+	if (!System || !System->GetSystemSpawnScript() || !System->GetSystemUpdateScript())
+	{
+		return TEXT("attributes_match=0 ready_to_run=0 error=missing_system_or_system_scripts");
+	}
+
+	System->RequestCompile(true);
+	System->WaitForCompilationComplete(true, false);
+	const TArray<FNiagaraVariableBase>& SpawnAttributes = System->GetSystemSpawnScript()->GetVMExecutableData().Attributes;
+	const TArray<FNiagaraVariableBase>& UpdateAttributes = System->GetSystemUpdateScript()->GetVMExecutableData().Attributes;
+	return FString::Printf(TEXT("attributes_match=%d ready_to_run=%d spawn_attributes=%d update_attributes=%d"),
+		SpawnAttributes == UpdateAttributes ? 1 : 0, System->IsReadyToRun() ? 1 : 0, SpawnAttributes.Num(), UpdateAttributes.Num());
 }

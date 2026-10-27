@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3. 생성·프로브·덤프는 에디터가 이 프로젝트를 열고 MCP 8000(NiagaraToolsets)·원격 실행이 살아 있어야 하고, --fake-calls 는 에디터 없이 돈다. 구조 명세(Tools/FluidFX/niagara_specs/NS_TD_*.json, spec-fx8n 2.2)를 fluid_niagara_drive 로 스택 계획으로 바꿔 공식 NiagaraToolset_System 으로 GPU 유체 구동 나이아가라 시스템을 만든다(덮어쓰기·삭제 안 함).
 실행 명령: python -B Tools/FluidFX/editor_make_fluid_driven_niagara.py --spec <명세.json> [--asset <경로>] [--look <모양 JSON>] [--probe] [--dump-only] [--fake-calls <출력.json>] (--probe 단독 = 0a 스키마 기록, --probe --asset /Game/Repro/FluidFX/<새 이름> = 0b 비엄격 시범, 생성은 그 명세의 0b 통과 뒤. 모양 키는 늘 명세 asset 이고 --asset 은 만들 경로만 바꾼다(반박 M3), 재현 사본은 /Game/FluidFX 밖 /Game/Repro/FluidFX/ 에만(반박 M1))
-출력: Saved/FluidFX/niagara/driven-probe.json(0a·명세별 0b, 계획 sha256·로그 판정 포함), 나이아가라 시스템, Saved/FluidFX/niagara/<이름>.dump.json(v1 과 같은 정규화 절 + 절별 sha256)·<이름>.report.json(단계·확인 항목·에디터 로그 구간 집계), --fake-calls 는 호출 기록 JSON(User 기본값은 <look> 자리표시, 반박 S1). 판정: ① 스크립트별 컴파일 상태 UpToDate·오류 0 ② 에디터 로그(표지로 찾은 실제 파일, 생성 전후 오프셋 구간)에 'There were issues for compilation of script "<이름>/' 줄 0 ③ 오프스크린 TDGame.FluidFXRhi.Niagara 통과(이 도구 밖, TODO 로 출력). 종료 0 = ①② 통과, 1 = 단계·확인 실패, 2 = 에디터·MCP 연결 실패, 3 = 선행 조건(명세 오류·에셋 있음·0b 미통과(로그 판정·계획 sha256 포함)·재질 없음·모양 항목 없음·모르는 User 변수)
-상태: 2026-10-26 FX-5 추가(미검증, --fake-calls·검사기만): profile mass 단계(데이터 인터페이스 모듈·킬 상자 모듈), 렌더러 none(제거만, 재질 검사 생략), CPU 시뮬은 GPU 계산 스크립트 판정 생략, 0a 에 mass 명세면 질량 모듈 2·킬 모듈·데이터 인터페이스 2 스키마와 모듈 입력 이름(mass_module_inputs_ok)을 더함(S14: --spec <명세> --probe). 이전: 2026-10-26 수정·검증(0b 7종·생성 7종 GPU 로그 문제 0, Niagara 오프스크린 12/12). '스택 오류 0'(GetStackIssues 는 외부 편집 문맥에서 늘 측정 불가) 판정을 ①②③ 으로 바꿈. User 기본값은 런타임 비텍스처 8개(v1 관례, 반박 M1)와 조절 등록표 이름 전부를 모양 항목 NiagaraSystems[<명세 asset>] 에서 읽는다.
+출력: Saved/FluidFX/niagara/driven-probe.json(0a·명세별 0b, 계획 sha256·로그 판정 포함), 나이아가라 시스템, Saved/FluidFX/niagara/<이름>.dump.json(v1 과 같은 정규화 절 + 절별 sha256)·<이름>.report.json(단계·확인 항목·에디터 로그 구간 집계), --fake-calls 는 호출 기록 JSON(User 기본값은 <look> 자리표시, 반박 S1). 판정: ① 스크립트별 컴파일 상태 UpToDate·오류 0 ④ 저장 전 강제 전체 재컴파일(UTDFluidNiagaraModuleEditorLibrary.RecompileNiagaraSystemFully) 뒤 시스템 Spawn·Update VM 속성 집합 같음·실행 준비 ② 에디터 로그(표지로 찾은 실제 파일, 생성 전후 오프셋 구간)에 'There were issues for compilation of script "<이름>/' 줄 0 ③ 오프스크린 TDGame.FluidFXRhi.Niagara 통과(이 도구 밖, TODO 로 출력). 종료 0 = ①②④ 통과, 1 = 단계·확인 실패, 2 = 에디터·MCP 연결 실패, 3 = 선행 조건(명세 오류·에셋 있음·0b 미통과(로그 판정·계획 sha256 포함)·재질 없음·모양 항목 없음·모르는 User 변수)
+상태: 2026-10-27 수정: 저장 전 5c 강제 전체 재컴파일과 판정 ④ 추가(질량 NS 가 시스템 Spawn·Update 속성 20 대 19 불일치로 IsReadyToRun 거짓 → 활성화 0, 편집기 빌드는 경고 없음). 이전: 2026-10-26 FX-5 추가(미검증, --fake-calls·검사기만): profile mass 단계(데이터 인터페이스 모듈·킬 상자 모듈), 렌더러 none(제거만, 재질 검사 생략), CPU 시뮬은 GPU 계산 스크립트 판정 생략, 0a 에 mass 명세면 질량 모듈 2·킬 모듈·데이터 인터페이스 2 스키마와 모듈 입력 이름(mass_module_inputs_ok)을 더함(S14: --spec <명세> --probe). 이전: 2026-10-26 수정·검증(0b 7종·생성 7종 GPU 로그 문제 0, Niagara 오프스크린 12/12). '스택 오류 0'(GetStackIssues 는 외부 편집 문맥에서 늘 측정 불가) 판정을 ①②③ 으로 바꿈. User 기본값은 런타임 비텍스처 8개(v1 관례, 반박 M1)와 조절 등록표 이름 전부를 모양 항목 NiagaraSystems[<명세 asset>] 에서 읽는다.
 """
 import argparse
 import hashlib
@@ -155,6 +155,7 @@ def verify_system(spec, dump, raw_emitter_data, raw_system_data, built, log_repo
         f"② 에디터 로그 '{toolset.COMPILE_ISSUE_TEXT}{toolset.asset_name(dump['asset'])}/' 줄 0(이번 생성분, 컴파일 줄 1개 이상)": toolset.is_compile_log_clean(log_report),
         f"User 변수 수 = {len(drive.build_user_variable_plan(spec))}": len(user_names) == len(drive.build_user_variable_plan(spec)),
         f"SampleTexture 바인딩 왕복 {sample_count}개": toolset.is_binding_roundtrip_ok(built["binding"], sample_count),
+        "④ 강제 전체 재컴파일 뒤 시스템 Spawn·Update VM 속성 집합 같음·실행 준비": toolset.is_system_attributes_match(built.get("recompile")),
     }
     if drive.renderer_class_of(spec) is None:
         checks["렌더러 0개(none)"] = not renderer_texts
@@ -264,6 +265,7 @@ def run_stage0b(client, spec, probe_asset, user_defaults):
             raise toolset.TDPreconditionError(f"빈 템플릿 실패 뒤 에셋이 남음, 새 경로로 다시: {probe_asset}")
     recorder = toolset.TDStepRecorder(strict=False)
     built = build_system(client, probe_asset, spec, user_defaults, recorder, template, should_create=bool(empty_template_error))
+    built["recompile"] = recorder.run("5c 강제 전체 재컴파일", lambda: toolset.editor_recompile_system_fully(probe_asset))
     recorder.run("6 저장", lambda: toolset.editor_save_asset(probe_asset))
     emitter_data = toolset.call_for_section(client, "GetEmitterData", {"emitterRef": toolset.stack_ref(probe_asset, spec["emitter_name"])})
     system_data = toolset.call_for_section(client, "GetSystemData", {"system": toolset.reference(toolset.object_path(probe_asset))})
@@ -330,6 +332,7 @@ def run_create(client, spec, system_path, user_defaults, look_path):
     try:
         log_capture = begin_log_capture(recorder)
         built = build_system(client, system_path, spec, user_defaults, recorder, template)
+        built["recompile"] = recorder.run("5c 강제 전체 재컴파일", lambda: toolset.editor_recompile_system_fully(system_path))
         recorder.run("6 저장", lambda: toolset.editor_save_asset(system_path))
         emitter_data = recorder.run("7 이미터 데이터 재읽기", lambda: client.call("GetEmitterData", emitterRef=toolset.stack_ref(system_path, spec["emitter_name"])))
         system_data = recorder.run("7 시스템 데이터 재읽기", lambda: client.call("GetSystemData", system=toolset.reference(toolset.object_path(system_path))))

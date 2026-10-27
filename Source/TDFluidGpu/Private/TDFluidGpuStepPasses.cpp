@@ -3542,6 +3542,8 @@ namespace
 	{
 		FTDFluidGpuPreparedFrame PreparedFrame;
 		FTDFluidGpuBatch::PrepareFrame(FrameInputs, InOutBatches, PreparedFrame);
+		CSV_CUSTOM_STAT(TDFluidGpu, GpuStampOverTickLimit, PreparedFrame.StampBins.OverTickLimitStampCount, ECsvCustomStatOp::Accumulate);
+		CSV_CUSTOM_STAT(TDFluidGpu, GpuStampBinOverflow, PreparedFrame.StampBins.BinOverflowEntryCount, ECsvCustomStatOp::Accumulate);
 		FTDFluidGpuMassInputSnapshot MassInputSnapshot;
 		for (const FTDFluidGpuBatch& Batch : InOutBatches)
 		{

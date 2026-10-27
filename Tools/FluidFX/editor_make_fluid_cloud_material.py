@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 구름 마스터 M_TD_FluidCloudLayers(MD_VOLUME, 고정 슬롯 4개 = Custom 노드 4개 TDFluidCloudCommon+TDFluidCloudSlot, 합성 Custom 1개 TDFluidCloudCombine, 앞단 Substrate 안개·구름 BSDF 1순위, VolumetricAdvancedMaterialOutput·CloudSampleAttribute Altitude), MI 18, 무대 지형 M_TD_FluidCloudStageTerrain·MI_TD_FluidCloudStageTerrain, 자체 지형 격자 SM_TD_FluidCloudTerrainGrid256, 텍스처 8장을 만든다. 먼저 make_fluid_cloud_textures.py 와 editor_make_fluid_volume_material.py(T_TD_FluidNoiseVolume)가 끝나 있어야 하고, 모양 정본에 look-fragment-fx11r.json 이 병합되어 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_cloud_material.py (PowerShell, L-repo-01. 기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_cloud_material_request.json 에 {"overwrite": true})
-출력: /Game/FluidFX/Materials/M_TD_FluidCloudLayers·MI_TD_FluidCloud_*(18)·M_TD_FluidCloudStageTerrain·MI_TD_FluidCloudStageTerrain, /Game/FluidFX/Textures/T_TD_FluidCloud*(8), /Game/FluidFX/Meshes/SM_TD_FluidCloudTerrainGrid256, Saved/FluidFX/fluid_cloud_material.json(앞단 경로 substrate|legacy, 통계, HLSL sha256, 모양 sha256, 오류 수)
-상태: 미검증(2026-10-26 FX-11r 작성: py_compile·가짜 unreal·check_fluid_cloud_hlsl.py 만, 에디터 실행 전). 단면은 FX-9 규약(맨 위 행 = 바닥, refute M5). 지형 격자는 자체 메시(경계 위 260000 cm, refute M6·P-03), TerrainFollow > 0 MI 는 지형 MI 와 발자국·높이 범위가 같아야 한다(M4, 무대 스크립트가 단언). Albedo·EmissiveColor 는 벡터(M3). MI 텍스처 연결은 set 반환값 대신 다시 읽어 판정한다(L-editor-66). 볼륨 도메인 PS 명령 0 은 실패로 보지 않고 check_fluid_cloud_hlsl.py dxc 명령 수가 대체 지표다(L-editor-65).
+출력: /Game/FluidFX/Materials/M_TD_FluidCloudLayers·MI_TD_FluidCloud_*(18)·M_TD_FluidCloudStageTerrain·MI_TD_FluidCloudStageTerrain, /Game/FluidFX/Textures/T_TD_FluidCloud*(8), /Game/FluidFX/Meshes/SM_TD_FluidCloudTerrainGrid256, Saved/FluidFX/fluid_cloud_material.json(앞단 경로 substrate|legacy, 마스터 used_with_volumetric_cloud, 통계, HLSL sha256, 모양 sha256, 오류 수)
+상태: 미검증(2026-10-26 FX-11r 작성: py_compile·가짜 unreal·check_fluid_cloud_hlsl.py 만, 에디터 실행 전. 2026-10-27 마스터 사용 플래그 UsedWithVolumetricCloud 를 노드 생성 전에 켜고 컴파일 뒤 has_material_usage 로 단언 — 꺼져 있으면 구름 셰이더 미컴파일로 PIE 그림자 패스 assert, blend→domain 순서로 Additive 오류 잡음 제거, py_compile 만·재생성 전). 단면은 FX-9 규약(맨 위 행 = 바닥, refute M5). 지형 격자는 자체 메시(경계 위 260000 cm, refute M6·P-03), TerrainFollow > 0 MI 는 지형 MI 와 발자국·높이 범위가 같아야 한다(M4, 무대 스크립트가 단언). Albedo·EmissiveColor 는 벡터(M3). MI 텍스처 연결은 set 반환값 대신 다시 읽어 판정한다(L-editor-66). 볼륨 도메인 PS 명령 0 은 실패로 보지 않고 check_fluid_cloud_hlsl.py dxc 명령 수가 대체 지표다(L-editor-65).
 """
 import hashlib
 import importlib.util
@@ -130,6 +130,7 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialEditingLibrary.get_vector_parameter_names", "MaterialEditingLibrary.get_scalar_parameter_names",
     "MaterialEditingLibrary.get_texture_parameter_names", "MaterialEditingLibrary.set_material_instance_texture_parameter_value",
     "MaterialEditingLibrary.get_material_instance_texture_parameter_value",
+    "MaterialEditingLibrary.has_material_usage", "MaterialUsage.MATUSAGE_VOLUMETRIC_CLOUD",
     "Material", "MaterialFactoryNew", "MaterialInstanceConstant", "MaterialInstanceConstantFactoryNew",
     "MaterialExpressionCustom", "CustomInput", "CustomOutput", "CustomMaterialOutputType.CMOT_FLOAT4", "CustomMaterialOutputType.CMOT_FLOAT3",
     "MaterialExpressionWorldPosition", "MaterialExpressionCameraPositionWS", "MaterialExpressionCloudSampleAttribute", "MaterialExpressionTime",
@@ -632,8 +633,9 @@ def recompile_or_fail(material, label):
 
 def create_cloud_master(codes, textures, overwrite):
     material, was_created = prepare_material(MASTER_NAME, MASTER_PATH, overwrite)
-    material.set_editor_property("material_domain", unreal.MaterialDomain.MD_VOLUME)
     material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_ADDITIVE)
+    material.set_editor_property("material_domain", unreal.MaterialDomain.MD_VOLUME)
+    material.set_editor_property("used_with_volumetric_cloud", True)
     parameters = build_parameter_nodes(material, textures)
     builtins = build_builtin_sources(material)
     slots, altitude_outputs = build_slot_nodes(material, codes["slot"], parameters, builtins)
@@ -641,10 +643,12 @@ def create_cloud_master(codes, textures, overwrite):
     front = build_front_outputs(material, combine)
     volumetric = build_volumetric_output(material, combine, parameters)
     error_count = recompile_or_fail(material, MASTER_NAME)
+    if not unreal.MaterialEditingLibrary.has_material_usage(material, unreal.MaterialUsage.MATUSAGE_VOLUMETRIC_CLOUD):
+        raise RuntimeError(f"{MASTER_NAME} 사용 플래그 UsedWithVolumetricCloud 꺼짐: 구름 셰이더가 컴파일되지 않아 PIE 구름 그림자 패스가 표면 기본 재질 assert 로 멈춘다")
     verify_parameters(material, [name for name, _ in master_vector_defaults()], [name for name, _ in master_scalar_defaults()], list(master_texture_names()), MASTER_NAME)
     save_asset(material, MASTER_PATH)
     return material, {
-        "asset": MASTER_PATH, "created": was_created, "front": front, "volumetric_output": volumetric,
+        "asset": MASTER_PATH, "created": was_created, "used_with_volumetric_cloud": True, "front": front, "volumetric_output": volumetric,
         "altitude_output": altitude_outputs, "slot_count": SLOT_COUNT, "slot_inputs": len(SLOT_INPUT_NAMES),
         "statistics": read_material_statistics(material), "compile_error_count": error_count,
         "statistics_note": "볼륨 도메인은 PS 명령 0 일 수 있음 → check_fluid_cloud_hlsl.py dxc 명령 수가 대체 지표",

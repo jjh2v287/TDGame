@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python(에디터 밖), 묶음 A(-TDFluidTuningFile= 명령줄) 통합 뒤의 빌드된 작업 트리. 빌드 창 규칙은 build_and_test.py 와 같다(본 트리에서 --acquire-hold 뒤 실행, 끝나면 --release-hold). 정본 JSON 은 읽기만 한다
 실행 명령: python Tools/FluidFX/check_fluid_value_independence.py [--scale 1.01] [--filter TDGame.FluidFX] [--rhi null] [--label w0-value-independence] [--holder 이름] [--allow 시험경로 ...] [--dry-run] [--no-confirm-load]
 출력: Saved/FluidFX/value_independence/TDFluidPresetTuning.perturbed.json(Kinds·Groups 층의 float·double 필드 ×scale, Clamp 밖이면 ×(2-scale), 그래도 밖이면 건너뜀), Saved/AgentOps/<YYYYMMDD>/<label>-tests.log·<label>-value-independence.json. 종료 0 허용 목록(A.3) 밖 실패 0 / 1 밖 실패 있음 / 2 실행 불완전·충돌·결과 없음 / 3 사본 로드 확인 실패 / 4 표 로드 오류 / 5 정본이 바뀜 / 6 입력 오류
-상태: 2026-10-25 파동 0 묶음 D 작성, py_compile·--dry-run·묶음 A 로그 형식(명령줄 경로 Display 줄·"Preset tuning files … failed to load"·"… (loaded), material look …: N errors") 정규식 대조 확인(BuildersMatchTuningFile 은 활성 경로를 읽으므로 허용 목록에 넣지 않음), 헤드리스 판정은 묶음 A·C 통합 빌드 뒤 미검증
+상태: 2026-10-27 구조체 검색에 TDFluidVolumeDriverTypes.h 추가(건너뜀 0), 2026-10-25 파동 0 묶음 D 작성, py_compile·--dry-run·묶음 A 로그 형식(명령줄 경로 Display 줄·"Preset tuning files … failed to load"·"… (loaded), material look …: N errors") 정규식 대조 확인(BuildersMatchTuningFile 은 활성 경로를 읽으므로 허용 목록에 넣지 않음), 헤드리스 판정은 묶음 A·C 통합 빌드 뒤 미검증
 """
 import argparse
 import copy
@@ -20,6 +20,7 @@ PERTURBED_RELATIVE_PATH = os.path.join("Saved", "FluidFX", "value_independence",
 LAYER_SECTIONS = ("Kinds", "Groups")
 GROUP_MEMBER_KEY = "Kinds"
 PERTURBED_TYPES = ("float", "double")
+EXTRA_HEADER_PATHS = (os.path.join("Source", "TDGame", "FluidFX", "TDFluidVolumeDriverTypes.h"),)
 TABLE_LOAD_ERROR = re.compile(r"Preset tuning files? .*failed to load|Preset tuning .*TDFluidPresetTuning\.perturbed\.json.*: [1-9]\d* errors")
 THRESHOLD_PROPERTY_TESTS = (
     "TDGame.FluidFX.SolverRegression.BorderBandRetainsFootprint",
@@ -81,6 +82,17 @@ def perturb_layer(layer, fields, scale, path, changes, skips):
         changes.append({"path": f"{path}.{field_name}", "from": value, "to": candidate})
 
 
+def read_struct_fields(root, struct_name, snapshot_tool):
+    try:
+        return snapshot_tool.read_struct_fields(root, struct_name)[0]
+    except snapshot_tool.SnapshotError:
+        for header_path in EXTRA_HEADER_PATHS:
+            body = snapshot_tool.find_struct_body(snapshot_tool.read_text(os.path.join(root, header_path)), struct_name)
+            if body is not None:
+                return snapshot_tool.parse_struct_fields(body)
+        raise
+
+
 def perturb_table(root, table, scale, snapshot_tool):
     perturbed = copy.deepcopy(table)
     changes = []
@@ -97,7 +109,7 @@ def perturb_table(root, table, scale, snapshot_tool):
                     continue
                 if struct_name not in field_cache:
                     try:
-                        field_cache[struct_name] = snapshot_tool.read_struct_fields(root, struct_name)[0]
+                        field_cache[struct_name] = read_struct_fields(root, struct_name, snapshot_tool)
                     except snapshot_tool.SnapshotError as error:
                         field_cache[struct_name] = None
                         skips.append({"path": struct_name, "reason": str(error)})

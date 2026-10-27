@@ -12,6 +12,9 @@
 class ATDFluidLiveActor;
 class ATDFluidRiverActor;
 class FTDFluidGpuSolverRenderState;
+class FTDFluidMassInputHub;
+class UTDFluidObstacleComponent;
+struct FTDFluidSdfObstacle;
 class ULevel;
 class UMaterialInstanceDynamic;
 class UTDFluidPresetAsset;
@@ -66,6 +69,13 @@ class TDGAME_API UTDFluidLiveSubsystem : public UTickableWorldSubsystem
 	GENERATED_BODY()
 
 public:
+	TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe> GetMassInputHub();
+	void RegisterObstacleSource(UTDFluidObstacleComponent* ObstacleSource);
+	void UnregisterObstacleSource(UTDFluidObstacleComponent* ObstacleSource);
+	void MarkObstacleSourcesDirty() { bObstacleSourcesDirty = true; }
+	int32 GetObstacleSourceCount() const;
+	static void SelectNearestObstacles(TConstArrayView<FTDFluidSdfObstacle> SourceObstacles, const FVector& CenterWorld, int32 MaxObstacleCount, TArray<FTDFluidSdfObstacle>& OutObstacles);
+
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	virtual void Deinitialize() override;
 
@@ -191,6 +201,9 @@ private:
 	void RefreshPlaneViewRotation();
 	static void RunSolverSteps(TConstArrayView<ATDFluidLiveActor*> SolvingActors, float DeltaTime);
 	void SubmitGpuSolverSteps(TConstArrayView<ATDFluidLiveActor*> GpuSolvingActors);
+	void ReadMassInputDataChannels();
+	void PublishMassInputTargets(TConstArrayView<ATDFluidLiveActor*> GpuSolvingActors);
+	void DistributeCollectedObstacles();
 	void DistributeGpuSolverReadback();
 	void ReleaseGpuSolverRenderState();
 	void RecordTickCost(float DeltaTime, double TickSeconds);
@@ -225,6 +238,9 @@ private:
 	int32 WaterRegistryVersion = 0;
 
 	TSharedPtr<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe> GpuSolverRenderState;
+	TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe> MassInputHub;
+	TArray<TWeakObjectPtr<UTDFluidObstacleComponent>> ObstacleSources;
+	bool bObstacleSourcesDirty = false;
 	TArray<uint64> PendingReleasedGpuActorKeys;
 	uint64 LastGpuSolverActorKey = 0;
 	uint32 LastGpuSolverFrameNumber = 0;

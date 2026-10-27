@@ -1,0 +1,114 @@
+{
+ "id": "fx5_mass_perf",
+ "note": "B1-p 성능 스윕 초안: 지표 출처 pie_profile(P3 확장 뒤), 그 전에는 calib_sweep 이 거부할 수 있음. 목표 1만 ≤0.5·1천 ≤0.15 ms GPU(로드맵 :590-591)",
+ "scenes": [
+  {
+   "name": "bench10k",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidMassInputStage",
+   "camera": {
+    "awake": {
+     "TDGen_FlamethrowerTurret": false,
+     "TDGen_MassBench10k": true,
+     "TDGen_MassBench1k": false,
+     "TDGen_MassNdc1k": false,
+     "TDGen_AvalancheSlope": false
+    },
+    "exposure_ev100": 2.0,
+    "pawn": [
+     0.0,
+     -2600.0
+    ],
+    "arm": 2500.0,
+    "view": [
+     -60.0,
+     90.0
+    ],
+    "hide": {}
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 4.0,
+   "regions_template": null,
+   "targets": null,
+   "live2_refs": []
+  },
+  {
+   "name": "bench1k",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidMassInputStage",
+   "camera": {
+    "awake": {
+     "TDGen_FlamethrowerTurret": false,
+     "TDGen_MassBench10k": false,
+     "TDGen_MassBench1k": true,
+     "TDGen_MassNdc1k": false,
+     "TDGen_AvalancheSlope": false
+    },
+    "exposure_ev100": 2.0,
+    "pawn": [
+     7000.0,
+     -1200.0
+    ],
+    "arm": 1500.0,
+    "view": [
+     -60.0,
+     90.0
+    ],
+    "hide": {}
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 4.0,
+   "regions_template": null,
+   "targets": null,
+   "live2_refs": []
+  }
+ ],
+ "params": [
+  {
+   "json_path": "Kinds.MassInputBench.TDFluidSimulationConfig.MassSplatRadiusCapCells",
+   "values": [
+    4,
+    8,
+    12
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Kinds.MassInputBench.TDFluidSimulationConfig.MassInputBufferDivisor",
+   "values": [
+    1,
+    2,
+    4
+   ],
+   "split_group": false
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "pie_profile"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "metric": "0.bench10k.gpu_mass_splat_ms",
+    "weight": 1.0,
+    "tolerance": 0.02,
+    "low": 0.0,
+    "high": 0.5,
+    "basis": "1만 점 GPU 증분 ≤0.5 ms"
+   },
+   {
+    "metric": "1.bench1k.gpu_mass_splat_ms",
+    "weight": 1.0,
+    "tolerance": 0.01,
+    "low": 0.0,
+    "high": 0.15,
+    "basis": "1천 점 GPU 증분 ≤0.15 ms"
+   }
+  ]
+ }
+}

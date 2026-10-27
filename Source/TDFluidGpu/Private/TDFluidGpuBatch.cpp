@@ -5,6 +5,15 @@
 
 #include "HAL/IConsoleManager.h"
 
+int32 TDFluidGpuComputeTrackBankRadiusCells(float BlurRadiusCm, double CellSizeCm)
+{
+	if (!(CellSizeCm > 0.0))
+	{
+		return 1;
+	}
+	return FMath::Clamp(FMath::RoundToInt(static_cast<double>(BlurRadiusCm) / CellSizeCm), 1, 16);
+}
+
 namespace
 {
 	constexpr int32 SliceCapacityGranularity = 4;
@@ -29,6 +38,7 @@ namespace
 	constexpr int64 PainterStateBytesPerCell = 2 * FloatBytes;
 	constexpr int64 PainterOutputBytesPerCell = RgbaHalfFloatBytes;
 	constexpr int64 PainterVelocityOutputBytes = 4 * 4 * RgbaHalfFloatBytes;
+	constexpr int64 PainterVelocityStateBytesPerCell = 2 * FloatBytes;
 	constexpr int64 MultigridRhsBytesPerCell = FloatBytes;
 	constexpr int64 MultigridCorrectionBytesPerCell = FloatBytes;
 	constexpr int64 MultigridApertureBytesPerCell = 2 * HalfFloatBytes;
@@ -224,13 +234,15 @@ namespace
 		Sanitized.AdvectionSpeedScale = ClampFinite(Settings.AdvectionSpeedScale, 0.0f, 10.0f);
 		Sanitized.BorderFadeRatio = ClampFinite(Settings.BorderFadeRatio, 0.0f, 0.49f);
 		Sanitized.MaxStampsPerTick = FMath::Clamp(Settings.MaxStampsPerTick, 1, TDFluidGpuSolverConstants::MaximumStampsPerTick);
+		Sanitized.MaxStampsPerBin = FMath::Clamp(Settings.MaxStampsPerBin, 1, TDFluidGpuSolverConstants::MaximumStampsPerBin);
+		Sanitized.MassSplatRadiusCapCells = FMath::Clamp(Settings.MassSplatRadiusCapCells, 1, TDFluidGpuSolverConstants::MaximumMassSplatRadiusCapCells);
 		Sanitized.AmbientDensity = ClampFinite(Settings.AmbientDensity, 0.0f, 1.0f);
 		Sanitized.AmbientRefillPerSec = ClampFinite(Settings.AmbientRefillPerSec, 0.0f, 100.0f);
 		Sanitized.FlowNoiseAccelerationCmPerSec2 = ClampFinite(Settings.FlowNoiseAccelerationCmPerSec2, 0.0f, 10000.0f);
 		Sanitized.FlowNoiseScaleCm = ClampFinite(Settings.FlowNoiseScaleCm, 1.0f, 100000.0f);
 		Sanitized.FlowNoiseSpeed = ClampFinite(Settings.FlowNoiseSpeed, 0.0f, 100.0f);
 		Sanitized.AmbientNoiseAmount = ClampFinite(Settings.AmbientNoiseAmount, 0.0f, 1.0f);
-		Sanitized.BuoyancyCmPerSec2 = ClampFinite(Settings.BuoyancyCmPerSec2, 0.0f, 20000.0f);
+		Sanitized.BuoyancyCmPerSec2 = ClampFinite(Settings.BuoyancyCmPerSec2, -20000.0f, 20000.0f);
 		Sanitized.OutflowBandRatio = ClampFinite(Settings.OutflowBandRatio, 0.0f, 0.45f);
 		Sanitized.OutflowRatePerSec = ClampFinite(Settings.OutflowRatePerSec, 0.0f, 50.0f);
 		Sanitized.HeatCoolingPerSec = ClampFinite(Settings.HeatCoolingPerSec, 0.0f, 50.0f);
@@ -242,6 +254,9 @@ namespace
 		Sanitized.BrushVelocityResponsePerSec = ClampFinite(Settings.BrushVelocityResponsePerSec, 0.0f, TNumericLimits<float>::Max());
 		Sanitized.BrushDisplacementRatio = ClampFinite(Settings.BrushDisplacementRatio, 0.0f, TNumericLimits<float>::Max());
 		Sanitized.BrushEraseRatePerSec = ClampFinite(Settings.BrushEraseRatePerSec, 0.0f, TNumericLimits<float>::Max());
+		Sanitized.TrackBankStrength = ClampFinite(Settings.TrackBankStrength, 0.0f, 2.0f);
+		Sanitized.TrackBankBlurRadiusCm = ClampFinite(Settings.TrackBankBlurRadiusCm, 2.0f, 60.0f);
+		Sanitized.TrackBankHeightLimit = ClampFinite(Settings.TrackBankHeightLimit, 0.0f, 1.0f);
 		Sanitized.VortexRadiusRatio = ClampFinite(Settings.VortexRadiusRatio, 0.01f, 0.5f);
 		Sanitized.bUsesHeatChannel = Settings.bUsesHeatChannel && Settings.SimMode == ETDFluidGpuSimMode::FluidSim && !Sanitized.bUsesWaterLayer;
 		Sanitized.WaterDepthReferenceCm = ClampFinite(Settings.WaterDepthReferenceCm, 1.0f, 100000.0f);
@@ -402,6 +417,9 @@ namespace
 		Parameters.VortexRadiusCm = Settings.VortexRadiusRatio * SmallestExtentCm;
 		Parameters.MaxCellSpeedCmPerSec = Settings.MaxCellSpeedCmPerSec;
 		Parameters.BrushDisplacementRatio = Settings.BrushDisplacementRatio;
+		Parameters.TrackBankStrength = Settings.TrackBankStrength;
+		Parameters.TrackBankHeightLimit = Settings.TrackBankHeightLimit;
+		Parameters.TrackBankRadiusCells = static_cast<uint32>(TDFluidGpuComputeTrackBankRadiusCells(Settings.TrackBankBlurRadiusCm, Settings.ExtentCm.X / static_cast<double>(FMath::Max(Resolution, 1))));
 		return Parameters;
 	}
 
@@ -434,7 +452,7 @@ namespace
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::HasTerrainElevation, bHasTerrainElevation);
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesTerrainSlopeAcceleration, bHasTerrainElevation && Settings.TerrainSlopeGravity > 0.0f);
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesFlowNoise, bRunsFluidForces && Settings.FlowNoiseAccelerationCmPerSec2 > 0.0f);
-		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesBuoyancy, bRunsFluidForces && bHasPlaneUp && Settings.BuoyancyCmPerSec2 > 0.0f);
+		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesBuoyancy, bRunsFluidForces && bHasPlaneUp && Settings.BuoyancyCmPerSec2 != 0.0f);
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesVorticity, bRunsFluidForces && Settings.VorticityStrength > 0.0f);
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesOutflow, bRunsFluidForces && bHasPlaneUp && Settings.OutflowRatePerSec > 0.0f && Settings.OutflowBandRatio > 0.0f);
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesAmbientRefill, bUsesAmbientRefill);
@@ -444,6 +462,8 @@ namespace
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesBoundaryReflection, bRunsFluidForces && Settings.bReflectsAtBoundaries);
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesVortexForce, bRunsFluidForces && Settings.VortexRadiusRatio > 0.0f && (Settings.VortexTangentialAccelerationCmPerSec2 != 0.0f || Settings.VortexRadialDriftCmPerSec != 0.0f));
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::WritesAuxOutput, bRunsFluidForces && Settings.bUsesHeatChannel && Actor.AuxOutput != nullptr);
+		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesTrackBank, bIsSimplePainter && Settings.TrackBankStrength > 0.0f);
+		AddFlagIf(Flags, ETDFluidGpuActorFlags::WritesPainterVelocity, bIsSimplePainter && Settings.bWritesPainterVelocity);
 		return Flags;
 	}
 
@@ -768,6 +788,7 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 	{
 		BatchKey.ResolutionTier = ResolveResolutionTier(FMath::Min(Settings.Resolution, TDFluidGpuSolverConstants::WrapAreaMaximumResolution));
 	}
+	BatchKey.bWritesPainterVelocity = Settings.SimMode == ETDFluidGpuSimMode::SimplePainter && Settings.bWritesPainterVelocity;
 	if (Settings.SimMode == ETDFluidGpuSimMode::SimplePainter)
 	{
 		return BatchKey;
@@ -785,6 +806,7 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 	}
 
 	BatchKey.bUsesHeatChannel = Settings.bUsesHeatChannel;
+	BatchKey.MassInputDivisor = Settings.bAcceptsMassInput ? TDFluidGpuMassInput::ResolveDivisor(Settings.MassInputDivisor) : 0;
 	if (BatchKey.bWrapsArea)
 	{
 		BatchKey.PressureSolver = ETDFluidGpuPressureSolver::Jacobi;
@@ -853,7 +875,7 @@ int32 FTDFluidGpuBatch::ComputeTransmittanceResolution(int32 ResolutionTier)
 	return FMath::Max(TDFluidGpuSolverConstants::MinimumTransmittanceResolution, FMath::DivideAndRoundUp(FMath::Max(ResolutionTier, 1), TDFluidGpuSolverConstants::TransmittanceResolutionDivisor));
 }
 
-FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel, bool bUsesTransmittance, uint8 PressureSolverModeRequest)
+FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel, bool bUsesTransmittance, uint8 PressureSolverModeRequest, int32 MassInputDivisor, bool bWritesPainterVelocity)
 {
 	const int64 Resolution = ResolveResolutionTier(RequestedResolution);
 	const int64 CellCount = Resolution * Resolution;
@@ -865,6 +887,11 @@ FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMo
 	{
 		Estimate.StateBytes = CellCount * PainterStateBytesPerCell;
 		Estimate.OutputBytes = CellCount * PainterOutputBytesPerCell + PainterVelocityOutputBytes;
+		if (bWritesPainterVelocity)
+		{
+			Estimate.StateBytes += CellCount * PainterVelocityStateBytesPerCell;
+			Estimate.OutputBytes = CellCount * (PainterOutputBytesPerCell + RgbaHalfFloatBytes);
+		}
 		return Estimate;
 	}
 
@@ -877,6 +904,10 @@ FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMo
 	{
 		Estimate.StateBytes += CellCount * HeatBytesPerCell;
 		Estimate.OutputBytes += CellCount * AuxOutputBytesPerCell;
+	}
+	if (MassInputDivisor > 0)
+	{
+		Estimate.StateBytes += TDFluidGpuMassInput::ComputeSliceBytes(static_cast<int32>(Resolution), MassInputDivisor);
 	}
 	if (bUsesTransmittance)
 	{
@@ -1168,6 +1199,7 @@ void FTDFluidGpuBatch::BuildFrameParameters(const FTDFluidGpuFrameInputs& FrameI
 
 		FTDFluidGpuStampBinLimits StampLimits;
 		StampLimits.MaxStampsPerTick = Settings.MaxStampsPerTick;
+		StampLimits.MaxStampsPerBin = Settings.MaxStampsPerBin;
 		FTDFluidGpuStampResponse StampResponse;
 		StampResponse.MaxCellSpeedCmPerSec = Settings.MaxCellSpeedCmPerSec;
 		StampResponse.BrushEraseRatePerSec = Settings.BrushEraseRatePerSec;
@@ -1183,6 +1215,10 @@ void FTDFluidGpuBatch::BuildFrameParameters(const FTDFluidGpuFrameInputs& FrameI
 		FTDFluidGpuActorParameters& Parameters = Frame.Parameters.Add_GetRef(MakeActorParameters(Actor, Settings, WindowCenter, PlaneUpDirection, Key.ResolutionTier));
 		Parameters.SliceIndex = Entry.SliceIndex;
 		Parameters.Flags = static_cast<uint32>(Flags);
+		if (Key.MassInputDivisor > 0)
+		{
+			Parameters.Flags |= static_cast<uint32>(ETDFluidGpuActorFlags::ConsumesMassInput);
+		}
 		Parameters.ShiftCells = bHasShift ? Actor.ShiftCells : FIntPoint::ZeroValue;
 		Parameters.ReadbackTileOrigin = InOutPreparedFrame.ReadbackLayout.GetTileOrigin(Entry.ActorInputIndex);
 		Parameters.StampBinTableOffset = FTDFluidGpuStampBins::AppendToFrame(ActorStampBins, InOutPreparedFrame.StampBins);

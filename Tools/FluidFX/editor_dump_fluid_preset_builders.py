@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 Python(PIE 아님, 미저장 작업 없음). 무대 맵 5개(STAGE_MAP_PATHS)를 차례로 열어 액터 값을 읽으므로 현재 맵이 바뀌고, 끝나면 원래 맵으로 되돌린다. 맵 안 DA 는 그 맵이 열려 있을 때 값을 다 읽고 UObject 를 붙잡지 않는다(L-editor-30)
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_dump_fluid_preset_builders.py
 출력: Saved/FluidFX/preset_builder_dump.json·preset_tuning_generated.json(앞 두 개는 기존 형식 그대로), preset_stage_values.json(presets=/Game/FluidFX 전체 DA, fire_stage_actors=기존 형식, 새 키 referenced_presets·stage_maps), preset_copy_mismatches.json(R2 로 무시되기 시작할 사본의 '빌더 값 ≠ 사본' 필드와 같은 종류 충돌, spec-wave0-data-bridge-v2 2.6. 새 구조체의 빌더 값은 TDFluidPresetAsset.h 에 반환 형식으로 선언된 Build*ForPresetKind, 없으면 헤더 기본값, summary.builder_sources 에 출처)
-상태: 기존 2개 출력은 검증됨(2026-10-22 FX-8c 프리셋 데이터: 변경 전 바이너리에서 두 번 실행해 세 파일 바이트 동일·생성 JSON = 정본, 새 바이너리에서 빌더 덤프 = 변경 전 golden 비트 동일), 확장분(2026-10-25 T0)은 미검증(에디터 실행 전: py_compile·가짜 unreal 형식 검사만)
+상태: 기존 2개 출력은 검증됨(2026-10-22 FX-8c 프리셋 데이터: 변경 전 바이너리에서 두 번 실행해 세 파일 바이트 동일·생성 JSON = 정본, 새 바이너리에서 빌더 덤프 = 변경 전 golden 비트 동일), 확장분(2026-10-25 T0)과 파동 2 고정표(GROUP_TABLE 7그룹·TDFluidVolumeDriverTypes.h)는 2026-10-27 에디터 1회 실행(종류 41, 기존 22종류×5구조체 2904값 중 파동 2 차이 0, 생성 조절 JSON 은 Globals 없는 옛 부분집합)
 """
 import decimal
 import importlib.util
@@ -18,10 +18,13 @@ TUNED_STRUCT_BUILDERS = (
     ("TDFluidFlameCardLayerSettings", "build_flame_card_layers_for_preset_kind"),
 )
 GROUP_TABLE = (
-    ("FireFamily", ("Torch", "Campfire", "CampfireSmoke", "Explosion", "ExplosionSmoke", "ExplosionGroundDust", "Candle", "Fireball", "PlasmaExplosion", "SteamPuff", "Vortex", "InvertedVortex", "PortalVortex")),
+    ("FireFamily", ("Torch", "Campfire", "CampfireSmoke", "Explosion", "ExplosionSmoke", "ExplosionGroundDust", "Candle", "Fireball", "PlasmaExplosion", "SteamPuff", "Vortex", "InvertedVortex", "PortalVortex", "VortexHeterogeneous", "Flamethrower")),
     ("WaterLayer", ("River", "Sea")),
-    ("VortexTrio", ("Vortex", "InvertedVortex", "PortalVortex")),
+    ("VortexTrio", ("Vortex", "InvertedVortex", "PortalVortex", "VortexHeterogeneous")),
     ("ExplosionPair", ("Explosion", "PlasmaExplosion")),
+    ("HeterogeneousStage", ("SmokeHeterogeneous", "VortexHeterogeneous", "SmokeCameraFacing", "FloorSmokeCapture")),
+    ("TrackPainter", ("SnowTrack", "SandTrack")),
+    ("TrackDust", ("SnowDust", "SandDust")),
 )
 COMPONENT_TYPES = {
     "FVector2D": (("X", "Y"), "double"),
@@ -79,6 +82,7 @@ COPY_HEADER_RELATIVE_PATHS = (
     ("Source", "TDGame", "FluidFX", "TDFluidPlaneTypes.h"),
     ("Source", "TDGame", "FluidFX", "TDFluidEmberComponent.h"),
     ("Source", "TDGame", "FluidFX", "TDFluidFireLightComponent.h"),
+    ("Source", "TDGame", "FluidFX", "TDFluidVolumeDriverTypes.h"),
 )
 SUPPORTED_SCALAR_TYPES = ("bool", "int32", "float", "double")
 ENUM_PATTERN = re.compile(r"UENUM\([^)]*\)\s*enum\s+class\s+(\w+)\s*:\s*\w+\s*\{(.*?)\};", re.DOTALL)

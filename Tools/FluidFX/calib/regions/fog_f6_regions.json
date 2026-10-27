@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, fog_f6_tile 카메라(피치 −35°·붐 2500) 기준 초안 박스(첫 촬영 뒤 맞춤). tile_far = 90 m 타일 상자 먼 쪽(반복 무늬가 화면에 여러 번 보이는 곳), tile_near = 가까운 쪽, sky = 배경. kind fog = measure_fx_look 대기 지표",
+ "regions": [
+  {
+   "name": "tile_far",
+   "kind": "fog",
+   "box": [
+    240,
+    220,
+    1040,
+    380
+   ]
+  },
+  {
+   "name": "tile_near",
+   "kind": "fog",
+   "box": [
+    240,
+    420,
+    1040,
+    660
+   ]
+  },
+  {
+   "name": "sky",
+   "kind": "background",
+   "box": [
+    40,
+    20,
+    300,
+    160
+   ]
+  }
+ ]
+}

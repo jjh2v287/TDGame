@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "FluidFX/TDFluidFireTypes.h"
 #include "FluidFX/TDFluidPlaneTypes.h"
+#include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "HAL/FileManager.h"
 #include "HAL/IConsoleManager.h"
 #include "JsonObjectConverter.h"
@@ -676,7 +677,13 @@ const TArray<FTDFluidPresetTuningRegisteredStruct>& UTDFluidPresetTuningSubsyste
 		{ FTDFluidEmberSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
 		{ FTDFluidFireLightSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
 		{ FTDFluidWaterLodGridSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
-		{ FTDFluidWaterNearRippleSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind }
+		{ FTDFluidWaterNearRippleSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidVolumeDriverSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidOutputTargetSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidTerrainHeightSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidMassInputSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidSurfaceRenderSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidHeterogeneousVolumeRenderProfile::StaticStruct(), ETDFluidPresetTuningScope::Global }
 	};
 	return RegisteredStructs;
 }

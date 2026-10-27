@@ -414,6 +414,29 @@ bool TDFluidGpuTryComputeStampWeight(FTDFluidGpuPackedStamp Stamp, float2 CellCe
 	return true;
 }
 
+float TDFluidGpuComputeShapedStampWeight(FTDFluidGpuPackedStamp Stamp, FTDFluidGpuPackedRingShape Shape, float2 CellCenter, float SmoothWeight)
+{
+	const float AspectRatio = clamp(Shape.EllipseAspectRatio, 1.0f, 4.0f);
+	const float Hardness = clamp(Shape.Hardness, 0.0f, 0.95f);
+	if (AspectRatio <= 1.0f && Hardness <= 0.0f)
+	{
+		return SmoothWeight;
+	}
+
+	const float2 MajorAxis = float2(cos(Shape.EllipseAxisRadians), sin(Shape.EllipseAxisRadians));
+	const float2 Offset = CellCenter - Stamp.CenterFromWindowCenterCm;
+	const float Along = dot(Offset, MajorAxis);
+	const float Across = dot(Offset, float2(-MajorAxis.y, MajorAxis.x)) * AspectRatio;
+	const float NormalizedDistance = sqrt(Along * Along + Across * Across) / Stamp.EffectiveRadiusCm;
+	if (NormalizedDistance > 1.0f)
+	{
+		return 0.0f;
+	}
+
+	const float Falloff = saturate((1.0f - NormalizedDistance) / max(1.0f - Hardness, 0.05f));
+	return Falloff * Falloff * (3.0f - 2.0f * Falloff);
+}
+
 bool TDFluidGpuHasStampFlag(FTDFluidGpuPackedStamp Stamp, uint Flag)
 {
 	return (Stamp.Flags & Flag) != 0u;

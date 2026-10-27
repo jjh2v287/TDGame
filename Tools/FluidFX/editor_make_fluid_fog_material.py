@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 볼류메트릭 포그 마스터 M_TD_FluidFogVolume(MD_VOLUME·BLEND_ADDITIVE, Custom 노드 1개 = Tools/FluidFX/Shaders/TDFluidFogVolume.hlsl), 창 MPC_TD_FluidFogWindow, 재질 인스턴스 14개를 만든다. 먼저 editor_make_fluid_volume_material.py 가 T_TD_FluidNoiseVolume 을 만들어 두어야 하고, 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json 에 MI 14개가 병합되어 있어야 한다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 볼류메트릭 포그 마스터 M_TD_FluidFogVolume(MD_VOLUME·BLEND_ADDITIVE, Custom 노드 1개 = Tools/FluidFX/Shaders/TDFluidFogVolume.hlsl), 창 MPC_TD_FluidFogWindow, 재질 인스턴스 15개를 만든다. 먼저 editor_make_fluid_volume_material.py 가 T_TD_FluidNoiseVolume 을 만들어 두어야 하고, 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json 에 MI 15개가 병합되어 있어야 한다(MI_TD_FluidFog_TileSync 는 FX-10c 조각 병합 뒤).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fog_material.py (기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_fog_material_request.json 에 {"overwrite": true})
-출력: /Game/FluidFX/Materials/M_TD_FluidFogVolume·MPC_TD_FluidFogWindow·MI_TD_FluidFog_*(14), Saved/FluidFX/fluid_fog_material.json(앞단 경로 substrate|legacy, 재질 통계, HLSL sha256)
-상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만, 에디터 실행 전). 앞단은 Substrate 안개·구름 BSDF 1순위, 연결 실패 시 기존 핀(BaseColor=알베도·SubsurfaceColor=소광·Emissive) 자동 변환. 구동(MID, SimGridResolution > 0.5)은 MID 창·바닥 = SimCenterWorld.z, 정적(MI)은 MPC 창·바닥 = ObjectPositionWS.z − ObjectBounds.z(반 크기). MI 값은 모양 정본(apply_to_instance)만 쓴다. 볼륨 도메인은 재질 통계 PS 명령이 0일 수 있어 실패로 보지 않고, dxc 명령 수(check_fluid_fog_hlsl.py)를 대체 지표로 둔다. MI 수는 명세 13개 + 대형 정적 상자용 MI_TD_FluidFog_PassiveField 1개(반박 S7, 상자 가장자리 부드러움) = 14개.
+출력: /Game/FluidFX/Materials/M_TD_FluidFogVolume·MPC_TD_FluidFogWindow·MI_TD_FluidFog_*(15), Saved/FluidFX/fluid_fog_material.json(앞단 경로 substrate|legacy, 재질 통계, HLSL sha256)
+상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만, 에디터 실행 전). 앞단은 Substrate 안개·구름 BSDF 1순위, 연결 실패 시 기존 핀(BaseColor=알베도·SubsurfaceColor=소광·Emissive) 자동 변환. 구동(MID, SimGridResolution > 0.5)은 MID 창·바닥 = SimCenterWorld.z, 정적(MI)은 MPC 창·바닥 = ObjectPositionWS.z − ObjectBounds.z(반 크기). MI 값은 모양 정본(apply_to_instance)만 쓴다. 볼륨 도메인은 재질 통계 PS 명령이 0일 수 있어 실패로 보지 않고, dxc 명령 수(check_fluid_fog_hlsl.py)를 대체 지표로 둔다. MI 수는 명세 13개 + 대형 정적 상자용 MI_TD_FluidFog_PassiveField 1개(반박 S7, 상자 가장자리 부드러움) + 감싸기 타일용 MI_TD_FluidFog_TileSync 1개(FX-10c F6) = 15개. 2026-10-26 FX-10c: C++ 구동 스칼라 SimAreaWrapped(기본 0, MI 덮어쓰기 금지)를 Custom 입력에 더함 — 1이면 창 UV 를 자르지 않고(RT TA_Wrap) 창 가중 1, 기존 마스터는 지우지 않고 식만 제자리 재구성(L-editor-67). 에디터 실행 전(py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만).
 """
 import hashlib
 import importlib.util
@@ -39,7 +39,7 @@ DRIVEN_VECTOR_DEFAULTS = (
     ("SimCenterWorld", (0.0, 0.0, 0.0, 0.0)),
     ("SimExtentsCm", (0.0, 0.0, 0.0, 0.0)),
 )
-DRIVEN_SCALAR_DEFAULTS = (("SimGridResolution", 0.0),)
+DRIVEN_SCALAR_DEFAULTS = (("SimGridResolution", 0.0), ("SimAreaWrapped", 0.0))
 LOOK_VECTOR_DEFAULTS = (
     ("FogAlbedo", (0.8, 0.85, 0.95, 1.0)),
     ("FogExtinctionTint", (1.0, 1.0, 1.0, 1.0)),
@@ -76,7 +76,7 @@ VECTOR_INPUT_NAMES = (
 CUSTOM_INPUT_NAMES = (
     "FogWorldPosition", "FogCameraPosition", "FogObjectPosition", "FogObjectBoundsCm", "ElapsedSeconds",
     "DensityPressureTexture", "NoiseVolumeTexture",
-    "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "FogWindowCenterWorld", "FogWindowExtentsCm",
+    "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "SimAreaWrapped", "FogWindowCenterWorld", "FogWindowExtentsCm",
     "FogExtinctionPerM", "FogExtinctionTint", "FogExtrudeHeightCm", "FogExtrudeExponent", "FogTopFadeCm",
     "FogNoiseSubtract", "FogNoiseScaleCm", "FogNoiseWindCmPerSec", "FogPassiveCoverage", "FogPassiveNoiseScaleCm",
     "FogWindowBlendRatio", "FogUsesWindowMask", "FogShape", "FogShapeSoftCm", "FogShellThicknessCm",
@@ -85,7 +85,7 @@ CUSTOM_INPUT_NAMES = (
 SAMPLER_NAMES = ("DensityPressureTextureSampler", "NoiseVolumeTextureSampler")
 ENGINE_SYMBOLS = ("Texture2DSampleLevel", "Texture3DSampleLevel")
 MID_DRIVEN_NAMES = (
-    "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "DensityPressureTexture", "VelocityTexture",
+    "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "SimAreaWrapped", "DensityPressureTexture", "VelocityTexture",
     "PlaneAxisU", "PlaneAxisV", "PlaneAxisN", "PlaneCoordinateOffsetCm", "VolumeHeightCm", "VolumeBoxScale",
     "VolumeOffsetCm", "ExtrudeSymmetric", "AuxTexture", "AuxHeatActive",
 )
@@ -105,6 +105,7 @@ INSTANCE_NAMES = (
     "MI_TD_FluidFog_CylA",
     "MI_TD_FluidFog_CylB",
     "MI_TD_FluidFog_Hollow",
+    "MI_TD_FluidFog_TileSync",
 )
 SUBSTRATE_PIN_CANDIDATES = {
     "albedo": ("Albedo",),
@@ -534,9 +535,10 @@ def verify_master_parameters(material):
     missing = [f"{kind}:{name}" for kind, names in expected.items() for name in names if name not in found[kind]]
     if missing:
         raise RuntimeError("마스터 파라미터 없음: " + ", ".join(missing))
-    default_resolution = editing.get_material_default_scalar_parameter_value(material, "SimGridResolution")
-    if abs(default_resolution) > 1e-6:
-        raise RuntimeError(f"마스터 SimGridResolution 기본값이 0이 아님(정적 역할 판정 깨짐): {default_resolution}")
+    for name, reason in (("SimGridResolution", "정적 역할 판정 깨짐"), ("SimAreaWrapped", "감싸기 끔 항등 깨짐")):
+        default_value = editing.get_material_default_scalar_parameter_value(material, name)
+        if abs(default_value) > 1e-6:
+            raise RuntimeError(f"마스터 {name} 기본값이 0이 아님({reason}): {default_value}")
 
 
 def read_material_statistics(material):

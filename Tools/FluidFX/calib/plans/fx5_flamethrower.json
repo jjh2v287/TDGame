@@ -1,0 +1,113 @@
+{
+ "id": "fx5_flamethrower",
+ "note": "E14 포탑+큐브 IMG 17, M1 p50 0.22·p95 0.95(IFS:100). 지표 이름 fire_m1_p50·fire_m1_p95 는 measure_fx_look.py 출력 이름으로 확정 필요[추정](R5-M5). pawn 은 editor_make_fluid_mass_input_stage.py M4 카메라 제안값(무대 보고서 scenes[].camera). TDFluidInputBrushSettings.MassPointHeatStrength(0.6·0.8·1.0)·MassPointRadiusScale(0.75·1.0·1.5) 손잡이는 calib_sweep 에 InputBrush 실효 다시 읽기를 더한 뒤 되살린다(R5-M5, 그때까지 열 감쇠·와도로 대신)",
+ "scenes": [
+  {
+   "name": "turret_img17",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidMassInputStage",
+   "camera": {
+    "awake": {
+     "TDGen_FlamethrowerTurret": true,
+     "TDGen_MassBench10k": false,
+     "TDGen_MassBench1k": false,
+     "TDGen_MassNdc1k": false,
+     "TDGen_AvalancheSlope": false
+    },
+    "exposure_ev100": 2.0,
+    "pawn": [
+     21150.0,
+     -450.0
+    ],
+    "arm": 450.0,
+    "view": [
+     -8.0,
+     90.0
+    ],
+    "hide": {}
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 6.0,
+   "regions_template": "Tools/FluidFX/calib/regions/fx5_flamethrower_regions.json",
+   "targets": "Tools/FluidFX/calib/targets/fx5_live2_flamethrower.json",
+   "live2_refs": [
+    "L17"
+   ]
+  }
+ ],
+ "params": [
+  {
+   "json_path": "Kinds.Flamethrower.TDFluidSimulationConfig.HeatCoolingPerSec",
+   "values": [
+    1.5,
+    2.5,
+    4.0
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Kinds.Flamethrower.TDFluidSimulationConfig.HeatBuoyancyCmPerSec2",
+   "values": [
+    400,
+    600,
+    900
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Kinds.Flamethrower.TDFluidSimulationConfig.VorticityStrength",
+   "values": [
+    1.5,
+    2.5,
+    4.0
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidFlamethrower.Floats.User.TDMassSpeedCmPerSec",
+   "values": [
+    600,
+    900,
+    1200
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidFlamethrower.Floats.User.TDMassConeAngleDegrees",
+   "values": [
+    4,
+    8,
+    14
+   ],
+   "split_group": false
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "look"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "metric": "0.turret_img17.fire_m1_p50",
+    "weight": 1.0,
+    "tolerance": 0.011,
+    "low": 0.165,
+    "high": 0.275,
+    "basis": "M1 p50 0.22 ±25%(IFS:100), 허용은 범위 폭의 10%"
+   },
+   {
+    "metric": "0.turret_img17.fire_m1_p95",
+    "weight": 1.0,
+    "tolerance": 0.029,
+    "low": 0.71,
+    "high": 1.0,
+    "basis": "M1 p95 0.95 ±25% 위쪽 1.0 절단"
+   }
+  ]
+ }
+}

@@ -5,6 +5,7 @@
 #include "FluidFX/TDFluidFireTypes.h"
 #include "FluidFX/TDFluidPlaneTypes.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "TDFluidPresetAsset.generated.h"
 
 class UMaterialInterface;
@@ -63,6 +64,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	FTDFluidVolumeRenderSettings VolumeRender;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	TArray<TSoftObjectPtr<UMaterialInterface>> PrimaryOutputMaterials;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	TArray<TSoftObjectPtr<UMaterialInterface>> SecondaryOutputMaterials;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	TArray<TSoftObjectPtr<UMaterialInterface>> TertiaryOutputMaterials;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	FName PrimaryOutputActorTag = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	FName SecondaryOutputActorTag = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	FName TertiaryOutputActorTag = NAME_None;
+
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	FTDFluidSimulationConfig ResolveEffectiveConfig() const;
 
@@ -118,7 +137,26 @@ public:
 	static FTDFluidWaterNearRippleSettings BuildWaterNearRippleSettingsForPresetKind(ETDFluidPresetKind Kind);
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidVolumeDriverSettings BuildVolumeDriverForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidOutputTargetSettings BuildOutputTargetForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidTerrainHeightSettings BuildTerrainHeightForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidMassInputSettings BuildMassInputForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidSurfaceRenderSettings BuildSurfaceRenderForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	static bool IsFireFamilyPresetKind(ETDFluidPresetKind Kind);
+
+	TSoftObjectPtr<UMaterialInterface> ResolveSlotMaterial(ETDFluidOutputMaterialSlot Slot, int32 MaterialIndex) const;
+
+	FName GetSlotActorTag(ETDFluidOutputMaterialSlot Slot) const;
 
 	static UTDFluidPresetAsset* CreateTransientPreset(UObject* Outer, ETDFluidPresetKind Kind);
 };

@@ -1,0 +1,45 @@
+{
+ "note": "1280x720, Cyclone 카메라 초안 상자. 눈 바닥·눈 벽 상자는 refute S8 로 추가(첫 촬영 뒤 맞춤)",
+ "regions": [
+  {
+   "name": "near",
+   "kind": "cloud",
+   "box": [
+    0,
+    420,
+    540,
+    720
+   ]
+  },
+  {
+   "name": "far",
+   "kind": "cloud",
+   "box": [
+    700,
+    0,
+    1280,
+    120
+   ]
+  },
+  {
+   "name": "eye_floor",
+   "kind": "cloud",
+   "box": [
+    600,
+    330,
+    680,
+    390
+   ]
+  },
+  {
+   "name": "eye_wall",
+   "kind": "cloud",
+   "box": [
+    540,
+    300,
+    740,
+    420
+   ]
+  }
+ ]
+}

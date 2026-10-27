@@ -1,0 +1,339 @@
+{
+ "run_label": "fx11",
+ "note": "FX-11r 구름 성능 계획(pie_profile_fluid.py --csv-gpu, fx10_fog_grid_plan.json 형식). 보임·숨김 ABBA, 배율 2·4·5·6, 층당 비용은 슬롯 수 1·2·3 셋업 차분(refute S8). 하늘광 캡처 열은 시운전 1블록으로 대조(L-editor-60). 초안: camera_view_target 동작은 P3 확장 필요",
+ "offscreen_logs": [],
+ "headless_logs": [],
+ "bench_outputs": [],
+ "scenes": [
+  {
+   "id": "volcano_s2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 6",
+      "TD.FluidFX.CloudViewSampleScale 2",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_Volcano"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 6,
+    "view_sample_scale": 2,
+    "budget_ms": 2.5,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "volcano_s4",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 6",
+      "TD.FluidFX.CloudViewSampleScale 4",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_Volcano"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 6,
+    "view_sample_scale": 4,
+    "budget_ms": 4.0,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "volcano_s5",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 6",
+      "TD.FluidFX.CloudViewSampleScale 5",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_Volcano"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 6,
+    "view_sample_scale": 5,
+    "budget_ms": 4.0,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "volcano_s6",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 6",
+      "TD.FluidFX.CloudViewSampleScale 6",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_Volcano"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 6,
+    "view_sample_scale": 6,
+    "budget_ms": 4.0,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "skyonly_1slot_s2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 16",
+      "TD.FluidFX.CloudViewSampleScale 2",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_SkyOnly"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 16,
+    "view_sample_scale": 2,
+    "budget_ms": 2.5,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "mushroomshield_2slot_s2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 9",
+      "TD.FluidFX.CloudViewSampleScale 2",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_MushroomShield"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 9,
+    "view_sample_scale": 2,
+    "budget_ms": 2.5,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "volcanosky_3slot_s2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 7",
+      "TD.FluidFX.CloudViewSampleScale 2",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_VolcanoSky"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 7,
+    "view_sample_scale": 2,
+    "budget_ms": 2.5,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  }
+ ],
+ "fresh_pie_after_gpu": true
+}

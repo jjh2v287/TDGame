@@ -1,0 +1,40 @@
+RWBuffer<uint> {ParameterName}_Accumulation;
+RWBuffer<uint> {ParameterName}_Counters;
+uint4 {ParameterName}_Layout;
+float4 {ParameterName}_AxisU;
+float4 {ParameterName}_AxisV;
+float4 {ParameterName}_AxisN;
+float4 {ParameterName}_Scales;
+float4 {ParameterName}_Strengths;
+
+void SplatPoint_{ParameterName}_UEImpureCall(in bool bExecute, in float3 Position, in float3 Velocity, in float RadiusCm, in float DensityStrength, in float HeatStrength, out bool bAccepted)
+{
+	bAccepted = false;
+	const uint4 Layout = {ParameterName}_Layout;
+	if (!bExecute || (Layout.w & 1u) == 0u)
+	{
+		return;
+	}
+
+	const float4 Scales = {ParameterName}_Scales;
+	const float SlabDistanceCm = dot(Position, {ParameterName}_AxisN.xyz) + {ParameterName}_AxisN.w;
+	if ((Layout.w & 4u) == 0u && abs(SlabDistanceCm) > Scales.z)
+	{
+		return;
+	}
+
+	const float4 Strengths = {ParameterName}_Strengths;
+	const float2 LocalCm = float2(dot(Position, {ParameterName}_AxisU.xyz) + {ParameterName}_AxisU.w, dot(Position, {ParameterName}_AxisV.xyz) + {ParameterName}_AxisV.w);
+	float2 VelocityPlane = float2(dot(Velocity, {ParameterName}_AxisU.xyz), dot(Velocity, {ParameterName}_AxisV.xyz)) * Strengths.y;
+	const float PlaneSpeed = length(VelocityPlane);
+	if (PlaneSpeed > Scales.w && PlaneSpeed > 0.0f)
+	{
+		VelocityPlane *= Scales.w / PlaneSpeed;
+	}
+
+	const float ResolvedRadiusCm = TDFluidGpuMassResolveRadius(RadiusCm * Strengths.w, Scales.xy, (float)((Layout.w >> 8u) & 0xFFu));
+	const bool bTouched = TDFluidGpuMassSplatPoint({ParameterName}_Accumulation, Layout.x, Layout.z, Scales.xy, (Layout.w & 2u) != 0u, LocalCm, VelocityPlane, ResolvedRadiusCm, DensityStrength * Strengths.x, HeatStrength * Strengths.z, Strengths.y > 0.0f);
+	uint PreviousCount;
+	InterlockedAdd({ParameterName}_Counters[Layout.y + (bTouched ? 0u : 1u)], 1u, PreviousCount);
+	bAccepted = bTouched;
+}

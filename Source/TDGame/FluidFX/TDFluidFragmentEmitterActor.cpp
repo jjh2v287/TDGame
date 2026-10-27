@@ -43,6 +43,7 @@ namespace
 		Stamp.DensityStrength = DensityStrength;
 		Stamp.VelocityStrength = 1.0f;
 		Stamp.Channel = Channel;
+		Stamp.Source = ETDFluidBrushSource::Fragment;
 		return Stamp;
 	}
 

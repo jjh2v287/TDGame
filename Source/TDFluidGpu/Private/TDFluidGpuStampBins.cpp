@@ -13,6 +13,15 @@ namespace
 		{
 			RingShape.MotionDirection = FVector2f(Stamp.VelocityPlaneCmPerSec / PlaneSpeed);
 		}
+		RingShape.EllipseAspectRatio = FMath::Clamp(Stamp.ShapeAspectRatio, 1.0f, 4.0f);
+		RingShape.Hardness = FMath::Clamp(Stamp.ShapeHardness, 0.0f, 0.95f);
+		const FVector2D ShapeAxis = !Stamp.ShapeMajorAxisPlane.IsZero() ? Stamp.ShapeMajorAxisPlane : (PlaneSpeed >= 1.0 ? Stamp.VelocityPlaneCmPerSec : FVector2D::ZeroVector);
+		if (ShapeAxis.IsZero())
+		{
+			RingShape.EllipseAspectRatio = 1.0f;
+			return RingShape;
+		}
+		RingShape.EllipseAxisRadians = FMath::Atan2(static_cast<float>(ShapeAxis.Y), static_cast<float>(ShapeAxis.X));
 		return RingShape;
 	}
 

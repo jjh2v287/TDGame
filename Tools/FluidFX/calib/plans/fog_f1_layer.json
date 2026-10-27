@@ -1,6 +1,6 @@
 {
  "id": "fog_f1_layer",
- "note": "FX-10r F1 시뮬 구동 안개층(7A, IMG 19 역광). 조절 사본으로 40 m·256² 창(정본 불변). 다른 시뮬은 awake 로 재우고 200 m 상자는 숨김",
+ "note": "FX-10r F1 시뮬 구동 안개층(7A, IMG 19 역광). 7A 는 FX-10c 부터 FogMist 정본(40 m·256² 창)이라 조절 사본(base_tuning)을 쓰지 않는다. 다른 시뮬은 awake 로 재우고 200 m 상자는 숨김. Kinds.FogMist 를 보정하면 값 복사인 Kinds.FogMistStir 도 같이 옮긴다",
  "scenes": [
   {
    "name": "f1_backlit",
@@ -10,7 +10,10 @@
      "TDGen_FogRoom": false,
      "TDGen_FogTrail": false,
      "TDGen_FogCharacter": false,
-     "TDGen_FogAmbient": true
+     "TDGen_FogAmbient": true,
+     "TDGen_FogCut": false,
+     "TDGen_FogStir": false,
+     "TDGen_FogTileSync": false
     },
     "hide": {
      "TDGen_FogPassiveField": true
@@ -40,19 +43,6 @@
     "L19",
     "L2"
    ]
-  }
- ],
- "base_tuning": [
-  {
-   "json_path": "Kinds.Smoke.TDFluidSimulationConfig.SimExtentCm",
-   "value": {
-    "X": 4000.0,
-    "Y": 4000.0
-   }
-  },
-  {
-   "json_path": "Kinds.Smoke.TDFluidSimulationConfig.GridResolution",
-   "value": 256
   }
  ],
  "params": [
@@ -113,7 +103,6 @@
  "reset": "reinit",
  "draft_status": "초안: P3 확장 전이라 calib_sweep.py --dry-run 대상 아님(검증 거부가 정상)",
  "p3_gaps": [
-  "base_tuning(고정 덮어쓰기)",
   "params json_path Look: 모양 경로 할당(문법은 FX-8n 과 같음, fluid_tuning_patch·calib_sweep 이 Look: 를 아직 적용하지 못함 = FX-8n G1)",
   "metrics.sources atmosphere(measure_fx_look 기본 모드 영역 지표)",
   "metrics.sources groove_profile(홈 단면 선 표본: 폭·둑 비)",

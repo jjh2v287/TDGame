@@ -1,4 +1,6 @@
 #include "FluidFX/TDFluidLiveComponent.h"
+#include "FluidFX/TDFluidInputBrushRules.h"
+#include "Algo/Compare.h"
 #include "Components/StaticMeshComponent.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/AssetManager.h"
@@ -254,6 +256,7 @@ void UTDFluidLiveComponent::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InO
 		ReapplyActiveObstacles();
 	}
 
+	EnsureMassInputDataChannelLoadRequested();
 	ReapplyMaterialLooks(InOutReport);
 	ApplyPlaneRenderFlags();
 	ApplyParametersToMID(InternalSurfaceMID);
@@ -289,6 +292,8 @@ void UTDFluidLiveComponent::RefreshEffectivePresetSettings(FTDFluidPresetReapply
 	AssignEffectiveStruct(EffectiveVolumeRender, ActivePreset ? ActivePreset->ResolveEffectiveVolumeRender() : FTDFluidVolumeRenderSettings(), InOutReport);
 	AssignEffectiveStruct(InputBrushSettings, UTDFluidPresetAsset::BuildInputBrushForPresetKind(PresetKind), InOutReport);
 	AssignEffectiveStruct(RuntimeOpsSettings, UTDFluidPresetAsset::BuildRuntimeOpsForPresetKind(PresetKind), InOutReport);
+	AssignEffectiveStruct(SurfaceRenderSettings, UTDFluidPresetAsset::BuildSurfaceRenderForPresetKind(PresetKind), InOutReport);
+	AssignEffectiveStruct(MassInputSettings, UTDFluidPresetAsset::BuildMassInputForPresetKind(PresetKind), InOutReport);
 	AssignEffectiveStruct(NearRippleSettings, UTDFluidPresetAsset::BuildWaterNearRippleSettingsForPresetKind(PresetKind), InOutReport);
 	NearRippleLayer.Configure(NearRippleSettings);
 	EffectiveSettingsPreset = ActivePreset;
@@ -438,6 +443,7 @@ void UTDFluidLiveComponent::QueueNiagaraParticleStamps(
 		Stamp.DensityStrength = InputBrushSettings.ParticleDensityStrength;
 		Stamp.VelocityStrength = 1.0f;
 		Stamp.Channel = Channel;
+		Stamp.Source = ETDFluidBrushSource::PointArray;
 		PendingBrushStamps.Add(Stamp);
 	}
 }
@@ -575,7 +581,7 @@ bool UTDFluidLiveComponent::SetPlaneBasis(const FTDFluidPlaneBasis& InBasis, con
 		return true;
 	}
 
-	bHasPendingObstacleUpdate = bHasPendingObstacleUpdate || !ActiveObstacles.IsEmpty();
+	bHasPendingObstacleUpdate = bHasPendingObstacleUpdate || HasAnySolverObstacles();
 	return true;
 }
 
@@ -707,7 +713,7 @@ bool UTDFluidLiveComponent::PrepareSimulationStep(float DeltaTime, const FVector
 		bDidShiftWindow = Solver.ShiftOriginForSlidingWindow(DesiredCenterWorld);
 	}
 
-	if ((bDidShiftWindow || bHasPendingObstacleUpdate) && !ActiveObstacles.IsEmpty())
+	if ((bDidShiftWindow || bHasPendingObstacleUpdate) && HasAnySolverObstacles())
 	{
 		RasterizeActiveObstacles();
 		bHasPendingObstacleUpdate = false;
@@ -719,6 +725,8 @@ bool UTDFluidLiveComponent::PrepareSimulationStep(float DeltaTime, const FVector
 	}
 
 	Solver.SetPlaneUpDirection(PlaneBasis.GetPlaneUpDirection());
+	ApplyGroundSlabToPendingStamps();
+	ApplyInputBrushRulesToPendingStamps();
 	ConvertPendingStampsToSolverPlane();
 	WrapPendingStampsIntoWindow();
 	PrioritizeAndClampPendingStamps();
@@ -813,6 +821,12 @@ void UTDFluidLiveComponent::RequestAsyncAssetLoads()
 	if (ActivePreset && !ActivePreset->VolumeMesh.IsNull())
 	{
 		AssetsToLoad.Add(ActivePreset->VolumeMesh.ToSoftObjectPath());
+	}
+
+	RequestedMassInputDataChannelPath = MassInputSettings.bReadDataChannel ? MassInputSettings.DataChannel.ToSoftObjectPath() : FSoftObjectPath();
+	if (RequestedMassInputDataChannelPath.IsValid())
+	{
+		AssetsToLoad.Add(RequestedMassInputDataChannelPath);
 	}
 
 	if (AssetsToLoad.IsEmpty())
@@ -1041,9 +1055,38 @@ void UTDFluidLiveComponent::UploadSolverOutputTextures()
 	UploadPixelsToSizedTexture(TransmittanceTexture, PackedTransmittancePixels, TDFluidVolumeTransmittance::ComputeOutputResolution(Solver.GetResolution()));
 }
 
+void UTDFluidLiveComponent::SetTerrainCollisionObstacles(const TArray<FTDFluidSdfObstacle>& InObstacles)
+{
+	if (InObstacles.IsEmpty() && TerrainCollisionObstacles.IsEmpty())
+	{
+		return;
+	}
+	TerrainCollisionObstacles = InObstacles;
+	bHasPendingObstacleUpdate = true;
+	if (!IsSimulationInitialized())
+	{
+		return;
+	}
+	RasterizeActiveObstacles();
+	bHasPendingObstacleUpdate = false;
+}
+
+bool UTDFluidLiveComponent::HasAnySolverObstacles() const
+{
+	return !ActiveObstacles.IsEmpty() || !TerrainCollisionObstacles.IsEmpty() || !CollectedObstacles.IsEmpty();
+}
+
+void UTDFluidLiveComponent::BuildWorldSolverObstacles(TArray<FTDFluidSdfObstacle>& OutObstacles) const
+{
+	OutObstacles.Reset(ActiveObstacles.Num() + TerrainCollisionObstacles.Num() + CollectedObstacles.Num());
+	OutObstacles.Append(ActiveObstacles);
+	OutObstacles.Append(TerrainCollisionObstacles);
+	OutObstacles.Append(CollectedObstacles);
+}
+
 void UTDFluidLiveComponent::ReapplyActiveObstacles()
 {
-	if (ActiveObstacles.IsEmpty())
+	if (!HasAnySolverObstacles())
 	{
 		return;
 	}
@@ -1065,7 +1108,7 @@ void UTDFluidLiveComponent::RasterizeActiveObstacles()
 		TArray<FTDFluidSdfObstacle> WrappedObstacles;
 		if (PlaneBasis.IsWorldFacing())
 		{
-			WrappedObstacles = ActiveObstacles;
+			BuildWorldSolverObstacles(WrappedObstacles);
 		}
 		else
 		{
@@ -1079,6 +1122,20 @@ void UTDFluidLiveComponent::RasterizeActiveObstacles()
 		}
 
 		Solver.RasterizeSdfObstacles(WrappedObstacles);
+		return;
+	}
+
+	if (PlaneBasis.IsWorldFacing() && (!TerrainCollisionObstacles.IsEmpty() || !CollectedObstacles.IsEmpty()))
+	{
+		TArray<FTDFluidSdfObstacle> WorldObstacles;
+		BuildWorldSolverObstacles(WorldObstacles);
+		if (bUsesGpuSolver)
+		{
+			GpuSolverProxy.SetObstacles(WorldObstacles);
+			return;
+		}
+
+		Solver.RasterizeSdfObstacles(WorldObstacles);
 		return;
 	}
 
@@ -1107,19 +1164,19 @@ void UTDFluidLiveComponent::RasterizeActiveObstacles()
 
 void UTDFluidLiveComponent::BuildSolverPlaneObstacles(TArray<FTDFluidSdfObstacle>& OutObstacles) const
 {
-	OutObstacles.Reset(ActiveObstacles.Num());
+	OutObstacles.Reset(ActiveObstacles.Num() + CollectedObstacles.Num());
 
-	const double MaxDepthOffsetCm = GetPlaneSettings().InteractionDepthCm;
-	for (const FTDFluidSdfObstacle& Obstacle : ActiveObstacles)
+	const FTDFluidPlaneSettings CurrentPlaneSettings = GetPlaneSettings();
+	for (const TArray<FTDFluidSdfObstacle>* SourceObstacles : { &ActiveObstacles, &CollectedObstacles })
 	{
-		if (FMath::Abs(PlaneBasis.ProjectDepth(Obstacle.WorldCenter) - PlaneDepthCm) > MaxDepthOffsetCm)
+		for (const FTDFluidSdfObstacle& Obstacle : *SourceObstacles)
 		{
-			continue;
+			FTDFluidSdfObstacle PlaneObstacle;
+			if (ProjectObstacleToPlane(PlaneBasis, PlaneDepthCm, CurrentPlaneSettings, Obstacle, PlaneObstacle))
+			{
+				OutObstacles.Add(PlaneObstacle);
+			}
 		}
-
-		const FVector2D PlaneCenter = PlaneBasis.ProjectPoint(Obstacle.WorldCenter);
-		FTDFluidSdfObstacle& PlaneObstacle = OutObstacles.Add_GetRef(Obstacle);
-		PlaneObstacle.WorldCenter = FVector(PlaneCenter.X, PlaneCenter.Y, 0.0);
 	}
 }
 
@@ -1162,6 +1219,105 @@ FVector2D UTDFluidLiveComponent::ResolveOwnerCenterWorld() const
 	return IsSimulationInitialized() ? GetSimulationCenterWorld() : FVector2D::ZeroVector;
 }
 
+void UTDFluidLiveComponent::ApplyInputBrushRulesToPendingStamps()
+{
+	FTDFluidInputBrushRules::ApplyToStamps(PendingBrushStamps, InputBrushSettings, PlaneBasis, ResolveBrushSurfaceDepthCm());
+}
+
+double UTDFluidLiveComponent::ResolveBrushSurfaceDepthCm() const
+{
+	if (!PlaneBasis.IsWorldFacing())
+	{
+		return PlaneDepthCm;
+	}
+
+	const AActor* OwnerActor = GetOwner();
+	return OwnerActor ? OwnerActor->GetActorLocation().Z : 0.0;
+}
+
+bool UTDFluidLiveComponent::NeedsStampGroundElevation() const
+{
+	if (!PlaneBasis.IsWorldFacing())
+	{
+		return false;
+	}
+	return InputBrushSettings.GroundSlabThicknessCm > 0.0f || InputBrushSettings.BrushHeightFadeDistanceCm > 0.0f;
+}
+
+void UTDFluidLiveComponent::ApplyGroundSlabToPendingStamps()
+{
+	const double SlabThicknessCm = InputBrushSettings.GroundSlabThicknessCm;
+	if (SlabThicknessCm <= 0.0 || !PlaneBasis.IsWorldFacing())
+	{
+		return;
+	}
+
+	const double FallbackGroundCm = ResolveBrushSurfaceDepthCm();
+	int32 KeptCount = 0;
+	for (int32 Index = 0; Index < PendingBrushStamps.Num(); ++Index)
+	{
+		const FTDFluidBrushStamp Stamp = PendingBrushStamps[Index];
+		const double GroundCm = Stamp.bHasGroundElevation ? Stamp.GroundElevationCm : FallbackGroundCm;
+		if (FMath::Abs(PlaneBasis.ProjectDepth(Stamp.WorldLocation) - GroundCm) > SlabThicknessCm)
+		{
+			continue;
+		}
+		PendingBrushStamps[KeptCount] = Stamp;
+		++KeptCount;
+	}
+
+	PendingBrushStamps.SetNum(KeptCount, EAllowShrinking::No);
+}
+
+void UTDFluidLiveComponent::SetWetnessSourceComponent(UTDFluidLiveComponent* SourceComponent)
+{
+	WetnessSourceComponent = SourceComponent;
+	if (!SourceComponent && !bHasWetnessSourceBinding)
+	{
+		return;
+	}
+
+	bHasWetnessSourceBinding = true;
+	if (InternalSurfaceMID)
+	{
+		ApplyTrackParametersToMID(*InternalSurfaceMID);
+	}
+	for (const TWeakObjectPtr<UMaterialInstanceDynamic>& ExternalTarget : ExternalMaterialTargets)
+	{
+		if (UMaterialInstanceDynamic* TargetMID = ExternalTarget.Get())
+		{
+			ApplyTrackParametersToMID(*TargetMID);
+		}
+	}
+}
+
+void UTDFluidLiveComponent::ApplyTrackParametersToMID(UMaterialInstanceDynamic& TargetMID) const
+{
+	if (SimulationConfig.SimMode == ETDFluidSimMode::SimplePainter)
+	{
+		TargetMID.SetScalarParameterValue(TEXT("TrackBankFromOutput"), SimulationConfig.TrackBankStrength > 0.0f ? 1.0f : 0.0f);
+	}
+	if (!bHasWetnessSourceBinding)
+	{
+		return;
+	}
+
+	const UTDFluidLiveComponent* SourceComponent = WetnessSourceComponent.Get();
+	UTexture* WetSourceTexture = SourceComponent && SourceComponent->IsWaterMaterialActive() ? SourceComponent->GetWaterSurfaceOutputTexture() : nullptr;
+	if (!WetSourceTexture)
+	{
+		TargetMID.SetScalarParameterValue(TEXT("WetSourceActive"), 0.0f);
+		return;
+	}
+
+	const FVector2D SourceCenter = SourceComponent->GetSimulationCenterWorld();
+	const FVector2D SourceExtent = SourceComponent->GetSimulationExtentCm();
+	TargetMID.SetTextureParameterValue(TEXT("WetSourceTexture"), WetSourceTexture);
+	TargetMID.SetVectorParameterValue(TEXT("WetSourceWindow"), FLinearColor(SourceCenter.X, SourceCenter.Y, SourceExtent.X, SourceExtent.Y));
+	TargetMID.SetScalarParameterValue(TEXT("WetSourceDepthReferenceCm"), SourceComponent->SimulationConfig.WaterDepthReferenceCm);
+	TargetMID.SetScalarParameterValue(TEXT("WetSourceActive"), 1.0f);
+}
+
 void UTDFluidLiveComponent::ConvertPendingStampsToSolverPlane()
 {
 	if (PlaneBasis.IsWorldFacing())
@@ -1181,8 +1337,10 @@ void UTDFluidLiveComponent::ConvertPendingStampsToSolverPlane()
 
 		const FVector2D PlaneLocation = PlaneBasis.ProjectPoint(Stamp.WorldLocation);
 		const FVector2D PlaneVelocity = PlaneBasis.ProjectVector(Stamp.WorldVelocity);
+		const FVector2D PlaneShapeAxis = PlaneBasis.ProjectVector(Stamp.ShapeMajorAxis);
 		Stamp.WorldLocation = FVector(PlaneLocation.X, PlaneLocation.Y, 0.0);
 		Stamp.WorldVelocity = FVector(PlaneVelocity.X, PlaneVelocity.Y, 0.0);
+		Stamp.ShapeMajorAxis = FVector(PlaneShapeAxis.X, PlaneShapeAxis.Y, 0.0);
 		PendingBrushStamps[KeptCount] = Stamp;
 		++KeptCount;
 	}
@@ -1789,6 +1947,7 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 	TargetMID->SetVectorParameterValue(TEXT("PlaneCoordinateOffsetCm"), FLinearColor(PlaneBasis.PlaneCoordinateOffsetCm.X, PlaneBasis.PlaneCoordinateOffsetCm.Y, 0.0f, 0.0f));
 	TargetMID->SetScalarParameterValue(TEXT("ExtrudeSymmetric"), bIsWorldFacing ? 0.0f : 1.0f);
 	TargetMID->SetScalarParameterValue(TEXT("SimGridResolution"), static_cast<float>(GetSimulationResolution()));
+	TargetMID->SetScalarParameterValue(TEXT("SimAreaWrapped"), IsAreaWrapped() && bIsWorldFacing ? 1.0f : 0.0f);
 
 	if (UTexture* DensityPressureOutput = GetDensityPressureTexture())
 	{
@@ -1805,6 +1964,7 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 		TargetMID->SetTextureParameterValue(TEXT("AuxTexture"), AuxOutput);
 	}
 	TargetMID->SetScalarParameterValue(TEXT("AuxHeatActive"), AuxOutput && IsHeatAuxOutputActive() ? 1.0f : 0.0f);
+	ApplyTrackParametersToMID(*TargetMID);
 
 	if (!IsWaterMaterialActive())
 	{
@@ -2054,24 +2214,298 @@ void UTDFluidLiveComponent::SyncSolverBackend(const FVector2D& FallbackCenterWor
 	ReapplyActiveObstacles();
 }
 
+namespace TDFluidLiveComponentMassInput
+{
+	bool DoesPresetWriteSelectiveDensity(const UTDFluidPresetAsset* Preset)
+	{
+		return Preset && (Preset->DefaultChannel == ETDFluidBrushChannel::ChannelG_Blood || Preset->DefaultChannel == ETDFluidBrushChannel::ChannelB_Fire);
+	}
+}
+
 bool UTDFluidLiveComponent::PrepareGpuSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift)
 {
 	const bool bDidShiftWindow = bAllowSlidingShift && !IsAreaWrapped() && GpuSolverProxy.ShiftWindowTowards(DesiredCenterWorld) != FIntPoint::ZeroValue;
-	if ((bDidShiftWindow || bHasPendingObstacleUpdate) && !ActiveObstacles.IsEmpty())
+	if ((bDidShiftWindow || bHasPendingObstacleUpdate) && HasAnySolverObstacles())
 	{
 		RasterizeActiveObstacles();
 		bHasPendingObstacleUpdate = false;
 	}
 
+	ApplyGroundSlabToPendingStamps();
+	ApplyInputBrushRulesToPendingStamps();
 	ConvertPendingStampsToSolverPlane();
 	WrapPendingStampsIntoWindow();
-	LastProcessedPointCount = FMath::Min(PendingBrushStamps.Num(), TDFluidGpuSolverConstants::MaximumStampsPerTick);
+	LastProcessedPointCount = FMath::Min(PendingBrushStamps.Num(), FMath::Clamp(SimulationConfig.GpuMaxStampsPerTick, 1, TDFluidGpuSolverConstants::MaximumStampsPerTick));
 	if (IsAreaWrapped())
 	{
 		AppendWrappedStampGhosts(PendingBrushStamps, ResolveWrapWindowMinimumCm(), GetSimulationExtentCm());
 	}
 	GpuSolverProxy.PrepareStep(DeltaTime, PendingBrushStamps, PlaneBasis.GetPlaneUpDirection(), PlaneBasis.IsWorldFacing());
 	PendingBrushStamps.Reset();
+	GpuSolverProxy.SetMassInputAcceptance(AcceptsMassInput(), TDFluidLiveComponentMassInput::DoesPresetWriteSelectiveDensity(ActivePreset));
+	LastUploadedMassPointCount = PendingMassPoints.Num();
+	GpuSolverProxy.SetPreparedMassPoints(MoveTemp(PendingMassPoints));
+	PendingMassPoints.Reset();
+	return true;
+}
+
+bool UTDFluidLiveComponent::AcceptsMassInput() const
+{
+	return MassInputSettings.bAcceptMassInput && TDFluidMassInput::IsAllowedByConsole();
+}
+
+FVector UTDFluidLiveComponent::GetSimulationWindowCenterWorld() const
+{
+	const FVector2D CenterPlane = bUsesGpuSolver ? GpuSolverProxy.GetCenterPlaneCm() : FVector2D(Solver.GetCenterWorld());
+	return UnprojectSolverPlaneToWorld(CenterPlane, 0.0);
+}
+
+FTDFluidGpuMassInputCounters UTDFluidLiveComponent::GetMassInputCounters() const
+{
+	return bUsesGpuSolver ? GpuSolverProxy.GetLatestMassInputCounters() : FTDFluidGpuMassInputCounters();
+}
+
+void UTDFluidLiveComponent::EnsureMassInputDataChannelLoadRequested()
+{
+	const FSoftObjectPath DesiredPath = MassInputSettings.bReadDataChannel ? MassInputSettings.DataChannel.ToSoftObjectPath() : FSoftObjectPath();
+	if (DesiredPath == RequestedMassInputDataChannelPath)
+	{
+		return;
+	}
+
+	RequestAsyncAssetLoads();
+}
+
+void UTDFluidLiveComponent::SortAndClampMassPoints(TArray<FTDFluidMassInputPoint>& InOutPoints, const FVector& CenterWorld, int32 MaxPoints)
+{
+	if (MaxPoints <= 0)
+	{
+		InOutPoints.Reset();
+		return;
+	}
+
+	constexpr int32 SortKeyCount = 9;
+	struct FTDFluidMassPointSortEntry
+	{
+		int64 Keys[SortKeyCount];
+		int32 PointIndex;
+	};
+
+	auto ToMillimeters = [](double ValueCm)
+	{
+		return FMath::IsFinite(ValueCm) ? FMath::RoundToInt64(FMath::Clamp(ValueCm * 10.0, -9.0e15, 9.0e15)) : 0;
+	};
+
+	TArray<FTDFluidMassPointSortEntry> SortEntries;
+	SortEntries.Reserve(InOutPoints.Num());
+	for (int32 PointIndex = 0; PointIndex < InOutPoints.Num(); ++PointIndex)
+	{
+		const FTDFluidMassInputPoint& Point = InOutPoints[PointIndex];
+		FTDFluidMassPointSortEntry& Entry = SortEntries.AddDefaulted_GetRef();
+		const double DistanceSquared = FVector::DistSquared(Point.WorldLocation, CenterWorld);
+		Entry.Keys[0] = FMath::IsFinite(DistanceSquared) ? FMath::RoundToInt64(FMath::Min(DistanceSquared, 9.0e15)) : MAX_int64;
+		Entry.Keys[1] = ToMillimeters(Point.WorldLocation.X);
+		Entry.Keys[2] = ToMillimeters(Point.WorldLocation.Y);
+		Entry.Keys[3] = ToMillimeters(Point.WorldLocation.Z);
+		Entry.Keys[4] = ToMillimeters(Point.WorldVelocity.X);
+		Entry.Keys[5] = ToMillimeters(Point.WorldVelocity.Y);
+		Entry.Keys[6] = ToMillimeters(Point.RadiusCm);
+		Entry.Keys[7] = ToMillimeters(Point.DensityStrength * 1000.0);
+		Entry.Keys[8] = ToMillimeters(Point.HeatStrength * 1000.0);
+		Entry.PointIndex = PointIndex;
+	}
+
+	SortEntries.StableSort([](const FTDFluidMassPointSortEntry& Left, const FTDFluidMassPointSortEntry& Right)
+	{
+		for (int32 KeyIndex = 0; KeyIndex < SortKeyCount; ++KeyIndex)
+		{
+			if (Left.Keys[KeyIndex] != Right.Keys[KeyIndex])
+			{
+				return Left.Keys[KeyIndex] < Right.Keys[KeyIndex];
+			}
+		}
+		return false;
+	});
+
+	const int32 KeptCount = FMath::Min(MaxPoints, SortEntries.Num());
+	TArray<FTDFluidMassInputPoint> SortedPoints;
+	SortedPoints.Reserve(KeptCount);
+	for (int32 SortedIndex = 0; SortedIndex < KeptCount; ++SortedIndex)
+	{
+		SortedPoints.Add(InOutPoints[SortEntries[SortedIndex].PointIndex]);
+	}
+	InOutPoints = MoveTemp(SortedPoints);
+}
+
+void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInputPoint> Points)
+{
+	if (Points.IsEmpty() || !AcceptsMassInput() || !IsSimulationInitialized())
+	{
+		return;
+	}
+
+	TArray<FTDFluidMassInputPoint> AcceptedPoints;
+	AcceptedPoints.Reserve(Points.Num());
+	for (const FTDFluidMassInputPoint& Point : Points)
+	{
+		FVector2D PlanePoint;
+		if (TryProjectWorldPointIntoSlab(Point.WorldLocation, PlanePoint))
+		{
+			AcceptedPoints.Add(Point);
+		}
+	}
+	if (AcceptedPoints.IsEmpty())
+	{
+		return;
+	}
+
+	const FVector CenterWorld = GetSimulationWindowCenterWorld();
+	if (!bUsesGpuSolver)
+	{
+		const int32 RemainingStampSlots = FMath::Max(SimulationConfig.MaxPointsPerTick, 1) - PendingBrushStamps.Num();
+		SortAndClampMassPoints(AcceptedPoints, CenterWorld, RemainingStampSlots);
+		for (const FTDFluidMassInputPoint& Point : AcceptedPoints)
+		{
+			FTDFluidBrushStamp& Stamp = PendingBrushStamps.AddDefaulted_GetRef();
+			Stamp.WorldLocation = Point.WorldLocation;
+			Stamp.WorldVelocity = Point.WorldVelocity;
+			Stamp.RadiusCm = FMath::Max(Point.RadiusCm, 0.0f) * InputBrushSettings.MassPointRadiusScale;
+			Stamp.DensityStrength = Point.DensityStrength * InputBrushSettings.MassPointDensityStrength;
+			Stamp.VelocityStrength = InputBrushSettings.MassPointVelocityStrength;
+			Stamp.HeatStrength = Point.HeatStrength * InputBrushSettings.MassPointHeatStrength;
+			Stamp.Channel = ActivePreset ? ActivePreset->DefaultChannel : ETDFluidBrushChannel::ChannelR_Mud;
+			Stamp.Source = ETDFluidBrushSource::DataChannel;
+		}
+		return;
+	}
+
+	const int32 RemainingUploadSlots = TDFluidGpuSolverConstants::MaximumMassPointsPerUpload - PendingMassPoints.Num();
+	if (AcceptedPoints.Num() > RemainingUploadSlots)
+	{
+		SortAndClampMassPoints(AcceptedPoints, CenterWorld, RemainingUploadSlots);
+	}
+
+	const float VelocityStrength = InputBrushSettings.MassPointVelocityStrength;
+	const float MaxCellSpeed = SimulationConfig.MaxCellSpeedCmPerSec;
+	for (const FTDFluidMassInputPoint& Point : AcceptedPoints)
+	{
+		FVector2D PlaneVelocity = PlaneBasis.ProjectVector(Point.WorldVelocity) * VelocityStrength;
+		if (MaxCellSpeed > 0.0f)
+		{
+			PlaneVelocity = PlaneVelocity.GetClampedToMaxSize(MaxCellSpeed);
+		}
+
+		FTDFluidGpuMassPointInput& MassPoint = PendingMassPoints.AddDefaulted_GetRef();
+		MassPoint.CenterPlaneCm = ProjectWorldToSolverPlane(Point.WorldLocation);
+		MassPoint.VelocityPlaneCmPerSec = PlaneVelocity;
+		MassPoint.RadiusCm = FMath::Max(Point.RadiusCm, 0.0f) * InputBrushSettings.MassPointRadiusScale;
+		MassPoint.DensityStrength = Point.DensityStrength * InputBrushSettings.MassPointDensityStrength;
+		MassPoint.HeatStrength = Point.HeatStrength * InputBrushSettings.MassPointHeatStrength;
+		MassPoint.bWritesVelocity = VelocityStrength > 0.0f;
+	}
+}
+
+bool UTDFluidLiveComponent::BuildMassInputTarget(FTDFluidMassInputTarget& OutTarget) const
+{
+	if (!bUsesGpuSolver || !AcceptsMassInput() || !GpuSolverProxy.HasActorKey())
+	{
+		return false;
+	}
+
+	OutTarget.ActorKey = GpuSolverProxy.GetActorKey();
+	OutTarget.ChannelName = MassInputSettings.MassInputChannelName;
+	OutTarget.WindowCenterWorld = GetSimulationWindowCenterWorld();
+	OutTarget.AxisU = PlaneBasis.U;
+	OutTarget.AxisV = PlaneBasis.V;
+	OutTarget.AxisN = PlaneBasis.N;
+	OutTarget.PlaneCoordinateOffsetCm = PlaneBasis.PlaneCoordinateOffsetCm;
+	OutTarget.PlaneDepthCm = PlaneDepthCm;
+	OutTarget.SlabHalfDepthCm = GetPlaneSettings().InteractionDepthCm;
+	OutTarget.bIsWorldFacing = PlaneBasis.IsWorldFacing();
+	OutTarget.DensityStrength = InputBrushSettings.MassPointDensityStrength;
+	OutTarget.VelocityStrength = InputBrushSettings.MassPointVelocityStrength;
+	OutTarget.HeatStrength = InputBrushSettings.MassPointHeatStrength;
+	OutTarget.RadiusScale = InputBrushSettings.MassPointRadiusScale;
+	OutTarget.MaxCellSpeedCmPerSec = SimulationConfig.MaxCellSpeedCmPerSec;
+	OutTarget.RadiusCapCells = SimulationConfig.MassSplatRadiusCapCells;
+	OutTarget.bWritesSelectiveDensity = TDFluidLiveComponentMassInput::DoesPresetWriteSelectiveDensity(ActivePreset);
+	OutTarget.bUsesHeat = GpuSolverProxy.GetSettings().bUsesHeatChannel;
+	return true;
+}
+
+void UTDFluidLiveComponent::SetCollectedObstacles(const TArray<FTDFluidSdfObstacle>& InObstacles)
+{
+	const bool bIsSameList = InObstacles.Num() == CollectedObstacles.Num() && Algo::Compare(InObstacles, CollectedObstacles, [](const FTDFluidSdfObstacle& Left, const FTDFluidSdfObstacle& Right)
+	{
+		return Left.WorldCenter == Right.WorldCenter
+			&& Left.RadiusCm == Right.RadiusCm
+			&& Left.BoxHalfExtentsCm == Right.BoxHalfExtentsCm
+			&& Left.bIsBox == Right.bIsBox
+			&& Left.BoxHalfExtents3DCm == Right.BoxHalfExtents3DCm
+			&& Left.WorldRotation == Right.WorldRotation;
+	});
+	if (bIsSameList)
+	{
+		return;
+	}
+
+	CollectedObstacles = InObstacles;
+	bHasPendingObstacleUpdate = true;
+	if (!IsSimulationInitialized())
+	{
+		return;
+	}
+
+	RasterizeActiveObstacles();
+	bHasPendingObstacleUpdate = false;
+}
+
+bool UTDFluidLiveComponent::ProjectObstacleToPlane(const FTDFluidPlaneBasis& Basis, double InPlaneDepthCm, const FTDFluidPlaneSettings& InPlaneSettings, const FTDFluidSdfObstacle& InObstacle, FTDFluidSdfObstacle& OutObstacle)
+{
+	const double MaxDepthOffsetCm = InPlaneSettings.InteractionDepthCm;
+	const bool bProjectsOrientedBox = InPlaneSettings.bProjectOrientedObstacles && InObstacle.bIsBox && !InObstacle.BoxHalfExtents3DCm.IsNearlyZero() && !Basis.IsWorldFacing();
+	if (!bProjectsOrientedBox)
+	{
+		if (FMath::Abs(Basis.ProjectDepth(InObstacle.WorldCenter) - InPlaneDepthCm) > MaxDepthOffsetCm)
+		{
+			return false;
+		}
+
+		const FVector2D PlaneCenter = Basis.ProjectPoint(InObstacle.WorldCenter);
+		OutObstacle = InObstacle;
+		OutObstacle.WorldCenter = FVector(PlaneCenter.X, PlaneCenter.Y, 0.0);
+		return true;
+	}
+
+	const FRotationMatrix RotationMatrix(InObstacle.WorldRotation);
+	const FVector& HalfExtents = InObstacle.BoxHalfExtents3DCm;
+	double MinimumDepth = TNumericLimits<double>::Max();
+	double MaximumDepth = TNumericLimits<double>::Lowest();
+	FBox2D PlaneBox(ForceInit);
+	for (int32 CornerIndex = 0; CornerIndex < 8; ++CornerIndex)
+	{
+		const FVector LocalCorner(
+			(CornerIndex & 1) ? HalfExtents.X : -HalfExtents.X,
+			(CornerIndex & 2) ? HalfExtents.Y : -HalfExtents.Y,
+			(CornerIndex & 4) ? HalfExtents.Z : -HalfExtents.Z);
+		const FVector WorldCorner = InObstacle.WorldCenter + RotationMatrix.TransformVector(LocalCorner);
+		const double CornerDepth = Basis.ProjectDepth(WorldCorner);
+		MinimumDepth = FMath::Min(MinimumDepth, CornerDepth);
+		MaximumDepth = FMath::Max(MaximumDepth, CornerDepth);
+		PlaneBox += Basis.ProjectPoint(WorldCorner);
+	}
+
+	const bool bMissesSlab = MaximumDepth < InPlaneDepthCm - MaxDepthOffsetCm || MinimumDepth > InPlaneDepthCm + MaxDepthOffsetCm;
+	if (bMissesSlab)
+	{
+		return false;
+	}
+
+	const double PaddingCm = FMath::Max(0.0, static_cast<double>(InPlaneSettings.ObstacleContourPaddingCm));
+	const FVector2D PlaneCenter = PlaneBox.GetCenter();
+	OutObstacle = InObstacle;
+	OutObstacle.WorldCenter = FVector(PlaneCenter.X, PlaneCenter.Y, 0.0);
+	OutObstacle.BoxHalfExtentsCm = PlaneBox.GetExtent() + FVector2D(PaddingCm, PaddingCm);
 	return true;
 }
 

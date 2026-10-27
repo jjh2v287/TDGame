@@ -105,7 +105,7 @@ namespace
 		InOutConfig.FlowNoiseScaleCm = ClampFinite(InOutConfig.FlowNoiseScaleCm, 1.0f, 100000.0f);
 		InOutConfig.FlowNoiseSpeed = ClampFinite(InOutConfig.FlowNoiseSpeed, 0.0f, 100.0f);
 		InOutConfig.AmbientNoiseAmount = ClampFinite(InOutConfig.AmbientNoiseAmount, 0.0f, 1.0f);
-		InOutConfig.BuoyancyCmPerSec2 = ClampFinite(InOutConfig.BuoyancyCmPerSec2, 0.0f, 20000.0f);
+		InOutConfig.BuoyancyCmPerSec2 = ClampFinite(InOutConfig.BuoyancyCmPerSec2, -20000.0f, 20000.0f);
 		InOutConfig.OutflowBandRatio = ClampFinite(InOutConfig.OutflowBandRatio, 0.0f, 0.45f);
 		InOutConfig.OutflowRatePerSec = ClampFinite(InOutConfig.OutflowRatePerSec, 0.0f, 50.0f);
 		InOutConfig.WaterDepthReferenceCm = ClampFinite(InOutConfig.WaterDepthReferenceCm, 1.0f, 100000.0f);
@@ -866,6 +866,114 @@ namespace
 	}
 }
 
+namespace
+{
+	struct FTDFluidStampShapeWeighting
+	{
+		float AspectRatio = 1.0f;
+		float Hardness = 0.0f;
+		FVector2D MajorAxis = FVector2D(1.0, 0.0);
+		bool bIsShaped = false;
+	};
+
+	FTDFluidStampShapeWeighting MakeTDFluidStampShapeWeighting(const FTDFluidBrushStamp& Stamp)
+	{
+		FTDFluidStampShapeWeighting Shape;
+		Shape.AspectRatio = FMath::Clamp(Stamp.ShapeAspectRatio, 1.0f, 4.0f);
+		Shape.Hardness = FMath::Clamp(Stamp.ShapeHardness, 0.0f, 0.95f);
+		const FVector2D AuthoredAxis(Stamp.ShapeMajorAxis.X, Stamp.ShapeMajorAxis.Y);
+		const FVector2D PlaneVelocity(Stamp.WorldVelocity.X, Stamp.WorldVelocity.Y);
+		const FVector2D ShapeAxis = !AuthoredAxis.IsZero() ? AuthoredAxis : (PlaneVelocity.Size() >= 1.0 ? PlaneVelocity : FVector2D::ZeroVector);
+		if (ShapeAxis.IsZero())
+		{
+			Shape.AspectRatio = 1.0f;
+		}
+		else
+		{
+			const float AxisRadians = FMath::Atan2(static_cast<float>(ShapeAxis.Y), static_cast<float>(ShapeAxis.X));
+			Shape.MajorAxis = FVector2D(FMath::Cos(AxisRadians), FMath::Sin(AxisRadians));
+		}
+		Shape.bIsShaped = Shape.AspectRatio > 1.0f || Shape.Hardness > 0.0f;
+		return Shape;
+	}
+
+	float ComputeTDFluidShapedStampWeight(const FTDFluidStampShapeWeighting& Shape, const FVector2D& Offset, float RadiusCm)
+	{
+		const float Along = static_cast<float>(Offset.X * Shape.MajorAxis.X + Offset.Y * Shape.MajorAxis.Y);
+		const float Across = static_cast<float>(Offset.Y * Shape.MajorAxis.X - Offset.X * Shape.MajorAxis.Y) * Shape.AspectRatio;
+		const float NormalizedDistance = FMath::Sqrt(Along * Along + Across * Across) / RadiusCm;
+		if (NormalizedDistance > 1.0f)
+		{
+			return 0.0f;
+		}
+		const float Falloff = FMath::Clamp((1.0f - NormalizedDistance) / FMath::Max(1.0f - Shape.Hardness, 0.05f), 0.0f, 1.0f);
+		return Falloff * Falloff * (3.0f - 2.0f * Falloff);
+	}
+
+	int32 ComputeTDFluidTrackBankRadiusCells(float BlurRadiusCm, double CellSizeCm)
+	{
+		if (!(CellSizeCm > 0.0))
+		{
+			return 1;
+		}
+		return FMath::Clamp(FMath::RoundToInt(static_cast<double>(BlurRadiusCm) / CellSizeCm), 1, 16);
+	}
+
+	int32 ResolveTDFluidTrackBankTap(int32 Coordinate, int32 GridSize, bool bWrapsArea)
+	{
+		if (bWrapsArea)
+		{
+			return (Coordinate % GridSize + GridSize) % GridSize;
+		}
+		return FMath::Clamp(Coordinate, 0, GridSize - 1);
+	}
+
+	void BuildTDFluidTrackBankBlur(const float* PrimaryValues, int32 GridSize, int32 RadiusCells, bool bWrapsArea, TArray<float>& OutBlurred)
+	{
+		const float Sigma = 0.5f * static_cast<float>(RadiusCells);
+		TArray<float> Weights;
+		Weights.SetNumUninitialized(2 * RadiusCells + 1);
+		float WeightSum = 0.0f;
+		for (int32 Offset = -RadiusCells; Offset <= RadiusCells; ++Offset)
+		{
+			const float Weight = FMath::Exp(-static_cast<float>(Offset * Offset) / (2.0f * Sigma * Sigma));
+			Weights[Offset + RadiusCells] = Weight;
+			WeightSum += Weight;
+		}
+
+		TArray<float> Rows;
+		Rows.SetNumUninitialized(GridSize * GridSize);
+		for (int32 Y = 0; Y < GridSize; ++Y)
+		{
+			for (int32 X = 0; X < GridSize; ++X)
+			{
+				float WeightedSum = 0.0f;
+				for (int32 Offset = -RadiusCells; Offset <= RadiusCells; ++Offset)
+				{
+					const int32 TapX = ResolveTDFluidTrackBankTap(X + Offset, GridSize, bWrapsArea);
+					WeightedSum += Weights[Offset + RadiusCells] * FMath::Clamp(PrimaryValues[Y * GridSize + TapX], 0.0f, 1.0f);
+				}
+				Rows[Y * GridSize + X] = WeightedSum / WeightSum;
+			}
+		}
+
+		OutBlurred.SetNumUninitialized(GridSize * GridSize);
+		for (int32 Y = 0; Y < GridSize; ++Y)
+		{
+			for (int32 X = 0; X < GridSize; ++X)
+			{
+				float WeightedSum = 0.0f;
+				for (int32 Offset = -RadiusCells; Offset <= RadiusCells; ++Offset)
+				{
+					const int32 TapY = ResolveTDFluidTrackBankTap(Y + Offset, GridSize, bWrapsArea);
+					WeightedSum += Weights[Offset + RadiusCells] * Rows[TapY * GridSize + X];
+				}
+				OutBlurred[Y * GridSize + X] = WeightedSum / WeightSum;
+			}
+		}
+	}
+}
+
 void FTDFluidGrid2DSolver::ApplyBrushStamps(const TArray<FTDFluidBrushStamp>& Stamps, float DeltaTime)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_ApplyBrushStamps);
@@ -934,6 +1042,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 	const bool bBlendsRadialVelocity = bHasRadialVelocity && !bDefersRadialVelocity;
 	const bool bInjectsVelocity = Stamp.VelocityStrength > 0.0f || bBlendsRadialVelocity;
 	const FVector2D TargetVelocity = (FVector2D(Stamp.WorldVelocity.X, Stamp.WorldVelocity.Y) * Stamp.VelocityStrength).GetClampedToMaxSize(Config.MaxCellSpeedCmPerSec);
+	const FTDFluidStampShapeWeighting StampShape = MakeTDFluidStampShapeWeighting(Stamp);
 
 	const int32 MinCellX = FMath::Clamp(FMath::FloorToInt((StampCenter.X - EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
 	const int32 MaxCellX = FMath::Clamp(FMath::CeilToInt((StampCenter.X + EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
@@ -958,6 +1067,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 
 			const float NormalizedFalloff = 1.0f - (DistanceCm / EffectiveRadius);
 			const float SmoothWeight = NormalizedFalloff * NormalizedFalloff * (3.0f - 2.0f * NormalizedFalloff);
+			const float ShapedWeight = StampShape.bIsShaped ? ComputeTDFluidShapedStampWeight(StampShape, CellCenter - StampCenter, EffectiveRadius) : SmoothWeight;
 			const int32 CellIdx = ToCellIndex(CellX, CellY);
 
 			if (bWritesRipple)
@@ -968,7 +1078,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 
 			if (bErasesDensity)
 			{
-				const float RetainFactor = FMath::Exp(-EraseRatePerSec * SmoothWeight * DeltaTime);
+				const float RetainFactor = FMath::Exp(-EraseRatePerSec * ShapedWeight * DeltaTime);
 				PrimaryDensity[CellIdx] *= RetainFactor;
 				if (bWritesSelectiveDensity)
 				{
@@ -977,7 +1087,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 			}
 			else
 			{
-				const float DensityWeight = bUsesRingStamp ? ComputeTDFluidRingStampDensityWeight(RingShape, CellCenter - StampCenter, DistanceCm, EffectiveRadius) : SmoothWeight;
+				const float DensityWeight = bUsesRingStamp ? ComputeTDFluidRingStampDensityWeight(RingShape, CellCenter - StampCenter, DistanceCm, EffectiveRadius) : ShapedWeight;
 				const float DensityTarget = FMath::Clamp(DensityStrength * DensityWeight, 0.0f, 1.0f);
 				PrimaryDensity[CellIdx] = FMath::Max(PrimaryDensity[CellIdx], DensityTarget);
 				if (!bIsWaterLayerActive)
@@ -1019,7 +1129,7 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 				CellTargetVelocity = (TargetVelocity + OutwardDirection * Stamp.RadialVelocityCmPerSec).GetClampedToMaxSize(Config.MaxCellSpeedCmPerSec);
 			}
 
-			const float CellBlend = SmoothWeight * VelocityBlend;
+			const float CellBlend = ShapedWeight * VelocityBlend;
 			VelocityX[CellIdx] += (CellTargetVelocity.X - VelocityX[CellIdx]) * CellBlend;
 			VelocityY[CellIdx] += (CellTargetVelocity.Y - VelocityY[CellIdx]) * CellBlend;
 		}
@@ -1359,7 +1469,7 @@ void FTDFluidGrid2DSolver::ApplyBuoyancyAcceleration(float DeltaTime)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_Buoyancy);
 
-	if (Config.BuoyancyCmPerSec2 <= 0.0f || PlaneUpDirection.IsNearlyZero())
+	if (Config.BuoyancyCmPerSec2 == 0.0f || PlaneUpDirection.IsNearlyZero())
 	{
 		return;
 	}
@@ -2251,6 +2361,16 @@ void FTDFluidGrid2DSolver::PackOutputPixels(TArray<FFloat16Color>& OutDensityPre
 	float BorderFadeByCoordinate[MaxGridResolution];
 	BuildBorderAlphaTable(BorderFadeByCoordinate);
 
+	const bool bComposesTrackBank = Config.SimMode == ETDFluidSimMode::SimplePainter && Config.TrackBankStrength > 0.0f;
+	const float TrackBankLimit = Config.TrackBankHeightLimit;
+	TArray<float> TrackBankBlur;
+	if (bComposesTrackBank)
+	{
+		const int32 RadiusCells = ComputeTDFluidTrackBankRadiusCells(Config.TrackBankBlurRadiusCm, Config.SimExtentCm.X / static_cast<double>(GridSize));
+		BuildTDFluidTrackBankBlur(PrimaryDensity.GetData(), GridSize, RadiusCells, IsAreaWrapped(), TrackBankBlur);
+	}
+	const float* TrackBankBlurValues = TrackBankBlur.GetData();
+
 	const float* SdfValues = ObstacleSdf.GetData();
 	const float* PressureValues = Pressure.GetData();
 	const float* DisplacementValues = SurfaceDisplacement.GetData();
@@ -2272,7 +2392,8 @@ void FTDFluidGrid2DSolver::PackOutputPixels(TArray<FFloat16Color>& OutDensityPre
 			const float SurfaceHeight = FMath::Clamp(PressureValues[Idx] + DisplacementValues[Idx], -1.0f, 1.0f);
 
 			const float Density = FMath::Clamp(PrimaryValues[Idx], 0.0f, 1.0f);
-			const float Surface = SurfaceHeight * 0.5f + 0.5f;
+			const float BankHeight = bComposesTrackBank ? -Density + FMath::Clamp(Config.TrackBankStrength * (TrackBankBlurValues[Idx] - Density), -TrackBankLimit, TrackBankLimit) : 0.0f;
+			const float Surface = bComposesTrackBank ? 0.5f + 0.5f * FMath::Clamp(BankHeight, -1.0f, 1.0f) : SurfaceHeight * 0.5f + 0.5f;
 			const float Selective = FMath::Clamp(SelectiveValues[Idx], 0.0f, 1.0f);
 			const float Alpha = FMath::Clamp(BorderAlpha * ObstacleMask, 0.0f, 1.0f);
 			DensityPressurePixels[Idx] = FFloat16Color(FLinearColor(Density, Surface, Selective, Alpha));

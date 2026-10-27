@@ -1,0 +1,28 @@
+{
+ "asset": "/Game/FluidFX/Niagara/NS_TD_FluidMassNdcBench",
+ "emitter_name": "Mass",
+ "profile": "mass",
+ "space": "world",
+ "spawn": "grid_burst",
+ "features": [
+  "ndc"
+ ],
+ "renderer": {
+  "kind": "none",
+  "material": null,
+  "alignment": null,
+  "mesh": null,
+  "mesh_facing": null
+ },
+ "cast_shadow": false,
+ "max_particles": 1024,
+ "fixed_bounds_half_extent_cm": 4000.0,
+ "random_seed": 1,
+ "mass": {
+  "motion": "swirl",
+  "sim_target": "cpu",
+  "target_channel_name": "Default",
+  "data_channel": "/Game/FluidFX/Niagara/DataChannels/NDC_TD_FluidMassInput.NDC_TD_FluidMassInput",
+  "allocation_count": 1024
+ }
+}

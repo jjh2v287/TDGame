@@ -30,4 +30,10 @@ struct TDGAME_API FTDFluidPlaneSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "0.49"))
 	float CenterOffsetAlongUpRatio = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
+	bool bProjectOrientedObstacles = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "100.0"))
+	float ObstacleContourPaddingCm = 0.0f;
 };

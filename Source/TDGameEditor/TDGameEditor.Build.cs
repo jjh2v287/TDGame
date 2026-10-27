@@ -46,7 +46,13 @@ public class TDGameEditor : ModuleRules
 			"GeometryCollectionEngine",
 			"Chaos",
 			"MeshDescription",
-			"StaticMeshDescription"
+			"StaticMeshDescription",
+			"AssetTools",
+			"Niagara",
+			"NiagaraCore",
+			"NiagaraEditor",
+			"Slate",
+			"SlateCore"
 		});
 	}
 }

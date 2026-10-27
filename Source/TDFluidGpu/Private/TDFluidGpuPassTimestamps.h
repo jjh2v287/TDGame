@@ -7,6 +7,7 @@
 class FTDFluidGpuBatch;
 struct FTDFluidGpuFrameInputs;
 struct FTDFluidGpuFrameOutputs;
+class FTDFluidGpuMassInputRegistry;
 
 struct FTDFluidGpuPassTimestamps
 {
@@ -14,4 +15,4 @@ struct FTDFluidGpuPassTimestamps
 	TArray<FRenderQueryRHIRef> Queries;
 };
 
-FTDFluidGpuFrameOutputs AddTDFluidGpuTimestampedFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPassTimestamps& OutTimestamps);
+FTDFluidGpuFrameOutputs AddTDFluidGpuTimestampedFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPassTimestamps& OutTimestamps, FTDFluidGpuMassInputRegistry* MassInputRegistry = nullptr);

@@ -1,0 +1,98 @@
+{
+ "id": "track_fx12c_vehicle",
+ "note": "FX-12 코드 J4 수확기(바퀴 4점·반경 15 cm·궤도 6 m·30°/s), 정본 SandTrack. 바퀴 반경 = 원천 형상값 × VehicleBrushRadiusScale(DEV-2)",
+ "scenes": [
+  {
+   "name": "sand_harvester",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSandStage",
+   "camera": {
+    "exposure_ev100": 1.5,
+    "pawn": [
+     0,
+     2400
+    ],
+    "arm": 500.0,
+    "view": [
+     -20.0,
+     30.0
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 12.0,
+   "regions_template": "Tools/FluidFX/calib/regions/track_sand_regions.json",
+   "targets": "Tools/FluidFX/calib/targets/track_fx12c_targets.json",
+   "live2_refs": [
+    "L4",
+    "L22"
+   ],
+   "awake": {
+    "TDGen_SandTrack": true,
+    "TDGen_HarvesterSandDust": true
+   }
+  }
+ ],
+ "base_tuning": [],
+ "params": [
+  {
+   "json_path": "Kinds.SandTrack.TDFluidInputBrushSettings.VehicleBrushRadiusScale",
+   "values": [
+    0.7,
+    1.0,
+    1.4
+   ],
+   "split_group": true
+  },
+  {
+   "json_path": "Kinds.SandTrack.TDFluidInputBrushSettings.StrokeSpacingRatio",
+   "values": [
+    0.3,
+    0.5,
+    1.0
+   ],
+   "split_group": true
+  },
+  {
+   "json_path": "Kinds.SandTrack.TDFluidInputBrushSettings.VehicleStampAspectRatio",
+   "values": [
+    1.0,
+    1.5,
+    2.0
+   ],
+   "split_group": true
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "look",
+   "groove_profile"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "metric": "harvester_wheel.groove_width_cm",
+    "weight": 1.0,
+    "low": 25.0,
+    "high": 35.0
+   },
+   {
+    "metric": "harvester_wheel.gap_count",
+    "weight": 1.0,
+    "low": 0.0,
+    "high": 0.5
+   }
+  ]
+ },
+ "draft_status": "초안: P3 확장 전이라 calib_sweep.py --dry-run 대상 아님(검증 거부가 정상)",
+ "p3_gaps": [
+  "params json_path Look: 모양 경로 할당(fluid_tuning_patch.parse_json_path 가 Look: 를 거부, R9-S4)",
+  "metrics.sources groove_profile(홈 단면 선 표본: 폭·둑/홈 비·둑 폭)·atmosphere",
+  "scenes.awake(이름표로 액터 깨우기) 실행기 지원",
+  "Groups.TrackPainter·Kinds.SnowTrack·SandTrack 는 FX-12c 묶음 A 통합 뒤에만 경로가 유효",
+  "regions_template 은 사구용 track_sand_regions.json 재사용: 수확기 구역 영역(harvester_wheel) 틀 없음"
+ ]
+}

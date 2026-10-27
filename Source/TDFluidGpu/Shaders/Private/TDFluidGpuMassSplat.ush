@@ -1,0 +1,137 @@
+#pragma once
+
+#define TDFLUIDGPU_MASS_DENSITY_SCALE 16777216.0f
+#define TDFLUIDGPU_MASS_VELOCITY_SCALE 8.0f
+#define TDFLUIDGPU_MASS_WEIGHT_SCALE 4096.0f
+#define TDFLUIDGPU_MASS_QUANTIZED_LIMIT 2147483520.0f
+#define TDFLUIDGPU_MASS_CHANNEL_COUNT 5
+#define TDFLUIDGPU_MASS_MAX_RADIUS_CAP_CELLS 16
+#define TDFLUIDGPU_MASS_ENTRY_FLAG_APPLIES 1u
+#define TDFLUIDGPU_MASS_ENTRY_FLAG_SELECTIVE_DENSITY 2u
+#define TDFLUIDGPU_MASS_ENTRY_FLAG_WRAPS_AREA 4u
+#define TDFLUIDGPU_MASS_POINT_WRITES_VELOCITY 0x80000000u
+#define TDFLUIDGPU_MASS_POINT_ENTRY_MASK 0x7FFFFFFFu
+
+struct FTDFluidGpuPackedMassPoint
+{
+	float2 LocalCm;
+	float2 VelocityPlaneCmPerSec;
+	float RadiusCm;
+	float DensityTarget;
+	float HeatTarget;
+	uint EntryIndexAndFlags;
+};
+
+struct FTDFluidGpuMassInputEntry
+{
+	uint AccumulationBase;
+	uint CounterBase;
+	uint InputResolution;
+	uint Flags;
+	float2 ShiftOffsetCm;
+	float2 InputCellCm;
+	uint SafeCount;
+	uint RadiusCapCells;
+	uint Padding0;
+	uint Padding1;
+};
+
+uint TDFluidGpuMassQuantizeUnit(float Value)
+{
+	return (uint)floor(saturate(Value) * TDFLUIDGPU_MASS_DENSITY_SCALE + 0.5f);
+}
+
+int TDFluidGpuMassQuantizeVelocity(float Value)
+{
+	const float Scaled = clamp(Value * TDFLUIDGPU_MASS_VELOCITY_SCALE, -TDFLUIDGPU_MASS_QUANTIZED_LIMIT, TDFLUIDGPU_MASS_QUANTIZED_LIMIT);
+	return (int)(sign(Scaled) * floor(abs(Scaled) + 0.5f));
+}
+
+uint TDFluidGpuMassQuantizeWeight(float Weight)
+{
+	return (uint)floor(saturate(Weight) * TDFLUIDGPU_MASS_WEIGHT_SCALE + 0.5f);
+}
+
+float TDFluidGpuMassResolveRadius(float RadiusCm, float2 InputCellCm, float RadiusCapCells)
+{
+	const float MinimumRadius = 0.5f * max(InputCellCm.x, InputCellCm.y);
+	const float CapCells = clamp(RadiusCapCells, 1.0f, (float)TDFLUIDGPU_MASS_MAX_RADIUS_CAP_CELLS);
+	const float MaximumRadius = max(MinimumRadius, CapCells * min(InputCellCm.x, InputCellCm.y));
+	return isfinite(RadiusCm) ? clamp(RadiusCm, MinimumRadius, MaximumRadius) : MinimumRadius;
+}
+
+int TDFluidGpuMassWrapIndex(int Index, int Resolution)
+{
+	const int Remainder = Index % Resolution;
+	return Remainder < 0 ? Remainder + Resolution : Remainder;
+}
+
+bool TDFluidGpuMassTryResolveIndex(int Index, int Resolution, bool bWrapsArea, out int OutIndex)
+{
+	if (bWrapsArea)
+	{
+		OutIndex = TDFluidGpuMassWrapIndex(Index, Resolution);
+		return true;
+	}
+	OutIndex = Index;
+	return Index >= 0 && Index < Resolution;
+}
+
+bool TDFluidGpuMassSplatPoint(RWBuffer<uint> Accumulation, uint AccumulationBase, uint InputResolution, float2 InputCellCm, bool bWrapsArea, float2 LocalCm, float2 VelocityPlaneCmPerSec, float RadiusCm, float DensityTarget, float HeatTarget, bool bWritesVelocity)
+{
+	if (InputResolution == 0u || RadiusCm <= 0.0f)
+	{
+		return false;
+	}
+	const int Resolution = (int)InputResolution;
+	const uint ChannelStride = InputResolution * InputResolution;
+	const int MinX = (int)floor((LocalCm.x - RadiusCm) / InputCellCm.x);
+	const int MinY = (int)floor((LocalCm.y - RadiusCm) / InputCellCm.y);
+	int MaxX = (int)floor((LocalCm.x + RadiusCm) / InputCellCm.x);
+	int MaxY = (int)floor((LocalCm.y + RadiusCm) / InputCellCm.y);
+	if (bWrapsArea)
+	{
+		MaxX = min(MaxX, MinX + Resolution - 1);
+		MaxY = min(MaxY, MinY + Resolution - 1);
+	}
+	bool bTouched = false;
+	for (int Y = MinY; Y <= MaxY; ++Y)
+	{
+		int ResolvedY;
+		if (!TDFluidGpuMassTryResolveIndex(Y, Resolution, bWrapsArea, ResolvedY))
+		{
+			continue;
+		}
+		for (int X = MinX; X <= MaxX; ++X)
+		{
+			int ResolvedX;
+			if (!TDFluidGpuMassTryResolveIndex(X, Resolution, bWrapsArea, ResolvedX))
+			{
+				continue;
+			}
+			const float2 Center = (float2(X, Y) + 0.5f) * InputCellCm;
+			const float Distance = length(Center - LocalCm);
+			if (Distance >= RadiusCm)
+			{
+				continue;
+			}
+			const float Falloff = 1.0f - Distance / RadiusCm;
+			const float Weight = Falloff * Falloff * (3.0f - 2.0f * Falloff);
+			const uint Index = AccumulationBase + (uint)ResolvedY * InputResolution + (uint)ResolvedX;
+			bTouched = true;
+			uint Previous;
+			InterlockedMax(Accumulation[Index], TDFluidGpuMassQuantizeUnit(DensityTarget * Weight), Previous);
+			if (HeatTarget > 0.0f)
+			{
+				InterlockedMax(Accumulation[Index + ChannelStride], TDFluidGpuMassQuantizeUnit(HeatTarget * Weight), Previous);
+			}
+			if (bWritesVelocity)
+			{
+				InterlockedAdd(Accumulation[Index + ChannelStride * 2u], asuint(TDFluidGpuMassQuantizeVelocity(Weight * VelocityPlaneCmPerSec.x)), Previous);
+				InterlockedAdd(Accumulation[Index + ChannelStride * 3u], asuint(TDFluidGpuMassQuantizeVelocity(Weight * VelocityPlaneCmPerSec.y)), Previous);
+				InterlockedAdd(Accumulation[Index + ChannelStride * 4u], TDFluidGpuMassQuantizeWeight(Weight), Previous);
+			}
+		}
+	}
+	return bTouched;
+}

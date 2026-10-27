@@ -470,7 +470,7 @@ namespace TDFluidWrapAreaComponentTestPrivate
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidWrapAreaCpuGpuParityTest,
 	"TDGame.FluidFXRhi.WrapArea.CpuGpuParity",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
 
 bool FTDFluidWrapAreaCpuGpuParityTest::RunTest(const FString& Parameters)
 {
@@ -478,8 +478,8 @@ bool FTDFluidWrapAreaCpuGpuParityTest::RunTest(const FString& Parameters)
 
 	if (!HasRenderingRhi())
 	{
-		AddInfo(TEXT("TDGame.FluidFXRhi.WrapArea.CpuGpuParity needs a rendering RHI; skipped under the null RHI."));
-		return true;
+		AddError(TEXT("TDGame.FluidFXRhi.WrapArea.CpuGpuParity needs a rendering RHI."));
+		return false;
 	}
 
 	FTDFluidWrapFieldMetrics CpuMetrics;
@@ -512,7 +512,7 @@ bool FTDFluidWrapAreaCpuGpuParityTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidWrapAreaGpuRepeatAndAddressTest,
 	"TDGame.FluidFXRhi.WrapArea.GpuRepeatAndAddress",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
 
 bool FTDFluidWrapAreaGpuRepeatAndAddressTest::RunTest(const FString& Parameters)
 {
@@ -520,8 +520,8 @@ bool FTDFluidWrapAreaGpuRepeatAndAddressTest::RunTest(const FString& Parameters)
 
 	if (!HasRenderingRhi())
 	{
-		AddInfo(TEXT("TDGame.FluidFXRhi.WrapArea.GpuRepeatAndAddress needs a rendering RHI; skipped under the null RHI."));
-		return true;
+		AddError(TEXT("TDGame.FluidFXRhi.WrapArea.GpuRepeatAndAddress needs a rendering RHI."));
+		return false;
 	}
 
 	uint32 FirstHash = 0;
@@ -565,7 +565,7 @@ namespace TDFluidWrapAreaComponentTestPrivate
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidWrapAreaTileMapTargetParametersTest,
 	"TDGame.FluidFXRhi.WrapArea.TileMapTargetParameters",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
 
 bool FTDFluidWrapAreaTileMapTargetParametersTest::RunTest(const FString& Parameters)
 {
@@ -573,8 +573,8 @@ bool FTDFluidWrapAreaTileMapTargetParametersTest::RunTest(const FString& Paramet
 
 	if (!HasRenderingRhi())
 	{
-		AddInfo(TEXT("TDGame.FluidFXRhi.WrapArea.TileMapTargetParameters needs a rendering RHI; skipped under the null RHI."));
-		return true;
+		AddError(TEXT("TDGame.FluidFXRhi.WrapArea.TileMapTargetParameters needs a rendering RHI."));
+		return false;
 	}
 
 	UMaterialInterface* SeaWaterInstance = LoadObject<UMaterialInterface>(nullptr, SeaWaterInstancePath);

@@ -333,7 +333,10 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.TerrainSlopeGravity = Config.TerrainSlopeGravity;
 	SimulationSettings.AdvectionSpeedScale = Config.AdvectionSpeedScale;
 	SimulationSettings.BorderFadeRatio = Config.BorderFadeRatio;
-	SimulationSettings.MaxStampsPerTick = TDFluidGpuSolverConstants::MaximumStampsPerTick;
+	SimulationSettings.MaxStampsPerTick = FMath::Clamp(Config.GpuMaxStampsPerTick, 1, TDFluidGpuSolverConstants::MaximumStampsPerTick);
+	SimulationSettings.MaxStampsPerBin = FMath::Clamp(Config.GpuMaxStampsPerBin, 1, TDFluidGpuSolverConstants::MaximumStampsPerBin);
+	SimulationSettings.MassInputDivisor = Config.MassInputBufferDivisor;
+	SimulationSettings.MassSplatRadiusCapCells = Config.MassSplatRadiusCapCells;
 	SimulationSettings.AmbientDensity = Config.AmbientDensity;
 	SimulationSettings.AmbientRefillPerSec = Config.AmbientRefillPerSec;
 	SimulationSettings.FlowNoiseAccelerationCmPerSec2 = Config.FlowNoiseAccelerationCmPerSec2;
@@ -356,6 +359,10 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.MaxCellSpeedCmPerSec = Config.MaxCellSpeedCmPerSec;
 	SimulationSettings.BrushVelocityResponsePerSec = Config.BrushVelocityResponsePerSec;
 	SimulationSettings.BrushDisplacementRatio = Config.BrushDisplacementRatio;
+	SimulationSettings.TrackBankStrength = Config.SimMode == ETDFluidSimMode::SimplePainter ? Config.TrackBankStrength : 0.0f;
+	SimulationSettings.TrackBankBlurRadiusCm = Config.TrackBankBlurRadiusCm;
+	SimulationSettings.TrackBankHeightLimit = Config.TrackBankHeightLimit;
+	SimulationSettings.bWritesPainterVelocity = Config.SimMode == ETDFluidSimMode::SimplePainter && Config.bWritesPainterVelocity;
 	SimulationSettings.BrushEraseRatePerSec = Config.BrushEraseRatePerSec;
 	SimulationSettings.PressureSolverModeRequest = static_cast<uint8>(Config.GpuPressureSolverMode);
 	SimulationSettings.MultigridCyclesRequest = Config.GpuMultigridCycles;
@@ -408,6 +415,9 @@ FTDFluidGpuStampInput FTDFluidGpuSolverProxy::MakeStampInput(const FTDFluidBrush
 	StampInput.RingInnerRadiusRatio = PlaneStamp.RingInnerRadiusRatio;
 	StampInput.RingSideArcWeight = PlaneStamp.RingSideArcWeight;
 	StampInput.RingInnerEraseRatePerSec = PlaneStamp.RingInnerEraseRatePerSec;
+	StampInput.ShapeAspectRatio = PlaneStamp.ShapeAspectRatio;
+	StampInput.ShapeHardness = PlaneStamp.ShapeHardness;
+	StampInput.ShapeMajorAxisPlane = FVector2D(PlaneStamp.ShapeMajorAxis.X, PlaneStamp.ShapeMajorAxis.Y);
 	return StampInput;
 }
 
@@ -676,6 +686,8 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 
 	OutActorInput.ActorKey = ActorKey;
 	OutActorInput.Settings = Settings;
+	OutActorInput.Settings.bAcceptsMassInput = bAcceptsMassInputRequest;
+	OutActorInput.Settings.bMassInputWritesSelectiveDensity = bMassInputWritesSelectiveDensityRequest;
 	OutActorInput.WindowCenterPlaneCm = CenterPlaneCm;
 	OutActorInput.ShiftCells = PendingShiftCells;
 	OutActorInput.PlaneUpDirection = PreparedPlaneUpDirection;
@@ -685,6 +697,7 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 	OutActorInput.bHasTerrainElevation = bPreparedAllowsTerrainElevation && bIsTerrainElevationActive;
 	OutActorInput.bHasObstacleListChanged = bHasObstacleListChanged;
 	OutActorInput.Stamps = MoveTemp(PreparedStamps);
+	OutActorInput.MassPoints = MoveTemp(PreparedMassPoints);
 	OutActorInput.Obstacles = Obstacles;
 	if (OutActorInput.bHasTerrainElevation)
 	{
@@ -707,6 +720,7 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 	RecordSubmission(FrameNumber, TileIndex, WaterProbeFirstSlot, SubmittedWaterProbeCount);
 	AdvanceSimulationTime(PreparedDeltaTimeSeconds);
 	PreparedStamps.Reset();
+	PreparedMassPoints.Reset();
 	PendingShiftCells = FIntPoint::ZeroValue;
 	bNeedsReset = false;
 	bHasObstacleListChanged = false;
@@ -717,6 +731,14 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 
 bool FTDFluidGpuSolverProxy::ConsumeReadbackFrame(const FTDFluidGpuReadbackFrame& ReadbackFrame)
 {
+	for (const FTDFluidGpuMassInputCounters& Counters : ReadbackFrame.MassInputCounters)
+	{
+		if (Counters.ActorKey == ActorKey)
+		{
+			LatestMassInputCounters = Counters;
+		}
+	}
+
 	const int32 RecordIndex = RecentSubmissions.IndexOfByPredicate([&ReadbackFrame](const FTDFluidGpuSubmissionRecord& Record)
 	{
 		return Record.FrameNumber == ReadbackFrame.FrameNumber;
@@ -746,6 +768,17 @@ void FTDFluidGpuSolverProxy::AssignActorKey(uint64 InActorKey)
 	{
 		WaterFieldState.RequestFullUpload(ProxyWaterFullUploadGatherCount);
 	}
+}
+
+void FTDFluidGpuSolverProxy::SetMassInputAcceptance(bool bInAcceptsMassInput, bool bInWritesSelectiveDensity)
+{
+	bAcceptsMassInputRequest = bInAcceptsMassInput;
+	bMassInputWritesSelectiveDensityRequest = bInWritesSelectiveDensity;
+}
+
+void FTDFluidGpuSolverProxy::SetPreparedMassPoints(TArray<FTDFluidGpuMassPointInput>&& InMassPoints)
+{
+	PreparedMassPoints = MoveTemp(InMassPoints);
 }
 
 uint64 FTDFluidGpuSolverProxy::ReleaseActorKey()
@@ -862,7 +895,7 @@ void FTDFluidGpuSolverRenderState::ExecuteFrame(FRHICommandListImmediate& RHICmd
 	PublishReadyReadback();
 
 	FRDGBuilder GraphBuilder(RHICmdList, RDG_EVENT_NAME("TDFluidGpuSolverFrame"));
-	const FTDFluidGpuFrameOutputs FrameOutputs = AddTDFluidGpuFramePasses(GraphBuilder, FrameInputs, Batches);
+	const FTDFluidGpuFrameOutputs FrameOutputs = AddTDFluidGpuFramePasses(GraphBuilder, FrameInputs, Batches, MassInputHub ? &MassInputHub->GetRegistry() : nullptr);
 	ReadbackRing.Enqueue(GraphBuilder, FrameOutputs);
 	GraphBuilder.Execute();
 }

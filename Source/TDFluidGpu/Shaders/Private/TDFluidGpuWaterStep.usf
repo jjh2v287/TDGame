@@ -73,6 +73,7 @@ void ApplyWaterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout f
 		}
 
 		const FTDFluidGpuPackedRingShape RingShape = StampRingShapes[StampIndex];
+		const float ShapedWeight = TDFluidGpuComputeShapedStampWeight(Stamp, RingShape, CellCenter, SmoothWeight);
 		if (RingShape.InnerRadiusRatio > 0.0f && !TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_ERASES_DENSITY))
 		{
 			ApplyWaterRingStampDensity(Actor, Stamp, RingShape, CellCenter, DistanceCm, Density);
@@ -80,11 +81,11 @@ void ApplyWaterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout f
 		else
 		{
 			float DiscardedDisplacement = 0.0f;
-			TDFluidGpuApplyStampDensity(Actor, Stamp, SmoothWeight, Density, DiscardedDisplacement);
+			TDFluidGpuApplyStampDensity(Actor, Stamp, ShapedWeight, Density, DiscardedDisplacement);
 		}
 		if (Stamp.VelocityStrength > 0.0f)
 		{
-			Velocity += (Stamp.TargetVelocityCmPerSec - Velocity) * (SmoothWeight * Actor.StampVelocityBlend);
+			Velocity += (Stamp.TargetVelocityCmPerSec - Velocity) * (ShapedWeight * Actor.StampVelocityBlend);
 		}
 		RippleHeight -= StampRippleImpulses[StampIndex] * SmoothWeight;
 	}

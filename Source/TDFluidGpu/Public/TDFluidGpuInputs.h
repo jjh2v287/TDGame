@@ -23,6 +23,16 @@ namespace TDFluidGpuSolverConstants
 	inline constexpr int32 DefaultMultigridWarmStartDecayFrames = 32;
 	inline constexpr int32 MaximumStampsPerTick = 16000;
 	inline constexpr int32 MaximumStampsPerBin = 256;
+	inline constexpr float MassInputDensityScale = 16777216.0f;
+	inline constexpr float MassInputVelocityScale = 8.0f;
+	inline constexpr float MassInputWeightScale = 4096.0f;
+	inline constexpr float MassInputQuantizedLimit = 2147483520.0f;
+	inline constexpr int32 MassInputChannelCount = 5;
+	inline constexpr int32 MassInputCounterCount = 4;
+	inline constexpr int32 DefaultMassInputDivisor = 2;
+	inline constexpr int32 DefaultMassSplatRadiusCapCells = 8;
+	inline constexpr int32 MaximumMassSplatRadiusCapCells = 16;
+	inline constexpr int32 MaximumMassPointsPerUpload = 16000;
 	inline constexpr int32 StampBinsPerAxis = 16;
 	inline constexpr int32 StampBinCount = StampBinsPerAxis * StampBinsPerAxis;
 	inline constexpr int32 ReadbackTileResolution = 64;
@@ -98,6 +108,9 @@ struct FTDFluidGpuStampInput
 	float RingInnerRadiusRatio = 0.0f;
 	float RingSideArcWeight = 0.3f;
 	float RingInnerEraseRatePerSec = 0.0f;
+	float ShapeAspectRatio = 1.0f;
+	float ShapeHardness = 0.0f;
+	FVector2D ShapeMajorAxisPlane = FVector2D::ZeroVector;
 };
 
 struct FTDFluidGpuObstacleInput
@@ -127,6 +140,11 @@ struct FTDFluidGpuSimulationSettings
 	float AdvectionSpeedScale = 1.0f;
 	float BorderFadeRatio = 0.1f;
 	int32 MaxStampsPerTick = TDFluidGpuSolverConstants::MaximumStampsPerTick;
+	int32 MaxStampsPerBin = TDFluidGpuSolverConstants::MaximumStampsPerBin;
+	bool bAcceptsMassInput = false;
+	bool bMassInputWritesSelectiveDensity = false;
+	int32 MassInputDivisor = TDFluidGpuSolverConstants::DefaultMassInputDivisor;
+	int32 MassSplatRadiusCapCells = TDFluidGpuSolverConstants::DefaultMassSplatRadiusCapCells;
 	float AmbientDensity = 0.0f;
 	float AmbientRefillPerSec = 0.0f;
 	float FlowNoiseAccelerationCmPerSec2 = 0.0f;
@@ -149,6 +167,10 @@ struct FTDFluidGpuSimulationSettings
 	float BrushVelocityResponsePerSec = TDFluidGpuSolverConstants::BrushVelocityResponsePerSec;
 	float BrushDisplacementRatio = TDFluidGpuSolverConstants::BrushDisplacementRatio;
 	float BrushEraseRatePerSec = TDFluidGpuSolverConstants::BrushEraseRatePerSec;
+	float TrackBankStrength = 0.0f;
+	float TrackBankBlurRadiusCm = 15.0f;
+	float TrackBankHeightLimit = 0.5f;
+	bool bWritesPainterVelocity = false;
 	uint8 PressureSolverModeRequest = 0;
 	uint8 AreaAddressModeRequest = 0;
 	int32 MultigridCyclesRequest = TDFluidGpuSolverConstants::DefaultMultigridCycles;
@@ -226,6 +248,16 @@ static_assert(sizeof(FTDFluidGpuWaterProbeSample) == 64, "FTDFluidGpuWaterProbeS
 static_assert(offsetof(FTDFluidGpuWaterProbeSample, WaterSurfaceHeightCm) == 16, "FTDFluidGpuWaterProbeSample::WaterSurfaceHeightCm must stay at byte 16.");
 static_assert(offsetof(FTDFluidGpuWaterProbeSample, ProbeSlot) == 52, "FTDFluidGpuWaterProbeSample::ProbeSlot must stay at byte 52.");
 
+struct FTDFluidGpuMassPointInput
+{
+	FVector2D CenterPlaneCm = FVector2D::ZeroVector;
+	FVector2D VelocityPlaneCmPerSec = FVector2D::ZeroVector;
+	float RadiusCm = 0.0f;
+	float DensityStrength = 0.0f;
+	float HeatStrength = 0.0f;
+	bool bWritesVelocity = true;
+};
+
 struct FTDFluidGpuActorInput
 {
 	uint64 ActorKey = 0;
@@ -240,6 +272,7 @@ struct FTDFluidGpuActorInput
 	bool bHasObstacleListChanged = false;
 	bool bRefreshesObstacleDistanceAux = false;
 	TArray<FTDFluidGpuStampInput> Stamps;
+	TArray<FTDFluidGpuMassPointInput> MassPoints;
 	TArray<FTDFluidGpuObstacleInput> Obstacles;
 	TArray<FTDFluidGpuTerrainCellUpdate> TerrainElevationUpdates;
 	FTextureRenderTargetResource* DensityPressureOutput = nullptr;

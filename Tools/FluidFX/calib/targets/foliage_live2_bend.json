@@ -1,0 +1,28 @@
+{
+ "id": "foliage_live2_bend",
+ "note": "IMG 9(IWI:52) 방사형 눌림, 수치는 명세 7절",
+ "targets": {
+  "IMG9": {
+   "radial_alignment_mean": {
+    "low": 0.8,
+    "high": 1.0
+   },
+   "max_bend_degrees": {
+    "low": 60.0,
+    "high": 80.0
+   },
+   "radius_over_mover_size": {
+    "low": 3.0,
+    "high": 6.0
+   },
+   "recovery_63_seconds": {
+    "low": 1.0,
+    "high": 5.0
+   },
+   "pressed_luma_ratio": {
+    "low": 1.05,
+    "high": 1.4
+   }
+  }
+ }
+}

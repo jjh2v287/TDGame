@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, Volcano 카메라 초안 상자(spec 7절). kind cloud = measure_fx_look 대기 지표",
+ "regions": [
+  {
+   "name": "smoke_backlit",
+   "kind": "cloud",
+   "box": [
+    0,
+    0,
+    330,
+    300
+   ]
+  },
+  {
+   "name": "smoke_side",
+   "kind": "cloud",
+   "box": [
+    900,
+    20,
+    1280,
+    290
+   ]
+  },
+  {
+   "name": "hill_fog",
+   "kind": "cloud",
+   "box": [
+    630,
+    330,
+    900,
+    590
+   ]
+  }
+ ]
+}

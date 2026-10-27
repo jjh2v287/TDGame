@@ -8,6 +8,10 @@
 #define TDFLUIDGPU_PAINTER 0
 #endif
 
+#ifndef TDFLUIDGPU_PAINTER_VELOCITY
+#define TDFLUIDGPU_PAINTER_VELOCITY 0
+#endif
+
 #define TDFLUIDGPU_SHIFT_PHASE_GATHER 0
 #define TDFLUIDGPU_SHIFT_PHASE_SCATTER 1
 #define TDFLUIDGPU_SHIFT_PHASE_RESET 2
@@ -23,11 +27,21 @@ RWTexture2DArray<float> TerrainElevationUpdateOut;
 Texture2DArray<float> PainterPrimaryDensityIn;
 Texture2DArray<float> PainterSelectiveDensityIn;
 RWTexture2DArray<float2> PainterStageOut;
+#if TDFLUIDGPU_PAINTER_VELOCITY
+Texture2DArray<float2> PainterVelocityIn;
+RWTexture2DArray<float2> PainterVelocityStageOut;
+#endif
 #else
 RWTexture2DArray<float> PainterPrimaryDensityOut;
 RWTexture2DArray<float> PainterSelectiveDensityOut;
+#if TDFLUIDGPU_PAINTER_VELOCITY
+RWTexture2DArray<float2> PainterVelocityOut;
+#endif
 #if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_SCATTER
 Texture2DArray<float2> PainterStageIn;
+#if TDFLUIDGPU_PAINTER_VELOCITY
+Texture2DArray<float2> PainterVelocityStageIn;
+#endif
 #endif
 #endif
 #else
@@ -92,6 +106,9 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const uint3 CompactTexel = uint3(uint2(Cell), StageSlot);
 #if TDFLUIDGPU_PAINTER
 	PainterStageOut[CompactTexel] = float2(PainterPrimaryDensityIn[StateTexel], PainterSelectiveDensityIn[StateTexel]);
+#if TDFLUIDGPU_PAINTER_VELOCITY
+	PainterVelocityStageOut[CompactTexel] = PainterVelocityIn[StateTexel];
+#endif
 #else
 	VelocityStageOut[StateTexel] = VelocityIn[StateTexel];
 	DensityStageOut[StateTexel] = DensityIn[StateTexel];
@@ -133,6 +150,16 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 #endif
 	PainterPrimaryDensityOut[StateTexel] = PainterDensity.x;
 	PainterSelectiveDensityOut[StateTexel] = PainterDensity.y;
+#if TDFLUIDGPU_PAINTER_VELOCITY
+	float2 ShiftedPainterVelocity = float2(0.0f, 0.0f);
+#if TDFLUIDGPU_SHIFT_PHASE == TDFLUIDGPU_SHIFT_PHASE_SCATTER
+	if (bCopiesSourceCell)
+	{
+		ShiftedPainterVelocity = PainterVelocityStageIn[uint3(uint2(SourceCell), ListIndex)];
+	}
+#endif
+	PainterVelocityOut[StateTexel] = ShiftedPainterVelocity;
+#endif
 #else
 	float2 Velocity = float2(0.0f, 0.0f);
 	float2 Density = float2(0.0f, 0.0f);

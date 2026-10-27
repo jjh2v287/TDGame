@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(numpy) 와 Windows Kits dxc.exe(ps_6_0·vs_6_0), 에디터 불필요
-실행 명령: python Tools/FluidFX/check_fluid_track_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json] [--output 요약.json]
+실행 명령: python Tools/FluidFX/check_fluid_track_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json] [--output 요약.json] (FX-12c 조각: --look-fragment Saved/AgentOps/20261026/wave2/look-fragment-fx12c.json)
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(dxc 표본·명령 수, 결정론 시험 sha256), 하나라도 실패하면 종료 코드 1
-상태: 미검증(2026-10-25 FX-12r 작성). 자국 셰이더 4개(TDFluidTrackCommon·Offset·Surface·Sample.hlsl)를 재질 스크립트와 같은 조립 함수로 노드별 조립해 텍스트·식 고정점·이름 계약(--look-fragment 로 병합 전 조각 포함)·dxc(표면·표본 ps_6_0, 오프셋 ps·vs_6_0, O3/Od)·두 노드를 한 파일에 이은 매크로 누수 검사와 음성 대조를 보고, numpy 거울 시험 T1 칸 일치·T2 홈 바닥·T3 둑 대칭·T4 이음매·T5 덮임·T6 잔차 POM 을 두 번 돌려 sha256 이 같은지 본다.
+상태: 미검증(2026-10-25 FX-12r 작성). 자국 셰이더 4개(TDFluidTrackCommon·Offset·Surface·Sample.hlsl)를 재질 스크립트와 같은 조립 함수로 노드별 조립해 텍스트·식 고정점·이름 계약(--look-fragment 로 병합 전 조각 포함)·dxc(표면·표본 ps_6_0, 오프셋 ps·vs_6_0, O3/Od)·두 노드를 한 파일에 이은 매크로 누수 검사와 음성 대조를 보고, numpy 거울 시험 T1 칸 일치·T2 홈 바닥·T3 둑 대칭·T4 이음매·T5 덮임·T6 잔차 POM 을 두 번 돌려 sha256 이 같은지 본다. 2026-10-26 FX-12c(미검증, 오프라인만): T7 출력 G 둑 해독 = 분리형 가우스 둑 팩(float16) 동치 ≤1e-3·T8 변형 메시 가장자리(e<Inset 침하, 바닥 편향, 단조, 꺼지면 원식 비트 동일)·T9 젖음 0 이면 색·거칠기 원값·T10 대비 1 이면 원값, 새 식 고정점과 런타임 이름(WetSource*·TrackDeformWindow·TrackBankFromOutput) MI 금지를 더했다.
 """
 import argparse
 import glob
@@ -29,9 +29,21 @@ INSTRUCTION_PATTERN = re.compile(r"^\s+(?:%\S+ = |call |store |br |ret )", re.MU
 ABSOLUTE_PATH_PATTERN = re.compile(r"[A-Za-z]:[\\/]")
 REQUIRED_ANCHORS = (
     "float2 trackWindowUv = (TrackRestPosition.xy - trackWindowCenter) / trackWindowSize + 0.5;",
-    "float trackInsideCm = trackLayerCm * (1.0 - saturate(TrackDepthScale * trackDepth)) + TrackBankHeightCm * max(trackBankBlur - trackDepth, 0.0);",
+    "float trackInsideCm = TD_TRACK_INSIDE(trackCenterTap, trackDepth);",
+    "#define TD_TRACK_INSIDE(TAP, DEPTH) (trackLayerCm * (1.0 - saturate(TrackDepthScale * TD_TRACK_SHAPE(DEPTH))) + TrackBankHeightCm * TD_TRACK_BANK_TERM(TAP, DEPTH))",
+    "#define TD_TRACK_BANK_TERM(TAP, DEPTH) (trackBankFromOutput > 0.5 ? TD_TRACK_BANK_FROM(TAP) : max(trackBankBlur - (DEPTH), 0.0))",
+    "#define TD_TRACK_BANK_FROM(TAP) (max(2.0 * (TAP).g - 1.0 + saturate((TAP).r), 0.0) * saturate((TAP).a))",
+    "#define TD_TRACK_SHAPE(DEPTH) (abs(TrackDensityContrast - 1.0) < 0.0001 ? (DEPTH) : pow(max((DEPTH), 0.0), clamp(TrackDensityContrast, 0.25, 4.0)))",
+    "float trackDeformEdgeCm = trackDeformActive > 0.5 ? TrackDeformWindow.z - max(trackDeformOffsetCm.x, trackDeformOffsetCm.y) : 1000000.0;",
+    "trackHeightCm = trackDeformEdgeCm < TrackFloorClipInsetCm ? -TrackEdgeSinkCm : max(trackDeformBlend * trackHeightCm, TrackDeformFloorBiasCm);",
+    "OUT_HEIGHT = trackDeformActive > 0.5 ? max(trackDeformBlend * trackMacroHeightCm, TrackDeformFloorBiasCm) : trackMacroHeightCm;",
+    "trackWet = trackWetInside * saturate(trackWetTap.g) * (1.0 - smoothstep(0.0, 2.0 / max(WetSourceDepthReferenceCm, 1.0), trackWetTap.r));",
+    "if (trackWet > 0.0)",
+    "trackColor *= (1.0 - TrackWetDarkening * trackWet) * (1.0 - TrackWetGrooveDarkening * trackWet * trackGrooveDepth);",
+    "TrackRoughnessOut = lerp(TrackRoughness, TrackWetGrooveRoughness, trackWet * trackGrooveDepth);",
     "trackHeightCm = trackEdgeDistanceCm < TrackFloorClipInsetCm ? trackOutsideCm - TrackEdgeSinkCm : lerp(trackOutsideCm, trackInsideCm, trackEdgeBlend);",
     "trackFloorClip = (TrackUsesWindowMask > 0.5 && trackEdgeDistanceCm >= TrackFloorClipInsetCm) ? 1.0 : 0.0;",
+    "if (trackIsDriven > 0.5) { trackHeightCm = trackEdgeDistanceCm < TrackFloorClipInsetCm ? trackOutsideCm - TrackEdgeSinkCm : lerp(trackOutsideCm, trackInsideCm, trackEdgeBlend); } else { trackFloorClip = (TrackUsesWindowMask > 0.5 && trackEdgeDistanceCm >= TrackFloorClipInsetCm) ? 1.0 : 0.0; } if (trackDeformActive > 0.5)",
     "float trackEdgeBlend = smoothstep(TrackFloorClipInsetCm, TrackFloorClipInsetCm + max(TrackEdgeFadeCm, 0.001), trackEdgeDistanceCm);",
     "float trackPomSteps = clamp(round(lerp(TrackPomMinSteps, TrackPomMaxSteps, 1.0 - abs(trackViewDirection.z))), 1.0, 64.0);",
     "float trackPomHalfSpanCm = TrackPomMaxDepthCm / max(abs(trackViewDirection.z), 0.2);",
@@ -66,13 +78,14 @@ def declare_inputs(material):
     vector_names = set(material.VECTOR_INPUT_NAMES)
     names = list(dict.fromkeys(material.SURFACE_INPUT_NAMES + material.OFFSET_INPUT_NAMES + material.SAMPLE_INPUT_NAMES))
     textures = [f"Texture2D {name};\nSamplerState {name}Sampler;" for name in names if name in material.TEXTURE_PARAMETER_NAMES]
-    scalars = [f"{'float3' if name in vector_names else 'float'} {name};" for name in names if name not in material.TEXTURE_PARAMETER_NAMES]
+    vector4_names = set(material.VECTOR4_INPUT_NAMES)
+    scalars = [f"{'float4' if name in vector4_names else 'float3' if name in vector_names else 'float'} {name};" for name in names if name not in material.TEXTURE_PARAMETER_NAMES]
     return "\n".join(textures) + "\ncbuffer Inputs {\n" + "\n".join(scalars) + "\n}\n"
 
 
 FUNCTIONS = {
     "offset": ("float3 TDOffset(float4 SvPositionValue)", "float3 a = TDOffset(sv);", "float4(a, 1.0)"),
-    "surface": ("float4 TDSurface(float4 SvPositionValue, out float3 TrackNormalWS, out float TrackPixelDepthOffsetCm)", "float3 n; float p; float4 f = TDSurface(sv, n, p);", "f + float4(n, p)"),
+    "surface": ("float4 TDSurface(float4 SvPositionValue, out float3 TrackNormalWS, out float TrackPixelDepthOffsetCm, out float TrackRoughnessOut)", "float3 n; float p; float o; float4 f = TDSurface(sv, n, p, o);", "f + float4(n, p + o)"),
     "sample": ("float4 TDSample(float4 SvPositionValue, out float3 TrackSampleNormalWS)", "float3 q; float4 g = TDSample(sv, q);", "g + float4(q, 0.0)"),
 }
 
@@ -108,13 +121,39 @@ def saturate(value):
     return np.clip(value, 0.0, 1.0)
 
 
+def bilinear(field, uv, resolution):
+    coordinates = saturate(np.asarray(uv, dtype=np.float64)) * resolution - 0.5
+    coordinates = np.clip(coordinates, 0.0, resolution - 1.0)
+    x0 = np.floor(coordinates[..., 0]).astype(int)
+    y0 = np.floor(coordinates[..., 1]).astype(int)
+    x1 = np.minimum(x0 + 1, resolution - 1)
+    y1 = np.minimum(y0 + 1, resolution - 1)
+    fx = coordinates[..., 0] - x0
+    fy = coordinates[..., 1] - y0
+    return (field[x0, y0] * (1 - fx) * (1 - fy) + field[x1, y0] * fx * (1 - fy) + field[x0, y1] * (1 - fx) * fy + field[x1, y1] * fx * fy)
+
+
+def shape_depth(contrast, depth):
+    if abs(contrast - 1.0) < 0.0001:
+        return depth
+    return np.power(np.maximum(depth, 0.0), float(np.clip(contrast, 0.25, 4.0)))
+
+
 class TrackMirror:
-    def __init__(self, parameters, field, center=WINDOW_CENTER, extent=WINDOW_EXTENT_CM):
+    def __init__(self, parameters, field, center=WINDOW_CENTER, extent=WINDOW_EXTENT_CM, green=None, alpha=None):
         self.p = parameters
         self.field = np.asarray(field, dtype=np.float64)
+        self.green = np.full(self.field.shape, 0.5) if green is None else np.asarray(green, dtype=np.float64)
+        self.alpha = np.ones(self.field.shape) if alpha is None else np.asarray(alpha, dtype=np.float64)
         self.center = np.asarray(center, dtype=np.float64)
         self.size = float(extent)
         self.resolution = self.field.shape[0]
+
+    def bank_from_output(self):
+        return self.p.get("TrackBankFromOutput", 0.0) > 0.5
+
+    def deform_window(self):
+        return self.p.get("TrackDeformWindow", (0.0, 0.0, 0.0, 0.0))
 
     def uv(self, xy):
         return (np.asarray(xy, dtype=np.float64) - self.center) / self.size + 0.5
@@ -127,19 +166,22 @@ class TrackMirror:
     def edge_blend(self, edge):
         return smoothstep(self.p["TrackFloorClipInsetCm"], self.p["TrackFloorClipInsetCm"] + max(self.p["TrackEdgeFadeCm"], 0.001), edge)
 
+    def tap(self, uv):
+        return bilinear(self.field, uv, self.resolution), bilinear(self.green, uv, self.resolution), bilinear(self.alpha, uv, self.resolution)
+
     def depth(self, uv):
-        coordinates = saturate(np.asarray(uv, dtype=np.float64)) * self.resolution - 0.5
-        coordinates = np.clip(coordinates, 0.0, self.resolution - 1.0)
-        x0 = np.floor(coordinates[..., 0]).astype(int)
-        y0 = np.floor(coordinates[..., 1]).astype(int)
-        x1 = np.minimum(x0 + 1, self.resolution - 1)
-        y1 = np.minimum(y0 + 1, self.resolution - 1)
-        fx = coordinates[..., 0] - x0
-        fy = coordinates[..., 1] - y0
-        f = self.field
-        return (f[x0, y0] * (1 - fx) * (1 - fy) + f[x1, y0] * fx * (1 - fy) + f[x0, y1] * (1 - fx) * fy + f[x1, y1] * fx * fy)
+        red, _, alpha = self.tap(uv)
+        return saturate(red) * saturate(alpha)
+
+    def bank_term(self, uv, depth, blur):
+        if not self.bank_from_output():
+            return np.maximum(blur - depth, 0.0)
+        red, green, alpha = self.tap(uv)
+        return np.maximum(2.0 * green - 1.0 + saturate(red), 0.0) * saturate(alpha)
 
     def bank_blur(self, uv, taps):
+        if self.bank_from_output():
+            return 0.0
         radius_uv = max(self.p["TrackBankRadiusCm"], 1.0) / self.size
         total = 0.0
         for index in range(taps):
@@ -151,8 +193,23 @@ class TrackMirror:
         layer = max(self.p["TrackLayerThicknessCm"], 0.0)
         return layer, layer * float(saturate(self.p["TrackOutsideLayerRatio"]))
 
-    def inside(self, layer, depth, blur):
-        return layer * (1.0 - saturate(self.p["TrackDepthScale"] * depth)) + self.p["TrackBankHeightCm"] * np.maximum(blur - depth, 0.0)
+    def inside(self, layer, depth, bank):
+        return layer * (1.0 - saturate(self.p["TrackDepthScale"] * shape_depth(self.p.get("TrackDensityContrast", 1.0), depth))) + self.p["TrackBankHeightCm"] * bank
+
+    def deform_edge(self, xy):
+        window = self.deform_window()
+        if window[3] <= 0.5:
+            return None
+        offset = np.abs(np.asarray(xy, dtype=np.float64) - np.asarray(window[:2], dtype=np.float64))
+        return window[2] - np.maximum(offset[..., 0], offset[..., 1])
+
+    def apply_deform(self, xy, height):
+        deform_edge = self.deform_edge(xy)
+        if deform_edge is None:
+            return height
+        inset = self.p["TrackFloorClipInsetCm"]
+        blend = smoothstep(inset, inset + max(self.p["TrackDeformEdgeFadeCm"], 0.001), deform_edge)
+        return np.where(deform_edge < inset, -self.p["TrackEdgeSinkCm"], np.maximum(blend * height, self.p["TrackDeformFloorBiasCm"]))
 
     def plane_height(self, xy, taps):
         uv = self.uv(xy)
@@ -160,16 +217,18 @@ class TrackMirror:
         depth = self.depth(uv)
         blur = self.bank_blur(uv, taps)
         edge = self.edge_distance(xy)
-        inside = self.inside(layer, depth, blur)
-        return np.where(edge < self.p["TrackFloorClipInsetCm"], outside - self.p["TrackEdgeSinkCm"], outside + (inside - outside) * self.edge_blend(edge))
+        inside = self.inside(layer, depth, self.bank_term(uv, depth, blur))
+        height = np.where(edge < self.p["TrackFloorClipInsetCm"], outside - self.p["TrackEdgeSinkCm"], outside + (inside - outside) * self.edge_blend(edge))
+        return self.apply_deform(xy, height)
 
     def floor_visible(self, edge, uses_window_mask):
         return ~((uses_window_mask > 0.5) & (edge >= self.p["TrackFloorClipInsetCm"]))
 
     def pom_height(self, xy, blur_center, blend_center):
         layer, outside = self.layer()
-        depth = self.depth(self.uv(xy))
-        return outside + (self.inside(layer, depth, blur_center) - outside) * blend_center
+        uv = self.uv(xy)
+        depth = self.depth(uv)
+        return outside + (self.inside(layer, depth, self.bank_term(uv, depth, blur_center)) - outside) * blend_center
 
     def pom(self, pixel_xy, raster_height, view, blur_center, blend_center):
         steps = float(np.clip(np.round(self.p["TrackPomMinSteps"] + (self.p["TrackPomMaxSteps"] - self.p["TrackPomMinSteps"]) * (1.0 - abs(view[2]))), 1.0, 64.0))
@@ -193,10 +252,17 @@ class TrackMirror:
         return hit, step, half_span, gap
 
 
-def snow_parameters(material, entries):
+def snow_parameters(material, entries, name="MI_TD_FluidTrack_Snow"):
     parameters = dict(material.LOOK_SCALAR_DEFAULTS)
-    entry = entries.get(material.asset_path("MI_TD_FluidTrack_Snow"), {})
+    entry = entries.get(material.asset_path(name), {})
     parameters.update(entry.get("Scalars", {}))
+    return parameters
+
+
+def deform_parameters(material, entries):
+    parameters = snow_parameters(material, entries, "MI_TD_FluidTrack_SnowDeform")
+    if material.asset_path("MI_TD_FluidTrack_SnowDeform") not in entries:
+        parameters.update(snow_parameters(material, entries), TrackOutsideLayerRatio=0.0)
     return parameters
 
 
@@ -336,7 +402,175 @@ def test_residual_pom(parameters):
     return passed, f"광선 {len(errors)}개, 맞은 점 오차 최대 {worst:.3f} 단계, PDO 최소 {min(depth_offsets) if depth_offsets else 'n/a'}", np.array(records, dtype=np.float64)
 
 
-def run_mirror_tests(parameters):
+PAINTER_CELL_CM = 5000.0 / 1024.0
+BANK_TEST_RESOLUTION = 256
+
+
+def gaussian_kernel(radius_cells):
+    sigma = radius_cells / 2.0
+    offsets = np.arange(-radius_cells, radius_cells + 1, dtype=np.float64)
+    weights = np.exp(-0.5 * (offsets / sigma) ** 2)
+    return weights / weights.sum()
+
+
+def blur_axis(values, kernel, axis):
+    radius = (len(kernel) - 1) // 2
+    count = values.shape[axis]
+    result = np.zeros_like(values)
+    for index, weight in enumerate(kernel):
+        source = np.clip(np.arange(count) + index - radius, 0, count - 1)
+        result += weight * np.take(values, source, axis=axis)
+    return result
+
+
+def pack_bank_output(density, radius_cm, strength, limit):
+    radius_cells = int(np.clip(round(radius_cm / PAINTER_CELL_CM), 1, 16))
+    kernel = gaussian_kernel(radius_cells)
+    clamped = np.clip(density, 0.0, 1.0)
+    blurred = blur_axis(blur_axis(clamped, kernel, 0), kernel, 1)
+    relative = -clamped + np.clip(strength * (blurred - clamped), -limit, limit)
+    green = 0.5 + 0.5 * np.clip(relative, -1.0, 1.0)
+    reference_bank = np.clip(strength * (blurred - clamped), 0.0, limit)
+    return clamped.astype(np.float16).astype(np.float64), green.astype(np.float16).astype(np.float64), reference_bank, radius_cells
+
+
+def bank_density_field():
+    cell = PAINTER_CELL_CM
+    coordinates = (np.arange(BANK_TEST_RESOLUTION) + 0.5) * cell - 0.5 * BANK_TEST_RESOLUTION * cell
+    x, y = np.meshgrid(coordinates, coordinates, indexing="ij")
+    straight = 1.0 - smoothstep(12.0, 18.0, np.abs(x - 40.0))
+    crossing = 1.0 - smoothstep(10.0, 16.0, np.abs((x + y) / np.sqrt(2.0) + 150.0))
+    footprint = 0.6 * (1.0 - smoothstep(20.0, 28.0, np.hypot((x + 300.0) / 1.8, y - 200.0)))
+    return np.maximum(np.maximum(straight, crossing), footprint)
+
+
+def test_bank_from_output(parameters):
+    density = bank_density_field()
+    worst = 0.0
+    worst_height = 0.0
+    records = []
+    extent = BANK_TEST_RESOLUTION * PAINTER_CELL_CM
+    for strength, limit, radius_cm in ((1.0, 0.5, 15.0), (1.5, 0.3, 25.0), (0.5, 1.0, 5.0)):
+        red, green, reference_bank, radius_cells = pack_bank_output(density, radius_cm, strength, limit)
+        decoded = np.maximum(2.0 * green - 1.0 + saturate(red), 0.0)
+        worst = max(worst, float(np.abs(decoded - reference_bank).max()))
+        local = dict(parameters, TrackBankFromOutput=1.0, TrackDensityContrast=1.0)
+        mirror = TrackMirror(local, red, center=(0.0, 0.0), extent=extent, green=green)
+        texel = (np.arange(BANK_TEST_RESOLUTION) + 0.5) / BANK_TEST_RESOLUTION
+        uv = np.stack(np.meshgrid(texel, texel, indexing="ij"), axis=-1)
+        layer, _ = mirror.layer()
+        depth = mirror.depth(uv)
+        height = mirror.inside(layer, depth, mirror.bank_term(uv, depth, 0.0))
+        expected = layer * (1.0 - saturate(local["TrackDepthScale"] * np.clip(density, 0.0, 1.0))) + local["TrackBankHeightCm"] * reference_bank
+        worst_height = max(worst_height, float(np.abs(height - expected).max()) / max(local["TrackBankHeightCm"], 1e-6))
+        records.append((strength, limit, radius_cells, worst, worst_height, float(reference_bank.max())))
+    passed = worst <= 1e-3 and worst_height <= 2e-3 and all(record[5] > 0.0 for record in records)
+    return passed, f"G 해독 − clamp(k(B−D),0,lim) 최대 {worst:.2e}(≤1e-3), 층 높이 차/둑 높이 최대 {worst_height:.2e}, 칸 수 {[record[2] for record in records]}", np.array(records, dtype=np.float64)
+
+
+def test_deform_edge(parameters):
+    half_cm = 1250.0
+    center = (WINDOW_CENTER[0] + 300.0, WINDOW_CENTER[1] - 200.0)
+    local = dict(parameters, TrackDeformWindow=(center[0], center[1], half_cm, 1.0))
+    mirror = TrackMirror(local, np.zeros((GRID_RESOLUTION, GRID_RESOLUTION)))
+    inset = local["TrackFloorClipInsetCm"]
+    fade = local["TrackDeformEdgeFadeCm"]
+    bias = local["TrackDeformFloorBiasCm"]
+    layer, _ = mirror.layer()
+    edges = np.linspace(-40.0, half_cm, 6497)
+    points = np.stack([center[0] + half_cm - edges, np.full(len(edges), center[1])], axis=-1)
+    heights = mirror.plane_height(points, 8)
+    below = edges < inset
+    sunk = bool(np.all(heights[below] == -local["TrackEdgeSinkCm"]))
+    above = heights[~below]
+    lifted = bool(np.all(above >= bias))
+    first_lip = float(above[0])
+    monotone = bool(np.all(np.diff(heights[~below]) >= -1e-9))
+    full = edges >= inset + fade
+    plateau = float(np.abs(heights[full] - max(layer, bias)).max())
+    ground = np.zeros(len(edges))
+    tops = np.stack([ground, heights])
+    unique_top = bool(np.all((np.abs(tops - tops.max(axis=0)) <= 1e-6).sum(axis=0) == 1))
+    off = dict(parameters, TrackDeformWindow=(center[0], center[1], half_cm, 0.0))
+    original = TrackMirror(off, np.zeros((GRID_RESOLUTION, GRID_RESOLUTION))).plane_height(points, 8)
+    plain = dict(parameters)
+    plain.pop("TrackDeformWindow", None)
+    identical = bool(np.array_equal(original, TrackMirror(plain, np.zeros((GRID_RESOLUTION, GRID_RESOLUTION))).plane_height(points, 8)))
+    lip_ok = first_lip - 0.0 <= 1.0
+    passed = sunk and lifted and monotone and plateau <= 1e-6 and unique_top and identical and lip_ok
+    detail = f"e<Inset 침하 {sunk}, e≥Inset ≥ 편향 {bias} {lifted}(첫 높이 {first_lip:.3f} ≤ 1 cm {lip_ok}), 단조 {monotone}, 평탄부 차 {plateau:.2e}, 바닥과 보이는 면 1개 {unique_top}, 꺼짐 = 원식 {identical}"
+    return passed, detail, heights
+
+
+def shade_surface(parameters, depth, wet_tap, window_inside):
+    depth = saturate(np.asarray(depth, dtype=np.float32))
+    surface = np.asarray(parameters["TrackSurfaceColor"][:3], dtype=np.float32)
+    groove = np.asarray(parameters["TrackGrooveColor"][:3], dtype=np.float32)
+    color = surface + (groove - surface) * depth[..., None]
+    roughness = np.full(depth.shape, np.float32(parameters["TrackRoughness"]), dtype=np.float32)
+    if parameters.get("WetSourceActive", 0.0) <= 0.5:
+        return color, roughness
+    red, green = np.asarray(wet_tap[0], dtype=np.float32), np.asarray(wet_tap[1], dtype=np.float32)
+    submerged = smoothstep(0.0, 2.0 / max(parameters.get("WetSourceDepthReferenceCm", 300.0), 1.0), red).astype(np.float32)
+    wet = (np.asarray(window_inside, dtype=np.float32) * saturate(green) * (np.float32(1.0) - submerged)).astype(np.float32)
+    mask = wet > 0.0
+    darkening = ((np.float32(1.0) - np.float32(parameters["TrackWetDarkening"]) * wet) * (np.float32(1.0) - np.float32(parameters["TrackWetGrooveDarkening"]) * wet * depth)).astype(np.float32)
+    color = np.where(mask[..., None], color * darkening[..., None], color)
+    roughness = np.where(mask, roughness + (np.float32(parameters["TrackWetGrooveRoughness"]) - roughness) * wet * depth, roughness)
+    return color, roughness
+
+
+def test_wetness_identity(material, parameters):
+    vectors = dict(material.LOOK_VECTOR_DEFAULTS)
+    local = dict(parameters, TrackSurfaceColor=vectors["TrackSurfaceColor"], TrackGrooveColor=vectors["TrackGrooveColor"])
+    rng = np.random.default_rng(20261026)
+    depth = rng.random(4096)
+    dry_color, dry_roughness = shade_surface(dict(local, WetSourceActive=0.0), depth, (np.zeros(4096), np.zeros(4096)), np.ones(4096))
+    cases = {
+        "원천 꺼짐": (dict(local, WetSourceActive=0.0, TrackWetDarkening=0.15, TrackWetGrooveDarkening=0.3), (np.zeros(4096), np.ones(4096)), np.ones(4096)),
+        "젖음 0": (dict(local, WetSourceActive=1.0, TrackWetDarkening=0.15, TrackWetGrooveDarkening=0.3), (np.zeros(4096), np.zeros(4096)), np.ones(4096)),
+        "창 밖": (dict(local, WetSourceActive=1.0, TrackWetDarkening=0.15, TrackWetGrooveDarkening=0.3), (np.zeros(4096), np.ones(4096)), np.zeros(4096)),
+        "물에 잠김": (dict(local, WetSourceActive=1.0, TrackWetDarkening=0.15, TrackWetGrooveDarkening=0.3, WetSourceDepthReferenceCm=300.0), (np.full(4096, 0.02), np.ones(4096)), np.ones(4096)),
+        "어둡게 0·홈 0": (dict(local, WetSourceActive=1.0, TrackWetDarkening=0.0, TrackWetGrooveDarkening=0.0), (np.zeros(4096), np.ones(4096)), np.ones(4096)),
+    }
+    identical = {}
+    for label, (case_parameters, tap, inside) in cases.items():
+        case_depth = np.zeros(4096) if label == "어둡게 0·홈 0" else depth
+        reference_color, reference_roughness = (dry_color, dry_roughness) if label != "어둡게 0·홈 0" else shade_surface(dict(local, WetSourceActive=0.0), case_depth, tap, inside)
+        color, roughness = shade_surface(case_parameters, case_depth, tap, inside)
+        identical[label] = bool(np.array_equal(color, reference_color) and np.array_equal(roughness, reference_roughness))
+    wet_color, wet_roughness = shade_surface(dict(local, WetSourceActive=1.0, TrackWetDarkening=0.15, TrackWetGrooveDarkening=0.3), np.ones(4096), (np.zeros(4096), np.ones(4096)), np.ones(4096))
+    groove_color, groove_roughness = shade_surface(dict(local, WetSourceActive=0.0), np.ones(4096), (np.zeros(4096), np.zeros(4096)), np.ones(4096))
+    darker = bool(np.all(wet_color < groove_color))
+    expected_ratio = (1.0 - 0.15) * (1.0 - 0.3)
+    ratio_error = float(np.abs(wet_color / groove_color - expected_ratio).max())
+    roughness_target = bool(np.allclose(wet_roughness, local["TrackWetGrooveRoughness"], atol=1e-6))
+    passed = all(identical.values()) and darker and ratio_error <= 1e-5 and roughness_target
+    detail = ", ".join(f"{label} 원값 {value}" for label, value in identical.items()) + f"; 젖은 홈 색 비 오차 {ratio_error:.1e}, 거칠기 → 홈 값 {roughness_target}"
+    return passed, detail, np.concatenate([dry_color.ravel(), dry_roughness, wet_color.ravel(), wet_roughness]).astype(np.float64)
+
+
+def test_contrast_identity(parameters):
+    rng = np.random.default_rng(20261027)
+    depth = rng.random(8192)
+    blur = rng.random(8192)
+    layer = parameters["TrackLayerThicknessCm"]
+    original = layer * (1.0 - saturate(parameters["TrackDepthScale"] * depth)) + parameters["TrackBankHeightCm"] * np.maximum(blur - depth, 0.0)
+    mirror_unit = TrackMirror(dict(parameters, TrackDensityContrast=1.0), np.zeros((4, 4)))
+    unit = mirror_unit.inside(layer, depth, np.maximum(blur - depth, 0.0))
+    identical = bool(np.array_equal(unit, original))
+    ordered = np.sort(depth)
+    strong = TrackMirror(dict(parameters, TrackDensityContrast=2.0), np.zeros((4, 4))).inside(layer, ordered, 0.0)
+    weak = TrackMirror(dict(parameters, TrackDensityContrast=0.5), np.zeros((4, 4))).inside(layer, ordered, 0.0)
+    plain = TrackMirror(dict(parameters, TrackDensityContrast=1.0), np.zeros((4, 4))).inside(layer, ordered, 0.0)
+    monotone = bool(np.all(np.diff(strong) <= 1e-12) and np.all(np.diff(weak) <= 1e-12))
+    shallower = bool(np.all(strong >= plain - 1e-12) and np.all(weak <= plain + 1e-12))
+    differs = bool(np.abs(strong - plain).max() > 0.1)
+    passed = identical and monotone and shallower and differs
+    return passed, f"대비 1 = 원식 비트 동일 {identical}, 대비 2·0.5 단조 {monotone}, 얕음·깊음 순서 {shallower}, 대비 2 차이 {float(np.abs(strong - plain).max()):.2f} cm", np.concatenate([unit, strong, weak])
+
+
+def run_mirror_tests(material, parameters, deform):
     outcomes = {}
     digest = hashlib.sha256()
     for label, test in (
@@ -346,6 +580,10 @@ def run_mirror_tests(parameters):
         ("T4 이음매", lambda: test_seam(parameters)),
         ("T5 덮임", lambda: test_coverage(parameters)),
         ("T6 잔차 POM", lambda: test_residual_pom(parameters)),
+        ("T7 G 둑 동치", lambda: test_bank_from_output(parameters)),
+        ("T8 변형 가장자리", lambda: test_deform_edge(deform)),
+        ("T9 젖음 0 원값", lambda: test_wetness_identity(material, parameters)),
+        ("T10 대비 1 원값", lambda: test_contrast_identity(parameters)),
     ):
         passed, detail, values = test()
         values = np.ascontiguousarray(values)
@@ -432,12 +670,13 @@ def main():
 
     entries, overlap = collect_look_entries(root, arguments.look_fragment)
     override_problems = material.find_instance_override_problems(entries)
-    record("MI 이름 계약(부모·마스터 이름·C++ 구동·조건부 이름 없음·먼지 = 땅먼지 값 + 색)", not override_problems, "; ".join(override_problems))
+    record("MI 이름 계약(부모·마스터 이름·C++ 구동·런타임 이름 WetSource*·TrackDeformWindow·TrackBankFromOutput·조건부 이름 없음·변형 MI 바깥층 0·지면 MI 층 0·창 자르기 끔·먼지 = 땅먼지 값 + 색)", not override_problems, "; ".join(override_problems))
     record("조각과 정본 키 서로소", not overlap, ", ".join(overlap))
 
     parameters = snow_parameters(material, entries)
-    outcomes_first, digest_first = run_mirror_tests(parameters)
-    _, digest_second = run_mirror_tests(parameters)
+    deform = deform_parameters(material, entries)
+    outcomes_first, digest_first = run_mirror_tests(material, parameters, deform)
+    _, digest_second = run_mirror_tests(material, parameters, deform)
     for label, (passed, detail, value_sha) in outcomes_first.items():
         record(f"거울 {label}", passed, f"{detail} sha256 {value_sha[:16]}")
     record("거울 시험 2회 sha256 같음", digest_first == digest_second, digest_first)

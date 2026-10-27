@@ -74,7 +74,15 @@
       "PressureKernelFeedback": 0.98,
       "PressureKernelScale": 1.0,
       "bOutputObstacleDistance": false,
-      "ObstacleDistanceOutputRangeCm": 400.0
+      "ObstacleDistanceOutputRangeCm": 400.0,
+      "GpuMaxStampsPerTick": 16000,
+      "GpuMaxStampsPerBin": 256,
+      "MassInputBufferDivisor": 2,
+      "MassSplatRadiusCapCells": 8,
+      "TrackBankStrength": 0.0,
+      "TrackBankBlurRadiusCm": 15.0,
+      "TrackBankHeightLimit": 0.5,
+      "bWritesPainterVelocity": false
     },
     "TDFluidSourceEmitterSettings": {
       "bIsEnabled": false,
@@ -179,7 +187,9 @@
       "BillboardLeanBackDegrees": 0.0,
       "CameraDepthBiasCm": 0.0,
       "InteractionDepthCm": 150.0,
-      "CenterOffsetAlongUpRatio": 0.0
+      "CenterOffsetAlongUpRatio": 0.0,
+      "bProjectOrientedObstacles": false,
+      "ObstacleContourPaddingCm": 0.0
     },
     "TDFluidDownstreamFeedSettings": {
       "bIsEnabled": false,
@@ -223,12 +233,33 @@
       "TeleportSpeedCmPerSec": 3000.0,
       "RingInnerRadiusRatio": 0.0,
       "RingSideArcWeight": 0.3,
-      "RingInnerEraseRatePerSec": 0.0
+      "RingInnerEraseRatePerSec": 0.0,
+      "MassPointDensityStrength": 0.85,
+      "MassPointVelocityStrength": 1.0,
+      "MassPointHeatStrength": 0.0,
+      "MassPointRadiusScale": 1.0,
+      "VelocityOnlySources": "Off",
+      "bShouldInvertInputDensity": false,
+      "DensityFadeBelowSpeedCmPerSec": 0.0,
+      "BrushHeightFadeDistanceCm": 0.0,
+      "GroundSlabThicknessCm": 0.0,
+      "BoneBrushRadiusOverrideCm": 0.0,
+      "PivotBrushRadiusOverrideCm": 0.0,
+      "BoneStampAspectRatio": 1.0,
+      "BrushHardness": 0.0,
+      "bStampsSlowBones": false,
+      "BoneStampMaxSpeedCmPerSec": 0.0,
+      "VehicleBrushRadiusScale": 1.0,
+      "VehicleStampAspectRatio": 1.0,
+      "bInterpolateStrokes": false,
+      "StrokeSpacingRatio": 0.5
     },
     "TDFluidRuntimeOpsSettings": {
       "SleepDistanceRatio": 1.1,
       "InteractionVolumeHalfHeightCm": 300.0,
-      "NiagaraCacheRefreshIntervalSeconds": 1.0
+      "NiagaraCacheRefreshIntervalSeconds": 1.0,
+      "MaxGroundTracesPerTick": 32,
+      "GroundTraceDepthCm": 500.0
     },
     "TDFluidEmberSettings": {
       "MaxEmbers": 256,
@@ -294,6 +325,75 @@
       "MinWaterDepthCm": 1.0,
       "MaxSourcesPerFrame": 32,
       "MaxSubsteps": 4
+    },
+    "TDFluidVolumeDriverSettings": {
+      "bRenderHeterogeneousVolume": false,
+      "HeterogeneousVolumeMaterialSlot": "Secondary",
+      "HeterogeneousVolumeHeightCm": 1000.0,
+      "HeterogeneousVolumeSizeMultiplier": 1.0,
+      "HeterogeneousVolumeOffsetCm": {
+        "X": 0.0,
+        "Y": 0.0,
+        "Z": 0.0
+      },
+      "HeterogeneousVolumeResolutionXY": 256,
+      "HeterogeneousVolumeResolutionZ": 128,
+      "HeterogeneousVolumeStepFactor": 1.0,
+      "HeterogeneousVolumeShadowStepFactor": 2.0,
+      "HeterogeneousVolumeShadowBiasFactor": 0.5,
+      "HeterogeneousVolumeLightingDownsampleFactor": 2.0,
+      "bHeterogeneousVolumeCastShadow": false,
+      "HeterogeneousVolumeMaxDrawDistanceCm": 0.0,
+      "bRenderFogVolume": false,
+      "FogVolumeMaterialSlot": "Tertiary",
+      "FogVolumeHeightCm": 1000.0,
+      "FogVolumeSizeMultiplier": 1.0
+    },
+    "TDFluidOutputTargetSettings": {
+      "PrimaryOutputMaterialIndex": 0,
+      "SecondaryOutputMaterialIndex": 0,
+      "TertiaryOutputMaterialIndex": 0,
+      "bRecollectTargetsDuringGame": true,
+      "RecollectIntervalSeconds": 1.0,
+      "bDriveTaggedMeshes": true,
+      "bDriveTaggedHeterogeneousVolumes": true,
+      "bRestoreTargetMaterialsOnEnd": true
+    },
+    "TDFluidTerrainHeightSettings": {
+      "HeightSource": "LineTrace",
+      "TraceStartHeightCm": 2000.0,
+      "TraceEndDepthCm": 4000.0,
+      "MaxCacheSamplesPerTick": 65536,
+      "bClampHeightLowerValues": false,
+      "ClampingValueCm": 0.0,
+      "HeightOffsetCm": 0.0,
+      "bUseHeightAsCollisionMask": false,
+      "CollisionHeightAboveBaseCm": 300.0,
+      "MaxCollisionBoxes": 256,
+      "VolumeHeightSource": "None",
+      "SceneCaptureResolution": 256,
+      "SceneCaptureHeightAboveCm": 2000.0,
+      "SceneCaptureRecaptureCells": 4,
+      "SceneCaptureMarginRatio": 0.1,
+      "bSceneCaptureIgnoresPawns": true
+    },
+    "TDFluidMassInputSettings": {
+      "bAcceptMassInput": false,
+      "MassInputChannelName": "Default",
+      "bReadDataChannel": false,
+      "DataChannel": "",
+      "bReadPreviousFrame": true,
+      "bSearchIslandByWindowCenter": false,
+      "MaxDataChannelPointsPerTick": 10000,
+      "DefaultPointRadiusCm": 25.0,
+      "bCollectObstacleComponents": false,
+      "MaxCollectedObstacles": 32
+    },
+    "TDFluidSurfaceRenderSettings": {
+      "bUsesTrackDeformMesh": false,
+      "TrackDeformMeshExtentCm": 2500.0,
+      "TrackDeformMeshShadowPolicy": "NoShadow",
+      "TrackDeformMeshRecenterDistanceCm": 50.0
     }
   },
   "Groups": {
@@ -311,7 +411,9 @@
         "SteamPuff",
         "Vortex",
         "InvertedVortex",
-        "PortalVortex"
+        "PortalVortex",
+        "VortexHeterogeneous",
+        "Flamethrower"
       ],
       "TDFluidSimulationConfig": {
         "TerrainSlopeGravity": 0.0
@@ -347,7 +449,8 @@
       "Kinds": [
         "Vortex",
         "InvertedVortex",
-        "PortalVortex"
+        "PortalVortex",
+        "VortexHeterogeneous"
       ],
       "TDFluidSimulationConfig": {
         "GridResolution": 128,
@@ -411,6 +514,83 @@
       "TDFluidFlameCardLayerSettings": {
         "ExtraCardCount": 1,
         "CardDepthSpacingCm": 30.0
+      }
+    },
+    "HeterogeneousStage": {
+      "Kinds": [
+        "SmokeHeterogeneous",
+        "VortexHeterogeneous",
+        "SmokeCameraFacing",
+        "FloorSmokeCapture"
+      ],
+      "TDFluidVolumeDriverSettings": {
+        "bRenderHeterogeneousVolume": true,
+        "HeterogeneousVolumeHeightCm": 300.0
+      }
+    },
+    "TrackPainter": {
+      "Kinds": [
+        "SnowTrack",
+        "SandTrack"
+      ],
+      "TDFluidSimulationConfig": {
+        "SimMode": "SimplePainter",
+        "GridResolution": 1024,
+        "SimExtentCm": {
+          "X": 5000.0,
+          "Y": 5000.0
+        },
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 256,
+        "DensityDissipation": 0.005,
+        "VelocityDamping": 1.0,
+        "PressureIterations": 1,
+        "VorticityStrength": 0.0,
+        "TerrainSlopeGravity": 0.0,
+        "AdvectionSpeedScale": 0.0,
+        "BorderFadeRatio": 0.05,
+        "MaxPointsPerTick": 128,
+        "TrackBankStrength": 1.0,
+        "TrackBankBlurRadiusCm": 15.0,
+        "TrackBankHeightLimit": 0.5
+      },
+      "TDFluidInputBrushSettings": {
+        "GroundSlabThicknessCm": 15.0,
+        "BoneBrushRadiusOverrideCm": 15.0,
+        "BoneStampAspectRatio": 1.8,
+        "BrushHardness": 0.3,
+        "bStampsSlowBones": true,
+        "BoneStampMaxSpeedCmPerSec": 250.0,
+        "bInterpolateStrokes": true
+      }
+    },
+    "TrackDust": {
+      "Kinds": [
+        "SnowDust",
+        "SandDust"
+      ],
+      "TDFluidSimulationConfig": {
+        "GridResolution": 192,
+        "SimExtentCm": {
+          "X": 1600.0,
+          "Y": 1600.0
+        },
+        "VelocityDamping": 0.1,
+        "DensityDissipation": 0.7,
+        "PressureIterations": 8,
+        "VorticityStrength": 1.5,
+        "MaxPointsPerTick": 256,
+        "FlowNoiseAccelerationCmPerSec2": 200.0,
+        "FlowNoiseScaleCm": 150.0,
+        "FlowNoiseSpeed": 0.4,
+        "TerrainSlopeGravity": 0.0,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128
+      },
+      "TDFluidVolumeRenderSettings": {
+        "bEnableTransmittance": true,
+        "DensityScale": 0.035,
+        "SoftFalloffCm": 30.0
       }
     }
   },
@@ -863,7 +1043,345 @@
         "AmbientRefillPerSec": 0.3,
         "AmbientNoiseAmount": 0.6
       }
+    },
+    "RisingSmokeColumn": {
+      "TDFluidSimulationConfig": {
+        "BuoyancyCmPerSec2": 160.0
+      },
+      "TDFluidSourceEmitterSettings": {
+        "bIsEnabled": true,
+        "Channel": "ChannelR_Mud",
+        "HeatStrength": 0.0,
+        "CoreHeatStrength": 0.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "VerticalBillboard"
+      },
+      "TDFluidFireLightSettings": {
+        "bIsDrivenByFluid": false
+      },
+      "TDFluidEmberSettings": {
+        "SpawnPerSecond": 0.0
+      },
+      "TDFluidFlameCardLayerSettings": {
+        "ExtraCardCount": 0
+      }
+    },
+    "FallingSmokeColumn": {
+      "TDFluidSimulationConfig": {
+        "BuoyancyCmPerSec2": -160.0
+      },
+      "TDFluidSourceEmitterSettings": {
+        "bIsEnabled": true,
+        "Channel": "ChannelR_Mud",
+        "HeatStrength": 0.0,
+        "CoreHeatStrength": 0.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "VerticalBillboard"
+      },
+      "TDFluidFireLightSettings": {
+        "bIsDrivenByFluid": false
+      },
+      "TDFluidEmberSettings": {
+        "SpawnPerSecond": 0.0
+      },
+      "TDFluidFlameCardLayerSettings": {
+        "ExtraCardCount": 0
+      }
+    },
+    "FallingThinSmokeColumn": {
+      "TDFluidSimulationConfig": {
+        "BuoyancyCmPerSec2": -160.0
+      },
+      "TDFluidSourceEmitterSettings": {
+        "bIsEnabled": true,
+        "Channel": "ChannelR_Mud",
+        "HeatStrength": 0.0,
+        "CoreHeatStrength": 0.0,
+        "RadiusCm": 3.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "VerticalBillboard"
+      },
+      "TDFluidFireLightSettings": {
+        "bIsDrivenByFluid": false
+      },
+      "TDFluidEmberSettings": {
+        "SpawnPerSecond": 0.0
+      },
+      "TDFluidFlameCardLayerSettings": {
+        "ExtraCardCount": 0
+      }
+    },
+    "SmokePiston": {
+      "TDFluidSimulationConfig": {
+        "BuoyancyCmPerSec2": 160.0
+      },
+      "TDFluidSourceEmitterSettings": {
+        "bIsEnabled": true,
+        "Channel": "ChannelR_Mud",
+        "HeatStrength": 0.0,
+        "CoreHeatStrength": 0.0,
+        "FlickerAmplitude": 1.0,
+        "FlickerFrequencyHz": 0.8
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "VerticalBillboard"
+      },
+      "TDFluidFireLightSettings": {
+        "bIsDrivenByFluid": false
+      },
+      "TDFluidEmberSettings": {
+        "SpawnPerSecond": 0.0
+      },
+      "TDFluidFlameCardLayerSettings": {
+        "ExtraCardCount": 0
+      }
+    },
+    "SmokeHeterogeneous": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 700.0,
+          "Y": 700.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.5,
+        "ActorBrushDensityStrength": -1.0,
+        "ActorBrushPunctureCmPerSec": 380.0,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 220.0,
+        "AmbientNoiseAmount": 0.45
+      }
+    },
+    "VortexHeterogeneous": {
+      "TDFluidSimulationConfig": {
+        "VortexTangentialAccelerationCmPerSec2": 600.0,
+        "VortexRadialDriftCmPerSec": 60.0
+      }
+    },
+    "SmokeCameraFacing": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 700.0,
+          "Y": 700.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.5,
+        "ActorBrushDensityStrength": -1.0,
+        "ActorBrushPunctureCmPerSec": 380.0,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 220.0,
+        "AmbientNoiseAmount": 0.45
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "CameraFacing"
+      }
+    },
+    "FloorSmokeCapture": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 700.0,
+          "Y": 700.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.5,
+        "ActorBrushDensityStrength": -1.0,
+        "ActorBrushPunctureCmPerSec": 380.0,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 220.0,
+        "AmbientNoiseAmount": 0.45
+      },
+      "TDFluidTerrainHeightSettings": {
+        "VolumeHeightSource": "SceneCapture"
+      }
+    },
+    "Flamethrower": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 600.0,
+          "Y": 300.0
+        },
+        "VelocityDamping": 0.12,
+        "DensityDissipation": 0.9,
+        "VorticityStrength": 2.5,
+        "MaxPointsPerTick": 256,
+        "FlowNoiseAccelerationCmPerSec2": 400.0,
+        "FlowNoiseScaleCm": 30.0,
+        "FlowNoiseSpeed": 1.2,
+        "OutflowBandRatio": 0.12,
+        "OutflowRatePerSec": 4.0,
+        "bEnableHeatChannel": true,
+        "HeatCoolingPerSec": 2.5,
+        "HeatBuoyancyCmPerSec2": 600.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "CameraFacing",
+        "InteractionDepthCm": 200.0,
+        "bProjectOrientedObstacles": true,
+        "ObstacleContourPaddingCm": 10.0
+      },
+      "TDFluidInputBrushSettings": {
+        "MassPointHeatStrength": 0.9
+      },
+      "TDFluidMassInputSettings": {
+        "bAcceptMassInput": true,
+        "bCollectObstacleComponents": true
+      }
+    },
+    "SnowAvalanche": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 6000.0,
+          "Y": 6000.0
+        },
+        "VelocityDamping": 0.06,
+        "DensityDissipation": 0.12,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 900.0,
+        "FlowNoiseAccelerationCmPerSec2": 150.0,
+        "FlowNoiseScaleCm": 300.0,
+        "FlowNoiseSpeed": 0.3,
+        "OutflowBandRatio": 0.1,
+        "OutflowRatePerSec": 1.0
+      },
+      "TDFluidVolumeRenderSettings": {
+        "bEnableTransmittance": true,
+        "DensityScale": 0.02,
+        "SoftFalloffCm": 60.0
+      },
+      "TDFluidPlaneSettings": {
+        "InteractionDepthCm": 600.0
+      },
+      "TDFluidInputBrushSettings": {
+        "MassPointDensityStrength": 0.7,
+        "MassPointRadiusScale": 1.5
+      },
+      "TDFluidMassInputSettings": {
+        "bAcceptMassInput": true,
+        "bCollectObstacleComponents": true
+      }
+    },
+    "MassInputBench": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 512,
+        "SolverBackend": "Gpu",
+        "DensityDissipation": 0.3
+      },
+      "TDFluidMassInputSettings": {
+        "bAcceptMassInput": true,
+        "bReadDataChannel": true,
+        "DataChannel": "/Game/FluidFX/Niagara/DataChannels/NDC_TD_FluidMassInput.NDC_TD_FluidMassInput"
+      }
+    },
+    "FogMist": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 4000.0,
+          "Y": 4000.0
+        },
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.3,
+        "AmbientNoiseAmount": 0.45,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 400.0,
+        "ActorBrushDensityStrength": -1.0,
+        "ActorBrushPunctureCmPerSec": 380.0
+      }
+    },
+    "FogMistStir": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 4000.0,
+          "Y": 4000.0
+        },
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.3,
+        "AmbientNoiseAmount": 0.45,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 400.0,
+        "ActorBrushDensityStrength": 0.0,
+        "ActorBrushPunctureCmPerSec": 0.0
+      },
+      "TDFluidInputBrushSettings": {
+        "VelocityOnlySources": "All",
+        "MassPointDensityStrength": 0.0
+      }
+    },
+    "FogTileSim": {
+      "TDFluidSimulationConfig": {
+        "AreaAddressMode": "Wrap",
+        "GridResolution": 256,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "SimExtentCm": {
+          "X": 3000.0,
+          "Y": 3000.0
+        },
+        "BorderFadeRatio": 0.0,
+        "TerrainSlopeGravity": 0.0,
+        "PressureIterations": 12,
+        "FlowNoiseAccelerationCmPerSec2": 150.0,
+        "FlowNoiseScaleCm": 400.0,
+        "VorticityStrength": 0.8,
+        "DensityDissipation": 0.05,
+        "AmbientDensity": 0.5,
+        "AmbientRefillPerSec": 0.3,
+        "AmbientNoiseAmount": 0.6
+      },
+      "TDFluidVolumeRenderSettings": {
+        "VolumeSizeMultiplier": 3.0
+      }
+    },
+    "SnowTrack": {
+      "TDFluidSurfaceRenderSettings": {
+        "bUsesTrackDeformMesh": true
+      }
     }
   },
-  "Globals": {}
+  "Globals": {
+    "TDFluidHeterogeneousVolumeRenderProfile": {
+      "MaxStepCount": -1,
+      "VolumeResolutionZ": -1,
+      "Preshading": -1,
+      "LightingCacheDownsampleFactor": -1,
+      "Shadows": -1,
+      "IndirectLighting": -1.0,
+      "AmbientOcclusion": -1,
+      "MaxTraceDistance": -1.0,
+      "Composition": -1,
+      "VolumetricFog": -1
+    }
+  }
 }

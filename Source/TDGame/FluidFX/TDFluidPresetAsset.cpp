@@ -53,11 +53,8 @@ FTDFluidSimulationConfig UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidP
 
 bool UTDFluidPresetAsset::IsFireFamilyPresetKind(ETDFluidPresetKind Kind)
 {
-	if (Kind == ETDFluidPresetKind::TileWaves)
-	{
-		return false;
-	}
-	return static_cast<uint8>(Kind) >= static_cast<uint8>(ETDFluidPresetKind::Torch);
+	const uint8 KindValue = static_cast<uint8>(Kind);
+	return (KindValue >= static_cast<uint8>(ETDFluidPresetKind::Torch) && KindValue < static_cast<uint8>(ETDFluidPresetKind::TileWaves)) || Kind == ETDFluidPresetKind::Flamethrower;
 }
 
 FTDFluidSourceEmitterSettings UTDFluidPresetAsset::BuildSourceEmitterForPresetKind(ETDFluidPresetKind Kind)
@@ -133,6 +130,64 @@ FTDFluidWaterNearRippleSettings UTDFluidPresetAsset::BuildWaterNearRippleSetting
 	return TDFluidBuildTunedSettings<FTDFluidWaterNearRippleSettings>(Kind);
 }
 
+FTDFluidVolumeDriverSettings UTDFluidPresetAsset::BuildVolumeDriverForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidVolumeDriverSettings>(Kind);
+}
+
+FTDFluidOutputTargetSettings UTDFluidPresetAsset::BuildOutputTargetForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidOutputTargetSettings>(Kind);
+}
+
+FTDFluidTerrainHeightSettings UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidTerrainHeightSettings>(Kind);
+}
+
+FTDFluidMassInputSettings UTDFluidPresetAsset::BuildMassInputForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidMassInputSettings>(Kind);
+}
+
+FTDFluidSurfaceRenderSettings UTDFluidPresetAsset::BuildSurfaceRenderForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidSurfaceRenderSettings>(Kind);
+}
+
+TSoftObjectPtr<UMaterialInterface> UTDFluidPresetAsset::ResolveSlotMaterial(ETDFluidOutputMaterialSlot Slot, int32 MaterialIndex) const
+{
+	const TArray<TSoftObjectPtr<UMaterialInterface>>& Materials = Slot == ETDFluidOutputMaterialSlot::Primary ? PrimaryOutputMaterials
+		: Slot == ETDFluidOutputMaterialSlot::Secondary ? SecondaryOutputMaterials
+		: TertiaryOutputMaterials;
+	if (!Materials.IsEmpty())
+	{
+		return Materials[FMath::Clamp(MaterialIndex, 0, Materials.Num() - 1)];
+	}
+	if (Slot == ETDFluidOutputMaterialSlot::Primary)
+	{
+		return OutputMaterial;
+	}
+	if (Slot == ETDFluidOutputMaterialSlot::Secondary)
+	{
+		return VolumeMaterial;
+	}
+	return TSoftObjectPtr<UMaterialInterface>();
+}
+
+FName UTDFluidPresetAsset::GetSlotActorTag(ETDFluidOutputMaterialSlot Slot) const
+{
+	if (Slot == ETDFluidOutputMaterialSlot::Primary)
+	{
+		return PrimaryOutputActorTag;
+	}
+	if (Slot == ETDFluidOutputMaterialSlot::Secondary)
+	{
+		return SecondaryOutputActorTag;
+	}
+	return TertiaryOutputActorTag;
+}
+
 UTDFluidPresetAsset* UTDFluidPresetAsset::CreateTransientPreset(UObject* Outer, ETDFluidPresetKind Kind)
 {
 	UObject* ResolvedOuter = Outer ? Outer : GetTransientPackage();
@@ -158,6 +213,7 @@ UTDFluidPresetAsset* UTDFluidPresetAsset::CreateTransientPreset(UObject* Outer, 
 	case ETDFluidPresetKind::Candle:
 	case ETDFluidPresetKind::Fireball:
 	case ETDFluidPresetKind::PlasmaExplosion:
+	case ETDFluidPresetKind::Flamethrower:
 		Preset->DefaultChannel = ETDFluidBrushChannel::ChannelB_Fire;
 		break;
 	case ETDFluidPresetKind::CampfireSmoke:
@@ -167,6 +223,16 @@ UTDFluidPresetAsset* UTDFluidPresetAsset::CreateTransientPreset(UObject* Outer, 
 	case ETDFluidPresetKind::Vortex:
 	case ETDFluidPresetKind::InvertedVortex:
 	case ETDFluidPresetKind::PortalVortex:
+	case ETDFluidPresetKind::RisingSmokeColumn:
+	case ETDFluidPresetKind::FallingSmokeColumn:
+	case ETDFluidPresetKind::FallingThinSmokeColumn:
+	case ETDFluidPresetKind::SmokePiston:
+	case ETDFluidPresetKind::VortexHeterogeneous:
+	case ETDFluidPresetKind::SnowAvalanche:
+	case ETDFluidPresetKind::SnowTrack:
+	case ETDFluidPresetKind::SandTrack:
+	case ETDFluidPresetKind::SnowDust:
+	case ETDFluidPresetKind::SandDust:
 		Preset->DefaultChannel = ETDFluidBrushChannel::ChannelR_Mud;
 		break;
 	case ETDFluidPresetKind::Water:

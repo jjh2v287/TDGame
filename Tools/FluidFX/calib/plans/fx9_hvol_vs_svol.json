@@ -1,0 +1,88 @@
+{
+ "id": "fx9_hvol_vs_svol",
+ "note": "spec-fx9 HV1·HV3, 구역 0(SVOL 창 중심 0,0 · HVOL +900 cm Y), 조절 사본만",
+ "scenes": [
+  {
+   "name": "hvol_pair",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidHvolStage",
+   "camera": {
+    "pawn": [
+     0,
+     450
+    ],
+    "arm": 600.0,
+    "view": [
+     -60.0,
+     0.0
+    ],
+    "console": [
+     "t.MaxFPS 0"
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 6.0,
+   "regions_template": "Tools/FluidFX/calib/regions/fx9_pair_regions.json",
+   "targets": "Tools/FluidFX/calib/targets/fx9_live2_volume.json",
+   "live2_refs": [
+    "L19",
+    "L3"
+   ]
+  }
+ ],
+ "params": [
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_Smoke.Scalars.VolExtinctionPerM",
+   "values": [
+    0.2,
+    0.4,
+    0.8
+   ]
+  },
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_Smoke.Scalars.VolExtrudeHeightCm",
+   "values": [
+    80,
+    120,
+    160
+   ]
+  },
+  {
+   "json_path": "Kinds.SmokeHeterogeneous.TDFluidVolumeDriverSettings.HeterogeneousVolumeResolutionXY",
+   "values": [
+    128,
+    256
+   ],
+   "split_group": true
+  },
+  {
+   "json_path": "Globals.TDFluidHeterogeneousVolumeRenderProfile.MaxStepCount",
+   "values": [
+    -1,
+    256
+   ]
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "look",
+   "frame_cost"
+  ],
+  "noise_floor": {
+   "luma_p50": 0.01,
+   "effect_ms": 0.05
+  }
+ },
+ "draft_status": "초안: 보정 도구 확장 전이라 calib_sweep.py --dry-run 대상 아님(검증 거부가 정상)",
+ "p3_gaps": [
+  "params json_path Look:·Globals. 경로: fluid_tuning_patch.parse_json_path 가 둘 다 거부(반박 S4) → 보정 단계에서 경로 2종 지원",
+  "calib_sweep.READ_BACK_STRUCTS 에 TDFluidVolumeDriverSettings·TDFluidTerrainHeightSettings 없음 → describe_params 거부, PIE 다시 읽기 2구조체 추가",
+  "metrics.sources frame_cost·영역 휘도 비 없음(METRIC_SOURCES = look·water_probe) → 출처 추가",
+  "HV5 캡처 횟수·HV6 런타임 트레이스 수·HV10 누수 칸은 카운터·측정기 없음 → CSV 카운트나 조회 함수 계약 필요",
+  "정적 MI 는 실행 중 재적용 안 됨: Look: 변형마다 MI 다시 굽기 또는 MID 재적용 경로 필요"
+ ]
+}

@@ -1,5 +1,7 @@
 #include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
 
+StructuredBuffer<FTDFluidGpuPackedRingShape> StampRingShapes;
+
 Texture2DArray<float> ObstacleSdf;
 Texture2DArray<float2> VelocityIn;
 Texture2DArray<float2> DensityIn;
@@ -10,13 +12,96 @@ RWTexture2DArray<float> SurfaceDisplacementOut;
 Texture2DArray<float> HeatIn;
 RWTexture2DArray<float> HeatOut;
 
+#ifndef TDFLUIDGPU_MASS_INPUT
+#define TDFLUIDGPU_MASS_INPUT 0
+#endif
+
+#if TDFLUIDGPU_MASS_INPUT
+#include "/TDFluidGpu/Private/TDFluidGpuMassSplat.ush"
+
+StructuredBuffer<FTDFluidGpuMassInputEntry> MassInputEntries;
+Buffer<uint> MassInputAccumulation;
+RWBuffer<uint> MassInputCounters;
+
+uint TDFluidGpuMassFetch(FTDFluidGpuMassInputEntry Entry, uint Channel, int2 Index, bool bWrapsArea)
+{
+	const int Resolution = (int)Entry.InputResolution;
+	int ResolvedX;
+	int ResolvedY;
+	if (!TDFluidGpuMassTryResolveIndex(Index.x, Resolution, bWrapsArea, ResolvedX) || !TDFluidGpuMassTryResolveIndex(Index.y, Resolution, bWrapsArea, ResolvedY))
+	{
+		return 0u;
+	}
+	return MassInputAccumulation[Entry.AccumulationBase + Channel * Entry.InputResolution * Entry.InputResolution + (uint)ResolvedY * Entry.InputResolution + (uint)ResolvedX];
+}
+
+uint4 TDFluidGpuMassGather(FTDFluidGpuMassInputEntry Entry, uint Channel, int2 BaseIndex, bool bWrapsArea)
+{
+	return uint4(
+		TDFluidGpuMassFetch(Entry, Channel, BaseIndex, bWrapsArea),
+		TDFluidGpuMassFetch(Entry, Channel, BaseIndex + int2(1, 0), bWrapsArea),
+		TDFluidGpuMassFetch(Entry, Channel, BaseIndex + int2(0, 1), bWrapsArea),
+		TDFluidGpuMassFetch(Entry, Channel, BaseIndex + int2(1, 1), bWrapsArea));
+}
+
+float TDFluidGpuMassBilinear(float4 Values, float2 Fraction)
+{
+	return lerp(lerp(Values.x, Values.y, Fraction.x), lerp(Values.z, Values.w, Fraction.x), Fraction.y);
+}
+
+void ApplyMassInputToCell(FTDFluidGpuActorParameters Actor, uint EntryIndex, int2 Cell, bool bUsesHeat, inout float2 Velocity, inout float2 Density, inout float Displacement, inout float Heat)
+{
+	const FTDFluidGpuMassInputEntry Entry = MassInputEntries[EntryIndex];
+	if ((Entry.Flags & TDFLUIDGPU_MASS_ENTRY_FLAG_APPLIES) == 0u)
+	{
+		return;
+	}
+
+	const bool bWrapsArea = (Entry.Flags & TDFLUIDGPU_MASS_ENTRY_FLAG_WRAPS_AREA) != 0u;
+	const float2 SamplePositionCm = (float2(Cell) + 0.5f) * Actor.CellSizeCm + Entry.ShiftOffsetCm;
+	const float2 SampleCoordinate = SamplePositionCm / Entry.InputCellCm - 0.5f;
+	const int2 BaseIndex = (int2)floor(SampleCoordinate);
+	const float2 Fraction = SampleCoordinate - float2(BaseIndex);
+
+	const float DensityTarget = TDFluidGpuMassBilinear(float4(TDFluidGpuMassGather(Entry, 0u, BaseIndex, bWrapsArea)), Fraction) / TDFLUIDGPU_MASS_DENSITY_SCALE;
+	Density.x = max(Density.x, DensityTarget);
+	Displacement = max(Displacement, DensityTarget * Actor.BrushDisplacementRatio);
+	if ((Entry.Flags & TDFLUIDGPU_MASS_ENTRY_FLAG_SELECTIVE_DENSITY) != 0u)
+	{
+		Density.y = max(Density.y, DensityTarget);
+	}
+	if (bUsesHeat)
+	{
+		Heat = max(Heat, TDFluidGpuMassBilinear(float4(TDFluidGpuMassGather(Entry, 1u, BaseIndex, bWrapsArea)), Fraction) / TDFLUIDGPU_MASS_DENSITY_SCALE);
+	}
+
+	const float Weight = TDFluidGpuMassBilinear(float4(TDFluidGpuMassGather(Entry, 4u, BaseIndex, bWrapsArea)), Fraction) / TDFLUIDGPU_MASS_WEIGHT_SCALE;
+	if (Weight <= 0.0f)
+	{
+		return;
+	}
+	if (MassInputCounters[Entry.CounterBase] > Entry.SafeCount)
+	{
+		MassInputCounters[Entry.CounterBase + 2u] = 1u;
+		return;
+	}
+
+	const float2 WeightedVelocity = float2(
+		TDFluidGpuMassBilinear(float4(asint(TDFluidGpuMassGather(Entry, 2u, BaseIndex, bWrapsArea))), Fraction),
+		TDFluidGpuMassBilinear(float4(asint(TDFluidGpuMassGather(Entry, 3u, BaseIndex, bWrapsArea))), Fraction)) / TDFLUIDGPU_MASS_VELOCITY_SCALE;
+	const float2 MeanVelocity = WeightedVelocity / Weight;
+	Velocity += (MeanVelocity - Velocity) * (min(Weight, 1.0f) * Actor.StampVelocityBlend);
+}
+#endif
+
 void ApplyStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, bool bUsesHeat, inout float2 Velocity, inout float2 Density, inout float Displacement, inout float Heat)
 {
 	const FTDFluidGpuStampBinRange Range = TDFluidGpuGetStampBinRange(Actor, Cell);
 	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
 	for (uint EntryOffset = 0; EntryOffset < Range.Count; ++EntryOffset)
 	{
-		const FTDFluidGpuPackedStamp Stamp = Stamps[StampBinIndices[Range.FirstIndex + EntryOffset]];
+		const uint StampIndex = StampBinIndices[Range.FirstIndex + EntryOffset];
+		const FTDFluidGpuPackedStamp Stamp = Stamps[StampIndex];
 		float SmoothWeight;
 		float DistanceCm;
 		if (!TDFluidGpuTryComputeStampWeight(Stamp, CellCenter, SmoothWeight, DistanceCm))
@@ -24,14 +109,15 @@ void ApplyStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, bool bUsesHe
 			continue;
 		}
 
-		TDFluidGpuApplyStampDensity(Actor, Stamp, SmoothWeight, Density, Displacement);
+		const float ShapedWeight = TDFluidGpuComputeShapedStampWeight(Stamp, StampRingShapes[StampIndex], CellCenter, SmoothWeight);
+		TDFluidGpuApplyStampDensity(Actor, Stamp, ShapedWeight, Density, Displacement);
 		if (bUsesHeat)
 		{
 			TDFluidGpuApplyStampHeat(Actor, Stamp, SmoothWeight, Heat);
 		}
 		if (Stamp.VelocityStrength > 0.0f)
 		{
-			Velocity += (Stamp.TargetVelocityCmPerSec - Velocity) * (SmoothWeight * Actor.StampVelocityBlend);
+			Velocity += (Stamp.TargetVelocityCmPerSec - Velocity) * (ShapedWeight * Actor.StampVelocityBlend);
 		}
 	}
 }
@@ -73,6 +159,12 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	{
 		ApplyStampsToCell(Actor, Cell, bUsesHeat, Velocity, Density, Displacement, Heat);
 	}
+#if TDFLUIDGPU_MASS_INPUT
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_CONSUMES_MASS_INPUT))
+	{
+		ApplyMassInputToCell(Actor, DispatchThreadId.z, Cell, bUsesHeat, Velocity, Density, Displacement, Heat);
+	}
+#endif
 
 	VelocityOut[Texel] = Velocity;
 	DensityOut[Texel] = Density;

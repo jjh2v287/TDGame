@@ -1,11 +1,12 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 안개 무대 LV_TDFluidFogStage(구역 0~6 은 X축 30 m 간격, 구역 7A 대형 창 + 200 m 정적 상자는 Y +250 m 띠, 7B 수동 7변형 진열은 Y −150 m 띠)와 Smoke 대리 DA 4개를 만든다. 먼저 editor_make_fluid_fog_material.py 와 FX-8n 무대 스크립트(교반기 BP_TDFluidStageStirrer)가 성공해 있어야 하고, 모양 정본 병합 뒤에 돌린다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 안개 무대 LV_TDFluidFogStage(구역 0~6 은 X축 30 m 간격, 구역 7A 대형 창 + 200 m 정적 상자는 Y +250 m 띠, 7B 수동 7변형 진열은 Y −150 m 띠, 구역 8 은 Y −350 m 띠: 8A 가르기 FogMist·8B 휘젓기 FogMistStir 에 교반기, 8C 감싸기 타일 FogTileSim)와 DA 7개(Smoke 대리 3·FogMist 2·FogMistStir 1·FogTileSim 1)를 만든다. 먼저 editor_make_fluid_fog_material.py 와 FX-8n 무대 스크립트(교반기 BP_TDFluidStageStirrer)가 성공해 있어야 하고, 모양 정본 병합 뒤에 돌린다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fog_stage.py (기존 DA·맵을 갱신할 때는 Saved/FluidFX/fluid_fog_stage_request.json 에 {"overwrite": true})
-출력: /Game/FluidFX/Presets/DA_TDFluid_FogAmbient·FogRoom·FogTrail·FogCharacter, /Game/FluidFX/Maps/LV_TDFluidFogStage, /Game/FluidFX/Materials/M_TD_FluidFogStageFloor·M_TD_FluidFogStageWall(없을 때만 만듦), Saved/FluidFX/fluid_fog_stage.json(preset_tuning_sha256·material_look_sha256, check_fluid_preset_data.py --stage-report 형식)
-상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·validate_stage_layout 만. 2026-10-26 에디터 실행 status ok·액터 37·DA 4·바닥·벽 재질 2, stage-report 오류 0, 화면 판정 전). 미저장 작업이 있으면 중단하고, 시작 때 프리셋 정본 검사·다시 읽기를 한다. 볼륨 상자 높이 1300 cm(돌출 범위 1000 + 윗면 페이드 300, 아래면 = 바닥)·광원·높이 안개 값은 무대 상수다(D-64 ② 편차, 보정은 룩데브 props). 시뮬 액터는 따라가기를 끄고 활성 볼륨(2000 cm)으로 가까운 것만 깨운다(따라가기를 켜면 안개판이 모든 구역으로 따라옴, 반박 M9). MPC 쓰기 액터는 FogAmbient 하나다.
+출력: /Game/FluidFX/Presets/DA_TDFluid_FogAmbient·FogRoom·FogTrail·FogCharacter·FogCut·FogStir·FogTileSync,/Game/FluidFX/Maps/LV_TDFluidFogStage, /Game/FluidFX/Materials/M_TD_FluidFogStageFloor·M_TD_FluidFogStageWall(없을 때만 만듦), Saved/FluidFX/fluid_fog_stage.json(preset_tuning_sha256·material_look_sha256, check_fluid_preset_data.py --stage-report 형식)
+상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·validate_stage_layout 만. 2026-10-26 에디터 실행 status ok·액터 37·DA 4·바닥·벽 재질 2, stage-report 오류 0, 화면 판정 전). 미저장 작업이 있으면 중단하고, 시작 때 프리셋 정본 검사·다시 읽기를 한다. 볼륨 상자 높이 1300 cm(돌출 범위 1000 + 윗면 페이드 300, 아래면 = 바닥)·광원·높이 안개 값은 무대 상수다(D-64 ② 편차, 보정은 룩데브 props). 시뮬 액터는 따라가기를 끄고 활성 볼륨(2000 cm)으로 가까운 것만 깨운다(따라가기를 켜면 안개판이 모든 구역으로 따라옴, 반박 M9). MPC 쓰기 액터는 FogAmbient 하나다. 2026-10-26 FX-10c: 7A FogAmbient 종류를 Smoke 대리에서 FogMist(40 m 창)로 바꾸고 구역 8(TileBandFloor)을 더함, 배치 점검을 종류별 창 × 상자 배율로 일반화(이웃 중심 거리 > 활성 거리 + 두 반폭), 종류 값(창·감싸기·상자 배율 상한)은 에셋 변경 전에 점검. 에디터 실행 전(py_compile·가짜 unreal·validate_stage_layout 만). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(덮어쓰기, 액터 43·DA 7, MI 15 단언 통과), stage-report stale 0, 화면 판정 전.
 """
 import hashlib
 import importlib.util
 import json
+import math
 import os
 
 import unreal
@@ -41,24 +42,40 @@ FOG_BOX_HEIGHT_CM = 1300.0
 FOG_VIEW_DISTANCE_CM = 12000.0
 HEIGHT_FOG_DENSITY = 0.002
 HEIGHT_FOG_SCATTERING_DISTRIBUTION = 0.35
-SMOKE_WINDOW_CM = 700.0
+PRESET_KIND_LAYOUTS = {
+    "SMOKE": {"window_cm": 700.0, "box_multiplier": 1.0, "wraps": False},
+    "FOG_MIST": {"window_cm": 4000.0, "box_multiplier": 1.0, "wraps": False},
+    "FOG_MIST_STIR": {"window_cm": 4000.0, "box_multiplier": 1.0, "wraps": False},
+    "FOG_TILE_SIM": {"window_cm": 3000.0, "box_multiplier": 3.0, "wraps": True},
+}
+EXPECTED_STAGE_INSTANCE_COUNT = 15
 ZONE7A_CENTER = (9000.0, 25000.0)
+ZONE8_BAND_Y_CM = -35000.0
+ZONE8_FLOOR_CENTER = (8500.0, ZONE8_BAND_Y_CM)
+ZONE8_FLOOR_SIZE_CM = (32000.0, 12000.0)
 PASSIVE_FIELD_SIZE_CM = 20000.0
 PASSIVE_DISPLAY_Y_CM = -15000.0
 PASSIVE_DISPLAY_SIZE_CM = 1500.0
 CYLINDER_BOX_SIZE_CM = 600.0
 HOLLOW_BOX_SIZE_CM = 800.0
-STIRRER_ORBIT_RADIUS_CM = 220.0
+STIRRER_SPHERE_RADIUS_CM = 50.0
 STIRRER_HEIGHT_CM = 60.0
-STIRRER_DEGREES_PER_SEC = 90.0
 PLAYER_START = (0.0, 0.0, 96.0)
 
 ZONE_LABELS = ("Intro", "Cylinders", "Lab", "Shrine", "Hollow", "Trail", "Character")
 FLUID_SPECS = (
-    {"name": "FogRoom", "zone": 2, "instance": "MI_TD_FluidFog_Sim", "writes_collection": False},
-    {"name": "FogTrail", "zone": 5, "instance": "MI_TD_FluidFog_SimTrail", "writes_collection": False},
-    {"name": "FogCharacter", "zone": 6, "instance": "MI_TD_FluidFog_SimCharacter", "writes_collection": False},
-    {"name": "FogAmbient", "zone": 7, "instance": "MI_TD_FluidFog_Sim", "writes_collection": True},
+    {"name": "FogRoom", "zone": "2", "center": (2 * ZONE_SPACING_CM, 0.0), "kind": "SMOKE", "instance": "MI_TD_FluidFog_Sim", "writes_collection": False},
+    {"name": "FogTrail", "zone": "5", "center": (5 * ZONE_SPACING_CM, 0.0), "kind": "SMOKE", "instance": "MI_TD_FluidFog_SimTrail", "writes_collection": False},
+    {"name": "FogCharacter", "zone": "6", "center": (6 * ZONE_SPACING_CM, 0.0), "kind": "SMOKE", "instance": "MI_TD_FluidFog_SimCharacter", "writes_collection": False},
+    {"name": "FogAmbient", "zone": "7A", "center": ZONE7A_CENTER, "kind": "FOG_MIST", "instance": "MI_TD_FluidFog_Sim", "writes_collection": True},
+    {"name": "FogCut", "zone": "8A", "center": (0.0, ZONE8_BAND_Y_CM), "kind": "FOG_MIST", "instance": "MI_TD_FluidFog_Sim", "writes_collection": False},
+    {"name": "FogStir", "zone": "8B", "center": (7000.0, ZONE8_BAND_Y_CM), "kind": "FOG_MIST_STIR", "instance": "MI_TD_FluidFog_Sim", "writes_collection": False},
+    {"name": "FogTileSync", "zone": "8C", "center": (17000.0, ZONE8_BAND_Y_CM), "kind": "FOG_TILE_SIM", "instance": "MI_TD_FluidFog_TileSync", "writes_collection": False},
+)
+STIRRER_SPECS = (
+    {"label": "FogTrailStirrer", "fluid": "FogTrail", "orbit_radius_cm": 220.0, "degrees_per_sec": 90.0},
+    {"label": "FogCutStirrer", "fluid": "FogCut", "orbit_radius_cm": 600.0, "degrees_per_sec": 30.0},
+    {"label": "FogStirStirrer", "fluid": "FogStir", "orbit_radius_cm": 600.0, "degrees_per_sec": 30.0},
 )
 STATIC_BOX_SPECS = (
     {"label": "CylinderA", "instance": "MI_TD_FluidFog_CylA", "center": (3000.0, -500.0), "size": (CYLINDER_BOX_SIZE_CM, CYLINDER_BOX_SIZE_CM, FOG_BOX_HEIGHT_CM), "shape": 1},
@@ -87,6 +104,7 @@ FLOOR_SPECS = (
     ("BandFloor", (9000.0, 0.0), (21000.0 + 2.0 * ZONE_BAND_HALF_WIDTH_CM, 2.0 * ZONE_BAND_HALF_WIDTH_CM)),
     ("FieldFloor", ZONE7A_CENTER, (PASSIVE_FIELD_SIZE_CM + 2000.0, PASSIVE_FIELD_SIZE_CM + 2000.0)),
     ("DisplayFloor", (9000.0, PASSIVE_DISPLAY_Y_CM), (21000.0 + PASSIVE_DISPLAY_SIZE_CM * 2.0, PASSIVE_DISPLAY_SIZE_CM * 2.0)),
+    ("TileBandFloor", ZONE8_FLOOR_CENTER, ZONE8_FLOOR_SIZE_CM),
 )
 FLOOR_COLOR = (0.03, 0.032, 0.036)
 WALL_COLOR = (0.06, 0.06, 0.07)
@@ -98,7 +116,13 @@ REQUIRED_UNREAL_NAMES = (
     "TDFluidPresetTuningSubsystem.get_load_errors",
     "TDFluidPresetAsset",
     "TDFluidPresetAsset.build_config_for_preset_kind",
+    "TDFluidPresetAsset.resolve_effective_volume_render",
+    "TDFluidPresetAsset.build_volume_render_for_preset_kind",
     "TDFluidPresetKind.SMOKE",
+    "TDFluidPresetKind.FOG_MIST",
+    "TDFluidPresetKind.FOG_MIST_STIR",
+    "TDFluidPresetKind.FOG_TILE_SIM",
+    "TDFluidAreaAddressMode.WRAP",
     "TDFluidBrushChannel.CHANNEL_R_MUD",
     "EditorAssetLibrary.load_blueprint_class",
     "EditorAssetLibrary.load_asset",
@@ -138,8 +162,6 @@ HEIGHT_FOG_PROPERTIES = (
 
 
 def zone_center(zone):
-    if zone == 7:
-        return ZONE7A_CENTER
     return (zone * ZONE_SPACING_CM, 0.0)
 
 
@@ -153,11 +175,56 @@ def rectangle_gap(first, second):
     return (gap_x * gap_x + gap_y * gap_y) ** 0.5
 
 
-def validate_stage_layout():
+def is_inside_bounds(inner, outer):
+    return inner[0] >= outer[0] and inner[1] >= outer[1] and inner[2] <= outer[2] and inner[3] <= outer[3]
+
+
+def fluid_visible_half_width(spec):
+    layout = PRESET_KIND_LAYOUTS[spec["kind"]]
+    return 0.5 * layout["window_cm"] * layout["box_multiplier"]
+
+
+def fluid_visible_bounds(spec):
+    half_width = fluid_visible_half_width(spec)
+    return box_xy_bounds(spec["center"], (2.0 * half_width, 2.0 * half_width))
+
+
+def find_fluid_spacing_problems():
     problems = []
+    for first_index, first in enumerate(FLUID_SPECS):
+        for second in FLUID_SPECS[first_index + 1:]:
+            distance = math.dist(first["center"], second["center"])
+            required = ACTIVATION_DISTANCE_CM + fluid_visible_half_width(first) + fluid_visible_half_width(second)
+            if distance <= required:
+                problems.append(f"{first['name']}·{second['name']} 중심 거리 {distance:.0f} ≤ 활성 거리 + 두 반폭 {required:.0f}(이웃 시뮬도 깨어남)")
+    return problems
+
+
+def find_zone8_problems(band, display_bounds):
+    problems = []
+    floor = box_xy_bounds(ZONE8_FLOOR_CENTER, ZONE8_FLOOR_SIZE_CM)
+    for spec in FLUID_SPECS:
+        if spec["zone"].startswith("8") and not is_inside_bounds(fluid_visible_bounds(spec), floor):
+            problems.append(f"{spec['name']}: 보이는 범위가 TileBandFloor 밖")
+    for label, bounds in [("구역 띠", band)] + display_bounds:
+        if rectangle_gap(floor, bounds) < FOG_VIEW_DISTANCE_CM:
+            problems.append(f"TileBandFloor·{label} 간격 {rectangle_gap(floor, bounds):.0f} < 보이는 거리 {FOG_VIEW_DISTANCE_CM}")
+    return problems
+
+
+def find_stirrer_problems():
+    problems = []
+    fluids_by_name = {spec["name"]: spec for spec in FLUID_SPECS}
+    for stirrer in STIRRER_SPECS:
+        half_window = 0.5 * PRESET_KIND_LAYOUTS[fluids_by_name[stirrer["fluid"]]["kind"]]["window_cm"]
+        if stirrer["orbit_radius_cm"] + STIRRER_SPHERE_RADIUS_CM > half_window:
+            problems.append(f"{stirrer['label']}: 궤도 반경 {stirrer['orbit_radius_cm']} + 구 반경이 창 반폭 {half_window} 밖")
+    return problems
+
+
+def validate_stage_layout():
+    problems = find_fluid_spacing_problems() + find_stirrer_problems()
     band = (-ZONE_BAND_HALF_WIDTH_CM, -ZONE_BAND_HALF_WIDTH_CM, (ZONE_COUNT_ON_AXIS - 1) * ZONE_SPACING_CM + ZONE_BAND_HALF_WIDTH_CM, ZONE_BAND_HALF_WIDTH_CM)
-    if ZONE_SPACING_CM <= ACTIVATION_DISTANCE_CM + 0.5 * SMOKE_WINDOW_CM:
-        problems.append(f"구역 간격 {ZONE_SPACING_CM} ≤ 활성 거리 {ACTIVATION_DISTANCE_CM} + 창 반폭(이웃 구역도 깨어남)")
     if FOG_BOX_HEIGHT_CM < FOG_EXTRUDE_RANGE_MAX_CM + FOG_TOP_FADE_RANGE_MAX_CM:
         problems.append(f"상자 높이 {FOG_BOX_HEIGHT_CM} < 돌출 범위 {FOG_EXTRUDE_RANGE_MAX_CM} + 윗면 페이드 {FOG_TOP_FADE_RANGE_MAX_CM}")
     for spec in STATIC_BOX_SPECS:
@@ -186,11 +253,10 @@ def validate_stage_layout():
     writers = [spec["name"] for spec in FLUID_SPECS if spec["writes_collection"]]
     if writers != ["FogAmbient"]:
         problems.append("MPC 쓰기 액터는 FogAmbient 하나여야 함: " + ", ".join(writers))
-    if STIRRER_ORBIT_RADIUS_CM + 50.0 > 0.5 * SMOKE_WINDOW_CM:
-        problems.append(f"교반기 궤도 반경 {STIRRER_ORBIT_RADIUS_CM} + 구 반경이 창 반폭 {0.5 * SMOKE_WINDOW_CM} 밖")
+    problems.extend(find_zone8_problems(band, [(spec["label"], box_xy_bounds(spec["center"], spec["size"])) for spec in displays]))
     instances = {spec["instance"] for spec in STATIC_BOX_SPECS} | {spec["instance"] for spec in FLUID_SPECS}
-    if len(instances) != 14:
-        problems.append(f"무대가 쓰는 MI 수 {len(instances)} ≠ 14")
+    if len(instances) != EXPECTED_STAGE_INSTANCE_COUNT:
+        problems.append(f"무대가 쓰는 MI 수 {len(instances)} ≠ {EXPECTED_STAGE_INSTANCE_COUNT}")
     return problems
 
 
@@ -353,8 +419,33 @@ def load_or_create_preset(spec):
     return preset
 
 
+def find_effective_layout_problems(spec, effective, volume_render):
+    layout = PRESET_KIND_LAYOUTS[spec["kind"]]
+    extent = effective.get_editor_property("sim_extent_cm")
+    problems = []
+    if abs(extent.x - layout["window_cm"]) > 0.01 or abs(extent.y - layout["window_cm"]) > 0.01:
+        problems.append(f"{spec['kind']} 창 {extent.x}x{extent.y} ≠ {layout['window_cm']}")
+    is_wrapped = effective.get_editor_property("area_address_mode") == unreal.TDFluidAreaAddressMode.WRAP
+    if is_wrapped != layout["wraps"]:
+        problems.append(f"{spec['kind']} 감싸기 {is_wrapped} ≠ {layout['wraps']}")
+    box_multiplier = volume_render.get_editor_property("volume_size_multiplier")
+    if box_multiplier > layout["box_multiplier"] + 0.01:
+        problems.append(f"{spec['kind']} 상자 배율 {box_multiplier} > 배치 가정 {layout['box_multiplier']}")
+    return problems
+
+
+def find_preset_kind_problems():
+    problems = []
+    for spec in FLUID_SPECS:
+        preset_kind = getattr(unreal.TDFluidPresetKind, spec["kind"])
+        config = unreal.TDFluidPresetAsset.build_config_for_preset_kind(preset_kind)
+        volume_render = unreal.TDFluidPresetAsset.build_volume_render_for_preset_kind(preset_kind)
+        problems.extend(f"{spec['name']}: {problem}" for problem in find_effective_layout_problems(spec, config, volume_render))
+    return problems
+
+
 def configure_fog_preset(spec, volume_material, cube, collection):
-    preset_kind = unreal.TDFluidPresetKind.SMOKE
+    preset_kind = getattr(unreal.TDFluidPresetKind, spec["kind"])
     preset = load_or_create_preset(spec)
     preset.set_editor_property("preset_kind", preset_kind)
     preset.set_editor_property("default_channel", unreal.TDFluidBrushChannel.CHANNEL_R_MUD)
@@ -365,9 +456,9 @@ def configure_fog_preset(spec, volume_material, cube, collection):
     preset.set_editor_property("volume_height_cm", FOG_BOX_HEIGHT_CM)
     preset.set_editor_property("parameter_collection", collection if spec["writes_collection"] else None)
     effective = preset.resolve_effective_config()
-    extent = effective.get_editor_property("sim_extent_cm")
-    if abs(extent.x - SMOKE_WINDOW_CM) > 0.01 or abs(extent.y - SMOKE_WINDOW_CM) > 0.01:
-        raise RuntimeError(f"Smoke 대리 종류 창 {extent.x}x{extent.y} ≠ {SMOKE_WINDOW_CM}(조절 정본 확인): {preset_asset_path(spec)}")
+    layout_problems = find_effective_layout_problems(spec, effective, preset.resolve_effective_volume_render())
+    if layout_problems:
+        raise RuntimeError("종류 값이 무대 배치 가정과 다름(조절 정본 확인): " + preset_asset_path(spec) + ", " + "; ".join(layout_problems))
     save_asset(preset, preset_asset_path(spec))
     return preset, effective
 
@@ -413,6 +504,9 @@ def main():
     print("단계: 프리셋 정본 검사·다시 읽기")
     preset_tuning_sha256 = reload_preset_tuning()
     material_look_sha256 = read_file_sha256(MATERIAL_LOOK_RELATIVE_PATH)
+    kind_problems = find_preset_kind_problems()
+    if kind_problems:
+        raise RuntimeError("종류 값이 무대 배치 가정과 다름(조절 정본 Kinds 확인, 에셋 변경 전 중단): " + " | ".join(kind_problems))
 
     game_mode = assets.load_blueprint_class(GAME_MODE_PATH)
     cube = assets.load_asset(CUBE_MESH_PATH)
@@ -516,7 +610,7 @@ def main():
     fluid_records = []
     for spec in FLUID_SPECS:
         preset, effective = presets[spec["name"]]
-        center = zone_center(spec["zone"])
+        center = spec["center"]
         actor = spawn(fluid_actor_class, (center[0], center[1], FLOOR_Z_CM), spec["name"], "SimFog")
         actor.set_editor_property("should_follow_player_pawn", False)
         actor.set_editor_property("should_use_activation_volume", True)
@@ -526,15 +620,20 @@ def main():
         live_component.set_editor_property("active_preset", preset)
         live_component.set_editor_property("should_init_system_state_from_preset", True)
         live_component.set_editor_property("simulation_config", effective)
-        fluid_records.append({"label": actor.get_actor_label(), "preset": preset_asset_name(spec), "instance": spec["instance"], "zone": spec["zone"], "location": [center[0], center[1], FLOOR_Z_CM], "writes_collection": spec["writes_collection"], "volume_height_cm": FOG_BOX_HEIGHT_CM})
+        fluid_records.append({"label": actor.get_actor_label(), "preset": preset_asset_name(spec), "preset_kind": spec["kind"], "instance": spec["instance"], "zone": spec["zone"], "location": [center[0], center[1], FLOOR_Z_CM], "writes_collection": spec["writes_collection"], "volume_height_cm": FOG_BOX_HEIGHT_CM})
 
-    trail_center = zone_center(5)
-    stirrer = spawn(stirrer_class, (trail_center[0] - STIRRER_ORBIT_RADIUS_CM, trail_center[1], FLOOR_Z_CM + STIRRER_HEIGHT_CM), "FogTrailStirrer", "SimFog")
-    rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-    if rotating is None:
-        raise RuntimeError("교반기에 회전 이동 컴포넌트가 없음: " + STIRRER_BLUEPRINT_PATH)
-    rotating.set_editor_property("pivot_translation", unreal.Vector(STIRRER_ORBIT_RADIUS_CM, 0.0, 0.0))
-    rotating.set_editor_property("rotation_rate", unreal.Rotator(0.0, STIRRER_DEGREES_PER_SEC, 0.0))
+    fluids_by_name = {spec["name"]: spec for spec in FLUID_SPECS}
+    stirrer_records = []
+    for stirrer_spec in STIRRER_SPECS:
+        orbit_center = fluids_by_name[stirrer_spec["fluid"]]["center"]
+        radius = stirrer_spec["orbit_radius_cm"]
+        stirrer = spawn(stirrer_class, (orbit_center[0] - radius, orbit_center[1], FLOOR_Z_CM + STIRRER_HEIGHT_CM), stirrer_spec["label"], "SimFog")
+        rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
+        if rotating is None:
+            raise RuntimeError("교반기에 회전 이동 컴포넌트가 없음: " + STIRRER_BLUEPRINT_PATH)
+        rotating.set_editor_property("pivot_translation", unreal.Vector(radius, 0.0, 0.0))
+        rotating.set_editor_property("rotation_rate", unreal.Rotator(0.0, stirrer_spec["degrees_per_sec"], 0.0))
+        stirrer_records.append({"label": stirrer.get_actor_label(), "fluid": stirrer_spec["fluid"], "orbit_radius_cm": radius, "degrees_per_sec": stirrer_spec["degrees_per_sec"]})
 
     print("단계: 레벨 저장")
     if not levels.save_current_level():
@@ -551,12 +650,12 @@ def main():
         "overwrite": overwrite,
         "created_floor_material": floor_created,
         "created_wall_material": wall_created,
-        "zones": {str(index): {"label": label, "center": list(zone_center(index))} for index, label in enumerate(ZONE_LABELS)} | {"7A": {"label": "AmbientWindowAndField", "center": list(ZONE7A_CENTER)}, "7B": {"label": "PassiveDisplays", "y": PASSIVE_DISPLAY_Y_CM}},
+        "zones": {str(index): {"label": label, "center": list(zone_center(index))} for index, label in enumerate(ZONE_LABELS)} | {"7A": {"label": "AmbientWindowAndField", "center": list(ZONE7A_CENTER)}, "7B": {"label": "PassiveDisplays", "y": PASSIVE_DISPLAY_Y_CM}} | {spec["zone"]: {"label": spec["name"], "center": list(spec["center"])} for spec in FLUID_SPECS if spec["zone"].startswith("8")},
         "fluid_actors": fluid_records,
         "static_boxes": box_records,
         "local_lights": light_records,
         "height_fog": applied_fog,
-        "stirrer": {"label": stirrer.get_actor_label(), "orbit_radius_cm": STIRRER_ORBIT_RADIUS_CM, "degrees_per_sec": STIRRER_DEGREES_PER_SEC},
+        "stirrers": stirrer_records,
         "collection_writer": "TDGen_FogAmbient",
         "deviations": ["광원·높이 안개·상자 높이·교반기 궤도는 무대 상수(D-64 ②), 보정은 룩데브 props", "시뮬 액터 따라가기 끔(D14 이동 시험은 props 로 FogAmbient 만 켬)"],
         "created_actors": len(created),

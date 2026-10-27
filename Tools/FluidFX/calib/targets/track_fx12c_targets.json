@@ -1,0 +1,96 @@
+{
+ "note": "FX-12c 목표(spec-fx12c 7절, IWI:79-82·ICF:163·RM:606-609). groove_profile·atmosphere 출처 확장(P3) 뒤 사용. [추정] 표시는 LIVE-2 정량 근거 없음",
+ "kind_metrics": {
+  "snow": {
+   "atmosphere.p95_over_p5": [
+    2.04,
+    3.4
+   ],
+   "atmosphere.fine_detail": [
+    0.067,
+    0.111
+   ]
+  }
+ },
+ "region_metrics": {
+  "groove_line": {
+   "groove_width_cm": [
+    25.0,
+    40.0
+   ],
+   "bank_over_groove_ratio": [
+    0.2,
+    0.4
+   ],
+   "bank_width_cm": [
+    5.0,
+    15.0
+   ],
+   "drag_streak_count": [
+    0.0,
+    0.0
+   ]
+  },
+  "groove_decay": {
+   "half_life_sec": [
+    60.0,
+    100000.0
+   ]
+  },
+  "harvester_wheel": {
+   "groove_width_cm": [
+    25.0,
+    35.0
+   ],
+   "gap_count": [
+    0.0,
+    0.0
+   ]
+  },
+  "deform_probe": {
+   "foot_height_error_cm": [
+    0.0,
+    2.0
+   ],
+   "edge_crack_cm": [
+    0.0,
+    1.0
+   ],
+   "camera_penetration_count": [
+    0.0,
+    0.0
+   ]
+  },
+  "wet_beach": {
+   "groove_luminance_over_dry": [
+    0.5,
+    100.0
+   ],
+   "groove_luminance_min": [
+    0.15,
+    1.0
+   ]
+  }
+ },
+ "cost_metrics": {
+  "painter_gpu_ms": [
+   0.0,
+   0.1
+  ],
+  "deform_mesh_gpu_ms": [
+   0.0,
+   0.3
+  ],
+  "dust_gpu_ms": [
+   0.0,
+   1.0
+  ],
+  "painter_vram_mib": [
+   0.0,
+   17.0
+  ]
+ },
+ "estimated": [
+  "region_metrics.groove_line.bank_over_groove_ratio"
+ ]
+}

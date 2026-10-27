@@ -1,0 +1,15 @@
+{
+ "note": "1280x720, SandWall 카메라 초안 상자",
+ "regions": [
+  {
+   "name": "wall",
+   "kind": "cloud",
+   "box": [
+    262,
+    480,
+    652,
+    720
+   ]
+  }
+ ]
+}

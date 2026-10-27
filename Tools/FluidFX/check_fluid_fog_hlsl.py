@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(numpy) 와 Windows Kits dxc.exe(ps_6_0), 에디터 불필요
-실행 명령: python Tools/FluidFX/check_fluid_fog_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json] [--output 요약.json]
-출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(dxc 명령·표본 수, 결정론 시험 sha256), 하나라도 실패하면 종료 코드 1
-상태: 미검증(2026-10-25 FX-10r 작성). TDFluidFogVolume.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점·이름 계약(MI 덮어쓰기에 C++ 구동·조건부 이름 없음, 정본에 아직 없으면 --look-fragment 로 조각을 더해 본다)·dxc ps_6_0 O3/Od 와 역할(정적·구동)×모양(0·1·2) 상수 접기 순열 컴파일을 보고, numpy 거울 시험 D1 창 분할·D2 돌출과 바닥(상자 아래면 = z0, 반 크기 ObjectBounds)·D3 보완 페이드·D4 UV 를 두 번 돌려 sha256 이 같은지 본다.
+실행 명령: python Tools/FluidFX/check_fluid_fog_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json] [--output 요약.json] [--dxc-baseline 이전_요약.json]
+출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(dxc 명령·표본 수, 감싸기 명령 증가 wrap_instruction_delta, 결정론 시험 sha256 = D1~D4 mirror_sha256·D5 wrap_mirror_sha256), 하나라도 실패하면 종료 코드 1
+상태: 미검증(2026-10-25 FX-10r 작성). TDFluidFogVolume.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점·이름 계약(MI 덮어쓰기에 C++ 구동·조건부 이름 없음, 정본에 아직 없으면 --look-fragment 로 조각을 더해 본다)·dxc ps_6_0 O3/Od 와 역할(정적·구동)×모양(0·1·2) 상수 접기 순열 컴파일을 보고, numpy 거울 시험 D1 창 분할·D2 돌출과 바닥(상자 아래면 = z0, 반 크기 ObjectBounds)·D3 보완 페이드·D4 UV 를 두 번 돌려 sha256 이 같은지 본다. 2026-10-26 FX-10c: 접기 순열에 SimAreaWrapped 0/1 을 더하고 D5(감싸기 주기 E 반복은 시뮬 탭에만·창 가중 1·물 TileMap 원점과 frac 동기·정적 역할 무시)와 D6(감싸기 0 접기 순열의 dxc 명령·표본 수 = 파동 1 기준, 기준은 내장값 dxc 10.0.19041 또는 --dxc-baseline 이전 요약)을 본다.
 """
 import argparse
 import glob
@@ -30,16 +30,37 @@ ABSOLUTE_PATH_PATTERN = re.compile(r"[A-Za-z]:[\\/]")
 REQUIRED_ANCHORS = (
     "lerp(FogObjectPosition.z - FogObjectBoundsCm.z, SimCenterWorld.z, (IS_DRIVEN))",
     "float fogIsDriven = step(0.5, SimGridResolution);",
+    "float fogAreaWrapped = fogIsDriven * step(0.5, SimAreaWrapped);",
     "float2 fogWindowUv = (FogWorldPosition.xy - fogWindowCenter.xy) / fogWindowSize + 0.5;",
     "float fogWindowWeight = fogHasWindow * smoothstep(0.0, fogBlendWidthCm, fogEdgeDistanceCm);",
+    "fogWindowWeight = lerp(fogWindowWeight, 1.0, fogAreaWrapped);",
+    "if (fogIsDriven > 0.5 && (fogEdgeDistanceCm >= 0.0 || fogAreaWrapped > 0.5))",
+    "fogAreaWrapped > 0.5 ? fogWindowUv : saturate(fogWindowUv)",
     "1.0 - smoothstep(fogTopCm - max(FogTopFadeCm, 1.0), fogTopCm, fogHeightCm)",
     "(FogUsesWindowMask > 0.5 ? 1.0 - fogWindowWeight : 1.0)",
     "(FogCameraFadeInvert > 0.5 ? 1.0 - fogCameraRamp : fogCameraRamp)",
 )
 FORBIDDEN_TOKENS = ("FogObjectBoundsCm.z * 0.5", "FogObjectBoundsCm.z / 2", "0.5 * FogObjectBoundsCm", "DensityScale", "SoftFalloffCm", "VolumeHeightCm")
-FOLD_NAMES = ("SimGridResolution", "FogShape")
+FOLD_NAMES = ("SimGridResolution", "FogShape", "SimAreaWrapped")
+ROLE_FOLDS = ((0.0, "static"), (256.0, "driven"))
+SHAPE_FOLDS = (0.0, 1.0, 2.0)
+WRAP_OFF_DXC_BASELINE = {
+    "static_shape0": {"samples": 2, "instructions": 194},
+    "static_shape1": {"samples": 2, "instructions": 198},
+    "static_shape2": {"samples": 2, "instructions": 190},
+    "driven_shape0": {"samples": 2, "instructions": 161},
+    "driven_shape1": {"samples": 2, "instructions": 161},
+    "driven_shape2": {"samples": 2, "instructions": 161},
+}
+WRAP_OFF_DXC_BASELINE_O3_INSTRUCTIONS = 311
 UV_GRID_RESOLUTION = 256
 SPLIT_GRID_SIZE = 257
+WRAP_TEXTURE_RESOLUTION = 256
+WRAP_TEXTURE_SEED = 20261026
+WRAP_PERIOD_SHIFTS = tuple(range(-3, 4))
+WRAP_SAMPLE_POINT_COUNT = 20
+WRAP_CENTER_CM = (17000.0, -35000.0)
+WRAP_EXTENT_CM = (3000.0, 3000.0)
 
 
 def load_script(root, name):
@@ -186,16 +207,139 @@ def test_window_uv():
     return passed, f"모서리 {corner_error:.2e}, 칸 왕복 {round_error:.2e}칸, C++ 식 대비 {formula_error:.2e}칸", round_trip
 
 
-def run_mirror_tests():
+def area_wrapped_flag(is_driven, sim_area_wrapped):
+    return float(is_driven) * float(sim_area_wrapped >= 0.5)
+
+
+def sample_bilinear(texture, uv, wraps):
+    resolution = texture.shape[0]
+    texel = uv * resolution - 0.5
+    base = np.floor(texel)
+    fraction = (texel - base)[..., None]
+    first = base.astype(np.int64)
+    second = first + 1
+    if wraps:
+        first, second = first % resolution, second % resolution
+    else:
+        first, second = np.clip(first, 0, resolution - 1), np.clip(second, 0, resolution - 1)
+    low = texture[first[..., 0], first[..., 1]] * (1.0 - fraction[..., 0, :]) + texture[second[..., 0], first[..., 1]] * fraction[..., 0, :]
+    high = texture[first[..., 0], second[..., 1]] * (1.0 - fraction[..., 0, :]) + texture[second[..., 0], second[..., 1]] * fraction[..., 0, :]
+    return low * (1.0 - fraction[..., 1, :]) + high * fraction[..., 1, :]
+
+
+def fog_sim_tap(texture, points_xy, center_xy, extent_xy, is_driven, sim_area_wrapped):
+    wrapped = area_wrapped_flag(is_driven, sim_area_wrapped)
+    size = np.maximum(np.asarray(extent_xy, dtype=np.float64), 1.0)
+    uv = (points_xy - np.asarray(center_xy)) / size + 0.5
+    _, edge_distance = window_weight(points_xy, center_xy, extent_xy, 0.15)
+    tap = sample_bilinear(texture, uv if wrapped > 0.5 else np.clip(uv, 0.0, 1.0), wrapped > 0.5)
+    density = np.clip(tap[..., 0], 0.0, 1.0) * np.clip(tap[..., 1], 0.0, 1.0)
+    if not is_driven:
+        return np.zeros_like(density)
+    return np.where((edge_distance >= 0.0) | (wrapped > 0.5), density, 0.0)
+
+
+def wrapped_window_weight(points_xy, center_xy, extent_xy, blend_ratio, is_driven, sim_area_wrapped):
+    weight, _ = window_weight(points_xy, center_xy, extent_xy, blend_ratio)
+    wrapped = area_wrapped_flag(is_driven, sim_area_wrapped)
+    return weight + (1.0 - weight) * wrapped
+
+
+def tile_map_uv(points_xy, center_xy, extent_xy, viewer_xy):
+    extent = np.asarray(extent_xy, dtype=np.float64)
+    window_minimum = np.asarray(center_xy) - 0.5 * extent
+    origin = window_minimum + extent * np.floor((viewer_xy - window_minimum) / extent)
+    return (points_xy - origin) / extent
+
+
+def circular_fraction_distance(first, second):
+    distance = np.abs(np.mod(first, 1.0) - np.mod(second, 1.0))
+    return np.minimum(distance, 1.0 - distance)
+
+
+def test_wrap_period_and_sync():
+    rng = np.random.default_rng(WRAP_TEXTURE_SEED)
+    texture = rng.uniform(0.0, 1.2, size=(WRAP_TEXTURE_RESOLUTION, WRAP_TEXTURE_RESOLUTION, 2))
+    center, extent = np.asarray(WRAP_CENTER_CM), np.asarray(WRAP_EXTENT_CM)
+    points = center + rng.uniform(-1.5, 1.5, size=(WRAP_SAMPLE_POINT_COUNT, 2)) * extent
+    base_tap = fog_sim_tap(texture, points, center, extent, True, 1.0)
+    period_error = 0.0
+    weight_error = 0.0
+    for shift_x in WRAP_PERIOD_SHIFTS:
+        for shift_y in WRAP_PERIOD_SHIFTS:
+            shifted = points + np.array([shift_x, shift_y]) * extent
+            period_error = max(period_error, float(np.abs(fog_sim_tap(texture, shifted, center, extent, True, 1.0) - base_tap).max()))
+            weight_error = max(weight_error, float(np.abs(wrapped_window_weight(shifted, center, extent, 0.15, True, 1.0) - 1.0).max()))
+    window_minimum = center - 0.5 * extent
+    edge_points = np.array([window_minimum, window_minimum + extent, window_minimum - extent, [-1.0e6, -1.0e6], [1.0e6, 1.0e6], [-1.0e6, 1.0e6], [0.0, 0.0], [-0.5, 0.5]])
+    sync_points = np.concatenate([edge_points, rng.uniform(-2.0e5, 2.0e5, size=(WRAP_SAMPLE_POINT_COUNT - len(edge_points), 2))])
+    viewers = rng.uniform(-1.0e6, 1.0e6, size=(WRAP_SAMPLE_POINT_COUNT, 2))
+    fog_uv = (sync_points - center) / extent + 0.5
+    sync_error = float(circular_fraction_distance(fog_uv, tile_map_uv(sync_points, center, extent, viewers)).max())
+    static_tap = float(np.abs(fog_sim_tap(texture, points, center, extent, False, 1.0)).max())
+    static_weight, _ = window_weight(points, center, extent, 0.15)
+    static_weight_error = float(np.abs(wrapped_window_weight(points, center, extent, 0.15, False, 1.0) - static_weight).max())
+    clamped_tap = fog_sim_tap(texture, points, center, extent, True, 0.0)
+    outside_zero = bool(np.all(clamped_tap[window_weight(points, center, extent, 0.15)[1] < 0.0] == 0.0))
+    passed = period_error <= 1e-6 and weight_error <= 1e-12 and sync_error <= 1e-9 and static_tap == 0.0 and static_weight_error == 0.0 and outside_zero
+    detail = f"주기 오차 {period_error:.2e}, 창 가중 오차 {weight_error:.2e}, 물 TileMap frac 차 {sync_error:.2e}, 정적+감싸기 탭 {static_tap}·가중 차 {static_weight_error}, 감싸기 끔 창 밖 0 {outside_zero}"
+    return passed, detail, np.concatenate([base_tap, clamped_tap, fog_uv.ravel()])
+
+
+def run_mirror_tests(tests):
     outcomes = {}
     digest = hashlib.sha256()
-    for label, test in (("D1 창 분할", test_window_split), ("D2 돌출·바닥", test_extrude_and_floor), ("D3 보완 페이드", test_complementary_fade), ("D4 UV", test_window_uv)):
+    for label, test in tests:
         passed, detail, values = test()
         values = np.ascontiguousarray(values)
         digest.update(label.encode("utf-8"))
         digest.update(values.tobytes())
         outcomes[label] = (passed, detail, hashlib.sha256(values.tobytes()).hexdigest())
     return outcomes, digest.hexdigest()
+
+
+BASE_MIRROR_TESTS = (("D1 창 분할", test_window_split), ("D2 돌출·바닥", test_extrude_and_floor), ("D3 보완 페이드", test_complementary_fade), ("D4 UV", test_window_uv))
+WRAP_MIRROR_TESTS = (("D5 감싸기 주기·물 TileMap 동기", test_wrap_period_and_sync),)
+
+
+def build_fold_permutations():
+    permutations = {}
+    for role_value, role_label in ROLE_FOLDS:
+        for shape_value in SHAPE_FOLDS:
+            label = f"{role_label}_shape{int(shape_value)}"
+            permutations[label] = dict(zip(FOLD_NAMES, (role_value, shape_value, 0.0)))
+            permutations[label + "_wrap"] = dict(zip(FOLD_NAMES, (role_value, shape_value, 1.0)))
+    return permutations
+
+
+def read_wrap_off_baseline(baseline_path):
+    if not baseline_path:
+        return WRAP_OFF_DXC_BASELINE, WRAP_OFF_DXC_BASELINE_O3_INSTRUCTIONS
+    report = json.loads(pathlib.Path(baseline_path).read_text(encoding="utf-8"))
+    dxc_counts = report.get("dxc", {})
+    return {label: dxc_counts[label] for label in WRAP_OFF_DXC_BASELINE if label in dxc_counts}, dxc_counts.get("O3", {}).get("instructions")
+
+
+def find_wrap_off_identity_problems(compiles, baseline):
+    problems = []
+    for label, expected in baseline.items():
+        actual = compiles.get(label)
+        if actual is None:
+            problems.append(f"{label}: 컴파일 결과 없음")
+            continue
+        if actual["instructions"] != expected["instructions"] or actual["samples"] != expected["samples"]:
+            problems.append(f"{label}: 명령 {actual['instructions']}·표본 {actual['samples']} ≠ 기준 {expected['instructions']}·{expected['samples']}")
+    return problems
+
+
+def find_static_wrap_problems(compiles):
+    problems = []
+    for shape_value in SHAPE_FOLDS:
+        label = f"static_shape{int(shape_value)}"
+        plain, wrapped = compiles.get(label), compiles.get(label + "_wrap")
+        if plain is None or wrapped is None or plain["instructions"] != wrapped["instructions"] or plain["samples"] != wrapped["samples"]:
+            problems.append(f"{label}: 정적 역할인데 감싸기 1 이 명령 수를 바꿈")
+    return problems
 
 
 def run_shader_text_checks(text):
@@ -230,6 +374,7 @@ def main():
     parser.add_argument("--dxc", default="")
     parser.add_argument("--look-fragment", default="")
     parser.add_argument("--output", default="")
+    parser.add_argument("--dxc-baseline", default="")
     arguments = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     root = pathlib.Path(arguments.root)
@@ -247,7 +392,7 @@ def main():
     if stage_path.is_file():
         stage = load_script(root, "editor_make_fluid_fog_stage")
         layout_problems = stage.validate_stage_layout()
-        record("무대 배치(구역 간격·200 m 상자 분리·상자 높이 ≥ 돌출+페이드·MPC 쓰기 액터 1개)", not layout_problems, "; ".join(layout_problems))
+        record("무대 배치(종류별 창 × 상자 배율 이웃 간격·교반기 궤도·구역 8 바닥·200 m 상자 분리·상자 높이 ≥ 돌출+페이드·MPC 쓰기 액터 1개·MI 15)", not layout_problems, "; ".join(layout_problems))
     else:
         record("무대 스크립트 unreal 스텁 임포트", False, "editor_make_fluid_fog_stage.py 없음")
 
@@ -267,12 +412,13 @@ def main():
     record("MI 이름 계약(부모·마스터 이름·C++ 구동·조건부 이름 없음)", not override_problems, "; ".join(override_problems))
     record("조각과 정본 키 서로소", not overlap or not arguments.look_fragment, ", ".join(overlap))
 
-    outcomes_first, digest_first = run_mirror_tests()
-    outcomes_second, digest_second = run_mirror_tests()
-    for label, (passed, detail, value_sha) in outcomes_first.items():
-        record(f"거울 {label}", passed, f"{detail} sha256 {value_sha[:16]}")
-    record("거울 시험 2회 sha256 같음", digest_first == digest_second, digest_first)
-    summary["mirror_sha256"] = digest_first
+    for summary_key, tests in (("mirror_sha256", BASE_MIRROR_TESTS), ("wrap_mirror_sha256", WRAP_MIRROR_TESTS)):
+        outcomes_first, digest_first = run_mirror_tests(tests)
+        outcomes_second, digest_second = run_mirror_tests(tests)
+        for label, (passed, detail, value_sha) in outcomes_first.items():
+            record(f"거울 {label}", passed, f"{detail} sha256 {value_sha[:16]}")
+        record(f"거울 시험 2회 sha256 같음({summary_key})", digest_first == digest_second, digest_first)
+        summary[summary_key] = digest_first
 
     dxc = find_dxc(arguments.dxc)
     if not dxc:
@@ -287,13 +433,20 @@ def main():
             outcome = compile_source(dxc, build_source(material, code, {}), f"fog_{suffix}", optimize, work_folder)
             record(f"dxc 안개 ps_6_0 {suffix}", outcome["exit"] == 0 and outcome["samples"] >= 3, outcome["error"] or f"표본 {outcome['samples']} 명령 {outcome['instructions']}")
             compiles[suffix] = outcome
-        for role_value, role_label in ((0.0, "static"), (256.0, "driven")):
-            for shape_value in (0.0, 1.0, 2.0):
-                label = f"{role_label}_shape{int(shape_value)}"
-                outcome = compile_source(dxc, build_source(material, code, {"SimGridResolution": role_value, "FogShape": shape_value}), label, True, work_folder)
-                record(f"dxc 순열 {label} O3", outcome["exit"] == 0, outcome["error"] or f"표본 {outcome['samples']} 명령 {outcome['instructions']}")
-                compiles[label] = outcome
+        for label, folded in build_fold_permutations().items():
+            outcome = compile_source(dxc, build_source(material, code, folded), label, True, work_folder)
+            record(f"dxc 순열 {label} O3", outcome["exit"] == 0 and outcome["samples"] >= 2, outcome["error"] or f"표본 {outcome['samples']} 명령 {outcome['instructions']}")
+            compiles[label] = outcome
+    baseline, baseline_o3_instructions = read_wrap_off_baseline(arguments.dxc_baseline)
+    identity_problems = find_wrap_off_identity_problems(compiles, baseline) if baseline else ["기준 dxc 명령 수 없음(--dxc-baseline 확인)"]
+    record("D6 감싸기 끔 항등(SimAreaWrapped 0 접기 순열의 dxc 명령·표본 수 = 파동 1 기준)", not identity_problems, "; ".join(identity_problems) or f"순열 {len(baseline)}개 일치")
+    static_wrap_problems = find_static_wrap_problems(compiles)
+    record("D6 정적 역할은 감싸기 무시(감싸기 1 접기 = 0 접기 명령 수)", not static_wrap_problems, "; ".join(static_wrap_problems))
     summary["dxc"] = {label: {"samples": item["samples"], "instructions": item["instructions"]} for label, item in compiles.items()}
+    summary["wrap_instruction_delta"] = {
+        "O3_vs_baseline": compiles["O3"]["instructions"] - baseline_o3_instructions if baseline_o3_instructions else None,
+        **{f"driven_shape{int(shape_value)}_wrap_vs_off": compiles[f"driven_shape{int(shape_value)}_wrap"]["instructions"] - compiles[f"driven_shape{int(shape_value)}"]["instructions"] for shape_value in SHAPE_FOLDS},
+    }
     return finish(results, summary, arguments.output)
 
 

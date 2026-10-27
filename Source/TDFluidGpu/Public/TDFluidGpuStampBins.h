@@ -44,9 +44,10 @@ struct alignas(16) FTDFluidGpuPackedRingShape
 	float InnerRadiusRatio = 0.0f;
 	float SideArcWeight = 0.0f;
 	float InnerEraseRatePerSec = 0.0f;
-	float Padding0 = 0.0f;
+	float EllipseAspectRatio = 1.0f;
 	FVector2f MotionDirection = FVector2f::ZeroVector;
-	FVector2f Padding1 = FVector2f::ZeroVector;
+	float Hardness = 0.0f;
+	float EllipseAxisRadians = 0.0f;
 };
 
 static_assert(sizeof(FTDFluidGpuPackedRingShape) == 32, "FTDFluidGpuPackedRingShape must match the 32 byte shader layout.");

@@ -1,0 +1,47 @@
+{
+ "note": "spec-fx9 7.1 목표(HV1 휘도 차 ≤ 10% [제안], HV3 CVAR 이득 15~25% PF:40, HV4 효과 4개 ≤ 2.5 ms RM:149, HV5 캡처 변경당 1·정지 0 RM:154). frame_cost·영역 비 출처 확장 뒤 사용",
+ "kind_metrics": {
+  "volume": {
+   "look.luma_p50": [
+    0.05,
+    0.9
+   ]
+  }
+ },
+ "region_metrics": {
+  "hvol": {
+   "luma_p50_relative_to:svol": [
+    0.9,
+    1.1
+   ]
+  },
+  "volume": {
+   "look.luma_p50": [
+    0.05,
+    0.9
+   ]
+  }
+ },
+ "frame_cost_metrics": {
+  "hv2_effect_ms_p50": [
+   0.0,
+   6.0
+  ],
+  "hv3_render_profile_gain": [
+   0.15,
+   0.25
+  ],
+  "hv4_four_effects_ms": [
+   0.0,
+   2.5
+  ],
+  "hv5_captures_per_change": [
+   1.0,
+   1.0
+  ],
+  "hv5_captures_when_still": [
+   0.0,
+   0.0
+  ]
+ }
+}

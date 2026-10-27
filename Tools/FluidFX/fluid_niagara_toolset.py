@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 모듈(editor_make_fluid_driven_niagara.py·check_fluid_niagara_specs.py 가 가져온다). 언리얼 MCP 8000(NiagaraToolsets)·원격 실행은 실제 클라이언트를 만들 때만 필요하고, 가짜 클라이언트와 정규화 함수는 에디터 없이 돈다.
 실행 명령: 직접 실행하지 않는다(import fluid_niagara_toolset).
 출력: 없음. 공용 MCP 호출(TDNiagaraToolsetClient)·호출 기록 가짜 클라이언트(TDFakeNiagaraToolsetClient)·스택 조작(Set Parameters·모듈·동적 입력·표본 출력 연결·텍스처 바인딩 왕복·열거 입력)·렌더러 교체·덤프 정규화(v1 editor_make_fluid_ember_niagara.py 188-760 을 이미터 이름 인수로 옮긴 사본, 덤프 형식 sections.UserVariables.userVariables 동일)·컴파일 상태 문제 목록·에디터 로그(FLUSHLOG 뒤 오프셋 구간) 컴파일 문제 줄 집계를 준다.
-상태: 2026-10-26 수정·검증(에디터 0b 7회·생성 7회에서 동작, Niagara 오프스크린 12/12). 열거 입력은 엔진 형식 NiagaraExt_StackInputData_Enum{enum, enumName}(NiagaraExternalSystemEditorUtilities.h:556-571·.cpp:2985-2993, 0b 덤프 재읽기와 같은 꼴)으로 확정. 색·정수 값·GetEmitterInputValues 구조는 0b 확정. 로그 경로 표지 탐색·컴파일 문제 줄 집계는 생성 7회에서 GPU 문제 줄 0으로 동작 확인.
+상태: 2026-10-26 FX-5 추가(미검증, 가짜 클라이언트만): 데이터 인터페이스 입력 모듈(속성 값 쓰기·재읽기 왕복 + 연결·식 입력), KillParticlesInVolume 열거(Kill Shape, 표시 이름 Box 재읽기), 렌더러 전부 제거(none). 이전: 2026-10-26 수정·검증(에디터 0b 7회·생성 7회에서 동작, Niagara 오프스크린 12/12). 열거 입력은 엔진 형식 NiagaraExt_StackInputData_Enum{enum, enumName}(NiagaraExternalSystemEditorUtilities.h:556-571·.cpp:2985-2993, 0b 덤프 재읽기와 같은 꼴)으로 확정. 색·정수 값·GetEmitterInputValues 구조는 0b 확정. 로그 경로 표지 탐색·컴파일 문제 줄 집계는 생성 7회에서 GPU 문제 줄 0으로 동작 확인.
 """
 import copy
 import json
@@ -37,6 +37,7 @@ DATA_INTERFACE_INPUT_STRUCT = "/Script/NiagaraEditor.NiagaraExt_StackInputData_D
 ENUM_INPUT_STRUCT = "/Script/NiagaraEditor.NiagaraExt_StackInputData_Enum"
 LIFE_CYCLE_ENUM = "/Niagara/Enums/ENiagaraEmitterLifeCycleMode.ENiagaraEmitterLifeCycleMode"
 LOOP_BEHAVIOR_ENUM = "/Niagara/Enums/ENiagara_EmitterStateOptions.ENiagara_EmitterStateOptions"
+KILL_SHAPE_ENUM = "/Niagara/Enums/ENiagaraKillVolumeOptions.ENiagaraKillVolumeOptions"
 COMPONENT_NAMES_BY_TYPE = {
     VECTOR2_TYPE: ("x", "y"),
     VECTOR3_TYPE: ("x", "y", "z"),
@@ -69,7 +70,13 @@ FAKE_MODULE_INPUTS = {
     "SpawnRate": ("Module.SpawnRate",),
     "SpawnBurst_Instantaneous": ("Module.Spawn Count",),
     "Collision": ("Module.Restitution", "Module.Friction"),
+    "NM_TD_FluidMassSplat": ("Module.SplatInterface", "Module.bExecute", "Module.Position", "Module.Velocity", "Module.RadiusCm",
+                             "Module.DensityStrength", "Module.HeatStrength"),
+    "NM_TD_FluidNdcAppendPoint": ("Module.DataChannelWriter", "Module.bExecute", "Module.Position", "Module.Velocity", "Module.RadiusCm",
+                                  "Module.DensityStrength", "Module.HeatStrength"),
+    "KillParticlesInVolume": ("Module.Kill Shape", "Module.Volume Origin", "Module.Box Size", "Module.Position"),
 }
+FAKE_ENUM_INPUTS = {"Module.Kill Shape": KILL_SHAPE_ENUM}
 FAKE_STATE_INPUTS = (("Module.Life Cycle Mode", LIFE_CYCLE_ENUM), ("Module.Loop Behavior", LOOP_BEHAVIOR_ENUM), ("Module.Loop Duration", ""))
 FAKE_TEMPLATE_EMITTER = "Fountain"
 
@@ -157,6 +164,7 @@ class TDFakeNiagaraToolsetClient:
         self.module_count = 0
         self.renderer_count = 1
         self.data_interface_values = {}
+        self.added_modules = []
 
     def call(self, tool_name, **arguments):
         self.calls.append(tool_name)
@@ -189,7 +197,12 @@ class TDFakeNiagaraToolsetClient:
 
     def fake_GetEmitterInputValues(self, arguments):
         inputs = [{"name": name, "value": enum_value(enum_path, "") if enum_path else {}} for name, enum_path in FAKE_STATE_INPUTS]
-        return {"modules": [{"moduleName": "EmitterState", "scriptName": "EmitterUpdateScript", "inputs": inputs}]}
+        modules = [{"moduleName": "EmitterState", "scriptName": "EmitterUpdateScript", "inputs": inputs}]
+        for module_name, base in self.added_modules:
+            module_inputs = [{"name": name, "value": enum_value(FAKE_ENUM_INPUTS[name], "") if name in FAKE_ENUM_INPUTS else {}}
+                             for name in FAKE_MODULE_INPUTS.get(base, ())]
+            modules.append({"moduleName": module_name, "scriptName": "ParticleUpdateScript", "inputs": module_inputs})
+        return {"modules": modules}
 
     def fake_AddSetParametersModule(self, arguments):
         names = [parameter["variable"]["name"] for parameter in arguments["parameters"]]
@@ -197,7 +210,9 @@ class TDFakeNiagaraToolsetClient:
 
     def fake_AddModule(self, arguments):
         base = arguments["moduleAsset"]["refPath"].rsplit(".", 1)[-1]
-        return {"moduleName": self.next_module_name(base), "inputs": [{"name": name} for name in FAKE_MODULE_INPUTS.get(base, ())]}
+        module_name = self.next_module_name(base)
+        self.added_modules.append((module_name, base))
+        return {"moduleName": module_name, "inputs": [{"name": name} for name in FAKE_MODULE_INPUTS.get(base, ())]}
 
     def fake_SetStackInputData(self, arguments):
         data = arguments["inputData"]
@@ -592,7 +607,70 @@ def is_binding_roundtrip_ok(binding_report, expected_count):
     return len(binding_report) == expected_count and all(item["stored"] == item["requested"] for item in binding_report)
 
 
+def add_data_interface_module(client, system_path, emitter, step, data_interface_report):
+    module_name, topology = add_module(client, system_path, emitter, step)
+    interface_input_name = resolve_input_name(topology, step["data_interface_input"])
+    data_interface_ref = stack_ref(system_path, emitter, step["script"], module_name, inputs=(interface_input_name,))
+    requested = step["data_interface_values"]
+    client.call("SetStackInputData", stackInputRef=data_interface_ref, inputData=data_interface_input(requested))
+    stored = read_data_interface_values(client, data_interface_ref)
+    data_interface_report.append({"step": step["label"], "requested": requested, "stored": stored})
+    if not is_data_interface_value_stored(requested, stored):
+        raise TDNiagaraToolError(f"{step['label']}: 데이터 인터페이스 값 왕복 불일치 요청 {requested} / 저장 {json.dumps(stored, ensure_ascii=False)[:500]}")
+    for wanted, (variable_name, type_path) in step["links"]:
+        input_name = resolve_input_name(topology, wanted)
+        client.call("SetStackInputData", stackInputRef=stack_ref(system_path, emitter, step["script"], module_name, inputs=(input_name,)),
+                    inputData=linked_input(variable_name, type_path))
+    set_expression_inputs(client, system_path, emitter, step, module_name, topology)
+    return module_name
+
+
+def set_expression_inputs(client, system_path, emitter, step, module_name, topology):
+    for wanted, expression in step["expressions"]:
+        input_name = resolve_input_name(topology, wanted)
+        client.call("SetStackInputData", stackInputRef=stack_ref(system_path, emitter, step["script"], module_name, inputs=(input_name,)),
+                    inputData=expression_input(expression))
+
+
+def stored_text_of(value):
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value).casefold()
+
+
+def is_data_interface_value_stored(requested, stored):
+    for key, value in requested.items():
+        actual = field(stored, key)
+        if actual is None or stored_text_of(value) not in stored_text_of(actual):
+            return False
+    return True
+
+
+def is_data_interface_roundtrip_ok(data_interface_report, expected_count):
+    return len(data_interface_report) == expected_count and all(
+        is_data_interface_value_stored(item["requested"], item["stored"]) for item in data_interface_report)
+
+
+def add_kill_volume_module(client, system_path, emitter, step, state_report):
+    module_name, topology = add_module(client, system_path, emitter, step)
+    set_state_enums(client, system_path, emitter, dict(step, module_fragment=module_name), state_report)
+    set_expression_inputs(client, system_path, emitter, step, module_name, topology)
+    return module_name
+
+
+def remove_all_renderers(client, system_path, emitter):
+    topology = client.call("GetEmitterTopology", emitterRef=stack_ref(system_path, emitter))
+    renderers = find_first(topology, "renderers") or []
+    for _ in renderers:
+        client.call("RemoveRenderer", rendererToRemove=stack_ref(system_path, emitter, renderer=0))
+    remaining = find_first(client.call("GetEmitterTopology", emitterRef=stack_ref(system_path, emitter)), "renderers") or []
+    if remaining:
+        raise TDNiagaraToolError(f"렌더러 제거 실패: 남음 {len(remaining)}")
+    return -1
+
+
 def replace_renderer(client, system_path, emitter, renderer_class, renderer_data):
+
     client.call("RemoveRenderer", rendererToRemove=stack_ref(system_path, emitter, renderer=0))
     added = client.call("AddRenderer", newRendererLocation=stack_ref(system_path, emitter), rendererClass=reference(renderer_class))
     index = find_first(added, "index")

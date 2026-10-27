@@ -2,6 +2,7 @@
 #define TDFogFloorHeightCm(IS_DRIVEN) lerp(FogObjectPosition.z - FogObjectBoundsCm.z, SimCenterWorld.z, (IS_DRIVEN))
 
 float fogIsDriven = step(0.5, SimGridResolution);
+float fogAreaWrapped = fogIsDriven * step(0.5, SimAreaWrapped);
 float3 fogWindowCenter = lerp(FogWindowCenterWorld, SimCenterWorld, fogIsDriven);
 float3 fogWindowExtent = lerp(FogWindowExtentsCm, SimExtentsCm, fogIsDriven);
 float2 fogWindowSize = max(fogWindowExtent.xy, float2(1.0, 1.0));
@@ -11,6 +12,7 @@ float fogEdgeDistanceCm = min(fogEdgeCm.x, fogEdgeCm.y);
 float fogHasWindow = step(0.5, fogWindowExtent.x) * step(0.5, fogWindowExtent.y);
 float fogBlendWidthCm = max(FogWindowBlendRatio * min(fogWindowSize.x, fogWindowSize.y), 1.0);
 float fogWindowWeight = fogHasWindow * smoothstep(0.0, fogBlendWidthCm, fogEdgeDistanceCm);
+fogWindowWeight = lerp(fogWindowWeight, 1.0, fogAreaWrapped);
 
 float fogFloorCm = TDFogFloorHeightCm(fogIsDriven);
 float fogHeightCm = FogWorldPosition.z - fogFloorCm;
@@ -18,9 +20,9 @@ float3 fogWindOffsetCm = ElapsedSeconds * FogNoiseWindCmPerSec;
 float fogShapeSoftCm = max(FogShapeSoftCm, 1.0);
 
 float fogSimDensity = 0.0;
-if (fogIsDriven > 0.5 && fogEdgeDistanceCm >= 0.0)
+if (fogIsDriven > 0.5 && (fogEdgeDistanceCm >= 0.0 || fogAreaWrapped > 0.5))
 {
-    float4 fogSimTap = Texture2DSampleLevel(DensityPressureTexture, DensityPressureTextureSampler, saturate(fogWindowUv), 0);
+    float4 fogSimTap = Texture2DSampleLevel(DensityPressureTexture, DensityPressureTextureSampler, fogAreaWrapped > 0.5 ? fogWindowUv : saturate(fogWindowUv), 0);
     fogSimDensity = saturate(fogSimTap.r) * saturate(fogSimTap.a);
 }
 

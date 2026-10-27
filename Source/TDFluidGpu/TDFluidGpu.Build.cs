@@ -17,6 +17,7 @@ public class TDFluidGpu : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
+			"Json",
 			"Projects"
 		});
 	}

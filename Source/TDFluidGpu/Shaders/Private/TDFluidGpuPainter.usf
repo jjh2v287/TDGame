@@ -4,21 +4,33 @@
 #define TDFLUIDGPU_WRITES_OUTPUT 0
 #endif
 
+#ifndef TDFLUIDGPU_WRITES_PAINTER_VELOCITY
+#define TDFLUIDGPU_WRITES_PAINTER_VELOCITY 0
+#endif
+
+StructuredBuffer<FTDFluidGpuPackedRingShape> StampRingShapes;
 RWTexture2DArray<float> PainterPrimaryDensity;
 RWTexture2DArray<float> PainterSelectiveDensity;
 uint EntryIndex;
 #if TDFLUIDGPU_WRITES_OUTPUT
 RWTexture2D<float4> DensityPressureOutput;
 #endif
+#if TDFLUIDGPU_WRITES_PAINTER_VELOCITY
+RWTexture2DArray<float2> PainterVelocity;
+#if TDFLUIDGPU_WRITES_OUTPUT
+RWTexture2D<float4> VelocityOutput;
+#endif
+#endif
 
-void ApplyPainterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout float2 Density)
+void ApplyPainterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout float2 Density, inout float2 Velocity)
 {
 	const FTDFluidGpuStampBinRange Range = TDFluidGpuGetStampBinRange(Actor, Cell);
 	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
 	float UnusedDisplacement = 0.0f;
 	for (uint EntryOffset = 0; EntryOffset < Range.Count; ++EntryOffset)
 	{
-		const FTDFluidGpuPackedStamp Stamp = Stamps[StampBinIndices[Range.FirstIndex + EntryOffset]];
+		const uint StampIndex = StampBinIndices[Range.FirstIndex + EntryOffset];
+		const FTDFluidGpuPackedStamp Stamp = Stamps[StampIndex];
 		float SmoothWeight;
 		float DistanceCm;
 		if (!TDFluidGpuTryComputeStampWeight(Stamp, CellCenter, SmoothWeight, DistanceCm))
@@ -26,7 +38,14 @@ void ApplyPainterStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, inout
 			continue;
 		}
 
-		TDFluidGpuApplyStampDensity(Actor, Stamp, SmoothWeight, Density, UnusedDisplacement);
+		const float ShapedWeight = TDFluidGpuComputeShapedStampWeight(Stamp, StampRingShapes[StampIndex], CellCenter, SmoothWeight);
+		TDFluidGpuApplyStampDensity(Actor, Stamp, ShapedWeight, Density, UnusedDisplacement);
+#if TDFLUIDGPU_WRITES_PAINTER_VELOCITY
+		if (Stamp.VelocityStrength > 0.0f)
+		{
+			Velocity += (Stamp.TargetVelocityCmPerSec - Velocity) * (ShapedWeight * Actor.StampVelocityBlend);
+		}
+#endif
 	}
 }
 
@@ -44,22 +63,30 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const float SignedDistance = TDFluidGpuComputeObstacleSignedDistance(Actor, Cell);
 	const bool bIsSolidCell = TDFluidGpuIsSolidDistance(SignedDistance);
 	float2 Density = float2(0.0f, 0.0f);
+	float2 Velocity = float2(0.0f, 0.0f);
 	float DecayedPrimaryDensity = 0.0f;
 	if (!bIsSolidCell)
 	{
 		Density = float2(PainterPrimaryDensity[Texel], PainterSelectiveDensity[Texel]);
+#if TDFLUIDGPU_WRITES_PAINTER_VELOCITY
+		Velocity = PainterVelocity[Texel];
+#endif
 		if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_HAS_STAMPS))
 		{
-			ApplyPainterStampsToCell(Actor, Cell, Density);
+			ApplyPainterStampsToCell(Actor, Cell, Density, Velocity);
 		}
 
 		Density *= Actor.DensityDissipationFactor;
+		Velocity *= Actor.PainterVelocityDecay;
 		DecayedPrimaryDensity = Density.x;
 		Density.x = TDFluidGpuApplyAmbientRefill(Actor, Cell, Density.x);
 	}
 
 	PainterPrimaryDensity[Texel] = Density.x;
 	PainterSelectiveDensity[Texel] = Density.y;
+#if TDFLUIDGPU_WRITES_PAINTER_VELOCITY
+	PainterVelocity[Texel] = Velocity;
+#endif
 
 #if TDFLUIDGPU_WRITES_OUTPUT
 	const float Displacement = DecayedPrimaryDensity * Actor.BrushDisplacementRatio;
@@ -67,5 +94,11 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const float ObstacleMask = SignedDistance > 0.0f ? 1.0f : 0.0f;
 	const float Alpha = clamp(TDFluidGpuComputeBorderAlpha(Actor, Cell) * ObstacleMask, 0.0f, 1.0f);
 	DensityPressureOutput[uint2(Cell)] = float4(clamp(Density.x, 0.0f, 1.0f), SurfaceHeight * 0.5f + 0.5f, clamp(Density.y, 0.0f, 1.0f), Alpha);
+#if TDFLUIDGPU_WRITES_PAINTER_VELOCITY
+	const float2 StoredVelocity = TDFluidGpuClampVelocityMagnitude(Velocity, Actor.MaxCellSpeedCmPerSec);
+	const float2 NormalizedVelocity = clamp(StoredVelocity / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, -1.0f, 1.0f) * 0.5f + 0.5f;
+	const float SpeedRatio = clamp(length(StoredVelocity) / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, 0.0f, 1.0f);
+	VelocityOutput[uint2(Cell)] = float4(NormalizedVelocity, SpeedRatio, 0.0f);
+#endif
 #endif
 }

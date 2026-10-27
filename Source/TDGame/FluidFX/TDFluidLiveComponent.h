@@ -186,8 +186,31 @@ public:
 	double GetPlaneDepthCm() const { return PlaneDepthCm; }
 	FTDFluidPlaneSettings GetPlaneSettings() const;
 	FTDFluidVolumeRenderSettings GetVolumeRenderSettings() const;
+	void ApplyParametersToMID(UMaterialInstanceDynamic* TargetMID, float FloorHeightCm = 0.0f) const;
+	void SetTerrainCollisionObstacles(const TArray<FTDFluidSdfObstacle>& InObstacles);
+	const TArray<FTDFluidSdfObstacle>& GetTerrainCollisionObstacles() const { return TerrainCollisionObstacles; }
 	const FTDFluidInputBrushSettings& GetInputBrushSettings() const { return InputBrushSettings; }
+	const FTDFluidMassInputSettings& GetMassInputSettings() const { return MassInputSettings; }
+	bool AcceptsMassInput() const;
+	void QueueMassInputPoints(TConstArrayView<FTDFluidMassInputPoint> Points);
+	bool BuildMassInputTarget(FTDFluidMassInputTarget& OutTarget) const;
+	FTDFluidGpuMassInputCounters GetMassInputCounters() const;
+	int32 GetPendingMassPointCount() const { return PendingMassPoints.Num(); }
+	int32 GetLastUploadedMassPointCount() const { return LastUploadedMassPointCount; }
+	void SetMassInputSettingsForTests(const FTDFluidMassInputSettings& InSettings) { MassInputSettings = InSettings; }
+	FVector GetSimulationWindowCenterWorld() const;
+	void EnsureMassInputDataChannelLoadRequested();
+	void SetCollectedObstacles(const TArray<FTDFluidSdfObstacle>& InObstacles);
+	const TArray<FTDFluidSdfObstacle>& GetCollectedObstacles() const { return CollectedObstacles; }
+	static bool ProjectObstacleToPlane(const FTDFluidPlaneBasis& Basis, double InPlaneDepthCm, const FTDFluidPlaneSettings& InPlaneSettings, const FTDFluidSdfObstacle& InObstacle, FTDFluidSdfObstacle& OutObstacle);
+	static void SortAndClampMassPoints(TArray<FTDFluidMassInputPoint>& InOutPoints, const FVector& CenterWorld, int32 MaxPoints);
 	const FTDFluidRuntimeOpsSettings& GetRuntimeOpsSettings() const { return RuntimeOpsSettings; }
+
+	const FTDFluidSurfaceRenderSettings& GetSurfaceRenderSettings() const { return SurfaceRenderSettings; }
+
+	bool NeedsStampGroundElevation() const;
+
+	void SetWetnessSourceComponent(UTDFluidLiveComponent* SourceComponent);
 	FVector2D ProjectWorldToSolverPlane(const FVector& WorldPoint) const;
 	bool TryProjectWorldPointIntoSlab(const FVector& WorldPoint, FVector2D& OutPlanePoint) const;
 	FVector UnprojectSolverPlaneToWorld(const FVector2D& PlanePoint, double DepthOffsetCm = 0.0) const;
@@ -223,6 +246,8 @@ private:
 	bool ApplySimulationConfigAndDetectReset(const FTDFluidSimulationConfig& InConfig);
 	bool HasFreshEffectivePresetSettings() const;
 	void RefreshEffectivePresetSettings(FTDFluidPresetReapplyReport* InOutReport);
+	void ApplyGroundSlabToPendingStamps();
+	void ApplyTrackParametersToMID(UMaterialInstanceDynamic& TargetMID) const;
 	void ReapplyMaterialLooks(FTDFluidPresetReapplyReport& InOutReport);
 	void ApplyNiagaraLookIfStale(UNiagaraComponent& NiagaraComp);
 	void InitializeSimulation(const FVector2D& CenterWorld);
@@ -244,8 +269,12 @@ private:
 	void ApplyVolumeParameters() const;
 	void UploadSolverOutputTextures();
 	void ReapplyActiveObstacles();
+	bool HasAnySolverObstacles() const;
+	void BuildWorldSolverObstacles(TArray<FTDFluidSdfObstacle>& OutObstacles) const;
 	void ReinitializeSolverAtOwnerLocation();
 	FVector2D ResolveOwnerCenterWorld() const;
+	void ApplyInputBrushRulesToPendingStamps();
+	double ResolveBrushSurfaceDepthCm() const;
 	void ConvertPendingStampsToSolverPlane();
 	FVector2D ResolveWrapWindowMinimumCm() const;
 	void WrapPendingStampsIntoWindow();
@@ -269,7 +298,6 @@ private:
 	void SyncOwnedNiagaraComponent();
 	void DestroyOwnedNiagaraComponent();
 	void RefreshTaggedNiagaraComponentCache(UWorld* World);
-	void ApplyParametersToMID(UMaterialInstanceDynamic* TargetMID, float FloorHeightCm = 0.0f) const;
 	void PackAuxAndTransmittanceOutputs();
 	FTDFluidGpuTransmittanceInput BuildGpuTransmittanceInput() const;
 	void ApplyVolumeRenderParameters() const;
@@ -288,6 +316,19 @@ private:
 
 	UPROPERTY(Transient)
 	TArray<FTDFluidSdfObstacle> ActiveObstacles;
+
+	UPROPERTY(Transient)
+	TArray<FTDFluidSdfObstacle> TerrainCollisionObstacles;
+
+	UPROPERTY(Transient)
+	TArray<FTDFluidSdfObstacle> CollectedObstacles;
+
+	UPROPERTY(Transient)
+	FTDFluidMassInputSettings MassInputSettings;
+
+	TArray<FTDFluidGpuMassPointInput> PendingMassPoints;
+	FSoftObjectPath RequestedMassInputDataChannelPath;
+	int32 LastUploadedMassPointCount = 0;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> DensityPressureTexture;
@@ -360,6 +401,9 @@ private:
 	FTDFluidVolumeRenderSettings EffectiveVolumeRender;
 	FTDFluidInputBrushSettings InputBrushSettings;
 	FTDFluidRuntimeOpsSettings RuntimeOpsSettings;
+	FTDFluidSurfaceRenderSettings SurfaceRenderSettings;
+	TWeakObjectPtr<UTDFluidLiveComponent> WetnessSourceComponent;
+	bool bHasWetnessSourceBinding = false;
 	TWeakObjectPtr<UTDFluidPresetAsset> EffectiveSettingsPreset;
 	ETDFluidPresetKind EffectiveSettingsPresetKind = ETDFluidPresetKind::Custom;
 	int32 TableGeneration = INDEX_NONE;

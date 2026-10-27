@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, fx9_hvol_vs_svol 카메라(폰 0,450, −60°) 기준 초안 박스(첫 촬영 뒤 맞춤). svol = 구역 0 SVOL 창, hvol = +900 cm 오프셋 HVOL 창",
+ "regions": [
+  {
+   "name": "svol",
+   "kind": "volume",
+   "box": [
+    200,
+    300,
+    620,
+    620
+   ]
+  },
+  {
+   "name": "hvol",
+   "kind": "volume",
+   "box": [
+    660,
+    300,
+    1080,
+    620
+   ]
+  },
+  {
+   "name": "floor",
+   "kind": "background",
+   "box": [
+    40,
+    640,
+    300,
+    710
+   ]
+  }
+ ]
+}

@@ -4,6 +4,7 @@
 #include "Misc/EnumClassFlags.h"
 #include "PooledRenderTarget.h"
 #include "TDFluidGpuInputs.h"
+#include "TDFluidGpuMassInput.h"
 #include "TDFluidGpuStampBins.h"
 
 enum class ETDFluidGpuActorFlags : uint32
@@ -26,9 +27,14 @@ enum class ETDFluidGpuActorFlags : uint32
 	UsesHeatChannel = 1u << 14,
 	UsesBoundaryReflection = 1u << 15,
 	UsesVortexForce = 1u << 16,
-	WritesAuxOutput = 1u << 17
+	WritesAuxOutput = 1u << 17,
+	ConsumesMassInput = 1u << 18,
+	UsesTrackBank = 1u << 19,
+	WritesPainterVelocity = 1u << 20
 };
 ENUM_CLASS_FLAGS(ETDFluidGpuActorFlags);
+
+TDFLUIDGPU_API int32 TDFluidGpuComputeTrackBankRadiusCells(float BlurRadiusCm, double CellSizeCm);
 
 enum class ETDFluidGpuWaterFlags : uint32
 {
@@ -141,8 +147,14 @@ struct alignas(16) FTDFluidGpuActorParameters
 	float BrushDisplacementRatio = TDFluidGpuSolverConstants::BrushDisplacementRatio;
 	uint32 FlowNoiseLatticePeriodPacked = 0;
 	uint32 AmbientNoiseLatticePeriodPacked = 0;
+
+	float TrackBankStrength = 0.0f;
+	float TrackBankHeightLimit = 0.0f;
+	uint32 TrackBankRadiusCells = 1;
+	uint32 TrackBankPadding = 0;
 };
-static_assert(sizeof(FTDFluidGpuActorParameters) == 288, "FTDFluidGpuActorParameters must match the 288 byte shader layout.");
+static_assert(sizeof(FTDFluidGpuActorParameters) == 304, "FTDFluidGpuActorParameters must match the 304 byte shader layout.");
+static_assert(offsetof(FTDFluidGpuActorParameters, TrackBankStrength) == 288, "FTDFluidGpuActorParameters::TrackBankStrength must stay at byte 288.");
 static_assert(offsetof(FTDFluidGpuActorParameters, FlowNoiseLatticePeriodPacked) == 280, "FTDFluidGpuActorParameters::FlowNoiseLatticePeriodPacked must stay at byte 280.");
 static_assert(offsetof(FTDFluidGpuActorParameters, AmbientNoiseLatticePeriodPacked) == 284, "FTDFluidGpuActorParameters::AmbientNoiseLatticePeriodPacked must stay at byte 284.");
 static_assert(offsetof(FTDFluidGpuActorParameters, MaxCellSpeedCmPerSec) == 272, "FTDFluidGpuActorParameters::MaxCellSpeedCmPerSec must stay at byte 272.");
@@ -278,6 +290,8 @@ struct FTDFluidGpuBatchKey
 	bool bUsesFloat32WaterVelocity = false;
 	bool bUsesFloat32Ripple = false;
 	bool bWrapsArea = false;
+	int32 MassInputDivisor = 0;
+	bool bWritesPainterVelocity = false;
 
 	bool operator==(const FTDFluidGpuBatchKey& Other) const
 	{
@@ -291,7 +305,9 @@ struct FTDFluidGpuBatchKey
 			&& WaterPressureMode == Other.WaterPressureMode
 			&& bUsesFloat32WaterVelocity == Other.bUsesFloat32WaterVelocity
 			&& bUsesFloat32Ripple == Other.bUsesFloat32Ripple
-			&& bWrapsArea == Other.bWrapsArea;
+			&& bWrapsArea == Other.bWrapsArea
+			&& MassInputDivisor == Other.MassInputDivisor
+			&& bWritesPainterVelocity == Other.bWritesPainterVelocity;
 	}
 };
 
@@ -330,6 +346,7 @@ struct FTDFluidGpuBatchStateTextures
 	TRefCountPtr<IPooledRenderTarget> TerrainElevation;
 	TRefCountPtr<IPooledRenderTarget> PainterPrimaryDensity;
 	TRefCountPtr<IPooledRenderTarget> PainterSelectiveDensity;
+	TRefCountPtr<IPooledRenderTarget> PainterVelocity;
 	TRefCountPtr<IPooledRenderTarget> Heat[2];
 	TRefCountPtr<IPooledRenderTarget> Ripple[2];
 	TRefCountPtr<IPooledRenderTarget> WaterGuideField;
@@ -407,7 +424,7 @@ public:
 	static int32 ComputeMultigridLevelCount(int32 ResolutionTier);
 	static int64 ComputeMultigridTransientBytes(int32 ResolutionTier);
 	static int32 RoundUpSliceCapacity(int32 SliceCount);
-	static FTDFluidGpuMemoryEstimate EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel = false, bool bUsesTransmittance = false, uint8 PressureSolverModeRequest = 0);
+	static FTDFluidGpuMemoryEstimate EstimateActorMemory(ETDFluidGpuSimMode SimMode, int32 RequestedResolution, bool bUsesHeatChannel = false, bool bUsesTransmittance = false, uint8 PressureSolverModeRequest = 0, int32 MassInputDivisor = 0, bool bWritesPainterVelocity = false);
 	static int32 ComputeTransmittanceResolution(int32 ResolutionTier);
 	static void PrepareFrame(const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPreparedFrame& OutPreparedFrame);
 	static int32 ResolveWaterResolutionTier(int32 RequestedResolution);
@@ -426,6 +443,7 @@ public:
 	int32 GetRequiredSliceCapacity() const;
 
 	FTDFluidGpuBatchStateTextures StateTextures;
+	FTDFluidGpuMassInputBatchState MassInputState;
 
 private:
 	static void ReleaseActorFromBatches(TArray<FTDFluidGpuBatch>& InOutBatches, uint64 ActorKey, const FTDFluidGpuBatchKey* KeptBatchKey);

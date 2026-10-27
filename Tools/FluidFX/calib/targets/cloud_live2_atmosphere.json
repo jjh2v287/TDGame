@@ -1,0 +1,107 @@
+{
+ "note": "LIVE-2 구름 목표(RM 3.3~4.2, TA G12, IFS:75, MT G5·G9·G10·H7). 범위 = 값 ±25%(p95/p5) 또는 등급 경계(구름 미세/거친 <0.5). atmosphere 출처 확장(P3) 뒤 사용",
+ "kind_metrics": {
+  "cloud": {
+   "atmosphere.fine_over_coarse": [
+    0.0,
+    0.5
+   ]
+  }
+ },
+ "region_metrics": {
+  "smoke_backlit": {
+   "atmosphere.p95_over_p5": [
+    3.12,
+    5.2
+   ],
+   "atmosphere.warmth_bright": [
+    0.065,
+    0.197
+   ]
+  },
+  "smoke_side": {
+   "atmosphere.p95_over_p5": [
+    2.49,
+    4.15
+   ]
+  },
+  "hill_fog": {
+   "atmosphere.p95_over_p5": [
+    2.46,
+    4.1
+   ],
+   "atmosphere.warmth_bright": [
+    0.062,
+    0.186
+   ]
+  },
+  "cap": {
+   "atmosphere.p95_over_p5": [
+    1.76,
+    2.93
+   ],
+   "atmosphere.saturation": [
+    0.33,
+    0.55
+   ]
+  },
+  "mushroom": {
+   "atmosphere.p95_over_p5": [
+    1.98,
+    3.3
+   ]
+  },
+  "far_deck": {
+   "atmosphere.p95_over_p5": [
+    1.29,
+    2.15
+   ],
+   "atmosphere.warmth_bright": [
+    0.048,
+    0.143
+   ]
+  },
+  "near": {
+   "atmosphere.p95_over_p5": [
+    1.4,
+    2.33
+   ],
+   "atmosphere.warmth_bright": [
+    0.058,
+    0.174
+   ]
+  },
+  "far": {
+   "atmosphere.p95_over_p5": [
+    1.46,
+    2.43
+   ]
+  },
+  "eye_floor": {
+   "eye_floor_over_eye_wall": [
+    0.45,
+    0.75
+   ]
+  },
+  "frame": {
+   "atmosphere.grain": [
+    0.0,
+    0.037
+   ]
+  },
+  "wall": {
+   "atmosphere.p95_over_p5": [
+    1.13,
+    1.88
+   ],
+   "atmosphere.warmth_bright": [
+    0.114,
+    0.342
+   ],
+   "atmosphere.saturation": [
+    0.4,
+    0.68
+   ]
+  }
+ }
+}

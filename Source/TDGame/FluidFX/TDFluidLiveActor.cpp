@@ -7,18 +7,25 @@
 #include "Components/PointLightComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/AssetManager.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/Scene.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/Texture2D.h"
 #include "Engine/World.h"
+#include "FluidFX/TDFluidHeightCacheAsset.h"
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidPresetAsset.h"
+#include "FluidFX/TDFluidTrackSourceComponent.h"
+#include "FluidFX/TDFluidVolumeDriverComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/App.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 
@@ -26,8 +33,6 @@ CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
 namespace
 {
-	constexpr float TerrainTraceStartHeightCm = 2000.0f;
-	constexpr float TerrainTraceEndDepthCm = 4000.0f;
 	constexpr int32 MaxQueuedTerrainTraceBatches = 2;
 	constexpr float PlaneMeshBaseSizeCm = 100.0f;
 	constexpr float ActivationVolumeHalfHeightCm = 1000.0f;
@@ -87,6 +92,16 @@ namespace
 	{
 		const float PlanarSpeed = Velocity.Size2D();
 		return PlanarSpeed >= MinSpeedCmPerSec && PlanarSpeed <= TeleportSpeedCmPerSec;
+	}
+
+	void ApplyTDFluidTrackGroundPlane(FTDFluidBrushStamp& Stamp, const FTDFluidTrackGroundPlane& GroundPlane)
+	{
+		if (!GroundPlane.bIsValid)
+		{
+			return;
+		}
+		Stamp.bHasGroundElevation = true;
+		Stamp.GroundElevationCm = GroundPlane.Point.Z - (GroundPlane.Normal.X * (Stamp.WorldLocation.X - GroundPlane.Point.X) + GroundPlane.Normal.Y * (Stamp.WorldLocation.Y - GroundPlane.Point.Y)) / GroundPlane.Normal.Z;
 	}
 
 	bool IsCellOutsideGrid(const FIntPoint& Cell, int32 Resolution)
@@ -225,9 +240,14 @@ void ATDFluidLiveActor::BeginPlay()
 	{
 		LiveComponent->BindInternalMeshComponent(InternalSurfaceMesh);
 		LiveComponent->BindVolumeMeshComponent(VolumeMeshComponent);
+		if (WetnessSourceActor && WetnessSourceActor->LiveComponent)
+		{
+			LiveComponent->SetWetnessSourceComponent(WetnessSourceActor->LiveComponent);
+		}
 	}
 
 	SyncVolumeExtentsWithSimulation();
+	SyncVolumeDriver();
 
 	if (UWorld* World = GetWorld())
 	{
@@ -251,6 +271,11 @@ void ATDFluidLiveActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	ClearInteractionState();
 	PendingTerrainCells.Reset();
 	DiscardTerrainTraceSlots();
+	if (TerrainHeightCacheLoadHandle.IsValid())
+	{
+		TerrainHeightCacheLoadHandle->CancelHandle();
+		TerrainHeightCacheLoadHandle.Reset();
+	}
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -275,6 +300,7 @@ void ATDFluidLiveActor::InitializeFromPreset(UTDFluidPresetAsset* InPreset, floa
 	bIsTerrainQueueCurrent = false;
 	bHasSteppedWhileAwake = false;
 	SyncVolumeExtentsWithSimulation();
+	SyncVolumeDriver();
 }
 
 void ATDFluidLiveActor::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutReport)
@@ -286,6 +312,11 @@ void ATDFluidLiveActor::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutRe
 
 	LiveComponent->ReapplyPresetTuning(InOutReport);
 	SyncVolumeExtentsWithSimulation();
+	SyncVolumeDriver();
+	if (VolumeDriver)
+	{
+		VolumeDriver->ReapplyMaterialLooks(InOutReport);
+	}
 }
 
 void ATDFluidLiveActor::RegisterInteractingActor(AActor* InteractingActor)
@@ -446,6 +477,10 @@ void ATDFluidLiveActor::FinishLiveActorStep()
 		ApplyVolumeLightToMaterial();
 		FinishActorSpecificOutputs(LastStepDeltaSeconds);
 		LiveComponent->SubmitNearRippleStep(ResolveNearRippleCenter(), LastStepDeltaSeconds);
+		if (VolumeDriver)
+		{
+			VolumeDriver->DriveTargets(*LiveComponent, LastStepDeltaSeconds);
+		}
 	}
 	else
 	{
@@ -466,6 +501,10 @@ void ATDFluidLiveActor::SetPooledInactive(bool bInactive)
 	const bool bWasPooledInactive = bIsPooledInactive;
 	bIsPooledInactive = bInactive;
 	SetActorHiddenInGame(bInactive);
+	if (VolumeDriver)
+	{
+		VolumeDriver->SetDriverHidden(bInactive);
+	}
 	bHasSteppedWhileAwake = false;
 	bHasPreparedSolverStep = false;
 	bIsTerrainQueueCurrent = false;
@@ -565,6 +604,8 @@ void ATDFluidLiveActor::CollectOverlappingAndRegisteredInputs(float DeltaTime)
 	PruneInvalidCombatBindings();
 	CurrentActorLocations.Reset();
 	CurrentBoneLocations.Reset();
+	CurrentTrackPointLocations.Reset();
+	GroundTracesThisTick = 0;
 
 	for (AActor* Candidate : CandidateActors)
 	{
@@ -577,6 +618,7 @@ void ATDFluidLiveActor::CollectOverlappingAndRegisteredInputs(float DeltaTime)
 
 	PreviousActorLocations = MoveTemp(CurrentActorLocations);
 	PreviousBoneLocations = MoveTemp(CurrentBoneLocations);
+	PreviousTrackPointLocations = MoveTemp(CurrentTrackPointLocations);
 }
 
 void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float DeltaTime)
@@ -586,21 +628,26 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 	const FObjectKey ActorKey(TargetActor);
 	const FVector CurrentLocation = TargetActor->GetActorLocation();
 	const FTDFluidInputBrushSettings& InputBrushSettings = LiveComponent->GetInputBrushSettings();
+	const FTDFluidTrackGroundPlane GroundPlane = LiveComponent->NeedsStampGroundElevation() ? TraceTrackGroundPlane(*TargetActor) : FTDFluidTrackGroundPlane();
+	FVector OwnerPlanarVelocity = FVector::ZeroVector;
 
 	if (const FVector* PreviousLocation = PreviousActorLocations.Find(ActorKey))
 	{
 		const FVector ComputedVelocity = (CurrentLocation - *PreviousLocation) / DeltaTime;
+		OwnerPlanarVelocity = FVector(ComputedVelocity.X, ComputedVelocity.Y, 0.0);
 		if (IsStampableVelocity(ComputedVelocity, MinInteractionSpeedCmPerSec, InputBrushSettings.TeleportSpeedCmPerSec))
 		{
 			FTDFluidBrushStamp PivotStamp;
 			PivotStamp.WorldLocation = CurrentLocation;
 			PivotStamp.WorldVelocity = ComputedVelocity;
-			PivotStamp.RadiusCm = ActorPivotBrushRadiusCm;
+			PivotStamp.RadiusCm = InputBrushSettings.PivotBrushRadiusOverrideCm > 0.0f ? InputBrushSettings.PivotBrushRadiusOverrideCm : ActorPivotBrushRadiusCm;
 			PivotStamp.DensityStrength = InputBrushSettings.PivotDensityStrength;
 			PivotStamp.VelocityStrength = 1.0f;
 			PivotStamp.Channel = InteractionBrushChannel;
 			ApplyActorBrushSettings(PivotStamp, LiveComponent->SimulationConfig);
 			ApplyRingBrushSettings(PivotStamp, InputBrushSettings);
+			PivotStamp.ShapeHardness = InputBrushSettings.BrushHardness;
+			ApplyTDFluidTrackGroundPlane(PivotStamp, GroundPlane);
 			LiveComponent->QueueBrushStamp(PivotStamp);
 		}
 		else if (ComputedVelocity.Size2D() < MinInteractionSpeedCmPerSec && TargetActor->IsA<APawn>())
@@ -609,6 +656,7 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 		}
 	}
 	CurrentActorLocations.Add(ActorKey, CurrentLocation);
+	HarvestTrackSourceStamps(*TargetActor, DeltaTime, InputBrushSettings, GroundPlane);
 
 	if (TrackedBoneNames.IsEmpty())
 	{
@@ -637,18 +685,21 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 			if (const FVector* PrevBoneLoc = PreviousBoneLocations.Find(BoneKey))
 			{
 				const FVector BoneVelocity = (BoneLocation - *PrevBoneLoc) / DeltaTime;
-				if (IsStampableVelocity(BoneVelocity, MinInteractionSpeedCmPerSec, InputBrushSettings.TeleportSpeedCmPerSec))
+				if (IsTrackContactStampable(BoneVelocity, MinInteractionSpeedCmPerSec, InputBrushSettings.BoneStampMaxSpeedCmPerSec, InputBrushSettings))
 				{
 					FTDFluidBrushStamp BoneStamp;
 					BoneStamp.WorldLocation = BoneLocation;
 					BoneStamp.WorldVelocity = BoneVelocity;
-					BoneStamp.RadiusCm = BoneBrushRadiusCm;
+					BoneStamp.RadiusCm = InputBrushSettings.BoneBrushRadiusOverrideCm > 0.0f ? InputBrushSettings.BoneBrushRadiusOverrideCm : BoneBrushRadiusCm;
 					BoneStamp.DensityStrength = InputBrushSettings.BoneDensityStrength;
 					BoneStamp.VelocityStrength = 1.0f;
 					BoneStamp.Channel = InteractionBrushChannel;
 					ApplyActorBrushSettings(BoneStamp, LiveComponent->SimulationConfig);
 					ApplyRingBrushSettings(BoneStamp, InputBrushSettings);
-					LiveComponent->QueueBrushStamp(BoneStamp);
+					BoneStamp.ShapeAspectRatio = InputBrushSettings.BoneStampAspectRatio;
+					BoneStamp.ShapeHardness = InputBrushSettings.BrushHardness;
+					BoneStamp.ShapeMajorAxis = OwnerPlanarVelocity;
+					QueueTrackStroke(BoneStamp, *PrevBoneLoc, InputBrushSettings, GroundPlane);
 				}
 			}
 
@@ -879,6 +930,7 @@ void ATDFluidLiveActor::ResetInteractionHistory()
 	ResetMouseBrushStroke();
 	PreviousActorLocations.Reset();
 	PreviousBoneLocations.Reset();
+	PreviousTrackPointLocations.Reset();
 	CurrentActorLocations.Reset();
 	CurrentBoneLocations.Reset();
 }
@@ -965,6 +1017,12 @@ void ATDFluidLiveActor::ShiftTerrainQueueWithWindow(const FVector2D& CenterBefor
 		Slot.bIsSettled = IsCellOutsideGrid(Slot.Cell, Resolution);
 	}
 
+	TerrainCacheMissPrefixCount = 0;
+	if (TerrainHeightSettings.bUseHeightAsCollisionMask)
+	{
+		TerrainCollisionMask.Shift(ShiftCells);
+	}
+
 	const int32 NewColumnBegin = ShiftCells.X > 0 ? Resolution - ShiftCells.X : 0;
 	const int32 NewColumnEnd = ShiftCells.X > 0 ? Resolution : -ShiftCells.X;
 	for (int32 CellY = 0; CellY < Resolution; ++CellY)
@@ -1015,16 +1073,43 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 			}
 		}
 		bIsTerrainQueueCurrent = true;
+		TerrainCacheMissPrefixCount = 0;
+		if (TerrainHeightSettings.bUseHeightAsCollisionMask)
+		{
+			TerrainCollisionMask.Reset(Resolution);
+		}
 	}
+
+	if (IsTerrainHeightCacheLoading())
+	{
+		return;
+	}
+
+	if (FillPendingTerrainCellsFromCache() > 0)
+	{
+		bShouldCompleteTerrainSampling = true;
+	}
+	const bool bHasUnscannedCacheCells = IsTerrainHeightCacheSourceActive() && PendingTerrainCells.Num() > TerrainCacheMissPrefixCount;
 
 	if (bUseAsyncTerrainTraces)
 	{
-		RequestQueuedTerrainTraces(*World);
+		if (!bHasUnscannedCacheCells)
+		{
+			RequestQueuedTerrainTraces(*World);
+			TerrainCacheMissPrefixCount = FMath::Min(TerrainCacheMissPrefixCount, PendingTerrainCells.Num());
+		}
+		CompleteTerrainSamplingIfSettled();
+		return;
+	}
+
+	if (bHasUnscannedCacheCells)
+	{
 		return;
 	}
 
 	if (PendingTerrainCells.IsEmpty())
 	{
+		CompleteTerrainSamplingIfSettled();
 		return;
 	}
 
@@ -1037,19 +1122,128 @@ void ATDFluidLiveActor::SampleQueuedTerrainWithinBudget()
 	{
 		const FIntPoint Cell = PendingTerrainCells.Pop(EAllowShrinking::No);
 		const FVector2D CellCenter = LiveComponent->TerrainSampleCellToPlaneCenter(Cell.X, Cell.Y);
-		const FVector TraceStart(CellCenter.X, CellCenter.Y, BaseHeightCm + TerrainTraceStartHeightCm);
-		const FVector TraceEnd(CellCenter.X, CellCenter.Y, BaseHeightCm - TerrainTraceEndDepthCm);
+		const FVector TraceStart(CellCenter.X, CellCenter.Y, BaseHeightCm + TerrainHeightSettings.TraceStartHeightCm);
+		const FVector TraceEnd(CellCenter.X, CellCenter.Y, BaseHeightCm - TerrainHeightSettings.TraceEndDepthCm);
 
 		FHitResult Hit;
 		const bool bDidHit = World->LineTraceSingleByObjectType(Hit, TraceStart, TraceEnd, ObjectQueryParams, QueryParams);
-		LiveComponent->SetTerrainElevationAtCell(Cell.X, Cell.Y, bDidHit ? Hit.ImpactPoint.Z : ResolveTerrainMissElevationCm(Cell.X, Cell.Y));
+		++TerrainTraceRequestCount;
+		RecordTerrainCellElevation(Cell.X, Cell.Y, bDidHit ? ApplyTerrainHeightOps(Hit.ImpactPoint.Z, TerrainHeightSettings) : ResolveTerrainMissElevationCm(Cell.X, Cell.Y));
 		--RemainingTraces;
 	}
+	TerrainCacheMissPrefixCount = FMath::Min(TerrainCacheMissPrefixCount, PendingTerrainCells.Num());
 
 	if (PendingTerrainCells.IsEmpty())
 	{
-		LiveComponent->CompleteTerrainElevationSampling();
-		OnTerrainSamplingCompleted();
+		bShouldCompleteTerrainSampling = true;
+		CompleteTerrainSamplingIfSettled();
+	}
+}
+
+bool ATDFluidLiveActor::IsTrackContactStampable(const FVector& Velocity, float MinSpeedCmPerSec, float MaxSpeedCmPerSec, const FTDFluidInputBrushSettings& Settings)
+{
+	const double PlanarSpeed = Velocity.Size2D();
+	if (MaxSpeedCmPerSec > 0.0f && PlanarSpeed > MaxSpeedCmPerSec)
+	{
+		return false;
+	}
+	if (Settings.bStampsSlowBones)
+	{
+		return PlanarSpeed <= Settings.TeleportSpeedCmPerSec;
+	}
+	return IsStampableVelocity(Velocity, MinSpeedCmPerSec, Settings.TeleportSpeedCmPerSec);
+}
+
+int32 ATDFluidLiveActor::ComputeStrokeStampCount(double SegmentLengthCm, float RadiusCm, float SpacingRatio)
+{
+	const double SpacingCm = FMath::Max(static_cast<double>(RadiusCm) * static_cast<double>(SpacingRatio), 1.0);
+	return FMath::Clamp(FMath::CeilToInt(SegmentLengthCm / SpacingCm), 1, 16);
+}
+
+FTDFluidTrackGroundPlane ATDFluidLiveActor::TraceTrackGroundPlane(const AActor& TargetActor)
+{
+	FTDFluidTrackGroundPlane GroundPlane;
+	UWorld* World = GetWorld();
+	const FTDFluidRuntimeOpsSettings& RuntimeOps = LiveComponent->GetRuntimeOpsSettings();
+	if (!World || GroundTracesThisTick >= RuntimeOps.MaxGroundTracesPerTick)
+	{
+		return GroundPlane;
+	}
+
+	++GroundTracesThisTick;
+	FCollisionQueryParams QueryParams = BuildTerrainTraceQueryParams(*World);
+	QueryParams.AddIgnoredActor(&TargetActor);
+	const FVector TraceStart = TargetActor.GetActorLocation();
+	const FVector TraceEnd = TraceStart - FVector(0.0, 0.0, RuntimeOps.GroundTraceDepthCm);
+	FHitResult Hit;
+	if (!World->LineTraceSingleByObjectType(Hit, TraceStart, TraceEnd, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams) || Hit.ImpactNormal.Z < 0.05)
+	{
+		return GroundPlane;
+	}
+
+	GroundPlane.Point = Hit.ImpactPoint;
+	GroundPlane.Normal = Hit.ImpactNormal;
+	GroundPlane.bIsValid = true;
+	return GroundPlane;
+}
+
+void ATDFluidLiveActor::QueueTrackStroke(FTDFluidBrushStamp Stamp, const FVector& PreviousLocation, const FTDFluidInputBrushSettings& Settings, const FTDFluidTrackGroundPlane& GroundPlane)
+{
+	const FVector EndLocation = Stamp.WorldLocation;
+	const int32 StampCount = Settings.bInterpolateStrokes ? ComputeStrokeStampCount((EndLocation - PreviousLocation).Size2D(), Stamp.RadiusCm, Settings.StrokeSpacingRatio) : 1;
+	for (int32 StampIndex = 1; StampIndex <= StampCount; ++StampIndex)
+	{
+		Stamp.WorldLocation = StampIndex == StampCount ? EndLocation : FMath::Lerp(PreviousLocation, EndLocation, static_cast<double>(StampIndex) / static_cast<double>(StampCount));
+		ApplyTDFluidTrackGroundPlane(Stamp, GroundPlane);
+		LiveComponent->QueueBrushStamp(Stamp);
+	}
+}
+
+void ATDFluidLiveActor::HarvestTrackSourceStamps(AActor& TargetActor, float DeltaTime, const FTDFluidInputBrushSettings& Settings, const FTDFluidTrackGroundPlane& GroundPlane)
+{
+	TInlineComponentArray<UTDFluidTrackSourceComponent*> TrackSources(&TargetActor);
+	for (const UTDFluidTrackSourceComponent* TrackSource : TrackSources)
+	{
+		if (!TrackSource)
+		{
+			continue;
+		}
+
+		const FObjectKey SourceKey(TrackSource);
+		for (int32 PointIndex = 0; PointIndex < TrackSource->Points.Num(); ++PointIndex)
+		{
+			FVector PointLocation;
+			if (!TrackSource->ResolvePointWorldLocation(PointIndex, PointLocation))
+			{
+				continue;
+			}
+
+			const TPair<FObjectKey, int32> PointKey(SourceKey, PointIndex);
+			CurrentTrackPointLocations.Add(PointKey, PointLocation);
+			const FVector* PreviousPointLocation = PreviousTrackPointLocations.Find(PointKey);
+			if (!PreviousPointLocation)
+			{
+				continue;
+			}
+
+			const FVector PointVelocity = (PointLocation - *PreviousPointLocation) / DeltaTime;
+			if (!IsTrackContactStampable(PointVelocity, MinInteractionSpeedCmPerSec, 0.0f, Settings))
+			{
+				continue;
+			}
+
+			FTDFluidBrushStamp WheelStamp;
+			WheelStamp.WorldLocation = PointLocation;
+			WheelStamp.WorldVelocity = PointVelocity;
+			WheelStamp.RadiusCm = TrackSource->ResolvePointRadiusCm(PointIndex, Settings.VehicleBrushRadiusScale);
+			WheelStamp.DensityStrength = Settings.BoneDensityStrength;
+			WheelStamp.VelocityStrength = 1.0f;
+			WheelStamp.Channel = InteractionBrushChannel;
+			ApplyActorBrushSettings(WheelStamp, LiveComponent->SimulationConfig);
+			WheelStamp.ShapeAspectRatio = Settings.VehicleStampAspectRatio;
+			WheelStamp.ShapeHardness = Settings.BrushHardness;
+			QueueTrackStroke(WheelStamp, *PreviousPointLocation, Settings, GroundPlane);
+		}
 	}
 }
 
@@ -1081,12 +1275,13 @@ void ATDFluidLiveActor::RequestQueuedTerrainTraces(UWorld& World)
 		{
 			const FIntPoint Cell = PendingTerrainCells.Pop(EAllowShrinking::No);
 			const FVector2D CellCenter = LiveComponent->TerrainSampleCellToPlaneCenter(Cell.X, Cell.Y);
-			const FVector TraceStart(CellCenter.X, CellCenter.Y, BaseHeightCm + TerrainTraceStartHeightCm);
-			const FVector TraceEnd(CellCenter.X, CellCenter.Y, BaseHeightCm - TerrainTraceEndDepthCm);
+			const FVector TraceStart(CellCenter.X, CellCenter.Y, BaseHeightCm + TerrainHeightSettings.TraceStartHeightCm);
+			const FVector TraceEnd(CellCenter.X, CellCenter.Y, BaseHeightCm - TerrainHeightSettings.TraceEndDepthCm);
 			const uint32 Serial = TerrainTraceFirstSerial + static_cast<uint32>(TerrainTraceSlots.Num());
 
 			TerrainTraceSlots.AddDefaulted_GetRef().Cell = Cell;
 			++AwaitedTerrainTraceCount;
+			++TerrainTraceRequestCount;
 			World.AsyncLineTraceByObjectType(EAsyncTraceType::Single, TraceStart, TraceEnd, ObjectQueryParams, QueryParams, &TraceDelegate, Serial);
 			--RemainingRequests;
 		}
@@ -1143,7 +1338,7 @@ void ATDFluidLiveActor::ApplyDeliveredTerrainTraceResults()
 		}
 
 		Slot.bIsSettled = true;
-		LiveComponent->SetTerrainElevationAtCell(Slot.Cell.X, Slot.Cell.Y, Slot.bDidHit ? Slot.ImpactZ : ResolveTerrainMissElevationCm(Slot.Cell.X, Slot.Cell.Y));
+		RecordTerrainCellElevation(Slot.Cell.X, Slot.Cell.Y, Slot.bDidHit ? ApplyTerrainHeightOps(Slot.ImpactZ, TerrainHeightSettings) : ResolveTerrainMissElevationCm(Slot.Cell.X, Slot.Cell.Y));
 	}
 
 	if (AwaitedTerrainTraceCount > 0)
@@ -1172,8 +1367,247 @@ void ATDFluidLiveActor::CompleteTerrainSamplingIfSettled()
 	}
 
 	bShouldCompleteTerrainSampling = false;
+	++TerrainSamplingCompletionCount;
 	LiveComponent->CompleteTerrainElevationSampling();
+	RebuildTerrainCollisionObstacles();
 	OnTerrainSamplingCompleted();
+}
+
+float ATDFluidLiveActor::ApplyTerrainHeightOps(float ElevationCm, const FTDFluidTerrainHeightSettings& Settings)
+{
+	float AdjustedElevationCm = ElevationCm;
+	if (Settings.bClampHeightLowerValues)
+	{
+		AdjustedElevationCm = FMath::Max(AdjustedElevationCm, Settings.ClampingValueCm);
+	}
+	if (Settings.HeightOffsetCm != 0.0f)
+	{
+		AdjustedElevationCm += Settings.HeightOffsetCm;
+	}
+	return AdjustedElevationCm;
+}
+
+void ATDFluidLiveActor::RecordTerrainCellElevation(int32 CellX, int32 CellY, float ElevationCm)
+{
+	LiveComponent->SetTerrainElevationAtCell(CellX, CellY, ElevationCm);
+	if (TerrainHeightSettings.bUseHeightAsCollisionMask)
+	{
+		TerrainCollisionMask.SetCellElevation(CellX, CellY, ElevationCm);
+	}
+}
+
+void ATDFluidLiveActor::RebuildTerrainCollisionObstacles()
+{
+	if (!TerrainHeightSettings.bUseHeightAsCollisionMask)
+	{
+		return;
+	}
+
+	const int32 Resolution = LiveComponent->GetTerrainSampleResolution();
+	if (Resolution <= 0 || TerrainCollisionMask.GetResolution() != Resolution)
+	{
+		return;
+	}
+
+	const UTDFluidLiveComponent* SamplingComponent = LiveComponent;
+	const FVector2D CellSizeCm = LiveComponent->GetSimulationExtentCm() / static_cast<double>(Resolution);
+	TArray<FTDFluidSdfObstacle> TerrainBoxes;
+	TerrainCollisionMask.BuildBoxes(static_cast<float>(GetActorLocation().Z), TerrainHeightSettings.CollisionHeightAboveBaseCm, TerrainHeightSettings.MaxCollisionBoxes, [SamplingComponent](int32 CellX, int32 CellY)
+	{
+		return SamplingComponent->TerrainSampleCellToPlaneCenter(CellX, CellY);
+	}, CellSizeCm, TerrainBoxes);
+	LiveComponent->SetTerrainCollisionObstacles(TerrainBoxes);
+}
+
+bool ATDFluidLiveActor::IsTerrainHeightCacheSourceActive() const
+{
+	return TerrainHeightSettings.HeightSource == ETDFluidTerrainHeightSource::HeightCache && LoadedTerrainHeightCache && LoadedTerrainHeightCache->IsUsable();
+}
+
+bool ATDFluidLiveActor::IsTerrainHeightCacheLoading() const
+{
+	return TerrainHeightSettings.HeightSource == ETDFluidTerrainHeightSource::HeightCache && !LoadedTerrainHeightCache && TerrainHeightCacheLoadHandle.IsValid() && TerrainHeightCacheLoadHandle->IsLoadingInProgress();
+}
+
+int32 ATDFluidLiveActor::FillPendingTerrainCellsFromCache()
+{
+	if (!IsTerrainHeightCacheSourceActive())
+	{
+		return 0;
+	}
+
+	int32 RemainingSamples = FMath::Max(TerrainHeightSettings.MaxCacheSamplesPerTick, 1);
+	int32 InsertedCellCount = 0;
+	while (RemainingSamples > 0 && PendingTerrainCells.Num() > TerrainCacheMissPrefixCount)
+	{
+		--RemainingSamples;
+		const FIntPoint Cell = PendingTerrainCells.Last();
+		const FVector2D CellCenter = LiveComponent->TerrainSampleCellToPlaneCenter(Cell.X, Cell.Y);
+		double CachedHeightCm = 0.0;
+		if (LoadedTerrainHeightCache->SampleHeightCm(CellCenter, CachedHeightCm))
+		{
+			PendingTerrainCells.Pop(EAllowShrinking::No);
+			RecordTerrainCellElevation(Cell.X, Cell.Y, ApplyTerrainHeightOps(static_cast<float>(CachedHeightCm), TerrainHeightSettings));
+			++InsertedCellCount;
+			continue;
+		}
+
+		PendingTerrainCells.Swap(PendingTerrainCells.Num() - 1, TerrainCacheMissPrefixCount);
+		++TerrainCacheMissPrefixCount;
+	}
+	TerrainCacheSampleCount += InsertedCellCount;
+	return InsertedCellCount;
+}
+
+void ATDFluidLiveActor::SyncVolumeDriver()
+{
+	if (!LiveComponent)
+	{
+		return;
+	}
+
+	const UTDFluidPresetAsset* Preset = LiveComponent->ActivePreset.Get();
+	const ETDFluidPresetKind Kind = Preset ? Preset->PresetKind : ETDFluidPresetKind::Custom;
+	SetTerrainHeightSettings(UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(Kind));
+	const FTDFluidVolumeDriverSettings DriverSettings = UTDFluidPresetAsset::BuildVolumeDriverForPresetKind(Kind);
+	if (!UTDFluidVolumeDriverComponent::IsDriverNeeded(DriverSettings, TerrainHeightSettings, Preset))
+	{
+		if (VolumeDriver)
+		{
+			VolumeDriver->DestroyComponent();
+			VolumeDriver = nullptr;
+		}
+		return;
+	}
+
+	if (!VolumeDriver)
+	{
+		VolumeDriver = NewObject<UTDFluidVolumeDriverComponent>(this, NAME_None, RF_Transient);
+		VolumeDriver->RegisterComponent();
+	}
+	VolumeDriver->ConfigureFromLiveComponent(*LiveComponent);
+	VolumeDriver->SetDriverHidden(bIsPooledInactive);
+	PushTerrainHeightCacheToDriver();
+}
+
+void ATDFluidLiveActor::SetTerrainHeightSettings(const FTDFluidTerrainHeightSettings& InSettings)
+{
+	const bool bHasChanged = !FTDFluidTerrainHeightSettings::StaticStruct()->CompareScriptStruct(&TerrainHeightSettings, &InSettings, PPF_None);
+	const bool bHadCollisionMask = TerrainHeightSettings.bUseHeightAsCollisionMask;
+	TerrainHeightSettings = InSettings;
+	SyncTerrainHeightCache();
+	if (!bHasChanged)
+	{
+		return;
+	}
+
+	bIsTerrainQueueCurrent = false;
+	if (bHadCollisionMask && !TerrainHeightSettings.bUseHeightAsCollisionMask && LiveComponent)
+	{
+		LiveComponent->SetTerrainCollisionObstacles(TArray<FTDFluidSdfObstacle>());
+	}
+}
+
+void ATDFluidLiveActor::SyncTerrainHeightCache()
+{
+	const bool bNeedsCache = TerrainHeightSettings.HeightSource == ETDFluidTerrainHeightSource::HeightCache || TerrainHeightSettings.VolumeHeightSource == ETDFluidVolumeHeightSource::HeightCache;
+	if (!bNeedsCache || TerrainHeightCache.IsNull())
+	{
+		if (bNeedsCache && !bHasWarnedTerrainHeightCacheUnavailable)
+		{
+			bHasWarnedTerrainHeightCacheUnavailable = true;
+			UE_LOG(LogTemp, Warning, TEXT("%s: terrain height cache source is selected but no cache asset is assigned, falling back to line traces"), *GetName());
+		}
+		if (TerrainHeightCacheLoadHandle.IsValid())
+		{
+			TerrainHeightCacheLoadHandle->CancelHandle();
+			TerrainHeightCacheLoadHandle.Reset();
+		}
+		LoadedTerrainHeightCache = nullptr;
+		TerrainHeightCacheTexture = nullptr;
+		return;
+	}
+
+	UTDFluidHeightCacheAsset* ResidentCache = TerrainHeightCache.Get();
+	if (ResidentCache && ResidentCache == LoadedTerrainHeightCache)
+	{
+		PushTerrainHeightCacheToDriver();
+		return;
+	}
+	if (ResidentCache)
+	{
+		HandleTerrainHeightCacheLoaded();
+		return;
+	}
+	if (TerrainHeightCacheLoadHandle.IsValid() && TerrainHeightCacheLoadHandle->IsLoadingInProgress())
+	{
+		return;
+	}
+
+	LoadedTerrainHeightCache = nullptr;
+	TerrainHeightCacheTexture = nullptr;
+	TerrainHeightCacheLoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		TerrainHeightCache.ToSoftObjectPath(),
+		FStreamableDelegate::CreateUObject(this, &ATDFluidLiveActor::HandleTerrainHeightCacheLoaded));
+}
+
+void ATDFluidLiveActor::HandleTerrainHeightCacheLoaded()
+{
+	TerrainHeightCacheLoadHandle.Reset();
+	UTDFluidHeightCacheAsset* ResolvedCache = TerrainHeightCache.Get();
+	if (!ResolvedCache || !ResolvedCache->IsUsable())
+	{
+		if (!bHasWarnedTerrainHeightCacheUnavailable)
+		{
+			bHasWarnedTerrainHeightCacheUnavailable = true;
+			UE_LOG(LogTemp, Warning, TEXT("%s: terrain height cache %s failed to load or is empty, falling back to line traces"), *GetName(), *TerrainHeightCache.ToString());
+		}
+		LoadedTerrainHeightCache = nullptr;
+		TerrainHeightCacheTexture = nullptr;
+		return;
+	}
+
+	LoadedTerrainHeightCache = ResolvedCache;
+	TerrainCacheMissPrefixCount = 0;
+	TerrainHeightCacheTexture = FApp::CanEverRender() ? ResolvedCache->CreateTransientHeightTexture() : nullptr;
+	PushTerrainHeightCacheToDriver();
+}
+
+void ATDFluidLiveActor::PushTerrainHeightCacheToDriver()
+{
+	if (!VolumeDriver || !LoadedTerrainHeightCache || TerrainHeightSettings.VolumeHeightSource != ETDFluidVolumeHeightSource::HeightCache)
+	{
+		return;
+	}
+
+	const float ValidFlag = TerrainHeightCacheTexture ? 1.0f : 0.0f;
+	VolumeDriver->SetTerrainHeightTexture(TerrainHeightCacheTexture, LoadedTerrainHeightCache->GetHeightWindow(), FVector4f(1.0f, 0.0f, ValidFlag, 0.0f));
+}
+
+bool ATDFluidLiveActor::TrySampleTerrainHeightCm(const FVector2D& WorldXY, double& OutHeightCm) const
+{
+	if (!LoadedTerrainHeightCache)
+	{
+		return false;
+	}
+
+	double CachedHeightCm = 0.0;
+	if (!LoadedTerrainHeightCache->SampleHeightCm(WorldXY, CachedHeightCm))
+	{
+		return false;
+	}
+	OutHeightCm = ApplyTerrainHeightOps(static_cast<float>(CachedHeightCm), TerrainHeightSettings);
+	return true;
+}
+
+bool ATDFluidLiveActor::GetTerrainHeightCacheWindow(FVector4f& OutWindow) const
+{
+	if (!LoadedTerrainHeightCache)
+	{
+		return false;
+	}
+	OutWindow = LoadedTerrainHeightCache->GetHeightWindow();
+	return true;
 }
 
 FVector ATDFluidLiveActor::ResolvePlaneAnchorWorldLocation() const

@@ -1,0 +1,25 @@
+{
+ "note": "1280x720, fx5_flamethrower 카메라(arm 450, view [-8, 90]) 기준 초안[유추]. 무대 생성 뒤 스크린샷으로 상자 확정",
+ "regions": [
+  {
+   "name": "turret",
+   "kind": "fire",
+   "box": [
+    420,
+    200,
+    1000,
+    520
+   ]
+  },
+  {
+   "name": "sky",
+   "kind": "background",
+   "box": [
+    1050,
+    40,
+    1270,
+    200
+   ]
+  }
+ ]
+}

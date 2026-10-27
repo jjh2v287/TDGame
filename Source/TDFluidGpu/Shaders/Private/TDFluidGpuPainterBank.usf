@@ -1,0 +1,81 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+Texture2DArray<float> PainterPrimaryDensityIn;
+Texture2DArray<float> PainterSelectiveDensityIn;
+Texture2D<float> BankRowsIn;
+RWTexture2D<float> BankRowsOut;
+RWTexture2D<float4> DensityPressureOutput;
+uint EntryIndex;
+uint WrapsArea;
+
+int ResolveBankTapCoordinate(int Coordinate, int Resolution)
+{
+	if (WrapsArea != 0u)
+	{
+		return (Coordinate % Resolution + Resolution) % Resolution;
+	}
+	return clamp(Coordinate, 0, Resolution - 1);
+}
+
+float ComputeBankTapWeight(int Offset, float Sigma)
+{
+	return exp(-float(Offset * Offset) / (2.0f * Sigma * Sigma));
+}
+
+float LoadBankDensity(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	return saturate(PainterPrimaryDensityIn[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)]);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void BlurRowsCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const int RadiusCells = int(Actor.TrackBankRadiusCells);
+	const float Sigma = 0.5f * float(RadiusCells);
+	float WeightedSum = 0.0f;
+	float WeightSum = 0.0f;
+	for (int Offset = -RadiusCells; Offset <= RadiusCells; ++Offset)
+	{
+		const float Weight = ComputeBankTapWeight(Offset, Sigma);
+		WeightedSum += Weight * LoadBankDensity(Actor, int2(ResolveBankTapCoordinate(Cell.x + Offset, Actor.Resolution), Cell.y));
+		WeightSum += Weight;
+	}
+	BankRowsOut[uint2(Cell)] = WeightedSum / WeightSum;
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void ComposeOutputCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const int RadiusCells = int(Actor.TrackBankRadiusCells);
+	const float Sigma = 0.5f * float(RadiusCells);
+	float WeightedSum = 0.0f;
+	float WeightSum = 0.0f;
+	for (int Offset = -RadiusCells; Offset <= RadiusCells; ++Offset)
+	{
+		const float Weight = ComputeBankTapWeight(Offset, Sigma);
+		WeightedSum += Weight * BankRowsIn[uint2(Cell.x, ResolveBankTapCoordinate(Cell.y + Offset, Actor.Resolution))];
+		WeightSum += Weight;
+	}
+
+	const float BlurredDensity = WeightedSum / WeightSum;
+	const float Density = LoadBankDensity(Actor, Cell);
+	const float BankHeight = -Density + clamp(Actor.TrackBankStrength * (BlurredDensity - Density), -Actor.TrackBankHeightLimit, Actor.TrackBankHeightLimit);
+	const float Selective = saturate(PainterSelectiveDensityIn[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)]);
+	const float ObstacleMask = TDFluidGpuComputeObstacleSignedDistance(Actor, Cell) > 0.0f ? 1.0f : 0.0f;
+	const float Alpha = clamp(TDFluidGpuComputeBorderAlpha(Actor, Cell) * ObstacleMask, 0.0f, 1.0f);
+	DensityPressureOutput[uint2(Cell)] = float4(Density, 0.5f + 0.5f * clamp(BankHeight, -1.0f, 1.0f), Selective, Alpha);
+}

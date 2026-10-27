@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, Mushroom·Shield 카메라 초안 상자",
+ "regions": [
+  {
+   "name": "cap",
+   "kind": "cloud",
+   "box": [
+    660,
+    10,
+    1100,
+    300
+   ]
+  },
+  {
+   "name": "mushroom",
+   "kind": "cloud",
+   "box": [
+    725,
+    45,
+    1045,
+    300
+   ]
+  },
+  {
+   "name": "far_deck",
+   "kind": "cloud",
+   "box": [
+    700,
+    280,
+    1280,
+    360
+   ]
+  }
+ ]
+}

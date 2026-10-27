@@ -468,6 +468,9 @@ bool FTDFluidFireFamilyPresetTest::RunTest(const FString& Parameters)
 		TestEqual(*(Label + TEXT(" keeps transmittance at the default")), UTDFluidPresetAsset::BuildVolumeRenderForPresetKind(Kind).bEnableTransmittance, DefaultVolumeRender.bEnableTransmittance);
 	}
 	TestFalse(TEXT("TileWaves is not a fire family kind"), UTDFluidPresetAsset::IsFireFamilyPresetKind(ETDFluidPresetKind::TileWaves));
+	TestFalse(TEXT("FogMist is not a fire family kind"), UTDFluidPresetAsset::IsFireFamilyPresetKind(ETDFluidPresetKind::FogMist));
+	TestFalse(TEXT("FogMistStir is not a fire family kind"), UTDFluidPresetAsset::IsFireFamilyPresetKind(ETDFluidPresetKind::FogMistStir));
+	TestFalse(TEXT("FogTileSim is not a fire family kind"), UTDFluidPresetAsset::IsFireFamilyPresetKind(ETDFluidPresetKind::FogTileSim));
 	return true;
 }
 

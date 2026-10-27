@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "FluidFX/TDFluidGpuWaterFieldState.h"
+#include "FluidFX/TDFluidMassInputTargets.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "HAL/CriticalSection.h"
 #include "TDFluidGpuBackendSelection.h"
@@ -62,7 +63,7 @@ public:
 	FVector2D GetCenterPlaneCm() const { return CenterPlaneCm; }
 	int32 GetGeneration() const { return Generation; }
 	double GetSimulationTimeSeconds() const { return SimulationTimeSeconds; }
-	bool UsesVelocityOutput() const { return Settings.SimMode == ETDFluidGpuSimMode::FluidSim; }
+	bool UsesVelocityOutput() const { return Settings.SimMode == ETDFluidGpuSimMode::FluidSim || (Settings.SimMode == ETDFluidGpuSimMode::SimplePainter && Settings.bWritesPainterVelocity); }
 	const FTDFluidGpuSimulationSettings& GetSettings() const { return Settings; }
 	const FTDFluidReadbackField& GetReadbackField() const { return ReadbackField; }
 
@@ -98,6 +99,9 @@ public:
 		int32 WaterProbeFirstSlot = 0);
 	void SetTransmittanceInput(const FTDFluidGpuTransmittanceInput& Input) { PendingTransmittanceInput = Input; }
 	bool ConsumeReadbackFrame(const FTDFluidGpuReadbackFrame& ReadbackFrame);
+	void SetMassInputAcceptance(bool bInAcceptsMassInput, bool bInWritesSelectiveDensity);
+	void SetPreparedMassPoints(TArray<FTDFluidGpuMassPointInput>&& InMassPoints);
+	const FTDFluidGpuMassInputCounters& GetLatestMassInputCounters() const { return LatestMassInputCounters; }
 
 	bool HasActorKey() const { return ActorKey != 0; }
 	uint64 GetActorKey() const { return ActorKey; }
@@ -127,6 +131,10 @@ private:
 	FTDFluidGpuTransmittanceInput PendingTransmittanceInput;
 	FTDFluidReadbackField ReadbackField;
 	TArray<FTDFluidGpuStampInput> PreparedStamps;
+	TArray<FTDFluidGpuMassPointInput> PreparedMassPoints;
+	FTDFluidGpuMassInputCounters LatestMassInputCounters;
+	bool bAcceptsMassInputRequest = false;
+	bool bMassInputWritesSelectiveDensityRequest = false;
 	TArray<FTDFluidGpuObstacleInput> Obstacles;
 	TArray<FTDFluidGpuTerrainCellUpdate> PendingTerrainUpdates;
 	TArray<FTDFluidGpuSubmissionRecord> RecentSubmissions;
@@ -163,6 +171,7 @@ class FTDFluidGpuSolverRenderState
 public:
 	void ExecuteFrame(FRHICommandListImmediate& RHICmdList, const FTDFluidGpuFrameInputs& FrameInputs);
 	bool TakeLatestReadback(FTDFluidGpuReadbackFrame& OutReadbackFrame);
+	void SetMassInputHub(const TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe>& InMassInputHub) { MassInputHub = InMassInputHub; }
 
 private:
 	void PublishReadyReadback();
@@ -172,4 +181,5 @@ private:
 	FCriticalSection ReadbackMutex;
 	FTDFluidGpuReadbackFrame LatestReadback;
 	bool bHasUnreadReadback = false;
+	TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe> MassInputHub;
 };

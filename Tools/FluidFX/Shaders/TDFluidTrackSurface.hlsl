@@ -1,11 +1,11 @@
-#define TD_TRACK_HEIGHT_AT(XY, OUT_HEIGHT, OUT_DEPTH) { float4 trackMacroTap = TD_TRACK_FETCH(((XY) - trackWindowCenter) / trackWindowSize + 0.5); OUT_DEPTH = TD_TRACK_DEPTH_FROM(trackMacroTap); OUT_HEIGHT = lerp(trackOutsideCm, trackLayerCm * (1.0 - saturate(TrackDepthScale * OUT_DEPTH)) + TrackBankHeightCm * max(trackBankBlur - OUT_DEPTH, 0.0), trackEdgeBlend); }
+#define TD_TRACK_HEIGHT_AT(XY, OUT_HEIGHT, OUT_DEPTH) { float4 trackMacroTap = TD_TRACK_FETCH(((XY) - trackWindowCenter) / trackWindowSize + 0.5); OUT_DEPTH = TD_TRACK_DEPTH_FROM(trackMacroTap); float trackMacroHeightCm = lerp(trackOutsideCm, TD_TRACK_INSIDE(trackMacroTap, OUT_DEPTH), trackEdgeBlend); OUT_HEIGHT = trackDeformActive > 0.5 ? max(trackDeformBlend * trackMacroHeightCm, TrackDeformFloorBiasCm) : trackMacroHeightCm; }
 
 float3 trackViewVector = TrackPixelPosition - CameraWorldPosition;
 float trackViewLengthCm = max(length(trackViewVector), 0.001);
 float3 trackViewDirection = trackViewVector / trackViewLengthCm;
 float trackRasterHeightCm = TrackPixelPosition.z - TrackRestPosition.z;
 float trackHitOffsetCm = 0.0;
-float trackPomActive = (trackIsDriven > 0.5 && TrackPomMaxDepthCm > 0.0 && trackViewLengthCm < TrackPomFadeEndCm && trackViewDirection.z < -0.05 && trackEdgeDistanceCm >= TrackFloorClipInsetCm) ? 1.0 : 0.0;
+float trackPomActive = (trackIsDriven > 0.5 && TrackPomMaxDepthCm > 0.0 && trackViewLengthCm < TrackPomFadeEndCm && trackViewDirection.z < -0.05 && trackEdgeDistanceCm >= TrackFloorClipInsetCm && trackDeformEdgeCm >= TrackFloorClipInsetCm) ? 1.0 : 0.0;
 if (trackPomActive > 0.5)
 {
     float trackPomSteps = clamp(round(lerp(TrackPomMinSteps, TrackPomMaxSteps, 1.0 - abs(trackViewDirection.z))), 1.0, 64.0);
@@ -104,6 +104,21 @@ TrackNormalWS = normalize(float3(-trackSlope + trackDetailXY, 1.0));
 
 float trackSparkleHash = frac(sin(dot(floor(trackHitXY / 0.8), float2(12.9898, 78.233))) * 43758.5453);
 float trackSparkle = step(0.985, trackSparkleHash) * TrackSparkleIntensity * (1.0 - saturate(trackHitDepth));
-float3 trackColor = lerp(TrackSurfaceColor, TrackGrooveColor, saturate(trackHitDepth)) * trackShadow + trackSparkle;
+float trackGrooveDepth = saturate(trackHitDepth);
+float3 trackColor = lerp(TrackSurfaceColor, TrackGrooveColor, trackGrooveDepth) * trackShadow + trackSparkle;
+float trackWet = 0.0;
+if (WetSourceActive > 0.5)
+{
+    float2 trackWetUv = (trackHitXY - WetSourceWindow.xy) / max(WetSourceWindow.zw, float2(1.0, 1.0)) + 0.5;
+    float trackWetInside = step(0.0, trackWetUv.x) * step(trackWetUv.x, 1.0) * step(0.0, trackWetUv.y) * step(trackWetUv.y, 1.0);
+    float4 trackWetTap = Texture2DSampleLevel(WetSourceTexture, WetSourceTextureSampler, saturate(trackWetUv), 0);
+    trackWet = trackWetInside * saturate(trackWetTap.g) * (1.0 - smoothstep(0.0, 2.0 / max(WetSourceDepthReferenceCm, 1.0), trackWetTap.r));
+}
+TrackRoughnessOut = TrackRoughness;
+if (trackWet > 0.0)
+{
+    trackColor *= (1.0 - TrackWetDarkening * trackWet) * (1.0 - TrackWetGrooveDarkening * trackWet * trackGrooveDepth);
+    TrackRoughnessOut = lerp(TrackRoughness, TrackWetGrooveRoughness, trackWet * trackGrooveDepth);
+}
 TrackPixelDepthOffsetCm = max(trackHitOffsetCm, 0.0);
 return float4(trackColor, 1.0 - trackFloorClip);

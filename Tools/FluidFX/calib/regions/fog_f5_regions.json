@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, fog_f5_cut_stir 카메라(피치 −55°·붐 900) 기준 초안 박스(첫 촬영 뒤 맞춤). trail_recent = 교반기 30° 뒤(1 s), trail_old = 180° 뒤(6 s), surround = 궤도 밖 같은 높이 안개. kind fog = measure_fx_look 대기 지표",
+ "regions": [
+  {
+   "name": "trail_recent",
+   "kind": "fog",
+   "box": [
+    700,
+    300,
+    820,
+    420
+   ]
+  },
+  {
+   "name": "trail_old",
+   "kind": "fog",
+   "box": [
+    460,
+    300,
+    580,
+    420
+   ]
+  },
+  {
+   "name": "surround",
+   "kind": "fog",
+   "box": [
+    80,
+    440,
+    330,
+    680
+   ]
+  }
+ ]
+}

@@ -9,6 +9,10 @@
 #include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidLiveComponent.h"
+#include "FluidFX/TDFluidMassInputDataChannelReader.h"
+#include "FluidFX/TDFluidMassInputTargets.h"
+#include "FluidFX/TDFluidObstacleComponent.h"
+#include "NiagaraDataChannelAsset.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidPresetTuningSubsystem.h"
@@ -169,6 +173,8 @@ void UTDFluidLiveSubsystem::Deinitialize()
 	RegisteredActors.Reset();
 	RegisteredFlowGuides.Reset();
 	ReleaseGpuSolverRenderState();
+	ObstacleSources.Reset();
+	MassInputHub.Reset();
 	Super::Deinitialize();
 }
 
@@ -520,6 +526,9 @@ void UTDFluidLiveSubsystem::StepFluidWorld(float DeltaTime)
 		return;
 	}
 
+	DistributeCollectedObstacles();
+	ReadMassInputDataChannels();
+
 	TArray<FTDFluidActorStep, TInlineAllocator<16>> ActorSteps;
 	for (int32 Idx = RegisteredActors.Num() - 1; Idx >= 0; --Idx)
 	{
@@ -562,6 +571,7 @@ void UTDFluidLiveSubsystem::StepFluidWorld(float DeltaTime)
 	CSV_CUSTOM_STAT(TDFluid, StepCount, SolvingActors.Num() + GpuSolvingActors.Num(), ECsvCustomStatOp::Set);
 	RunSolverSteps(SolvingActors, DeltaTime);
 	SubmitGpuSolverSteps(GpuSolvingActors);
+	PublishMassInputTargets(GpuSolvingActors);
 	DistributeGpuSolverReadback();
 
 	for (const FTDFluidActorStep& ActorStep : ActorSteps)
@@ -615,6 +625,7 @@ void UTDFluidLiveSubsystem::SubmitGpuSolverSteps(TConstArrayView<ATDFluidLiveAct
 	if (!GpuSolverRenderState)
 	{
 		GpuSolverRenderState = MakeShared<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe>();
+		GpuSolverRenderState->SetMassInputHub(GetMassInputHub());
 	}
 
 	ENQUEUE_RENDER_COMMAND(TDFluidGpuSolverStep)(
@@ -889,6 +900,256 @@ void UTDFluidLiveSubsystem::QueueCombatDeath(AActor* DeadActor, AActor* Killer, 
 	Incoming.SplashDirection = ResolveSplashDirection(Killer, Incoming.DeathLocation);
 	Incoming.bHasKiller = Killer != nullptr;
 	QueuedDeathByActor.Add(DeadActorKey, Incoming);
+}
+
+TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe> UTDFluidLiveSubsystem::GetMassInputHub()
+{
+	if (!MassInputHub)
+	{
+		MassInputHub = MakeShared<FTDFluidMassInputHub, ESPMode::ThreadSafe>();
+	}
+	return MassInputHub;
+}
+
+void UTDFluidLiveSubsystem::RegisterObstacleSource(UTDFluidObstacleComponent* ObstacleSource)
+{
+	if (!ObstacleSource)
+	{
+		return;
+	}
+
+	ObstacleSources.AddUnique(ObstacleSource);
+	bObstacleSourcesDirty = true;
+}
+
+void UTDFluidLiveSubsystem::UnregisterObstacleSource(UTDFluidObstacleComponent* ObstacleSource)
+{
+	if (ObstacleSources.Remove(ObstacleSource) > 0)
+	{
+		bObstacleSourcesDirty = true;
+	}
+}
+
+int32 UTDFluidLiveSubsystem::GetObstacleSourceCount() const
+{
+	int32 SourceCount = 0;
+	for (const TWeakObjectPtr<UTDFluidObstacleComponent>& ObstacleSource : ObstacleSources)
+	{
+		SourceCount += ObstacleSource.IsValid() ? 1 : 0;
+	}
+	return SourceCount;
+}
+
+void UTDFluidLiveSubsystem::SelectNearestObstacles(TConstArrayView<FTDFluidSdfObstacle> SourceObstacles, const FVector& CenterWorld, int32 MaxObstacleCount, TArray<FTDFluidSdfObstacle>& OutObstacles)
+{
+	OutObstacles.Reset();
+	if (MaxObstacleCount <= 0 || SourceObstacles.IsEmpty())
+	{
+		return;
+	}
+
+	TArray<int32> SortedIndices;
+	SortedIndices.Reserve(SourceObstacles.Num());
+	for (int32 SourceIndex = 0; SourceIndex < SourceObstacles.Num(); ++SourceIndex)
+	{
+		SortedIndices.Add(SourceIndex);
+	}
+
+	SortedIndices.StableSort([&SourceObstacles, &CenterWorld](int32 LeftIndex, int32 RightIndex)
+	{
+		const FVector& Left = SourceObstacles[LeftIndex].WorldCenter;
+		const FVector& Right = SourceObstacles[RightIndex].WorldCenter;
+		const double LeftDistance = FVector::DistSquared(Left, CenterWorld);
+		const double RightDistance = FVector::DistSquared(Right, CenterWorld);
+		if (LeftDistance != RightDistance)
+		{
+			return LeftDistance < RightDistance;
+		}
+		if (Left.X != Right.X)
+		{
+			return Left.X < Right.X;
+		}
+		if (Left.Y != Right.Y)
+		{
+			return Left.Y < Right.Y;
+		}
+		return Left.Z < Right.Z;
+	});
+
+	const int32 SelectedCount = FMath::Min(MaxObstacleCount, SortedIndices.Num());
+	OutObstacles.Reserve(SelectedCount);
+	for (int32 SortedIndex = 0; SortedIndex < SelectedCount; ++SortedIndex)
+	{
+		OutObstacles.Add(SourceObstacles[SortedIndices[SortedIndex]]);
+	}
+}
+
+void UTDFluidLiveSubsystem::DistributeCollectedObstacles()
+{
+	ObstacleSources.RemoveAll([](const TWeakObjectPtr<UTDFluidObstacleComponent>& ObstacleSource)
+	{
+		return !ObstacleSource.IsValid();
+	});
+	if (ObstacleSources.IsEmpty() && !bObstacleSourcesDirty)
+	{
+		return;
+	}
+
+	TArray<FTDFluidSdfObstacle> SourceObstacles;
+	SourceObstacles.Reserve(ObstacleSources.Num());
+	for (const TWeakObjectPtr<UTDFluidObstacleComponent>& ObstacleSource : ObstacleSources)
+	{
+		FTDFluidSdfObstacle Obstacle;
+		if (ObstacleSource->BuildObstacle(Obstacle))
+		{
+			SourceObstacles.Add(Obstacle);
+		}
+	}
+
+	TArray<FTDFluidSdfObstacle> SelectedObstacles;
+	for (const TWeakObjectPtr<ATDFluidLiveActor>& RegisteredActor : RegisteredActors)
+	{
+		ATDFluidLiveActor* LiveActor = RegisteredActor.Get();
+		UTDFluidLiveComponent* LiveComponent = LiveActor ? LiveActor->LiveComponent.Get() : nullptr;
+		if (!LiveComponent || !LiveComponent->IsSimulationInitialized())
+		{
+			continue;
+		}
+
+		const FTDFluidMassInputSettings& MassInputSettings = LiveComponent->GetMassInputSettings();
+		SelectedObstacles.Reset();
+		if (MassInputSettings.bCollectObstacleComponents)
+		{
+			SelectNearestObstacles(SourceObstacles, LiveComponent->GetSimulationWindowCenterWorld(), MassInputSettings.MaxCollectedObstacles, SelectedObstacles);
+		}
+		LiveComponent->SetCollectedObstacles(SelectedObstacles);
+	}
+	bObstacleSourcesDirty = false;
+}
+
+void UTDFluidLiveSubsystem::ReadMassInputDataChannels()
+{
+	CSV_SCOPED_TIMING_STAT(TDFluid, MassInputRead);
+	if (!TDFluidMassInput::IsAllowedByConsole())
+	{
+		return;
+	}
+
+	struct FTDFluidMassInputReadGroup
+	{
+		const UNiagaraDataChannel* DataChannel = nullptr;
+		FVector SearchLocation = FVector::ZeroVector;
+		bool bSearchesByLocation = false;
+		bool bReadsPreviousFrame = true;
+		int32 MaxPoints = 0;
+		float DefaultRadiusCm = 0.0f;
+		TArray<UTDFluidLiveComponent*, TInlineAllocator<4>> Components;
+	};
+
+	TArray<FTDFluidMassInputReadGroup, TInlineAllocator<4>> ReadGroups;
+	for (const TWeakObjectPtr<ATDFluidLiveActor>& RegisteredActor : RegisteredActors)
+	{
+		ATDFluidLiveActor* LiveActor = RegisteredActor.Get();
+		UTDFluidLiveComponent* LiveComponent = LiveActor && !LiveActor->IsPooledInactive() ? LiveActor->LiveComponent.Get() : nullptr;
+		if (!LiveComponent || !LiveComponent->AcceptsMassInput() || !LiveComponent->IsSimulationInitialized())
+		{
+			continue;
+		}
+
+		const FTDFluidMassInputSettings& MassInputSettings = LiveComponent->GetMassInputSettings();
+		if (!MassInputSettings.bReadDataChannel)
+		{
+			continue;
+		}
+
+		LiveComponent->EnsureMassInputDataChannelLoadRequested();
+		const UNiagaraDataChannelAsset* DataChannelAsset = MassInputSettings.DataChannel.Get();
+		const UNiagaraDataChannel* DataChannel = DataChannelAsset ? DataChannelAsset->Get() : nullptr;
+		if (!DataChannel)
+		{
+			continue;
+		}
+
+		const bool bSearchesByLocation = MassInputSettings.bSearchIslandByWindowCenter;
+		const FVector SearchLocation = bSearchesByLocation ? LiveComponent->GetSimulationWindowCenterWorld() : FVector::ZeroVector;
+		FTDFluidMassInputReadGroup* ReadGroup = ReadGroups.FindByPredicate([&](const FTDFluidMassInputReadGroup& Group)
+		{
+			return Group.DataChannel == DataChannel
+				&& Group.bSearchesByLocation == bSearchesByLocation
+				&& Group.SearchLocation == SearchLocation
+				&& Group.bReadsPreviousFrame == MassInputSettings.bReadPreviousFrame;
+		});
+		if (!ReadGroup)
+		{
+			ReadGroup = &ReadGroups.AddDefaulted_GetRef();
+			ReadGroup->DataChannel = DataChannel;
+			ReadGroup->SearchLocation = SearchLocation;
+			ReadGroup->bSearchesByLocation = bSearchesByLocation;
+			ReadGroup->bReadsPreviousFrame = MassInputSettings.bReadPreviousFrame;
+			ReadGroup->DefaultRadiusCm = MassInputSettings.DefaultPointRadiusCm;
+		}
+		ReadGroup->MaxPoints = FMath::Max(ReadGroup->MaxPoints, MassInputSettings.MaxDataChannelPointsPerTick);
+		ReadGroup->Components.Add(LiveComponent);
+	}
+
+	int32 RemainingPointBudget = TDFluidGpuSolverConstants::MaximumMassPointsPerUpload;
+	int32 TotalReadPointCount = 0;
+	TArray<FTDFluidMassInputPoint> Points;
+	for (const FTDFluidMassInputReadGroup& ReadGroup : ReadGroups)
+	{
+		if (RemainingPointBudget <= 0)
+		{
+			break;
+		}
+
+		const FNiagaraDataChannelSearchParameters SearchParameters = ReadGroup.bSearchesByLocation ? FNiagaraDataChannelSearchParameters(ReadGroup.SearchLocation) : FNiagaraDataChannelSearchParameters();
+		FTDFluidMassInputDataChannelReader Reader;
+		Reader.ReadPoints(GetWorld(), ReadGroup.DataChannel, SearchParameters, ReadGroup.bReadsPreviousFrame, FMath::Min(ReadGroup.MaxPoints, RemainingPointBudget), ReadGroup.DefaultRadiusCm, Points);
+		RemainingPointBudget -= Points.Num();
+		TotalReadPointCount += Points.Num();
+		for (UTDFluidLiveComponent* LiveComponent : ReadGroup.Components)
+		{
+			LiveComponent->QueueMassInputPoints(Points);
+		}
+	}
+	CSV_CUSTOM_STAT(TDFluid, MassInputDataChannelPoints, TotalReadPointCount, ECsvCustomStatOp::Set);
+}
+
+void UTDFluidLiveSubsystem::PublishMassInputTargets(TConstArrayView<ATDFluidLiveActor*> GpuSolvingActors)
+{
+	CSV_SCOPED_TIMING_STAT(TDFluid, MassInputPublish);
+	TArray<FTDFluidMassInputTarget> Targets;
+	int32 UploadedPointCount = 0;
+	int32 SplatCount = 0;
+	int32 OutsideCount = 0;
+	int32 SaturatedCount = 0;
+	for (ATDFluidLiveActor* LiveActor : GpuSolvingActors)
+	{
+		UTDFluidLiveComponent* LiveComponent = LiveActor ? LiveActor->LiveComponent.Get() : nullptr;
+		FTDFluidMassInputTarget Target;
+		if (!LiveComponent || !LiveComponent->BuildMassInputTarget(Target))
+		{
+			continue;
+		}
+
+		Targets.Add(Target);
+		const FTDFluidGpuMassInputCounters Counters = LiveComponent->GetMassInputCounters();
+		UploadedPointCount += LiveComponent->GetLastUploadedMassPointCount();
+		SplatCount += static_cast<int32>(FMath::Min<uint32>(Counters.SplatCount, MAX_int32));
+		OutsideCount += static_cast<int32>(FMath::Min<uint32>(Counters.OutsideCount, MAX_int32));
+		SaturatedCount += Counters.bSaturated ? 1 : 0;
+	}
+
+	if (Targets.IsEmpty() && !MassInputHub)
+	{
+		return;
+	}
+
+	GetMassInputHub()->PublishTargets(MoveTemp(Targets));
+	CSV_CUSTOM_STAT(TDFluid, MassInputUploadedPoints, UploadedPointCount, ECsvCustomStatOp::Set);
+	CSV_CUSTOM_STAT(TDFluid, MassInputSplatCalls, SplatCount, ECsvCustomStatOp::Set);
+	CSV_CUSTOM_STAT(TDFluid, MassInputOutside, OutsideCount, ECsvCustomStatOp::Set);
+	CSV_CUSTOM_STAT(TDFluid, MassInputSaturatedFrames, SaturatedCount, ECsvCustomStatOp::Set);
 }
 
 void UTDFluidLiveSubsystem::FlushQueuedCombatEvents()

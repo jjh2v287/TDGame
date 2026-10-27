@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 자국 층 마스터 M_TD_FluidTrackLayer(불투명 Masked·월드 공간 법선, Custom 노드 2개 = 정점 WPO TDFluidTrackOffset·화소 TDFluidTrackSurface, 공용 TDFluidTrackCommon, 출력은 MakeMaterialAttributes 하나를 MP_MATERIAL_ATTRIBUTES 에 연결), 지형용 MF_TD_FluidTrackSample, 창 MPC_TD_FluidTrackWindow, 격자 SM_TD_FluidTrackGridUnit256, 텍스처 2장, MI 5개(자국 3·먼지 2)를 만든다. 먼저 python Tools/FluidFX/make_fluid_track_textures.py 를 돌리고, 모양 정본에 MI 5개가 병합되어 있어야 한다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 자국 층 마스터 M_TD_FluidTrackLayer(불투명 Masked·월드 공간 법선, Custom 노드 2개 = 정점 WPO TDFluidTrackOffset·화소 TDFluidTrackSurface, 공용 TDFluidTrackCommon, 출력은 MakeMaterialAttributes 하나를 MP_MATERIAL_ATTRIBUTES 에 연결), 지형용 MF_TD_FluidTrackSample, 창 MPC_TD_FluidTrackWindow, 격자 SM_TD_FluidTrackGridUnit256·변형 메시 격자 SM_TD_FluidTrackDeformGrid256(경계 확장 Z ±200 cm), 텍스처 2장, MI 7개(자국 5·먼지 2)를 만든다. 격자는 정점 수·경계 확장이 맞으면 지우지 않고 재사용한다(다른 무대 참조 보호, 교차 P-03). 먼저 python Tools/FluidFX/make_fluid_track_textures.py 를 돌리고, 모양 정본에 MI 5개가 병합되어 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_track_material.py (기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_track_material_request.json 에 {"overwrite": true})
-출력: /Game/FluidFX/Materials/M_TD_FluidTrackLayer·MF_TD_FluidTrackSample·MPC_TD_FluidTrackWindow·MI_TD_FluidTrack_Snow·SnowSlope·Sand·MI_TD_FluidVolume_SnowDust·SandDust, /Game/FluidFX/Textures/T_TD_FluidDuneHeight·T_TD_FluidSnowDetailN, /Game/FluidFX/Meshes/SM_TD_FluidTrackGridUnit256, Saved/FluidFX/fluid_track_material.json
-상태: 검증(2026-10-26 에디터 2회차 status ok·재질 컴파일 오류 0·자국 무대 stale 0, 2026-10-25 FX-12r 작성. 2026-10-26 고침: UE 5.8 Python 에 MP_PIXEL_DEPTH_OFFSET 이 없어(L-editor-64) BaseColor·OpacityMask·Normal·PDO·Roughness·WPO 를 MakeMaterialAttributes 로 모으고 use_material_attributes 를 켠다. Substrate 프로젝트에서는 FrontMaterial 미연결 재질을 번역기가 숨은 변환으로 컴파일한다. 2026-10-26 고침 2: UE 5.8 set_material_instance_texture_parameter_value 는 늘 False 를 돌려주므로 MI 텍스처 연결은 다시 읽어 판정한다). 구동(MID, SimGridResolution > 0.5) = 내부 표면 평면(창 안 층 높이·잔차 POM·자기 그림자·PDO), 정적(MI) = 바닥(MPC 창 안 클립, TrackUsesWindowMask 0 이면 비탈용으로 클립 끔). 층 기준면은 셰이더 오프셋을 뺀 월드 위치(평면·바닥 메시 높이)다. MI 값은 모양 정본(apply_to_instance)만, 모래 MI 의 세부 법선 텍스처(T_TD_FluidSandRipplesN)는 에셋 연결로 넣는다(반박 S4). 사구 높이 PNG 16비트는 TC_HALF_FLOAT·선형 표본기(반박 S3). 정점 WPO 에 카메라 거리 페이드가 있고 바닥 클립이 MPC 창을 따라가므로 VSM Rigid 를 쓰지 않는다(반박 S2).
+출력: /Game/FluidFX/Materials/M_TD_FluidTrackLayer·MF_TD_FluidTrackSample·MPC_TD_FluidTrackWindow·MI_TD_FluidTrack_Snow·SnowSlope·Sand·SnowDeform·SnowGround·MI_TD_FluidVolume_SnowDust·SandDust, /Game/FluidFX/Textures/T_TD_FluidDuneHeight·T_TD_FluidSnowDetailN, /Game/FluidFX/Meshes/SM_TD_FluidTrackGridUnit256·SM_TD_FluidTrackDeformGrid256, Saved/FluidFX/fluid_track_material.json
+상태: 미검증(2026-10-26 FX-12c 파동 2 고침, py_compile·가짜 unreal·check_fluid_track_hlsl 만, 에디터 실행 전: C++ 런타임 이름 TrackBankFromOutput(둑을 출력 G 한 탭으로)·TrackDeformWindow(변형 메시 가장자리 침하·바닥 편향)·WetSource*(젖음 원천 색·거칠기, 거칠기는 표면 노드 출력 TrackRoughnessOut), 모양 값 TrackDensityContrast·TrackDeformEdgeFadeCm·TrackDeformFloorBiasCm·TrackWet*, 시작 점검에 StaticMesh 경계 확장 속성). 이전: 검증(2026-10-26 에디터 2회차 status ok·재질 컴파일 오류 0·자국 무대 stale 0, 2026-10-25 FX-12r 작성. 2026-10-26 고침: UE 5.8 Python 에 MP_PIXEL_DEPTH_OFFSET 이 없어(L-editor-64) BaseColor·OpacityMask·Normal·PDO·Roughness·WPO 를 MakeMaterialAttributes 로 모으고 use_material_attributes 를 켠다. Substrate 프로젝트에서는 FrontMaterial 미연결 재질을 번역기가 숨은 변환으로 컴파일한다. 2026-10-26 고침 2: UE 5.8 set_material_instance_texture_parameter_value 는 늘 False 를 돌려주므로 MI 텍스처 연결은 다시 읽어 판정한다). 구동(MID, SimGridResolution > 0.5) = 내부 표면 평면(창 안 층 높이·잔차 POM·자기 그림자·PDO), 정적(MI) = 바닥(MPC 창 안 클립, TrackUsesWindowMask 0 이면 비탈용으로 클립 끔). 층 기준면은 셰이더 오프셋을 뺀 월드 위치(평면·바닥 메시 높이)다. MI 값은 모양 정본(apply_to_instance)만, 모래 MI 의 세부 법선 텍스처(T_TD_FluidSandRipplesN)는 에셋 연결로 넣는다(반박 S4). 사구 높이 PNG 16비트는 TC_HALF_FLOAT·선형 표본기(반박 S3). 정점 WPO 에 카메라 거리 페이드가 있고 바닥 클립이 MPC 창을 따라가므로 VSM Rigid 를 쓰지 않는다(반박 S2).
 """
 import hashlib
 import importlib.util
@@ -25,10 +25,15 @@ COLLECTION_PATH = f"{MATERIAL_DIR}/{COLLECTION_NAME}"
 VOLUME_MASTER_PATH = f"{MATERIAL_DIR}/M_TD_FluidVolume"
 GRID_MESH_NAME = "SM_TD_FluidTrackGridUnit256"
 GRID_MESH_PATH = f"{MESH_DIR}/{GRID_MESH_NAME}"
+DEFORM_GRID_MESH_NAME = "SM_TD_FluidTrackDeformGrid256"
+DEFORM_GRID_MESH_PATH = f"{MESH_DIR}/{DEFORM_GRID_MESH_NAME}"
 GRID_MESH_SIZE_CM = 100.0
 GRID_MESH_QUADS = 256
-GRID_BOUNDS_EXTENSION_UP_CM = 80.0
-GRID_BOUNDS_EXTENSION_DOWN_CM = 10.0
+GRID_MESH_SPECS = (
+    {"name": GRID_MESH_NAME, "up_cm": 80.0, "down_cm": 10.0},
+    {"name": DEFORM_GRID_MESH_NAME, "up_cm": 200.0, "down_cm": 200.0},
+)
+BOUNDS_EXTENSION_TOLERANCE_CM = 0.01
 GRID_DEFAULT_MATERIAL_PATH = "/Engine/EngineMaterials/WorldGridMaterial"
 SAND_RIPPLES_NORMAL_PATH = f"{TEXTURE_DIR}/T_TD_FluidSandRipplesN"
 DEFAULT_TEXTURE_PATHS = ("/Engine/EngineResources/Black", "/Engine/EngineResources/DefaultTexture")
@@ -52,14 +57,27 @@ TEXTURE_PARAMETER_SOURCES = {
     "DensityPressureTexture": "default",
     "TrackDuneHeightTexture": "T_TD_FluidDuneHeight",
     "TrackDetailNormalTexture": "T_TD_FluidSnowDetailN",
+    "WetSourceTexture": "default",
 }
 TEXTURE_PARAMETER_NAMES = tuple(TEXTURE_PARAMETER_SOURCES)
 INSTANCE_TEXTURE_OVERRIDES = {"MI_TD_FluidTrack_Sand": {"TrackDetailNormalTexture": SAND_RIPPLES_NORMAL_PATH}}
 COLLECTION_VECTOR_DEFAULTS = (("SimCenterWorld", (0.0, 0.0, 0.0, 0.0)), ("SimExtentsCm", (0.0, 0.0, 0.0, 0.0)))
 COLLECTION_SOURCE_BY_INPUT = {"TrackWindowCenterWorld": "SimCenterWorld", "TrackWindowExtentsCm": "SimExtentsCm"}
 
-DRIVEN_VECTOR_DEFAULTS = (("SimCenterWorld", (0.0, 0.0, 0.0, 0.0)), ("SimExtentsCm", (0.0, 0.0, 0.0, 0.0)))
-DRIVEN_SCALAR_DEFAULTS = (("SimGridResolution", 0.0),)
+DRIVEN_VECTOR_DEFAULTS = (
+    ("SimCenterWorld", (0.0, 0.0, 0.0, 0.0)),
+    ("SimExtentsCm", (0.0, 0.0, 0.0, 0.0)),
+    ("TrackDeformWindow", (0.0, 0.0, 0.0, 0.0)),
+    ("WetSourceWindow", (0.0, 0.0, 0.0, 0.0)),
+)
+DRIVEN_SCALAR_DEFAULTS = (
+    ("SimGridResolution", 0.0),
+    ("TrackBankFromOutput", 0.0),
+    ("WetSourceActive", 0.0),
+    ("WetSourceDepthReferenceCm", 300.0),
+)
+TRACK_RUNTIME_NAMES = ("TrackBankFromOutput", "TrackDeformWindow", "WetSourceTexture", "WetSourceWindow", "WetSourceActive", "WetSourceDepthReferenceCm")
+VECTOR4_INPUT_NAMES = ("TrackDeformWindow", "WetSourceWindow")
 LOOK_VECTOR_DEFAULTS = (
     ("TrackShadowLightDirection", (-0.5, -0.3, -0.81, 0.0)),
     ("TrackSurfaceColor", (0.85, 0.88, 0.92, 1.0)),
@@ -93,6 +111,12 @@ LOOK_SCALAR_DEFAULTS = (
     ("TileMapCameraFadeCm", 3000.0),
     ("TileMapCameraFadeLengthCm", 5000.0),
     ("TileMapWpoFadeEndCm", 6000.0),
+    ("TrackDensityContrast", 1.0),
+    ("TrackDeformEdgeFadeCm", 250.0),
+    ("TrackDeformFloorBiasCm", 0.5),
+    ("TrackWetDarkening", 0.0),
+    ("TrackWetGrooveDarkening", 0.0),
+    ("TrackWetGrooveRoughness", 0.25),
 )
 VECTOR_PARAMETER_DEFAULTS = DRIVEN_VECTOR_DEFAULTS + LOOK_VECTOR_DEFAULTS
 SCALAR_PARAMETER_DEFAULTS = DRIVEN_SCALAR_DEFAULTS + LOOK_SCALAR_DEFAULTS
@@ -108,6 +132,7 @@ COMMON_INPUT_NAMES = (
     "TrackLayerThicknessCm", "TrackDepthScale", "TrackBankHeightCm", "TrackBankRadiusCm", "TrackOutsideLayerRatio",
     "TrackEdgeFadeCm", "TrackFloorClipInsetCm", "TrackEdgeSinkCm", "TrackUsesWindowMask",
     "TileMapPeriodCm", "TileMapHeightCm", "TileMapWindDegrees", "TileMapWpoFadeEndCm",
+    "TrackBankFromOutput", "TrackDensityContrast", "TrackDeformWindow", "TrackDeformEdgeFadeCm", "TrackDeformFloorBiasCm",
 )
 OFFSET_INPUT_NAMES = COMMON_INPUT_NAMES
 SURFACE_INPUT_NAMES = COMMON_INPUT_NAMES + (
@@ -115,25 +140,30 @@ SURFACE_INPUT_NAMES = COMMON_INPUT_NAMES + (
     "TrackPomMinSteps", "TrackPomMaxSteps", "TrackPomMaxDepthCm", "TrackPomFadeEndCm", "TrackPomShadowStrength",
     "TrackPomShadowSteps", "TrackShadowLightDirection", "TrackSurfaceColor", "TrackGrooveColor",
     "TrackDetailTileCm", "TrackDetailNormalStrength", "TrackSparkleIntensity", "TileMapNormalStrength",
-    "TileMapCameraFadeCm", "TileMapCameraFadeLengthCm",
+    "TileMapCameraFadeCm", "TileMapCameraFadeLengthCm", "TrackRoughness", "WetSourceTexture", "WetSourceWindow",
+    "WetSourceActive", "WetSourceDepthReferenceCm", "TrackWetDarkening", "TrackWetGrooveDarkening", "TrackWetGrooveRoughness",
 )
 SAMPLE_INPUT_NAMES = COMMON_INPUT_NAMES + ("TrackNormalStrength",)
-SURFACE_OUTPUT_SPECS = (("TrackNormalWS", "CMOT_FLOAT3"), ("TrackPixelDepthOffsetCm", "CMOT_FLOAT1"))
+SURFACE_OUTPUT_SPECS = (("TrackNormalWS", "CMOT_FLOAT3"), ("TrackPixelDepthOffsetCm", "CMOT_FLOAT1"), ("TrackRoughnessOut", "CMOT_FLOAT1"))
 MASTER_ATTRIBUTE_INPUT_NAMES = ("BaseColor", "OpacityMask", "Normal", "PixelDepthOffset", "Roughness", "WorldPositionOffset")
 SAMPLE_OUTPUT_SPECS = (("TrackSampleNormalWS", "CMOT_FLOAT3"),)
 SAMPLE_FUNCTION_OUTPUTS = (("WindowMask", "R"), ("TrackDepth", "G"), ("HeightCm", "B"))
 COMMON_SAMPLER_NAMES = ("DensityPressureTextureSampler", "TrackDuneHeightTextureSampler")
-SURFACE_SAMPLER_NAMES = COMMON_SAMPLER_NAMES + ("TrackDetailNormalTextureSampler",)
+SURFACE_SAMPLER_NAMES = COMMON_SAMPLER_NAMES + ("TrackDetailNormalTextureSampler", "WetSourceTextureSampler")
 MID_DRIVEN_NAMES = (
     "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "DensityPressureTexture", "VelocityTexture",
     "PlaneAxisU", "PlaneAxisV", "PlaneAxisN", "PlaneCoordinateOffsetCm", "VolumeHeightCm", "VolumeBoxScale",
     "VolumeOffsetCm", "ExtrudeSymmetric", "AuxTexture", "AuxHeatActive",
 )
 CONDITIONAL_CPP_NAMES = ("DensityScale", "SoftFalloffCm")
-TRACK_INSTANCE_NAMES = ("MI_TD_FluidTrack_Snow", "MI_TD_FluidTrack_SnowSlope", "MI_TD_FluidTrack_Sand")
+TRACK_INSTANCE_NAMES = ("MI_TD_FluidTrack_Snow", "MI_TD_FluidTrack_SnowSlope", "MI_TD_FluidTrack_Sand", "MI_TD_FluidTrack_SnowDeform", "MI_TD_FluidTrack_SnowGround")
+INSTANCE_REQUIRED_SCALARS = {
+    "MI_TD_FluidTrack_SnowDeform": {"TrackOutsideLayerRatio": 0.0},
+    "MI_TD_FluidTrack_SnowGround": {"TrackLayerThicknessCm": 0.0, "TrackUsesWindowMask": 0.0},
+}
 DUST_INSTANCE_NAMES = ("MI_TD_FluidVolume_SnowDust", "MI_TD_FluidVolume_SandDust")
 DUST_SOURCE_INSTANCE = "MI_TD_FluidVolume_GroundDust"
-POM_TAP_FORMULA = "단계 수 × 1 + 중심 1 + 둑 고리 8 + 맞은 점 1 + 법선 4 + 그림자 단계 × 1 + 사구 2(+법선 3) + 세부 법선 1"
+POM_TAP_FORMULA = "단계 수 × 1 + 중심 1 + 둑 고리 8(TrackBankFromOutput 1 이면 0, 둑은 탭마다 G) + 맞은 점 1 + 법선 4 + 그림자 단계 × 1 + 사구 2(+법선 3) + 세부 법선 1 + 젖음 원천 1(WetSourceActive 일 때)"
 REQUIRED_UNREAL_NAMES = (
     "EditorAssetLibrary.load_asset",
     "EditorAssetLibrary.save_loaded_asset",
@@ -195,7 +225,14 @@ REQUIRED_UNREAL_NAMES = (
     "TDFluidWaterMeshEditorLibrary.create_grid_static_mesh",
     "StaticMesh",
     "StaticMeshEditorSubsystem",
+    "EditorLoadingAndSavingUtils.unload_packages",
+    "SystemLibrary.collect_garbage",
+    "AssetRegistryHelpers.get_asset_registry",
+    "TDFluidTrackDeformMeshActor",
+    "TDFluidTrackSourceComponent",
+    "TDFluidPresetKind.SNOW_TRACK",
 )
+REQUIRED_EDITOR_PROPERTIES = (("StaticMesh", "positive_bounds_extension"), ("StaticMesh", "negative_bounds_extension"))
 
 IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 DEFINE_PATTERN = re.compile(r"^[ \t]*#define[ \t]+(TD_TRACK_[A-Za-z0-9_]+)", re.MULTILINE)
@@ -297,7 +334,7 @@ def find_unresolved_inputs():
 def find_instance_override_problems(entries):
     problems = []
     overridable = {name for name, _ in LOOK_VECTOR_DEFAULTS} | {name for name, _ in LOOK_SCALAR_DEFAULTS}
-    forbidden = set(MID_DRIVEN_NAMES) | set(CONDITIONAL_CPP_NAMES)
+    forbidden = set(MID_DRIVEN_NAMES) | set(CONDITIONAL_CPP_NAMES) | set(TRACK_RUNTIME_NAMES)
     for name in TRACK_INSTANCE_NAMES:
         entry = entries.get(asset_path(name))
         if entry is None:
@@ -310,6 +347,10 @@ def find_instance_override_problems(entries):
             problems.append(f"{name}: C++ 구동·조건부 이름 덮어씀 " + ", ".join(sorted(names & forbidden)))
         if names - overridable:
             problems.append(f"{name}: 마스터에 없는 이름 " + ", ".join(sorted(names - overridable)))
+        scalars = entry.get("Scalars", {})
+        for scalar_name, wanted in INSTANCE_REQUIRED_SCALARS.get(name, {}).items():
+            if scalars.get(scalar_name) != wanted:
+                problems.append(f"{name}: Scalars.{scalar_name} = {scalars.get(scalar_name)} ≠ {wanted}")
     source = entries.get(asset_path(DUST_SOURCE_INSTANCE))
     for name in DUST_INSTANCE_NAMES:
         entry = entries.get(asset_path(name))
@@ -349,6 +390,10 @@ def find_missing_unreal_names():
             if target is None:
                 missing.append(dotted_name)
                 break
+    for class_name, property_name in REQUIRED_EDITOR_PROPERTIES:
+        owner_class = getattr(unreal, class_name, None)
+        if owner_class is None or not has_editor_property(unreal.get_default_object(owner_class), property_name):
+            missing.append(f"{class_name}.{property_name}")
     return missing
 
 
@@ -362,7 +407,7 @@ def read_overwrite_request():
 
 
 def collect_target_asset_paths():
-    paths = [MASTER_PATH, FUNCTION_PATH, COLLECTION_PATH, GRID_MESH_PATH]
+    paths = [MASTER_PATH, FUNCTION_PATH, COLLECTION_PATH] + [f"{MESH_DIR}/{spec['name']}" for spec in GRID_MESH_SPECS]
     paths.extend(asset_path(name) for name in TRACK_INSTANCE_NAMES + DUST_INSTANCE_NAMES)
     paths.extend(f"{TEXTURE_DIR}/{spec['name']}" for spec in TEXTURE_SPECS)
     return paths
@@ -446,26 +491,77 @@ def import_texture(spec, overwrite):
     return texture, sampler_type, {"asset": path, "source_sha256": source_sha256, "compression": str(compression), "sampler_type": str(sampler_type)}
 
 
-def create_grid_mesh(overwrite):
-    if unreal.EditorAssetLibrary.does_asset_exist(GRID_MESH_PATH):
+def read_bounds_extension(mesh):
+    values = {}
+    for property_name in ("positive_bounds_extension", "negative_bounds_extension"):
+        vector = mesh.get_editor_property(property_name)
+        values[property_name] = [vector.x, vector.y, vector.z]
+    return values
+
+
+def wanted_bounds_extension(spec):
+    return {"positive_bounds_extension": [0.0, 0.0, spec["up_cm"]], "negative_bounds_extension": [0.0, 0.0, spec["down_cm"]]}
+
+
+def bounds_extension_matches(actual, wanted):
+    return all(abs(a - b) <= BOUNDS_EXTENSION_TOLERANCE_CM for name in wanted for a, b in zip(actual[name], wanted[name]))
+
+
+def count_grid_vertices(mesh):
+    return unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem).get_number_verts(mesh, 0)
+
+
+def delete_asset_from_disk(asset_path):
+    asset = unreal.EditorAssetLibrary.load_asset(asset_path)
+    package = asset.get_outermost() if asset is not None else None
+    asset = None
+    unreal.EditorAssetLibrary.delete_asset(asset_path)
+    if package is not None:
+        unreal.EditorLoadingAndSavingUtils.unload_packages([package])
+    package = None
+    unreal.SystemLibrary.collect_garbage()
+    file_path = project_path("Content", *asset_path[len("/Game/"):].split("/")) + ".uasset"
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    unreal.AssetRegistryHelpers.get_asset_registry().scan_paths_synchronous([MESH_DIR], True)
+    if unreal.EditorAssetLibrary.does_asset_exist(asset_path) or os.path.exists(file_path):
+        raise RuntimeError(f"기존 격자 삭제 뒤에도 남아 있음(참조 맵을 닫거나 python Tools/ue_editor.py restart 뒤 재실행, L-editor-67): {asset_path}")
+
+
+def record_grid_mesh(path, mesh, action, wanted):
+    actual = read_bounds_extension(mesh)
+    if not bounds_extension_matches(actual, wanted):
+        raise RuntimeError(f"격자 경계 확장 다시 읽기 불일치: {path} {actual} ≠ {wanted}")
+    vertex_total = count_grid_vertices(mesh)
+    return {"asset": path, "action": action, "size_cm": GRID_MESH_SIZE_CM, "quads": GRID_MESH_QUADS, "render_vertices": vertex_total, "bounds_extension": actual}
+
+
+def ensure_grid_mesh(spec, overwrite):
+    path = f"{MESH_DIR}/{spec['name']}"
+    wanted = wanted_bounds_extension(spec)
+    expected_vertices = (GRID_MESH_QUADS + 1) ** 2
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
         if not overwrite:
-            raise RuntimeError(f"기존 에셋 보존: {GRID_MESH_PATH}")
-        if not unreal.EditorAssetLibrary.delete_asset(GRID_MESH_PATH):
-            raise RuntimeError(f"기존 격자 삭제 실패(참조 중인 맵을 닫고 다시 실행): {GRID_MESH_PATH}")
+            raise RuntimeError(f"기존 에셋 보존: {path}")
+        mesh = unreal.EditorAssetLibrary.load_asset(path)
+        if isinstance(mesh, unreal.StaticMesh) and count_grid_vertices(mesh) == expected_vertices:
+            if bounds_extension_matches(read_bounds_extension(mesh), wanted):
+                return record_grid_mesh(path, mesh, "reused", wanted)
+            for property_name, vector in wanted.items():
+                mesh.set_editor_property(property_name, unreal.Vector(*vector))
+            save_asset(mesh, path)
+            return record_grid_mesh(path, mesh, "bounds_updated", wanted)
+        delete_asset_from_disk(path)
     ensure_directory(MESH_DIR)
-    mesh = unreal.TDFluidWaterMeshEditorLibrary.create_grid_static_mesh(MESH_DIR, GRID_MESH_NAME, GRID_MESH_SIZE_CM, GRID_MESH_QUADS, unreal.load_asset(GRID_DEFAULT_MATERIAL_PATH))
+    mesh = unreal.TDFluidWaterMeshEditorLibrary.create_grid_static_mesh(MESH_DIR, spec["name"], GRID_MESH_SIZE_CM, GRID_MESH_QUADS, unreal.load_asset(GRID_DEFAULT_MATERIAL_PATH))
     if not isinstance(mesh, unreal.StaticMesh):
-        raise RuntimeError(f"격자 메시 생성 실패: {GRID_MESH_PATH}")
-    vertex_total = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem).get_number_verts(mesh, 0)
-    if vertex_total != (GRID_MESH_QUADS + 1) ** 2:
-        raise RuntimeError(f"격자 메시 정점 수 불일치: {vertex_total}")
-    extension = {}
-    for property_name, vector in (("positive_bounds_extension", (0.0, 0.0, GRID_BOUNDS_EXTENSION_UP_CM)), ("negative_bounds_extension", (0.0, 0.0, GRID_BOUNDS_EXTENSION_DOWN_CM))):
-        if has_editor_property(mesh, property_name):
-            mesh.set_editor_property(property_name, unreal.Vector(*vector))
-            extension[property_name] = list(vector)
-    save_asset(mesh, GRID_MESH_PATH)
-    return {"asset": GRID_MESH_PATH, "size_cm": GRID_MESH_SIZE_CM, "quads": GRID_MESH_QUADS, "render_vertices": vertex_total, "bounds_extension": extension}
+        raise RuntimeError(f"격자 메시 생성 실패: {path}")
+    if count_grid_vertices(mesh) != expected_vertices:
+        raise RuntimeError(f"격자 메시 정점 수 불일치: {path} {count_grid_vertices(mesh)}")
+    for property_name, vector in wanted.items():
+        mesh.set_editor_property(property_name, unreal.Vector(*vector))
+    save_asset(mesh, path)
+    return record_grid_mesh(path, mesh, "created", wanted)
 
 
 def load_or_create_collection(overwrite):
@@ -546,7 +642,7 @@ class SourceFactory:
         if name in vectors:
             node = self.node(unreal.MaterialExpressionVectorParameter, x, y, parameter_name=name, default_value=unreal.LinearColor(*vectors[name]))
             assign_parameter_group(node)
-            return node, "RGB"
+            return node, "RGBA" if name in VECTOR4_INPUT_NAMES else "RGB"
         scalars = dict(SCALAR_PARAMETER_DEFAULTS)
         if name in scalars:
             node = self.node(unreal.MaterialExpressionScalarParameter, x, y, parameter_name=name, default_value=scalars[name])
@@ -650,14 +746,13 @@ def create_master(codes, textures, collection, overwrite):
     opacity = factory.node(unreal.MaterialExpressionComponentMask, -150, 40, r=False, g=False, b=False, a=True)
     link(surface, color)
     link(surface, opacity)
-    roughness_source, _ = factory.get("TrackRoughness")
     attributes = factory.node(unreal.MaterialExpressionMakeMaterialAttributes, 200, 0)
     sources_by_attribute = {
         "BaseColor": (color, ""),
         "OpacityMask": (opacity, ""),
         "Normal": (surface, "TrackNormalWS"),
         "PixelDepthOffset": (surface, "TrackPixelDepthOffsetCm"),
-        "Roughness": (roughness_source, ""),
+        "Roughness": (surface, "TrackRoughnessOut"),
         "WorldPositionOffset": (offset, ""),
     }
     for attribute_name in MASTER_ATTRIBUTE_INPUT_NAMES:
@@ -784,7 +879,7 @@ def main():
         imported[spec["name"]] = (texture, sampler_type)
         texture_records.append(record)
     textures = {name: (default_texture, default_sampler) if source == "default" else imported[source] for name, source in TEXTURE_PARAMETER_SOURCES.items()}
-    grid_record = create_grid_mesh(overwrite)
+    grid_records = [ensure_grid_mesh(spec, overwrite) for spec in GRID_MESH_SPECS]
     collection = load_or_create_collection(overwrite)
 
     print("단계: 마스터·재질 함수·인스턴스")
@@ -797,7 +892,8 @@ def main():
         "overwrite": overwrite,
         "default_texture": default_path,
         "textures": texture_records,
-        "grid_mesh": grid_record,
+        "grid_meshes": grid_records,
+        "runtime_parameter_names": list(TRACK_RUNTIME_NAMES),
         "collection": COLLECTION_PATH,
         "master": master_record,
         "function": function_record,

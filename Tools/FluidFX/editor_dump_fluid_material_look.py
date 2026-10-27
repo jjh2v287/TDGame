@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 Python(PIE 아님, 읽기 전용·저장 없음·맵을 열지 않음). 나이아가라 User 값은 에디터 Python 으로 못 읽어 먼저 python -B Tools/FluidFX/editor_make_fluid_ember_niagara.py --dump-only 가 만든 Saved/FluidFX/niagara/<시스템 이름>.dump.json 의 UserVariables 절을 읽는다
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_dump_fluid_material_look.py (PowerShell)
 출력: Saved/FluidFX/material_look_dump.json(키 정렬, 실수는 float32 최단 표기. Materials=/Game/FluidFX 재질 인스턴스가 덮어쓴 스칼라·벡터[r,g,b,a]·부모와 값이 다른 정적 스위치, NiagaraSystems=User 변수 기본값(Floats·Ints·Bools·Vectors2·Vectors3·Colors, 키는 User.이름 그대로), DumpInfo=덮어쓰기 텍스처·마스터에 없는 낡은 덮어쓰기(StaleOverrides, 값에서 뺌)·건너뛴 항목·나이아가라 원본 파일·오류), 오류(배열 값 ≠ MaterialEditingLibrary 값, 덮어쓰기 0개, 낡은 나이아가라 덤프 포함)가 있으면 파일을 쓴 뒤 종료 1
-상태: 미검증(2026-10-25 T0 작성, 에디터 실행 전: py_compile·가짜 unreal 형식 검사만, spec-wave0-data-bridge-v2 2.4·3.6)
+상태: 검증됨(2026-10-27 파동 2 A6 에디터 실행: 재질 인스턴스 91·나이아가라 9, 오류 0, fluid_material_look.py compare 차이는 에셋이 없는 나이아가라 4개뿐)
 """
 import json
 import math

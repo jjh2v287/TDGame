@@ -6,8 +6,10 @@
 #include "Templates/UniquePtr.h"
 #include "TDFluidGpuBatch.h"
 #include "TDFluidGpuInputs.h"
+#include "TDFluidGpuMassInput.h"
 
 class FRHIGPUTextureReadback;
+class FTDFluidGpuMassInputRegistry;
 class FRHIGPUBufferReadback;
 
 struct FTDFluidGpuFrameOutputs
@@ -20,9 +22,11 @@ struct FTDFluidGpuFrameOutputs
 	int32 SkippedOutputCount = 0;
 	FRDGBufferRef WaterProbeSamples = nullptr;
 	int32 WaterProbeSlotCount = 0;
+	FRDGBufferRef MassInputCounterSnapshot = nullptr;
+	TArray<uint64> MassInputCounterActorKeys;
 };
 
-TDFLUIDGPU_API FTDFluidGpuFrameOutputs AddTDFluidGpuFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches);
+TDFLUIDGPU_API FTDFluidGpuFrameOutputs AddTDFluidGpuFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuMassInputRegistry* MassInputRegistry = nullptr);
 
 TDFLUIDGPU_API int64 ComputeTDFluidGpuBatchStateBytes(const FTDFluidGpuBatch& Batch);
 
@@ -34,6 +38,7 @@ struct FTDFluidGpuReadbackFrame
 	FTDFluidGpuReadbackAtlasLayout Layout;
 	TArray<FFloat16Color> Texels;
 	TArray<FTDFluidGpuWaterProbeSample> WaterProbeSamples;
+	TArray<FTDFluidGpuMassInputCounters> MassInputCounters;
 };
 
 class TDFLUIDGPU_API FTDFluidGpuReadbackRing
@@ -57,6 +62,8 @@ private:
 		bool bIsPending = false;
 		TUniquePtr<FRHIGPUBufferReadback> WaterProbeReadback;
 		int32 WaterProbeSlotCount = 0;
+		TUniquePtr<FRHIGPUBufferReadback> MassInputCounterReadback;
+		TArray<uint64> MassInputCounterActorKeys;
 	};
 
 	FTDFluidGpuReadbackSlot Slots[TDFluidGpuSolverConstants::ReadbackRingSize];

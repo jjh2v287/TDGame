@@ -58,6 +58,11 @@ namespace TDFluidPresetTuningTestPrivate
 		Builders.Add(FTDFluidFireLightSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildFireLightSettingsForPresetKind));
 		Builders.Add(FTDFluidWaterLodGridSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildWaterLodGridSettingsForPresetKind));
 		Builders.Add(FTDFluidWaterNearRippleSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildWaterNearRippleSettingsForPresetKind));
+		Builders.Add(FTDFluidVolumeDriverSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildVolumeDriverForPresetKind));
+		Builders.Add(FTDFluidOutputTargetSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildOutputTargetForPresetKind));
+		Builders.Add(FTDFluidTerrainHeightSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildTerrainHeightForPresetKind));
+		Builders.Add(FTDFluidMassInputSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildMassInputForPresetKind));
+		Builders.Add(FTDFluidSurfaceRenderSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildSurfaceRenderForPresetKind));
 		return Builders;
 	}
 
@@ -255,6 +260,16 @@ namespace TDFluidPresetTuningTestPrivate
 			FStructOnScope ExpectedStruct(StructProperty->Struct);
 			const bool bConverted = FJsonObjectConverter::JsonObjectToUStruct(Expected->AsObject().ToSharedRef(), StructProperty->Struct, ExpectedStruct.GetStructMemory());
 			return bConverted && StructProperty->Identical(ValuePtr, ExpectedStruct.GetStructMemory(), PPF_None);
+		}
+		if (const FNameProperty* NameProperty = CastField<FNameProperty>(Property))
+		{
+			OutActual = NameProperty->GetPropertyValue(ValuePtr).ToString();
+			return Expected->Type == EJson::String && OutActual.Equals(Expected->AsString(), ESearchCase::CaseSensitive);
+		}
+		if (const FSoftObjectProperty* SoftObjectProperty = CastField<FSoftObjectProperty>(Property))
+		{
+			OutActual = SoftObjectProperty->GetPropertyValue(ValuePtr).ToSoftObjectPath().ToString();
+			return Expected->Type == EJson::String && OutActual.Equals(Expected->AsString(), ESearchCase::CaseSensitive);
 		}
 		OutActual = TEXT("unsupported property type");
 		return false;

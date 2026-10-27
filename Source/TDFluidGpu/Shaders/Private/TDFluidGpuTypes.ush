@@ -18,6 +18,9 @@ static const uint TDFLUIDGPU_ACTOR_FLAG_USES_HEAT_CHANNEL = 1u << 14;
 static const uint TDFLUIDGPU_ACTOR_FLAG_USES_BOUNDARY_REFLECTION = 1u << 15;
 static const uint TDFLUIDGPU_ACTOR_FLAG_USES_VORTEX_FORCE = 1u << 16;
 static const uint TDFLUIDGPU_ACTOR_FLAG_WRITES_AUX_OUTPUT = 1u << 17;
+static const uint TDFLUIDGPU_ACTOR_FLAG_CONSUMES_MASS_INPUT = 1u << 18;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_TRACK_BANK = 1u << 19;
+static const uint TDFLUIDGPU_ACTOR_FLAG_WRITES_PAINTER_VELOCITY = 1u << 20;
 
 static const uint TDFLUIDGPU_STAMP_FLAG_WRITES_SELECTIVE_DENSITY = 1u << 0;
 static const uint TDFLUIDGPU_STAMP_FLAG_ERASES_DENSITY = 1u << 1;
@@ -111,6 +114,11 @@ struct FTDFluidGpuActorParameters
 	float BrushDisplacementRatio;
 	uint FlowNoiseLatticePeriodPacked;
 	uint AmbientNoiseLatticePeriodPacked;
+
+	float TrackBankStrength;
+	float TrackBankHeightLimit;
+	uint TrackBankRadiusCells;
+	uint TrackBankPadding;
 };
 
 struct FTDFluidGpuPackedRingShape
@@ -118,9 +126,10 @@ struct FTDFluidGpuPackedRingShape
 	float InnerRadiusRatio;
 	float SideArcWeight;
 	float InnerEraseRatePerSec;
-	float Padding0;
+	float EllipseAspectRatio;
 	float2 MotionDirection;
-	float2 Padding1;
+	float Hardness;
+	float EllipseAxisRadians;
 };
 
 struct FTDFluidGpuPackedStamp

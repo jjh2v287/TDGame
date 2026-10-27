@@ -1,0 +1,26 @@
+#include "/Engine/Public/Platform.ush"
+#include "/TDFluidGpu/Private/TDFluidGpuMassSplat.ush"
+
+StructuredBuffer<FTDFluidGpuPackedMassPoint> MassPoints;
+StructuredBuffer<FTDFluidGpuMassInputEntry> MassInputEntries;
+RWBuffer<uint> MassInputAccumulation;
+RWBuffer<uint> MassInputCounters;
+uint MassPointCount;
+
+[numthreads(64, 1, 1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (DispatchThreadId.x >= MassPointCount)
+	{
+		return;
+	}
+
+	const FTDFluidGpuPackedMassPoint MassPoint = MassPoints[DispatchThreadId.x];
+	const FTDFluidGpuMassInputEntry Entry = MassInputEntries[MassPoint.EntryIndexAndFlags & TDFLUIDGPU_MASS_POINT_ENTRY_MASK];
+	const bool bWritesVelocity = (MassPoint.EntryIndexAndFlags & TDFLUIDGPU_MASS_POINT_WRITES_VELOCITY) != 0u;
+	const bool bWrapsArea = (Entry.Flags & TDFLUIDGPU_MASS_ENTRY_FLAG_WRAPS_AREA) != 0u;
+	const float RadiusCm = TDFluidGpuMassResolveRadius(MassPoint.RadiusCm, Entry.InputCellCm, (float)Entry.RadiusCapCells);
+	const bool bTouched = TDFluidGpuMassSplatPoint(MassInputAccumulation, Entry.AccumulationBase, Entry.InputResolution, Entry.InputCellCm, bWrapsArea, MassPoint.LocalCm, MassPoint.VelocityPlaneCmPerSec, RadiusCm, MassPoint.DensityTarget, MassPoint.HeatTarget, bWritesVelocity);
+	uint Previous;
+	InterlockedAdd(MassInputCounters[Entry.CounterBase + (bTouched ? 0u : 1u)], 1u, Previous);
+}

@@ -2,6 +2,7 @@
 
 #include "TDFluidGpuMultigridProbeReadbacks.h"
 #include "TDFluidGpuPassTimestamps.h"
+#include "TDFluidGpuMassInput.h"
 #include "TDFluidGpuWaterPressureProbeReadbacks.h"
 
 #include "DataDrivenShaderPlatformInfo.h"
@@ -40,6 +41,7 @@ namespace
 	constexpr EPixelFormat DivergenceFormat = PF_R16F;
 	constexpr EPixelFormat PainterDensityFormat = PF_R32_FLOAT;
 	constexpr EPixelFormat PainterShiftStageFormat = PF_G32R32F;
+	constexpr EPixelFormat PainterVelocityFormat = PF_G32R32F;
 	constexpr EPixelFormat TerrainShiftStageFormat = PF_R32_FLOAT;
 	constexpr EPixelFormat OutputFormat = PF_FloatRGBA;
 	constexpr EPixelFormat ReadbackAtlasFormat = PF_FloatRGBA;
@@ -86,7 +88,18 @@ class FTDFluidGpuShiftCS : public FTDFluidGpuComputeShader
 
 	class FPhaseDimension : SHADER_PERMUTATION_INT("TDFLUIDGPU_SHIFT_PHASE", 3);
 	class FPainterDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_PAINTER");
-	using FPermutationDomain = TShaderPermutationDomain<FPhaseDimension, FPainterDimension>;
+	class FPainterVelocityDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_PAINTER_VELOCITY");
+	using FPermutationDomain = TShaderPermutationDomain<FPhaseDimension, FPainterDimension, FPainterVelocityDimension>;
+
+	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
+	{
+		const FPermutationDomain PermutationVector(Parameters.PermutationId);
+		if (PermutationVector.Get<FPainterVelocityDimension>() && !PermutationVector.Get<FPainterDimension>())
+		{
+			return false;
+		}
+		return FTDFluidGpuComputeShader::ShouldCompilePermutation(Parameters);
+	}
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -98,6 +111,10 @@ class FTDFluidGpuShiftCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, PainterStageIn)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PainterPrimaryDensityOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PainterSelectiveDensityOut)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, PainterVelocityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, PainterVelocityStageOut)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, PainterVelocityStageIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, PainterVelocityOut)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, SurfaceDisplacementIn)
@@ -155,18 +172,35 @@ class FTDFluidGpuRasterizeObstaclesCS : public FTDFluidGpuComputeShader
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuRasterizeObstaclesCS, "/TDFluidGpu/Private/TDFluidGpuRasterizeObstacles.usf", "MainCS", SF_Compute);
 
 class FTDFluidGpuWrapAreaDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WRAP_AREA");
+class FTDFluidGpuMassInputDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_MASS_INPUT");
+
+class FTDFluidGpuMassSplatPointsCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuMassSplatPointsCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuMassSplatPointsCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedMassPoint>, MassPoints)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuMassInputEntry>, MassInputEntries)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWBuffer<uint>, MassInputAccumulation)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWBuffer<uint>, MassInputCounters)
+		SHADER_PARAMETER(uint32, MassPointCount)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuMassSplatPointsCS, "/TDFluidGpu/Private/TDFluidGpuMassSplatPoints.usf", "MainCS", SF_Compute);
 
 class FTDFluidGpuApplyStampsCS : public FTDFluidGpuComputeShader
 {
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuApplyStampsCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuApplyStampsCS, FTDFluidGpuComputeShader);
-	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension>;
+	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension, FTDFluidGpuMassInputDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedStamp>, Stamps)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuStampBinRange>, StampBinRanges)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, StampBinIndices)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedRingShape>, StampRingShapes)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, ObstacleSdf)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
@@ -176,6 +210,9 @@ class FTDFluidGpuApplyStampsCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, SurfaceDisplacementOut)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, HeatIn)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, HeatOut)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuMassInputEntry>, MassInputEntries)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(Buffer<uint>, MassInputAccumulation)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWBuffer<uint>, MassInputCounters)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuApplyStampsCS, "/TDFluidGpu/Private/TDFluidGpuApplyStamps.usf", "MainCS", SF_Compute);
@@ -530,7 +567,8 @@ class FTDFluidGpuPainterStepCS : public FTDFluidGpuComputeShader
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuPainterStepCS, FTDFluidGpuComputeShader);
 
 	class FWritesOutputDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WRITES_OUTPUT");
-	using FPermutationDomain = TShaderPermutationDomain<FWritesOutputDimension>;
+	class FWritesPainterVelocityDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WRITES_PAINTER_VELOCITY");
+	using FPermutationDomain = TShaderPermutationDomain<FWritesOutputDimension, FWritesPainterVelocityDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -538,13 +576,49 @@ class FTDFluidGpuPainterStepCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuStampBinRange>, StampBinRanges)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, StampBinIndices)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedObstacle>, Obstacles)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedRingShape>, StampRingShapes)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PainterPrimaryDensity)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, PainterSelectiveDensity)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, PainterVelocity)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, DensityPressureOutput)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, VelocityOutput)
 		SHADER_PARAMETER(uint32, EntryIndex)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuPainterStepCS, "/TDFluidGpu/Private/TDFluidGpuPainter.usf", "MainCS", SF_Compute);
+
+class FTDFluidGpuPainterBankBlurRowsCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuPainterBankBlurRowsCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuPainterBankBlurRowsCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PainterPrimaryDensityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float>, BankRowsOut)
+		SHADER_PARAMETER(uint32, EntryIndex)
+		SHADER_PARAMETER(uint32, WrapsArea)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuPainterBankBlurRowsCS, "/TDFluidGpu/Private/TDFluidGpuPainterBank.usf", "BlurRowsCS", SF_Compute);
+
+class FTDFluidGpuPainterBankComposeCS : public FTDFluidGpuComputeShader
+{
+	DECLARE_GLOBAL_SHADER(FTDFluidGpuPainterBankComposeCS);
+	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuPainterBankComposeCS, FTDFluidGpuComputeShader);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedObstacle>, Obstacles)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PainterPrimaryDensityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, PainterSelectiveDensityIn)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2D<float>, BankRowsIn)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, DensityPressureOutput)
+		SHADER_PARAMETER(uint32, EntryIndex)
+		SHADER_PARAMETER(uint32, WrapsArea)
+	END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuPainterBankComposeCS, "/TDFluidGpu/Private/TDFluidGpuPainterBank.usf", "ComposeOutputCS", SF_Compute);
 
 class FTDFluidGpuWaterShiftCS : public FTDFluidGpuComputeShader
 {
@@ -975,6 +1049,24 @@ namespace
 		FRDGBufferRef WaterProbeSamples = nullptr;
 	};
 
+	struct FTDFluidGpuMassInputSnapshot
+	{
+		FRDGBufferRef Buffer = nullptr;
+		int32 Capacity = 0;
+		TArray<uint64> ActorKeys;
+	};
+
+	struct FTDFluidGpuMassInputGraph
+	{
+		FTDFluidGpuMassInputSnapshot* Snapshot = nullptr;
+		TArray<uint32> CounterBases;
+		TArray<uint64> ActorKeys;
+		FRDGBufferRef Accumulation = nullptr;
+		FRDGBufferRef Counters = nullptr;
+		FRDGBufferSRVRef Entries = nullptr;
+		TArray<FTDFluidGpuPackedMassPoint> Points;
+	};
+
 	struct FTDFluidGpuBatchGraphTextures
 	{
 		FRDGTextureRef Velocity[2] = { nullptr, nullptr };
@@ -985,6 +1077,7 @@ namespace
 		FRDGTextureRef TerrainElevation = nullptr;
 		FRDGTextureRef PainterPrimaryDensity = nullptr;
 		FRDGTextureRef PainterSelectiveDensity = nullptr;
+		FRDGTextureRef PainterVelocity = nullptr;
 		FRDGTextureRef Heat[2] = { nullptr, nullptr };
 	};
 
@@ -1016,6 +1109,7 @@ namespace
 		int32 Resolution;
 		int32 EntryCount;
 		FTDFluidGpuPassTimestamps* PassTimestamps;
+		FTDFluidGpuMassInputGraph* MassInput = nullptr;
 	};
 
 	struct FTDFluidGpuOutputTargets
@@ -1174,6 +1268,10 @@ namespace
 		{
 			Textures.PainterPrimaryDensity = RegisterOrGrowStateTexture(GraphBuilder, State.PainterPrimaryDensity, Resolution, SliceCapacity, PainterDensityFormat, true, TEXT("TDFluidGpu.PainterPrimaryDensity"));
 			Textures.PainterSelectiveDensity = RegisterOrGrowStateTexture(GraphBuilder, State.PainterSelectiveDensity, Resolution, SliceCapacity, PainterDensityFormat, true, TEXT("TDFluidGpu.PainterSelectiveDensity"));
+			if (Batch.GetKey().bWritesPainterVelocity)
+			{
+				Textures.PainterVelocity = RegisterOrGrowStateTexture(GraphBuilder, State.PainterVelocity, Resolution, SliceCapacity, PainterVelocityFormat, true, TEXT("TDFluidGpu.PainterVelocity"));
+			}
 			State.SliceCapacity = SliceCapacity;
 			return Textures;
 		}
@@ -1280,7 +1378,6 @@ namespace
 		}
 
 		InOutResources.StampRippleImpulses = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampRippleImpulses"), PreparedFrame.StampBins.RippleImpulsesCm));
-		InOutResources.StampRingShapes = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampRingShapes"), PreparedFrame.StampBins.RingShapes));
 		if (PreparedFrame.WaterProbeSlotCount <= 0)
 		{
 			return;
@@ -1297,6 +1394,7 @@ namespace
 		Resources.Stamps = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.Stamps"), PreparedFrame.StampBins.Stamps));
 		Resources.StampBinRanges = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampBinRanges"), PreparedFrame.StampBins.BinRanges));
 		Resources.StampBinIndices = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampBinIndices"), PreparedFrame.StampBins.BinStampIndices));
+		Resources.StampRingShapes = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.StampRingShapes"), PreparedFrame.StampBins.RingShapes));
 		CreateWaterFrameResources(GraphBuilder, PreparedFrame, Resources);
 
 		const FIntPoint AtlasSize = PreparedFrame.ReadbackLayout.GetAtlasSize();
@@ -1311,7 +1409,7 @@ namespace
 		return Resources;
 	}
 
-	void AddShiftGatherPass(const FTDFluidGpuBatchPassContext& Context, FRDGTextureRef CompactStage)
+	void AddShiftGatherPass(const FTDFluidGpuBatchPassContext& Context, FRDGTextureRef CompactStage, FRDGTextureRef PainterVelocityStage)
 	{
 		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
 		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
@@ -1321,6 +1419,7 @@ namespace
 		FTDFluidGpuShiftCS::FPermutationDomain Permutation;
 		Permutation.Set<FTDFluidGpuShiftCS::FPhaseDimension>(ShiftPhaseGather);
 		Permutation.Set<FTDFluidGpuShiftCS::FPainterDimension>(bIsPainter);
+		Permutation.Set<FTDFluidGpuShiftCS::FPainterVelocityDimension>(PainterVelocityStage != nullptr);
 
 		FTDFluidGpuShiftCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuShiftCS::FParameters>();
 		Parameters->ActorParameters = Context.ActorParameters;
@@ -1331,6 +1430,11 @@ namespace
 			Parameters->PainterPrimaryDensityIn = MakeSRV(GraphBuilder, Textures.PainterPrimaryDensity);
 			Parameters->PainterSelectiveDensityIn = MakeSRV(GraphBuilder, Textures.PainterSelectiveDensity);
 			Parameters->PainterStageOut = MakeUAV(GraphBuilder, CompactStage);
+			if (PainterVelocityStage)
+			{
+				Parameters->PainterVelocityIn = MakeSRV(GraphBuilder, Textures.PainterVelocity);
+				Parameters->PainterVelocityStageOut = MakeUAV(GraphBuilder, PainterVelocityStage);
+			}
 		}
 		else
 		{
@@ -1365,11 +1469,17 @@ namespace
 		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
 		const bool bIsPainter = IsPainterBatch(Context.Batch);
 		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+		const bool bShiftsPainterVelocity = bIsPainter && Textures.PainterVelocity != nullptr;
 		FRDGTextureRef CompactStage = nullptr;
+		FRDGTextureRef PainterVelocityStage = nullptr;
 		if (ShiftCount > 0)
 		{
 			CompactStage = GraphBuilder.CreateTexture(MakeStateArrayDesc(Context.Resolution, ShiftCount, bIsPainter ? PainterShiftStageFormat : TerrainShiftStageFormat), TEXT("TDFluidGpu.ShiftStage"));
-			AddShiftGatherPass(Context, CompactStage);
+			if (bShiftsPainterVelocity)
+			{
+				PainterVelocityStage = GraphBuilder.CreateTexture(MakeStateArrayDesc(Context.Resolution, ShiftCount, PainterVelocityFormat), TEXT("TDFluidGpu.PainterVelocityShiftStage"));
+			}
+			AddShiftGatherPass(Context, CompactStage, PainterVelocityStage);
 		}
 
 		TArray<uint32> ScatterEntries(Frame.ShiftEntryIndices);
@@ -1378,6 +1488,7 @@ namespace
 		FTDFluidGpuShiftCS::FPermutationDomain Permutation;
 		Permutation.Set<FTDFluidGpuShiftCS::FPhaseDimension>(CompactStage ? ShiftPhaseScatter : ShiftPhaseResetOnly);
 		Permutation.Set<FTDFluidGpuShiftCS::FPainterDimension>(bIsPainter);
+		Permutation.Set<FTDFluidGpuShiftCS::FPainterVelocityDimension>(bShiftsPainterVelocity);
 
 		FTDFluidGpuShiftCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuShiftCS::FParameters>();
 		Parameters->ActorParameters = Context.ActorParameters;
@@ -1387,6 +1498,14 @@ namespace
 		{
 			Parameters->PainterPrimaryDensityOut = MakeUAV(GraphBuilder, Textures.PainterPrimaryDensity);
 			Parameters->PainterSelectiveDensityOut = MakeUAV(GraphBuilder, Textures.PainterSelectiveDensity);
+			if (bShiftsPainterVelocity)
+			{
+				Parameters->PainterVelocityOut = MakeUAV(GraphBuilder, Textures.PainterVelocity);
+			}
+			if (PainterVelocityStage)
+			{
+				Parameters->PainterVelocityStageIn = MakeSRV(GraphBuilder, PainterVelocityStage);
+			}
 			if (CompactStage)
 			{
 				Parameters->PainterStageIn = MakeSRV(GraphBuilder, CompactStage);
@@ -1463,6 +1582,7 @@ namespace
 		Parameters->Stamps = Context.FrameResources.Stamps;
 		Parameters->StampBinRanges = Context.FrameResources.StampBinRanges;
 		Parameters->StampBinIndices = Context.FrameResources.StampBinIndices;
+		Parameters->StampRingShapes = Context.FrameResources.StampRingShapes;
 		Parameters->ObstacleSdf = MakeSRV(GraphBuilder, Textures.ObstacleSdf);
 		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
 		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[0]);
@@ -1475,6 +1595,13 @@ namespace
 
 		FTDFluidGpuApplyStampsCS::FPermutationDomain StampDomain;
 		StampDomain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
+		StampDomain.Set<FTDFluidGpuMassInputDimension>(Context.MassInput != nullptr);
+		if (Context.MassInput)
+		{
+			Parameters->MassInputEntries = Context.MassInput->Entries;
+			Parameters->MassInputAccumulation = GraphBuilder.CreateSRV(Context.MassInput->Accumulation, PF_R32_UINT);
+			Parameters->MassInputCounters = GraphBuilder.CreateUAV(Context.MassInput->Counters, PF_R32_UINT);
+		}
 		TShaderMapRef<FTDFluidGpuApplyStampsCS> Shader(Context.ShaderMap, StampDomain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.ApplyStamps"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
 	}
@@ -2095,18 +2222,51 @@ namespace
 		}
 	}
 
+	void AddPainterTrackBankPasses(const FTDFluidGpuBatchPassContext& Context, int32 EntryIndex, FRDGTextureRef DensityPressureOutput)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const uint32 WrapsArea = Context.Batch.GetKey().bWrapsArea ? 1u : 0u;
+		const FRDGTextureDesc BankRowsDesc = FRDGTextureDesc::Create2D(FIntPoint(Context.Resolution, Context.Resolution), PF_R16F, FClearValueBinding::None, TexCreate_ShaderResource | TexCreate_UAV);
+		FRDGTextureRef BankRows = GraphBuilder.CreateTexture(BankRowsDesc, TEXT("TDFluidGpu.PainterBankRows"));
+
+		FTDFluidGpuPainterBankBlurRowsCS::FParameters* RowParameters = GraphBuilder.AllocParameters<FTDFluidGpuPainterBankBlurRowsCS::FParameters>();
+		RowParameters->ActorParameters = Context.ActorParameters;
+		RowParameters->PainterPrimaryDensityIn = MakeSRV(GraphBuilder, Context.Textures.PainterPrimaryDensity);
+		RowParameters->BankRowsOut = GraphBuilder.CreateUAV(BankRows);
+		RowParameters->EntryIndex = static_cast<uint32>(EntryIndex);
+		RowParameters->WrapsArea = WrapsArea;
+		TShaderMapRef<FTDFluidGpuPainterBankBlurRowsCS> RowShader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.PainterBankRows"), RowShader, RowParameters, MakeCellGroupCount(Context.Resolution, 1));
+
+		FTDFluidGpuPainterBankComposeCS::FParameters* ComposeParameters = GraphBuilder.AllocParameters<FTDFluidGpuPainterBankComposeCS::FParameters>();
+		ComposeParameters->ActorParameters = Context.ActorParameters;
+		ComposeParameters->Obstacles = Context.Obstacles;
+		ComposeParameters->PainterPrimaryDensityIn = MakeSRV(GraphBuilder, Context.Textures.PainterPrimaryDensity);
+		ComposeParameters->PainterSelectiveDensityIn = MakeSRV(GraphBuilder, Context.Textures.PainterSelectiveDensity);
+		ComposeParameters->BankRowsIn = GraphBuilder.CreateSRV(FRDGTextureSRVDesc::Create(BankRows));
+		ComposeParameters->DensityPressureOutput = MakeUAV(GraphBuilder, DensityPressureOutput);
+		ComposeParameters->EntryIndex = static_cast<uint32>(EntryIndex);
+		ComposeParameters->WrapsArea = WrapsArea;
+		TShaderMapRef<FTDFluidGpuPainterBankComposeCS> ComposeShader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.PainterBankCompose"), ComposeShader, ComposeParameters, MakeCellGroupCount(Context.Resolution, 1));
+	}
+
 	void AddPainterStepPasses(const FTDFluidGpuBatchPassContext& Context, FTDFluidGpuFrameOutputs& InOutOutputs)
 	{
 		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
 		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
 		FRDGTextureUAVRef PrimaryUAV = MakeUnorderedUAV(GraphBuilder, Context.Textures.PainterPrimaryDensity);
 		FRDGTextureUAVRef SelectiveUAV = MakeUnorderedUAV(GraphBuilder, Context.Textures.PainterSelectiveDensity);
+		const bool bWritesPainterVelocity = Context.Textures.PainterVelocity != nullptr;
+		FRDGTextureUAVRef PainterVelocityUAV = bWritesPainterVelocity ? MakeUnorderedUAV(GraphBuilder, Context.Textures.PainterVelocity) : nullptr;
 
 		for (int32 EntryIndex = 0; EntryIndex < Context.EntryCount; ++EntryIndex)
 		{
 			const FTDFluidGpuActorInput& Actor = Context.FrameInputs.Actors[Frame.Entries[EntryIndex].ActorInputIndex];
-			const FTDFluidGpuOutputTargets Targets = RegisterOutputTargets(GraphBuilder, Actor, Context.Resolution, false);
-			const bool bWritesOutput = Targets.DensityPressure != nullptr;
+			const FTDFluidGpuOutputTargets Targets = RegisterOutputTargets(GraphBuilder, Actor, Context.Resolution, bWritesPainterVelocity);
+			const bool bHasOutputTargets = Targets.DensityPressure != nullptr;
+			const bool bComposesTrackBank = bHasOutputTargets && Actor.Settings.TrackBankStrength > 0.0f;
+			const bool bWritesOutput = bHasOutputTargets && (!bComposesTrackBank || bWritesPainterVelocity);
 
 			FTDFluidGpuPainterStepCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuPainterStepCS::FParameters>();
 			Parameters->ActorParameters = Context.ActorParameters;
@@ -2114,12 +2274,21 @@ namespace
 			Parameters->StampBinRanges = Context.FrameResources.StampBinRanges;
 			Parameters->StampBinIndices = Context.FrameResources.StampBinIndices;
 			Parameters->Obstacles = Context.Obstacles;
+			Parameters->StampRingShapes = Context.FrameResources.StampRingShapes;
 			Parameters->PainterPrimaryDensity = PrimaryUAV;
 			Parameters->PainterSelectiveDensity = SelectiveUAV;
+			Parameters->PainterVelocity = PainterVelocityUAV;
 			Parameters->EntryIndex = static_cast<uint32>(EntryIndex);
 			if (bWritesOutput)
 			{
 				Parameters->DensityPressureOutput = MakeUAV(GraphBuilder, Targets.DensityPressure);
+			}
+			if (bWritesOutput && bWritesPainterVelocity)
+			{
+				Parameters->VelocityOutput = MakeUAV(GraphBuilder, Targets.Velocity);
+			}
+			if (bHasOutputTargets)
+			{
 				++InOutOutputs.WrittenOutputCount;
 			}
 			else
@@ -2127,8 +2296,15 @@ namespace
 				++InOutOutputs.SkippedOutputCount;
 			}
 
-			TShaderMapRef<FTDFluidGpuPainterStepCS> Shader(Context.ShaderMap, FTDFluidGpuPainterStepCS::FPermutationDomain(bWritesOutput));
+			FTDFluidGpuPainterStepCS::FPermutationDomain Permutation;
+			Permutation.Set<FTDFluidGpuPainterStepCS::FWritesOutputDimension>(bWritesOutput);
+			Permutation.Set<FTDFluidGpuPainterStepCS::FWritesPainterVelocityDimension>(bWritesPainterVelocity);
+			TShaderMapRef<FTDFluidGpuPainterStepCS> Shader(Context.ShaderMap, Permutation);
 			FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.PainterStep"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, 1));
+			if (bComposesTrackBank)
+			{
+				AddPainterTrackBankPasses(Context, EntryIndex, Targets.DensityPressure);
+			}
 		}
 	}
 
@@ -2159,6 +2335,53 @@ namespace
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.ReadbackDownsample"), Shader, Parameters, MakeCellGroupCount(TDFluidGpuSolverConstants::ReadbackTileResolution, Context.EntryCount));
 	}
 
+	void AddMassInputSplatPass(const FTDFluidGpuBatchPassContext& Context)
+	{
+		FTDFluidGpuMassInputGraph& MassInput = *Context.MassInput;
+		if (MassInput.Points.IsEmpty())
+		{
+			return;
+		}
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		FTDFluidGpuMassSplatPointsCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuMassSplatPointsCS::FParameters>();
+		Parameters->MassPoints = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.MassPoints"), MassInput.Points));
+		Parameters->MassInputEntries = MassInput.Entries;
+		Parameters->MassInputAccumulation = GraphBuilder.CreateUAV(MassInput.Accumulation, PF_R32_UINT);
+		Parameters->MassInputCounters = GraphBuilder.CreateUAV(MassInput.Counters, PF_R32_UINT);
+		Parameters->MassPointCount = static_cast<uint32>(MassInput.Points.Num());
+		TShaderMapRef<FTDFluidGpuMassSplatPointsCS> Shader(Context.ShaderMap);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.MassSplatPoints"), Shader, Parameters, FIntVector(FMath::DivideAndRoundUp(MassInput.Points.Num(), 64), 1, 1));
+	}
+
+	void AddMassInputCounterSnapshotPasses(const FTDFluidGpuBatchPassContext& Context)
+	{
+		FTDFluidGpuMassInputGraph& MassInput = *Context.MassInput;
+		FTDFluidGpuMassInputSnapshot* Snapshot = MassInput.Snapshot;
+		if (!Snapshot || !Snapshot->Buffer)
+		{
+			return;
+		}
+		constexpr uint32 CounterBytes = sizeof(uint32) * TDFluidGpuSolverConstants::MassInputCounterCount;
+		for (int32 EntryIndex = 0; EntryIndex < MassInput.CounterBases.Num(); ++EntryIndex)
+		{
+			const int32 SnapshotIndex = Snapshot->ActorKeys.Num();
+			if (SnapshotIndex >= Snapshot->Capacity)
+			{
+				return;
+			}
+			AddCopyBufferPass(Context.GraphBuilder, Snapshot->Buffer, SnapshotIndex * CounterBytes, MassInput.Counters, MassInput.CounterBases[EntryIndex] * sizeof(uint32), CounterBytes);
+			Snapshot->ActorKeys.Add(MassInput.ActorKeys[EntryIndex]);
+		}
+	}
+
+	void AddMassInputClearPasses(const FTDFluidGpuBatchPassContext& Context)
+	{
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		AddMassInputCounterSnapshotPasses(Context);
+		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(Context.MassInput->Accumulation, PF_R32_UINT), 0u);
+		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(Context.MassInput->Counters, PF_R32_UINT), 0u);
+	}
+
 	void AddFluidSimPasses(const FTDFluidGpuBatchPassContext& Context, FTDFluidGpuFrameOutputs& InOutOutputs)
 	{
 		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
@@ -2169,8 +2392,18 @@ namespace
 		AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("rasterize_obstacles"));
 		AddTerrainUpdatePass(Context);
 		AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("terrain_update"));
+		if (Context.MassInput)
+		{
+			AddMassInputSplatPass(Context);
+			AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("mass_splat"));
+		}
 		AddApplyStampsPass(Context);
 		AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("apply_stamps"));
+		if (Context.MassInput)
+		{
+			AddMassInputClearPasses(Context);
+			AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("mass_clear"));
+		}
 		AddForcesPass(Context);
 		AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("forces"));
 		AddVorticityPass(Context);
@@ -3156,7 +3389,105 @@ namespace
 		CSV_CUSTOM_STAT(TDFluidGpu, WaterPressureMode, PressureModeMaximum, ECsvCustomStatOp::Max);
 	}
 
-	void AddBatchPasses(FRDGBuilder& GraphBuilder, FGlobalShaderMap* ShaderMap, const FTDFluidGpuFrameInputs& FrameInputs, const FTDFluidGpuFrameResources& FrameResources, FTDFluidGpuBatch& Batch, FTDFluidGpuFrameOutputs& InOutOutputs, FTDFluidGpuPassTimestamps* PassTimestamps)
+	FTDFluidGpuMassInputGraph PrepareMassInputGraph(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, FTDFluidGpuBatch& Batch, FTDFluidGpuMassInputRegistry* MassInputRegistry, FTDFluidGpuMassInputSnapshot* MassInputSnapshot)
+	{
+		FTDFluidGpuMassInputGraph Graph;
+		Graph.Snapshot = MassInputSnapshot;
+		FTDFluidGpuMassInputBatchState& State = Batch.MassInputState;
+		const FTDFluidGpuBatchKey& Key = Batch.GetKey();
+		const FTDFluidGpuBatchFrame& Frame = Batch.GetFrame();
+		const int32 InputResolution = TDFluidGpuMassInput::ComputeInputResolution(Key.ResolutionTier, Key.MassInputDivisor);
+		const int32 Divisor = FMath::Max(1, Key.ResolutionTier / InputResolution);
+		const int64 ChannelStride = static_cast<int64>(InputResolution) * InputResolution;
+		const int32 SliceCapacity = FMath::Max3(Batch.StateTextures.SliceCapacity, Batch.GetRequiredSliceCapacity(), 1);
+		const bool bNeedsAllocation = !State.Accumulation.IsValid() || !State.Counters.IsValid() || State.SliceCapacity < SliceCapacity || State.InputResolution != InputResolution;
+		if (bNeedsAllocation)
+		{
+			State.Accumulation = AllocatePooledBuffer(FRDGBufferDesc::CreateBufferDesc(sizeof(uint32), static_cast<uint32>(SliceCapacity * ChannelStride * TDFluidGpuSolverConstants::MassInputChannelCount)), TEXT("TDFluidGpu.MassInputAccumulation"));
+			State.Counters = AllocatePooledBuffer(FRDGBufferDesc::CreateBufferDesc(sizeof(uint32), static_cast<uint32>(SliceCapacity * TDFluidGpuSolverConstants::MassInputCounterCount)), TEXT("TDFluidGpu.MassInputCounters"));
+			State.SliceCapacity = SliceCapacity;
+			State.InputResolution = InputResolution;
+			State.SliceOriginPlaneCm.Init(FVector2D::ZeroVector, SliceCapacity);
+			State.SliceHasOrigin.Init(false, SliceCapacity);
+		}
+		Graph.Accumulation = GraphBuilder.RegisterExternalBuffer(State.Accumulation);
+		Graph.Counters = GraphBuilder.RegisterExternalBuffer(State.Counters);
+		if (bNeedsAllocation)
+		{
+			AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(Graph.Accumulation, PF_R32_UINT), 0u);
+			AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(Graph.Counters, PF_R32_UINT), 0u);
+		}
+
+		TArray<FTDFluidGpuMassInputEntry> Entries;
+		Entries.Reserve(Frame.Entries.Num());
+		for (int32 EntryIndex = 0; EntryIndex < Frame.Entries.Num(); ++EntryIndex)
+		{
+			const FTDFluidGpuSliceEntry& SliceEntry = Frame.Entries[EntryIndex];
+			const FTDFluidGpuActorInput& Actor = FrameInputs.Actors[SliceEntry.ActorInputIndex];
+			const FTDFluidGpuActorParameters& Parameters = Frame.Parameters[EntryIndex];
+			const int32 SliceIndex = SliceEntry.SliceIndex;
+			const FVector2D InputCellCm = FVector2D(Parameters.CellSizeCm) * static_cast<double>(Divisor);
+			const FVector2D WindowCenter = Actor.WindowCenterPlaneCm.ContainsNaN() ? FVector2D::ZeroVector : Actor.WindowCenterPlaneCm;
+			const FVector2D WindowMinimum = WindowCenter - 0.5 * FVector2D(Parameters.ExtentCm);
+			const bool bAppliesAccumulation = State.SliceHasOrigin[SliceIndex] && !SliceEntry.bNeedsReset;
+			const FVector2D Origin = bAppliesAccumulation ? State.SliceOriginPlaneCm[SliceIndex] : WindowMinimum;
+			const int32 RadiusCapCells = FMath::Clamp(Actor.Settings.MassSplatRadiusCapCells, 1, TDFluidGpuSolverConstants::MaximumMassSplatRadiusCapCells);
+
+			ETDFluidGpuMassInputEntryFlags EntryFlags = ETDFluidGpuMassInputEntryFlags::None;
+			EntryFlags |= bAppliesAccumulation ? ETDFluidGpuMassInputEntryFlags::AppliesAccumulation : ETDFluidGpuMassInputEntryFlags::None;
+			EntryFlags |= Actor.Settings.bMassInputWritesSelectiveDensity ? ETDFluidGpuMassInputEntryFlags::WritesSelectiveDensity : ETDFluidGpuMassInputEntryFlags::None;
+			EntryFlags |= Key.bWrapsArea ? ETDFluidGpuMassInputEntryFlags::WrapsArea : ETDFluidGpuMassInputEntryFlags::None;
+
+			FTDFluidGpuMassInputEntry& Entry = Entries.AddDefaulted_GetRef();
+			Entry.AccumulationBase = static_cast<uint32>(SliceIndex * ChannelStride * TDFluidGpuSolverConstants::MassInputChannelCount);
+			Entry.CounterBase = static_cast<uint32>(SliceIndex * TDFluidGpuSolverConstants::MassInputCounterCount);
+			Entry.InputResolution = static_cast<uint32>(InputResolution);
+			Entry.Flags = static_cast<uint32>(EntryFlags);
+			Entry.ShiftOffsetCm = FVector2f(WindowMinimum - Origin);
+			Entry.InputCellCm = FVector2f(InputCellCm);
+			Entry.SafeCount = TDFluidGpuMassInput::ComputeSafeCount(Parameters.MaxCellSpeedCmPerSec);
+			Entry.RadiusCapCells = static_cast<uint32>(RadiusCapCells);
+			Graph.CounterBases.Add(Entry.CounterBase);
+			Graph.ActorKeys.Add(Actor.ActorKey);
+
+			for (const FTDFluidGpuMassPointInput& MassPoint : Actor.MassPoints)
+			{
+				if (Graph.Points.Num() >= TDFluidGpuSolverConstants::MaximumMassPointsPerUpload)
+				{
+					break;
+				}
+				FTDFluidGpuPackedMassPoint& Packed = Graph.Points.AddDefaulted_GetRef();
+				Packed.LocalCm = FVector2f(MassPoint.CenterPlaneCm - Origin);
+				Packed.VelocityPlaneCmPerSec = FVector2f(MassPoint.VelocityPlaneCmPerSec);
+				Packed.RadiusCm = MassPoint.RadiusCm;
+				Packed.DensityTarget = MassPoint.DensityStrength;
+				Packed.HeatTarget = MassPoint.HeatStrength;
+				Packed.EntryIndexAndFlags = static_cast<uint32>(EntryIndex) | (MassPoint.bWritesVelocity ? 0x80000000u : 0u);
+			}
+
+			State.SliceOriginPlaneCm[SliceIndex] = WindowMinimum;
+			State.SliceHasOrigin[SliceIndex] = true;
+			if (MassInputRegistry)
+			{
+				FTDFluidGpuMassInputTargetView View;
+				View.Accumulation = State.Accumulation;
+				View.Counters = State.Counters;
+				View.AccumulationBase = Entry.AccumulationBase;
+				View.CounterBase = Entry.CounterBase;
+				View.InputResolution = InputResolution;
+				View.InputCellCm = InputCellCm;
+				View.OriginPlaneCm = WindowMinimum;
+				View.RadiusCapCells = RadiusCapCells;
+				View.bWrapsArea = Key.bWrapsArea;
+				View.bIsReady = true;
+				MassInputRegistry->UpdateTarget(Actor.ActorKey, View);
+			}
+		}
+		Graph.Entries = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.MassInputEntries"), Entries));
+		return Graph;
+	}
+
+	void AddBatchPasses(FRDGBuilder& GraphBuilder, FGlobalShaderMap* ShaderMap, const FTDFluidGpuFrameInputs& FrameInputs, const FTDFluidGpuFrameResources& FrameResources, FTDFluidGpuBatch& Batch, FTDFluidGpuFrameOutputs& InOutOutputs, FTDFluidGpuPassTimestamps* PassTimestamps, FTDFluidGpuMassInputRegistry* MassInputRegistry = nullptr, FTDFluidGpuMassInputSnapshot* MassInputSnapshot = nullptr)
 	{
 		const FTDFluidGpuBatchFrame& Frame = Batch.GetFrame();
 		if (Frame.Entries.IsEmpty())
@@ -3174,7 +3505,13 @@ namespace
 		const FTDFluidGpuBatchGraphTextures Textures = RegisterBatchStateTextures(GraphBuilder, Batch);
 		FRDGBufferSRVRef ActorParameters = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.ActorParameters"), Frame.Parameters));
 		FRDGBufferSRVRef Obstacles = GraphBuilder.CreateSRV(CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.Obstacles"), Frame.Obstacles));
-		const FTDFluidGpuBatchPassContext Context(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, Textures, ActorParameters, Obstacles, PassTimestamps);
+		FTDFluidGpuBatchPassContext Context(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, Textures, ActorParameters, Obstacles, PassTimestamps);
+		FTDFluidGpuMassInputGraph MassInputGraph;
+		if (Batch.GetKey().MassInputDivisor > 0 && !IsPainterBatch(Batch))
+		{
+			MassInputGraph = PrepareMassInputGraph(GraphBuilder, FrameInputs, Batch, MassInputRegistry, MassInputSnapshot);
+			Context.MassInput = &MassInputGraph;
+		}
 
 		InOutOutputs.SteppedEntryCount += Context.EntryCount;
 		if (IsPainterBatch(Batch))
@@ -3201,10 +3538,29 @@ namespace
 
 namespace
 {
-	FTDFluidGpuFrameOutputs AddFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPassTimestamps* PassTimestamps)
+	FTDFluidGpuFrameOutputs AddFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPassTimestamps* PassTimestamps, FTDFluidGpuMassInputRegistry* MassInputRegistry)
 	{
 		FTDFluidGpuPreparedFrame PreparedFrame;
 		FTDFluidGpuBatch::PrepareFrame(FrameInputs, InOutBatches, PreparedFrame);
+		FTDFluidGpuMassInputSnapshot MassInputSnapshot;
+		for (const FTDFluidGpuBatch& Batch : InOutBatches)
+		{
+			const bool bStepsMassInput = Batch.GetKey().MassInputDivisor > 0 && !Batch.GetKey().bUsesWaterLayer && !IsPainterBatch(Batch);
+			MassInputSnapshot.Capacity += bStepsMassInput ? Batch.GetFrame().Entries.Num() : 0;
+		}
+		if (MassInputSnapshot.Capacity > 0)
+		{
+			MassInputSnapshot.Buffer = GraphBuilder.CreateBuffer(FRDGBufferDesc::CreateBufferDesc(sizeof(uint32), static_cast<uint32>(MassInputSnapshot.Capacity * TDFluidGpuSolverConstants::MassInputCounterCount)), TEXT("TDFluidGpu.MassInputCounterSnapshot"));
+			AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(MassInputSnapshot.Buffer, PF_R32_UINT), 0u);
+		}
+		if (MassInputRegistry)
+		{
+			MassInputRegistry->MarkAllTargetsNotReady();
+			for (const uint64 ReleasedActorKey : FrameInputs.ReleasedActorKeys)
+			{
+				MassInputRegistry->RemoveTarget(ReleasedActorKey);
+			}
+		}
 
 		FTDFluidGpuFrameOutputs Outputs;
 		Outputs.FrameNumber = FrameInputs.FrameNumber;
@@ -3230,7 +3586,7 @@ namespace
 			{
 				if (!Batch.GetKey().bUsesWaterLayer)
 				{
-					AddBatchPasses(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, Outputs, PassTimestamps);
+					AddBatchPasses(GraphBuilder, ShaderMap, FrameInputs, FrameResources, Batch, Outputs, PassTimestamps, MassInputRegistry, &MassInputSnapshot);
 				}
 			}
 		}
@@ -3251,18 +3607,23 @@ namespace
 		Outputs.ReadbackAtlas = FrameResources.ReadbackAtlas;
 		Outputs.WaterProbeSamples = FrameResources.WaterProbeSamples;
 		Outputs.WaterProbeSlotCount = PreparedFrame.WaterProbeSlotCount;
+		if (MassInputSnapshot.Buffer)
+		{
+			Outputs.MassInputCounterSnapshot = MassInputSnapshot.Buffer;
+			Outputs.MassInputCounterActorKeys = MoveTemp(MassInputSnapshot.ActorKeys);
+		}
 		return Outputs;
 	}
 }
 
-FTDFluidGpuFrameOutputs AddTDFluidGpuFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches)
+FTDFluidGpuFrameOutputs AddTDFluidGpuFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuMassInputRegistry* MassInputRegistry)
 {
-	return AddFramePasses(GraphBuilder, FrameInputs, InOutBatches, nullptr);
+	return AddFramePasses(GraphBuilder, FrameInputs, InOutBatches, nullptr, MassInputRegistry);
 }
 
-FTDFluidGpuFrameOutputs AddTDFluidGpuTimestampedFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPassTimestamps& OutTimestamps)
+FTDFluidGpuFrameOutputs AddTDFluidGpuTimestampedFramePasses(FRDGBuilder& GraphBuilder, const FTDFluidGpuFrameInputs& FrameInputs, TArray<FTDFluidGpuBatch>& InOutBatches, FTDFluidGpuPassTimestamps& OutTimestamps, FTDFluidGpuMassInputRegistry* MassInputRegistry)
 {
-	return AddFramePasses(GraphBuilder, FrameInputs, InOutBatches, &OutTimestamps);
+	return AddFramePasses(GraphBuilder, FrameInputs, InOutBatches, &OutTimestamps, MassInputRegistry);
 }
 
 void AddTDFluidGpuMultigridProbePasses(FRDGBuilder& GraphBuilder, FTDFluidGpuBatch& Batch, int32 EntryIndex, const TArray<int32>& RecordedCycleCounts, FTDFluidGpuMultigridProbeReadbacks& OutReadbacks)
@@ -3432,6 +3793,34 @@ namespace
 		OutSamples.Append(Samples, FMath::Min(SlotCount, TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame));
 		Readback->Unlock();
 	}
+
+	void CopyMassInputCounters(FRHIGPUBufferReadback* Readback, TConstArrayView<uint64> ActorKeys, uint32 FrameNumber, TArray<FTDFluidGpuMassInputCounters>& OutCounters)
+	{
+		OutCounters.Reset();
+		if (!Readback || ActorKeys.IsEmpty())
+		{
+			return;
+		}
+
+		const uint32 ByteCount = static_cast<uint32>(ActorKeys.Num() * TDFluidGpuSolverConstants::MassInputCounterCount * sizeof(uint32));
+		const uint32* Counters = static_cast<const uint32*>(Readback->Lock(ByteCount));
+		if (!Counters)
+		{
+			return;
+		}
+
+		for (int32 Index = 0; Index < ActorKeys.Num(); ++Index)
+		{
+			const uint32* EntryCounters = Counters + Index * TDFluidGpuSolverConstants::MassInputCounterCount;
+			FTDFluidGpuMassInputCounters& Entry = OutCounters.AddDefaulted_GetRef();
+			Entry.ActorKey = ActorKeys[Index];
+			Entry.SplatCount = EntryCounters[0];
+			Entry.OutsideCount = EntryCounters[1];
+			Entry.bSaturated = EntryCounters[2] != 0;
+			Entry.FrameNumber = FrameNumber;
+		}
+		Readback->Unlock();
+	}
 }
 
 FTDFluidGpuReadbackRing::FTDFluidGpuReadbackRing()
@@ -3440,6 +3829,7 @@ FTDFluidGpuReadbackRing::FTDFluidGpuReadbackRing()
 	{
 		Slot.Readback = MakeUnique<FRHIGPUTextureReadback>(TEXT("TDFluidGpu.ReadbackAtlas"));
 		Slot.WaterProbeReadback = MakeUnique<FRHIGPUBufferReadback>(TEXT("TDFluidGpu.WaterProbeReadback"));
+		Slot.MassInputCounterReadback = MakeUnique<FRHIGPUBufferReadback>(TEXT("TDFluidGpu.MassInputCounterReadback"));
 	}
 }
 
@@ -3480,6 +3870,12 @@ bool FTDFluidGpuReadbackRing::Enqueue(FRDGBuilder& GraphBuilder, const FTDFluidG
 		AddEnqueueCopyPass(GraphBuilder, FreeSlot->WaterProbeReadback.Get(), FrameOutputs.WaterProbeSamples, WaterProbeReadbackBytes);
 		FreeSlot->WaterProbeSlotCount = FMath::Min(FrameOutputs.WaterProbeSlotCount, TDFluidGpuSolverConstants::MaximumWaterProbesPerFrame);
 	}
+	FreeSlot->MassInputCounterActorKeys.Reset();
+	if (FrameOutputs.MassInputCounterSnapshot && !FrameOutputs.MassInputCounterActorKeys.IsEmpty())
+	{
+		AddEnqueueCopyPass(GraphBuilder, FreeSlot->MassInputCounterReadback.Get(), FrameOutputs.MassInputCounterSnapshot, static_cast<uint32>(FrameOutputs.MassInputCounterActorKeys.Num() * TDFluidGpuSolverConstants::MassInputCounterCount * sizeof(uint32)));
+		FreeSlot->MassInputCounterActorKeys = FrameOutputs.MassInputCounterActorKeys;
+	}
 	FreeSlot->Layout = FrameOutputs.ReadbackLayout;
 	FreeSlot->FrameNumber = FrameOutputs.FrameNumber;
 	FreeSlot->EnqueueOrder = NextEnqueueOrder++;
@@ -3493,7 +3889,8 @@ bool FTDFluidGpuReadbackRing::TryReadLatest(FTDFluidGpuReadbackFrame& OutFrame)
 	for (FTDFluidGpuReadbackSlot& Slot : Slots)
 	{
 		const bool bIsWaterProbeReady = Slot.WaterProbeSlotCount == 0 || Slot.WaterProbeReadback->IsReady();
-		const bool bIsNewerReadySlot = Slot.bIsPending && Slot.Readback->IsReady() && bIsWaterProbeReady && (!LatestReadySlot || Slot.EnqueueOrder > LatestReadySlot->EnqueueOrder);
+		const bool bIsMassInputReady = Slot.MassInputCounterActorKeys.IsEmpty() || Slot.MassInputCounterReadback->IsReady();
+		const bool bIsNewerReadySlot = Slot.bIsPending && Slot.Readback->IsReady() && bIsWaterProbeReady && bIsMassInputReady && (!LatestReadySlot || Slot.EnqueueOrder > LatestReadySlot->EnqueueOrder);
 		if (bIsNewerReadySlot)
 		{
 			LatestReadySlot = &Slot;
@@ -3524,6 +3921,7 @@ bool FTDFluidGpuReadbackRing::TryReadLatest(FTDFluidGpuReadbackFrame& OutFrame)
 	}
 	LatestReadySlot->Readback->Unlock();
 	CopyWaterProbeSamples(LatestReadySlot->WaterProbeReadback.Get(), LatestReadySlot->WaterProbeSlotCount, OutFrame.WaterProbeSamples);
+	CopyMassInputCounters(LatestReadySlot->MassInputCounterReadback.Get(), LatestReadySlot->MassInputCounterActorKeys, LatestReadySlot->FrameNumber, OutFrame.MassInputCounters);
 
 	const uint64 ConsumedOrder = LatestReadySlot->EnqueueOrder;
 	for (FTDFluidGpuReadbackSlot& Slot : Slots)

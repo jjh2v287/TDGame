@@ -2337,9 +2337,9 @@ void UTDFluidLiveComponent::SortAndClampMassPoints(TArray<FTDFluidMassInputPoint
 	InOutPoints = MoveTemp(SortedPoints);
 }
 
-void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInputPoint> Points)
+void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInputPoint> Points, ETDFluidBrushSource Source)
 {
-	if (Points.IsEmpty() || !AcceptsMassInput() || !IsSimulationInitialized())
+	if (Points.IsEmpty() || (Source != ETDFluidBrushSource::Rain && !AcceptsMassInput()) || !IsSimulationInitialized())
 	{
 		return;
 	}
@@ -2360,7 +2360,7 @@ void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInp
 	}
 
 	const FVector CenterWorld = GetSimulationWindowCenterWorld();
-	if (!bUsesGpuSolver)
+	if (!bUsesGpuSolver || IsUsingGpuWaterLayer() || !AcceptsMassInput())
 	{
 		const int32 RemainingStampSlots = FMath::Max(SimulationConfig.MaxPointsPerTick, 1) - PendingBrushStamps.Num();
 		SortAndClampMassPoints(AcceptedPoints, CenterWorld, RemainingStampSlots);
@@ -2371,10 +2371,11 @@ void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInp
 			Stamp.WorldVelocity = Point.WorldVelocity;
 			Stamp.RadiusCm = FMath::Max(Point.RadiusCm, 0.0f) * InputBrushSettings.MassPointRadiusScale;
 			Stamp.DensityStrength = Point.DensityStrength * InputBrushSettings.MassPointDensityStrength;
-			Stamp.VelocityStrength = InputBrushSettings.MassPointVelocityStrength;
+			Stamp.VelocityStrength = InputBrushSettings.MassPointVelocityStrength * Point.VelocityStrengthScale;
 			Stamp.HeatStrength = Point.HeatStrength * InputBrushSettings.MassPointHeatStrength;
+			Stamp.RippleImpulseCm = Point.RippleImpulseCm + InputBrushSettings.MassPointRippleImpulseCm;
 			Stamp.Channel = ActivePreset ? ActivePreset->DefaultChannel : ETDFluidBrushChannel::ChannelR_Mud;
-			Stamp.Source = ETDFluidBrushSource::DataChannel;
+			Stamp.Source = Source;
 		}
 		return;
 	}
@@ -2389,7 +2390,8 @@ void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInp
 	const float MaxCellSpeed = SimulationConfig.MaxCellSpeedCmPerSec;
 	for (const FTDFluidMassInputPoint& Point : AcceptedPoints)
 	{
-		FVector2D PlaneVelocity = PlaneBasis.ProjectVector(Point.WorldVelocity) * VelocityStrength;
+		const float PointVelocityStrength = VelocityStrength * Point.VelocityStrengthScale;
+		FVector2D PlaneVelocity = PlaneBasis.ProjectVector(Point.WorldVelocity) * PointVelocityStrength;
 		if (MaxCellSpeed > 0.0f)
 		{
 			PlaneVelocity = PlaneVelocity.GetClampedToMaxSize(MaxCellSpeed);
@@ -2401,7 +2403,7 @@ void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInp
 		MassPoint.RadiusCm = FMath::Max(Point.RadiusCm, 0.0f) * InputBrushSettings.MassPointRadiusScale;
 		MassPoint.DensityStrength = Point.DensityStrength * InputBrushSettings.MassPointDensityStrength;
 		MassPoint.HeatStrength = Point.HeatStrength * InputBrushSettings.MassPointHeatStrength;
-		MassPoint.bWritesVelocity = VelocityStrength > 0.0f;
+		MassPoint.bWritesVelocity = PointVelocityStrength > 0.0f;
 	}
 }
 

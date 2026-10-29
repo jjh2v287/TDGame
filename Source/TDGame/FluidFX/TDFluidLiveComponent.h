@@ -192,7 +192,7 @@ public:
 	const FTDFluidInputBrushSettings& GetInputBrushSettings() const { return InputBrushSettings; }
 	const FTDFluidMassInputSettings& GetMassInputSettings() const { return MassInputSettings; }
 	bool AcceptsMassInput() const;
-	void QueueMassInputPoints(TConstArrayView<FTDFluidMassInputPoint> Points);
+	void QueueMassInputPoints(TConstArrayView<FTDFluidMassInputPoint> Points, ETDFluidBrushSource Source = ETDFluidBrushSource::DataChannel);
 	bool BuildMassInputTarget(FTDFluidMassInputTarget& OutTarget) const;
 	FTDFluidGpuMassInputCounters GetMassInputCounters() const;
 	int32 GetPendingMassPointCount() const { return PendingMassPoints.Num(); }
@@ -234,6 +234,7 @@ public:
 	const FTDFluidGrid2DSolver& GetSolver() const { return Solver; }
 	FTDFluidGrid2DSolver& GetMutableSolver() { return Solver; }
 	int32 GetLastProcessedPointCount() const { return LastProcessedPointCount; }
+	const TArray<FTDFluidBrushStamp>& GetPendingBrushStamps() const { return PendingBrushStamps; }
 	const TArray<FFloat16Color>& GetPackedDensityPressurePixels() const { return PackedDensityPressurePixels; }
 	const TArray<FFloat16Color>& GetPackedVelocityPixels() const { return PackedVelocityPixels; }
 	const TArray<FFloat16Color>& GetPackedWaterSurfacePixels() const { return PackedWaterSurfacePixels; }

@@ -52,7 +52,8 @@ public class TDGameEditor : ModuleRules
 			"NiagaraCore",
 			"NiagaraEditor",
 			"Slate",
-			"SlateCore"
+			"SlateCore",
+			"TDFluidGpu"
 		});
 	}
 }

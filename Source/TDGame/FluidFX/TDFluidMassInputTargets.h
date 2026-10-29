@@ -11,6 +11,8 @@ struct FTDFluidMassInputPoint
 	float RadiusCm = 0.0f;
 	float DensityStrength = 1.0f;
 	float HeatStrength = 0.0f;
+	float RippleImpulseCm = 0.0f;
+	float VelocityStrengthScale = 1.0f;
 };
 
 struct FTDFluidMassInputTarget

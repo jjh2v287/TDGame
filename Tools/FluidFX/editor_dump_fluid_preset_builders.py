@@ -19,12 +19,14 @@ TUNED_STRUCT_BUILDERS = (
 )
 GROUP_TABLE = (
     ("FireFamily", ("Torch", "Campfire", "CampfireSmoke", "Explosion", "ExplosionSmoke", "ExplosionGroundDust", "Candle", "Fireball", "PlasmaExplosion", "SteamPuff", "Vortex", "InvertedVortex", "PortalVortex", "VortexHeterogeneous", "Flamethrower")),
-    ("WaterLayer", ("River", "Sea")),
+    ("WaterLayer", ("River", "Sea", "RainPond", "ReedShallows")),
     ("VortexTrio", ("Vortex", "InvertedVortex", "PortalVortex", "VortexHeterogeneous")),
     ("ExplosionPair", ("Explosion", "PlasmaExplosion")),
     ("HeterogeneousStage", ("SmokeHeterogeneous", "VortexHeterogeneous", "SmokeCameraFacing", "FloorSmokeCapture")),
     ("TrackPainter", ("SnowTrack", "SandTrack")),
     ("TrackDust", ("SnowDust", "SandDust")),
+    ("Viscous", ("ViscousMud", "ViscousBlood")),
+    ("DenseWater", ("DenseCreek", "DenseLake", "DenseSea", "DenseTank")),
 )
 COMPONENT_TYPES = {
     "FVector2D": (("X", "Y"), "double"),
@@ -83,6 +85,9 @@ COPY_HEADER_RELATIVE_PATHS = (
     ("Source", "TDGame", "FluidFX", "TDFluidEmberComponent.h"),
     ("Source", "TDGame", "FluidFX", "TDFluidFireLightComponent.h"),
     ("Source", "TDGame", "FluidFX", "TDFluidVolumeDriverTypes.h"),
+    ("Source", "TDGame", "FluidFX", "TDFluidWaterParticleTypes.h"),
+    ("Source", "TDGame", "FluidFX", "TDFluidRainTypes.h"),
+    ("Source", "TDGame", "FluidFX", "TDFluidWaterPropTypes.h"),
 )
 SUPPORTED_SCALAR_TYPES = ("bool", "int32", "float", "double")
 ENUM_PATTERN = re.compile(r"UENUM\([^)]*\)\s*enum\s+class\s+(\w+)\s*:\s*\w+\s*\{(.*?)\};", re.DOTALL)

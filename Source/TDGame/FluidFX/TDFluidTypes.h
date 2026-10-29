@@ -35,7 +35,14 @@ enum class ETDFluidBrushSource : uint8
 	Other,
 	PointArray,
 	DataChannel,
-	Fragment
+	Fragment,
+	Pivot,
+	Bone,
+	TrackPoint,
+	Pointer,
+	Shared,
+	Field,
+	Rain
 };
 
 UENUM(BlueprintType)
@@ -46,7 +53,8 @@ enum class ETDFluidVelocityOnlySources : uint8
 	DataChannel,
 	Fragments,
 	PointArraysAndFragments,
-	All
+	All,
+	Fields
 };
 
 UENUM(BlueprintType)
@@ -92,7 +100,38 @@ enum class ETDFluidPresetKind : uint8
 	SnowTrack,
 	SandTrack,
 	SnowDust,
-	SandDust
+	SandDust,
+	ViscousMud,
+	ViscousBlood,
+	LavaTile,
+	LavaLocal,
+	InputBrushBench,
+	InputFieldBench,
+	SmokeKernelPressure,
+	SmokeWindDrift,
+	SmokeAnchoredCauldron,
+	FoliageWalk,
+	FoliagePainter,
+	ReedShallows,
+	DenseCreek,
+	DenseLake,
+	DenseSea,
+	DenseTank,
+	ShipWakeSea,
+	WaterPool,
+	Fountain,
+	Cauldron,
+	Waterfall,
+	LiquidSphereClear,
+	LiquidSphereTurbulent,
+	BloodOrb,
+	WaterySandFlow,
+	RainPond,
+	RainAccumulationBench,
+	CloudPaint,
+	CloudCyclone,
+	CloudStormWall,
+	CloudWrapField
 };
 
 UENUM(BlueprintType)
@@ -577,6 +616,9 @@ struct TDGAME_API FTDFluidInputBrushSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "2.0"))
 	float StrokeSpacingRatio = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+	float MassPointRippleImpulseCm = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -613,6 +655,12 @@ struct TDGAME_API FTDFluidMassInputSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MassInput", meta = (ClampMin = "0", ClampMax = "256"))
 	int32 MaxCollectedObstacles = 32;
+};
+
+USTRUCT(BlueprintType)
+struct TDGAME_API FTDFluidFieldInputSettings
+{
+	GENERATED_BODY()
 };
 
 USTRUCT(BlueprintType)

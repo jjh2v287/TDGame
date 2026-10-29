@@ -1,6 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TDFluidGpuSolverOptionSettings.h"
+#include "TDFluidGpuDenseWater.h"
+#include "TDFluidGpuStateCacheTypes.h"
 
 class FTextureRenderTargetResource;
 

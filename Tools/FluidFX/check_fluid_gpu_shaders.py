@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 와 dxc.exe(엔진 폴더의 dxc.exe 우선, 없으면 엔진 dxcompiler.dll 을 Windows Kits dxc.exe 앞단에 붙여 씀, 그것도 안 되면 Windows Kits dxc 단독), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_gpu_shaders.py [--root 프로젝트경로] [--engine 엔진Engine폴더] [--dxc dxc경로] [--keep-temp]
 출력: 셰이더 클래스·순열·프로필별 PASS/FAIL 줄, RHI 시험 플래그 PASS/FAIL 줄과 마지막 줄 JSON 요약(사용한 컴파일러 포함), 하나라도 실패하면 종료 코드 1
-상태: 2026-10-19 FX-4a 묶음 A 빌더 2가 작성. TDFluidGpuStepPasses.cpp 의 IMPLEMENT_GLOBAL_SHADER·SHADER_PERMUTATION 을 읽어 Source/TDFluidGpu/Shaders 의 .usf 를 가상 경로(/Engine/, /TDFluidGpu/) 그대로 펼쳐 cs_6_0 으로 컴파일한다. 엔진 셰이더 컴파일러 자체 검사(에디터 시작)를 대신하지 못한다. 같은 날 추가: Source/TDFluidGpu·Source/TDGame/FluidFX 의 `TDGame.FluidFXRhi.` 시험마다 EAutomationTestFlags::NonNullRHI 가 있는지 본다(RunTests 필터는 부분 문자열 일치라 -NullRHI 의 `TDGame.FluidFX` 실행이 RHI 시험을 함께 고르므로, 이 플래그로 널 RHI 목록에서 뺀다).
+상태: 2026-10-19 FX-4a 묶음 A 빌더 2가 작성. Source/TDFluidGpu/Private/*.cpp 가운데 IMPLEMENT_GLOBAL_SHADER 가 있는 파일 전부(2026-10-29 W3-0 이전에는 TDFluidGpuStepPasses.cpp 하나)를 파일마다 따로 읽어 IMPLEMENT_GLOBAL_SHADER·SHADER_PERMUTATION 으로 Source/TDFluidGpu/Shaders 의 .usf 를 가상 경로(/Engine/, /TDFluidGpu/) 그대로 펼쳐 cs_6_0 으로 컴파일한다. 엔진 셰이더 컴파일러 자체 검사(에디터 시작)를 대신하지 못한다. 같은 날 추가: Source/TDFluidGpu·Source/TDGame/FluidFX 의 `TDGame.FluidFXRhi.` 시험마다 EAutomationTestFlags::NonNullRHI 가 있는지 본다(RunTests 필터는 부분 문자열 일치라 -NullRHI 의 `TDGame.FluidFX` 실행이 RHI 시험을 함께 고르므로, 이 플래그로 널 RHI 목록에서 뺀다).
 """
 import argparse
 import glob
@@ -19,7 +19,7 @@ sys.dont_write_bytecode = True
 
 DEFAULT_ENGINE_DIR = r"C:\Program Files\Epic Games\UE_5.8\Engine"
 SHADER_TARGET = "cs_6_0"
-STEP_PASSES_SOURCE = pathlib.Path("Source") / "TDFluidGpu" / "Private" / "TDFluidGpuStepPasses.cpp"
+SHADER_SOURCE_DIR = pathlib.Path("Source") / "TDFluidGpu" / "Private"
 MODULE_SHADER_DIR = pathlib.Path("Source") / "TDFluidGpu" / "Shaders"
 INCLUDE_PATTERN = re.compile(r'^(\s*#\s*include\s*)"([^"]+)"', re.MULTILINE)
 CLASS_PATTERN = re.compile(r"class\s+(FTDFluidGpu\w+CS)\s*:\s*public\s+\w+")
@@ -130,15 +130,19 @@ def supports_hlsl_2021(dxc_path, work_dir):
     return result.returncode == 0
 
 
-def parse_shader_classes(step_passes_text):
+def find_shader_sources(shader_source_dir):
+    return [path for path in sorted(shader_source_dir.glob("*.cpp")) if IMPLEMENT_PATTERN.search(path.read_text(encoding="utf-8"))]
+
+
+def parse_shader_classes(source_text):
     classes = []
-    class_matches = list(CLASS_PATTERN.finditer(step_passes_text))
-    for implement in IMPLEMENT_PATTERN.finditer(step_passes_text):
+    class_matches = list(CLASS_PATTERN.finditer(source_text))
+    for implement in IMPLEMENT_PATTERN.finditer(source_text):
         class_name, virtual_path, entry_point = implement.groups()
         declaration = next((match for match in class_matches if match.group(1) == class_name), None)
         if declaration is None:
             continue
-        body = step_passes_text[declaration.start():implement.start()]
+        body = source_text[declaration.start():implement.start()]
         dimensions = [(name, ["0", "1"]) for name in BOOL_PERMUTATION_PATTERN.findall(body)]
         dimensions += [(name, [str(value) for value in range(int(count))]) for name, count in INT_PERMUTATION_PATTERN.findall(body)]
         classes.append({"class": class_name, "path": virtual_path, "entry": entry_point, "dimensions": dimensions})
@@ -259,11 +263,11 @@ def main():
     engine_dir = pathlib.Path(arguments.engine)
     engine_shader_dir = engine_dir / "Shaders"
     module_shader_dir = root / MODULE_SHADER_DIR
-    step_passes_path = root / STEP_PASSES_SOURCE
+    shader_source_dir = root / SHADER_SOURCE_DIR
     summary = {"compiler": "", "compiler_version": "", "hlsl_versions": [], "passed": 0, "failed": 0, "failures": [], "unresolved_includes": [], "comment_lines": []}
 
-    if not step_passes_path.is_file() or not module_shader_dir.is_dir() or not engine_shader_dir.is_dir():
-        print(f"FAIL 입력 경로 없음: {step_passes_path} / {module_shader_dir} / {engine_shader_dir}")
+    if not shader_source_dir.is_dir() or not module_shader_dir.is_dir() or not engine_shader_dir.is_dir():
+        print(f"FAIL 입력 경로 없음: {shader_source_dir} / {module_shader_dir} / {engine_shader_dir}")
         print(json.dumps(summary, ensure_ascii=False))
         return 1
 
@@ -282,7 +286,9 @@ def main():
             hlsl_versions.append("2021")
         summary["hlsl_versions"] = [version or "기본" for version in hlsl_versions]
 
-        shader_classes = parse_shader_classes(step_passes_path.read_text(encoding="utf-8"))
+        shader_sources = find_shader_sources(shader_source_dir)
+        summary["shader_sources"] = [path.name for path in shader_sources]
+        shader_classes = [shader_class for path in shader_sources for shader_class in parse_shader_classes(path.read_text(encoding="utf-8"))]
         if not shader_classes:
             print("FAIL IMPLEMENT_GLOBAL_SHADER 를 찾지 못함")
             print(json.dumps(summary, ensure_ascii=False))

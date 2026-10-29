@@ -252,7 +252,8 @@
       "VehicleBrushRadiusScale": 1.0,
       "VehicleStampAspectRatio": 1.0,
       "bInterpolateStrokes": false,
-      "StrokeSpacingRatio": 0.5
+      "StrokeSpacingRatio": 0.5,
+      "MassPointRippleImpulseCm": 0.0
     },
     "TDFluidRuntimeOpsSettings": {
       "SleepDistanceRatio": 1.1,
@@ -394,6 +395,14 @@
       "TrackDeformMeshExtentCm": 2500.0,
       "TrackDeformMeshShadowPolicy": "NoShadow",
       "TrackDeformMeshRecenterDistanceCm": 50.0
+    },
+    "TDFluidFieldInputSettings": {
+    },
+    "TDFluidWaterPropSettings": {
+    },
+    "TDFluidWaterParticleSettings": {
+    },
+    "TDFluidRainSettings": {
     }
   },
   "Groups": {
@@ -422,7 +431,9 @@
     "WaterLayer": {
       "Kinds": [
         "River",
-        "Sea"
+        "Sea",
+        "RainPond",
+        "ReedShallows"
       ],
       "TDFluidSimulationConfig": {
         "GridResolution": 192,
@@ -592,6 +603,20 @@
         "DensityScale": 0.035,
         "SoftFalloffCm": 30.0
       }
+    },
+    "Viscous": {
+      "Kinds": [
+        "ViscousMud",
+        "ViscousBlood"
+      ]
+    },
+    "DenseWater": {
+      "Kinds": [
+        "DenseCreek",
+        "DenseLake",
+        "DenseSea",
+        "DenseTank"
+      ]
     }
   },
   "Kinds": {
@@ -1368,6 +1393,68 @@
       "TDFluidSurfaceRenderSettings": {
         "bUsesTrackDeformMesh": true
       }
+    },
+    "ViscousMud": {
+    },
+    "ViscousBlood": {
+    },
+    "LavaTile": {
+    },
+    "LavaLocal": {
+    },
+    "InputBrushBench": {
+    },
+    "InputFieldBench": {
+    },
+    "SmokeKernelPressure": {
+    },
+    "SmokeWindDrift": {
+    },
+    "SmokeAnchoredCauldron": {
+    },
+    "FoliageWalk": {
+    },
+    "FoliagePainter": {
+    },
+    "ReedShallows": {
+    },
+    "DenseCreek": {
+    },
+    "DenseLake": {
+    },
+    "DenseSea": {
+    },
+    "DenseTank": {
+    },
+    "ShipWakeSea": {
+    },
+    "WaterPool": {
+    },
+    "Fountain": {
+    },
+    "Cauldron": {
+    },
+    "Waterfall": {
+    },
+    "LiquidSphereClear": {
+    },
+    "LiquidSphereTurbulent": {
+    },
+    "BloodOrb": {
+    },
+    "WaterySandFlow": {
+    },
+    "RainPond": {
+    },
+    "RainAccumulationBench": {
+    },
+    "CloudPaint": {
+    },
+    "CloudCyclone": {
+    },
+    "CloudStormWall": {
+    },
+    "CloudWrapField": {
     }
   },
   "Globals": {
@@ -1382,6 +1469,12 @@
       "MaxTraceDistance": -1.0,
       "Composition": -1,
       "VolumetricFog": -1
+    },
+    "TDFluidUnderwaterSettings": {
+    },
+    "TDFluidCloudSceneSettings": {
+    },
+    "TDFluidOutputQualitySettings": {
     }
   }
 }

@@ -63,6 +63,10 @@ namespace TDFluidPresetTuningTestPrivate
 		Builders.Add(FTDFluidTerrainHeightSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildTerrainHeightForPresetKind));
 		Builders.Add(FTDFluidMassInputSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildMassInputForPresetKind));
 		Builders.Add(FTDFluidSurfaceRenderSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildSurfaceRenderForPresetKind));
+		Builders.Add(FTDFluidFieldInputSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildFieldInputForPresetKind));
+		Builders.Add(FTDFluidWaterPropSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildWaterPropForPresetKind));
+		Builders.Add(FTDFluidWaterParticleSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildWaterParticleForPresetKind));
+		Builders.Add(FTDFluidRainSettings::StaticStruct(), MakeBuild(&UTDFluidPresetAsset::BuildRainForPresetKind));
 		return Builders;
 	}
 

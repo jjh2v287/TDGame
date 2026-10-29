@@ -20,7 +20,12 @@ PERTURBED_RELATIVE_PATH = os.path.join("Saved", "FluidFX", "value_independence",
 LAYER_SECTIONS = ("Kinds", "Groups")
 GROUP_MEMBER_KEY = "Kinds"
 PERTURBED_TYPES = ("float", "double")
-EXTRA_HEADER_PATHS = (os.path.join("Source", "TDGame", "FluidFX", "TDFluidVolumeDriverTypes.h"),)
+EXTRA_HEADER_PATHS = (
+    os.path.join("Source", "TDGame", "FluidFX", "TDFluidVolumeDriverTypes.h"),
+    os.path.join("Source", "TDGame", "FluidFX", "TDFluidWaterParticleTypes.h"),
+    os.path.join("Source", "TDGame", "FluidFX", "TDFluidRainTypes.h"),
+    os.path.join("Source", "TDGame", "FluidFX", "TDFluidWaterPropTypes.h"),
+)
 TABLE_LOAD_ERROR = re.compile(r"Preset tuning files? .*failed to load|Preset tuning .*TDFluidPresetTuning\.perturbed\.json.*: [1-9]\d* errors")
 THRESHOLD_PROPERTY_TESTS = (
     "TDGame.FluidFX.SolverRegression.BorderBandRetainsFootprint",

@@ -4,8 +4,11 @@
 #include "Engine/DataAsset.h"
 #include "FluidFX/TDFluidFireTypes.h"
 #include "FluidFX/TDFluidPlaneTypes.h"
+#include "FluidFX/TDFluidRainTypes.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "FluidFX/TDFluidVolumeDriverTypes.h"
+#include "FluidFX/TDFluidWaterParticleTypes.h"
+#include "FluidFX/TDFluidWaterPropTypes.h"
 #include "TDFluidPresetAsset.generated.h"
 
 class UMaterialInterface;
@@ -150,6 +153,18 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	static FTDFluidSurfaceRenderSettings BuildSurfaceRenderForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidFieldInputSettings BuildFieldInputForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidWaterPropSettings BuildWaterPropForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidWaterParticleSettings BuildWaterParticleForPresetKind(ETDFluidPresetKind Kind);
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	static FTDFluidRainSettings BuildRainForPresetKind(ETDFluidPresetKind Kind);
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	static bool IsFireFamilyPresetKind(ETDFluidPresetKind Kind);

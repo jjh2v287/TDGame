@@ -155,6 +155,26 @@ FTDFluidSurfaceRenderSettings UTDFluidPresetAsset::BuildSurfaceRenderForPresetKi
 	return TDFluidBuildTunedSettings<FTDFluidSurfaceRenderSettings>(Kind);
 }
 
+FTDFluidFieldInputSettings UTDFluidPresetAsset::BuildFieldInputForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidFieldInputSettings>(Kind);
+}
+
+FTDFluidWaterPropSettings UTDFluidPresetAsset::BuildWaterPropForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidWaterPropSettings>(Kind);
+}
+
+FTDFluidWaterParticleSettings UTDFluidPresetAsset::BuildWaterParticleForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidWaterParticleSettings>(Kind);
+}
+
+FTDFluidRainSettings UTDFluidPresetAsset::BuildRainForPresetKind(ETDFluidPresetKind Kind)
+{
+	return TDFluidBuildTunedSettings<FTDFluidRainSettings>(Kind);
+}
+
 TSoftObjectPtr<UMaterialInterface> UTDFluidPresetAsset::ResolveSlotMaterial(ETDFluidOutputMaterialSlot Slot, int32 MaterialIndex) const
 {
 	const TArray<TSoftObjectPtr<UMaterialInterface>>& Materials = Slot == ETDFluidOutputMaterialSlot::Primary ? PrimaryOutputMaterials
@@ -202,6 +222,7 @@ UTDFluidPresetAsset* UTDFluidPresetAsset::CreateTransientPreset(UObject* Outer, 
 		Preset->DefaultChannel = ETDFluidBrushChannel::ChannelR_Mud;
 		break;
 	case ETDFluidPresetKind::Blood:
+	case ETDFluidPresetKind::ViscousBlood:
 		Preset->DefaultChannel = ETDFluidBrushChannel::ChannelG_Blood;
 		break;
 	case ETDFluidPresetKind::Fire:
@@ -233,6 +254,13 @@ UTDFluidPresetAsset* UTDFluidPresetAsset::CreateTransientPreset(UObject* Outer, 
 	case ETDFluidPresetKind::SandTrack:
 	case ETDFluidPresetKind::SnowDust:
 	case ETDFluidPresetKind::SandDust:
+	case ETDFluidPresetKind::FoliagePainter:
+	case ETDFluidPresetKind::ViscousMud:
+	case ETDFluidPresetKind::LavaTile:
+	case ETDFluidPresetKind::LavaLocal:
+	case ETDFluidPresetKind::InputBrushBench:
+	case ETDFluidPresetKind::InputFieldBench:
+	case ETDFluidPresetKind::RainAccumulationBench:
 		Preset->DefaultChannel = ETDFluidBrushChannel::ChannelR_Mud;
 		break;
 	case ETDFluidPresetKind::Water:

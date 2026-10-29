@@ -3,9 +3,14 @@
 #include "Dom/JsonValue.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "FluidFX/TDFluidCloudTypes.h"
 #include "FluidFX/TDFluidFireTypes.h"
+#include "FluidFX/TDFluidOutputQuality.h"
 #include "FluidFX/TDFluidPlaneTypes.h"
+#include "FluidFX/TDFluidRainTypes.h"
 #include "FluidFX/TDFluidVolumeDriverTypes.h"
+#include "FluidFX/TDFluidWaterParticleTypes.h"
+#include "FluidFX/TDFluidWaterPropTypes.h"
 #include "HAL/FileManager.h"
 #include "HAL/IConsoleManager.h"
 #include "JsonObjectConverter.h"
@@ -683,7 +688,14 @@ const TArray<FTDFluidPresetTuningRegisteredStruct>& UTDFluidPresetTuningSubsyste
 		{ FTDFluidTerrainHeightSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
 		{ FTDFluidMassInputSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
 		{ FTDFluidSurfaceRenderSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
-		{ FTDFluidHeterogeneousVolumeRenderProfile::StaticStruct(), ETDFluidPresetTuningScope::Global }
+		{ FTDFluidHeterogeneousVolumeRenderProfile::StaticStruct(), ETDFluidPresetTuningScope::Global },
+		{ FTDFluidFieldInputSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidWaterPropSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidUnderwaterSettings::StaticStruct(), ETDFluidPresetTuningScope::Global },
+		{ FTDFluidWaterParticleSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidRainSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
+		{ FTDFluidCloudSceneSettings::StaticStruct(), ETDFluidPresetTuningScope::Global },
+		{ FTDFluidOutputQualitySettings::StaticStruct(), ETDFluidPresetTuningScope::Global },
 	};
 	return RegisteredStructs;
 }

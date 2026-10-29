@@ -247,3 +247,12 @@
 - 증거: `Saved/AgentOps/20261027/wave2-assets/refute-final.md` (c)절, `Saved/AgentOps/20261027/wave2-int/main-check/index.md`, `Saved/AgentOps/20261026/wave2/ib2/`(골든 45)
 - 날짜·상태: 2026-10-27 active
 - 발견: claude(FluidFX 파동 2)
+
+### L-repo-28 Workflow를 TaskStop하면 w3job 분리 실행기도 함께 죽어 빌드 보류가 남는다
+- 증상: 파동 3 워크플로 `TaskStop` 뒤 작업 `w3-L3-cp-r0-rhi-replay` 상태가 `RUNNING`인데 `w3job.py _runner`·UnrealEditor 프로세스가 없고, `Saved/AgentOps/build_hold.json`은 owner `w3-L3`로 남았다.
+- 원인: `DETACHED_PROCESS|CREATE_NEW_PROCESS_GROUP|CREATE_BREAKAWAY_FROM_JOB`로 띄워도 워크플로 중지가 실행기까지 끝냈다. 그래서 `finally`의 보류 해제가 돌지 않았다. 셸 백그라운드 작업의 자식이 살아남는 L-repo-14와 반대다.
+- 해결: 워크플로를 멈춘 뒤 jobs 폴더에서 `RUNNING`·`WAITING_HOLD` 상태를 보고 실행기 프로세스가 없는지 확인한다. 그다음 `python Tools/build_and_test.py --release-hold <owner>`를 실행하고 상태 파일에 KILLED를 적는다.
+- 범위: `Saved/AgentOps/20261029/wave3/prep/w3job.py`로 빌드 창을 나누는 워크플로 전부
+- 증거: `Saved/AgentOps/20261029/wave3/jobs/w3-L3-cp-r0-rhi-replay-014431/`(out.log 0바이트, 01:47 시작)
+- 날짜·상태: 2026-10-30 active
+- 발견: claude(FluidFX 파동 3 일시 정지)

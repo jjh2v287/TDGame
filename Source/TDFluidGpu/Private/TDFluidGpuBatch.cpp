@@ -2,6 +2,7 @@
 
 #include "TDFluidGpuNearRipple.h"
 #include "TDFluidGpuStepPasses.h"
+#include "TDFluidGpuFieldInput.h"
 
 #include "HAL/IConsoleManager.h"
 
@@ -278,6 +279,10 @@ namespace
 		Sanitized.SwashHeightCm = ClampFinite(Settings.SwashHeightCm, 0.0f, 1000.0f);
 		Sanitized.CoastWavePeriodSeconds = ClampFinite(Settings.CoastWavePeriodSeconds, 0.1f, 1000.0f);
 		Sanitized.WetnessDryingSeconds = ClampFinite(Settings.WetnessDryingSeconds, 0.01f, 10000.0f);
+		Sanitized.DensityAccumulationPerSec = ClampFinite(Settings.DensityAccumulationPerSec, 0.0f, 20.0f);
+		Sanitized.DenseDensityCeiling = ClampFinite(Settings.DenseDensityCeiling, 1.0f, 8.0f);
+		Sanitized.DenseGrowthThreshold = ClampFinite(Settings.DenseGrowthThreshold, 0.0f, 1.0f);
+		Sanitized.FlowNoiseSpeedMaskReferenceCmPerSec = ClampFinite(Settings.FlowNoiseSpeedMaskReferenceCmPerSec, 0.0f, 1200.0f);
 		ApplyWrappedAreaRules(Settings, Sanitized);
 		return Sanitized;
 	}
@@ -420,6 +425,10 @@ namespace
 		Parameters.TrackBankStrength = Settings.TrackBankStrength;
 		Parameters.TrackBankHeightLimit = Settings.TrackBankHeightLimit;
 		Parameters.TrackBankRadiusCells = static_cast<uint32>(TDFluidGpuComputeTrackBankRadiusCells(Settings.TrackBankBlurRadiusCm, Settings.ExtentCm.X / static_cast<double>(FMath::Max(Resolution, 1))));
+		Parameters.DenseDensityCeiling = FMath::Max(Settings.DenseDensityCeiling, 1.0f);
+		Parameters.DenseGrowthFactor = FMath::Exp(Settings.DensityAccumulationPerSec * StepDeltaTime);
+		Parameters.DenseGrowthThreshold = Settings.DenseGrowthThreshold;
+		Parameters.FlowNoiseSpeedMaskInverseCmPerSec = Settings.FlowNoiseSpeedMaskReferenceCmPerSec > 0.0f ? 1.0f / Settings.FlowNoiseSpeedMaskReferenceCmPerSec : 0.0f;
 		return Parameters;
 	}
 
@@ -439,7 +448,7 @@ namespace
 		const bool bRunsFluidForces = !bIsSimplePainter;
 		const bool bHasPlaneUp = !PlaneUpDirection.IsNearlyZero();
 		const bool bHasShift = !bNeedsReset && Actor.ShiftCells != FIntPoint::ZeroValue;
-		const bool bHasObstacles = ObstacleCount > 0;
+		const bool bHasObstacles = ObstacleCount > 0 || TDFluidGpuFieldInput::HasCollisionField(Actor);
 		const bool bHasTerrainElevation = bRunsFluidForces && Actor.bHasTerrainElevation;
 		const bool bUsesAmbientRefill = Settings.AmbientRefillPerSec > 0.0f;
 
@@ -464,6 +473,8 @@ namespace
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::WritesAuxOutput, bRunsFluidForces && Settings.bUsesHeatChannel && Actor.AuxOutput != nullptr);
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesTrackBank, bIsSimplePainter && Settings.TrackBankStrength > 0.0f);
 		AddFlagIf(Flags, ETDFluidGpuActorFlags::WritesPainterVelocity, bIsSimplePainter && Settings.bWritesPainterVelocity);
+		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesDenseDensity, bRunsFluidForces && !Settings.bUsesWaterLayer && (Settings.DenseDensityCeiling > 1.0f || Settings.DensityAccumulationPerSec > 0.0f));
+		AddFlagIf(Flags, ETDFluidGpuActorFlags::UsesFlowNoiseSpeedMask, bRunsFluidForces && Settings.FlowNoiseAccelerationCmPerSec2 > 0.0f && Settings.FlowNoiseSpeedMaskReferenceCmPerSec > 0.0f && !Settings.bUsesWaterLayer);
 		return Flags;
 	}
 

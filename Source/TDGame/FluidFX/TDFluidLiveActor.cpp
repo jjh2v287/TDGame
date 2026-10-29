@@ -14,6 +14,7 @@
 #include "Engine/StreamableManager.h"
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
+#include "FluidFX/TDFluidBrushModel.h"
 #include "FluidFX/TDFluidHeightCacheAsset.h"
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidLiveSubsystem.h"
@@ -589,6 +590,7 @@ void ATDFluidLiveActor::CollectOverlappingAndRegisteredInputs(float DeltaTime)
 	{
 		InteractionVolume->GetOverlappingActors(CandidateActors);
 	}
+	const int32 OverlapCandidateCount = CandidateActors.Num();
 
 	for (int32 Idx = RegisteredInteractingActors.Num() - 1; Idx >= 0; --Idx)
 	{
@@ -607,26 +609,34 @@ void ATDFluidLiveActor::CollectOverlappingAndRegisteredInputs(float DeltaTime)
 	CurrentTrackPointLocations.Reset();
 	GroundTracesThisTick = 0;
 
-	for (AActor* Candidate : CandidateActors)
+	AActor* OwnerCandidate = ResolveInteractionOwnerCandidate();
+	for (int32 CandidateIndex = 0; CandidateIndex < CandidateActors.Num(); ++CandidateIndex)
 	{
-		if (!Candidate || Candidate == this || Candidate->IsA<ATDFluidLiveActor>())
+		AActor* Candidate = CandidateActors[CandidateIndex];
+		if (!Candidate || Candidate == this || Candidate == OwnerCandidate || Candidate->IsA<ATDFluidLiveActor>())
 		{
 			continue;
 		}
-		HarvestActorInteractionStamps(Candidate, DeltaTime);
+		const FBox CandidateBounds = ResolveHarvestBounds(*Candidate);
+		if (!PassesHarvestFilter(*Candidate, CandidateIndex < OverlapCandidateCount, CandidateBounds))
+		{
+			continue;
+		}
+		HarvestActorInteractionStamps(Candidate, DeltaTime, CandidateBounds, false);
 	}
+	HarvestOwnerInteraction(OwnerCandidate, DeltaTime);
 
 	PreviousActorLocations = MoveTemp(CurrentActorLocations);
 	PreviousBoneLocations = MoveTemp(CurrentBoneLocations);
 	PreviousTrackPointLocations = MoveTemp(CurrentTrackPointLocations);
 }
 
-void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float DeltaTime)
+void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float DeltaTime, const FBox& TargetBounds, bool bIsOwnerCandidate)
 {
 	BindCombatComponentIfPresent(TargetActor);
 
 	const FObjectKey ActorKey(TargetActor);
-	const FVector CurrentLocation = TargetActor->GetActorLocation();
+	const FVector CurrentLocation = ResolveHarvestPivotLocation(*TargetActor, TargetBounds);
 	const FTDFluidInputBrushSettings& InputBrushSettings = LiveComponent->GetInputBrushSettings();
 	const FTDFluidTrackGroundPlane GroundPlane = LiveComponent->NeedsStampGroundElevation() ? TraceTrackGroundPlane(*TargetActor) : FTDFluidTrackGroundPlane();
 	FVector OwnerPlanarVelocity = FVector::ZeroVector;
@@ -647,8 +657,18 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 			ApplyActorBrushSettings(PivotStamp, LiveComponent->SimulationConfig);
 			ApplyRingBrushSettings(PivotStamp, InputBrushSettings);
 			PivotStamp.ShapeHardness = InputBrushSettings.BrushHardness;
-			ApplyTDFluidTrackGroundPlane(PivotStamp, GroundPlane);
-			LiveComponent->QueueBrushStamp(PivotStamp);
+			PivotStamp.Source = ETDFluidBrushSource::Pivot;
+			ApplyHarvestObjectSize(PivotStamp, TargetActor->GetActorScale3D(), &TargetBounds);
+			RecordLingeringInteractionStamp(FTDFluidInputSourceKey{ActorKey, NAME_None, INDEX_NONE}, PivotStamp);
+			if (InputBrushSettings.bInterpolatePivotAndPointerStrokes)
+			{
+				QueueTrackStroke(PivotStamp, *PreviousLocation, InputBrushSettings, GroundPlane, true);
+			}
+			else
+			{
+				ApplyTDFluidTrackGroundPlane(PivotStamp, GroundPlane);
+				LiveComponent->QueueBrushStamp(PivotStamp);
+			}
 		}
 		else if (ComputedVelocity.Size2D() < MinInteractionSpeedCmPerSec && TargetActor->IsA<APawn>())
 		{
@@ -658,7 +678,8 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 	CurrentActorLocations.Add(ActorKey, CurrentLocation);
 	HarvestTrackSourceStamps(*TargetActor, DeltaTime, InputBrushSettings, GroundPlane);
 
-	if (TrackedBoneNames.IsEmpty())
+	const TArray<FName>& HarvestBoneNames = bIsOwnerCandidate && !OwnerBoneNames.IsEmpty() ? OwnerBoneNames : TrackedBoneNames;
+	if (HarvestBoneNames.IsEmpty())
 	{
 		return;
 	}
@@ -666,13 +687,13 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 	TInlineComponentArray<USkeletalMeshComponent*> SkeletalComponents(TargetActor);
 	for (USkeletalMeshComponent* SkelMesh : SkeletalComponents)
 	{
-		if (!SkelMesh)
+		if (!SkelMesh || (bIsOwnerCandidate && !OwnerComponentNames.IsEmpty() && !OwnerComponentNames.Contains(SkelMesh->GetFName())))
 		{
 			continue;
 		}
 
 		const FObjectKey MeshKey(SkelMesh);
-		for (const FName& BoneName : TrackedBoneNames)
+		for (const FName& BoneName : HarvestBoneNames)
 		{
 			if (BoneName.IsNone() || SkelMesh->GetBoneIndex(BoneName) == INDEX_NONE)
 			{
@@ -699,7 +720,10 @@ void ATDFluidLiveActor::HarvestActorInteractionStamps(AActor* TargetActor, float
 					BoneStamp.ShapeAspectRatio = InputBrushSettings.BoneStampAspectRatio;
 					BoneStamp.ShapeHardness = InputBrushSettings.BrushHardness;
 					BoneStamp.ShapeMajorAxis = OwnerPlanarVelocity;
-					QueueTrackStroke(BoneStamp, *PrevBoneLoc, InputBrushSettings, GroundPlane);
+					BoneStamp.Source = ETDFluidBrushSource::Bone;
+					ApplyHarvestObjectSize(BoneStamp, SkelMesh->GetComponentScale(), nullptr);
+					RecordLingeringInteractionStamp(FTDFluidInputSourceKey{MeshKey, BoneName, INDEX_NONE}, BoneStamp);
+					QueueTrackStroke(BoneStamp, *PrevBoneLoc, InputBrushSettings, GroundPlane, InputBrushSettings.bInterpolateStrokes);
 				}
 			}
 
@@ -809,74 +833,10 @@ void ATDFluidLiveActor::ReleaseCombatBindings()
 	CombatBindings.Reset();
 }
 
-void ATDFluidLiveActor::QueueMouseBrushAt(const FVector& CursorWorldLocation, float DeltaTime)
-{
-	if (!LiveComponent || DeltaTime <= 0.0f)
-	{
-		return;
-	}
-
-	FVector2D CursorPlanePoint;
-	if (!LiveComponent->TryProjectWorldPointIntoSlab(CursorWorldLocation, CursorPlanePoint))
-	{
-		ResetMouseBrushStroke();
-		return;
-	}
-
-	const bool bHadPreviousLocation = bHasPreviousMouseBrushLocation;
-	const FVector PreviousLocation = PreviousMouseBrushLocation;
-	PreviousMouseBrushLocation = CursorWorldLocation;
-	bHasPreviousMouseBrushLocation = true;
-	if (!bHadPreviousLocation)
-	{
-		return;
-	}
-
-	const FVector CursorDelta = CursorWorldLocation - PreviousLocation;
-	const FTDFluidPlaneBasis& PlaneBasis = LiveComponent->GetPlaneBasis();
-	const FVector2D PlaneDelta = PlaneBasis.ProjectVector(CursorDelta);
-	const FVector2D PlaneVelocity(PlaneDelta.X / DeltaTime, PlaneDelta.Y / DeltaTime);
-	const FVector PlanarVelocity(PlaneVelocity.X, PlaneVelocity.Y, 0.0f);
-	const FTDFluidInputBrushSettings& InputBrushSettings = LiveComponent->GetInputBrushSettings();
-	if (!IsStampableVelocity(PlanarVelocity, MinInteractionSpeedCmPerSec, InputBrushSettings.TeleportSpeedCmPerSec))
-	{
-		return;
-	}
-
-	FTDFluidBrushStamp MouseStamp;
-	MouseStamp.WorldLocation = CursorWorldLocation;
-	MouseStamp.WorldVelocity = PlaneBasis.UnprojectVector(PlaneVelocity);
-	MouseStamp.RadiusCm = MouseBrushRadiusCm;
-	MouseStamp.DensityStrength = InputBrushSettings.MouseBrushDensityStrength;
-	MouseStamp.VelocityStrength = 1.0f;
-	MouseStamp.Channel = InteractionBrushChannel;
-	ApplyActorBrushSettings(MouseStamp, LiveComponent->SimulationConfig);
-	LiveComponent->QueueBrushStamp(MouseStamp);
-}
-
 void ATDFluidLiveActor::PollMouseBrush(float DeltaTime)
 {
-	if (!bAcceptMouseBrush)
-	{
-		ResetMouseBrushStroke();
-		return;
-	}
-
-	const APlayerController* Controller = GEngine ? GEngine->GetFirstLocalPlayerController(GetWorld()) : nullptr;
-	if (!Controller || !Controller->IsInputKeyDown(EKeys::MiddleMouseButton))
-	{
-		ResetMouseBrushStroke();
-		return;
-	}
-
-	FVector CursorWorldLocation;
-	if (!ResolveMouseBrushWorldLocation(*Controller, CursorWorldLocation))
-	{
-		ResetMouseBrushStroke();
-		return;
-	}
-
-	QueueMouseBrushAt(CursorWorldLocation, DeltaTime);
+	PollPointerInput(DeltaTime);
+	EmitLingeringInteractionStamps(DeltaTime);
 }
 
 bool ATDFluidLiveActor::ResolveMouseBrushWorldLocation(const APlayerController& Controller, FVector& OutLocation) const
@@ -933,6 +893,8 @@ void ATDFluidLiveActor::ResetInteractionHistory()
 	PreviousTrackPointLocations.Reset();
 	CurrentActorLocations.Reset();
 	CurrentBoneLocations.Reset();
+	InputPersistence.Reset();
+	PreviousPointerLocations.Reset();
 }
 
 void ATDFluidLiveActor::ClearInteractionState()
@@ -1187,10 +1149,11 @@ FTDFluidTrackGroundPlane ATDFluidLiveActor::TraceTrackGroundPlane(const AActor& 
 	return GroundPlane;
 }
 
-void ATDFluidLiveActor::QueueTrackStroke(FTDFluidBrushStamp Stamp, const FVector& PreviousLocation, const FTDFluidInputBrushSettings& Settings, const FTDFluidTrackGroundPlane& GroundPlane)
+void ATDFluidLiveActor::QueueTrackStroke(FTDFluidBrushStamp Stamp, const FVector& PreviousLocation, const FTDFluidInputBrushSettings& Settings, const FTDFluidTrackGroundPlane& GroundPlane, bool bInterpolates)
 {
 	const FVector EndLocation = Stamp.WorldLocation;
-	const int32 StampCount = Settings.bInterpolateStrokes ? ComputeStrokeStampCount((EndLocation - PreviousLocation).Size2D(), Stamp.RadiusCm, Settings.StrokeSpacingRatio) : 1;
+	const float SpacingRadiusCm = Stamp.RadiusCm * Settings.GlobalBrushRadiusScale * FTDFluidBrushModel::ResolveSourceRadiusScale(Settings, Stamp.Source);
+	const int32 StampCount = bInterpolates ? ComputeStrokeStampCount((EndLocation - PreviousLocation).Size2D(), SpacingRadiusCm, Settings.StrokeSpacingRatio) : 1;
 	for (int32 StampIndex = 1; StampIndex <= StampCount; ++StampIndex)
 	{
 		Stamp.WorldLocation = StampIndex == StampCount ? EndLocation : FMath::Lerp(PreviousLocation, EndLocation, static_cast<double>(StampIndex) / static_cast<double>(StampCount));
@@ -1242,7 +1205,9 @@ void ATDFluidLiveActor::HarvestTrackSourceStamps(AActor& TargetActor, float Delt
 			ApplyActorBrushSettings(WheelStamp, LiveComponent->SimulationConfig);
 			WheelStamp.ShapeAspectRatio = Settings.VehicleStampAspectRatio;
 			WheelStamp.ShapeHardness = Settings.BrushHardness;
-			QueueTrackStroke(WheelStamp, *PreviousPointLocation, Settings, GroundPlane);
+			WheelStamp.Source = ETDFluidBrushSource::TrackPoint;
+			RecordLingeringInteractionStamp(FTDFluidInputSourceKey{SourceKey, NAME_None, PointIndex}, WheelStamp);
+			QueueTrackStroke(WheelStamp, *PreviousPointLocation, Settings, GroundPlane, Settings.bInterpolateStrokes);
 		}
 	}
 }

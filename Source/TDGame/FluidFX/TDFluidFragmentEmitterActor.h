@@ -31,6 +31,14 @@ private:
 	int32 WrittenFrameCount = 0;
 };
 
+struct TDGAME_API FTDFluidFragmentLeafPoses
+{
+	TArray<FBox> LocalBounds;
+	TArray<FTransform> MassToLocalTransforms;
+	TArray<FTransform> CurrentTransforms;
+	FTransform ComponentTransform = FTransform::Identity;
+};
+
 UCLASS()
 class TDGAME_API ATDFluidFragmentEmitterActor : public AActor
 {
@@ -148,6 +156,36 @@ public:
 	static float ComputeTargetHeightWeight(const FTDFluidFragmentTarget& Target, double StampZ, double BurstCenterZ);
 
 	static float ComputeFragmentGlowHeatRatio(const FTDFluidFragmentGlowSettings& Settings, float BreakAgeSeconds);
+	static void BuildTargetInputStamps(
+		const FTDFluidFragmentTarget& Target,
+		const FTDFluidFragmentLeafPoses& LeafPoses,
+		const TArray<FVector>& PreviousPositions,
+		const TArray<FVector>& CurrentPositions,
+		const TArray<FVector>& LaggedPositions,
+		float DeltaTime,
+		float BurstCenterZ,
+		const FTDFluidFragmentTrailSettings& Settings,
+		TArray<FTDFluidBrushStamp>& OutStamps,
+		TArray<int32>* OutStampedLeafIndices = nullptr,
+		float ElapsedSeconds = 0.0f);
+	static void BuildTargetFootprintStamps(
+		const FTDFluidFragmentTarget& Target,
+		const FTDFluidFragmentLeafPoses& LeafPoses,
+		const TArray<FVector>& PreviousPositions,
+		const TArray<FVector>& CurrentPositions,
+		float DeltaTime,
+		const FTDFluidFragmentTrailSettings& Settings,
+		TArray<FTDFluidBrushStamp>& OutStamps);
+	static bool BuildFootprintStamp(
+		const FBox& LeafBounds,
+		const FTransform& MassToLocal,
+		const FTransform& LeafCurrentTransform,
+		const FTransform& ComponentTransform,
+		const FVector& LeafVelocity,
+		double TargetActorZ,
+		const FTDFluidFragmentTarget& Target,
+		const FTDFluidFragmentTrailSettings& Settings,
+		FTDFluidBrushStamp& OutStamp);
 
 	void ResolveActiveTargets(TArray<FTDFluidFragmentTarget>& OutTargets) const;
 	FVector GetBurstCenterWorld() const { return BurstCenterWorld; }
@@ -159,6 +197,7 @@ private:
 	void BeginFragmentTracking(const FVector& CenterWorld);
 	void CollectLeafTransformIndices(const UGeometryCollectionComponent& Component);
 	void CaptureLeafWorldPositions(UGeometryCollectionComponent& Component, TArray<FVector>& OutPositions) const;
+	void CaptureLeafPoses(UGeometryCollectionComponent& Component, FTDFluidFragmentLeafPoses& OutLeafPoses) const;
 	void StampBurst(const FVector& CenterWorld);
 	void SustainBurst();
 	void QueueBurstOnTargets(float DensityRatio, float HeatRatio);
@@ -183,6 +222,8 @@ private:
 	TSharedPtr<FStreamableHandle> FragmentGlowLoadHandle;
 	TWeakObjectPtr<UGeometryCollectionComponent> GeometryCollectionComponent;
 	TArray<int32> LeafTransformIndices;
+	TArray<FBox> LeafLocalBounds;
+	TArray<FTransform> LeafMassToLocalTransforms;
 	TArray<FVector> InitialLeafPositions;
 	TArray<bool> LeafStampedFlags;
 	FTDFluidFragmentPositionHistory PositionHistory;

@@ -124,6 +124,10 @@ namespace
 		{
 			Flags |= ETDFluidGpuStampFlags::WritesHeat;
 		}
+		if (Stamp.bAddsDensity)
+		{
+			Flags |= ETDFluidGpuStampFlags::AddsDensity;
+		}
 
 		FTDFluidGpuPackedStamp Packed;
 		Packed.CenterFromWindowCenterCm = FVector2f(Stamp.CenterPlaneCm - Window.CenterPlaneCm);

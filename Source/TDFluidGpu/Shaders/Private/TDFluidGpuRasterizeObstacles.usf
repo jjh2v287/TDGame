@@ -1,5 +1,13 @@
 #include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
 
+#ifndef TDFLUIDGPU_FIELD_INPUT
+#define TDFLUIDGPU_FIELD_INPUT 0
+#endif
+
+#if TDFLUIDGPU_FIELD_INPUT
+#include "/TDFluidGpu/Private/TDFluidGpuFieldInput.ush"
+#endif
+
 StructuredBuffer<uint> EntryList;
 RWTexture2DArray<float> ObstacleSdfOut;
 
@@ -13,5 +21,9 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		return;
 	}
 
-	ObstacleSdfOut[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)] = TDFluidGpuComputeObstacleSignedDistance(Actor, Cell);
+	float SignedDistance = TDFluidGpuComputeObstacleSignedDistance(Actor, Cell);
+#if TDFLUIDGPU_FIELD_INPUT
+	SignedDistance = min(SignedDistance, TDFluidGpuComputeFieldCollisionDistance(Actor, EntryList[DispatchThreadId.z], Cell));
+#endif
+	ObstacleSdfOut[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)] = SignedDistance;
 }

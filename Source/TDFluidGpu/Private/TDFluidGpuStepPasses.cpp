@@ -4,6 +4,7 @@
 #include "TDFluidGpuPassTimestamps.h"
 #include "TDFluidGpuMassInput.h"
 #include "TDFluidGpuWaterPressureProbeReadbacks.h"
+#include "TDFluidGpuFieldInput.h"
 
 #include "DataDrivenShaderPlatformInfo.h"
 #include "GlobalShader.h"
@@ -161,12 +162,21 @@ class FTDFluidGpuRasterizeObstaclesCS : public FTDFluidGpuComputeShader
 {
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuRasterizeObstaclesCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuRasterizeObstaclesCS, FTDFluidGpuComputeShader);
+	class FFieldInputDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_FIELD_INPUT");
+	using FPermutationDomain = TShaderPermutationDomain<FFieldInputDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, EntryList)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedObstacle>, Obstacles)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, ObstacleSdfOut)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedFieldInput>, FieldInputs)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint2>, FieldEntryRanges)
+		SHADER_PARAMETER_TEXTURE(Texture2D, FieldTexture0)
+		SHADER_PARAMETER_TEXTURE(Texture2D, FieldTexture1)
+		SHADER_PARAMETER_TEXTURE(Texture2D, FieldTexture2)
+		SHADER_PARAMETER_TEXTURE(Texture2D, FieldTexture3)
+		SHADER_PARAMETER_SAMPLER(SamplerState, FieldSampler)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuRasterizeObstaclesCS, "/TDFluidGpu/Private/TDFluidGpuRasterizeObstacles.usf", "MainCS", SF_Compute);
@@ -193,7 +203,8 @@ class FTDFluidGpuApplyStampsCS : public FTDFluidGpuComputeShader
 {
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuApplyStampsCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuApplyStampsCS, FTDFluidGpuComputeShader);
-	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension, FTDFluidGpuMassInputDimension>;
+	class FFieldInputDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_FIELD_INPUT");
+	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension, FTDFluidGpuMassInputDimension, FFieldInputDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -213,6 +224,13 @@ class FTDFluidGpuApplyStampsCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuMassInputEntry>, MassInputEntries)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(Buffer<uint>, MassInputAccumulation)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWBuffer<uint>, MassInputCounters)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedFieldInput>, FieldInputs)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint2>, FieldEntryRanges)
+		SHADER_PARAMETER_TEXTURE(Texture2D, FieldTexture0)
+		SHADER_PARAMETER_TEXTURE(Texture2D, FieldTexture1)
+		SHADER_PARAMETER_TEXTURE(Texture2D, FieldTexture2)
+		SHADER_PARAMETER_TEXTURE(Texture2D, FieldTexture3)
+		SHADER_PARAMETER_SAMPLER(SamplerState, FieldSampler)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuApplyStampsCS, "/TDFluidGpu/Private/TDFluidGpuApplyStamps.usf", "MainCS", SF_Compute);
@@ -1110,6 +1128,7 @@ namespace
 		int32 EntryCount;
 		FTDFluidGpuPassTimestamps* PassTimestamps;
 		FTDFluidGpuMassInputGraph* MassInput = nullptr;
+		FTDFluidGpuFieldInputGraph* FieldInput = nullptr;
 	};
 
 	struct FTDFluidGpuOutputTargets
@@ -1549,8 +1568,14 @@ namespace
 		Parameters->EntryList = UploadEntryList(GraphBuilder, TEXT("TDFluidGpu.ObstacleEntries"), TArray<uint32>(Frame.ObstacleEntryIndices));
 		Parameters->Obstacles = Context.Obstacles;
 		Parameters->ObstacleSdfOut = MakeUAV(GraphBuilder, Context.Textures.ObstacleSdf);
+		FTDFluidGpuRasterizeObstaclesCS::FPermutationDomain ObstacleDomain;
+		ObstacleDomain.Set<FTDFluidGpuRasterizeObstaclesCS::FFieldInputDimension>(Context.FieldInput != nullptr);
+		if (Context.FieldInput)
+		{
+			BindTDFluidGpuFieldInputParameters(*Context.FieldInput, *Parameters);
+		}
 
-		TShaderMapRef<FTDFluidGpuRasterizeObstaclesCS> Shader(Context.ShaderMap);
+		TShaderMapRef<FTDFluidGpuRasterizeObstaclesCS> Shader(Context.ShaderMap, ObstacleDomain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.RasterizeObstacles"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Frame.ObstacleEntryIndices.Num()));
 	}
 
@@ -1601,6 +1626,11 @@ namespace
 			Parameters->MassInputEntries = Context.MassInput->Entries;
 			Parameters->MassInputAccumulation = GraphBuilder.CreateSRV(Context.MassInput->Accumulation, PF_R32_UINT);
 			Parameters->MassInputCounters = GraphBuilder.CreateUAV(Context.MassInput->Counters, PF_R32_UINT);
+		}
+		StampDomain.Set<FTDFluidGpuApplyStampsCS::FFieldInputDimension>(Context.FieldInput != nullptr);
+		if (Context.FieldInput)
+		{
+			BindTDFluidGpuFieldInputParameters(*Context.FieldInput, *Parameters);
 		}
 		TShaderMapRef<FTDFluidGpuApplyStampsCS> Shader(Context.ShaderMap, StampDomain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.ApplyStamps"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
@@ -3511,6 +3541,11 @@ namespace
 		{
 			MassInputGraph = PrepareMassInputGraph(GraphBuilder, FrameInputs, Batch, MassInputRegistry, MassInputSnapshot);
 			Context.MassInput = &MassInputGraph;
+		}
+		FTDFluidGpuFieldInputGraph FieldInputGraph;
+		if (!IsPainterBatch(Batch) && TDFluidGpuFieldInput::PrepareGraph(GraphBuilder, FrameInputs, Batch, FieldInputGraph))
+		{
+			Context.FieldInput = &FieldInputGraph;
 		}
 
 		InOutOutputs.SteppedEntryCount += Context.EntryCount;

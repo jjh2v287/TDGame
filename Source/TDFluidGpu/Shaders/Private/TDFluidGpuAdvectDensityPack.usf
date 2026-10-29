@@ -58,7 +58,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 
 		const float2 BacktracePosition = float2(Cell) - AdvectionVelocity * Actor.AdvectionStepScale;
 		const FTDFluidGpuBilinearSample Sample = TDFluidGpuMakeBilinearSample(BacktracePosition, Actor.Resolution);
-		Density = clamp(TDFluidGpuSampleBilinearFloat2(DensityIn, Sample, Actor.SliceIndex) * Actor.DensityDissipationFactor, 0.0f, 1.0f);
+		Density = TDFluidGpuApplyDenseDensity(Actor, TDFluidGpuSampleBilinearFloat2(DensityIn, Sample, Actor.SliceIndex) * Actor.DensityDissipationFactor);
 		Displacement = clamp(TDFluidGpuSampleBilinearFloat(SurfaceDisplacementIn, Sample, Actor.SliceIndex) * Actor.DensityDissipationFactor, 0.0f, 1.0f);
 
 		const float OutflowRetainFactor = TDFluidGpuComputeOutflowRetainFactor(Actor, Cell);
@@ -86,7 +86,8 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const float SurfaceHeight = clamp(DisplayPressure + Displacement, -1.0f, 1.0f);
 	const float ObstacleMask = SignedDistance > 0.0f ? 1.0f : 0.0f;
 	const float Alpha = clamp(TDFluidGpuComputeOutputBorderAlpha(Actor, Cell) * ObstacleMask, 0.0f, 1.0f);
-	DensityPressureOutput[uint2(Cell)] = float4(clamp(Density.x, 0.0f, 1.0f), SurfaceHeight * 0.5f + 0.5f, clamp(Density.y, 0.0f, 1.0f), Alpha);
+	const float2 EncodedDensity = TDFluidGpuEncodeOutputDensity(Actor, Density);
+	DensityPressureOutput[uint2(Cell)] = float4(EncodedDensity.x, SurfaceHeight * 0.5f + 0.5f, EncodedDensity.y, Alpha);
 
 	const float2 StoredVelocity = TDFluidGpuClampVelocityMagnitude(Velocity, Actor.MaxCellSpeedCmPerSec);
 	const float2 NormalizedVelocity = clamp(StoredVelocity / TDFLUIDGPU_OUTPUT_SPEED_REFERENCE_CM_PER_SEC, -1.0f, 1.0f) * 0.5f + 0.5f;

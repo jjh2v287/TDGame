@@ -1,0 +1,154 @@
+{
+ "id": "viscous_fx14_blood",
+ "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4)",
+ "scenes": [
+  {
+   "name": "blood_decal",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidViscousStage",
+   "camera": {
+    "exposure_ev100": 1.0,
+    "pawn": [
+     8000.0,
+     0.0
+    ],
+    "arm": 500.0,
+    "view": [
+     -30.0,
+     0.0
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 8.0,
+   "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions.json",
+   "targets": "Tools/FluidFX/calib/targets/viscous_fx14_targets.json",
+   "live2_refs": [
+    "L4"
+   ],
+   "awake": {
+    "TDGen_ViscousBloodFlowDecal": true
+   }
+  },
+  {
+   "name": "blood_splash",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidViscousStage",
+   "camera": {
+    "exposure_ev100": 1.0,
+    "pawn": [
+     2000.0,
+     0.0
+    ],
+    "arm": 500.0,
+    "view": [
+     -30.0,
+     0.0
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 6.0,
+   "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions.json",
+   "targets": "Tools/FluidFX/calib/targets/viscous_fx14_targets.json",
+   "live2_refs": [
+    "L4"
+   ],
+   "awake": {
+    "TDGen_ViscousBloodSplash": true
+   }
+  }
+ ],
+ "base_tuning": [],
+ "params": [
+  {
+   "json_path": "Kinds.ViscousBlood.TDFluidInputBrushSettings.BrushVelocityScale",
+   "values": [
+    1.0,
+    1.5,
+    2.5
+   ],
+   "split_group": true
+  },
+  {
+   "json_path": "Kinds.ViscousBlood.TDFluidSimulationConfig.AdvectionSpeedScale",
+   "values": [
+    0.35,
+    0.55,
+    1.0
+   ]
+  },
+  {
+   "json_path": "Groups.Viscous.TDFluidSimulationConfig.DenseDensityCeiling",
+   "values": [
+    1.5,
+    2,
+    3
+   ]
+  },
+  {
+   "json_path": "Kinds.ViscousBlood.TDFluidSurfaceRenderSettings.DecalBoxHeightCm",
+   "values": [
+    100,
+    400,
+    600
+   ]
+  },
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidViscousDecal_Blood.Scalars.ViscousEdgeSoftness",
+   "values": [
+    0.02,
+    0.04,
+    0.08
+   ]
+  },
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidViscousDecal_Blood.Scalars.ViscousDecalOpacity",
+   "values": [
+    0.7,
+    0.9,
+    1.0
+   ]
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "look",
+   "viscous_headless"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "metric": "viscous_headless.streak_aspect",
+    "weight": 1.0,
+    "low": 5.0,
+    "high": 15.0
+   },
+   {
+    "metric": "viscous_headless.streak_tip_width_ratio",
+    "weight": 0.5,
+    "low": 0.5,
+    "high": 1.0
+   },
+   {
+    "metric": "decal_edge.width_cells",
+    "weight": 1.0,
+    "low": 0.0,
+    "high": 2.0
+   }
+  ]
+ },
+ "draft_status": "blocked(CAL-0)",
+ "p3_gaps": [
+  "viscous_headless 출처(튐 줄기 길이/폭·머리 폭 비)",
+  "Look: 경로(fluid_tuning_patch.parse_json_path 가 Look: 를 거부, R9-S4)",
+  "scenes.awake(이름표로 액터 깨우기) 실행기 지원",
+  "regions 파일 없음: Tools/FluidFX/calib/regions/viscous_fx14_regions.json(CAL-0 소유자가 추가, S6)",
+  "decal_edge 지표(가장자리 10~90 % 폭·분홍 반투명 가장자리)는 measure_fx_look.py 미지원(S6)",
+  "lookdev schedule 에 조각 방출기 trigger_break_at 호출 키 없음(blood_splash 장면)",
+  "READ_BACK_STRUCTS에 TDFluidInputBrushSettings·TDFluidSurfaceRenderSettings 없음",
+  "Groups.Viscous·Kinds.ViscousBlood 경로는 FX-14 묶음 A 통합 뒤에만 유효"
+ ]
+}

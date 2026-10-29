@@ -136,6 +136,10 @@ namespace
 		InOutConfig.VortexTangentialAccelerationCmPerSec2 = FMath::IsFinite(InOutConfig.VortexTangentialAccelerationCmPerSec2) ? FMath::Clamp(InOutConfig.VortexTangentialAccelerationCmPerSec2, -20000.0f, 20000.0f) : 0.0f;
 		InOutConfig.VortexRadialDriftCmPerSec = FMath::IsFinite(InOutConfig.VortexRadialDriftCmPerSec) ? FMath::Clamp(InOutConfig.VortexRadialDriftCmPerSec, -InOutConfig.MaxCellSpeedCmPerSec, InOutConfig.MaxCellSpeedCmPerSec) : 0.0f;
 		InOutConfig.VortexRadiusRatio = ClampFinite(InOutConfig.VortexRadiusRatio, 0.01f, 0.5f);
+		InOutConfig.DensityAccumulationPerSec = ClampFinite(InOutConfig.DensityAccumulationPerSec, 0.0f, 20.0f);
+		InOutConfig.DenseDensityCeiling = ClampFinite(InOutConfig.DenseDensityCeiling, 1.0f, 8.0f);
+		InOutConfig.DenseGrowthThreshold = ClampFinite(InOutConfig.DenseGrowthThreshold, 0.0f, 1.0f);
+		InOutConfig.FlowNoiseSpeedMaskReferenceCmPerSec = ClampFinite(InOutConfig.FlowNoiseSpeedMaskReferenceCmPerSec, 0.0f, 1200.0f);
 		ApplyWrappedAreaRules(InOutConfig);
 	}
 
@@ -1043,6 +1047,9 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 	const bool bInjectsVelocity = Stamp.VelocityStrength > 0.0f || bBlendsRadialVelocity;
 	const FVector2D TargetVelocity = (FVector2D(Stamp.WorldVelocity.X, Stamp.WorldVelocity.Y) * Stamp.VelocityStrength).GetClampedToMaxSize(Config.MaxCellSpeedCmPerSec);
 	const FTDFluidStampShapeWeighting StampShape = MakeTDFluidStampShapeWeighting(Stamp);
+	const bool bUsesDenseDensity = UsesDenseDensity();
+	const float StampDensityCeiling = GetStampDensityCeiling();
+	const bool bAddsDensity = Stamp.bAddsDensity && !bErasesDensity && !bUsesRingStamp;
 
 	const int32 MinCellX = FMath::Clamp(FMath::FloorToInt((StampCenter.X - EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
 	const int32 MaxCellX = FMath::Clamp(FMath::CeilToInt((StampCenter.X + EffectiveRadius - MinBoundsX) / CellSizeX), 0, Resolution - 1);
@@ -1085,14 +1092,28 @@ void FTDFluidGrid2DSolver::ApplyBrushStamp(const FTDFluidBrushStamp& Stamp, floa
 					SelectiveDensity[CellIdx] *= RetainFactor;
 				}
 			}
+			else if (bAddsDensity)
+			{
+				const float AddedDensity = DensityStrength * ShapedWeight * DeltaTime;
+				PrimaryDensity[CellIdx] = FMath::Min(PrimaryDensity[CellIdx] + AddedDensity, StampDensityCeiling);
+				if (!bIsWaterLayerActive)
+				{
+					SurfaceDisplacement[CellIdx] = FMath::Max(SurfaceDisplacement[CellIdx], FMath::Min(PrimaryDensity[CellIdx], 1.0f) * Config.BrushDisplacementRatio);
+				}
+				if (bWritesSelectiveDensity)
+				{
+					SelectiveDensity[CellIdx] = FMath::Min(SelectiveDensity[CellIdx] + AddedDensity, StampDensityCeiling);
+				}
+			}
 			else
 			{
 				const float DensityWeight = bUsesRingStamp ? ComputeTDFluidRingStampDensityWeight(RingShape, CellCenter - StampCenter, DistanceCm, EffectiveRadius) : ShapedWeight;
-				const float DensityTarget = FMath::Clamp(DensityStrength * DensityWeight, 0.0f, 1.0f);
+				const float DensityTarget = FMath::Clamp(DensityStrength * DensityWeight, 0.0f, StampDensityCeiling);
 				PrimaryDensity[CellIdx] = FMath::Max(PrimaryDensity[CellIdx], DensityTarget);
 				if (!bIsWaterLayerActive)
 				{
-					SurfaceDisplacement[CellIdx] = FMath::Max(SurfaceDisplacement[CellIdx], DensityTarget * Config.BrushDisplacementRatio);
+					const float DisplacementDensityTarget = bUsesDenseDensity ? FMath::Min(DensityTarget, 1.0f) : DensityTarget;
+					SurfaceDisplacement[CellIdx] = FMath::Max(SurfaceDisplacement[CellIdx], DisplacementDensityTarget * Config.BrushDisplacementRatio);
 				}
 				if (bWritesSelectiveDensity)
 				{
@@ -1439,6 +1460,8 @@ void FTDFluidGrid2DSolver::ApplyFlowNoiseAcceleration(float DeltaTime)
 	const uint8* SolidCells = SolidCellMask.GetData();
 	float* VelX = VelocityX.GetData();
 	float* VelY = VelocityY.GetData();
+	const bool bUsesSpeedMask = UsesFlowNoiseSpeedMask();
+	const float InverseSpeedMaskReferenceCmPerSec = bUsesSpeedMask ? 1.0f / Config.FlowNoiseSpeedMaskReferenceCmPerSec : 0.0f;
 
 	ParallelFor(TEXT("TDFluidFlowNoise"), GridSize, NoiseRowsPerBatch, [&](int32 Y)
 	{
@@ -1451,6 +1474,14 @@ void FTDFluidGrid2DSolver::ApplyFlowNoiseAcceleration(float DeltaTime)
 			const int32 Idx = Y * GridSize + X;
 			if (SolidCells[Idx])
 			{
+				continue;
+			}
+
+			if (bUsesSpeedMask)
+			{
+				const float SpeedMask = ComputeFlowNoiseSpeedMask(FMath::Sqrt(VelX[Idx] * VelX[Idx] + VelY[Idx] * VelY[Idx]), InverseSpeedMaskReferenceCmPerSec);
+				VelX[Idx] += RowAccelerationX[X] * DeltaTime * SpeedMask;
+				VelY[Idx] += RowAccelerationY[X] * DeltaTime * SpeedMask;
 				continue;
 			}
 
@@ -2081,6 +2112,11 @@ void FTDFluidGrid2DSolver::AdvectDensities(float DeltaTime)
 	const float StepScaleY = (DeltaTime * Config.AdvectionSpeedScale) / CellSizeY;
 	const float DissipationFactor = 1.0f / (1.0f + Config.DensityDissipation * DeltaTime);
 	const float PrimaryDissipationFactor = (IsWaterLayerActive() && Config.bUseWhitewaterDissipation) ? 1.0f / (1.0f + Config.WhitewaterDissipation * DeltaTime) : DissipationFactor;
+	const bool bUsesDenseDensity = UsesDenseDensity();
+	const bool bGrowsDenseDensity = bUsesDenseDensity && Config.DensityAccumulationPerSec > 0.0f;
+	const float DenseDensityCeiling = GetStampDensityCeiling();
+	const float DenseGrowthFactor = bGrowsDenseDensity ? FMath::Exp(Config.DensityAccumulationPerSec * DeltaTime) : 1.0f;
+	const float DenseGrowthThreshold = Config.DenseGrowthThreshold;
 
 	const int32 GridSize = Resolution;
 	const uint8* SolidCells = SolidCellMask.GetData();
@@ -2110,8 +2146,20 @@ void FTDFluidGrid2DSolver::AdvectDensities(float DeltaTime)
 			const float BacktraceY = static_cast<float>(Y) - VelY[Idx] * StepScaleY;
 			const FTDFluidBilinearSample Sample = MakeAreaBilinearSample(BacktraceX, BacktraceY, GridSize, Config.AreaAddressMode);
 
-			AdvectedPrimary[Idx] = FMath::Clamp(InterpolateBilinear(PrimaryValues, Sample) * PrimaryDissipationFactor, 0.0f, 1.0f);
-			AdvectedSelective[Idx] = FMath::Clamp(InterpolateBilinear(SelectiveValues, Sample) * DissipationFactor, 0.0f, 1.0f);
+			if (bUsesDenseDensity)
+			{
+				const float PrimarySample = InterpolateBilinear(PrimaryValues, Sample) * PrimaryDissipationFactor;
+				const float SelectiveSample = InterpolateBilinear(SelectiveValues, Sample) * DissipationFactor;
+				const float GrownPrimary = bGrowsDenseDensity && PrimarySample >= DenseGrowthThreshold ? PrimarySample * DenseGrowthFactor : PrimarySample;
+				const float GrownSelective = bGrowsDenseDensity && SelectiveSample >= DenseGrowthThreshold ? SelectiveSample * DenseGrowthFactor : SelectiveSample;
+				AdvectedPrimary[Idx] = FMath::Clamp(GrownPrimary, 0.0f, DenseDensityCeiling);
+				AdvectedSelective[Idx] = FMath::Clamp(GrownSelective, 0.0f, DenseDensityCeiling);
+			}
+			else
+			{
+				AdvectedPrimary[Idx] = FMath::Clamp(InterpolateBilinear(PrimaryValues, Sample) * PrimaryDissipationFactor, 0.0f, 1.0f);
+				AdvectedSelective[Idx] = FMath::Clamp(InterpolateBilinear(SelectiveValues, Sample) * DissipationFactor, 0.0f, 1.0f);
+			}
 			AdvectedDisplacement[Idx] = FMath::Clamp(InterpolateBilinear(DisplacementValues, Sample) * DissipationFactor, 0.0f, 1.0f);
 		}
 	});
@@ -2370,6 +2418,8 @@ void FTDFluidGrid2DSolver::PackOutputPixels(TArray<FFloat16Color>& OutDensityPre
 		BuildTDFluidTrackBankBlur(PrimaryDensity.GetData(), GridSize, RadiusCells, IsAreaWrapped(), TrackBankBlur);
 	}
 	const float* TrackBankBlurValues = TrackBankBlur.GetData();
+	const bool bEncodesDenseDensity = UsesDenseDensity();
+	const float InverseDenseDensityCeiling = bEncodesDenseDensity ? 1.0f / GetStampDensityCeiling() : 1.0f;
 
 	const float* SdfValues = ObstacleSdf.GetData();
 	const float* PressureValues = Pressure.GetData();
@@ -2391,10 +2441,10 @@ void FTDFluidGrid2DSolver::PackOutputPixels(TArray<FFloat16Color>& OutDensityPre
 			const float ObstacleMask = SdfValues[Idx] > 0.0f ? 1.0f : 0.0f;
 			const float SurfaceHeight = FMath::Clamp(PressureValues[Idx] + DisplacementValues[Idx], -1.0f, 1.0f);
 
-			const float Density = FMath::Clamp(PrimaryValues[Idx], 0.0f, 1.0f);
+			const float Density = bEncodesDenseDensity ? FMath::Clamp(PrimaryValues[Idx] * InverseDenseDensityCeiling, 0.0f, 1.0f) : FMath::Clamp(PrimaryValues[Idx], 0.0f, 1.0f);
 			const float BankHeight = bComposesTrackBank ? -Density + FMath::Clamp(Config.TrackBankStrength * (TrackBankBlurValues[Idx] - Density), -TrackBankLimit, TrackBankLimit) : 0.0f;
 			const float Surface = bComposesTrackBank ? 0.5f + 0.5f * FMath::Clamp(BankHeight, -1.0f, 1.0f) : SurfaceHeight * 0.5f + 0.5f;
-			const float Selective = FMath::Clamp(SelectiveValues[Idx], 0.0f, 1.0f);
+			const float Selective = bEncodesDenseDensity ? FMath::Clamp(SelectiveValues[Idx] * InverseDenseDensityCeiling, 0.0f, 1.0f) : FMath::Clamp(SelectiveValues[Idx], 0.0f, 1.0f);
 			const float Alpha = FMath::Clamp(BorderAlpha * ObstacleMask, 0.0f, 1.0f);
 			DensityPressurePixels[Idx] = FFloat16Color(FLinearColor(Density, Surface, Selective, Alpha));
 

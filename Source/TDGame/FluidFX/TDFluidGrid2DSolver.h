@@ -43,6 +43,10 @@ public:
 	int32 GetObstacleSdfRawGeneration() const { return ObstacleSdfRawGeneration; }
 	static constexpr float ObstacleDistanceEmptySdfCm = 10000.0f;
 	bool IsHeatChannelActive() const;
+	bool UsesDenseDensity() const;
+	bool UsesFlowNoiseSpeedMask() const;
+	float GetStampDensityCeiling() const;
+	static float ComputeFlowNoiseSpeedMask(float SpeedCmPerSec, float InverseReferenceCmPerSec);
 
 	static constexpr float NoWaterSurfaceHeight = -TNumericLimits<float>::Max();
 	static float GetOutputSpeedReferenceCmPerSec();

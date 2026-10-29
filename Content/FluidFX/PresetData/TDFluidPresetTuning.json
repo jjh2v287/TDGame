@@ -82,7 +82,11 @@
       "TrackBankStrength": 0.0,
       "TrackBankBlurRadiusCm": 15.0,
       "TrackBankHeightLimit": 0.5,
-      "bWritesPainterVelocity": false
+      "bWritesPainterVelocity": false,
+      "DensityAccumulationPerSec": 0.0,
+      "DenseDensityCeiling": 1.0,
+      "DenseGrowthThreshold": 0.1,
+      "FlowNoiseSpeedMaskReferenceCmPerSec": 0.0
     },
     "TDFluidSourceEmitterSettings": {
       "bIsEnabled": false,
@@ -151,7 +155,12 @@
       "RestingHeatSeconds": 0.0,
       "RestingHeatStrength": 0.5,
       "RestingHeatRadiusCm": 14.0,
-      "RestingDensityStrength": 0.0
+      "RestingDensityStrength": 0.0,
+      "FragmentInputMode": "Points",
+      "FootprintDensityStrength": 1.0,
+      "FootprintVelocityStrength": 0.0,
+      "FootprintHardness": 0.8,
+      "FootprintMaxHeightCm": 0.0
     },
     "TDFluidVolumeRenderSettings": {
       "bEnableTransmittance": false,
@@ -253,7 +262,38 @@
       "VehicleStampAspectRatio": 1.0,
       "bInterpolateStrokes": false,
       "StrokeSpacingRatio": 0.5,
-      "MassPointRippleImpulseCm": 0.0
+      "MassPointRippleImpulseCm": 0.0,
+      "BrushVelocityScale": 1.0,
+      "GlobalBrushRadiusScale": 1.0,
+      "PivotBrushRadiusScale": 1.0,
+      "BoneBrushRadiusScale": 1.0,
+      "PointerBrushRadiusScale": 1.0,
+      "ParticleBrushRadiusScale": 1.0,
+      "FragmentBrushRadiusScale": 1.0,
+      "SharedBrushRadiusScale": 1.0,
+      "ObjectSizeMode": "Fixed",
+      "ObjectSizeRadiusRatio": 1.0,
+      "bHardnessScalesWithObjectSize": false,
+      "BrushVelocityExponent": 1.0,
+      "BrushVelocityReferenceCmPerSec": 100.0,
+      "BrushVelocityClampCmPerSec": 0.0,
+      "MotionLeadRatio": 0.0,
+      "PositionJitterRatio": 0.0,
+      "bJitterScalesWithSpeed": false,
+      "DensityNoiseAmount": 0.0,
+      "DensityNoiseScaleCm": 100.0,
+      "VelocityNoiseAmount": 0.0,
+      "VelocityNoiseScaleCm": 100.0,
+      "BrushNoiseSeed": 0,
+      "bAdditiveStrokeBlend": false,
+      "AdditiveDensityRatePerSec": 4.0,
+      "bInterpolatePivotAndPointerStrokes": false,
+      "InputPersistenceSeconds": 0.0,
+      "LargeObjectExcludeRatio": 0.0,
+      "bMovePivotToBoundsBottom": false,
+      "bReceivesSharedInput": false,
+      "SharedInputDensityScale": 1.0,
+      "SharedInputVelocityScale": 1.0
     },
     "TDFluidRuntimeOpsSettings": {
       "SleepDistanceRatio": 1.1,
@@ -394,9 +434,25 @@
       "bUsesTrackDeformMesh": false,
       "TrackDeformMeshExtentCm": 2500.0,
       "TrackDeformMeshShadowPolicy": "NoShadow",
-      "TrackDeformMeshRecenterDistanceCm": 50.0
+      "TrackDeformMeshRecenterDistanceCm": 50.0,
+      "bUsesDecalOutput": false,
+      "DecalBoxHeightCm": 100.0
     },
     "TDFluidFieldInputSettings": {
+      "bAcceptFieldInputs": false,
+      "MaxFieldInputs": 4,
+      "FieldDensityScale": 1.0,
+      "FieldVelocityScale": 1.0,
+      "FieldVelocityRangeCmPerSec": 300.0,
+      "bFieldCollisionEnabled": false,
+      "FieldCollisionEdgeCm": 25.0,
+      "MeshFieldDensityStrength": 0.0,
+      "MeshFieldOutwardVelocityCmPerSec": 0.0,
+      "MeshFieldMotionVelocityStrength": 0.0,
+      "MeshContourBandCm": 50.0,
+      "MeshContourNoiseAmount": 0.0,
+      "MeshContourNoiseScaleCm": 100.0,
+      "bMeshFieldFillsInterior": false
     },
     "TDFluidWaterPropSettings": {
     },
@@ -608,7 +664,32 @@
       "Kinds": [
         "ViscousMud",
         "ViscousBlood"
-      ]
+      ],
+        "TDFluidSimulationConfig": {
+          "GridResolution": 256,
+          "SimExtentCm": {
+            "X": 1280.0,
+            "Y": 1280.0
+          },
+          "SolverBackend": "Gpu",
+          "CpuFallbackResolution": 128,
+          "PressureIterations": 4,
+          "DensityDissipation": 0.05,
+          "DensityAccumulationPerSec": 3.0,
+          "DenseDensityCeiling": 2.0,
+          "DenseGrowthThreshold": 0.15,
+          "FlowNoiseAccelerationCmPerSec2": 400.0,
+          "FlowNoiseScaleCm": 15.0,
+          "FlowNoiseSpeed": 0.0,
+          "FlowNoiseSpeedMaskReferenceCmPerSec": 100.0,
+          "MaxCellSpeedCmPerSec": 300.0,
+          "BorderFadeRatio": 0.1,
+          "MaxPointsPerTick": 96
+        },
+        "TDFluidInputBrushSettings": {
+          "DensityFadeBelowSpeedCmPerSec": 20.0,
+          "BrushVelocityScale": 1.5
+        }
     },
     "DenseWater": {
       "Kinds": [
@@ -1395,16 +1476,113 @@
       }
     },
     "ViscousMud": {
+      "TDFluidSimulationConfig": {
+        "VelocityDamping": 0.65,
+        "VorticityStrength": 0.15,
+        "TerrainSlopeGravity": 120.0,
+        "AdvectionSpeedScale": 0.35
+      }
     },
     "ViscousBlood": {
+      "TDFluidSimulationConfig": {
+        "VelocityDamping": 0.45,
+        "VorticityStrength": 0.3,
+        "TerrainSlopeGravity": 450.0,
+        "AdvectionSpeedScale": 0.55
+      },
+      "TDFluidSurfaceRenderSettings": {
+        "bUsesDecalOutput": true,
+        "DecalBoxHeightCm": 400.0
+      }
     },
     "LavaTile": {
+      "TDFluidSimulationConfig": {
+        "AreaAddressMode": "Wrap",
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 1600.0,
+          "Y": 1600.0
+        },
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "VelocityDamping": 0.2,
+        "DensityDissipation": 0.0,
+        "AmbientDensity": 0.55,
+        "AmbientRefillPerSec": 0.15,
+        "AmbientNoiseAmount": 0.8,
+        "FlowNoiseAccelerationCmPerSec2": 60.0,
+        "FlowNoiseScaleCm": 150.0,
+        "FlowNoiseSpeed": 0.03,
+        "VorticityStrength": 1.5,
+        "MaxPointsPerTick": 16
+      }
     },
     "LavaLocal": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 1280.0,
+          "Y": 1280.0
+        },
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "VelocityDamping": 0.5,
+        "DensityDissipation": 0.4,
+        "DenseDensityCeiling": 1.5,
+        "DensityAccumulationPerSec": 1.5,
+        "DenseGrowthThreshold": 0.2,
+        "VorticityStrength": 0.3,
+        "TerrainSlopeGravity": 300.0,
+        "AdvectionSpeedScale": 0.5,
+        "FlowNoiseAccelerationCmPerSec2": 200.0,
+        "FlowNoiseScaleCm": 20.0,
+        "FlowNoiseSpeed": 0.0,
+        "FlowNoiseSpeedMaskReferenceCmPerSec": 80.0
+      }
     },
     "InputBrushBench": {
+      "TDFluidSimulationConfig": {
+        "SolverBackend": "Gpu",
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 2000.0,
+          "Y": 2000.0
+        },
+        "DensityDissipation": 0.2,
+        "ActorBrushDensityStrength": 1.0
+      },
+      "TDFluidInputBrushSettings": {
+        "ObjectSizeMode": "Bounds",
+        "bHardnessScalesWithObjectSize": true,
+        "BrushHardness": 0.3,
+        "BrushVelocityExponent": 1.3,
+        "MotionLeadRatio": 0.3,
+        "PositionJitterRatio": 0.1,
+        "DensityNoiseAmount": 0.3,
+        "bInterpolatePivotAndPointerStrokes": true,
+        "InputPersistenceSeconds": 0.25,
+        "bReceivesSharedInput": true
+      }
     },
     "InputFieldBench": {
+      "TDFluidSimulationConfig": {
+        "SolverBackend": "Gpu",
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 2000.0,
+          "Y": 2000.0
+        },
+        "DensityDissipation": 0.2,
+        "ActorBrushDensityStrength": 1.0
+      },
+      "TDFluidFieldInputSettings": {
+        "bAcceptFieldInputs": true,
+        "bFieldCollisionEnabled": true,
+        "MeshFieldDensityStrength": 0.8,
+        "MeshFieldOutwardVelocityCmPerSec": 150.0,
+        "MeshFieldMotionVelocityStrength": 0.6,
+        "MeshContourNoiseAmount": 0.3
+      }
     },
     "SmokeKernelPressure": {
     },

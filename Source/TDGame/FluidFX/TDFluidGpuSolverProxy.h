@@ -101,6 +101,7 @@ public:
 	bool ConsumeReadbackFrame(const FTDFluidGpuReadbackFrame& ReadbackFrame);
 	void SetMassInputAcceptance(bool bInAcceptsMassInput, bool bInWritesSelectiveDensity);
 	void SetPreparedMassPoints(TArray<FTDFluidGpuMassPointInput>&& InMassPoints);
+	void SetPreparedFieldInputs(TArray<FTDFluidGpuFieldInput>&& InFieldInputs) { PreparedFieldInputs = MoveTemp(InFieldInputs); }
 	const FTDFluidGpuMassInputCounters& GetLatestMassInputCounters() const { return LatestMassInputCounters; }
 
 	bool HasActorKey() const { return ActorKey != 0; }
@@ -132,6 +133,8 @@ private:
 	FTDFluidReadbackField ReadbackField;
 	TArray<FTDFluidGpuStampInput> PreparedStamps;
 	TArray<FTDFluidGpuMassPointInput> PreparedMassPoints;
+	TArray<FTDFluidGpuFieldInput> PreparedFieldInputs;
+	bool bHadCollisionField = false;
 	FTDFluidGpuMassInputCounters LatestMassInputCounters;
 	bool bAcceptsMassInputRequest = false;
 	bool bMassInputWritesSelectiveDensityRequest = false;

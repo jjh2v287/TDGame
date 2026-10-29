@@ -1,5 +1,6 @@
 #include "FluidFX/TDFluidInputBrushRules.h"
 
+#include "FluidFX/TDFluidBrushModel.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 
 bool FTDFluidInputBrushRules::HasActiveRules(const FTDFluidInputBrushSettings& Settings)
@@ -7,7 +8,9 @@ bool FTDFluidInputBrushRules::HasActiveRules(const FTDFluidInputBrushSettings& S
 	return Settings.VelocityOnlySources != ETDFluidVelocityOnlySources::Off
 		|| Settings.bShouldInvertInputDensity
 		|| Settings.DensityFadeBelowSpeedCmPerSec > 0.0f
-		|| Settings.BrushHeightFadeDistanceCm > 0.0f;
+		|| Settings.BrushHeightFadeDistanceCm > 0.0f
+		|| Settings.BrushVelocityScale != 1.0f
+		|| FTDFluidBrushModel::HasActiveModel(Settings);
 }
 
 bool FTDFluidInputBrushRules::IsVelocityOnlySource(ETDFluidVelocityOnlySources Selection, ETDFluidBrushSource Source)
@@ -22,6 +25,8 @@ bool FTDFluidInputBrushRules::IsVelocityOnlySource(ETDFluidVelocityOnlySources S
 		return Source == ETDFluidBrushSource::Fragment;
 	case ETDFluidVelocityOnlySources::PointArraysAndFragments:
 		return Source == ETDFluidBrushSource::PointArray || Source == ETDFluidBrushSource::Fragment;
+	case ETDFluidVelocityOnlySources::Fields:
+		return Source == ETDFluidBrushSource::Field;
 	case ETDFluidVelocityOnlySources::All:
 		return true;
 	default:
@@ -55,11 +60,16 @@ void FTDFluidInputBrushRules::ApplyToStamps(TArray<FTDFluidBrushStamp>& InOutSta
 	}
 
 	const bool bFadesByHeight = Settings.BrushHeightFadeDistanceCm > 0.0f;
+	const bool bScalesBrushVelocity = Settings.BrushVelocityScale != 1.0f;
 	int32 KeptCount = 0;
 	for (int32 Index = 0; Index < InOutStamps.Num(); ++Index)
 	{
 		FTDFluidBrushStamp Stamp = InOutStamps[Index];
 		ApplyDensityRules(Stamp, Settings, PlaneBasis);
+		if (bScalesBrushVelocity)
+		{
+			Stamp.VelocityStrength *= Settings.BrushVelocityScale;
+		}
 		if (bFadesByHeight)
 		{
 			const double GroundDepthCm = Stamp.bHasGroundElevation ? Stamp.GroundElevationCm : SurfaceDepthCm;
@@ -70,6 +80,7 @@ void FTDFluidInputBrushRules::ApplyToStamps(TArray<FTDFluidBrushStamp>& InOutSta
 			}
 			ScaleStampStrengths(Stamp, HeightFactor);
 		}
+		FTDFluidBrushModel::ApplyToStamp(Stamp, Settings, PlaneBasis);
 		InOutStamps[KeptCount] = Stamp;
 		++KeptCount;
 	}

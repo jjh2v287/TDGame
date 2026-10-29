@@ -528,6 +528,7 @@ void UTDFluidLiveSubsystem::StepFluidWorld(float DeltaTime)
 	}
 
 	DistributeCollectedObstacles();
+	DistributeFieldInputs(DeltaTime);
 	ReadMassInputDataChannels();
 
 	TArray<FTDFluidActorStep, TInlineAllocator<16>> ActorSteps;

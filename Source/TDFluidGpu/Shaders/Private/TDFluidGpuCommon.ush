@@ -442,6 +442,45 @@ bool TDFluidGpuHasStampFlag(FTDFluidGpuPackedStamp Stamp, uint Flag)
 	return (Stamp.Flags & Flag) != 0u;
 }
 
+float TDFluidGpuResolveStampDensityCeiling(FTDFluidGpuActorParameters Actor)
+{
+	if (!TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_DENSE_DENSITY))
+	{
+		return 1.0f;
+	}
+	return Actor.DenseDensityCeiling;
+}
+
+float2 TDFluidGpuApplyDenseDensity(FTDFluidGpuActorParameters Actor, float2 Sampled)
+{
+	if (!TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_DENSE_DENSITY))
+	{
+		return clamp(Sampled, 0.0f, 1.0f);
+	}
+	const float GrownPrimary = Sampled.x >= Actor.DenseGrowthThreshold ? Sampled.x * Actor.DenseGrowthFactor : Sampled.x;
+	const float GrownSelective = Sampled.y >= Actor.DenseGrowthThreshold ? Sampled.y * Actor.DenseGrowthFactor : Sampled.y;
+	return float2(clamp(GrownPrimary, 0.0f, Actor.DenseDensityCeiling), clamp(GrownSelective, 0.0f, Actor.DenseDensityCeiling));
+}
+
+float2 TDFluidGpuEncodeOutputDensity(FTDFluidGpuActorParameters Actor, float2 Density)
+{
+	if (!TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_DENSE_DENSITY))
+	{
+		return float2(clamp(Density.x, 0.0f, 1.0f), clamp(Density.y, 0.0f, 1.0f));
+	}
+	const float InverseCeiling = 1.0f / Actor.DenseDensityCeiling;
+	return float2(clamp(Density.x * InverseCeiling, 0.0f, 1.0f), clamp(Density.y * InverseCeiling, 0.0f, 1.0f));
+}
+
+float TDFluidGpuComputeFlowNoiseSpeedMask(FTDFluidGpuActorParameters Actor, float2 Velocity)
+{
+	if (!TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_FLOW_NOISE_SPEED_MASK))
+	{
+		return 1.0f;
+	}
+	return clamp(length(Velocity) * Actor.FlowNoiseSpeedMaskInverseCmPerSec, 0.0f, 1.0f);
+}
+
 void TDFluidGpuApplyStampDensity(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedStamp Stamp, float SmoothWeight, inout float2 Density, inout float Displacement)
 {
 	const bool bWritesSelectiveDensity = TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_WRITES_SELECTIVE_DENSITY);
@@ -455,10 +494,23 @@ void TDFluidGpuApplyStampDensity(FTDFluidGpuActorParameters Actor, FTDFluidGpuPa
 		}
 		return;
 	}
+	if (TDFluidGpuHasStampFlag(Stamp, TDFLUIDGPU_STAMP_FLAG_ADDS_DENSITY))
+	{
+		const float AddedDensity = max(Stamp.DensityStrength, 0.0f) * SmoothWeight * Actor.StampDeltaTimeSeconds;
+		const float AdditiveCeiling = TDFluidGpuResolveStampDensityCeiling(Actor);
+		Density.x = min(Density.x + AddedDensity, AdditiveCeiling);
+		Displacement = max(Displacement, min(Density.x, 1.0f) * Actor.BrushDisplacementRatio);
+		if (bWritesSelectiveDensity)
+		{
+			Density.y = min(Density.y + AddedDensity, AdditiveCeiling);
+		}
+		return;
+	}
 
-	const float DensityTarget = clamp(max(Stamp.DensityStrength, 0.0f) * SmoothWeight, 0.0f, 1.0f);
+	const float DensityTarget = clamp(max(Stamp.DensityStrength, 0.0f) * SmoothWeight, 0.0f, TDFluidGpuResolveStampDensityCeiling(Actor));
 	Density.x = max(Density.x, DensityTarget);
-	Displacement = max(Displacement, DensityTarget * Actor.BrushDisplacementRatio);
+	const float DisplacementDensityTarget = TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_DENSE_DENSITY) ? min(DensityTarget, 1.0f) : DensityTarget;
+	Displacement = max(Displacement, DisplacementDensityTarget * Actor.BrushDisplacementRatio);
 	if (bWritesSelectiveDensity)
 	{
 		Density.y = max(Density.y, DensityTarget);

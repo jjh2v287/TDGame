@@ -291,6 +291,7 @@ void UTDFluidLiveComponent::RefreshEffectivePresetSettings(FTDFluidPresetReapply
 	AssignEffectiveStruct(EffectivePlaneSettings, ActivePreset ? ActivePreset->ResolveEffectivePlaneSettings() : FTDFluidPlaneSettings(), InOutReport);
 	AssignEffectiveStruct(EffectiveVolumeRender, ActivePreset ? ActivePreset->ResolveEffectiveVolumeRender() : FTDFluidVolumeRenderSettings(), InOutReport);
 	AssignEffectiveStruct(InputBrushSettings, UTDFluidPresetAsset::BuildInputBrushForPresetKind(PresetKind), InOutReport);
+	AssignEffectiveStruct(FieldInputSettings, UTDFluidPresetAsset::BuildFieldInputForPresetKind(PresetKind), InOutReport);
 	AssignEffectiveStruct(RuntimeOpsSettings, UTDFluidPresetAsset::BuildRuntimeOpsForPresetKind(PresetKind), InOutReport);
 	AssignEffectiveStruct(SurfaceRenderSettings, UTDFluidPresetAsset::BuildSurfaceRenderForPresetKind(PresetKind), InOutReport);
 	AssignEffectiveStruct(MassInputSettings, UTDFluidPresetAsset::BuildMassInputForPresetKind(PresetKind), InOutReport);
@@ -730,6 +731,7 @@ bool UTDFluidLiveComponent::PrepareSimulationStep(float DeltaTime, const FVector
 	ConvertPendingStampsToSolverPlane();
 	WrapPendingStampsIntoWindow();
 	PrioritizeAndClampPendingStamps();
+	RecordIgnoredFieldInputs();
 	LastProcessedPointCount = PendingBrushStamps.Num();
 	if (IsAreaWrapped())
 	{
@@ -2241,6 +2243,7 @@ bool UTDFluidLiveComponent::PrepareGpuSimulationStep(float DeltaTime, const FVec
 		AppendWrappedStampGhosts(PendingBrushStamps, ResolveWrapWindowMinimumCm(), GetSimulationExtentCm());
 	}
 	GpuSolverProxy.PrepareStep(DeltaTime, PendingBrushStamps, PlaneBasis.GetPlaneUpDirection(), PlaneBasis.IsWorldFacing());
+	GpuSolverProxy.SetPreparedFieldInputs(BuildGpuFieldInputs());
 	PendingBrushStamps.Reset();
 	GpuSolverProxy.SetMassInputAcceptance(AcceptsMassInput(), TDFluidLiveComponentMassInput::DoesPresetWriteSelectiveDensity(ActivePreset));
 	LastUploadedMassPointCount = PendingMassPoints.Num();
@@ -2387,6 +2390,7 @@ void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInp
 	}
 
 	const float VelocityStrength = InputBrushSettings.MassPointVelocityStrength;
+	const bool bIsVelocityOnlySource = FTDFluidInputBrushRules::IsVelocityOnlySource(InputBrushSettings.VelocityOnlySources, Source);
 	const float MaxCellSpeed = SimulationConfig.MaxCellSpeedCmPerSec;
 	for (const FTDFluidMassInputPoint& Point : AcceptedPoints)
 	{
@@ -2404,6 +2408,11 @@ void UTDFluidLiveComponent::QueueMassInputPoints(TConstArrayView<FTDFluidMassInp
 		MassPoint.DensityStrength = Point.DensityStrength * InputBrushSettings.MassPointDensityStrength;
 		MassPoint.HeatStrength = Point.HeatStrength * InputBrushSettings.MassPointHeatStrength;
 		MassPoint.bWritesVelocity = PointVelocityStrength > 0.0f;
+		if (bIsVelocityOnlySource)
+		{
+			MassPoint.DensityStrength = 0.0f;
+			MassPoint.HeatStrength = 0.0f;
+		}
 	}
 }
 
@@ -2432,6 +2441,11 @@ bool UTDFluidLiveComponent::BuildMassInputTarget(FTDFluidMassInputTarget& OutTar
 	OutTarget.RadiusCapCells = SimulationConfig.MassSplatRadiusCapCells;
 	OutTarget.bWritesSelectiveDensity = TDFluidLiveComponentMassInput::DoesPresetWriteSelectiveDensity(ActivePreset);
 	OutTarget.bUsesHeat = GpuSolverProxy.GetSettings().bUsesHeatChannel;
+	if (FTDFluidInputBrushRules::IsVelocityOnlySource(InputBrushSettings.VelocityOnlySources, ETDFluidBrushSource::DataChannel))
+	{
+		OutTarget.DensityStrength = 0.0f;
+		OutTarget.HeatStrength = 0.0f;
+	}
 	return true;
 }
 

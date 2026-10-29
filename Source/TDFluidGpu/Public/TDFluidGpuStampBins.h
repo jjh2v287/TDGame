@@ -9,7 +9,8 @@ enum class ETDFluidGpuStampFlags : uint32
 	None = 0,
 	WritesSelectiveDensity = 1u << 0,
 	ErasesDensity = 1u << 1,
-	WritesHeat = 1u << 2
+	WritesHeat = 1u << 2,
+	AddsDensity = 1u << 3
 };
 ENUM_CLASS_FLAGS(ETDFluidGpuStampFlags);
 

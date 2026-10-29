@@ -165,6 +165,33 @@ enum class ETDFluidTrackDeformShadowPolicy : uint8
 	Auto
 };
 
+UENUM(BlueprintType)
+enum class ETDFluidObjectSizeMode : uint8
+{
+	Fixed,
+	ActorScale,
+	Bounds
+};
+
+UENUM(BlueprintType)
+enum class ETDFluidPointerInputMode : uint8
+{
+	Off,
+	Mouse,
+	Touch,
+	MultiTouch
+};
+
+UENUM(BlueprintType)
+enum class ETDFluidFieldInputLayout : uint8
+{
+	Density,
+	DensityVelocity,
+	Velocity,
+	CollisionMask,
+	MeshDistance
+};
+
 USTRUCT(BlueprintType)
 struct TDGAME_API FTDFluidBrushStamp
 {
@@ -223,6 +250,9 @@ struct TDGAME_API FTDFluidBrushStamp
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
 	double GroundElevationCm = 0.0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
+	bool bAddsDensity = false;
 };
 
 USTRUCT(BlueprintType)
@@ -529,6 +559,18 @@ struct TDGAME_API FTDFluidSimulationConfig
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TrackBank")
 	bool bWritesPainterVelocity = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "20.0"))
+	float DensityAccumulationPerSec = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "1.0", ClampMax = "8.0"))
+	float DenseDensityCeiling = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DenseGrowthThreshold = 0.1f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1200.0"))
+	float FlowNoiseSpeedMaskReferenceCmPerSec = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -619,6 +661,99 @@ struct TDGAME_API FTDFluidInputBrushSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "10.0"))
 	float MassPointRippleImpulseCm = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+	float BrushVelocityScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+	float GlobalBrushRadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+	float PivotBrushRadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+	float BoneBrushRadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+	float PointerBrushRadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+	float ParticleBrushRadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+	float FragmentBrushRadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "10.0"))
+	float SharedBrushRadiusScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush")
+	ETDFluidObjectSizeMode ObjectSizeMode = ETDFluidObjectSizeMode::Fixed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "4.0"))
+	float ObjectSizeRadiusRatio = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush")
+	bool bHardnessScalesWithObjectSize = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.25", ClampMax = "4.0"))
+	float BrushVelocityExponent = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "10.0", ClampMax = "1200.0"))
+	float BrushVelocityReferenceCmPerSec = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "5000.0"))
+	float BrushVelocityClampCmPerSec = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float MotionLeadRatio = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float PositionJitterRatio = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush")
+	bool bJitterScalesWithSpeed = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DensityNoiseAmount = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "1.0", ClampMax = "10000.0"))
+	float DensityNoiseScaleCm = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float VelocityNoiseAmount = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "1.0", ClampMax = "10000.0"))
+	float VelocityNoiseScaleCm = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0", ClampMax = "65535"))
+	int32 BrushNoiseSeed = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush")
+	bool bAdditiveStrokeBlend = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.1", ClampMax = "60.0"))
+	float AdditiveDensityRatePerSec = 4.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush")
+	bool bInterpolatePivotAndPointerStrokes = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+	float InputPersistenceSeconds = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "4.0"))
+	float LargeObjectExcludeRatio = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush")
+	bool bMovePivotToBoundsBottom = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush")
+	bool bReceivesSharedInput = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "4.0"))
+	float SharedInputDensityScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "4.0"))
+	float SharedInputVelocityScale = 1.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -661,6 +796,48 @@ USTRUCT(BlueprintType)
 struct TDGAME_API FTDFluidFieldInputSettings
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput")
+	bool bAcceptFieldInputs = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "0", ClampMax = "4"))
+	int32 MaxFieldInputs = 4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "0.0", ClampMax = "4.0"))
+	float FieldDensityScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "0.0", ClampMax = "4.0"))
+	float FieldVelocityScale = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "0.0", ClampMax = "1200.0"))
+	float FieldVelocityRangeCmPerSec = 300.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput")
+	bool bFieldCollisionEnabled = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "1.0", ClampMax = "400.0"))
+	float FieldCollisionEdgeCm = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float MeshFieldDensityStrength = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "0.0", ClampMax = "1200.0"))
+	float MeshFieldOutwardVelocityCmPerSec = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float MeshFieldMotionVelocityStrength = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "1.0", ClampMax = "400.0"))
+	float MeshContourBandCm = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float MeshContourNoiseAmount = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput", meta = (ClampMin = "1.0", ClampMax = "10000.0"))
+	float MeshContourNoiseScaleCm = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FieldInput")
+	bool bMeshFieldFillsInterior = false;
 };
 
 USTRUCT(BlueprintType)
@@ -700,6 +877,12 @@ struct TDGAME_API FTDFluidSurfaceRenderSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SurfaceRender", meta = (ClampMin = "1.0", ClampMax = "1000.0"))
 	float TrackDeformMeshRecenterDistanceCm = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SurfaceRender")
+	bool bUsesDecalOutput = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SurfaceRender", meta = (ClampMin = "10.0", ClampMax = "500.0"))
+	float DecalBoxHeightCm = 100.0f;
 };
 
 USTRUCT(BlueprintType)

@@ -4,6 +4,8 @@
 #include "TDFluidGpuPassTimestamps.h"
 #include "TDFluidGpuMassInput.h"
 #include "TDFluidGpuWaterPressureProbeReadbacks.h"
+#include "TDFluidGpuKernelPressurePasses.h"
+#include "TDFluidGpuSolverOptions.h"
 
 #include "DataDrivenShaderPlatformInfo.h"
 #include "GlobalShader.h"
@@ -221,7 +223,8 @@ class FTDFluidGpuForcesCS : public FTDFluidGpuComputeShader
 {
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuForcesCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuForcesCS, FTDFluidGpuComputeShader);
-	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension>;
+	class FSolverOptionsDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_SOLVER_OPTIONS");
+	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuWrapAreaDimension, FSolverOptionsDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -231,6 +234,7 @@ class FTDFluidGpuForcesCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, HeatIn)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float2>, VelocityOut)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuSolverOptionParameters>, SolverOptionParameters)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuForcesCS, "/TDFluidGpu/Private/TDFluidGpuForces.usf", "ForcesCS", SF_Compute);
@@ -494,7 +498,8 @@ class FTDFluidGpuAdvectDensityPackCS : public FTDFluidGpuComputeShader
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuAdvectDensityPackCS, FTDFluidGpuComputeShader);
 
 	class FWritesOutputDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WRITES_OUTPUT");
-	using FPermutationDomain = TShaderPermutationDomain<FWritesOutputDimension, FTDFluidGpuWrapAreaDimension>;
+	class FSolverOptionsDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_SOLVER_OPTIONS");
+	using FPermutationDomain = TShaderPermutationDomain<FWritesOutputDimension, FTDFluidGpuWrapAreaDimension, FSolverOptionsDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
@@ -516,6 +521,7 @@ class FTDFluidGpuAdvectDensityPackCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2DArray<float>, HeatOut)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, AuxOutput)
 		SHADER_PARAMETER(uint32, EntryIndex)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuSolverOptionParameters>, SolverOptionParameters)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuAdvectDensityPackCS, "/TDFluidGpu/Private/TDFluidGpuAdvectDensityPack.usf", "MainCS", SF_Compute);
@@ -1618,9 +1624,15 @@ namespace
 		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[1]);
 		Parameters->HeatIn = MakeSRV(GraphBuilder, Textures.Heat[1]);
 		Parameters->VelocityOut = MakeUAV(GraphBuilder, Textures.Velocity[0]);
+		const bool bUsesFlowAmplitudeNoise = DoesTDFluidGpuFrameUseSolverOption(Context.Batch.GetFrame(), ETDFluidGpuSolverOptionFlags::UsesFlowAmplitudeNoise);
+		if (bUsesFlowAmplitudeNoise)
+		{
+			Parameters->SolverOptionParameters = CreateTDFluidGpuSolverOptionParametersSRV(GraphBuilder, Context.Batch.GetFrame());
+		}
 
 		FTDFluidGpuForcesCS::FPermutationDomain ForcesDomain;
 		ForcesDomain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
+		ForcesDomain.Set<FTDFluidGpuForcesCS::FSolverOptionsDimension>(bUsesFlowAmplitudeNoise);
 		TShaderMapRef<FTDFluidGpuForcesCS> Shader(Context.ShaderMap, ForcesDomain);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.Forces"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Context.EntryCount));
 	}
@@ -2065,6 +2077,24 @@ namespace
 
 	int32 AddPressureSolvePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuMultigridLevels& MultigridLevels, FRDGTextureRef ProjectedVelocity, int32 PressureIndex, bool bIsFirstProjection, FRDGBufferRef PressurePartialSums)
 	{
+		if (Context.Batch.GetKey().PressureSolver == ETDFluidGpuPressureSolver::KernelFeedback)
+		{
+			FTDFluidGpuKernelPressurePassInputs KernelInputs;
+			KernelInputs.ActorParameters = Context.ActorParameters;
+			KernelInputs.SolverOptionParameters = CreateTDFluidGpuSolverOptionParametersSRV(Context.GraphBuilder, Context.Batch.GetFrame());
+			KernelInputs.ObstacleSdf = Context.Textures.ObstacleSdf;
+			KernelInputs.ProjectedVelocity = ProjectedVelocity;
+			KernelInputs.PressureTextures[0] = Context.Textures.PressureSolution[0];
+			KernelInputs.PressureTextures[1] = Context.Textures.PressureSolution[1];
+			KernelInputs.PressureIndex = PressureIndex;
+			KernelInputs.Resolution = Context.Resolution;
+			KernelInputs.EntryCount = Context.EntryCount;
+			KernelInputs.SliceCapacity = Context.Batch.StateTextures.SliceCapacity;
+			KernelInputs.PassesPerProjection = Context.Batch.GetKey().PressureIterations;
+			const int32 KernelPressureIndex = AddTDFluidGpuKernelPressurePasses(Context.GraphBuilder, Context.ShaderMap, KernelInputs);
+			AddPassTimestamp(Context.GraphBuilder, Context.PassTimestamps, TEXT("kernel_pressure"));
+			return KernelPressureIndex;
+		}
 		if (!IsMultigridBatch(Context.Batch))
 		{
 			const int32 SolvedPressureIndex = AddJacobiPasses(Context, ProjectedVelocity, PressureIndex);
@@ -2118,6 +2148,8 @@ namespace
 		FRDGTextureSRVRef HeatSRV = MakeSRV(GraphBuilder, Textures.Heat[1]);
 		FRDGTextureUAVRef HeatUAV = MakeUnorderedUAV(GraphBuilder, Textures.Heat[0]);
 		FRDGTextureUAVRef PlaceholderAuxUAV = nullptr;
+		const bool bUsesAdvectionOffset = DoesTDFluidGpuFrameUseSolverOption(Frame, ETDFluidGpuSolverOptionFlags::UsesAdvectionOffset);
+		FRDGBufferSRVRef SolverOptionParametersSRV = bUsesAdvectionOffset ? CreateTDFluidGpuSolverOptionParametersSRV(GraphBuilder, Frame) : nullptr;
 
 		for (int32 EntryIndex = 0; EntryIndex < Context.EntryCount; ++EntryIndex)
 		{
@@ -2142,6 +2174,11 @@ namespace
 			Parameters->HeatIn = HeatSRV;
 			Parameters->HeatOut = HeatUAV;
 			Parameters->EntryIndex = static_cast<uint32>(EntryIndex);
+			const bool bEntryUsesAdvectionOffset = bUsesAdvectionOffset && Frame.SolverOptionParameters.IsValidIndex(EntryIndex) && EnumHasAnyFlags(static_cast<ETDFluidGpuSolverOptionFlags>(Frame.SolverOptionParameters[EntryIndex].OptionFlags), ETDFluidGpuSolverOptionFlags::UsesAdvectionOffset);
+			if (bEntryUsesAdvectionOffset)
+			{
+				Parameters->SolverOptionParameters = SolverOptionParametersSRV;
+			}
 			if (bWritesOutput)
 			{
 				Parameters->DensityPressureOutput = MakeUAV(GraphBuilder, Targets.DensityPressure);
@@ -2172,6 +2209,7 @@ namespace
 			FTDFluidGpuAdvectDensityPackCS::FPermutationDomain DensityPackDomain;
 			DensityPackDomain.Set<FTDFluidGpuAdvectDensityPackCS::FWritesOutputDimension>(bWritesOutput);
 			DensityPackDomain.Set<FTDFluidGpuWrapAreaDimension>(Context.Batch.GetKey().bWrapsArea);
+			DensityPackDomain.Set<FTDFluidGpuAdvectDensityPackCS::FSolverOptionsDimension>(bEntryUsesAdvectionOffset);
 			TShaderMapRef<FTDFluidGpuAdvectDensityPackCS> Shader(Context.ShaderMap, DensityPackDomain);
 			FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.AdvectDensityPack"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, 1));
 		}

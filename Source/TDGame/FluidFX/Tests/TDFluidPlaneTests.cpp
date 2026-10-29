@@ -1393,4 +1393,106 @@ bool FTDFluidPlaneSubDegreeViewChangeDepthTest::RunTest(const FString& Parameter
 	return true;
 }
 
+namespace TDFluidPlaneTestPrivate
+{
+	float MeasureSolverPeakDensity(const FTDFluidGrid2DSolver& Solver)
+	{
+		float PeakDensity = 0.0f;
+		for (int32 CellY = 0; CellY < Solver.GetResolution(); ++CellY)
+		{
+			for (int32 CellX = 0; CellX < Solver.GetResolution(); ++CellX)
+			{
+				PeakDensity = FMath::Max(PeakDensity, Solver.SampleAtCell(CellX, CellY).PrimaryDensity);
+			}
+		}
+		return PeakDensity;
+	}
+
+	FVector2D MeasureSolverDensityCentroid(const FTDFluidGrid2DSolver& Solver)
+	{
+		double TotalDensity = 0.0;
+		FVector2D WeightedSum = FVector2D::ZeroVector;
+		for (int32 CellY = 0; CellY < Solver.GetResolution(); ++CellY)
+		{
+			for (int32 CellX = 0; CellX < Solver.GetResolution(); ++CellX)
+			{
+				const double Density = Solver.SampleAtCell(CellX, CellY).PrimaryDensity;
+				TotalDensity += Density;
+				WeightedSum += Solver.CellToWorldCenter(CellX, CellY) * Density;
+			}
+		}
+		if (TotalDensity <= UE_DOUBLE_SMALL_NUMBER)
+		{
+			return FVector2D::ZeroVector;
+		}
+		return WeightedSum / TotalDensity;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPlaneCameraFacingShiftKeepsPeakDensityTest,
+	"TDGame.FluidFX.SolverOptions.CameraFacingShiftKeepsPeakDensity",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPlaneCameraFacingShiftKeepsPeakDensityTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPlaneTestPrivate;
+
+	constexpr int32 TickCount = 20;
+	constexpr double CellsPerTick = 0.37;
+	FTDFluidPlaneTestWorld TestWorld;
+	if (!TestNotNull(TEXT("Fluid subsystem exists"), TestWorld.Subsystem))
+	{
+		return false;
+	}
+	TestWorld.Subsystem->SetPlaneViewRotationOverrideForTests(GetPitchMinus60View());
+
+	AActor* Anchor = SpawnMovableAnchor(TestWorld.World, FVector::ZeroVector);
+	ATDFluidLiveActor* LiveActor = SpawnPlaneActor(TestWorld, FVector::ZeroVector, MakeStillPlanePreset(TestWorld.World));
+	if (!TestNotNull(TEXT("Spawned anchor"), Anchor) || !TestNotNull(TEXT("Spawned live actor"), LiveActor))
+	{
+		return false;
+	}
+	LiveActor->bShouldFollowPlayerPawn = true;
+	LiveActor->FollowTargetActor = Anchor;
+
+	LiveActor->StepLiveActor(StepSeconds);
+	UTDFluidLiveComponent* LiveComponent = LiveActor->LiveComponent;
+	const FTDFluidPlaneBasis Basis = LiveComponent->GetPlaneBasis();
+	TestFalse(TEXT("The actor runs on a camera facing plane"), Basis.IsWorldFacing());
+	LiveComponent->QueueBrushStamp(MakeStampAt(LiveComponent->UnprojectSolverPlaneToWorld(FVector2D(20.0, -10.0))));
+	LiveActor->StepLiveActor(StepSeconds);
+
+	const FTDFluidGrid2DSolver& Solver = LiveComponent->GetSolver();
+	const double CellSizeCm = Solver.GetExtentCm().X / Solver.GetResolution();
+	const FVector2D CenterBefore = Solver.GetCenterWorld();
+	const float PeakBefore = MeasureSolverPeakDensity(Solver);
+	const FVector2D CentroidBefore = MeasureSolverDensityCentroid(Solver);
+	TestTrue(TEXT("The stamp wrote density before the actor moved"), PeakBefore > 0.1f);
+
+	double MaximumCenterErrorCells = 0.0;
+	double MaximumFractionalShiftCells = 0.0;
+	for (int32 TickIndex = 1; TickIndex <= TickCount; ++TickIndex)
+	{
+		const double DesiredShiftCells = CellsPerTick * TickIndex;
+		Anchor->SetActorLocation(Basis.UnprojectVector(FVector2D(DesiredShiftCells * CellSizeCm, 0.0)));
+		LiveActor->StepLiveActor(StepSeconds);
+
+		const FVector2D CenterShiftCells = (Solver.GetCenterWorld() - CenterBefore) / CellSizeCm;
+		MaximumCenterErrorCells = FMath::Max(MaximumCenterErrorCells, FMath::Abs(CenterShiftCells.X - DesiredShiftCells));
+		MaximumCenterErrorCells = FMath::Max(MaximumCenterErrorCells, FMath::Abs(CenterShiftCells.Y));
+		MaximumFractionalShiftCells = FMath::Max(MaximumFractionalShiftCells, FMath::Abs(CenterShiftCells.X - FMath::RoundToDouble(CenterShiftCells.X)));
+		MaximumFractionalShiftCells = FMath::Max(MaximumFractionalShiftCells, FMath::Abs(CenterShiftCells.Y - FMath::RoundToDouble(CenterShiftCells.Y)));
+	}
+
+	const double FinalShiftCells = (Solver.GetCenterWorld() - CenterBefore).X / CellSizeCm;
+	const double CentroidDriftCells = FVector2D::Distance(MeasureSolverDensityCentroid(Solver), CentroidBefore) / CellSizeCm;
+	TestTrue(FString::Printf(TEXT("The window followed the anchor (%.3f cells)"), FinalShiftCells), FinalShiftCells >= CellsPerTick * TickCount - 0.5 - 1.0e-4);
+	TestTrue(FString::Printf(TEXT("The window moves only by whole cells (max fraction %.6f)"), MaximumFractionalShiftCells), MaximumFractionalShiftCells <= 1.0e-4);
+	TestTrue(FString::Printf(TEXT("The window center stays within half a cell of the anchor (max %.4f cells)"), MaximumCenterErrorCells), MaximumCenterErrorCells <= 0.5 + 1.0e-4);
+	TestTrue(TEXT("The peak density keeps its bits"), MeasureSolverPeakDensity(Solver) == PeakBefore);
+	TestTrue(FString::Printf(TEXT("The density world centroid stays within half a cell (%.4f cells)"), CentroidDriftCells), CentroidDriftCells <= 0.5);
+	return true;
+}
+
 #endif

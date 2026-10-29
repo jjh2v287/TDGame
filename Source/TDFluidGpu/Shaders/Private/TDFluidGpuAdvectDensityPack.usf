@@ -1,4 +1,10 @@
 #include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+#ifndef TDFLUIDGPU_SOLVER_OPTIONS
+#define TDFLUIDGPU_SOLVER_OPTIONS 0
+#endif
+#if TDFLUIDGPU_SOLVER_OPTIONS
+#include "/TDFluidGpu/Private/TDFluidGpuSolverOptions.ush"
+#endif
 
 #ifndef TDFLUIDGPU_WRITES_OUTPUT
 #define TDFLUIDGPU_WRITES_OUTPUT 0
@@ -50,6 +56,13 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		{
 			RadialPush += TDFluidGpuComputeVortexRadialDrift(Actor, Cell);
 		}
+#if TDFLUIDGPU_SOLVER_OPTIONS
+		const FTDFluidGpuSolverOptionParameters SolverOptions = SolverOptionParameters[EntryIndex];
+		if (TDFluidGpuHasSolverOptionFlag(SolverOptions, TDFLUIDGPU_SOLVER_OPTION_FLAG_USES_ADVECTION_OFFSET))
+		{
+			RadialPush += SolverOptions.AdvectionOffsetCmPerSec;
+		}
+#endif
 		if (RadialPush.x != 0.0f || RadialPush.y != 0.0f)
 		{
 			AdvectionVelocity = TDFluidGpuClampToMaxSize(Velocity + RadialPush, Actor.MaxCellSpeedCmPerSec);

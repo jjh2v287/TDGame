@@ -71,6 +71,9 @@ public:
 	bool PlanePointToGridUV(const FVector2D& PlanePoint, FVector2D& OutUV) const;
 	FTDFluidCellSample SampleSimulationCell(int32 CellX, int32 CellY) const;
 	FIntPoint ShiftWindowTowards(const FVector2D& DesiredCenterPlaneCm);
+	void SetAdvectionOffsetPlane(const FVector2D& InAdvectionOffsetPlaneCmPerSec);
+	void SetNoiseLatticeOffsetCells(const FIntPoint& InNoiseLatticeOffsetCells);
+	bool MoveWindowWithoutShift(const FVector2D& NewCenterPlaneCm);
 	void SetObstacles(TConstArrayView<FTDFluidSdfObstacle> PlaneObstacles);
 	void SetTerrainElevationAtCell(int32 CellX, int32 CellY, float ElevationCm);
 	void MarkTerrainSamplingComplete() { bIsTerrainElevationActive = true; }
@@ -141,6 +144,8 @@ private:
 	FVector2D CenterPlaneCm = FVector2D::ZeroVector;
 	FVector2D PreparedPlaneUpDirection = FVector2D::ZeroVector;
 	FIntPoint PendingShiftCells = FIntPoint::ZeroValue;
+	FVector2D AdvectionOffsetPlaneCmPerSec = FVector2D::ZeroVector;
+	FIntPoint NoiseLatticeOffsetCells = FIntPoint::ZeroValue;
 	double SimulationTimeSeconds = 0.0;
 	uint64 ActorKey = 0;
 	int32 Resolution = 0;

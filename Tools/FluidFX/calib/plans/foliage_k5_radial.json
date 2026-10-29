@@ -1,6 +1,6 @@
 {
  "id": "foliage_k5_radial",
- "note": "FX-13r K5 구역 2(GrassUnderwater, 점광 교반기 z 150 cm·45°/s), IMG 9 방사형 휨",
+ "note": "FX-13r K5 구역 2(GrassUnderwater, 점광 교반기 z 150 cm·45°/s, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 방사형 휨",
  "scenes": [
   {
    "name": "k5_radial",
@@ -32,7 +32,7 @@
  ],
  "base_tuning": [
   {
-   "json_path": "Kinds.Smoke.TDFluidSimulationConfig.SimExtentCm",
+   "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.SimExtentCm",
    "value": {
     "X": 1500.0,
     "Y": 1500.0
@@ -87,7 +87,7 @@
  "repeats": 2,
  "control_every": 0,
  "reset": "reinit",
- "draft_status": "초안: P3 확장 전이라 --dry-run 대상 아님",
+ "draft_status": "blocked(CAL-0)",
  "p3_gaps": [
   "metrics.sources foliage_flow(RT 되읽기 탐침)",
   "params Look: 할당(FX-8n G1)",

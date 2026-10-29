@@ -1,4 +1,10 @@
 #include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+#ifndef TDFLUIDGPU_SOLVER_OPTIONS
+#define TDFLUIDGPU_SOLVER_OPTIONS 0
+#endif
+#if TDFLUIDGPU_SOLVER_OPTIONS
+#include "/TDFluidGpu/Private/TDFluidGpuSolverOptions.ush"
+#endif
 
 #define TDFLUIDGPU_VORTICITY_HALO_CELLS 2
 #define TDFLUIDGPU_VORTICITY_VELOCITY_TILE (TDFLUIDGPU_TILE_GROUP_SIZE + 2 * TDFLUIDGPU_VORTICITY_HALO_CELLS)
@@ -61,6 +67,15 @@ void ForcesCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	{
 		Velocity += TDFluidGpuComputeVortexTangentialStep(Actor, Cell);
 	}
+
+#if TDFLUIDGPU_SOLVER_OPTIONS
+	const FTDFluidGpuSolverOptionParameters SolverOptions = SolverOptionParameters[DispatchThreadId.z];
+	BRANCH
+	if (TDFluidGpuHasSolverOptionFlag(SolverOptions, TDFLUIDGPU_SOLVER_OPTION_FLAG_USES_FLOW_AMPLITUDE_NOISE))
+	{
+		Velocity *= TDFluidGpuComputeFlowAmplitudeDampingFactor(Actor, SolverOptions, Cell);
+	}
+#endif
 
 	VelocityOut[Texel] = TDFluidGpuEnforceObstacleBoundary(ObstacleSdf, Actor, Cell, Velocity);
 }

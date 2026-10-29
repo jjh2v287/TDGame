@@ -1,5 +1,6 @@
 #include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
+#include "FluidFX/TDFluidSolverOptionRules.h"
 #include "FluidFX/TDFluidWaterWetnessRules.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 #include "RenderGraphBuilder.h"
@@ -364,13 +365,18 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.TrackBankHeightLimit = Config.TrackBankHeightLimit;
 	SimulationSettings.bWritesPainterVelocity = Config.SimMode == ETDFluidSimMode::SimplePainter && Config.bWritesPainterVelocity;
 	SimulationSettings.BrushEraseRatePerSec = Config.BrushEraseRatePerSec;
-	SimulationSettings.PressureSolverModeRequest = static_cast<uint8>(Config.GpuPressureSolverMode);
+	SimulationSettings.PressureSolverModeRequest = Config.PressureMethod == ETDFluidPressureMethod::KernelFeedback ? TDFluidGpuSolverOptionConstants::KernelFeedbackPressureSolverModeRequest : static_cast<uint8>(Config.GpuPressureSolverMode);
 	SimulationSettings.MultigridCyclesRequest = Config.GpuMultigridCycles;
 	SimulationSettings.WaterPressureModeRequest = static_cast<uint8>(Config.WaterGpuPressureMode);
 	SimulationSettings.WaterKernelRadius = Config.PressureKernelRadiusTexels;
 	SimulationSettings.WaterKernelFeedback = Config.PressureKernelFeedback;
 	SimulationSettings.WaterKernelScale = Config.PressureKernelScale;
 	SimulationSettings.WaterMultigridCycles = Config.GpuMultigridCycles;
+	SimulationSettings.SolverOptions = TDFluidSolverOptionRules::MakeGpuSolverOptionSettings(Config);
+	if (Config.bAnchorsDensityToActor)
+	{
+		SimulationSettings.TerrainSlopeGravity = 0.0f;
+	}
 	SimulationSettings.bUsesWaterLayer = Config.bEnableWaterLayer && Config.SimMode == ETDFluidSimMode::FluidSim;
 	SimulationSettings.bOpenWaterBorders = Config.bOpenWaterBorders;
 	SimulationSettings.bTreatDryCellsAsSolid = Config.bTreatDryCellsAsSolid;
@@ -688,6 +694,8 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 	OutActorInput.Settings = Settings;
 	OutActorInput.Settings.bAcceptsMassInput = bAcceptsMassInputRequest;
 	OutActorInput.Settings.bMassInputWritesSelectiveDensity = bMassInputWritesSelectiveDensityRequest;
+	OutActorInput.Settings.SolverOptions.AdvectionOffsetPlaneCmPerSec = AdvectionOffsetPlaneCmPerSec;
+	OutActorInput.Settings.SolverOptions.NoiseLatticeOffsetCells = NoiseLatticeOffsetCells;
 	OutActorInput.WindowCenterPlaneCm = CenterPlaneCm;
 	OutActorInput.ShiftCells = PendingShiftCells;
 	OutActorInput.PlaneUpDirection = PreparedPlaneUpDirection;

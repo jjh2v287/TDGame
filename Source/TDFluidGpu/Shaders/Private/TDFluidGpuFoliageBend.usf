@@ -1,0 +1,152 @@
+#include "/Engine/Public/Platform.ush"
+
+Texture2D VelocityTexture;
+Texture2D DensityPressureTexture;
+Texture2D WaterSurfaceTexture;
+Texture2D<float2> PreviousBend;
+Texture2D AuxPrevious;
+RWTexture2D<float2> NextBend;
+RWTexture2D<float4> AuxOutput;
+int Resolution;
+int2 ShiftCells;
+uint ResetsState;
+uint UsesVelocity;
+uint HasWaterSurface;
+uint PreservesAuxRedGreen;
+uint WrapsArea;
+float RiseBlend;
+float RecoveryBlend;
+float PainterDensityWeight;
+float RippleSlopeWeight;
+float2 RippleGradientScale;
+
+static const float FoliageBendDirectionEpsilon = 1.0e-4f;
+
+int2 ResolveFoliageBendNeighborCell(int2 Cell)
+{
+	if (WrapsArea != 0u)
+	{
+		return (Cell % Resolution + Resolution) % Resolution;
+	}
+
+	return clamp(Cell, int2(0, 0), int2(Resolution - 1, Resolution - 1));
+}
+
+float LoadFoliageBendDensity(int2 Cell)
+{
+	return DensityPressureTexture.Load(int3(ResolveFoliageBendNeighborCell(Cell), 0)).r;
+}
+
+float LoadFoliageBendWaterHeight(int2 Cell)
+{
+	return 2.0f * WaterSurfaceTexture.Load(int3(ResolveFoliageBendNeighborCell(Cell), 0)).b - 1.0f;
+}
+
+float2 LimitFoliageBendLength(float2 Value)
+{
+	const float ValueLength = length(Value);
+	if (ValueLength > 1.0f)
+	{
+		return Value / ValueLength;
+	}
+
+	return Value;
+}
+
+float2 LoadFoliageBendVelocity(int2 Cell)
+{
+	if (UsesVelocity == 0u)
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	return 2.0f * VelocityTexture.Load(int3(Cell, 0)).rg - 1.0f;
+}
+
+float2 ComputeFoliageBendDensityGradient(int2 Cell)
+{
+	return float2(
+		LoadFoliageBendDensity(Cell + int2(1, 0)) - LoadFoliageBendDensity(Cell - int2(1, 0)),
+		LoadFoliageBendDensity(Cell + int2(0, 1)) - LoadFoliageBendDensity(Cell - int2(0, 1)));
+}
+
+float2 ComputeFoliageBendWaterGradient(int2 Cell)
+{
+	if (HasWaterSurface == 0u)
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	return float2(
+		(LoadFoliageBendWaterHeight(Cell + int2(1, 0)) - LoadFoliageBendWaterHeight(Cell - int2(1, 0))) * RippleGradientScale.x,
+		(LoadFoliageBendWaterHeight(Cell + int2(0, 1)) - LoadFoliageBendWaterHeight(Cell - int2(0, 1))) * RippleGradientScale.y);
+}
+
+float2 LoadFoliageBendPrevious(int2 Cell)
+{
+	const int2 PreviousCell = Cell + ShiftCells;
+	if (ResetsState != 0u || any(PreviousCell < 0) || any(PreviousCell >= Resolution))
+	{
+		return float2(0.0f, 0.0f);
+	}
+
+	return PreviousBend.Load(int3(PreviousCell, 0));
+}
+
+float2 ResolveFoliageBendPressDirection(float2 Previous, float2 Target, float2 DensityGradient)
+{
+	const float PreviousLength = length(Previous);
+	if (PreviousLength > FoliageBendDirectionEpsilon)
+	{
+		return Previous / PreviousLength;
+	}
+
+	const float TargetLength = length(Target);
+	if (TargetLength > FoliageBendDirectionEpsilon)
+	{
+		return Target / TargetLength;
+	}
+
+	const float GradientLength = length(DensityGradient);
+	if (GradientLength > FoliageBendDirectionEpsilon)
+	{
+		return -DensityGradient / GradientLength;
+	}
+
+	return float2(0.0f, 0.0f);
+}
+
+[numthreads(8, 8, 1)]
+void FoliageBendCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (any(Cell >= Resolution))
+	{
+		return;
+	}
+
+	const float2 Velocity = LoadFoliageBendVelocity(Cell);
+	const float Density = LoadFoliageBendDensity(Cell);
+	const float2 DensityGradient = ComputeFoliageBendDensityGradient(Cell);
+	const float2 WaterGradient = ComputeFoliageBendWaterGradient(Cell);
+	const float2 Previous = LoadFoliageBendPrevious(Cell);
+
+	float2 Target = LimitFoliageBendLength(Velocity);
+	const float PainterPress = PainterDensityWeight * Density;
+	if (PainterPress > length(Target))
+	{
+		const float2 PressDirection = ResolveFoliageBendPressDirection(Previous, Target, DensityGradient);
+		if (any(PressDirection != 0.0f))
+		{
+			Target = PressDirection * PainterPress;
+		}
+	}
+	Target = LimitFoliageBendLength(Target - RippleSlopeWeight * WaterGradient);
+
+	const float Blend = dot(Target, Target) > dot(Previous, Previous) ? RiseBlend : RecoveryBlend;
+	const float2 Bend = Previous + (Target - Previous) * Blend;
+	NextBend[Cell] = Bend;
+
+	const float2 AuxRedGreen = PreservesAuxRedGreen != 0u ? AuxPrevious.Load(int3(Cell, 0)).rg : float2(0.0f, 0.0f);
+	AuxOutput[Cell] = float4(AuxRedGreen, Bend.x, Bend.y);
+}

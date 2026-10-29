@@ -1,6 +1,6 @@
 {
  "id": "foliage_k1_bend",
- "note": "FX-13r K1 구역 1(GrassSim + 지면 교반기 반경 150 cm), IMG 9 휨·눌린 쪽 밝기",
+ "note": "FX-13r K1 구역 1(GrassSim + 지면 교반기 반경 150 cm, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 휨·눌린 쪽 밝기·복원 시간",
  "scenes": [
   {
    "name": "k1_bend",
@@ -32,7 +32,7 @@
  ],
  "base_tuning": [
   {
-   "json_path": "Kinds.Smoke.TDFluidSimulationConfig.SimExtentCm",
+   "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.SimExtentCm",
    "value": {
     "X": 1500.0,
     "Y": 1500.0
@@ -63,12 +63,21 @@
     2.0,
     3.0
    ]
+  },
+  {
+   "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.BendVectorRecoverySeconds",
+   "values": [
+    1.5,
+    2.5,
+    4.0
+   ]
   }
  ],
  "metrics": {
   "sources": [
    "foliage_flow",
-   "look"
+   "look",
+   "bend_record"
   ],
   "noise_floor": {},
   "targets": [
@@ -83,6 +92,12 @@
     "weight": 0.5,
     "low": 1.05,
     "high": 1.4
+   },
+   {
+    "metric": "k1_bend.bend_record.recovery_63_seconds",
+    "weight": 1.0,
+    "low": 1.0,
+    "high": 5.0
    }
   ]
  },
@@ -90,10 +105,11 @@
  "repeats": 2,
  "control_every": 0,
  "reset": "reinit",
- "draft_status": "초안: P3 확장 전이라 --dry-run 대상 아님",
+ "draft_status": "blocked(CAL-0)",
  "p3_gaps": [
   "metrics.sources foliage_flow",
   "풀 MI 값(PressedBrightness·HeightExponent)은 정적 MI라 재굽기 단계 필요(R1311-S7)",
-  "params Look: 할당(FX-8n G1)"
+  "params Look: 할당(FX-8n G1)",
+  "시간 지표 출처 bend_record: 헤드리스 기록 시험(.StepResponse·.PressHalfLifeRecord·.RippleLagRecord)과 check_fluid_foliage_bend.py 거울을 손잡이 값마다 다시 돌리는 오프라인 판정(calib_sweep.py METRIC_SOURCES에 없음, CAL-0). PIE 구역은 교반기가 계속 돌아 복원이 화면에 안 나타남"
  ]
 }

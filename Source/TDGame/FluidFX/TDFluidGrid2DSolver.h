@@ -23,6 +23,9 @@ public:
 	bool ShiftOriginForSlidingWindow(const FVector2D& DesiredCenterWorld);
 	void SetUniformTerrainSlope(const FVector2D& InSlopeGradient);
 	void SetPlaneUpDirection(const FVector2D& InPlaneUpDirection);
+	void SetAdvectionOffsetPlane(const FVector2D& InAdvectionOffsetPlaneCmPerSec);
+	void SetNoiseLatticeOffsetCells(const FIntPoint& InNoiseLatticeOffsetCells);
+	bool MoveWindowWithoutShift(const FVector2D& NewCenterWorld);
 	void SetTerrainElevationAtCell(int32 CellX, int32 CellY, float ElevationCm);
 	void ComputeTerrainSlopeFromElevation();
 
@@ -167,6 +170,13 @@ private:
 	float ObstacleSdfMinimum = 0.0f;
 	bool bIsTerrainSlopeZero = true;
 	bool bHasPendingRadialPush = false;
+	FVector2D AdvectionOffsetPlaneCmPerSec = FVector2D::ZeroVector;
+	FIntPoint NoiseLatticeOffsetCells = FIntPoint::ZeroValue;
+	TArray<FVector4f> KernelPartialSums;
+	bool UsesKernelPressure() const;
+	void RelaxPressureKernelFeedback();
+	void ApplyFlowAmplitudeNoiseDamping(float DeltaTime);
+	void AccumulateAdvectionOffset();
 
 	TArray<float> WaterSurfaceHeight;
 	TArray<float> WaterDrySdf;

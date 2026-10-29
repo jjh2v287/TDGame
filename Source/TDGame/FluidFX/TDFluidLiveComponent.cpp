@@ -166,6 +166,7 @@ void UTDFluidLiveComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	PendingBrushStamps.Reset();
+	FoliageBendLayer.Release();
 	NearRippleLayer.Release();
 	NearRippleTarget = nullptr;
 	ExternalMaterialTargets.Reset();
@@ -321,6 +322,7 @@ FTDFluidVolumeRenderSettings UTDFluidLiveComponent::GetVolumeRenderSettings() co
 void UTDFluidLiveComponent::ResetSimulationState()
 {
 	PendingBrushStamps.Reset();
+	FoliageBendLayer.RequestReset();
 	LastProcessedPointCount = 0;
 	bHasSampledTerrainRange = false;
 	if (bUsesGpuSolver)
@@ -469,6 +471,11 @@ void UTDFluidLiveComponent::SetSimulationAwake(bool bShouldWake)
 	}
 
 	bIsSimulationAwake = bShouldWake;
+	if (bIsSimulationAwake)
+	{
+		FoliageBendLayer.RequestReset();
+	}
+
 	if (!bIsSimulationAwake)
 	{
 		PendingBrushStamps.Reset();
@@ -698,6 +705,7 @@ bool UTDFluidLiveComponent::PrepareSimulationStep(float DeltaTime, const FVector
 	}
 
 	SyncSolverBackend(DesiredCenterWorld);
+	RefreshFoliageBendStep(DeltaTime);
 	if (bUsesGpuSolver)
 	{
 		return PrepareGpuSimulationStep(DeltaTime, DesiredCenterWorld, bAllowSlidingShift);
@@ -708,11 +716,7 @@ bool UTDFluidLiveComponent::PrepareSimulationStep(float DeltaTime, const FVector
 		Solver.Initialize(MakeCpuSolverConfig(), DesiredCenterWorld);
 	}
 
-	bool bDidShiftWindow = false;
-	if (bAllowSlidingShift && !IsAreaWrapped())
-	{
-		bDidShiftWindow = Solver.ShiftOriginForSlidingWindow(DesiredCenterWorld);
-	}
+	const bool bDidShiftWindow = AdvanceCpuSolverWindow(DeltaTime, DesiredCenterWorld, bAllowSlidingShift);
 
 	if ((bDidShiftWindow || bHasPendingObstacleUpdate) && HasAnySolverObstacles())
 	{
@@ -756,6 +760,7 @@ void UTDFluidLiveComponent::RunPreparedSolverStep(float DeltaTime)
 	Solver.StepSimulation(DeltaTime);
 	Solver.PackOutputPixels(PackedDensityPressurePixels, PackedVelocityPixels);
 	PackWaterSurfaceOutputs();
+	AdvanceFoliageBendCpu(DeltaTime);
 	PackAuxAndTransmittanceOutputs();
 }
 
@@ -766,6 +771,7 @@ void UTDFluidLiveComponent::FinishSimulationStep()
 		return;
 	}
 
+	SubmitFoliageBendGpu();
 	PushDirectDriveOutputs();
 }
 
@@ -1202,6 +1208,7 @@ void UTDFluidLiveComponent::ReinitializeSolverAtOwnerLocation()
 	PendingBrushStamps.Reset();
 	LastProcessedPointCount = 0;
 	ReapplyActiveObstacles();
+	FoliageBendLayer.RequestReset();
 }
 
 FVector2D UTDFluidLiveComponent::ResolveOwnerCenterWorld() const
@@ -1966,6 +1973,7 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 		TargetMID->SetTextureParameterValue(TEXT("AuxTexture"), AuxOutput);
 	}
 	TargetMID->SetScalarParameterValue(TEXT("AuxHeatActive"), AuxOutput && IsHeatAuxOutputActive() ? 1.0f : 0.0f);
+	TargetMID->SetScalarParameterValue(TEXT("AuxFoliageBendActive"), AuxOutput && bIsFoliageBendStepEnabled && FoliageBendLayer.HasOutput() ? 1.0f : 0.0f);
 	ApplyTrackParametersToMID(*TargetMID);
 
 	if (!IsWaterMaterialActive())
@@ -2226,7 +2234,7 @@ namespace TDFluidLiveComponentMassInput
 
 bool UTDFluidLiveComponent::PrepareGpuSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift)
 {
-	const bool bDidShiftWindow = bAllowSlidingShift && !IsAreaWrapped() && GpuSolverProxy.ShiftWindowTowards(DesiredCenterWorld) != FIntPoint::ZeroValue;
+	const bool bDidShiftWindow = AdvanceGpuSolverWindow(DeltaTime, DesiredCenterWorld, bAllowSlidingShift);
 	if ((bDidShiftWindow || bHasPendingObstacleUpdate) && HasAnySolverObstacles())
 	{
 		RasterizeActiveObstacles();
@@ -2813,7 +2821,7 @@ UTexture* UTDFluidLiveComponent::GetTransmittanceTexture() const
 
 bool UTDFluidLiveComponent::IsAuxOutputActive() const
 {
-	return IsHeatAuxOutputActive() || IsObstacleDistanceAuxActive();
+	return IsHeatAuxOutputActive() || IsObstacleDistanceAuxActive() || IsFoliageBendAuxActive();
 }
 
 bool UTDFluidLiveComponent::IsHeatAuxOutputActive() const
@@ -2863,7 +2871,7 @@ void UTDFluidLiveComponent::PackAuxAndTransmittanceOutputs()
 	if (IsObstacleDistanceAuxActive())
 	{
 		const int32 ObstacleGeneration = Solver.GetObstacleSdfRawGeneration();
-		if (ObstacleGeneration == PackedAuxObstacleGeneration)
+		if (ObstacleGeneration == PackedAuxObstacleGeneration && !bIsFoliageBendStepEnabled)
 		{
 			PackedAuxPixels.Reset();
 		}
@@ -2876,6 +2884,10 @@ void UTDFluidLiveComponent::PackAuxAndTransmittanceOutputs()
 	else
 	{
 		Solver.PackAuxPixels(PackedAuxPixels);
+	}
+	if (bIsFoliageBendStepEnabled)
+	{
+		FoliageBendLayer.WriteCpuBendToAux(PackedAuxPixels, Solver.GetResolution());
 	}
 	FTDFluidTransmittanceInputs TransmittanceInputs;
 	if (!BuildTransmittanceInputs(TransmittanceInputs))

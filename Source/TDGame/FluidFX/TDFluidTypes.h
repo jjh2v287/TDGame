@@ -158,6 +158,13 @@ enum class ETDFluidWaterGpuPressureMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class ETDFluidPressureMethod : uint8
+{
+	PoissonSolve,
+	KernelFeedback
+};
+
+UENUM(BlueprintType)
 enum class ETDFluidTrackDeformShadowPolicy : uint8
 {
 	NoShadow,
@@ -500,6 +507,27 @@ struct TDGAME_API FTDFluidSimulationConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vortex", meta = (ClampMin = "0.01", ClampMax = "0.5"))
 	float VortexRadiusRatio = 0.35f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SolverOptions", meta = (ClampMin = "-1200.0", ClampMax = "1200.0"))
+	FVector DirectVelocityCmPerSec = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SolverOptions")
+	bool bDirectVelocityInWorldSpace = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SolverOptions")
+	bool bAnchorsDensityToActor = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SolverOptions", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float SimAreaMotionVelocityScale = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SolverOptions", meta = (ClampMin = "0.0", ClampMax = "20.0"))
+	float FlowAmplitudeNoiseDampingPerSec = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SolverOptions", meta = (ClampMin = "1.0", ClampMax = "100000.0"))
+	float FlowAmplitudeNoiseScaleCm = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SolverOptions")
+	bool bRandomizeNoiseOffsetPerActor = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Solver", meta = (ClampMin = "1.0"))
 	float MaxCellSpeedCmPerSec = 1200.0f;
 
@@ -530,11 +558,35 @@ struct TDGAME_API FTDFluidSimulationConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure", meta = (ClampMin = "0.0", ClampMax = "100.0"))
 	float PressureKernelScale = 1.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure")
+	ETDFluidPressureMethod PressureMethod = ETDFluidPressureMethod::PoissonSolve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure", meta = (ClampMin = "1", ClampMax = "7"))
+	int32 PressureKernelDivergenceRadiusTexels = 2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GpuPressure", meta = (ClampMin = "1", ClampMax = "4"))
+	int32 PressureKernelPassesPerProjection = 1;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water")
 	bool bOutputObstacleDistance = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", meta = (ClampMin = "20.0", ClampMax = "2000.0"))
 	float ObstacleDistanceOutputRangeCm = 400.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FoliageBend")
+	bool bEnableBendVectorChannel = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FoliageBend", meta = (ClampMin = "0.02", ClampMax = "2.0"))
+	float BendVectorRiseSeconds = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FoliageBend", meta = (ClampMin = "0.05", ClampMax = "10.0"))
+	float BendVectorRecoverySeconds = 3.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FoliageBend", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float BendFromPainterDensity = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FoliageBend", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float BendFromRippleSlope = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MassInput", meta = (ClampMin = "1", ClampMax = "16000"))
 	int32 GpuMaxStampsPerTick = 16000;

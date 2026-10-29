@@ -282,7 +282,8 @@ static_assert(sizeof(FTDFluidGpuWaterProbeRequest) == 16, "FTDFluidGpuWaterProbe
 enum class ETDFluidGpuPressureSolver : uint8
 {
 	Jacobi,
-	Multigrid
+	Multigrid,
+	KernelFeedback
 };
 
 struct FTDFluidGpuBatchKey
@@ -341,6 +342,7 @@ struct FTDFluidGpuBatchFrame
 	TArray<FTDFluidGpuWaterProbeRequest> WaterProbeRequests;
 	int32 WaterRippleSubstepMaximum = 0;
 	int32 WaterRippleSubstepCapHitCount = 0;
+	TArray<FTDFluidGpuSolverOptionParameters> SolverOptionParameters;
 };
 
 struct FTDFluidGpuBatchStateTextures

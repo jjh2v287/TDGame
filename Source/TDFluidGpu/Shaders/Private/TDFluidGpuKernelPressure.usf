@@ -1,0 +1,160 @@
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+#include "/TDFluidGpu/Private/TDFluidGpuSolverOptions.ush"
+
+Texture2DArray<float> ObstacleSdf;
+Texture2DArray<float2> VelocityIn;
+RWTexture2DArray<float> KernelDivergenceOut;
+Texture2DArray<float> KernelDivergenceIn;
+Texture2DArray<float> PressureIn;
+RWTexture2DArray<float4> KernelPartialSumsOut;
+Texture2DArray<float4> KernelPartialSumsIn;
+RWTexture2DArray<float> PressureOut;
+
+bool IsKernelFluidCell(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return false;
+	}
+	return !TDFluidGpuIsSolidDistance(ObstacleSdf[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)]);
+}
+
+int ResolveKernelRadiusTexels(uint RadiusTexels)
+{
+	return clamp(int(RadiusTexels), 1, TDFLUIDGPU_MAXIMUM_KERNEL_RADIUS_TEXELS);
+}
+
+float ComputeKernelWeight(int Offset, int RadiusTexels)
+{
+	const float OffsetAsFloat = float(Offset);
+	const float RadiusAsFloat = float(RadiusTexels);
+	return exp(-2.0f * OffsetAsFloat * OffsetAsFloat / (RadiusAsFloat * RadiusAsFloat));
+}
+
+float SampleKernelNeighborVelocity(FTDFluidGpuActorParameters Actor, int2 Cell, uint Component)
+{
+	if (!IsKernelFluidCell(Actor, Cell))
+	{
+		return 0.0f;
+	}
+	const float2 Velocity = VelocityIn[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)];
+	return Component == 0u ? Velocity.x : Velocity.y;
+}
+
+float ComputeKernelCellDivergence(FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	const float VelocityRight = SampleKernelNeighborVelocity(Actor, Cell + int2(1, 0), 0u);
+	const float VelocityLeft = SampleKernelNeighborVelocity(Actor, Cell - int2(1, 0), 0u);
+	const float VelocityUp = SampleKernelNeighborVelocity(Actor, Cell + int2(0, 1), 1u);
+	const float VelocityDown = SampleKernelNeighborVelocity(Actor, Cell - int2(0, 1), 1u);
+	return (VelocityRight - VelocityLeft) / (2.0f * Actor.RelativeCellSpacing.x) + (VelocityUp - VelocityDown) / (2.0f * Actor.RelativeCellSpacing.y);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void KernelDivergenceCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[DispatchThreadId.z];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	if (!IsKernelFluidCell(Actor, Cell))
+	{
+		KernelDivergenceOut[Texel] = 0.0f;
+		return;
+	}
+	KernelDivergenceOut[Texel] = ComputeKernelCellDivergence(Actor, Cell);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void KernelHorizontalCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[DispatchThreadId.z];
+	const FTDFluidGpuSolverOptionParameters Options = SolverOptionParameters[DispatchThreadId.z];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const int PressureRadiusTexels = ResolveKernelRadiusTexels(Options.KernelRadiusTexels);
+	const int DivergenceRadiusTexels = ResolveKernelRadiusTexels(Options.KernelDivergenceRadiusTexels);
+	float4 Sums = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	[loop]
+	for (int PressureOffset = -PressureRadiusTexels; PressureOffset <= PressureRadiusTexels; ++PressureOffset)
+	{
+		const int2 TapCell = Cell + int2(PressureOffset, 0);
+		if (!IsKernelFluidCell(Actor, TapCell))
+		{
+			continue;
+		}
+		const float Weight = ComputeKernelWeight(PressureOffset, PressureRadiusTexels);
+		Sums.x += Weight * PressureIn[TDFluidGpuMakeTexel(TapCell, Actor.SliceIndex)];
+		Sums.y += Weight;
+	}
+	[loop]
+	for (int DivergenceOffset = -DivergenceRadiusTexels; DivergenceOffset <= DivergenceRadiusTexels; ++DivergenceOffset)
+	{
+		const int2 TapCell = Cell + int2(DivergenceOffset, 0);
+		if (!IsKernelFluidCell(Actor, TapCell))
+		{
+			continue;
+		}
+		const float Weight = ComputeKernelWeight(DivergenceOffset, DivergenceRadiusTexels);
+		Sums.z += Weight * KernelDivergenceIn[TDFluidGpuMakeTexel(TapCell, Actor.SliceIndex)];
+		Sums.w += Weight;
+	}
+	KernelPartialSumsOut[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)] = Sums;
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void KernelVerticalCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const FTDFluidGpuActorParameters Actor = ActorParameters[DispatchThreadId.z];
+	const FTDFluidGpuSolverOptionParameters Options = SolverOptionParameters[DispatchThreadId.z];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	if (!IsKernelFluidCell(Actor, Cell))
+	{
+		PressureOut[Texel] = 0.0f;
+		return;
+	}
+
+	const int PressureRadiusTexels = ResolveKernelRadiusTexels(Options.KernelRadiusTexels);
+	const int DivergenceRadiusTexels = ResolveKernelRadiusTexels(Options.KernelDivergenceRadiusTexels);
+	float4 Sums = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	[loop]
+	for (int PressureOffset = -PressureRadiusTexels; PressureOffset <= PressureRadiusTexels; ++PressureOffset)
+	{
+		const int2 TapCell = Cell + int2(0, PressureOffset);
+		if (!TDFluidGpuIsInsideGrid(TapCell, Actor.Resolution))
+		{
+			continue;
+		}
+		const float Weight = ComputeKernelWeight(PressureOffset, PressureRadiusTexels);
+		Sums.xy += Weight * KernelPartialSumsIn[TDFluidGpuMakeTexel(TapCell, Actor.SliceIndex)].xy;
+	}
+	[loop]
+	for (int DivergenceOffset = -DivergenceRadiusTexels; DivergenceOffset <= DivergenceRadiusTexels; ++DivergenceOffset)
+	{
+		const int2 TapCell = Cell + int2(0, DivergenceOffset);
+		if (!TDFluidGpuIsInsideGrid(TapCell, Actor.Resolution))
+		{
+			continue;
+		}
+		const float Weight = ComputeKernelWeight(DivergenceOffset, DivergenceRadiusTexels);
+		Sums.zw += Weight * KernelPartialSumsIn[TDFluidGpuMakeTexel(TapCell, Actor.SliceIndex)].zw;
+	}
+
+	const float BlurredPressure = Sums.y > 0.0f ? Sums.x / max(Sums.y, TDFLUIDGPU_SMALL_NUMBER) : 0.0f;
+	const float BlurredDivergence = Sums.w > 0.0f ? Sums.z / max(Sums.w, TDFLUIDGPU_SMALL_NUMBER) : 0.0f;
+	PressureOut[Texel] = Options.KernelFeedback * BlurredPressure - Options.KernelDivergenceScale * BlurredDivergence;
+}

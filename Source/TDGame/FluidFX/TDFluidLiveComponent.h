@@ -7,6 +7,7 @@
 #include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidNearRippleLayer.h"
+#include "FluidFX/TDFluidFoliageBendLayer.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "UObject/ObjectKey.h"
@@ -144,6 +145,7 @@ public:
 	bool IsAuxOutputActive() const;
 	bool IsHeatAuxOutputActive() const;
 	bool IsObstacleDistanceAuxActive() const;
+	bool IsFoliageBendAuxActive() const;
 	bool IsTransmittanceActive() const;
 	void SetVolumeTransmittanceSources(const FTDFluidVolumeLightState& LightState, TConstArrayView<FTDFluidShadowCapsule> Capsules);
 	const FTDFluidVolumeLightState& GetVolumeLightState() const { return CachedVolumeLightState; }
@@ -245,6 +247,7 @@ public:
 	const TArray<FFloat16Color>& GetPackedVelocityPixels() const { return PackedVelocityPixels; }
 	const TArray<FFloat16Color>& GetPackedWaterSurfacePixels() const { return PackedWaterSurfacePixels; }
 	const TArray<FFloat16Color>& GetPackedAuxPixels() const { return PackedAuxPixels; }
+	const FTDFluidFoliageBendLayer& GetFoliageBendLayer() const { return FoliageBendLayer; }
 	const TArray<FFloat16Color>& GetPackedTransmittancePixels() const { return PackedTransmittancePixels; }
 	UNiagaraComponent* GetOwnedNiagaraComponent() const { return OwnedNiagaraComponent; }
 
@@ -260,6 +263,10 @@ private:
 	void InitializeSimulation(const FVector2D& CenterWorld);
 	void SyncSolverBackend(const FVector2D& FallbackCenterWorld);
 	bool PrepareGpuSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift);
+	bool AdvanceCpuSolverWindow(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift);
+	bool AdvanceGpuSolverWindow(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift);
+	FVector2D ComputeSolverAdvectionOffset(float DeltaTime, const FVector2D& DesiredCenterWorld) const;
+	void EnsureNoiseLatticeOffsetCells();
 	void EnsureGpuOutputTargets();
 	void ClearGpuOutputTargets();
 	void ReleaseGpuSolverSlot();
@@ -402,6 +409,12 @@ private:
 	int32 PackedAuxObstacleGeneration = INDEX_NONE;
 	FTDFluidNearRippleLayer NearRippleLayer;
 	FTDFluidWaterNearRippleSettings NearRippleSettings;
+	FTDFluidFoliageBendLayer FoliageBendLayer;
+	float PreparedFoliageBendDeltaSeconds = 0.0f;
+	bool bIsFoliageBendStepEnabled = false;
+	void RefreshFoliageBendStep(float DeltaTime);
+	void AdvanceFoliageBendCpu(float DeltaTime);
+	void SubmitFoliageBendGpu();
 	TArray<FFloat16Color> PackedTransmittancePixels;
 	FTDFluidVolumeLightState CachedVolumeLightState;
 	FTDFluidPlaneSettings EffectivePlaneSettings;
@@ -437,6 +450,11 @@ private:
 	bool bHasPendingObstacleUpdate = false;
 	bool bUsesGpuSolver = false;
 	bool bHasSampledTerrainRange = false;
+	bool bHasPreviousAnchoredCenter = false;
+	bool bHasNoiseLatticeOffsetCells = false;
+	FVector2D PreviousAnchoredCenterPlane = FVector2D::ZeroVector;
+	FIntPoint NoiseLatticeOffsetCells = FIntPoint::ZeroValue;
+	int32 LastCpuReinitializationGeneration = INDEX_NONE;
 	int32 LastProcessedPointCount = 0;
 	float WaterLayerDisplayAlpha = 0.0f;
 	float TerrainReferenceZCm = 0.0f;

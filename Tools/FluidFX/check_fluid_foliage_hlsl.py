@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(numpy) 와 Windows Kits dxc.exe(vs_6_0·ps_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_foliage_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json] [--output 요약.json]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(dxc 명령·표본 수, 거울 시험 sha256), 하나라도 실패하면 종료 코드 1
-상태: 미검증(2026-10-26 FX-13r R13 작성). TDFluidFoliageFlowCopy.hlsl·TDFluidFoliageBend.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점(안전 정규화·θ=0 분기·M1 속도 기준)·이름 계약(MI 덮어쓰기에 C++ 구동 이름 없음, 스칼라·벡터 구획)·dxc(복사 ps_6_0, 휨 vs_6_0·ps_6_0, O3/Od, 마스터 값 접기 순열)를 보고, numpy 거울 F1 길이 보존·F2 뿌리 WPO 0·F3 휨 방향·F4 창 경계 연속·F5 복사→MF 왕복 θ·F6 마스터 값 WPO 0(NaN 없음)을 두 번 돌려 sha256 이 같은지 본다.
+상태: 미검증(2026-10-26 FX-13r R13 작성, 2026-10-29 파동 3 FX-13c: 복사 입력 AuxTexture·AuxFoliageBendActive 식 고정점과 거울 F7 스칼라 1·BA = 2t-1 이면 복사 출력 = 속도 경로, MI 이름 계약은 채널 3개 전부이므로 조각 병합 전에는 --look-fragment 필요). TDFluidFoliageFlowCopy.hlsl·TDFluidFoliageBend.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점(안전 정규화·θ=0 분기·M1 속도 기준)·이름 계약(MI 덮어쓰기에 C++ 구동 이름 없음, 스칼라·벡터 구획)·dxc(복사 ps_6_0, 휨 vs_6_0·ps_6_0, O3/Od, 마스터 값 접기 순열)를 보고, numpy 거울 F1 길이 보존·F2 뿌리 WPO 0·F3 휨 방향·F4 창 경계 연속·F5 복사→MF 왕복 θ·F6 마스터 값 WPO 0(NaN 없음)을 두 번 돌려 sha256 이 같은지 본다.
 """
 import argparse
 import glob
@@ -27,7 +27,9 @@ SAMPLE_PATTERN = re.compile(r"call \S+ @dx\.op\.(?:sample|sampleLevel|sampleBias
 INSTRUCTION_PATTERN = re.compile(r"^\s+(?:%\S+ = |call |store |br |ret )", re.MULTILINE)
 ABSOLUTE_PATH_PATTERN = re.compile(r"[A-Za-z]:[\\/]")
 COPY_ANCHORS = (
-    "float2 tdFlowPlane = (2.0 * tdFlowPacked.rg - 1.0) * VelocitySpeedReferenceCmPerSec;",
+    "float4 tdAuxPacked = Texture2DSampleLevel(AuxTexture, AuxTextureSampler, FlowUv, 0.0);",
+    "float2 tdFlowNormalized = AuxFoliageBendActive > 0.5 ? tdAuxPacked.ba : (2.0 * tdFlowPacked.rg - 1.0);",
+    "float2 tdFlowPlane = tdFlowNormalized * VelocitySpeedReferenceCmPerSec;",
     "float2 tdFlowWorld = tdFlowPlane.x * PlaneAxisU.xy + tdFlowPlane.y * PlaneAxisV.xy;",
     "float tdFlowDegrees = clamp(FoliageBendMaxDegrees, 0.0, 85.0) * tdFlowMagnitude;",
     "return float4(0.5 + 0.5 * tdFlowDirection * tdFlowDegrees / 90.0, tdFlowDegrees / 90.0, 1.0);",
@@ -39,7 +41,7 @@ BEND_ANCHORS = (
     "float tdBendActive = step(0.5, FoliageFlowState.x) * step(0.001, tdBendExtent.x);",
     "float2 tdBendVector = tdWindBend * (1.0 - tdBendWeight * FoliageSimReplacesWind) + tdBendSim * tdBendWeight * FoliageBendScale;",
 )
-TEXTURE_INPUT_NAMES = ("VelocityTexture", "FoliageFlowTexture")
+TEXTURE_INPUT_NAMES = ("VelocityTexture", "AuxTexture", "FoliageFlowTexture")
 GRID = 256
 MASTER_FOLDED_INSTRUCTION_LIMIT = 20
 RNG_SEED = 1317
@@ -112,8 +114,9 @@ def saturate(x):
     return np.clip(x, 0.0, 1.0)
 
 
-def copy_flow(packed_rg, axis_u, axis_v, speed_reference, max_degrees, bend_speed_reference, response):
-    plane = (2.0 * packed_rg - 1.0) * speed_reference
+def copy_flow(packed_rg, axis_u, axis_v, speed_reference, max_degrees, bend_speed_reference, response, aux_packed_ba=None, aux_active=0.0):
+    normalized = aux_packed_ba if aux_packed_ba is not None and aux_active > 0.5 else 2.0 * packed_rg - 1.0
+    plane = normalized * speed_reference
     world = plane[..., :1] * np.asarray(axis_u[:2]) + plane[..., 1:2] * np.asarray(axis_v[:2])
     speed = np.linalg.norm(world, axis=-1)
     magnitude = np.power(saturate(speed / max(bend_speed_reference, 1.0)), max(response, 0.01))
@@ -283,11 +286,30 @@ def test_master_zero(material):
     return passed, f"마스터 값 WPO 0·유한·BendAmount 0 (창 켬, 끔) = {outcomes}", np.array([[float(a), float(b), c] for a, b, c in outcomes])
 
 
+def test_aux_source_equals_velocity(material):
+    rng = np.random.default_rng(RNG_SEED + 5)
+    packed = saturate(rng.uniform(-1.0, 1.0, (GRID, GRID, 2)) * rng.uniform(0.0, 1.0, (GRID, GRID, 1)) * 0.5 + 0.5)
+    garbage = rng.uniform(-1.0, 1.0, (GRID, GRID, 2))
+    reference = copy_flow(packed, (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), 600.0, 70.0, 300.0, 1.0)
+    aux_ba = 2.0 * packed - 1.0
+    active = copy_flow(np.full_like(packed, 0.5), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), 600.0, 70.0, 300.0, 1.0, aux_ba, 1.0)
+    inactive = copy_flow(packed, (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), 600.0, 70.0, 300.0, 1.0, garbage, 0.0)
+    boundary = copy_flow(packed, (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), 600.0, 70.0, 300.0, 1.0, garbage, 0.5)
+    active_error = float(np.abs(active - reference).max())
+    inactive_error = float(np.abs(inactive - reference).max())
+    boundary_error = float(np.abs(boundary - reference).max())
+    default_active = dict(material.COPY_DRIVEN_SCALAR_DEFAULTS).get("AuxFoliageBendActive")
+    passed = active_error <= 1e-6 and inactive_error == 0.0 and boundary_error == 0.0 and default_active == 0.0
+    detail = f"스칼라 1·BA=2t-1 오차 {active_error:.2e}, 스칼라 0 오차 {inactive_error:.2e}, 스칼라 0.5 오차 {boundary_error:.2e}, 마스터 기본 {default_active}"
+    return passed, detail, np.array([active_error, inactive_error, boundary_error])
+
+
 def run_mirror_tests(material):
     outcomes = {}
     digest = hashlib.sha256()
     tests = (("F1 길이 보존", test_length_preservation), ("F2 뿌리 WPO 0", test_root_zero), ("F3 휨 방향", test_bend_direction),
-             ("F4 창 경계 연속", test_window_boundary), ("F5 복사→MF 왕복", test_round_trip), ("F6 마스터 값 WPO 0", test_master_zero))
+             ("F4 창 경계 연속", test_window_boundary), ("F5 복사→MF 왕복", test_round_trip), ("F6 마스터 값 WPO 0", test_master_zero),
+             ("F7 Aux 원천 = 속도 경로", test_aux_source_equals_velocity))
     for label, test in tests:
         passed, detail, values = test(material)
         values = np.ascontiguousarray(values, dtype=np.float64)
@@ -388,7 +410,7 @@ def main():
     jobs = []
     for optimize in (False, True):
         suffix = "O3" if optimize else "Od"
-        jobs.append((f"copy_ps_{suffix}", build_copy_source(material, copy_code, {}), "ps_6_0", optimize, 1, None))
+        jobs.append((f"copy_ps_{suffix}", build_copy_source(material, copy_code, {}), "ps_6_0", optimize, 2, None))
         jobs.append((f"bend_vs_{suffix}", build_bend_source(material, bend_code, {}, "vs"), "vs_6_0", optimize, 1, None))
         jobs.append((f"bend_ps_{suffix}", build_bend_source(material, bend_code, {}, "ps"), "ps_6_0", optimize, 1, None))
     jobs.append(("copy_ps_master_O3", build_copy_source(material, copy_code, dict(material.COPY_LOOK_SCALAR_DEFAULTS)), "ps_6_0", True, 0, MASTER_FOLDED_INSTRUCTION_LIMIT))

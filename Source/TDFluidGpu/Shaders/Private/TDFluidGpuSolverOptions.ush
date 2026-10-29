@@ -1,0 +1,50 @@
+#pragma once
+
+#include "/TDFluidGpu/Private/TDFluidGpuCommon.ush"
+
+static const uint TDFLUIDGPU_SOLVER_OPTION_FLAG_USES_KERNEL_PRESSURE = 1u;
+static const uint TDFLUIDGPU_SOLVER_OPTION_FLAG_USES_FLOW_AMPLITUDE_NOISE = 2u;
+static const uint TDFLUIDGPU_SOLVER_OPTION_FLAG_USES_ADVECTION_OFFSET = 4u;
+static const uint TDFLUIDGPU_FLOW_AMPLITUDE_NOISE_SEED = 0x9E3779B9u;
+static const int TDFLUIDGPU_MAXIMUM_KERNEL_RADIUS_TEXELS = 7;
+
+struct FTDFluidGpuSolverOptionParameters
+{
+	uint OptionFlags;
+	uint KernelRadiusTexels;
+	uint KernelDivergenceRadiusTexels;
+	float KernelFeedback;
+	float KernelDivergenceScale;
+	float FlowAmplitudeDampingStep;
+	float2 AdvectionOffsetCmPerSec;
+	int2 AmplitudeNoiseLatticeOrigin;
+	float2 AmplitudeNoiseLatticeOffset;
+	float2 AmplitudeNoiseLatticeStepPerCell;
+	uint AmplitudeNoiseLatticePeriodPacked;
+	uint Padding;
+};
+
+StructuredBuffer<FTDFluidGpuSolverOptionParameters> SolverOptionParameters;
+
+bool TDFluidGpuHasSolverOptionFlag(FTDFluidGpuSolverOptionParameters Options, uint Flag)
+{
+	return (Options.OptionFlags & Flag) != 0u;
+}
+
+float TDFluidGpuComputeFlowAmplitudeDampingFactor(FTDFluidGpuActorParameters Actor, FTDFluidGpuSolverOptionParameters Options, int2 Cell)
+{
+	if (!TDFluidGpuHasSolverOptionFlag(Options, TDFLUIDGPU_SOLVER_OPTION_FLAG_USES_FLOW_AMPLITUDE_NOISE))
+	{
+		return 1.0f;
+	}
+
+	const FTDFluidGpuLatticeSample Sample = TDFluidGpuMakeLatticeSample(Options.AmplitudeNoiseLatticeOrigin, Options.AmplitudeNoiseLatticeOffset, Options.AmplitudeNoiseLatticeStepPerCell, Cell);
+	const float Value00 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index, Options.AmplitudeNoiseLatticePeriodPacked), TDFLUIDGPU_FLOW_AMPLITUDE_NOISE_SEED, Actor);
+	const float Value10 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(1, 0), Options.AmplitudeNoiseLatticePeriodPacked), TDFLUIDGPU_FLOW_AMPLITUDE_NOISE_SEED, Actor);
+	const float Value01 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(0, 1), Options.AmplitudeNoiseLatticePeriodPacked), TDFLUIDGPU_FLOW_AMPLITUDE_NOISE_SEED, Actor);
+	const float Value11 = TDFluidGpuEvaluateLatticeValue(TDFluidGpuResolveLatticeIndex(Sample.Index + int2(1, 1), Options.AmplitudeNoiseLatticePeriodPacked), TDFLUIDGPU_FLOW_AMPLITUDE_NOISE_SEED, Actor);
+	const float ColumnFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.x);
+	const float RowFade = TDFluidGpuEvaluateQuinticFade(Sample.Fraction.y);
+	const float NoiseValue = lerp(lerp(Value00, Value10, ColumnFade), lerp(Value01, Value11, ColumnFade), RowFade);
+	return exp(-0.5f * Options.FlowAmplitudeDampingStep * (1.0f - NoiseValue));
+}

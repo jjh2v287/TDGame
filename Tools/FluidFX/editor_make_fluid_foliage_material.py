@@ -1,8 +1,9 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FX-13r 식생 에셋을 만든다: 흐름 RT RT_TD_FluidFoliageFlow(256², RTF_RGBA16F, Clamp, 지우기 (0.5,0.5,0,1)), 창 MPC_TD_FluidFoliageWindow(SimCenterWorld·SimExtentsCm·FoliageFlowState), 복사 재질 M_TD_FluidFoliageFlowCopy(Unlit·Emissive, Custom = Shaders/TDFluidFoliageFlowCopy.hlsl)·MI, 휨 함수 MF_TD_FluidFoliageBend(정점 Custom = Shaders/TDFluidFoliageBend.hlsl, 출력 WorldPositionOffset·BendAmount), 풀 재질 M_TD_FluidFoliageGrass(Masked·양면·MSM_TWO_SIDED_FOLIAGE)·MI 4. 모양 정본에 MI 5개가 병합되어 있어야 한다.
-실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_foliage_material.py (PowerShell, L-repo-01. 기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_foliage_material_request.json 에 {"overwrite": true})
-출력: /Game/FluidFX/Textures/RT_TD_FluidFoliageFlow, /Game/FluidFX/Materials/{MPC_TD_FluidFoliageWindow, M_TD_FluidFoliageFlowCopy, MI_TD_FluidFoliageFlowCopy, MF_TD_FluidFoliageBend, M_TD_FluidFoliageGrass, MI_TD_FluidFoliage_*(4)}, Saved/FluidFX/fluid_foliage_material.json(풀 텍스처 출처, 재질 통계, HLSL sha256, 모양 정본 sha256)
-상태: 미검증(2026-10-26 FX-13r R13 작성: py_compile·가짜 unreal·check_fluid_foliage_hlsl.py 만, 에디터 실행 전). 복사 재질의 VelocityTexture·PlaneAxisU/V 는 라이브 외부 대상 MID 가, VelocitySpeedReferenceCmPerSec 는 흐름 액터가 넣는다(마스터 600, 모양 파일 금지 R7). MF 는 RT 에셋을 텍스처 객체 노드로 직접 참조하고 휨 매개변수는 MF 안에 둔다(풀 MI 가 바로 덮어씀). ISM·Nanite 사용 플래그는 노드 생성 전 속성으로 켜고 확인은 컴파일 뒤(L-editor-61). MI 값은 모양 정본(apply_to_instance)만 쓴다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FX-13r 식생 에셋을 만든다: 흐름 RT RT_TD_FluidFoliageFlow(256², RTF_RGBA16F, Clamp, 지우기 (0.5,0.5,0,1)), 창 MPC_TD_FluidFoliageWindow(SimCenterWorld·SimExtentsCm·FoliageFlowState), 복사 재질 M_TD_FluidFoliageFlowCopy(Unlit·Emissive, Custom = Shaders/TDFluidFoliageFlowCopy.hlsl)·MI, 휨 함수 MF_TD_FluidFoliageBend(정점 Custom = Shaders/TDFluidFoliageBend.hlsl, 출력 WorldPositionOffset·BendAmount), 풀 재질 M_TD_FluidFoliageGrass(Masked·양면·MSM_TWO_SIDED_FOLIAGE)·MI 4. 파동 3 FX-13c: 복사 재질에 AuxTexture·AuxFoliageBendActive(휨 벡터 원천 교체)를 더하고 채널 Press·Reed(RT·MPC·MF·풀 마스터·MI·복사 MI)를 Walk 와 같은 그래프로 더 만든다. 선택한 대상의 MI 가 모양 정본에 병합되어 있어야 한다.
+실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_foliage_material.py (PowerShell, L-repo-01. 기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_foliage_material_request.json 에 {"overwrite": true}, 만들 대상은 "targets": ["copy","walk","press","reed"] 의 부분집합, 없으면 전부)
+출력: /Game/FluidFX/Textures/RT_TD_FluidFoliageFlow, /Game/FluidFX/Materials/{MPC_TD_FluidFoliageWindow, M_TD_FluidFoliageFlowCopy, MI_TD_FluidFoliageFlowCopy, MF_TD_FluidFoliageBend, M_TD_FluidFoliageGrass, MI_TD_FluidFoliage_*(4)}, Press·Reed 채널 {RT_TD_FluidFoliagePressFlow·RT_TD_FluidReedFlow, MPC_TD_FluidFoliagePressWindow·MPC_TD_FluidReedWindow, MF_TD_FluidFoliagePressBend·MF_TD_FluidReedBend, M_TD_FluidFoliageGrassPress·M_TD_FluidFoliageReed, MI_TD_FluidFoliage_GrassPress·MI_TD_FluidFoliage_Reed, MI_TD_FluidFoliageFlowCopy_Press·MI_TD_FluidFoliageFlowCopy_Reed}, Saved/FluidFX/fluid_foliage_material.json(풀 텍스처 출처, 재질 통계, HLSL sha256, 모양 정본 sha256)
+상태: 미검증(2026-10-26 FX-13r R13 작성, 2026-10-29 파동 3 FX-13c 채널·Aux 원천 추가: py_compile·가짜 unreal 전체 실행·check_fluid_foliage_hlsl.py 만, 에디터 실행 전). 복사 재질의 VelocityTexture·AuxTexture·AuxFoliageBendActive·PlaneAxisU/V 는 라이브 외부 대상 MID 가, VelocitySpeedReferenceCmPerSec 는 흐름 액터가 넣는다(마스터 600, 모양 파일 금지 R7). MF 는 RT 에셋을 텍스처 객체 노드로 직접 참조하고 휨 매개변수는 MF 안에 둔다(풀 MI 가 바로 덮어씀). ISM·Nanite 사용 플래그는 노드 생성 전 속성으로 켜고 확인은 컴파일 뒤(L-editor-61). MI 값은 모양 정본(apply_to_instance)만 쓴다.
 """
+import collections
 import hashlib
 import importlib.util
 import json
@@ -16,24 +17,37 @@ FLUID_ROOT = "/Game/FluidFX"
 MATERIAL_DIR = f"{FLUID_ROOT}/Materials"
 TEXTURE_DIR = f"{FLUID_ROOT}/Textures"
 RENDER_TARGET_NAME = "RT_TD_FluidFoliageFlow"
-RENDER_TARGET_PATH = f"{TEXTURE_DIR}/{RENDER_TARGET_NAME}"
 RENDER_TARGET_SIZE = 256
 RENDER_TARGET_CLEAR_COLOR = (0.5, 0.5, 0.0, 1.0)
 COLLECTION_NAME = "MPC_TD_FluidFoliageWindow"
-COLLECTION_PATH = f"{MATERIAL_DIR}/{COLLECTION_NAME}"
 COPY_MASTER_NAME = "M_TD_FluidFoliageFlowCopy"
 COPY_MASTER_PATH = f"{MATERIAL_DIR}/{COPY_MASTER_NAME}"
 COPY_INSTANCE_NAME = "MI_TD_FluidFoliageFlowCopy"
 FUNCTION_NAME = "MF_TD_FluidFoliageBend"
-FUNCTION_PATH = f"{MATERIAL_DIR}/{FUNCTION_NAME}"
 GRASS_MASTER_NAME = "M_TD_FluidFoliageGrass"
-GRASS_MASTER_PATH = f"{MATERIAL_DIR}/{GRASS_MASTER_NAME}"
 GRASS_INSTANCE_NAMES = (
     "MI_TD_FluidFoliage_GrassWind",
     "MI_TD_FluidFoliage_GrassSim",
     "MI_TD_FluidFoliage_GrassUnderwater",
     "MI_TD_FluidFoliage_PcgStandIn",
 )
+FoliageChannel = collections.namedtuple(
+    "FoliageChannel",
+    ("key", "render_target_name", "collection_name", "function_name", "grass_master_name", "grass_instance_names", "copy_instance_name"),
+)
+FOLIAGE_CHANNELS = (
+    FoliageChannel("walk", RENDER_TARGET_NAME, COLLECTION_NAME, FUNCTION_NAME, GRASS_MASTER_NAME, GRASS_INSTANCE_NAMES, COPY_INSTANCE_NAME),
+    FoliageChannel(
+        "press", "RT_TD_FluidFoliagePressFlow", "MPC_TD_FluidFoliagePressWindow", "MF_TD_FluidFoliagePressBend",
+        "M_TD_FluidFoliageGrassPress", ("MI_TD_FluidFoliage_GrassPress",), "MI_TD_FluidFoliageFlowCopy_Press",
+    ),
+    FoliageChannel(
+        "reed", "RT_TD_FluidReedFlow", "MPC_TD_FluidReedWindow", "MF_TD_FluidReedBend",
+        "M_TD_FluidFoliageReed", ("MI_TD_FluidFoliage_Reed",), "MI_TD_FluidFoliageFlowCopy_Reed",
+    ),
+)
+COPY_TARGET_KEY = "copy"
+REQUEST_TARGET_KEYS = (COPY_TARGET_KEY,) + tuple(channel.key for channel in FOLIAGE_CHANNELS)
 GRASS_MESH_PATH = "/Game/DarkFantasyTopDown/StaticMeshes/Nature/SM_Grass"
 FALLBACK_BASE_COLOR_TEXTURE_PATH = "/Game/DarkFantasyTopDown/Textures/Nature/Grass/T_Grass2_basecolor"
 FALLBACK_OPACITY_TEXTURE_PATH = "/Game/DarkFantasyTopDown/Textures/Nature/Grass/T_Grass2_Alpha"
@@ -64,21 +78,21 @@ COPY_DRIVEN_VECTOR_DEFAULTS = (
     ("PlaneAxisU", (1.0, 0.0, 0.0, 0.0)),
     ("PlaneAxisV", (0.0, 1.0, 0.0, 0.0)),
 )
-COPY_DRIVEN_SCALAR_DEFAULTS = (("VelocitySpeedReferenceCmPerSec", 600.0),)
+COPY_DRIVEN_SCALAR_DEFAULTS = (("VelocitySpeedReferenceCmPerSec", 600.0), ("AuxFoliageBendActive", 0.0))
 COPY_LOOK_SCALAR_DEFAULTS = (
     ("FoliageBendMaxDegrees", 0.0),
     ("FoliageBendSpeedReferenceCmPerSec", 300.0),
     ("FoliageBendResponse", 1.0),
 )
 COPY_LOOK_VECTOR_DEFAULTS = ()
-COPY_TEXTURE_PARAMETER_NAMES = ("VelocityTexture",)
+COPY_TEXTURE_PARAMETER_NAMES = ("VelocityTexture", "AuxTexture")
 COPY_INPUT_NAMES = (
-    "FlowUv", "VelocityTexture", "PlaneAxisU", "PlaneAxisV", "VelocitySpeedReferenceCmPerSec",
+    "FlowUv", "VelocityTexture", "AuxTexture", "PlaneAxisU", "PlaneAxisV", "VelocitySpeedReferenceCmPerSec", "AuxFoliageBendActive",
     "FoliageBendMaxDegrees", "FoliageBendSpeedReferenceCmPerSec", "FoliageBendResponse",
 )
 COPY_VECTOR_INPUT_NAMES = ("PlaneAxisU", "PlaneAxisV")
 COPY_FLOAT2_INPUT_NAMES = ("FlowUv",)
-COPY_SAMPLER_NAMES = ("VelocityTextureSampler",)
+COPY_SAMPLER_NAMES = ("VelocityTextureSampler", "AuxTextureSampler")
 
 BEND_LOOK_SCALAR_DEFAULTS = (
     ("FoliageBendScale", 1.0),
@@ -121,14 +135,11 @@ GRASS_TEXTURE_PARAMETER_NAMES = ("FoliageBaseColorTexture", "FoliageOpacityTextu
 ENGINE_SYMBOLS = ("Texture2DSampleLevel",)
 MID_DRIVEN_NAMES = (
     "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "DensityPressureTexture", "VelocityTexture",
-    "PlaneAxisU", "PlaneAxisV", "PlaneAxisN", "PlaneCoordinateOffsetCm", "ExtrudeSymmetric", "AuxTexture", "AuxHeatActive",
+    "PlaneAxisU", "PlaneAxisV", "PlaneAxisN", "PlaneCoordinateOffsetCm", "ExtrudeSymmetric", "AuxTexture", "AuxHeatActive", "AuxFoliageBendActive",
     "VelocitySpeedReferenceCmPerSec", "FoliageFlowState",
 )
-INSTANCE_PARENTS = {COPY_INSTANCE_NAME: COPY_MASTER_PATH, **{name: GRASS_MASTER_PATH for name in GRASS_INSTANCE_NAMES}}
-OVERRIDABLE_NAMES_BY_PARENT = {
-    COPY_MASTER_PATH: {name for name, _ in COPY_LOOK_SCALAR_DEFAULTS} | {name for name, _ in COPY_LOOK_VECTOR_DEFAULTS},
-    GRASS_MASTER_PATH: {name for name, _ in BEND_LOOK_SCALAR_DEFAULTS + GRASS_LOOK_SCALAR_DEFAULTS} | {name for name, _ in BEND_LOOK_VECTOR_DEFAULTS + GRASS_LOOK_VECTOR_DEFAULTS},
-}
+COPY_OVERRIDABLE_NAMES = {name for name, _ in COPY_LOOK_SCALAR_DEFAULTS} | {name for name, _ in COPY_LOOK_VECTOR_DEFAULTS}
+GRASS_OVERRIDABLE_NAMES = {name for name, _ in BEND_LOOK_SCALAR_DEFAULTS + GRASS_LOOK_SCALAR_DEFAULTS} | {name for name, _ in BEND_LOOK_VECTOR_DEFAULTS + GRASS_LOOK_VECTOR_DEFAULTS}
 REQUIRED_UNREAL_NAMES = (
     "EditorAssetLibrary.load_asset",
     "EditorAssetLibrary.save_loaded_asset",
@@ -218,6 +229,23 @@ def asset_path(name):
     return f"{MATERIAL_DIR}/{name}"
 
 
+def texture_asset_path(name):
+    return f"{TEXTURE_DIR}/{name}"
+
+
+def select_channels(targets):
+    return [channel for channel in FOLIAGE_CHANNELS if channel.key in targets]
+
+
+def make_instance_parents(channels):
+    parents = {}
+    for channel in channels:
+        parents[channel.copy_instance_name] = COPY_MASTER_PATH
+        for name in channel.grass_instance_names:
+            parents[name] = asset_path(channel.grass_master_name)
+    return parents
+
+
 def read_text_file(path):
     if not os.path.isfile(path):
         raise RuntimeError(f"HLSL 파일 없음: {path}")
@@ -281,9 +309,9 @@ def find_unresolved_inputs():
     return unresolved
 
 
-def find_instance_override_problems(entries):
+def find_instance_override_problems(entries, channels=FOLIAGE_CHANNELS):
     problems = []
-    for name, parent_path in INSTANCE_PARENTS.items():
+    for name, parent_path in make_instance_parents(channels).items():
         entry = entries.get(asset_path(name))
         if entry is None:
             problems.append(f"{name}: 모양 정본에 없음")
@@ -294,7 +322,7 @@ def find_instance_override_problems(entries):
         driven = sorted(names & set(MID_DRIVEN_NAMES))
         if driven:
             problems.append(f"{name}: C++ 구동 이름 덮어씀(R7) " + ", ".join(driven))
-        unknown = sorted(names - OVERRIDABLE_NAMES_BY_PARENT[parent_path])
+        unknown = sorted(names - (COPY_OVERRIDABLE_NAMES if parent_path == COPY_MASTER_PATH else GRASS_OVERRIDABLE_NAMES))
         if unknown:
             problems.append(f"{name}: 마스터에 없는 이름 " + ", ".join(unknown))
         vector_names = {item for item, _ in COPY_LOOK_VECTOR_DEFAULTS + BEND_LOOK_VECTOR_DEFAULTS + GRASS_LOOK_VECTOR_DEFAULTS}
@@ -326,18 +354,35 @@ def find_missing_unreal_names():
     return missing
 
 
-def read_overwrite_request():
+def resolve_request_targets(requested):
+    if requested is None:
+        return REQUEST_TARGET_KEYS
+    if not isinstance(requested, list) or not requested:
+        raise RuntimeError("요청 targets 는 비어 있지 않은 목록이어야 함: " + repr(requested))
+    unknown = [str(item) for item in requested if item not in REQUEST_TARGET_KEYS]
+    if unknown:
+        raise RuntimeError("알 수 없는 targets: " + ", ".join(unknown) + " (허용: " + ", ".join(REQUEST_TARGET_KEYS) + ")")
+    return tuple(key for key in REQUEST_TARGET_KEYS if key in requested)
+
+
+def read_request():
     request_path = project_path(*REQUEST_RELATIVE_PATH)
     if not os.path.isfile(request_path):
-        return False
+        return False, REQUEST_TARGET_KEYS
     with open(request_path, encoding="utf-8") as request_file:
         request = json.load(request_file)
-    return isinstance(request, dict) and request.get("overwrite") is True
+    if not isinstance(request, dict):
+        return False, REQUEST_TARGET_KEYS
+    return request.get("overwrite") is True, resolve_request_targets(request.get("targets"))
 
 
-def collect_target_asset_paths():
-    names = [COPY_MASTER_NAME, COPY_INSTANCE_NAME, FUNCTION_NAME, GRASS_MASTER_NAME] + list(GRASS_INSTANCE_NAMES)
-    return [RENDER_TARGET_PATH, COLLECTION_PATH] + [asset_path(name) for name in names]
+def collect_target_asset_paths(targets=REQUEST_TARGET_KEYS):
+    paths = [COPY_MASTER_PATH] if COPY_TARGET_KEY in targets else []
+    for channel in select_channels(targets):
+        paths.append(texture_asset_path(channel.render_target_name))
+        names = [channel.collection_name, channel.function_name, channel.grass_master_name, channel.copy_instance_name] + list(channel.grass_instance_names)
+        paths += [asset_path(name) for name in names]
+    return paths
 
 
 def find_unsaved_package_names(overwrite):
@@ -461,8 +506,9 @@ def resolve_grass_textures():
     return textures, sources, {"mesh": GRASS_MESH_PATH, "mesh_texture_parameters": sorted(found), "nanite_enabled": nanite_enabled}
 
 
-def load_or_create_render_target(overwrite):
-    render_target, was_created = load_or_create(RENDER_TARGET_PATH, unreal.TextureRenderTarget2D, unreal.TextureRenderTargetFactoryNew(), overwrite)
+def load_or_create_render_target(channel, overwrite):
+    render_target_path = texture_asset_path(channel.render_target_name)
+    render_target, was_created = load_or_create(render_target_path, unreal.TextureRenderTarget2D, unreal.TextureRenderTargetFactoryNew(), overwrite)
     for name, value in (
         ("render_target_format", unreal.TextureRenderTargetFormat.RTF_RGBA16F),
         ("size_x", RENDER_TARGET_SIZE),
@@ -474,13 +520,14 @@ def load_or_create_render_target(overwrite):
     ):
         render_target.set_editor_property(name, value)
     if int(render_target.get_editor_property("size_x")) != RENDER_TARGET_SIZE or render_target.get_editor_property("render_target_format") != unreal.TextureRenderTargetFormat.RTF_RGBA16F:
-        raise RuntimeError(f"흐름 RT 설정 확인 실패: {RENDER_TARGET_PATH}")
-    save_asset(render_target, RENDER_TARGET_PATH)
+        raise RuntimeError(f"흐름 RT 설정 확인 실패: {render_target_path}")
+    save_asset(render_target, render_target_path)
     return render_target, was_created
 
 
-def load_or_create_collection(overwrite):
-    collection, was_created = load_or_create(COLLECTION_PATH, unreal.MaterialParameterCollection, unreal.MaterialParameterCollectionFactoryNew(), overwrite)
+def load_or_create_collection(channel, overwrite):
+    collection_path = asset_path(channel.collection_name)
+    collection, was_created = load_or_create(collection_path, unreal.MaterialParameterCollection, unreal.MaterialParameterCollectionFactoryNew(), overwrite)
     parameters = []
     for name, rgba in COLLECTION_VECTOR_DEFAULTS:
         parameter = unreal.CollectionVectorParameter()
@@ -492,7 +539,7 @@ def load_or_create_collection(overwrite):
     stored = [str(item.get_editor_property("parameter_name")) for item in collection.get_editor_property("vector_parameters")]
     if stored != [name for name, _ in COLLECTION_VECTOR_DEFAULTS]:
         raise RuntimeError("MPC 벡터 이름 설정 확인 실패: " + ", ".join(stored))
-    save_asset(collection, COLLECTION_PATH)
+    save_asset(collection, collection_path)
     return collection, was_created
 
 
@@ -620,7 +667,8 @@ def create_copy_master(code, velocity_texture, overwrite):
     factory = NodeFactory(lambda expression_class, x, y: unreal.MaterialEditingLibrary.create_material_expression(material, expression_class, x, y))
     sources = {"FlowUv": (factory.node(unreal.MaterialExpressionTextureCoordinate, -1600, -1900, coordinate_index=0), "")}
     texture, sampler_type = velocity_texture
-    sources["VelocityTexture"] = (factory.parameter(unreal.MaterialExpressionTextureObjectParameter, parameter_name="VelocityTexture", texture=texture, sampler_type=sampler_type), "")
+    for texture_name in COPY_TEXTURE_PARAMETER_NAMES:
+        sources[texture_name] = (factory.parameter(unreal.MaterialExpressionTextureObjectParameter, parameter_name=texture_name, texture=texture, sampler_type=sampler_type), "")
     add_parameters(factory, sources, COPY_DRIVEN_SCALAR_DEFAULTS + COPY_LOOK_SCALAR_DEFAULTS, COPY_DRIVEN_VECTOR_DEFAULTS + COPY_LOOK_VECTOR_DEFAULTS)
     custom = build_custom_node(factory, "TDFluidFoliageFlowCopy", unreal.CustomMaterialOutputType.CMOT_FLOAT4, COPY_INPUT_NAMES, code, sources, -500, 0)
     connect_material_output(mask_channels(factory, custom, -150, 0, "RGB"), unreal.MaterialProperty.MP_EMISSIVE_COLOR)
@@ -658,9 +706,10 @@ def build_bend_root(factory):
     }
 
 
-def create_bend_function(code, render_target, collection, overwrite):
+def create_bend_function(channel, code, render_target, collection, overwrite):
     editing = unreal.MaterialEditingLibrary
-    function, was_created = load_or_create(FUNCTION_PATH, unreal.MaterialFunction, unreal.MaterialFunctionFactoryNew(), overwrite)
+    function_path = asset_path(channel.function_name)
+    function, was_created = load_or_create(function_path, unreal.MaterialFunction, unreal.MaterialFunctionFactoryNew(), overwrite)
     if not was_created:
         editing.delete_all_material_expressions_in_function(function)
     factory = NodeFactory(lambda expression_class, x, y: editing.create_material_expression_in_function(function, expression_class, x, y))
@@ -679,13 +728,14 @@ def create_bend_function(code, render_target, collection, overwrite):
     amount_output = factory.node(unreal.MaterialExpressionFunctionOutput, 200, 200, output_name=FUNCTION_OUTPUT_NAMES[1], sort_priority=1)
     link(interpolator, amount_output)
     editing.update_material_function(function)
-    save_asset(function, FUNCTION_PATH)
-    return function, {"asset": FUNCTION_PATH, "created": was_created, "outputs": list(FUNCTION_OUTPUT_NAMES), "render_target": RENDER_TARGET_PATH, "collection": COLLECTION_PATH}
+    save_asset(function, function_path)
+    return function, {"asset": function_path, "created": was_created, "outputs": list(FUNCTION_OUTPUT_NAMES), "render_target": texture_asset_path(channel.render_target_name), "collection": asset_path(channel.collection_name)}
 
 
-def create_grass_master(function, textures, nanite_enabled, overwrite):
+def create_grass_master(channel, function, textures, nanite_enabled, overwrite):
     editing = unreal.MaterialEditingLibrary
-    material, was_created = prepare_material(GRASS_MASTER_PATH, overwrite)
+    grass_master_path = asset_path(channel.grass_master_name)
+    material, was_created = prepare_material(grass_master_path, overwrite)
     assignments = [
         ("blend_mode", unreal.BlendMode.BLEND_MASKED),
         ("shading_model", unreal.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE),
@@ -725,17 +775,17 @@ def create_grass_master(function, textures, nanite_enabled, overwrite):
     connect_material_output(subsurface_source, unreal.MaterialProperty.MP_SUBSURFACE_COLOR, subsurface_output)
     roughness_source, _ = sources["FoliageRoughness"]
     connect_material_output(roughness_source, unreal.MaterialProperty.MP_ROUGHNESS)
-    statistics = compile_material(material, GRASS_MASTER_NAME)
+    statistics = compile_material(material, channel.grass_master_name)
     if not editing.has_material_usage(material, unreal.MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES):
-        raise RuntimeError(f"{GRASS_MASTER_NAME} 인스턴스드 스태틱 메시 사용 플래그 확인 실패(L-editor-61)")
+        raise RuntimeError(f"{channel.grass_master_name} 인스턴스드 스태틱 메시 사용 플래그 확인 실패(L-editor-61)")
     verify_parameters(
-        material, GRASS_MASTER_NAME,
+        material, channel.grass_master_name,
         [name for name, _ in BEND_LOOK_SCALAR_DEFAULTS + GRASS_LOOK_SCALAR_DEFAULTS],
         [name for name, _ in BEND_LOOK_VECTOR_DEFAULTS + GRASS_LOOK_VECTOR_DEFAULTS],
         list(GRASS_TEXTURE_PARAMETER_NAMES),
     )
-    save_asset(material, GRASS_MASTER_PATH)
-    return material, {"asset": GRASS_MASTER_PATH, "created": was_created, "statistics": statistics, "used_with_nanite": bool(nanite_enabled)}
+    save_asset(material, grass_master_path)
+    return material, {"asset": grass_master_path, "created": was_created, "statistics": statistics, "used_with_nanite": bool(nanite_enabled)}
 
 
 def prepare_instance(name, overwrite):
@@ -751,6 +801,33 @@ def write_report(report):
     return report_path
 
 
+def load_existing_copy_master():
+    if not unreal.EditorAssetLibrary.does_asset_exist(COPY_MASTER_PATH):
+        raise RuntimeError(f"복사 마스터 없음(targets 에 copy 를 넣으세요): {COPY_MASTER_PATH}")
+    material = unreal.EditorAssetLibrary.load_asset(COPY_MASTER_PATH)
+    texture_names = {str(name) for name in unreal.MaterialEditingLibrary.get_texture_parameter_names(material)}
+    missing = [name for name in COPY_TEXTURE_PARAMETER_NAMES if name not in texture_names]
+    if missing:
+        raise RuntimeError("복사 마스터에 텍스처 매개변수 없음(targets 에 copy 를 넣어 다시 만드세요): " + ", ".join(missing))
+    return material
+
+
+def build_channel(channel, bend_code, grass_textures, nanite_enabled, overwrite):
+    print(f"단계: 채널 {channel.key} 흐름 RT·MPC")
+    render_target, render_target_created = load_or_create_render_target(channel, overwrite)
+    collection, collection_created = load_or_create_collection(channel, overwrite)
+    print(f"단계: 채널 {channel.key} 휨 재질 함수·풀 재질")
+    function, function_summary = create_bend_function(channel, bend_code, render_target, collection, overwrite)
+    grass_master, grass_summary = create_grass_master(channel, function, grass_textures, nanite_enabled, overwrite)
+    summary = {
+        "render_target": {"asset": texture_asset_path(channel.render_target_name), "created": render_target_created, "size": RENDER_TARGET_SIZE, "format": "RTF_RGBA16F", "clear_color": list(RENDER_TARGET_CLEAR_COLOR)},
+        "collection": {"asset": asset_path(channel.collection_name), "created": collection_created, "vectors": [name for name, _ in COLLECTION_VECTOR_DEFAULTS]},
+        "bend_function": function_summary,
+        "grass_master": grass_summary,
+    }
+    return grass_master, summary
+
+
 def main():
     editor = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
     assets = unreal.EditorAssetLibrary
@@ -760,6 +837,8 @@ def main():
     if editor.get_game_world() is not None:
         raise RuntimeError("PIE를 종료한 뒤 실행하세요.")
 
+    overwrite, targets = read_request()
+    channels = select_channels(targets)
     look_table = load_material_look_table()
     project_root = unreal.SystemLibrary.get_project_directory()
     copy_code = assemble_node_code(read_shader_source(project_root, COPY_HLSL_NAME))
@@ -767,12 +846,11 @@ def main():
     problems = validate_hlsl_code(copy_code, COPY_INPUT_NAMES, COPY_SAMPLER_NAMES)
     problems += validate_hlsl_code(bend_code, BEND_INPUT_NAMES, BEND_SAMPLER_NAMES, BEND_ADDITIONAL_OUTPUT_NAMES)
     problems += [f"입력 원천 없음: {name}" for name in find_unresolved_inputs()]
-    problems += find_instance_override_problems(look_table.look["Materials"])
+    problems += find_instance_override_problems(look_table.look["Materials"], channels)
     if problems:
         raise RuntimeError("자체 점검 실패: " + " | ".join(problems))
 
-    overwrite = read_overwrite_request()
-    existing_paths = [path for path in collect_target_asset_paths() if assets.does_asset_exist(path)]
+    existing_paths = [path for path in collect_target_asset_paths(targets) if assets.does_asset_exist(path)]
     if existing_paths and not overwrite:
         print(json.dumps({"status": "기존 에셋이 있어 아무것도 바꾸지 않았습니다", "existing_assets": existing_paths, "overwrite_request_file": project_path(*REQUEST_RELATIVE_PATH), "overwrite_request_content": {"overwrite": True}}, ensure_ascii=False))
         raise RuntimeError("기존 에셋 보존: overwrite 요청 파일이 없어 중단합니다.")
@@ -780,23 +858,26 @@ def main():
     if unsaved_names:
         raise RuntimeError("미저장 작업을 보존합니다: " + ", ".join(unsaved_names))
 
-    print("단계: 흐름 RT·MPC·텍스처")
-    render_target, render_target_created = load_or_create_render_target(overwrite)
-    collection, collection_created = load_or_create_collection(overwrite)
-    default_texture_path, default_texture = pick_default_texture()
-    grass_textures, grass_texture_sources, grass_mesh = resolve_grass_textures()
+    builds_copy_master = COPY_TARGET_KEY in targets
+    copy_master = load_existing_copy_master() if channels and not builds_copy_master else None
+    default_texture_path, default_texture = pick_default_texture() if builds_copy_master else ("", None)
+    grass_textures, grass_texture_sources, grass_mesh = resolve_grass_textures() if channels else ({}, {}, {})
 
-    print("단계: 복사 재질")
-    copy_master, copy_summary = create_copy_master(copy_code, default_texture, overwrite)
+    copy_summary = None
+    if builds_copy_master:
+        print("단계: 복사 재질")
+        copy_master, copy_summary = create_copy_master(copy_code, default_texture, overwrite)
 
-    print("단계: 휨 재질 함수·풀 재질")
-    function, function_summary = create_bend_function(bend_code, render_target, collection, overwrite)
-    grass_master, grass_summary = create_grass_master(function, grass_textures, grass_mesh["nanite_enabled"], overwrite)
+    grass_masters = {}
+    channel_reports = {}
+    for channel in channels:
+        grass_master, channel_reports[channel.key] = build_channel(channel, bend_code, grass_textures, grass_mesh["nanite_enabled"], overwrite)
+        grass_masters[asset_path(channel.grass_master_name)] = grass_master
 
     print("단계: 재질 인스턴스")
     instances = []
-    for name, parent_path in INSTANCE_PARENTS.items():
-        parent = copy_master if parent_path == COPY_MASTER_PATH else grass_master
+    for name, parent_path in make_instance_parents(channels).items():
+        parent = copy_master if parent_path == COPY_MASTER_PATH else grass_masters[parent_path]
         instance = prepare_instance(name, overwrite)
         entry = look_table.apply_to_instance(unreal.MaterialEditingLibrary, unreal.LinearColor, instance, asset_path(name), parent)
         save_asset(instance, asset_path(name))
@@ -805,11 +886,9 @@ def main():
     report = {
         "status": "ok",
         "overwrite": overwrite,
-        "render_target": {"asset": RENDER_TARGET_PATH, "created": render_target_created, "size": RENDER_TARGET_SIZE, "format": "RTF_RGBA16F", "clear_color": list(RENDER_TARGET_CLEAR_COLOR)},
-        "collection": {"asset": COLLECTION_PATH, "created": collection_created, "vectors": [name for name, _ in COLLECTION_VECTOR_DEFAULTS]},
+        "targets": list(targets),
         "copy_master": copy_summary,
-        "bend_function": function_summary,
-        "grass_master": grass_summary,
+        "channels": channel_reports,
         "grass_textures": grass_texture_sources,
         "grass_mesh": grass_mesh,
         "default_velocity_texture": default_texture_path,

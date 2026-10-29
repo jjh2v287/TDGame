@@ -63,6 +63,17 @@
       "VortexTangentialAccelerationCmPerSec2": 0.0,
       "VortexRadialDriftCmPerSec": 0.0,
       "VortexRadiusRatio": 0.35,
+      "DirectVelocityCmPerSec": {
+        "X": 0.0,
+        "Y": 0.0,
+        "Z": 0.0
+      },
+      "bDirectVelocityInWorldSpace": false,
+      "bAnchorsDensityToActor": false,
+      "SimAreaMotionVelocityScale": 0.0,
+      "FlowAmplitudeNoiseDampingPerSec": 0.0,
+      "FlowAmplitudeNoiseScaleCm": 200.0,
+      "bRandomizeNoiseOffsetPerActor": false,
       "MaxCellSpeedCmPerSec": 1200.0,
       "BrushVelocityResponsePerSec": 12.0,
       "BrushDisplacementRatio": 0.5,
@@ -73,8 +84,16 @@
       "PressureKernelRadiusTexels": 4,
       "PressureKernelFeedback": 0.98,
       "PressureKernelScale": 1.0,
+      "PressureMethod": "PoissonSolve",
+      "PressureKernelDivergenceRadiusTexels": 2,
+      "PressureKernelPassesPerProjection": 1,
       "bOutputObstacleDistance": false,
       "ObstacleDistanceOutputRangeCm": 400.0,
+      "bEnableBendVectorChannel": false,
+      "BendVectorRiseSeconds": 0.25,
+      "BendVectorRecoverySeconds": 3.0,
+      "BendFromPainterDensity": 0.0,
+      "BendFromRippleSlope": 0.0,
       "GpuMaxStampsPerTick": 16000,
       "GpuMaxStampsPerBin": 256,
       "MassInputBufferDivisor": 2,
@@ -1585,16 +1604,113 @@
       }
     },
     "SmokeKernelPressure": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 700.0,
+          "Y": 700.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.5,
+        "ActorBrushDensityStrength": -1.0,
+        "ActorBrushPunctureCmPerSec": 380.0,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 220.0,
+        "AmbientNoiseAmount": 0.45,
+        "PressureMethod": "KernelFeedback"
+      }
     },
     "SmokeWindDrift": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 700.0,
+          "Y": 700.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.5,
+        "ActorBrushDensityStrength": -1.0,
+        "ActorBrushPunctureCmPerSec": 380.0,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 220.0,
+        "AmbientNoiseAmount": 0.45,
+        "DirectVelocityCmPerSec": {
+          "X": 60.0,
+          "Y": 0.0,
+          "Z": 0.0
+        }
+      }
     },
     "SmokeAnchoredCauldron": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 300.0,
+          "Y": 300.0
+        },
+        "VelocityDamping": 0.08,
+        "DensityDissipation": 0.0,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "AmbientDensity": 0.8,
+        "AmbientRefillPerSec": 0.5,
+        "ActorBrushDensityStrength": -1.0,
+        "ActorBrushPunctureCmPerSec": 380.0,
+        "FlowNoiseAccelerationCmPerSec2": 70.0,
+        "FlowNoiseScaleCm": 220.0,
+        "AmbientNoiseAmount": 0.45,
+        "bAnchorsDensityToActor": true,
+        "SimAreaMotionVelocityScale": 1.0
+      }
     },
     "FoliageWalk": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 1000.0,
+          "Y": 1000.0
+        },
+        "VelocityDamping": 0.08,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "ActorBrushPunctureCmPerSec": 380.0,
+        "bEnableBendVectorChannel": true,
+        "BendVectorRiseSeconds": 0.15,
+        "BendVectorRecoverySeconds": 2.5
+      }
     },
     "FoliagePainter": {
+      "TDFluidSimulationConfig": {
+        "SimMode": "SimplePainter",
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 2560.0,
+          "Y": 2560.0
+        },
+        "DensityDissipation": 0.15,
+        "VelocityDamping": 1.0,
+        "bWritesPainterVelocity": true,
+        "bEnableBendVectorChannel": true,
+        "BendVectorRiseSeconds": 0.1,
+        "BendVectorRecoverySeconds": 0.8,
+        "BendFromPainterDensity": 0.7
+      }
     },
     "ReedShallows": {
+      "TDFluidSimulationConfig": {
+        "bEnableBendVectorChannel": true,
+        "BendVectorRiseSeconds": 0.08,
+        "BendVectorRecoverySeconds": 0.08,
+        "BendFromRippleSlope": 0.15
+      }
     },
     "DenseCreek": {
     },

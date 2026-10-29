@@ -1,0 +1,94 @@
+{
+ "id": "foliage_k2_press",
+ "note": "FX-13c K2 구역 4(FoliagePainter 원천·GrassPress·교반기 반경 600 cm 궤도), 눌림 반감·밝기, IMG 9",
+ "scenes": [
+  {
+   "name": "k2_press",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
+   "camera": {
+    "pawn": [
+     12000.0,
+     0.0
+    ],
+    "arm": 450.0,
+    "view": [
+     -60.0,
+     0.0
+    ],
+    "console": [
+     "TD.FluidFX.FoliageFlow 1",
+     "TD.FluidFX.FoliageBend -1",
+     "r.TDFogScattering 0"
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 8.0,
+   "regions_template": "Tools/FluidFX/calib/regions/foliage_k23_regions.json",
+   "targets": "Tools/FluidFX/calib/targets/foliage_live2_press.json",
+   "live2_refs": [
+    "IMG9"
+   ]
+  }
+ ],
+ "base_tuning": [],
+ "params": [
+  {
+   "json_path": "Kinds.FoliagePainter.TDFluidSimulationConfig.DensityDissipation",
+   "values": [
+    0.1,
+    0.15,
+    0.25
+   ]
+  },
+  {
+   "json_path": "Kinds.FoliagePainter.TDFluidSimulationConfig.BendFromPainterDensity",
+   "values": [
+    0.5,
+    0.7,
+    0.9
+   ]
+  },
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassPress.Scalars.FoliagePressedBrightness",
+   "values": [
+    0.15,
+    0.25,
+    0.35
+   ]
+  }
+ ],
+ "metrics": {
+  "sources": [
+   "look",
+   "bend_record"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "metric": "k2_press.look.pressed_luma_ratio",
+    "weight": 0.5,
+    "low": 1.05,
+    "high": 1.4
+   },
+   {
+    "metric": "k2_press.bend_record.press_half_life_seconds",
+    "weight": 1.0,
+    "low": 3.0,
+    "high": 8.0
+   }
+  ]
+ },
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "draft_status": "blocked(CAL-0)",
+ "p3_gaps": [
+  "metrics.sources bend_record + look 지표 이름 k2_press.look.pressed_luma_ratio 확정 필요",
+  "시간 지표 출처 bend_record: 헤드리스 기록 시험(.StepResponse·.PressHalfLifeRecord·.RippleLagRecord)과 check_fluid_foliage_bend.py 거울을 손잡이 값마다 다시 돌리는 오프라인 판정(calib_sweep.py METRIC_SOURCES에 없음, CAL-0). PIE 구역은 교반기가 계속 돌아 복원이 화면에 안 나타남",
+  "params Look: 할당(fluid_tuning_patch가 Look: 경로를 처리하지 못함, CAL-0)",
+  "풀 MI 값(FoliagePressedBrightness 등)은 정적 MI라 재굽기 단계 필요(R1311-S7)",
+  "calib/regions/foliage_k23_regions.json·calib/targets/foliage_live2_press.json 미작성(look 지표 출처가 파일을 요구함)"
+ ]
+}

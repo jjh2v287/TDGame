@@ -211,6 +211,7 @@ struct FTDFluidGpuSimulationSettings
 	uint8 PressureSolverModeRequest = 0;
 	uint8 AreaAddressModeRequest = 0;
 	int32 MultigridCyclesRequest = TDFluidGpuSolverConstants::DefaultMultigridCycles;
+	FTDFluidGpuSolverOptionSettings SolverOptions;
 	bool bUsesWaterLayer = false;
 	bool bOpenWaterBorders = true;
 	bool bTreatDryCellsAsSolid = true;

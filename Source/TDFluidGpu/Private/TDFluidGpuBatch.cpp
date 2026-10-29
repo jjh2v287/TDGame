@@ -1,6 +1,7 @@
 #include "TDFluidGpuBatch.h"
 
 #include "TDFluidGpuNearRipple.h"
+#include "TDFluidGpuSolverOptions.h"
 #include "TDFluidGpuStepPasses.h"
 #include "TDFluidGpuFieldInput.h"
 
@@ -77,7 +78,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarTDFluidGpuPressureSolver(
 		TEXT("TD.FluidFX.GpuPressureSolver"),
 		-1,
-		TEXT("GPU fluid pressure solver. Negative: follow the preset field GpuPressureSolverMode, 0: automatic (multigrid V cycles at the 512 tier and above, Jacobi below), 1: Jacobi everywhere, 2: multigrid at the 64 tier and above. Changing it moves GPU fluid actors into new batches and resets their state."),
+		TEXT("GPU fluid pressure solver. Negative: follow the preset field GpuPressureSolverMode, 0: automatic (multigrid V cycles at the 512 tier and above, Jacobi below), 1: Jacobi everywhere, 2: multigrid at the 64 tier and above, 3: kernel feedback (square, not wrapped, not water; otherwise Jacobi). Changing it moves GPU fluid actors into new batches and resets their state."),
 		ECVF_RenderThreadSafe);
 
 	TAutoConsoleVariable<int32> CVarTDFluidGpuPressureCycles(
@@ -391,11 +392,11 @@ namespace
 		Parameters.TerrainSlopeGravity = Settings.TerrainSlopeGravity;
 		Parameters.FlowNoiseAccelerationCmPerSec2 = Settings.FlowNoiseAccelerationCmPerSec2;
 		Parameters.AmbientNoiseAmount = Settings.AmbientNoiseAmount;
-		Parameters.FlowNoiseLatticeOrigin = FlowNoiseLattice.Origin;
+		Parameters.FlowNoiseLatticeOrigin = FlowNoiseLattice.Origin + Settings.SolverOptions.NoiseLatticeOffsetCells;
 		Parameters.FlowNoiseLatticeOffset = FlowNoiseLattice.Offset;
 		Parameters.FlowNoiseLatticeStepPerCell = FlowNoiseLattice.StepPerCell;
 		Parameters.AmbientNoiseLatticeStepPerCell = AmbientNoiseLattice.StepPerCell;
-		Parameters.AmbientNoiseLatticeOrigin = AmbientNoiseLattice.Origin;
+		Parameters.AmbientNoiseLatticeOrigin = AmbientNoiseLattice.Origin + Settings.SolverOptions.NoiseLatticeOffsetCells;
 		Parameters.AmbientNoiseLatticeOffset = AmbientNoiseLattice.Offset;
 		Parameters.FlowNoiseLatticePeriodPacked = FlowNoiseLattice.PeriodPacked;
 		Parameters.AmbientNoiseLatticePeriodPacked = AmbientNoiseLattice.PeriodPacked;
@@ -825,6 +826,15 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 		return BatchKey;
 	}
 	BatchKey.PressureSolver = ResolvePressureSolver(BatchKey.ResolutionTier, Settings.PressureSolverModeRequest);
+	if (BatchKey.PressureSolver == ETDFluidGpuPressureSolver::KernelFeedback)
+	{
+		if (CanTDFluidGpuUseKernelPressure(Settings))
+		{
+			BatchKey.PressureIterations = FMath::Clamp(Settings.SolverOptions.KernelPassesPerProjection, 1, TDFluidGpuSolverOptionConstants::MaximumKernelPassesPerProjection);
+			return BatchKey;
+		}
+		BatchKey.PressureSolver = ETDFluidGpuPressureSolver::Jacobi;
+	}
 	if (BatchKey.PressureSolver == ETDFluidGpuPressureSolver::Multigrid)
 	{
 		BatchKey.MultigridCycles = FMath::Clamp(ResolveIntegerConsoleOverride(CVarTDFluidGpuPressureCycles.GetValueOnAnyThread(), Settings.MultigridCyclesRequest), TDFluidGpuSolverConstants::MinimumMultigridCycles, TDFluidGpuSolverConstants::MaximumMultigridCycles);
@@ -841,6 +851,10 @@ ETDFluidGpuPressureSolver FTDFluidGpuBatch::ResolvePressureSolver(int32 Resoluti
 	if (SolverMode == ForcedJacobiSolverMode)
 	{
 		return ETDFluidGpuPressureSolver::Jacobi;
+	}
+	if (SolverMode == TDFluidGpuSolverOptionConstants::KernelFeedbackPressureSolverModeRequest)
+	{
+		return ETDFluidGpuPressureSolver::KernelFeedback;
 	}
 
 	const int32 MinimumResolution = SolverMode == ForcedMultigridSolverMode ? TDFluidGpuSolverConstants::MultigridMinimumResolution : TDFluidGpuSolverConstants::MultigridAutoMinimumResolution;
@@ -910,6 +924,10 @@ FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMo
 	Estimate.TransientBytes = ResolvePressureSolver(static_cast<int32>(Resolution), PressureSolverModeRequest) == ETDFluidGpuPressureSolver::Multigrid
 		? ComputeMultigridTransientBytes(static_cast<int32>(Resolution))
 		: CellCount * DivergenceCurlBytesPerCell;
+	if (ResolvePressureSolver(static_cast<int32>(Resolution), PressureSolverModeRequest) == ETDFluidGpuPressureSolver::KernelFeedback)
+	{
+		Estimate.TransientBytes = CellCount * TDFluidGpuSolverOptionConstants::KernelTransientBytesPerCell;
+	}
 	Estimate.OutputBytes = CellCount * FluidOutputBytesPerCell;
 	if (bUsesHeatChannel)
 	{
@@ -1235,6 +1253,7 @@ void FTDFluidGpuBatch::BuildFrameParameters(const FTDFluidGpuFrameInputs& FrameI
 		Parameters.StampBinTableOffset = FTDFluidGpuStampBins::AppendToFrame(ActorStampBins, InOutPreparedFrame.StampBins);
 		Parameters.FirstObstacle = static_cast<uint32>(FirstObstacle);
 		Parameters.ObstacleCount = static_cast<uint32>(ObstacleCount);
+		Frame.SolverOptionParameters.Add(MakeTDFluidGpuSolverOptionParameters(Settings, WindowCenter, FMath::Min(Actor.DeltaTimeSeconds, TDFluidGpuSolverConstants::MaximumStepDeltaTimeSeconds), Key.ResolutionTier));
 
 		if (Entry.bNeedsReset)
 		{

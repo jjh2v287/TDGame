@@ -1,5 +1,6 @@
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "Async/ParallelFor.h"
+#include "FluidFX/TDFluidSolverOptionRules.h"
 #include "FluidFX/TDFluidWaterWetnessRules.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/Crc.h"
@@ -141,6 +142,7 @@ namespace
 		InOutConfig.DenseGrowthThreshold = ClampFinite(InOutConfig.DenseGrowthThreshold, 0.0f, 1.0f);
 		InOutConfig.FlowNoiseSpeedMaskReferenceCmPerSec = ClampFinite(InOutConfig.FlowNoiseSpeedMaskReferenceCmPerSec, 0.0f, 1200.0f);
 		ApplyWrappedAreaRules(InOutConfig);
+		TDFluidSolverOptionRules::SanitizeSolverOptions(InOutConfig);
 	}
 
 	bool IsFiniteBrushStamp(const FTDFluidBrushStamp& Stamp)
@@ -399,12 +401,12 @@ namespace
 		return FMath::Max(1, FMath::RoundToInt(static_cast<float>(ExtentCm) / SpacingCm));
 	}
 
-	void BuildPeriodicNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, float SpacingCm, uint32 Seed, double NoiseTime)
+	void BuildPeriodicNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, float SpacingCm, uint32 Seed, double NoiseTime, const FIntPoint& LatticeOffsetCells)
 	{
 		const int32 PeriodX = ResolvePeriodicLatticeCount(Config.SimExtentCm.X, SpacingCm);
 		const int32 PeriodY = ResolvePeriodicLatticeCount(Config.SimExtentCm.Y, SpacingCm);
-		const int32 MinIndexX = BuildNoiseAxis(OutLattice.Columns, Resolution, 0.0, static_cast<double>(PeriodX) / Resolution, 1.0);
-		const int32 MinIndexY = BuildNoiseAxis(OutLattice.Rows, Resolution, 0.0, static_cast<double>(PeriodY) / Resolution, 1.0);
+		const int32 MinIndexX = BuildNoiseAxis(OutLattice.Columns, Resolution, 0.0, static_cast<double>(PeriodX) / Resolution, 1.0) + LatticeOffsetCells.X;
+		const int32 MinIndexY = BuildNoiseAxis(OutLattice.Rows, Resolution, 0.0, static_cast<double>(PeriodY) / Resolution, 1.0) + LatticeOffsetCells.Y;
 
 		const int32 Width = OutLattice.Columns[Resolution - 1].LatticeIndex + 2;
 		const int32 Height = OutLattice.Rows[Resolution - 1].LatticeIndex + 2;
@@ -421,17 +423,17 @@ namespace
 		}
 	}
 
-	void BuildNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, const FVector2D& CenterWorld, float SpacingCm, uint32 Seed, double SimulationTimeSeconds)
+	void BuildNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, const FVector2D& CenterWorld, float SpacingCm, uint32 Seed, double SimulationTimeSeconds, const FIntPoint& LatticeOffsetCells)
 	{
 		const double InverseSpacing = 1.0 / static_cast<double>(SpacingCm);
 		const double NoiseTime = static_cast<double>(Config.FlowNoiseSpeed) * SimulationTimeSeconds;
 		if (Config.AreaAddressMode == ETDFluidAreaAddressMode::Wrap)
 		{
-			BuildPeriodicNoiseLattice(OutLattice, Config, Resolution, SpacingCm, Seed, NoiseTime);
+			BuildPeriodicNoiseLattice(OutLattice, Config, Resolution, SpacingCm, Seed, NoiseTime, LatticeOffsetCells);
 			return;
 		}
-		const int32 MinIndexX = BuildNoiseAxis(OutLattice.Columns, Resolution, CenterWorld.X - 0.5 * Config.SimExtentCm.X, Config.SimExtentCm.X / Resolution, InverseSpacing);
-		const int32 MinIndexY = BuildNoiseAxis(OutLattice.Rows, Resolution, CenterWorld.Y - 0.5 * Config.SimExtentCm.Y, Config.SimExtentCm.Y / Resolution, InverseSpacing);
+		const int32 MinIndexX = BuildNoiseAxis(OutLattice.Columns, Resolution, CenterWorld.X - 0.5 * Config.SimExtentCm.X, Config.SimExtentCm.X / Resolution, InverseSpacing) + LatticeOffsetCells.X;
+		const int32 MinIndexY = BuildNoiseAxis(OutLattice.Rows, Resolution, CenterWorld.Y - 0.5 * Config.SimExtentCm.Y, Config.SimExtentCm.Y / Resolution, InverseSpacing) + LatticeOffsetCells.Y;
 
 		const int32 Width = OutLattice.Columns[Resolution - 1].LatticeIndex + 2;
 		const int32 Height = OutLattice.Rows[Resolution - 1].LatticeIndex + 2;
@@ -448,14 +450,14 @@ namespace
 		}
 	}
 
-	void BuildFlowNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, const FVector2D& CenterWorld, double SimulationTimeSeconds)
+	void BuildFlowNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, const FVector2D& CenterWorld, double SimulationTimeSeconds, const FIntPoint& LatticeOffsetCells)
 	{
-		BuildNoiseLattice(OutLattice, Config, Resolution, CenterWorld, ResolveNoiseSpacingCm(Config, Resolution, 1.0f), FlowNoiseSeed, SimulationTimeSeconds);
+		BuildNoiseLattice(OutLattice, Config, Resolution, CenterWorld, ResolveNoiseSpacingCm(Config, Resolution, 1.0f), FlowNoiseSeed, SimulationTimeSeconds, LatticeOffsetCells);
 	}
 
-	void BuildAmbientNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, const FVector2D& CenterWorld, double SimulationTimeSeconds)
+	void BuildAmbientNoiseLattice(FTDFluidNoiseLattice& OutLattice, const FTDFluidSimulationConfig& Config, int32 Resolution, const FVector2D& CenterWorld, double SimulationTimeSeconds, const FIntPoint& LatticeOffsetCells)
 	{
-		BuildNoiseLattice(OutLattice, Config, Resolution, CenterWorld, ResolveNoiseSpacingCm(Config, Resolution, AmbientNoiseScaleMultiplier), AmbientNoiseSeed, SimulationTimeSeconds);
+		BuildNoiseLattice(OutLattice, Config, Resolution, CenterWorld, ResolveNoiseSpacingCm(Config, Resolution, AmbientNoiseScaleMultiplier), AmbientNoiseSeed, SimulationTimeSeconds, LatticeOffsetCells);
 	}
 
 	void EvaluateFlowNoiseRow(const FTDFluidNoiseLattice& Lattice, int32 Resolution, int32 RowIndex, float Amplitude, float* OutAccelerationX, float* OutAccelerationY)
@@ -1202,7 +1204,7 @@ void FTDFluidGrid2DSolver::ComputeFlowNoiseAccelerationField(TArray<FVector2D>& 
 	}
 
 	FTDFluidNoiseLattice Lattice;
-	BuildFlowNoiseLattice(Lattice, Config, GridSize, CenterWorld, SimulationTimeSeconds);
+	BuildFlowNoiseLattice(Lattice, Config, GridSize, CenterWorld, SimulationTimeSeconds, NoiseLatticeOffsetCells);
 
 	const float Amplitude = Config.FlowNoiseAccelerationCmPerSec2;
 	FVector2D* AccelerationValues = OutAccelerationCmPerSec2.GetData();
@@ -1256,7 +1258,7 @@ void FTDFluidGrid2DSolver::RefillAmbientDensityWithNoise(float RefillBlend)
 	TRACE_CPUPROFILER_EVENT_SCOPE(TDFluid_RefillAmbientNoise);
 
 	FTDFluidNoiseLattice Lattice;
-	BuildAmbientNoiseLattice(Lattice, Config, Resolution, CenterWorld, SimulationTimeSeconds);
+	BuildAmbientNoiseLattice(Lattice, Config, Resolution, CenterWorld, SimulationTimeSeconds, NoiseLatticeOffsetCells);
 
 	const int32 GridSize = Resolution;
 	const float AmbientDensity = Config.AmbientDensity;
@@ -1330,6 +1332,7 @@ void FTDFluidGrid2DSolver::StepFluidSim(float DeltaTime)
 	ApplyBuoyancyAcceleration(DeltaTime);
 	ApplyHeatBuoyancyAcceleration(DeltaTime);
 	ApplyVortexAcceleration(DeltaTime);
+	ApplyFlowAmplitudeNoiseDamping(DeltaTime);
 	EnforceObstacleBoundaries();
 	ApplyVorticityConfinement(DeltaTime);
 	SolvePressureProjection();
@@ -1346,6 +1349,7 @@ void FTDFluidGrid2DSolver::StepFluidSim(float DeltaTime)
 	SolvePressureProjection();
 	EnforceObstacleBoundaries();
 	AccumulateVortexRadialDrift();
+	AccumulateAdvectionOffset();
 
 	const bool bAppliesRadialPush = bHasPendingRadialPush;
 	if (bAppliesRadialPush)
@@ -1453,7 +1457,7 @@ void FTDFluidGrid2DSolver::ApplyFlowNoiseAcceleration(float DeltaTime)
 	}
 
 	FTDFluidNoiseLattice Lattice;
-	BuildFlowNoiseLattice(Lattice, Config, Resolution, CenterWorld, SimulationTimeSeconds);
+	BuildFlowNoiseLattice(Lattice, Config, Resolution, CenterWorld, SimulationTimeSeconds, NoiseLatticeOffsetCells);
 
 	const int32 GridSize = Resolution;
 	const float Amplitude = Config.FlowNoiseAccelerationCmPerSec2;
@@ -1831,7 +1835,14 @@ void FTDFluidGrid2DSolver::SolvePressureProjection()
 	const float PressureDisplayScale = SmallestCellSizeCm / (PressureNormalizationCmPerSec * PressureReferenceCellSizeCm);
 
 	ComputeVelocityDivergence(SpacingX, SpacingY);
-	RelaxPressureJacobi(InvSpacingXSquared, InvSpacingYSquared, InvNeighborWeightSum);
+	if (UsesKernelPressure())
+	{
+		RelaxPressureKernelFeedback();
+	}
+	else
+	{
+		RelaxPressureJacobi(InvSpacingXSquared, InvSpacingYSquared, InvNeighborWeightSum);
+	}
 	RemoveMeanPressure();
 	SubtractPressureGradient(SpacingX, SpacingY, PressureDisplayScale);
 }

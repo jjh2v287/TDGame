@@ -1,10 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FluidFX/TDFluidInputPersistence.h"
 #include "FluidFX/TDFluidTerrainCollisionMask.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "GameFramework/Actor.h"
+#include "InputCoreTypes.h"
 #include "UObject/ObjectKey.h"
 #include "TDFluidLiveActor.generated.h"
 
@@ -107,6 +109,30 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction", meta = (ClampMin = "5.0"))
 	float MouseBrushRadiusCm = 120.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction")
+	TArray<TEnumAsByte<EObjectTypeQuery>> InteractionObjectTypes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction")
+	TArray<FName> TrackedActorTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction")
+	TArray<TSoftObjectPtr<AActor>> ExcludedActors;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction")
+	bool bInteractWithOwner = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction")
+	TArray<FName> OwnerBoneNames;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction")
+	TArray<FName> OwnerComponentNames;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction")
+	ETDFluidPointerInputMode PointerInputMode = ETDFluidPointerInputMode::Off;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveInteraction")
+	FKey MouseBrushKey = EKeys::MiddleMouseButton;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveTerrain")
 	bool bSampleTerrainElevation = false;
 
@@ -150,7 +176,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void EvaluateActivationProximity(const FVector& ObserverWorldLocation);
 
-	void QueueMouseBrushAt(const FVector& CursorWorldLocation, float DeltaTime);
+	void QueueMouseBrushAt(const FVector& CursorWorldLocation, float DeltaTime) { QueuePointerBrushAt(-1, CursorWorldLocation, DeltaTime); }
+	void QueuePointerBrushAt(int32 PointerIndex, const FVector& PointerWorldLocation, float DeltaTime);
+	void HarvestInteractionsForTests(float DeltaTime) { CollectOverlappingAndRegisteredInputs(DeltaTime); }
 
 	void StepLiveActor(float DeltaTime);
 	bool BeginLiveActorStep(float DeltaTime);
@@ -192,7 +220,7 @@ private:
 
 	void SyncVolumeExtentsWithSimulation();
 	void CollectOverlappingAndRegisteredInputs(float DeltaTime);
-	void HarvestActorInteractionStamps(AActor* TargetActor, float DeltaTime);
+	void HarvestActorInteractionStamps(AActor* TargetActor, float DeltaTime, const FBox& TargetBounds, bool bIsOwnerCandidate);
 	void BindCombatComponentIfPresent(AActor* TargetActor);
 	void PruneInvalidCombatBindings();
 	void ReleaseCombatBindings();
@@ -226,6 +254,20 @@ private:
 	void UpdatePlaneBasis();
 	void PlaceChildrenOnSolverPlane();
 	bool ResolveMouseBrushWorldLocation(const APlayerController& Controller, FVector& OutLocation) const;
+	bool AdvancePointerStroke(int32 PointerIndex, const FVector& PointerWorldLocation, FVector& OutPreviousLocation);
+	void ForgetPointerStroke(int32 PointerIndex);
+	ETDFluidPointerInputMode ResolveEffectivePointerInputMode() const;
+	void PollPointerInput(float DeltaTime);
+	void PollTouchPointers(const APlayerController* Controller, ETDFluidPointerInputMode EffectivePointerMode, float DeltaTime);
+	bool ResolveTouchWorldLocation(const APlayerController& Controller, const FVector2D& ScreenPosition, FVector& OutLocation) const;
+	void EmitLingeringInteractionStamps(float DeltaTime);
+	void RecordLingeringInteractionStamp(const FTDFluidInputSourceKey& SourceKey, const FTDFluidBrushStamp& Stamp);
+	AActor* ResolveInteractionOwnerCandidate() const;
+	void HarvestOwnerInteraction(AActor* OwnerCandidate, float DeltaTime);
+	FBox ResolveHarvestBounds(const AActor& Candidate) const;
+	bool PassesHarvestFilter(const AActor& Candidate, bool bIsOverlapCandidate, const FBox& CandidateBounds) const;
+	FVector ResolveHarvestPivotLocation(const AActor& TargetActor, const FBox& TargetBounds) const;
+	void ApplyHarvestObjectSize(FTDFluidBrushStamp& Stamp, const FVector& WorldScale, const FBox* TargetBounds) const;
 
 	TArray<TWeakObjectPtr<AActor>> RegisteredInteractingActors;
 	TMap<FObjectKey, FVector> PreviousActorLocations;
@@ -237,7 +279,7 @@ private:
 	int32 GroundTracesThisTick = 0;
 
 	FTDFluidTrackGroundPlane TraceTrackGroundPlane(const AActor& TargetActor);
-	void QueueTrackStroke(FTDFluidBrushStamp Stamp, const FVector& PreviousLocation, const FTDFluidInputBrushSettings& Settings, const FTDFluidTrackGroundPlane& GroundPlane);
+	void QueueTrackStroke(FTDFluidBrushStamp Stamp, const FVector& PreviousLocation, const FTDFluidInputBrushSettings& Settings, const FTDFluidTrackGroundPlane& GroundPlane, bool bInterpolates);
 	void HarvestTrackSourceStamps(AActor& TargetActor, float DeltaTime, const FTDFluidInputBrushSettings& Settings, const FTDFluidTrackGroundPlane& GroundPlane);
 	TMap<FObjectKey, FTDFluidCombatBinding> CombatBindings;
 	TArray<FIntPoint> PendingTerrainCells;
@@ -266,6 +308,8 @@ private:
 	FVector PreviousMouseBrushLocation = FVector::ZeroVector;
 
 	bool bHasPreviousMouseBrushLocation = false;
+	FTDFluidInputPersistence InputPersistence;
+	TMap<int32, FVector> PreviousPointerLocations;
 	bool bIsPooledInactive = false;
 	bool bHasFiniteLifetime = false;
 	bool bHasSteppedWhileAwake = false;

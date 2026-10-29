@@ -4,6 +4,7 @@
 #include "ProfilingDebugging/CsvProfiler.h"
 #include "RenderGraphBuilder.h"
 #include "TDFluidGpuBatch.h"
+#include "TDFluidGpuFieldInput.h"
 
 CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
@@ -359,6 +360,10 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.MaxCellSpeedCmPerSec = Config.MaxCellSpeedCmPerSec;
 	SimulationSettings.BrushVelocityResponsePerSec = Config.BrushVelocityResponsePerSec;
 	SimulationSettings.BrushDisplacementRatio = Config.BrushDisplacementRatio;
+	SimulationSettings.DensityAccumulationPerSec = Config.DensityAccumulationPerSec;
+	SimulationSettings.DenseDensityCeiling = Config.DenseDensityCeiling;
+	SimulationSettings.DenseGrowthThreshold = Config.DenseGrowthThreshold;
+	SimulationSettings.FlowNoiseSpeedMaskReferenceCmPerSec = Config.FlowNoiseSpeedMaskReferenceCmPerSec;
 	SimulationSettings.TrackBankStrength = Config.SimMode == ETDFluidSimMode::SimplePainter ? Config.TrackBankStrength : 0.0f;
 	SimulationSettings.TrackBankBlurRadiusCm = Config.TrackBankBlurRadiusCm;
 	SimulationSettings.TrackBankHeightLimit = Config.TrackBankHeightLimit;
@@ -418,6 +423,7 @@ FTDFluidGpuStampInput FTDFluidGpuSolverProxy::MakeStampInput(const FTDFluidBrush
 	StampInput.ShapeAspectRatio = PlaneStamp.ShapeAspectRatio;
 	StampInput.ShapeHardness = PlaneStamp.ShapeHardness;
 	StampInput.ShapeMajorAxisPlane = FVector2D(PlaneStamp.ShapeMajorAxis.X, PlaneStamp.ShapeMajorAxis.Y);
+	StampInput.bAddsDensity = PlaneStamp.bAddsDensity;
 	return StampInput;
 }
 
@@ -698,6 +704,14 @@ bool FTDFluidGpuSolverProxy::GatherStep(
 	OutActorInput.bHasObstacleListChanged = bHasObstacleListChanged;
 	OutActorInput.Stamps = MoveTemp(PreparedStamps);
 	OutActorInput.MassPoints = MoveTemp(PreparedMassPoints);
+	OutActorInput.FieldInputs = MoveTemp(PreparedFieldInputs);
+	const bool bHasCollisionField = TDFluidGpuFieldInput::HasCollisionField(OutActorInput);
+	if (bHasCollisionField || bHadCollisionField)
+	{
+		bHasObstacleListChanged = true;
+		OutActorInput.bHasObstacleListChanged = true;
+	}
+	bHadCollisionField = bHasCollisionField;
 	OutActorInput.Obstacles = Obstacles;
 	if (OutActorInput.bHasTerrainElevation)
 	{

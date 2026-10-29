@@ -30,7 +30,9 @@ enum class ETDFluidGpuActorFlags : uint32
 	WritesAuxOutput = 1u << 17,
 	ConsumesMassInput = 1u << 18,
 	UsesTrackBank = 1u << 19,
-	WritesPainterVelocity = 1u << 20
+	WritesPainterVelocity = 1u << 20,
+	UsesDenseDensity = 1u << 21,
+	UsesFlowNoiseSpeedMask = 1u << 22
 };
 ENUM_CLASS_FLAGS(ETDFluidGpuActorFlags);
 
@@ -152,8 +154,14 @@ struct alignas(16) FTDFluidGpuActorParameters
 	float TrackBankHeightLimit = 0.0f;
 	uint32 TrackBankRadiusCells = 1;
 	uint32 TrackBankPadding = 0;
+
+	float DenseDensityCeiling = 1.0f;
+	float DenseGrowthFactor = 1.0f;
+	float DenseGrowthThreshold = 0.0f;
+	float FlowNoiseSpeedMaskInverseCmPerSec = 0.0f;
 };
-static_assert(sizeof(FTDFluidGpuActorParameters) == 304, "FTDFluidGpuActorParameters must match the 304 byte shader layout.");
+static_assert(sizeof(FTDFluidGpuActorParameters) == 320, "FTDFluidGpuActorParameters must match the 320 byte shader layout.");
+static_assert(offsetof(FTDFluidGpuActorParameters, DenseDensityCeiling) == 304, "FTDFluidGpuActorParameters::DenseDensityCeiling must stay at byte 304.");
 static_assert(offsetof(FTDFluidGpuActorParameters, TrackBankStrength) == 288, "FTDFluidGpuActorParameters::TrackBankStrength must stay at byte 288.");
 static_assert(offsetof(FTDFluidGpuActorParameters, FlowNoiseLatticePeriodPacked) == 280, "FTDFluidGpuActorParameters::FlowNoiseLatticePeriodPacked must stay at byte 280.");
 static_assert(offsetof(FTDFluidGpuActorParameters, AmbientNoiseLatticePeriodPacked) == 284, "FTDFluidGpuActorParameters::AmbientNoiseLatticePeriodPacked must stay at byte 284.");

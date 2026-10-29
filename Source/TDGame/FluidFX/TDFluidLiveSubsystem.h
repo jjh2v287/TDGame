@@ -14,6 +14,7 @@ class ATDFluidRiverActor;
 class FTDFluidGpuSolverRenderState;
 class FTDFluidMassInputHub;
 class UTDFluidObstacleComponent;
+class UTDFluidFieldInputComponent;
 struct FTDFluidSdfObstacle;
 class ULevel;
 class UMaterialInstanceDynamic;
@@ -144,6 +145,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	int32 BindLandscapeMaterialViaTag(FName LiveActorTag, UMaterialInstanceDynamic* LandscapeMID);
+	int32 BroadcastSharedBrushStamps(TConstArrayView<FTDFluidBrushStamp> Stamps);
+	void RegisterFieldInputSource(UTDFluidFieldInputComponent* FieldInputSource);
+	void UnregisterFieldInputSource(UTDFluidFieldInputComponent* FieldInputSource);
 
 	void RegisterFlowGuideSource(ATDFluidRiverActor* River);
 	void UnregisterFlowGuideSource(ATDFluidRiverActor* River);
@@ -242,6 +246,9 @@ private:
 	TSharedPtr<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe> GpuSolverRenderState;
 	TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe> MassInputHub;
 	TArray<TWeakObjectPtr<UTDFluidObstacleComponent>> ObstacleSources;
+	TArray<TWeakObjectPtr<UTDFluidFieldInputComponent>> FieldInputSources;
+	bool bHasDistributedFieldInputs = false;
+	void DistributeFieldInputs(float DeltaTime);
 	bool bObstacleSourcesDirty = false;
 	double LastMassInputReadSeconds = 0.0;
 	double LastMassInputPublishSeconds = 0.0;

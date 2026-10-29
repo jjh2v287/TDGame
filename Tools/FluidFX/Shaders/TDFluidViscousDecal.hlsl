@@ -1,0 +1,14 @@
+float viscousCellCm = viscousSize.x / max(SimGridResolution, 2.0);
+float viscousEastCm = 0.0;
+float viscousWestCm = 0.0;
+float viscousNorthCm = 0.0;
+float viscousSouthCm = 0.0;
+TD_VISCOUS_HEIGHT_AT(ViscousPosition.xy + float2(viscousCellCm, 0.0), viscousEastCm);
+TD_VISCOUS_HEIGHT_AT(ViscousPosition.xy - float2(viscousCellCm, 0.0), viscousWestCm);
+TD_VISCOUS_HEIGHT_AT(ViscousPosition.xy + float2(0.0, viscousCellCm), viscousNorthCm);
+TD_VISCOUS_HEIGHT_AT(ViscousPosition.xy - float2(0.0, viscousCellCm), viscousSouthCm);
+float2 viscousSlope = float2(viscousEastCm - viscousWestCm, viscousNorthCm - viscousSouthCm) / (2.0 * viscousCellCm) * ViscousNormalStrength;
+ViscousNormalWS = normalize(float3(-viscousSlope, 1.0));
+float viscousSelective = saturate(viscousTap.b / max(viscousTap.r, 0.001));
+float3 viscousColor = lerp(ViscousBaseColor, ViscousSelectiveColor, viscousSelective);
+return float4(viscousColor, viscousCoverage * saturate(viscousTap.a) * viscousInside * saturate(ViscousDecalOpacity));

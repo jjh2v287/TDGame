@@ -102,6 +102,14 @@ struct TDGAME_API FTDFluidDownstreamFeedSettings
 	float HeatScale = 0.0f;
 };
 
+UENUM(BlueprintType)
+enum class ETDFluidFragmentInputMode : uint8
+{
+	Points,
+	Footprint,
+	PointsAndFootprint
+};
+
 USTRUCT(BlueprintType)
 struct TDGAME_API FTDFluidFragmentTrailSettings
 {
@@ -232,6 +240,21 @@ struct TDGAME_API FTDFluidFragmentTrailSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float RestingDensityStrength = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
+	ETDFluidFragmentInputMode FragmentInputMode = ETDFluidFragmentInputMode::Points;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float FootprintDensityStrength = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float FootprintVelocityStrength = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "0.95"))
+	float FootprintHardness = 0.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "0.0", ClampMax = "1000.0"))
+	float FootprintMaxHeightCm = 0.0f;
 };
 
 USTRUCT(BlueprintType)

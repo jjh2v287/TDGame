@@ -89,6 +89,8 @@ namespace TDFluidGpuSolverConstants
 	inline constexpr float WaterRippleCourantLimitRaw = 32.0f;
 	inline constexpr float WaterRippleCourantTargetRaw = 28.8f;
 	inline constexpr float WaterHalfPressureDirichletBaseScale = 0.5f;
+	inline constexpr int32 MaximumFieldTexturesPerBatch = 4;
+	inline constexpr int32 MaximumFieldInputsPerActor = 4;
 }
 
 enum class ETDFluidGpuSimMode : uint8
@@ -114,6 +116,38 @@ struct FTDFluidGpuStampInput
 	float ShapeAspectRatio = 1.0f;
 	float ShapeHardness = 0.0f;
 	FVector2D ShapeMajorAxisPlane = FVector2D::ZeroVector;
+	bool bAddsDensity = false;
+};
+
+class FTextureResource;
+
+struct FTDFluidGpuFieldInput
+{
+	FTextureResource* Texture = nullptr;
+	FVector2D CenterPlaneCm = FVector2D::ZeroVector;
+	FVector2D AxisXPlane = FVector2D(1.0, 0.0);
+	FVector2D HalfSizeCm = FVector2D(100.0, 100.0);
+	FVector2D MotionPlaneCmPerSec = FVector2D::ZeroVector;
+	FVector2D UVOffset = FVector2D::ZeroVector;
+	float UVTileCount = 1.0f;
+	float UVRotationRadians = 0.0f;
+	uint8 LayoutRequest = 0;
+	bool bSignedVelocity = false;
+	bool bWritesCollision = false;
+	bool bFillsInterior = false;
+	bool bErasesDensity = false;
+	bool bTiled = false;
+	float EraseRatePerSec = 0.0f;
+	float DensityScale = 1.0f;
+	float VelocityScale = 1.0f;
+	float VelocityRangeCmPerSec = 0.0f;
+	float CollisionEdgeCm = 1.0f;
+	float ContourBandCm = 0.0f;
+	float ContourDensityStrength = 0.0f;
+	float OutwardVelocityCmPerSec = 0.0f;
+	float MotionVelocityStrength = 0.0f;
+	float ContourNoiseAmount = 0.0f;
+	float ContourNoiseScaleCm = 100.0f;
 };
 
 struct FTDFluidGpuObstacleInput
@@ -206,6 +240,10 @@ struct FTDFluidGpuSimulationSettings
 	float WetnessDryingSeconds = 8.0f;
 	bool bWritesObstacleDistanceAux = false;
 	float ObstacleDistanceOutputRangeCm = 400.0f;
+	float DensityAccumulationPerSec = 0.0f;
+	float DenseDensityCeiling = 1.0f;
+	float DenseGrowthThreshold = 0.1f;
+	float FlowNoiseSpeedMaskReferenceCmPerSec = 0.0f;
 };
 
 struct FTDFluidGpuTransmittanceInput
@@ -276,6 +314,7 @@ struct FTDFluidGpuActorInput
 	bool bRefreshesObstacleDistanceAux = false;
 	TArray<FTDFluidGpuStampInput> Stamps;
 	TArray<FTDFluidGpuMassPointInput> MassPoints;
+	TArray<FTDFluidGpuFieldInput> FieldInputs;
 	TArray<FTDFluidGpuObstacleInput> Obstacles;
 	TArray<FTDFluidGpuTerrainCellUpdate> TerrainElevationUpdates;
 	FTextureRenderTargetResource* DensityPressureOutput = nullptr;

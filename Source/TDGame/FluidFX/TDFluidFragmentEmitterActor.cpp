@@ -307,9 +307,38 @@ void ATDFluidFragmentEmitterActor::BeginFragmentTracking(const FVector& CenterWo
 	ApplyFragmentGlowMaterial();
 }
 
+namespace
+{
+	FBox FootprintResolveLeafLocalBounds(const FGeometryCollection& Collection, int32 TransformIndex)
+	{
+		const int32 GeometryIndex = Collection.TransformToGeometryIndex.IsValidIndex(TransformIndex) ? Collection.TransformToGeometryIndex[TransformIndex] : INDEX_NONE;
+		if (!Collection.BoundingBox.IsValidIndex(GeometryIndex))
+		{
+			return FBox(ForceInit);
+		}
+
+		const FBox& StoredBounds = Collection.BoundingBox[GeometryIndex];
+		if (StoredBounds.IsValid || !Collection.VertexStart.IsValidIndex(GeometryIndex) || !Collection.VertexCount.IsValidIndex(GeometryIndex))
+		{
+			return StoredBounds;
+		}
+
+		FBox VertexBounds(ForceInit);
+		const int32 FirstVertex = Collection.VertexStart[GeometryIndex];
+		const int32 EndVertex = FirstVertex + Collection.VertexCount[GeometryIndex];
+		for (int32 VertexIndex = FirstVertex; VertexIndex < EndVertex && Collection.Vertex.IsValidIndex(VertexIndex); ++VertexIndex)
+		{
+			VertexBounds += FVector(Collection.Vertex[VertexIndex]);
+		}
+		return VertexBounds;
+	}
+}
+
 void ATDFluidFragmentEmitterActor::CollectLeafTransformIndices(const UGeometryCollectionComponent& Component)
 {
 	LeafTransformIndices.Reset();
+	LeafLocalBounds.Reset();
+	LeafMassToLocalTransforms.Reset();
 
 	const UGeometryCollection* RestCollection = Component.GetRestCollection();
 	if (!RestCollection)
@@ -324,11 +353,14 @@ void ATDFluidFragmentEmitterActor::CollectLeafTransformIndices(const UGeometryCo
 	}
 
 	const int32 TransformCount = Collection->NumElements(FGeometryCollection::TransformGroup);
+	const TManagedArray<FTransform>* MassToLocalAttribute = Collection->FindAttribute<FTransform>("MassToLocal", FGeometryCollection::TransformGroup);
 	for (int32 TransformIndex = 0; TransformIndex < TransformCount; ++TransformIndex)
 	{
 		if (Collection->IsRigid(TransformIndex))
 		{
 			LeafTransformIndices.Add(TransformIndex);
+			LeafLocalBounds.Add(FootprintResolveLeafLocalBounds(*Collection, TransformIndex));
+			LeafMassToLocalTransforms.Add(MassToLocalAttribute && MassToLocalAttribute->IsValidIndex(TransformIndex) ? (*MassToLocalAttribute)[TransformIndex] : FTransform::Identity);
 		}
 	}
 }
@@ -348,6 +380,14 @@ void ATDFluidFragmentEmitterActor::CaptureLeafWorldPositions(UGeometryCollection
 	{
 		OutPositions.Add(ComponentTransform.TransformPosition(LeafTransform.GetTranslation()));
 	}
+}
+
+void ATDFluidFragmentEmitterActor::CaptureLeafPoses(UGeometryCollectionComponent& Component, FTDFluidFragmentLeafPoses& OutLeafPoses) const
+{
+	OutLeafPoses.LocalBounds = LeafLocalBounds;
+	OutLeafPoses.MassToLocalTransforms = LeafMassToLocalTransforms;
+	OutLeafPoses.CurrentTransforms = Component.GetCurrentTransformsFromIndices(LeafTransformIndices);
+	OutLeafPoses.ComponentTransform = Component.GetComponentTransform();
 }
 
 void ATDFluidFragmentEmitterActor::StampBurst(const FVector& CenterWorld)
@@ -433,6 +473,11 @@ void ATDFluidFragmentEmitterActor::StepFragmentTracking(float DeltaSeconds)
 	PositionHistory.PushFrame(CurrentPositions);
 	TArray<FVector> LaggedPositions;
 	PositionHistory.GetLaggedFrame(TrailSettings.SmokeTrailLagFrames, LaggedPositions);
+	FTDFluidFragmentLeafPoses LeafPoses;
+	if (TrailSettings.FragmentInputMode != ETDFluidFragmentInputMode::Points)
+	{
+		CaptureLeafPoses(*Component, LeafPoses);
+	}
 
 	SustainBurst();
 
@@ -445,7 +490,7 @@ void ATDFluidFragmentEmitterActor::StepFragmentTracking(float DeltaSeconds)
 		TArray<FTDFluidBrushStamp> TargetStamps;
 		if (Target.bReceivesTrails)
 		{
-			BuildTargetTrailStamps(Target, PreviousPositions, CurrentPositions, LaggedPositions, StepSeconds, static_cast<float>(BurstCenterWorld.Z), TrailSettings, TargetStamps, TargetIndex == 0 ? &StampedLeafIndices : nullptr, TrackingElapsedSeconds);
+			BuildTargetInputStamps(Target, LeafPoses, PreviousPositions, CurrentPositions, LaggedPositions, StepSeconds, static_cast<float>(BurstCenterWorld.Z), TrailSettings, TargetStamps, TargetIndex == 0 ? &StampedLeafIndices : nullptr, TrackingElapsedSeconds);
 		}
 
 		TArray<FTDFluidBrushStamp> RestingStamps;
@@ -917,4 +962,121 @@ void ATDFluidFragmentEmitterActor::BuildBurstStamps(
 	{
 		AppendFireBurstLobeStamps(CenterWorld, PlaneBasis, Settings, Settings.BurstCoreRadiusCm * RadiusScale, DensityStrength, HeatStrength, OutStamps);
 	}
+}
+
+void ATDFluidFragmentEmitterActor::BuildTargetInputStamps(
+	const FTDFluidFragmentTarget& Target,
+	const FTDFluidFragmentLeafPoses& LeafPoses,
+	const TArray<FVector>& PreviousPositions,
+	const TArray<FVector>& CurrentPositions,
+	const TArray<FVector>& LaggedPositions,
+	float DeltaTime,
+	float BurstCenterZ,
+	const FTDFluidFragmentTrailSettings& Settings,
+	TArray<FTDFluidBrushStamp>& OutStamps,
+	TArray<int32>* OutStampedLeafIndices,
+	float ElapsedSeconds)
+{
+	if (Settings.FragmentInputMode != ETDFluidFragmentInputMode::Footprint)
+	{
+		BuildTargetTrailStamps(Target, PreviousPositions, CurrentPositions, LaggedPositions, DeltaTime, BurstCenterZ, Settings, OutStamps, OutStampedLeafIndices, ElapsedSeconds);
+	}
+
+	if (Settings.FragmentInputMode != ETDFluidFragmentInputMode::Points)
+	{
+		BuildTargetFootprintStamps(Target, LeafPoses, PreviousPositions, CurrentPositions, DeltaTime, Settings, OutStamps);
+	}
+}
+
+void ATDFluidFragmentEmitterActor::BuildTargetFootprintStamps(
+	const FTDFluidFragmentTarget& Target,
+	const FTDFluidFragmentLeafPoses& LeafPoses,
+	const TArray<FVector>& PreviousPositions,
+	const TArray<FVector>& CurrentPositions,
+	float DeltaTime,
+	const FTDFluidFragmentTrailSettings& Settings,
+	TArray<FTDFluidBrushStamp>& OutStamps)
+{
+	const int32 LeafCount = FMath::Min3(LeafPoses.LocalBounds.Num(), LeafPoses.MassToLocalTransforms.Num(), LeafPoses.CurrentTransforms.Num());
+	const double TargetActorZ = Target.TargetActor ? Target.TargetActor->GetActorLocation().Z : 0.0;
+	for (int32 LeafIndex = 0; LeafIndex < LeafCount; ++LeafIndex)
+	{
+		const bool bHasLeafMotion = DeltaTime > UE_SMALL_NUMBER && PreviousPositions.IsValidIndex(LeafIndex) && CurrentPositions.IsValidIndex(LeafIndex);
+		const FVector LeafVelocity = bHasLeafMotion ? (CurrentPositions[LeafIndex] - PreviousPositions[LeafIndex]) / DeltaTime : FVector::ZeroVector;
+		FTDFluidBrushStamp FootprintStamp;
+		if (BuildFootprintStamp(LeafPoses.LocalBounds[LeafIndex], LeafPoses.MassToLocalTransforms[LeafIndex], LeafPoses.CurrentTransforms[LeafIndex], LeafPoses.ComponentTransform, LeafVelocity, TargetActorZ, Target, Settings, FootprintStamp))
+		{
+			OutStamps.Add(FootprintStamp);
+		}
+	}
+}
+
+bool ATDFluidFragmentEmitterActor::BuildFootprintStamp(
+	const FBox& LeafBounds,
+	const FTransform& MassToLocal,
+	const FTransform& LeafCurrentTransform,
+	const FTransform& ComponentTransform,
+	const FVector& LeafVelocity,
+	double TargetActorZ,
+	const FTDFluidFragmentTarget& Target,
+	const FTDFluidFragmentTrailSettings& Settings,
+	FTDFluidBrushStamp& OutStamp)
+{
+	if (!LeafBounds.IsValid)
+	{
+		return false;
+	}
+
+	const FTransform LeafToWorld = MassToLocal.Inverse() * LeafCurrentTransform * ComponentTransform;
+	const FVector LocalExtent = LeafBounds.GetExtent();
+	const FVector WorldCenter = LeafToWorld.TransformPosition(LeafBounds.GetCenter());
+	const FVector WorldHalfAxes[3] = {
+		LeafToWorld.TransformVector(FVector(LocalExtent.X, 0.0, 0.0)),
+		LeafToWorld.TransformVector(FVector(0.0, LocalExtent.Y, 0.0)),
+		LeafToWorld.TransformVector(FVector(0.0, 0.0, LocalExtent.Z)) };
+
+	int32 MajorAxisIndex = 0;
+	for (int32 AxisIndex = 1; AxisIndex < 3; ++AxisIndex)
+	{
+		if (WorldHalfAxes[AxisIndex].Size2D() > WorldHalfAxes[MajorAxisIndex].Size2D())
+		{
+			MajorAxisIndex = AxisIndex;
+		}
+	}
+
+	const FVector2D MajorDirection = FVector2D(WorldHalfAxes[MajorAxisIndex].X, WorldHalfAxes[MajorAxisIndex].Y).GetSafeNormal();
+	if (MajorDirection.IsNearlyZero())
+	{
+		return false;
+	}
+
+	double MajorHalfLengthCm = 0.0;
+	double MinorHalfLengthCm = 0.0;
+	double VerticalHalfExtentCm = 0.0;
+	for (const FVector& WorldHalfAxis : WorldHalfAxes)
+	{
+		const FVector2D PlanarHalfAxis(WorldHalfAxis.X, WorldHalfAxis.Y);
+		MajorHalfLengthCm += FMath::Abs(FVector2D::DotProduct(PlanarHalfAxis, MajorDirection));
+		MinorHalfLengthCm += FMath::Abs(FVector2D::CrossProduct(MajorDirection, PlanarHalfAxis));
+		VerticalHalfExtentCm += FMath::Abs(WorldHalfAxis.Z);
+	}
+
+	const double BottomZ = WorldCenter.Z - VerticalHalfExtentCm;
+	if (Settings.FootprintMaxHeightCm > 0.0f && BottomZ - TargetActorZ > Settings.FootprintMaxHeightCm)
+	{
+		return false;
+	}
+
+	OutStamp = FTDFluidBrushStamp();
+	OutStamp.WorldLocation = FVector(WorldCenter.X, WorldCenter.Y, BottomZ);
+	OutStamp.WorldVelocity = LeafVelocity;
+	OutStamp.RadiusCm = static_cast<float>(MajorHalfLengthCm * 2.0 / FMath::Sqrt(UE_DOUBLE_PI));
+	OutStamp.ShapeAspectRatio = static_cast<float>(FMath::Clamp(MajorHalfLengthCm / FMath::Max(MinorHalfLengthCm, UE_KINDA_SMALL_NUMBER), 1.0, 4.0));
+	OutStamp.ShapeMajorAxis = FVector(MajorDirection.X, MajorDirection.Y, 0.0);
+	OutStamp.ShapeHardness = Settings.FootprintHardness;
+	OutStamp.DensityStrength = Settings.FootprintDensityStrength * Target.DensityScale;
+	OutStamp.VelocityStrength = Settings.FootprintVelocityStrength;
+	OutStamp.Channel = Target.Channel;
+	OutStamp.Source = ETDFluidBrushSource::Fragment;
+	return true;
 }

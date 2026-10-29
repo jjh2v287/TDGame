@@ -41,7 +41,12 @@ void ForcesCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		Velocity -= TerrainSlope * Actor.TerrainSlopeGravity * ActiveFluidMask * Actor.StepDeltaTimeSeconds;
 	}
 
-	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_FLOW_NOISE))
+	if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_FLOW_NOISE_SPEED_MASK))
+	{
+		const float FlowNoiseSpeedMask = TDFluidGpuComputeFlowNoiseSpeedMask(Actor, Velocity);
+		Velocity += TDFluidGpuEvaluateFlowNoiseAcceleration(Actor, Cell) * Actor.StepDeltaTimeSeconds * FlowNoiseSpeedMask;
+	}
+	else if (TDFluidGpuHasActorFlag(Actor, TDFLUIDGPU_ACTOR_FLAG_USES_FLOW_NOISE))
 	{
 		Velocity += TDFluidGpuEvaluateFlowNoiseAcceleration(Actor, Cell) * Actor.StepDeltaTimeSeconds;
 	}

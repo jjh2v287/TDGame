@@ -94,6 +94,14 @@ void ApplyMassInputToCell(FTDFluidGpuActorParameters Actor, uint EntryIndex, int
 }
 #endif
 
+#ifndef TDFLUIDGPU_FIELD_INPUT
+#define TDFLUIDGPU_FIELD_INPUT 0
+#endif
+
+#if TDFLUIDGPU_FIELD_INPUT
+#include "/TDFluidGpu/Private/TDFluidGpuFieldInput.ush"
+#endif
+
 void ApplyStampsToCell(FTDFluidGpuActorParameters Actor, int2 Cell, bool bUsesHeat, inout float2 Velocity, inout float2 Density, inout float Displacement, inout float Heat)
 {
 	const FTDFluidGpuStampBinRange Range = TDFluidGpuGetStampBinRange(Actor, Cell);
@@ -164,6 +172,9 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	{
 		ApplyMassInputToCell(Actor, DispatchThreadId.z, Cell, bUsesHeat, Velocity, Density, Displacement, Heat);
 	}
+#endif
+#if TDFLUIDGPU_FIELD_INPUT
+	ApplyFieldInputsToCell(Actor, DispatchThreadId.z, Cell, Velocity, Density, Displacement);
 #endif
 
 	VelocityOut[Texel] = Velocity;

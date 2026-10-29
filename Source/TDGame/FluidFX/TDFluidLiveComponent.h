@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Engine/TextureDefines.h"
+#include "FluidFX/TDFluidFieldInputComponent.h"
 #include "FluidFX/TDFluidGpuSolverProxy.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidNearRippleLayer.h"
@@ -235,6 +236,11 @@ public:
 	FTDFluidGrid2DSolver& GetMutableSolver() { return Solver; }
 	int32 GetLastProcessedPointCount() const { return LastProcessedPointCount; }
 	const TArray<FTDFluidBrushStamp>& GetPendingBrushStamps() const { return PendingBrushStamps; }
+	void SetInputBrushSettingsForTests(const FTDFluidInputBrushSettings& InSettings) { InputBrushSettings = InSettings; }
+	const FTDFluidFieldInputSettings& GetFieldInputSettings() const { return FieldInputSettings; }
+	void SetFieldInputSettingsForTests(const FTDFluidFieldInputSettings& InSettings) { FieldInputSettings = InSettings; }
+	void SetFieldInputPlacements(TArray<FTDFluidFieldInputPlacement>&& InPlacements);
+	int32 GetIgnoredFieldInputCount() const { return IgnoredFieldInputCount; }
 	const TArray<FFloat16Color>& GetPackedDensityPressurePixels() const { return PackedDensityPressurePixels; }
 	const TArray<FFloat16Color>& GetPackedVelocityPixels() const { return PackedVelocityPixels; }
 	const TArray<FFloat16Color>& GetPackedWaterSurfacePixels() const { return PackedWaterSurfacePixels; }
@@ -400,6 +406,14 @@ private:
 	FTDFluidVolumeLightState CachedVolumeLightState;
 	FTDFluidPlaneSettings EffectivePlaneSettings;
 	FTDFluidVolumeRenderSettings EffectiveVolumeRender;
+	FTDFluidFieldInputSettings FieldInputSettings;
+	TArray<FTDFluidFieldInputPlacement> PendingFieldInputPlacements;
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UTexture>> FieldInputTextures;
+	int32 IgnoredFieldInputCount = 0;
+	bool bHasWarnedIgnoredFieldInputs = false;
+	TArray<FTDFluidGpuFieldInput> BuildGpuFieldInputs();
+	void RecordIgnoredFieldInputs();
 	FTDFluidInputBrushSettings InputBrushSettings;
 	FTDFluidRuntimeOpsSettings RuntimeOpsSettings;
 	FTDFluidSurfaceRenderSettings SurfaceRenderSettings;

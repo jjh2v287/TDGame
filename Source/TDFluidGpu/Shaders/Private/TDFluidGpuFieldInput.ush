@@ -1,0 +1,267 @@
+#pragma once
+
+static const uint TDFLUIDGPU_FIELD_FLAG_SIGNED_VELOCITY = 1u << 0;
+static const uint TDFLUIDGPU_FIELD_FLAG_WRITES_COLLISION = 1u << 1;
+static const uint TDFLUIDGPU_FIELD_FLAG_FILLS_INTERIOR = 1u << 2;
+static const uint TDFLUIDGPU_FIELD_FLAG_ERASES_DENSITY = 1u << 3;
+static const uint TDFLUIDGPU_FIELD_FLAG_TILED = 1u << 4;
+
+static const uint TDFLUIDGPU_FIELD_LAYOUT_DENSITY = 0u;
+static const uint TDFLUIDGPU_FIELD_LAYOUT_DENSITY_VELOCITY = 1u;
+static const uint TDFLUIDGPU_FIELD_LAYOUT_VELOCITY = 2u;
+static const uint TDFLUIDGPU_FIELD_LAYOUT_COLLISION_MASK = 3u;
+static const uint TDFLUIDGPU_FIELD_LAYOUT_MESH_DISTANCE = 4u;
+
+static const float TDFLUIDGPU_FIELD_MINIMUM_NORMAL_LENGTH_SQUARED = 1.0e-8f;
+static const float TDFLUIDGPU_FIELD_MINIMUM_CONTOUR_BAND_CM = 1.0e-3f;
+static const uint TDFLUIDGPU_FIELD_NOISE_SEED = 0x5BD1E995u;
+
+struct FTDFluidGpuPackedFieldInput
+{
+	float2 CenterFromWindowCenterCm;
+	float2 AxisX;
+
+	float2 InvHalfSizeCm;
+	float2 MotionPlaneCmPerSec;
+
+	float2 UVOffset;
+	float UVTileCount;
+	float UVRotationRadians;
+
+	uint TextureSlot;
+	uint Layout;
+	uint Flags;
+	float EraseRatePerSec;
+
+	float DensityScale;
+	float VelocityScale;
+	float VelocityRangeCmPerSec;
+	float CollisionEdgeCm;
+
+	float ContourBandCm;
+	float ContourDensityStrength;
+	float OutwardVelocityCmPerSec;
+	float MotionVelocityStrength;
+
+	float ContourNoiseAmount;
+	float InvContourNoiseScaleCm;
+	float HalfSizeXCm;
+	float HalfSizeYCm;
+};
+
+StructuredBuffer<FTDFluidGpuPackedFieldInput> FieldInputs;
+StructuredBuffer<uint2> FieldEntryRanges;
+Texture2D FieldTexture0;
+Texture2D FieldTexture1;
+Texture2D FieldTexture2;
+Texture2D FieldTexture3;
+SamplerState FieldSampler;
+
+bool TDFluidGpuHasFieldFlag(FTDFluidGpuPackedFieldInput Field, uint Flag)
+{
+	return (Field.Flags & Flag) != 0u;
+}
+
+float2 TDFluidGpuRotateFieldVector(float2 Value, float Radians)
+{
+	float SinAngle;
+	float CosAngle;
+	sincos(Radians, SinAngle, CosAngle);
+	return float2(CosAngle * Value.x - SinAngle * Value.y, SinAngle * Value.x + CosAngle * Value.y);
+}
+
+float2 TDFluidGpuGetFieldAxisY(FTDFluidGpuPackedFieldInput Field)
+{
+	return float2(-Field.AxisX.y, Field.AxisX.x);
+}
+
+float2 TDFluidGpuFieldVectorToPlane(FTDFluidGpuPackedFieldInput Field, float2 TextureVector)
+{
+	const float2 LocalVector = TDFluidGpuRotateFieldVector(TextureVector, -Field.UVRotationRadians);
+	return LocalVector.x * Field.AxisX + LocalVector.y * TDFluidGpuGetFieldAxisY(Field);
+}
+
+bool TDFluidGpuTryResolveFieldLocal(FTDFluidGpuPackedFieldInput Field, float2 CellCenter, out float2 Local)
+{
+	const float2 Offset = CellCenter - Field.CenterFromWindowCenterCm;
+	Local = float2(dot(Offset, Field.AxisX), dot(Offset, TDFluidGpuGetFieldAxisY(Field))) * Field.InvHalfSizeCm;
+	return abs(Local.x) <= 1.0f && abs(Local.y) <= 1.0f;
+}
+
+float2 TDFluidGpuResolveFieldUV(FTDFluidGpuPackedFieldInput Field, float2 Local)
+{
+	const float2 UV = TDFluidGpuRotateFieldVector(Local * 0.5f, Field.UVRotationRadians) * Field.UVTileCount + 0.5f + Field.UVOffset;
+	if (TDFluidGpuHasFieldFlag(Field, TDFLUIDGPU_FIELD_FLAG_TILED))
+	{
+		return frac(UV);
+	}
+	return UV;
+}
+
+float4 TDFluidGpuSampleField(FTDFluidGpuPackedFieldInput Field, float2 Local)
+{
+	const float2 UV = TDFluidGpuResolveFieldUV(Field, Local);
+	if (Field.TextureSlot == 1u)
+	{
+		return FieldTexture1.SampleLevel(FieldSampler, UV, 0.0f);
+	}
+	if (Field.TextureSlot == 2u)
+	{
+		return FieldTexture2.SampleLevel(FieldSampler, UV, 0.0f);
+	}
+	if (Field.TextureSlot == 3u)
+	{
+		return FieldTexture3.SampleLevel(FieldSampler, UV, 0.0f);
+	}
+	return FieldTexture0.SampleLevel(FieldSampler, UV, 0.0f);
+}
+
+float TDFluidGpuHashFieldLattice(int2 Lattice)
+{
+	uint Hash = TDFLUIDGPU_FIELD_NOISE_SEED ^ (asuint(Lattice.x) * 0x8DA6B343u) ^ (asuint(Lattice.y) * 0xD8163841u);
+	Hash ^= Hash >> 16;
+	Hash *= 0x7FEB352Du;
+	Hash ^= Hash >> 15;
+	Hash *= 0x846CA68Bu;
+	Hash ^= Hash >> 16;
+	return float(Hash & 0xFFFFu) / 65535.0f;
+}
+
+float TDFluidGpuSampleFieldValueNoise(float2 Position)
+{
+	const float2 Base = floor(Position);
+	const float2 Fraction = Position - Base;
+	const float2 Blend = Fraction * Fraction * (3.0f - 2.0f * Fraction);
+	const int2 Lattice = int2(Base);
+	const float Bottom = lerp(TDFluidGpuHashFieldLattice(Lattice), TDFluidGpuHashFieldLattice(Lattice + int2(1, 0)), Blend.x);
+	const float Top = lerp(TDFluidGpuHashFieldLattice(Lattice + int2(0, 1)), TDFluidGpuHashFieldLattice(Lattice + int2(1, 1)), Blend.x);
+	return saturate(lerp(Bottom, Top, Blend.y));
+}
+
+void TDFluidGpuApplyFieldDensity(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedFieldInput Field, float Amount, inout float2 Density, inout float Displacement)
+{
+	if (TDFluidGpuHasFieldFlag(Field, TDFLUIDGPU_FIELD_FLAG_ERASES_DENSITY))
+	{
+		Density.x *= exp(-Field.EraseRatePerSec * max(Amount, 0.0f) * Actor.StampDeltaTimeSeconds);
+		return;
+	}
+
+	const float DensityTarget = saturate(Amount * Field.DensityScale);
+	Density.x = max(Density.x, DensityTarget);
+	Displacement = max(Displacement, DensityTarget * Actor.BrushDisplacementRatio);
+}
+
+void TDFluidGpuBlendFieldVelocity(FTDFluidGpuActorParameters Actor, float2 TargetVelocity, float Weight, inout float2 Velocity)
+{
+	if (Weight <= 0.0f)
+	{
+		return;
+	}
+	Velocity += (TargetVelocity - Velocity) * (Weight * Actor.StampVelocityBlend);
+}
+
+void TDFluidGpuApplyFieldEncodedVelocity(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedFieldInput Field, float2 Encoded, inout float2 Velocity)
+{
+	const float2 Decoded = TDFluidGpuHasFieldFlag(Field, TDFLUIDGPU_FIELD_FLAG_SIGNED_VELOCITY) ? Encoded * 2.0f - 1.0f : Encoded;
+	const float2 TargetVelocity = TDFluidGpuFieldVectorToPlane(Field, Decoded) * (Field.VelocityRangeCmPerSec * Field.VelocityScale);
+	TDFluidGpuBlendFieldVelocity(Actor, TargetVelocity, saturate(length(Decoded)), Velocity);
+}
+
+float2 TDFluidGpuResolveFieldNormal(FTDFluidGpuPackedFieldInput Field, float2 EncodedNormal)
+{
+	const float2 Normal = TDFluidGpuFieldVectorToPlane(Field, EncodedNormal);
+	const float LengthSquared = dot(Normal, Normal);
+	if (LengthSquared < TDFLUIDGPU_FIELD_MINIMUM_NORMAL_LENGTH_SQUARED)
+	{
+		return float2(0.0f, 0.0f);
+	}
+	return Normal * rsqrt(LengthSquared);
+}
+
+float TDFluidGpuComputeContourWeight(FTDFluidGpuPackedFieldInput Field, float2 Local, float DistanceCm)
+{
+	float Weight = saturate(1.0f - DistanceCm / max(Field.ContourBandCm, TDFLUIDGPU_FIELD_MINIMUM_CONTOUR_BAND_CM));
+	if (DistanceCm <= 0.0f)
+	{
+		Weight = TDFluidGpuHasFieldFlag(Field, TDFLUIDGPU_FIELD_FLAG_FILLS_INTERIOR) ? 1.0f : 0.0f;
+	}
+	if (Field.ContourNoiseAmount <= 0.0f || Weight <= 0.0f)
+	{
+		return Weight;
+	}
+	const float2 FieldLocalCm = Local * float2(Field.HalfSizeXCm, Field.HalfSizeYCm);
+	return Weight * (1.0f - Field.ContourNoiseAmount * TDFluidGpuSampleFieldValueNoise(FieldLocalCm * Field.InvContourNoiseScaleCm));
+}
+
+void TDFluidGpuApplyMeshDistanceField(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedFieldInput Field, float2 Local, float4 Texel, inout float2 Velocity, inout float2 Density, inout float Displacement)
+{
+	const float Weight = TDFluidGpuComputeContourWeight(Field, Local, Texel.r);
+	if (Weight <= 0.0f)
+	{
+		return;
+	}
+
+	TDFluidGpuApplyFieldDensity(Actor, Field, Field.ContourDensityStrength * Weight, Density, Displacement);
+	const float2 TargetVelocity = TDFluidGpuResolveFieldNormal(Field, Texel.gb) * Field.OutwardVelocityCmPerSec + Field.MotionPlaneCmPerSec * Field.MotionVelocityStrength;
+	TDFluidGpuBlendFieldVelocity(Actor, TargetVelocity, Weight, Velocity);
+}
+
+void TDFluidGpuApplyFieldTexel(FTDFluidGpuActorParameters Actor, FTDFluidGpuPackedFieldInput Field, float2 Local, float4 Texel, inout float2 Velocity, inout float2 Density, inout float Displacement)
+{
+	if (Field.Layout == TDFLUIDGPU_FIELD_LAYOUT_DENSITY)
+	{
+		TDFluidGpuApplyFieldDensity(Actor, Field, Texel.r, Density, Displacement);
+		return;
+	}
+	if (Field.Layout == TDFLUIDGPU_FIELD_LAYOUT_DENSITY_VELOCITY)
+	{
+		TDFluidGpuApplyFieldDensity(Actor, Field, Texel.r, Density, Displacement);
+		TDFluidGpuApplyFieldEncodedVelocity(Actor, Field, Texel.gb, Velocity);
+		return;
+	}
+	if (Field.Layout == TDFLUIDGPU_FIELD_LAYOUT_VELOCITY)
+	{
+		TDFluidGpuApplyFieldEncodedVelocity(Actor, Field, Texel.rg, Velocity);
+		return;
+	}
+	if (Field.Layout == TDFLUIDGPU_FIELD_LAYOUT_MESH_DISTANCE)
+	{
+		TDFluidGpuApplyMeshDistanceField(Actor, Field, Local, Texel, Velocity, Density, Displacement);
+	}
+}
+
+void ApplyFieldInputsToCell(FTDFluidGpuActorParameters Actor, uint EntryIndex, int2 Cell, inout float2 Velocity, inout float2 Density, inout float Displacement)
+{
+	const uint2 Range = FieldEntryRanges[EntryIndex];
+	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
+	for (uint FieldOffset = 0u; FieldOffset < Range.y; ++FieldOffset)
+	{
+		const FTDFluidGpuPackedFieldInput Field = FieldInputs[Range.x + FieldOffset];
+		float2 Local;
+		if (Field.Layout == TDFLUIDGPU_FIELD_LAYOUT_COLLISION_MASK || !TDFluidGpuTryResolveFieldLocal(Field, CellCenter, Local))
+		{
+			continue;
+		}
+		TDFluidGpuApplyFieldTexel(Actor, Field, Local, TDFluidGpuSampleField(Field, Local), Velocity, Density, Displacement);
+	}
+}
+
+float TDFluidGpuComputeFieldCollisionDistance(FTDFluidGpuActorParameters Actor, uint EntryIndex, int2 Cell)
+{
+	float MinSignedDistance = TDFLUIDGPU_NO_OBSTACLE_DISTANCE_CM;
+	const uint2 Range = FieldEntryRanges[EntryIndex];
+	const float2 CellCenter = TDFluidGpuComputeCellCenterFromWindowCenter(Actor, Cell);
+	for (uint FieldOffset = 0u; FieldOffset < Range.y; ++FieldOffset)
+	{
+		const FTDFluidGpuPackedFieldInput Field = FieldInputs[Range.x + FieldOffset];
+		float2 Local;
+		if (!TDFluidGpuHasFieldFlag(Field, TDFLUIDGPU_FIELD_FLAG_WRITES_COLLISION) || !TDFluidGpuTryResolveFieldLocal(Field, CellCenter, Local))
+		{
+			continue;
+		}
+		const float Sampled = TDFluidGpuSampleField(Field, Local).r;
+		const float SignedDistance = Field.Layout == TDFLUIDGPU_FIELD_LAYOUT_MESH_DISTANCE ? Sampled : (0.5f - Sampled) * 2.0f * Field.CollisionEdgeCm;
+		MinSignedDistance = min(MinSignedDistance, SignedDistance);
+	}
+	return MinSignedDistance;
+}

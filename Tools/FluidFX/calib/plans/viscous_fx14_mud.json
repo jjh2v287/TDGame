@@ -1,0 +1,117 @@
+{
+ "id": "viscous_fx14_mud",
+ "note": "FX-14 A6·A7·A10·M1·M4, 정본 ViscousMud(256²·12.8 m GPU), 무대 LV_TDFluidViscousStage 구역 3(중심 4000, 0). Groups.Viscous 경로는 묶음 A 통합 뒤 유효",
+ "scenes": [
+  {
+   "name": "mud_world",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidViscousStage",
+   "camera": {
+    "exposure_ev100": 1.0,
+    "pawn": [
+     4000.0,
+     0.0
+    ],
+    "arm": 350.0,
+    "view": [
+     -35.0,
+     0.0
+    ],
+    "move": {
+     "distance_cm": 600.0
+    }
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 8.0,
+   "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions.json",
+   "targets": "Tools/FluidFX/calib/targets/viscous_fx14_targets.json",
+   "live2_refs": [
+    "L4"
+   ],
+   "awake": {
+    "TDGen_ViscousMudWorld": true
+   }
+  }
+ ],
+ "base_tuning": [],
+ "params": [
+  {
+   "json_path": "Groups.Viscous.TDFluidSimulationConfig.DensityAccumulationPerSec",
+   "values": [
+    1.5,
+    3,
+    6
+   ]
+  },
+  {
+   "json_path": "Groups.Viscous.TDFluidSimulationConfig.FlowNoiseAccelerationCmPerSec2",
+   "values": [
+    200,
+    400,
+    800
+   ]
+  },
+  {
+   "json_path": "Kinds.ViscousMud.TDFluidSimulationConfig.AdvectionSpeedScale",
+   "values": [
+    0.35,
+    1.0,
+    3.0
+   ]
+  },
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidViscous_Mud.Scalars.ViscousRoughness",
+   "values": [
+    0.12,
+    0.22,
+    0.32
+   ]
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "look",
+   "viscous_headless"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "metric": "viscous_headless.spread_growth_per_sec",
+    "weight": 1.0,
+    "low": 0.0,
+    "high": 0.02
+   },
+   {
+    "metric": "viscous_headless.streak_aspect",
+    "weight": 1.0,
+    "low": 5.0,
+    "high": 15.0
+   },
+   {
+    "metric": "viscous_headless.streak_tip_width_ratio",
+    "weight": 0.5,
+    "low": 0.5,
+    "high": 1.0
+   },
+   {
+    "metric": "mud_surface.swirl_spacing_cm",
+    "weight": 0.5,
+    "low": 10.0,
+    "high": 20.0
+   }
+  ]
+ },
+ "draft_status": "blocked(CAL-0)",
+ "p3_gaps": [
+  "viscous_headless 출처(브러시 1 s 이동 뒤 2 s 정지의 D ≥ 0.5 면적 증가율·400 cm/s 스탬프 열의 D ≥ 0.3 연결 성분 길이/폭·머리 폭 비)",
+  "Look: 경로(fluid_tuning_patch.parse_json_path 가 Look: 를 거부, R9-S4)",
+  "scenes.awake(이름표로 액터 깨우기) 실행기 지원",
+  "regions 파일 없음: Tools/FluidFX/calib/regions/viscous_fx14_regions.json(CAL-0 소유자가 추가, S6)",
+  "mud_surface 지표(소용돌이 간격·홈 가장자리 명암)는 measure_fx_look.py 미지원(S6)",
+  "Groups.Viscous·Kinds.ViscousMud 경로는 FX-14 묶음 A 통합 뒤에만 유효"
+ ]
+}

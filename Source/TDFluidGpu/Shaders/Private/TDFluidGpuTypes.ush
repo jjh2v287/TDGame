@@ -21,10 +21,13 @@ static const uint TDFLUIDGPU_ACTOR_FLAG_WRITES_AUX_OUTPUT = 1u << 17;
 static const uint TDFLUIDGPU_ACTOR_FLAG_CONSUMES_MASS_INPUT = 1u << 18;
 static const uint TDFLUIDGPU_ACTOR_FLAG_USES_TRACK_BANK = 1u << 19;
 static const uint TDFLUIDGPU_ACTOR_FLAG_WRITES_PAINTER_VELOCITY = 1u << 20;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_DENSE_DENSITY = 1u << 21;
+static const uint TDFLUIDGPU_ACTOR_FLAG_USES_FLOW_NOISE_SPEED_MASK = 1u << 22;
 
 static const uint TDFLUIDGPU_STAMP_FLAG_WRITES_SELECTIVE_DENSITY = 1u << 0;
 static const uint TDFLUIDGPU_STAMP_FLAG_ERASES_DENSITY = 1u << 1;
 static const uint TDFLUIDGPU_STAMP_FLAG_WRITES_HEAT = 1u << 2;
+static const uint TDFLUIDGPU_STAMP_FLAG_ADDS_DENSITY = 1u << 3;
 
 static const uint TDFLUIDGPU_STAMP_BINS_PER_AXIS = 16u;
 static const uint TDFLUIDGPU_STAMP_BIN_COUNT = 256u;
@@ -119,6 +122,11 @@ struct FTDFluidGpuActorParameters
 	float TrackBankHeightLimit;
 	uint TrackBankRadiusCells;
 	uint TrackBankPadding;
+
+	float DenseDensityCeiling;
+	float DenseGrowthFactor;
+	float DenseGrowthThreshold;
+	float FlowNoiseSpeedMaskInverseCmPerSec;
 };
 
 struct FTDFluidGpuPackedRingShape

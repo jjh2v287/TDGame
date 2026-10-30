@@ -1,6 +1,6 @@
 {
   "id": "fx5_flamethrower",
-  "note": "E14 포탑+큐브 IMG 17, M1 p50 0.22·p95 0.95(IFS:100). 지표 이름 fire_m1_p50·fire_m1_p95 는 measure_fx_look.py 출력 이름으로 확정 필요[추정](R5-M5). pawn 은 editor_make_fluid_mass_input_stage.py M4 카메라 제안값(무대 보고서 scenes[].camera). TDFluidInputBrushSettings.MassPointHeatStrength(0.6·0.8·1.0)·MassPointRadiusScale(0.75·1.0·1.5) 손잡이는 calib_sweep 에 InputBrush 실효 다시 읽기를 더한 뒤 되살린다(R5-M5, 그때까지 열 감쇠·와도로 대신)",
+  "note": "E14 포탑+큐브 IMG 17, M1 p50 0.22·p95 0.95(IFS:100). 지표 이름 fire_m1_p50·fire_m1_p95 는 measure_fx_look.py 출력 이름으로 확정 필요[추정](R5-M5). pawn 은 editor_make_fluid_mass_input_stage.py M4 카메라 제안값(무대 보고서 scenes[].camera). TDFluidInputBrushSettings.MassPointHeatStrength(0.6·0.8·1.0)·MassPointRadiusScale(0.75·1.0·1.5) 손잡이는 calib_sweep 에 InputBrush 실효 다시 읽기를 더한 뒤 되살린다(R5-M5, 그때까지 열 감쇠·와도로 대신) / 2026-10-31: frame 화염 0 은 Flamethrower 가 CPU 백엔드(정본 키 없음 → StructDefaults Cpu, Auto 도 해상도 128 이라 CPU)라 GPU DI 스플랫 대상이 공개되지 않은 결함 → 정본 Kinds.Flamethrower(·SnowAvalanche) SolverBackend Gpu 로 고치고 임시 base_tuning 은 뺐다",
   "scenes": [
     {
       "name": "turret_img17",
@@ -95,13 +95,6 @@
   "repeats": 2,
   "control_every": 0,
   "reset": "reinit",
-  "base_tuning": [
-    {
-      "json_path": "Kinds.Flamethrower.TDFluidSimulationConfig.SolverBackend",
-      "value": "Gpu"
-    }
-  ],
-  "base_tuning_ships": true,
   "metrics": {
     "sources": [
       "look"

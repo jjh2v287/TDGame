@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). 유체 구동 입자 무대 LV_TDFluidParticleStage(장면 P1~P11 = CD S.3.4.1~11, 장면마다 라이브 액터 1 + 교반기 BP_TDFluidStageStirrer 1, 로컬 장면 P6~P11 은 Yaw 30°, 그림자 받는 바닥)를 만든다. 먼저 editor_make_fluid_particle_material.py 와 editor_make_fluid_driven_niagara.py 7종 생성이 끝나 있어야 한다. 다른 무대 스크립트(불티·연기 셋업)가 importlib 로 공용 함수를 가져간다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_particle_stage.py (PowerShell, L-repo-01)
 출력: /Game/FluidFX/Blueprints/BP_TDFluidStageStirrer, /Game/FluidFX/Presets/DA_TDFluid_Drive<장면>, /Game/FluidFX/Maps/LV_TDFluidParticleStage, Saved/FluidFX/fluid_particle_stage.json(preset_tuning_sha256·material_look_sha256, 장면마다 cd_ids·niagara_system·kind·output_material·카메라 제안). 기존 에셋은 Saved/FluidFX/fluid_particle_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고 미저장 작업이 있으면 중단한다.
-상태: 미검증(2026-10-25 FX-8n B4 작성: py_compile·가짜 unreal 가져오기만, 에디터 실행 전). 프리셋은 PresetKind·ExternalNiagaraSystem 만 정하고 bOverridePresetDefaults 는 끈다(값은 JSON 종류 값). 출력 재질은 모든 장면에서 없음(입자만 보임, 반박 M6). 교반기는 그래프 로직 0, 궤도 값은 시험 장치 상수다.
+상태: 미검증(2026-10-25 FX-8n B4 작성: py_compile·가짜 unreal 가져오기만, 에디터 실행 전). 프리셋은 PresetKind·ExternalNiagaraSystem 만 정하고 bOverridePresetDefaults 는 끈다(값은 JSON 종류 값). 출력 재질은 모든 장면에서 없음(입자만 보임, 반박 M6). 교반기는 그래프 로직 0, 궤도 값은 시험 장치 상수다. 2026-10-31: 블루프린트 액터 컴포넌트는 속성 쓰기마다 구성 스크립트가 다시 돌아 컴포넌트가 새로 만들어지므로(엔진 ActorComponent.cpp ConsolidatedPostEditChange) 공용 set_component_properties 가 핸들을 새로 받아 set_editor_properties 한 번에 쓰고 새 핸들로 다시 읽어 다르면 실패시킨다(다른 무대도 이 함수를 쓴다, py_compile·가짜 unreal 핸들 재생성 시험만).
 """
 import hashlib
 import importlib.util
@@ -33,6 +33,8 @@ STIRRER_SCALE = 0.4
 STIRRER_ORBIT_RADIUS_CM = 150.0
 STIRRER_HEIGHT_CM = 20.0
 STIRRER_DEGREES_PER_SEC = 90.0
+PROPERTY_READBACK_TOLERANCE = 0.001
+VECTOR_AND_ROTATOR_FIELD_NAMES = ("x", "y", "z", "roll", "pitch", "yaw")
 SCENE_SPACING_CM = 1500.0
 LOCAL_YAW_DEGREES = 30.0
 CAMERA_ARM_CM = 900.0
@@ -288,13 +290,38 @@ def configure_live_actor(actor, preset, effective):
     return live_component
 
 
+def property_value_matches(actual, expected):
+    if isinstance(expected, unreal.Object):
+        return actual is not None and actual.get_path_name() == expected.get_path_name()
+    if isinstance(expected, float):
+        return abs(actual - expected) <= PROPERTY_READBACK_TOLERANCE
+    field_names = [name for name in VECTOR_AND_ROTATOR_FIELD_NAMES if hasattr(expected, name)]
+    if field_names:
+        return all(abs(getattr(actual, name) - getattr(expected, name)) <= PROPERTY_READBACK_TOLERANCE for name in field_names)
+    return actual == expected
+
+
+def require_component_properties(actor, component_class, properties):
+    component = actor.get_component_by_class(component_class)
+    if component is None:
+        raise RuntimeError(f"다시 읽을 {component_class.__name__} 컴포넌트가 없습니다: {actor.get_actor_label()}")
+    mismatches = {name: str(component.get_editor_property(name)) for name, expected in properties.items() if not property_value_matches(component.get_editor_property(name), expected)}
+    if mismatches:
+        raise RuntimeError(f"컴포넌트 속성 다시 읽기 불일치(블루프린트 구성 스크립트 재실행 유실 의심): {actor.get_actor_label()} {component_class.__name__} {mismatches}")
+
+
+def set_component_properties(actor, component_class, properties):
+    component = actor.get_component_by_class(component_class)
+    if component is None:
+        raise RuntimeError(f"{component_class.__name__} 컴포넌트가 없습니다: {actor.get_actor_label()}")
+    component.set_editor_properties(properties)
+    require_component_properties(actor, component_class, properties)
+
+
 def place_stirrer(actors, stirrer_class, center, label, folder, created):
     stirrer = actors.spawn_actor_from_class(stirrer_class, unreal.Vector(center[0] + STIRRER_ORBIT_RADIUS_CM, center[1], STIRRER_HEIGHT_CM), unreal.Rotator())
     finish_actor(stirrer, label, folder, created)
-    rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-    if rotating is None:
-        raise RuntimeError("교반기에 회전 이동 컴포넌트가 없습니다: " + STIRRER_BLUEPRINT_PATH)
-    rotating.set_editor_property("pivot_translation", unreal.Vector(-STIRRER_ORBIT_RADIUS_CM, 0.0, 0.0))
+    set_component_properties(stirrer, unreal.RotatingMovementComponent, {"pivot_translation": unreal.Vector(-STIRRER_ORBIT_RADIUS_CM, 0.0, 0.0)})
     return stirrer
 
 

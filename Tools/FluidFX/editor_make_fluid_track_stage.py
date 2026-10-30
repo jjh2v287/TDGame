@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 자국 무대 3개(장면 0 LV_TDFluidSnowStage = 평지 60 m + 15° 오르막 20 m, 장면 1 LV_TDFluidSandStage = 평지 100 m 사구 WPO + Y +30 m 수확기 구역, 장면 2 LV_TDFluidSnowDeformStage = 평지 60 m 변형 메시)와 DA 5개(새 종류 SnowTrack·SandTrack·SnowDust·SandDust, 변형용 SnowTrackDeform), 구성 전용 BP_TDFluidTrackHarvester 를 만든다. 먼저 editor_make_fluid_track_material.py 와 FX-8n 무대 스크립트(교반기 BP_TDFluidStageStirrer)가 성공해 있어야 하고, 모양 정본 병합 뒤에 돌린다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_track_stage.py (기존 DA·맵을 갱신할 때는 Saved/FluidFX/fluid_track_stage_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Presets/DA_TDFluid_SnowTrack·SandTrack·SnowDust·SandDust·SnowTrackDeform, /Game/FluidFX/Maps/LV_TDFluidSnowStage·LV_TDFluidSandStage·LV_TDFluidSnowDeformStage, /Game/FluidFX/Blueprints/BP_TDFluidTrackHarvester, Saved/FluidFX/fluid_track_stage.json(preset_tuning_sha256·material_look_sha256, 종류, 변형 액터, 바퀴 점, 장면마다 바닥 위 1 m 에서 쏜 라인 트레이스 적중 Z)
-상태: 미검증(2026-10-26 FX-12c 파동 2 고침: 종류 교체·변형 무대·수확기 구역, py_compile·가짜 unreal·validate_stage_layout 만, 에디터 실행 전. 수확기는 FX-8n 교반기처럼 기본 장면 루트 아래 큐브 몸체(Movable·OverlapAllDynamic·겹침 이벤트)라 RotatingMovement.PivotTranslation 이 액터 위치를 공전시키고, 그래프는 remove_unused_nodes 로 비운다. 2026-10-25 FX-12r 작성: py_compile·가짜 unreal·validate_stage_layout 만, 에디터 실행 전). 보이는 바닥은 격자 메시 SM_TD_FluidTrackGridUnit256(충돌 없음)이고 같은 Z 에 숨긴 큐브 충돌 바닥을 둔다(반박 M5). 페인터 Z = 충돌면 Z, 따라가기 켬. 비탈은 창 자르기를 끈 MI_TD_FluidTrack_SnowSlope 의 오르막이라 평면 평면이 비탈 아래로 숨고, 시작 위치에서 창(정본 20 m·보정 25 m 반폭)이 닿지 않게 떨어뜨린다(반박 M4, 지형을 따르는 층은 FX-9 B8). 굴림 공은 FX-8n 교반기를 재사용한다(반박 M3). 붓 반경(홈 폭)은 액터 속성이라 JSON 밖이다(반박 M7, INFRA-BRUSH 이관). 먼지 상자 높이·광원·궤도는 무대 상수(D-64 ② 편차). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(덮어쓰기, 맵 3·DA 5·수확기 BP 바퀴 4, 트레이스 Z 0), stage-report stale 0, 화면 판정 전.
+상태: 미검증(2026-10-26 FX-12c 파동 2 고침: 종류 교체·변형 무대·수확기 구역, py_compile·가짜 unreal·validate_stage_layout 만, 에디터 실행 전. 수확기는 FX-8n 교반기처럼 기본 장면 루트 아래 큐브 몸체(Movable·OverlapAllDynamic·겹침 이벤트)라 RotatingMovement.PivotTranslation 이 액터 위치를 공전시키고, 그래프는 remove_unused_nodes 로 비운다. 2026-10-25 FX-12r 작성: py_compile·가짜 unreal·validate_stage_layout 만, 에디터 실행 전). 보이는 바닥은 격자 메시 SM_TD_FluidTrackGridUnit256(충돌 없음)이고 같은 Z 에 숨긴 큐브 충돌 바닥을 둔다(반박 M5). 페인터 Z = 충돌면 Z, 따라가기 켬. 비탈은 창 자르기를 끈 MI_TD_FluidTrack_SnowSlope 의 오르막이라 평면 평면이 비탈 아래로 숨고, 시작 위치에서 창(정본 20 m·보정 25 m 반폭)이 닿지 않게 떨어뜨린다(반박 M4, 지형을 따르는 층은 FX-9 B8). 굴림 공은 FX-8n 교반기를 재사용한다(반박 M3). 붓 반경(홈 폭)은 액터 속성이라 JSON 밖이다(반박 M7, INFRA-BRUSH 이관). 먼지 상자 높이·광원·궤도는 무대 상수(D-64 ② 편차). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(덮어쓰기, 맵 3·DA 5·수확기 BP 바퀴 4, 트레이스 Z 0), stage-report stale 0, 화면 판정 전. 2026-10-31: 굴림 공 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고(기본 90°/s) 위치 인수 Rotator(0, v, 0)가 pitch 였던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)와 yaw 키워드로 고치고, 수확기 원천 컴포넌트는 피벗 쓰기 뒤 새 핸들로 읽는다, 맵 재생성 필요.
 """
 import hashlib
 import importlib.util
@@ -35,6 +35,7 @@ REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_track_stage.json")
 PRESET_TUNING_RELATIVE_PATH = ("Content", "FluidFX", "PresetData", "TDFluidPresetTuning.json")
 MATERIAL_LOOK_RELATIVE_PATH = ("Content", "FluidFX", "PresetData", "TDFluidMaterialLook.json")
 PRESET_CHECKER_RELATIVE_PATH = ("Tools", "check_fluid_preset_data.py")
+PARTICLE_STAGE_RELATIVE_PATH = ("Tools", "FluidFX", "editor_make_fluid_particle_stage.py")
 
 FLOOR_Z_CM = 0.0
 COLLISION_FLOOR_THICKNESS_CM = 50.0
@@ -394,6 +395,16 @@ def read_file_sha256(relative_parts):
         return hashlib.sha256(source_file.read()).hexdigest()
 
 
+def load_particle_stage():
+    module_path = project_path(*PARTICLE_STAGE_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("td_fluid_particle_stage", module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"입자 무대 공용 함수 모듈 없음: {module_path}")
+    particle_stage = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(particle_stage)
+    return particle_stage
+
+
 def reload_preset_tuning():
     checker_path = project_path(*PRESET_CHECKER_RELATIVE_PATH)
     module_spec = importlib.util.spec_from_file_location("check_fluid_preset_data", checker_path)
@@ -585,11 +596,8 @@ def build_scene(scene, levels, actors, editor, loaded, presets, fluid_actor_clas
     roller_x, roller_y = scene["roller_center"]
     roller = spawn(stirrer_class, (roller_x - ROLLER_ORBIT_RADIUS_CM, roller_y, FLOOR_Z_CM + ROLLER_RADIUS_CM), "TrackRoller", "Fluid")
     roller.set_actor_scale3d(unreal.Vector(ROLLER_SCALE, ROLLER_SCALE, ROLLER_SCALE))
-    rotating = roller.get_component_by_class(unreal.RotatingMovementComponent)
-    if rotating is None:
-        raise RuntimeError("교반기에 회전 이동 컴포넌트가 없음: " + STIRRER_BLUEPRINT_PATH)
-    rotating.set_editor_property("pivot_translation", unreal.Vector(ROLLER_ORBIT_RADIUS_CM, 0.0, 0.0))
-    rotating.set_editor_property("rotation_rate", unreal.Rotator(0.0, ROLLER_DEGREES_PER_SEC, 0.0))
+    roller_motion = {"pivot_translation": unreal.Vector(ROLLER_ORBIT_RADIUS_CM, 0.0, 0.0), "rotation_rate": unreal.Rotator(roll=0.0, pitch=0.0, yaw=ROLLER_DEGREES_PER_SEC)}
+    loaded["particle_stage"].set_component_properties(roller, unreal.RotatingMovementComponent, roller_motion)
 
     deform_record = None
     if scene["deform_mesh"]:
@@ -609,11 +617,10 @@ def build_scene(scene, levels, actors, editor, loaded, presets, fluid_actor_clas
     if scene["harvester"] is not None:
         center_x, center_y = scene["harvester"]["center"]
         harvester = spawn(loaded["harvester_class"], (center_x, center_y - HARVESTER_ORBIT_RADIUS_CM, FLOOR_Z_CM + HARVESTER_ROOT_HEIGHT_CM), "TrackHarvester", "Fluid")
-        harvester_rotating = harvester.get_component_by_class(unreal.RotatingMovementComponent)
+        loaded["particle_stage"].set_component_properties(harvester, unreal.RotatingMovementComponent, {"pivot_translation": unreal.Vector(0.0, HARVESTER_ORBIT_RADIUS_CM, 0.0)})
         harvester_source = harvester.get_component_by_class(unreal.TDFluidTrackSourceComponent)
-        if harvester_rotating is None or harvester_source is None:
-            raise RuntimeError("수확기에 회전 이동 또는 자국 원천 컴포넌트가 없음: " + HARVESTER_BLUEPRINT_PATH)
-        harvester_rotating.set_editor_property("pivot_translation", unreal.Vector(0.0, HARVESTER_ORBIT_RADIUS_CM, 0.0))
+        if harvester_source is None:
+            raise RuntimeError("수확기에 자국 원천 컴포넌트가 없음: " + HARVESTER_BLUEPRINT_PATH)
         wheel_records = read_wheel_points(harvester_source)
         if not wheel_points_match(wheel_records):
             raise RuntimeError(f"수확기 바퀴 점 다시 읽기 불일치(BP 를 지우고 다시 실행): {wheel_records}")
@@ -706,6 +713,7 @@ def main():
     ensure_directory(PRESET_DIR)
     presets = {spec["name"]: configure_preset(spec, loaded) for spec in PRESET_SPECS}
     loaded["harvester_class"], harvester_created = load_or_create_harvester_blueprint(loaded["cube"])
+    loaded["particle_stage"] = load_particle_stage()
 
     scene_records = []
     for scene in SCENES:

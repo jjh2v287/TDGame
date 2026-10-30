@@ -1806,6 +1806,13 @@ def check_cal0_integration():
     check("통합 B5#10 모양 손잡이: 대조 사본에도 {json_path, value: base}(정본에 없는 키도 재적재로 base 복귀)·대조 판정 불변",
           control["is_control"] and control["assignments"] == [{"json_path": look_path, "value": 0.4, "split_group": False, "base": 0.4}] and accepted["added_key"]
           and not variant["is_control"] and variant["assignments"][0]["value"] == 0.8 and variant["knobs"] == [0], (control["assignments"], variant["assignments"]))
+    other_path = look_path.replace("CloudSlot1DetailErosion", "CloudSlot1SectionDepthKm")
+    other_param = dict(look_param, index=1, json_path=other_path, look=calib_sweep.parse_look_path(other_path), base_value=2.0)
+    first_only = calib_sweep.make_variant("v01", [look_param, other_param], [0.8, 2.0])
+    staged_sweep = {"params": [{"json_path": look_path}, {"json_path": other_path}], "variants": [first_only]}
+    adopted = calib_judge.plan_param_assignments(staged_sweep, "v01")
+    check("통합 B5#10 채택: 변형이 돌린 손잡이만 adopt.assignments(base 그대로 실린 다른 모양 손잡이는 덧씌움에 들어가지 않음)",
+          len(first_only["assignments"]) == 2 and [item["json_path"] for item in adopted] == [look_path] and adopted[0]["value"] == 0.8, adopted)
 
     def judge_rejection(sweep, lock_path):
         try:

@@ -916,10 +916,11 @@ def variant_signature(touched):
 
 
 def plan_param_assignments(sweep, variant_id):
-    keys = {key for param in sweep["params"] for key in param_keys(param)}
+    touched = variant_param_values(sweep)[variant_id]
+    keys = {key for index in touched for key in param_keys(sweep["params"][index])}
     variant = next(entry for entry in sweep["variants"] if entry["id"] == variant_id)
     chosen = [assignment for assignment in variant.get("assignments", []) if assignment_key(assignment) in keys]
-    for index, value in variant_param_values(sweep)[variant_id].items():
+    for index, value in touched.items():
         param = sweep["params"][index]
         if is_actor_prop_param(param) and not any("actor_prop" in assignment for assignment in chosen):
             chosen.append({"actor_prop": param["actor_prop"], "value": value})

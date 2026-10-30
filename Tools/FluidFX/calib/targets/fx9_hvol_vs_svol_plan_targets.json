@@ -1,0 +1,41 @@
+{
+  "note": "fx9_hvol_vs_svol 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: fx9_live2_volume.json: spec-fx9 7.1 + 0b: kind volume 넓은 휘도 띠(B6, spec)는 그대로, region_metrics 의 p95_over_p5·fine_over_coarse 는 LIVE-2 IMG19(근거리 50 m HVOL) 측정 띠 [min×0.8, max×1.25](근거 표 0b/smoke-volume-particles/evidence.md). HV1 비 띠는 계획 인라인(fx9_hvol_vs_svol), 비용 지표는 ⑤(perf/plans/calib_cost_targets.json)",
+  "kind_metrics": {
+    "volume": {
+      "atmosphere.luminance_mean": [
+        0.05,
+        0.9
+      ]
+    }
+  },
+  "region_metrics": {
+    "volume": {
+      "atmosphere.luminance_mean": [
+        0.05,
+        0.9
+      ],
+      "atmosphere.p95_over_p5": [
+        2.12038,
+        4.43826
+      ],
+      "atmosphere.fine_over_coarse": [
+        0.29886,
+        0.6817
+      ]
+    },
+    "hvol": {
+      "atmosphere.luminance_mean": [
+        0.05,
+        0.9
+      ],
+      "atmosphere.p95_over_p5": [
+        2.12038,
+        4.43826
+      ],
+      "atmosphere.fine_over_coarse": [
+        0.29886,
+        0.6817
+      ]
+    }
+  }
+}

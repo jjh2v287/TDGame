@@ -1,6 +1,6 @@
 {
   "id": "foliage_k3_reed",
-  "note": "FX-13c K3 구역 5(ReedShallows 물 액터·갈대 띠·물속 교반기), 물결 위상(앞섬은 음수)·갈대 휨. 육안 승인 전 확정 아님. M5(b): 기준 Recovery = Rise",
+  "note": "FX-13c K3 구역 5(ReedShallows 물 액터·갈대 띠·물속 교반기), 물결 위상(앞섬은 음수)·갈대 휨. 육안 승인 전 확정 아님. M5(b): 기준 Recovery = Rise / 0b(2026-10-30): 거울 도달 시험 통과(measure/k3_mirror_reach.txt) — 지금 −0.172 s = Rise 0.08·Recovery 0.08, 한 손잡이 끝 Recovery 0.6 → −0.092 s, Rise 0.15 → −0.150 s. P-16 불필요. BendFromRippleSlope 는 지연에 무관(선형 배율, 값 0 은 휨 0 이라 위상 정의 불가)이고 갈대 Look 손잡이는 근거 목표가 없어(IMG 9 는 풀) 둘 다 뺐다. Rise 를 키우면 휨 진폭이 준다(0.135 → 0.11, 거울)",
   "scenes": [
     {
       "name": "k3_reed",
@@ -41,52 +41,10 @@
         ],
         "output": "offline.json"
       }
-    },
-    {
-      "name": "k3_reed_look",
-      "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
-      "camera": {
-        "pawn": [
-          15000.0,
-          0.0
-        ],
-        "arm": 450.0,
-        "view": [
-          -60.0,
-          0.0
-        ],
-        "console": [
-          "TD.FluidFX.FoliageFlow 1",
-          "TD.FluidFX.FoliageBend -1",
-          "r.TDFogScattering 0"
-        ]
-      },
-      "time_dilation": 1.0,
-      "settle": 8.0,
-      "regions_template": "Tools/FluidFX/calib/regions/foliage_k23_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/foliage_live2_press.json",
-      "live2_refs": [],
-      "shots": {
-        "count": 5,
-        "interval": 0.25,
-        "kind": "replicate"
-      }
     }
   ],
   "base_tuning": [],
   "params": [
-    {
-      "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendFromRippleSlope",
-      "values": [
-        0.0,
-        0.05,
-        0.15,
-        0.3
-      ],
-      "scenes": [
-        "k3_reed"
-      ]
-    },
     {
       "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendVectorRiseSeconds",
       "values": [
@@ -108,23 +66,11 @@
       "scenes": [
         "k3_reed"
       ]
-    },
-    {
-      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy_Reed.Scalars.FoliageBendMaxDegrees",
-      "values": [
-        30.0,
-        40.0,
-        55.0
-      ],
-      "scenes": [
-        "k3_reed_look"
-      ]
     }
   ],
   "metrics": {
     "sources": [
-      "offline",
-      "look"
+      "offline"
     ],
     "targets": [
       {
@@ -133,7 +79,8 @@
         "low": -0.1,
         "high": 0.1,
         "scene": "k3_reed",
-        "basis": "갈대 물결 지연 ±0.1 s(지금 −0.172 s), 비대칭 회복 거울(G-OFFLINE 1.4)"
+        "basis": "spec_proposal",
+        "note": "spec-fx13c M5(b) 갈대 물결 위상 지연 ±0.1 s 명세 [제안], 거울 1 Hz·250 cm 물결 조건"
       }
     ]
   },

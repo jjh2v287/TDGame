@@ -1,0 +1,12 @@
+{
+  "note": "w5_underwater_l18a 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: w5_underwater_targets.json: w5_underwater_l18a 0b(2026-10-30) IMG 21·IMG 15 수중 영역 측정(measure/gallery_underwater.json), [최소×0.75, 최대×1.25]",
+  "kind_metrics": {},
+  "region_metrics": {
+    "uw_view": {
+      "water.local_contrast": [
+        0.025,
+        0.0898
+      ]
+    }
+  }
+}

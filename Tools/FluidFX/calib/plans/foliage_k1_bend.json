@@ -1,6 +1,6 @@
 {
   "id": "foliage_k1_bend",
-  "note": "FX-13r K1 구역 1(GrassSim + 지면 교반기 반경 150 cm, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 휨·눌린 쪽 밝기·복원 시간",
+  "note": "FX-13r K1 구역 1(GrassSim + 지면 교반기 반경 150 cm, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 휨·눌린 쪽 밝기·복원 시간 / 0b(2026-10-30): 목표 셋은 명세 [제안](spec-fx13c 7절, IMG 9 육안). IMG 9 측정 눌림/바깥 휘도 비 4.4~8.2 는 잠수종 조명이 눌린 쪽을 비춰 생긴 값이라 목표로 쓰지 않는다. probe 에 stats·rt 가 없다(B6·k5 공통 공백) → frame 때 무대 보고서의 흐름 액터 라벨·렌더 타깃으로 채우고 지표 이름을 룩데브 규칙(mean·p50·p95·max·radial_alignment_mean)에 맞춘다. k1_recovery 는 이동체 정지 이벤트가 없으면 회복 구간이 없다(frame 확인) / 0b 수정: max_bend_degrees 목표 삭제(탐침이 도 단위 값을 내지 않음, rt 키는 mean·p50·p95·max·fraction_above·radial_alignment_mean 뿐 → 도달 불가, 승인 시트로). k1_bend 는 look 만",
   "scenes": [
     {
       "name": "k1_bend",
@@ -22,24 +22,14 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/foliage_k5_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/foliage_live2_bend.json",
+      "regions_template": "Tools/FluidFX/calib/regions/foliage_k1_bend_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/foliage_k1_bend_plan_targets.json",
       "live2_refs": [
         "IMG9"
       ],
       "sources": [
-        "look",
-        "probe"
+        "look"
       ],
-      "probe": {
-        "times": [
-          6.0,
-          6.25,
-          6.5,
-          6.75,
-          7.0
-        ]
-      },
       "shots": {
         "count": 5,
         "interval": 0.25,
@@ -66,8 +56,6 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/foliage_k5_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/foliage_live2_bend.json",
       "live2_refs": [
         "IMG9"
       ],
@@ -75,6 +63,21 @@
         "probe"
       ],
       "probe": {
+        "rt": [
+          {
+            "label": "FoliageFlow_Walk",
+            "property": "flow_render_target",
+            "box": [
+              0.0,
+              0.0,
+              1.0,
+              1.0
+            ],
+            "step": 0.05,
+            "channel": "rg_len",
+            "prefix": "foliage_flow"
+          }
+        ],
         "times": [
           6.0,
           6.5,
@@ -158,18 +161,13 @@
     ],
     "targets": [
       {
-        "metric": "probe.foliage_flow.max_bend_degrees",
-        "weight": 1.0,
-        "low": 60.0,
-        "high": 80.0,
-        "scene": "k1_bend"
-      },
-      {
         "metric": "derived.pressed_luma_ratio",
         "weight": 0.5,
         "low": 1.05,
         "high": 1.4,
-        "scene": "k1_bend"
+        "scene": "k1_bend",
+        "basis": "spec_proposal",
+        "note": "spec-fx13c 7절 [1.05,1.4]. IMG 9 측정 4.4~8.2 는 조명 혼입이라 근거로 쓰지 않음(evidence.md)"
       },
       {
         "metric": "derived.bend_recovery_e_fold_seconds",
@@ -178,7 +176,8 @@
         "low": 1.0,
         "high": 5.0,
         "scene": "k1_recovery",
-        "basis": "IMG9 recovery_63_seconds [1,5] 와 같은 양(63% 복원 시간 = e-fold τ), recovery_63 삭제(RT-M11) → PIE 시계열. tolerance = 범위 반폭의 2%"
+        "basis": "spec_proposal",
+        "note": "IMG 9 복원 '수 초'(추정) → 옛 recovery_63 [1,5] = e-fold τ. tolerance = 범위 반폭의 2%. 0b 수정: 피연산을 rt 탐침 probe.foliage_flow.max(굽힘 벡터 길이 rg_len 최댓값)로 바꿈. e-fold 는 크기 배율과 무관한 시간이라 도 단위 변환 없이 같은 정의. 라벨 FoliageFlow_Walk·속성 flow_render_target 은 editor_make_fluid_foliage_stage.py:477·288 근거, 실제 읽힘은 frame 에서 확인"
       }
     ],
     "derived": [
@@ -191,7 +190,7 @@
       {
         "name": "bend_recovery_e_fold_seconds",
         "op": "e_fold",
-        "a": "probe.foliage_flow.max_bend_degrees"
+        "a": "probe.foliage_flow.max"
       }
     ]
   },

@@ -1,6 +1,6 @@
 {
   "id": "w5_underwater_l18a",
-  "note": "spec-w5 UW1·UW2·UW3. 구역 8 구덩이 바닥 폰(카메라 수면 아래). 수중 안개 밀도(UW1)와 전환 블렌드(UW2)를 훑고 게임 스레드 비용(UW3)을 같이 잰다. UW1 색은 IMG 21 왼쪽 위·IMG 15 아래와 육안 대조(수치 목표 없음). 폰 좌표는 무대 보고 zones.8.camera 값(구역 중심 24000, 0)",
+  "note": "spec-w5 UW1·UW2·UW3. 구역 8 구덩이 바닥 폰(카메라 수면 아래). 수중 안개 밀도(UW1)와 전환 블렌드(UW2)를 훑고 게임 스레드 비용(UW3)을 같이 잰다. UW1 색은 IMG 21 왼쪽 위·IMG 15 아래와 육안 대조(수치 목표 없음). 폰 좌표는 무대 보고 zones.8.camera 값(구역 중심 24000, 0) / 0b(2026-10-30): UW1 색을 IMG 21 왼쪽 위·아래, IMG 15 아래 측정 띠로 수치화. BlendSeconds 손잡이는 뺐다(점수 목표가 지연뿐인데 지연은 지금 파생식으로 못 잼, Globals 라 P-5 헤더 편집도 필요) → 헤드리스 UW2 로 검증. 수면 오르내림 장면 uw_cross 는 전환 1회·진동 0 제약만",
   "scenes": [
     {
       "name": "uw_pit",
@@ -45,6 +45,8 @@
         "interval": 0.25,
         "kind": "replicate"
       },
+      "regions_template": "Tools/FluidFX/calib/regions/w5_underwater_l18a_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/w5_underwater_l18a_plan_targets.json",
       "probe": {
         "stats": [
           {
@@ -61,6 +63,63 @@
           4.0
         ]
       }
+    },
+    {
+      "name": "uw_cross",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidWaterPropsStage",
+      "camera": {
+        "awake": {
+          "TDGen_Tank_Pool": false,
+          "TDGen_Fountain_Fountain": false,
+          "TDGen_Cauldron_MinimalCauldron": false,
+          "TDGen_Cauldron_GeneralCauldron": false,
+          "TDGen_WaterTank_Pool": false,
+          "TDGen_LiquidSpheres_ClearSim": false,
+          "TDGen_LiquidSpheres_TurbulentSim": false,
+          "TDGen_LiquidSpheres_BloodOrbSim": false,
+          "TDGen_Waterfall_Pool": false,
+          "TDGen_Waterfall_Fall": false,
+          "TDGen_WaterySand_Sand": false,
+          "TDGen_UnderwaterPit_Pool": true
+        },
+        "pawn": [
+          24000,
+          0
+        ],
+        "arm": 150.0,
+        "view": [
+          -10.0,
+          0.0
+        ],
+        "move": {
+          "distance_cm": 800.0
+        }
+      },
+      "time_dilation": 1.0,
+      "settle": 1.0,
+      "live2_refs": [
+        "MC:225"
+      ],
+      "sources": [
+        "probe"
+      ],
+      "probe": {
+        "stats": [
+          {
+            "subsystem": "TDFluidUnderwaterSubsystem",
+            "function": "get_underwater_stats",
+            "prefix": "underwater"
+          }
+        ],
+        "times": [
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0
+        ]
+      }
     }
   ],
   "params": [
@@ -71,16 +130,10 @@
         0.002,
         0.004
       ],
-      "split_group": false
-    },
-    {
-      "json_path": "Globals.TDFluidUnderwaterSettings.BlendSeconds",
-      "values": [
-        0.0,
-        0.1,
-        0.25
-      ],
-      "split_group": false
+      "split_group": false,
+      "scenes": [
+        "uw_pit"
+      ]
     }
   ],
   "mode": "one_at_a_time",
@@ -94,31 +147,73 @@
     ],
     "targets": [
       {
-        "scene": "uw_pit",
-        "metric": "probe.underwater.SwitchCount",
+        "metric": "derived.uw_blue_over_red",
         "weight": 1.0,
-        "low": 0.0,
-        "high": 0.0,
-        "basis": "[측정 결함, CAL-0 통합] GetUnderwaterStats().SwitchCount 는 PIE 시작부터의 누적값(TDFluidUnderwaterSubsystem.cpp:363)이라 폰을 구덩이로 옮길 때 1 이 더해지고 한 PIE 에서 이어 도는 단계마다 쌓인다. [0, 0] 은 단계 안 증가량(마지막 표본 − 첫 표본)으로만 뜻이 맞으므로 0b 에서 표본 차 지표를 만들기 전에는 이 목표를 쓰지 않는다"
+        "scene": "uw_pit",
+        "low": 1.7486,
+        "high": 5.4815,
+        "basis": "live2_image",
+        "note": "IMG 21 왼쪽 위 4.3852·아래 4.2507, IMG 15 아래 2.3315 → [최소×0.75, 최대×1.25]"
       },
       {
+        "metric": "uw_view.water.local_contrast",
+        "weight": 0.5,
         "scene": "uw_pit",
-        "metric": "probe.underwater.crossing_delay_seconds",
-        "weight": 1.0,
-        "low": 0.0,
-        "high": 0.14
+        "basis": "live2_image",
+        "note": "같은 세 영역 0.0719, 0.0518, 0.0334 → [최소×0.75, 최대×1.25](목표 파일)"
       },
       {
-        "scene": "uw_pit",
-        "metric": "derived.underwater_mean_tick_milliseconds",
+        "metric": "derived.stationary_switches",
         "weight": 1.0,
+        "scene": "uw_pit",
+        "low": -0.5,
+        "high": 0.5,
+        "role": "constraint",
+        "basis": "spec_proposal",
+        "note": "spec-w5 UW2 '정지 시 진동 0'. 첫·마지막 탐침 사이 SwitchCount 증가 0. 0b 수정: low<high(B2) 를 위해 정수 개수라 [-0.5, 0.5] = 0회와 같다"
+      },
+      {
+        "metric": "derived.mean_tick_milliseconds",
+        "weight": 1.0,
+        "scene": "uw_pit",
         "low": 0.0,
-        "high": 0.02
+        "high": 0.02,
+        "role": "constraint",
+        "basis": "spec_proposal",
+        "note": "spec-w5 UW3 평균 GT ≤0.02ms(RM:657), 누적 TotalTickMilliseconds/TickCount. 비용 지표라 제약만(⑤ 예산 표가 정본)"
+      },
+      {
+        "metric": "derived.crossing_switches",
+        "weight": 1.0,
+        "scene": "uw_cross",
+        "low": 0.5,
+        "high": 1.5,
+        "role": "constraint",
+        "basis": "spec_proposal",
+        "note": "spec-w5 UW2 수면 통과 1회 = 전환 1회(진동 없음). 질의 주기 25 Hz 는 매뉴얼 CamPosQueryRefreshRate 25(MC:225). 지연 ≤0.14 s 는 임계 통과 시각 파생식이 없어 측정 불가. 0b 수정: low<high(B2) 를 위해 정수 개수라 [0.5, 1.5] = 1회와 같다"
       }
     ],
     "derived": [
       {
-        "name": "underwater_mean_tick_milliseconds",
+        "name": "uw_blue_over_red",
+        "op": "ratio",
+        "a": "uw_view.water.mean_blue",
+        "b": "uw_view.water.mean_red"
+      },
+      {
+        "name": "stationary_switches",
+        "op": "difference",
+        "a": "4.probe.underwater.SwitchCount",
+        "b": "0.probe.underwater.SwitchCount"
+      },
+      {
+        "name": "crossing_switches",
+        "op": "difference",
+        "a": "5.probe.underwater.SwitchCount",
+        "b": "0.probe.underwater.SwitchCount"
+      },
+      {
+        "name": "mean_tick_milliseconds",
         "op": "ratio",
         "a": "probe.underwater.TotalTickMilliseconds",
         "b": "probe.underwater.TickCount"

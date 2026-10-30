@@ -1,0 +1,66 @@
+{
+ "version": 1,
+ "note": "자동 보정 대신 화면 승인 시트(plan-batch-v2 6.2)에서 육안으로 정하는 손잡이·목표·장면. 측정 근거(LIVE-2 갤러리 정량)가 생기면 계획으로 되돌린다. original = 지우기 전 원문(git 커밋:경로)",
+ "items": [
+  {
+   "plan": "fx15a_wind_and_anchor",
+   "kind": "target",
+   "item": "anchored_cauldron.wake_length_cm@anchored_cauldron",
+   "decision": "D5",
+   "destination": "승인 시트 뒤(deferred)",
+   "reason": "그릇 꼬리 길이를 내는 측정 함수가 없다. 계획은 calib/retired/",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/fx15a_wind_and_anchor.json"
+  },
+  {
+   "plan": "foliage_k3_reed",
+   "kind": "knob",
+   "item": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy_Reed.Scalars.FoliageBendMaxDegrees(장면 k3_reed_look)",
+   "decision": "D5",
+   "destination": "승인 시트",
+   "reason": "갈대 휨 모양의 근거 목표가 없다(IMG 9 는 풀). k3 는 offline 단독",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/foliage_k3_reed.json"
+  },
+  {
+   "plan": "fx8n_drive",
+   "kind": "scene",
+   "item": "p2_smoke_sprite(손잡이 NS_TD_FluidDriveSprite User.DriveSpawnPerM2PerSec·User.DriveVelocityDragPerSec, 목표 particles.embers.count·median_area_px)",
+   "decision": "D5",
+   "destination": "P2 승인 시트 뒤(deferred)",
+   "reason": "IMG16 근거는 메시 공뿐이라 스모크 스프라이트 장면의 정량 목표가 없다",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/fx8n_drive.json"
+  },
+  {
+   "plan": "w3_rain",
+   "kind": "scene",
+   "item": "rain_streaks·density_bench(손잡이 NS_TD_FluidRain User.TDRainSpawnRatePerSec)",
+   "decision": "D5",
+   "destination": "승인 시트 M5·⑤ 비용",
+   "reason": "빗줄기·밀도 장면은 측정 가능한 목표가 없고 스폰율은 비용 손잡이다",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/w3_rain.json"
+  },
+  {
+   "plan": "foliage_k1_bend",
+   "kind": "target",
+   "item": "probe.foliage_flow.max_bend_degrees@k1_bend",
+   "decision": "0b",
+   "destination": "승인 시트",
+   "reason": "탐침이 도 단위 값을 내지 않는다(rt 키는 mean·p50·p95·max·fraction_above·radial_alignment_mean 뿐)",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/foliage_k1_bend.json"
+  },
+  {
+   "plan": "fx16b_fadeout",
+   "kind": "plan",
+   "item": "fx16b_fadeout",
+   "decision": "PB2 47~51",
+   "destination": "승인 시트",
+   "reason": "B6 가 calib/retired/ 로 옮긴 폐기·이관 계획(plan-batch-v2 1절 47~51)",
+   "source": "B6",
+   "original": "Tools/FluidFX/calib/retired/fx16b_fadeout.json"
+  }
+ ]
+}

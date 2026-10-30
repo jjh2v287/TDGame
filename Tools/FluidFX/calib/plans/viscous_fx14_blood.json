@@ -1,6 +1,6 @@
 {
   "id": "viscous_fx14_blood",
-  "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4). blood_splash 는 단계마다 call 로 조각 방출기 trigger_break_at(파괴 액터 (2000, 0, 50) + EXPLOSION_HIT_OFFSET (-55, 0, -35) = (1945, 0, 15), editor_make_fluid_viscous_stage.py build_zone_splash·fire_stage)을 부른 뒤 settle 6 초를 기다린다. 목록 인수는 언리얼 파이썬이 FVector 로 바꾼다(PyWrapperStruct CastPyObject 순서열 허용). [위험] TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌리므로 둘째 단계부터 새 튐이 없다: 0b 에서 단계마다 PIE 재시작이나 재무장 수단을 정하기 전에는 blood_splash 판정을 쓰지 않는다",
+  "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4). blood_splash 는 단계마다 call 로 조각 방출기 trigger_break_at(파괴 액터 (2000, 0, 50) + EXPLOSION_HIT_OFFSET (-55, 0, -35) = (1945, 0, 15), editor_make_fluid_viscous_stage.py build_zone_splash·fire_stage)을 부른 뒤 settle 6 초를 기다린다. 목록 인수는 언리얼 파이썬이 FVector 로 바꾼다(PyWrapperStruct CastPyObject 순서열 허용). [위험] TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌리므로 둘째 단계부터 새 튐이 없다: 0b 에서 단계마다 PIE 재시작이나 재무장 수단을 정하기 전에는 blood_splash 판정을 쓰지 않는다 / CAL-0 0b 통합(D3): blood_splash 장면과 그 목표 2개(blood_streak.streak_aspect·streak_tip_width_ratio)는 TriggerBreakAt 가 PIE 당 한 번이라 재무장 수단이 생길 때까지 deferred(판정 미사용, FX-P 표). 원문과 복원 조건은 Tools/FluidFX/calib/structural-gaps.json",
   "scenes": [
     {
       "name": "blood_decal",
@@ -31,51 +31,6 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
-    },
-    {
-      "name": "blood_splash",
-      "level": "/Game/FluidFX/Maps/LV_TDFluidViscousStage",
-      "camera": {
-        "exposure_ev100": 1.0,
-        "pawn": [
-          2000.0,
-          0.0
-        ],
-        "arm": 500.0,
-        "view": [
-          -30.0,
-          0.0
-        ],
-        "awake": {
-          "TDGen_ViscousBloodSplash": true
-        }
-      },
-      "time_dilation": 1.0,
-      "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/viscous_fx14_targets.json",
-      "live2_refs": [
-        "L4"
-      ],
-      "shots": {
-        "count": 5,
-        "interval": 0.25,
-        "kind": "replicate"
-      },
-      "step_apply": {
-        "call": {
-          "TDGen_ViscousBloodSplash_Fragments": {
-            "function": "trigger_break_at",
-            "args": [
-              [
-                1945.0,
-                0.0,
-                15.0
-              ]
-            ]
-          }
-        }
       }
     }
   ],
@@ -138,20 +93,6 @@
       "look"
     ],
     "targets": [
-      {
-        "metric": "blood_streak.streak_aspect",
-        "weight": 1.0,
-        "low": 5.0,
-        "high": 15.0,
-        "scene": "blood_splash"
-      },
-      {
-        "metric": "blood_streak.streak_tip_width_ratio",
-        "weight": 0.5,
-        "low": 0.5,
-        "high": 1.0,
-        "scene": "blood_splash"
-      },
       {
         "metric": "decal_edge.width_cells",
         "weight": 1.0,

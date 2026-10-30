@@ -1,0 +1,136 @@
+{
+ "version": 1,
+ "note": "CAL-0 일괄 보정이 다루지 않는 손잡이·목표·장면·기준(plan-batch-v2 5절 6: 닿지 않는 목표는 여기로, 스윕을 늘려 쫓지 않는다). kind = knob|target|scene|plan|criterion, destination = 넘긴 곳, original = 지우기 전 원문(git 커밋:경로). 육안 승인으로 넘긴 것은 approval-only.json",
+ "gaps": [
+  {
+   "plan": "fx15a_wind_and_anchor",
+   "kind": "plan",
+   "item": "fx15a_wind_and_anchor(wind_drift.drift_speed_ratio)",
+   "decision": "D5",
+   "destination": "헤드리스 시험 H8(같은 정의)",
+   "reason": "연기 중심 이동·꼬리 길이를 내는 측정 함수가 0개(measure_fx_look·probe.rt 에 중심 위치 없음)라 실행 불가. 계획 전체를 calib/retired/ 로, 그릇 꼬리는 approval-only",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/fx15a_wind_and_anchor.json"
+  },
+  {
+   "plan": "fog_f7_lights",
+   "kind": "knob",
+   "item": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Sim.Vectors.FogAlbedo",
+   "decision": "D5",
+   "destination": "없음(구조 격차, 채택은 actor_props → W④ P-9)",
+   "reason": "MI_TD_FluidFog_Sim 을 FogRoom·FogAmbient·FogCut·FogStir 가 함께 써 f5 와 같은 잎 충돌이고, 웅덩이/주변 비는 반사율 배율에 거의 불변",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/fog_f7_lights.json"
+  },
+  {
+   "plan": "w5_underwater_l18a",
+   "kind": "knob",
+   "item": "Globals.TDFluidUnderwaterSettings.BlendSeconds",
+   "decision": "D5",
+   "destination": "헤드리스 시험 UW2",
+   "reason": "점수 목표가 전환 지연뿐인데 지연은 지금 파생식으로 잴 수 없고, Globals 라 바꾸려면 P-5 헤더 편집도 필요",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/w5_underwater_l18a.json"
+  },
+  {
+   "plan": "foliage_k3_reed",
+   "kind": "knob",
+   "item": "Kinds.ReedShallows.TDFluidSimulationConfig.BendFromRippleSlope",
+   "decision": "D5",
+   "destination": "없음(구조상 지연 둔감)",
+   "reason": "선형 배율이라 위상 지연에 무관하고, 값 0 은 휨 0 이라 위상 정의가 안 된다. k3 는 offline 거울 해석기 단독(거울 도달 시험 통과, P-16 불필요)",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/foliage_k3_reed.json"
+  },
+  {
+   "plan": "track_sand_h4",
+   "kind": "target",
+   "item": "dune_fft.dominant_wavelength_relative_error",
+   "decision": "D5",
+   "destination": "없음(정의 불가)",
+   "reason": "기준 파장(cm)이 없어 상대 오차를 정의할 수 없다. 사구 목표는 IMG 13 주파수 봉우리 비·미세 세부(크기 무관)로 바꿨다",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/track_sand_h4.json"
+  },
+  {
+   "plan": "track_sand_h4",
+   "kind": "target",
+   "item": "sand_dust.atmosphere.fine_over_coarse",
+   "decision": "0b",
+   "destination": "없음(손잡이 무관)",
+   "reason": "이 계획 손잡이 셋(사구 재질)과 무관한 지표",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/track_sand_h4.json"
+  },
+  {
+   "plan": "fx9_floor_smoke",
+   "kind": "criterion",
+   "item": "HV5(두께 차 ≤ 캡처 칸 1·캡처 변경당 1·정지 0)",
+   "decision": "D5",
+   "destination": "헤드리스 시험",
+   "reason": "이미지 지표가 없고 GetHeightCaptureCount(TDFluidVolumeDriverComponent.h:69)가 UFUNCTION 이 아니라 probe 로 읽을 수 없다",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/fx9_floor_smoke.json"
+  },
+  {
+   "plan": "fx9_hvol_vs_svol",
+   "kind": "criterion",
+   "item": "HV3(CVAR 이득 GPU ms)",
+   "decision": "0b",
+   "destination": "⑤ 성능 판정",
+   "reason": "GPU 시간은 이 계획의 화면 지표가 아니다",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/fx9_hvol_vs_svol.json"
+  },
+  {
+   "plan": "fx8n_drive",
+   "kind": "target",
+   "item": "particles.embers.median_area_px@p4_vortex_mesh",
+   "decision": "0b",
+   "destination": "없음(비교 불가)",
+   "reason": "IMG16 측정 덩어리 크기가 반사점(5 px)이라 메시 공 크기와 비교할 수 없다",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/fx8n_drive.json"
+  },
+  {
+   "plan": "w3_rain",
+   "kind": "target",
+   "item": "pond_surface.ring_density_per_m2_per_sec@pond_near · pond_surface.ring_amplitude_e_fold_seconds@pond_near · frame.density_coverage_fraction@density_bench",
+   "decision": "D5",
+   "destination": "없음(측정기 키 없음)",
+   "reason": "측정기에 고리 밀도·고리 수명·웅덩이 면적 키가 없고 LIVE-2 갤러리에 비 맞는 웅덩이 장면이 없다(IMG 15 는 옆 시점 폭풍 바다)",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/w3_rain.json"
+  },
+  {
+   "plan": "w3_rain",
+   "kind": "target",
+   "item": "rain_streaks.embers.count@rain_streaks",
+   "decision": "D5",
+   "destination": "없음(검출 불가)",
+   "reason": "embers 는 따뜻한 색 검출이라 IMG 15 비 영역에서 0(측정)",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/w3_rain.json"
+  },
+  {
+   "plan": "w1b_water_particles",
+   "kind": "target",
+   "item": "particles.embers.count@rapids_img20",
+   "decision": "0b",
+   "destination": "없음(검출 불가)",
+   "reason": "IMG 20 급류 공이 embers 최대 면적 40 px 를 넘어 잡음만 센다",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/w1b_water_particles.json"
+  },
+  {
+   "plan": "viscous_fx14_blood",
+   "kind": "scene",
+   "item": "blood_splash(목표 blood_streak.streak_aspect·blood_streak.streak_tip_width_ratio)",
+   "decision": "D3",
+   "destination": "deferred(판정 미사용, FX-P 표)",
+   "reason": "TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌려 둘째 단계부터 새 튐이 없다. 단계마다 PIE 재시작이나 재무장 수단이 생기면 original 에서 장면·목표를 되살린다",
+   "source": "0b",
+   "original": "2c8a03bd:Tools/FluidFX/calib/plans/viscous_fx14_blood.json"
+  }
+ ]
+}

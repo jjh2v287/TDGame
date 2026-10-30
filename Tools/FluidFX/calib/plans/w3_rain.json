@@ -1,6 +1,6 @@
 {
   "id": "w3_rain",
-  "note": "W-3 비·웅덩이(L12): 기준 수치가 없어 M1(근접 고리 밀도)·M4(웅덩이 면적률)·M5(빗줄기·튐)는 사용자 승인, 일괄 보정(D-64) 때 사용. 카메라 좌표는 editor_make_fluid_rain_stage.py 의 S1(연못 중심 0,0)·S2(4200,0) 배치와 같다. M1 2차 손잡이는 W-7 근접 감쇠 DampingPerSec(반박 B5) CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
+  "note": "W-3 비·웅덩이(L12): 기준 수치가 없어 M1(근접 고리 밀도)·M4(웅덩이 면적률)·M5(빗줄기·튐)는 사용자 승인, 일괄 보정(D-64) 때 사용. 카메라 좌표는 editor_make_fluid_rain_stage.py 의 S1(연못 중심 0,0)·S2(4200,0) 배치와 같다. M1 2차 손잡이는 W-7 근접 감쇠 DampingPerSec(반박 B5) / 0b(2026-10-30): LIVE-2 갤러리에 비 맞는 웅덩이 장면이 없고(IMG 15 는 옆 시점 폭풍 바다), 측정기에 고리 밀도·고리 수명·웅덩이 면적 키가 없어 옛 목표 4개(ring_density·ring_e_fold·density_coverage·빗줄기 embers 수)를 뺐다. 빗줄기는 embers 따뜻한 색 검출이라 IMG 15 비 영역에서 0(측정). rain_streaks·density_bench 장면과 SpawnRate 손잡이는 승인 시트(M5)·⑤ 로 넘기는 제안. 남은 목표는 명세 [제안] M1·M3 뿐(P-11 동등 증명 아님)",
   "scenes": [
     {
       "name": "pond_near",
@@ -19,7 +19,8 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/w3_rain_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/w3_rain_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/w3_rain_plan_targets.json",
       "live2_refs": [
         "L12"
       ],
@@ -46,7 +47,8 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/w3_rain_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/w3_rain_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/w3_rain_plan_targets.json",
       "live2_refs": [
         "L12",
         "L3"
@@ -55,61 +57,6 @@
         "count": 8,
         "interval": 5.0,
         "kind": "series"
-      }
-    },
-    {
-      "name": "density_bench",
-      "level": "/Game/FluidFX/Maps/LV_TDFluidRainStage",
-      "camera": {
-        "pawn": [
-          4200.0,
-          0.0
-        ],
-        "arm": 1200.0,
-        "view": [
-          -90.0,
-          0.0
-        ],
-        "exposure_ev100": 2.0
-      },
-      "time_dilation": 1.0,
-      "settle": 60.0,
-      "regions_template": "Tools/FluidFX/calib/regions/w3_rain_regions.json",
-      "live2_refs": [
-        "L12"
-      ],
-      "shots": {
-        "count": 3,
-        "interval": 0.25,
-        "kind": "replicate"
-      }
-    },
-    {
-      "name": "rain_streaks",
-      "level": "/Game/FluidFX/Maps/LV_TDFluidRainStage",
-      "camera": {
-        "pawn": [
-          0.0,
-          0.0
-        ],
-        "arm": 1500.0,
-        "view": [
-          -90.0,
-          0.0
-        ],
-        "exposure_ev100": 2.0
-      },
-      "time_dilation": 1.0,
-      "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/w3_rain_regions.json",
-      "live2_refs": [
-        "L12",
-        "L3"
-      ],
-      "shots": {
-        "count": 5,
-        "interval": 0.25,
-        "kind": "replicate"
       }
     }
   ],
@@ -123,8 +70,7 @@
       ],
       "split_group": false,
       "scenes": [
-        "pond_near",
-        "density_bench"
+        "pond_near"
       ],
       "cost": "higher_costs_more"
     },
@@ -175,20 +121,6 @@
       "scenes": [
         "pond_top"
       ]
-    },
-    {
-      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidRain.Floats.User.TDRainSpawnRatePerSec",
-      "values": [
-        1500,
-        2850,
-        4000
-      ],
-      "split_group": false,
-      "scenes": [
-        "rain_streaks",
-        "density_bench"
-      ],
-      "cost": "higher_costs_more"
     }
   ],
   "mode": "one_at_a_time",
@@ -201,60 +133,34 @@
     ],
     "targets": [
       {
-        "metric": "rain_streaks.embers.count",
+        "metric": "pond_surface.water.local_contrast",
         "weight": 1.0,
-        "tolerance": 200.0,
-        "low": 3500.0,
-        "high": 4300.0,
-        "scene": "rain_streaks",
-        "basis": "빗줄기 입자 수(목표 파일 rain_streaks)"
-      },
-      {
-        "metric": "pond_surface.ring_density_per_m2_per_sec",
-        "weight": 1.0,
-        "tolerance": 0.0,
         "scene": "pond_near",
-        "basis": "분석기 확장 뒤 확정(목표 측정)"
+        "relative_to_control": {
+          "low": 0.7,
+          "high": 1.3
+        },
+        "role": "constraint",
+        "basis": "spec_proposal",
+        "note": "spec-w3 7절 M1 '설정 ±30%, 화면은 사용자 승인'. 대조 대비 0.7~1.3 이라 1.0 포함 → 제약. pond_near 손잡이 3개는 점수 목표가 없어 구조상 둔감(검증만)"
       },
       {
-        "metric": "pond_surface.ring_amplitude_e_fold_seconds",
+        "metric": "derived.wet_luminance_ratio",
         "weight": 1.0,
-        "tolerance": 0.0,
-        "scene": "pond_near",
-        "basis": "분석기 확장 뒤 확정(목표 측정)"
-      },
-      {
-        "metric": "derived.wet_luminance_slope",
-        "weight": 1.0,
-        "tolerance": 0.001,
         "scene": "pond_top",
-        "basis": "젖음 누적률(RF-S4 대안 slope), 범위는 목표 측정, tolerance 는 범위와 함께 다시 정함(임시)"
-      },
-      {
-        "metric": "derived.puddle_luminance_slope",
-        "weight": 1.0,
-        "tolerance": 0.001,
-        "scene": "pond_top",
-        "basis": "웅덩이 누적률(slope), 범위는 목표 측정, tolerance 임시"
-      },
-      {
-        "metric": "frame.density_coverage_fraction",
-        "weight": 1.0,
-        "tolerance": 0.0,
-        "scene": "density_bench",
-        "basis": "분석기 확장 뒤 확정(목표 측정)"
+        "tolerance": 0.02,
+        "low": 0.5,
+        "high": 0.7,
+        "basis": "spec_proposal",
+        "note": "spec-w3 7절 M3 젖은 지면 휘도 비 0.5~0.7[제안], 마지막 장(41 게임초) 젖은/마른 영역 비. 마른 영역(비 안 맞는 곳)이 무대에 없으면 도달 불가. tolerance 0.02 = 띠 폭 10%(임시, 잠금 전 확인)"
       }
     ],
     "derived": [
       {
-        "name": "wet_luminance_slope",
-        "op": "slope",
-        "a": "puddle_ground.luminance_mean"
-      },
-      {
-        "name": "puddle_luminance_slope",
-        "op": "slope",
-        "a": "puddle_ground.water.local_contrast"
+        "name": "wet_luminance_ratio",
+        "op": "ratio",
+        "a": "7.wet_ground.luminance_mean",
+        "b": "7.dry_ground.luminance_mean"
       }
     ]
   }

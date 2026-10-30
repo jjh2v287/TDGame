@@ -1,6 +1,6 @@
 {
   "id": "cloud_g4_painter",
-  "note": "FX-11c G4, 셋업 5 Paint(CloudPaint 라이브 + 칠하기 액터). 의도한 예약: 시작 직후 TD.FluidFX.CloudPaintStroke 6.3 7.7 7.7 6.3 1 0 (카메라 시야 안 평지 사분면을 가로지르는 획 1초), 2초 뒤 같은 획에 지우기 1. 투영 오차 ≤ 1칸은 대본 획이 커서 투영을 건너뛰므로 보정이 아니라 시험 PainterRayToAltitude·PainterDisplayToSimulation 으로 대체한다",
+  "note": "FX-11c G4, 셋업 5 Paint. 0b: 의도만 적혀 있던 예약을 장면 schedule.events 로 옮김(0.5 s 칠하기 획 1 s, 4.0 s 같은 획 지우기 1 s), probe 에 rt 추가(stats|rt 필수 누락 보완). 탐침 표본 k: 0 = 칠하기 전, 1~3 = 칠한 뒤, 4~6 = 지운 뒤. 투영 오차 ≤1칸은 시험 PainterRayToAltitude·PainterDisplayToSimulation 으로 대체. rt 상자는 frame 뒤(전 영역에서 획 상자로 좁힐지) / 0b 수정: rt step 4 는 UV 상자 [0,1] 에서 표본 1개(grid_positions)라 0.025(41x41)로. 읽기 속도(read_render_target_raw_uv)는 frame 에서 확인",
   "scenes": [
     {
       "name": "painter_stroke",
@@ -23,12 +23,47 @@
         "probe"
       ],
       "probe": {
+        "rt": [
+          {
+            "label": "TDGen_CloudPaint_Source",
+            "component": "live_component",
+            "property": "gpu_density_pressure_target",
+            "box": [
+              0.0,
+              0.0,
+              1.0,
+              1.0
+            ],
+            "step": 0.025,
+            "channel": "r",
+            "prefix": "cloud_paint"
+          }
+        ],
         "times": [
-          4.0,
-          4.25,
-          4.5,
-          4.75,
-          5.0
+          0.25,
+          2.5,
+          2.75,
+          3.0,
+          6.0,
+          6.25,
+          6.5
+        ]
+      },
+      "schedule": {
+        "reference": "now",
+        "events": [
+          {
+            "time": 0.5,
+            "console": [
+              "TD.FluidFX.CloudPaintStroke 6.3 7.7 7.7 6.3 1 0"
+            ]
+          },
+          {
+            "time": 4.0,
+            "console": [
+              "TD.FluidFX.CloudPaintStroke 6.3 7.7 7.7 6.3 1 1"
+            ]
+          }
         ]
       }
     }
@@ -56,23 +91,37 @@
     "sources": [
       "probe"
     ],
+    "derived": [
+      {
+        "name": "erased_over_painted",
+        "op": "ratio",
+        "a": "5.probe.cloud_paint.max",
+        "b": "2.probe.cloud_paint.max"
+      }
+    ],
     "targets": [
       {
-        "metric": "probe.cloud_paint.density_in_radius",
+        "metric": "2.probe.cloud_paint.max",
         "weight": 1.0,
         "low": 0.5,
-        "high": 2.0
+        "high": 1000.0,
+        "basis": "spec_proposal",
+        "note": "spec-fx11c.md:170 '반경 안 밀도 ≥ 0.5' [제안]. 획 중심 = 최댓값이라 전 영역 max 로 대리(상자 무관). 상한 열림. FX-P 동등 증명 아님(P-11)"
       },
       {
-        "metric": "probe.cloud_paint.erased_over_painted",
+        "metric": "derived.erased_over_painted",
         "weight": 1.0,
         "low": 0.0,
-        "high": 0.6
+        "high": 0.9,
+        "role": "constraint",
+        "basis": "spec_proposal",
+        "note": "spec-fx11c.md:170 '지우기 → 감소' [제안]. 수치 없음 → 0.9(10% 넘게 감소)는 0b 해석. 옛 [0, 0.6]·밀도 상한 2.0 은 근거 없어 버림"
       }
     ]
   },
   "mode": "one_at_a_time",
   "repeats": 2,
   "control_every": 0,
-  "reset": "reinit"
+  "reset": "reinit",
+  "spec_source": "작업 기록 AgentOps/20261029/wave3/spec-fx11c.md:170(저장소 밖)"
 }

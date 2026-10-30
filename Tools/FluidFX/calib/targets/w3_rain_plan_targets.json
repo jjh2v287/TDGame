@@ -1,0 +1,5 @@
+{
+  "note": "w3_rain 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: w3_rain_targets.json: w3_rain 0b(2026-10-30): 옛 kind·region 범위(ring e-fold·wet ratio·ring 밀도·웅덩이 면적·빗줄기 수)는 측정 키가 없거나(분석기 미확장) 검출 정의가 맞지 않아 비웠다. 남은 목표는 계획 인라인(명세 [제안] M1·M3)",
+  "kind_metrics": {},
+  "region_metrics": {}
+}

@@ -1,6 +1,6 @@
 {
   "id": "fx9_floor_smoke",
-  "note": "spec-fx9 HV5, 구역 3(바닥 요철 3개 위 바닥 연기, 장면 캡처 높이)",
+  "note": "spec-fx9 HV5, 구역 3(바닥 요철 3개 위 바닥 연기, 장면 캡처 높이) / 0b: 목표 = IMG19 HVOL 측정 띠 2개(score) + 넓은 휘도 띠(constraint). HV5 '두께 차 ≤ 캡처 칸 1·캡처 변경당 1·정지 0'은 이미지 지표가 없고 GetHeightCaptureCount 가 UFUNCTION 이 아니라 probe 로 못 읽음 → 헤드리스 시험 이관 제안",
   "scenes": [
     {
       "name": "floor_smoke",
@@ -21,8 +21,8 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fx9_zone_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/fx9_live2_volume.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fx9_floor_smoke_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx9_floor_smoke_plan_targets.json",
       "live2_refs": [
         "L3"
       ],
@@ -60,6 +60,26 @@
     "sources": [
       "look"
     ],
-    "targets": []
+    "targets": [
+      {
+        "metric": "volume.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "basis": "live2_image",
+        "note": "IMG19 띠(목표 파일 region_metrics.volume)"
+      },
+      {
+        "metric": "volume.atmosphere.fine_over_coarse",
+        "weight": 1.0,
+        "basis": "live2_image",
+        "note": "IMG19 띠(목표 파일 region_metrics.volume)"
+      },
+      {
+        "metric": "volume.atmosphere.luminance_mean",
+        "weight": 1.0,
+        "role": "constraint",
+        "basis": "spec_proposal",
+        "note": "spec-fx9 7.1 넓은 정상 띠, 동등 증명 아님(P-11)"
+      }
+    ]
   }
 }

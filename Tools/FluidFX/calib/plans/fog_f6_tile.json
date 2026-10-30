@@ -1,6 +1,6 @@
 {
   "id": "fog_f6_tile",
-  "note": "FX-10c F6. 8C 감싸기 원천(FogTileSim 30 m 창, Wrap)이 자기 RT 를 90 m 안개 상자(상자 배율 3)에 타일 렌더(SimAreaWrapped 1). 반복 은폐는 휘도 2D 자기상관 2차 봉우리(SWB L14-a 관례), 원거리 대기 지표는 IMG 19 원거리 기준 2.23 ±25%(타일 안개 이미지 없음, CD M.3.20.1 Water_Sparse_DoubleSim_TilingWaves 유추). MI_TD_FluidFog_TileSync 는 8C 전용이라 재질 값을 훑어도 다른 구역과 충돌하지 않는다",
+  "note": "FX-10c F6. 8C 감싸기 원천(FogTileSim 30 m 창, Wrap)이 자기 RT 를 90 m 안개 상자(상자 배율 3)에 타일 렌더(SimAreaWrapped 1). 반복 은폐는 휘도 2D 자기상관 2차 봉우리(SWB L14-a 관례), 원거리 대기 지표는 IMG 19 원거리 기준 2.23 ±25%(타일 안개 이미지 없음, CD M.3.20.1 Water_Sparse_DoubleSim_TilingWaves 유추). MI_TD_FluidFog_TileSync 는 8C 전용이라 재질 값을 훑어도 다른 구역과 충돌하지 않는다 0b(2026-10-30): 자기상관 상한을 LIVE-2 갤러리 안개 영역 최댓값으로(명세 [제안] ≤0.3 은 참고), 원거리 p95/p5 는 IMG 19 측정 재현 2.23 ±25%. 띠는 targets 파일. sky kind background → sky(measure_fx_look 기본 모드 kind 아님). 영역은 frame 뒤",
   "scenes": [
     {
       "name": "f6_tile",
@@ -33,13 +33,14 @@
       },
       "time_dilation": 1.0,
       "settle": 10.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fog_f6_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f6_tile_frame_regions.json",
       "live2_refs": [],
       "shots": {
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
+      },
+      "targets": "Tools/FluidFX/calib/targets/fog_f6_tile_plan_targets.json"
     }
   ],
   "params": [
@@ -89,20 +90,21 @@
         "scene": "f6_tile",
         "metric": "tile_far.autocorrelation.secondary_peak",
         "weight": 2.0,
-        "low": 0.0,
-        "high": 0.3
+        "basis": "live2_image",
+        "note": "갤러리 안개 6영역 최댓값 0.0603(IMG19 far_fvol) 올림, 나머지 5영역은 0. 띠 targets 파일. 명세 [제안] ≤0.3 은 참고만"
       },
       {
         "scene": "f6_tile",
         "metric": "tile_far.atmosphere.p95_over_p5",
         "weight": 1.0,
-        "low": 1.67,
-        "high": 2.79
+        "basis": "live2_image",
+        "note": "IMG19 원거리 FVOL (800,240,1280,420) p95/p5 2.231 ±25%(ICF:125 관례). 띠 targets 파일"
       }
     ]
   },
   "mode": "one_at_a_time",
   "repeats": 2,
   "control_every": 0,
-  "reset": "reinit"
+  "reset": "reinit",
+  "spec_source": "작업 기록 AgentOps/20261026/wave2/spec-fx10c.md:197(저장소 밖)"
 }

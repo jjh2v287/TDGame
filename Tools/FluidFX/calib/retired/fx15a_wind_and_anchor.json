@@ -1,6 +1,6 @@
 {
   "id": "fx15a_wind_and_anchor",
-  "note": "FX-15a A13 바람(구역 1 SmokeWindDrift)·A17 D 그릇(구역 2 SmokeAnchoredCauldron, 교반기 궤도 부모). 바람 변형은 DirectVelocityCmPerSec 의 X 성분 3값, 그릇 변형은 창 이동 배율 SimAreaMotionVelocityScale 3값이다. 지표 두 개(바람 중심 이동 속도/U, 그릇 꼬리 길이)는 아직 측정 출처가 없다.",
+  "note": "폐기·이관 제안(0b): 두 지표(바람 중심 이동 속도 비·그릇 꼬리 길이)를 내는 측정 함수가 0개라 실행 불가. 바람 비는 시험 H8 과 같은 정의라 헤드리스 시험으로 이관, 그릇 꼬리는 승인 시트 뒤(deferred). TOP·SVP 두 판이 같은 제안 / FX-15a A13 바람(구역 1 SmokeWindDrift)·A17 D 그릇(구역 2 SmokeAnchoredCauldron, 교반기 궤도 부모). 바람 변형은 DirectVelocityCmPerSec 의 X 성분 3값, 그릇 변형은 창 이동 배율 SimAreaMotionVelocityScale 3값이다. 지표 두 개(바람 중심 이동 속도/U, 그릇 꼬리 길이)는 아직 측정 출처가 없다. / 0b: 실행 불가(측정 출처 없음). 바람 비는 시험 H8 과 같은 정의라 헤드리스 시험으로 이관, 그릇 꼬리는 승인 시트 뒤(deferred) 제안. 손잡이에 장면 지정(scenes)만 더함",
   "scenes": [
     {
       "name": "wind_drift",
@@ -21,8 +21,8 @@
       },
       "time_dilation": 1.0,
       "settle": 4.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fx15a_zone_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fx15a_wind_and_anchor_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx15a_wind_and_anchor_plan_targets.json",
       "live2_refs": [
         "L3"
       ],
@@ -51,8 +51,8 @@
       },
       "time_dilation": 1.0,
       "settle": 4.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fx15a_zone_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fx15a_wind_and_anchor_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx15a_wind_and_anchor_plan_targets.json",
       "live2_refs": [
         "L3"
       ],
@@ -82,6 +82,9 @@
           "Y": 0,
           "Z": 0
         }
+      ],
+      "scenes": [
+        "wind_drift"
       ]
     },
     {
@@ -90,6 +93,9 @@
         0.0,
         0.5,
         1.0
+      ],
+      "scenes": [
+        "anchored_cauldron"
       ]
     }
   ],
@@ -99,16 +105,20 @@
     ],
     "targets": [
       {
+        "metric": "smoke.drift_speed_ratio",
+        "weight": 1.0,
         "scene": "wind_drift",
-        "metric": "wind_drift.drift_speed_ratio",
-        "basis": "연기 중심 이동 속도 / 바람 속도 U = 1±0.1(시험 H8 과 같은 정의)",
-        "weight": 1.0
+        "low": 0.9,
+        "high": 1.1,
+        "basis": "spec_proposal",
+        "note": "측정 출처 없음: measure_fx_look·probe 에 연기 중심 위치가 없다. 시험 H8 정의 1±0.1"
       },
       {
+        "metric": "smoke.wake_length_cm",
+        "weight": 1.0,
         "scene": "anchored_cauldron",
-        "metric": "anchored_cauldron.wake_length_cm",
-        "basis": "그릇 뒤 꼬리 길이(cm), 목표 범위는 사용자 승인 [제안]",
-        "weight": 1.0
+        "basis": "spec_proposal",
+        "note": "측정 출처·수치 근거 없음, 사용자 승인 [제안]"
       }
     ]
   },

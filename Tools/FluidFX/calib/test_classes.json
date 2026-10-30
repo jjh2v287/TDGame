@@ -1,0 +1,913 @@
+{
+ "version": 2,
+ "rules": {
+  "default_class": "design",
+  "default_note": "D6: 표(tests)에 없는 시험은 설계 단언(design)으로 본다. 실패하면 그 블록의 가장 최근 채택을 되돌린다. CreateTransientPreset 경유로 활성 JSON 을 읽지만 정적 분석에서 빠진 37개(활성 JSON 시험 최소 183개 − 표 146개)도 이 기본값이다",
+  "mixed_pin_rule": "D6(P-27 보강): numeric_pin_when_failures_match 의 시험은 design 이지만, 헤드리스 로그의 그 시험 실패 단언 문구가 모두 나열된 숫자 고정 줄 문구 중 하나를 포함하면 numeric_pin(기록만)으로 본다",
+  "consumer": "calib_batch.py 는 numeric_pinned 목록(헤드리스 시험 경로)만 읽는다. mixed_pin_rule 의 실패 문구 대조는 아직 읽지 않으므로 그 5개는 실패 시 design 으로 처리된다(안전 쪽)",
+  "source": "0b 정적 분류(classify_tests.py + 수동 정정 11건), 기준 main 52bfa730"
+ },
+ "numeric_pinned": [],
+ "numeric_pin_when_failures_match": {
+  "TDGame.FluidFX.MassInput.DefaultsKeepLegacy": [
+   "Default GpuMaxStampsPerTick",
+   "Default GpuMaxStampsPerBin",
+   "Default MassInputBufferDivisor",
+   "Default MassSplatRadiusCapCells",
+   "Default MassPointDensityStrength",
+   "Default MaxDataChannelPointsPerTick"
+  ],
+  "TDGame.FluidFX.SolverRegression.PresetOverrideResolvesConfig": [
+   "Factory Mud resolution differs from the override resolution",
+   "With override the SimulationConfig resolution is returned",
+   "Custom preset returns SimulationConfig without override"
+  ],
+  "TDGame.FluidFX.Track.Kinds.BuildersAndFamilies": [
+   "Track painter kinds use 1024 cells"
+  ],
+  "TDGame.FluidFX.Volume.SmokePresetAndVolumeFieldsMatchContract": [
+   "VolumeHeightCm defaults to 150"
+  ],
+  "TDGame.FluidFX.Water.Whitewater.LaceRetainsHalfAfterFiveSeconds": [
+   ": River keeps the shared dissipation"
+  ]
+ },
+ "tests": [
+  {
+   "name": "TDGame.FluidFX.Fragment.BurstLobesOffByDefault",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp:181 관계·범위 단언 'Trail settings have no burst lobes by default' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Fragment.BurstLobesFollowSettings",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp:228 관계·범위 단언 'The explosion burst keeps no ring stamps' 외 11줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Fragment.BurstLobesAreDeterministic",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp:278 관계·범위 단언 'The same burst centre builds identical lobes' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Fragment.BurstLobesOnlyOnFireChannel",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp:324 관계·범위 단언 'Smoke and dust bursts keep the lobe-free core' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Explosion.BurstLobeSilhouette",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidBurstLobeTests.cpp:348 관계·범위 단언 'The lobe-free core is a round silhouette without peaks' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.CloudLayers.BindsSlotTextures",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidCloudLayersTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidCloudLayersTests.cpp:336 관계·범위 단언 'setup 0 is active' 외 12줄"
+  },
+  {
+   "name": "TDGame.FluidFX.CloudSource.CycloneEyeForms",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidCloudSourceTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidCloudSourceTests.cpp:752 관계·범위 단언 'eye mean %.4f is at most half the ring mean %.4f' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.CloudSource.StormWallRisesAndCurls",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidCloudSourceTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidCloudSourceTests.cpp:773 관계·범위 단언 'density centroid %.2f rises above the curtain row %.2f' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Solver.ReinitializationGenerationAdvancesOnResetAndResolutionChange",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidCombatAndTerrainTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidCombatAndTerrainTests.cpp:592 48 은 시험이 UpdateConfig 로 직접 준 해상도(기구 단언, 수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.DenseWater.PresetKindsResolve",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidDenseWaterRuntimeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidDenseWaterRuntimeTests.cpp:18 관계·범위 단언 'Dense water is off by default' 외 14줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Fire.TorchCoreHeatPinnedToAnchor",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp:208 관계·범위 단언 'The hottest cell of a still torch sits on the socket' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Fire.SubstepEmissionContinuous",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp:224 관계·범위 단언 'Three emission substeps leave at most a two cell gap along a 1200 cm/s swing' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Fire.ExtraCardCountFromPreset",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp:242 추가 카드 수 2 상한 고정(clamp 불변식, 수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.Fragment.BurstHeatSustainsWhileDensityDecays",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp:362 관계·범위 단언 'The explosion keeps burst heat while the burst density fades' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Preset.FireFamilyKindsValid",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFireHeatTests.cpp:426 관계·범위 단언 ' is a fire family kind' 외 24줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Solver.BuoyancyAndOutflowZeroKeepChecksum",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFireTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFireTests.cpp:683 관계·범위 단언 'The scenario produces a non-trivial state' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.DeterministicStateAfter120Steps",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:189 관계·범위 단언 'Two solvers with the same noise config share one state checksum after 120 steps' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.NoiseVelocityFieldIsNearlyDivergenceFree",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:233 관계·범위 단언 '%s noise field is not trivial (mean %.2f cm/s2)' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.ZeroStrengthLeavesStateBitIdentical",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:260 관계·범위 단언 'With zero acceleration and zero ambient amount the noise scale and speed cannot reach the ' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.AverageSpeedAndDensityAreFrameRateIndependent",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:289 관계·범위 단언 'The noise moves the smoke (mean speed %.3f cm/s)' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.PatternStaysFixedToTheWorldWhenTheWindowSlides",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:319 관계·범위 단언 'The window slides by whole cells' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.AmbientNoiseAddsBoundedDensityVariance",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:383 관계·범위 단언 'Without ambient noise the refilled density is flat (variance %.8f)' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.ParallelFieldIsBitIdenticalToSerialAndResetRestartsTime",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:414 관계·범위 단언 'The parallel noise field is bit-identical to the serial one' 외 8줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.SmokePresetCarriesNoiseFactoryValues",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:460 관계·범위 단언 'Smoke turns the flow noise on' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FlowNoise.StepCostOfNoiseIsMeasured",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFlowNoiseTests.cpp:509 관계·범위 단언 'The noise adds well under 2 ms to a 128x128 step (%.4f ms)'"
+  },
+  {
+   "name": "TDGame.FluidFX.FogInput.FogKindsDataContract",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFogInputTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFogInputTests.cpp:281 관계·범위 단언 'FogMist actors erase fog' 외 10줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.FoliageBend.LiveGpuAuxCarriesBend",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendRhiTests.cpp:438 관계·범위 단언 'FoliageWalk selected the GPU solver' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.FoliageBend.WaterAuxKeepsObstacleDistance",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendRhiTests.cpp:491 관계·범위 단언 'water aux and bend aux are both on' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FoliageBend.PresetKindsCarryBend",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendTests.cpp:544 관계·범위 단언 'Read the active preset tuning file' 외 19줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FoliageBend.PressHalfLifeRecord",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendTests.cpp:609 관계·범위 단언 'Painter solver initializes' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FoliageBend.RippleLagRecord",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendTests.cpp:684 관계·범위 단언 'Ripple slope bend leads the surface, lead is negative (%.4f s)' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FoliageBend.LivePackedAuxCarriesBend",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFoliageBendTests.cpp:792 관계·범위 단언 'FoliageWalk turns the bend aux on' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Fragment.ExplosionStampBinBudget",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidFragmentTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidFragmentTests.cpp:1513 관계·범위 단언 'The bin table has one range per bin'"
+  },
+  {
+   "name": "TDGame.FluidFX.Gpu.BackendFallsBackToCpuWithoutRhi",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:1526 관계·범위 단언 'Gpu preference without a rendering RHI decides the CPU' 외 15줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Gpu.ResolutionClampPerBackend",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:1645 관계·범위 단언 '%s: backend' 외 10줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Gpu.ReadbackFieldMappingMatchesCpuDownsample",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:1720 관계·범위 단언 'Readback field resolution is 64' 외 16줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.StatisticalParityWithCpu128",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:1874 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.StatisticalParityWithCpu256",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:1885 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Resolution512DivergenceResidual",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:1926 관계·범위 단언 '%s=%d and %s=%d could not be applied (variable missing or overridden by a higher priority ' 외 10줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.SlidingShiftMatchesCpuStatistics",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2107 관계·범위 단언 'The CPU window slid during the scenario' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.SimplePainterParity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2159 관계·범위 단언 'Painter captured a readback at or after frame %d' 외 8줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.ObstacleBoundaryParity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2273 관계·범위 단언 'The obstacle scenario has field cells deep inside obstacles' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.ReadbackLatencyAtMostThreeFrames",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2302 관계·범위 단언 'Spawned the latency GPU actor' 외 7줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.LiveReconfigureKeepsReadbackValid",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2384 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Heat.CpuGpuParity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2595 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Heat.ShiftParity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2641 관계·범위 단언 'The heat window slid during the scenario'"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Bounds.EdgeBounceParity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2651 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Bounds.VortexParity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2681 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.AuxOutput.WrittenOnlyWhenEnabled",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2722 관계·범위 단언 'Heat off leaves the GPU aux target unallocated' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Transmittance.CpuGpuParity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2774 관계·범위 단언 'The CPU actor computed transmittance' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Plane.ViewRotationKeepsGpuState",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuBackendTests.cpp:2952 관계·범위 단언 'The unrotated reference keeps density on the GPU' 외 7줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Water.Probe.SamplesMatchOutputs",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidGpuWaterContractTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidGpuWaterContractTests.cpp:1550 관계·범위 단언 ' runs the exact 192 tier' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Heat.DisabledKeepsGoldenChecksums",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidHeatTests.cpp:471 관계·범위 단언 ' state checksum is unchanged by inactive FX-8b fields and stamp heat' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Heat.SeparateFromDensityCooling",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidHeatTests.cpp:606 관계·범위 단언 'Heat decays at its own cooling rate' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Explosion.HotCoreAreaTimeline",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidHeatTests.cpp:827 관계·범위 단언 'FX-3 legacy hot core area stays below the acceptance threshold' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Explosion.UndergroundLossRatio",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidHeatTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidHeatTests.cpp:856 관계·범위 단언 'Burst heat below the ground stays at most 2%% at camera pitch %.0f' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SimplePainter.FootprintTrailAndFade",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp:267 관계·범위 단언 'Center sample is valid' 외 6줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FluidSim.AdvectionPressureAndViscosity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp:328 관계·범위 단언 'Water advects density downstream' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.FieldBuffer.SdfObstacleAndTerrainSlope",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp:381 관계·범위 단언 'Obstacle interior has non-positive SDF' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SlidingWindow.WorldCoordinatePreservation",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp:440 0.05f 는 허용 오차, 창 이동 전후 같음(불변식, 수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.LiveComponent.PackedPixelsFollowWorldAxes",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidLiveTests.cpp:1084 관계·범위 단언 'Packed pixel count matches the grid' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.LookRefresh.FoliageAndTrackSubscribe",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidLookRefreshTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidLookRefreshTests.cpp:60 관계·범위 단언 'Foliage flow actor subscribes to tuning reloads at BeginPlay' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.MassInput.DefaultsKeepLegacy",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:59 관계 단언 'Default MassPointVelocityStrength' + 혼합: 숫자 고정 줄 Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:52(16000),Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:53(256),Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:54(2),Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:55(8),Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:58(0.85f),Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:68(10000) … — 이 줄만 실패하면 숫자 고정으로 취급 가능"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.MassInput.NiagaraSplatReachesTarget",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:706 관계·범위 단언 'The other channel actor runs the GPU solver' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.MassInput.DataChannelLatencyRecord",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:763 관계·범위 단언 'Writes Saved/FluidFX/fx5/latency.json' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.MassInput.NiagaraAndGameThreadCostRecord",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidMassInputTests.cpp:825 관계·범위 단언 'Writes the Niagara and game thread section of cost-mass-input.json' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Solver.NegativeBuoyancyMatchesCpu",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNegativeBuoyancyTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNegativeBuoyancyTests.cpp:219 관계·범위 단언 'TDGame.FluidFXRhi.Solver.NegativeBuoyancyMatchesCpu needs a rendering RHI but none is acti' 외 7줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.Drive.SpawnFollowsDensity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:538 관계·범위 단언 'Density stamps spawn driven particles' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.Drive.VelocityCouplingSign",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:584 관계·범위 단언 'Both coupling runs match particles by UniqueID across frames' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.Drive.LocalMatchesWorld",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:618 관계·범위 단언 'Both runs leave particles' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.Drive.HeightFollowsDensity",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:668 관계·범위 단언 'The grid covers both halves' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.Drive.RepeatRunMatches",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:725 관계·범위 단언 'Run B matches run A within tolerance' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.EmberHeat.SpawnsFromHeatOnly",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:767 관계·범위 단언 'Heat stamps spawn live embers' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.EmberHeat.AttributeRanges",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:807 관계·범위 단언 'Position, NormalizedAge, Scale and DynamicMaterialParameter cover every ember' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.EmberHeat.RestKeepsSlowEmbers",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:865 관계·범위 단언 'Without ground rest every slow ember dies within 0.5 s after spawning stops' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Niagara.Drive.OffscreenCostRecord",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidNiagaraDriveTests.cpp:894 관계·범위 단언 'WITH_NIAGARA_GPU_PROFILER is off in this build, so the dispatch cost cannot be recorded.'"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.OpsCost.OffscreenStepRate",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidOpsActorTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidOpsActorTests.cpp:525 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFX.Ops.KeepBuffersOnReinit",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidOpsComponentTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidOpsComponentTests.cpp:197 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Ops.ExternalTargetGpuDirectWrite",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidOpsRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidOpsRhiTests.cpp:201 관계·범위 단언 'The internal-target GPU run completed' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Ops.ExternalTargetRejectsMismatch",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidOpsRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidOpsRhiTests.cpp:305 관계·범위 단언 'A mismatched external target falls back to the internal target' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.OutputQuality.LoopScaleMath",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidOutputQualityTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidOutputQualityTests.cpp:61-62 순수 계산 함수 입력·출력(활성 값 아님, 수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.OutputQuality.VolumeLoopScalarsScaleAndRestore",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidOutputQualityTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidOutputQualityTests.cpp:135 관계·범위 단언 'SmokeSoft exposes StepCount and ShadowSteps' 외 11줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Perf.StepCostByResolution",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPerfAndNiagaraTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPerfAndNiagaraTests.cpp:845 측정 단계 수 120 = 시험이 정한 반복 수(수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetReapply.SameTableMatchesNoReapply",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetReapplyTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetReapplyTests.cpp:224 관계·범위 단언 'Both CPU scenario runs completed' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetReapply.NonStructuralChangeKeepsStateAndRepeats",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetReapplyTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetReapplyTests.cpp:255 관계·범위 단언 'All CPU scenario runs completed' 외 7줄"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetReapply.ResolutionChangeResetsAndCounts",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetReapplyTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetReapplyTests.cpp:285 관계·범위 단언 'The CPU scenario run completed' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetReapply.NonGameWorldIsUntouched",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetReapplyTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetReapplyTests.cpp:327 관계·범위 단언 'Loaded the changed table' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetData.LoadsWithoutErrors",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp:466 관계·범위 단언 'Reloading the preset tuning file reports no errors' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetData.RejectsBadInput",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp:479 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetData.ExtendedFormatsLayerByReplacement",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp:524 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetData.BuildersMatchTuningFile",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp:590 관계·범위 단언 'Read the preset tuning file' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetData.StructDefaultsMatchHeader",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp:642 관계·범위 단언 'Read the preset tuning file' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetData.MirrorStructsMatchComponentDefaults",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp:717-719 시험이 넣은 값의 복사 확인(기구, 수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.PresetData.ReloadFromPathsUsesSavedFiles",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidPresetTuningTests.cpp:729 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFX.Rain.PresetKindsAndDefaults",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidRainTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidRainTests.cpp:489 관계·범위 단언 'A kind without rain values matches the header defaults' 외 20줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.SimStateCache.GpuSeedStepMatchesOriginal",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSimStateCacheRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSimStateCacheRhiTests.cpp:283 관계·범위 단언 'Smoke actor runs on the GPU solver' 외 7줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.SimStateCache.GpuWaterChannelsRoundTrip",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSimStateCacheRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSimStateCacheRhiTests.cpp:357 관계·범위 단언 'Water actor runs on the GPU solver' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Fx16b.OffscreenCost",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSimStateCacheRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSimStateCacheRhiTests.cpp:413 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverBounds.VortexSpinsAndInverts",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverBoundsTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverBoundsTests.cpp:294 관계·범위 단언 'Positive tangential acceleration spins counterclockwise' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverBounds.PortalDriftIsInward",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverBoundsTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverBoundsTests.cpp:336 관계·범위 단언 'The portal drift moves density inward' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.SolverOptionsAsset.StageResolvesKinds",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverOptionsRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverOptionsRhiTests.cpp:576 관계·범위 단언 '%s keeps its preset kind' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Solver.RowParallelEqualsSerial",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverParallelTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverParallelTests.cpp:472 관계·범위 단언 'TD.FluidFX.SolverRowParallel defaults to 1' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Solver.RowParallelStepCost",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverParallelTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverParallelTests.cpp:601 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.BrushFrameRateInvariance",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:200 관계·범위 단언 'No cell exceeds 1200 cm/s at %d fps (max %.2f)' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.BorderBandRetainsFootprint",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:253 관계·범위 단언 'Footprint in border band keeps density >= 0.9 after 1 s at %d fps, cell (%d,%d) = %.4f'"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.NonSquareProjectionResidual",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:267 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.NonSquareFourToOneProjectionResidual",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:286 단언 없음(실행·크래시 확인만)"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.StationaryStateHasNoPressureResidue",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:318 관계·범위 단언 'Density-only stamp creates no pressure' 외 6줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.MovingMudStampDisplacesSurface",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:412 관계·범위 단언 'Trajectory contains cells' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.NonFiniteStampIsDiscarded",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:455 관계·범위 단언 'Grid stays finite after non-finite stamps' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.SampleReportsVelocityCmPerSec",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:484 관계·범위 단언 'Stamp location can be sampled' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.PresetOverrideResolvesConfig",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:511 관계 단언 'bOverridePresetDefaults is editable and visible to Blueprints' + 혼합: 숫자 고정 줄 Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:521(128),Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:531(128),Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:536(128) — 이 줄만 실패하면 숫자 고정으로 취급 가능"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.DisplayPressureIsResolutionIndependent",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:574 관계·범위 단언 'Reference pressure at 64 is measurable and not saturated (%.4f)' 외 1줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.GridEdgeObstacleNormalIsTangential",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:633 관계·범위 단언 'Edge cell (%d,%d) is fluid inside the obstacle boundary band (sdf %.2f)' 외 8줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.StampVelocityIsCappedAtMaxSpeed",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:711 관계·범위 단언 'Stamp speed is capped at 1200 cm/s (%.2f)' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.MovingStampLeavesNoPressureAfterSettling",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:751 관계·범위 단언 'Moving stamp precondition creates pressure (%.4f)' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.WaterBorderBandKeepsDensityAndFadesAlpha",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:768 관계·범위 단언 'Water preset runs the fluid simulation' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFX.SolverRegression.ExtremeConfigIsClampedAndStaysFinite",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidSolverRegressionTests.cpp:852 해상도 0→16·범위 0→100 cm clamp 불변식(수동 검토로 숫자 고정에서 설계로 정정)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Track.Wetness.SourceBinding",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidTrackInputTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidTrackInputTests.cpp:366 관계·범위 단언 'Without a source the MID parameter count stays' 외 11줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Track.Kinds.BuildersAndFamilies",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidTrackKindTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidTrackKindTests.cpp:71 관계 단언 'Track painter kinds are not fire family' + 혼합: 숫자 고정 줄 Source/TDGame/FluidFX/Tests/TDFluidTrackKindTests.cpp:74(1024) — 이 줄만 실패하면 숫자 고정으로 취급 가능"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Track.EllipseStampMatchesCpu",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp:353 관계·범위 단언 'Painter ellipse reference carries density' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Track.BankMatchesCpu",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp:389 관계·범위 단언 'Bank clamp CPU bank moves G away from neutral' 외 7줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Track.PainterVelocityMatchesCpu",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp:431 관계·범위 단언 'Painter velocity adds 16 bytes per cell and drops the 4x4 placeholder' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Track.DeterministicReplay",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp:499 관계·범위 단언 'Replay density carries a trail' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Track.PainterOffscreenCost",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidTrackPainterRhiTests.cpp:510 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFX.Viscous.Kinds.BuildersAndFamilies",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidViscousKindTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidViscousKindTests.cpp:66 관계·범위 단언 'Dense accumulation is off by default' 외 28줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Viscous.GpuMatchesCpu",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidViscousRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidViscousRhiTests.cpp:519 관계·범위 단언 'Still growth CPU reaches the dense ceiling' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Viscous.DeterministicReplay",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidViscousRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidViscousRhiTests.cpp:593 관계·범위 단언 'Replay density carries a trail' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.Viscous.OffscreenCost",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidViscousRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidViscousRhiTests.cpp:605 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFX.Viscous.Dense.OffMatchesLegacy",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidViscousSolverTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidViscousSolverTests.cpp:353 관계·범위 단언 'neutral dense and mask fields keep the legacy checksum' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Viscous.HeadlessMetricsReport",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidViscousSolverTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidViscousSolverTests.cpp:400 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.VolumeDriver.HeterogeneousDriven",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeDriverRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeDriverRhiTests.cpp:487 관계·범위 단언 'the HVOL slot assets are missing (run the HVOL material and stage scripts): SmokeHeterogen' 외 2줄"
+  },
+  {
+   "name": "TDGame.FluidFXRhi.VolumeDriver.OffscreenCost",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeDriverRhiTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeDriverRhiTests.cpp:536 시험이 직접 쓴 임시 JSON·표로 기구를 단언(활성 JSON 값 아님)"
+  },
+  {
+   "name": "TDGame.FluidFX.VolumeDriver.SlotResolveAndNeed",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeDriverTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeDriverTests.cpp:117-118 슬롯 색인 clamp(기구, 수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.Volume.PackedOutputKeepsEncodingInHalfFloat",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp:242 관계·범위 단언 'Both packed buffers hold one pixel per cell' 외 5줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Volume.AmbientDensityRefillsAndIsFrameRateInvariant",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp:299 수렴값 = 설정 AmbientDensity(관계, 0.005f 는 오차), :332 1200 은 칸 속도 상한 clamp(수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.Volume.ErasingBrushIsFrameRateInvariantAndChannelScoped",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp:378 31 은 칸 좌표, 지우개 전후 같음(불변식, 수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.Volume.RadialVelocityBlendsOutwardIntoCells",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp:401 관계·범위 단언 'Stamping alone leaves the velocity field untouched' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Volume.RadialPushMovesDensityOutwardAndIsFrameRateInvariant",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp:445 관계·범위 단언 'The push carries blob density into the outer ring (%.4f -> %.4f)' 외 4줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Volume.SmokeIsCutByActorStampAndRefills",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp:487 관계·범위 단언 'Ambient smoke fills the box (%.4f)' 외 3줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Volume.SmokePresetAndVolumeFieldsMatchContract",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp:521 관계 단언 'Smoke runs the fluid solver' + 혼합: 숫자 고정 줄 Source/TDGame/FluidFX/Tests/TDFluidVolumeTests.cpp:545(150.0f) — 이 줄만 실패하면 숫자 고정으로 취급 가능"
+  },
+  {
+   "name": "TDGame.FluidFX.Water.Preset.RiverAndSeaEnableWaterLayer",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidWaterActorTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidWaterActorTests.cpp:1534 강 경사 중력 0(기능 꺼짐 단언, 0.0001f 는 오차, 수동 검토)"
+  },
+  {
+   "name": "TDGame.FluidFX.WaterProps.ActorQueuesSourceAndCoupling",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidWaterPropTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidWaterPropTests.cpp:531 관계·범위 단언 'The waterfall and pool actors were spawned' 외 12줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Water.Wetness.PresetsEnableWetnessForRiverAndSea",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidWaterWetnessTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidWaterWetnessTests.cpp:1566 관계·범위 단언 'AddError(MakeMissingConfigFieldMessage(Label, EnableWetnessFieldName));' 외 8줄"
+  },
+  {
+   "name": "TDGame.FluidFX.Water.Whitewater.LaceRetainsHalfAfterFiveSeconds",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidWaterWetnessTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidWaterWetnessTests.cpp:1616 관계 단언 '%s: whitewater harness is invalid (the stamp left no density)' + 혼합: 숫자 고정 줄 Source/TDGame/FluidFX/Tests/TDFluidWaterWetnessTests.cpp:1631(0.005f) — 이 줄만 실패하면 숫자 고정으로 취급 가능"
+  },
+  {
+   "name": "TDGame.FluidFX.Water.Whitewater.DyeKeepsDensityDissipation",
+   "file": "Source/TDGame/FluidFX/Tests/TDFluidWaterWetnessTests.cpp",
+   "class": "design",
+   "evidence": "Source/TDGame/FluidFX/Tests/TDFluidWaterWetnessTests.cpp:1650 관계·범위 단언 '%s: whitewater harness is invalid (shared dissipation retention %.5f, expected %.5f)' 외 2줄"
+  }
+ ]
+}

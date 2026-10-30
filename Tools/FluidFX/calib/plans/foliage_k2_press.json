@@ -1,6 +1,6 @@
 {
   "id": "foliage_k2_press",
-  "note": "FX-13c K2 구역 4(FoliagePainter 원천·GrassPress·교반기 반경 600 cm 궤도), 눌림 반감·밝기, IMG 9",
+  "note": "FX-13c K2 구역 4(FoliagePainter 원천·GrassPress·교반기 반경 600 cm 궤도), 눌림 반감·밝기, IMG 9 / 0b(2026-10-30): 목표 둘은 명세 [제안](P-11). 손잡이를 장면별로 나눴다(소산 → decay, 나머지 → press). 교반기가 계속 돌면 감쇠 구간이 없고, half_life 는 바깥 기준 휘도로 내려가는 값을 0 으로 가는 지수로 맞춰 치우친다 → frame 에서 교반기 정지 이벤트(step_apply call)와 기준 차감 필요 여부 확인",
   "scenes": [
     {
       "name": "k2_press",
@@ -23,7 +23,7 @@
       },
       "time_dilation": 1.0,
       "settle": 8.0,
-      "regions_template": "Tools/FluidFX/calib/regions/foliage_k23_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/foliage_k2_press_frame_regions.json",
       "live2_refs": [
         "IMG9"
       ],
@@ -31,7 +31,8 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
+      },
+      "targets": "Tools/FluidFX/calib/targets/foliage_k2_press_plan_targets.json"
     },
     {
       "name": "k2_press_decay",
@@ -54,7 +55,7 @@
       },
       "time_dilation": 1.0,
       "settle": 8.0,
-      "regions_template": "Tools/FluidFX/calib/regions/foliage_k23_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/foliage_k2_press_frame_regions.json",
       "live2_refs": [
         "IMG9"
       ],
@@ -62,7 +63,8 @@
         "count": 9,
         "interval": 1.0,
         "kind": "series"
-      }
+      },
+      "targets": "Tools/FluidFX/calib/targets/foliage_k2_press_plan_targets.json"
     }
   ],
   "base_tuning": [],
@@ -73,6 +75,9 @@
         0.1,
         0.15,
         0.25
+      ],
+      "scenes": [
+        "k2_press_decay"
       ]
     },
     {
@@ -81,6 +86,9 @@
         0.5,
         0.7,
         0.9
+      ],
+      "scenes": [
+        "k2_press"
       ]
     },
     {
@@ -89,6 +97,9 @@
         0.15,
         0.25,
         0.35
+      ],
+      "scenes": [
+        "k2_press"
       ]
     }
   ],
@@ -103,7 +114,8 @@
         "low": 1.05,
         "high": 1.4,
         "scene": "k2_press",
-        "basis": "IMG9 pressed_luma_ratio"
+        "basis": "spec_proposal",
+        "note": "spec-fx13c 7절 IMG 9 pressed_luma_ratio [1.05,1.4] 명세 [제안](IMG 9 측정은 조명 혼입, k1 과 같음)"
       },
       {
         "metric": "derived.press_half_life_seconds",
@@ -112,7 +124,8 @@
         "low": 3.0,
         "high": 8.0,
         "scene": "k2_press_decay",
-        "basis": "옛 bend_record press_half_life_seconds [3,8] → PIE 시계열 half_life(RT-M11). tolerance = 범위 반폭의 2%"
+        "basis": "spec_proposal",
+        "note": "spec-fx13c 7절 옛 bend_record press_half_life [3,8] s 명세 [제안] → PIE 시계열 half_life"
       }
     ],
     "derived": [

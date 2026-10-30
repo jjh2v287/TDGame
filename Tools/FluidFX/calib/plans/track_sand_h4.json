@@ -1,6 +1,6 @@
 {
   "id": "track_sand_h4",
-  "note": "FX-12r H4·H5·H8 모래 사구 타일·WPO·홈(IMG 13·22). 사구 주 파장·방향은 FFT 분석기(P3 공백) 뒤 / CAL-0 B6: 낡은 base_tuning(FootprintPainter 1024·5000) 삭제, SandTrack 정본 기준으로 잰다 CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
+  "note": "FX-12r H4·H5·H8 모래 사구 타일·WPO·홈(IMG 13·22). 사구 주 파장·방향은 FFT 분석기(P3 공백) 뒤 / CAL-0 B6: 낡은 base_tuning(FootprintPainter 1024·5000) 삭제, SandTrack 정본 기준으로 잰다 / 0b(2026-10-30): 사구 목표를 IMG 13 왼쪽·오른쪽 물결 영역의 주파수 봉우리 비와 미세 세부(크기 무관)로 바꿨다. 주 파장 상대 오차는 기준 파장(cm)이 없어 정의 불가라 뺐고, 모래 먼지는 이 손잡이 셋(사구 재질)과 무관해 뺐다. 방향 손잡이(WindDegrees)는 방향 지표가 없어 구조상 둔감",
   "scenes": [
     {
       "name": "sand_dunes",
@@ -25,7 +25,8 @@
       },
       "time_dilation": 1.0,
       "settle": 12.0,
-      "regions_template": "Tools/FluidFX/calib/regions/track_sand_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/track_sand_h4_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/track_sand_h4_plan_targets.json",
       "live2_refs": [
         "L13",
         "L22"
@@ -92,16 +93,18 @@
     ],
     "targets": [
       {
-        "metric": "dune_fft.dominant_wavelength_relative_error",
+        "metric": "dune_fft.spectrum.peak_ratio",
         "weight": 1.0,
-        "low": 0.0,
-        "high": 0.25
+        "scene": "sand_dunes",
+        "basis": "live2_image",
+        "note": "IMG 13 물결 두 영역 0.0409·0.0776 → [최소×0.75, 최대×1.25]"
       },
       {
-        "metric": "sand_dust.atmosphere.fine_over_coarse",
+        "metric": "dune_fft.atmosphere.fine_detail",
         "weight": 1.0,
-        "low": 1.26,
-        "high": 2.03
+        "scene": "sand_dunes",
+        "basis": "live2_image",
+        "note": "IMG 13 물결 두 영역 0.1658·0.0967 → [최소×0.75, 최대×1.25]"
       }
     ]
   },

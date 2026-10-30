@@ -1,0 +1,30 @@
+{
+  "note": "fx15a_kernel_vs_jacobi 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: fx15a_live2_smoke.json: 0b 새 파일: FX-15a 연기 웅덩이 목표. LIVE-2 IMG3(점광원 붉은 연기 바다·편집기 Stage 7) 측정 띠 [min×0.8, max×1.25](근거 표 0b/smoke-volume-particles/evidence.md). 색 의존 M1·M5 는 쓰지 않는다",
+  "kind_metrics": {},
+  "region_metrics": {
+    "pool": {
+      "detail.above_64_cycles_per_height": [
+        0.00218,
+        0.00413
+      ],
+      "atmosphere.fine_over_coarse": [
+        0.257,
+        0.67804
+      ]
+    },
+    "kernel": {
+      "detail.above_64_cycles_per_height": [
+        0.00218,
+        0.00413
+      ],
+      "atmosphere.p95_over_p5": [
+        3.06981,
+        5.36415
+      ],
+      "atmosphere.fine_over_coarse": [
+        0.257,
+        0.67804
+      ]
+    }
+  }
+}

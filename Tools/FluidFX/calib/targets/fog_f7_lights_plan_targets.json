@@ -1,0 +1,5 @@
+{
+  "note": "fog_f7_lights 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: fog_f7_targets.json: fog_f7_lights 목표(C4 v2). 목표 2개가 파생 비라 띠는 계획 인라인. 옛 fog_live2_atmosphere.json 의 green_pool·blue_pool.pool_over_surround 는 측정 키가 아니라 쓰지 않는다. 영역·종류 띠는 비워 둔다. 근거 0b/cloud-fog/evidence.md",
+  "kind_metrics": {},
+  "region_metrics": {}
+}

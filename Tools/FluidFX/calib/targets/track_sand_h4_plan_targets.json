@@ -1,0 +1,16 @@
+{
+  "note": "track_sand_h4 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: track_sand_h4_targets.json: track_sand_h4 0b(2026-10-30) IMG 13 사구 물결 영역 측정(CAL-0 B4b measure_fx_look analyses, measure/gallery_analyses.json)",
+  "kind_metrics": {},
+  "region_metrics": {
+    "dune_fft": {
+      "spectrum.peak_ratio": [
+        0.0307,
+        0.097
+      ],
+      "atmosphere.fine_detail": [
+        0.0725,
+        0.2072
+      ]
+    }
+  }
+}

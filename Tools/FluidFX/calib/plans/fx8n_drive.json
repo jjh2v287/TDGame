@@ -1,35 +1,7 @@
 {
   "id": "fx8n_drive",
-  "note": "FX-8n C12 장면 P2(Smoke·DriveSprite)·P4(Vortex·DriveMeshFloat) 덩어리 수·크기 + 비교 시트, C12-v 는 오프스크린 RHI(D2) 재실행으로 잰다. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2) CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
+  "note": "FX-8n C12 장면 P2(Smoke·DriveSprite)·P4(Vortex·DriveMeshFloat) 덩어리 수·크기 + 비교 시트, C12-v 는 오프스크린 RHI(D2) 재실행으로 잰다. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2) / 0b: P4(부유 메시) 장면만 남김. IMG16 근거는 메시 공뿐이라 P2(스모크 스프라이트) 손잡이(DriveSprite 끌림·스폰)는 승인 시트 뒤(deferred). P4 개수 목표에 닿는 손잡이가 없어(B6 스폰 손잡이는 DriveSprite NS) MeshFloat 스폰을 더함. 덩어리 크기는 IMG16 측정이 반사점(5 px)이라 비교 불가 → 목표에서 뺌",
   "scenes": [
-    {
-      "name": "p2_smoke_sprite",
-      "level": "/Game/FluidFX/Maps/LV_TDFluidParticleStage",
-      "camera": {
-        "awake": {
-          "TDGen_ParticleP2_Fluid": true
-        },
-        "exposure_ev100": 2.0,
-        "pawn": [
-          1500.0,
-          -900.0
-        ],
-        "arm": 900.0,
-        "view": [
-          -35.0,
-          0.0
-        ]
-      },
-      "time_dilation": 1.0,
-      "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_regions.json",
-      "live2_refs": [],
-      "shots": {
-        "count": 5,
-        "interval": 0.25,
-        "kind": "replicate"
-      }
-    },
     {
       "name": "p4_vortex_mesh",
       "level": "/Game/FluidFX/Maps/LV_TDFluidParticleStage",
@@ -50,7 +22,8 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx8n_drive_plan_targets.json",
       "live2_refs": [],
       "shots": {
         "count": 5,
@@ -61,22 +34,16 @@
   ],
   "params": [
     {
-      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidDriveSprite.Floats.User.DriveVelocityDragPerSec",
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidDriveMeshFloat.Floats.User.DriveSpawnPerM2PerSec",
       "values": [
-        3,
-        6,
-        12
-      ],
-      "split_group": false
-    },
-    {
-      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidDriveSprite.Floats.User.DriveSpawnPerM2PerSec",
-      "values": [
-        12.5,
         25,
-        50
+        50,
+        100
       ],
       "split_group": false,
+      "scenes": [
+        "p4_vortex_mesh"
+      ],
       "cost": "higher_costs_more"
     },
     {
@@ -86,7 +53,10 @@
         30,
         60
       ],
-      "split_group": false
+      "split_group": false,
+      "scenes": [
+        "p4_vortex_mesh"
+      ]
     }
   ],
   "mode": "one_at_a_time",
@@ -100,33 +70,13 @@
     "targets": [
       {
         "metric": "particles.embers.count",
-        "scene": "p2_smoke_sprite",
         "weight": 1.0,
-        "tolerance": 20.0,
-        "basis": "C12 덩어리 수(목표 범위는 비교 시트 승인 뒤)"
-      },
-      {
-        "metric": "particles.embers.median_area_px",
-        "scene": "p2_smoke_sprite",
-        "weight": 1.0,
-        "tolerance": 0.5,
-        "basis": "C12 덩어리 크기"
-      },
-      {
-        "metric": "particles.embers.count",
         "scene": "p4_vortex_mesh",
-        "weight": 1.0,
         "tolerance": 20.0,
         "low": 300.0,
-        "high": 4000.0,
-        "basis": "C12-f 부유 메시 ≥300(IMG 16)"
-      },
-      {
-        "metric": "particles.embers.median_area_px",
-        "scene": "p4_vortex_mesh",
-        "weight": 1.0,
-        "tolerance": 0.5,
-        "basis": "C12-f 메시 크기"
+        "high": 1000.0,
+        "basis": "live2_image",
+        "note": "IMG16 빨간 공 상자 embers 482, 하한 C12-f 300"
       }
     ]
   }

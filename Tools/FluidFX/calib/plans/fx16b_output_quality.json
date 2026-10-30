@@ -20,7 +20,9 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
+      },
+      "regions_template": "Tools/FluidFX/calib/regions/fx16b_output_quality_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx16b_output_quality_plan_targets.json"
     },
     {
       "name": "svol_q1",
@@ -41,7 +43,9 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
+      },
+      "regions_template": "Tools/FluidFX/calib/regions/fx16b_output_quality_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx16b_output_quality_plan_targets.json"
     },
     {
       "name": "svol_q2",
@@ -62,7 +66,9 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
+      },
+      "regions_template": "Tools/FluidFX/calib/regions/fx16b_output_quality_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx16b_output_quality_plan_targets.json"
     },
     {
       "name": "svol_q3",
@@ -83,7 +89,9 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
+      },
+      "regions_template": "Tools/FluidFX/calib/regions/fx16b_output_quality_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx16b_output_quality_plan_targets.json"
     }
   ],
   "params": [
@@ -143,6 +151,52 @@
     "sources": [
       "look"
     ],
-    "targets": []
-  }
+    "targets": [
+      {
+        "metric": "smoke.luminance_mean",
+        "weight": 1.0,
+        "scene": "svol_q0",
+        "relative_to_control": {
+          "low": 0.9,
+          "high": 0.995
+        },
+        "basis": "spec_proposal",
+        "note": "OQ1 수치 없음 → HV1 ≤10% 빌림, 동등 증명 아님(P-11)"
+      },
+      {
+        "metric": "smoke.luminance_mean",
+        "weight": 1.0,
+        "scene": "svol_q1",
+        "relative_to_control": {
+          "low": 0.9,
+          "high": 0.995
+        },
+        "basis": "spec_proposal",
+        "note": "OQ1 수치 없음 → HV1 ≤10% 빌림, 동등 증명 아님(P-11)"
+      },
+      {
+        "metric": "smoke.luminance_mean",
+        "weight": 1.0,
+        "scene": "svol_q2",
+        "relative_to_control": {
+          "low": 0.9,
+          "high": 0.995
+        },
+        "basis": "spec_proposal",
+        "note": "OQ1 수치 없음 → HV1 ≤10% 빌림, 동등 증명 아님(P-11)"
+      },
+      {
+        "metric": "smoke.luminance_mean",
+        "weight": 1.0,
+        "scene": "svol_q3",
+        "relative_to_control": {
+          "low": 0.9,
+          "high": 0.995
+        },
+        "basis": "spec_proposal",
+        "note": "OQ1 수치 없음 → HV1 ≤10% 빌림, 동등 증명 아님(P-11)"
+      }
+    ]
+  },
+  "note": "spec-fx16b OQ1 연기 무대 SVOL 품질 단계 L0~3(카메라 console), 손잡이마다 자기 단계 장면만(param scenes). 0b: 장면마다 smoke.luminance_mean 하락 띠 relative_to_control [0.90, 0.995](1.0 제외 → score, spec_proposal), 비용 오르는 끝은 cost_blocked → ⑤"
 }

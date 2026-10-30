@@ -1,0 +1,5 @@
+{
+  "note": "fx8n_drive 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: fx8n_live2_drive.json: LIVE-2 목표 선택(calib 형식): C12 는 IMG 16 외 정량 목표가 없어 비교 시트 승인 뒤 범위를 정한다. CAL-0 B6: 가리키던 LIVE-2 파일이 처음부터 없어(Saved, 미작성) 불 경로를 버리고 C4 v2 로 바꿈. 범위는 계획 인라인, 정량 목표는 승인 시트 뒤 / 0b: P4 개수 띠 [300, 1000]은 계획 인라인(IMG16 측정 482, 근거 표 evidence.md), P2 는 승인 시트 뒤",
+  "kind_metrics": {},
+  "region_metrics": {}
+}

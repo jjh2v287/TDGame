@@ -1,0 +1,16 @@
+{
+  "note": "fog_f6_tile 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: fog_f6_targets.json: fog_f6_tile 목표(C4 v2). tile_far 자기상관 상한 = LIVE-2 갤러리 안개 영역 최댓값, p95/p5 = IMG 19 원거리 ±25%. 근거 0b/cloud-fog/evidence.md",
+  "kind_metrics": {},
+  "region_metrics": {
+    "tile_far": {
+      "autocorrelation.secondary_peak": [
+        -1.0,
+        0.061
+      ],
+      "atmosphere.p95_over_p5": [
+        1.67,
+        2.79
+      ]
+    }
+  }
+}

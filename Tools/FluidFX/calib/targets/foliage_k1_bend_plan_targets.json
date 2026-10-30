@@ -1,0 +1,5 @@
+{
+  "note": "foliage_k1_bend 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: foliage_live2_bend.json: IMG 9(IWI:52) 방사형 눌림, 수치는 명세 7절. IMG9 범위(탐침·파생 지표라 영역 키가 없어 계획 인라인으로 씀): radial_alignment_mean [0.8, 1.0], max_bend_degrees [60.0, 80.0], radius_over_mover_size [3.0, 6.0], recovery_63_seconds [1.0, 5.0], pressed_luma_ratio [1.05, 1.4]. recovery_63 은 e-fold τ 와 같은 양이라 PIE 시계열 derived 로 옮김(RT-M11)",
+  "kind_metrics": {},
+  "region_metrics": {}
+}

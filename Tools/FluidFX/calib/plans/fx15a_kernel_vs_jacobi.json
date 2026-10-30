@@ -1,6 +1,6 @@
 {
   "id": "fx15a_kernel_vs_jacobi",
-  "note": "FX-15a A5 사용자 선택(RM:666): 연기 웅덩이 구도에서 Poisson(Jacobi) 대 커널 피드백 압력을 한 장면에 나란히 둔다(구역 0, Y축 10 m 간격, 같은 교반기). 변형은 커널 쪽 DA(Kinds.SmokeKernelPressure)의 반경 R(PressureKernelRadiusTexels)·피드백 F(PressureKernelFeedback)·발산 배율(PressureKernelScale)만 바꾸고, Poisson 쪽 DA_TDFluid_SmokeSoft 는 고정 기준이다. 기준 종류가 이미 KernelFeedback 이라 R·F 스윕이 커널 켠 채로 돈다(R15a-M4). 모닥불 장면은 CampfireSmoke 종류라 이 경로가 닿지 않아 뺐다.",
+  "note": "FX-15a A5 사용자 선택(RM:666): 연기 웅덩이 구도에서 Poisson(Jacobi) 대 커널 피드백 압력을 한 장면에 나란히 둔다(구역 0, Y축 10 m 간격, 같은 교반기). 변형은 커널 쪽 DA(Kinds.SmokeKernelPressure)의 반경 R(PressureKernelRadiusTexels)·피드백 F(PressureKernelFeedback)·발산 배율(PressureKernelScale)만 바꾸고, Poisson 쪽 DA_TDFluid_SmokeSoft 는 고정 기준이다. 기준 종류가 이미 KernelFeedback 이라 R·F 스윕이 커널 켠 채로 돈다(R15a-M4). 모닥불 장면은 CampfireSmoke 종류라 이 경로가 닿지 않아 뺐다. / 0b: 지표를 C3 이름으로(kernel 영역 = 커널 피드백 쪽, poisson = 고정 기준 진단), M5 p90/p10 은 색 무관 p95/p5 로 대용, 띠는 IMG3 측정(목표 파일 region_metrics.kernel)",
   "scenes": [
     {
       "name": "smoke_pair",
@@ -21,8 +21,8 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fx15a_pair_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fx15a_kernel_vs_jacobi_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx15a_kernel_vs_jacobi_plan_targets.json",
       "live2_refs": [
         "L3"
       ],
@@ -68,19 +68,22 @@
     ],
     "targets": [
       {
-        "metric": "smoke_pair.M3_detail_energy_per_height",
-        "basis": "IFS M3 c/H, LIVE-2 0.0104 대 우리 0.0009(RM:150)",
-        "weight": 1.0
+        "metric": "kernel.detail.above_64_cycles_per_height",
+        "weight": 1.0,
+        "basis": "live2_image",
+        "note": "IMG3 띠, 영역 높이 ≥143 px"
       },
       {
-        "metric": "smoke_pair.ratio_p90_p10",
-        "basis": "M5 연기 깊이 대비 4.9(RM:150)",
-        "weight": 1.0
+        "metric": "kernel.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "basis": "live2_image",
+        "note": "IMG3 띠(M5 대용)"
       },
       {
-        "metric": "smoke_pair.fine_coarse_ratio",
-        "basis": "미세/거친 등급 같음",
-        "weight": 1.0
+        "metric": "kernel.atmosphere.fine_over_coarse",
+        "weight": 1.0,
+        "basis": "live2_image",
+        "note": "IMG3 띠"
       }
     ]
   },

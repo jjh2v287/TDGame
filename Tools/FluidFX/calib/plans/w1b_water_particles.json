@@ -1,6 +1,6 @@
 {
   "id": "w1b_water_particles",
-  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다 CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
+  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다 / 0b(2026-10-30): 목표를 LIVE-2 갤러리 측정(IMG 16 바다 부유 공, IMG 20 급류 흰 물)으로 정했다. 영역 틀은 frame 뒤(B6 추측 상자 폐기). 급류의 부유물 개수는 IMG 20 공이 embers 최대 면적 40px 를 넘어 잡음만 세므로 목표에서 뺐다",
   "scenes": [
     {
       "name": "sea_img16",
@@ -23,7 +23,8 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/w1b_sea_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/w1b_water_particles_sea_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/w1b_water_particles_plan_targets.json",
       "live2_refs": [
         "C12",
         "L26",
@@ -56,7 +57,8 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/w1b_rapids_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/w1b_water_particles_rapids_frame_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/w1b_water_particles_plan_targets.json",
       "live2_refs": [
         "L4"
       ],
@@ -76,7 +78,10 @@
         1000
       ],
       "split_group": false,
-      "cost": "higher_costs_more"
+      "cost": "higher_costs_more",
+      "scenes": [
+        "sea_img16"
+      ]
     },
     {
       "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterDebris.Floats.User.TDDebrisFloatOffsetCm",
@@ -85,7 +90,10 @@
         -3.0,
         0.0
       ],
-      "split_group": false
+      "split_group": false,
+      "scenes": [
+        "sea_img16"
+      ]
     },
     {
       "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterSplash.Floats.User.TDSplashContactWhitewater",
@@ -94,7 +102,10 @@
         0.3,
         0.6
       ],
-      "split_group": false
+      "split_group": false,
+      "scenes": [
+        "rapids_img20"
+      ]
     }
   ],
   "mode": "one_at_a_time",
@@ -107,27 +118,41 @@
     ],
     "targets": [
       {
-        "metric": "particles.embers.count",
-        "scene": "sea_img16",
+        "metric": "debris.embers.count",
         "weight": 1.0,
+        "scene": "sea_img16",
         "tolerance": 20.0,
-        "low": 300.0,
-        "high": 4000.0,
-        "basis": "C12-f 화면 부유 수 ≥300(IMG 16)"
+        "basis": "live2_image",
+        "note": "IMG 16 g16_debris [740,300,1240,600] embers count 418, 화면 크기 의존이라 ×0.5~×2. 우리 부유물이 따뜻한 색이 아니면 검출 0(frame 에서 확인)"
       },
       {
-        "metric": "particles.embers.median_area_px",
+        "metric": "debris.embers.median_area_px",
+        "weight": 0.5,
         "scene": "sea_img16",
-        "weight": 1.0,
         "tolerance": 0.5,
-        "basis": "C12-f 부유 메시 크기(범위는 비교 시트 승인 뒤)"
+        "basis": "live2_image",
+        "note": "IMG 16 g16_debris median_area_px 5.0, ×0.5~×2"
       },
       {
-        "metric": "particles.embers.count",
-        "scene": "rapids_img20",
+        "metric": "whitewater.luminance_mean",
         "weight": 1.0,
-        "tolerance": 20.0,
-        "basis": "L4-d 흰 물 점 밀도(IMG 20 대조, 범위는 비교 시트 승인 뒤)"
+        "scene": "rapids_img20",
+        "basis": "live2_image",
+        "note": "IMG 20 g20_rapids_white [70,405,270,520] 0.4292, ±25%"
+      },
+      {
+        "metric": "whitewater.glint_fraction",
+        "weight": 0.5,
+        "scene": "rapids_img20",
+        "basis": "live2_image",
+        "note": "IMG 20 g20_rapids_white 0.0151, ±25%(parity2 문서 급류 1.16% 와 같은 자릿수)"
+      },
+      {
+        "metric": "whitewater.water.local_contrast",
+        "weight": 0.5,
+        "scene": "rapids_img20",
+        "basis": "live2_image",
+        "note": "IMG 20 g20_rapids_white 0.1413, ±25%"
       }
     ]
   }

@@ -1,6 +1,6 @@
 {
   "id": "fog_f7_lights",
-  "note": "FX-10r F7 실험실 국소광(IMG 2). 광원 산란 세기는 무대 상수라 calib_sweep 변형이 아님: actor_prop(룩데브 props) 확장 필요(D-64 ② 편차, proposed 결정 후보)",
+  "note": "FX-10r F7 실험실 국소광(IMG 2). 광원 산란 세기는 무대 상수(editor_make_fluid_fog_stage.py:97-98, 4.0)라 actor_prop 으로 돌리고 채택은 덧씌움 actor_props → W ④에서 무대 스크립트 상수로(P-9). 0b(2026-10-30): actor_prop 키 name → property(C2), base 4.0 필수(B2), MI_TD_FluidFog_Sim.FogAlbedo 손잡이 삭제(FogRoom·FogAmbient·FogCut·FogStir 공유 MI 라 f5 와 같은 잎 충돌, 비 지표는 반사율에 거의 불변), 지표 pool_over_surround(측정 키 아님) → 파생 비, 목표 = IMG 2 측정 ±25%. 영역 frame 뒤",
   "scenes": [
     {
       "name": "f7_lab",
@@ -28,8 +28,7 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fog_f7_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/fog_live2_atmosphere.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f7_lights_frame_regions.json",
       "live2_refs": [
         "L2"
       ],
@@ -37,7 +36,8 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
+      },
+      "targets": "Tools/FluidFX/calib/targets/fog_f7_lights_plan_targets.json"
     }
   ],
   "params": [
@@ -66,58 +66,48 @@
         8.0
       ],
       "base": 4.0
-    },
-    {
-      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Sim.Vectors.FogAlbedo",
-      "values": [
-        [
-          0.7,
-          0.75,
-          0.85,
-          1.0
-        ],
-        [
-          0.8,
-          0.85,
-          0.95,
-          1.0
-        ],
-        [
-          0.9,
-          0.92,
-          0.98,
-          1.0
-        ]
-      ],
-      "base": [
-        0.8,
-        0.85,
-        0.95,
-        1.0
-      ]
     }
   ],
   "metrics": {
     "sources": [
       "look"
     ],
-    "targets": [
+    "derived": [
       {
-        "metric": "green_pool.pool_over_surround",
-        "weight": 1.0,
-        "low": 2.0,
-        "high": 1000.0
+        "name": "green_pool_over_surround",
+        "op": "ratio",
+        "a": "green_pool.luminance_mean",
+        "b": "surround.luminance_mean"
       },
       {
-        "metric": "blue_pool.pool_over_surround",
+        "name": "blue_pool_over_surround",
+        "op": "ratio",
+        "a": "blue_pool.luminance_mean",
+        "b": "surround.luminance_mean"
+      }
+    ],
+    "targets": [
+      {
+        "metric": "derived.green_pool_over_surround",
         "weight": 1.0,
-        "low": 2.0,
-        "high": 1000.0
+        "low": 2.33,
+        "high": 3.89,
+        "basis": "live2_image",
+        "note": "IMG 2 왼쪽(녹색광) 웅덩이 (420,405,540,455) L 0.8780 ÷ 같은 층 먼 안개 (0,420,140,470) L 0.2821 = 3.112, ±25%. 웅덩이 L 0.88 은 포화 근처라 비가 눌려 있을 수 있음"
+      },
+      {
+        "metric": "derived.blue_pool_over_surround",
+        "weight": 1.0,
+        "low": 1.22,
+        "high": 2.04,
+        "basis": "live2_image",
+        "note": "IMG 2 오른쪽(인물 흰 광원, 푸른 안개) 웅덩이 (1025,305,1105,340) L 0.8725 ÷ 같은 깊이 안개 (720,320,880,355) L 0.5356 = 1.629, ±25%. 갤러리에 푸른 국소광 웅덩이가 없어 가장 가까운 대응(유추)"
       }
     ]
   },
   "mode": "one_at_a_time",
   "repeats": 2,
   "control_every": 0,
-  "reset": "reinit"
+  "reset": "reinit",
+  "spec_source": "작업 기록 AgentOps/20261019/fluidfx/parity2/images-clouds-fog-sand-snow.md:39-49(저장소 밖)"
 }

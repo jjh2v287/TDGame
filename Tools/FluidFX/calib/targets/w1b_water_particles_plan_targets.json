@@ -1,0 +1,30 @@
+{
+  "note": "w1b_water_particles 목표(C4 v2, 0b 수정판). 계획 인라인 띠가 우선이고 여기는 띠가 인라인에 없는 영역 지표만. 원본: w1b_live2_water_particles.json: LIVE-2 갤러리 측정 목표(0b 2026-10-30, measure/gallery_basic.json). 크기 무관 ±25%, 개수·px 면적 ×0.5~×2. 영역 이름은 w1b_sea_regions(debris)·w1b_rapids_regions(whitewater) frame 뒤 틀과 같다",
+  "kind_metrics": {},
+  "region_metrics": {
+    "debris": {
+      "embers.count": [
+        209.0,
+        836.0
+      ],
+      "embers.median_area_px": [
+        2.5,
+        10.0
+      ]
+    },
+    "whitewater": {
+      "luminance_mean": [
+        0.3219,
+        0.5364
+      ],
+      "glint_fraction": [
+        0.0113,
+        0.0189
+      ],
+      "water.local_contrast": [
+        0.106,
+        0.1766
+      ]
+    }
+  }
+}

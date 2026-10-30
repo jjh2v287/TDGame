@@ -1,0 +1,592 @@
+{
+ "rule": "pass band = LIVE-2 [min,max] widened by abs tolerance or by relative tolerance (rel: min*(1-t), max*(1+t)); JPEG q95 4:2:0 parity per FX-7a tool",
+ "fire_and_fireball": {
+  "sources": [
+   "L0_campfire_flame",
+   "L0_fireball_pawn",
+   "L14_fire_pawn",
+   "L17_flamethrower",
+   "L17_firewall",
+   "L17_explosion_destructible"
+  ],
+  "metrics": {
+   "flame_class_fractions.white_core": {
+    "label": "white core share (V>=.92,S<.25)",
+    "live2_min": 0.0,
+    "live2_median": 0.012397,
+    "live2_max": 0.051256,
+    "pass_low": -0.03,
+    "pass_high": 0.081256,
+    "tolerance": "abs 0.03",
+    "n": 6
+   },
+   "flame_class_fractions.yellow": {
+    "label": "yellow share (H 42-70)",
+    "live2_min": 0.104891,
+    "live2_median": 0.183402,
+    "live2_max": 0.240503,
+    "pass_low": 0.054890999999999995,
+    "pass_high": 0.290503,
+    "tolerance": "abs 0.05",
+    "n": 6
+   },
+   "flame_class_fractions.orange": {
+    "label": "orange share (H 25-42)",
+    "live2_min": 0.114135,
+    "live2_median": 0.138986,
+    "live2_max": 0.224639,
+    "pass_low": 0.064135,
+    "pass_high": 0.274639,
+    "tolerance": "abs 0.05",
+    "n": 6
+   },
+   "flame_class_fractions.red": {
+    "label": "red share (H 12-25)",
+    "live2_min": 0.101518,
+    "live2_median": 0.141774,
+    "live2_max": 0.314693,
+    "pass_low": 0.051517999999999994,
+    "pass_high": 0.364693,
+    "tolerance": "abs 0.05",
+    "n": 6
+   },
+   "flame_class_fractions.deep_red": {
+    "label": "deep red share (H<12 or >=330)",
+    "live2_min": 0.378069,
+    "live2_median": 0.538031,
+    "live2_max": 0.571927,
+    "pass_low": 0.328069,
+    "pass_high": 0.621927,
+    "tolerance": "abs 0.05",
+    "n": 6
+   },
+   "flame_hue_pct.p50": {
+    "label": "flame hue median (deg)",
+    "live2_min": 8.450704,
+    "live2_median": 12.5,
+    "live2_max": 21.869159,
+    "pass_low": 3.450704,
+    "pass_high": 26.869159,
+    "tolerance": "abs 5.0",
+    "n": 6
+   },
+   "flame_luma_pct.p25": {
+    "label": "flame luma p25 (8-bit)",
+    "live2_min": 78.6326,
+    "live2_median": 91.501,
+    "live2_max": 100.651,
+    "pass_low": 68.6326,
+    "pass_high": 110.651,
+    "tolerance": "abs 10.0",
+    "n": 6
+   },
+   "flame_luma_pct.p50": {
+    "label": "flame luma p50 (8-bit)",
+    "live2_min": 98.1648,
+    "live2_median": 125.9194,
+    "live2_max": 145.164,
+    "pass_low": 86.1648,
+    "pass_high": 157.164,
+    "tolerance": "abs 12.0",
+    "n": 6
+   },
+   "flame_luma_pct.p95": {
+    "label": "flame luma p95 (8-bit)",
+    "live2_min": 222.432,
+    "live2_median": 236.977,
+    "live2_max": 246.0198,
+    "pass_low": 214.432,
+    "pass_high": 254.0198,
+    "tolerance": "abs 8.0",
+    "n": 6
+   },
+   "tool_flame.color_steps.p50.green_over_red": {
+    "label": "FX-7a M1 G/R at warm p50",
+    "live2_min": 0.22753,
+    "live2_median": 0.301503,
+    "live2_max": 0.329621,
+    "pass_low": 0.17753000000000002,
+    "pass_high": 0.379621,
+    "tolerance": "abs 0.05",
+    "n": 6
+   },
+   "tool_flame.hot_fraction": {
+    "label": "FX-7a M2 hot share (warm L>200)",
+    "live2_min": 0.088219,
+    "live2_median": 0.152606,
+    "live2_max": 0.171071,
+    "pass_low": 0.048219000000000005,
+    "pass_high": 0.211071,
+    "tolerance": "abs 0.04",
+    "n": 6
+   },
+   "tool_flame.contrast_p90_over_p10": {
+    "label": "FX-7a M5 p90/p10",
+    "live2_min": 3.014399,
+    "live2_median": 4.950036,
+    "live2_max": 6.375489,
+    "pass_low": 2.56223915,
+    "pass_high": 7.331812349999999,
+    "tolerance": "rel 0.15",
+    "n": 6
+   },
+   "rim_band.hue_median": {
+    "label": "rim 4px hue median (deg)",
+    "live2_min": -21.686747,
+    "live2_median": -7.346939,
+    "live2_max": 4.054054,
+    "pass_low": -27.686747,
+    "pass_high": 10.054054,
+    "tolerance": "abs 6.0",
+    "n": 6
+   },
+   "rim_band.red_or_deep": {
+    "label": "rim 4px red+deep share",
+    "live2_min": 0.901142,
+    "live2_median": 0.969452,
+    "live2_max": 0.991889,
+    "pass_low": 0.851142,
+    "pass_high": 1.041889,
+    "tolerance": "abs 0.05",
+    "n": 6
+   },
+   "core_band.hue_median": {
+    "label": "core hue median (deg)",
+    "live2_min": 6.375,
+    "live2_median": 21.111111,
+    "live2_max": 36.35468,
+    "pass_low": 0.375,
+    "pass_high": 42.35468,
+    "tolerance": "abs 6.0",
+    "n": 6
+   },
+   "core_band.white_or_yellow": {
+    "label": "core white+yellow share",
+    "live2_min": 0.168636,
+    "live2_median": 0.237243,
+    "live2_max": 0.359371,
+    "pass_low": 0.10863600000000001,
+    "pass_high": 0.419371,
+    "tolerance": "abs 0.06",
+    "n": 6
+   },
+   "glow_over_flame_area": {
+    "label": "glow(V .3-.6) / flame area",
+    "live2_min": 0.270492,
+    "live2_median": 0.408611,
+    "live2_max": 1.000588,
+    "pass_low": 0.2299182,
+    "pass_high": 1.1506762,
+    "tolerance": "rel 0.15",
+    "n": 6
+   },
+   "glow_class_fractions.deep_red": {
+    "label": "glow band deep red share",
+    "live2_min": 0.972322,
+    "live2_median": 0.999756,
+    "live2_max": 1.0,
+    "pass_low": 0.922322,
+    "pass_high": 1.05,
+    "tolerance": "abs 0.05",
+    "n": 6
+   },
+   "rim_width_over_req": {
+    "label": "rim 10-90 width / equiv radius",
+    "live2_min": 0.127242,
+    "live2_median": 0.230618,
+    "live2_max": 0.359149,
+    "pass_low": 0.1017936,
+    "pass_high": 0.4309788,
+    "tolerance": "rel 0.2",
+    "n": 6
+   },
+   "halo_excess_at16_over_dL": {
+    "label": "halo excess @16px / flame-bg",
+    "live2_min": 0.206282,
+    "live2_median": 0.287437,
+    "live2_max": 0.320063,
+    "pass_low": 0.1650256,
+    "pass_high": 0.38407559999999996,
+    "tolerance": "rel 0.2",
+    "n": 6
+   },
+   "bg_luma": {
+    "label": "background luma 60-120px out (p20)",
+    "live2_min": 19.6274,
+    "live2_median": 36.0816,
+    "live2_max": 45.7418,
+    "pass_low": 14.627400000000002,
+    "pass_high": 50.7418,
+    "tolerance": "abs 5.0",
+    "n": 6
+   },
+   "sil_luma_cv": {
+    "label": "luma CV inside silhouette",
+    "live2_min": 0.35972632179912606,
+    "live2_median": 0.44132406875782454,
+    "live2_max": 0.4935215099959591,
+    "pass_low": 0.30576737352925715,
+    "pass_high": 0.5675497364953529,
+    "tolerance": "rel 0.15",
+    "n": 6
+   },
+   "sil_hot_frac_L200": {
+    "label": "silhouette share L>200",
+    "live2_min": 0.1149269290533231,
+    "live2_median": 0.2306427560891676,
+    "live2_max": 0.301542968084744,
+    "pass_low": 0.0649269290533231,
+    "pass_high": 0.351542968084744,
+    "tolerance": "abs 0.05",
+    "n": 6
+   },
+   "interior_billow_contrast_s4_s24": {
+    "label": "interior billow contrast s4-s24",
+    "live2_min": 0.163712,
+    "live2_median": 0.195219,
+    "live2_max": 0.27175,
+    "pass_low": 0.1391552,
+    "pass_high": 0.31251249999999997,
+    "tolerance": "rel 0.15",
+    "n": 6
+   },
+   "interior_coherence_s1w4": {
+    "label": "interior streak coherence s1/w4",
+    "live2_min": 0.480972,
+    "live2_median": 0.554063,
+    "live2_max": 0.649631,
+    "pass_low": 0.44097200000000003,
+    "pass_high": 0.689631,
+    "tolerance": "abs 0.04",
+    "n": 6
+   },
+   "interface_x_req": {
+    "label": "colour-patch changes across radius",
+    "live2_min": 7.0060812491562094,
+    "live2_median": 9.265944148131776,
+    "live2_max": 11.477079795957586,
+    "pass_low": 5.955169061782778,
+    "pass_high": 13.198641765351223,
+    "tolerance": "rel 0.15",
+    "n": 6
+   }
+  }
+ },
+ "night_firelit_smoke": {
+  "sources": [
+   "L0_campfire_smoke",
+   "L14_smoke_redlit",
+   "L3_smoke_redlit"
+  ],
+  "metrics": {
+   "luma_pct.p10": {
+    "label": "smoke luma p10",
+    "live2_min": 15.0682,
+    "live2_median": 17.9502,
+    "live2_max": 26.9502,
+    "pass_low": 10.0682,
+    "pass_high": 31.9502,
+    "tolerance": "abs 5.0",
+    "n": 3
+   },
+   "luma_pct.p50": {
+    "label": "smoke luma p50",
+    "live2_min": 24.054,
+    "live2_median": 36.7744,
+    "live2_max": 49.2546,
+    "pass_low": 18.054,
+    "pass_high": 55.2546,
+    "tolerance": "abs 6.0",
+    "n": 3
+   },
+   "luma_pct.p90": {
+    "label": "smoke luma p90",
+    "live2_min": 52.6062,
+    "live2_median": 86.195,
+    "live2_max": 101.1292,
+    "pass_low": 42.6062,
+    "pass_high": 111.1292,
+    "tolerance": "abs 10.0",
+    "n": 3
+   },
+   "michelson_p90_p10": {
+    "label": "self-shadow Michelson p90/p10",
+    "live2_min": 0.554685,
+    "live2_median": 0.579164,
+    "live2_max": 0.655285,
+    "pass_low": 0.494685,
+    "pass_high": 0.715285,
+    "tolerance": "abs 0.06",
+    "n": 3
+   },
+   "ratio_p90_p10": {
+    "label": "lit/shadow ratio p90/p10",
+    "live2_min": 3.491207,
+    "live2_median": 3.752447,
+    "live2_max": 4.801896,
+    "pass_low": 2.96752595,
+    "pass_high": 5.5221804,
+    "tolerance": "rel 0.15",
+    "n": 3
+   },
+   "billow_contrast_s2_s16": {
+    "label": "billow contrast s2-s16",
+    "live2_min": 0.1141,
+    "live2_median": 0.134645,
+    "live2_max": 0.185869,
+    "pass_low": 0.09698499999999999,
+    "pass_high": 0.21374935,
+    "tolerance": "rel 0.15",
+    "n": 3
+   },
+   "coarse_contrast_s8_s40": {
+    "label": "coarse contrast s8-s40",
+    "live2_min": 0.162919,
+    "live2_median": 0.177742,
+    "live2_max": 0.231686,
+    "pass_low": 0.13848115,
+    "pass_high": 0.2664389,
+    "tolerance": "rel 0.15",
+    "n": 3
+   },
+   "saturation_mean": {
+    "label": "mean HSV saturation",
+    "live2_min": 0.64922,
+    "live2_median": 0.91427,
+    "live2_max": 0.918892,
+    "pass_low": 0.5892200000000001,
+    "pass_high": 0.9788920000000001,
+    "tolerance": "abs 0.06",
+    "n": 3
+   },
+   "warmth_lit_top10": {
+    "label": "warmth of lit top 10%",
+    "live2_min": 0.573966,
+    "live2_median": 0.595364,
+    "live2_max": 0.617663,
+    "pass_low": 0.5139659999999999,
+    "pass_high": 0.6776629999999999,
+    "tolerance": "abs 0.06",
+    "n": 3
+   },
+   "sat_shadow_bottom10": {
+    "label": "saturation of shadow bottom 10%",
+    "live2_min": 0.253169,
+    "live2_median": 0.890737,
+    "live2_max": 0.944776,
+    "pass_low": 0.17316899999999996,
+    "pass_high": 1.024776,
+    "tolerance": "abs 0.08",
+    "n": 3
+   },
+   "edges.vertical_edge_score": {
+    "label": "coherent vertical edge score",
+    "live2_min": 0.031628,
+    "live2_median": 0.033036,
+    "live2_max": 0.054376,
+    "pass_low": 0.0016280000000000044,
+    "pass_high": 0.084376,
+    "tolerance": "abs 0.03",
+    "n": 3
+   }
+  }
+ },
+ "day_smoke": {
+  "sources": [
+   "L12_smoke_sunlit",
+   "L23_mushroom",
+   "L6_mushroom"
+  ],
+  "metrics": {
+   "luma_pct.p10": {
+    "label": "smoke luma p10",
+    "live2_min": 47.73866,
+    "live2_median": 54.8288,
+    "live2_max": 79.42,
+    "pass_low": 42.73866,
+    "pass_high": 84.42,
+    "tolerance": "abs 5.0",
+    "n": 3
+   },
+   "luma_pct.p50": {
+    "label": "smoke luma p50",
+    "live2_min": 64.5008,
+    "live2_median": 65.6274,
+    "live2_max": 125.812,
+    "pass_low": 58.5008,
+    "pass_high": 131.812,
+    "tolerance": "abs 6.0",
+    "n": 3
+   },
+   "luma_pct.p90": {
+    "label": "smoke luma p90",
+    "live2_min": 106.7862,
+    "live2_median": 114.1204,
+    "live2_max": 166.7136,
+    "pass_low": 96.7862,
+    "pass_high": 176.7136,
+    "tolerance": "abs 10.0",
+    "n": 3
+   },
+   "michelson_p90_p10": {
+    "label": "self-shadow Michelson p90/p10",
+    "live2_min": 0.321489,
+    "live2_median": 0.354659,
+    "live2_max": 0.410121,
+    "pass_low": 0.261489,
+    "pass_high": 0.470121,
+    "tolerance": "abs 0.06",
+    "n": 3
+   },
+   "ratio_p90_p10": {
+    "label": "lit/shadow ratio p90/p10",
+    "live2_min": 1.94763,
+    "live2_median": 2.099139,
+    "live2_max": 2.390524,
+    "pass_low": 1.6554855,
+    "pass_high": 2.7491026,
+    "tolerance": "rel 0.15",
+    "n": 3
+   },
+   "billow_contrast_s2_s16": {
+    "label": "billow contrast s2-s16",
+    "live2_min": 0.07811,
+    "live2_median": 0.088053,
+    "live2_max": 0.10397,
+    "pass_low": 0.0663935,
+    "pass_high": 0.1195655,
+    "tolerance": "rel 0.15",
+    "n": 3
+   },
+   "coarse_contrast_s8_s40": {
+    "label": "coarse contrast s8-s40",
+    "live2_min": 0.096464,
+    "live2_median": 0.113978,
+    "live2_max": 0.131983,
+    "pass_low": 0.0819944,
+    "pass_high": 0.15178044999999998,
+    "tolerance": "rel 0.15",
+    "n": 3
+   },
+   "saturation_mean": {
+    "label": "mean HSV saturation",
+    "live2_min": 0.121393,
+    "live2_median": 0.251026,
+    "live2_max": 0.403928,
+    "pass_low": 0.061393,
+    "pass_high": 0.463928,
+    "tolerance": "abs 0.06",
+    "n": 3
+   },
+   "warmth_lit_top10": {
+    "label": "warmth of lit top 10%",
+    "live2_min": 0.017252,
+    "live2_median": 0.025973,
+    "live2_max": 0.033855,
+    "pass_low": -0.042747999999999994,
+    "pass_high": 0.093855,
+    "tolerance": "abs 0.06",
+    "n": 3
+   },
+   "sat_shadow_bottom10": {
+    "label": "saturation of shadow bottom 10%",
+    "live2_min": 0.116606,
+    "live2_median": 0.255542,
+    "live2_max": 0.465691,
+    "pass_low": 0.036606,
+    "pass_high": 0.545691,
+    "tolerance": "abs 0.08",
+    "n": 3
+   },
+   "edges.vertical_edge_score": {
+    "label": "coherent vertical edge score",
+    "live2_min": 0.044528,
+    "live2_median": 0.04562,
+    "live2_max": 0.05557,
+    "pass_low": 0.014528,
+    "pass_high": 0.08557000000000001,
+    "tolerance": "abs 0.03",
+    "n": 3
+   }
+  }
+ },
+ "manual": {
+  "torch_flame_height_over_character": {
+   "live2": [
+    0.15,
+    0.21
+   ],
+   "pass": [
+    0.12,
+    0.28
+   ],
+   "source": "#17 top panels, ruler crops r17_torch_both.png"
+  },
+  "fire_engulfing_pawn_bbox_height_over_character": {
+   "live2": [
+    1.46,
+    1.46
+   ],
+   "pass": [
+    1.2,
+    1.8
+   ],
+   "source": "#14 FIRE panel"
+  },
+  "fireball_diameter_over_body_length": {
+   "live2": [
+    0.9,
+    0.96
+   ],
+   "pass": [
+    0.75,
+    1.15
+   ],
+   "source": "#0 middle panel"
+  },
+  "campfire_flame_height_over_width": {
+   "live2": [
+    0.9,
+    1.0
+   ],
+   "pass": [
+    0.75,
+    1.3
+   ],
+   "source": "#0 left panel (crop-limited)"
+  },
+  "campfire_flame_width_over_fuel_bed_width": {
+   "live2": [
+    1.0,
+    1.15
+   ],
+   "pass": [
+    0.9,
+    1.5
+   ],
+   "source": "#0 left panel, logs ~215 px wide"
+  },
+  "campfire_smoke_luma_falloff_flame_top_to_frame_top": {
+   "live2": [
+    3.4,
+    3.4
+   ],
+   "pass": [
+    2.0,
+    6.0
+   ],
+   "source": "#0 left panel bands 54->16 luma over ~320 px"
+  },
+  "campfire_smoke_neutral_floor_GB_8bit": {
+   "live2": [
+    14,
+    19
+   ],
+   "pass": [
+    8,
+    30
+   ],
+   "source": "#0 left panel band mean RGB"
+  }
+ }
+}

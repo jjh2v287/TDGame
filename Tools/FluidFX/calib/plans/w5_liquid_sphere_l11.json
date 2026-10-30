@@ -1,94 +1,93 @@
 {
- "id": "w5_liquid_sphere_l11",
- "note": "spec-w5 SP1(MT L11). 구역 4 액체 구 3(맑음·난류·피 구슬, 시뮬은 z −5000 에 숨기고 태그 메시에 입힘). 난류 구의 흐름 잡음·와도를 훑어 경도 이음매·극 띠·난류/맑음 속도 비를 본다. 구 재질(Sphere*) 값은 모양 정본 몫이라 이 계획에서 훑지 않는다. 폰은 zones.4.camera",
- "scenes": [
-  {
-   "name": "spheres",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidWaterPropsStage",
-   "camera": {
-    "awake": {
-     "TDGen_Tank_Pool": false,
-     "TDGen_Fountain_Fountain": false,
-     "TDGen_Cauldron_MinimalCauldron": false,
-     "TDGen_Cauldron_GeneralCauldron": false,
-     "TDGen_WaterTank_Pool": false,
-     "TDGen_LiquidSpheres_ClearSim": true,
-     "TDGen_LiquidSpheres_TurbulentSim": true,
-     "TDGen_LiquidSpheres_BloodOrbSim": true,
-     "TDGen_Waterfall_Pool": false,
-     "TDGen_Waterfall_Fall": false,
-     "TDGen_WaterySand_Sand": false,
-     "TDGen_UnderwaterPit_Pool": false
-    },
-    "pawn": [
-     12000,
-     -900
-    ],
-    "arm": 1200.0,
-    "view": [
-     -30.0,
-     90.0
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 8.0,
-   "regions_template": null,
-   "targets": null,
-   "live2_refs": []
-  }
- ],
- "params": [
-  {
-   "json_path": "Kinds.LiquidSphereTurbulent.TDFluidSimulationConfig.FlowNoiseAccelerationCmPerSec2",
-   "values": [
-    150.0,
-    300.0,
-    600.0
-   ],
-   "split_group": false
-  },
-  {
-   "json_path": "Kinds.LiquidSphereTurbulent.TDFluidSimulationConfig.VorticityStrength",
-   "values": [
-    1.0,
-    2.0,
-    3.0
-   ],
-   "split_group": false
-  }
- ],
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "metrics": {
-  "sources": [
-   "look",
-   "prop_probe"
+  "id": "w5_liquid_sphere_l11",
+  "note": "spec-w5 SP1(MT L11). 구역 4 액체 구 3(맑음·난류·피 구슬, 시뮬은 z −5000 에 숨기고 태그 메시에 입힘). 난류 구의 흐름 잡음·와도를 훑어 경도 이음매·극 띠·난류/맑음 속도 비를 본다. 구 재질(Sphere*) 값은 모양 정본 몫이라 이 계획에서 훑지 않는다. 폰은 zones.4.camera",
+  "scenes": [
+    {
+      "name": "spheres",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidWaterPropsStage",
+      "camera": {
+        "awake": {
+          "TDGen_Tank_Pool": false,
+          "TDGen_Fountain_Fountain": false,
+          "TDGen_Cauldron_MinimalCauldron": false,
+          "TDGen_Cauldron_GeneralCauldron": false,
+          "TDGen_WaterTank_Pool": false,
+          "TDGen_LiquidSpheres_ClearSim": true,
+          "TDGen_LiquidSpheres_TurbulentSim": true,
+          "TDGen_LiquidSpheres_BloodOrbSim": true,
+          "TDGen_Waterfall_Pool": false,
+          "TDGen_Waterfall_Fall": false,
+          "TDGen_WaterySand_Sand": false,
+          "TDGen_UnderwaterPit_Pool": false
+        },
+        "pawn": [
+          12000,
+          -900
+        ],
+        "arm": 1200.0,
+        "view": [
+          -30.0,
+          90.0
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 8.0,
+      "live2_refs": [],
+      "sources": [
+        "look",
+        "probe"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "scene": "spheres",
-    "metric": "look.sphere_seam_luminance_difference_over_neighbor_p99",
-    "weight": 2.0,
-    "low": 0.0,
-    "high": 1.5
-   },
-   {
-    "scene": "spheres",
-    "metric": "prop_probe.turbulent_over_clear_speed_p50_ratio",
-    "weight": 1.0,
-    "low": 3.0,
-    "high": 100.0
-   }
-  ]
- },
- "p3_gaps": [
-  "metrics.sources prop_probe: 난류/맑음 시뮬 속도 p50 비는 두 구 시뮬의 속도 텍스처를 PIE 에서 읽는 출처가 필요(목표 ≥3)",
-  "look 지표 sphere_seam_luminance_difference_over_neighbor_p99: 경도 이음매 휘도 차 ÷ 내부 이웃 차 99분위(목표 ≤1.5)는 measure_fx_look.py 에 없다. 극 띠(안 보임)는 육안 판정",
-  "구 태그 메시 재질(MID)은 PIE 에서 구동 컴포넌트가 입히므로 룩데브 캡처가 입힌 뒤 찍는지 확인 필요(settle 8 초는 가정)"
- ],
- "draft_status": "blocked(CAL-0)"
+  "params": [
+    {
+      "json_path": "Kinds.LiquidSphereTurbulent.TDFluidSimulationConfig.FlowNoiseAccelerationCmPerSec2",
+      "values": [
+        150.0,
+        300.0,
+        600.0
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.LiquidSphereTurbulent.TDFluidSimulationConfig.VorticityStrength",
+      "values": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "split_group": false
+    }
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "metrics": {
+    "sources": [
+      "look",
+      "probe"
+    ],
+    "targets": [
+      {
+        "scene": "spheres",
+        "metric": "sphere_seam.luminance_difference_over_neighbor_p99",
+        "weight": 2.0,
+        "low": 0.0,
+        "high": 1.5
+      },
+      {
+        "scene": "spheres",
+        "metric": "probe.prop.turbulent_over_clear_speed_p50_ratio",
+        "weight": 1.0,
+        "low": 3.0,
+        "high": 100.0
+      }
+    ]
+  }
 }

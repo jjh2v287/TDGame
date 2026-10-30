@@ -1,115 +1,203 @@
 {
- "id": "foliage_k1_bend",
- "note": "FX-13r K1 구역 1(GrassSim + 지면 교반기 반경 150 cm, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 휨·눌린 쪽 밝기·복원 시간",
- "scenes": [
-  {
-   "name": "k1_bend",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
-   "camera": {
-    "pawn": [
-     3000.0,
-     0.0
-    ],
-    "arm": 450.0,
-    "view": [
-     -60.0,
-     0.0
-    ],
-    "console": [
-     "TD.FluidFX.FoliageFlow 1",
-     "r.TDFogScattering 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/foliage_k5_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/foliage_live2_bend.json",
-   "live2_refs": [
-    "IMG9"
-   ]
-  }
- ],
- "base_tuning": [
-  {
-   "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.SimExtentCm",
-   "value": {
-    "X": 1500.0,
-    "Y": 1500.0
-   }
-  }
- ],
- "params": [
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy.Scalars.FoliageBendResponse",
-   "values": [
-    0.5,
-    1.0,
-    2.0
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassSim.Scalars.FoliagePressedBrightness",
-   "values": [
-    0.0,
-    0.15,
-    0.3
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassSim.Scalars.FoliageBendHeightExponent",
-   "values": [
-    1.5,
-    2.0,
-    3.0
-   ]
-  },
-  {
-   "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.BendVectorRecoverySeconds",
-   "values": [
-    1.5,
-    2.5,
-    4.0
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "foliage_flow",
-   "look",
-   "bend_record"
+  "id": "foliage_k1_bend",
+  "note": "FX-13r K1 구역 1(GrassSim + 지면 교반기 반경 150 cm, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 휨·눌린 쪽 밝기·복원 시간",
+  "scenes": [
+    {
+      "name": "k1_bend",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
+      "camera": {
+        "pawn": [
+          3000.0,
+          0.0
+        ],
+        "arm": 450.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "console": [
+          "TD.FluidFX.FoliageFlow 1",
+          "r.TDFogScattering 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/foliage_k5_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/foliage_live2_bend.json",
+      "live2_refs": [
+        "IMG9"
+      ],
+      "sources": [
+        "look",
+        "probe"
+      ],
+      "probe": {
+        "times": [
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0
+        ]
+      },
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    },
+    {
+      "name": "k1_recovery",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
+      "camera": {
+        "pawn": [
+          3000.0,
+          0.0
+        ],
+        "arm": 450.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "console": [
+          "TD.FluidFX.FoliageFlow 1",
+          "r.TDFogScattering 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/foliage_k5_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/foliage_live2_bend.json",
+      "live2_refs": [
+        "IMG9"
+      ],
+      "sources": [
+        "probe"
+      ],
+      "probe": {
+        "times": [
+          6.0,
+          6.5,
+          7.0,
+          7.5,
+          8.0,
+          8.5,
+          9.0,
+          9.5,
+          10.0
+        ]
+      },
+      "shots": {
+        "count": 9,
+        "interval": 0.5,
+        "kind": "series"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "k1_bend.foliage_flow.max_bend_degrees",
-    "weight": 1.0,
-    "low": 60.0,
-    "high": 80.0
-   },
-   {
-    "metric": "k1_bend.look.pressed_luma_ratio",
-    "weight": 0.5,
-    "low": 1.05,
-    "high": 1.4
-   },
-   {
-    "metric": "k1_bend.bend_record.recovery_63_seconds",
-    "weight": 1.0,
-    "low": 1.0,
-    "high": 5.0
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "metrics.sources foliage_flow",
-  "풀 MI 값(PressedBrightness·HeightExponent)은 정적 MI라 재굽기 단계 필요(R1311-S7)",
-  "params Look: 할당(FX-8n G1)",
-  "시간 지표 출처 bend_record: 헤드리스 기록 시험(.StepResponse·.PressHalfLifeRecord·.RippleLagRecord)과 check_fluid_foliage_bend.py 거울을 손잡이 값마다 다시 돌리는 오프라인 판정(calib_sweep.py METRIC_SOURCES에 없음, CAL-0). PIE 구역은 교반기가 계속 돌아 복원이 화면에 안 나타남"
- ]
+  "base_tuning": [
+    {
+      "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.SimExtentCm",
+      "value": {
+        "X": 1500.0,
+        "Y": 1500.0
+      }
+    }
+  ],
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy.Scalars.FoliageBendResponse",
+      "values": [
+        0.5,
+        1.0,
+        2.0
+      ],
+      "scenes": [
+        "k1_bend"
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassSim.Scalars.FoliagePressedBrightness",
+      "values": [
+        0.0,
+        0.15,
+        0.3
+      ],
+      "scenes": [
+        "k1_bend"
+      ],
+      "base": 0.0
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassSim.Scalars.FoliageBendHeightExponent",
+      "values": [
+        1.5,
+        2.0,
+        3.0
+      ],
+      "scenes": [
+        "k1_bend"
+      ],
+      "base": 2.0
+    },
+    {
+      "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.BendVectorRecoverySeconds",
+      "values": [
+        1.5,
+        2.5,
+        4.0
+      ],
+      "scenes": [
+        "k1_recovery"
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "probe",
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "probe.foliage_flow.max_bend_degrees",
+        "weight": 1.0,
+        "low": 60.0,
+        "high": 80.0,
+        "scene": "k1_bend"
+      },
+      {
+        "metric": "derived.pressed_luma_ratio",
+        "weight": 0.5,
+        "low": 1.05,
+        "high": 1.4,
+        "scene": "k1_bend"
+      },
+      {
+        "metric": "derived.bend_recovery_e_fold_seconds",
+        "weight": 1.0,
+        "tolerance": 0.04,
+        "low": 1.0,
+        "high": 5.0,
+        "scene": "k1_recovery",
+        "basis": "IMG9 recovery_63_seconds [1,5] 와 같은 양(63% 복원 시간 = e-fold τ), recovery_63 삭제(RT-M11) → PIE 시계열. tolerance = 범위 반폭의 2%"
+      }
+    ],
+    "derived": [
+      {
+        "name": "pressed_luma_ratio",
+        "op": "ratio",
+        "a": "pressed_side.luminance_mean",
+        "b": "outer_ring.luminance_mean"
+      },
+      {
+        "name": "bend_recovery_e_fold_seconds",
+        "op": "e_fold",
+        "a": "probe.foliage_flow.max_bend_degrees"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "base_tuning_ships": false
 }

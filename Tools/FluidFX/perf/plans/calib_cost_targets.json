@@ -1,0 +1,77 @@
+{
+  "note": "CAL-0 B6: calib 목표 파일에서 옮긴 비용 지표(⑤ 성능 판정 입력, P-6). 키 = 원래 목표 파일 이름, 값은 원문 그대로",
+  "sources": {
+    "fx9_live2_volume": {
+      "frame_cost_metrics": {
+        "hv2_effect_ms_p50": [
+          0.0,
+          6.0
+        ],
+        "hv3_render_profile_gain": [
+          0.15,
+          0.25
+        ],
+        "hv4_four_effects_ms": [
+          0.0,
+          2.5
+        ],
+        "hv5_captures_per_change": [
+          1.0,
+          1.0
+        ],
+        "hv5_captures_when_still": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "track_fx12c_targets": {
+      "cost_metrics": {
+        "painter_gpu_ms": [
+          0.0,
+          0.1
+        ],
+        "deform_mesh_gpu_ms": [
+          0.0,
+          0.3
+        ],
+        "dust_gpu_ms": [
+          0.0,
+          1.0
+        ],
+        "painter_vram_mib": [
+          0.0,
+          17.0
+        ]
+      },
+      "estimated": [
+        "region_metrics.groove_line.bank_over_groove_ratio"
+      ]
+    },
+    "viscous_fx14_targets": {
+      "cost_metrics": {
+        "viscous_gpu_ms": [
+          0.0,
+          0.15
+        ],
+        "surface_gpu_ms": [
+          0.0,
+          0.3
+        ],
+        "decal_gpu_ms": [
+          0.0,
+          0.2
+        ],
+        "lava_tile_gpu_ms": [
+          0.0,
+          0.03
+        ]
+      },
+      "estimated": [
+        "cost_metrics.lava_tile_gpu_ms",
+        "region_metrics.lava_tile_seam.seam_ratio",
+        "region_metrics.lava_local.contrast_over_tile"
+      ]
+    }
+  }
+}

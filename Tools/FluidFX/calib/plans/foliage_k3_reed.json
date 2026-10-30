@@ -1,98 +1,144 @@
 {
- "id": "foliage_k3_reed",
- "note": "FX-13c K3 구역 5(ReedShallows 물 액터·갈대 띠·물속 교반기), 물결 위상(앞섬은 음수)·갈대 휨. 육안 승인 전 확정 아님. M5(b): 기준 Recovery = Rise",
- "scenes": [
-  {
-   "name": "k3_reed",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
-   "camera": {
-    "pawn": [
-     15000.0,
-     0.0
-    ],
-    "arm": 450.0,
-    "view": [
-     -60.0,
-     0.0
-    ],
-    "console": [
-     "TD.FluidFX.FoliageFlow 1",
-     "TD.FluidFX.FoliageBend -1",
-     "r.TDFogScattering 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 8.0,
-   "regions_template": "Tools/FluidFX/calib/regions/foliage_k23_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/foliage_live2_press.json",
-   "live2_refs": []
-  }
- ],
- "base_tuning": [
-  {
-   "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendVectorRecoverySeconds",
-   "value": 0.08
-  }
- ],
- "params": [
-  {
-   "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendFromRippleSlope",
-   "values": [
-    0.0,
-    0.05,
-    0.15,
-    0.3
-   ]
-  },
-  {
-   "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendVectorRiseSeconds",
-   "values": [
-    0.04,
-    0.08,
-    0.15
-   ]
-  },
-  {
-   "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendVectorRecoverySeconds",
-   "values": [
-    0.08,
-    0.3,
-    0.6
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy_Reed.Scalars.FoliageBendMaxDegrees",
-   "values": [
-    30.0,
-    40.0,
-    55.0
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "bend_record"
+  "id": "foliage_k3_reed",
+  "note": "FX-13c K3 구역 5(ReedShallows 물 액터·갈대 띠·물속 교반기), 물결 위상(앞섬은 음수)·갈대 휨. 육안 승인 전 확정 아님. M5(b): 기준 Recovery = Rise",
+  "scenes": [
+    {
+      "name": "k3_reed",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
+      "camera": {
+        "pawn": [
+          15000.0,
+          0.0
+        ],
+        "arm": 450.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "console": [
+          "TD.FluidFX.FoliageFlow 1",
+          "TD.FluidFX.FoliageBend -1",
+          "r.TDFogScattering 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 8.0,
+      "live2_refs": [],
+      "sources": [
+        "offline"
+      ],
+      "offline": {
+        "command": [
+          "python",
+          "-B",
+          "Tools/FluidFX/check_fluid_foliage_bend.py",
+          "--tuning",
+          "{tuning}",
+          "--kind",
+          "ReedShallows",
+          "--json",
+          "{output}"
+        ],
+        "output": "offline.json"
+      }
+    },
+    {
+      "name": "k3_reed_look",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
+      "camera": {
+        "pawn": [
+          15000.0,
+          0.0
+        ],
+        "arm": 450.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "console": [
+          "TD.FluidFX.FoliageFlow 1",
+          "TD.FluidFX.FoliageBend -1",
+          "r.TDFogScattering 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 8.0,
+      "regions_template": "Tools/FluidFX/calib/regions/foliage_k23_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/foliage_live2_press.json",
+      "live2_refs": [],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "k3_reed.bend_record.ripple_lag_seconds",
-    "weight": 1.0,
-    "low": -0.1,
-    "high": 0.1
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "시간 지표 출처 bend_record: 헤드리스 기록 시험(.StepResponse·.PressHalfLifeRecord·.RippleLagRecord)과 check_fluid_foliage_bend.py 거울을 손잡이 값마다 다시 돌리는 오프라인 판정(calib_sweep.py METRIC_SOURCES에 없음, CAL-0). PIE 구역은 교반기가 계속 돌아 복원이 화면에 안 나타남",
-  "위상 지연 부호: b가 물결 높이보다 앞서면 음수(check_fluid_foliage_bend.py M5b 정의). Rise=Recovery=0.08에서 거울 -0.172 s(해석해 -0.176 s)라 목표 ±0.1 s는 BendFromRippleSlope 항만으로 못 맞춘다: 항을 높이와 같은 위상으로 바꾸는 (a)안이 필요하면 C++ 쪽 결정",
-  "params Look: 할당(fluid_tuning_patch가 Look: 경로를 처리하지 못함, CAL-0)",
-  "regions·targets 파일 미작성: 갈대는 이미지 없음이라 사용자 육안 승인(look 지표 없음)"
- ]
+  "base_tuning": [],
+  "params": [
+    {
+      "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendFromRippleSlope",
+      "values": [
+        0.0,
+        0.05,
+        0.15,
+        0.3
+      ],
+      "scenes": [
+        "k3_reed"
+      ]
+    },
+    {
+      "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendVectorRiseSeconds",
+      "values": [
+        0.04,
+        0.08,
+        0.15
+      ],
+      "scenes": [
+        "k3_reed"
+      ]
+    },
+    {
+      "json_path": "Kinds.ReedShallows.TDFluidSimulationConfig.BendVectorRecoverySeconds",
+      "values": [
+        0.08,
+        0.3,
+        0.6
+      ],
+      "scenes": [
+        "k3_reed"
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy_Reed.Scalars.FoliageBendMaxDegrees",
+      "values": [
+        30.0,
+        40.0,
+        55.0
+      ],
+      "scenes": [
+        "k3_reed_look"
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "offline",
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "offline.ripple_lag_seconds.asymmetric_recovery",
+        "weight": 1.0,
+        "low": -0.1,
+        "high": 0.1,
+        "scene": "k3_reed",
+        "basis": "갈대 물결 지연 ±0.1 s(지금 −0.172 s), 비대칭 회복 거울(G-OFFLINE 1.4)"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

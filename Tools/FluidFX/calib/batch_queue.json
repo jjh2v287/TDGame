@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "note": "CAL-0 B6: 일괄 보정 실행 순서(plan-batch-v2 2절이 정본). 블록은 위에서 아래로, 블록 안 계획은 목록 순서로 계획 단위 직렬. stages 는 계획마다 돌릴 단계(verify 는 사슬 끝에서만), class 는 PB2 1절 분류(now·cal0·verify·target·defect, target·defect 는 목표·결함이 풀린 뒤에만 돌림), needs_frame 은 영역 틀을 frame 뒤에 그리는 계획. chains 는 공유 소유자 사슬(상류 → 하류)과 사슬 끝 재검증 계획. river_vorticity 는 돌리지 않는다(run1 둔감 기록, not_run)",
+  "chains": [
+    {"name": "Groups.WaterLayer", "order": ["w3_rain", "foliage_k3_reed"], "verify_plans": ["w3_rain"]},
+    {"name": "Groups.TrackPainter", "order": ["track_fx12c_groove", "track_fx12c_vehicle", "track_sand_h4"], "verify_plans": ["track_fx12c_groove", "track_fx12c_vehicle"]},
+    {"name": "Groups.Viscous", "order": ["viscous_fx14_mud", "viscous_fx14_blood"], "verify_plans": ["viscous_fx14_mud"]},
+    {"name": "Groups.DenseWater", "order": ["w6_dense_creek", "w6_ship_wake"], "verify_plans": ["w6_dense_creek"]},
+    {"name": "Kinds.Smoke", "order": ["fx15a_amplitude_noise", "fx16a_cell_size_invariance", "fx16b_output_quality"], "verify_plans": ["fx15a_amplitude_noise"]},
+    {"name": "Globals.TDFluidCloudSceneSettings", "order": ["cloud_g11_cyclone_live", "cloud_g13_storm_wall", "cloud_g4_painter"], "verify_plans": ["cloud_g11_cyclone_live", "cloud_g13_storm_wall"]},
+    {"name": "MI_TD_FluidFog_Sim", "order": ["fog_f1_layer", "fog_f2_passive", "fog_f6_tile", "fog_f5_cut_stir", "fog_f7_lights"], "verify_plans": ["fog_f1_layer", "fog_f2_passive", "fog_f6_tile", "fog_f5_cut_stir"]},
+    {"name": "MI_TD_FluidFoliageFlowCopy", "order": ["foliage_k5_radial", "foliage_k1_bend", "foliage_k2_press"], "verify_plans": ["foliage_k5_radial", "foliage_k1_bend"]},
+    {"name": "Groups.HeterogeneousStage", "order": ["fx9_camera_facing", "fx9_floor_smoke", "fx9_hvol_vs_svol", "fx9_terrain_cache"], "verify_plans": []}
+  ],
+  "blocks": [
+    {"id": "K1", "name": "불", "after": ["0e"], "plans": [
+      {"plan": "campfire_vorticity", "class": "now", "stages": ["screen", "confirm"], "gate": "K1 관문(PB2 3절: 중앙값 잡음 ≤ 한 장 잡음 × 0.6, 대조 실패율 ≤30%)"},
+      {"plan": "fx8n_embers", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "fx5_flamethrower", "class": "cal0", "stages": ["screen", "confirm"]}
+    ]},
+    {"id": "K2", "name": "물 상류", "after": ["K1"], "plans": [
+      {"plan": "w3_rain", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.WaterLayer"},
+      {"plan": "foliage_k3_reed", "class": "defect", "stages": ["screen", "confirm"], "chain": "Groups.WaterLayer", "offline": true}
+    ]},
+    {"id": "K3", "name": "구름", "after": ["K1"], "plans": [
+      {"plan": "cloud_g10_near", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "cloud_g12_volcano", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "cloud_g9_mushroom", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "cloud_h7_sandwall", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "cloud_g2_wrap_seam", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "cloud_g11_cyclone_live", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"},
+      {"plan": "cloud_g13_storm_wall", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"},
+      {"plan": "cloud_g4_painter", "class": "target", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"}
+    ]},
+    {"id": "K4", "name": "안개", "after": [], "plans": [
+      {"plan": "fog_f1_layer", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "fog_f2_passive", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "fog_f6_tile", "class": "target", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "fog_f5_cut_stir", "class": "target", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "fog_f7_lights", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim", "requires": "P-9"}
+    ]},
+    {"id": "K5", "name": "연기·볼륨", "after": [], "plans": [
+      {"plan": "fx15a_amplitude_noise", "class": "target", "stages": ["screen", "confirm"], "chain": "Kinds.Smoke"},
+      {"plan": "fx16a_cell_size_invariance", "class": "verify", "stages": ["screen"], "chain": "Kinds.Smoke"},
+      {"plan": "fx16b_output_quality", "class": "target", "stages": ["screen", "confirm"], "chain": "Kinds.Smoke"},
+      {"plan": "fx15a_kernel_vs_jacobi", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "fx15a_wind_and_anchor", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "fx9_camera_facing", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage"},
+      {"plan": "fx9_floor_smoke", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"},
+      {"plan": "fx9_hvol_vs_svol", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"},
+      {"plan": "fx9_terrain_cache", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage"}
+    ]},
+    {"id": "K6", "name": "식생", "after": ["K2"], "plans": [
+      {"plan": "foliage_k5_radial", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"},
+      {"plan": "foliage_k1_bend", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"},
+      {"plan": "foliage_k2_press", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"}
+    ]},
+    {"id": "K7", "name": "자국", "after": ["B5"], "plans": [
+      {"plan": "track_fx12c_groove", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter", "needs_frame": true},
+      {"plan": "track_fx12c_vehicle", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter", "needs_frame": true},
+      {"plan": "track_sand_h4", "class": "defect", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter"}
+    ]},
+    {"id": "K8", "name": "점성", "after": ["B5"], "plans": [
+      {"plan": "viscous_fx14_mud", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.Viscous", "needs_frame": true},
+      {"plan": "viscous_fx14_blood", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.Viscous", "needs_frame": true},
+      {"plan": "viscous_fx14_lava", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true}
+    ]},
+    {"id": "K9", "name": "물·입자·입력", "after": ["B5"], "plans": [
+      {"plan": "w5_liquid_sphere_l11", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true},
+      {"plan": "w5_waterfall_l29", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true},
+      {"plan": "w5_tank_l11", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "w5_underwater_l18a", "class": "defect", "stages": ["screen", "confirm"]},
+      {"plan": "w6_dense_creek", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater", "gate": "frame 에서 settle 90 대 120 수렴 관문"},
+      {"plan": "w6_ship_wake", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater"},
+      {"plan": "w1b_water_particles", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "fx8n_drive", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "input_fx15b", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true}
+    ]}
+  ],
+  "not_run": [
+    {"plan": "river_vorticity", "reason": "run1 둔감(효과 0.013 < 2×잡음 0.063, RF-S1), 건식 0만 유지"}
+  ]
+}

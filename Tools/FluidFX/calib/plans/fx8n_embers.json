@@ -27,11 +27,15 @@
         }
       },
       "time_dilation": 1.0,
-      "schedule": null,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/fx8n_ember_regions.json",
       "targets": "Tools/FluidFX/calib/targets/fx8n_live2_embers.json",
-      "live2_refs": []
+      "live2_refs": [],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     }
   ],
   "params": [
@@ -42,7 +46,8 @@
         400,
         800
       ],
-      "split_group": false
+      "split_group": false,
+      "cost": "higher_costs_more"
     },
     {
       "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidEmberHeat.Floats.User.EmberBaseScale",
@@ -71,10 +76,9 @@
     "sources": [
       "look"
     ],
-    "noise_floor": {},
     "targets": [
       {
-        "metric": "0.embers.count",
+        "metric": "embers.embers.count",
         "weight": 1.0,
         "tolerance": 15.0,
         "low": 300.0,
@@ -82,7 +86,7 @@
         "basis": "E7-n 화면당 불티 ≥300(IMG 0)·500~600(IMG 17), IFS:134·195"
       },
       {
-        "metric": "0.embers.median_area_px",
+        "metric": "embers.embers.median_area_px",
         "weight": 1.0,
         "tolerance": 0.5,
         "low": 0.0,
@@ -90,7 +94,7 @@
         "basis": "E7-s 720p 중앙 크기 ≤3px(면적 ≤7px² [유추])"
       },
       {
-        "metric": "0.embers.median_elongation",
+        "metric": "embers.embers.median_elongation",
         "weight": 1.0,
         "tolerance": 0.2,
         "low": 1.5,

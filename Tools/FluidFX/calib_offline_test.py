@@ -1655,7 +1655,7 @@ def check_cal0_sweep():
     check("B2 T69 덧씌움 경로 다시 읽기 값이 다르면 대조 단계 무효 / 같으면 유효 / 그 종류가 장면에 없으면 단언 생략",
           len(missed) == 1 and "덧씌움 경로" in missed[0] and calib_sweep.judge_step(variant, outcome({"TDGen_TorchFire": {"value": 2.5}})) == [] and calib_sweep.judge_step(variant, outcome({})) == [], missed)
 
-    relative = lambda role: lambda plan: plan["metrics"]["targets"][0].update(relative_to_control=[0.9, 1.1], **({"role": role} if role else {}))
+    relative = lambda role: lambda plan: plan["metrics"]["targets"][0].update(relative_to_control={"low": 0.9, "high": 1.1}, **({"role": role} if role else {}))
     code_score, text_score, _ = dry("t39a", stage_plan("t39a", relative(None)), "--stage", "screen")
     code_constraint, _, _ = dry("t39b", stage_plan("t39b", relative("constraint")), "--stage", "screen")
     check("B2 T39 relative_to_control [0.9,1.1] 은 1.0 포함 → score 면 종료 2 / constraint 면 0", code_score == 2 and "대조 중심 띠" in text_score and code_constraint == 0, text_score)

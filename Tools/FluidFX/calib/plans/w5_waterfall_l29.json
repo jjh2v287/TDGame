@@ -44,6 +44,22 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
+      },
+      "probe": {
+        "stats": [
+          {
+            "label": "TDGen_Waterfall_Fall",
+            "function": "get_water_prop_stats",
+            "prefix": "prop"
+          }
+        ],
+        "times": [
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0
+        ]
       }
     }
   ],
@@ -88,10 +104,11 @@
     "targets": [
       {
         "scene": "fall_pool",
-        "metric": "probe.prop.fall_lower_quarter_mean_down_speed_cm_per_sec",
+        "metric": "probe.prop.LastCouplingMeanDownSpeedCmPerSec",
         "weight": 2.0,
         "low": 354.4,
-        "high": 531.6
+        "high": 531.6,
+        "basis": "B5 #5: 결합 띠(CouplingBandRatio, 아래 10%) 열별 하강 속도 평균. '아래 1/4' 아님. 결합이 꺼지면 직전 값이 남아 CouplingStampCount 제약을 함께 둔다"
       },
       {
         "scene": "fall_pool",
@@ -99,6 +116,15 @@
         "weight": 1.0,
         "low": 0.3,
         "high": 0.6
+      },
+      {
+        "scene": "fall_pool",
+        "metric": "probe.prop.CouplingStampCount",
+        "weight": 1.0,
+        "low": 0.5,
+        "high": 1000000.0,
+        "role": "constraint",
+        "basis": "B5 #5 단언: 이번 틱 결합 도장 > 0 이어야 하강 속도가 현재 값"
       }
     ]
   }

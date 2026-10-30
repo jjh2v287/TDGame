@@ -1,6 +1,6 @@
 {
   "id": "cloud_g2_wrap_seam",
-  "note": "FX-11c G2, 셋업 19 WrapField(감싸기 라이브 + 반복 슬롯), 타일 경계 x = 40 km(먼 바닥 위, 지형 끝 x = 20 km 의 지면 이음을 피함) 위에서 아래로. 지표는 경계 좌우 32 px 띠 휘도 차와 주기 자기상관",
+  "note": "FX-11c G2, 셋업 19 WrapField(감싸기 라이브 + 반복 슬롯), 타일 경계 x = 40 km(먼 바닥 위, 지형 끝 x = 20 km 의 지면 이음을 피함) 위에서 아래로. 지표는 경계 좌우 32 px 띠 휘도 차와 주기 자기상관 CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
   "scenes": [
     {
       "name": "wrap_seam",
@@ -18,7 +18,6 @@
       "time_dilation": 1.0,
       "settle": 30.0,
       "regions_template": "Tools/FluidFX/calib/regions/cloud_g2_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
       "live2_refs": [],
       "shots": {
         "count": 3,

@@ -1,6 +1,6 @@
 {
   "id": "w3_rain",
-  "note": "W-3 비·웅덩이(L12): 기준 수치가 없어 M1(근접 고리 밀도)·M4(웅덩이 면적률)·M5(빗줄기·튐)는 사용자 승인, 일괄 보정(D-64) 때 사용. 카메라 좌표는 editor_make_fluid_rain_stage.py 의 S1(연못 중심 0,0)·S2(4200,0) 배치와 같다. M1 2차 손잡이는 W-7 근접 감쇠 DampingPerSec(반박 B5)",
+  "note": "W-3 비·웅덩이(L12): 기준 수치가 없어 M1(근접 고리 밀도)·M4(웅덩이 면적률)·M5(빗줄기·튐)는 사용자 승인, 일괄 보정(D-64) 때 사용. 카메라 좌표는 editor_make_fluid_rain_stage.py 의 S1(연못 중심 0,0)·S2(4200,0) 배치와 같다. M1 2차 손잡이는 W-7 근접 감쇠 DampingPerSec(반박 B5) CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
   "scenes": [
     {
       "name": "pond_near",
@@ -20,7 +20,6 @@
       "time_dilation": 1.0,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/w3_rain_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/w3_rain_targets.json",
       "live2_refs": [
         "L12"
       ],
@@ -48,7 +47,6 @@
       "time_dilation": 1.0,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/w3_rain_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/w3_rain_targets.json",
       "live2_refs": [
         "L12",
         "L3"
@@ -77,7 +75,6 @@
       "time_dilation": 1.0,
       "settle": 60.0,
       "regions_template": "Tools/FluidFX/calib/regions/w3_rain_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/w3_rain_targets.json",
       "live2_refs": [
         "L12"
       ],
@@ -105,7 +102,6 @@
       "time_dilation": 1.0,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/w3_rain_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/w3_rain_targets.json",
       "live2_refs": [
         "L12",
         "L3"

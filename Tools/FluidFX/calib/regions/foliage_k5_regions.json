@@ -1,24 +1,36 @@
 {
  "id": "foliage_k5_regions",
- "note": "1280×720 화면 기준, 구역 중심 탐침 상자(이동체 둘레·바깥 고리·눌린 쪽)",
- "regions": {
-  "mover_ring": [
-   440,
-   200,
-   840,
-   520
-  ],
-  "outer_ring": [
-   240,
-   80,
-   1040,
-   640
-  ],
-  "pressed_side": [
-   540,
-   300,
-   740,
-   460
-  ]
- }
+ "note": "1280×720 화면 기준, 구역 중심 탐침 상자(이동체 둘레·바깥 고리·눌린 쪽). kind volume 은 휘도 지표 자리(풀 전용 kind 없음, 파생 pressed_luma_ratio 는 luminance_mean 만 씀)",
+ "regions": [
+  {
+   "name": "mover_ring",
+   "kind": "volume",
+   "box": [
+    440,
+    200,
+    840,
+    520
+   ]
+  },
+  {
+   "name": "outer_ring",
+   "kind": "volume",
+   "box": [
+    240,
+    80,
+    1040,
+    640
+   ]
+  },
+  {
+   "name": "pressed_side",
+   "kind": "volume",
+   "box": [
+    540,
+    300,
+    740,
+    460
+   ]
+  }
+ ]
 }

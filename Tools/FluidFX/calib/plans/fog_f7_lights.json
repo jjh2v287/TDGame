@@ -45,25 +45,27 @@
       "actor_prop": {
         "label": "TDGen_LabGreenLight",
         "component": "light_component",
-        "name": "volumetric_scattering_intensity"
+        "property": "volumetric_scattering_intensity"
       },
       "values": [
         2.0,
         4.0,
         8.0
-      ]
+      ],
+      "base": 4.0
     },
     {
       "actor_prop": {
         "label": "TDGen_LabBlueLight",
         "component": "light_component",
-        "name": "volumetric_scattering_intensity"
+        "property": "volumetric_scattering_intensity"
       },
       "values": [
         2.0,
         4.0,
         8.0
-      ]
+      ],
+      "base": 4.0
     },
     {
       "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Sim.Vectors.FogAlbedo",

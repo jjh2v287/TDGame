@@ -1,6 +1,6 @@
 {
   "id": "fx8n_drive",
-  "note": "FX-8n C12 장면 P2(Smoke·DriveSprite)·P4(Vortex·DriveMeshFloat) 덩어리 수·크기 + 비교 시트, C12-v 는 오프스크린 RHI(D2) 재실행으로 잰다. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2)",
+  "note": "FX-8n C12 장면 P2(Smoke·DriveSprite)·P4(Vortex·DriveMeshFloat) 덩어리 수·크기 + 비교 시트, C12-v 는 오프스크린 RHI(D2) 재실행으로 잰다. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2) CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
   "scenes": [
     {
       "name": "p2_smoke_sprite",
@@ -23,7 +23,6 @@
       "time_dilation": 1.0,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/fx8n_live2_drive.json",
       "live2_refs": [],
       "shots": {
         "count": 5,
@@ -52,7 +51,6 @@
       "time_dilation": 1.0,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/fx8n_live2_drive.json",
       "live2_refs": [],
       "shots": {
         "count": 5,

@@ -1,6 +1,6 @@
 {
   "id": "w1b_water_particles",
-  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다",
+  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다 CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
   "scenes": [
     {
       "name": "sea_img16",
@@ -24,7 +24,6 @@
       "time_dilation": 1.0,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/w1b_sea_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/w1b_live2_water_particles.json",
       "live2_refs": [
         "C12",
         "L26",
@@ -58,7 +57,6 @@
       "time_dilation": 1.0,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/w1b_rapids_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/w1b_live2_water_particles.json",
       "live2_refs": [
         "L4"
       ],

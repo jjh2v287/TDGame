@@ -1,6 +1,6 @@
 {
   "id": "track_sand_h4",
-  "note": "FX-12r H4·H5·H8 모래 사구 타일·WPO·홈(IMG 13·22). 사구 주 파장·방향은 FFT 분석기(P3 공백) 뒤 / CAL-0 B6: 낡은 base_tuning(FootprintPainter 1024·5000) 삭제, SandTrack 정본 기준으로 잰다",
+  "note": "FX-12r H4·H5·H8 모래 사구 타일·WPO·홈(IMG 13·22). 사구 주 파장·방향은 FFT 분석기(P3 공백) 뒤 / CAL-0 B6: 낡은 base_tuning(FootprintPainter 1024·5000) 삭제, SandTrack 정본 기준으로 잰다 CAL-0 통합: 목표 측정·결함 계획이라 장면 목표 파일 연결은 0b 측정·승인 뒤 한다(목표를 결과로 정하지 않음, PB2 1절).",
   "scenes": [
     {
       "name": "sand_dunes",
@@ -26,7 +26,6 @@
       "time_dilation": 1.0,
       "settle": 12.0,
       "regions_template": "Tools/FluidFX/calib/regions/track_sand_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/track_live2_snow_sand.json",
       "live2_refs": [
         "L13",
         "L22"

@@ -257,8 +257,8 @@ def validate_target_band(target, path):
     require(target.get("role", "score") in TARGET_ROLES, f"{path}.role: {'|'.join(TARGET_ROLES)}")
     if "relative_to_control" in target:
         band = target["relative_to_control"]
-        require(isinstance(band, list) and len(band) == 2 and all(is_number(value) for value in band) and band[0] < band[1], f"{path}.relative_to_control: [낮은 배율, 높은 배율] 수 2개")
-        require(not (band[0] <= 1.0 <= band[1]) or target.get("role") == "constraint", f"{path}: relative_to_control 띠가 1.0 을 포함하면 role constraint 여야 한다(대조 중심 띠는 점수로 쓰면 후보가 늘 v00)")
+        require(isinstance(band, dict) and set(band) == {"low", "high"} and is_number(band["low"]) and is_number(band["high"]) and band["low"] < band["high"], f"{path}.relative_to_control: {{low, high}} 배율 수 2개(low < high)")
+        require(not (band["low"] <= 1.0 <= band["high"]) or target.get("role") == "constraint", f"{path}: relative_to_control 띠가 1.0 을 포함하면 role constraint 여야 한다(대조 중심 띠는 점수로 쓰면 후보가 늘 v00)")
 
 
 def validate_targets(plan):

@@ -44,6 +44,22 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
+      },
+      "probe": {
+        "stats": [
+          {
+            "subsystem": "TDFluidUnderwaterSubsystem",
+            "function": "get_underwater_stats",
+            "prefix": "underwater"
+          }
+        ],
+        "times": [
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0
+        ]
       }
     }
   ],
@@ -79,7 +95,7 @@
     "targets": [
       {
         "scene": "uw_pit",
-        "metric": "probe.underwater.stationary_switch_count",
+        "metric": "probe.underwater.SwitchCount",
         "weight": 1.0,
         "low": 0.0,
         "high": 0.0
@@ -93,10 +109,18 @@
       },
       {
         "scene": "uw_pit",
-        "metric": "probe.underwater.mean_tick_milliseconds",
+        "metric": "derived.underwater_mean_tick_milliseconds",
         "weight": 1.0,
         "low": 0.0,
         "high": 0.02
+      }
+    ],
+    "derived": [
+      {
+        "name": "underwater_mean_tick_milliseconds",
+        "op": "ratio",
+        "a": "probe.underwater.TotalTickMilliseconds",
+        "b": "probe.underwater.TickCount"
       }
     ]
   }

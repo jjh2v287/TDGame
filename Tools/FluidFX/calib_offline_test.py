@@ -739,7 +739,7 @@ reset_world([(TDFluidFireActor, "TDGen_CampfireFire", FakePreset("CAMPFIRE")), (
 applied = fake_editor_action("lookdev_apply", apply={"preset": {"TDGen_CampfireFire": {"plane_settings": {"camera_depth_bias_cm": 30.0}}}}, tag="t", output=str(TEST_DIR), size="1280x720")
 entry = applied.get("preset", {}).get("TDGen_CampfireFire", {})
 check("preset R2 무시 키 오류", entry.get("ignored_copy_paths") == ["plane_settings.camera_depth_bias_cm"] and WORLD.actors[0].live_component.active_preset.plane_settings.camera_depth_bias_cm == 10.0, applied)
-check("find_key_errors 가 R2 키를 셈", len(lookdev.find_key_errors(applied)) == 1, lookdev.find_key_errors(applied))
+check("find_key_errors 가 R2 키를 셈", len(lookdev.find_outcome_errors(applied)) == 1, lookdev.find_outcome_errors(applied))
 applied = fake_editor_action("lookdev_apply", apply={"preset": {"TDGen_CampfireFire": {"force_override": True, "plane_settings": {"camera_depth_bias_cm": 30.0}}}}, tag="t", output=str(TEST_DIR), size="1280x720")
 active = WORLD.actors[0].live_component.active_preset
 check("preset force_override 복제 override 켬", applied["preset"]["TDGen_CampfireFire"].get("forced_override") is True and active.override_preset_defaults and active.plane_settings.camera_depth_bias_cm == 30.0, applied)
@@ -1045,7 +1045,239 @@ def check_cal0_b0():
     check("B0 patched: 바꾼 속성은 원래 값으로, 없던 속성은 지움", patched_values == (9.0, 1) and lookdev.FRAME_FILE_WAIT_SECONDS == 0.5 and not hasattr(lookdev, "CAL0_ADDED_NAME"))
 
 
+def check_cal0_lookdev():
+    output_dir = TEST_DIR / "cal0-lookdev"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    lookdev.OUTPUT_DIRECTORY = output_dir
+
+    typo = lookdev.find_key_errors({"veiw_target": "TDGen_CloudCam_Stratus", "arm": 300.0})
+    cameras = [scene["camera"] for path in sorted((W / "Tools/FluidFX/calib/plans").glob("*.json")) for scene in load_json(path).get("scenes", []) if isinstance(scene, dict) and isinstance(scene.get("camera"), dict)]
+    camera_errors = [error for camera in cameras for error in lookdev.find_key_errors(camera)]
+    nested = lookdev.find_key_errors({"schedule": {"times": [1.0], "reference": "call", "evnts": []}, "look_live": {"materials": {"/Game/CAL0/MI_Look": {"Switches": {"A": True}}}},
+                                      "probe": {"rt": [{"label": "P", "property": "rt", "box": [0, 0, 1], "step": 0, "channel": "xy", "prefix": "p"}]}})
+    check("T07 find_key_errors(apply): 모르는 키 veiw_target 1건(view_target 제안)·현재 계획 camera 전부 0건·중첩 키(schedule·reference call·Switches·rt box·step·channel) 6건",
+          len(typo) == 1 and "veiw_target" in typo[0] and "view_target" in typo[0] and cameras and not camera_errors and len(nested) == 6
+          and all(any(word in line for line in nested) for word in ("evnts", "reference call", "Switches", ".box", ".step", ".channel")), (typo, camera_errors[:3], nested))
+
+    reset_world([(TDFluidFireActor, "TDGen_CampfireFire", FakePreset("CAMPFIRE"))])
+    tuning = load_json(CANONICAL)
+    tuning["Kinds"]["Campfire"]["TDFluidSimulationConfig"]["VorticityStrength"] = 2.25
+    control_path = output_dir / "control-tuning.json"
+    control_path.write_text(json.dumps(tuning), encoding="utf-8")
+    old = lookdev.run_tuning_reload({"tuning": str(control_path), "look": "", "reset": "keep"})
+    new = lookdev.run_tuning_reload({"tuning": str(control_path), "look": "", "reset": "keep", "base": {"tuning": str(control_path), "look": ""}})
+    check("T68 G-BASE: base 없는 옛 요청은 덧씌움 든 대조 사본에서 ChangedFieldCount 1(단계 무효 조건)·base 요청은 대조 사본을 먼저 적재해 0",
+          old["report"]["changed_field_count"] == 1 and new["report"]["changed_field_count"] == 0 and Path(new["base_copy"]["tuning"]).resolve() == control_path.resolve()
+          and Path(new["base"]["tuning_source_path"]).resolve() == control_path.resolve(), (old.get("report"), new.get("report"), new.get("error")))
+
+    package = "/Game/CAL0/MI_Look"
+    base_material = FakeMaterial("/Game/CAL0/M_Look", scalars={"Glow": 1.0}, vectors={"Tint": FakeLinearColor(1.0, 1.0, 1.0, 1.0)})
+    target = FakeMaterialInstanceConstant(package, scalars={"Glow": 2.0}, parent=base_material)
+    child = FakeMaterialInstanceConstant("/Game/CAL0/MI_LookChild", parent=target)
+    variant_values = {"Scalars": {"Glow": 4.0}, "Vectors": {"Tint": [0.5, 0.25, 0.0, 1.0]}}
+    control_values = {"Scalars": {"Glow": 4.0}, "Vectors": {"Tint": [1.0, 1.0, 1.0, 1.0]}}
+    look_paths = {}
+    for name, values in (("variant", variant_values), ("control", control_values)):
+        look = load_json(CANONICAL_LOOK)
+        look["Materials"][package] = dict(values, Parent="/Game/CAL0/M_Look", Switches={})
+        look_paths[name] = output_dir / f"look-{name}.json"
+        look_paths[name].write_text(json.dumps(look), encoding="utf-8")
+
+    def run_look(build, look_live=None, extra=None):
+        reset_world([(TDFluidFireActor, "TDGen_CampfireFire", FakePreset("CAMPFIRE"))])
+        WORLD.add_asset(target)
+        actors = build()
+        WORLD.actors += actors
+        created_before = FakeMaterialInstanceDynamic.created_count
+        state = {"uses_tuning_reload": False, "key_errors": []}
+        apply = dict({"tuning_reload": {"tuning": "", "look": str(look_paths["variant"]), "reset": "keep", "relative_to_base": False},
+                      "look_live": look_live or {"materials": {package: variant_values}}}, **(extra or {}))
+        outcome = lookdev.apply_variant_with_tuning(apply, "s00", state)
+        return actors, outcome, state["key_errors"], FakeMaterialInstanceDynamic.created_count - created_before
+
+    def owners(outcome):
+        return [(item["owner"], item["by"], item.get("matches")) for item in outcome.get("owner_checks", [])]
+
+    def reads_match(outcome):
+        entries = outcome.get("look_read_back", {}).get(package, {})
+        return entries and all(entry["matches"] and entry["read"] for section in entries.values() for entry in section.values())
+
+    actors, outcome, errors, created = run_look(lambda: [FakeActor("TDGen_Prop", components=[FakeStaticMeshComponent("Mesh", [target])])],
+                                               extra={"look_live": {"materials": {package: variant_values}, "base": {package: {"Scalars": {"Glow": 2.0}}}}})
+    slot = actors[0].components[0].get_material(0)
+    check("T25a primitive_slot: MI 슬롯을 MID 로 교체·값 설정·MI 자산 불변·1초 뒤 다시 읽기 일치·적용 수",
+          isinstance(slot, FakeMaterialInstanceDynamic) and slot.parent is target and slot.get_scalar_parameter_value("Glow") == 4.0 and target.scalars["Glow"] == 2.0 and created == 1
+          and outcome["look_applied"] == {package: {"Glow": 1, "Tint": 1}} and owners(outcome) == [("primitive_slot", "python", True)] and reads_match(outcome) and not errors, (outcome, errors))
+    _, mismatch, mismatch_errors, _ = run_look(lambda: [FakeActor("TDGen_Prop", components=[FakeStaticMeshComponent("Mesh", [target])])],
+                                               extra={"look_live": {"materials": {package: variant_values}, "base": {package: {"Scalars": {"Glow": 9.0}}}}})
+    check("T86 첫 대조 단계 원 MI 값 ≠ base → base 불일치(일치하면 0건)",
+          outcome["look_base"] == {"checked": 1, "mismatches": []} and len(mismatch["look_base"]["mismatches"]) == 1 and any("base 불일치" in line for line in mismatch_errors), (mismatch.get("look_base"), mismatch_errors))
+
+    def cpp_card_actor():
+        actor = TDFluidLiveActor(WORLD, "TDGen_CardFire", FakePreset("CAMPFIRE"))
+        actor.components.append(FakeStaticMeshComponent("Card", [WORLD.add_cpp_material(target)]))
+        return [actor]
+
+    actors, outcome, errors, created = run_look(cpp_card_actor)
+    card = actors[0].components[0].get_material(0)
+
+    def cpp_card_without_reapply():
+        WORLD.cpp_reapplies_look = False
+        return cpp_card_actor()
+
+    _, stale, stale_errors, _ = run_look(cpp_card_without_reapply)
+    check("T25b cpp_mid: 교체·직접 설정 0·모양 사본 적재로 C++ 가 다시 적용·다시 읽기 일치 / C++ 가 안 하면 단계 무효 문구",
+          created == 0 and card.get_scalar_parameter_value("Glow") == 4.0 and owners(outcome) == [("cpp_mid", "cpp", True)] and reads_match(outcome) and not errors
+          and owners(stale) == [("cpp_mid", "cpp", False)] and any("C++ 소유 MID가 모양 사본을 다시 적용하지 않음" in line for line in stale_errors), (outcome, stale_errors))
+
+    actors, outcome, errors, created = run_look(lambda: [TDFluidCloudLayersActor("TDGen_Clouds", WORLD.add_cpp_material(target))])
+    check("T25c cloud_component: 구름 컴포넌트 C++ MID 를 교체 없이 다시 읽기 일치",
+          created == 0 and owners(outcome) == [("cloud_component", "cpp", True)] and reads_match(outcome) and not errors, (outcome, errors))
+
+    actors, outcome, errors, created = run_look(lambda: [TDFluidFoliageFlowActor("TDGen_Foliage", WORLD.add_cpp_material(target))])
+    with patched(TDFluidFoliageFlowActor, get_flow_copy_material_instance=None):
+        _, no_getter, no_getter_errors, _ = run_look(lambda: [TDFluidFoliageFlowActor("TDGen_Foliage", WORLD.add_cpp_material(target))])
+    check("T25d foliage_flow: B5 게터로 FlowCopy MID 다시 읽기 일치 / 게터 없으면 '게터 없음: B5 필요'",
+          created == 0 and owners(outcome) == [("foliage_flow", "cpp", True)] and reads_match(outcome) and not errors
+          and any("게터 없음: B5 필요" in line for line in no_getter_errors) and no_getter["look_applied"][package]["Glow"] == 0, (outcome, no_getter_errors))
+
+    actors, outcome, errors, created = run_look(lambda: [TDFluidSurfaceOutputActor("TDGen_Blood", target), TDFluidSurfaceOutputActor("TDGen_BloodCpp", WORLD.add_cpp_material(target))])
+    decal = actors[0].output_decal.get_decal_material()
+    check("T25e decal: MI 데칼은 create_dynamic_material_instance 뒤 설정·C++ MID 데칼은 다시 읽기만·둘 다 일치",
+          created == 1 and isinstance(decal, FakeMaterialInstanceDynamic) and decal.parent is target and decal.get_scalar_parameter_value("Glow") == 4.0
+          and owners(outcome) == [("decal", "python", True), ("decal", "cpp", True)] and reads_match(outcome) and not errors, (outcome, errors))
+
+    actors, outcome, errors, created = run_look(lambda: [FakePostProcessVolume("TDGen_Underwater", [WORLD.add_cpp_material(target)])])
+    check("T25f post_process: 후처리 blendable C++ MID 를 교체 없이 다시 읽기 일치",
+          created == 0 and owners(outcome) == [("post_process", "cpp", True)] and reads_match(outcome) and not errors, (outcome, errors))
+
+    rain_system = FakeNiagaraSystem("/Game/CAL0/NS_Look")
+
+    def rain_actor():
+        WORLD.add_asset(rain_system)
+        return [FakeActor("TDGen_Rain", components=[FakeNiagaraComponent("Rain", rain_system)])]
+
+    actors, outcome, errors, _ = run_look(rain_actor, look_live={"niagara": {"/Game/CAL0/NS_Look": {"Floats": {"User.Rate": 5.0}}}, "niagara_reset": True})
+    rain = actors[0].components[0]
+    check("T26 look_live NS + niagara_reset: set_variable 기록·reinitialize 1·적용 수 1",
+          rain.variables == {"User.Rate": 5.0} and rain.reinitialize_count == 1 and outcome["look_applied"] == {"/Game/CAL0/NS_Look": {"User.Rate": 1}} and not errors, (outcome, errors))
+
+    _, outcome, errors, _ = run_look(lambda: [], look_live={"materials": {"/Game/CAL0/MI_Missing": {"Scalars": {"Glow": 4.0}}}})
+    check("T27 look_live 대상 패키지가 레벨에 없음 → 적용 수 0 → key_errors(단계 무효)",
+          outcome["look_applied"] == {"/Game/CAL0/MI_Missing": {"Glow": 0}} and errors == ["s00: look_live: look 적용 대상 없음: /Game/CAL0/MI_Missing"], (outcome, errors))
+
+    actors, outcome, errors, created = run_look(lambda: [FakeActor("TDGen_Prop", components=[FakeStaticMeshComponent("Mesh", [child])]), TDFluidCloudLayersActor("TDGen_Clouds", WORLD.add_cpp_material(child))])
+    check("T85 조부모가 대상인 MI·C++ MID(직접 부모 아님) → 적용 0·슬롯 그대로",
+          created == 0 and actors[0].components[0].get_material(0) is child and outcome["look_applied"] == {package: {"Glow": 0, "Tint": 0}}
+          and any("look 적용 대상 없음" in line for line in errors), (outcome, errors))
+
+    reset_world([(TDFluidFireActor, "TDGen_CampfireFire", FakePreset("CAMPFIRE"))])
+    WORLD.add_asset(target)
+    prop_mesh = FakeStaticMeshComponent("Mesh", [target])
+    clouds = TDFluidCloudLayersActor("TDGen_Clouds", WORLD.add_cpp_material(target))
+    WORLD.actors += [FakeActor("TDGen_Prop", components=[prop_mesh]), clouds]
+    steps = [("s00_v00", "control", control_values), ("s01_v01", "variant", variant_values), ("s02_v00", "control", control_values)]
+    spec = {"base": {}, "variants": [{"name": name, "settle": 0.1, "apply": {"tuning_reload": {"tuning": "", "look": str(look_paths[copy]), "reset": "keep", "base": {"tuning": "", "look": str(look_paths["control"])}},
+                                                                          "look_live": {"materials": {package: values}}}} for name, copy, values in steps]}
+    spec_path = output_dir / "t87-spec.json"
+    spec_path.write_text(json.dumps(spec), encoding="utf-8")
+    exit_code = run_lookdev_in_process(spec_path, "/Game/CAL0/Stage", output_dir / "t87")
+    result = load_json(output_dir / "t87" / "result.json")
+    outcomes = [entry["apply"] for entry in result["variants"]]
+    check("T87 덧씌움 Look → 대조 포함 모든 단계 look_live 적용·단계마다 다시 읽기 일치(파이썬·C++ 소유자)·대조로 돌아오면 C++ MID 도 대조 값",
+          exit_code == 0 and not result["key_errors"] and len(outcomes) == 3 and all(reads_match(item) and sorted(owners(item)) == [("cloud_component", "cpp", True), ("primitive_slot", "python", True)] for item in outcomes)
+          and clouds.components[0].material.get_vector_parameter_value("Tint") == FakeLinearColor(1.0, 1.0, 1.0, 1.0) and prop_mesh.get_material(0).get_vector_parameter_value("Tint") == FakeLinearColor(1.0, 1.0, 1.0, 1.0),
+          (exit_code, result.get("key_errors"), [owners(item) for item in outcomes]))
+
+    reset_world([(TDFluidFireActor, "TDGen_CampfireFire", FakePreset("CAMPFIRE"))])
+    camera = FakeActor("TDGen_CloudCam_Stratus")
+    WORLD.actors.append(camera)
+    view_calls = []
+    controller = Props(set_view_target_with_blend=lambda actor, blend_time=0.0: view_calls.append((actor, blend_time)))
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    with patched(unreal.GameplayStatics, get_player_controller=lambda world, index: controller):
+        found = lookdev.apply_variant_with_tuning({"view_target": "TDGen_CloudCam_Stratus"}, "s00", state)
+        missing = lookdev.apply_variant_with_tuning({"view_target": "TDGen_CloudCam_Missing"}, "s01", state)
+    check("T41 view_target: 라벨 있으면 set_view_target_with_blend 1회 / 없으면 key_errors",
+          view_calls == [(camera, 0.0)] and found["view_target"]["ok"] and not missing["view_target"]["ok"] and state["key_errors"] == ["s01: view_target TDGen_CloudCam_Missing: 액터 없음"], (found, missing, state))
+
+    live = WORLD.actors[0].live_component
+    live.rain_settings = Props(rain_rate=3.0)
+    live.get_effective_runtime_ops_settings = lambda: Props(max_steps_per_frame=4)
+
+    class TDFluidWaterParticleActor(FakeActor):
+        def get_water_particle_settings(self):
+            return Props(spawn_rate_per_second=120.0)
+
+    WORLD.actors.append(TDFluidWaterParticleActor("TDGen_Spray"))
+    requests = [{"struct": "TDFluidRainSettings", "field": "RainRate", "kinds": ["Campfire"], "owner": "live_component", "access": "rain_settings"},
+                {"struct": "TDFluidRuntimeOpsSettings", "field": "MaxStepsPerFrame", "kinds": ["Campfire"], "owner": "live_component", "access": "call:get_effective_runtime_ops_settings"},
+                {"struct": "TDFluidWaterParticleSettings", "field": "SpawnRatePerSecond", "owner": "actor_class:TDFluidWaterParticleActor", "access": "call:get_water_particle_settings"},
+                {"struct": "TDFluidInputBrushSettings", "field": "RadiusCm", "kinds": ["Campfire"], "owner": "live_component", "access": "call:get_effective_input_brush_settings"}]
+    with patched(unreal, TDFluidWaterParticleActor=TDFluidWaterParticleActor):
+        read = fake_editor_action("lookdev_tuning_read_back", requests=requests).get("read_back", [])
+    check("T42 다시 읽기: Rain(속성)·RuntimeOps(call:) 값 일치·요청 owner·access 기록",
+          len(read) == 4 and read[0]["actors"]["TDGen_CampfireFire"]["value"] == 3.0 and read[1]["actors"]["TDGen_CampfireFire"]["value"] == 4 and read[1]["access"] == "call:get_effective_runtime_ops_settings", read)
+    check("T43 actor_class: 소유자(LiveActor 밖)는 그 클래스 액터만 읽음", len(read) == 4 and read[2]["actors"] == {"TDGen_Spray": {"value": 120.0}}, read[2:3])
+    check("T44 게터 없음 → 다시 읽기 오류 '게터 없음: B5 필요'(단계 무효 근거)", len(read) == 4 and "게터 없음: B5 필요" in read[3]["actors"]["TDGen_CampfireFire"].get("error", ""), read[3:])
+    carried = lookdev.find_key_errors({"tuning_reload": {"tuning": "", "look": "", "read_back": requests + [{"struct": "TDFluidUnderwaterSettings", "field": "FogDensity", "owner": "subsystem:TDFluidUnderwaterSubsystem", "access": "call:get_underwater_settings"}]}})
+    wrong_owner = lookdev.find_key_errors({"tuning_reload": {"read_back": [{"struct": "TDFluidRainSettings", "field": "RainRate", "owner": "component", "acess": "rain_settings"}]}})
+    check("T45(B3 측) 요청 read_back[] 의 owner·access 를 받아 결과에 되적음·모르는 owner·키는 키 오류",
+          not carried and len(wrong_owner) == 2 and any("acess" in line for line in wrong_owner) and any("owner component" in line for line in wrong_owner)
+          and read[2]["owner"] == "actor_class:TDFluidWaterParticleActor" and read[0]["access"] == "rain_settings", (carried, wrong_owner))
+
+    WORLD.actors += [FakeActor("TDGen_Prop", get_water_prop_stats=lambda: Props(last_coupling_mean_down_speed_cm_per_sec=120.0, contact_count=3)),
+                     FakeActor("TDGen_Painter", paint=Props(flow_target="RT_Flow"))]
+    probe_request = {"stats": [{"label": "TDGen_Prop", "function": "get_water_prop_stats", "prefix": "prop"}],
+                     "rt": [{"label": "TDGen_Painter", "component": "paint", "property": "flow_target", "box": [0.1, 0.1, 0.9, 0.9], "step": 0.2, "channel": "rg_len", "radial_center": [0.5, 0.5], "threshold": 0.3, "prefix": "flow"}],
+                     "times": [0.5, 1.0, 1.5]}
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    with patched(unreal, RenderingLibrary=Props(read_render_target_raw_uv=lambda world, render_target, u, v: FakeLinearColor(u - 0.5, v - 0.5, 0.0, 1.0))):
+        probed = lookdev.apply_variant_with_tuning({"probe": probe_request}, "s00", state)
+        missing = lookdev.apply_variant_with_tuning({"probe": {"stats": [{"label": "TDGen_Prop", "function": "get_missing_stats", "prefix": "prop"}]}}, "s01", state)
+    metrics = probed["probe"]["metrics"]
+    samples = probed["probe"]["samples"]
+    check("T46 probe_stats: 구조체 반환을 probe.prop.<필드> 로 펼침·times 3장 표본·게임 시각 뒤",
+          metrics.get("probe.prop.LastCouplingMeanDownSpeedCmPerSec") == 120.0 and metrics.get("probe.prop.ContactCount") == 3 and len(samples) == 3
+          and all(sample["elapsed"] >= sample["time"] for sample in samples), probed.get("probe"))
+    grid = load_json(samples[0]["grid_paths"]["flow"]) if samples and "grid_paths" in samples[0] else {}
+    check("T47 probe_rt box·radial_center(방사 벡터장) → radial_alignment_mean ≈1.0·격자 파일 5×5",
+          abs((metrics.get("probe.flow.radial_alignment_mean") or 0.0) - 1.0) < 1e-9 and len(grid.get("values", [])) == 5 and len(grid["values"][0]) == 5 and "probe.flow.fraction_above" in metrics, metrics)
+    check("T48 probe 함수 이름 없음 → key_errors(단계 무효)", state["key_errors"] == ["s01: probe: probe.stats TDGen_Prop.get_missing_stats: 함수 없음"] * 1 and not missing["probe"]["metrics"], state["key_errors"])
+
+    breaks = []
+    WORLD.actors.append(FakeActor("TDGen_Breaker", trigger_break=lambda: breaks.append(CLOCK.game_seconds)))
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    called = lookdev.apply_variant_with_tuning({"call": {"TDGen_Breaker": {"function": "trigger_break", "args": []}}, "schedule": {"times": [0.5, 1.0, 1.5], "reference": "call", "prefix": "call"}}, "s00", state)
+    status = lookdev.wait_for_schedule(Path(called["schedule"]["status_path"]), 30.0)
+    check("T56 call + schedule.reference call: 첫 호출 게임 시각 기준 촬영 3장",
+          len(breaks) == 1 and called["call_game_time"] == breaks[0] and status.get("reference_game_time") == breaks[0] and status.get("done") and len(status.get("shots", [])) == 3
+          and all(shot["saved"] and shot["captured_game_time"] >= shot["time"] for shot in status["shots"]) and not state["key_errors"], (called, status))
+
+    events = [{"time": 2.0, "call": {"TDGen_Breaker": {"function": "trigger_break"}}}, {"time": 1.0, "console": ["r.CAL0.Value 1"]}, {"time": 1.5, "call": {"TDGen_Breaker": {"function": "missing_function"}}}]
+    scheduled = lookdev.apply_variant_with_tuning({"schedule": {"times": [2.5], "reference": "now", "prefix": "events", "events": events}}, "s01", state)
+    status = lookdev.wait_for_schedule(Path(scheduled["schedule"]["status_path"]), 30.0)
+    done = status.get("events_done", [])
+    event_errors = lookdev.find_schedule_event_errors(status)
+    check("T57 schedule.events: 틱 콜백 안에서 시각 순서(1.0 콘솔·1.5·2.0 call)·게임 시각 기록·없는 함수는 key_errors 문구",
+          [event["time"] for event in done] == [1.0, 1.5, 2.0] and all(event["game_time"] >= event["time"] for event in done) and done[0]["console"][0]["command"] == "r.CAL0.Value 1"
+          and done[2]["call"]["TDGen_Breaker"]["function"] == "trigger_break" and len(breaks) == 2 and status.get("done") and status["shots"][0]["saved"]
+          and event_errors == ["schedule.events t=1.5 call.TDGen_Breaker: 함수 없음: missing_function"], (done, event_errors))
+
+    water = FakeActor("TDGen_Water", is_waiting_for_dense_water_cache=True)
+    WORLD.actors.append(water)
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    condition = {"label": "TDGen_Water", "property": "bIsWaitingForDenseWaterCache", "equals": False, "timeout": 0.5}
+    timed_out = lookdev.apply_variant_with_tuning({"wait_until": condition}, "s00", state)
+    water.is_waiting_for_dense_water_cache = False
+    ready = lookdev.apply_variant_with_tuning({"wait_until": condition}, "s01", state)
+    check("T58 wait_until 시간 초과 → key_errors / 조건 맞으면 통과",
+          "시간 초과" in timed_out["wait"].get("error", "") and timed_out["wait"]["checks"] > 1 and ready["wait"].get("matched") is True
+          and len(state["key_errors"]) == 1 and state["key_errors"][0].startswith("s00: wait_until: 시간 초과"), (timed_out.get("wait"), ready.get("wait"), state))
+
+
 run_check(check_cal0_b0)
+run_check(check_cal0_lookdev)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

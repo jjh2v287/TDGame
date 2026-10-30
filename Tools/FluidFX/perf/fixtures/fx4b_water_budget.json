@@ -1,0 +1,97 @@
+{
+ "version": 1,
+ "area": "water",
+ "title": "FX-4b 물 예산",
+ "basis": "fx4b_budget_judge.py 내장 FX4B_BUDGET_TABLE와 같은 내용(2026-10-24 FX-4b 판정, 명세 spec-fx4b-budget.md 1~5절, 한도 출처 PF ③·D-60)",
+ "target_label": "TDGen_WaterRiverSimulation",
+ "water_path_check": true,
+ "scenes": {
+  "WQ0": {
+   "backend": "GPU",
+   "grid": 1024
+  },
+  "WQ1": {
+   "backend": "CPU",
+   "grid": 192
+  },
+  "WQ2": {
+   "backend": "GPU",
+   "grid": 192
+  },
+  "WQ3": {
+   "backend": "GPU",
+   "grid": 1024
+  },
+  "WQ4": {
+   "backend": "GPU",
+   "grid": 2048
+  },
+  "WQ5": {
+   "backend": "GPU",
+   "grid": 1024
+  }
+ },
+ "metrics": {},
+ "reference": {
+  "scene": "WQ0",
+  "metric": "named_gpu",
+  "ratio_range": [
+   0.8,
+   1.5
+  ]
+ },
+ "rows": [
+  {
+   "row": "B192",
+   "scene": "WQ2",
+   "metric": "named_gpu",
+   "limit_ms": 0.1,
+   "label": "명명 GPU d"
+  },
+  {
+   "row": "B1024",
+   "scene": "WQ3",
+   "metric": "named_gpu",
+   "limit_ms": 0.9,
+   "label": "명명 GPU d"
+  },
+  {
+   "row": "G192",
+   "scene": "WQ2",
+   "metric": "game_thread_water",
+   "limit_ms": 0.3,
+   "label": "게임 스레드 물 합 A p50"
+  },
+  {
+   "row": "G1024",
+   "scene": "WQ3",
+   "metric": "game_thread_water",
+   "limit_ms": 0.3,
+   "label": "게임 스레드 물 합 A p50"
+  },
+  {
+   "row": "GW",
+   "scene": "WQ5",
+   "kind": "walk",
+   "metric": "game_thread_water",
+   "limit_ms": 0.3,
+   "moving_p95_ratio": 1.5,
+   "label": "게임 스레드 물 합 A p50 + 이동 프레임 명명 GPU p95"
+  }
+ ],
+ "records": [
+  {
+   "scene": "WQ1",
+   "game_thread_focus": true
+  },
+  {
+   "scene": "WQ4",
+   "game_thread_focus": false
+  }
+ ],
+ "consequences": {
+  "충족(proposed)": "FX-4b 성능 예산 충족(proposed): 1024² 화면 승인(RM:533)만 남는다",
+  "미충족": "레버 잔여(L1·L3·S2·S3·S5) 효과를 실측으로 더 낸 뒤 다시 재거나 예산 개정을 결정 기록에 proposed로 올린다",
+  "판정 불가": "판정 불가 사유를 해소한 뒤 같은 계획으로 다시 잰다"
+ }
+}

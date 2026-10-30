@@ -1,0 +1,25 @@
+{
+ "version": 1,
+ "area": "smoke_example",
+ "title": "일반 영역 예산 표 시험용 가상 연기 영역",
+ "note": "check_budget_table_fixtures.py가 만드는 가짜 실행 폴더 전용이다. 한도는 실제 예산이 아니다.",
+ "water_path_check": false,
+ "target_label": "TDGen_SmokeA",
+ "scenes": {
+  "S1": {"backend": "GPU", "grid": 128},
+  "S2": {"backend": "GPU", "grid": null, "target_labels": ["TDGen_SmokeA", "TDGen_SmokeB"], "awake_step_count": 2}
+ },
+ "metrics": {
+  "smoke_gpu": {"label": "연기 GPU", "columns": ["GPU/TDFluidGpuSolver", "GPU/Translucency"], "pair": "difference"},
+  "frame_time": {"label": "프레임 시간", "columns": ["FrameTime"], "pair": "difference"},
+  "game_thread_a": {"label": "게임 스레드 A", "columns": ["GameThreadTime"], "pair": "a_only"}
+ },
+ "reference": null,
+ "rows": [
+  {"row": "S1G", "scene": "S1", "metric": "smoke_gpu", "limit_ms": 0.5, "source": "가상 한도"},
+  {"row": "S1F", "scene": "S1", "metric": "frame_time", "limit_ms": 1.0, "label": "켬-끔 프레임 시간 중앙값 d"},
+  {"row": "S2G", "scene": "S2", "metric": "smoke_gpu", "limit_ms": 0.9},
+  {"row": "S1T", "scene": "S1", "metric": "game_thread_a", "limit_ms": 9.0}
+ ],
+ "records": [{"scene": "S2", "game_thread_focus": true}]
+}

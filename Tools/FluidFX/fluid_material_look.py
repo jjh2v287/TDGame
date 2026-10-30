@@ -1,9 +1,10 @@
 """실행 환경: 시스템 Python 3 또는 언리얼 에디터 Python(unreal 을 가져오지 않는 순수 모듈, 에디터 스크립트는 importlib 로 불러 MaterialEditingLibrary·LinearColor 를 인수로 넘긴다)
 실행 명령: python Tools/FluidFX/fluid_material_look.py compare <덤프.json> <정본.json> | python Tools/FluidFX/fluid_material_look.py check [<정본.json>] | python Tools/FluidFX/fluid_material_look.py merge <정본.json> <조각.json>... [--out <경로>] [--dry-run]
-출력: 표준 출력 JSON(compare = 차이 수·차이 목록 앞 100개, check = 형식 문제 목록, merge = 충돌·형식 문제·정본 값 변경·추가 목록 앞 100개와 결과 sha256). merge 는 최상위 구획→항목 키→하위 구획(Parent·Scalars 등)→이름 단위 깊은 병합이다: 조각에 없는 최상위 키·하위 구획은 빈 것으로 보고 새 항목의 빠진 하위 구획은 {} 로 채운다, 조각 사이 같은 잎에 다른 값이면 충돌로 쓰지 않는다, 정본 값 변경은 허용하고 목록으로 낸다, 기존 키 순서를 보존하고 새 키는 사전순으로 자기보다 큰 첫 기존 키 앞(없으면 끝)에 넣는다(정렬된 정본은 정렬 유지), 조각의 실수 값은 float32 최단 표기, 들여쓰기·줄 끝·끝 줄바꿈은 정본을 따른다(같은 입력이면 같은 바이트). --out 이 없으면 정본에 덮어쓰고 --dry-run 은 쓰지 않는다. 종료 0 = 차이·문제·충돌 없음, 1 = 차이·문제·충돌 있음, 2 = 파일 읽기 실패(JSON 중복 키 포함). 정본 기본 경로 Content/FluidFX/PresetData/TDFluidMaterialLook.json(spec-wave0-data-bridge-v2 2.4)
-상태: 미검증(2026-10-25 파동 0 P1 작성: py_compile·가짜 unreal 검사·기준선 덤프 compare 차이 0만, 에디터 실행 전). merge 는 2026-10-26 파동 1 F2 작성: fixture(python -B Tools/FluidFX/look_merge_fixtures/run_fixtures.py) 통과와 파동 1 조각 5개 병합만 확인
+출력: 표준 출력 JSON(compare = 차이 수·차이 목록 앞 100개·제외한 런타임 User 변수 차이 수(NiagaraSystems 에서 fluid_niagara_drive.all_runtime_user_variables() 이름은 굽지 않는 런타임 값이라 세지 않는다, L-repo-30), check = 형식 문제 목록, merge = 충돌·형식 문제·정본 값 변경·추가 목록 앞 100개와 결과 sha256). merge 는 최상위 구획→항목 키→하위 구획(Parent·Scalars 등)→이름 단위 깊은 병합이다: 조각에 없는 최상위 키·하위 구획은 빈 것으로 보고 새 항목의 빠진 하위 구획은 {} 로 채운다, 조각 사이 같은 잎에 다른 값이면 충돌로 쓰지 않는다, 정본 값 변경은 허용하고 목록으로 낸다, 기존 키 순서를 보존하고 새 키는 사전순으로 자기보다 큰 첫 기존 키 앞(없으면 끝)에 넣는다(정렬된 정본은 정렬 유지), 조각의 실수 값은 float32 최단 표기, 들여쓰기·줄 끝·끝 줄바꿈은 정본을 따른다(같은 입력이면 같은 바이트). --out 이 없으면 정본에 덮어쓰고 --dry-run 은 쓰지 않는다. 종료 0 = 차이·문제·충돌 없음, 1 = 차이·문제·충돌 있음, 2 = 파일 읽기 실패(JSON 중복 키 포함). 정본 기본 경로 Content/FluidFX/PresetData/TDFluidMaterialLook.json(spec-wave0-data-bridge-v2 2.4)
+상태: 미검증(2026-10-25 파동 0 P1 작성: py_compile·가짜 unreal 검사·기준선 덤프 compare 차이 0만, 에디터 실행 전). merge 는 2026-10-26 파동 1 F2 작성: fixture(python -B Tools/FluidFX/look_merge_fixtures/run_fixtures.py) 통과와 파동 1 조각 5개 병합만 확인. compare 런타임 User 변수 제외는 2026-10-30 CAL-0 B1 작성(하네스 check_cal0_patch T28만, 에디터 덤프 대조 미실행)
 """
 import hashlib
+import importlib
 import json
 import math
 import os
@@ -22,6 +23,7 @@ PACKAGE_ROOT = "/Game/"
 INDENT = " "
 APPLY_TOLERANCE = 0.001
 REPORT_ITEM_LIMIT = 100
+RUNTIME_USER_VARIABLE_MODULE = "fluid_niagara_drive"
 
 
 def to_float32(value):
@@ -258,7 +260,7 @@ def make_canonical_look(dump):
     }
 
 
-def compare_entry(owner, dumped, canonical, sections, extra_keys=()):
+def compare_entry(owner, dumped, canonical, sections, extra_keys=(), excluded_names=frozenset()):
     differences = []
     for key in extra_keys:
         if dumped.get(key) != canonical.get(key):
@@ -266,7 +268,7 @@ def compare_entry(owner, dumped, canonical, sections, extra_keys=()):
     for section in sections:
         dumped_values = dumped.get(section, {})
         canonical_values = canonical.get(section, {})
-        for name in sorted(set(dumped_values) | set(canonical_values)):
+        for name in sorted((set(dumped_values) | set(canonical_values)) - set(excluded_names)):
             dump_value = normalize_section_value(section, dumped_values[name]) if name in dumped_values else None
             canonical_value = normalize_section_value(section, canonical_values[name]) if name in canonical_values else None
             if dump_value != canonical_value:
@@ -274,11 +276,12 @@ def compare_entry(owner, dumped, canonical, sections, extra_keys=()):
     return differences
 
 
-def compare_looks(dump, canonical):
+def compare_looks(dump, canonical, runtime_user_names=frozenset()):
     differences = []
     for top_key, sections, extra_keys in (("Materials", MATERIAL_SECTIONS, ("Parent",)), ("NiagaraSystems", NIAGARA_SECTIONS, ())):
         dumped_entries = dump.get(top_key, {})
         canonical_entries = canonical.get(top_key, {})
+        excluded_names = runtime_user_names if top_key == "NiagaraSystems" else frozenset()
         for path in sorted(set(dumped_entries) | set(canonical_entries)):
             owner = f"{top_key}.{path}"
             if path not in canonical_entries:
@@ -286,15 +289,26 @@ def compare_looks(dump, canonical):
             elif path not in dumped_entries:
                 differences.append({"at": owner, "dump": None, "canonical": "있음"})
             else:
-                differences.extend(compare_entry(owner, dumped_entries[path], canonical_entries[path], sections, extra_keys))
+                differences.extend(compare_entry(owner, dumped_entries[path], canonical_entries[path], sections, extra_keys, excluded_names))
     return differences
+
+
+def load_runtime_user_names():
+    module_directory = os.path.dirname(os.path.abspath(__file__))
+    if module_directory not in sys.path:
+        sys.path.insert(0, module_directory)
+    drive = importlib.import_module(RUNTIME_USER_VARIABLE_MODULE)
+    return frozenset(name for name, _ in drive.all_runtime_user_variables())
 
 
 def run_compare(dump_path, canonical_path):
     dump = read_json_file(dump_path)
     canonical = read_look(canonical_path)
-    differences = compare_looks(dump, canonical)
-    print(json.dumps({"dump": dump_path, "canonical": canonical_path, "difference_count": len(differences), "differences": differences[:REPORT_ITEM_LIMIT]}, ensure_ascii=False, indent=1))
+    runtime_user_names = load_runtime_user_names()
+    differences = compare_looks(dump, canonical, runtime_user_names)
+    excluded_count = len(compare_looks(dump, canonical)) - len(differences)
+    print(json.dumps({"dump": dump_path, "canonical": canonical_path, "difference_count": len(differences), "excluded_runtime_user_differences": excluded_count,
+                      "differences": differences[:REPORT_ITEM_LIMIT]}, ensure_ascii=False, indent=1))
     return 0 if not differences else 1
 
 

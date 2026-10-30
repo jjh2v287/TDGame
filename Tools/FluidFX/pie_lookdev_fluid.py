@@ -1,14 +1,16 @@
 """실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06). FluidFX 무대 PIE 하나에서 변형(노출·조명·불빛·불꽃 카드/볼륨 재질 값·활성 프리셋 임시 복제본·폰 위치·카메라 거리·액터 위치·컴포넌트 숨김·콘솔 명령·깨어 있는 유체 액터·폭발 트리거)을 차례로 적용하고 정착 시간 뒤 또는 게임 시간 예약 시각마다 게임 화면을 찍어 이름표 붙은 비교 격자를 만든다.
-실행 명령: python Tools/FluidFX/pie_lookdev_fluid.py --variants <변형 JSON> [--level /Game/FluidFX/Maps/LV_TDFluidFireStage] [--settle-seconds 3] [--stop-pie] [--output-dir <폴더>] (PowerShell). 변형 JSON = {"base": {적용}, "variants": [{"name": "영문", "apply": {적용}, "settle": 초}]}, 적용 키(이 순서로 적용) = tuning_reload({"tuning": 조절 사본, "look": 모양 사본(빈 문자열이면 정본, 둘 다 Saved 아래), "reset": "reinit"(기본, 모든 라이브 액터 init_system_state_from_preset 뒤 같은 단계 apply 원격 호출 첫머리에서 모든 액터의 TDFluidLiveComponent.reset_simulation_state()(솔버·젖음·웅덩이·비 충격·식생 눌림), 결과 tuning_reload.state_reset{actors, component_count, errors, game_time}·state_reset_actor_count, report.state_reset_actor_count 는 C++ 재적용의 구조 변경 초기화만 센다)|"keep", "relative_to_base": true(기본, 먼저 정본을 다시 읽어 보고서 세대를 기다림), "read_back": [{"struct", "field", "kinds": [종류]}] 그 종류 액터의 실효 값을 다시 읽음} 다른 키보다 먼저 ReloadPresetTuningFromPaths 뒤 GetLastReapplyReport 세대를 기다리고, 하나라도 쓰면 실행 끝 finally 에서 정본을 다시 읽음)·awake({라벨: bool}이면 적힌 것만, 목록이면 목록 외는 재움)·pawn([x, y]면 현재 z 유지, [x, y, z]면 그 높이로)·arm·view([pitch, yaw] 조종 회전, 붐이 따라감)·props({라벨: {속성: 값}} 액터 속성. 값이 dict면 현재 값이 구조체일 때 필드를 고쳐 되넣고, UObject(컴포넌트)면 그 객체의 필드만 고치고 되넣지 않으며, 배열이면 정수 문자열 키의 원소를 고쳐 배열을 되넣는다 예 {"targets": {"1": {"burst_radius_scale": 1.5}}}, "append:<i>" 키는 같은 호출의 정수 키 편집 전 i번 원소를 복제(구조체 copy, UObject 원소는 오류)해 고친 뒤 끝에 붙인다 예 {"targets": {"0": {"receives_trails": false}, "append:0": {"receives_burst": false, "heat_scale": 0.4}}})·hide({라벨: bool} 게임 숨김)·location({라벨: [x, y, z]} 액터 위치, null 성분은 현재 값 유지 예 [null, null, 0.0], 다시 읽은 값 기록)·hide_components({라벨 또는 "pawn": [컴포넌트 이름 일부(대소문자 무시)]} 맞는 씬 컴포넌트 set_visibility(False), 예 ShieldMesh)·preset({라벨: {점 경로 또는 중첩 dict: 값}} 라이브 컴포넌트 활성 프리셋의 임시 복제본을 고쳐 active_preset에 넣음, 원본 에셋은 건드리지 않음. simulation_config·plane_settings·volume_render 는 비 Custom·비 override 프리셋이면 R2 로 무시되므로 오류(종료 1)이고 "force_override": true 면 복제본의 override_preset_defaults 를 켬. plane_settings·volume_render·volume_height_cm은 C++가 매 스텝 다시 읽어 그대로 반영되고, 반영 여부는 다음 촬영의 preset_effect(볼륨 MID 매개변수 값, camera_depth_bias_cm은 내부 표면 메시 이동 거리)로 보고)·preset_reinit([라벨] 복제본으로 init_system_state_from_preset 재초기화, 시뮬 상태와 앞선 sim 편집이 초기화되므로 프리셋의 시뮬 설정·출력 재질처럼 초기화 때만 읽는 필드를 바꿀 때만)·exposure_ev100(모든 후처리 볼륨의 min/max 밝기 = EV100, 효과는 자동 노출 볼륨만. AEM_MANUAL 볼륨은 엔진이 min/max 를 무시하고(PostProcessEyeAdaptation.cpp 수동 분기) 기본은 바이어스를 건드리지 않아 mode manual_ignored·현재 auto_exposure_bias 만 기록, 같은 apply 의 exposure_manual 이 "bias" 일 때만 auto_exposure_bias = 원래 바이어스 + 물리 카메라 EV100(auto_exposure_apply_physical_camera_exposure 꺼짐이면 0) − EV100(mode manual), 결과 exposure_applied[{label, mode, fields, ...}])·exposure_manual("ignore"(기본)|"bias", exposure_ev100 없이 쓰거나 다른 값이면 키 오류)·lights·fire_light·flame(액터의 모든 불꽃 카드 MID)·volume(볼륨 MID)·ember({라벨: {재질 매개변수: 값}} ember_component 0번 재질 사슬에 FluidEmber 필요, MID 아니면 만들어 설정, 부모에 없는 이름은 missing, settle 촬영마다 result.json에 ember_mid)·sim(simulation_config 필드, apply_simulation_config)·emitter(source_emitter 필드, 비 Custom·비 override 프리셋이면 오류(종료 1), "force_override": true 면 override 켠 프리셋 복제본을 active_preset 에 넣고 진행)·surface_material(라이브 컴포넌트 출력 재질 교체 후 내부 메시 재연결)·console([명령] PIE 플레이어 컨트롤러로 실행, "이름 값" 꼴 cvar는 다시 읽은 값 기록, Shot 결과는 result.json console_screenshots)·speed·move([goal_x, goal_y] 는 옛 절대 목표(내비 있으면 simple_move_to, 없으면 순간이동), {"distance_cm": d, "yaw": 도(기본 현재 조종 회전 yaw)} 는 내비 없이 예약과 다른 슬레이트 틱 콜백이 2D 이동 ≥ d 까지 매 틱 pawn.add_movement_input(방향, 1, True)(Mover 폰은 ProduceInput 의 ConsumeMoveIntent 로 소비), 순간이동 없음, 시한 2d/최대 속도 + 3 게임 초 초과는 오류. 바깥 Python 이 그 변형 촬영 뒤(base 는 곧바로) 끝을 기다려 move 결과를 {mode, yaw, goal, moved_cm, timed_out, error?} 로 바꿔 적음)·trigger(같은 호출의 게임 시간을 trigger_game_time으로 기록)·time_dilation(전역 시간 배율)·schedule({"times": [기준 뒤 게임 초], "reference": "trigger"|"now", "prefix": "영문", "fixed_fps": 60(0이면 끔, 예약 동안 t.OverrideFPS 고정 간격 뒤 복구 L-editor-45), "file_wait_ticks": 30(1이면 그려진 다음 틱에 바로 다음 장), "timeout": 초} 원격 호출 하나에서 슬레이트 틱 콜백을 걸어 기준 뒤 게임 시간마다 HighResShot을 요청하고, 앞 장이 그려지고 파일이 생기거나 틱 한도가 지나야 다음 장을 건 뒤 스스로 해제, 이 변형은 settle 촬영을 하지 않음, reference trigger는 같은 apply의 trigger 필요). props·emitter·sim·preset 값 변환: 현재 값이 Vector·Vector2D면 목록 [x, y(, z)], Rotator면 [pitch, yaw, roll], LinearColor면 [r, g, b(, a)], Transform이면 {"location": [], "rotation": [pitch, yaw, roll], "scale": []}(빠진 키는 현재 값 유지). CAL-0 키(spec-cal0-v2 C9·1.3): view_target(액터 라벨, 컨트롤러 set_view_target_with_blend)·call({라벨: {function, component?, args?}} 함수 호출, 첫 성공 게임 시각 call_game_time)·wait_until({label, component?, property, equals, timeout} 바깥에서 조건이 맞을 때까지 기다린 뒤 apply, 시간 초과는 키 오류)·look_live({materials: {/Game 패키지: {Scalars|Vectors: {이름: 값}}}, niagara: {패키지: {Floats|Ints|Bools|Vectors2|Vectors3|Colors: {이름: 값}}}, niagara_reset, base: {패키지: {Scalars|Vectors: {이름: 원 MI 값}}}} 직접 부모만 맞춤. 소유자 primitive_slot(MI 슬롯은 MID 로 교체 뒤 설정)·decal(MI면 MID 만들어 설정)은 파이썬이 설정, cpp_mid(CPP_LOOK_OWNER_CLASS_NAMES 액터의 MID)·cloud_component·foliage_flow(B5 get_flow_copy_material_instance)·post_process 는 교체·설정 없이 tuning_reload.look 사본으로 C++ 가 다시 적용, niagara 는 set_variable_* 뒤 niagara_reset 이면 reinitialize_system. 1초 뒤 MID 를 다시 읽어 단언, base 는 MI 에셋 원래 값과 대조)·probe({stats: [{label|subsystem, component?, function, prefix}], rt: [{label, component?, property|function(둘 중 하나, function 은 렌더 타깃을 돌려주는 게터), box: [u0, v0, u1, v1], step, channel: r|g|b|a|rg_len|rgb_len, radial_center?, threshold?, prefix}], times: [apply 뒤 게임 초]})·schedule.reference "call"·schedule.events([{time, console?, call?, move?}] 틱 콜백 안에서 기준 뒤 게임 시각에 실행, move 는 위 두 형식). 예약 reference now 의 시간 원점은 단계 apply 원격 호출의 게임 시각(PIE 시작 아님)이고 reinit 상태 초기화와 같은 호출이라 같은 시각·tuning_reload.base({tuning, look} 대조 사본, relative_to_base 때 정본 대신 먼저 적재)·tuning_reload.read_back[] 의 owner(live_component|actor|volume_driver|subsystem:<클래스>|actor_class:<클래스>)·access(<속성>|call:<함수>, 함수 없으면 "게터 없음: B5 필요"). 모르는 적용 키·하위 키는 find_key_errors(apply) 순수 함수(에디터 접근 없음, calib_sweep 건식이 import)가 키 오류로 낸다
-출력: Saved/FluidFX/lookdev/<시각>/<순번>_<이름>.png, 예약 촬영은 <순번>_<prefix>_<기준 뒤 ms>ms.png와 <순번>_<move|eventNNNNNms>_walk.json(사전 move 걷기 상태), <순번>_<prefix>_schedule.json(장마다 요청·실제 찍힌 게임 시간, 늦음, 틱 사이 벽시계 간격 real_dt(요청 틱)·real_dt_mean(앞 장 뒤 촬영 대기 아닌 틱 평균, 실제 fps 대용)·capture_real_dt(촬영 끊김 포함), world_dt, 파일 대기 틱, 고정 간격 복구, preset_effect), grid.png, result.json(변형별 적용 결과·shot_game_time·preset_effect·schedule·console_screenshots). result.json 에 tuning_reload(보고서·다시 읽기, 요청 read_back 이 [] 이면 [])·canonical_reload·key_errors. 종료 코드 0 기대한 장 전부 찍음·키 오류 없음/1 일부 실패 또는 키 오류(tuning_reload 실패·R2 무시 키)/2 환경 문제. CAL-0: 단계 apply 결과에 look_applied({패키지: {이름: 소유자 수}})·look_owners·look_base({checked, mismatches})·look_read_back({패키지: {구역: {이름: {expected, read[], matches}}}})·owner_checks([{package, owner, by: python|cpp, actor, component, slot, matches, reason?}])·look_errors·skipped_look(look_live.skip_if_no_owner 패키지에 소유자가 없어 적용·다시 읽기를 건너뜀, 키 오류 아님)·probe({samples: [{time, elapsed, metrics, errors, grid_paths}], metrics: probe.<prefix>.<필드 파스칼 이름 또는 mean·p50·p95·max·fraction_above·radial_alignment_mean> 표본 중앙값, errors})와 <순번>_probe_<prefix>_<k>.json 격자·call·call_game_time·view_target·wait, 예약 상태 events_done. 키 오류(종료 1)에 apply 원격 호출 자체 오류(base 포함)·schedule 시작·끝 오류·move 형식(목록 2개 숫자 또는 {distance_cm > 0, yaw?})·걷기 오류(시한 초과·폰 없음)·schedule.events move 오류·state_reset 오류·모르는 키·view_target 없음·call 함수 없음·wait_until 시간 초과·look 적용 대상 없음·base 불일치·다시 읽기 불일치·"C++ 소유 MID가 모양 사본을 다시 적용하지 않음"·게터 없음·probe 함수·렌더 타깃 없음이 더해진다
-상태: 검증됨(2026-10-18 모닥불·횃불·폭발 변형 9회 실행, campfire_v1~v5·torch_v1·explosion_v1. 2026-10-20 view·hide·props 추가와 flame 전 카드 적용으로 측면 룩데브 6회 실행). 2026-10-20 추가한 awake dict·game_time·time_dilation과 console·schedule·location·hide_components·preset·preset_reinit·값 변환·배열 원소·UObject 필드 편집은 미검증(PIE 미실행, 정적 검토만). PIE 런타임 값만 바꾸므로 에셋은 바뀌지 않는다. 고른 값은 재질·무대 생성 스크립트에 옮겨 적는다. 2026-10-21 FX-8c 11차 ember 키는 미검증(PIE 미실행), EmberTint* 는 재질 재생성 뒤에만 효과. 2026-10-21 FX-8c 12차 props 배열 "append:<i>" 키는 2026-10-21 FX-8c 12차 AP 세션 PIE 9회에서 확인(복제 원소가 배열 끝에 붙고 수정 필드가 다시 읽기와 같음, 가짜 unreal 오프라인 시험에서 기존 정수 키 결과 불변). 2026-10-25 P3(spec-wave0-data-bridge-v2 3.9) tuning_reload·--output-dir·R2 무시 키 오류·force_override 는 가짜 unreal 오프라인 시험만(PIE 미실행). 2026-10-30 CAL-0 B3(view_target·call·schedule.events·reference call·wait_until·look_live 소유자 7종·probe stats·rt·tuning_reload.base·다시 읽기 owner·access·find_key_errors)와 CAL-0 통합 probe.rt function(B5 텍스처 게터)은 calib_offline_test.py check_cal0_lookdev 가짜 unreal 오프라인 시험만(PIE 미실행). 실제 엔진에서 미검증: RenderingLibrary.read_render_target_raw_uv 격자 읽기 속도, 월드 서브시스템 찾기(2026-10-30 UE 5.8 에 SubsystemBlueprintLibrary 가 없어 get_engine_subsystem 뒤 ObjectIterator 월드 대조로 바꿈, 에디터 월드 원격 질의만 확인·PIE 미확인), 후처리 blendables·구름 material 속성 이름, Niagara 사용자 변수 이름 접두(User.), 다시 읽기 1초는 실시간 sleep(시간 배율 1 가정). 2026-10-31 frame 결함 4건(사전 move 입력 걷기·조용한 base/단계/이벤트 오류·수동 노출 바이어스(반박 뒤 exposure_manual "bias" 명시 선택일 때만, 전역 변환은 구름 무대 EV 12 를 −12 스톱으로 만들었다)·reinit 전체 상태 초기화)은 calib_offline_test.py check_lookdev_frame_fixes 가짜 unreal 오프라인 시험만(PIE 미실행).
+실행 명령: python Tools/FluidFX/pie_lookdev_fluid.py --variants <변형 JSON> [--level /Game/FluidFX/Maps/LV_TDFluidFireStage] [--settle-seconds 3] [--stop-pie] [--output-dir <폴더>] [--run-id <실행 식별자>] (PowerShell). 변형 JSON = {"base": {적용}, "variants": [{"name": "영문", "apply": {적용}, "settle": 초}]}, 적용 키(이 순서로 적용) = tuning_reload({"tuning": 조절 사본, "look": 모양 사본(빈 문자열이면 정본, 둘 다 Saved 아래), "reset": "reinit"(기본, 모든 라이브 액터 init_system_state_from_preset 뒤 같은 단계 apply 원격 호출 첫머리에서 모든 액터의 TDFluidLiveComponent.reset_simulation_state()(솔버·젖음·웅덩이·비 충격·식생 눌림), 결과 tuning_reload.state_reset{actors, component_count, errors, game_time}·state_reset_actor_count, report.state_reset_actor_count 는 C++ 재적용의 구조 변경 초기화만 센다)|"keep", "relative_to_base": true(기본, 먼저 정본을 다시 읽어 보고서 세대를 기다림), "read_back": [{"struct", "field", "kinds": [종류]}] 그 종류 액터의 실효 값을 다시 읽음} 다른 키보다 먼저 ReloadPresetTuningFromPaths 뒤 GetLastReapplyReport 세대를 기다리고, 하나라도 쓰면 실행 끝 finally 에서 정본을 다시 읽음)·awake({라벨: bool}이면 적힌 것만, 목록이면 목록 외는 재움)·pawn([x, y]면 현재 z 유지, [x, y, z]면 그 높이로)·arm·view([pitch, yaw] 조종 회전, 붐이 따라감)·props({라벨: {속성: 값}} 액터 속성. 값이 dict면 현재 값이 구조체일 때 필드를 고쳐 되넣고, UObject(컴포넌트)면 그 객체의 필드만 고치고 되넣지 않으며, 배열이면 정수 문자열 키의 원소를 고쳐 배열을 되넣는다 예 {"targets": {"1": {"burst_radius_scale": 1.5}}}, "append:<i>" 키는 같은 호출의 정수 키 편집 전 i번 원소를 복제(구조체 copy, UObject 원소는 오류)해 고친 뒤 끝에 붙인다 예 {"targets": {"0": {"receives_trails": false}, "append:0": {"receives_burst": false, "heat_scale": 0.4}}})·hide({라벨: bool} 게임 숨김)·location({라벨: [x, y, z]} 액터 위치, null 성분은 현재 값 유지 예 [null, null, 0.0], 다시 읽은 값 기록)·hide_components({라벨 또는 "pawn": [컴포넌트 이름 일부(대소문자 무시)]} 맞는 씬 컴포넌트 set_visibility(False), 예 ShieldMesh)·preset({라벨: {점 경로 또는 중첩 dict: 값}} 라이브 컴포넌트 활성 프리셋의 임시 복제본을 고쳐 active_preset에 넣음, 원본 에셋은 건드리지 않음. simulation_config·plane_settings·volume_render 는 비 Custom·비 override 프리셋이면 R2 로 무시되므로 오류(종료 1)이고 "force_override": true 면 복제본의 override_preset_defaults 를 켬. plane_settings·volume_render·volume_height_cm은 C++가 매 스텝 다시 읽어 그대로 반영되고, 반영 여부는 다음 촬영의 preset_effect(볼륨 MID 매개변수 값, camera_depth_bias_cm은 내부 표면 메시 이동 거리)로 보고)·preset_reinit([라벨] 복제본으로 init_system_state_from_preset 재초기화, 시뮬 상태와 앞선 sim 편집이 초기화되므로 프리셋의 시뮬 설정·출력 재질처럼 초기화 때만 읽는 필드를 바꿀 때만)·exposure_ev100(모든 후처리 볼륨의 min/max 밝기 = EV100, 효과는 자동 노출 볼륨만. AEM_MANUAL 볼륨은 엔진이 min/max 를 무시하고(PostProcessEyeAdaptation.cpp 수동 분기) 기본은 바이어스를 건드리지 않아 mode manual_ignored·현재 auto_exposure_bias 만 기록, 같은 apply 의 exposure_manual 이 "bias" 일 때만 auto_exposure_bias = 원래 바이어스 + 물리 카메라 EV100(auto_exposure_apply_physical_camera_exposure 꺼짐이면 0) − EV100(mode manual), 결과 exposure_applied[{label, mode, fields, ...}])·exposure_manual("ignore"(기본)|"bias", exposure_ev100 없이 쓰거나 다른 값이면 키 오류)·lights·fire_light·flame(액터의 모든 불꽃 카드 MID)·volume(볼륨 MID)·ember({라벨: {재질 매개변수: 값}} ember_component 0번 재질 사슬에 FluidEmber 필요, MID 아니면 만들어 설정, 부모에 없는 이름은 missing, settle 촬영마다 result.json에 ember_mid)·sim(simulation_config 필드, apply_simulation_config)·emitter(source_emitter 필드, 비 Custom·비 override 프리셋이면 오류(종료 1), "force_override": true 면 override 켠 프리셋 복제본을 active_preset 에 넣고 진행)·surface_material(라이브 컴포넌트 출력 재질 교체 후 내부 메시 재연결)·console([명령] PIE 플레이어 컨트롤러로 실행, "이름 값" 꼴 cvar는 다시 읽은 값 기록, Shot 결과는 result.json console_screenshots)·speed·move([goal_x, goal_y] 는 옛 절대 목표(내비 있으면 simple_move_to, 없으면 순간이동), {"distance_cm": d, "yaw": 도(기본 현재 조종 회전 yaw)} 는 내비 없이 예약과 다른 슬레이트 틱 콜백이 2D 이동 ≥ d 까지 매 틱 pawn.add_movement_input(방향, 1, True)(Mover 폰은 ProduceInput 의 ConsumeMoveIntent 로 소비), 순간이동 없음, 시한 2d/최대 속도 + 3 게임 초 초과는 오류. 바깥 Python 이 그 변형 촬영 뒤(base 는 곧바로) 끝을 기다려 move 결과를 {mode, yaw, goal, moved_cm, timed_out, error?} 로 바꿔 적음)·trigger(같은 호출의 게임 시간을 trigger_game_time으로 기록)·time_dilation(전역 시간 배율)·schedule({"times": [기준 뒤 게임 초], "reference": "trigger"|"now", "prefix": "영문", "fixed_fps": 60(0이면 끔, 예약 동안 t.OverrideFPS 고정 간격 뒤 복구 L-editor-45), "file_wait_ticks": 30(1이면 그려진 다음 틱에 바로 다음 장), "timeout": 초} 원격 호출 하나에서 슬레이트 틱 콜백을 걸어 기준 뒤 게임 시간마다 HighResShot을 요청하고, 앞 장이 그려지고 파일이 생기거나 틱 한도가 지나야 다음 장을 건 뒤 스스로 해제, 이 변형은 settle 촬영을 하지 않음, reference trigger는 같은 apply의 trigger 필요). props·emitter·sim·preset 값 변환: 현재 값이 Vector·Vector2D면 목록 [x, y(, z)], Rotator면 [pitch, yaw, roll], LinearColor면 [r, g, b(, a)], Transform이면 {"location": [], "rotation": [pitch, yaw, roll], "scale": []}(빠진 키는 현재 값 유지). CAL-0 키(spec-cal0-v2 C9·1.3): view_target(액터 라벨, 컨트롤러 set_view_target_with_blend)·call({라벨: {function, component?, args?}} 함수 호출, 첫 성공 게임 시각 call_game_time)·wait_until({label, component?, property, equals, timeout} 바깥에서 조건이 맞을 때까지 기다린 뒤 apply, 시간 초과는 키 오류)·look_live({materials: {/Game 패키지: {Scalars|Vectors: {이름: 값}}}, niagara: {패키지: {Floats|Ints|Bools|Vectors2|Vectors3|Colors: {이름: 값}}}, niagara_reset, base: {패키지: {Scalars|Vectors: {이름: 원 MI 값}}}} 직접 부모만 맞춤. 소유자 primitive_slot(MI 슬롯은 MID 로 교체 뒤 설정)·decal(MI면 MID 만들어 설정)은 파이썬이 설정, cpp_mid(CPP_LOOK_OWNER_CLASS_NAMES 액터의 MID)·cloud_component·foliage_flow(B5 get_flow_copy_material_instance)·post_process 는 교체·설정 없이 tuning_reload.look 사본으로 C++ 가 다시 적용, niagara 는 set_variable_* 뒤 niagara_reset 이면 reinitialize_system. 1초 뒤 MID 를 다시 읽어 단언, base 는 MI 에셋 원래 값과 대조)·probe({stats: [{label|subsystem, component?, function, prefix}], rt: [{label, component?, property|function(둘 중 하나, function 은 렌더 타깃을 돌려주는 게터), box: [u0, v0, u1, v1], step, channel: r|g|b|a|rg_len|rgb_len, radial_center?, threshold?, prefix}], times: [apply 뒤 게임 초]})·schedule.reference "call"·schedule.events([{time, console?, call?, move?}] 틱 콜백 안에서 기준 뒤 게임 시각에 실행, move 는 위 두 형식). 예약 reference now 의 시간 원점은 단계 apply 원격 호출의 게임 시각(PIE 시작 아님)이고 reinit 상태 초기화와 같은 호출이라 같은 시각·tuning_reload.base({tuning, look} 대조 사본, relative_to_base 때 정본 대신 먼저 적재)·tuning_reload.read_back[] 의 owner(live_component|actor|volume_driver|subsystem:<클래스>|actor_class:<클래스>)·access(<속성>|call:<함수>, 함수 없으면 "게터 없음: B5 필요"). 모르는 적용 키·하위 키는 find_key_errors(apply) 순수 함수(에디터 접근 없음, calib_sweep 건식이 import)가 키 오류로 낸다
+출력: Saved/FluidFX/lookdev/<시각>/<순번>_<이름>.png, 예약 촬영은 <순번>_<prefix>_<기준 뒤 ms>ms.png와 <순번>_<move|eventNNNNNms>_walk.json(사전 move 걷기 상태), <순번>_<prefix>_schedule.json(장마다 요청·실제 찍힌 게임 시간, 늦음, 틱 사이 벽시계 간격 real_dt(요청 틱)·real_dt_mean(앞 장 뒤 촬영 대기 아닌 틱 평균, 실제 fps 대용)·capture_real_dt(촬영 끊김 포함), world_dt, 파일 대기 틱, 고정 간격 복구, preset_effect), grid.png, result.json(변형별 적용 결과·shot_game_time·preset_effect·schedule·console_screenshots). result.json 에 tuning_reload(보고서·다시 읽기, 요청 read_back 이 [] 이면 [])·canonical_reload·key_errors. 종료 코드 0 기대한 장 전부 찍음·키 오류 없음/1 일부 실패 또는 키 오류(tuning_reload 실패·R2 무시 키)/2 환경 문제. CAL-0: 단계 apply 결과에 look_applied({패키지: {이름: 소유자 수}})·look_owners·look_base({checked, mismatches})·look_read_back({패키지: {구역: {이름: {expected, read[], matches}}}})·owner_checks([{package, owner, by: python|cpp, actor, component, slot, matches, reason?}])·look_errors·skipped_look(look_live.skip_if_no_owner 패키지에 소유자가 없어 적용·다시 읽기를 건너뜀, 키 오류 아님)·probe({samples: [{time, elapsed, metrics, errors, grid_paths}], metrics: probe.<prefix>.<필드 파스칼 이름 또는 mean·p50·p95·max·fraction_above·radial_alignment_mean> 표본 중앙값, errors})와 <순번>_probe_<prefix>_<k>.json 격자·call·call_game_time·view_target·wait, 예약 상태 events_done. 키 오류(종료 1)에 apply 원격 호출 자체 오류(base 포함)·schedule 시작·끝 오류·move 형식(목록 2개 숫자 또는 {distance_cm > 0, yaw?})·걷기 오류(시한 초과·폰 없음)·schedule.events move 오류·state_reset 오류·모르는 키·view_target 없음·call 함수 없음·wait_until 시간 초과·look 적용 대상 없음·base 불일치·다시 읽기 불일치·"C++ 소유 MID가 모양 사본을 다시 적용하지 않음"·게터 없음·probe 함수·렌더 타깃 없음이 더해진다. result.json 첫머리에 run_id(--run-id)·started_at·variants_sha256(변형 JSON sha256). 원격 호출 결과가 4096 바이트를 넘으면 에디터가 Saved/FluidFX/lookdev/remote_results/<시각>_<uuid>_<action>.json 에 쓰고 표식 뒤엔 {result_file} 만 내며 바깥이 읽은 뒤 지운다(UE stdout TextIOWrapper 가 8192자 덩어리에서 표식과 본문을 다른 로그 항목으로 가르고, 원격 실행 TCP 수신은 큰 응답을 자를 수 있다). 표식 뒤 응답은 뒤 출력 항목까지 모아 해석하고, 해석 실패·결과 파일 없음·원격 실행 예외는 죽지 않고 그 호출의 error(탐침이면 표본 오류 → 키 오류). probe.rt 렌더 타깃 없음은 소유자 없음·게터 None·속성 None(TSoftObjectPtr 는 get_editor_property 가 동기 적재를 시도하므로 경로가 비었거나 적재 실패)으로 나눠 적는다
+상태: 검증됨(2026-10-18 모닥불·횃불·폭발 변형 9회 실행, campfire_v1~v5·torch_v1·explosion_v1. 2026-10-20 view·hide·props 추가와 flame 전 카드 적용으로 측면 룩데브 6회 실행). 2026-10-20 추가한 awake dict·game_time·time_dilation과 console·schedule·location·hide_components·preset·preset_reinit·값 변환·배열 원소·UObject 필드 편집은 미검증(PIE 미실행, 정적 검토만). PIE 런타임 값만 바꾸므로 에셋은 바뀌지 않는다. 고른 값은 재질·무대 생성 스크립트에 옮겨 적는다. 2026-10-21 FX-8c 11차 ember 키는 미검증(PIE 미실행), EmberTint* 는 재질 재생성 뒤에만 효과. 2026-10-21 FX-8c 12차 props 배열 "append:<i>" 키는 2026-10-21 FX-8c 12차 AP 세션 PIE 9회에서 확인(복제 원소가 배열 끝에 붙고 수정 필드가 다시 읽기와 같음, 가짜 unreal 오프라인 시험에서 기존 정수 키 결과 불변). 2026-10-25 P3(spec-wave0-data-bridge-v2 3.9) tuning_reload·--output-dir·R2 무시 키 오류·force_override 는 가짜 unreal 오프라인 시험만(PIE 미실행). 2026-10-30 CAL-0 B3(view_target·call·schedule.events·reference call·wait_until·look_live 소유자 7종·probe stats·rt·tuning_reload.base·다시 읽기 owner·access·find_key_errors)와 CAL-0 통합 probe.rt function(B5 텍스처 게터)은 calib_offline_test.py check_cal0_lookdev 가짜 unreal 오프라인 시험만(PIE 미실행). 실제 엔진에서 미검증: RenderingLibrary.read_render_target_raw_uv 격자 읽기 속도, 월드 서브시스템 찾기(2026-10-30 UE 5.8 에 SubsystemBlueprintLibrary 가 없어 get_engine_subsystem 뒤 ObjectIterator 월드 대조로 바꿈, 에디터 월드 원격 질의만 확인·PIE 미확인), 후처리 blendables·구름 material 속성 이름, Niagara 사용자 변수 이름 접두(User.), 다시 읽기 1초는 실시간 sleep(시간 배율 1 가정). 2026-10-31 frame 결함 4건(사전 move 입력 걷기·조용한 base/단계/이벤트 오류·수동 노출 바이어스(반박 뒤 exposure_manual "bias" 명시 선택일 때만, 전역 변환은 구름 무대 EV 12 를 −12 스톱으로 만들었다)·reinit 전체 상태 초기화)은 calib_offline_test.py check_lookdev_frame_fixes 가짜 unreal 오프라인 시험만(PIE 미실행). 2026-10-31 탐침 응답 파싱(frame g4 painter_stroke·k1 k1_recovery 의 표식 뒤 빈 줄 IndexError)·큰 결과 파일 전달·원격 실행 예외 흡수·렌더 타깃 없음 사유·--run-id 는 calib_offline_test.py check_capture_tool_fixes(가짜 UE 로그 스트림) 오프라인 시험만(PIE 미실행).
 """
 import argparse
 import difflib
+import hashlib
 import json
 import statistics
 import sys
 import time
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -24,6 +26,10 @@ import uemcp  # noqa: E402
 
 RUN_TOKEN = datetime.now().strftime("%Y%m%d-%H%M%S")
 OUTPUT_DIRECTORY = ROOT / "Saved" / "FluidFX" / "lookdev" / RUN_TOKEN
+REMOTE_RESULT_DIRECTORY = ROOT / "Saved" / "FluidFX" / "lookdev" / "remote_results"
+REMOTE_RESULT_INLINE_LIMIT_BYTES = 4096
+REMOTE_RESULT_PRINT = "print(RESULT_MARKER, json.dumps(result, ensure_ascii=False, default=str))"
+REMOTE_RESULT_EMIT = "emit_lookdev_result(result)"
 SCREENSHOT_DIRECTORY = ROOT / "Saved" / "Screenshots" / "WindowsEditor"
 DEFAULT_LEVEL_PATH = "/Game/FluidFX/Maps/LV_TDFluidFireStage"
 SHOT_SIZE = "1280x720"
@@ -73,6 +79,7 @@ READ_BACK_OWNER_PREFIXES = ("subsystem:", "actor_class:")
 LOOKDEV_ACTIONS = r'''
 import inspect
 import os
+import sys
 import time
 
 SCHEDULE_ATTRIBUTE = "td_lookdev_schedule"
@@ -1442,10 +1449,15 @@ def is_texture_2d(target):
 
 
 def read_probe_render_target(world, entry):
-    target = probe_render_target(probe_owner(world, entry), entry)
+    owner = probe_owner(world, entry)
     source = f"probe.rt {entry['label']}.{entry.get('function') or entry.get('property')}"
+    if owner is None:
+        return {}, None, f"{source}: 렌더 타깃 없음(소유자 없음)"
+    target = probe_render_target(owner, entry)
+    if target is None and entry.get("function"):
+        return {}, None, f"{source}: 렌더 타깃 없음(게터가 None)"
     if target is None:
-        return {}, None, f"{source}: 렌더 타깃 없음"
+        return {}, None, f"{source}: 렌더 타깃 없음(속성 None: TSoftObjectPtr 면 get_editor_property 의 동기 적재가 실패했거나 경로가 비었다)"
     if is_texture_2d(target):
         return {}, None, f"{source}: 렌더 타깃이 아닌 Texture2D(CPU 백엔드 출력이면 GPU 백엔드 필요)"
     step = float(entry["step"])
@@ -1504,23 +1516,73 @@ def action_lookdev_wait_check(world):
     return {"value": value, "matched": value == condition["equals"]}
 
 
+def emit_lookdev_result(result):
+    text = json.dumps(result, ensure_ascii=False, default=str)
+    size = len(text.encode("utf-8"))
+    path = PARAMS.get("result_path")
+    if path and size > PARAMS.get("result_inline_limit", size):
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(text)
+            text = json.dumps({"result_file": path, "result_bytes": size})
+        except OSError as caught:
+            text = json.dumps({"error": "결과 파일 쓰기 실패 " + path + ": " + str(caught)[-200:]}, ensure_ascii=False)
+    sys.stdout.write(RESULT_MARKER + " " + text + "\n")
+    sys.stdout.flush()
+
+
 def run():'''
 
 
+def build_editor_code(action, fields, result_path):
+    code = pie_showcase_fluid.EDITOR_CODE.replace("\ndef run():", LOOKDEV_ACTIONS, 1).replace(REMOTE_RESULT_PRINT, REMOTE_RESULT_EMIT, 1)
+    params = {"action": action, **fields, "result_path": result_path.as_posix(), "result_inline_limit": REMOTE_RESULT_INLINE_LIMIT_BYTES}
+    return code.replace("__PARAMS__", repr(json.dumps(params)))
+
+
+def remote_output_text(line):
+    if line.startswith("[") and "] " in line:
+        return line.split("] ", 1)[1]
+    return line
+
+
+def parse_editor_result(lines):
+    marker = pie_showcase_fluid.RESULT_MARKER
+    for position, line in enumerate(lines):
+        index = line.find(marker)
+        if index < 0:
+            continue
+        text = "".join([line[index + len(marker):]] + [remote_output_text(following) for following in lines[position + 1:]]).lstrip()
+        try:
+            value = json.JSONDecoder().raw_decode(text)[0]
+        except ValueError as error:
+            return {"error": f"결과 해석 실패(표식 뒤 {len(text)}자, {error}): {text[:200]}"}
+        return value if isinstance(value, dict) else {"error": "결과가 객체가 아니다: " + text[:200]}
+    return {"error": "결과 표식 없음: " + " | ".join(lines)[-300:]}
+
+
+def read_remote_result_file(path):
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        return {"error": f"결과 파일 읽기 실패 {path.as_posix()}: {error}"}
+    path.unlink(missing_ok=True)
+    return loaded if isinstance(loaded, dict) else {"error": f"결과 파일이 객체가 아니다: {path.as_posix()}"}
+
+
 def editor_action(action, **fields):
-    code = pie_showcase_fluid.EDITOR_CODE.replace("\ndef run():", LOOKDEV_ACTIONS, 1)
-    params = {"action": action, **fields}
-    outcome = run_in_editor.run_code(code.replace("__PARAMS__", repr(json.dumps(params))))
+    result_path = REMOTE_RESULT_DIRECTORY / f"{RUN_TOKEN}_{uuid.uuid4().hex}_{action}.json"
+    try:
+        outcome = run_in_editor.run_code(build_editor_code(action, fields, result_path))
+    except Exception as error:
+        return {"error": f"에디터 원격 실행 예외 {type(error).__name__}: {str(error)[-200:]}"}
     if not outcome["connected"]:
         return {"error": "에디터 원격 실행에 연결하지 못했다"}
-    for line in outcome["lines"]:
-        index = line.find(pie_showcase_fluid.RESULT_MARKER)
-        if index >= 0:
-            try:
-                return json.loads(line[index + len(pie_showcase_fluid.RESULT_MARKER):].strip().splitlines()[0])
-            except ValueError:
-                return {"error": "결과 해석 실패: " + line[-200:]}
-    return {"error": "결과 표식 없음: " + " | ".join(outcome["lines"])[-300:]}
+    result = parse_editor_result(outcome["lines"])
+    if "result_file" in result:
+        return read_remote_result_file(result_path)
+    return result
 
 
 def apply_variant(apply, tag, resets_state=False):
@@ -2004,11 +2066,14 @@ def main():
     parser.add_argument("--settle-seconds", type=float, default=3.0)
     parser.add_argument("--stop-pie", action="store_true")
     parser.add_argument("--output-dir", type=Path, help="출력 폴더(기본 Saved/FluidFX/lookdev/<시각>, 상대 경로는 프로젝트 루트 기준)")
+    parser.add_argument("--run-id", help="실행 식별자(result.json run_id 로 되적어 calib_sweep 이 이번 실행 결과인지 대조)")
     arguments = parser.parse_args()
+    started_at = datetime.now().isoformat(timespec="seconds")
     global OUTPUT_DIRECTORY
     if arguments.output_dir is not None:
         OUTPUT_DIRECTORY = arguments.output_dir if arguments.output_dir.is_absolute() else ROOT / arguments.output_dir
-    specification = json.loads(arguments.variants.read_text(encoding="utf-8"))
+    specification_bytes = arguments.variants.read_bytes()
+    specification = json.loads(specification_bytes.decode("utf-8"))
     print("경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).", flush=True)
     OUTPUT_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
@@ -2033,7 +2098,7 @@ def main():
     shots = []
     base_apply = specification.get("base", {})
     run_state = {"uses_tuning_reload": False, "key_errors": []}
-    result = {"level": arguments.level, "base": None, "variants": []}
+    result = {"run_id": arguments.run_id, "started_at": started_at, "variants_sha256": hashlib.sha256(specification_bytes).hexdigest(), "level": arguments.level, "base": None, "variants": []}
     expected_shots = scheduled_shot_count(base_apply)
     try:
         result["base"] = apply_variant_with_tuning(base_apply, "base", run_state)

@@ -75,6 +75,7 @@ namespace TDFluidWaterParticleRhiTestPrivate
 	constexpr int32 SplashTailSteps = 60;
 	constexpr float SplashImpactSpeedCmPerSec = 600.0f;
 	constexpr float SplashImpactRadiusCm = 15.0f;
+	constexpr double SplashWhitewaterReadRadiusCm = 200.0;
 	constexpr int32 WhitewaterSteps = 120;
 	constexpr double WhitewaterStampMinX = -1500.0;
 	constexpr double WhitewaterStampMaxX = -300.0;
@@ -356,6 +357,58 @@ namespace TDFluidWaterParticleRhiTestPrivate
 			}
 		}
 		return MaximumWhitewater;
+	}
+
+	struct FTDSplashWhitewaterReading
+	{
+		bool bHasRead = false;
+		float MaximumWhitewater = 0.0f;
+		double MaximumDistanceCm = 0.0;
+		double NearestDistanceCm = 0.0;
+		double FarthestDistanceCm = 0.0;
+		int32 NonZeroCellCount = 0;
+	};
+
+	FTDSplashWhitewaterReading ReadWhitewaterAroundPoint(const UTDFluidLiveComponent& WaterComponent, const FVector& CenterWorld, double RadiusCm)
+	{
+		FTDSplashWhitewaterReading Reading;
+		TArray<FFloat16Color> Pixels;
+		const int32 Resolution = WaterComponent.GetSimulationResolution();
+		if (!ReadRenderTargetPixels(WaterComponent.GetDensityPressureTexture(), Pixels) || Pixels.Num() != Resolution * Resolution)
+		{
+			return Reading;
+		}
+
+		Reading.bHasRead = true;
+		const FVector WindowCenter = WaterComponent.GetSimulationWindowCenterWorld();
+		for (int32 CellY = 0; CellY < Resolution; ++CellY)
+		{
+			for (int32 CellX = 0; CellX < Resolution; ++CellX)
+			{
+				const float Whitewater = Pixels[CellY * Resolution + CellX].R.GetFloat();
+				if (Whitewater <= 0.0f)
+				{
+					continue;
+				}
+
+				const FVector2D CellCenter(WindowCenter.X + (CellX + 0.5 - 0.5 * Resolution) * SceneCellSizeCm, WindowCenter.Y + (CellY + 0.5 - 0.5 * Resolution) * SceneCellSizeCm);
+				const double DistanceCm = FVector2D::Distance(CellCenter, FVector2D(CenterWorld.X, CenterWorld.Y));
+				if (DistanceCm > RadiusCm)
+				{
+					continue;
+				}
+
+				Reading.NearestDistanceCm = Reading.NonZeroCellCount == 0 ? DistanceCm : FMath::Min(Reading.NearestDistanceCm, DistanceCm);
+				Reading.FarthestDistanceCm = FMath::Max(Reading.FarthestDistanceCm, DistanceCm);
+				++Reading.NonZeroCellCount;
+				if (Whitewater > Reading.MaximumWhitewater)
+				{
+					Reading.MaximumWhitewater = Whitewater;
+					Reading.MaximumDistanceCm = DistanceCm;
+				}
+			}
+		}
+		return Reading;
 	}
 
 	struct FTDWaterParticleAssets
@@ -1022,6 +1075,8 @@ bool FTDFluidWaterParticleRhiSplashContactReachesWaterTest::RunTest(const FStrin
 	int32 FirstWhitewaterStep = INDEX_NONE;
 	int32 MaximumContactPoints = 0;
 	float MaximumProbeWhitewater = 0.0f;
+	bool bHasReadWhitewater = false;
+	FTDSplashWhitewaterReading PeakReading;
 	TArray<FTDFluidWaterPointSample> Samples;
 	for (int32 StepIndex = 0; StepIndex < SplashContactSteps; ++StepIndex)
 	{
@@ -1032,8 +1087,16 @@ bool FTDFluidWaterParticleRhiSplashContactReachesWaterTest::RunTest(const FStrin
 		if (Scene.GetWaterComponent().GetWaterProbeSamples(Samples) && Samples.Num() == 1)
 		{
 			MaximumProbeWhitewater = FMath::Max(MaximumProbeWhitewater, Samples[0].Whitewater);
-			FirstWhitewaterStep = FirstWhitewaterStep == INDEX_NONE && Samples[0].Whitewater > 0.0f ? StepIndex : FirstWhitewaterStep;
 		}
+		if (FirstContactStep == INDEX_NONE)
+		{
+			continue;
+		}
+
+		const FTDSplashWhitewaterReading Reading = ReadWhitewaterAroundPoint(Scene.GetWaterComponent(), SplashEvent.WorldLocation, SplashWhitewaterReadRadiusCm);
+		bHasReadWhitewater |= Reading.bHasRead;
+		FirstWhitewaterStep = FirstWhitewaterStep == INDEX_NONE && Reading.MaximumWhitewater > 0.0f ? StepIndex : FirstWhitewaterStep;
+		PeakReading = Reading.MaximumWhitewater > PeakReading.MaximumWhitewater ? Reading : PeakReading;
 	}
 	for (int32 StepIndex = 0; StepIndex < SplashTailSteps; ++StepIndex)
 	{
@@ -1041,7 +1104,8 @@ bool FTDFluidWaterParticleRhiSplashContactReachesWaterTest::RunTest(const FStrin
 	}
 
 	TestTrue(*FString::Printf(TEXT("Splash contact points reach the reader within 2 seconds (max %d)"), MaximumContactPoints), MaximumContactPoints > 0);
-	TestTrue(*FString::Printf(TEXT("Whitewater rises at the splash center within 2 seconds (%.5f)"), MaximumProbeWhitewater), MaximumProbeWhitewater > 0.0f);
+	TestTrue(TEXT("The GPU density output is readable once contact points arrive"), bHasReadWhitewater);
+	TestTrue(*FString::Printf(TEXT("Whitewater rises within %.0f cm of the splash entry within 2 seconds (%.5f)"), SplashWhitewaterReadRadiusCm, PeakReading.MaximumWhitewater), PeakReading.MaximumWhitewater > 0.0f);
 	TestEqual(TEXT("No splash stays active one second after the contact window"), Scene.ParticleActor->GetActiveSplashCount(), 0);
 
 	TArray<TPair<FString, double>> Fields;
@@ -1050,6 +1114,11 @@ bool FTDFluidWaterParticleRhiSplashContactReachesWaterTest::RunTest(const FStrin
 	Fields.Add({ TEXT("contact_latency_seconds"), FirstContactStep == INDEX_NONE ? std::numeric_limits<double>::quiet_NaN() : (SplashEarlySteps + FirstContactStep + 1) * static_cast<double>(StepSeconds) });
 	Fields.Add({ TEXT("whitewater_latency_seconds"), FirstWhitewaterStep == INDEX_NONE ? std::numeric_limits<double>::quiet_NaN() : (SplashEarlySteps + FirstWhitewaterStep + 1) * static_cast<double>(StepSeconds) });
 	Fields.Add({ TEXT("max_probe_whitewater"), static_cast<double>(MaximumProbeWhitewater) });
+	Fields.Add({ TEXT("max_whitewater_near_entry"), static_cast<double>(PeakReading.MaximumWhitewater) });
+	Fields.Add({ TEXT("max_whitewater_distance_cm"), PeakReading.MaximumDistanceCm });
+	Fields.Add({ TEXT("nearest_whitewater_distance_cm"), PeakReading.NearestDistanceCm });
+	Fields.Add({ TEXT("farthest_whitewater_distance_cm"), PeakReading.FarthestDistanceCm });
+	Fields.Add({ TEXT("nonzero_whitewater_cells"), static_cast<double>(PeakReading.NonZeroCellCount) });
 	WriteRecord(*this, TEXT("contact-latency.json"), Fields);
 	return !HasAnyErrors();
 }

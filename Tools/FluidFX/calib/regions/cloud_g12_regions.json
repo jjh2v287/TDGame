@@ -1,0 +1,35 @@
+{
+  "note": "frame 대조 이미지(cloud_g12_volcano/volcano_backlit 00_schedule_*.png 5장, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 출처: Tools/FluidFX/calib/retired/regions/cloud_g12_regions.json(frame-after 명세 없음). smoke_backlit = 왼쪽 위 연기 덩어리(가운데 매끈한 기둥·아래 밝은 지면 안개 제외), smoke_side = 오른쪽 위 연기(오른쪽 끝 어두운 기둥 제외), hill_fog = 화산 오른쪽 사면을 따라 낀 밝은 안개 띠(5장 모두 휘도가 가장 높은 x 900~1150·y 605~680 구간, 위쪽 일반 연기·아래 사면 그늘·오른쪽 끝 어두운 기둥 제외).",
+  "regions": [
+    {
+      "name": "smoke_backlit",
+      "kind": "cloud",
+      "box": [
+        0,
+        0,
+        300,
+        480
+      ]
+    },
+    {
+      "name": "smoke_side",
+      "kind": "cloud",
+      "box": [
+        880,
+        0,
+        1270,
+        360
+      ]
+    },
+    {
+      "name": "hill_fog",
+      "kind": "cloud",
+      "box": [
+        900,
+        605,
+        1150,
+        680
+      ]
+    }
+  ]
+}

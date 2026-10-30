@@ -23,7 +23,12 @@
           -8.0,
           90.0
         ],
-        "hide": {}
+        "hide": {},
+        "hide_components": {
+          "pawn": [
+            "mesh"
+          ]
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,
@@ -90,6 +95,13 @@
   "repeats": 2,
   "control_every": 0,
   "reset": "reinit",
+  "base_tuning": [
+    {
+      "json_path": "Kinds.Flamethrower.TDFluidSimulationConfig.SolverBackend",
+      "value": "Gpu"
+    }
+  ],
+  "base_tuning_ships": true,
   "metrics": {
     "sources": [
       "look"

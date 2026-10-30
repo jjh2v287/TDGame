@@ -1,0 +1,15 @@
+{
+  "note": "frame 대조 이미지(w5_tank_l11/tank 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/w5_tank_l11_frame_regions.frame-after.json(이름·kind). tank_surface 는 수조 윗물 사다리꼴(y 17~247) 안쪽 직사각형, tank_side 는 앞 유리 옆면 띠(y 248~285, 좌우 비스듬한 옆벽 x 448~477·803~832 제외)",
+  "regions": [
+    {
+      "name": "tank_side",
+      "kind": "water",
+      "box": [480, 251, 800, 282]
+    },
+    {
+      "name": "tank_surface",
+      "kind": "water",
+      "box": [500, 26, 780, 240]
+    }
+  ]
+}

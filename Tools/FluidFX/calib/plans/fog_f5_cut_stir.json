@@ -1,6 +1,6 @@
 {
   "id": "fog_f5_cut_stir",
-  "note": "FX-10c F5·B13. 8A 가르기(FogMist, 지우개 −1·재충전)·8B 휘젓기(FogMistStir, 모든 출처 속도만), 교반기 궤도 반경 600 cm·30°/s(한 바퀴 12 s). 시간 경과는 장면을 둘로 나누지 않고 궤적 나이(교반기 뒤 각도 ÷ 30°/s)로 영역을 나눠 한 장면에서 잰다(1 s 뒤 = 30° 뒤, 6 s 뒤 = 180° 뒤). settle 15 s 는 주변 재충전(k 0.3 → 95% 10 s) 뒤에 판정하기 위함. 8A·8B 는 MI_TD_FluidFog_Sim 을 FogRoom·FogAmbient 와 공유하므로 재질 값은 훑지 않는다(fog_f1_layer 와 같은 잎 충돌, 반박 R10-S7). FogMistStir 는 FogMist 값 복사(묶음 없음)라 FogMist 보정값을 FogMistStir 에도 옮긴다(R10-S10). FogMistStir 는 스탬프 밀도가 모두 0 이라 DensityFadeBelowSpeedCmPerSec 는 효과가 없어 훑지 않는다 0b(2026-10-30): AmbientRefillPerSec 를 json_paths 로 FogMist·FogMistStir 연동(R10-S10 을 데이터로, 두 기준 0.3 같음), 손잡이마다 장면 지정(Puncture → f5_cut, Vorticity → f5_stir), 휘젓기 밀도 보존 비 0.9~1.1 은 role constraint(대조가 이미 1 근처라 점수항으로는 정보 없음). 영역은 frame 뒤, 교반기 위상 재현성 확인 필요(evidence.md)",
+  "note": "FX-10c F5·B13. 8A 가르기(FogMist, 지우개 −1·재충전)·8B 휘젓기(FogMistStir, 모든 출처 속도만), 교반기 궤도 반경 600 cm·30°/s(한 바퀴 12 s). 시간 경과는 장면을 둘로 나누지 않고 궤적 나이(교반기 뒤 각도 ÷ 30°/s)로 영역을 나눠 한 장면에서 잰다(1 s 뒤 = 30° 뒤, 6 s 뒤 = 180° 뒤). settle 15 s 는 주변 재충전(k 0.3 → 95% 10 s) 뒤에 판정하기 위함. 8A·8B 는 MI_TD_FluidFog_Sim 을 FogRoom·FogAmbient 와 공유하므로 재질 값은 훑지 않는다(fog_f1_layer 와 같은 잎 충돌, 반박 R10-S7). FogMistStir 는 FogMist 값 복사(묶음 없음)라 FogMist 보정값을 FogMistStir 에도 옮긴다(R10-S10). FogMistStir 는 스탬프 밀도가 모두 0 이라 DensityFadeBelowSpeedCmPerSec 는 효과가 없어 훑지 않는다 0b(2026-10-30): AmbientRefillPerSec 를 json_paths 로 FogMist·FogMistStir 연동(R10-S10 을 데이터로, 두 기준 0.3 같음), 손잡이마다 장면 지정(Puncture → f5_cut, Vorticity → f5_stir), 휘젓기 밀도 보존 비 0.9~1.1 은 role constraint(대조가 이미 1 근처라 점수항으로는 정보 없음). 영역은 frame 뒤, 교반기 위상 재현성 확인 필요(evidence.md). 카메라 재설정(2026-10-31): 옛 시점(폰 1500 cm 앞 궤도, pitch -55·yaw 90)은 가까운 호만 보였고 교반기 위상이 PIE 누적 시각(30°/s × 세계 시각)이라 단계마다 달랐다. 폰을 궤도 중심 x-155 에 두고 메시를 숨기고(hide_components), yaw 0·pitch -35·arm 1700 으로 궤도 전체를 넣는다. step_apply 가 단계마다 교반기를 θ=0(중심 x-600, 회전 0)으로 되돌려 재초기화·일정 시작과 같은 틱에 위상을 맞추므로 첫 장 θ≈90.5°, 중앙 장 θ≈105.5°. 그때 1 s 궤적(θ 75.5°)은 화면 왼쪽, 6 s 궤적(θ 285.5°)은 오른쪽, 둘 다 같은 행(깊이)이라 surround 를 같은 행 궤도 바깥에 둔다. 투영 예측은 상자 근거가 아니다(P-18): 재촬영 frame 이미지로 영역을 다시 그린다",
   "scenes": [
     {
       "name": "f5_cut",
@@ -17,14 +17,19 @@
         },
         "exposure_ev100": 1.0,
         "pawn": [
-          0,
-          -36500
+          -155,
+          -35000
         ],
-        "arm": 900.0,
+        "arm": 1700.0,
         "view": [
-          -55.0,
-          90.0
+          -35.0,
+          0.0
         ],
+        "hide_components": {
+          "pawn": [
+            "Mesh"
+          ]
+        },
         "console": [
           "r.TDFogScattering 0",
           "r.VolumetricFog.GridPixelSize 8",
@@ -42,7 +47,29 @@
         "interval": 0.25,
         "kind": "replicate"
       },
-      "targets": "Tools/FluidFX/calib/targets/fog_f5_cut_stir_plan_targets.json"
+      "targets": "Tools/FluidFX/calib/targets/fog_f5_cut_stir_plan_targets.json",
+      "step_apply": {
+        "location": {
+          "TDGen_FogCutStirrer": [
+            -600.0,
+            -35000.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_FogCutStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
+      }
     },
     {
       "name": "f5_stir",
@@ -59,14 +86,19 @@
         },
         "exposure_ev100": 1.0,
         "pawn": [
-          7000,
-          -36500
+          6845,
+          -35000
         ],
-        "arm": 900.0,
+        "arm": 1700.0,
         "view": [
-          -55.0,
-          90.0
+          -35.0,
+          0.0
         ],
+        "hide_components": {
+          "pawn": [
+            "Mesh"
+          ]
+        },
         "console": [
           "r.TDFogScattering 0",
           "r.VolumetricFog.GridPixelSize 8",
@@ -84,7 +116,29 @@
         "interval": 0.25,
         "kind": "replicate"
       },
-      "targets": "Tools/FluidFX/calib/targets/fog_f5_cut_stir_plan_targets.json"
+      "targets": "Tools/FluidFX/calib/targets/fog_f5_cut_stir_plan_targets.json",
+      "step_apply": {
+        "location": {
+          "TDGen_FogStirStirrer": [
+            6400.0,
+            -35000.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_FogStirStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
+      }
     }
   ],
   "params": [

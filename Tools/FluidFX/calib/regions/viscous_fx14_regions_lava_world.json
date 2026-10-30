@@ -1,0 +1,15 @@
+{
+  "note": "frame 대조 이미지(viscous_fx14_lava/lava_world 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: frame-after·retired 명세가 없어 계획 metrics.targets 와 viscous_fx14_targets region_metrics 가 참조하는 이름(lava_tile_seam·lava_local)으로 만듦. 세 계획(mud·blood·lava)이 카메라가 달라 장면별 파일로 나눔. lava_tile_seam 은 평면 끝(y 약 50) 아래 먼 띠로, 시간 표준편차에서 타일 반복 무늬(가로 주기 약 290~650 px)가 여러 번 보이는 곳. lava_local 은 캐릭터 오른쪽 가까운 쪽으로 국소 시뮬 흐름 움직임이 보이는 곳(캐릭터 x 705 이하 제외, 카메라 기하로 12.8 m 국소 영역 안). kind water 는 기본 모드에 용암 전용 kind 가 없어 액체 표면 지표 자리로 빌림",
+  "regions": [
+    {
+      "name": "lava_tile_seam",
+      "kind": "water",
+      "box": [10, 62, 1270, 170]
+    },
+    {
+      "name": "lava_local",
+      "kind": "water",
+      "box": [720, 300, 1200, 700]
+    }
+  ]
+}

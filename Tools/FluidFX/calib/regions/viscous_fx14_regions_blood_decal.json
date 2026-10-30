@@ -1,0 +1,10 @@
+{
+  "note": "frame 대조 이미지(viscous_fx14_blood/blood_decal 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: frame-after·retired 명세가 없어 계획 metrics.targets 와 viscous_fx14_targets region_metrics 가 참조하는 이름(decal_edge)으로 만듦. 세 계획(mud·blood·lava)이 카메라가 달라 장면별 파일로 나눔. decal_edge 는 피 데칼 오른쪽 덩어리와 그 가장자리(다섯 장 데칼 범위 x 494~802·y 84~127 중 회색 블록·구체·그림자 x 572~667 제외: 마지막 장(09000ms)에서 구체가 블록 오른쪽 위 x 657~667·y 82~102 까지 오므로 x0 672, 위쪽 벽 띠 제외). kind water 는 기본 모드에 데칼 전용 kind 가 없어 액체 표면 지표 자리로 빌림",
+  "regions": [
+    {
+      "name": "decal_edge",
+      "kind": "water",
+      "box": [672, 74, 812, 134]
+    }
+  ]
+}

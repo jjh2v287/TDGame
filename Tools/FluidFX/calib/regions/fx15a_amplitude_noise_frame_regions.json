@@ -1,0 +1,15 @@
+{
+ "note": "frame 대조 이미지(fx15a_amplitude_noise/smoke_pool 00_schedule_*.png 5장, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/fx15a_amplitude_noise_frame_regions.frame-after.json(pool·dust). pool = 화면 아래 가까운 연기 웅덩이(무대 스크립트상 SmokeHard, X=-650, Kinds.Smoke) 내부, 벽·웅덩이 가장자리 제외, 높이 162 px(64 c/H 대역 ≥143 px 조건 충족), 5장 모두 연기 안. 계획 지표는 pool.* 만 참조하므로 kernel 영역은 두지 않는다(이 무대에는 커널 압력 연기가 없다)",
+ "regions": [
+  {
+   "name": "pool",
+   "kind": "dust",
+   "box": [
+    496,
+    558,
+    840,
+    720
+   ]
+  }
+ ]
+}

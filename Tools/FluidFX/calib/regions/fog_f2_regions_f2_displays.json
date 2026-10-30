@@ -1,0 +1,6 @@
+{
+  "note": "frame 대조 이미지(fog_f2_passive/f2_displays 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: 이름·kind 는 Tools/FluidFX/calib/retired/regions/fog_f2_regions.json 의 passive_field. FogAmbient 가 잠들어 창 경계가 없으므로 window_seam 은 두지 않는다. passive_field = 오른쪽 수동장 전시체 안쪽(검은 틈·바닥 띠 제외)",
+  "regions": [
+    {"name": "passive_field", "kind": "fog", "box": [1135, 228, 1275, 314]}
+  ]
+}

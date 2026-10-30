@@ -1,6 +1,6 @@
 {
   "id": "w3_rain",
-  "note": "W-3 비·웅덩이(L12): 기준 수치가 없어 M1(근접 고리 밀도)·M4(웅덩이 면적률)·M5(빗줄기·튐)는 사용자 승인, 일괄 보정(D-64) 때 사용. 카메라 좌표는 editor_make_fluid_rain_stage.py 의 S1(연못 중심 0,0)·S2(4200,0) 배치와 같다. M1 2차 손잡이는 W-7 근접 감쇠 DampingPerSec(반박 B5) / 0b(2026-10-30): LIVE-2 갤러리에 비 맞는 웅덩이 장면이 없고(IMG 15 는 옆 시점 폭풍 바다), 측정기에 고리 밀도·고리 수명·웅덩이 면적 키가 없어 옛 목표 4개(ring_density·ring_e_fold·density_coverage·빗줄기 embers 수)를 뺐다. 빗줄기는 embers 따뜻한 색 검출이라 IMG 15 비 영역에서 0(측정). rain_streaks·density_bench 장면과 SpawnRate 손잡이는 승인 시트(M5)·⑤ 로 넘기는 제안. 남은 목표는 명세 [제안] M1·M3 뿐(P-11 동등 증명 아님)",
+  "note": "W-3 비·웅덩이(L12): 기준 수치가 없어 M1(근접 고리 밀도)·M4(웅덩이 면적률)·M5(빗줄기·튐)는 사용자 승인, 일괄 보정(D-64) 때 사용. 카메라 좌표는 editor_make_fluid_rain_stage.py 의 S1(연못 중심 0,0)·S2(4200,0) 배치와 같다. M1 2차 손잡이는 W-7 근접 감쇠 DampingPerSec(반박 B5) / 0b(2026-10-30): LIVE-2 갤러리에 비 맞는 웅덩이 장면이 없고(IMG 15 는 옆 시점 폭풍 바다), 측정기에 고리 밀도·고리 수명·웅덩이 면적 키가 없어 옛 목표 4개(ring_density·ring_e_fold·density_coverage·빗줄기 embers 수)를 뺐다. 빗줄기는 embers 따뜻한 색 검출이라 IMG 15 비 영역에서 0(측정). rain_streaks·density_bench 장면과 SpawnRate 손잡이는 승인 시트(M5)·⑤ 로 넘기는 제안. 남은 목표는 명세 [제안] M1·M3 뿐(P-11 동등 증명 아님) / 젖음 조사(2026-10-30, 정본 frame): pond_top 장면·M3 목표 derived.wet_luminance_ratio·파생식·손잡이 WetnessFromRainPerSec·PuddleCavityReferenceCm 를 뺐다. 근거 ① reinit 이 상태를 지우지 않는다(bKeepBuffersOnReinit, 보고 state_reset_actor_count 0): 비는 PIE 시작부터 내려 첫 장(예약 6초)이 비 약 21초째이고, 젖음 W=min(1, rτ)=1(r 0.2·τ 8초, 약 8초에 포화)이라 6→41초 지면 휘도 비 1.00 이 맞다(웅덩이 면적이 예약 26~31초에 멈춘 것 = 수위 0.07 cm/s 가 PIE 시작부터 3 cm 상한, 같은 증거). ② 젖음은 36 m 시야 창 안에서 공간 균일이고 화면(약 32x18 m)이 창 안이라 마른 지면 기준이 화면에 없다(dry_ground 상자도 창 안 지면). ③ 도달 불가: 젖음 데칼은 WetDarkColor 쪽으로 불투명도 G·WetOpacity(0.20, 재질 기본값·룩 표에 없음) 섞기라 완전히 젖어도 모래 대비 휘도 비 약 0.83 > 목표 0.5~0.7, 손잡이 0.2·0.4 는 평형에서 같다. 남은 목표는 pond_near 제약(local_contrast 대조 0.7~1.3) 하나뿐이라 이 계획은 점수 목표가 없는 검증 전용이다(구조 격차 항목 문안은 부모가 기록)",
   "scenes": [
     {
       "name": "pond_near",
@@ -28,35 +28,6 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
-      }
-    },
-    {
-      "name": "pond_top",
-      "level": "/Game/FluidFX/Maps/LV_TDFluidRainStage",
-      "camera": {
-        "pawn": [
-          0.0,
-          0.0
-        ],
-        "arm": 1500.0,
-        "view": [
-          -90.0,
-          0.0
-        ],
-        "exposure_ev100": 2.0
-      },
-      "time_dilation": 1.0,
-      "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/w3_rain_frame_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/w3_rain_plan_targets.json",
-      "live2_refs": [
-        "L12",
-        "L3"
-      ],
-      "shots": {
-        "count": 8,
-        "interval": 5.0,
-        "kind": "series"
       }
     }
   ],
@@ -97,30 +68,6 @@
       "scenes": [
         "pond_near"
       ]
-    },
-    {
-      "json_path": "Groups.WaterLayer.TDFluidRainSettings.WetnessFromRainPerSec",
-      "values": [
-        0.1,
-        0.2,
-        0.4
-      ],
-      "split_group": false,
-      "scenes": [
-        "pond_top"
-      ]
-    },
-    {
-      "json_path": "Groups.WaterLayer.TDFluidRainSettings.PuddleCavityReferenceCm",
-      "values": [
-        2,
-        4,
-        8
-      ],
-      "split_group": false,
-      "scenes": [
-        "pond_top"
-      ]
     }
   ],
   "mode": "one_at_a_time",
@@ -143,24 +90,6 @@
         "role": "constraint",
         "basis": "spec_proposal",
         "note": "spec-w3 7절 M1 '설정 ±30%, 화면은 사용자 승인'. 대조 대비 0.7~1.3 이라 1.0 포함 → 제약. pond_near 손잡이 3개는 점수 목표가 없어 구조상 둔감(검증만)"
-      },
-      {
-        "metric": "derived.wet_luminance_ratio",
-        "weight": 1.0,
-        "scene": "pond_top",
-        "tolerance": 0.02,
-        "low": 0.5,
-        "high": 0.7,
-        "basis": "spec_proposal",
-        "note": "spec-w3 7절 M3 젖은 지면 휘도 비 0.5~0.7[제안], 마지막 장(41 게임초) 젖은/마른 영역 비. 마른 영역(비 안 맞는 곳)이 무대에 없으면 도달 불가. tolerance 0.02 = 띠 폭 10%(임시, 잠금 전 확인)"
-      }
-    ],
-    "derived": [
-      {
-        "name": "wet_luminance_ratio",
-        "op": "ratio",
-        "a": "7.wet_ground.luminance_mean",
-        "b": "7.dry_ground.luminance_mean"
       }
     ]
   }

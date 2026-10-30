@@ -1,0 +1,8 @@
+{
+  "note": "frame 대조 이미지(fog_f1_layer/f1_backlit 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: 이름·kind 는 Tools/FluidFX/calib/retired/regions/fog_f1_regions.json(frame-after 명세 없음), sky kind background → sky(기본 모드 허용값). fog_far = 인물 오른쪽 먼 안개층(윗면 y≈277 아래), fog_near = 인물·그림자 왼쪽 가까운 안개, sky = 안개층 위 검은 배경",
+  "regions": [
+    {"name": "fog_near", "kind": "fog", "box": [40, 420, 540, 700]},
+    {"name": "fog_far", "kind": "fog", "box": [710, 288, 1270, 350]},
+    {"name": "sky", "kind": "sky", "box": [20, 10, 1260, 228]}
+  ]
+}

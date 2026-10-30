@@ -1,0 +1,8 @@
+{
+  "note": "frame 대조 이미지(fog_f6_tile/f6_tile 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/fog_f6_tile_frame_regions.frame-after.json(이름·kind·analyses). tile_far = 반복 덩어리가 보이는 먼 쪽(위 검은 띠·왼쪽 위 사선 모서리·인물 제외), tile_near = 인물·그림자 아래 가까운 쪽, sky = 맨 위 검은 띠",
+  "regions": [
+    {"name": "tile_far", "kind": "fog", "analyses": ["autocorrelation"], "box": [110, 56, 1270, 300]},
+    {"name": "tile_near", "kind": "fog", "box": [40, 420, 1240, 700]},
+    {"name": "sky", "kind": "sky", "box": [110, 4, 1276, 40]}
+  ]
+}

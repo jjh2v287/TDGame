@@ -1,0 +1,6 @@
+{
+  "note": "frame 대조 이미지(w3_rain/pond_near 00_schedule_*.png 5장, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 출처: Saved/AgentOps/20261030/cal0/0b/regions/w3_rain_frame_regions.frame-after.json. pond_near 전용: pond_top 은 카메라가 달라 한 상자 집합이 두 장면에서 성립하지 않아 w3_rain_frame_regions_pond_top.json 으로 나눴다. pond_near 에는 젖은·마른 지면(구덩이 웅덩이·평지)이 화면에 없어 pond_surface 만 둔다(파생식 7.wet_ground 는 8장 장면 pond_top 전용). pond_surface 는 기사·칼 그림자(x 약 780 이하)와 위쪽 햇빛 반짝임·오른쪽 모래 기슭(x 약 1040 이상)을 피한 깊은 수면",
+  "regions": [
+    {"name": "pond_surface", "kind": "water", "box": [800, 180, 1020, 560]}
+  ]
+}

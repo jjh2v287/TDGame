@@ -1,6 +1,6 @@
 {
   "id": "viscous_fx14_mud",
-  "note": "FX-14 A6·A7·A10·M1·M4, 정본 ViscousMud(256²·12.8 m GPU), 무대 LV_TDFluidViscousStage 구역 3(중심 4000, 0). Groups.Viscous 경로는 묶음 A 통합 뒤 유효",
+  "note": "FX-14 A6·A7·A10·M1·M4, 정본 ViscousMud(256²·12.8 m GPU), 무대 LV_TDFluidViscousStage 구역 3(중심 4000, 0). Groups.Viscous 경로는 묶음 A 통합 뒤 유효 / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다",
   "scenes": [
     {
       "name": "mud_world",
@@ -16,16 +16,22 @@
           -35.0,
           0.0
         ],
-        "move": {
-          "distance_cm": 600.0
-        },
         "awake": {
           "TDGen_ViscousMudWorld": true
         }
       },
+      "step_apply": {
+        "pawn": [
+          4000.0,
+          0.0
+        ],
+        "move": {
+          "distance_cm": 600.0
+        }
+      },
       "time_dilation": 1.0,
       "settle": 8.0,
-      "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions_mud_world.json",
       "targets": "Tools/FluidFX/calib/targets/viscous_fx14_targets.json",
       "live2_refs": [
         "L4"

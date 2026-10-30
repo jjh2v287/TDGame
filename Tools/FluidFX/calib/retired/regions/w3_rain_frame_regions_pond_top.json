@@ -1,0 +1,7 @@
+{
+  "note": "frame 대조 이미지(w3_rain/pond_top 00_schedule_*.png 8장 6~41초, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 출처: Saved/AgentOps/20261030/cal0/0b/regions/w3_rain_frame_regions.frame-after.json. pond_top 전용(pond_near 와 카메라가 달라 나눔). wet_ground 는 그릴 근거가 없어 넣지 않았다: 연못·웅덩이 밖 지면은 6초→41초 휘도 비가 칸마다 0.998~1.006 으로 젖어 어두워진 곳이 화면에 없고, 어두운 원(웅덩이)은 생기는 즉시 휘도 약 0.165~0.176 으로 포화해 손잡이와 무관하다. 무대 확인 전까지 derived.wet_luminance_ratio 는 계산되지 않는다. dry_ground 는 구덩이·연못 기슭(연못 중심에서 반지름 약 190px 안)과 위쪽 반짝임 띠를 피한 평지(6초·41초 휘도 변화 없음). pond_surface 는 연못 원 안쪽 왼편으로 기사(x 615~660)·그 그림자와 밝은 기슭 띠를 피했다",
+  "regions": [
+    {"name": "pond_surface", "kind": "water", "box": [535, 305, 600, 420]},
+    {"name": "dry_ground", "kind": "water", "box": [1010, 380, 1250, 640]}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "note": "frame 대조 이미지(fx8n_drive/p4_vortex_mesh 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/fx8n_drive_frame_regions.frame-after.json(이름·kind). particles 는 흰 띠 왼쪽 검은 바닥 위 빨간 부유 메시 무리(캐릭터 x 600 이상·위쪽 초록 줄무늬는 다섯 장에서 y 139 까지 내려오므로 y0 145·흰 띠 제외). embers 계수는 어두운 바탕보다 밝은 덩어리만 세므로 흰 띠 위 알갱이는 넣지 않음",
+  "regions": [
+    {
+      "name": "particles",
+      "kind": "embers",
+      "box": [0, 145, 590, 720]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "id": "fog_f7_lights",
-  "note": "FX-10r F7 실험실 국소광(IMG 2). 광원 산란 세기는 무대 상수(editor_make_fluid_fog_stage.py:97-98, 4.0)라 actor_prop 으로 돌리고 채택은 덧씌움 actor_props → W ④에서 무대 스크립트 상수로(P-9). 0b(2026-10-30): actor_prop 키 name → property(C2), base 4.0 필수(B2), MI_TD_FluidFog_Sim.FogAlbedo 손잡이 삭제(FogRoom·FogAmbient·FogCut·FogStir 공유 MI 라 f5 와 같은 잎 충돌, 비 지표는 반사율에 거의 불변), 지표 pool_over_surround(측정 키 아님) → 파생 비, 목표 = IMG 2 측정 ±25%. 영역 frame 뒤",
+  "note": "FX-10r F7 실험실 국소광(IMG 2). 광원 산란 세기는 무대 상수(editor_make_fluid_fog_stage.py:97-98, 4.0)라 actor_prop 으로 돌리고 채택은 덧씌움 actor_props → W ④에서 무대 스크립트 상수로(P-9). 0b(2026-10-30): actor_prop 키 name → property(C2), base 4.0 필수(B2), MI_TD_FluidFog_Sim.FogAlbedo 손잡이 삭제(FogRoom·FogAmbient·FogCut·FogStir 공유 MI 라 f5 와 같은 잎 충돌, 비 지표는 반사율에 거의 불변), 지표 pool_over_surround(측정 키 아님) → 파생 비, 목표 = IMG 2 측정 ±25%. 영역 frame 뒤. 카메라(2026-10-30 원인 조사): 옛 pawn (5000,0)·arm 350·view(-5,0) 은 카메라 ≈(4651,0,127)에서 실험실 서벽(x 5280~5320, 높이 400) 바깥 면을 봐 화면이 검었고 y≈432 녹색 선은 벽 밑 빛샘이었다(투영 검산 y 432 일치). 실험실은 +Y 쪽만 열린 ㄷ자라 벽 위에서 내려다보는 pawn (6000,0)·arm 900·view(-45,0)(카메라 ≈(5364,0,733), 벽 위·실험실 안)로 바꿨다. 옛 영역 상자는 벽면을 잰 것이라 재촬영 frame 으로 다시 그린다",
   "scenes": [
     {
       "name": "f7_lab",
@@ -14,12 +14,12 @@
         },
         "exposure_ev100": 0.0,
         "pawn": [
-          5000,
+          6000,
           0
         ],
-        "arm": 350.0,
+        "arm": 900.0,
         "view": [
-          -5.0,
+          -45.0,
           0.0
         ],
         "console": [

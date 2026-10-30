@@ -1,0 +1,23 @@
+{
+ "note": "frame 대조 이미지(track_sand_h4/sand_dunes 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 이름·kind·analyses·band_px 명세: Saved/AgentOps/20261030/cal0/0b/regions/track_sand_h4_frame_regions.frame-after.json. 인물·그림자·굴러가는 공·수확기·지평선을 피한 왼쪽 물결 면",
+ "regions": [
+  {
+   "name": "dune_fft",
+   "kind": "dust",
+   "box": [
+    16,
+    300,
+    548,
+    712
+   ],
+   "analyses": [
+    "autocorrelation",
+    "spectrum"
+   ],
+   "band_px": [
+    6,
+    100
+   ]
+  }
+ ]
+}

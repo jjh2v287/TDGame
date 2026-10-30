@@ -23,7 +23,7 @@
       },
       "time_dilation": 1.0,
       "settle": 8.0,
-      "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions_lava_world.json",
       "targets": "Tools/FluidFX/calib/targets/viscous_fx14_targets.json",
       "live2_refs": [],
       "shots": {

@@ -1,6 +1,6 @@
 {
   "id": "fog_f2_passive",
-  "note": "FX-10r F2 수동 7변형(7B)·D14 창 가중(7A, FogAmbient 만 props 로 따라가기 켜서 이동 중 두 프레임 차). 큰 상자 MI 는 정적이라 변형마다 다시 굽는다(P3 공백 7)",
+  "note": "FX-10r F2 수동 7변형(7B)·D14 창 가중(7A, FogAmbient 만 props 로 따라가기 켜서 이동 중 두 프레임 차). 큰 상자 MI 는 정적이라 변형마다 다시 굽는다(P3 공백 7) / 2026-10-30 move 계약: D14 '이동 중' 촬영이 되도록 move 를 schedule.events t=5.0(촬영 6.0~7.0 초 동안 600 cm/s 기본 속도로 2000 cm 걷는 중[추정: BP 속도 미확인])로, pawn 원위치는 step_apply 로 옮겼다. {distance_cm} 사전 형식은 룩데브 move 확장 뒤에만 실행된다",
   "scenes": [
     {
       "name": "d14_window_move",
@@ -29,10 +29,13 @@
         ],
         "console": [
           "r.TDFogScattering 0"
-        ],
-        "move": {
-          "distance_cm": 2000.0
-        }
+        ]
+      },
+      "step_apply": {
+        "pawn": [
+          9000,
+          25000
+        ]
       },
       "time_dilation": 1.0,
       "settle": 6.0,
@@ -45,6 +48,16 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
+      },
+      "schedule": {
+        "events": [
+          {
+            "time": 5.0,
+            "move": {
+              "distance_cm": 2000.0
+            }
+          }
+        ]
       }
     },
     {
@@ -73,7 +86,7 @@
       },
       "time_dilation": 1.0,
       "settle": 4.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fog_f2_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f2_regions_f2_displays.json",
       "targets": "Tools/FluidFX/calib/targets/fog_live2_atmosphere.json",
       "live2_refs": [
         "L12"

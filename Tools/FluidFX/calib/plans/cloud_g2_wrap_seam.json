@@ -1,6 +1,6 @@
 {
   "id": "cloud_g2_wrap_seam",
-  "note": "FX-11c G2, 셋업 19 WrapField(감싸기 라이브 + 반복 슬롯), 타일 경계 x = 40 km(먼 바닥 위, 지형 끝 x = 20 km 지면 이음을 피함) 위에서 아래로. 0b(2026-10-30): 이음 지표를 부호 있는 difference·[0, 0.03] 에서 relative_step·대칭 띠로 바꿈(오른쪽이 밝으면 음수라 옛 띠는 이음 없이도 벌점), 띠 폭 = LIVE-2 갤러리 구름 인접 32 px 띠 자연 단차 최댓값, 자기상관 상한 = 갤러리 구름 영역 최댓값(근거 evidence.md). 영역 상자는 frame 뒤",
+  "note": "FX-11c G2, 셋업 19 WrapField(감싸기 라이브 + 반복 슬롯), 타일 경계 x = 40 km(먼 바닥 위, 지형 끝 x = 20 km 지면 이음을 피함) 위에서 아래로. 0b(2026-10-30): 이음 지표를 부호 있는 difference·[0, 0.03] 에서 relative_step·대칭 띠로 바꿈(오른쪽이 밝으면 음수라 옛 띠는 이음 없이도 벌점), 띠 폭 = LIVE-2 갤러리 구름 인접 32 px 띠 자연 단차 최댓값, 자기상관 상한 = 갤러리 구름 영역 최댓값(근거 evidence.md). 영역 상자는 frame 뒤. frame 뒤(2026-10-30): 정본 3장 모두 x = 40 km 이음매 열(640)에 구름이 없어(추정: 앰비언트 잡음 목표 밀도가 낮은 칸이 이음매에 걸림. 같은 v 범위의 가로 이음매에는 구름이 이어져 텍스처 가장자리 계통 결손은 아님) 같은 타일의 y = 0 km 가로 이음매(361 행)로 seam_above·seam_below 를 둠. 카메라·셋업 불변이라 frame 재촬영 불필요",
   "scenes": [
     {
       "name": "wrap_seam",
@@ -65,8 +65,8 @@
       {
         "name": "seam_band_relative_step",
         "op": "relative_step",
-        "a": "seam_left.luminance_mean",
-        "b": "seam_right.luminance_mean"
+        "a": "seam_above.luminance_mean",
+        "b": "seam_below.luminance_mean"
       }
     ],
     "targets": [
@@ -76,7 +76,7 @@
         "low": -0.048,
         "high": 0.048,
         "basis": "live2_image",
-        "note": "IMG10·18·23 인접 32 px 띠 (왼−오)/오 = -0.0096·-0.0438·0.0479, 띠 = ±|최댓값| 올림. 명세 [제안] ≤3%(spec-fx11c.md:169)는 자연 단차보다 좁아 참고만"
+        "note": "IMG10·18·23 인접 32 px 띠 (왼−오)/오 = -0.0096·-0.0438·0.0479, 띠 = ±|최댓값| 올림. 명세 [제안] ≤3%(spec-fx11c.md:169)는 자연 단차보다 좁아 참고만. 2026-10-30 frame 뒤: 세로 이음매(x = 40 km) 열에 구름이 없어 가로 이음매(y = 0 km, 361 행)의 위−아래 띠 (위−아래)/아래 로 바꿈. 띠 값은 그대로(위에서 내려다본 구름 장은 방향 무관이라는 가정, 갤러리 근거는 좌우 인접). 정본 frame 3장 measure_fx_look(JPEG 95 재압축) +0.0073·+0.0006·+0.0002, PNG 원본 같은 열 이음매 아닌 행 대조 +0.0054~+0.0086(200 행)·-0.0102~-0.0137(520 행)"
       },
       {
         "metric": "tile.autocorrelation.secondary_peak",

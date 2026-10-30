@@ -131,6 +131,16 @@
    "reason": "TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌려 둘째 단계부터 새 튐이 없다. 단계마다 PIE 재시작이나 재무장 수단이 생기면 original 에서 장면·목표를 되살린다",
    "source": "0b",
    "original": "2c8a03bd:Tools/FluidFX/calib/plans/viscous_fx14_blood.json"
+  },
+  {
+   "plan": "fx8n_embers",
+   "kind": "target",
+   "item": "embers.embers.count 300~1000(E7-n 화면당 불티 ≥300 IMG 0·500~600 IMG 17)",
+   "decision": "frame",
+   "destination": "승인 시트(⑤ 불 영역, 화면 전체 불티 수 육안·측정 대조)",
+   "reason": "목표가 화면 전체 개수인데, frame 대조 이미지에서 불티가 불꽃 몸통 위·옆에 섞여 몸통을 뺀 상자는 띠(y 110~228)뿐이라 개수가 3~19 로 나온다. 몸통을 담으면 count·면적·늘어남이 오염된다(반박 확인). 모양 목표 2개(median_area_px·median_elongation)만 보정",
+   "source": "frame",
+   "original": "aa1280ea:Tools/FluidFX/calib/plans/fx8n_embers.json"
   }
  ]
 }

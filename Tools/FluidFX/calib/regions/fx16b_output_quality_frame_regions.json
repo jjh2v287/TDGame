@@ -1,0 +1,15 @@
+{
+ "note": "frame 대조 이미지(fx16b_output_quality/svol_q0·svol_q1·svol_q2·svol_q3 00_schedule_*.png 각 5장, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/fx16b_output_quality_frame_regions.frame-after.json(smoke·dust). smoke = SVOL 연기 몸통 안쪽, 네 장면 20장 모두 연기 안(화면 위 가장자리에서 잘린 몸통이라 y0 = 0)",
+ "regions": [
+  {
+   "name": "smoke",
+   "kind": "dust",
+   "box": [
+    477,
+    0,
+    860,
+    171
+   ]
+  }
+ ]
+}

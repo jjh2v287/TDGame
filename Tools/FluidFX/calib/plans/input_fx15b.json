@@ -1,6 +1,6 @@
 {
   "id": "input_fx15b",
-  "note": "FX-15b B12·B14·B15·B10·B6 초안(spec-fx15b 7절). 맵 LV_TDFluidInputStage 탑다운, 구역 간격 3000 cm 라 pawn 은 editor_make_fluid_input_stage.py 무대 보고 zones[].camera 와 같다(명세 7절 예시 6000 은 간격 1500 가정이었음). z5_mesh 는 z1_size 와 장면 이름·awake·pawn·settle 만 다르다. region_ratio 지표는 P3 확장(CAL-0) 필요, calib_sweep READ_BACK_STRUCTS 에 InputBrush·FieldInput 없음",
+  "note": "FX-15b B12·B14·B15·B10·B6 초안(spec-fx15b 7절). 맵 LV_TDFluidInputStage 탑다운, 구역 간격 3000 cm 라 pawn 은 editor_make_fluid_input_stage.py 무대 보고 zones[].camera 와 같다(명세 7절 예시 6000 은 간격 1500 가정이었음). z5_mesh 는 z1_size 와 장면 이름·awake·pawn·settle 만 다르다. region_ratio 지표는 P3 확장(CAL-0) 필요, calib_sweep READ_BACK_STRUCTS 에 InputBrush·FieldInput 없음 / 2026-10-31 frame 진단: 저장 맵에 교반기 인스턴스 값(메시 배율·pivot_translation·rotation_rate)이 없다(umap 이름표에 PivotTranslation·RotationRate 없음, frame 의 두 상자가 BP 기본 0.4 배율로 제자리 90°/s 회전 → 위치 속도 0 이라 자국 0). 생성기가 컴포넌트 핸들을 한 번 받아 여러 값을 쓰는데 첫 set_editor_property 가 소유 액터 RerunConstructionScripts 로 컴포넌트를 바꿔 이후 값이 버려진다 → 생성기 수정·무대 재생성 뒤 재촬영. settle 8.5 는 단계 시작에 교반기를 생성 자세로 되돌리는 위상 재설정 전제: 작은 상자 7.33 s 에 (350,0), 큰 상자 6.81 s 에 (650,0) 을 지나 촬영 8.5~9.5 s 에 두 흔적이 같은 깊이 행(세계 Y=0, 화면 y≈378)에 1.2~2.7 s 나이로 남고 상자는 먼 쪽으로 떠나 있다. 영역은 재촬영 frame 에서 이 행의 가로 선으로 정한다(P-18). 이전 측정 상자(위 Y=+650 큰·아래 Y=-350 작은)는 촬영 시점에 두 상자가 아직 지나가지 않았고 세로 원근 배율이 0.54 배 달라 비가 약 1.1 로 치우친다. regions_template 파일은 아직 없다",
   "scenes": [
     {
       "name": "z1_size",
@@ -28,7 +28,7 @@
         "hide": {}
       },
       "time_dilation": 1.0,
-      "settle": 4.0,
+      "settle": 8.5,
       "regions_template": "Tools/FluidFX/calib/regions/input_fx15b_regions.json", "targets": "Tools/FluidFX/calib/targets/input_fx15b_plan_targets.json",
       "live2_refs": [],
       "shots": {

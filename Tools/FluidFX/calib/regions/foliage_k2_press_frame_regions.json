@@ -1,0 +1,25 @@
+{
+ "note": "frame 대조 이미지(foliage_k2_press/k2_press·k2_press_decay 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 명세: Saved/AgentOps/20261030/cal0/0b/regions/foliage_k2_press_frame_regions.frame-after.json. pressed_side = 교반기 궤도(반경 600 cm) 눌림 띠의 화면 위 가운데 구간, outer_ring = 궤도 고리 바깥 왼쪽 위 모서리(조명 가로 기울기가 가운데와 가까운 쪽)",
+ "regions": [
+  {
+   "name": "pressed_side",
+   "kind": "fog",
+   "box": [
+    540,
+    22,
+    760,
+    50
+   ]
+  },
+  {
+   "name": "outer_ring",
+   "kind": "fog",
+   "box": [
+    0,
+    0,
+    200,
+    90
+   ]
+  }
+ ]
+}

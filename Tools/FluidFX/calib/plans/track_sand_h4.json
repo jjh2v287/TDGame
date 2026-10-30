@@ -1,6 +1,6 @@
 {
   "id": "track_sand_h4",
-  "note": "FX-12r H4·H5·H8 모래 사구 타일·WPO·홈(IMG 13·22). 사구 주 파장·방향은 FFT 분석기(P3 공백) 뒤 / CAL-0 B6: 낡은 base_tuning(FootprintPainter 1024·5000) 삭제, SandTrack 정본 기준으로 잰다 / 0b(2026-10-30): 사구 목표를 IMG 13 왼쪽·오른쪽 물결 영역의 주파수 봉우리 비와 미세 세부(크기 무관)로 바꿨다. 주 파장 상대 오차는 기준 파장(cm)이 없어 정의 불가라 뺐고, 모래 먼지는 이 손잡이 셋(사구 재질)과 무관해 뺐다. 방향 손잡이(WindDegrees)는 방향 지표가 없어 구조상 둔감",
+  "note": "FX-12r H4·H5·H8 모래 사구 타일·WPO·홈(IMG 13·22). 사구 주 파장·방향은 FFT 분석기(P3 공백) 뒤 / CAL-0 B6: 낡은 base_tuning(FootprintPainter 1024·5000) 삭제, SandTrack 정본 기준으로 잰다 / 0b(2026-10-30): 사구 목표를 IMG 13 왼쪽·오른쪽 물결 영역의 주파수 봉우리 비와 미세 세부(크기 무관)로 바꿨다. 주 파장 상대 오차는 기준 파장(cm)이 없어 정의 불가라 뺐고, 모래 먼지는 이 손잡이 셋(사구 재질)과 무관해 뺐다. 방향 손잡이(WindDegrees)는 방향 지표가 없어 구조상 둔감 / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다",
   "scenes": [
     {
       "name": "sand_dunes",
@@ -18,6 +18,12 @@
         ],
         "console": [
           "TD.FluidFX.SolverBackend 1"
+        ]
+      },
+      "step_apply": {
+        "pawn": [
+          0,
+          0
         ],
         "move": {
           "distance_cm": 1500.0

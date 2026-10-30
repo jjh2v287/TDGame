@@ -1,0 +1,7 @@
+{
+  "note": "frame 대조 이미지(fx8n_embers/ember_campfire_niagara 00_schedule_*.png 5장, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 출처: Tools/FluidFX/calib/retired/regions/fx8n_ember_regions.json(sky 의 옛 kind background 는 기본 모드 허용값이 아니라 sky). embers 는 불꽃 몸통 꼭대기(휘도 40/255 넘는 가장 큰 덩어리의 맨 위, 5장 y 242~261) 위의 띠만 담는다: 아래 끝 y 228 로 몸통과 그 위 흐린 불꽃 끝(휘도 12/255 넘는 100px 넘는 덩어리, 6.25초·7초 장)을 빼고, 위로는 불티 최고점(y 약 188)보다 넉넉히 y 110, 옆으로는 기사(x 약 690 이하)를 피했다. 이 띠의 불티는 장당 약 3~18개다. sky 는 불티가 닿지 않는 검은 배경",
+  "regions": [
+    {"name": "embers", "kind": "embers", "box": [705, 110, 925, 228]},
+    {"name": "sky", "kind": "sky", "box": [960, 40, 1260, 330]}
+  ]
+}

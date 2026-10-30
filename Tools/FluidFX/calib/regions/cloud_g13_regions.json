@@ -1,0 +1,15 @@
+{
+  "note": "frame 대조 이미지(cloud_g13_storm_wall/storm_wall 00_schedule_*.png 3장, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 출처: Tools/FluidFX/calib/retired/regions/cloud_g13_regions.json(frame-after 명세 없음). storm_wall = 화면 아래 폭풍 벽 띠 중 세 장 모두 구름으로 찬 행(윗가장자리 최저 약 630, 아래 하늘 틈 약 688 사이; 하늘 제외).",
+  "regions": [
+    {
+      "name": "storm_wall",
+      "kind": "cloud",
+      "box": [
+        0,
+        638,
+        1280,
+        684
+      ]
+    }
+  ]
+}

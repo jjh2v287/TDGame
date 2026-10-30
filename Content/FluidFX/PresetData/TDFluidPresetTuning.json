@@ -260,7 +260,20 @@
       "InteractionVolumeHalfHeightCm": 300.0,
       "NiagaraCacheRefreshIntervalSeconds": 1.0,
       "MaxGroundTracesPerTick": 32,
-      "GroundTraceDepthCm": 500.0
+      "GroundTraceDepthCm": 500.0,
+      "MaxStepRateHz": 0.0,
+      "LodMinStepRateHz": 30.0,
+      "LodNearDistanceCm": 2500.0,
+      "LodFarDistanceCm": 5000.0,
+      "LodStepCount": 0,
+      "bPauseWhenNotVisible": false,
+      "VisibilityGraceSeconds": 0.2,
+      "bKeepBuffersOnReinit": false,
+      "bNormalizeDynamicsByCellSize": false,
+      "ReferenceCellSizeCm": 0.0,
+      "FadeOutSeconds": 1.0,
+      "FadeOutDissipationPerSec": 6.0,
+      "SimStateCacheMaxWaitSeconds": 2.0
     },
     "TDFluidEmberSettings": {
       "MaxEmbers": 256,
@@ -1449,12 +1462,91 @@
     "RainAccumulationBench": {
     },
     "CloudPaint": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "SimExtentCm": {
+          "X": 3000.0,
+          "Y": 3000.0
+        },
+        "DensityDissipation": 0.0,
+        "VelocityDamping": 0.6,
+        "VorticityStrength": 0.6,
+        "FlowNoiseAccelerationCmPerSec2": 20.0,
+        "FlowNoiseScaleCm": 300.0,
+        "FlowNoiseSpeed": 0.05,
+        "TerrainSlopeGravity": 0.0,
+        "BorderFadeRatio": 0.05
+      }
     },
     "CloudCyclone": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 512,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "SimExtentCm": {
+          "X": 6000.0,
+          "Y": 6000.0
+        },
+        "VortexTangentialAccelerationCmPerSec2": 25.0,
+        "VortexRadialDriftCmPerSec": -30.0,
+        "VortexRadiusRatio": 0.45,
+        "VelocityDamping": 0.2,
+        "DensityDissipation": 0.0,
+        "AmbientDensity": 0.75,
+        "AmbientRefillPerSec": 0.1,
+        "AmbientNoiseAmount": 0.5,
+        "FlowNoiseAccelerationCmPerSec2": 8.0,
+        "FlowNoiseScaleCm": 750.0,
+        "FlowNoiseSpeed": 0.05,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0
+      }
     },
     "CloudStormWall": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "VorticityStrength": 3.0,
+        "BuoyancyCmPerSec2": 40.0,
+        "VelocityDamping": 0.1,
+        "DensityDissipation": 0.03,
+        "ActorBrushDensityStrength": 0.9,
+        "OutflowBandRatio": 0.08,
+        "OutflowRatePerSec": 1.0,
+        "FlowNoiseAccelerationCmPerSec2": 15.0,
+        "FlowNoiseScaleCm": 400.0,
+        "BorderFadeRatio": 0.05,
+        "TerrainSlopeGravity": 0.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "VerticalBillboard"
+      }
     },
     "CloudWrapField": {
+      "TDFluidSimulationConfig": {
+        "AreaAddressMode": "Wrap",
+        "GridResolution": 256,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "SimExtentCm": {
+          "X": 3000.0,
+          "Y": 3000.0
+        },
+        "BorderFadeRatio": 0.0,
+        "TerrainSlopeGravity": 0.0,
+        "PressureIterations": 12,
+        "FlowNoiseAccelerationCmPerSec2": 40.0,
+        "FlowNoiseScaleCm": 500.0,
+        "FlowNoiseSpeed": 0.04,
+        "VorticityStrength": 0.8,
+        "DensityDissipation": 0.02,
+        "AmbientDensity": 0.55,
+        "AmbientRefillPerSec": 0.15,
+        "AmbientNoiseAmount": 0.6
+      }
     }
   },
   "Globals": {
@@ -1473,8 +1565,33 @@
     "TDFluidUnderwaterSettings": {
     },
     "TDFluidCloudSceneSettings": {
+      "ViewSampleCountScaleFar": 2.0,
+      "ViewSampleCountScaleNear": 4.0,
+      "ShadowViewSampleCountScale": 1.0,
+      "NearEnterMarginKm": 0.5,
+      "NearExitMarginKm": 0.75,
+      "TracingMaxDistanceKm": 50.0,
+      "StopTracingTransmittanceThreshold": 0.005,
+      "PainterBrushRadiusKm": 0.5,
+      "PainterVelocityScale": 1.0,
+      "PainterProjection": "LayerMidHeight",
+      "PainterMaxStampsPerTick": 16,
+      "WindCurtainHeightRatio": 0.12,
+      "WindCurtainThicknessRatio": 0.1,
+      "WindCurtainSpanRatio": 0.9,
+      "WindCurtainSpeedCmPerSec": 150.0,
+      "WindCurtainLiftRatio": 0.2,
+      "WindCurtainStampCount": 12,
+      "WindCurtainGustAmplitude": 0.3,
+      "WindCurtainGustPeriodSeconds": 8.0,
+      "CycloneEyeRadiusRatio": 0.05,
+      "CycloneEyeEraseStrength": 1.0
     },
     "TDFluidOutputQualitySettings": {
+      "Level0LoopScale": 0.35,
+      "Level1LoopScale": 0.5,
+      "Level2LoopScale": 0.75,
+      "MinimumLoopScalar": 2.0
     }
   }
 }

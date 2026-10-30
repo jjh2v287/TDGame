@@ -64,6 +64,7 @@ public:
 
 private:
 	void HandleAssetsLoaded();
+	void HandlePresetTuningReloaded(int32 TableGeneration);
 	UMaterialInstanceDynamic* CreateFlowCopyMaterialInstance();
 	void RefreshSourceLiveActor();
 	void BindSourceLiveActor(ATDFluidLiveActor* NewSource);
@@ -76,6 +77,7 @@ private:
 
 	TWeakObjectPtr<ATDFluidLiveActor> SourceLiveActor;
 	TSharedPtr<FStreamableHandle> AssetLoadHandle;
+	FDelegateHandle PresetTuningReloadedHandle;
 	bool bAreAssetsReady = false;
 	bool bIsWritingFlow = false;
 };

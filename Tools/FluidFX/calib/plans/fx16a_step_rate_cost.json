@@ -1,0 +1,195 @@
+{
+ "run_label": "fx16a-step-rate",
+ "note": "FX-16a OP1·OP2·OP3 처리 주기 상한 비용과 안 보이면 정지 비용(pie_profile_fluid.py --csv-gpu, fx7p_plan.json 형식). 대상은 활성 볼륨 없는 구역 1a 횃불 2(TDGen_OpsTorchRow0·1)와 등 뒤 횃불 TDGen_OpsTorchBehind(깨움 거리 5000 cm 안·활성 볼륨 없음)이고 장면마다 두 CVAR를 모두 명시한다. A=깨움, B=재움 차분이므로 Row 장면 값은 횃불 2개의 합이다. 무대는 editor_make_fluid_ops_stage.py",
+ "fresh_pie_after_gpu": true,
+ "recorded_variables": [
+  "t.MaxFPS",
+  "r.VSync",
+  "r.VSyncEditor",
+  "r.GPUCsvStatsEnabled",
+  "r.DynamicRes.OperationMode",
+  "r.ScreenPercentage",
+  "r.Editor.Viewport.OverridePIEScreenPercentage",
+  "r.AntiAliasingMethod",
+  "r.VolumetricFog",
+  "sg.ResolutionQuality",
+  "sg.ViewDistanceQuality",
+  "sg.AntiAliasingQuality",
+  "sg.ShadowQuality",
+  "sg.GlobalIlluminationQuality",
+  "sg.ReflectionQuality",
+  "sg.PostProcessQuality",
+  "sg.TextureQuality",
+  "sg.EffectsQuality",
+  "sg.FoliageQuality",
+  "sg.ShadingQuality",
+  "TD.FluidFX.MaxStepRateHz",
+  "TD.FluidFX.PauseWhenNotVisible"
+ ],
+ "hash_paths": [
+  "Content/FluidFX/Maps/LV_TDFluidOpsStage.umap",
+  "Content/FluidFX/Presets/DA_TDFluid_OpsMudExternal.uasset"
+ ],
+ "scenes": [
+  {
+   "id": "TorchRowCap60",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidOpsStage",
+   "targets": [
+    "TDGen_OpsTorchRow0",
+    "TDGen_OpsTorchRow1"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "t.MaxFPS 120",
+      "TD.FluidFX.MaxStepRateHz 60",
+      "TD.FluidFX.PauseWhenNotVisible 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_OpsTorchRow0",
+     "distance_cm": 1500.0,
+     "pitch": -60.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "count": 2,
+    "cap_hz": 60,
+    "pause_when_not_visible": 0
+   },
+   "gpu_clock": false
+  },
+  {
+   "id": "TorchRowCapOff",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidOpsStage",
+   "targets": [
+    "TDGen_OpsTorchRow0",
+    "TDGen_OpsTorchRow1"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "t.MaxFPS 120",
+      "TD.FluidFX.MaxStepRateHz 0",
+      "TD.FluidFX.PauseWhenNotVisible 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_OpsTorchRow0",
+     "distance_cm": 1500.0,
+     "pitch": -60.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "count": 2,
+    "cap_hz": 0,
+    "pause_when_not_visible": 0
+   },
+   "gpu_clock": false
+  },
+  {
+   "id": "TorchBehindCameraPaused",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidOpsStage",
+   "targets": [
+    "TDGen_OpsTorchBehind"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "t.MaxFPS 120",
+      "TD.FluidFX.MaxStepRateHz 0",
+      "TD.FluidFX.PauseWhenNotVisible 1"
+     ],
+     "restore": true
+    },
+    {
+     "action": "sleep",
+     "targets": "others",
+     "awake": false
+    },
+    {
+     "action": "camera",
+     "target": "TDGen_OpsCameraMark",
+     "distance_cm": 1500.0,
+     "pitch": -10.0,
+     "yaw": 0.0,
+     "height_cm": 100.0
+    }
+   ],
+   "a": [
+    {
+     "action": "sleep",
+     "awake": true
+    }
+   ],
+   "b": [
+    {
+     "action": "sleep",
+     "awake": false
+    }
+   ],
+   "meta": {
+    "backend": "Cpu",
+    "count": 1,
+    "cap_hz": 0,
+    "pause_when_not_visible": 1
+   },
+   "gpu_clock": false
+  }
+ ],
+ "draft_status": "blocked(CAL-0)",
+ "p3_gaps": [
+  "새 CVAR TD.FluidFX.MaxStepRateHz·TD.FluidFX.PauseWhenNotVisible는 FX-16a 묶음 A 빌드 뒤에만 있다: recorded_variables에 넣었으므로 console restore가 이전 값으로 되돌린다(M3d)",
+  "OP1 비율(상한 60 대 끔 ≤ 0.55)과 p95 기록은 두 장면 A−B 결과를 비교하는 후처리가 필요하다: 현재 --analyze는 장면별 차분만 낸다(CAL-0)",
+  "OP5 거리 곡선(구역 1b 횃불 8개 TDGen_OpsTorchLod0~7)의 거리별 스텝 수는 GetCompletedStepCount 조회 동작이 pie_profile에 없어 이 계획에 장면이 없다",
+  "camera 동작은 대상을 정면으로 보는 위치에 카메라를 두므로 TorchBehindCameraPaused의 카메라 대상은 표지 TDGen_OpsCameraMark이고 측정 대상(등 뒤)은 targets에 따로 둔다",
+  "열 이름 required_columns는 시운전 1블록으로 대조한다(L-editor-60)"
+ ]
+}

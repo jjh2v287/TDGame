@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). 구름 무대 LV_TDFluidCloudStage(지면 Z 0 = 구름 지면, 40 km 지형 = SM_TD_FluidCloudTerrainGrid256 × 40000 + 지형 MI(VSM Rigid) + 먼 바닥 200 km, 하늘 대기·주광·하늘광·높이 안개·수동 노출 PPV, 구름 액터 1(셋업 17), 대리 라이브 6(Z -20000 cm, 태그 TDFluidCloud_<셋업>, Paint 만 평지 관찰점 앞 지면), 교반기, 셋업마다 CineCamera TDGen_CloudCam_<셋업>)와 DA_TDFluid_Cloud<셋업> 6개를 만든다. 먼저 editor_make_fluid_cloud_material.py 와 editor_make_fluid_particle_stage.py(교반기 블루프린트)가 끝나 있어야 한다. 공용 함수는 editor_make_fluid_particle_stage.py 에서 가져온다.
+"""실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). 구름 무대 LV_TDFluidCloudStage(지면 Z 0 = 구름 지면, 40 km 지형 = SM_TD_FluidCloudTerrainGrid256 × 40000 + 지형 MI(VSM Rigid) + 먼 바닥 200 km, 하늘 대기·주광·하늘광·높이 안개·수동 노출 PPV, 구름 액터 1(셋업 20), 대리 라이브 9(Z -20000 cm, 태그 TDFluidCloud_<셋업>), 교반기, 칠하기 액터 TDGen_CloudPainter·바람 막 액터 TDGen_CloudWindCurtain, 셋업마다 CineCamera TDGen_CloudCam_<셋업>)와 DA_TDFluid_Cloud<셋업> 9개를 만든다. 먼저 editor_make_fluid_cloud_material.py 와 editor_make_fluid_particle_stage.py(교반기 블루프린트)가 끝나 있어야 한다. 공용 함수는 editor_make_fluid_particle_stage.py 에서 가져온다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_cloud_stage.py (PowerShell, L-repo-01. 갱신은 Saved/FluidFX/fluid_cloud_stage_request.json 에 {"overwrite": true}, 6c 토네이도 HVOL 은 같은 파일에 "with_hvol": true 또는 인수 --with-hvol, 에셋 단계 맨 끝에서만 cross-plan P-05)
-출력: /Game/FluidFX/Maps/LV_TDFluidCloudStage, /Game/FluidFX/Presets/DA_TDFluid_Cloud{Pillars,Vortex,Impulse,Aurora,Titan,Paint}, Saved/FluidFX/fluid_cloud_stage.json(preset_tuning_sha256·material_look_sha256, 셋업 17·카메라·원천, 지형 일치 단언, g14_hvol attached|deferred|skipped)
-상태: 미검증(2026-10-26 FX-11r 작성: py_compile·가짜 unreal 가져오기만, 에디터 실행 전). 프리셋은 PresetKind 만 정하고 bOverridePresetDefaults 는 끈다(골든 불변). TerrainFollow > 0 인 슬롯이 있는 MI 는 CloudTerrainFootprintKm·HeightRangeKm 이 지형 MI StageTerrain* 과 같아야 하며 다르면 중단한다(refute M4). Titan 지우개(밀도 −1) 구동은 교반기 채널에 없어 보통 교반기로 두고 보고에 deferred 로 적는다. 무대 조명 값은 JSON 밖 무대 상수다(spec 2.7, 조명 담당 P-9). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(셋업 17·DA 6·액터 38, g14_hvol skipped), stage-report stale 0, 화면 판정 전. 고침: 높이 안개 속성 enable_volumetric_fog, 먼 바닥 축척 200000(200 km).
+출력: /Game/FluidFX/Maps/LV_TDFluidCloudStage, /Game/FluidFX/Presets/DA_TDFluid_Cloud{Pillars,Vortex,Impulse,Aurora,Titan,Paint,Cyclone,StormWall,WrapField}, Saved/FluidFX/fluid_cloud_stage.json(preset_tuning_sha256·material_look_sha256, 셋업 20·카메라·원천·조절 액터, 지형 일치 단언, g14_hvol attached|deferred|skipped)
+상태: 미검증(2026-10-26 FX-11r 작성: py_compile·가짜 unreal 가져오기만, 에디터 실행 전). 프리셋은 PresetKind 만 정하고 bOverridePresetDefaults 는 끈다(골든 불변). TerrainFollow > 0 인 슬롯이 있는 MI 는 CloudTerrainFootprintKm·HeightRangeKm 이 지형 MI StageTerrain* 과 같아야 하며 다르면 중단한다(refute M4). Titan 지우개(밀도 −1) 구동은 교반기 채널에 없어 보통 교반기로 두고 보고에 deferred 로 적는다. 무대 조명 값은 JSON 밖 무대 상수다(spec 2.7, 조명 담당 P-9). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(셋업 17·DA 6·액터 38, g14_hvol skipped), stage-report stale 0, 화면 판정 전. 고침: 높이 안개 속성 enable_volumetric_fog, 먼 바닥 축척 200000(200 km). 2026-10-29 FX-11c 무대 단계 작성(py_compile·가짜 unreal 가져오기만, 에디터 실행 전): 셋업 17 CycloneLive·18 StormWall·19 WrapField, 원천 3(DA 9개), Paint 종류 CLOUD_PAINT(원천 줄 Z -20000, 마우스 붓 끔, 카메라 목표 평지 사분면), 원천 역할 Coverage|Section, 모든 원천 DA 기본 채널 R, 조절 액터 2, 클래스·속성 점검.
 """
 import importlib.util
 import json
@@ -18,6 +18,10 @@ STAGE_MAP_PATH = f"{FLUID_ROOT}/Maps/LV_TDFluidCloudStage"
 PRESET_DIR = f"{FLUID_ROOT}/Presets"
 FLUID_ACTOR_CLASS_PATH = "/Script/TDGame.TDFluidLiveActor"
 CLOUD_ACTOR_CLASS_PATH = "/Script/TDGame.TDFluidCloudLayersActor"
+PAINTER_ACTOR_CLASS_PATH = "/Script/TDGame.TDFluidCloudPainterActor"
+WIND_CURTAIN_ACTOR_CLASS_PATH = "/Script/TDGame.TDFluidCloudWindCurtainActor"
+PAINTER_REQUIRED_PROPERTIES = ("target_live_actor_tags",)
+WIND_CURTAIN_REQUIRED_PROPERTIES = ("target_live_actor_tag", "eye_sink_target_live_actor_tag")
 TERRAIN_GRID_PATH = f"{MESH_DIR}/SM_TD_FluidCloudTerrainGrid256"
 TERRAIN_INSTANCE_PATH = f"{MATERIAL_DIR}/MI_TD_FluidCloudStageTerrain"
 PLANE_MESH_PATH = "/Engine/BasicShapes/Plane"
@@ -35,8 +39,10 @@ FAR_FLOOR_Z_CM = -20.0
 SOURCE_DEPTH_CM = -20000.0
 SOURCE_SPACING_CM = 3000.0
 SOURCE_ROW = (-3000000.0, -3000000.0)
-PAINT_GROUND = (850000.0, 850000.0, 5001.0)
 IMPULSE_DEGREES_PER_SEC = 360.0
+EXPECTED_SETUP_COUNT = 20
+DEFAULT_SLOT_ROLE = "Coverage"
+SLOT_ROLE_ENUM_NAMES = {"Coverage": "COVERAGE", "Section": "SECTION"}
 PILLAR_OFFSETS_CM = ((-180.0, 0.0), (90.0, 156.0), (90.0, -156.0))
 SUN_ROTATION = (-12.0, 200.0)
 EXPOSURE_BIAS = 0.0
@@ -49,7 +55,10 @@ DYNAMIC_SOURCES = (
     {"setup": "Impulse", "kind": "SMOKE", "stirrers": 1, "degrees_per_sec": IMPULSE_DEGREES_PER_SEC},
     {"setup": "Aurora", "kind": "TILE_WAVES", "stirrers": 0},
     {"setup": "Titan", "kind": "SMOKE", "stirrers": 1, "eraser": "deferred"},
-    {"setup": "Paint", "kind": "FOOTPRINT_PAINTER", "stirrers": 0, "mouse_brush": True},
+    {"setup": "Paint", "kind": "CLOUD_PAINT", "stirrers": 0},
+    {"setup": "Cyclone", "kind": "CLOUD_CYCLONE", "stirrers": 0},
+    {"setup": "StormWall", "kind": "CLOUD_STORM_WALL", "stirrers": 0},
+    {"setup": "WrapField", "kind": "CLOUD_WRAP_FIELD", "stirrers": 0},
 )
 SETUP_SPECS = (
     {"name": "Pillars", "sources": {1: "Pillars"}, "camera": ((-12.0, 0.0, 0.3), (0.0, 0.0, 4.0))},
@@ -57,7 +66,7 @@ SETUP_SPECS = (
     {"name": "Impulse", "sources": {1: "Impulse"}, "camera": ((-30.0, 0.0, 1.0), (0.0, 0.0, 3.5))},
     {"name": "Aurora", "sources": {1: "Aurora"}, "camera": ((-15.0, 0.0, 0.3), (0.0, 0.0, 120.0))},
     {"name": "Titan", "sources": {1: "Titan"}, "camera": ((-12.0, -4.0, 0.4), (0.0, 0.0, 1.0))},
-    {"name": "Paint", "sources": {1: "Paint"}, "camera": ((8.6, 8.6, 0.07), (0.0, 0.0, 1.5))},
+    {"name": "Paint", "sources": {1: "Paint"}, "camera": ((8.6, 8.6, 0.07), (6.0, 6.0, 3.1))},
     {"name": "Volcano", "sources": {}, "camera": ((-16.0, 3.0, 0.2), (0.0, 0.0, 4.0))},
     {"name": "VolcanoSky", "sources": {}, "camera": ((-16.0, 3.0, 0.2), (0.0, 0.0, 4.0))},
     {"name": "Mushroom", "sources": {}, "camera": ((-6.0, -6.0, 0.3), (12.0, 12.0, 4.0))},
@@ -69,9 +78,15 @@ SETUP_SPECS = (
     {"name": "Tornado", "sources": {1: "Vortex"}, "camera": ((-12.0, 0.0, 0.3), (0.0, 0.0, 3.0))},
     {"name": "Cyclone", "sources": {}, "camera": ((-15.0, -15.0, 6.0), (0.0, 0.0, 1.0))},
     {"name": "SkyOnly", "sources": {}, "camera": ((0.0, 0.0, 0.2), (5.0, 0.0, 2.5))},
+    {"name": "CycloneLive", "material": "MI_TD_FluidCloud_CycloneLive", "sources": {1: "Cyclone/Coverage"}, "camera": ((-15.0, -15.0, 6.0), (0.0, 0.0, 1.0))},
+    {"name": "StormWall", "sources": {1: "StormWall/Section"}, "camera": ((12.0, 5.5, 0.15), (12.0, 12.0, 1.5))},
+    {"name": "WrapField", "sources": {1: "WrapField/Coverage"}, "camera": ((40.0, 0.0, 12.0), (40.0, 0.01, 0.0))},
 )
 REQUIRED_UNREAL_NAMES = (
-    "TDFluidCloudLayersActor", "TDFluidCloudSetup", "TDFluidCloudSlotSource", "TDFluidCloudSlotTextureRole.COVERAGE",
+    "TDFluidCloudLayersActor", "TDFluidCloudPainterActor", "TDFluidCloudWindCurtainActor", "TDFluidCloudSetup", "TDFluidCloudSlotSource",
+    "TDFluidCloudSlotTextureRole.COVERAGE", "TDFluidCloudSlotTextureRole.SECTION", "TDFluidBrushChannel.CHANNEL_R_MUD",
+    "TDFluidCloudPainterProjection.LAYER_MID_HEIGHT", "TDFluidCloudPainterProjection.TERRAIN",
+    "TDFluidPresetKind.CLOUD_PAINT", "TDFluidPresetKind.CLOUD_CYCLONE", "TDFluidPresetKind.CLOUD_STORM_WALL", "TDFluidPresetKind.CLOUD_WRAP_FIELD",
     "TDFluidPresetAsset", "TDFluidPresetKind", "SkyAtmosphere", "DirectionalLight", "SkyLight", "ExponentialHeightFog",
     "PostProcessVolume", "CineCameraActor", "StaticMeshActor", "ShadowCacheInvalidationBehavior.RIGID",
     "AutoExposureMethod.AEM_MANUAL", "RotatingMovementComponent", "MaterialInstanceConstant",
@@ -117,6 +132,17 @@ def instance_path(setup_name):
     return f"{MATERIAL_DIR}/MI_TD_FluidCloud_{setup_name}"
 
 
+def resolve_material_path(spec):
+    if "material" in spec:
+        return f"{MATERIAL_DIR}/{spec['material']}"
+    return instance_path(spec["name"])
+
+
+def parse_slot_source(source_text):
+    source_name, _, role_name = source_text.partition("/")
+    return source_name, role_name or DEFAULT_SLOT_ROLE
+
+
 def source_tag(setup_name):
     return f"TDFluidCloud_{setup_name}"
 
@@ -124,8 +150,8 @@ def source_tag(setup_name):
 def validate_stage_layout():
     problems = []
     names = [spec["name"] for spec in SETUP_SPECS]
-    if len(names) != 17 or len(set(names)) != 17:
-        problems.append(f"셋업 17개·이름 중복 없음이어야 함: {len(names)}")
+    if len(names) != EXPECTED_SETUP_COUNT or len(set(names)) != EXPECTED_SETUP_COUNT:
+        problems.append(f"셋업 {EXPECTED_SETUP_COUNT}개·이름 중복 없음이어야 함: {len(names)}")
     expected_order = ["Pillars", "Vortex", "Impulse", "Aurora", "Titan", "Paint"]
     if names[:6] != expected_order:
         problems.append("동적 셋업 순서(0~5)가 명세와 다름")
@@ -134,8 +160,11 @@ def validate_stage_layout():
         for slot, source in spec["sources"].items():
             if not 0 <= slot < SLOT_COUNT:
                 problems.append(f"{spec['name']}: 슬롯 {slot} 범위 밖")
-            if source not in dynamic:
-                problems.append(f"{spec['name']}: 원천 {source} 가 대리 라이브에 없음")
+            source_name, role_name = parse_slot_source(source)
+            if source_name not in dynamic:
+                problems.append(f"{spec['name']}: 원천 {source_name} 가 대리 라이브에 없음")
+            if role_name not in SLOT_ROLE_ENUM_NAMES:
+                problems.append(f"{spec['name']}: 원천 역할 {role_name} 알 수 없음({'|'.join(SLOT_ROLE_ENUM_NAMES)})")
     if TERRAIN_SCALE * 100.0 / CENTIMETERS_PER_KILOMETER != 40.0:
         problems.append("지형 격자 축척이 40 km 가 아님")
     return problems
@@ -149,9 +178,9 @@ def find_terrain_contract_problems(materials):
     terrain_footprint = terrain.get("Vectors", {}).get("StageTerrainFootprintKm")
     terrain_range = terrain.get("Vectors", {}).get("StageTerrainHeightRangeKm")
     for spec in SETUP_SPECS:
-        entry = materials.get(instance_path(spec["name"]))
+        entry = materials.get(resolve_material_path(spec))
         if entry is None:
-            problems.append(f"모양 정본에 없음: {instance_path(spec['name'])}")
+            problems.append(f"모양 정본에 없음: {resolve_material_path(spec)}")
             continue
         scalars = entry.get("Scalars", {})
         follows = [slot for slot in range(SLOT_COUNT) if scalars.get(f"CloudSlot{slot}TerrainFollow", 0.0) > 0.0 and scalars.get(f"CloudSlot{slot}Source", 0.0) > 0.5]
@@ -168,6 +197,7 @@ def configure_source_preset(stage, spec):
     preset, path = stage.load_or_create_preset("Cloud" + spec["setup"])
     preset.set_editor_property("preset_kind", kind)
     preset.set_editor_property("override_preset_defaults", False)
+    preset.set_editor_property("default_channel", unreal.TDFluidBrushChannel.CHANNEL_R_MUD)
     preset.set_editor_property("simulation_config", unreal.TDFluidPresetAsset.build_config_for_preset_kind(kind))
     stage.save_asset(preset, path)
     return preset, path, preset.resolve_effective_config()
@@ -175,14 +205,11 @@ def configure_source_preset(stage, spec):
 
 def place_source(stage, actors, fluid_actor_class, stirrer_class, index, spec, preset_record, created):
     preset, preset_path, effective = preset_record
-    if spec.get("mouse_brush"):
-        location = PAINT_GROUND
-    else:
-        location = (SOURCE_ROW[0] + index * SOURCE_SPACING_CM, SOURCE_ROW[1], SOURCE_DEPTH_CM)
+    location = (SOURCE_ROW[0] + index * SOURCE_SPACING_CM, SOURCE_ROW[1], SOURCE_DEPTH_CM)
     actor = actors.spawn_actor_from_class(fluid_actor_class, unreal.Vector(*location), unreal.Rotator())
     stage.finish_actor(actor, f"Cloud{spec['setup']}_Source", f"{FOLDER}/Sources", created)
     stage.configure_live_actor(actor, preset, effective)
-    actor.set_editor_property("accept_mouse_brush", bool(spec.get("mouse_brush")))
+    actor.set_editor_property("accept_mouse_brush", False)
     actor.set_editor_property("tags", [unreal.Name(source_tag(spec["setup"]))])
     stirrers = []
     offsets = PILLAR_OFFSETS_CM[:spec["stirrers"]] if spec["stirrers"] > 1 else ((0.0, 0.0),) * spec["stirrers"]
@@ -195,8 +222,8 @@ def place_source(stage, actors, fluid_actor_class, stirrer_class, index, spec, p
             rotating.set_editor_property("rotation_rate", unreal.Rotator(roll=0.0, pitch=0.0, yaw=spec["degrees_per_sec"]))
         stirrers.append(stirrer.get_actor_label())
     return {"setup": spec["setup"], "kind": spec["kind"], "preset": preset_path, "override_preset_defaults": False, "actor": actor.get_actor_label(),
-            "tag": source_tag(spec["setup"]), "location_cm": list(location), "stirrers": stirrers, "mouse_brush": bool(spec.get("mouse_brush")),
-            "eraser": spec.get("eraser", "none")}
+            "tag": source_tag(spec["setup"]), "location_cm": list(location), "stirrers": stirrers, "mouse_brush": False,
+            "default_channel": "CHANNEL_R_MUD", "eraser": spec.get("eraser", "none")}
 
 
 def place_terrain(actors, created, stage):
@@ -250,13 +277,14 @@ def make_cloud_setups():
     for spec in SETUP_SPECS:
         setup = unreal.TDFluidCloudSetup()
         setup.set_editor_property("setup_name", unreal.Name(spec["name"]))
-        setup.set_editor_property("cloud_material", unreal.EditorAssetLibrary.load_asset(instance_path(spec["name"])))
+        setup.set_editor_property("cloud_material", unreal.EditorAssetLibrary.load_asset(resolve_material_path(spec)))
         sources = []
         for slot, source in sorted(spec["sources"].items()):
+            source_name, role_name = parse_slot_source(source)
             slot_source = unreal.TDFluidCloudSlotSource()
             slot_source.set_editor_property("slot_index", slot)
-            slot_source.set_editor_property("role", unreal.TDFluidCloudSlotTextureRole.COVERAGE)
-            slot_source.set_editor_property("live_actor_tag", unreal.Name(source_tag(source)))
+            slot_source.set_editor_property("role", getattr(unreal.TDFluidCloudSlotTextureRole, SLOT_ROLE_ENUM_NAMES[role_name]))
+            slot_source.set_editor_property("live_actor_tag", unreal.Name(source_tag(source_name)))
             sources.append(slot_source)
         setup.set_editor_property("slot_sources", sources)
         setups.append(setup)
@@ -264,7 +292,7 @@ def make_cloud_setups():
 
 
 def place_cloud_actor(actors, created, stage):
-    missing = [instance_path(spec["name"]) for spec in SETUP_SPECS if not unreal.EditorAssetLibrary.does_asset_exist(instance_path(spec["name"]))]
+    missing = [resolve_material_path(spec) for spec in SETUP_SPECS if not unreal.EditorAssetLibrary.does_asset_exist(resolve_material_path(spec))]
     if missing:
         raise RuntimeError("구름 MI 없음(editor_make_fluid_cloud_material.py 먼저): " + ", ".join(missing))
     cloud_class = unreal.load_class(None, CLOUD_ACTOR_CLASS_PATH)
@@ -279,6 +307,39 @@ def place_cloud_actor(actors, created, stage):
     if len(stored) != len(SETUP_SPECS):
         raise RuntimeError(f"구름 셋업 설정 확인 실패: {len(stored)}")
     return cloud.get_actor_label()
+
+
+def load_control_actor_class(stage, class_path, property_names):
+    actor_class = unreal.load_class(None, class_path)
+    if actor_class is None:
+        raise RuntimeError("구름 조절 액터 클래스 없음(재빌드와 에디터 재시작 필요): " + class_path)
+    missing = stage.find_missing_properties(unreal.get_default_object(actor_class), property_names)
+    if missing:
+        raise RuntimeError(f"구름 조절 액터 속성 없음(재빌드와 에디터 재시작 필요): {class_path} {', '.join(missing)}")
+    return actor_class
+
+
+def place_control_actors(actors, created, stage, painter_class, wind_curtain_class):
+    folder = f"{FOLDER}/Cloud"
+    painter_tags = [source_tag("Paint")]
+    painter = actors.spawn_actor_from_class(painter_class, unreal.Vector(0.0, 0.0, 0.0), unreal.Rotator())
+    stage.finish_actor(painter, "CloudPainter", folder, created)
+    painter.set_editor_property("target_live_actor_tags", [unreal.Name(tag) for tag in painter_tags])
+    stored_painter_tags = [str(tag) for tag in painter.get_editor_property("target_live_actor_tags")]
+    if stored_painter_tags != painter_tags:
+        raise RuntimeError(f"칠하기 액터 대상 태그 확인 실패: {stored_painter_tags}")
+    wind_tag = source_tag("StormWall")
+    eye_sink_tag = source_tag("Cyclone")
+    wind_curtain = actors.spawn_actor_from_class(wind_curtain_class, unreal.Vector(0.0, 0.0, 0.0), unreal.Rotator())
+    stage.finish_actor(wind_curtain, "CloudWindCurtain", folder, created)
+    wind_curtain.set_editor_property("target_live_actor_tag", unreal.Name(wind_tag))
+    wind_curtain.set_editor_property("eye_sink_target_live_actor_tag", unreal.Name(eye_sink_tag))
+    stored_wind_tag = str(wind_curtain.get_editor_property("target_live_actor_tag"))
+    stored_eye_sink_tag = str(wind_curtain.get_editor_property("eye_sink_target_live_actor_tag"))
+    if (stored_wind_tag, stored_eye_sink_tag) != (wind_tag, eye_sink_tag):
+        raise RuntimeError(f"바람 막 액터 대상 태그 확인 실패: {stored_wind_tag}, {stored_eye_sink_tag}")
+    return {"painter": painter.get_actor_label(), "painter_tags": painter_tags, "wind_curtain": wind_curtain.get_actor_label(),
+            "wind_curtain_tag": wind_tag, "eye_sink_tag": eye_sink_tag}
 
 
 def place_cameras(actors, created, stage):
@@ -350,6 +411,8 @@ def main():
     fluid_actor_class = unreal.load_class(None, FLUID_ACTOR_CLASS_PATH)
     if fluid_actor_class is None:
         raise RuntimeError("유체 액터 클래스 없음: " + FLUID_ACTOR_CLASS_PATH)
+    painter_class = load_control_actor_class(stage, PAINTER_ACTOR_CLASS_PATH, PAINTER_REQUIRED_PROPERTIES)
+    wind_curtain_class = load_control_actor_class(stage, WIND_CURTAIN_ACTOR_CLASS_PATH, WIND_CURTAIN_REQUIRED_PROPERTIES)
 
     print("단계: 교반기·프리셋")
     stirrer_class, _ = stage.load_or_create_stirrer_blueprint()
@@ -364,6 +427,7 @@ def main():
     lighting_record = place_lighting(actors, created, stage)
     source_records = [place_source(stage, actors, fluid_actor_class, stirrer_class, index, spec, presets[spec["setup"]], created) for index, spec in enumerate(DYNAMIC_SOURCES)]
     cloud_label = place_cloud_actor(actors, created, stage)
+    control_record = place_control_actors(actors, created, stage, painter_class, wind_curtain_class)
     cameras = place_cameras(actors, created, stage)
     player_start = actors.spawn_actor_from_class(unreal.PlayerStart, kilometers_to_vector((-12.0, 0.0, 0.3)), unreal.Rotator())
     stage.finish_actor(player_start, "CloudPlayerStart", f"{FOLDER}/Gameplay", created)
@@ -376,9 +440,11 @@ def main():
 
     report = {
         "status": "ok", "preset_tuning_sha256": tuning_sha256, "material_look_sha256": look_sha256, "map": STAGE_MAP_PATH, "overwrite": overwrite,
-        "cloud_actor": cloud_label, "setups": [{"index": index, "name": spec["name"], "material": instance_path(spec["name"]),
-                                                "sources": {str(slot): source_tag(source) for slot, source in spec["sources"].items()}, "camera": cameras[spec["name"]]}
-                                               for index, spec in enumerate(SETUP_SPECS)],
+        "cloud_actor": cloud_label, "setup_count": len(SETUP_SPECS), "control_actors": control_record,
+        "setups": [{"index": index, "name": spec["name"], "material": resolve_material_path(spec),
+                    "sources": {str(slot): "/".join((source_tag(parse_slot_source(source)[0]), parse_slot_source(source)[1])) for slot, source in spec["sources"].items()},
+                    "camera": cameras[spec["name"]]}
+                   for index, spec in enumerate(SETUP_SPECS)],
         "sources": source_records, "terrain": terrain_record, "lighting": lighting_record, "terrain_contract": "TerrainFollow MI == MI_TD_FluidCloudStageTerrain",
         "g14_hvol": hvol_record["status"], "g14_hvol_detail": hvol_record, "created_actors": len(created), "saved": True,
     }

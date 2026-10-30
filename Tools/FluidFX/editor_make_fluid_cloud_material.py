@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 구름 마스터 M_TD_FluidCloudLayers(MD_VOLUME, 고정 슬롯 4개 = Custom 노드 4개 TDFluidCloudCommon+TDFluidCloudSlot, 합성 Custom 1개 TDFluidCloudCombine, 앞단 Substrate 안개·구름 BSDF 1순위, VolumetricAdvancedMaterialOutput·CloudSampleAttribute Altitude), MI 18, 무대 지형 M_TD_FluidCloudStageTerrain·MI_TD_FluidCloudStageTerrain, 자체 지형 격자 SM_TD_FluidCloudTerrainGrid256, 텍스처 8장을 만든다. 먼저 make_fluid_cloud_textures.py 와 editor_make_fluid_volume_material.py(T_TD_FluidNoiseVolume)가 끝나 있어야 하고, 모양 정본에 look-fragment-fx11r.json 이 병합되어 있어야 한다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 구름 마스터 M_TD_FluidCloudLayers(MD_VOLUME, 고정 슬롯 4개 = Custom 노드 4개 TDFluidCloudCommon+TDFluidCloudSlot, 합성 Custom 1개 TDFluidCloudCombine, 앞단 Substrate 안개·구름 BSDF 1순위, VolumetricAdvancedMaterialOutput·CloudSampleAttribute Altitude), MI 21, 무대 지형 M_TD_FluidCloudStageTerrain·MI_TD_FluidCloudStageTerrain, 자체 지형 격자 SM_TD_FluidCloudTerrainGrid256, 텍스처 8장을 만든다. 먼저 make_fluid_cloud_textures.py 와 editor_make_fluid_volume_material.py(T_TD_FluidNoiseVolume)가 끝나 있어야 하고, 모양 정본에 look-fragment-fx11r.json 과 look-fragment-fx11c.json(MI_TD_FluidCloud_StormWall·WrapField·CycloneLive) 이 병합되어 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_cloud_material.py (PowerShell, L-repo-01. 기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_cloud_material_request.json 에 {"overwrite": true})
-출력: /Game/FluidFX/Materials/M_TD_FluidCloudLayers·MI_TD_FluidCloud_*(18)·M_TD_FluidCloudStageTerrain·MI_TD_FluidCloudStageTerrain, /Game/FluidFX/Textures/T_TD_FluidCloud*(8), /Game/FluidFX/Meshes/SM_TD_FluidCloudTerrainGrid256, Saved/FluidFX/fluid_cloud_material.json(앞단 경로 substrate|legacy, 마스터 used_with_volumetric_cloud, 통계, HLSL sha256, 모양 sha256, 오류 수)
-상태: 미검증(2026-10-26 FX-11r 작성: py_compile·가짜 unreal·check_fluid_cloud_hlsl.py 만, 에디터 실행 전. 2026-10-27 마스터 사용 플래그 UsedWithVolumetricCloud 를 노드 생성 전에 켜고 컴파일 뒤 has_material_usage 로 단언 — 꺼져 있으면 구름 셰이더 미컴파일로 PIE 그림자 패스 assert, blend→domain 순서로 Additive 오류 잡음 제거, py_compile 만·재생성 전). 단면은 FX-9 규약(맨 위 행 = 바닥, refute M5). 지형 격자는 자체 메시(경계 위 260000 cm, refute M6·P-03), TerrainFollow > 0 MI 는 지형 MI 와 발자국·높이 범위가 같아야 한다(M4, 무대 스크립트가 단언). Albedo·EmissiveColor 는 벡터(M3). MI 텍스처 연결은 set 반환값 대신 다시 읽어 판정한다(L-editor-66). 볼륨 도메인 PS 명령 0 은 실패로 보지 않고 check_fluid_cloud_hlsl.py dxc 명령 수가 대체 지표다(L-editor-65).
+출력: /Game/FluidFX/Materials/M_TD_FluidCloudLayers·MI_TD_FluidCloud_*(21)·M_TD_FluidCloudStageTerrain·MI_TD_FluidCloudStageTerrain, /Game/FluidFX/Textures/T_TD_FluidCloud*(8), /Game/FluidFX/Meshes/SM_TD_FluidCloudTerrainGrid256, Saved/FluidFX/fluid_cloud_material.json(앞단 경로 substrate|legacy, 마스터 used_with_volumetric_cloud, 통계, HLSL sha256, 모양 sha256, 오류 수)
+상태: 미검증(2026-10-26 FX-11r 작성: py_compile·가짜 unreal·check_fluid_cloud_hlsl.py 만, 에디터 실행 전. 2026-10-27 마스터 사용 플래그 UsedWithVolumetricCloud 를 노드 생성 전에 켜고 컴파일 뒤 has_material_usage 로 단언 — 꺼져 있으면 구름 셰이더 미컴파일로 PIE 그림자 패스 assert, blend→domain 순서로 Additive 오류 잡음 제거, py_compile 만·재생성 전). 단면은 FX-9 규약(맨 위 행 = 바닥, refute M5). 지형 격자는 자체 메시(경계 위 260000 cm, refute M6·P-03), TerrainFollow > 0 MI 는 지형 MI 와 발자국·높이 범위가 같아야 한다(M4, 무대 스크립트가 단언). Albedo·EmissiveColor 는 벡터(M3). MI 텍스처 연결은 set 반환값 대신 다시 읽어 판정한다(L-editor-66). 볼륨 도메인 PS 명령 0 은 실패로 보지 않고 check_fluid_cloud_hlsl.py dxc 명령 수가 대체 지표다(L-editor-65). 2026-10-29 FX-11c C11b 작성: MI 18→21(StormWall·WrapField·CycloneLive 추가, 마스터 그래프 불변이라 L-editor-71 사용 플래그 노드 순서 그대로, StormWall 대체 단면 = SandWall 텍스처, CycloneLive 정적 덮임 = Cyclone 텍스처), py_compile·check_fluid_cloud_hlsl.py 만, 에디터 실행 전.
 """
 import hashlib
 import importlib.util
@@ -107,7 +107,9 @@ INSTANCE_NAMES = (
     "MI_TD_FluidCloud_Mushroom", "MI_TD_FluidCloud_MushroomShield", "MI_TD_FluidCloud_SandWall", "MI_TD_FluidCloud_Nimbus",
     "MI_TD_FluidCloud_Stratus", "MI_TD_FluidCloud_Mammatus", "MI_TD_FluidCloud_Tornado", "MI_TD_FluidCloud_Cyclone",
     "MI_TD_FluidCloud_SkyOnly", "MI_TD_FluidCloud_TestSlots",
+    "MI_TD_FluidCloud_StormWall", "MI_TD_FluidCloud_WrapField", "MI_TD_FluidCloud_CycloneLive",
 )
+STORM_WALL_SECTION_TEXTURE_NAME = "T_TD_FluidCloudSection_SandWall"
 STAGE_TEXTURE_OVERRIDES = {"CloudTerrainHeightTexture": "T_TD_FluidCloudStageHeight"}
 INSTANCE_TEXTURE_OVERRIDES = {
     "MI_TD_FluidCloud_Volcano": {"CloudSlot1SectionTexture": "T_TD_FluidCloudSection_VolcanoPlume"},
@@ -117,6 +119,8 @@ INSTANCE_TEXTURE_OVERRIDES = {
     "MI_TD_FluidCloud_SandWall": {"CloudSlot1SectionTexture": "T_TD_FluidCloudSection_SandWall"},
     "MI_TD_FluidCloud_Tornado": {"CloudSlot1SectionTexture": "T_TD_FluidCloudSection_Tornado"},
     "MI_TD_FluidCloud_Cyclone": {"CloudSlot1CoverageTexture": "T_TD_FluidCloudCoverage_Cyclone"},
+    "MI_TD_FluidCloud_StormWall": {"CloudSlot1SectionTexture": STORM_WALL_SECTION_TEXTURE_NAME},
+    "MI_TD_FluidCloud_CycloneLive": {"CloudSlot1CoverageTexture": "T_TD_FluidCloudCoverage_Cyclone"},
 }
 CPP_RUNTIME_SUFFIXES = ("CoverageTexture", "SectionTexture")
 SUBSTRATE_PIN_CANDIDATES = {"albedo": ("Albedo",), "extinction": ("Extinction",), "emissive": ("EmissiveColor", "Emissive Color", "Emissive")}

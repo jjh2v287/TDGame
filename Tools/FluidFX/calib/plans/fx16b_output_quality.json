@@ -1,0 +1,129 @@
+{
+ "id": "fx16b_output_quality",
+ "scenes": [
+  {
+   "name": "svol_q0",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "camera": {
+    "arm": 600.0,
+    "view": [
+     -60.0,
+     0.0
+    ],
+    "console": [
+     "t.MaxFPS 0",
+     "TD.FluidFX.OutputQuality 0"
+    ]
+   },
+   "settle": 4.0,
+   "regions_template": null,
+   "targets": null
+  },
+  {
+   "name": "svol_q1",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "camera": {
+    "arm": 600.0,
+    "view": [
+     -60.0,
+     0.0
+    ],
+    "console": [
+     "t.MaxFPS 0",
+     "TD.FluidFX.OutputQuality 1"
+    ]
+   },
+   "settle": 4.0,
+   "regions_template": null,
+   "targets": null
+  },
+  {
+   "name": "svol_q2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "camera": {
+    "arm": 600.0,
+    "view": [
+     -60.0,
+     0.0
+    ],
+    "console": [
+     "t.MaxFPS 0",
+     "TD.FluidFX.OutputQuality 2"
+    ]
+   },
+   "settle": 4.0,
+   "regions_template": null,
+   "targets": null
+  },
+  {
+   "name": "svol_q3",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "camera": {
+    "arm": 600.0,
+    "view": [
+     -60.0,
+     0.0
+    ],
+    "console": [
+     "t.MaxFPS 0",
+     "TD.FluidFX.OutputQuality 3"
+    ]
+   },
+   "settle": 4.0,
+   "regions_template": null,
+   "targets": null
+  }
+ ],
+ "params": [
+  {
+   "json_path": "Globals.TDFluidOutputQualitySettings.Level0LoopScale",
+   "values": [
+    0.25,
+    0.35,
+    0.5
+   ]
+  },
+  {
+   "json_path": "Globals.TDFluidOutputQualitySettings.Level1LoopScale",
+   "values": [
+    0.4,
+    0.5,
+    0.6
+   ]
+  },
+  {
+   "json_path": "Globals.TDFluidOutputQualitySettings.Level2LoopScale",
+   "values": [
+    0.6,
+    0.75,
+    0.9
+   ]
+  },
+  {
+   "json_path": "Globals.TDFluidOutputQualitySettings.MinimumLoopScalar",
+   "values": [
+    2.0,
+    4.0
+   ]
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "keep",
+ "metrics": {
+  "sources": [
+   "look"
+  ],
+  "noise_floor": {
+   "luma_p50": 0.01
+  }
+ },
+ "draft_status": "blocked(CAL-0)",
+ "p3_gaps": [
+  "params json_path Globals. 경로: fluid_tuning_patch.parse_json_path 는 Kinds·Groups·StructDefaults 만 허용(R16b-M7, X-25) → CAL-0 에서 Globals.<구조체>.<필드> 경로 지원",
+  "GPU ms 지표 출처 없음: calib_sweep.METRIC_SOURCES 는 look·water_probe 뿐 → L 0~3 SVOL GPU ms 는 Rhi:Fx16b.OffscreenCost(Saved/AgentOps/<날짜>/fx16b/cost.json)로 재고 이 계획은 휘도 p50 하락만 잰다, 출처 gpu_stats 는 CAL-0",
+  "scenes[].regions_template·targets: 연기 무대 SVOL 영역·목표 파일이 아직 없어 null(look 지표 검증이 문자열 파일 경로를 요구) → calib/regions·calib/targets 새 파일 필요",
+  "metrics.targets: 목표 지표 목록이 없음(calib_sweep.validate_targets 가 1개 이상 요구)"
+ ]
+}

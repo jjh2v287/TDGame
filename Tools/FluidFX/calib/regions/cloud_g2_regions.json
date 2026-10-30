@@ -1,0 +1,35 @@
+{
+ "note": "1280x720, WrapField 카메라(타일 경계 x = 40 km 가 화면 가운데, 위에서 아래로) 초안 상자: 경계 좌우 32 px 띠와 전체 프레임(주기 자기상관)",
+ "regions": [
+  {
+   "name": "seam_left",
+   "kind": "cloud",
+   "box": [
+    608,
+    0,
+    640,
+    720
+   ]
+  },
+  {
+   "name": "seam_right",
+   "kind": "cloud",
+   "box": [
+    640,
+    0,
+    672,
+    720
+   ]
+  },
+  {
+   "name": "tile",
+   "kind": "cloud",
+   "box": [
+    0,
+    0,
+    1280,
+    720
+   ]
+  }
+ ]
+}

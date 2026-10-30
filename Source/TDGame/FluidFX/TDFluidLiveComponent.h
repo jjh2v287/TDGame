@@ -8,6 +8,7 @@
 #include "FluidFX/TDFluidNearRippleLayer.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidRuntimeOps.h"
 #include "UObject/ObjectKey.h"
 #include "TDFluidLiveComponent.generated.h"
 
@@ -25,6 +26,7 @@ class UTexture2D;
 class UTextureRenderTarget2D;
 struct FStreamableHandle;
 struct FTDFluidPresetReapplyReport;
+struct FTDFluidSimStateSnapshot;
 struct FTDFluidTransmittanceInputs;
 
 struct FTDFluidTileMapTarget
@@ -62,6 +64,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveOutputExternalRenderers")
 	FName DriveNiagaraComponentInTaggedActors = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveOutputExternalRenderers")
+	FTDFluidExternalOutputTargets ExternalOutputTargets;
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -205,6 +210,12 @@ public:
 	static bool ProjectObstacleToPlane(const FTDFluidPlaneBasis& Basis, double InPlaneDepthCm, const FTDFluidPlaneSettings& InPlaneSettings, const FTDFluidSdfObstacle& InObstacle, FTDFluidSdfObstacle& OutObstacle);
 	static void SortAndClampMassPoints(TArray<FTDFluidMassInputPoint>& InOutPoints, const FVector& CenterWorld, int32 MaxPoints);
 	const FTDFluidRuntimeOpsSettings& GetRuntimeOpsSettings() const { return RuntimeOpsSettings; }
+	void QueueSimStateSeed(TSharedPtr<const FTDFluidSimStateSnapshot, ESPMode::ThreadSafe> InSeed);
+	bool HasPendingSimStateSeed() const { return PendingSimStateSeed.IsValid(); }
+	bool CaptureSimStateSnapshot(FTDFluidSimStateSnapshot& OutSnapshot, FString& OutError);
+	void ApplyRuntimeConfigOverride(const FTDFluidSimulationConfig& InConfig) { ApplySimulationConfigAndDetectReset(InConfig); }
+	void SetWaterDisplayAlphaScale(float InScale) { WaterDisplayAlphaScale = FMath::Clamp(InScale, 0.0f, 1.0f); }
+	float GetWaterDisplayAlphaScale() const { return WaterDisplayAlphaScale; }
 
 	const FTDFluidSurfaceRenderSettings& GetSurfaceRenderSettings() const { return SurfaceRenderSettings; }
 
@@ -241,6 +252,11 @@ public:
 	const TArray<FFloat16Color>& GetPackedAuxPixels() const { return PackedAuxPixels; }
 	const TArray<FFloat16Color>& GetPackedTransmittancePixels() const { return PackedTransmittancePixels; }
 	UNiagaraComponent* GetOwnedNiagaraComponent() const { return OwnedNiagaraComponent; }
+	bool IsEligibleForVisibilityPause() const;
+	void DiscardPendingInputs();
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidRuntimeOpsSettings GetEffectiveRuntimeOpsSettings() const { return RuntimeOpsSettings; }
 
 private:
 	FTDFluidGpuBackendDecision ResolveSolverBackend() const;
@@ -250,6 +266,8 @@ private:
 	void ApplyGroundSlabToPendingStamps();
 	void ApplyTrackParametersToMID(UMaterialInstanceDynamic& TargetMID) const;
 	void ReapplyMaterialLooks(FTDFluidPresetReapplyReport& InOutReport);
+	void ConsumePendingCpuSimStateSeed();
+	void AppendPendingGpuSimStateSeed(FTDFluidGpuFrameInputs& InOutFrameInputs);
 	void ApplyNiagaraLookIfStale(UNiagaraComponent& NiagaraComp);
 	void InitializeSimulation(const FVector2D& CenterWorld);
 	void SyncSolverBackend(const FVector2D& FallbackCenterWorld);
@@ -402,6 +420,8 @@ private:
 	FTDFluidVolumeRenderSettings EffectiveVolumeRender;
 	FTDFluidInputBrushSettings InputBrushSettings;
 	FTDFluidRuntimeOpsSettings RuntimeOpsSettings;
+	TSharedPtr<const FTDFluidSimStateSnapshot, ESPMode::ThreadSafe> PendingSimStateSeed;
+	float WaterDisplayAlphaScale = 1.0f;
 	FTDFluidSurfaceRenderSettings SurfaceRenderSettings;
 	TWeakObjectPtr<UTDFluidLiveComponent> WetnessSourceComponent;
 	bool bHasWetnessSourceBinding = false;
@@ -428,4 +448,17 @@ private:
 	float TerrainReferenceZCm = 0.0f;
 	float SampledTerrainMinCm = 0.0f;
 	float SampledTerrainMaxCm = 0.0f;
+
+	FTDFluidSimulationConfig MakeGpuSolverConfig(int32 GpuResolution) const;
+	bool CanKeepSolverStateOnReinit(const FTDFluidSimulationConfig& PreviousConfig, bool bWasInitialized) const;
+	bool TryBindExternalOutputTarget(TObjectPtr<UTextureRenderTarget2D>& InOutTarget, const TSoftObjectPtr<UTextureRenderTarget2D>& ExternalTarget, int32 Resolution, const FLinearColor& ExpectedClearColor, TextureAddress ExpectedAddress);
+	bool IsUsableClaimedExternalTarget(UTextureRenderTarget2D* Target, int32 Resolution, const FLinearColor& ExpectedClearColor, TextureAddress ExpectedAddress);
+	void CopyCpuOutputsToExternalTargets();
+	bool ClaimSharedOutput(const UObject* SharedOutput);
+	bool ShouldWriteSharedParameterCollection(const UObject* SharedParameterCollection);
+	bool IsExternalOutputTarget(const UTextureRenderTarget2D* Target) const;
+	bool CanClearGpuOutputTarget(const UTextureRenderTarget2D* Target) const;
+	void AppendExternalOutputTargetPaths(TArray<FSoftObjectPath>& InOutPaths) const;
+
+	TSet<FObjectKey> WarnedExternalOutputTargets;
 };

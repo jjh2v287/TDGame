@@ -1,5 +1,5 @@
 {
- "note": "LIVE-2 구름 목표(RM 3.3~4.2, TA G12, IFS:75, MT G5·G9·G10·H7). 범위 = 값 ±25%(p95/p5) 또는 등급 경계(구름 미세/거친 <0.5). atmosphere 출처 확장(P3) 뒤 사용",
+ "note": "LIVE-2 구름 목표(RM 3.3~4.2, TA G12, IFS:75, MT G5·G9·G10·H7·G13 IMG18 storm_wall: p95/p5 2.63 ±25%, warmth_bright +0.014 ±50%). 범위 = 값 ±25%(p95/p5) 또는 등급 경계(구름 미세/거친 <0.5). atmosphere 출처 확장(P3) 뒤 사용",
  "kind_metrics": {
   "cloud": {
    "atmosphere.fine_over_coarse": [
@@ -101,6 +101,16 @@
    "atmosphere.saturation": [
     0.4,
     0.68
+   ]
+  },
+  "storm_wall": {
+   "atmosphere.p95_over_p5": [
+    1.97,
+    3.29
+   ],
+   "atmosphere.warmth_bright": [
+    0.007,
+    0.021
    ]
   }
  }

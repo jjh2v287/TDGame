@@ -301,4 +301,5 @@ struct FTDFluidGpuFrameInputs
 	uint32 FrameNumber = 0;
 	TArray<FTDFluidGpuActorInput> Actors;
 	TArray<uint64> ReleasedActorKeys;
+	TArray<FTDFluidGpuStateSeedRequest> StateSeeds;
 };

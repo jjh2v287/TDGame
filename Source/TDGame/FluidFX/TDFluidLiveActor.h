@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FluidFX/TDFluidRuntimeOps.h"
 #include "FluidFX/TDFluidTerrainCollisionMask.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "FluidFX/TDFluidVolumeDriverTypes.h"
@@ -21,6 +22,7 @@ class UTDCombatComponent;
 class UTDFluidHeightCacheAsset;
 class UTDFluidLiveComponent;
 class UTDFluidPresetAsset;
+class UTDFluidSimStateCacheAsset;
 class UTDFluidVolumeDriverComponent;
 class UTexture2D;
 struct FStreamableHandle;
@@ -120,6 +122,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveTerrain")
 	TSoftObjectPtr<UTDFluidHeightCacheAsset> TerrainHeightCache;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveCache")
+	TSoftObjectPtr<UTDFluidSimStateCacheAsset> SimStateCache;
 
 	UPROPERTY(Transient, VisibleInstanceOnly, BlueprintReadOnly, Category = "LiveVolume")
 	TObjectPtr<UTDFluidVolumeDriverComponent> VolumeDriver;
@@ -258,6 +263,13 @@ private:
 	TObjectPtr<UTexture2D> TerrainHeightCacheTexture;
 
 	TSharedPtr<FStreamableHandle> TerrainHeightCacheLoadHandle;
+	TSharedPtr<FStreamableHandle> SimStateCacheLoadHandle;
+	float SimStateCacheWaitSeconds = 0.0f;
+	bool bIsAwaitingSimStateCache = false;
+	void RequestSimStateCacheLoad();
+	void HandleSimStateCacheLoaded();
+	void CancelSimStateCacheLoad();
+	bool ShouldWaitForSimStateCache(float DeltaTime);
 	int32 TerrainCacheMissPrefixCount = 0;
 	int32 TerrainSamplingCompletionCount = 0;
 	int32 TerrainTraceRequestCount = 0;
@@ -274,5 +286,23 @@ private:
 	bool bHasPreparedSolverStep = false;
 	float RemainingLifetimeSeconds = 0.0f;
 	float LastStepDeltaSeconds = 0.0f;
+
+public:
+	float ResolveStepRateHz() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	int32 GetCompletedStepCount() const { return CompletedStepCount; }
+
+protected:
+	virtual bool HasOffscreenOutputConsumers() const { return false; }
+
+private:
+	bool ShouldPauseForVisibility() const;
+	void ResetStepClock();
+
+	FTDFluidStepClock StepClock;
+	int32 CompletedStepCount = 0;
+	bool bIsVisibilityPaused = false;
+	bool bHasCompletedStepSinceWake = false;
 };
 

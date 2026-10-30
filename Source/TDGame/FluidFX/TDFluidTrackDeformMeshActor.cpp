@@ -2,6 +2,7 @@
 
 #include "Components/StaticMeshComponent.h"
 #include "Engine/AssetManager.h"
+#include "Engine/Engine.h"
 #include "Engine/StaticMesh.h"
 #include "FluidFX/TDFluidLiveActor.h"
 #include "FluidFX/TDFluidLiveComponent.h"
@@ -37,11 +38,20 @@ ATDFluidTrackDeformMeshActor::ATDFluidTrackDeformMeshActor()
 void ATDFluidTrackDeformMeshActor::BeginPlay()
 {
 	Super::BeginPlay();
+	if (UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr)
+	{
+		PresetTuningReloadedHandle = TuningSubsystem->OnPresetTuningReloaded.AddUObject(this, &ATDFluidTrackDeformMeshActor::HandlePresetTuningReloaded);
+	}
 	RequestDeformAssets();
 }
 
 void ATDFluidTrackDeformMeshActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr)
+	{
+		TuningSubsystem->OnPresetTuningReloaded.Remove(PresetTuningReloadedHandle);
+	}
+	PresetTuningReloadedHandle.Reset();
 	if (DeformAssetHandle.IsValid())
 	{
 		DeformAssetHandle->CancelHandle();
@@ -103,6 +113,14 @@ AActor* ATDFluidTrackDeformMeshActor::ResolveFollowTarget() const
 		return FollowTargetActor;
 	}
 	return UGameplayStatics::GetPlayerPawn(this, 0);
+}
+
+void ATDFluidTrackDeformMeshActor::HandlePresetTuningReloaded(int32)
+{
+	if (DeformMID)
+	{
+		UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*DeformMID);
+	}
 }
 
 void ATDFluidTrackDeformMeshActor::UpdateDeformMesh()

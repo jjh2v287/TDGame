@@ -945,6 +945,7 @@ int32 UTDFluidPresetTuningSubsystem::ApplyMaterialLook(UMaterialInstanceDynamic&
 	const FTDFluidMaterialLookEntry* Look = FindMaterialLook(Parent->GetPackage()->GetFName());
 	if (!Look)
 	{
+		FTDFluidOutputQuality::ApplyToMaterial(Material, nullptr);
 		return 0;
 	}
 	for (const TPair<FName, float>& Scalar : Look->Scalars)
@@ -955,6 +956,7 @@ int32 UTDFluidPresetTuningSubsystem::ApplyMaterialLook(UMaterialInstanceDynamic&
 	{
 		Material.SetVectorParameterValue(Vector.Key, Vector.Value);
 	}
+	FTDFluidOutputQuality::ApplyToMaterial(Material, Look);
 	return Look->Scalars.Num() + Look->Vectors.Num();
 }
 

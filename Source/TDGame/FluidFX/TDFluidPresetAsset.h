@@ -5,6 +5,7 @@
 #include "FluidFX/TDFluidFireTypes.h"
 #include "FluidFX/TDFluidPlaneTypes.h"
 #include "FluidFX/TDFluidRainTypes.h"
+#include "FluidFX/TDFluidRuntimeOps.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "FluidFX/TDFluidWaterParticleTypes.h"
@@ -84,6 +85,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	FName TertiaryOutputActorTag = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	FTDFluidExternalOutputTargets ExternalOutputTargets;
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	FTDFluidSimulationConfig ResolveEffectiveConfig() const;

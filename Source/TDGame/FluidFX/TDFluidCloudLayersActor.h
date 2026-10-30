@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "FluidFX/TDFluidCloudTypes.h"
 #include "TDFluidCloudLayersActor.generated.h"
 
 class ATDFluidLiveActor;
@@ -77,27 +78,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cloud")
 	bool bTakesOverSceneCloud = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudTracing", meta = (ClampMin = "0.25", ClampMax = "8.0"))
-	float ViewSampleCountScaleFar = 2.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudTracing", meta = (ClampMin = "4.0", ClampMax = "6.0"))
-	float ViewSampleCountScaleNear = 4.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudTracing", meta = (ClampMin = "0.05", ClampMax = "8.0"))
-	float ShadowViewSampleCountScale = 1.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudTracing", meta = (ClampMin = "0.0"))
-	float NearEnterMarginKm = 0.5f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudTracing", meta = (ClampMin = "0.0"))
-	float NearExitMarginKm = 0.75f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudTracing", meta = (ClampMin = "0.1"))
-	float TracingMaxDistanceKm = 50.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudTracing", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float StopTracingTransmittanceThreshold = 0.005f;
-
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -106,6 +86,7 @@ public:
 	static bool ResolveNearSampling(float CameraAltitudeKm, const FVector2D& SlabKm, float EnterMarginKm, float ExitMarginKm, bool bWasNear);
 	static int32 ResolveSetupIndex(int32 CVarValue, int32 DefaultIndex, int32 SetupCount);
 	static FName MakeSlotParameterName(int32 SlotIndex, const FString& Suffix);
+	static bool ShouldWarnWrapMismatch(float Source, float FootprintSizeKmX, bool bIsSourceWrapped);
 
 	int32 GetActiveSetupIndex() const { return ActiveSetupIndex; }
 	UMaterialInstanceDynamic* GetActiveMaterial() const { return ActiveMaterial; }
@@ -119,6 +100,7 @@ private:
 	void RestoreHiddenSceneClouds();
 	void HandleCloudMaterialsLoaded();
 	void HandlePresetTuningReloaded(int32 TableGeneration);
+	void ReadSceneSettings();
 	void ActivateSetup(int32 SetupIndex);
 	void RefreshActiveLayer();
 	void HideCloudLayer();
@@ -126,6 +108,7 @@ private:
 	void ResolveSourceLiveActors();
 	void RetrySourceResolution();
 	void BindSlotTextures(bool bForce);
+	void WarnIfSlotTilesNonWrappedSource(int32 SlotIndex, const ATDFluidLiveActor& LiveActor);
 	void ApplySourceAwake();
 	void UpdateViewSampling(bool bForce);
 	void WarnIfSetupConsoleValueIsOutOfRange(int32 ConsoleValue);
@@ -140,7 +123,9 @@ private:
 
 	TMap<FName, TWeakObjectPtr<ATDFluidLiveActor>> SourceLiveActors;
 	TMap<FName, TWeakObjectPtr<UTexture>> BoundSlotTextures;
+	TSet<int32> WrapMismatchWarnedSlots;
 	TArray<TWeakObjectPtr<UVolumetricCloudComponent>> HiddenSceneClouds;
+	FTDFluidCloudSceneSettings SceneSettings;
 	TSharedPtr<FStreamableHandle> MaterialLoadHandle;
 	FDelegateHandle PresetTuningReloadedHandle;
 	FVector2D ActiveSlabKm = FVector2D::ZeroVector;

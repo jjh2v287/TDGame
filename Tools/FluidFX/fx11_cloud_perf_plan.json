@@ -1,6 +1,6 @@
 {
  "run_label": "fx11",
- "note": "FX-11r 구름 성능 계획(pie_profile_fluid.py --csv-gpu, fx10_fog_grid_plan.json 형식). 보임·숨김 ABBA, 배율 2·4·5·6, 층당 비용은 슬롯 수 1·2·3 셋업 차분(refute S8). 하늘광 캡처 열은 시운전 1블록으로 대조(L-editor-60). 초안: camera_view_target 동작은 P3 확장 필요",
+ "note": "FX-11r 구름 성능 계획(pie_profile_fluid.py --csv-gpu, fx10_fog_grid_plan.json 형식). 보임·숨김 ABBA, 배율 2·4·5·6, 층당 비용은 슬롯 수 1·2·3 셋업 차분(refute S8). 하늘광 캡처 열은 시운전 1블록으로 대조(L-editor-60). 초안: camera_view_target 동작은 P3 확장 필요 FX-11c(2026-10-29): 셋업 17~19 장면 3개 추가(배율 2, 라이브 해상도 512·256·256 의 풀이 예산은 meta 기록용, 측정 열은 기존과 같음).",
  "offscreen_logs": [],
  "headless_logs": [],
  "bench_outputs": [],
@@ -326,6 +326,153 @@
     "budget_ms": 2.5,
     "per_layer_budget_ms": 0.3,
     "game_thread_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "cyclonelive_512_s2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 17",
+      "TD.FluidFX.CloudViewSampleScale 2",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_CycloneLive"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 17,
+    "view_sample_scale": 2,
+    "budget_ms": 2.5,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.05,
+    "solver_resolution": 512,
+    "solver_budget_ms": 0.45
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "stormwall_256_s2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 18",
+      "TD.FluidFX.CloudViewSampleScale 2",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_StormWall"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 18,
+    "view_sample_scale": 2,
+    "budget_ms": 2.5,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.05,
+    "solver_resolution": 256,
+    "solver_budget_ms": 0.2
+   },
+   "gpu_clock": false,
+   "required_columns": [
+    "FrameTime",
+    "GPU/VolumetricCloud",
+    "GPU/VolumetricCloudShadow"
+   ]
+  },
+  {
+   "id": "wrapfield_256_s2",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "targets": [
+    "TDGen_CloudLayers"
+   ],
+   "setup": [
+    {
+     "action": "console",
+     "commands": [
+      "TD.FluidFX.CloudSetup 19",
+      "TD.FluidFX.CloudViewSampleScale 2",
+      "r.TDFogScattering 0"
+     ],
+     "restore": true
+    },
+    {
+     "action": "camera_view_target",
+     "target": "TDGen_CloudCam_WrapField"
+    }
+   ],
+   "a": [
+    {
+     "action": "visibility",
+     "visible": true
+    }
+   ],
+   "b": [
+    {
+     "action": "visibility",
+     "visible": false
+    }
+   ],
+   "meta": {
+    "setup_index": 19,
+    "view_sample_scale": 2,
+    "budget_ms": 2.5,
+    "per_layer_budget_ms": 0.3,
+    "game_thread_budget_ms": 0.05,
+    "solver_resolution": 256,
+    "solver_budget_ms": 0.2
    },
    "gpu_clock": false,
    "required_columns": [

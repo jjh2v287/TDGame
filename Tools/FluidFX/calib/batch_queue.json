@@ -1,6 +1,7 @@
 {
-  "version": 1,
-  "note": "CAL-0 B6: 일괄 보정 실행 순서(plan-batch-v2 2절이 정본). 블록은 위에서 아래로, 블록 안 계획은 목록 순서로 계획 단위 직렬. stages 는 계획마다 돌릴 단계(verify 는 사슬 끝에서만), class 는 PB2 1절 분류(now·cal0·verify·target·defect, target·defect 는 목표·결함이 풀린 뒤에만 돌림), needs_frame 은 영역 틀을 frame 뒤에 그리는 계획. chains 는 공유 소유자 사슬(상류 → 하류)과 사슬 끝 재검증 계획. river_vorticity 는 돌리지 않는다(run1 둔감 기록, not_run)",
+  "version": 2,
+  "note": "CAL-0 B6: 일괄 보정 실행 순서(plan-batch-v2 2절이 정본). 블록은 위에서 아래로, 블록 안 계획은 목록 순서로 계획 단위 직렬. stages 는 계획마다 돌릴 단계(verify 는 사슬 끝에서만), class 는 PB2 1절 분류(now·cal0·verify·target·defect, target·defect 는 목표·결함이 풀린 뒤에만 돌림), needs_frame 은 영역 틀을 frame 뒤에 그리는 계획. chains 는 공유 소유자 사슬(상류 → 하류)과 사슬 끝 재검증 계획. river_vorticity 는 돌리지 않는다(run1 둔감 기록, not_run). CAL-0 통합: B8 큐 형식으로 계획을 프로젝트 상대 경로로 바꾸고 test_classes 를 두었다. test_classes 는 0b 가 헤드리스 시험 분류표(numeric_pinned)를 쓴 뒤 sha256 을 동결한다(그 전에는 calib_batch 가 '파일 없음'으로 거부). class·gate·offline·chains 는 B8 이 읽지 않는 설명 필드다",
+  "test_classes": {"path": "Tools/FluidFX/calib/test_classes.json", "sha256": null},
   "chains": [
     {"name": "Groups.WaterLayer", "order": ["w3_rain", "foliage_k3_reed"], "verify_plans": ["w3_rain"]},
     {"name": "Groups.TrackPainter", "order": ["track_fx12c_groove", "track_fx12c_vehicle", "track_sand_h4"], "verify_plans": ["track_fx12c_groove", "track_fx12c_vehicle"]},
@@ -14,67 +15,67 @@
   ],
   "blocks": [
     {"id": "K1", "name": "불", "after": ["0e"], "plans": [
-      {"plan": "campfire_vorticity", "class": "now", "stages": ["screen", "confirm"], "gate": "K1 관문(PB2 3절: 중앙값 잡음 ≤ 한 장 잡음 × 0.6, 대조 실패율 ≤30%)"},
-      {"plan": "fx8n_embers", "class": "cal0", "stages": ["screen", "confirm"]},
-      {"plan": "fx5_flamethrower", "class": "cal0", "stages": ["screen", "confirm"]}
+      {"plan": "Tools/FluidFX/calib/plans/campfire_vorticity.json", "class": "now", "stages": ["screen", "confirm"], "gate": "K1 관문(PB2 3절: 중앙값 잡음 ≤ 한 장 잡음 × 0.6, 대조 실패율 ≤30%)"},
+      {"plan": "Tools/FluidFX/calib/plans/fx8n_embers.json", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/fx5_flamethrower.json", "class": "cal0", "stages": ["screen", "confirm"]}
     ]},
     {"id": "K2", "name": "물 상류", "after": ["K1"], "plans": [
-      {"plan": "w3_rain", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.WaterLayer"},
-      {"plan": "foliage_k3_reed", "class": "defect", "stages": ["screen", "confirm"], "chain": "Groups.WaterLayer", "offline": true}
+      {"plan": "Tools/FluidFX/calib/plans/w3_rain.json", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.WaterLayer"},
+      {"plan": "Tools/FluidFX/calib/plans/foliage_k3_reed.json", "class": "defect", "stages": ["screen", "confirm"], "chain": "Groups.WaterLayer", "offline": true}
     ]},
     {"id": "K3", "name": "구름", "after": ["K1"], "plans": [
-      {"plan": "cloud_g10_near", "class": "cal0", "stages": ["screen", "confirm"]},
-      {"plan": "cloud_g12_volcano", "class": "cal0", "stages": ["screen", "confirm"]},
-      {"plan": "cloud_g9_mushroom", "class": "cal0", "stages": ["screen", "confirm"]},
-      {"plan": "cloud_h7_sandwall", "class": "cal0", "stages": ["screen", "confirm"]},
-      {"plan": "cloud_g2_wrap_seam", "class": "target", "stages": ["screen", "confirm"]},
-      {"plan": "cloud_g11_cyclone_live", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"},
-      {"plan": "cloud_g13_storm_wall", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"},
-      {"plan": "cloud_g4_painter", "class": "target", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"}
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g10_near.json", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g12_volcano.json", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g9_mushroom.json", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_h7_sandwall.json", "class": "cal0", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g2_wrap_seam.json", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g11_cyclone_live.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g13_storm_wall.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g4_painter.json", "class": "target", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"}
     ]},
     {"id": "K4", "name": "안개", "after": [], "plans": [
-      {"plan": "fog_f1_layer", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
-      {"plan": "fog_f2_passive", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
-      {"plan": "fog_f6_tile", "class": "target", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
-      {"plan": "fog_f5_cut_stir", "class": "target", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
-      {"plan": "fog_f7_lights", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim", "requires": "P-9"}
+      {"plan": "Tools/FluidFX/calib/plans/fog_f1_layer.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "Tools/FluidFX/calib/plans/fog_f2_passive.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "Tools/FluidFX/calib/plans/fog_f6_tile.json", "class": "target", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "Tools/FluidFX/calib/plans/fog_f5_cut_stir.json", "class": "target", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "Tools/FluidFX/calib/plans/fog_f7_lights.json", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim", "requires": "P-9"}
     ]},
     {"id": "K5", "name": "연기·볼륨", "after": [], "plans": [
-      {"plan": "fx15a_amplitude_noise", "class": "target", "stages": ["screen", "confirm"], "chain": "Kinds.Smoke"},
-      {"plan": "fx16a_cell_size_invariance", "class": "verify", "stages": ["screen"], "chain": "Kinds.Smoke"},
-      {"plan": "fx16b_output_quality", "class": "target", "stages": ["screen", "confirm"], "chain": "Kinds.Smoke"},
-      {"plan": "fx15a_kernel_vs_jacobi", "class": "target", "stages": ["screen", "confirm"]},
-      {"plan": "fx15a_wind_and_anchor", "class": "target", "stages": ["screen", "confirm"]},
-      {"plan": "fx9_camera_facing", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage"},
-      {"plan": "fx9_floor_smoke", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"},
-      {"plan": "fx9_hvol_vs_svol", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"},
-      {"plan": "fx9_terrain_cache", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage"}
+      {"plan": "Tools/FluidFX/calib/plans/fx15a_amplitude_noise.json", "class": "target", "stages": ["screen", "confirm"], "chain": "Kinds.Smoke"},
+      {"plan": "Tools/FluidFX/calib/plans/fx16a_cell_size_invariance.json", "class": "verify", "stages": ["screen"], "chain": "Kinds.Smoke"},
+      {"plan": "Tools/FluidFX/calib/plans/fx16b_output_quality.json", "class": "target", "stages": ["screen", "confirm"], "chain": "Kinds.Smoke"},
+      {"plan": "Tools/FluidFX/calib/plans/fx15a_kernel_vs_jacobi.json", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/fx15a_wind_and_anchor.json", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/fx9_camera_facing.json", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage"},
+      {"plan": "Tools/FluidFX/calib/plans/fx9_floor_smoke.json", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"},
+      {"plan": "Tools/FluidFX/calib/plans/fx9_hvol_vs_svol.json", "class": "target", "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"},
+      {"plan": "Tools/FluidFX/calib/plans/fx9_terrain_cache.json", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage"}
     ]},
     {"id": "K6", "name": "식생", "after": ["K2"], "plans": [
-      {"plan": "foliage_k5_radial", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"},
-      {"plan": "foliage_k1_bend", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"},
-      {"plan": "foliage_k2_press", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"}
+      {"plan": "Tools/FluidFX/calib/plans/foliage_k5_radial.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"},
+      {"plan": "Tools/FluidFX/calib/plans/foliage_k1_bend.json", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"},
+      {"plan": "Tools/FluidFX/calib/plans/foliage_k2_press.json", "class": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"}
     ]},
     {"id": "K7", "name": "자국", "after": ["B5"], "plans": [
-      {"plan": "track_fx12c_groove", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter", "needs_frame": true},
-      {"plan": "track_fx12c_vehicle", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter", "needs_frame": true},
-      {"plan": "track_sand_h4", "class": "defect", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter"}
+      {"plan": "Tools/FluidFX/calib/plans/track_fx12c_groove.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter", "needs_frame": true},
+      {"plan": "Tools/FluidFX/calib/plans/track_fx12c_vehicle.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter", "needs_frame": true},
+      {"plan": "Tools/FluidFX/calib/plans/track_sand_h4.json", "class": "defect", "stages": ["screen", "confirm"], "chain": "Groups.TrackPainter"}
     ]},
     {"id": "K8", "name": "점성", "after": ["B5"], "plans": [
-      {"plan": "viscous_fx14_mud", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.Viscous", "needs_frame": true},
-      {"plan": "viscous_fx14_blood", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.Viscous", "needs_frame": true},
-      {"plan": "viscous_fx14_lava", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true}
+      {"plan": "Tools/FluidFX/calib/plans/viscous_fx14_mud.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.Viscous", "needs_frame": true},
+      {"plan": "Tools/FluidFX/calib/plans/viscous_fx14_blood.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.Viscous", "needs_frame": true},
+      {"plan": "Tools/FluidFX/calib/plans/viscous_fx14_lava.json", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true}
     ]},
     {"id": "K9", "name": "물·입자·입력", "after": ["B5"], "plans": [
-      {"plan": "w5_liquid_sphere_l11", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true},
-      {"plan": "w5_waterfall_l29", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true},
-      {"plan": "w5_tank_l11", "class": "target", "stages": ["screen", "confirm"]},
-      {"plan": "w5_underwater_l18a", "class": "defect", "stages": ["screen", "confirm"]},
-      {"plan": "w6_dense_creek", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater", "gate": "frame 에서 settle 90 대 120 수렴 관문"},
-      {"plan": "w6_ship_wake", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater"},
-      {"plan": "w1b_water_particles", "class": "target", "stages": ["screen", "confirm"]},
-      {"plan": "fx8n_drive", "class": "target", "stages": ["screen", "confirm"]},
-      {"plan": "input_fx15b", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true}
+      {"plan": "Tools/FluidFX/calib/plans/w5_liquid_sphere_l11.json", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true},
+      {"plan": "Tools/FluidFX/calib/plans/w5_waterfall_l29.json", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true},
+      {"plan": "Tools/FluidFX/calib/plans/w5_tank_l11.json", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/w5_underwater_l18a.json", "class": "defect", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/w6_dense_creek.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater", "gate": "frame 에서 settle 90 대 120 수렴 관문"},
+      {"plan": "Tools/FluidFX/calib/plans/w6_ship_wake.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater"},
+      {"plan": "Tools/FluidFX/calib/plans/w1b_water_particles.json", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/fx8n_drive.json", "class": "target", "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/input_fx15b.json", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true}
     ]}
   ],
   "not_run": [

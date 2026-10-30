@@ -3027,18 +3027,35 @@ def check_lookdev_frame_fixes():
           (code, scene.get("error"), step_errors))
 
     reset_world([])
+    cloud_volume = make_exposure_volume("CloudVolume", "AEM_Manual", 0.0)
+    WORLD.actors.append(cloud_volume)
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    cloud = lookdev.apply_variant_with_tuning({"exposure_ev100": 12.0}, "s00", state).get("exposure_applied", [])
+    check("F8a 구름 무대꼴(AEM_MANUAL·바이어스 0·물리 카메라 끔)·exposure_ev100 12·exposure_manual 없음: 바이어스 0 그대로(−12 스톱 회귀 없음), 결과 mode manual_ignored·현재 바이어스·엔진 무시 필드",
+          cloud_volume.settings.auto_exposure_bias == 0.0 and getattr(cloud_volume.settings, "override_auto_exposure_bias", None) is None and len(cloud) == 1
+          and cloud[0]["mode"] == "manual_ignored" and cloud[0]["auto_exposure_bias"] == 0.0 and "auto_exposure_min_brightness" in cloud[0]["ignored_by_engine"] and not state["key_errors"],
+          (cloud_volume.settings.auto_exposure_bias, cloud))
+
+    reset_world([])
     volumes = [make_exposure_volume("ManualVolume", "AEM_Manual", 0.5), make_exposure_volume("CameraVolume", "AEM_Manual", 0.0, True), make_exposure_volume("AutoVolume", "AEM_Histogram", 0.25)]
     WORLD.actors += volumes
     state = {"uses_tuning_reload": False, "key_errors": []}
-    first = lookdev.apply_variant_with_tuning({"exposure_ev100": 1.0}, "s00", state)
-    second = lookdev.apply_variant_with_tuning({"exposure_ev100": 1.0}, "s01", state)
+    ignored = lookdev.apply_variant_with_tuning({"exposure_ev100": 1.0}, "s00", state).get("exposure_applied", [])
+    ignored_biases = [volume.settings.auto_exposure_bias for volume in volumes]
+    first = lookdev.apply_variant_with_tuning({"exposure_ev100": 1.0, "exposure_manual": "bias"}, "s01", state)
+    second = lookdev.apply_variant_with_tuning({"exposure_ev100": 1.0, "exposure_manual": "bias"}, "s02", state)
     camera_ev100 = math.log2(4.0 * 4.0 * 60.0 * 100.0 / 100.0)
     biases = [volume.settings.auto_exposure_bias for volume in volumes]
     applied = second.get("exposure_applied", [])
-    check("F8 AEM_MANUAL 볼륨: auto_exposure_bias = 원래 + 물리 카메라 EV100 − EV100(엔진 수동 식)·두 번 적용해도 같음, 자동 볼륨은 min/max = EV100·바이어스 그대로, 결과에 mode·필드·값",
-          near(biases, [-0.5, camera_ev100 - 1.0, 0.25]) and volumes[2].settings.auto_exposure_min_brightness == 1.0 and volumes[2].settings.auto_exposure_max_brightness == 1.0
+    check("F8 exposure_manual 기본(ignore): 수동 볼륨 바이어스 불변·자동 볼륨 min/max = EV100, \"bias\": AEM_MANUAL 볼륨 auto_exposure_bias = 원래 + 물리 카메라 EV100 − EV100(엔진 수동 식)·두 번 적용해도 같음, 결과에 mode·필드·값",
+          near(ignored_biases, [0.5, 0.0, 0.25]) and [entry["mode"] for entry in ignored] == ["manual_ignored", "manual_ignored", "auto"]
+          and near(biases, [-0.5, camera_ev100 - 1.0, 0.25]) and volumes[2].settings.auto_exposure_min_brightness == 1.0 and volumes[2].settings.auto_exposure_max_brightness == 1.0
           and [entry["mode"] for entry in applied] == ["manual", "manual", "auto"] and near([applied[0]["fields"]["auto_exposure_bias"], applied[0]["original_bias"]], [-0.5, 0.5])
-          and first["exposure"] == ["ManualVolume", "CameraVolume", "AutoVolume"] and volumes[0].settings.override_auto_exposure_bias is True and not state["key_errors"], (biases, applied))
+          and first["exposure"] == ["ManualVolume", "CameraVolume", "AutoVolume"] and volumes[0].settings.override_auto_exposure_bias is True and not state["key_errors"], (ignored_biases, biases, applied))
+    manual_key_errors = [lookdev.find_key_errors(apply) for apply in ({"exposure_manual": "bias"}, {"exposure_ev100": 1.0, "exposure_manual": "on"},
+                                                                       {"exposure_ev100": 1.0, "exposure_manual": "bias"}, {"exposure_ev100": 1.0, "exposure_manual": "ignore"})]
+    check("F8b exposure_manual 키 오류: exposure_ev100 없이 1건·모르는 값 1건, bias·ignore 는 0건",
+          [len(errors) for errors in manual_key_errors] == [1, 1, 0, 0] and "exposure_ev100" in manual_key_errors[0][0] and "bias" in manual_key_errors[1][0], manual_key_errors)
 
     reset_world([(TDFluidLiveActor, "TDGen_RainPond", FakePreset("CAMPFIRE")), (TDFluidLiveActor, "TDGen_RainBench", FakePreset("CAMPFIRE"))])
     for actor in WORLD.live_actors():

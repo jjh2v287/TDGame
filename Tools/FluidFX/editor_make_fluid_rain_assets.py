@@ -396,7 +396,7 @@ def build_drop_master(code):
     streak_width = add_scalar_parameter(material, "RainStreakWidthRatio", -900, 40)
     ring_width = add_scalar_parameter(material, "RainSplashRingWidth", -900, 160)
     custom = build_custom_node(material, "TDFluidRainDrop", unreal.CustomMaterialOutputType.CMOT_FLOAT1, DROP_INPUT_NAMES, code, -500, -100)
-    link(particle_color, custom, "ParticleColor")
+    link(particle_color, custom, "ParticleColor", "RGBA")
     link(texture_coordinate, custom, "TexCoord")
     link(streak_width, custom, "RainStreakWidthRatio")
     link(ring_width, custom, "RainSplashRingWidth")

@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). 운용 장치 무대 LV_TDFluidOpsStage(구역 0 외부 렌더 타깃 Mud, 구역 1a 처리 주기 상한 비용 횃불 2, 구역 1b 거리 곡선 횃불 8, 구역 1c 카메라 표지와 등 뒤 횃불, 구역 2 레벨 시퀀스 큐브가 Mud를 4초에 가로지름)를 만든다. 먼저 Mud·횃불 프리셋(DA_TDFluid_Mud, editor_make_fluid_fire_stage.py)이 있어야 하고 FX-16a 묶음 A·B 빌드와 에디터 재시작 뒤에만 실행한다(ExternalOutputTargets 이름 필요).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_ops_stage.py (PowerShell, L-repo-01. 기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_ops_stage_request.json 에 {"overwrite": true}, 다른 차선의 모양 조각 병합 뒤 마지막에 실행해 STALE을 피한다)
 출력: /Game/FluidFX/Textures/RT_TD_FluidOps{DensityPressure,Velocity}, /Game/FluidFX/Presets/DA_TDFluid_OpsMudExternal, /Game/FluidFX/Sequences/LS_TD_FluidOpsSequencerCube, /Game/FluidFX/Maps/LV_TDFluidOpsStage, Saved/FluidFX/fluid_ops_stage.json(preset_tuning_sha256·material_look_sha256·TDGen_Ops* 좌표·건너뛴 구역, check_fluid_preset_data.py --stage-report 형식)
-상태: 미검증(2026-10-29 FX-16a 묶음 D 작성: py_compile·가짜 unreal 배치 계산만, 에디터 실행 전). 시퀀스 구역은 L-editor-73·66에 따라 반환값 대신 다시 읽어 판정하고 실패하면 그 구역만 건너뛰어 보고에 이유를 남긴다. RT 지우기 색은 C++ EmptyDensityPressureColor·EmptyVelocityColor 와 같아야 한다(외부 RT는 풀 반납 때 자기 색으로 지워진다).
+상태: 미검증(2026-10-29 FX-16a 묶음 D 작성: py_compile·가짜 unreal 배치 계산만, 에디터 실행 전). 시퀀스 구역은 L-editor-73·66에 따라 반환값 대신 다시 읽어 판정하고 실패하면 그 구역만 건너뛰어 보고에 이유를 남긴다. RT 지우기 색은 C++ EmptyDensityPressureColor·EmptyVelocityColor 와 같아야 한다(외부 RT는 풀 반납 때 자기 색으로 지워진다). 2026-10-30 A5 에셋 단계: 에디터 실행 성공(구역 0·1a·1b·1c·2 모두, stage-report stale 0). 고침: 렌더 타깃 크기는 상수 64 대신 Mud 유효 격자 해상도(DA_TDFluid_Mud override 128)를 따름, generate_overlap_events 는 set_editor_property, 변환 채널은 get_all_channels. 키 보간은 default(선형 열거 미탐지).
 """
 import importlib.util
 import json
@@ -23,7 +23,6 @@ REQUEST_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_ops_stage_request.json")
 REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_ops_stage.json")
 STAGE_FOLDER = "TDGen/FluidFX/OpsStage"
 
-RENDER_TARGET_SIZE = 64
 EMPTY_DENSITY_PRESSURE_CLEAR_COLOR = (0.0, 0.5, 0.0, 0.0)
 EMPTY_VELOCITY_CLEAR_COLOR = (0.5, 0.5, 0.0, 0.0)
 CLEAR_COLOR_TOLERANCE = 1e-6
@@ -162,7 +161,7 @@ def is_same_color(color, expected):
     return all(abs(actual[index] - expected[index]) <= CLEAR_COLOR_TOLERANCE for index in range(4))
 
 
-def load_or_create_render_target(particle_stage, spec):
+def load_or_create_render_target(particle_stage, spec, render_target_size):
     path = f"{TEXTURE_DIR}/{spec['name']}"
     assets = unreal.EditorAssetLibrary
     was_created = not assets.does_asset_exist(path)
@@ -175,8 +174,8 @@ def load_or_create_render_target(particle_stage, spec):
         raise RuntimeError(f"렌더 타깃 생성 또는 형식 확인 실패: {path}")
     for name, value in (
         ("render_target_format", unreal.TextureRenderTargetFormat.RTF_RGBA16F),
-        ("size_x", RENDER_TARGET_SIZE),
-        ("size_y", RENDER_TARGET_SIZE),
+        ("size_x", render_target_size),
+        ("size_y", render_target_size),
         ("clear_color", unreal.LinearColor(*spec["clear_color"])),
         ("address_x", unreal.TextureAddress.TA_CLAMP),
         ("address_y", unreal.TextureAddress.TA_CLAMP),
@@ -187,7 +186,7 @@ def load_or_create_render_target(particle_stage, spec):
     problems = []
     if render_target.get_editor_property("render_target_format") != unreal.TextureRenderTargetFormat.RTF_RGBA16F:
         problems.append("render_target_format")
-    if int(render_target.get_editor_property("size_x")) != RENDER_TARGET_SIZE or int(render_target.get_editor_property("size_y")) != RENDER_TARGET_SIZE:
+    if int(render_target.get_editor_property("size_x")) != render_target_size or int(render_target.get_editor_property("size_y")) != render_target_size:
         problems.append("size")
     if not is_same_color(render_target.get_editor_property("clear_color"), spec["clear_color"]):
         problems.append("clear_color")
@@ -201,7 +200,7 @@ def load_or_create_render_target(particle_stage, spec):
         raise RuntimeError(f"렌더 타깃 설정 다시 읽기 불일치: {path} {problems}")
     particle_stage.save_asset(render_target, path)
     color = render_target.get_editor_property("clear_color")
-    return render_target, {"asset": path, "created": was_created, "size": RENDER_TARGET_SIZE, "format": "RTF_RGBA16F", "address": "Clamp",
+    return render_target, {"asset": path, "created": was_created, "size": render_target_size, "format": "RTF_RGBA16F", "address": "Clamp",
                            "auto_generate_mips": False, "supports_uav": True, "clear_color": [color.r, color.g, color.b, color.a]}
 
 
@@ -241,8 +240,9 @@ def build_external_preset(particle_stage, source_preset, render_targets):
         raise RuntimeError(f"복제 프리셋 종류가 원본과 다름: {path}")
     effective = preset.resolve_effective_config()
     resolution = int(effective.get_editor_property("grid_resolution"))
-    if resolution != RENDER_TARGET_SIZE:
-        raise RuntimeError(f"Mud 격자 해상도 {resolution} 가 외부 렌더 타깃 {RENDER_TARGET_SIZE}² 와 달라 내부 렌더 타깃으로 떨어진다: {path}")
+    render_target_size = int(next(iter(render_targets.values())).get_editor_property("size_x"))
+    if resolution != render_target_size:
+        raise RuntimeError(f"Mud 격자 해상도 {resolution} 가 외부 렌더 타깃 {render_target_size}² 와 달라 내부 렌더 타깃으로 떨어진다: {path}")
     particle_stage.save_asset(preset, path)
     details = {"asset": path, "source": source_path, "created": was_created, "synced_properties": synced, "grid_resolution": resolution,
                "solver_backend": str(effective.get_editor_property("solver_backend")),
@@ -338,7 +338,7 @@ def add_transform_key(channel, frame, value):
 
 
 def key_cube_transform(section, end_frame, start_location, end_location):
-    channels = list(section.get_channels())
+    channels = list(section.get_all_channels())
     if len(channels) < 9:
         raise RuntimeError(f"변환 섹션 채널 {len(channels)}개(9개 필요)")
     scale = SEQUENCER_CUBE_SCALE
@@ -395,7 +395,7 @@ def build_sequencer_zone(context, layout):
     cube = spawn_marker(context, context["assets"]["cube"], layout["sequencer_cube_start"], SEQUENCER_CUBE_SCALE, "OpsSequencerCube", folder)
     cube_component = cube.static_mesh_component
     cube_component.set_collision_profile_name(SEQUENCER_COLLISION_PROFILE)
-    cube_component.set_generate_overlap_events(True)
+    cube_component.set_editor_property("generate_overlap_events", True)
     if str(cube_component.get_collision_profile_name()) != SEQUENCER_COLLISION_PROFILE:
         raise RuntimeError("시퀀서 큐브 충돌 프로파일 다시 읽기 불일치")
     sequence, sequence_path, sequence_created = load_or_create_sequence(particle_stage)
@@ -491,8 +491,9 @@ def main():
     print("단계: 외부 렌더 타깃 2개")
     render_targets = {}
     render_target_details = {}
+    render_target_size = int(source_effective.get_editor_property("grid_resolution"))
     for spec in RENDER_TARGET_SPECS:
-        render_targets[spec["name"]], render_target_details[spec["name"]] = load_or_create_render_target(particle_stage, spec)
+        render_targets[spec["name"]], render_target_details[spec["name"]] = load_or_create_render_target(particle_stage, spec, render_target_size)
 
     print("단계: 외부 렌더 타깃 Mud 프리셋")
     external_preset, external_effective, external_details = build_external_preset(particle_stage, source_preset, render_targets)

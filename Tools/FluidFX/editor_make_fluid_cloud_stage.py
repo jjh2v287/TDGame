@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). 구름 무대 LV_TDFluidCloudStage(지면 Z 0 = 구름 지면, 40 km 지형 = SM_TD_FluidCloudTerrainGrid256 × 40000 + 지형 MI(VSM Rigid) + 먼 바닥 200 km, 하늘 대기·주광·하늘광·높이 안개·수동 노출 PPV, 구름 액터 1(셋업 20), 대리 라이브 9(Z -20000 cm, 태그 TDFluidCloud_<셋업>), 교반기, 칠하기 액터 TDGen_CloudPainter·바람 막 액터 TDGen_CloudWindCurtain, 셋업마다 CineCamera TDGen_CloudCam_<셋업>)와 DA_TDFluid_Cloud<셋업> 9개를 만든다. 먼저 editor_make_fluid_cloud_material.py 와 editor_make_fluid_particle_stage.py(교반기 블루프린트)가 끝나 있어야 한다. 공용 함수는 editor_make_fluid_particle_stage.py 에서 가져온다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_cloud_stage.py (PowerShell, L-repo-01. 갱신은 Saved/FluidFX/fluid_cloud_stage_request.json 에 {"overwrite": true}, 6c 토네이도 HVOL 은 같은 파일에 "with_hvol": true 또는 인수 --with-hvol, 에셋 단계 맨 끝에서만 cross-plan P-05)
 출력: /Game/FluidFX/Maps/LV_TDFluidCloudStage, /Game/FluidFX/Presets/DA_TDFluid_Cloud{Pillars,Vortex,Impulse,Aurora,Titan,Paint,Cyclone,StormWall,WrapField}, Saved/FluidFX/fluid_cloud_stage.json(preset_tuning_sha256·material_look_sha256, 셋업 20·카메라·원천·조절 액터, 지형 일치 단언, g14_hvol attached|deferred|skipped)
-상태: 미검증(2026-10-26 FX-11r 작성: py_compile·가짜 unreal 가져오기만, 에디터 실행 전). 프리셋은 PresetKind 만 정하고 bOverridePresetDefaults 는 끈다(골든 불변). TerrainFollow > 0 인 슬롯이 있는 MI 는 CloudTerrainFootprintKm·HeightRangeKm 이 지형 MI StageTerrain* 과 같아야 하며 다르면 중단한다(refute M4). Titan 지우개(밀도 −1) 구동은 교반기 채널에 없어 보통 교반기로 두고 보고에 deferred 로 적는다. 무대 조명 값은 JSON 밖 무대 상수다(spec 2.7, 조명 담당 P-9). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(셋업 17·DA 6·액터 38, g14_hvol skipped), stage-report stale 0, 화면 판정 전. 고침: 높이 안개 속성 enable_volumetric_fog, 먼 바닥 축척 200000(200 km). 2026-10-29 FX-11c 무대 단계 작성(py_compile·가짜 unreal 가져오기만, 에디터 실행 전): 셋업 17 CycloneLive·18 StormWall·19 WrapField, 원천 3(DA 9개), Paint 종류 CLOUD_PAINT(원천 줄 Z -20000, 마우스 붓 끔, 카메라 목표 평지 사분면), 원천 역할 Coverage|Section, 모든 원천 DA 기본 채널 R, 조절 액터 2, 클래스·속성 점검.
+상태: 미검증(2026-10-26 FX-11r 작성: py_compile·가짜 unreal 가져오기만, 에디터 실행 전). 프리셋은 PresetKind 만 정하고 bOverridePresetDefaults 는 끈다(골든 불변). TerrainFollow > 0 인 슬롯이 있는 MI 는 CloudTerrainFootprintKm·HeightRangeKm 이 지형 MI StageTerrain* 과 같아야 하며 다르면 중단한다(refute M4). Titan 지우개(밀도 −1) 구동은 교반기 채널에 없어 보통 교반기로 두고 보고에 deferred 로 적는다. 무대 조명 값은 JSON 밖 무대 상수다(spec 2.7, 조명 담당 P-9). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(셋업 17·DA 6·액터 38, g14_hvol skipped), stage-report stale 0, 화면 판정 전. 고침: 높이 안개 속성 enable_volumetric_fog, 먼 바닥 축척 200000(200 km). 2026-10-29 FX-11c 무대 단계 작성(py_compile·가짜 unreal 가져오기만, 에디터 실행 전): 셋업 17 CycloneLive·18 StormWall·19 WrapField, 원천 3(DA 9개), Paint 종류 CLOUD_PAINT(원천 줄 Z -20000, 마우스 붓 끔, 카메라 목표 평지 사분면), 원천 역할 Coverage|Section, 모든 원천 DA 기본 채널 R, 조절 액터 2, 클래스·속성 점검. 2026-10-30 cloud-black: 수동 노출 PPV 가 물리 카메라 노출(기본 켬, EV100 약 9~10)을 끄지 않아 주광 10 lux 무대가 PIE 에서 검정이었다 → 다른 무대처럼 auto_exposure_apply_physical_camera_exposure 끔(EV100 0).
 """
 import importlib.util
 import json
@@ -267,9 +267,11 @@ def place_lighting(actors, created, stage):
     settings.set_editor_property("auto_exposure_method", unreal.AutoExposureMethod.AEM_MANUAL)
     settings.set_editor_property("override_auto_exposure_bias", True)
     settings.set_editor_property("auto_exposure_bias", EXPOSURE_BIAS)
+    settings.set_editor_property("override_auto_exposure_apply_physical_camera_exposure", True)
+    settings.set_editor_property("auto_exposure_apply_physical_camera_exposure", False)
     volume.set_editor_property("settings", settings)
     return {"sun_rotation": list(SUN_ROTATION), "sun_flags": ["atmosphere_sun_light", "cast_shadows_on_clouds", "cast_cloud_shadows"], "sky_light": "real_time_capture",
-            "height_fog_volumetric": False, "exposure": {"method": "manual", "bias": EXPOSURE_BIAS}}
+            "height_fog_volumetric": False, "exposure": {"method": "manual", "bias": EXPOSURE_BIAS, "apply_physical_camera_exposure": False}}
 
 
 def make_cloud_setups():

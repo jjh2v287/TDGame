@@ -1,5 +1,95 @@
 {
  "Materials": {
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Aux": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 7.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Density": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 0.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Mask": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 3.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Selective": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 2.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Slope": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 6.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Speed": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 5.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Surface": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 1.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Velocity": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 4.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_WaterSurface": {
+   "Parent": "/Game/FluidFX/Materials/Debug/M_TD_FluidBufferView",
+   "Scalars": {
+    "DebugBias": 0.0,
+    "DebugChannel": 8.0,
+    "DebugGain": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
   "/Game/FluidFX/Materials/MI_TD_FluidCharredWood_Campfire": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidCharredWood",
    "Scalars": {
@@ -39,6 +129,27 @@
    }
   },
   "/Game/FluidFX/Materials/MI_TD_FluidCloud_Cyclone": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidCloudLayers",
+   "Scalars": {
+    "CloudSlot1BottomKm": 1.5,
+    "CloudSlot1EdgeErosion": 0.6,
+    "CloudSlot1Source": 1.0,
+    "CloudSlot1ThicknessKm": 8.0,
+    "CloudSlot1TopExponent": 2.0,
+    "CloudSlot2BottomKm": 0.5,
+    "CloudSlot2Pattern": 0.0,
+    "CloudSlot2PatternCoverage": 0.4,
+    "CloudSlot2Source": 2.0,
+    "CloudSlot2ThicknessKm": 0.3
+   },
+   "Switches": {},
+   "Vectors": {
+    "CloudSlot2FootprintSizeKm": [3.0, 3.0, 0.0, 0.0],
+    "CloudTerrainFootprintKm": [-20.0, -20.0, 40.0, 40.0],
+    "CloudTerrainHeightRangeKm": [0.0, 2.5, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidCloud_CycloneLive": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidCloudLayers",
    "Scalars": {
     "CloudSlot1BottomKm": 1.5,
@@ -217,6 +328,28 @@
     "CloudTerrainHeightRangeKm": [0.0, 2.5, 0.0, 0.0]
    }
   },
+  "/Game/FluidFX/Materials/MI_TD_FluidCloud_StormWall": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidCloudLayers",
+   "Scalars": {
+    "CloudSlot1BottomKm": 0.0,
+    "CloudSlot1DetailErosion": 0.5,
+    "CloudSlot1EdgeErosion": 0.6,
+    "CloudSlot1ExtinctionPerM": 0.03,
+    "CloudSlot1SectionDepthKm": 2.0,
+    "CloudSlot1SectionYawDegrees": 0.0,
+    "CloudSlot1Shape": 2.0,
+    "CloudSlot1Source": 3.0,
+    "CloudSlot1ThicknessKm": 4.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "CloudSlot1Albedo": [0.82, 0.82, 0.85, 0.0],
+    "CloudSlot1FootprintCenterKm": [12.0, 12.0, 0.0, 0.0],
+    "CloudSlot1FootprintSizeKm": [12.0, 0.0, 0.0, 0.0],
+    "CloudTerrainFootprintKm": [-20.0, -20.0, 40.0, 40.0],
+    "CloudTerrainHeightRangeKm": [0.0, 2.5, 0.0, 0.0]
+   }
+  },
   "/Game/FluidFX/Materials/MI_TD_FluidCloud_Stratus": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidCloudLayers",
    "Scalars": {
@@ -359,6 +492,28 @@
    },
    "Switches": {},
    "Vectors": {
+    "CloudTerrainFootprintKm": [-20.0, -20.0, 40.0, 40.0],
+    "CloudTerrainHeightRangeKm": [0.0, 2.5, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidCloud_WrapField": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidCloudLayers",
+   "Scalars": {
+    "CloudSlot1BottomKm": 1.2,
+    "CloudSlot1CoverageScale": 1.2,
+    "CloudSlot1CoverageThreshold": 0.15,
+    "CloudSlot1DetailErosion": 0.45,
+    "CloudSlot1EdgeErosion": 0.5,
+    "CloudSlot1ExtinctionPerM": 0.02,
+    "CloudSlot1Pattern": 0.0,
+    "CloudSlot1PatternScaleKm": 20.0,
+    "CloudSlot1Shape": 0.0,
+    "CloudSlot1Source": 1.0,
+    "CloudSlot1ThicknessKm": 1.5
+   },
+   "Switches": {},
+   "Vectors": {
+    "CloudSlot1FootprintSizeKm": [0.0, 0.0, 0.0, 0.0],
     "CloudTerrainFootprintKm": [-20.0, -20.0, 40.0, 40.0],
     "CloudTerrainHeightRangeKm": [0.0, 2.5, 0.0, 0.0]
    }
@@ -736,6 +891,35 @@
    "Switches": {},
    "Vectors": {}
   },
+  "/Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy_Press": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFoliageFlowCopy",
+   "Scalars": {
+    "FoliageBendMaxDegrees": 75.0,
+    "FoliageBendResponse": 1.0,
+    "FoliageBendSpeedReferenceCmPerSec": 300.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy_Reed": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFoliageFlowCopy",
+   "Scalars": {
+    "FoliageBendMaxDegrees": 40.0,
+    "FoliageBendResponse": 0.8,
+    "FoliageBendSpeedReferenceCmPerSec": 150.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassPress": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFoliageGrassPress",
+   "Scalars": {
+    "FoliagePressedBrightness": 0.25,
+    "FoliageWindAmplitude": 0.25
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
   "/Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassSim": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidFoliageGrass",
    "Scalars": {
@@ -769,6 +953,16 @@
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidFoliageGrass",
    "Scalars": {
     "FoliageWindAmplitude": 0.25
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidFoliage_Reed": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidFoliageReed",
+   "Scalars": {
+    "FoliageBendHeightExponent": 1.5,
+    "FoliageWindAmplitude": 0.2,
+    "FoliageWindMaxDegrees": 15.0
    },
    "Switches": {},
    "Vectors": {}
@@ -858,6 +1052,120 @@
    "Switches": {},
    "Vectors": {
     "VolNoiseWindCmPerSec": [0.0, 0.0, 40.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidLava": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidLavaSurface",
+   "Scalars": {
+    "LavaCrustRoughness": 0.8,
+    "LavaCrustSoftness": 0.12,
+    "LavaCrustThreshold": 0.5,
+    "LavaEmissiveExponent": 2.0,
+    "LavaEmissiveIntensity": 20.0,
+    "LavaLocalRevealStrength": 1.0,
+    "LavaMoltenColorScale": 0.05,
+    "LavaMoltenRoughness": 0.4,
+    "TileMap1DensityHeightCm": 6.0,
+    "TileMap1FadeLengthCm": 1000.0,
+    "TileMap1FadeStartCm": 100000.0,
+    "TileMap1FoamStrength": 1.0,
+    "TileMap1HeightCm": 4.0,
+    "TileMap1NormalStrength": 1.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "LavaCrustColor": [0.03, 0.025, 0.02, 1.0],
+    "LavaEmissiveColor": [1.0, 0.25, 0.05, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidLiquidSphere_BloodOrb": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidLiquidSphere",
+   "Scalars": {
+    "SphereDensityContrast": 1.2,
+    "SphereFresnelPower": 4.0,
+    "SphereFresnelStrength": 0.4,
+    "SphereLongitudeRepeat": 2.0,
+    "SphereOpacityMax": 0.95,
+    "SphereOpacityMin": 0.6,
+    "SpherePoleDensity": 0.5,
+    "SpherePoleFadeRatio": 0.08,
+    "SphereRoughness": 0.15
+   },
+   "Switches": {},
+   "Vectors": {
+    "SphereBaseColor": [0.25, 0.01, 0.02, 1.0],
+    "SphereDenseColor": [0.55, 0.03, 0.04, 1.0],
+    "SphereSelectiveColor": [0.7, 0.05, 0.05, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidLiquidSphere_Clear": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidLiquidSphere",
+   "Scalars": {
+    "SphereDensityContrast": 1.2,
+    "SphereFresnelPower": 4.0,
+    "SphereFresnelStrength": 0.6,
+    "SphereLongitudeRepeat": 2.0,
+    "SphereOpacityMax": 0.55,
+    "SphereOpacityMin": 0.15,
+    "SpherePoleDensity": 0.5,
+    "SpherePoleFadeRatio": 0.08,
+    "SphereRoughness": 0.05
+   },
+   "Switches": {},
+   "Vectors": {
+    "SphereBaseColor": [0.55, 0.8, 0.9, 1.0],
+    "SphereDenseColor": [0.85, 0.95, 1.0, 1.0],
+    "SphereSelectiveColor": [0.6, 0.05, 0.05, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidLiquidSphere_Turbulent": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidLiquidSphere",
+   "Scalars": {
+    "SphereDensityContrast": 1.8,
+    "SphereFresnelPower": 4.0,
+    "SphereFresnelStrength": 0.6,
+    "SphereLongitudeRepeat": 2.0,
+    "SphereOpacityMax": 0.8,
+    "SphereOpacityMin": 0.25,
+    "SpherePoleDensity": 0.5,
+    "SpherePoleFadeRatio": 0.08,
+    "SphereRoughness": 0.05
+   },
+   "Switches": {},
+   "Vectors": {
+    "SphereBaseColor": [0.2, 0.45, 0.6, 1.0],
+    "SphereDenseColor": [0.9, 0.97, 1.0, 1.0],
+    "SphereSelectiveColor": [0.6, 0.05, 0.05, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidRainDrop_Default": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidRainDrop",
+   "Scalars": {
+    "RainEmissive": 1.0,
+    "RainSplashRingWidth": 0.15,
+    "RainStreakWidthRatio": 0.12
+   },
+   "Switches": {},
+   "Vectors": {
+    "RainTint": [0.75, 0.8, 0.85, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidRainPuddleDecal_Default": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidRainPuddleDecal",
+   "Scalars": {
+    "PuddleEdgeSoftnessCm": 0.4,
+    "PuddleHeightToleranceCm": 30.0,
+    "PuddleOpacity": 0.85,
+    "PuddleRippleCellCm": 12.0,
+    "PuddleRippleDecayPerSec": 4.0,
+    "PuddleRippleNormalStrength": 0.6,
+    "PuddleRippleSpeedCmPerSec": 25.0,
+    "PuddleRippleWidthCm": 3.0,
+    "PuddleRoughness": 0.04
+   },
+   "Switches": {},
+   "Vectors": {
+    "PuddleColor": [0.05, 0.06, 0.07, 1.0]
    }
   },
   "/Game/FluidFX/Materials/MI_TD_FluidTrack_Sand": {
@@ -951,6 +1259,82 @@
    "Vectors": {
     "TrackGrooveColor": [0.7, 0.75, 0.82, 1.0],
     "TrackSurfaceColor": [0.85, 0.88, 0.92, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidUnderwater_Lake": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidUnderwaterPostProcess",
+   "Scalars": {
+    "UnderwaterFogDensityPerCm": 0.002,
+    "UnderwaterMaxDistanceCm": 20000.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "UnderwaterAbsorptionPerCm": [0.006, 0.0016, 0.0011, 0.0],
+    "UnderwaterFogColor": [0.02, 0.12, 0.18, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidUnderwater_Tank": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidUnderwaterPostProcess",
+   "Scalars": {
+    "UnderwaterFogDensityPerCm": 0.003,
+    "UnderwaterMaxDistanceCm": 20000.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "UnderwaterAbsorptionPerCm": [0.006, 0.0016, 0.0011, 0.0],
+    "UnderwaterFogColor": [0.03, 0.18, 0.2, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidViscousDecal_Blood": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidViscousDecal",
+   "Scalars": {
+    "ViscousDecalOpacity": 0.9,
+    "ViscousEdgeSoftness": 0.04,
+    "ViscousHeightCm": 1.0,
+    "ViscousMaskThreshold": 0.2,
+    "ViscousNormalStrength": 0.8,
+    "ViscousRoughness": 0.15
+   },
+   "Switches": {},
+   "Vectors": {
+    "ViscousBaseColor": [0.25, 0.01, 0.01, 1.0],
+    "ViscousSelectiveColor": [0.35, 0.01, 0.015, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidViscous_Blood": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidViscousSurface",
+   "Scalars": {
+    "ViscousEdgeSoftness": 0.03,
+    "ViscousHeightCm": 1.0,
+    "ViscousHeightExponent": 0.5,
+    "ViscousMaskThreshold": 0.25,
+    "ViscousNormalStrength": 1.0,
+    "ViscousPressureHeightCm": 0.2,
+    "ViscousRoughness": 0.12,
+    "ViscousSpecular": 0.5
+   },
+   "Switches": {},
+   "Vectors": {
+    "ViscousBaseColor": [0.25, 0.01, 0.01, 1.0],
+    "ViscousSelectiveColor": [0.35, 0.01, 0.015, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidViscous_Mud": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidViscousSurface",
+   "Scalars": {
+    "ViscousEdgeSoftness": 0.04,
+    "ViscousHeightCm": 3.0,
+    "ViscousHeightExponent": 0.6,
+    "ViscousMaskThreshold": 0.25,
+    "ViscousNormalStrength": 1.0,
+    "ViscousPressureHeightCm": 0.5,
+    "ViscousRoughness": 0.22,
+    "ViscousSpecular": 0.5
+   },
+   "Switches": {},
+   "Vectors": {
+    "ViscousBaseColor": [0.09, 0.06, 0.04, 1.0],
+    "ViscousSelectiveColor": [0.09, 0.06, 0.04, 1.0]
    }
   },
   "/Game/FluidFX/Materials/MI_TD_FluidVolume_ExplosionBillow": {
@@ -1092,6 +1476,14 @@
     "SmokeColor": [0.9, 0.92, 0.95, 1.0]
    }
   },
+  "/Game/FluidFX/Materials/MI_TD_FluidWaterDebris_Default": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidDrivenParticleMesh",
+   "Scalars": {
+    "ParticleRoughness": 0.45
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
   "/Game/FluidFX/Materials/MI_TD_FluidWaterSand": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidWaterSandRipple",
    "Scalars": {
@@ -1114,6 +1506,14 @@
     "BaseColor": [0.55, 0.45, 0.3, 1.0]
    }
   },
+  "/Game/FluidFX/Materials/MI_TD_FluidWaterSplash_Default": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidDrivenParticle",
+   "Scalars": {
+    "ParticleEmissive": 1.2
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
   "/Game/FluidFX/Materials/MI_TD_FluidWaterStone": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidWaterMatte",
    "Scalars": {
@@ -1122,6 +1522,115 @@
    "Switches": {},
    "Vectors": {
     "BaseColor": [0.3, 0.29, 0.27, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidWaterTankWall": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidWaterPropGlass",
+   "Scalars": {
+    "GlassFresnelPower": 3.0,
+    "GlassOpacity": 0.25,
+    "GlassRoughness": 0.05
+   },
+   "Switches": {},
+   "Vectors": {
+    "GlassTint": [0.35, 0.75, 0.75, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidWaterWhitewater_Default": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidDrivenParticle",
+   "Scalars": {
+    "ParticleEmissive": 1.0
+   },
+   "Switches": {},
+   "Vectors": {}
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidWater_DenseCreek": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidWater",
+   "Scalars": {
+    "CausticsMaxDepthCm": 160.0,
+    "CausticsStrength": 0.45,
+    "CausticsTilingCm": 180.0,
+    "CoastFoamStrength": 0.0,
+    "DenseDrySinkCm": 10.0,
+    "DenseEdgeSoftnessCm": 2.0,
+    "DetailNormalStrength": 0.22,
+    "DyeOpacity": 0.8,
+    "EdgeSoftnessCm": 3.0,
+    "FlowPhasePeriodSeconds": 1.0,
+    "FoamCoverageMax": 0.7,
+    "FoamDensityThreshold": 0.08,
+    "FoamFadeLengthCm": 2000.0,
+    "FoamFadeStartCm": 2200.0,
+    "FoamFromDensity": 1.6,
+    "FoamFromFroude": 0.32,
+    "FoamFromSpeed": 0.0,
+    "FoamFroudeThreshold": 1.2,
+    "FoamTilingCm": 180.0,
+    "GlintHotspotSharpness": 6.0,
+    "GlintIntensity": 10.0,
+    "GlintSharpness": 1500.0,
+    "MicroNormalStrength": 0.12,
+    "MicroNormalTilingCm": 30.0,
+    "ObstacleRingNormalStrength": 0.2,
+    "ObstacleWakeFoamStrength": 0.6,
+    "PassiveWaveAmplitudeCm": 1.5,
+    "RibbonSegmentLengthCm": 395.0,
+    "RibbonStretchAlong": 3.0,
+    "RibbonWidthCm": 800.0,
+    "ShoreFoamAmount": 0.7,
+    "ShoreFoamDepthCm": 6.0,
+    "WaterRoughness": 0.03
+   },
+   "Switches": {},
+   "Vectors": {
+    "DetailNormalTilingCm": [200.0, 640.0, 0.0, 0.0],
+    "WaterExtinctionPerCm": [0.028, 0.0068, 0.0042, 0.0],
+    "WaterScatteringAlbedo": [0.04, 0.3, 0.45, 0.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidWater_DenseLake": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidWater",
+   "Scalars": {
+    "CausticsStrength": 1.6,
+    "CausticsTilingCm": 340.0,
+    "CoastFoamStrength": 0.0,
+    "DenseDrySinkCm": 10.0,
+    "DenseEdgeSoftnessCm": 3.0,
+    "DetailNormalStrength": 0.17,
+    "FoamCoverageMax": 0.85,
+    "FoamFromSpeed": 1.1,
+    "MicroNormalStrength": 0.07,
+    "ObstacleRingNormalStrength": 0.2,
+    "PassiveWaveAmplitudeCm": 3.0,
+    "ShoreFoamAmount": 0.15,
+    "ShoreFoamDepthCm": 8.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "DetailNormalTilingCm": [320.0, 900.0, 0.0, 0.0],
+    "WaterExtinctionPerCm": [0.006, 0.0016, 0.0011, 0.0],
+    "WaterScatteringAlbedo": [0.05, 0.35, 0.55, 0.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidWater_DenseSea": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidWater",
+   "Scalars": {
+    "DenseDrySinkCm": 30.0,
+    "DenseEdgeSoftnessCm": 5.0,
+    "ObstacleRingNormalStrength": 0.15,
+    "PassiveWaveAmplitudeCm": 12.0,
+    "ShoreFoamDepthCm": 25.0,
+    "TileMap1DensityHeightCm": 4.0,
+    "TileMap1FadeLengthCm": 5000.0,
+    "TileMap1FadeStartCm": 3000.0,
+    "TileMap1FoamStrength": 0.3,
+    "TileMap1HeightCm": 8.0,
+    "TileMap1NormalStrength": 0.6
+   },
+   "Switches": {},
+   "Vectors": {
+    "WaterExtinctionPerCm": [0.004, 0.0009, 0.0006, 0.0],
+    "WaterScatteringAlbedo": [0.03, 0.3, 0.6, 0.0]
    }
   },
   "/Game/FluidFX/Materials/MI_TD_FluidWater_Lake": {
@@ -1248,6 +1757,65 @@
     "WaterScatteringAlbedo": [0.32, 0.3, 0.16, 0.0]
    }
   },
+  "/Game/FluidFX/Materials/MI_TD_FluidWaterfallFar_Blue": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidWaterfallFar",
+   "Scalars": {
+    "FarBaseOpacityBias": 0.4,
+    "FarEdgeFadeRatio": 0.12,
+    "FarFlowCycleSeconds": 1.0,
+    "FarFlowSpeedCmPerSec": 300.0,
+    "FarFoamCoverage": 0.35,
+    "FarFoamOpacityGain": 0.6,
+    "FarFoamSharpness": 4.0,
+    "FarMistHeightRatio": 0.15,
+    "FarNoiseScaleCm": 120.0,
+    "FarOpacity": 0.85,
+    "FarStreakStretch": 5.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "FarFoamColor": [1.0, 1.0, 1.0, 1.0],
+    "FarTint": [0.25, 0.45, 0.65, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidWaterfallFar_White": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidWaterfallFar",
+   "Scalars": {
+    "FarBaseOpacityBias": 0.4,
+    "FarEdgeFadeRatio": 0.12,
+    "FarFlowCycleSeconds": 1.0,
+    "FarFlowSpeedCmPerSec": 300.0,
+    "FarFoamCoverage": 0.6,
+    "FarFoamOpacityGain": 0.6,
+    "FarFoamSharpness": 4.0,
+    "FarMistHeightRatio": 0.15,
+    "FarNoiseScaleCm": 120.0,
+    "FarOpacity": 0.85,
+    "FarStreakStretch": 5.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "FarFoamColor": [1.0, 1.0, 1.0, 1.0],
+    "FarTint": [0.9, 0.95, 1.0, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_FluidWaterfallSheet_Default": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidWaterfallSheet",
+   "Scalars": {
+    "SheetDensityContrast": 1.5,
+    "SheetFlowCycleSeconds": 0.6,
+    "SheetNoiseOpacityBase": 0.5,
+    "SheetNoiseOpacityGain": 0.5,
+    "SheetOpacityScale": 1.4,
+    "SheetStreakScaleCm": 40.0,
+    "SheetStreakStretch": 4.0
+   },
+   "Switches": {},
+   "Vectors": {
+    "SheetFoamColor": [0.95, 0.97, 1.0, 1.0],
+    "SheetTint": [0.55, 0.72, 0.8, 1.0]
+   }
+  },
   "/Game/FluidFX/Materials/MI_TD_Fluid_Blood": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidSurface",
    "Scalars": {},
@@ -1288,6 +1856,14 @@
    "Switches": {},
    "Vectors": {
     "BaseTint": [0.05, 0.28, 0.55, 1.0]
+   }
+  },
+  "/Game/FluidFX/Materials/MI_TD_Fluid_WaterySand": {
+   "Parent": "/Game/FluidFX/Materials/M_TD_FluidSurface",
+   "Scalars": {},
+   "Switches": {},
+   "Vectors": {
+    "BaseTint": [0.32, 0.25, 0.16, 1.0]
    }
   }
  },
@@ -1718,6 +2294,130 @@
    },
    "Vectors2": {},
    "Vectors3": {}
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidRain": {
+   "Bools": {},
+   "Colors": {},
+   "Floats": {
+    "User.TDRainFallSpeedCmPerSec": 1000.0,
+    "User.TDRainOpacity": 0.6,
+    "User.TDRainSpawnHeightCm": 1500.0,
+    "User.TDRainSpawnRatePerSec": 2850.0,
+    "User.TDRainSplashSeconds": 0.25
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.TDRainBoxHalfExtentCm": [1500.0, 1500.0],
+    "User.TDRainSplashSizeCm": [12.0, 12.0],
+    "User.TDRainStreakSizeCm": [1.2, 40.0],
+    "User.TDRainWindCmPerSec": [0.0, 0.0]
+   },
+   "Vectors3": {}
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris": {
+   "Bools": {},
+   "Colors": {
+    "User.TDDebrisColor": [0.8, 0.05, 0.04, 1.0]
+   },
+   "Floats": {
+    "User.TDDebrisBobbingHeightScale": 1.0,
+    "User.TDDebrisFloatOffsetCm": -3.0,
+    "User.TDDebrisFlowDragPerSec": 2.0,
+    "User.TDDebrisFlowFollowScale": 1.0,
+    "User.TDDebrisHeightFollowPerSec": 10.0,
+    "User.TDDebrisLifetimeMaxSeconds": 40.0,
+    "User.TDDebrisLifetimeMinSeconds": 20.0,
+    "User.TDDebrisMeshScaleCm": 20.0,
+    "User.TDDebrisMinDepthCm": 10.0,
+    "User.TDDebrisScaleFadePerSec": 2.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {
+    "User.TDDebrisCount": 300
+   },
+   "Vectors2": {
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0],
+    "User.TDDebrisSpawnUvMax": [0.95, 0.95],
+    "User.TDDebrisSpawnUvMin": [0.05, 0.05]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidWaterSplash": {
+   "Bools": {},
+   "Colors": {
+    "User.TDSplashColor": [0.9, 0.95, 1.0, 0.8]
+   },
+   "Floats": {
+    "User.TDSplashCarryRatio": 0.3,
+    "User.TDSplashContactMinAgeSeconds": 0.05,
+    "User.TDSplashContactRadiusCm": 12.0,
+    "User.TDSplashContactWhitewater": 0.3,
+    "User.TDSplashCrownRadialSpeedRatio": 0.15,
+    "User.TDSplashCrownRadiusRatio": 1.2,
+    "User.TDSplashCrownShare": 0.4,
+    "User.TDSplashCrownThicknessRatio": 0.15,
+    "User.TDSplashCrownUpSpeedRatio": 0.6,
+    "User.TDSplashDragPerSec": 0.5,
+    "User.TDSplashDropletRadialSpeedRatio": 0.45,
+    "User.TDSplashDropletSizeCm": 2.0,
+    "User.TDSplashDropletUpSpeedRatio": 0.9,
+    "User.TDSplashFadePerSec": 8.0,
+    "User.TDSplashFullCountSpeedCmPerSec": 400.0,
+    "User.TDSplashGravityCmPerSec2": 980.0,
+    "User.TDSplashLifetimeMaxSeconds": 0.8,
+    "User.TDSplashLifetimeMinSeconds": 0.3,
+    "User.TDSplashSpawnLiftCm": 1.0,
+    "User.TDSplashSpeedJitter": 0.4,
+    "User.TDSplashStretchPerCmPerSec": 0.004
+   },
+   "Ints": {
+    "User.TDSplashDropletsPerImpact": 24
+   },
+   "Vectors2": {},
+   "Vectors3": {}
+  },
+  "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater": {
+   "Bools": {},
+   "Colors": {
+    "User.TDWhitewaterColor": [1.0, 1.0, 1.0, 0.9]
+   },
+   "Floats": {
+    "User.TDWhitewaterCameraFadeLengthCm": 600.0,
+    "User.TDWhitewaterCameraFadeStartCm": 1200.0,
+    "User.TDWhitewaterDensityToAlpha": 1.5,
+    "User.TDWhitewaterFadePerSec": 4.0,
+    "User.TDWhitewaterHeightFollowPerSec": 20.0,
+    "User.TDWhitewaterLifetimeMaxSeconds": 1.5,
+    "User.TDWhitewaterLifetimeMinSeconds": 0.8,
+    "User.TDWhitewaterLiftCm": 2.0,
+    "User.TDWhitewaterSpawnPerM2PerSec": 20.0,
+    "User.TDWhitewaterSpawnThreshold": 0.5,
+    "User.TDWhitewaterSpriteSizeCm": 6.0,
+    "User.TDWhitewaterStretchPerCmPerSec": 0.002,
+    "User.TDWhitewaterVelocityDragPerSec": 4.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {},
+   "Vectors2": {
+    "User.PlaneCoordinateOffsetCm": [0.0, 0.0],
+    "User.SimCenterPlane": [0.0, 0.0],
+    "User.SimExtentsCm": [0.0, 0.0],
+    "User.TDWhitewaterSpawnUvMax": [1.0, 1.0],
+    "User.TDWhitewaterSpawnUvMin": [0.0, 0.0]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [0.0, 0.0, 1.0],
+    "User.PlaneAxisU": [1.0, 0.0, 0.0],
+    "User.PlaneAxisV": [0.0, 1.0, 0.0],
+    "User.SimCenterWorld": [0.0, 0.0, 0.0]
+   }
   }
  }
 }

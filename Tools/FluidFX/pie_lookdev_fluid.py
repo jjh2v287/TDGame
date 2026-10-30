@@ -1,10 +1,12 @@
 """실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06). FluidFX 무대 PIE 하나에서 변형(노출·조명·불빛·불꽃 카드/볼륨 재질 값·활성 프리셋 임시 복제본·폰 위치·카메라 거리·액터 위치·컴포넌트 숨김·콘솔 명령·깨어 있는 유체 액터·폭발 트리거)을 차례로 적용하고 정착 시간 뒤 또는 게임 시간 예약 시각마다 게임 화면을 찍어 이름표 붙은 비교 격자를 만든다.
-실행 명령: python Tools/FluidFX/pie_lookdev_fluid.py --variants <변형 JSON> [--level /Game/FluidFX/Maps/LV_TDFluidFireStage] [--settle-seconds 3] [--stop-pie] [--output-dir <폴더>] (PowerShell). 변형 JSON = {"base": {적용}, "variants": [{"name": "영문", "apply": {적용}, "settle": 초}]}, 적용 키(이 순서로 적용) = tuning_reload({"tuning": 조절 사본, "look": 모양 사본(빈 문자열이면 정본, 둘 다 Saved 아래), "reset": "reinit"(기본, 모든 라이브 액터 init_system_state_from_preset)|"keep", "relative_to_base": true(기본, 먼저 정본을 다시 읽어 보고서 세대를 기다림), "read_back": [{"struct", "field", "kinds": [종류]}] 그 종류 액터의 실효 값을 다시 읽음} 다른 키보다 먼저 ReloadPresetTuningFromPaths 뒤 GetLastReapplyReport 세대를 기다리고, 하나라도 쓰면 실행 끝 finally 에서 정본을 다시 읽음)·awake({라벨: bool}이면 적힌 것만, 목록이면 목록 외는 재움)·pawn([x, y]면 현재 z 유지, [x, y, z]면 그 높이로)·arm·view([pitch, yaw] 조종 회전, 붐이 따라감)·props({라벨: {속성: 값}} 액터 속성. 값이 dict면 현재 값이 구조체일 때 필드를 고쳐 되넣고, UObject(컴포넌트)면 그 객체의 필드만 고치고 되넣지 않으며, 배열이면 정수 문자열 키의 원소를 고쳐 배열을 되넣는다 예 {"targets": {"1": {"burst_radius_scale": 1.5}}}, "append:<i>" 키는 같은 호출의 정수 키 편집 전 i번 원소를 복제(구조체 copy, UObject 원소는 오류)해 고친 뒤 끝에 붙인다 예 {"targets": {"0": {"receives_trails": false}, "append:0": {"receives_burst": false, "heat_scale": 0.4}}})·hide({라벨: bool} 게임 숨김)·location({라벨: [x, y, z]} 액터 위치, null 성분은 현재 값 유지 예 [null, null, 0.0], 다시 읽은 값 기록)·hide_components({라벨 또는 "pawn": [컴포넌트 이름 일부(대소문자 무시)]} 맞는 씬 컴포넌트 set_visibility(False), 예 ShieldMesh)·preset({라벨: {점 경로 또는 중첩 dict: 값}} 라이브 컴포넌트 활성 프리셋의 임시 복제본을 고쳐 active_preset에 넣음, 원본 에셋은 건드리지 않음. simulation_config·plane_settings·volume_render 는 비 Custom·비 override 프리셋이면 R2 로 무시되므로 오류(종료 1)이고 "force_override": true 면 복제본의 override_preset_defaults 를 켬. plane_settings·volume_render·volume_height_cm은 C++가 매 스텝 다시 읽어 그대로 반영되고, 반영 여부는 다음 촬영의 preset_effect(볼륨 MID 매개변수 값, camera_depth_bias_cm은 내부 표면 메시 이동 거리)로 보고)·preset_reinit([라벨] 복제본으로 init_system_state_from_preset 재초기화, 시뮬 상태와 앞선 sim 편집이 초기화되므로 프리셋의 시뮬 설정·출력 재질처럼 초기화 때만 읽는 필드를 바꿀 때만)·exposure_ev100·lights·fire_light·flame(액터의 모든 불꽃 카드 MID)·volume(볼륨 MID)·ember({라벨: {재질 매개변수: 값}} ember_component 0번 재질 사슬에 FluidEmber 필요, MID 아니면 만들어 설정, 부모에 없는 이름은 missing, settle 촬영마다 result.json에 ember_mid)·sim(simulation_config 필드, apply_simulation_config)·emitter(source_emitter 필드, 비 Custom·비 override 프리셋이면 오류(종료 1), "force_override": true 면 override 켠 프리셋 복제본을 active_preset 에 넣고 진행)·surface_material(라이브 컴포넌트 출력 재질 교체 후 내부 메시 재연결)·console([명령] PIE 플레이어 컨트롤러로 실행, "이름 값" 꼴 cvar는 다시 읽은 값 기록, Shot 결과는 result.json console_screenshots)·move(내비 이동 목표)·speed·trigger(같은 호출의 게임 시간을 trigger_game_time으로 기록)·time_dilation(전역 시간 배율)·schedule({"times": [기준 뒤 게임 초], "reference": "trigger"|"now", "prefix": "영문", "fixed_fps": 60(0이면 끔, 예약 동안 t.OverrideFPS 고정 간격 뒤 복구 L-editor-45), "file_wait_ticks": 30(1이면 그려진 다음 틱에 바로 다음 장), "timeout": 초} 원격 호출 하나에서 슬레이트 틱 콜백을 걸어 기준 뒤 게임 시간마다 HighResShot을 요청하고, 앞 장이 그려지고 파일이 생기거나 틱 한도가 지나야 다음 장을 건 뒤 스스로 해제, 이 변형은 settle 촬영을 하지 않음, reference trigger는 같은 apply의 trigger 필요). props·emitter·sim·preset 값 변환: 현재 값이 Vector·Vector2D면 목록 [x, y(, z)], Rotator면 [pitch, yaw, roll], LinearColor면 [r, g, b(, a)], Transform이면 {"location": [], "rotation": [pitch, yaw, roll], "scale": []}(빠진 키는 현재 값 유지)
-출력: Saved/FluidFX/lookdev/<시각>/<순번>_<이름>.png, 예약 촬영은 <순번>_<prefix>_<기준 뒤 ms>ms.png와 <순번>_<prefix>_schedule.json(장마다 요청·실제 찍힌 게임 시간, 늦음, 틱 사이 벽시계 간격 real_dt(요청 틱)·real_dt_mean(앞 장 뒤 촬영 대기 아닌 틱 평균, 실제 fps 대용)·capture_real_dt(촬영 끊김 포함), world_dt, 파일 대기 틱, 고정 간격 복구, preset_effect), grid.png, result.json(변형별 적용 결과·shot_game_time·preset_effect·schedule·console_screenshots). result.json 에 tuning_reload(보고서·다시 읽기)·canonical_reload·key_errors. 종료 코드 0 기대한 장 전부 찍음·키 오류 없음/1 일부 실패 또는 키 오류(tuning_reload 실패·R2 무시 키)/2 환경 문제
-상태: 검증됨(2026-10-18 모닥불·횃불·폭발 변형 9회 실행, campfire_v1~v5·torch_v1·explosion_v1. 2026-10-20 view·hide·props 추가와 flame 전 카드 적용으로 측면 룩데브 6회 실행). 2026-10-20 추가한 awake dict·game_time·time_dilation과 console·schedule·location·hide_components·preset·preset_reinit·값 변환·배열 원소·UObject 필드 편집은 미검증(PIE 미실행, 정적 검토만). PIE 런타임 값만 바꾸므로 에셋은 바뀌지 않는다. 고른 값은 재질·무대 생성 스크립트에 옮겨 적는다. 2026-10-21 FX-8c 11차 ember 키는 미검증(PIE 미실행), EmberTint* 는 재질 재생성 뒤에만 효과. 2026-10-21 FX-8c 12차 props 배열 "append:<i>" 키는 2026-10-21 FX-8c 12차 AP 세션 PIE 9회에서 확인(복제 원소가 배열 끝에 붙고 수정 필드가 다시 읽기와 같음, 가짜 unreal 오프라인 시험에서 기존 정수 키 결과 불변). 2026-10-25 P3(spec-wave0-data-bridge-v2 3.9) tuning_reload·--output-dir·R2 무시 키 오류·force_override 는 가짜 unreal 오프라인 시험만(PIE 미실행).
+실행 명령: python Tools/FluidFX/pie_lookdev_fluid.py --variants <변형 JSON> [--level /Game/FluidFX/Maps/LV_TDFluidFireStage] [--settle-seconds 3] [--stop-pie] [--output-dir <폴더>] (PowerShell). 변형 JSON = {"base": {적용}, "variants": [{"name": "영문", "apply": {적용}, "settle": 초}]}, 적용 키(이 순서로 적용) = tuning_reload({"tuning": 조절 사본, "look": 모양 사본(빈 문자열이면 정본, 둘 다 Saved 아래), "reset": "reinit"(기본, 모든 라이브 액터 init_system_state_from_preset)|"keep", "relative_to_base": true(기본, 먼저 정본을 다시 읽어 보고서 세대를 기다림), "read_back": [{"struct", "field", "kinds": [종류]}] 그 종류 액터의 실효 값을 다시 읽음} 다른 키보다 먼저 ReloadPresetTuningFromPaths 뒤 GetLastReapplyReport 세대를 기다리고, 하나라도 쓰면 실행 끝 finally 에서 정본을 다시 읽음)·awake({라벨: bool}이면 적힌 것만, 목록이면 목록 외는 재움)·pawn([x, y]면 현재 z 유지, [x, y, z]면 그 높이로)·arm·view([pitch, yaw] 조종 회전, 붐이 따라감)·props({라벨: {속성: 값}} 액터 속성. 값이 dict면 현재 값이 구조체일 때 필드를 고쳐 되넣고, UObject(컴포넌트)면 그 객체의 필드만 고치고 되넣지 않으며, 배열이면 정수 문자열 키의 원소를 고쳐 배열을 되넣는다 예 {"targets": {"1": {"burst_radius_scale": 1.5}}}, "append:<i>" 키는 같은 호출의 정수 키 편집 전 i번 원소를 복제(구조체 copy, UObject 원소는 오류)해 고친 뒤 끝에 붙인다 예 {"targets": {"0": {"receives_trails": false}, "append:0": {"receives_burst": false, "heat_scale": 0.4}}})·hide({라벨: bool} 게임 숨김)·location({라벨: [x, y, z]} 액터 위치, null 성분은 현재 값 유지 예 [null, null, 0.0], 다시 읽은 값 기록)·hide_components({라벨 또는 "pawn": [컴포넌트 이름 일부(대소문자 무시)]} 맞는 씬 컴포넌트 set_visibility(False), 예 ShieldMesh)·preset({라벨: {점 경로 또는 중첩 dict: 값}} 라이브 컴포넌트 활성 프리셋의 임시 복제본을 고쳐 active_preset에 넣음, 원본 에셋은 건드리지 않음. simulation_config·plane_settings·volume_render 는 비 Custom·비 override 프리셋이면 R2 로 무시되므로 오류(종료 1)이고 "force_override": true 면 복제본의 override_preset_defaults 를 켬. plane_settings·volume_render·volume_height_cm은 C++가 매 스텝 다시 읽어 그대로 반영되고, 반영 여부는 다음 촬영의 preset_effect(볼륨 MID 매개변수 값, camera_depth_bias_cm은 내부 표면 메시 이동 거리)로 보고)·preset_reinit([라벨] 복제본으로 init_system_state_from_preset 재초기화, 시뮬 상태와 앞선 sim 편집이 초기화되므로 프리셋의 시뮬 설정·출력 재질처럼 초기화 때만 읽는 필드를 바꿀 때만)·exposure_ev100·lights·fire_light·flame(액터의 모든 불꽃 카드 MID)·volume(볼륨 MID)·ember({라벨: {재질 매개변수: 값}} ember_component 0번 재질 사슬에 FluidEmber 필요, MID 아니면 만들어 설정, 부모에 없는 이름은 missing, settle 촬영마다 result.json에 ember_mid)·sim(simulation_config 필드, apply_simulation_config)·emitter(source_emitter 필드, 비 Custom·비 override 프리셋이면 오류(종료 1), "force_override": true 면 override 켠 프리셋 복제본을 active_preset 에 넣고 진행)·surface_material(라이브 컴포넌트 출력 재질 교체 후 내부 메시 재연결)·console([명령] PIE 플레이어 컨트롤러로 실행, "이름 값" 꼴 cvar는 다시 읽은 값 기록, Shot 결과는 result.json console_screenshots)·move(내비 이동 목표)·speed·trigger(같은 호출의 게임 시간을 trigger_game_time으로 기록)·time_dilation(전역 시간 배율)·schedule({"times": [기준 뒤 게임 초], "reference": "trigger"|"now", "prefix": "영문", "fixed_fps": 60(0이면 끔, 예약 동안 t.OverrideFPS 고정 간격 뒤 복구 L-editor-45), "file_wait_ticks": 30(1이면 그려진 다음 틱에 바로 다음 장), "timeout": 초} 원격 호출 하나에서 슬레이트 틱 콜백을 걸어 기준 뒤 게임 시간마다 HighResShot을 요청하고, 앞 장이 그려지고 파일이 생기거나 틱 한도가 지나야 다음 장을 건 뒤 스스로 해제, 이 변형은 settle 촬영을 하지 않음, reference trigger는 같은 apply의 trigger 필요). props·emitter·sim·preset 값 변환: 현재 값이 Vector·Vector2D면 목록 [x, y(, z)], Rotator면 [pitch, yaw, roll], LinearColor면 [r, g, b(, a)], Transform이면 {"location": [], "rotation": [pitch, yaw, roll], "scale": []}(빠진 키는 현재 값 유지). CAL-0 키(spec-cal0-v2 C9·1.3): view_target(액터 라벨, 컨트롤러 set_view_target_with_blend)·call({라벨: {function, component?, args?}} 함수 호출, 첫 성공 게임 시각 call_game_time)·wait_until({label, component?, property, equals, timeout} 바깥에서 조건이 맞을 때까지 기다린 뒤 apply, 시간 초과는 키 오류)·look_live({materials: {/Game 패키지: {Scalars|Vectors: {이름: 값}}}, niagara: {패키지: {Floats|Ints|Bools|Vectors2|Vectors3|Colors: {이름: 값}}}, niagara_reset, base: {패키지: {Scalars|Vectors: {이름: 원 MI 값}}}} 직접 부모만 맞춤. 소유자 primitive_slot(MI 슬롯은 MID 로 교체 뒤 설정)·decal(MI면 MID 만들어 설정)은 파이썬이 설정, cpp_mid(CPP_LOOK_OWNER_CLASS_NAMES 액터의 MID)·cloud_component·foliage_flow(B5 get_flow_copy_material_instance)·post_process 는 교체·설정 없이 tuning_reload.look 사본으로 C++ 가 다시 적용, niagara 는 set_variable_* 뒤 niagara_reset 이면 reinitialize_system. 1초 뒤 MID 를 다시 읽어 단언, base 는 MI 에셋 원래 값과 대조)·probe({stats: [{label|subsystem, component?, function, prefix}], rt: [{label, component?, property, box: [u0, v0, u1, v1], step, channel: r|g|b|a|rg_len|rgb_len, radial_center?, threshold?, prefix}], times: [apply 뒤 게임 초]})·schedule.reference "call"·schedule.events([{time, console?, call?, move?}] 틱 콜백 안에서 기준 뒤 게임 시각에 실행)·tuning_reload.base({tuning, look} 대조 사본, relative_to_base 때 정본 대신 먼저 적재)·tuning_reload.read_back[] 의 owner(live_component|actor|volume_driver|subsystem:<클래스>|actor_class:<클래스>)·access(<속성>|call:<함수>, 함수 없으면 "게터 없음: B5 필요"). 모르는 적용 키·하위 키는 find_key_errors(apply) 순수 함수(에디터 접근 없음, calib_sweep 건식이 import)가 키 오류로 낸다
+출력: Saved/FluidFX/lookdev/<시각>/<순번>_<이름>.png, 예약 촬영은 <순번>_<prefix>_<기준 뒤 ms>ms.png와 <순번>_<prefix>_schedule.json(장마다 요청·실제 찍힌 게임 시간, 늦음, 틱 사이 벽시계 간격 real_dt(요청 틱)·real_dt_mean(앞 장 뒤 촬영 대기 아닌 틱 평균, 실제 fps 대용)·capture_real_dt(촬영 끊김 포함), world_dt, 파일 대기 틱, 고정 간격 복구, preset_effect), grid.png, result.json(변형별 적용 결과·shot_game_time·preset_effect·schedule·console_screenshots). result.json 에 tuning_reload(보고서·다시 읽기)·canonical_reload·key_errors. 종료 코드 0 기대한 장 전부 찍음·키 오류 없음/1 일부 실패 또는 키 오류(tuning_reload 실패·R2 무시 키)/2 환경 문제. CAL-0: 단계 apply 결과에 look_applied({패키지: {이름: 소유자 수}})·look_owners·look_base({checked, mismatches})·look_read_back({패키지: {구역: {이름: {expected, read[], matches}}}})·owner_checks([{package, owner, by: python|cpp, actor, component, slot, matches, reason?}])·look_errors·probe({samples: [{time, elapsed, metrics, errors, grid_paths}], metrics: probe.<prefix>.<필드 파스칼 이름 또는 mean·p50·p95·max·fraction_above·radial_alignment_mean> 표본 중앙값, errors})와 <순번>_probe_<prefix>_<k>.json 격자·call·call_game_time·view_target·wait, 예약 상태 events_done. 키 오류(종료 1)에 모르는 키·view_target 없음·call 함수 없음·wait_until 시간 초과·look 적용 대상 없음·base 불일치·다시 읽기 불일치·"C++ 소유 MID가 모양 사본을 다시 적용하지 않음"·게터 없음·probe 함수·렌더 타깃 없음이 더해진다
+상태: 검증됨(2026-10-18 모닥불·횃불·폭발 변형 9회 실행, campfire_v1~v5·torch_v1·explosion_v1. 2026-10-20 view·hide·props 추가와 flame 전 카드 적용으로 측면 룩데브 6회 실행). 2026-10-20 추가한 awake dict·game_time·time_dilation과 console·schedule·location·hide_components·preset·preset_reinit·값 변환·배열 원소·UObject 필드 편집은 미검증(PIE 미실행, 정적 검토만). PIE 런타임 값만 바꾸므로 에셋은 바뀌지 않는다. 고른 값은 재질·무대 생성 스크립트에 옮겨 적는다. 2026-10-21 FX-8c 11차 ember 키는 미검증(PIE 미실행), EmberTint* 는 재질 재생성 뒤에만 효과. 2026-10-21 FX-8c 12차 props 배열 "append:<i>" 키는 2026-10-21 FX-8c 12차 AP 세션 PIE 9회에서 확인(복제 원소가 배열 끝에 붙고 수정 필드가 다시 읽기와 같음, 가짜 unreal 오프라인 시험에서 기존 정수 키 결과 불변). 2026-10-25 P3(spec-wave0-data-bridge-v2 3.9) tuning_reload·--output-dir·R2 무시 키 오류·force_override 는 가짜 unreal 오프라인 시험만(PIE 미실행). 2026-10-30 CAL-0 B3(view_target·call·schedule.events·reference call·wait_until·look_live 소유자 7종·probe stats·rt·tuning_reload.base·다시 읽기 owner·access·find_key_errors)는 calib_offline_test.py check_cal0_lookdev 가짜 unreal 오프라인 시험만(PIE 미실행). 실제 엔진에서 미검증: RenderingLibrary.read_render_target_raw_uv 격자 읽기 속도, SubsystemBlueprintLibrary.get_world_subsystem, 후처리 blendables·구름 material 속성 이름, Niagara 사용자 변수 이름 접두(User.), 다시 읽기 1초는 실시간 sleep(시간 배율 1 가정).
 """
 import argparse
+import difflib
 import json
+import statistics
 import sys
 import time
 from datetime import datetime
@@ -35,6 +37,36 @@ EXIT_ENVIRONMENT = 2
 TUNING_RELOAD_WAIT_SECONDS = 20.0
 TUNING_RELOAD_POLL_SECONDS = 0.25
 TUNING_RESET_MODES = ("reinit", "keep")
+LOOK_READ_BACK_DELAY_SECONDS = 1.0
+PROBE_POLL_SECONDS = 0.25
+PROBE_SLEEP_MARGIN_SECONDS = 0.02
+PROBE_WAIT_MARGIN_SECONDS = 30.0
+WAIT_UNTIL_POLL_SECONDS = 0.25
+WAIT_UNTIL_DEFAULT_TIMEOUT_SECONDS = 60.0
+OUTER_APPLY_KEYS = ("tuning_reload", "wait_until", "probe")
+APPLY_KEYS = ("tuning_reload", "wait_until", "awake", "pawn", "arm", "view", "view_target", "props", "hide", "location", "hide_components", "preset", "preset_reinit",
+              "exposure_ev100", "lights", "fire_light", "flame", "volume", "ember", "sim", "emitter", "surface_material", "console", "move", "speed", "trigger", "call",
+              "time_dilation", "look_live", "schedule", "probe")
+APPLY_OBJECT_KEYS = {
+    "tuning_reload": ("tuning", "look", "reset", "relative_to_base", "read_back", "base"),
+    "schedule": ("times", "reference", "prefix", "fixed_fps", "file_wait_ticks", "timeout", "events"),
+    "wait_until": ("label", "component", "property", "equals", "timeout"),
+    "look_live": ("materials", "niagara", "niagara_reset", "base"),
+    "probe": ("stats", "rt", "times"),
+}
+APPLY_ITEM_KEYS = {
+    "tuning_reload.read_back": ("struct", "field", "kinds", "owner", "access", "json_path", "expected"),
+    "tuning_reload.base": ("tuning", "look"),
+    "schedule.events": ("time", "console", "call", "move"),
+    "probe.stats": ("label", "component", "subsystem", "function", "prefix"),
+    "probe.rt": ("label", "component", "property", "box", "step", "channel", "radial_center", "threshold", "prefix"),
+}
+CALL_KEYS = ("component", "function", "args")
+SCHEDULE_REFERENCES = ("now", "trigger", "call")
+LOOK_GROUP_SECTIONS = {"materials": ("Scalars", "Vectors"), "niagara": ("Floats", "Ints", "Bools", "Vectors2", "Vectors3", "Colors"), "base": ("Scalars", "Vectors")}
+PROBE_CHANNELS = ("r", "g", "b", "a", "rg_len", "rgb_len")
+READ_BACK_OWNER_KINDS = ("live_component", "actor", "volume_driver")
+READ_BACK_OWNER_PREFIXES = ("subsystem:", "actor_class:")
 
 LOOKDEV_ACTIONS = r'''
 import inspect
@@ -61,6 +93,18 @@ READ_BACK_SOURCES = {
     "TDFluidEmberSettings": ("ember_component", None),
     "TDFluidFireLightSettings": ("fire_light_component", None),
 }
+MISSING_GETTER_ERROR = "게터 없음: B5 필요"
+CPP_LOOK_OWNER_CLASS_NAMES = ("TDFluidLiveActor", "TDFluidCloudLayersActor", "TDFluidFoliageFlowActor", "TDFluidFragmentEmitterActor", "TDFluidSurfaceOutputActor", "TDFluidTrackDeformMeshActor", "TDFluidWaterActor")
+CPP_LOOK_OWNER_COMPONENT_CLASS_NAMES = ("TDFluidVolumeDriverComponent",)
+CPP_ONLY_LOOK_HOLDERS = ("cloud", "foliage", "post_process")
+LOOK_HOLDER_OWNERS = {"slot": ("primitive_slot", "cpp_mid"), "decal": ("decal", "decal"), "cloud": ("cloud_component", "cloud_component"),
+                      "foliage": ("foliage_flow", "foliage_flow"), "post_process": ("post_process", "post_process")}
+FOLIAGE_FLOW_GETTER = "get_flow_copy_material_instance"
+LOOK_MATERIAL_SECTIONS = ("Scalars", "Vectors")
+LOOK_READ_BACK_TOLERANCE = 1e-4
+CPP_LOOK_MISMATCH_REASON = "C++ 소유 MID가 모양 사본을 다시 적용하지 않음"
+PYTHON_LOOK_MISMATCH_REASON = "다시 읽기 불일치"
+PYTHON_MID_ATTRIBUTE = "td_lookdev_python_mids"
 
 
 def find_actor_by_label(world, label):
@@ -577,11 +621,15 @@ def advance_schedule(state, slate_delta_seconds):
     state["ticks"] += 1
     elapsed = unreal.GameplayStatics.get_time_seconds(world) - state["reference"]
     real_time = unreal.GameplayStatics.get_real_time_seconds(world)
+    while state["events"] and elapsed >= float(state["events"][0]["time"]):
+        run_schedule_event(state, world, state["events"].pop(0), elapsed)
     if state["pending"] is not None:
         settle_pending_shot(state, state["pending"], elapsed, real_time, wall_delta_seconds)
         return
-    if not state["remaining"]:
+    if not state["remaining"] and not state["events"]:
         finish_schedule(state, None)
+        return
+    if not state["remaining"]:
         return
     state["real_dt_sum"] += wall_delta_seconds
     state["real_dt_count"] += 1
@@ -591,14 +639,15 @@ def advance_schedule(state, slate_delta_seconds):
 
 def start_schedule(schedule, reference_time):
     stop_schedule("새 예약이 이전 예약을 대체했다")
-    times = sorted(float(value) for value in schedule["times"])
+    times = sorted(float(value) for value in schedule.get("times", []))
+    events = sorted(schedule.get("events", []), key=lambda event: float(event["time"]))
     prefix = schedule.get("prefix", "schedule")
-    timeout = float(schedule.get("timeout", 120.0 + 10.0 * max(times + [0.0])))
-    state = {"remaining": list(times), "pending": None, "ticks": 0, "real_dt_sum": 0.0, "real_dt_count": 0, "last_wall_time": None, "handle": None,
+    timeout = float(schedule.get("timeout", 120.0 + 10.0 * max(times + [float(event["time"]) for event in events] + [0.0])))
+    state = {"remaining": list(times), "events": events, "pending": None, "ticks": 0, "real_dt_sum": 0.0, "real_dt_count": 0, "last_wall_time": None, "handle": None,
              "file_wait_ticks": int(schedule.get("file_wait_ticks", DEFAULT_SCHEDULE_FILE_WAIT_TICKS)), "deadline": time.monotonic() + timeout,
              "reference": reference_time, "size": PARAMS["size"], "output": PARAMS["output"], "tag": PARAMS["tag"], "prefix": prefix,
              "status_path": f"{PARAMS['output']}/{PARAMS['tag']}_{prefix}_schedule.json",
-             "status": {"times": times, "reference": schedule.get("reference", "now"), "reference_game_time": reference_time, "prefix": prefix, "shots": [], "done": False}}
+             "status": {"times": times, "reference": schedule.get("reference", "now"), "reference_game_time": reference_time, "prefix": prefix, "shots": [], "events_done": [], "done": False}}
     state["status"]["fixed_step"] = enable_fixed_step(state, float(schedule.get("fixed_fps", DEFAULT_SCHEDULE_FIXED_FPS)))
     write_schedule_status(state)
 
@@ -617,12 +666,239 @@ def begin_schedule(world, schedule, outcome):
     reference = schedule.get("reference", "now")
     if reference == "now":
         return start_schedule(schedule, unreal.GameplayStatics.get_time_seconds(world))
+    if reference == "call":
+        if "call_game_time" not in outcome:
+            return {"error": "reference call은 같은 apply에서 call이 하나 이상 성공해야 한다"}
+        return start_schedule(schedule, outcome["call_game_time"])
     if reference != "trigger":
-        return {"error": "reference는 trigger 또는 now: " + str(reference)}
+        return {"error": "reference는 trigger·now·call: " + str(reference)}
     trigger = outcome.get("trigger")
     if not isinstance(trigger, dict) or "error" in trigger or "trigger_game_time" not in outcome:
         return {"error": "reference trigger는 같은 apply에서 trigger가 성공해야 한다"}
     return start_schedule(schedule, outcome["trigger_game_time"])
+
+
+def call_function(world, label, request):
+    actor = find_actor_by_label(world, label)
+    if actor is None:
+        return {"error": "액터 없음"}
+    owner = actor.get_editor_property(request["component"]) if request.get("component") else actor
+    function = getattr(owner, request["function"], None)
+    if not callable(function):
+        return {"error": "함수 없음: " + request["function"]}
+    returned = function(*request.get("args", []))
+    return {"function": request["function"], "returned": describe_read_value(returned), "game_time": unreal.GameplayStatics.get_time_seconds(world)}
+
+
+def apply_calls(world, calls, outcome):
+    results = {}
+    for label, request in calls.items():
+        try:
+            results[label] = call_function(world, label, request)
+        except Exception as error:
+            results[label] = {"error": str(error)[-300:]}
+        if "error" not in results[label] and "call_game_time" not in outcome:
+            outcome["call_game_time"] = results[label]["game_time"]
+    return results
+
+
+def run_schedule_event(state, world, event, elapsed):
+    done = {"time": float(event["time"]), "game_time": elapsed}
+    if "console" in event:
+        done["console"] = run_console_commands(world, event["console"])
+    if "call" in event:
+        done["call"] = apply_calls(world, event["call"], {})
+    if "move" in event:
+        PARAMS["start_x"] = None
+        PARAMS["goal_x"], PARAMS["goal_y"] = event["move"]
+        done["move"] = action_fire_move(world)
+    state["status"]["events_done"].append(done)
+    write_schedule_status(state)
+
+
+def apply_view_target(world, label):
+    actor = find_actor_by_label(world, label)
+    if actor is None:
+        return {"label": label, "ok": False, "error": "액터 없음"}
+    unreal.GameplayStatics.get_player_controller(world, 0).set_view_target_with_blend(actor, 0.0)
+    return {"label": label, "ok": True}
+
+
+def material_package(material):
+    return str(material.get_path_name()).split(".")[0] if material is not None else ""
+
+
+def is_cpp_look_owner(actor):
+    for name in CPP_LOOK_OWNER_CLASS_NAMES:
+        owner_class = getattr(unreal, name, None)
+        if isinstance(owner_class, type) and isinstance(actor, owner_class):
+            return True
+    for name in CPP_LOOK_OWNER_COMPONENT_CLASS_NAMES:
+        component_class = getattr(unreal, name, None)
+        if isinstance(component_class, type) and len(actor.get_components_by_class(component_class)) > 0:
+            return True
+    return False
+
+
+def match_look_material(material, package):
+    if material is None:
+        return None
+    if isinstance(material, unreal.MaterialInstanceDynamic):
+        return "mid" if material_package(material.get_editor_property("parent")) == package else None
+    return "asset" if material_package(material) == package else None
+
+
+def look_holders(actor):
+    holders = []
+    for component in actor.get_components_by_class(unreal.PrimitiveComponent):
+        holders += [{"holder": "slot", "component": component, "slot": slot, "material": component.get_material(slot)} for slot in range(component.get_num_materials())]
+    for component in actor.get_components_by_class(unreal.DecalComponent):
+        holders.append({"holder": "decal", "component": component, "slot": 0, "material": component.get_decal_material()})
+    for component in actor.get_components_by_class(unreal.VolumetricCloudComponent):
+        holders.append({"holder": "cloud", "component": component, "slot": 0, "material": component.get_editor_property("material")})
+    if isinstance(actor, unreal.TDFluidFoliageFlowActor):
+        getter = getattr(actor, FOLIAGE_FLOW_GETTER, None)
+        holders.append({"holder": "foliage", "component": None, "slot": 0, "material": getter() if callable(getter) else None,
+                        "error": None if callable(getter) else f"{MISSING_GETTER_ERROR} ({FOLIAGE_FLOW_GETTER})"})
+    if isinstance(actor, unreal.PostProcessVolume):
+        blendables = actor.get_editor_property("settings").get_editor_property("weighted_blendables").get_editor_property("array")
+        holders += [{"holder": "post_process", "component": None, "slot": index, "material": blendable.get_editor_property("object")} for index, blendable in enumerate(blendables)]
+    return holders
+
+
+def find_look_owners(world, package):
+    owners = []
+    for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.Actor):
+        is_cpp_actor = is_cpp_look_owner(actor)
+        for holder in look_holders(actor):
+            match = match_look_material(holder["material"], package)
+            if match is None and not holder.get("error"):
+                continue
+            is_cpp = holder["holder"] in CPP_ONLY_LOOK_HOLDERS or (match == "mid" and is_cpp_actor and str(holder["material"].get_path_name()) not in python_mid_names())
+            owners.append(dict(holder, package=package, actor=actor.get_actor_label(), by="cpp" if is_cpp else "python", owner=LOOK_HOLDER_OWNERS[holder["holder"]][1 if is_cpp else 0]))
+    return owners
+
+
+def describe_look_owner(owner):
+    component = owner["component"]
+    described = {"package": owner["package"], "owner": owner["owner"], "by": owner["by"], "actor": owner["actor"], "component": component.get_name() if component is not None else None, "slot": owner["slot"]}
+    if owner.get("error"):
+        described["error"] = owner["error"]
+    return described
+
+
+def python_mid_names():
+    names = getattr(unreal, PYTHON_MID_ATTRIBUTE, None)
+    if names is None:
+        names = set()
+        setattr(unreal, PYTHON_MID_ATTRIBUTE, names)
+    return names
+
+
+def make_python_mid(owner):
+    material = owner["material"]
+    if isinstance(material, unreal.MaterialInstanceDynamic):
+        return material
+    if owner["holder"] == "decal":
+        created = owner["component"].create_dynamic_material_instance()
+    else:
+        created = owner["component"].create_dynamic_material_instance(owner["slot"], material)
+    python_mid_names().add(str(created.get_path_name()))
+    return created
+
+
+def read_look_value(material, section, name):
+    if isinstance(material, unreal.MaterialInstanceDynamic):
+        value = material.get_scalar_parameter_value(name) if section == "Scalars" else material.get_vector_parameter_value(name)
+    elif section == "Scalars":
+        value = unreal.MaterialEditingLibrary.get_material_instance_scalar_parameter_value(material, name)
+    else:
+        value = unreal.MaterialEditingLibrary.get_material_instance_vector_parameter_value(material, name)
+    return [value.r, value.g, value.b, value.a] if section == "Vectors" else float(value)
+
+
+def look_value_matches(expected, value):
+    expected_values = list(expected) + [1.0] * (4 - len(expected)) if isinstance(expected, list) else [expected]
+    read_values = value if isinstance(value, list) else [value]
+    return all(abs(float(want) - float(got)) <= LOOK_READ_BACK_TOLERANCE * max(1.0, abs(float(want))) for want, got in zip(expected_values, read_values))
+
+
+def check_look_base(base):
+    checked, mismatches = 0, []
+    for package, sections in base.items():
+        asset = unreal.load_asset(package)
+        if asset is None:
+            mismatches.append({"package": package, "error": "에셋 없음"})
+            continue
+        for section in LOOK_MATERIAL_SECTIONS:
+            for name, expected in sections.get(section, {}).items():
+                checked += 1
+                value = read_look_value(asset, section, name)
+                if not look_value_matches(expected, value):
+                    mismatches.append({"package": package, "section": section, "name": name, "expected": expected, "asset": value})
+    return {"checked": checked, "mismatches": mismatches}
+
+
+def niagara_value(section, value):
+    if section == "Floats":
+        return "set_variable_float", float(value)
+    if section == "Ints":
+        return "set_variable_int", int(value)
+    if section == "Bools":
+        return "set_variable_bool", bool(value)
+    if section == "Vectors2":
+        return "set_variable_vec2", unreal.Vector2D(*value)
+    if section == "Vectors3":
+        return "set_variable_vec3", unreal.Vector(*value)
+    return "set_variable_linear_color", unreal.LinearColor(*(list(value) + [1.0] * (4 - len(value))))
+
+
+def find_niagara_components(world, package):
+    found = []
+    for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.Actor):
+        found += [(actor, component) for component in actor.get_components_by_class(unreal.NiagaraComponent) if material_package(component.get_asset()) == package]
+    return found
+
+
+def apply_look_materials(world, package, sections, look):
+    owners = find_look_owners(world, package)
+    values = dict(sections.get("Scalars", {}), **sections.get("Vectors", {}))
+    look["look_errors"] += sorted({owner["error"] for owner in owners if owner.get("error")})
+    usable = [owner for owner in owners if not owner.get("error")]
+    for owner in usable:
+        if owner["by"] == "python":
+            set_material_values(make_python_mid(owner), values)
+    look["look_applied"][package] = {name: len(usable) for name in values}
+    look["look_owners"] += [describe_look_owner(owner) for owner in owners]
+    if not usable:
+        look["look_errors"].append("look 적용 대상 없음: " + package)
+
+
+def apply_look_niagara(world, package, sections, is_reset, look):
+    components = find_niagara_components(world, package)
+    for actor, component in components:
+        for section, values in sections.items():
+            for name, value in values.items():
+                setter, converted = niagara_value(section, value)
+                getattr(component, setter)(name, converted)
+        if is_reset:
+            component.reinitialize_system()
+    look["look_applied"][package] = {name: len(components) for values in sections.values() for name in values}
+    look["look_owners"] += [{"package": package, "owner": "niagara", "by": "python", "actor": actor.get_actor_label(), "component": component.get_name(), "reset": bool(is_reset)} for actor, component in components]
+    if not components:
+        look["look_errors"].append("look 적용 대상 없음: " + package)
+
+
+def apply_look_live(world, look_live):
+    look = {"look_applied": {}, "look_owners": [], "look_errors": []}
+    if look_live.get("base"):
+        look["look_base"] = check_look_base(look_live["base"])
+        look["look_errors"] += [f"base 불일치: {item['package']} {item.get('section', '')}.{item.get('name', '')} 기대 {item.get('expected')} 원 MI {item.get('asset', item.get('error'))}" for item in look["look_base"]["mismatches"]]
+    for package, sections in (look_live.get("materials") or {}).items():
+        apply_look_materials(world, package, sections, look)
+    for package, sections in (look_live.get("niagara") or {}).items():
+        apply_look_niagara(world, package, sections, look_live.get("niagara_reset", False), look)
+    return look
 
 
 def action_lookdev_apply(world):
@@ -647,6 +923,8 @@ def action_lookdev_apply(world):
         boom.set_editor_property("use_pawn_control_rotation", True)
         boom.set_editor_property("do_collision_test", False)
         outcome["view"] = [controller.get_control_rotation().pitch, controller.get_control_rotation().yaw]
+    if "view_target" in apply:
+        outcome["view_target"] = apply_view_target(world, apply["view_target"])
     apply_each_label(world, apply, outcome, "props", apply_props)
     for label, is_hidden in apply.get("hide", {}).items():
         actor = find_actor_by_label(world, label)
@@ -707,9 +985,13 @@ def action_lookdev_apply(world):
         PARAMS["hit_dx"], PARAMS["hit_dy"], PARAMS["hit_dz"] = apply["trigger"]
         outcome["trigger"] = action_fire_trigger(world)
         outcome["trigger_game_time"] = unreal.GameplayStatics.get_time_seconds(world)
+    if "call" in apply:
+        outcome["call"] = apply_calls(world, apply["call"], outcome)
     if "time_dilation" in apply:
         unreal.GameplayStatics.set_global_time_dilation(world, apply["time_dilation"])
         outcome["time_dilation"] = unreal.GameplayStatics.get_global_time_dilation(world)
+    if "look_live" in apply:
+        outcome.update(apply_look_live(world, apply["look_live"]))
     if "schedule" in apply:
         try:
             outcome["schedule"] = begin_schedule(world, apply["schedule"], outcome)
@@ -790,37 +1072,249 @@ def describe_read_value(value):
     return str(value)
 
 
-def read_effective_field(actor, struct_name, field_name):
-    component_name, property_name = READ_BACK_SOURCES[struct_name]
-    owner = actor.get_editor_property(component_name) if component_name else actor
-    if property_name:
-        owner = owner.get_editor_property(property_name)
+def find_subsystem(world, class_name):
+    subsystem_class = getattr(unreal, class_name, None)
+    if not isinstance(subsystem_class, type):
+        return None
+    for getter in (lambda: unreal.SubsystemBlueprintLibrary.get_world_subsystem(world, subsystem_class), lambda: unreal.get_engine_subsystem(subsystem_class)):
+        try:
+            found = getter()
+        except Exception:
+            found = None
+        if found is not None:
+            return found
+    return None
+
+
+def resolve_read_back_owner(actor, owner_kind):
+    if owner_kind == "live_component":
+        return actor.get_editor_property("live_component")
+    if owner_kind == "volume_driver":
+        return actor.get_component_by_class(unreal.TDFluidVolumeDriverComponent)
+    return actor
+
+
+def read_owner_field(owner, struct_name, field_name, access):
+    if owner is None:
+        return {"error": "소유자 없음"}
+    if access.startswith("call:"):
+        getter_name = access[len("call:"):]
+        getter = getattr(owner, getter_name, None)
+        if not callable(getter):
+            return {"error": f"{MISSING_GETTER_ERROR} ({getter_name})"}
+        owner = getter()
+    elif access:
+        owner = owner.get_editor_property(access)
     attribute = python_attribute_for(owner, field_name)
     if attribute is None:
         return {"error": f"{struct_name}.{field_name}: 파이썬 속성 없음"}
     return {"value": describe_read_value(owner.get_editor_property(attribute))}
 
 
+def read_effective_field(actor, request):
+    if request.get("owner"):
+        return read_owner_field(resolve_read_back_owner(actor, request["owner"]), request["struct"], request["field"], request.get("access", ""))
+    component_name, property_name = READ_BACK_SOURCES[request["struct"]]
+    owner = actor.get_editor_property(component_name) if component_name else actor
+    return read_owner_field(owner, request["struct"], request["field"], property_name or "")
+
+
+def safe_read(read):
+    try:
+        return read()
+    except Exception as error:
+        return {"error": str(error)[-200:]}
+
+
+def read_class_owners(world, request, entry):
+    actor_class = getattr(unreal, request["owner"][len("actor_class:"):], None)
+    if not isinstance(actor_class, type):
+        entry["error"] = "클래스 없음"
+        return
+    for actor in unreal.GameplayStatics.get_all_actors_of_class(world, actor_class):
+        entry["actors"][actor.get_actor_label()] = safe_read(lambda: read_owner_field(actor, request["struct"], request["field"], request.get("access", "")))
+
+
 def action_lookdev_tuning_read_back(world):
     pairs = live_actors_with_presets(world)
     results = []
     for request in PARAMS["requests"]:
-        entry = {"struct": request["struct"], "field": request["field"], "kinds": request["kinds"], "actors": {}}
+        owner_kind = request.get("owner", "")
+        entry = {"struct": request["struct"], "field": request["field"], "kinds": request.get("kinds", []), "actors": {}}
+        if owner_kind:
+            entry.update(owner=owner_kind, access=request.get("access", ""))
         results.append(entry)
-        if request["struct"] not in READ_BACK_SOURCES:
+        if owner_kind.startswith("subsystem:"):
+            subsystem = find_subsystem(world, owner_kind[len("subsystem:"):])
+            entry["actors"][owner_kind] = safe_read(lambda: read_owner_field(subsystem, request["struct"], request["field"], request.get("access", "")))
+            continue
+        if owner_kind.startswith("actor_class:"):
+            read_class_owners(world, request, entry)
+            continue
+        if not owner_kind and request["struct"] not in READ_BACK_SOURCES:
             entry["error"] = "다시 읽기 미지원 구조체"
             continue
-        wanted = {normalized_enum_name(kind) for kind in request["kinds"]}
+        wanted = {normalized_enum_name(kind) for kind in request.get("kinds", [])}
         for actor, live, preset in pairs:
             kind = normalized_enum_name(preset.get_editor_property("preset_kind"))
             if kind not in wanted:
                 continue
-            try:
-                read = read_effective_field(actor, request["struct"], request["field"])
-            except Exception as error:
-                read = {"error": str(error)[-200:]}
+            read = safe_read(lambda: read_effective_field(actor, request))
             entry["actors"][actor.get_actor_label()] = dict(read, kind=kind, uses_own_copies=uses_own_preset_copies(preset))
     return {"read_back": results}
+
+
+def action_lookdev_look_read_back(world):
+    look_live = PARAMS["look_live"]
+    read_back, checks, errors = {}, [], []
+    for package, sections in (look_live.get("materials") or {}).items():
+        for owner in find_look_owners(world, package):
+            if owner.get("error"):
+                continue
+            check = describe_look_owner(owner)
+            mismatched = []
+            for section in LOOK_MATERIAL_SECTIONS:
+                for name, expected in sections.get(section, {}).items():
+                    value = read_look_value(owner["material"], section, name)
+                    entry = read_back.setdefault(package, {}).setdefault(section, {}).setdefault(name, {"expected": expected, "read": [], "matches": True})
+                    entry["read"].append(value)
+                    if not look_value_matches(expected, value):
+                        entry["matches"] = False
+                        mismatched.append(f"{section}.{name}")
+            check["matches"] = not mismatched
+            if mismatched:
+                check["reason"] = CPP_LOOK_MISMATCH_REASON if owner["by"] == "cpp" else PYTHON_LOOK_MISMATCH_REASON
+                errors.append(f"{check['reason']}: {package} {owner['actor']} {', '.join(mismatched)}")
+            checks.append(check)
+    return {"look_read_back": read_back, "owner_checks": checks, "look_errors": errors, "game_time": unreal.GameplayStatics.get_time_seconds(world)}
+
+
+def probe_owner(world, entry):
+    if entry.get("subsystem"):
+        return find_subsystem(world, entry["subsystem"])
+    actor = find_actor_by_label(world, entry["label"])
+    if actor is None or not entry.get("component"):
+        return actor
+    return actor.get_editor_property(entry["component"])
+
+
+def pascal_name(name):
+    return "".join(part[:1].upper() + part[1:] for part in str(name).split("_"))
+
+
+def flatten_probe_value(value, prefix, depth=0):
+    described = describe_read_value(value)
+    if isinstance(described, (bool, int, float)):
+        return {prefix: described}
+    if isinstance(described, dict):
+        return {f"{prefix}.{key}": item for key, item in described.items()}
+    if depth >= 2:
+        return {}
+    flat = {}
+    for name in dir(value):
+        if name.startswith("_"):
+            continue
+        try:
+            item = getattr(value, name)
+        except Exception:
+            continue
+        if not callable(item):
+            flat.update(flatten_probe_value(item, f"{prefix}.{pascal_name(name)}", depth + 1))
+    return flat
+
+
+def read_probe_stats(world, entry):
+    name = entry.get("label") or entry.get("subsystem")
+    owner = probe_owner(world, entry)
+    if owner is None:
+        return {}, f"probe.stats {name}: 소유자 없음"
+    function = getattr(owner, entry["function"], None)
+    if not callable(function):
+        return {}, f"probe.stats {name}.{entry['function']}: 함수 없음"
+    return flatten_probe_value(function(), "probe." + entry["prefix"]), None
+
+
+def grid_positions(start, end, step):
+    count = max(1, int(round((end - start) / step)) + 1)
+    return [min(end, start + index * step) for index in range(count)]
+
+
+def channel_value(color, channel):
+    if channel == "rg_len":
+        return math.hypot(color.r, color.g)
+    if channel == "rgb_len":
+        return math.sqrt(color.r ** 2 + color.g ** 2 + color.b ** 2)
+    return float(getattr(color, channel))
+
+
+def radial_alignment(samples, center):
+    alignments = []
+    for u, v, x, y in samples:
+        radius, length = math.hypot(u - center[0], v - center[1]), math.hypot(x, y)
+        if radius > 1e-6 and length > 1e-6:
+            alignments.append(((u - center[0]) * x + (v - center[1]) * y) / (radius * length))
+    return sum(alignments) / len(alignments) if alignments else None
+
+
+def read_probe_render_target(world, entry):
+    owner = probe_owner(world, entry)
+    target = owner.get_editor_property(entry["property"]) if owner is not None else None
+    if target is None:
+        return {}, None, f"probe.rt {entry['label']}.{entry['property']}: 렌더 타깃 없음"
+    step = float(entry["step"])
+    us, vs = grid_positions(entry["box"][0], entry["box"][2], step), grid_positions(entry["box"][1], entry["box"][3], step)
+    rows, samples = [], []
+    for v in vs:
+        colors = [unreal.RenderingLibrary.read_render_target_raw_uv(world, target, u, v) for u in us]
+        rows.append([channel_value(color, entry["channel"]) for color in colors])
+        samples += [(u, v, color.r, color.g) for u, color in zip(us, colors)]
+    values = sorted(value for row in rows for value in row)
+    prefix = "probe." + entry["prefix"]
+    metrics = {prefix + ".mean": sum(values) / len(values), prefix + ".p50": values[int(round(0.5 * (len(values) - 1)))],
+               prefix + ".p95": values[int(round(0.95 * (len(values) - 1)))], prefix + ".max": values[-1]}
+    if entry.get("threshold") is not None:
+        metrics[prefix + ".fraction_above"] = sum(1 for value in values if value > float(entry["threshold"])) / len(values)
+    if entry.get("radial_center"):
+        metrics[prefix + ".radial_alignment_mean"] = radial_alignment(samples, entry["radial_center"])
+    return metrics, {"u": us, "v": vs, "values": rows}, None
+
+
+def action_lookdev_probe(world):
+    probe = PARAMS["probe"]
+    elapsed = unreal.GameplayStatics.get_time_seconds(world) - PARAMS["reference"]
+    if elapsed < PARAMS["at"]:
+        return {"wait_seconds": PARAMS["at"] - elapsed}
+    sample = {"time": PARAMS["at"], "elapsed": elapsed, "metrics": {}, "grids": {}, "errors": []}
+    for entry in probe.get("stats", []):
+        try:
+            metrics, error = read_probe_stats(world, entry)
+        except Exception as caught:
+            metrics, error = {}, f"probe.stats {entry.get('function')}: {str(caught)[-200:]}"
+        sample["metrics"].update(metrics)
+        if error:
+            sample["errors"].append(error)
+    for entry in probe.get("rt", []):
+        try:
+            metrics, grid, error = read_probe_render_target(world, entry)
+        except Exception as caught:
+            metrics, grid, error = {}, None, f"probe.rt {entry.get('property')}: 렌더 타깃 읽기 실패 {str(caught)[-200:]}"
+        sample["metrics"].update(metrics)
+        if grid is not None:
+            sample["grids"][entry["prefix"]] = grid
+        if error:
+            sample["errors"].append(error)
+    return sample
+
+
+def action_lookdev_wait_check(world):
+    condition = PARAMS["wait_until"]
+    actor = find_actor_by_label(world, condition["label"])
+    if actor is None:
+        return {"error": "액터 없음: " + condition["label"]}
+    owner = actor.get_editor_property(condition["component"]) if condition.get("component") else actor
+    attribute = python_attribute_for(owner, condition["property"]) or condition["property"]
+    value = describe_read_value(owner.get_editor_property(attribute))
+    return {"value": value, "matched": value == condition["equals"]}
 
 
 def run():'''
@@ -873,15 +1367,21 @@ def load_tuning_and_wait(tuning, look):
 
 def run_tuning_reload(request):
     if not isinstance(request, dict) or not all(isinstance(request.get(key, ""), str) for key in ("tuning", "look")):
-        return {"error": "tuning_reload 는 {tuning, look, reset, read_back} 객체여야 한다"}
+        return {"error": "tuning_reload 는 {tuning, look, reset, read_back, base} 객체여야 한다"}
+    base = request.get("base", {})
+    if not isinstance(base, dict) or not all(isinstance(base.get(key, ""), str) for key in ("tuning", "look")):
+        return {"error": "tuning_reload.base 는 {tuning, look} 대조 사본 객체여야 한다"}
     reset = request.get("reset", TUNING_RESET_MODES[0])
     if reset not in TUNING_RESET_MODES:
         return {"error": f"tuning_reload.reset 은 {'|'.join(TUNING_RESET_MODES)}: {reset}"}
     outcome = {"reset": reset, "tuning": resolve_tuning_path(request.get("tuning", "")), "look": resolve_tuning_path(request.get("look", ""))}
+    base_paths = {key: resolve_tuning_path(base.get(key, "")) for key in ("tuning", "look")}
+    if "base" in request:
+        outcome["base_copy"] = base_paths
     if request.get("relative_to_base", True) and (outcome["tuning"] or outcome["look"]):
-        outcome["base"] = load_tuning_and_wait("", "")
+        outcome["base"] = load_tuning_and_wait(base_paths["tuning"], base_paths["look"])
         if "error" in outcome["base"]:
-            return dict(outcome, error="정본 다시 읽기: " + str(outcome["base"]["error"]))
+            return dict(outcome, error=("대조 사본" if "base" in request else "정본") + " 다시 읽기: " + str(outcome["base"]["error"]))
     outcome["load"] = load_tuning_and_wait(outcome["tuning"], outcome["look"])
     if "error" in outcome["load"]:
         return dict(outcome, error=str(outcome["load"]["error"]))
@@ -898,7 +1398,156 @@ def run_tuning_reload(request):
     return outcome
 
 
-def find_key_errors(outcome):
+def unknown_key_errors(where, mapping, allowed):
+    errors = []
+    for key in mapping:
+        if key in allowed:
+            continue
+        close = difflib.get_close_matches(str(key), allowed, n=1)
+        errors.append(f"{where}: 모르는 키 {key}" + (f" ({close[0]}?)" if close else ""))
+    return errors
+
+
+def object_key_errors(where, value, allowed):
+    if not isinstance(value, dict):
+        return [f"{where}: 객체여야 한다"]
+    return unknown_key_errors(where, value, allowed)
+
+
+def item_key_errors(where, items, allowed, required):
+    if not isinstance(items, list):
+        return [f"{where}: 목록이어야 한다"]
+    errors = []
+    for index, item in enumerate(items):
+        errors += object_key_errors(f"{where}[{index}]", item, allowed)
+        if isinstance(item, dict):
+            errors += [f"{where}[{index}]: {key} 필요" for key in required if key not in item]
+    return errors
+
+
+def dict_items(items):
+    return [(index, item) for index, item in enumerate(items) if isinstance(item, dict)] if isinstance(items, list) else []
+
+
+def call_key_errors(where, calls):
+    if not isinstance(calls, dict):
+        return [f"{where}: {{라벨: {{function, component?, args?}}}} 객체여야 한다"]
+    errors = []
+    for label, request in calls.items():
+        errors += object_key_errors(f"{where}.{label}", request, CALL_KEYS)
+        if isinstance(request, dict) and not request.get("function"):
+            errors.append(f"{where}.{label}: function 필요")
+    return errors
+
+
+def read_back_owner_errors(items):
+    errors = []
+    for index, item in dict_items(items):
+        owner = item.get("owner")
+        if owner is None or owner in READ_BACK_OWNER_KINDS or any(isinstance(owner, str) and owner.startswith(prefix) and len(owner) > len(prefix) for prefix in READ_BACK_OWNER_PREFIXES):
+            continue
+        errors.append(f"tuning_reload.read_back[{index}]: owner {owner} 모름({'|'.join(READ_BACK_OWNER_KINDS)}|subsystem:<클래스>|actor_class:<클래스>)")
+    return errors
+
+
+def tuning_reload_key_errors(request):
+    errors = object_key_errors("tuning_reload", request, APPLY_OBJECT_KEYS["tuning_reload"])
+    if not isinstance(request, dict):
+        return errors
+    if request.get("reset", TUNING_RESET_MODES[0]) not in TUNING_RESET_MODES:
+        errors.append(f"tuning_reload.reset: {request['reset']} ({'|'.join(TUNING_RESET_MODES)})")
+    if "base" in request:
+        errors += object_key_errors("tuning_reload.base", request["base"], APPLY_ITEM_KEYS["tuning_reload.base"])
+    if "read_back" in request:
+        errors += item_key_errors("tuning_reload.read_back", request["read_back"], APPLY_ITEM_KEYS["tuning_reload.read_back"], ("struct", "field"))
+        errors += read_back_owner_errors(request["read_back"])
+    return errors
+
+
+def schedule_key_errors(apply):
+    schedule = apply["schedule"]
+    errors = object_key_errors("schedule", schedule, APPLY_OBJECT_KEYS["schedule"])
+    if not isinstance(schedule, dict):
+        return errors
+    reference = schedule.get("reference", "now")
+    if reference not in SCHEDULE_REFERENCES:
+        errors.append(f"schedule.reference: {reference} ({'|'.join(SCHEDULE_REFERENCES)})")
+    elif reference != "now" and reference not in apply:
+        errors.append(f"schedule.reference {reference}: 같은 apply에 {reference} 키 필요")
+    if "events" in schedule:
+        errors += item_key_errors("schedule.events", schedule["events"], APPLY_ITEM_KEYS["schedule.events"], ("time",))
+        for index, event in dict_items(schedule["events"]):
+            if "call" in event:
+                errors += call_key_errors(f"schedule.events[{index}].call", event["call"])
+    return errors
+
+
+def look_live_key_errors(look_live):
+    errors = object_key_errors("look_live", look_live, APPLY_OBJECT_KEYS["look_live"])
+    if not isinstance(look_live, dict):
+        return errors
+    for group, sections in LOOK_GROUP_SECTIONS.items():
+        packages = look_live.get(group, {})
+        if not isinstance(packages, dict):
+            errors.append(f"look_live.{group}: {{패키지: {{구역: {{이름: 값}}}}}} 객체여야 한다")
+            continue
+        for package, values in packages.items():
+            if not str(package).startswith("/Game/") or "." in str(package):
+                errors.append(f"look_live.{group}: 패키지 {package} 는 /Game/ 로 시작하고 . 이 없어야 한다")
+            if isinstance(values, dict) and "Switches" in values:
+                errors.append(f"look_live.{group}.{package}: Switches 는 실행 중 바꿀 수 없다")
+            errors += object_key_errors(f"look_live.{group}.{package}", {key: value for key, value in values.items() if key != "Switches"} if isinstance(values, dict) else values, sections)
+    return errors
+
+
+def probe_key_errors(probe):
+    errors = object_key_errors("probe", probe, APPLY_OBJECT_KEYS["probe"])
+    if not isinstance(probe, dict):
+        return errors
+    if not probe.get("stats") and not probe.get("rt"):
+        errors.append("probe: stats 나 rt 가 하나 이상 필요")
+    if "stats" in probe:
+        errors += item_key_errors("probe.stats", probe["stats"], APPLY_ITEM_KEYS["probe.stats"], ("function", "prefix"))
+        errors += [f"probe.stats[{index}]: label 또는 subsystem 필요" for index, item in dict_items(probe["stats"]) if not item.get("label") and not item.get("subsystem")]
+    if "rt" in probe:
+        errors += item_key_errors("probe.rt", probe["rt"], APPLY_ITEM_KEYS["probe.rt"], ("label", "property", "box", "step", "channel", "prefix"))
+        for index, item in dict_items(probe["rt"]):
+            if item.get("channel") not in PROBE_CHANNELS:
+                errors.append(f"probe.rt[{index}].channel: {item.get('channel')} ({'|'.join(PROBE_CHANNELS)})")
+            if not (isinstance(item.get("box"), list) and len(item["box"]) == 4 and all(isinstance(value, (int, float)) for value in item["box"])):
+                errors.append(f"probe.rt[{index}].box: [u0, v0, u1, v1] 숫자 4개여야 한다")
+            if not (isinstance(item.get("step"), (int, float)) and item["step"] > 0):
+                errors.append(f"probe.rt[{index}].step: 0 초과 숫자여야 한다")
+    if "times" in probe and not (isinstance(probe["times"], list) and all(isinstance(value, (int, float)) and value >= 0 for value in probe["times"])):
+        errors.append("probe.times: 0 이상 게임 초 목록이어야 한다")
+    return errors
+
+
+def wait_until_key_errors(condition):
+    errors = object_key_errors("wait_until", condition, APPLY_OBJECT_KEYS["wait_until"])
+    if isinstance(condition, dict):
+        errors += [f"wait_until: {key} 필요" for key in ("label", "property", "equals") if key not in condition]
+    return errors
+
+
+def find_key_errors(apply):
+    if not isinstance(apply, dict):
+        return ["apply: 객체여야 한다"]
+    errors = unknown_key_errors("apply", apply, APPLY_KEYS)
+    nested_checks = {"tuning_reload": tuning_reload_key_errors, "look_live": look_live_key_errors, "probe": probe_key_errors, "wait_until": wait_until_key_errors}
+    for key, check in nested_checks.items():
+        if key in apply:
+            errors += check(apply[key])
+    if "schedule" in apply:
+        errors += schedule_key_errors(apply)
+    if "call" in apply:
+        errors += call_key_errors("call", apply["call"])
+    if "view_target" in apply and not (isinstance(apply["view_target"], str) and apply["view_target"]):
+        errors.append("view_target: 액터 라벨 문자열이어야 한다")
+    return errors
+
+
+def find_outcome_errors(outcome):
     if not isinstance(outcome, dict):
         return []
     errors = []
@@ -909,18 +1558,99 @@ def find_key_errors(outcome):
         for label, entry in (outcome.get(key) or {}).items():
             if isinstance(entry, dict) and entry.get("ignored_copy_paths"):
                 errors.append(f"{key}.{label}: R2 로 무시되는 사본 키 {', '.join(entry['ignored_copy_paths'])}")
+    view_target = outcome.get("view_target")
+    if isinstance(view_target, dict) and not view_target.get("ok"):
+        errors.append(f"view_target {view_target.get('label')}: {view_target.get('error')}")
+    errors += [f"call.{label}: {result['error']}" for label, result in (outcome.get("call") or {}).items() if isinstance(result, dict) and "error" in result]
+    if isinstance(outcome.get("wait"), dict) and "error" in outcome["wait"]:
+        errors.append("wait_until: " + str(outcome["wait"]["error"]))
+    errors += ["look_live: " + line for line in outcome.get("look_errors", [])]
+    if isinstance(outcome.get("probe"), dict):
+        errors += ["probe: " + line for line in outcome["probe"].get("errors", [])]
     return errors
 
 
+def find_schedule_event_errors(status):
+    if not isinstance(status, dict):
+        return []
+    return [f"schedule.events t={event['time']:g} call.{label}: {result['error']}" for event in status.get("events_done", [])
+            for label, result in (event.get("call") or {}).items() if isinstance(result, dict) and "error" in result]
+
+
+def wait_until_condition(condition):
+    timeout = float(condition.get("timeout", WAIT_UNTIL_DEFAULT_TIMEOUT_SECONDS))
+    deadline = time.monotonic() + timeout
+    checks = 0
+    while True:
+        checked = editor_action("lookdev_wait_check", wait_until=condition)
+        checks += 1
+        if "error" in checked or checked.get("matched"):
+            return dict(checked, checks=checks)
+        if time.monotonic() >= deadline:
+            return dict(checked, checks=checks, error=f"시간 초과 {timeout:g}초: {condition['property']} 가 {condition['equals']!r} 이 아니다")
+        time.sleep(WAIT_UNTIL_POLL_SECONDS)
+
+
+def read_probe_sample(probe, reference, at):
+    deadline = time.monotonic() + at + PROBE_WAIT_MARGIN_SECONDS
+    while True:
+        sample = editor_action("lookdev_probe", probe=probe, reference=reference, at=at)
+        if "error" in sample:
+            return {"time": at, "metrics": {}, "grids": {}, "errors": [str(sample["error"])]}
+        if "wait_seconds" not in sample:
+            return sample
+        if time.monotonic() > deadline:
+            return {"time": at, "metrics": {}, "grids": {}, "errors": [f"t={at:g} 게임 시각에 {PROBE_WAIT_MARGIN_SECONDS:g}초 여유 안에 닿지 않았다"]}
+        time.sleep(min(sample["wait_seconds"], PROBE_POLL_SECONDS) + PROBE_SLEEP_MARGIN_SECONDS)
+
+
+def median_probe_metrics(samples):
+    metrics = {}
+    for key in sorted({key for sample in samples for key in sample["metrics"]}):
+        values = [sample["metrics"][key] for sample in samples if isinstance(sample["metrics"].get(key), (int, float))]
+        if values:
+            metrics[key] = statistics.median(values)
+    return metrics
+
+
+def collect_probe(probe, reference, tag):
+    samples = []
+    for index, at in enumerate(probe.get("times") or [0.0]):
+        sample = read_probe_sample(probe, reference, float(at))
+        for prefix, grid in sample.pop("grids", {}).items():
+            grid_path = OUTPUT_DIRECTORY / f"{tag}_probe_{prefix}_{index:02d}.json"
+            grid_path.parent.mkdir(parents=True, exist_ok=True)
+            grid_path.write_text(json.dumps(grid), encoding="utf-8")
+            sample.setdefault("grid_paths", {})[prefix] = grid_path.as_posix()
+        samples.append(sample)
+    return {"samples": samples, "metrics": median_probe_metrics(samples), "errors": [error for sample in samples for error in sample["errors"]]}
+
+
+def read_back_look_live(look_live):
+    time.sleep(LOOK_READ_BACK_DELAY_SECONDS)
+    read_back = editor_action("lookdev_look_read_back", look_live=look_live)
+    errors = read_back.get("look_errors", []) + ([str(read_back["error"])] if "error" in read_back else [])
+    return {"look_read_back": read_back.get("look_read_back", {}), "owner_checks": read_back.get("owner_checks", []), "look_errors": errors}
+
+
 def apply_variant_with_tuning(apply, tag, run_state):
+    run_state["key_errors"].extend(f"{tag}: {line}" for line in find_key_errors(apply))
     reload_outcome = None
     if "tuning_reload" in apply:
         run_state["uses_tuning_reload"] = True
         reload_outcome = run_tuning_reload(apply["tuning_reload"])
-    outcome = apply_variant({key: value for key, value in apply.items() if key != "tuning_reload"}, tag)
+    wait_outcome = wait_until_condition(apply["wait_until"]) if isinstance(apply.get("wait_until"), dict) else None
+    outcome = apply_variant({key: value for key, value in apply.items() if key not in OUTER_APPLY_KEYS}, tag)
     if reload_outcome is not None:
         outcome = dict(outcome, tuning_reload=reload_outcome)
-    run_state["key_errors"].extend(f"{tag}: {line}" for line in find_key_errors(outcome))
+    if wait_outcome is not None:
+        outcome["wait"] = wait_outcome
+    if isinstance(apply.get("look_live"), dict) and "error" not in outcome:
+        read_back = read_back_look_live(apply["look_live"])
+        outcome.update(read_back, look_errors=outcome.get("look_errors", []) + read_back["look_errors"])
+    if isinstance(apply.get("probe"), dict) and "error" not in outcome:
+        outcome["probe"] = collect_probe(apply["probe"], outcome.get("game_time", 0.0), tag)
+    run_state["key_errors"].extend(f"{tag}: {line}" for line in find_outcome_errors(outcome))
     return outcome
 
 
@@ -1035,6 +1765,7 @@ def main():
     try:
         result["base"] = apply_variant_with_tuning(base_apply, "base", run_state)
         base_schedule = collect_schedule_shots(result["base"], "base", shots)
+        run_state["key_errors"].extend(f"base: {line}" for line in find_schedule_event_errors(base_schedule))
         if base_schedule is not None:
             result["base_schedule"] = base_schedule
         for index, variant in enumerate(specification["variants"]):
@@ -1047,6 +1778,7 @@ def main():
                 expected_shots += expected
                 shots_before = len(shots)
                 entry["schedule"] = collect_schedule_shots(outcome, variant["name"], shots)
+                run_state["key_errors"].extend(f"{index:02d}: {line}" for line in find_schedule_event_errors(entry["schedule"]))
                 entry["saved"] = len(shots) - shots_before == expected
                 summary = f"예약 {len(shots) - shots_before}/{expected}장"
             else:

@@ -1,6 +1,6 @@
 {
   "id": "viscous_fx14_lava",
-  "note": "FX-14 A12·M3, 정본 LavaTile(128²·16 m 감싸기)·LavaLocal(256²·12.8 m), 무대 구역 8 LavaWorld(중심 0, 8000, 100 m 평면). 기준 이미지 없음: 사용자 육안 승인",
+  "note": "FX-14 A12·M3, 정본 LavaTile(128²·16 m 감싸기)·LavaLocal(256²·12.8 m), 무대 구역 8 LavaWorld(중심 0, 8000, 100 m 평면). 기준 이미지 없음: 사용자 육안 승인 / frame 정리(2026-10-31): contrast_over_tile → 파생 ratio(lava_local.water.local_contrast ÷ lava_tile_seam.water.local_contrast). seam_ratio 는 명세 7절 텍셀 정의라 화면으로 정의 불가 → structural-gaps.json",
   "scenes": [
     {
       "name": "lava_world",
@@ -86,16 +86,19 @@
     ],
     "targets": [
       {
-        "metric": "lava_tile_seam.seam_ratio",
-        "weight": 1.0,
-        "low": 0.0,
-        "high": 1.0
-      },
-      {
-        "metric": "lava_local.contrast_over_tile",
+        "metric": "derived.contrast_over_tile",
         "weight": 1.0,
         "low": 1.0,
-        "high": 100000.0
+        "high": 100000.0,
+        "note": "spec-fx14 7절 국소 대비 ≥ 타일 대비(T2 조각 파생 ratio). 주의: b 는 같은 깊이의 국소 범위 밖 타일 영역이어야 하는데 지금 lava_tile_seam 은 먼 띠라 원근 흐림으로 타일 대비가 작게 나와 비가 부풀고 하한 1 이 쉽게 넘는다(둔감 위험). frame 이미지(lava_world 1280x720)는 평면 전체가 고른 주황이라 국소·타일 경계가 보이지 않아 같은 깊이 타일 상자를 이미지로 정할 근거가 없다(재촬영·대비 강화 뒤 다시 본다)"
+      }
+    ],
+    "derived": [
+      {
+        "name": "contrast_over_tile",
+        "op": "ratio",
+        "a": "lava_local.water.local_contrast",
+        "b": "lava_tile_seam.water.local_contrast"
       }
     ]
   }

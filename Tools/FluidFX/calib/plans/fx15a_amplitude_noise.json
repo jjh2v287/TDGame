@@ -1,6 +1,6 @@
 {
   "id": "fx15a_amplitude_noise",
-  "note": "FX-15a A10 진폭 감쇠 노이즈. 기준 Kinds.Smoke 의 감쇠 D(FlowAmplitudeNoiseDampingPerSec)가 0 이면 플래그가 꺼져 노이즈 크기(FlowAmplitudeNoiseScaleCm) 스윕이 무효가 된다(R15a-M4). 그래서 격자 모드로 D>0 값(0.5·1·2)만 노이즈 크기 3값과 곱한다. 대조(v00)가 D=0 이다. 오프셋 무작위(bRandomizeNoiseOffsetPerActor)는 이 계획에서 돌리지 않는다. / 0b: 지표 이름을 C3(<영역>.<측정 키>)로, 띠는 IMG3 측정(목표 파일 region_metrics.pool). 주의: 단계 실행 screen 은 손잡이 하나씩이라 대조 D=0 에서 크기 손잡이는 둔감 예상(R15a-M4) → 둔감이면 D 채택 뒤 P-20 2라운드",
+  "note": "FX-15a A10 진폭 감쇠 노이즈. 기준 Kinds.Smoke 의 감쇠 D(FlowAmplitudeNoiseDampingPerSec)가 0 이면 플래그가 꺼져 노이즈 크기(FlowAmplitudeNoiseScaleCm) 스윕이 무효가 된다(R15a-M4). 그래서 격자 모드로 D>0 값(0.5·1·2)만 노이즈 크기 3값과 곱한다. 대조(v00)가 D=0 이다. 오프셋 무작위(bRandomizeNoiseOffsetPerActor)는 이 계획에서 돌리지 않는다. / 0b: 지표 이름을 C3(<영역>.<측정 키>)로, 띠는 IMG3 측정(목표 파일 region_metrics.pool). 주의: 단계 실행 screen 은 손잡이 하나씩이라 대조 D=0 에서 크기 손잡이는 둔감 예상(R15a-M4) → 둔감이면 D 채택 뒤 P-20 2라운드 / frame 정리(2026-10-31): pool.detail.above_64_cycles_per_height 는 상자 높이 정규화 불일치(162 px 대 기준 175~240 px)라 structural-gaps.json, 남은 목표는 pool.atmosphere.fine_over_coarse",
   "scenes": [
     {
       "name": "smoke_pool",
@@ -61,12 +61,6 @@
         "weight": 1.0,
         "basis": "live2_image",
         "note": "IMG3 띠"
-      },
-      {
-        "metric": "pool.detail.above_64_cycles_per_height",
-        "weight": 1.0,
-        "basis": "live2_image",
-        "note": "IMG3 띠, 영역 높이 ≥143 px 필요(64 c/H ≤ 0.45 c/px)"
       }
     ]
   },

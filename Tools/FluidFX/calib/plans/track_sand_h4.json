@@ -103,7 +103,7 @@
         "weight": 1.0,
         "scene": "sand_dunes",
         "basis": "live2_image",
-        "note": "IMG 13 물결 두 영역 0.0409·0.0776 → [최소×0.75, 최대×1.25]"
+        "note": "IMG 13 물결 두 영역 0.0409·0.0776 → [최소×0.75, 최대×1.25] / frame 정리(2026-10-31): 약한 의심: peak_ratio = 봉우리 칸 ÷ 대역 합이라 상자가 크면 대역 칸 수가 늘어 묽어질 수 있다(우리 532x412 대 기준 255x370·610x120, frame 0.0937 띠 안, 감사 표 118행). 띠는 그대로"
       },
       {
         "metric": "dune_fft.atmosphere.fine_detail",

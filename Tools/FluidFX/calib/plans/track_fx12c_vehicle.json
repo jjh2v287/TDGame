@@ -1,6 +1,6 @@
 {
   "id": "track_fx12c_vehicle",
-  "note": "FX-12 코드 J4 수확기(바퀴 4점·반경 15 cm·궤도 6 m·30°/s), 정본 SandTrack. 바퀴 반경 = 원천 형상값 × VehicleBrushRadiusScale(DEV-2)",
+  "note": "FX-12 코드 J4 수확기(바퀴 4점·반경 15 cm·궤도 6 m·30°/s), 정본 SandTrack. 바퀴 반경 = 원천 형상값 × VehicleBrushRadiusScale(DEV-2) / frame 정리(2026-10-31): harvester_wheel.line_profile.groove_width_cm 는 측정(반 깊이 폭) 대 목표(바퀴 지름 30 cm) 정의 불일치라 structural-gaps.json, gap_count 목표는 유지",
   "scenes": [
     {
       "name": "sand_harvester",
@@ -75,12 +75,6 @@
       "look"
     ],
     "targets": [
-      {
-        "metric": "harvester_wheel.line_profile.groove_width_cm",
-        "weight": 1.0,
-        "low": 25.0,
-        "high": 35.0
-      },
       {
         "metric": "harvester_wheel.line_profile.gap_count",
         "weight": 1.0,

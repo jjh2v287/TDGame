@@ -71,6 +71,16 @@
    "reason": "튐은 움직이는 물체가 수면을 지날 때만 생겨(TDFluidWaterParticleActor.cpp EmitSplashEvents) 여울 무대엔 소유자가 없어 frame 이 실패했고, 바다 목표 debris.embers.* 는 따뜻한 색 검출(R>1.3B)이라 흰 튐 접촉 밀도와 무관하다. 여울 백수 손잡이는 NS_TD_FluidWaterWhitewater TDWhitewaterSpawnPerM2PerSec 로 바꿨다",
    "source": "frame",
    "original": "aa1280ea:Tools/FluidFX/calib/plans/w1b_water_particles.json"
+  },
+  {
+   "plan": "fog_f2_passive",
+   "kind": "scene",
+   "item": "f2_displays(F2 수동 7변형 전시, 영역 틀 regions/fog_f2_regions_f2_displays.json passive_field)",
+   "decision": "frame",
+   "destination": "승인 시트(F2 수동 7변형 육안 비교)",
+   "reason": "이 장면에 걸리는 목표가 없어 calib_judge resolve_targets 가 JudgeError('이 장면에 걸리는 목표 지표가 없다')를 낸다(감사 표 60행, 장면 측정은 정상). FogAmbient 가 잠들어 창 경계가 없고 수동장 안개 결은 d14_window_move passive_field 목표가 같은 안개 kind 띠로 이미 재므로, 근거 없는 새 장면 목표를 만들지 않고 장면을 뺐다. 영역 틀 파일은 남겼다",
+   "source": "frame",
+   "original": "37d9dc18:Tools/FluidFX/calib/plans/fog_f2_passive.json"
   }
  ]
 }

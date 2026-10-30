@@ -124,7 +124,7 @@
         "scene": "sea_img16",
         "tolerance": 20.0,
         "basis": "live2_image",
-        "note": "IMG 16 g16_debris [740,300,1240,600] embers count 418, 화면 크기 의존이라 ×0.5~×2. 우리 부유물이 따뜻한 색이 아니면 검출 0(frame 에서 확인)"
+        "note": "IMG 16 g16_debris [740,300,1240,600] embers count 418, 화면 크기 의존이라 ×0.5~×2. 우리 부유물이 따뜻한 색이 아니면 검출 0(frame 에서 확인) / frame 정리(2026-10-31): 띠는 기준 상자 g16_debris 500x300(150,000 px²) 안 개수라 debris 상자를 같은 500x300 넓이로 그려야 비교된다(감사 표 143행). 영역 틀은 재촬영 대기(명세 Saved/AgentOps/20261031/pending-region-specs/w1b_water_particles_sea_frame_regions.json)"
       },
       {
         "metric": "debris.embers.median_area_px",

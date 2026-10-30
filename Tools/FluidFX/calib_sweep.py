@@ -931,7 +931,7 @@ def assert_lookdev_result(result, sequence, variants_by_id, output_dir, scene_en
 
 
 def run_lookdev(spec_path, level, output_dir, run_id):
-    command = [sys.executable, str(LOOKDEV_SCRIPT), "--variants", str(spec_path), "--level", level, "--output-dir", str(output_dir), "--stop-pie", "--run-id", run_id]
+    command = [sys.executable, str(LOOKDEV_SCRIPT), "--variants", str(spec_path), "--level", level, "--output-dir", str(output_dir), "--stop-pie", "--fresh-pie", "--run-id", run_id]
     return subprocess.run(command).returncode
 
 

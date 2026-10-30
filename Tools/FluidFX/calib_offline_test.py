@@ -3342,6 +3342,61 @@ def check_capture_tool_fixes():
           (errors, fresh.get("lookdev_run_id"), fresh_result.get("run_id")))
 
 
+def check_pie_session_fixes():
+    output_dir = TEST_DIR / "pie-session"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    spec_path = output_dir / "spec.json"
+    spec_path.write_text(json.dumps({"base": {}, "variants": []}), encoding="utf-8")
+    reset_world([])
+    calls = []
+    pie = {"running": True}
+
+    def fake_wait(running, timeout):
+        return pie["running"] is running
+
+    def fake_stop(session, environment):
+        calls.append("stop")
+        pie["running"] = False
+        return True
+
+    def fake_start(session, environment):
+        calls.append("start")
+        pie["running"] = True
+        return True
+
+    def fake_open(level):
+        calls.append("open")
+        return {"loaded": True}
+
+    def run(extra, capture=None):
+        calls.clear()
+        pie["running"] = True
+        saved_argv = sys.argv
+        sys.argv = ["pie_lookdev_fluid.py", "--variants", str(spec_path), "--level", "/Game/Test/LV", "--output-dir", str(output_dir), "--stop-pie"] + extra
+        replacements = {"capture_variants": capture} if capture else {}
+        try:
+            with patched(lookdev.pie_check_fluid, wait_for_pie_state=fake_wait, stop_pie=fake_stop, start_pie=fake_start, wait_for_editor_navigation=lambda: True), \
+                    patched(lookdev.pie_showcase_fluid, open_stage_level=fake_open), patched(lookdev, **replacements):
+                return lookdev.main(), list(calls)
+        except RuntimeError as error:
+            return str(error), list(calls)
+        finally:
+            sys.argv = saved_argv
+
+    fresh_code, fresh_calls = run(["--fresh-pie"])
+    fresh_result = load_json(output_dir / "result.json")
+    check("P1 --fresh-pie: 앞 실행이 남긴 PIE 를 먼저 멈추고 --level 을 새로 열어 PIE 시작, result.stopped_leftover_pie 참, 끝에 --stop-pie 로 멈춤",
+          fresh_code == 0 and fresh_calls == ["stop", "open", "start", "stop"] and fresh_result.get("stopped_leftover_pie") is True, (fresh_code, fresh_calls, fresh_result.get("stopped_leftover_pie")))
+    reuse_code, reuse_calls = run([])
+    check("P2 --fresh-pie 없음: 이미 도는 PIE 를 그대로 쓰는 옛 동작(대화형 룩데브), 끝에 --stop-pie 로 멈춤", reuse_code == 0 and reuse_calls == ["stop"], (reuse_code, reuse_calls))
+
+    def crashing_capture(*args):
+        raise RuntimeError("캡처 중 예외")
+
+    crash_code, crash_calls = run(["--fresh-pie"], crashing_capture)
+    check("P3 촬영 중 예외가 나도 finally 에서 PIE 를 멈춘다(남은 PIE 가 다음 계획 촬영을 오염시키지 않게)", crash_code == "캡처 중 예외" and crash_calls[-1] == "stop" and not pie["running"], (crash_code, crash_calls))
+
+
 run_check(check_cal0_b0)
 run_check(check_cal0_patch)
 run_check(check_cal0_lookdev)
@@ -3355,6 +3410,7 @@ run_check(check_cal0_integration)
 run_check(check_cal0_real_queue)
 run_check(check_lookdev_frame_fixes)
 run_check(check_capture_tool_fixes)
+run_check(check_pie_session_fixes)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

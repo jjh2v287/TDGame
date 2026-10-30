@@ -1,49 +1,49 @@
 {
- "note": "LIVE-2 목표(ICF:125·156-173, TA D14). 범위 = 값 ±25%(p95/p5) 또는 등급 경계. atmosphere 출처 확장(P3) 뒤 사용",
- "kind_metrics": {
-  "fog": {
-   "atmosphere.p95_over_p5": [
-    2.66,
-    4.44
-   ],
-   "atmosphere.fine_over_coarse": [
-    0.0,
-    0.8
-   ],
-   "atmosphere.warmth_bright": [
-    0.12,
-    0.21
-   ]
+  "note": "LIVE-2 목표(ICF:125·156-173, TA D14). 범위 = 값 ±25%(p95/p5) 또는 등급 경계. atmosphere 출처 확장(P3) 뒤 사용",
+  "kind_metrics": {
+    "fog": {
+      "atmosphere.p95_over_p5": [
+        2.66,
+        4.44
+      ],
+      "atmosphere.fine_over_coarse": [
+        0.0,
+        0.8
+      ],
+      "atmosphere.warmth_bright": [
+        0.12,
+        0.21
+      ]
+    }
+  },
+  "region_metrics": {
+    "fog_far": {
+      "atmosphere.p95_over_p5": [
+        1.67,
+        2.79
+      ],
+      "atmosphere.fine_over_coarse": [
+        0.25,
+        0.43
+      ]
+    },
+    "window_seam": {
+      "luminance_relative_step": [
+        0.0,
+        0.05
+      ]
+    },
+    "green_pool": {
+      "pool_over_surround": [
+        2.0,
+        1000.0
+      ]
+    },
+    "blue_pool": {
+      "pool_over_surround": [
+        2.0,
+        1000.0
+      ]
+    }
   }
- },
- "region_metrics": {
-  "fog_far": {
-   "atmosphere.p95_over_p5": [
-    1.67,
-    2.79
-   ],
-   "atmosphere.fine_over_coarse": [
-    0.25,
-    0.43
-   ]
-  },
-  "window_seam": {
-   "luminance_relative_step": [
-    0.0,
-    0.05
-   ]
-  },
-  "green_pool": {
-   "pool_over_surround": [
-    2.0,
-    1000.0
-   ]
-  },
-  "blue_pool": {
-   "pool_over_surround": [
-    2.0,
-    1000.0
-   ]
-  }
- }
 }

@@ -1,95 +1,91 @@
 {
- "id": "fx15a_kernel_vs_jacobi",
- "note": "FX-15a A5 사용자 선택(RM:666): 연기 웅덩이 구도에서 Poisson(Jacobi) 대 커널 피드백 압력을 한 장면에 나란히 둔다(구역 0, Y축 10 m 간격, 같은 교반기). 변형은 커널 쪽 DA(Kinds.SmokeKernelPressure)의 반경 R(PressureKernelRadiusTexels)·피드백 F(PressureKernelFeedback)·발산 배율(PressureKernelScale)만 바꾸고, Poisson 쪽 DA_TDFluid_SmokeSoft 는 고정 기준이다. 기준 종류가 이미 KernelFeedback 이라 R·F 스윕이 커널 켠 채로 돈다(R15a-M4). 모닥불 장면은 CampfireSmoke 종류라 이 경로가 닿지 않아 뺐다.",
- "scenes": [
-  {
-   "name": "smoke_pair",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidSolverOptionsStage",
-   "camera": {
-    "pawn": [
-     0,
-     0
-    ],
-    "arm": 1800.0,
-    "view": [
-     -50.0,
-     0.0
-    ],
-    "console": [
-     "t.MaxFPS 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fx15a_pair_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
-   "live2_refs": [
-    "L3"
-   ]
-  }
- ],
- "params": [
-  {
-   "json_path": "Kinds.SmokeKernelPressure.TDFluidSimulationConfig.PressureKernelRadiusTexels",
-   "values": [
-    2,
-    4,
-    7
-   ],
-   "split_group": false
-  },
-  {
-   "json_path": "Kinds.SmokeKernelPressure.TDFluidSimulationConfig.PressureKernelFeedback",
-   "values": [
-    0.95,
-    0.98,
-    1.0
-   ],
-   "split_group": false
-  },
-  {
-   "json_path": "Kinds.SmokeKernelPressure.TDFluidSimulationConfig.PressureKernelScale",
-   "values": [
-    0.5,
-    1.0,
-    2.0
-   ],
-   "split_group": false
-  }
- ],
- "metrics": {
-  "sources": [
-   "look"
+  "id": "fx15a_kernel_vs_jacobi",
+  "note": "FX-15a A5 사용자 선택(RM:666): 연기 웅덩이 구도에서 Poisson(Jacobi) 대 커널 피드백 압력을 한 장면에 나란히 둔다(구역 0, Y축 10 m 간격, 같은 교반기). 변형은 커널 쪽 DA(Kinds.SmokeKernelPressure)의 반경 R(PressureKernelRadiusTexels)·피드백 F(PressureKernelFeedback)·발산 배율(PressureKernelScale)만 바꾸고, Poisson 쪽 DA_TDFluid_SmokeSoft 는 고정 기준이다. 기준 종류가 이미 KernelFeedback 이라 R·F 스윕이 커널 켠 채로 돈다(R15a-M4). 모닥불 장면은 CampfireSmoke 종류라 이 경로가 닿지 않아 뺐다.",
+  "scenes": [
+    {
+      "name": "smoke_pair",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSolverOptionsStage",
+      "camera": {
+        "pawn": [
+          0,
+          0
+        ],
+        "arm": 1800.0,
+        "view": [
+          -50.0,
+          0.0
+        ],
+        "console": [
+          "t.MaxFPS 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fx15a_pair_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
+      "live2_refs": [
+        "L3"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "0.smoke_pair.M3_detail_energy_per_height",
-    "basis": "IFS M3 c/H, LIVE-2 0.0104 대 우리 0.0009(RM:150)"
-   },
-   {
-    "metric": "0.smoke_pair.ratio_p90_p10",
-    "basis": "M5 연기 깊이 대비 4.9(RM:150)"
-   },
-   {
-    "metric": "0.smoke_pair.fine_coarse_ratio",
-    "basis": "미세/거친 등급 같음"
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "frame_cost 지표 출처 없음(METRIC_SOURCES = look·water_probe 뿐): 이 계획에서 뺐고 비용은 시험 SolverOptions.Cost512(4.3절)로 갈음",
-  "regions_template·targets 파일이 아직 없다(이름만 정함): fx15a_pair_regions.json(Poisson 쪽·커널 쪽 영역 두 개), fx15a_live2_smoke.json(IMG 3 연기 웅덩이 목표). 보정 도구 확장(CAL-0) 때 만든다",
-  "지표 이름은 measure_fx_look.py 출력 이름으로 확정할 것(ratio_p90_p10 은 measure_fx_look.py 의 이름에 맞춤), 영역별 키 형식은 regions 파일을 만들 때 정한다",
-  "대조(v00)는 SmokeKernelPressure 기본값(반경 4·피드백 0.98·배율 1). Poisson 쪽은 같은 장면의 고정 기준 액터이고 변형과 무관하다",
-  "CPU Smoke 256² 기준이다. GPU 비교는 SolverBackend 변형을 따로 추가해야 한다",
-  "물리 관문(발산 잔차 ≤ CPU 128²×1.2)은 Poisson 기본에만 적용하고 커널은 기록만 한다(spec-fx15a 8절 1)",
-  "describe_params 는 2026-10-29 작업 트리 JSON(L2 B1 진행분)에서 통과했다(기준값 반경 4·피드백 0.98·배율 1.0). 정본이 바뀌면 다시 확인한다"
- ]
+  "params": [
+    {
+      "json_path": "Kinds.SmokeKernelPressure.TDFluidSimulationConfig.PressureKernelRadiusTexels",
+      "values": [
+        2,
+        4,
+        7
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.SmokeKernelPressure.TDFluidSimulationConfig.PressureKernelFeedback",
+      "values": [
+        0.95,
+        0.98,
+        1.0
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.SmokeKernelPressure.TDFluidSimulationConfig.PressureKernelScale",
+      "values": [
+        0.5,
+        1.0,
+        2.0
+      ],
+      "split_group": false
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "smoke_pair.M3_detail_energy_per_height",
+        "basis": "IFS M3 c/H, LIVE-2 0.0104 대 우리 0.0009(RM:150)",
+        "weight": 1.0
+      },
+      {
+        "metric": "smoke_pair.ratio_p90_p10",
+        "basis": "M5 연기 깊이 대비 4.9(RM:150)",
+        "weight": 1.0
+      },
+      {
+        "metric": "smoke_pair.fine_coarse_ratio",
+        "basis": "미세/거친 등급 같음",
+        "weight": 1.0
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

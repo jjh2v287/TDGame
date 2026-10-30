@@ -1,161 +1,176 @@
 {
- "id": "fog_f5_cut_stir",
- "note": "FX-10c F5·B13. 8A 가르기(FogMist, 지우개 −1·재충전)·8B 휘젓기(FogMistStir, 모든 출처 속도만), 교반기 궤도 반경 600 cm·30°/s(한 바퀴 12 s). 시간 경과는 장면을 둘로 나누지 않고 궤적 나이(교반기 뒤 각도 ÷ 30°/s)로 영역을 나눠 한 장면에서 잰다(1 s 뒤 = 30° 뒤, 6 s 뒤 = 180° 뒤). settle 15 s 는 주변 재충전(k 0.3 → 95% 10 s) 뒤에 판정하기 위함. 8A·8B 는 MI_TD_FluidFog_Sim 을 FogRoom·FogAmbient 와 공유하므로 재질 값은 훑지 않는다(fog_f1_layer 와 같은 잎 충돌, 반박 R10-S7). FogMistStir 는 FogMist 값 복사(묶음 없음)라 FogMist 보정값을 FogMistStir 에도 옮긴다(R10-S10). FogMistStir 는 스탬프 밀도가 모두 0 이라 DensityFadeBelowSpeedCmPerSec 는 효과가 없어 훑지 않는다",
- "scenes": [
-  {
-   "name": "f5_cut",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
-   "camera": {
-    "awake": {
-     "TDGen_FogRoom": false,
-     "TDGen_FogTrail": false,
-     "TDGen_FogCharacter": false,
-     "TDGen_FogAmbient": false,
-     "TDGen_FogCut": true,
-     "TDGen_FogStir": false,
-     "TDGen_FogTileSync": false
+  "id": "fog_f5_cut_stir",
+  "note": "FX-10c F5·B13. 8A 가르기(FogMist, 지우개 −1·재충전)·8B 휘젓기(FogMistStir, 모든 출처 속도만), 교반기 궤도 반경 600 cm·30°/s(한 바퀴 12 s). 시간 경과는 장면을 둘로 나누지 않고 궤적 나이(교반기 뒤 각도 ÷ 30°/s)로 영역을 나눠 한 장면에서 잰다(1 s 뒤 = 30° 뒤, 6 s 뒤 = 180° 뒤). settle 15 s 는 주변 재충전(k 0.3 → 95% 10 s) 뒤에 판정하기 위함. 8A·8B 는 MI_TD_FluidFog_Sim 을 FogRoom·FogAmbient 와 공유하므로 재질 값은 훑지 않는다(fog_f1_layer 와 같은 잎 충돌, 반박 R10-S7). FogMistStir 는 FogMist 값 복사(묶음 없음)라 FogMist 보정값을 FogMistStir 에도 옮긴다(R10-S10). FogMistStir 는 스탬프 밀도가 모두 0 이라 DensityFadeBelowSpeedCmPerSec 는 효과가 없어 훑지 않는다",
+  "scenes": [
+    {
+      "name": "f5_cut",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+      "camera": {
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": true,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false
+        },
+        "exposure_ev100": 1.0,
+        "pawn": [
+          0,
+          -36500
+        ],
+        "arm": 900.0,
+        "view": [
+          -55.0,
+          90.0
+        ],
+        "console": [
+          "r.TDFogScattering 0",
+          "r.VolumetricFog.GridPixelSize 8",
+          "r.VolumetricFog.GridSizeZ 128"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 15.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f5_regions.json",
+      "live2_refs": [
+        "L2"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     },
-    "exposure_ev100": 1.0,
-    "pawn": [
-     0,
-     -36500
-    ],
-    "arm": 900.0,
-    "view": [
-     -55.0,
-     90.0
-    ],
-    "console": [
-     "r.TDFogScattering 0",
-     "r.VolumetricFog.GridPixelSize 8",
-     "r.VolumetricFog.GridSizeZ 128"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 15.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fog_f5_regions.json",
-   "targets": null,
-   "live2_refs": [
-    "L2"
-   ]
-  },
-  {
-   "name": "f5_stir",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
-   "camera": {
-    "awake": {
-     "TDGen_FogRoom": false,
-     "TDGen_FogTrail": false,
-     "TDGen_FogCharacter": false,
-     "TDGen_FogAmbient": false,
-     "TDGen_FogCut": false,
-     "TDGen_FogStir": true,
-     "TDGen_FogTileSync": false
-    },
-    "exposure_ev100": 1.0,
-    "pawn": [
-     7000,
-     -36500
-    ],
-    "arm": 900.0,
-    "view": [
-     -55.0,
-     90.0
-    ],
-    "console": [
-     "r.TDFogScattering 0",
-     "r.VolumetricFog.GridPixelSize 8",
-     "r.VolumetricFog.GridSizeZ 128"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 15.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fog_f5_regions.json",
-   "targets": null,
-   "live2_refs": [
-    "L2"
-   ]
-  }
- ],
- "params": [
-  {
-   "json_path": "Kinds.FogMist.TDFluidSimulationConfig.AmbientRefillPerSec",
-   "values": [
-    0.15,
-    0.3,
-    0.6
-   ],
-   "split_group": false
-  },
-  {
-   "json_path": "Kinds.FogMist.TDFluidSimulationConfig.ActorBrushPunctureCmPerSec",
-   "values": [
-    0,
-    380,
-    760
-   ],
-   "split_group": false
-  },
-  {
-   "json_path": "Kinds.FogMistStir.TDFluidSimulationConfig.VorticityStrength",
-   "values": [
-    0.6,
-    1.2,
-    2.4
-   ],
-   "split_group": false
-  }
- ],
- "metrics": {
-  "sources": [
-   "atmosphere",
-   "region_ratio",
-   "frame_difference"
+    {
+      "name": "f5_stir",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+      "camera": {
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": true,
+          "TDGen_FogTileSync": false
+        },
+        "exposure_ev100": 1.0,
+        "pawn": [
+          7000,
+          -36500
+        ],
+        "arm": 900.0,
+        "view": [
+          -55.0,
+          90.0
+        ],
+        "console": [
+          "r.TDFogScattering 0",
+          "r.VolumetricFog.GridPixelSize 8",
+          "r.VolumetricFog.GridSizeZ 128"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 15.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f5_regions.json",
+      "live2_refs": [
+        "L2"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "scene": "f5_cut",
-    "metric": "region_ratio.trail_recent_over_surround.luminance",
-    "weight": 2.0,
-    "low": 0.0,
-    "high": 0.5
-   },
-   {
-    "scene": "f5_cut",
-    "metric": "region_ratio.trail_old_over_surround.luminance",
-    "weight": 1.0,
-    "low": 0.85,
-    "high": 1.15
-   },
-   {
-    "scene": "f5_stir",
-    "metric": "region_ratio.trail_recent_over_surround.luminance",
-    "weight": 1.0,
-    "low": 0.9,
-    "high": 1.1
-   },
-   {
-    "scene": "f5_stir",
-    "metric": "frame_difference.trail_recent.luminance_over_noise_floor",
-    "weight": 1.0,
-    "low": 3.0,
-    "high": 100.0
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "초안: P3 확장 전이라 calib_sweep.py --dry-run 대상 아님(검증 거부가 정상). Kinds.FogMist·FogMistStir 경로는 FX-10c C10 이 조절 정본에 종류를 더한 뒤에 유효",
- "p3_gaps": [
-  "metrics.sources atmosphere(measure_fx_look 기본 모드 영역 지표)",
-  "metrics.sources region_ratio(두 영역 휘도 평균 비, S10R 6.3)",
-  "metrics.sources frame_difference(같은 영역 두 프레임 휘도 차 ÷ 잡음 바닥)",
-  "궤적 나이 영역: 교반기 시작 각과 settle 로 캡처 순간의 교반기 위치를 계산해 30°·180° 뒤 영역을 자동으로 잡기(지금은 첫 촬영 뒤 손으로 맞춤)",
-  "FogMist·FogMistStir 연동 매개변수(묶음 없이 값 복사라 한 경로로 두 종류를 같이 훑지 못함)"
- ]
+  "params": [
+    {
+      "json_path": "Kinds.FogMist.TDFluidSimulationConfig.AmbientRefillPerSec",
+      "values": [
+        0.15,
+        0.3,
+        0.6
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.FogMist.TDFluidSimulationConfig.ActorBrushPunctureCmPerSec",
+      "values": [
+        0,
+        380,
+        760
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.FogMistStir.TDFluidSimulationConfig.VorticityStrength",
+      "values": [
+        0.6,
+        1.2,
+        2.4
+      ],
+      "split_group": false
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "scene": "f5_cut",
+        "metric": "derived.trail_recent_over_surround",
+        "weight": 2.0,
+        "low": 0.0,
+        "high": 0.5
+      },
+      {
+        "scene": "f5_cut",
+        "metric": "derived.trail_old_over_surround",
+        "weight": 1.0,
+        "low": 0.85,
+        "high": 1.15
+      },
+      {
+        "scene": "f5_stir",
+        "metric": "derived.trail_recent_over_surround",
+        "weight": 1.0,
+        "low": 0.9,
+        "high": 1.1
+      },
+      {
+        "scene": "f5_stir",
+        "metric": "derived.trail_recent_change_over_surround",
+        "weight": 1.0,
+        "low": 3.0,
+        "high": 100.0
+      }
+    ],
+    "derived": [
+      {
+        "name": "trail_recent_over_surround",
+        "op": "ratio",
+        "a": "trail_recent.luminance_mean",
+        "b": "surround.luminance_mean"
+      },
+      {
+        "name": "trail_old_over_surround",
+        "op": "ratio",
+        "a": "trail_old.luminance_mean",
+        "b": "surround.luminance_mean"
+      },
+      {
+        "name": "trail_recent_change_over_surround",
+        "op": "ratio",
+        "a": "trail_recent.frame_difference.mean",
+        "b": "surround.frame_difference.mean"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

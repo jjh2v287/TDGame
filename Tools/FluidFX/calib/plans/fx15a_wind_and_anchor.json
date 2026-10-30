@@ -1,118 +1,119 @@
 {
- "id": "fx15a_wind_and_anchor",
- "note": "FX-15a A13 바람(구역 1 SmokeWindDrift)·A17 D 그릇(구역 2 SmokeAnchoredCauldron, 교반기 궤도 부모). 바람 변형은 DirectVelocityCmPerSec 의 X 성분 3값, 그릇 변형은 창 이동 배율 SimAreaMotionVelocityScale 3값이다. 지표 두 개(바람 중심 이동 속도/U, 그릇 꼬리 길이)는 아직 측정 출처가 없다.",
- "scenes": [
-  {
-   "name": "wind_drift",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidSolverOptionsStage",
-   "camera": {
-    "pawn": [
-     3000,
-     0
-    ],
-    "arm": 900.0,
-    "view": [
-     -50.0,
-     0.0
-    ],
-    "console": [
-     "t.MaxFPS 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 4.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fx15a_zone_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
-   "live2_refs": [
-    "L3"
-   ]
-  },
-  {
-   "name": "anchored_cauldron",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidSolverOptionsStage",
-   "camera": {
-    "pawn": [
-     6000,
-     0
-    ],
-    "arm": 1200.0,
-    "view": [
-     -50.0,
-     0.0
-    ],
-    "console": [
-     "t.MaxFPS 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 4.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fx15a_zone_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
-   "live2_refs": [
-    "L3"
-   ]
-  }
- ],
- "params": [
-  {
-   "json_path": "Kinds.SmokeWindDrift.TDFluidSimulationConfig.DirectVelocityCmPerSec",
-   "values": [
+  "id": "fx15a_wind_and_anchor",
+  "note": "FX-15a A13 바람(구역 1 SmokeWindDrift)·A17 D 그릇(구역 2 SmokeAnchoredCauldron, 교반기 궤도 부모). 바람 변형은 DirectVelocityCmPerSec 의 X 성분 3값, 그릇 변형은 창 이동 배율 SimAreaMotionVelocityScale 3값이다. 지표 두 개(바람 중심 이동 속도/U, 그릇 꼬리 길이)는 아직 측정 출처가 없다.",
+  "scenes": [
     {
-     "X": 20,
-     "Y": 0,
-     "Z": 0
+      "name": "wind_drift",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSolverOptionsStage",
+      "camera": {
+        "pawn": [
+          3000,
+          0
+        ],
+        "arm": 900.0,
+        "view": [
+          -50.0,
+          0.0
+        ],
+        "console": [
+          "t.MaxFPS 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 4.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fx15a_zone_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
+      "live2_refs": [
+        "L3"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     },
     {
-     "X": 60,
-     "Y": 0,
-     "Z": 0
-    },
-    {
-     "X": 120,
-     "Y": 0,
-     "Z": 0
+      "name": "anchored_cauldron",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSolverOptionsStage",
+      "camera": {
+        "pawn": [
+          6000,
+          0
+        ],
+        "arm": 1200.0,
+        "view": [
+          -50.0,
+          0.0
+        ],
+        "console": [
+          "t.MaxFPS 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 4.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fx15a_zone_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
+      "live2_refs": [
+        "L3"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     }
-   ]
-  },
-  {
-   "json_path": "Kinds.SmokeAnchoredCauldron.TDFluidSimulationConfig.SimAreaMotionVelocityScale",
-   "values": [
-    0.0,
-    0.5,
-    1.0
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "look"
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "scene": "wind_drift",
-    "metric": "0.wind_drift.drift_speed_ratio",
-    "basis": "연기 중심 이동 속도 / 바람 속도 U = 1±0.1(시험 H8 과 같은 정의)"
-   },
-   {
-    "scene": "anchored_cauldron",
-    "metric": "1.anchored_cauldron.wake_length_cm",
-    "basis": "그릇 뒤 꼬리 길이(cm), 목표 범위는 사용자 승인 [제안]"
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "중심 이동 속도 비와 꼬리 길이 지표 출처가 없다(METRIC_SOURCES = look·water_probe 에 없음): measure_fx_look.py 에 두 지표를 추가하거나 새 출처가 필요하다",
-  "FVector 값 경로: describe_params 는 {X,Y,Z} 값을 2026-10-29 작업 트리 JSON에서 통과했다(기준값 {60,0,0}). PIE 실효 값 다시 읽기와 변형 단언 비교가 FVector 를 받는지는 확인하지 못했다",
-  "변형이 모든 장면에서 돈다: 바람 변형은 장면 wind_drift 에서만, 배율 변형은 장면 anchored_cauldron 에서만 의미가 있어 나머지 실행은 낭비다. 장면별 params 가 필요하다",
-  "regions_template·targets 파일이 아직 없다(이름만 정함): fx15a_zone_regions.json, fx15a_live2_smoke.json. 보정 도구 확장(CAL-0) 때 만든다",
-  "frame_cost 지표 출처 없음: 비용은 시험 SolverOptions.Cost512(4.3절)로 갈음한다"
- ]
+  "params": [
+    {
+      "json_path": "Kinds.SmokeWindDrift.TDFluidSimulationConfig.DirectVelocityCmPerSec",
+      "values": [
+        {
+          "X": 20,
+          "Y": 0,
+          "Z": 0
+        },
+        {
+          "X": 60,
+          "Y": 0,
+          "Z": 0
+        },
+        {
+          "X": 120,
+          "Y": 0,
+          "Z": 0
+        }
+      ]
+    },
+    {
+      "json_path": "Kinds.SmokeAnchoredCauldron.TDFluidSimulationConfig.SimAreaMotionVelocityScale",
+      "values": [
+        0.0,
+        0.5,
+        1.0
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "scene": "wind_drift",
+        "metric": "wind_drift.drift_speed_ratio",
+        "basis": "연기 중심 이동 속도 / 바람 속도 U = 1±0.1(시험 H8 과 같은 정의)",
+        "weight": 1.0
+      },
+      {
+        "scene": "anchored_cauldron",
+        "metric": "anchored_cauldron.wake_length_cm",
+        "basis": "그릇 뒤 꼬리 길이(cm), 목표 범위는 사용자 승인 [제안]",
+        "weight": 1.0
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

@@ -1,108 +1,127 @@
 {
- "id": "cloud_g10_near",
- "note": "FX-11r G10, 셋업 12 층운 관통, 카메라 페이드·배율 CVAR 4·5·6, grain·두 프레임 차",
- "scenes": [
-  {
-   "name": "stratus_scale4",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
-   "camera": {
-    "view_target": "TDGen_CloudCam_Stratus",
-    "exposure_ev100": 12.0,
-    "console": [
-     "TD.FluidFX.CloudSetup 12",
-     "TD.FluidFX.CloudViewSampleScale 4",
-     "r.TDFogScattering 0",
-     "r.VolumetricRenderTarget.Mode 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/cloud_g10_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
-   "live2_refs": [
-    "IMG10"
-   ]
-  },
-  {
-   "name": "stratus_scale5",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
-   "camera": {
-    "view_target": "TDGen_CloudCam_Stratus",
-    "exposure_ev100": 12.0,
-    "console": [
-     "TD.FluidFX.CloudSetup 12",
-     "TD.FluidFX.CloudViewSampleScale 5",
-     "r.TDFogScattering 0",
-     "r.VolumetricRenderTarget.Mode 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/cloud_g10_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
-   "live2_refs": [
-    "IMG10"
-   ]
-  },
-  {
-   "name": "stratus_scale6",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
-   "camera": {
-    "view_target": "TDGen_CloudCam_Stratus",
-    "exposure_ev100": 12.0,
-    "console": [
-     "TD.FluidFX.CloudSetup 12",
-     "TD.FluidFX.CloudViewSampleScale 6",
-     "r.TDFogScattering 0",
-     "r.VolumetricRenderTarget.Mode 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/cloud_g10_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
-   "live2_refs": [
-    "IMG10"
-   ]
-  }
- ],
- "base_tuning": [],
- "params": [
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Stratus.Scalars.CloudCameraFadeEndKm",
-   "values": [
-    0.02,
-    0.05,
-    0.1
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "atmosphere"
+  "id": "cloud_g10_near",
+  "note": "FX-11r G10, 셋업 12 층운 관통, 카메라 페이드·배율 CVAR 4·5·6, grain·두 프레임 차",
+  "scenes": [
+    {
+      "name": "stratus_scale4",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "camera": {
+        "view_target": "TDGen_CloudCam_Stratus",
+        "exposure_ev100": 12.0,
+        "console": [
+          "TD.FluidFX.CloudSetup 12",
+          "TD.FluidFX.CloudViewSampleScale 4",
+          "r.TDFogScattering 0",
+          "r.VolumetricRenderTarget.Mode 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/cloud_g10_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+      "live2_refs": [
+        "IMG10"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    },
+    {
+      "name": "stratus_scale5",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "camera": {
+        "view_target": "TDGen_CloudCam_Stratus",
+        "exposure_ev100": 12.0,
+        "console": [
+          "TD.FluidFX.CloudSetup 12",
+          "TD.FluidFX.CloudViewSampleScale 5",
+          "r.TDFogScattering 0",
+          "r.VolumetricRenderTarget.Mode 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/cloud_g10_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+      "live2_refs": [
+        "IMG10"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    },
+    {
+      "name": "stratus_scale6",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "camera": {
+        "view_target": "TDGen_CloudCam_Stratus",
+        "exposure_ev100": 12.0,
+        "console": [
+          "TD.FluidFX.CloudSetup 12",
+          "TD.FluidFX.CloudViewSampleScale 6",
+          "r.TDFogScattering 0",
+          "r.VolumetricRenderTarget.Mode 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/cloud_g10_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+      "live2_refs": [
+        "IMG10"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "frame.atmosphere.grain",
-    "weight": 1.0,
-    "low": 0.0,
-    "high": 0.037
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "keep",
- "draft_status": "초안: P3 확장 전이라 --dry-run 대상 아님",
- "p3_gaps": [
-  "camera.view_target(CineCamera SetViewTarget)",
-  "params Look: 할당(FX-8n G1)",
-  "metrics.sources atmosphere",
-  "두 프레임 차 깜빡임 기록(measure_fx_look :417)"
- ]
+  "base_tuning": [],
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Stratus.Scalars.CloudCameraFadeEndKm",
+      "values": [
+        0.02,
+        0.05,
+        0.1
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "frame.atmosphere.grain",
+        "weight": 1.0,
+        "low": 0.0,
+        "high": 0.037,
+        "scene": "stratus_scale4"
+      },
+      {
+        "metric": "frame.atmosphere.grain",
+        "weight": 1.0,
+        "low": 0.0,
+        "high": 0.037,
+        "scene": "stratus_scale5"
+      },
+      {
+        "metric": "frame.atmosphere.grain",
+        "weight": 1.0,
+        "low": 0.0,
+        "high": 0.037,
+        "scene": "stratus_scale6"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "keep"
 }

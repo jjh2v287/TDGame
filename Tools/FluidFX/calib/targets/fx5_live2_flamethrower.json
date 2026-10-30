@@ -1,8 +1,8 @@
 {
- "note": "LIVE-2 IMG 17 화염방사 목표: measure_fx_look --targets 형식 LIVE-2 목표 파일에서 kind fire 영역 검사만 점수에 넣는다(선례 campfire_live2_fire.json)",
- "live2_targets": "Saved/AgentOps/20261020/fx8c/scratch/live2-targets/targets.json",
- "kinds": [
-  "fire"
- ],
- "metrics": []
+  "note": "LIVE-2 IMG 17 화염방사 목표: measure_fx_look --targets 형식 LIVE-2 목표 파일(calib/targets/live2_fx8c_targets.json, Saved 원본 사본)에서 kind fire 영역 검사만 점수에 넣는다(선례 campfire_live2_fire.json)",
+  "live2_targets": "Tools/FluidFX/calib/targets/live2_fx8c_targets.json",
+  "kinds": [
+    "fire"
+  ],
+  "metrics": []
 }

@@ -1,96 +1,101 @@
 {
- "id": "foliage_k5_radial",
- "note": "FX-13r K5 구역 2(GrassUnderwater, 점광 교반기 z 150 cm·45°/s, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 방사형 휨",
- "scenes": [
-  {
-   "name": "k5_radial",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
-   "camera": {
-    "pawn": [
-     6000.0,
-     0.0
-    ],
-    "arm": 450.0,
-    "view": [
-     -60.0,
-     0.0
-    ],
-    "console": [
-     "TD.FluidFX.FoliageFlow 1",
-     "r.TDFogScattering 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 8.0,
-   "regions_template": "Tools/FluidFX/calib/regions/foliage_k5_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/foliage_live2_bend.json",
-   "live2_refs": [
-    "IMG9"
-   ]
-  }
- ],
- "base_tuning": [
-  {
-   "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.SimExtentCm",
-   "value": {
-    "X": 1500.0,
-    "Y": 1500.0
-   }
-  }
- ],
- "params": [
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy.Scalars.FoliageBendMaxDegrees",
-   "values": [
-    60.0,
-    70.0,
-    80.0
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy.Scalars.FoliageBendSpeedReferenceCmPerSec",
-   "values": [
-    150.0,
-    300.0,
-    600.0
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "foliage_flow"
+  "id": "foliage_k5_radial",
+  "note": "FX-13r K5 구역 2(GrassUnderwater, 점광 교반기 z 150 cm·45°/s, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 방사형 휨",
+  "scenes": [
+    {
+      "name": "k5_radial",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFoliageStage",
+      "camera": {
+        "pawn": [
+          6000.0,
+          0.0
+        ],
+        "arm": 450.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "console": [
+          "TD.FluidFX.FoliageFlow 1",
+          "r.TDFogScattering 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 8.0,
+      "regions_template": "Tools/FluidFX/calib/regions/foliage_k5_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/foliage_live2_bend.json",
+      "live2_refs": [
+        "IMG9"
+      ],
+      "sources": [
+        "probe"
+      ],
+      "probe": {
+        "times": [
+          8.0,
+          8.25,
+          8.5,
+          8.75,
+          9.0
+        ]
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "k5_radial.foliage_flow.radial_alignment_mean",
-    "weight": 1.0,
-    "low": 0.8,
-    "high": 1.0
-   },
-   {
-    "metric": "k5_radial.foliage_flow.max_bend_degrees",
-    "weight": 1.0,
-    "low": 60.0,
-    "high": 80.0
-   },
-   {
-    "metric": "k5_radial.foliage_flow.radius_over_mover_size",
-    "weight": 0.5,
-    "low": 3.0,
-    "high": 6.0
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "metrics.sources foliage_flow(RT 되읽기 탐침)",
-  "params Look: 할당(FX-8n G1)",
-  "63% 복원 시간 지표"
- ]
+  "base_tuning": [
+    {
+      "json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.SimExtentCm",
+      "value": {
+        "X": 1500.0,
+        "Y": 1500.0
+      }
+    }
+  ],
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy.Scalars.FoliageBendMaxDegrees",
+      "values": [
+        60.0,
+        70.0,
+        80.0
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFoliageFlowCopy.Scalars.FoliageBendSpeedReferenceCmPerSec",
+      "values": [
+        150.0,
+        300.0,
+        600.0
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "probe"
+    ],
+    "targets": [
+      {
+        "metric": "probe.foliage_flow.radial_alignment_mean",
+        "weight": 1.0,
+        "low": 0.8,
+        "high": 1.0
+      },
+      {
+        "metric": "probe.foliage_flow.max_bend_degrees",
+        "weight": 1.0,
+        "low": 60.0,
+        "high": 80.0
+      },
+      {
+        "metric": "probe.foliage_flow.radius_over_mover_size",
+        "weight": 0.5,
+        "low": 3.0,
+        "high": 6.0
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "base_tuning_ships": false
 }

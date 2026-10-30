@@ -1,126 +1,113 @@
 {
- "id": "track_sand_h4",
- "note": "FX-12r H4·H5·H8 모래 사구 타일·WPO·홈(IMG 13·22). 사구 주 파장·방향은 FFT 분석기(P3 공백) 뒤",
- "scenes": [
-  {
-   "name": "sand_dunes",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidSandStage",
-   "camera": {
-    "exposure_ev100": 1.5,
-    "pawn": [
-     0,
-     0
-    ],
-    "arm": 500.0,
-    "view": [
-     -20.0,
-     30.0
-    ],
-    "console": [
-     "TD.FluidFX.SolverBackend 1"
-    ],
-    "move": {
-     "distance_cm": 1500.0
+  "id": "track_sand_h4",
+  "note": "FX-12r H4·H5·H8 모래 사구 타일·WPO·홈(IMG 13·22). 사구 주 파장·방향은 FFT 분석기(P3 공백) 뒤 / CAL-0 B6: 낡은 base_tuning(FootprintPainter 1024·5000) 삭제, SandTrack 정본 기준으로 잰다",
+  "scenes": [
+    {
+      "name": "sand_dunes",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSandStage",
+      "camera": {
+        "exposure_ev100": 1.5,
+        "pawn": [
+          0,
+          0
+        ],
+        "arm": 500.0,
+        "view": [
+          -20.0,
+          30.0
+        ],
+        "console": [
+          "TD.FluidFX.SolverBackend 1"
+        ],
+        "move": {
+          "distance_cm": 1500.0
+        }
+      },
+      "time_dilation": 1.0,
+      "settle": 12.0,
+      "regions_template": "Tools/FluidFX/calib/regions/track_sand_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/track_live2_snow_sand.json",
+      "live2_refs": [
+        "L13",
+        "L22"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     }
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 12.0,
-   "regions_template": "Tools/FluidFX/calib/regions/track_sand_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/track_live2_snow_sand.json",
-   "live2_refs": [
-    "L13",
-    "L22"
-   ]
-  }
- ],
- "base_tuning": [
-  {
-   "json_path": "Kinds.FootprintPainter.TDFluidSimulationConfig.GridResolution",
-   "value": 1024
-  },
-  {
-   "json_path": "Kinds.FootprintPainter.TDFluidSimulationConfig.SimExtentCm",
-   "value": {
-    "X": 5000.0,
-    "Y": 5000.0
-   }
-  }
- ],
- "params": [
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand.Vectors.TileMapPeriodCm",
-   "values": [
-    [
-     600.0,
-     600.0,
-     0.0,
-     0.0
-    ],
-    [
-     800.0,
-     800.0,
-     0.0,
-     0.0
-    ],
-    [
-     1200.0,
-     1200.0,
-     0.0,
-     0.0
-    ]
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand.Scalars.TileMapHeightCm",
-   "values": [
-    10,
-    20,
-    35
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand.Scalars.TileMapWindDegrees",
-   "values": [
-    0,
-    30,
-    60
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "atmosphere",
-   "groove_profile"
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "dune_fft.dominant_wavelength_relative_error",
-    "weight": 1.0,
-    "low": 0.0,
-    "high": 0.25
-   },
-   {
-    "metric": "sand_dust.atmosphere.fine_over_coarse",
-    "weight": 1.0,
-    "low": 1.26,
-    "high": 2.03
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "초안: P3 확장 전이라 calib_sweep.py --dry-run 대상 아님(검증 거부가 정상)",
- "p3_gaps": [
-  "base_tuning(고정 덮어쓰기)",
-  "params json_path Look: 모양 경로 할당(문법은 FX-8n 과 같음, fluid_tuning_patch·calib_sweep 이 Look: 를 아직 적용하지 못함 = FX-8n G1)",
-  "metrics.sources atmosphere(measure_fx_look 기본 모드 영역 지표)",
-  "metrics.sources groove_profile(홈 단면 선 표본: 폭·둑 비)",
-  "사구 휘도 2D FFT 주 파장·방향 분석기(measure_fx_look 은 세부 비만)",
-  "params.actor_prop(광원·액터 속성, 룩데브 props 경로)",
-  "정적 MI(바닥·수동 상자)는 실행 중 재적용 안 됨: 판정 영역을 창 안으로 잡거나 변형마다 다시 굽기"
- ]
+  "base_tuning": [],
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand.Vectors.TileMapPeriodCm",
+      "values": [
+        [
+          600.0,
+          600.0,
+          0.0,
+          0.0
+        ],
+        [
+          800.0,
+          800.0,
+          0.0,
+          0.0
+        ],
+        [
+          1200.0,
+          1200.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "base": [
+        800.0,
+        800.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand.Scalars.TileMapHeightCm",
+      "values": [
+        10,
+        20,
+        35
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand.Scalars.TileMapWindDegrees",
+      "values": [
+        0,
+        30,
+        60
+      ],
+      "base": 0.0
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "dune_fft.dominant_wavelength_relative_error",
+        "weight": 1.0,
+        "low": 0.0,
+        "high": 0.25
+      },
+      {
+        "metric": "sand_dust.atmosphere.fine_over_coarse",
+        "weight": 1.0,
+        "low": 1.26,
+        "high": 2.03
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

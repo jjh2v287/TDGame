@@ -1,78 +1,75 @@
 {
- "id": "fx15a_amplitude_noise",
- "note": "FX-15a A10 진폭 감쇠 노이즈. 기준 Kinds.Smoke 의 감쇠 D(FlowAmplitudeNoiseDampingPerSec)가 0 이면 플래그가 꺼져 노이즈 크기(FlowAmplitudeNoiseScaleCm) 스윕이 무효가 된다(R15a-M4). 그래서 격자 모드로 D>0 값(0.5·1·2)만 노이즈 크기 3값과 곱한다. 대조(v00)가 D=0 이다. 오프셋 무작위(bRandomizeNoiseOffsetPerActor)는 이 계획에서 돌리지 않는다.",
- "scenes": [
-  {
-   "name": "smoke_pool",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
-   "camera": {
-    "pawn": [
-     0,
-     0
-    ],
-    "arm": 1400.0,
-    "view": [
-     -35.0,
-     0.0
-    ],
-    "console": [
-     "t.MaxFPS 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fx15a_pool_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
-   "live2_refs": [
-    "L3"
-   ]
-  }
- ],
- "params": [
-  {
-   "json_path": "Kinds.Smoke.TDFluidSimulationConfig.FlowAmplitudeNoiseDampingPerSec",
-   "values": [
-    0.5,
-    1.0,
-    2.0
-   ]
-  },
-  {
-   "json_path": "Kinds.Smoke.TDFluidSimulationConfig.FlowAmplitudeNoiseScaleCm",
-   "values": [
-    110.0,
-    220.0,
-    440.0
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "look"
+  "id": "fx15a_amplitude_noise",
+  "note": "FX-15a A10 진폭 감쇠 노이즈. 기준 Kinds.Smoke 의 감쇠 D(FlowAmplitudeNoiseDampingPerSec)가 0 이면 플래그가 꺼져 노이즈 크기(FlowAmplitudeNoiseScaleCm) 스윕이 무효가 된다(R15a-M4). 그래서 격자 모드로 D>0 값(0.5·1·2)만 노이즈 크기 3값과 곱한다. 대조(v00)가 D=0 이다. 오프셋 무작위(bRandomizeNoiseOffsetPerActor)는 이 계획에서 돌리지 않는다.",
+  "scenes": [
+    {
+      "name": "smoke_pool",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "camera": {
+        "pawn": [
+          0,
+          0
+        ],
+        "arm": 1400.0,
+        "view": [
+          -35.0,
+          0.0
+        ],
+        "console": [
+          "t.MaxFPS 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fx15a_pool_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx15a_live2_smoke.json",
+      "live2_refs": [
+        "L3"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "0.smoke_pool.fine_coarse_ratio",
-    "basis": "미세/거친 등급 같음"
-   },
-   {
-    "metric": "0.smoke_pool.M3_detail_energy_per_height",
-    "basis": "IFS M3 c/H, LIVE-2 0.0104 대 우리 0.0009(RM:150)"
-   }
-  ]
- },
- "mode": "grid",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "regions_template·targets 파일이 아직 없다(이름만 정함): fx15a_pool_regions.json(SmokeHard 쪽·SmokeSoft 쪽 영역), fx15a_live2_smoke.json(공용). 보정 도구 확장(CAL-0) 때 만든다",
-  "카메라(폰 0,0·팔 1400·시선 −35°)는 제안값이다. 기존 LV_TDFluidSmokeStage 를 쓰므로 첫 촬영 뒤에 맞춘다",
-  "지표 이름은 measure_fx_look.py 출력 이름으로 확정할 것",
-  "나란한 두 액터 상관(<0.3)은 헤드리스 시험 H12 로 갈음한다",
-  "Kinds.Smoke 경로를 따르는 종류가 여럿(SmokeSoft·SmokeHard 등)이라 장면의 두 액터가 함께 바뀐다(의도). 감쇠 효과가 지표에 잡히는지는 첫 실행으로 확인한다"
- ]
+  "params": [
+    {
+      "json_path": "Kinds.Smoke.TDFluidSimulationConfig.FlowAmplitudeNoiseDampingPerSec",
+      "values": [
+        0.5,
+        1.0,
+        2.0
+      ]
+    },
+    {
+      "json_path": "Kinds.Smoke.TDFluidSimulationConfig.FlowAmplitudeNoiseScaleCm",
+      "values": [
+        110.0,
+        220.0,
+        440.0
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "smoke_pool.fine_coarse_ratio",
+        "basis": "미세/거친 등급 같음",
+        "weight": 1.0
+      },
+      {
+        "metric": "smoke_pool.M3_detail_energy_per_height",
+        "basis": "IFS M3 c/H, LIVE-2 0.0104 대 우리 0.0009(RM:150)",
+        "weight": 1.0
+      }
+    ]
+  },
+  "mode": "grid",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

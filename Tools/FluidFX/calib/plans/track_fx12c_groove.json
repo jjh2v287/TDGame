@@ -1,153 +1,208 @@
 {
- "id": "track_fx12c_groove",
- "note": "FX-12 코드 J3·J8·H1, 정본 SnowTrack(1024²·50 m GPU). 눈만 흔드는 묶음 소유 필드는 split_group true(반박 R12-M5), 둑 세기는 묶음 경로. 높이 감쇠 이름은 FX-10c BrushHeightFadeDistanceCm(X-09)",
- "scenes": [
-  {
-   "name": "snow_groove",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidSnowStage",
-   "camera": {
-    "exposure_ev100": 1.0,
-    "pawn": [
-     -1500,
-     0
-    ],
-    "arm": 350.0,
-    "view": [
-     -12.0,
-     0.0
-    ],
-    "move": {
-     "distance_cm": 1500.0
+  "id": "track_fx12c_groove",
+  "note": "FX-12 코드 J3·J8·H1, 정본 SnowTrack(1024²·50 m GPU). 눈만 흔드는 묶음 소유 필드는 split_group true(반박 R12-M5), 둑 세기는 묶음 경로. 높이 감쇠 이름은 FX-10c BrushHeightFadeDistanceCm(X-09) / CAL-0 B6: track_snow_i2(폐기·이관) 흡수 — TrackPomMaxSteps 손잡이 추가(BankHeight·뼈 붓 반지름은 이미 있음), groove_decay 시계열 장면(영역은 frame 뒤)",
+  "scenes": [
+    {
+      "name": "snow_groove",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSnowStage",
+      "camera": {
+        "exposure_ev100": 1.0,
+        "pawn": [
+          -1500,
+          0
+        ],
+        "arm": 350.0,
+        "view": [
+          -12.0,
+          0.0
+        ],
+        "move": {
+          "distance_cm": 1500.0
+        },
+        "awake": {
+          "TDGen_SnowTrack": true
+        }
+      },
+      "time_dilation": 1.0,
+      "settle": 12.0,
+      "regions_template": "Tools/FluidFX/calib/regions/track_snow_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/track_fx12c_targets.json",
+      "live2_refs": [
+        "L22",
+        "L11",
+        "L1"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    },
+    {
+      "name": "groove_decay",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSnowStage",
+      "camera": {
+        "exposure_ev100": 1.0,
+        "pawn": [
+          -1500,
+          0
+        ],
+        "arm": 350.0,
+        "view": [
+          -12.0,
+          0.0
+        ],
+        "move": {
+          "distance_cm": 1500.0
+        },
+        "awake": {
+          "TDGen_SnowTrack": true
+        }
+      },
+      "time_dilation": 1.0,
+      "settle": 12.0,
+      "regions_template": "Tools/FluidFX/calib/regions/track_snow_decay_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/track_fx12c_targets.json",
+      "live2_refs": [
+        "L22",
+        "L11",
+        "L1"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 15.0,
+        "kind": "series"
+      }
     }
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 12.0,
-   "regions_template": "Tools/FluidFX/calib/regions/track_snow_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/track_fx12c_targets.json",
-   "live2_refs": [
-    "L22",
-    "L11",
-    "L1"
-   ],
-   "awake": {
-    "TDGen_SnowTrack": true
-   }
-  }
- ],
- "base_tuning": [],
- "params": [
-  {
-   "json_path": "Kinds.SnowTrack.TDFluidInputBrushSettings.BoneBrushRadiusOverrideCm",
-   "values": [
-    12,
-    15,
-    20
-   ],
-   "split_group": true
-  },
-  {
-   "json_path": "Kinds.SnowTrack.TDFluidInputBrushSettings.BoneStampAspectRatio",
-   "values": [
-    1.4,
-    1.8,
-    2.4
-   ],
-   "split_group": true
-  },
-  {
-   "json_path": "Kinds.SnowTrack.TDFluidInputBrushSettings.BrushHardness",
-   "values": [
-    0.0,
-    0.3,
-    0.6
-   ],
-   "split_group": true
-  },
-  {
-   "json_path": "Kinds.SnowTrack.TDFluidInputBrushSettings.BrushHeightFadeDistanceCm",
-   "values": [
-    0,
-    50,
-    100
-   ],
-   "split_group": true
-  },
-  {
-   "json_path": "Groups.TrackPainter.TDFluidSimulationConfig.TrackBankStrength",
-   "values": [
-    0.5,
-    1.0,
-    1.5
-   ]
-  },
-  {
-   "json_path": "Groups.TrackPainter.TDFluidSimulationConfig.TrackBankBlurRadiusCm",
-   "values": [
-    10,
-    15,
-    25
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Snow.Scalars.TrackBankHeightCm",
-   "values": [
-    3,
-    6,
-    10
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Snow.Scalars.TrackDensityContrast",
-   "values": [
-    0.7,
-    1.0,
-    1.5
-   ]
-  }
- ],
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "metrics": {
-  "sources": [
-   "look",
-   "groove_profile"
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "snow_surface.atmosphere.p95_over_p5",
-    "weight": 1.0,
-    "low": 2.04,
-    "high": 3.4
-   },
-   {
-    "metric": "groove_line.groove_width_cm",
-    "weight": 1.0,
-    "low": 25.0,
-    "high": 40.0
-   },
-   {
-    "metric": "groove_line.bank_over_groove_ratio",
-    "weight": 0.5,
-    "low": 0.2,
-    "high": 0.4
-   },
-   {
-    "metric": "groove_decay.half_life_sec",
-    "weight": 0.5,
-    "low": 60.0,
-    "high": 100000.0
-   }
-  ]
- },
- "draft_status": "초안: P3 확장 전이라 calib_sweep.py --dry-run 대상 아님(검증 거부가 정상)",
- "p3_gaps": [
-  "params json_path Look: 모양 경로 할당(fluid_tuning_patch.parse_json_path 가 Look: 를 거부, R9-S4)",
-  "metrics.sources groove_profile(홈 단면 선 표본: 폭·둑/홈 비·둑 폭)·atmosphere",
-  "scenes.awake(이름표로 액터 깨우기) 실행기 지원",
-  "Groups.TrackPainter·Kinds.SnowTrack·SandTrack 는 FX-12c 묶음 A 통합 뒤에만 경로가 유효"
- ]
+  "base_tuning": [],
+  "params": [
+    {
+      "json_path": "Kinds.SnowTrack.TDFluidInputBrushSettings.BoneBrushRadiusOverrideCm",
+      "values": [
+        12,
+        15,
+        20
+      ],
+      "split_group": true
+    },
+    {
+      "json_path": "Kinds.SnowTrack.TDFluidInputBrushSettings.BoneStampAspectRatio",
+      "values": [
+        1.4,
+        1.8,
+        2.4
+      ],
+      "split_group": true
+    },
+    {
+      "json_path": "Kinds.SnowTrack.TDFluidInputBrushSettings.BrushHardness",
+      "values": [
+        0.0,
+        0.3,
+        0.6
+      ],
+      "split_group": true
+    },
+    {
+      "json_path": "Kinds.SnowTrack.TDFluidInputBrushSettings.BrushHeightFadeDistanceCm",
+      "values": [
+        0,
+        50,
+        100
+      ],
+      "split_group": true
+    },
+    {
+      "json_path": "Groups.TrackPainter.TDFluidSimulationConfig.TrackBankStrength",
+      "values": [
+        0.5,
+        1.0,
+        1.5
+      ]
+    },
+    {
+      "json_path": "Groups.TrackPainter.TDFluidSimulationConfig.TrackBankBlurRadiusCm",
+      "values": [
+        10,
+        15,
+        25
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Snow.Scalars.TrackBankHeightCm",
+      "values": [
+        3,
+        6,
+        10
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Snow.Scalars.TrackDensityContrast",
+      "values": [
+        0.7,
+        1.0,
+        1.5
+      ],
+      "base": 1.0
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Snow.Scalars.TrackPomMaxSteps",
+      "values": [
+        12,
+        24
+      ],
+      "split_group": false,
+      "base": 24.0,
+      "cost": "higher_costs_more"
+    }
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "snow_surface.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 2.04,
+        "high": 3.4,
+        "scene": "snow_groove"
+      },
+      {
+        "metric": "groove_line.line_profile.groove_width_cm",
+        "weight": 1.0,
+        "low": 25.0,
+        "high": 40.0,
+        "scene": "snow_groove"
+      },
+      {
+        "metric": "groove_line.line_profile.bank_over_groove_ratio",
+        "weight": 0.5,
+        "low": 0.2,
+        "high": 0.4,
+        "scene": "snow_groove"
+      },
+      {
+        "metric": "derived.groove_half_life_seconds",
+        "weight": 0.5,
+        "tolerance": 1.0,
+        "low": 60.0,
+        "high": 100000.0,
+        "scene": "groove_decay",
+        "basis": "track_fx12c_targets groove_decay half_life_sec [60,∞), 시계열 half_life. tolerance 1 s(60 s 하한 대비 표본 간격 15 s 의 1/15)"
+      }
+    ],
+    "derived": [
+      {
+        "name": "groove_half_life_seconds",
+        "op": "half_life",
+        "a": "groove_decay.luminance_mean"
+      }
+    ]
+  }
 }

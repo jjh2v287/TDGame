@@ -1,89 +1,97 @@
 {
- "id": "fx16a_cell_size_invariance",
- "note": "FX-16a OP6 해상도 무관(A8): 같은 연기 장면을 GridResolution 128·256으로 돌려 정규화 켬(bNormalizeDynamicsByCellSize true, ReferenceCellSizeCm 2.734 고정 = 700/256)일 때 영역 휘도 평균·표준편차가 ±10% 안인지 본다. ReferenceCellSizeCm이 0이면 기준이 스윕하는 GridResolution을 따라가 정규화가 없어지므로 고정값으로 둔다. 정규화 켬과 해상도 변경이 함께 있어야 의미가 있어 mode는 grid(7변형)다",
- "scenes": [
-  {
-   "name": "smoke_soft_cells",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
-   "camera": {
-    "awake": {
-     "TDGen_SmokeHard": false,
-     "TDGen_SmokeSoft": true
-    },
-    "exposure_ev100": 1.0,
-    "pawn": [
-     650,
-     -700
-    ],
-    "arm": 900.0,
-    "view": [
-     -35.0,
-     90.0
-    ],
-    "console": [
-     "t.MaxFPS 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fx16a_smoke_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/fx9_live2_volume.json",
-   "live2_refs": []
-  }
- ],
- "params": [
-  {
-   "json_path": "Kinds.Smoke.TDFluidRuntimeOpsSettings.bNormalizeDynamicsByCellSize",
-   "values": [
-    false,
-    true
-   ]
-  },
-  {
-   "json_path": "Kinds.Smoke.TDFluidRuntimeOpsSettings.ReferenceCellSizeCm",
-   "values": [
-    0.0,
-    2.734
-   ]
-  },
-  {
-   "json_path": "Kinds.Smoke.TDFluidSimulationConfig.GridResolution",
-   "values": [
-    128,
-    256
-   ],
-   "split_group": true
-  }
- ],
- "metrics": {
-  "sources": [
-   "look"
+  "id": "fx16a_cell_size_invariance",
+  "note": "FX-16a OP6 해상도 무관(A8): 같은 연기 장면을 GridResolution 128·256으로 돌려 정규화 켬(bNormalizeDynamicsByCellSize true, ReferenceCellSizeCm 2.734 고정 = 700/256)일 때 영역 휘도 평균·표준편차가 ±10% 안인지 본다. ReferenceCellSizeCm이 0이면 기준이 스윕하는 GridResolution을 따라가 정규화가 없어지므로 고정값으로 둔다. 정규화 켬과 해상도 변경이 함께 있어야 의미가 있어 mode는 grid(7변형)다",
+  "scenes": [
+    {
+      "name": "smoke_soft_cells",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "camera": {
+        "awake": {
+          "TDGen_SmokeHard": false,
+          "TDGen_SmokeSoft": true
+        },
+        "exposure_ev100": 1.0,
+        "pawn": [
+          650,
+          -700
+        ],
+        "arm": 900.0,
+        "view": [
+          -35.0,
+          90.0
+        ],
+        "console": [
+          "t.MaxFPS 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fx16a_smoke_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fx9_live2_volume.json",
+      "live2_refs": [],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "smoke_core.atmosphere.luminance_mean",
-    "weight": 1.0,
-    "tolerance": 0.02
-   },
-   {
-    "metric": "smoke_halo.atmosphere.luminance_mean",
-    "weight": 1.0,
-    "tolerance": 0.02
-   }
-  ]
- },
- "mode": "grid",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "calib_sweep.READ_BACK_STRUCTS에 TDFluidRuntimeOpsSettings가 없어 describe_params가 거부한다: PIE 실효 값 다시 읽기는 LC GetEffectiveRuntimeOpsSettings()(BlueprintPure)로 하고 READ_BACK_STRUCTS·READ_BACK_SOURCES에 추가해야 한다",
-  "fluid_tuning_patch가 bool 값(bNormalizeDynamicsByCellSize true)을 받는지 미확인: bool 값 지원 확인이 필요하다",
-  "scenes[0].targets는 임시로 fx9_live2_volume.json을 가리킨다: 연기 해상도 불변 전용 목표 파일과 metrics.targets 지표 이름은 목표 파일 확정 뒤 맞춘다",
-  "밀도 중심 이동·면적(MT A8)은 look 출처에 없어 영역 휘도 평균으로 대체했다: 밀도 중심·면적 지표 출처는 CAL-0 몫이다",
-  "ReferenceCellSizeCm 2.734는 SmokeSoft 저작 칸 크기 700/256과 같다: Kinds.Smoke.SimExtentCm이 바뀌면 다시 계산한다"
- ]
+  "params": [
+    {
+      "json_path": "Kinds.Smoke.TDFluidRuntimeOpsSettings.bNormalizeDynamicsByCellSize",
+      "values": [
+        false,
+        true
+      ]
+    },
+    {
+      "json_path": "Kinds.Smoke.TDFluidRuntimeOpsSettings.ReferenceCellSizeCm",
+      "values": [
+        0.0,
+        2.734
+      ]
+    },
+    {
+      "json_path": "Kinds.Smoke.TDFluidSimulationConfig.GridResolution",
+      "values": [
+        128,
+        256
+      ],
+      "split_group": true,
+      "cost": "higher_costs_more"
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "smoke_core.atmosphere.luminance_mean",
+        "weight": 1.0,
+        "tolerance": 0.02,
+        "relative_to_control": {
+          "low": 0.9,
+          "high": 1.1
+        },
+        "role": "constraint",
+        "basis": "셀 크기 불변: 대조 ±10% 제약(검증, 채택 없음)"
+      },
+      {
+        "metric": "smoke_halo.atmosphere.luminance_mean",
+        "weight": 1.0,
+        "tolerance": 0.02,
+        "relative_to_control": {
+          "low": 0.9,
+          "high": 1.1
+        },
+        "role": "constraint",
+        "basis": "셀 크기 불변: 대조 ±10% 제약(검증, 채택 없음)"
+      }
+    ]
+  },
+  "mode": "grid",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

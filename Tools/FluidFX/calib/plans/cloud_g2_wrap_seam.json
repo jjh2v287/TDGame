@@ -1,84 +1,88 @@
 {
- "id": "cloud_g2_wrap_seam",
- "note": "FX-11c G2, 셋업 19 WrapField(감싸기 라이브 + 반복 슬롯), 타일 경계 x = 40 km(먼 바닥 위, 지형 끝 x = 20 km 의 지면 이음을 피함) 위에서 아래로. 지표는 경계 좌우 32 px 띠 휘도 차와 주기 자기상관",
- "scenes": [
-  {
-   "name": "wrap_seam",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
-   "camera": {
-    "view_target": "TDGen_CloudCam_WrapField",
-    "exposure_ev100": 12.0,
-    "console": [
-     "TD.FluidFX.CloudSetup 19",
-     "TD.FluidFX.CloudViewSampleScale 2",
-     "r.TDFogScattering 0",
-     "r.VolumetricRenderTarget.Mode 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 30.0,
-   "regions_template": "Tools/FluidFX/calib/regions/cloud_g2_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
-   "live2_refs": []
-  }
- ],
- "base_tuning": [],
- "params": [
-  {
-   "json_path": "Kinds.CloudWrapField.TDFluidSimulationConfig.AmbientNoiseAmount",
-   "values": [
-    0.3,
-    0.6,
-    0.9
-   ]
-  },
-  {
-   "json_path": "Kinds.CloudWrapField.TDFluidSimulationConfig.FlowNoiseAccelerationCmPerSec2",
-   "values": [
-    20,
-    40,
-    80
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_WrapField.Scalars.CloudSlot1DetailErosion",
-   "values": [
-    0.3,
-    0.45,
-    0.6
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "atmosphere"
+  "id": "cloud_g2_wrap_seam",
+  "note": "FX-11c G2, 셋업 19 WrapField(감싸기 라이브 + 반복 슬롯), 타일 경계 x = 40 km(먼 바닥 위, 지형 끝 x = 20 km 의 지면 이음을 피함) 위에서 아래로. 지표는 경계 좌우 32 px 띠 휘도 차와 주기 자기상관",
+  "scenes": [
+    {
+      "name": "wrap_seam",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "camera": {
+        "view_target": "TDGen_CloudCam_WrapField",
+        "exposure_ev100": 12.0,
+        "console": [
+          "TD.FluidFX.CloudSetup 19",
+          "TD.FluidFX.CloudViewSampleScale 2",
+          "r.TDFogScattering 0",
+          "r.VolumetricRenderTarget.Mode 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 30.0,
+      "regions_template": "Tools/FluidFX/calib/regions/cloud_g2_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+      "live2_refs": [],
+      "shots": {
+        "count": 3,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "seam_left.seam_band_luminance_delta",
-    "weight": 1.0,
-    "low": 0.0,
-    "high": 0.03
-   },
-   {
-    "metric": "tile.period_autocorrelation",
-    "weight": 0.5,
-    "low": 0.0,
-    "high": 0.3
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "camera.view_target(CineCamera SetViewTarget)",
-  "params Look: 할당(FX-8n G1)",
-  "metrics.sources atmosphere",
-  "새 지표 seam_band_luminance_delta(seam_left·seam_right 평균 휘도 차 / 평균)·period_autocorrelation(tile 영역 주기 자기상관) 출처 없음(목표 ≤ 3%·≤ 0.3 은 [제안])"
- ]
+  "base_tuning": [],
+  "params": [
+    {
+      "json_path": "Kinds.CloudWrapField.TDFluidSimulationConfig.AmbientNoiseAmount",
+      "values": [
+        0.3,
+        0.6,
+        0.9
+      ]
+    },
+    {
+      "json_path": "Kinds.CloudWrapField.TDFluidSimulationConfig.FlowNoiseAccelerationCmPerSec2",
+      "values": [
+        20,
+        40,
+        80
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_WrapField.Scalars.CloudSlot1DetailErosion",
+      "values": [
+        0.3,
+        0.45,
+        0.6
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "derived.seam_band_luminance_delta",
+        "weight": 1.0,
+        "low": 0.0,
+        "high": 0.03
+      },
+      {
+        "metric": "tile.autocorrelation.secondary_peak",
+        "weight": 0.5,
+        "low": 0.0,
+        "high": 0.3
+      }
+    ],
+    "derived": [
+      {
+        "name": "seam_band_luminance_delta",
+        "op": "difference",
+        "a": "seam_left.luminance_mean",
+        "b": "seam_right.luminance_mean"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

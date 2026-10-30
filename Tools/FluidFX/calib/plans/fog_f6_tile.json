@@ -1,114 +1,108 @@
 {
- "id": "fog_f6_tile",
- "note": "FX-10c F6. 8C 감싸기 원천(FogTileSim 30 m 창, Wrap)이 자기 RT 를 90 m 안개 상자(상자 배율 3)에 타일 렌더(SimAreaWrapped 1). 반복 은폐는 휘도 2D 자기상관 2차 봉우리(SWB L14-a 관례), 원거리 대기 지표는 IMG 19 원거리 기준 2.23 ±25%(타일 안개 이미지 없음, CD M.3.20.1 Water_Sparse_DoubleSim_TilingWaves 유추). MI_TD_FluidFog_TileSync 는 8C 전용이라 재질 값을 훑어도 다른 구역과 충돌하지 않는다",
- "scenes": [
-  {
-   "name": "f6_tile",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
-   "camera": {
-    "awake": {
-     "TDGen_FogRoom": false,
-     "TDGen_FogTrail": false,
-     "TDGen_FogCharacter": false,
-     "TDGen_FogAmbient": false,
-     "TDGen_FogCut": false,
-     "TDGen_FogStir": false,
-     "TDGen_FogTileSync": true
-    },
-    "exposure_ev100": 1.0,
-    "pawn": [
-     17000,
-     -36800
-    ],
-    "arm": 2500.0,
-    "view": [
-     -35.0,
-     90.0
-    ],
-    "console": [
-     "r.TDFogScattering 0",
-     "r.VolumetricFog.GridPixelSize 8",
-     "r.VolumetricFog.GridSizeZ 128"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 10.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fog_f6_regions.json",
-   "targets": null,
-   "live2_refs": []
-  }
- ],
- "params": [
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_TileSync.Scalars.FogExtinctionPerM",
-   "values": [
-    0.08,
-    0.15,
-    0.3
-   ],
-   "split_group": false
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_TileSync.Scalars.FogExtrudeHeightCm",
-   "values": [
-    60,
-    120,
-    240
-   ],
-   "split_group": false
-  },
-  {
-   "json_path": "Kinds.FogTileSim.TDFluidSimulationConfig.AmbientNoiseAmount",
-   "values": [
-    0.3,
-    0.6,
-    0.9
-   ],
-   "split_group": false
-  },
-  {
-   "json_path": "Kinds.FogTileSim.TDFluidSimulationConfig.FlowNoiseScaleCm",
-   "values": [
-    200,
-    400,
-    800
-   ],
-   "split_group": false
-  }
- ],
- "metrics": {
-  "sources": [
-   "atmosphere",
-   "autocorrelation"
+  "id": "fog_f6_tile",
+  "note": "FX-10c F6. 8C 감싸기 원천(FogTileSim 30 m 창, Wrap)이 자기 RT 를 90 m 안개 상자(상자 배율 3)에 타일 렌더(SimAreaWrapped 1). 반복 은폐는 휘도 2D 자기상관 2차 봉우리(SWB L14-a 관례), 원거리 대기 지표는 IMG 19 원거리 기준 2.23 ±25%(타일 안개 이미지 없음, CD M.3.20.1 Water_Sparse_DoubleSim_TilingWaves 유추). MI_TD_FluidFog_TileSync 는 8C 전용이라 재질 값을 훑어도 다른 구역과 충돌하지 않는다",
+  "scenes": [
+    {
+      "name": "f6_tile",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+      "camera": {
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": true
+        },
+        "exposure_ev100": 1.0,
+        "pawn": [
+          17000,
+          -36800
+        ],
+        "arm": 2500.0,
+        "view": [
+          -35.0,
+          90.0
+        ],
+        "console": [
+          "r.TDFogScattering 0",
+          "r.VolumetricFog.GridPixelSize 8",
+          "r.VolumetricFog.GridSizeZ 128"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 10.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f6_regions.json",
+      "live2_refs": [],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "scene": "f6_tile",
-    "metric": "tile_far.autocorrelation.secondary_peak",
-    "weight": 2.0,
-    "low": 0.0,
-    "high": 0.3
-   },
-   {
-    "scene": "f6_tile",
-    "metric": "tile_far.atmosphere.p95_over_p5",
-    "weight": 1.0,
-    "low": 1.67,
-    "high": 2.79
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "초안: P3 확장 전이라 calib_sweep.py --dry-run 대상 아님(검증 거부가 정상). Kinds.FogTileSim 경로는 FX-10c C10 이, MI_TD_FluidFog_TileSync 는 모양 조각 병합·재질 스크립트 실행 뒤에 유효",
- "p3_gaps": [
-  "params json_path Look: 모양 경로 할당(문법은 FX-8n 과 같음, fluid_tuning_patch·calib_sweep 이 Look: 를 아직 적용하지 못함 = FX-8n G1)",
-  "metrics.sources atmosphere(measure_fx_look 기본 모드 영역 지표)",
-  "metrics.sources autocorrelation(영역 휘도 2D 자기상관의 원점 밖 최대 봉우리 ÷ 원점 값, SWB L14-a 관례)",
-  "상자 배율(VolumeSizeMultiplier) 상한 3 → 8 상향은 D14 뒤(LIVE-2 FVOL 200 m 비교는 그 뒤)"
- ]
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_TileSync.Scalars.FogExtinctionPerM",
+      "values": [
+        0.08,
+        0.15,
+        0.3
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_TileSync.Scalars.FogExtrudeHeightCm",
+      "values": [
+        60,
+        120,
+        240
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.FogTileSim.TDFluidSimulationConfig.AmbientNoiseAmount",
+      "values": [
+        0.3,
+        0.6,
+        0.9
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.FogTileSim.TDFluidSimulationConfig.FlowNoiseScaleCm",
+      "values": [
+        200,
+        400,
+        800
+      ],
+      "split_group": false
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "scene": "f6_tile",
+        "metric": "tile_far.autocorrelation.secondary_peak",
+        "weight": 2.0,
+        "low": 0.0,
+        "high": 0.3
+      },
+      {
+        "scene": "f6_tile",
+        "metric": "tile_far.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.67,
+        "high": 2.79
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

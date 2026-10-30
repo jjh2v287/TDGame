@@ -1,123 +1,146 @@
 {
- "id": "cloud_g9_mushroom",
- "note": "FX-11r G9, 셋업 8·9, IMG 6·23(갓 발광·방패 갑판)",
- "scenes": [
-  {
-   "name": "mushroom_cap",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
-   "camera": {
-    "view_target": "TDGen_CloudCam_Mushroom",
-    "exposure_ev100": 12.0,
-    "console": [
-     "TD.FluidFX.CloudSetup 8",
-     "TD.FluidFX.CloudViewSampleScale 2",
-     "r.TDFogScattering 0",
-     "r.VolumetricRenderTarget.Mode 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/cloud_g9_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
-   "live2_refs": [
-    "IMG6"
-   ]
-  },
-  {
-   "name": "mushroom_shield",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
-   "camera": {
-    "view_target": "TDGen_CloudCam_MushroomShield",
-    "exposure_ev100": 12.0,
-    "console": [
-     "TD.FluidFX.CloudSetup 9",
-     "TD.FluidFX.CloudViewSampleScale 2",
-     "r.TDFogScattering 0",
-     "r.VolumetricRenderTarget.Mode 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/cloud_g9_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
-   "live2_refs": [
-    "IMG23"
-   ]
-  }
- ],
- "base_tuning": [],
- "params": [
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EmissiveIntensity",
-   "values": [
-    4,
-    8,
-    16
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EmissiveExponent",
-   "values": [
-    2,
-    3,
-    4
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EdgeErosion",
-   "values": [
-    0.4,
-    0.6,
-    0.8
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_MushroomShield.Scalars.CloudSlot2PatternCoverage",
-   "values": [
-    0.6,
-    0.8,
-    0.95
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "atmosphere"
+  "id": "cloud_g9_mushroom",
+  "note": "FX-11r G9, 셋업 8·9, IMG 6·23(갓 발광·방패 갑판)",
+  "scenes": [
+    {
+      "name": "mushroom_cap",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "camera": {
+        "view_target": "TDGen_CloudCam_Mushroom",
+        "exposure_ev100": 12.0,
+        "console": [
+          "TD.FluidFX.CloudSetup 8",
+          "TD.FluidFX.CloudViewSampleScale 2",
+          "r.TDFogScattering 0",
+          "r.VolumetricRenderTarget.Mode 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/cloud_g9_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+      "live2_refs": [
+        "IMG6"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    },
+    {
+      "name": "mushroom_shield",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "camera": {
+        "view_target": "TDGen_CloudCam_MushroomShield",
+        "exposure_ev100": 12.0,
+        "console": [
+          "TD.FluidFX.CloudSetup 9",
+          "TD.FluidFX.CloudViewSampleScale 2",
+          "r.TDFogScattering 0",
+          "r.VolumetricRenderTarget.Mode 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/cloud_g9_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+      "live2_refs": [
+        "IMG23"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "cap.atmosphere.p95_over_p5",
-    "weight": 1.0,
-    "low": 1.76,
-    "high": 2.93
-   },
-   {
-    "metric": "mushroom.atmosphere.p95_over_p5",
-    "weight": 1.0,
-    "low": 1.98,
-    "high": 3.3
-   },
-   {
-    "metric": "far_deck.atmosphere.p95_over_p5",
-    "weight": 1.0,
-    "low": 1.29,
-    "high": 2.15
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "keep",
- "draft_status": "초안: P3 확장 전이라 --dry-run 대상 아님",
- "p3_gaps": [
-  "camera.view_target(CineCamera SetViewTarget)",
-  "params Look: 할당(FX-8n G1)",
-  "metrics.sources atmosphere",
-  "G/R·B/R 비 지표(IFS:75)",
-  "위에서 본 초승달 지면 그림자 육안(ICF:57)"
- ]
+  "base_tuning": [],
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EmissiveIntensity",
+      "values": [
+        4,
+        8,
+        16
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EmissiveExponent",
+      "values": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EdgeErosion",
+      "values": [
+        0.4,
+        0.6,
+        0.8
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_MushroomShield.Scalars.CloudSlot2PatternCoverage",
+      "values": [
+        0.6,
+        0.8,
+        0.95
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "cap.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.76,
+        "high": 2.93,
+        "scene": "mushroom_cap"
+      },
+      {
+        "metric": "cap.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.76,
+        "high": 2.93,
+        "scene": "mushroom_shield"
+      },
+      {
+        "metric": "mushroom.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.98,
+        "high": 3.3,
+        "scene": "mushroom_cap"
+      },
+      {
+        "metric": "mushroom.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.98,
+        "high": 3.3,
+        "scene": "mushroom_shield"
+      },
+      {
+        "metric": "far_deck.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.29,
+        "high": 2.15,
+        "scene": "mushroom_cap"
+      },
+      {
+        "metric": "far_deck.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.29,
+        "high": 2.15,
+        "scene": "mushroom_shield"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "keep"
 }

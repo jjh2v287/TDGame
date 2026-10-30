@@ -1,54 +1,30 @@
 {
- "note": "FX-14 목표(spec-fx14 7절, IWI:26-28·TS J6·A12·RM:635). 용암은 기준 이미지가 없어 이음매·대비 목표는 규칙에서 유도한 추정이고 사용자 육안 승인이 최종이다. viscous_headless·mud_surface·decal_edge 출처 확장(P3, CAL-0) 뒤 사용",
- "draft_status": "blocked(CAL-0)",
- "kind_metrics": {},
- "region_metrics": {
-  "mud_surface": {
-   "swirl_spacing_cm": [
-    10.0,
-    20.0
-   ]
-  },
-  "decal_edge": {
-   "width_cells": [
-    0.0,
-    2.0
-   ]
-  },
-  "lava_tile_seam": {
-   "seam_ratio": [
-    0.0,
-    1.0
-   ]
-  },
-  "lava_local": {
-   "contrast_over_tile": [
-    1.0,
-    100000.0
-   ]
+  "note": "FX-14 목표(spec-fx14 7절, IWI:26-28·TS J6·A12·RM:635). 용암은 기준 이미지가 없어 이음매·대비 목표는 규칙에서 유도한 추정이고 사용자 육안 승인이 최종이다. viscous_headless·mud_surface·decal_edge 출처 확장(P3, CAL-0) 뒤 사용 / CAL-0 B6: 비용 지표(cost_metrics, estimated)는 ⑤ 예산 표로 옮김(Tools/FluidFX/perf/plans/calib_cost_targets.json) / CAL-0 B6: 지운 키 draft_status",
+  "kind_metrics": {},
+  "region_metrics": {
+    "mud_surface": {
+      "swirl_spacing_cm": [
+        10.0,
+        20.0
+      ]
+    },
+    "decal_edge": {
+      "width_cells": [
+        0.0,
+        2.0
+      ]
+    },
+    "lava_tile_seam": {
+      "seam_ratio": [
+        0.0,
+        1.0
+      ]
+    },
+    "lava_local": {
+      "contrast_over_tile": [
+        1.0,
+        100000.0
+      ]
+    }
   }
- },
- "cost_metrics": {
-  "viscous_gpu_ms": [
-   0.0,
-   0.15
-  ],
-  "surface_gpu_ms": [
-   0.0,
-   0.3
-  ],
-  "decal_gpu_ms": [
-   0.0,
-   0.2
-  ],
-  "lava_tile_gpu_ms": [
-   0.0,
-   0.03
-  ]
- },
- "estimated": [
-  "cost_metrics.lava_tile_gpu_ms",
-  "region_metrics.lava_tile_seam.seam_ratio",
-  "region_metrics.lava_local.contrast_over_tile"
- ]
 }

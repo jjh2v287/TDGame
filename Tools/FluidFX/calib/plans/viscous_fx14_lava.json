@@ -1,108 +1,102 @@
 {
- "id": "viscous_fx14_lava",
- "note": "FX-14 A12·M3, 정본 LavaTile(128²·16 m 감싸기)·LavaLocal(256²·12.8 m), 무대 구역 8 LavaWorld(중심 0, 8000, 100 m 평면). 기준 이미지 없음: 사용자 육안 승인",
- "scenes": [
-  {
-   "name": "lava_world",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidViscousStage",
-   "camera": {
-    "exposure_ev100": 1.0,
-    "pawn": [
-     0.0,
-     8000.0
-    ],
-    "arm": 600.0,
-    "view": [
-     -30.0,
-     0.0
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 8.0,
-   "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/viscous_fx14_targets.json",
-   "live2_refs": [],
-   "awake": {
-    "TDGen_LavaWorld_Tile": true,
-    "TDGen_LavaWorld_Local": true
-   }
-  }
- ],
- "base_tuning": [],
- "params": [
-  {
-   "json_path": "Kinds.LavaTile.TDFluidSimulationConfig.AmbientNoiseAmount",
-   "values": [
-    0.4,
-    0.8,
-    1.2
-   ]
-  },
-  {
-   "json_path": "Kinds.LavaTile.TDFluidSimulationConfig.FlowNoiseAccelerationCmPerSec2",
-   "values": [
-    30,
-    60,
-    120
-   ]
-  },
-  {
-   "json_path": "Kinds.LavaLocal.TDFluidSimulationConfig.DensityDissipation",
-   "values": [
-    0.2,
-    0.4,
-    0.8
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidLava.Scalars.LavaCrustThreshold",
-   "values": [
-    0.35,
-    0.5,
-    0.65
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidLava.Scalars.LavaEmissiveIntensity",
-   "values": [
-    10,
-    20,
-    40
-   ]
-  }
- ],
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "metrics": {
-  "sources": [
-   "look"
+  "id": "viscous_fx14_lava",
+  "note": "FX-14 A12·M3, 정본 LavaTile(128²·16 m 감싸기)·LavaLocal(256²·12.8 m), 무대 구역 8 LavaWorld(중심 0, 8000, 100 m 평면). 기준 이미지 없음: 사용자 육안 승인",
+  "scenes": [
+    {
+      "name": "lava_world",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidViscousStage",
+      "camera": {
+        "exposure_ev100": 1.0,
+        "pawn": [
+          0.0,
+          8000.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -30.0,
+          0.0
+        ],
+        "awake": {
+          "TDGen_LavaWorld_Tile": true,
+          "TDGen_LavaWorld_Local": true
+        }
+      },
+      "time_dilation": 1.0,
+      "settle": 8.0,
+      "regions_template": "Tools/FluidFX/calib/regions/viscous_fx14_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/viscous_fx14_targets.json",
+      "live2_refs": [],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "metric": "lava_tile_seam.seam_ratio",
-    "weight": 1.0,
-    "low": 0.0,
-    "high": 1.0
-   },
-   {
-    "metric": "lava_local.contrast_over_tile",
-    "weight": 1.0,
-    "low": 1.0,
-    "high": 100000.0
-   }
-  ]
- },
- "draft_status": "blocked(CAL-0)",
- "p3_gaps": [
-  "Look: 경로(fluid_tuning_patch.parse_json_path 가 Look: 를 거부, R9-S4)",
-  "scenes.awake(이름표로 액터 깨우기) 실행기 지원",
-  "regions 파일 없음: Tools/FluidFX/calib/regions/viscous_fx14_regions.json(CAL-0 소유자가 추가, S6)",
-  "lava_tile_seam 지표(경계 텍셀 차 대 내부 99분위)는 출력 RT 판독이 필요한데 읽기 출처가 없음(S6, 이음매는 RHI 시험 1개로 기록만)",
-  "lava_local.contrast_over_tile(국소 대비 대 타일 대비) 지표 출처 없음",
-  "Kinds.LavaTile·LavaLocal 경로는 FX-14 묶음 A 통합 뒤에만 유효"
- ]
+  "base_tuning": [],
+  "params": [
+    {
+      "json_path": "Kinds.LavaTile.TDFluidSimulationConfig.AmbientNoiseAmount",
+      "values": [
+        0.4,
+        0.8,
+        1.2
+      ]
+    },
+    {
+      "json_path": "Kinds.LavaTile.TDFluidSimulationConfig.FlowNoiseAccelerationCmPerSec2",
+      "values": [
+        30,
+        60,
+        120
+      ]
+    },
+    {
+      "json_path": "Kinds.LavaLocal.TDFluidSimulationConfig.DensityDissipation",
+      "values": [
+        0.2,
+        0.4,
+        0.8
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidLava.Scalars.LavaCrustThreshold",
+      "values": [
+        0.35,
+        0.5,
+        0.65
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidLava.Scalars.LavaEmissiveIntensity",
+      "values": [
+        10,
+        20,
+        40
+      ]
+    }
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "lava_tile_seam.seam_ratio",
+        "weight": 1.0,
+        "low": 0.0,
+        "high": 1.0
+      },
+      {
+        "metric": "lava_local.contrast_over_tile",
+        "weight": 1.0,
+        "low": 1.0,
+        "high": 100000.0
+      }
+    ]
+  }
 }

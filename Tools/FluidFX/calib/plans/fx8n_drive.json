@@ -21,11 +21,15 @@
         ]
       },
       "time_dilation": 1.0,
-      "schedule": null,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_regions.json",
       "targets": "Tools/FluidFX/calib/targets/fx8n_live2_drive.json",
-      "live2_refs": []
+      "live2_refs": [],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     },
     {
       "name": "p4_vortex_mesh",
@@ -46,11 +50,15 @@
         ]
       },
       "time_dilation": 1.0,
-      "schedule": null,
       "settle": 6.0,
       "regions_template": "Tools/FluidFX/calib/regions/fx8n_drive_regions.json",
       "targets": "Tools/FluidFX/calib/targets/fx8n_live2_drive.json",
-      "live2_refs": []
+      "live2_refs": [],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     }
   ],
   "params": [
@@ -70,7 +78,8 @@
         25,
         50
       ],
-      "split_group": false
+      "split_group": false,
+      "cost": "higher_costs_more"
     },
     {
       "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidDriveMeshFloat.Floats.User.DrivePressureToHeightCm",
@@ -90,24 +99,23 @@
     "sources": [
       "look"
     ],
-    "noise_floor": {},
     "targets": [
       {
-        "metric": "0.particles.count",
+        "metric": "particles.embers.count",
         "scene": "p2_smoke_sprite",
         "weight": 1.0,
         "tolerance": 20.0,
         "basis": "C12 덩어리 수(목표 범위는 비교 시트 승인 뒤)"
       },
       {
-        "metric": "0.particles.median_area_px",
+        "metric": "particles.embers.median_area_px",
         "scene": "p2_smoke_sprite",
         "weight": 1.0,
         "tolerance": 0.5,
         "basis": "C12 덩어리 크기"
       },
       {
-        "metric": "0.particles.count",
+        "metric": "particles.embers.count",
         "scene": "p4_vortex_mesh",
         "weight": 1.0,
         "tolerance": 20.0,
@@ -116,7 +124,7 @@
         "basis": "C12-f 부유 메시 ≥300(IMG 16)"
       },
       {
-        "metric": "0.particles.median_area_px",
+        "metric": "particles.embers.median_area_px",
         "scene": "p4_vortex_mesh",
         "weight": 1.0,
         "tolerance": 0.5,

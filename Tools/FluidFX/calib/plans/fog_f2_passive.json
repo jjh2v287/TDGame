@@ -1,142 +1,140 @@
 {
- "id": "fog_f2_passive",
- "note": "FX-10r F2 수동 7변형(7B)·D14 창 가중(7A, FogAmbient 만 props 로 따라가기 켜서 이동 중 두 프레임 차). 큰 상자 MI 는 정적이라 변형마다 다시 굽는다(P3 공백 7)",
- "scenes": [
-  {
-   "name": "d14_window_move",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
-   "camera": {
-    "awake": {
-     "TDGen_FogRoom": false,
-     "TDGen_FogTrail": false,
-     "TDGen_FogCharacter": false,
-     "TDGen_FogAmbient": true
+  "id": "fog_f2_passive",
+  "note": "FX-10r F2 수동 7변형(7B)·D14 창 가중(7A, FogAmbient 만 props 로 따라가기 켜서 이동 중 두 프레임 차). 큰 상자 MI 는 정적이라 변형마다 다시 굽는다(P3 공백 7)",
+  "scenes": [
+    {
+      "name": "d14_window_move",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+      "camera": {
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": true
+        },
+        "props": {
+          "TDGen_FogAmbient": {
+            "should_follow_player_pawn": true
+          }
+        },
+        "exposure_ev100": 1.0,
+        "pawn": [
+          9000,
+          25000
+        ],
+        "arm": 600.0,
+        "view": [
+          -10.0,
+          0.0
+        ],
+        "console": [
+          "r.TDFogScattering 0"
+        ],
+        "move": {
+          "distance_cm": 2000.0
+        }
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f2_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fog_live2_atmosphere.json",
+      "live2_refs": [
+        "L12"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     },
-    "props": {
-     "TDGen_FogAmbient": {
-      "should_follow_player_pawn": true
-     }
-    },
-    "exposure_ev100": 1.0,
-    "pawn": [
-     9000,
-     25000
-    ],
-    "arm": 600.0,
-    "view": [
-     -10.0,
-     0.0
-    ],
-    "console": [
-     "r.TDFogScattering 0"
-    ],
-    "move": {
-     "distance_cm": 2000.0
+    {
+      "name": "f2_displays",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+      "camera": {
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false
+        },
+        "exposure_ev100": 1.0,
+        "pawn": [
+          9000,
+          -12000
+        ],
+        "arm": 900.0,
+        "view": [
+          -6.0,
+          -90.0
+        ],
+        "console": [
+          "r.TDFogScattering 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 4.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f2_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/fog_live2_atmosphere.json",
+      "live2_refs": [
+        "L12"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
     }
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 6.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fog_f2_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/fog_live2_atmosphere.json",
-   "live2_refs": [
-    "L12"
-   ]
-  },
-  {
-   "name": "f2_displays",
-   "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
-   "camera": {
-    "awake": {
-     "TDGen_FogRoom": false,
-     "TDGen_FogTrail": false,
-     "TDGen_FogCharacter": false,
-     "TDGen_FogAmbient": false
-    },
-    "exposure_ev100": 1.0,
-    "pawn": [
-     9000,
-     -12000
-    ],
-    "arm": 900.0,
-    "view": [
-     -6.0,
-     -90.0
-    ],
-    "console": [
-     "r.TDFogScattering 0"
-    ]
-   },
-   "time_dilation": 1.0,
-   "schedule": null,
-   "settle": 4.0,
-   "regions_template": "Tools/FluidFX/calib/regions/fog_f2_regions.json",
-   "targets": "Tools/FluidFX/calib/targets/fog_live2_atmosphere.json",
-   "live2_refs": [
-    "L12"
-   ]
-  }
- ],
- "params": [
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_PassiveField.Scalars.FogPassiveCoverage",
-   "values": [
-    0.35,
-    0.5,
-    0.65
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_PassiveField.Scalars.FogPassiveNoiseScaleCm",
-   "values": [
-    1500,
-    3000,
-    6000
-   ]
-  },
-  {
-   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Sim.Scalars.FogWindowBlendRatio",
-   "values": [
-    0.1,
-    0.15,
-    0.25
-   ]
-  }
- ],
- "metrics": {
-  "sources": [
-   "atmosphere"
   ],
-  "noise_floor": {},
-  "targets": [
-   {
-    "scene": "d14_window_move",
-    "metric": "window_seam.luminance_relative_step",
-    "weight": 2.0,
-    "low": 0.0,
-    "high": 0.05
-   },
-   {
-    "scene": "d14_window_move",
-    "metric": "passive_field.atmosphere.p95_over_p5",
-    "weight": 1.0,
-    "low": 2.46,
-    "high": 4.1
-   }
-  ]
- },
- "mode": "one_at_a_time",
- "repeats": 2,
- "control_every": 0,
- "reset": "reinit",
- "draft_status": "초안: P3 확장 전이라 calib_sweep.py --dry-run 대상 아님(검증 거부가 정상)",
- "p3_gaps": [
-  "base_tuning(고정 덮어쓰기)",
-  "params json_path Look: 모양 경로 할당(문법은 FX-8n 과 같음, fluid_tuning_patch·calib_sweep 이 Look: 를 아직 적용하지 못함 = FX-8n G1)",
-  "metrics.sources atmosphere(measure_fx_look 기본 모드 영역 지표)",
-  "metrics.sources groove_profile(홈 단면 선 표본: 폭·둑 비)",
-  "사구 휘도 2D FFT 주 파장·방향 분석기(measure_fx_look 은 세부 비만)",
-  "params.actor_prop(광원·액터 속성, 룩데브 props 경로)",
-  "정적 MI(바닥·수동 상자)는 실행 중 재적용 안 됨: 판정 영역을 창 안으로 잡거나 변형마다 다시 굽기"
- ]
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_PassiveField.Scalars.FogPassiveCoverage",
+      "values": [
+        0.35,
+        0.5,
+        0.65
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_PassiveField.Scalars.FogPassiveNoiseScaleCm",
+      "values": [
+        1500,
+        3000,
+        6000
+      ],
+      "base": 3000.0
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Sim.Scalars.FogWindowBlendRatio",
+      "values": [
+        0.1,
+        0.15,
+        0.25
+      ],
+      "base": 0.15
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "scene": "d14_window_move",
+        "metric": "window_seam.luminance_relative_step",
+        "weight": 2.0,
+        "low": 0.0,
+        "high": 0.05
+      },
+      {
+        "scene": "d14_window_move",
+        "metric": "passive_field.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "basis": "인라인 삭제 → 안개 kind 띠 [2.66,4.44](P-11)"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit"
 }

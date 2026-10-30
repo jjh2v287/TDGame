@@ -257,10 +257,12 @@ void ATDFluidLiveActor::BeginPlay()
 			FluidSubsystem->RegisterLiveActor(this);
 		}
 	}
+	RequestSimStateCacheLoad();
 }
 
 void ATDFluidLiveActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	CancelSimStateCacheLoad();
 	if (UWorld* World = GetWorld())
 	{
 		if (UTDFluidLiveSubsystem* FluidSubsystem = World->GetSubsystem<UTDFluidLiveSubsystem>())
@@ -300,6 +302,8 @@ void ATDFluidLiveActor::InitializeFromPreset(UTDFluidPresetAsset* InPreset, floa
 	ResetInteractionHistory();
 	bIsTerrainQueueCurrent = false;
 	bHasSteppedWhileAwake = false;
+	bIsVisibilityPaused = false;
+	ResetStepClock();
 	SyncVolumeExtentsWithSimulation();
 	SyncVolumeDriver();
 }
@@ -385,6 +389,11 @@ bool ATDFluidLiveActor::BeginLiveActorStep(float DeltaTime)
 		return false;
 	}
 
+	if (ShouldWaitForSimStateCache(DeltaTime))
+	{
+		return false;
+	}
+
 	if (bHasFiniteLifetime)
 	{
 		RemainingLifetimeSeconds -= DeltaTime;
@@ -411,6 +420,7 @@ bool ATDFluidLiveActor::BeginLiveActorStep(float DeltaTime)
 	if (!LiveComponent->IsSimulationAwake())
 	{
 		bHasSteppedWhileAwake = false;
+		bIsVisibilityPaused = false;
 		return false;
 	}
 
@@ -419,21 +429,43 @@ bool ATDFluidLiveActor::BeginLiveActorStep(float DeltaTime)
 		bHasSteppedWhileAwake = true;
 		ResetInteractionHistory();
 		bIsTerrainQueueCurrent = false;
+		ResetStepClock();
+		bHasCompletedStepSinceWake = false;
 	}
 
-	LastStepDeltaSeconds = DeltaTime;
-	PrepareActorSpecificInputs(DeltaTime);
+	if (ShouldPauseForVisibility())
+	{
+		bIsVisibilityPaused = true;
+		LiveComponent->DiscardPendingInputs();
+		return false;
+	}
+
+	if (bIsVisibilityPaused)
+	{
+		bIsVisibilityPaused = false;
+		ResetInteractionHistory();
+		ResetStepClock();
+	}
+
+	const float StepDeltaSeconds = TDFluidRuntimeOps::AdvanceStepClock(StepClock, DeltaTime, ResolveStepRateHz());
+	if (StepDeltaSeconds <= 0.0f)
+	{
+		return false;
+	}
+
+	LastStepDeltaSeconds = StepDeltaSeconds;
+	PrepareActorSpecificInputs(StepDeltaSeconds);
 	if (ShouldHarvestInteractions())
 	{
-		CollectOverlappingAndRegisteredInputs(DeltaTime);
+		CollectOverlappingAndRegisteredInputs(StepDeltaSeconds);
 	}
-	PollMouseBrush(DeltaTime);
+	PollMouseBrush(StepDeltaSeconds);
 	InvalidateTerrainQueueIfSolverGridChanged();
 	ApplyDeliveredTerrainTraceResults();
 
 	const FVector2D DesiredCenter = ResolveDesiredSimulationCenter();
 	CenterBeforeSolverStep = LiveComponent->GetSimulationCenterWorld();
-	bHasPreparedSolverStep = LiveComponent->PrepareSimulationStep(DeltaTime, DesiredCenter, bShouldFollowPlayerPawn);
+	bHasPreparedSolverStep = LiveComponent->PrepareSimulationStep(StepDeltaSeconds, DesiredCenter, bShouldFollowPlayerPawn);
 
 	if (bShouldFollowPlayerPawn)
 	{
@@ -459,14 +491,14 @@ bool ATDFluidLiveActor::BeginLiveActorStep(float DeltaTime)
 	return true;
 }
 
-void ATDFluidLiveActor::RunLiveActorSolverStep(float DeltaTime)
+void ATDFluidLiveActor::RunLiveActorSolverStep(float)
 {
 	if (!bHasPreparedSolverStep)
 	{
 		return;
 	}
 
-	LiveComponent->RunPreparedSolverStep(DeltaTime);
+	LiveComponent->RunPreparedSolverStep(LastStepDeltaSeconds);
 }
 
 void ATDFluidLiveActor::FinishLiveActorStep()
@@ -474,6 +506,8 @@ void ATDFluidLiveActor::FinishLiveActorStep()
 	if (bHasPreparedSolverStep)
 	{
 		bHasPreparedSolverStep = false;
+		bHasCompletedStepSinceWake = true;
+		++CompletedStepCount;
 		LiveComponent->FinishSimulationStep();
 		ApplyVolumeLightToMaterial();
 		FinishActorSpecificOutputs(LastStepDeltaSeconds);
@@ -507,6 +541,8 @@ void ATDFluidLiveActor::SetPooledInactive(bool bInactive)
 		VolumeDriver->SetDriverHidden(bInactive);
 	}
 	bHasSteppedWhileAwake = false;
+	bIsVisibilityPaused = false;
+	ResetStepClock();
 	bHasPreparedSolverStep = false;
 	bIsTerrainQueueCurrent = false;
 	PendingTerrainCells.Reset();

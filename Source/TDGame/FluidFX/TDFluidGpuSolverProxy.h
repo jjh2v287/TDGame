@@ -64,6 +64,7 @@ public:
 	FVector2D GetCenterPlaneCm() const { return CenterPlaneCm; }
 	int32 GetGeneration() const { return Generation; }
 	double GetSimulationTimeSeconds() const { return SimulationTimeSeconds; }
+	void SetSimulationTimeSeconds(double InSeconds) { SimulationTimeSeconds = InSeconds; }
 	bool UsesVelocityOutput() const { return Settings.SimMode == ETDFluidGpuSimMode::FluidSim || (Settings.SimMode == ETDFluidGpuSimMode::SimplePainter && Settings.bWritesPainterVelocity); }
 	const FTDFluidGpuSimulationSettings& GetSettings() const { return Settings; }
 	const FTDFluidReadbackField& GetReadbackField() const { return ReadbackField; }
@@ -190,6 +191,7 @@ public:
 	void ExecuteFrame(FRHICommandListImmediate& RHICmdList, const FTDFluidGpuFrameInputs& FrameInputs);
 	bool TakeLatestReadback(FTDFluidGpuReadbackFrame& OutReadbackFrame);
 	void SetMassInputHub(const TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe>& InMassInputHub) { MassInputHub = InMassInputHub; }
+	bool ReadActorState(FRHICommandListImmediate& RHICmdList, uint64 ActorKey, FTDFluidGpuStateLayout& OutLayout, TArray<FTDFluidStateChannelBytes>& OutChannels, FString& OutError);
 
 private:
 	void PublishReadyReadback();

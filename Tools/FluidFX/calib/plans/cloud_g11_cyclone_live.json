@@ -1,0 +1,109 @@
+{
+ "id": "cloud_g11_cyclone_live",
+ "note": "FX-11c G11, 셋업 17 CycloneLive(라이브 텍스처 덮임 + 눈 싱크 스탬프), IMG 10(가까운·먼·눈 바닥 휘도비). 모양 키는 G5 와 겹치지 않게 MI_TD_FluidCloud_CycloneLive 를 쓴다",
+ "scenes": [
+  {
+   "name": "cyclone_live",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "camera": {
+    "view_target": "TDGen_CloudCam_CycloneLive",
+    "exposure_ev100": 12.0,
+    "console": [
+     "TD.FluidFX.CloudSetup 17",
+     "TD.FluidFX.CloudViewSampleScale 2",
+     "r.TDFogScattering 0",
+     "r.VolumetricRenderTarget.Mode 0"
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 60.0,
+   "regions_template": "Tools/FluidFX/calib/regions/cloud_g11live_regions.json",
+   "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+   "live2_refs": [
+    "IMG10"
+   ]
+  }
+ ],
+ "base_tuning": [],
+ "params": [
+  {
+   "json_path": "Kinds.CloudCyclone.TDFluidSimulationConfig.VortexRadialDriftCmPerSec",
+   "values": [
+    -15,
+    -30,
+    -60
+   ]
+  },
+  {
+   "json_path": "Kinds.CloudCyclone.TDFluidSimulationConfig.AmbientRefillPerSec",
+   "values": [
+    0.05,
+    0.1,
+    0.2
+   ]
+  },
+  {
+   "json_path": "Globals.TDFluidCloudSceneSettings.CycloneEyeRadiusRatio",
+   "values": [
+    0.03,
+    0.05,
+    0.1
+   ]
+  },
+  {
+   "json_path": "Globals.TDFluidCloudSceneSettings.CycloneEyeEraseStrength",
+   "values": [
+    0.5,
+    1.0,
+    2.0
+   ]
+  },
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_CycloneLive.Scalars.CloudSlot1TopExponent",
+   "values": [
+    1,
+    2,
+    3
+   ]
+  }
+ ],
+ "metrics": {
+  "sources": [
+   "atmosphere"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "metric": "near.atmosphere.p95_over_p5",
+    "weight": 1.0,
+    "low": 1.4,
+    "high": 2.33
+   },
+   {
+    "metric": "far.atmosphere.p95_over_p5",
+    "weight": 1.0,
+    "low": 1.46,
+    "high": 2.43
+   },
+   {
+    "metric": "eye_floor.eye_floor_over_eye_wall",
+    "weight": 1.0,
+    "low": 0.45,
+    "high": 0.75
+   }
+  ]
+ },
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "draft_status": "blocked(CAL-0)",
+ "p3_gaps": [
+  "camera.view_target(CineCamera SetViewTarget)",
+  "params Look: 할당(FX-8n G1)",
+  "metrics.sources atmosphere",
+  "Globals 경로 패치(fluid_tuning_patch.py는 Kinds·Groups·StructDefaults만)",
+  "eye_floor/eye_wall 휘도비 0.31:0.52 지표 출처 없음"
+ ]
+}

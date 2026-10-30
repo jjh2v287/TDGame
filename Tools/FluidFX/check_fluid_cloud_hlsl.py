@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(numpy) 와 Windows Kits dxc.exe(ps_6_0·vs_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_cloud_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json] [--output 요약.json]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(dxc 명령·표본 수, 거울 시험 sha256), 하나라도 실패하면 종료 코드 1
-상태: 미검증(2026-10-26 FX-11r 작성). TDFluidCloud{Common,Slot,Combine}.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점(단면 CS(u, v) FX-9 규약 M5, 카메라 페이드 km→cm S9①)·이름 계약(MI 덮어쓰기·벡터 색 M3·지형 추종 MI 와 지형 MI 일치 M4, 정본에 아직 없으면 --look-fragment)·무대 배치·dxc O3/Od 와 Source×Shape 접기 순열·합성·지형(ps·vs) 컴파일을 보고, numpy 거울 C1 꺼짐 0·C2 보수 밀도 ≥ 밀도(MI 18 × 10만)·C3 합성 가산·C4 방사 회전 불변·C5 발자국 마스크 단조·C6 지형 추종 불변·C7 판 = C++ 시험 사례를 두 번 돌려 sha256 이 같은지 본다.
+상태: 미검증(2026-10-26 FX-11r 작성). TDFluidCloud{Common,Slot,Combine}.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점(단면 CS(u, v) FX-9 규약 M5, 카메라 페이드 km→cm S9①)·이름 계약(MI 덮어쓰기·벡터 색 M3·지형 추종 MI 와 지형 MI 일치 M4, 정본에 아직 없으면 --look-fragment)·무대 배치·dxc O3/Od 와 Source×Shape 접기 순열·합성·지형(ps·vs) 컴파일을 보고, numpy 거울 C1 꺼짐 0·C2 보수 밀도 ≥ 밀도(MI 21 × 10만)·C3 합성 가산·C4 방사 회전 불변·C5 발자국 마스크 단조·C6 지형 추종 불변·C7 판 = C++ 시험 사례·C8 S.x=0 반복에서 x=k·PS±ε 이음매 연속(σ 차 ≤ 1e-5, 점 표본 대조군은 벌어짐)·C9 HLSL q = C++ q(FX-11c 시험 2 사례표)를 두 번 돌려 sha256 이 같은지 본다. 2026-10-29 FX-11c C11b 작성: C8·C9 와 MI 21 목록 점검 추가, py_compile·이 도구 실행만, 에디터 실행 전.
 """
 import argparse
 import glob
@@ -45,6 +45,24 @@ KM = 100000.0
 MIRROR_SAMPLE_COUNT = 100000
 NOISE_SIZE = 64
 SECTION_SIZE = 64
+NEW_INSTANCE_NAMES = ("MI_TD_FluidCloud_StormWall", "MI_TD_FluidCloud_WrapField", "MI_TD_FluidCloud_CycloneLive")
+INSTANCE_COUNT = 21
+UV_ANCHORS = (
+    "float cloudHasFootprint = step(1e-6, SlotFootprintSizeKm.x);",
+    "float2 cloudOffsetCm = cloudP.xy - cloudCenterCm;",
+    "float2 cloudUv = cloudHasFootprint > 0.5 ? cloudOffsetCm / max(cloudSizeCm, float2(1.0, 1.0)) + 0.5 : frac(cloudP.xy / cloudPatternScaleCm);",
+)
+SEAM_EPSILON_CM = 1.0
+SEAM_TOLERANCE = 1e-5
+SEAM_CONTROL_MINIMUM = 1e-4
+PAINTER_SIMULATION_CENTER_CM = (100.0, -50.0)
+PAINTER_SIMULATION_EXTENT_CM = (3000.0, 3000.0)
+PAINTER_UV_CASES = (
+    ((0.0, 0.0), (20.0, 20.0), 20.0, (0.0, 0.0), True, (0.5, 0.5), (100.0, -50.0)),
+    ((0.0, 0.0), (20.0, 20.0), 20.0, (5.0, -5.0), True, (0.75, 0.25), (850.0, -800.0)),
+    ((0.0, 0.0), (20.0, 20.0), 20.0, (11.0, 0.0), False, None, None),
+    ((0.0, 0.0), (0.0, 0.0), 20.0, (25.0, -5.0), True, (0.25, 0.75), (-650.0, 700.0)),
+)
 SLAB_CASES = (
     ([(True, 1.5, 3.0, 0.0, 0.0)], (0.0, 0.0), (1.5, 3.0)),
     ([(True, 0.2, 0.3, 0.0, 0.0), (True, 2.0, 4.0, 0.0, 0.0)], (0.0, 0.0), (0.2, 5.8)),
@@ -136,6 +154,7 @@ class TDCloudMirror:
         self.coverage = rng.random((SECTION_SIZE, SECTION_SIZE, 3))
         self.terrain = smoothstep(0.0, 1.0, rng.random((SECTION_SIZE, SECTION_SIZE)))
         self.terrain_scale = 1.0
+        self.bilinear_coverage = False
 
     @staticmethod
     def fetch2d(texture, uv, wrap):
@@ -143,6 +162,36 @@ class TDCloudMirror:
         coordinates = np.floor(np.mod(uv, 1.0) * size if wrap else np.clip(uv, 0.0, 1.0) * size).astype(int)
         coordinates = np.clip(coordinates, 0, size - 1)
         return texture[coordinates[..., 1], coordinates[..., 0]]
+
+    @staticmethod
+    def fetch2d_bilinear(texture, uv, wrap):
+        size = texture.shape[0]
+        position = (np.mod(uv, 1.0) if wrap else np.clip(uv, 0.0, 1.0)) * size - 0.5
+        base = np.floor(position)
+        fraction = position - base
+        base = base.astype(int)
+
+        def texel(offset_x, offset_y):
+            x = base[..., 0] + offset_x
+            y = base[..., 1] + offset_y
+            x, y = (x % size, y % size) if wrap else (np.clip(x, 0, size - 1), np.clip(y, 0, size - 1))
+            return texture[y, x]
+
+        weight_x = fraction[..., 0:1]
+        weight_y = fraction[..., 1:2]
+        lower = texel(0, 0) * (1.0 - weight_x) + texel(1, 0) * weight_x
+        upper = texel(0, 1) * (1.0 - weight_x) + texel(1, 1) * weight_x
+        return lower * (1.0 - weight_y) + upper * weight_y
+
+    @staticmethod
+    def footprint_uv(p, params):
+        center = np.array(params["FootprintCenterKm"][:2]) * KM
+        size = np.maximum(np.array(params["FootprintSizeKm"][:2]), 0.0) * KM
+        pattern_scale = max(params["PatternScaleKm"] * KM, 1.0)
+        has_footprint = params["FootprintSizeKm"][0] >= 1e-6
+        offset = p[:, :2] - center
+        uv = offset / np.maximum(size, 1.0) + 0.5 if has_footprint else np.mod(p[:, :2] / pattern_scale, 1.0)
+        return uv, offset, size, pattern_scale, has_footprint
 
     def noise3(self, uvw):
         index = np.floor(np.mod(uvw, 1.0) * NOISE_SIZE).astype(int) % NOISE_SIZE
@@ -155,12 +204,7 @@ class TDCloudMirror:
             return zero, zero, zero, np.zeros((n, 3)), np.zeros((n, 3))
         shape = round(params["Shape"])
         pattern = round(params["Pattern"])
-        center = np.array(params["FootprintCenterKm"][:2]) * KM
-        size = np.maximum(np.array(params["FootprintSizeKm"][:2]), 0.0) * KM
-        pattern_scale = max(params["PatternScaleKm"] * KM, 1.0)
-        has_footprint = params["FootprintSizeKm"][0] >= 1e-6
-        offset = p[:, :2] - center
-        uv = offset / np.maximum(size, 1.0) + 0.5 if has_footprint else np.mod(p[:, :2] / pattern_scale, 1.0)
+        uv, offset, size, pattern_scale, has_footprint = self.footprint_uv(p, params)
         yaw = np.radians(params["SectionYawDegrees"])
         direction = np.array([np.cos(yaw), np.sin(yaw)])
         linear_u = offset @ direction / max(size[0], 1.0) + 0.5
@@ -173,7 +217,8 @@ class TDCloudMirror:
         lobe_cell = np.mod(p[:, :2] / pattern_scale, 1.0) - 0.5
         lobe = np.sqrt(np.clip(1.0 - 4.0 * np.sum(lobe_cell * lobe_cell, axis=1), 0.0, 1.0))
         if params["Source"] < 1.5:
-            tap = self.fetch2d(self.coverage, np.clip(uv, 0.0, 1.0) if has_footprint else uv, not has_footprint)
+            fetch = self.fetch2d_bilinear if self.bilinear_coverage else self.fetch2d
+            tap = fetch(self.coverage, np.clip(uv, 0.0, 1.0) if has_footprint else uv, not has_footprint)
             raw = np.maximum(tap[:, 0], tap[:, 2])
         elif params["Source"] < 2.5:
             q = (p[:, :2] - flow[:2]) / pattern_scale
@@ -385,7 +430,92 @@ def test_slab_cases(_material, _mirror):
     return worst <= 1e-6, f"C++ 시험 사례 {len(SLAB_CASES)}개 최대 오차 {worst:.1e}", np.array(values)
 
 
-def run_mirror_tests(material, entries):
+def make_periodic_coverage_mirror():
+    mirror = TDCloudMirror(20261029)
+    texel = (np.arange(SECTION_SIZE) + 0.5) / SECTION_SIZE
+    u, v = np.meshgrid(texel, texel, indexing="xy")
+    noise = np.random.default_rng(88).random(u.shape) - 0.5
+    red = np.clip(0.55 + 0.3 * np.sin(2.0 * np.pi * u + 0.7) * np.cos(2.0 * np.pi * v) + 0.1 * np.cos(4.0 * np.pi * v + 0.3) + 0.3 * noise, 0.0, 1.0)
+    mirror.coverage = np.stack([red, np.zeros_like(red), 0.8 * red], axis=-1)
+    mirror.bilinear_coverage = True
+    return mirror
+
+
+def measure_seam_sigma_difference(mirror, params, globals_):
+    rng = np.random.default_rng(8)
+    count = 4096
+    period = params["PatternScaleKm"] * KM
+    seam_position = rng.integers(-3, 4, size=count) * period
+    free = (rng.random(count) * 2.0 - 1.0) * 30.0 * KM
+    altitude = (params["BottomKm"] + (0.05 + 0.55 * rng.random(count)) * params["ThicknessKm"]) * KM
+    camera = np.zeros(3)
+    differences = []
+    sigma_peak = 0.0
+    for seam_on_x in (True, False):
+        def make_points(offset):
+            along = seam_position + offset
+            return np.column_stack([along, free, altitude]) if seam_on_x else np.column_stack([free, along, altitude])
+
+        minus = mirror.slot(make_points(-SEAM_EPSILON_CM), altitude, camera, 0.0, params, globals_)[0]
+        plus = mirror.slot(make_points(SEAM_EPSILON_CM), altitude, camera, 0.0, params, globals_)[0]
+        differences.append(np.abs(plus - minus))
+        sigma_peak = max(sigma_peak, float(plus.max()))
+    return np.concatenate(differences), sigma_peak
+
+
+def test_periodic_seam(material, _mirror, entries):
+    entry = entries.get(material.asset_path("MI_TD_FluidCloud_WrapField"), {})
+    params = master_parameters(material, entry, 1)
+    if not entry:
+        params.update({"Source": 1.0, "Shape": 0.0, "Pattern": 0.0, "PatternScaleKm": 20.0, "FootprintSizeKm": [0.0, 0.0, 0.0, 0.0], "BottomKm": 1.2, "ThicknessKm": 1.5, "CoverageScale": 1.2, "CoverageThreshold": 0.15})
+    is_repeating_coverage = params["FootprintSizeKm"][0] == 0.0 and round(params["Source"]) == 1 and params["TerrainFollow"] == 0.0
+    params.update({"DetailErosion": 0.0, "EdgeErosion": 0.0})
+    globals_ = master_globals(material, entry)
+    mirror = make_periodic_coverage_mirror()
+    seam, sigma_peak = measure_seam_sigma_difference(mirror, params, globals_)
+    mirror.bilinear_coverage = False
+    control, _ = measure_seam_sigma_difference(mirror, params, globals_)
+    worst = float(seam.max())
+    control_worst = float(control.max())
+    passed = is_repeating_coverage and worst <= SEAM_TOLERANCE and control_worst >= SEAM_CONTROL_MINIMUM and sigma_peak > 1e-3
+    detail = f"{'조각 WrapField' if entry else '명세 값'} S.x=0 반복 {is_repeating_coverage}, 이음매 σ 차 최대 {worst:.2e}, 점 표본 대조군 {control_worst:.2e}, σ 최대 {sigma_peak:.3e}"
+    return passed, detail, np.round(np.concatenate([seam, control]), 12)
+
+
+def measure_painter_uv_cases(material, mirror):
+    rows = []
+    mismatches = []
+    base = master_parameters(material, {}, 1)
+    globals_ = master_globals(material, {})
+    center = np.array(PAINTER_SIMULATION_CENTER_CM)
+    extent = np.array(PAINTER_SIMULATION_EXTENT_CM)
+    for index, (footprint_center, footprint_size, pattern_scale, point_km, expected_valid, expected_uv, expected_plane) in enumerate(PAINTER_UV_CASES):
+        params = dict(base)
+        params.update({"Source": 3.0, "Shape": 0.0, "DetailErosion": 0.0, "EdgeErosion": 0.0, "BottomKm": 1.0, "ThicknessKm": 2.0, "TerrainFollow": 0.0, "PatternScaleKm": pattern_scale,
+                       "FootprintCenterKm": [footprint_center[0], footprint_center[1], 0.0, 0.0], "FootprintSizeKm": [footprint_size[0], footprint_size[1], 0.0, 0.0]})
+        point = np.array([[point_km[0] * KM, point_km[1] * KM, 2.0 * KM]])
+        uv, _, _, _, has_footprint = mirror.footprint_uv(point, params)
+        edge = float(np.minimum(0.5 - np.abs(uv[0, 0] - 0.5), 0.5 - np.abs(uv[0, 1] - 0.5)))
+        is_valid = (not has_footprint) or edge > 0.0
+        plane = center + (uv[0] - 0.5) * extent
+        sigma = float(mirror.slot(point, point[:, 2], np.zeros(3), 0.0, params, globals_)[0][0])
+        if is_valid != expected_valid or (sigma > 0.0) != expected_valid:
+            mismatches.append(f"사례 {index + 1}: 유효 {is_valid}(σ {sigma:.2e}) ≠ {expected_valid}")
+        if expected_valid and (np.abs(uv[0] - np.array(expected_uv)).max() > 1e-6 or np.abs(plane - np.array(expected_plane)).max() > 1e-3):
+            mismatches.append(f"사례 {index + 1}: q {uv[0].tolist()}·p {plane.tolist()} ≠ {expected_uv}·{expected_plane}")
+        rows.extend([uv[0, 0], uv[0, 1], plane[0], plane[1], sigma, float(is_valid)])
+    return mismatches, np.array(rows)
+
+
+def test_painter_uv_cases(material, mirror, codes):
+    normalized = normalize(codes["slot"])
+    missing = [anchor for anchor in UV_ANCHORS if normalize(anchor) not in normalized]
+    mismatches, values = measure_painter_uv_cases(material, mirror)
+    problems = [f"HLSL 식 없음: {anchor}" for anchor in missing] + mismatches
+    return not problems, f"사례 {len(PAINTER_UV_CASES)}개·식 고정점 {len(UV_ANCHORS)}개 " + ("; ".join(problems) if problems else "일치"), values
+
+
+def run_mirror_tests(material, entries, codes):
     mirror = TDCloudMirror(20261026)
     tests = (
         ("C1 꺼짐 0", lambda: test_source_off(material, mirror)),
@@ -395,6 +525,8 @@ def run_mirror_tests(material, entries):
         ("C5 발자국 마스크 단조·밖 0", lambda: test_footprint_mask(material, mirror)),
         ("C6 지형 추종 불변", lambda: test_terrain_follow(material, mirror)),
         ("C7 판 = C++ 사례", lambda: test_slab_cases(material, mirror)),
+        ("C8 반복 이음매 연속(x=k·PS±ε)", lambda: test_periodic_seam(material, mirror, entries)),
+        ("C9 HLSL q = C++ q(시험 2 사례표)", lambda: test_painter_uv_cases(material, mirror, codes)),
     )
     outcomes = {}
     digest = hashlib.sha256()
@@ -477,8 +609,10 @@ def main():
     terrain_problems = stage.find_terrain_contract_problems(entries)
     record("지형 추종 MI = 지형 MI 발자국·높이 범위(M4)", not terrain_problems, "; ".join(terrain_problems))
 
-    outcomes_first, digest_first = run_mirror_tests(material, entries)
-    outcomes_second, digest_second = run_mirror_tests(material, entries)
+    missing_new = [name for name in NEW_INSTANCE_NAMES if name not in material.INSTANCE_NAMES or (arguments.look_fragment and material.asset_path(name) not in entries)]
+    record("MI 목록 21(새 StormWall·WrapField·CycloneLive 포함)", len(material.INSTANCE_NAMES) == INSTANCE_COUNT and not missing_new, f"{len(material.INSTANCE_NAMES)}개 " + ", ".join(missing_new))
+    outcomes_first, digest_first = run_mirror_tests(material, entries, codes)
+    outcomes_second, digest_second = run_mirror_tests(material, entries, codes)
     for label, (passed, detail, value_sha) in outcomes_first.items():
         record(f"거울 {label}", passed, f"{detail} sha256 {value_sha[:16]}")
     record("거울 시험 2회 sha256 같음", digest_first == digest_second, digest_first)

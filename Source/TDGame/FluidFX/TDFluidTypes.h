@@ -977,6 +977,45 @@ struct TDGAME_API FTDFluidRuntimeOpsSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "50.0", ClampMax = "5000.0"))
 	float GroundTraceDepthCm = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0", ClampMax = "240.0"))
+	float MaxStepRateHz = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "12.0", ClampMax = "120.0"))
+	float LodMinStepRateHz = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0", ClampMax = "100000.0"))
+	float LodNearDistanceCm = 2500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0", ClampMax = "100000.0"))
+	float LodFarDistanceCm = 5000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0", ClampMax = "8"))
+	int32 LodStepCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps")
+	bool bPauseWhenNotVisible = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0", ClampMax = "5.0"))
+	float VisibilityGraceSeconds = 0.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps")
+	bool bKeepBuffersOnReinit = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps")
+	bool bNormalizeDynamicsByCellSize = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0", ClampMax = "500.0"))
+	float ReferenceCellSizeCm = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.05", ClampMax = "30.0"))
+	float FadeOutSeconds = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0", ClampMax = "50.0"))
+	float FadeOutDissipationPerSec = 6.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RuntimeOps", meta = (ClampMin = "0.0", ClampMax = "30.0"))
+	float SimStateCacheMaxWaitSeconds = 2.0f;
 };
 
 USTRUCT(BlueprintType)

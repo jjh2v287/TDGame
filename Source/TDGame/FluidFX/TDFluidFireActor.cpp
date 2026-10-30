@@ -518,3 +518,8 @@ void ATDFluidFireActor::FeedDownstreamSmoke()
 		SmokeComponent->QueueBrushStamp(Stamp);
 	}
 }
+
+bool ATDFluidFireActor::HasOffscreenOutputConsumers() const
+{
+	return DownstreamSmokeActor != nullptr;
+}

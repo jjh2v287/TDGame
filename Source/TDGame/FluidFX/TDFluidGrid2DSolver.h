@@ -6,6 +6,8 @@
 #include "FluidFX/TDFluidWaterInputRaster.h"
 #include "Math/Float16Color.h"
 
+struct FTDFluidSimStateSnapshot;
+
 class TDGAME_API FTDFluidGrid2DSolver
 {
 public:
@@ -42,6 +44,8 @@ public:
 
 	void PackOutputPixels(TArray<FFloat16Color>& OutDensityPressurePixels, TArray<FFloat16Color>& OutVelocityPixels) const;
 	uint32 ComputeStateChecksum() const;
+	void CaptureStateSnapshot(FTDFluidSimStateSnapshot& OutSnapshot) const;
+	bool RestoreStateSnapshot(const FTDFluidSimStateSnapshot& Snapshot, FString& OutReason);
 	void PackAuxPixels(TArray<FFloat16Color>& OutAuxPixels) const;
 	void PackObstacleDistanceAuxPixels(TArray<FFloat16Color>& OutAuxPixels) const;
 	int32 GetObstacleSdfRawGeneration() const { return ObstacleSdfRawGeneration; }

@@ -73,6 +73,7 @@ protected:
 	virtual FVector2D GetDynamicCenterOffsetPlane() const override;
 	virtual void PrepareActorSpecificInputs(float DeltaTime) override;
 	virtual void FinishActorSpecificOutputs(float DeltaTime) override;
+	virtual bool HasOffscreenOutputConsumers() const override;
 
 private:
 	const AActor* ResolveFollowTarget() const;

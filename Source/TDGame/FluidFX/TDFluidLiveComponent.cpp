@@ -184,6 +184,8 @@ void UTDFluidLiveComponent::InitSystemStateFromPreset(UTDFluidPresetAsset* InPre
 		return;
 	}
 
+	const FTDFluidSimulationConfig PreviousSimulationConfig = SimulationConfig;
+	const bool bWasSimulationInitialized = IsSimulationInitialized();
 	ActivePreset = InPreset;
 	SimulationConfig = InPreset->ResolveEffectiveConfig();
 	bIsSimulationConfigFromPreset = true;
@@ -191,13 +193,23 @@ void UTDFluidLiveComponent::InitSystemStateFromPreset(UTDFluidPresetAsset* InPre
 	OutputMaterial = InPreset->OutputMaterial;
 	ParameterCollection = InPreset->ParameterCollection;
 	ExternalNiagaraSystem = InPreset->ExternalNiagaraSystem;
+	ExternalOutputTargets = InPreset->ExternalOutputTargets;
 
 	if (!InPreset->ExternalRendererActorTag.IsNone())
 	{
 		DriveNiagaraComponentInTaggedActors = InPreset->ExternalRendererActorTag;
 	}
 
-	ReinitializeSolverAtOwnerLocation();
+	if (CanKeepSolverStateOnReinit(PreviousSimulationConfig, bWasSimulationInitialized))
+	{
+		ApplySimulationConfigAndDetectReset(SimulationConfig);
+		PendingBrushStamps.Reset();
+		LastProcessedPointCount = 0;
+	}
+	else
+	{
+		ReinitializeSolverAtOwnerLocation();
+	}
 	RequestAsyncAssetLoads();
 	ApplyLoadedOutputsToBoundMesh();
 	ApplyLoadedOutputsToVolumeMesh();
@@ -218,7 +230,7 @@ bool UTDFluidLiveComponent::ApplySimulationConfigAndDetectReset(const FTDFluidSi
 	bool bWasStateReset = false;
 	if (bKeepsGpuState)
 	{
-		GpuSolverProxy.UpdateSettings(SimulationConfig);
+		GpuSolverProxy.UpdateSettings(MakeGpuSolverConfig(GpuSolverProxy.GetResolution()));
 		bWasStateReset = GpuSolverProxy.WasLastSettingsUpdateReset();
 	}
 	else if (bUsesGpuSolver || BackendDecision.bUsesGpu)
@@ -744,6 +756,7 @@ bool UTDFluidLiveComponent::PrepareSimulationStep(float DeltaTime, const FVector
 	{
 		AppendWrappedStampGhosts(PendingBrushStamps, ResolveWrapWindowMinimumCm(), GetSimulationExtentCm());
 	}
+	ConsumePendingCpuSimStateSeed();
 	return true;
 }
 
@@ -833,6 +846,8 @@ void UTDFluidLiveComponent::RequestAsyncAssetLoads()
 	{
 		AssetsToLoad.Add(ActivePreset->VolumeMesh.ToSoftObjectPath());
 	}
+
+	AppendExternalOutputTargetPaths(AssetsToLoad);
 
 	RequestedMassInputDataChannelPath = MassInputSettings.bReadDataChannel ? MassInputSettings.DataChannel.ToSoftObjectPath() : FSoftObjectPath();
 	if (RequestedMassInputDataChannelPath.IsValid())
@@ -1758,6 +1773,7 @@ void UTDFluidLiveComponent::PushDirectDriveOutputs()
 		UploadPixelsToTexture(WaterSurfaceTexture, PackedWaterSurfacePixels);
 		UploadPixelsToTexture(AuxTexture, PackedAuxPixels);
 		UploadPixelsToSizedTexture(TransmittanceTexture, PackedTransmittancePixels, TDFluidVolumeTransmittance::ComputeOutputResolution(Solver.GetResolution()));
+		CopyCpuOutputsToExternalTargets();
 	}
 
 	if (InternalSurfaceMID)
@@ -1776,7 +1792,7 @@ void UTDFluidLiveComponent::PushDirectDriveOutputs()
 		return;
 	}
 
-	if (UMaterialParameterCollection* LoadedMPC = PlaneBasis.IsWorldFacing() ? ParameterCollection.Get() : nullptr)
+	if (UMaterialParameterCollection* LoadedMPC = PlaneBasis.IsWorldFacing() ? ParameterCollection.Get() : nullptr; LoadedMPC && ShouldWriteSharedParameterCollection(LoadedMPC))
 	{
 		if (UMaterialParameterCollectionInstance* MPCInstance = World->GetParameterCollectionInstance(LoadedMPC))
 		{
@@ -1995,7 +2011,7 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 	TargetMID->SetScalarParameterValue(TEXT("WaterDepthReferenceCm"), SolverConfig.WaterDepthReferenceCm);
 	TargetMID->SetScalarParameterValue(TEXT("RippleHeightReferenceCm"), SolverConfig.RippleHeightReferenceCm);
 	TargetMID->SetScalarParameterValue(TEXT("VelocitySpeedReferenceCmPerSec"), FTDFluidGrid2DSolver::GetOutputSpeedReferenceCmPerSec());
-	TargetMID->SetScalarParameterValue(TEXT("FluidWaterLayerActive"), bIsSimulationAwake ? WaterLayerDisplayAlpha : 0.0f);
+	TargetMID->SetScalarParameterValue(TEXT("FluidWaterLayerActive"), bIsSimulationAwake ? WaterLayerDisplayAlpha * WaterDisplayAlphaScale : 0.0f);
 	TargetMID->SetScalarParameterValue(TEXT("CoastWavePhase"), CoastWavePhase);
 	TargetMID->SetScalarParameterValue(TEXT("CoastWaveDepthSpacingCm"), SolverConfig.CoastWaveDepthSpacingCm);
 	TargetMID->SetScalarParameterValue(TEXT("CoastWaveMaxDepthCm"), SolverConfig.CoastWaveMaxDepthCm);
@@ -2157,6 +2173,7 @@ bool UTDFluidLiveComponent::AppendPreparedGpuStep(UTDFluidLiveSubsystem& FluidSu
 	}
 
 	InOutFrameInputs.Actors.Add(MoveTemp(ActorInput));
+	AppendPendingGpuSimStateSeed(InOutFrameInputs);
 	return true;
 }
 
@@ -2214,7 +2231,7 @@ void UTDFluidLiveComponent::InitializeSimulation(const FVector2D& CenterWorld)
 	WaterSurfaceTexture = nullptr;
 	AuxTexture = nullptr;
 	TransmittanceTexture = nullptr;
-	GpuSolverProxy.Initialize(SimulationConfig, BackendDecision.Resolution, CenterWorld);
+	GpuSolverProxy.Initialize(MakeGpuSolverConfig(BackendDecision.Resolution), BackendDecision.Resolution, CenterWorld);
 	if (bHasLastWaterInputs && GpuSolverProxy.UsesWaterLayer())
 	{
 		GpuSolverProxy.SetWaterInputs(LastWaterGuides, LastWaterRegions);
@@ -2554,10 +2571,16 @@ void UTDFluidLiveComponent::EnsureGpuOutputTargets()
 	}
 
 	const TextureAddress OutputAddress = ResolveOutputTextureAddress();
-	EnsureGpuOutputTarget(GpuDensityPressureTarget, this, GpuResolution, EmptyDensityPressureColor, OutputAddress);
+	if (!TryBindExternalOutputTarget(GpuDensityPressureTarget, ExternalOutputTargets.DensityPressureTarget, GpuResolution, EmptyDensityPressureColor, OutputAddress))
+	{
+		EnsureGpuOutputTarget(GpuDensityPressureTarget, this, GpuResolution, EmptyDensityPressureColor, OutputAddress);
+	}
 	if (GpuSolverProxy.UsesVelocityOutput())
 	{
-		EnsureGpuOutputTarget(GpuVelocityTarget, this, GpuResolution, EmptyVelocityColor, OutputAddress);
+		if (!TryBindExternalOutputTarget(GpuVelocityTarget, ExternalOutputTargets.VelocityTarget, GpuResolution, EmptyVelocityColor, OutputAddress))
+		{
+			EnsureGpuOutputTarget(GpuVelocityTarget, this, GpuResolution, EmptyVelocityColor, OutputAddress);
+		}
 	}
 	else
 	{
@@ -2566,7 +2589,10 @@ void UTDFluidLiveComponent::EnsureGpuOutputTargets()
 	if (IsAuxOutputActive())
 	{
 		const UTextureRenderTarget2D* PreviousAuxTarget = GpuAuxTarget.Get();
-		EnsureGpuOutputTarget(GpuAuxTarget, this, GpuResolution, FLinearColor::Transparent, OutputAddress);
+		if (!TryBindExternalOutputTarget(GpuAuxTarget, ExternalOutputTargets.AuxTarget, GpuResolution, FLinearColor::Transparent, OutputAddress))
+		{
+			EnsureGpuOutputTarget(GpuAuxTarget, this, GpuResolution, FLinearColor::Transparent, OutputAddress);
+		}
 		if (GpuAuxTarget.Get() != PreviousAuxTarget)
 		{
 			GpuSolverProxy.MarkObstacleDistanceAuxStale();
@@ -2586,7 +2612,10 @@ void UTDFluidLiveComponent::EnsureGpuOutputTargets()
 	}
 	if (GpuSolverProxy.UsesWaterLayer())
 	{
-		EnsureGpuOutputTarget(GpuWaterSurfaceTarget, this, GpuResolution, EmptyWaterSurfaceColor);
+		if (!TryBindExternalOutputTarget(GpuWaterSurfaceTarget, ExternalOutputTargets.WaterSurfaceTarget, GpuResolution, EmptyWaterSurfaceColor, TA_Clamp))
+		{
+			EnsureGpuOutputTarget(GpuWaterSurfaceTarget, this, GpuResolution, EmptyWaterSurfaceColor);
+		}
 	}
 	else
 	{
@@ -2597,23 +2626,23 @@ void UTDFluidLiveComponent::EnsureGpuOutputTargets()
 
 void UTDFluidLiveComponent::ClearGpuOutputTargets()
 {
-	if (GpuDensityPressureTarget)
+	if (CanClearGpuOutputTarget(GpuDensityPressureTarget))
 	{
 		GpuDensityPressureTarget->UpdateResourceImmediate(true);
 	}
-	if (GpuVelocityTarget)
+	if (CanClearGpuOutputTarget(GpuVelocityTarget))
 	{
 		GpuVelocityTarget->UpdateResourceImmediate(true);
 	}
-	if (GpuAuxTarget)
+	if (CanClearGpuOutputTarget(GpuAuxTarget))
 	{
 		GpuAuxTarget->UpdateResourceImmediate(true);
 	}
-	if (GpuTransmittanceTarget)
+	if (CanClearGpuOutputTarget(GpuTransmittanceTarget))
 	{
 		GpuTransmittanceTarget->UpdateResourceImmediate(true);
 	}
-	if (GpuWaterSurfaceTarget)
+	if (CanClearGpuOutputTarget(GpuWaterSurfaceTarget))
 	{
 		GpuWaterSurfaceTarget->UpdateResourceImmediate(true);
 	}
@@ -2868,6 +2897,7 @@ FTDFluidSimulationConfig UTDFluidLiveComponent::MakeCpuSolverConfig() const
 	const FTDFluidGpuBackendDecision BackendDecision = ResolveSolverBackend();
 	if (!BackendDecision.bUsesGpu)
 	{
+		CpuConfig = TDFluidRuntimeOps::MakeCellSizeNormalizedConfig(SimulationConfig, BackendDecision.Resolution, RuntimeOpsSettings, true);
 		CpuConfig.GridResolution = BackendDecision.Resolution;
 	}
 	return CpuConfig;

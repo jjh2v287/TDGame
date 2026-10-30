@@ -57,6 +57,7 @@ public:
 private:
 	void RequestDeformAssets();
 	void HandleDeformAssetsLoaded();
+	void HandlePresetTuningReloaded(int32 TableGeneration);
 	AActor* ResolveFollowTarget() const;
 	void PlaceDeformMesh(const FVector2D& CenterCm, double ExtentCm, double FloorHeightCm);
 
@@ -64,6 +65,7 @@ private:
 	TObjectPtr<UMaterialInstanceDynamic> DeformMID;
 
 	TSharedPtr<FStreamableHandle> DeformAssetHandle;
+	FDelegateHandle PresetTuningReloadedHandle;
 	FVector2D DeformCenterCm = FVector2D::ZeroVector;
 	int32 GridVertexCount = 0;
 	bool bHasPlacement = false;

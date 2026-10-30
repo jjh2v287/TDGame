@@ -6,6 +6,7 @@
 #include "RenderGraphBuilder.h"
 #include "TDFluidGpuBatch.h"
 #include "TDFluidGpuFieldInput.h"
+#include "TDFluidGpuStateCache.h"
 
 CSV_DECLARE_CATEGORY_EXTERN(TDFluid);
 
@@ -931,6 +932,12 @@ void FTDFluidGpuSolverRenderState::ExecuteFrame(FRHICommandListImmediate& RHICmd
 	const FTDFluidGpuFrameOutputs FrameOutputs = AddTDFluidGpuFramePasses(GraphBuilder, FrameInputs, Batches, MassInputHub ? &MassInputHub->GetRegistry() : nullptr);
 	ReadbackRing.Enqueue(GraphBuilder, FrameOutputs);
 	GraphBuilder.Execute();
+	TArray<FString> StateSeedErrors;
+	ApplyTDFluidGpuStateSeeds(RHICmdList, FrameInputs.StateSeeds, Batches, StateSeedErrors);
+	for (const FString& StateSeedError : StateSeedErrors)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FluidFX GPU simulation state seed rejected: %s"), *StateSeedError);
+	}
 }
 
 bool FTDFluidGpuSolverRenderState::TakeLatestReadback(FTDFluidGpuReadbackFrame& OutReadbackFrame)

@@ -1,6 +1,7 @@
 #include "FluidFX/TDFluidFoliageFlowActor.h"
 #include "Components/SceneComponent.h"
 #include "Engine/AssetManager.h"
+#include "Engine/Engine.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
@@ -80,6 +81,10 @@ bool ATDFluidFoliageFlowActor::ResolveFlowEnabled(int32 ConsoleValue, bool bActo
 void ATDFluidFoliageFlowActor::BeginPlay()
 {
 	Super::BeginPlay();
+	if (UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr)
+	{
+		PresetTuningReloadedHandle = TuningSubsystem->OnPresetTuningReloaded.AddUObject(this, &ATDFluidFoliageFlowActor::HandlePresetTuningReloaded);
+	}
 
 	const FSoftObjectPath AssetPaths[] = {FlowRenderTarget.ToSoftObjectPath(), FlowCopyMaterial.ToSoftObjectPath(), FoliageWindowCollection.ToSoftObjectPath()};
 	TArray<FSoftObjectPath> AssetsToLoad;
@@ -103,6 +108,11 @@ void ATDFluidFoliageFlowActor::BeginPlay()
 
 void ATDFluidFoliageFlowActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr)
+	{
+		TuningSubsystem->OnPresetTuningReloaded.Remove(PresetTuningReloadedHandle);
+	}
+	PresetTuningReloadedHandle.Reset();
 	if (AssetLoadHandle.IsValid())
 	{
 		AssetLoadHandle->CancelHandle();
@@ -142,6 +152,14 @@ void ATDFluidFoliageFlowActor::HandleAssetsLoaded()
 
 	WriteInactiveWindow();
 	RefreshSourceLiveActor();
+}
+
+void ATDFluidFoliageFlowActor::HandlePresetTuningReloaded(int32)
+{
+	if (FlowCopyMaterialInstance)
+	{
+		UTDFluidPresetTuningSubsystem::ApplyMaterialLook(*FlowCopyMaterialInstance);
+	}
 }
 
 UMaterialInstanceDynamic* ATDFluidFoliageFlowActor::CreateFlowCopyMaterialInstance()

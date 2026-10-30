@@ -39,10 +39,14 @@ namespace TDFluidCloudLayersPrivate
 	constexpr float ActiveSourceThreshold = 0.5f;
 	constexpr float MammatusPatternIndex = 2.0f;
 	constexpr float PatternIndexTolerance = 0.5f;
+	constexpr float SimulatedCoverageSource = 1.0f;
+	constexpr float SourceIndexTolerance = 0.5f;
+	constexpr float TilingFootprintMaxKm = 1e-6f;
 	constexpr double CentimetersPerKilometer = 100000.0;
 	constexpr double SourceRetryIntervalSeconds = 1.0;
 	const TCHAR* const CoverageTextureSuffix = TEXT("CoverageTexture");
 	const TCHAR* const SectionTextureSuffix = TEXT("SectionTexture");
+	const TCHAR* const FootprintSizeSuffix = TEXT("FootprintSizeKm");
 	const TCHAR* const TerrainHeightRangeParameterName = TEXT("CloudTerrainHeightRangeKm");
 
 	const TCHAR* ResolveRoleSuffix(ETDFluidCloudSlotTextureRole Role)
@@ -154,10 +158,22 @@ FName ATDFluidCloudLayersActor::MakeSlotParameterName(int32 SlotIndex, const FSt
 	return FName(*FString::Printf(TEXT("CloudSlot%d%s"), SlotIndex, *Suffix));
 }
 
+bool ATDFluidCloudLayersActor::ShouldWarnWrapMismatch(float Source, float FootprintSizeKmX, bool bIsSourceWrapped)
+{
+	if (bIsSourceWrapped)
+	{
+		return false;
+	}
+
+	const bool bIsSimulatedCoverage = FMath::Abs(Source - TDFluidCloudLayersPrivate::SimulatedCoverageSource) < TDFluidCloudLayersPrivate::SourceIndexTolerance;
+	return bIsSimulatedCoverage && FootprintSizeKmX <= TDFluidCloudLayersPrivate::TilingFootprintMaxKm;
+}
+
 void ATDFluidCloudLayersActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ReadSceneSettings();
 	HideCloudLayer();
 	if (!ResolveSceneCloudOwnership())
 	{
@@ -299,6 +315,7 @@ void ATDFluidCloudLayersActor::HandleCloudMaterialsLoaded()
 
 void ATDFluidCloudLayersActor::HandlePresetTuningReloaded(int32)
 {
+	ReadSceneSettings();
 	for (UMaterialInstanceDynamic* SetupMaterial : SetupMaterials)
 	{
 		if (SetupMaterial)
@@ -312,10 +329,16 @@ void ATDFluidCloudLayersActor::HandlePresetTuningReloaded(int32)
 		return;
 	}
 
+	ApplyTracingSettings();
 	RefreshActiveLayer();
 	BindSlotTextures(true);
 	ApplySourceAwake();
 	UpdateViewSampling(true);
+}
+
+void ATDFluidCloudLayersActor::ReadSceneSettings()
+{
+	UTDFluidPresetTuningSubsystem::ApplyPresetTuning(ETDFluidPresetKind::Custom, FTDFluidCloudSceneSettings::StaticStruct(), &SceneSettings);
 }
 
 void ATDFluidCloudLayersActor::ActivateSetup(int32 SetupIndex)
@@ -323,6 +346,7 @@ void ATDFluidCloudLayersActor::ActivateSetup(int32 SetupIndex)
 	ActiveSetupIndex = SetupIndex;
 	ActiveMaterial = nullptr;
 	BoundSlotTextures.Reset();
+	WrapMismatchWarnedSlots.Reset();
 	if (!Setups.IsValidIndex(SetupIndex))
 	{
 		HideCloudLayer();
@@ -389,9 +413,9 @@ void ATDFluidCloudLayersActor::HideCloudLayer()
 
 void ATDFluidCloudLayersActor::ApplyTracingSettings()
 {
-	CloudComponent->SetTracingMaxDistance(TracingMaxDistanceKm);
-	CloudComponent->SetStopTracingTransmittanceThreshold(StopTracingTransmittanceThreshold);
-	CloudComponent->SetShadowViewSampleCountScale(ShadowViewSampleCountScale);
+	CloudComponent->SetTracingMaxDistance(SceneSettings.TracingMaxDistanceKm);
+	CloudComponent->SetStopTracingTransmittanceThreshold(SceneSettings.StopTracingTransmittanceThreshold);
+	CloudComponent->SetShadowViewSampleCountScale(SceneSettings.ShadowViewSampleCountScale);
 }
 
 void ATDFluidCloudLayersActor::ResolveSourceLiveActors()
@@ -484,9 +508,28 @@ void ATDFluidCloudLayersActor::BindSlotTextures(bool bForce)
 			continue;
 		}
 
+		WarnIfSlotTilesNonWrappedSource(SlotSource.SlotIndex, *LiveActor);
 		ActiveMaterial->SetTextureParameterValue(ParameterName, SourceTexture);
 		BoundTexture = SourceTexture;
 	}
+}
+
+void ATDFluidCloudLayersActor::WarnIfSlotTilesNonWrappedSource(int32 SlotIndex, const ATDFluidLiveActor& LiveActor)
+{
+	if (!ActiveMaterial || !LiveActor.LiveComponent || WrapMismatchWarnedSlots.Contains(SlotIndex))
+	{
+		return;
+	}
+
+	const float Source = TDFluidCloudLayersPrivate::ReadSlotScalar(*ActiveMaterial, SlotIndex, TEXT("Source"));
+	const FLinearColor FootprintSizeKm = ActiveMaterial->K2_GetVectorParameterValue(MakeSlotParameterName(SlotIndex, TDFluidCloudLayersPrivate::FootprintSizeSuffix));
+	if (!ShouldWarnWrapMismatch(Source, FootprintSizeKm.R, LiveActor.LiveComponent->IsAreaWrapped()))
+	{
+		return;
+	}
+
+	WrapMismatchWarnedSlots.Add(SlotIndex);
+	UE_LOG(LogTDFluidCloud, Warning, TEXT("slot %d tiles non-wrapped source %s"), SlotIndex, *LiveActor.GetName());
 }
 
 void ATDFluidCloudLayersActor::ApplySourceAwake()
@@ -528,12 +571,12 @@ void ATDFluidCloudLayersActor::UpdateViewSampling(bool bForce)
 	FVector CameraLocation = FVector::ZeroVector;
 	if (TryGetFirstLocalCameraLocation(CameraLocation))
 	{
-		bIsNear = ResolveNearSampling(static_cast<float>(CameraLocation.Z / TDFluidCloudLayersPrivate::CentimetersPerKilometer), ActiveSlabKm, NearEnterMarginKm, NearExitMarginKm, bIsUsingNearSampling);
+		bIsNear = ResolveNearSampling(static_cast<float>(CameraLocation.Z / TDFluidCloudLayersPrivate::CentimetersPerKilometer), ActiveSlabKm, SceneSettings.NearEnterMarginKm, SceneSettings.NearExitMarginKm, bIsUsingNearSampling);
 	}
 	bIsUsingNearSampling = bIsNear;
 
 	const float ForcedScale = CVarTDFluidCloudViewSampleScale.GetValueOnGameThread();
-	const float AutomaticScale = bIsNear ? ViewSampleCountScaleNear : ViewSampleCountScaleFar;
+	const float AutomaticScale = bIsNear ? SceneSettings.ViewSampleCountScaleNear : SceneSettings.ViewSampleCountScaleFar;
 	const float DesiredScale = FMath::Max(ForcedScale >= 0.0f ? ForcedScale : AutomaticScale, TDFluidCloudLayersPrivate::MinimumViewSampleCountScale);
 	if (!bForce && FMath::IsNearlyEqual(DesiredScale, AppliedViewSampleCountScale))
 	{

@@ -1,0 +1,76 @@
+{
+ "id": "cloud_g4_painter",
+ "note": "FX-11c G4, 셋업 5 Paint(CloudPaint 라이브 + 칠하기 액터). 의도한 예약: 시작 직후 TD.FluidFX.CloudPaintStroke 6.3 7.7 7.7 6.3 1 0 (카메라 시야 안 평지 사분면을 가로지르는 획 1초), 2초 뒤 같은 획에 지우기 1. 투영 오차 ≤ 1칸은 대본 획이 커서 투영을 건너뛰므로 보정이 아니라 시험 PainterRayToAltitude·PainterDisplayToSimulation 으로 대체한다",
+ "scenes": [
+  {
+   "name": "painter_stroke",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+   "camera": {
+    "view_target": "TDGen_CloudCam_Paint",
+    "exposure_ev100": 12.0,
+    "console": [
+     "TD.FluidFX.CloudSetup 5",
+     "TD.FluidFX.CloudViewSampleScale 2",
+     "TD.FluidFX.CloudPainter 1",
+     "r.TDFogScattering 0",
+     "r.VolumetricRenderTarget.Mode 0"
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 4.0,
+   "live2_refs": []
+  }
+ ],
+ "base_tuning": [],
+ "params": [
+  {
+   "json_path": "Globals.TDFluidCloudSceneSettings.PainterBrushRadiusKm",
+   "values": [
+    0.25,
+    0.5,
+    1.0
+   ]
+  },
+  {
+   "json_path": "Globals.TDFluidCloudSceneSettings.PainterVelocityScale",
+   "values": [
+    0.5,
+    1.0,
+    2.0
+   ]
+  }
+ ],
+ "metrics": {
+  "sources": [
+   "cloud_paint_probe"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "metric": "painter_stroke.cloud_paint_probe.density_in_radius",
+    "weight": 1.0,
+    "low": 0.5,
+    "high": 2.0
+   },
+   {
+    "metric": "painter_stroke.cloud_paint_probe.erased_over_painted",
+    "weight": 1.0,
+    "low": 0.0,
+    "high": 0.6
+   }
+  ]
+ },
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "draft_status": "blocked(CAL-0)",
+ "p3_gaps": [
+  "camera.view_target(CineCamera SetViewTarget)",
+  "Globals 경로 패치(fluid_tuning_patch.py는 Kinds·Groups·StructDefaults만)",
+  "metrics.sources cloud_paint_probe: 라이브 출력 텍스처 되읽기 탐침(METRIC_SOURCES = look·water_probe 에 없음)",
+  "콘솔 명령 예약: schedule 은 촬영 시각 형식(pie_lookdev_fluid.py)이라 TD.FluidFX.CloudPaintStroke 를 지정 시각에 보낼 수 없다",
+  "투영 오차 지표는 보정으로 측정 불가: 시험 1·2(PainterRayToAltitude·PainterDisplayToSimulation)로 대체"
+ ]
+}

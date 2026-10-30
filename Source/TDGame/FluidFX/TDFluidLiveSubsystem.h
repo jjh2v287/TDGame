@@ -12,6 +12,8 @@
 class ATDFluidLiveActor;
 class ATDFluidRiverActor;
 class FTDFluidGpuSolverRenderState;
+struct FTDFluidGpuStateLayout;
+struct FTDFluidStateChannelBytes;
 class FTDFluidMassInputHub;
 class UTDFluidObstacleComponent;
 class UTDFluidFieldInputComponent;
@@ -162,6 +164,7 @@ public:
 
 	uint64 AllocateGpuSolverActorKey();
 	void ReleaseGpuSolverActorKey(uint64 ActorKey);
+	bool ReadGpuActorState(uint64 ActorKey, FTDFluidGpuStateLayout& OutLayout, TArray<FTDFluidStateChannelBytes>& OutChannels, FString& OutError);
 	uint32 GetLastGpuSolverFrameNumber() const { return LastGpuSolverFrameNumber; }
 
 	FRotator GetPlaneViewRotation() const;
@@ -170,6 +173,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	FTDFluidPresetReapplyReport GetLastReapplyReport() const { return LastReapplyReport; }
+
+	bool ClaimSharedOutput(const UObject* SharedOutput, class UTDFluidLiveComponent* Requester);
+	bool IsSharedOutputClaimedBy(const UObject* SharedOutput, const class UTDFluidLiveComponent* Component) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FluidFX")
+	bool FindFluidSampleAtWorldLocation(const FVector& WorldLocation, FTDFluidCellSample& OutSample) const;
 
 protected:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
@@ -266,5 +275,8 @@ private:
 	double TickCostTotalSeconds = 0.0;
 	double TickCostMaxSeconds = 0.0;
 	double TickCostTotalDeltaSeconds = 0.0;
+
+	TMap<FObjectKey, TWeakObjectPtr<class UTDFluidLiveComponent>> SharedOutputClaims;
+	TSet<FObjectKey> WarnedSharedOutputs;
 };
 

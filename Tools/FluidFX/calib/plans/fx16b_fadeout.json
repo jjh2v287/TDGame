@@ -1,0 +1,61 @@
+{
+ "id": "fx16b_fadeout",
+ "scenes": [
+  {
+   "name": "smoke_fadeout",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+   "camera": {
+    "arm": 600.0,
+    "view": [
+     -60.0,
+     0.0
+    ],
+    "console": [
+     "t.MaxFPS 0"
+    ]
+   },
+   "settle": 4.0,
+   "schedule": {
+    "times": [
+     0.0,
+     0.5,
+     1.0
+    ],
+    "reference": "now",
+    "prefix": "fo"
+   },
+   "regions_template": null,
+   "targets": null
+  }
+ ],
+ "params": [
+  {
+   "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.FadeOutDissipationPerSec",
+   "values": [
+    3.0,
+    6.0,
+    12.0
+   ]
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "look"
+  ],
+  "noise_floor": {
+   "luma_p50": 0.01
+  }
+ },
+ "draft_status": "blocked(CAL-0)",
+ "p3_gaps": [
+  "FadeOut 호출 키 없음: pie_lookdev_fluid.py 적용 키에 함수 호출이 없어 페이드가 시작되지 않음(R16b-M7) → CAL-0 의 lookdev call 키(예 라벨별 fade_out) 또는 콘솔 명령, 생기면 schedule.reference 를 trigger 로",
+  "calib_sweep.READ_BACK_STRUCTS 에 TDFluidRuntimeOpsSettings 없음 → describe_params 가 FadeOutDissipationPerSec 변형을 거부, PIE 다시 읽기 구조체 추가",
+  "단조 감소·0 도달 판정은 T:RuntimeControl.FadeOutMonotonicToZero(#5)가 맡고 이 계획은 0·0.5·1초 화면 비교용(FO1 화면은 사용자 승인)",
+  "scenes[].regions_template·targets: 연기 무대 SVOL 영역·목표 파일이 아직 없어 null(look 지표 검증이 문자열 파일 경로를 요구) → calib/regions·calib/targets 새 파일 필요",
+  "metrics.targets: 목표 지표 목록이 없음(calib_sweep.validate_targets 가 1개 이상 요구)"
+ ]
+}

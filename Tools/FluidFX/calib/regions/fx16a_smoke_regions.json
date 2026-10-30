@@ -1,0 +1,25 @@
+{
+ "note": "1280x720, fx16a_cell_size_invariance 카메라(폰 650,-700, 붐 900, 시점 -35/90) 기준 초안 박스(첫 촬영 뒤 맞춤). smoke_core = 연기 기둥 중심부, smoke_halo = 주변 넓은 상자(면적 대용: 핵심 대 후광 휘도 비). 종류 dust = 대기 지표(휘도 평균·표준편차)",
+ "regions": [
+  {
+   "name": "smoke_core",
+   "kind": "dust",
+   "box": [
+    520,
+    240,
+    760,
+    520
+   ]
+  },
+  {
+   "name": "smoke_halo",
+   "kind": "dust",
+   "box": [
+    360,
+    120,
+    920,
+    620
+   ]
+  }
+ ]
+}

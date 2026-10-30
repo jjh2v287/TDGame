@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(실제 실행은 언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06. 건식·offline 단독 장면은 에디터 불필요). 계획 JSON v2(spec-cal0-v2 C1)를 허용 키 표로 검사하고, 덧씌움 → base_tuning → 변형 순으로 fluid_tuning_patch 사본을 만든 뒤 장면 sources(look·probe·water_probe·offline)마다 pie_lookdev_fluid 룩데브(tuning_reload base·read_back owner/access·look_live·props·probe·schedule), 물 탐침, offline 명령(같은 사본 2회 결정론 확인)을 돌려 단계 유효성을 단언한다. 단계 종류 frame(v00 1)·screen(손잡이 끝 값, 대조 ≥3)·confirm(v00,best,v00,second|best,v00)·verify(v00 3), 장면 shots → schedule{times: settle+k·interval, reference now, fixed_fps 60}. --stage 없으면 옛 스윕(반복·control_every·control_middle).
 실행 명령: python Tools/FluidFX/calib_sweep.py --plan Tools/FluidFX/calib/plans/<id>.json [--stage frame|screen|confirm|verify] [--lock <잠금 v2>] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--screen-result <screen.json>] [--dry-run] [--run-dir Saved/FluidFX/calib/<run>] [--assert-scene <장면>=<result.json>] (PowerShell, L-repo-01). screen·confirm·verify 실제 실행은 --lock 필수, confirm 은 --screen-result 필수(plan·overlay·정본 2·lock sha 대조). --dry-run 은 검사·사본·룩데브 변형 JSON·sweep.json 만 만든다
-출력: <run-dir>/v<k>/(조절·모양 사본, variant.json), <run-dir>/<장면>/lookdev_spec.json·룩데브 출력(result.json·png)·water_probe.json·<단계>_offline*.json, <run-dir>/sweep.json(version 2·stage·lock·lock_sha256·overlay·overlay_sha256·screen_result·base_copy·canonical_tuning/look_sha256·started_at·warnings, 장면별 sequence·sources·shots_expected, 단계별 images·image_sha256·shots_saved·shot_game_times·metrics·look_applied·look_read_back·owner_checks(룩데브 apply 최상위)·valid·invalid_reasons, props 결과가 목록 아님(액터 없음 등)이면 무효, 물 탐침 단계는 Look 미적용 look_live_skipped 와 장면 overlay_props(덧씌움 actor_props) 적용, 덧씌움·base_tuning Look 패키지(손잡이 패키지 아님) 중 levels 에 이 장면 수준이 없는 것은 look_live.skip_if_no_owner 로 보내 소유자가 없으면 적용·다시 읽기 단언을 건너뛰고 단계 skipped_look 에 기록, 변형 base_look_levels, 손잡이 Look 패키지라도 이 장면 손잡이 없이 param scenes 가 다른 장면인 손잡이만 가진 것은 장면 out_of_scene_look_packages 로 기록하고 같은 skip_if_no_owner 로 보낸다). 종료 코드 0 모든 단계 유효·정본 불변 / 1 무효 단계·룩데브 실패·정본 바뀜·confirm 거부(screen 둔감·best 없음) / 2 계획·잠금·덧씌움·screen.json 입력 오류
-상태: 오프라인 하네스(가짜 unreal·가짜 룩데브, calib_offline_test.py check_cal0_sweep)만 검사, 실제 PIE 단계 스윕 미실행(2026-10-30 CAL-0 B2). 룩데브 적용 키 검사 find_key_errors(apply)·tuning_reload base·look_live·probe 결과 형식은 B3, Look·Globals 사본은 B1, 잠금 v2 생성은 B4b 병합 뒤 확인.
+출력: <run-dir>/v<k>/(조절·모양 사본, variant.json), <run-dir>/<장면>/lookdev_spec.json·룩데브 출력(result.json·png)·water_probe.json·<단계>_offline*.json, <run-dir>/sweep.json(version 2·stage·lock·lock_sha256·overlay·overlay_sha256·screen_result·base_copy·canonical_tuning/look_sha256·started_at·warnings, 장면별 sequence·sources·shots_expected, 단계별 images·image_sha256·shots_saved·shot_game_times·metrics·look_applied·look_read_back·owner_checks(룩데브 apply 최상위)·valid·invalid_reasons, props 결과가 목록 아님(액터 없음 등)이면 무효, 룩데브 단계 apply 원격 호출 오류·schedule 오류·move 오류(형식·걷기 시한 초과)·schedule.events call/move 오류·state_reset 오류도 단계 무효, result.json base(카메라 apply)의 같은 오류는 장면 error(sweep 무효), 단계 state_reset_actor_count(reinit 때 reset_simulation_state 한 액터 수), 물 탐침 단계는 Look 미적용 look_live_skipped 와 장면 overlay_props(덧씌움 actor_props) 적용, 덧씌움·base_tuning Look 패키지(손잡이 패키지 아님) 중 levels 에 이 장면 수준이 없는 것은 look_live.skip_if_no_owner 로 보내 소유자가 없으면 적용·다시 읽기 단언을 건너뛰고 단계 skipped_look 에 기록, 변형 base_look_levels, 손잡이 Look 패키지라도 이 장면 손잡이 없이 param scenes 가 다른 장면인 손잡이만 가진 것은 장면 out_of_scene_look_packages 로 기록하고 같은 skip_if_no_owner 로 보낸다). 종료 코드 0 모든 단계 유효·정본 불변 / 1 무효 단계·룩데브 실패·정본 바뀜·confirm 거부(screen 둔감·best 없음) / 2 계획·잠금·덧씌움·screen.json 입력 오류
+상태: 오프라인 하네스(가짜 unreal·가짜 룩데브, calib_offline_test.py check_cal0_sweep·2026-10-31 check_lookdev_frame_fixes 의 base·단계 오류 무효)만 검사, 실제 PIE 단계 스윕 미실행(2026-10-30 CAL-0 B2). 룩데브 적용 키 검사 find_key_errors(apply)·tuning_reload base·look_live·probe 결과 형식은 B3, Look·Globals 사본은 B1, 잠금 v2 생성은 B4b 병합 뒤 확인.
 """
 import argparse
 import copy
@@ -846,6 +846,14 @@ def flatten_metrics(value, prefix):
     return flat
 
 
+def lookdev_failure_errors(apply_outcome, schedule_status=None):
+    try:
+        from pie_lookdev_fluid import find_apply_failure_errors, find_move_errors, find_schedule_event_errors
+    except ImportError as error:
+        return [f"pie_lookdev_fluid 실패 판정 함수를 불러오지 못했다: {error}"]
+    return find_apply_failure_errors(apply_outcome) + find_move_errors(apply_outcome) + find_schedule_event_errors(schedule_status)
+
+
 def probe_metrics(apply_outcome):
     probe = apply_outcome.get("probe") if isinstance(apply_outcome, dict) else None
     if not isinstance(probe, dict):
@@ -900,6 +908,7 @@ def assert_lookdev_result(result, sequence, variants_by_id, output_dir, scene_en
         variant = variants_by_id[variant_id]
         errors = judge_step(variant, entry.get("apply"), optional_packages=skippable_look_packages(variant, scene_entry.get("level"), scene_entry.get("out_of_scene_look_packages", [])))
         apply = entry.get("apply") if isinstance(entry.get("apply"), dict) else {}
+        errors.extend(lookdev_failure_errors(entry.get("apply"), entry.get("schedule")))
         images = lookdev_images(output_dir, index, entry)
         metrics, samples = {}, None
         if "probe" in sources:
@@ -912,6 +921,7 @@ def assert_lookdev_result(result, sequence, variants_by_id, output_dir, scene_en
         steps.append({"step": index, "name": expected_name, "variant": variant_id, "valid": not errors, "errors": errors, "invalid_reasons": errors, "sources": sources,
                       "images": images, "image_sha256": image_hashes(images), "shots_expected": shots_expected, "shots_saved": len(images), "shot_game_times": shot_game_times(entry, apply),
                       "shot_game_time": apply.get("shot_game_time"), "report": (apply.get("tuning_reload") or {}).get("report"),
+                      "state_reset_actor_count": (apply.get("tuning_reload") or {}).get("state_reset_actor_count"),
                       "look_applied": apply.get("look_applied"), "look_read_back": apply.get("look_read_back"), "owner_checks": apply.get("owner_checks"), **metrics_record(metrics),
                       **({"skipped_look": apply["skipped_look"]} if apply.get("skipped_look") else {}),
                       **({} if samples is None else {"probe_samples": samples})})
@@ -1184,6 +1194,9 @@ def run_scenes(plan, sweep, assert_results):
             continue
         entry["lookdev_result"] = relative_text(result_path)
         entry["key_errors"] = result.get("key_errors", [])
+        base_errors = lookdev_failure_errors(result.get("base"), result.get("base_schedule"))
+        if base_errors:
+            entry["error"] = "룩데브 base: " + "; ".join(base_errors)
         entry["steps"] = assert_lookdev_result(result, entry["sequence"], variants_by_id, result_path.parent, entry)
         if "offline" in entry["sources"]:
             merge_offline_metrics(scene, entry, variants_by_id, scene_dir)

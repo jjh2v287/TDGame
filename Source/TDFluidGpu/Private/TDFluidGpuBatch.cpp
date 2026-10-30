@@ -643,6 +643,7 @@ namespace
 		WaterParameters.BankWetHeightCm = Settings.BankWetHeightCm;
 		WaterParameters.InvBankWetHeightCm = Settings.BankWetHeightCm > 0.0f ? 1.0f / Settings.BankWetHeightCm : 0.0f;
 		WaterParameters.WetnessFromWhitewater = Settings.WetnessFromWhitewater;
+		WaterParameters.RainWetnessStep = FMath::Max(Actor.WaterRainWetnessStep, 0.0f);
 		if (!bUsesKernelPressure)
 		{
 			return WaterParameters;

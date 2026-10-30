@@ -178,7 +178,7 @@ float UpdateWaterWetness(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParam
 	}
 
 	const float Source = ComputeWaterWetnessSource(Actor, Water, Cell, SurfaceHeight, TerrainElevation);
-	const float Wetness = clamp(max(PreviousWetness * Water.WetnessRetainFactor, Source), 0.0f, 1.0f);
+	const float Wetness = clamp(max(PreviousWetness * Water.WetnessRetainFactor + Water.RainWetnessStep, Source), 0.0f, 1.0f);
 	WetnessState[Texel] = Wetness;
 	return Wetness;
 }

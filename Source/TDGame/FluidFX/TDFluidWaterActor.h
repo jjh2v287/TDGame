@@ -56,6 +56,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water|Wetness", meta = (ClampMin = "0.0"))
 	float WetDecalVerticalMarginCm = 30.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water|Rain")
+	bool bEnableRainPuddleDecal = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water|Rain")
+	TSoftObjectPtr<UMaterialInterface> RainPuddleDecalMaterial;
+
 	UPROPERTY(VisibleAnywhere, Category = "Water|LodGrid")
 	TObjectPtr<UTDFluidWaterLodGridComponent> LodGridComponent;
 
@@ -78,6 +84,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Water|Wetness")
 	UMaterialInstanceDynamic* GetWetDecalMaterialInstance() const;
+
+	UFUNCTION(BlueprintPure, Category = "Water|Rain")
+	bool IsRainPuddleDecalVisible() const;
+
+	UFUNCTION(BlueprintPure, Category = "Water|Rain")
+	UMaterialInstanceDynamic* GetRainPuddleDecalMaterialInstance() const;
 
 	UFUNCTION(BlueprintPure, Category = "Water")
 	int32 GetDrivenSurfaceCount() const { return DrivenSurfaceCount; }
@@ -103,6 +115,13 @@ private:
 	void UpdateWetDecalPlacement();
 	void HideWetDecal();
 	void PlaceWetDecalIfChanged(const FVector& WorldLocation, const FVector& DecalSize);
+	void ComputeWindowDecalPlacement(float TerrainMinimumCm, float TerrainMaximumCm, FVector& OutDecalLocation, FVector& OutDecalSize) const;
+	void RequestRainPuddleDecalMaterial();
+	void CreateRainPuddleDecal();
+	void ApplyLoadedRainPuddleDecalMaterial();
+	void UpdateRainPuddleDecalPlacement();
+	void ReleaseRainPuddleDecal();
+	void HideRainPuddleDecal();
 	const AActor* ResolveFollowedActor() const;
 	FVector ComputeLookAheadOffset() const;
 	FBox2D ComputeWindowBoundsXY(double HalfExtentScale) const;
@@ -138,6 +157,14 @@ private:
 	TObjectPtr<UMaterialInstanceDynamic> WetDecalMID;
 
 	TSharedPtr<FStreamableHandle> WetDecalLoadHandle;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UDecalComponent> RainPuddleDecal;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInstanceDynamic> RainPuddleDecalMID;
+
+	TSharedPtr<FStreamableHandle> RainPuddleDecalLoadHandle;
 	TSharedPtr<FStreamableHandle> LodGridMeshLoadHandle;
 	TArray<TWeakObjectPtr<AActor>> LodHiddenSurfaceActors;
 	FTDFluidWaterLodGridSettings LodGridSettings;

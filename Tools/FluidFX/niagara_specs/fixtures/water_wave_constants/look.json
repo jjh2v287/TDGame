@@ -1,0 +1,76 @@
+{
+ "Materials": {},
+ "NiagaraSystems": {
+  "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris": {
+   "Bools": {},
+   "Colors": {
+    "User.TDDebrisColor": [
+     0.8,
+     0.05,
+     0.04,
+     1.0
+    ]
+   },
+   "Floats": {
+    "User.TDDebrisBobbingHeightScale": 1.0,
+    "User.TDDebrisFloatOffsetCm": -3.0,
+    "User.TDDebrisFlowDragPerSec": 2.0,
+    "User.TDDebrisFlowFollowScale": 1.0,
+    "User.TDDebrisHeightFollowPerSec": 10.0,
+    "User.TDDebrisLifetimeMaxSeconds": 40.0,
+    "User.TDDebrisLifetimeMinSeconds": 20.0,
+    "User.TDDebrisMeshScaleCm": 20.0,
+    "User.TDDebrisMinDepthCm": 10.0,
+    "User.TDDebrisScaleFadePerSec": 2.0,
+    "User.VelocityReferenceCmPerSec": 600.0
+   },
+   "Ints": {
+    "User.TDDebrisCount": 300
+   },
+   "Vectors2": {
+    "User.PlaneCoordinateOffsetCm": [
+     0.0,
+     0.0
+    ],
+    "User.SimCenterPlane": [
+     0.0,
+     0.0
+    ],
+    "User.SimExtentsCm": [
+     0.0,
+     0.0
+    ],
+    "User.TDDebrisSpawnUvMax": [
+     0.95,
+     0.95
+    ],
+    "User.TDDebrisSpawnUvMin": [
+     0.05,
+     0.05
+    ]
+   },
+   "Vectors3": {
+    "User.PlaneAxisN": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "User.PlaneAxisU": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "User.PlaneAxisV": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "User.SimCenterWorld": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  }
+ }
+}

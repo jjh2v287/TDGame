@@ -430,7 +430,7 @@ bool FTDFluidNearRippleRhiDeterministicReplayTest::RunTest(const FString& Parame
 		return false;
 	}
 
-	TStrongObjectPtr<UTexture2D> SurfaceTexture(CreateUniformMaskTexture(FLinearColor(0.0f, 0.0f, 1.0f, 0.0f)));
+	TStrongObjectPtr<UTexture2D> SurfaceTexture(CreateUniformMaskTexture(FLinearColor(1.0f, 0.0f, 0.0f, 0.0f)));
 	FlushRenderingCommands();
 	if (!TestNotNull(*(CaseLabel + TEXT(" created the water surface mask")), SurfaceTexture.Get()))
 	{
@@ -482,7 +482,7 @@ bool FTDFluidNearRippleRhiWindowShiftTorusInvariantTest::RunTest(const FString& 
 		return false;
 	}
 
-	TStrongObjectPtr<UTexture2D> SurfaceTexture(CreateUniformMaskTexture(FLinearColor(0.0f, 0.0f, 1.0f, 0.0f)));
+	TStrongObjectPtr<UTexture2D> SurfaceTexture(CreateUniformMaskTexture(FLinearColor(1.0f, 0.0f, 0.0f, 0.0f)));
 	FlushRenderingCommands();
 	if (!TestNotNull(*(CaseLabel + TEXT(" created the water surface mask")), SurfaceTexture.Get()))
 	{
@@ -570,7 +570,7 @@ bool FTDFluidNearRippleRhiMaskedCellsStayFlatTest::RunTest(const FString& Parame
 
 	TStrongObjectPtr<UTexture2D> SurfaceTexture(CreateMaskTexture(MaskSize, [](int32 PixelX, int32 PixelY)
 	{
-		return FLinearColor(0.0f, 0.0f, ComputeMaskTexelWorldCenter(PixelX, PixelY).Y < MaskDryBelowYCm ? 0.0f : 1.0f, 0.0f);
+		return FLinearColor(ComputeMaskTexelWorldCenter(PixelX, PixelY).Y < MaskDryBelowYCm ? 0.0f : 1.0f, 0.0f, 0.0f, 0.0f);
 	}));
 	TStrongObjectPtr<UTexture2D> AuxTexture(CreateMaskTexture(MaskSize, [](int32 PixelX, int32 PixelY)
 	{
@@ -693,7 +693,7 @@ bool FTDFluidNearRippleRhiOffscreenCostTest::RunTest(const FString& Parameters)
 		return false;
 	}
 
-	TStrongObjectPtr<UTexture2D> SurfaceTexture(CreateUniformMaskTexture(FLinearColor(0.0f, 0.0f, 1.0f, 0.0f)));
+	TStrongObjectPtr<UTexture2D> SurfaceTexture(CreateUniformMaskTexture(FLinearColor(1.0f, 0.0f, 0.0f, 0.0f)));
 	TStrongObjectPtr<UTexture2D> AuxTexture(CreateUniformMaskTexture(FLinearColor(0.0f, 1.0f, 0.0f, 0.0f)));
 	TStrongObjectPtr<UTextureRenderTarget2D> OutputTarget(CreateNearRippleOutputTarget(NearRippleTestResolution));
 	FlushRenderingCommands();

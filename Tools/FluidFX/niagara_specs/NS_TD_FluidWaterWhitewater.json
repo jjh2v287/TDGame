@@ -1,0 +1,26 @@
+{
+ "asset": "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater",
+ "emitter_name": "Whitewater",
+ "profile": "water",
+ "space": "world",
+ "spawn": "rate_reject",
+ "features": [
+  "surface",
+  "tilemap"
+ ],
+ "renderer": {
+  "kind": "sprite",
+  "material": "/Game/FluidFX/Materials/MI_TD_FluidWaterWhitewater_Default",
+  "alignment": "VelocityAligned",
+  "mesh": null,
+  "mesh_facing": null
+ },
+ "cast_shadow": false,
+ "max_particles": 2000,
+ "fixed_bounds_half_extent_cm": 4000.0,
+ "random_seed": 22,
+ "water": {
+  "role": "whitewater",
+  "sim_target": "gpu"
+ }
+}

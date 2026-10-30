@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3. 생성·프로브·덤프는 에디터가 이 프로젝트를 열고 MCP 8000(NiagaraToolsets)·원격 실행이 살아 있어야 하고, --fake-calls 는 에디터 없이 돈다. 구조 명세(Tools/FluidFX/niagara_specs/NS_TD_*.json, spec-fx8n 2.2)를 fluid_niagara_drive 로 스택 계획으로 바꿔 공식 NiagaraToolset_System 으로 GPU 유체 구동 나이아가라 시스템을 만든다(덮어쓰기·삭제 안 함).
 실행 명령: python -B Tools/FluidFX/editor_make_fluid_driven_niagara.py --spec <명세.json> [--asset <경로>] [--look <모양 JSON>] [--probe] [--dump-only] [--fake-calls <출력.json>] (--probe 단독 = 0a 스키마 기록, --probe --asset /Game/Repro/FluidFX/<새 이름> = 0b 비엄격 시범, 생성은 그 명세의 0b 통과 뒤. 모양 키는 늘 명세 asset 이고 --asset 은 만들 경로만 바꾼다(반박 M3), 재현 사본은 /Game/FluidFX 밖 /Game/Repro/FluidFX/ 에만(반박 M1))
 출력: Saved/FluidFX/niagara/driven-probe.json(0a·명세별 0b, 계획 sha256·로그 판정 포함), 나이아가라 시스템, Saved/FluidFX/niagara/<이름>.dump.json(v1 과 같은 정규화 절 + 절별 sha256)·<이름>.report.json(단계·확인 항목·에디터 로그 구간 집계), --fake-calls 는 호출 기록 JSON(User 기본값은 <look> 자리표시, 반박 S1). 판정: ① 스크립트별 컴파일 상태 UpToDate·오류 0 ④ 저장 전 강제 전체 재컴파일(UTDFluidNiagaraModuleEditorLibrary.RecompileNiagaraSystemFully) 뒤 시스템 Spawn·Update VM 속성 집합 같음·실행 준비 ② 에디터 로그(표지로 찾은 실제 파일, 생성 전후 오프셋 구간)에 'There were issues for compilation of script "<이름>/' 줄 0 ③ 오프스크린 TDGame.FluidFXRhi.Niagara 통과(이 도구 밖, TODO 로 출력). 종료 0 = ①②④ 통과, 1 = 단계·확인 실패, 2 = 에디터·MCP 연결 실패, 3 = 선행 조건(명세 오류·에셋 있음·0b 미통과(로그 판정·계획 sha256 포함)·재질 없음·모양 항목 없음·모르는 User 변수)
-상태: 2026-10-27 수정: 저장 전 5c 강제 전체 재컴파일과 판정 ④ 추가(질량 NS 가 시스템 Spawn·Update 속성 20 대 19 불일치로 IsReadyToRun 거짓 → 활성화 0, 편집기 빌드는 경고 없음). 이전: 2026-10-26 FX-5 추가(미검증, --fake-calls·검사기만): profile mass 단계(데이터 인터페이스 모듈·킬 상자 모듈), 렌더러 none(제거만, 재질 검사 생략), CPU 시뮬은 GPU 계산 스크립트 판정 생략, 0a 에 mass 명세면 질량 모듈 2·킬 모듈·데이터 인터페이스 2 스키마와 모듈 입력 이름(mass_module_inputs_ok)을 더함(S14: --spec <명세> --probe). 이전: 2026-10-26 수정·검증(0b 7종·생성 7종 GPU 로그 문제 0, Niagara 오프스크린 12/12). '스택 오류 0'(GetStackIssues 는 외부 편집 문맥에서 늘 측정 불가) 판정을 ①②③ 으로 바꿈. User 기본값은 런타임 비텍스처 8개(v1 관례, 반박 M1)와 조절 등록표 이름 전부를 모양 항목 NiagaraSystems[<명세 asset>] 에서 읽는다.
+상태: 2026-10-29 W-1b C: 굽지 않는 런타임 User(water·rain, drive.unbaked_runtime_names)는 모양 대신 ZERO_BY_TYPE 기본값, 0a 모듈 탐침에 water splash ndc(NDC Append 모듈·NDC 쓰기 인터페이스) 추가(미검증, 오프라인 --fake-calls 만). 이전: 2026-10-27 수정: 저장 전 5c 강제 전체 재컴파일과 판정 ④ 추가(질량 NS 가 시스템 Spawn·Update 속성 20 대 19 불일치로 IsReadyToRun 거짓 → 활성화 0, 편집기 빌드는 경고 없음). 이전: 2026-10-26 FX-5 추가(미검증, --fake-calls·검사기만): profile mass 단계(데이터 인터페이스 모듈·킬 상자 모듈), 렌더러 none(제거만, 재질 검사 생략), CPU 시뮬은 GPU 계산 스크립트 판정 생략, 0a 에 mass 명세면 질량 모듈 2·킬 모듈·데이터 인터페이스 2 스키마와 모듈 입력 이름(mass_module_inputs_ok)을 더함(S14: --spec <명세> --probe). 이전: 2026-10-26 수정·검증(0b 7종·생성 7종 GPU 로그 문제 0, Niagara 오프스크린 12/12). '스택 오류 0'(GetStackIssues 는 외부 편집 문맥에서 늘 측정 불가) 판정을 ①②③ 으로 바꿈. User 기본값은 런타임 비텍스처 8개(v1 관례, 반박 M1)와 조절 등록표 이름 전부를 모양 항목 NiagaraSystems[<명세 asset>] 에서 읽는다.
 """
 import argparse
 import hashlib
@@ -65,8 +65,14 @@ def read_user_defaults(spec, look_path):
 
 def build_user_variables(spec, user_defaults):
     variables = []
+    unbaked_names = drive.unbaked_runtime_names(spec)
     for name, type_path in drive.build_user_variable_plan(spec):
-        default = None if type_path == toolset.TEXTURE_CLASS else (user_defaults[name] if user_defaults is not None else toolset.LOOK_PLACEHOLDER)
+        if type_path == toolset.TEXTURE_CLASS:
+            default = None
+        elif name in unbaked_names:
+            default = toolset.ZERO_BY_TYPE[type_path]
+        else:
+            default = user_defaults[name] if user_defaults is not None else toolset.LOOK_PLACEHOLDER
         variables.append({"name": name, "type": toolset.type_definition(type_path), "description": "", "defaultValue": toolset.instanced_value(type_path, default)})
     return variables
 
@@ -201,6 +207,7 @@ MASS_MODULE_PROBES = (("module_mass_splat", drive.MASS_SPLAT_MODULE, "SplatInter
                       ("module_kill_volume", drive.KILL_VOLUME_MODULE, ""))
 MASS_DATA_INTERFACE_PROBES = (("data_interface_mass_splat", drive.SPLAT_DATA_INTERFACE_CLASS),
                               ("data_interface_ndc_write", drive.NDC_WRITE_DATA_INTERFACE_CLASS))
+WATER_NDC_PROBE_LABELS = ("module_mass_ndc_append", "data_interface_ndc_write")
 
 
 def find_missing_module_inputs(result, interface_input):
@@ -211,13 +218,27 @@ def find_missing_module_inputs(result, interface_input):
     return [name for name in wanted if name.replace(" ", "").casefold() not in text]
 
 
-def run_mass_stage0a(client, results):
+def mass_probe_labels(spec):
+    if spec is None:
+        return ()
+    if drive.is_mass(spec):
+        return tuple(label for label, _, _ in MASS_MODULE_PROBES) + tuple(label for label, _ in MASS_DATA_INTERFACE_PROBES)
+    if spec["profile"] == "water" and "ndc" in spec["features"]:
+        return WATER_NDC_PROBE_LABELS
+    return ()
+
+
+def run_mass_stage0a(client, results, labels):
     missing = {}
     for label, asset, interface_input in MASS_MODULE_PROBES:
+        if label not in labels:
+            continue
         toolset.probe_call(client, label, "GetModuleSchemaFromAsset", {"moduleAsset": toolset.reference(asset)}, results)
         if interface_input:
             missing[label] = find_missing_module_inputs(results.get(label), interface_input)
     for label, class_path in MASS_DATA_INTERFACE_PROBES:
+        if label not in labels:
+            continue
         toolset.probe_call(client, label, "GetDataInterfaceSchema", {"dataInterfaceClass": toolset.reference(class_path)}, results)
     return {"mass_module_missing_inputs": missing, "mass_module_inputs_ok": not any(missing.values())}
 
@@ -226,7 +247,8 @@ def run_stage0a(client, spec=None):
     description = client.describe_toolset(client.system_toolset)
     tools = description.get("tools", []) if isinstance(description, dict) else []
     results = {}
-    mass_report = run_mass_stage0a(client, results) if spec is not None and drive.is_mass(spec) else {}
+    labels = mass_probe_labels(spec)
+    mass_report = run_mass_stage0a(client, results, labels) if labels else {}
     for label, asset in (("module_sample_texture", drive.SAMPLE_TEXTURE_MODULE), ("module_spawn_rate", drive.SPAWN_RATE_MODULE),
                          ("module_spawn_burst", drive.SPAWN_BURST_MODULE), ("module_solve_forces", drive.SOLVE_FORCES_MODULE),
                          ("module_collision", drive.COLLISION_MODULE), ("module_initialize_particle", drive.INITIALIZE_PARTICLE_MODULE)):

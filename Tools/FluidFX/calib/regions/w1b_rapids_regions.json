@@ -1,0 +1,25 @@
+{
+  "note": "1280x720 촬영, w1b_water_particles rapids_img20 카메라(pawn 0,0·붐 1200·시선 [-40, 200]) 기준 영역 초안. IMG 20 왼쪽 아래 흰 물 영역에 맞춘 박스이며 첫 촬영 뒤 맞춘다. 작은 덩어리 검출은 embers kind 를 빌린다(G2)",
+  "regions": [
+    {
+      "name": "particles",
+      "kind": "embers",
+      "box": [
+        40,
+        300,
+        700,
+        700
+      ]
+    },
+    {
+      "name": "sky",
+      "kind": "background",
+      "box": [
+        1050,
+        20,
+        1270,
+        110
+      ]
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "id": "w1b_water_particles",
+  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다",
+  "scenes": [
+    {
+      "name": "sea_img16",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidWaterParticleSeaStage",
+      "camera": {
+        "awake": {
+          "TDGen_WaterParticleSea": true
+        },
+        "exposure_ev100": 2.0,
+        "pawn": [
+          0.0,
+          0.0
+        ],
+        "arm": 900.0,
+        "view": [
+          -35.0,
+          30.0
+        ],
+        "hide": {}
+      },
+      "time_dilation": 1.0,
+      "schedule": null,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/w1b_sea_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/w1b_live2_water_particles.json",
+      "live2_refs": [
+        "C12",
+        "L26",
+        "L5"
+      ]
+    },
+    {
+      "name": "rapids_img20",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidWaterParticleRapidsStage",
+      "camera": {
+        "awake": {
+          "TDGen_WaterParticleRapids": true
+        },
+        "exposure_ev100": 2.0,
+        "pawn": [
+          0.0,
+          0.0
+        ],
+        "arm": 1200.0,
+        "view": [
+          -40.0,
+          200.0
+        ],
+        "hide": {}
+      },
+      "time_dilation": 1.0,
+      "schedule": null,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/w1b_rapids_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/w1b_live2_water_particles.json",
+      "live2_refs": [
+        "L4"
+      ]
+    }
+  ],
+  "params": [
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterDebris.Ints.User.TDDebrisCount",
+      "values": [
+        300,
+        600,
+        1000
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterDebris.Floats.User.TDDebrisFloatOffsetCm",
+      "values": [
+        -5.0,
+        -3.0,
+        0.0
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterSplash.Floats.User.TDSplashContactWhitewater",
+      "values": [
+        0.15,
+        0.3,
+        0.6
+      ],
+      "split_group": false
+    }
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "noise_floor": {},
+    "targets": [
+      {
+        "metric": "0.particles.count",
+        "scene": "sea_img16",
+        "weight": 1.0,
+        "tolerance": 20.0,
+        "low": 300.0,
+        "high": 4000.0,
+        "basis": "C12-f 화면 부유 수 ≥300(IMG 16)"
+      },
+      {
+        "metric": "0.particles.median_area_px",
+        "scene": "sea_img16",
+        "weight": 1.0,
+        "tolerance": 0.5,
+        "basis": "C12-f 부유 메시 크기(범위는 비교 시트 승인 뒤)"
+      },
+      {
+        "metric": "0.particles.count",
+        "scene": "rapids_img20",
+        "weight": 1.0,
+        "tolerance": 20.0,
+        "basis": "L4-d 흰 물 점 밀도(IMG 20 대조, 범위는 비교 시트 승인 뒤)"
+      }
+    ]
+  },
+  "draft_status": "blocked(CAL-0)",
+  "p3_gaps": [
+    "params json_path Look: 경로 할당(G1: fluid_tuning_patch·calib_sweep 의 Look: 경로 지원과 나이아가라 적용 수 보고 = FX-8n G1)",
+    "StructDefaults.TDFluidWaterParticleSettings.* 매개변수는 calib_sweep.py READ_BACK_STRUCTS 밖이라 다시 읽기를 거부한다(R1b-M5) → G3: 다시 읽기 목록에 TDFluidWaterParticleSettings 를 더한 뒤 SplashEntrySpeedThresholdCmPerSec 100·150·250 을 되살린다",
+    "목표 JSON kind_metrics.water_particles 는 measure_fx_look.py 가 fire|torch 만 받아 InputError 라서 쓰지 않았다. 입자 수·크기는 embers kind 영역의 0.particles.* 로 잰다(FX-8n G2 빌림)",
+    "debris.count·splash.lifetime_s 같은 입자 지표는 measure_fx_look 에 없다 → L5-h(R1 수면 대비 |ΔZ| p95)·L26-l(R3 수명)·L26-w(R3 접촉→흰 물 프레임·세기)는 calib_sweep 이 아니라 RHI 시험 R1·R3 JSON 출력 지표로 옮긴다",
+    "L5-v 수면 아래 숨은 입자 비는 measure_fx_look 깊이 비교 확장이 필요하다[제안], L26-c 왕관 두께·후광 비는 지표 정의가 없다",
+    "P-s/P-d 비용(TD.FluidFX.WaterParticles 0 ABBA의 GPU 증분)은 지표 출처 gpu_stats 가 없다 → CAL-0",
+    "lookdev camera 키 pawn·arm·view·exposure_ev100 와 awake 라벨(TDGen_WaterParticleSea·TDGen_WaterParticleRapids)은 무대 스크립트 editor_make_fluid_water_particle_stage.py 상수와 같다 — 무대 라벨을 바꾸면 여기도 바꾼다"
+  ]
+}

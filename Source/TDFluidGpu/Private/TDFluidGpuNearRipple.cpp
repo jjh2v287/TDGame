@@ -47,6 +47,9 @@ class FTDFluidGpuNearRippleStepCS : public FTDFluidGpuNearRippleShader
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuNearRippleStepCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuNearRippleStepCS, FTDFluidGpuNearRippleShader);
 
+	class FTDFluidGpuNearRippleRainDim : SHADER_PERMUTATION_BOOL("TDFLUID_NEAR_RIPPLE_RAIN");
+	using FPermutationDomain = TShaderPermutationDomain<FTDFluidGpuNearRippleRainDim>;
+
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_STRUCT_INCLUDE(FTDFluidGpuNearRippleCommonParameters, Common)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2D<float2>, StateIn)
@@ -61,6 +64,12 @@ class FTDFluidGpuNearRippleStepCS : public FTDFluidGpuNearRippleShader
 		SHADER_PARAMETER(float, EdgeAbsorptionStrength)
 		SHADER_PARAMETER(float, IdleContactAmplitudeCm)
 		SHADER_PARAMETER(float, IdleContactPhase)
+		SHADER_PARAMETER(float, RainDropProbability)
+		SHADER_PARAMETER(float, RainDropImpulseCm)
+		SHADER_PARAMETER(float, RainDropRadiusCells)
+		SHADER_PARAMETER(int32, RainBlockSizeCells)
+		SHADER_PARAMETER(uint32, RainSeed)
+		SHADER_PARAMETER(uint32, RainSubstepIndex)
 	END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_GLOBAL_SHADER(FTDFluidGpuNearRippleStepCS, "/TDFluidGpu/Private/TDFluidGpuNearRipple.usf", "NearRippleStepCS", SF_Compute);
@@ -144,6 +153,11 @@ namespace
 		GraphBuilder.QueueTextureExtraction(StateTextures[1], &State.HeightVelocityTargets[1]);
 	}
 
+	bool HasTDFluidNearRippleRain(const FTDFluidGpuNearRippleFrameInput& FrameInput)
+	{
+		return FrameInput.RainDropProbability > 0.0f && FrameInput.RainDropRadiusCells > 0.0f && FrameInput.RainBlockSizeCells > 0 && FMath::IsFinite(FrameInput.RainDropImpulseCm);
+	}
+
 	bool HasTDFluidNearRippleMaskSource(const FTDFluidGpuNearRippleFrameInput& FrameInput)
 	{
 		return FrameInput.WaterSurfaceTexture && FrameInput.MainWindowExtentCm.X > 0.0f && FrameInput.MainWindowExtentCm.Y > 0.0f;
@@ -204,7 +218,10 @@ void AddTDFluidGpuNearRipplePasses(FRDGBuilder& GraphBuilder, FTDFluidGpuNearRip
 	const FIntVector GroupCount = FComputeShaderUtils::GetGroupCount(FIntPoint(FrameInput.Resolution, FrameInput.Resolution), TDFluidNearRippleGroupSize);
 	FGlobalShaderMap* ShaderMap = GetGlobalShaderMap(GMaxRHIFeatureLevel);
 
-	TShaderMapRef<FTDFluidGpuNearRippleStepCS> StepShader(ShaderMap);
+	const bool bHasRain = HasTDFluidNearRippleRain(FrameInput);
+	FTDFluidGpuNearRippleStepCS::FPermutationDomain StepPermutation;
+	StepPermutation.Set<FTDFluidGpuNearRippleStepCS::FTDFluidGpuNearRippleRainDim>(bHasRain);
+	TShaderMapRef<FTDFluidGpuNearRippleStepCS> StepShader(ShaderMap, StepPermutation);
 	const int32 SubstepCount = FMath::Clamp(FrameInput.SubstepCount, 1, TDFluidNearRippleMaximumSubsteps);
 	for (int32 SubstepIndex = 0; SubstepIndex < SubstepCount; ++SubstepIndex)
 	{
@@ -222,6 +239,12 @@ void AddTDFluidGpuNearRipplePasses(FRDGBuilder& GraphBuilder, FTDFluidGpuNearRip
 		Parameters->EdgeAbsorptionStrength = FrameInput.EdgeAbsorptionStrength;
 		Parameters->IdleContactAmplitudeCm = FrameInput.IdleContactAmplitudeCm;
 		Parameters->IdleContactPhase = static_cast<float>(FMath::Fmod(FrameInput.IdleContactStartPhase + static_cast<double>(SubstepIndex + 1) * FrameInput.IdleContactPhasePerSubstep, UE_DOUBLE_TWO_PI));
+		Parameters->RainDropProbability = bHasRain ? FMath::Min(FrameInput.RainDropProbability, 1.0f) : 0.0f;
+		Parameters->RainDropImpulseCm = bHasRain ? FrameInput.RainDropImpulseCm : 0.0f;
+		Parameters->RainDropRadiusCells = bHasRain ? FrameInput.RainDropRadiusCells : 1.0f;
+		Parameters->RainBlockSizeCells = bHasRain ? FrameInput.RainBlockSizeCells : 1;
+		Parameters->RainSeed = FrameInput.RainSeed;
+		Parameters->RainSubstepIndex = FrameInput.RainSubstepBase + static_cast<uint32>(SubstepIndex);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.NearRippleStep %d", SubstepIndex), StepShader, Parameters, GroupCount);
 		State.CurrentIndex = 1 - State.CurrentIndex;
 	}

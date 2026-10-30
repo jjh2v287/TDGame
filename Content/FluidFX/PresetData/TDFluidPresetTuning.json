@@ -401,8 +401,43 @@
     "TDFluidWaterPropSettings": {
     },
     "TDFluidWaterParticleSettings": {
+      "bEmitSplashEvents": true,
+      "bApplyContactWhitewater": true,
+      "bReadContactPreviousFrame": true,
+      "bUseTerrainDepthSurfaceBase": true,
+      "SplashEntrySpeedThresholdCmPerSec": 150.0,
+      "SplashExitSpeedThresholdCmPerSec": 200.0,
+      "SplashMoveSpeedThresholdCmPerSec": 250.0,
+      "SplashMoveIntervalSeconds": 0.15,
+      "SplashCooldownSeconds": 0.2,
+      "SplashSurfaceBandCm": 4.0,
+      "SplashBoneRadiusCm": 12.0,
+      "SplashMinRadiusCm": 5.0,
+      "SplashMaxRadiusCm": 60.0,
+      "MaxTrackedSplashPoints": 64,
+      "MaxConcurrentSplashes": 12,
+      "MaxContactPointsPerTick": 2048,
+      "MaxContactStampsPerTick": 16,
+      "ContactReadFallbackRadiusCm": 12.0,
+      "DebrisPrefillSeconds": 1.0,
+      "CoverageRefreshSeconds": 0.5
     },
     "TDFluidRainSettings": {
+      "bEnabled": false,
+      "DropsPerSquareMeterPerSec": 0.0,
+      "DropRadiusCm": 4.0,
+      "DropRippleImpulseCm": 0.4,
+      "DropDensityStrength": 0.0,
+      "MaxDropsPerTick": 128,
+      "NearDropImpulseCm": 0.0,
+      "WetnessFromRainPerSec": 0.0,
+      "bShouldAccumulatePuddles": false,
+      "PuddleFillCmPerSec": 0.05,
+      "PuddleDrainCmPerSec": 0.02,
+      "PuddleMaxLevelCm": 3.0,
+      "PuddleCavityRadiusCm": 150.0,
+      "PuddleCavityReferenceCm": 4.0,
+      "RandomSeed": 1
     }
   },
   "Groups": {
@@ -435,6 +470,22 @@
         "RainPond",
         "ReedShallows"
       ],
+      "TDFluidRainSettings": {
+        "bEnabled": true,
+        "DropsPerSquareMeterPerSec": 60.0,
+        "DropRadiusCm": 4.0,
+        "DropRippleImpulseCm": 0.4,
+        "DropDensityStrength": 0.0,
+        "NearDropImpulseCm": 0.15,
+        "WetnessFromRainPerSec": 0.2,
+        "bShouldAccumulatePuddles": true,
+        "PuddleFillCmPerSec": 0.1,
+        "PuddleDrainCmPerSec": 0.03,
+        "PuddleMaxLevelCm": 3.0,
+        "PuddleCavityRadiusCm": 150.0,
+        "PuddleCavityReferenceCm": 4.0,
+        "RandomSeed": 1
+      },
       "TDFluidSimulationConfig": {
         "GridResolution": 192,
         "SimExtentCm": {
@@ -704,6 +755,9 @@
       }
     },
     "River": {
+      "TDFluidRainSettings": {
+        "MaxDropsPerTick": 64
+      },
       "TDFluidSimulationConfig": {
         "FlowNoiseAccelerationCmPerSec2": 150.0,
         "RapidsWhitewaterPerSec": 2.0,
@@ -713,6 +767,9 @@
       }
     },
     "Sea": {
+      "TDFluidRainSettings": {
+        "MaxDropsPerTick": 64
+      },
       "TDFluidSimulationConfig": {
         "WhitewaterFromVorticity": 0.15,
         "RippleWaveSpeedCmPerSec": 100.0,
@@ -1445,8 +1502,38 @@
     "WaterySandFlow": {
     },
     "RainPond": {
+      "TDFluidSimulationConfig": {
+        "RippleWaveSpeedCmPerSec": 80.0,
+        "MaxPointsPerTick": 256
+      },
+      "TDFluidRainSettings": {
+        "MaxDropsPerTick": 128
+      }
     },
     "RainAccumulationBench": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 1200.0,
+          "Y": 1200.0
+        },
+        "SolverBackend": "Auto",
+        "VelocityDamping": 0.5,
+        "DensityDissipation": 0.02,
+        "MaxPointsPerTick": 256
+      },
+      "TDFluidRainSettings": {
+        "bEnabled": true,
+        "DropsPerSquareMeterPerSec": 30.0,
+        "DropRadiusCm": 8.0,
+        "DropRippleImpulseCm": 0.0,
+        "DropDensityStrength": 0.6,
+        "MaxDropsPerTick": 128,
+        "NearDropImpulseCm": 0.0,
+        "WetnessFromRainPerSec": 0.0,
+        "bShouldAccumulatePuddles": false,
+        "RandomSeed": 2
+      }
     },
     "CloudPaint": {
     },

@@ -294,6 +294,7 @@ struct FTDFluidGpuActorInput
 	bool bResetsWaterWetness = false;
 	float WaterWetnessRetainFactor = 1.0f;
 	float WaterSwashReachCm = 0.0f;
+	float WaterRainWetnessStep = 0.0f;
 };
 
 struct FTDFluidGpuFrameInputs

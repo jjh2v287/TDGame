@@ -2,6 +2,7 @@
 
 #include "Engine/Texture.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "FluidFX/TDFluidRainImpacts.h"
 #include "RenderGraphBuilder.h"
 #include "RenderingThread.h"
 #include "TDFluidGpuInputs.h"
@@ -17,6 +18,12 @@ namespace
 	constexpr int32 NearRippleMaximumSubsteps = 8;
 	constexpr float NearRippleMinimumWaveSpeedCmPerSec = 1.0f;
 	constexpr double NearRippleMinimumSourceCellSpan = 2.0;
+	constexpr int32 NearRippleRainMinimumBlockCells = 2;
+	constexpr float NearRippleRainMaximumRadiusCells = 64.0f;
+	constexpr double NearRippleRainMaximumProbability = 0.5;
+	constexpr double NearRippleRainSquareCentimetersToSquareMeters = 1.0e-4;
+	constexpr uint32 NearRippleRainHorizontalSalt = 0x68E31DA4u;
+	constexpr uint32 NearRippleRainVerticalSalt = 0xB5297A4Du;
 }
 
 FTDFluidNearRippleLayer::~FTDFluidNearRippleLayer()
@@ -62,6 +69,11 @@ void FTDFluidNearRippleLayer::AddIdleContact(const FVector2D& WorldXY)
 void FTDFluidNearRippleLayer::ClearPendingSources()
 {
 	PendingSources.Reset();
+}
+
+void FTDFluidNearRippleLayer::SetRainInput(const FTDFluidNearRippleRainInput& InRainInput)
+{
+	RainInput = InRainInput;
 }
 
 TArray<FTDFluidNearRippleSourceSelection> FTDFluidNearRippleLayer::SelectFrameSources(const FVector2D& WindowCenterWorld) const
@@ -120,6 +132,11 @@ void FTDFluidNearRippleLayer::SubmitStep(const FTDFluidNearRippleMaskInputs& Mas
 		bNeedsReset = true;
 	}
 
+	if (bNeedsReset)
+	{
+		RainSubstepCounter = 0;
+	}
+
 	const int32 Resolution = GetResolution();
 	const double CellSizeCm = ComputeCellSizeCm();
 	const FIntPoint WindowMinCell = ComputeWindowMinCell(CenterWorldXY, CellSizeCm, Resolution);
@@ -151,6 +168,13 @@ void FTDFluidNearRippleLayer::SubmitStep(const FTDFluidNearRippleMaskInputs& Mas
 	FrameInput.WaterSurfaceTexture = Masks.WaterSurfaceTexture ? Masks.WaterSurfaceTexture->GetResource() : nullptr;
 	FrameInput.AuxTexture = Masks.AuxTexture ? Masks.AuxTexture->GetResource() : nullptr;
 	FrameInput.OutputTarget = OutputResource;
+	const FTDFluidNearRippleRainFrame RainFrame = MakeRainFrame(RainInput, static_cast<float>(CellSizeCm), SubstepPlan.SubstepDeltaSeconds);
+	FrameInput.RainDropProbability = RainFrame.DropProbability;
+	FrameInput.RainDropImpulseCm = RainFrame.DropImpulseCm;
+	FrameInput.RainDropRadiusCells = RainFrame.DropRadiusCells;
+	FrameInput.RainBlockSizeCells = RainFrame.BlockSizeCells;
+	FrameInput.RainSeed = RainFrame.Seed;
+	FrameInput.RainSubstepBase = RainSubstepCounter;
 
 	const FVector2D WindowCenterWorld = WindowOriginWorld + FVector2D(0.5 * Resolution * CellSizeCm);
 	for (const FTDFluidNearRippleSourceSelection& Selection : SelectFrameSources(WindowCenterWorld))
@@ -173,6 +197,7 @@ void FTDFluidNearRippleLayer::SubmitStep(const FTDFluidNearRippleMaskInputs& Mas
 	bHasWindow = true;
 	bNeedsReset = false;
 	LayerTimeSeconds += static_cast<double>(SubstepPlan.SubstepCount) * static_cast<double>(SubstepPlan.SubstepDeltaSeconds);
+	RainSubstepCounter += static_cast<uint32>(SubstepPlan.SubstepCount);
 	ClearPendingSources();
 }
 
@@ -181,6 +206,7 @@ void FTDFluidNearRippleLayer::Release()
 	ClearPendingSources();
 	bNeedsReset = true;
 	bHasWindow = false;
+	RainSubstepCounter = 0;
 	if (!RenderState.IsValid())
 	{
 		return;
@@ -278,4 +304,78 @@ bool FTDFluidNearRippleLayer::ResolveEnabled(int32 ConsoleState, bool bPresetEna
 	}
 
 	return ConsoleState > 0 || bPresetEnabled;
+}
+
+FTDFluidNearRippleRainFrame FTDFluidNearRippleLayer::MakeRainFrame(const FTDFluidNearRippleRainInput& Input, float CellSizeCm, float SubstepDeltaSeconds)
+{
+	FTDFluidNearRippleRainFrame Frame;
+	Frame.Seed = Input.RandomSeed;
+	const bool bHasFiniteInput = FMath::IsFinite(Input.DropsPerSquareMeterPerSec) && FMath::IsFinite(Input.DropImpulseCm) && FMath::IsFinite(Input.DropRadiusCm) && FMath::IsFinite(CellSizeCm) && FMath::IsFinite(SubstepDeltaSeconds);
+	if (!bHasFiniteInput || Input.DropsPerSquareMeterPerSec <= 0.0f || Input.DropRadiusCm <= 0.0f || Input.DropImpulseCm == 0.0f || CellSizeCm <= 0.0f || SubstepDeltaSeconds <= 0.0f)
+	{
+		return Frame;
+	}
+
+	Frame.DropImpulseCm = Input.DropImpulseCm;
+	Frame.DropRadiusCells = FMath::Min(Input.DropRadiusCm / CellSizeCm, NearRippleRainMaximumRadiusCells);
+	Frame.BlockSizeCells = FMath::Max(NearRippleRainMinimumBlockCells, FMath::CeilToInt32(Frame.DropRadiusCells));
+	const double BlockAreaSquareMeters = FMath::Square(static_cast<double>(Frame.BlockSizeCells) * CellSizeCm) * NearRippleRainSquareCentimetersToSquareMeters;
+	const double Probability = static_cast<double>(Input.DropsPerSquareMeterPerSec) * BlockAreaSquareMeters * SubstepDeltaSeconds;
+	Frame.DropProbability = static_cast<float>(FMath::Clamp(Probability, 0.0, NearRippleRainMaximumProbability));
+	return Frame;
+}
+
+FIntPoint FTDFluidNearRippleLayer::ComputeRainBlock(const FIntPoint& WorldCell, int32 BlockSizeCells)
+{
+	const int32 Divisor = FMath::Max(BlockSizeCells, 1);
+	const auto FloorDivide = [Divisor](int32 Value)
+	{
+		return Value >= 0 ? Value / Divisor : -((-Value - 1) / Divisor) - 1;
+	};
+	return FIntPoint(FloorDivide(WorldCell.X), FloorDivide(WorldCell.Y));
+}
+
+bool FTDFluidNearRippleLayer::FindRainDropInBlock(const FIntPoint& Block, uint32 SubstepIndex, const FTDFluidNearRippleRainFrame& Frame, FVector2f& OutDropOffsetCells)
+{
+	const uint32 BlockHash = FTDFluidRainImpacts::HashUint32(static_cast<uint32>(Block.X) ^ FTDFluidRainImpacts::HashUint32(static_cast<uint32>(Block.Y)));
+	const uint32 Hash = FTDFluidRainImpacts::HashCombine3(Frame.Seed, BlockHash, SubstepIndex);
+	if (!(FTDFluidRainImpacts::HashToUnitFloat(Hash) < Frame.DropProbability))
+	{
+		return false;
+	}
+
+	const float BlockSizeCells = static_cast<float>(Frame.BlockSizeCells);
+	OutDropOffsetCells = FVector2f(
+		FTDFluidRainImpacts::HashToUnitFloat(FTDFluidRainImpacts::HashUint32(Hash ^ NearRippleRainHorizontalSalt)) * BlockSizeCells,
+		FTDFluidRainImpacts::HashToUnitFloat(FTDFluidRainImpacts::HashUint32(Hash ^ NearRippleRainVerticalSalt)) * BlockSizeCells);
+	return true;
+}
+
+float FTDFluidNearRippleLayer::ComputeRainDropWeight(const FIntPoint& WorldCell, uint32 SubstepIndex, const FTDFluidNearRippleRainFrame& Frame)
+{
+	if (!(Frame.DropProbability > 0.0f) || !(Frame.DropRadiusCells > 0.0f) || Frame.BlockSizeCells <= 0)
+	{
+		return 0.0f;
+	}
+
+	const FIntPoint CenterBlock = ComputeRainBlock(WorldCell, Frame.BlockSizeCells);
+	float Weight = 0.0f;
+	for (int32 OffsetY = -1; OffsetY <= 1; ++OffsetY)
+	{
+		for (int32 OffsetX = -1; OffsetX <= 1; ++OffsetX)
+		{
+			const FIntPoint Block = CenterBlock + FIntPoint(OffsetX, OffsetY);
+			FVector2f DropOffsetCells;
+			if (!FindRainDropInBlock(Block, SubstepIndex, Frame, DropOffsetCells))
+			{
+				continue;
+			}
+
+			const FIntPoint CellInBlock = WorldCell - Block * Frame.BlockSizeCells;
+			const FVector2f CellOffsetCells = FVector2f(static_cast<float>(CellInBlock.X), static_cast<float>(CellInBlock.Y)) + FVector2f(0.5f, 0.5f) - DropOffsetCells;
+			const float Falloff = FMath::Clamp(1.0f - CellOffsetCells.Size() / Frame.DropRadiusCells, 0.0f, 1.0f);
+			Weight += Falloff * Falloff * (3.0f - 2.0f * Falloff);
+		}
+	}
+	return Weight;
 }

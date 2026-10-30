@@ -1,0 +1,23 @@
+{
+ "asset": "/Game/FluidFX/Niagara/NS_TD_FluidWaterSplash",
+ "emitter_name": "Splash",
+ "profile": "water",
+ "space": "world",
+ "spawn": "event_burst",
+ "features": [],
+ "renderer": {
+  "kind": "sprite",
+  "material": "/Game/FluidFX/Materials/MI_TD_FluidWaterSplash_Default",
+  "alignment": "VelocityAligned",
+  "mesh": null,
+  "mesh_facing": null
+ },
+ "cast_shadow": false,
+ "max_particles": 128,
+ "fixed_bounds_half_extent_cm": 400.0,
+ "random_seed": 23,
+ "water": {
+  "role": "splash",
+  "sim_target": "gpu"
+ }
+}

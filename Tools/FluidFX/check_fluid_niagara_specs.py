@@ -1,7 +1,7 @@
-"""실행 환경: 시스템 Python 3(에디터 없이). 유체 구동 나이아가라 구조 명세(Tools/FluidFX/niagara_specs/NS_TD_*.json)와 가짜 호출 기록 정답(golden/*.calls.json)·모양 항목(TDFluidMaterialLook.json NiagaraSystems)을 오프라인으로 검사한다(spec-fx8n 2.5 ①~⑥, 반박 M1 반영: 런타임 이름은 기준선 굽기 8개만 모양에 허용). ⑦ 은 엔진 ProcessCustomHlsl(NiagaraHlslTranslator.cpp:8687-8693·9161-9175) 병렬 배열 어긋남 모의로, 식마다 원래 별칭 기준 고유 변수 수가 실제 고유 변수 수보다 적으면(L-editor-62) 외부 상수(User·Engine·System·Emitter) 누락을 보고한다.
+"""실행 환경: 시스템 Python 3(에디터 없이). 유체 구동 나이아가라 구조 명세(Tools/FluidFX/niagara_specs/NS_TD_*.json)와 가짜 호출 기록 정답(golden/*.calls.json)·모양 항목(TDFluidMaterialLook.json NiagaraSystems)을 오프라인으로 검사한다(spec-fx8n 2.5 ①~⑥, 반박 M1 반영: 런타임 이름은 기준선 굽기 8개만 모양에 허용). ⑥ 은 C++ 가 넣는 User 이름과 런타임 목록(drive.all_runtime_user_variables = 기준 12 ∪ water ∪ rain)을 양방향 대조하고 모양 검사의 런타임 이름 집합은 C++ 집합 ∪ 그 목록이다. ⑦ 은 엔진 ProcessCustomHlsl(NiagaraHlslTranslator.cpp:8687-8693·9161-9175) 병렬 배열 어긋남 모의로, 식마다 원래 별칭 기준 고유 변수 수가 실제 고유 변수 수보다 적으면(L-editor-62) 외부 상수(User·Engine·System·Emitter) 누락을 보고한다. ⑧ 은 water 명세가 파싱하는 HLSL 상수(파 배열 4×8·스칼라 3·지형 2, fluid_niagara_water.read_wave_constants)를 명세 폴더 아래 사본 우선으로 읽어 성공하는지 본다.
 실행 명령: python -B Tools/FluidFX/check_fluid_niagara_specs.py [--root <명세 폴더>] [--look <모양 JSON>] [--update-golden] | --fixtures Tools/FluidFX/niagara_specs/fixtures (병합 전에는 --look <병합 사본>)
-출력: 표준 출력 ERROR [코드] ①~⑦ 줄과 SUMMARY. 코드 spec·golden·look_missing·look_type·look_range·look_extra·runtime_name·token·runtime_list·alias_drop. --fixtures 는 하위 폴더마다 expect.json 의 코드가 모두 검출되는지 PASS·FAIL. 종료 0 = 통과(또는 fixture 전부 검출), 1 = 위반, 2 = 입력 오류
-상태: 2026-10-26 ⑦ 추가(실제 트리 7종 + fixture 10종 오프라인 실행, 옛 생성 덤프 6종의 관측 GPU 누락과 대조). 에디터 생성 7종의 GPU 로그 문제 줄 0으로 ⑦ 규칙 확인(2026-10-26).
+출력: 표준 출력 ERROR [코드] ①~⑧ 줄과 SUMMARY. 코드 spec·golden·look_missing·look_type·look_range·look_extra·runtime_name·token·runtime_list·alias_drop·wave_constants. --fixtures 는 하위 폴더마다 expect.json 의 코드가 모두 검출되는지 PASS·FAIL. 종료 0 = 통과(또는 fixture 전부 검출), 1 = 위반, 2 = 입력 오류
+상태: 2026-10-29 ⑥ 확장형(water·rain 런타임 목록)·⑧ 추가(W-1b, fixture water_* 6종 오프라인 확인; C++ 런타임 이름이 들어오기 전에는 ⑥ 이 water·rain 이름 줄을 낸다). 2026-10-26 ⑦ 추가(실제 트리 7종 + fixture 10종 오프라인 실행, 옛 생성 덤프 6종의 관측 GPU 누락과 대조). 에디터 생성 7종의 GPU 로그 문제 줄 0으로 ⑦ 규칙 확인(2026-10-26).
 """
 import argparse
 import json
@@ -203,14 +203,37 @@ def check_golden(spec, spec_path, golden_folder, update_golden, findings):
         findings.add("golden", "②", f"{spec['asset']}: 가짜 호출 기록이 정답 {golden_path.name} 와 다름(구조 변경이면 검토 뒤 --update-golden)")
 
 
+def declared_runtime_names():
+    return {name.casefold(): name for name, _ in drive.all_runtime_user_variables()}
+
+
 def check_runtime_list(runtime_names, findings):
-    declared = {name.casefold(): name for name, _ in drive.RUNTIME_USER_VARIABLES}
+    declared = declared_runtime_names()
     for folded, location in sorted(runtime_names.items()):
         if folded not in declared:
-            findings.add("runtime_list", "⑥", f"C++ 가 넣는 User 이름 {folded}({location}) 이 런타임 12 목록에 없음")
+            findings.add("runtime_list", "⑥", f"C++ 가 넣는 User 이름 {folded}({location}) 이 런타임 목록(기준 12 ∪ water ∪ rain)에 없음")
     for folded, name in sorted(declared.items()):
         if folded not in runtime_names:
-            findings.add("runtime_list", "⑥", f"런타임 12 목록의 {name} 을 C++ 가 넣지 않음")
+            findings.add("runtime_list", "⑥", f"런타임 목록의 {name} 을 C++ 가 넣지 않음")
+
+
+def merge_registry_runtime_names(runtime_names):
+    merged = dict(runtime_names)
+    for folded in declared_runtime_names():
+        merged.setdefault(folded, "런타임 등록표")
+    return merged
+
+
+def check_wave_constants(spec, root, findings):
+    if spec["profile"] != "water":
+        return True
+    module = drive.profile_module(spec)
+    try:
+        module.read_wave_constants(root)
+    except module.TDWaterConstantsError as error:
+        findings.add("wave_constants", "⑧", f"{spec['asset']}: {error}")
+        return False
+    return True
 
 
 def read_look(path):
@@ -242,12 +265,14 @@ def check_root(root, look_argument, update_golden, requires_golden):
         golden_folder = None
     findings = TDFindings()
     check_runtime_list(runtime_names, findings)
+    look_runtime_names = merge_registry_runtime_names(runtime_names)
     for spec_path in spec_paths:
         spec = load_spec(spec_path, findings)
         if spec is None:
             continue
-        check_golden(spec, spec_path, golden_folder, update_golden, findings)
-        check_look_entry(spec, look, runtime_names, findings)
+        if check_wave_constants(spec, root, findings):
+            check_golden(spec, spec_path, golden_folder, update_golden, findings)
+        check_look_entry(spec, look, look_runtime_names, findings)
     return findings, len(spec_paths)
 
 

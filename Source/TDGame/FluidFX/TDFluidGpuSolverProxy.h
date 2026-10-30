@@ -81,6 +81,7 @@ public:
 	float GetWaterSurfaceHeightAtFieldCell(int32 FieldX, int32 FieldY) const;
 	void SetWaterInputs(const TArray<FTDFluidFlowGuide>& Guides, const TArray<FTDFluidWaterRegion>& Regions);
 	void SetWaterTerrainReferenceZCm(float InTerrainReferenceZCm) { WaterTerrainReferenceZCm = InTerrainReferenceZCm; }
+	void SetRainWetnessPerSec(float InRainWetnessPerSec) { RainWetnessPerSec = FMath::IsNaN(InRainWetnessPerSec) ? 0.0f : FMath::Clamp(InRainWetnessPerSec, 0.0f, 10.0f); }
 	void SetWaterProbePlanePoints(TConstArrayView<FVector2D> PlanePoints, int32 InProbeGeneration);
 	bool TryGetWaterProbeSamples(TArray<FTDFluidGpuWaterProbeSample>& OutSamples, uint32& OutFrameNumber) const;
 
@@ -163,6 +164,7 @@ private:
 	FTDFluidGpuBatchKey LastGatheredBatchKey;
 	bool bHasGatheredBatchKey = false;
 	bool bWasUpdatingWaterWetness = false;
+	float RainWetnessPerSec = 0.0f;
 	bool bWasLastSettingsUpdateReset = false;
 };
 

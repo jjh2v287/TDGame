@@ -42,6 +42,12 @@ struct FTDFluidGpuNearRippleFrameInput
 	float MainWaterDepthReferenceCm = 300.0f;
 	float ObstacleDistanceOutputRangeCm = 400.0f;
 	bool bHasObstacleDistanceAux = false;
+	float RainDropProbability = 0.0f;
+	float RainDropImpulseCm = 0.0f;
+	float RainDropRadiusCells = 1.0f;
+	int32 RainBlockSizeCells = 2;
+	uint32 RainSeed = 0;
+	uint32 RainSubstepBase = 0;
 	FTextureResource* WaterSurfaceTexture = nullptr;
 	FTextureResource* AuxTexture = nullptr;
 	FTextureRenderTargetResource* OutputTarget = nullptr;

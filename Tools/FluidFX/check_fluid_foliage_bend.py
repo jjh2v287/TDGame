@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(numpy), 에디터·빌드·GPU 불필요
-실행 명령: python Tools/FluidFX/check_fluid_foliage_bend.py [--output 요약.json]
-출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(통과 수, 실패 목록, 결과 sha256, 위상 지연 기록), 하나라도 실패하면 종료 코드 1
-상태: 미검증(2026-10-29 파동 3 FX-13c 작성: 실행 전). TDFluidFoliageBendLayer 의 numpy 거울 float32 - B1 매개변수·B2 계단 응답·B3 프레임률 무관·B4 눌림 방향 유지·B5 기울기 대체 방향·B6 물결 기울기 항·B7 창 이동 상태 이월·B8 Aux 병합 R·G 보존·B9 콘솔 재정의는 spec-fx13c 4절 헤드리스 리터럴과 같고, B10 무작위 10000칸 크기 1 이하·M4 빈 입력 규칙(속도 없음은 0, 해독 금지)·M5(b) 위상 지연 부호(앞섬은 음수, 해석해 대조)를 더한다. 같은 거울을 두 번 돌려 sha256 이 같은지 본다.
+실행 명령: python Tools/FluidFX/check_fluid_foliage_bend.py [--output 요약.json] | --tuning <조절 사본 JSON> --kind <종류> --json <출력.json> (조절 입력 모드, calib_sweep offline 장면 k3)
+출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(통과 수, 실패 목록, 결과 sha256, 위상 지연 기록), 하나라도 실패하면 종료 코드 1. 조절 입력 모드는 --json 에 {kind, tuning_sha256, inputs(상수 → 조절 필드·실효 값), unmapped, ripple_lag_seconds.{equal_blend, analytic, asymmetric_recovery}, bend_amplitude} 를 정렬 키로 쓰고 종료 0, 입력 오류 종료 2
+상태: 미검증(2026-10-29 파동 3 FX-13c 작성: 실행 전). TDFluidFoliageBendLayer 의 numpy 거울 float32 - B1 매개변수·B2 계단 응답·B3 프레임률 무관·B4 눌림 방향 유지·B5 기울기 대체 방향·B6 물결 기울기 항·B7 창 이동 상태 이월·B8 Aux 병합 R·G 보존·B9 콘솔 재정의는 spec-fx13c 4절 헤드리스 리터럴과 같고, B10 무작위 10000칸 크기 1 이하·M4 빈 입력 규칙(속도 없음은 0, 해독 금지)·M5(b) 위상 지연 부호(앞섬은 음수, 해석해 대조)를 더한다. 같은 거울을 두 번 돌려 sha256 이 같은지 본다. 2026-10-30 CAL-0 B2: 조절 입력 모드(실효 값은 fluid_tuning_patch.effective_value, CAL-0 B1 병합 필요)와 상수 → 조절 필드 대응표 TUNING_FIELD_BY_CONSTANT(근거 TDFluidFoliageBendLayer.cpp MakeParameters:159-162 BendVectorRiseSeconds·BendVectorRecoverySeconds·BendFromRippleSlope), 시험 입력 파형·격자 상수는 unmapped. 실제 게임 회복과의 대조는 미검증.
 """
 import argparse
 import collections
@@ -36,6 +36,11 @@ LAG_RIPPLE_WEIGHT = 0.15
 LAG_RISE_SECONDS = 0.08
 LAG_ASYMMETRIC_RECOVERY_SECONDS = 0.6
 LAG_ANALYTIC_TOLERANCE_SECONDS = 0.01
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+BEND_STRUCT = "TDFluidSimulationConfig"
+TUNING_FIELD_BY_CONSTANT = {"LAG_RISE_SECONDS": "BendVectorRiseSeconds", "LAG_ASYMMETRIC_RECOVERY_SECONDS": "BendVectorRecoverySeconds", "LAG_RIPPLE_WEIGHT": "BendFromRippleSlope"}
+UNMAPPED_CONSTANTS = ("LAG_DELTA_SECONDS", "LAG_FREQUENCY_HZ", "LAG_WAVELENGTH_CM", "LAG_AMPLITUDE", "LAG_RESOLUTION", "DEFAULT_CELL_SIZE_CM")
+EXIT_INPUT = 2
 
 Parameters = collections.namedtuple(
     "Parameters",
@@ -385,10 +390,10 @@ def test_empty_input_rule():
     return passed, f"속도 없음·작은 크기 UsesVelocity 거짓, 밀도·Aux 불일치만 건너뜀, 속도 없는 단계 결과 {diagonal_leak}", [float(item) for item in (silent_uses, missing_uses, small_uses, density_skips, aux_skips, kept_skips)] + [diagonal_leak]
 
 
-def measure_ripple_lag_seconds(rise_seconds, recovery_seconds):
+def measure_ripple_lag_seconds(rise_seconds, recovery_seconds, ripple_slope_weight=LAG_RIPPLE_WEIGHT):
     resolution = LAG_RESOLUTION
     cell_size = DEFAULT_CELL_SIZE_CM
-    parameters = make_parameters(rise_seconds, recovery_seconds, LAG_DELTA_SECONDS, cell_size, ripple_slope_weight=LAG_RIPPLE_WEIGHT, has_water_surface=True)
+    parameters = make_parameters(rise_seconds, recovery_seconds, LAG_DELTA_SECONDS, cell_size, ripple_slope_weight=ripple_slope_weight, has_water_surface=True)
     angular_frequency = 2.0 * math.pi * LAG_FREQUENCY_HZ
     wave_number = 2.0 * math.pi / LAG_WAVELENGTH_CM
     column_positions = np.arange(resolution) * cell_size[0]
@@ -459,10 +464,70 @@ def run_mirror_tests():
     return outcomes, digest.hexdigest()
 
 
+class InputError(Exception):
+    pass
+
+
+def load_effective_inputs(tuning_path, kind):
+    sys.path.insert(0, str(ROOT / "Tools"))
+    sys.path.insert(0, str(ROOT / "Tools" / "FluidFX"))
+    import fluid_tuning_patch
+
+    effective_value = getattr(fluid_tuning_patch, "effective_value", None)
+    if effective_value is None:
+        raise InputError("fluid_tuning_patch.effective_value(document, kind, struct, field) 가 없다(CAL-0 B1 병합 필요)")
+    try:
+        document = json.loads(pathlib.Path(tuning_path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise InputError(f"조절 사본을 읽지 못했다: {error}") from error
+    if kind not in document.get("Kinds", {}):
+        raise InputError(f"조절 사본에 종류 {kind} 가 없다")
+    inputs = {}
+    for constant, field in TUNING_FIELD_BY_CONSTANT.items():
+        value = effective_value(document, kind, BEND_STRUCT, field)
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            raise InputError(f"{kind} {BEND_STRUCT}.{field} 실효 값이 수가 아니다: {value!r}")
+        inputs[constant] = {"json_field": f"{BEND_STRUCT}.{field}", "value": float(value)}
+    return inputs
+
+
+def measure_tuning_lag(tuning_path, kind):
+    inputs = load_effective_inputs(tuning_path, kind)
+    rise = inputs["LAG_RISE_SECONDS"]["value"]
+    recovery = inputs["LAG_ASYMMETRIC_RECOVERY_SECONDS"]["value"]
+    ripple_weight = inputs["LAG_RIPPLE_WEIGHT"]["value"]
+    angular_frequency = 2.0 * math.pi * LAG_FREQUENCY_HZ
+    equal_lag, equal_amplitude = measure_ripple_lag_seconds(rise, rise, ripple_weight)
+    asymmetric_lag, asymmetric_amplitude = measure_ripple_lag_seconds(rise, recovery, ripple_weight)
+    analytic = -0.25 / LAG_FREQUENCY_HZ + math.atan(angular_frequency * max(rise, MINIMUM_RISE_SECONDS)) / angular_frequency
+    return {"kind": kind, "tuning_sha256": hashlib.sha256(pathlib.Path(tuning_path).read_bytes()).hexdigest(), "inputs": inputs, "unmapped": list(UNMAPPED_CONSTANTS),
+            "ripple_lag_seconds": {"equal_blend": equal_lag, "analytic": analytic, "asymmetric_recovery": asymmetric_lag},
+            "bend_amplitude": {"equal_blend": equal_amplitude, "asymmetric_recovery": asymmetric_amplitude}}
+
+
+def run_tuning_mode(arguments):
+    if not arguments.kind or not arguments.json:
+        print("--tuning 은 --kind 와 --json 이 함께 필요하다", file=sys.stderr)
+        return EXIT_INPUT
+    try:
+        report = measure_tuning_lag(arguments.tuning, arguments.kind)
+    except InputError as error:
+        print(f"입력 오류: {error}", file=sys.stderr)
+        return EXIT_INPUT
+    pathlib.Path(arguments.json).write_text(json.dumps(report, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    print(json.dumps(report["ripple_lag_seconds"], sort_keys=True))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default="")
+    parser.add_argument("--tuning", default="")
+    parser.add_argument("--kind", default="")
+    parser.add_argument("--json", default="")
     arguments = parser.parse_args()
+    if arguments.tuning:
+        return run_tuning_mode(arguments)
     outcomes_first, digest_first = run_mirror_tests()
     _, digest_second = run_mirror_tests()
     failed = []

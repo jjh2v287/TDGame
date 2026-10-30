@@ -2120,11 +2120,177 @@ def check_cal0_judge():
           {name: (rejudged[name][1]["control_ok"], rejudged[name][1]["candidate"]["variant"]) for name in present})
 
 
+def check_cal0_measure():
+    from datetime import datetime, timedelta
+    output_dir = TEST_DIR / "cal0-b4b"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    measure_script = W / "Tools" / "FluidFX" / "measure_fx_look.py"
+    baseline_script = output_dir / "baseline" / "measure_fx_look.py"
+    baseline_script.parent.mkdir(parents=True, exist_ok=True)
+    baseline_script.write_bytes(subprocess.run(["git", "show", "5674bb4c:Tools/FluidFX/measure_fx_look.py"], capture_output=True, cwd=W).stdout)
+
+    def write_gray(name, value_at):
+        image = Image.new("L", (256, 144))
+        image.putdata([value_at(x, y) for y in range(144) for x in range(256)])
+        image.convert("RGB").save(output_dir / name)
+        return (output_dir / name).as_posix()
+
+    def measure(script, name, regions_path, *extra):
+        output_path = output_dir / f"{name}.json"
+        exit_code, text = python(str(script), "--regions", str(regions_path), "--output", str(output_path), *extra)
+        return exit_code, output_path.read_bytes() if output_path.is_file() else b"", text
+
+    def write_regions(name, images):
+        regions_path = output_dir / f"{name}_regions.json"
+        regions_path.write_text(json.dumps({"images": images}), encoding="utf-8")
+        return regions_path
+
+    def region_metrics(document_bytes, image_id, region_name):
+        image = next(item for item in json.loads(document_bytes)["images"] if item["id"] == image_id)
+        return next(region for region in image["regions"] if region["name"] == region_name)["metrics"]
+
+    stripes = write_gray("stripes.png", lambda x, y: int(round(128 + 80 * math.sin(2 * math.pi * x / 32))))
+    groove = write_gray("groove.png", lambda x, y: 60 if 122 <= x < 134 else 200)
+    gradient = write_gray("gradient.png", lambda x, y: 30 + x // 2 + (y // 9) * 3)
+    analysed = write_regions("analysed", [
+        {"path": stripes, "id": "stripes", "regions": [{"name": "tile", "kind": "fog", "box": [0, 0, 256, 144], "analyses": ["autocorrelation", "spectrum"]}]},
+        {"path": groove, "id": "groove", "regions": [{"name": "groove_line", "kind": "snow", "box": [32, 40, 224, 104], "analyses": ["line_profile"], "line": [[64, 72], [191, 72]], "cm_per_px": 2}]},
+        {"path": gradient, "id": "volume", "regions": [{"name": "volume", "kind": "volume", "box": [8, 8, 248, 136]}, {"name": "fog", "kind": "fog", "box": [8, 8, 248, 136]}]}])
+    exit_code, measured, text = measure(measure_script, "analysed", analysed)
+    tile = region_metrics(measured, "stripes", "tile") if exit_code == 0 else {}
+    check("T50 B4b 주기 32px 줄무늬: autocorrelation period_px 32±1·secondary_peak > 0.5, spectrum dominant_wavelength_px 32±1",
+          abs(tile.get("autocorrelation", {}).get("period_px", 0) - 32) <= 1 and tile["autocorrelation"]["secondary_peak"] > 0.5 and abs(tile.get("spectrum", {}).get("dominant_wavelength_px", 0) - 32) <= 1, (exit_code, tile, text[-300:]))
+    line = region_metrics(measured, "groove", "groove_line").get("line_profile", {}) if exit_code == 0 else {}
+    check("T51 B4b 폭 12px 홈 line_profile(cm_per_px 2): groove_width_cm 24±2·gap_count 0", abs((line.get("groove_width_cm") or 0) - 24) <= 2 and line.get("gap_count") == 0, line)
+    volume = region_metrics(measured, "volume", "volume") if exit_code == 0 else {}
+    check("B4b kind volume 은 atmosphere 별칭(같은 상자 fog 와 값 동일)·분석 키 없음", "atmosphere" in volume and volume == region_metrics(measured, "volume", "fog") and "autocorrelation" not in volume, volume)
+
+    plain_regions = [{"name": "fire", "kind": "fire", "box": [96, 0, 160, 144]}, {"name": "embers", "kind": "embers", "box": [0, 0, 128, 72]}, {"name": "cloud", "kind": "cloud", "box": [0, 0, 256, 144]},
+                     {"name": "fog", "kind": "fog", "box": [16, 16, 240, 128], "object_height_px": 40}, {"name": "dust", "kind": "dust", "box": [0, 72, 128, 144]}, {"name": "snow", "kind": "snow", "box": [128, 0, 256, 72]},
+                     {"name": "sky", "kind": "sky", "box": [128, 72, 256, 144]}, {"name": "water", "kind": "water", "box": [32, 32, 224, 112]}]
+    plain = write_regions("plain", [{"path": stripes, "id": "a", "view": "v", "condition": "c0", "regions": plain_regions},
+                                    {"path": groove, "id": "b", "view": "v", "condition": "c1", "previous": stripes, "regions": plain_regions},
+                                    {"path": gradient, "id": "c", "view": "v", "condition": "c2", "previous": groove, "regions": plain_regions}])
+    base_run, new_run = measure(baseline_script, "plain_base", plain), measure(measure_script, "plain_new", plain)
+    check("T52 B4b analyses 없는 영역: 기본 모드 결과 JSON·표준 출력이 기준 커밋 5674bb4c 와 바이트 동일", base_run[0] == new_run[0] == 0 and base_run[1] == new_run[1] and base_run[2] == new_run[2] and b"autocorrelation" not in new_run[1],
+          (base_run[0], new_run[0], len(base_run[1]), len(new_run[1]), new_run[2][-300:]))
+
+    judged_regions = TEST_DIR / "campfire" / "judge" / "campfire_regions.json"
+    live2_targets = W / "Saved" / "AgentOps" / "20261020" / "fx8c" / "scratch" / "live2-targets" / "targets.json"
+    fire_document = {"images": load_json(judged_regions)["images"][:2]} if judged_regions.is_file() else {"images": []}
+    for image in fire_document["images"]:
+        image["path"] = (W / image["path"]).as_posix()
+    fire = write_regions("fire_targets", fire_document["images"])
+    base_run = measure(baseline_script, "fire_base", fire, "--targets", str(live2_targets))
+    new_run = measure(measure_script, "fire_new", fire, "--targets", str(live2_targets))
+    check("B4b 불 경로(--targets) 측정: 결과 JSON·격차표가 기준 커밋과 바이트 동일(모닥불 가짜 스윕 2장)", fire_document["images"] and base_run[0] == new_run[0] == 0 and base_run[1] == new_run[1] and base_run[2] == new_run[2],
+          (len(fire_document["images"]), base_run[0], new_run[0], new_run[2][-300:]))
+
+    small = write_regions("small", [{"path": stripes, "id": "a", "regions": [{"name": "tile", "kind": "fog", "box": [0, 0, 31, 144], "analyses": ["autocorrelation"]}]}])
+    unknown = write_regions("unknown", [{"path": stripes, "id": "a", "regions": [{"name": "tile", "kind": "fog", "box": [0, 0, 64, 64], "analyses": ["histogram"]}]}])
+    small_run, unknown_run = measure(measure_script, "small", small), measure(measure_script, "unknown", unknown)
+    check("B4b 분석 거부: 31px 영역 → 종료 2 '분석에 너무 작음' / 모르는 분석 이름 → 종료 2", small_run[0] == 2 and "분석에 너무 작음" in small_run[2] and unknown_run[0] == 2 and "analyses" in unknown_run[2],
+          (small_run[2][-200:], unknown_run[2][-200:]))
+
+    root = output_dir / "lock-root"
+    shutil.rmtree(root, ignore_errors=True)
+    for tool_text in prereg_lock.JUDGE_TOOL_FILES:
+        (root / tool_text).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(W / tool_text, root / tool_text)
+
+    def put(file_text, content):
+        (root / file_text).parent.mkdir(parents=True, exist_ok=True)
+        (root / file_text).write_text(content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
+        return file_text
+
+    regions_text = put("Tools/FluidFX/calib/regions/b4b_fire.json", {"regions": [{"name": "fire", "kind": "fire", "box": [0, 0, 64, 64]}]})
+    targets_text = put("Tools/FluidFX/calib/targets/b4b_fire.json", {"live2_targets": "Saved/live2/targets.json", "kinds": ["fire"]})
+    live2_text = put("Saved/live2/targets.json", {"targets": []})
+    script_text = put("Tools/FluidFX/check_fluid_foliage_bend.py", "print('reed')\n")
+    offline_scene = {"name": "reed", "offline": {"command": ["{python}", script_text, "--tuning", "{tuning}", "--json", "{output}"]}}
+    plan_text = put("Tools/FluidFX/calib/plans/b4b.json", {"id": "b4b", "scenes": [{"name": "fire", "regions_template": regions_text, "targets": targets_text}, offline_scene]})
+    lock_tool = str(root / "Tools" / "FluidFX" / "prereg_lock.py")
+    required = [plan_text, regions_text, targets_text, live2_text, script_text, *prereg_lock.JUDGE_TOOL_FILES]
+
+    def lock_files(name, *arguments):
+        lock_path = output_dir / f"{name}-lock.json"
+        lock_path.unlink(missing_ok=True)
+        return python(lock_tool, "lock", "--out", str(lock_path), *arguments)[0], lock_path
+
+    def write_sweep(name, lock_path, **fields):
+        created_at = datetime.fromisoformat(load_json(lock_path).get("created_at") or "2026-10-30T00:00:00+09:00")
+        sweep = {"plan": plan_text, "plan_sha256": prereg_lock.file_sha256(root / plan_text), "stage": "screen", "lock": str(lock_path), "lock_sha256": prereg_lock.file_sha256(lock_path),
+                 "started_at": (created_at + timedelta(minutes=1)).isoformat(), "scenes": [{"name": "fire", "regions_template": regions_text, "targets": targets_text}, {"name": "reed", "regions_template": None, "targets": None}]}
+        sweep.update(fields)
+        sweep = {key: value for key, value in sweep.items() if value is not MISSING}
+        sweep_path = output_dir / f"{name}-sweep.json"
+        sweep_path.write_text(json.dumps(sweep), encoding="utf-8")
+        return sweep_path
+
+    def verify(lock_path, sweep_path=None):
+        return python(lock_tool, "verify", "--lock", str(lock_path), *(["--sweep", str(sweep_path)] if sweep_path else []))
+
+    lock_code, plan_lock = lock_files("plan", "--plan", plan_text, "--note", "b4b")
+    lock_document = load_json(plan_lock) if plan_lock.is_file() else {}
+    good = verify(plan_lock, write_sweep("good", plan_lock)) if plan_lock.is_file() else (None, "")
+    check("T65 B4b C8 잠금 v2: --plan 필수 집합(계획·영역 틀·목표·live2·offline 스크립트·도구 7개)·version 2·created_at, 닫힌 세계 스윕 판정 종료 0",
+          lock_code == 0 and lock_document.get("version") == 2 and lock_document.get("created_at") and sorted(lock_document.get("files", {})) == sorted(required) and good[0] == 0, (lock_code, sorted(lock_document.get("files", {})), good[1][-300:]))
+
+    lock_code, file_lock = lock_files("file", *[part for text in required if text != targets_text for part in ("--file", text)])
+    exit_code, text = verify(file_lock, write_sweep("file", file_lock))
+    check("T88 B4b --file 잠금에 targets 누락 → 판정 종료 2 '필수 파일 누락'", lock_code == 0 and exit_code == 2 and "필수 파일 누락" in text and targets_text in text, text[-300:])
+
+    v1_lock = output_dir / "v1-lock.json"
+    v1_lock.write_text(json.dumps({"tool": "prereg_lock", "created": "2026-10-25T21:35:48", "note": "v1", "files": {text: prereg_lock.file_sha256(root / text) for text in (plan_text, regions_text, targets_text, live2_text)}}), encoding="utf-8")
+    staged_v1 = verify(v1_lock, write_sweep("v1-staged", v1_lock))
+    check("T89 B4b v1 잠금 + stage 있는 스윕 → 종료 2", staged_v1[0] == 2 and "v1 잠금은 stage 없는" in staged_v1[1], staged_v1[1][-300:])
+    old_v1 = verify(v1_lock, write_sweep("v1-old", v1_lock, stage=MISSING, lock_sha256=MISSING, started_at=MISSING))
+    check("T66 B4b v1 옛 잠금: verify 일치 0·stage 없는 옛 스윕 판정 통과 0(하위 호환)", verify(v1_lock)[0] == 0 and old_v1[0] == 0, old_v1[1][-300:])
+
+    wrong_sha = verify(plan_lock, write_sweep("wrong-sha", plan_lock, lock_sha256="0" * 64))
+    no_lock = verify(plan_lock, write_sweep("no-lock", plan_lock, lock_sha256=MISSING))
+    early = verify(plan_lock, write_sweep("early", plan_lock, started_at=(datetime.fromisoformat(lock_document.get("created_at") or "2026-10-30T00:00:00+09:00") - timedelta(hours=1)).isoformat()))
+    check("T90 B4b 스윕 lock_sha256 ≠ 잠금 / 단계 스윕에 lock_sha256 없음(--lock 없이 실행) / 잠금 created_at > 스윕 started_at → 각각 종료 2",
+          (wrong_sha[0], no_lock[0], early[0]) == (2, 2, 2) and "lock_sha256" in wrong_sha[1] and "--lock 없이" in no_lock[1] and "started_at" in early[1], (wrong_sha[1][-160:], no_lock[1][-160:], early[1][-160:]))
+
+    moved = verify(plan_lock, write_sweep("moved", plan_lock, scenes=[{"name": "fire", "regions_template": regions_text, "targets": "Tools/FluidFX/calib/targets/other.json"}]))
+    check("B4b 스윕 장면 targets 경로 ≠ 계획 → 종료 2", moved[0] == 2 and "≠ 계획" in moved[1], moved[1][-300:])
+
+    live2_bytes = (root / live2_text).read_bytes()
+    (root / live2_text).write_bytes(live2_bytes + b" ")
+    changed_live2 = verify(plan_lock, write_sweep("live2", plan_lock))
+    (root / live2_text).write_bytes(live2_bytes)
+    check("T91 B4b 목표가 가리키는 live2_targets 1바이트 변경 → 판정 종료 2", changed_live2[0] == 2 and f"sha256 불일치: {live2_text}" in changed_live2[1], changed_live2[1][-300:])
+
+    sweep_tool = root / "Tools" / "FluidFX" / "calib_sweep.py"
+    sweep_bytes = sweep_tool.read_bytes()
+    sweep_tool.write_bytes(sweep_bytes + b"\n")
+    changed_tool = verify(plan_lock)
+    sweep_tool.write_bytes(sweep_bytes)
+    check("T65 B4b 잠금 v2 도구 calib_sweep.py 1바이트 변경 → verify 종료 2", changed_tool[0] == 2 and "sha256 불일치: Tools/FluidFX/calib_sweep.py" in changed_tool[1], changed_tool[1][-300:])
+
+    missing_plan = put("Tools/FluidFX/calib/plans/b4b_missing.json", {"id": "b4b_missing", "scenes": [{"name": "reed", "offline": {"command": ["{python}", "Tools/FluidFX/absent_tool.py", "{output}"]}}]})
+    lock_code, missing_lock = lock_files("missing", "--plan", missing_plan)
+    check("B4b offline 명령 스크립트가 없는 계획 잠금 → 종료 1·잠금 안 씀", lock_code == 1 and not missing_lock.exists(), lock_code)
+
+    rejudged_runs = sorted(path.parent for path in (TEST_DIR / "rejudge").glob("*/lock.json"))
+    compatibility = {}
+    for run_dir in rejudged_runs:
+        try:
+            compatibility[run_dir.name] = prereg_lock.check_sweep_lock(load_json(run_dir / "sweep.json"), run_dir / "lock.json").get("version")
+        except prereg_lock.LockError as error:
+            compatibility[run_dir.name] = str(error)
+    if not rejudged_runs:
+        print("SKIP 재판정 산출 없음(닫힌 세계 하위 호환 시험)")
+    check("B4b 재판정(Q3) 스윕은 --plan 잠금 v2 로 닫힌 세계 판정 통과", all(value == 2 for value in compatibility.values()), compatibility)
+
+
 run_check(check_cal0_b0)
 run_check(check_cal0_patch)
 run_check(check_cal0_lookdev)
 run_check(check_cal0_sweep)
 run_check(check_cal0_judge)
+run_check(check_cal0_measure)
 run_check(check_cal0_integration)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 

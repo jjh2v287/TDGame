@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). 점성·용암 무대 LV_TDFluidViscousStage(FX-14 구역 9: 1 ViscousBloodSlide 3 m 궤도 교반기, 2 ViscousBloodSplash 조각 방출기 피 튐, 3 ViscousMudWorld 고정 창+굴림 공, 4 ViscousMudLocal 창이 움직이는 공을 따름, 5 ViscousBloodFlowDecal 15도 경사+데칼 출력 액터, 6 ViscousBloodFlowMesh 평지 WPO 표면+조각 방출기, 7 ViscousBloodBath 고리 장애물+교반기 3, 8 LavaWorld 별도 Y 줄 100 m 평면, 9 LavaFlow 평지 교반기 흐름+증기)와 DA 6개를 만든다. 실행 전 python Tools/ue_editor.py restart(새 UCLASS TDFluidSurfaceOutputActor, L-build-01), 모든 차선의 조각 병합(fluid_material_look.py merge) 뒤 재질 도구 editor_make_fluid_viscous_material.py, 불 무대(editor_make_fluid_fire_stage.py)와 연기 셋업 무대(editor_make_fluid_smoke_setup_stage.py)가 끝나 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_viscous_stage.py (PowerShell, L-repo-01). 시작 점검(TDFluidSurfaceOutputActor·TDFluidPresetKind.VISCOUS_MUD·LAVA_TILE·TDFluidAreaAddressMode.WRAP 등)이 하나라도 없으면 에셋을 바꾸기 전에 멈춘다. run_in_editor.py 가 SUCCESS 여도 본문 status 가 failed 면 실패로 판정한다(L-editor-73).
 출력: /Game/FluidFX/Presets/DA_TDFluid_{ViscousMud,ViscousBlood,ViscousBloodDecal,LavaTile,LavaLocal,LavaFlow}(모두 override_preset_defaults 끔, 채널 ViscousBlood·ViscousBloodDecal 은 CHANNEL_G_BLOOD 나머지는 CHANNEL_R_MUD), /Game/FluidFX/Maps/LV_TDFluidViscousStage, Saved/FluidFX/fluid_viscous_stage.json(status·preset_tuning_sha256·material_look_sha256·구역별 라벨·카메라 제안·결정 기록). 기존 에셋은 Saved/FluidFX/fluid_viscous_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고 미저장 작업이 있으면 중단한다.
-상태: 미검증(2026-10-29 FX-14 D-2 작성: py_compile 만, 에디터 실행 전). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다고 가정하고(M4) 무대는 DecalBoxHeightCm 를 건드리지 않는다. 증기는 기존 DA_TDFluidSetupSteamPuff 를 쓴다(명세 표기 불 액터와 달리 선례 smoke setup stage 는 볼륨 연기 액터). 추종 방식·조각 방출기 파괴 계기는 보고에 실제 방식을 적는다[추정].
+상태: 미검증(2026-10-29 FX-14 D-2 작성: py_compile 만, 에디터 실행 전). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다고 가정하고(M4) 무대는 DecalBoxHeightCm 를 건드리지 않는다. 증기는 기존 DA_TDFluidSetupSteamPuff 를 쓴다(명세 표기 불 액터와 달리 선례 smoke setup stage 는 볼륨 연기 액터). 추종 방식·조각 방출기 파괴 계기는 보고에 실제 방식을 적는다[추정]. 2026-10-31: 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되던(기본 90°/s) 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)로 고침, 맵 재생성 필요.
 """
 import importlib.util
 import json
@@ -254,12 +254,10 @@ def place_orbit_stirrer(context, pivot, radius_cm, label, folder, height_cm=None
     stirrer_height = particle_stage.STIRRER_HEIGHT_CM if height_cm is None else height_cm
     stirrer = context["actors"].spawn_actor_from_class(context["stirrer_class"], unreal.Vector(pivot[0] + radius_cm, pivot[1], stirrer_height), unreal.Rotator())
     particle_stage.finish_actor(stirrer, label, folder, context["created"])
-    rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-    if rotating is None:
-        raise RuntimeError("교반기에 회전 이동 컴포넌트가 없습니다: " + particle_stage.STIRRER_BLUEPRINT_PATH)
-    rotating.set_editor_property("pivot_translation", unreal.Vector(-radius_cm, 0.0, 0.0))
+    motion = {"pivot_translation": unreal.Vector(-radius_cm, 0.0, 0.0)}
     if degrees_per_sec is not None:
-        rotating.set_editor_property("rotation_rate", unreal.Rotator(roll=0.0, pitch=0.0, yaw=degrees_per_sec))
+        motion["rotation_rate"] = unreal.Rotator(roll=0.0, pitch=0.0, yaw=degrees_per_sec)
+    particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, motion)
     if scale is not None:
         stirrer.set_actor_scale3d(unreal.Vector(scale, scale, scale))
     return stirrer

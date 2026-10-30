@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 HVOL 비교 무대 LV_TDFluidHvolStage(구역 0~8, X축 30 m 간격: 0 SVOL 대 HVOL·1 소용돌이 쌍·2 카메라 정렬·3 바닥 연기·4 경사+높이 캐시·5 단면·6 태그 대상·7 동굴·8 블록 그림자)와 DA_TDFluid_Hvol* 10개를 만든다. 먼저 editor_make_fluid_heterogeneous_volume_material.py(마스터·MI 7)와 FX-8n 무대(교반기 BP_TDFluidStageStirrer)가 성공해 있어야 하고, FX-9 C++(구동 컴포넌트·DA 슬롯·액터 TerrainHeightCache) 통합·재시작 뒤에 돌린다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_hvol_stage.py (기존 DA·맵을 갱신할 때는 Saved/FluidFX/fluid_hvol_stage_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Presets/DA_TDFluid_Hvol*(10), /Game/FluidFX/Maps/LV_TDFluidHvolStage, Saved/FluidFX/fluid_hvol_stage.json(preset_tuning_sha256·material_look_sha256 = check_fluid_preset_data.py --stage-report 형식, 구역 중심·보정 지표, 6c 굽기 요청 초안, JSON 의존 값 대조)
-상태: 2026-10-27 에디터 실행 통과(파동 2 A5-a: DA 10·액터 38·미저장 0, json_dependencies_differ 2건 기록). 구역 4 높이 캐시는 비워 두고 6c(editor_bake_fluid_height_cache.py, assign_actor)가 채운다(cross-plan A-02). 새 조절 구조체는 DA 사본이 없어 구역 0 오프셋(+900 cm)·HVOL 켬·장면 캡처·충돌 마스크는 조절 정본 종류 값에 의존하고, 무대는 빌더 값을 읽어 보고만 한다(DEV-FX9-11). 태그 구역은 Smoke 종류(내부 HVOL 끔)로 태그 HVOL·메시만 구동한다. 블루프린트는 구성 전용.
+상태: 2026-10-27 에디터 실행 통과(파동 2 A5-a: DA 10·액터 38·미저장 0, json_dependencies_differ 2건 기록). 구역 4 높이 캐시는 비워 두고 6c(editor_bake_fluid_height_cache.py, assign_actor)가 채운다(cross-plan A-02). 새 조절 구조체는 DA 사본이 없어 구역 0 오프셋(+900 cm)·HVOL 켬·장면 캡처·충돌 마스크는 조절 정본 종류 값에 의존하고, 무대는 빌더 값을 읽어 보고만 한다(DEV-FX9-11). 태그 구역은 Smoke 종류(내부 HVOL 끔)로 태그 HVOL·메시만 구동한다. 블루프린트는 구성 전용. 2026-10-31: 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고 위치 인수 Rotator(0, v, 0)가 pitch 였던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)와 yaw 키워드로 고침(py_compile·가짜 unreal 핸들 재생성 시험만), 맵 재생성 필요.
 """
 import hashlib
 import importlib.util
@@ -30,6 +30,7 @@ REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_hvol_stage.json")
 PRESET_TUNING_RELATIVE_PATH = ("Content", "FluidFX", "PresetData", "TDFluidPresetTuning.json")
 MATERIAL_LOOK_RELATIVE_PATH = ("Content", "FluidFX", "PresetData", "TDFluidMaterialLook.json")
 PRESET_CHECKER_RELATIVE_PATH = ("Tools", "check_fluid_preset_data.py")
+PARTICLE_STAGE_RELATIVE_PATH = ("Tools", "FluidFX", "editor_make_fluid_particle_stage.py")
 
 FLOOR_Z_CM = 0.0
 ZONE_SPACING_CM = 3000.0
@@ -491,6 +492,7 @@ def main():
     game_mode = assets.load_blueprint_class(GAME_MODE_PATH)
     cube = assets.load_asset(CUBE_MESH_PATH)
     stirrer_class = assets.load_blueprint_class(STIRRER_BLUEPRINT_PATH)
+    particle_stage = load_module("td_fluid_particle_stage", PARTICLE_STAGE_RELATIVE_PATH)
     fluid_actor_class = unreal.load_class(None, FLUID_ACTOR_CLASS_PATH)
     instances = {name: assets.load_asset(f"{MATERIAL_DIR}/{name}") for name in HVOL_MI.values()}
     svol_material = assets.load_asset(f"{MATERIAL_DIR}/{SVOL_MI}")
@@ -605,11 +607,8 @@ def main():
         live_component.set_editor_property("simulation_config", effective)
         location = placement["location"]
         stirrer = spawn(stirrer_class, (location[0] - STIRRER_ORBIT_RADIUS_CM, location[1], FLOOR_Z_CM + STIRRER_HEIGHT_CM), placement["label"] + "Stirrer", "Sim")
-        rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-        if rotating is None:
-            raise RuntimeError("교반기에 회전 이동 컴포넌트가 없음: " + STIRRER_BLUEPRINT_PATH)
-        rotating.set_editor_property("pivot_translation", unreal.Vector(STIRRER_ORBIT_RADIUS_CM, 0.0, 0.0))
-        rotating.set_editor_property("rotation_rate", unreal.Rotator(0.0, STIRRER_DEGREES_PER_SEC, 0.0))
+        motion = {"pivot_translation": unreal.Vector(STIRRER_ORBIT_RADIUS_CM, 0.0, 0.0), "rotation_rate": unreal.Rotator(roll=0.0, pitch=0.0, yaw=STIRRER_DEGREES_PER_SEC)}
+        particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, motion)
         fluid_records.append({"label": actor.get_actor_label(), "preset": preset_asset_name(spec["name"]), "kind": spec["kind"], "zone": placement["zone"], "location": list(location), "secondary_material": HVOL_MI[spec["secondary"]], "svol": bool(spec.get("svol")), "stirrer": stirrer.get_actor_label()})
 
     zone6 = zone_center(6)

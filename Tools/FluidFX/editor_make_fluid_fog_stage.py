@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 안개 무대 LV_TDFluidFogStage(구역 0~6 은 X축 30 m 간격, 구역 7A 대형 창 + 200 m 정적 상자는 Y +250 m 띠, 7B 수동 7변형 진열은 Y −150 m 띠, 구역 8 은 Y −350 m 띠: 8A 가르기 FogMist·8B 휘젓기 FogMistStir 에 교반기, 8C 감싸기 타일 FogTileSim)와 DA 7개(Smoke 대리 3·FogMist 2·FogMistStir 1·FogTileSim 1)를 만든다. 먼저 editor_make_fluid_fog_material.py 와 FX-8n 무대 스크립트(교반기 BP_TDFluidStageStirrer)가 성공해 있어야 하고, 모양 정본 병합 뒤에 돌린다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fog_stage.py (기존 DA·맵을 갱신할 때는 Saved/FluidFX/fluid_fog_stage_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Presets/DA_TDFluid_FogAmbient·FogRoom·FogTrail·FogCharacter·FogCut·FogStir·FogTileSync,/Game/FluidFX/Maps/LV_TDFluidFogStage, /Game/FluidFX/Materials/M_TD_FluidFogStageFloor·M_TD_FluidFogStageWall(없을 때만 만듦), Saved/FluidFX/fluid_fog_stage.json(preset_tuning_sha256·material_look_sha256, check_fluid_preset_data.py --stage-report 형식)
-상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·validate_stage_layout 만. 2026-10-26 에디터 실행 status ok·액터 37·DA 4·바닥·벽 재질 2, stage-report 오류 0, 화면 판정 전). 미저장 작업이 있으면 중단하고, 시작 때 프리셋 정본 검사·다시 읽기를 한다. 볼륨 상자 높이 1300 cm(돌출 범위 1000 + 윗면 페이드 300, 아래면 = 바닥)·광원·높이 안개 값은 무대 상수다(D-64 ② 편차, 보정은 룩데브 props). 시뮬 액터는 따라가기를 끄고 활성 볼륨(2000 cm)으로 가까운 것만 깨운다(따라가기를 켜면 안개판이 모든 구역으로 따라옴, 반박 M9). MPC 쓰기 액터는 FogAmbient 하나다. 2026-10-26 FX-10c: 7A FogAmbient 종류를 Smoke 대리에서 FogMist(40 m 창)로 바꾸고 구역 8(TileBandFloor)을 더함, 배치 점검을 종류별 창 × 상자 배율로 일반화(이웃 중심 거리 > 활성 거리 + 두 반폭), 종류 값(창·감싸기·상자 배율 상한)은 에셋 변경 전에 점검. 에디터 실행 전(py_compile·가짜 unreal·validate_stage_layout 만). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(덮어쓰기, 액터 43·DA 7, MI 15 단언 통과), stage-report stale 0, 화면 판정 전.
+상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·validate_stage_layout 만. 2026-10-26 에디터 실행 status ok·액터 37·DA 4·바닥·벽 재질 2, stage-report 오류 0, 화면 판정 전). 미저장 작업이 있으면 중단하고, 시작 때 프리셋 정본 검사·다시 읽기를 한다. 볼륨 상자 높이 1300 cm(돌출 범위 1000 + 윗면 페이드 300, 아래면 = 바닥)·광원·높이 안개 값은 무대 상수다(D-64 ② 편차, 보정은 룩데브 props). 시뮬 액터는 따라가기를 끄고 활성 볼륨(2000 cm)으로 가까운 것만 깨운다(따라가기를 켜면 안개판이 모든 구역으로 따라옴, 반박 M9). MPC 쓰기 액터는 FogAmbient 하나다. 2026-10-26 FX-10c: 7A FogAmbient 종류를 Smoke 대리에서 FogMist(40 m 창)로 바꾸고 구역 8(TileBandFloor)을 더함, 배치 점검을 종류별 창 × 상자 배율로 일반화(이웃 중심 거리 > 활성 거리 + 두 반폭), 종류 값(창·감싸기·상자 배율 상한)은 에셋 변경 전에 점검. 에디터 실행 전(py_compile·가짜 unreal·validate_stage_layout 만). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(덮어쓰기, 액터 43·DA 7, MI 15 단언 통과), stage-report stale 0, 화면 판정 전. 2026-10-31: 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고(기본 90°/s) 위치 인수 Rotator(0, v, 0)가 pitch 였던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)와 yaw 키워드로 고침, 맵 재생성 필요.
 """
 import hashlib
 import importlib.util
@@ -30,6 +30,7 @@ REPORT_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_fog_stage.json")
 PRESET_TUNING_RELATIVE_PATH = ("Content", "FluidFX", "PresetData", "TDFluidPresetTuning.json")
 MATERIAL_LOOK_RELATIVE_PATH = ("Content", "FluidFX", "PresetData", "TDFluidMaterialLook.json")
 PRESET_CHECKER_RELATIVE_PATH = ("Tools", "check_fluid_preset_data.py")
+PARTICLE_STAGE_RELATIVE_PATH = ("Tools", "FluidFX", "editor_make_fluid_particle_stage.py")
 
 FLOOR_Z_CM = 0.0
 ZONE_SPACING_CM = 3000.0
@@ -342,6 +343,16 @@ def load_preset_checker():
     return checker
 
 
+def load_particle_stage():
+    module_path = project_path(*PARTICLE_STAGE_RELATIVE_PATH)
+    module_spec = importlib.util.spec_from_file_location("td_fluid_particle_stage", module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise RuntimeError(f"입자 무대 공용 함수 모듈 없음: {module_path}")
+    particle_stage = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(particle_stage)
+    return particle_stage
+
+
 def read_file_sha256(relative_parts):
     path = project_path(*relative_parts)
     if not os.path.isfile(path):
@@ -512,6 +523,7 @@ def main():
     cube = assets.load_asset(CUBE_MESH_PATH)
     collection = assets.load_asset(COLLECTION_PATH)
     stirrer_class = assets.load_blueprint_class(STIRRER_BLUEPRINT_PATH)
+    particle_stage = load_particle_stage()
     fluid_actor_class = unreal.load_class(None, FLUID_ACTOR_CLASS_PATH)
     instance_names = sorted({spec["instance"] for spec in STATIC_BOX_SPECS} | {spec["instance"] for spec in FLUID_SPECS})
     instances = {name: assets.load_asset(f"{MATERIAL_DIR}/{name}") for name in instance_names}
@@ -628,11 +640,8 @@ def main():
         orbit_center = fluids_by_name[stirrer_spec["fluid"]]["center"]
         radius = stirrer_spec["orbit_radius_cm"]
         stirrer = spawn(stirrer_class, (orbit_center[0] - radius, orbit_center[1], FLOOR_Z_CM + STIRRER_HEIGHT_CM), stirrer_spec["label"], "SimFog")
-        rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-        if rotating is None:
-            raise RuntimeError("교반기에 회전 이동 컴포넌트가 없음: " + STIRRER_BLUEPRINT_PATH)
-        rotating.set_editor_property("pivot_translation", unreal.Vector(radius, 0.0, 0.0))
-        rotating.set_editor_property("rotation_rate", unreal.Rotator(0.0, stirrer_spec["degrees_per_sec"], 0.0))
+        motion = {"pivot_translation": unreal.Vector(radius, 0.0, 0.0), "rotation_rate": unreal.Rotator(roll=0.0, pitch=0.0, yaw=stirrer_spec["degrees_per_sec"])}
+        particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, motion)
         stirrer_records.append({"label": stirrer.get_actor_label(), "fluid": stirrer_spec["fluid"], "orbit_radius_cm": radius, "degrees_per_sec": stirrer_spec["degrees_per_sec"]})
 
     print("단계: 레벨 저장")

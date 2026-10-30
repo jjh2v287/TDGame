@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). FX-15a 솔버 옵션 무대 LV_TDFluidSolverOptionsStage(X축 30 m 간격 구역 3개: 0 기존 연기 DA_TDFluid_SmokeSoft 대 SmokeKernelPressure 를 Y축 10 m 간격·같은 교반기로 나란히 / 1 SmokeWindDrift + 교반기 / 2 SmokeAnchoredCauldron 을 교반기 BP_TDFluidStageStirrer 궤도 부모에 붙임)와 DA_TDFluid_<종류> 3개(build_config_for_preset_kind)를 만든다. 먼저 editor_make_fluid_smoke_stage.py(SmokeSoft 기준 DA)·editor_make_fluid_particle_stage.py(교반기 BP·공용 함수)가 성공해 있어야 하고, FX-15a C++ 통합·에디터 재시작 뒤에 돌린다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_solver_options_stage.py (PowerShell, L-repo-01. 기존 에셋을 갱신할 때만 Saved/FluidFX/fluid_solver_options_stage_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Presets/DA_TDFluid_SmokeKernelPressure·SmokeWindDrift·SmokeAnchoredCauldron, /Game/FluidFX/Maps/LV_TDFluidSolverOptionsStage, Saved/FluidFX/fluid_solver_options_stage.json(preset_tuning_sha256·material_look_sha256 = check_fluid_preset_data.py --stage-report 형식, 구역 중심·카메라 제안, 조절 정본 값 다시 읽기 대조 json_dependencies_differ)
-상태: 미검증(2026-10-29 FX-15a L2 작성: py_compile 만, 에디터 실행 전). 판정은 run_in_editor.py 의 SUCCESS 가 아니라 출력 본문의 "status": "ok" 와 "보고서:" 줄로 한다(L-editor-73). 시작 점검(언리얼 Python 이름·구성 속성)이 실패하면 에셋을 바꾸기 전에 멈춘다. 새 조절 값은 DA 사본이 없고 JSON 종류 값이 정본이라 무대는 읽어 보고만 한다(DEV-FX9-11 선례). 구역 0 기준은 spec 의 DA_TDFluid_Smoke 가 없어 SmokeSoft 로 둔다. 교반기 궤도(반경 300 cm·초당 30도)는 무대 상수 [제안]. 블루프린트는 구성 전용.
+상태: 미검증(2026-10-29 FX-15a L2 작성: py_compile 만, 에디터 실행 전). 판정은 run_in_editor.py 의 SUCCESS 가 아니라 출력 본문의 "status": "ok" 와 "보고서:" 줄로 한다(L-editor-73). 시작 점검(언리얼 Python 이름·구성 속성)이 실패하면 에셋을 바꾸기 전에 멈춘다. 새 조절 값은 DA 사본이 없고 JSON 종류 값이 정본이라 무대는 읽어 보고만 한다(DEV-FX9-11 선례). 구역 0 기준은 spec 의 DA_TDFluid_Smoke 가 없어 SmokeSoft 로 둔다. 교반기 궤도(반경 300 cm·초당 30도)는 무대 상수 [제안]. 블루프린트는 구성 전용. 2026-10-31: 가마솥 궤도 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되던(기본 90°/s) 것을 stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)로 고침, 맵 재생성 필요.
 """
 import importlib.util
 import json
@@ -196,11 +196,8 @@ def place_orbiting_stirrer(stage, actors, stirrer_class, center, label, created)
     location = unreal.Vector(center[0] + CAULDRON_ORBIT_RADIUS_CM, center[1], ACTOR_Z_CM)
     stirrer = actors.spawn_actor_from_class(stirrer_class, location, unreal.Rotator())
     stage.finish_actor(stirrer, label, STAGE_FOLDER + "/Cauldron", created)
-    rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-    if rotating is None:
-        raise RuntimeError("교반기에 회전 이동 컴포넌트가 없습니다: " + stage.STIRRER_BLUEPRINT_PATH)
-    rotating.set_editor_property("pivot_translation", unreal.Vector(-CAULDRON_ORBIT_RADIUS_CM, 0.0, 0.0))
-    rotating.set_editor_property("rotation_rate", unreal.Rotator(roll=0.0, pitch=0.0, yaw=CAULDRON_DEGREES_PER_SEC))
+    motion = {"pivot_translation": unreal.Vector(-CAULDRON_ORBIT_RADIUS_CM, 0.0, 0.0), "rotation_rate": unreal.Rotator(roll=0.0, pitch=0.0, yaw=CAULDRON_DEGREES_PER_SEC)}
+    stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, motion)
     return stirrer
 
 

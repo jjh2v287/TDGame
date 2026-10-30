@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). W-1b 물 부유물·물보라 무대 맵 2개를 만든다: 바다 WP1 LV_TDFluidWaterParticleSeaStage(40 m 평바닥 -250 cm, 수면 판 3x3·Sea 물 액터, 교반기 2개(수직 공전 반경 120 cm·Pitch 120도/초, 수평 스침 반경 150 cm·Yaw 180도/초), 물리 공 3개)와 여울 WP2 LV_TDFluidWaterParticleRapidsStage(직선 30 m·폭 6 m·기울기 3 %·수심 35 cm 강 액터, 유속 350, 장애물 바위 2개, River 물 액터). 맵마다 입자 액터 ATDFluidWaterParticleActor 1개를 두고 맵이 둘인 이유는 물 액터 둘째가 영구 휴면이 되기 때문이다(X-18). 먼저 editor_make_fluid_water_material.py·editor_make_fluid_water_particle_assets.py 와 나이아가라 3종 생성(editor_make_fluid_driven_niagara.py)이 끝나 있어야 하고 모양 조각 병합(A0)이 모든 무대보다 앞서야 한다(L-repo-27).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_particle_stage.py (PowerShell, L-repo-01). 맵마다 요청 파일이 따로다: Saved/FluidFX/fluid_water_particle_sea_stage_request.json·fluid_water_particle_rapids_stage_request.json 의 {"overwrite": true} 가 있을 때만 그 맵과 프리셋을 갱신하고, 없으면 그 맵은 기존 에셋을 보존하며 건너뛴다. 교반기 블루프린트 BP_TDFluidStageStirrer 가 없으면 editor_make_fluid_particle_stage.py 의 함수로 만든다.
 출력: /Game/FluidFX/Presets/DA_TDFluid_WaterParticleSea·DA_TDFluid_WaterParticleRiver, /Game/FluidFX/Maps/LV_TDFluidWaterParticleSeaStage·LV_TDFluidWaterParticleRapidsStage, Saved/FluidFX/fluid_water_particle_sea_stage.json·fluid_water_particle_rapids_stage.json(preset_tuning_sha256·material_look_sha256, 장면별 cd_ids·niagara_system·kind·카메라 제안). 판정은 출력 본문의 TD_WATER_PARTICLE_STAGE_WP1·WP2 PASS|KEPT|FAIL 줄로 한다(L-editor-73).
-상태: 미검증(2026-10-29 W-1b D 작성: py_compile 과 가짜 unreal 시험만, 에디터 실행 전). 입자 액터 속성 이름(water_actor 등)은 C2 의 C++ 이름 snake 변환 가정이라 첫머리에서 점검하고, 강 배치·물 액터 설정·프리셋 보조는 editor_make_fluid_water_stage.py 의 함수를 importlib 로 불러 쓴다(그 파일 최상위 실행은 __main__ 가드 안). 교반기 회전은 CDO 에 SCS 컴포넌트가 없어(L-editor-65) 배치한 액터에서 설정한다. 스크립트가 맵마다 시작 때 check_fluid_preset_data 와 같은 검사와 정본 다시 읽기를 한다. 노출·카메라 값은 초안이다.
+상태: 미검증(2026-10-29 W-1b D 작성: py_compile 과 가짜 unreal 시험만, 에디터 실행 전). 입자 액터 속성 이름(water_actor 등)은 C2 의 C++ 이름 snake 변환 가정이라 첫머리에서 점검하고, 강 배치·물 액터 설정·프리셋 보조는 editor_make_fluid_water_stage.py 의 함수를 importlib 로 불러 쓴다(그 파일 최상위 실행은 __main__ 가드 안). 교반기 회전은 CDO 에 SCS 컴포넌트가 없어(L-editor-65) 배치한 액터에서 설정한다. 스크립트가 맵마다 시작 때 check_fluid_preset_data 와 같은 검사와 정본 다시 읽기를 한다. 노출·카메라 값은 초안이다. 2026-10-31: 교반기 피벗이 회전 속도 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고(바다 맵에 피벗 없음) 다시 읽기가 버려진 옛 핸들을 읽어 통과하던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)로 고침, WP1 맵 재생성 필요.
 """
 import importlib.util
 import json
@@ -253,19 +253,12 @@ def spawn_particle_actor(spawn, resources, water, surface_source, label):
     return actor
 
 
-def place_orbiting_stirrer(spawn_actor, stirrer_class, stirrer_spec, center_z_cm):
+def place_orbiting_stirrer(particle_stage, spawn_actor, stirrer_class, stirrer_spec, center_z_cm):
     radius_cm = stirrer_spec["radius_cm"]
     center_x_cm, center_y_cm = stirrer_spec["center_xy"]
     stirrer = spawn_actor(stirrer_class, (center_x_cm + radius_cm, center_y_cm, center_z_cm), stirrer_spec["label"], "Stirrers")
-    rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-    if rotating is None:
-        raise RuntimeError("교반기에 회전 이동 컴포넌트가 없습니다(배치한 액터에서 읽음, L-editor-65): " + stirrer_spec["label"])
     rate = unreal.Rotator(roll=0.0, pitch=stirrer_spec["rotation"].get("pitch", 0.0), yaw=stirrer_spec["rotation"].get("yaw", 0.0))
-    rotating.set_editor_property("rotation_rate", rate)
-    rotating.set_editor_property("pivot_translation", unreal.Vector(-radius_cm, 0.0, 0.0))
-    actual = rotating.get_editor_property("rotation_rate")
-    if abs(actual.pitch - rate.pitch) > 0.01 or abs(actual.yaw - rate.yaw) > 0.01:
-        raise RuntimeError("교반기 회전 속도 다시 읽기 불일치: " + stirrer_spec["label"])
+    particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, {"rotation_rate": rate, "pivot_translation": unreal.Vector(-radius_cm, 0.0, 0.0)})
     degrees_per_sec = max(abs(rate.pitch), abs(rate.yaw))
     return {"label": stirrer.get_actor_label(), "motion": stirrer_spec["motion"], "radius_cm": radius_cm, "degrees_per_sec": degrees_per_sec,
             "crossing_speed_cm_per_sec": radius_cm * math.radians(degrees_per_sec), "center": [center_x_cm, center_y_cm, center_z_cm]}
@@ -315,7 +308,7 @@ def build_sea_scene(context):
     first_tile, tile_record = spawn_sea_tiles(water_stage, spawn_object, resources["tile_mesh"], resources["surface_material"])
     water = spawn(resources["water_actor_class"], (0.0, 0.0, SEA_SURFACE_Z_CM), context["spec"]["water_label"], "Water")
     water_properties = water_stage.configure_water_actor(water, context["preset"], context["effective"])
-    stirrers = [place_orbiting_stirrer(spawn, context["stirrer_class"], stirrer_spec, SEA_SURFACE_Z_CM) for stirrer_spec in SEA_STIRRER_SPECS]
+    stirrers = [place_orbiting_stirrer(context["particle_stage"], spawn, context["stirrer_class"], stirrer_spec, SEA_SURFACE_Z_CM) for stirrer_spec in SEA_STIRRER_SPECS]
     balls = spawn_physics_balls(spawn_object, resources["sphere"])
     player_start = spawn_player_start(spawn, "WP1", SEA_FLOOR_TOP_Z_CM, water_stage.PLAYER_START_CLEARANCE_CM)
     particle_actor = spawn_particle_actor(spawn, resources, water, first_tile, "WaterParticleSeaParticles")

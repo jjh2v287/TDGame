@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). FX-13r·FX-13c 식생 무대 LV_TDFluidFoliageStage(X축 30 m 간격 구역 6개: 0 바람만 GrassWind / 1 K1 GrassSim + 교반기 / 2 K5 GrassUnderwater + 점광 교반기 / 3 K4 PCG 대역 SM_Grass_VarB + PcgStandIn / 4 K2 눌림 유지 GrassPress + 반경 600 cm 궤도 교반기 / 5 K3 물가 갈대 Reed + 수면 +40 cm 물 영역 + 물속 궤도 교반기, 구역마다 ATDInstancedMeshActor 20×20 m·25 cm 격자 + 시드 고정 흔들림(구역 5는 30 cm 격자 띠 20×4 m), 바닥 180×30 m), 원천 라이브 3(DA_TDFluid_FoliageWalk = FoliageWalk 태그 TDFluidFoliageSource / DA_TDFluid_FoliagePress = FoliagePainter 태그 TDFluidFoliagePressSource / DA_TDFluid_ReedShallows = ReedShallows 물 액터 태그 TDFluidReedSource, 모두 플레이어 따라가기), 흐름 액터 3(RT마다 1개)을 만든다. 먼저 editor_make_fluid_foliage_material.py(targets copy·press·reed)와 editor_make_fluid_particle_stage.py(교반기 BP)·editor_make_fluid_water_material.py(물 MI)가 끝나 있어야 하고 C++ ATDFluidFoliageFlowActor·ATDFluidWaterActor 와 새 종류 3(FoliageWalk·FoliagePainter·ReedShallows)이 빌드되어 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_foliage_stage.py [--underwater-ppv] (PowerShell, L-repo-01)
 출력: /Game/FluidFX/Presets/DA_TDFluid_FoliageWalk·DA_TDFluid_FoliagePress·DA_TDFluid_ReedShallows, /Game/FluidFX/Maps/LV_TDFluidFoliageStage, Saved/FluidFX/fluid_foliage_stage.json(preset_tuning_sha256·material_look_sha256, 구역별 MI·인스턴스 수·그림자 정책·카메라 제안, 채널·원천·흐름 액터·물 영역 기록). 기존 에셋은 Saved/FluidFX/fluid_foliage_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고 미저장 작업이 있으면 중단한다. 성공 여부는 run_in_editor.py 출력 본문(보고 JSON 줄과 마지막 보고서 줄)으로 판정한다.
-상태: 미검증(2026-10-29 파동 3 FX-13c 구역 4·5 추가: py_compile·가짜 unreal(check_fluid_foliage_hlsl.py 의 validate_stage_layout)만, 에디터 실행 전). 이전 상태: 2026-10-27 파동 2 에셋 단계 에디터 실행 status ok(구역 4·인스턴스 6400×4·흐름 액터 1). 공용 함수는 editor_make_fluid_particle_stage.py 를 importlib 로 가져온다. 프리셋은 PresetKind 만 정하고 bOverridePresetDefaults 는 끈다(골든 44 불변). 시작 점검(새 종류 Python 이름·휨 켬·물 층 켬·선행 에셋)이 실패하면 에셋을 바꾸기 전에 멈춘다. 갈대 메시는 SM_GrassTall_01A 가 없으면 SM_Grass Z 3배로 대신한다. 구역 4 교반기는 직선 왕복이 아니라 기존 궤도 회전의 반경만 키운다(S3). 풀 WPO 끄기 거리·레이 트레이싱 WPO·그림자 무효화 정책은 무대 상수(→ TDFluidFoliageSettings, 2.7 편차).
+상태: 미검증(2026-10-29 파동 3 FX-13c 구역 4·5 추가: py_compile·가짜 unreal(check_fluid_foliage_hlsl.py 의 validate_stage_layout)만, 에디터 실행 전). 이전 상태: 2026-10-27 파동 2 에셋 단계 에디터 실행 status ok(구역 4·인스턴스 6400×4·흐름 액터 1). 공용 함수는 editor_make_fluid_particle_stage.py 를 importlib 로 가져온다. 프리셋은 PresetKind 만 정하고 bOverridePresetDefaults 는 끈다(골든 44 불변). 시작 점검(새 종류 Python 이름·휨 켬·물 층 켬·선행 에셋)이 실패하면 에셋을 바꾸기 전에 멈춘다. 갈대 메시는 SM_GrassTall_01A 가 없으면 SM_Grass Z 3배로 대신한다. 구역 4 교반기는 직선 왕복이 아니라 기존 궤도 회전의 반경만 키운다(S3). 풀 WPO 끄기 거리·레이 트레이싱 WPO·그림자 무효화 정책은 무대 상수(→ TDFluidFoliageSettings, 2.7 편차). 2026-10-31: 궤도·물속 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되던(기본 90°/s) 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)로 고침, 맵 재생성 필요.
 """
 import json
 import os
@@ -338,11 +338,8 @@ def place_orbit_stirrer(actors, stirrer_class, spec, created, folder, particle_s
     radius = zone_value(spec, "orbit_radius_cm")
     stirrer = actors.spawn_actor_from_class(stirrer_class, unreal.Vector(center[0] + radius, center[1], zone_value(spec, "stirrer_height_cm")), unreal.Rotator())
     particle_stage.finish_actor(stirrer, f"Foliage{spec['name']}_Stirrer", f"{folder}/{spec['name']}", created)
-    rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-    if rotating is None:
-        raise RuntimeError("교반기에 회전 이동 컴포넌트가 없습니다: " + particle_stage.STIRRER_BLUEPRINT_PATH)
-    rotating.set_editor_property("pivot_translation", unreal.Vector(-radius, 0.0, 0.0))
-    rotating.set_editor_property("rotation_rate", unreal.Rotator(yaw=zone_value(spec, "degrees_per_sec")))
+    motion = {"pivot_translation": unreal.Vector(-radius, 0.0, 0.0), "rotation_rate": unreal.Rotator(yaw=zone_value(spec, "degrees_per_sec"))}
+    particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, motion)
     return stirrer
 
 
@@ -355,8 +352,8 @@ def place_zone_stirrer(actors, stirrer_class, spec, created, folder, particle_st
         return stirrer
     location = stirrer.get_actor_location()
     stirrer.set_actor_location(unreal.Vector(location.x, location.y, UNDERWATER_STIRRER_HEIGHT_CM), False, False)
-    rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-    rotating.set_editor_property("rotation_rate", unreal.Rotator(yaw=UNDERWATER_DEGREES_PER_SEC))
+    particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, {"rotation_rate": unreal.Rotator(yaw=UNDERWATER_DEGREES_PER_SEC)})
+    particle_stage.require_component_properties(stirrer, unreal.RotatingMovementComponent, {"pivot_translation": unreal.Vector(-particle_stage.STIRRER_ORBIT_RADIUS_CM, 0.0, 0.0)})
     light = actors.spawn_actor_from_class(unreal.PointLight, location, unreal.Rotator())
     particle_stage.finish_actor(light, f"Foliage{spec['name']}_StirrerLight", f"{folder}/{spec['name']}", created)
     light.attach_to_actor(stirrer, unreal.Name(""), unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD, False)

@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). 새 UCLASS 2개(UTDFluidFieldInputComponent·UTDFluidMeshFieldEditorLibrary)가 빌드돼 있어야 하므로 실행 전 python Tools/ue_editor.py restart(L-build-01). 먼저 make_fluid_field_input_textures.py, editor_make_fluid_particle_stage.py(교반기 BP), editor_make_fluid_smoke_stage.py(볼륨 연기 재질), editor_make_fluid_fire_stage.py(바닥 MI)가 끝나 있어야 하고, 재질 값 조각 병합은 모두 이 무대보다 먼저다(L-repo-27 ①).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_input_stage.py (PowerShell, L-repo-01). run_in_editor.py 는 스크립트가 실패해도 SUCCESS 를 낼 수 있으니 출력 본문의 TD_FLUID_INPUT_STAGE PASS|FAIL 줄로 판정한다(L-editor-73, 반박 S6).
 출력: /Game/FluidFX/Textures/Input/T_TD_FluidFieldWindSwirl·DensityRings·MaskMaze(TC_VectorDisplacementmap·sRGB 끔·밉 없음·never_stream)·T_TD_FluidMeshField_Cube·Cylinder(BakeMeshSliceField), /Game/FluidFX/Destruction/GC_TD_FluidInputBricks, /Game/FluidFX/Presets/DA_TDFluid_InputBrushBench·InputFieldBench(기존 연기 볼륨 재질 슬롯 재사용, 새 재질 없음), /Game/FluidFX/Maps/LV_TDFluidInputStage(Z1 크기·Z2 궤도·Z3 정지·Z4 필드·Z5 메시 필드·Z6 조각 자국·Z7 다중 터치), Saved/FluidFX/fluid_input_stage.json(preset_tuning_sha256·material_look_sha256·텍스처 sha256·굽기 통계·장면 카메라). 기존 에셋은 Saved/FluidFX/fluid_input_stage_request.json 의 {"overwrite": true} 가 있을 때만 갱신하고 미저장 작업이 있으면 중단한다.
-상태: 미검증(2026-10-29 FX-15b 에셋 도구 초안: py_compile·가짜 unreal 배치 검사만, 에디터 실행 전). 교반기 BP(회전 이동)로 움직임을 구성만 하므로 Z1 왕복은 원 궤도, Z3 정지는 창을 한 번 가로질러 빠져나가는 큰 궤도로 대신한다. MeshDistance 필드 컴포넌트는 굽기 반환값 field_size_cm 을 그대로 쓰고 소유 액터·메시 배율을 1로 둔다(반박 S12). 굽기 반환 status 의 성공 문자열은 BAKE_SUCCESS_STATUSES 로 판정하며 B6e 계약과 다르면 상수를 맞춘다.
+상태: 미검증(2026-10-29 FX-15b 에셋 도구 초안: py_compile·가짜 unreal 배치 검사만, 에디터 실행 전). 교반기 BP(회전 이동)로 움직임을 구성만 하므로 Z1 왕복은 원 궤도, Z3 정지는 창을 한 번 가로질러 빠져나가는 큰 궤도로 대신한다. MeshDistance 필드 컴포넌트는 굽기 반환값 field_size_cm 을 그대로 쓰고 소유 액터·메시 배율을 1로 둔다(반박 S12). 굽기 반환 status 의 성공 문자열은 BAKE_SUCCESS_STATUSES 로 판정하며 B6e 계약과 다르면 상수를 맞춘다. 2026-10-31: 교반기 BP 메시·회전 이동 값이 첫 쓰기 뒤 구성 스크립트 재실행으로 유실되던 결함(맵에 PivotTranslation·RotationRate 없음)을 particle_stage.set_component_properties(핸들 새로 받기·한 번에 쓰기·새 핸들로 다시 읽기)로 고치고 describe_body 가 마지막에 다시 읽어 다르면 FAIL, 맵 재생성 필요.
 """
 import hashlib
 import importlib.util
@@ -390,18 +390,11 @@ def add_instance_component(actor, component_class):
     return component
 
 
-def configure_field_component(component, texture, size_cm, layout_name, uses_signed_encoding):
-    component.set_editor_property("field_texture", texture)
-    component.set_editor_property("field_size_cm", unreal.Vector2D(size_cm[0], size_cm[1]))
-    component.set_editor_property("layout", getattr(unreal.TDFluidFieldInputLayout, layout_name))
-    component.set_editor_property("uses_signed_velocity_encoding", uses_signed_encoding)
-    component.set_editor_property("uv_tile_count", 1.0)
-    component.set_editor_property("uv_scroll_per_sec", unreal.Vector2D(0.0, 0.0))
-    component.set_editor_property("uv_rotation_degrees", 0.0)
-    if component.get_editor_property("field_texture") is None or component.get_editor_property("layout") != getattr(unreal.TDFluidFieldInputLayout, layout_name):
-        raise RuntimeError("필드 컴포넌트 텍스처·배치 지정 확인 실패: " + component.get_name())
-    return {"layout": layout_name, "size_cm": [size_cm[0], size_cm[1]], "uses_signed_velocity_encoding": uses_signed_encoding,
-            "texture": component.get_editor_property("field_texture").get_path_name()}
+def configure_field_component(context, actor, texture, size_cm, layout_name, uses_signed_encoding):
+    properties = {"field_texture": texture, "field_size_cm": unreal.Vector2D(size_cm[0], size_cm[1]), "layout": getattr(unreal.TDFluidFieldInputLayout, layout_name),
+                  "uses_signed_velocity_encoding": uses_signed_encoding, "uv_tile_count": 1.0, "uv_scroll_per_sec": unreal.Vector2D(0.0, 0.0), "uv_rotation_degrees": 0.0}
+    context["particle_stage"].set_component_properties(actor, context["field_component_class"], properties)
+    return {"layout": layout_name, "size_cm": [size_cm[0], size_cm[1]], "uses_signed_velocity_encoding": uses_signed_encoding, "texture": texture.get_path_name()}
 
 
 def spawn_live_actor(context, zone, center, folder):
@@ -418,22 +411,34 @@ def spawn_orbiting_body(context, zone, body, center, folder):
     start_x, start_y = body_start_offset(body)
     stirrer = actors.spawn_actor_from_class(context["stirrer_class"], unreal.Vector(center[0] + start_x, center[1] + start_y, body["height_cm"]), unreal.Rotator())
     particle_stage.finish_actor(stirrer, f"{zone['label']}_{body['name']}", folder, created)
-    mesh_component = stirrer.get_component_by_class(unreal.StaticMeshComponent)
-    rotating = stirrer.get_component_by_class(unreal.RotatingMovementComponent)
-    if mesh_component is None or rotating is None:
-        raise RuntimeError("교반기에 메시·회전 이동 컴포넌트가 없습니다: " + stirrer.get_actor_label())
-    scale = body["half_extent_cm"] * 2.0 / BASIC_SHAPE_SIZE_CM
-    mesh_component.set_editor_property("static_mesh", context["meshes"][body["mesh"]])
-    mesh_component.set_editor_property("relative_scale3d", unreal.Vector(scale, scale, scale))
+    particle_stage.set_component_properties(stirrer, unreal.StaticMeshComponent, body_mesh_properties(context, body))
+    particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, body_motion_properties(body))
     if not body["collides"]:
-        mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
-    pivot_x, pivot_y = body_local_pivot_offset(body)
-    rotating.set_editor_property("pivot_translation", unreal.Vector(pivot_x, pivot_y, 0.0))
-    rotating.set_editor_property("rotation_rate", unreal.Rotator(roll=0.0, pitch=0.0, yaw=body_degrees_per_sec(body)))
+        stirrer.get_component_by_class(unreal.StaticMeshComponent).set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    require_body_properties(context, stirrer, body)
     return stirrer
 
 
-def describe_body(stirrer, body):
+def body_mesh_properties(context, body):
+    scale = body["half_extent_cm"] * 2.0 / BASIC_SHAPE_SIZE_CM
+    return {"static_mesh": context["meshes"][body["mesh"]], "relative_scale3d": unreal.Vector(scale, scale, scale)}
+
+
+def body_motion_properties(body):
+    pivot_x, pivot_y = body_local_pivot_offset(body)
+    return {"pivot_translation": unreal.Vector(pivot_x, pivot_y, 0.0), "rotation_rate": unreal.Rotator(roll=0.0, pitch=0.0, yaw=body_degrees_per_sec(body))}
+
+
+def require_body_properties(context, stirrer, body):
+    particle_stage = context["particle_stage"]
+    particle_stage.require_component_properties(stirrer, unreal.StaticMeshComponent, body_mesh_properties(context, body))
+    particle_stage.require_component_properties(stirrer, unreal.RotatingMovementComponent, body_motion_properties(body))
+    if not body["collides"] and stirrer.get_component_by_class(unreal.StaticMeshComponent).get_collision_enabled() != unreal.CollisionEnabled.NO_COLLISION:
+        raise RuntimeError("교반기 충돌 끔 다시 읽기 불일치(블루프린트 구성 스크립트 재실행 유실 의심): " + stirrer.get_actor_label())
+
+
+def describe_body(context, stirrer, body):
+    require_body_properties(context, stirrer, body)
     return {"label": stirrer.get_actor_label(), "name": body["name"], "mesh": body["mesh"], "half_extent_cm": body["half_extent_cm"], "orbit_radius_cm": body["orbit_radius_cm"],
             "pivot_offset_cm": list(body["pivot_offset_cm"]), "start_angle_degrees": body["start_angle_degrees"], "degrees_per_sec": body_degrees_per_sec(body),
             "speed_cm_per_sec": body.get("speed_cm_per_sec"), "collides": body["collides"]}
@@ -442,7 +447,7 @@ def describe_body(stirrer, body):
 def build_zone_bodies(context, zone, center, folder):
     actor, preset_path = spawn_live_actor(context, zone, center, folder)
     stirrers = [spawn_orbiting_body(context, zone, body, center, folder) for body in zone["bodies"]]
-    return actor, {"preset": preset_path, "bodies": [describe_body(stirrer, body) for stirrer, body in zip(stirrers, zone["bodies"])]}
+    return actor, {"preset": preset_path, "bodies": [describe_body(context, stirrer, body) for stirrer, body in zip(stirrers, zone["bodies"])]}
 
 
 def spawn_field_marker(context, label, location, size_cm, folder):
@@ -464,8 +469,8 @@ def build_zone_fields(context, zone, center, folder):
         texture_spec = next(spec for spec in TEXTURE_SPECS if spec["key"] == field["texture"])
         location = (center[0] + field["offset_cm"][0], center[1] + field["offset_cm"][1], FIELD_MARKER_HEIGHT_CM)
         marker = spawn_field_marker(context, f"{zone['label']}_{field['name']}", location, field["size_cm"], folder)
-        component = add_instance_component(marker, context["field_component_class"])
-        record = configure_field_component(component, context["input_textures"][field["texture"]], (field["size_cm"], field["size_cm"]), texture_spec["layout"], texture_spec["signed"])
+        add_instance_component(marker, context["field_component_class"])
+        record = configure_field_component(context, marker, context["input_textures"][field["texture"]], (field["size_cm"], field["size_cm"]), texture_spec["layout"], texture_spec["signed"])
         record.update({"label": marker.get_actor_label(), "name": field["name"], "center": [location[0], location[1]]})
         fields.append(record)
     return actor, {"preset": preset_path, "fields": fields}
@@ -480,9 +485,9 @@ def build_zone_mesh(context, zone, center, folder):
         actor_scale = stirrer.get_actor_scale3d()
         if max(abs(actor_scale.x - 1.0), abs(actor_scale.y - 1.0), abs(actor_scale.z - 1.0)) > 0.0001 or abs(body["half_extent_cm"] * 2.0 - BASIC_SHAPE_SIZE_CM) > 0.001:
             raise RuntimeError(f"MeshDistance 필드를 싣는 몸체는 배율 1 이어야 합니다(반박 S12): {stirrer.get_actor_label()}")
-        component = add_instance_component(stirrer, context["field_component_class"])
-        field_record = configure_field_component(component, baked_texture, bake_record["field_size_cm"], "MESH_DISTANCE", False)
-        record = describe_body(stirrer, body)
+        add_instance_component(stirrer, context["field_component_class"])
+        field_record = configure_field_component(context, stirrer, baked_texture, bake_record["field_size_cm"], "MESH_DISTANCE", False)
+        record = describe_body(context, stirrer, body)
         record["field"] = field_record
         bodies.append(record)
     return actor, {"preset": preset_path, "bodies": bodies}

@@ -647,3 +647,55 @@
 - 증거: `Saved/AgentOps/20261027/wave2-assets/{a3-hvol-foliage-cloud,a4-mass-input,a5-stages-1,a5-stages-2}/index.md`, `Saved/AgentOps/20261027/wave2-assets/refute-final.md` (e)절
 - 날짜·상태: 2026-10-27 active
 - 발견: claude(FluidFX 파동 2 에셋 단계)
+
+### L-editor-74 나이아가라 `SetVariableTexture`·`SetVariableObject`는 선언되지 않은 사용자 매개변수를 추가하지 않는다(숫자형 setter는 추가한다)
+- 증상: 헤드리스 null RHI 에서 늘 통과하던 `TDGame.FluidFX.Niagara.{TaggedActorReceivesCenterExtentsAndTextures, TagAddedLaterIsDrivenAfterCacheRefresh, DestroyedTaggedActorOrComponentKeepsDriving, PresetSystemSpawnsAttachedOwnedComponent}`가 실제 GPU(`-RenderOffScreen`)에서 "Tagged component DensityPressureTexture parameter is the output texture"로 실패(TDFluidPerfAndNiagaraTests.cpp:254-255)
+- 원인: `UNiagaraComponent::SetVariableTexture`(NiagaraComponent.cpp:3000-3015)는 `FNiagaraParameterStore::SetUObject`(NiagaraParameterStore.h:633-641)를 거치는데, 저장소에 없는 변수는 아무것도 하지 않는다. `SetVariableVec3` 등은 `bAdd=true`로 추가한다. 시험 컴포넌트는 시스템이 없어 `User.DensityPressureTexture`가 선언되지 않았다. null RHI 에서는 출력 텍스처가 없어(L-editor-69) 단언 분기를 비켜 갔다
+- 해결: 시스템 없는 컴포넌트로 텍스처 구동을 시험하면 `GetOverrideParameters().AddParameter(var, true)`로 먼저 선언한다. 제품 경로는 매개변수를 선언한 시스템에서만 텍스처가 들어간다(`TDGame.FluidFXRhi.Niagara.Drive.*`가 증명)
+- 범위: UE 5.8 Niagara 사용자 매개변수 쓰기 전부(텍스처·오브젝트형)
+- 증거: `Saved/AgentOps/20261030/wave3-assets/niagara/fix-r1.md`·`refute-r1.md`, 커밋 7e06b181
+- 날짜·상태: 2026-10-30 active
+- 발견: claude(FluidFX 파동 3 통합 확인)
+
+### L-editor-75 Python으로 만든 반투명 입자 재질에서 `ParticleColor` 기본 출력은 RGB(float3)라 Custom HLSL 의 `.a`가 swizzle 오류
+- 증상: `M_TD_FluidRainDrop` 컴파일 오류(Custom 노드 입력의 `.a` 접근에서 invalid swizzle)
+- 해결: `connect_material_expressions`의 from_output_name 에 "RGBA"를 명시한다(생성기 `link(particle_color, custom, "ParticleColor", "RGBA")`, 비우면 기본 출력 RGB)
+- 범위: UE 5.8 `MaterialEditingLibrary`, 여러 출력 핀을 가진 표현식(ParticleColor·VertexColor 등)
+- 증거: `Saved/AgentOps/20261030/wave3-assets/a3-materials-2/index.md`, `Tools/FluidFX/editor_make_fluid_rain_assets.py`(커밋 47a548a1)
+- 날짜·상태: 2026-10-30 active
+- 발견: claude(FluidFX 파동 3 에셋 단계)
+
+### L-editor-76 무대 PPV가 수동 노출만 덮어쓰고 물리 카메라 노출(기본 켬)을 끄지 않으면 EV100 9~10이 되어 어두운 주광 무대가 PIE에서 완전 검정
+- 증상: `LV_TDFluidCloudStage` PIE HighResShot·Shot 모두 픽셀 0.0(시네 카메라·폰 시선), 오류·경고 0. 다른 무대 스크린숏은 정상. 파동 2 생성부터 있었으나 화면 확인 기록이 없었다
+- 원인: 생성기 PPV가 `auto_exposure_method` 수동과 EV 값만 설정하고 `auto_exposure_apply_physical_camera_exposure`(기본 켬)를 덮어쓰지 않아 카메라 물리 노출이 적용됐다. 기본 10 lux 주광에서 검정
+- 해결: PPV 설정에 `override_auto_exposure_apply_physical_camera_exposure=True`·`auto_exposure_apply_physical_camera_exposure=False`를 함께 넣는다. PIE 월드에서 이것만 끄면 휘도 0.03 → 34~72
+- 범위: 수동 노출을 쓰는 모든 무대 생성기(FluidFX 무대·룩데브)
+- 증거: `Saved/AgentOps/20261030/wave3-finish/cloud/index.md`, `Tools/FluidFX/editor_make_fluid_cloud_stage.py`(커밋 47a548a1)
+- 날짜·상태: 2026-10-30 active
+- 발견: claude(FluidFX 파동 3 마무리)
+
+### L-editor-77 폰을 따라가는 FluidFX 물 액터에 시뮬 상태 캐시를 구우면 시작 창 상태만 담겨, 시작 창에 물이 없으면 전부 0인 캐시가 된다
+- 증상: `pie_bake_fluid_sim_cache.py`로 `LV_TDFluidWaterStage` 강(`TDGen_WaterRiverSimulation`)을 구웠더니 10채널 CRC가 모두 0 바이트 값(2679683870), 머리 sim 시간 4.94 s
+- 원인: 그 액터는 `bShouldFollowPlayerPawn` 참이고 플레이어 시작 (-2600,0) 창에 강이 없다. 씨앗은 중심 차가 반 칸을 넘으면 거부되므로(TDFluidSimStateCacheAsset.cpp:191-194) 폰을 옮겨 구워도 시작 때 쓰이지 않는다. 같은 맵의 `pie_probe_fluid_water.py`가 이 추종에 기대어 고정 창으로 바꿀 수도 없었다
+- 해결: 시뮬 캐시는 고정 창 액터에만 굽는다(spec-fx16b 2.5-5). 굽기 요청 `backend`는 `TD.FluidFX.WaterGpu` 기본 0이라 `cpu`
+- 범위: FX-16b 시뮬 상태 캐시, 폰 추종 FluidFX 액터 전부
+- 증거: `Saved/AgentOps/20261030/wave3-assets/a6-bakes/index.md`, `Saved/AgentOps/20261030/wave3-finish/river/index.md`
+- 날짜·상태: 2026-10-30 active
+- 발견: claude(FluidFX 파동 3 에셋 단계)
+
+### L-editor-78 GUI 에디터 MCP RunTests로 `TDGame.FluidFX.` 전체를 돌리면 600초 제한에 걸리고 장치 제거가 날 수 있다
+- 증상: `python Tools/check_automation_tests.py --filter TDGame.FluidFX.`가 `Tools/uemcp.py:25` TimeoutError(600초), 같은 시각 에디터 로그 `DXGI_ERROR_DRIVER_INTERNAL_ERROR` 장치 제거(`Subsystem.CombatStampRoutesPerActorBasis` 도중). 같은 시험은 오프스크린에서 통과
+- 해결: FluidFX 시험은 `build_and_test.py --rhi null`(헤드리스)과 `--rhi offscreen`(실제 GPU)으로만 돌린다. GUI 실행이 필요하면 필터를 묶음 단위로 좁힌다
+- 범위: FluidFX 자동화 시험 490개 규모
+- 증거: `Saved/AgentOps/20261029/wave3/int/r0/index.md` (4)절, `Saved/Logs/TDGame.log` 6537행(2026-10-30)
+- 날짜·상태: 2026-10-30 active(장치 제거의 근본 원인은 미검증)
+- 발견: claude(FluidFX 파동 3 통합 확인)
+
+### L-editor-79 FluidFX 접촉·스탬프 시험의 탐침 위치는 스탬프 실효 반경과 입자 착수 반경 분포를 먼저 계산해 정한다
+- 증상: `TDGame.FluidFXRhi.WaterParticleAssets.SplashContactReachesWater`가 "Whitewater rises at the splash center within 2 seconds (0.00000)"로 결정론적 실패(TDFluidWaterParticleRhiTests.cpp:1044), 접촉 점은 4개 들어옴
+- 원인: 탐침이 진입점 칸 하나(칸 25cm)인데 접촉 스탬프 실효 반경은 max(반경, 칸 절반)=12.5cm(TDFluidGpuStampBins.cpp:340-344)이라 중심 칸에 닿으려면 30.2cm 안에 떨어져야 한다. 왕관 입자 착수 반경은 38~80cm, 물방울 86~131cm(프레임 적분)라 기하적으로 불가능
+- 해결: 진입점 반경 200cm 안 밀도 출력 최대를 읽는다(실측 0이 아닌 칸 3개, 39.5~63.7cm, 최대 0.295). 명세 편차는 D-64 파동 3 편차에 적는다
+- 범위: 입자·브러시가 물·연기 필드에 찍히는 것을 한 칸으로 확인하는 시험
+- 증거: `Saved/AgentOps/20261030/wave3-finish/r3/{debug,fix,refute}.md`, 커밋 78fa1c1a
+- 날짜·상태: 2026-10-30 active
+- 발견: claude(FluidFX 파동 3 마무리)

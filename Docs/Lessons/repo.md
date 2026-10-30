@@ -256,3 +256,21 @@
 - 증거: `Saved/AgentOps/20261029/wave3/jobs/w3-L3-cp-r0-rhi-replay-014431/`(out.log 0바이트, 01:47 시작)
 - 날짜·상태: 2026-10-30 active
 - 발견: claude(FluidFX 파동 3 일시 정지)
+
+### L-repo-29 본 트리(`core.autocrlf=true`)에서는 바이트로 읽는 텍스트 검사기가 CRLF로 실패하고, Git Bash `sed -i`는 CRLF 파일을 LF로 바꾼다
+- 증상: 작업 트리에서 통과한 `Tools/FluidFX/check_fluid_water_props_hlsl.py`가 본 트리 병합 뒤 새 HLSL 4개를 "CRLF 줄바꿈"으로 실패. `check_fluid_cloud_hlsl.py`도 L5 작업 트리에서 같은 이유로 실패. W3-F 빌더가 Git Bash `sed -i`로 고친 CRLF 소스가 통째로 LF로 바뀌어 diff 가 파일 전체가 됐다
+- 원인: 체크아웃 줄바꿈은 트리마다 다르다(본 트리 autocrlf=true). 검사기가 `open(..., "rb")`나 `newline=""`로 읽고 CR을 금지했다. GNU sed 는 줄 끝 CR을 보존하지 않는다
+- 해결: 검사기는 읽은 뒤 `\r\n`→`\n` 정규화 후 검사(LF 규칙은 저장소 기준 `git ls-files --eol`로 따로 본다). 파일 편집은 Edit 도구나 줄바꿈을 보존하는 파이썬(`newline=""`)으로 하고 `sed -i`는 쓰지 않는다
+- 범위: Tools/FluidFX 검사기 전부, 여러 작업 트리를 쓰는 병렬 차선 워크플로
+- 증거: `Saved/AgentOps/20261029/wave3/merge-L3.md`, `w3-f.md`, 병합 커밋 347c01f8
+- 날짜·상태: 2026-10-30 active
+- 발견: claude(FluidFX 파동 3 병합)
+
+### L-repo-30 FluidFX 검사 도구 판독 주의 두 가지: 굽기 보고는 `--stage-report`에서 STALE로, 런타임 User 변수는 `compare`에서 차이로 센다
+- 증상: `check_fluid_preset_data.py --stage-report Saved/FluidFX/fluid_dense_water_cache.json`(·`fluid_sim_cache.json`)이 STALE. `fluid_material_look.py compare`가 새 NS 4종에서 차이 45
+- 원인: 굽기 보고에는 `preset_tuning_sha256`·`material_look_sha256` 필드가 없다. compare 는 굽지 않는 런타임 User 변수(명세 R7, `*_RUNTIME_USER_VARIABLES`)를 모양 값과 구분하지 않는다
+- 해결: STALE 판정에는 무대 보고만 넣는다. compare 차이는 이름이 런타임 목록에 있는지 대조해 실질 차이를 센다(도구 개선은 CAL-0 때)
+- 범위: D-64 에셋 단계 A7 대조
+- 증거: `Saved/AgentOps/20261030/wave3-assets/a7-a8/index.md`, `a9-tests/index.md` 끝 절
+- 날짜·상태: 2026-10-30 active
+- 발견: claude(FluidFX 파동 3 에셋 단계)

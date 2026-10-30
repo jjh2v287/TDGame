@@ -1,6 +1,6 @@
 {
   "id": "viscous_fx14_blood",
-  "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4)",
+  "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4). blood_splash 는 단계마다 call 로 조각 방출기 trigger_break_at(파괴 액터 (2000, 0, 50) + EXPLOSION_HIT_OFFSET (-55, 0, -35) = (1945, 0, 15), editor_make_fluid_viscous_stage.py build_zone_splash·fire_stage)을 부른 뒤 settle 6 초를 기다린다. 목록 인수는 언리얼 파이썬이 FVector 로 바꾼다(PyWrapperStruct CastPyObject 순서열 허용). [위험] TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌리므로 둘째 단계부터 새 튐이 없다: 0b 에서 단계마다 PIE 재시작이나 재무장 수단을 정하기 전에는 blood_splash 판정을 쓰지 않는다",
   "scenes": [
     {
       "name": "blood_decal",
@@ -62,6 +62,20 @@
         "count": 5,
         "interval": 0.25,
         "kind": "replicate"
+      },
+      "step_apply": {
+        "call": {
+          "TDGen_ViscousBloodSplash_Fragments": {
+            "function": "trigger_break_at",
+            "args": [
+              [
+                1945.0,
+                0.0,
+                15.0
+              ]
+            ]
+          }
+        }
       }
     }
   ],

@@ -1,6 +1,6 @@
 {
   "id": "w5_liquid_sphere_l11",
-  "note": "spec-w5 SP1(MT L11). 구역 4 액체 구 3(맑음·난류·피 구슬, 시뮬은 z −5000 에 숨기고 태그 메시에 입힘). 난류 구의 흐름 잡음·와도를 훑어 경도 이음매·극 띠·난류/맑음 속도 비를 본다. 구 재질(Sphere*) 값은 모양 정본 몫이라 이 계획에서 훑지 않는다. 폰은 zones.4.camera",
+  "note": "spec-w5 SP1(MT L11). 구역 4 액체 구 3(맑음·난류·피 구슬, 시뮬은 z −5000 에 숨기고 태그 메시에 입힘). 난류 구의 흐름 잡음·와도를 훑어 경도 이음매·극 띠·난류/맑음 속도 비를 본다. 구 재질(Sphere*) 값은 모양 정본 몫이라 이 계획에서 훑지 않는다. 폰은 zones.4.camera. [측정 출처 없음, CAL-0 통합] 목표 probe.prop.turbulent_over_clear_speed_p50_ratio [3, 100](가중 1.0)은 WaterPropStats 에 속도 분포가 없어 뗐다: 0b 에서 probe.rt function get_velocity_texture(B5 게터)로 난류·맑음 구 상자 두 개의 rg_len p50 을 읽고 derived ratio 를 만든 뒤 다시 잇는다",
   "scenes": [
     {
       "name": "spheres",
@@ -34,8 +34,7 @@
       "settle": 8.0,
       "live2_refs": [],
       "sources": [
-        "look",
-        "probe"
+        "look"
       ],
       "shots": {
         "count": 5,
@@ -70,8 +69,7 @@
   "reset": "reinit",
   "metrics": {
     "sources": [
-      "look",
-      "probe"
+      "look"
     ],
     "targets": [
       {
@@ -80,13 +78,6 @@
         "weight": 2.0,
         "low": 0.0,
         "high": 1.5
-      },
-      {
-        "scene": "spheres",
-        "metric": "probe.prop.turbulent_over_clear_speed_p50_ratio",
-        "weight": 1.0,
-        "low": 3.0,
-        "high": 100.0
       }
     ]
   }

@@ -1467,6 +1467,15 @@ def check_cal0_lookdev():
     check("T47 probe_rt box·radial_center(방사 벡터장) → radial_alignment_mean ≈1.0·격자 파일 5×5",
           abs((metrics.get("probe.flow.radial_alignment_mean") or 0.0) - 1.0) < 1e-9 and len(grid.get("values", [])) == 5 and len(grid["values"][0]) == 5 and "probe.flow.fraction_above" in metrics, metrics)
     check("T48 probe 함수 이름 없음 → key_errors(단계 무효)", state["key_errors"] == ["s01: probe: probe.stats TDGen_Prop.get_missing_stats: 함수 없음"] * 1 and not missing["probe"]["metrics"], state["key_errors"])
+    WORLD.actors.append(FakeActor("TDGen_FluidVelocity", get_velocity_texture=lambda: "RT_Velocity"))
+    getter_rt = {"label": "TDGen_FluidVelocity", "function": "get_velocity_texture", "box": [0.0, 0.0, 1.0, 1.0], "step": 0.5, "channel": "rg_len", "prefix": "velocity"}
+    with patched(unreal, RenderingLibrary=Props(read_render_target_raw_uv=lambda world, render_target, u, v: FakeLinearColor(1.0 if render_target == "RT_Velocity" else 0.0, 0.0, 0.0, 1.0))):
+        by_getter = lookdev.apply_variant_with_tuning({"probe": {"rt": [getter_rt], "times": [0.5]}}, "s02", state)
+    both = lookdev.find_key_errors({"probe": {"rt": [dict(getter_rt, property="flow_target")]}})
+    neither = lookdev.find_key_errors({"probe": {"rt": [{key: value for key, value in getter_rt.items() if key != "function"}]}})
+    check("T47b probe_rt function(B5 텍스처 게터)로 렌더 타깃 읽기·property 와 function 은 하나만",
+          by_getter["probe"]["metrics"].get("probe.velocity.mean") == 1.0 and not lookdev.find_key_errors({"probe": {"rt": [getter_rt]}})
+          and len(both) == 1 and len(neither) == 1 and "하나만" in both[0] + neither[0], (by_getter.get("probe"), both, neither))
 
     breaks = []
     WORLD.actors.append(FakeActor("TDGen_Breaker", trigger_break=lambda: breaks.append(CLOCK.game_seconds)))

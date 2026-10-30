@@ -1804,10 +1804,323 @@ def check_cal0_integration():
           and not variant["is_control"] and variant["assignments"][0]["value"] == 0.8 and variant["knobs"] == [0], (control["assignments"], variant["assignments"]))
 
 
+def check_cal0_judge():
+    from datetime import datetime, timezone
+    root = TEST_DIR / "cal0-b4a"
+    root.mkdir(parents=True, exist_ok=True)
+    calib_judge.PERF_CANDIDATES_PATH = root / "perf-candidates.json"
+    knob_a, knob_b = "Kinds.T.TDFluidSimulationConfig.A", "Kinds.T.TDFluidSimulationConfig.B"
+    variant_knobs = {"v00": [], "v01": [(knob_a, 0.5)], "v02": [(knob_a, 1.5)], "v03": [(knob_b, 0.5)], "v04": [(knob_b, 1.5)]}
+    target_m = {"metric": "probe.m", "low": 6.0, "high": 10.0, "weight": 1.0}
+    floor = 0.2 / math.sqrt(3)
+    score_noise = floor / 2.0
+
+    def close(value, expected, tolerance=1e-9):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and abs(value - expected) <= tolerance
+
+    def dig(value, *keys):
+        for key in keys:
+            if isinstance(value, dict):
+                value = value.get(key)
+            elif isinstance(value, list) and isinstance(key, int) and -len(value) <= key < len(value):
+                value = value[key]
+            else:
+                return None
+        return value
+
+    def write_document(path, document):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(document, ensure_ascii=False, indent=1), encoding="utf-8")
+        return path
+
+    def rows(*entries):
+        return [(variant, {metric: [value - 0.1, value, value + 0.1] for metric, value in values.items()}) for variant, values in entries]
+
+    def probe_scene(name):
+        return {"name": name, "level": "/Game/CAL0/Level", "camera": {}, "settle": 1.0, "sources": ["probe"], "probe": {"times": [1.0, 1.5, 2.0]}}
+
+    def make_plan(name, scenes, targets, costs=None):
+        params = [dict({"json_path": path, "values": [0.5, 1.0, 1.5]}, **({"cost": costs[path]} if costs and path in costs else {})) for path in (knob_a, knob_b)]
+        metrics = {"sources": sorted({source for scene in scenes for source in scene.get("sources", ["look"])}), "targets": targets}
+        plan_path = write_document(root / name / "plan.json", {"id": name, "scenes": scenes, "params": params, "mode": "one_at_a_time", "repeats": 1, "control_every": 0, "reset": "reinit", "metrics": metrics})
+        lock_path = root / name / "lock.json"
+        python("Tools/FluidFX/prereg_lock.py", "lock", "--out", str(lock_path), "--plan", str(plan_path))
+        return plan_path, lock_path
+
+    def make_sweep(plan_path, lock_path, stage, scene_steps, folder, extra=None):
+        run_dir = plan_path.parent / folder
+        plan = load_json(plan_path)
+        scenes = []
+        for scene_name, steps in scene_steps.items():
+            if steps and isinstance(steps[0], tuple):
+                steps = [{"step": index, "name": f"s{index:02d}_{variant}", "variant": variant, "valid": True, "errors": [], "images": [], "metrics": metrics, "shot_game_times": [1.0, 1.5, 2.0]}
+                         for index, (variant, metrics) in enumerate(steps)]
+            plan_scene = next(scene for scene in plan["scenes"] if scene["name"] == scene_name)
+            scenes.append({"name": scene_name, "level": "/Game/CAL0/Level", "sources": plan_scene.get("sources", ["look"]), "regions_template": plan_scene.get("regions_template"), "targets": plan_scene.get("targets"), "steps": steps})
+        sweep = {"tool": "calib_sweep", "stage": stage, "plan": prereg_lock.relative_text(plan_path), "plan_sha256": prereg_lock.file_sha256(plan_path), "plan_id": plan["id"],
+                 "run_dir": prereg_lock.relative_text(run_dir), "lock": prereg_lock.relative_text(lock_path), "lock_sha256": prereg_lock.file_sha256(lock_path),
+                 "overlay": None, "overlay_sha256": None, "canonical_tuning_sha256": "1" * 64, "canonical_look_sha256": "2" * 64, "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                 "params": [{"json_path": path, "base_value": 1.0, "values": [0.5, 1.0, 1.5]} for path in (knob_a, knob_b)],
+                 "variants": [{"id": variant, "assignments": [{"json_path": path, "value": value, "split_group": False} for path, value in knobs]} for variant, knobs in variant_knobs.items()],
+                 "metrics": plan["metrics"], "scenes": scenes}
+        sweep.update(extra or {})
+        return write_document(run_dir / "sweep.json", sweep)
+
+    def judge(*arguments):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output), patched(sys, argv=["calib_judge.py", *[str(argument) for argument in arguments]]):
+            code = calib_judge.main()
+        return code, output.getvalue()
+
+    def screen(plan_path, lock_path, scene_steps, folder="screen"):
+        sweep_path = make_sweep(plan_path, lock_path, "screen", scene_steps, folder)
+        code, output = judge("--sweep", sweep_path, "--lock", lock_path)
+        result_path = sweep_path.parent / "screen.json"
+        return sweep_path, code, output, load_json(result_path) if result_path.is_file() else {}
+
+    def confirm(plan_path, lock_path, scene_steps, screen_sweep_path, folder="confirm", screen_result_path=None, extra=None):
+        screen_result_path = screen_result_path or screen_sweep_path.parent / "screen.json"
+        fields = {"screen_result": prereg_lock.relative_text(screen_result_path), "screen_result_sha256": prereg_lock.file_sha256(screen_result_path)}
+        fields.update(extra or {})
+        sweep_path = make_sweep(plan_path, lock_path, "confirm", scene_steps, folder, fields)
+        code, output = judge("--sweep", sweep_path, "--lock", lock_path, "--screen-sweep", screen_sweep_path)
+        result_path = sweep_path.parent / "judge.json"
+        return code, output, load_json(result_path) if result_path.is_file() else {}
+
+    screen_steps = {"s1": rows(("v00", {"probe.m": 5.0}), ("v01", {"probe.m": 4.0}), ("v02", {"probe.m": 7.5}), ("v00", {"probe.m": 5.05}), ("v03", {"probe.m": 5.03}), ("v04", {"probe.m": 4.98}), ("v00", {"probe.m": 4.95}))}
+    p1_plan, p1_lock = make_plan("p1", [probe_scene("s1")], [target_m])
+    p1_screen, code, output, screen_document = screen(p1_plan, p1_lock, screen_steps)
+    noise = dig(screen_document, "noise", "s1", "probe.m") or {}
+    params = {param["json_path"]: param for param in screen_document.get("params", [])}
+    required = {"version", "plan_sha256", "overlay_sha256", "canonical_tuning_sha256", "canonical_look_sha256", "lock_sha256", "screen_sweep", "screen_sweep_sha256", "noise", "score_noise", "params", "keep", "best", "second", "insensitive", "unreachable_targets"}
+    check("CAL-0 B4a T13 screen 합성: 잡음 between 0.1·shot 0.2·median_floor 0.2/√3·noise=max, 효과 a 2.5 민감·b 0.03 둔감, keep·best v02·reach, screen.json 필드 전부",
+          code == 0 and required <= set(screen_document) and screen_document["version"] == 2 and close(noise.get("between"), 0.1) and close(noise.get("shot"), 0.2) and close(noise.get("median_floor"), floor) and close(noise.get("noise"), floor)
+          and close(dig(params, knob_a, "effect", "s1", "probe.m"), 2.5) and dig(params, knob_a, "sensitive") is True and close(dig(params, knob_b, "effect", "s1", "probe.m"), 0.03) and dig(params, knob_b, "sensitive") is False
+          and screen_document["keep"] == [knob_a] and dig(screen_document, "best", "variant") == "v02" and close(dig(screen_document, "best", "gain"), 1.25 / score_noise, 1e-6) and screen_document["second"] is None
+          and screen_document["insensitive"] is False and close(dig(screen_document, "score_noise", "s1"), score_noise) and dig(params, knob_a, "reach") == {"probe.m": "inside"} and dig(params, knob_b, "reach") == {"probe.m": "outside"}
+          and screen_document["unreachable_targets"] == [], output[-800:])
+    check("CAL-0 B4a T16 강한 효과(gain > 20)라도 screen 만으로는 adopt 거짓(confirm 필요)", dig(screen_document, "adopt", "decision") is False and "confirm" in " ".join(dig(screen_document, "adopt", "reasons") or []), screen_document.get("adopt"))
+
+    def drift_steps(second_control):
+        return {"s1": rows(("v00", {"probe.m": 5.0}), ("v01", {"probe.m": 4.0}), ("v02", {"probe.m": 7.5}), ("v00", {"probe.m": second_control}), ("v03", {"probe.m": 5.03}), ("v04", {"probe.m": 4.98}), ("v00", {"probe.m": 5.0}))}
+
+    _, pass_code, _, drift_pass = screen(p1_plan, p1_lock, drift_steps(5.15), "screen-drift-pass")
+    _, fail_code, fail_output, drift_fail = screen(p1_plan, p1_lock, drift_steps(5.5), "screen-drift-fail")
+    check("CAL-0 B4a T70 표류 0.15 < 2×median_floor 0.231 통과 / 표류 0.5 > 허용이면 대조 실패(between 0.5 라 동어반복 규칙이면 통과했을 것)·종료 1·best 없음",
+          pass_code == 0 and dig(drift_pass, "scenes", 0, "control_check", "probe.m") == "pass" and close(dig(drift_pass, "scenes", 0, "control_allowed", "probe.m"), 2 * floor)
+          and fail_code == 1 and dig(drift_fail, "scenes", 0, "control_check", "probe.m") == "fail" and close(dig(drift_fail, "noise", "s1", "probe.m", "between"), 0.5) and drift_fail.get("best") is None, (drift_pass.get("scenes"), fail_output[-300:]))
+
+    confirm_steps = {"s1": rows(("v00", {"probe.m": 5.01}), ("v02", {"probe.m": 7.6}), ("v00", {"probe.m": 5.02}), ("v02", {"probe.m": 7.4}), ("v00", {"probe.m": 4.98 - 1e-6}))}
+    code, output, confirmed = confirm(p1_plan, p1_lock, confirm_steps, p1_screen)
+    adopt = confirmed.get("adopt") or {}
+    check("CAL-0 B4a T15 양성: 다른 실행·같은 후보 v02·둘 다 유의 → adopt 참·할당·증거(교집합 0, sha 표 일치)",
+          code == 0 and adopt.get("decision") is True and adopt.get("variant") == "v02" and adopt.get("assignments") == [{"json_path": knob_a, "value": 1.5, "split_group": False}]
+          and dig(adopt, "evidence", "image_overlap") == 0 and dig(adopt, "evidence", "screen_run") != dig(adopt, "evidence", "confirm_run") and all(row["match"] for row in (dig(adopt, "evidence", "sha") or {"x": {"match": False}}).values())
+          and confirmed.get("version") == 2 and confirmed.get("stage") == "confirm" and confirmed.get("lock_sha256") == prereg_lock.file_sha256(p1_lock) and dig(confirmed, "scenes", 0, "candidate_medians", "probe.m") is not None, (adopt.get("reasons"), output[-500:]))
+    verify_close = make_sweep(p1_plan, p1_lock, "verify", {"s1": rows(("v00", {"probe.m": 7.5}), ("v00", {"probe.m": 7.52}), ("v00", {"probe.m": 7.48}))}, "verify-close")
+    verify_close_code, verify_close_output = judge("--sweep", verify_close, "--lock", p1_lock, "--verify-against", p1_plan.parent / "confirm" / "judge.json")
+    verify_far = make_sweep(p1_plan, p1_lock, "verify", {"s1": rows(("v00", {"probe.m": 5.0}), ("v00", {"probe.m": 5.02}), ("v00", {"probe.m": 4.98}))}, "verify-far")
+    verify_far_code, _ = judge("--sweep", verify_far, "--lock", p1_lock, "--verify-against", p1_plan.parent / "confirm" / "judge.json")
+    verify_report = load_json(verify_close.parent / "judge.json") if (verify_close.parent / "judge.json").is_file() else {}
+    check("CAL-0 B4a verify --verify-against: 대조 기준이 앞 채택 후보 중앙값 7.5 ± max(2×screen median_floor, tolerance) 안이면 통과(종료 0), 5.0 이면 실패(종료 1)",
+          verify_close_code == 0 and dig(verify_report, "verify", "passed") is True and close(dig(verify_report, "verify", "checks", 0, "allowed"), 2 * floor) and verify_far_code == 1, verify_close_output[-400:])
+    other_steps = {"s1": rows(("v00", {"probe.m": 5.0}), ("v04", {"probe.m": 7.5}), ("v00", {"probe.m": 5.02}), ("v04", {"probe.m": 7.5}), ("v00", {"probe.m": 4.98}))}
+    code, output, other = confirm(p1_plan, p1_lock, other_steps, p1_screen, "confirm-other")
+    check("CAL-0 B4a T15 음성: confirm 후보가 screen best 와 다름 → adopt 거짓(후보 다름)", dig(other, "adopt", "decision") is False and any("후보 다름" in reason for reason in dig(other, "adopt", "reasons") or []), (dig(other, "adopt"), output[-300:]))
+    wide_steps = {"s1": rows(("v00", {"probe.m": 5.0}), ("v02", {"probe.m": 5.24}), ("v00", {"probe.m": 5.15}), ("v02", {"probe.m": 5.24}), ("v00", {"probe.m": 4.85}))}
+    code, output, wide = confirm(p1_plan, p1_lock, wide_steps, p1_screen, "confirm-wide")
+    check("CAL-0 B4a T71 confirm 잡음 = max(screen noise, confirm between): 작으면 screen 0.115 유지 / 0.3 이면 점수 잡음 0.15 로 개선 0.12 는 유의 아님(screen 잡음이면 유의)",
+          close(dig(confirmed, "scenes", 0, "noise", "probe.m", "noise"), floor) and close(dig(confirmed, "scenes", 0, "noise", "probe.m", "between"), 0.04, 1e-5)
+          and close(dig(wide, "scenes", 0, "noise", "probe.m", "noise"), 0.3) and close(dig(wide, "scenes", 0, "score_noise"), 0.15) and close(dig(wide, "scenes", 0, "variants", "v02", "improvement"), 0.12)
+          and dig(wide, "scenes", 0, "control_ok") is True and dig(wide, "adopt", "decision") is False and any("유의 아님" in reason for reason in dig(wide, "adopt", "reasons") or []), (dig(wide, "scenes", 0, "noise"), dig(wide, "adopt"), output[-300:]))
+
+    _, _, same = confirm(p1_plan, p1_lock, screen_steps, p1_screen, "confirm-same", extra={"run_dir": load_json(p1_screen)["run_dir"]})
+    overlay_code, overlay_output, _ = confirm(p1_plan, p1_lock, confirm_steps, p1_screen, "confirm-overlay", extra={"overlay_sha256": "f" * 64})
+    flat_steps = {"s1": rows(("v00", {"probe.m": 5.0}), ("v01", {"probe.m": 5.0}), ("v02", {"probe.m": 5.02}), ("v00", {"probe.m": 5.05}), ("v03", {"probe.m": 5.03}), ("v04", {"probe.m": 4.98}), ("v00", {"probe.m": 4.95}))}
+    flat_screen, _, _, flat_document = screen(p1_plan, p1_lock, flat_steps, "screen-flat")
+    _, _, flat = confirm(p1_plan, p1_lock, confirm_steps, flat_screen, "confirm-flat")
+    check("CAL-0 B4a T77 같은 스윕 두 번 → adopt 거짓(같은 실행·교집합) / overlay sha 다름 → 종료 2 / 후보 v00(best 없음) → 거짓 / 유의 아님 → 거짓",
+          dig(same, "adopt", "decision") is False and any("같은 실행" in reason for reason in dig(same, "adopt", "reasons") or []) and (dig(same, "adopt", "evidence", "image_overlap") or 0) > 0
+          and overlay_code == 2 and "sha 불일치" in overlay_output and "overlay_sha256" in overlay_output
+          and flat_document.get("best") is None and dig(flat, "adopt", "decision") is False and any("best 가 없다" in reason for reason in dig(flat, "adopt", "reasons") or [])
+          and dig(wide, "adopt", "decision") is False, (dig(same, "adopt", "reasons"), overlay_output[-300:], dig(flat, "adopt", "reasons")))
+
+    edited = load_json(p1_screen.parent / "screen.json")
+    edited["keep"] = [knob_a, knob_b]
+    edited_path = write_document(p1_plan.parent / "screen-edited.json", edited)
+    edited_code, edited_output, _ = confirm(p1_plan, p1_lock, confirm_steps, p1_screen, "confirm-edited", screen_result_path=edited_path)
+    check("CAL-0 B4a T79 screen.json keep 손편집 뒤 confirm 판정 → 종료 2 'screen 재판정 불일치'", edited_code == 2 and "screen 재판정 불일치" in edited_output and "keep" in edited_output, edited_output[-300:])
+
+    target_n = {"metric": "probe.n", "low": 0.0, "high": 4.0, "weight": 1.0, "scene": "s2"}
+    p2_plan, p2_lock = make_plan("p2", [probe_scene("s1"), probe_scene("s2")], [dict(target_m, scene="s1"), target_n])
+    multi_steps = {"s1": rows(("v00", {"probe.m": 5.0}), ("v01", {"probe.m": 4.0}), ("v02", {"probe.m": 7.5}), ("v00", {"probe.m": 5.05}), ("v03", {"probe.m": 4.0}), ("v04", {"probe.m": 6.8}), ("v00", {"probe.m": 4.95})),
+                   "s2": rows(("v00", {"probe.n": 3.0}), ("v01", {"probe.n": 3.0}), ("v02", {"probe.n": 3.0}), ("v00", {"probe.n": 3.05}), ("v03", {"probe.n": 2.0}), ("v04", {"probe.n": 2.2}), ("v00", {"probe.n": 2.95}))}
+    _, code, output, multi = screen(p2_plan, p2_lock, multi_steps)
+    check("CAL-0 B4a T80 다장면: 장면별 최선(s1 v02·s2 v03)이 달라도 gain 합 최대 v04(1.3/q), s1 악화 v03 제외, second v02(차 < 1)",
+          code == 0 and dig(multi, "best", "variant") == "v04" and close(dig(multi, "best", "gain"), 1.3 / score_noise, 1e-6) and dig(multi, "second", "variant") == "v02" and close(dig(multi, "second", "gain"), 1.25 / score_noise, 1e-6)
+          and dig(multi, "scenes", 0, "variants", "v03", "eligible") is False and close(dig(multi, "scenes", 1, "variants", "v03", "score"), 0.0) and close(dig(multi, "scenes", 0, "variants", "v02", "score"), 0.25), (multi.get("best"), multi.get("second"), output[-300:]))
+
+    lane_sweep = {"params": [{"kind": "tuning", "json_path": knob_a, "json_paths": [knob_a, knob_b], "base_value": 1.0}, {"kind": "actor_prop", "json_path": None, "actor_prop": {"label": "Rock", "property": "scale"}, "base_value": 1.0}],
+                  "variants": [{"id": "v00", "knobs": [], "values": [1.0, 1.0], "assignments": [{"json_path": "Kinds.T.TDFluidSimulationConfig.Overlay", "value": 3.0}]},
+                               {"id": "v01", "knobs": [0], "values": [1.5, 1.0], "assignments": [{"json_path": "Kinds.T.TDFluidSimulationConfig.Overlay", "value": 3.0}, {"json_path": knob_a, "value": 1.5}, {"json_path": knob_b, "value": 1.5}]},
+                               {"id": "v02", "knobs": [1], "values": [1.0, 2.0], "assignments": [{"json_path": "Kinds.T.TDFluidSimulationConfig.Overlay", "value": 3.0}]}]}
+    check("CAL-0 B4a 변형↔손잡이 대응(스윕 knobs·values): 연동 json_paths 는 한 손잡이, actor_prop 채택 할당 생성, 덧씌움 할당은 adopt 에서 뺌",
+          calib_judge.variant_param_values(lane_sweep) == {"v00": {}, "v01": {0: 1.5}, "v02": {1: 2.0}}
+          and calib_judge.plan_param_assignments(lane_sweep, "v01") == [{"json_path": knob_a, "value": 1.5}, {"json_path": knob_b, "value": 1.5}]
+          and calib_judge.plan_param_assignments(lane_sweep, "v02") == [{"actor_prop": {"label": "Rock", "property": "scale"}, "value": 2.0}])
+
+    p3_plan, p3_lock = make_plan("p3", [probe_scene("s1")], [target_m, {"metric": "probe.c", "low": 0.0, "high": 1.0, "role": "constraint"}])
+    constraint_steps = {"s1": rows(("v00", {"probe.m": 5.0, "probe.c": 0.5}), ("v01", {"probe.m": 4.0, "probe.c": 0.5}), ("v02", {"probe.m": 7.5, "probe.c": 1.5}), ("v00", {"probe.m": 5.05, "probe.c": 0.5}),
+                                ("v03", {"probe.m": 4.0, "probe.c": 0.5}), ("v04", {"probe.m": 6.8, "probe.c": 0.5}), ("v00", {"probe.m": 4.95, "probe.c": 0.5}))}
+    _, code, output, constrained = screen(p3_plan, p3_lock, constraint_steps)
+    check("CAL-0 B4a T81 제약 실패 변형 v02 가 점수 최선이어도 자격 없음 → 다음 v04",
+          code == 0 and dig(constrained, "best", "variant") == "v04" and dig(constrained, "scenes", 0, "variants", "v02", "constraint_failures") == ["probe.c"] and dig(constrained, "scenes", 0, "variants", "v02", "eligible") is False
+          and close(dig(constrained, "scenes", 0, "variants", "v02", "score"), 0.25), (constrained.get("best"), output[-300:]))
+
+    p4_plan, p4_lock = make_plan("p4", [probe_scene("s1")], [target_m], costs={knob_a: "higher_costs_more"})
+    p4_screen, code, output, costly = screen(p4_plan, p4_lock, screen_steps)
+    _, _, costly_confirm = confirm(p4_plan, p4_lock, confirm_steps, p4_screen)
+    perf_items = load_json(calib_judge.PERF_CANDIDATES_PATH).get("items", []) if calib_judge.PERF_CANDIDATES_PATH.is_file() else []
+    check("CAL-0 B4a T82 최선이 비용 증가 끝(higher_costs_more, 1.0→1.5) → best 없음·cost_blocked_best v02·perf-candidates 기록·confirm adopt 거짓",
+          dig(costly, "best") is None and dig(costly, "cost_blocked_best", "variant") == "v02" and dig(costly, "params", 0, "cost_blocked") == ["v02"]
+          and any(item.get("variant") == "v02" and item.get("plan_sha256") == prereg_lock.file_sha256(p4_plan) for item in perf_items) and dig(costly_confirm, "adopt", "decision") is False, (costly.get("params"), perf_items, output[-300:]))
+
+    relative_target = {"metric": "probe.c", "role": "constraint", "relative_to_control": {"low": 0.9, "high": 1.1}}
+    p5_plan, p5_lock = make_plan("p5", [probe_scene("s1")], [target_m, relative_target])
+    relative_steps = {"s1": rows(("v00", {"probe.m": 5.0, "probe.c": 2.0}), ("v01", {"probe.m": 4.0, "probe.c": 2.0}), ("v02", {"probe.m": 7.5, "probe.c": 2.5}), ("v00", {"probe.m": 5.05, "probe.c": 2.0}),
+                              ("v03", {"probe.m": 4.0, "probe.c": 2.0}), ("v04", {"probe.m": 6.8, "probe.c": 2.0}), ("v00", {"probe.m": 4.95, "probe.c": 2.0}))}
+    _, code, output, relative_document = screen(p5_plan, p5_lock, relative_steps)
+    band = next((row for row in dig(relative_document, "scenes", 0, "targets") or [] if row["metric"] == "probe.c"), {})
+    p6_plan, p6_lock = make_plan("p6", [probe_scene("s1")], [target_m, dict(relative_target, role="score")])
+    _, score_code, score_output, _ = screen(p6_plan, p6_lock, relative_steps)
+    check("CAL-0 B4a T39 relative_to_control {0.9,1.1} 제약 띠 = 대조 2.0 × 0.9·1.1 = [1.8, 2.2](v02 c 2.5 자격 없음) / score 면 종료 2 '1.0 을 포함'",
+          code == 0 and close(band.get("low"), 1.8) and close(band.get("high"), 2.2) and band.get("band_source") == "relative" and dig(relative_document, "best", "variant") == "v04"
+          and score_code == 2 and "1.0 을 포함" in score_output, (band, score_output[-300:]))
+
+    p7_plan, p7_lock = make_plan("p7", [probe_scene("s1"), probe_scene("s2")], [target_m, target_n])
+    _, unscoped_code, unscoped_output, _ = screen(p7_plan, p7_lock, multi_steps)
+    check("CAL-0 B4a T76(판정기 쪽 방어) 장면 2개 계획 target 에 scene 없음 → 종료 2", unscoped_code == 2 and "scene 이 있어야" in unscoped_output, unscoped_output[-300:])
+
+    derived_items = [{"step": index, "variant": "v00", "metrics": {"derived.decay": None}, "samples": {}, "rule_score": 0, "bands": {}, "shot_count": 0} for index in range(3)]
+    derived_targets = calib_judge.resolve_targets({"metrics": {"targets": [{"metric": "derived.decay", "low": 1.0, "high": 3.0, "tolerance": 0.1}]}}, "s", derived_items)
+    undetermined = calib_judge.judge_staged_scene("s", derived_items, derived_targets, True, False)
+    check("CAL-0 B4a T38 맞춤 점 2개 → 파생 None → 목표면 장면 판정 불가(대조 통과 아님)",
+          calib_judge.series_value("half_life", [(0.0, 1.0), (1.0, 0.5)]) is None and undetermined["determinable"] is False and not undetermined["control_ok"]
+          and any("derived.decay" in reason for reason in undetermined["undetermined_reasons"]), undetermined["undetermined_reasons"])
+
+    image_dir = root / "png"
+    image_dir.mkdir(parents=True, exist_ok=True)
+
+    def write_png(name, left, right):
+        image = Image.new("RGB", (256, 144))
+        draw = ImageDraw.Draw(image)
+        for x0, (top, bottom) in ((0, left), (128, right)):
+            draw.rectangle([x0, 0, x0 + 127, 63], fill=(top, top, top))
+            draw.rectangle([x0, 64, x0 + 127, 143], fill=(bottom, bottom, bottom))
+        path = image_dir / f"{name}.png"
+        image.save(path)
+        return prereg_lock.relative_text(path)
+
+    regions_path = write_document(root / "g1" / "regions.json", {"regions": [{"name": "haze", "kind": "fog", "box": [0, 0, 128, 144]}, {"name": "body", "kind": "volume", "box": [128, 0, 256, 144]}]})
+    targets_path = write_document(root / "g1" / "targets.json", {"note": "B4a fixture", "region_metrics": {"haze": {"atmosphere.p95_over_p5": [1.0, 5.0]}}, "kind_metrics": {"volume": {"atmosphere.p95_over_p5": [1.0, 4.0]}}})
+    look_scene = {"name": "fog", "level": "/Game/CAL0/Level", "camera": {}, "settle": 6.0, "sources": ["look"], "shots": {"count": 5, "interval": 0.5},
+                  "regions_template": prereg_lock.relative_text(regions_path), "targets": prereg_lock.relative_text(targets_path)}
+    replicate_images = [write_png(f"rep{index}", (64, level), (32, level // 2)) for index, level in enumerate((128, 160, 192, 224, 240))]
+
+    def look_step(index, images, saved=None, metrics=None, times=None):
+        step = {"step": index, "name": f"s{index:02d}_v00", "variant": "v00", "valid": True, "errors": [], "images": list(images), "image_sha256": [prereg_lock.file_sha256(W / image) for image in images],
+                "shots_expected": 5, "shots_saved": saved or [True] * 5, "shot_game_times": times or [6.0, 6.5, 7.0, 7.5, 8.0]}
+        if metrics is not None:
+            step["metrics"] = metrics
+        return step
+
+    look_steps = [look_step(index, replicate_images, metrics={"probe.flow": [1.0, 2.0, 3.0]}) for index in range(3)]
+    items, band_lookup, _, _ = calib_judge.measure_staged_scene(look_scene, look_scene, look_steps, ["look", "probe"], root / "g1" / "measure")
+    metrics = items[0]["metrics"]
+    resolved = {target["metric"]: target for target in calib_judge.resolve_targets({"metrics": {"targets": [{"metric": "haze.atmosphere.p95_over_p5"}, {"metric": "body.atmosphere.p95_over_p5"}]}}, "fog", items, band_lookup)}
+    check("CAL-0 B4a T29 일반 경로: 영역 PNG 5장(p95/p5 = 2·2.5·3·3.5·3.75) 중앙값 3.0 = 손계산, 띠 출처 region [1,5]",
+          close(metrics.get("haze.atmosphere.p95_over_p5"), 3.0, 1e-6) and resolved["haze.atmosphere.p95_over_p5"]["band_source"] == "region" and resolved["haze.atmosphere.p95_over_p5"]["high"] == 5.0, {key: value for key, value in metrics.items() if "p95_over_p5" in key})
+    check("CAL-0 B4a T30 kind 띠만 있는 영역(body·volume) → 띠 출처 kind [1,4]", resolved["body.atmosphere.p95_over_p5"]["band_source"] == "kind" and resolved["body.atmosphere.p95_over_p5"]["high"] == 4.0, resolved["body.atmosphere.p95_over_p5"])
+    check("CAL-0 B4a T31 <n>. 접두 장별 지표와 중앙값 지표가 둘 다 측정에 있음", close(metrics.get("0.haze.atmosphere.p95_over_p5"), 2.0, 1e-6) and close(metrics.get("4.haze.atmosphere.p95_over_p5"), 3.75, 1e-6) and "haze.atmosphere.p95_over_p5" in metrics)
+    try:
+        calib_judge.resolve_targets({"metrics": {"targets": [{"metric": "haze.atmosphere.p95_over_p6"}]}}, "fog", items, band_lookup)
+        typo_message = ""
+    except calib_judge.JudgeError as error:
+        typo_message = str(error)
+    check("CAL-0 B4a T32 목표 지표 이름 오타 → 판정 불가(입력 오류) + 가까운 이름 3개 중 정답", "측정값에 없다" in typo_message and "가까운 이름" in typo_message and "haze.atmosphere.p95_over_p5" in typo_message, typo_message)
+    check("CAL-0 B4a T33 frame_difference 짝짓기: 같은 단계 k≥1 장에만 키", "1.haze.frame_difference.mean" in metrics and "4.haze.frame_difference.mean" in metrics and "0.haze.frame_difference.mean" not in metrics)
+    check("CAL-0 B4a T34 kind volume 영역 → atmosphere 키(fog 로 측정)", "body.atmosphere.p95_over_p5" in metrics and "body.atmosphere.fine_detail" in metrics)
+    check("CAL-0 B4a T75 sources [look, probe] 한 단계 → 이미지 지표 + probe 지표 합침(probe 목록은 장 표본·중앙값)", "haze.luminance_mean" in metrics and metrics.get("probe.flow") == 2.0 and metrics.get("2.probe.flow") == 3.0 and items[0]["samples"].get("probe.flow") == [1.0, 2.0, 3.0])
+    calib_judge.add_derived_metrics(items, look_steps, [{"name": "glow_ratio", "op": "ratio", "a": "haze.luminance_mean", "b": "body.luminance_mean"}, {"name": "decay", "op": "half_life", "a": "haze.luminance_mean"}], "fog", False)
+    check("CAL-0 B4a T36 ratio(두 영역 밝기 비 2.0 PNG) → derived 2.0±0.02, 시계열 op 는 replicate 장면에서 건너뜀", close(items[0]["metrics"].get("derived.glow_ratio"), 2.0, 0.02) and "derived.decay" not in items[0]["metrics"], items[0]["metrics"].get("derived.glow_ratio"))
+
+    g1_plan, g1_lock = make_plan("g1", [look_scene], [{"metric": "haze.atmosphere.p95_over_p5"}, {"metric": "body.atmosphere.p95_over_p5"}])
+    good = make_sweep(g1_plan, g1_lock, "verify", {"fog": [look_step(index, replicate_images) for index in range(3)]}, "verify")
+    good_code, good_output = judge("--sweep", good, "--lock", g1_lock)
+    short = make_sweep(g1_plan, g1_lock, "verify", {"fog": [look_step(0, replicate_images), look_step(1, replicate_images[:4]), look_step(2, replicate_images)]}, "verify-short")
+    short_code, short_output = judge("--sweep", short, "--lock", g1_lock)
+    unsaved = make_sweep(g1_plan, g1_lock, "verify", {"fog": [look_step(0, replicate_images), look_step(1, replicate_images, saved=[True, True, False, True, True]), look_step(2, replicate_images)]}, "verify-unsaved")
+    unsaved_code, unsaved_output = judge("--sweep", unsaved, "--lock", g1_lock)
+    good_judge = load_json(good.parent / "judge.json") if (good.parent / "judge.json").is_file() else {}
+    check("CAL-0 B4a T74 단계 이미지 4장(잠긴 count 5) / saved 거짓 → 판정 종료 2, 정상 5장 verify 는 끝까지 종료 0",
+          short_code == 2 and "shots.count 5" in short_output and unsaved_code == 2 and "saved" in unsaved_output and good_code == 0 and dig(good_judge, "scenes", 0, "control_ok") is True
+          and close(dig(good_judge, "scenes", 0, "noise", "haze.atmosphere.p95_over_p5", "median_floor"), 1.75 / math.sqrt(5), 1e-5), (short_output[-200:], unsaved_output[-200:], good_output[-300:]))
+
+    single_scene = dict(look_scene, shots={"count": 1, "interval": 0.5})
+    p8_plan, p8_lock = make_plan("p8", [single_scene], [{"metric": "haze.atmosphere.p95_over_p5"}])
+    single_steps = [dict(look_step(index, replicate_images[:1]), shots_expected=1, shots_saved=[True]) for index in range(3)]
+    single_code, single_output = judge("--sweep", make_sweep(p8_plan, p8_lock, "verify", {"fog": single_steps}, "verify"), "--lock", p8_lock)
+    check("CAL-0 B4a T72(판정기 쪽 방어) 단계 실행인데 look shots.count 1 → 종료 2 '표본 ≥3'", single_code == 2 and "표본 ≥3" in single_output, single_output[-300:])
+
+    series_images = [write_png(f"series{index}", (round(204 * 2 ** (-index / 2)),) * 2, (50 + 25 * index,) * 2) for index in range(5)]
+    series_scene = dict(look_scene, shots={"count": 5, "interval": 1.0, "kind": "series"})
+    series_steps = [look_step(index, series_images, times=[10.0, 11.0, 12.0, 13.0, 14.0]) for index in range(3)]
+    series_items, _, _, _ = calib_judge.measure_staged_scene(series_scene, series_scene, series_steps, ["look"], root / "g1" / "series")
+    calib_judge.add_derived_metrics(series_items, series_steps, [{"name": "decay", "op": "half_life", "a": "haze.luminance_mean"}, {"name": "rise", "op": "slope", "a": "body.luminance_mean"}], "fog", True)
+    series_metrics = series_items[0]["metrics"]
+    check("CAL-0 B4a T37 half_life(반감기 2초 5장) → 2.0±0.1, r2 > 0.99", close(series_metrics.get("derived.decay"), 2.0, 0.1) and (series_metrics.get("derived.decay.r2") or 0) > 0.99, (series_metrics.get("derived.decay"), series_metrics.get("derived.decay.r2")))
+    check("CAL-0 B4a T92 slope(선형 증가 5장, 25/255 per 게임초) → ±2%", close(series_metrics.get("derived.rise"), 25 / 255, 0.02 * 25 / 255), series_metrics.get("derived.rise"))
+
+    size, apex_row = 101, 50
+    slope_limit = math.tan(math.radians(20.0))
+    grid_path = write_document(root / "grid" / "wake.json", {"values": [[1.0 if column > 0 and abs(row - apex_row) <= column * slope_limit else 0.0 for column in range(size)] for row in range(size)], "radial_center": [0.0, 0.5]})
+    extent_item = {"step": 0, "variant": "v00", "metrics": {}, "samples": {}, "rule_score": 0, "bands": {}, "shot_count": 0}
+    calib_judge.add_derived_metrics([extent_item], [{"step": 0, "grids": {"wake": prereg_lock.relative_text(grid_path)}}], [{"name": "wake", "op": "extent", "grid": "wake", "threshold": 0.5}], "s", False)
+    check("CAL-0 B4a T40 extent(RT 격자 쐐기 반각 20°) → half_angle_deg 20±1·length 100", close(extent_item["metrics"].get("derived.wake.half_angle_deg"), 20.0, 1.0) and close(extent_item["metrics"].get("derived.wake.length"), 100.0, 1e-6)
+          and 0 < (extent_item["metrics"].get("derived.wake.area_fraction") or 0) < 1, extent_item["metrics"])
+
+    sample_steps = [{"step": index, "name": f"s{index:02d}_v00", "variant": "v00", "valid": True, "images": [], "metrics": {"probe.wake.mean": 2.0},
+                     "probe_samples": [{"time": at, "metrics": {"probe.wake.mean": value}, "grid_paths": {"wake": prereg_lock.relative_text(grid_path)}} for at, value in ((1.0, 1.9), (1.5, 2.0), (2.0, 2.2))]} for index in range(3)]
+    sample_items, _, _, _ = calib_judge.measure_staged_scene({"name": "s1"}, {"name": "s1"}, sample_steps, ["probe"], root / "samples")
+    calib_judge.add_derived_metrics(sample_items, sample_steps, [{"name": "wake", "op": "extent", "grid": "wake", "threshold": 0.5}], "s1", False)
+    sample_metrics = sample_items[0]["metrics"]
+    check("CAL-0 B4a 출처 probe_samples(룩데브 probe.samples 그대로) → 장 표본 [1.9, 2.0, 2.2]·중앙값·표본별 격자 extent 3장",
+          sample_items[0]["samples"].get("probe.wake.mean") == [1.9, 2.0, 2.2] and sample_metrics.get("probe.wake.mean") == 2.0 and sample_metrics.get("2.probe.wake.mean") == 2.2
+          and close(sample_metrics.get("derived.wake.half_angle_deg"), 20.0, 1.0) and len(sample_items[0]["samples"].get("derived.wake.half_angle_deg", [])) == 3, sample_metrics)
+
+    campfire_sweep = load_json(TEST_DIR / "campfire" / "sweep.json")
+    campfire_scene = campfire_sweep["scenes"][0]
+    fire_items, _, _ = calib_judge.measure_fire_scene(campfire_scene, campfire_scene["steps"], root / "fire")
+    fire_pairs = [(item["metrics"].get(name), item["metrics"].get("0." + name)) for item in fire_items for name in item["bands"]]
+    check("CAL-0 B4a T73 불 경로 중앙값 이름 <영역>.<지표> 가 한 장 스윕에서 0. 이름과 같은 값", fire_pairs and all(median == first for median, first in fire_pairs), fire_pairs[:4])
+
+    expected_rejudge = {"campfire-run1": (True, "v01", {"v00": 3.524208828, "v01": 3.004812262, "v02": 3.566825772}),
+                        "campfire-run2": (True, "v02", {"v00": 3.384534853, "v01": 3.702105652, "v02": 3.292333965}),
+                        "campfire-r4-run1": (False, "v02", {"v00": 3.789017843, "v01": 3.484807815, "v02": 3.452179595})}
+    present = [name for name in expected_rejudge if name in rejudged and rejudged[name][1]]
+    if not present:
+        print("SKIP CAL-0 B4a T35 수용 시험 산출 없음")
+        return
+    check("CAL-0 B4a T35 모닥불 불 경로 재판정(고정 사본)이 B4a 전과 같음(control_ok·후보·점수 9자리, Q3)",
+          all((rejudged[name][1]["control_ok"], rejudged[name][1]["candidate"]["variant"], {key: round(value, 9) for key, value in rejudged[name][1]["candidate"]["scores"].items()}) == expected_rejudge[name] for name in present),
+          {name: (rejudged[name][1]["control_ok"], rejudged[name][1]["candidate"]["variant"]) for name in present})
+
+
 run_check(check_cal0_b0)
 run_check(check_cal0_patch)
 run_check(check_cal0_lookdev)
 run_check(check_cal0_sweep)
+run_check(check_cal0_judge)
 run_check(check_cal0_integration)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 

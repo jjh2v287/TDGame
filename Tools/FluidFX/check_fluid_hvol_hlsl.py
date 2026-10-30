@@ -32,6 +32,8 @@ PLANNED_RUNTIME_NAMES = ("TerrainHeightTexture", "TerrainHeightWindow", "Terrain
 REQUIRED_ANCHORS = (
     "- float3(VolumeOffsetCm.xy, tdVolIsSymmetric * VolumeOffsetCm.z);",
     "float3 tdVolQ = lerp(VolWorldPosition, tdVolPlanePosition, tdVolIsDriven);",
+    "float3 tdVolCenter = tdVolIsDriven > 0.5 ? SimCenterWorld : float3(VolObjectPosition.xy, VolObjectPosition.z - VolObjectBoundsCm.z);",
+    "float2 tdVolSize = tdVolIsDriven > 0.5 ? SimExtentsCm.xy : 2.0 * VolObjectBoundsCm.xy;",
     "#define TD_VOL_WINDOW_UV(Q_XY, CENTER_XY, SIZE_XY) (((Q_XY) - (CENTER_XY)) / max((SIZE_XY), float2(1.0, 1.0)) + 0.5)",
     "#define TD_VOL_SIM_DENSITY(TAP) (saturate((TAP).r) * saturate((TAP).a))",
     "float tdVolSectionV = saturate(tdVolHeightCm / max(VolCrossSectionHeightCm, 1.0));",
@@ -40,7 +42,7 @@ REQUIRED_ANCHORS = (
     "float tdVolTopCm = tdVolIsSymmetric > 0.5 ? 0.5 * tdVolExtrudeCm : tdVolExtrudeCm;",
     "tdVolShape = tdVolSectionMode < 2.5 ? tdVolSource * tdVolSection : tdVolSection;",
 )
-FORBIDDEN_TOKENS = ("1.0 - tdVolSectionV", "VolumeHeightCm", "FogWorldPosition", "tdVolQ.z - VolumeOffsetCm.z", "LoadObject")
+FORBIDDEN_TOKENS = ("1.0 - tdVolSectionV", "VolumeHeightCm", "FogWorldPosition", "tdVolQ.z - VolumeOffsetCm.z", "LoadObject", "lerp(float3(VolObjectPosition", "lerp(2.0 * VolObjectBoundsCm")
 FOG_ANCHORS = ("/ fogWindowSize + 0.5", "saturate(fogSimTap.r) * saturate(fogSimTap.a)")
 HVOL_SYNC_ANCHORS = ("/ max((SIZE_XY), float2(1.0, 1.0)) + 0.5", "(saturate((TAP).r) * saturate((TAP).a))")
 FOLD_ROLES = ((0.0, "passive"), (256.0, "driven"))

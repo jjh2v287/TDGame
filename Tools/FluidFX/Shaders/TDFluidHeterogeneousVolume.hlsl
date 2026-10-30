@@ -2,8 +2,8 @@ float tdVolIsDriven = step(0.5, SimGridResolution);
 float tdVolIsSymmetric = step(0.5, ExtrudeSymmetric) * tdVolIsDriven;
 float3 tdVolPlanePosition = TD_VOL_TO_PLANE(VolWorldPosition, PlaneAxisU, PlaneAxisV, PlaneAxisN) + float3(PlaneCoordinateOffsetCm.xy, 0.0) - float3(VolumeOffsetCm.xy, tdVolIsSymmetric * VolumeOffsetCm.z);
 float3 tdVolQ = lerp(VolWorldPosition, tdVolPlanePosition, tdVolIsDriven);
-float3 tdVolCenter = lerp(float3(VolObjectPosition.xy, VolObjectPosition.z - VolObjectBoundsCm.z), SimCenterWorld, tdVolIsDriven);
-float2 tdVolSize = lerp(2.0 * VolObjectBoundsCm.xy, SimExtentsCm.xy, tdVolIsDriven);
+float3 tdVolCenter = tdVolIsDriven > 0.5 ? SimCenterWorld : float3(VolObjectPosition.xy, VolObjectPosition.z - VolObjectBoundsCm.z);
+float2 tdVolSize = tdVolIsDriven > 0.5 ? SimExtentsCm.xy : 2.0 * VolObjectBoundsCm.xy;
 float2 tdVolUv = TD_VOL_WINDOW_UV(tdVolQ.xy, tdVolCenter.xy, tdVolSize);
 float tdVolEdgeCm = TD_VOL_EDGE_DISTANCE_CM(tdVolUv, tdVolSize);
 

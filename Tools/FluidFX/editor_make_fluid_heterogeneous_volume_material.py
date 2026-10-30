@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 엔진 이종 볼륨(HVOL) 마스터 M_TD_FluidHeterogeneousVolume(MD_VOLUME·BLEND_ADDITIVE·HVOL 사용 플래그, Custom 노드 1개 = Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl + TDFluidHeterogeneousVolume.hlsl, 보조 출력 알베도·발광·차폐), 단면 텍스처 3장, 재질 인스턴스 7개를 만든다. 먼저 editor_make_fluid_volume_material.py(T_TD_FluidNoiseVolume)·make_fluid_cross_section_textures.py(PNG)가 끝나 있고, look-fragment-fx9.json 이 모양 정본에 병합되어 있어야 한다(반박 S5).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_heterogeneous_volume_material.py (기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_heterogeneous_volume_material_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Materials/M_TD_FluidHeterogeneousVolume·MI_TD_FluidHeterogeneousVolume_*(7), /Game/FluidFX/Textures/T_TD_FluidCrossSection_{Mushroom,Pump,Ring}(sRGB 끔·16비트 반정밀·고정 주소), Saved/FluidFX/fluid_heterogeneous_volume_material.json(앞단 substrate|legacy, 최종 컴파일 오류 수, 사용 플래그, HLSL sha256, 텍스처 원본 sha256)
-상태: 미검증(2026-10-26 FX-9 묶음 E 작성: py_compile·가짜 unreal·check_fluid_hvol_hlsl.py 만, 에디터 실행 전). 사용 플래그는 노드 만들기 전에 재질 속성으로 켜고 확인은 컴파일 뒤(L-editor-61·36), 속성이 없으면 컴파일 뒤 set_material_usage. 도메인 변경 직후 Additive 경고는 무시하고 최종 컴파일 오류 수로 판정(L-editor-65). MI 텍스처 값은 반환값 대신 다시 읽어 판정(L-editor-66). 마스터는 제자리 재구성하고, 형식이 다른 기존 에셋만 지운 뒤 디스크 잔존을 확인한다(L-editor-67·10). MI 값은 모양 정본(apply_to_instance)만 쓴다.
+상태: 미검증(2026-10-26 FX-9 묶음 E 작성: py_compile·가짜 unreal·check_fluid_hvol_hlsl.py 만, 에디터 실행 전). 사용 플래그는 노드 만들기 전에 재질 속성으로 켜고 확인은 컴파일 뒤(L-editor-61·36), 속성이 없으면 컴파일 뒤 set_material_usage. 도메인 변경 직후 Additive 경고는 무시하고 최종 컴파일 오류 수로 판정(L-editor-65). MI 텍스처 값은 반환값 대신 다시 읽어 판정(L-editor-66). 마스터는 제자리 재구성하고, 형식이 다른 기존 에셋만 지운 뒤 디스크 잔존을 확인한다(L-editor-67·10). MI 값은 모양 정본(apply_to_instance)만 쓴다. 2026-10-31: HVOL 라이브 셰이딩은 ObjectPositionWS 를 (0,0,0)·ObjectBounds 를 거대값으로 넘겨(엔진 LiveShadingPipeline.usf 269~276 TODO) 화면에 안 보였다 → VolObjectPosition 은 로컬 원점 TransformPosition(로컬→월드)·VolObjectBoundsCm 은 ObjectLocalBounds 반 크기 Transform(로컬→월드)의 절댓값으로, HLSL 중심·크기는 lerp 대신 선택식(PIE 3회 반복 확인, Saved/AgentOps/20261031/hvol/r2).
 """
 import gc
 import hashlib
@@ -161,8 +161,15 @@ REQUIRED_UNREAL_NAMES = (
     "CustomMaterialOutputType.CMOT_FLOAT4",
     "MaterialExpressionWorldPosition",
     "MaterialExpressionCameraPositionWS",
-    "MaterialExpressionObjectPositionWS",
-    "MaterialExpressionObjectBounds",
+    "MaterialExpressionConstant3Vector",
+    "MaterialExpressionTransformPosition",
+    "MaterialPositionTransformSource.TRANSFORMPOSSOURCE_LOCAL",
+    "MaterialPositionTransformSource.TRANSFORMPOSSOURCE_WORLD",
+    "MaterialExpressionObjectLocalBounds",
+    "MaterialExpressionTransform",
+    "MaterialVectorCoordTransformSource.TRANSFORMSOURCE_LOCAL",
+    "MaterialVectorCoordTransform.TRANSFORM_WORLD",
+    "MaterialExpressionAbs",
     "MaterialExpressionTime",
     "MaterialExpressionTextureObjectParameter",
     "MaterialExpressionVectorParameter",
@@ -484,6 +491,26 @@ def truncate_if_available(material, source, x, y):
     return truncated
 
 
+def build_object_position(material, x, y):
+    origin = add_node(material, unreal.MaterialExpressionConstant3Vector, x - 440, y, constant=unreal.LinearColor(0.0, 0.0, 0.0, 0.0))
+    to_world = add_node(material, unreal.MaterialExpressionTransformPosition, x - 220, y,
+                        transform_source_type=unreal.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_LOCAL,
+                        transform_type=unreal.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_WORLD)
+    link(origin, to_world)
+    return truncate_if_available(material, to_world, x, y)
+
+
+def build_object_half_extents(material, x, y):
+    bounds = add_node(material, unreal.MaterialExpressionObjectLocalBounds, x - 440, y)
+    to_world = add_node(material, unreal.MaterialExpressionTransform, x - 220, y,
+                        transform_source_type=unreal.MaterialVectorCoordTransformSource.TRANSFORMSOURCE_LOCAL,
+                        transform_type=unreal.MaterialVectorCoordTransform.TRANSFORM_WORLD)
+    link(bounds, to_world, source_output="Half Extents")
+    absolute = add_node(material, unreal.MaterialExpressionAbs, x, y)
+    link(to_world, absolute)
+    return absolute
+
+
 def prepare_master(overwrite):
     material, replaced = load_or_replace(MASTER_PATH, unreal.Material, overwrite)
     if material is not None:
@@ -514,13 +541,14 @@ def build_sources(material, textures):
     builtin_classes = {
         "VolWorldPosition": unreal.MaterialExpressionWorldPosition,
         "VolCameraPosition": unreal.MaterialExpressionCameraPositionWS,
-        "VolObjectPosition": unreal.MaterialExpressionObjectPositionWS,
     }
     for name, expression_class in builtin_classes.items():
         x, y = place()
         sources[name] = (truncate_if_available(material, add_node(material, expression_class, x - 220, y), x, y), "")
     x, y = place()
-    sources["VolObjectBoundsCm"] = (add_node(material, unreal.MaterialExpressionObjectBounds, x, y), "")
+    sources["VolObjectPosition"] = (build_object_position(material, x, y), "")
+    x, y = place()
+    sources["VolObjectBoundsCm"] = (build_object_half_extents(material, x, y), "")
     x, y = place()
     sources["ElapsedSeconds"] = (add_node(material, unreal.MaterialExpressionTime, x, y), "")
     for name in TEXTURE_PARAMETER_NAMES:

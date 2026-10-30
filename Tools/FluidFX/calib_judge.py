@@ -1,6 +1,6 @@
 """실행 환경: 시스템 Python 3(에디터 불필요, look 지표는 measure_fx_look.py 의 numpy·Pillow·scipy 필요). calib_sweep.py 의 sweep.json 을 사전 등록 잠금(prereg_lock.py) 확인 뒤 판정한다. 옛 스윕(stage 없음, spec-wave0-data-bridge-v2 3.9): look 장면은 단계 이미지를 영역 틀로 measure_fx_look.py --targets 에 넣어 LIVE-2 목표 범위를(지표 <n>.<영역>.<지표> 와 N장 중앙값 <영역>.<지표>), 물 장면은 pie_probe_fluid_water 규칙 값을 지표로 삼고 반복 간 범위를 잡음으로 쓴다. 단계 스윕(stage screen|confirm|verify, spec-cal0-v2 1.1·1.2·G-JUDGE·G-DERIVED): 장면 sources(look·water_probe·probe·offline) 지표를 합치고(look 은 목표 파일에 live2_targets 가 있으면 불 경로, 없으면 기본 모드 측정을 펼친 일반 경로이고 장수 = 잠긴 계획 shots.count·shots_saved 참, 단계 metrics 의 숫자 목록과 probe_samples[{time, metrics, grid_paths}](pie_lookdev_fluid probe.samples) 는 장별 표본), metrics.derived(ratio·difference·relative_step·half_life·e_fold·slope·extent, 시계열은 shots.kind series 장면만, extent 는 단계 grids{접두: 격자 JSON 경로 또는 목록} 또는 probe_samples grid_paths) 를 더하며, 목표 띠는 계획 > region_metrics > kind_metrics(영역 kind volume 은 fog 로 측정), relative_to_control 은 대조 기준 × 비, role constraint 는 점수 밖 제약이다.
 실행 명령: python Tools/FluidFX/calib_judge.py --sweep Saved/FluidFX/calib/<run>/sweep.json --lock <잠금 JSON> [--output <Saved 아래 JSON>] [--screen-sweep <screen sweep.json>(confirm 필수)] [--verify-against <앞 confirm judge.json>(verify 선택)]
-출력: 옛 스윕은 judge.json(장면별 targets 표·noise_floor·drift·control_check·curves·candidate·live2_sheet·accepted). screen 은 screen.json v2(plan·overlay·정본 2·lock·screen_sweep sha, noise{장면: {지표: between·shot·median_floor·noise}}·score_noise·params[effect·sensitive·reach·cost_blocked]·keep·best·second·insensitive·unreachable_targets·cost_blocked_best·scenes, adopt 거짓)이고 비용 막힌 최선은 Saved/FluidFX/calib/perf-candidates.json 에 덧붙인다. confirm 은 judge.json v2(stage·sha·scenes(candidate_medians)·candidate·adopt{decision·variant·assignments·reasons·evidence}), verify 는 judge.json v2(verify{against·passed·checks}). 종료 코드 0 판정 완료·대조 통과(verify 대조 기준 통과 포함) / 1 스윕 무효·대조 실패·판정 불가·verify 실패 / 2 잠금·입력 오류·장수 불일치·saved 거짓·sha 불일치·screen 재판정 불일치. 판정 상수(잠금 대상, 결과를 연 뒤 불변): SENSITIVITY_FACTOR 2.0·CONTROL_NOISE_FACTOR 2.0·REACH_NOISE_FACTOR 2.0·MIN_CONTROL_STEPS 3·MIN_SAMPLES 3·SECOND_GAIN_MARGIN 1.0.
+출력: 옛 스윕은 judge.json(장면별 targets 표·noise_floor·drift·control_check·curves·candidate·live2_sheet·accepted). screen 은 screen.json v2(plan·overlay·정본 2·lock·screen_sweep sha, noise{장면: {지표: between·shot·median_floor·noise}}·score_noise·params[effect·sensitive·reach·cost_blocked]·keep·best·second·insensitive·unreachable_targets·cost_blocked_best·scenes, adopt 거짓)이고 비용 막힌 최선은 Saved/FluidFX/calib/perf-candidates.json 에 덧붙인다. confirm 은 judge.json v2(stage·sha·scenes(candidate_medians)·candidate·adopt{decision·variant·assignments·reasons·evidence}, best 손잡이 param scenes 밖 skipped 장면은 건너뜀, offline 장면은 이미지 지문 대신 결정론 증거), verify 는 judge.json v2(verify{against·against_sha256·passed·checks}, 앞 confirm 판정의 plan·plan_sha256·lock_sha256 이 다르면 종료 2). 종료 코드 0 판정 완료·대조 통과(verify 대조 기준 통과 포함) / 1 스윕 무효·대조 실패·판정 불가·verify 실패 / 2 잠금·입력 오류·장수 불일치·saved 거짓·sha 불일치·screen 재판정 불일치. 판정 상수(잠금 대상, 결과를 연 뒤 불변): SENSITIVITY_FACTOR 2.0·CONTROL_NOISE_FACTOR 2.0·REACH_NOISE_FACTOR 2.0·MIN_CONTROL_STEPS 3·MIN_SAMPLES 3·SECOND_GAIN_MARGIN 1.0.
 상태: 오프라인만 검사(합성 탐침 규칙·합성 단계 점수·2026-10-25 수용 시험 산출 재판정, 2026-10-30 CAL-0 B4a 합성 단계 스윕·합성 PNG·격자 fixture), 단계 스윕의 실제 PIE 판정 미실행. 옛 스윕 잡음 바닥은 계획 metrics.noise_floor 가 없으면 비대조 변형 반복 간 최대 범위(반복 2 이상 필요).
 """
 import argparse
@@ -840,7 +840,7 @@ def judge_staged_scene(scene_name, items, targets, is_series, is_offline_only, s
             "control_steps": [item["step"] for item in controls], "diagnostic_drift_over_allowed": diagnostic}
 
 
-def judge_sweep_scenes(sweep, plan, work_dir, screen_noise=None):
+def judge_sweep_scenes(sweep, plan, work_dir, screen_noise=None, skippable=frozenset()):
     plan_scenes = {scene["name"]: scene for scene in plan.get("scenes", [])}
     unscoped = [str(target.get("metric")) for target in sweep["metrics"].get("targets") or [] if "scene" not in target]
     if len(plan_scenes) >= 2 and unscoped:
@@ -850,6 +850,8 @@ def judge_sweep_scenes(sweep, plan, work_dir, screen_noise=None):
         plan_scene = plan_scenes.get(scene["name"])
         if plan_scene is None:
             raise JudgeError(f"{scene['name']}: 잠긴 계획에 이 장면이 없다")
+        if scene.get("skipped") and not scene["steps"] and scene["name"] in skippable:
+            continue
         steps = [step for step in scene["steps"] if step["valid"]]
         if len(steps) != len(scene["steps"]) or not steps:
             raise JudgeError(f"{scene['name']}: 무효 단계가 있거나 단계가 없다")
@@ -865,7 +867,15 @@ def judge_sweep_scenes(sweep, plan, work_dir, screen_noise=None):
             medians = {variant: {name: median_or_none(metric_values(group, name)) for name in group[0]["bands"]} for variant, group in group_by_variant(items).items()}
             result["live2_sheet"] = build_live2_sheet(items, live2, medians, None)
         results.append(result)
+    if not results:
+        raise JudgeError("판정할 장면이 없다(모든 장면 skipped)")
     return results
+
+
+def variant_scenes(sweep, plan, variant):
+    names = [{"name": scene["name"]} for scene in sweep["scenes"]]
+    touched = variant_param_values(sweep).get(variant, {})
+    return {name for index in touched for name in param_scenes(sweep["params"][index], plan, index, names)}
 
 
 def group_by_variant(items):
@@ -1051,9 +1061,15 @@ def build_screen_document(sweep, sweep_path, plan, lock_sha, scene_results, shou
             "scenes": scene_results, "adopt": {"decision": False, "reasons": [SCREEN_ONLY_REASON]}}
 
 
+def is_offline_scene(scene):
+    return scene.get("sources") == ["offline"]
+
+
 def step_fingerprints(sweep):
     fingerprints = set()
     for scene in sweep["scenes"]:
+        if is_offline_scene(scene):
+            continue
         for step in scene["steps"]:
             recorded = step.get("image_sha256")
             if isinstance(recorded, list) and recorded:
@@ -1081,17 +1097,19 @@ def is_offline_only_sweep(sweep):
 
 
 def has_determinism_evidence(sweep):
-    records = [step.get("offline") or {} for scene in sweep["scenes"] for step in scene["steps"]]
-    return bool(records) and all(record.get("output_sha256") is not None and record.get("output_sha256") == record.get("repeat_sha256") for record in records)
+    records = [step.get("offline") or {} for scene in sweep["scenes"] if is_offline_scene(scene) for step in scene["steps"]]
+    return all(record.get("output_sha256") is not None and record.get("output_sha256") == record.get("repeat_sha256") for record in records)
 
 
-def choose_confirm_candidate(screen_result, screen_sweep, sweep, scene_results):
+def choose_confirm_candidate(screen_result, screen_sweep, sweep, scene_results, plan, skipped):
     screen_signatures = {variant: variant_signature(touched) for variant, touched in variant_param_values(screen_sweep).items()}
     confirm_by_signature = {variant_signature(touched): variant for variant, touched in variant_param_values(sweep).items() if variant != CONTROL_ID}
     options, reasons = [], []
     for label in ("best", "second"):
         entry = screen_result.get(label)
         if not entry:
+            continue
+        if variant_scenes(screen_sweep, plan, entry["variant"]) & skipped:
             continue
         confirm_variant = confirm_by_signature.get(screen_signatures.get(entry["variant"]))
         if confirm_variant is None or not any(confirm_variant in scene["variants"] for scene in scene_results):
@@ -1106,13 +1124,14 @@ def choose_confirm_candidate(screen_result, screen_sweep, sweep, scene_results):
     return (options[0] if options else None), reasons
 
 
-def adopt_reasons(candidate, screen_result, screen_sweep, sweep, scene_results, overlap, is_offline_only):
+def adopt_reasons(candidate, screen_result, screen_sweep, sweep, scene_results, overlap):
     reasons = []
     if screen_sweep.get("run_dir") == sweep.get("run_dir"):
         reasons.append(f"screen·confirm 이 같은 실행이다(run_dir {sweep.get('run_dir')})")
-    if is_offline_only and not (has_determinism_evidence(screen_sweep) and has_determinism_evidence(sweep)):
-        reasons.append("offline 단독인데 두 실행의 결정론 증거(단계 offline output_sha256 = repeat_sha256)가 없다")
-    if not is_offline_only and overlap:
+    has_offline_steps = any(is_offline_scene(scene) and scene["steps"] for scene in sweep["scenes"])
+    if has_offline_steps and not (has_determinism_evidence(screen_sweep) and has_determinism_evidence(sweep)):
+        reasons.append("offline 장면인데 두 실행의 결정론 증거(단계 offline output_sha256 = repeat_sha256)가 없다")
+    if overlap:
         reasons.append(f"screen·confirm 이미지·단계 기록 sha 교집합 {overlap}개(같은 촬영 재사용)")
     if not screen_result.get("best"):
         reasons.append("screen.json 에 best 가 없다(후보 v00: 둔감 또는 유의 후보 없음)")
@@ -1158,11 +1177,14 @@ def judge_confirm_document(sweep, sweep_path, plan, lock_path, lock_sha, screen_
     differing = [key for key in REJUDGE_KEYS if canonical_text(json.loads(json.dumps(rejudged[key]))) != canonical_text(screen_result.get(key))]
     if differing:
         raise JudgeError(f"screen 재판정 불일치: {', '.join(differing)}(screen.json 손편집 또는 판정 입력 변경)")
-    scene_results = judge_sweep_scenes(sweep, plan, work_dir, screen_result["noise"])
-    candidate, reasons = choose_confirm_candidate(screen_result, screen_sweep, sweep, scene_results)
+    best_variant = (screen_result.get("best") or {}).get("variant")
+    skippable = {scene["name"] for scene in sweep["scenes"]} - variant_scenes(screen_sweep, plan, best_variant) if best_variant else set()
+    skipped = {scene["name"] for scene in sweep["scenes"] if scene.get("skipped") and not scene["steps"]} & skippable
+    scene_results = judge_sweep_scenes(sweep, plan, work_dir, screen_result["noise"], skippable)
+    candidate, reasons = choose_confirm_candidate(screen_result, screen_sweep, sweep, scene_results, plan, skipped)
     is_offline_only = is_offline_only_sweep(sweep)
     overlap = len(step_fingerprints(screen_sweep) & step_fingerprints(sweep))
-    reasons += adopt_reasons(candidate, screen_result, screen_sweep, sweep, scene_results, overlap, is_offline_only)
+    reasons += adopt_reasons(candidate, screen_result, screen_sweep, sweep, scene_results, overlap)
     for scene in scene_results:
         scene["candidate_medians"] = scene["variants"][candidate["variant"]]["medians"] if candidate and candidate["variant"] in scene["variants"] else None
     decision = not reasons and candidate is not None
@@ -1180,7 +1202,9 @@ def verify_checks(scene_results, prior):
     checks = []
     for scene in scene_results:
         prior_scene = prior_scenes.get(scene["name"])
-        if prior_scene is None or not prior_scene.get("candidate_medians"):
+        if prior_scene is None:
+            continue
+        if not prior_scene.get("candidate_medians"):
             raise JudgeError(f"{scene['name']}: --verify-against 판정에 이 장면의 candidate_medians 가 없다")
         for target in scene["targets"]:
             metric = target["metric"]
@@ -1189,22 +1213,28 @@ def verify_checks(scene_results, prior):
             allowed = drift_allowance((prior_scene["noise"].get(metric) or {}).get("drift_floor"), target["tolerance"], scene["series"])
             is_passed = None not in (value, expected, allowed) and abs(value - expected) <= allowed + TOLERANCE
             checks.append({"scene": scene["name"], "metric": metric, "value": value, "expected": expected, "allowed": allowed, "passed": is_passed})
+    if not checks:
+        raise JudgeError("--verify-against 판정과 겹치는 장면이 없다")
     return checks
 
 
 def judge_verify_document(sweep, sweep_path, plan, lock_path, lock_sha, verify_against_text, work_dir):
-    prior, prior_table = None, None
+    prior, prior_table, prior_path = None, None, None
     if verify_against_text:
-        prior = load_json(prereg_lock.project_path(verify_against_text))
+        prior_path = prereg_lock.project_path(verify_against_text)
+        prior = load_json(prior_path)
         if prior.get("stage") != "confirm" or not (prior.get("adopt") or {}).get("decision"):
             raise JudgeError("--verify-against 는 채택(adopt.decision 참)한 confirm judge.json 이어야 한다")
+        unbound = [key for key, expected in (("plan", sweep["plan"]), ("plan_sha256", sweep["plan_sha256"]), ("lock_sha256", lock_sha)) if prior.get(key) != expected]
+        if unbound:
+            raise JudgeError(f"--verify-against 판정의 {', '.join(unbound)} 이 이번 verify 스윕·잠금과 다르다")
         prior_table = {scene["name"]: {metric: {"noise": entry.get("noise"), "median_floor": entry.get("drift_floor")} for metric, entry in scene["noise"].items()} for scene in prior["scenes"]}
     scene_results = judge_sweep_scenes(sweep, plan, work_dir, prior_table)
     report = {"tool": "calib_judge", "version": 2, "stage": "verify", "sweep": relative(sweep_path), "lock": relative(lock_path), "plan": sweep["plan"], "plan_sha256": sweep["plan_sha256"],
               "overlay_sha256": sweep.get("overlay_sha256"), "lock_sha256": lock_sha, "scenes": scene_results}
     if prior is not None:
         checks = verify_checks(scene_results, prior)
-        report["verify"] = {"against": verify_against_text, "passed": all(check["passed"] for check in checks), "checks": checks}
+        report["verify"] = {"against": verify_against_text, "against_sha256": prereg_lock.file_sha256(prior_path), "passed": all(check["passed"] for check in checks), "checks": checks}
     return report
 
 

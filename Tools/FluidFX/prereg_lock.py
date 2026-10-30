@@ -1,6 +1,6 @@
 """실행 환경: 시스템 Python 3(에디터 불필요, PowerShell 또는 Git Bash). 보정 판정 규칙을 결과를 열기 전에 잠그는 sha256 사전 등록 잠금을 만들고 검증한다(spec-wave0-data-bridge-v2 3.9 6단계, 수기 선례 Saved/AgentOps/20261024/fx4b-acc/prereg-lock-budget.txt). 잠금 v2 는 닫힌 세계다(spec-cal0-v2 C8): 판정기가 읽는 필수 집합이 모두 잠겨 있어야 한다.
 실행 명령: python Tools/FluidFX/prereg_lock.py lock --out Saved/FluidFX/calib/<id>-prereg-lock.json (--plan Tools/FluidFX/calib/plans/<id>.json [--file <경로>...] | --file <경로>...) [--note "<메모>"] | verify --lock <잠금 JSON> [--sweep Saved/FluidFX/calib/<run>/sweep.json]
-출력: lock 은 잠금 JSON v2({tool, version 2, created_at 시간대 포함 초 단위 ISO 시각(내림이라 같은 초에 시작한 스윕을 늦은 잠금으로 오판하지 않음), note, files: {프로젝트 상대 경로: sha256}}, --plan 이면 필수 집합 = 계획·장면 영역 틀·목표·목표 안 live2_targets·장면 offline.command 의 .py 스크립트·판정 도구 7개에 --file 을 더함, 이미 있으면 덮어쓰지 않음), verify 는 파일별 일치·불일치를, --sweep 이면 닫힌 세계 위반(필수 파일 누락, v1 잠금 + stage 스윕, 스윕 lock_sha256 불일치·없음, 단계 스윕의 잠금 created_at > 스윕 started_at, 스윕 장면 regions_template·targets ≠ 계획)까지 표준 출력에. 종료 코드 0 일치 / 1 lock 입력 오류 / 2 잠금 없음·형식 오류·불일치·파일 없음·닫힌 세계 위반
+출력: lock 은 잠금 JSON v2({tool, version 2, created_at 시간대 포함 초 단위 ISO 시각(내림이라 같은 초에 시작한 스윕을 늦은 잠금으로 오판하지 않음), note, files: {프로젝트 상대 경로: sha256}}, --plan 이면 필수 집합 = 계획·장면 영역 틀·목표·목표 안 live2_targets·장면 offline.command 의 .py 스크립트·판정 도구 7개에 --file 을 더함, 이미 있으면 덮어쓰지 않음), verify 는 파일별 일치·불일치를, --sweep 이면 닫힌 세계 위반(필수 파일 누락, v1 잠금 + stage 스윕, 스윕 lock_sha256 불일치·없음, 단계 스윕의 잠금 created_at > 스윕 started_at, 스윕 장면 regions_template·targets ≠ 계획, 단계 스윕의 metrics·장면 집합·장면 sources·params values·cost·scenes·대상 ≠ 계획)까지 표준 출력에. 종료 코드 0 일치 / 1 lock 입력 오류 / 2 잠금 없음·형식 오류·불일치·파일 없음·닫힌 세계 위반
 상태: 오프라인 검사만(2026-10-25 잠금 생성·일치·한 바이트 변경 불일치·잠금 없음, 2026-10-30 CAL-0 B4b 잠금 v2·check_sweep_lock 이 calib_offline_test check_cal0_measure 통과. 통합 뒤 calib_judge.check_lock 이 check_sweep_lock 에 위임한다).
 """
 import argparse
@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 JUDGE_TOOL_FILES = tuple(f"Tools/FluidFX/{name}.py" for name in ("calib_judge", "measure_fx_look", "prereg_lock", "pie_probe_fluid_water", "calib_sweep", "fluid_tuning_patch", "pie_lookdev_fluid"))
 LIVE2_TARGETS_KEY = "live2_targets"
 SCENE_FILE_KEYS = ("regions_template", "targets")
+PARAM_RULE_KEYS = ("values", "cost", "scenes")
 LOCK_VERSION = 2
 EXIT_LOCK_INPUT = 1
 EXIT_MISMATCH = 2
@@ -128,6 +129,41 @@ def find_scene_path_problems(sweep, plan):
     return problems
 
 
+def canonical_text(value):
+    return json.dumps(value, sort_keys=True, ensure_ascii=False)
+
+
+def planned_sources(scene, plan):
+    if "sources" in scene:
+        return list(scene["sources"])
+    return ["water_probe"] if "water_probe" in (plan.get("metrics") or {}).get("sources", []) else ["look"]
+
+
+def param_target(param):
+    paths = param.get("json_paths") or ([param["json_path"]] if param.get("json_path") else [])
+    return canonical_text({"json_paths": paths, "actor_prop": param.get("actor_prop")})
+
+
+def find_rule_copy_problems(sweep, plan):
+    problems = []
+    if canonical_text(sweep.get("metrics")) != canonical_text(plan.get("metrics")):
+        problems.append("스윕 metrics(목표·파생) ≠ 잠긴 계획 metrics")
+    plan_scenes = {scene.get("name"): scene for scene in plan.get("scenes", [])}
+    if sorted(str(scene.get("name")) for scene in sweep.get("scenes", [])) != sorted(str(name) for name in plan_scenes):
+        problems.append("스윕 장면 집합 ≠ 잠긴 계획 장면 집합")
+    problems.extend(f"스윕 장면 {scene['name']} 의 sources {scene.get('sources')} ≠ 계획 {planned_sources(plan_scenes[scene['name']], plan)}" for scene in sweep.get("scenes", [])
+                    if scene.get("name") in plan_scenes and scene.get("sources") != planned_sources(plan_scenes[scene["name"]], plan))
+    recorded_params, planned_params = sweep.get("params") or [], plan.get("params") or []
+    if len(recorded_params) != len(planned_params):
+        return problems + [f"스윕 params {len(recorded_params)}개 ≠ 잠긴 계획 {len(planned_params)}개"]
+    for index, (recorded, planned) in enumerate(zip(recorded_params, planned_params)):
+        differing = [key for key in PARAM_RULE_KEYS if canonical_text(recorded.get(key)) != canonical_text(planned.get(key))]
+        differing += ["대상"] if param_target(recorded) != param_target(planned) else []
+        if differing:
+            problems.append(f"스윕 params[{index}] 의 {', '.join(differing)} ≠ 잠긴 계획")
+    return problems
+
+
 def find_record_problems(sweep, lock_path, lock):
     problems = []
     is_staged = bool(sweep.get("stage"))
@@ -167,6 +203,8 @@ def check_sweep_lock(sweep, lock_path):
     except (OSError, ValueError) as error:
         raise LockError(f"필수 집합을 계산할 수 없다: {error}")
     problems = ([f"필수 파일 누락: {', '.join(missing)}"] if missing else []) + find_scene_path_problems(sweep, plan) + find_record_problems(sweep, lock_path, lock)
+    if sweep.get("stage"):
+        problems += find_rule_copy_problems(sweep, plan)
     if problems:
         raise LockError("; ".join(problems))
     return lock

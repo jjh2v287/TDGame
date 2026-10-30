@@ -1,6 +1,6 @@
 {
   "id": "fx9_hvol_vs_svol",
-  "note": "spec-fx9 HV1·HV3, 구역 0(SVOL 창 중심 0,0 · HVOL +900 cm Y), 조절 사본만",
+  "note": "spec-fx9 HV1·HV3, 구역 0(SVOL 창 중심 0,0 · HVOL +900 cm Y), 조절 사본만. MaxStepCount 는 cost 표기 없음: 정본 -1 = 엔진 기본 512 로 되돌림(TDFluidVolumeDriverTypes.h, 엔진 HeterogeneousVolumes.cpp)이라 끝 값 256 은 비용 감소(P-23, CAL-0 반박 adopt3)",
   "scenes": [
     {
       "name": "hvol_pair",
@@ -65,8 +65,7 @@
       "values": [
         -1,
         256
-      ],
-      "cost": "higher_costs_more"
+      ]
     }
   ],
   "mode": "one_at_a_time",

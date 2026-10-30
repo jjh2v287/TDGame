@@ -1,6 +1,6 @@
 """실행 환경: 시스템 Python 3(실제 실행은 언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06. 건식·offline 단독 장면은 에디터 불필요). 계획 JSON v2(spec-cal0-v2 C1)를 허용 키 표로 검사하고, 덧씌움 → base_tuning → 변형 순으로 fluid_tuning_patch 사본을 만든 뒤 장면 sources(look·probe·water_probe·offline)마다 pie_lookdev_fluid 룩데브(tuning_reload base·read_back owner/access·look_live·props·probe·schedule), 물 탐침, offline 명령(같은 사본 2회 결정론 확인)을 돌려 단계 유효성을 단언한다. 단계 종류 frame(v00 1)·screen(손잡이 끝 값, 대조 ≥3)·confirm(v00,best,v00,second|best,v00)·verify(v00 3), 장면 shots → schedule{times: settle+k·interval, reference now, fixed_fps 60}. --stage 없으면 옛 스윕(반복·control_every·control_middle).
 실행 명령: python Tools/FluidFX/calib_sweep.py --plan Tools/FluidFX/calib/plans/<id>.json [--stage frame|screen|confirm|verify] [--lock <잠금 v2>] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--screen-result <screen.json>] [--dry-run] [--run-dir Saved/FluidFX/calib/<run>] [--assert-scene <장면>=<result.json>] (PowerShell, L-repo-01). screen·confirm·verify 실제 실행은 --lock 필수, confirm 은 --screen-result 필수(plan·overlay·정본 2·lock sha 대조). --dry-run 은 검사·사본·룩데브 변형 JSON·sweep.json 만 만든다
-출력: <run-dir>/v<k>/(조절·모양 사본, variant.json), <run-dir>/<장면>/lookdev_spec.json·룩데브 출력(result.json·png)·water_probe.json·<단계>_offline*.json, <run-dir>/sweep.json(version 2·stage·lock·lock_sha256·overlay·overlay_sha256·screen_result·base_copy·canonical_tuning/look_sha256·started_at·warnings, 장면별 sequence·sources·shots_expected, 단계별 images·image_sha256·shots_saved·shot_game_times·metrics·look_applied·look_read_back·owner_checks·valid·invalid_reasons). 종료 코드 0 모든 단계 유효·정본 불변 / 1 무효 단계·룩데브 실패·정본 바뀜·confirm 거부(screen 둔감·best 없음) / 2 계획·잠금·덧씌움·screen.json 입력 오류
+출력: <run-dir>/v<k>/(조절·모양 사본, variant.json), <run-dir>/<장면>/lookdev_spec.json·룩데브 출력(result.json·png)·water_probe.json·<단계>_offline*.json, <run-dir>/sweep.json(version 2·stage·lock·lock_sha256·overlay·overlay_sha256·screen_result·base_copy·canonical_tuning/look_sha256·started_at·warnings, 장면별 sequence·sources·shots_expected, 단계별 images·image_sha256·shots_saved·shot_game_times·metrics·look_applied·look_read_back·owner_checks(룩데브 apply 최상위)·valid·invalid_reasons, props 결과가 목록 아님(액터 없음 등)이면 무효, 물 탐침 단계는 Look 미적용 look_live_skipped 와 장면 overlay_props(덧씌움 actor_props) 적용). 종료 코드 0 모든 단계 유효·정본 불변 / 1 무효 단계·룩데브 실패·정본 바뀜·confirm 거부(screen 둔감·best 없음) / 2 계획·잠금·덧씌움·screen.json 입력 오류
 상태: 오프라인 하네스(가짜 unreal·가짜 룩데브, calib_offline_test.py check_cal0_sweep)만 검사, 실제 PIE 단계 스윕 미실행(2026-10-30 CAL-0 B2). 룩데브 적용 키 검사 find_key_errors(apply)·tuning_reload base·look_live·probe 결과 형식은 B3, Look·Globals 사본은 B1, 잠금 v2 생성은 B4b 병합 뒤 확인.
 """
 import argparse
@@ -75,8 +75,6 @@ READ_BACK_TABLE = {
     "TDFluidSourceEmitterSettings": {"owner": "actor", "access": "source_emitter"},
     "TDFluidDownstreamFeedSettings": {"owner": "actor", "access": "downstream_feed"},
     "TDFluidFlameCardLayerSettings": {"owner": "actor", "access": "flame_card_layers"},
-    "TDFluidEmberSettings": {"owner": "ember_component", "access": None},
-    "TDFluidFireLightSettings": {"owner": "fire_light_component", "access": None},
     "TDFluidRainSettings": {"owner": "live_component", "access": "rain_settings"},
     "TDFluidRuntimeOpsSettings": {"owner": "live_component", "access": "call:get_effective_runtime_ops_settings"},
     "TDFluidWaterPropSettings": {"owner": "actor", "access": "call:get_water_prop_settings"},
@@ -383,6 +381,9 @@ def lookdev_key_errors(plan):
         step_extra = copy.deepcopy(scene.get("step_apply", {}))
         if "probe" in scene:
             step_extra["probe"] = copy.deepcopy(scene["probe"])
+        schedule = scene_schedule(scene)
+        if schedule:
+            step_extra["schedule"] = copy.deepcopy(schedule)
         for label, apply in ((f"scenes[{index}].camera", scene["camera"]), (f"scenes[{index}].step_apply", step_extra)):
             errors.extend(f"{label}: {line}" for line in find_key_errors(copy.deepcopy(apply)))
     return errors
@@ -754,36 +755,37 @@ def judge_read_back(expect, read):
 def judge_look_live(variant, apply_outcome):
     if not variant.get("look_live"):
         return []
-    outcome = apply_outcome.get("look_live")
-    if not isinstance(outcome, dict):
+    if "look_applied" not in apply_outcome:
         return ["look_live 결과 없음"]
-    if "error" in outcome:
-        return ["look_live: " + str(outcome["error"])]
-    errors = [f"look_live: {line}" for line in outcome.get("invalid_reasons", [])]
-    if not outcome.get("look_applied"):
+    errors = [f"look_live: {line}" for line in apply_outcome.get("look_errors", [])]
+    if not apply_outcome["look_applied"]:
         errors.append("look 적용 대상 없음(look_applied 0)")
-    read_back = outcome.get("look_read_back") or {}
+    read_back = apply_outcome.get("look_read_back") or {}
     for package, sections in variant["look_live"].get("materials", {}).items():
         for section, names in sections.items():
             for name, value in names.items():
-                actual = (read_back.get(package) or {}).get(section, {}).get(name)
-                if actual is None:
+                entry = (read_back.get(package) or {}).get(section, {}).get(name)
+                if not isinstance(entry, dict) or not entry.get("read"):
                     errors.append(f"{package}.{section}.{name}: 다시 읽기 없음")
-                elif not values_match(actual, value):
-                    errors.append(f"{package}.{section}.{name}: 다시 읽은 값 {actual!r} ≠ 기대 값 {value!r}")
+                elif entry.get("matches") is not True:
+                    errors.append(f"{package}.{section}.{name}: 다시 읽은 값 {entry['read']!r} ≠ 기대 값 {value!r}")
     return errors
 
 
-def judge_props(variant_props, apply_outcome):
-    if not variant_props:
-        return []
+def judge_props(expected_props, apply_outcome):
     outcome = apply_outcome.get("props")
-    if not isinstance(outcome, dict):
+    if expected_props and not isinstance(outcome, dict):
         return ["props 결과 없음"]
-    return [f"props.{label}: {entry['error']}" for label, entry in sorted(outcome.items()) if isinstance(entry, dict) and "error" in entry]
+    errors = []
+    for label, entry in sorted((outcome if isinstance(outcome, dict) else {}).items()):
+        if isinstance(entry, dict) and "error" in entry:
+            errors.append(f"props.{label}: {entry['error']}")
+        elif not isinstance(entry, list):
+            errors.append(f"props.{label}: {entry}")
+    return errors
 
 
-def judge_step(variant, apply_outcome):
+def judge_step(variant, apply_outcome, expected_props=None, judges_look=True):
     reload_outcome = apply_outcome.get("tuning_reload") if isinstance(apply_outcome, dict) else None
     if not isinstance(reload_outcome, dict):
         return ["tuning_reload 결과 없음"]
@@ -805,7 +807,8 @@ def judge_step(variant, apply_outcome):
         return errors + ["실효 값 다시 읽기 결과 수가 기대와 다르다"]
     for expect, read in zip(variant["expect"], read_back):
         errors.extend(judge_read_back(expect, read))
-    return errors + judge_look_live(variant, apply_outcome) + judge_props(variant.get("props"), apply_outcome)
+    look_errors = judge_look_live(variant, apply_outcome) if judges_look else []
+    return errors + look_errors + judge_props(variant.get("props") if expected_props is None else expected_props, apply_outcome)
 
 
 def flatten_metrics(value, prefix):
@@ -882,11 +885,10 @@ def assert_lookdev_result(result, sequence, variants_by_id, output_dir, scene_en
         shots_expected = scene_entry.get("shots_expected")
         if is_stage and "look" in sources and len(images) != shots_expected:
             errors.append(f"촬영 장수 {len(images)}/{shots_expected}")
-        look_outcome = apply.get("look_live") if isinstance(apply.get("look_live"), dict) else {}
         steps.append({"step": index, "name": expected_name, "variant": variant_id, "valid": not errors, "errors": errors, "invalid_reasons": errors, "sources": sources,
                       "images": images, "image_sha256": image_hashes(images), "shots_expected": shots_expected, "shots_saved": len(images), "shot_game_times": shot_game_times(entry, apply),
                       "shot_game_time": apply.get("shot_game_time"), "report": (apply.get("tuning_reload") or {}).get("report"),
-                      "look_applied": look_outcome.get("look_applied"), "look_read_back": look_outcome.get("look_read_back"), "owner_checks": look_outcome.get("owner_checks"), **metrics_record(metrics),
+                      "look_applied": apply.get("look_applied"), "look_read_back": apply.get("look_read_back"), "owner_checks": apply.get("owner_checks"), **metrics_record(metrics),
                       **({} if samples is None else {"probe_samples": samples})})
     return steps
 
@@ -951,7 +953,7 @@ def merge_offline_metrics(scene, entry, variants_by_id, scene_dir):
         step.update(metrics_record(dict(step.get("metrics") or {}, **metrics)))
 
 
-def run_water_probe_scene(scene, plan, sequence, variants_by_id, scene_dir, base_variant=None):
+def run_water_probe_scene(scene, plan, sequence, variants_by_id, scene_dir, base_variant=None, scene_props=None):
     import pie_lookdev_fluid
     import pie_probe_fluid_water as probe
 
@@ -979,13 +981,18 @@ def run_water_probe_scene(scene, plan, sequence, variants_by_id, scene_dir, base
             variant = variants_by_id[variant_id]
             started = time.monotonic()
             reload_outcome = pie_lookdev_fluid.run_tuning_reload(tuning_reload_request(variant, plan["reset"], base_variant))
-            errors = judge_step(variant, {"tuning_reload": reload_outcome})
+            props = merge_into(copy.deepcopy(scene_props or {}), variant.get("props", {}))
+            outcome = {"tuning_reload": reload_outcome}
+            if props:
+                outcome["props"] = pie_lookdev_fluid.apply_variant({"props": props}, step_name(index, variant_id)).get("props")
+            errors = judge_step(variant, outcome, props, judges_look=False)
             run = None
             if not errors:
                 time.sleep(scene["settle"])
                 run = probe.run_once(points, layout, contract, status["sleep_delay_seconds"], setup["requested_backend"], scene.get("probe_window_scale", 1.0))
             steps.append({"step": index, "name": step_name(index, variant_id), "variant": variant_id, "valid": not errors, "errors": errors, "invalid_reasons": errors, "images": [],
-                          "report": reload_outcome.get("report"), "elapsed_seconds": round(time.monotonic() - started, 1), "water_probe": None if run is None else {"rules": run["rules"], "failed": run["failed"]}})
+                          "report": reload_outcome.get("report"), "elapsed_seconds": round(time.monotonic() - started, 1), "water_probe": None if run is None else {"rules": run["rules"], "failed": run["failed"]},
+                          **({"look_live_skipped": "물 탐침은 물리 지표라 Look 을 적용하지 않는다"} if variant.get("look_live") else {})})
     finally:
         canonical = pie_lookdev_fluid.editor_action("lookdev_tuning_load", tuning="", look="")
         probe.editor_action("console", command=f"{probe.PERF_CONSOLE_VARIABLE} 0")
@@ -1108,6 +1115,8 @@ def prepare_sweep(plan_path, run_dir, plan=None, stage=None, overlay=None, scree
                  "live2_refs": scene.get("live2_refs", []), "uses_water_probe": sources == ["water_probe"], "sources": sources, "stage": stage, "sequence": scene_sequence,
                  "shots": scene.get("shots"), "shots_expected": scene_sample_count(scene, sources) if "look" in sources else None,
                  "settle": scene["settle"], "probe_window_scale": scene.get("probe_window_scale", 1.0), "steps": []}
+        if sources == ["water_probe"] and overlay_scene_props(overlay, scene):
+            entry["overlay_props"] = overlay_scene_props(overlay, scene)
         if not scene_sequence:
             entry["skipped"] = "이 단계의 변형이 이 장면에서 돌지 않는다(param scenes)"
         elif any(source in sources for source in ("look", "probe")):
@@ -1127,7 +1136,7 @@ def run_scenes(plan, sweep, assert_results):
         scene_dir = project_path(entry["output_dir"])
         started = time.monotonic()
         if entry["uses_water_probe"]:
-            entry["water_probe"], entry["steps"] = run_water_probe_scene(scene, plan, entry["sequence"], variants_by_id, scene_dir, base_variant)
+            entry["water_probe"], entry["steps"] = run_water_probe_scene(scene, plan, entry["sequence"], variants_by_id, scene_dir, base_variant, entry.get("overlay_props"))
             entry["wall_seconds"] = round(time.monotonic() - started, 1)
             (scene_dir / WATER_PROBE_FILE_NAME).write_text(json.dumps(entry, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8", newline="\n")
             continue

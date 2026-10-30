@@ -5,6 +5,7 @@
 """
 import contextlib
 import copy
+import hashlib
 import io
 import json
 import math
@@ -1805,6 +1806,67 @@ def check_cal0_sweep():
           and outputs[0]["ripple_lag_seconds"]["equal_blend"] != outputs[2]["ripple_lag_seconds"]["equal_blend"] and outputs[2]["inputs"]["LAG_RISE_SECONDS"]["value"] == 0.2
           and outputs[0]["inputs"]["LAG_RISE_SECONDS"]["value"] == 0.08 and "LAG_FREQUENCY_HZ" in outputs[0]["unmapped"], [output[-300:] for _, output in runs])
 
+    def staged_run(name, plan_path, *extra):
+        code, text = sweep_text(["--plan", plan_path, "--run-dir", sweep_dir / name, "--stage", "screen", "--lock", write_lock(name, plan_path), *extra])
+        record_path = sweep_dir / name / "sweep.json"
+        record = load_json(record_path) if record_path.is_file() else {}
+        return code, text, [step for scene in record.get("scenes", []) for step in scene.get("steps", [])]
+
+    def step_errors(steps):
+        return sorted({error for step in steps for error in step["errors"]})
+
+    glow = {"label": "TDGen_CampfireFire", "property": "cal0_glow"}
+    reset_world(fire_world)
+    WORLD.actors[0].cal0_glow = 1.0
+    code, text, steps = staged_run("fix-s2", stage_plan("fix-s2", lambda plan: plan.update(params=[{"actor_prop": glow, "base": 1.0, "values": [1.0, 2.0]}])))
+    check("CAL-0 반박 S2 actor_prop 만 있는 계획(조절 다시 읽기 요청 []): 룩데브가 read_back [] 을 남겨 단계 전부 유효·종료 0",
+          code == 0 and steps and all(step["valid"] for step in steps), (code, text[-300:], step_errors(steps)[:4]))
+
+    missing = {"label": "TDGen_Missing", "property": "cal0_glow"}
+    reset_world(fire_world)
+    WORLD.actors[0].cal0_glow = 1.0
+    code_param, text_param, param_steps = staged_run("fix-s3a", stage_plan("fix-s3a", lambda plan: plan["params"].append({"actor_prop": missing, "base": 1.0, "values": [1.0, 2.0]})))
+    campfire_level = load_json(W / CAMPFIRE_PLAN)["scenes"][0]["level"]
+    missing_overlay = write_json("fix-s3-overlay.json", {"version": 2, "assignments": [], "actor_props": [dict(missing, level=campfire_level, value=2.0)], "history": []})
+    reset_world(fire_world)
+    WORLD.actors[0].cal0_glow = 1.0
+    code_overlay, text_overlay, overlay_steps = staged_run("fix-s3b", stage_plan("fix-s3b"), "--overlay", missing_overlay)
+    check("CAL-0 반박 S3 없는 라벨 actor_prop(계획 손잡이·덧씌움): '액터 없음' 으로 단계 무효·종료 1",
+          code_param == 1 and any("액터 없음" in error for error in step_errors(param_steps)) and code_overlay == 1 and overlay_steps and not any(step["valid"] for step in overlay_steps),
+          (code_param, text_param[-200:], step_errors(param_steps)[:4], code_overlay, text_overlay[-200:], step_errors(overlay_steps)[:4]))
+
+    look_package, look_name = "/Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Aux", "DebugBias"
+    look_path = f"Look:Materials.{look_package}.Scalars.{look_name}"
+    reset_world(fire_world)
+    look_material = FakeMaterialInstanceConstant(look_package, scalars={look_name: 0.0}, parent=FakeMaterial("/Game/CAL0/M_Look", scalars={look_name: 0.0}, vectors={"Tint": FakeLinearColor(1.0, 1.0, 1.0, 1.0)}))
+    WORLD.add_asset(look_material)
+    WORLD.actors.append(FakeActor("TDGen_LookProp", components=[FakeStaticMeshComponent("Mesh", [look_material])]))
+    code, text, look_steps = staged_run("fix-s1", stage_plan("fix-s1", lambda plan: plan["params"].append({"json_path": look_path, "base": 0.0, "values": [0.0, 1.0]})))
+    check("CAL-0 반박 S1 Look 손잡이: 룩데브 최상위 look_applied·look_read_back({expected, read, matches})로 판정 → 단계 전부 유효·종료 0·단계 기록 look_read_back",
+          code == 0 and look_steps and all(step["valid"] and step.get("look_read_back") for step in look_steps), (code, text[-300:], step_errors(look_steps)[:4]))
+
+    river_level = load_json(W / RIVER_PLAN)["scenes"][0]["level"]
+    river_overlay = write_json("fix-s1-river-overlay.json", {"version": 2, "assignments": [{"json_path": look_path, "value": 0.5, "split_group": False}],
+                                                            "actor_props": [{"level": river_level, "label": "TDGen_River", "property": "cal0_glow", "value": 2.0}], "history": []})
+    reset_world([(TDFluidLiveActor, "TDGen_River", FakePreset("RIVER", vorticity=0.3)), (TDFluidLiveActor, "TDGen_Sea", FakePreset("SEA", vorticity=0.3))])
+    WORLD.actors[0].cal0_glow = 1.0
+    code, text = sweep_text(["--plan", W / RIVER_PLAN, "--run-dir", sweep_dir / "fix-s1-river", "--overlay", river_overlay])
+    river_record = sweep_dir / "fix-s1-river" / "sweep.json"
+    river_steps = load_json(river_record)["scenes"][0]["steps"] if river_record.is_file() else []
+    check("CAL-0 반박 S1 물 탐침 장면 + 덧씌움 Look·actor_props: Look 은 물리 탐침이라 건너뜀 기록, actor_props 는 적용 → 단계 전부 유효·종료 0",
+          code == 0 and river_steps and all(step["valid"] and step.get("look_live_skipped") for step in river_steps) and WORLD.actors[0].cal0_glow == 2.0,
+          (code, text[-300:], step_errors(river_steps)[:4], WORLD.actors[0].cal0_glow))
+
+    ember_path = "Kinds.Campfire.TDFluidEmberSettings.SpawnPerSecond"
+    ember_base = load_json(CANONICAL)["Kinds"]["Campfire"].get("TDFluidEmberSettings", {}).get("SpawnPerSecond", 1.0)
+    code, text, _ = dry("fix-s4", stage_plan("fix-s4", lambda plan: plan["params"].append({"json_path": ember_path, "values": [ember_base, ember_base * 2 + 1]})), "--stage", "screen")
+    owner_errors = lookdev.read_back_owner_errors([{"owner": entry["owner"]} for entry in calib_sweep.READ_BACK_TABLE.values()])
+    check("CAL-0 반박 S4 다시 읽기 표 owner 는 모두 룩데브 허용 owner, 게터 없는 TDFluidEmberSettings 손잡이는 건식 종료 2",
+          owner_errors == [] and code == 2 and "다시 읽기가 없어" in text, (owner_errors, code, text[-300:]))
+
+    code, text, _ = dry("fix-s5", stage_plan("fix-s5", lambda plan: plan["scenes"][0].update(schedule={"prefx": "a", "events": [{"time": 0.1, "cal": {}}]})), "--stage", "screen")
+    check("CAL-0 반박 S5 장면 schedule 오타: 건식도 PIE 단계 apply 와 같은 schedule 키 검사로 종료 2·'prefx'", code == 2 and "prefx" in text, (code, text[-300:]))
+
 
 def check_cal0_integration():
     look_path = "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_SandWall.Scalars.CloudSlot1DetailErosion"
@@ -1836,7 +1898,11 @@ def check_cal0_integration():
     prereg_lock.create_lock([plan_text], plan_only_lock)
     full_lock = lock_dir / "full.lock.json"
     prereg_lock.create_lock(prereg_lock.required_files(plan_text), full_lock)
-    staged = {"plan": plan_text, "plan_sha256": fluid_tuning_patch.file_sha256(W / CAMPFIRE_PLAN), "stage": "screen", "scenes": [], "started_at": "2999-01-01T00:00:00+00:00"}
+    campfire_plan = load_json(W / CAMPFIRE_PLAN)
+    rule_copies = {"metrics": campfire_plan["metrics"], "params": campfire_plan["params"],
+                   "scenes": [{"name": scene["name"], "sources": calib_sweep.scene_sources(scene, campfire_plan), "regions_template": scene.get("regions_template"), "targets": scene.get("targets")}
+                              for scene in campfire_plan["scenes"]]}
+    staged = dict(rule_copies, plan=plan_text, plan_sha256=fluid_tuning_patch.file_sha256(W / CAMPFIRE_PLAN), stage="screen", started_at="2999-01-01T00:00:00+00:00")
     missing_file = judge_rejection(staged, plan_only_lock)
     missing_lock_sha = judge_rejection(staged, full_lock)
     accepted_lock = calib_judge.check_lock(dict(staged, lock_sha256=fluid_tuning_patch.file_sha256(full_lock)), full_lock)
@@ -1880,8 +1946,9 @@ def check_cal0_judge():
     def probe_scene(name):
         return {"name": name, "level": "/Game/CAL0/Level", "camera": {}, "settle": 1.0, "sources": ["probe"], "probe": {"times": [1.0, 1.5, 2.0]}}
 
-    def make_plan(name, scenes, targets, costs=None):
-        params = [dict({"json_path": path, "values": [0.5, 1.0, 1.5]}, **({"cost": costs[path]} if costs and path in costs else {})) for path in (knob_a, knob_b)]
+    def make_plan(name, scenes, targets, costs=None, scopes=None):
+        params = [dict({"json_path": path, "values": [0.5, 1.0, 1.5]}, **({"cost": costs[path]} if costs and path in costs else {}), **({"scenes": scopes[path]} if scopes and path in scopes else {}))
+                  for path in (knob_a, knob_b)]
         metrics = {"sources": sorted({source for scene in scenes for source in scene.get("sources", ["look"])}), "targets": targets}
         plan_path = write_document(root / name / "plan.json", {"id": name, "scenes": scenes, "params": params, "mode": "one_at_a_time", "repeats": 1, "control_every": 0, "reset": "reinit", "metrics": metrics})
         lock_path = root / name / "lock.json"
@@ -1893,15 +1960,18 @@ def check_cal0_judge():
         plan = load_json(plan_path)
         scenes = []
         for scene_name, steps in scene_steps.items():
+            plan_scene = next(scene for scene in plan["scenes"] if scene["name"] == scene_name)
             if steps and isinstance(steps[0], tuple):
                 steps = [{"step": index, "name": f"s{index:02d}_{variant}", "variant": variant, "valid": True, "errors": [], "images": [], "metrics": metrics, "shot_game_times": [1.0, 1.5, 2.0]}
                          for index, (variant, metrics) in enumerate(steps)]
-            plan_scene = next(scene for scene in plan["scenes"] if scene["name"] == scene_name)
+                for step in steps if plan_scene.get("sources") == ["offline"] else []:
+                    digest = hashlib.sha256(json.dumps(step["metrics"], sort_keys=True).encode("utf-8")).hexdigest()
+                    step["offline"] = {"output_sha256": digest, "repeat_sha256": digest}
             scenes.append({"name": scene_name, "level": "/Game/CAL0/Level", "sources": plan_scene.get("sources", ["look"]), "regions_template": plan_scene.get("regions_template"), "targets": plan_scene.get("targets"), "steps": steps})
         sweep = {"tool": "calib_sweep", "stage": stage, "plan": prereg_lock.relative_text(plan_path), "plan_sha256": prereg_lock.file_sha256(plan_path), "plan_id": plan["id"],
                  "run_dir": prereg_lock.relative_text(run_dir), "lock": prereg_lock.relative_text(lock_path), "lock_sha256": prereg_lock.file_sha256(lock_path),
                  "overlay": None, "overlay_sha256": None, "canonical_tuning_sha256": "1" * 64, "canonical_look_sha256": "2" * 64, "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                 "params": [{"json_path": path, "base_value": 1.0, "values": [0.5, 1.0, 1.5]} for path in (knob_a, knob_b)],
+                 "params": [{"json_path": param["json_path"], "base_value": 1.0, "values": param["values"], "cost": param.get("cost"), "scenes": param.get("scenes")} for param in plan["params"]],
                  "variants": [{"id": variant, "assignments": [{"json_path": path, "value": value, "split_group": False} for path, value in knobs]} for variant, knobs in variant_knobs.items()],
                  "metrics": plan["metrics"], "scenes": scenes}
         sweep.update(extra or {})
@@ -2139,6 +2209,84 @@ def check_cal0_judge():
           sample_items[0]["samples"].get("probe.wake.mean") == [1.9, 2.0, 2.2] and sample_metrics.get("probe.wake.mean") == 2.0 and sample_metrics.get("2.probe.wake.mean") == 2.2
           and close(sample_metrics.get("derived.wake.half_angle_deg"), 20.0, 1.0) and len(sample_items[0]["samples"].get("derived.wake.half_angle_deg", [])) == 3, sample_metrics)
 
+    def judge_edited(plan_path, lock_path, stage, scene_steps, folder, edit, *arguments, extra=None):
+        sweep_path = make_sweep(plan_path, lock_path, stage, scene_steps, folder, extra)
+        sweep = load_json(sweep_path)
+        edit(sweep)
+        write_document(sweep_path, sweep)
+        code, output = judge("--sweep", sweep_path, "--lock", lock_path, *arguments)
+        result_path = sweep_path.parent / ("screen.json" if stage == "screen" else "judge.json")
+        return code, output, load_json(result_path) if result_path.is_file() else {}
+
+    def skip_scene(name):
+        def edit(sweep):
+            next(scene for scene in sweep["scenes"] if scene["name"] == name).update(steps=[], sequence=[], skipped="이 단계의 변형이 이 장면에서 돌지 않는다(param scenes)")
+        return edit
+
+    def screen_fields(screen_sweep_path):
+        return {"screen_result": prereg_lock.relative_text(screen_sweep_path.parent / "screen.json"), "screen_result_sha256": prereg_lock.file_sha256(screen_sweep_path.parent / "screen.json")}
+
+    two_targets = [dict(target_m, scene="s1"), dict(target_m, scene="s2")]
+    l1_plan, l1_lock = make_plan("fix-l1", [probe_scene("s1"), probe_scene("s2")], two_targets)
+    two_steps = {"s1": screen_steps["s1"], "s2": screen_steps["s1"]}
+    tamperings = {"목표 띠": lambda sweep: sweep["metrics"]["targets"][0].update(low=3.0, high=4.5), "비용": lambda sweep: sweep["params"][0].update(cost="lower_costs_more"),
+                  "장면 집합": lambda sweep: sweep["scenes"].pop(1), "장면 sources": lambda sweep: sweep["scenes"][0].update(sources=["look"]),
+                  "values": lambda sweep: sweep["params"][1].update(values=[0.5, 1.0]), "param scenes": lambda sweep: sweep["params"][0].update(scenes=["s1"])}
+    honest_code, honest_output, _ = judge_edited(l1_plan, l1_lock, "screen", two_steps, "fix-l1-honest", lambda sweep: None)
+    tampered = {label: judge_edited(l1_plan, l1_lock, "screen", two_steps, f"fix-l1-{index}", edit)[:2] for index, (label, edit) in enumerate(tamperings.items())}
+    check("CAL-0 반박 lock1 sweep.json 규칙 사본(목표 띠·비용·장면 집합·sources·values·param scenes)이 잠긴 계획과 다르면 종료 2 '사전 등록 잠금', 정직한 사본은 통과",
+          honest_code == 0 and all(code == 2 and "사전 등록 잠금" in output for code, output in tampered.values()),
+          (honest_output[-200:], {label: (code, output[-160:]) for label, (code, output) in tampered.items()}))
+
+    prior_path = p1_plan.parent / "confirm" / "judge.json"
+    q_plan, q_lock = make_plan("fix-q", [probe_scene("s1")], [target_m])
+    q_verify = make_sweep(q_plan, q_lock, "verify", {"s1": rows(("v00", {"probe.m": 7.5}), ("v00", {"probe.m": 7.52}), ("v00", {"probe.m": 7.48}))}, "verify")
+    q_code, q_output = judge("--sweep", q_verify, "--lock", q_lock, "--verify-against", prior_path)
+    close_report = load_json(verify_close.parent / "judge.json") if (verify_close.parent / "judge.json").is_file() else {}
+    check("CAL-0 반박 lock2 --verify-against 앞 판정의 plan·plan_sha256·lock_sha256 이 이번 verify 와 다르면 종료 2, 통과 보고에 앞 판정 sha256",
+          q_code == 2 and "verify-against" in q_output and dig(close_report, "verify", "against_sha256") == prereg_lock.file_sha256(prior_path), (q_code, q_output[-300:], dig(close_report, "verify", "against_sha256")))
+
+    scoped_plan, scoped_lock = make_plan("fix-a1", [probe_scene("s1"), probe_scene("s2")], two_targets, scopes={knob_a: ["s1"], knob_b: ["s2"]})
+    scoped_screen, scoped_screen_code, _, _ = screen(scoped_plan, scoped_lock, {
+        "s1": rows(("v00", {"probe.m": 5.0}), ("v01", {"probe.m": 4.0}), ("v02", {"probe.m": 7.5}), ("v00", {"probe.m": 5.05}), ("v00", {"probe.m": 4.95})),
+        "s2": rows(("v00", {"probe.m": 5.0}), ("v03", {"probe.m": 5.03}), ("v04", {"probe.m": 4.98}), ("v00", {"probe.m": 5.05}), ("v00", {"probe.m": 4.95}))})
+    scoped_code, scoped_output, scoped = judge_edited(scoped_plan, scoped_lock, "confirm", {"s1": confirm_steps["s1"], "s2": []}, "confirm", skip_scene("s2"),
+                                                      "--screen-sweep", scoped_screen, extra=screen_fields(scoped_screen))
+    inside_code, inside_output, _ = judge_edited(scoped_plan, scoped_lock, "confirm", {"s1": [], "s2": confirm_steps["s1"]}, "confirm-inside", skip_scene("s1"),
+                                                 "--screen-sweep", scoped_screen, extra=screen_fields(scoped_screen))
+    check("CAL-0 반박 adopt1 param scenes 계획 confirm: best 손잡이 범위 밖 skipped 장면은 건너뛰어 adopt 참 / 범위 안 skipped 는 종료 2",
+          scoped_screen_code == 0 and scoped_code == 0 and dig(scoped, "adopt", "decision") is True and dig(scoped, "adopt", "variant") == "v02" and inside_code == 2,
+          (scoped_output[-300:], dig(scoped, "adopt", "reasons"), inside_code, inside_output[-200:]))
+
+    offline_scene = {"name": "s_off", "level": "/Game/CAL0/Level", "camera": {}, "settle": 1.0, "sources": ["offline"]}
+    lag_target = {"metric": "offline.lag", "low": 1.1, "high": 1.3, "weight": 1.0, "scene": "s_off"}
+    mixed_plan, mixed_lock = make_plan("fix-a2", [offline_scene, probe_scene("s_p")], [lag_target, dict(target_m, scene="s_p")])
+    lag = {"v00": 1.0, "v01": 0.9, "v02": 1.2, "v03": 1.0, "v04": 1.0}
+
+    def lag_rows(*variants):
+        return [(variant, {"offline.lag": lag[variant]}) for variant in variants]
+
+    mixed_screen, mixed_screen_code, _, _ = screen(mixed_plan, mixed_lock, {"s_off": lag_rows("v00", "v01", "v02", "v00", "v03", "v04", "v00"), "s_p": screen_steps["s1"]})
+    mixed_confirm = {"s_off": lag_rows("v00", "v02", "v00", "v02", "v00"), "s_p": confirm_steps["s1"]}
+    mixed_code, mixed_output, mixed = confirm(mixed_plan, mixed_lock, mixed_confirm, mixed_screen)
+
+    def break_determinism(sweep):
+        for step in sweep["scenes"][0]["steps"]:
+            step["offline"]["repeat_sha256"] = "0" * 64
+
+    _, _, unrepeated = judge_edited(mixed_plan, mixed_lock, "confirm", mixed_confirm, "confirm-unrepeated", break_determinism, "--screen-sweep", mixed_screen, extra=screen_fields(mixed_screen))
+    check("CAL-0 반박 adopt2 offline+probe 혼합: offline 장면은 지문에서 빼고 결정론 증거로 → adopt 참·교집합 0 / 결정론 증거 없으면 거짓",
+          mixed_screen_code == 0 and mixed_code == 0 and dig(mixed, "adopt", "decision") is True and dig(mixed, "adopt", "evidence", "image_overlap") == 0
+          and dig(unrepeated, "adopt", "decision") is False and any("결정론" in reason for reason in dig(unrepeated, "adopt", "reasons") or []),
+          (dig(mixed, "adopt", "reasons"), dig(mixed, "adopt", "evidence", "image_overlap"), dig(unrepeated, "adopt", "reasons"), mixed_output[-200:]))
+
+    fx9 = load_json(W / "Tools/FluidFX/calib/plans/fx9_hvol_vs_svol.json")
+    step_count = next(param for param in fx9["params"] if str(param.get("json_path", "")).endswith(".MaxStepCount"))
+    canonical_steps = load_json(CANONICAL)["Globals"]["TDFluidHeterogeneousVolumeRenderProfile"]["MaxStepCount"]
+    blocked = [value for value in step_count["values"] if calib_judge.cost_direction(step_count.get("cost"), value, canonical_steps) > 0]
+    check("CAL-0 반박 adopt3 fx9 MaxStepCount: 정본 -1(엔진 기본 512)이라 끝 값 256 은 비용 감소 → cost_blocked 아님",
+          canonical_steps == -1 and blocked == [], (canonical_steps, step_count, blocked))
+
     campfire_sweep = load_json(TEST_DIR / "campfire" / "sweep.json")
     campfire_scene = campfire_sweep["scenes"][0]
     fire_items, _, _ = calib_judge.measure_fire_scene(campfire_scene, campfire_scene["steps"], root / "fire")
@@ -2257,7 +2405,8 @@ def check_cal0_measure():
     def write_sweep(name, lock_path, **fields):
         created_at = datetime.fromisoformat(load_json(lock_path).get("created_at") or "2026-10-30T00:00:00+09:00")
         sweep = {"plan": plan_text, "plan_sha256": prereg_lock.file_sha256(root / plan_text), "stage": "screen", "lock": str(lock_path), "lock_sha256": prereg_lock.file_sha256(lock_path),
-                 "started_at": (created_at + timedelta(minutes=1)).isoformat(), "scenes": [{"name": "fire", "regions_template": regions_text, "targets": targets_text}, {"name": "reed", "regions_template": None, "targets": None}]}
+                 "started_at": (created_at + timedelta(minutes=1)).isoformat(),
+                 "scenes": [{"name": "fire", "sources": ["look"], "regions_template": regions_text, "targets": targets_text}, {"name": "reed", "sources": ["look"], "regions_template": None, "targets": None}]}
         sweep.update(fields)
         sweep = {key: value for key, value in sweep.items() if value is not MISSING}
         sweep_path = output_dir / f"{name}-sweep.json"
@@ -2379,15 +2528,19 @@ class FakeBatchTools:
             run_dir = Path(command_option(command, "--run-dir"))
             (run_dir / "s1").mkdir(parents=True, exist_ok=True)
             (run_dir / "s1" / "b8_schedule.json").write_text(json.dumps({"real_dt_mean": 0.03}), encoding="utf-8")
+            if words[2] == "confirm" and load_json(command_option(command, "--screen-result")).get("overlay_sha256") != fluid_tuning_patch.file_sha256(self.overlay_path):
+                return 2, "screen.json overlay_sha256 불일치"
             return code, f"{label} 종료 {code}"
         if words[0] == "judge":
             output = Path(command_option(command, "--output"))
-            documents = {"screen": {"version": 2, "insensitive": False, "best": {"variant": "v01", "gain": 3.0}},
+            documents = {"screen": {"version": 2, "insensitive": False, "best": {"variant": "v01", "gain": 3.0}, "overlay_sha256": fluid_tuning_patch.file_sha256(self.overlay_path)},
                          "judge": {"version": 2, "adopt": {"decision": True, "variant": "v01", "reasons": []}}}
             if words[2] in documents:
                 output.write_text(json.dumps(documents[words[2]]), encoding="utf-8")
                 return 0, ""
-            return (self.verify_codes.get(words[1]) or [0]).pop(0), "재검증"
+            outcome = (self.verify_codes.get(words[1]) or [0]).pop(0)
+            output.write_text(json.dumps({"scenes": [{"control_ok": outcome != "drift"}], "verify": {"passed": outcome != 1}}), encoding="utf-8")
+            return (1 if outcome == "drift" else outcome), "재검증"
         if words[0] in ("accept", "remove"):
             overlay = load_json(self.overlay_path)
             json_path = f"Groups.B8.TDFluidTest.{words[1]}" if words[0] == "accept" else words[1]
@@ -2524,6 +2677,29 @@ def check_cal0_batch():
           and headless_record.get("allowlisted_failures") == ["TDGame.FluidFX.Numeric.B"] and headless_record.get("verdict_code") == 0
           and [assignment["json_path"] for assignment in load_json(root / "t99" / "overlay.json")["assignments"]] == ["Groups.B8.TDFluidTest.b8_c1", "Groups.B8.TDFluidTest.b8_d1"]
           and chain_code == 0, (calls[calls.index("accept b8_d1") + 1:], headless_record, chain_code))
+
+    arguments = batch_arguments("fix-a4", [{"id": "K9", "plans": [entry("b8_e1", estimate_seconds={"screen": 1000, "confirm": 10})]},
+                                           {"id": "K9b", "plans": [entry("b8_e2", estimate_seconds={"screen": 10, "confirm": 10})]}])
+    fake = FakeBatchTools(root / "fix-a4" / "overlay.json")
+    fake.sweep_outcomes = {("b8_e1", "screen"): [(0, 1990.0)]}
+    with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
+        run_batch(arguments)
+        deferred = statuses(load_json(root / "fix-a4" / "journal.json"))
+        fake.calls.clear()
+        revisit_code = run_batch(arguments + ["--resume", "--revisit-deferred", "--block", "K9"])
+    revisited, calls = statuses(load_json(root / "fix-a4" / "journal.json")), fake.calls
+    check("CAL-0 반박 adopt4 deferred 재방문 때 덧씌움이 바뀌었으면 locked 로 되돌려 재screen → confirm(상한 없음) → 채택(failed 아님)",
+          deferred["b8_e1"]["status"] == "deferred" and deferred["b8_e2"]["status"] == "adopted" and revisited["b8_e1"]["status"] == "adopted" and calls.count("sweep b8_e1 screen") == 1
+          and "sweep b8_e1 confirm" in calls and calls.index("sweep b8_e1 screen") < calls.index("sweep b8_e1 confirm") and revisit_code == 0, (deferred["b8_e1"], revisited["b8_e1"], calls))
+
+    arguments = batch_arguments("fix-a5", [{"id": "K11", "plans": [entry("b8_f1", "Groups.Drift"), entry("b8_f2", "Groups.Drift")]}])
+    fake = FakeBatchTools(root / "fix-a5" / "overlay.json")
+    fake.verify_codes = {"b8_f1": ["drift"]}
+    with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
+        run_batch(arguments)
+    drifted, calls = statuses(load_json(root / "fix-a5" / "journal.json")), fake.calls
+    check("CAL-0 반박 adopt5 사슬 재검증 판정 종료 1 이 대조 표류(control_ok 거짓)면 실패로 읽지 않음 → 되돌림 없음·사슬 중단 사유 기록",
+          drifted["b8_f2"]["status"] == "adopted" and not any(call.startswith("remove") for call in calls) and "대조" in drifted["b8_f1"]["reason"], (calls, drifted["b8_f1"], drifted["b8_f2"]))
 
 
 run_check(check_cal0_b0)

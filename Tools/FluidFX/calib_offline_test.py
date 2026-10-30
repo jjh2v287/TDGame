@@ -1045,7 +1045,231 @@ def check_cal0_b0():
     check("B0 patched: 바꾼 속성은 원래 값으로, 없던 속성은 지움", patched_values == (9.0, 1) and lookdev.FRAME_FILE_WAIT_SECONDS == 0.5 and not hasattr(lookdev, "CAL0_ADDED_NAME"))
 
 
+def check_cal0_patch():
+    output_dir = TEST_DIR / "cal0-b1"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    patch = fluid_tuning_patch
+    look_module = patch.fluid_material_look
+    schema = patch.check_fluid_preset_data.load_schema(W)
+    canonical_bytes = CANONICAL.read_bytes()
+    canonical_look = load_json(CANONICAL_LOOK)
+    river = "/Game/FluidFX/Materials/MI_TD_FluidWater_River"
+    river_scalar = f"Look:Materials.{river}.Scalars.CausticsStrength"
+    missing_scalar = f"Look:Materials.{river}.Scalars.CAL0MissingScalar"
+    debris_package = "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris"
+    debris_count = f"Look:NiagaraSystems.{debris_package}.Ints.User.TDDebrisCount"
+    cloud_global = "Globals.TDFluidCloudSceneSettings.ViewSampleCountScaleFar"
+    vorticity = "Kinds.Campfire.TDFluidSimulationConfig.VorticityStrength"
+
+    def cli(*arguments):
+        return python("Tools/FluidFX/fluid_tuning_patch.py", *arguments)
+
+    def rejection(call):
+        try:
+            call()
+        except patch.InputRejected as error:
+            return str(error)
+        return None
+
+    def sha(path):
+        return patch.file_sha256(path)
+
+    t21 = patch.write_variant([{"json_path": river_scalar, "value": 0.6}], output_dir / "t21", root=W, schema=schema)
+    t21_look = load_json(output_dir / "t21" / "TDFluidMaterialLook.json")
+    check("T21 Look 재질 Scalars 변형: 조절 사본 = 정본 바이트, 모양 사본만 값 변경, 검사 0",
+          (output_dir / "t21" / "TDFluidPresetTuning.json").read_bytes() == canonical_bytes and t21_look["Materials"][river]["Scalars"]["CausticsStrength"] == 0.6
+          and t21_look["Materials"][river]["Scalars"]["CausticsMaxDepthCm"] == canonical_look["Materials"][river]["Scalars"]["CausticsMaxDepthCm"]
+          and t21["assignments"][0]["scope"] == "look" and t21["assignments"][0]["base_value"] == 0.45 and "errors=0" in t21["checker"], t21)
+
+    patch.write_variant([{"json_path": debris_count, "value": 120}], output_dir / "t22", root=W, schema=schema)
+    check("T22 Look NS Ints.User.TDDebrisCount(이름에 점): 4부분 파싱·모양 사본 반영",
+          patch.parse_json_path(debris_count) == ("Look:NiagaraSystems", debris_package, "Ints", "User.TDDebrisCount")
+          and load_json(output_dir / "t22" / "TDFluidMaterialLook.json")["NiagaraSystems"][debris_package]["Ints"]["User.TDDebrisCount"] == 120)
+
+    bad_paths = {"switch": f"Look:Materials.{river}.Switches.bRibbonLocalCaustics", "dot": "Look:Materials./Game/FluidFX/MI_TD.Fluid.Scalars.X", "game": "Look:Materials./Engine/MI_X.Scalars.X"}
+    rejected = {name: cli("variant", "--out-dir", str(output_dir / "t23"), "--set", f"{path}=1.0") for name, path in bad_paths.items()}
+    check("T23 Look 거부: Switches·패키지에 '.'·/Game/ 아님 → 각각 종료 2와 사유 문구",
+          rejected["switch"][0] == 2 and "Switches" in rejected["switch"][1] and rejected["dot"][0] == 2 and "'.'" in rejected["dot"][1]
+          and rejected["game"][0] == 2 and "/Game/" in rejected["game"][1], {name: (code, text[-200:]) for name, (code, text) in rejected.items()})
+
+    patch.write_variant([], output_dir / "t24-v00", root=W, schema=schema)
+    t24 = patch.write_variant([{"json_path": missing_scalar, "value": 2.0, "base": 1.0}], output_dir / "t24-v01", root=W, schema=schema)
+    no_base = cli("variant", "--out-dir", str(output_dir / "t24-v02"), "--set", f"{missing_scalar}=2.0")
+    wrong_base = rejection(lambda: patch.describe_assignment(load_json(CANONICAL), schema, {"json_path": river_scalar, "value": 0.6, "base": 0.5}))
+    check("T24 정본에 없는 Look 키: base 있으면 대조 사본에 키 없음·변형 사본에 키 / base 없음 → 종료 2 / base ≠ 정본 → 거부",
+          "CAL0MissingScalar" not in load_json(output_dir / "t24-v00" / "TDFluidMaterialLook.json")["Materials"][river]["Scalars"]
+          and load_json(output_dir / "t24-v01" / "TDFluidMaterialLook.json")["Materials"][river]["Scalars"]["CAL0MissingScalar"] == 2.0
+          and t24["assignments"][0]["added_key"] and t24["assignments"][0]["base_value"] == 1.0
+          and no_base[0] == 2 and "base" in no_base[1] and wrong_base and "정본 값" in wrong_base, (no_base[0], no_base[1][-200:], wrong_base))
+
+    t53 = patch.write_variant([{"json_path": cloud_global, "value": 3.0}], output_dir / "t53", root=W, schema=schema)
+    check("T53 Globals.TDFluidCloudSceneSettings 변형: 사본 Globals 값·영향 전역·모양 사본 = 정본 바이트",
+          load_json(output_dir / "t53" / "TDFluidPresetTuning.json")["Globals"]["TDFluidCloudSceneSettings"]["ViewSampleCountScaleFar"] == 3.0
+          and t53["assignments"][0]["scope"] == "global" and t53["assignments"][0]["owner"] == "Globals.TDFluidCloudSceneSettings" and t53["assignments"][0]["base_value"] == 2.0
+          and (output_dir / "t53" / "TDFluidMaterialLook.json").read_bytes() == CANONICAL_LOOK.read_bytes(), t53["assignments"])
+
+    unknown_global = cli("variant", "--out-dir", str(output_dir / "t54"), "--set", "Globals.TDFluidNoSuchSettings.Value=1.0")
+    kind_scoped_global = cli("variant", "--out-dir", str(output_dir / "t54"), "--set", "Globals.TDFluidSimulationConfig.VorticityStrength=1.0")
+    check("T54 정본에 없는 Globals 구조체·종류 범위 구조체 → 종료 2",
+          unknown_global[0] == 2 and "TDFluidNoSuchSettings" in unknown_global[1] and kind_scoped_global[0] == 2 and "Globals 등록 구조체" in kind_scoped_global[1],
+          (unknown_global, kind_scoped_global))
+
+    temp_root = output_dir / "root"
+    for relative in (patch.check_fluid_preset_data.TUNING_RELATIVE_PATH, patch.check_fluid_preset_data.LOOK_RELATIVE_PATH, patch.check_fluid_preset_data.GAME_INI_RELATIVE_PATH, patch.CHECKER_RELATIVE_PATH):
+        temp_root.joinpath(*relative).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(W.joinpath(*relative), temp_root.joinpath(*relative))
+    shutil.copytree(W / "Source" / "TDGame" / "FluidFX", temp_root / "Source" / "TDGame" / "FluidFX", ignore=shutil.ignore_patterns("Tests"))
+    for _, soft_path in patch.check_fluid_preset_data.collect_tuning_soft_paths(W):
+        package_file = patch.check_fluid_preset_data.find_package_file(W, soft_path.split(".", 1)[0])
+        placeholder = temp_root / package_file.relative_to(W)
+        placeholder.parent.mkdir(parents=True, exist_ok=True)
+        placeholder.write_bytes(b"")
+    temp_tuning = patch.canonical_tuning_path(temp_root)
+    temp_look = patch.canonical_look_path(temp_root)
+    temp_shas = (sha(temp_tuning), sha(temp_look))
+    t55 = cli("--root", str(temp_root), "write-canonical", "--backup-dir", str(temp_root / "Saved" / "t55"), "--set", f"{cloud_global}=3.0")
+    check("T55 write-canonical Globals 경로 --acknowledge-header 없음 → 종료 2·임시 정본 불변",
+          t55[0] == 2 and "--acknowledge-header" in t55[1] and (sha(temp_tuning), sha(temp_look)) == temp_shas, t55)
+
+    t96 = cli("--root", str(temp_root), "write-canonical", "--backup-dir", str(temp_root / "Saved" / "t96"), "--acknowledge-header", "--set", "StructDefaults.TDFluidSimulationConfig.VorticityStrength=1.25")
+    t96_variant = rejection(lambda: patch.check_canonical_writable([{"json_path": "StructDefaults.TDFluidSimulationConfig.GridResolution", "value": 128}], True))
+    check("T96(B1) StructDefaults.TDFluidSimulationConfig write-canonical → --acknowledge-header 있어도 종료 2·임시 정본 불변",
+          t96[0] == 2 and "골든 스냅숏" in t96[1] and t96_variant and (sha(temp_tuning), sha(temp_look)) == temp_shas, t96)
+
+    t20_overlay = temp_root / "Saved" / "overlay.json"
+    patch.write_overlay(t20_overlay, dict(patch.empty_overlay(), assignments=[{"json_path": vorticity, "value": 1.75, "split_group": False, "kind": "knob", "from": {}},
+                                                                               {"json_path": missing_scalar, "value": 2.0, "base": 1.0, "split_group": False, "kind": "knob", "from": {}}]))
+    t20 = cli("--root", str(temp_root), "write-canonical", "--backup-dir", str(temp_root / "Saved" / "t20"), "--from-overlay", str(t20_overlay))
+    written_tuning, written_look = load_json(temp_tuning), load_json(temp_look)
+    look_check = python("Tools/FluidFX/fluid_material_look.py", "check", str(temp_look))[0]
+    backup_shas = (sha(temp_root / "Saved" / "t20" / "TDFluidPresetTuning.json"), sha(temp_root / "Saved" / "t20" / "TDFluidMaterialLook.json"))
+    restored = cli("--root", str(temp_root), "restore", "--backup-dir", str(temp_root / "Saved" / "t20"))
+    check("T20 write-canonical --from-overlay(임시 루트, Kinds 1·Look 1): 두 정본 백업·쓰기·검사 0, restore 로 원래 sha",
+          t20[0] == 0 and written_tuning["Kinds"]["Campfire"]["TDFluidSimulationConfig"]["VorticityStrength"] == 1.75
+          and written_look["Materials"][river]["Scalars"]["CAL0MissingScalar"] == 2.0 and look_check == 0 and backup_shas == temp_shas
+          and restored[0] == 0 and (sha(temp_tuning), sha(temp_look)) == temp_shas, (t20[0], t20[1][-400:], restored))
+
+    runtime_names = look_module.load_runtime_user_names()
+    dump = copy.deepcopy(canonical_look)
+    dump["NiagaraSystems"][debris_package]["Vectors2"]["User.SimExtentsCm"] = [1.0, 2.0]
+    dump["NiagaraSystems"][debris_package]["Floats"]["User.VelocityReferenceCmPerSec"] = 3.0
+    dump_path = output_dir / "t28-dump.json"
+    dump_path.write_text(json.dumps(dump), encoding="utf-8")
+    compared = python("Tools/FluidFX/fluid_material_look.py", "compare", str(dump_path), str(CANONICAL_LOOK))
+    real_change = copy.deepcopy(dump)
+    real_change["Materials"][river]["Scalars"]["CausticsStrength"] = 0.9
+    check("T28 compare: 런타임 User 변수 차이는 0(제외 목록)·실제 모양 차이는 셈",
+          "User.SimExtentsCm" in runtime_names and look_module.compare_looks(dump, canonical_look, runtime_names) == [] and len(look_module.compare_looks(dump, canonical_look)) == 2
+          and len(look_module.compare_looks(real_change, canonical_look, runtime_names)) == 1 and compared[0] == 0 and '"excluded_runtime_user_differences": 2' in compared[1], compared)
+
+    def make_judge(name, assignments, plan_extra=None, decision=True, overlay_sha=None, version=2, plan_path=None):
+        if plan_path is None:
+            plan_path = output_dir / f"{name}-plan.json"
+            plan_path.write_text(json.dumps(dict({"id": f"cal0-b1-{name}", "scenes": [{"name": "s", "level": "/Game/CAL0/L_B1"}], "params": []}, **(plan_extra or {}))), encoding="utf-8")
+        tool_path = output_dir / f"{name}-tool.py"
+        tool_path.write_text("TOOL = 1\n", encoding="utf-8")
+        lock_path = output_dir / f"{name}-lock.json"
+        prereg_lock.create_lock([str(plan_path), str(tool_path)], lock_path)
+        judge = {"tool": "calib_judge", "version": version, "stage": "confirm", "plan": prereg_lock.relative_text(plan_path), "plan_sha256": sha(plan_path),
+                 "lock": prereg_lock.relative_text(lock_path), "lock_sha256": sha(lock_path), "overlay_sha256": overlay_sha, "screen_result": f"{name}/screen.json",
+                 "adopt": {"decision": decision, "variant": "v01", "assignments": assignments, "reasons": [] if decision else ["후보가 v00"], "evidence": {}}}
+        if version != 2:
+            judge = {"tool": "calib_judge", "sweep": "x", "lock": judge["lock"], "scenes": [], "accepted": True}
+        judge_path = output_dir / f"{name}-judge.json"
+        judge_path.write_text(json.dumps(judge), encoding="utf-8")
+        return judge_path
+
+    overlay_path = output_dir / "overlay.json"
+    accept = lambda judge_path: cli("accept", "--judge", str(judge_path), "--overlay", str(overlay_path))
+    t19_judge = make_judge("t19", [{"json_path": vorticity, "value": 1.75}])
+    t19_ok = accept(t19_judge)
+    t19_overlay = load_json(overlay_path) if overlay_path.exists() else {"assignments": [{}], "history": [{}]}
+    t19_entry = t19_overlay["assignments"][0]
+    t19_false = accept(make_judge("t19-false", [{"json_path": cloud_global, "value": 3.0}], decision=False, overlay_sha=sha(overlay_path) if overlay_path.exists() else None))
+    t19_old = accept(make_judge("t19-old", [{"json_path": cloud_global, "value": 3.0}], version=1))
+    check("T19 accept: v2 adopt 참 → 항목·from·history / adopt 거짓 → 종료 1 / 옛 형식 → 종료 2",
+          t19_ok[0] == 0 and t19_entry.get("json_path") == vorticity and t19_entry.get("value") == 1.75 and t19_entry.get("kind") == "knob"
+          and t19_entry["from"]["variant"] == "v01" and t19_entry["from"]["judge_sha256"] == sha(t19_judge) and t19_entry["from"]["screen_judge"] == "t19/screen.json"
+          and t19_overlay["history"][0]["op"] == "add" and t19_overlay["history"][0]["json_path"] == vorticity
+          and t19_false[0] == 1 and "adopt.decision" in t19_false[1] and t19_old[0] == 2 and "v2" in t19_old[1], (t19_ok[1][-300:], t19_false, t19_old))
+
+    after_t19 = sha(overlay_path)
+    t78_judge = make_judge("t78", [{"json_path": cloud_global, "value": 3.0}], overlay_sha=after_t19)
+    tool_path = output_dir / "t78-tool.py"
+    tool_path.write_bytes(tool_path.read_bytes() + b"#")
+    t78 = accept(t78_judge)
+    t78_stale = accept(make_judge("t78-stale", [{"json_path": cloud_global, "value": 3.0}], overlay_sha="0" * 64))
+    check("T78 accept 때 잠금 도구 1바이트 변경 → 종료 2 / 덧씌움 sha 가 판정과 다름 → 종료 2 / 덧씌움 그대로",
+          t78[0] == 2 and "잠금 재검증 실패" in t78[1] and t78_stale[0] == 2 and "끼워 넣기" in t78_stale[1] and sha(overlay_path) == after_t19, (t78, t78_stale))
+
+    base_extent = {"json_path": "Kinds.FoliageWalk.TDFluidSimulationConfig.SimExtentCm", "value": {"X": 1500.0, "Y": 1500.0}}
+    reed_recovery = "Kinds.ReedShallows.TDFluidSimulationConfig.BendVectorRecoverySeconds"
+    t84_none = accept(make_judge("t84-none", [{"json_path": cloud_global, "value": 3.0}], {"base_tuning": [base_extent]}, overlay_sha=after_t19))
+    t84_ships = accept(make_judge("t84-ships", [{"json_path": cloud_global, "value": 3.0}], {"base_tuning": [base_extent], "base_tuning_ships": True}, overlay_sha=after_t19))
+    measured_extra = {"base_tuning": [{"json_path": reed_recovery, "value": 0.2}], "base_tuning_ships": False}
+    measured_judge = make_judge("t84-measured", [{"json_path": river_scalar, "value": 0.6}], measured_extra, overlay_sha=sha(overlay_path))
+    measured_overlay_sha = load_json(measured_judge)["overlay_sha256"]
+    t84_measured = accept(measured_judge)
+    entries = {entry["json_path"]: entry for entry in load_json(overlay_path)["assignments"]}
+    check("T84 base_tuning: ships 없음 → 종료 2 / ships 참 → base 항목 kind base_tuning / 거짓 → measured_under_base",
+          t84_none[0] == 2 and "base_tuning_ships" in t84_none[1] and t84_ships[0] == 0 and entries.get(base_extent["json_path"], {}).get("kind") == "base_tuning"
+          and entries.get(cloud_global, {}).get("kind") == "knob" and "measured_under_base" not in entries.get(cloud_global, {})
+          and t84_measured[0] == 0 and entries.get(river_scalar, {}).get("measured_under_base") == [reed_recovery] and reed_recovery not in entries,
+          (t84_none, t84_ships[1][-300:], t84_measured[1][-300:], list(entries)))
+
+    first = cli("materialize", "--overlay", str(overlay_path), "--out", str(output_dir / "t83-a"))
+    second = cli("materialize", "--overlay", str(overlay_path), "--out", str(output_dir / "t83-b"))
+    copy_tuning = load_json(output_dir / "t83-a" / "TDFluidPresetTuning.json") if first[0] == 0 else {}
+    copy_look = load_json(output_dir / "t83-a" / "TDFluidMaterialLook.json") if first[0] == 0 else {}
+    materialized = first[0] == 0 and second[0] == 0 and sha(output_dir / "t83-a" / "TDFluidPresetTuning.json") == sha(output_dir / "t83-b" / "TDFluidPresetTuning.json") \
+        and sha(output_dir / "t83-a" / "TDFluidMaterialLook.json") == sha(output_dir / "t83-b" / "TDFluidMaterialLook.json") \
+        and copy_tuning["Kinds"]["Campfire"]["TDFluidSimulationConfig"]["VorticityStrength"] == 1.75 and copy_tuning["Globals"]["TDFluidCloudSceneSettings"]["ViewSampleCountScaleFar"] == 3.0 \
+        and copy_tuning["Kinds"]["FoliageWalk"]["TDFluidSimulationConfig"]["SimExtentCm"] == {"X": 1500.0, "Y": 1500.0} and copy_look["Materials"][river]["Scalars"]["CausticsStrength"] == 0.6 \
+        and load_json(output_dir / "t83-a" / "variant.json")["overlay_sha256"] == sha(overlay_path)
+    removed = cli("overlay-remove", "--overlay", str(overlay_path), "--json-path", cloud_global, "--reason", "사슬 재검증 실패")
+    after_remove = load_json(overlay_path)
+    replace_judge = make_judge("t83-replace", [{"json_path": river_scalar, "value": 0.7}], plan_path=output_dir / "t84-measured-plan.json", overlay_sha=measured_overlay_sha)
+    replaced = cli("overlay-replace", "--overlay", str(overlay_path), "--json-path", river_scalar, "--judge", str(replace_judge))
+    after_replace = load_json(overlay_path)
+    replaced_entry = next((entry for entry in after_replace["assignments"] if entry["json_path"] == river_scalar), {})
+    stale_replace = cli("overlay-replace", "--overlay", str(overlay_path), "--json-path", river_scalar, "--judge", str(make_judge("t83-stale", [{"json_path": river_scalar, "value": 0.8}], plan_path=output_dir / "t84-measured-plan.json", overlay_sha=sha(overlay_path))))
+    check("T83 materialize(정본+덧씌움 값·두 번 같은 sha) / overlay-remove(항목 빠짐·history remove·사유) / overlay-replace(재판정 값·history replace·다른 덧씌움 판정은 종료 2)",
+          materialized and removed[0] == 0 and all(entry["json_path"] != cloud_global for entry in after_remove["assignments"])
+          and after_remove["history"][-1]["op"] == "remove" and after_remove["history"][-1]["reason"] == "사슬 재검증 실패" and after_remove["history"][-1]["value"] == 3.0
+          and replaced[0] == 0 and replaced_entry.get("value") == 0.7 and replaced_entry.get("measured_under_base") == [reed_recovery] and replaced_entry["from"]["judge_sha256"] == sha(replace_judge)
+          and after_replace["history"][-1]["op"] == "replace" and after_replace["history"][-1]["previous"]["value"] == 0.6 and stale_replace[0] == 2,
+          (first[1][-300:], removed[1][-300:], replaced[1][-300:], stale_replace[1][-200:]))
+
+    light = {"actor_prop": {"label": "TDGen_LabGreenLight", "component": "light_component", "property": "volumetric_scattering_intensity"}, "value": 4.0}
+    prop_first = accept(make_judge("t19-prop", [light], overlay_sha=sha(overlay_path)))
+    prop_entries = load_json(overlay_path)["actor_props"]
+    prop_again = accept(make_judge("t19-prop-again", [light], overlay_sha=sha(overlay_path)))
+    check("T19 보강 accept actor_prop: 레벨은 계획 장면에서·history 기술자·같은 속성 두 번 → 종료 2",
+          prop_first[0] == 0 and len(prop_entries) == 1 and prop_entries[0]["level"] == "/Game/CAL0/L_B1" and prop_entries[0]["value"] == 4.0
+          and load_json(overlay_path)["history"][-1]["json_path"] == "actor_prop:/Game/CAL0/L_B1/TDGen_LabGreenLight.light_component.volumetric_scattering_intensity"
+          and prop_again[0] == 2 and "같은 속성" in prop_again[1], (prop_first[1][-300:], prop_again[1][-300:]))
+
+    document = load_json(CANONICAL)
+    layered = copy.deepcopy(document)
+    layered["Groups"]["FireFamily"]["TDFluidSimulationConfig"]["TerrainSlopeGravity"] = 0.25
+    layered["Kinds"]["Campfire"]["TDFluidSimulationConfig"].pop("VorticityStrength")
+    for group in layered["Groups"].values():
+        group.get("TDFluidSimulationConfig", {}).pop("VorticityStrength", None)
+    layered["StructDefaults"]["TDFluidSimulationConfig"]["VorticityStrength"] = 1.23
+    reed_copy = patch.write_variant([{"json_path": reed_recovery, "value": 0.2}], output_dir / "t97", root=W, schema=schema)
+    reed_document = load_json(reed_copy["tuning"])
+    check("T97(B1) effective_value: Kinds → Groups → StructDefaults·Globals 한 층, 갈대 사본 값 변경이 실효 값에 보임, 없는 필드는 거부",
+          patch.effective_value(document, "Campfire", "TDFluidSimulationConfig", "VorticityStrength") == 1.5
+          and patch.effective_value(layered, "Campfire", "TDFluidSimulationConfig", "TerrainSlopeGravity") == 0.25
+          and patch.effective_value(layered, "Campfire", "TDFluidSimulationConfig", "VorticityStrength") == 1.23
+          and patch.effective_value(document, "Campfire", "TDFluidCloudSceneSettings", "ViewSampleCountScaleFar") == 2.0
+          and patch.effective_value(document, "ReedShallows", "TDFluidSimulationConfig", "BendVectorRecoverySeconds") == 0.08
+          and patch.effective_value(reed_document, "ReedShallows", "TDFluidSimulationConfig", "BendVectorRecoverySeconds") == 0.2
+          and rejection(lambda: patch.effective_value(document, "Campfire", "TDFluidSimulationConfig", "NoSuchField")) is not None)
+
+
 run_check(check_cal0_b0)
+run_check(check_cal0_patch)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

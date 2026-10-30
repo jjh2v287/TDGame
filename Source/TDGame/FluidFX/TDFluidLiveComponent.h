@@ -5,6 +5,7 @@
 #include "Engine/TextureDefines.h"
 #include "FluidFX/TDFluidFieldInputComponent.h"
 #include "FluidFX/TDFluidGpuSolverProxy.h"
+#include "FluidFX/TDFluidRainImpacts.h"
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidNearRippleLayer.h"
 #include "FluidFX/TDFluidFoliageBendLayer.h"
@@ -204,6 +205,10 @@ public:
 	int32 GetPendingMassPointCount() const { return PendingMassPoints.Num(); }
 	int32 GetLastUploadedMassPointCount() const { return LastUploadedMassPointCount; }
 	void SetMassInputSettingsForTests(const FTDFluidMassInputSettings& InSettings) { MassInputSettings = InSettings; }
+	const FTDFluidRainSettings& GetRainSettings() const { return RainSettings; }
+	float GetRainPuddleLevelCm() const { return RainImpactState.PuddleLevelCm; }
+	const FTDFluidRainImpactState& GetRainImpactState() const { return RainImpactState; }
+	void SetRainSettingsForTests(const FTDFluidRainSettings& InSettings) { RainSettings = InSettings; }
 	FVector GetSimulationWindowCenterWorld() const;
 	void EnsureMassInputDataChannelLoadRequested();
 	void SetCollectedObstacles(const TArray<FTDFluidSdfObstacle>& InObstacles);
@@ -215,6 +220,7 @@ public:
 	const FTDFluidSurfaceRenderSettings& GetSurfaceRenderSettings() const { return SurfaceRenderSettings; }
 
 	bool NeedsStampGroundElevation() const;
+	void DriveNiagaraComponent(UNiagaraComponent& NiagaraComp, const AActor& HeightSourceActor) const;
 
 	void SetWetnessSourceComponent(UTDFluidLiveComponent* SourceComponent);
 	FVector2D ProjectWorldToSolverPlane(const FVector& WorldPoint) const;
@@ -275,6 +281,9 @@ private:
 	void ReleaseGpuSolverSlot();
 	bool IsWaterLayerEnabled() const;
 	bool IsWaterMaterialActive() const;
+	void QueueRainForStep(float DeltaTime);
+	bool IsRainActive() const;
+	float ResolveRainIntensity() const;
 	void SubmitGpuWaterProbePlanePoints();
 	bool GetCpuWaterProbeSamples(TArray<FTDFluidWaterPointSample>& OutSamples) const;
 	bool GetGpuWaterProbeSamples(TArray<FTDFluidWaterPointSample>& OutSamples) const;
@@ -311,7 +320,6 @@ private:
 	void PushDirectDriveOutputs();
 	void DriveTaggedNiagaraComponents(UWorld* World);
 	void DriveOwnedNiagaraComponent();
-	void DriveNiagaraComponent(UNiagaraComponent& NiagaraComp, const AActor& HeightSourceActor) const;
 	void SyncOwnedNiagaraComponent();
 	void DestroyOwnedNiagaraComponent();
 	void RefreshTaggedNiagaraComponentCache(UWorld* World);
@@ -448,6 +456,11 @@ private:
 	bool bHasEffectivePresetSettings = false;
 	bool bIsSimulationConfigFromPreset = false;
 	bool bHasWaterInputsMissingOnCpu = false;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "FluidFX", meta = (AllowPrivateAccess = "true"))
+	FTDFluidRainSettings RainSettings;
+
+	FTDFluidRainImpactState RainImpactState;
 
 	bool bIsSimulationAwake = true;
 	bool bHasPendingObstacleUpdate = false;

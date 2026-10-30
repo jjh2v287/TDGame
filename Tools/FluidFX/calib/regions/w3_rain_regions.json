@@ -1,0 +1,20 @@
+{
+  "note": "1280x720 촬영, w3_rain 계획 3장면 공통 영역 초안(첫 촬영 뒤 맞춤). water = 연못 수면 고리 검출, embers = 빗줄기·튐 작은 덩어리 검출(FX-8n G2 빌림), 웅덩이는 pond_top 지면 영역",
+  "regions": [
+    {
+      "name": "pond_surface",
+      "kind": "water",
+      "box": [320, 200, 960, 600]
+    },
+    {
+      "name": "rain_streaks",
+      "kind": "embers",
+      "box": [160, 40, 1120, 360]
+    },
+    {
+      "name": "puddle_ground",
+      "kind": "water",
+      "box": [40, 380, 360, 700]
+    }
+  ]
+}

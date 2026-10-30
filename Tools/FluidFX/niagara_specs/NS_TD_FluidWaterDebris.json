@@ -1,0 +1,26 @@
+{
+ "asset": "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris",
+ "emitter_name": "Debris",
+ "profile": "water",
+ "space": "world",
+ "spawn": "rate_reject",
+ "features": [
+  "surface",
+  "tilemap"
+ ],
+ "renderer": {
+  "kind": "mesh",
+  "material": "/Game/FluidFX/Materials/MI_TD_FluidWaterDebris_Default",
+  "alignment": null,
+  "mesh": "/Engine/BasicShapes/Sphere.Sphere",
+  "mesh_facing": "Default"
+ },
+ "cast_shadow": true,
+ "max_particles": 1000,
+ "fixed_bounds_half_extent_cm": 4000.0,
+ "random_seed": 21,
+ "water": {
+  "role": "debris",
+  "sim_target": "gpu"
+ }
+}

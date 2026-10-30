@@ -880,6 +880,7 @@ int32 FTDFluidGpuSolverProxy::GatherWaterStep(FTDFluidGpuActorInput& OutActorInp
 	bWasUpdatingWaterWetness = bUpdatesWetness;
 	OutActorInput.WaterWetnessRetainFactor = FTDFluidWaterWetnessRules::ComputeRetainFactor(StepDeltaTime, OutActorInput.Settings.WetnessDryingSeconds);
 	OutActorInput.WaterSwashReachCm = FTDFluidWaterWetnessRules::ComputeSwashReachCm(OutActorInput.Settings.SwashHeightCm, FTDFluidWaterWetnessRules::ComputeCoastWavePhase(SimulationTimeSeconds + StepDeltaTime, OutActorInput.Settings.CoastWavePeriodSeconds));
+	OutActorInput.WaterRainWetnessStep = bUpdatesWetness ? RainWetnessPerSec * StepDeltaTime : 0.0f;
 	OutActorInput.WaterSurfaceOutput = WaterSurfaceOutput;
 	OutActorInput.WaterProbeFirstSlot = WaterProbeFirstSlot;
 

@@ -1,0 +1,25 @@
+{
+  "note": "1280x720 촬영, w1b_water_particles sea_img16 카메라(pawn 0,0·붐 900·시선 [-35, 30]) 기준 영역 초안(첫 촬영 뒤 맞춤). 작은 덩어리 검출은 embers kind 를 빌린다(G2)",
+  "regions": [
+    {
+      "name": "particles",
+      "kind": "embers",
+      "box": [
+        240,
+        120,
+        1040,
+        640
+      ]
+    },
+    {
+      "name": "sky",
+      "kind": "background",
+      "box": [
+        1050,
+        20,
+        1270,
+        110
+      ]
+    }
+  ]
+}

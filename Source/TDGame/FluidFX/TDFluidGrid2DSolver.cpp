@@ -2909,6 +2909,7 @@ void FTDFluidGrid2DSolver::UpdateWetness(float DeltaTime)
 	const float CoastWavePhase = FTDFluidWaterWetnessRules::ComputeCoastWavePhase(SimulationTimeSeconds + DeltaTime, Config.CoastWavePeriodSeconds);
 	const float SwashReachCm = FTDFluidWaterWetnessRules::ComputeSwashReachCm(Config.SwashHeightCm, CoastWavePhase);
 	const float InvBankWetHeightCm = FTDFluidWaterWetnessRules::ComputeInverseHeight(Config.BankWetHeightCm);
+	const float RainWetnessStep = RainWetnessPerSec * DeltaTime;
 
 	const int32 GridSize = Resolution;
 	float* WetnessValues = Wetness.GetData();
@@ -2918,7 +2919,7 @@ void FTDFluidGrid2DSolver::UpdateWetness(float DeltaTime)
 		{
 			const int32 Idx = Y * GridSize + X;
 			const float Source = ComputeWetnessSourceAtCell(X, Y, SwashReachCm, InvBankWetHeightCm);
-			WetnessValues[Idx] = FMath::Clamp(FMath::Max(WetnessValues[Idx] * RetainFactor, Source), 0.0f, 1.0f);
+			WetnessValues[Idx] = FMath::Clamp(FMath::Max(WetnessValues[Idx] * RetainFactor + RainWetnessStep, Source), 0.0f, 1.0f);
 		}
 	});
 }

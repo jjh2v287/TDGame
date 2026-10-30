@@ -618,7 +618,7 @@ def add_sample_texture(client, system_path, emitter, step, sample_module_asset, 
     client.call(
         "SetStackInputData",
         stackInputRef=stack_ref(system_path, emitter, step["script"], module_name, inputs=(uv_input,)),
-        inputData=linked_input(PLANE_UV_ATTRIBUTE, VECTOR2_TYPE),
+        inputData=linked_input(step.get("uv_attribute", PLANE_UV_ATTRIBUTE), VECTOR2_TYPE),
     )
     return module_name
 

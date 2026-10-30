@@ -239,7 +239,7 @@ struct alignas(16) FTDFluidGpuWaterParameters
 
 	float InvBankWetHeightCm = 0.0f;
 	float WetnessFromWhitewater = 0.0f;
-	uint32 Padding0 = 0;
+	float RainWetnessStep = 0.0f;
 	uint32 Padding1 = 0;
 };
 static_assert(sizeof(FTDFluidGpuWaterParameters) == 128, "FTDFluidGpuWaterParameters must match the 128 byte shader layout.");
@@ -251,6 +251,7 @@ static_assert(offsetof(FTDFluidGpuWaterParameters, RippleHeightReferenceCm) == 8
 static_assert(offsetof(FTDFluidGpuWaterParameters, KernelRadius) == 96, "FTDFluidGpuWaterParameters::KernelRadius must stay at byte 96.");
 static_assert(offsetof(FTDFluidGpuWaterParameters, WetnessRetainFactor) == 100, "FTDFluidGpuWaterParameters::WetnessRetainFactor must stay at byte 100.");
 static_assert(offsetof(FTDFluidGpuWaterParameters, InvBankWetHeightCm) == 112, "FTDFluidGpuWaterParameters::InvBankWetHeightCm must stay at byte 112.");
+static_assert(offsetof(FTDFluidGpuWaterParameters, RainWetnessStep) == 120, "FTDFluidGpuWaterParameters::RainWetnessStep must stay at byte 120.");
 
 struct alignas(16) FTDFluidGpuPackedWaterGuideUpdate
 {

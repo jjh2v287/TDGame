@@ -78,6 +78,7 @@ void ATDFluidWaterActor::BeginPlay()
 	Super::BeginPlay();
 
 	RequestWetDecalMaterial();
+	RequestRainPuddleDecalMaterial();
 	RequestLodGridPatchMesh();
 
 	UWorld* World = GetWorld();
@@ -111,6 +112,7 @@ void ATDFluidWaterActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		WetDecalLoadHandle->CancelHandle();
 		WetDecalLoadHandle.Reset();
 	}
+	ReleaseRainPuddleDecal();
 	if (LodGridMeshLoadHandle.IsValid())
 	{
 		LodGridMeshLoadHandle->CancelHandle();
@@ -143,6 +145,7 @@ void ATDFluidWaterActor::Tick(float DeltaSeconds)
 
 	TickWaterLayer(DeltaSeconds);
 	UpdateWetDecalPlacement();
+	UpdateRainPuddleDecalPlacement();
 	UpdateLodGrid();
 }
 
@@ -863,10 +866,9 @@ void ATDFluidWaterActor::UpdateWetDecalPlacement()
 		return;
 	}
 
-	const FVector2D WindowCenter = LiveComponent->GetSimulationCenterWorld();
-	const FVector2D WindowExtent = LiveComponent->GetSimulationExtentCm();
-	const FVector DecalLocation(WindowCenter.X, WindowCenter.Y, 0.5 * (TerrainMinimumCm + TerrainMaximumCm));
-	const FVector DecalSize(0.5 * (TerrainMaximumCm - TerrainMinimumCm) + WetDecalVerticalMarginCm, 0.5 * WindowExtent.Y, 0.5 * WindowExtent.X);
+	FVector DecalLocation = FVector::ZeroVector;
+	FVector DecalSize = FVector::ZeroVector;
+	ComputeWindowDecalPlacement(TerrainMinimumCm, TerrainMaximumCm, DecalLocation, DecalSize);
 	PlaceWetDecalIfChanged(DecalLocation, DecalSize);
 
 	if (!WetDecal->IsVisible())

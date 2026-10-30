@@ -298,6 +298,7 @@ void UTDFluidLiveComponent::RefreshEffectivePresetSettings(FTDFluidPresetReapply
 	AssignEffectiveStruct(MassInputSettings, UTDFluidPresetAsset::BuildMassInputForPresetKind(PresetKind), InOutReport);
 	AssignEffectiveStruct(NearRippleSettings, UTDFluidPresetAsset::BuildWaterNearRippleSettingsForPresetKind(PresetKind), InOutReport);
 	NearRippleLayer.Configure(NearRippleSettings);
+	AssignEffectiveStruct(RainSettings, UTDFluidPresetAsset::BuildRainForPresetKind(PresetKind), InOutReport);
 	EffectiveSettingsPreset = ActivePreset;
 	EffectiveSettingsPresetKind = PresetKind;
 	TableGeneration = GetPresetTuningTableGeneration();
@@ -335,6 +336,7 @@ void UTDFluidLiveComponent::ResetSimulationState()
 		Solver.ResetSimulation();
 	}
 	ReapplyActiveObstacles();
+	RainImpactState = FTDFluidRainImpactState();
 }
 
 void UTDFluidLiveComponent::QueueBrushStamp(const FTDFluidBrushStamp& Stamp)
@@ -730,6 +732,7 @@ bool UTDFluidLiveComponent::PrepareSimulationStep(float DeltaTime, const FVector
 	}
 
 	Solver.SetPlaneUpDirection(PlaneBasis.GetPlaneUpDirection());
+	QueueRainForStep(DeltaTime);
 	ApplyGroundSlabToPendingStamps();
 	ApplyInputBrushRulesToPendingStamps();
 	ConvertPendingStampsToSolverPlane();
@@ -2011,6 +2014,12 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 	const FVector2D NearRippleCenter = NearRippleLayer.GetSnappedCenterWorld();
 	TargetMID->SetVectorParameterValue(TEXT("NearRippleWindow"), FLinearColor(NearRippleCenter.X, NearRippleCenter.Y, NearRippleLayer.GetExtentCm(), FMath::Clamp(NearRippleSettings.EdgeFadeRatio, 0.02f, 0.4f)));
 	TargetMID->SetScalarParameterValue(TEXT("NearRippleActive"), NearRippleOutput ? 1.0f : 0.0f);
+	TargetMID->SetScalarParameterValue(TEXT("RainPuddleLevelCm"), RainImpactState.PuddleLevelCm);
+	TargetMID->SetScalarParameterValue(TEXT("RainPuddleCavityRadiusCm"), RainSettings.PuddleCavityRadiusCm);
+	TargetMID->SetScalarParameterValue(TEXT("RainPuddleCavityReferenceCm"), RainSettings.PuddleCavityReferenceCm);
+	TargetMID->SetScalarParameterValue(TEXT("RainIntensity"), ResolveRainIntensity());
+	TargetMID->SetScalarParameterValue(TEXT("RainDropsPerSquareMeterPerSec"), RainSettings.DropsPerSquareMeterPerSec);
+	TargetMID->SetScalarParameterValue(TEXT("RainTimeSeconds"), static_cast<float>(RainImpactState.ClockSeconds));
 }
 
 UTexture* UTDFluidLiveComponent::GetDensityPressureTexture() const
@@ -2243,6 +2252,7 @@ bool UTDFluidLiveComponent::PrepareGpuSimulationStep(float DeltaTime, const FVec
 		bHasPendingObstacleUpdate = false;
 	}
 
+	QueueRainForStep(DeltaTime);
 	ApplyGroundSlabToPendingStamps();
 	ApplyInputBrushRulesToPendingStamps();
 	ConvertPendingStampsToSolverPlane();

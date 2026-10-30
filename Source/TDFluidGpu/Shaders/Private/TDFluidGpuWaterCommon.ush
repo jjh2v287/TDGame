@@ -68,7 +68,7 @@ struct FTDFluidGpuWaterParameters
 
 	float InvBankWetHeightCm;
 	float WetnessFromWhitewater;
-	uint Padding0;
+	float RainWetnessStep;
 	uint Padding1;
 };
 

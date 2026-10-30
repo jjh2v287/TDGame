@@ -1,8 +1,9 @@
 """실행 환경: 시스템 Python 3 순수 모듈(unreal·MCP 없음, editor_make_fluid_driven_niagara.py·check_fluid_niagara_specs.py 가 가져온다).
 실행 명령: 직접 실행하지 않는다(import fluid_niagara_drive).
-출력: 없음. 구조 명세 Tools/FluidFX/niagara_specs/NS_TD_*.json(spec-fx8n 2.2) 검사와, 명세 → User 변수(런타임 12 + 조절 등록표)·STACK_PLAN(입력 단위 HLSL 식, 3절)·시스템/이미터/렌더러 데이터 변환을 준다. 표본 모듈마다 SampledColor 를 고유 입자 속성(SAMPLE_COPY_ATTRIBUTES)으로 연결 복사하고 $D·$A·$V 는 그 속성을 가리킨다(L-editor-62, 한 식이 표본 모듈 출력을 둘 이상 읽지 않음). 조절 등록표는 이름·형·범위만 두고 값은 모양 정본 TDFluidMaterialLook.json NiagaraSystems 에만 둔다(반박 S5).
-상태: 2026-10-27 CPU(VM) 질량 격자 위치식은 정수 % 대신 fmod·floor(VM 이 정수 나머지를 거부, NS_TD_FluidMassNdcBench 0b·생성 통과). 2026-10-26 FX-5 수정(미검증, 오프라인 검사만): 대량 입력 profile mass(월드 공간 고정, 충돌 금지 P-25 ⑤, 렌더러 none, 쓰기 splat(TDFluidSplatDataInterface)·ndc(NDC Append)·kill(KillParticlesInVolume 상자, Kill Shape Box 열거 재읽기), 운동 swirl·cone·slide, CPU·GPU)와 등록표 TDMass* 를 더함. 기존 drive·ember 계획은 바이트 그대로. 이전: 2026-10-26 수정(격자 UV 를 Engine.ExecIndex 대신 Particles.UniqueID % 격자수² 로: GPU 식 입력에서 Engine.ExecIndex 가 늘 0 이라 2048개가 한 점에 모였음, sim cache 실측. 수정 뒤 MeshArray 0b·생성·HeightFollowsDensity 통과). 식 접근·SpawnBurst·Collision 은 0b 확정. EmitterState 열거 값은 엔진 Niagara 콘텐츠 Enums 에셋 표시 이름 표 해독으로 확정(Self = ENiagaraEmitterLifeCycleMode::NewEnumerator1, Once = ENiagara_EmitterStateOptions::NewEnumerator1)하고 생성기가 재읽기 표시 이름으로 다시 확인한다.
+출력: 없음. 구조 명세 Tools/FluidFX/niagara_specs/NS_TD_*.json(spec-fx8n 2.2) 검사와, 명세 → User 변수(런타임 12 + 조절 등록표)·STACK_PLAN(입력 단위 HLSL 식, 3절)·시스템/이미터/렌더러 데이터 변환을 준다. 표본 모듈마다 SampledColor 를 고유 입자 속성(SAMPLE_COPY_ATTRIBUTES)으로 연결 복사하고 $D·$A·$V 는 그 속성을 가리킨다(L-editor-62, 한 식이 표본 모듈 출력을 둘 이상 읽지 않음). 조절 등록표는 이름·형·범위만 두고 값은 모양 정본 TDFluidMaterialLook.json NiagaraSystems 에만 둔다(반박 S5). profile water·rain 은 PROFILE_MODULE_NAMES 의 모듈(fluid_niagara_water·fluid_niagara_rain)을 지연 가져와 find_spec_problems·build_stack_plan·select_tuning_variables·build_user_variable_plan·required_look_names·sim_target_of·required_compile_scripts 를 위임하고(profile_module), 런타임 목록은 all_runtime_user_variables()(기준 12 ∪ water ∪ rain)·unbaked_runtime_names(spec)(굽지 않는 런타임)로 준다(X-05).
+상태: 2026-10-29 W-1b C: profile water·rain 행·위임·표본 자리표시 $S·$T 추가(미검증, 오프라인 검사만; 기존 profile 계획·정답 바이트 동일, 기존 12 정답 불변 확인). 이전: 2026-10-27 CPU(VM) 질량 격자 위치식은 정수 % 대신 fmod·floor(VM 이 정수 나머지를 거부, NS_TD_FluidMassNdcBench 0b·생성 통과). 2026-10-26 FX-5 수정(미검증, 오프라인 검사만): 대량 입력 profile mass(월드 공간 고정, 충돌 금지 P-25 ⑤, 렌더러 none, 쓰기 splat(TDFluidSplatDataInterface)·ndc(NDC Append)·kill(KillParticlesInVolume 상자, Kill Shape Box 열거 재읽기), 운동 swirl·cone·slide, CPU·GPU)와 등록표 TDMass* 를 더함. 기존 drive·ember 계획은 바이트 그대로. 이전: 2026-10-26 수정(격자 UV 를 Engine.ExecIndex 대신 Particles.UniqueID % 격자수² 로: GPU 식 입력에서 Engine.ExecIndex 가 늘 0 이라 2048개가 한 점에 모였음, sim cache 실측. 수정 뒤 MeshArray 0b·생성·HeightFollowsDensity 통과). 식 접근·SpawnBurst·Collision 은 0b 확정. EmitterState 열거 값은 엔진 Niagara 콘텐츠 Enums 에셋 표시 이름 표 해독으로 확정(Self = ENiagaraEmitterLifeCycleMode::NewEnumerator1, Once = ENiagara_EmitterStateOptions::NewEnumerator1)하고 생성기가 재읽기 표시 이름으로 다시 확인한다.
 """
+import importlib
 import json
 import pathlib
 import re
@@ -14,12 +15,14 @@ SPEC_KEYS = ("asset", "emitter_name", "profile", "space", "spawn", "features", "
 MASS_SPEC_KEY = "mass"
 MASS_KEYS = ("motion", "sim_target", "target_channel_name", "data_channel", "allocation_count")
 RENDERER_KEYS = ("kind", "material", "alignment", "mesh", "mesh_facing")
-PROFILES = ("drive", "ember", "mass")
+PROFILES = ("drive", "ember", "mass", "water", "rain")
 SPACES = ("world", "local")
-SPAWN_MODES = ("rate_reject", "grid_burst", "rate")
-SPAWN_MODES_BY_PROFILE = {"drive": ("rate_reject", "grid_burst"), "ember": ("rate_reject",), "mass": ("rate", "grid_burst")}
-FEATURES = ("height", "color", "collision", "splat", "ndc", "kill")
-FEATURES_BY_PROFILE = {"drive": ("height", "color"), "ember": ("collision",), "mass": ("splat", "ndc", "kill")}
+SPAWN_MODES = ("rate_reject", "grid_burst", "rate", "event_burst")
+SPAWN_MODES_BY_PROFILE = {"drive": ("rate_reject", "grid_burst"), "ember": ("rate_reject",), "mass": ("rate", "grid_burst"),
+                          "water": ("rate_reject", "event_burst"), "rain": ("rate",)}
+FEATURES = ("height", "color", "collision", "splat", "ndc", "kill", "surface", "tilemap")
+FEATURES_BY_PROFILE = {"drive": ("height", "color"), "ember": ("collision",), "mass": ("splat", "ndc", "kill"),
+                       "water": ("surface", "tilemap", "ndc"), "rain": ()}
 MASS_WRITE_FEATURES = ("splat", "ndc")
 MASS_MOTIONS = ("swirl", "cone", "slide")
 MASS_SIM_TARGETS = ("gpu", "cpu")
@@ -55,7 +58,8 @@ MASS_MODULE_INPUTS = ("bExecute", "Position", "Velocity", "RadiusCm", "DensitySt
 KILL_SHAPE_BOX = ("Kill Shape", toolset.KILL_SHAPE_ENUM, "ENiagaraKillVolumeOptions::NewEnumerator1", "Box")
 LIFE_CYCLE_SELF = ("Life Cycle Mode", toolset.LIFE_CYCLE_ENUM, "ENiagaraEmitterLifeCycleMode::NewEnumerator1", "Self")
 LOOP_BEHAVIOR_ONCE = ("Loop Behavior", toolset.LOOP_BEHAVIOR_ENUM, "ENiagara_EmitterStateOptions::NewEnumerator1", "Once")
-SAMPLE_COPY_ATTRIBUTES = {"$D": "Particles.TDDriveSampleDensity", "$A": "Particles.TDDriveSampleAux", "$V": "Particles.TDDriveSampleVelocity"}
+SAMPLE_COPY_ATTRIBUTES = {"$D": "Particles.TDDriveSampleDensity", "$A": "Particles.TDDriveSampleAux", "$V": "Particles.TDDriveSampleVelocity",
+                          "$S": "Particles.TDWaterSampleSurface", "$T": "Particles.TDWaterSampleTile"}
 
 EMITTER_UPDATE_SCRIPT = "EmitterUpdateScript"
 PARTICLE_SPAWN_SCRIPT = "ParticleSpawnScript"
@@ -84,12 +88,15 @@ RUNTIME_USER_VARIABLES = (
     ("User.VelocityReferenceCmPerSec", toolset.FLOAT_TYPE),
 )
 BAKED_RUNTIME_USER_VARIABLES = tuple(item for item in RUNTIME_USER_VARIABLES if item[1] != toolset.TEXTURE_CLASS)
+PROFILE_MODULE_NAMES = {"water": "fluid_niagara_water", "rain": "fluid_niagara_rain"}
+PROFILE_SPEC_KEYS = {"water": "water"}
 
 F = toolset.FLOAT_TYPE
 I = toolset.INT_TYPE
 V2 = toolset.VECTOR2_TYPE
 V3 = toolset.VECTOR3_TYPE
 C = toolset.COLOR_TYPE
+RAIN_RUNTIME_USER_VARIABLES = (("User.TDRainIntensity", F),)
 TUNING_REGISTRY = (
     ("drive", "rate", "User.DriveSpawnRatePerSec", F, 0.0, 2e4),
     ("drive", "rate", "User.DriveSpawnPerM2PerSec", F, 0.0, 1e5),
@@ -168,7 +175,7 @@ TUNING_REGISTRY = (
 ALLOWED_ENGINE_NAMES = ("Engine.DeltaTime", "Engine.ExecIndex", "Engine.Owner.SystemLocalToWorld", "Engine.Owner.SystemWorldToLocal")
 ALLOWED_PARTICLE_NAMES = ("Position", "Velocity", "Lifetime", "Age", "Color", "SpriteSize", "Scale", "DynamicMaterialParameter", "UniqueID")
 TOKEN_PATTERN = re.compile(r"(?<![A-Za-z0-9_])(User|Particles|Engine)\.([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)")
-PLACEHOLDERS = ("$D", "$V", "$A")
+PLACEHOLDERS = ("$D", "$V", "$A", "$S", "$T")
 
 
 def read_spec(path):
@@ -179,10 +186,45 @@ def is_number(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def profile_module(spec):
+    profile = spec.get("profile") if isinstance(spec, dict) else None
+    module_name = PROFILE_MODULE_NAMES.get(profile) if isinstance(profile, str) else None
+    return importlib.import_module(module_name) if module_name else None
+
+
+def all_runtime_user_variables():
+    water_runtime = profile_module({"profile": "water"}).WATER_RUNTIME_USER_VARIABLES
+    merged = {}
+    for item in RUNTIME_USER_VARIABLES + tuple(water_runtime) + RAIN_RUNTIME_USER_VARIABLES:
+        merged.setdefault(item[0], item)
+    return tuple(merged.values())
+
+
+def unbaked_runtime_names(spec):
+    profile = spec.get("profile") if isinstance(spec, dict) else None
+    if profile == "water":
+        return {name for name, _ in profile_module(spec).WATER_RUNTIME_USER_VARIABLES}
+    if profile == "rain":
+        return {name for name, _ in RAIN_RUNTIME_USER_VARIABLES}
+    return set()
+
+
+def extra_spec_keys(spec):
+    profile = spec.get("profile")
+    return {MASS_SPEC_KEY, PROFILE_SPEC_KEYS.get(profile) if isinstance(profile, str) else None}
+
+
 def find_spec_problems(spec):
+    module = profile_module(spec)
+    if module is not None:
+        return module.find_spec_problems(spec)
+    return find_base_spec_problems(spec)
+
+
+def find_base_spec_problems(spec):
     if not isinstance(spec, dict):
         return ["명세 최상위는 객체여야 함"]
-    problems = [f"모르는 키 {key!r}" for key in spec if key not in SPEC_KEYS and key != MASS_SPEC_KEY]
+    problems = [f"모르는 키 {key!r}" for key in spec if key not in SPEC_KEYS and key not in extra_spec_keys(spec)]
     problems.extend(f"키 없음 {key!r}" for key in SPEC_KEYS if key not in spec)
     if problems:
         return problems
@@ -298,17 +340,26 @@ def spec_conditions(spec):
 
 
 def select_tuning_variables(spec):
+    module = profile_module(spec)
+    if module is not None:
+        return module.select_tuning_variables(spec)
     conditions = spec_conditions(spec)
     return [(name, type_path, low, high) for profile, condition, name, type_path, low, high in TUNING_REGISTRY
             if profile == spec["profile"] and condition in conditions]
 
 
 def build_user_variable_plan(spec):
+    module = profile_module(spec)
+    if module is not None:
+        return module.build_user_variable_plan(spec)
     runtime = [] if is_mass(spec) else list(RUNTIME_USER_VARIABLES)
     return runtime + [(name, type_path) for name, type_path, _, _ in select_tuning_variables(spec)]
 
 
 def required_look_names(spec):
+    module = profile_module(spec)
+    if module is not None:
+        return module.required_look_names(spec)
     return [(name, type_path) for name, type_path in build_user_variable_plan(spec) if type_path != toolset.TEXTURE_CLASS]
 
 
@@ -625,6 +676,9 @@ def mass_update_steps(spec):
 
 
 def build_stack_plan(spec):
+    module = profile_module(spec)
+    if module is not None:
+        return module.build_stack_plan(spec)
     if is_mass(spec):
         return mass_emitter_steps(spec) + mass_spawn_steps(spec) + mass_update_steps(spec)
     return emitter_spawn_steps(spec) + spawn_steps(spec) + update_steps(spec)
@@ -643,12 +697,18 @@ def count_data_interface_steps(plan):
 
 
 def required_compile_scripts(spec):
+    module = profile_module(spec)
+    if module is not None:
+        return module.required_compile_scripts(spec)
     if is_mass(spec) and spec[MASS_SPEC_KEY]["sim_target"] == "cpu":
         return []
     return [f"{spec['emitter_name']}.{GPU_COMPUTE_SCRIPT}"]
 
 
 def sim_target_of(spec):
+    module = profile_module(spec)
+    if module is not None:
+        return module.sim_target_of(spec)
     if is_mass(spec) and spec[MASS_SPEC_KEY]["sim_target"] == "cpu":
         return "CPUSim"
     return "GPUComputeSim"

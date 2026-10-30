@@ -61,6 +61,7 @@ public:
 	void PackWaterSurfacePixels(TArray<FFloat16Color>& OutPixels, float TerrainReferenceZCm) const;
 	uint32 ComputeWaterStateChecksum() const;
 	float GetWaterSurfaceHeightAtCell(int32 CellX, int32 CellY) const;
+	void SetRainWetnessPerSec(float InRainWetnessPerSec) { RainWetnessPerSec = FMath::IsNaN(InRainWetnessPerSec) ? 0.0f : FMath::Clamp(InRainWetnessPerSec, 0.0f, 10.0f); }
 	bool IsTerrainSamplingCompleteForWater() const;
 	bool IsDenseWaterActive() const;
 	static bool IsDenseWaterConsoleEnabled();
@@ -233,4 +234,5 @@ private:
 	bool bWaterVelocityInitPending = true;
 	bool bHasRippleActivity = false;
 	bool bIsWetnessUpdating = false;
+	float RainWetnessPerSec = 0.0f;
 };

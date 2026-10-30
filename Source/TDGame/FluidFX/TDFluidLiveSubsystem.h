@@ -154,6 +154,8 @@ public:
 	void CollectFlowGuidesInBounds(const FBox2D& BoundsXY, TArray<FTDFluidFlowGuide>& OutGuides) const;
 	void NotifyWaterSurfacesChanged();
 	int32 GetWaterRegistryVersion() const { return WaterRegistryVersion; }
+	void SetRainIntensity(float InRainIntensity);
+	float GetEffectiveRainIntensity() const;
 
 	int32 GetActiveActorCount() const;
 	int32 GetPooledInactiveActorCount() const;
@@ -242,6 +244,7 @@ private:
 	FTDFluidPresetReapplyReport LastReapplyReport;
 	int32 PendingReapplyTableGeneration = INDEX_NONE;
 	int32 WaterRegistryVersion = 0;
+	float RainIntensity = 0.0f;
 
 	TSharedPtr<FTDFluidGpuSolverRenderState, ESPMode::ThreadSafe> GpuSolverRenderState;
 	TSharedPtr<FTDFluidMassInputHub, ESPMode::ThreadSafe> MassInputHub;

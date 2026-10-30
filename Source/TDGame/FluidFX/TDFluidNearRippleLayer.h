@@ -24,6 +24,23 @@ struct FTDFluidNearRippleSubstepPlan
 	float SubstepDeltaSeconds = 0.0f;
 };
 
+struct FTDFluidNearRippleRainInput
+{
+	float DropsPerSquareMeterPerSec = 0.0f;
+	float DropImpulseCm = 0.0f;
+	float DropRadiusCm = 0.0f;
+	uint32 RandomSeed = 0;
+};
+
+struct FTDFluidNearRippleRainFrame
+{
+	float DropProbability = 0.0f;
+	float DropImpulseCm = 0.0f;
+	float DropRadiusCells = 1.0f;
+	int32 BlockSizeCells = 2;
+	uint32 Seed = 0;
+};
+
 struct FTDFluidNearRippleSourceSelection
 {
 	FVector2D WorldXY = FVector2D::ZeroVector;
@@ -44,6 +61,7 @@ public:
 	void AddMovingSource(const FVector2D& WorldXY, const FVector2D& VelocityXY, float StampRadiusCm);
 	void AddIdleContact(const FVector2D& WorldXY);
 	void ClearPendingSources();
+	void SetRainInput(const FTDFluidNearRippleRainInput& InRainInput);
 	void SubmitStep(const FTDFluidNearRippleMaskInputs& Masks, const FVector2D& CenterWorldXY, float DeltaTime, UTextureRenderTarget2D& OutputTarget);
 	void Release();
 
@@ -61,6 +79,10 @@ public:
 	static FIntPoint ComputeStorageCell(const FIntPoint& WorldCell, int32 Resolution);
 	static bool ShouldResetForShift(const FIntPoint& PreviousWindowMinCell, const FIntPoint& WindowMinCell, int32 Resolution);
 	static bool ResolveEnabled(int32 ConsoleState, bool bPresetEnabled);
+	static FTDFluidNearRippleRainFrame MakeRainFrame(const FTDFluidNearRippleRainInput& Input, float CellSizeCm, float SubstepDeltaSeconds);
+	static FIntPoint ComputeRainBlock(const FIntPoint& WorldCell, int32 BlockSizeCells);
+	static bool FindRainDropInBlock(const FIntPoint& Block, uint32 SubstepIndex, const FTDFluidNearRippleRainFrame& Frame, FVector2f& OutDropOffsetCells);
+	static float ComputeRainDropWeight(const FIntPoint& WorldCell, uint32 SubstepIndex, const FTDFluidNearRippleRainFrame& Frame);
 
 private:
 	struct FPendingSource
@@ -75,6 +97,8 @@ private:
 
 	FTDFluidWaterNearRippleSettings Settings;
 	TArray<FPendingSource> PendingSources;
+	FTDFluidNearRippleRainInput RainInput;
+	uint32 RainSubstepCounter = 0;
 	TSharedPtr<FTDFluidGpuNearRippleState, ESPMode::ThreadSafe> RenderState;
 	FIntPoint CurrentWindowMinCell = FIntPoint::ZeroValue;
 	double LayerTimeSeconds = 0.0;

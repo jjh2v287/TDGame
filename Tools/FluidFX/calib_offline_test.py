@@ -2548,6 +2548,135 @@ def check_cal0_measure():
     check("B4b 재판정(Q3) 스윕은 --plan 잠금 v2 로 닫힌 세계 판정 통과", all(value == 2 for value in compatibility.values()), compatibility)
 
 
+def check_cal0_derived_chain():
+    def close(value, expected, tolerance):
+        return isinstance(value, (int, float)) and abs(value - expected) <= tolerance
+
+    def series_items(times, columns):
+        steps = [{"step": index, "name": f"s{index:02d}_v00", "variant": "v00", "valid": True, "shot_game_times": list(times)} for index in range(3)]
+        items = []
+        for step in steps:
+            metrics = {f"{shot}.{name}": values[shot] for name, values in columns.items() for shot in range(len(times))}
+            metrics.update({name: sorted(values)[len(values) // 2] for name, values in columns.items()})
+            items.append({"step": step["step"], "variant": "v00", "metrics": metrics, "samples": {name: list(values) for name, values in columns.items()}, "rule_score": 0, "bands": {}, "shot_count": len(times)})
+        return items, steps
+
+    def plan_error(specs):
+        items, steps = series_items([0.0, 1.0, 2.0], {"x.m": [3.0, 2.0, 1.0], "y.m": [1.0, 1.0, 1.0]})
+        try:
+            calib_judge.add_derived_metrics(items, steps, specs, "s", True)
+        except calib_judge.JudgeError as error:
+            return str(error)
+        return ""
+
+    press_times = [20.0 + shot for shot in range(9)]
+    press_items, press_steps = series_items(press_times, {"pressed_side.luminance_mean": [0.70 + 0.06 * 2 ** (-(time - 20.0) / 4.0) for time in press_times],
+                                                          "outer_ring.luminance_mean": [0.70] * 9})
+    press_specs = [{"name": "pressed_luma_ratio", "op": "ratio", "a": "pressed_side.luminance_mean", "b": "outer_ring.luminance_mean"},
+                   {"name": "press_contrast", "op": "difference", "a": "pressed_side.luminance_mean", "b": "outer_ring.luminance_mean"},
+                   {"name": "press_half_life_seconds", "op": "half_life", "a": "derived.press_contrast"},
+                   {"name": "press_absolute_half_life", "op": "half_life", "a": "pressed_side.luminance_mean"},
+                   {"name": "press_contrast_over_ratio", "op": "ratio", "a": "derived.press_contrast", "b": "derived.pressed_luma_ratio"}]
+    calib_judge.add_derived_metrics(press_items, press_steps, press_specs, "k2_press_decay", True)
+    press = press_items[0]["metrics"]
+    check("CAL-0 파생 연쇄: difference(눌림 − 바깥) 장별 계열 → half_life(derived.press_contrast) 합성 반감기 4초 ±1%·r2>0.999, 절대 휘도 half_life 는 띠 [3,8] 밖(합성 계열 약 92 s)",
+          close(press.get("derived.press_half_life_seconds"), 4.0, 0.04) and (press.get("derived.press_half_life_seconds.r2") or 0) > 0.999 and (press.get("derived.press_absolute_half_life") or 0) > 30.0
+          and close(press.get("8.derived.press_contrast"), 0.06 * 2 ** -2, 1e-12) and len(press_items[2]["samples"].get("derived.press_contrast", [])) == 9,
+          {key: press.get(key) for key in ("derived.press_half_life_seconds", "derived.press_half_life_seconds.r2", "derived.press_absolute_half_life", "8.derived.press_contrast")})
+    check("CAL-0 파생 연쇄: 쌍 연산이 앞 파생 둘을 피연산으로(대비 ÷ 비, 장별·중앙값)", close(press.get("derived.press_contrast_over_ratio"), press.get("derived.press_contrast", 0) / press.get("derived.pressed_luma_ratio", 1), 1e-12)
+          and close(press.get("0.derived.press_contrast_over_ratio"), 0.06 / (0.76 / 0.70), 1e-12), {key: value for key, value in press.items() if "over_ratio" in key})
+
+    replicate_items, replicate_steps = series_items(press_times[:5], {"pressed_side.luminance_mean": [0.72] * 5, "outer_ring.luminance_mean": [0.70] * 5})
+    calib_judge.add_derived_metrics(replicate_items, replicate_steps, press_specs, "k2_press", False)
+    replicate = replicate_items[0]["metrics"]
+    check("CAL-0 파생 연쇄: replicate 장면은 대비(쌍 연산)만 내고 시계열 연산은 건너뜀(연쇄된 쌍 연산은 계속)", close(replicate.get("derived.press_contrast"), 0.02, 1e-12)
+          and "derived.press_half_life_seconds" not in replicate and "derived.press_contrast_over_ratio" in replicate, sorted(key for key in replicate if key.startswith("derived.")))
+
+    groove_times = [15.0 * shot for shot in range(5)]
+    groove_items, groove_steps = series_items(groove_times, {"snow_surface.luminance_mean": [0.84] * 5, "groove_decay.luminance_mean": [0.84 - 0.2 * 2 ** (-time / 90.0) for time in groove_times]})
+    groove_specs = [{"name": "groove_contrast", "op": "difference", "a": "snow_surface.luminance_mean", "b": "groove_decay.luminance_mean"},
+                    {"name": "groove_half_life_seconds", "op": "half_life", "a": "derived.groove_contrast"},
+                    {"name": "groove_absolute_half_life", "op": "half_life", "a": "groove_decay.luminance_mean"},
+                    {"name": "groove_reversed", "op": "difference", "a": "groove_decay.luminance_mean", "b": "snow_surface.luminance_mean"},
+                    {"name": "groove_reversed_half_life", "op": "half_life", "a": "derived.groove_reversed"},
+                    {"name": "groove_magnitude_half_life", "op": "half_life", "a": "derived.groove_reversed", "absolute": True},
+                    {"name": "groove_magnitude_e_fold", "op": "e_fold", "a": "derived.groove_reversed", "absolute": True}]
+    calib_judge.add_derived_metrics(groove_items, groove_steps, groove_specs, "groove_decay", True)
+    groove = groove_items[1]["metrics"]
+    check("CAL-0 대비 반감기: 홈이 밝아지며 복원(표면 − 홈 대비 반감기 90 s) → 90 s ±1%, 절대 홈 휘도 half_life 는 None(증가 계열)",
+          close(groove.get("derived.groove_half_life_seconds"), 90.0, 0.9) and groove.get("derived.groove_absolute_half_life") is None,
+          {key: groove.get(key) for key in ("derived.groove_half_life_seconds", "derived.groove_absolute_half_life")})
+    check("CAL-0 대비 반감기: 거꾸로 뺀 대비(홈 − 표면, 음수) → None, absolute 참이면 방향 무관 90 s ±1%·e_fold 90/ln2",
+          groove.get("derived.groove_reversed_half_life") is None and close(groove.get("derived.groove_magnitude_half_life"), 90.0, 0.9) and close(groove.get("derived.groove_magnitude_e_fold"), 90.0 / math.log(2.0), 1.3),
+          {key: groove.get(key) for key in ("derived.groove_reversed_half_life", "derived.groove_magnitude_half_life", "derived.groove_magnitude_e_fold")})
+
+    self_message = plan_error([{"name": "loop", "op": "difference", "a": "derived.loop", "b": "y.m"}])
+    forward_message = plan_error([{"name": "first", "op": "half_life", "a": "derived.second"}, {"name": "second", "op": "difference", "a": "x.m", "b": "y.m"}])
+    cycle_message = plan_error([{"name": "first", "op": "ratio", "a": "derived.second", "b": "y.m"}, {"name": "second", "op": "ratio", "a": "derived.first", "b": "y.m"}])
+    undefined_message = plan_error([{"name": "contrast", "op": "difference", "a": "x.m", "b": "y.m"}, {"name": "decay", "op": "half_life", "a": "derived.contrats"}])
+    duplicate_message = plan_error([{"name": "contrast", "op": "difference", "a": "x.m", "b": "y.m"}, {"name": "contrast", "op": "ratio", "a": "x.m", "b": "y.m"}])
+    absolute_message = plan_error([{"name": "contrast", "op": "difference", "a": "x.m", "b": "y.m", "absolute": True}])
+    check("CAL-0 파생 연쇄 거부(계획 오류): 자기 참조·뒤 파생 참조·두 식 순환 → '순환 또는 순서 오류', 미정의 이름 → '정의되지 않은'+가까운 이름, 이름 중복·absolute 를 쌍 연산에",
+          all("순환 또는 순서 오류" in message for message in (self_message, forward_message, cycle_message)) and "정의되지 않은" in undefined_message and "derived.contrats" in undefined_message
+          and "contrast" in undefined_message.split("가까운 이름")[-1] and "겹친다" in duplicate_message and "absolute" in absolute_message,
+          (self_message, forward_message, cycle_message, undefined_message, duplicate_message, absolute_message))
+
+    scoped_items, scoped_steps = series_items([0.0, 1.0, 2.0], {"x.m": [3.0, 2.0, 1.0], "y.m": [1.0, 1.0, 1.0]})
+    calib_judge.add_derived_metrics(scoped_items, scoped_steps, [{"name": "other_contrast", "op": "difference", "a": "x.m", "b": "y.m", "scene": "other"},
+                                                                 {"name": "other_ratio", "op": "ratio", "a": "derived.other_contrast", "b": "y.m"},
+                                                                 {"name": "missing_ratio", "op": "ratio", "a": "z.m", "b": "y.m"}], "s", True)
+    check("CAL-0 파생 연쇄: 앞 파생이 다른 장면 전용이면 이 장면에서 뒤 파생도 건너뜀(오류 아님), 측정에 없는 피연산 건너뜀은 그대로",
+          not any(key.startswith("derived.") or ".derived." in key for key in scoped_items[0]["metrics"]), sorted(scoped_items[0]["metrics"]))
+
+
+def check_cal0_viscous_measure():
+    output_dir = TEST_DIR / "cal0-viscous"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    measure_script = W / "Tools" / "FluidFX" / "measure_fx_look.py"
+
+    def write_gray(name, value_at):
+        image = Image.new("L", (256, 144))
+        image.putdata([max(0, min(255, value_at(x, y))) for y in range(144) for x in range(256)])
+        image.convert("RGB").save(output_dir / name)
+        return (output_dir / name).as_posix()
+
+    def measure(name, images):
+        regions_path = output_dir / f"{name}_regions.json"
+        regions_path.write_text(json.dumps({"images": images}), encoding="utf-8")
+        output_path = output_dir / f"{name}.json"
+        output_path.unlink(missing_ok=True)
+        exit_code, text = python(str(measure_script), "--regions", str(regions_path), "--output", str(output_path))
+        document = json.loads(output_path.read_text(encoding="utf-8")) if exit_code == 0 and output_path.is_file() else {"images": []}
+        return exit_code, {(image["id"], region["name"]): region["metrics"] for image in document["images"] for region in image["regions"]}, text
+
+    swirl = write_gray("swirl.png", lambda x, y: int(round(128 + 70 * math.sin(2 * math.pi * x / 20.0 + 0.3 * math.sin(2 * math.pi * y / 48.0)))))
+    ramp = write_gray("edge.png", lambda x, y: 40 + 8 * min(max(x - 120, 0), 20))
+    flat = write_gray("flat.png", lambda x, y: 128)
+    exit_code, measured, text = measure("viscous", [
+        {"path": swirl, "id": "swirl", "regions": [{"name": "mud_surface", "kind": "water", "box": [40, 20, 200, 120], "analyses": ["swirl"], "cm_per_px": 0.75},
+                                                   {"name": "mud_band", "kind": "water", "box": [40, 20, 200, 120], "analyses": ["swirl"], "band_px": [8, 64]},
+                                                   {"name": "plain", "kind": "water", "box": [40, 20, 200, 120]}]},
+        {"path": ramp, "id": "edge", "regions": [{"name": "decal_edge", "kind": "water", "box": [80, 40, 180, 104], "analyses": ["edge_profile"], "line": [[90, 72], [170, 72]], "cm_per_px": 0.5, "cell_cm": 5},
+                                                 {"name": "decal_back", "kind": "water", "box": [80, 40, 180, 104], "analyses": ["edge_profile"], "line": [[170, 60], [90, 60]], "cm_per_px": 0.5}]},
+        {"path": flat, "id": "flat", "regions": [{"name": "decal_edge", "kind": "water", "box": [80, 40, 180, 104], "analyses": ["edge_profile", "swirl"], "line": [[90, 72], [170, 72]], "cm_per_px": 0.5, "cell_cm": 5}]}])
+    mud, band = measured.get(("swirl", "mud_surface"), {}).get("swirl", {}), measured.get(("swirl", "mud_band"), {}).get("swirl", {})
+    check("CAL-0 점성 swirl: 가로 주기 20px 소용돌이 무늬(세로로 흔들림) → spacing_px 20±0.5·spacing_cm(cm_per_px 0.75) 15±0.4, cm_per_px 없으면 cm null·band_px 지정도 같은 값",
+          exit_code == 0 and abs((mud.get("spacing_px") or 0) - 20) <= 0.5 and abs((mud.get("spacing_cm") or 0) - 15) <= 0.4 and band.get("spacing_cm") is None and abs((band.get("spacing_px") or 0) - 20) <= 0.5,
+          (exit_code, mud, band, text[-300:]))
+    edge, back = measured.get(("edge", "decal_edge"), {}).get("edge_profile", {}), measured.get(("edge", "decal_back"), {}).get("edge_profile", {})
+    check("CAL-0 점성 edge_profile: 20px 선형 경사 가장자리 → 10~90% 폭 16±1 px·8±0.5 cm·1.6±0.1 칸(cell_cm 5), 반대 방향 선도 같은 폭·cell_cm 없으면 칸 null",
+          abs((edge.get("width_px") or 0) - 16) <= 1 and abs((edge.get("width_cm") or 0) - 8) <= 0.5 and abs((edge.get("width_cells") or 0) - 1.6) <= 0.1
+          and abs((back.get("width_px") or 0) - 16) <= 1 and back.get("width_cells") is None, (edge, back))
+    flat_metrics = measured.get(("flat", "decal_edge"), {})
+    check("CAL-0 점성 평평한 영역: edge_profile 세 값 null·swirl 두 값 null, 분석 없는 같은 상자 영역에는 swirl·edge_profile 키 없음",
+          flat_metrics.get("edge_profile") == {"width_px": None, "width_cm": None, "width_cells": None} and flat_metrics.get("swirl") == {"spacing_px": None, "spacing_cm": None}
+          and "swirl" not in measured.get(("swirl", "plain"), {"swirl": 1}) and "edge_profile" not in measured.get(("swirl", "plain"), {"edge_profile": 1}), (flat_metrics, sorted(measured.get(("swirl", "plain"), {}))))
+    no_line = measure("no-line", [{"path": ramp, "id": "a", "regions": [{"name": "decal_edge", "kind": "water", "box": [80, 40, 180, 104], "analyses": ["edge_profile"]}]}])
+    bad_cell = measure("bad-cell", [{"path": ramp, "id": "a", "regions": [{"name": "decal_edge", "kind": "water", "box": [80, 40, 180, 104], "analyses": ["edge_profile"], "line": [[90, 72], [170, 72]], "cell_cm": 0}]}])
+    check("CAL-0 점성 입력 거부: edge_profile 에 line 없음 → 종료 2 'edge_profile 은 line', cell_cm 0 → 종료 2 'cell_cm 는 양수'",
+          no_line[0] == 2 and "edge_profile 은 line" in no_line[2] and bad_cell[0] == 2 and "cell_cm 는 양수" in bad_cell[2], (no_line[2][-200:], bad_cell[2][-200:]))
+
+
 BATCH_TESTS = ("TDGame.FluidFX.Design.A", "TDGame.FluidFX.Numeric.B", "TDGame.FluidFX.Other.C")
 
 
@@ -2844,6 +2973,8 @@ run_check(check_cal0_lookdev)
 run_check(check_cal0_sweep)
 run_check(check_cal0_judge)
 run_check(check_cal0_measure)
+run_check(check_cal0_derived_chain)
+run_check(check_cal0_viscous_measure)
 run_check(check_cal0_batch)
 run_check(check_cal0_integration)
 run_check(check_cal0_real_queue)

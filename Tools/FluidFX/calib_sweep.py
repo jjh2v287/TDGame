@@ -538,8 +538,7 @@ def make_variant(variant_id, params, chosen_values, base_layer=None):
                     assignments.append({"json_path": field["json_path"], "value": value, "split_group": param["split_group"]})
         elif param["kind"] == "look":
             set_live_value(look_live, param["look"], value)
-            if is_changed:
-                assignments.append({"json_path": param["json_path"], "value": value, "split_group": False, "base": param["base_value"]})
+            assignments.append({"json_path": param["json_path"], "value": value, "split_group": False, "base": param["base_value"]})
         else:
             set_prop_value(props, param["actor_prop"], value)
     return {"id": variant_id, "is_control": not changed_params, "values": list(chosen_values), "assignments": assignments, "expect": knob_expect + copy.deepcopy(base_layer["expect"]),

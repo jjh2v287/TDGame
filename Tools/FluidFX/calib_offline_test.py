@@ -714,7 +714,7 @@ def python(*arguments):
 
 def write_plan(name, mutate):
     plan = json.loads((W / RIVER_PLAN).read_text(encoding="utf-8"))
-    plan = mutate(plan) or plan
+    mutate(plan)
     path = TEST_DIR / f"{name}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(plan), encoding="utf-8")
@@ -1793,10 +1793,22 @@ def check_cal0_sweep():
           and outputs[0]["inputs"]["LAG_RISE_SECONDS"]["value"] == 0.08 and "LAG_FREQUENCY_HZ" in outputs[0]["unmapped"], [output[-300:] for _, output in runs])
 
 
+def check_cal0_integration():
+    look_path = "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_SandWall.Scalars.CloudSlot1DetailErosion"
+    look_param = {"index": 0, "kind": "look", "json_path": look_path, "look": calib_sweep.parse_look_path(look_path), "base_value": 0.4, "split_group": False, "scenes": None}
+    control = calib_sweep.make_variant("v00", [look_param], [0.4])
+    variant = calib_sweep.make_variant("v01", [look_param], [0.8])
+    accepted = fluid_tuning_patch.describe_assignment(None, None, control["assignments"][0], look=fluid_tuning_patch.load_canonical_look())
+    check("통합 B5#10 모양 손잡이: 대조 사본에도 {json_path, value: base}(정본에 없는 키도 재적재로 base 복귀)·대조 판정 불변",
+          control["is_control"] and control["assignments"] == [{"json_path": look_path, "value": 0.4, "split_group": False, "base": 0.4}] and accepted["added_key"]
+          and not variant["is_control"] and variant["assignments"][0]["value"] == 0.8 and variant["knobs"] == [0], (control["assignments"], variant["assignments"]))
+
+
 run_check(check_cal0_b0)
 run_check(check_cal0_patch)
 run_check(check_cal0_lookdev)
 run_check(check_cal0_sweep)
+run_check(check_cal0_integration)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

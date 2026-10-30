@@ -1,7 +1,7 @@
-"""실행 환경: 시스템 Python 3(에디터 불필요, look 지표는 measure_fx_look.py 의 numpy·Pillow·scipy 필요). calib_sweep.py 의 sweep.json 을 사전 등록 잠금(prereg_lock.py) 확인 뒤 판정한다. 옛 스윕(stage 없음, spec-wave0-data-bridge-v2 3.9): look 장면은 단계 이미지를 영역 틀로 measure_fx_look.py --targets 에 넣어 LIVE-2 목표 범위를(지표 <n>.<영역>.<지표> 와 N장 중앙값 <영역>.<지표>), 물 장면은 pie_probe_fluid_water 규칙 값을 지표로 삼고 반복 간 범위를 잡음으로 쓴다. 단계 스윕(stage screen|confirm|verify, spec-cal0-v2 1.1·1.2·G-JUDGE·G-DERIVED): 장면 sources(look·water_probe·probe·offline) 지표를 합치고(look 은 목표 파일에 live2_targets 가 있으면 불 경로, 없으면 기본 모드 측정을 펼친 일반 경로이고 장수 = 잠긴 계획 shots.count·shots_saved 참, 단계 metrics 의 숫자 목록과 probe_samples[{time, metrics, grid_paths}](pie_lookdev_fluid probe.samples) 는 장별 표본), metrics.derived(ratio·difference·relative_step·half_life·e_fold·slope·extent, 시계열은 shots.kind series 장면만, extent 는 단계 grids{접두: 격자 JSON 경로 또는 목록} 또는 probe_samples grid_paths) 를 더하며, 목표 띠는 계획 > region_metrics > kind_metrics(영역 kind volume 은 fog 로 측정), relative_to_control 은 대조 기준 × 비, role constraint 는 점수 밖 제약이다.
+"""실행 환경: 시스템 Python 3(에디터 불필요, look 지표는 measure_fx_look.py 의 numpy·Pillow·scipy 필요). calib_sweep.py 의 sweep.json 을 사전 등록 잠금(prereg_lock.py) 확인 뒤 판정한다. 옛 스윕(stage 없음, spec-wave0-data-bridge-v2 3.9): look 장면은 단계 이미지를 영역 틀로 measure_fx_look.py --targets 에 넣어 LIVE-2 목표 범위를(지표 <n>.<영역>.<지표> 와 N장 중앙값 <영역>.<지표>), 물 장면은 pie_probe_fluid_water 규칙 값을 지표로 삼고 반복 간 범위를 잡음으로 쓴다. 단계 스윕(stage screen|confirm|verify, spec-cal0-v2 1.1·1.2·G-JUDGE·G-DERIVED): 장면 sources(look·water_probe·probe·offline) 지표를 합치고(look 은 목표 파일에 live2_targets 가 있으면 불 경로, 없으면 기본 모드 측정을 펼친 일반 경로이고 장수 = 잠긴 계획 shots.count·shots_saved 참, 단계 metrics 의 숫자 목록과 probe_samples[{time, metrics, grid_paths}](pie_lookdev_fluid probe.samples) 는 장별 표본), metrics.derived(ratio·difference·relative_step·half_life·e_fold·slope·extent, 시계열은 shots.kind series 장면만, extent 는 단계 grids{접두: 격자 JSON 경로 또는 목록} 또는 probe_samples grid_paths, 목록 순서대로 계산해 a·b 에 앞 파생 derived.<이름>[.<필드>] 를 쓸 수 있고(장별 값도 이어져 difference 계열의 half_life 같은 대비 반감기가 된다) 자기·뒤·미정의·중복 이름은 계획 오류, half_life·e_fold 의 absolute 참은 |값| 계열을 맞춘다) 를 더하며, 목표 띠는 계획 > region_metrics > kind_metrics(영역 kind volume 은 fog 로 측정), relative_to_control 은 대조 기준 × 비, role constraint 는 점수 밖 제약이다.
 실행 명령: python Tools/FluidFX/calib_judge.py --sweep Saved/FluidFX/calib/<run>/sweep.json --lock <잠금 JSON> [--output <Saved 아래 JSON>] [--screen-sweep <screen sweep.json>(confirm 필수)] [--verify-against <앞 confirm judge.json>(verify 선택)]
 출력: 옛 스윕은 judge.json(장면별 targets 표·noise_floor·drift·control_check·curves·candidate·live2_sheet·accepted). screen 은 screen.json v2(plan·overlay·정본 2·lock·screen_sweep sha, noise{장면: {지표: between·shot·median_floor·noise}}·score_noise·params[effect·sensitive·reach·cost_blocked]·keep·best·second·insensitive·unreachable_targets·cost_blocked_best·scenes, adopt 거짓)이고 비용 막힌 최선은 Saved/FluidFX/calib/perf-candidates.json 에 덧붙인다. confirm 은 judge.json v2(stage·sha·scenes(candidate_medians)·candidate·adopt{decision·variant·assignments·reasons·evidence}, best 손잡이 param scenes 밖 skipped 장면은 건너뜀, offline 장면은 이미지 지문 대신 결정론 증거), verify 는 judge.json v2(verify{against·against_sha256·passed(판정 불가 항목만 있으면 null)·checks}, 앞 confirm 판정에 없는 장면은 판정하지 않고 skipped_scenes 에 기록, 앞 confirm 판정의 plan·plan_sha256·lock_sha256 이 다르면 종료 2). 종료 코드 0 판정 완료·대조 통과(verify 대조 기준 통과 포함) / 1 스윕 무효·대조 실패·판정 불가·verify 실패 / 2 잠금·입력 오류·장수 불일치·saved 거짓·sha 불일치·screen 재판정 불일치. 판정 상수(잠금 대상, 결과를 연 뒤 불변): SENSITIVITY_FACTOR 2.0·CONTROL_NOISE_FACTOR 2.0·REACH_NOISE_FACTOR 2.0·MIN_CONTROL_STEPS 3·MIN_SAMPLES 3·SECOND_GAIN_MARGIN 1.0.
-상태: 오프라인만 검사(합성 탐침 규칙·합성 단계 점수·2026-10-25 수용 시험 산출 재판정, 2026-10-30 CAL-0 B4a 합성 단계 스윕·합성 PNG·격자 fixture), 단계 스윕의 실제 PIE 판정 미실행. 옛 스윕 잡음 바닥은 계획 metrics.noise_floor 가 없으면 비대조 변형 반복 간 최대 범위(반복 2 이상 필요).
+상태: 오프라인만 검사(합성 탐침 규칙·합성 단계 점수·2026-10-25 수용 시험 산출 재판정, 2026-10-30 CAL-0 B4a 합성 단계 스윕·합성 PNG·격자 fixture, 2026-10-31 파생 연쇄·순환 거부·합성 대비 계열 반감기), 단계 스윕의 실제 PIE 판정 미실행. 옛 스윕 잡음 바닥은 계획 metrics.noise_floor 가 없으면 비대조 변형 반복 간 최대 범위(반복 2 이상 필요).
 """
 import argparse
 import difflib
@@ -45,6 +45,9 @@ SERIES_KIND = "series"
 MEASURE_KIND_ALIASES = {"volume": "fog"}
 PAIR_OPERATIONS = ("ratio", "difference", "relative_step")
 SERIES_OPERATIONS = ("half_life", "e_fold", "slope")
+LOG_FIT_OPERATIONS = ("half_life", "e_fold")
+DERIVED_PREFIX = "derived."
+OPERAND_KEYS = ("a", "b")
 EXTENT_OPERATION = "extent"
 EXTENT_FIELDS = ("area_fraction", "length", "width", "half_angle_deg")
 COST_SIGNS = {"higher_costs_more": 1, "lower_costs_more": -1}
@@ -467,7 +470,10 @@ def add_pair_metrics(item, spec, operation, name):
 
 
 def add_series_metrics(item, step, spec, operation, name):
-    fitted = series_value(operation, series_points(item, step, spec["a"]))
+    points = series_points(item, step, spec["a"])
+    if spec.get("absolute"):
+        points = [(time, abs(value)) for time, value in points]
+    fitted = series_value(operation, points)
     item["metrics"][name] = fitted[0] if fitted else None
     item["metrics"][f"{name}.r2"] = fitted[1] if fitted else None
 
@@ -480,7 +486,32 @@ def is_derivable(spec, operation, known, steps):
     return any(spec.get("grid") in step_grids(step) for step in steps)
 
 
+def derived_reference(operand):
+    if not isinstance(operand, str) or not operand.startswith(DERIVED_PREFIX):
+        return None
+    return operand[len(DERIVED_PREFIX):].split(".", 1)[0]
+
+
+def check_derived_specs(specs):
+    names = [spec.get("name") for spec in specs]
+    for index, spec in enumerate(specs):
+        label = f"파생식 {spec.get('name')}"
+        if names.index(spec.get("name")) != index:
+            raise JudgeError(f"{label}: 이름이 앞 파생식과 겹친다(계획 오류)")
+        if "absolute" in spec and (spec.get("op") not in LOG_FIT_OPERATIONS or not isinstance(spec["absolute"], bool)):
+            raise JudgeError(f"{label}: absolute 는 {'·'.join(LOG_FIT_OPERATIONS)} 의 불 값만(계획 오류)")
+        for key in OPERAND_KEYS:
+            reference = derived_reference(spec.get(key))
+            if reference is None:
+                continue
+            if reference not in names:
+                raise JudgeError(f"{label}.{key}: {spec[key]} 는 정의되지 않은 파생이다(계획 오류){suggest_names(reference, [name for name in names if isinstance(name, str)])}")
+            if names.index(reference) >= index:
+                raise JudgeError(f"{label}.{key}: {spec[key]} 는 자기 자신이거나 뒤에 정의된 파생이다(순환 또는 순서 오류, 계획 derived 목록에서 앞 파생만 쓴다)")
+
+
 def add_derived_metrics(items, steps, specs, scene_name, is_series):
+    check_derived_specs(specs)
     steps_by_number = {step["step"]: step for step in steps}
     known = set().union(*[set(item["metrics"]) for item in items]) if items else set()
     for spec in specs:
@@ -500,6 +531,7 @@ def add_derived_metrics(items, steps, specs, scene_name, is_series):
                 add_series_metrics(item, step, spec, operation, name)
             else:
                 add_extent_metrics(item, step, spec, name)
+        known.update(key for item in items for key in item["metrics"])
 
 
 def resolve_band(target, live2_bands, band_lookup):

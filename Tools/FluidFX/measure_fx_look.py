@@ -1,7 +1,7 @@
-"""시스템 Python으로 실행(numpy·Pillow, --targets 모드는 scipy 추가, 에디터 불필요): 기본 모드는 이미지와 영역 JSON으로 불·연기 M1~M5, 구름·안개, 물, 반짝임 비율, 두 프레임 차(잔상) 지표를 결정론으로 재고 같은 구도의 조건별(R16 안티에일리어싱 A/B 등) 비교표를 낸다(FX-7a). --targets 모드는 목표 JSON(LIVE-2 합격 범위)과 영역 JSON(이미지·이름 붙은 사각형/다각형 영역·kind fire|torch|smoke|plume|background·game_time 라벨)으로 FX-8c 지표(불 색 등급·색상 중앙값·M1 G/R·테두리/코어 색·가장자리 폭/등가 반지름·번짐 @16px·배경 p20·실루엣 변동계수·구조 텐서 결맞음·색 경계 밀도·분홍 비율(pink_hi_fraction = 불 화소 중 색상<15°·휘도≥130, pink_hi145_fraction ≥145), 연기 백분위·미켈슨·따뜻함·중성 바닥·곧은 경계)를 재고 합격/불합격 격차표를 낸다(FX-8c C17). 목표 JSON 선택 키 kind_metrics {fire|torch: {지표 경로: 범위}}는 그 kind 영역에만 덧붙여 판정한다. 기본 모드 영역에 analyses 목록이 있으면 그 영역만 autocorrelation(2D 자기상관)·line_profile(선 단면)·spectrum(2D 주파수) 분석을 더 재고, kind volume 은 atmosphere 분석의 별칭이다(CAL-0 G-MEASURE).
+"""시스템 Python으로 실행(numpy·Pillow, --targets 모드는 scipy 추가, 에디터 불필요): 기본 모드는 이미지와 영역 JSON으로 불·연기 M1~M5, 구름·안개, 물, 반짝임 비율, 두 프레임 차(잔상) 지표를 결정론으로 재고 같은 구도의 조건별(R16 안티에일리어싱 A/B 등) 비교표를 낸다(FX-7a). --targets 모드는 목표 JSON(LIVE-2 합격 범위)과 영역 JSON(이미지·이름 붙은 사각형/다각형 영역·kind fire|torch|smoke|plume|background·game_time 라벨)으로 FX-8c 지표(불 색 등급·색상 중앙값·M1 G/R·테두리/코어 색·가장자리 폭/등가 반지름·번짐 @16px·배경 p20·실루엣 변동계수·구조 텐서 결맞음·색 경계 밀도·분홍 비율(pink_hi_fraction = 불 화소 중 색상<15°·휘도≥130, pink_hi145_fraction ≥145), 연기 백분위·미켈슨·따뜻함·중성 바닥·곧은 경계)를 재고 합격/불합격 격차표를 낸다(FX-8c C17). 목표 JSON 선택 키 kind_metrics {fire|torch: {지표 경로: 범위}}는 그 kind 영역에만 덧붙여 판정한다. 기본 모드 영역에 analyses 목록이 있으면 그 영역만 autocorrelation(2D 자기상관)·line_profile(선 단면)·spectrum(2D 주파수)·swirl(가로 소용돌이 간격)·edge_profile(가장자리 10~90% 폭) 분석을 더 재고, kind volume 은 atmosphere 분석의 별칭이다(CAL-0 G-MEASURE).
 실행: python Tools/FluidFX/measure_fx_look.py --regions <영역 JSON> --output <결과 JSON> [--targets <목표 JSON>] (PowerShell 또는 Git Bash, 인수와 JSON 안의 상대 경로는 프로젝트 루트 기준, --targets 영역 JSON 형식은 --help)
-출력: --output JSON(기본: images 이미지·영역별 지표(analyses 영역은 metrics.autocorrelation{secondary_peak, period_px}·line_profile{groove_width_px, groove_width_cm, bank_over_groove_ratio, gap_count}·spectrum{dominant_wavelength_px, peak_ratio} 추가)와 comparisons 조건 비교표 / --targets: images 영역별 metrics·checks 판정(kind_metrics 범위는 group kind_metrics.<kind>)·frame_fire C8 판정)과 표준 출력(기본: 요약 / --targets: 마크다운 격차표, X = 합격 범위 밖). 종료 코드 0 성공(불합격 지표가 있어도 0) / 1 출력이 Docs/ 아래인데 입력에 LIVE-2 갤러리 이미지가 있음(RR R-14) / 2 입력 오류(--targets인데 scipy 없음 포함)
-상태: 실험. 해석 선택: JPEG가 아닌 입력은 전체 프레임을 품질 95·4:2:0으로 다시 압축한 뒤 자름(LIVE-2 갤러리 JPEG 24장의 양자화표가 모두 IJG 품질 95 표·4:2:0과 같음, Pillow 11.2.1 대조), 흰 포화의 분모는 휘도 60 초과 화소(따뜻한 마스크 안에서는 정의상 0), 구름·안개 잡음과 물 국소 대비의 흐림은 8비트 내림 휘도에 Pillow GaussianBlur(반경 2·12), 미세/거친 비는 원본 대 1/4 LANCZOS 축소의 라플라시안 평균비, M3 물체 높이 기본값은 영역 높이. --targets 지표는 FX-8c 1·2차 스크립트(measure_targets·measure_r2·plume_r2)와 같은 정의이고 색 경계 밀도는 2차 정의, 플룸 = σ2 흐린 휘도 ≥6에서 불씨(따뜻함·V≥0.6·L>114.75, 3px 팽창) 제외, C8 = 프레임 전체 불 화소(V≥0.6) 최대 연결 덩어리가 200px 미만이면 연기의 따뜻함·채도·그림자 채도를 day_smoke(중성) 범위로 판정(이미지 fire_lit로 덮어씀), 중성 바닥 = 연기 화소 평균 G·B(manual 8~30), background 영역 휘도 p20은 불 주변 배경 범위(bg_luma)로 판정. FX-8c 11차(2026-10-21) 분홍 비율 2개와 kind_metrics 추가: kind_metrics 없는 목표 JSON에서 표준 출력과 기존 지표 값은 같고, 불 영역 metrics 끝에 키 2개만 붙는다(round11 torch-pink-metric run_tests 19/19). CAL-0 B4b(2026-10-30): analyses 없는 영역의 기본 모드와 --targets 모드 출력은 바이트 그대로(calib_offline_test check_cal0_measure). 자기상관 = 평균 뺀 휘도의 영 덧댄 선형 자기상관 ÷ 원점 값(편향 추정, 지연 ±절반 변), 원점을 품은 양수 연결 덩어리 밖 최댓값과 그 지연 거리. 주파수 = 한 창 곱한 휘도 rfft2 출력의 band_px 파장 대역 최댓값 칸(1 칸 해상도)과 그 칸 ÷ 대역 합. 선 단면 = 수직 ±2px 평균 표본, 양 끝 20% 중앙값 = 표면, 최저점을 품은 반 깊이 아래 구간 폭(선형 보간), 둑 = 홈 폭만큼 바깥의 최대 − 표면.
+출력: --output JSON(기본: images 이미지·영역별 지표(analyses 영역은 metrics.autocorrelation{secondary_peak, period_px}·line_profile{groove_width_px, groove_width_cm, bank_over_groove_ratio, gap_count}·spectrum{dominant_wavelength_px, peak_ratio}·swirl{spacing_px, spacing_cm}·edge_profile{width_px, width_cm, width_cells} 추가, cm 는 영역 cm_per_px·칸은 cell_cm 이 있을 때만이고 없으면 null)와 comparisons 조건 비교표 / --targets: images 영역별 metrics·checks 판정(kind_metrics 범위는 group kind_metrics.<kind>)·frame_fire C8 판정)과 표준 출력(기본: 요약 / --targets: 마크다운 격차표, X = 합격 범위 밖). 종료 코드 0 성공(불합격 지표가 있어도 0) / 1 출력이 Docs/ 아래인데 입력에 LIVE-2 갤러리 이미지가 있음(RR R-14) / 2 입력 오류(--targets인데 scipy 없음 포함)
+상태: 실험. 해석 선택: JPEG가 아닌 입력은 전체 프레임을 품질 95·4:2:0으로 다시 압축한 뒤 자름(LIVE-2 갤러리 JPEG 24장의 양자화표가 모두 IJG 품질 95 표·4:2:0과 같음, Pillow 11.2.1 대조), 흰 포화의 분모는 휘도 60 초과 화소(따뜻한 마스크 안에서는 정의상 0), 구름·안개 잡음과 물 국소 대비의 흐림은 8비트 내림 휘도에 Pillow GaussianBlur(반경 2·12), 미세/거친 비는 원본 대 1/4 LANCZOS 축소의 라플라시안 평균비, M3 물체 높이 기본값은 영역 높이. --targets 지표는 FX-8c 1·2차 스크립트(measure_targets·measure_r2·plume_r2)와 같은 정의이고 색 경계 밀도는 2차 정의, 플룸 = σ2 흐린 휘도 ≥6에서 불씨(따뜻함·V≥0.6·L>114.75, 3px 팽창) 제외, C8 = 프레임 전체 불 화소(V≥0.6) 최대 연결 덩어리가 200px 미만이면 연기의 따뜻함·채도·그림자 채도를 day_smoke(중성) 범위로 판정(이미지 fire_lit로 덮어씀), 중성 바닥 = 연기 화소 평균 G·B(manual 8~30), background 영역 휘도 p20은 불 주변 배경 범위(bg_luma)로 판정. FX-8c 11차(2026-10-21) 분홍 비율 2개와 kind_metrics 추가: kind_metrics 없는 목표 JSON에서 표준 출력과 기존 지표 값은 같고, 불 영역 metrics 끝에 키 2개만 붙는다(round11 torch-pink-metric run_tests 19/19). CAL-0 B4b(2026-10-30): analyses 없는 영역의 기본 모드와 --targets 모드 출력은 바이트 그대로(calib_offline_test check_cal0_measure). 자기상관 = 평균 뺀 휘도의 영 덧댄 선형 자기상관 ÷ 원점 값(편향 추정, 지연 ±절반 변), 원점을 품은 양수 연결 덩어리 밖 최댓값과 그 지연 거리. 주파수 = 한 창 곱한 휘도 rfft2 출력의 band_px 파장 대역 최댓값 칸(1 칸 해상도)과 그 칸 ÷ 대역 합. 선 단면 = 수직 ±2px 평균 표본, 양 끝 20% 중앙값 = 표면, 최저점을 품은 반 깊이 아래 구간 폭(선형 보간), 둑 = 홈 폭만큼 바깥의 최대 − 표면. 2026-10-31 swirl = 행마다 평균 뺀 휘도에 한 창을 곱해 8배 영 덧댄 rfft 전력을 행끼리 더한 가로 1D 스펙트럼의 band_px(없으면 4px~영역 폭/2) 파장 대역 최댓값 파장(px, 행 평균 뺀 휘도가 평평하면 null), spacing_cm = px × cm_per_px(영역 깊이의 가로 축척, 원근 단축 없는 이미지 가로 방향, FX-14 7절 진흙 소용돌이 간격). edge_profile = line 을 따라 선 단면과 같은 표본, 양 끝 20% 중앙값을 0·1 로 맞춘 상승 곡선에서 처음 0.5 를 넘는 곳 앞의 마지막 0.1 이하·뒤의 처음 0.9 이상 사이 거리(선형 보간, 방향 무관), width_cm = px × cm_per_px, width_cells = cm ÷ cell_cm(시뮬 칸 크기, FX-14 7절 피 데칼 가장자리 10~90% 폭 TS J6), 끝 대비 < 2/255 이면 null.
 """
 import argparse
 import io
@@ -32,7 +32,7 @@ ATMOSPHERE_KINDS = ("cloud", "fog", "dust", "snow", "sky", "volume")
 WATER_KINDS = ("water",)
 KNOWN_KINDS = FLAME_KINDS + EMBER_KINDS + ATMOSPHERE_KINDS + WATER_KINDS
 MINIMUM_REGION_SIDE = 16
-ANALYSIS_NAMES = ("autocorrelation", "line_profile", "spectrum")
+ANALYSIS_NAMES = ("autocorrelation", "line_profile", "spectrum", "swirl", "edge_profile")
 MINIMUM_ANALYSIS_SIDE = 32
 FLAT_LUMINANCE_STD = 1e-9
 SPECTRUM_SHORTEST_WAVELENGTH_PX = 4.0
@@ -40,6 +40,9 @@ LINE_HALF_WIDTH_PX = 2
 LINE_SURFACE_FRACTION = 0.2
 LINE_MINIMUM_DEPTH = 2.0 / 255.0
 LINE_MINIMUM_RUN = 2
+SWIRL_PADDING_FACTOR = 8
+EDGE_LOW_FRACTION = 0.1
+EDGE_HIGH_FRACTION = 0.9
 WARM_MASK_MINIMUM_PIXELS = 50
 FLAME_PERCENTILES = (10, 25, 50, 75, 95)
 FLAME_STEP_HALF_WIDTH = 6
@@ -179,13 +182,18 @@ def read_analyses(entry, box, where):
         analyses["line_profile"] = {"line": read_line(entry.get("line"), box, where), "cm_per_px": read_optional_positive(entry, "cm_per_px", where)}
     if "spectrum" in analyses:
         analyses["spectrum"] = {"band_px": read_wavelength_band(entry.get("band_px"), box, where)}
+    if "swirl" in analyses:
+        band = read_wavelength_band(entry.get("band_px"), box, where) if entry.get("band_px") is not None else [SPECTRUM_SHORTEST_WAVELENGTH_PX, (x1 - x0) / 2.0]
+        analyses["swirl"] = {"band_px": band, "cm_per_px": read_optional_positive(entry, "cm_per_px", where)}
+    if "edge_profile" in analyses:
+        analyses["edge_profile"] = {"line": read_line(entry.get("line"), box, where), "cm_per_px": read_optional_positive(entry, "cm_per_px", where), "cell_cm": read_optional_positive(entry, "cell_cm", where)}
     return analyses
 
 
 def read_line(value, box, where):
     x0, y0, x1, y1 = box
     if not isinstance(value, list) or len(value) != 2 or not all(isinstance(point, list) and len(point) == 2 and all(is_plain_number(v) for v in point) for point in value):
-        raise InputError(f"{where}: line_profile 은 line [[x0, y0], [x1, y1]](이미지 좌표)이 필요하다")
+        raise InputError(f"{where}: line_profile·edge_profile 은 line [[x0, y0], [x1, y1]](이미지 좌표)이 필요하다")
     if not all(x0 <= x <= x1 - 1 and y0 <= y <= y1 - 1 for x, y in value):
         raise InputError(f"{where}: line 양 끝은 box {box} 안이어야 한다")
     if math.dist(value[0], value[1]) < MINIMUM_ANALYSIS_SIDE:
@@ -516,6 +524,23 @@ def measure_spectrum(unit_luminance, band_px):
     return {"dominant_wavelength_px": 1.0 / frequency.flat[peak], "peak_ratio": power.flat[peak] / band_total}
 
 
+def measure_swirl(unit_luminance, settings):
+    centered = unit_luminance - unit_luminance.mean(axis=1, keepdims=True)
+    if centered.std() < FLAT_LUMINANCE_STD:
+        return {"spacing_px": None, "spacing_cm": None}
+    width = unit_luminance.shape[1]
+    padded_width = SWIRL_PADDING_FACTOR * width
+    power = (np.abs(np.fft.rfft(centered * np.hanning(width)[None, :], n=padded_width, axis=1)) ** 2).sum(axis=0)
+    frequency = np.fft.rfftfreq(padded_width)
+    shortest, longest = settings["band_px"]
+    in_band = (frequency >= 1.0 / longest) & (frequency <= 1.0 / shortest)
+    if power[in_band].sum() <= 0:
+        return {"spacing_px": None, "spacing_cm": None}
+    spacing_px = 1.0 / frequency[np.argmax(np.where(in_band, power, -1.0))]
+    cm_per_px = settings["cm_per_px"]
+    return {"spacing_px": spacing_px, "spacing_cm": spacing_px * cm_per_px if cm_per_px else None}
+
+
 def sample_bilinear(values, columns, rows):
     height, width = values.shape
     columns = np.clip(columns, 0, width - 1)
@@ -567,6 +592,26 @@ def measure_line_profile(unit_image_luminance, settings):
     return {"groove_width_px": width_px, "groove_width_cm": width_px * cm_per_px if cm_per_px else None, "bank_over_groove_ratio": bank / depth, "gap_count": len(groove_runs) - 1}
 
 
+def measure_edge_profile(unit_image_luminance, settings):
+    missing = {"width_px": None, "width_cm": None, "width_cells": None}
+    profile, spacing = sample_line(unit_image_luminance, settings["line"])
+    edge = max(1, int(len(profile) * LINE_SURFACE_FRACTION))
+    start_level, end_level = float(np.median(profile[:edge])), float(np.median(profile[-edge:]))
+    if abs(end_level - start_level) < LINE_MINIMUM_DEPTH:
+        return missing
+    rise = (profile - start_level) / (end_level - start_level)
+    middle = int(np.argmax(rise >= 0.5))
+    before = rise[middle::-1] <= EDGE_LOW_FRACTION
+    after = rise[middle:] >= EDGE_HIGH_FRACTION
+    if middle == 0 or not before.any() or not after.any():
+        return missing
+    low = middle - int(np.argmax(before))
+    high = middle + int(np.argmax(after))
+    width_px = (interpolate_crossing(rise, high, high - 1, EDGE_HIGH_FRACTION) - interpolate_crossing(rise, low, low + 1, EDGE_LOW_FRACTION)) * spacing
+    width_cm = width_px * settings["cm_per_px"] if settings["cm_per_px"] else None
+    return {"width_px": width_px, "width_cm": width_cm, "width_cells": width_cm / settings["cell_cm"] if width_cm is not None and settings["cell_cm"] else None}
+
+
 def measure_analyses(pixels, unit_luminance, analyses):
     measured = {}
     if "autocorrelation" in analyses:
@@ -575,6 +620,10 @@ def measure_analyses(pixels, unit_luminance, analyses):
         measured["line_profile"] = measure_line_profile(luminance(pixels.astype(np.float64)) / 255.0, analyses["line_profile"])
     if "spectrum" in analyses:
         measured["spectrum"] = measure_spectrum(unit_luminance, analyses["spectrum"]["band_px"])
+    if "swirl" in analyses:
+        measured["swirl"] = measure_swirl(unit_luminance, analyses["swirl"])
+    if "edge_profile" in analyses:
+        measured["edge_profile"] = measure_edge_profile(luminance(pixels.astype(np.float64)) / 255.0, analyses["edge_profile"])
     return measured
 
 

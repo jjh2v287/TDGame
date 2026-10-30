@@ -1,16 +1,19 @@
 """실행 환경: 시스템 Python 3(에디터·PIE 불필요, numpy·Pillow·scipy 필요, 가짜 unreal 로 calib_sweep·pie_lookdev_fluid·pie_probe_fluid_water 를 프로세스 안에서 돌린다). 2026-10-25 P3 오프라인 시험(w0-P3-offline-test.py)을 본 트리로 옮겨 새 판정 규칙(목표 지표 대조·연속 점수·점수 잡음 유의)과 짧은 창 배율·대조 처음·끝 모드를 더했다.
-실행 명령: python Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
+실행 명령: python -B Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/offline-test/ 아래 스윕·판정 산출물(실행마다 지움)과 표준 출력 PASS/FAIL 줄. 수용 시험 산출(Saved/FluidFX/calib/{campfire-run1,campfire-run2,campfire-r4-run1,river-run1})이 있으면 새 판정기로 재판정해 SKIP 아닌 결과를 낸다.
-상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함).
+상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json, 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다.
 """
 import contextlib
 import copy
 import io
 import json
+import math
+import re
 import shutil
 import subprocess
 import sys
 import time
+import traceback
 import types
 from pathlib import Path
 
@@ -24,14 +27,19 @@ import pie_showcase_fluid  # noqa: E402
 import calib_judge  # noqa: E402
 import calib_sweep  # noqa: E402
 import fluid_tuning_patch  # noqa: E402
+import pie_probe_fluid_water as probe  # noqa: E402
 import prereg_lock  # noqa: E402
 
 TEST_DIR = W / "Saved" / "FluidFX" / "calib" / "offline-test"
 ACCEPTANCE_DIR = W / "Saved" / "FluidFX" / "calib"
-KIND_JSON = {"CAMPFIRE": "Campfire", "RIVER": "River", "SEA": "Sea", "TORCH": "Torch", "CUSTOM": "Custom"}
 CANONICAL = fluid_tuning_patch.canonical_tuning_path()
-CAMPFIRE_PLAN = "Tools/FluidFX/calib/plans/campfire_vorticity.json"
-RIVER_PLAN = "Tools/FluidFX/calib/plans/river_vorticity.json"
+CANONICAL_LOOK = fluid_tuning_patch.canonical_look_path()
+CAMPFIRE_PLAN = "Tools/FluidFX/calib/fixtures/campfire_vorticity.head.json"
+RIVER_PLAN = "Tools/FluidFX/calib/fixtures/river_vorticity.head.json"
+DEFAULT_WORLD_FIELDS = (("TDFluidSimulationConfig", "VorticityStrength"),)
+FIELD_HOLDERS = {"TDFluidSimulationConfig": ("live_component", "simulation_config"), "TDFluidSourceEmitterSettings": (None, "source_emitter")}
+TICK_SECONDS = 1.0 / 60.0
+MISSING = object()
 RESULTS = []
 PROBE_WINDOW_SCALES = []
 
@@ -39,6 +47,21 @@ PROBE_WINDOW_SCALES = []
 def check(name, condition, detail=""):
     RESULTS.append((name, bool(condition)))
     print(("PASS " if condition else "FAIL ") + name + ("" if condition else f"  {detail}"))
+
+
+@contextlib.contextmanager
+def patched(target, **replacements):
+    saved = {name: vars(target).get(name, MISSING) for name in replacements}
+    for name, value in replacements.items():
+        setattr(target, name, value)
+    try:
+        yield target
+    finally:
+        for name, value in saved.items():
+            if value is not MISSING:
+                setattr(target, name, value)
+            elif name in vars(target):
+                delattr(target, name)
 
 
 class FakeEnum:
@@ -70,12 +93,296 @@ class FakeModule(types.ModuleType):
         return dummy
 
 
+class FakeClock:
+    def __init__(self):
+        self.real_seconds = 1.0
+        self.game_seconds = 1.0
+        self.time_dilation = 1.0
+        self.callbacks = {}
+        self.last_handle = 0
+        self.is_ticking = False
+
+    def register(self, callback):
+        self.last_handle += 1
+        self.callbacks[self.last_handle] = callback
+        return self.last_handle
+
+    def unregister(self, handle):
+        self.callbacks.pop(handle, None)
+
+    def tick(self):
+        self.real_seconds += TICK_SECONDS
+        self.game_seconds += TICK_SECONDS * self.time_dilation
+        if self.is_ticking:
+            return
+        self.is_ticking = True
+        try:
+            for handle in list(self.callbacks):
+                if handle in self.callbacks:
+                    self.callbacks[handle](TICK_SECONDS)
+        finally:
+            self.is_ticking = False
+
+    def sleep(self, seconds):
+        for _ in range(max(0, math.ceil(seconds / TICK_SECONDS - 1e-9))):
+            self.tick()
+
+    def monotonic(self):
+        return self.real_seconds
+
+
+CLOCK = FakeClock()
 unreal = FakeModule("unreal")
 unreal.EnumBase = FakeEnum
 unreal.Object = type("Object", (Props,), {})
+
+
+class FakeLinearColor:
+    def __init__(self, r=0.0, g=0.0, b=0.0, a=1.0):
+        self.r, self.g, self.b, self.a = r, g, b, a
+
+    def __eq__(self, other):
+        return isinstance(other, FakeLinearColor) and (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
+
+
+unreal.LinearColor = FakeLinearColor
 unreal.Vector2D = type("Vector2D", (), {})
 unreal.Vector = type("Vector", (), {})
-unreal.LinearColor = type("LinearColor", (), {})
+
+
+class FakeAsset(unreal.Object):
+    def __init__(self, path, **values):
+        super().__init__(**values)
+        self.path = path
+
+    def get_name(self):
+        return self.path.rsplit("/", 1)[-1]
+
+    def get_path_name(self):
+        return f"{self.path}.{self.get_name()}"
+
+
+class FakeMaterialInterface(FakeAsset):
+    def __init__(self, path, scalars=None, vectors=None, parent=None):
+        super().__init__(path, parent=parent)
+        self.scalars = dict(scalars or {})
+        self.vectors = dict(vectors or {})
+
+    def get_base_material(self):
+        material = self
+        while material.parent is not None:
+            material = material.parent
+        return material
+
+    def parameter_value(self, table_name, name):
+        material = self
+        while material is not None:
+            table = getattr(material, table_name)
+            if str(name) in table:
+                return table[str(name)]
+            material = material.parent
+        return None
+
+
+class FakeMaterial(FakeMaterialInterface):
+    pass
+
+
+class FakeMaterialInstance(FakeMaterialInterface):
+    pass
+
+
+class FakeMaterialInstanceConstant(FakeMaterialInstance):
+    pass
+
+
+class FakeMaterialInstanceDynamic(FakeMaterialInstance):
+    created_count = 0
+
+    def __init__(self, parent):
+        FakeMaterialInstanceDynamic.created_count += 1
+        super().__init__(f"/Engine/Transient/MaterialInstanceDynamic_{FakeMaterialInstanceDynamic.created_count}", parent=parent)
+
+    def set_scalar_parameter_value(self, name, value):
+        self.scalars[str(name)] = value
+
+    def get_scalar_parameter_value(self, name):
+        value = self.parameter_value("scalars", name)
+        return 0.0 if value is None else value
+
+    def set_vector_parameter_value(self, name, value):
+        self.vectors[str(name)] = value
+
+    def get_vector_parameter_value(self, name):
+        value = self.parameter_value("vectors", name)
+        return FakeLinearColor() if value is None else value
+
+
+class FakeMaterialEditingLibrary:
+    @staticmethod
+    def get_scalar_parameter_names(material):
+        return sorted(material.get_base_material().scalars)
+
+    @staticmethod
+    def get_vector_parameter_names(material):
+        return sorted(material.get_base_material().vectors)
+
+    @staticmethod
+    def get_material_instance_scalar_parameter_value(instance, parameter_name, association=None):
+        value = instance.parameter_value("scalars", parameter_name)
+        return 0.0 if value is None else value
+
+    @staticmethod
+    def get_material_instance_vector_parameter_value(instance, parameter_name, association=None):
+        value = instance.parameter_value("vectors", parameter_name)
+        return FakeLinearColor() if value is None else value
+
+
+class FakeNiagaraSystem(FakeAsset):
+    pass
+
+
+class FakeComponent(unreal.Object):
+    def __init__(self, name, **values):
+        super().__init__(**values)
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+
+class FakePrimitiveComponent(FakeComponent):
+    def __init__(self, name, materials=()):
+        super().__init__(name)
+        self.materials = list(materials)
+
+    def get_num_materials(self):
+        return len(self.materials)
+
+    def get_material(self, element_index):
+        return self.materials[element_index] if 0 <= element_index < len(self.materials) else None
+
+    def set_material(self, element_index, material):
+        if 0 <= element_index < len(self.materials):
+            self.materials[element_index] = material
+
+    def create_dynamic_material_instance(self, element_index, source_material=None, optional_name="None"):
+        if source_material is not None:
+            self.set_material(element_index, source_material)
+        current = self.get_material(element_index)
+        if isinstance(current, FakeMaterialInstanceDynamic):
+            return current
+        instance = FakeMaterialInstanceDynamic(current)
+        self.set_material(element_index, instance)
+        return instance
+
+
+class FakeStaticMeshComponent(FakePrimitiveComponent):
+    pass
+
+
+class FakeNiagaraComponent(FakePrimitiveComponent):
+    def __init__(self, name, asset):
+        super().__init__(name)
+        self.asset = asset
+        self.variables = {}
+        self.reinitialize_count = 0
+
+    def get_asset(self):
+        return self.asset
+
+    def set_variable_float(self, name, value):
+        self.variables[str(name)] = value
+
+    set_variable_int = set_variable_bool = set_variable_vec2 = set_variable_vec3 = set_variable_vec4 = set_variable_linear_color = set_variable_float
+
+    def reinitialize_system(self):
+        self.reinitialize_count += 1
+
+
+class FakeDecalComponent(FakeComponent):
+    def __init__(self, name, decal_material=None):
+        super().__init__(name, decal_material=decal_material)
+
+    def get_decal_material(self):
+        return self.decal_material
+
+    def set_decal_material(self, material):
+        self.decal_material = material
+
+    def create_dynamic_material_instance(self):
+        instance = FakeMaterialInstanceDynamic(self.decal_material)
+        self.decal_material = instance
+        return instance
+
+
+class FakeVolumetricCloudComponent(FakeComponent):
+    def __init__(self, name, material=None):
+        super().__init__(name, material=material)
+
+    def set_material(self, material):
+        self.material = material
+
+
+unreal.MaterialInterface = FakeMaterialInterface
+unreal.Material = FakeMaterial
+unreal.MaterialInstance = FakeMaterialInstance
+unreal.MaterialInstanceConstant = FakeMaterialInstanceConstant
+unreal.MaterialInstanceDynamic = FakeMaterialInstanceDynamic
+unreal.MaterialEditingLibrary = FakeMaterialEditingLibrary
+unreal.NiagaraSystem = FakeNiagaraSystem
+unreal.ActorComponent = unreal.SceneComponent = FakeComponent
+unreal.PrimitiveComponent = FakePrimitiveComponent
+unreal.StaticMeshComponent = FakeStaticMeshComponent
+unreal.NiagaraComponent = FakeNiagaraComponent
+unreal.DecalComponent = FakeDecalComponent
+unreal.VolumetricCloudComponent = FakeVolumetricCloudComponent
+
+
+class FakeActor(unreal.Actor, Props):
+    def __init__(self, label, components=(), **values):
+        super().__init__(**values)
+        self.label = label
+        self.components = list(components)
+
+    def get_actor_label(self):
+        return self.label
+
+    def get_components_by_class(self, cls):
+        return [component for component in self.components if isinstance(component, cls)]
+
+    def get_component_by_class(self, cls):
+        return next(iter(self.get_components_by_class(cls)), None)
+
+
+class FakePostProcessVolume(FakeActor):
+    def __init__(self, label, blendables=()):
+        super().__init__(label, settings=Props(weighted_blendables=Props(array=[Props(weight=1.0, object=material) for material in blendables])))
+
+
+class TDFluidCloudLayersActor(FakeActor):
+    def __init__(self, label, cloud_material):
+        super().__init__(label, components=[FakeVolumetricCloudComponent("VolumetricCloud", cloud_material)])
+
+
+class TDFluidFoliageFlowActor(FakeActor):
+    def __init__(self, label, flow_copy_material):
+        super().__init__(label, flow_copy_material_instance=flow_copy_material)
+
+    def get_flow_copy_material_instance(self):
+        return self.flow_copy_material_instance
+
+
+class TDFluidSurfaceOutputActor(FakeActor):
+    def __init__(self, label, decal_material):
+        decal = FakeDecalComponent("OutputDecal", decal_material)
+        super().__init__(label, components=[decal], output_decal=decal)
+
+
+unreal.PostProcessVolume = FakePostProcessVolume
+unreal.TDFluidCloudLayersActor = TDFluidCloudLayersActor
+unreal.TDFluidFoliageFlowActor = TDFluidFoliageFlowActor
+unreal.TDFluidSurfaceOutputActor = TDFluidSurfaceOutputActor
 
 
 class FakePreset(unreal.Object):
@@ -98,25 +405,39 @@ def uses_copies(preset):
     return preset.preset_kind.name == "CUSTOM" or preset.override_preset_defaults
 
 
+def kind_json_name(kind_name):
+    return "".join(part.capitalize() for part in kind_name.split("_"))
+
+
+def snake_name(field_name):
+    stripped = field_name[1:] if len(field_name) > 1 and field_name[0] == "b" and field_name[1].isupper() else field_name
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", stripped).lower()
+
+
+def field_holder(actor, struct_name):
+    component_name, property_name = FIELD_HOLDERS[struct_name]
+    holder = getattr(actor, component_name) if component_name else actor
+    return getattr(holder, property_name) if property_name else holder
+
+
 class FakeLive(unreal.Object):
     def __init__(self, world, preset):
-        super().__init__(active_preset=preset, simulation_config=Props(vorticity_strength=preset.simulation_config.vorticity_strength, enable_heat_channel=True))
+        super().__init__(active_preset=preset, simulation_config=copy.copy(preset.simulation_config))
         self.world = world
+        self.owner_actor = None
         self.init_count = 0
 
     def init_system_state_from_preset(self, preset):
         self.init_count += 1
-        value = preset.simulation_config.vorticity_strength if uses_copies(preset) else self.world.effective(preset.preset_kind.name)
-        self.simulation_config = Props(vorticity_strength=value, enable_heat_channel=True)
+        self.simulation_config = copy.copy(preset.simulation_config)
+        if not uses_copies(preset):
+            self.world.apply_effective(self.owner_actor)
 
 
-class TDFluidLiveActor(unreal.Actor, Props):
+class TDFluidLiveActor(FakeActor):
     def __init__(self, world, label, preset):
-        super().__init__(live_component=FakeLive(world, preset), source_emitter=Props(radius_cm=26.0), ember_component=None, internal_surface_mesh=None, volume_mesh_component=None)
-        self.label = label
-
-    def get_actor_label(self):
-        return self.label
+        super().__init__(label, live_component=FakeLive(world, preset), source_emitter=Props(radius_cm=26.0), ember_component=None, internal_surface_mesh=None, volume_mesh_component=None)
+        self.live_component.owner_actor = self
 
 
 class TDFluidFireActor(TDFluidLiveActor):
@@ -128,53 +449,100 @@ unreal.TDFluidFireActor = TDFluidFireActor
 
 
 class FakeWorld:
-    def __init__(self):
+    def __init__(self, fields=DEFAULT_WORLD_FIELDS):
         self.actors = []
+        self.fields = list(fields)
         self.table = json.loads(CANONICAL.read_text(encoding="utf-8"))
+        self.look_table = json.loads(CANONICAL_LOOK.read_text(encoding="utf-8"))
         self.generation = 1
         self.pending = None
-        self.report = {"table_generation": 1, "tuning_source_path": CANONICAL.as_posix(), "look_source_path": "", "reapplied_actor_count": 0,
+        self.source = CANONICAL.as_posix()
+        self.look_source = CANONICAL_LOOK.as_posix()
+        self.report = {"table_generation": 1, "tuning_source_path": self.source, "look_source_path": self.look_source, "reapplied_actor_count": 0,
                        "state_reset_actor_count": 0, "changed_field_count": 0, "live_material_count": 0, "bake_only_changed_count": 0}
         self.report_calls = 0
-        self.source = CANONICAL.as_posix()
+        self.assets = {}
+        self.cpp_materials = []
+        self.cpp_reapplies_look = True
         self.shot_count = 0
 
-    def effective(self, kind_name):
-        kind = KIND_JSON[kind_name]
-        entries = self.table["Kinds"].get(kind, {}).get("TDFluidSimulationConfig", {})
-        if "VorticityStrength" in entries:
-            return entries["VorticityStrength"]
+    def live_actors(self):
+        return [actor for actor in self.actors if isinstance(actor, TDFluidLiveActor)]
+
+    def effective_value(self, kind_name, struct_name, field_name):
+        kind = kind_json_name(kind_name)
+        entries = self.table["Kinds"].get(kind, {}).get(struct_name, {})
+        if field_name in entries:
+            return entries[field_name]
         for group in self.table["Groups"].values():
-            if kind in group["Kinds"] and "VorticityStrength" in group.get("TDFluidSimulationConfig", {}):
-                return group["TDFluidSimulationConfig"]["VorticityStrength"]
-        return self.table["StructDefaults"]["TDFluidSimulationConfig"]["VorticityStrength"]
+            if kind in group["Kinds"] and field_name in group.get(struct_name, {}):
+                return group[struct_name][field_name]
+        return self.table["StructDefaults"].get(struct_name, {}).get(field_name)
+
+    def apply_effective(self, actor):
+        changed = 0
+        kind_name = actor.live_component.active_preset.preset_kind.name
+        for struct_name, field_name in self.fields:
+            value = self.effective_value(kind_name, struct_name, field_name)
+            holder = field_holder(actor, struct_name)
+            attribute = snake_name(field_name)
+            if value is None or getattr(holder, attribute, None) == value:
+                continue
+            setattr(holder, attribute, value)
+            changed += 1
+        return changed
+
+    def apply_look_to_cpp_materials(self):
+        if not self.cpp_reapplies_look:
+            return 0
+        applied = 0
+        for material in self.cpp_materials:
+            entry = self.look_table.get("Materials", {}).get(material.parent.path if material.parent is not None else "")
+            if entry is None:
+                continue
+            for name, value in entry.get("Scalars", {}).items():
+                material.set_scalar_parameter_value(name, float(value))
+            for name, value in entry.get("Vectors", {}).items():
+                material.set_vector_parameter_value(name, FakeLinearColor(*value))
+            applied += 1
+        return applied
+
+    def add_asset(self, asset):
+        self.assets[asset.path] = asset
+        return asset
+
+    def add_cpp_material(self, parent):
+        material = FakeMaterialInstanceDynamic(parent)
+        self.cpp_materials.append(material)
+        return material
 
     def tick_reapply(self):
-        changed = 0
-        for actor in self.actors:
-            live = actor.live_component
-            if uses_copies(live.active_preset):
-                continue
-            value = self.effective(live.active_preset.preset_kind.name)
-            if live.simulation_config.vorticity_strength != value:
-                changed += 1
-                live.simulation_config.vorticity_strength = value
-        self.report = dict(self.report, table_generation=self.pending, tuning_source_path=self.source, changed_field_count=changed, reapplied_actor_count=len(self.actors))
+        live_actors = self.live_actors()
+        changed = sum(self.apply_effective(actor) for actor in live_actors if not uses_copies(actor.live_component.active_preset))
+        self.report = dict(self.report, table_generation=self.pending, tuning_source_path=self.source, look_source_path=self.look_source, changed_field_count=changed,
+                           reapplied_actor_count=len(live_actors), live_material_count=self.apply_look_to_cpp_materials())
         self.pending = None
 
 
 WORLD = FakeWorld()
 
 
+def is_outside_saved(path_text):
+    return bool(path_text) and (W / "Saved").resolve() not in Path(path_text).resolve().parents
+
+
 class FakeTuningSubsystem:
     def reload_preset_tuning_from_paths(self, tuning, look):
-        path = Path(tuning) if tuning else CANONICAL
-        if tuning and (W / "Saved").resolve() not in path.resolve().parents:
+        if is_outside_saved(tuning) or is_outside_saved(look):
             self.errors = ["refused"]
             return 1
         self.errors = []
-        WORLD.table = json.loads(path.read_text(encoding="utf-8"))
-        WORLD.source = path.as_posix()
+        tuning_path = Path(tuning) if tuning else CANONICAL
+        look_path = Path(look) if look else CANONICAL_LOOK
+        WORLD.table = json.loads(tuning_path.read_text(encoding="utf-8"))
+        WORLD.look_table = json.loads(look_path.read_text(encoding="utf-8"))
+        WORLD.source = tuning_path.as_posix()
+        WORLD.look_source = look_path.as_posix()
         WORLD.generation += 1
         WORLD.pending = WORLD.generation
         return 0
@@ -189,10 +557,10 @@ class FakeTuningSubsystem:
         return WORLD.source
 
     def get_look_source_path(self):
-        return ""
+        return WORLD.look_source
 
     def is_using_override_paths(self):
-        return WORLD.source != CANONICAL.as_posix()
+        return WORLD.source != CANONICAL.as_posix() or WORLD.look_source != CANONICAL_LOOK.as_posix()
 
 
 TUNING = FakeTuningSubsystem()
@@ -213,6 +581,10 @@ class FakeLiveSubsystem:
 unreal.TDFluidLiveSubsystem = FakeLiveSubsystem
 unreal.get_engine_subsystem = lambda cls: TUNING
 unreal.get_editor_subsystem = lambda cls: Props(get_game_world=lambda: WORLD)
+unreal.load_asset = lambda path: WORLD.assets.get(str(path).split(".")[0])
+unreal.EditorAssetLibrary = Props(load_asset=unreal.load_asset)
+unreal.register_slate_post_tick_callback = CLOCK.register
+unreal.unregister_slate_post_tick_callback = CLOCK.unregister
 
 
 def all_actors(world, cls):
@@ -223,7 +595,8 @@ def console(world, command, controller=None):
     if command.startswith("HighResShot"):
         path = Path(command.split("filename=", 1)[1])
         path.parent.mkdir(parents=True, exist_ok=True)
-        value = WORLD.actors[0].live_component.simulation_config.vorticity_strength if WORLD.actors else 1.0
+        live_actors = WORLD.live_actors()
+        value = live_actors[0].live_component.simulation_config.vorticity_strength if live_actors else 1.0
         WORLD.shot_count += 1
         image = Image.new("RGB", (1280, 720), (20, 24, 40))
         draw = ImageDraw.Draw(image)
@@ -233,7 +606,9 @@ def console(world, command, controller=None):
         image.save(path)
 
 
-unreal.GameplayStatics = Props(get_all_actors_of_class=all_actors, get_time_seconds=lambda world: 1.0, get_player_controller=lambda world, index: None)
+unreal.GameplayStatics = Props(get_all_actors_of_class=all_actors, get_time_seconds=lambda world: CLOCK.game_seconds, get_real_time_seconds=lambda world: CLOCK.real_seconds,
+                               get_world_delta_seconds=lambda world: TICK_SECONDS * CLOCK.time_dilation, get_global_time_dilation=lambda world: CLOCK.time_dilation,
+                               set_global_time_dilation=lambda world, value: setattr(CLOCK, "time_dilation", value), get_player_controller=lambda world, index: None)
 unreal.SystemLibrary = Props(execute_console_command=console, get_console_variable_float_value=lambda name: 0.0)
 sys.modules["unreal"] = unreal
 
@@ -255,13 +630,38 @@ lookdev.pie_check_fluid.wait_for_pie_state = lambda running, timeout: True
 lookdev.pie_check_fluid.stop_pie = lambda session, environment: True
 lookdev.uemcp.connect = lambda: None
 lookdev.FRAME_FILE_WAIT_SECONDS = 0.5
-time.sleep = lambda seconds: None
+time.sleep = CLOCK.sleep
+time.monotonic = CLOCK.monotonic
+time.perf_counter = CLOCK.monotonic
 
 
-def reset_world(actors):
+def fake_probe_run(points, layout, contract, delay, backend, window_scale=1.0):
+    PROBE_WINDOW_SCALES.append(window_scale)
+    vorticity = WORLD.live_actors()[0].live_component.simulation_config.vorticity_strength
+    rules = {"flow_matches_target_center_3pts": {"passed": True, "value": [0.10 + vorticity * 0.05, 0.12, 0.11], "required": True},
+             "riffle_speed_ratio": {"passed": True, "value": {"ratio": 2.0 + vorticity, "wide_cm_per_sec": 200.0, "riffle_cm_per_sec": 400.0}, "required": True},
+             "rock_wake_density": {"passed": vorticity >= 0.3, "value": 0.4 + 0.5 * vorticity, "required": True},
+             "crossing_ripple_height": {"passed": True, "value": {"max_abs_ripple_cm": 50.0, "seconds_in_water": 0.5, "reached_goal": True}, "required": True}}
+    return {"rules": rules, "failed": [name for name, rule in rules.items() if not rule["passed"]]}
+
+
+probe.read_stage_report = lambda: {"river": {"probe_points": {}, "layout": {}}}
+probe.read_material_contract = lambda: {"scalar_names": [], "texture_names": [], "vector_names": []}
+probe.open_stage_level = lambda: {"loaded": True}
+probe.uemcp.connect = lambda: None
+probe.pie_check_fluid.wait_for_editor_navigation = lambda: True
+probe.pie_check_fluid.start_pie = lambda session, environment: True
+probe.editor_action = lambda action, **fields: {"sleep_delay_seconds": 1.0} if action == "status" else {}
+probe.prepare_backend = lambda setup, backend, grid: True
+probe.restore_backend = lambda setup: True
+probe.run_once = fake_probe_run
+
+
+def reset_world(actors, fields=DEFAULT_WORLD_FIELDS):
     global WORLD
-    WORLD = FakeWorld()
+    WORLD = FakeWorld(fields)
     WORLD.actors = [cls(WORLD, label, preset) for cls, label, preset in actors]
+    CLOCK.time_dilation = 1.0
 
 
 def run_lookdev_in_process(spec_path, level, output_dir):
@@ -274,6 +674,27 @@ def run_lookdev_in_process(spec_path, level, output_dir):
 
 
 calib_sweep.run_lookdev = run_lookdev_in_process
+
+
+def run_check(check_function):
+    modules = {id(module): module for module in (sys.modules[__name__], unreal, time, lookdev, lookdev.pie_check_fluid, lookdev.uemcp, pie_showcase_fluid,
+                                                 calib_judge, calib_sweep, fluid_tuning_patch, prereg_lock, probe, probe.pie_check_fluid, probe.uemcp)}
+    snapshots = [(module, dict(vars(module))) for module in modules.values()]
+    callbacks = dict(CLOCK.callbacks)
+    saved_argv = list(sys.argv)
+    try:
+        check_function()
+    except Exception:
+        check(f"{check_function.__name__} 예외 없이 끝남", False, traceback.format_exc()[-800:])
+    finally:
+        for module, snapshot in snapshots:
+            namespace = vars(module)
+            for name in set(namespace) - set(snapshot):
+                del namespace[name]
+            namespace.update(snapshot)
+        CLOCK.callbacks = callbacks
+        CLOCK.time_dilation = 1.0
+        sys.argv = saved_argv
 
 
 def run_sweep(arguments):
@@ -412,29 +833,6 @@ first = python("Tools/FluidFX/prereg_lock.py", "verify", "--lock", str(TEST_DIR 
 scratch_file.write_text("b", encoding="utf-8")
 check("잠금 검증 일치 0 → 바뀌면 2", first == 0 and python("Tools/FluidFX/prereg_lock.py", "verify", "--lock", str(TEST_DIR / "note-lock.json"))[0] == 2)
 
-import pie_probe_fluid_water as probe  # noqa: E402
-
-
-def fake_probe_run(points, layout, contract, delay, backend, window_scale=1.0):
-    PROBE_WINDOW_SCALES.append(window_scale)
-    vorticity = WORLD.actors[0].live_component.simulation_config.vorticity_strength
-    rules = {"flow_matches_target_center_3pts": {"passed": True, "value": [0.10 + vorticity * 0.05, 0.12, 0.11], "required": True},
-             "riffle_speed_ratio": {"passed": True, "value": {"ratio": 2.0 + vorticity, "wide_cm_per_sec": 200.0, "riffle_cm_per_sec": 400.0}, "required": True},
-             "rock_wake_density": {"passed": vorticity >= 0.3, "value": 0.4 + 0.5 * vorticity, "required": True},
-             "crossing_ripple_height": {"passed": True, "value": {"max_abs_ripple_cm": 50.0, "seconds_in_water": 0.5, "reached_goal": True}, "required": True}}
-    return {"rules": rules, "failed": [name for name, rule in rules.items() if not rule["passed"]]}
-
-
-probe.read_stage_report = lambda: {"river": {"probe_points": {}, "layout": {}}}
-probe.read_material_contract = lambda: {"scalar_names": [], "texture_names": [], "vector_names": []}
-probe.open_stage_level = lambda: {"loaded": True}
-probe.uemcp.connect = lambda: None
-probe.pie_check_fluid.wait_for_editor_navigation = lambda: True
-probe.pie_check_fluid.start_pie = lambda session, environment: True
-probe.editor_action = lambda action, **fields: {"sleep_delay_seconds": 1.0} if action == "status" else {}
-probe.prepare_backend = lambda setup, backend, grid: True
-probe.restore_backend = lambda setup: True
-probe.run_once = fake_probe_run
 reset_world([(TDFluidLiveActor, "TDGen_River", FakePreset("RIVER", vorticity=0.3)), (TDFluidLiveActor, "TDGen_Sea", FakePreset("SEA", vorticity=0.3))])
 code = run_sweep(["--plan", RIVER_PLAN, "--run-dir", str(TEST_DIR / "river")])
 river_sweep = load_json(TEST_DIR / "river" / "sweep.json")
@@ -454,24 +852,19 @@ legs = {"asleep": lambda scale: probe.run_asleep_leg({"asleep_pawn": [0, 0, 0]},
         "rock": lambda scale: probe.run_rock_leg({"pawn": [0, 0, 0], "center": [0, 0], "tangent": [1, 0], "bounding_radius_cm": 50.0}, scale),
         "submerged": lambda scale: probe.run_submerged_leg({"pawn": [0, 0, 0], "center": [0, 0], "tangent": [1, 0], "bounding_radius_cm": 50.0}, scale),
         "crossing": lambda scale: probe.run_crossing_leg({"start": [0, 0, 0], "goal": [0, 100, 0], "tangent": [1, 0], "foam_box": {"origin": [0, 0], "half_width_cm": 100.0, "s_range_cm": [0, 100], "step_cm": 10}}, "cpu", scale)}
-probe.log_size = lambda: 0
-probe.read_log_since = lambda offset: ""
-probe.build_flow_points = lambda points: {}
-probe.build_rock_points = lambda rock: {}
-probe.build_submerged_points = lambda rock: {}
 recorded = []
-time.sleep = lambda seconds: recorded.append(seconds)
 leg_sleeps = {}
-for leg_name, run_leg in legs.items():
-    for scale in (1.0, 0.5):
-        recorded.clear()
-        try:
-            run_leg(scale)
-        except Exception as error:
-            leg_sleeps[(leg_name, scale)] = repr(error)
-            continue
-        leg_sleeps[(leg_name, scale)] = list(recorded)
-time.sleep = lambda seconds: None
+with patched(probe, log_size=lambda: 0, read_log_since=lambda offset: "", build_flow_points=lambda points: {}, build_rock_points=lambda rock: {}, build_submerged_points=lambda rock: {}), \
+        patched(time, sleep=lambda seconds: (recorded.append(seconds), CLOCK.sleep(seconds))):
+    for leg_name, run_leg in legs.items():
+        for scale in (1.0, 0.5):
+            recorded.clear()
+            try:
+                run_leg(scale)
+            except Exception as error:
+                leg_sleeps[(leg_name, scale)] = repr(error)
+                continue
+            leg_sleeps[(leg_name, scale)] = list(recorded)
 expected_full = {"asleep": [5.0 + probe.SLEEP_MARGIN_SECONDS, probe.PERF_MEASURE_SECONDS], "wake": [probe.WAKE_OBSERVE_SECONDS], "flow": [probe.FLOW_SETTLE_SECONDS, probe.FLOW_MEASURE_SECONDS],
                  "rock": [probe.ROCK_SETTLE_SECONDS, probe.ROCK_MEASURE_SECONDS], "submerged": [probe.SUBMERGED_SETTLE_SECONDS, probe.SUBMERGED_MEASURE_SECONDS],
                  "crossing": [probe.CROSSING_SETTLE_SECONDS, probe.FOAM_SNAPSHOT_GAP_SECONDS]}
@@ -590,6 +983,69 @@ if "river-run1" in rejudged:
     wake = next(item for item in scene["targets"] if item["metric"] == "rock_wake_density")
     check("재판정 river-run1: 와도에 따라 변하는 rock_wake_density 거리가 변형마다 다르게 점수에 들어감", len(set(round(value, 6) for value in wake["distance_by_variant"].values())) == 3, wake["distance_by_variant"])
 
+
+def check_cal0_b0():
+    output_dir = TEST_DIR / "cal0-b0"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    reset_world([(TDFluidFireActor, "TDGen_CampfireFire", FakePreset("CAMPFIRE"))], fields=DEFAULT_WORLD_FIELDS + (("TDFluidSourceEmitterSettings", "RadiusCm"),))
+    applied = fake_editor_action("lookdev_apply", apply={"schedule": {"times": [0.5, 1.0, 1.5], "reference": "now", "prefix": "b0"}}, tag="b0", output=output_dir.as_posix(), size="1280x720")
+    status = lookdev.wait_for_schedule(Path(applied["schedule"]["status_path"]), 30.0)
+    shots = status.get("shots", [])
+    check("B0 F-TICK: 예약 촬영 3장이 가짜 시계로 끝남·게임 시간 순서·콜백 해제", status.get("done") and status.get("error") is None and not status.get("outer_timeout") and len(shots) == 3
+          and all(shot["saved"] and shot["captured_game_time"] >= shot["time"] for shot in shots) and not CLOCK.callbacks, status)
+
+    tuning = load_json(CANONICAL)
+    tuning["Kinds"]["Campfire"]["TDFluidSimulationConfig"]["VorticityStrength"] = 2.0
+    tuning["Kinds"]["Campfire"].setdefault("TDFluidSourceEmitterSettings", {})["RadiusCm"] = 33.0
+    tuning_path = output_dir / "tuning.json"
+    tuning_path.write_text(json.dumps(tuning), encoding="utf-8")
+    request = {"tuning": str(tuning_path), "look": "", "reset": "keep", "relative_to_base": False, "read_back": [{"struct": "TDFluidSourceEmitterSettings", "field": "RadiusCm", "kinds": ["Campfire"]}]}
+    first, second = lookdev.run_tuning_reload(request), lookdev.run_tuning_reload(request)
+    check("B0 F-WORLD: ChangedFieldCount 는 현재 상태 대비(첫 적재 2·같은 사본 다시 0)·다시 읽기가 적용 값",
+          first["report"]["changed_field_count"] == 2 and second["report"]["changed_field_count"] == 0 and second["read_back"][0]["actors"]["TDGen_CampfireFire"]["value"] == 33.0, (first.get("report"), second.get("read_back")))
+
+    base = FakeMaterial("/Game/CAL0/M_Glow", scalars={"Glow": 1.0}, vectors={"Tint": FakeLinearColor(1.0, 1.0, 1.0)})
+    instance = WORLD.add_asset(FakeMaterialInstanceConstant("/Game/CAL0/MI_Glow", scalars={"Glow": 2.0}, parent=base))
+    child = FakeMaterialInstanceConstant("/Game/CAL0/MI_GlowChild", parent=instance)
+    mesh = FakeStaticMeshComponent("Mesh", [instance])
+    slot_material = mesh.create_dynamic_material_instance(0)
+    slot_material.set_scalar_parameter_value("Glow", 5.0)
+    cloud = TDFluidCloudLayersActor("Clouds", WORLD.add_cpp_material(instance))
+    foliage = TDFluidFoliageFlowActor("Foliage", WORLD.add_cpp_material(instance))
+    grandchild_owned = WORLD.add_cpp_material(child)
+    blood = TDFluidSurfaceOutputActor("Blood", instance)
+    decal_material = blood.output_decal.create_dynamic_material_instance()
+    underwater = FakePostProcessVolume("Underwater", [WORLD.add_cpp_material(instance)])
+    rain = FakeNiagaraComponent("Rain", WORLD.add_asset(FakeNiagaraSystem("/Game/CAL0/NS_Rain")))
+    rain.set_variable_float("User.Rate", 3.0)
+    rain.reinitialize_system()
+    WORLD.actors += [cloud, foliage, blood, underwater]
+    check("B0 F-UNREAL: 슬롯 MID 교체·MI 자산 값 불변·load_asset·데칼 MID·구름·식생 게터·후처리 blendable·나이아가라 변수",
+          mesh.get_material(0) is slot_material and slot_material.get_editor_property("parent") is instance and slot_material.get_scalar_parameter_value("Glow") == 5.0
+          and unreal.MaterialEditingLibrary.get_material_instance_scalar_parameter_value(instance, "Glow") == 2.0 and unreal.load_asset("/Game/CAL0/MI_Glow.MI_Glow") is instance
+          and blood.output_decal.get_decal_material() is decal_material and decal_material.parent is instance
+          and cloud.get_component_by_class(unreal.VolumetricCloudComponent).get_editor_property("material").parent is instance
+          and foliage.get_flow_copy_material_instance().parent is instance and all_actors(WORLD, unreal.PostProcessVolume) == [underwater]
+          and underwater.get_editor_property("settings").get_editor_property("weighted_blendables").get_editor_property("array")[0].get_editor_property("object").parent is instance
+          and rain.get_asset().get_path_name() == "/Game/CAL0/NS_Rain.NS_Rain" and rain.variables == {"User.Rate": 3.0} and rain.reinitialize_count == 1)
+
+    look = load_json(CANONICAL_LOOK)
+    look["Materials"]["/Game/CAL0/MI_Glow"] = {"Parent": "/Game/CAL0/M_Glow", "Scalars": {"Glow": 7.0}, "Switches": {}, "Vectors": {"Tint": [0.5, 0.25, 0.0, 1.0]}}
+    look_path = output_dir / "look.json"
+    look_path.write_text(json.dumps(look), encoding="utf-8")
+    reloaded = lookdev.run_tuning_reload({"tuning": "", "look": str(look_path), "reset": "keep", "relative_to_base": False})
+    owned = [cloud.components[0].material, foliage.get_flow_copy_material_instance(), underwater.settings.weighted_blendables.array[0].object]
+    check("B0 F-WORLD: 모양 사본 적재 때 C++ 소유 MID 는 직접 부모 항목만 다시 적용(조부모 대상은 그대로)",
+          reloaded["report"]["live_material_count"] == 3 and Path(reloaded["report"]["look_source_path"]).resolve() == look_path.resolve()
+          and all(material.get_scalar_parameter_value("Glow") == 7.0 and material.get_vector_parameter_value("Tint") == FakeLinearColor(0.5, 0.25, 0.0, 1.0) for material in owned)
+          and grandchild_owned.get_scalar_parameter_value("Glow") == 2.0 and slot_material.get_scalar_parameter_value("Glow") == 5.0, reloaded.get("report"))
+
+    with patched(lookdev, FRAME_FILE_WAIT_SECONDS=9.0, CAL0_ADDED_NAME=1):
+        patched_values = (lookdev.FRAME_FILE_WAIT_SECONDS, lookdev.CAL0_ADDED_NAME)
+    check("B0 patched: 바꾼 속성은 원래 값으로, 없던 속성은 지움", patched_values == (9.0, 1) and lookdev.FRAME_FILE_WAIT_SECONDS == 0.5 and not hasattr(lookdev, "CAL0_ADDED_NAME"))
+
+
+run_check(check_cal0_b0)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

@@ -848,6 +848,11 @@ def image_hashes(images):
     return [file_sha256(project_path(image)) if project_path(image).is_file() else None for image in images]
 
 
+def probe_samples(apply_outcome):
+    probe = apply_outcome.get("probe")
+    return copy.deepcopy(probe.get("samples", [])) if isinstance(probe, dict) else []
+
+
 def metrics_record(metrics):
     return {"metrics": metrics, "metrics_sha256": text_sha256(json.dumps(metrics, sort_keys=True))}
 
@@ -869,10 +874,11 @@ def assert_lookdev_result(result, sequence, variants_by_id, output_dir, scene_en
         errors = judge_step(variant, entry.get("apply"))
         apply = entry.get("apply") if isinstance(entry.get("apply"), dict) else {}
         images = lookdev_images(output_dir, index, entry)
-        metrics = {}
+        metrics, samples = {}, None
         if "probe" in sources:
             metrics, probe_errors = probe_metrics(apply)
             errors.extend(probe_errors)
+            samples = probe_samples(apply)
         shots_expected = scene_entry.get("shots_expected")
         if is_stage and "look" in sources and len(images) != shots_expected:
             errors.append(f"촬영 장수 {len(images)}/{shots_expected}")
@@ -880,7 +886,8 @@ def assert_lookdev_result(result, sequence, variants_by_id, output_dir, scene_en
         steps.append({"step": index, "name": expected_name, "variant": variant_id, "valid": not errors, "errors": errors, "invalid_reasons": errors, "sources": sources,
                       "images": images, "image_sha256": image_hashes(images), "shots_expected": shots_expected, "shots_saved": len(images), "shot_game_times": shot_game_times(entry, apply),
                       "shot_game_time": apply.get("shot_game_time"), "report": (apply.get("tuning_reload") or {}).get("report"),
-                      "look_applied": look_outcome.get("look_applied"), "look_read_back": look_outcome.get("look_read_back"), "owner_checks": look_outcome.get("owner_checks"), **metrics_record(metrics)})
+                      "look_applied": look_outcome.get("look_applied"), "look_read_back": look_outcome.get("look_read_back"), "owner_checks": look_outcome.get("owner_checks"), **metrics_record(metrics),
+                      **({} if samples is None else {"probe_samples": samples})})
     return steps
 
 

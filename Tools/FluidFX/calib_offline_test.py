@@ -1673,6 +1673,10 @@ def check_cal0_sweep():
     steps = record["scenes"][0]["steps"]
     check("B2 T49 sources [probe] 가짜 PIE(B3 probe 필요): 단계마다 probe.* 지표·metrics sha", code == 0 and steps and all(step["metrics"] and all(key.startswith("probe.") for key in step["metrics"]) and step["metrics_sha256"] for step in steps),
           (text[-300:], record.get("problems")))
+    shot_values = [calib_judge.probe_sample_values(step) for step in steps]
+    check("통합 (b) probe 단계 기록 probe_samples = 룩데브 probe.samples(times 3장) → 판정기 장별 표본 probe.* 3개",
+          code == 0 and steps and all(len(step.get("probe_samples", [])) == 3 and all("time" in sample for sample in step["probe_samples"]) for step in steps)
+          and all(len(shots) == 3 and all(key.startswith("probe.") for shot in shots for key in shot) for shots in shot_values), shot_values[:1])
 
     code, text, record = dry("t59", stage_plan("t59", lambda plan: plan["scenes"][0].update(step_apply={"trigger": True})), "--stage", "screen")
     check("B2 T59 step_apply(trigger) 가 모든 단계 apply 에", code == 0 and all(step["apply"].get("trigger") is True and "tuning_reload" in step["apply"] for step in lookdev_spec("t59", record)["variants"]), text)

@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터·PIE 불필요, numpy·Pillow·scipy 필요, 가짜 unreal 로 calib_sweep·pie_lookdev_fluid·pie_probe_fluid_water 를 프로세스 안에서 돌린다). 2026-10-25 P3 오프라인 시험(w0-P3-offline-test.py)을 본 트리로 옮겨 새 판정 규칙(목표 지표 대조·연속 점수·점수 잡음 유의)과 짧은 창 배율·대조 처음·끝 모드를 더했다.
 실행 명령: python -B Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/offline-test/ 아래 스윕·판정 산출물(실행마다 지움)과 표준 출력 PASS/FAIL 줄. 수용 시험 산출(Saved/FluidFX/calib/{campfire-run1,campfire-run2,campfire-r4-run1,river-run1})이 있으면 새 판정기로 재판정해 SKIP 아닌 결과를 낸다.
-상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json, 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다.
+상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json, 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다).
 """
 import contextlib
 import copy
@@ -2745,6 +2745,57 @@ def check_cal0_batch():
           bool(marker) and (chain_summary.get("interrupted") or {}).get("plan") == "b8_f1" and "sweep b8_f1 verify" not in fake.calls, (marker, chain_summary, fake.calls))
 
 
+class ValidatingBatchTools(FakeBatchTools):
+    def respond(self, label, command, timeout):
+        words = label.split()
+        if words[0] == "sweep":
+            try:
+                calib_sweep.load_plan(W / command_option(command, "--plan"), words[2])
+            except calib_sweep.PlanError as error:
+                return 2, str(error)
+        return super().respond(label, command, timeout)
+
+
+def declared_regions(plan_text):
+    return [scene["regions_template"] for scene in load_json(W / plan_text).get("scenes", []) if scene.get("regions_template")]
+
+
+def is_draft_regions(regions_text):
+    path = W / regions_text
+    return path.is_file() and "초안" in str(load_json(path).get("note", ""))
+
+
+def check_cal0_real_queue():
+    import calib_batch
+    root = TEST_DIR / "cal0-real-queue"
+    shutil.rmtree(root, ignore_errors=True)
+    calib_dir = W / "Tools" / "FluidFX" / "calib"
+    queue_path = calib_dir / "batch_queue.json"
+    queue = load_json(queue_path)
+    entries = {Path(entry["plan"]).stem: entry for _, entry in calib_batch.queue_entries(queue)}
+    blocked = {Path(entry["plan"]).stem: entry for entry in queue.get("blocked", [])}
+    plan_names = sorted(path.stem for path in (calib_dir / "plans").glob("*.json"))
+    placed = sorted(list(entries) + list(blocked) + [entry["plan"] for entry in queue.get("not_run", []) if entry["plan"] in plan_names])
+    check("CAL-0 마무리 실제 큐: calib/plans 계획마다 실행 블록·blocked·not_run 중 한 곳에만, blocked 항목은 막힘 사유·돌아갈 블록이 있다",
+          placed == plan_names and all(entry.get("blocked") and entry.get("block") for entry in blocked.values()), (sorted(set(plan_names) ^ set(placed)), list(blocked)))
+    undeclared = [name for name, entry in {**entries, **blocked}.items() if entry.get("needs_frame") and not declared_regions(entry["plan"])]
+    drafts = sorted(path.name for path in (calib_dir / "regions").glob("*.json") if is_draft_regions(path.relative_to(W).as_posix()))
+    check("CAL-0 마무리 실제 큐: needs_frame 계획은 영역 틀 경로를 선언하고 calib/regions 에 초안 상자(note '초안')가 없다",
+          not undeclared and not drafts, (undeclared, drafts))
+    sys.argv = ["calib_batch.py", "--queue", str(queue_path), "--holder", "real-queue-test", "--journal", str(root / "journal.json"),
+                "--overlay", str(root / "overlay.json"), "--locks-dir", str(root / "locks")]
+    fake = ValidatingBatchTools(root / "overlay.json")
+    with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"), contextlib.redirect_stdout(io.StringIO()):
+        batch_code = calib_batch.main()
+    items = {Path(item["plan"]).stem: item for item in load_json(root / "journal.json")["items"]}
+    failed = {name: item["reason"][:160] for name, item in items.items() if item["status"] == "failed"}
+    draft_locked = [name for name, item in items.items() if "lock" in item["runs"] and any(is_draft_regions(text) for text in declared_regions(item["plan"]))]
+    unmarked_waiting = [name for name, item in items.items() if item["status"] == "needs_regions" and not entries[name].get("needs_frame")]
+    check("CAL-0 마무리 실제 큐 가짜 B8(스윕은 calib_sweep.load_plan 단계 검사): failed 0·배치 종료 0·초안 상자 잠금 0·blocked 미실행·영역 틀 대기는 모두 needs_frame",
+          batch_code == 0 and not failed and not draft_locked and not unmarked_waiting and not set(blocked) & set(items),
+          (batch_code, failed, draft_locked, unmarked_waiting, {name: item["status"] for name, item in items.items()}))
+
+
 run_check(check_cal0_b0)
 run_check(check_cal0_patch)
 run_check(check_cal0_lookdev)
@@ -2753,6 +2804,7 @@ run_check(check_cal0_judge)
 run_check(check_cal0_measure)
 run_check(check_cal0_batch)
 run_check(check_cal0_integration)
+run_check(check_cal0_real_queue)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

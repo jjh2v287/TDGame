@@ -36,6 +36,7 @@
         "S.0.17.2",
         "S.0.23.8"
       ],
+      "regions_template": "Tools/FluidFX/calib/regions/w5_waterfall_l29_frame_regions.json",
       "sources": [
         "look",
         "probe"

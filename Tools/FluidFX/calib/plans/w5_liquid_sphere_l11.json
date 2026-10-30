@@ -33,6 +33,7 @@
       "time_dilation": 1.0,
       "settle": 8.0,
       "live2_refs": [],
+      "regions_template": "Tools/FluidFX/calib/regions/w5_liquid_sphere_l11_frame_regions.json",
       "sources": [
         "look"
       ],

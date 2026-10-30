@@ -15,7 +15,6 @@ const float secondCausticDriftRatio = 0.8;
 float viewDepthDeltaCm = max(SceneDepthWithoutWaterCm - PixelDepthCm, 0.0);
 float verticalViewRatio = abs(WaterWorldPosition.z - CameraWorldPosition.z) / max(PixelDepthCm, 1.0);
 float sceneThicknessCm = viewDepthDeltaCm * verticalViewRatio;
-float windowDepthKnown = step(0.0, simField[0].z);
 float windowThicknessCm = lerp(LiteFallbackThicknessCm, simField[0].z * WaterDepthReferenceCm, windowDepthKnown * simFade * waterLayerBlend);
 float verticalThicknessCm = lerp(sceneThicknessCm, windowThicknessCm, saturate(LiteDepthMode));
 
@@ -219,16 +218,20 @@ float3 glintEmission = SunIlluminance * (GlintIntensity * glintLobe * glintHotsp
 float detailRoughnessBoost = 0.3 * saturate(length(detailSlope * DetailNormalStrength));
 float waterRoughnessValue = max(WaterRoughness + detailRoughnessBoost, WaterRoughnessMin);
 float liteDepthBlend = 1.0 - exp(-dot(WaterExtinctionPerCm, float3(0.3333, 0.3333, 0.3333)) * 3.0 * verticalThicknessCm);
+float denseActive = saturate(DenseWaterActive);
+float denseDepthCm = simField[0].z * WaterDepthReferenceCm;
+float denseCoverBlend = denseActive * windowDepthKnown;
+float denseCover = lerp(1.0, smoothstep(DenseWaterWetThresholdCm, DenseWaterWetThresholdCm + max(DenseEdgeSoftnessCm, 0.01), denseDepthCm), denseCoverBlend);
 
 OutNormalWS = normalize(lerp(surfaceNormal, float3(0.0, 0.0, 1.0), 0.6 * foamMask));
 OutBaseColor = topColor;
 OutRoughness = lerp(waterRoughnessValue, FoamRoughness, foamMask);
 OutSpecular = SpecularScale * edgeSoftness;
-OutTopOpacity = topOpacity;
+OutTopOpacity = topOpacity * denseCover;
 OutColorScaleBehindWater = causticScale;
 OutEmissive = glintEmission;
 OutLiteColor = lerp(lerp(LiteBedColor, WaterScatteringAlbedo, liteDepthBlend), DyeColor, dyeOpacity);
-OutTranslucentOpacity = saturate(max(topOpacity, liteDepthBlend * edgeSoftness));
+OutTranslucentOpacity = saturate(max(topOpacity, liteDepthBlend * edgeSoftness)) * denseCover;
 OutTranslucentColor = lerp(WaterScatteringAlbedo, topColor, topOpacity);
 
 return float4(foamMask, verticalThicknessCm, simMask, causticLight.g * causticWindow);

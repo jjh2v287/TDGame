@@ -1,0 +1,366 @@
+#include "/TDFluidGpu/Private/TDFluidGpuDenseWater.ush"
+
+Texture2DArray<float> CompositeSdf;
+Texture2DArray<float> WaterSurfaceHeightField;
+Texture2DArray<float> WaterTerrainField;
+Texture2DArray<float2> PreviousVelocity;
+Texture2DArray<float2> StampedVelocity;
+Texture2DArray<float> DenseDepthIn;
+Texture2DArray<float2> DenseFaceVelocityIn;
+Texture2DArray<float2> DenseCellVelocityIn;
+RWTexture2DArray<float> DenseDepthOut;
+RWTexture2DArray<float2> DenseFaceVelocityOut;
+RWTexture2DArray<float2> DenseCellVelocityOut;
+RWTexture2DArray<float2> VelocityOut;
+RWTexture2DArray<float> DenseSurfaceOut;
+StructuredBuffer<float4> DenseSeedTexels;
+StructuredBuffer<uint> DenseSeedEntryIndices;
+uint DenseSeedEntryCount;
+uint SubstepIndex;
+
+float DenseSampleTerrain(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, float2 FullCellPosition)
+{
+	const float FieldDivisor = float(max(Water.FieldDivisor, 1));
+	const int LastFieldCell = max(Water.FieldResolution - 1, 0);
+	const float2 FieldPosition = clamp((FullCellPosition + 0.5f) / FieldDivisor - 0.5f, 0.0f, float(LastFieldCell));
+	const int2 LowCell = min(int2(floor(FieldPosition)), LastFieldCell);
+	const int2 HighCell = min(LowCell + 1, LastFieldCell);
+	const float2 Fraction = FieldPosition - float2(LowCell);
+	const float BottomLeft = WaterTerrainField[TDFluidGpuWaterMakeFieldTexel(Water, LowCell, Actor.SliceIndex)];
+	const float BottomRight = WaterTerrainField[TDFluidGpuWaterMakeFieldTexel(Water, int2(HighCell.x, LowCell.y), Actor.SliceIndex)];
+	const float TopLeft = WaterTerrainField[TDFluidGpuWaterMakeFieldTexel(Water, int2(LowCell.x, HighCell.y), Actor.SliceIndex)];
+	const float TopRight = WaterTerrainField[TDFluidGpuWaterMakeFieldTexel(Water, HighCell, Actor.SliceIndex)];
+	const bool bIsKnown = TDFluidGpuIsTerrainElevationKnown(BottomLeft) && TDFluidGpuIsTerrainElevationKnown(BottomRight) && TDFluidGpuIsTerrainElevationKnown(TopLeft) && TDFluidGpuIsTerrainElevationKnown(TopRight);
+	if (!bIsKnown)
+	{
+		return TDFLUIDGPU_TERRAIN_UNKNOWN_ELEVATION_CM;
+	}
+
+	return lerp(lerp(BottomLeft, BottomRight, Fraction.x), lerp(TopLeft, TopRight, Fraction.x), Fraction.y);
+}
+
+float DenseLoadSdf(FTDFluidGpuActorParameters Actor, FTDFluidGpuDenseWaterParameters Dense, int2 DenseCell)
+{
+	const int Divisor = max(Dense.DenseDivisor, 1);
+	const int2 BaseCell = DenseCell * Divisor;
+	float SdfSum = 0.0f;
+	for (int OffsetY = 0; OffsetY < Divisor; ++OffsetY)
+	{
+		for (int OffsetX = 0; OffsetX < Divisor; ++OffsetX)
+		{
+			const int2 FullCell = min(BaseCell + int2(OffsetX, OffsetY), Actor.Resolution - 1);
+			SdfSum += CompositeSdf[TDFluidGpuMakeTexel(FullCell, Actor.SliceIndex)];
+		}
+	}
+	return SdfSum / float(Divisor * Divisor);
+}
+
+FTDFluidGpuDenseBed DenseLoadBed(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, FTDFluidGpuDenseWaterParameters Dense, int2 DenseCell)
+{
+	const float Divisor = float(max(Dense.DenseDivisor, 1));
+	FTDFluidGpuDenseBed Bed;
+	Bed.TerrainCm = DenseSampleTerrain(Actor, Water, (float2(DenseCell) + 0.5f) * Divisor - 0.5f);
+	Bed.SdfCm = DenseLoadSdf(Actor, Dense, DenseCell);
+	Bed.bIsSolid = !TDFluidGpuIsTerrainElevationKnown(Bed.TerrainCm) || TDFluidGpuIsSolidDistance(Bed.SdfCm);
+	return Bed;
+}
+
+float2 DenseComputeStampDelta(FTDFluidGpuActorParameters Actor, FTDFluidGpuDenseWaterParameters Dense, int2 DenseCell)
+{
+	const int Divisor = max(Dense.DenseDivisor, 1);
+	const int2 BaseCell = DenseCell * Divisor;
+	float2 DeltaSum = float2(0.0f, 0.0f);
+	for (int OffsetY = 0; OffsetY < Divisor; ++OffsetY)
+	{
+		for (int OffsetX = 0; OffsetX < Divisor; ++OffsetX)
+		{
+			const uint3 FullTexel = TDFluidGpuMakeTexel(min(BaseCell + int2(OffsetX, OffsetY), Actor.Resolution - 1), Actor.SliceIndex);
+			DeltaSum += StampedVelocity[FullTexel] - PreviousVelocity[FullTexel];
+		}
+	}
+	return DeltaSum / float(Divisor * Divisor);
+}
+
+float2 DenseLoadFace(FTDFluidGpuActorParameters Actor, int2 DenseCell)
+{
+	return DenseFaceVelocityIn[TDFluidGpuMakeTexel(DenseCell, Actor.SliceIndex)];
+}
+
+float2 DenseSampleFaceClamped(FTDFluidGpuActorParameters Actor, int Resolution, float2 GridPosition)
+{
+	const float2 Clamped = clamp(GridPosition, 0.0f, float(Resolution - 1));
+	const int2 LowCell = min(int2(floor(Clamped)), Resolution - 1);
+	const int2 HighCell = min(LowCell + 1, Resolution - 1);
+	const float2 Fraction = Clamped - float2(LowCell);
+	const float2 Bottom = lerp(DenseLoadFace(Actor, LowCell), DenseLoadFace(Actor, int2(HighCell.x, LowCell.y)), Fraction.x);
+	const float2 Top = lerp(DenseLoadFace(Actor, int2(LowCell.x, HighCell.y)), DenseLoadFace(Actor, HighCell), Fraction.x);
+	return lerp(Bottom, Top, Fraction.y);
+}
+
+float4 DenseSampleSeed(FTDFluidGpuDenseWaterParameters Dense, float2 SeedPosition)
+{
+	const int SeedResolution = max(Dense.SeedResolution, 1);
+	const float2 Clamped = clamp(SeedPosition, 0.0f, float(SeedResolution - 1));
+	const int2 LowCell = min(int2(floor(Clamped)), SeedResolution - 1);
+	const int2 HighCell = min(LowCell + 1, SeedResolution - 1);
+	const float2 Fraction = Clamped - float2(LowCell);
+	const uint RowStride = uint(SeedResolution);
+	const float4 BottomLeft = DenseSeedTexels[Dense.SeedTexelOffset + uint(LowCell.y) * RowStride + uint(LowCell.x)];
+	const float4 BottomRight = DenseSeedTexels[Dense.SeedTexelOffset + uint(LowCell.y) * RowStride + uint(HighCell.x)];
+	const float4 TopLeft = DenseSeedTexels[Dense.SeedTexelOffset + uint(HighCell.y) * RowStride + uint(LowCell.x)];
+	const float4 TopRight = DenseSeedTexels[Dense.SeedTexelOffset + uint(HighCell.y) * RowStride + uint(HighCell.x)];
+	return lerp(lerp(BottomLeft, BottomRight, Fraction.x), lerp(TopLeft, TopRight, Fraction.x), Fraction.y);
+}
+
+bool DenseIsOpenBorderCell(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, FTDFluidGpuDenseWaterParameters Dense, int2 DenseCell)
+{
+	if (!TDFluidGpuDenseHasFlag(Dense, TDFLUIDGPU_DENSE_FLAG_OPEN_BORDERS))
+	{
+		return false;
+	}
+
+	return !DenseLoadBed(Actor, Water, Dense, DenseCell).bIsSolid;
+}
+
+float DenseLoadFaceU(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, FTDFluidGpuDenseWaterParameters Dense, int FaceX, int Y)
+{
+	const int LastCell = Dense.DenseResolution - 1;
+	if (FaceX < 0)
+	{
+		return DenseIsOpenBorderCell(Actor, Water, Dense, int2(0, Y)) ? min(DenseLoadFace(Actor, int2(0, Y)).x, 0.0f) : 0.0f;
+	}
+	if (FaceX >= LastCell)
+	{
+		const bool bIsOpen = LastCell > 0 && DenseIsOpenBorderCell(Actor, Water, Dense, int2(LastCell, Y));
+		return bIsOpen ? max(DenseLoadFace(Actor, int2(LastCell - 1, Y)).x, 0.0f) : 0.0f;
+	}
+	return DenseLoadFace(Actor, int2(FaceX, Y)).x;
+}
+
+float DenseLoadFaceV(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, FTDFluidGpuDenseWaterParameters Dense, int X, int FaceY)
+{
+	const int LastCell = Dense.DenseResolution - 1;
+	if (FaceY < 0)
+	{
+		return DenseIsOpenBorderCell(Actor, Water, Dense, int2(X, 0)) ? min(DenseLoadFace(Actor, int2(X, 0)).y, 0.0f) : 0.0f;
+	}
+	if (FaceY >= LastCell)
+	{
+		const bool bIsOpen = LastCell > 0 && DenseIsOpenBorderCell(Actor, Water, Dense, int2(X, LastCell));
+		return bIsOpen ? max(DenseLoadFace(Actor, int2(X, LastCell - 1)).y, 0.0f) : 0.0f;
+	}
+	return DenseLoadFace(Actor, int2(X, FaceY)).y;
+}
+
+float DenseComputeOutflowScaleAt(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, FTDFluidGpuDenseWaterParameters Dense, float2 CellSize, int2 DenseCell)
+{
+	const float OutgoingX = max(DenseLoadFaceU(Actor, Water, Dense, DenseCell.x, DenseCell.y), 0.0f) + max(-DenseLoadFaceU(Actor, Water, Dense, DenseCell.x - 1, DenseCell.y), 0.0f);
+	const float OutgoingY = max(DenseLoadFaceV(Actor, Water, Dense, DenseCell.x, DenseCell.y), 0.0f) + max(-DenseLoadFaceV(Actor, Water, Dense, DenseCell.x, DenseCell.y - 1), 0.0f);
+	return TDFluidGpuDenseComputeOutflowScale(OutgoingX / CellSize.x + OutgoingY / CellSize.y, Dense.SubstepSeconds);
+}
+
+float DenseComputeFluxU(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, FTDFluidGpuDenseWaterParameters Dense, float2 CellSize, int FaceX, int Y)
+{
+	const float Velocity = DenseLoadFaceU(Actor, Water, Dense, FaceX, Y);
+	if (Velocity == 0.0f)
+	{
+		return 0.0f;
+	}
+
+	const int2 UpwindCell = int2(Velocity > 0.0f ? max(FaceX, 0) : min(FaceX + 1, Dense.DenseResolution - 1), Y);
+	const float UpwindDepth = min(DenseDepthIn[TDFluidGpuMakeTexel(UpwindCell, Actor.SliceIndex)], Dense.MaxFlowDepthCm);
+	return Velocity * UpwindDepth * DenseComputeOutflowScaleAt(Actor, Water, Dense, CellSize, UpwindCell);
+}
+
+float DenseComputeFluxV(FTDFluidGpuActorParameters Actor, FTDFluidGpuWaterParameters Water, FTDFluidGpuDenseWaterParameters Dense, float2 CellSize, int X, int FaceY)
+{
+	const float Velocity = DenseLoadFaceV(Actor, Water, Dense, X, FaceY);
+	if (Velocity == 0.0f)
+	{
+		return 0.0f;
+	}
+
+	const int2 UpwindCell = int2(X, Velocity > 0.0f ? max(FaceY, 0) : min(FaceY + 1, Dense.DenseResolution - 1));
+	const float UpwindDepth = min(DenseDepthIn[TDFluidGpuMakeTexel(UpwindCell, Actor.SliceIndex)], Dense.MaxFlowDepthCm);
+	return Velocity * UpwindDepth * DenseComputeOutflowScaleAt(Actor, Water, Dense, CellSize, UpwindCell);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void DenseSeedCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (DispatchThreadId.z >= DenseSeedEntryCount)
+	{
+		return;
+	}
+
+	const uint EntryIndex = DenseSeedEntryIndices[DispatchThreadId.z];
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuDenseWaterParameters Dense = DenseWaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Dense.DenseResolution))
+	{
+		return;
+	}
+
+	float Depth = 0.0f;
+	float2 Face = float2(0.0f, 0.0f);
+	if (TDFluidGpuDenseHasFlag(Dense, TDFLUIDGPU_DENSE_FLAG_HAS_SEED) && Dense.SeedResolution > 0)
+	{
+		const float SeedCellsPerCell = float(Dense.SeedResolution) / float(max(Dense.DenseResolution, 1));
+		const float2 SeedCenter = (float2(Cell) + 0.5f) * SeedCellsPerCell - 0.5f;
+		const float2 SeedEdge = (float2(Cell) + 1.0f) * SeedCellsPerCell - 1.0f;
+		Depth = max(0.0f, DenseSampleSeed(Dense, SeedCenter).x);
+		Face.x = DenseSampleSeed(Dense, float2(SeedEdge.x, SeedCenter.y)).y;
+		Face.y = DenseSampleSeed(Dense, float2(SeedCenter.x, SeedEdge.y)).z;
+	}
+
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	DenseDepthOut[Texel] = Depth;
+	DenseFaceVelocityOut[Texel] = Face;
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void DenseMomentumCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const FTDFluidGpuDenseWaterParameters Dense = DenseWaterParameters[EntryIndex];
+	const int Resolution = Dense.DenseResolution;
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Resolution))
+	{
+		return;
+	}
+
+	const float2 CellSize = TDFluidGpuDenseComputeCellSizeCm(Actor, Dense);
+	const float Seconds = Dense.SubstepSeconds;
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	const float2 Face = DenseFaceVelocityIn[Texel];
+	const float Depth = DenseDepthIn[Texel];
+	const FTDFluidGpuDenseBed Bed = DenseLoadBed(Actor, Water, Dense, Cell);
+	const bool bAppliesStampDelta = SubstepIndex == 0u && TDFluidGpuDenseHasFlag(Dense, TDFLUIDGPU_DENSE_FLAG_APPLIES_STAMP_DELTA);
+	const float2 StampDelta = bAppliesStampDelta ? DenseComputeStampDelta(Actor, Dense, Cell) : float2(0.0f, 0.0f);
+	const int LastCell = Resolution - 1;
+	const int RightX = min(Cell.x + 1, LastCell);
+	const int LeftX = max(Cell.x - 1, 0);
+	const int BelowY = max(Cell.y - 1, 0);
+
+	float NextU = 0.0f;
+	if (Cell.x < LastCell)
+	{
+		const int2 RightCell = int2(Cell.x + 1, Cell.y);
+		float AdvectedU = Face.x;
+		if (Dense.MomentumAdvection > 0.0f)
+		{
+			const float MeanV = 0.25f * (Face.y + DenseLoadFace(Actor, int2(RightX, Cell.y)).y + DenseLoadFace(Actor, int2(Cell.x, BelowY)).y + DenseLoadFace(Actor, int2(RightX, BelowY)).y);
+			const float2 SamplePosition = float2(Cell) - Seconds * float2(Face.x / CellSize.x, MeanV / CellSize.y);
+			AdvectedU = lerp(Face.x, DenseSampleFaceClamped(Actor, Resolution, SamplePosition).x, Dense.MomentumAdvection);
+		}
+		const float RightStampDelta = bAppliesStampDelta ? DenseComputeStampDelta(Actor, Dense, RightCell).x : 0.0f;
+		const float RightDepth = DenseDepthIn[TDFluidGpuMakeTexel(RightCell, Actor.SliceIndex)];
+		NextU = TDFluidGpuDenseSolveFace(Dense, Bed, DenseLoadBed(Actor, Water, Dense, RightCell), Depth, RightDepth, AdvectedU, 0.5f * (StampDelta.x + RightStampDelta), CellSize.x);
+	}
+
+	float NextV = 0.0f;
+	if (Cell.y < LastCell)
+	{
+		const int2 AboveCell = int2(Cell.x, Cell.y + 1);
+		float AdvectedV = Face.y;
+		if (Dense.MomentumAdvection > 0.0f)
+		{
+			const float MeanU = 0.25f * (Face.x + DenseLoadFace(Actor, AboveCell).x + DenseLoadFace(Actor, int2(LeftX, Cell.y)).x + DenseLoadFace(Actor, int2(LeftX, AboveCell.y)).x);
+			const float2 SamplePosition = float2(Cell) - Seconds * float2(MeanU / CellSize.x, Face.y / CellSize.y);
+			AdvectedV = lerp(Face.y, DenseSampleFaceClamped(Actor, Resolution, SamplePosition).y, Dense.MomentumAdvection);
+		}
+		const float AboveStampDelta = bAppliesStampDelta ? DenseComputeStampDelta(Actor, Dense, AboveCell).y : 0.0f;
+		const float AboveDepth = DenseDepthIn[TDFluidGpuMakeTexel(AboveCell, Actor.SliceIndex)];
+		NextV = TDFluidGpuDenseSolveFace(Dense, Bed, DenseLoadBed(Actor, Water, Dense, AboveCell), Depth, AboveDepth, AdvectedV, 0.5f * (StampDelta.y + AboveStampDelta), CellSize.y);
+	}
+
+	DenseFaceVelocityOut[Texel] = float2(NextU, NextV);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void DenseDepthCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const FTDFluidGpuDenseWaterParameters Dense = DenseWaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Dense.DenseResolution))
+	{
+		return;
+	}
+
+	const float2 CellSize = TDFluidGpuDenseComputeCellSizeCm(Actor, Dense);
+	const float Seconds = Dense.SubstepSeconds;
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	const float NetFlux = (DenseComputeFluxU(Actor, Water, Dense, CellSize, Cell.x, Cell.y) - DenseComputeFluxU(Actor, Water, Dense, CellSize, Cell.x - 1, Cell.y)) / CellSize.x
+		+ (DenseComputeFluxV(Actor, Water, Dense, CellSize, Cell.x, Cell.y) - DenseComputeFluxV(Actor, Water, Dense, CellSize, Cell.x, Cell.y - 1)) / CellSize.y;
+	float Depth = max(0.0f, DenseDepthIn[Texel] - Seconds * NetFlux);
+	const float ReservoirSurfaceCm = TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, min(Cell * max(Dense.DenseDivisor, 1), Actor.Resolution - 1));
+	if (TDFluidGpuWaterHasSurface(ReservoirSurfaceCm))
+	{
+		const float TerrainCm = DenseLoadBed(Actor, Water, Dense, Cell).TerrainCm;
+		if (TDFluidGpuIsTerrainElevationKnown(TerrainCm))
+		{
+			Depth += (max(0.0f, ReservoirSurfaceCm - TerrainCm) - Depth) * Dense.ReservoirBlend;
+		}
+	}
+	if (Depth < Dense.WetThresholdCm)
+	{
+		Depth = max(0.0f, Depth - Dense.FilmDrainCmPerSec * Seconds);
+	}
+	DenseDepthOut[Texel] = Depth;
+	if (SubstepIndex + 1u < Dense.SubstepCount)
+	{
+		return;
+	}
+
+	float2 CellVelocity = float2(0.0f, 0.0f);
+	if (Depth > Dense.WetThresholdCm)
+	{
+		CellVelocity.x = 0.5f * (DenseLoadFaceU(Actor, Water, Dense, Cell.x - 1, Cell.y) + DenseLoadFaceU(Actor, Water, Dense, Cell.x, Cell.y));
+		CellVelocity.y = 0.5f * (DenseLoadFaceV(Actor, Water, Dense, Cell.x, Cell.y - 1) + DenseLoadFaceV(Actor, Water, Dense, Cell.x, Cell.y));
+	}
+	DenseCellVelocityOut[Texel] = CellVelocity;
+}
+
+float DenseSampleDepthAndVelocity(FTDFluidGpuActorParameters Actor, int Resolution, float2 GridPosition, out float2 OutCellVelocity)
+{
+	const float2 Clamped = clamp(GridPosition, 0.0f, float(Resolution - 1));
+	const int2 LowCell = min(int2(floor(Clamped)), Resolution - 1);
+	const int2 HighCell = min(LowCell + 1, Resolution - 1);
+	const float2 Fraction = Clamped - float2(LowCell);
+	const uint3 BottomLeft = TDFluidGpuMakeTexel(LowCell, Actor.SliceIndex);
+	const uint3 BottomRight = TDFluidGpuMakeTexel(int2(HighCell.x, LowCell.y), Actor.SliceIndex);
+	const uint3 TopLeft = TDFluidGpuMakeTexel(int2(LowCell.x, HighCell.y), Actor.SliceIndex);
+	const uint3 TopRight = TDFluidGpuMakeTexel(HighCell, Actor.SliceIndex);
+	OutCellVelocity = lerp(lerp(DenseCellVelocityIn[BottomLeft], DenseCellVelocityIn[BottomRight], Fraction.x), lerp(DenseCellVelocityIn[TopLeft], DenseCellVelocityIn[TopRight], Fraction.x), Fraction.y);
+	return lerp(lerp(DenseDepthIn[BottomLeft], DenseDepthIn[BottomRight], Fraction.x), lerp(DenseDepthIn[TopLeft], DenseDepthIn[TopRight], Fraction.x), Fraction.y);
+}
+
+[numthreads(TDFLUIDGPU_CELL_GROUP_SIZE, TDFLUIDGPU_CELL_GROUP_SIZE, 1)]
+void DenseExpandCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	const uint EntryIndex = DispatchThreadId.z;
+	const FTDFluidGpuActorParameters Actor = ActorParameters[EntryIndex];
+	const FTDFluidGpuWaterParameters Water = WaterParameters[EntryIndex];
+	const FTDFluidGpuDenseWaterParameters Dense = DenseWaterParameters[EntryIndex];
+	const int2 Cell = int2(DispatchThreadId.xy);
+	if (!TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	{
+		return;
+	}
+
+	const float Divisor = float(max(Dense.DenseDivisor, 1));
+	float2 CellVelocity = float2(0.0f, 0.0f);
+	const float Depth = DenseSampleDepthAndVelocity(Actor, Dense.DenseResolution, (float2(Cell) + 0.5f) / Divisor - 0.5f, CellVelocity);
+	const float TerrainCm = TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell);
+	const bool bIsWet = Depth > Dense.WetThresholdCm && TDFluidGpuIsTerrainElevationKnown(TerrainCm);
+	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
+	VelocityOut[Texel] = bIsWet ? CellVelocity : float2(0.0f, 0.0f);
+	DenseSurfaceOut[Texel] = bIsWet ? TerrainCm + Depth : TDFLUIDGPU_WATER_NO_SURFACE_HEIGHT_CM;
+}

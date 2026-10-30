@@ -10,6 +10,7 @@ class UDecalComponent;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
 class UStaticMesh;
+class UTDFluidDenseWaterCacheAsset;
 struct FStreamableHandle;
 
 UCLASS()
@@ -65,6 +66,9 @@ public:
 	UPROPERTY(EditInstanceOnly, Category = "Water|TileMap")
 	TObjectPtr<ATDFluidLiveActor> TileMapSourceActor;
 
+	UPROPERTY(EditAnywhere, Category = "Water|Dense")
+	TSoftObjectPtr<UTDFluidDenseWaterCacheAsset> DenseWaterCache;
+
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -87,6 +91,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Water")
 	float GetWaterLayerDisplayAlpha() const { return WaterLayerDisplayAlpha; }
+
+	UFUNCTION(BlueprintCallable, Category = "Water|Dense")
+	bool BakeDenseWaterCache(UTDFluidDenseWaterCacheAsset* TargetCache, float SimulatedSeconds);
 
 protected:
 	virtual FVector ResolvePlaneAnchorWorldLocation() const override;
@@ -127,6 +134,8 @@ private:
 	void PushLodGridMaterialParameters(UMaterialInstanceDynamic& LodMaterial, const FVector& ObserverWorld, double EffectiveBaseRangeCm) const;
 	void SetTaggedSurfacesHiddenInGame(const TArray<AActor*>& SurfaceActors, bool bShouldHide);
 	void DisableLodGrid();
+	void RequestDenseWaterCacheLoad();
+	void ApplyLoadedDenseWaterCache();
 
 	UPROPERTY(Transient)
 	TMap<TObjectPtr<UMaterialInterface>, TObjectPtr<UMaterialInstanceDynamic>> SharedSurfaceMaterials;
@@ -139,6 +148,8 @@ private:
 
 	TSharedPtr<FStreamableHandle> WetDecalLoadHandle;
 	TSharedPtr<FStreamableHandle> LodGridMeshLoadHandle;
+	TSharedPtr<FStreamableHandle> DenseWaterCacheLoadHandle;
+	TArray<FTDFluidSdfObstacle> CachedWaterObstacles;
 	TArray<TWeakObjectPtr<AActor>> LodHiddenSurfaceActors;
 	FTDFluidWaterLodGridSettings LodGridSettings;
 	FTDFluidWaterLodGridStats LodGridStats;
@@ -148,6 +159,8 @@ private:
 	bool bIsLodSelectionDirty = true;
 	bool bHasLodGridSettings = false;
 	bool bHasWarnedLodGridMesh = false;
+	bool bIsWaitingForDenseWaterCache = false;
+	bool bHasWarnedDenseWaterCache = false;
 
 	TArray<TWeakObjectPtr<AActor>> TraceIgnoredActors;
 	TArray<FTDFluidWaterRegion> CachedWaterRegions;

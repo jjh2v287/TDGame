@@ -1,0 +1,90 @@
+{
+ "id": "w5_tank_l11",
+ "note": "spec-w5 TK1(MT L11). 구역 0 수조: 유리 옆면 불투명도와 물 반사·소산. 반박 M7: TK1 의 캐릭터 둘레 고리 목표는 고리 스탬프가 물 계층 받는 쪽 전용이라 현재 WaterPool 로는 닿지 않아 뺐다(p3_gaps). 옆면 반투명 청록·바닥 코스틱 칸 = 캐릭터 폭 1~2배는 IMG 21 오른쪽 위와 육안 대조(수치 목표 없음). 폰은 zones.0.camera",
+ "scenes": [
+  {
+   "name": "tank",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidWaterPropsStage",
+   "camera": {
+    "awake": {
+     "TDGen_Tank_Pool": true,
+     "TDGen_Fountain_Fountain": false,
+     "TDGen_Cauldron_MinimalCauldron": false,
+     "TDGen_Cauldron_GeneralCauldron": false,
+     "TDGen_WaterTank_Pool": false,
+     "TDGen_LiquidSpheres_ClearSim": false,
+     "TDGen_LiquidSpheres_TurbulentSim": false,
+     "TDGen_LiquidSpheres_BloodOrbSim": false,
+     "TDGen_Waterfall_Pool": false,
+     "TDGen_Waterfall_Fall": false,
+     "TDGen_WaterySand_Sand": false,
+     "TDGen_UnderwaterPit_Pool": false
+    },
+    "pawn": [
+     0,
+     -500
+    ],
+    "arm": 900.0,
+    "view": [
+     -60.0,
+     90.0
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 5.0,
+   "regions_template": null,
+   "targets": null,
+   "live2_refs": [
+    "S.0.23.1",
+    "S.0.23.2",
+    "IMG 21"
+   ]
+  }
+ ],
+ "params": [
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidWaterTankWall.Scalars.GlassOpacity",
+   "values": [
+    0.15,
+    0.25,
+    0.4
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Kinds.WaterPool.TDFluidSimulationConfig.EdgeBounciness",
+   "values": [
+    0.25,
+    0.5,
+    0.75
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Kinds.WaterPool.TDFluidSimulationConfig.DensityDissipation",
+   "values": [
+    0.1,
+    0.2,
+    0.4
+   ],
+   "split_group": false
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "look"
+  ],
+  "noise_floor": {}
+ },
+ "p3_gaps": [
+  "물 계층 WaterPool proposed: TK1 캐릭터 둘레 고리는 고리 스탬프가 물 계층(bEnableWaterLayer) 받는 쪽에서만 쓰이는데 WaterPool 종류는 물 계층이 꺼져 있다. 고리 목표는 이 종류에 물 계층을 켜는 결정이 난 뒤에만 계획에 넣는다(R5-M7)",
+  "params Look: 할당(파동 2 계획과 같은 공통 공백, 구현은 CAL-0)",
+  "바닥 코스틱 칸 크기(캐릭터 폭 1~2배)·옆면 청록 색은 수치 지표가 없어 육안 판정"
+ ],
+ "draft_status": "blocked(CAL-0)"
+}

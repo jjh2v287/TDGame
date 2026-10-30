@@ -1,0 +1,108 @@
+{
+ "id": "w5_waterfall_l29",
+ "note": "spec-w5 WF1·WF2(MT L29). 구역 5 폭포 낙하 속도(음수 부력)와 낙수가 앞 웅덩이에 만드는 흰 물. 반박 M7: 받는 쪽 WaterPool 에 물 계층이 없어 CouplingRippleImpulseCm 은 응답이 0이므로 훑지 않고 CouplingRadialVelocityCmPerSec·CouplingDensityScale 을 훑는다. 폰은 폭포 앞(−X)에서 +X 를 본다(zones.5.camera)",
+ "scenes": [
+  {
+   "name": "fall_pool",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidWaterPropsStage",
+   "camera": {
+    "awake": {
+     "TDGen_Tank_Pool": false,
+     "TDGen_Fountain_Fountain": false,
+     "TDGen_Cauldron_MinimalCauldron": false,
+     "TDGen_Cauldron_GeneralCauldron": false,
+     "TDGen_WaterTank_Pool": false,
+     "TDGen_LiquidSpheres_ClearSim": false,
+     "TDGen_LiquidSpheres_TurbulentSim": false,
+     "TDGen_LiquidSpheres_BloodOrbSim": false,
+     "TDGen_Waterfall_Pool": true,
+     "TDGen_Waterfall_Fall": true,
+     "TDGen_WaterySand_Sand": false,
+     "TDGen_UnderwaterPit_Pool": false
+    },
+    "pawn": [
+     14100,
+     0
+    ],
+    "arm": 900.0,
+    "view": [
+     -15.0,
+     0.0
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 6.0,
+   "regions_template": null,
+   "targets": null,
+   "live2_refs": [
+    "S.0.17.2",
+    "S.0.23.8"
+   ]
+  }
+ ],
+ "params": [
+  {
+   "json_path": "Kinds.Waterfall.TDFluidSimulationConfig.BuoyancyCmPerSec2",
+   "values": [
+    -600.0,
+    -900.0,
+    -1200.0
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Kinds.Waterfall.TDFluidWaterPropSettings.CouplingRadialVelocityCmPerSec",
+   "values": [
+    60.0,
+    120.0,
+    240.0
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Kinds.Waterfall.TDFluidWaterPropSettings.CouplingDensityScale",
+   "values": [
+    0.25,
+    0.5,
+    0.75
+   ],
+   "split_group": false
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "reinit",
+ "metrics": {
+  "sources": [
+   "look",
+   "prop_probe"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "scene": "fall_pool",
+    "metric": "prop_probe.fall_lower_quarter_mean_down_speed_cm_per_sec",
+    "weight": 2.0,
+    "low": 354.4,
+    "high": 531.6
+   },
+   {
+    "scene": "fall_pool",
+    "metric": "prop_probe.white_water_radius_over_fall_height",
+    "weight": 1.0,
+    "low": 0.3,
+    "high": 0.6
+   }
+  ]
+ },
+ "p3_gaps": [
+  "metrics.sources prop_probe: 폭포 아래 1/4 평균 하강 속도(목표 √(2gh) 1 m 443 cm/s ±20% = 354.4~531.6)는 FTDFluidWaterPropStats 에 LastCouplingMeanDownSpeedCmPerSec 를 더해야 읽힌다(R5-S1). 흰 물 반경 ÷ 낙차(0.3~0.6 [제안])는 통계가 없어 화면 측정",
+  "READ_BACK_STRUCTS(calib_sweep.py:34·159)에 TDFluidWaterPropSettings 가 없어 Kinds.Waterfall.TDFluidWaterPropSettings.* 경로가 거부된다(R5-S2)",
+  "params Look: 할당(파동 2 계획과 같은 공통 공백, 구현은 CAL-0)",
+  "WF1 은 속도 텍스처로 재지 않는다: 속도 출력은 ±600 cm/s 에서 포화되고 Waterfall MaxCellSpeedCmPerSec 1500 이라 판 흐름 속도가 잘린다(R5-M5)",
+  "M7: SourceRippleImpulseCm·CouplingRippleImpulseCm 은 물 계층 받는 쪽 전용(TDFluidGrid2DSolver.cpp:1037-1038)이다. 받는 WaterPool 에 물 계층이 없어 훑지 않는다"
+ ],
+ "draft_status": "blocked(CAL-0)"
+}

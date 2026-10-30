@@ -9,4 +9,12 @@ if (waterLayerBlend > 0.0 && SwashHeightCm > 0.0 && simField[0].z >= 0.0)
     swashOffsetCm = SwashHeightCm * max(0.0, sin(swashPhase)) * swashShoal * simFade * waterLayerBlend;
 }
 
-return float3(waveDisplacementCm.xy + lodMorphDeltaXY, waveDisplacementCm.z + rippleHeightCm + swashOffsetCm + tileMapHeightCm);
+float denseActive = saturate(DenseWaterActive);
+float denseDepthCm = simField[0].z * WaterDepthReferenceCm;
+float denseWetWeight = step(max(DenseWaterWetThresholdCm, 0.001), denseDepthCm) * windowDepthKnown;
+float denseTerrainKnown = 1.0 - step(waterTerrainUnknownLimit - 0.01, simTerrainNormalized);
+float denseTerrainZCm = TerrainReferenceZCm + simTerrainNormalized * waterTerrainScaleCm;
+float denseTargetZCm = denseTerrainZCm + lerp(-DenseDrySinkCm, denseDepthCm, denseWetWeight);
+float denseOffsetZCm = (denseTargetZCm - WaterWorldPosition.z) * denseActive * windowDepthKnown * denseTerrainKnown;
+
+return float3(waveDisplacementCm.xy + lodMorphDeltaXY, waveDisplacementCm.z + rippleHeightCm + swashOffsetCm + tileMapHeightCm + denseOffsetZCm);

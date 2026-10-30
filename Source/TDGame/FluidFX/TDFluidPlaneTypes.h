@@ -8,7 +8,8 @@ enum class ETDFluidPlaneOrientation : uint8
 {
 	WorldFacing,
 	CameraFacing,
-	VerticalBillboard
+	VerticalBillboard,
+	WorldFixedVertical
 };
 
 USTRUCT(BlueprintType)

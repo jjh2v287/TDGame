@@ -62,6 +62,9 @@ namespace
 	constexpr int64 BatchWaterFloatPairBytesPerTexel = 2 * FloatBytes;
 	constexpr int64 BatchWaterFieldBytesPerCell = 4 * FloatBytes + FloatBytes + FloatBytes;
 	constexpr int64 BatchWaterWetnessBytesPerCell = FloatBytes;
+	constexpr int64 BatchWaterDenseStateBytesPerCell = PingPongTextureCount * (FloatBytes + 2 * FloatBytes);
+	constexpr int64 BatchWaterDenseCellVelocityBytesPerCell = 2 * FloatBytes;
+	constexpr int64 BatchWaterDenseSurfaceBytesPerCell = FloatBytes;
 	constexpr int64 BatchWaterOutputBytesPerCell = 3 * RgbaHalfFloatBytes;
 	constexpr int64 BatchWaterCompositeSdfBytesPerCell = HalfFloatBytes;
 	constexpr int64 BatchWaterFieldDrySdfBytesPerCell = HalfFloatBytes;
@@ -584,7 +587,7 @@ namespace
 
 		ETDFluidGpuWaterFlags Flags = ETDFluidGpuWaterFlags::None;
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesOpenBorders, Settings.bOpenWaterBorders);
-		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::TreatsDryCellsAsSolid, Settings.bTreatDryCellsAsSolid);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::TreatsDryCellsAsSolid, Settings.bTreatDryCellsAsSolid && !Settings.bUsesDenseWater);
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::InitializesAllVelocities, bNeedsReset);
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesRipples, bUsesRipples);
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesRippleAdvection, bUsesRipples && Settings.RippleFlowAdvection > 0.0f);
@@ -595,6 +598,7 @@ namespace
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::ReachedRippleSubstepCap, bReachedRippleSubstepCap);
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UpdatesWetness, bUpdatesWetness);
 		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::ResetsWetness, bResetsWetness);
+		AddBatchWaterFlagIf(Flags, ETDFluidGpuWaterFlags::UsesDenseWater, Settings.bUsesDenseWater);
 		return Flags;
 	}
 
@@ -801,6 +805,7 @@ FTDFluidGpuBatchKey FTDFluidGpuBatch::MakeKey(const FTDFluidGpuSimulationSetting
 		BatchKey.WaterPressureMode = ResolveWaterPressureMode(Settings);
 		BatchKey.bUsesFloat32WaterVelocity = Settings.bUsesFloat32WaterVelocity;
 		BatchKey.bUsesFloat32Ripple = Settings.bUsesFloat32Ripple;
+		BatchKey.bUsesDenseWater = Settings.bUsesDenseWater;
 		ApplyBatchWaterPressureKey(Settings, BatchKey);
 		return BatchKey;
 	}
@@ -1032,9 +1037,16 @@ FTDFluidGpuMemoryEstimate FTDFluidGpuBatch::EstimateWaterActorMemory(const FTDFl
 	Estimate.OutputBytes = CellCount * BatchWaterOutputBytesPerCell;
 	Estimate.TransientBytes = CellCount * BatchWaterCompositeSdfBytesPerCell
 		+ FieldCellCount * BatchWaterFieldDrySdfBytesPerCell
-		+ ComputeBatchWaterPressureTransientBytes(WaterKey.WaterPressureMode, ResolutionTier);
+		+ (WaterKey.bUsesDenseWater ? 0 : ComputeBatchWaterPressureTransientBytes(WaterKey.WaterPressureMode, ResolutionTier));
 	Estimate.ReadbackBytes = ReadbackTileTexelCount * RgbaHalfFloatBytes * TDFluidGpuSolverConstants::ReadbackRingSize + BatchWaterProbeReadbackBytes;
 	Estimate.NearRippleStateBytes = FTDFluidGpuNearRippleState::EstimateStateBytes(NearRippleResolution);
+	if (WaterKey.bUsesDenseWater)
+	{
+		const int64 DenseResolution = Resolution / FTDFluidGpuDenseWaterRules::ResolveDenseDivisor(ResolutionTier);
+		const int64 DenseCellCount = DenseResolution * DenseResolution;
+		Estimate.StateBytes += DenseCellCount * BatchWaterDenseStateBytesPerCell;
+		Estimate.TransientBytes += DenseCellCount * BatchWaterDenseCellVelocityBytesPerCell + CellCount * BatchWaterDenseSurfaceBytesPerCell;
+	}
 	return Estimate;
 }
 

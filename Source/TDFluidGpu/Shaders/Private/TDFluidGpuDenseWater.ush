@@ -1,0 +1,114 @@
+#pragma once
+
+#include "/TDFluidGpu/Private/TDFluidGpuWaterCommon.ush"
+
+static const uint TDFLUIDGPU_DENSE_FLAG_OPEN_BORDERS = 1u << 0;
+static const uint TDFLUIDGPU_DENSE_FLAG_APPLIES_STAMP_DELTA = 1u << 1;
+static const uint TDFLUIDGPU_DENSE_FLAG_HAS_SEED = 1u << 2;
+
+struct FTDFluidGpuDenseWaterParameters
+{
+	uint Flags;
+	int DenseResolution;
+	int DenseDivisor;
+	uint SubstepCount;
+
+	float SubstepSeconds;
+	float GravityCmPerSec2;
+	float GapFillTendency;
+	float PeakAvoidance;
+
+	float PeakSoftnessCm;
+	float SdfRepelCmPerSec2;
+	float SdfRepelBandCm;
+	float LinearDragPerSec;
+
+	float BedFriction;
+	float WetThresholdCm;
+	float DryDepthCm;
+	float FilmDrainCmPerSec;
+
+	float MaxFlowDepthCm;
+	float MaxSpeedCmPerSec;
+	float MomentumAdvection;
+	float ReservoirBlend;
+
+	uint SeedTexelOffset;
+	int SeedResolution;
+	uint Padding0;
+	uint Padding1;
+};
+
+struct FTDFluidGpuDenseBed
+{
+	float TerrainCm;
+	float SdfCm;
+	bool bIsSolid;
+};
+
+StructuredBuffer<FTDFluidGpuDenseWaterParameters> DenseWaterParameters;
+
+bool TDFluidGpuDenseHasFlag(FTDFluidGpuDenseWaterParameters Dense, uint Flag)
+{
+	return (Dense.Flags & Flag) != 0u;
+}
+
+float2 TDFluidGpuDenseComputeCellSizeCm(FTDFluidGpuActorParameters Actor, FTDFluidGpuDenseWaterParameters Dense)
+{
+	return Actor.ExtentCm / float(max(Dense.DenseResolution, 1));
+}
+
+float TDFluidGpuDenseComputePeakAvoidanceFactor(float UpwindSurfaceCm, float DownwindTerrainCm, float PeakAvoidance, float SoftnessCm)
+{
+	const float RiseAboveSurfaceCm = DownwindTerrainCm - UpwindSurfaceCm;
+	if (RiseAboveSurfaceCm <= 0.0f)
+	{
+		return 1.0f;
+	}
+
+	const float BlockedFraction = saturate(RiseAboveSurfaceCm / max(SoftnessCm, 1.0e-4f));
+	return 1.0f - saturate(PeakAvoidance) * BlockedFraction;
+}
+
+float TDFluidGpuDenseComputeOutflowScale(float OutgoingSpeedSumPerCm, float SubstepSeconds)
+{
+	const float OutflowFraction = OutgoingSpeedSumPerCm * SubstepSeconds;
+	return OutflowFraction > 1.0f ? 1.0f / OutflowFraction : 1.0f;
+}
+
+float TDFluidGpuDenseSolveFace(FTDFluidGpuDenseWaterParameters Dense, FTDFluidGpuDenseBed LowBed, FTDFluidGpuDenseBed HighBed, float LowDepth, float HighDepth, float AdvectedVelocity, float StampDelta, float CellSizeAlong)
+{
+	if (LowBed.bIsSolid || HighBed.bIsSolid)
+	{
+		return 0.0f;
+	}
+	if (LowDepth < Dense.DryDepthCm && HighDepth < Dense.DryDepthCm)
+	{
+		return 0.0f;
+	}
+
+	const float Seconds = Dense.SubstepSeconds;
+	float Velocity = AdvectedVelocity + StampDelta;
+	const float BedRise = HighBed.TerrainCm - LowBed.TerrainCm;
+	Velocity -= Seconds * Dense.GravityCmPerSec2 * (BedRise + Dense.GapFillTendency * (HighDepth - LowDepth)) / CellSizeAlong;
+	const bool bFlowsUp = Velocity > 0.0f;
+	const float UpwindDepth = bFlowsUp ? LowDepth : HighDepth;
+	if (UpwindDepth < Dense.DryDepthCm)
+	{
+		return 0.0f;
+	}
+
+	const float UpwindSurfaceCm = (bFlowsUp ? LowBed.TerrainCm : HighBed.TerrainCm) + UpwindDepth;
+	const float DownwindTerrainCm = bFlowsUp ? HighBed.TerrainCm : LowBed.TerrainCm;
+	Velocity *= TDFluidGpuDenseComputePeakAvoidanceFactor(UpwindSurfaceCm, DownwindTerrainCm, Dense.PeakAvoidance, Dense.PeakSoftnessCm);
+	const float FaceSdf = 0.5f * (LowBed.SdfCm + HighBed.SdfCm);
+	if (FaceSdf > 0.0f && FaceSdf < Dense.SdfRepelBandCm)
+	{
+		const float NormalAlong = clamp((HighBed.SdfCm - LowBed.SdfCm) / CellSizeAlong, -1.0f, 1.0f);
+		Velocity += Seconds * Dense.SdfRepelCmPerSec2 * (1.0f - FaceSdf / Dense.SdfRepelBandCm) * NormalAlong;
+	}
+
+	const float FaceDepth = max(0.5f * (LowDepth + HighDepth), 1.0f);
+	Velocity /= 1.0f + Seconds * (Dense.LinearDragPerSec + Dense.BedFriction * abs(Velocity) / FaceDepth);
+	return clamp(Velocity, -Dense.MaxSpeedCmPerSec, Dense.MaxSpeedCmPerSec);
+}

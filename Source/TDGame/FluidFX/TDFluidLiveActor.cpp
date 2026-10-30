@@ -1660,7 +1660,7 @@ void ATDFluidLiveActor::UpdatePlaneBasis()
 	const UWorld* World = GetWorld();
 	const UTDFluidLiveSubsystem* FluidSubsystem = World ? World->GetSubsystem<UTDFluidLiveSubsystem>() : nullptr;
 	const FRotator ViewRotation = FluidSubsystem ? FluidSubsystem->GetPlaneViewRotation() : FTDFluidPlaneBasis::GetDefaultViewRotation();
-	const FTDFluidPlaneBasis PlaneBasis = FTDFluidPlaneBasis::MakeFromView(PlaneSettings.Orientation, ViewRotation, PlaneSettings.BillboardLeanBackDegrees);
+	const FTDFluidPlaneBasis PlaneBasis = FTDFluidPlaneBasis::MakeFromView(PlaneSettings.Orientation, PlaneSettings.Orientation == ETDFluidPlaneOrientation::WorldFixedVertical ? FRotator(0.0, GetActorRotation().Yaw, 0.0) : ViewRotation, PlaneSettings.BillboardLeanBackDegrees);
 	LiveComponent->SetPlaneBasis(PlaneBasis, ResolvePlaneAnchorWorldLocation(), PlaneSettings.CameraDepthBiasCm);
 }
 

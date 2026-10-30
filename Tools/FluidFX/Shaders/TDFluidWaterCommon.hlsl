@@ -72,6 +72,9 @@ for (int wavePass = 0; wavePass < TD_WATER_WAVE_PASS_COUNT; ++wavePass)
 
 const float2 simTapOffset[5] = { float2(0.0, 0.0), float2(1.0, 0.0), float2(-1.0, 0.0), float2(0.0, 1.0), float2(0.0, -1.0) };
 float4 simField[5];
+const float waterTerrainScaleCm = 1000.0;
+const float waterTerrainUnknownLimit = 8.0;
+float simTerrainNormalized = waterTerrainUnknownLimit;
 
 [unroll]
 for (int simFieldIndex = 0; simFieldIndex < 5; ++simFieldIndex)
@@ -111,6 +114,10 @@ for (int simTapIndex = 0; simTapIndex < TD_WATER_SIM_TAP_COUNT; ++simTapIndex)
         float layerRipple = clamp(surfaceTap.b * 2.0 - 1.0, -1.0, 1.0) + PressureNormalStrength * densityRipple;
         rippleDecoded = lerp(densityRipple, layerRipple, waterLayerBlend);
         depthNormalized = saturate(surfaceTap.r);
+        if (simTapIndex == 0)
+        {
+            simTerrainNormalized = surfaceTap.a;
+        }
     }
 
     simField[simTapIndex] = float4(saturate(densityTap.r), rippleDecoded, depthNormalized, saturate(densityTap.a));
@@ -120,6 +127,7 @@ for (int simTapIndex = 0; simTapIndex < TD_WATER_SIM_TAP_COUNT; ++simTapIndex)
     }
 }
 
+float windowDepthKnown = step(0.0, simField[0].z);
 float simMask = simIsDriven * min(windowFade, simField[0].w);
 float foamDensity = simField[0].x * simMask;
 float rippleHeightCm = simField[0].y * RippleHeightReferenceCm * simMask;

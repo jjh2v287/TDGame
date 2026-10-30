@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FluidFX/TDFluidDenseWaterCacheAsset.h"
 #include "FluidFX/TDFluidGpuWaterFieldState.h"
 #include "FluidFX/TDFluidMassInputTargets.h"
 #include "FluidFX/TDFluidTypes.h"
@@ -83,6 +84,9 @@ public:
 	void SetWaterTerrainReferenceZCm(float InTerrainReferenceZCm) { WaterTerrainReferenceZCm = InTerrainReferenceZCm; }
 	void SetWaterProbePlanePoints(TConstArrayView<FVector2D> PlanePoints, int32 InProbeGeneration);
 	bool TryGetWaterProbeSamples(TArray<FTDFluidGpuWaterProbeSample>& OutSamples, uint32& OutFrameNumber) const;
+	bool UsesDenseWater() const { return Settings.bUsesDenseWater; }
+	void SetDenseWaterSeed(const FTDFluidDenseWaterSeed& Seed);
+	void ClearDenseWaterSeed();
 
 	void PrepareStep(float DeltaTime, TConstArrayView<FTDFluidBrushStamp> PlaneStamps, const FVector2D& PlaneUpDirection, bool bAllowsTerrainElevation);
 	bool HasPreparedStep() const { return bHasPreparedStep; }
@@ -126,6 +130,8 @@ private:
 	int32 GatherWaterStep(FTDFluidGpuActorInput& OutActorInput, FTextureRenderTargetResource* WaterSurfaceOutput, int32 WaterProbeFirstSlot);
 	void ConsumeWaterProbeSamples(const FTDFluidGpuReadbackFrame& ReadbackFrame, const FTDFluidGpuSubmissionRecord& Submission);
 	void AdvanceSimulationTime(float DeltaTime);
+	static void ApplyDenseWaterSettings(const FTDFluidSimulationConfig& Config, FTDFluidGpuSimulationSettings& InOutSettings);
+	void GatherDenseWaterSeed(FTDFluidGpuActorInput& OutActorInput);
 
 	FTDFluidGpuSimulationSettings Settings;
 	FTDFluidGpuTransmittanceInput PendingTransmittanceInput;
@@ -160,6 +166,8 @@ private:
 	TArray<FTDFluidGpuWaterProbeSample> LatestWaterProbeSamples;
 	uint32 LatestWaterProbeFrameNumber = 0;
 	int32 LatestWaterProbeGeneration = -1;
+	TOptional<FTDFluidDenseWaterSeed> DenseWaterSeed;
+	bool bHasPendingDenseWaterSeed = false;
 	FTDFluidGpuBatchKey LastGatheredBatchKey;
 	bool bHasGatheredBatchKey = false;
 	bool bWasUpdatingWaterWetness = false;

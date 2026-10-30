@@ -434,6 +434,60 @@ struct TDGAME_API FTDFluidSimulationConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", meta = (ClampMin = "0.0", ClampMax = "10.0"))
 	float WhitewaterDissipation = 0.12f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater")
+	bool bEnableDenseWater = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "50.0", ClampMax = "3000.0"))
+	float DenseWaterGravityCmPerSec2 = 980.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.0", ClampMax = "2.0"))
+	float DenseWaterGapFillTendency = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DenseWaterPeakAvoidance = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.1", ClampMax = "50.0"))
+	float DenseWaterPeakSoftnessCm = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.0", ClampMax = "5000.0"))
+	float DenseWaterSdfRepelCmPerSec2 = 400.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "1.0", ClampMax = "500.0"))
+	float DenseWaterSdfRepelBandCm = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+	float DenseWaterLinearDragPerSec = 0.3f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DenseWaterBedFriction = 0.01f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.01", ClampMax = "50.0"))
+	float DenseWaterWetThresholdCm = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.001", ClampMax = "5.0"))
+	float DenseWaterDryDepthCm = 0.05f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+	float DenseWaterFilmDrainCmPerSec = 0.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "10.0", ClampMax = "2000.0"))
+	float DenseWaterMaxFlowDepthCm = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "10.0", ClampMax = "2000.0"))
+	float DenseWaterMaxSpeedCmPerSec = 400.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.1", ClampMax = "0.9"))
+	float DenseWaterCourantNumber = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "1", ClampMax = "16"))
+	int32 DenseWaterMaxSubsteps = 4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DenseWaterMomentumAdvection = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DenseWater", meta = (ClampMin = "0.0", ClampMax = "100.0"))
+	float DenseWaterReservoirRelaxPerSec = 8.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
 	ETDFluidSolverBackend SolverBackend = ETDFluidSolverBackend::Cpu;
 
@@ -610,6 +664,18 @@ struct TDGAME_API FTDFluidInputBrushSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "1.0", ClampMax = "4.0"))
 	float VehicleStampAspectRatio = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "4.0"))
+	float HullWakeVelocityStrength = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "4.0"))
+	float HullWakeDensityStrength = 0.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "50.0"))
+	float HullWakeRippleImpulseCm = 4.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush", meta = (ClampMin = "0.0", ClampMax = "2000.0"))
+	float HullWakeMinSpeedCmPerSec = 50.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputBrush")
 	bool bInterpolateStrokes = false;

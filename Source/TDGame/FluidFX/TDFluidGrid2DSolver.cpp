@@ -602,6 +602,11 @@ void FTDFluidGrid2DSolver::ResetSimulation()
 
 bool FTDFluidGrid2DSolver::ShiftOriginForSlidingWindow(const FVector2D& DesiredCenterWorld)
 {
+	if (IsDenseWaterActive())
+	{
+		return false;
+	}
+
 	if (!IsInitialized() || IsAreaWrapped())
 	{
 		return false;
@@ -2481,6 +2486,7 @@ void FTDFluidGrid2DSolver::ReleaseWaterBuffers()
 	TerrainKnownCellCount = 0;
 	bHasRippleActivity = false;
 	bIsWetnessUpdating = false;
+	SynchronizeDenseWaterBuffers();
 }
 
 void FTDFluidGrid2DSolver::ResetWaterBuffers()
@@ -2515,6 +2521,7 @@ void FTDFluidGrid2DSolver::ResetWaterBuffers()
 	bWaterVelocityInitPending = true;
 	bHasRippleActivity = false;
 	bIsWetnessUpdating = false;
+	SynchronizeDenseWaterBuffers();
 }
 
 void FTDFluidGrid2DSolver::SynchronizeWaterBuffersWithConfig(const FTDFluidSimulationConfig& PreviousConfig)
@@ -2540,6 +2547,8 @@ void FTDFluidGrid2DSolver::SynchronizeWaterBuffersWithConfig(const FTDFluidSimul
 	{
 		bWaterDryDirty = true;
 	}
+
+	SynchronizeDenseWaterBuffers();
 }
 
 void FTDFluidGrid2DSolver::ShiftWaterBuffers(int32 ShiftCellsX, int32 ShiftCellsY)
@@ -2595,6 +2604,11 @@ void FTDFluidGrid2DSolver::SetWaterRegions(const TArray<FTDFluidWaterRegion>& Re
 
 float FTDFluidGrid2DSolver::GetWaterSurfaceHeightAtCell(int32 CellX, int32 CellY) const
 {
+	if (IsDenseWaterActive() && IsValidCell(CellX, CellY))
+	{
+		return DenseReservoirSurface[ToCellIndex(CellX, CellY)];
+	}
+
 	if (!IsWaterLayerActive() || !IsValidCell(CellX, CellY))
 	{
 		return NoWaterSurfaceHeight;
@@ -2634,7 +2648,7 @@ void FTDFluidGrid2DSolver::ComposeWaterObstacleSdf()
 	const float* DryValues = WaterDrySdf.GetData();
 	float* SdfValues = ObstacleSdf.GetData();
 
-	if (Config.bTreatDryCellsAsSolid)
+	if (Config.bTreatDryCellsAsSolid && !IsDenseWaterActive())
 	{
 		ForEachGridRow(TEXT("TDFluidComposeObstacleSdfRows"), GridSize, [&](int32 Y)
 		{
@@ -2708,7 +2722,7 @@ void FTDFluidGrid2DSolver::RasterizeWaterInputs()
 	const float BankSpeedRatio = Config.FlowGuideBankSpeedRatio;
 	const uint8* DirtyColumns = WaterDirtyColumns.GetData();
 	const uint8* DirtyRows = WaterDirtyRows.GetData();
-	float* SurfaceValues = WaterSurfaceHeight.GetData();
+	float* SurfaceValues = IsDenseWaterActive() ? DenseReservoirSurface.GetData() : WaterSurfaceHeight.GetData();
 	float* TargetX = FlowTargetVelocityX.GetData();
 	float* TargetY = FlowTargetVelocityY.GetData();
 	float* WeightValues = FlowGuideWeight.GetData();
@@ -2776,6 +2790,17 @@ void FTDFluidGrid2DSolver::PrepareWaterInputs()
 void FTDFluidGrid2DSolver::StepFluidSimWater(float DeltaTime)
 {
 	PrepareWaterInputs();
+	if (IsDenseWaterActive())
+	{
+		StepDenseWater(DeltaTime);
+		UpdateWetnessIfEnabled(DeltaTime);
+		AdvectDensities(DeltaTime);
+		AddWhitewaterSources(DeltaTime);
+		StepRipples(DeltaTime);
+		ZeroDenseDryRipples();
+		return;
+	}
+
 	ApplyTerrainSlopeAccelerationDryOnly(DeltaTime);
 	ApplyFlowNoiseAcceleration(DeltaTime);
 	ApplyFlowGuideAcceleration(DeltaTime);
@@ -3513,7 +3538,25 @@ uint32 FTDFluidGrid2DSolver::ComputeWaterStateChecksum() const
 	{
 		Checksum = FCrc::MemCrc32(Field->GetData(), Field->Num() * sizeof(float), Checksum);
 	}
+
+	const TArray<float>* const DenseWaterFields[] = {
+		&DenseDepth,
+		&DenseFaceVelocityX,
+		&DenseFaceVelocityY,
+		&DenseCellVelocityX,
+		&DenseCellVelocityY,
+		&DenseReservoirSurface,
+	};
+	for (const TArray<float>* Field : DenseWaterFields)
+	{
+		Checksum = FCrc::MemCrc32(Field->GetData(), Field->Num() * sizeof(float), Checksum);
+	}
 	return FCrc::MemCrc32(TerrainKnownMask.GetData(), TerrainKnownMask.Num(), Checksum);
+}
+
+void FTDFluidGrid2DSolver::RunRowsInParallel(const TCHAR* DebugName, int32 RowCount, TFunctionRef<void(int32)> RowBody) const
+{
+	ForEachGridRow(DebugName, RowCount, RowBody);
 }
 
 namespace

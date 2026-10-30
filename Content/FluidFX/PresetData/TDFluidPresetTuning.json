@@ -51,6 +51,24 @@
       "bEnableWaterWetness": false,
       "bUseWhitewaterDissipation": false,
       "WhitewaterDissipation": 0.12,
+      "bEnableDenseWater": false,
+      "DenseWaterGravityCmPerSec2": 980.0,
+      "DenseWaterGapFillTendency": 1.0,
+      "DenseWaterPeakAvoidance": 1.0,
+      "DenseWaterPeakSoftnessCm": 2.0,
+      "DenseWaterSdfRepelCmPerSec2": 400.0,
+      "DenseWaterSdfRepelBandCm": 30.0,
+      "DenseWaterLinearDragPerSec": 0.3,
+      "DenseWaterBedFriction": 0.01,
+      "DenseWaterWetThresholdCm": 1.0,
+      "DenseWaterDryDepthCm": 0.05,
+      "DenseWaterFilmDrainCmPerSec": 0.2,
+      "DenseWaterMaxFlowDepthCm": 200.0,
+      "DenseWaterMaxSpeedCmPerSec": 400.0,
+      "DenseWaterCourantNumber": 0.5,
+      "DenseWaterMaxSubsteps": 4,
+      "DenseWaterMomentumAdvection": 1.0,
+      "DenseWaterReservoirRelaxPerSec": 8.0,
       "SolverBackend": "Cpu",
       "CpuFallbackResolution": 0,
       "bEnableHeatChannel": false,
@@ -251,6 +269,10 @@
       "BoneStampMaxSpeedCmPerSec": 0.0,
       "VehicleBrushRadiusScale": 1.0,
       "VehicleStampAspectRatio": 1.0,
+      "HullWakeVelocityStrength": 1.0,
+      "HullWakeDensityStrength": 0.8,
+      "HullWakeRippleImpulseCm": 4.0,
+      "HullWakeMinSpeedCmPerSec": 50.0,
       "bInterpolateStrokes": false,
       "StrokeSpacingRatio": 0.5,
       "MassPointRippleImpulseCm": 0.0
@@ -399,6 +421,36 @@
     "TDFluidFieldInputSettings": {
     },
     "TDFluidWaterPropSettings": {
+      "bEnableSource": false,
+      "SourceShape": "Point",
+      "SourceWindowRatio": {
+        "X": 0.0,
+        "Y": 0.0
+      },
+      "SourceLengthCm": 0.0,
+      "SourceStampCount": 1,
+      "SourceRadiusCm": 20.0,
+      "SourceDensityStrength": 0.5,
+      "SourceVelocityCmPerSec": {
+        "X": 0.0,
+        "Y": 0.0
+      },
+      "SourceRadialVelocityCmPerSec": 0.0,
+      "SourceRippleImpulseCm": 0.0,
+      "SourcePulseFrequencyHz": 0.0,
+      "SourcePulseAmplitude": 0.0,
+      "SourceChannel": "ChannelA_Water",
+      "RandomSeed": 1,
+      "bEnableOutflowCoupling": false,
+      "CouplingBandRatio": 0.1,
+      "CouplingColumnCount": 8,
+      "CouplingMinDensity": 0.05,
+      "CouplingRadiusCm": 60.0,
+      "CouplingDensityScale": 0.6,
+      "CouplingRadialVelocityCmPerSec": 120.0,
+      "CouplingRippleImpulseCm": 3.0,
+      "CouplingForwardOffsetCm": 0.0,
+      "CouplingChannel": "ChannelA_Water"
     },
     "TDFluidWaterParticleSettings": {
     },
@@ -616,7 +668,23 @@
         "DenseLake",
         "DenseSea",
         "DenseTank"
-      ]
+      ],
+      "TDFluidSimulationConfig": {
+        "bEnableWaterLayer": true,
+        "bEnableDenseWater": true,
+        "bTreatDryCellsAsSolid": false,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 256,
+        "WhitewaterFromVorticity": 0.3,
+        "ActorBrushDensityStrength": 0.6,
+        "ActorBrushRippleImpulseCm": 2.5,
+        "RippleWaveSpeedCmPerSec": 80.0,
+        "bEnableWaterWetness": true,
+        "bOutputObstacleDistance": true
+      },
+      "TDFluidWaterNearRippleSettings": {
+        "bEnabled": true
+      }
     }
   },
   "Kinds": {
@@ -1419,30 +1487,295 @@
     "ReedShallows": {
     },
     "DenseCreek": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 2048,
+        "SimExtentCm": {
+          "X": 6400.0,
+          "Y": 6400.0
+        },
+        "bOpenWaterBorders": true,
+        "WaterDepthReferenceCm": 200.0
+      }
     },
     "DenseLake": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 1024,
+        "SimExtentCm": {
+          "X": 4800.0,
+          "Y": 4800.0
+        },
+        "bOpenWaterBorders": false,
+        "WaterDepthReferenceCm": 600.0
+      }
     },
     "DenseSea": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 1024,
+        "SimExtentCm": {
+          "X": 8000.0,
+          "Y": 8000.0
+        },
+        "bOpenWaterBorders": false,
+        "WaterDepthReferenceCm": 1000.0,
+        "SwashHeightCm": 25.0,
+        "bUseWhitewaterDissipation": true,
+        "WhitewaterDissipation": 0.12
+      }
     },
     "DenseTank": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 600.0,
+          "Y": 600.0
+        },
+        "bOpenWaterBorders": false,
+        "WaterDepthReferenceCm": 200.0
+      }
     },
     "ShipWakeSea": {
+      "TDFluidSimulationConfig": {
+        "bEnableWaterLayer": true,
+        "GridResolution": 1024,
+        "SimExtentCm": {
+          "X": 30000.0,
+          "Y": 30000.0
+        },
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 192,
+        "VelocityDamping": 0.02,
+        "DensityDissipation": 0.35,
+        "PressureIterations": 12,
+        "VorticityStrength": 0.3,
+        "TerrainSlopeGravity": 0.0,
+        "bUseWhitewaterDissipation": true,
+        "WhitewaterDissipation": 0.05,
+        "RippleWaveSpeedCmPerSec": 200.0,
+        "RippleDampingPerSec": 0.4,
+        "bEnableWaterWetness": false
+      }
     },
     "WaterPool": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 64,
+        "SimExtentCm": {
+          "X": 600.0,
+          "Y": 600.0
+        },
+        "VelocityDamping": 0.05,
+        "DensityDissipation": 0.2,
+        "VorticityStrength": 0.8,
+        "TerrainSlopeGravity": 0.0,
+        "BorderFadeRatio": 0.0,
+        "SolverBackend": "Cpu",
+        "bReflectsAtBoundaries": true,
+        "EdgeBounciness": 0.5
+      }
     },
     "Fountain": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 64,
+        "SimExtentCm": {
+          "X": 500.0,
+          "Y": 500.0
+        },
+        "VelocityDamping": 0.05,
+        "DensityDissipation": 0.2,
+        "VorticityStrength": 0.8,
+        "TerrainSlopeGravity": 0.0,
+        "BorderFadeRatio": 0.0,
+        "SolverBackend": "Cpu",
+        "bReflectsAtBoundaries": true,
+        "EdgeBounciness": 0.5
+      },
+      "TDFluidWaterPropSettings": {
+        "bEnableSource": true,
+        "SourceShape": "Point",
+        "SourceRadiusCm": 30.0,
+        "SourceDensityStrength": 0.3,
+        "SourceRadialVelocityCmPerSec": 150.0,
+        "SourceRippleImpulseCm": 2.0,
+        "SourcePulseFrequencyHz": 2.0,
+        "SourcePulseAmplitude": 0.4
+      }
     },
     "Cauldron": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 48,
+        "SimExtentCm": {
+          "X": 150.0,
+          "Y": 150.0
+        },
+        "DensityDissipation": 0.3,
+        "TerrainSlopeGravity": 0.0,
+        "BorderFadeRatio": 0.0,
+        "SolverBackend": "Cpu",
+        "bReflectsAtBoundaries": true,
+        "EdgeBounciness": 0.5,
+        "VortexTangentialAccelerationCmPerSec2": 150.0,
+        "VortexRadiusRatio": 0.35
+      },
+      "TDFluidWaterPropSettings": {
+        "bEnableSource": true,
+        "SourceShape": "Point",
+        "SourceWindowRatio": {
+          "X": 0.1,
+          "Y": -0.05
+        },
+        "SourceRadiusCm": 8.0,
+        "SourceDensityStrength": 0.15,
+        "SourceRadialVelocityCmPerSec": 40.0,
+        "SourceRippleImpulseCm": 1.0,
+        "SourcePulseFrequencyHz": 3.0,
+        "SourcePulseAmplitude": 0.8
+      }
     },
     "Waterfall": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 500.0,
+          "Y": 800.0
+        },
+        "VelocityDamping": 0.02,
+        "DensityDissipation": 0.3,
+        "VorticityStrength": 1.2,
+        "TerrainSlopeGravity": 0.0,
+        "BorderFadeRatio": 0.12,
+        "FlowNoiseAccelerationCmPerSec2": 200.0,
+        "FlowNoiseScaleCm": 60.0,
+        "BuoyancyCmPerSec2": -900.0,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 64,
+        "MaxCellSpeedCmPerSec": 1500.0
+      },
+      "TDFluidPlaneSettings": {
+        "Orientation": "WorldFixedVertical",
+        "BillboardLeanBackDegrees": 10.0,
+        "InteractionDepthCm": 100.0
+      },
+      "TDFluidWaterPropSettings": {
+        "bEnableSource": true,
+        "SourceShape": "Line",
+        "SourceWindowRatio": {
+          "X": 0.0,
+          "Y": 0.34
+        },
+        "SourceLengthCm": 300.0,
+        "SourceStampCount": 8,
+        "SourceRadiusCm": 25.0,
+        "SourceDensityStrength": 0.8,
+        "SourceVelocityCmPerSec": {
+          "X": 0.0,
+          "Y": -150.0
+        },
+        "SourcePulseFrequencyHz": 4.0,
+        "SourcePulseAmplitude": 0.3,
+        "bEnableOutflowCoupling": true,
+        "CouplingBandRatio": 0.12,
+        "CouplingColumnCount": 6,
+        "CouplingMinDensity": 0.05,
+        "CouplingRadiusCm": 60.0,
+        "CouplingDensityScale": 0.5,
+        "CouplingRadialVelocityCmPerSec": 120.0,
+        "CouplingRippleImpulseCm": 3.0,
+        "CouplingForwardOffsetCm": 80.0
+      }
     },
     "LiquidSphereClear": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 300.0,
+          "Y": 300.0
+        },
+        "DensityDissipation": 0.05,
+        "PressureIterations": 12,
+        "VorticityStrength": 0.6,
+        "AmbientDensity": 0.5,
+        "AmbientRefillPerSec": 0.3,
+        "FlowNoiseAccelerationCmPerSec2": 40.0,
+        "FlowNoiseScaleCm": 80.0,
+        "AmbientNoiseAmount": 0.4,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 64,
+        "AreaAddressMode": "Wrap"
+      }
     },
     "LiquidSphereTurbulent": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 300.0,
+          "Y": 300.0
+        },
+        "DensityDissipation": 0.05,
+        "PressureIterations": 12,
+        "VorticityStrength": 2.0,
+        "AmbientDensity": 0.5,
+        "AmbientRefillPerSec": 0.3,
+        "FlowNoiseAccelerationCmPerSec2": 300.0,
+        "FlowNoiseScaleCm": 80.0,
+        "AmbientNoiseAmount": 0.7,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 64,
+        "AreaAddressMode": "Wrap"
+      }
     },
     "BloodOrb": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 128,
+        "SimExtentCm": {
+          "X": 300.0,
+          "Y": 300.0
+        },
+        "VelocityDamping": 0.4,
+        "DensityDissipation": 0.01,
+        "PressureIterations": 12,
+        "VorticityStrength": 0.6,
+        "AdvectionSpeedScale": 0.6,
+        "AmbientDensity": 0.5,
+        "AmbientRefillPerSec": 0.3,
+        "FlowNoiseAccelerationCmPerSec2": 150.0,
+        "FlowNoiseScaleCm": 80.0,
+        "AmbientNoiseAmount": 0.4,
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 64,
+        "AreaAddressMode": "Wrap"
+      }
     },
     "WaterySandFlow": {
+      "TDFluidSimulationConfig": {
+        "GridResolution": 64,
+        "SimExtentCm": {
+          "X": 800.0,
+          "Y": 800.0
+        },
+        "VelocityDamping": 0.5,
+        "DensityDissipation": 0.02,
+        "VorticityStrength": 0.2,
+        "TerrainSlopeGravity": 700.0,
+        "AdvectionSpeedScale": 0.5,
+        "BorderFadeRatio": 0.1,
+        "SolverBackend": "Cpu"
+      },
+      "TDFluidWaterPropSettings": {
+        "bEnableSource": true,
+        "SourceShape": "Line",
+        "SourceWindowRatio": {
+          "X": 0.0,
+          "Y": 0.35
+        },
+        "SourceLengthCm": 200.0,
+        "SourceStampCount": 5,
+        "SourceRadiusCm": 30.0,
+        "SourceDensityStrength": 0.6,
+        "SourceVelocityCmPerSec": {
+          "X": 0.0,
+          "Y": -80.0
+        },
+        "SourceChannel": "ChannelR_Mud"
+      }
     },
     "RainPond": {
     },
@@ -1471,6 +1804,11 @@
       "VolumetricFog": -1
     },
     "TDFluidUnderwaterSettings": {
+      "bEnableUnderwaterSwitch": true,
+      "QueryRateHz": 25.0,
+      "BlendSeconds": 0.1,
+      "SurfaceMarginCm": 5.0,
+      "bUseWaterLayerReadback": true
     },
     "TDFluidCloudSceneSettings": {
     },

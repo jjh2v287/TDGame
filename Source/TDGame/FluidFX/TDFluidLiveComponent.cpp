@@ -1988,6 +1988,8 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 	TargetMID->SetScalarParameterValue(TEXT("CoastWaveMaxDepthCm"), SolverConfig.CoastWaveMaxDepthCm);
 	TargetMID->SetScalarParameterValue(TEXT("SwashHeightCm"), SolverConfig.SwashHeightCm);
 	TargetMID->SetScalarParameterValue(TEXT("TerrainReferenceZCm"), TerrainReferenceZCm);
+	TargetMID->SetScalarParameterValue(TEXT("DenseWaterActive"), IsDenseWaterActive() ? 1.0f : 0.0f);
+	TargetMID->SetScalarParameterValue(TEXT("DenseWaterWetThresholdCm"), SolverConfig.DenseWaterWetThresholdCm);
 	TargetMID->SetScalarParameterValue(TEXT("AuxObstacleDistanceActive"), AuxOutput && IsObstacleDistanceAuxActive() ? 1.0f : 0.0f);
 	TargetMID->SetScalarParameterValue(TEXT("ObstacleDistanceRangeCm"), FMath::Clamp(SolverConfig.ObstacleDistanceOutputRangeCm, 20.0f, 2000.0f));
 

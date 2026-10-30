@@ -1,6 +1,7 @@
 #include "TDFluidGpuStepPasses.h"
 
 #include "TDFluidGpuMultigridProbeReadbacks.h"
+#include "TDFluidGpuDenseWaterPasses.h"
 #include "TDFluidGpuPassTimestamps.h"
 #include "TDFluidGpuMassInput.h"
 #include "TDFluidGpuWaterPressureProbeReadbacks.h"
@@ -883,6 +884,7 @@ class FTDFluidGpuWaterFinalizeCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, DenseSurfaceHeight)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterTerrainField)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<uint>, WaterOpenBorderFlags)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<float>, MeanPressure)
@@ -915,6 +917,7 @@ class FTDFluidGpuWaterProbeCS : public FTDFluidGpuComputeShader
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, CompositeSdf)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float4>, WaterGuideField)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterSurfaceHeightField)
+		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, DenseSurfaceHeight)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float>, WaterTerrainField)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, VelocityIn)
 		SHADER_PARAMETER_RDG_TEXTURE_SRV(Texture2DArray<float2>, DensityIn)
@@ -3104,7 +3107,7 @@ namespace
 		return Targets;
 	}
 
-	void AddWaterFinalizePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, FRDGTextureRef PressureFull, int32 PressureIndex, int32 FinalRippleIndex, FRDGBufferRef MeanPressure, FTDFluidGpuFrameOutputs& InOutOutputs)
+	void AddWaterFinalizePasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, FRDGTextureRef PressureFull, int32 PressureIndex, int32 FinalRippleIndex, FRDGBufferRef MeanPressure, FTDFluidGpuFrameOutputs& InOutOutputs, FRDGTextureRef DenseSurfaceHeight = nullptr)
 	{
 		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
 		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
@@ -3116,6 +3119,7 @@ namespace
 		FRDGTextureSRVRef CompositeSdfSRV = MakeSRV(GraphBuilder, Water.CompositeSdf);
 		FRDGTextureSRVRef GuideFieldSRV = MakeSRV(GraphBuilder, Water.GuideField);
 		FRDGTextureSRVRef SurfaceHeightFieldSRV = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		FRDGTextureSRVRef DenseSurfaceHeightSRV = MakeSRV(GraphBuilder, DenseSurfaceHeight ? DenseSurfaceHeight : CreateClearedPlaceholderHeatTexture(GraphBuilder, TEXT("TDFluidGpu.DenseSurfacePlaceholder")));
 		FRDGTextureSRVRef TerrainFieldSRV = MakeSRV(GraphBuilder, Water.TerrainField);
 		FRDGTextureSRVRef VelocitySRV = MakeSRV(GraphBuilder, Textures.Velocity[0]);
 		FRDGTextureSRVRef DensitySRV = MakeSRV(GraphBuilder, Textures.Density[1]);
@@ -3138,6 +3142,7 @@ namespace
 			Parameters->CompositeSdf = CompositeSdfSRV;
 			Parameters->WaterGuideField = GuideFieldSRV;
 			Parameters->WaterSurfaceHeightField = SurfaceHeightFieldSRV;
+			Parameters->DenseSurfaceHeight = DenseSurfaceHeightSRV;
 			Parameters->WaterTerrainField = TerrainFieldSRV;
 			Parameters->WaterOpenBorderFlags = OpenBorderFlagsSRV;
 			Parameters->MeanPressure = MeanPressureSRV;
@@ -3171,7 +3176,7 @@ namespace
 		}
 	}
 
-	void AddWaterProbePass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, int32 FinalRippleIndex)
+	void AddWaterProbePass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water, int32 FinalRippleIndex, FRDGTextureRef DenseSurfaceHeight = nullptr)
 	{
 		const TArray<FTDFluidGpuWaterProbeRequest>& Requests = Context.Batch.GetFrame().WaterProbeRequests;
 		if (Requests.IsEmpty() || !Context.FrameResources.WaterProbeSamples)
@@ -3189,6 +3194,7 @@ namespace
 		Parameters->CompositeSdf = MakeSRV(GraphBuilder, Water.CompositeSdf);
 		Parameters->WaterGuideField = MakeSRV(GraphBuilder, Water.GuideField);
 		Parameters->WaterSurfaceHeightField = MakeSRV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->DenseSurfaceHeight = MakeSRV(GraphBuilder, DenseSurfaceHeight ? DenseSurfaceHeight : CreateClearedPlaceholderHeatTexture(GraphBuilder, TEXT("TDFluidGpu.DenseSurfacePlaceholder")));
 		Parameters->WaterTerrainField = MakeSRV(GraphBuilder, Water.TerrainField);
 		Parameters->VelocityIn = MakeSRV(GraphBuilder, Textures.Velocity[0]);
 		Parameters->DensityIn = MakeSRV(GraphBuilder, Textures.Density[0]);
@@ -3308,6 +3314,60 @@ namespace
 		return FinalRippleIndex;
 	}
 
+	int32 AddDenseWaterBatchPasses(const FTDFluidGpuBatchPassContext& Context, FTDFluidGpuBatchStateTextures& State, FTDFluidGpuWaterGraphTextures& Water, FTDFluidGpuFrameOutputs& InOutOutputs, int32& OutDenseFinalIndex)
+	{
+		constexpr EPixelFormat DenseDepthFormat = PF_R32_FLOAT;
+		constexpr EPixelFormat DenseFaceVelocityFormat = PF_G32R32F;
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const int32 RippleDispatchCount = ComputeWaterRippleDispatchCount(Context.Batch);
+		const int32 FinalRippleIndex = RippleDispatchCount % 2;
+		AddWaterShiftAndResetPasses(Context, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_shift"));
+		AddRasterizeObstaclesPass(Context);
+		AddWaterFieldUpdatePasses(Context, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_fields"));
+		AddWaterComposePasses(Context, Water);
+
+		FTDFluidGpuBatchGraphTextures SolverTextures = Context.Textures;
+		SolverTextures.ObstacleSdf = Water.CompositeSdf;
+		const FTDFluidGpuBatchPassContext SolverContext(GraphBuilder, Context.ShaderMap, Context.FrameInputs, Context.FrameResources, Context.Batch, SolverTextures, Context.ActorParameters, Context.Obstacles, Context.PassTimestamps);
+		AddWaterStampsPass(SolverContext, Water);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_stamps"));
+
+		const int32 DenseResolution = Context.Resolution / FTDFluidGpuDenseWaterRules::ResolveDenseDivisor(Context.Resolution);
+		FTDFluidGpuDenseWaterPassInputs DenseInputs;
+		DenseInputs.Batch = &Context.Batch;
+		DenseInputs.FrameInputs = &Context.FrameInputs;
+		DenseInputs.ActorParameters = Context.ActorParameters;
+		DenseInputs.WaterParameters = Water.WaterParameters;
+		DenseInputs.CompositeSdf = Water.CompositeSdf;
+		DenseInputs.SurfaceHeightField = Water.SurfaceHeightField;
+		DenseInputs.TerrainField = Water.TerrainField;
+		DenseInputs.PublishedVelocity = SolverTextures.Velocity[0];
+		DenseInputs.StampedVelocity = SolverTextures.Velocity[1];
+		DenseInputs.SliceCapacity = State.SliceCapacity;
+		DenseInputs.DenseDepth[0] = RegisterOrGrowStateTexture(GraphBuilder, State.DenseDepth[0], DenseResolution, State.SliceCapacity, DenseDepthFormat, true, TEXT("TDFluidGpu.DenseDepth"));
+		DenseInputs.DenseDepth[1] = RegisterOrGrowStateTexture(GraphBuilder, State.DenseDepth[1], DenseResolution, State.SliceCapacity, DenseDepthFormat, false, TEXT("TDFluidGpu.DenseDepthScratch"));
+		DenseInputs.DenseFaceVelocity[0] = RegisterOrGrowStateTexture(GraphBuilder, State.DenseFaceVelocity[0], DenseResolution, State.SliceCapacity, DenseFaceVelocityFormat, true, TEXT("TDFluidGpu.DenseFaceVelocity"));
+		DenseInputs.DenseFaceVelocity[1] = RegisterOrGrowStateTexture(GraphBuilder, State.DenseFaceVelocity[1], DenseResolution, State.SliceCapacity, DenseFaceVelocityFormat, false, TEXT("TDFluidGpu.DenseFaceVelocityScratch"));
+		const FTDFluidGpuDenseWaterPassResult DenseResult = AddTDFluidGpuDenseWaterSolvePasses(GraphBuilder, Context.ShaderMap, DenseInputs);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("dense_water"));
+		AddWaterRipplePasses(SolverContext, Water, RippleDispatchCount);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_ripple"));
+
+		TArray<float> ZeroMeanPressures;
+		ZeroMeanPressures.SetNumZeroed(FMath::Max(Context.EntryCount, 1));
+		FRDGBufferRef MeanPressure = CreateStructuredBuffer(GraphBuilder, TEXT("TDFluidGpu.DenseMeanPressure"), ZeroMeanPressures);
+		AddWaterFinalizePasses(SolverContext, Water, nullptr, 0, FinalRippleIndex, MeanPressure, InOutOutputs, DenseResult.DenseSurfaceHeight);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_finalize"));
+		AddReadbackDownsamplePass(SolverContext);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("readback_downsample"));
+		AddWaterProbePass(SolverContext, Water, FinalRippleIndex, DenseResult.DenseSurfaceHeight);
+		AddPassTimestamp(GraphBuilder, Context.PassTimestamps, TEXT("water_probe"));
+		OutDenseFinalIndex = DenseResult.FinalStateIndex;
+		return FinalRippleIndex;
+	}
+
 	void AddWaterObstacleDistanceAuxPasses(const FTDFluidGpuBatchPassContext& Context)
 	{
 		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
@@ -3355,7 +3415,10 @@ namespace
 
 		InOutOutputs.SteppedEntryCount += Context.EntryCount;
 		bool bSwapsVelocityStates = false;
-		const int32 FinalRippleIndex = AddWaterBatchPasses(Context, WaterTextures, InOutOutputs, bSwapsVelocityStates);
+		int32 DenseFinalIndex = 0;
+		const int32 FinalRippleIndex = Batch.GetKey().bUsesDenseWater
+			? AddDenseWaterBatchPasses(Context, Batch.StateTextures, WaterTextures, InOutOutputs, DenseFinalIndex)
+			: AddWaterBatchPasses(Context, WaterTextures, InOutOutputs, bSwapsVelocityStates);
 		AddWaterObstacleDistanceAuxPasses(Context);
 		if (FinalRippleIndex == 1)
 		{
@@ -3364,6 +3427,11 @@ namespace
 		if (bSwapsVelocityStates)
 		{
 			Swap(Batch.StateTextures.Velocity[0], Batch.StateTextures.Velocity[1]);
+		}
+		if (DenseFinalIndex == 1)
+		{
+			Swap(Batch.StateTextures.DenseDepth[0], Batch.StateTextures.DenseDepth[1]);
+			Swap(Batch.StateTextures.DenseFaceVelocity[0], Batch.StateTextures.DenseFaceVelocity[1]);
 		}
 	}
 
@@ -3764,6 +3832,8 @@ int64 ComputeTDFluidGpuBatchStateBytes(const FTDFluidGpuBatch& Batch)
 		TotalBytes += ComputePooledTextureBytes(State.PressureSolution[PingPongIndex]);
 		TotalBytes += ComputePooledTextureBytes(State.Heat[PingPongIndex]);
 		TotalBytes += ComputePooledTextureBytes(State.Ripple[PingPongIndex]);
+		TotalBytes += ComputePooledTextureBytes(State.DenseDepth[PingPongIndex]);
+		TotalBytes += ComputePooledTextureBytes(State.DenseFaceVelocity[PingPongIndex]);
 	}
 	TotalBytes += ComputePooledTextureBytes(State.ObstacleSdf);
 	TotalBytes += ComputePooledTextureBytes(State.TerrainElevation);

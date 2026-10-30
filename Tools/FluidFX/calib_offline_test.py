@@ -1045,7 +1045,212 @@ def check_cal0_b0():
     check("B0 patched: 바꾼 속성은 원래 값으로, 없던 속성은 지움", patched_values == (9.0, 1) and lookdev.FRAME_FILE_WAIT_SECONDS == 0.5 and not hasattr(lookdev, "CAL0_ADDED_NAME"))
 
 
+BATCH_TESTS = ("TDGame.FluidFX.Design.A", "TDGame.FluidFX.Numeric.B", "TDGame.FluidFX.Other.C")
+
+
+def command_option(command, name):
+    return command[command.index(name) + 1] if name in command else ""
+
+
+class FakeBatchTools:
+    def __init__(self, overlay_path):
+        self.overlay_path = overlay_path
+        self.calls = []
+        self.sweep_outcomes = {}
+        self.verify_codes = {}
+        self.headless_failures = []
+        self.headless_commands = []
+        self.interrupt_at = None
+
+    def describe(self, command):
+        if command[0].endswith("UnrealEditor-Cmd.exe"):
+            return "headless"
+        script = Path(command[1]).stem
+        if script == "calib_sweep":
+            return f"sweep {Path(command_option(command, '--plan')).stem} {command_option(command, '--stage')}"
+        if script == "calib_judge":
+            output = Path(command_option(command, "--output"))
+            return f"judge {output.parent.parent.name} {output.stem}"
+        if script == "prereg_lock":
+            return f"lock {Path(command_option(command, '--plan')).stem}"
+        if script == "fluid_tuning_patch":
+            return {"accept": f"accept {Path(command_option(command, '--judge')).parent.parent.name}",
+                    "overlay-remove": f"remove {command_option(command, '--json-path')}"}.get(command[2], command[2])
+        if script == "ue_editor":
+            return command[2]
+        if script == "run_in_editor":
+            return "fps" if "OverrideFPS" in command[-1] else "reload"
+        if script == "build_and_test":
+            return "release " + command_option(command, "--release-hold") if "--release-hold" in command else "acquire " + command_option(command, "--acquire-hold")
+        return script
+
+    def __call__(self, command, log_path, timeout):
+        label = self.describe(command)
+        self.calls.append(label)
+        if label == self.interrupt_at:
+            self.interrupt_at = None
+            raise KeyboardInterrupt
+        return self.respond(label, command, timeout)
+
+    def respond(self, label, command, timeout):
+        words = label.split()
+        if words[0] == "sweep":
+            code, seconds = (self.sweep_outcomes.get((words[1], words[2])) or [(0, 10.0)]).pop(0)
+            CLOCK.real_seconds += min(seconds, timeout)
+            if seconds > timeout:
+                return None, "멈춤"
+            run_dir = Path(command_option(command, "--run-dir"))
+            (run_dir / "s1").mkdir(parents=True, exist_ok=True)
+            (run_dir / "s1" / "b8_schedule.json").write_text(json.dumps({"real_dt_mean": 0.03}), encoding="utf-8")
+            return code, f"{label} 종료 {code}"
+        if words[0] == "judge":
+            output = Path(command_option(command, "--output"))
+            documents = {"screen": {"version": 2, "insensitive": False, "best": {"variant": "v01", "gain": 3.0}},
+                         "judge": {"version": 2, "adopt": {"decision": True, "variant": "v01", "reasons": []}}}
+            if words[2] in documents:
+                output.write_text(json.dumps(documents[words[2]]), encoding="utf-8")
+                return 0, ""
+            return (self.verify_codes.get(words[1]) or [0]).pop(0), "재검증"
+        if words[0] in ("accept", "remove"):
+            overlay = load_json(self.overlay_path)
+            json_path = f"Groups.B8.TDFluidTest.{words[1]}" if words[0] == "accept" else words[1]
+            if words[0] == "accept":
+                overlay["assignments"].append({"json_path": json_path, "value": 2.0, "kind": "knob", "from": {"plan": words[1]}})
+            else:
+                overlay["assignments"] = [entry for entry in overlay["assignments"] if entry["json_path"] != json_path]
+            overlay["history"].append({"op": "add" if words[0] == "accept" else "remove", "json_path": json_path, "from": {"plan": json_path.rsplit(".", 1)[-1]}})
+            self.overlay_path.write_text(json.dumps(overlay), encoding="utf-8")
+            return 0, ""
+        if label == "materialize":
+            output = Path(command_option(command, "--out"))
+            output.mkdir(parents=True, exist_ok=True)
+            for name in ("TDFluidPresetTuning.json", "TDFluidMaterialLook.json"):
+                (output / name).write_text("{}", encoding="utf-8")
+            return 0, ""
+        if label == "headless":
+            self.headless_commands.append(command)
+            failures = self.headless_failures.pop(0) if self.headless_failures else []
+            log_path = Path(next(argument for argument in command if argument.startswith("-abslog="))[len("-abslog="):])
+            tuning = next(argument for argument in command if argument.startswith("-TDFluidTuningFile="))
+            lines = [f"LogTemp: Display: Preset tuning file {tuning}", f"LogAutomationController: Found {len(BATCH_TESTS)} automation tests"]
+            lines += [f"Test Completed. Result={{{'Fail' if test in failures else 'Success'}}} Name={{{test}}} Path={{{test}}}" for test in BATCH_TESTS]
+            log_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            return 0, ""
+        return 0, ""
+
+
+def check_cal0_batch():
+    import calib_batch
+    root = TEST_DIR / "cal0-b8"
+    shutil.rmtree(root, ignore_errors=True)
+    (root / "plans").mkdir(parents=True)
+    classes_path = root / "test_classes.json"
+    classes_path.write_text(json.dumps({"numeric_pinned": ["TDGame.FluidFX.Numeric.B"]}), encoding="utf-8")
+
+    def batch_plan(name, regions=None):
+        scene = {"name": "s1", "level": "/Game/CAL0/LV_B8Stage", "camera": {}, "settle": 1.0, "shots": {"count": 3, "interval": 0.25}}
+        if regions:
+            scene["regions_template"] = regions.relative_to(W).as_posix()
+        path = root / "plans" / f"{name}.json"
+        path.write_text(json.dumps({"id": name, "scenes": [scene], "params": [{"json_path": f"Groups.B8.TDFluidTest.{name}", "values": [1.0, 2.0]}]}), encoding="utf-8")
+        return path.relative_to(W).as_posix()
+
+    def batch_arguments(name, blocks):
+        queue_path = root / f"{name}-queue.json"
+        test_classes = {"path": classes_path.relative_to(W).as_posix(), "sha256": calib_batch.file_sha256(classes_path)}
+        queue_path.write_text(json.dumps({"test_classes": test_classes, "blocks": blocks}), encoding="utf-8")
+        return ["--queue", str(queue_path), "--holder", "b8-test", "--journal", str(root / name / "journal.json"),
+                "--overlay", str(root / name / "overlay.json"), "--locks-dir", str(root / name / "locks")]
+
+    def run_batch(arguments):
+        sys.argv = ["calib_batch.py"] + arguments
+        with contextlib.redirect_stdout(io.StringIO()):
+            return calib_batch.main()
+
+    def entry(name, chain=None, regions=None, **extra):
+        return dict({"plan": batch_plan(name, regions), "chain": chain, "stages": ["screen", "confirm"]}, **extra)
+
+    def statuses(journal):
+        return {Path(item["plan"]).stem: item for item in journal["items"]}
+
+    regions_path = root / "t98" / "regions_alpha.json"
+    arguments = batch_arguments("t98", [{"id": "K1", "plans": [entry("b8_alpha", regions=regions_path), entry("b8_beta"), entry("b8_gamma"),
+                                                                entry("b8_delta", estimate_seconds={"screen": 1000, "confirm": 10})]}])
+    journal_path = root / "t98" / "journal.json"
+    fake = FakeBatchTools(root / "t98" / "overlay.json")
+    fake.interrupt_at = "sweep b8_beta screen"
+    with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
+        try:
+            run_batch(arguments)
+            interrupted = False
+        except KeyboardInterrupt:
+            interrupted = True
+        first, first_calls = statuses(load_json(journal_path)), list(fake.calls)
+        start_lines = [line.split(" | ")[0].split(" ", 1)[1] for line in (journal_path.parent / "batch.log").read_text(encoding="utf-8").splitlines()[:4]]
+        killed = load_json(journal_path)
+        released_on_interrupt = bool(killed["holds"][-1].get("released_at"))
+        for key in ("released_at", "released_by"):
+            killed["holds"][-1].pop(key, None)
+        journal_path.write_text(json.dumps(killed), encoding="utf-8")
+        regions_path.write_text("{}", encoding="utf-8")
+        fake.calls.clear()
+        fake.sweep_outcomes = {("b8_beta", "screen"): [(1, 5.0), (0, 10.0)], ("b8_gamma", "screen"): [(0, 1.0e6)], ("b8_delta", "screen"): [(0, 1990.0)]}
+        resumed_code = run_batch(arguments + ["--resume"])
+        refused_code = run_batch(arguments)
+    second, calls = statuses(load_json(journal_path)), fake.calls
+    check("T98 시작 처리 4개 기록: 보류 회수 → ensure → t.OverrideFPS 0 → 정본 재적재(→ 보류 획득) 순서·batch.log",
+          first_calls[:4] == ["ensure", "fps", "reload", "acquire b8-test"] and start_lines == ["보류 회수", "ensure", "t.OverrideFPS 0", "정본 재적재"],
+          (first_calls[:4], start_lines))
+    check("T98 k단계 뒤 중단 → 일지 상태열(영역 틀 없음 needs_regions·locked) → --resume 이 남은 보류 회수부터 이어 함(잠금·frame 중복 없음)",
+          interrupted and released_on_interrupt and first["b8_alpha"]["status"] == "needs_regions" and "영역 틀 없음" in first["b8_alpha"]["reason"]
+          and first["b8_beta"]["status"] == "locked" and calls[:2] == ["release b8-test", "ensure"] and "lock b8_beta" not in calls and "sweep b8_alpha frame" not in calls
+          and calls.count("lock b8_alpha") == 1 and second["b8_alpha"]["status"] == second["b8_beta"]["status"] == "adopted" and resumed_code == 1 and refused_code == 2,
+          (first_calls, calls, {name: item["status"] for name, item in second.items()}, resumed_code, refused_code))
+    beta_screen = calls.index("sweep b8_beta screen")
+    check("T98 장면 실패 → ensure → 1회 재시도",
+          calls[beta_screen:beta_screen + 3] == ["sweep b8_beta screen", "ensure", "sweep b8_beta screen"] and calls.count("sweep b8_beta screen") == 2, calls[beta_screen:beta_screen + 4])
+    gamma_screen = calls.index("sweep b8_gamma screen")
+    check("T98 단계 2배 초과 → 장면 중단(재시도 없음)·failed·꼬리 600자 이하",
+          second["b8_gamma"]["status"] == "failed" and "2배" in second["b8_gamma"]["reason"] and calls.count("sweep b8_gamma screen") == 1
+          and calls[gamma_screen + 1] != "ensure" and len(second["b8_gamma"]["reason"]) < 700, second["b8_gamma"])
+    check("T98 블록 누적 > 1.25 × 추정 → 남은 confirm deferred·real_dt 블록 첫 단계로 갱신·블록 헤드리스 기록",
+          second["b8_delta"]["status"] == "deferred" and "sweep b8_delta confirm" not in calls and load_json(journal_path)["real_dt"] == {"LV_B8Stage": 0.03}
+          and "headless" in second["b8_delta"]["runs"] and load_json(journal_path)["holds"][-1].get("released_at"), (second["b8_delta"], load_json(journal_path)["real_dt"]))
+
+    chain = "Groups.TrackPainter"
+    arguments = batch_arguments("t99", [{"id": "K7", "plans": [entry("b8_c1", chain), entry("b8_c2", chain), entry("b8_c3", chain)]}, {"id": "K8", "plans": [entry("b8_d1")]}])
+    fake = FakeBatchTools(root / "t99" / "overlay.json")
+    fake.verify_codes = {"b8_c1": [1, 0], "b8_c2": [0]}
+    fake.headless_failures = [["TDGame.FluidFX.Design.A"], [], ["TDGame.FluidFX.Numeric.B"]]
+    with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
+        chain_code = run_batch(arguments)
+    journal = load_json(root / "t99" / "journal.json")
+    items, calls = statuses(journal), fake.calls
+    after_c3 = calls[calls.index("accept b8_c3") + 1:]
+    chain_calls = after_c3[:after_c3.index("materialize")]
+    verify_c1, verify_c2 = ["sweep b8_c1 verify", "judge b8_c1 verify"], ["sweep b8_c2 verify", "judge b8_c2 verify"]
+    check("T99 사슬 끝 verify 실패 → 가장 최근 채택부터 overlay-remove → 남은 앞 채택 재검증 통과 시 멈춤(conflict 기록)",
+          chain_calls == verify_c1 + verify_c2 + ["remove Groups.B8.TDFluidTest.b8_c3"] + verify_c1
+          and items["b8_c3"]["status"] == "verify_failed" and "conflict" in items["b8_c3"]["reason"] and items["b8_c1"]["status"] == "adopted"
+          and "verify2" in items["b8_c1"]["runs"] and load_json(root / "t99" / "chains" / "Groups_TrackPainter.json")["rounds"] == [{"b8_c1": False, "b8_c2": True}, {"b8_c1": True}],
+          (chain_calls, items["b8_c3"]))
+    block_calls = after_c3[len(chain_calls):after_c3.index("lock b8_d1")]
+    tuning_arguments = [argument for argument in fake.headless_commands[0] if argument.startswith("-TDFluidTuningFile=")]
+    check("T99 블록 헤드리스(-TDFluidTuningFile=materialize 사본): 설계 단언 실패 → 블록의 가장 최근 채택 되돌림 → 다시 시험 통과",
+          block_calls == ["materialize", "headless", "remove Groups.B8.TDFluidTest.b8_c2", "materialize", "headless"]
+          and items["b8_c2"]["status"] == "verify_failed" and "설계 단언" in items["b8_c2"]["reason"] and "headless" in items["b8_c3"]["runs"]
+          and len(tuning_arguments) == 1 and Path(tuning_arguments[0].split("=", 1)[1]).parent.name == "copy" and Path(tuning_arguments[0].split("=", 1)[1]).is_file(),
+          (block_calls, tuning_arguments))
+    headless_record = load_json(W / items["b8_d1"]["runs"].get("headless", "missing") / "headless.json") if items["b8_d1"]["runs"].get("headless") else {}
+    check("T99 블록 헤드리스 실패가 숫자 고정 목록뿐 → 기록만(되돌림 없음)·덧씌움 최종 c1·d1",
+          calls[calls.index("accept b8_d1") + 1:] == ["materialize", "headless", "release b8-test"] and items["b8_d1"]["status"] == "adopted"
+          and headless_record.get("allowlisted_failures") == ["TDGame.FluidFX.Numeric.B"] and headless_record.get("verdict_code") == 0
+          and [assignment["json_path"] for assignment in load_json(root / "t99" / "overlay.json")["assignments"]] == ["Groups.B8.TDFluidTest.b8_c1", "Groups.B8.TDFluidTest.b8_d1"]
+          and chain_code == 0, (calls[calls.index("accept b8_d1") + 1:], headless_record, chain_code))
+
+
 run_check(check_cal0_b0)
+run_check(check_cal0_batch)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

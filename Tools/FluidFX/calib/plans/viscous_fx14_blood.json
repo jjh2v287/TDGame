@@ -1,6 +1,6 @@
 {
   "id": "viscous_fx14_blood",
-  "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4). blood_splash 는 단계마다 call 로 조각 방출기 trigger_break_at(파괴 액터 (2000, 0, 50) + EXPLOSION_HIT_OFFSET (-55, 0, -35) = (1945, 0, 15), editor_make_fluid_viscous_stage.py build_zone_splash·fire_stage)을 부른 뒤 settle 6 초를 기다린다. 목록 인수는 언리얼 파이썬이 FVector 로 바꾼다(PyWrapperStruct CastPyObject 순서열 허용). [위험] TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌리므로 둘째 단계부터 새 튐이 없다: 0b 에서 단계마다 PIE 재시작이나 재무장 수단을 정하기 전에는 blood_splash 판정을 쓰지 않는다 / CAL-0 0b 통합(D3): blood_splash 장면과 그 목표 2개(blood_streak.streak_aspect·streak_tip_width_ratio)는 TriggerBreakAt 가 PIE 당 한 번이라 재무장 수단이 생길 때까지 deferred(판정 미사용, FX-P 표). 원문과 복원 조건은 Tools/FluidFX/calib/structural-gaps.json",
+  "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4). blood_splash 는 단계마다 call 로 조각 방출기 trigger_break_at(파괴 액터 (2000, 0, 50) + EXPLOSION_HIT_OFFSET (-55, 0, -35) = (1945, 0, 15), editor_make_fluid_viscous_stage.py build_zone_splash·fire_stage)을 부른 뒤 settle 6 초를 기다린다. 목록 인수는 언리얼 파이썬이 FVector 로 바꾼다(PyWrapperStruct CastPyObject 순서열 허용). [위험] TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌리므로 둘째 단계부터 새 튐이 없다: 0b 에서 단계마다 PIE 재시작이나 재무장 수단을 정하기 전에는 blood_splash 판정을 쓰지 않는다 / CAL-0 0b 통합(D3): blood_splash 장면과 그 목표 2개(blood_streak.streak_aspect·streak_tip_width_ratio)는 TriggerBreakAt 가 PIE 당 한 번이라 재무장 수단이 생길 때까지 deferred(판정 미사용, FX-P 표). 원문과 복원 조건은 Tools/FluidFX/calib/structural-gaps.json / frame 정리(2026-10-31): decal_edge.width_cells → decal_edge.edge_profile.width_cells(edge_profile 분석). 영역 선·축척은 재촬영 뒤(명세만)",
   "scenes": [
     {
       "name": "blood_decal",
@@ -94,11 +94,12 @@
     ],
     "targets": [
       {
-        "metric": "decal_edge.width_cells",
+        "metric": "decal_edge.edge_profile.width_cells",
         "weight": 1.0,
         "low": 0.0,
         "high": 2.0,
-        "scene": "blood_decal"
+        "scene": "blood_decal",
+        "note": "spec-fx14 7절 피 데칼 가장자리 10~90% 폭 ≤2칸(TS J6). measure_fx_look edge_profile 키(영역 analyses edge_profile·line·cm_per_px·cell_cm 5.0 = 12.8 m/256 필요). 지금 영역 틀에는 analyses 가 없어 None: frame 이미지(1280x720)에서 데칼이 멀어 한 칸이 약 1.1 px(교반 구[추정: 회색 블록 옆 어두운 구] 지름 40 cm 가 약 9 px)이고 오른쪽 가장자리 가로 단면 10~90% 폭이 행마다 5~30 px 로 들쭉날쭉한 모양에 지배돼 선을 정할 수 없다 → 명세만(Saved/AgentOps/20261031/pending-region-specs/viscous_fx14_regions_blood_decal.json), 데칼을 가까이 다시 찍은 뒤 line·cm_per_px 를 그린다"
       }
     ]
   }

@@ -1,6 +1,6 @@
 {
   "id": "viscous_fx14_mud",
-  "note": "FX-14 A6·A7·A10·M1·M4, 정본 ViscousMud(256²·12.8 m GPU), 무대 LV_TDFluidViscousStage 구역 3(중심 4000, 0). Groups.Viscous 경로는 묶음 A 통합 뒤 유효 / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다",
+  "note": "FX-14 A6·A7·A10·M1·M4, 정본 ViscousMud(256²·12.8 m GPU), 무대 LV_TDFluidViscousStage 구역 3(중심 4000, 0). Groups.Viscous 경로는 묶음 A 통합 뒤 유효 / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다 / frame 정리(2026-10-31): swirl_spacing_cm → mud_surface.swirl.spacing_cm(swirl 분석). spread_growth_per_sec·streak_aspect·streak_tip_width_ratio 는 명세 7절이 헤드리스 밀도장 지표(Viscous.HeadlessMetricsReport)라 화면으로 정의 불가 → structural-gaps.json",
   "scenes": [
     {
       "name": "mud_world",
@@ -88,28 +88,11 @@
     ],
     "targets": [
       {
-        "metric": "mud_surface.spread_growth_per_sec",
-        "weight": 1.0,
-        "low": 0.0,
-        "high": 0.02
-      },
-      {
-        "metric": "mud_surface.streak_aspect",
-        "weight": 1.0,
-        "low": 5.0,
-        "high": 15.0
-      },
-      {
-        "metric": "mud_surface.streak_tip_width_ratio",
-        "weight": 0.5,
-        "low": 0.5,
-        "high": 1.0
-      },
-      {
-        "metric": "mud_surface.swirl_spacing_cm",
+        "metric": "mud_surface.swirl.spacing_cm",
         "weight": 0.5,
         "low": 10.0,
-        "high": 20.0
+        "high": 20.0,
+        "note": "spec-fx14 7절 진흙(화면) 소용돌이 간격 10~20 cm. measure_fx_look swirl 분석 키(영역 analyses swirl·cm_per_px 필요, cm_per_px 없으면 None). 영역 틀은 재촬영 대기(명세 Saved/AgentOps/20261031/pending-region-specs/viscous_fx14_regions_mud_world.json, cm_per_px 는 카메라 기하로 계산하고 공 지름으로 교차 확인)"
       }
     ]
   }

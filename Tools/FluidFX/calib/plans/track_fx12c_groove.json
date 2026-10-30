@@ -1,6 +1,6 @@
 {
   "id": "track_fx12c_groove",
-  "note": "FX-12 코드 J3·J8·H1, 정본 SnowTrack(1024²·50 m GPU). 눈만 흔드는 묶음 소유 필드는 split_group true(반박 R12-M5), 둑 세기는 묶음 경로. 높이 감쇠 이름은 FX-10c BrushHeightFadeDistanceCm(X-09) / CAL-0 B6: track_snow_i2(폐기·이관) 흡수 — TrackPomMaxSteps 손잡이 추가(BankHeight·뼈 붓 반지름은 이미 있음), groove_decay 시계열 장면(영역은 frame 뒤) / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다",
+  "note": "FX-12 코드 J3·J8·H1, 정본 SnowTrack(1024²·50 m GPU). 눈만 흔드는 묶음 소유 필드는 split_group true(반박 R12-M5), 둑 세기는 묶음 경로. 높이 감쇠 이름은 FX-10c BrushHeightFadeDistanceCm(X-09) / CAL-0 B6: track_snow_i2(폐기·이관) 흡수 — TrackPomMaxSteps 손잡이 추가(BankHeight·뼈 붓 반지름은 이미 있음), groove_decay 시계열 장면(영역은 frame 뒤) / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다 / frame 정리(2026-10-31): groove_decay 반감기를 대비 계열(decay_surface − groove_decay, half_life absolute)로 바꿈. 감쇠 틀 track_snow_decay_regions.json 은 재촬영 대기라 decay_surface 영역 명세만 Saved/AgentOps/20261031/pending-region-specs/ 에 둠",
   "scenes": [
     {
       "name": "snow_groove",
@@ -206,14 +206,22 @@
         "low": 60.0,
         "high": 100000.0,
         "scene": "groove_decay",
-        "basis": "track_fx12c_targets groove_decay half_life_sec [60,∞), 시계열 half_life. tolerance 1 s(60 s 하한 대비 표본 간격 15 s 의 1/15)"
+        "basis": "track_fx12c_targets groove_decay half_life_sec [60,∞), 시계열 half_life. tolerance 1 s(60 s 하한 대비 표본 간격 15 s 의 1/15)",
+        "note": "절대 휘도 groove_decay 는 복원되면 밝아져 감쇠율이 음수라 늘 None(감사 표 114행) → 대비 derived.groove_contrast(decay_surface − groove_decay)의 |값| 반감기(T2 조각). decay_surface = 홈 옆 같은 깊이 걷지 않은 눈, 영역 틀은 재촬영 대기(명세 Saved/AgentOps/20261031/pending-region-specs/track_snow_decay_regions.json)"
       }
     ],
     "derived": [
       {
+        "name": "groove_contrast",
+        "op": "difference",
+        "a": "decay_surface.luminance_mean",
+        "b": "groove_decay.luminance_mean"
+      },
+      {
         "name": "groove_half_life_seconds",
         "op": "half_life",
-        "a": "groove_decay.luminance_mean"
+        "a": "derived.groove_contrast",
+        "absolute": true
       }
     ]
   }

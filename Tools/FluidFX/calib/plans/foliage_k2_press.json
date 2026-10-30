@@ -1,6 +1,6 @@
 {
   "id": "foliage_k2_press",
-  "note": "FX-13c K2 구역 4(FoliagePainter 원천·GrassPress·교반기 반경 600 cm 궤도), 눌림 반감·밝기, IMG 9 / 0b(2026-10-30): 목표 둘은 명세 [제안](P-11). 손잡이를 장면별로 나눴다(소산 → decay, 나머지 → press). 교반기가 계속 돌면 감쇠 구간이 없고, half_life 는 바깥 기준 휘도로 내려가는 값을 0 으로 가는 지수로 맞춰 치우친다 → frame 에서 교반기 정지 이벤트(step_apply call)와 기준 차감 필요 여부 확인",
+  "note": "FX-13c K2 구역 4(FoliagePainter 원천·GrassPress·교반기 반경 600 cm 궤도), 눌림 반감·밝기, IMG 9 / 0b(2026-10-30): 목표 둘은 명세 [제안](P-11). 손잡이를 장면별로 나눴다(소산 → decay, 나머지 → press). 교반기가 계속 돌면 감쇠 구간이 없고, half_life 는 바깥 기준 휘도로 내려가는 값을 0 으로 가는 지수로 맞춰 치우친다 → frame 에서 교반기 정지 이벤트(step_apply call)와 기준 차감 필요 여부 확인 / frame 정리(2026-10-31): 반감기를 대비 계열(derived.press_contrast → half_life absolute)로 바꿈. 절대 휘도 반감기는 기준선 0.70 으로 돌아가는 복원이라 완전 복원해도 약 197 s 로 띠 [3,8] 도달 불가였다(감사 표 108행·제안 9)",
   "scenes": [
     {
       "name": "k2_press",
@@ -125,7 +125,7 @@
         "high": 8.0,
         "scene": "k2_press_decay",
         "basis": "spec_proposal",
-        "note": "spec-fx13c 7절 옛 bend_record press_half_life [3,8] s 명세 [제안] → PIE 시계열 half_life"
+        "note": "spec-fx13c 7절 옛 bend_record press_half_life [3,8] s 명세 [제안] → PIE 시계열 half_life / frame 정리(2026-10-31): 절대 휘도 pressed_side 대신 대비 derived.press_contrast(pressed_side − outer_ring)의 |값| 반감기(calib_judge 파생 연쇄·absolute, T2 조각). 가정: 쉴 때 대비 → 0. frame k2_press_decay 비가 1.024~1.036 으로 평탄(감사 표)하므로 쉴 때 대비가 0 이 아니면 반감기가 길게 나온다 → 재촬영에서 교반기 정지 뒤 대비가 0 으로 가는지 확인"
       }
     ],
     "derived": [
@@ -136,9 +136,16 @@
         "b": "outer_ring.luminance_mean"
       },
       {
+        "name": "press_contrast",
+        "op": "difference",
+        "a": "pressed_side.luminance_mean",
+        "b": "outer_ring.luminance_mean"
+      },
+      {
         "name": "press_half_life_seconds",
         "op": "half_life",
-        "a": "pressed_side.luminance_mean"
+        "a": "derived.press_contrast",
+        "absolute": true
       }
     ]
   },

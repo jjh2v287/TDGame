@@ -68,7 +68,6 @@
       {"plan": "Tools/FluidFX/calib/plans/w5_tank_l11.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"]},
       {"plan": "Tools/FluidFX/calib/plans/w5_underwater_l18a.json", "class": "cal0", "origin": "defect", "needs_frame": true, "stages": ["screen", "confirm"]},
       {"plan": "Tools/FluidFX/calib/plans/w1b_water_particles.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"]},
-      {"plan": "Tools/FluidFX/calib/plans/fx8n_drive.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"]},
       {"plan": "Tools/FluidFX/calib/plans/input_fx15b.json", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true}
     ]}
   ],
@@ -80,6 +79,7 @@
     {"plan": "viscous_fx14_blood", "scene": "blood_splash", "reason": "D3: TriggerBreakAt 가 PIE 당 1회라 재무장 수단이 생길 때까지 판정 미사용(FX-P 표). 장면·목표 2개는 계획에서 빼고 원문은 structural-gaps.json"}
   ],
   "blocked": [
+    {"plan": "Tools/FluidFX/calib/plans/fx8n_drive.json", "class": "target", "origin": "cal0", "stages": ["screen", "confirm"], "needs_frame": true, "blocked": "2026-10-31 4차: 유일한 목표 particles.embers.count 가 정의 불일치(상자 넓이 2.03배, 기준은 공 반사점 5px·우리는 12~13px 입자) → 구조 격차 proposed, 목표 0 개 계획은 load_plan 거부. 밀도·대상 정의가 생기면 복귀", "block": "K9"},
     {"plan": "Tools/FluidFX/calib/plans/foliage_k5_radial.json", "class": "target", "origin": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy", "reclassified": "P-28", "blocked": "probe 명세 없음(측정 출처 없음): max_bend_degrees·radius_over_mover_size 게터 없음, radial_alignment 는 RT 상자·중심 UV 를 PIE 로 재야 함", "block": "K6"},
     {"plan": "Tools/FluidFX/calib/plans/w6_dense_creek.json", "class": "target", "origin": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater", "reclassified": "P-28", "blocked": "probe 명세 없음(측정 출처 없음): dense.* C++ 통계 게터 없음(GetLodGridStats 만)", "gate": "frame 에서 settle 90 대 120 수렴 관문", "block": "K9"},
     {"plan": "Tools/FluidFX/calib/plans/w6_ship_wake.json", "class": "target", "origin": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater", "reclassified": "P-28", "blocked": "probe 명세 없음(측정 출처 없음): wake.* C++ 통계 게터 없음", "block": "K9"},

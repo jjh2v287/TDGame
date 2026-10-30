@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터·PIE 불필요, numpy·Pillow·scipy 필요, 가짜 unreal 로 calib_sweep·pie_lookdev_fluid·pie_probe_fluid_water 를 프로세스 안에서 돌린다). 2026-10-25 P3 오프라인 시험(w0-P3-offline-test.py)을 본 트리로 옮겨 새 판정 규칙(목표 지표 대조·연속 점수·점수 잡음 유의)과 짧은 창 배율·대조 처음·끝 모드를 더했다.
 실행 명령: python -B Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/offline-test/ 아래 스윕·판정 산출물(실행마다 지움)과 표준 출력 PASS/FAIL 줄. 수용 시험 산출(Saved/FluidFX/calib/{campfire-run1,campfire-run2,campfire-r4-run1,river-run1})이 있으면 새 판정기로 재판정해 SKIP 아닌 결과를 낸다.
-상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json, 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F9): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점, 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다.
+상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json, 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F9): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점, 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조.
 """
 import contextlib
 import copy
@@ -693,6 +693,7 @@ def fake_editor_action(action, **fields):
     return {"error": "no marker: " + buffer.getvalue()[-300:]}
 
 
+REAL_LOOKDEV_EDITOR_ACTION = lookdev.editor_action
 lookdev.editor_action = fake_editor_action
 lookdev.pie_check_fluid.wait_for_pie_state = lambda running, timeout: True
 lookdev.pie_check_fluid.stop_pie = lambda session, environment: True
@@ -732,9 +733,9 @@ def reset_world(actors, fields=DEFAULT_WORLD_FIELDS):
     CLOCK.time_dilation = 1.0
 
 
-def run_lookdev_in_process(spec_path, level, output_dir):
+def run_lookdev_in_process(spec_path, level, output_dir, run_id=None):
     saved_argv = sys.argv
-    sys.argv = ["pie_lookdev_fluid.py", "--variants", str(spec_path), "--level", level, "--output-dir", str(output_dir), "--stop-pie"]
+    sys.argv = ["pie_lookdev_fluid.py", "--variants", str(spec_path), "--level", level, "--output-dir", str(output_dir), "--stop-pie"] + (["--run-id", run_id] if run_id else [])
     try:
         return lookdev.main()
     finally:
@@ -3206,6 +3207,196 @@ def check_lookdev_frame_fixes():
           and "state_reset" not in kept.get("tuning_reload", {}) and "state_reset" not in kept and not state["key_errors"], (reload_outcome, [live.reset_count for live in lives], state))
 
 
+class FakeUnrealLog(io.BufferedIOBase):
+    def __init__(self):
+        self.entries = []
+
+    def writable(self):
+        return True
+
+    def write(self, data):
+        text = bytes(data).decode("utf-8")
+        if text.strip():
+            self.entries.append(text)
+        return len(data)
+
+
+def run_code_through_unreal_log(code, timeout=12, try_enable=True):
+    log = FakeUnrealLog()
+    stream = io.TextIOWrapper(log, encoding="utf-8", line_buffering=True)
+    with contextlib.redirect_stdout(stream):
+        exec(compile(code, "<editor>", "exec"), {"__name__": "editor"})
+        stream.flush()
+    return {"success": True, "lines": [f"[Info] {entry}" for entry in log.entries], "connected": True}
+
+
+def check_capture_tool_fixes():
+    output_dir = TEST_DIR / "capture-fixes"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    lookdev.OUTPUT_DIRECTORY = output_dir
+    lookdev.REMOTE_RESULT_DIRECTORY = output_dir / "remote_results"
+    marker = pie_showcase_fluid.RESULT_MARKER
+    big_grid = {"grid": [[0.123456789012] * 41] * 41}
+    old_style = run_code_through_unreal_log(f"import json\nprint({marker!r}, json.dumps({big_grid!r}))\n")["lines"]
+    try:
+        old_style[0][old_style[0].find(marker) + len(marker):].strip().splitlines()[0]
+        old_parser_error = None
+    except IndexError as error:
+        old_parser_error = error
+    check("C1 원인: UE stdout(TextIOWrapper 8192자 덩어리, unreal_core._Logger 가 write 마다 로그 1항목)에서 큰 결과는 표식과 본문이 다른 출력 항목으로 갈라져 옛 파서 IndexError / 새 파서는 뒤 항목까지 모아 해석",
+          len(old_style) == 2 and old_style[0].strip() == "[Info] " + marker and isinstance(old_parser_error, IndexError) and lookdev.parse_editor_result(old_style) == big_grid,
+          ([line[:60] for line in old_style], old_parser_error))
+    broken = [lookdev.parse_editor_result(lines) for lines in (["[Info] " + marker + " "], ["[Info] " + marker + ' {"a": 1'], ["[Info] " + marker + " [1, 2]"], ["[Info] other"])]
+    check("C2 표식 뒤가 비었거나 잘림·객체 아님·표식 없음 → 예외 없이 error", all(set(item) == {"error"} for item in broken), broken)
+
+    reset_world([])
+    WORLD.actors.append(FakeActor("TDGen_CloudPainter", get_density_pressure_texture=lambda: "RT_Density"))
+    rt_entry = {"label": "TDGen_CloudPainter", "function": "get_density_pressure_texture", "box": [0.0, 0.0, 1.0, 1.0], "step": 0.025, "channel": "r", "prefix": "density"}
+    reader = Props(read_render_target_raw_uv=lambda world, render_target, u, v: FakeLinearColor(u * 0.3711 + v * 0.1234567, v, 0.0, 1.0))
+    captured = []
+
+    def capturing_run_code(code, **kwargs):
+        outcome = run_code_through_unreal_log(code)
+        captured.append(outcome["lines"])
+        return outcome
+
+    with patched(unreal, RenderingLibrary=reader), patched(lookdev.run_in_editor, run_code=capturing_run_code), patched(lookdev, editor_action=REAL_LOOKDEV_EDITOR_ACTION):
+        large = lookdev.editor_action("lookdev_probe", probe={"rt": [rt_entry]}, reference=0.0, at=0.0)
+        small = lookdev.editor_action("lookdev_probe", probe={"rt": [dict(rt_entry, step=0.5)]}, reference=0.0, at=0.0)
+    grid = large.get("grids", {}).get("density", {})
+    leftovers = sorted(lookdev.REMOTE_RESULT_DIRECTORY.glob("*.json")) if lookdev.REMOTE_RESULT_DIRECTORY.exists() else []
+    check("C3 큰 탐침 결과(41×41 격자, g4 painter_stroke 꼴) → 에디터가 Saved 아래 파일에 쓰고 표식 뒤엔 경로만, 바깥이 읽고 지움 / 작은 결과는 한 줄 그대로 / 결과 print 치환 대상이 EDITOR_CODE 에 있음",
+          not large.get("errors") and len(grid.get("values", [])) == 41 and len(grid["values"][0]) == 41 and "probe.density.mean" in large.get("metrics", {})
+          and any('"result_file"' in line for line in captured[0]) and max(len(line) for line in captured[0]) < lookdev.REMOTE_RESULT_INLINE_LIMIT_BYTES
+          and len(small.get("grids", {}).get("density", {}).get("values", [])) == 3 and not any('"result_file"' in line for line in captured[1]) and not leftovers
+          and lookdev.REMOTE_RESULT_PRINT in pie_showcase_fluid.EDITOR_CODE and lookdev.REMOTE_RESULT_EMIT in lookdev.build_editor_code("lookdev_probe", {}, output_dir / "r.json"),
+          (large.get("errors"), [len(line) for line in captured[0]] if captured else None, leftovers))
+
+    def broken_probe_run_code(code, **kwargs):
+        if '"action": "lookdev_probe"' in code:
+            return {"success": True, "lines": ["[Info] " + marker + " "], "connected": True}
+        return run_code_through_unreal_log(code)
+
+    def failing_run_code(code, **kwargs):
+        raise RuntimeError("Remote party failed to send a valid response!")
+
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    with patched(unreal, RenderingLibrary=reader), patched(lookdev.run_in_editor, run_code=broken_probe_run_code), patched(lookdev, editor_action=REAL_LOOKDEV_EDITOR_ACTION):
+        probed = lookdev.apply_variant_with_tuning({"probe": {"rt": [rt_entry], "times": [0.0]}}, "s00", state)
+    with patched(lookdev.run_in_editor, run_code=failing_run_code), patched(lookdev, editor_action=REAL_LOOKDEV_EDITOR_ACTION):
+        raised = lookdev.editor_action("lookdev_probe", probe={"rt": [rt_entry]}, reference=0.0, at=0.0)
+    spilled_without_file = {"success": True, "lines": ["[Info] " + marker + ' {"result_file": "elsewhere.json", "result_bytes": 9}'], "connected": True}
+    with patched(lookdev.run_in_editor, run_code=lambda code, **kwargs: spilled_without_file), patched(lookdev, editor_action=REAL_LOOKDEV_EDITOR_ACTION):
+        missing_file = lookdev.editor_action("lookdev_probe", probe={"rt": [rt_entry]}, reference=0.0, at=0.0)
+    probe_errors = probed.get("probe", {}).get("errors", [])
+    check("C4 그래도 실패하면 죽지 않음: 표식 뒤 빈 응답 → 그 표본 errors '결과 해석 실패'·키 오류 's00: probe: …'(단계 무효) / 원격 실행 예외·결과 파일 없음 → error",
+          len(probe_errors) == 1 and "결과 해석 실패" in probe_errors[0] and any(line.startswith("s00: probe: 결과 해석 실패") for line in state["key_errors"])
+          and raised.get("error", "").startswith("에디터 원격 실행 예외 RuntimeError") and missing_file.get("error", "").startswith("결과 파일 읽기 실패"),
+          (probe_errors, state["key_errors"], raised, missing_file))
+
+    reset_world([])
+    WORLD.actors.append(FakeActor("TDGen_FoliageFlow_Walk", flow_render_target=None))
+    soft_entry = {"label": "TDGen_FoliageFlow_Walk", "property": "flow_render_target", "box": [0.0, 0.0, 1.0, 1.0], "step": 0.5, "channel": "rg_len", "prefix": "flow"}
+    unloaded = fake_editor_action("lookdev_probe", probe={"rt": [soft_entry, dict(soft_entry, label="TDGen_Missing", prefix="missing")]}, reference=0.0, at=0.0)
+    check("C5 foliage flow_render_target(TSoftObjectPtr) None → '렌더 타깃 없음(속성 None: TSoftObjectPtr …)' / 액터 없음 → '(소유자 없음)', 둘 다 표본 오류",
+          len(unloaded.get("errors", [])) == 2 and "TSoftObjectPtr" in unloaded["errors"][0] and unloaded["errors"][1].endswith("렌더 타깃 없음(소유자 없음)"), unloaded)
+
+    source_dir, copy_dir = TEST_DIR / "campfire", TEST_DIR / "capture-stale"
+    shutil.rmtree(copy_dir, ignore_errors=True)
+    shutil.copytree(source_dir, copy_dir)
+    scene_dir = copy_dir / "campfire"
+    stale_result = load_json(scene_dir / "result.json")
+    calls = []
+
+    def failing_lookdev(spec_path, level, output_dir, run_id):
+        calls.append(run_id)
+        return 1
+
+    with patched(calib_sweep, run_lookdev=failing_lookdev):
+        code = run_sweep(["--plan", CAMPFIRE_PLAN, "--run-dir", str(copy_dir)])
+    scene = load_json(copy_dir / "sweep.json")["scenes"][0]
+    archived = sorted((copy_dir / calib_sweep.PREVIOUS_OUTPUTS_NAME / "campfire").glob("*/result.json"))
+    check("C6 지난 result.json 이 남은 장면에서 룩데브가 새 결과 없이 종료 1 → 실행 전에 지난 산출물을 <run-dir>/_previous/<장면>/<시각>/ 로 옮겨(장면 폴더엔 lookdev_spec.json 만) 옛 결과로 판정하지 않음·장면 error '룩데브 종료 1, 이번 실행 결과 없음'·단계 0·종료 1",
+          code == 1 and len(calls) == 1 and str(scene.get("error", "")).startswith("룩데브 종료 1, 이번 실행 결과 없음") and not scene["steps"] and [path.name for path in scene_dir.iterdir()] == [calib_sweep.LOOKDEV_SPEC_NAME]
+          and len(archived) == 1 and load_json(archived[0]) == stale_result and (scene_dir / calib_sweep.LOOKDEV_SPEC_NAME).exists() and scene.get("previous_outputs") and scene.get("lookdev_run_id") == calls[0],
+          (code, calls, scene.get("error"), archived, scene.get("previous_outputs")))
+
+    def replaying_lookdev(result_run_id, sha256):
+        def run(spec_path, level, output_dir, run_id):
+            replay = dict(stale_result, run_id=result_run_id or run_id, variants_sha256=sha256 or calib_sweep.file_sha256(spec_path))
+            (Path(output_dir) / "result.json").write_text(json.dumps(replay), encoding="utf-8")
+            return 0
+        return run
+
+    errors = []
+    for result_run_id, sha256 in (("old-run", None), (None, "0" * 64)):
+        with patched(calib_sweep, run_lookdev=replaying_lookdev(result_run_id, sha256)):
+            code = run_sweep(["--plan", CAMPFIRE_PLAN, "--run-dir", str(copy_dir)])
+        errors.append((code, load_json(copy_dir / "sweep.json")["scenes"][0].get("error", "")))
+    fresh = load_json(source_dir / "sweep.json")["scenes"][0]
+    fresh_result = load_json(source_dir / "campfire" / "result.json")
+    check("C7 새 result.json 의 run_id 가 이번 실행과 다름 → '이번 실행 것이 아니다'·variants_sha256 가 이번 lookdev_spec 과 다름 → 무효(종료 1) / 정상 실행은 run_id·variants_sha256·started_at 일치",
+          [code for code, _ in errors] == [1, 1] and "이번 실행 것이 아니다" in errors[0][1] and "variants_sha256" in errors[1][1]
+          and fresh.get("lookdev_run_id") and fresh_result.get("run_id") == fresh["lookdev_run_id"] and fresh_result.get("started_at")
+          and fresh_result.get("variants_sha256") == calib_sweep.file_sha256(source_dir / "campfire" / calib_sweep.LOOKDEV_SPEC_NAME),
+          (errors, fresh.get("lookdev_run_id"), fresh_result.get("run_id")))
+
+
+def check_pie_session_fixes():
+    output_dir = TEST_DIR / "pie-session"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    spec_path = output_dir / "spec.json"
+    spec_path.write_text(json.dumps({"base": {}, "variants": []}), encoding="utf-8")
+    reset_world([])
+    calls = []
+    pie = {"running": True}
+
+    def fake_wait(running, timeout):
+        return pie["running"] is running
+
+    def fake_stop(session, environment):
+        calls.append("stop")
+        pie["running"] = False
+        return True
+
+    def fake_start(session, environment):
+        calls.append("start")
+        pie["running"] = True
+        return True
+
+    def fake_open(level):
+        calls.append("open")
+        return {"loaded": True}
+
+    def run(extra, capture=None):
+        calls.clear()
+        pie["running"] = True
+        saved_argv = sys.argv
+        sys.argv = ["pie_lookdev_fluid.py", "--variants", str(spec_path), "--level", "/Game/Test/LV", "--output-dir", str(output_dir), "--stop-pie"] + extra
+        replacements = {"capture_variants": capture} if capture else {}
+        try:
+            with patched(lookdev.pie_check_fluid, wait_for_pie_state=fake_wait, stop_pie=fake_stop, start_pie=fake_start, wait_for_editor_navigation=lambda: True), \
+                    patched(lookdev.pie_showcase_fluid, open_stage_level=fake_open), patched(lookdev, **replacements):
+                return lookdev.main(), list(calls)
+        except RuntimeError as error:
+            return str(error), list(calls)
+        finally:
+            sys.argv = saved_argv
+
+    fresh_code, fresh_calls = run(["--fresh-pie"])
+    fresh_result = load_json(output_dir / "result.json")
+    check("P1 --fresh-pie: 앞 실행이 남긴 PIE 를 먼저 멈추고 --level 을 새로 열어 PIE 시작, result.stopped_leftover_pie 참, 끝에 --stop-pie 로 멈춤",
+          fresh_code == 0 and fresh_calls == ["stop", "open", "start", "stop"] and fresh_result.get("stopped_leftover_pie") is True, (fresh_code, fresh_calls, fresh_result.get("stopped_leftover_pie")))
+    reuse_code, reuse_calls = run([])
+    check("P2 --fresh-pie 없음: 이미 도는 PIE 를 그대로 쓰는 옛 동작(대화형 룩데브), 끝에 --stop-pie 로 멈춤", reuse_code == 0 and reuse_calls == ["stop"], (reuse_code, reuse_calls))
+
+    def crashing_capture(*args):
+        raise RuntimeError("캡처 중 예외")
+
+    crash_code, crash_calls = run(["--fresh-pie"], crashing_capture)
+    check("P3 촬영 중 예외가 나도 finally 에서 PIE 를 멈춘다(남은 PIE 가 다음 계획 촬영을 오염시키지 않게)", crash_code == "캡처 중 예외" and crash_calls[-1] == "stop" and not pie["running"], (crash_code, crash_calls))
+
+
 run_check(check_cal0_b0)
 run_check(check_cal0_patch)
 run_check(check_cal0_lookdev)
@@ -3218,6 +3409,8 @@ run_check(check_cal0_batch)
 run_check(check_cal0_integration)
 run_check(check_cal0_real_queue)
 run_check(check_lookdev_frame_fixes)
+run_check(check_capture_tool_fixes)
+run_check(check_pie_session_fixes)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

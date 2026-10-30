@@ -141,6 +141,106 @@
    "reason": "목표가 화면 전체 개수인데, frame 대조 이미지에서 불티가 불꽃 몸통 위·옆에 섞여 몸통을 뺀 상자는 띠(y 110~228)뿐이라 개수가 3~19 로 나온다. 몸통을 담으면 count·면적·늘어남이 오염된다(반박 확인). 모양 목표 2개(median_area_px·median_elongation)만 보정",
    "source": "frame",
    "original": "aa1280ea:Tools/FluidFX/calib/plans/fx8n_embers.json"
+  },
+  {
+   "plan": "viscous_fx14_mud",
+   "kind": "target",
+   "item": "mud_surface.spread_growth_per_sec · mud_surface.streak_aspect · mud_surface.streak_tip_width_ratio",
+   "decision": "frame",
+   "destination": "헤드리스 Viscous.HeadlessMetricsReport(viscous_headless.*, spec-fx14 7절 헤드리스 퍼짐 정지·튐 줄기)",
+   "reason": "명세 7절 정의가 헤드리스 CPU 256² 밀도장 지표(브러시 정지 뒤 마지막 1 s 의 D ≥ 0.5 면적 증가율, 스탬프 열의 D ≥ 0.3 연결 성분 길이/폭·머리 10% 폭/최대 폭)라 화면 이미지로 정의할 수 없고, measure_fx_look·probe·offline 어디에도 이 키를 내는 측정기가 없다(감사 표 120~122행). 명세 초안 계획도 viscous_headless.* 지표였다(spec-fx14.md 266~268행)",
+   "source": "frame",
+   "original": "37d9dc18:Tools/FluidFX/calib/plans/viscous_fx14_mud.json"
+  },
+  {
+   "plan": "viscous_fx14_lava",
+   "kind": "target",
+   "item": "lava_tile_seam.seam_ratio",
+   "decision": "frame",
+   "destination": "헤드리스·탐침 시험(감싸기 이음매 텍셀 비, TS A12)",
+   "reason": "명세 7절 감싸기 이음매 = 경계 텍셀 차 ≤ 내부 99분위(TS A12)로 시뮬 텍셀 정의라 화면 이미지로 정의할 수 없고 look 측정기에 키가 없다(seam_ratio 는 make_fluid_*_textures.py 텍스처 생성 함수일 뿐, 감사 표 125행). 기준 이미지도 없다(사용자 육안 승인 항목)",
+   "source": "frame",
+   "original": "37d9dc18:Tools/FluidFX/calib/plans/viscous_fx14_lava.json"
+  },
+  {
+   "plan": "fx15a_amplitude_noise",
+   "kind": "target",
+   "item": "pool.detail.above_64_cycles_per_height",
+   "decision": "frame",
+   "destination": "없음(되살림 조건: 연기만 덮는 상자 높이가 기준 범위 175~240 px 가 되도록 다시 찍은 frame)",
+   "reason": "주기/높이 정규화가 상자 높이(object_height_px 기본값)라 64 c/H 하한이 우리 162 px 상자에서 0.395 c/px, 기준 IMG3 상자 175~240 px 에서 0.27~0.37 c/px 인데 상한 0.45 c/px(DETAIL_MAX_CYCLES_PER_PIXEL)가 같아 적분 대역이 달라 계통적으로 작다(0.00018 대 띠 하한 0.00218, 12배, 감사 표 78행). frame 이미지에서 가까운 웅덩이는 화면 아래 끝(720 행)에 잘리고 윗면 실루엣이 장마다 달라, 다섯 장 모두 연기만 덮는 상자는 기존 frame 상자(558~720 행, 162 px)보다 위로 넓힐 수 없다. object_height_px 를 기준 높이로 덮어쓰는 것은 우리 물체 높이와 무관한 값이라 하지 않는다",
+   "source": "frame",
+   "original": "37d9dc18:Tools/FluidFX/calib/plans/fx15a_amplitude_noise.json"
+  },
+  {
+   "plan": "fx15a_kernel_vs_jacobi",
+   "kind": "target",
+   "item": "kernel.detail.above_64_cycles_per_height",
+   "decision": "frame",
+   "destination": "없음(되살림 조건: 연기만 덮는 상자 높이가 기준 범위 175~240 px 가 되도록 다시 찍은 frame)",
+   "reason": "fx15a_amplitude_noise 와 같은 정규화 불일치: 상자 높이 160 px → 64 c/H = 0.4 c/px 대 기준 175~240 px(0.27~0.37 c/px), 상한 0.45 c/px 가 같아 계통적으로 작다(0.00114 대 띠 하한 0.00218, 감사 표 85행). frame 이미지에서 두 웅덩이는 들쭉날쭉한 윤곽까지 세로 약 190 px(약 295~488 행)라 연기만 덮는 상자를 175 px 이상으로 그릴 수 없다",
+   "source": "frame",
+   "original": "37d9dc18:Tools/FluidFX/calib/plans/fx15a_kernel_vs_jacobi.json"
+  },
+  {
+   "plan": "track_fx12c_vehicle",
+   "kind": "target",
+   "item": "harvester_wheel.line_profile.groove_width_cm [25, 35]",
+   "decision": "frame",
+   "destination": "없음(정의 불일치)",
+   "reason": "line_profile 의 groove_width 는 홈 단면 최저점을 품은 반 깊이 아래 구간 폭인데 띠 [25,35] cm 는 바퀴 지름 30 cm(반경 15 cm, 계획 note J4) 둘레다. 둥근 바퀴 자국은 반 깊이 폭이 전체 폭(지름)보다 좁아 같은 양이 아니다(부모 진단: 반 깊이 폭 약 18 cm 대 지름 30 cm). frame 틀에 cm_per_px 도 없어 cm 값은 None 이었다(px 16.1~16.4, 감사 표 116행). 바퀴 자국 끊김 gap_count 목표는 유지",
+   "source": "frame",
+   "original": "37d9dc18:Tools/FluidFX/calib/plans/track_fx12c_vehicle.json"
+  },
+  {
+   "plan": "cloud_g2_wrap_seam",
+   "kind": "target",
+   "item": "tile.autocorrelation.secondary_peak [-1, 0.012]",
+   "decision": "frame",
+   "destination": "없음(구조상 도달 불가)",
+   "reason": "상한 0.012 는 LIVE-2 갤러리 구름 영역 최댓값(반복이 보이지 않는 기준)인데, 이 셋업 화면의 왼쪽 구름 열에는 상세 잡음(0.5 km) 반복이 약 87 px 주기 무늬로 보여 frame 3장 2차 봉우리가 0.095~0.14 다(감사 표 42행). 반복은 잡음 주기 구성에서 나와 이 계획 손잡이로 상한에 닿을 수 없으므로 스윕으로 쫓지 않는다. 이음매 띠 목표 derived.seam_band_relative_step 은 유지, tile 영역은 측정 기록용으로 틀에 남김",
+   "source": "frame",
+   "original": "37d9dc18:Tools/FluidFX/calib/plans/cloud_g2_wrap_seam.json"
+  },
+  {
+   "plan": "w3_rain",
+   "kind": "scene",
+   "item": "pond_top(M3 젖은 지면, 목표 derived.wet_luminance_ratio)",
+   "decision": "frame",
+   "destination": "없음(마른 지면 기준이 화면에 없음)",
+   "reason": "2차 진단 D5(정본 frame): ① reinit 이 상태를 지우지 않는다(bKeepBuffersOnReinit, state_reset_actor_count 0)라 첫 장이 비 약 21초째이고 젖음 W = min(1, rτ) 이 약 8초에 포화해 6→41초 지면 휘도 비 1.00 ② 젖음은 36 m 시야 창 안에서 공간 균일이고 화면(약 32x18 m)이 창 안이라 마른 지면 기준이 화면에 없다(틀에 wet_ground 근거 없음, 감사 표 23~24행) ③ 젖음 데칼은 WetOpacity 0.20 섞기라 완전히 젖어도 휘도 비 약 0.83 > 목표 0.5~0.7 로 도달 불가",
+   "source": "frame",
+   "original": "aa1280ea:Tools/FluidFX/calib/plans/w3_rain.json"
+  },
+  {
+   "plan": "w3_rain",
+   "kind": "target",
+   "item": "derived.wet_luminance_ratio@pond_top [0.5, 0.7](파생식 ratio 7.wet_ground.luminance_mean ÷ 7.dry_ground.luminance_mean)",
+   "decision": "frame",
+   "destination": "없음(도달 불가·기준 영역 없음)",
+   "reason": "2차 진단 D5(정본 frame): ① reinit 이 상태를 지우지 않는다(bKeepBuffersOnReinit, state_reset_actor_count 0)라 첫 장이 비 약 21초째이고 젖음 W = min(1, rτ) 이 약 8초에 포화해 6→41초 지면 휘도 비 1.00 ② 젖음은 36 m 시야 창 안에서 공간 균일이고 화면(약 32x18 m)이 창 안이라 마른 지면 기준이 화면에 없다(틀에 wet_ground 근거 없음, 감사 표 23~24행) ③ 젖음 데칼은 WetOpacity 0.20 섞기라 완전히 젖어도 휘도 비 약 0.83 > 목표 0.5~0.7 로 도달 불가",
+   "source": "frame",
+   "original": "aa1280ea:Tools/FluidFX/calib/plans/w3_rain.json"
+  },
+  {
+   "plan": "w3_rain",
+   "kind": "knob",
+   "item": "Groups.WaterLayer.TDFluidRainSettings.WetnessFromRainPerSec(장면 pond_top, values 0.1·0.2·0.4)",
+   "decision": "frame",
+   "destination": "없음(목표 없음, 평형에서 둔감)",
+   "reason": "pond_top 장면·목표를 뺀 뒤 이 손잡이에 걸리는 목표가 없고, 젖음 W = min(1, rτ) 가 약 8초에 포화해 0.2·0.4 가 평형에서 같다(2차 진단 D5 ①③)",
+   "source": "frame",
+   "original": "aa1280ea:Tools/FluidFX/calib/plans/w3_rain.json"
+  },
+  {
+   "plan": "w3_rain",
+   "kind": "knob",
+   "item": "Groups.WaterLayer.TDFluidRainSettings.PuddleCavityReferenceCm(장면 pond_top, values 2·4·8)",
+   "decision": "frame",
+   "destination": "없음(목표 없음)",
+   "reason": "pond_top 장면·목표를 뺀 뒤 이 손잡이에 걸리는 목표가 없다. 웅덩이 면적은 수위가 PIE 시작부터 3 cm 상한에 닿아 예약 26~31초에 멈춘다(2차 진단 D5)",
+   "source": "frame",
+   "original": "aa1280ea:Tools/FluidFX/calib/plans/w3_rain.json"
   }
  ]
 }

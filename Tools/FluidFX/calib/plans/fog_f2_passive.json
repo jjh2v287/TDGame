@@ -1,6 +1,6 @@
 {
   "id": "fog_f2_passive",
-  "note": "FX-10r F2 수동 7변형(7B)·D14 창 가중(7A, FogAmbient 만 props 로 따라가기 켜서 이동 중 두 프레임 차). 큰 상자 MI 는 정적이라 변형마다 다시 굽는다(P3 공백 7) / 2026-10-30 move 계약: D14 '이동 중' 촬영이 되도록 move 를 schedule.events t=5.0(촬영 6.0~7.0 초 동안 600 cm/s 기본 속도로 2000 cm 걷는 중[추정: BP 속도 미확인])로, pawn 원위치는 step_apply 로 옮겼다. {distance_cm} 사전 형식은 룩데브 move 확장 뒤에만 실행된다",
+  "note": "FX-10r F2 수동 7변형(7B)·D14 창 가중(7A, FogAmbient 만 props 로 따라가기 켜서 이동 중 두 프레임 차). 큰 상자 MI 는 정적이라 변형마다 다시 굽는다(P3 공백 7) / 2026-10-30 move 계약: D14 '이동 중' 촬영이 되도록 move 를 schedule.events t=5.0(촬영 6.0~7.0 초 동안 600 cm/s 기본 속도로 2000 cm 걷는 중[추정: BP 속도 미확인])로, pawn 원위치는 step_apply 로 옮겼다. {distance_cm} 사전 형식은 룩데브 move 확장 뒤에만 실행된다 / frame 정리(2026-10-31): f2_displays 장면 삭제(걸리는 목표가 없어 calib_judge JudgeError, 원문·사유 approval-only.json). window_seam.luminance_relative_step → 두 영역 + derived.window_seam_relative_step",
   "scenes": [
     {
       "name": "d14_window_move",
@@ -59,43 +59,6 @@
           }
         ]
       }
-    },
-    {
-      "name": "f2_displays",
-      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
-      "camera": {
-        "awake": {
-          "TDGen_FogRoom": false,
-          "TDGen_FogTrail": false,
-          "TDGen_FogCharacter": false,
-          "TDGen_FogAmbient": false
-        },
-        "exposure_ev100": 1.0,
-        "pawn": [
-          9000,
-          -12000
-        ],
-        "arm": 900.0,
-        "view": [
-          -6.0,
-          -90.0
-        ],
-        "console": [
-          "r.TDFogScattering 0"
-        ]
-      },
-      "time_dilation": 1.0,
-      "settle": 4.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fog_f2_regions_f2_displays.json",
-      "targets": "Tools/FluidFX/calib/targets/fog_live2_atmosphere.json",
-      "live2_refs": [
-        "L12"
-      ],
-      "shots": {
-        "count": 5,
-        "interval": 0.25,
-        "kind": "replicate"
-      }
     }
   ],
   "params": [
@@ -133,16 +96,25 @@
     "targets": [
       {
         "scene": "d14_window_move",
-        "metric": "window_seam.luminance_relative_step",
+        "metric": "derived.window_seam_relative_step",
         "weight": 2.0,
-        "low": 0.0,
-        "high": 0.05
+        "low": -0.05,
+        "high": 0.05,
+        "note": "measure_fx_look 에 luminance_relative_step 이 없어(감사 표 58행) 창 경계 위·아래 띠 두 영역 + 파생 relative_step (위−아래)/아래 로 바꿈. 띠 [proposed]: 옛 region_metrics window_seam.luminance_relative_step [0, 0.05] 를 부호 없는 단차 크기로 읽고 부호 있는 relative_step 에 ±0.05 로 옮김(g2 이음 띠를 [0, 0.03] 에서 대칭 띠로 바꾼 것과 같은 이유: 아래가 밝으면 음수라 한쪽 띠는 이음 없이도 벌점). 원 정의 문서 미확인, 잠금 전 부모 결정. 영역 틀은 재촬영 대기(명세 Saved/AgentOps/20261031/pending-region-specs/fog_f2_regions.json)"
       },
       {
         "scene": "d14_window_move",
         "metric": "passive_field.atmosphere.p95_over_p5",
         "weight": 1.0,
         "basis": "인라인 삭제 → 안개 kind 띠 [2.66,4.44](P-11)"
+      }
+    ],
+    "derived": [
+      {
+        "name": "window_seam_relative_step",
+        "op": "relative_step",
+        "a": "window_seam_above.luminance_mean",
+        "b": "window_seam_below.luminance_mean"
       }
     ]
   },

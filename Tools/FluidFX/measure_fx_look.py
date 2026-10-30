@@ -1,7 +1,7 @@
-"""시스템 Python으로 실행(numpy·Pillow, --targets 모드는 scipy 추가, 에디터 불필요): 기본 모드는 이미지와 영역 JSON으로 불·연기 M1~M5, 구름·안개, 물, 반짝임 비율, 두 프레임 차(잔상) 지표를 결정론으로 재고 같은 구도의 조건별(R16 안티에일리어싱 A/B 등) 비교표를 낸다(FX-7a). --targets 모드는 목표 JSON(LIVE-2 합격 범위)과 영역 JSON(이미지·이름 붙은 사각형/다각형 영역·kind fire|torch|smoke|plume|background·game_time 라벨)으로 FX-8c 지표(불 색 등급·색상 중앙값·M1 G/R·테두리/코어 색·가장자리 폭/등가 반지름·번짐 @16px·배경 p20·실루엣 변동계수·구조 텐서 결맞음·색 경계 밀도·분홍 비율(pink_hi_fraction = 불 화소 중 색상<15°·휘도≥130, pink_hi145_fraction ≥145), 연기 백분위·미켈슨·따뜻함·중성 바닥·곧은 경계)를 재고 합격/불합격 격차표를 낸다(FX-8c C17). 목표 JSON 선택 키 kind_metrics {fire|torch: {지표 경로: 범위}}는 그 kind 영역에만 덧붙여 판정한다.
+"""시스템 Python으로 실행(numpy·Pillow, --targets 모드는 scipy 추가, 에디터 불필요): 기본 모드는 이미지와 영역 JSON으로 불·연기 M1~M5, 구름·안개, 물, 반짝임 비율, 두 프레임 차(잔상) 지표를 결정론으로 재고 같은 구도의 조건별(R16 안티에일리어싱 A/B 등) 비교표를 낸다(FX-7a). --targets 모드는 목표 JSON(LIVE-2 합격 범위)과 영역 JSON(이미지·이름 붙은 사각형/다각형 영역·kind fire|torch|smoke|plume|background·game_time 라벨)으로 FX-8c 지표(불 색 등급·색상 중앙값·M1 G/R·테두리/코어 색·가장자리 폭/등가 반지름·번짐 @16px·배경 p20·실루엣 변동계수·구조 텐서 결맞음·색 경계 밀도·분홍 비율(pink_hi_fraction = 불 화소 중 색상<15°·휘도≥130, pink_hi145_fraction ≥145), 연기 백분위·미켈슨·따뜻함·중성 바닥·곧은 경계)를 재고 합격/불합격 격차표를 낸다(FX-8c C17). 목표 JSON 선택 키 kind_metrics {fire|torch: {지표 경로: 범위}}는 그 kind 영역에만 덧붙여 판정한다. 기본 모드 영역에 analyses 목록이 있으면 그 영역만 autocorrelation(2D 자기상관)·line_profile(선 단면)·spectrum(2D 주파수) 분석을 더 재고, kind volume 은 atmosphere 분석의 별칭이다(CAL-0 G-MEASURE).
 실행: python Tools/FluidFX/measure_fx_look.py --regions <영역 JSON> --output <결과 JSON> [--targets <목표 JSON>] (PowerShell 또는 Git Bash, 인수와 JSON 안의 상대 경로는 프로젝트 루트 기준, --targets 영역 JSON 형식은 --help)
-출력: --output JSON(기본: images 이미지·영역별 지표와 comparisons 조건 비교표 / --targets: images 영역별 metrics·checks 판정(kind_metrics 범위는 group kind_metrics.<kind>)·frame_fire C8 판정)과 표준 출력(기본: 요약 / --targets: 마크다운 격차표, X = 합격 범위 밖). 종료 코드 0 성공(불합격 지표가 있어도 0) / 1 출력이 Docs/ 아래인데 입력에 LIVE-2 갤러리 이미지가 있음(RR R-14) / 2 입력 오류(--targets인데 scipy 없음 포함)
-상태: 실험. 해석 선택: JPEG가 아닌 입력은 전체 프레임을 품질 95·4:2:0으로 다시 압축한 뒤 자름(LIVE-2 갤러리 JPEG 24장의 양자화표가 모두 IJG 품질 95 표·4:2:0과 같음, Pillow 11.2.1 대조), 흰 포화의 분모는 휘도 60 초과 화소(따뜻한 마스크 안에서는 정의상 0), 구름·안개 잡음과 물 국소 대비의 흐림은 8비트 내림 휘도에 Pillow GaussianBlur(반경 2·12), 미세/거친 비는 원본 대 1/4 LANCZOS 축소의 라플라시안 평균비, M3 물체 높이 기본값은 영역 높이. --targets 지표는 FX-8c 1·2차 스크립트(measure_targets·measure_r2·plume_r2)와 같은 정의이고 색 경계 밀도는 2차 정의, 플룸 = σ2 흐린 휘도 ≥6에서 불씨(따뜻함·V≥0.6·L>114.75, 3px 팽창) 제외, C8 = 프레임 전체 불 화소(V≥0.6) 최대 연결 덩어리가 200px 미만이면 연기의 따뜻함·채도·그림자 채도를 day_smoke(중성) 범위로 판정(이미지 fire_lit로 덮어씀), 중성 바닥 = 연기 화소 평균 G·B(manual 8~30), background 영역 휘도 p20은 불 주변 배경 범위(bg_luma)로 판정. FX-8c 11차(2026-10-21) 분홍 비율 2개와 kind_metrics 추가: kind_metrics 없는 목표 JSON에서 표준 출력과 기존 지표 값은 같고, 불 영역 metrics 끝에 키 2개만 붙는다(round11 torch-pink-metric run_tests 19/19).
+출력: --output JSON(기본: images 이미지·영역별 지표(analyses 영역은 metrics.autocorrelation{secondary_peak, period_px}·line_profile{groove_width_px, groove_width_cm, bank_over_groove_ratio, gap_count}·spectrum{dominant_wavelength_px, peak_ratio} 추가)와 comparisons 조건 비교표 / --targets: images 영역별 metrics·checks 판정(kind_metrics 범위는 group kind_metrics.<kind>)·frame_fire C8 판정)과 표준 출력(기본: 요약 / --targets: 마크다운 격차표, X = 합격 범위 밖). 종료 코드 0 성공(불합격 지표가 있어도 0) / 1 출력이 Docs/ 아래인데 입력에 LIVE-2 갤러리 이미지가 있음(RR R-14) / 2 입력 오류(--targets인데 scipy 없음 포함)
+상태: 실험. 해석 선택: JPEG가 아닌 입력은 전체 프레임을 품질 95·4:2:0으로 다시 압축한 뒤 자름(LIVE-2 갤러리 JPEG 24장의 양자화표가 모두 IJG 품질 95 표·4:2:0과 같음, Pillow 11.2.1 대조), 흰 포화의 분모는 휘도 60 초과 화소(따뜻한 마스크 안에서는 정의상 0), 구름·안개 잡음과 물 국소 대비의 흐림은 8비트 내림 휘도에 Pillow GaussianBlur(반경 2·12), 미세/거친 비는 원본 대 1/4 LANCZOS 축소의 라플라시안 평균비, M3 물체 높이 기본값은 영역 높이. --targets 지표는 FX-8c 1·2차 스크립트(measure_targets·measure_r2·plume_r2)와 같은 정의이고 색 경계 밀도는 2차 정의, 플룸 = σ2 흐린 휘도 ≥6에서 불씨(따뜻함·V≥0.6·L>114.75, 3px 팽창) 제외, C8 = 프레임 전체 불 화소(V≥0.6) 최대 연결 덩어리가 200px 미만이면 연기의 따뜻함·채도·그림자 채도를 day_smoke(중성) 범위로 판정(이미지 fire_lit로 덮어씀), 중성 바닥 = 연기 화소 평균 G·B(manual 8~30), background 영역 휘도 p20은 불 주변 배경 범위(bg_luma)로 판정. FX-8c 11차(2026-10-21) 분홍 비율 2개와 kind_metrics 추가: kind_metrics 없는 목표 JSON에서 표준 출력과 기존 지표 값은 같고, 불 영역 metrics 끝에 키 2개만 붙는다(round11 torch-pink-metric run_tests 19/19). CAL-0 B4b(2026-10-30): analyses 없는 영역의 기본 모드와 --targets 모드 출력은 바이트 그대로(calib_offline_test check_cal0_measure). 자기상관 = 평균 뺀 휘도의 영 덧댄 선형 자기상관 ÷ 원점 값(편향 추정, 지연 ±절반 변), 원점을 품은 양수 연결 덩어리 밖 최댓값과 그 지연 거리. 주파수 = 한 창 곱한 휘도 rfft2 출력의 band_px 파장 대역 최댓값 칸(1 칸 해상도)과 그 칸 ÷ 대역 합. 선 단면 = 수직 ±2px 평균 표본, 양 끝 20% 중앙값 = 표면, 최저점을 품은 반 깊이 아래 구간 폭(선형 보간), 둑 = 홈 폭만큼 바깥의 최대 − 표면.
 """
 import argparse
 import io
@@ -28,10 +28,18 @@ JPEG_QUALITY = 95
 JPEG_SUBSAMPLING = "4:2:0"
 FLAME_KINDS = ("fire", "explosion", "smoke")
 EMBER_KINDS = ("embers",)
-ATMOSPHERE_KINDS = ("cloud", "fog", "dust", "snow", "sky")
+ATMOSPHERE_KINDS = ("cloud", "fog", "dust", "snow", "sky", "volume")
 WATER_KINDS = ("water",)
 KNOWN_KINDS = FLAME_KINDS + EMBER_KINDS + ATMOSPHERE_KINDS + WATER_KINDS
 MINIMUM_REGION_SIDE = 16
+ANALYSIS_NAMES = ("autocorrelation", "line_profile", "spectrum")
+MINIMUM_ANALYSIS_SIDE = 32
+FLAT_LUMINANCE_STD = 1e-9
+SPECTRUM_SHORTEST_WAVELENGTH_PX = 4.0
+LINE_HALF_WIDTH_PX = 2
+LINE_SURFACE_FRACTION = 0.2
+LINE_MINIMUM_DEPTH = 2.0 / 255.0
+LINE_MINIMUM_RUN = 2
 WARM_MASK_MINIMUM_PIXELS = 50
 FLAME_PERCENTILES = (10, 25, 50, 75, 95)
 FLAME_STEP_HALF_WIDTH = 6
@@ -154,7 +162,52 @@ def read_region(entry, where):
     object_height = entry.get("object_height_px", y1 - y0)
     if not is_plain_number(object_height) or object_height <= 0:
         raise InputError(f"{where}: object_height_px 는 양수여야 한다")
-    return {"name": name, "kind": kind, "box": box, "object_height_px": object_height}
+    return {"name": name, "kind": kind, "box": box, "object_height_px": object_height, "analyses": read_analyses(entry, box, where)}
+
+
+def read_analyses(entry, box, where):
+    names = entry.get("analyses")
+    if names is None:
+        return {}
+    if not isinstance(names, list) or not names or any(name not in ANALYSIS_NAMES for name in names) or len(set(names)) != len(names):
+        raise InputError(f"{where}: analyses 는 {', '.join(ANALYSIS_NAMES)} 중 겹치지 않는 이름 목록이어야 한다")
+    x0, y0, x1, y1 = box
+    if x1 - x0 < MINIMUM_ANALYSIS_SIDE or y1 - y0 < MINIMUM_ANALYSIS_SIDE:
+        raise InputError(f"{where}: analyses 영역은 가로·세로 {MINIMUM_ANALYSIS_SIDE}px 이상이어야 한다(영역이 분석에 너무 작음)")
+    analyses = {name: {} for name in names}
+    if "line_profile" in analyses:
+        analyses["line_profile"] = {"line": read_line(entry.get("line"), box, where), "cm_per_px": read_optional_positive(entry, "cm_per_px", where)}
+    if "spectrum" in analyses:
+        analyses["spectrum"] = {"band_px": read_wavelength_band(entry.get("band_px"), box, where)}
+    return analyses
+
+
+def read_line(value, box, where):
+    x0, y0, x1, y1 = box
+    if not isinstance(value, list) or len(value) != 2 or not all(isinstance(point, list) and len(point) == 2 and all(is_plain_number(v) for v in point) for point in value):
+        raise InputError(f"{where}: line_profile 은 line [[x0, y0], [x1, y1]](이미지 좌표)이 필요하다")
+    if not all(x0 <= x <= x1 - 1 and y0 <= y <= y1 - 1 for x, y in value):
+        raise InputError(f"{where}: line 양 끝은 box {box} 안이어야 한다")
+    if math.dist(value[0], value[1]) < MINIMUM_ANALYSIS_SIDE:
+        raise InputError(f"{where}: line 길이는 {MINIMUM_ANALYSIS_SIDE}px 이상이어야 한다")
+    return [[float(x), float(y)] for x, y in value]
+
+
+def read_optional_positive(entry, key, where):
+    value = entry.get(key)
+    if value is None:
+        return None
+    if not is_plain_number(value) or value <= 0:
+        raise InputError(f"{where}: {key} 는 양수여야 한다")
+    return float(value)
+
+
+def read_wavelength_band(value, box, where):
+    if value is None:
+        return [SPECTRUM_SHORTEST_WAVELENGTH_PX, min(box[2] - box[0], box[3] - box[1]) / 2.0]
+    if not isinstance(value, list) or len(value) != 2 or not all(is_plain_number(v) for v in value) or not 2 <= value[0] < value[1]:
+        raise InputError(f"{where}: band_px 는 파장 [짧은 px, 긴 px](2 이상, 짧은 < 긴)이어야 한다")
+    return [float(value[0]), float(value[1])]
 
 
 def read_image_entry(entry, where):
@@ -423,6 +476,108 @@ def measure_frame_difference(crop, previous_crop):
     }
 
 
+def find_central_lobe(mask, row, column):
+    lobe = np.zeros_like(mask)
+    for component_runs in find_components(mask):
+        if any(run_row == row and start <= column < end for run_row, start, end in component_runs):
+            for run_row, start, end in component_runs:
+                lobe[run_row, start:end] = True
+            break
+    return lobe
+
+
+def measure_autocorrelation(unit_luminance):
+    centered = unit_luminance - unit_luminance.mean()
+    if centered.std() < FLAT_LUMINANCE_STD:
+        return {"secondary_peak": None, "period_px": None}
+    height, width = centered.shape
+    padded_shape = (2 * height, 2 * width)
+    correlation = np.fft.irfft2(np.abs(np.fft.rfft2(centered, s=padded_shape)) ** 2, s=padded_shape)
+    lag_rows, lag_columns = height // 2, width // 2
+    window = np.roll(correlation, (lag_rows, lag_columns), axis=(0, 1))[:2 * lag_rows + 1, :2 * lag_columns + 1] / correlation[0, 0]
+    outside_lobe = np.where(find_central_lobe(window > 0, lag_rows, lag_columns), -np.inf, window)
+    peak_row, peak_column = np.unravel_index(np.argmax(outside_lobe), outside_lobe.shape)
+    if not np.isfinite(outside_lobe[peak_row, peak_column]):
+        return {"secondary_peak": 0.0, "period_px": None}
+    return {"secondary_peak": float(outside_lobe[peak_row, peak_column]), "period_px": math.hypot(peak_row - lag_rows, peak_column - lag_columns)}
+
+
+def measure_spectrum(unit_luminance, band_px):
+    height, width = unit_luminance.shape
+    windowed = (unit_luminance - unit_luminance.mean()) * np.outer(np.hanning(height), np.hanning(width))
+    power = np.abs(np.fft.rfft2(windowed)) ** 2
+    frequency = np.hypot(np.fft.fftfreq(height)[:, None], np.fft.rfftfreq(width)[None, :])
+    shortest, longest = band_px
+    in_band = (frequency >= 1.0 / longest) & (frequency <= 1.0 / shortest)
+    band_total = power[in_band].sum()
+    if band_total <= 0:
+        return {"dominant_wavelength_px": None, "peak_ratio": None}
+    peak = np.argmax(np.where(in_band, power, -1.0))
+    return {"dominant_wavelength_px": 1.0 / frequency.flat[peak], "peak_ratio": power.flat[peak] / band_total}
+
+
+def sample_bilinear(values, columns, rows):
+    height, width = values.shape
+    columns = np.clip(columns, 0, width - 1)
+    rows = np.clip(rows, 0, height - 1)
+    left = np.minimum(np.floor(columns).astype(int), width - 2)
+    top = np.minimum(np.floor(rows).astype(int), height - 2)
+    right_weight = columns - left
+    bottom_weight = rows - top
+    upper = values[top, left] * (1 - right_weight) + values[top, left + 1] * right_weight
+    lower = values[top + 1, left] * (1 - right_weight) + values[top + 1, left + 1] * right_weight
+    return upper * (1 - bottom_weight) + lower * bottom_weight
+
+
+def sample_line(unit_luminance, line):
+    (x0, y0), (x1, y1) = line
+    length = math.dist(line[0], line[1])
+    count = int(round(length)) + 1
+    along = np.linspace(0.0, 1.0, count)[:, None]
+    offsets = np.arange(-LINE_HALF_WIDTH_PX, LINE_HALF_WIDTH_PX + 1, dtype=np.float64)[None, :]
+    columns = x0 + (x1 - x0) * along - (y1 - y0) / length * offsets
+    rows = y0 + (y1 - y0) * along + (x1 - x0) / length * offsets
+    return sample_bilinear(unit_luminance, columns, rows).mean(axis=1), length / (count - 1)
+
+
+def interpolate_crossing(profile, inside_index, outside_index, level):
+    if not 0 <= outside_index < len(profile):
+        return float(inside_index)
+    inside, outside = profile[inside_index], profile[outside_index]
+    return inside_index + (outside_index - inside_index) * (level - inside) / (outside - inside)
+
+
+def measure_line_profile(unit_image_luminance, settings):
+    profile, spacing = sample_line(unit_image_luminance, settings["line"])
+    edge = max(1, int(len(profile) * LINE_SURFACE_FRACTION))
+    surface = float(np.median(np.concatenate((profile[:edge], profile[-edge:]))))
+    deepest = int(np.argmin(profile))
+    depth = surface - float(profile[deepest])
+    if depth < LINE_MINIMUM_DEPTH:
+        return {"groove_width_px": None, "groove_width_cm": None, "bank_over_groove_ratio": None, "gap_count": None}
+    half_level = surface - depth / 2.0
+    runs = find_row_runs(profile < half_level)
+    start, end = next((start, end) for start, end in runs if start <= deepest < end)
+    groove_runs = [run for run in runs if run[1] - run[0] >= LINE_MINIMUM_RUN or run == (start, end)]
+    width_px = (interpolate_crossing(profile, end - 1, end, half_level) - interpolate_crossing(profile, start, start - 1, half_level)) * spacing
+    reach = end - start
+    banks = np.concatenate((profile[max(0, start - reach):start], profile[end:end + reach]))
+    bank = max(0.0, float(banks.max()) - surface) if banks.size else 0.0
+    cm_per_px = settings["cm_per_px"]
+    return {"groove_width_px": width_px, "groove_width_cm": width_px * cm_per_px if cm_per_px else None, "bank_over_groove_ratio": bank / depth, "gap_count": len(groove_runs) - 1}
+
+
+def measure_analyses(pixels, unit_luminance, analyses):
+    measured = {}
+    if "autocorrelation" in analyses:
+        measured["autocorrelation"] = measure_autocorrelation(unit_luminance)
+    if "line_profile" in analyses:
+        measured["line_profile"] = measure_line_profile(luminance(pixels.astype(np.float64)) / 255.0, analyses["line_profile"])
+    if "spectrum" in analyses:
+        measured["spectrum"] = measure_spectrum(unit_luminance, analyses["spectrum"]["band_px"])
+    return measured
+
+
 def measure_region(pixels, previous_pixels, region):
     x0, y0, x1, y1 = region["box"]
     crop = pixels[y0:y1, x0:x1]
@@ -442,6 +597,7 @@ def measure_region(pixels, previous_pixels, region):
         metrics["atmosphere"] = measure_atmosphere(crop)
     if region["kind"] in WATER_KINDS:
         metrics["water"] = measure_water(crop)
+    metrics.update(measure_analyses(pixels, lum / 255.0, region["analyses"]))
     return {"name": region["name"], "kind": region["kind"], "box": region["box"], "metrics": metrics}
 
 
@@ -1346,6 +1502,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="FX-7a 이미지 지표: 영역 JSON의 이미지·영역을 재서 결과 JSON과 요약을 낸다. --targets 를 주면 FX-8c 지표를 재서 목표 합격 범위와 대조한다",
         epilog=(
+            "기본 모드 영역 선택 키: \"analyses\": [autocorrelation|line_profile|spectrum](영역 가로·세로 32px 이상), line_profile 은 \"line\": [[x0,y0],[x1,y1]](이미지 좌표, box 안, 32px 이상)·\"cm_per_px\"?, "
+            "spectrum 은 \"band_px\"?: [짧은 파장 px, 긴 파장 px](기본 [4, 짧은 변/2]). kind volume 은 atmosphere 분석. "
             "--targets 영역 JSON: {\"images\": [{\"path\", \"id\"?, \"game_time\"? 초, \"label\"?, \"fire_lit\"? true|false(C8 자동 판정 덮어쓰기), "
             "\"regions\": [{\"name\", \"kind\": fire|torch|smoke|plume|background, \"box\": [x0,y0,x1,y1] 또는 \"polygon\": [[x,y],...](화소 중심 판정), "
             "\"exclude\"?: [사각형 [x0,y0,x1,y1] 또는 다각형], \"planes\"?: [[a,b,\"L\"|\"R\"]](L은 x<a+b·y-8, R은 x>a+b·y+8만 남김), "

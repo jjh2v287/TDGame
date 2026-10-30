@@ -82,6 +82,9 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
 
+	UFUNCTION(BlueprintPure, Category = "Cloud")
+	FTDFluidCloudSceneSettings GetEffectiveCloudSceneSettings() const { return SceneSettings; }
+
 	static FVector2D ComputeSlabKm(const TArray<FTDFluidCloudSlotBand>& Bands, const FVector2D& TerrainHeightRangeKm);
 	static bool ResolveNearSampling(float CameraAltitudeKm, const FVector2D& SlabKm, float EnterMarginKm, float ExitMarginKm, bool bWasNear);
 	static int32 ResolveSetupIndex(int32 CVarValue, int32 DefaultIndex, int32 SetupCount);

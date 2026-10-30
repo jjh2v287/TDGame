@@ -54,6 +54,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	UMaterialInstanceDynamic* GetOutputMaterialInstance(ETDFluidOutputMaterialSlot Slot) const;
 
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidVolumeDriverSettings GetEffectiveVolumeDriverSettings() const { return DriverSettings; }
+
 	const FTDFluidVolumeDriverSettings& GetDriverSettings() const { return DriverSettings; }
 	const FTDFluidOutputTargetSettings& GetOutputTargetSettings() const { return OutputTargetSettings; }
 	const FTDFluidTerrainHeightSettings& GetTerrainHeightSettings() const { return TerrainHeightSettings; }

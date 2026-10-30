@@ -4,6 +4,8 @@
 #include "Containers/Ticker.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidOutputQuality.h"
+#include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "TDFluidPresetTuningSubsystem.generated.h"
 
 class FJsonObject;
@@ -85,6 +87,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	bool IsUsingOverridePaths() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidOutputQualitySettings GetEffectiveOutputQualitySettings() const;
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidHeterogeneousVolumeRenderProfile GetEffectiveHeterogeneousVolumeRenderProfile() const;
 
 	FTDFluidOnPresetTuningReloaded OnPresetTuningReloaded;
 

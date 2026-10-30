@@ -48,6 +48,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "WaterParticles")
 	int32 GetActiveSplashCount() const;
 
+	UFUNCTION(BlueprintPure, Category = "WaterParticles")
+	FTDFluidWaterParticleSettings GetEffectiveWaterParticleSettings() const { return Settings; }
+
 	int32 GetEmittedSplashEventCount() const { return EmittedSplashEventCount; }
 	int32 GetLastContactPointCount() const { return LastContactPointCount; }
 	int32 GetLastContactStampCount() const { return LastContactStampCount; }

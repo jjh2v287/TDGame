@@ -55,6 +55,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	FTDFluidUnderwaterStats GetUnderwaterStats() const { return Stats; }
 
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidUnderwaterSettings GetEffectiveUnderwaterSettings() const { return Settings; }
+
 	void SetCameraLocationOverrideForTests(const FVector& CameraLocation);
 	void ClearCameraLocationOverrideForTests();
 	void RestoreDrivenVolumesForTests();

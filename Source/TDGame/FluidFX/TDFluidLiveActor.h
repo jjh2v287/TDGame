@@ -158,6 +158,10 @@ public:
 	static float ApplyTerrainHeightOps(float ElevationCm, const FTDFluidTerrainHeightSettings& Settings);
 	void SetTerrainHeightSettings(const FTDFluidTerrainHeightSettings& InSettings);
 	const FTDFluidTerrainHeightSettings& GetTerrainHeightSettings() const { return TerrainHeightSettings; }
+
+	UFUNCTION(BlueprintPure, Category = "LiveTerrain")
+	FTDFluidTerrainHeightSettings GetEffectiveTerrainHeightSettings() const { return TerrainHeightSettings; }
+
 	bool TrySampleTerrainHeightCm(const FVector2D& WorldXY, double& OutHeightCm) const;
 	UTexture2D* GetTerrainHeightCacheTexture() const { return TerrainHeightCacheTexture; }
 	bool GetTerrainHeightCacheWindow(FVector4f& OutWindow) const;

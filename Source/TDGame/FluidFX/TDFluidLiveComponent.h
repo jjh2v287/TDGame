@@ -276,6 +276,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FluidFX")
 	FTDFluidRuntimeOpsSettings GetEffectiveRuntimeOpsSettings() const { return RuntimeOpsSettings; }
 
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidInputBrushSettings GetEffectiveInputBrushSettings() const { return InputBrushSettings; }
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidFieldInputSettings GetEffectiveFieldInputSettings() const { return FieldInputSettings; }
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidSurfaceRenderSettings GetEffectiveSurfaceRenderSettings() const { return SurfaceRenderSettings; }
+
+	UFUNCTION(BlueprintPure, Category = "FluidFX")
+	FTDFluidWaterNearRippleSettings GetEffectiveNearRippleSettings() const { return NearRippleSettings; }
+
 private:
 	FTDFluidGpuBackendDecision ResolveSolverBackend() const;
 	bool ApplySimulationConfigAndDetectReset(const FTDFluidSimulationConfig& InConfig);

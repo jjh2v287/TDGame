@@ -666,6 +666,30 @@ bool UTDFluidPresetTuningSubsystem::IsUsingOverridePaths() const
 	return bIsTuningOverridden || bIsLookOverridden;
 }
 
+FTDFluidOutputQualitySettings UTDFluidPresetTuningSubsystem::GetEffectiveOutputQualitySettings() const
+{
+	FTDFluidOutputQualitySettings Settings;
+	if (!bHasTable)
+	{
+		return Settings;
+	}
+
+	ApplyPresetTuningFromTable(Table, ETDFluidPresetKind::Custom, FTDFluidOutputQualitySettings::StaticStruct(), &Settings);
+	return Settings;
+}
+
+FTDFluidHeterogeneousVolumeRenderProfile UTDFluidPresetTuningSubsystem::GetEffectiveHeterogeneousVolumeRenderProfile() const
+{
+	FTDFluidHeterogeneousVolumeRenderProfile Profile;
+	if (!bHasTable)
+	{
+		return Profile;
+	}
+
+	ApplyPresetTuningFromTable(Table, ETDFluidPresetKind::Custom, FTDFluidHeterogeneousVolumeRenderProfile::StaticStruct(), &Profile);
+	return Profile;
+}
+
 const TArray<FTDFluidPresetTuningRegisteredStruct>& UTDFluidPresetTuningSubsystem::GetRegisteredStructs()
 {
 	static const TArray<FTDFluidPresetTuningRegisteredStruct> RegisteredStructs = {

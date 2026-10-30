@@ -59,6 +59,7 @@ public:
 
 	bool AreFlowAssetsReady() const { return bAreAssetsReady; }
 	bool IsWritingFlow() const { return bIsWritingFlow; }
+	UFUNCTION(BlueprintPure, Category = "FoliageFlow")
 	UMaterialInstanceDynamic* GetFlowCopyMaterialInstance() const { return FlowCopyMaterialInstance; }
 	ATDFluidLiveActor* GetSourceLiveActor() const { return SourceLiveActor.Get(); }
 

@@ -744,3 +744,11 @@
 - 증거: 2차 진단 D2(Saved/FluidFX/calib/frames/fx5_flamethrower)
 - 날짜·상태: 2026-10-31 active(재촬영 확인 대기)
 - 발견: claude
+
+### L-editor-85 에디터 C++ 도구가 디스크에 있지만 불러오지 않은 패키지에 CreatePackage 후 저장하면 '일부만 로드되어 저장할 수 없음' 치명 오류, delete_asset 뒤 남은 파일은 다음 저장에서 옛 지오메트리 컬렉션을 덮어 읽어 단언이 터진다
+- 증상: 입력 무대 overwrite 재생성에서 에디터가 두 번 크래시 — ① TDFluidMeshFieldEditorLibrary.cpp 359 저장 중 부분 로드 패키지 치명 오류 ② EditorAssetLibrary.delete_asset 이 True 인데 GC_TD_FluidInputBricks.uasset 이 디스크에 남고, 다음 저장 때 FullyLoad 가 옛 GC 를 새 객체 위에 읽어 GeometryCollectionRenderData.cpp 711 !bIsInitialized
+- 해결(임시): 메시 단면 텍스처를 미리 불러 두고 남은 GC 파일을 옮긴 뒤 다시 실행. 근본: CreatePackage 다음 Package->FullyLoad(), 삭제 뒤 디스크 잔존 확인(L-editor-67 와 같은 계열) — TDFluidMeshFieldEditorLibrary.cpp 359·TDFluidFractureEditorLibrary.cpp 76 수정 필요(C++, 재시작 빌드)
+- 범위: 에디터 전용 C++ 라이브러리로 기존 에셋을 덮어쓰는 무대 생성기(입력 무대)
+- 증거: Saved/Crashes 2026-10-31 01:35·01:36, `Saved/AgentOps/20261031/hvol/regen/`(backup 포함)
+- 날짜·상태: 2026-10-31 active(C++ 미수정)
+- 발견: claude(FluidFX 일괄 보정 무대 재생성)

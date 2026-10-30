@@ -1807,6 +1807,27 @@ def check_cal0_integration():
           control["is_control"] and control["assignments"] == [{"json_path": look_path, "value": 0.4, "split_group": False, "base": 0.4}] and accepted["added_key"]
           and not variant["is_control"] and variant["assignments"][0]["value"] == 0.8 and variant["knobs"] == [0], (control["assignments"], variant["assignments"]))
 
+    def judge_rejection(sweep, lock_path):
+        try:
+            calib_judge.check_lock(sweep, lock_path)
+        except calib_judge.JudgeError as error:
+            return str(error)
+        return None
+    lock_dir = TEST_DIR / "cal0-integration"
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    plan_text = calib_sweep.relative_text(W / CAMPFIRE_PLAN)
+    plan_only_lock = lock_dir / "plan-only.lock.json"
+    prereg_lock.create_lock([plan_text], plan_only_lock)
+    full_lock = lock_dir / "full.lock.json"
+    prereg_lock.create_lock(prereg_lock.required_files(plan_text), full_lock)
+    staged = {"plan": plan_text, "plan_sha256": fluid_tuning_patch.file_sha256(W / CAMPFIRE_PLAN), "stage": "screen", "scenes": [], "started_at": "2999-01-01T00:00:00+00:00"}
+    missing_file = judge_rejection(staged, plan_only_lock)
+    missing_lock_sha = judge_rejection(staged, full_lock)
+    accepted_lock = calib_judge.check_lock(dict(staged, lock_sha256=fluid_tuning_patch.file_sha256(full_lock)), full_lock)
+    check("통합 (a) 판정기 check_lock = prereg_lock.check_sweep_lock(닫힌 세계 C8): 필수 파일 누락·lock_sha256 없음 거부, 다 갖추면 통과",
+          missing_file is not None and "필수 파일 누락" in missing_file and missing_lock_sha is not None and "lock_sha256" in missing_lock_sha and accepted_lock.get("version") == 2,
+          (missing_file, missing_lock_sha))
+
 
 def check_cal0_judge():
     from datetime import datetime, timezone

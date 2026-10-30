@@ -99,12 +99,10 @@ def median_or_none(values):
 
 
 def check_lock(sweep, lock_path):
-    is_matching, problems, lock = prereg_lock.verify_lock(lock_path)
-    if not is_matching:
-        raise JudgeError("사전 등록 잠금: " + "; ".join(problems))
-    if lock["files"].get(sweep["plan"]) != sweep["plan_sha256"]:
-        raise JudgeError(f"사전 등록 잠금에 이 스윕의 계획 {sweep['plan']} (sha256 {sweep['plan_sha256'][:12]}…) 이 없다")
-    return lock
+    try:
+        return prereg_lock.check_sweep_lock(sweep, lock_path)
+    except prereg_lock.LockError as error:
+        raise JudgeError(f"사전 등록 잠금: {error}")
 
 
 def build_measure_regions(scene, steps):

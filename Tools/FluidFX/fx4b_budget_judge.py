@@ -1,10 +1,11 @@
-"""실행 환경: 시스템 Python 3(표준 라이브러리만), 에디터·빌드 불필요. 입력은 pie_profile_fluid.py --csv-gpu 실행 폴더(Saved/FluidFX/fx7p/<run>/, session.json·plan.json·csv/ 블록 CSV).
-실행 명령: python -B Tools/FluidFX/fx4b_budget_judge.py pilot|judge <run_dir> [--water-ref-ms <값, judge 필수>] [--out <json>]
-출력: 표준 출력에 사람이 읽는 요약, --out이면 같은 내용을 JSON으로 저장(pilot = 장면별 필수 열·PD-H 통과 비율·명명 GPU와 게임 스레드 물 합 대략값, judge = WQ0 유효성·B192·B1024·G192·G1024·GW 판정 행·WQ1·WQ4 기록 행). 판정 불가는 이름 붙은 사유.
-상태: 2026-10-24 FX-4b 예산 PIE 판정 분석기(명세 Saved/AgentOps/20261024/fx4b-acc/spec-fx4b-budget.md 1~5절, FX-7p-r 판정기 fx7pr_judge.py의 구간·안정·클럭 규칙 계승), 시험은 같은 폴더 기준 budget-fixtures/run_fixtures.py.
+"""실행 환경: 시스템 Python 3(표준 라이브러리만), 에디터·빌드 불필요. 입력은 pie_profile_fluid.py --csv-gpu 실행 폴더(Saved/FluidFX/fx7p/<run>/, session.json·plan.json·csv/ 블록 CSV)와 선택 영역 예산 표 JSON(없으면 내장 FX-4b 물 표, 같은 내용 파일 Tools/FluidFX/perf/fixtures/fx4b_water_budget.json).
+실행 명령: python -B Tools/FluidFX/fx4b_budget_judge.py pilot|judge <run_dir> [--budget-table <영역 예산 표 json>] [--water-ref-ms|--ref-ms <기준 ms, 표에 reference가 있으면 judge 필수·없으면 금지>] [--out <json>]
+출력: 표준 출력에 사람이 읽는 요약, --out이면 같은 내용을 JSON으로 저장(pilot = 장면별 표 지표 필수 열·PD-H 통과 비율·대략값, judge = 기준 장면 유효성·표의 판정 행(구간·걷기)·기록 행·예산 판정, --budget-table이면 budget_table{path,sha256,area} 추가). 판정 불가는 이름 붙은 사유, 예산 표 오류는 종료 2.
+상태: 2026-10-30 CAL-0 B7 영역 예산 표 일반화(내장 표 = 2026-10-24 FX-4b 판정, 출력 동일. 명세 Saved/AgentOps/20261024/fx4b-acc/spec-fx4b-budget.md 1~5절, fx7pr_judge.py의 구간·안정·클럭 규칙 계승), 시험은 그 폴더 budget-fixtures/run_fixtures.py(FX-4b)와 Tools/FluidFX/perf/fixtures/check_budget_table_fixtures.py(일반 표).
 """
 import argparse
 import csv
+import hashlib
 import json
 import math
 import re
@@ -54,16 +55,243 @@ BACKEND_PATTERN = re.compile(r"(GPU|CPU)", re.IGNORECASE)
 PAIR_POSITIONS = ((1, 2), (4, 3))
 SIDE_POSITIONS = {"A": (1, 4), "B": (2, 3)}
 
-GPU_ROW_SPECS = (
-    {"row": "B192", "scene": "WQ2", "limit": GPU_LIMIT_192_MS, "label": "명명 GPU d"},
-    {"row": "B1024", "scene": "WQ3", "limit": GPU_LIMIT_1024_MS, "label": "명명 GPU d"},
-)
-GAME_THREAD_ROW_SPECS = (
-    {"row": "G192", "scene": "WQ2", "limit": GAME_THREAD_LIMIT_MS, "label": "게임 스레드 물 합 A p50"},
-    {"row": "G1024", "scene": "WQ3", "limit": GAME_THREAD_LIMIT_MS, "label": "게임 스레드 물 합 A p50"},
-)
-GPU_METRIC = {"name": "named_gpu", "needed": NAMED_GPU_COLUMNS + (SUBSTEPS,), "sides": ("A", "B"), "uses_pdh": True}
-GAME_THREAD_METRIC = {"name": "game_thread_water", "needed": GAME_THREAD_WATER_COLUMNS, "sides": ("A",), "uses_pdh": False}
+TABLE_VERSION = 1
+BUDGET_VERDICTS = ("충족(proposed)", "미충족", "판정 불가")
+DOCUMENT_KEYS = {"source", "basis", "note"}
+TABLE_KEYS = {"version", "area", "title", "target_label", "water_path_check", "scenes", "metrics", "reference", "rows", "records", "consequences"} | DOCUMENT_KEYS
+SCENE_KEYS = {"backend", "grid", "target_labels", "awake_step_count"} | DOCUMENT_KEYS
+METRIC_KEYS = {"label", "columns", "pair", "pdh", "backends"} | DOCUMENT_KEYS
+REFERENCE_KEYS = {"scene", "metric", "ratio_range"} | DOCUMENT_KEYS
+ROW_KEYS = {"row", "scene", "kind", "metric", "limit_ms", "moving_p95_ratio", "label"} | DOCUMENT_KEYS
+RECORD_KEYS = {"scene", "game_thread_focus"} | DOCUMENT_KEYS
+PAIR_KINDS = ("difference", "a_only")
+ROW_KINDS = ("interval", "walk")
+BACKENDS = ("GPU", "CPU")
+GENERIC_CONSEQUENCES = {"충족(proposed)": "영역 성능 예산 충족(proposed): 화면 승인만 남는다",
+                        "미충족": "미달 행의 비용 손잡이 채택을 백업 값으로 되돌리고 그 영역을 다시 재거나 예산 개정을 결정 기록에 proposed로 올린다",
+                        "판정 불가": "판정 불가 사유를 해소한 뒤 같은 계획으로 다시 잰다"}
+
+BUILTIN_METRICS = {
+    "named_gpu": {"label": "명명 GPU", "columns": list(NAMED_GPU_COLUMNS), "pair": "difference", "pdh": True, "backends": ["GPU"]},
+    "game_thread_water": {"label": "게임 스레드 물 합", "columns": list(GAME_THREAD_WATER_COLUMNS), "pair": "a_only", "pdh": False, "backends": ["GPU"]},
+}
+FX4B_BUDGET_TABLE = {
+    "version": TABLE_VERSION, "area": "water", "title": "FX-4b 물 예산", "target_label": TARGET_LABEL, "water_path_check": True,
+    "scenes": {scene_id: {"backend": backend, "grid": grid} for scene_id, (backend, grid) in SCENE_DEFINITIONS.items()},
+    "metrics": {},
+    "reference": {"scene": "WQ0", "metric": "named_gpu", "ratio_range": list(REFERENCE_RATIO_RANGE)},
+    "rows": [
+        {"row": "B192", "scene": "WQ2", "metric": "named_gpu", "limit_ms": GPU_LIMIT_192_MS, "label": "명명 GPU d"},
+        {"row": "B1024", "scene": "WQ3", "metric": "named_gpu", "limit_ms": GPU_LIMIT_1024_MS, "label": "명명 GPU d"},
+        {"row": "G192", "scene": "WQ2", "metric": "game_thread_water", "limit_ms": GAME_THREAD_LIMIT_MS, "label": "게임 스레드 물 합 A p50"},
+        {"row": "G1024", "scene": "WQ3", "metric": "game_thread_water", "limit_ms": GAME_THREAD_LIMIT_MS, "label": "게임 스레드 물 합 A p50"},
+        {"row": "GW", "scene": "WQ5", "kind": "walk", "metric": "game_thread_water", "limit_ms": GAME_THREAD_LIMIT_MS, "moving_p95_ratio": MOVING_P95_RATIO,
+         "label": "게임 스레드 물 합 A p50 + 이동 프레임 명명 GPU p95"},
+    ],
+    "records": [{"scene": "WQ1", "game_thread_focus": True}, {"scene": "WQ4", "game_thread_focus": False}],
+    "consequences": {"충족(proposed)": "FX-4b 성능 예산 충족(proposed): 1024² 화면 승인(RM:533)만 남는다",
+                     "미충족": "레버 잔여(L1·L3·S2·S3·S5) 효과를 실측으로 더 낸 뒤 다시 재거나 예산 개정을 결정 기록에 proposed로 올린다",
+                     "판정 불가": "판정 불가 사유를 해소한 뒤 같은 계획으로 다시 잰다"},
+}
+
+
+def build_metric(name, definition):
+    pdh = definition.get("pdh", False)
+    pair = definition.get("pair", "difference")
+    columns = tuple(definition["columns"])
+    return {"name": name, "label": definition.get("label", name), "columns": columns, "needed": columns + ((SUBSTEPS,) if pdh else ()),
+            "sides": ("A", "B") if pair == "difference" else ("A",), "uses_pdh": pdh, "pair": pair, "backends": tuple(definition.get("backends", ()))}
+
+
+GPU_METRIC = build_metric("named_gpu", BUILTIN_METRICS["named_gpu"])
+
+
+def is_integer(value):
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def is_positive_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0
+
+
+def find_unknown_keys(item, allowed, where):
+    return [f"{where}: 모르는 키 {key}" for key in item if key not in allowed]
+
+
+def find_scene_errors(scene_id, scene, default_label):
+    where = f"장면 {scene_id}"
+    if not isinstance(scene, dict):
+        return [f"{where}: 객체가 아니다"]
+    errors = find_unknown_keys(scene, SCENE_KEYS, where)
+    errors.extend(f"{where}: {key} 필요(확인하지 않으려면 null)" for key in ("backend", "grid") if key not in scene)
+    if scene.get("backend") not in BACKENDS + (None,):
+        errors.append(f"{where}: backend {scene.get('backend')!r}는 GPU·CPU·null 중 하나")
+    if scene.get("grid") is not None and not (is_integer(scene["grid"]) and scene["grid"] > 0):
+        errors.append(f"{where}: grid {scene.get('grid')!r}는 양의 정수 또는 null")
+    if not (is_integer(scene.get("awake_step_count", 1)) and scene.get("awake_step_count", 1) >= 1):
+        errors.append(f"{where}: awake_step_count는 1 이상 정수")
+    labels = scene.get("target_labels", [default_label] if default_label else [])
+    if not isinstance(labels, list) or not labels or not all(isinstance(label, str) and label for label in labels):
+        errors.append(f"{where}: 대상 액터 이름이 없다(표 target_label 또는 장면 target_labels)")
+    return errors
+
+
+def find_metric_errors(name, metric):
+    where = f"지표 {name}"
+    if name in BUILTIN_METRICS:
+        return [f"{where}: 내장 지표 이름과 겹친다"]
+    if not isinstance(metric, dict):
+        return [f"{where}: 객체가 아니다"]
+    errors = find_unknown_keys(metric, METRIC_KEYS, where)
+    columns = metric.get("columns")
+    if not isinstance(columns, list) or not columns or not all(isinstance(column, str) and column for column in columns):
+        errors.append(f"{where}: columns는 비지 않은 열 이름 목록")
+    if metric.get("pair", "difference") not in PAIR_KINDS:
+        errors.append(f"{where}: pair {metric.get('pair')!r}는 {PAIR_KINDS} 중 하나")
+    if not isinstance(metric.get("pdh", False), bool):
+        errors.append(f"{where}: pdh는 참·거짓")
+    backends = metric.get("backends", [])
+    if not isinstance(backends, list) or any(backend not in BACKENDS for backend in backends):
+        errors.append(f"{where}: backends는 {BACKENDS} 목록")
+    if not isinstance(metric.get("label", name), str):
+        errors.append(f"{where}: label은 문자열")
+    return errors
+
+
+def find_reference_errors(reference, scenes, metrics):
+    if reference is None:
+        return []
+    if not isinstance(reference, dict):
+        return ["reference: 객체 또는 null"]
+    errors = find_unknown_keys(reference, REFERENCE_KEYS, "reference")
+    if reference.get("scene") not in scenes:
+        errors.append(f"reference: 장면 {reference.get('scene')!r}이 scenes에 없다")
+    if reference.get("metric") not in metrics:
+        errors.append(f"reference: 지표 {reference.get('metric')!r}이 없다")
+    ratio_range = reference.get("ratio_range")
+    if not (isinstance(ratio_range, list) and len(ratio_range) == 2 and all(is_positive_number(value) for value in ratio_range) and ratio_range[0] < ratio_range[1]):
+        errors.append("reference: ratio_range는 [하한, 상한] 양수이고 하한 < 상한")
+    return errors
+
+
+def find_row_errors(rows, scenes, metrics):
+    if not isinstance(rows, list) or not rows:
+        return ["rows: 판정 행이 1개 이상 필요"]
+    errors = []
+    seen = set()
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            errors.append(f"행 {index}: 객체가 아니다")
+            continue
+        where = f"행 {row.get('row', index)}"
+        errors.extend(find_unknown_keys(row, ROW_KEYS, where))
+        if not isinstance(row.get("row"), str) or not row.get("row") or row.get("row") in seen:
+            errors.append(f"{where}: row 이름이 없거나 겹친다")
+        seen.add(row.get("row"))
+        if row.get("scene") not in scenes:
+            errors.append(f"{where}: 장면 {row.get('scene')!r}이 scenes에 없다")
+        if row.get("metric") not in metrics:
+            errors.append(f"{where}: 지표 {row.get('metric')!r}이 없다")
+        if not is_positive_number(row.get("limit_ms")):
+            errors.append(f"{where}: limit_ms는 양수")
+        kind = row.get("kind", "interval")
+        if kind not in ROW_KINDS:
+            errors.append(f"{where}: kind {kind!r}는 {ROW_KINDS} 중 하나")
+        if kind == "walk" and not is_positive_number(row.get("moving_p95_ratio", MOVING_P95_RATIO)):
+            errors.append(f"{where}: moving_p95_ratio는 양수")
+        if kind != "walk" and "moving_p95_ratio" in row:
+            errors.append(f"{where}: moving_p95_ratio는 walk 행에만 쓴다")
+        if not isinstance(row.get("label", ""), str):
+            errors.append(f"{where}: label은 문자열")
+    return errors
+
+
+def find_record_errors(records, scenes):
+    if not isinstance(records, list):
+        return ["records: 목록이 아니다"]
+    errors = []
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            errors.append(f"기록 {index}: 객체가 아니다")
+            continue
+        errors.extend(find_unknown_keys(record, RECORD_KEYS, f"기록 {index}"))
+        if record.get("scene") not in scenes:
+            errors.append(f"기록 {index}: 장면 {record.get('scene')!r}이 scenes에 없다")
+        if not isinstance(record.get("game_thread_focus", False), bool):
+            errors.append(f"기록 {index}: game_thread_focus는 참·거짓")
+    if len({record.get("scene") for record in records if isinstance(record, dict)}) != len(records):
+        errors.append("records: 장면이 겹친다")
+    return errors
+
+
+def find_table_errors(table):
+    if not isinstance(table, dict):
+        return ["표 최상위가 객체가 아니다"]
+    errors = find_unknown_keys(table, TABLE_KEYS, "표")
+    if table.get("version") != TABLE_VERSION:
+        errors.append(f"version {table.get('version')!r}(기대 {TABLE_VERSION})")
+    if not isinstance(table.get("area"), str) or not table.get("area"):
+        errors.append("area: 비지 않은 문자열 필요")
+    if not isinstance(table.get("water_path_check"), bool):
+        errors.append("water_path_check: 참·거짓 필요(물 표만 참)")
+    if not isinstance(table.get("target_label", ""), str):
+        errors.append("target_label: 문자열")
+    scenes = table.get("scenes")
+    metrics = table.get("metrics", {})
+    if not isinstance(scenes, dict) or not scenes:
+        return errors + ["scenes: 장면이 1개 이상 필요"]
+    if not isinstance(metrics, dict):
+        return errors + ["metrics: 객체가 아니다"]
+    for scene_id, scene in scenes.items():
+        errors.extend(find_scene_errors(scene_id, scene, table.get("target_label")))
+    for name, metric in metrics.items():
+        errors.extend(find_metric_errors(name, metric))
+    known = {**BUILTIN_METRICS, **metrics}
+    labels = [definition.get("label", name) for name, definition in known.items() if isinstance(definition, dict)]
+    if len(set(labels)) != len(labels):
+        errors.append(f"metrics: 지표 label이 겹친다 {labels}")
+    errors.extend(find_reference_errors(table.get("reference"), scenes, known))
+    errors.extend(find_row_errors(table.get("rows"), scenes, known))
+    errors.extend(find_record_errors(table.get("records", []), scenes))
+    consequences = table.get("consequences", {})
+    if not isinstance(consequences, dict) or any(key not in BUDGET_VERDICTS or not isinstance(text, str) for key, text in consequences.items()):
+        errors.append(f"consequences: 키는 {BUDGET_VERDICTS} 중 하나, 값은 문자열")
+    return errors
+
+
+def normalize_row(row, metrics):
+    metric = metrics[row["metric"]]
+    default_label = f"{metric['label']} d" if metric["pair"] == "difference" else f"{metric['label']} A p50"
+    return {"row": row["row"], "scene": row["scene"], "kind": row.get("kind", "interval"), "metric": row["metric"], "limit": row["limit_ms"],
+            "moving_p95_ratio": row.get("moving_p95_ratio", MOVING_P95_RATIO), "label": row.get("label", default_label), "source": row.get("source")}
+
+
+def normalize_table(table):
+    metrics = {name: build_metric(name, definition) for name, definition in {**BUILTIN_METRICS, **table.get("metrics", {})}.items()}
+    scenes = {scene_id: {"backend": scene["backend"], "grid": scene["grid"], "target_labels": tuple(scene.get("target_labels", [table.get("target_label")])),
+                         "awake_step_count": scene.get("awake_step_count", 1)} for scene_id, scene in table["scenes"].items()}
+    reference = table.get("reference")
+    return {"area": table["area"], "title": table.get("title", table["area"]), "water_path_check": table["water_path_check"], "scenes": scenes, "metrics": metrics,
+            "reference": None if reference is None else {"scene": reference["scene"], "metric": reference["metric"], "ratio_range": tuple(reference["ratio_range"])},
+            "rows": [normalize_row(row, metrics) for row in table["rows"]], "records": [{"scene": record["scene"], "game_thread_focus": record.get("game_thread_focus", False)} for record in table.get("records", [])],
+            "consequences": {**GENERIC_CONSEQUENCES, **table.get("consequences", {})}, "source_file": None}
+
+
+def load_budget_table(path):
+    try:
+        raw = Path(path).read_bytes()
+        table = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError) as error:
+        return None, [f"읽기 실패: {error}"]
+    errors = find_table_errors(table)
+    if errors:
+        return None, errors
+    normalized = normalize_table(table)
+    normalized["source_file"] = {"path": str(path), "sha256": hashlib.sha256(raw).hexdigest(), "area": table["area"]}
+    return normalized, []
+
+
+DEFAULT_BUDGET_TABLE = normalize_table(FX4B_BUDGET_TABLE)
 
 
 def percentile(values, fraction):
@@ -105,7 +333,7 @@ def parse_cell(row, index):
         return None
 
 
-def read_block_table(path, discard_rows):
+def read_block_table(path, discard_rows, wanted_columns):
     with open(path, encoding="utf-8", errors="replace", newline="") as handle:
         rows = list(csv.reader(handle))
     if not rows:
@@ -118,7 +346,7 @@ def read_block_table(path, discard_rows):
     kept_rows = [row for row in data_rows[discard_rows:] if len(row) <= len(header)]
     indices = {}
     for index, name in enumerate(header):
-        if name in WANTED_COLUMNS:
+        if name in wanted_columns:
             indices.setdefault(name, index)
     return {"row_count": len(kept_rows), "columns": {name: [parse_cell(row, index) for row in kept_rows] for name, index in indices.items()}}
 
@@ -148,7 +376,17 @@ def build_pdh_mask(substeps):
     return mask
 
 
-def summarize_block(block, side, table):
+def select_metric_values(series, mask, uses_pdh):
+    if series is None:
+        return []
+    if not uses_pdh:
+        return present_values(series)
+    if mask is None:
+        return []
+    return [value for value, passed in zip(series, mask) if passed and value is not None]
+
+
+def summarize_block(block, side, table, metrics):
     columns = table["columns"]
     row_count = table["row_count"]
     step_values = present_values(columns.get(STEP_COUNT))
@@ -159,6 +397,7 @@ def summarize_block(block, side, table):
     substeps = read_series(table, SUBSTEPS, idle_confirmed, assumed_zero)
     water = read_series(table, WATER, idle_confirmed, assumed_zero)
     game_thread_water = sum_series([read_series(table, name, idle_confirmed, assumed_zero) for name in GAME_THREAD_WATER_COLUMNS])
+    metric_series = {name: sum_series([read_series(table, column, idle_confirmed, assumed_zero) for column in metric["columns"]]) for name, metric in metrics.items()}
     mask = build_pdh_mask(substeps) if substeps is not None else None
     passed_count = sum(mask) if mask is not None else 0
     named_values = [named[index] for index in range(row_count) if mask is not None and named is not None and mask[index] and named[index] is not None]
@@ -174,11 +413,13 @@ def summarize_block(block, side, table):
         "pressure_mode_max": max(present_values(columns.get(PRESSURE_MODE)), default=None),
         "frame_p50": median_of(present_values(columns.get(FRAME))), "game_thread_p50": median_of(present_values(columns.get(GAME_THREAD))),
         "tickables_p50": median_of(present_values(columns.get(TICKABLES))), "walk_speed_p50": median_of(present_values(columns.get(WALK_SPEED))),
+        "metric_p50": {name: median_of(select_metric_values(metric_series[name], mask, metric["uses_pdh"])) for name, metric in metrics.items()},
     }
-    return summary, {"named": named, "mask": mask, "water": water}
+    return summary, {"named": named, "mask": mask, "water": water, "series": metric_series}
 
 
-def load_context(run_dir):
+def load_context(run_dir, table=None):
+    table = table or DEFAULT_BUDGET_TABLE
     run_dir = Path(run_dir)
     session_path = run_dir / "session.json"
     if not session_path.is_file():
@@ -188,7 +429,8 @@ def load_context(run_dir):
     plan = read_json(plan_path) if plan_path.is_file() else {}
     context = {"run_dir": run_dir, "session": session, "plan": plan, "records": {record["id"]: record for record in session.get("scenes", [])},
                "plan_scenes": {scene["id"]: scene for scene in plan.get("scenes", [])}, "discard_rows": plan.get("discard_frames", DEFAULT_DISCARD_ROWS),
-               "summaries": {}, "frames": {}, "tables": {}, "warnings": [], "analyses": {}}
+               "summaries": {}, "frames": {}, "tables": {}, "warnings": [], "analyses": {}, "table": table, "metrics": table["metrics"],
+               "wanted_columns": set(WANTED_COLUMNS).union(*(metric["columns"] for metric in table["metrics"].values()))}
     return context, None
 
 
@@ -203,8 +445,8 @@ def block_csv_path(block, context):
 def block_summary(block, context):
     key = block["block_id"]
     if key not in context["summaries"]:
-        table = read_block_table(block_csv_path(block, context), context["discard_rows"])
-        context["summaries"][key], context["frames"][key] = summarize_block(block, block["side"], table)
+        table = read_block_table(block_csv_path(block, context), context["discard_rows"], context["wanted_columns"])
+        context["summaries"][key], context["frames"][key] = summarize_block(block, block["side"], table, context["metrics"])
     return context["summaries"][key]
 
 
@@ -261,24 +503,25 @@ def normalize_backend(value):
 
 def describe_target_problems(actor, side, expected_backend, expected_grid):
     problems = []
-    if normalize_backend(actor.get("backend")) != expected_backend:
+    if expected_backend is not None and normalize_backend(actor.get("backend")) != expected_backend:
         problems.append(f"backend {actor.get('backend')} (기대 {expected_backend})")
-    if actor.get("grid_resolution") != expected_grid:
+    if expected_grid is not None and actor.get("grid_resolution") != expected_grid:
         problems.append(f"grid {actor.get('grid_resolution')} (기대 {expected_grid})")
     if bool(actor.get("awake")) != (side == "A"):
         problems.append(f"awake {actor.get('awake')} ({side} 측 기대 {side == 'A'})")
-    if "is_using_gpu_water_layer" in actor and bool(actor["is_using_gpu_water_layer"]) != (expected_backend == "GPU"):
+    if "is_using_gpu_water_layer" in actor and expected_backend is not None and bool(actor["is_using_gpu_water_layer"]) != (expected_backend == "GPU"):
         problems.append(f"is_using_gpu_water_layer {actor['is_using_gpu_water_layer']}")
     return problems
 
 
-def check_actor_records(side_blocks, expected_backend, expected_grid):
+def check_actor_records(side_blocks, scene_definition):
+    expected_backend, expected_grid, labels = scene_definition["backend"], scene_definition["grid"], scene_definition["target_labels"]
     result = {"expected_backend": expected_backend, "expected_grid": expected_grid, "checked_blocks": 0, "unverified_blocks": 0, "others_unrecorded_blocks": 0, "mismatches": []}
     for side, blocks in side_blocks.items():
         for block in blocks:
             actors = block.get("actors") or []
-            targets = [actor for actor in actors if actor.get("label") == TARGET_LABEL]
-            others = [actor for actor in actors if actor.get("label") != TARGET_LABEL]
+            targets = [actor for actor in actors if actor.get("label") in labels]
+            others = [actor for actor in actors if actor.get("label") not in labels]
             if not targets:
                 result["unverified_blocks"] += 1
                 continue
@@ -294,7 +537,7 @@ def check_actor_records(side_blocks, expected_backend, expected_grid):
     return result
 
 
-def check_step_counts(side_blocks, context):
+def check_step_counts(side_blocks, context, awake_step_count):
     mismatches = []
     for side, blocks in side_blocks.items():
         for block in blocks:
@@ -303,7 +546,7 @@ def check_step_counts(side_blocks, context):
                 continue
             if side == "B" and step_max > 0:
                 mismatches.append(f"{block['block_id']} 재운 측 {STEP_COUNT} 최대 {step_max:g}(다른 유체가 깨어 있거나 물이 재워지지 않음)")
-            if side == "A" and step_max > 1:
+            if side == "A" and step_max > awake_step_count:
                 mismatches.append(f"{block['block_id']} 깨운 측 {STEP_COUNT} 최대 {step_max:g}(다른 유체 깨움)")
             if side == "A" and step_max < 1:
                 mismatches.append(f"{block['block_id']} 깨운 측 {STEP_COUNT} 최대 {step_max:g}(물 액터가 스텝하지 않음)")
@@ -335,14 +578,15 @@ def analyze_scene(context, scene_id):
 
 def build_scene_analysis(context, scene_id):
     record = context["records"].get(scene_id)
-    backend, grid = SCENE_DEFINITIONS[scene_id]
-    analysis = {"scene": scene_id, "present": record is not None, "blockers": [], "backend": backend, "grid": grid, "round_numbers": [], "leading_rounds": 0, "pairs": [], "rounds": {}}
+    definition = context["table"]["scenes"][scene_id]
+    backend, grid = definition["backend"], definition["grid"]
+    analysis = {"scene": scene_id, "present": record is not None, "blockers": [], "backend": backend, "grid": grid, "definition": definition, "round_numbers": [], "leading_rounds": 0, "pairs": [], "rounds": {}}
     if record is None:
         add_blocker(analysis, "장면 없음", f"{scene_id} 장면이 session.json에 없다")
         return analysis
     plan_meta = (context["plan_scenes"].get(scene_id) or {}).get("meta") or {}
     plan_grid = plan_meta.get("resolution")
-    if plan_grid is not None and plan_grid != grid:
+    if plan_grid is not None and grid is not None and plan_grid != grid:
         context["warnings"].append(f"{scene_id}: 계획 meta resolution {plan_grid}가 명세 {grid}와 다르다(명세 값 사용)")
     if record.get("error"):
         add_blocker(analysis, "장면 오류", str(record["error"])[:160])
@@ -371,7 +615,7 @@ def build_scene_analysis(context, scene_id):
 
 def apply_validity_checks(context, analysis):
     side_blocks = analysis["side_blocks"]
-    actors = check_actor_records(side_blocks, analysis["backend"], analysis["grid"])
+    actors = check_actor_records(side_blocks, analysis["definition"])
     analysis["actors_check"] = actors
     if actors["mismatches"]:
         summary = "; ".join(f"{item['block']} {item['actor']}: {', '.join(item['problems'])}" for item in actors["mismatches"][:3])
@@ -380,9 +624,11 @@ def apply_validity_checks(context, analysis):
         context["warnings"].append(f"{analysis['scene']}: 블록 {actors['unverified_blocks']}개에 대상 액터 기록이 없어 backend·grid·깨움을 확인하지 못했다")
     if actors["others_unrecorded_blocks"]:
         context["warnings"].append(f"{analysis['scene']}: 블록 {actors['others_unrecorded_blocks']}개에 다른 유체 액터 기록이 없어 {STEP_COUNT}로만 재움을 확인했다(계획 targets를 all로 두면 기록된다)")
-    step_problems = check_step_counts(side_blocks, context)
+    step_problems = check_step_counts(side_blocks, context, analysis["definition"]["awake_step_count"])
     if step_problems:
         add_blocker(analysis, "유효성", f"(c) 스텝 수 어긋남 {len(step_problems)}건: {'; '.join(step_problems[:3])}")
+    if not context["table"]["water_path_check"]:
+        return
     water_problems = check_water_path(side_blocks, analysis["backend"], context)
     if water_problems:
         add_blocker(analysis, "유효성", f"(d) 물 경로 어긋남 {len(water_problems)}건: {'; '.join(water_problems[:3])}")
@@ -431,9 +677,9 @@ def check_spread(values):
 
 def block_value(block, metric, context):
     summary = block_summary(block, context)
-    if metric["uses_pdh"]:
-        return summary["named_p50"] if summary["pdh_valid"] else None
-    return summary["game_thread_water_p50"]
+    if metric["uses_pdh"] and not summary["pdh_valid"]:
+        return None
+    return summary["metric_p50"][metric["name"]]
 
 
 def build_round_table(analysis, metric, context):
@@ -529,11 +775,11 @@ def make_interval(values, rank, limit):
 def pair_value(pair, metric):
     if pair["discarded"]:
         return None
-    if metric["uses_pdh"]:
-        a_value, b_value = pair["a_summary"]["named_p50"], pair["b_summary"]["named_p50"]
-        return None if a_value is None or b_value is None else round(a_value - b_value, 6)
-    value = pair["a_summary"]["game_thread_water_p50"]
-    return None if value is None else round(value, 6)
+    a_value = pair["a_summary"]["metric_p50"][metric["name"]]
+    if metric["pair"] == "a_only":
+        return None if a_value is None else round(a_value, 6)
+    b_value = pair["b_summary"]["metric_p50"][metric["name"]]
+    return None if a_value is None or b_value is None else round(a_value - b_value, 6)
 
 
 def usable_pairs(analysis, metric, round_count):
@@ -606,8 +852,10 @@ def collect_gpu_records(analysis, context, round_count):
 def decide_interval_row(context, analysis, metric, row_spec, reference):
     row = {"row": row_spec["row"], "scene": row_spec["scene"], "metric": metric["name"], "label": row_spec["label"], "limit_ms": row_spec["limit"], "verdict": "판정 불가", "reason": None,
            "reasons": [dict(item) for item in analysis["blockers"]], "stage_rounds": None, "trace": [], "outcome": None}
+    if row_spec.get("source") is not None:
+        row["source"] = row_spec["source"]
     if reference is not None and not reference["valid"]:
-        row["reasons"].append({"reason": "유효성", "detail": f"(a) WQ0 세션 무효({reference['status']}): {reference['detail']}"})
+        row["reasons"].append({"reason": "유효성", "detail": f"(a) {reference['scene']} 세션 무효({reference['status']}): {reference['detail']}"})
     missing = find_missing_columns(analysis, metric, context)
     if missing:
         row["reasons"].insert(0, {"reason": "필수 열 없음", "detail": ", ".join(missing)})
@@ -641,7 +889,7 @@ def finish_row(row, analysis, context, final_count, metric):
     return row
 
 
-def evaluate_moving_frames(context, analysis, round_count):
+def evaluate_moving_frames(context, analysis, round_count, ratio_limit):
     blocks = [pair for pair in stage_pairs(analysis, round_count or len(analysis["round_numbers"])) if not pair["discarded"] and not pair["pdh_invalid"]]
     moving_values = []
     all_values = []
@@ -657,11 +905,11 @@ def evaluate_moving_frames(context, analysis, round_count):
         all_values.extend(frames["named"][index] for index in indices)
         moving_values.extend(frames["named"][index] for index in indices if frames["water"][index] > threshold)
     result = {"definition": MOVING_DEFINITION, "blocks": len(blocks), "skipped_blocks": skipped_blocks, "frames": len(all_values), "moving_frames": len(moving_values),
-              "moving_p95": percentile(moving_values, 0.95), "scene_mean": mean_of(all_values), "ratio_limit": MOVING_P95_RATIO}
+              "moving_p95": percentile(moving_values, 0.95), "scene_mean": mean_of(all_values), "ratio_limit": ratio_limit}
     if not moving_values or not all_values:
         result.update({"state": "판정 불가", "detail": "이동 프레임 0개(근사 정의로 표본 없음)" if all_values else "PD-H 통과 A 블록 없음"})
         return result
-    result["limit_ms"] = MOVING_P95_RATIO * result["scene_mean"]
+    result["limit_ms"] = ratio_limit * result["scene_mean"]
     result["state"] = "통과" if result["moving_p95"] <= result["limit_ms"] + EPSILON else "미달"
     return result
 
@@ -670,17 +918,17 @@ def check_walk_evidence(context, analysis):
     speeds = [block_summary(block, context)["walk_speed_p50"] for block in analysis["side_blocks"]["A"]]
     known = [speed for speed in speeds if speed is not None]
     if not known:
-        context["warnings"].append(f"WQ5: 블록에 {WALK_SPEED} 열이 없어 걷기를 확인하지 못했다")
+        context["warnings"].append(f"{analysis['scene']}: 블록에 {WALK_SPEED} 열이 없어 걷기를 확인하지 못했다")
         return None
     slow = [speed for speed in known if speed < MINIMUM_WALK_SPEED]
-    return None if not slow else f"WQ5 A 블록 {WALK_SPEED} p50 {min(slow):.1f}cm/s < {MINIMUM_WALK_SPEED:g}(폰이 걷지 않음)"
+    return None if not slow else f"{analysis['scene']} A 블록 {WALK_SPEED} p50 {min(slow):.1f}cm/s < {MINIMUM_WALK_SPEED:g}(폰이 걷지 않음)"
 
 
-def decide_walk_row(context, reference):
-    analysis = analyze_scene(context, "WQ5")
-    spec = {"row": "GW", "scene": "WQ5", "limit": GAME_THREAD_LIMIT_MS, "label": "게임 스레드 물 합 A p50 + 이동 프레임 명명 GPU p95"}
-    game_thread = decide_interval_row(context, analysis, GAME_THREAD_METRIC, spec, reference)
-    row = {**game_thread, "metric": "game_thread_water_and_moving_gpu", "game_thread_verdict": game_thread["verdict"], "reasons": list(game_thread["reasons"]), "moving": None}
+def decide_walk_row(context, row_spec, reference):
+    analysis = analyze_scene(context, row_spec["scene"])
+    metric = context["metrics"][row_spec["metric"]]
+    game_thread = decide_interval_row(context, analysis, metric, row_spec, reference)
+    row = {**game_thread, "metric": f"{metric['name']}_and_moving_gpu", "game_thread_verdict": game_thread["verdict"], "reasons": list(game_thread["reasons"]), "moving": None}
     if not analysis["pairs"]:
         return combine_walk_verdict(row)
     gpu_missing = find_missing_columns(analysis, GPU_METRIC, context)
@@ -691,7 +939,7 @@ def decide_walk_row(context, reference):
     if walk_problem is not None:
         row["reasons"].append({"reason": "유효성", "detail": walk_problem})
         return combine_walk_verdict(row)
-    row["moving"] = evaluate_moving_frames(context, analysis, row["stage_rounds"])
+    row["moving"] = evaluate_moving_frames(context, analysis, row["stage_rounds"], row_spec["moving_p95_ratio"])
     if row["moving"]["state"] == "판정 불가":
         row["reasons"].append({"reason": "이동 프레임", "detail": row["moving"]["detail"], "kind": "unresolved"})
     return combine_walk_verdict(row)
@@ -712,31 +960,36 @@ def combine_walk_verdict(row):
 
 
 def decide_reference(context, water_reference_ms):
-    analysis = analyze_scene(context, "WQ0")
-    row = {"row": "WQ0", "scene": "WQ0", "water_ref_ms": water_reference_ms, "range_ratio": list(REFERENCE_RATIO_RANGE), "range_ms": [round(water_reference_ms * ratio, 6) for ratio in REFERENCE_RATIO_RANGE],
+    settings = context["table"]["reference"]
+    if settings is None:
+        return None
+    scene_id, metric, ratio_range = settings["scene"], context["metrics"][settings["metric"]], settings["ratio_range"]
+    analysis = analyze_scene(context, scene_id)
+    row = {"row": scene_id, "scene": scene_id, "water_ref_ms": water_reference_ms, "range_ratio": list(ratio_range), "range_ms": [round(water_reference_ms * ratio, 6) for ratio in ratio_range],
            "named_a_p50": None, "ratio": None, "valid": False, "status": None, "detail": ""}
     first_scene = (context["session"].get("scenes") or [{}])[0].get("id")
-    row["is_first_scene"] = first_scene == "WQ0"
+    row["is_first_scene"] = first_scene == scene_id
     if analysis["present"] and not row["is_first_scene"]:
-        context["warnings"].append(f"WQ0가 첫 장면이 아니다(첫 장면 {first_scene})")
+        context["warnings"].append(f"{scene_id}가 첫 장면이 아니다(첫 장면 {first_scene})")
     if analysis["blockers"]:
         row.update({"status": analysis["blockers"][0]["reason"], "detail": "; ".join(item["detail"] for item in analysis["blockers"])})
         return row
-    missing = find_missing_columns(analysis, GPU_METRIC, context)
+    missing = find_missing_columns(analysis, metric, context)
     if missing:
         row.update({"status": "필수 열 없음", "detail": ", ".join(missing)})
         return row
-    values = [block_summary(block, context) for block in analysis["side_blocks"]["A"]]
-    valid_values = [summary["named_p50"] for summary in values if summary["pdh_valid"] and summary["named_p50"] is not None]
+    values = [block_value(block, metric, context) for block in analysis["side_blocks"]["A"]]
+    valid_values = [value for value in values if value is not None]
     row["pdh_valid_a_blocks"] = f"{len(valid_values)}/{len(values)}"
     if not valid_values:
-        row.update({"status": "하위 스텝", "detail": "PD-H 유효 A 블록이 없다"})
+        status, detail = ("하위 스텝", "PD-H 유효 A 블록이 없다") if metric["uses_pdh"] else ("값 없음", f"A 블록 {metric['label']} 값이 없다")
+        row.update({"status": status, "detail": detail})
         return row
     row["named_a_p50"] = median_of(valid_values)
     row["ratio"] = row["named_a_p50"] / water_reference_ms
-    row["valid"] = REFERENCE_RATIO_RANGE[0] - EPSILON <= row["ratio"] <= REFERENCE_RATIO_RANGE[1] + EPSILON
+    row["valid"] = ratio_range[0] - EPSILON <= row["ratio"] <= ratio_range[1] + EPSILON
     row["status"] = "유효" if row["valid"] else "범위 밖"
-    row["detail"] = "" if row["valid"] else f"WQ0 명명 GPU A p50 {round_four(row['named_a_p50'])}ms가 기준 {water_reference_ms}ms의 {REFERENCE_RATIO_RANGE[0]}~{REFERENCE_RATIO_RANGE[1]}배({row['range_ms'][0]}~{row['range_ms'][1]}ms) 밖"
+    row["detail"] = "" if row["valid"] else f"{scene_id} {metric['label']} A p50 {round_four(row['named_a_p50'])}ms가 기준 {water_reference_ms}ms의 {ratio_range[0]}~{ratio_range[1]}배({row['range_ms'][0]}~{row['range_ms'][1]}ms) 밖"
     return row
 
 
@@ -762,26 +1015,18 @@ def decide_budget(reference, rows):
     verdicts = [row["verdict"] for row in rows.values()]
     if "미달" in verdicts:
         return "미충족"
-    if "판정 불가" in verdicts or not reference["valid"]:
+    if "판정 불가" in verdicts or (reference is not None and not reference["valid"]):
         return "판정 불가"
     return "충족(proposed)"
-
-
-def describe_consequence(budget_verdict):
-    if budget_verdict == "충족(proposed)":
-        return "FX-4b 성능 예산 충족(proposed): 1024² 화면 승인(RM:533)만 남는다"
-    if budget_verdict == "미충족":
-        return "레버 잔여(L1·L3·S2·S3·S5) 효과를 실측으로 더 낸 뒤 다시 재거나 예산 개정을 결정 기록에 proposed로 올린다"
-    return "판정 불가 사유를 해소한 뒤 같은 계획으로 다시 잰다"
 
 
 BLOCK_TABLE_KEYS = ("block_id", "side", "rows", "pdh_ratio", "pdh_valid", "named_p50", "water_p50", "game_thread_water_p50", "game_thread_water_p95", "substeps_p50", "substeps_max", "pressure_mode_max",
                     "step_count_max", "walk_speed_p50", "assumed_zero")
 
 
-def describe_block(summary, backend):
+def describe_block(summary, backend, context):
     entry = {key: summary[key] for key in BLOCK_TABLE_KEYS}
-    if backend == "CPU":
+    if backend == "CPU" or not any(metric["uses_pdh"] for metric in list_pilot_metrics(context)):
         entry.update({"pdh_ratio": None, "pdh_valid": None})
     return entry
 
@@ -791,23 +1036,45 @@ def build_block_table(context):
     for scene_id, analysis in context["analyses"].items():
         if not analysis["pairs"]:
             continue
-        table[scene_id] = [describe_block(block_summary(block, context), analysis["backend"]) for side in ("A", "B") for block in analysis["side_blocks"][side]]
+        table[scene_id] = [describe_block(block_summary(block, context), analysis["backend"], context) for side in ("A", "B") for block in analysis["side_blocks"][side]]
     return table
 
 
+def decide_table_row(context, row_spec, reference):
+    if row_spec["kind"] == "walk":
+        return decide_walk_row(context, row_spec, reference)
+    return decide_interval_row(context, analyze_scene(context, row_spec["scene"]), context["metrics"][row_spec["metric"]], row_spec, reference)
+
+
+def attach_table_source(result, context):
+    if context["table"]["source_file"] is not None:
+        result["budget_table"] = context["table"]["source_file"]
+    return result
+
+
 def run_judge(context, water_reference_ms):
+    table = context["table"]
     reference = decide_reference(context, water_reference_ms)
-    rows = {}
-    for spec in GPU_ROW_SPECS:
-        rows[spec["row"]] = decide_interval_row(context, analyze_scene(context, spec["scene"]), GPU_METRIC, spec, reference)
-    for spec in GAME_THREAD_ROW_SPECS:
-        rows[spec["row"]] = decide_interval_row(context, analyze_scene(context, spec["scene"]), GAME_THREAD_METRIC, spec, reference)
-    rows["GW"] = decide_walk_row(context, reference)
-    records = {"WQ1": build_record_row(context, "WQ1", True), "WQ4": build_record_row(context, "WQ4", False)}
+    rows = {row_spec["row"]: decide_table_row(context, row_spec, reference) for row_spec in table["rows"]}
+    records = {record["scene"]: build_record_row(context, record["scene"], record["game_thread_focus"]) for record in table["records"]}
     budget_verdict = decide_budget(reference, rows)
-    return {"mode": "judge", "run_dir": str(context["run_dir"]), "run_token": context["session"].get("run_token"), "water_ref_ms": water_reference_ms, "reference": reference, "rows": rows,
-            "records": records, "blocks": build_block_table(context), "budget_verdict": budget_verdict, "consequence": describe_consequence(budget_verdict), "asset_hashes": context["session"].get("asset_hashes"),
-            "build_gate": context["session"].get("build_gate"), "warnings": context["warnings"]}
+    return attach_table_source({"mode": "judge", "run_dir": str(context["run_dir"]), "run_token": context["session"].get("run_token"), "water_ref_ms": water_reference_ms, "reference": reference, "rows": rows,
+                                "records": records, "blocks": build_block_table(context), "budget_verdict": budget_verdict, "consequence": table["consequences"][budget_verdict],
+                                "asset_hashes": context["session"].get("asset_hashes"), "build_gate": context["session"].get("build_gate"), "warnings": context["warnings"]}, context)
+
+
+def list_pilot_metrics(context):
+    table = context["table"]
+    names = [table["reference"]["metric"]] if table["reference"] is not None else []
+    for row_spec in table["rows"]:
+        names.append(row_spec["metric"])
+        if row_spec["kind"] == "walk":
+            names.append(GPU_METRIC["name"])
+    return [context["metrics"][name] for name in dict.fromkeys(names)]
+
+
+def find_walk_row(context, scene_id):
+    return next((row_spec for row_spec in context["table"]["rows"] if row_spec["kind"] == "walk" and row_spec["scene"] == scene_id), None)
 
 
 def pilot_scene(context, scene_id):
@@ -817,28 +1084,30 @@ def pilot_scene(context, scene_id):
         return entry
     for side in ("A", "B"):
         for block in analysis["side_blocks"][side]:
-            entry["blocks"].append(describe_block(block_summary(block, context), analysis["backend"]))
-    if analysis["backend"] == "GPU":
-        needed = {"명명 GPU": GPU_METRIC["needed"], "게임 스레드 물 합": GAME_THREAD_METRIC["needed"]}
-        for label, names in needed.items():
-            entry["missing_columns"][label] = find_missing_columns(analysis, {"needed": names}, context)
+            entry["blocks"].append(describe_block(block_summary(block, context), analysis["backend"], context))
+    for metric in list_pilot_metrics(context):
+        if not metric["backends"] or analysis["backend"] in metric["backends"]:
+            entry["missing_columns"][metric["label"]] = find_missing_columns(analysis, metric, context)
     entry["records"] = collect_gpu_records(analysis, context, None) if analysis["backend"] == "GPU" and analysis["pairs"] else None
-    if scene_id == "WQ5":
-        entry["moving"] = evaluate_moving_frames(context, analysis, None) if not entry["missing_columns"].get("명명 GPU") else None
+    walk_row = find_walk_row(context, scene_id)
+    if walk_row is not None:
+        entry["moving"] = evaluate_moving_frames(context, analysis, None, walk_row["moving_p95_ratio"]) if not entry["missing_columns"].get(GPU_METRIC["label"]) else None
         entry["walk_problem"] = check_walk_evidence(context, analysis)
     return entry
 
 
 def run_pilot(context, water_reference_ms):
-    scenes = {scene_id: pilot_scene(context, scene_id) for scene_id in SCENE_DEFINITIONS if scene_id in context["records"]}
-    for scene_id in SCENE_DEFINITIONS:
+    table = context["table"]
+    scenes = {scene_id: pilot_scene(context, scene_id) for scene_id in table["scenes"] if scene_id in context["records"]}
+    for scene_id in table["scenes"]:
         if scene_id not in context["records"]:
             context["warnings"].append(f"{scene_id}: session.json에 장면이 없다")
     ready = bool(scenes) and all(not entry["blockers"] and not any(entry["missing_columns"].values()) and not entry.get("walk_problem") for entry in scenes.values())
-    reference = decide_reference(context, water_reference_ms) if water_reference_ms and "WQ0" in scenes else None
+    reference_scene = table["reference"]["scene"] if table["reference"] is not None else None
+    reference = decide_reference(context, water_reference_ms) if water_reference_ms and reference_scene in scenes else None
     invalid_blocks = [block["block_id"] for entry in scenes.values() for block in entry["blocks"] if block["side"] == "A" and block["pdh_valid"] is False]
-    return {"mode": "pilot", "run_dir": str(context["run_dir"]), "run_token": context["session"].get("run_token"), "scenes": scenes, "reference": reference, "ready": ready,
-            "pdh_invalid_blocks": invalid_blocks, "warnings": context["warnings"]}
+    return attach_table_source({"mode": "pilot", "run_dir": str(context["run_dir"]), "run_token": context["session"].get("run_token"), "scenes": scenes, "reference": reference, "ready": ready,
+                                "pdh_invalid_blocks": invalid_blocks, "warnings": context["warnings"]}, context)
 
 
 def clean(value):
@@ -856,7 +1125,7 @@ def format_number(value):
 
 
 def format_pilot(result):
-    lines = [f"[pilot] {result['run_dir']}"]
+    lines = [f"[pilot] {result['run_dir']}"] + describe_table_source(result)
     for scene_id, entry in result["scenes"].items():
         lines.append(f"{scene_id} {entry['backend']} {entry['grid']}: 사유 {[item['reason'] for item in entry['blockers']] or '없음'}")
         for label, names in entry["missing_columns"].items():
@@ -869,7 +1138,7 @@ def format_pilot(result):
         if entry.get("moving"):
             lines.append(f"  이동 프레임 {entry['moving']['moving_frames']}/{entry['moving']['frames']} p95 {format_number(entry['moving']['moving_p95'])} 평균 {format_number(entry['moving']['scene_mean'])}")
     if result["reference"]:
-        lines.append(f"WQ0 기준: {result['reference']['status']} 비율 {format_number(result['reference']['ratio'])}")
+        lines.append(f"{result['reference']['scene']} 기준: {result['reference']['status']} 비율 {format_number(result['reference']['ratio'])}")
     lines.append(f"PD-H 무효 A 블록: {result['pdh_invalid_blocks'] or '없음'}")
     lines.append(f"시운전 준비: {'예' if result['ready'] else '아니오'}")
     lines.extend(f"경고: {warning}" for warning in result["warnings"])
@@ -883,9 +1152,19 @@ def format_interval(outcome):
     return f"[{format_number(interval['lower'])}, {format_number(interval['upper'])}] 순위 {interval['rank']} 쌍 {outcome['pairs']}"
 
 
+def describe_table_source(result):
+    source = result.get("budget_table")
+    return [] if source is None else [f"예산 표: {source['area']} {source['path']} sha256 {source['sha256']}"]
+
+
+def describe_reference(reference):
+    if reference is None:
+        return "기준 장면: 없음(예산 표 reference null)"
+    return f"{reference['scene']} 기준: {reference['status']} A p50 {format_number(reference['named_a_p50'])} 기준 {reference['water_ref_ms']} 범위 {reference['range_ms']} {reference['detail']}"
+
+
 def format_judge(result):
-    reference = result["reference"]
-    lines = [f"[judge] {result['run_dir']}", f"WQ0 기준: {reference['status']} A p50 {format_number(reference['named_a_p50'])} 기준 {reference['water_ref_ms']} 범위 {reference['range_ms']} {reference['detail']}"]
+    lines = [f"[judge] {result['run_dir']}"] + describe_table_source(result) + [describe_reference(result["reference"])]
     for name, row in result["rows"].items():
         reason = f"({row['reason']})" if row["reason"] else ""
         lines.append(f"{name} {row['scene']}: {row['verdict']}{reason} {row['label']} 한도 {row['limit_ms']}ms 라운드 {row['stage_rounds']} {format_interval(row['outcome'])}")
@@ -910,15 +1189,24 @@ def main():
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="FX-4b 예산 PIE 판정 분석기")
+    parser = argparse.ArgumentParser(description="영역 예산 PIE 판정 분석기(기본 표 FX-4b 물)")
     parser.add_argument("mode", choices=["pilot", "judge"])
     parser.add_argument("run_dir", type=Path)
-    parser.add_argument("--water-ref-ms", type=float)
+    parser.add_argument("--budget-table", type=Path)
+    parser.add_argument("--water-ref-ms", "--ref-ms", dest="water_ref_ms", type=float)
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
-    if args.mode == "judge" and (args.water_ref_ms is None or args.water_ref_ms <= 0):
+    table = DEFAULT_BUDGET_TABLE
+    if args.budget_table is not None:
+        table, errors = load_budget_table(args.budget_table)
+        if errors:
+            print(f"예산 표 오류({args.budget_table}): " + "; ".join(errors), file=sys.stderr)
+            return 2
+    if table["reference"] is None and args.water_ref_ms is not None:
+        parser.error("예산 표에 reference가 없으니 --water-ref-ms를 주지 않는다")
+    if args.mode == "judge" and table["reference"] is not None and (args.water_ref_ms is None or args.water_ref_ms <= 0):
         parser.error("judge에는 양수 --water-ref-ms가 필요하다")
-    context, error = load_context(args.run_dir)
+    context, error = load_context(args.run_dir, table)
     if error is not None:
         print(error, file=sys.stderr)
         return 2

@@ -123,6 +123,16 @@ namespace TDFluidPerfNiagaraTest
 		int32 PreviousValue = 0;
 	};
 
+	FNiagaraVariable MakeDensityTextureVariable()
+	{
+		return FNiagaraVariable(FNiagaraTypeDefinition::GetUTextureDef(), FName(TEXT("User.DensityPressureTexture")));
+	}
+
+	FNiagaraVariable MakeVelocityTextureVariable()
+	{
+		return FNiagaraVariable(FNiagaraTypeDefinition::GetUTextureDef(), FName(TEXT("User.VelocityTexture")));
+	}
+
 	AActor* SpawnTaggedNiagaraActor(UWorld* World, const FVector& Location, UNiagaraComponent*& OutNiagaraComponent)
 	{
 		AActor* Actor = World->SpawnActor<AActor>(AActor::StaticClass(), Location, FRotator::ZeroRotator);
@@ -139,6 +149,8 @@ namespace TDFluidPerfNiagaraTest
 		Actor->Tags.Add(DriveTagName);
 
 		OutNiagaraComponent = NewObject<UNiagaraComponent>(Actor);
+		OutNiagaraComponent->GetOverrideParameters().AddParameter(MakeDensityTextureVariable(), true);
+		OutNiagaraComponent->GetOverrideParameters().AddParameter(MakeVelocityTextureVariable(), true);
 		OutNiagaraComponent->SetAutoActivate(false);
 		Actor->AddInstanceComponent(OutNiagaraComponent);
 		OutNiagaraComponent->SetupAttachment(ActorRoot);
@@ -192,16 +204,6 @@ namespace TDFluidPerfNiagaraTest
 		return FNiagaraVariable(FNiagaraTypeDefinition::GetVec2Def(), FName(TEXT("User.SimExtentsCm")));
 	}
 
-	FNiagaraVariable MakeDensityTextureVariable()
-	{
-		return FNiagaraVariable(FNiagaraTypeDefinition::GetUTextureDef(), FName(TEXT("User.DensityPressureTexture")));
-	}
-
-	FNiagaraVariable MakeVelocityTextureVariable()
-	{
-		return FNiagaraVariable(FNiagaraTypeDefinition::GetUTextureDef(), FName(TEXT("User.VelocityTexture")));
-	}
-
 	bool HasDriveParameter(const UNiagaraComponent& NiagaraComp, const FNiagaraVariable& Variable)
 	{
 		return NiagaraComp.GetOverrideParameters().IndexOf(Variable) != INDEX_NONE;
@@ -225,7 +227,8 @@ namespace TDFluidPerfNiagaraTest
 		const UNiagaraComponent& NiagaraComp,
 		const UTDFluidLiveComponent& FluidComponent,
 		float ExpectedHeightCm,
-		const FString& Label)
+		const FString& Label,
+		bool bComponentDeclaresTextureParameters)
 	{
 		const FNiagaraParameterStore& Parameters = NiagaraComp.GetOverrideParameters();
 		const FVector2D ExpectedCenter = FluidComponent.GetSolver().GetCenterWorld();
@@ -251,13 +254,20 @@ namespace TDFluidPerfNiagaraTest
 		{
 			Test.TestTrue(*(Label + TEXT(" DensityPressureTexture is half float RGBA")), ResolveOutputPixelFormat(DensityTexture) == PF_FloatRGBA);
 			Test.TestTrue(*(Label + TEXT(" VelocityTexture is half float RGBA")), ResolveOutputPixelFormat(VelocityTexture) == PF_FloatRGBA);
-			Test.TestTrue(*(Label + TEXT(" DensityPressureTexture parameter is the output texture")), Parameters.GetUObject(MakeDensityTextureVariable()).Get() == static_cast<const UObject*>(DensityTexture));
-			Test.TestTrue(*(Label + TEXT(" VelocityTexture parameter is the output texture")), Parameters.GetUObject(MakeVelocityTextureVariable()).Get() == static_cast<const UObject*>(VelocityTexture));
+			if (bComponentDeclaresTextureParameters)
+			{
+				Test.TestTrue(*(Label + TEXT(" DensityPressureTexture parameter is the output texture")), Parameters.GetUObject(MakeDensityTextureVariable()).Get() == static_cast<const UObject*>(DensityTexture));
+				Test.TestTrue(*(Label + TEXT(" VelocityTexture parameter is the output texture")), Parameters.GetUObject(MakeVelocityTextureVariable()).Get() == static_cast<const UObject*>(VelocityTexture));
+				return;
+			}
+
+			Test.TestFalse(*(Label + TEXT(" DensityPressureTexture parameter is not added to a system that does not declare it")), HasDriveParameter(NiagaraComp, MakeDensityTextureVariable()));
+			Test.TestFalse(*(Label + TEXT(" VelocityTexture parameter is not added to a system that does not declare it")), HasDriveParameter(NiagaraComp, MakeVelocityTextureVariable()));
 			return;
 		}
 
-		Test.TestFalse(*(Label + TEXT(" has no DensityPressureTexture parameter without an output texture")), HasDriveParameter(NiagaraComp, MakeDensityTextureVariable()));
-		Test.TestFalse(*(Label + TEXT(" has no VelocityTexture parameter without an output texture")), HasDriveParameter(NiagaraComp, MakeVelocityTextureVariable()));
+		Test.TestTrue(*(Label + TEXT(" DensityPressureTexture parameter stays empty because no output texture drives it")), Parameters.GetUObject(MakeDensityTextureVariable()) == nullptr);
+		Test.TestTrue(*(Label + TEXT(" VelocityTexture parameter stays empty because no output texture drives it")), Parameters.GetUObject(MakeVelocityTextureVariable()) == nullptr);
 	}
 
 	void ExpectActiveState(FAutomationTestBase& Test, const UNiagaraComponent& NiagaraComp, bool bExpectActive, const FString& Label)
@@ -443,11 +453,11 @@ bool FTDFluidNiagaraTaggedDriveTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("The tagged component has no center parameter before the first step"), HasDriveParameter(*TaggedNiagara, MakeCenterVariable()));
 
 	TestWorld.TickWorld(0.15f);
-	ExpectDrivenParameters(*this, *TaggedNiagara, *LiveActor->LiveComponent, 777.0f, TEXT("Tagged component"));
+	ExpectDrivenParameters(*this, *TaggedNiagara, *LiveActor->LiveComponent, 777.0f, TEXT("Tagged component"), true);
 
 	TaggedActor->SetActorLocation(FVector(1200.0f, 800.0f, 905.0f));
 	TestWorld.TickWorld(0.1f);
-	ExpectDrivenParameters(*this, *TaggedNiagara, *LiveActor->LiveComponent, 905.0f, TEXT("Tagged component after moving"));
+	ExpectDrivenParameters(*this, *TaggedNiagara, *LiveActor->LiveComponent, 905.0f, TEXT("Tagged component after moving"), true);
 
 	return true;
 }
@@ -540,7 +550,7 @@ bool FTDFluidNiagaraTagAddedLaterTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("A tag added after the cache refresh is not driven before the refresh interval"), HasDriveParameter(*LateNiagara, MakeCenterVariable()));
 
 	TestWorld.TickWorld(0.8f);
-	ExpectDrivenParameters(*this, *LateNiagara, *LiveActor->LiveComponent, 410.0f, TEXT("Late tagged component"));
+	ExpectDrivenParameters(*this, *LateNiagara, *LiveActor->LiveComponent, 410.0f, TEXT("Late tagged component"), true);
 
 	return true;
 }
@@ -577,7 +587,7 @@ bool FTDFluidNiagaraTagDestroyedTest::RunTest(const FString& Parameters)
 
 	FirstActor->Destroy();
 	TestWorld.TickWorld(1.5f);
-	ExpectDrivenParameters(*this, *SecondNiagara, *LiveActor->LiveComponent, 20.0f, TEXT("Second tagged component after the first actor was destroyed"));
+	ExpectDrivenParameters(*this, *SecondNiagara, *LiveActor->LiveComponent, 20.0f, TEXT("Second tagged component after the first actor was destroyed"), true);
 
 	SecondNiagara->DestroyComponent();
 	TestWorld.TickWorld(1.5f);
@@ -590,7 +600,7 @@ bool FTDFluidNiagaraTagDestroyedTest::RunTest(const FString& Parameters)
 	}
 
 	TestWorld.TickWorld(1.2f);
-	ExpectDrivenParameters(*this, *ThirdNiagara, *LiveActor->LiveComponent, 30.0f, TEXT("Third tagged component after a component was destroyed"));
+	ExpectDrivenParameters(*this, *ThirdNiagara, *LiveActor->LiveComponent, 30.0f, TEXT("Third tagged component after a component was destroyed"), true);
 
 	return true;
 }
@@ -633,12 +643,12 @@ bool FTDFluidNiagaraPresetSpawnTest::RunTest(const FString& Parameters)
 	}
 
 	TestWorld.TickWorld(0.15f);
-	ExpectDrivenParameters(*this, *OwnedNiagara, *LiveActor->LiveComponent, 250.0f, TEXT("Owned component"));
+	ExpectDrivenParameters(*this, *OwnedNiagara, *LiveActor->LiveComponent, 250.0f, TEXT("Owned component"), false);
 	TestTrue(TEXT("The owned component is reused while the system stays the same"), LiveActor->LiveComponent->GetOwnedNiagaraComponent() == OwnedNiagara);
 
 	LiveActor->SetActorLocation(FVector(0.0f, 0.0f, 480.0f));
 	TestWorld.TickWorld(0.1f);
-	ExpectDrivenParameters(*this, *OwnedNiagara, *LiveActor->LiveComponent, 480.0f, TEXT("Owned component after moving"));
+	ExpectDrivenParameters(*this, *OwnedNiagara, *LiveActor->LiveComponent, 480.0f, TEXT("Owned component after moving"), false);
 
 	return true;
 }

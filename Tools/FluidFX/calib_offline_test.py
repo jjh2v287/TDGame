@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터·PIE 불필요, numpy·Pillow·scipy 필요, 가짜 unreal 로 calib_sweep·pie_lookdev_fluid·pie_probe_fluid_water 를 프로세스 안에서 돌린다). 2026-10-25 P3 오프라인 시험(w0-P3-offline-test.py)을 본 트리로 옮겨 새 판정 규칙(목표 지표 대조·연속 점수·점수 잡음 유의)과 짧은 창 배율·대조 처음·끝 모드를 더했다.
 실행 명령: python -B Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/offline-test/ 아래 스윕·판정 산출물(실행마다 지움)과 표준 출력 PASS/FAIL 줄. 수용 시험 산출(Saved/FluidFX/calib/{campfire-run1,campfire-run2,campfire-r4-run1,river-run1})이 있으면 새 판정기로 재판정해 SKIP 아닌 결과를 낸다.
-상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json, 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다).
+상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json, 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F9): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점, 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다.
 """
 import contextlib
 import copy
@@ -146,9 +146,62 @@ class FakeLinearColor:
         return isinstance(other, FakeLinearColor) and (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
 
 
+class FakeVector:
+    def __init__(self, x=0.0, y=0.0, z=0.0):
+        self.x, self.y, self.z = float(x), float(y), float(z)
+
+
+class FakeRotator(Props):
+    def __init__(self, roll=0.0, pitch=0.0, yaw=0.0):
+        super().__init__(roll=roll, pitch=pitch, yaw=yaw)
+
+
+class FakePlayerController(Props):
+    def __init__(self):
+        super().__init__(control_rotation=FakeRotator())
+
+    def get_control_rotation(self):
+        return self.control_rotation
+
+    def set_control_rotation(self, rotation):
+        self.control_rotation = rotation
+
+    def stop_movement(self):
+        pass
+
+
+class FakePlayerPawn(Props):
+    def __init__(self, speed=600.0):
+        super().__init__(spring_arm=Props(target_arm_length=300.0, use_pawn_control_rotation=False, do_collision_test=True))
+        self.location = FakeVector(0.0, 0.0, 90.0)
+        self.speed = speed
+        self.pending_intent = None
+        self.teleports = []
+
+    def get_actor_location(self):
+        return FakeVector(self.location.x, self.location.y, self.location.z)
+
+    def set_actor_location(self, location, sweep=False, teleport=False):
+        self.location = FakeVector(location.x, location.y, location.z)
+        self.teleports.append((location.x, location.y))
+
+    def get_component_by_class(self, cls):
+        return self.spring_arm
+
+    def add_movement_input(self, direction, scale=1.0, force=False):
+        self.pending_intent = (direction.x * scale, direction.y * scale)
+
+    def get_max_move_speed(self):
+        return self.speed
+
+    def set_max_move_speed(self, speed):
+        self.speed = speed
+
+
 unreal.LinearColor = FakeLinearColor
 unreal.Vector2D = type("Vector2D", (), {})
-unreal.Vector = type("Vector", (), {})
+unreal.Vector = FakeVector
+unreal.Rotator = FakeRotator
 
 
 class FakeAsset(unreal.Object):
@@ -349,6 +402,9 @@ class FakeActor(unreal.Actor, Props):
     def get_actor_label(self):
         return self.label
 
+    def set_actor_hidden_in_game(self, is_hidden):
+        self.is_hidden_in_game = is_hidden
+
     def get_components_by_class(self, cls):
         return [component for component in self.components if isinstance(component, cls)]
 
@@ -427,6 +483,14 @@ class FakeLive(unreal.Object):
         self.world = world
         self.owner_actor = None
         self.init_count = 0
+        self.reset_count = 0
+        self.is_awake = True
+
+    def reset_simulation_state(self):
+        self.reset_count += 1
+
+    def set_simulation_awake(self, is_awake):
+        self.is_awake = is_awake
 
     def init_system_state_from_preset(self, preset):
         self.init_count += 1
@@ -466,6 +530,8 @@ class FakeWorld:
         self.cpp_materials = []
         self.cpp_reapplies_look = True
         self.shot_count = 0
+        self.player_pawn = FakePlayerPawn()
+        self.player_controller = FakePlayerController()
 
     def live_actors(self):
         return [actor for actor in self.actors if isinstance(actor, TDFluidLiveActor)]
@@ -609,7 +675,8 @@ def console(world, command, controller=None):
 
 unreal.GameplayStatics = Props(get_all_actors_of_class=all_actors, get_time_seconds=lambda world: CLOCK.game_seconds, get_real_time_seconds=lambda world: CLOCK.real_seconds,
                                get_world_delta_seconds=lambda world: TICK_SECONDS * CLOCK.time_dilation, get_global_time_dilation=lambda world: CLOCK.time_dilation,
-                               set_global_time_dilation=lambda world, value: setattr(CLOCK, "time_dilation", value), get_player_controller=lambda world, index: None)
+                               set_global_time_dilation=lambda world, value: setattr(CLOCK, "time_dilation", value), get_player_controller=lambda world, index: world.player_controller,
+                               get_player_pawn=lambda world, index: world.player_pawn)
 unreal.SystemLibrary = Props(execute_console_command=console, get_console_variable_float_value=lambda name: 0.0)
 sys.modules["unreal"] = unreal
 
@@ -2838,6 +2905,178 @@ def check_cal0_real_queue():
           (batch_code, failed, draft_locked, unmarked_waiting, {name: item["status"] for name, item in items.items()}))
 
 
+class FakeWalkingPawn(FakePlayerPawn):
+    def __init__(self, speed=600.0, is_blocked=False):
+        super().__init__(speed)
+        self.is_blocked = is_blocked
+        CLOCK.register(self.consume_move_intent)
+
+    def consume_move_intent(self, delta_seconds):
+        intent, self.pending_intent = self.pending_intent, None
+        if intent is None or self.is_blocked:
+            return
+        self.location = FakeVector(self.location.x + intent[0] * self.speed * delta_seconds, self.location.y + intent[1] * self.speed * delta_seconds, self.location.z)
+
+
+def make_controller(yaw):
+    return Props(get_control_rotation=lambda: Props(pitch=0.0, yaw=yaw, roll=0.0), stop_movement=lambda: None)
+
+
+def make_exposure_volume(label, method, bias, applies_physical_camera=False):
+    volume = FakePostProcessVolume(label)
+    volume.settings = Props(override_auto_exposure_method=True, auto_exposure_method=FakeEnum(method), auto_exposure_bias=bias, auto_exposure_apply_physical_camera_exposure=applies_physical_camera,
+                            depth_of_field_fstop=4.0, camera_shutter_speed=60.0, camera_iso=100.0, auto_exposure_min_brightness=-10.0, auto_exposure_max_brightness=20.0)
+    volume.get_path_name = lambda: f"/Game/CAL0/Stage.Stage:PersistentLevel.{label}"
+    return volume
+
+
+def check_lookdev_frame_fixes():
+    output_dir = TEST_DIR / "frame-fixes"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    lookdev.OUTPUT_DIRECTORY = output_dir
+
+    def players(pawn, controller):
+        return patched(unreal.GameplayStatics, get_player_pawn=lambda world, index: pawn, get_player_controller=lambda world, index: controller)
+
+    def run_spec(name, spec):
+        spec_path = output_dir / f"{name}-spec.json"
+        spec_path.write_text(json.dumps(spec), encoding="utf-8")
+        exit_code = run_lookdev_in_process(spec_path, "/Game/CAL0/Stage", output_dir / name)
+        return exit_code, load_json(output_dir / name / "result.json")
+
+    def near(values, expected):
+        return len(values) == len(expected) and all(abs(value - target) < 1e-6 for value, target in zip(values, expected))
+
+    no_navigation = Props(project_point_to_navigation=lambda world, goal, data, query, extent: None)
+    reset_world([])
+    pawn = FakeWalkingPawn()
+    spec = {"base": {"move": {"distance_cm": 300.0}}, "variants": [{"name": "s00_walk", "settle": 0.1, "apply": {"pawn": [0.0, 0.0], "move": {"distance_cm": 300.0, "yaw": 0.0}}}]}
+    with patched(unreal, NavigationSystemV1=no_navigation), players(pawn, make_controller(90.0)):
+        exit_code, result = run_spec("walk", spec)
+    base_move, step_move = result["base"].get("move", {}), result["variants"][0]["apply"].get("move", {})
+    check("F1 사전 move {distance_cm, yaw?}: 내비 없이 입력 걷기·base 는 조종 yaw 90·단계는 yaw 0·순간이동은 pawn 키 1회뿐·결과 mode·yaw·goal·moved_cm·timed_out·키 오류 0",
+          exit_code == 0 and not result["key_errors"] and base_move.get("mode") == "input" and base_move.get("yaw") == 90.0 and near(base_move.get("goal", []), [0.0, 300.0])
+          and base_move.get("moved_cm", 0.0) >= 300.0 and base_move.get("timed_out") is False and base_move.get("done") and "error" not in base_move
+          and step_move.get("yaw") == 0.0 and near(step_move.get("goal", []), [300.0, 0.0]) and step_move.get("moved_cm", 0.0) >= 300.0 and step_move.get("done")
+          and pawn.teleports == [(0.0, 0.0)] and pawn.location.x >= 300.0, (exit_code, result["key_errors"], base_move, step_move, pawn.teleports))
+
+    reset_world([])
+    blocked = FakeWalkingPawn(is_blocked=True)
+    with players(blocked, make_controller(0.0)):
+        exit_code, result = run_spec("walk-blocked", {"base": {}, "variants": [{"name": "s00_blocked", "settle": 0.1, "apply": {"move": {"distance_cm": 300.0}}}]})
+    blocked_move = result["variants"][0]["apply"].get("move", {})
+    check("F2 걷기 시한(2d/최대 속도 + 3 = 4 게임 초) 초과 → move.timed_out·error, 키 오류 '00: move: 시한 초과'·종료 1",
+          exit_code == 1 and blocked_move.get("timed_out") is True and abs(blocked_move.get("timeout_seconds", 0.0) - 4.0) < 1e-9 and blocked_move.get("moved_cm") == 0.0
+          and any(line.startswith("00: move: 시한 초과") for line in result["key_errors"]) and not blocked.teleports, (exit_code, blocked_move, result["key_errors"]))
+
+    reset_world([])
+    pawn = FakeWalkingPawn()
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    with patched(unreal, NavigationSystemV1=no_navigation), players(pawn, make_controller(0.0)):
+        listed = lookdev.apply_variant_with_tuning({"move": [500.0, 200.0]}, "s00", state)
+        walk_errors = lookdev.find_walk_errors(listed, None)
+    check("F3 목록 move [goal_x, goal_y]: 옛 절대 목표 동작(내비 없으면 순간이동) 그대로·걷기 상태 파일 없음·오류 0",
+          listed.get("move") == {"goal": [500.0, 200.0], "mode": "teleport"} and pawn.teleports == [(500.0, 200.0)] and not walk_errors and not state["key_errors"]
+          and lookdev.find_key_errors({"move": [500.0, 200.0]}) == [], (listed.get("move"), pawn.teleports, walk_errors, state))
+
+    reset_world([])
+    pawn = FakeWalkingPawn()
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    events = [{"time": 0.2, "move": {"distance_cm": 120.0}}]
+    with players(pawn, make_controller(0.0)):
+        scheduled = lookdev.apply_variant_with_tuning({"schedule": {"times": [1.0], "reference": "now", "prefix": "walk", "events": events}}, "s01", state)
+        status = lookdev.wait_for_schedule(Path(scheduled["schedule"]["status_path"]), 30.0)
+        event_errors = lookdev.find_walk_errors(scheduled, status)
+        pawn.is_blocked = True
+        stuck = lookdev.apply_variant_with_tuning({"schedule": {"times": [1.0], "reference": "now", "prefix": "stuck", "events": events}}, "s02", state)
+        stuck_status = lookdev.wait_for_schedule(Path(stuck["schedule"]["status_path"]), 30.0)
+        stuck_errors = lookdev.find_walk_errors(stuck, stuck_status)
+    event_move = (status.get("events_done") or [{}])[0].get("move", {})
+    check("F4 schedule.events move 사전 형식: 예약과 다른 틱 콜백에서 걷고 끝 상태를 이벤트에 적음 / 막히면 'schedule.events t=0.2 move: 시한 초과'",
+          event_move.get("mode") == "input" and event_move.get("done") and event_move.get("moved_cm", 0.0) >= 120.0 and not event_errors
+          and any(line.startswith("schedule.events t=0.2 move: 시한 초과") for line in stuck_errors), (event_move, event_errors, stuck_errors))
+
+    move_errors = [lookdev.find_key_errors(apply) for apply in ({"move": {"distance": 5.0}}, {"move": [1.0, 2.0, 3.0]}, {"move": {"distance_cm": 0}}, {"move": {"distance_cm": 100.0, "yaw": "east"}},
+                                                               {"schedule": {"events": [{"time": 1.0, "move": "forward"}]}}, {"move": {"distance_cm": 1500.0}}, {"move": {"distance_cm": 800.0, "yaw": 45.0}})]
+    check("F5 move 형식 키 오류: 모르는 키·목록 3개·distance_cm 0·yaw 문자열·이벤트 문자열은 오류, 사전 {distance_cm, yaw?} 는 통과",
+          all(errors for errors in move_errors[:5]) and move_errors[5:] == [[], []] and any("distance_cm?" in line for line in move_errors[0]), move_errors)
+
+    reset_world([])
+    with players(None, make_controller(0.0)):
+        exit_code, result = run_spec("base-error", {"base": {"arm": 300.0}, "variants": [{"name": "s00_still", "settle": 0.1, "apply": {}}]})
+    check("F6 base apply 원격 호출 오류(예외)는 result base.error 에만 남지 않고 키 오류 'base: apply: …'·종료 1",
+          exit_code == 1 and "error" in result["base"] and any(line.startswith("base: apply: ") for line in result["key_errors"]), (exit_code, result.get("base"), result["key_errors"]))
+
+    source_dir, copy_dir = TEST_DIR / "campfire", TEST_DIR / "frame-base-error"
+    shutil.rmtree(copy_dir, ignore_errors=True)
+    shutil.copytree(source_dir, copy_dir)
+    result_text = (copy_dir / "campfire" / "result.json").read_text(encoding="utf-8").replace(source_dir.as_posix() + "/", copy_dir.as_posix() + "/")
+    doctored = json.loads(result_text)
+    doctored["key_errors"] = []
+    doctored["base"]["error"] = "ValueError: too many values to unpack (expected 2)"
+    doctored["variants"][1]["apply"]["move"] = {"mode": "input", "timed_out": True, "error": "시한 초과: 4.00 게임 초 안에 0/300 cm"}
+    doctored_path = copy_dir / "campfire" / "result-frame-error.json"
+    doctored_path.write_text(json.dumps(doctored), encoding="utf-8")
+    code = run_sweep(["--plan", CAMPFIRE_PLAN, "--run-dir", str(copy_dir), "--assert-scene", f"campfire={doctored_path}"])
+    swept = load_json(copy_dir / "sweep.json")
+    scene = swept["scenes"][0]
+    step_errors = [step["errors"] for step in scene.get("steps", [])]
+    check("F7 calib_sweep: result.base.error → 장면 error(sweep 무효·종료 1), 단계 move 오류 → 그 단계만 무효",
+          code == 1 and str(scene.get("error", "")).startswith("룩데브 base: apply: ValueError") and any("룩데브 base" in line for line in swept["problems"])
+          and len(step_errors) == 7 and step_errors[1] and any(line.startswith("move: 시한 초과") for line in step_errors[1]) and not any(step_errors[:1] + step_errors[2:]),
+          (code, scene.get("error"), step_errors))
+
+    reset_world([])
+    cloud_volume = make_exposure_volume("CloudVolume", "AEM_Manual", 0.0)
+    WORLD.actors.append(cloud_volume)
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    cloud = lookdev.apply_variant_with_tuning({"exposure_ev100": 12.0}, "s00", state).get("exposure_applied", [])
+    check("F8a 구름 무대꼴(AEM_MANUAL·바이어스 0·물리 카메라 끔)·exposure_ev100 12·exposure_manual 없음: 바이어스 0 그대로(−12 스톱 회귀 없음), 결과 mode manual_ignored·현재 바이어스·엔진 무시 필드",
+          cloud_volume.settings.auto_exposure_bias == 0.0 and getattr(cloud_volume.settings, "override_auto_exposure_bias", None) is None and len(cloud) == 1
+          and cloud[0]["mode"] == "manual_ignored" and cloud[0]["auto_exposure_bias"] == 0.0 and "auto_exposure_min_brightness" in cloud[0]["ignored_by_engine"] and not state["key_errors"],
+          (cloud_volume.settings.auto_exposure_bias, cloud))
+
+    reset_world([])
+    volumes = [make_exposure_volume("ManualVolume", "AEM_Manual", 0.5), make_exposure_volume("CameraVolume", "AEM_Manual", 0.0, True), make_exposure_volume("AutoVolume", "AEM_Histogram", 0.25)]
+    WORLD.actors += volumes
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    ignored = lookdev.apply_variant_with_tuning({"exposure_ev100": 1.0}, "s00", state).get("exposure_applied", [])
+    ignored_biases = [volume.settings.auto_exposure_bias for volume in volumes]
+    first = lookdev.apply_variant_with_tuning({"exposure_ev100": 1.0, "exposure_manual": "bias"}, "s01", state)
+    second = lookdev.apply_variant_with_tuning({"exposure_ev100": 1.0, "exposure_manual": "bias"}, "s02", state)
+    camera_ev100 = math.log2(4.0 * 4.0 * 60.0 * 100.0 / 100.0)
+    biases = [volume.settings.auto_exposure_bias for volume in volumes]
+    applied = second.get("exposure_applied", [])
+    check("F8 exposure_manual 기본(ignore): 수동 볼륨 바이어스 불변·자동 볼륨 min/max = EV100, \"bias\": AEM_MANUAL 볼륨 auto_exposure_bias = 원래 + 물리 카메라 EV100 − EV100(엔진 수동 식)·두 번 적용해도 같음, 결과에 mode·필드·값",
+          near(ignored_biases, [0.5, 0.0, 0.25]) and [entry["mode"] for entry in ignored] == ["manual_ignored", "manual_ignored", "auto"]
+          and near(biases, [-0.5, camera_ev100 - 1.0, 0.25]) and volumes[2].settings.auto_exposure_min_brightness == 1.0 and volumes[2].settings.auto_exposure_max_brightness == 1.0
+          and [entry["mode"] for entry in applied] == ["manual", "manual", "auto"] and near([applied[0]["fields"]["auto_exposure_bias"], applied[0]["original_bias"]], [-0.5, 0.5])
+          and first["exposure"] == ["ManualVolume", "CameraVolume", "AutoVolume"] and volumes[0].settings.override_auto_exposure_bias is True and not state["key_errors"], (ignored_biases, biases, applied))
+    manual_key_errors = [lookdev.find_key_errors(apply) for apply in ({"exposure_manual": "bias"}, {"exposure_ev100": 1.0, "exposure_manual": "on"},
+                                                                       {"exposure_ev100": 1.0, "exposure_manual": "bias"}, {"exposure_ev100": 1.0, "exposure_manual": "ignore"})]
+    check("F8b exposure_manual 키 오류: exposure_ev100 없이 1건·모르는 값 1건, bias·ignore 는 0건",
+          [len(errors) for errors in manual_key_errors] == [1, 1, 0, 0] and "exposure_ev100" in manual_key_errors[0][0] and "bias" in manual_key_errors[1][0], manual_key_errors)
+
+    reset_world([(TDFluidLiveActor, "TDGen_RainPond", FakePreset("CAMPFIRE")), (TDFluidLiveActor, "TDGen_RainBench", FakePreset("CAMPFIRE"))])
+    for actor in WORLD.live_actors():
+        actor.components.append(actor.live_component)
+    track = FakeActor("TDGen_SnowTrack", components=[FakeLive(WORLD, FakePreset("CAMPFIRE"))])
+    WORLD.actors += [track, FakeActor("TDGen_Prop")]
+    lives = [actor.live_component for actor in WORLD.live_actors()] + track.components
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    with patched(unreal, TDFluidLiveComponent=FakeLive):
+        reinit = lookdev.apply_variant_with_tuning({"tuning_reload": {"tuning": "", "look": "", "reset": "reinit", "relative_to_base": False},
+                                                    "schedule": {"times": [0.5], "reference": "now", "prefix": "reset"}}, "s00", state)
+        status = lookdev.wait_for_schedule(Path(reinit["schedule"]["status_path"]), 30.0)
+        kept = lookdev.apply_variant_with_tuning({"tuning_reload": {"tuning": "", "look": "", "reset": "keep", "relative_to_base": False}}, "s01", state)
+    reload_outcome = reinit.get("tuning_reload", {})
+    check("F9 reset reinit: 같은 apply 원격 호출 첫머리에서 모든 TDFluidLiveComponent reset_simulation_state(라이브 액터 2 + 다른 액터 1)·state_reset_actor_count 3·예약 시간 원점 = 초기화 게임 시각 / keep 은 초기화 없음",
+          reload_outcome.get("state_reset_actor_count") == 3 and [live.reset_count for live in lives] == [1, 1, 1] and [live.init_count for live in lives[:2]] == [1, 1]
+          and sorted(reload_outcome["state_reset"]["actors"]) == ["TDGen_RainBench", "TDGen_RainPond", "TDGen_SnowTrack"]
+          and reload_outcome["state_reset"]["game_time"] == reinit["schedule"]["reference_game_time"] == status.get("reference_game_time") and status.get("done")
+          and "state_reset" not in kept.get("tuning_reload", {}) and "state_reset" not in kept and not state["key_errors"], (reload_outcome, [live.reset_count for live in lives], state))
+
+
 run_check(check_cal0_b0)
 run_check(check_cal0_patch)
 run_check(check_cal0_lookdev)
@@ -2847,6 +3086,7 @@ run_check(check_cal0_measure)
 run_check(check_cal0_batch)
 run_check(check_cal0_integration)
 run_check(check_cal0_real_queue)
+run_check(check_lookdev_frame_fixes)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

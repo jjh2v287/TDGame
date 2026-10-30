@@ -1045,7 +1045,302 @@ def check_cal0_b0():
     check("B0 patched: 바꾼 속성은 원래 값으로, 없던 속성은 지움", patched_values == (9.0, 1) and lookdev.FRAME_FILE_WAIT_SECONDS == 0.5 and not hasattr(lookdev, "CAL0_ADDED_NAME"))
 
 
+def check_cal0_sweep():
+    sweep_dir = TEST_DIR / "cal0-sweep"
+    sweep_dir.mkdir(parents=True, exist_ok=True)
+    sha = fluid_tuning_patch.file_sha256
+    flicker = load_json(CANONICAL)["StructDefaults"]["TDFluidSourceEmitterSettings"]["FlickerAmplitude"]
+    vorticity_path = "Kinds.Campfire.TDFluidSimulationConfig.VorticityStrength"
+    flicker_path = "Kinds.Campfire.TDFluidSourceEmitterSettings.FlickerAmplitude"
+    torch_path = "Kinds.Torch.TDFluidSimulationConfig.VorticityStrength"
+    fire_world = [(TDFluidFireActor, "TDGen_CampfireFire", FakePreset("CAMPFIRE")), (TDFluidFireActor, "TDGen_TorchFire", FakePreset("TORCH"))]
+
+    def sweep_text(arguments):
+        saved_argv = sys.argv
+        sys.argv = ["calib_sweep.py"] + [str(argument) for argument in arguments]
+        errors = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(errors), contextlib.redirect_stdout(io.StringIO()):
+                code = calib_sweep.main()
+        finally:
+            sys.argv = saved_argv
+        return code, errors.getvalue()
+
+    def stage_plan(name, mutate=None):
+        plan = load_json(W / CAMPFIRE_PLAN)
+        plan["scenes"][0].update(schedule=None, shots={"count": 3, "interval": 0.25})
+        if mutate:
+            plan = mutate(plan) or plan
+        path = sweep_dir / f"{name}.json"
+        path.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def dry(name, path, *extra):
+        code, text = sweep_text(["--plan", path, "--run-dir", sweep_dir / name, "--dry-run", *extra])
+        record = sweep_dir / name / "sweep.json"
+        return code, text, load_json(record) if code != 2 and record.is_file() else None
+
+    def write_json(name, value):
+        path = sweep_dir / name
+        path.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def write_lock(name, plan_path, extra=(), version=2):
+        plan = load_json(plan_path)
+        files = [Path(plan_path)] + [W / scene[key] for scene in plan["scenes"] for key in ("regions_template", "targets") if scene.get(key) and (W / scene[key]).is_file()] + list(extra)
+        lock = {"created_at": "2026-10-30T00:00:00", "files": {calib_sweep.relative_text(path): sha(path) for path in files}}
+        if version:
+            lock["version"] = version
+        return write_json(f"{name}.lock.json", lock)
+
+    def screen_file(name, plan_path, **fields):
+        screen = {"version": 2, "plan_sha256": sha(plan_path), "overlay_sha256": None, "canonical_tuning_sha256": sha(CANONICAL), "canonical_look_sha256": sha(CANONICAL_LOOK),
+                  "best": {"variant": "v02", "gain": 3.0}, "second": None, "insensitive": False}
+        screen.update(fields)
+        return write_json(f"{name}.screen.json", screen)
+
+    def lookdev_spec(name, result, index=0):
+        return load_json(sweep_dir / name / result["scenes"][index]["name"] / "lookdev_spec.json")
+
+    def copy_value(name, variant_id, kind, struct_name, field_name):
+        return load_json(sweep_dir / name / variant_id / "TDFluidPresetTuning.json")["Kinds"][kind][struct_name][field_name]
+
+    phrases = {"no_split": "split_group: true", "unsupported_struct": "다시 읽기가 없어", "control_only": "다른 값이 없다", "no_targets": "필수 키 없음: targets", "empty_targets": "목표 지표 목록",
+               "water_without_range": "low 와 high 는 함께", "range_reversed": "low < high", "weight_zero": "weight: 양수", "tolerance_negative": "tolerance: 0 이상",
+               "duplicate_metric": "같은 지표가 두 번", "unknown_scene": "계획 장면 이름", "window_zero": "probe_window_scale: 양수", "control_middle_text": "control_middle: 불"}
+    rebuilt = {"no_targets": lambda plan: plan["metrics"].pop("targets"), "water_without_range": lambda plan: plan["metrics"]["targets"][0].pop("low")}
+    for name, mutate in rebuilt.items():
+        plan = load_json(W / RIVER_PLAN)
+        mutate(plan)
+        write_json(f"phrase_{name}.json", plan)
+    for name, phrase in phrases.items():
+        plan_path = sweep_dir / f"phrase_{name}.json" if name in rebuilt else TEST_DIR / f"bad_{name}.json"
+        code, text = sweep_text(["--plan", plan_path, "--run-dir", sweep_dir / f"phrase_{name}"])
+        check(f"B2 기존 거부 {name}: 종료 2·사유 '{phrase}'", code == 2 and phrase in text, text[-300:])
+
+    code, text, _ = dry("t01", stage_plan("t01", lambda plan: plan.update(base_tunning=[])))
+    check("B2 T01 최상위 모르는 키 base_tunning: 종료 2·키 이름", code == 2 and "모르는 키 base_tunning" in text, text)
+    code, text, _ = dry("t02", stage_plan("t02", lambda plan: plan["scenes"][0].update(awake={"TDGen_CampfireFire": True})))
+    check("B2 T02 장면 awake: 종료 2·camera.awake 문구", code == 2 and "camera.awake" in text, text)
+    code_param, text_param, _ = dry("t03a", stage_plan("t03a", lambda plan: plan["params"][0].update(step=0.1)))
+    code_metrics, text_metrics, _ = dry("t03b", stage_plan("t03b", lambda plan: plan["metrics"].update(extra=1)))
+    code_source, text_source, _ = dry("t03c", stage_plan("t03c", lambda plan: plan["scenes"][0].update(source="look")))
+    code_shots, text_shots, _ = dry("t03d", stage_plan("t03d", lambda plan: plan["scenes"][0]["shots"].update(every=1)))
+    check("B2 T03 param·metrics·장면 source·shots 모르는 키: 각각 종료 2·위치와 키",
+          (code_param, code_metrics, code_source, code_shots) == (2, 2, 2, 2) and "params[0]: 모르는 키 step" in text_param and "metrics: 모르는 키 extra" in text_metrics
+          and "sources 목록으로" in text_source and "shots: 모르는 키 every" in text_shots, (text_param, text_metrics, text_source, text_shots))
+    code, text, _ = dry("t05", stage_plan("t05", lambda plan: plan.update(base_tuning=[{"json_path": vorticity_path, "value": 1.3}], base_tuning_ships=True)))
+    check("B2 T05 base_tuning 경로 = params 경로: 종료 2", code == 2 and "base_tuning 경로가 params 경로와 같다" in text, text)
+    draft_path = stage_plan("t06", lambda plan: plan.update(draft_status="draft"))
+    code_real, text_real = sweep_text(["--plan", draft_path, "--run-dir", sweep_dir / "t06-real"])
+    code_dry, _, record = dry("t06-dry", draft_path)
+    check("B2 T06 draft_status: 실제 실행 종료 2 / 건식 0·경고", code_real == 2 and "draft_status" in text_real and code_dry == 0 and any("draft_status" in line for line in record["warnings"]), (text_real, record and record["warnings"]))
+
+    two_knobs = lambda plan: plan["params"].append({"json_path": flicker_path, "values": [flicker * 0.5, flicker, flicker * 2.0]})
+    two_path = stage_plan("t08", two_knobs)
+    code, text, record = dry("t08", two_path, "--stage", "screen")
+    check("B2 T08 screen P=2: v00,a_lo,a_hi,v00,b_lo,b_hi,v00·끝 값만·반복 1", code == 0 and record["sequence"] == ["v00", "v01", "v02", "v00", "v03", "v04", "v00"] and record["scenes"][0]["sequence"] == record["sequence"]
+          and [variant["values"] for variant in record["variants"][1:]] == [[1.2, flicker], [1.8, flicker], [1.5, flicker * 0.5], [1.5, flicker * 2.0]], (text, record and record["sequence"]))
+    code, text, record = dry("t08b", stage_plan("t08b"), "--stage", "screen")
+    check("B2 T08b screen P=1: v00,lo,v00,hi,v00(대조 최소 3)", code == 0 and record["sequence"] == ["v00", "v01", "v00", "v02", "v00"], (text, record and record["sequence"]))
+    code, text, record = dry("t09", two_path, "--stage", "confirm", "--screen-result", screen_file("t09", two_path))
+    code_second, _, record_second = dry("t09b", two_path, "--stage", "confirm", "--screen-result", screen_file("t09b", two_path, second={"variant": "v03", "gain": 2.5}))
+    check("B2 T09 confirm: v00,best,v00,best,v00 / second 있으면 v00,best,v00,second,v00·screen sha 기록",
+          code == 0 and record["sequence"] == ["v00", "v02", "v00", "v02", "v00"] and record["screen_result_sha256"] == sha(sweep_dir / "t09.screen.json")
+          and code_second == 0 and record_second["sequence"] == ["v00", "v02", "v00", "v03", "v00"] and [variant["id"] for variant in record_second["variants"]] == ["v00", "v02", "v03"], (text, record and record["sequence"]))
+    code_plan, text_plan, _ = dry("t10", two_path, "--stage", "confirm", "--screen-result", screen_file("t10", two_path, plan_sha256="0" * 64))
+    code_look, text_look, _ = dry("t10b", two_path, "--stage", "confirm", "--screen-result", screen_file("t10b", two_path, canonical_look_sha256="0" * 64))
+    code_dull, text_dull, _ = dry("t10c", two_path, "--stage", "confirm", "--screen-result", screen_file("t10c", two_path, insensitive=True))
+    code_missing, text_missing, _ = dry("t10d", two_path, "--stage", "confirm")
+    check("B2 T10 screen.json plan·정본 sha 불일치 종료 2 / 둔감 confirm 거부 종료 1 / screen-result 없음 종료 2",
+          (code_plan, code_look, code_dull, code_missing) == (2, 2, 1, 2) and "plan_sha256 불일치" in text_plan and "canonical_look_sha256 불일치" in text_look and "confirm 거부" in text_dull and "--screen-result" in text_missing,
+          (text_plan, text_dull, text_missing))
+    code, text, record = dry("t11", stage_plan("t11", lambda plan: plan["scenes"][0].update(shots={"count": 5, "interval": 0.25})), "--stage", "screen")
+    spec = lookdev_spec("t11", record) if record else {"variants": [{}]}
+    schedule = spec["variants"][0].get("apply", {}).get("schedule", {})
+    check("B2 T11 shots{5, 0.25} settle 6 → schedule times [6..7]·reference now·fixed_fps 60·모든 단계", code == 0 and schedule.get("times") == [6.0, 6.25, 6.5, 6.75, 7.0] and schedule.get("reference") == "now"
+          and schedule.get("fixed_fps") == 60 and all(step["apply"]["schedule"] == schedule for step in spec["variants"]) and record["scenes"][0]["shots_expected"] == 5, (text, schedule))
+    code, text, record = dry("t12", stage_plan("t12"), "--stage", "frame")
+    no_regions = stage_plan("t12b", lambda plan: plan["scenes"][0].update(regions_template="Tools/FluidFX/calib/regions/cal0_missing.json"))
+    code_frame, _, _ = dry("t12b", no_regions, "--stage", "frame")
+    code_screen, text_screen, _ = dry("t12c", no_regions, "--stage", "screen")
+    check("B2 T12 frame: v00 1단계·N장 schedule / 영역 틀 없어도 frame 0·screen 은 종료 2 '영역 틀 없음'",
+          code == 0 and record["sequence"] == ["v00"] and len(record["variants"]) == 1 and len(lookdev_spec("t12", record)["variants"][0]["apply"]["schedule"]["times"]) == 3
+          and code_frame == 0 and code_screen == 2 and "영역 틀 없음" in text_screen, (text, text_screen))
+
+    overlay_path = write_json("overlay.json", {"version": 2, "assignments": [{"json_path": torch_path, "value": 2.5, "split_group": False, "kind": "knob"}], "actor_props": [], "history": []})
+    code, text, _ = dry("t18", stage_plan("t18"), "--stage", "screen", "--overlay", write_json("overlay-same.json", {"version": 2, "assignments": [{"json_path": vorticity_path, "value": 1.6}], "actor_props": []}))
+    check("B2 T18 덧씌움 경로 = params 경로: 종료 2", code == 2 and "덧씌움 경로가 계획 params·base_tuning 경로와 같다" in text, text)
+    base_path = stage_plan("t04", lambda plan: plan.update(base_tuning=[{"json_path": torch_path, "value": 2.5}], base_tuning_ships=True))
+    code, text, record = dry("t04-dry", base_path, "--stage", "screen")
+    check("B2 T04 사본: base_tuning 이 대조·변형 사본 모두에·변형은 base 위에 손잡이", code == 0 and copy_value("t04-dry", "v00", "Torch", "TDFluidSimulationConfig", "VorticityStrength") == 2.5
+          and copy_value("t04-dry", "v01", "Torch", "TDFluidSimulationConfig", "VorticityStrength") == 2.5 and copy_value("t04-dry", "v01", "Campfire", "TDFluidSimulationConfig", "VorticityStrength") == 1.2
+          and copy_value("t04-dry", "v00", "Campfire", "TDFluidSimulationConfig", "VorticityStrength") == 1.5 and all(variant["expect"][-1]["role"] == "base_tuning" for variant in record["variants"]), text)
+    reset_world(fire_world)
+    code, text = sweep_text(["--plan", base_path, "--run-dir", sweep_dir / "t04", "--stage", "screen", "--lock", write_lock("t04", base_path)])
+    record = load_json(sweep_dir / "t04" / "sweep.json") if (sweep_dir / "t04" / "sweep.json").is_file() else {"scenes": [{"steps": []}]}
+    steps = record["scenes"][0]["steps"]
+    spec = lookdev_spec("t04", record) if code != 2 else {"variants": []}
+    check("B2 T04 가짜 PIE(B3 base 필요): 대조 ChangedFieldCount 0·변형 ≥1·모든 단계 다시 읽기에 base 경로·base 사본 요청", code == 0 and [step["report"]["changed_field_count"] for step in steps] == [0, 1, 0, 1, 0]
+          and all(step["valid"] for step in steps) and all(step["apply"]["tuning_reload"]["read_back"][-1]["kinds"] == ["Torch"] and step["apply"]["tuning_reload"]["base"]["tuning"] == record["base_copy"]["tuning"] for step in spec["variants"]),
+          record.get("problems"))
+    reset_world(fire_world)
+    verify_path = stage_plan("t17")
+    verify_lock = write_lock("t17", verify_path)
+    code, text = sweep_text(["--plan", verify_path, "--run-dir", sweep_dir / "t17", "--stage", "verify", "--lock", verify_lock, "--overlay", overlay_path])
+    record = load_json(sweep_dir / "t17" / "sweep.json") if (sweep_dir / "t17" / "sweep.json").is_file() else {"scenes": [{"steps": []}]}
+    steps = record["scenes"][0]["steps"]
+    check("B2 T17 덧씌움 가짜 PIE verify(B3 base 필요): 대조 3단계 ChangedFieldCount 0·overlay sha·lock sha 기록·덧씌움 경로 다시 읽기 단언", code == 0 and record["sequence"] == ["v00", "v00", "v00"]
+          and [step["report"]["changed_field_count"] for step in steps] == [0, 0, 0] and record["overlay_sha256"] == sha(overlay_path) and record["lock_sha256"] == sha(verify_lock)
+          and all(variant["expect"][-1]["role"] == "덧씌움" for variant in record["variants"]), record.get("problems"))
+
+    variant = {"is_control": True, "counts_change": False, "tuning": str(CANONICAL), "look_live": {}, "props": {},
+               "expect": [{"struct": "TDFluidSimulationConfig", "field": "VorticityStrength", "kinds": ["Torch"], "value": 2.5, "role": "덧씌움", "owner": "live_component", "access": "simulation_config"}]}
+    outcome = lambda actors: {"tuning_reload": {"report": {"changed_field_count": 0, "tuning_source_path": str(CANONICAL)}, "read_back": [{"actors": actors}]}}
+    missed = calib_sweep.judge_step(variant, outcome({"TDGen_TorchFire": {"value": 3.0}}))
+    check("B2 T69 덧씌움 경로 다시 읽기 값이 다르면 대조 단계 무효 / 같으면 유효 / 그 종류가 장면에 없으면 단언 생략",
+          len(missed) == 1 and "덧씌움 경로" in missed[0] and calib_sweep.judge_step(variant, outcome({"TDGen_TorchFire": {"value": 2.5}})) == [] and calib_sweep.judge_step(variant, outcome({})) == [], missed)
+
+    relative = lambda role: lambda plan: plan["metrics"]["targets"][0].update(relative_to_control=[0.9, 1.1], **({"role": role} if role else {}))
+    code_score, text_score, _ = dry("t39a", stage_plan("t39a", relative(None)), "--stage", "screen")
+    code_constraint, _, _ = dry("t39b", stage_plan("t39b", relative("constraint")), "--stage", "screen")
+    check("B2 T39 relative_to_control [0.9,1.1] 은 1.0 포함 → score 면 종료 2 / constraint 면 0", code_score == 2 and "대조 중심 띠" in text_score and code_constraint == 0, text_score)
+
+    def probe_plan(plan):
+        scene = plan["scenes"][0]
+        scene.pop("shots")
+        scene.update(sources=["probe"], probe={"stats": [{"label": "TDGen_CampfireFire", "component": "live_component", "function": "get_cal0_probe_stats", "prefix": "live"}], "times": [1.0, 1.5, 2.0]})
+        plan["metrics"].update(sources=["probe"], targets=[{"metric": "probe.live.mean_speed", "weight": 1.0, "low": 0.0, "high": 10.0, "tolerance": 0.01}])
+    reset_world(fire_world)
+    probe_path = stage_plan("t49", probe_plan)
+    with patched(FakeLive, get_cal0_probe_stats=lambda self: Props(mean_speed=self.simulation_config.vorticity_strength)):
+        code, text = sweep_text(["--plan", probe_path, "--run-dir", sweep_dir / "t49", "--stage", "screen", "--lock", write_lock("t49", probe_path)])
+    record = load_json(sweep_dir / "t49" / "sweep.json") if (sweep_dir / "t49" / "sweep.json").is_file() else {"scenes": [{"steps": []}]}
+    steps = record["scenes"][0]["steps"]
+    check("B2 T49 sources [probe] 가짜 PIE(B3 probe 필요): 단계마다 probe.* 지표·metrics sha", code == 0 and steps and all(step["metrics"] and all(key.startswith("probe.") for key in step["metrics"]) and step["metrics_sha256"] for step in steps),
+          (text[-300:], record.get("problems")))
+
+    code, text, record = dry("t59", stage_plan("t59", lambda plan: plan["scenes"][0].update(step_apply={"trigger": True})), "--stage", "screen")
+    check("B2 T59 step_apply(trigger) 가 모든 단계 apply 에", code == 0 and all(step["apply"].get("trigger") is True and "tuning_reload" in step["apply"] for step in lookdev_spec("t59", record)["variants"]), text)
+    linked = "Kinds.Torch.TDFluidSourceEmitterSettings.FlickerAmplitude"
+    code, text, record = dry("t60", stage_plan("t60", lambda plan: plan.update(params=[{"json_paths": [flicker_path, linked], "values": [flicker, flicker * 2.0]}])), "--stage", "screen")
+    code_diff, text_diff, _ = dry("t60b", stage_plan("t60b", lambda plan: plan.update(params=[{"json_paths": [vorticity_path, torch_path], "values": [1.5, 2.0]}])), "--stage", "screen")
+    check("B2 T60 json_paths 연동: 두 경로 같은 값·다시 읽기 2개 / 기준 다르면 종료 2", code == 0 and copy_value("t60", "v01", "Campfire", "TDFluidSourceEmitterSettings", "FlickerAmplitude") == flicker * 2.0
+          and copy_value("t60", "v01", "Torch", "TDFluidSourceEmitterSettings", "FlickerAmplitude") == flicker * 2.0 and len(record["variants"][1]["expect"]) == 2
+          and code_diff == 2 and "기준 값이 다르다" in text_diff, (text, text_diff))
+
+    def two_scenes(param_scenes):
+        def mutate(plan):
+            second = copy.deepcopy(plan["scenes"][0])
+            second["name"] = "campfire_b"
+            plan["scenes"].append(second)
+            for target in plan["metrics"]["targets"]:
+                target["scene"] = "campfire"
+            plan["params"][0]["scenes"] = param_scenes
+            plan["params"].append({"json_path": flicker_path, "values": [flicker * 0.5, flicker * 2.0]})
+        return mutate
+    code, text, record = dry("t61", stage_plan("t61", two_scenes(["campfire"])), "--stage", "screen")
+    code_unknown, text_unknown, _ = dry("t61b", stage_plan("t61b", two_scenes(["nowhere"])), "--stage", "screen")
+    check("B2 T61 param scenes(장면 A만): 장면 B 순서에 그 변형 없음 / 모르는 장면 종료 2", code == 0 and record["scenes"][0]["sequence"] == ["v00", "v01", "v02", "v00", "v03", "v04", "v00"]
+          and record["scenes"][1]["sequence"] == ["v00", "v03", "v00", "v04", "v00"] and code_unknown == 2 and "장면에 없는 이름" in text_unknown, (text, record and [scene["sequence"] for scene in record["scenes"]]))
+    def no_scene(plan):
+        two_scenes(None)(plan)
+        plan["params"][0].pop("scenes")
+        plan["metrics"]["targets"][1].pop("scene")
+    code, text, _ = dry("t76", stage_plan("t76", no_scene), "--stage", "screen")
+    check("B2 T76 장면 2개 계획 target 에 scene 없음: 건식 종료 2", code == 2 and "모든 target 에 scene" in text, text)
+    prop = {"label": "TDGen_CampfireFire", "property": "cal0_glow"}
+    code, text, record = dry("t62", stage_plan("t62", lambda plan: plan.update(params=[{"actor_prop": prop, "base": 1.0, "values": [1.0, 2.0]}])), "--stage", "screen")
+    code_base, text_base, _ = dry("t62b", stage_plan("t62b", lambda plan: plan.update(params=[{"actor_prop": prop, "values": [1.0, 2.0]}])), "--stage", "screen")
+    spec_steps = lookdev_spec("t62", record)["variants"] if record else []
+    check("B2 T62 actor_prop: 조절 사본 = 대조 = 정본 바이트·단계 apply props(대조는 base)·base 없으면 종료 2",
+          code == 0 and all((sweep_dir / "t62" / variant_id / "TDFluidPresetTuning.json").read_bytes() == CANONICAL.read_bytes() for variant_id in ("v00", "v01"))
+          and [step["apply"]["props"]["TDGen_CampfireFire"]["cal0_glow"] for step in spec_steps] == [1.0, 2.0, 1.0, 1.0] and code_base == 2 and "actor_prop 은 base" in text_base, (text, text_base))
+
+    script = sweep_dir / "fake_offline.py"
+    script.write_text("import json\nimport sys\narguments = dict(zip(sys.argv[1::2], sys.argv[2::2]))\ntuning = json.load(open(arguments['--tuning'], encoding='utf-8'))\n"
+                      "value = tuning['Kinds']['Campfire']['TDFluidSimulationConfig']['VorticityStrength']\nopen(arguments['--json'], 'w', encoding='utf-8').write(json.dumps({'x': value * 2}))\n"
+                      "sys.exit(int(arguments['--exit']))\n", encoding="utf-8")
+
+    def offline_plan(exit_code):
+        def mutate(plan):
+            scene = plan["scenes"][0]
+            scene.pop("shots")
+            scene.update(sources=["offline"], offline={"command": [str(script), "--tuning", "{tuning}", "--json", "{output}", "--exit", str(exit_code)]})
+            plan["metrics"].update(sources=["offline"], targets=[{"metric": "offline.x", "weight": 1.0, "low": 2.0, "high": 4.0, "tolerance": 0.0}])
+        return mutate
+    offline_path = stage_plan("t63", offline_plan(0))
+    offline_lock = write_lock("t63", offline_path, [script])
+    code, text = sweep_text(["--plan", offline_path, "--run-dir", sweep_dir / "t63", "--stage", "screen", "--lock", offline_lock])
+    record = load_json(sweep_dir / "t63" / "sweep.json") if code != 2 else {"scenes": [{"steps": []}]}
+    steps = record["scenes"][0]["steps"]
+    check("B2 T63 offline 명령(가짜 스크립트 사본 값 ×2): offline.x = 2×값·2회 sha 같음·lock sha 기록", code == 0 and [round(step["metrics"].get("offline.x", 0), 9) for step in steps] == [3.0, 2.4, 3.0, 3.6, 3.0]
+          and all(step["offline"]["output_sha256"] == step["offline"]["repeat_sha256"] for step in steps) and record["lock_sha256"] == sha(offline_lock), (text, record.get("problems")))
+    failing_path = stage_plan("t64", offline_plan(1))
+    code, text = sweep_text(["--plan", failing_path, "--run-dir", sweep_dir / "t64", "--stage", "screen", "--lock", write_lock("t64", failing_path, [script])])
+    record = load_json(sweep_dir / "t64" / "sweep.json") if code != 2 else {"scenes": [{"steps": [{"valid": True, "errors": []}]}]}
+    check("B2 T64 offline 명령 종료 1: 단계 무효·스윕 종료 1", code == 1 and all(not step["valid"] and "offline 명령 종료 1" in step["errors"][0] for step in record["scenes"][0]["steps"]), (code, text))
+
+    one_shot = stage_plan("t72", lambda plan: plan["scenes"][0].update(shots={"count": 1, "interval": 0.25}))
+    code, text, _ = dry("t72", one_shot, "--stage", "screen")
+    code_frame, _, _ = dry("t72b", one_shot, "--stage", "frame")
+    check("B2 T72 look shots.count 1 단계 실행: 건식 종료 2 '표본 ≥3' / frame 은 0", code == 2 and "표본 ≥3" in text and code_frame == 0, text)
+    code, text, _ = dry("t84", stage_plan("t84", lambda plan: plan.update(base_tuning=[{"json_path": torch_path, "value": 2.5}])), "--stage", "screen")
+    code_ships, _, record = dry("t84b", stage_plan("t84b", lambda plan: plan.update(base_tuning=[{"json_path": torch_path, "value": 2.5}], base_tuning_ships=False)), "--stage", "screen")
+    check("B2 T84 base_tuning 있음 + ships 없음 종료 2 / ships 불이면 0·기록", code == 2 and "base_tuning_ships" in text and code_ships == 0 and record["base_tuning_ships"] is False, text)
+
+    lock_plan = stage_plan("t90")
+    code_none, text_none = sweep_text(["--plan", lock_plan, "--run-dir", sweep_dir / "t90a", "--stage", "screen"])
+    code_v1, text_v1 = sweep_text(["--plan", lock_plan, "--run-dir", sweep_dir / "t90b", "--stage", "screen", "--lock", write_lock("t90b", lock_plan, version=None)])
+    stale_lock = write_lock("t90c", lock_plan)
+    lock_plan.write_text(lock_plan.read_text(encoding="utf-8") + " ", encoding="utf-8")
+    code_stale, text_stale = sweep_text(["--plan", lock_plan, "--run-dir", sweep_dir / "t90c", "--stage", "screen", "--lock", stale_lock])
+    short_lock = write_json("t90d.lock.json", {"version": 2, "created_at": "2026-10-30T00:00:00", "files": {calib_sweep.relative_text(lock_plan): sha(lock_plan)}})
+    code_short, text_short = sweep_text(["--plan", lock_plan, "--run-dir", sweep_dir / "t90d", "--stage", "screen", "--lock", short_lock])
+    check("B2 T90 단계 실제 실행 --lock 없음·v1 잠금·sha 불일치·필수 파일 누락: 각각 종료 2", (code_none, code_v1, code_stale, code_short) == (2, 2, 2, 2) and "--lock" in text_none
+          and "version 2" in text_v1 and "sha256 불일치" in text_stale and "필수 파일 누락" in text_short, (text_none, text_v1, text_stale, text_short))
+
+    def series(prefixed):
+        def mutate(plan):
+            plan["scenes"][0]["shots"]["kind"] = "series"
+            if not prefixed:
+                plan["metrics"]["targets"][0]["metric"] = "campfire.interior_billow_contrast_s4_s24"
+        return mutate
+    code, text, _ = dry("t93", stage_plan("t93", series(False)), "--stage", "screen")
+    code_prefixed, _, _ = dry("t93b", stage_plan("t93b", series(True)), "--stage", "screen")
+    check("B2 T93 series 장면 + 접두 없는 target: 건식 종료 2 / 접두 있으면 0", code == 2 and "접두" in text and code_prefixed == 0, text)
+    code, text, _ = dry("t94", stage_plan("t94", lambda plan: plan["scenes"][0]["camera"].update(veiw_target="TDGen_CampfireFire")), "--stage", "screen")
+    check("B2 T94 camera 오타 veiw_target(B3 find_key_errors 필요): 건식 종료 2·키 이름", code == 2 and "veiw_target" in text, text)
+    overlay_base = write_json("overlay-base.json", {"version": 2, "assignments": [{"json_path": "StructDefaults.TDFluidSourceEmitterSettings.FlickerAmplitude", "value": 0.4, "split_group": False, "kind": "knob"}], "actor_props": []})
+    base_knob = stage_plan("t95", lambda plan: plan.update(params=[{"json_path": flicker_path, "values": [flicker, 0.4, 0.6]}]))
+    code, text, record = dry("t95", base_knob, "--stage", "screen", "--overlay", overlay_base)
+    code_plain, _, record_plain = dry("t95b", base_knob, "--stage", "screen")
+    check("B2 T95 describe_params base_value = 정본+덧씌움 값·screen 끝 값은 그 기준을 뺀 최소·최대", code == 0 and record["params"][0]["base_value"] == 0.4 and [variant["values"] for variant in record["variants"][1:]] == [[flicker], [0.6]]
+          and code_plain == 0 and record_plain["params"][0]["base_value"] == flicker and [variant["values"] for variant in record_plain["variants"][1:]] == [[0.4], [0.6]], (text, record and record["params"][0]["base_value"]))
+    golden = "StructDefaults.TDFluidSimulationConfig.VorticityStrength"
+    code_param, text_param, _ = dry("t96", stage_plan("t96", lambda plan: plan.update(params=[{"json_path": golden, "values": [1.0, 1.2]}])), "--stage", "screen")
+    code_base, _, _ = dry("t96b", stage_plan("t96b", lambda plan: plan.update(base_tuning=[{"json_path": golden, "value": 1.2}], base_tuning_ships=True)), "--stage", "screen")
+    code_overlay, _, _ = dry("t96c", stage_plan("t96c"), "--stage", "screen", "--overlay", write_json("overlay-golden.json", {"version": 2, "assignments": [{"json_path": golden, "value": 1.2}], "actor_props": []}))
+    check("B2 T96 StructDefaults.TDFluidSimulationConfig.* params·base_tuning·덧씌움: 각각 종료 2 '골든 입력'", (code_param, code_base, code_overlay) == (2, 2, 2) and "골든 입력" in text_param, text_param)
+    look_missing = "Look:Materials./Game/CAL0/MI_None.Scalars.Glow"
+    code_missing, text_missing, _ = dry("look-a", stage_plan("look-a", lambda plan: plan.update(params=[{"json_path": look_missing, "values": [1.0, 2.0]}])), "--stage", "screen")
+    code_switch, text_switch, _ = dry("look-b", stage_plan("look-b", lambda plan: plan.update(params=[{"json_path": "Look:Materials./Game/CAL0/MI_None.Switches.Glow", "values": [True]}])), "--stage", "screen")
+    check("B2 G-LOOK 검사: 정본 모양에 없는 키인데 base 없음·Switches 각각 종료 2", code_missing == 2 and "base(직접 부모 기본값)" in text_missing and code_switch == 2 and "Switches" in text_switch, (text_missing, text_switch))
+
+    reed = load_json(CANONICAL)
+    reed["Kinds"]["ReedShallows"]["TDFluidSimulationConfig"]["BendVectorRiseSeconds"] = 0.2
+    reed_path = write_json("reed_tuning.json", reed)
+    bend = "Tools/FluidFX/check_fluid_foliage_bend.py"
+    runs = [python(bend, "--tuning", str(path), "--kind", "ReedShallows", "--json", str(sweep_dir / name)) for path, name in ((CANONICAL, "reed0.json"), (CANONICAL, "reed0b.json"), (reed_path, "reed1.json"))]
+    outputs = [load_json(sweep_dir / name) if (sweep_dir / name).is_file() else {} for name in ("reed0.json", "reed0b.json", "reed1.json")]
+    check("B2 T97 갈대 offline(B1 effective_value 필요): 사본 값 변경 → ripple_lag 변화·같은 사본 2회 sha 같음·실효 입력·unmapped",
+          all(code == 0 for code, _ in runs) and sha(sweep_dir / "reed0.json") == sha(sweep_dir / "reed0b.json")
+          and outputs[0]["ripple_lag_seconds"]["equal_blend"] != outputs[2]["ripple_lag_seconds"]["equal_blend"] and outputs[2]["inputs"]["LAG_RISE_SECONDS"]["value"] == 0.2
+          and outputs[0]["inputs"]["LAG_RISE_SECONDS"]["value"] == 0.08 and "LAG_FREQUENCY_HZ" in outputs[0]["unmapped"], [output[-300:] for _, output in runs])
+
+
 run_check(check_cal0_b0)
+run_check(check_cal0_sweep)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)
 
 failed = [name for name, passed in RESULTS if not passed]

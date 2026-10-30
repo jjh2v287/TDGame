@@ -29,7 +29,7 @@
       },
       "time_dilation": 1.0,
       "settle": 4.0,
-      "regions_template": "Tools/FluidFX/calib/regions/input_fx15b_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/input_fx15b_regions.json", "targets": "Tools/FluidFX/calib/targets/input_fx15b_plan_targets.json",
       "live2_refs": [],
       "shots": {
         "count": 5,

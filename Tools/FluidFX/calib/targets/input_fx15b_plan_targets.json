@@ -1,0 +1,5 @@
+{
+  "note": "input_fx15b 목표(2026-10-30 일괄 보정 착수). 계획 인라인 띠(derived.large_over_small_trail_width 1.8~2.2, spec-fx15b 7절 Z1 [제안])만 쓰고 영역·kind 띠는 없다. 화면 단계는 look 장면에 목표 파일을 요구하므로(calib_sweep 장면 검사) 빈 띠 파일을 둔다",
+  "kind_metrics": {},
+  "region_metrics": {}
+}

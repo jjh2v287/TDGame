@@ -274,3 +274,11 @@
 - 증거: `Saved/AgentOps/20261030/wave3-assets/a7-a8/index.md`, `a9-tests/index.md` 끝 절
 - 날짜·상태: 2026-10-30 active
 - 발견: claude(FluidFX 파동 3 에셋 단계)
+
+### L-repo-31 `python Tools/ue_editor.py ensure` 가 에디터 복구 때 `Config/DefaultEngine.ini` 의 줄끝만 바꿔 작업 트리가 더러워진다
+- 증상: 에디터 충돌 뒤 ensure 로 재기동하자 `git status` 에 ` M Config/DefaultEngine.ini`, `git diff --stat` 은 비어 있고 "LF will be replaced by CRLF" 경고
+- 해결: 내용 차이가 없으므로 커밋하지 않고 두거나, 사용자 승인 뒤 되돌린다(`git checkout --` 는 승인 필요). 커밋할 때 경로를 명시해 섞이지 않게 한다
+- 범위: ensure 가 원격 실행 설정을 다시 쓰는 경로(본 트리 core.autocrlf=true)
+- 증거: 2026-10-31 HVOL 2차 진단(Saved/AgentOps/20261031/hvol/r2) 뒤 본 트리 git status
+- 날짜·상태: 2026-10-31 active
+- 발견: claude

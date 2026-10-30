@@ -62,6 +62,7 @@
 - 증거: 2026-09-24 `Tools/MonsterAI/editor_pie_monster_probe.py` 실패 → 정적 접근자 추가 후 PIE 검증 통과
 - 날짜·상태: 2026-09-24 active
 - 발견: claude
+- 보충(2026-10-31): 빌드 없는 대안으로 unreal.ObjectIterator(서브시스템 클래스) 중 get_world()==월드인 것을 고른다(pie_lookdev_fluid.py find_world_subsystem). 에디터 월드에는 CDO 만 있어 PIE 에서만 확인 가능 — PIE 확인 전 미검증
 
 ### L-editor-08 에디터 안(MCP) 자동화 테스트로 `TDGame.Combat` 전체를 돌리면 MegaMagic 잔상 테스트에서 에디터가 죽는다
 - 증상: `TDGame.Combat.MegaMagic.VisualTailStopsGameplayAndExpires` 실행 중 `Assertion failed: (Index >= 0) & (Index < ArrayNum)` / `UNiagaraScript::GetLastGeneratedVMId() [NiagaraScript.cpp:985]` ← `UNiagaraComponent::ActivateInternal` ← `WaitForCompilationComplete`. 클라이언트에는 `ConnectionResetError: [WinError 10054]`만 보인다.
@@ -699,3 +700,47 @@
 - 증거: `Saved/AgentOps/20261030/wave3-finish/r3/{debug,fix,refute}.md`, 커밋 78fa1c1a
 - 날짜·상태: 2026-10-30 active
 - 발견: claude(FluidFX 파동 3 마무리)
+
+### L-editor-80 UE 5.8 HVOL 라이브 셰이딩에서 재질의 ObjectPositionWS 는 (0,0,0), ObjectBounds 는 거대값이라 이 둘에 기댄 창 계산이 화면에서 사라진다
+- 증상: FX-9 HVOL(이질 볼륨)이 PIE 화면에 전혀 안 보임. 컴포넌트 보임·바운즈 시야 안·슬롯 MID·시뮬 RT 정상, 소광 50 으로도 안 보이고 위치 무관 상수 밀도만 보임. 1차 창 시험은 한 장씩이라 결과가 서로 모순(같은 조건 반복 안 함)
+- 원인: 엔진 LiveShadingPipeline.usf 269~276 이 빈 매개변수로 LWC 자료를 만들고(PrimitiveId 주석 처리, ObjectWorldPosition TODO) LiveShadingUtils.ush 14~20 은 LocalToWorld·LocalObjectBounds 만 채운다. 셰이더 덤프에서 VolObjectPosition=GetObjectWorldPosition, VolObjectBoundsCm=GetPrimitiveData(Parameters).ObjectBounds 확인. lerp(거대값, 정상값, 1) 은 x+1·(y−x) 소거로 정상값이 안 나온다
+- 해결: 오브젝트 위치는 상수 0 을 TransformPosition(로컬→월드), 바운즈는 ObjectLocalBounds 반 크기를 Transform(로컬→월드) 후 Abs, HLSL 의 역할별 값 고르기는 lerp 대신 선택식(`조건 ? a : b`). WorldPosition·LocalPosition·CameraPosition 은 정상. 회전된 수동 볼륨은 AABB 처리 필요
+- 범위: UE 5.8 Heterogeneous Volume(라이브 셰이딩, Preshading 0) 재질. Preshading 1 런타임 전환은 HVOL 렌더 중 RDG 접근 위반으로 에디터 충돌(미해결)
+- 증거: `Saved/AgentOps/20261031/hvol/r2/`(탐침 재질 3회 반복 일치, 원본·코드 수정·코드+입력 수정 A/B), 커밋 abe87c40
+- 날짜·상태: 2026-10-31 active(실제 에셋 재생성 뒤 확인은 cal-editor-ops 워크플로)
+- 발견: claude(FluidFX 일괄 보정 frame)
+
+### L-editor-81 에디터 Python 에서 블루프린트 액터 컴포넌트에 set_editor_property 를 여러 번 쓰면 첫 쓰기 뒤 구성 스크립트가 다시 돌아 나머지 값이 버려진 옛 컴포넌트에 들어간다
+- 증상: 무대 생성기가 교반기 메시·배율·피벗·회전 속도를 차례로 썼는데 맵에 PivotTranslation·RotationRate 이름표가 없고 PIE 에서 블루프린트 기본값(90°/s, 배율 0.4)으로 돈다. 옛 핸들로 다시 읽으면 값이 맞아 검사가 거짓 통과
+- 원인: set_editor_property → ActorComponent.cpp 1444 ConsolidatedPostEditChange → RerunConstructionScripts 로 컴포넌트를 새로 만든다. set_editor_properties 는 Pre/PostEditChange 를 한 번만 부른다(PyWrapperObject.cpp 977~985). 또 unreal.Rotator(0, v, 0) 위치 인수는 (roll, pitch, yaw) 라 v 가 pitch 가 된다
+- 해결: 쓰기마다 get_component_by_class 로 핸들을 새로 받고 set_editor_properties 로 한 번에 쓴 뒤 새 핸들로 다시 읽어 다르면 FAIL(공용 set_component_properties, editor_make_fluid_particle_stage.py). Rotator 는 yaw= 키워드. unreal.load_class 결과(unreal.Class)는 __name__ 이 없어 get_name() 사용
+- 범위: 구성 스크립트가 있는 블루프린트 액터의 컴포넌트 속성 편집(무대 생성기 전부)
+- 증거: 2차 진단 D4(LV_TDFluidInputStage.umap 이름표·frame 픽셀), 3차 T3 가짜 unreal 핸들 재생성 시험 18/18, 커밋 e9161019·c117e536
+- 날짜·상태: 2026-10-31 active(맵 재생성 뒤 PIE 확인 대기)
+- 발견: claude(FluidFX 일괄 보정 frame)
+
+### L-editor-82 후처리 볼륨 노출이 AEM_MANUAL 이면 엔진이 min/max brightness(exposure_ev100)를 무시해, 룩데브가 노출을 바꿨다고 기록해도 화면은 그대로다
+- 증상: 안개 계획 exposure_ev100 1.0 이 촬영에 반영되지 않음(무대 PPV 수동·바이어스 0). 구름 무대(EV 12)에 바이어스 변환을 전역으로 걸자 −12 스톱 검은 화면 회귀
+- 원인: PostProcessEyeAdaptation.cpp 652~655(수동 모드는 바이어스와 물리 카메라 EV100 만 씀)
+- 해결: 수동 볼륨은 auto_exposure_bias = 원래 바이어스 + 물리 카메라 EV100 − 목표 EV100 이지만 무대마다 의도가 달라 계획 키 exposure_manual "bias" 를 줄 때만 적용하고 기본은 무시·기록(pie_lookdev_fluid.py)
+- 범위: AEM_MANUAL 후처리 볼륨이 있는 모든 무대
+- 증거: 2차 진단 D3, 3차 T1 반박(구름 회귀), 커밋 be874211
+- 날짜·상태: 2026-10-31 active
+- 발견: claude(FluidFX 일괄 보정 frame)
+
+### L-editor-83 UPROPERTY(Transient) 만 붙은 C++ 멤버는 Python get_editor_property 로 읽을 수 없다
+- 증상: 탐침이 `TDFluidLiveComponent: Failed to find property 'gpu_density_pressure_target'`
+- 해결: BlueprintPure 게터(get_density_pressure_texture)를 부른다(probe.rt 의 function 키). 게터가 Texture2D(CPU 백엔드)를 주면 렌더 타깃 읽기 대상이 아니다
+- 범위: 에디터 Python 의 C++ 객체 속성 접근
+- 증거: frame 재촬영 cloud_g4_painter result.json, TDFluidLiveComponent.h 397~398
+- 날짜·상태: 2026-10-31 active
+- 발견: claude
+
+### L-editor-84 FluidFX 대량 입력(GPU DI 스플랫) 종류는 SolverBackend 가 Gpu 여야 한다 — 비우면 StructDefaults Cpu, Auto 도 해상도 256 이하면 CPU 라 입력 0
+- 증상: fx5 화염방사기 frame 5장에 화염 0, 로그 오류 0
+- 원인: ShouldUseGpuSolver 는 Auto 일 때 해상도 >256 만 GPU. BuildMassInputTarget(TDFluidLiveComponent.cpp 2458)은 !bUsesGpuSolver 면 거부, PublishMassInputTargets 는 GPU 액터만 공개 → DI bHasTarget 거짓
+- 해결: 정본 Kinds.Flamethrower·SnowAvalanche 에 "SolverBackend": "Gpu"(커밋 6f1b6a30). 새 대량 입력 종류도 같다
+- 범위: NS 렌더러 없이 GPU DI 스플랫으로만 입력하는 종류
+- 증거: 2차 진단 D2(Saved/FluidFX/calib/frames/fx5_flamethrower)
+- 날짜·상태: 2026-10-31 active(재촬영 확인 대기)
+- 발견: claude

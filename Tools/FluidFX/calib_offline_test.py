@@ -1217,6 +1217,8 @@ def check_cal0_patch():
           and entries.get(cloud_global, {}).get("kind") == "knob" and "measured_under_base" not in entries.get(cloud_global, {})
           and t84_measured[0] == 0 and entries.get(river_scalar, {}).get("measured_under_base") == [reed_recovery] and reed_recovery not in entries,
           (t84_none, t84_ships[1][-300:], t84_measured[1][-300:], list(entries)))
+    check("CAL-0 재반박 N1 accept: Look 채택 항목에 levels(Look 을 적용한 장면의 수준), 조절 채택 항목에는 없음",
+          entries.get(river_scalar, {}).get("levels") == ["/Game/CAL0/L_B1"] and "levels" not in entries.get(cloud_global, {}), (entries.get(river_scalar), entries.get(cloud_global)))
 
     first = cli("materialize", "--overlay", str(overlay_path), "--out", str(output_dir / "t83-a"))
     second = cli("materialize", "--overlay", str(overlay_path), "--out", str(output_dir / "t83-b"))
@@ -1857,6 +1859,23 @@ def check_cal0_sweep():
           code == 0 and river_steps and all(step["valid"] and step.get("look_live_skipped") for step in river_steps) and WORLD.actors[0].cal0_glow == 2.0,
           (code, text[-300:], step_errors(river_steps)[:4], WORLD.actors[0].cal0_glow))
 
+    def look_overlay(name, **entry_extra):
+        return write_json(name, {"version": 2, "assignments": [dict({"json_path": look_path, "value": 0.5, "split_group": False}, **entry_extra)], "actor_props": [], "history": []})
+
+    ownerless_runs = {}
+    for name, plan_edit, extra in (("fix-n1a", None, ("--overlay", look_overlay("fix-n1a-overlay.json"))),
+                                   ("fix-n1b", lambda plan: plan.update(base_tuning=[{"json_path": look_path, "value": 0.5}], base_tuning_ships=True), ()),
+                                   ("fix-n1c", None, ("--overlay", look_overlay("fix-n1c-overlay.json", levels=["/Game/CAL0/LV_Other"]))),
+                                   ("fix-n1d", None, ("--overlay", look_overlay("fix-n1d-overlay.json", levels=[campfire_level]))),
+                                   ("fix-n1e", lambda plan: plan["params"].append({"json_path": look_path, "base": 0.0, "values": [0.0, 1.0]}), ())):
+        reset_world(fire_world)
+        ownerless_runs[name] = staged_run(name, stage_plan(name, plan_edit), *extra)
+    skipped_runs = [ownerless_runs[name] for name in ("fix-n1a", "fix-n1b", "fix-n1c")]
+    check("CAL-0 재반박 N1 덧씌움·base_tuning Look 이 이 수준에 소유자 없음(levels 없음·다른 수준) → 적용·다시 읽기 건너뜀 skipped_look·단계 유효·종료 0 / 이 수준 levels·손잡이 Look 은 엄격(종료 1)",
+          all(code == 0 and steps and all(step["valid"] and step.get("skipped_look") == [look_package] for step in steps) for code, _, steps in skipped_runs)
+          and ownerless_runs["fix-n1d"][0] == 1 and ownerless_runs["fix-n1e"][0] == 1 and any("look 적용 대상 없음" in error for error in step_errors(ownerless_runs["fix-n1e"][2])),
+          {name: (code, text[-160:], step_errors(steps)[:3]) for name, (code, text, steps) in ownerless_runs.items()})
+
     ember_path = "Kinds.Campfire.TDFluidEmberSettings.SpawnPerSecond"
     ember_base = load_json(CANONICAL)["Kinds"]["Campfire"].get("TDFluidEmberSettings", {}).get("SpawnPerSecond", 1.0)
     code, text, _ = dry("fix-s4", stage_plan("fix-s4", lambda plan: plan["params"].append({"json_path": ember_path, "values": [ember_base, ember_base * 2 + 1]})), "--stage", "screen")
@@ -2257,6 +2276,22 @@ def check_cal0_judge():
     check("CAL-0 반박 adopt1 param scenes 계획 confirm: best 손잡이 범위 밖 skipped 장면은 건너뛰어 adopt 참 / 범위 안 skipped 는 종료 2",
           scoped_screen_code == 0 and scoped_code == 0 and dig(scoped, "adopt", "decision") is True and dig(scoped, "adopt", "variant") == "v02" and inside_code == 2,
           (scoped_output[-300:], dig(scoped, "adopt", "reasons"), inside_code, inside_output[-200:]))
+
+    scoped_prior = scoped_plan.parent / "confirm" / "judge.json"
+    unjudged_s2 = rows(("v00", {"probe.m": 5.0}), ("v00", {"probe.m": 5.3}), ("v00", {"probe.m": 4.7}))
+    verify_runs = {}
+    for folder, s1_rows in (("verify-n2-match", rows(("v00", {"probe.m": 7.5}), ("v00", {"probe.m": 7.52}), ("v00", {"probe.m": 7.48}))),
+                            ("verify-n2-drift", rows(("v00", {"probe.m": 5.0}), ("v00", {"probe.m": 5.02}), ("v00", {"probe.m": 4.98})))):
+        code, output = judge("--sweep", make_sweep(scoped_plan, scoped_lock, "verify", {"s1": s1_rows, "s2": unjudged_s2}, folder), "--lock", scoped_lock, "--verify-against", scoped_prior)
+        report_path = scoped_plan.parent / folder / "judge.json"
+        verify_runs[folder] = (code, output, load_json(report_path) if report_path.is_file() else {})
+    match_code, match_output, match_report = verify_runs["verify-n2-match"]
+    drift_code, drift_output, drift_report = verify_runs["verify-n2-drift"]
+    check("CAL-0 재반박 N2 범위 손잡이 verify: 앞 confirm 판정에 없는 장면 s2 는 건너뜀 기록·판정 제외 → 값 일치 종료 0 / 값 표류 종료 1·대조 통과(control_ok 참)·verify.passed 거짓(되돌림 대상)",
+          match_code == 0 and [scene["name"] for scene in match_report.get("scenes", [])] == ["s1"] and dig(match_report, "skipped_scenes", 0, "name") == "s2"
+          and dig(match_report, "verify", "passed") is True and drift_code == 1 and drift_report.get("scenes") and all(scene["control_ok"] for scene in drift_report["scenes"])
+          and dig(drift_report, "verify", "passed") is False,
+          (match_code, match_output[-300:], drift_code, drift_output[-300:], dig(drift_report, "verify")))
 
     offline_scene = {"name": "s_off", "level": "/Game/CAL0/Level", "camera": {}, "settle": 1.0, "sources": ["offline"]}
     lag_target = {"metric": "offline.lag", "low": 1.1, "high": 1.3, "weight": 1.0, "scene": "s_off"}
@@ -2700,6 +2735,14 @@ def check_cal0_batch():
     drifted, calls = statuses(load_json(root / "fix-a5" / "journal.json")), fake.calls
     check("CAL-0 반박 adopt5 사슬 재검증 판정 종료 1 이 대조 표류(control_ok 거짓)면 실패로 읽지 않음 → 되돌림 없음·사슬 중단 사유 기록",
           drifted["b8_f2"]["status"] == "adopted" and not any(call.startswith("remove") for call in calls) and "대조" in drifted["b8_f1"]["reason"], (calls, drifted["b8_f1"], drifted["b8_f2"]))
+
+    with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
+        fake.calls.clear()
+        run_batch(arguments + ["--resume"])
+    marker = statuses(load_json(root / "fix-a5" / "journal.json"))["b8_f2"]["runs"].get("chain_verify")
+    chain_summary = load_json(W / marker) if marker and (W / marker).is_file() else {}
+    check("CAL-0 재반박 N2 사슬 재검증이 판정 불가로 중단되면 chain_verify 표시(interrupted 계획·사유)를 남겨 --resume 때 verify 스윕을 반복하지 않음",
+          bool(marker) and (chain_summary.get("interrupted") or {}).get("plan") == "b8_f1" and "sweep b8_f1 verify" not in fake.calls, (marker, chain_summary, fake.calls))
 
 
 run_check(check_cal0_b0)

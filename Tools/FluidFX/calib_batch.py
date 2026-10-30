@@ -1,6 +1,6 @@
 """실행 환경: 시스템 Python 3, 백그라운드 실행(스윕 1회가 600초를 넘는다). 에디터가 TDGame 을 열 수 있고 Saved/AgentOps/build_hold.json 보류를 얻을 수 있어야 한다. 하위 도구(calib_sweep·calib_judge·prereg_lock·fluid_tuning_patch·ue_editor·run_in_editor·build_and_test, 헤드리스 UnrealEditor-Cmd)는 모두 하위 프로세스로 부르고 정본은 쓰지 않는다(spec-cal0-v2 1.5 G-BATCH, 일지 C10).
 실행 명령: python Tools/FluidFX/calib_batch.py --queue Tools/FluidFX/calib/batch_queue.json --holder <보류 이름> [--journal Saved/FluidFX/calib/batch/journal.json] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--locks-dir Saved/FluidFX/calib/locks] [--block K1]... [--resume] [--revisit-deferred] (PowerShell). 큐 = {"test_classes": {"path", "sha256"}, "blocks": [{"id", "plans": [{"plan": 프로젝트 상대 경로, "chain": 사슬 이름|null, "stages": ["screen"] 또는 ["screen", "confirm"], "estimate_seconds"?: {단계: 초}}]}]}(계획 경로는 큐 전체에서 한 번씩), 시험 분류표 = {"numeric_pinned": [헤드리스 시험 경로]}. 일지가 있으면 --resume 일 때만, 큐 sha256 이 같을 때만 이어 한다. --revisit-deferred 는 고른 블록의 deferred 항목 confirm 을 상한 없이 돌린다(K10)
-출력: 일지(C10 원자적 다시 쓰기. runs = {단계: 실행 폴더, lock: 잠금, verify<n>: 사슬 재검증, chain_verify: 사슬 요약(사슬 마지막 항목), headless: 블록 헤드리스 폴더(블록 마지막 항목)}), 일지 폴더의 batch.log(시작 처리·명령·상태 한 줄씩), runs/<계획>/<단계>-<n>/ 와 <단계>-<n>.log, chains/<사슬>.json, blocks/<블록>-<n>/(materialize 사본·headless.log·headless.json). 종료 코드 0 고른 블록 처리 끝·failed 없음 / 1 failed 항목 있음 / 2 큐·일지·계획 입력 오류 / 3 시작 처리(보류 회수→ensure→t.OverrideFPS 0→정본 재적재→보류 획득) 실패
+출력: 일지(C10 원자적 다시 쓰기. runs = {단계: 실행 폴더, lock: 잠금, verify<n>: 사슬 재검증, chain_verify: 사슬 요약(사슬 마지막 항목, 재검증 판정 불가로 중단되면 interrupted{plan, reason} 을 남겨 재개 때 반복하지 않음, 실행 실패면 남기지 않음), headless: 블록 헤드리스 폴더(블록 마지막 항목)}), 일지 폴더의 batch.log(시작 처리·명령·상태 한 줄씩), runs/<계획>/<단계>-<n>/ 와 <단계>-<n>.log, chains/<사슬>.json, blocks/<블록>-<n>/(materialize 사본·headless.log·headless.json). 종료 코드 0 고른 블록 처리 끝·failed 없음 / 1 failed 항목 있음 / 2 큐·일지·계획 입력 오류 / 3 시작 처리(보류 회수→ensure→t.OverrideFPS 0→정본 재적재→보류 획득) 실패
 상태: 가짜 하위 프로세스 시험만(calib_offline_test T98·T99, 2026-10-30), 실제 에디터 배치 미실행. 하위 도구의 새 인수(--stage·--overlay·--lock·--screen-result·--screen-sweep·--verify-against·accept·overlay-remove --overlay·materialize 의 TDFluidPresetTuning.json·TDFluidMaterialLook.json 출력)는 명세 0.4 계약 기준이며 병합 뒤 이름·경로 맞물림 확인(실제 실행 미검증). 단계 2배 상한은 단계 실행 하나(하위 프로세스) 전체의 시간 제한으로 집행한다. 판정 종료 1(스윕 무효·대조 실패·판정 불가)은 undetermined 로 채택 없음(no_adopt)·둔감(insensitive)과 구분한다, 재검증 판정은 종료 0 통과, 종료 1 은 verify.json 대조 통과(control_ok)·verify.passed 거짓일 때만 실패이고 대조 표류·판정 불가는 사슬 중단(되돌림 없음). confirm 직전 screen.json overlay_sha256 ≠ 현재 덧씌움이면 locked 로 되돌려 재screen 한다(deferred 재방문은 상한 없이)
 """
 import argparse
@@ -47,6 +47,9 @@ SHOT_SECONDS = 0.35
 STEP_OVERHEAD_SECONDS = 6.0
 SCENE_OVERHEAD_SECONDS = 42.0
 STEP_LIMIT_FACTOR = 2.0
+REPLACE_ATTEMPTS = 4
+REPLACE_RETRY_SECONDS = 2.0
+VERIFY_PASSED, VERIFY_FAILED, VERIFY_UNDETERMINED, VERIFY_NOT_RUN = "passed", "failed", "undetermined", "not_run"
 BLOCK_LIMIT_FACTOR = 1.25
 TOOL_TIMEOUT_SECONDS = 1800
 REASON_TAIL_CHARACTERS = 600
@@ -65,7 +68,14 @@ def write_json_atomic(path, document):
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(json.dumps(document, ensure_ascii=False, indent=1), encoding="utf-8")
-    os.replace(temporary, path)
+    for attempt in range(1, REPLACE_ATTEMPTS + 1):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError:
+            if attempt == REPLACE_ATTEMPTS:
+                raise
+            time.sleep(REPLACE_RETRY_SECONDS)
 
 
 def file_sha256(path):
@@ -492,17 +502,23 @@ class BatchRunner:
         run_dir, failure = self.run_stage(item, "verify", ["--lock", self.lock_path(item)], run_key)
         if run_dir is None:
             item["reason"] = f"사슬 재검증 실행 실패: {failure}"
-            return None
+            return VERIFY_NOT_RUN
         confirm_judge = project_path(item["runs"]["confirm"]) / "judge.json"
         code, tail, verify_path = self.judge(item, run_key, run_dir, "verify.json", ["--verify-against", confirm_judge])
         if code == 0:
-            return True
+            return VERIFY_PASSED
         report = read_json(verify_path) if code == 1 and verify_path.exists() else {}
         is_control_ok = all(scene.get("control_ok") for scene in report.get("scenes") or [{}])
         if code == 1 and is_control_ok and (report.get("verify") or {}).get("passed") is False:
-            return False
+            return VERIFY_FAILED
         item["reason"] = f"사슬 재검증 판정 종료 {code}{'(대조 표류·판정 불가)' if code == 1 else ''}: {tail}"
-        return None
+        return VERIFY_UNDETERMINED
+
+    def write_chain_summary(self, last, chain, rounds, interrupted=None):
+        summary_path = self.work_dir / "chains" / (chain.replace("/", "_").replace(".", "_") + ".json")
+        write_json_atomic(summary_path, dict({"chain": chain, "rounds": rounds, "at": now_text()}, **({"interrupted": interrupted} if interrupted else {})))
+        last["runs"]["chain_verify"] = display_path(summary_path)
+        self.save()
 
     def verify_chain(self, chain, is_revisit):
         members = [item for item in self.journal["items"] if item["chain"] == chain]
@@ -516,21 +532,21 @@ class BatchRunner:
                 break
             outcomes = {}
             for earlier in adopted[:-1]:
-                outcomes[self.plan_name(earlier)] = self.verify_item(earlier, len(rounds) + 1)
+                status = self.verify_item(earlier, len(rounds) + 1)
                 self.save()
-                if outcomes[self.plan_name(earlier)] is None:
+                if status in (VERIFY_NOT_RUN, VERIFY_UNDETERMINED):
                     self.record(f"사슬 {chain} 재검증", "중단", earlier["reason"][:200])
+                    if status == VERIFY_UNDETERMINED:
+                        self.write_chain_summary(last, chain, rounds, {"plan": self.plan_name(earlier), "reason": earlier["reason"][:600]})
                     return
+                outcomes[self.plan_name(earlier)] = status == VERIFY_PASSED
             rounds.append(outcomes)
             failing = [name for name, passed in outcomes.items() if not passed]
             if not failing:
                 break
             if not self.revert(adopted[-1], f"conflict: 사슬 {chain} 재검증 실패({', '.join(failing)}) → 가장 최근 채택 되돌림"):
                 return
-        summary_path = self.work_dir / "chains" / (chain.replace("/", "_").replace(".", "_") + ".json")
-        write_json_atomic(summary_path, {"chain": chain, "rounds": rounds, "at": now_text()})
-        last["runs"]["chain_verify"] = display_path(summary_path)
-        self.save()
+        self.write_chain_summary(last, chain, rounds)
 
     def run_headless_tests(self, output_dir):
         tuning_path = output_dir / "copy" / MATERIALIZED_TUNING

@@ -1,6 +1,6 @@
 """실행 환경: 시스템 Python 3(에디터 불필요, look 지표는 measure_fx_look.py 의 numpy·Pillow·scipy 필요). calib_sweep.py 의 sweep.json 을 사전 등록 잠금(prereg_lock.py) 확인 뒤 판정한다. 옛 스윕(stage 없음, spec-wave0-data-bridge-v2 3.9): look 장면은 단계 이미지를 영역 틀로 measure_fx_look.py --targets 에 넣어 LIVE-2 목표 범위를(지표 <n>.<영역>.<지표> 와 N장 중앙값 <영역>.<지표>), 물 장면은 pie_probe_fluid_water 규칙 값을 지표로 삼고 반복 간 범위를 잡음으로 쓴다. 단계 스윕(stage screen|confirm|verify, spec-cal0-v2 1.1·1.2·G-JUDGE·G-DERIVED): 장면 sources(look·water_probe·probe·offline) 지표를 합치고(look 은 목표 파일에 live2_targets 가 있으면 불 경로, 없으면 기본 모드 측정을 펼친 일반 경로이고 장수 = 잠긴 계획 shots.count·shots_saved 참, 단계 metrics 의 숫자 목록과 probe_samples[{time, metrics, grid_paths}](pie_lookdev_fluid probe.samples) 는 장별 표본), metrics.derived(ratio·difference·relative_step·half_life·e_fold·slope·extent, 시계열은 shots.kind series 장면만, extent 는 단계 grids{접두: 격자 JSON 경로 또는 목록} 또는 probe_samples grid_paths) 를 더하며, 목표 띠는 계획 > region_metrics > kind_metrics(영역 kind volume 은 fog 로 측정), relative_to_control 은 대조 기준 × 비, role constraint 는 점수 밖 제약이다.
 실행 명령: python Tools/FluidFX/calib_judge.py --sweep Saved/FluidFX/calib/<run>/sweep.json --lock <잠금 JSON> [--output <Saved 아래 JSON>] [--screen-sweep <screen sweep.json>(confirm 필수)] [--verify-against <앞 confirm judge.json>(verify 선택)]
-출력: 옛 스윕은 judge.json(장면별 targets 표·noise_floor·drift·control_check·curves·candidate·live2_sheet·accepted). screen 은 screen.json v2(plan·overlay·정본 2·lock·screen_sweep sha, noise{장면: {지표: between·shot·median_floor·noise}}·score_noise·params[effect·sensitive·reach·cost_blocked]·keep·best·second·insensitive·unreachable_targets·cost_blocked_best·scenes, adopt 거짓)이고 비용 막힌 최선은 Saved/FluidFX/calib/perf-candidates.json 에 덧붙인다. confirm 은 judge.json v2(stage·sha·scenes(candidate_medians)·candidate·adopt{decision·variant·assignments·reasons·evidence}, best 손잡이 param scenes 밖 skipped 장면은 건너뜀, offline 장면은 이미지 지문 대신 결정론 증거), verify 는 judge.json v2(verify{against·against_sha256·passed·checks}, 앞 confirm 판정의 plan·plan_sha256·lock_sha256 이 다르면 종료 2). 종료 코드 0 판정 완료·대조 통과(verify 대조 기준 통과 포함) / 1 스윕 무효·대조 실패·판정 불가·verify 실패 / 2 잠금·입력 오류·장수 불일치·saved 거짓·sha 불일치·screen 재판정 불일치. 판정 상수(잠금 대상, 결과를 연 뒤 불변): SENSITIVITY_FACTOR 2.0·CONTROL_NOISE_FACTOR 2.0·REACH_NOISE_FACTOR 2.0·MIN_CONTROL_STEPS 3·MIN_SAMPLES 3·SECOND_GAIN_MARGIN 1.0.
+출력: 옛 스윕은 judge.json(장면별 targets 표·noise_floor·drift·control_check·curves·candidate·live2_sheet·accepted). screen 은 screen.json v2(plan·overlay·정본 2·lock·screen_sweep sha, noise{장면: {지표: between·shot·median_floor·noise}}·score_noise·params[effect·sensitive·reach·cost_blocked]·keep·best·second·insensitive·unreachable_targets·cost_blocked_best·scenes, adopt 거짓)이고 비용 막힌 최선은 Saved/FluidFX/calib/perf-candidates.json 에 덧붙인다. confirm 은 judge.json v2(stage·sha·scenes(candidate_medians)·candidate·adopt{decision·variant·assignments·reasons·evidence}, best 손잡이 param scenes 밖 skipped 장면은 건너뜀, offline 장면은 이미지 지문 대신 결정론 증거), verify 는 judge.json v2(verify{against·against_sha256·passed(판정 불가 항목만 있으면 null)·checks}, 앞 confirm 판정에 없는 장면은 판정하지 않고 skipped_scenes 에 기록, 앞 confirm 판정의 plan·plan_sha256·lock_sha256 이 다르면 종료 2). 종료 코드 0 판정 완료·대조 통과(verify 대조 기준 통과 포함) / 1 스윕 무효·대조 실패·판정 불가·verify 실패 / 2 잠금·입력 오류·장수 불일치·saved 거짓·sha 불일치·screen 재판정 불일치. 판정 상수(잠금 대상, 결과를 연 뒤 불변): SENSITIVITY_FACTOR 2.0·CONTROL_NOISE_FACTOR 2.0·REACH_NOISE_FACTOR 2.0·MIN_CONTROL_STEPS 3·MIN_SAMPLES 3·SECOND_GAIN_MARGIN 1.0.
 상태: 오프라인만 검사(합성 탐침 규칙·합성 단계 점수·2026-10-25 수용 시험 산출 재판정, 2026-10-30 CAL-0 B4a 합성 단계 스윕·합성 PNG·격자 fixture), 단계 스윕의 실제 PIE 판정 미실행. 옛 스윕 잡음 바닥은 계획 metrics.noise_floor 가 없으면 비대조 변형 반복 간 최대 범위(반복 2 이상 필요).
 """
 import argparse
@@ -37,6 +37,7 @@ TOLERANCE = 1e-12
 EXIT_REJECTED = 1
 EXIT_INPUT = 2
 JUDGED_STAGES = ("screen", "confirm", "verify")
+VERIFY_STATES = {True: "통과", False: "실패", None: "판정 불가"}
 SOURCE_NAMES = ("look", "water_probe", "probe", "offline")
 ROLE_SCORE = "score"
 ROLE_CONSTRAINT = "constraint"
@@ -840,7 +841,7 @@ def judge_staged_scene(scene_name, items, targets, is_series, is_offline_only, s
             "control_steps": [item["step"] for item in controls], "diagnostic_drift_over_allowed": diagnostic}
 
 
-def judge_sweep_scenes(sweep, plan, work_dir, screen_noise=None, skippable=frozenset()):
+def judge_sweep_scenes(sweep, plan, work_dir, screen_noise=None, skippable=frozenset(), judged_names=None):
     plan_scenes = {scene["name"]: scene for scene in plan.get("scenes", [])}
     unscoped = [str(target.get("metric")) for target in sweep["metrics"].get("targets") or [] if "scene" not in target]
     if len(plan_scenes) >= 2 and unscoped:
@@ -850,6 +851,8 @@ def judge_sweep_scenes(sweep, plan, work_dir, screen_noise=None, skippable=froze
         plan_scene = plan_scenes.get(scene["name"])
         if plan_scene is None:
             raise JudgeError(f"{scene['name']}: 잠긴 계획에 이 장면이 없다")
+        if judged_names is not None and scene["name"] not in judged_names:
+            continue
         if scene.get("skipped") and not scene["steps"] and scene["name"] in skippable:
             continue
         steps = [step for step in scene["steps"] if step["valid"]]
@@ -1211,7 +1214,7 @@ def verify_checks(scene_results, prior):
             value = scene["control_reference"].get(metric)
             expected = prior_scene["candidate_medians"].get(metric)
             allowed = drift_allowance((prior_scene["noise"].get(metric) or {}).get("drift_floor"), target["tolerance"], scene["series"])
-            is_passed = None not in (value, expected, allowed) and abs(value - expected) <= allowed + TOLERANCE
+            is_passed = None if None in (value, expected, allowed) else abs(value - expected) <= allowed + TOLERANCE
             checks.append({"scene": scene["name"], "metric": metric, "value": value, "expected": expected, "allowed": allowed, "passed": is_passed})
     if not checks:
         raise JudgeError("--verify-against 판정과 겹치는 장면이 없다")
@@ -1219,7 +1222,7 @@ def verify_checks(scene_results, prior):
 
 
 def judge_verify_document(sweep, sweep_path, plan, lock_path, lock_sha, verify_against_text, work_dir):
-    prior, prior_table, prior_path = None, None, None
+    prior, prior_table, prior_path, judged_names = None, None, None, None
     if verify_against_text:
         prior_path = prereg_lock.project_path(verify_against_text)
         prior = load_json(prior_path)
@@ -1229,12 +1232,16 @@ def judge_verify_document(sweep, sweep_path, plan, lock_path, lock_sha, verify_a
         if unbound:
             raise JudgeError(f"--verify-against 판정의 {', '.join(unbound)} 이 이번 verify 스윕·잠금과 다르다")
         prior_table = {scene["name"]: {metric: {"noise": entry.get("noise"), "median_floor": entry.get("drift_floor")} for metric, entry in scene["noise"].items()} for scene in prior["scenes"]}
-    scene_results = judge_sweep_scenes(sweep, plan, work_dir, prior_table)
+        judged_names = set(prior_table)
+    scene_results = judge_sweep_scenes(sweep, plan, work_dir, prior_table, judged_names=judged_names)
     report = {"tool": "calib_judge", "version": 2, "stage": "verify", "sweep": relative(sweep_path), "lock": relative(lock_path), "plan": sweep["plan"], "plan_sha256": sweep["plan_sha256"],
               "overlay_sha256": sweep.get("overlay_sha256"), "lock_sha256": lock_sha, "scenes": scene_results}
     if prior is not None:
         checks = verify_checks(scene_results, prior)
-        report["verify"] = {"against": verify_against_text, "against_sha256": prereg_lock.file_sha256(prior_path), "passed": all(check["passed"] for check in checks), "checks": checks}
+        outcomes = [check["passed"] for check in checks]
+        report["skipped_scenes"] = [{"name": scene["name"], "reason": "앞 confirm 판정에 없는 장면(best 손잡이 param scenes 밖)"} for scene in sweep["scenes"] if scene["name"] not in judged_names]
+        report["verify"] = {"against": verify_against_text, "against_sha256": prereg_lock.file_sha256(prior_path),
+                            "passed": False if False in outcomes else True if all(outcomes) else None, "checks": checks}
     return report
 
 
@@ -1270,7 +1277,7 @@ def print_staged_summary(report, output_path):
     if report["stage"] == "confirm":
         print(f"adopt {report['adopt']['decision']} 후보 {report['adopt']['variant']} 사유 {report['adopt']['reasons']}")
     if "verify" in report:
-        print(f"verify {'통과' if report['verify']['passed'] else '실패'} ({report['verify']['against']})")
+        print(f"verify {VERIFY_STATES[report['verify']['passed']]} ({report['verify']['against']}), 건너뛴 장면 {[scene['name'] for scene in report['skipped_scenes']]}")
     print("판정", relative(output_path))
 
 

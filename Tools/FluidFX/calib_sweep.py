@@ -1,6 +1,6 @@
 """실행 환경: 시스템 Python 3(실제 실행은 언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06. 건식·offline 단독 장면은 에디터 불필요). 계획 JSON v2(spec-cal0-v2 C1)를 허용 키 표로 검사하고, 덧씌움 → base_tuning → 변형 순으로 fluid_tuning_patch 사본을 만든 뒤 장면 sources(look·probe·water_probe·offline)마다 pie_lookdev_fluid 룩데브(tuning_reload base·read_back owner/access·look_live·props·probe·schedule), 물 탐침, offline 명령(같은 사본 2회 결정론 확인)을 돌려 단계 유효성을 단언한다. 단계 종류 frame(v00 1)·screen(손잡이 끝 값, 대조 ≥3)·confirm(v00,best,v00,second|best,v00)·verify(v00 3), 장면 shots → schedule{times: settle+k·interval, reference now, fixed_fps 60}. --stage 없으면 옛 스윕(반복·control_every·control_middle).
 실행 명령: python Tools/FluidFX/calib_sweep.py --plan Tools/FluidFX/calib/plans/<id>.json [--stage frame|screen|confirm|verify] [--lock <잠금 v2>] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--screen-result <screen.json>] [--dry-run] [--run-dir Saved/FluidFX/calib/<run>] [--assert-scene <장면>=<result.json>] (PowerShell, L-repo-01). screen·confirm·verify 실제 실행은 --lock 필수, confirm 은 --screen-result 필수(plan·overlay·정본 2·lock sha 대조). --dry-run 은 검사·사본·룩데브 변형 JSON·sweep.json 만 만든다
-출력: <run-dir>/v<k>/(조절·모양 사본, variant.json), <run-dir>/<장면>/lookdev_spec.json·룩데브 출력(result.json·png)·water_probe.json·<단계>_offline*.json, <run-dir>/sweep.json(version 2·stage·lock·lock_sha256·overlay·overlay_sha256·screen_result·base_copy·canonical_tuning/look_sha256·started_at·warnings, 장면별 sequence·sources·shots_expected, 단계별 images·image_sha256·shots_saved·shot_game_times·metrics·look_applied·look_read_back·owner_checks(룩데브 apply 최상위)·valid·invalid_reasons, props 결과가 목록 아님(액터 없음 등)이면 무효, 물 탐침 단계는 Look 미적용 look_live_skipped 와 장면 overlay_props(덧씌움 actor_props) 적용). 종료 코드 0 모든 단계 유효·정본 불변 / 1 무효 단계·룩데브 실패·정본 바뀜·confirm 거부(screen 둔감·best 없음) / 2 계획·잠금·덧씌움·screen.json 입력 오류
+출력: <run-dir>/v<k>/(조절·모양 사본, variant.json), <run-dir>/<장면>/lookdev_spec.json·룩데브 출력(result.json·png)·water_probe.json·<단계>_offline*.json, <run-dir>/sweep.json(version 2·stage·lock·lock_sha256·overlay·overlay_sha256·screen_result·base_copy·canonical_tuning/look_sha256·started_at·warnings, 장면별 sequence·sources·shots_expected, 단계별 images·image_sha256·shots_saved·shot_game_times·metrics·look_applied·look_read_back·owner_checks(룩데브 apply 최상위)·valid·invalid_reasons, props 결과가 목록 아님(액터 없음 등)이면 무효, 물 탐침 단계는 Look 미적용 look_live_skipped 와 장면 overlay_props(덧씌움 actor_props) 적용, 덧씌움·base_tuning Look 패키지(손잡이 패키지 아님) 중 levels 에 이 장면 수준이 없는 것은 look_live.skip_if_no_owner 로 보내 소유자가 없으면 적용·다시 읽기 단언을 건너뛰고 단계 skipped_look 에 기록, 변형 base_look_levels). 종료 코드 0 모든 단계 유효·정본 불변 / 1 무효 단계·룩데브 실패·정본 바뀜·confirm 거부(screen 둔감·best 없음) / 2 계획·잠금·덧씌움·screen.json 입력 오류
 상태: 오프라인 하네스(가짜 unreal·가짜 룩데브, calib_offline_test.py check_cal0_sweep)만 검사, 실제 PIE 단계 스윕 미실행(2026-10-30 CAL-0 B2). 룩데브 적용 키 검사 find_key_errors(apply)·tuning_reload base·look_live·probe 결과 형식은 B3, Look·Globals 사본은 B1, 잠금 v2 생성은 B4b 병합 뒤 확인.
 """
 import argparse
@@ -97,7 +97,7 @@ FLOAT_RELATIVE_TOLERANCE = 1e-6
 FLOAT_ABSOLUTE_TOLERANCE = 1e-7
 EXIT_INVALID = 1
 EXIT_INPUT = 2
-EMPTY_BASE_LAYER = {"assignments": [], "expect": [], "look_live": {}}
+EMPTY_BASE_LAYER = {"assignments": [], "expect": [], "look_live": {}, "look_levels": {}}
 
 
 class PlanError(Exception):
@@ -449,7 +449,7 @@ def build_base_layer(plan, overlay, document, look_document, schema):
     items.extend(dict(item, origin="base_tuning") for item in plan.get("base_tuning", []))
     current_document = copy.deepcopy(document)
     current_look = copy.deepcopy(look_document)
-    layer = {"assignments": [], "expect": [], "look_live": {}}
+    layer = {"assignments": [], "expect": [], "look_live": {}, "look_levels": {}}
     for item in items:
         assignment = {key: copy.deepcopy(item[key]) for key in ("json_path", "value", "split_group", "base") if key in item}
         assignment.setdefault("split_group", False)
@@ -458,6 +458,8 @@ def build_base_layer(plan, overlay, document, look_document, schema):
             look = parse_look_path(item["json_path"])
             set_look_value(current_look, look, item["value"])
             set_live_value(layer["look_live"], look, item["value"])
+            levels = layer["look_levels"].setdefault(look["package"], [])
+            levels.extend(level for level in item.get("levels") or [] if level not in levels)
             continue
         try:
             info = fluid_tuning_patch.apply_assignment(current_document, schema, assignment)
@@ -528,6 +530,7 @@ def make_variant(variant_id, params, chosen_values, base_layer=None):
     look_live = copy.deepcopy(base_layer["look_live"])
     props = {}
     changed_params = []
+    knob_packages = {param["look"]["package"] for param in params if param["kind"] == "look"}
     for param, value in zip(params, chosen_values):
         is_changed = value != param["base_value"]
         if is_changed:
@@ -544,6 +547,7 @@ def make_variant(variant_id, params, chosen_values, base_layer=None):
             set_prop_value(props, param["actor_prop"], value)
     return {"id": variant_id, "is_control": not changed_params, "values": list(chosen_values), "assignments": assignments, "expect": knob_expect + copy.deepcopy(base_layer["expect"]),
             "look_live": look_live, "props": props, "knobs": [param["index"] for param in changed_params], "scenes": variant_scenes(changed_params),
+            "base_look_levels": {package: list(levels) for package, levels in base_layer.get("look_levels", {}).items() if package not in knob_packages},
             "counts_change": any(param["kind"] == "tuning" and counts_in_reapply_report(param["struct"]) for param in changed_params)}
 
 
@@ -681,6 +685,10 @@ def overlay_scene_props(overlay, scene):
     return props
 
 
+def ownerless_look_packages(variant, level):
+    return sorted(package for package, levels in variant.get("base_look_levels", {}).items() if level not in levels)
+
+
 def make_lookdev_spec(scene, plan, sequence, variants_by_id, base_variant=None, overlay=None):
     base = dict(copy.deepcopy(scene["camera"]), time_dilation=scene.get("time_dilation", 1.0))
     schedule = scene_schedule(scene)
@@ -692,6 +700,9 @@ def make_lookdev_spec(scene, plan, sequence, variants_by_id, base_variant=None, 
         merge_into(apply, scene.get("step_apply", {}))
         if variant.get("look_live"):
             apply["look_live"] = copy.deepcopy(variant["look_live"])
+            optional_packages = ownerless_look_packages(variant, scene["level"])
+            if optional_packages:
+                apply["look_live"]["skip_if_no_owner"] = optional_packages
         props = merge_into(merge_into(copy.deepcopy(apply.get("props", {})), scene_props), variant.get("props", {}))
         if props:
             apply["props"] = props
@@ -752,16 +763,19 @@ def judge_read_back(expect, read):
     return errors
 
 
-def judge_look_live(variant, apply_outcome):
+def judge_look_live(variant, apply_outcome, optional_packages=()):
     if not variant.get("look_live"):
         return []
     if "look_applied" not in apply_outcome:
         return ["look_live 결과 없음"]
-    errors = [f"look_live: {line}" for line in apply_outcome.get("look_errors", [])]
-    if not apply_outcome["look_applied"]:
+    skipped = set(apply_outcome.get("skipped_look") or [])
+    errors = [f"look_live: {package}: 손잡이 Look 인데 소유자 없음으로 건너뜀" for package in sorted(skipped - set(optional_packages))]
+    errors += [f"look_live: {line}" for line in apply_outcome.get("look_errors", [])]
+    judged = {group: {package: sections for package, sections in packages.items() if package not in skipped} for group, packages in variant["look_live"].items()}
+    if any(judged.values()) and not apply_outcome["look_applied"]:
         errors.append("look 적용 대상 없음(look_applied 0)")
     read_back = apply_outcome.get("look_read_back") or {}
-    for package, sections in variant["look_live"].get("materials", {}).items():
+    for package, sections in judged.get("materials", {}).items():
         for section, names in sections.items():
             for name, value in names.items():
                 entry = (read_back.get(package) or {}).get(section, {}).get(name)
@@ -785,7 +799,7 @@ def judge_props(expected_props, apply_outcome):
     return errors
 
 
-def judge_step(variant, apply_outcome, expected_props=None, judges_look=True):
+def judge_step(variant, apply_outcome, expected_props=None, judges_look=True, optional_packages=()):
     reload_outcome = apply_outcome.get("tuning_reload") if isinstance(apply_outcome, dict) else None
     if not isinstance(reload_outcome, dict):
         return ["tuning_reload 결과 없음"]
@@ -807,7 +821,7 @@ def judge_step(variant, apply_outcome, expected_props=None, judges_look=True):
         return errors + ["실효 값 다시 읽기 결과 수가 기대와 다르다"]
     for expect, read in zip(variant["expect"], read_back):
         errors.extend(judge_read_back(expect, read))
-    look_errors = judge_look_live(variant, apply_outcome) if judges_look else []
+    look_errors = judge_look_live(variant, apply_outcome, optional_packages) if judges_look else []
     return errors + look_errors + judge_props(variant.get("props") if expected_props is None else expected_props, apply_outcome)
 
 
@@ -874,7 +888,7 @@ def assert_lookdev_result(result, sequence, variants_by_id, output_dir, scene_en
             steps.append({"step": index, "name": expected_name, "variant": variant_id, "valid": False, "errors": errors, "invalid_reasons": errors, "images": []})
             continue
         variant = variants_by_id[variant_id]
-        errors = judge_step(variant, entry.get("apply"))
+        errors = judge_step(variant, entry.get("apply"), optional_packages=ownerless_look_packages(variant, scene_entry.get("level")))
         apply = entry.get("apply") if isinstance(entry.get("apply"), dict) else {}
         images = lookdev_images(output_dir, index, entry)
         metrics, samples = {}, None
@@ -889,6 +903,7 @@ def assert_lookdev_result(result, sequence, variants_by_id, output_dir, scene_en
                       "images": images, "image_sha256": image_hashes(images), "shots_expected": shots_expected, "shots_saved": len(images), "shot_game_times": shot_game_times(entry, apply),
                       "shot_game_time": apply.get("shot_game_time"), "report": (apply.get("tuning_reload") or {}).get("report"),
                       "look_applied": apply.get("look_applied"), "look_read_back": apply.get("look_read_back"), "owner_checks": apply.get("owner_checks"), **metrics_record(metrics),
+                      **({"skipped_look": apply["skipped_look"]} if apply.get("skipped_look") else {}),
                       **({} if samples is None else {"probe_samples": samples})})
     return steps
 
@@ -1041,7 +1056,8 @@ def load_overlay(overlay_path):
         raise PlanError(f"덧씌움을 읽지 못했다: {error}") from error
     require(isinstance(overlay, dict) and overlay.get("version") == OVERLAY_VERSION, f"덧씌움 {relative_text(overlay_path)}: version {OVERLAY_VERSION} 만 받는다(C7)")
     assignments = overlay.get("assignments", [])
-    require(isinstance(assignments, list) and all(isinstance(item, dict) and isinstance(item.get("json_path"), str) and "value" in item for item in assignments), "덧씌움 assignments: {json_path, value, …} 목록")
+    require(isinstance(assignments, list) and all(isinstance(item, dict) and isinstance(item.get("json_path"), str) and "value" in item and isinstance(item.get("levels", []), list) for item in assignments),
+            "덧씌움 assignments: {json_path, value, levels?(목록), …} 목록")
     for index, item in enumerate(assignments):
         require_tunable_path(item["json_path"], f"덧씌움 assignments[{index}]")
     actor_props = overlay.get("actor_props", [])

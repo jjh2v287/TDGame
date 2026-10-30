@@ -61,6 +61,16 @@
    "reason": "B6 가 calib/retired/ 로 옮긴 폐기·이관 계획(plan-batch-v2 1절 47~51)",
    "source": "B6",
    "original": "Tools/FluidFX/calib/retired/fx16b_fadeout.json"
+  },
+  {
+   "plan": "w1b_water_particles",
+   "kind": "knob",
+   "item": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterSplash.Floats.User.TDSplashContactWhitewater(장면 rapids_img20, values 0.15·0.3·0.6)",
+   "decision": "frame",
+   "destination": "승인 시트(바다 L26 물보라)",
+   "reason": "튐은 움직이는 물체가 수면을 지날 때만 생겨(TDFluidWaterParticleActor.cpp EmitSplashEvents) 여울 무대엔 소유자가 없어 frame 이 실패했고, 바다 목표 debris.embers.* 는 따뜻한 색 검출(R>1.3B)이라 흰 튐 접촉 밀도와 무관하다. 여울 백수 손잡이는 NS_TD_FluidWaterWhitewater TDWhitewaterSpawnPerM2PerSec 로 바꿨다",
+   "source": "frame",
+   "original": "aa1280ea:Tools/FluidFX/calib/plans/w1b_water_particles.json"
   }
  ]
 }

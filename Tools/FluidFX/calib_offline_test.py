@@ -1876,6 +1876,48 @@ def check_cal0_sweep():
           and ownerless_runs["fix-n1d"][0] == 1 and ownerless_runs["fix-n1e"][0] == 1 and any("look 적용 대상 없음" in error for error in step_errors(ownerless_runs["fix-n1e"][2])),
           {name: (code, text[-160:], step_errors(steps)[:3]) for name, (code, text, steps) in ownerless_runs.items()})
 
+    cloud_look = load_json(CANONICAL_LOOK)["Materials"]
+    cap_package, shield_package = "/Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom", "/Game/FluidFX/Materials/MI_TD_FluidCloud_MushroomShield"
+    cap_name, cap_exponent_name, shield_name = "CloudSlot1EmissiveIntensity", "CloudSlot1EmissiveExponent", "CloudSlot2PatternCoverage"
+
+    def cloud_knob(package, name, scenes=None):
+        base = cloud_look[package]["Scalars"][name]
+        return dict({"json_path": f"Look:Materials.{package}.Scalars.{name}", "values": [base, base + 1.0]}, **({"scenes": scenes} if scenes else {}))
+
+    def two_scene_plan(name, knobs):
+        def add_second_scene(plan):
+            plan["scenes"].append(dict(copy.deepcopy(plan["scenes"][0]), name="campfire_b"))
+            for target in plan["metrics"]["targets"]:
+                target["scene"] = "campfire"
+            plan["params"].extend(knobs)
+        return stage_plan(name, add_second_scene)
+
+    def scene_skips(name, record):
+        return [(scene["out_of_scene_look_packages"], lookdev_spec(name, record, index)["variants"][0]["apply"]["look_live"].get("skip_if_no_owner")) for index, scene in enumerate(record["scenes"])]
+
+    reset_world(fire_world)
+    cap_base, shield_base = cloud_look[cap_package]["Scalars"][cap_name], cloud_look[shield_package]["Scalars"][shield_name]
+    cap_material = FakeMaterialInstanceConstant(cap_package, scalars={cap_name: cap_base}, parent=FakeMaterial("/Game/CAL0/M_Cloud", scalars={cap_name: cap_base}))
+    WORLD.add_asset(cap_material)
+    WORLD.add_asset(FakeMaterialInstanceConstant(shield_package, scalars={shield_name: shield_base}, parent=FakeMaterial("/Game/CAL0/M_CloudShield", scalars={shield_name: shield_base})))
+    WORLD.actors.append(FakeActor("TDGen_CloudLayers", components=[FakeStaticMeshComponent("Mesh", [cap_material])]))
+    scoped_path = two_scene_plan("fix-p1", [cloud_knob(cap_package, cap_name, ["campfire"]), cloud_knob(shield_package, shield_name, ["campfire_b"])])
+    code, text = sweep_text(["--plan", scoped_path, "--run-dir", sweep_dir / "fix-p1", "--stage", "frame"])
+    scoped_record = load_json(sweep_dir / "fix-p1" / "sweep.json") if (sweep_dir / "fix-p1" / "sweep.json").is_file() else {"scenes": []}
+    cap_steps, shield_steps = ([scene["steps"] for scene in scoped_record["scenes"]] + [[], []])[:2]
+    check("CAL-0 frame P1 같은 레벨 2장면·패키지별 param scenes: 장면 밖 손잡이 패키지만 skip_if_no_owner·out_of_scene_look_packages, 소유자 없으면 skipped_look 로 유효 / 장면 밖이라도 소유자 있으면 적용·다시 읽기 / 장면 안 패키지 소유자 없음은 엄격(종료 1)",
+          code == 1 and scene_skips("fix-p1", scoped_record) == [([shield_package], [shield_package]), ([cap_package], [cap_package])]
+          and cap_steps and all(step["valid"] and step.get("skipped_look") == [shield_package] and cap_package in (step.get("look_read_back") or {}) for step in cap_steps)
+          and shield_steps and not any(step["valid"] for step in shield_steps) and all(not step.get("skipped_look") and cap_package in (step.get("look_read_back") or {}) for step in shield_steps)
+          and any("look 적용 대상 없음" in error and shield_package in error for error in step_errors(shield_steps)),
+          (code, text[-300:], step_errors(cap_steps)[:3], step_errors(shield_steps)[:3]))
+
+    aux_knob = {"json_path": look_path, "base": 0.0, "values": [0.0, 1.0], "scenes": ["campfire_b"]}
+    mixed_knobs = [cloud_knob(cap_package, cap_name, ["campfire"]), cloud_knob(cap_package, cap_exponent_name, ["campfire_b"]), cloud_knob(shield_package, shield_name), aux_knob]
+    code, text, mixed_record = dry("fix-p2", two_scene_plan("fix-p2", mixed_knobs), "--stage", "frame")
+    check("CAL-0 frame P2 같은 패키지에 이 장면 손잡이가 하나라도 있으면 필수·param scenes 없는(null) 손잡이 패키지는 모든 장면 필수: 장면 밖 패키지만 skip_if_no_owner",
+          code == 0 and scene_skips("fix-p2", mixed_record) == [([look_package], [look_package]), ([], None)], (code, text[-300:], mixed_record and scene_skips("fix-p2", mixed_record)))
+
     ember_path = "Kinds.Campfire.TDFluidEmberSettings.SpawnPerSecond"
     ember_base = load_json(CANONICAL)["Kinds"]["Campfire"].get("TDFluidEmberSettings", {}).get("SpawnPerSecond", 1.0)
     code, text, _ = dry("fix-s4", stage_plan("fix-s4", lambda plan: plan["params"].append({"json_path": ember_path, "values": [ember_base, ember_base * 2 + 1]})), "--stage", "screen")

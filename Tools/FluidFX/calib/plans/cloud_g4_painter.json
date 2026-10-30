@@ -27,7 +27,7 @@
           {
             "label": "TDGen_CloudPaint_Source",
             "component": "live_component",
-            "property": "gpu_density_pressure_target",
+            "function": "get_density_pressure_texture",
             "box": [
               0.0,
               0.0,

@@ -1,6 +1,6 @@
 {
   "id": "fx8n_embers",
-  "note": "FX-8n E7 수·크기·줄무늬, 불티 무대 E-B(모닥불 + NS_TD_FluidEmberHeat, ISM 숨김), FX-7b 구도. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2)",
+  "note": "FX-8n E7 수·크기·줄무늬, 불티 무대 E-B(모닥불 + NS_TD_FluidEmberHeat, ISM 숨김), FX-7b 구도. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2) / 2026-10-30 frame 뒤: 화면당 불티 수 목표(embers.embers.count 300~1000, E7-n)는 화면 전체 개수라 불꽃 몸통을 뺀 띠 상자로 잴 수 없어 structural-gaps.json 으로 옮기고 모양 목표 2개만 판정",
   "scenes": [
     {
       "name": "ember_campfire_niagara",
@@ -77,14 +77,6 @@
       "look"
     ],
     "targets": [
-      {
-        "metric": "embers.embers.count",
-        "weight": 1.0,
-        "tolerance": 15.0,
-        "low": 300.0,
-        "high": 1000.0,
-        "basis": "E7-n 화면당 불티 ≥300(IMG 0)·500~600(IMG 17), IFS:134·195"
-      },
       {
         "metric": "embers.embers.median_area_px",
         "weight": 1.0,

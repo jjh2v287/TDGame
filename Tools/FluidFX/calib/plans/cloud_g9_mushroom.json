@@ -63,6 +63,9 @@
         4,
         8,
         16
+      ],
+      "scenes": [
+        "mushroom_cap"
       ]
     },
     {
@@ -71,6 +74,9 @@
         2,
         3,
         4
+      ],
+      "scenes": [
+        "mushroom_cap"
       ]
     },
     {
@@ -79,6 +85,9 @@
         0.4,
         0.6,
         0.8
+      ],
+      "scenes": [
+        "mushroom_cap"
       ]
     },
     {
@@ -87,6 +96,9 @@
         0.6,
         0.8,
         0.95
+      ],
+      "scenes": [
+        "mushroom_shield"
       ]
     }
   ],

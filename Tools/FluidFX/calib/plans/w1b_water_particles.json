@@ -1,6 +1,6 @@
 {
   "id": "w1b_water_particles",
-  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다 / 0b(2026-10-30): 목표를 LIVE-2 갤러리 측정(IMG 16 바다 부유 공, IMG 20 급류 흰 물)으로 정했다. 영역 틀은 frame 뒤(B6 추측 상자 폐기). 급류의 부유물 개수는 IMG 20 공이 embers 최대 면적 40px 를 넘어 잡음만 세므로 목표에서 뺐다",
+  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다 / 0b(2026-10-30): 목표를 LIVE-2 갤러리 측정(IMG 16 바다 부유 공, IMG 20 급류 흰 물)으로 정했다. 영역 틀은 frame 뒤(B6 추측 상자 폐기). 급류의 부유물 개수는 IMG 20 공이 embers 최대 면적 40px 를 넘어 잡음만 세므로 목표에서 뺐다 / frame(2026-10-30): 여울 손잡이를 NS_TD_FluidWaterSplash TDSplashContactWhitewater(움직이는 물체 접촉 때만 생성되는 튐, 여울 무대엔 움직이는 물체가 없어 소유자 0·효과 0)에서 여울 백수를 내는 NS_TD_FluidWaterWhitewater TDWhitewaterSpawnPerM2PerSec(정본 20 가운데)로 바꿨다. 튐 손잡이는 바다 목표(embers 는 따뜻한 색 검출)와 무관해 approval-only.json 으로 옮겼다",
   "scenes": [
     {
       "name": "sea_img16",
@@ -96,13 +96,14 @@
       ]
     },
     {
-      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterSplash.Floats.User.TDSplashContactWhitewater",
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater.Floats.User.TDWhitewaterSpawnPerM2PerSec",
       "values": [
-        0.15,
-        0.3,
-        0.6
+        10.0,
+        20.0,
+        40.0
       ],
       "split_group": false,
+      "cost": "higher_costs_more",
       "scenes": [
         "rapids_img20"
       ]

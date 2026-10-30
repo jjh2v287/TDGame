@@ -65,7 +65,7 @@
       "probe": {
         "rt": [
           {
-            "label": "FoliageFlow_Walk",
+            "label": "TDGen_FoliageFlow_Walk",
             "property": "flow_render_target",
             "box": [
               0.0,
@@ -177,7 +177,7 @@
         "high": 5.0,
         "scene": "k1_recovery",
         "basis": "spec_proposal",
-        "note": "IMG 9 복원 '수 초'(추정) → 옛 recovery_63 [1,5] = e-fold τ. tolerance = 범위 반폭의 2%. 0b 수정: 피연산을 rt 탐침 probe.foliage_flow.max(굽힘 벡터 길이 rg_len 최댓값)로 바꿈. e-fold 는 크기 배율과 무관한 시간이라 도 단위 변환 없이 같은 정의. 라벨 FoliageFlow_Walk·속성 flow_render_target 은 editor_make_fluid_foliage_stage.py:477·288 근거, 실제 읽힘은 frame 에서 확인"
+        "note": "IMG 9 복원 '수 초'(추정) → 옛 recovery_63 [1,5] = e-fold τ. tolerance = 범위 반폭의 2%. 0b 수정: 피연산을 rt 탐침 probe.foliage_flow.max(굽힘 벡터 길이 rg_len 최댓값)로 바꿈. e-fold 는 크기 배율과 무관한 시간이라 도 단위 변환 없이 같은 정의. 라벨 TDGen_FoliageFlow_Walk(finish_actor 가 TDGen_ 접두어, editor_make_fluid_particle_stage.py:304)·속성 flow_render_target 은 editor_make_fluid_foliage_stage.py:477·288 근거, 실제 읽힘은 frame 에서 확인"
       }
     ],
     "derived": [

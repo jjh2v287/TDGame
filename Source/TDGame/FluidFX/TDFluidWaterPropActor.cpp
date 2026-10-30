@@ -238,3 +238,8 @@ void ATDFluidWaterPropActor::QueueCouplingStamps()
 	WaterPropStats.LastCouplingMeanDensity = ColumnCount > 0 ? static_cast<float>(MeanDensitySum / ColumnCount) : 0.0f;
 	WaterPropStats.LastCouplingMeanDownSpeedCmPerSec = ColumnCount > 0 ? static_cast<float>(MeanDownSpeedSum / ColumnCount) : 0.0f;
 }
+
+bool ATDFluidWaterPropActor::HasOffscreenOutputConsumers() const
+{
+	return CouplingReceiverActor != nullptr && CouplingReceiverActor.Get() != this;
+}

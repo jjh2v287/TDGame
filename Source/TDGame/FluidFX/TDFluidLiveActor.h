@@ -339,6 +339,7 @@ public:
 
 protected:
 	virtual bool HasOffscreenOutputConsumers() const { return false; }
+	virtual bool ShouldIgnoreSimStateCache() const { return false; }
 
 private:
 	bool ShouldPauseForVisibility() const;

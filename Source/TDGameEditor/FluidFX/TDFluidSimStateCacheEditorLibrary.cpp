@@ -83,6 +83,7 @@ namespace TDFluidSimStateCacheEditorPrivate
 		LayoutObject->SetBoolField(TEXT("uses_float32_ripple"), Layout.bUsesFloat32Ripple);
 		LayoutObject->SetBoolField(TEXT("wraps_area"), Layout.bWrapsArea);
 		LayoutObject->SetBoolField(TEXT("writes_painter_velocity"), Layout.bWritesPainterVelocity);
+		LayoutObject->SetBoolField(TEXT("uses_dense_water"), Layout.bUsesDenseWater);
 		return LayoutObject;
 	}
 
@@ -97,6 +98,7 @@ namespace TDFluidSimStateCacheEditorPrivate
 		Layout.bUsesFloat32Ripple = LayoutObject.GetBoolField(TEXT("uses_float32_ripple"));
 		Layout.bWrapsArea = LayoutObject.GetBoolField(TEXT("wraps_area"));
 		Layout.bWritesPainterVelocity = LayoutObject.GetBoolField(TEXT("writes_painter_velocity"));
+		LayoutObject.TryGetBoolField(TEXT("uses_dense_water"), Layout.bUsesDenseWater);
 		return Layout;
 	}
 
@@ -119,6 +121,7 @@ namespace TDFluidSimStateCacheEditorPrivate
 		Header->SetNumberField(TEXT("sim_mode"), static_cast<int32>(Snapshot.SimMode));
 		Header->SetBoolField(TEXT("uses_heat_channel"), Snapshot.bUsesHeatChannel);
 		Header->SetBoolField(TEXT("uses_water_layer"), Snapshot.bUsesWaterLayer);
+		Header->SetBoolField(TEXT("uses_dense_water"), Snapshot.bUsesDenseWater);
 		Header->SetNumberField(TEXT("simulation_time_seconds"), Snapshot.SimulationTimeSeconds);
 		Header->SetObjectField(TEXT("gpu_layout"), MakeGpuLayoutObject(Snapshot.GpuLayout));
 		Header->SetStringField(TEXT("preset_kind"), DescribePresetKind(LiveActor));
@@ -176,6 +179,7 @@ namespace TDFluidSimStateCacheEditorPrivate
 		OutSnapshot.SimMode = static_cast<ETDFluidSimMode>(static_cast<uint8>(Header.GetNumberField(TEXT("sim_mode"))));
 		OutSnapshot.bUsesHeatChannel = Header.GetBoolField(TEXT("uses_heat_channel"));
 		OutSnapshot.bUsesWaterLayer = Header.GetBoolField(TEXT("uses_water_layer"));
+		Header.TryGetBoolField(TEXT("uses_dense_water"), OutSnapshot.bUsesDenseWater);
 		OutSnapshot.SimulationTimeSeconds = Header.GetNumberField(TEXT("simulation_time_seconds"));
 		OutSnapshot.GpuLayout = ReadGpuLayoutObject(**LayoutObject);
 		if (OutSnapshot.LayoutVersion != TDFluidSimStateCacheLayoutVersion)

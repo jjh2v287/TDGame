@@ -2160,7 +2160,10 @@
         "SolverBackend": "Auto",
         "VelocityDamping": 0.5,
         "DensityDissipation": 0.02,
-        "MaxPointsPerTick": 256
+        "MaxPointsPerTick": 256,
+        "DensityAccumulationPerSec": 1.0,
+        "DenseDensityCeiling": 2.0,
+        "DenseGrowthThreshold": 0.15
       },
       "TDFluidRainSettings": {
         "bEnabled": true,

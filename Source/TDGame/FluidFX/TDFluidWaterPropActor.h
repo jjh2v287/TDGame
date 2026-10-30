@@ -48,6 +48,7 @@ public:
 protected:
 	virtual void PrepareActorSpecificInputs(float DeltaTime) override;
 	virtual void FinishActorSpecificOutputs(float DeltaTime) override;
+	virtual bool HasOffscreenOutputConsumers() const override;
 
 private:
 	void RefreshWaterPropSettings(FTDFluidPresetReapplyReport* InOutReport);

@@ -29,6 +29,12 @@ void ATDFluidLiveActor::RequestSimStateCacheLoad()
 		return;
 	}
 
+	if (ShouldIgnoreSimStateCache())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s: simulation state cache %s is ignored because the dense water cache takes priority"), *GetName(), *SimStateCache.ToString());
+		return;
+	}
+
 	bIsAwaitingSimStateCache = true;
 	SimStateCacheWaitSeconds = 0.0f;
 	if (SimStateCache.Get())

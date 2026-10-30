@@ -136,3 +136,8 @@ bool ATDFluidWaterActor::BakeDenseWaterCache(UTDFluidDenseWaterCacheAsset* Targe
 	TargetCache->MarkPackageDirty();
 	return true;
 }
+
+bool ATDFluidWaterActor::ShouldIgnoreSimStateCache() const
+{
+	return !DenseWaterCache.IsNull();
+}

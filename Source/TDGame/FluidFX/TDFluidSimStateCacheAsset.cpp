@@ -11,6 +11,7 @@ namespace TDFluidSimStateCacheAssetPrivate
 	constexpr int32 Float32RippleFlagBit = 1 << 3;
 	constexpr int32 WrapsAreaFlagBit = 1 << 4;
 	constexpr int32 PainterVelocityFlagBit = 1 << 5;
+	constexpr int32 DenseWaterFlagBit = 1 << 6;
 	constexpr int32 SimModeShift = 8;
 
 	int32 PackGpuLayoutFlags(const FTDFluidGpuStateLayout& Layout)
@@ -22,6 +23,7 @@ namespace TDFluidSimStateCacheAssetPrivate
 		Flags |= Layout.bUsesFloat32Ripple ? Float32RippleFlagBit : 0;
 		Flags |= Layout.bWrapsArea ? WrapsAreaFlagBit : 0;
 		Flags |= Layout.bWritesPainterVelocity ? PainterVelocityFlagBit : 0;
+		Flags |= Layout.bUsesDenseWater ? DenseWaterFlagBit : 0;
 		return Flags;
 	}
 
@@ -36,7 +38,15 @@ namespace TDFluidSimStateCacheAssetPrivate
 		Layout.bUsesFloat32Ripple = (Flags & Float32RippleFlagBit) != 0;
 		Layout.bWrapsArea = (Flags & WrapsAreaFlagBit) != 0;
 		Layout.bWritesPainterVelocity = (Flags & PainterVelocityFlagBit) != 0;
+		Layout.bUsesDenseWater = (Flags & DenseWaterFlagBit) != 0;
 		return Layout;
+	}
+
+	const TCHAR* const DenseWaterRejectionReason = TEXT("dense water state is cached by the dense water cache, not the simulation state cache");
+
+	bool UsesDenseWaterState(const FTDFluidSimStateSnapshot& Snapshot)
+	{
+		return Snapshot.bUsesDenseWater || Snapshot.GpuLayout.bUsesDenseWater;
 	}
 
 	template <typename ValueType>
@@ -76,6 +86,7 @@ TSharedRef<const FTDFluidSimStateSnapshot, ESPMode::ThreadSafe> UTDFluidSimState
 	Snapshot->SimMode = SimMode;
 	Snapshot->bUsesHeatChannel = bUsesHeatChannel;
 	Snapshot->bUsesWaterLayer = bUsesWaterLayer;
+	Snapshot->bUsesDenseWater = bUsesDenseWater;
 	Snapshot->SimulationTimeSeconds = SimulationTimeSeconds;
 	Snapshot->GpuLayout = TDFluidSimStateCacheAssetPrivate::UnpackGpuLayout(GpuResolutionTier, GpuLayoutFlags);
 	Snapshot->Channels.Reserve(Channels.Num());
@@ -102,6 +113,7 @@ void UTDFluidSimStateCacheAsset::SetFromSnapshot(const FTDFluidSimStateSnapshot&
 	SimMode = Snapshot.SimMode;
 	bUsesHeatChannel = Snapshot.bUsesHeatChannel;
 	bUsesWaterLayer = Snapshot.bUsesWaterLayer;
+	bUsesDenseWater = Snapshot.bUsesDenseWater;
 	SimulationTimeSeconds = Snapshot.SimulationTimeSeconds;
 	GpuResolutionTier = Snapshot.GpuLayout.ResolutionTier;
 	GpuLayoutFlags = TDFluidSimStateCacheAssetPrivate::PackGpuLayoutFlags(Snapshot.GpuLayout);
@@ -130,6 +142,7 @@ int64 UTDFluidSimStateCacheAsset::ComputeChecksum() const
 	Checksum = AppendChecksum(SimMode, Checksum);
 	Checksum = AppendChecksum(bUsesHeatChannel, Checksum);
 	Checksum = AppendChecksum(bUsesWaterLayer, Checksum);
+	Checksum = AppendChecksum(bUsesDenseWater, Checksum);
 	Checksum = AppendChecksum(SimulationTimeSeconds, Checksum);
 	Checksum = AppendChecksum(GpuResolutionTier, Checksum);
 	Checksum = AppendChecksum(GpuLayoutFlags, Checksum);
@@ -145,11 +158,23 @@ int64 UTDFluidSimStateCacheAsset::ComputeChecksum() const
 	return static_cast<int64>(Checksum);
 }
 
+FString TDFluidSimStateCache::DescribeDenseWaterRejection(const FTDFluidSimStateSnapshot& Snapshot)
+{
+	using namespace TDFluidSimStateCacheAssetPrivate;
+
+	return UsesDenseWaterState(Snapshot) ? FString(DenseWaterRejectionReason) : FString();
+}
+
 FString TDFluidSimStateCache::DescribeHeaderMismatch(const FTDFluidSimStateSnapshot& Seed, const FTDFluidSimStateSnapshot& Current)
 {
 	if (Seed.LayoutVersion != Current.LayoutVersion)
 	{
 		return FString::Printf(TEXT("layout version %d does not match %d"), Seed.LayoutVersion, Current.LayoutVersion);
+	}
+
+	if (TDFluidSimStateCacheAssetPrivate::UsesDenseWaterState(Seed) || TDFluidSimStateCacheAssetPrivate::UsesDenseWaterState(Current))
+	{
+		return TDFluidSimStateCacheAssetPrivate::DenseWaterRejectionReason;
 	}
 
 	if (Seed.Backend != Current.Backend)

@@ -60,6 +60,7 @@ void FTDFluidGrid2DSolver::CaptureStateSnapshot(FTDFluidSimStateSnapshot& OutSna
 	OutSnapshot.SimMode = Config.SimMode;
 	OutSnapshot.bUsesHeatChannel = bUsesHeatChannel;
 	OutSnapshot.bUsesWaterLayer = bUsesWaterLayer;
+	OutSnapshot.bUsesDenseWater = IsDenseWaterActive();
 	OutSnapshot.SimulationTimeSeconds = SimulationTimeSeconds;
 
 	const TStateCacheField<const TArray<float>*> Fields[] = {
@@ -115,6 +116,7 @@ bool FTDFluidGrid2DSolver::RestoreStateSnapshot(const FTDFluidSimStateSnapshot& 
 	CurrentHeader.SimMode = Config.SimMode;
 	CurrentHeader.bUsesHeatChannel = bUsesHeatChannel;
 	CurrentHeader.bUsesWaterLayer = bUsesWaterLayer;
+	CurrentHeader.bUsesDenseWater = IsDenseWaterActive();
 	OutReason = TDFluidSimStateCache::DescribeHeaderMismatch(Snapshot, CurrentHeader);
 	if (!OutReason.IsEmpty())
 	{

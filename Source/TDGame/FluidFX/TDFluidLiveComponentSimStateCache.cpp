@@ -17,7 +17,21 @@ namespace
 		OutHeader.SimMode = Config.SimMode;
 		OutHeader.bUsesHeatChannel = Proxy.GetSettings().bUsesHeatChannel;
 		OutHeader.bUsesWaterLayer = Proxy.GetSettings().bUsesWaterLayer;
+		OutHeader.bUsesDenseWater = Proxy.UsesDenseWater();
 		OutHeader.SimulationTimeSeconds = Proxy.GetSimulationTimeSeconds();
+	}
+
+	bool TDFluidSimStateCacheRejectDenseCapture(FTDFluidSimStateSnapshot& InOutSnapshot, const AActor* Owner, FString& OutError)
+	{
+		OutError = TDFluidSimStateCache::DescribeDenseWaterRejection(InOutSnapshot);
+		if (OutError.IsEmpty())
+		{
+			return false;
+		}
+
+		InOutSnapshot.Channels.Reset();
+		UE_LOG(LogTemp, Warning, TEXT("%s: simulation state capture rejected: %s"), *GetNameSafe(Owner), *OutError);
+		return true;
 	}
 }
 
@@ -39,6 +53,11 @@ bool UTDFluidLiveComponent::CaptureSimStateSnapshot(FTDFluidSimStateSnapshot& Ou
 		}
 
 		TDFluidSimStateCacheFillGpuHeader(GpuSolverProxy, SimulationConfig, OutSnapshot);
+		if (TDFluidSimStateCacheRejectDenseCapture(OutSnapshot, GetOwner(), OutError))
+		{
+			return false;
+		}
+
 		return FluidSubsystem->ReadGpuActorState(GpuSolverProxy.GetActorKey(), OutSnapshot.GpuLayout, OutSnapshot.Channels, OutError);
 	}
 
@@ -49,7 +68,7 @@ bool UTDFluidLiveComponent::CaptureSimStateSnapshot(FTDFluidSimStateSnapshot& Ou
 	}
 
 	Solver.CaptureStateSnapshot(OutSnapshot);
-	return true;
+	return !TDFluidSimStateCacheRejectDenseCapture(OutSnapshot, GetOwner(), OutError);
 }
 
 void UTDFluidLiveComponent::ConsumePendingCpuSimStateSeed()
@@ -65,7 +84,10 @@ void UTDFluidLiveComponent::ConsumePendingCpuSimStateSeed()
 	if (!Solver.RestoreStateSnapshot(*Seed, RejectReason))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%s: simulation state cache seed rejected: %s"), *GetNameSafe(GetOwner()), *RejectReason);
+		return;
 	}
+
+	FoliageBendLayer.RequestReset();
 }
 
 void UTDFluidLiveComponent::AppendPendingGpuSimStateSeed(FTDFluidGpuFrameInputs& InOutFrameInputs)
@@ -91,4 +113,5 @@ void UTDFluidLiveComponent::AppendPendingGpuSimStateSeed(FTDFluidGpuFrameInputs&
 	Request.Layout = Seed->GpuLayout;
 	Request.Channels = TSharedPtr<const TArray<FTDFluidStateChannelBytes>, ESPMode::ThreadSafe>(Seed, &Seed->Channels);
 	GpuSolverProxy.SetSimulationTimeSeconds(Seed->SimulationTimeSeconds);
+	FoliageBendLayer.RequestReset();
 }

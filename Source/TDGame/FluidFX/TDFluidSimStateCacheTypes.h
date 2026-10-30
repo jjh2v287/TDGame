@@ -5,7 +5,7 @@
 #include "FluidFX/TDFluidTypes.h"
 #include "TDFluidGpuStateCacheTypes.h"
 
-inline constexpr int32 TDFluidSimStateCacheLayoutVersion = 1;
+inline constexpr int32 TDFluidSimStateCacheLayoutVersion = 2;
 
 struct FTDFluidSimStateSnapshot
 {
@@ -18,6 +18,7 @@ struct FTDFluidSimStateSnapshot
 	ETDFluidSimMode SimMode = ETDFluidSimMode::FluidSim;
 	bool bUsesHeatChannel = false;
 	bool bUsesWaterLayer = false;
+	bool bUsesDenseWater = false;
 	double SimulationTimeSeconds = 0.0;
 	FTDFluidGpuStateLayout GpuLayout;
 	TArray<FTDFluidStateChannelBytes> Channels;
@@ -30,6 +31,7 @@ struct FTDFluidSimStateSnapshot
 
 namespace TDFluidSimStateCache
 {
+	TDGAME_API FString DescribeDenseWaterRejection(const FTDFluidSimStateSnapshot& Snapshot);
 	TDGAME_API FString DescribeHeaderMismatch(const FTDFluidSimStateSnapshot& Seed, const FTDFluidSimStateSnapshot& Current);
 	TDGAME_API bool IsCacheConsoleEnabled();
 }

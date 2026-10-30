@@ -349,4 +349,46 @@ bool FTDFluidSimStateCacheComponentConsumesSeedOnceTest::RunTest(const FString& 
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidSimStateCacheRejectsDenseWaterCaptureTest,
+	"TDGame.FluidFX.SimStateCache.RejectsDenseWaterCapture",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidSimStateCacheRejectsDenseWaterCaptureTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidSimStateCacheTestPrivate;
+
+	FTDFluidSimulationConfig DenseConfig = MakeSimStateCacheConfig(true);
+	DenseConfig.bEnableDenseWater = true;
+	FTDFluidGrid2DSolver DenseSolver;
+	DenseSolver.Initialize(DenseConfig, FVector2D::ZeroVector);
+	if (!TestTrue(TEXT("CPU solver runs dense water"), DenseSolver.IsDenseWaterActive()))
+	{
+		return false;
+	}
+
+	FTDFluidSimStateSnapshot DenseSnapshot;
+	DenseSolver.CaptureStateSnapshot(DenseSnapshot);
+	TestTrue(TEXT("Dense capture marks the snapshot header"), DenseSnapshot.bUsesDenseWater);
+	TestFalse(TEXT("Dense capture is rejected"), TDFluidSimStateCache::DescribeDenseWaterRejection(DenseSnapshot).IsEmpty());
+
+	const uint32 DenseChecksum = DenseSolver.ComputeStateChecksum();
+	FString DenseReason;
+	TestFalse(TEXT("Dense seed is rejected by a dense solver"), DenseSolver.RestoreStateSnapshot(DenseSnapshot, DenseReason));
+	TestFalse(TEXT("Dense seed rejection reports a reason"), DenseReason.IsEmpty());
+
+	FTDFluidGrid2DSolver SparseSolver;
+	InitializeSolver(SparseSolver, true);
+	RunWarmup(SparseSolver, true);
+	FTDFluidSimStateSnapshot SparseSnapshot;
+	SparseSolver.CaptureStateSnapshot(SparseSnapshot);
+	TestFalse(TEXT("Sparse capture keeps the dense flag clear"), SparseSnapshot.bUsesDenseWater);
+	TestTrue(TEXT("Sparse capture is accepted"), TDFluidSimStateCache::DescribeDenseWaterRejection(SparseSnapshot).IsEmpty());
+
+	FString SparseReason;
+	TestFalse(TEXT("Sparse seed is rejected by a dense solver"), DenseSolver.RestoreStateSnapshot(SparseSnapshot, SparseReason));
+	TestEqual(TEXT("Rejected seeds leave the dense state untouched"), DenseSolver.ComputeStateChecksum(), DenseChecksum);
+	return true;
+}
+
 #endif

@@ -21,6 +21,7 @@ struct FTDFluidGpuStateLayout
 	bool bUsesFloat32Ripple = false;
 	bool bWrapsArea = false;
 	bool bWritesPainterVelocity = false;
+	bool bUsesDenseWater = false;
 
 	bool operator==(const FTDFluidGpuStateLayout& Other) const = default;
 };

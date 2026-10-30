@@ -129,6 +129,12 @@ namespace
 			return false;
 		}
 
+		if (Seed.Layout.bUsesDenseWater)
+		{
+			OutError = TEXT("dense water state is restored by the dense water cache");
+			return false;
+		}
+
 		if (!(MakeTDFluidGpuStateLayout(Batch->GetKey()) == Seed.Layout))
 		{
 			OutError = TEXT("state layout does not match the actor batch key");
@@ -222,6 +228,7 @@ FTDFluidGpuStateLayout MakeTDFluidGpuStateLayout(const FTDFluidGpuBatchKey& Key)
 	Layout.bUsesFloat32Ripple = Key.bUsesFloat32Ripple;
 	Layout.bWrapsArea = Key.bWrapsArea;
 	Layout.bWritesPainterVelocity = Key.bWritesPainterVelocity;
+	Layout.bUsesDenseWater = Key.bUsesDenseWater;
 	return Layout;
 }
 
@@ -235,6 +242,12 @@ bool ReadTDFluidGpuActorState(FRHICommandListImmediate& RHICmdList, TArray<FTDFl
 	if (!Batch)
 	{
 		OutError = FString::Printf(TEXT("GPU actor key %llu has no batch slice"), ActorKey);
+		return false;
+	}
+
+	if (Batch->GetKey().bUsesDenseWater)
+	{
+		OutError = FString::Printf(TEXT("GPU actor key %llu uses dense water, which the dense water cache captures"), ActorKey);
 		return false;
 	}
 

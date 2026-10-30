@@ -114,6 +114,7 @@ protected:
 	virtual float ResolveTerrainMissElevationCm(int32 CellX, int32 CellY) const override;
 	virtual void AddTerrainTraceIgnoredActors(FCollisionQueryParams& QueryParams) const override;
 	virtual void OnTerrainSamplingCompleted() override;
+	virtual bool ShouldIgnoreSimStateCache() const override;
 
 private:
 	void TickWaterLayer(float DeltaSeconds);

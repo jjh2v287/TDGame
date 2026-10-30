@@ -70,6 +70,9 @@ public:
 	bool bUsesWaterLayer = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
+	bool bUsesDenseWater = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")
 	double SimulationTimeSeconds = 0.0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FluidFX")

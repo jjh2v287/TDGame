@@ -98,7 +98,8 @@
         "metric": "probe.underwater.SwitchCount",
         "weight": 1.0,
         "low": 0.0,
-        "high": 0.0
+        "high": 0.0,
+        "basis": "[측정 결함, CAL-0 통합] GetUnderwaterStats().SwitchCount 는 PIE 시작부터의 누적값(TDFluidUnderwaterSubsystem.cpp:363)이라 폰을 구덩이로 옮길 때 1 이 더해지고 한 PIE 에서 이어 도는 단계마다 쌓인다. [0, 0] 은 단계 안 증가량(마지막 표본 − 첫 표본)으로만 뜻이 맞으므로 0b 에서 표본 차 지표를 만들기 전에는 이 목표를 쓰지 않는다"
       },
       {
         "scene": "uw_pit",

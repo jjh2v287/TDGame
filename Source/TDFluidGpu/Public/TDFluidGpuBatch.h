@@ -52,7 +52,8 @@ enum class ETDFluidGpuWaterFlags : uint32
 	UsesTerrainSlopeDryOnly = 1u << 8,
 	ReachedRippleSubstepCap = 1u << 9,
 	UpdatesWetness = 1u << 10,
-	ResetsWetness = 1u << 11
+	ResetsWetness = 1u << 11,
+	UsesDenseWater = 1u << 12
 };
 ENUM_CLASS_FLAGS(ETDFluidGpuWaterFlags);
 
@@ -301,6 +302,7 @@ struct FTDFluidGpuBatchKey
 	bool bWrapsArea = false;
 	int32 MassInputDivisor = 0;
 	bool bWritesPainterVelocity = false;
+	bool bUsesDenseWater = false;
 
 	bool operator==(const FTDFluidGpuBatchKey& Other) const
 	{
@@ -316,7 +318,8 @@ struct FTDFluidGpuBatchKey
 			&& bUsesFloat32Ripple == Other.bUsesFloat32Ripple
 			&& bWrapsArea == Other.bWrapsArea
 			&& MassInputDivisor == Other.MassInputDivisor
-			&& bWritesPainterVelocity == Other.bWritesPainterVelocity;
+			&& bWritesPainterVelocity == Other.bWritesPainterVelocity
+			&& bUsesDenseWater == Other.bUsesDenseWater;
 	}
 };
 
@@ -363,6 +366,8 @@ struct FTDFluidGpuBatchStateTextures
 	TRefCountPtr<IPooledRenderTarget> WaterSurfaceHeightField;
 	TRefCountPtr<IPooledRenderTarget> WaterTerrainField;
 	TRefCountPtr<IPooledRenderTarget> WaterWetness;
+	TRefCountPtr<IPooledRenderTarget> DenseDepth[2];
+	TRefCountPtr<IPooledRenderTarget> DenseFaceVelocity[2];
 };
 
 struct FTDFluidGpuReadbackAtlasLayout

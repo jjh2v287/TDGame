@@ -99,6 +99,8 @@ void ATDFluidWaterActor::BeginPlay()
 		LiveComponent->SetSimulationAwake(false);
 		return;
 	}
+
+	RequestDenseWaterCacheLoad();
 }
 
 void ATDFluidWaterActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -114,6 +116,12 @@ void ATDFluidWaterActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		LodGridMeshLoadHandle->CancelHandle();
 		LodGridMeshLoadHandle.Reset();
 	}
+	if (DenseWaterCacheLoadHandle.IsValid())
+	{
+		DenseWaterCacheLoadHandle->CancelHandle();
+		DenseWaterCacheLoadHandle.Reset();
+	}
+	bIsWaitingForDenseWaterCache = false;
 	DisableLodGrid();
 
 	Super::EndPlay(EndPlayReason);
@@ -159,7 +167,7 @@ bool ATDFluidWaterActor::CanUseLodGrid() const
 {
 	const UWorld* World = GetWorld();
 	return World && World->IsGameWorld() && LodGridComponent && LiveComponent && !bIsDormantDuplicate && !IsPooledInactive()
-		&& UTDFluidWaterLodGridComponent::ResolveLodGridEnabled(LodGridSettings.bEnableLodGrid);
+		&& !LiveComponent->IsDenseWaterActive() && UTDFluidWaterLodGridComponent::ResolveLodGridEnabled(LodGridSettings.bEnableLodGrid);
 }
 
 bool ATDFluidWaterActor::PrepareLodGridPatchMesh()
@@ -447,7 +455,7 @@ void ATDFluidWaterActor::TickWaterLayer(float DeltaSeconds)
 
 FVector ATDFluidWaterActor::ResolvePlaneAnchorWorldLocation() const
 {
-	if (!bShouldFollowPlayerPawn)
+	if (!bShouldFollowPlayerPawn || (LiveComponent && LiveComponent->IsDenseWaterActive()))
 	{
 		return GetActorLocation();
 	}
@@ -464,6 +472,12 @@ FVector ATDFluidWaterActor::ResolvePlaneAnchorWorldLocation() const
 void ATDFluidWaterActor::PrepareActorSpecificInputs(float DeltaTime)
 {
 	if (bIsDormantDuplicate)
+	{
+		LiveComponent->SetSimulationAwake(false);
+		return;
+	}
+
+	if (bIsWaitingForDenseWaterCache)
 	{
 		LiveComponent->SetSimulationAwake(false);
 		return;
@@ -602,6 +616,7 @@ void ATDFluidWaterActor::RebuildWaterRegistryCaches()
 		LiveComponent->SetSdfObstacles(Obstacles);
 	}
 	AppliedObstacleCount = Obstacles.Num();
+	CachedWaterObstacles = Obstacles;
 
 	TraceIgnoredActors.Reset();
 	CollectWaterActorTaggedActors(*World, TerrainTraceIgnoreTag, TaggedActors);

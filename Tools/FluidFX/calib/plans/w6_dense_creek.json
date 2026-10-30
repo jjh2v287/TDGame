@@ -1,0 +1,51 @@
+{
+  "id": "w6_dense_creek",
+  "note": "spec-w6 7절 보정 초안(파동 3 L3-S2, 작성만·실행 금지). 장면마다 맵 하나(refute-w6 M1·cross-plan X-18)라 level 은 LV_TDFluidDenseWaterStage_Creek. refute-w6 S8: Groups.* 경로는 split_group false(Kinds 경로에서만 true 허용), 비용 목표는 PIE 3.2 ms(오프스크린 2.8 ms × 1.13). Groups.DenseWater 값을 바꾸면 밀집 4종(DenseCreek·DenseLake·DenseSea·DenseTank)이 함께 바뀐다. 위험(S10): ShipWakeSea 5값과 Groups.DenseWater 의 0.6·2.5·젖음·장애물 거리·근접 잔물결은 Groups.WaterLayer 복사라 WaterLayer 만 보정하면 따라오지 않는다",
+  "draft_status": "blocked(CAL-0)",
+  "p3_gaps": [
+    "metrics.sources dense_probe: descent_speed_gain·ascent_speed_ratio·saddle_leak_cm3·gap_fill_seconds·rapids_white_fraction 원천이 없음(METRIC_SOURCES = look|water_probe) → CAL-0, pie_probe_fluid_water.py 에 밀집 깊이·면 속도 읽기 확장",
+    "metrics.sources gpu_stats: dense_named_gpu_ms_2048 원천이 없음 → CAL-0, 명명 GPU 통계(TDFluidGpu CSV) 읽기 출처 추가",
+    "params json_path Look: 경로를 fluid_tuning_patch.parse_json_path 가 거부 → G1 확장 뒤 MI 변형 지원",
+    "정적 MI 값은 실행 중 다시 적용되지 않음 → Look: 변형마다 MI 다시 굽기 또는 MID 재적용 경로 필요",
+    "밀집 캐시는 비동기 로드(bIsWaitingForDenseWaterCache)라 settle 동안 로드 완료를 기다리는 조건 필요",
+    "level 맵과 캐시는 editor_make_fluid_dense_water_stage.py(E2)·editor_bake_fluid_dense_water_cache.py(E3)를 먼저 실행해야 존재함"
+  ],
+  "scenes": [
+    {
+      "name": "creek",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidDenseWaterStage_Creek",
+      "camera": {"pawn": [0.0, 0.0], "arm": 2500.0, "view": [-70.0, 0.0], "console": ["t.MaxFPS 0", "TD.FluidFX.WaterGpu 1"]},
+      "backend": "gpu",
+      "time_dilation": 1.0,
+      "schedule": null,
+      "settle": 20.0,
+      "regions_template": null,
+      "targets": null,
+      "live2_refs": ["L1", "L4"]
+    }
+  ],
+  "params": [
+    {"json_path": "Groups.DenseWater.TDFluidSimulationConfig.DenseWaterGravityCmPerSec2", "values": [600.0, 980.0, 1500.0], "split_group": false},
+    {"json_path": "Groups.DenseWater.TDFluidSimulationConfig.DenseWaterLinearDragPerSec", "values": [0.1, 0.3, 0.8], "split_group": false},
+    {"json_path": "Groups.DenseWater.TDFluidSimulationConfig.DenseWaterBedFriction", "values": [0.005, 0.01, 0.03], "split_group": false},
+    {"json_path": "Groups.DenseWater.TDFluidSimulationConfig.DenseWaterPeakSoftnessCm", "values": [1.0, 2.0, 5.0], "split_group": false},
+    {"json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidWater_DenseCreek.Scalars.FoamFromFroude", "values": [0.2, 0.32, 0.5], "split_group": false}
+  ],
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "control_middle": false,
+  "metrics": {
+    "sources": ["dense_probe", "gpu_stats"],
+    "noise_floor": {},
+    "targets": [
+      {"metric": "descent_speed_gain", "low": 1.5, "high": 6.0, "weight": 1.0, "tolerance": 0.05, "basis": "내리막 가속 ≥1.5, 상한 6.0 은 임시(Water_Dense_Creek 동작, RM:641)"},
+      {"metric": "ascent_speed_ratio", "low": 0.0, "high": 0.5, "weight": 1.0, "tolerance": 0.03, "basis": "오르막 감속 ≤0.5(Water_Dense_Creek 동작, RM:641)"},
+      {"metric": "saddle_leak_cm3", "low": 0.0, "high": 1000.0, "weight": 1.0, "tolerance": 100.0, "basis": "안장 기어오름 없음(0), 상한 1000 cm3 은 임시"},
+      {"metric": "gap_fill_seconds", "low": 0.0, "high": 10.0, "weight": 0.5, "tolerance": 0.5, "basis": "1 m 홈 채움 ≤10 s 는 임시"},
+      {"metric": "rapids_white_fraction", "low": 0.3, "high": 0.7, "weight": 1.0, "tolerance": 0.02, "basis": "IMG 20 급류 흰 화소 ≥30%, 상한 0.7 은 임시(IWI:113)"},
+      {"metric": "dense_named_gpu_ms_2048", "low": 0.0, "high": 3.2, "weight": 0.5, "tolerance": 0.05, "basis": "0.3 예산: 2048² 밀집 PIE ≤3.2 ms(오프스크린 2.8 ms × 1.13, S8)"}
+    ]
+  }
+}

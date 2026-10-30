@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 와 Windows Kits dxc.exe(ps_6_0·vs_6_0), 에디터 불필요
-실행 명령: python Tools/FluidFX/check_fluid_hlsl.py [--root 프로젝트경로] [--dxc dxc경로]
+실행 명령: python Tools/FluidFX/check_fluid_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json ...]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약, 하나라도 실패하면 종료 코드 1
-상태: 미검증(첫 성공 전). 물 셰이더 3개(TDFluidWaterCommon·Surface·Offset.hlsl)를 재질 스크립트와 같은 조립 함수로 노드별 조립해 엔진 순서(정점 오프셋이 먼저)대로 한 파일에 이어 붙여 컴파일하고, 정점용 매크로가 표면 함수로 새면(표본 명령 수가 단독 합과 다르면) 실패한다. 매크로를 지우지 않는 조립을 음성 대조로 넣어 검사의 검출력을 함께 확인한다. C1 추가분: 리본 입력(RibbonTangentWS·RibbonFlowCmPerSec)·C++ 구동 파라미터 계약(MID_DRIVEN_*)·무대 강 배치 자체 점검(validate_river_layout)도 함께 본다. W-2r 추가분: 젖음 데칼 HLSL(TDFluidWaterWetDecal.hlsl) 텍스트·자체 점검·dxc 컴파일, 리본 로컬 UV 정적 스위치 0·1 순열 컴파일(표본 수 불변), 인스턴스 정적 스위치 이름 대조. 파동 0 P1(2026-10-25): 인스턴스 덮어쓰기 이름·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(fluid_material_look.TDMaterialLookTable)에서 읽는다.
+상태: 미검증(첫 성공 전). 물 셰이더 3개(TDFluidWaterCommon·Surface·Offset.hlsl)를 재질 스크립트와 같은 조립 함수로 노드별 조립해 엔진 순서(정점 오프셋이 먼저)대로 한 파일에 이어 붙여 컴파일하고, 정점용 매크로가 표면 함수로 새면(표본 명령 수가 단독 합과 다르면) 실패한다. 매크로를 지우지 않는 조립을 음성 대조로 넣어 검사의 검출력을 함께 확인한다. C1 추가분: 리본 입력(RibbonTangentWS·RibbonFlowCmPerSec)·C++ 구동 파라미터 계약(MID_DRIVEN_*)·무대 강 배치 자체 점검(validate_river_layout)도 함께 본다. W-2r 추가분: 젖음 데칼 HLSL(TDFluidWaterWetDecal.hlsl) 텍스트·자체 점검·dxc 컴파일, 리본 로컬 UV 정적 스위치 0·1 순열 컴파일(표본 수 불변), 인스턴스 정적 스위치 이름 대조. 파동 0 P1(2026-10-25): 인스턴스 덮어쓰기 이름·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(fluid_material_look.TDMaterialLookTable)에서 읽는다. 파동 3 W-6 E(2026-10-29): --look-fragment(여러 번, 정본에 아직 없는 인스턴스 값을 fluid_material_look.merge_look_fragments 로 메모리에서만 병합, 정본 파일은 쓰지 않는다)·밀집 물 계약(C++ 구동 이름 3·모양 이름 2·밀집 MI 3의 부모와 모양 값)·밀집 식 고정점(비활성 곱셈 인자·windowDepthKnown 한 번 정의·W-1b 파동 상수 7줄 보존) 점검을 더했다.
 """
 import argparse
 import glob
@@ -50,6 +50,20 @@ def find_dxc(explicit_path):
         if candidate and os.path.isfile(candidate):
             return candidate
     return ""
+
+
+def build_look_table(root, look_module, fragment_paths):
+    table = look_module.TDMaterialLookTable.read_project(str(root))
+    if not fragment_paths:
+        return table, "", []
+    try:
+        fragments = [(os.path.basename(path), json.loads(pathlib.Path(path).read_text(encoding="utf-8"))) for path in fragment_paths]
+    except (OSError, ValueError) as error:
+        return table, f"조각 읽기 실패: {error}", []
+    merged, outcome = look_module.merge_look_fragments(table.look, fragments)
+    if merged is None:
+        return table, "; ".join([str(item) for item in outcome["problems"] + outcome["conflicts"]]), []
+    return look_module.TDMaterialLookTable(merged, table.source_path), "", outcome.get("added_entries", [])
 
 
 def declare_inputs(material):
@@ -178,7 +192,11 @@ def run_contract_checks(material, look_table):
         unused = [name for name in driven_names if name not in surface_and_offset]
         if unused:
             failures.append(f"C++ 구동 {label} 파라미터가 셰이더 입력에 없음: " + ", ".join(unused))
-    shadowed = material.find_shadowed_mid_parameters(look_table)
+    try:
+        shadowed = material.find_shadowed_mid_parameters(look_table)
+    except RuntimeError as error:
+        shadowed = []
+        failures.append(str(error))
     if shadowed:
         failures.append("인스턴스가 C++ 구동 파라미터를 덮어씀: " + ", ".join(shadowed))
     primitive_indices = material.PRIMITIVE_DATA_INDEX_BY_PARAMETER
@@ -189,7 +207,11 @@ def run_contract_checks(material, look_table):
     if primitive_not_scalar:
         failures.append("Custom Primitive Data 이름이 스칼라 선언에 없음: " + ", ".join(primitive_not_scalar))
     for spec in material.INSTANCE_SPECS:
-        entry = look_table.material(material.asset_path(spec["name"]), material.WATER_MASTER_PATH)
+        try:
+            entry = look_table.material(material.asset_path(spec["name"]), material.WATER_MASTER_PATH)
+        except RuntimeError as error:
+            failures.append(f"{spec['name']}: {error}")
+            continue
         overridable = {name for name, _ in material.VECTOR_PARAMETER_DEFAULTS} | {name for name, _ in material.SCALAR_PARAMETER_DEFAULTS}
         unknown = sorted((set(entry["Vectors"]) | set(entry["Scalars"])) - overridable)
         if unknown:
@@ -200,11 +222,74 @@ def run_contract_checks(material, look_table):
     return failures
 
 
+DENSE_CPP_DRIVEN_SCALARS = ("DenseWaterActive", "DenseWaterWetThresholdCm", "TerrainReferenceZCm")
+DENSE_LOOK_SCALARS = ("DenseEdgeSoftnessCm", "DenseDrySinkCm")
+DENSE_OFFSET_INPUTS = ("DenseWaterActive", "DenseWaterWetThresholdCm", "DenseDrySinkCm", "TerrainReferenceZCm")
+DENSE_SURFACE_INPUTS = ("DenseWaterActive", "DenseWaterWetThresholdCm", "DenseEdgeSoftnessCm")
+DENSE_INSTANCE_NAMES = ("MI_TD_FluidWater_DenseCreek", "MI_TD_FluidWater_DenseLake", "MI_TD_FluidWater_DenseSea")
+WAVE_CONSTANT_NAMES = ("waveLengthCm", "waveAmplitudeShare", "waveAngleOffsetDegrees", "wavePhaseOffset", "waveSteepness", "waveTimeScale", "gravityCmPerSecondSquared")
+DENSE_OFFSET_ANCHORS = (
+    "float denseActive = saturate(DenseWaterActive);",
+    "* denseActive * windowDepthKnown * denseTerrainKnown;",
+    "tileMapHeightCm + denseOffsetZCm);",
+)
+DENSE_SURFACE_ANCHORS = (
+    "float denseCoverBlend = denseActive * windowDepthKnown;",
+    "lerp(1.0, smoothstep(DenseWaterWetThresholdCm,",
+    "OutTopOpacity = topOpacity * denseCover;",
+    "liteDepthBlend * edgeSoftness)) * denseCover;",
+)
+
+
+def run_dense_contract_checks(material, look_table):
+    failures = []
+    scalar_defaults = dict(material.SCALAR_PARAMETER_DEFAULTS)
+    failures += [f"{name}: 마스터 스칼라 선언 없음" for name in DENSE_CPP_DRIVEN_SCALARS + DENSE_LOOK_SCALARS if name not in scalar_defaults]
+    if scalar_defaults.get("DenseWaterActive") != 0.0:
+        failures.append("DenseWaterActive 기본값이 0 이 아님(기존 MI 결과가 달라짐)")
+    failures += [f"{name}: C++ 구동 스칼라 목록에 없음" for name in DENSE_CPP_DRIVEN_SCALARS if name not in material.MID_DRIVEN_SCALAR_NAMES]
+    failures += [f"{name}: 모양 값인데 C++ 구동 목록에 있음" for name in DENSE_LOOK_SCALARS if name in material.MID_DRIVEN_SCALAR_NAMES]
+    if "TerrainReferenceZCm" in material.DECAL_ONLY_MID_SCALAR_NAMES:
+        failures.append("TerrainReferenceZCm 가 아직 데칼 전용 목록에 있음")
+    failures += [f"오프셋 입력에 없음: {name}" for name in DENSE_OFFSET_INPUTS if name not in material.OFFSET_INPUT_NAMES]
+    failures += [f"표면 입력에 없음: {name}" for name in DENSE_SURFACE_INPUTS if name not in material.SURFACE_INPUT_NAMES]
+    instance_names = [spec["name"] for spec in material.INSTANCE_SPECS]
+    for name in DENSE_INSTANCE_NAMES:
+        if name not in instance_names:
+            failures.append(f"INSTANCE_SPECS 에 없음: {name}")
+            continue
+        try:
+            entry = look_table.material(material.asset_path(name), material.WATER_MASTER_PATH)
+        except RuntimeError as error:
+            failures.append(f"{name}: {error}")
+            continue
+        missing_shape = [shape for shape in DENSE_LOOK_SCALARS if shape not in entry["Scalars"]]
+        if missing_shape:
+            failures.append(f"{name}: 모양 값 없음 " + ", ".join(missing_shape))
+    return failures
+
+
+def run_dense_anchor_checks(codes, common_text):
+    failures = []
+    failures += [f"오프셋 식 고정점 없음: {anchor}" for anchor in DENSE_OFFSET_ANCHORS if anchor not in codes["offset"]]
+    failures += [f"표면 식 고정점 없음: {anchor}" for anchor in DENSE_SURFACE_ANCHORS if anchor not in codes["surface"]]
+    for label in ("offset", "surface"):
+        declared = len(re.findall(r"\bfloat windowDepthKnown\b", codes[label]))
+        if declared != 1:
+            failures.append(f"{label}: windowDepthKnown 정의가 {declared}번(공통 한 번이어야 함)")
+    for name in WAVE_CONSTANT_NAMES:
+        if not re.search(rf"^const float(?:\[8\])? {name}(?:\[8\])? = ", common_text, re.MULTILINE):
+            failures.append(f"W-1b 파동 상수 선언 줄이 바뀜: {name}")
+    return failures
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=str(pathlib.Path(__file__).resolve().parents[2]))
     parser.add_argument("--dxc", default="")
+    parser.add_argument("--look-fragment", action="append", default=[])
     arguments = parser.parse_args()
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     root = pathlib.Path(arguments.root)
     results = []
 
@@ -215,7 +300,10 @@ def main():
     sys.modules["unreal"] = mock.MagicMock()
     material = load_script(root, "editor_make_fluid_water_material")
     record("재질 스크립트 unreal 스텁 임포트", True)
-    look_table = load_script(root, "fluid_material_look").TDMaterialLookTable.read_project(str(root))
+    look_module = load_script(root, "fluid_material_look")
+    look_table, fragment_problem, added_entries = build_look_table(root, look_module, arguments.look_fragment)
+    if arguments.look_fragment:
+        record("모양 조각 병합(형식 문제·충돌 0)", not fragment_problem, fragment_problem or f"조각 {len(arguments.look_fragment)}개, 추가 항목 {len(added_entries)}개")
     stage_path = root / "Tools" / "FluidFX" / "editor_make_fluid_water_stage.py"
     if stage_path.is_file():
         stage = load_script(root, "editor_make_fluid_water_stage")
@@ -231,6 +319,8 @@ def main():
 
     contract_failures = run_contract_checks(material, look_table)
     record("입력·파라미터 계약", not contract_failures, "; ".join(contract_failures))
+    dense_failures = run_dense_contract_checks(material, look_table)
+    record("밀집 물 계약(C++ 구동 3·모양 2·밀집 MI 3)", not dense_failures, "; ".join(dense_failures))
 
     sources = material.read_shader_sources(str(root))
     codes = material.assemble_all_node_codes(sources)
@@ -243,6 +333,9 @@ def main():
     except RuntimeError as error:
         wet_decal_code = ""
         record("젖음 데칼 코드 자체 점검", False, str(error))
+
+    anchor_failures = run_dense_anchor_checks(codes, sources["common"])
+    record("밀집 식 고정점(비활성 곱셈 인자·windowDepthKnown 한 번·파동 상수 7줄)", not anchor_failures, "; ".join(anchor_failures))
 
     offset_text = codes["offset"]
     pixel_only_in_offset = [token for token in ("SceneDepthWithoutWaterCm", "PixelDepthCm", "Texture2DSample(") if token in offset_text]

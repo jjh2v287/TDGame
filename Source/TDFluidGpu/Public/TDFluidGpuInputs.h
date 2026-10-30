@@ -215,6 +215,8 @@ struct FTDFluidGpuSimulationSettings
 	bool bUsesWaterLayer = false;
 	bool bOpenWaterBorders = true;
 	bool bTreatDryCellsAsSolid = true;
+	bool bUsesDenseWater = false;
+	FTDFluidGpuDenseWaterSettings DenseWater;
 	float WaterDepthReferenceCm = 300.0f;
 	float FlowGuideResponsePerSec = 3.0f;
 	float WhitewaterFromVorticity = 0.0f;
@@ -313,6 +315,8 @@ struct FTDFluidGpuActorInput
 	bool bHasTerrainElevation = false;
 	bool bHasObstacleListChanged = false;
 	bool bRefreshesObstacleDistanceAux = false;
+	int32 DenseSeedResolution = 0;
+	TArray<FVector4f> DenseSeedTexels;
 	TArray<FTDFluidGpuStampInput> Stamps;
 	TArray<FTDFluidGpuMassPointInput> MassPoints;
 	TArray<FTDFluidGpuFieldInput> FieldInputs;

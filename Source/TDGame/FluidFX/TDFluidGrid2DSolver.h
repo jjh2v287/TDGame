@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FluidFX/TDFluidDenseWaterCacheAsset.h"
 #include "FluidFX/TDFluidTypes.h"
 #include "FluidFX/TDFluidWaterInputRaster.h"
 #include "Math/Float16Color.h"
@@ -61,6 +62,14 @@ public:
 	uint32 ComputeWaterStateChecksum() const;
 	float GetWaterSurfaceHeightAtCell(int32 CellX, int32 CellY) const;
 	bool IsTerrainSamplingCompleteForWater() const;
+	bool IsDenseWaterActive() const;
+	static bool IsDenseWaterConsoleEnabled();
+	void SetDenseWaterSeed(const FTDFluidDenseWaterSeed& Seed);
+	void ClearDenseWaterSeed();
+	bool ExportDenseWaterState(FTDFluidDenseWaterSeed& OutSeed) const;
+	double ComputeDenseWaterVolumeCm3() const;
+	int32 GetLastDenseSubstepCount() const { return LastDenseSubstepCount; }
+	bool DidDenseReachSubstepCap() const { return bDidDenseReachSubstepCap; }
 
 private:
 	int32 ToCellIndex(int32 CellX, int32 CellY) const { return CellY * Resolution + CellX; }
@@ -194,6 +203,28 @@ private:
 	TArray<float> ScratchRippleHeightVelocity;
 	TArray<uint8> WaterDirtyColumns;
 	TArray<uint8> WaterDirtyRows;
+	void SynchronizeDenseWaterBuffers();
+	void StepDenseWater(float DeltaTime);
+	void UpdateDenseFaceVelocities(float SubstepSeconds, float GravityScale, bool bAppliesStampDelta);
+	void UpdateDenseDepth(float SubstepSeconds, bool bIsLastSubstep);
+	void PublishDenseSurfaceAndVelocity();
+	void ApplyDenseWaterSeedIfMatching();
+	void ZeroDenseDryRipples();
+	void RunRowsInParallel(const TCHAR* DebugName, int32 RowCount, TFunctionRef<void(int32)> RowBody) const;
+	TArray<float> DenseDepth;
+	TArray<float> ScratchDenseDepth;
+	TArray<float> DenseFaceVelocityX;
+	TArray<float> DenseFaceVelocityY;
+	TArray<float> ScratchDenseFaceVelocityX;
+	TArray<float> ScratchDenseFaceVelocityY;
+	TArray<float> DenseCellVelocityX;
+	TArray<float> DenseCellVelocityY;
+	TArray<float> DenseReservoirSurface;
+	TOptional<FTDFluidDenseWaterSeed> DenseSeed;
+	int32 LastDenseSubstepCount = 0;
+	bool bDidDenseReachSubstepCap = false;
+	bool bDenseSkipsStampDelta = true;
+	bool bIsDenseWaterEnabledAtSync = false;
 	FTDFluidWaterInputRaster WaterInputRaster;
 	int32 TerrainKnownCellCount = 0;
 	bool bWaterRasterFullDirty = true;

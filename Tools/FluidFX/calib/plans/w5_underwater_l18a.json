@@ -1,0 +1,106 @@
+{
+ "id": "w5_underwater_l18a",
+ "note": "spec-w5 UW1·UW2·UW3. 구역 8 구덩이 바닥 폰(카메라 수면 아래). 수중 안개 밀도(UW1)와 전환 블렌드(UW2)를 훑고 게임 스레드 비용(UW3)을 같이 잰다. UW1 색은 IMG 21 왼쪽 위·IMG 15 아래와 육안 대조(수치 목표 없음). 폰 좌표는 무대 보고 zones.8.camera 값(구역 중심 24000, 0)",
+ "scenes": [
+  {
+   "name": "uw_pit",
+   "level": "/Game/FluidFX/Maps/LV_TDFluidWaterPropsStage",
+   "camera": {
+    "awake": {
+     "TDGen_Tank_Pool": false,
+     "TDGen_Fountain_Fountain": false,
+     "TDGen_Cauldron_MinimalCauldron": false,
+     "TDGen_Cauldron_GeneralCauldron": false,
+     "TDGen_WaterTank_Pool": false,
+     "TDGen_LiquidSpheres_ClearSim": false,
+     "TDGen_LiquidSpheres_TurbulentSim": false,
+     "TDGen_LiquidSpheres_BloodOrbSim": false,
+     "TDGen_Waterfall_Pool": false,
+     "TDGen_Waterfall_Fall": false,
+     "TDGen_WaterySand_Sand": false,
+     "TDGen_UnderwaterPit_Pool": true
+    },
+    "pawn": [
+     24000,
+     0
+    ],
+    "arm": 150.0,
+    "view": [
+     -10.0,
+     0.0
+    ]
+   },
+   "time_dilation": 1.0,
+   "schedule": null,
+   "settle": 3.0,
+   "regions_template": null,
+   "targets": null,
+   "live2_refs": [
+    "MC:225",
+    "IMG 21"
+   ]
+  }
+ ],
+ "params": [
+  {
+   "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidUnderwater_Lake.Scalars.UnderwaterFogDensityPerCm",
+   "values": [
+    0.001,
+    0.002,
+    0.004
+   ],
+   "split_group": false
+  },
+  {
+   "json_path": "Globals.TDFluidUnderwaterSettings.BlendSeconds",
+   "values": [
+    0.0,
+    0.1,
+    0.25
+   ],
+   "split_group": false
+  }
+ ],
+ "mode": "one_at_a_time",
+ "repeats": 2,
+ "control_every": 0,
+ "reset": "keep",
+ "metrics": {
+  "sources": [
+   "look",
+   "underwater_stats"
+  ],
+  "noise_floor": {},
+  "targets": [
+   {
+    "scene": "uw_pit",
+    "metric": "underwater_stats.stationary_switch_count",
+    "weight": 1.0,
+    "low": 0.0,
+    "high": 0.0
+   },
+   {
+    "scene": "uw_pit",
+    "metric": "underwater_stats.crossing_delay_seconds",
+    "weight": 1.0,
+    "low": 0.0,
+    "high": 0.14
+   },
+   {
+    "scene": "uw_pit",
+    "metric": "underwater_stats.mean_tick_milliseconds",
+    "weight": 1.0,
+    "low": 0.0,
+    "high": 0.02
+   }
+  ]
+ },
+ "p3_gaps": [
+  "metrics.sources underwater_stats: calib_sweep.py METRIC_SOURCES 는 look|water_probe 뿐. FTDFluidUnderwaterStats(bIsCameraUnderwater·SwitchCount·TickCount·TotalTickMilliseconds·MaxTickMilliseconds)를 PIE 에서 읽는 출처와 수면 통과 지연·정지 시 전환 횟수 지표가 필요(목표 0.14 = 1/QueryRateHz 0.04 + BlendSeconds 0.1, 평균 GT 0.02 ms 는 RM:657)",
+  "params Globals. 경로: fluid_tuning_patch.py 는 StructDefaults·Kinds·Groups 만 받아 Globals.TDFluidUnderwaterSettings.* 를 거부한다(R5-S2 확정). READ_BACK_STRUCTS 에도 TDFluidUnderwaterSettings 가 없다",
+  "Global 값은 StructDefaultsMatchHeader 가 헤더 기본값과 같도록 강제(TDFluidPresetTuningTests.cpp:654-662)해 BlendSeconds·QueryRateHz·SurfaceMarginCm 을 JSON 만으로 보정하면 시험이 실패한다: Global 헤더 일치 면제 또는 별도 보정 범위를 정하는 proposed 결정 필요(R5-S2)",
+  "params Look: 할당(파동 2 계획과 같은 공통 공백, 구현은 CAL-0)",
+  "카메라가 수면을 오르내리는 이동 스케줄(schedule) 미정: 지금 장면은 구덩이 바닥 고정이라 UW2 통과 지연은 별도 이동 장면이 필요"
+ ],
+ "draft_status": "blocked(CAL-0)"
+}

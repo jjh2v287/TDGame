@@ -19,6 +19,7 @@ static const float TDFLUIDGPU_WATER_LARGEST_FLOAT = 3.402823466e+38f;
 Texture2DArray<float> CompositeSdf;
 Texture2DArray<float4> WaterGuideField;
 Texture2DArray<float> WaterSurfaceHeightField;
+Texture2DArray<float> DenseSurfaceHeight;
 Texture2DArray<float> WaterTerrainField;
 StructuredBuffer<uint> WaterOpenBorderFlags;
 StructuredBuffer<float> MeanPressure;
@@ -216,8 +217,9 @@ void FinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const uint OpenBorderFlag = WaterOpenBorderFlags[EntryIndex];
 	const float EntryMeanPressure = MeanPressure[EntryIndex];
 	const int2 Cell = int2(DispatchThreadId.xy);
+	const bool bIsDense = TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_DENSE_WATER);
 #if TDFLUIDGPU_WATER_HALF_PRESSURE
-	if (OpenBorderFlag == 0u && ((Cell.x | Cell.y) & 1) == 0 && TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
+	if (!bIsDense && OpenBorderFlag == 0u && ((Cell.x | Cell.y) & 1) == 0 && TDFluidGpuIsInsideGrid(Cell, Actor.Resolution))
 	{
 		PressureSolution[TDFluidGpuMakeTexel(Cell >> 1, Actor.SliceIndex)] -= EntryMeanPressure;
 	}
@@ -232,7 +234,7 @@ void FinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	float Wetness = 0.0f;
 	if (TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_UPDATES_WETNESS))
 	{
-		Wetness = UpdateWaterWetness(Actor, Water, Cell, Texel, TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell), TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell));
+		Wetness = UpdateWaterWetness(Actor, Water, Cell, Texel, TDFluidGpuWaterLoadEffectiveSurfaceHeight(WaterSurfaceHeightField, DenseSurfaceHeight, Water, Actor, Cell), TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell));
 	}
 #if TDFLUIDGPU_WATER_SOLID_FIRST_READS
 	if (TDFluidGpuIsSolidDistance(SignedDistance))
@@ -245,20 +247,24 @@ void FinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		DensityOut[Texel] = float2(0.0f, 0.0f);
 		RippleOut[Texel] = SolidRipple;
 #if TDFLUIDGPU_WATER_WRITES_OUTPUT
-		WriteWaterOutputs(Actor, Water, Cell, SignedDistance, float2(0.0f, 0.0f), 0.0f, float2(0.0f, 0.0f), SolidRipple.x, TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell), TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell), Wetness);
+		WriteWaterOutputs(Actor, Water, Cell, SignedDistance, float2(0.0f, 0.0f), 0.0f, float2(0.0f, 0.0f), SolidRipple.x, TDFluidGpuWaterLoadEffectiveSurfaceHeight(WaterSurfaceHeightField, DenseSurfaceHeight, Water, Actor, Cell), TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell), Wetness);
 #endif
 		return;
 	}
 #endif
 	const float2 Velocity = VelocityIn[Texel];
 	const float2 PreviousRipple = RippleIn[Texel];
-	const float SurfaceHeight = TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell);
+	const float SurfaceHeight = TDFluidGpuWaterLoadEffectiveSurfaceHeight(WaterSurfaceHeightField, DenseSurfaceHeight, Water, Actor, Cell);
 	const float TerrainElevation = TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell);
+	float Pressure = 0.0f;
+	if (!bIsDense)
+	{
 #if TDFLUIDGPU_WATER_HALF_PRESSURE
-	float Pressure = PressureFull[Texel];
+		Pressure = PressureFull[Texel];
 #else
-	float Pressure = PressureSolution[Texel];
+		Pressure = PressureSolution[Texel];
 #endif
+	}
 #if !TDFLUIDGPU_WATER_SOLID_FIRST_READS
 	if (TDFluidGpuIsSolidDistance(SignedDistance))
 	{
@@ -272,7 +278,7 @@ void FinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	}
 #endif
 
-	if (OpenBorderFlag == 0u)
+	if (!bIsDense && OpenBorderFlag == 0u)
 	{
 		Pressure -= EntryMeanPressure;
 #if !TDFLUIDGPU_WATER_HALF_PRESSURE
@@ -297,6 +303,10 @@ void FinalizeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	if (TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_RIPPLE_ADVECTION))
 	{
 		Ripple = AdvectWaterRipple(Actor, Water, Cell, Velocity);
+	}
+	if (bIsDense && !TDFluidGpuWaterHasSurface(SurfaceHeight))
+	{
+		Ripple = float2(0.0f, 0.0f);
 	}
 
 	DensityOut[Texel] = Density;
@@ -343,7 +353,7 @@ void ProbeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	const uint3 Texel = TDFluidGpuMakeTexel(Cell, Actor.SliceIndex);
 	const float2 Density = DensityIn[Texel];
 	const float SignedDistance = CompositeSdf[Texel];
-	const float SurfaceHeight = TDFluidGpuWaterLoadSurfaceHeight(WaterSurfaceHeightField, Water, Actor, Cell);
+	const float SurfaceHeight = TDFluidGpuWaterLoadEffectiveSurfaceHeight(WaterSurfaceHeightField, DenseSurfaceHeight, Water, Actor, Cell);
 	const float TerrainElevation = TDFluidGpuWaterLoadTerrain(WaterTerrainField, Water, Actor, Cell);
 	const float4 Guide = TDFluidGpuWaterLoadGuide(WaterGuideField, Water, Actor, Cell);
 	Sample.VelocityCmPerSec = TDFluidGpuClampVelocityMagnitude(VelocityIn[Texel], Actor.MaxCellSpeedCmPerSec);

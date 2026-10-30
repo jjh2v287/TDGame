@@ -404,6 +404,7 @@ FTDFluidGpuSimulationSettings FTDFluidGpuSolverProxy::MakeSimulationSettings(con
 	SimulationSettings.SwashHeightCm = FTDFluidWaterWetnessRules::SanitizeSwashHeightCm(Config.SwashHeightCm);
 	SimulationSettings.CoastWavePeriodSeconds = FTDFluidWaterWetnessRules::SanitizeCoastWavePeriodSeconds(Config.CoastWavePeriodSeconds);
 	SimulationSettings.WetnessDryingSeconds = FTDFluidWaterWetnessRules::SanitizeDryingSeconds(Config.WetnessDryingSeconds);
+	ApplyDenseWaterSettings(Config, SimulationSettings);
 	if (SimulationSettings.bUsesWaterLayer)
 	{
 		SimulationSettings.MaxStampsPerTick = FMath::Clamp(Config.MaxPointsPerTick, 1, ProxyWaterMaximumStampsPerTick);
@@ -475,6 +476,7 @@ void FTDFluidGpuSolverProxy::UpdateSettings(const FTDFluidSimulationConfig& Conf
 	const FTDFluidGpuBatchKey PreviousBatchKey = MakeEffectiveBatchKey(Settings);
 	Settings = MakeSimulationSettings(Config, Resolution);
 	bWasLastSettingsUpdateReset = !(MakeEffectiveBatchKey(Settings) == PreviousBatchKey);
+	bHasPendingDenseWaterSeed |= bWasLastSettingsUpdateReset && DenseWaterSeed.IsSet();
 	WaterFieldConfig = Config;
 	if (bPreviouslyUsedWaterLayer && Settings.bUsesWaterLayer)
 	{
@@ -518,6 +520,7 @@ void FTDFluidGpuSolverProxy::ResetState()
 
 	WaterFieldState.Initialize(WaterFieldConfig, Resolution, FTDFluidGpuBatch::ComputeWaterFieldDivisor(Resolution), CenterPlaneCm, Settings.ExtentCm);
 	WaterFieldState.RequestFullUpload(ProxyWaterFullUploadGatherCount);
+	bHasPendingDenseWaterSeed = DenseWaterSeed.IsSet();
 }
 
 int32 FTDFluidGpuSolverProxy::GetWaterFieldResolution() const
@@ -603,6 +606,11 @@ FTDFluidCellSample FTDFluidGpuSolverProxy::SampleSimulationCell(int32 CellX, int
 
 FIntPoint FTDFluidGpuSolverProxy::ShiftWindowTowards(const FVector2D& DesiredCenterPlaneCm)
 {
+	if (Settings.bUsesDenseWater)
+	{
+		return FIntPoint::ZeroValue;
+	}
+
 	if (!IsInitialized() || DesiredCenterPlaneCm.ContainsNaN() || Settings.AreaAddressModeRequest == TDFluidGpuSolverConstants::WrapAreaAddressModeRequest)
 	{
 		return FIntPoint::ZeroValue;
@@ -854,6 +862,7 @@ int32 FTDFluidGpuSolverProxy::GatherWaterStep(FTDFluidGpuActorInput& OutActorInp
 		WaterFieldState.RequestFullUpload(ProxyWaterFullUploadGatherCount);
 		LastGatheredBatchKey = GatheredKey;
 		bHasGatheredBatchKey = true;
+		bHasPendingDenseWaterSeed |= DenseWaterSeed.IsSet();
 	}
 
 	if (!FMath::IsFinite(PreparedDeltaTimeSeconds) || PreparedDeltaTimeSeconds <= 0.0f)
@@ -862,6 +871,7 @@ int32 FTDFluidGpuSolverProxy::GatherWaterStep(FTDFluidGpuActorInput& OutActorInp
 	}
 
 	WaterFieldState.MoveUpdatesInto(OutActorInput);
+	GatherDenseWaterSeed(OutActorInput);
 	OutActorInput.WaterTerrainReferenceZCm = WaterTerrainReferenceZCm;
 	const float StepDeltaTime = FMath::Min(PreparedDeltaTimeSeconds, TDFluidGpuSolverConstants::MaximumStepDeltaTimeSeconds);
 	const bool bUpdatesWetness = OutActorInput.Settings.bUsesWaterWetness && FTDFluidGrid2DSolver::IsWaterWetnessConsoleEnabled();

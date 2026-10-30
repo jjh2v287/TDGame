@@ -22,6 +22,7 @@ class UNiagaraSystem;
 class UStaticMeshComponent;
 class UTDFluidLiveSubsystem;
 class UTDFluidPresetAsset;
+class UTDFluidDenseWaterCacheAsset;
 class UTexture;
 class UTexture2D;
 class UTextureRenderTarget2D;
@@ -176,6 +177,8 @@ public:
 
 	void SetWaterLayerDisplayAlpha(float Alpha);
 	void SetTerrainReferenceZCm(float InTerrainReferenceZCm) { TerrainReferenceZCm = InTerrainReferenceZCm; }
+	bool IsDenseWaterActive() const;
+	bool SeedDenseWaterState(const UTDFluidDenseWaterCacheAsset& Cache);
 	float GetWaterLayerDisplayAlpha() const { return WaterLayerDisplayAlpha; }
 
 	void AdvanceSimulationStep(float DeltaTime, const FVector2D& DesiredCenterWorld, bool bAllowSlidingShift);

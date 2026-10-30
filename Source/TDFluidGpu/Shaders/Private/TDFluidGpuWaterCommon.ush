@@ -14,6 +14,7 @@ static const uint TDFLUIDGPU_WATER_FLAG_USES_TERRAIN_SLOPE_DRY_ONLY = 1u << 8;
 static const uint TDFLUIDGPU_WATER_FLAG_REACHED_RIPPLE_SUBSTEP_CAP = 1u << 9;
 static const uint TDFLUIDGPU_WATER_FLAG_UPDATES_WETNESS = 1u << 10;
 static const uint TDFLUIDGPU_WATER_FLAG_RESETS_WETNESS = 1u << 11;
+static const uint TDFLUIDGPU_WATER_FLAG_USES_DENSE_WATER = 1u << 12;
 
 static const uint TDFLUIDGPU_WATER_PROBE_FLAG_IS_INSIDE_WINDOW = 1u << 0;
 static const uint TDFLUIDGPU_WATER_PROBE_FLAG_HAS_WATER_SURFACE = 1u << 1;
@@ -141,6 +142,16 @@ uint3 TDFluidGpuWaterMakeFieldTexel(FTDFluidGpuWaterParameters Water, int2 Field
 float TDFluidGpuWaterLoadSurfaceHeight(Texture2DArray<float> Field, FTDFluidGpuWaterParameters Water, FTDFluidGpuActorParameters Actor, int2 Cell)
 {
 	return Field[TDFluidGpuWaterMakeFieldTexel(Water, TDFluidGpuWaterToFieldCell(Water, Cell), Actor.SliceIndex)];
+}
+
+float TDFluidGpuWaterLoadEffectiveSurfaceHeight(Texture2DArray<float> Field, Texture2DArray<float> DenseSurface, FTDFluidGpuWaterParameters Water, FTDFluidGpuActorParameters Actor, int2 Cell)
+{
+	if (TDFluidGpuWaterHasFlag(Water, TDFLUIDGPU_WATER_FLAG_USES_DENSE_WATER))
+	{
+		return DenseSurface[TDFluidGpuMakeTexel(Cell, Actor.SliceIndex)];
+	}
+
+	return TDFluidGpuWaterLoadSurfaceHeight(Field, Water, Actor, Cell);
 }
 
 float TDFluidGpuWaterLoadTerrain(Texture2DArray<float> Field, FTDFluidGpuWaterParameters Water, FTDFluidGpuActorParameters Actor, int2 Cell)

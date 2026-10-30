@@ -354,7 +354,7 @@ def place_zone_stirrer(actors, stirrer_class, spec, created, folder, particle_st
     stirrer.set_actor_location(unreal.Vector(location.x, location.y, UNDERWATER_STIRRER_HEIGHT_CM), False, False)
     particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, {"rotation_rate": unreal.Rotator(yaw=UNDERWATER_DEGREES_PER_SEC)})
     particle_stage.require_component_properties(stirrer, unreal.RotatingMovementComponent, {"pivot_translation": unreal.Vector(-particle_stage.STIRRER_ORBIT_RADIUS_CM, 0.0, 0.0)})
-    light =actors.spawn_actor_from_class(unreal.PointLight, location, unreal.Rotator())
+    light = actors.spawn_actor_from_class(unreal.PointLight, location, unreal.Rotator())
     particle_stage.finish_actor(light, f"Foliage{spec['name']}_StirrerLight", f"{folder}/{spec['name']}", created)
     light.attach_to_actor(stirrer, unreal.Name(""), unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD, False)
     return stirrer

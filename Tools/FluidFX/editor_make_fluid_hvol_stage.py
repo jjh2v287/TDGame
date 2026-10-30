@@ -494,7 +494,7 @@ def main():
     stirrer_class = assets.load_blueprint_class(STIRRER_BLUEPRINT_PATH)
     particle_stage = load_module("td_fluid_particle_stage", PARTICLE_STAGE_RELATIVE_PATH)
     fluid_actor_class = unreal.load_class(None, FLUID_ACTOR_CLASS_PATH)
-    instances ={name: assets.load_asset(f"{MATERIAL_DIR}/{name}") for name in HVOL_MI.values()}
+    instances = {name: assets.load_asset(f"{MATERIAL_DIR}/{name}") for name in HVOL_MI.values()}
     svol_material = assets.load_asset(f"{MATERIAL_DIR}/{SVOL_MI}")
     output_source = assets.load_asset(OUTPUT_MATERIAL_SOURCE_PRESET_PATH)
     output_material = output_source.get_editor_property("output_material") if output_source is not None and has_editor_property(output_source, "output_material") else None

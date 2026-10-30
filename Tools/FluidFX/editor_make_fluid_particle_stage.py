@@ -301,19 +301,23 @@ def property_value_matches(actual, expected):
     return actual == expected
 
 
+def get_component_class_name(component_class):
+    return getattr(component_class, "__name__", None) or component_class.get_name()
+
+
 def require_component_properties(actor, component_class, properties):
     component = actor.get_component_by_class(component_class)
     if component is None:
-        raise RuntimeError(f"다시 읽을 {component_class.__name__} 컴포넌트가 없습니다: {actor.get_actor_label()}")
+        raise RuntimeError(f"다시 읽을 {get_component_class_name(component_class)} 컴포넌트가 없습니다: {actor.get_actor_label()}")
     mismatches = {name: str(component.get_editor_property(name)) for name, expected in properties.items() if not property_value_matches(component.get_editor_property(name), expected)}
     if mismatches:
-        raise RuntimeError(f"컴포넌트 속성 다시 읽기 불일치(블루프린트 구성 스크립트 재실행 유실 의심): {actor.get_actor_label()} {component_class.__name__} {mismatches}")
+        raise RuntimeError(f"컴포넌트 속성 다시 읽기 불일치(블루프린트 구성 스크립트 재실행 유실 의심): {actor.get_actor_label()} {get_component_class_name(component_class)} {mismatches}")
 
 
 def set_component_properties(actor, component_class, properties):
     component = actor.get_component_by_class(component_class)
     if component is None:
-        raise RuntimeError(f"{component_class.__name__} 컴포넌트가 없습니다: {actor.get_actor_label()}")
+        raise RuntimeError(f"{get_component_class_name(component_class)} 컴포넌트가 없습니다: {actor.get_actor_label()}")
     component.set_editor_properties(properties)
     require_component_properties(actor, component_class, properties)
 

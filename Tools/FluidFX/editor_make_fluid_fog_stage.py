@@ -525,7 +525,7 @@ def main():
     stirrer_class = assets.load_blueprint_class(STIRRER_BLUEPRINT_PATH)
     particle_stage = load_particle_stage()
     fluid_actor_class = unreal.load_class(None, FLUID_ACTOR_CLASS_PATH)
-    instance_names =sorted({spec["instance"] for spec in STATIC_BOX_SPECS} | {spec["instance"] for spec in FLUID_SPECS})
+    instance_names = sorted({spec["instance"] for spec in STATIC_BOX_SPECS} | {spec["instance"] for spec in FLUID_SPECS})
     instances = {name: assets.load_asset(f"{MATERIAL_DIR}/{name}") for name in instance_names}
     required = {"게임 모드": game_mode, "큐브": cube, "MPC": collection, "교반기(FX-8n 무대 먼저)": stirrer_class, "유체 액터 클래스": fluid_actor_class}
     required.update({f"MI {name}": value for name, value in instances.items()})

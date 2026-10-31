@@ -540,6 +540,7 @@ def main():
         component.set_material(0, material)
         if not has_collision:
             component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+            component.set_collision_profile_name("NoCollision")
             component.set_cast_shadow(False)
         return actor
 

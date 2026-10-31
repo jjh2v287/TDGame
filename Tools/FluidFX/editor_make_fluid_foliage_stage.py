@@ -325,6 +325,7 @@ def place_zone_grass(actors, instanced_class, spec, created, folder, particle_st
     component.set_editor_property("shadow_cache_invalidation_behavior", getattr(unreal.ShadowCacheInvalidationBehavior, SHADOW_POLICY_NAMES[spec["shadow"]]))
     if not zone_value(spec, "collision"):
         component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        component.set_collision_profile_name("NoCollision")
     scale_z = zone_value(spec, "scale_z")
     transforms = []
     for x, y, yaw, scale in make_grid_points(spec["index"]):
@@ -369,6 +370,7 @@ def place_water_region(actors, spec, created, folder, particle_stage):
     component = region.static_mesh_component
     component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    component.set_collision_profile_name("NoCollision")
     component.set_cast_shadow(False)
     component.set_visibility(False)
     region.tags = [unreal.Name(WATER_REGION_TAG)]

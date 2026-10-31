@@ -294,6 +294,7 @@ def configure_plate_component(actor, material, has_collision):
     component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     if not has_collision:
         component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        component.set_collision_profile_name("NoCollision")
         component.set_cast_shadow(False)
     component.set_material(0, material)
     return component

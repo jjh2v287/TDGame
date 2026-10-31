@@ -414,7 +414,9 @@ def spawn_orbiting_body(context, zone, body, center, folder):
     particle_stage.set_component_properties(stirrer, unreal.StaticMeshComponent, body_mesh_properties(context, body))
     particle_stage.set_component_properties(stirrer, unreal.RotatingMovementComponent, body_motion_properties(body))
     if not body["collides"]:
-        stirrer.get_component_by_class(unreal.StaticMeshComponent).set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        mesh_component = stirrer.get_component_by_class(unreal.StaticMeshComponent)
+        mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        mesh_component.set_collision_profile_name("NoCollision")
     require_body_properties(context, stirrer, body)
     return stirrer
 
@@ -433,7 +435,8 @@ def require_body_properties(context, stirrer, body):
     particle_stage = context["particle_stage"]
     particle_stage.require_component_properties(stirrer, unreal.StaticMeshComponent, body_mesh_properties(context, body))
     particle_stage.require_component_properties(stirrer, unreal.RotatingMovementComponent, body_motion_properties(body))
-    if not body["collides"] and stirrer.get_component_by_class(unreal.StaticMeshComponent).get_collision_enabled() != unreal.CollisionEnabled.NO_COLLISION:
+    mesh_component = stirrer.get_component_by_class(unreal.StaticMeshComponent)
+    if not body["collides"] and (mesh_component.get_collision_enabled() != unreal.CollisionEnabled.NO_COLLISION or str(mesh_component.get_collision_profile_name()) != "NoCollision"):
         raise RuntimeError("교반기 충돌 끔 다시 읽기 불일치(블루프린트 구성 스크립트 재실행 유실 의심): " + stirrer.get_actor_label())
 
 
@@ -458,6 +461,7 @@ def spawn_field_marker(context, label, location, size_cm, folder):
     marker.set_actor_scale3d(unreal.Vector(scale, scale, 1.0))
     marker.static_mesh_component.set_editor_property("mobility", unreal.ComponentMobility.STATIC)
     marker.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    marker.static_mesh_component.set_collision_profile_name("NoCollision")
     marker.set_actor_hidden_in_game(True)
     return marker
 

@@ -551,6 +551,7 @@ def build_scene(scene, levels, actors, editor, loaded, presets, fluid_actor_clas
     size = scene["floor_size_cm"]
     _, floor_component = place_mesh(loaded["grid"], (0.0, 0.0, FLOOR_Z_CM), (size / GRID_MESH_SIZE_CM, size / GRID_MESH_SIZE_CM, 1.0), loaded[scene["floor_instance"]], "VisibleFloor", "Stage")
     floor_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    floor_component.set_collision_profile_name("NoCollision")
     collision_actor, collision_component = place_mesh(loaded["cube"], (0.0, 0.0, FLOOR_Z_CM - 0.5 * COLLISION_FLOOR_THICKNESS_CM), (size / CUBE_SIZE_CM, size / CUBE_SIZE_CM, COLLISION_FLOOR_THICKNESS_CM / CUBE_SIZE_CM), None, "CollisionFloor", "Stage")
     collision_component.set_visibility(False)
     collision_actor.set_actor_hidden_in_game(True)

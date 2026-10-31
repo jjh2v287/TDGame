@@ -289,6 +289,7 @@ def spawn_sea_tiles(water_stage, spawn_object, tile_mesh, sea_material):
             component = tile.static_mesh_component
             component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
             component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+            component.set_collision_profile_name("NoCollision")
             component.set_cast_shadow(False)
             component.set_material(0, sea_material)
             water_stage.add_actor_tag(tile, water_stage.TAG_WATER_SURFACE)

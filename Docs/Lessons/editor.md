@@ -131,6 +131,7 @@
 - 증거: `Saved/AgentOps/20261014/piewalk/`(PIE 탐침 출력 Fog_2·Floor_5 block=True), 수정 뒤 실제 이동 입력 걷기 6/6 통과
 - 날짜·상태: 2026-10-14 active
 - 발견: claude
+- 재발(2026-10-31): FluidFX 무대 생성기 9개(fog·foliage·hvol·input·rain·track·water_particle·water_props·water)가 짝 없이 NO_COLLISION 만 호출 → 안개 무대 `TDGen_FogPassiveField`(200 m 정적 안개 상자)가 저장 맵에서 QUERY_AND_PHYSICS·BlockAll, 폰이 안에 갇혀 입력 걷기 0 cm(fog_f2). 에디터 월드 조회 `Saved/AgentOps/20261031/f2walk/query_blockers.py`. 재발 방지 검사 `python Tools/check_collision_disable.py`(생성기 수정 워크플로 wf_a4e5db9c-ee8)
 
 ### L-editor-16 재질 Python 편집 함정 세 가지: 잘못된 MaterialProperty 값은 크래시, 함수 표현식 일괄 삭제는 절반만, Vector4f는 import_text로
 - 증상: ① `MaterialEditingLibrary.get_material_property_input_node(material, <유효하지 않은 MaterialProperty 값>)`로 열거형을 훑다가 에디터가 크래시(로그 `Saved/AgentOps/20261014/topdown/laneM/editor_crash_tail.log`) ② `delete_all_material_expressions_in_function`이 표현식의 약 절반만 지운다 ③ `MaterialExpressionFunctionInput.preview_value`(Vector4f)는 생성자 인수·속성 대입으로 값이 들어가지 않는다.
@@ -752,3 +753,12 @@
 - 증거: Saved/Crashes 2026-10-31 01:35·01:36, `Saved/AgentOps/20261031/hvol/regen/`(backup 포함)
 - 날짜·상태: 2026-10-31 active(C++ 미수정)
 - 발견: claude(FluidFX 일괄 보정 무대 재생성)
+
+### L-editor-86 Python 원격 실행은 호출마다 같은 전역 이름 공간에서 돈다 — 슬레이트 틱 콜백이 나중에 전역(PARAMS 등)을 읽으면 다른 호출의 값이다
+- 증상: 룩데브 예약 촬영 중 schedule.events move 가 `KeyError: 'output'`(begin_pawn_walk 의 `PARAMS['output']`), 장면 무효. 가짜 unreal 하네스(호출마다 새 globals)에서는 통과
+- 원인: 원격 실행 명령은 같은 `__main__` 전역에서 실행되어, 예약을 건 호출 뒤 다른 원격 호출(TD_NAV_STATE 점검·상태 조회)이 `PARAMS` 를 덮어쓴다. register_slate_post_tick_callback 콜백은 전역 이름을 실행 시점에 찾는다
+- 해결: 콜백이 쓸 값은 등록할 때 상태 사전(state)에 복사해 두고 전역을 읽지 않는다(eb4c51dd, 예약 상태 output·tag). 하네스는 공유 이름 공간 모드(EDITOR_SHARED_NAMESPACE, F4c)로 재현
+- 범위: run_in_editor·pie_showcase EDITOR_CODE 로 틱 콜백을 거는 모든 도구(pie_lookdev_fluid 예약·걷기 등)
+- 증거: Saved/FluidFX/calib/frames/fog_f2_passive(2026-10-31 frame 2차), 하네스 수정 전 빨강·수정 뒤 275/275
+- 날짜·상태: 2026-10-31 active
+- 발견: claude(FluidFX 일괄 보정 frame)

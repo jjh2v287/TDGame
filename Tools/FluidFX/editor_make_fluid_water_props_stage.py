@@ -589,6 +589,7 @@ def place_mesh(context, shape, location, size_cm, label, material_key=None, rota
         component.set_material(0, context["assets"][material_key])
     if not has_collision:
         component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        component.set_collision_profile_name("NoCollision")
     if not casts_shadow:
         component.set_cast_shadow(False)
     if tags:

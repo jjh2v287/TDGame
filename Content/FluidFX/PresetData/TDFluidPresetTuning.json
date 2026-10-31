@@ -1499,7 +1499,8 @@
         "Orientation": "CameraFacing",
         "InteractionDepthCm": 200.0,
         "bProjectOrientedObstacles": true,
-        "ObstacleContourPaddingCm": 10.0
+        "ObstacleContourPaddingCm": 10.0,
+        "CenterOffsetAlongUpRatio": 0.45
       },
       "TDFluidInputBrushSettings": {
         "MassPointHeatStrength": 0.9

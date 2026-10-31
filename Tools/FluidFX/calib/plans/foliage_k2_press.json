@@ -1,6 +1,6 @@
 {
   "id": "foliage_k2_press",
-  "note": "FX-13c K2 구역 4(FoliagePainter 원천·GrassPress·교반기 반경 600 cm 궤도), 눌림 반감·밝기, IMG 9 / 0b(2026-10-30): 목표 둘은 명세 [제안](P-11). 손잡이를 장면별로 나눴다(소산 → decay, 나머지 → press). 교반기가 계속 돌면 감쇠 구간이 없고, half_life 는 바깥 기준 휘도로 내려가는 값을 0 으로 가는 지수로 맞춰 치우친다 → frame 에서 교반기 정지 이벤트(step_apply call)와 기준 차감 필요 여부 확인 / frame 정리(2026-10-31): 반감기를 대비 계열(derived.press_contrast → half_life absolute)로 바꿈. 절대 휘도 반감기는 기준선 0.70 으로 돌아가는 복원이라 완전 복원해도 약 197 s 로 띠 [3,8] 도달 불가였다(감사 표 108행·제안 9) / 위상 재설정(2026-10-31): 눌림 교반기 TDGen_FoliagePress_Stirrer(editor_make_fluid_foliage_stage.py:337 place_orbit_stirrer, 반경 600·20°/s, 중심 (12000, 0))는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다. step_apply 가 재확인한 frame(13:56·13:59 회차)의 apply 위상으로 되돌린다: k2_press θ=304.79°(apply 15.239 s → 첫 장 8.017 s 뒤 θ≈105.1°), k2_press_decay θ=301.7°(apply 15.085 s → 첫 장 θ≈102.0°)",
+  "note": "FX-13c K2 구역 4(FoliagePainter 원천·GrassPress·교반기 반경 600 cm 궤도), 눌림 반감·밝기, IMG 9 / 0b(2026-10-30): 목표 둘은 명세 [제안](P-11). 손잡이를 장면별로 나눴다(소산 → decay, 나머지 → press). 교반기가 계속 돌면 감쇠 구간이 없고, half_life 는 바깥 기준 휘도로 내려가는 값을 0 으로 가는 지수로 맞춰 치우친다 → frame 에서 교반기 정지 이벤트(step_apply call)와 기준 차감 필요 여부 확인 / frame 정리(2026-10-31): 반감기를 대비 계열(derived.press_contrast → half_life absolute)로 바꿈. 절대 휘도 반감기는 기준선 0.70 으로 돌아가는 복원이라 완전 복원해도 약 197 s 로 띠 [3,8] 도달 불가였다(감사 표 108행·제안 9) / 위상 재설정(2026-10-31): 눌림 교반기 TDGen_FoliagePress_Stirrer(editor_make_fluid_foliage_stage.py:337 place_orbit_stirrer, 반경 600·20°/s, 중심 (12000, 0))는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다. step_apply 가 재확인한 frame(13:56·13:59 회차)의 apply 위상으로 되돌린다: k2_press θ=304.79°(apply 15.239 s → 첫 장 8.017 s 뒤 θ≈105.1°), k2_press_decay θ=301.7°(apply 15.085 s → 첫 장 θ≈102.0°) / 위상 실측(2026-10-31 시간원 2차 통합): PIE 에서 get_actor_location·get_actor_rotation 으로 잰 궤도 중심 (12000, 0)·반경 600.00·피벗 −600·θ = 20 × 게임 시각(배치 위상 0) 잔차 0.00°, 재설정 뒤에도 피벗 그대로·θ = 설정값 + 20 × (t − apply). 모형은 맞았고 영역 틀을 그린 회차(_previous/k2_press/20261031-135643-973786·_previous/k2_press_decay/20261031-135942-995511 = 11:11·11:14 시작, 영역 note 수치 0.682·대비 −0.043 과 같은 회차) apply 14.854·14.901 s 위상으로 고침: k2_press θ=297.08°(첫 장 θ≈97.4°), k2_press_decay θ=298.02°(첫 장 θ≈98.4°). 2차 묶음(reinit 의 이전 위치 기록 초기화·잎 바람 MPC 원점) 뒤 3복제 반감기 1.04·0.95·1.09 s(그 회차 0.98 s, 꼬리 ≈0), 옛 값 301.7° 는 1.12·1.27·1.12 s(13:59 회차 1.13 s) — 16:57 frame 의 눌림 상자 오른쪽 평탄은 위상 모형 탓이 아니다(Saved/AgentOps/20261031/integ2/)",
   "scenes": [
     {
       "name": "k2_press",
@@ -24,8 +24,8 @@
       "step_apply": {
         "location": {
           "TDGen_FoliagePress_Stirrer": [
-            12342.34,
-            -492.75,
+            12273.14,
+            -534.22,
             20.0
           ]
         },
@@ -35,7 +35,7 @@
             "args": [
               [
                 0.0,
-                304.79,
+                297.08,
                 0.0
               ],
               true
@@ -78,8 +78,8 @@
       "step_apply": {
         "location": {
           "TDGen_FoliagePress_Stirrer": [
-            12315.28,
-            -510.49,
+            12281.87,
+            -529.67,
             20.0
           ]
         },
@@ -89,7 +89,7 @@
             "args": [
               [
                 0.0,
-                301.7,
+                298.02,
                 0.0
               ],
               true

@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터·PIE 불필요, numpy·Pillow·scipy 필요, 가짜 unreal 로 calib_sweep·pie_lookdev_fluid·pie_probe_fluid_water 를 프로세스 안에서 돌린다). 2026-10-25 P3 오프라인 시험(w0-P3-offline-test.py)을 본 트리로 옮겨 새 판정 규칙(목표 지표 대조·연속 점수·점수 잡음 유의)과 짧은 창 배율·대조 처음·끝 모드를 더했다.
 실행 명령: python -B Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/offline-test/ 아래 스윕·판정 산출물(실행마다 지움)과 표준 출력 PASS/FAIL 줄. 수용 시험 산출(Saved/FluidFX/calib/{campfire-run1,campfire-run2,campfire-r4-run1,river-run1})이 있으면 새 판정기로 재판정해 SKIP 아닌 결과를 낸다.
-상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json(모닥불 영역 틀도 712dfa89 전 고정 사본 fixtures/campfire_fire_regions.head.json, 재판정은 계획 사본의 영역 틀로), 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F10): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점·구름 흐름 시계 재시작(reinit·keep 단계마다 1회, 예약 원점과 같은 게임 시각, 예외는 키 오류, 가짜 구름 액터에 restart_cloud_flow_clock), 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조.
+상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json(모닥불 영역 틀도 712dfa89 전 고정 사본 fixtures/campfire_fire_regions.head.json, 재판정은 계획 사본의 영역 틀로), 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F11): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점·구름 흐름 시계 재시작(reinit·keep 단계마다 1회, 예약 원점과 같은 게임 시각, 예외는 키 오류, 가짜 구름 액터에 restart_cloud_flow_clock)·안개 흐름 원점(F11: 안개 마스터 사용자가 있는 무대만 단계마다 MPC FogFlowOriginSeconds = 그 apply 게임 시각, MPC 매개변수 없음·MPC 없음은 키 오류, 비안개 무대는 MPC 가 메모리에 있어도 키 없음, 가짜 MaterialParameterCollection·KismetMaterialLibrary, MPC 경로·이름은 editor_make_fluid_fog_material 상수로 대조, F11b 모양 정본 MPC 이름 덮어쓰기 거부), 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조.
 """
 import contextlib
 import copy
@@ -296,6 +296,19 @@ class FakeNiagaraSystem(FakeAsset):
     pass
 
 
+class FakeMaterialParameterCollection(FakeAsset):
+    def __init__(self, path, scalar_names=()):
+        super().__init__(path, scalar_parameters=[Props(parameter_name=name, default_value=0.0) for name in scalar_names])
+
+
+def set_collection_scalar(world, collection, parameter_name, parameter_value):
+    world.collection_scalars[(collection.path, str(parameter_name))] = float(parameter_value)
+
+
+def get_collection_scalar(world, collection, parameter_name):
+    return world.collection_scalars.get((collection.path, str(parameter_name)), 0.0)
+
+
 class FakeComponent(unreal.Object):
     def __init__(self, name, **values):
         super().__init__(**values)
@@ -385,6 +398,8 @@ unreal.MaterialInstanceConstant = FakeMaterialInstanceConstant
 unreal.MaterialInstanceDynamic = FakeMaterialInstanceDynamic
 unreal.MaterialEditingLibrary = FakeMaterialEditingLibrary
 unreal.NiagaraSystem = FakeNiagaraSystem
+unreal.MaterialParameterCollection = FakeMaterialParameterCollection
+unreal.KismetMaterialLibrary = Props(set_scalar_parameter_value=set_collection_scalar, get_scalar_parameter_value=get_collection_scalar)
 unreal.ActorComponent = unreal.SceneComponent = FakeComponent
 unreal.PrimitiveComponent = FakePrimitiveComponent
 unreal.StaticMeshComponent = FakeStaticMeshComponent
@@ -533,6 +548,7 @@ class FakeWorld:
         self.assets = {}
         self.cpp_materials = []
         self.cpp_reapplies_look = True
+        self.collection_scalars = {}
         self.shot_count = 0
         self.player_pawn = FakePlayerPawn()
         self.player_controller = FakePlayerController()
@@ -683,6 +699,7 @@ unreal.GameplayStatics = Props(get_all_actors_of_class=all_actors, get_time_seco
                                get_player_pawn=lambda world, index: world.player_pawn)
 unreal.SystemLibrary = Props(execute_console_command=console, get_console_variable_float_value=lambda name: 0.0)
 sys.modules["unreal"] = unreal
+import editor_make_fluid_fog_material as fog_material  # noqa: E402
 
 
 EDITOR_SHARED_NAMESPACE = None
@@ -3264,6 +3281,62 @@ def check_lookdev_frame_fixes():
           and broken_restart.get("actors") == [] and len(broken_restart.get("errors", [])) == 1
           and any(line.startswith("s03: cloud_flow_restart: TDGen_BrokenClouds: ") for line in broken_state["key_errors"]),
           (restarts, clouds.flow_restart_game_times, [step.get("schedule") for step in flow_steps], no_cloud.get("cloud_flow_restart"), broken_restart, state["key_errors"], broken_state["key_errors"]))
+
+    origin_name = fog_material.FLOW_ORIGIN_PARAMETER_NAME
+    origin_key = (fog_material.COLLECTION_PATH, origin_name)
+
+    def fog_user(label, material):
+        return FakeActor(label, components=[FakeStaticMeshComponent("FogBox", [material])])
+
+    def fog_instance(name):
+        return FakeMaterialInstanceConstant(fog_material.asset_path(name), parent=FakeMaterial(fog_material.MASTER_PATH))
+
+    reset_world([(TDFluidLiveActor, "TDGen_FogAmbient", FakePreset("CAMPFIRE"))])
+    WORLD.add_asset(FakeMaterialParameterCollection(fog_material.COLLECTION_PATH, [name for name, _ in fog_material.COLLECTION_SCALAR_DEFAULTS]))
+    WORLD.actors.append(fog_user("TDGen_FogPassiveField", fog_instance("MI_TD_FluidFog_PassiveField")))
+    state = {"uses_tuning_reload": False, "key_errors": []}
+    origin_steps = []
+    for tag, reset_mode in (("s00", "reinit"), ("s01", "keep")):
+        step = lookdev.apply_variant_with_tuning({"tuning_reload": {"tuning": "", "look": "", "reset": reset_mode, "relative_to_base": False},
+                                                  "schedule": {"times": [0.5], "reference": "now", "prefix": f"fog_{reset_mode}"}}, tag, state)
+        lookdev.wait_for_schedule(Path(step["schedule"]["status_path"]), 30.0)
+        origin_steps.append(step)
+    origins = [step.get("fog_flow_origin", {}) for step in origin_steps]
+    final_origin = WORLD.collection_scalars.get(origin_key)
+
+    reset_world([])
+    WORLD.add_asset(FakeMaterialParameterCollection(fog_material.COLLECTION_PATH, []))
+    WORLD.actors.append(fog_user("TDGen_FogRoom", FakeMaterialInstanceDynamic(fog_instance("MI_TD_FluidFog_Sim"))))
+    stale_state = {"uses_tuning_reload": False, "key_errors": []}
+    stale = lookdev.apply_variant_with_tuning({}, "s02", stale_state).get("fog_flow_origin", {})
+    stale_scalars = dict(WORLD.collection_scalars)
+
+    reset_world([])
+    WORLD.add_asset(FakeMaterialParameterCollection(fog_material.COLLECTION_PATH, []))
+    WORLD.actors.append(fog_user("TDGen_CloudProp", FakeMaterialInstanceConstant("/Game/FluidFX/Materials/MI_TD_FluidCloud_Fake", parent=FakeMaterial("/Game/FluidFX/Materials/M_TD_FluidCloudLayers"))))
+    non_fog_state = {"uses_tuning_reload": False, "key_errors": []}
+    non_fog = lookdev.apply_variant_with_tuning({}, "s03", non_fog_state)
+
+    reset_world([])
+    WORLD.actors.append(fog_user("TDGen_FogCut", fog_instance("MI_TD_FluidFog_Sim")))
+    missing_state = {"uses_tuning_reload": False, "key_errors": []}
+    missing = lookdev.apply_variant_with_tuning({}, "s04", missing_state).get("fog_flow_origin", {})
+    check("F11 안개 흐름 원점: 안개 마스터 사용자(MI·MID 기반 재질)가 있으면 reinit·keep 단계마다 같은 apply 원격 호출 첫머리에서 MPC FogFlowOriginSeconds = 그 apply 게임 시각 = 예약 reference_game_time(다시 읽은 value 같음, MPC 경로·이름은 재질 스크립트 상수, 기본 0) / MPC 매개변수 없음(재질 재생성 전)·MPC 없음은 키 오류 'fog_flow_origin: ' 로 단계 무효 / 비안개 무대는 MPC 가 메모리에 있어도 키 없음",
+          dict(fog_material.COLLECTION_SCALAR_DEFAULTS) == {origin_name: 0.0}
+          and all(item.get("mpc") == fog_material.COLLECTION_PATH and item.get("user") == "TDGen_FogPassiveField" and item.get("errors") == [] for item in origins)
+          and [item.get("game_time") for item in origins] == [item.get("value") for item in origins] == [step["schedule"]["reference_game_time"] for step in origin_steps]
+          and origins[0]["game_time"] < origins[1]["game_time"] and final_origin == origins[1]["game_time"] and not state["key_errors"]
+          and stale.get("user") == "TDGen_FogRoom" and stale.get("value") is None and len(stale.get("errors", [])) == 1 and stale_scalars == {}
+          and any(line.startswith(f"s02: fog_flow_origin: MPC 매개변수 없음: {origin_name}") for line in stale_state["key_errors"])
+          and "fog_flow_origin" not in non_fog and not non_fog_state["key_errors"]
+          and missing.get("value") is None and any(line.startswith(f"s04: fog_flow_origin: MPC 없음: {fog_material.COLLECTION_PATH}") for line in missing_state["key_errors"]),
+          (origins, final_origin, [step.get("schedule", {}).get("reference_game_time") for step in origin_steps], state["key_errors"], stale, stale_scalars, stale_state["key_errors"],
+           non_fog.get("fog_flow_origin"), non_fog_state["key_errors"], missing, missing_state["key_errors"]))
+    look_entries = {fog_material.asset_path(name): {"Parent": fog_material.MASTER_PATH, "Scalars": {}, "Vectors": {}} for name in fog_material.INSTANCE_NAMES}
+    look_entries[fog_material.asset_path("MI_TD_FluidFog_PassiveField")]["Scalars"] = {origin_name: 5.0, "FogExtinctionPerM": 0.1}
+    override_problems = fog_material.find_instance_override_problems(look_entries)
+    check("F11b 안개 재질 스크립트: 모양 정본 MI 가 룩데브 구동 MPC 이름 FogFlowOriginSeconds 를 덮으면 그 MI 하나만 '룩데브 구동 MPC 이름 덮어씀'(마스터에 없는 이름 중복 없음), 모양 이름은 통과",
+          override_problems == [f"MI_TD_FluidFog_PassiveField: 룩데브 구동 MPC 이름 덮어씀 {origin_name}"], override_problems)
 
 
 class FakeUnrealLog(io.BufferedIOBase):

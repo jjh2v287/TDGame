@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 볼류메트릭 포그 마스터 M_TD_FluidFogVolume(MD_VOLUME·BLEND_ADDITIVE, Custom 노드 1개 = Tools/FluidFX/Shaders/TDFluidFogVolume.hlsl), 창 MPC_TD_FluidFogWindow, 재질 인스턴스 15개를 만든다. 먼저 editor_make_fluid_volume_material.py 가 T_TD_FluidNoiseVolume 을 만들어 두어야 하고, 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json 에 MI 15개가 병합되어 있어야 한다(MI_TD_FluidFog_TileSync 는 FX-10c 조각 병합 뒤).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fog_material.py (기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_fog_material_request.json 에 {"overwrite": true})
-출력: /Game/FluidFX/Materials/M_TD_FluidFogVolume·MPC_TD_FluidFogWindow·MI_TD_FluidFog_*(15), Saved/FluidFX/fluid_fog_material.json(앞단 경로 substrate|legacy, 재질 통계, HLSL sha256)
-상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만, 에디터 실행 전). 앞단은 Substrate 안개·구름 BSDF 1순위, 연결 실패 시 기존 핀(BaseColor=알베도·SubsurfaceColor=소광·Emissive) 자동 변환. 구동(MID, SimGridResolution > 0.5)은 MID 창·바닥 = SimCenterWorld.z, 정적(MI)은 MPC 창·바닥 = ObjectPositionWS.z − ObjectBounds.z(반 크기). MI 값은 모양 정본(apply_to_instance)만 쓴다. 볼륨 도메인은 재질 통계 PS 명령이 0일 수 있어 실패로 보지 않고, dxc 명령 수(check_fluid_fog_hlsl.py)를 대체 지표로 둔다. MI 수는 명세 13개 + 대형 정적 상자용 MI_TD_FluidFog_PassiveField 1개(반박 S7, 상자 가장자리 부드러움) + 감싸기 타일용 MI_TD_FluidFog_TileSync 1개(FX-10c F6) = 15개. 2026-10-26 FX-10c: C++ 구동 스칼라 SimAreaWrapped(기본 0, MI 덮어쓰기 금지)를 Custom 입력에 더함 — 1이면 창 UV 를 자르지 않고(RT TA_Wrap) 창 가중 1, 기존 마스터는 지우지 않고 식만 제자리 재구성(L-editor-67). 에디터 실행 전(py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만).
+출력: /Game/FluidFX/Materials/M_TD_FluidFogVolume·MPC_TD_FluidFogWindow(벡터 SimCenterWorld·SimExtentsCm, 스칼라 FogFlowOriginSeconds 기본 0)·MI_TD_FluidFog_*(15), Saved/FluidFX/fluid_fog_material.json(앞단 경로 substrate|legacy, collection_scalars, master.elapsed_seconds, 재질 통계, HLSL sha256)
+상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만, 에디터 실행 전). 앞단은 Substrate 안개·구름 BSDF 1순위, 연결 실패 시 기존 핀(BaseColor=알베도·SubsurfaceColor=소광·Emissive) 자동 변환. 구동(MID, SimGridResolution > 0.5)은 MID 창·바닥 = SimCenterWorld.z, 정적(MI)은 MPC 창·바닥 = ObjectPositionWS.z − ObjectBounds.z(반 크기). MI 값은 모양 정본(apply_to_instance)만 쓴다. 볼륨 도메인은 재질 통계 PS 명령이 0일 수 있어 실패로 보지 않고, dxc 명령 수(check_fluid_fog_hlsl.py)를 대체 지표로 둔다. MI 수는 명세 13개 + 대형 정적 상자용 MI_TD_FluidFog_PassiveField 1개(반박 S7, 상자 가장자리 부드러움) + 감싸기 타일용 MI_TD_FluidFog_TileSync 1개(FX-10c F6) = 15개. 2026-10-26 FX-10c: C++ 구동 스칼라 SimAreaWrapped(기본 0, MI 덮어쓰기 금지)를 Custom 입력에 더함 — 1이면 창 UV 를 자르지 않고(RT TA_Wrap) 창 가중 1, 기존 마스터는 지우지 않고 식만 제자리 재구성(L-editor-67). 에디터 실행 전(py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만). 2026-10-31 K4 안개 시간 결정론: Custom 입력 ElapsedSeconds = Time(View.GameTime, PIE 시작 원점) − MPC 스칼라 FogFlowOriginSeconds(기본 0 이라 게임 모양 불변, MI 덮어쓰기 금지 — 정적 PassiveField MI 도 같은 마스터라 MID 매개변수 대신 MPC), pie_lookdev_fluid.py 가 안개 무대 단계 apply 마다 원점 = 그 게임 시각(fog_flow_origin). 에디터 재생성 전(py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만), 재생성 전에는 MPC 에 이 스칼라가 없어 안개 무대 룩데브 단계가 키 오류다.
 """
 import hashlib
 import importlib.util
@@ -33,6 +33,8 @@ COLLECTION_VECTOR_DEFAULTS = (
     ("SimCenterWorld", (0.0, 0.0, 0.0, 0.0)),
     ("SimExtentsCm", (0.0, 0.0, 0.0, 0.0)),
 )
+FLOW_ORIGIN_PARAMETER_NAME = "FogFlowOriginSeconds"
+COLLECTION_SCALAR_DEFAULTS = ((FLOW_ORIGIN_PARAMETER_NAME, 0.0),)
 COLLECTION_SOURCE_BY_INPUT = {"FogWindowCenterWorld": "SimCenterWorld", "FogWindowExtentsCm": "SimExtentsCm"}
 
 DRIVEN_VECTOR_DEFAULTS = (
@@ -137,6 +139,7 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialParameterCollection",
     "MaterialParameterCollectionFactoryNew",
     "CollectionVectorParameter",
+    "CollectionScalarParameter",
     "MaterialExpressionCollectionParameter",
     "MaterialExpressionCustom",
     "CustomInput",
@@ -151,6 +154,7 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialExpressionScalarParameter",
     "MaterialExpressionComponentMask",
     "MaterialExpressionMultiply",
+    "MaterialExpressionSubtract",
     "MaterialExpressionSubstrateVolumetricFogCloudBSDF",
     "MaterialDomain.MD_VOLUME",
     "BlendMode.BLEND_ADDITIVE",
@@ -234,6 +238,7 @@ def find_unresolved_inputs():
 def find_instance_override_problems(entries):
     problems = []
     overridable = {name for name, _ in LOOK_VECTOR_DEFAULTS} | {name for name, _ in LOOK_SCALAR_DEFAULTS}
+    collection_runtime_names = {name for name, _ in COLLECTION_SCALAR_DEFAULTS}
     for name in INSTANCE_NAMES:
         entry = entries.get(asset_path(name))
         if entry is None:
@@ -245,7 +250,10 @@ def find_instance_override_problems(entries):
         driven = sorted(names & (set(MID_DRIVEN_NAMES) | set(CONDITIONAL_CPP_NAMES)))
         if driven:
             problems.append(f"{name}: C++ 구동·조건부 이름 덮어씀 " + ", ".join(driven))
-        unknown = sorted(names - overridable)
+        collection_driven = sorted(names & collection_runtime_names)
+        if collection_driven:
+            problems.append(f"{name}: 룩데브 구동 MPC 이름 덮어씀 " + ", ".join(collection_driven))
+        unknown = sorted(names - overridable - collection_runtime_names)
         if unknown:
             problems.append(f"{name}: 마스터에 없는 이름 " + ", ".join(unknown))
     return problems
@@ -407,11 +415,20 @@ def load_or_create_collection(overwrite):
         parameter.set_editor_property("parameter_name", name)
         parameter.set_editor_property("default_value", unreal.LinearColor(*rgba))
         parameters.append(parameter)
+    scalar_parameters = []
+    for name, value in COLLECTION_SCALAR_DEFAULTS:
+        parameter = unreal.CollectionScalarParameter()
+        parameter.set_editor_property("parameter_name", name)
+        parameter.set_editor_property("default_value", value)
+        scalar_parameters.append(parameter)
     collection.set_editor_property("vector_parameters", parameters)
-    collection.set_editor_property("scalar_parameters", [])
+    collection.set_editor_property("scalar_parameters", scalar_parameters)
     stored = [str(item.get_editor_property("parameter_name")) for item in collection.get_editor_property("vector_parameters")]
     if stored != [name for name, _ in COLLECTION_VECTOR_DEFAULTS]:
         raise RuntimeError("MPC 벡터 이름 설정 확인 실패: " + ", ".join(stored))
+    stored_scalars = [(str(item.get_editor_property("parameter_name")), float(item.get_editor_property("default_value"))) for item in collection.get_editor_property("scalar_parameters")]
+    if stored_scalars != list(COLLECTION_SCALAR_DEFAULTS):
+        raise RuntimeError("MPC 스칼라 이름·기본값 설정 확인 실패: " + ", ".join(f"{name}={value}" for name, value in stored_scalars))
     save_asset(collection, COLLECTION_PATH)
     return collection
 
@@ -433,6 +450,15 @@ def prepare_master(overwrite):
     return material, True
 
 
+def build_flow_elapsed_seconds(material, collection, x, y):
+    game_time = add_node(material, unreal.MaterialExpressionTime, x - 440, y)
+    flow_origin = add_node(material, unreal.MaterialExpressionCollectionParameter, x - 440, y + 55, collection=collection, parameter_name=FLOW_ORIGIN_PARAMETER_NAME)
+    elapsed = add_node(material, unreal.MaterialExpressionSubtract, x, y)
+    link(game_time, elapsed, "A")
+    link(flow_origin, elapsed, "B")
+    return elapsed
+
+
 def build_sources(material, textures, collection):
     sources = {}
     rows = iter(range(200))
@@ -449,7 +475,7 @@ def build_sources(material, textures, collection):
     x, y = place()
     sources["FogObjectBoundsCm"] = (add_node(material, unreal.MaterialExpressionObjectBounds, x, y), "")
     x, y = place()
-    sources["ElapsedSeconds"] = (add_node(material, unreal.MaterialExpressionTime, x, y), "")
+    sources["ElapsedSeconds"] = (build_flow_elapsed_seconds(material, collection, x, y), "")
     for name, (texture, sampler_type) in textures.items():
         x, y = place()
         node = add_node(material, unreal.MaterialExpressionTextureObjectParameter, x, y, parameter_name=name, texture=texture, sampler_type=sampler_type)
@@ -566,6 +592,7 @@ def create_master(code, textures, collection, overwrite):
         "asset": MASTER_PATH,
         "created": was_created,
         "front": front,
+        "elapsed_seconds": f"Time - {COLLECTION_NAME}.{FLOW_ORIGIN_PARAMETER_NAME}",
         "statistics": statistics,
         "statistics_note": "볼륨 도메인은 베이스 패스가 없어 PS 명령 0일 수 있음 → check_fluid_fog_hlsl.py dxc 명령 수가 대체 지표",
     }
@@ -643,6 +670,7 @@ def main():
         "default_texture": texture_path,
         "noise_texture": NOISE_VOLUME_PATH,
         "collection": COLLECTION_PATH,
+        "collection_scalars": dict(COLLECTION_SCALAR_DEFAULTS),
         "master": master_summary,
         "instances": instances,
         "hlsl": {"path": "/".join(SHADER_DIRECTORY + (FOG_HLSL_NAME,)), "sha256": hashlib.sha256(code.encode("utf-8")).hexdigest()},

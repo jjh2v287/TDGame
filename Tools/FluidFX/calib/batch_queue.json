@@ -30,7 +30,7 @@
       {"plan": "Tools/FluidFX/calib/plans/cloud_g2_wrap_seam.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"]},
       {"plan": "Tools/FluidFX/calib/plans/cloud_g11_cyclone_live.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings", "needs_frame": true},
       {"plan": "Tools/FluidFX/calib/plans/cloud_g13_storm_wall.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings", "needs_frame": true},
-      {"plan": "Tools/FluidFX/calib/plans/cloud_g4_painter.json", "class": "cal0", "origin": "target", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g4_painter.json", "class": "cal0", "origin": "target", "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings", "estimate_seconds": {"screen": 900, "confirm": 600}, "estimate_note": "2026-10-31 K3: 단계마다 탐침 7회(41x41 RT 읽기)로 약 55 s/단계라 자동 추정 129 s 의 2배에서 끊김 → 실측 기준 상향"},
       {"plan": "Tools/FluidFX/calib/plans/cloud_g9_mushroom.json", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true}
     ]},
     {"id": "K4", "name": "안개", "after": [], "plans": [

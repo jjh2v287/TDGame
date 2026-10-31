@@ -553,6 +553,7 @@ void ATDFluidWaterParticleActor::ReinitializeParticleLayersAfterSimulationReset(
 	}
 
 	AppliedSimulationResetSerial = ResetSerial;
+	LastCoverageRefreshSeconds = -1.0;
 	const double NowSeconds = GetWorld()->GetTimeSeconds();
 	if (DebrisComponent)
 	{

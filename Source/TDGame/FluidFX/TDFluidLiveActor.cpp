@@ -316,12 +316,22 @@ void ATDFluidLiveActor::ReapplyPresetTuning(FTDFluidPresetReapplyReport& InOutRe
 	}
 
 	LiveComponent->ReapplyPresetTuning(InOutReport);
+	FTDFluidTerrainHeightSettings PreviousTerrainHeightSettings = TerrainHeightSettings;
+	const bool bHadVolumeDriver = VolumeDriver != nullptr;
+	FTDFluidVolumeDriverSettings PreviousDriverSettings = bHadVolumeDriver ? VolumeDriver->GetDriverSettings() : FTDFluidVolumeDriverSettings();
 	SyncVolumeExtentsWithSimulation();
 	SyncVolumeDriver();
-	if (VolumeDriver)
+	InOutReport.AssignTrackedStruct(PreviousTerrainHeightSettings, TerrainHeightSettings);
+	if (!VolumeDriver)
 	{
-		VolumeDriver->ReapplyMaterialLooks(InOutReport);
+		return;
 	}
+
+	if (bHadVolumeDriver)
+	{
+		InOutReport.AssignTrackedStruct(PreviousDriverSettings, VolumeDriver->GetDriverSettings());
+	}
+	VolumeDriver->ReapplyMaterialLooks(InOutReport);
 }
 
 void ATDFluidLiveActor::RegisterInteractingActor(AActor* InteractingActor)

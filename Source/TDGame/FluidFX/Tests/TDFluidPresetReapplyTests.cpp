@@ -6,6 +6,7 @@
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidPresetTuningSubsystem.h"
+#include "FluidFX/TDFluidVolumeDriverComponent.h"
 #include "HAL/FileManager.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
@@ -24,13 +25,15 @@ namespace TDFluidPresetReapplyTestPrivate
 	constexpr int32 StepsAfterReload = 6;
 	constexpr float ChangedVorticityStrength = 0.45f;
 	constexpr int32 ChangedGridResolution = 128;
+	constexpr int32 ChangedVolumeResolutionXY = 128;
 
 	enum class ETDFluidReapplyTable : uint8
 	{
 		None,
 		SameBase,
 		ChangedVorticity,
-		ChangedResolution
+		ChangedResolution,
+		ChangedVolumeResolution
 	};
 
 	struct FTDFluidReapplyTestWorld
@@ -82,6 +85,21 @@ namespace TDFluidPresetReapplyTestPrivate
 		return FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("FluidFX/PresetReapplyTests/TDFluidPresetReapplyVariant.json")));
 	}
 
+	bool SetCameraFacingVolumeResolution(const FJsonObject& Kinds)
+	{
+		const TSharedPtr<FJsonObject>* CameraFacingLayers = nullptr;
+		if (!Kinds.TryGetObjectField(TEXT("SmokeCameraFacing"), CameraFacingLayers))
+		{
+			return false;
+		}
+
+		const TSharedPtr<FJsonObject>* ExistingDriverOverrides = nullptr;
+		const TSharedPtr<FJsonObject> DriverOverrides = (*CameraFacingLayers)->TryGetObjectField(TEXT("TDFluidVolumeDriverSettings"), ExistingDriverOverrides) ? *ExistingDriverOverrides : TSharedPtr<FJsonObject>(MakeShared<FJsonObject>());
+		DriverOverrides->SetNumberField(TEXT("HeterogeneousVolumeResolutionXY"), ChangedVolumeResolutionXY);
+		(*CameraFacingLayers)->SetObjectField(TEXT("TDFluidVolumeDriverSettings"), DriverOverrides);
+		return true;
+	}
+
 	bool WriteVariantTuningFile(ETDFluidReapplyTable Variant)
 	{
 		FString BaseText;
@@ -111,6 +129,10 @@ namespace TDFluidPresetReapplyTestPrivate
 		if (Variant == ETDFluidReapplyTable::ChangedResolution)
 		{
 			(*MudConfig)->SetNumberField(TEXT("GridResolution"), ChangedGridResolution);
+		}
+		if (Variant == ETDFluidReapplyTable::ChangedVolumeResolution && !SetCameraFacingVolumeResolution(**Kinds))
+		{
+			return false;
 		}
 
 		FString VariantText;
@@ -191,6 +213,51 @@ namespace TDFluidPresetReapplyTestPrivate
 
 		Run.Report = LiveSubsystem->GetLastReapplyReport();
 		Run.StateChecksum = Component->GetSolver().ComputeStateChecksum();
+		Run.bIsValid = true;
+		return Run;
+	}
+
+	struct FTDFluidVolumeDriverReapplyRun
+	{
+		FTDFluidPresetReapplyReport Report;
+		int32 ResolutionXYBeforeReload = 0;
+		int32 ResolutionXYAfterReload = 0;
+		bool bIsValid = false;
+	};
+
+	FTDFluidVolumeDriverReapplyRun RunVolumeDriverReapplyScenario(ETDFluidReapplyTable Variant)
+	{
+		FTDFluidVolumeDriverReapplyRun Run;
+		UTDFluidPresetTuningSubsystem* TuningSubsystem = GetTuningSubsystem();
+		FTDFluidReapplyTestWorld TestWorld(EWorldType::Game);
+		UTDFluidLiveSubsystem* LiveSubsystem = TestWorld.World->GetSubsystem<UTDFluidLiveSubsystem>();
+		if (!TuningSubsystem || !LiveSubsystem)
+		{
+			return Run;
+		}
+
+		UTDFluidPresetAsset* Preset = UTDFluidPresetAsset::CreateTransientPreset(TestWorld.World, ETDFluidPresetKind::SmokeCameraFacing);
+		ATDFluidLiveActor* LiveActor = LiveSubsystem->SpawnPooledFluidActor(Preset, FVector::ZeroVector, 0.0f);
+		if (!LiveActor || !LiveActor->VolumeDriver)
+		{
+			return Run;
+		}
+
+		TestWorld.StepWorld();
+		Run.ResolutionXYBeforeReload = LiveActor->VolumeDriver->GetDriverSettings().HeterogeneousVolumeResolutionXY;
+		if (!ReloadTable(*TuningSubsystem, Variant))
+		{
+			return Run;
+		}
+
+		TestWorld.StepWorld();
+		if (!LiveActor->VolumeDriver)
+		{
+			return Run;
+		}
+
+		Run.ResolutionXYAfterReload = LiveActor->VolumeDriver->GetDriverSettings().HeterogeneousVolumeResolutionXY;
+		Run.Report = LiveSubsystem->GetLastReapplyReport();
 		Run.bIsValid = true;
 		return Run;
 	}
@@ -290,6 +357,37 @@ bool FTDFluidPresetReapplyResolutionChangeTest::RunTest(const FString& Parameter
 	TestEqual(TEXT("The new grid resolution reached the running solver"), Run.ResolutionAfterReload, ChangedGridResolution);
 	TestEqual(TEXT("The report counts the reset actor"), Run.Report.StateResetActorCount, 1);
 	TestNotEqual(TEXT("The reset raises the solver generation"), Run.GenerationAfterReload, Run.GenerationBeforeReload);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidPresetReapplyVolumeDriverChangeTest,
+	"TDGame.FluidFX.PresetReapply.VolumeDriverChangeCounts",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidPresetReapplyVolumeDriverChangeTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidPresetReapplyTestPrivate;
+	ON_SCOPE_EXIT
+	{
+		RestoreBaseTable();
+	};
+	RestoreBaseTable();
+
+	const FTDFluidVolumeDriverReapplyRun SameRun = RunVolumeDriverReapplyScenario(ETDFluidReapplyTable::SameBase);
+	RestoreBaseTable();
+	const FTDFluidVolumeDriverReapplyRun ChangedRun = RunVolumeDriverReapplyScenario(ETDFluidReapplyTable::ChangedVolumeResolution);
+	if (!TestTrue(TEXT("Both camera facing smoke runs kept a volume driver"), SameRun.bIsValid && ChangedRun.bIsValid))
+	{
+		return false;
+	}
+
+	TestEqual(TEXT("The reapply reached the camera facing actor"), ChangedRun.Report.ReappliedActorCount, 1);
+	TestNotEqual(TEXT("The base table volume resolution differs from the variant"), ChangedRun.ResolutionXYBeforeReload, ChangedVolumeResolutionXY);
+	TestEqual(TEXT("The new volume resolution reached the running driver"), ChangedRun.ResolutionXYAfterReload, ChangedVolumeResolutionXY);
+	TestTrue(TEXT("The report counts the changed volume driver field"), ChangedRun.Report.ChangedFieldCount >= 1);
+	TestEqual(TEXT("A same-table reapply keeps the volume resolution"), SameRun.ResolutionXYAfterReload, SameRun.ResolutionXYBeforeReload);
+	TestEqual(TEXT("A same-table reapply with a volume driver changes no field"), SameRun.Report.ChangedFieldCount, 0);
 	return true;
 }
 

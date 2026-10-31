@@ -2006,7 +2006,7 @@ void UTDFluidLiveComponent::ApplyParametersToMID(UMaterialInstanceDynamic* Targe
 	{
 		TargetMID->SetTextureParameterValue(TEXT("WaterSurfaceTexture"), WaterSurfaceOutput);
 	}
-	const double WaterTimeSeconds = bUsesGpuSolver ? GpuSolverProxy.GetSimulationTimeSeconds() : Solver.GetSimulationTimeSeconds();
+	const double WaterTimeSeconds = GetSimulationTimeSeconds();
 	const float CoastWavePhase = FTDFluidWaterWetnessRules::ComputeCoastWavePhase(WaterTimeSeconds, SolverConfig.CoastWavePeriodSeconds);
 	TargetMID->SetScalarParameterValue(TEXT("WaterDepthReferenceCm"), SolverConfig.WaterDepthReferenceCm);
 	TargetMID->SetScalarParameterValue(TEXT("RippleHeightReferenceCm"), SolverConfig.RippleHeightReferenceCm);
@@ -2079,6 +2079,11 @@ FVector2D UTDFluidLiveComponent::GetSimulationCenterWorld() const
 int32 UTDFluidLiveComponent::GetSimulationGeneration() const
 {
 	return Solver.GetReinitializationGeneration() + GpuSolverProxy.GetGeneration();
+}
+
+double UTDFluidLiveComponent::GetSimulationTimeSeconds() const
+{
+	return bUsesGpuSolver ? GpuSolverProxy.GetSimulationTimeSeconds() : Solver.GetSimulationTimeSeconds();
 }
 
 FVector2D UTDFluidLiveComponent::CellToPlaneCenter(int32 CellX, int32 CellY) const

@@ -85,6 +85,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Cloud")
 	FTDFluidCloudSceneSettings GetEffectiveCloudSceneSettings() const { return SceneSettings; }
 
+	UFUNCTION(BlueprintCallable, Category = "Cloud")
+	void RestartCloudFlowClock();
+
+	static float ComputeCloudFlowSeconds(double WorldSeconds, double OriginSeconds);
 	static FVector2D ComputeSlabKm(const TArray<FTDFluidCloudSlotBand>& Bands, const FVector2D& TerrainHeightRangeKm);
 	static bool ResolveNearSampling(float CameraAltitudeKm, const FVector2D& SlabKm, float EnterMarginKm, float ExitMarginKm, bool bWasNear);
 	static int32 ResolveSetupIndex(int32 CVarValue, int32 DefaultIndex, int32 SetupCount);
@@ -114,6 +118,7 @@ private:
 	void WarnIfSlotTilesNonWrappedSource(int32 SlotIndex, const ATDFluidLiveActor& LiveActor);
 	void ApplySourceAwake();
 	void UpdateViewSampling(bool bForce);
+	void ApplyCloudFlowClock();
 	void WarnIfSetupConsoleValueIsOutOfRange(int32 ConsoleValue);
 	bool TryGetFirstLocalCameraLocation(FVector& OutLocation) const;
 	bool HasUnresolvedSources() const;
@@ -136,6 +141,7 @@ private:
 	int32 LastWarnedSetupConsoleValue = INDEX_NONE;
 	float AppliedViewSampleCountScale = -1.0f;
 	double LastSourceResolveSeconds = 0.0;
+	double CloudFlowOriginSeconds = 0.0;
 	bool bIsUsingNearSampling = false;
 	bool bIsYieldingSceneCloud = false;
 	bool bHasLoadedCloudMaterials = false;

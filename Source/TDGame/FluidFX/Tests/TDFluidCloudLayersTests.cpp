@@ -17,6 +17,7 @@
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/DateTime.h"
 #include "Misc/FileHelper.h"
@@ -37,7 +38,11 @@ namespace TDFluidCloudLayersTestPrivate
 	const TCHAR* const ViewScaleConsoleName = TEXT("TD.FluidFX.CloudViewSampleScale");
 	const FName SourceTagA(TEXT("TDFluidCloud_TestA"));
 	const FName SourceTagB(TEXT("TDFluidCloud_TestB"));
+	const FName CloudFlowParameterName(TEXT("CloudFlowSeconds"));
 	constexpr float StepSeconds = 1.0f / 60.0f;
+	constexpr double FlowToleranceSeconds = 1e-3;
+	constexpr float RestartedFlowMaxSeconds = 1e-4f;
+	constexpr int32 FlowRestartStepCount = 6;
 	constexpr float LiveActiveSeconds = 600.0f;
 	constexpr int32 MaxLoadStepCount = 400;
 	constexpr int32 SettleStepCount = 8;
@@ -201,6 +206,18 @@ namespace TDFluidCloudLayersTestPrivate
 		return false;
 	}
 
+	float ReadFlowSeconds(UMaterialInstanceDynamic& Material)
+	{
+		return Material.K2_GetScalarParameterValue(CloudFlowParameterName);
+	}
+
+	bool TestFlowSinceRestart(FAutomationTestBase& Test, const TCHAR* Label, UMaterialInstanceDynamic& Material, const UWorld& World, double RestartWorldSeconds)
+	{
+		const float FlowSeconds = ReadFlowSeconds(Material);
+		const double ExpectedSeconds = World.GetTimeSeconds() - RestartWorldSeconds;
+		return Test.TestTrue(*FString::Printf(TEXT("%s: flow seconds %.5f equal world seconds since the restart %.5f"), Label, FlowSeconds, ExpectedSeconds), FMath::Abs(FlowSeconds - ExpectedSeconds) <= FlowToleranceSeconds);
+	}
+
 	void WriteReportJson(const FString& Path, const TSharedRef<FJsonObject>& Report)
 	{
 		FString Text;
@@ -285,6 +302,95 @@ bool FTDFluidCloudLayersSlotParameterNamesTest::RunTest(const FString& Parameter
 {
 	TestTrue(TEXT("slot 2 coverage texture name"), ATDFluidCloudLayersActor::MakeSlotParameterName(2, TEXT("CoverageTexture")) == FName(TEXT("CloudSlot2CoverageTexture")));
 	TestTrue(TEXT("slot 0 section texture name"), ATDFluidCloudLayersActor::MakeSlotParameterName(0, TEXT("SectionTexture")) == FName(TEXT("CloudSlot0SectionTexture")));
+	return !HasAnyErrors();
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidCloudLayersFlowClockRestartsTest,
+	"TDGame.FluidFX.CloudLayers.FlowClockRestarts",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidCloudLayersFlowClockRestartsTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidCloudLayersTestPrivate;
+
+	TestNearlyEqual(TEXT("flow seconds count from the origin"), ATDFluidCloudLayersActor::ComputeCloudFlowSeconds(10.0, 4.0), 6.0f, 1e-6f);
+	TestNearlyEqual(TEXT("flow seconds before the origin stay at zero"), ATDFluidCloudLayersActor::ComputeCloudFlowSeconds(4.0, 10.0), 0.0f, 1e-6f);
+	TestNearlyEqual(TEXT("flow seconds keep the fraction late in a session"), ATDFluidCloudLayersActor::ComputeCloudFlowSeconds(100000.25, 100000.0), 0.25f, 1e-6f);
+
+	FTDConsoleRestore SetupRestore(SetupConsoleName);
+	if (!TestNotNull(TEXT("TD.FluidFX.CloudSetup exists"), SetupRestore.Variable))
+	{
+		return false;
+	}
+	SetupRestore.Variable->Set(-1, ECVF_SetByCode);
+
+	FTDCloudTestWorld TestWorld;
+	ATDFluidCloudLayersActor* CloudActor = SpawnCloudActor(*TestWorld.World, { MakeSetup(TEXT("SkyOnlyA"), SkyOnlyMaterialPath, {}), MakeSetup(TEXT("SkyOnlyB"), SkyOnlyMaterialPath, {}) });
+	if (!TestNotNull(TEXT("spawned the cloud layers actor"), CloudActor) || !WaitForCloudMaterial(*this, TestWorld, *CloudActor, SkyOnlyMaterialPath))
+	{
+		return false;
+	}
+
+	float ParentFlowSeconds = -1.0f;
+	const UMaterialInterface* SkyOnlyMaterial = CloudActor->Setups[0].CloudMaterial.Get();
+	const bool bParentHasFlowParameter = SkyOnlyMaterial && SkyOnlyMaterial->GetScalarParameterValue(FHashedMaterialParameterInfo(CloudFlowParameterName), ParentFlowSeconds);
+	if (!TestTrue(TEXT("the SkyOnly parent has CloudFlowSeconds (run editor_make_fluid_cloud_material.py)"), bParentHasFlowParameter))
+	{
+		return false;
+	}
+	TestEqual(TEXT("the SkyOnly parent keeps CloudFlowSeconds at 0"), ParentFlowSeconds, 0.0f);
+
+	for (int32 StepIndex = 0; StepIndex < SettleStepCount; ++StepIndex)
+	{
+		TestWorld.StepWorld();
+	}
+	UMaterialInstanceDynamic* FirstMaterial = CloudActor->GetActiveMaterial();
+	if (!TestNotNull(TEXT("setup 0 has a dynamic material"), FirstMaterial))
+	{
+		return false;
+	}
+	const float SettledFlowSeconds = ReadFlowSeconds(*FirstMaterial);
+	const double SettledWorldSeconds = TestWorld.World->GetTimeSeconds();
+	TestTrue(*FString::Printf(TEXT("without a restart flow seconds %.5f follow world seconds %.5f"), SettledFlowSeconds, SettledWorldSeconds), FMath::Abs(SettledFlowSeconds - SettledWorldSeconds) <= StepSeconds + FlowToleranceSeconds);
+	TestTrue(*FString::Printf(TEXT("flow seconds %.5f run before any restart"), SettledFlowSeconds), SettledFlowSeconds > 0.0f);
+
+	for (int32 StepIndex = 0; StepIndex < SettleStepCount; ++StepIndex)
+	{
+		TestWorld.StepWorld();
+	}
+	const float AdvancedFlowSeconds = ReadFlowSeconds(*FirstMaterial);
+	const double ExpectedAdvanceSeconds = SettleStepCount * StepSeconds;
+	TestTrue(*FString::Printf(TEXT("%d more steps add %.5f flow seconds (expected %.5f)"), SettleStepCount, AdvancedFlowSeconds - SettledFlowSeconds, ExpectedAdvanceSeconds), FMath::Abs((AdvancedFlowSeconds - SettledFlowSeconds) - ExpectedAdvanceSeconds) <= FlowToleranceSeconds);
+
+	CloudActor->RestartCloudFlowClock();
+	const double RestartWorldSeconds = TestWorld.World->GetTimeSeconds();
+	const float RestartedFlowSeconds = ReadFlowSeconds(*FirstMaterial);
+	TestTrue(*FString::Printf(TEXT("the restart puts flow seconds at %.6f"), RestartedFlowSeconds), RestartedFlowSeconds >= 0.0f && RestartedFlowSeconds <= RestartedFlowMaxSeconds);
+	for (int32 StepIndex = 0; StepIndex < FlowRestartStepCount; ++StepIndex)
+	{
+		TestWorld.StepWorld();
+	}
+	TestFlowSinceRestart(*this, TEXT("after the restart"), *FirstMaterial, *TestWorld.World, RestartWorldSeconds);
+
+	SetupRestore.Variable->Set(1, ECVF_SetByCode);
+	TestWorld.StepWorld();
+	UMaterialInstanceDynamic* SecondMaterial = CloudActor->GetActiveMaterial();
+	TestEqual(TEXT("console switch activates setup 1"), CloudActor->GetActiveSetupIndex(), 1);
+	if (!TestTrue(TEXT("setup 1 owns its own dynamic material"), SecondMaterial && SecondMaterial != FirstMaterial))
+	{
+		return false;
+	}
+	TestFlowSinceRestart(*this, TEXT("the new setup material"), *SecondMaterial, *TestWorld.World, RestartWorldSeconds);
+
+	UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>();
+	if (!TestNotNull(TEXT("preset tuning subsystem exists"), TuningSubsystem))
+	{
+		return false;
+	}
+	TestEqual(TEXT("tuning reload has no errors"), TuningSubsystem->ReloadPresetTuning(), 0);
+	TestWorld.StepWorld();
+	TestFlowSinceRestart(*this, TEXT("after a tuning reload"), *SecondMaterial, *TestWorld.World, RestartWorldSeconds);
 	return !HasAnyErrors();
 }
 

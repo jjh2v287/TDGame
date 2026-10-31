@@ -101,7 +101,7 @@ void ATDFluidCloudWindCurtainActor::Tick(float DeltaSeconds)
 		return;
 	}
 
-	QueueWindCurtain(World->GetTimeSeconds());
+	QueueWindCurtain();
 	QueueEyeSink();
 }
 
@@ -153,7 +153,7 @@ void ATDFluidCloudWindCurtainActor::ReadSceneSettings()
 	UTDFluidPresetTuningSubsystem::ApplyPresetTuning(ETDFluidPresetKind::Custom, FTDFluidCloudSceneSettings::StaticStruct(), &SceneSettings);
 }
 
-void ATDFluidCloudWindCurtainActor::QueueWindCurtain(double TimeSeconds)
+void ATDFluidCloudWindCurtainActor::QueueWindCurtain()
 {
 	using namespace TDFluidCloudSourceWindPrivate;
 	UTDFluidLiveComponent* LiveComponent = FindSteppingComponent(ResolveLiveActor(TargetLiveActorTag, CachedCurtainLiveActor, LastCurtainSearchSeconds));
@@ -162,7 +162,7 @@ void ATDFluidCloudWindCurtainActor::QueueWindCurtain(double TimeSeconds)
 		return;
 	}
 
-	BuildWindCurtainStamps(SceneSettings, LiveComponent->GetSimulationCenterWorld(), LiveComponent->GetSimulationExtentCm(), TimeSeconds, LiveComponent->SimulationConfig.ActorBrushDensityStrength, CurtainStamps);
+	BuildWindCurtainStamps(SceneSettings, LiveComponent->GetSimulationCenterWorld(), LiveComponent->GetSimulationExtentCm(), LiveComponent->GetSimulationTimeSeconds(), LiveComponent->SimulationConfig.ActorBrushDensityStrength, CurtainStamps);
 	for (const FTDFluidCloudWindCurtainStamp& CurtainStamp : CurtainStamps)
 	{
 		QueuePlaneStamp(*LiveComponent, CurtainStamp, CurtainVelocityStrength);

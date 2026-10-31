@@ -43,7 +43,7 @@ public:
 private:
 	void HandlePresetTuningReloaded(int32 TableGeneration);
 	void ReadSceneSettings();
-	void QueueWindCurtain(double TimeSeconds);
+	void QueueWindCurtain();
 	void QueueEyeSink();
 	ATDFluidLiveActor* ResolveLiveActor(FName LiveActorTag, TWeakObjectPtr<ATDFluidLiveActor>& CachedActor, double& LastSearchSeconds) const;
 

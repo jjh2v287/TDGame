@@ -42,6 +42,7 @@ namespace TDFluidCloudSourceTestPrivate
 	constexpr double PositionToleranceCm = 1e-3;
 	constexpr double UvTolerance = 1e-6;
 	constexpr double VelocityToleranceCmPerSec = 1e-3;
+	constexpr double SimulationClockToleranceSeconds = 1e-6;
 	constexpr float PaintStepSeconds = 1.0f / 30.0f;
 	constexpr float SolverStepSeconds = 1.0f / 30.0f;
 	constexpr float LiveActiveSeconds = 600.0f;
@@ -49,6 +50,8 @@ namespace TDFluidCloudSourceTestPrivate
 	constexpr int32 TestResolution = 128;
 	constexpr int32 MaxInitializeStepCount = 60;
 	constexpr int32 StrokeStepCount = 30;
+	constexpr int32 SimulationClockStepCount = 10;
+	constexpr int32 SimulationClockRestartStepCount = 3;
 	constexpr int32 CycloneStepCount = 900;
 	constexpr int32 StormWallStepCount = 600;
 	constexpr int32 RoundTripFrameCount = 20;
@@ -675,6 +678,45 @@ bool FTDFluidCloudSourcePainterPaintsAndErasesTest::RunTest(const FString& Param
 		const float Density = SamplePlaneDensity(LiveComponent, PathProbes[ProbeIndex]);
 		TestTrue(*FString::Printf(TEXT("erased probe %d density %.4f is at most 0.6 x painted %.4f"), ProbeIndex, Density, PaintedDensities[ProbeIndex]), Density >= 0.0f && Density <= 0.6f * PaintedDensities[ProbeIndex]);
 	}
+	return !HasAnyErrors();
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidCloudSourceSimulationClockRestartsTest,
+	"TDGame.FluidFX.CloudSource.SimulationClockRestarts",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidCloudSourceSimulationClockRestartsTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidCloudSourceTestPrivate;
+
+	FTDCloudSourceTestWorld TestWorld;
+	ATDFluidLiveActor* LiveActor = SpawnPaintLive(*this, TestWorld, ETDFluidSolverBackend::Cpu);
+	if (!LiveActor)
+	{
+		return false;
+	}
+
+	UTDFluidLiveComponent& LiveComponent = *LiveActor->LiveComponent;
+	TestFalse(TEXT("the paint live runs on the CPU solver"), LiveComponent.IsUsingGpuSolver());
+	const double StartSeconds = LiveComponent.GetSimulationTimeSeconds();
+	for (int32 StepIndex = 0; StepIndex < SimulationClockStepCount; ++StepIndex)
+	{
+		TestWorld.StepWorld(PaintStepSeconds);
+	}
+	const double SteppedSeconds = LiveComponent.GetSimulationTimeSeconds();
+	const double AdvancedSeconds = SteppedSeconds - StartSeconds;
+	TestTrue(*FString::Printf(TEXT("%d steps advance the simulation clock by %.6f s"), SimulationClockStepCount, AdvancedSeconds), AdvancedSeconds > 0.0);
+	TestTrue(*FString::Printf(TEXT("the simulation clock advance %.6f s stays within %d world steps"), AdvancedSeconds, SimulationClockStepCount), AdvancedSeconds <= SimulationClockStepCount * static_cast<double>(PaintStepSeconds) + SimulationClockToleranceSeconds);
+	TestEqual(TEXT("the component clock is the CPU solver clock"), SteppedSeconds, LiveComponent.GetSolver().GetSimulationTimeSeconds());
+
+	LiveComponent.ResetSimulationState();
+	TestEqual(TEXT("ResetSimulationState puts the simulation clock at 0"), LiveComponent.GetSimulationTimeSeconds(), 0.0);
+	for (int32 StepIndex = 0; StepIndex < SimulationClockRestartStepCount; ++StepIndex)
+	{
+		TestWorld.StepWorld(PaintStepSeconds);
+	}
+	TestTrue(*FString::Printf(TEXT("the simulation clock runs again after the reset (%.6f s)"), LiveComponent.GetSimulationTimeSeconds()), LiveComponent.GetSimulationTimeSeconds() > 0.0);
 	return !HasAnyErrors();
 }
 

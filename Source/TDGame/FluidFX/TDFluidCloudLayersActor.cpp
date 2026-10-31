@@ -48,6 +48,7 @@ namespace TDFluidCloudLayersPrivate
 	const TCHAR* const SectionTextureSuffix = TEXT("SectionTexture");
 	const TCHAR* const FootprintSizeSuffix = TEXT("FootprintSizeKm");
 	const TCHAR* const TerrainHeightRangeParameterName = TEXT("CloudTerrainHeightRangeKm");
+	const TCHAR* const CloudFlowParameterName = TEXT("CloudFlowSeconds");
 
 	const TCHAR* ResolveRoleSuffix(ETDFluidCloudSlotTextureRole Role)
 	{
@@ -96,6 +97,18 @@ ATDFluidCloudLayersActor::ATDFluidCloudLayersActor()
 	CloudComponent->Mobility = EComponentMobility::Movable;
 	CloudComponent->Material.Reset();
 	SetRootComponent(CloudComponent);
+}
+
+void ATDFluidCloudLayersActor::RestartCloudFlowClock()
+{
+	const UWorld* World = GetWorld();
+	CloudFlowOriginSeconds = World ? World->GetTimeSeconds() : 0.0;
+	ApplyCloudFlowClock();
+}
+
+float ATDFluidCloudLayersActor::ComputeCloudFlowSeconds(double WorldSeconds, double OriginSeconds)
+{
+	return static_cast<float>(FMath::Max(WorldSeconds - OriginSeconds, 0.0));
 }
 
 FVector2D ATDFluidCloudLayersActor::ComputeSlabKm(const TArray<FTDFluidCloudSlotBand>& Bands, const FVector2D& TerrainHeightRangeKm)
@@ -254,6 +267,7 @@ void ATDFluidCloudLayersActor::Tick(float DeltaSeconds)
 		return;
 	}
 
+	ApplyCloudFlowClock();
 	RetrySourceResolution();
 	BindSlotTextures(false);
 	UpdateViewSampling(false);
@@ -376,6 +390,7 @@ void ATDFluidCloudLayersActor::ActivateSetup(int32 SetupIndex)
 	}
 
 	ActiveMaterial = SetupMaterial;
+	ApplyCloudFlowClock();
 	CloudComponent->SetMaterial(ActiveMaterial);
 	ApplyTracingSettings();
 	RefreshActiveLayer();
@@ -585,6 +600,17 @@ void ATDFluidCloudLayersActor::UpdateViewSampling(bool bForce)
 
 	CloudComponent->SetViewSampleCountScale(DesiredScale);
 	AppliedViewSampleCountScale = DesiredScale;
+}
+
+void ATDFluidCloudLayersActor::ApplyCloudFlowClock()
+{
+	const UWorld* World = GetWorld();
+	if (!ActiveMaterial || !World)
+	{
+		return;
+	}
+
+	ActiveMaterial->SetScalarParameterValue(FName(TDFluidCloudLayersPrivate::CloudFlowParameterName), ComputeCloudFlowSeconds(World->GetTimeSeconds(), CloudFlowOriginSeconds));
 }
 
 void ATDFluidCloudLayersActor::WarnIfSetupConsoleValueIsOutOfRange(int32 ConsoleValue)

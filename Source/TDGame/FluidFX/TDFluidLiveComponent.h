@@ -245,6 +245,7 @@ public:
 	FVector2D GetSimulationExtentCm() const;
 	FVector2D GetSimulationCenterWorld() const;
 	int32 GetSimulationGeneration() const;
+	double GetSimulationTimeSeconds() const;
 	FVector2D CellToPlaneCenter(int32 CellX, int32 CellY) const;
 	FTDFluidCellSample SampleSimulationCell(int32 CellX, int32 CellY) const;
 	void SetTerrainElevationAtCell(int32 CellX, int32 CellY, float ElevationCm);

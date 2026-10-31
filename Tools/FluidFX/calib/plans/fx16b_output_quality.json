@@ -15,6 +15,32 @@
           "TD.FluidFX.OutputQuality 0"
         ]
       },
+      "step_apply": {
+        "call": {
+          "TDGen_SmokeHard_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                334.06,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_SmokeSoft_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                334.06,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
+      },
       "settle": 4.0,
       "shots": {
         "count": 5,
@@ -37,6 +63,32 @@
           "t.MaxFPS 0",
           "TD.FluidFX.OutputQuality 1"
         ]
+      },
+      "step_apply": {
+        "call": {
+          "TDGen_SmokeHard_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                334.98,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_SmokeSoft_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                334.98,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "settle": 4.0,
       "shots": {
@@ -61,6 +113,32 @@
           "TD.FluidFX.OutputQuality 2"
         ]
       },
+      "step_apply": {
+        "call": {
+          "TDGen_SmokeHard_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                334.77,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_SmokeSoft_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                334.77,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
+      },
       "settle": 4.0,
       "shots": {
         "count": 5,
@@ -83,6 +161,32 @@
           "t.MaxFPS 0",
           "TD.FluidFX.OutputQuality 3"
         ]
+      },
+      "step_apply": {
+        "call": {
+          "TDGen_SmokeHard_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                336.85,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_SmokeSoft_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                336.85,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "settle": 4.0,
       "shots": {
@@ -198,5 +302,5 @@
       }
     ]
   },
-  "note": "spec-fx16b OQ1 연기 무대 SVOL 품질 단계 L0~3(카메라 console), 손잡이마다 자기 단계 장면만(param scenes). 0b: 장면마다 smoke.luminance_mean 하락 띠 relative_to_control [0.90, 0.995](1.0 제외 → score, spec_proposal), 비용 오르는 끝은 cost_blocked → ⑤"
+  "note": "spec-fx16b OQ1 연기 무대 SVOL 품질 단계 L0~3(카메라 console), 손잡이마다 자기 단계 장면만(param scenes). 0b: 장면마다 smoke.luminance_mean 하락 띠 relative_to_control [0.90, 0.995](1.0 제외 → score, spec_proposal), 비용 오르는 끝은 cost_blocked → ⑤ / 위상 재설정(2026-10-31): 조명 피벗 TDGen_SmokeHard_LightPivot·TDGen_SmokeSoft_LightPivot(BP_TDFluidLightPivot 제자리 회전 50°/s, editor_make_fluid_smoke_stage.py:326·575-595, 반경 250 주황 점광원)은 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다(SVOL 연기 조명이 바뀜). step_apply 가 장면마다 frame(10:49~10:51 회차)의 apply 위상으로 두 피벗 회전만 되돌린다: svol_q0 θ=334.06°(apply 13.881 s → 첫 장 4.017 s 뒤 θ≈174.9°), q1 θ=334.98°(13.900 s → 175.8°), q2 θ=334.77°(13.895 s → 175.6°), q3 θ=336.85°(13.937 s → 177.7°)"
 }

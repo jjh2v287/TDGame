@@ -1,6 +1,6 @@
 {
   "id": "track_fx12c_vehicle",
-  "note": "FX-12 코드 J4 수확기(바퀴 4점·반경 15 cm·궤도 6 m·30°/s), 정본 SandTrack. 바퀴 반경 = 원천 형상값 × VehicleBrushRadiusScale(DEV-2) / frame 정리(2026-10-31): harvester_wheel.line_profile.groove_width_cm 는 측정(반 깊이 폭) 대 목표(바퀴 지름 30 cm) 정의 불일치라 structural-gaps.json, gap_count 목표는 유지",
+  "note": "FX-12 코드 J4 수확기(바퀴 4점·반경 15 cm·궤도 6 m·30°/s), 정본 SandTrack. 바퀴 반경 = 원천 형상값 × VehicleBrushRadiusScale(DEV-2) / frame 정리(2026-10-31): harvester_wheel.line_profile.groove_width_cm 는 측정(반 깊이 폭) 대 목표(바퀴 지름 30 cm) 정의 불일치라 structural-gaps.json, gap_count 목표는 유지 / 위상 재설정(2026-10-31): 수확기 TDGen_TrackHarvester(BP_TDFluidTrackHarvester, editor_make_fluid_track_stage.py:355 30°/s·620-621 피벗 (0, 600, 0), 위치 = (0, 3000) + 600(sin θ, −cos θ))는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다. step_apply 가 영역 틀(13:24 커밋)이 쓴 frame(_previous/sand_harvester 11:24 회차, apply 14.993 s)의 θ=89.78°(위치 (600, 2997.7, 60)·yaw 89.78)로 되돌려 첫 장(12.017 s 뒤) θ≈90.3° 를 재현한다(14:09 회차와는 1° 차)",
   "scenes": [
     {
       "name": "sand_harvester",
@@ -19,6 +19,28 @@
         "awake": {
           "TDGen_SandTrack": true,
           "TDGen_HarvesterSandDust": true
+        }
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_TrackHarvester": [
+            600.0,
+            2997.7,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_TrackHarvester": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                89.78,
+                0.0
+              ],
+              true
+            ]
+          }
         }
       },
       "time_dilation": 1.0,

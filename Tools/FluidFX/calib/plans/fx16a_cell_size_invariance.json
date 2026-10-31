@@ -1,6 +1,6 @@
 {
   "id": "fx16a_cell_size_invariance",
-  "note": "FX-16a OP6 해상도 무관(A8): 같은 연기 장면을 GridResolution 128·256으로 돌려 정규화 켬(bNormalizeDynamicsByCellSize true, ReferenceCellSizeCm 2.734 고정 = 700/256)일 때 영역 휘도 평균·표준편차가 ±10% 안인지 본다. ReferenceCellSizeCm이 0이면 기준이 스윕하는 GridResolution을 따라가 정규화가 없어지므로 고정값으로 둔다. 정규화 켬과 해상도 변경이 함께 있어야 의미가 있어 mode는 grid(7변형)다",
+  "note": "FX-16a OP6 해상도 무관(A8): 같은 연기 장면을 GridResolution 128·256으로 돌려 정규화 켬(bNormalizeDynamicsByCellSize true, ReferenceCellSizeCm 2.734 고정 = 700/256)일 때 영역 휘도 평균·표준편차가 ±10% 안인지 본다. ReferenceCellSizeCm이 0이면 기준이 스윕하는 GridResolution을 따라가 정규화가 없어지므로 고정값으로 둔다. 정규화 켬과 해상도 변경이 함께 있어야 의미가 있어 mode는 grid(7변형)다 / 위상 재설정(2026-10-31): 조명 피벗 TDGen_SmokeHard_LightPivot·TDGen_SmokeSoft_LightPivot(BP_TDFluidLightPivot 제자리 회전 50°/s, editor_make_fluid_smoke_stage.py:326·575-595, 반경 250 주황 점광원)은 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다(연기 조명이 바뀜). step_apply 가 frame(10:48 회차, apply 14.923 s)의 θ=26.17° 로 두 피벗 회전만 되돌려 첫 장(6.017 s 뒤) θ≈327.0° 를 재현한다",
   "scenes": [
     {
       "name": "smoke_soft_cells",
@@ -23,6 +23,32 @@
         "console": [
           "t.MaxFPS 0"
         ]
+      },
+      "step_apply": {
+        "call": {
+          "TDGen_SmokeHard_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                26.17,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_SmokeSoft_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                26.17,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,

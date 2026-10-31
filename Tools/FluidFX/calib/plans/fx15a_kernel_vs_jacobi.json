@@ -1,6 +1,6 @@
 {
   "id": "fx15a_kernel_vs_jacobi",
-  "note": "FX-15a A5 사용자 선택(RM:666): 연기 웅덩이 구도에서 Poisson(Jacobi) 대 커널 피드백 압력을 한 장면에 나란히 둔다(구역 0, Y축 10 m 간격, 같은 교반기). 변형은 커널 쪽 DA(Kinds.SmokeKernelPressure)의 반경 R(PressureKernelRadiusTexels)·피드백 F(PressureKernelFeedback)·발산 배율(PressureKernelScale)만 바꾸고, Poisson 쪽 DA_TDFluid_SmokeSoft 는 고정 기준이다. 기준 종류가 이미 KernelFeedback 이라 R·F 스윕이 커널 켠 채로 돈다(R15a-M4). 모닥불 장면은 CampfireSmoke 종류라 이 경로가 닿지 않아 뺐다. / 0b: 지표를 C3 이름으로(kernel 영역 = 커널 피드백 쪽, poisson = 고정 기준 진단), M5 p90/p10 은 색 무관 p95/p5 로 대용, 띠는 IMG3 측정(목표 파일 region_metrics.kernel) / frame 정리(2026-10-31): kernel.detail.above_64_cycles_per_height 는 상자 높이 정규화 불일치(160 px 대 기준 175~240 px)라 structural-gaps.json, 남은 목표는 kernel.atmosphere.p95_over_p5·fine_over_coarse",
+  "note": "FX-15a A5 사용자 선택(RM:666): 연기 웅덩이 구도에서 Poisson(Jacobi) 대 커널 피드백 압력을 한 장면에 나란히 둔다(구역 0, Y축 10 m 간격, 같은 교반기). 변형은 커널 쪽 DA(Kinds.SmokeKernelPressure)의 반경 R(PressureKernelRadiusTexels)·피드백 F(PressureKernelFeedback)·발산 배율(PressureKernelScale)만 바꾸고, Poisson 쪽 DA_TDFluid_SmokeSoft 는 고정 기준이다. 기준 종류가 이미 KernelFeedback 이라 R·F 스윕이 커널 켠 채로 돈다(R15a-M4). 모닥불 장면은 CampfireSmoke 종류라 이 경로가 닿지 않아 뺐다. / 0b: 지표를 C3 이름으로(kernel 영역 = 커널 피드백 쪽, poisson = 고정 기준 진단), M5 p90/p10 은 색 무관 p95/p5 로 대용, 띠는 IMG3 측정(목표 파일 region_metrics.kernel) / frame 정리(2026-10-31): kernel.detail.above_64_cycles_per_height 는 상자 높이 정규화 불일치(160 px 대 기준 175~240 px)라 structural-gaps.json, 남은 목표는 kernel.atmosphere.p95_over_p5·fine_over_coarse / 위상 재설정(2026-10-31): 두 웅덩이 교반기 TDGen_SolverBaseline_Stirrer·TDGen_SolverKernelPressure_Stirrer(BP_TDFluidStageStirrer, editor_make_fluid_solver_options_stage.py:226 → editor_make_fluid_particle_stage.py:325, 반경 150·90°/s, 중심 (0, ∓500))는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다. step_apply 가 영역 frame(10:52 회차, apply 15.113 s)의 θ=280.2° 로 되돌려 첫 장 θ≈101.7°·끝 장 191.7° 를 재현한다(이 모형의 kernel 공 화면 예측 (865,385)→(810,419) 이 영역 note 의 (867,385)→(811,418) 와 맞음)",
   "scenes": [
     {
       "name": "smoke_pair",
@@ -18,6 +18,44 @@
         "console": [
           "t.MaxFPS 0"
         ]
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_SolverBaseline_Stirrer": [
+            26.56,
+            -647.63,
+            20.0
+          ],
+          "TDGen_SolverKernelPressure_Stirrer": [
+            26.56,
+            352.37,
+            20.0
+          ]
+        },
+        "call": {
+          "TDGen_SolverBaseline_Stirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                280.2,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_SolverKernelPressure_Stirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                280.2,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,

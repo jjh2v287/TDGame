@@ -1,6 +1,6 @@
 {
   "id": "fx8n_drive",
-  "note": "FX-8n C12 장면 P2(Smoke·DriveSprite)·P4(Vortex·DriveMeshFloat) 덩어리 수·크기 + 비교 시트, C12-v 는 오프스크린 RHI(D2) 재실행으로 잰다. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2) / 0b: P4(부유 메시) 장면만 남김. IMG16 근거는 메시 공뿐이라 P2(스모크 스프라이트) 손잡이(DriveSprite 끌림·스폰)는 승인 시트 뒤(deferred). P4 개수 목표에 닿는 손잡이가 없어(B6 스폰 손잡이는 DriveSprite NS) MeshFloat 스폰을 더함. 덩어리 크기는 IMG16 측정이 반사점(5 px)이라 비교 불가 → 목표에서 뺌",
+  "note": "FX-8n C12 장면 P2(Smoke·DriveSprite)·P4(Vortex·DriveMeshFloat) 덩어리 수·크기 + 비교 시트, C12-v 는 오프스크린 RHI(D2) 재실행으로 잰다. G1(fluid_tuning_patch 의 Look: 경로 할당·나이아가라 적용 수 보고)·G2(measure_fx_look --targets 의 embers kind·kind_metrics) 해소 전에는 calib_sweep 이 이 계획을 돌리지 못한다(spec-fx8n 6절, 반박 M4·M5). 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(반박 S2) / 0b: P4(부유 메시) 장면만 남김. IMG16 근거는 메시 공뿐이라 P2(스모크 스프라이트) 손잡이(DriveSprite 끌림·스폰)는 승인 시트 뒤(deferred). P4 개수 목표에 닿는 손잡이가 없어(B6 스폰 손잡이는 DriveSprite NS) MeshFloat 스폰을 더함. 덩어리 크기는 IMG16 측정이 반사점(5 px)이라 비교 불가 → 목표에서 뺌 / 위상 재설정(2026-10-31): 소용돌이 교반기 TDGen_ParticleP4_Stirrer(BP_TDFluidStageStirrer, editor_make_fluid_particle_stage.py:325·424, 중심 (4500, 0)·반경 150·90°/s)는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다(입자 흐름이 바뀜). step_apply 가 영역 틀이 쓴 frame(Saved/FluidFX/calib/frames_r1/fx8n_drive/p4_vortex_mesh, apply 14.067 s)의 θ=186.05° 로 되돌려 첫 장(6.017 s 뒤) θ≈7.5° 를 재현한다(막힘 복귀 때 재촬영도 이 위상)",
   "scenes": [
     {
       "name": "p4_vortex_mesh",
@@ -19,6 +19,28 @@
           -35.0,
           0.0
         ]
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_ParticleP4_Stirrer": [
+            4350.84,
+            -15.81,
+            20.0
+          ]
+        },
+        "call": {
+          "TDGen_ParticleP4_Stirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                186.05,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,

@@ -1,6 +1,6 @@
 {
   "id": "fx9_floor_smoke",
-  "note": "spec-fx9 HV5, 구역 3(바닥 요철 3개 위 바닥 연기, 장면 캡처 높이) / 0b: 목표 = IMG19 HVOL 측정 띠 2개(score) + 넓은 휘도 띠(constraint). HV5 '두께 차 ≤ 캡처 칸 1·캡처 변경당 1·정지 0'은 이미지 지표가 없고 GetHeightCaptureCount 가 UFUNCTION 이 아니라 probe 로 못 읽음 → 헤드리스 시험 이관 제안",
+  "note": "spec-fx9 HV5, 구역 3(바닥 요철 3개 위 바닥 연기, 장면 캡처 높이) / 0b: 목표 = IMG19 HVOL 측정 띠 2개(score) + 넓은 휘도 띠(constraint). HV5 '두께 차 ≤ 캡처 칸 1·캡처 변경당 1·정지 0'은 이미지 지표가 없고 GetHeightCaptureCount 가 UFUNCTION 이 아니라 probe 로 못 읽음 → 헤드리스 시험 이관 제안 / 위상 재설정(2026-10-31): 교반기 TDGen_HvolFloorSmokeStirrer(editor_make_fluid_hvol_stage.py:610-612 피벗 (+220, 0, 0)·90°/s)는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다(공이 비운 자국 위치가 바뀜). step_apply 가 영역 틀(13:24 커밋)이 쓴 frame(_previous/floor_smoke 10:57 회차, apply 15.086 s)의 θ=277.7° 로 되돌려 첫 장(6.017 s 뒤) θ≈99.2° 를 재현한다(13:45 회차는 16.5° 앞섬)",
   "scenes": [
     {
       "name": "floor_smoke",
@@ -18,6 +18,28 @@
         "console": [
           "t.MaxFPS 0"
         ]
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_HvolFloorSmokeStirrer": [
+            8970.52,
+            218.02,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolFloorSmokeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                277.7,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,

@@ -1,6 +1,6 @@
 {
   "id": "fx9_hvol_vs_svol",
-  "note": "spec-fx9 HV1·HV3, 구역 0(SVOL 창 중심 0,0 · HVOL +900 cm Y), 조절 사본만 / 0b: HV1 = derived 비 hvol/svol 휘도 [0.9, 1.1](spec_proposal), HVOL 모양 = IMG19 띠 2개, HV3 CVAR 이득(GPU ms)은 ⑤ 성능 판정으로(이 계획 지표 아님) / CAL-0 0b 통합(e844cb03 반박 adopt3 재적용): MaxStepCount 는 cost 표기 없음. 정본 -1 = 엔진 기본 512 로 되돌림(TDFluidVolumeDriverTypes.h, 엔진 HeterogeneousVolumes.cpp)이라 끝 값 256 은 비용 감소(P-23) / 2026-10-31: HvolPair 의 +900 cm Y 오프셋은 정본 Kinds.SmokeHeterogeneous 에 없어(StructDefaults 0) HVOL 이 SVOL 과 겹쳤다. 같은 종류를 쓰는 Slope·Cross·Cave·Shadow 구역까지 밀리므로 정본에 넣지 않고 base_tuning(측정 조건, ships false)으로 준다 — 사본 frame 에서 오른쪽 HVOL 확인(Saved/AgentOps/20261031/hvol/pairfix)",
+  "note": "spec-fx9 HV1·HV3, 구역 0(SVOL 창 중심 0,0 · HVOL +900 cm Y), 조절 사본만 / 0b: HV1 = derived 비 hvol/svol 휘도 [0.9, 1.1](spec_proposal), HVOL 모양 = IMG19 띠 2개, HV3 CVAR 이득(GPU ms)은 ⑤ 성능 판정으로(이 계획 지표 아님) / CAL-0 0b 통합(e844cb03 반박 adopt3 재적용): MaxStepCount 는 cost 표기 없음. 정본 -1 = 엔진 기본 512 로 되돌림(TDFluidVolumeDriverTypes.h, 엔진 HeterogeneousVolumes.cpp)이라 끝 값 256 은 비용 감소(P-23) / 2026-10-31: HvolPair 의 +900 cm Y 오프셋은 정본 Kinds.SmokeHeterogeneous 에 없어(StructDefaults 0) HVOL 이 SVOL 과 겹쳤다. 같은 종류를 쓰는 Slope·Cross·Cave·Shadow 구역까지 밀리므로 정본에 넣지 않고 base_tuning(측정 조건, ships false)으로 준다 — 사본 frame 에서 오른쪽 HVOL 확인(Saved/AgentOps/20261031/hvol/pairfix) / 위상 재설정(2026-10-31): 교반기 TDGen_HvolPairStirrer(editor_make_fluid_hvol_stage.py:610-612 피벗 (+220, 0, 0)·90°/s, 위치 = 중심 − 220(cos θ, sin θ))는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다(공이 비운 자국 위치가 바뀜). step_apply 가 영역 틀(13:24 커밋)이 쓴 frame(_previous/hvol_pair 11:00 회차, apply 15.061 s)의 θ=275.5° 로 되돌려 첫 장(6.017 s 뒤) θ≈97.0° 를 재현한다(13:48 회차는 12.5° 앞섬)",
   "scenes": [
     {
       "name": "hvol_pair",
@@ -18,6 +18,28 @@
         "console": [
           "t.MaxFPS 0"
         ]
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_HvolPairStirrer": [
+            -21.09,
+            218.99,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolPairStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                275.5,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,

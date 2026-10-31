@@ -1,6 +1,6 @@
 {
   "id": "foliage_k1_bend",
-  "note": "FX-13r K1 구역 1(GrassSim + 지면 교반기 반경 150 cm, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 휨·눌린 쪽 밝기·복원 시간 / 0b(2026-10-30): 목표 셋은 명세 [제안](spec-fx13c 7절, IMG 9 육안). IMG 9 측정 눌림/바깥 휘도 비 4.4~8.2 는 잠수종 조명이 눌린 쪽을 비춰 생긴 값이라 목표로 쓰지 않는다. probe 에 stats·rt 가 없다(B6·k5 공통 공백) → frame 때 무대 보고서의 흐름 액터 라벨·렌더 타깃으로 채우고 지표 이름을 룩데브 규칙(mean·p50·p95·max·radial_alignment_mean)에 맞춘다. k1_recovery 는 이동체 정지 이벤트가 없으면 회복 구간이 없다(frame 확인) / 0b 수정: max_bend_degrees 목표 삭제(탐침이 도 단위 값을 내지 않음, rt 키는 mean·p50·p95·max·fraction_above·radial_alignment_mean 뿐 → 도달 불가, 승인 시트로). k1_bend 는 look 만",
+  "note": "FX-13r K1 구역 1(GrassSim + 지면 교반기 반경 150 cm, 원천 DA_TDFluid_FoliageWalk = Kinds.FoliageWalk), IMG 9 휨·눌린 쪽 밝기·복원 시간 / 0b(2026-10-30): 목표 셋은 명세 [제안](spec-fx13c 7절, IMG 9 육안). IMG 9 측정 눌림/바깥 휘도 비 4.4~8.2 는 잠수종 조명이 눌린 쪽을 비춰 생긴 값이라 목표로 쓰지 않는다. probe 에 stats·rt 가 없다(B6·k5 공통 공백) → frame 때 무대 보고서의 흐름 액터 라벨·렌더 타깃으로 채우고 지표 이름을 룩데브 규칙(mean·p50·p95·max·radial_alignment_mean)에 맞춘다. k1_recovery 는 이동체 정지 이벤트가 없으면 회복 구간이 없다(frame 확인) / 0b 수정: max_bend_degrees 목표 삭제(탐침이 도 단위 값을 내지 않음, rt 키는 mean·p50·p95·max·fraction_above·radial_alignment_mean 뿐 → 도달 불가, 승인 시트로). k1_bend 는 look 만 / 위상 재설정(2026-10-31): 지면 교반기 TDGen_FoliageSim_Stirrer(BP_TDFluidStageStirrer, editor_make_fluid_foliage_stage.py:347 → editor_make_fluid_particle_stage.py:325, 반경 150·90°/s)는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다(직전 회차 apply 15.094 s 대 14.865 s = 0.229 s 가 한 장 밀림의 원인). step_apply 가 상자를 다시 맞춘 frame(13:50·13:53 회차)의 apply 위상으로 되돌린다: k1_bend θ=257.85°(apply 14.865 s → 첫 장 6.017 s 뒤 θ≈79.4°), k1_recovery θ=265.04°(apply 14.945 s → 첫 탐침 θ≈86.5°). 모형은 smoke_pair·camera_facing frame 공 화소와 2 px 안에서 맞고 k1 frame 회색 공 조각 4곳도 위상 차 0°(카메라 높이만 보정)로 맞는다(영역 note 의 A≈86° 는 피벗 z 96 가정의 시각 추정)",
   "scenes": [
     {
       "name": "k1_bend",
@@ -19,6 +19,28 @@
           "TD.FluidFX.FoliageFlow 1",
           "r.TDFogScattering 0"
         ]
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_FoliageSim_Stirrer": [
+            2968.43,
+            -146.64,
+            20.0
+          ]
+        },
+        "call": {
+          "TDGen_FoliageSim_Stirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                257.85,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,
@@ -53,6 +75,28 @@
           "TD.FluidFX.FoliageFlow 1",
           "r.TDFogScattering 0"
         ]
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_FoliageSim_Stirrer": [
+            2987.03,
+            -149.44,
+            20.0
+          ]
+        },
+        "call": {
+          "TDGen_FoliageSim_Stirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                265.04,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,

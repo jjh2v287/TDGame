@@ -1,6 +1,6 @@
 {
   "id": "fx15a_amplitude_noise",
-  "note": "FX-15a A10 진폭 감쇠 노이즈. 기준 Kinds.Smoke 의 감쇠 D(FlowAmplitudeNoiseDampingPerSec)가 0 이면 플래그가 꺼져 노이즈 크기(FlowAmplitudeNoiseScaleCm) 스윕이 무효가 된다(R15a-M4). 그래서 격자 모드로 D>0 값(0.5·1·2)만 노이즈 크기 3값과 곱한다. 대조(v00)가 D=0 이다. 오프셋 무작위(bRandomizeNoiseOffsetPerActor)는 이 계획에서 돌리지 않는다. / 0b: 지표 이름을 C3(<영역>.<측정 키>)로, 띠는 IMG3 측정(목표 파일 region_metrics.pool). 주의: 단계 실행 screen 은 손잡이 하나씩이라 대조 D=0 에서 크기 손잡이는 둔감 예상(R15a-M4) → 둔감이면 D 채택 뒤 P-20 2라운드 / frame 정리(2026-10-31): pool.detail.above_64_cycles_per_height 는 상자 높이 정규화 불일치(162 px 대 기준 175~240 px)라 structural-gaps.json, 남은 목표는 pool.atmosphere.fine_over_coarse",
+  "note": "FX-15a A10 진폭 감쇠 노이즈. 기준 Kinds.Smoke 의 감쇠 D(FlowAmplitudeNoiseDampingPerSec)가 0 이면 플래그가 꺼져 노이즈 크기(FlowAmplitudeNoiseScaleCm) 스윕이 무효가 된다(R15a-M4). 그래서 격자 모드로 D>0 값(0.5·1·2)만 노이즈 크기 3값과 곱한다. 대조(v00)가 D=0 이다. 오프셋 무작위(bRandomizeNoiseOffsetPerActor)는 이 계획에서 돌리지 않는다. / 0b: 지표 이름을 C3(<영역>.<측정 키>)로, 띠는 IMG3 측정(목표 파일 region_metrics.pool). 주의: 단계 실행 screen 은 손잡이 하나씩이라 대조 D=0 에서 크기 손잡이는 둔감 예상(R15a-M4) → 둔감이면 D 채택 뒤 P-20 2라운드 / frame 정리(2026-10-31): pool.detail.above_64_cycles_per_height 는 상자 높이 정규화 불일치(162 px 대 기준 175~240 px)라 structural-gaps.json, 남은 목표는 pool.atmosphere.fine_over_coarse / 위상 재설정(2026-10-31): 조명 피벗 TDGen_SmokeHard_LightPivot·TDGen_SmokeSoft_LightPivot(BP_TDFluidLightPivot 제자리 회전 50°/s, editor_make_fluid_smoke_stage.py:326·575-595, 반경 250·높이 180 주황 점광원이 붙어 돈다)은 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다(웅덩이 조명이 바뀜). step_apply 가 frame(10:47 회차, apply 15.046 s)의 θ=32.3° 로 두 피벗 회전만 되돌려 첫 장(6.017 s 뒤) θ≈333.1° 를 재현한다",
   "scenes": [
     {
       "name": "smoke_pool",
@@ -18,6 +18,32 @@
         "console": [
           "t.MaxFPS 0"
         ]
+      },
+      "step_apply": {
+        "call": {
+          "TDGen_SmokeHard_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                32.3,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_SmokeSoft_LightPivot": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                32.3,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,

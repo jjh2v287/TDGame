@@ -1,0 +1,5 @@
+{
+ "note": "fx5_flamethrower 계획 목표(일반 모드). fx5_live2_flamethrower.json 은 live2_targets 가 있어 calib_judge 가 불 모드(LIVE-2 검사 26개 이름만)로 재는데, 계획 목표 M1 p50·p95(녹/적)는 그 이름에 p95 가 없다. 일반 모드는 kind fire 영역에 measure_fx_look flame.color_steps.p<n>.green_over_red 를 낸다. 띠는 계획 인라인(M1 p50 0.22·p95 0.95 ±25%, IFS:100)",
+ "kind_metrics": {},
+ "region_metrics": {}
+}

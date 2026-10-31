@@ -1,6 +1,6 @@
 {
   "id": "fx9_camera_facing",
-  "note": "spec-fx9 HV4, 구역 2(카메라 정렬 HVOL), 효과 4개 ≤ 2.5 ms",
+  "note": "spec-fx9 HV4, 구역 2(카메라 정렬 HVOL), 효과 4개 ≤ 2.5 ms / 위상 재설정(2026-10-31): 교반기 TDGen_HvolCameraFacingStirrer(editor_make_fluid_hvol_stage.py:610-612 피벗 (+220, 0, 0)·90°/s)는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다. 상자 [638,143,906,244] 는 _previous/camera_facing 10:54 회차(apply 14.842 s, 공 화면 (414,423)→(598,215))에 맞춘 것이고 현 13:42 회차(apply 15.356 s)는 끝 두 장에서 공이 상자 안에 든다(예측 (677,214)·(748,235), 07000ms 화소 (747,234) 확인)라, step_apply 가 10:54 회차의 θ=255.75° 로 되돌려 첫 장 θ≈77.2° 를 재현한다",
   "scenes": [
     {
       "name": "camera_facing",
@@ -18,6 +18,28 @@
         "console": [
           "t.MaxFPS 0"
         ]
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_HvolCameraFacingStirrer": [
+            6054.15,
+            213.23,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolCameraFacingStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                255.75,
+                0.0
+              ],
+              true
+            ]
+          }
+        }
       },
       "time_dilation": 1.0,
       "settle": 6.0,

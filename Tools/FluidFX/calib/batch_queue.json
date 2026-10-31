@@ -36,7 +36,8 @@
       {"plan": "Tools/FluidFX/calib/plans/fog_f1_layer.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim", "needs_frame": true},
       {"plan": "Tools/FluidFX/calib/plans/fog_f2_passive.json", "class": "cal0", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim", "needs_frame": true},
       {"plan": "Tools/FluidFX/calib/plans/fog_f6_tile.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
-      {"plan": "Tools/FluidFX/calib/plans/fog_f5_cut_stir.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"}
+      {"plan": "Tools/FluidFX/calib/plans/fog_f5_cut_stir.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim"},
+      {"plan": "Tools/FluidFX/calib/plans/fog_f7_lights.json", "class": "cal0", "origin": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim", "needs_frame": true, "reclassified": "P-28: P-9 actor_prop·base 로 결함 해소"}
     ]},
     {"id": "K5", "name": "연기·볼륨", "after": [], "plans": [
       {"plan": "Tools/FluidFX/calib/plans/fx15a_amplitude_noise.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "Kinds.Smoke"},
@@ -45,7 +46,8 @@
       {"plan": "Tools/FluidFX/calib/plans/fx15a_kernel_vs_jacobi.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"]},
       {"plan": "Tools/FluidFX/calib/plans/fx9_camera_facing.json", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage", "needs_frame": true},
       {"plan": "Tools/FluidFX/calib/plans/fx9_floor_smoke.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"},
-      {"plan": "Tools/FluidFX/calib/plans/fx9_hvol_vs_svol.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"}
+      {"plan": "Tools/FluidFX/calib/plans/fx9_hvol_vs_svol.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "Groups.HeterogeneousStage"},
+      {"plan": "Tools/FluidFX/calib/plans/fx9_terrain_cache.json", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage", "needs_frame": true}
     ]},
     {"id": "K6", "name": "식생", "after": ["K2"], "plans": [
       {"plan": "Tools/FluidFX/calib/plans/foliage_k1_bend.json", "class": "cal0", "origin": "defect", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"},
@@ -82,8 +84,6 @@
     {"plan": "Tools/FluidFX/calib/plans/w6_ship_wake.json", "class": "target", "origin": "cal0", "stages": ["screen", "confirm"], "chain": "Groups.DenseWater", "reclassified": "P-28", "blocked": "probe 명세 없음(측정 출처 없음): wake.* C++ 통계 게터 없음", "block": "K9"},
     {"plan": "Tools/FluidFX/calib/plans/w5_liquid_sphere_l11.json", "class": "target", "stages": ["screen", "confirm"], "needs_frame": true, "origin": "cal0", "reclassified": "CAL-0 마무리 fix2 제안(D2 와 같은 사유, 부모 판정 대기): 영역 틀 대기 → 목표 측정", "blocked": "측정 출처 없음: 유일한 목표 sphere_seam.luminance_difference_over_neighbor_p99 를 measure_fx_look 이 내지 않는다(영역 지표는 luminance_mean·glint_fraction·detail·frame_difference·flame·embers·atmosphere·water·분석 3종뿐) → 영역을 그려도 판정기 '목표 지표 … 이 측정값에 없다' 종료 2. look 장면 targets 파일도 없다(calib_sweep screen '목표 파일 없음')", "block": "K9"},
     {"plan": "Tools/FluidFX/calib/plans/w5_waterfall_l29.json", "class": "target", "stages": ["screen", "confirm"], "needs_frame": true, "origin": "cal0", "reclassified": "CAL-0 마무리 fix2 제안(D2 와 같은 사유, 부모 판정 대기): 영역 틀 대기 → 목표 측정", "blocked": "측정 출처 없음: 목표 probe.prop.white_water_radius_over_fall_height 는 FTDFluidWaterPropStats 필드(SourceStampCount·CouplingStampCount·TotalSourceStamps·TotalCouplingStamps·LastCouplingMeanDensity·LastCouplingMeanDownSpeedCmPerSec)가 아니다 → 판정기 종료 2. look 장면에 look 목표·targets 파일이 없다(calib_sweep screen '목표 파일 없음')", "block": "K9"},
-    {"plan": "Tools/FluidFX/calib/plans/cloud_g9_mushroom.json", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true, "blocked": "2026-10-31 계획 결정: mushroom_cap 갓 포화(무대 AEM_MANUAL 이라 EV100 12 미적용) → exposure_manual bias EV100 3·5·7 PIE 비교로 노출 확정·frame 재촬영 뒤 복귀(지금 cap 값은 클리핑 상수 1.003386)", "block": "K3"},
-    {"plan": "Tools/FluidFX/calib/plans/fog_f7_lights.json", "class": "cal0", "origin": "defect", "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFog_Sim", "needs_frame": true, "reclassified": "P-28: P-9 actor_prop·base 로 결함 해소", "blocked": "2026-10-31 계획 결정: 녹색 웅덩이 포화 → exposure_manual bias EV100 2·3·4 PIE 비교로 노출 확정·frame 재촬영·green_pool 영역 그린 뒤 복귀", "block": "K4"},
-    {"plan": "Tools/FluidFX/calib/plans/fx9_terrain_cache.json", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage", "needs_frame": true, "blocked": "2026-10-31 계획 결정: slope_cache 연기가 화면 아래에서 잘림 → 팔 길이 600·900·1000 PIE 비교로 카메라 확정·frame 재촬영·영역 재확인 뒤 복귀", "block": "K5"}
+    {"plan": "Tools/FluidFX/calib/plans/cloud_g9_mushroom.json", "class": "cal0", "stages": ["screen", "confirm"], "needs_frame": true, "blocked": "2026-10-31 계획 결정: mushroom_cap 갓 포화(무대 AEM_MANUAL 이라 EV100 12 미적용) → exposure_manual bias EV100 3·5·7 PIE 비교로 노출 확정·frame 재촬영 뒤 복귀(지금 cap 값은 클리핑 상수 1.003386)", "block": "K3"}
   ]
 }

@@ -155,3 +155,11 @@
 - 증거: `Saved/AgentOps/20261026/wave2/fx5/`(빌더 r0~r5 기록), `Saved/AgentOps/20261026/wave2/ib2/`
 - 날짜·상태: 2026-10-27 active(①②는 원문 오류 줄 미보존 — 미검증 문구)
 - 발견: claude(FluidFX FX-5 빌더)
+
+### L-build-18 FluidFX 일괄 보정 배치(calib_batch.py) 블록 헤드리스는 에디터가 켜진 채 돌아 벽시계(ms) 기준 성능 시험이 흔들리고, 배치 실행 중 정본(조절·모양) 편집은 그 계획 결과를 무효로 만든다
+- 증상: ① K1 fx5 confirm 이 '무효: 실행 전후 정본 sha256 이 다르다', 2회차는 'screen.json canonical_look_sha256 불일치' — 다른 계획 결정으로 모양 정본을 고친 시각이 confirm 실행 중이었다 ② 채택 뒤 블록 헤드리스 'CPU transmittance for a 96 grid stays under 0.3 ms'(TDGame.FluidFX.Perf.TransmittanceCpuCost, 중앙값 0.361 ms) 실패 → 설계 단언으로 보고 채택 되돌림. 에디터를 닫은 build_and_test 헤드리스에서는 통과
+- 해결: ① 배치가 도는 동안 Content/FluidFX/PresetData/*.json·계획 파일을 편집하지 않는다(편집은 배치 사이에). 이미 무효면 별도 --journal 폴더·--locks-dir 로 1회 재실행(사전 등록 잠금은 덮어쓰지 않음) ② 벽시계 단언 시험 4개를 Tools/FluidFX/calib/test_classes.json timing_record_only(기록만)로, calib_batch 가 numeric_pinned 와 합쳐 읽음(4cec6b4c). 거짓 되돌림은 일지 상태를 confirmed 로, 덧씌움을 confirm 당시(빈 덧씌움 sha)로 복원한 뒤 --resume — accept 는 판정 overlay_sha256 과 현재 덧씌움이 같아야 한다
+- 범위: calib_batch 블록 헤드리스·calib_sweep 정본 sha 전후 대조
+- 증거: Saved/FluidFX/calib/batch/batch.log(K1 1차), Saved/FluidFX/calib/batch-K1-fx5/(재실행·재개), Saved/AgentOps/20261031/overlay-before-restore-K1fx5.json
+- 날짜·상태: 2026-10-31 active
+- 발견: claude(FluidFX 일괄 보정 K1)

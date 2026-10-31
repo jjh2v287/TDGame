@@ -1,0 +1,15 @@
+{
+  "note": "새 frame(2026-10-31 재촬영) cloud_g9_mushroom 의 mushroom_cap(셋업 8)·mushroom_shield(셋업 9) 00_schedule_06000~07000ms 각 5장(1280x720, TDGen_CloudCam_Mushroom·MushroomShield (-6,-6,0.3)→(12,12,4) km)으로 그린 상자. cap = 10장 공통 갓 실루엣(휘도 > (하늘+255)/2, 갓 중심 연결 성분, 화산·방패층 제외)을 10px 침식한 최대 내접 사각형, far_deck = mushroom_shield 5장 공통 방패층(MI_TD_FluidCloud_MushroomShield 슬롯 2, 4~4.6 km) 오른쪽 날개 그늘 아랫면을 4px 침식한 최대 내접. 무효 주의: (1) 계획의 exposure_ev100 12 는 적용되지 않았다(result.json base.exposure_applied mode manual_ignored). 갓 원판 전체가 포화(상자 안 최대 채널 254 이상 100%, p95/p5 1.003386 상수)라 지금 cap 값은 클리핑만 잰다. (2) mushroom_cap 의 MI_TD_FluidCloud_Mushroom 에는 슬롯 2(층)가 없어 같은 far_deck 상자가 하늘을 잰다. 그 장면 far_deck 값은 가짜다. (3) mushroom(버섯 몸통: 단면 텍스처의 줄기·치마, 축 (12,12) km)은 원점 화산(높이 2.5 km) 뒤에 가려 화면에는 갓 윗부분만 보이고, 그 부분도 포화라 그리지 않았다. / 2026-10-31 노출 확정 뒤 재촬영(bias EV2·모양 정본 발광 0.015): mushroom_cap 하늘 [0,4,300,133] 중앙값 0.258(원본 0.22~0.36)·cap 포화 0%·cap p95/p5 1.388 로 측정 가능, mushroom_shield 갓은 MushroomShield 재질 발광이라 여전히 포화(그 장면 cap 목표는 이관됨)·far_deck 1.177. 상자는 그대로",
+  "regions": [
+    {
+      "name": "cap",
+      "kind": "cloud",
+      "box": [461, 4, 819, 133]
+    },
+    {
+      "name": "far_deck",
+      "kind": "cloud",
+      "box": [1170, 321, 1275, 356]
+    }
+  ]
+}

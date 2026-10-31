@@ -762,3 +762,20 @@
 - 증거: Saved/FluidFX/calib/frames/fog_f2_passive(2026-10-31 frame 2차), 하네스 수정 전 빨강·수정 뒤 275/275
 - 날짜·상태: 2026-10-31 active
 - 발견: claude(FluidFX 일괄 보정 frame)
+
+### L-editor-87 원격 실행(run_in_editor·pie_showcase EDITOR_CODE) 코드 문자열 안에 '<이름>.py' 낱말이 있으면 UE 가 코드 전체를 파일 경로로 읽어 실행하지 않는다
+- 증상: 병합 뒤 모든 룩데브 원격 호출이 '결과 해석 실패', 에디터 로그 'Could not load Python file …editor_make_fluid_fog_material.py'(오류 문구 안에 생성기 파일 이름을 넣은 줄 때문)
+- 원인: UE Python 원격 실행(ExecuteFile 모드)이 명령 문자열에 '.py' 로 끝나는 낱말이 있으면 파일 실행으로 해석한다(추정: 명령 판별 규칙, 엔진 소스 미확인 — 현상은 재현)
+- 해결: 원격 코드 문자열(오류 메시지·주석 포함)에 '.py' 를 쓰지 않는다 — 'editor_make_fluid_fog_material' 처럼 확장자를 뺀다(3425aa53)
+- 범위: Tools/run_in_editor.py 로 보내는 모든 코드 문자열(pie_lookdev_fluid LOOKDEV_ACTIONS·pie_showcase EDITOR_CODE 등)
+- 증거: Saved/AgentOps/20261031/integ/(g12 1차 실패·수정 뒤 통과), 통합 워크플로 wf_be2f48dc-5aa
+- 날짜·상태: 2026-10-31 active
+- 발견: claude(FluidFX 시간 결정론 통합)
+
+### L-editor-88 UE 5.8 에디터 Python 에는 unreal.KismetMaterialLibrary 가 없다 — MPC 스칼라 읽기·쓰기는 unreal.MaterialLibrary
+- 증상: 룩데브 키 오류 "module 'unreal' has no attribute 'KismetMaterialLibrary'"(MPC FogFlowOriginSeconds 설정)
+- 해결: unreal.MaterialLibrary.set_scalar_parameter_value(world, collection, name, value)·get_scalar_parameter_value 를 쓴다(C++ UKismetMaterialLibrary 가 파이썬에서는 MaterialLibrary 로 노출). 가짜 unreal 하네스도 같은 이름으로(3425aa53)
+- 범위: UE 5.8 에디터 Python 의 재질 매개변수 컬렉션 접근
+- 증거: Saved/AgentOps/20261031/integ/f7/(1차 키 오류·수정 뒤 통과)
+- 날짜·상태: 2026-10-31 active
+- 발견: claude(FluidFX 시간 결정론 통합)

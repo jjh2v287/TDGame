@@ -51,7 +51,7 @@
       {"plan": "Tools/FluidFX/calib/plans/fx9_terrain_cache.json", "class": "verify", "stages": ["screen"], "chain": "Groups.HeterogeneousStage", "needs_frame": true}
     ]},
     {"id": "K6", "name": "식생", "after": ["K2"], "plans": [
-      {"plan": "Tools/FluidFX/calib/plans/foliage_k1_bend.json", "class": "cal0", "origin": "defect", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"},
+      {"plan": "Tools/FluidFX/calib/plans/foliage_k1_bend.json", "class": "cal0", "origin": "defect", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy", "estimate_seconds": {"screen": 2400, "confirm": 1500}, "estimate_note": "2026-10-31 K6: k1_recovery 9장 시계열·탐침으로 자동 추정 391 s 의 2배(782 s)에서 끊김 → 실측 기준 상향"},
       {"plan": "Tools/FluidFX/calib/plans/foliage_k2_press.json", "class": "cal0", "origin": "defect", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "MI_TD_FluidFoliageFlowCopy"}
     ]},
     {"id": "K7", "name": "자국", "after": ["B5"], "plans": [

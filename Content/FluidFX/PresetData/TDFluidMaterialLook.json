@@ -206,7 +206,7 @@
     "CloudSlot1BottomKm": 0.0,
     "CloudSlot1EdgeErosion": 0.6,
     "CloudSlot1EmissiveExponent": 3.0,
-    "CloudSlot1EmissiveIntensity": 8.0,
+    "CloudSlot1EmissiveIntensity": 0.015,
     "CloudSlot1ExtinctionPerM": 0.05,
     "CloudSlot1Shape": 1.0,
     "CloudSlot1Source": 3.0,

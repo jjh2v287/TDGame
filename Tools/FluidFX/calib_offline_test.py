@@ -681,12 +681,16 @@ unreal.SystemLibrary = Props(execute_console_command=console, get_console_variab
 sys.modules["unreal"] = unreal
 
 
+EDITOR_SHARED_NAMESPACE = None
+
+
 def fake_editor_action(action, **fields):
     code = pie_showcase_fluid.EDITOR_CODE.replace("\ndef run():", lookdev.LOOKDEV_ACTIONS, 1)
     code = code.replace("__PARAMS__", repr(json.dumps({"action": action, **fields})))
+    namespace = EDITOR_SHARED_NAMESPACE if EDITOR_SHARED_NAMESPACE is not None else {"__name__": "editor"}
     buffer = io.StringIO()
     with contextlib.redirect_stdout(buffer):
-        exec(compile(code, "<editor>", "exec"), {"__name__": "editor"})
+        exec(compile(code, "<editor>", "exec"), namespace)
     for line in buffer.getvalue().splitlines():
         if pie_showcase_fluid.RESULT_MARKER in line:
             return json.loads(line.split(pie_showcase_fluid.RESULT_MARKER, 1)[1])
@@ -3125,6 +3129,22 @@ def check_lookdev_frame_fixes():
     check("F4 schedule.events move 사전 형식: 예약과 다른 틱 콜백에서 걷고 끝 상태를 이벤트에 적음 / 막히면 'schedule.events t=0.2 move: 시한 초과'",
           event_move.get("mode") == "input" and event_move.get("done") and event_move.get("moved_cm", 0.0) >= 120.0 and not event_errors
           and any(line.startswith("schedule.events t=0.2 move: 시한 초과") for line in stuck_errors), (event_move, event_errors, stuck_errors))
+
+    global EDITOR_SHARED_NAMESPACE
+    reset_world([])
+    pawn = FakeWalkingPawn()
+    EDITOR_SHARED_NAMESPACE = {"__name__": "editor"}
+    with players(pawn, make_controller(0.0)):
+        shared = lookdev.apply_variant_with_tuning({"schedule": {"times": [1.0], "reference": "now", "prefix": "shared", "events": events}}, "s03", state)
+        fake_editor_action("status")
+        shared_status = lookdev.wait_for_schedule(Path(shared["schedule"]["status_path"]), 30.0)
+        shared_errors = lookdev.find_walk_errors(shared, shared_status)
+    EDITOR_SHARED_NAMESPACE = None
+    shared_move = (shared_status.get("events_done") or [{}])[0].get("move", {})
+    check("F4c 원격 호출이 전역 이름 공간을 공유(실제 에디터): 예약 시작 뒤 다른 호출이 PARAMS 를 덮어써도 schedule.events move 가 예약 상태의 output·tag 로 걷기 상태 파일을 씀(fog_f2 d14 KeyError 'output' 회귀)",
+          shared_move.get("mode") == "input" and shared_move.get("done") and shared_move.get("moved_cm", 0.0) >= 120.0 and not shared_errors
+          and str(shared_move.get("status_path", "")).endswith("_event00200ms_walk.json") and Path(shared_move.get("status_path", "")).exists(),
+          (shared_move, shared_errors))
 
     move_errors = [lookdev.find_key_errors(apply) for apply in ({"move": {"distance": 5.0}}, {"move": [1.0, 2.0, 3.0]}, {"move": {"distance_cm": 0}}, {"move": {"distance_cm": 100.0, "yaw": "east"}},
                                                                {"schedule": {"events": [{"time": 1.0, "move": "forward"}]}}, {"move": {"distance_cm": 1500.0}}, {"move": {"distance_cm": 800.0, "yaw": 45.0}})]

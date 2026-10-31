@@ -768,7 +768,7 @@ def run_schedule_event(state, world, event, elapsed):
     if "call" in event:
         done["call"] = apply_calls(world, event["call"], {})
     if "move" in event:
-        done["move"] = begin_pawn_walk(world, event["move"], f"event{round(float(event['time']) * 1000):05d}ms")
+        done["move"] = begin_pawn_walk(world, event["move"], f"{state['output']}/{state['tag']}_event{round(float(event['time']) * 1000):05d}ms")
     state["status"]["events_done"].append(done)
     write_schedule_status(state)
 
@@ -822,7 +822,7 @@ def move_to_goal(world, goal):
     return action_fire_move(world)
 
 
-def begin_pawn_walk(world, move, name):
+def begin_pawn_walk(world, move, status_stem):
     if isinstance(move, list) and len(move) == 2:
         return move_to_goal(world, move)
     distance = move.get("distance_cm") if isinstance(move, dict) else None
@@ -844,7 +844,7 @@ def begin_pawn_walk(world, move, name):
     stop_pawn_walk("새 걷기가 이전 걷기를 대체했다")
     status = {"mode": "input", "yaw": yaw, "distance_cm": float(distance), "start": [start.x, start.y], "goal": [start.x + direction[0] * distance, start.y + direction[1] * distance],
               "max_speed": max_speed, "timeout_seconds": timeout, "wall_timeout_seconds": wall_timeout, "start_game_time": unreal.GameplayStatics.get_time_seconds(world),
-              "moved_cm": 0.0, "elapsed_game_seconds": 0.0, "timed_out": False, "done": False, "status_path": f"{PARAMS['output']}/{PARAMS['tag']}_{name}_walk.json"}
+              "moved_cm": 0.0, "elapsed_game_seconds": 0.0, "timed_out": False, "done": False, "status_path": f"{status_stem}_walk.json"}
     state = {"status": status, "status_path": status["status_path"], "direction": unreal.Vector(direction[0], direction[1], 0.0), "handle": None,
              "deadline": time.monotonic() + wall_timeout}
     write_schedule_status(state)
@@ -1149,7 +1149,7 @@ def action_lookdev_apply(world):
         pawn.set_max_move_speed(apply["speed"])
         outcome["speed"] = pawn.get_max_move_speed()
     if "move" in apply:
-        outcome["move"] = begin_pawn_walk(world, apply["move"], "move")
+        outcome["move"] = begin_pawn_walk(world, apply["move"], f"{PARAMS['output']}/{PARAMS['tag']}_move")
     if "trigger" in apply:
         PARAMS["hit_dx"], PARAMS["hit_dy"], PARAMS["hit_dz"] = apply["trigger"]
         outcome["trigger"] = action_fire_trigger(world)

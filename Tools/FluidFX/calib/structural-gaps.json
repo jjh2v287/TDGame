@@ -241,6 +241,106 @@
    "reason": "pond_top 장면·목표를 뺀 뒤 이 손잡이에 걸리는 목표가 없다. 웅덩이 면적은 수위가 PIE 시작부터 3 cm 상한에 닿아 예약 26~31초에 멈춘다(2차 진단 D5)",
    "source": "frame",
    "original": "aa1280ea:Tools/FluidFX/calib/plans/w3_rain.json"
+  },
+  {
+   "plan": "cloud_g9_mushroom",
+   "kind": "target",
+   "item": "mushroom.atmosphere.p95_over_p5 [1.98, 3.3](mushroom_cap·mushroom_shield)",
+   "decision": "frame",
+   "destination": "PIE 카메라 높이 후보를 채택하면 mushroom_cap 영역 파일을 새로 그려 되살림, 아니면 무대 카메라 재배치(editor_make_fluid_cloud_stage.py SETUP_SPECS Mushroom·MushroomShield)",
+   "reason": "버섯 몸통(단면 텍스처 줄기 v<0.66·치마 v0.34, 축 (12,12) km)을 원점 화산이 가린다. 두 카메라 모두 (-6,-6,0.3)→(12,12,4) km라 시선이 화산 꼭대기 바로 위를 지난다(세 점이 한 직선). 능선 앙각 14.5°로 축에서 약 6.9 km 높이까지 가려지며, 10장 모두 y≈185~215 아래가 화산이고 보이는 갓 윗부분은 포화 원판이다. lookdev location으로 카메라를 올릴 수는 있다. 하지만 그러면 mushroom_cap의 cap 상자도 새 frame에서 다시 그려야 하고, 몸통도 갓과 같은 슬롯 1 발광이라 노출 확정(PIE) 뒤에야 잴 수 있다. 그래서 이번 계획 데이터로는 닫지 않는다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/cloud_g9_mushroom.json"
+  },
+  {
+   "plan": "cloud_g9_mushroom",
+   "kind": "target",
+   "item": "cap.atmosphere.p95_over_p5 [1.76, 2.93]@mushroom_shield",
+   "decision": "frame",
+   "destination": "없음(손잡이 없음, 같은 목표는 mushroom_cap에서 판정)",
+   "reason": "mushroom_shield의 갓은 MI_TD_FluidCloud_MushroomShield 슬롯 1이 그린다. 계획의 갓 손잡이 3개는 MI_TD_FluidCloud_Mushroom(scenes mushroom_cap)에만 걸려 있어 이 장면 값은 모든 변형에서 상수다. 무대 노출(수동 EV 0)에서는 포화 원판이라 p95/p5가 1.003386(5장 동일)으로 클리핑만 잰다. 고른 갓 값을 MushroomShield 슬롯 1에도 옮겨 적을지는 채택할 때 정한다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/cloud_g9_mushroom.json"
+  },
+  {
+   "plan": "cloud_g9_mushroom",
+   "kind": "target",
+   "item": "far_deck.atmosphere.p95_over_p5 [1.29, 2.15]@mushroom_cap",
+   "decision": "frame",
+   "destination": "없음(장면에 층 없음, 같은 목표는 mushroom_shield에서 판정)",
+   "reason": "MI_TD_FluidCloud_Mushroom에는 슬롯 2(방패층)가 없다. 그래서 공유 상자 [1170,321,1275,356]가 하늘을 잰다(휘도 0.517, p95/p5 1.1208). calib_judge.measure_generic_scene은 영역을 장면별로 거르지 않으므로 region_check가 이 값을 측정됨으로 센다. 가짜 값이라 목표를 뺀다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/cloud_g9_mushroom.json"
+  },
+  {
+   "plan": "cloud_g11_cyclone_live",
+   "kind": "scene",
+   "item": "cyclone(셋업 15 정적 덮임, 목표 near·far.atmosphere.p95_over_p5@cyclone, 손잡이 MI_TD_FluidCloud_Cyclone CloudSlot1TopExponent·CloudSlot1EdgeErosion·CloudSlot2PatternCoverage)",
+   "decision": "frame",
+   "destination": "없음(같은 near·far 목표는 cyclone_live가 잰다). 정적 덮임 무대를 고치면(카메라 > 9.5 km 또는 덮임 꼭대기 < 6 km) original에서 장면·목표·손잡이를 되살린다",
+   "reason": "새 frame 5장은 정지 화면이다. 위쪽 2/3은 평평한 그늘 기둥 옆벽(휘도 0.359, p95/p5 1.24)이고 아래는 지형이다. 층 윗면·눈·먼 층이 없어 near·far 상자를 그릴 근거가 없다. cloud_g5_regions.json도 없어 region_check가 종료 2로 끝나고, calib_judge는 cyclone_live 판정까지 입력 오류로 멈출 수 있다. 카메라 (-15,-15,6)→(0,0,1) km는 CycloneLive와 같고, MI 슬롯 1이 1.5 km에서 시작해 두께 8 km(꼭대기 9.5 km)다. 그래서 정적 덮임 꼭대기가 카메라 고도 6 km를 넘는 무대 문제로 추정한다(미검증). lookdev location으로 카메라를 올리는 길은 있지만 같은 목표를 cyclone_live가 이미 재므로 쫓지 않는다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/cloud_g11_cyclone_live.json"
+  },
+  {
+   "plan": "fog_f7_lights",
+   "kind": "target",
+   "item": "derived.blue_pool_over_surround@f7_lab(영역 blue_pool·blue_surround, 띠 1.22~2.04)",
+   "decision": "frame",
+   "destination": "없음(정의 불가: 같은 깊이 녹색광 밖 안개가 무대에 없음)",
+   "reason": "실험실 안개 창 700 cm(x 5650~6350, y ±350) 전체가 녹색광 (5800,−300,120) 감쇠 반경 900 cm 안이라(가장 먼 모서리 851 cm, editor_make_fluid_fog_stage.py LOCAL_LIGHTS), 명세의 '녹색광 영향 밖 같은 깊이 안개'는 카메라·노출과 무관하게 없다. frame 행 322~370 에는 녹색 감쇠(G−B +38→−3)·인물·청색 헤일로 오르막(L 0.91→0.95)만 있다. 헤일로 안에 분모를 두면 산란 세기에 분자·분모가 함께 비례해 비가 손잡이에 둔감하다. 띠도 흰 인물광에서 유추한 값이다(갤러리에 푸른 국소광 없음). 되살림 조건: 광원 반경·위치를 바꾼 무대, 또는 청색 국소광 갤러리 근거",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/fog_f7_lights.json"
+  },
+  {
+   "plan": "fog_f6_tile",
+   "kind": "criterion",
+   "item": "tile_far.autocorrelation.secondary_peak@f6_tile(상한 0.0603, targets/fog_f6_tile_plan_targets.json 띠 [−1, 0.061])",
+   "decision": "frame",
+   "destination": "없음(측정 정의 결함. 되살림 조건: measure_fx_look 자기상관에서 기울기를 제거하고 갤러리 띠를 다시 잼. 그때까지 반복 은폐는 approval-only)",
+   "reason": "measure_autocorrelation 은 평균만 뺀다. 그래서 원근 밝기 기울기 때문에 양수 중앙 덩어리(find_central_lobe)가 창 전체를 덮고, 부분 상자 6개 모두 −3.5e−5~−2e−6 으로 상자와 무관하게 약 0 이 나와 상한을 거저 통과한다. 띠 근거인 갤러리 안개 6영역도 5개가 0 으로, 같은 결함에서 나온 값이다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/fog_f6_tile.json"
+  },
+  {
+   "plan": "viscous_fx14_lava",
+   "kind": "plan",
+   "item": "viscous_fx14_lava(장면 lava_world, 목표 derived.contrast_over_tile = lava_local.water.local_contrast ÷ lava_tile_seam.water.local_contrast)",
+   "decision": "frame",
+   "destination": "승인 시트(approval-only, spec-fx14 7절 용암 = 사용자 육안 승인). 먼저 LavaWorld 합성 무늬 없음 결함을 확인한다",
+   "reason": "화면에 잴 효과가 없다. ① 구역 8에는 LavaLocal 창 안에 입력이 없어(교반기 없음, 폰 정지) 국소 층 local = r·a = 0이다[추정]. ② 타일 층에도 무늬가 없다. lava_tile_seam의 local_contrast는 0.0019로 8비트 한 단계(0.0039)보다 작고, 장 사이 changed_fraction은 0, 시간 표준편차는 옛 상자 0.00098 대 왼쪽 0.00097이다. 분모가 잡음이라 비가 어떤 손잡이 값에도 거저 통과한다. 폰 걷기로 국소 자국은 만들 수 있지만 타일 무늬 없이는 판정이 무의미하다. 원인 후보(미검증): TileMap1 미등록(crustTile = 1)·LavaCrustThreshold 대비 타일 밀도 균일·발광 포화. 복원: 타일 무늬가 보이는 frame이 나오면 걷기(schedule.events move)와 같은 깊이 타일 상자로 original에서 되살린다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/viscous_fx14_lava.json"
+  },
+  {
+   "plan": "w5_tank_l11",
+   "kind": "target",
+   "item": "derived.tank_side_blue_over_red@tank [1.9933, 3.3222](파생 ratio tank_side.water.mean_blue ÷ tank_side.water.mean_red, IMG 21 g21_tank_side B/R 2.6578 ±25%)",
+   "decision": "frame",
+   "destination": "없음(되살림 조건: 수조 밖 카메라에서 앞 유리 너머 물 몸체가 그려지는 렌더 경로가 생긴 뒤 frame, 상자 후보 앞 유리 띠 x 480~800·y 251~282)",
+   "reason": "새 frame 5장 앞 유리 띠(y 248~285)가 물결 없는 균일한 회색 판(B/R 1.019, 고역 표준편차 0.0019, 바로 아래 바닥 1.000, 좌우 옆벽 1.04~1.05, frames_r1 1.018). 수조 물은 WaterPool 윗면만 그려지고 TankUnderwaterVolume 은 카메라가 수조 안일 때만 적용되는 경계 후처리라 밖에서는 유리 너머 물 몸체가 없어 카메라·노출 데이터로 만들 수 없다. 상자를 두면 유리 색을 물 색으로 보정하게 된다(regions_r2_summary B·I)",
+   "source": "frame",
+   "original": "4603c689:Tools/FluidFX/calib/plans/w5_tank_l11.json"
+  },
+  {
+   "plan": "input_fx15b",
+   "kind": "plan",
+   "item": "input_fx15b(z1_size derived.large_over_small_trail_width [1.8, 2.2], 파생 ratio large_trail.line_profile.groove_width_px ÷ small_trail.line_profile.groove_width_px)",
+   "decision": "frame",
+   "destination": "없음(되살림 조건: 두 교반기가 같은 시각에 같은 행을 지나 흔적 나이가 같아지는 무대 위상과, 화면 원근·구슬 모양에 좌우되지 않는 폭 측정)",
+   "reason": "같은 행 가로선(line_profile)은 y 330~444 를 2 px 간격으로 훑어도 5장 모두 두 흔적 끊김 0 인 행이 y 330(비 1.28~1.45)과 큰 흔적 꼬리만 걸린 y 424~440(0.71~0.96)뿐이라 앞 회차 통과는 선 기하 산물이다. 대안인 같은 행 띠 평균 폭 비 L/S(띠 안 warm 화소 수 ÷ 띠 높이. 상자가 140:70 px 라 flame.warm_fraction 비는 그 절반)도 9.0 s 한 장에서 띠 행 선택에 따라 1.68~2.05, 띠 370~430 에서 8.5→9.5 s 에 1.70→1.88 로 움직여 목표 띠 폭만큼 흔들린다(큰 흔적 구슬 모양, 작은 흔적이 0.52 s 늦게 생겨 더 빨리 가늘어짐). 손잡이 ObjectSizeRadiusRatio 는 두 상자 반지름에 같은 배율을 걸어(TDFluidLiveActorInput.cpp:320) 비가 손잡이에 거의 둔감하다. 계획 전체를 calib/retired/ 로",
+   "source": "frame",
+   "original": "4603c689:Tools/FluidFX/calib/plans/input_fx15b.json"
+  },
+  {
+   "plan": "input_fx15b",
+   "kind": "knob",
+   "item": "Kinds.InputFieldBench.TDFluidFieldInputSettings.MeshContourBandCm(장면 없음, values 30·60·120)",
+   "decision": "frame",
+   "destination": "없음(되살림 조건: InputFieldBench 를 깨우는 z5_mesh 장면과 그 목표가 다시 생기면)",
+   "reason": "77ae9453 에서 z5_mesh 장면을 뺀 뒤 InputFieldBench 를 깨우는 장면이 없어(z1_size 는 InputBrushBench 만 깨움) 어느 단계에서도 효과가 화면에 나오지 않는다",
+   "source": "frame",
+   "original": "4603c689:Tools/FluidFX/calib/plans/input_fx15b.json"
   }
  ]
 }

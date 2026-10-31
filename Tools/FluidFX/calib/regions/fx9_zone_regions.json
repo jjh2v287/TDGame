@@ -1,0 +1,6 @@
+{
+  "note": "frame 대조 이미지(fx9_camera_facing/camera_facing 00_schedule_06000~07000ms.png 5장, 1280x720, 폰 6000,0·팔 600·−60°)로 그린 상자, 2026-10-31. 명세: 이름 volume·kind volume(fx9_live2_volume.json). 상자 = 5장 모두 휘도>0.235(바닥 0.19~0.21)인 연기 화소의 공통 마스크를 6 px 깎은 뒤 가장 큰 직사각형(폰 [570,280,705,440] 제외, 공이 지나가며 비운 왼쪽 자국·공·그림자·연기 안 구멍 자동 제외). 이 파일은 fx9_camera_facing/camera_facing 전용이다. fx9_terrain_cache/slope_cache 는 연기가 화면 아래 끝(y 560~720)에 있어 이 상자가 경사 바닥만 재므로(L 0.245) 2026-10-31 부터 전용 파일 fx9_terrain_cache_regions.json 을 쓴다.",
+  "regions": [
+    {"name": "volume", "kind": "volume", "box": [638, 143, 906, 244]}
+  ]
+}

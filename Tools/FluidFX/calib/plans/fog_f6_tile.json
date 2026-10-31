@@ -1,6 +1,6 @@
 {
   "id": "fog_f6_tile",
-  "note": "FX-10c F6. 8C 감싸기 원천(FogTileSim 30 m 창, Wrap)이 자기 RT 를 90 m 안개 상자(상자 배율 3)에 타일 렌더(SimAreaWrapped 1). 반복 은폐는 휘도 2D 자기상관 2차 봉우리(SWB L14-a 관례), 원거리 대기 지표는 IMG 19 원거리 기준 2.23 ±25%(타일 안개 이미지 없음, CD M.3.20.1 Water_Sparse_DoubleSim_TilingWaves 유추). MI_TD_FluidFog_TileSync 는 8C 전용이라 재질 값을 훑어도 다른 구역과 충돌하지 않는다 0b(2026-10-30): 자기상관 상한을 LIVE-2 갤러리 안개 영역 최댓값으로(명세 [제안] ≤0.3 은 참고), 원거리 p95/p5 는 IMG 19 측정 재현 2.23 ±25%. 띠는 targets 파일. sky kind background → sky(measure_fx_look 기본 모드 kind 아님). 영역은 frame 뒤",
+  "note": "FX-10c F6. 8C 감싸기 원천(FogTileSim 30 m 창, Wrap)이 자기 RT 를 90 m 안개 상자(상자 배율 3)에 타일 렌더(SimAreaWrapped 1). 반복 은폐는 휘도 2D 자기상관 2차 봉우리(SWB L14-a 관례), 원거리 대기 지표는 IMG 19 원거리 기준 2.23 ±25%(타일 안개 이미지 없음, CD M.3.20.1 Water_Sparse_DoubleSim_TilingWaves 유추). MI_TD_FluidFog_TileSync 는 8C 전용이라 재질 값을 훑어도 다른 구역과 충돌하지 않는다 0b(2026-10-30): 자기상관 상한을 LIVE-2 갤러리 안개 영역 최댓값으로(명세 [제안] ≤0.3 은 참고), 원거리 p95/p5 는 IMG 19 측정 재현 2.23 ±25%. 띠는 targets 파일. sky kind background → sky(measure_fx_look 기본 모드 kind 아님). 영역은 frame 뒤 / 영역 2차(2026-10-31, 원문 63ad8084): tile_far.autocorrelation.secondary_peak 목표 이관(criterion) — measure_fx_look 자기상관은 평균만 빼서 원근 밝기 기울기가 양수 중앙 덩어리로 창 전체를 덮고 그 덩어리를 빼고 봉우리를 찾으므로 부분 상자 6개 모두 −3.5e−5~−2e−6 으로 상자와 무관하게 약 0 이 되어 상한 0.0603 이 거저 통과한다. 띠 근거인 갤러리 안개 6영역도 5개가 0 이라 같은 결함의 값이다. 기울기 제거 뒤 갤러리 띠를 다시 재면 되살린다(원문 63ad8084). 그동안 타일 반복 은폐는 승인 시트 육안, 손잡이 4개는 tile_far.atmosphere.p95_over_p5 로만 판정. exposure_ev100 1.0 은 AEM_MANUAL 볼륨이라 manual_ignored(실제 bias 0)이고 영역 상자는 그 화면 기준",
   "scenes": [
     {
       "name": "f6_tile",
@@ -86,13 +86,6 @@
       "look"
     ],
     "targets": [
-      {
-        "scene": "f6_tile",
-        "metric": "tile_far.autocorrelation.secondary_peak",
-        "weight": 2.0,
-        "basis": "live2_image",
-        "note": "갤러리 안개 6영역 최댓값 0.0603(IMG19 far_fvol) 올림, 나머지 5영역은 0. 띠 targets 파일. 명세 [제안] ≤0.3 은 참고만"
-      },
       {
         "scene": "f6_tile",
         "metric": "tile_far.atmosphere.p95_over_p5",

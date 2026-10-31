@@ -81,6 +81,56 @@
    "reason": "이 장면에 걸리는 목표가 없어 calib_judge resolve_targets 가 JudgeError('이 장면에 걸리는 목표 지표가 없다')를 낸다(감사 표 60행, 장면 측정은 정상). FogAmbient 가 잠들어 창 경계가 없고 수동장 안개 결은 d14_window_move passive_field 목표가 같은 안개 kind 띠로 이미 재므로, 근거 없는 새 장면 목표를 만들지 않고 장면을 뺐다. 영역 틀 파일은 남겼다",
    "source": "frame",
    "original": "37d9dc18:Tools/FluidFX/calib/plans/fog_f2_passive.json"
+  },
+  {
+   "plan": "fog_f7_lights",
+   "kind": "knob",
+   "item": "actor_prop TDGen_LabBlueLight.light_component.volumetric_scattering_intensity(2·4·8, base 4.0)",
+   "decision": "frame",
+   "destination": "승인 시트(f7 청색 웅덩이 육안, 그때까지 무대 상수 4.0)",
+   "reason": "짝 목표 blue_pool_over_surround 가 정의 불가로 structural-gaps 에 가서, 이 손잡이를 판정할 화면 지표가 남지 않았다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/fog_f7_lights.json"
+  },
+  {
+   "plan": "fog_f6_tile",
+   "kind": "target",
+   "item": "타일 반복 은폐(tile_far 30 m 주기 덩어리, 자기상관 대체)@f6_tile",
+   "decision": "frame",
+   "destination": "승인 시트(육안, 도구를 고친 뒤 계획으로 되살림)",
+   "reason": "자동 지표 tile_far.autocorrelation.secondary_peak 가 측정 정의 결함으로 structural-gaps(criterion)에 갔다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/fog_f6_tile.json"
+  },
+  {
+   "plan": "viscous_fx14_lava",
+   "kind": "target",
+   "item": "lava_world 국소 대비 ≥ 타일 대비(옛 derived.contrast_over_tile)와 손잡이 Kinds.LavaTile.TDFluidSimulationConfig.{AmbientNoiseAmount,FlowNoiseAccelerationCmPerSec2}·Kinds.LavaLocal.TDFluidSimulationConfig.DensityDissipation·Look:Materials./Game/FluidFX/Materials/MI_TD_FluidLava.Scalars.{LavaCrustThreshold,LavaEmissiveIntensity}",
+   "decision": "frame",
+   "destination": "승인 시트(합성 무늬 결함 확인 뒤)",
+   "reason": "spec-fx14 7절 용암 판정은 사용자 육안 승인이다(기준 이미지 없음). 화면 비는 분모(타일 대비 0.0019)가 잡음이라 쓸 수 없다. 지금 평면 전체가 고른 주황이므로 승인 전에 무늬 결함부터 확인한다",
+   "source": "frame",
+   "original": "63ad8084:Tools/FluidFX/calib/plans/viscous_fx14_lava.json"
+  },
+  {
+   "plan": "w5_tank_l11",
+   "kind": "knob",
+   "item": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidWaterTankWall.Scalars.GlassOpacity(장면 tank, values 0.15·0.25·0.4)",
+   "decision": "frame",
+   "destination": "승인 시트(TK1 옆면 반투명 청록, IMG 21 오른쪽 위 육안)",
+   "reason": "이 손잡이를 재던 유일한 목표 derived.tank_side_blue_over_red 가 structural-gaps 로 갔고 남은 목표 tank_surface.water.local_contrast 는 수면 윗면이라 유리 불투명도와 무관하다. 앞 유리 띠를 재면 유리 자체 색(B/R 1.019 회색)이라 의도와 반대로 보정될 수 있다",
+   "source": "frame",
+   "original": "4603c689:Tools/FluidFX/calib/plans/w5_tank_l11.json"
+  },
+  {
+   "plan": "input_fx15b",
+   "kind": "knob",
+   "item": "Kinds.InputBrushBench.TDFluidInputBrushSettings.ObjectSizeRadiusRatio(장면 z1_size, values 0.75·1.0·1.25)",
+   "decision": "frame",
+   "destination": "승인 시트(FX-15b B12 흔적 폭이 물체 크기를 따르는지 육안)",
+   "reason": "반지름 = 경계 최대 반폭 × 배율(TDFluidLiveActorInput.cpp:320)이라 두 상자에 같은 배율이 걸려 큰/작은 폭 비가 손잡이에 거의 둔감하고 남은 수치 목표가 없다. 배율에 따른 절대 흔적 폭은 frame 육안으로 본다",
+   "source": "frame",
+   "original": "4603c689:Tools/FluidFX/calib/plans/input_fx15b.json"
   }
  ]
 }

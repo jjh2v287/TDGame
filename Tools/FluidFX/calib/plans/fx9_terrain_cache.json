@@ -21,7 +21,7 @@
       },
       "time_dilation": 1.0,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/fx9_zone_regions.json",
+      "regions_template": "Tools/FluidFX/calib/regions/fx9_terrain_cache_regions.json",
       "targets": "Tools/FluidFX/calib/targets/fx9_live2_volume.json",
       "live2_refs": [
         "L3"

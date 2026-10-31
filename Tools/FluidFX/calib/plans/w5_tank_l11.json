@@ -1,6 +1,6 @@
 {
   "id": "w5_tank_l11",
-  "note": "spec-w5 TK1(MT L11). 구역 0 수조: 유리 옆면 불투명도와 물 반사·소산. 반박 M7: TK1 의 캐릭터 둘레 고리 목표는 고리 스탬프가 물 계층 받는 쪽 전용이라 현재 WaterPool 로는 닿지 않아 뺐다(p3_gaps). 옆면 반투명 청록·바닥 코스틱 칸 = 캐릭터 폭 1~2배는 IMG 21 오른쪽 위와 육안 대조(수치 목표 없음). 폰은 zones.0.camera / 0b(2026-10-30): IMG 21 오른쪽 위 수조 측정으로 옆면 청록(B/R)과 수면 코스틱 국소 대비 목표를 더했다. 영역 틀은 frame 뒤",
+  "note": "spec-w5 TK1(MT L11). 구역 0 수조: 유리 옆면 불투명도와 물 반사·소산. 반박 M7: TK1 의 캐릭터 둘레 고리 목표는 고리 스탬프가 물 계층 받는 쪽 전용이라 현재 WaterPool 로는 닿지 않아 뺐다(p3_gaps). 옆면 반투명 청록·바닥 코스틱 칸 = 캐릭터 폭 1~2배는 IMG 21 오른쪽 위와 육안 대조(수치 목표 없음). 폰은 zones.0.camera / 0b(2026-10-30): IMG 21 오른쪽 위 수조 측정으로 옆면 청록(B/R)과 수면 코스틱 국소 대비 목표를 더했다. 영역 틀은 frame 뒤 / 영역 틀 2차(2026-10-31): 옆면 목표 derived.tank_side_blue_over_red(IMG 21 B/R 2.66)와 그 파생식은 structural-gaps 로, 그 목표만 재던 GlassOpacity(0.15·0.25·0.4)는 approval-only 로 옮겼다. 새 frame 5장 앞 유리 띠(y 248~285)가 B/R 1.019 회색: 수조 물은 윗면(WaterPool 표면 z 100)만 그려지고 TankUnderwaterVolume 은 경계 있는 후처리라 카메라가 수조 안일 때만 적용되어, 밖에서는 유리(GlassTint 0.35·0.75·0.75) 너머에 물 몸체가 없다(카메라·노출로 만들 수 없음). 원문 4603c689",
   "scenes": [
     {
       "name": "tank",
@@ -48,15 +48,6 @@
   ],
   "params": [
     {
-      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidWaterTankWall.Scalars.GlassOpacity",
-      "values": [
-        0.15,
-        0.25,
-        0.4
-      ],
-      "split_group": false
-    },
-    {
       "json_path": "Kinds.WaterPool.TDFluidSimulationConfig.EdgeBounciness",
       "values": [
         0.25,
@@ -85,28 +76,11 @@
     ],
     "targets": [
       {
-        "metric": "derived.tank_side_blue_over_red",
-        "weight": 1.0,
-        "scene": "tank",
-        "low": 1.9933,
-        "high": 3.3222,
-        "basis": "live2_image",
-        "note": "IMG 21 g21_tank_side [800,250,1230,310] B/R 2.6578, ±25%"
-      },
-      {
         "metric": "tank_surface.water.local_contrast",
         "weight": 1.0,
         "scene": "tank",
         "basis": "live2_image",
         "note": "IMG 21 g21_tank_top [1040,120,1240,240] 0.0535, ±25%"
-      }
-    ],
-    "derived": [
-      {
-        "name": "tank_side_blue_over_red",
-        "op": "ratio",
-        "a": "tank_side.water.mean_blue",
-        "b": "tank_side.water.mean_red"
       }
     ]
   }

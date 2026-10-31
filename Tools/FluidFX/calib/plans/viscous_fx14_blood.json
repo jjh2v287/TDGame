@@ -1,6 +1,6 @@
 {
   "id": "viscous_fx14_blood",
-  "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4). blood_splash 는 단계마다 call 로 조각 방출기 trigger_break_at(파괴 액터 (2000, 0, 50) + EXPLOSION_HIT_OFFSET (-55, 0, -35) = (1945, 0, 15), editor_make_fluid_viscous_stage.py build_zone_splash·fire_stage)을 부른 뒤 settle 6 초를 기다린다. 목록 인수는 언리얼 파이썬이 FVector 로 바꾼다(PyWrapperStruct CastPyObject 순서열 허용). [위험] TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌리므로 둘째 단계부터 새 튐이 없다: 0b 에서 단계마다 PIE 재시작이나 재무장 수단을 정하기 전에는 blood_splash 판정을 쓰지 않는다 / CAL-0 0b 통합(D3): blood_splash 장면과 그 목표 2개(blood_streak.streak_aspect·streak_tip_width_ratio)는 TriggerBreakAt 가 PIE 당 한 번이라 재무장 수단이 생길 때까지 deferred(판정 미사용, FX-P 표). 원문과 복원 조건은 Tools/FluidFX/calib/structural-gaps.json / frame 정리(2026-10-31): decal_edge.width_cells → decal_edge.edge_profile.width_cells(edge_profile 분석). 영역 선·축척은 재촬영 뒤(명세만)",
+  "note": "FX-14 A6·A7·B5·M1·J6, 정본 ViscousBlood(256²·12.8 m GPU), 무대 구역 5 데칼(중심 8000, 0)·구역 2 피 튐(중심 2000, 0). 경사 데칼 깊이는 C++ 출력 액터가 지형 범위로 잡는다(M4). blood_splash 는 단계마다 call 로 조각 방출기 trigger_break_at(파괴 액터 (2000, 0, 50) + EXPLOSION_HIT_OFFSET (-55, 0, -35) = (1945, 0, 15), editor_make_fluid_viscous_stage.py build_zone_splash·fire_stage)을 부른 뒤 settle 6 초를 기다린다. 목록 인수는 언리얼 파이썬이 FVector 로 바꾼다(PyWrapperStruct CastPyObject 순서열 허용). [위험] TriggerBreakAt 는 PIE 당 한 번(bHasStartedTracking)이고 룩데브는 한 장면의 단계를 한 PIE 에서 이어 돌리므로 둘째 단계부터 새 튐이 없다: 0b 에서 단계마다 PIE 재시작이나 재무장 수단을 정하기 전에는 blood_splash 판정을 쓰지 않는다 / CAL-0 0b 통합(D3): blood_splash 장면과 그 목표 2개(blood_streak.streak_aspect·streak_tip_width_ratio)는 TriggerBreakAt 가 PIE 당 한 번이라 재무장 수단이 생길 때까지 deferred(판정 미사용, FX-P 표). 원문과 복원 조건은 Tools/FluidFX/calib/structural-gaps.json / frame 정리(2026-10-31): decal_edge.width_cells → decal_edge.edge_profile.width_cells(edge_profile 분석). 영역 선·축척은 재촬영 뒤(명세만) / 계획 결정(2026-10-31 viscous 묶음, 원래 값 63ad8084): 옛 시점(폰 (8000, 0) 현재 z 유지 → 바닥, 카메라 (7567, 0, 346))은 경사판(중심 높이 450 cm, 아랫면 x 7567 에서 약 556 cm) 아래라 구역 5 데칼을 못 봤다. r2 가 데칼로 본 빨간 얼룩(x 513~776, y 84~121)과 회색 상자는 구역 6(FlowMesh, 중심 10000) 피와 파괴 상자 (9600, 0, 50)이다(투영 (640, 105)·3.0 cm/px 가 상자 화면 위치·폭과 맞고, 화면 위 y<65 회색 띠는 판 아랫면 투영 y≤67 과 맞음). 새 시점: 폰을 판 윗면 위쪽 끝 띠(x 7290: 판 끝 7227, 데칼 창 7360~8640 밖)에 [x, y, z](윗면 650.6 + 캡슐 96 + 5)로 올리고 메시를 숨기며 arm 100·pitch -40·yaw 0(경사 아래 +X), 구역 6 은 재운다. 교반기(BP 기본 90°/s, 반경 100, 피벗 (7650, 0), 높이 579.13)는 step_apply 가 θ=0 으로 되돌려 촬영 8.0~9.0 초에 θ≈0~90°(화면 (642, 169) → (773, 225), 반지름 23~27 px). 피 원판(x 7530~7770, y ±120)은 행 약 217~308·0.60~0.96 cm/px(칸 5 cm = 5~8 px, 문턱 2칸 = 10~17 px), 왼쪽 옆 가장자리(화면 x 약 440~515)는 교반기와 겹치지 않는다. 투영 예측은 선 근거가 아니다(P-18)",
   "scenes": [
     {
       "name": "blood_decal",
@@ -8,16 +8,45 @@
       "camera": {
         "exposure_ev100": 1.0,
         "pawn": [
-          8000.0,
-          0.0
+          7290.0,
+          0.0,
+          751.6
         ],
-        "arm": 500.0,
+        "arm": 100.0,
         "view": [
-          -30.0,
+          -40.0,
           0.0
         ],
         "awake": {
-          "TDGen_ViscousBloodFlowDecal": true
+          "TDGen_ViscousBloodFlowDecal": true,
+          "TDGen_ViscousBloodFlowMesh": false
+        },
+        "hide_components": {
+          "pawn": [
+            "Mesh"
+          ]
+        }
+      },
+      "step_apply": {
+        "location": {
+          "TDGen_ViscousBloodFlowDecal_Stirrer": [
+            7750.0,
+            0.0,
+            579.13
+          ]
+        },
+        "call": {
+          "TDGen_ViscousBloodFlowDecal_Stirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
         }
       },
       "time_dilation": 1.0,
@@ -99,7 +128,7 @@
         "low": 0.0,
         "high": 2.0,
         "scene": "blood_decal",
-        "note": "spec-fx14 7절 피 데칼 가장자리 10~90% 폭 ≤2칸(TS J6). measure_fx_look edge_profile 키(영역 analyses edge_profile·line·cm_per_px·cell_cm 5.0 = 12.8 m/256 필요). 지금 영역 틀에는 analyses 가 없어 None: frame 이미지(1280x720)에서 데칼이 멀어 한 칸이 약 1.1 px(교반 구[추정: 회색 블록 옆 어두운 구] 지름 40 cm 가 약 9 px)이고 오른쪽 가장자리 가로 단면 10~90% 폭이 행마다 5~30 px 로 들쭉날쭉한 모양에 지배돼 선을 정할 수 없다 → 명세만(Saved/AgentOps/20261031/pending-region-specs/viscous_fx14_regions_blood_decal.json), 데칼을 가까이 다시 찍은 뒤 line·cm_per_px 를 그린다"
+        "note": "spec-fx14 7절 피 데칼 가장자리 10~90% 폭 ≤2칸(TS J6). measure_fx_look edge_profile(영역 analyses edge_profile·line·cm_per_px·cell_cm 5.0 = 12.8 m/256). 선은 재촬영 frame 에서 경사 아래로 흐르는 피의 옆 가장자리(세계 X 방향으로 놓임)를 가로지르는 가로선으로 긋는다(yaw 0 이라 가로 축척에 원근 단축 없음). 행 ≥ 약 217(≤1 cm/px)에서 다섯 장 모두 교반 구·그림자와 겹치지 않는 곳. cm_per_px 는 그 행의 가로 축척(폰 캡슐 중심 z 746.6·arm 100·pitch -40·초점 640, 판 윗면 z = 460.35 − tan15°·(x − 8000))으로 계산하고 교반 구 지름 40 cm 의 화면 폭으로 교차 확인. 재촬영 대기: 옛 frame(2026-10-31 r2)은 판 아래 시점이라 구역 6 을 찍어 이 목표에 무효(명세 Saved/AgentOps/20261031/pending-region-specs/viscous_fx14_regions_blood_decal.json 의 축척은 옛 시점 값)"
       }
     ]
   }

@@ -1,6 +1,6 @@
 {
   "id": "viscous_fx14_mud",
-  "note": "FX-14 A6·A7·A10·M1·M4, 정본 ViscousMud(256²·12.8 m GPU), 무대 LV_TDFluidViscousStage 구역 3(중심 4000, 0). Groups.Viscous 경로는 묶음 A 통합 뒤 유효 / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다 / frame 정리(2026-10-31): swirl_spacing_cm → mud_surface.swirl.spacing_cm(swirl 분석). spread_growth_per_sec·streak_aspect·streak_tip_width_ratio 는 명세 7절이 헤드리스 밀도장 지표(Viscous.HeadlessMetricsReport)라 화면으로 정의 불가 → structural-gaps.json",
+  "note": "FX-14 A6·A7·A10·M1·M4, 정본 ViscousMud(256²·12.8 m GPU), 무대 LV_TDFluidViscousStage 구역 3(중심 4000, 0). Groups.Viscous 경로는 묶음 A 통합 뒤 유효 / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다 / frame 정리(2026-10-31): swirl_spacing_cm → mud_surface.swirl.spacing_cm(swirl 분석). spread_growth_per_sec·streak_aspect·streak_tip_width_ratio 는 명세 7절이 헤드리스 밀도장 지표(Viscous.HeadlessMetricsReport)라 화면으로 정의 불가 → structural-gaps.json / 계획 결정(2026-10-31 viscous 묶음, 원래 값 63ad8084): r2 frame 위쪽의 공·띠는 구역 4(MudLocal, 궤도 중심 6000·반경 600)다. 걷기 뒤 폰 4607·카메라 x≈4320 이 +X 를 보아 구역 3 궤도(x 3700~4300)는 카메라 뒤에 있었고, 공 화면 이동 약 150 px/s·지름 약 37 px(≈3.2 cm/px → 약 480 cm/s)가 반경 600·45°/s 와 맞는다. 가까운 갈색 덩어리는 폰 걷기 자국(창 가장자리 4640 에서 잘림)이고 7초 뒤라 흐름이 없다. 구역 4 띠의 화면 두께 5~10 px 는 지면 세로 축척 약 20 cm/px 로 원근 단축된 것이라 실제 폭은 약 1.1~2 m(공 지름 120 cm 정도)여서 상자를 띠 안에 둘 수 있다. 그래서 move 를 뺐고(걷기는 헤드리스로 옮긴 streak 목표용), 폰을 궤도 중심에 두고 메시를 숨기며(arm 250·pitch -55·yaw 0), step_apply 가 공을 θ=30°(위치 (4259.81, 150, 60)·회전 yaw 30, 피벗 (4000, 0) 유지, fog_f5 선례)로 되돌린다. 45°/s 라 촬영 8.0~9.0 초에 공은 θ≈30~75°(화면 (868, 74) 반지름 약 90 px → (1216, 279)), θ≈-20~10° 띠(가로로 놓임, 공 뒤 나이 약 0.5~2 s)는 화면 x 약 500~720·행 약 73~180, 축척 약 0.73~0.84 cm/px(목표 10~20 cm = 12~27 px). 투영 예측은 상자 근거가 아니다(P-18): 재촬영 frame 으로 영역을 그린다",
   "scenes": [
     {
       "name": "mud_world",
@@ -11,13 +11,18 @@
           4000.0,
           0.0
         ],
-        "arm": 350.0,
+        "arm": 250.0,
         "view": [
-          -35.0,
+          -55.0,
           0.0
         ],
         "awake": {
           "TDGen_ViscousMudWorld": true
+        },
+        "hide_components": {
+          "pawn": [
+            "Mesh"
+          ]
         }
       },
       "step_apply": {
@@ -25,8 +30,25 @@
           4000.0,
           0.0
         ],
-        "move": {
-          "distance_cm": 600.0
+        "location": {
+          "TDGen_ViscousMudWorld_Ball": [
+            4259.81,
+            150.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_ViscousMudWorld_Ball": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                30.0,
+                0.0
+              ],
+              true
+            ]
+          }
         }
       },
       "time_dilation": 1.0,
@@ -92,7 +114,7 @@
         "weight": 0.5,
         "low": 10.0,
         "high": 20.0,
-        "note": "spec-fx14 7절 진흙(화면) 소용돌이 간격 10~20 cm. measure_fx_look swirl 분석 키(영역 analyses swirl·cm_per_px 필요, cm_per_px 없으면 None). 영역 틀은 재촬영 대기(명세 Saved/AgentOps/20261031/pending-region-specs/viscous_fx14_regions_mud_world.json, cm_per_px 는 카메라 기하로 계산하고 공 지름으로 교차 확인)"
+        "note": "spec-fx14 7절 진흙(화면) 소용돌이 간격 10~20 cm(FlowNoiseScaleCm 15 의 흐름 잡음 소용돌이). measure_fx_look swirl(영역 analyses swirl·cm_per_px, band_px 를 넣으면 4~30 px 처럼 목표 양쪽을 넉넉히 덮게: 목표 안쪽으로 좁히면 붉은 스펙트럼이 대역 끝에 걸려 가짜 통과). 상자는 구역 3 공 자국 띠(θ≈-20~10°) 안에만 두고, 다섯 장 모두 공·공 그림자·흰 바닥·폰 발 자국을 뺀다. cm_per_px 는 상자 가운데 행의 가로 축척(폰 캡슐 중심 z 96·arm 250·pitch -55·yaw 0·초점 640, 지면 z 0)으로 계산하고 첫 장 공 지름 120 cm 의 화면 폭으로 교차 확인. 재촬영 대기: 옛 frame(2026-10-31 r2)은 구역 4 를 찍어 이 목표에 무효(명세 Saved/AgentOps/20261031/pending-region-specs/viscous_fx14_regions_mud_world.json 의 축척 표는 옛 시점 값)"
       }
     ]
   }

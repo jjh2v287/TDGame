@@ -1,6 +1,6 @@
 {
   "id": "cloud_g11_cyclone_live",
-  "note": "FX-11c G11, 셋업 17 CycloneLive(라이브 텍스처 덮임 + 눈 싱크 스탬프), IMG 10(가까운·먼·눈 바닥 휘도비). 모양 키는 G5 와 겹치지 않게 MI_TD_FluidCloud_CycloneLive 를 쓴다 / CAL-0 B6: cloud_g5_cyclone(폐기·이관) 장면 cyclone·목표·Look 손잡이를 합침(손잡이는 param scenes 로 장면 한정)",
+  "note": "FX-11c G11, 셋업 17 CycloneLive(라이브 텍스처 덮임 + 눈 싱크 스탬프), IMG 10(가까운·먼·눈 바닥 휘도비). 모양 키는 G5 와 겹치지 않게 MI_TD_FluidCloud_CycloneLive 를 쓴다 / CAL-0 B6: cloud_g5_cyclone(폐기·이관) 장면 cyclone·목표·Look 손잡이를 합침(손잡이는 param scenes 로 장면 한정) / 2026-10-31 frame 영역 2차: 장면 cyclone(셋업 15 정적 덮임)은 near·far 층이 화면에 없어 장면·목표 2·MI_TD_FluidCloud_Cyclone 손잡이 3을 structural-gaps(scene)로 옮김(원문 63ad8084)",
   "scenes": [
     {
       "name": "cyclone_live",
@@ -24,32 +24,6 @@
       ],
       "shots": {
         "count": 3,
-        "interval": 0.25,
-        "kind": "replicate"
-      }
-    },
-    {
-      "name": "cyclone",
-      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
-      "camera": {
-        "view_target": "TDGen_CloudCam_Cyclone",
-        "exposure_ev100": 12.0,
-        "console": [
-          "TD.FluidFX.CloudSetup 15",
-          "TD.FluidFX.CloudViewSampleScale 2",
-          "r.TDFogScattering 0",
-          "r.VolumetricRenderTarget.Mode 0"
-        ]
-      },
-      "time_dilation": 1.0,
-      "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/cloud_g5_regions.json",
-      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
-      "live2_refs": [
-        "IMG10"
-      ],
-      "shots": {
-        "count": 5,
         "interval": 0.25,
         "kind": "replicate"
       }
@@ -111,39 +85,6 @@
       "scenes": [
         "cyclone_live"
       ]
-    },
-    {
-      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Cyclone.Scalars.CloudSlot1TopExponent",
-      "values": [
-        1.5,
-        2,
-        3
-      ],
-      "scenes": [
-        "cyclone"
-      ]
-    },
-    {
-      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Cyclone.Scalars.CloudSlot1EdgeErosion",
-      "values": [
-        0.4,
-        0.6,
-        0.8
-      ],
-      "scenes": [
-        "cyclone"
-      ]
-    },
-    {
-      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Cyclone.Scalars.CloudSlot2PatternCoverage",
-      "values": [
-        0.3,
-        0.4,
-        0.6
-      ],
-      "scenes": [
-        "cyclone"
-      ]
     }
   ],
   "metrics": {
@@ -171,20 +112,6 @@
         "low": 0.45,
         "high": 0.75,
         "scene": "cyclone_live"
-      },
-      {
-        "metric": "near.atmosphere.p95_over_p5",
-        "weight": 1.0,
-        "low": 1.4,
-        "high": 2.33,
-        "scene": "cyclone"
-      },
-      {
-        "metric": "far.atmosphere.p95_over_p5",
-        "weight": 1.0,
-        "low": 1.46,
-        "high": 2.43,
-        "scene": "cyclone"
       }
     ],
     "derived": [

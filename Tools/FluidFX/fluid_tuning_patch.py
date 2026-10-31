@@ -1,6 +1,6 @@
 """실행 환경: 시스템 Python 3(에디터 불필요, PowerShell 또는 Git Bash). 조절 정본 TDFluidPresetTuning.json 과 모양 정본 TDFluidMaterialLook.json 을 한 곳 규칙의 소유 위치(Kinds·Groups·StructDefaults·Globals, 모양은 Look:<구획>.<패키지>.<값 구역>.<이름>)에서 고친 사본을 Saved 아래에 만들고, 묶음(Groups) 소유 필드를 한 종류만 바꿀 때는 split_group 일 때만 회원 종류로 펼친다(spec-wave0-data-bridge-v2 3.9). 채택값은 덧씌움 overlay.json v2(spec-cal0-v2 C7)에 누적한다.
 실행 명령: python Tools/FluidFX/fluid_tuning_patch.py [--root <루트>] variant --out-dir Saved/FluidFX/calib/<run>/v<k> [--set <JSON 경로>=<JSON 값>]... [--set-split <Kinds 경로>=<JSON 값>]... | write-canonical --backup-dir <Saved 아래 폴더> [--set ...] [--from-overlay <overlay.json>] [--acknowledge-header] | restore --backup-dir <폴더> | accept --judge <confirm judge.json> [--overlay <overlay.json>] | overlay-remove --json-path <경로> --reason <사유> [--overlay ...] | overlay-replace --json-path <경로> --judge <judge.json> [--overlay ...] | materialize --out <Saved 아래 폴더> [--overlay ...]. JSON 경로 = Kinds.<종류>.<구조체>.<필드> | Groups.<묶음>.<구조체>.<필드> | StructDefaults.<구조체>.<필드> | Globals.<구조체>.<필드> | Look:Materials.<패키지>.<Scalars|Vectors>.<이름> | Look:NiagaraSystems.<패키지>.<Floats|Ints|Bools|Vectors2|Vectors3|Colors>.<이름>(정본 모양에 없는 키는 할당에 base 필수, Switches 거부). 덧씌움 기본 경로 Saved/FluidFX/calib/accepted/overlay.json
-출력: variant·materialize 는 <out>/TDFluidPresetTuning.json·TDFluidMaterialLook.json(바꾸지 않은 쪽은 정본 바이트 그대로)·variant.json(할당·scope kind|global|look·소유 위치·기준 값·sha256, materialize 는 overlay·overlay_sha256 추가). write-canonical 은 두 정본을 <backup-dir> 에 백업(backup.json)한 뒤 쓰고 검사 실패면 둘 다 되돌린다. StructDefaults·Globals 경로는 --acknowledge-header 없으면 거부, StructDefaults.TDFluidSimulationConfig 는 늘 거부. accept·overlay-* 는 덧씌움을 원자적으로 다시 쓰고 history 에 add|remove|replace 를 남긴다(Look 채택 항목에는 levels = Look 을 적용한 계획 장면(sources look·probe)의 수준). 사본·정본은 check_fluid_preset_data.py --tuning --look 과 fluid_material_look 형식 검사가 0 이어야 한다. 종료 코드 0 성공 / 1 검사 실패·소유 규칙 위반·adopt 거짓 / 2 입력 오류(경로 문법·정본에 없는 키·옛 형식 판정·잠금 재검증 실패·덧씌움 sha 불일치)
+출력: variant·materialize 는 <out>/TDFluidPresetTuning.json·TDFluidMaterialLook.json(바꾸지 않은 쪽은 정본 바이트 그대로)·variant.json(할당·scope kind|global|look·소유 위치·기준 값·sha256, materialize 는 overlay·overlay_sha256 추가). write-canonical 은 두 정본을 <backup-dir> 에 백업(backup.json)한 뒤 쓰고 검사 실패면 둘 다 되돌린다. StructDefaults·Globals 경로는 --acknowledge-header 없으면 거부, StructDefaults.TDFluidSimulationConfig 는 늘 거부. accept·overlay-* 는 덧씌움을 원자적으로 다시 쓰고 history 에 add|remove|replace 를 남긴다(Look 채택 항목에는 levels = Look 을 적용한 계획 장면(sources look·probe)의 수준, 그 장면 camera.console 에 TD.FluidFX.CloudSetup N 이 있으면 cloud_setups = N 정수 목록). 사본·정본은 check_fluid_preset_data.py --tuning --look 과 fluid_material_look 형식 검사가 0 이어야 한다. 종료 코드 0 성공 / 1 검사 실패·소유 규칙 위반·adopt 거짓 / 2 입력 오류(경로 문법·정본에 없는 키·옛 형식 판정·잠금 재검증 실패·덧씌움 sha 불일치)
 상태: 오프라인 검사만(2026-10-25 정본 왕복·묶음 펼침·되쓰기 복원, 2026-10-30 CAL-0 B1 하네스 check_cal0_patch: Look·Globals 사본, 임시 루트 write-canonical·restore, accept·overlay-remove·overlay-replace·materialize, effective_value). effective_value 해석 순서 Globals 한 층, 아니면 Kinds → Groups → StructDefaults 는 C++ TDFluidPresetTuningSubsystem.cpp 에서 확인(StructDefaults :773, Groups :788, Kinds :806 순으로 층을 쌓고 :912-915 가 차례로 덮어씀, Globals :901). 정본 조절 JSON 은 들여쓰기가 고르지 않아(Kinds 한 구간) 되쓰기 때 그 구간 들여쓰기도 정규화된다. 실제 PIE 스윕·정본 되쓰기 미실행.
 """
 import argparse
@@ -47,6 +47,7 @@ JUDGE_VERSION = 2
 KNOB_ENTRY = "knob"
 BASE_TUNING_ENTRY = "base_tuning"
 LOOKDEV_SOURCES = ("look", "probe")
+CLOUD_SETUP_CONSOLE = "TD.FluidFX.CloudSetup"
 EXIT_CHECK_FAILED = 1
 EXIT_INPUT = 2
 
@@ -510,11 +511,26 @@ def plan_levels(plan, scene_names):
     return list(dict.fromkeys(scene.get("level") for scene in chosen if scene.get("level")))
 
 
-def look_levels(plan, json_path):
+def scene_cloud_setup(scene):
+    commands = ((scene.get("camera") or {}).get("console") or []) if isinstance(scene, dict) else []
+    setups = [int(parts[1]) for parts in (str(command).split() for command in commands) if len(parts) == 2 and parts[0].lower() == CLOUD_SETUP_CONSOLE.lower() and parts[1].isdigit()]
+    return setups[-1] if setups else None
+
+
+def look_scenes(plan, json_path):
     default_sources = ["water_probe"] if "water_probe" in ((plan.get("metrics") or {}).get("sources") or []) else ["look"]
     lookdev_scenes = [scene for scene in plan.get("scenes") or [] if set(scene.get("sources", default_sources)) & set(LOOKDEV_SOURCES)]
     scene_names = next((param.get("scenes") for param in plan.get("params") or [] if param.get("json_path") == json_path), None)
-    return plan_levels({"scenes": lookdev_scenes}, scene_names)
+    return [scene for scene in lookdev_scenes if not scene_names or scene.get("name") in scene_names]
+
+
+def look_levels(plan, json_path):
+    return plan_levels({"scenes": look_scenes(plan, json_path)}, None)
+
+
+def look_cloud_setups(plan, json_path):
+    setups = (scene_cloud_setup(scene) for scene in look_scenes(plan, json_path) if scene.get("level"))
+    return sorted({setup for setup in setups if setup is not None})
 
 
 def describe_actor_prop(actor_prop):
@@ -543,6 +559,9 @@ def adopted_entries(judge_path, judge, adopt, plan):
                 entry["base"] = item["base"]
             if is_look_path(json_path):
                 entry["levels"] = look_levels(plan, json_path)
+                cloud_setups = look_cloud_setups(plan, json_path)
+                if cloud_setups:
+                    entry["cloud_setups"] = cloud_setups
             knobs.append(entry)
     if not knobs and not actor_props:
         raise InputRejected(f"{judge_path}: adopt.assignments 가 비었다")

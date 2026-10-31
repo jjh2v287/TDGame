@@ -30,7 +30,7 @@
 - 공개 저장소 Fab·Paragon·Manny 원본 비공개 전환·재저장 에셋 유지 판단.
 - 분석 결정 GQ-01~32(26=아니오), 먼저 GQ-01·10~13·20·27.
 - 기록 누락 의심: M1-01~05(코드 있음, 대장 todo).
-- FluidFX D-64 ⑫ 확인.
+- FluidFX D-64⑫ 확인
 - 빌드 순서 `--acquire-hold`·`--holder`(L-build-05·08). `TDGame.Combat` GUI 크래시→헤드리스(L-editor-08).
 
 ## ③ 다음 행동

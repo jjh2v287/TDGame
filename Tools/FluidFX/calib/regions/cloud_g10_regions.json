@@ -1,5 +1,5 @@
 {
- "note": "1280x720, 층운 관통 전체 화면 grain",
+ "note": "새 frame(2026-10-31 재촬영, Saved/FluidFX/calib/frames/cloud_g10_near/stratus_scale4·5·6/00_schedule_*.png 각 5장, 1280x720, LV_TDFluidCloudStage, TDGen_CloudCam_Stratus)에서 다시 확인한 전체 화면 상자(변경 없음). 매질 안이라는 근거: 층운 층이 고도 0.8~1.2 km(Content/FluidFX/PresetData/TDFluidMaterialLook.json 의 MI_TD_FluidCloud_Stratus CloudSlot1BottomKm 0.8·ThicknessKm 0.4)이고 카메라가 eye (-2, 0, 0.95) km→target (2, 0, 1.0) km(Tools/FluidFX/editor_make_fluid_cloud_stage.py 의 Stratus)라 층 안에서 거의 수평(+0.7°)으로 본다. 같은 무대 h7 카메라(고도 0.1 km)에서는 지평선이 439 행에 행 평균 휘도 단차 26.7/255 로 보이는데, 이 15장은 모두 방사형 비네트 맞춤 뒤 잔차 표준편차 약 1.0/255·8 px 행 평균 단차 0.75/255 이하로 지평선이 없다(매질이 지면·하늘 경계를 가림). 그래서 화면 전체가 층운 매질이고 grain 을 전체 화면에서 잰다. 주의: 화면이 균일해 grain 0.00117~0.00119 는 디더 하한 근처이고 scale 4·5·6 사이 평균 절대 차(약 0.001)가 같은 장면 6.0초·7.0초 차와 같아, 이 지표의 CVAR 판별력은 계획 수준 문제다",
  "regions": [
   {
    "name": "frame",

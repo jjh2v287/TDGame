@@ -1,15 +1,6 @@
 {
-  "note": "frame 대조 이미지(viscous_fx14_lava/lava_world 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: frame-after·retired 명세가 없어 계획 metrics.targets 와 viscous_fx14_targets region_metrics 가 참조하는 이름(lava_tile_seam·lava_local)으로 만듦. 세 계획(mud·blood·lava)이 카메라가 달라 장면별 파일로 나눔. lava_tile_seam 은 평면 끝(y 약 50) 아래 먼 띠로, 시간 표준편차에서 타일 반복 무늬(가로 주기 약 290~650 px)가 여러 번 보이는 곳. lava_local 은 캐릭터 오른쪽 가까운 쪽으로 국소 시뮬 흐름 움직임이 보이는 곳(캐릭터 x 705 이하 제외, 카메라 기하로 12.8 m 국소 영역 안). kind water 는 기본 모드에 용암 전용 kind 가 없어 액체 표면 지표 자리로 빌림",
+  "note": "2026-10-31 재확인 결과 lava_local 을 뺌(blocked): 계획 viscous_fx14_lava 장면 lava_world 새 frame 5장(Saved/FluidFX/calib/frames/viscous_fx14_lava/lava_world/00_schedule_08000~09000ms.png, 1280x720), 카메라 pawn (0,8000)·arm 600·view (-30,0)·EV100 1·TDGen_LavaWorld_Tile·Local 깨움. 시간 표준편차 지도에는 비네트 양자화 동심 띠만 있고 국소 시뮬 흐름이 없다: 옛 lava_local [720,300,1200,700] 의 처음·끝 장 최대 변화 0.0076 = 같은 깊이 왼쪽 [60,300,540,700] 0.0076(frames_r1 에서는 0.025), 고역(가우스 8 px) 표준편차 0.00135 = 왼쪽 0.00134. 효과가 화면에 없어 상자를 그리면 contrast_over_tile 이 거저 통과하므로 그리지 않는다(재촬영에서 흐름이 보이면 다시 그림). lava_tile_seam 은 평면 끝(y 약 50) 아래 먼 띠로 그대로 둠(새 frame 에서는 frames_r1 의 움직이는 타일 얼룩이 없고 정지 무늬만 약하게 남음). 이름 출처: 계획 metrics.derived contrast_over_tile 의 a·b. kind water 는 용암 전용 kind 가 없어 액체 표면 지표 자리로 빌림",
   "regions": [
-    {
-      "name": "lava_tile_seam",
-      "kind": "water",
-      "box": [10, 62, 1270, 170]
-    },
-    {
-      "name": "lava_local",
-      "kind": "water",
-      "box": [720, 300, 1200, 700]
-    }
+    {"name": "lava_tile_seam", "kind": "water", "box": [10, 62, 1270, 170]}
   ]
 }

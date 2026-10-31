@@ -1,11 +1,6 @@
 {
-  "note": "frame 대조 이미지(w5_tank_l11/tank 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/w5_tank_l11_frame_regions.frame-after.json(이름·kind). tank_surface 는 수조 윗물 사다리꼴(y 17~247) 안쪽 직사각형, tank_side 는 앞 유리 옆면 띠(y 248~285, 좌우 비스듬한 옆벽 x 448~477·803~832 제외)",
+  "note": "2026-10-31 재확인: 계획 w5_tank_l11 장면 tank 새 frame 5장(Saved/FluidFX/calib/frames/w5_tank_l11/tank/00_schedule_05000~06000ms.png, 1280x720), 카메라 pawn (0,-500)·arm 900·view (-60,90). tank_surface 는 수조 윗물 사다리꼴(y 17~247) 안쪽 직사각형으로, 겹침 이미지·5장 대조에서 물결 무늬 안에 있음을 확인해 그대로 둠. tank_side 는 뺐다: 앞 유리 옆면 띠(y 248~285)가 물결 무늬 없는 균일한 회색 판이고(5장 모두 B/R 1.019·고역 표준편차 0.0019, 바로 아래 바닥 1.000·0.0014, 좌우 옆벽 1.04~1.05, frames_r1 도 1.018), 목표 derived.tank_side_blue_over_red(IMG 21 옆면 청록 B/R 2.66)가 재려는 옆면으로 보이는 물이 화면에 없어 상자를 두면 유리 색을 물 색으로 보정하게 된다. 옆면 물이 그려지면 앞 유리 띠 x 480~800, y 251~282(옆벽 x 448~477·803~832 제외)에 다시 둔다. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/w5_tank_l11_frame_regions.frame-after.json(이름·kind)",
   "regions": [
-    {
-      "name": "tank_side",
-      "kind": "water",
-      "box": [480, 251, 800, 282]
-    },
     {
       "name": "tank_surface",
       "kind": "water",

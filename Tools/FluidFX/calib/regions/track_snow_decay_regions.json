@@ -1,0 +1,25 @@
+{
+ "note": "frame 대조 이미지(track_fx12c_groove/groove_decay 00_schedule_12000~72000ms.png 시계열 5장, 1280x720, 2026-10-31 재촬영: move 입력 걷기 1507 cm 완료, 폰 정지, 카메라 arm 350·view -12/0)로 그린 상자. 이름·kind·요건: Saved/AgentOps/20261031/pending-region-specs/track_snow_decay_regions.json. 화면 안 홈은 인물 뒤 발자국 하나(다섯 장 같은 자리, 12 s 최저 휘도 84 → 72 s 154 로 옅어짐). groove_decay = 12 s 장에서 행마다 반깊이(표면 216 과 최저값의 중간) 아래인 구간이 590~623 행 모두에서 겹치는 x 631~646(홈 바닥, 둑·그림자 제외). decay_surface = 같은 행 590~623 의 왼쪽 걷지 않은 평평한 눈 x 530~593: 열 휘도 단면에서 왼쪽 둑 띠(x 596~613, 최대 220.6)와 오른쪽 둑(x 668~686) 밖이고, 다섯 장 평균 216.55~216.58 로 일정(그림자 하단 y 584 아래)",
+ "regions": [
+  {
+   "name": "groove_decay",
+   "kind": "snow",
+   "box": [
+    631,
+    590,
+    647,
+    624
+   ]
+  },
+  {
+   "name": "decay_surface",
+   "kind": "snow",
+   "box": [
+    530,
+    590,
+    594,
+    624
+   ]
+  }
+ ]
+}

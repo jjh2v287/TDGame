@@ -1,0 +1,7 @@
+{
+  "note": "frame 대조 이미지(fx9_hvol_vs_svol/hvol_pair 00_schedule_06000~07000ms.png 5장, 1280x720, 폰 0,450·팔 600·−60°)로 그린 상자, 2026-10-31. 명세: Saved/AgentOps/20261030/cal0/0b/regions/fx9_hvol_vs_svol_frame_regions.frame-after.json(svol·hvol, kind volume, 같은 크기). hvol = 오른쪽(+900 cm Y) 회색 HVOL 연기에서 5장 모두 휘도>0.28(바닥 0.19~0.21)인 공통 마스크를 6 px 깎은 뒤 가장 큰 직사각형(공이 비운 왼쪽 자국·아래 어두운 줄무늬 제외). svol = 왼쪽 붉은 SVOL 연기(5장 모두 R−max(G,B)>0.12, 6 px 깎음) 안에 같은 크기 207x320·같은 y 를 화면 중심 x=640 에 좌우 대칭으로 둔 상자(비네팅 영향을 맞춤). 폰 [560,280,740,530] 제외.",
+  "regions": [
+    {"name": "svol", "kind": "volume", "box": [29, 272, 236, 592]},
+    {"name": "hvol", "kind": "volume", "box": [1044, 272, 1251, 592]}
+  ]
+}

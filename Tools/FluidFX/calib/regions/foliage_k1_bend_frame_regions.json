@@ -1,0 +1,25 @@
+{
+ "note": "frame 대조 이미지(foliage_k1_bend/k1_bend 00_schedule_06000~07000ms.png 5장, 1280x720, 2026-10-31 재촬영, 카메라 pawn (3000,0)·arm 450·view -60/0)로 그린 상자. 이름·kind 명세: Saved/AgentOps/20261030/cal0/0b/regions/foliage_k1_bend_frame_regions.frame-after.json. 방법: 카메라 기하(피벗 z 96·가로 시야 90°)로 화소마다 지면 반경 R·방위 A(교반기 궤도 중심 3000,0 기준)를 구하고, 교반기(반경 150 cm·90°/s) 회색 덩어리를 2·3번째 장에서 찾아 위상을 맞춤(첫 장 A≈108°, 마지막 장 A≈198°, 오차 약 13 px). pressed_side = 궤도 띠 R 100~200 cm·A 35~100°(첫 장 0.1~0.8초 전, 마지막 장 1.1~1.8초 전에 눌린 구간, 복원 2.5초라 다섯 장 모두 휨 유지)에 내접한 직사각형, 인물·그림자·교반기 몸체(첫 장 약 819,469) 제외. 흐름 탐침(k1_recovery 00_probe_foliage_flow) 편차가 R 약 225 cm 밖에서 0 이라 outer_ring 은 R 300 cm 이상. 화면에 왼쪽 위 밝음→오른쪽 아래 어두움 조명 기울기(휘도 약 190→120)가 있어, R 280 cm 이상 무교란 화소로 2차 곡면을 맞춰 pressed_side 와 기대 무교란 휘도가 같은(차 0.06) 가장 가까운 같은 크기 상자를 outer_ring 으로 골랐다(조명 혼입 방지)",
+ "regions": [
+  {
+   "name": "pressed_side",
+   "kind": "fog",
+   "box": [
+    761,
+    330,
+    841,
+    426
+   ]
+  },
+  {
+   "name": "outer_ring",
+   "kind": "fog",
+   "box": [
+    896,
+    152,
+    976,
+    248
+   ]
+  }
+ ]
+}

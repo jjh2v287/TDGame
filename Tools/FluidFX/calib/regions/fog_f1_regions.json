@@ -1,8 +1,8 @@
 {
-  "note": "frame 대조 이미지(fog_f1_layer/f1_backlit 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: 이름·kind 는 Tools/FluidFX/calib/retired/regions/fog_f1_regions.json(frame-after 명세 없음), sky kind background → sky(기본 모드 허용값). fog_far = 인물 오른쪽 먼 안개층(윗면 y≈277 아래), fog_near = 인물·그림자 왼쪽 가까운 안개, sky = 안개층 위 검은 배경",
+  "note": "2026-10-31 재확인: 계획 fog_f1_layer 장면 f1_backlit 새 frame 5장(Saved/FluidFX/calib/frames/fog_f1_layer/f1_backlit/00_schedule_08000~09000ms.png, 1280x720), 카메라 pawn (8000,25000)·arm 450·view (-8,0)·EV100 1·TDGen_FogPassiveField 숨김. 겹침 이미지·5장 대조와 행 평균 프로파일(x 710~1270 평균 휘도 > 0.05 첫 행 y 278)로 안개층 윗면이 fog_far 위 경계 288 보다 위, 인물이 fog_far 왼쪽 경계 710 밖, sky 최대 휘도 0.0039 임을 확인해 상자를 그대로 둠. 이름·kind 출처: Tools/FluidFX/calib/retired/regions/fog_f1_regions.json(sky kind background → sky). fog_far = 인물 오른쪽 먼 안개층, fog_near = 인물·그림자 왼쪽 가까운 안개, sky = 안개층 위 검은 배경 / 2026-10-31 반박 반영(부모): fog_far 위 끝 288 → 326. y 278 은 하늘·바닥 평면 경계(지평선)이고 안개층 윗면(5장 시간 표준편차 > 0.003 첫 행·세로 기울기 최대 행)은 x 720~1020 에서 y≈295~300, x 1070~1270 에서 y≈308~325 다. 옛 상자의 14.4% 가 L<0.2 정지 맨바닥 띠(x 1060~1269·y 288~322)라 p95/p5 3.64~3.75 가 그 띠에서 나왔다. 새 상자는 L<0.2 화소 0, p95/p5 1.59~1.82",
   "regions": [
     {"name": "fog_near", "kind": "fog", "box": [40, 420, 540, 700]},
-    {"name": "fog_far", "kind": "fog", "box": [710, 288, 1270, 350]},
+    {"name": "fog_far", "kind": "fog", "box": [710, 326, 1270, 350]},
     {"name": "sky", "kind": "sky", "box": [20, 10, 1260, 228]}
   ]
 }

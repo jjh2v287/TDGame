@@ -1,25 +1,7 @@
 {
- "note": "frame 대조 이미지(foliage_k2_press/k2_press·k2_press_decay 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 명세: Saved/AgentOps/20261030/cal0/0b/regions/foliage_k2_press_frame_regions.frame-after.json. pressed_side = 교반기 궤도(반경 600 cm) 눌림 띠의 화면 위 가운데 구간, outer_ring = 궤도 고리 바깥 왼쪽 위 모서리(조명 가로 기울기가 가운데와 가까운 쪽)",
- "regions": [
-  {
-   "name": "pressed_side",
-   "kind": "fog",
-   "box": [
-    540,
-    22,
-    760,
-    50
-   ]
-  },
-  {
-   "name": "outer_ring",
-   "kind": "fog",
-   "box": [
-    0,
-    0,
-    200,
-    90
-   ]
-  }
- ]
+  "note": "2026-10-31 새 frame 으로 다시 그림: 계획 foliage_k2_press 장면 k2_press(00_schedule_08000~09000ms.png 5장)·k2_press_decay(00_schedule_08000~16000ms.png 9장, 1 s 간격), 경로 Saved/FluidFX/calib/frames/foliage_k2_press/<장면>/(1280x720), 카메라 pawn (12000,0)·arm 450·view (-60,0)·FoliageFlow 1·FoliageBend -1. 감쇠 장면 첫 장과 13~16 s 평균의 차이 지도에서 교반기 궤도 눌림 띠(어둡게 눌린 풀)가 화면 위 가운데를 지나 양옆 아래로 휘고, 띠 바로 아래(y 36~64)는 밝은 옆 띠라 반대로 회복한다. pressed_side = 눌림 띠 중심만(x 540~760, y 21~37, 측정 도구 최소 높이 16 px: 0.682 → 13 s 부터 0.7233±0.0004 평탄; 옛 상자 y 22~50 은 옆 띠와 섞여 상쇄). outer_ring = 궤도 고리 바깥 왼쪽 위, pressed_side 와 같은 화면 행(y 21~36 겹침, 같은 깊이)에서 고른 x 100~300, y 8~36. 띠와의 거리: 차이 지도 국소 RMS(반경 10~15 px, 배경 0.028 과 띠 중심 0.165 의 중간 문턱)로 잰 띠 바깥 경계는 x 300 에서 y 55, x 250 에서 y 76~84 라 상자 아래 경계(y 36)에서 19~48 px, 최단 거리는 상자 오른쪽 아래 모서리에서 약 17~19 px 다(더 높은 문턱으로는 30~44 px). 상자 안 시계열은 8~16 s 내내 0.7225~0.7242(region_check 9장)로 평탄해 띠 오염은 보이지 않는다. 한계: outer_ring 은 쉴 때(13~16 s) 휘도 0.7235 가 pressed_side 평탄값과 맞는 곳을 골랐으므로, 계획 note 의 '쉴 때 대비 → 0' 은 상자 선택 때문에 0 이 된 것이지 독립 검증이 아니다. 검증되는 것은 pressed_side 가 0.682 → 0.723 으로 실제 회복하는 시간 변화다. 옛 outer_ring [0,0,200,90] 은 쉴 때 pressed 보다 약 0.02 어두웠다. 새 쌍의 대비 pressed_side − outer_ring 은 -0.043(8 s) → +0.0003(16 s). 이름·kind 명세: Saved/AgentOps/20261030/cal0/0b/regions/foliage_k2_press_frame_regions.frame-after.json",
+  "regions": [
+    {"name": "pressed_side", "kind": "fog", "box": [540, 21, 760, 37]},
+    {"name": "outer_ring", "kind": "fog", "box": [100, 8, 300, 36]}
+  ]
 }

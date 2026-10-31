@@ -1,0 +1,10 @@
+{
+  "note": "재촬영 frame(2026-10-31, 계획 w1b_water_particles / sea_img16, Saved/FluidFX/calib/frames/w1b_water_particles/sea_img16/00_schedule_06000~07000ms.png 5장, 1280x720, 카메라 pawn (0,0)·arm 900·view (-35,30)·EV100 2.0)로 그린 상자. 명세 Saved/AgentOps/20261031/pending-region-specs/w1b_water_particles_sea_frame_regions.json 대로 500x300(150,000 px²). 다섯 장에서 embers 검출식(따뜻함·휘도 차 25·면적 40 이하)으로 부유물 위치를, 하늘 경계(휘도<30 마지막 행 47~48)·배와 항적 고리(x 574~799, y 98~171)·오른쪽 물거품(x 1158 이상, y 329~422)·화면 끝을 Python 으로 찾고, 이를 피하는 500x300 창 가운데 부유물 수가 가장 많은 왼쪽 위 수면(장별 11~17개)을 골랐다",
+  "regions": [
+    {
+      "name": "debris",
+      "kind": "embers",
+      "box": [40, 62, 540, 362]
+    }
+  ]
+}

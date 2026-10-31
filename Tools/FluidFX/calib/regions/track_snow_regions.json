@@ -1,0 +1,39 @@
+{
+ "note": "frame 대조 이미지(track_fx12c_groove/snow_groove 00_schedule_12000~13000ms.png 5장, 1280x720, 2026-10-31 재촬영: move 입력 걷기 1507 cm 완료, 폰 X≈7, 카메라 arm 350·view -12/0)로 그린 상자. 이름·kind: retired/regions/track_snow_regions.json·계획 지표(snow_dust 제외), analyses·line 은 groove_line.line_profile.*. 화면 안 홈은 인물 뒤 발자국 하나(x 616~665, y 586~638, 다섯 장 같은 자리)라 groove_line 선은 발자국 가장 깊은 행 y 610 가로(양 끝 32 px 는 걷지 않은 평평한 눈, 둑 포함), 상자는 그림자(y 584 위) 아래. snow_surface = 그림자 아래 걸은 길 띠(발자국 + 양옆 걷지 않은 눈, 행 650 기준 길 중심 ±50 cm), 인물·그림자·하늘 제외. cm_per_px 0.447 = 610 행 가로(지면 Y) 축척을 카메라 기하로 계산(폰 캡슐 중심 z 96·팔 350·피치 -12·요 0·가로 시야 90° → 초점 640 px·지면 z 0, 610 행 지면 = 폰 X − 85.8 cm, 깊이 286.0 cm, 가로선 전체 같은 깊이). 교차 확인: 발자국 세로(586→638 행 = 폰 뒤 66.4→105.6 cm, 39.2 cm)/가로(49 px × 0.447 = 21.9 cm) 비 1.79 ≈ BoneStampAspectRatio 1.8, 발 접지 행 예측 522 ≈ 화면 약 520, 비탈 밑변 폭 예측 386 px ≈ 화면 384 px",
+ "regions": [
+  {
+   "name": "snow_surface",
+   "kind": "snow",
+   "box": [
+    516,
+    588,
+    764,
+    712
+   ]
+  },
+  {
+   "name": "groove_line",
+   "kind": "snow",
+   "box": [
+    556,
+    588,
+    724,
+    640
+   ],
+   "analyses": [
+    "line_profile"
+   ],
+   "line": [
+    [
+     560,
+     610
+    ],
+    [
+     720,
+     610
+    ]
+   ],
+   "cm_per_px": 0.447
+  }
+ ]
+}

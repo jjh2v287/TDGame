@@ -1,5 +1,5 @@
 {
-  "note": "frame 대조 이미지(fog_f6_tile/f6_tile 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/fog_f6_tile_frame_regions.frame-after.json(이름·kind·analyses). tile_far = 반복 덩어리가 보이는 먼 쪽(위 검은 띠·왼쪽 위 사선 모서리·인물 제외), tile_near = 인물·그림자 아래 가까운 쪽, sky = 맨 위 검은 띠",
+  "note": "2026-10-31 재확인: 계획 fog_f6_tile 장면 f6_tile 새 frame 5장(Saved/FluidFX/calib/frames/fog_f6_tile/f6_tile/00_schedule_10000~11000ms.png, 1280x720), 카메라 pawn (17000,-36800)·arm 2500·view (-35,90)·EV100 1. 겹침 이미지·5장 대조로 tile_far 가 판 모서리·인물을 피하고 sky 최대 휘도 0.000 임을 확인해 상자를 그대로 둠(대비를 키우면 tile_far 안 반복 덩어리가 보임, 독립 반박 확인). 이름·kind·analyses 출처: Saved/AgentOps/20261030/cal0/0b/regions/fog_f6_tile_frame_regions.frame-after.json. tile_far = 반복 덩어리가 보이는 먼 쪽(위 검은 띠·왼쪽 위 사선 모서리·인물 제외), tile_near = 인물·그림자 아래 가까운 쪽, sky = 맨 위 검은 띠",
   "regions": [
     {"name": "tile_far", "kind": "fog", "analyses": ["autocorrelation"], "box": [110, 56, 1270, 300]},
     {"name": "tile_near", "kind": "fog", "box": [40, 420, 1240, 700]},

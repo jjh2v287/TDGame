@@ -1,5 +1,5 @@
 {
- "note": "frame 대조 이미지(fx16a_cell_size_invariance/smoke_soft_cells 00_schedule_*.png 5장, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Tools/FluidFX/calib/retired/regions/fx16a_smoke_regions.json 의 이름·kind(smoke_core·smoke_halo, dust). smoke_halo = 연기만 담는 가장 큰 5장 공통 상자(뒷벽·검은 배경·바닥 제외, 채도<0.5 또는 명도<0.12 화소 0.1~0.3%, 가장자리 8 px 띠 ≤0.1%). smoke_core = smoke_halo 와 중심이 같은 연기 몸통 중심부(면적 약 30%, 같은 기준 배경 화소 0%). 직사각형이라 halo 는 core 를 포함한다. volume = 장면 목표 파일 fx9_live2_volume.json region_metrics.volume 이 참조하는 이름, smoke_halo 와 같은 상자(kind volume)",
+ "note": "2026-10-31 재확인: 계획 fx16a_cell_size_invariance 장면 smoke_soft_cells 새 frame 5장(Saved/FluidFX/calib/frames/fx16a_cell_size_invariance/smoke_soft_cells/00_schedule_06000~07000ms.png, 1280x720), 카메라 pawn (650,-700)·arm 900·view (-35,90)·EV100 1. 겹침 이미지·5장 대조와 화소 검사로 상자를 그대로 둠: smoke_core 는 채도<0.5 또는 명도<0.12 화소 0%, smoke_halo 는 그런 화소 0.6~1.0% 가 위 오른쪽 모서리(x 724~766, y 156~168)의 옅은 붉은 연기 가장자리와 아래 어두운 연기뿐이고 붉은기 없는 배경 화소는 0.008%. 이름·kind 출처: Tools/FluidFX/calib/retired/regions/fx16a_smoke_regions.json(smoke_core·smoke_halo, dust). smoke_halo = 연기(가장자리 포함)만 담는 5장 공통 상자(뒷벽·검은 배경·바닥 제외), smoke_core = 같은 중심의 연기 몸통 중심부(면적 약 30%), halo 가 core 를 포함. volume = 목표 파일 fx9_live2_volume.json region_metrics.volume 이 참조하는 이름, smoke_halo 와 같은 상자(kind volume)",
  "regions": [
   {
    "name": "smoke_core",

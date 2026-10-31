@@ -1,0 +1,6 @@
+{
+  "note": "frame 대조 이미지(fx9_floor_smoke/floor_smoke 00_schedule_06000~07000ms.png 5장, 1280x720, 폰 9000,0·팔 600·−60°)로 그린 상자, 2026-10-31. 명세: Saved/AgentOps/20261030/cal0/0b/regions/fx9_floor_smoke_frame_regions.frame-after.json(volume·kind volume). 상자 = 5장 모두 휘도>0.27(바닥 0.18~0.21)·채도<0.25인 바닥 연기 화소의 공통 마스크를 6 px 깎은 뒤 가장 큰 직사각형. 큐브 3개(윗면 포함 [462,92,632,340]·[698,214,892,428]·[350,500,588,720])와 폰·그림자 [570,285,725,515]를 빼고, 공이 지나가며 비운 자국·가운데 아래 옅은 소용돌이는 마스크가 자동으로 뺐다.",
+  "regions": [
+    {"name": "volume", "kind": "volume", "box": [773, 438, 937, 711]}
+  ]
+}

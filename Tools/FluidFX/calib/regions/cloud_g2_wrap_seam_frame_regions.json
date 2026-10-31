@@ -1,5 +1,5 @@
 {
-  "note": "frame 대조 이미지(cloud_g2_wrap_seam/wrap_seam 00_schedule_*.png 3장, 1280x720)로 그린 상자, 2026-10-30. 이름·kind·analyses 출처: Saved/AgentOps/20261030/cal0/0b/regions/cloud_g2_wrap_seam_frame_regions.frame-after.json. tile = 왼쪽 구름 덩어리 열(약 87 px 간격 반복 무늬가 3장 모두 보이는 x 0~180 전체 높이, 가운데 빈 하늘·오른쪽 성긴 구름 제외) + autocorrelation. 세로 이음매 x = 40 km(640 열)는 3장 모두 구름이 없어(가운데 열은 평탄한 하늘) 띠를 두지 않았다. 대신 같은 무늬 주기 PatternScaleKm 20 의 가로 이음매 y = 0 km 를 쓴다: 카메라 eye (40, 0, 12) km·target (40, 0.01, 0) km, yaw 90·pitch -89.95 이라 화면 위 = +Y, 기울기 0.01/12 rad × 초점 약 1886 px(기본 CineCamera 35 mm·23.76 mm) = 1.6 px 라 y = 0 은 깊이와 무관하게 361.6(경계 좌표), 즉 361 행에 온다. seam_above = 329~360 행, seam_below = 362~393 행(361 행 제외), x 0~180 은 3장 모두 구름 덩어리가 361 행 위아래에 걸쳐 있는 열(확대 대조: Saved/AgentOps/20261030/cal0/g2_seam/g2_row_seam_crop.png).",
+  "note": "새 frame(2026-10-31 재촬영, Saved/FluidFX/calib/frames/cloud_g2_wrap_seam/wrap_seam/00_schedule_30000~30500ms.png 3장, 1280x720, LV_TDFluidCloudStage, TDGen_CloudCam_WrapField)으로 다시 확인. 이름·kind·analyses 출처: Saved/AgentOps/20261030/cal0/0b/regions/cloud_g2_wrap_seam_frame_regions.frame-after.json. tile(진단 전용, 자기상관 상한 목표는 structural-gaps.json) = 왼쪽 구름 덩어리 열 x 0~180 중 행 평균 휘도가 평탄한 0~319 행(0.336~0.369, 그 아래는 0.20 까지 내려가는 세로 기울기) + autocorrelation: 옛 전체 높이 0~720 은 기울기 때문에 2차 봉우리가 -1.5e-5~-5.4e-5 로 묻혀 상한 0.012 를 거짓 통과했고, 새 상자는 3장 모두 주기 86 px·봉우리 0.12~0.19 로 반복 무늬를 드러낸다. 주의: 이음매 띠 단차 +0.024 는 띠 밖 2·3차 맞춤으로 예측한 매끈한 세로 기울기 단차 +0.024~+0.030 과 같아 이 지표는 기울기에 지배된다(계획 수준, 부모 결정). 세로 이음매 x = 40 km(640 열)는 3장 모두 구름이 없어(가운데 열은 평탄한 하늘) 띠를 두지 않았다. 대신 같은 무늬 주기 PatternScaleKm 20 의 가로 이음매 y = 0 km 를 쓴다: 카메라 eye (40, 0, 12) km·target (40, 0.01, 0) km, yaw 90·pitch -89.95 이라 화면 위 = +Y, 기울기 0.01/12 rad × 초점 약 1886 px(기본 CineCamera 35 mm·23.76 mm) = 1.6 px 라 y = 0 은 깊이와 무관하게 361.6(경계 좌표), 즉 361 행에 온다. seam_above = 329~360 행, seam_below = 362~393 행(361 행 제외), x 0~180 은 3장 모두 구름 덩어리가 361 행 위아래에 걸쳐 있는 열(확대 대조: Saved/AgentOps/20261030/cal0/g2_seam/g2_row_seam_crop.png).",
   "regions": [
     {
       "name": "seam_above",
@@ -28,7 +28,7 @@
         0,
         0,
         180,
-        720
+        320
       ],
       "analyses": [
         "autocorrelation"

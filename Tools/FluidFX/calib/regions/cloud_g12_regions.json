@@ -1,5 +1,5 @@
 {
-  "note": "frame 대조 이미지(cloud_g12_volcano/volcano_backlit 00_schedule_*.png 5장, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 출처: Tools/FluidFX/calib/retired/regions/cloud_g12_regions.json(frame-after 명세 없음). smoke_backlit = 왼쪽 위 연기 덩어리(가운데 매끈한 기둥·아래 밝은 지면 안개 제외), smoke_side = 오른쪽 위 연기(오른쪽 끝 어두운 기둥 제외), hill_fog = 화산 오른쪽 사면을 따라 낀 밝은 안개 띠(5장 모두 휘도가 가장 높은 x 900~1150·y 605~680 구간, 위쪽 일반 연기·아래 사면 그늘·오른쪽 끝 어두운 기둥 제외).",
+  "note": "새 frame(2026-10-31 재촬영, Saved/FluidFX/calib/frames/cloud_g12_volcano/volcano_backlit/00_schedule_*.png 5장, 1280x720, LV_TDFluidCloudStage, TDGen_CloudCam_Volcano eye (-16, 3, 0.2) km→(0, 0, 4) km)에서 다시 확인한 상자(변경 없음). 이름·kind 출처: Tools/FluidFX/calib/retired/regions/cloud_g12_regions.json. smoke_backlit = 왼쪽 위 연기 덩어리(가운데 매끈한 기둥·아래 밝은 지면 안개 제외), smoke_side = 오른쪽 위 연기(오른쪽 끝 x 1240~1280 어두운 기둥은 5장 모두 y 449~467 아래부터라 상자 아래 끝 360 밖), hill_fog = 화산 오른쪽 사면의 밝은 안개 띠: 행 프로파일로 x 900~1150 행 평균 휘도 상위 15% 행이 5장 모두 615~659 로 상자 605~680 안이고, 상자 평균 193/255 가 위 590~605 행(171~175)·아래 680~700 행(152~153)보다 밝다. / 2026-10-31 반박 반영(부모): smoke_backlit 오른쪽 끝 300 → 230. 5장 행 0~240 의 7px 고주파 잔차 열 평균이 x 0~100 에서 2.9~3.0, x 240~320 에서 1.1~1.4 로 떨어져 매끈한 기둥이 x≈230 부터라 상자 오른쪽 1/4 이 기둥 안이었다(p95_over_p5 중앙값 1.285 → 약 1.31)",
   "regions": [
     {
       "name": "smoke_backlit",
@@ -7,7 +7,7 @@
       "box": [
         0,
         0,
-        300,
+        230,
         480
       ]
     },

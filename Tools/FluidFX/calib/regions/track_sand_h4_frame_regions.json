@@ -1,5 +1,5 @@
 {
- "note": "frame 대조 이미지(track_sand_h4/sand_dunes 00_schedule_*.png, 1280x720)로 그린 상자, 2026-10-30. 이름·kind·analyses·band_px 명세: Saved/AgentOps/20261030/cal0/0b/regions/track_sand_h4_frame_regions.frame-after.json. 인물·그림자·굴러가는 공·수확기·지평선을 피한 왼쪽 물결 면",
+ "note": "2026-10-31 재확인: 계획 track_sand_h4 장면 sand_dunes 새 frame 5장(Saved/FluidFX/calib/frames/track_sand_h4/sand_dunes/00_schedule_12000~13000ms.png, 1280x720), 카메라 pawn (0,0)·arm 500·view (-20,30)·EV100 1.5. 겹침 이미지·5장 대조와 화소 검사(어두운 화소 L<0.2 0%, 인물·그림자는 상자 오른쪽 경계 548 밖)로 상자를 그대로 둠. 이름·kind·analyses·band_px 명세: Saved/AgentOps/20261030/cal0/0b/regions/track_sand_h4_frame_regions.frame-after.json. 인물·그림자·굴러가는 공·수확기·지평선을 피한 왼쪽 물결 면",
  "regions": [
   {
    "name": "dune_fft",

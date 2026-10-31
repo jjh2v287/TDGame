@@ -1,0 +1,10 @@
+{
+  "note": "재촬영 frame(2026-10-31, 계획 w1b_water_particles / rapids_img20, Saved/FluidFX/calib/frames/w1b_water_particles/rapids_img20/00_schedule_06000~07000ms.png 5장, 1280x720, 카메라 pawn (0,0)·arm 1200·view (-40,200)·EV100 2.0)로 그린 상자. 이름·kind 출처 Saved/AgentOps/20261030/cal0/0b/regions/w1b_water_particles_rapids_frame_regions.frame-after.json. 강 사다리꼴 경계(B/R>0.85 열 프로파일, 왼쪽 x≈448+0.2475(y-280))·바위 두 개·폰·다섯 장의 떠내려가는 붉은 부유물(+3px)을 Python 으로 찾아 모두 피하고, 그 안에서 흰 물 입자(중성 회색 사각 점)가 다섯 장 모두 잡히는 폰 아래 왼쪽 강 띠(흰 물 비율 31~34%)를 골랐다. 바위 아래 가운데(흰 물 10~18%, 입자 0)는 효과가 적어 뺐다",
+  "regions": [
+    {
+      "name": "whitewater",
+      "kind": "water",
+      "box": [571, 424, 663, 680]
+    }
+  ]
+}

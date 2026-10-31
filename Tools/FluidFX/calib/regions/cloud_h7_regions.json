@@ -1,5 +1,5 @@
 {
-  "note": "frame 대조 이미지(cloud_h7_sandwall/sand_wall 00_schedule_*.png 5장, 1280x720)로 그린 상자, 2026-10-30. 이름·kind 출처: Tools/FluidFX/calib/retired/regions/cloud_h7_regions.json(frame-after 명세 없음). wall = 모래 벽 몸통(위 밝은 가장자리 아래, 지평선 위; 하늘·지면 제외).",
+  "note": "새 frame(2026-10-31 재촬영, Saved/FluidFX/calib/frames/cloud_h7_sandwall/sand_wall/00_schedule_*.png 5장, 1280x720, LV_TDFluidCloudStage, TDGen_CloudCam_SandWall eye (5, 0, 0.1) km→(20, 0, 1) km)에서 다시 확인한 상자(변경 없음). 이름·kind 출처: Tools/FluidFX/calib/retired/regions/cloud_h7_regions.json. wall = 모래 벽 몸통: 5장 모두 위 밝은 가장자리(160 px 간격 열마다 150~300 행 최대 휘도 행)가 y 206~242 로 상자 위 250 보다 위에 있고, 지평선(400~470 행 평균 휘도 단차 최대)이 440 행이라 상자 아래 428 은 그 위 벽(행 평균 125~129/255)만 담는다(하늘·지면 제외).",
   "regions": [
     {
       "name": "wall",

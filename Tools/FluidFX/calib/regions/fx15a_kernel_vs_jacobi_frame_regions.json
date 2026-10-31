@@ -1,35 +1,8 @@
 {
- "note": "frame 대조 이미지(fx15a_kernel_vs_jacobi/smoke_pair 00_schedule_*.png 5장, 1280x720)로 그린 상자, 2026-10-30. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/fx15a_kernel_vs_jacobi_frame_regions.frame-after.json(kernel·poisson, dust). 시점 yaw 0 이라 화면 오른쪽 = +Y: kernel = 오른쪽 웅덩이(SolverKernelPressure, Y=+500), poisson = 왼쪽 웅덩이(SolverBaseline DA_TDFluid_SmokeSoft, Y=-500). 두 상자 같은 크기 139x160 px(높이 ≥143 px), 5장 모두 연기 몸통 안. pool = 장면 목표 파일 region_metrics.pool 이 참조하는 이름, Kinds.Smoke 웅덩이인 poisson 과 같은 상자",
- "regions": [
-  {
-   "name": "kernel",
-   "kind": "dust",
-   "box": [
-    735,
-    311,
-    874,
-    471
-   ]
-  },
-  {
-   "name": "poisson",
-   "kind": "dust",
-   "box": [
-    380,
-    309,
-    519,
-    469
-   ]
-  },
-  {
-   "name": "pool",
-   "kind": "dust",
-   "box": [
-    380,
-    309,
-    519,
-    469
-   ]
-  }
- ]
+  "note": "2026-10-31 새 frame 으로 다시 그림: 계획 fx15a_kernel_vs_jacobi 장면 smoke_pair 새 frame 5장(Saved/FluidFX/calib/frames/fx15a_kernel_vs_jacobi/smoke_pair/00_schedule_06000~07000ms.png, 1280x720), 카메라 pawn (0,0)·arm 1800·view (-50,0). 두 웅덩이의 교반기 구(지름 약 14 px)와 그 옆 디더 빈자리가 5장에 걸쳐 kernel 쪽 (867,385)→(811,418), poisson 쪽 (517,386)→(446,417)로 지나가므로, 옛 139x160 상자 [735,311,874,471]·[380,309,519,469]를 왼쪽 끝 40 px 띠로 줄여 구 궤적을 뺐다(구 중심까지 kernel 37 px 이상, poisson 27 px 이상, 5장 모두 연기 몸통 안이고 최대 휘도 0.46 으로 배경 화소 없음). 높이 160 px 는 유지. 명세 출처: Saved/AgentOps/20261030/cal0/0b/regions/fx15a_kernel_vs_jacobi_frame_regions.frame-after.json(kernel·poisson, dust). 시점 yaw 0 이라 화면 오른쪽 = +Y: kernel = 오른쪽 웅덩이(SolverKernelPressure, Y=+500), poisson = 왼쪽 웅덩이(SolverBaseline DA_TDFluid_SmokeSoft, Y=-500), 두 상자 같은 크기 40x160 px. pool = 목표 파일 region_metrics.pool 이 참조하는 이름, poisson 과 같은 상자",
+  "regions": [
+    {"name": "kernel", "kind": "dust", "box": [735, 311, 775, 471]},
+    {"name": "poisson", "kind": "dust", "box": [380, 309, 420, 469]},
+    {"name": "pool", "kind": "dust", "box": [380, 309, 420, 469]}
+  ]
 }

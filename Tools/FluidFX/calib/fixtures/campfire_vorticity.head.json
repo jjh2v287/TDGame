@@ -16,7 +16,7 @@
       "time_dilation": 1.0,
       "schedule": null,
       "settle": 6.0,
-      "regions_template": "Tools/FluidFX/calib/regions/campfire_fire_regions.json",
+      "regions_template": "Tools/FluidFX/calib/fixtures/campfire_fire_regions.head.json",
       "targets": "Tools/FluidFX/calib/targets/campfire_live2_fire.json",
       "live2_refs": []
     }

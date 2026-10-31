@@ -5,7 +5,8 @@
   "default_note": "D6: 표(tests)에 없는 시험은 설계 단언(design)으로 본다. 실패하면 그 블록의 가장 최근 채택을 되돌린다. CreateTransientPreset 경유로 활성 JSON 을 읽지만 정적 분석에서 빠진 37개(활성 JSON 시험 최소 183개 − 표 146개)도 이 기본값이다",
   "mixed_pin_rule": "D6(P-27 보강): numeric_pin_when_failures_match 의 시험은 design 이지만, 헤드리스 로그의 그 시험 실패 단언 문구가 모두 나열된 숫자 고정 줄 문구 중 하나를 포함하면 numeric_pin(기록만)으로 본다",
   "consumer": "calib_batch.py 는 numeric_pinned 목록(헤드리스 시험 경로)만 읽는다. mixed_pin_rule 의 실패 문구 대조는 아직 읽지 않으므로 그 5개는 실패 시 design 으로 처리된다(안전 쪽)",
-  "source": "0b 정적 분류(classify_tests.py + 수동 정정 11건), 기준 main 52bfa730"
+  "source": "0b 정적 분류(classify_tests.py + 수동 정정 11건), 기준 main 52bfa730",
+  "timing_note": "2026-10-31 K1: 벽시계 시간(ms) 기준을 단언하는 고정 입력 벤치마크 시험은 timing_record_only 로 블록 헤드리스에서 실패해도 기록만 한다. 배치 헤드리스는 에디터가 켜진 채 돌아 CPU 경쟁으로 흔들리고(TransmittanceCpuCost 0.361 ms > 0.3), 보정 값과 무관하며 비용은 P 단계에서 판정한다"
  },
  "numeric_pinned": [],
  "numeric_pin_when_failures_match": {
@@ -909,5 +910,11 @@
    "class": "design",
    "evidence": "Source/TDGame/FluidFX/Tests/TDFluidWaterWetnessTests.cpp:1650 관계·범위 단언 '%s: whitewater harness is invalid (shared dissipation retention %.5f, expected %.5f)' 외 2줄"
   }
+ ],
+ "timing_record_only": [
+  "TDGame.FluidFX.FlowNoise.StepCostOfNoiseIsMeasured",
+  "TDGame.FluidFX.Ops.PausedActorCost",
+  "TDGame.FluidFX.Perf.StepCostByResolution",
+  "TDGame.FluidFX.Perf.TransmittanceCpuCost"
  ]
 }

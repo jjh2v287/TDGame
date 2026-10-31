@@ -1,0 +1,7 @@
+{
+  "note": "1280x720 촬영, campfire_vorticity 카메라(폰 [120, 1150]·붐 300·시선 [-3, 80]) 기준 영역. 출처 FX-8c 5차 r5_regions_template",
+  "regions": [
+    {"name": "campfire", "kind": "fire", "box": [700, 150, 1000, 445]},
+    {"name": "sky", "kind": "background", "box": [1050, 40, 1270, 235]}
+  ]
+}

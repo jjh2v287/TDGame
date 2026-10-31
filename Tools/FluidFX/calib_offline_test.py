@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터·PIE 불필요, numpy·Pillow·scipy 필요, 가짜 unreal 로 calib_sweep·pie_lookdev_fluid·pie_probe_fluid_water 를 프로세스 안에서 돌린다). 2026-10-25 P3 오프라인 시험(w0-P3-offline-test.py)을 본 트리로 옮겨 새 판정 규칙(목표 지표 대조·연속 점수·점수 잡음 유의)과 짧은 창 배율·대조 처음·끝 모드를 더했다.
 실행 명령: python -B Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/offline-test/ 아래 스윕·판정 산출물(실행마다 지움)과 표준 출력 PASS/FAIL 줄. 수용 시험 산출(Saved/FluidFX/calib/{campfire-run1,campfire-run2,campfire-r4-run1,river-run1})이 있으면 새 판정기로 재판정해 SKIP 아닌 결과를 낸다.
-상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json, 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F9): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점, 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조.
+상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json(모닥불 영역 틀도 712dfa89 전 고정 사본 fixtures/campfire_fire_regions.head.json, 재판정은 계획 사본의 영역 틀로), 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F9): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점, 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조.
 """
 import contextlib
 import copy
@@ -1037,6 +1037,10 @@ for run_name, plan_text in rejudge_jobs:
     old_sweep = load_json(old_sweep_path)
     plan_path = W / plan_text
     old_sweep.update(plan=plan_text, plan_sha256=prereg_lock.file_sha256(plan_path), metrics=load_json(plan_path)["metrics"])
+    plan_regions = {scene["name"]: scene.get("regions_template") for scene in load_json(plan_path)["scenes"]}
+    for scene in old_sweep.get("scenes", []):
+        if plan_regions.get(scene.get("name")):
+            scene["regions_template"] = plan_regions[scene["name"]]
     (run_dir / "sweep.json").write_text(json.dumps(old_sweep, ensure_ascii=False, indent=2), encoding="utf-8")
     prereg_lock.create_lock(prereg_lock.plan_lock_files(plan_path), run_dir / "lock.json", "rejudge")
     exit_code, output = python("Tools/FluidFX/calib_judge.py", "--sweep", str(run_dir / "sweep.json"), "--lock", str(run_dir / "lock.json"), "--output", str(run_dir / "judge.json"))
@@ -2853,7 +2857,7 @@ def check_cal0_batch():
     shutil.rmtree(root, ignore_errors=True)
     (root / "plans").mkdir(parents=True)
     classes_path = root / "test_classes.json"
-    classes_path.write_text(json.dumps({"numeric_pinned": ["TDGame.FluidFX.Numeric.B"]}), encoding="utf-8")
+    classes_path.write_text(json.dumps({"numeric_pinned": ["TDGame.FluidFX.Numeric.B"], "timing_record_only": ["TDGame.FluidFX.Other.C"]}), encoding="utf-8")
 
     def batch_plan(name, regions=None):
         scene = {"name": "s1", "level": "/Game/CAL0/LV_B8Stage", "camera": {}, "settle": 1.0, "shots": {"count": 3, "interval": 0.25}}
@@ -2929,7 +2933,7 @@ def check_cal0_batch():
     arguments = batch_arguments("t99", [{"id": "K7", "plans": [entry("b8_c1", chain), entry("b8_c2", chain), entry("b8_c3", chain)]}, {"id": "K8", "plans": [entry("b8_d1")]}])
     fake = FakeBatchTools(root / "t99" / "overlay.json")
     fake.verify_codes = {"b8_c1": [1, 0], "b8_c2": [0]}
-    fake.headless_failures = [["TDGame.FluidFX.Design.A"], [], ["TDGame.FluidFX.Numeric.B"]]
+    fake.headless_failures = [["TDGame.FluidFX.Design.A"], [], ["TDGame.FluidFX.Numeric.B", "TDGame.FluidFX.Other.C"]]
     with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
         chain_code = run_batch(arguments)
     journal = load_json(root / "t99" / "journal.json")
@@ -2950,9 +2954,9 @@ def check_cal0_batch():
           and len(tuning_arguments) == 1 and Path(tuning_arguments[0].split("=", 1)[1]).parent.name == "copy" and Path(tuning_arguments[0].split("=", 1)[1]).is_file(),
           (block_calls, tuning_arguments))
     headless_record = load_json(W / items["b8_d1"]["runs"].get("headless", "missing") / "headless.json") if items["b8_d1"]["runs"].get("headless") else {}
-    check("T99 블록 헤드리스 실패가 숫자 고정 목록뿐 → 기록만(되돌림 없음)·덧씌움 최종 c1·d1",
+    check("T99 블록 헤드리스 실패가 숫자 고정·시간 측정(timing_record_only) 목록뿐 → 기록만(되돌림 없음)·덧씌움 최종 c1·d1",
           calls[calls.index("accept b8_d1") + 1:] == ["materialize", "headless", "release b8-test"] and items["b8_d1"]["status"] == "adopted"
-          and headless_record.get("allowlisted_failures") == ["TDGame.FluidFX.Numeric.B"] and headless_record.get("verdict_code") == 0
+          and sorted(headless_record.get("allowlisted_failures") or []) == ["TDGame.FluidFX.Numeric.B", "TDGame.FluidFX.Other.C"] and headless_record.get("verdict_code") == 0
           and [assignment["json_path"] for assignment in load_json(root / "t99" / "overlay.json")["assignments"]] == ["Groups.B8.TDFluidTest.b8_c1", "Groups.B8.TDFluidTest.b8_d1"]
           and chain_code == 0, (calls[calls.index("accept b8_d1") + 1:], headless_record, chain_code))
 

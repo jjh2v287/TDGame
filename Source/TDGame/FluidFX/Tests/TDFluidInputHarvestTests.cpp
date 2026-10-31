@@ -226,6 +226,42 @@ bool FTDFluidHarvestHardnessScalesTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidHarvestHistoryResetTest,
+	"TDGame.FluidFX.InputHarvest.ResetInteractionHistoryDropsJumpStroke",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidHarvestHistoryResetTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidInputHarvestTestPrivate;
+
+	FTDFluidHarvestTestWorld TestWorld;
+	ATDFluidLiveActor* LiveActor = SpawnHarvestLiveActor(TestWorld.World, FVector::ZeroVector);
+	AActor* Mover = SpawnBoxActor(TestWorld.World, FVector(-300.0, 0.0, 50.0), FVector(30.0));
+	if (!TestNotNull(TEXT("Spawned live actor"), LiveActor) || !TestNotNull(TEXT("Spawned mover"), Mover))
+	{
+		return false;
+	}
+	LiveActor->RegisterInteractingActor(Mover);
+
+	const TArray<FTDFluidBrushStamp> ControlStamps = HarvestPivotStampsAfterMove(*LiveActor, { Mover });
+	if (!TestTrue(TEXT("A move between two harvests stamps the pivot"), ControlStamps.Num() > 0))
+	{
+		return false;
+	}
+
+	LiveActor->HarvestInteractionsForTests(HarvestStepSeconds);
+	const int32 ResetStartIndex = LiveActor->LiveComponent->GetPendingBrushStamps().Num();
+	Mover->AddActorWorldOffset(HarvestMoveOffset);
+	LiveActor->ResetInteractionHistory();
+	LiveActor->HarvestInteractionsForTests(HarvestStepSeconds);
+	TestEqual(TEXT("After ResetInteractionHistory the jump to the new location stamps nothing"), CollectStampsSince(*LiveActor, ResetStartIndex, ETDFluidBrushSource::Pivot).Num(), 0);
+
+	const TArray<FTDFluidBrushStamp> AfterResetStamps = HarvestPivotStampsAfterMove(*LiveActor, { Mover });
+	TestTrue(TEXT("ResetInteractionHistory keeps the registration so the next move stamps again"), AfterResetStamps.Num() > 0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidHarvestFilterRulesTest,
 	"TDGame.FluidFX.InputHarvest.FilterRules",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

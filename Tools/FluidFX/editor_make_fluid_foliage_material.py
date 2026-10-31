@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 FX-13r 식생 에셋을 만든다: 흐름 RT RT_TD_FluidFoliageFlow(256², RTF_RGBA16F, Clamp, 지우기 (0.5,0.5,0,1)), 창 MPC_TD_FluidFoliageWindow(SimCenterWorld·SimExtentsCm·FoliageFlowState), 복사 재질 M_TD_FluidFoliageFlowCopy(Unlit·Emissive, Custom = Shaders/TDFluidFoliageFlowCopy.hlsl)·MI, 휨 함수 MF_TD_FluidFoliageBend(정점 Custom = Shaders/TDFluidFoliageBend.hlsl, 출력 WorldPositionOffset·BendAmount), 풀 재질 M_TD_FluidFoliageGrass(Masked·양면·MSM_TWO_SIDED_FOLIAGE)·MI 4. 파동 3 FX-13c: 복사 재질에 AuxTexture·AuxFoliageBendActive(휨 벡터 원천 교체)를 더하고 채널 Press·Reed(RT·MPC·MF·풀 마스터·MI·복사 MI)를 Walk 와 같은 그래프로 더 만든다. 선택한 대상의 MI 가 모양 정본에 병합되어 있어야 한다.
+"""실행 환경: TDGame 언리얼 에디터 안에서 FX-13r 식생 에셋을 만든다: 흐름 RT RT_TD_FluidFoliageFlow(256², RTF_RGBA16F, Clamp, 지우기 (0.5,0.5,0,1)), 창 MPC_TD_FluidFoliageWindow(SimCenterWorld·SimExtentsCm·FoliageFlowState, 스칼라 FoliageWindOriginSeconds), 복사 재질 M_TD_FluidFoliageFlowCopy(Unlit·Emissive, Custom = Shaders/TDFluidFoliageFlowCopy.hlsl)·MI, 휨 함수 MF_TD_FluidFoliageBend(정점 Custom = Shaders/TDFluidFoliageBend.hlsl, 출력 WorldPositionOffset·BendAmount), 풀 재질 M_TD_FluidFoliageGrass(Masked·양면·MSM_TWO_SIDED_FOLIAGE)·MI 4. 파동 3 FX-13c: 복사 재질에 AuxTexture·AuxFoliageBendActive(휨 벡터 원천 교체)를 더하고 채널 Press·Reed(RT·MPC·MF·풀 마스터·MI·복사 MI)를 Walk 와 같은 그래프로 더 만든다. 선택한 대상의 MI 가 모양 정본에 병합되어 있어야 한다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_foliage_material.py (PowerShell, L-repo-01. 기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_foliage_material_request.json 에 {"overwrite": true}, 만들 대상은 "targets": ["copy","walk","press","reed"] 의 부분집합, 없으면 전부)
-출력: /Game/FluidFX/Textures/RT_TD_FluidFoliageFlow, /Game/FluidFX/Materials/{MPC_TD_FluidFoliageWindow, M_TD_FluidFoliageFlowCopy, MI_TD_FluidFoliageFlowCopy, MF_TD_FluidFoliageBend, M_TD_FluidFoliageGrass, MI_TD_FluidFoliage_*(4)}, Press·Reed 채널 {RT_TD_FluidFoliagePressFlow·RT_TD_FluidReedFlow, MPC_TD_FluidFoliagePressWindow·MPC_TD_FluidReedWindow, MF_TD_FluidFoliagePressBend·MF_TD_FluidReedBend, M_TD_FluidFoliageGrassPress·M_TD_FluidFoliageReed, MI_TD_FluidFoliage_GrassPress·MI_TD_FluidFoliage_Reed, MI_TD_FluidFoliageFlowCopy_Press·MI_TD_FluidFoliageFlowCopy_Reed}, Saved/FluidFX/fluid_foliage_material.json(풀 텍스처 출처, 재질 통계, HLSL sha256, 모양 정본 sha256)
-상태: 미검증(2026-10-26 FX-13r R13 작성, 2026-10-29 파동 3 FX-13c 채널·Aux 원천 추가: py_compile·가짜 unreal 전체 실행·check_fluid_foliage_hlsl.py 만, 에디터 실행 전). 복사 재질의 VelocityTexture·AuxTexture·AuxFoliageBendActive·PlaneAxisU/V 는 라이브 외부 대상 MID 가, VelocitySpeedReferenceCmPerSec 는 흐름 액터가 넣는다(마스터 600, 모양 파일 금지 R7). MF 는 RT 에셋을 텍스처 객체 노드로 직접 참조하고 휨 매개변수는 MF 안에 둔다(풀 MI 가 바로 덮어씀). ISM·Nanite 사용 플래그는 노드 생성 전 속성으로 켜고 확인은 컴파일 뒤(L-editor-61). MI 값은 모양 정본(apply_to_instance)만 쓴다.
+출력: /Game/FluidFX/Textures/RT_TD_FluidFoliageFlow, /Game/FluidFX/Materials/{MPC_TD_FluidFoliageWindow, M_TD_FluidFoliageFlowCopy, MI_TD_FluidFoliageFlowCopy, MF_TD_FluidFoliageBend, M_TD_FluidFoliageGrass, MI_TD_FluidFoliage_*(4)}, Press·Reed 채널 {RT_TD_FluidFoliagePressFlow·RT_TD_FluidReedFlow, MPC_TD_FluidFoliagePressWindow·MPC_TD_FluidReedWindow, MF_TD_FluidFoliagePressBend·MF_TD_FluidReedBend, M_TD_FluidFoliageGrassPress·M_TD_FluidFoliageReed, MI_TD_FluidFoliage_GrassPress·MI_TD_FluidFoliage_Reed, MI_TD_FluidFoliageFlowCopy_Press·MI_TD_FluidFoliageFlowCopy_Reed}, Saved/FluidFX/fluid_foliage_material.json(풀 텍스처 출처, 재질 통계, 채널별 collection.scalars·bend_function.elapsed_seconds, HLSL sha256, 모양 정본 sha256)
+상태: 미검증(2026-10-26 FX-13r R13 작성, 2026-10-29 파동 3 FX-13c 채널·Aux 원천 추가: py_compile·가짜 unreal 전체 실행·check_fluid_foliage_hlsl.py 만, 에디터 실행 전). 복사 재질의 VelocityTexture·AuxTexture·AuxFoliageBendActive·PlaneAxisU/V 는 라이브 외부 대상 MID 가, VelocitySpeedReferenceCmPerSec 는 흐름 액터가 넣는다(마스터 600, 모양 파일 금지 R7). MF 는 RT 에셋을 텍스처 객체 노드로 직접 참조하고 휨 매개변수는 MF 안에 둔다(풀 MI 가 바로 덮어씀). ISM·Nanite 사용 플래그는 노드 생성 전 속성으로 켜고 확인은 컴파일 뒤(L-editor-61). MI 값은 모양 정본(apply_to_instance)만 쓴다. 2026-10-31 시간원 2차(K6 k2_press_decay 대조 실패의 바람 몫): 채널마다 휨 MF 의 Custom 입력 ElapsedSeconds = Time − 그 채널 MPC 스칼라 FoliageWindOriginSeconds(기본 0 이라 게임 모양 불변, 같은 MPC 라 재질당 MPC 수 그대로, MI·모양 정본 덮어쓰기 금지 — 룩데브 구동 MPC 이름 자체 점검), pie_lookdev_fluid.py 가 기반 재질이 채널 풀 마스터인 사용자가 있는 무대 단계 apply 마다 그 채널 원점 = 그 게임 시각(foliage_wind_origin). 에디터 재생성 전(py_compile·calib_offline_test F13 가짜 unreal·check_fluid_foliage_hlsl.py 만), 재생성 전에는 MPC 에 이 스칼라가 없어 식생 무대 룩데브 단계가 키 오류다.
 """
 import collections
 import hashlib
@@ -68,6 +68,9 @@ COLLECTION_VECTOR_DEFAULTS = (
     ("SimExtentsCm", (0.0, 0.0, 0.0, 0.0)),
     ("FoliageFlowState", (0.0, 0.0, 0.0, 0.0)),
 )
+WIND_ORIGIN_PARAMETER_NAME = "FoliageWindOriginSeconds"
+COLLECTION_SCALAR_DEFAULTS = ((WIND_ORIGIN_PARAMETER_NAME, 0.0),)
+COLLECTION_RUNTIME_NAMES = frozenset(name for name, _ in COLLECTION_SCALAR_DEFAULTS)
 BEND_COLLECTION_SOURCE_BY_INPUT = {
     "FoliageWindowCenter": "SimCenterWorld",
     "FoliageWindowExtents": "SimExtentsCm",
@@ -169,6 +172,7 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialParameterCollection",
     "MaterialParameterCollectionFactoryNew",
     "CollectionVectorParameter",
+    "CollectionScalarParameter",
     "TextureRenderTarget2D",
     "TextureRenderTargetFactoryNew",
     "TextureRenderTargetFormat.RTF_RGBA16F",
@@ -200,6 +204,7 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialExpressionComponentMask",
     "MaterialExpressionMultiply",
     "MaterialExpressionAdd",
+    "MaterialExpressionSubtract",
     "MaterialShadingModel.MSM_UNLIT",
     "MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE",
     "BlendMode.BLEND_OPAQUE",
@@ -322,7 +327,10 @@ def find_instance_override_problems(entries, channels=FOLIAGE_CHANNELS):
         driven = sorted(names & set(MID_DRIVEN_NAMES))
         if driven:
             problems.append(f"{name}: C++ 구동 이름 덮어씀(R7) " + ", ".join(driven))
-        unknown = sorted(names - (COPY_OVERRIDABLE_NAMES if parent_path == COPY_MASTER_PATH else GRASS_OVERRIDABLE_NAMES))
+        collection_driven = sorted(names & COLLECTION_RUNTIME_NAMES)
+        if collection_driven:
+            problems.append(f"{name}: 룩데브 구동 MPC 이름 덮어씀 " + ", ".join(collection_driven))
+        unknown = sorted(names - (COPY_OVERRIDABLE_NAMES if parent_path == COPY_MASTER_PATH else GRASS_OVERRIDABLE_NAMES) - COLLECTION_RUNTIME_NAMES)
         if unknown:
             problems.append(f"{name}: 마스터에 없는 이름 " + ", ".join(unknown))
         vector_names = {item for item, _ in COPY_LOOK_VECTOR_DEFAULTS + BEND_LOOK_VECTOR_DEFAULTS + GRASS_LOOK_VECTOR_DEFAULTS}
@@ -534,11 +542,20 @@ def load_or_create_collection(channel, overwrite):
         parameter.set_editor_property("parameter_name", name)
         parameter.set_editor_property("default_value", unreal.LinearColor(*rgba))
         parameters.append(parameter)
+    scalar_parameters = []
+    for name, value in COLLECTION_SCALAR_DEFAULTS:
+        parameter = unreal.CollectionScalarParameter()
+        parameter.set_editor_property("parameter_name", name)
+        parameter.set_editor_property("default_value", value)
+        scalar_parameters.append(parameter)
     collection.set_editor_property("vector_parameters", parameters)
-    collection.set_editor_property("scalar_parameters", [])
+    collection.set_editor_property("scalar_parameters", scalar_parameters)
     stored = [str(item.get_editor_property("parameter_name")) for item in collection.get_editor_property("vector_parameters")]
     if stored != [name for name, _ in COLLECTION_VECTOR_DEFAULTS]:
         raise RuntimeError("MPC 벡터 이름 설정 확인 실패: " + ", ".join(stored))
+    stored_scalars = [(str(item.get_editor_property("parameter_name")), float(item.get_editor_property("default_value"))) for item in collection.get_editor_property("scalar_parameters")]
+    if stored_scalars != list(COLLECTION_SCALAR_DEFAULTS):
+        raise RuntimeError("MPC 스칼라 이름·기본값 설정 확인 실패: " + ", ".join(f"{name}={value}" for name, value in stored_scalars))
     save_asset(collection, collection_path)
     return collection, was_created
 
@@ -706,6 +723,15 @@ def build_bend_root(factory):
     }
 
 
+def build_wind_elapsed_seconds(factory, collection):
+    game_time = factory.node(unreal.MaterialExpressionTime, -1800, -1900)
+    wind_origin = factory.node(unreal.MaterialExpressionCollectionParameter, -1800, -1845, collection=collection, parameter_name=WIND_ORIGIN_PARAMETER_NAME)
+    elapsed = factory.node(unreal.MaterialExpressionSubtract, -1600, -1900)
+    link(game_time, elapsed, "A")
+    link(wind_origin, elapsed, "B")
+    return elapsed
+
+
 def create_bend_function(channel, code, render_target, collection, overwrite):
     editing = unreal.MaterialEditingLibrary
     function_path = asset_path(channel.function_name)
@@ -714,7 +740,7 @@ def create_bend_function(channel, code, render_target, collection, overwrite):
         editing.delete_all_material_expressions_in_function(function)
     factory = NodeFactory(lambda expression_class, x, y: editing.create_material_expression_in_function(function, expression_class, x, y))
     sources = build_bend_root(factory)
-    sources["ElapsedSeconds"] = (factory.node(unreal.MaterialExpressionTime, -1600, -1900), "")
+    sources["ElapsedSeconds"] = (build_wind_elapsed_seconds(factory, collection), "")
     sources["FoliageFlowTexture"] = (factory.node(unreal.MaterialExpressionTextureObject, -1600, -2000, texture=render_target, sampler_type=unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR), "")
     for input_name, collection_name in BEND_COLLECTION_SOURCE_BY_INPUT.items():
         x, y = factory.place()
@@ -729,7 +755,8 @@ def create_bend_function(channel, code, render_target, collection, overwrite):
     link(interpolator, amount_output)
     editing.update_material_function(function)
     save_asset(function, function_path)
-    return function, {"asset": function_path, "created": was_created, "outputs": list(FUNCTION_OUTPUT_NAMES), "render_target": texture_asset_path(channel.render_target_name), "collection": asset_path(channel.collection_name)}
+    return function, {"asset": function_path, "created": was_created, "outputs": list(FUNCTION_OUTPUT_NAMES), "render_target": texture_asset_path(channel.render_target_name), "collection": asset_path(channel.collection_name),
+                      "elapsed_seconds": f"Time - {channel.collection_name}.{WIND_ORIGIN_PARAMETER_NAME}"}
 
 
 def create_grass_master(channel, function, textures, nanite_enabled, overwrite):
@@ -821,7 +848,7 @@ def build_channel(channel, bend_code, grass_textures, nanite_enabled, overwrite)
     grass_master, grass_summary = create_grass_master(channel, function, grass_textures, nanite_enabled, overwrite)
     summary = {
         "render_target": {"asset": texture_asset_path(channel.render_target_name), "created": render_target_created, "size": RENDER_TARGET_SIZE, "format": "RTF_RGBA16F", "clear_color": list(RENDER_TARGET_CLEAR_COLOR)},
-        "collection": {"asset": asset_path(channel.collection_name), "created": collection_created, "vectors": [name for name, _ in COLLECTION_VECTOR_DEFAULTS]},
+        "collection": {"asset": asset_path(channel.collection_name), "created": collection_created, "vectors": [name for name, _ in COLLECTION_VECTOR_DEFAULTS], "scalars": dict(COLLECTION_SCALAR_DEFAULTS)},
         "bend_function": function_summary,
         "grass_master": grass_summary,
     }

@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터·PIE 불필요, numpy·Pillow·scipy 필요, 가짜 unreal 로 calib_sweep·pie_lookdev_fluid·pie_probe_fluid_water 를 프로세스 안에서 돌린다). 2026-10-25 P3 오프라인 시험(w0-P3-offline-test.py)을 본 트리로 옮겨 새 판정 규칙(목표 지표 대조·연속 점수·점수 잡음 유의)과 짧은 창 배율·대조 처음·끝 모드를 더했다.
 실행 명령: python -B Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/offline-test/ 아래 스윕·판정 산출물(실행마다 지움)과 표준 출력 PASS/FAIL 줄. 수용 시험 산출(Saved/FluidFX/calib/{campfire-run1,campfire-run2,campfire-r4-run1,river-run1})이 있으면 새 판정기로 재판정해 SKIP 아닌 결과를 낸다.
-상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json(모닥불 영역 틀도 712dfa89 전 고정 사본 fixtures/campfire_fire_regions.head.json, 재판정은 계획 사본의 영역 틀로), 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F11): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점·구름 흐름 시계 재시작(reinit·keep 단계마다 1회, 예약 원점과 같은 게임 시각, 예외는 키 오류, 가짜 구름 액터에 restart_cloud_flow_clock)·안개 흐름 원점(F11: 안개 마스터 사용자가 있는 무대만 단계마다 MPC FogFlowOriginSeconds = 그 apply 게임 시각, MPC 매개변수 없음·MPC 없음은 키 오류, 비안개 무대는 MPC 가 메모리에 있어도 키 없음, 가짜 MaterialParameterCollection·MaterialLibrary, MPC 경로·이름은 editor_make_fluid_fog_material 상수로 대조, F11b 모양 정본 MPC 이름 덮어쓰기 거부), 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조.
+상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json(모닥불 영역 틀도 712dfa89 전 고정 사본 fixtures/campfire_fire_regions.head.json, 재판정은 계획 사본의 영역 틀로), 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F11): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점·구름 흐름 시계 재시작(reinit·keep 단계마다 1회, 예약 원점과 같은 게임 시각, 예외는 키 오류, 가짜 구름 액터에 restart_cloud_flow_clock)·안개 흐름 원점(F11: 안개 마스터 사용자가 있는 무대만 단계마다 MPC FogFlowOriginSeconds = 그 apply 게임 시각, MPC 매개변수 없음·MPC 없음은 키 오류, 비안개 무대는 MPC 가 메모리에 있어도 키 없음, 가짜 MaterialParameterCollection·MaterialLibrary, MPC 경로·이름은 editor_make_fluid_fog_material 상수로 대조, F11b 모양 정본 MPC 이름 덮어쓰기 거부), 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조. 2026-10-31 check_time_origin_fixes(시간원 2차 F12~F14): F12 볼륨 흐름 원점(기반 재질 M_TD_FluidVolume 사용자 무대만 단계마다 MPC_TD_FluidVolumeFlow VolumeFlowOriginSeconds = 그 apply 게임 시각, 가짜 볼륨 마스터만이면 키 없음, MPC 매개변수 없음·MPC 없음은 키 오류)·F12b 볼륨 모양 정본 MPC 이름 덮어쓰기 거부·F12c 볼륨 마스터 그래프(기록 가짜 MaterialEditingLibrary: Subtract(Time, CollectionParameter), 가짜 볼륨은 Time)와 흐름 MPC overwrite 규칙·F13 잎 바람 원점(채널 3개 MPC FoliageWindOriginSeconds, 같은 무대 안개·볼륨 원점 같은 시각, 한 채널 매개변수 없음은 그 채널만 키 오류 'foliage_wind_origin: <MPC 이름>: ')·F13b 식생 MPC 이름 덮어쓰기 거부·F13c 휨 MF 그래프와 채널 MPC 스칼라·F14 reinit 의 TDFluidLiveActor reset_interaction_history(가짜 라이브 액터에 호출 수, keep 은 없음, 실패는 state_reset 키 오류). B4b 는 Saved/AgentOps/20261020/fx8c/scratch/live2-targets/targets.json 이 있어야 해서 Saved 없는 작업 트리에서는 그 파일을 메인 트리에서 복사해 돌린다(복사 뒤 279/279).
 """
 import contextlib
 import copy
@@ -522,6 +522,10 @@ class TDFluidLiveActor(FakeActor):
     def __init__(self, world, label, preset):
         super().__init__(label, live_component=FakeLive(world, preset), source_emitter=Props(radius_cm=26.0), ember_component=None, internal_surface_mesh=None, volume_mesh_component=None)
         self.live_component.owner_actor = self
+        self.history_reset_count = 0
+
+    def reset_interaction_history(self):
+        self.history_reset_count += 1
 
 
 class TDFluidFireActor(TDFluidLiveActor):
@@ -700,6 +704,9 @@ unreal.GameplayStatics = Props(get_all_actors_of_class=all_actors, get_time_seco
 unreal.SystemLibrary = Props(execute_console_command=console, get_console_variable_float_value=lambda name: 0.0)
 sys.modules["unreal"] = unreal
 import editor_make_fluid_fog_material as fog_material  # noqa: E402
+import editor_make_fluid_foliage_material as foliage_material  # noqa: E402
+import editor_make_fluid_volume_material as volume_material  # noqa: E402
+import fluid_material_look  # noqa: E402
 
 
 EDITOR_SHARED_NAMESPACE = None
@@ -3339,6 +3346,254 @@ def check_lookdev_frame_fixes():
           override_problems == [f"MI_TD_FluidFog_PassiveField: 룩데브 구동 MPC 이름 덮어씀 {origin_name}"], override_problems)
 
 
+class RecordedMaterialNode(Props):
+    def __init__(self, expression_class):
+        super().__init__()
+        self.expression_class = expression_class
+
+    def get_name(self):
+        return self.expression_class.__name__
+
+
+def record_material_graph():
+    links = []
+
+    def create_expression(material, expression_class, x, y):
+        return RecordedMaterialNode(expression_class)
+
+    def connect(source, source_output, target, target_input):
+        links.append((source, source_output, target, target_input))
+        return True
+
+    return links, create_expression, connect
+
+
+def find_linked_source(links, target, target_input):
+    return next((source for source, _, linked_target, linked_input in links if linked_target is target and linked_input == target_input), None)
+
+
+def is_origin_subtract(node, links, collection, parameter_name):
+    game_time = find_linked_source(links, node, "A")
+    origin = find_linked_source(links, node, "B")
+    return (node.get_name() == "MaterialExpressionSubtract" and game_time is not None and game_time.get_name() == "MaterialExpressionTime"
+            and origin is not None and origin.get_name() == "MaterialExpressionCollectionParameter" and origin.collection is collection and origin.parameter_name == parameter_name)
+
+
+def make_collection_props():
+    return Props(vector_parameters=[], scalar_parameters=[])
+
+
+def collection_parameter_types():
+    return {"CollectionScalarParameter": type("CollectionScalarParameter", (Props,), {}), "CollectionVectorParameter": type("CollectionVectorParameter", (Props,), {})}
+
+
+def stored_collection_scalars(collection):
+    return [(item.parameter_name, item.default_value) for item in collection.scalar_parameters]
+
+
+def check_time_origin_fixes():
+    output_dir = TEST_DIR / "time-origin"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    lookdev.OUTPUT_DIRECTORY = output_dir
+
+    def material_user(label, material):
+        return FakeActor(label, components=[FakeStaticMeshComponent("Mesh", [material])])
+
+    def instance_of(master_path, name):
+        return FakeMaterialInstanceConstant(f"{volume_material.MATERIAL_DIR}/{name}", parent=FakeMaterial(master_path))
+
+    def add_collection(path, scalar_names):
+        WORLD.add_asset(FakeMaterialParameterCollection(path, scalar_names))
+
+    def fresh_state():
+        return {"uses_tuning_reload": False, "key_errors": []}
+
+    def apply_reinit_and_keep(prefix, state):
+        steps = []
+        for tag, reset_mode in (("s00", "reinit"), ("s01", "keep")):
+            step = lookdev.apply_variant_with_tuning({"tuning_reload": {"tuning": "", "look": "", "reset": reset_mode, "relative_to_base": False},
+                                                      "schedule": {"times": [0.5], "reference": "now", "prefix": f"{prefix}_{reset_mode}"}}, tag, state)
+            lookdev.wait_for_schedule(Path(step["schedule"]["status_path"]), 30.0)
+            steps.append(step)
+        return steps
+
+    def reference_times(steps):
+        return [step["schedule"]["reference_game_time"] for step in steps]
+
+    volume_master_path = volume_material.material_asset_path(volume_material.VOLUME_MASTER["name"])
+    fake_master_path = volume_material.material_asset_path(volume_material.FAKE_MASTER["name"])
+    volume_origin_name = volume_material.FLOW_ORIGIN_PARAMETER_NAME
+    volume_scalar_names = [name for name, _ in volume_material.COLLECTION_SCALAR_DEFAULTS]
+
+    reset_world([(TDFluidLiveActor, "TDGen_SmokeLive", FakePreset("CAMPFIRE"))])
+    add_collection(volume_material.FLOW_COLLECTION_PATH, volume_scalar_names)
+    WORLD.actors.append(material_user("TDGen_SmokeVolume", FakeMaterialInstanceDynamic(instance_of(volume_master_path, "MI_TD_FluidVolume_SmokeBillow"))))
+    state = fresh_state()
+    volume_steps = apply_reinit_and_keep("volume", state)
+    volume_origins = [step.get("volume_flow_origin", {}) for step in volume_steps]
+    final_volume_origin = WORLD.collection_scalars.get((volume_material.FLOW_COLLECTION_PATH, volume_origin_name))
+    stray_keys = [key for step in volume_steps for key in ("fog_flow_origin", "foliage_wind_origin") if key in step]
+
+    reset_world([])
+    add_collection(volume_material.FLOW_COLLECTION_PATH, volume_scalar_names)
+    WORLD.actors.append(material_user("TDGen_FakeVolume", instance_of(fake_master_path, "MI_TD_FluidFakeVolume_GrayFluff")))
+    fake_state = fresh_state()
+    fake_only = lookdev.apply_variant_with_tuning({}, "s02", fake_state)
+
+    reset_world([])
+    add_collection(volume_material.FLOW_COLLECTION_PATH, [])
+    WORLD.actors.append(material_user("TDGen_SmokeStale", instance_of(volume_master_path, "MI_TD_FluidVolume_SmokeHard")))
+    stale_state = fresh_state()
+    stale = lookdev.apply_variant_with_tuning({}, "s03", stale_state).get("volume_flow_origin", {})
+    stale_scalars = dict(WORLD.collection_scalars)
+
+    reset_world([])
+    WORLD.actors.append(material_user("TDGen_SmokeCut", instance_of(volume_master_path, "MI_TD_FluidVolume_SmokeHard")))
+    missing_state = fresh_state()
+    missing = lookdev.apply_variant_with_tuning({}, "s04", missing_state).get("volume_flow_origin", {})
+    check("F12 볼륨 흐름 원점: 기반 재질 M_TD_FluidVolume 사용자(MID)가 있으면 reinit·keep 단계마다 같은 apply 원격 호출 첫머리에서 MPC_TD_FluidVolumeFlow VolumeFlowOriginSeconds = 그 apply 게임 시각 = 예약 reference_game_time(다시 읽은 value 같음, 경로·이름은 볼륨 재질 스크립트 상수, 기본 0) / 안개·식생 키 없음 / 가짜 볼륨 마스터 사용자만이면 키 없음 / MPC 매개변수 없음·MPC 없음은 키 오류 'volume_flow_origin: ' 로 단계 무효",
+          dict(volume_material.COLLECTION_SCALAR_DEFAULTS) == {volume_origin_name: 0.0} and volume_material.FLOW_COLLECTION_PATH == "/Game/FluidFX/Materials/MPC_TD_FluidVolumeFlow"
+          and all(item.get("mpc") == volume_material.FLOW_COLLECTION_PATH and item.get("user") == "TDGen_SmokeVolume" and item.get("errors") == [] for item in volume_origins)
+          and [item.get("game_time") for item in volume_origins] == [item.get("value") for item in volume_origins] == reference_times(volume_steps)
+          and volume_origins[0]["game_time"] < volume_origins[1]["game_time"] and final_volume_origin == volume_origins[1]["game_time"] and not stray_keys and not state["key_errors"]
+          and "volume_flow_origin" not in fake_only and not fake_state["key_errors"]
+          and stale.get("user") == "TDGen_SmokeStale" and stale.get("value") is None and len(stale.get("errors", [])) == 1 and stale_scalars == {}
+          and any(line.startswith(f"s03: volume_flow_origin: MPC 매개변수 없음: {volume_origin_name}") for line in stale_state["key_errors"])
+          and missing.get("value") is None and any(line.startswith(f"s04: volume_flow_origin: MPC 없음: {volume_material.FLOW_COLLECTION_PATH}") for line in missing_state["key_errors"]),
+          (volume_origins, final_volume_origin, reference_times(volume_steps), stray_keys, state["key_errors"], fake_only.get("volume_flow_origin"), fake_state["key_errors"],
+           stale, stale_scalars, stale_state["key_errors"], missing, missing_state["key_errors"]))
+
+    look = copy.deepcopy(WORLD.look_table)
+    clean_table = fluid_material_look.TDMaterialLookTable(copy.deepcopy(look), "fixture")
+    base_unknown = volume_material.find_unknown_instance_overrides(clean_table)
+    base_driven = volume_material.find_collection_driven_overrides(clean_table)
+    look["Materials"][volume_material.material_asset_path("MI_TD_FluidVolume_SmokeHard")]["Scalars"][volume_origin_name] = 5.0
+    injected_table = fluid_material_look.TDMaterialLookTable(look, "fixture")
+    injected_unknown = volume_material.find_unknown_instance_overrides(injected_table)
+    injected_driven = volume_material.find_collection_driven_overrides(injected_table)
+    check("F12b 볼륨 재질 스크립트: 모양 정본 MI 가 룩데브 구동 MPC 이름 VolumeFlowOriginSeconds 를 덮으면 그 MI 하나만 '룩데브 구동 MPC 이름' 목록(마스터에 없는 이름 목록에 중복 없음), 정본 그대로는 0건",
+          base_driven == [] and injected_driven == [f"MI_TD_FluidVolume_SmokeHard.{volume_origin_name}"] and injected_unknown == base_unknown,
+          (base_driven, injected_driven, base_unknown, injected_unknown))
+
+    links, create_expression, connect = record_material_graph()
+    flow_collection = FakeMaterialParameterCollection(volume_material.FLOW_COLLECTION_PATH, volume_scalar_names)
+    volume_sources, fake_sources = {}, {}
+    with patched(FakeMaterialEditingLibrary, create_material_expression=create_expression, connect_material_expressions=connect):
+        volume_material.add_builtin_sources(None, volume_material.VOLUME_MASTER, volume_sources, flow_collection)
+        fake_link_count = len(links)
+        volume_material.add_builtin_sources(None, volume_material.FAKE_MASTER, fake_sources, flow_collection)
+    volume_elapsed, fake_elapsed = volume_sources["ElapsedSeconds"][0], fake_sources["ElapsedSeconds"][0]
+    flow_saves = []
+    existing_collection = FakeMaterialParameterCollection(volume_material.FLOW_COLLECTION_PATH, [])
+    with patched(unreal, EditorAssetLibrary=Props(does_asset_exist=lambda path: path == volume_material.FLOW_COLLECTION_PATH, load_asset=lambda path: existing_collection), **collection_parameter_types()), \
+            patched(volume_material, save_asset=lambda asset, path: flow_saves.append(path)):
+        built_collection = volume_material.load_or_create_flow_collection(True)
+        try:
+            volume_material.load_or_create_flow_collection(False)
+            preserved = False
+        except RuntimeError as error:
+            preserved = str(error).startswith("기존 에셋 보존")
+    check("F12c 볼륨 마스터 그래프: M_TD_FluidVolume ElapsedSeconds 원천 = Subtract(A Time, B CollectionParameter MPC_TD_FluidVolumeFlow.VolumeFlowOriginSeconds), M_TD_FluidFakeVolume 은 Time 그대로(뺄셈 없음) / 흐름 MPC 재사용은 overwrite 때만 스칼라 {VolumeFlowOriginSeconds: 0} 로 쓰고 저장, overwrite 없으면 '기존 에셋 보존' / 대상 에셋 목록에 MPC",
+          is_origin_subtract(volume_elapsed, links, flow_collection, volume_origin_name) and fake_elapsed.get_name() == "MaterialExpressionTime"
+          and not any(target is fake_elapsed for _, _, target, _ in links[fake_link_count:]) and volume_material.describe_elapsed_seconds(volume_material.FAKE_MASTER) == "Time"
+          and built_collection is existing_collection and stored_collection_scalars(existing_collection) == list(volume_material.COLLECTION_SCALAR_DEFAULTS)
+          and flow_saves == [volume_material.FLOW_COLLECTION_PATH] and preserved and volume_material.FLOW_COLLECTION_PATH in volume_material.collect_target_asset_paths(),
+          ([(source.get_name(), output, target.get_name(), target_input) for source, output, target, target_input in links], fake_elapsed.get_name(), stored_collection_scalars(existing_collection), flow_saves, preserved))
+
+    wind_origin_name = foliage_material.WIND_ORIGIN_PARAMETER_NAME
+    wind_scalar_names = [name for name, _ in foliage_material.COLLECTION_SCALAR_DEFAULTS]
+    wind_collections = [(foliage_material.asset_path(channel.grass_master_name), foliage_material.asset_path(channel.collection_name)) for channel in foliage_material.FOLIAGE_CHANNELS]
+    fog_master_path = fog_material.MASTER_PATH
+
+    reset_world([(TDFluidLiveActor, "TDGen_FoliageLive", FakePreset("CAMPFIRE"))])
+    for index, (master_path, collection_path) in enumerate(wind_collections):
+        add_collection(collection_path, wind_scalar_names)
+        WORLD.actors.append(material_user(f"TDGen_Grass{index}", instance_of(master_path, f"MI_TD_FluidFoliage_Test{index}")))
+    add_collection(fog_material.COLLECTION_PATH, [name for name, _ in fog_material.COLLECTION_SCALAR_DEFAULTS])
+    add_collection(volume_material.FLOW_COLLECTION_PATH, volume_scalar_names)
+    WORLD.actors.append(material_user("TDGen_FogField", instance_of(fog_master_path, "MI_TD_FluidFog_PassiveField")))
+    WORLD.actors.append(material_user("TDGen_DustVolume", instance_of(volume_master_path, "MI_TD_FluidVolume_GroundDust")))
+    state = fresh_state()
+    wind_steps = apply_reinit_and_keep("wind", state)
+    winds = [step.get("foliage_wind_origin", []) for step in wind_steps]
+    expected_pairs = [(collection_path, f"TDGen_Grass{index}") for index, (_, collection_path) in enumerate(wind_collections)]
+    final_winds = [WORLD.collection_scalars.get((collection_path, wind_origin_name)) for _, collection_path in wind_collections]
+    shared_origins_match = all(step.get(key, {}).get("value") == step["schedule"]["reference_game_time"] for step in wind_steps for key in ("fog_flow_origin", "volume_flow_origin"))
+
+    reset_world([])
+    for index, (master_path, collection_path) in enumerate(wind_collections[:2]):
+        add_collection(collection_path, [] if index == 0 else wind_scalar_names)
+        WORLD.actors.append(material_user(f"TDGen_Grass{index}", instance_of(master_path, f"MI_TD_FluidFoliage_Test{index}")))
+    stale_state = fresh_state()
+    stale_winds = lookdev.apply_variant_with_tuning({}, "s02", stale_state).get("foliage_wind_origin", [])
+    stale_name = wind_collections[0][1].rsplit("/", 1)[-1]
+
+    reset_world([])
+    WORLD.actors.append(material_user("TDGen_Rock", instance_of("/Game/FluidFX/Materials/M_TD_FluidTrackLayer", "MI_TD_FluidTrack_Snow")))
+    for _, collection_path in wind_collections:
+        add_collection(collection_path, wind_scalar_names)
+    plain_state = fresh_state()
+    plain = lookdev.apply_variant_with_tuning({}, "s03", plain_state)
+    check("F13 잎 바람 원점: 채널 풀 마스터(Grass·GrassPress·Reed) 사용자가 있는 채널마다 reinit·keep 단계 apply 첫머리에서 그 채널 MPC FoliageWindOriginSeconds = 그 apply 게임 시각(채널 순서·MPC 경로는 식생 재질 스크립트 FOLIAGE_CHANNELS, 다시 읽은 value 같음) / 같은 무대의 안개·볼륨 원점도 같은 시각(사용자 찾기 1회) / 한 채널 MPC 매개변수 없음은 그 채널만 키 오류 'foliage_wind_origin: <MPC 이름>: ' / 풀 마스터 사용자 없으면 키 없음",
+          dict(foliage_material.COLLECTION_SCALAR_DEFAULTS) == {wind_origin_name: 0.0}
+          and all([(item.get("mpc"), item.get("user")) for item in wind] == expected_pairs for wind in winds)
+          and all(item.get("value") == item.get("game_time") == step["schedule"]["reference_game_time"] and item.get("errors") == [] for step, wind in zip(wind_steps, winds) for item in wind)
+          and final_winds == [winds[1][0]["game_time"]] * len(wind_collections) and winds[0][0]["game_time"] < winds[1][0]["game_time"] and shared_origins_match and not state["key_errors"]
+          and [item.get("value") is None for item in stale_winds] == [True, False] and len(stale_state["key_errors"]) == 1
+          and stale_state["key_errors"][0].startswith(f"s02: foliage_wind_origin: {stale_name}: MPC 매개변수 없음: {wind_origin_name}")
+          and not any(key in plain for key in ("fog_flow_origin", "volume_flow_origin", "foliage_wind_origin")) and not plain_state["key_errors"],
+          (winds, expected_pairs, final_winds, [step.get("schedule", {}).get("reference_game_time") for step in wind_steps], shared_origins_match, state["key_errors"],
+           stale_winds, stale_state["key_errors"], plain_state["key_errors"]))
+
+    entries = copy.deepcopy(WORLD.look_table["Materials"])
+    base_problems = foliage_material.find_instance_override_problems(entries)
+    entries[foliage_material.asset_path("MI_TD_FluidFoliage_GrassPress")]["Scalars"][wind_origin_name] = 5.0
+    new_problems = [problem for problem in foliage_material.find_instance_override_problems(entries) if problem not in base_problems]
+    check("F13b 식생 재질 스크립트: 모양 정본 풀 MI 가 룩데브 구동 MPC 이름 FoliageWindOriginSeconds 를 덮으면 그 MI 하나만 '룩데브 구동 MPC 이름 덮어씀'(마스터에 없는 이름·구획 어긋남 중복 없음)",
+          new_problems == [f"MI_TD_FluidFoliage_GrassPress: 룩데브 구동 MPC 이름 덮어씀 {wind_origin_name}"], (new_problems, base_problems))
+
+    links, create_expression, connect = record_material_graph()
+    wind_collection = make_collection_props()
+    factory = foliage_material.NodeFactory(lambda expression_class, x, y: create_expression(None, expression_class, x, y))
+    channel = foliage_material.FOLIAGE_CHANNELS[1]
+    collection_loads = []
+    with patched(FakeMaterialEditingLibrary, connect_material_expressions=connect):
+        wind_elapsed = foliage_material.build_wind_elapsed_seconds(factory, wind_collection)
+    with patched(unreal, **collection_parameter_types()), \
+            patched(foliage_material, load_or_create=lambda path, asset_class, asset_factory, overwrite: (collection_loads.append(path) or wind_collection, False), save_asset=lambda asset, path: None):
+        _, was_created = foliage_material.load_or_create_collection(channel, True)
+    check("F13c 식생 휨 MF 그래프: ElapsedSeconds 원천 = Subtract(A Time, B CollectionParameter 채널 MPC.FoliageWindOriginSeconds) / 채널 MPC 는 벡터 3개 그대로에 스칼라 {FoliageWindOriginSeconds: 0} 를 더해 씀",
+          is_origin_subtract(wind_elapsed, links, wind_collection, wind_origin_name) and collection_loads == [foliage_material.asset_path(channel.collection_name)] and was_created is False
+          and [item.parameter_name for item in wind_collection.vector_parameters] == [name for name, _ in foliage_material.COLLECTION_VECTOR_DEFAULTS]
+          and stored_collection_scalars(wind_collection) == list(foliage_material.COLLECTION_SCALAR_DEFAULTS),
+          ([(source.get_name(), output, target.get_name(), target_input) for source, output, target, target_input in links], collection_loads, stored_collection_scalars(wind_collection)))
+
+    reset_world([(TDFluidLiveActor, "TDGen_StirLive", FakePreset("CAMPFIRE")), (TDFluidFireActor, "TDGen_FireLive", FakePreset("CAMPFIRE"))])
+    for actor in WORLD.live_actors():
+        actor.components.append(actor.live_component)
+    WORLD.actors.append(FakeActor("TDGen_SnowTrack", components=[FakeLive(WORLD, FakePreset("CAMPFIRE"))]))
+    live_actors = WORLD.live_actors()
+    state = fresh_state()
+    with patched(unreal, TDFluidLiveComponent=FakeLive):
+        reset_steps = apply_reinit_and_keep("history", state)
+    history_counts = [actor.history_reset_count for actor in live_actors]
+    reinit_reset = reset_steps[0].get("tuning_reload", {}).get("state_reset", {})
+
+    def refuse_history(actor):
+        raise RuntimeError("reset_interaction_history 없음")
+
+    broken_state = fresh_state()
+    with patched(unreal, TDFluidLiveComponent=FakeLive), patched(TDFluidLiveActor, reset_interaction_history=refuse_history):
+        broken = lookdev.apply_variant_with_tuning({"tuning_reload": {"tuning": "", "look": "", "reset": "reinit", "relative_to_base": False}}, "s02", broken_state)
+    broken_reset = broken.get("tuning_reload", {}).get("state_reset", {})
+    check("F14 reinit 상태 초기화가 TDFluidLiveActor 마다 reset_interaction_history() 1회(이전 위치·잔류 도장 기록, 단계 첫머리 순간이동 도장 fx15a s00), 라이브 액터가 아닌 라이브 컴포넌트 소유자는 컴포넌트만 / keep 은 호출 없음 / 결과 state_reset.interaction_history_actors / 호출 실패(C++ 빌드 전)는 그 액터 키 오류 'state_reset: <라벨>: ' 로 단계 무효",
+          history_counts == [1, 1] and sorted(reinit_reset.get("interaction_history_actors", [])) == ["TDGen_FireLive", "TDGen_StirLive"]
+          and sorted(reinit_reset.get("actors", [])) == ["TDGen_FireLive", "TDGen_SnowTrack", "TDGen_StirLive"] and "state_reset" not in reset_steps[1].get("tuning_reload", {})
+          and not state["key_errors"] and broken_reset.get("actors") == ["TDGen_SnowTrack"] and broken_reset.get("interaction_history_actors") == []
+          and sorted(line.split(": ", 3)[2] for line in broken_state["key_errors"] if line.startswith("s02: state_reset: ")) == ["TDGen_FireLive", "TDGen_StirLive"],
+          (history_counts, reinit_reset, reset_steps[1].get("tuning_reload", {}).get("state_reset"), state["key_errors"], broken_reset, broken_state["key_errors"]))
+
+
 class FakeUnrealLog(io.BufferedIOBase):
     def __init__(self):
         self.entries = []
@@ -3541,6 +3796,7 @@ run_check(check_cal0_batch)
 run_check(check_cal0_integration)
 run_check(check_cal0_real_queue)
 run_check(check_lookdev_frame_fixes)
+run_check(check_time_origin_fixes)
 run_check(check_capture_tool_fixes)
 run_check(check_pie_session_fixes)
 check("실행 전후 정본 sha256 동일", fluid_tuning_patch.file_sha256(CANONICAL) == canonical_before and fluid_tuning_patch.file_sha256(fluid_tuning_patch.canonical_look_path()) == look_canonical_before)

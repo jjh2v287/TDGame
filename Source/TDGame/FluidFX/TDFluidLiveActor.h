@@ -183,6 +183,9 @@ public:
 	void UnregisterInteractingActor(AActor* InteractingActor);
 
 	UFUNCTION(BlueprintCallable, Category = "FluidFX")
+	void ResetInteractionHistory();
+
+	UFUNCTION(BlueprintCallable, Category = "FluidFX")
 	void EvaluateActivationProximity(const FVector& ObserverWorldLocation);
 
 	void QueueMouseBrushAt(const FVector& CursorWorldLocation, float DeltaTime) { QueuePointerBrushAt(-1, CursorWorldLocation, DeltaTime); }
@@ -238,7 +241,6 @@ private:
 	void ApplyVolumeLightToMaterial();
 	void GatherShadowCapsules(TArray<FTDFluidShadowCapsule>& OutCapsules) const;
 	void PushVolumeTransmittanceSources();
-	void ResetInteractionHistory();
 	void ClearInteractionState();
 	void InvalidateTerrainQueueIfSolverGridChanged();
 	void ShiftTerrainQueueWithWindow(const FVector2D& CenterBeforeStep);

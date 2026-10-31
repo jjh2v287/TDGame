@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FX-8a 공용 3D 노이즈 볼륨 텍스처 T_TD_FluidNoiseVolume(Saved/FluidFX/fire_textures/T_TD_FluidNoiseAtlas.png 64³ 아틀라스)과 볼륨 레이마칭 마스터 재질 M_TD_FluidVolume(TDFluidVolumeRaymarch.hlsl)·가짜 볼륨 마스터 M_TD_FluidFakeVolume(TDFluidFakeVolume.hlsl) 및 인스턴스를 만든다.
 실행 명령: python Tools/FluidFX/make_fluid_fire_textures.py 다음 python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_volume_material.py (불꽃 재질 스크립트보다 먼저)
-출력: /Game/FluidFX/Textures/T_TD_FluidNoiseAtlas·T_TD_FluidNoiseVolume, /Game/FluidFX/Materials/M_TD_FluidVolume, MI_TD_FluidVolume_SmokeHard·SmokeSoft·SmokeSlab·SmokeBillow·GroundDust·ExplosionBillow, M_TD_FluidFakeVolume, MI_TD_FluidFakeVolume_PurplePlasma·GrayFluff·BlueSmoke·RedSmoke·FloorPulse·PlasmaSphere·SmokeChamber, Saved/FluidFX/fluid_volume_material.json
-상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 볼륨 입력 73/73·PS 917 명령, 가짜 볼륨 38/38). FX-8c 3차(2026-10-20) 볼륨 입력 76개(HeatEmissionSurfaceScale·AmbientSideFloor·AmbientCreviceFloor, 기본값은 옛 출력과 같음)·디더 View.StateFrameIndexMod8 과 FX-8c 4차 G1(2026-10-20) 볼륨 입력 77개·가짜 볼륨 입력 39개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(볼륨 77/77 연결·PS 931 명령·표본기 6, 가짜 볼륨 39/39·PS 292 명령, 인스턴스 11개). FX-8c 5차 굽기(2026-10-20: SmokeBillow 에 HeatEmissionSurfaceScale 1, 새 MI_TD_FluidVolume_GroundDust 는 SmokeBillow 색과 HeatEmissionSurfaceScale 를 뺀 스칼라에 RenderMode 2)는 6차 에디터 재실행(볼륨 77/77·PS 931 명령·인스턴스 12개)에서 반영. FX-8c 7차(2026-10-20) 볼륨 입력 79개(연기 노이즈 부드러운 절댓값 NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift, 기본 0 = 옛 abs 경로와 dxc 본문 동일, 인스턴스 값은 그대로)는 2026-10-20 16:14 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 12개). FX-8c 8차(2026-10-20) 폭발 연기 전용 MI_TD_FluidVolume_ExplosionBillow(SmokeBillow 값에 NoiseSoftAbsEpsilon 0.04·NoiseSoftAbsMeanShift 0.08456, SmokeBillow 은 0/0 그대로)는 2026-10-20 17:22 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 13개, 다시 읽기 ExplosionBillow ε 0.04·δ 0.08456, SmokeBillow 0/0). 기존 에셋은 Saved/FluidFX/fluid_volume_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(노이즈 텍스처도 다시 가져옴), 미저장 작업이 있으면 중단한다. 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 13종의 스칼라·벡터[r,g,b,a]·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, INSTANCE_SPECS 에는 이름·마스터만 남는다(알파 1 강제 삭제, 정본 값 그대로). 마스터 기본값 표는 그대로다.
+출력: /Game/FluidFX/Textures/T_TD_FluidNoiseAtlas·T_TD_FluidNoiseVolume, /Game/FluidFX/Materials/MPC_TD_FluidVolumeFlow(스칼라 VolumeFlowOriginSeconds 기본 0), M_TD_FluidVolume, MI_TD_FluidVolume_SmokeHard·SmokeSoft·SmokeSlab·SmokeBillow·GroundDust·ExplosionBillow, M_TD_FluidFakeVolume, MI_TD_FluidFakeVolume_PurplePlasma·GrayFluff·BlueSmoke·RedSmoke·FloorPulse·PlasmaSphere·SmokeChamber, Saved/FluidFX/fluid_volume_material.json(flow_collection, collection_scalars, 마스터별 elapsed_seconds)
+상태: 검증됨(2026-10-20 FX-8b 에디터 실행, 볼륨 입력 73/73·PS 917 명령, 가짜 볼륨 38/38). FX-8c 3차(2026-10-20) 볼륨 입력 76개(HeatEmissionSurfaceScale·AmbientSideFloor·AmbientCreviceFloor, 기본값은 옛 출력과 같음)·디더 View.StateFrameIndexMod8 과 FX-8c 4차 G1(2026-10-20) 볼륨 입력 77개·가짜 볼륨 입력 39개(PlaneCoordinateOffsetCm, 기본 0 = 옛 출력과 같음)는 2026-10-20 12:09 에디터 재실행(볼륨 77/77 연결·PS 931 명령·표본기 6, 가짜 볼륨 39/39·PS 292 명령, 인스턴스 11개). FX-8c 5차 굽기(2026-10-20: SmokeBillow 에 HeatEmissionSurfaceScale 1, 새 MI_TD_FluidVolume_GroundDust 는 SmokeBillow 색과 HeatEmissionSurfaceScale 를 뺀 스칼라에 RenderMode 2)는 6차 에디터 재실행(볼륨 77/77·PS 931 명령·인스턴스 12개)에서 반영. FX-8c 7차(2026-10-20) 볼륨 입력 79개(연기 노이즈 부드러운 절댓값 NoiseSoftAbsEpsilon·NoiseSoftAbsMeanShift, 기본 0 = 옛 abs 경로와 dxc 본문 동일, 인스턴스 값은 그대로)는 2026-10-20 16:14 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 12개). FX-8c 8차(2026-10-20) 폭발 연기 전용 MI_TD_FluidVolume_ExplosionBillow(SmokeBillow 값에 NoiseSoftAbsEpsilon 0.04·NoiseSoftAbsMeanShift 0.08456, SmokeBillow 은 0/0 그대로)는 2026-10-20 17:22 에디터 재실행(볼륨 79/79 연결·PS 970 명령·인스턴스 13개, 다시 읽기 ExplosionBillow ε 0.04·δ 0.08456, SmokeBillow 0/0). 기존 에셋은 Saved/FluidFX/fluid_volume_material_request.json 의 {"overwrite": true} 가 있을 때만 같은 에셋 안에서 다시 짓고(노이즈 텍스처도 다시 가져옴), 미저장 작업이 있으면 중단한다. 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 13종의 스칼라·벡터[r,g,b,a]·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, INSTANCE_SPECS 에는 이름·마스터만 남는다(알파 1 강제 삭제, 정본 값 그대로). 마스터 기본값 표는 그대로다. 2026-10-31 시간원 2차(K5 fx15a kernel 대조 실패): M_TD_FluidVolume 의 Custom 입력 ElapsedSeconds = Time(View.GameTime) − 새 MPC_TD_FluidVolumeFlow 스칼라 VolumeFlowOriginSeconds(기본 0 이라 게임 모양 불변, 재질당 MPC 1개로 한도 2 안, MI·모양 정본 덮어쓰기 금지 — 룩데브 구동 MPC 이름 자체 점검), M_TD_FluidFakeVolume 은 Time 그대로(uses_flow_origin False). pie_lookdev_fluid.py 가 기반 재질 M_TD_FluidVolume 사용자가 있는 무대 단계 apply 마다 원점 = 그 게임 시각(volume_flow_origin). 에디터 재생성 전(py_compile·calib_offline_test F12 가짜 unreal·check_fluid_fire_hlsl.py 만), 재생성 전에는 MPC 가 없어 연기 무대 룩데브 단계가 키 오류다.
 """
 import hashlib
 import importlib.util
@@ -31,6 +31,12 @@ NOISE_TILE_X_PROPERTY_CANDIDATES = ("source2d_tile_size_x", "source_2d_tile_size
 NOISE_TILE_Y_PROPERTY_CANDIDATES = ("source2d_tile_size_y", "source_2d_tile_size_y")
 
 DEFAULT_TEXTURE_PATHS = ("/Engine/EngineResources/Black", "/Engine/EngineResources/DefaultTexture")
+
+FLOW_COLLECTION_NAME = "MPC_TD_FluidVolumeFlow"
+FLOW_COLLECTION_PATH = f"{MATERIAL_DIR}/{FLOW_COLLECTION_NAME}"
+FLOW_ORIGIN_PARAMETER_NAME = "VolumeFlowOriginSeconds"
+COLLECTION_SCALAR_DEFAULTS = ((FLOW_ORIGIN_PARAMETER_NAME, 0.0),)
+COLLECTION_RUNTIME_NAMES = frozenset(name for name, _ in COLLECTION_SCALAR_DEFAULTS)
 
 SMOKE_COLOR = (0.88, 0.12, 0.045)
 SHADOW_COLOR = (0.018, 0.002, 0.001)
@@ -71,6 +77,7 @@ VOLUME_MASTER = {
     "group": "TDFluidVolume",
     "blend": "BLEND_TRANSLUCENT",
     "disable_depth_test": True,
+    "uses_flow_origin": True,
     "vectors": (
         ("SimCenterWorld", (0.0, 0.0, 0.0, 1.0)),
         ("SimExtentsCm", (700.0, 700.0, 0.1, 0.0)),
@@ -166,6 +173,7 @@ FAKE_MASTER = {
     "group": "TDFluidFakeVolume",
     "blend": "BLEND_ALPHA_COMPOSITE",
     "disable_depth_test": False,
+    "uses_flow_origin": False,
     "vectors": (
         ("SimCenterWorld", (0.0, 0.0, 0.0, 1.0)),
         ("SimExtentsCm", (700.0, 700.0, 0.1, 0.0)),
@@ -291,6 +299,9 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialFactoryNew",
     "MaterialInstanceConstant",
     "MaterialInstanceConstantFactoryNew",
+    "MaterialParameterCollection",
+    "MaterialParameterCollectionFactoryNew",
+    "CollectionScalarParameter",
     "VolumeTexture",
     "VolumeTextureFactory",
     "MaterialExpressionCustom",
@@ -301,6 +312,8 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialExpressionSceneDepth",
     "MaterialExpressionPixelDepth",
     "MaterialExpressionTime",
+    "MaterialExpressionCollectionParameter",
+    "MaterialExpressionSubtract",
     "MaterialExpressionTextureObjectParameter",
     "MaterialExpressionVectorParameter",
     "MaterialExpressionScalarParameter",
@@ -361,7 +374,7 @@ def material_asset_path(name):
 
 
 def collect_target_asset_paths():
-    paths = [NOISE_ATLAS_PATH, NOISE_VOLUME_PATH]
+    paths = [NOISE_ATLAS_PATH, NOISE_VOLUME_PATH, FLOW_COLLECTION_PATH]
     paths.extend(material_asset_path(spec["name"]) for spec in MASTER_SPECS)
     paths.extend(material_asset_path(spec["name"]) for spec in INSTANCE_SPECS)
     return paths
@@ -454,16 +467,27 @@ def find_unresolved_inputs(spec):
     return [name for name in spec["inputs"] if name not in resolvable]
 
 
+def read_instance_override_names(look_table):
+    for instance in INSTANCE_SPECS:
+        entry = look_table.material(material_asset_path(instance["name"]), material_asset_path(instance["master"]))
+        yield instance, set(entry["Vectors"]) | set(entry["Scalars"])
+
+
 def find_unknown_instance_overrides(look_table):
     declared = {
         spec["name"]: {name for name, _ in spec["vectors"]} | {name for name, _ in spec["scalars"]} for spec in MASTER_SPECS
     }
     unknown = []
-    for instance in INSTANCE_SPECS:
-        entry = look_table.material(material_asset_path(instance["name"]), material_asset_path(instance["master"]))
-        names = set(entry["Vectors"]) | set(entry["Scalars"])
-        unknown.extend(f"{instance['name']}.{name}" for name in sorted(names - declared[instance["master"]]))
+    for instance, names in read_instance_override_names(look_table):
+        unknown.extend(f"{instance['name']}.{name}" for name in sorted(names - declared[instance["master"]] - COLLECTION_RUNTIME_NAMES))
     return unknown
+
+
+def find_collection_driven_overrides(look_table):
+    driven = []
+    for instance, names in read_instance_override_names(look_table):
+        driven.extend(f"{instance['name']}.{name}" for name in sorted(names & COLLECTION_RUNTIME_NAMES))
+    return driven
 
 
 def choose_sampler_type(texture):
@@ -560,6 +584,35 @@ def build_noise_volume_texture():
         "sampler_type": str(sampler_type),
     }
     return volume, sampler_type, summary
+
+
+def load_or_create_flow_collection(overwrite):
+    assets = unreal.EditorAssetLibrary
+    if assets.does_asset_exist(FLOW_COLLECTION_PATH):
+        if not overwrite:
+            raise RuntimeError(f"기존 에셋 보존: {FLOW_COLLECTION_PATH}")
+        collection = assets.load_asset(FLOW_COLLECTION_PATH)
+        if not isinstance(collection, unreal.MaterialParameterCollection):
+            raise RuntimeError(f"기존 에셋 형식 불일치: {FLOW_COLLECTION_PATH}")
+    else:
+        ensure_directory(MATERIAL_DIR)
+        collection = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            FLOW_COLLECTION_NAME, MATERIAL_DIR, unreal.MaterialParameterCollection, unreal.MaterialParameterCollectionFactoryNew()
+        )
+        if collection is None:
+            raise RuntimeError(f"MPC 생성 실패: {FLOW_COLLECTION_PATH}")
+    scalar_parameters = []
+    for name, value in COLLECTION_SCALAR_DEFAULTS:
+        parameter = unreal.CollectionScalarParameter()
+        parameter.set_editor_property("parameter_name", name)
+        parameter.set_editor_property("default_value", value)
+        scalar_parameters.append(parameter)
+    collection.set_editor_property("scalar_parameters", scalar_parameters)
+    stored = [(str(item.get_editor_property("parameter_name")), float(item.get_editor_property("default_value"))) for item in collection.get_editor_property("scalar_parameters")]
+    if stored != list(COLLECTION_SCALAR_DEFAULTS):
+        raise RuntimeError("MPC 스칼라 이름·기본값 설정 확인 실패: " + ", ".join(f"{name}={value}" for name, value in stored))
+    save_asset(collection, FLOW_COLLECTION_PATH)
+    return collection
 
 
 def add_node(material, expression_class, x, y, **properties):
@@ -660,14 +713,29 @@ def prepare_master_material(spec, overwrite):
     return material, True
 
 
-def add_builtin_sources(material, sources):
+def build_elapsed_seconds(material, spec, flow_collection):
+    game_time = add_node(material, unreal.MaterialExpressionTime, -1500, -660)
+    if not spec["uses_flow_origin"]:
+        return game_time
+    flow_origin = add_node(material, unreal.MaterialExpressionCollectionParameter, -1500, -605, collection=flow_collection, parameter_name=FLOW_ORIGIN_PARAMETER_NAME)
+    elapsed = add_node(material, unreal.MaterialExpressionSubtract, -1300, -660)
+    link(game_time, elapsed, "A")
+    link(flow_origin, elapsed, "B")
+    return elapsed
+
+
+def describe_elapsed_seconds(spec):
+    return f"Time - {FLOW_COLLECTION_NAME}.{FLOW_ORIGIN_PARAMETER_NAME}" if spec["uses_flow_origin"] else "Time"
+
+
+def add_builtin_sources(material, spec, sources, flow_collection):
     world_position = add_node(material, unreal.MaterialExpressionWorldPosition, -1500, -1100)
     camera_position = add_node(material, unreal.MaterialExpressionCameraPositionWS, -1500, -980)
     sources["PixelWorldPosition"] = (truncate_if_available(material, world_position, -1300, -1100), "")
     sources["CameraWorldPosition"] = (truncate_if_available(material, camera_position, -1300, -980), "")
     sources["SceneDepthCm"] = (add_node(material, unreal.MaterialExpressionSceneDepth, -1300, -860), "")
     sources["PixelDepthCm"] = (add_node(material, unreal.MaterialExpressionPixelDepth, -1300, -760), "")
-    sources["ElapsedSeconds"] = (add_node(material, unreal.MaterialExpressionTime, -1300, -660), "")
+    sources["ElapsedSeconds"] = (build_elapsed_seconds(material, spec, flow_collection), "")
 
 
 def add_texture_sources(material, spec, sources, textures):
@@ -711,9 +779,9 @@ def add_parameter_sources(material, spec, sources):
         sources[parameter_name] = (scalar_node, "")
 
 
-def build_master_graph(material, spec, code, textures):
+def build_master_graph(material, spec, code, textures, flow_collection):
     sources = {}
-    add_builtin_sources(material, sources)
+    add_builtin_sources(material, spec, sources, flow_collection)
     add_texture_sources(material, spec, sources, textures)
     add_parameter_sources(material, spec, sources)
 
@@ -781,11 +849,11 @@ def compile_master_material(material, label):
     return statistics
 
 
-def create_master_material(spec, code, textures, overwrite):
+def create_master_material(spec, code, textures, flow_collection, overwrite):
     master_path = material_asset_path(spec["name"])
     material, was_created = prepare_master_material(spec, overwrite)
     settings, skipped_settings = apply_material_settings(material, spec)
-    custom = build_master_graph(material, spec, code, textures)
+    custom = build_master_graph(material, spec, code, textures, flow_collection)
     connected = verify_custom_inputs_connected(material, custom, len(spec["inputs"]))
     statistics = compile_master_material(material, spec["name"])
     verify_master_parameters(material, spec)
@@ -795,6 +863,7 @@ def create_master_material(spec, code, textures, overwrite):
         "created": was_created,
         "settings": settings,
         "skipped_settings": skipped_settings,
+        "elapsed_seconds": describe_elapsed_seconds(spec),
         "custom_inputs_connected": connected,
         "statistics_available": bool(statistics),
         "statistics": statistics,
@@ -855,6 +924,9 @@ def load_and_check_all_hlsl(look_table):
     unknown = find_unknown_instance_overrides(look_table)
     if unknown:
         problems.append("인스턴스 덮어쓰기 이름이 마스터에 없음: " + ", ".join(unknown))
+    collection_driven = find_collection_driven_overrides(look_table)
+    if collection_driven:
+        problems.append("인스턴스가 룩데브 구동 MPC 이름 덮어씀: " + ", ".join(collection_driven))
     return codes, problems
 
 
@@ -905,11 +977,14 @@ def main():
         NOISE_TEXTURE_PARAMETER_NAME: (noise_texture, noise_sampler_type),
     }
 
+    print("단계: 흐름 원점 MPC")
+    flow_collection = load_or_create_flow_collection(overwrite)
+
     print("단계: 마스터 재질 생성")
     masters = {}
     master_summaries = []
     for spec in MASTER_SPECS:
-        master, summary = create_master_material(spec, codes[spec["name"]][1], textures, overwrite)
+        master, summary = create_master_material(spec, codes[spec["name"]][1], textures, flow_collection, overwrite)
         masters[spec["name"]] = master
         summary["hlsl"] = describe_hlsl(*codes[spec["name"]])
         master_summaries.append(summary)
@@ -927,6 +1002,8 @@ def main():
         "default_texture": texture_path,
         "sampler_type": str(sampler_type),
         "noise_texture": noise_summary,
+        "flow_collection": FLOW_COLLECTION_PATH,
+        "collection_scalars": dict(COLLECTION_SCALAR_DEFAULTS),
         "masters": master_summaries,
         "instances": instances,
         "saved": True,

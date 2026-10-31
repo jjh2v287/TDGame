@@ -245,6 +245,7 @@ public:
 	FVector2D GetSimulationExtentCm() const;
 	FVector2D GetSimulationCenterWorld() const;
 	int32 GetSimulationGeneration() const;
+	int32 GetSimulationResetSerial() const { return SimulationResetSerial; }
 	double GetSimulationTimeSeconds() const;
 	FVector2D CellToPlaneCenter(int32 CellX, int32 CellY) const;
 	FTDFluidCellSample SampleSimulationCell(int32 CellX, int32 CellY) const;
@@ -505,6 +506,7 @@ private:
 	FIntPoint NoiseLatticeOffsetCells = FIntPoint::ZeroValue;
 	int32 LastCpuReinitializationGeneration = INDEX_NONE;
 	int32 LastProcessedPointCount = 0;
+	int32 SimulationResetSerial = 0;
 	float WaterLayerDisplayAlpha = 0.0f;
 	float TerrainReferenceZCm = 0.0f;
 	float SampledTerrainMinCm = 0.0f;

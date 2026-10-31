@@ -349,6 +349,7 @@ void UTDFluidLiveComponent::ResetSimulationState()
 	}
 	ReapplyActiveObstacles();
 	RainImpactState = FTDFluidRainImpactState();
+	++SimulationResetSerial;
 }
 
 void UTDFluidLiveComponent::QueueBrushStamp(const FTDFluidBrushStamp& Stamp)

@@ -1,6 +1,6 @@
 {
   "id": "fx5_flamethrower",
-  "note": "E14 포탑+큐브 IMG 17, M1 p50 0.22·p95 0.95(IFS:100). 지표 이름 fire_m1_p50·fire_m1_p95 는 measure_fx_look.py 출력 이름으로 확정 필요[추정](R5-M5). pawn 은 editor_make_fluid_mass_input_stage.py M4 카메라 제안값(무대 보고서 scenes[].camera). TDFluidInputBrushSettings.MassPointHeatStrength(0.6·0.8·1.0)·MassPointRadiusScale(0.75·1.0·1.5) 손잡이는 calib_sweep 에 InputBrush 실효 다시 읽기를 더한 뒤 되살린다(R5-M5, 그때까지 열 감쇠·와도로 대신) / 2026-10-31: frame 화염 0 은 Flamethrower 가 CPU 백엔드(정본 키 없음 → StructDefaults Cpu, Auto 도 해상도 128 이라 CPU)라 GPU DI 스플랫 대상이 공개되지 않은 결함 → 정본 Kinds.Flamethrower(·SnowAvalanche) SolverBackend Gpu 로 고치고 임시 base_tuning 은 뺐다",
+  "note": "E14 포탑+큐브 IMG 17, M1 p50 0.22·p95 0.95(IFS:100). 지표 이름 fire_m1_p50·fire_m1_p95 는 measure_fx_look.py 출력 이름으로 확정 필요[추정](R5-M5). pawn 은 editor_make_fluid_mass_input_stage.py M4 카메라 제안값(무대 보고서 scenes[].camera). TDFluidInputBrushSettings.MassPointHeatStrength(0.6·0.8·1.0)·MassPointRadiusScale(0.75·1.0·1.5) 손잡이는 calib_sweep 에 InputBrush 실효 다시 읽기를 더한 뒤 되살린다(R5-M5, 그때까지 열 감쇠·와도로 대신) / 2026-10-31: frame 화염 0 은 Flamethrower 가 CPU 백엔드(정본 키 없음 → StructDefaults Cpu, Auto 도 해상도 128 이라 CPU)라 GPU DI 스플랫 대상이 공개되지 않은 결함 → 정본 Kinds.Flamethrower(·SnowAvalanche) SolverBackend Gpu 로 고치고 임시 base_tuning 은 뺐다 / 2026-10-31 창·입자 구조 수정: 정본 Flamethrower CenterOffsetAlongUpRatio 0.45(63ad8084), 모양 정본 입자 부력 300→−300·수명 1.2→0.5(L17 구도: 화염이 큐브 앞면에 박혀 위로, 창 왼끝 잘림 제거 — Saved/AgentOps/20261031/fx5ab A/B). 속도 손잡이 600·900·1200 → 750·900·1050: 수명 0.5 에서 도달 264·317·369 cm 로 창 앞 여유 415 cm 안(1200 은 422 cm 로 창에 잘려 지표 오염, 600 은 211 cm 로 큐브 앞면 215 cm 미달) / base_tuning(Look 부력 −300·수명 0.5, ships false): 정본 모양에 이미 같은 값이 있지만 포탑 NS 는 독립 Niagara 액터라 런타임 C++ 가 모양 정본을 적용하지 않고 에셋 기본값(300·1.2)을 쓴다(라이브 컴포넌트 소유 NS 만 ApplyNiagaraLookIfStale). 보정 동안 정본 값을 live 로 맞추고, W 단계 재생성 때 NS 에셋 기본값을 정본에서 다시 굽는다(editor_make_fluid_driven_niagara 는 덮어쓰기 안 함 → 삭제·재생성·무대 재연결)",
   "scenes": [
     {
       "name": "turret_img17",
@@ -75,9 +75,9 @@
     {
       "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidFlamethrower.Floats.User.TDMassSpeedCmPerSec",
       "values": [
-        600,
+        750,
         900,
-        1200
+        1050
       ],
       "split_group": false
     },
@@ -117,5 +117,16 @@
         "basis": "M1 p95 0.95 ±25% 위쪽 1.0 절단"
       }
     ]
-  }
+  },
+  "base_tuning": [
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidFlamethrower.Floats.User.TDMassBuoyancyCmPerSec2",
+      "value": -300.0
+    },
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidFlamethrower.Floats.User.TDMassLifetimeSeconds",
+      "value": 0.5
+    }
+  ],
+  "base_tuning_ships": false
 }

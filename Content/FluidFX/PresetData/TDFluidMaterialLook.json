@@ -2223,13 +2223,13 @@
    "Bools": {},
    "Colors": {},
    "Floats": {
-    "User.TDMassBuoyancyCmPerSec2": 300.0,
+    "User.TDMassBuoyancyCmPerSec2": -300.0,
     "User.TDMassConeAngleDegrees": 8.0,
     "User.TDMassDensity": 1.0,
     "User.TDMassDragPerSec": 1.5,
     "User.TDMassFadeWithAge": 0.6,
     "User.TDMassHeat": 1.0,
-    "User.TDMassLifetimeSeconds": 1.2,
+    "User.TDMassLifetimeSeconds": 0.5,
     "User.TDMassRadiusCm": 30.0,
     "User.TDMassSpawnRatePerSec": 2000.0,
     "User.TDMassSpeedCmPerSec": 900.0

@@ -131,6 +131,16 @@
    "reason": "반지름 = 경계 최대 반폭 × 배율(TDFluidLiveActorInput.cpp:320)이라 두 상자에 같은 배율이 걸려 큰/작은 폭 비가 손잡이에 거의 둔감하고 남은 수치 목표가 없다. 배율에 따른 절대 흔적 폭은 frame 육안으로 본다",
    "source": "frame",
    "original": "4603c689:Tools/FluidFX/calib/plans/input_fx15b.json"
+  },
+  {
+   "plan": "fog_f2_passive",
+   "kind": "target",
+   "item": "derived.window_seam_relative_step@d14_window_move(창 경계 위·아래 띠 단차, 띠 ±0.05 proposed)",
+   "decision": "frame",
+   "destination": "승인 시트(F2 이동 중 창 이음이 보이지 않는지 육안, LIVE-2 L12)",
+   "reason": "창이 폰을 연속으로 따라가 경계가 화면에 거의 고정되고, 두 띠 단차 +0.23~+0.30 은 세로 밝기 기울기와 월드 결이 지배해 이음 가시성을 분리하지 못한다(영역 틀 3차 반박). 같은 행의 창 없는 기준 화면과 빼는 지표가 생기면 되살린다",
+   "source": "frame",
+   "original": "dc26f90b:Tools/FluidFX/calib/plans/fog_f2_passive.json"
   }
  ]
 }

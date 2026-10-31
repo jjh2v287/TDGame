@@ -1,6 +1,6 @@
 {
   "id": "track_fx12c_groove",
-  "note": "FX-12 코드 J3·J8·H1, 정본 SnowTrack(1024²·50 m GPU). 눈만 흔드는 묶음 소유 필드는 split_group true(반박 R12-M5), 둑 세기는 묶음 경로. 높이 감쇠 이름은 FX-10c BrushHeightFadeDistanceCm(X-09) / CAL-0 B6: track_snow_i2(폐기·이관) 흡수 — TrackPomMaxSteps 손잡이 추가(BankHeight·뼈 붓 반지름은 이미 있음), groove_decay 시계열 장면(영역은 frame 뒤) / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다 / frame 정리(2026-10-31): groove_decay 반감기를 대비 계열(decay_surface − groove_decay, half_life absolute)로 바꿈. 감쇠 틀 track_snow_decay_regions.json 은 재촬영 대기라 decay_surface 영역 명세만 Saved/AgentOps/20261031/pending-region-specs/ 에 둠",
+  "note": "FX-12 코드 J3·J8·H1, 정본 SnowTrack(1024²·50 m GPU). 눈만 흔드는 묶음 소유 필드는 split_group true(반박 R12-M5), 둑 세기는 묶음 경로. 높이 감쇠 이름은 FX-10c BrushHeightFadeDistanceCm(X-09) / CAL-0 B6: track_snow_i2(폐기·이관) 흡수 — TrackPomMaxSteps 손잡이 추가(BankHeight·뼈 붓 반지름은 이미 있음), groove_decay 시계열 장면(영역은 frame 뒤) / 2026-10-30 move 계약: camera(base) 의 move 를 step_apply 로 옮겼다(단계마다 tuning_reload reset reinit 이 base 때 생긴 자국·창 상태를 지우므로 단계마다 pawn 원위치 뒤 다시 걷는다). {distance_cm} 사전 형식은 룩데브 move 확장(조종 회전 yaw 방향 입력 걷기, 내비 없는 무대) 뒤에만 실행된다 / frame 정리(2026-10-31): groove_decay 반감기를 대비 계열(decay_surface − groove_decay, half_life absolute)로 바꿈. 감쇠 틀 track_snow_decay_regions.json 은 재촬영 대기라 decay_surface 영역 명세만 Saved/AgentOps/20261031/pending-region-specs/ 에 둠 / 2026-11-01 예열(진단 wf_13482eb4-d63, 반박 partly): K7 snow_groove 대조 실패는 첫 대조 s00 한 장(눈 레벨 첫 PIE 시작 약 27 s 뒤, real_dt 0.0164 대 0.012 — 배경 작업 중)이 명암만 달라 groove_width_cm 7.951(나머지 8.06~8.12)이 되어 첫 대조 기준 drift 0.168 > 허용 0.077. 홈 위치·모양·걷기 위상·틱 위상·트랙 리셋은 같음. 두 장면 base(camera)에 걷기 1500 cm + 45 게임초 예열 촬영 1장(판정 제외 — calib_sweep 은 base 오류만 보고 단계 이미지만 대조)을 넣어 s00 도 s01 이후와 같은 진입 조건으로. 재실행 판정 기준(미리 정함): s00 첫 장 real_dt_mean ≈0.012, s00 그림자·폰 휘도가 s03 ± 잡음, 대조 마스크 상자 그대로",
   "scenes": [
     {
       "name": "snow_groove",
@@ -18,6 +18,16 @@
         ],
         "awake": {
           "TDGen_SnowTrack": true
+        },
+        "move": {
+          "distance_cm": 1500.0
+        },
+        "schedule": {
+          "times": [
+            45.0
+          ],
+          "reference": "now",
+          "prefix": "warmup"
         }
       },
       "step_apply": {
@@ -60,6 +70,16 @@
         ],
         "awake": {
           "TDGen_SnowTrack": true
+        },
+        "move": {
+          "distance_cm": 1500.0
+        },
+        "schedule": {
+          "times": [
+            45.0
+          ],
+          "reference": "now",
+          "prefix": "warmup"
         }
       },
       "step_apply": {

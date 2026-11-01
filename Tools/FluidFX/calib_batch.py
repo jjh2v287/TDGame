@@ -309,11 +309,11 @@ class BatchRunner:
         try:
             best = (read_json(screen_dir / "screen.json").get("best") or {}).get("variant")
             variants = {variant.get("id"): variant for variant in read_json(screen_dir / "sweep.json").get("variants", [])}
-        except (OSError, ValueError):
+            scenes = variants[best].get("scenes") if best in variants else None
+        except (OSError, ValueError, AttributeError, TypeError):
             return None
         if best not in variants:
             return None
-        scenes = variants[best].get("scenes")
         return [scene.get("name") for scene in self.plans[item["plan"]].get("scenes", [])] if scenes is None else scenes
 
     def item_estimate(self, item):

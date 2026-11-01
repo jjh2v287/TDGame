@@ -3309,11 +3309,17 @@ def check_cal0_batch():
     check("R5 단계 한도 = 2 × max(추정, 장면 고정 비용 130초): 250초면 screen 이 끝까지 돌고(블록 누적 상한으로 confirm 만 deferred), 270초면 중단·failed·사유에 한도 260초",
           items["b8_q1"]["status"] == "deferred" and "블록 누적" in items["b8_q1"]["reason"] and items["b8_q2"]["status"] == "failed" and "한도 260초" in items["b8_q2"]["reason"] and "2배" in items["b8_q2"]["reason"],
           (items["b8_q1"]["status"], items["b8_q2"]["status"], items["b8_q2"]["reason"][:200]))
-    measured_limits = [("w5_underwater_l18a", "screen", 225.0), ("fog_f2_passive", "verify", 211.0)]
-    limit_rows = [(name, stage, measured, calib_batch.STEP_LIMIT_FACTOR * calib_batch.estimate_stage_seconds(load_json(W / f"Tools/FluidFX/calib/plans/{name}.json"), stage, {}))
-                  for name, stage, measured in measured_limits]
-    check("R5 실측 대조(L-build-19): 수중 screen 225초·안개 f2 verify 211초의 한도가 실측 1.5배 이상이고 3fps 스로틀 하한 모형(약 592·595초)보다 짧다",
-          all(1.5 * measured <= limit < 590.0 for _, _, measured, limit in limit_rows), limit_rows)
+    measured_limits = [("w5_underwater_l18a", "screen", 225.0, 592.0), ("fog_f2_passive", "verify", 211.0, 595.0),
+                       ("w5_underwater_l18a", "confirm", 225.0, 582.0), ("cloud_g9_mushroom-p20", "confirm", 214.0, 855.0)]
+    limit_rows = [(name, stage, measured, throttled, calib_batch.STEP_LIMIT_FACTOR * calib_batch.estimate_stage_seconds(load_json(W / f"Tools/FluidFX/calib/plans/{name}.json"), stage, {}))
+                  for name, stage, measured, throttled in measured_limits]
+    check("R5 실측 대조(L-build-19): 수중 screen·confirm 225초·안개 f2 verify 211초·g9-p20 confirm 214초의 한도가 실측 1.5배 이상이고 3fps 스로틀 하한 모형(582~855초)보다 짧다(confirm 은 손잡이가 닿지 않는 장면 uw_cross·mushroom_shield 를 빼고 추정)",
+          all(1.5 * measured <= limit < throttled for _, _, measured, throttled, limit in limit_rows), limit_rows)
+    underwater_plan = load_json(W / "Tools/FluidFX/calib/plans/w5_underwater_l18a.json")
+    check("R5 confirm 추정은 screen 최선 변형 장면을 따른다: 장면 목록을 주면 그 장면만, 없으면 손잡이가 닿는 장면 합집합",
+          calib_batch.estimate_stage_seconds(underwater_plan, "confirm", {}, ["uw_pit", "uw_cross"]) > calib_batch.estimate_stage_seconds(underwater_plan, "confirm", {})
+          == calib_batch.estimate_stage_seconds(underwater_plan, "confirm", {}, ["uw_pit"]) > calib_batch.estimate_stage_seconds(underwater_plan, "confirm", {}, []) == 0.0,
+          [calib_batch.estimate_stage_seconds(underwater_plan, "confirm", {}, scenes) for scenes in (["uw_pit", "uw_cross"], None, ["uw_pit"], [])])
 
 
 class ValidatingBatchTools(FakeBatchTools):

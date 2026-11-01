@@ -220,9 +220,22 @@ def stage_step_count(plan, scene, stage):
     return ends + max(3, math.ceil(ends / 2) + 1)
 
 
-def estimate_stage_seconds(plan, stage, real_dt_by_level):
+def param_scene_names(plan):
+    all_names = [scene.get("name") for scene in plan.get("scenes", [])]
+    touched = set()
+    for param in plan.get("params", []):
+        touched.update(param.get("scenes") or all_names)
+    return touched
+
+
+def estimate_stage_seconds(plan, stage, real_dt_by_level, confirm_scenes=None):
+    run_scenes = None
+    if stage == "confirm":
+        run_scenes = set(confirm_scenes) if confirm_scenes is not None else param_scene_names(plan)
     total = 0.0
     for scene in plan.get("scenes", []):
+        if run_scenes is not None and scene.get("name") not in run_scenes:
+            continue
         steps = stage_step_count(plan, scene, stage)
         if not steps:
             continue
@@ -287,7 +300,21 @@ class BatchRunner:
         override = (self.entries[item["plan"]].get("estimate_seconds") or {}).get(stage)
         if override is not None:
             return float(override)
-        return estimate_stage_seconds(self.plans[item["plan"]], stage, self.journal["real_dt"])
+        return estimate_stage_seconds(self.plans[item["plan"]], stage, self.journal["real_dt"], self.screened_best_scenes(item) if stage == "confirm" else None)
+
+    def screened_best_scenes(self, item):
+        if "screen" not in item["runs"]:
+            return None
+        screen_dir = project_path(item["runs"]["screen"])
+        try:
+            best = (read_json(screen_dir / "screen.json").get("best") or {}).get("variant")
+            variants = {variant.get("id"): variant for variant in read_json(screen_dir / "sweep.json").get("variants", [])}
+        except (OSError, ValueError):
+            return None
+        if best not in variants:
+            return None
+        scenes = variants[best].get("scenes")
+        return [scene.get("name") for scene in self.plans[item["plan"]].get("scenes", [])] if scenes is None else scenes
 
     def item_estimate(self, item):
         return sum(self.stage_estimate(item, stage) for stage in self.entries[item["plan"]]["stages"])

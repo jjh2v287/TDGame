@@ -66,6 +66,14 @@
       {"plan": "Tools/FluidFX/calib/plans/w5_tank_l11.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"]},
       {"plan": "Tools/FluidFX/calib/plans/w5_underwater_l18a.json", "class": "cal0", "origin": "defect", "needs_frame": true, "stages": ["screen", "confirm"]},
       {"plan": "Tools/FluidFX/calib/plans/w1b_water_particles.json", "class": "cal0", "origin": "target", "needs_frame": true, "stages": ["screen", "confirm"]}
+    ]},
+    {"id": "K10", "name": "재방문(P-20 2라운드, make_p20_plan.py 생성, D-64 ㉖)", "after": ["K9"], "plans": [
+      {"plan": "Tools/FluidFX/calib/plans/fx5_flamethrower-p20.json", "class": "cal0", "origin": "p20", "needs_frame": true, "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g9_mushroom-p20.json", "class": "cal0", "origin": "p20", "needs_frame": true, "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/fog_f6_tile-p20.json", "class": "cal0", "origin": "p20", "needs_frame": true, "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g12_volcano-p20.json", "class": "cal0", "origin": "p20", "needs_frame": true, "stages": ["screen", "confirm"]},
+      {"plan": "Tools/FluidFX/calib/plans/track_fx12c_groove-p20.json", "class": "cal0", "origin": "p20", "needs_frame": true, "stages": ["screen", "confirm"], "estimate_seconds": {"screen": 3000, "confirm": 2000}},
+      {"plan": "Tools/FluidFX/calib/plans/cloud_g11_cyclone_live-p20.json", "class": "cal0", "origin": "p20", "needs_frame": true, "stages": ["screen", "confirm"], "chain": "Globals.TDFluidCloudSceneSettings"}
     ]}
   ],
   "not_run": [

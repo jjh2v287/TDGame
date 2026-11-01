@@ -2088,6 +2088,74 @@ def check_cal0_sweep():
     code, text, _ = dry("fix-s5", stage_plan("fix-s5", lambda plan: plan["scenes"][0].update(schedule={"prefx": "a", "events": [{"time": 0.1, "cal": {}}]})), "--stage", "screen")
     check("CAL-0 반박 S5 장면 schedule 오타: 건식도 PIE 단계 apply 와 같은 schedule 키 검사로 종료 2·'prefx'", code == 2 and "prefx" in text, (code, text[-300:]))
 
+    fog_path = "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Sim.Scalars.FogExtrudeHeightCm"
+    fog_look = calib_sweep.parse_look_path(fog_path)
+    own_source, id_source, other_source = ({"plan": f"Tools/FluidFX/calib/plans/{stem}.json"} for stem in ("k10-b1", load_json(W / CAMPFIRE_PLAN)["id"], "fog_f2_passive"))
+    own_glow = dict(glow, level=campfire_level, value=2.0, **{"from": id_source})
+    overlap_text = "덧씌움 경로가 계획 params·base_tuning 경로와 같다"
+
+    def chain_plan(name, extra_params=(), mutate=None):
+        def edit(plan):
+            plan["params"] = [{"json_path": vorticity_path, "values": [1.2, 1.5, 1.8]}, {"actor_prop": glow, "base": 1.0, "values": [1.0, 2.0]}] + list(extra_params)
+            if mutate:
+                mutate(plan)
+        return stage_plan(name, edit)
+
+    def own_overlay(name, assignments, actor_props=()):
+        return write_json(f"{name}-overlay.json", {"version": 2, "assignments": list(assignments), "actor_props": list(actor_props), "history": []})
+
+    fog_knob = {"json_path": fog_path, "base": 90.0, "values": [60.0, 90.0, 120.0]}
+    adopted = [{"json_path": vorticity_path, "value": 1.8, "split_group": False, "kind": "knob", "from": own_source},
+               {"json_path": fog_path, "value": 60.0, "split_group": False, "kind": "knob", "base": 90.0, "from": id_source}]
+    chain_overlay = own_overlay("k10-b1", adopted, [own_glow])
+    chain_path = chain_plan("k10-b1", [fog_knob])
+    code, text, record = dry("k10-b1", chain_path, "--stage", "verify", "--overlay", chain_overlay)
+    spec_steps = lookdev_spec("k10-b1", record)["variants"] if record else []
+    fog_copy = load_json(sweep_dir / "k10-b1" / "v00" / "TDFluidMaterialLook.json")["Materials"][fog_look["package"]]["Scalars"].get("FogExtrudeHeightCm") if record else None
+    check("K10 B1 verify: 덧씌움에 이 계획(파일 stem·계획 id) 채택 경로(조절·정본에 없는 Look 키+base)가 있어도 겹침 거부 없음·종료 0, v00 base_value = 덧씌움 값(조절 1.8·Look 60·actor_props 2.0)·사본·look_live·props 도 그 값",
+          code == 0 and record["sequence"] == ["v00", "v00", "v00"] and [param["base_value"] for param in record["params"]] == [1.8, 2.0, 60.0]
+          and [variant["id"] for variant in record["variants"]] == ["v00"] and record["variants"][0]["values"] == [1.8, 2.0, 60.0]
+          and copy_value("k10-b1", "v00", "Campfire", "TDFluidSimulationConfig", "VorticityStrength") == 1.8 and fog_copy == 60.0 and len(spec_steps) == 3
+          and all(step["apply"]["props"]["TDGen_CampfireFire"]["cal0_glow"] == 2.0 and step["apply"]["look_live"][fog_look["live_root"]][fog_look["package"]][fog_look["section"]]["FogExtrudeHeightCm"] == 60.0
+                  for step in spec_steps),
+          (code, text[-300:], record and [param["base_value"] for param in record["params"]]))
+
+    foreign = {name: dry(name, chain_plan(name), "--stage", "verify", "--overlay", own_overlay(name, [dict(adopted[0], **extra)]))[:2]
+               for name, extra in (("k10-b2", {"from": other_source}), ("k10-b2b", {"from": None}))}
+    check("K10 B2 verify 라도 남의 계획(from.plan 다른 stem·id)·from 없는 덧씌움 항목이 params 경로와 같으면 기존대로 종료 2 '덧씌움 경로가 계획 params·base_tuning 경로와 같다'",
+          all(code == 2 and overlap_text in text and vorticity_path in text for code, text in foreign.values()), foreign)
+
+    stage_codes = {}
+    for stage in ("screen", "confirm"):
+        name = f"k10-b3-{stage}"
+        stage_path = chain_plan(name, [fog_knob])
+        extra = ("--screen-result", screen_file(name, stage_path, overlay_sha256=sha(chain_overlay))) if stage == "confirm" else ()
+        stage_codes[stage] = dry(name, stage_path, "--stage", stage, "--overlay", chain_overlay, *extra)[:2]
+    shipped_path = chain_plan("k10-b3-base", mutate=lambda plan: plan.update(base_tuning=[{"json_path": torch_path, "value": 2.5}], base_tuning_ships=True))
+    shipped = dry("k10-b3-base", shipped_path, "--stage", "verify", "--overlay", own_overlay("k10-b3-base", [{"json_path": torch_path, "value": 2.5, "split_group": False, "kind": "base_tuning", "from": id_source}]))[:2]
+    check("K10 B3 자기 채택 경로 겹침 허용은 verify 만: 같은 덧씌움으로 screen·confirm 은 종료 2 겹침 거부 / verify 라도 base_tuning 경로와 겹치면(자기 항목이라도) 종료 2",
+          all(code == 2 and overlap_text in text for code, text in stage_codes.values()) and shipped[0] == 2 and overlap_text in shipped[1] and torch_path in shipped[1],
+          (stage_codes, shipped))
+
+    split_glow = [own_glow, dict(own_glow, level="/Game/CAL0/LV_Other", value=3.0)]
+    code_split, text_split, _ = dry("k10-b4", chain_plan("k10-b4"), "--stage", "verify", "--overlay", own_overlay("k10-b4", [], split_glow))
+    code_screen, text_screen, screen_record = dry("k10-b4s", chain_plan("k10-b4s"), "--stage", "screen", "--overlay", own_overlay("k10-b4s", [], [own_glow]))
+    screen_props = [step["apply"]["props"]["TDGen_CampfireFire"]["cal0_glow"] for step in lookdev_spec("k10-b4s", screen_record)["variants"] if step["name"].endswith("_v00")] if screen_record else []
+    check("K10 B4 actor_props: verify 에서 이 계획의 같은 대상 채택 값이 레벨마다 다르면 종료 2 '레벨마다 다르다' / verify 밖(screen) v00 props 는 옛 동작대로 계획 base 1.0",
+          code_split == 2 and "레벨마다 다르다" in text_split and code_screen == 0 and screen_record["params"][1]["base_value"] == 1.0 and screen_props and set(screen_props) == {1.0},
+          (code_split, text_split[-200:], code_screen, text_screen[-200:], screen_props))
+
+    reset_world(fire_world)
+    WORLD.actors[0].cal0_glow = 1.0
+    live_path = chain_plan("k10-b5")
+    live_overlay = own_overlay("k10-b5", [dict(adopted[0], **{"from": id_source})], [own_glow])
+    code, text = sweep_text(["--plan", live_path, "--run-dir", sweep_dir / "k10-b5", "--stage", "verify", "--lock", write_lock("k10-b5", live_path), "--overlay", live_overlay])
+    live_record = load_json(sweep_dir / "k10-b5" / "sweep.json") if (sweep_dir / "k10-b5" / "sweep.json").is_file() else {"scenes": [{"steps": []}]}
+    live_steps = live_record["scenes"][0]["steps"]
+    check("K10 B5 가짜 PIE verify(자기 채택 조절 1.8·actor_props 2.0): 대조 3단계 유효·ChangedFieldCount 0·액터 값 2.0(계획 base 1.0 이 덮지 않음)·종료 0",
+          code == 0 and len(live_steps) == 3 and all(step["valid"] for step in live_steps) and [step["report"]["changed_field_count"] for step in live_steps] == [0, 0, 0]
+          and WORLD.actors[0].cal0_glow == 2.0, (code, text[-300:], step_errors(live_steps)[:4], WORLD.actors[0].cal0_glow))
+
 
 def check_cal0_integration():
     look_path = "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_SandWall.Scalars.CloudSlot1DetailErosion"
@@ -2874,7 +2942,9 @@ class FakeBatchTools:
         self.sweep_outcomes = {}
         self.verify_codes = {}
         self.headless_failures = []
+        self.headless_events = []
         self.headless_commands = []
+        self.accept_paths = {}
         self.interrupt_at = None
 
     def describe(self, command):
@@ -2932,7 +3002,7 @@ class FakeBatchTools:
             return (1 if outcome == "drift" else outcome), "재검증"
         if words[0] in ("accept", "remove"):
             overlay = load_json(self.overlay_path)
-            json_path = f"Groups.B8.TDFluidTest.{words[1]}" if words[0] == "accept" else words[1]
+            json_path = self.accept_paths.get(words[1], f"Groups.B8.TDFluidTest.{words[1]}") if words[0] == "accept" else words[1]
             if words[0] == "accept":
                 overlay["assignments"].append({"json_path": json_path, "value": 2.0, "kind": "knob", "from": {"plan": words[1]}})
             else:
@@ -2949,10 +3019,16 @@ class FakeBatchTools:
         if label == "headless":
             self.headless_commands.append(command)
             failures = self.headless_failures.pop(0) if self.headless_failures else []
+            events = self.headless_events.pop(0) if self.headless_events else {}
+            tests = list(BATCH_TESTS) + [test for test in failures if test not in BATCH_TESTS]
             log_path = Path(next(argument for argument in command if argument.startswith("-abslog="))[len("-abslog="):])
             tuning = next(argument for argument in command if argument.startswith("-TDFluidTuningFile="))
-            lines = [f"LogTemp: Display: Preset tuning file {tuning}", f"LogAutomationController: Found {len(BATCH_TESTS)} automation tests"]
-            lines += [f"Test Completed. Result={{{'Fail' if test in failures else 'Success'}}} Name={{{test}}} Path={{{test}}}" for test in BATCH_TESTS]
+            lines = [f"LogTemp: Display: Preset tuning file {tuning}", f"LogAutomationController: Found {len(tests)} automation tests"]
+            for test in tests:
+                lines.append(f"Test Completed. Result={{{'Fail' if test in failures else 'Success'}}} Name={{{test}}} Path={{{test}}}")
+                if test in events:
+                    stamp = "[2026.11.01-02.15.17:872][497]LogAutomationController: "
+                    lines += [f"{stamp}BeginEvents: {test}"] + [f"{stamp}{event}" for event in events[test]] + [f"{stamp}EndEvents: {test}"]
             log_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
             return 0, ""
         return 0, ""
@@ -3097,6 +3173,50 @@ def check_cal0_batch():
     chain_summary = load_json(W / marker) if marker and (W / marker).is_file() else {}
     check("CAL-0 재반박 N2 사슬 재검증이 판정 불가로 중단되면 chain_verify 표시(interrupted 계획·사유)를 남겨 --resume 때 verify 스윕을 반복하지 않음",
           bool(marker) and (chain_summary.get("interrupted") or {}).get("plan") == "b8_f1" and "sweep b8_f1 verify" not in fake.calls, (marker, chain_summary, fake.calls))
+
+    header_test = "TDGame.FluidFX.PresetData.StructDefaultsMatchHeader"
+    wind_path, emitter_path = "Globals.TDFluidCloudSceneSettings.WindCurtainSpeedCmPerSec", "StructDefaults.TDFluidSourceEmitterSettings.FlickerAmplitude"
+
+    def header_error(json_path, default="150.0"):
+        return (f"Error: Expected '{json_path} equals the header default {default} (a header change does not move presets; update the tuning file on purpose)' to be true. "
+                "[C:\\Project\\TDGame\\Source\\TDGame\\FluidFX\\Tests\\TDFluidPresetTuningTests.cpp(669)]")
+
+    def header_run(name, accept_paths, failures, events):
+        arguments = batch_arguments(name, [{"id": "K12", "plans": [entry(plan) for plan in accept_paths]}])
+        fake = FakeBatchTools(root / name / "overlay.json")
+        fake.accept_paths, fake.headless_failures, fake.headless_events = accept_paths, [failures], [events]
+        with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
+            code = run_batch(arguments)
+        last_plan = list(accept_paths)[-1]
+        record_path = root / name / "blocks" / "K12-1" / "headless.json"
+        return {"code": code, "items": statuses(load_json(root / name / "journal.json")), "after": fake.calls[fake.calls.index(f"accept {last_plan}") + 1:],
+                "record": load_json(record_path) if record_path.is_file() else {}, "log": (root / name / "batch.log").read_text(encoding="utf-8"),
+                "overlay": [assignment["json_path"] for assignment in load_json(root / name / "overlay.json")["assignments"]]}
+
+    synced = header_run("k10-a1", {"b8_g1": emitter_path, "b8_g2": wind_path}, [header_test, "TDGame.FluidFX.Numeric.B"],
+                        {header_test: [header_error(wind_path), header_error(emitter_path, "0.2")]})
+    check("K10 A1 블록 헤드리스 설계 단언 실패가 StructDefaultsMatchHeader 하나·오류 줄 전부 'Globals|StructDefaults 경로 equals the header default' 꼴·경로 전부 덧씌움 json_path → 통과(되돌림 없음)·headless.json header_sync_pending·batch.log '헤더 기본값 동기 대기(W 단계)'",
+          synced["after"] == ["materialize", "headless", "release b8-test"] and synced["items"]["b8_g2"]["status"] == synced["items"]["b8_g1"]["status"] == "adopted"
+          and "headless" in synced["items"]["b8_g2"]["runs"] and synced["record"].get("header_sync_pending") == [wind_path, emitter_path]
+          and synced["record"].get("outside_allowlist") == [header_test] and synced["record"].get("allowlisted_failures") == ["TDGame.FluidFX.Numeric.B"]
+          and f"헤더 기본값 동기 대기(W 단계): {wind_path}, {emitter_path}" in synced["log"] and synced["overlay"] == [emitter_path, wind_path] and synced["code"] == 0,
+          (synced["after"], synced["record"], synced["log"][-400:]))
+
+    def reverted(run):
+        return (run["after"][:3] == ["materialize", "headless", f"remove {wind_path}"] and run["items"]["b8_" + run["name"]]["status"] == "verify_failed"
+                and "설계 단언" in run["items"]["b8_" + run["name"]]["reason"] and run["record"].get("header_sync_pending") == [] and run["overlay"] == [] and "헤더 기본값 동기 대기" not in run["log"])
+
+    mixed = dict(header_run("k10-a2", {"b8_h1": wind_path}, [header_test, "TDGame.FluidFX.Design.A"], {header_test: [header_error(wind_path)]}), name="h1")
+    check("K10 A2 StructDefaultsMatchHeader(헤더 기본값 꼴)와 다른 설계 단언 실패 Design.A 가 섞이면 기존대로 블록의 가장 최근 채택 되돌림·header_sync_pending []",
+          reverted(mixed), (mixed["after"], mixed["record"], mixed["items"]["b8_h1"]["status"]))
+    outside = dict(header_run("k10-a3", {"b8_i1": wind_path}, [header_test], {header_test: [header_error(wind_path), header_error("Globals.TDFluidCloudSceneSettings.WindCurtainGustScale", "1.0")]}), name="i1")
+    check("K10 A3 헤더 기본값 꼴 줄의 경로 하나라도 덧씌움 assignments 밖(채택 안 한 Globals 필드) → 되돌림·header_sync_pending []",
+          reverted(outside), (outside["after"], outside["record"], outside["items"]["b8_i1"]["status"]))
+    array_error = "Error: Expected 'TDFluidCloudSceneSettings array fields default to empty arrays (WindCurtainSamples)' to be true. [C:\\Project\\TDGame\\Source\\TDGame\\FluidFX\\Tests\\TDFluidPresetTuningTests.cpp(657)]"
+    other_form = dict(header_run("k10-a4", {"b8_j1": wind_path}, [header_test], {header_test: [header_error(wind_path), array_error]}), name="j1")
+    no_lines = dict(header_run("k10-a4b", {"b8_j2": wind_path}, [header_test], {header_test: ["Warning: only a warning line"]}), name="j2")
+    check("K10 A4 StructDefaultsMatchHeader 오류 줄에 다른 꼴(빈 배열 기본값 단언)이 섞임 / Error 줄이 없음(Warning 만) → 각각 되돌림·header_sync_pending []",
+          reverted(other_form) and reverted(no_lines), (other_form["after"], other_form["record"], no_lines["after"], no_lines["record"]))
 
 
 class ValidatingBatchTools(FakeBatchTools):

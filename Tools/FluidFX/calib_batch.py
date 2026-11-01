@@ -1,13 +1,14 @@
 """실행 환경: 시스템 Python 3, 백그라운드 실행(스윕 1회가 600초를 넘는다). 에디터가 TDGame 을 열 수 있고 Saved/AgentOps/build_hold.json 보류를 얻을 수 있어야 한다. 하위 도구(calib_sweep·calib_judge·prereg_lock·fluid_tuning_patch·ue_editor·run_in_editor·build_and_test, 헤드리스 UnrealEditor-Cmd)는 모두 하위 프로세스로 부르고 정본은 쓰지 않는다(spec-cal0-v2 1.5 G-BATCH, 일지 C10).
 실행 명령: python Tools/FluidFX/calib_batch.py --queue Tools/FluidFX/calib/batch_queue.json --holder <보류 이름> [--journal Saved/FluidFX/calib/batch/journal.json] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--locks-dir Saved/FluidFX/calib/locks] [--block K1]... [--resume] [--revisit-deferred] (PowerShell). 큐 = {"test_classes": {"path", "sha256"}, "blocks": [{"id", "plans": [{"plan": 프로젝트 상대 경로, "chain": 사슬 이름|null, "stages": ["screen"] 또는 ["screen", "confirm"], "estimate_seconds"?: {단계: 초}}]}]}(계획 경로는 큐 전체에서 한 번씩), 시험 분류표 = {"numeric_pinned": [헤드리스 시험 경로], "timing_record_only": [벽시계 시간 기준 시험 경로]}(둘 다 블록 헤드리스에서 실패해도 기록만). 일지가 있으면 --resume 일 때만, 큐 sha256 이 같을 때만 이어 한다. --revisit-deferred 는 고른 블록의 deferred 항목 confirm 을 상한 없이 돌린다(K10)
-출력: 일지(C10 원자적 다시 쓰기. runs = {단계: 실행 폴더, lock: 잠금, verify<n>: 사슬 재검증, chain_verify: 사슬 요약(사슬 마지막 항목, 재검증 판정 불가로 중단되면 interrupted{plan, reason} 을 남겨 재개 때 반복하지 않음, 실행 실패면 남기지 않음), headless: 블록 헤드리스 폴더(블록 마지막 항목)}), 일지 폴더의 batch.log(시작 처리·명령·상태 한 줄씩), runs/<계획>/<단계>-<n>/ 와 <단계>-<n>.log, chains/<사슬>.json, blocks/<블록>-<n>/(materialize 사본·headless.log·headless.json). 종료 코드 0 고른 블록 처리 끝·failed 없음 / 1 failed 항목 있음 / 2 큐·일지·계획 입력 오류 / 3 시작 처리(보류 회수→ensure→t.OverrideFPS 0→정본 재적재→보류 획득) 실패
-상태: 가짜 하위 프로세스 시험만(calib_offline_test T98·T99, 2026-10-30), 실제 에디터 배치 미실행. 하위 도구의 새 인수(--stage·--overlay·--lock·--screen-result·--screen-sweep·--verify-against·accept·overlay-remove --overlay·materialize 의 TDFluidPresetTuning.json·TDFluidMaterialLook.json 출력)는 명세 0.4 계약 기준이며 병합 뒤 이름·경로 맞물림 확인(실제 실행 미검증). 단계 2배 상한은 단계 실행 하나(하위 프로세스) 전체의 시간 제한으로 집행한다. 판정 종료 1(스윕 무효·대조 실패·판정 불가)은 undetermined 로 채택 없음(no_adopt)·둔감(insensitive)과 구분한다, 재검증 판정은 종료 0 통과, 종료 1 은 verify.json 대조 통과(control_ok)·verify.passed 거짓일 때만 실패이고 대조 표류·판정 불가는 사슬 중단(되돌림 없음). confirm 직전 screen.json overlay_sha256 ≠ 현재 덧씌움이면 locked 로 되돌려 재screen 한다(deferred 재방문은 상한 없이)
+출력: 일지(C10 원자적 다시 쓰기. runs = {단계: 실행 폴더, lock: 잠금, verify<n>: 사슬 재검증, chain_verify: 사슬 요약(사슬 마지막 항목, 재검증 판정 불가로 중단되면 interrupted{plan, reason} 을 남겨 재개 때 반복하지 않음, 실행 실패면 남기지 않음), headless: 블록 헤드리스 폴더(블록 마지막 항목)}), 일지 폴더의 batch.log(시작 처리·명령·상태 한 줄씩), runs/<계획>/<단계>-<n>/ 와 <단계>-<n>.log, chains/<사슬>.json, blocks/<블록>-<n>/(materialize 사본·headless.log·headless.json(판정기 verdict·verdict_code·header_sync_pending)). 종료 코드 0 고른 블록 처리 끝·failed 없음 / 1 failed 항목 있음 / 2 큐·일지·계획 입력 오류 / 3 시작 처리(보류 회수→ensure→t.OverrideFPS 0→정본 재적재→보류 획득) 실패
+상태: 가짜 하위 프로세스 시험만(calib_offline_test T98·T99, 2026-10-30), 실제 에디터 배치 미실행. 하위 도구의 새 인수(--stage·--overlay·--lock·--screen-result·--screen-sweep·--verify-against·accept·overlay-remove --overlay·materialize 의 TDFluidPresetTuning.json·TDFluidMaterialLook.json 출력)는 명세 0.4 계약 기준이며 병합 뒤 이름·경로 맞물림 확인(실제 실행 미검증). 단계 2배 상한은 단계 실행 하나(하위 프로세스) 전체의 시간 제한으로 집행한다. 판정 종료 1(스윕 무효·대조 실패·판정 불가)은 undetermined 로 채택 없음(no_adopt)·둔감(insensitive)과 구분한다, 재검증 판정은 종료 0 통과, 종료 1 은 verify.json 대조 통과(control_ok)·verify.passed 거짓일 때만 실패이고 대조 표류·판정 불가는 사슬 중단(되돌림 없음). confirm 직전 screen.json overlay_sha256 ≠ 현재 덧씌움이면 locked 로 되돌려 재screen 한다(deferred 재방문은 상한 없이). 2026-11-01 블록 헤드리스 설계 단언 실패가 TDGame.FluidFX.PresetData.StructDefaultsMatchHeader 하나뿐이고 그 시험 BeginEvents~EndEvents 의 Error 줄이 모두 "Expected '<Globals|StructDefaults>.<구조체>.<필드> equals the header default …' to be true." 꼴이며 그 경로가 모두 덧씌움 assignments json_path 이면 통과(헤더 기본값은 W 단계에서 같이 옮김, headless.json header_sync_pending·batch.log '헤더 기본값 동기 대기(W 단계)'), 다른 꼴 줄·덧씌움 밖 경로·다른 설계 단언 실패가 섞이면 되돌림(calib_offline_test K10 A1~A4, 실제 배치 미실행)
 """
 import argparse
 import hashlib
 import json
 import math
 import os
+import re
 import statistics
 import subprocess
 import sys
@@ -39,6 +40,9 @@ FIXED_STEP_RESET_CODE = "import unreal; unreal.SystemLibrary.execute_console_com
 CANONICAL_RELOAD_CODE = ("import unreal; errors = unreal.get_engine_subsystem(unreal.TDFluidPresetTuningSubsystem).reload_preset_tuning(); "
                          "print('reload_errors', errors); assert errors == 0, errors")
 HEADLESS_FILTER = "TDGame.FluidFX"
+HEADER_DEFAULTS_TEST = "TDGame.FluidFX.PresetData.StructDefaultsMatchHeader"
+HEADER_DEFAULT_ERROR = re.compile(r"Error: Expected '((?:Globals|StructDefaults)\.\w+\.\w+) equals the header default .* "
+                                  r"\(a header change does not move presets; update the tuning file on purpose\)' to be true\.(?: \[[^\]]*\])?")
 MATERIALIZED_TUNING = "TDFluidPresetTuning.json"
 MATERIALIZED_LOOK = "TDFluidMaterialLook.json"
 QUEUE_STAGE_SETS = (["screen"], ["screen", "confirm"])
@@ -156,6 +160,32 @@ def open_journal(journal_path, queue, queue_sha256, is_resume):
     if journal.get("queue_sha256") != queue_sha256:
         raise InputError("큐 sha256 이 일지에 동결한 값과 다르다(큐를 바꾸면 새 일지)")
     return journal
+
+
+def automation_error_lines(log_text, test_path):
+    lines = []
+    is_inside = False
+    for line in log_text.splitlines():
+        begin = build_and_test.EVENTS_BEGIN.search(line)
+        if begin:
+            is_inside = begin.group(1) == test_path
+            continue
+        if build_and_test.EVENTS_END.search(line):
+            is_inside = False
+            continue
+        if is_inside and "Error:" in line:
+            lines.append(line.split("LogAutomationController:", 1)[-1].strip())
+    return lines
+
+
+def header_sync_pending(verdict, verdict_code, log_text, overlay_paths):
+    if verdict_code != 1 or verdict["outside_allowlist"] != [HEADER_DEFAULTS_TEST]:
+        return []
+    matches = [HEADER_DEFAULT_ERROR.fullmatch(line) for line in automation_error_lines(log_text, HEADER_DEFAULTS_TEST)]
+    if not matches or not all(matches):
+        return []
+    paths = sorted({match.group(1) for match in matches})
+    return paths if set(paths) <= set(overlay_paths) else []
 
 
 def level_name(scene):
@@ -576,13 +606,16 @@ class BatchRunner:
                 self.record(f"블록 {block_id} 헤드리스", "중단", f"materialize 종료 {code}: {tail[-200:]}")
                 return
             verdict, verdict_code = self.run_headless_tests(output_dir)
-            write_json_atomic(output_dir / "headless.json", dict(verdict, verdict_code=verdict_code, overlay_sha256=file_sha256(self.overlay_path)))
+            overlay_paths = [entry.get("json_path") for entry in read_json(self.overlay_path).get("assignments", [])]
+            pending = header_sync_pending(verdict, verdict_code, value_independence.read_log_text(str(output_dir / "headless.log")), overlay_paths)
+            write_json_atomic(output_dir / "headless.json", dict(verdict, verdict_code=verdict_code, header_sync_pending=pending, overlay_sha256=file_sha256(self.overlay_path)))
             if verdict_code not in (0, 1):
                 self.record(f"블록 {block_id} 헤드리스", f"불완전 {verdict_code}", "다음 --resume 에서 다시")
                 return
-            if verdict_code == 0:
+            if verdict_code == 0 or pending:
                 last["runs"]["headless"] = display_path(output_dir)
-                self.record(f"블록 {block_id} 헤드리스", "통과", "기록만(숫자 고정·시간 측정) 실패: " + ", ".join(verdict["allowlisted_failures"]))
+                pending_text = f" / 헤더 기본값 동기 대기(W 단계): {', '.join(pending)}" if pending else ""
+                self.record(f"블록 {block_id} 헤드리스", "통과", "기록만(숫자 고정·시간 측정) 실패: " + ", ".join(verdict["allowlisted_failures"]) + pending_text)
                 self.save()
                 return
             if not self.revert(adopted[-1], f"블록 {block_id} 헤드리스 설계 단언 실패({', '.join(verdict['outside_allowlist'][:5])}) → 블록의 가장 최근 채택 되돌림"):

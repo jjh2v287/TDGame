@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(실제 실행은 언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, 에디터 앞창 유지 L-editor-06. 건식·offline 단독 장면은 에디터 불필요). 계획 JSON v2(spec-cal0-v2 C1)를 허용 키 표로 검사하고, 덧씌움 → base_tuning → 변형 순으로 fluid_tuning_patch 사본을 만든 뒤 장면 sources(look·probe·water_probe·offline)마다 pie_lookdev_fluid 룩데브(tuning_reload base·read_back owner/access·look_live·props·probe·schedule), 물 탐침, offline 명령(같은 사본 2회 결정론 확인)을 돌려 단계 유효성을 단언한다. 단계 종류 frame(v00 1)·screen(손잡이 끝 값, 대조 ≥3)·confirm(v00,best,v00,second|best,v00)·verify(v00 3), 장면 shots → schedule{times: settle+k·interval, reference now, fixed_fps 60}. --stage 없으면 옛 스윕(반복·control_every·control_middle).
 실행 명령: python Tools/FluidFX/calib_sweep.py --plan Tools/FluidFX/calib/plans/<id>.json [--stage frame|screen|confirm|verify] [--lock <잠금 v2>] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--screen-result <screen.json>] [--dry-run] [--run-dir Saved/FluidFX/calib/<run>] [--assert-scene <장면>=<result.json>] (PowerShell, L-repo-01). screen·confirm·verify 실제 실행은 --lock 필수, confirm 은 --screen-result 필수(plan·overlay·정본 2·lock sha 대조). --dry-run 은 검사·사본·룩데브 변형 JSON·sweep.json 만 만든다
 출력: <run-dir>/v<k>/(조절·모양 사본, variant.json), <run-dir>/<장면>/lookdev_spec.json·룩데브 출력(result.json·png)·water_probe.json·<단계>_offline*.json, <run-dir>/sweep.json(version 2·stage·lock·lock_sha256·overlay·overlay_sha256·screen_result·base_copy·canonical_tuning/look_sha256·started_at·warnings, 장면별 sequence·sources·shots_expected, 단계별 images·image_sha256·shots_saved·shot_game_times·metrics·look_applied·look_read_back·owner_checks(룩데브 apply 최상위)·valid·invalid_reasons, props 결과가 목록 아님(액터 없음 등)이면 무효, 룩데브 단계 apply 원격 호출 오류·schedule 오류·move 오류(형식·걷기 시한 초과)·schedule.events call/move 오류·state_reset 오류도 단계 무효, result.json base(카메라 apply)의 같은 오류는 장면 error(sweep 무효), 단계 state_reset_actor_count(reinit 때 reset_simulation_state 한 액터 수), 물 탐침 단계는 Look 미적용 look_live_skipped 와 장면 overlay_props(덧씌움 actor_props) 적용, 덧씌움·base_tuning Look 패키지(손잡이 패키지 아님) 중 levels 에 이 장면 수준이 없거나, 그 패키지 항목이 모두 cloud_setups 를 갖고 장면 camera.console 의 TD.FluidFX.CloudSetup N(장면 cloud_setup, 없으면 null 이라 수준만 본다)이 그 목록에 없는 것은 look_live.skip_if_no_owner 로 보내 소유자가 없으면 적용·다시 읽기 단언을 건너뛰고 단계 skipped_look 에 기록, 변형 base_look_levels·base_look_cloud_setups, 손잡이 Look 패키지라도 이 장면 손잡이 없이 param scenes 가 다른 장면인 손잡이만 가진 것은 장면 out_of_scene_look_packages 로 기록하고 같은 skip_if_no_owner 로 보낸다). 룩데브 장면은 실행 전에 lookdev_spec.json 외 지난 산출물을 <run-dir>/_previous/<장면>/<시각>/ 로 옮기고(장면 폴더 밖이라 calib_batch 의 장면 폴더 rglob 에 섞이지 않음, 장면 previous_outputs, 못 옮기면 장면 error·룩데브 미실행) 장면 lookdev_run_id 를 --run-id 로 넘겨 result.json run_id·variants_sha256(lookdev_spec.json) 이 다르면 장면 error, 룩데브 종료 ≠ 0 이고 새 result.json 이 없으면 장면 error '룩데브 종료 N, 이번 실행 결과 없음'(--assert-scene 결과는 대조하지 않는다). 종료 코드 0 모든 단계 유효·정본 불변 / 1 무효 단계·룩데브 실패·정본 바뀜·confirm 거부(screen 둔감·best 없음) / 2 계획·잠금·덧씌움·screen.json 입력 오류
-상태: 오프라인 하네스(가짜 unreal·가짜 룩데브, calib_offline_test.py check_cal0_sweep·2026-10-31 check_lookdev_frame_fixes 의 base·단계 오류 무효)만 검사, 실제 PIE 단계 스윕 미실행(2026-10-30 CAL-0 B2). 룩데브 적용 키 검사 find_key_errors(apply)·tuning_reload base·look_live·probe 결과 형식은 B3, Look·Globals 사본은 B1, 잠금 v2 생성은 B4b 병합 뒤 확인. 2026-10-31 지난 산출물 이동·run_id 대조는 calib_offline_test.py check_capture_tool_fixes 오프라인 시험만.
+상태: 오프라인 하네스(가짜 unreal·가짜 룩데브, calib_offline_test.py check_cal0_sweep·2026-10-31 check_lookdev_frame_fixes 의 base·단계 오류 무효)만 검사, 실제 PIE 단계 스윕 미실행(2026-10-30 CAL-0 B2). 룩데브 적용 키 검사 find_key_errors(apply)·tuning_reload base·look_live·probe 결과 형식은 B3, Look·Globals 사본은 B1, 잠금 v2 생성은 B4b 병합 뒤 확인. 2026-10-31 지난 산출물 이동·run_id 대조는 calib_offline_test.py check_capture_tool_fixes 오프라인 시험만. 2026-11-01 verify 단계만: 덧씌움 assignments 중 from.plan(파일 stem 또는 계획 id, calib_batch.is_from_item 과 같은 규칙)이 이 계획인 항목은 params 경로 겹침 검사에서 빼고(남의 계획 경로·base_tuning 겹침·다른 단계는 그대로 종료 2), v00 기준 값은 정본+덧씌움(Look 손잡이 base 는 덧씌움 전 정본 모양과 대조), actor_prop 손잡이는 이 계획의 덧씌움 actor_props 값(같은 대상 값이 레벨마다 다르면 종료 2)으로 둔다(calib_offline_test K10 B1~B5, 실제 PIE verify 미실행).
 """
 import argparse
 import copy
@@ -488,25 +488,34 @@ def describe_tuning_path(document, schema, json_path, value, split_group, index)
     return info
 
 
-def look_base_value(look_document, look, param, index):
+def look_base_value(look_document, look, param, index, canonical_look=None):
+    canonical_entry = look_entry(look_document if canonical_look is None else canonical_look, look)
+    if look["name"] in canonical_entry:
+        canonical = canonical_entry[look["name"]]
+        require("base" not in param or values_match(param["base"], canonical), f"params[{index}].base: {param.get('base')!r} ≠ 정본 모양 값 {canonical!r}")
     entry = look_entry(look_document, look)
     if look["name"] in entry:
-        current = entry[look["name"]]
-        require("base" not in param or values_match(param["base"], current), f"params[{index}].base: {param.get('base')!r} ≠ 정본 모양 값 {current!r}")
-        return current
+        return entry[look["name"]]
     require("base" in param, f"params[{index}]: 정본 모양에 {look['name']} 이 없어 base(직접 부모 기본값)가 필요하다")
     return param["base"]
 
 
-def describe_params(plan, document, schema, look_document=None):
+def own_actor_prop_value(param, own_actor_props, index):
+    target = param["actor_prop"]
+    values = [item["value"] for item in own_actor_props if all(item.get(key) == target.get(key) for key in ACTOR_PROP_KEYS + ACTOR_PROP_OPTIONAL_KEYS)]
+    require(all(values_match(value, values[0]) for value in values), f"params[{index}].actor_prop: 덧씌움 actor_props 의 이 계획 채택 값이 레벨마다 다르다({values!r}) — verify 대조 값을 하나로 정할 수 없다")
+    return values[0] if values else param["base"]
+
+
+def describe_params(plan, document, schema, look_document=None, canonical_look=None, own_actor_props=()):
     described = []
     for index, param in enumerate(plan["params"]):
         item = {"index": index, "values": param["values"], "split_group": param.get("split_group", False), "scenes": param.get("scenes"), "cost": param.get("cost")}
         if "actor_prop" in param:
-            item.update(kind="actor_prop", json_path=None, actor_prop=param["actor_prop"], base_value=param["base"])
+            item.update(kind="actor_prop", json_path=None, actor_prop=param["actor_prop"], base_value=own_actor_prop_value(param, own_actor_props, index))
         elif str(param.get("json_path", "")).startswith(LOOK_PREFIX):
             look = parse_look_path(param["json_path"])
-            item.update(kind="look", json_path=param["json_path"], look=look, base_value=look_base_value(look_document or {}, look, param, index))
+            item.update(kind="look", json_path=param["json_path"], look=look, base_value=look_base_value(look_document or {}, look, param, index, canonical_look))
         else:
             paths = param_paths(param)
             infos = [describe_tuning_path(document, schema, path, param["values"][0], item["split_group"], index) for path in paths]
@@ -1121,12 +1130,18 @@ def load_overlay(overlay_path):
     return {"path": relative_text(overlay_path), "sha256": file_sha256(overlay_path), "assignments": assignments, "actor_props": actor_props}
 
 
-def check_overlay_overlap(plan, overlay):
+def is_own_verify_entry(entry, plan_path, plan, stage):
+    source = str((entry.get("from") or {}).get("plan", ""))
+    return stage == "verify" and bool(source) and Path(source).stem in (Path(plan_path).stem, str(plan.get("id")))
+
+
+def check_overlay_overlap(plan, overlay, plan_path, stage):
     if overlay is None:
         return
-    overlay_paths = {item["json_path"] for item in overlay["assignments"]}
-    plan_paths = {path for param in plan["params"] for path in param_paths(param)} | {item["json_path"] for item in plan.get("base_tuning", [])}
-    overlap = sorted(overlay_paths & plan_paths)
+    knob_paths = {path for param in plan["params"] for path in param_paths(param)}
+    base_paths = {item["json_path"] for item in plan.get("base_tuning", [])}
+    overlap = sorted({item["json_path"] for item in overlay["assignments"]
+                      if item["json_path"] in base_paths or (item["json_path"] in knob_paths and not is_own_verify_entry(item, plan_path, plan, stage))})
     require(not overlap, f"덧씌움 경로가 계획 params·base_tuning 경로와 같다: {', '.join(overlap)}")
 
 
@@ -1158,12 +1173,13 @@ def build_stage_variants(stage, params, base_layer, screen):
 
 def prepare_sweep(plan_path, run_dir, plan=None, stage=None, overlay=None, screen=None):
     plan = plan or load_plan(plan_path, stage)
-    check_overlay_overlap(plan, overlay)
+    check_overlay_overlap(plan, overlay, plan_path, stage)
     schema = check_fluid_preset_data.load_schema(ROOT)
     document = fluid_tuning_patch.load_canonical_document(ROOT)
     look_document = json.loads(fluid_tuning_patch.canonical_look_path(ROOT).read_text(encoding="utf-8"))
     base_layer, base_document, base_look = build_base_layer(plan, overlay, document, look_document, schema)
-    params = describe_params(plan, base_document, schema, base_look)
+    own_actor_props = [item for item in (overlay or {}).get("actor_props", []) if is_own_verify_entry(item, plan_path, plan, stage)]
+    params = describe_params(plan, base_document, schema, base_look, look_document, own_actor_props)
     if stage:
         variants, candidates = build_stage_variants(stage, params, base_layer, screen)
         sequence = stage_scene_sequence(stage, None, [dict(variant, scenes=None) for variant in variants], candidates)

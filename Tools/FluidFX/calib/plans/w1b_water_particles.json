@@ -1,6 +1,6 @@
 {
   "id": "w1b_water_particles",
-  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다 / 0b(2026-10-30): 목표를 LIVE-2 갤러리 측정(IMG 16 바다 부유 공, IMG 20 급류 흰 물)으로 정했다. 영역 틀은 frame 뒤(B6 추측 상자 폐기). 급류의 부유물 개수는 IMG 20 공이 embers 최대 면적 40px 를 넘어 잡음만 세므로 목표에서 뺐다 / frame(2026-10-30): 여울 손잡이를 NS_TD_FluidWaterSplash TDSplashContactWhitewater(움직이는 물체 접촉 때만 생성되는 튐, 여울 무대엔 움직이는 물체가 없어 소유자 0·효과 0)에서 여울 백수를 내는 NS_TD_FluidWaterWhitewater TDWhitewaterSpawnPerM2PerSec(정본 20 가운데)로 바꿨다. 튐 손잡이는 바다 목표(embers 는 따뜻한 색 검출)와 무관해 approval-only.json 으로 옮겼다 / 위상 재설정(2026-10-31): 바다 교반기 둘(editor_make_fluid_water_particle_stage.py:46-47·256-261 피벗 (−R, 0, 0)) TDGen_WaterParticleStirrerGraze(수평 반경 150·180°/s, debris 상자 오른쪽 옆 항적 고리)·TDGen_WaterParticleStirrerVertical(수직 반경 120·pitch 120°/s, 위치 = 중심 + 120(cos θ, 0, sin θ))는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다. step_apply 가 영역 틀(13:24 커밋)이 쓴 frame(_previous/sea_img16 11:46 회차, apply 13.683 s)의 Graze yaw θ=302.97°·Vertical pitch θ=201.98° 로 되돌려 첫 장(6.017 s 뒤) Graze θ≈306.0°·Vertical θ≈204.0° 를 재현한다(rapids_img20 은 움직이는 소품 없음)",
+  "note": "W-1b C12 부유물·L26 물보라·L5 수면 추종·L4 흰 물 점 보정 초안. 맵은 장면마다 하나(X-18): 바다 WP1 IMG 16, 여울 WP2 IMG 20. 스폰 시점 값은 reinit 으로 바뀌지 않아 awake 끄기·켜기가 필요하다(FX-8n 반박 S2). exposure_ev100 2.0 은 무대 태양 10 lux 기준이며 명세 초안의 11.0 에서 바꾼 편차(proposed)다. pawn·arm·view·박스는 첫 촬영 뒤 맞춘다. L4-d 손잡이(TDWhitewaterSpawnPerM2PerSec·SpawnThreshold·CameraFade*)는 CAL-0 뒤 rapids_img20 에 더한다. 값·화면·성능 판정은 D-64 일괄 단계에서 한다 / 0b(2026-10-30): 목표를 LIVE-2 갤러리 측정(IMG 16 바다 부유 공, IMG 20 급류 흰 물)으로 정했다. 영역 틀은 frame 뒤(B6 추측 상자 폐기). 급류의 부유물 개수는 IMG 20 공이 embers 최대 면적 40px 를 넘어 잡음만 세므로 목표에서 뺐다 / frame(2026-10-30): 여울 손잡이를 NS_TD_FluidWaterSplash TDSplashContactWhitewater(움직이는 물체 접촉 때만 생성되는 튐, 여울 무대엔 움직이는 물체가 없어 소유자 0·효과 0)에서 여울 백수를 내는 NS_TD_FluidWaterWhitewater TDWhitewaterSpawnPerM2PerSec(정본 20 가운데)로 바꿨다. 튐 손잡이는 바다 목표(embers 는 따뜻한 색 검출)와 무관해 approval-only.json 으로 옮겼다 / 위상 재설정(2026-10-31): 바다 교반기 둘(editor_make_fluid_water_particle_stage.py:46-47·256-261 피벗 (−R, 0, 0)) TDGen_WaterParticleStirrerGraze(수평 반경 150·180°/s, debris 상자 오른쪽 옆 항적 고리)·TDGen_WaterParticleStirrerVertical(수직 반경 120·pitch 120°/s, 위치 = 중심 + 120(cos θ, 0, sin θ))는 RotatingMovementComponent::TickComponent 가 매 틱 회전율×DeltaTime 을 누적하므로 위상 = 배치 위상 + ω × PIE 게임 시각이고 apply 시각이 회차·변형마다 달라 촬영 위상이 밀린다. step_apply 가 영역 틀(13:24 커밋)이 쓴 frame(_previous/sea_img16 11:46 회차, apply 13.683 s)의 Graze yaw θ=302.97°·Vertical pitch θ=201.98° 로 되돌려 첫 장(6.017 s 뒤) Graze θ≈306.0°·Vertical θ≈204.0° 를 재현한다(rapids_img20 은 움직이는 소품 없음) / 2026-11-01 -r2: 부유물 몸통이 짙은 빨강(정본 TDDebrisColor 0.8·0.05·0.04)이라 embers 검출식(measure_fx_look.py 423~437행, 휘도 − 9px 중앙값 > 25·R > 110·R > 1.3B)이 몸통은 못 잡고 태양 반사 테두리만 세므로, 측정 조건으로 base_tuning 에 밝은 주황 TDDebrisColor [1.0, 0.45, 0.05, 1.0] 를 넣고 출하하지 않는다(base_tuning_ships false, 진단 diag-w1b_water_particles.md 6절 C, proposed).",
   "scenes": [
     {
       "name": "sea_img16",
@@ -194,5 +194,17 @@
         "note": "IMG 20 g20_rapids_white 0.1413, ±25%"
       }
     ]
-  }
+  },
+  "base_tuning": [
+    {
+      "json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterDebris.Colors.User.TDDebrisColor",
+      "value": [
+        1.0,
+        0.45,
+        0.05,
+        1.0
+      ]
+    }
+  ],
+  "base_tuning_ships": false
 }

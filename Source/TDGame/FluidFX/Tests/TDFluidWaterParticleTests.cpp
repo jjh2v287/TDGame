@@ -3,6 +3,7 @@
 #include "FluidFX/TDFluidGrid2DSolver.h"
 #include "FluidFX/TDFluidMassInputTargets.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidWaterParticleActor.h"
 #include "FluidFX/TDFluidWaterParticleTypes.h"
 #include "FluidFX/TDFluidWaterSplashRules.h"
 #include "Algo/Reverse.h"
@@ -600,6 +601,21 @@ bool FTDFluidWaterParticleFieldCellLookupTest::RunTest(const FString& Parameters
 	TestFalse(TEXT("A negative cell size is rejected"), FTDFluidWaterSplashRules::TryResolveFieldCell(FirstCellCenter, FirstCellCenter, -CellSizeCm, ContactResolution, Cell));
 	TestFalse(TEXT("A zero resolution is rejected"), FTDFluidWaterSplashRules::TryResolveFieldCell(FirstCellCenter, FirstCellCenter, CellSizeCm, 0, Cell));
 	TestFalse(TEXT("A non-finite point is rejected"), FTDFluidWaterSplashRules::TryResolveFieldCell(FVector2D(std::numeric_limits<double>::infinity(), 0.0), FirstCellCenter, CellSizeCm, ContactResolution, Cell));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWaterParticleTimeOriginRestartsTest,
+	"TDGame.FluidFX.WaterParticle.TimeOriginRestarts",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWaterParticleTimeOriginRestartsTest::RunTest(const FString& Parameters)
+{
+	TestNearlyEqual(TEXT("water time counts from the origin"), ATDFluidWaterParticleActor::ComputeWaterTimeSeconds(61.43, 15.39), 46.04f, 1e-4f);
+	TestNearlyEqual(TEXT("a zero origin keeps the world time"), ATDFluidWaterParticleActor::ComputeWaterTimeSeconds(12.5, 0.0), 12.5f, 1e-6f);
+	TestNearlyEqual(TEXT("two stages at the same offset get the same water time"), ATDFluidWaterParticleActor::ComputeWaterTimeSeconds(108.20 + 6.0, 108.20), ATDFluidWaterParticleActor::ComputeWaterTimeSeconds(15.39 + 6.0, 15.39), 1e-5f);
+	TestNearlyEqual(TEXT("water time keeps the fraction late in a session"), ATDFluidWaterParticleActor::ComputeWaterTimeSeconds(100000.25, 100000.0), 0.25f, 1e-6f);
+	TestNearlyEqual(TEXT("water time before the origin stays signed like the material"), ATDFluidWaterParticleActor::ComputeWaterTimeSeconds(4.0, 10.0), -6.0f, 1e-6f);
 	return true;
 }
 

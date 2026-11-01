@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 물 수면 마스터 재질 M_TD_FluidWater(Substrate 단일층 물)·M_TD_FluidWaterLite(DefaultLit)와 인스턴스 8종(강·호수·바다·폭풍·늪·밀집 개울·호수·바다), 젖음 DBuffer 데칼 재질 M_TD_FluidWetnessDecal(TDFluidWaterWetDecal.hlsl), 텍스처 6장, 격자 메시 3개, 0단계 확인 3건을 만든다. Custom 노드 2개(표면·정점 오프셋)에 Tools/FluidFX/Shaders/TDFluidWaterCommon·Surface·Offset.hlsl 을 노드별로 조립해 넣는다.
 실행 명령: python Tools/FluidFX/make_fluid_water_textures.py 다음 python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_material.py (젖음 데칼 재질 하나만 다시 만들 때는 요청 파일 Saved/FluidFX/fluid_water_material_request.json 에 {"wet_decal_only": true})
-출력: /Game/FluidFX/Materials/M_TD_FluidWater·M_TD_FluidWaterLite·MI_TD_FluidWater_River·Lake·Sea·SeaStorm·Swamp·DenseCreek·DenseLake·DenseSea·M_TD_FluidWaterDecalProbe·M_TD_FluidWetnessDecal, /Game/FluidFX/Textures/T_TD_FluidWaterDetailN·T_TD_FluidFoamNoise·T_TD_FluidFlowPhaseNoise·T_TD_FluidCaustics·T_TD_FluidSandRipplesN·T_TD_FluidSandDetail, /Game/FluidFX/Meshes/SM_TD_FluidWaterGrid64·SM_TD_FluidWaterGridUnit·SM_TD_FluidWaterLodPatch16, Saved/FluidFX/fluid_water_material.json
-상태: 검증 중(2026-10-19). 기본 경로는 단일층 물(legacy = MSM_SINGLE_LAYER_WATER, 굴절 Pixel Normal Offset, 흡수·산란 계수는 1/cm 그대로 = 엔진이 cm 깊이에 곱함, SingleLayerWaterShading.ush 206·221행). SLW 가 안 보이던 것은 아래를 보는 격자 탓이었다(L-editor-40·41 정정). 코스틱 텍스처 min 결합(ColorScaleBehindWater)·미세 법선·해 반짝임 방출(SkyAtmosphereLightDirection·Illuminance)·레이스 거품 문턱. {"water_path": "substrate"|"translucent"} 로 다른 경로(반투명은 두께 = SceneDepth − PixelDepth). C1 추가분: RibbonTangentWS·RibbonFlowCmPerSec(CPD 0번)·MID_DRIVEN_* 계약 대조. 기존 에셋은 {"overwrite": true} 일 때만 다시 짓고(격자는 지운 뒤 새로), 물 무대가 열려 있으면 불 무대로 옮긴 뒤 짓는다. 미저장 작업이 있으면 중단한다. W-2r 추가분(새 파라미터 기본값은 기존 화면과 같음): 거품 문턱(FoamDensityThreshold·FoamFromDensity·FoamSpeedThreshold)·프루드 수 흰 물(FoamFromFroude·FoamFroudeThreshold)·카메라 거리 거품 페이드(FoamFadeStartCm·FoamFadeLengthCm)·선택 밀도 염료(DyeColor·DyeOpacity)·리본 로컬 UV 정적 스위치 3개(bRibbonLocalFlowDetail·Caustics·Tiling, RibbonSegmentLengthCm·RibbonWidthCm·RibbonStretchAlong, 인스턴스 "switches"), 강 MI 청록·거품 재조정. W-2s-a(미검증): 젖음 데칼 HLSL 높이 관문(입력 TerrainReferenceZCm·WetHeightToleranceCm 추가, WetOpacity 기본 0.20 = 일괄 보정 전 임시값)과 {"wet_decal_only": true} 요청(M_TD_FluidWetnessDecal 하나만 덮어쓰고 텍스처·격자 메시·물 마스터·인스턴스·물 무대는 건드리지 않으며 보고서는 이 요청의 결과로 덮어쓴다). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 8종의 스칼라·벡터[r,g,b,a]·정적 스위치와 부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, 표 INSTANCE_SPECS 에는 이름만 남는다(알파 0 강제 삭제, 정본 값 그대로). 파동 1 L-editor-61 고침(2026-10-26 검증: 에디터 실행 status ok, Lite 크래시 0, ISM 사용 true): 물·Lite 마스터의 인스턴스드 스태틱 메시 사용 플래그는 노드 생성 전 재질 속성 used_with_instanced_static_meshes 로 켜고(set_material_usage 를 부르지 않음), has_material_usage 확인은 compile_material 뒤에서만 한다. 파동 3 W-6 E(2026-10-29, 미검증: py_compile·check_fluid_hlsl 조각 검사만): 밀집 물 재질 분기로 입력 4개(DenseWaterActive 0·DenseWaterWetThresholdCm 1 은 C++ 구동, DenseEdgeSoftnessCm·DenseDrySinkCm 은 모양)를 더하고 TerrainReferenceZCm 을 젖음 데칼 전용에서 물 마스터 오프셋 입력으로 승격(C++ 구동 스칼라 목록으로 이동, 데칼 전용 목록은 비움)하며 인스턴스 MI_TD_FluidWater_DenseCreek·DenseLake·DenseSea 3개를 INSTANCE_SPECS 에 더한다(값은 조각 look-fragment-w6.json 병합 뒤 정본에서 읽는다).
+출력: /Game/FluidFX/Materials/MPC_TD_FluidWaterFlow(스칼라 WaterFlowOriginSeconds 기본 0)·M_TD_FluidWater·M_TD_FluidWaterLite·MI_TD_FluidWater_River·Lake·Sea·SeaStorm·Swamp·DenseCreek·DenseLake·DenseSea·M_TD_FluidWaterDecalProbe·M_TD_FluidWetnessDecal, /Game/FluidFX/Textures/T_TD_FluidWaterDetailN·T_TD_FluidFoamNoise·T_TD_FluidFlowPhaseNoise·T_TD_FluidCaustics·T_TD_FluidSandRipplesN·T_TD_FluidSandDetail, /Game/FluidFX/Meshes/SM_TD_FluidWaterGrid64·SM_TD_FluidWaterGridUnit·SM_TD_FluidWaterLodPatch16, Saved/FluidFX/fluid_water_material.json(flow_collection, collection_scalars, 마스터별 elapsed_seconds)
+상태: 검증 중(2026-10-19). 기본 경로는 단일층 물(legacy = MSM_SINGLE_LAYER_WATER, 굴절 Pixel Normal Offset, 흡수·산란 계수는 1/cm 그대로 = 엔진이 cm 깊이에 곱함, SingleLayerWaterShading.ush 206·221행). SLW 가 안 보이던 것은 아래를 보는 격자 탓이었다(L-editor-40·41 정정). 코스틱 텍스처 min 결합(ColorScaleBehindWater)·미세 법선·해 반짝임 방출(SkyAtmosphereLightDirection·Illuminance)·레이스 거품 문턱. {"water_path": "substrate"|"translucent"} 로 다른 경로(반투명은 두께 = SceneDepth − PixelDepth). C1 추가분: RibbonTangentWS·RibbonFlowCmPerSec(CPD 0번)·MID_DRIVEN_* 계약 대조. 기존 에셋은 {"overwrite": true} 일 때만 다시 짓고(격자는 지운 뒤 새로), 물 무대가 열려 있으면 불 무대로 옮긴 뒤 짓는다. 미저장 작업이 있으면 중단한다. W-2r 추가분(새 파라미터 기본값은 기존 화면과 같음): 거품 문턱(FoamDensityThreshold·FoamFromDensity·FoamSpeedThreshold)·프루드 수 흰 물(FoamFromFroude·FoamFroudeThreshold)·카메라 거리 거품 페이드(FoamFadeStartCm·FoamFadeLengthCm)·선택 밀도 염료(DyeColor·DyeOpacity)·리본 로컬 UV 정적 스위치 3개(bRibbonLocalFlowDetail·Caustics·Tiling, RibbonSegmentLengthCm·RibbonWidthCm·RibbonStretchAlong, 인스턴스 "switches"), 강 MI 청록·거품 재조정. W-2s-a(미검증): 젖음 데칼 HLSL 높이 관문(입력 TerrainReferenceZCm·WetHeightToleranceCm 추가, WetOpacity 기본 0.20 = 일괄 보정 전 임시값)과 {"wet_decal_only": true} 요청(M_TD_FluidWetnessDecal 하나만 덮어쓰고 텍스처·격자 메시·물 마스터·인스턴스·물 무대는 건드리지 않으며 보고서는 이 요청의 결과로 덮어쓴다). 파동 0 P1(2026-10-25, 미검증: py_compile·가짜 unreal 검사만): 인스턴스 8종의 스칼라·벡터[r,g,b,a]·정적 스위치와 부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(Tools/FluidFX/fluid_material_look.py)에서 읽고, 표 INSTANCE_SPECS 에는 이름만 남는다(알파 0 강제 삭제, 정본 값 그대로). 파동 1 L-editor-61 고침(2026-10-26 검증: 에디터 실행 status ok, Lite 크래시 0, ISM 사용 true): 물·Lite 마스터의 인스턴스드 스태틱 메시 사용 플래그는 노드 생성 전 재질 속성 used_with_instanced_static_meshes 로 켜고(set_material_usage 를 부르지 않음), has_material_usage 확인은 compile_material 뒤에서만 한다. 파동 3 W-6 E(2026-10-29, 미검증: py_compile·check_fluid_hlsl 조각 검사만): 밀집 물 재질 분기로 입력 4개(DenseWaterActive 0·DenseWaterWetThresholdCm 1 은 C++ 구동, DenseEdgeSoftnessCm·DenseDrySinkCm 은 모양)를 더하고 TerrainReferenceZCm 을 젖음 데칼 전용에서 물 마스터 오프셋 입력으로 승격(C++ 구동 스칼라 목록으로 이동, 데칼 전용 목록은 비움)하며 인스턴스 MI_TD_FluidWater_DenseCreek·DenseLake·DenseSea 3개를 INSTANCE_SPECS 에 더한다(값은 조각 look-fragment-w6.json 병합 뒤 정본에서 읽는다). 2026-11-01 물 시간 원점(K9 w5_tank_l11·w1b 대조 실패): 두 마스터의 Custom 입력 ElapsedSeconds = Time − 새 MPC_TD_FluidWaterFlow 스칼라 WaterFlowOriginSeconds(기본 0 이라 게임 모양 불변, 표면·정점 오프셋 노드가 같은 원천을 공유, 물 HLSL 은 시간을 이 입력에서만 받음), 모양 정본 MI 가 이 이름을 덮으면 자체 점검 거부. pie_lookdev_fluid.py 가 물 마스터 사용자가 있는 단계 apply 마다 원점 = 그 게임 시각(water_flow_origin). 에디터 재생성 전(py_compile·calib_offline_test F15 가짜 unreal 만), 재생성 전에는 MPC 가 없어 물 무대 룩데브 단계가 키 오류다.
 """
 import hashlib
 import importlib.util
@@ -24,6 +24,11 @@ LITE_MASTER_PATH = f"{MATERIAL_DIR}/{LITE_MASTER_NAME}"
 DECAL_PROBE_PATH = f"{MATERIAL_DIR}/{DECAL_PROBE_NAME}"
 WET_DECAL_NAME = "M_TD_FluidWetnessDecal"
 WET_DECAL_PATH = f"{MATERIAL_DIR}/{WET_DECAL_NAME}"
+FLOW_COLLECTION_NAME = "MPC_TD_FluidWaterFlow"
+FLOW_COLLECTION_PATH = f"{MATERIAL_DIR}/{FLOW_COLLECTION_NAME}"
+FLOW_ORIGIN_PARAMETER_NAME = "WaterFlowOriginSeconds"
+COLLECTION_SCALAR_DEFAULTS = ((FLOW_ORIGIN_PARAMETER_NAME, 0.0),)
+COLLECTION_RUNTIME_NAMES = frozenset(name for name, _ in COLLECTION_SCALAR_DEFAULTS)
 
 SHADER_DIRECTORY = ("Tools", "FluidFX", "Shaders")
 COMMON_HLSL_NAME = "TDFluidWaterCommon.hlsl"
@@ -473,6 +478,11 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialProperty.MP_EMISSIVE_COLOR",
     "MaterialExpressionSceneDepthWithoutWater",
     "MaterialExpressionTime",
+    "MaterialExpressionCollectionParameter",
+    "MaterialExpressionSubtract",
+    "MaterialParameterCollection",
+    "MaterialParameterCollectionFactoryNew",
+    "CollectionScalarParameter",
     "MaterialExpressionConstant",
     "MaterialExpressionConstant3Vector",
     "MaterialExpressionTextureObjectParameter",
@@ -635,7 +645,7 @@ def asset_path(name):
 
 
 def collect_target_asset_paths():
-    paths = [WATER_MASTER_PATH, LITE_MASTER_PATH, DECAL_PROBE_PATH, WET_DECAL_PATH]
+    paths = [WATER_MASTER_PATH, LITE_MASTER_PATH, DECAL_PROBE_PATH, WET_DECAL_PATH, FLOW_COLLECTION_PATH]
     paths.extend(asset_path(spec["name"]) for spec in INSTANCE_SPECS)
     paths.extend(f"{TEXTURE_DIR}/{spec['name']}" for spec in TEXTURE_SPECS)
     paths.extend(f"{MESH_DIR}/{spec['name']}" for spec in MESH_SPECS)
@@ -905,12 +915,46 @@ def create_master_asset(master_name, master_path):
     return material, True
 
 
+def load_or_create_flow_collection(overwrite):
+    assets = unreal.EditorAssetLibrary
+    if assets.does_asset_exist(FLOW_COLLECTION_PATH):
+        if not overwrite:
+            raise RuntimeError(f"기존 에셋 보존: {FLOW_COLLECTION_PATH}")
+        collection = assets.load_asset(FLOW_COLLECTION_PATH)
+        if not isinstance(collection, unreal.MaterialParameterCollection):
+            raise RuntimeError(f"기존 에셋 형식 불일치: {FLOW_COLLECTION_PATH}")
+    else:
+        ensure_directory(MATERIAL_DIR)
+        collection = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            FLOW_COLLECTION_NAME, MATERIAL_DIR, unreal.MaterialParameterCollection, unreal.MaterialParameterCollectionFactoryNew()
+        )
+        if collection is None:
+            raise RuntimeError(f"MPC 생성 실패: {FLOW_COLLECTION_PATH}")
+    scalar_parameters = []
+    for name, value in COLLECTION_SCALAR_DEFAULTS:
+        parameter = unreal.CollectionScalarParameter()
+        parameter.set_editor_property("parameter_name", name)
+        parameter.set_editor_property("default_value", value)
+        scalar_parameters.append(parameter)
+    collection.set_editor_property("scalar_parameters", scalar_parameters)
+    stored = [(str(item.get_editor_property("parameter_name")), float(item.get_editor_property("default_value"))) for item in collection.get_editor_property("scalar_parameters")]
+    if stored != list(COLLECTION_SCALAR_DEFAULTS):
+        raise RuntimeError("MPC 스칼라 이름·기본값 설정 확인 실패: " + ", ".join(f"{name}={value}" for name, value in stored))
+    save_asset(collection, FLOW_COLLECTION_PATH)
+    return collection
+
+
+def describe_elapsed_seconds():
+    return f"Time - {FLOW_COLLECTION_NAME}.{FLOW_ORIGIN_PARAMETER_NAME}"
+
+
 class SourceFactory:
-    def __init__(self, material, texture_defaults, is_lite, water_path=LEGACY_WATER_PATH):
+    def __init__(self, material, texture_defaults, is_lite, water_path=LEGACY_WATER_PATH, flow_collection=None):
         self.material = material
         self.texture_defaults = texture_defaults
         self.is_lite = is_lite
         self.water_path = water_path
+        self.flow_collection = flow_collection
         self.sources = {}
         self.next_row = 0
         self.vector_defaults = dict(VECTOR_PARAMETER_DEFAULTS)
@@ -946,7 +990,7 @@ class SourceFactory:
         if name == "SunIlluminance":
             return add_node(material, unreal.MaterialExpressionSkyAtmosphereLightIlluminance, x, y), ""
         if name == "ElapsedSeconds":
-            return add_node(material, unreal.MaterialExpressionTime, x, y), ""
+            return self.create_elapsed_seconds(x, y), ""
         if name == "SceneDepthWithoutWaterCm":
             if self.is_lite:
                 return add_node(material, unreal.MaterialExpressionConstant, x, y, r=0.0), ""
@@ -992,6 +1036,17 @@ class SourceFactory:
         if name in self.switch_defaults:
             return self.create_static_switch(name, x, y), ""
         raise RuntimeError(f"입력 원천을 정할 수 없음: {name}")
+
+    def create_elapsed_seconds(self, x, y):
+        if self.flow_collection is None:
+            raise RuntimeError(f"ElapsedSeconds 원점 MPC 없음: {FLOW_COLLECTION_PATH}")
+        material = self.material
+        game_time = add_node(material, unreal.MaterialExpressionTime, x - 400, y)
+        flow_origin = add_node(material, unreal.MaterialExpressionCollectionParameter, x - 400, y + 55, collection=self.flow_collection, parameter_name=FLOW_ORIGIN_PARAMETER_NAME)
+        elapsed = add_node(material, unreal.MaterialExpressionSubtract, x, y)
+        link(game_time, elapsed, "A")
+        link(flow_origin, elapsed, "B")
+        return elapsed
 
     def create_static_switch(self, name, x, y):
         material = self.material
@@ -1189,6 +1244,10 @@ def find_shadowed_mid_parameters(look_table):
     return sorted(driven & collect_instance_override_names(look_table))
 
 
+def find_collection_driven_overrides(look_table):
+    return sorted(COLLECTION_RUNTIME_NAMES & collect_instance_override_names(look_table))
+
+
 def verify_primitive_data_parameters(factory):
     stored = {}
     for name, index in PRIMITIVE_DATA_INDEX_BY_PARAMETER.items():
@@ -1225,7 +1284,7 @@ def verify_instanced_static_mesh_usage(material, master_name):
         raise RuntimeError(f"재질 컴파일 뒤 인스턴스드 스태틱 메시 사용 플래그가 꺼져 있음: {master_name}")
 
 
-def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path):
+def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path, flow_collection):
     master_name = LITE_MASTER_NAME if is_lite else WATER_MASTER_NAME
     master_path = LITE_MASTER_PATH if is_lite else WATER_MASTER_PATH
     material, was_created = prepare_master_material(master_name, master_path, overwrite)
@@ -1245,7 +1304,7 @@ def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path)
     assignments.append(("used_with_instanced_static_meshes", True))
     settings = apply_required_properties(material, assignments)
 
-    factory = SourceFactory(material, texture_defaults, is_lite, water_path)
+    factory = SourceFactory(material, texture_defaults, is_lite, water_path, flow_collection)
     surface = build_custom_node(
         material,
         "TDFluidWaterSurface",
@@ -1288,6 +1347,7 @@ def create_water_master(is_lite, codes, texture_defaults, overwrite, water_path)
         "settings": settings,
         "pins": pins,
         "static_switches": factory.used_static_switches,
+        "elapsed_seconds": describe_elapsed_seconds(),
         "surface_inputs_connected": surface_connected,
         "offset_inputs_connected": offset_connected,
         "statistics": statistics,
@@ -1461,6 +1521,9 @@ def main():
     shadowed_parameters = find_shadowed_mid_parameters(look_table)
     if shadowed_parameters:
         raise RuntimeError("인스턴스가 C++ 구동 파라미터를 덮어쓰고 있음: " + ", ".join(shadowed_parameters))
+    collection_driven = find_collection_driven_overrides(look_table)
+    if collection_driven:
+        raise RuntimeError("인스턴스가 룩데브 구동 MPC 이름 덮어씀: " + ", ".join(collection_driven))
 
     sources = read_shader_sources(unreal.SystemLibrary.get_project_directory())
     codes = assemble_all_node_codes(sources)
@@ -1504,16 +1567,19 @@ def main():
     if overwrite:
         release_water_stage_world()
         delete_existing_instances()
+    print("단계: 흐름 원점 MPC")
+    flow_collection = load_or_create_flow_collection(overwrite)
+
     print("단계: 물 마스터 재질(0단계 확인 2 SceneDepthWithoutWater 컴파일)")
     try:
-        water_master, water_summary = create_water_master(False, codes, texture_defaults, overwrite, water_path)
+        water_master, water_summary = create_water_master(False, codes, texture_defaults, overwrite, water_path, flow_collection)
     except Exception as error:
         phase_zero["scene_depth_without_water_compiles"] = {"ok": False, "detail": str(error)}
         raise
     phase_zero["scene_depth_without_water_compiles"] = {"ok": True, "detail": water_path}
 
     print("단계: Lite 마스터 재질")
-    lite_master, lite_summary = create_water_master(True, codes, texture_defaults, overwrite, water_path)
+    lite_master, lite_summary = create_water_master(True, codes, texture_defaults, overwrite, water_path, flow_collection)
 
     print("단계: 재질 인스턴스")
     instances = [create_material_instance(spec, water_master, overwrite, look_table) for spec in INSTANCE_SPECS]
@@ -1529,6 +1595,8 @@ def main():
         "phase_zero": phase_zero,
         "hlsl": describe_codes(codes),
         "default_texture": texture_path,
+        "flow_collection": FLOW_COLLECTION_PATH,
+        "collection_scalars": dict(COLLECTION_SCALAR_DEFAULTS),
         "textures": {name: str(sampler) for name, (_, sampler) in imported.items()},
         "meshes": meshes,
         "water_master": water_summary,

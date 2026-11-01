@@ -422,6 +422,7 @@ void ATDFluidWaterParticleActor::Tick(float DeltaSeconds)
 		return;
 	}
 
+	ReinitializeParticleLayersAfterSimulationReset(*LiveComponent);
 	const FTDFluidWaterSurfaceParameters SurfaceParameters = ResolveWaterSurfaceParameters();
 	DriveParticleLayer(DebrisComponent, DebrisSystem.Get(), DebrisLookGeneration, DebrisActivationSeconds, SurfaceParameters);
 	DriveParticleLayer(WhitewaterComponent, WhitewaterSystem.Get(), WhitewaterLookGeneration, WhitewaterActivationSeconds, SurfaceParameters);
@@ -543,6 +544,34 @@ void ATDFluidWaterParticleActor::DeactivateParticleLayers()
 	}
 }
 
+void ATDFluidWaterParticleActor::ReinitializeParticleLayersAfterSimulationReset(const UTDFluidLiveComponent& LiveComponent)
+{
+	const int32 ResetSerial = LiveComponent.GetSimulationResetSerial();
+	if (ResetSerial == AppliedSimulationResetSerial)
+	{
+		return;
+	}
+
+	AppliedSimulationResetSerial = ResetSerial;
+	LastCoverageRefreshSeconds = -1.0;
+	const double NowSeconds = GetWorld()->GetTimeSeconds();
+	if (DebrisComponent)
+	{
+		DebrisComponent->ReinitializeSystem();
+		DebrisActivationSeconds = NowSeconds;
+	}
+	if (WhitewaterComponent)
+	{
+		WhitewaterComponent->ReinitializeSystem();
+		WhitewaterActivationSeconds = NowSeconds;
+	}
+}
+
+float ATDFluidWaterParticleActor::ComputeWaterTimeSeconds(double WorldSeconds, double OriginSeconds)
+{
+	return static_cast<float>(WorldSeconds - OriginSeconds);
+}
+
 void ATDFluidWaterParticleActor::DriveParticleLayer(TObjectPtr<UNiagaraComponent>& Component, UNiagaraSystem* System, int32& AppliedLookGeneration, double& ActivationSeconds, const FTDFluidWaterSurfaceParameters& Parameters)
 {
 	using namespace TDFluidWaterParticleActorPrivate;
@@ -620,7 +649,7 @@ FTDFluidWaterSurfaceParameters ATDFluidWaterParticleActor::ResolveWaterSurfacePa
 	}
 
 	const FVector WindowCenterWorld = LiveComponent->GetSimulationWindowCenterWorld();
-	Parameters.TimeSeconds = static_cast<float>(World->GetTimeSeconds());
+	Parameters.TimeSeconds = ComputeWaterTimeSeconds(World->GetTimeSeconds(), WaterTimeOriginSeconds);
 	Parameters.CameraWorld = ResolveCameraWorld(*World, WindowCenterWorld);
 
 	float CenterSurfaceHeightCm = 0.0f;

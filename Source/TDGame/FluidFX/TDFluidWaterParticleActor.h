@@ -51,6 +51,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "WaterParticles")
 	FTDFluidWaterParticleSettings GetEffectiveWaterParticleSettings() const { return Settings; }
 
+	UFUNCTION(BlueprintCallable, Category = "WaterParticles")
+	void SetWaterTimeOriginSeconds(double OriginSeconds) { WaterTimeOriginSeconds = OriginSeconds; }
+
+	static float ComputeWaterTimeSeconds(double WorldSeconds, double OriginSeconds);
+
 	int32 GetEmittedSplashEventCount() const { return EmittedSplashEventCount; }
 	int32 GetLastContactPointCount() const { return LastContactPointCount; }
 	int32 GetLastContactStampCount() const { return LastContactStampCount; }
@@ -67,6 +72,7 @@ private:
 	void HandlePresetTuningReloaded(int32 TableGeneration);
 	void RequestMissingAssetLoads();
 	void DeactivateParticleLayers();
+	void ReinitializeParticleLayersAfterSimulationReset(const UTDFluidLiveComponent& LiveComponent);
 	void DriveParticleLayer(TObjectPtr<UNiagaraComponent>& Component, UNiagaraSystem* System, int32& AppliedLookGeneration, double& ActivationSeconds, const FTDFluidWaterSurfaceParameters& Parameters);
 	FTDFluidWaterSurfaceParameters ResolveWaterSurfaceParameters();
 	UMaterialInterface* ResolveSurfaceMaterial();
@@ -95,6 +101,7 @@ private:
 	int32 WhitewaterLookGeneration = INDEX_NONE;
 	double DebrisActivationSeconds = 0.0;
 	double WhitewaterActivationSeconds = 0.0;
+	double WaterTimeOriginSeconds = 0.0;
 	double LastCoverageRefreshSeconds = -1.0;
 	double LastSurfaceSourceSearchSeconds = -1.0;
 	float CachedWaterCoverage = 0.0f;
@@ -103,5 +110,6 @@ private:
 	int32 LastSplashEventCount = 0;
 	int32 LastContactPointCount = 0;
 	int32 LastContactStampCount = 0;
+	int32 AppliedSimulationResetSerial = 0;
 	bool bHasRequestedAssetLoad = false;
 };

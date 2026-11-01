@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터 불필요, look 지표는 measure_fx_look.py 의 numpy·Pillow·scipy 필요). calib_sweep.py 의 sweep.json 을 사전 등록 잠금(prereg_lock.py) 확인 뒤 판정한다. 옛 스윕(stage 없음, spec-wave0-data-bridge-v2 3.9): look 장면은 단계 이미지를 영역 틀로 measure_fx_look.py --targets 에 넣어 LIVE-2 목표 범위를(지표 <n>.<영역>.<지표> 와 N장 중앙값 <영역>.<지표>), 물 장면은 pie_probe_fluid_water 규칙 값을 지표로 삼고 반복 간 범위를 잡음으로 쓴다. 단계 스윕(stage screen|confirm|verify, spec-cal0-v2 1.1·1.2·G-JUDGE·G-DERIVED): 장면 sources(look·water_probe·probe·offline) 지표를 합치고(look 은 목표 파일에 live2_targets 가 있으면 불 경로, 없으면 기본 모드 측정을 펼친 일반 경로이고 장수 = 잠긴 계획 shots.count·shots_saved 참, 단계 metrics 의 숫자 목록과 probe_samples[{time, metrics, grid_paths}](pie_lookdev_fluid probe.samples) 는 장별 표본), metrics.derived(ratio·difference·relative_step·half_life·e_fold·slope·extent, 시계열은 shots.kind series 장면만, extent 는 단계 grids{접두: 격자 JSON 경로 또는 목록} 또는 probe_samples grid_paths, 목록 순서대로 계산해 a·b 에 앞 파생 derived.<이름>[.<필드>] 를 쓸 수 있고(장별 값도 이어져 difference 계열의 half_life 같은 대비 반감기가 된다) 자기·뒤·미정의·중복 이름은 계획 오류, half_life·e_fold 의 absolute 참은 |값| 계열을 맞춘다) 를 더하며, 목표 띠는 계획 > region_metrics > kind_metrics(영역 kind volume 은 fog 로 측정), relative_to_control 은 대조 기준 × 비, role constraint 는 점수 밖 제약이다.
 실행 명령: python Tools/FluidFX/calib_judge.py --sweep Saved/FluidFX/calib/<run>/sweep.json --lock <잠금 JSON> [--output <Saved 아래 JSON>] [--screen-sweep <screen sweep.json>(confirm 필수)] [--verify-against <앞 confirm judge.json>(verify 선택)]
-출력: 옛 스윕은 judge.json(장면별 targets 표·noise_floor·drift·control_check·curves·candidate·live2_sheet·accepted). screen 은 screen.json v2(plan·overlay·정본 2·lock·screen_sweep sha, noise{장면: {지표: between·shot·median_floor·noise}}·score_noise·params[effect·sensitive·reach·cost_blocked]·keep·best·second·insensitive·unreachable_targets·cost_blocked_best·scenes, adopt 거짓)이고 비용 막힌 최선은 Saved/FluidFX/calib/perf-candidates.json 에 덧붙인다. confirm 은 judge.json v2(stage·sha·scenes(candidate_medians)·candidate·adopt{decision·variant·assignments·reasons·evidence}, best 손잡이 param scenes 밖 skipped 장면은 건너뜀, offline 장면은 이미지 지문 대신 결정론 증거), verify 는 judge.json v2(verify{against·against_sha256·passed(판정 불가 항목만 있으면 null)·checks}, 앞 confirm 판정에 없는 장면은 판정하지 않고 skipped_scenes 에 기록, 앞 confirm 판정의 plan·plan_sha256·lock_sha256 이 다르면 종료 2). 종료 코드 0 판정 완료·대조 통과(verify 대조 기준 통과 포함) / 1 스윕 무효·대조 실패·판정 불가·verify 실패 / 2 잠금·입력 오류·장수 불일치·saved 거짓·sha 불일치·screen 재판정 불일치. 판정 상수(잠금 대상, 결과를 연 뒤 불변): SENSITIVITY_FACTOR 2.0·CONTROL_NOISE_FACTOR 2.0·REACH_NOISE_FACTOR 2.0·MIN_CONTROL_STEPS 3·MIN_SAMPLES 3·SECOND_GAIN_MARGIN 1.0.
-상태: 오프라인만 검사(합성 탐침 규칙·합성 단계 점수·2026-10-25 수용 시험 산출 재판정, 2026-10-30 CAL-0 B4a 합성 단계 스윕·합성 PNG·격자 fixture, 2026-10-31 파생 연쇄·순환 거부·합성 대비 계열 반감기), 단계 스윕의 실제 PIE 판정 미실행. 옛 스윕 잡음 바닥은 계획 metrics.noise_floor 가 없으면 비대조 변형 반복 간 최대 범위(반복 2 이상 필요).
+출력: 옛 스윕은 judge.json(장면별 targets 표·noise_floor·drift·control_check·curves·candidate·live2_sheet·accepted). screen 은 screen.json v2(plan·overlay·정본 2·lock·screen_sweep sha, noise{장면: {지표: between·shot·median_floor·noise}}·score_noise·params[effect·sensitive·reach·cost_blocked]·keep·best·second·insensitive·unreachable_targets·cost_blocked_best·scenes·skipped_scenes[{name, reason}](비대조 screen 변형이 하나도 닿지 않는 skipped 장면 = 잠긴 계획 장면 − ∪ 계획 params[].scenes(없으면 모든 장면)는 건너뜀), adopt 거짓)이고 비용 막힌 최선은 Saved/FluidFX/calib/perf-candidates.json 에 덧붙인다. confirm 은 judge.json v2(stage·sha·scenes(candidate_medians)·candidate·adopt{decision·variant·assignments·reasons·evidence}, best 손잡이 param scenes 밖 skipped 장면은 건너뛰어 skipped_scenes 에 기록, confirm 안 screen 재판정도 screen 과 같은 건너뜀, offline 장면은 이미지 지문 대신 결정론 증거), verify 는 judge.json v2(verify{against·against_sha256·passed(판정 불가 항목만 있으면 null)·checks}, 앞 confirm 판정에 없는 장면은 판정하지 않고 skipped_scenes 에 기록, 앞 confirm 판정의 plan·plan_sha256·lock_sha256 이 다르면 종료 2). 종료 코드 0 판정 완료·대조 통과(verify 대조 기준 통과 포함) / 1 스윕 무효·대조 실패·판정 불가·verify 실패 / 2 잠금·입력 오류·장수 불일치·saved 거짓·sha 불일치·screen 재판정 불일치·sweep params[].scenes 가 잠긴 계획과 다름(screen·confirm). 판정 상수(잠금 대상, 결과를 연 뒤 불변): SENSITIVITY_FACTOR 2.0·CONTROL_NOISE_FACTOR 2.0·REACH_NOISE_FACTOR 2.0·MIN_CONTROL_STEPS 3·MIN_SAMPLES 3·SECOND_GAIN_MARGIN 1.0.
+상태: 오프라인만 검사(합성 탐침 규칙·합성 단계 점수·2026-10-25 수용 시험 산출 재판정, 2026-10-30 CAL-0 B4a 합성 단계 스윕·합성 PNG·격자 fixture, 2026-10-31 파생 연쇄·순환 거부·합성 대비 계열 반감기, 2026-11-01 손잡이가 닿지 않는 장면의 screen 건너뜀·sweep param scenes 손편집 거부), 단계 스윕의 실제 PIE 판정 미실행. 옛 스윕 잡음 바닥은 계획 metrics.noise_floor 가 없으면 비대조 변형 반복 간 최대 범위(반복 2 이상 필요).
 """
 import argparse
 import difflib
@@ -907,6 +907,21 @@ def judge_sweep_scenes(sweep, plan, work_dir, screen_noise=None, skippable=froze
     return results
 
 
+def require_plan_param_scenes(sweep, plan):
+    sweep_scopes = [param.get("scenes") for param in sweep["params"]]
+    plan_scopes = [param.get("scenes") for param in plan.get("params") or []]
+    if sweep_scopes != plan_scopes:
+        raise JudgeError(f"sweep params[].scenes {sweep_scopes} 가 잠긴 계획 params[].scenes {plan_scopes} 와 다르다(sweep 손편집)")
+
+
+def find_screen_skippable_scenes(sweep, plan):
+    require_plan_param_scenes(sweep, plan)
+    names = [scene["name"] for scene in plan.get("scenes", [])]
+    plan_params = plan.get("params") or []
+    touched = {name for variant, knobs in variant_param_values(sweep).items() if variant != CONTROL_ID for index in knobs for name in plan_params[index].get("scenes") or names}
+    return set(names) - touched
+
+
 def variant_scenes(sweep, plan, variant):
     names = [{"name": scene["name"]} for scene in sweep["scenes"]]
     touched = variant_param_values(sweep).get(variant, {})
@@ -1082,6 +1097,7 @@ def build_screen_document(sweep, sweep_path, plan, lock_sha, scene_results, shou
     second = open_ranked[1] if len(open_ranked) > 1 and best["gain"] - open_ranked[1]["gain"] < SECOND_GAIN_MARGIN else None
     blocked_best = ranked[0] if ranked and ranked[0]["variant"] in blocked else None
     screen_sweep_sha = prereg_lock.file_sha256(sweep_path)
+    judged_names = {scene["name"] for scene in scene_results}
     if blocked_best and should_record_perf:
         record_perf_candidate({"plan": sweep["plan"], "plan_sha256": sweep["plan_sha256"], "screen_sweep": relative(sweep_path), "screen_sweep_sha256": screen_sweep_sha,
                                "variant": blocked_best["variant"], "gain": blocked_best["gain"], "assignments": plan_param_assignments(sweep, blocked_best["variant"]),
@@ -1093,7 +1109,8 @@ def build_screen_document(sweep, sweep_path, plan, lock_sha, scene_results, shou
             "score_noise": {scene["name"]: scene["score_noise"] for scene in scene_results},
             "params": [{key: value for key, value in param.items() if key != "reach_by_scene"} for param in params], "keep": [params[index]["json_path"] for index in kept],
             "best": best, "second": second, "insensitive": not kept, "unreachable_targets": find_unreachable(params, scene_results), "cost_blocked_best": blocked_best,
-            "scenes": scene_results, "adopt": {"decision": False, "reasons": [SCREEN_ONLY_REASON]}}
+            "scenes": scene_results, "skipped_scenes": [{"name": scene["name"], "reason": "screen 변형이 돌지 않는 장면(잠긴 계획 param scenes 밖)"} for scene in sweep["scenes"] if scene["name"] not in judged_names],
+            "adopt": {"decision": False, "reasons": [SCREEN_ONLY_REASON]}}
 
 
 def is_offline_scene(scene):
@@ -1208,7 +1225,7 @@ def judge_confirm_document(sweep, sweep_path, plan, lock_path, lock_sha, screen_
     mismatched = [key for key, row in sha_table.items() if not row["match"]]
     if mismatched:
         raise JudgeError(f"sha 불일치(screen 스윕·confirm 스윕·screen.json·잠금): {', '.join(mismatched)}")
-    rejudged = build_screen_document(screen_sweep, screen_sweep_path, plan, lock_sha, judge_sweep_scenes(screen_sweep, plan, work_dir / "screen-rejudge"), False)
+    rejudged = build_screen_document(screen_sweep, screen_sweep_path, plan, lock_sha, judge_sweep_scenes(screen_sweep, plan, work_dir / "screen-rejudge", skippable=find_screen_skippable_scenes(screen_sweep, plan)), False)
     differing = [key for key in REJUDGE_KEYS if canonical_text(json.loads(json.dumps(rejudged[key]))) != canonical_text(screen_result.get(key))]
     if differing:
         raise JudgeError(f"screen 재판정 불일치: {', '.join(differing)}(screen.json 손편집 또는 판정 입력 변경)")
@@ -1229,7 +1246,8 @@ def judge_confirm_document(sweep, sweep_path, plan, lock_path, lock_sha, screen_
     return {"tool": "calib_judge", "version": 2, "stage": "confirm", "sweep": relative(sweep_path), "lock": relative(lock_path), "plan": sweep["plan"], "plan_sha256": sweep["plan_sha256"],
             "overlay_sha256": sweep.get("overlay_sha256"), "canonical_tuning_sha256": sweep.get("canonical_tuning_sha256"), "canonical_look_sha256": sweep.get("canonical_look_sha256"),
             "lock_sha256": lock_sha, "screen_result": relative(screen_result_path), "screen_result_sha256": sweep["screen_result_sha256"], "screen_sweep": relative(screen_sweep_path),
-            "scenes": scene_results, "candidate": candidate, "adopt": adopt}
+            "scenes": scene_results, "skipped_scenes": [{"name": scene["name"], "reason": "best 손잡이 param scenes 밖 장면"} for scene in sweep["scenes"] if scene["name"] in skipped],
+            "candidate": candidate, "adopt": adopt}
 
 
 def verify_checks(scene_results, prior):
@@ -1285,7 +1303,7 @@ def judge_staged(sweep, sweep_path, lock_path, output_path, arguments):
     work_dir = output_path.parent / "judge"
     lock_sha = prereg_lock.file_sha256(lock_path)
     if stage == "screen":
-        return build_screen_document(sweep, sweep_path, plan, lock_sha, judge_sweep_scenes(sweep, plan, work_dir), True)
+        return build_screen_document(sweep, sweep_path, plan, lock_sha, judge_sweep_scenes(sweep, plan, work_dir, skippable=find_screen_skippable_scenes(sweep, plan)), True)
     if stage == "confirm":
         return judge_confirm_document(sweep, sweep_path, plan, lock_path, lock_sha, arguments.screen_sweep, work_dir)
     return judge_verify_document(sweep, sweep_path, plan, lock_path, lock_sha, arguments.verify_against, work_dir)

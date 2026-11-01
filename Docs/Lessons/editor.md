@@ -779,3 +779,11 @@
 - 증거: Saved/AgentOps/20261031/integ/f7/(1차 키 오류·수정 뒤 통과)
 - 날짜·상태: 2026-10-31 active
 - 발견: claude(FluidFX 시간 결정론 통합)
+
+### L-editor-89 룩데브 한 PIE 세션의 첫 단계 s00 은 PIE 시작 직후 이력이 남아 뒤 단계와 다를 수 있다 — 대조 기준이 s00 이라 대조가 깨진다
+- 증상 원문: K7 snow_groove "대조 실패 groove_line.groove_width_cm"(s00 7.951 대 8.06~8.12, 명암만 다름 — 눈 레벨 첫 PIE 약 27 s 뒤 렌더 예열), w1b sea_img16 사전 점검에서 s01↔s02 상관 0.992~0.996 인데 s00 만 0.93(조명 같고 수면 반짝임만 다름, 리셋을 통과한 상태가 남음, 층 미확정)
+- 해결: 판정기 대조는 max|c_i − c_0| 라 첫 단계 하나가 실패를 만든다. 재실행 전에 calib_sweep --stage verify(v00 3단계, 별도 잠금·run-dir) 로 사전 점검하고 calib_judge 로 대조만 확인한다(지표에 영향이 없으면 그대로, groove 처럼 지표가 흔들리면 base camera 예열 = 걷기 + 45 게임초 1장). 화소 성분 수를 직접 세는 임시 판정은 반짝임을 공으로 세어 오판한다(판정기 측정기로 볼 것)
+- 범위: pie_lookdev_fluid 단계 스윕(reset reinit·keep), 첫 PIE 의 렌더 예열·리셋 경로 밖 상태
+- 증거: Saved/AgentOps/20261101/precheck/(judge.json·verify-judge.json), Saved/AgentOps/20261101/diag-w1b-s00.md, Saved/AgentOps/20261031/cal-issues.md groove 진단
+- 날짜·상태: 2026-11-01 active(w1b 수면 누출 층은 미검증)
+- 발견: claude(FluidFX 일괄 보정 K7·K9 재실행)

@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터·PIE 불필요, numpy·Pillow·scipy 필요, 가짜 unreal 로 calib_sweep·pie_lookdev_fluid·pie_probe_fluid_water 를 프로세스 안에서 돌린다). 2026-10-25 P3 오프라인 시험(w0-P3-offline-test.py)을 본 트리로 옮겨 새 판정 규칙(목표 지표 대조·연속 점수·점수 잡음 유의)과 짧은 창 배율·대조 처음·끝 모드를 더했다.
 실행 명령: python -B Tools/FluidFX/calib_offline_test.py (종료 코드 0 전부 통과 / 1 실패 있음, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/offline-test/ 아래 스윕·판정 산출물(실행마다 지움)과 표준 출력 PASS/FAIL 줄. 수용 시험 산출(Saved/FluidFX/calib/{campfire-run1,campfire-run2,campfire-r4-run1,river-run1})이 있으면 새 판정기로 재판정해 SKIP 아닌 결과를 낸다.
-상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json(모닥불 영역 틀도 712dfa89 전 고정 사본 fixtures/campfire_fire_regions.head.json, 재판정은 계획 사본의 영역 틀로), 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F11): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점·구름 흐름 시계 재시작(reinit·keep 단계마다 1회, 예약 원점과 같은 게임 시각, 예외는 키 오류, 가짜 구름 액터에 restart_cloud_flow_clock)·안개 흐름 원점(F11: 안개 마스터 사용자가 있는 무대만 단계마다 MPC FogFlowOriginSeconds = 그 apply 게임 시각, MPC 매개변수 없음·MPC 없음은 키 오류, 비안개 무대는 MPC 가 메모리에 있어도 키 없음, 가짜 MaterialParameterCollection·MaterialLibrary, MPC 경로·이름은 editor_make_fluid_fog_material 상수로 대조, F11b 모양 정본 MPC 이름 덮어쓰기 거부), 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조. 2026-10-31 check_time_origin_fixes(시간원 2차 F12~F14): F12 볼륨 흐름 원점(기반 재질 M_TD_FluidVolume 사용자 무대만 단계마다 MPC_TD_FluidVolumeFlow VolumeFlowOriginSeconds = 그 apply 게임 시각, 가짜 볼륨 마스터만이면 키 없음, MPC 매개변수 없음·MPC 없음은 키 오류)·F12b 볼륨 모양 정본 MPC 이름 덮어쓰기 거부·F12c 볼륨 마스터 그래프(기록 가짜 MaterialEditingLibrary: Subtract(Time, CollectionParameter), 가짜 볼륨은 Time)와 흐름 MPC overwrite 규칙·F13 잎 바람 원점(채널 3개 MPC FoliageWindOriginSeconds, 같은 무대 안개·볼륨 원점 같은 시각, 한 채널 매개변수 없음은 그 채널만 키 오류 'foliage_wind_origin: <MPC 이름>: ')·F13b 식생 MPC 이름 덮어쓰기 거부·F13c 휨 MF 그래프와 채널 MPC 스칼라·F14 reinit 의 TDFluidLiveActor reset_interaction_history(가짜 라이브 액터에 호출 수, keep 은 없음, 실패는 state_reset 키 오류). B4b 는 Saved/AgentOps/20261020/fx8c/scratch/live2-targets/targets.json 이 있어야 해서 Saved 없는 작업 트리에서는 그 파일을 메인 트리에서 복사해 돌린다(복사 뒤 281/281, 수용 산출 Saved/FluidFX/calib/campfire-run1·campfire-run2·campfire-r4-run1·river-run1 도 복사하면 289/289). 2026-11-01 K9: 어느 손잡이 param scenes 에도 없는 장면의 screen 건너뜀(skipped_scenes)·confirm 재판정 일치·sweep params[].scenes 손편집 거부 check 2개. 2026-11-01 K9 G: 덧씌움 Look cloud_setups(같은 레벨 구름 셋업)로 셋업 밖 장면 skip_if_no_owner·셋업 안·CloudSetup 없는 장면 엄격·정수 아닌 목록 종료 2, accept 의 cloud_setups 기록 check 2개. 2026-11-01 check_water_time_origin_fixes(물 시간 원점 F15~F15c): F15 물 흐름 원점(기반 재질 M_TD_FluidWater·Lite 사용자 무대만 reinit·keep 단계마다 MPC_TD_FluidWaterFlow WaterFlowOriginSeconds = 그 apply 게임 시각, 같은 값으로 모든 가짜 TDFluidWaterParticleActor set_water_time_origin_seconds, MPC 매개변수 없음·MPC 없음·설정 함수 없음은 키 오류 'water_flow_origin: ', 물 사용자 없으면 키 없음)·F15b 물 모양 정본 MPC 이름 덮어쓰기 거부·F15c 물 마스터 그래프 Subtract(Time, CollectionParameter)·원천 캐시 공유·흐름 MPC overwrite 규칙·물 HLSL 직접 시간 기호 없음.
+상태: 2026-10-25 작성, 실제 PIE 스윕은 돌리지 않는다(정본 JSON sha256 전후 비교 포함). 2026-10-30 CAL-0 B0: 공용 가짜 한 구역(F-WORLD 구조체·필드 표와 현재 상태 대비 ChangedFieldCount·모양 재적용, F-TICK 가짜 시계·슬레이트 틱 콜백·시간 배율, F-UNREAL 재질·나이아가라·데칼·구름·후처리·식생 게터), 모닥불·강 계획은 f02965cb 고정 사본 Tools/FluidFX/calib/fixtures/*.head.json(모닥불 영역 틀도 712dfa89 전 고정 사본 fixtures/campfire_fire_regions.head.json, 재판정은 계획 사본의 영역 틀로), 묶음 시험은 check_cal0_<묶음>() 를 정본 sha 단언 직전 run_check 한 줄로 부르고 patched·run_check 가 패치를 되돌린다. CAL-0 마무리 check_cal0_real_queue 는 실제 batch_queue.json·calib/plans·calib/regions 를 가짜 B8(스윕 자리에서 calib_sweep.load_plan 단계 검사)로 돌려 failed·초안 상자 잠금·needs_frame 경로 미선언을 거부한다(영역 상자를 그려 넣으면 그 계획은 잠금·screen 쪽으로 간다). 2026-10-31 check_lookdev_frame_fixes(F1~F11): 사전 move 입력 걷기·시한 초과·목록 move·이벤트 move·move 형식 키 오류·base 오류 키 오류·calib_sweep base/단계 오류 무효·AEM_MANUAL 노출 바이어스·reinit 전체 상태 초기화 수와 예약 시간 원점·구름 흐름 시계 재시작(reinit·keep 단계마다 1회, 예약 원점과 같은 게임 시각, 예외는 키 오류, 가짜 구름 액터에 restart_cloud_flow_clock)·안개 흐름 원점(F11: 안개 마스터 사용자가 있는 무대만 단계마다 MPC FogFlowOriginSeconds = 그 apply 게임 시각, MPC 매개변수 없음·MPC 없음은 키 오류, 비안개 무대는 MPC 가 메모리에 있어도 키 없음, 가짜 MaterialParameterCollection·MaterialLibrary, MPC 경로·이름은 editor_make_fluid_fog_material 상수로 대조, F11b 모양 정본 MPC 이름 덮어쓰기 거부), 가짜 월드에 기본 플레이어 폰·컨트롤러(F-UNREAL Vector·Rotator 인자 생성)·set_simulation_awake·set_actor_hidden_in_game 을 더해 카메라 apply 가 오프라인에서도 실제로 돈다. 2026-10-31 check_capture_tool_fixes(C1~C7): 가짜 UE 로그 스트림(TextIOWrapper + write 마다 로그 항목)으로 큰 결과의 표식·본문 분리 재현과 새 파서, 큰 탐침 결과 파일 전달, 빈 표식·원격 실행 예외·결과 파일 없음 흡수(단계 무효), foliage 소프트 참조 None 사유, calib_sweep 지난 result.json 이동·run_id·variants_sha256 대조. 2026-10-31 check_time_origin_fixes(시간원 2차 F12~F14): F12 볼륨 흐름 원점(기반 재질 M_TD_FluidVolume 사용자 무대만 단계마다 MPC_TD_FluidVolumeFlow VolumeFlowOriginSeconds = 그 apply 게임 시각, 가짜 볼륨 마스터만이면 키 없음, MPC 매개변수 없음·MPC 없음은 키 오류)·F12b 볼륨 모양 정본 MPC 이름 덮어쓰기 거부·F12c 볼륨 마스터 그래프(기록 가짜 MaterialEditingLibrary: Subtract(Time, CollectionParameter), 가짜 볼륨은 Time)와 흐름 MPC overwrite 규칙·F13 잎 바람 원점(채널 3개 MPC FoliageWindOriginSeconds, 같은 무대 안개·볼륨 원점 같은 시각, 한 채널 매개변수 없음은 그 채널만 키 오류 'foliage_wind_origin: <MPC 이름>: ')·F13b 식생 MPC 이름 덮어쓰기 거부·F13c 휨 MF 그래프와 채널 MPC 스칼라·F14 reinit 의 TDFluidLiveActor reset_interaction_history(가짜 라이브 액터에 호출 수, keep 은 없음, 실패는 state_reset 키 오류). B4b 는 Saved/AgentOps/20261020/fx8c/scratch/live2-targets/targets.json 이 있어야 해서 Saved 없는 작업 트리에서는 그 파일을 메인 트리에서 복사해 돌린다(복사 뒤 281/281, 수용 산출 Saved/FluidFX/calib/campfire-run1·campfire-run2·campfire-r4-run1·river-run1 도 복사하면 289/289). 2026-11-01 K9: 어느 손잡이 param scenes 에도 없는 장면의 screen 건너뜀(skipped_scenes)·confirm 재판정 일치·sweep params[].scenes 손편집 거부 check 2개. 2026-11-01 K9 G: 덧씌움 Look cloud_setups(같은 레벨 구름 셋업)로 셋업 밖 장면 skip_if_no_owner·셋업 안·CloudSetup 없는 장면 엄격·정수 아닌 목록 종료 2, accept 의 cloud_setups 기록 check 2개. 2026-11-01 check_water_time_origin_fixes(물 시간 원점 F15~F15c): F15 물 흐름 원점(기반 재질 M_TD_FluidWater·Lite 사용자 무대만 reinit·keep 단계마다 MPC_TD_FluidWaterFlow WaterFlowOriginSeconds = 그 apply 게임 시각, 같은 값으로 모든 가짜 TDFluidWaterParticleActor set_water_time_origin_seconds, MPC 매개변수 없음·MPC 없음·설정 함수 없음은 키 오류 'water_flow_origin: ', 물 사용자 없으면 키 없음)·F15b 물 모양 정본 MPC 이름 덮어쓰기 거부·F15c 물 마스터 그래프 Subtract(Time, CollectionParameter)·원천 캐시 공유·흐름 MPC overwrite 규칙·물 HLSL 직접 시간 기호 없음. 2026-11-01 K10 2차: B1~B5 자기 채택 출처를 from.plan 프로젝트 상대 경로+plan_sha256 으로, B4 는 두 레벨 장면 계획, C1 calib_sweep verify P-20 자손 거부·C2 calib_batch 사슬 재검증 P-20 자손 제외(일지 reason·batch.log), D1 다른 폴더 같은 stem·sha 다름 거부, E1 자기 actor_props 대상 불일치 거부, E2 actor_props 대상 겹침 거부(screen 자기·verify·frame 남의, 레벨 밖 통과), F12d HVOL 마스터 ElapsedSeconds = Time − MPC_TD_FluidVolumeFlow·MPC 읽기 규칙.
 """
 import contextlib
 import copy
@@ -715,6 +715,7 @@ unreal.SystemLibrary = Props(execute_console_command=console, get_console_variab
 sys.modules["unreal"] = unreal
 import editor_make_fluid_fog_material as fog_material  # noqa: E402
 import editor_make_fluid_foliage_material as foliage_material  # noqa: E402
+import editor_make_fluid_heterogeneous_volume_material as hvol_material  # noqa: E402
 import editor_make_fluid_volume_material as volume_material  # noqa: E402
 import editor_make_fluid_water_material as water_material  # noqa: E402
 import fluid_material_look  # noqa: E402
@@ -2090,9 +2091,10 @@ def check_cal0_sweep():
 
     fog_path = "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Sim.Scalars.FogExtrudeHeightCm"
     fog_look = calib_sweep.parse_look_path(fog_path)
-    own_source, id_source, other_source = ({"plan": f"Tools/FluidFX/calib/plans/{stem}.json"} for stem in ("k10-b1", load_json(W / CAMPFIRE_PLAN)["id"], "fog_f2_passive"))
-    own_glow = dict(glow, level=campfire_level, value=2.0, **{"from": id_source})
+    other_source = {"plan": "Tools/FluidFX/calib/plans/fog_f2_passive.json"}
     overlap_text = "덧씌움 경로가 계획 params·base_tuning 경로와 같다"
+    prop_overlap_text = "덧씌움 actor_props 가 계획 actor_prop 손잡이와 같은 대상이다"
+    other_level = "/Game/CAL0/LV_Other"
 
     def chain_plan(name, extra_params=(), mutate=None):
         def edit(plan):
@@ -2104,15 +2106,29 @@ def check_cal0_sweep():
     def own_overlay(name, assignments, actor_props=()):
         return write_json(f"{name}-overlay.json", {"version": 2, "assignments": list(assignments), "actor_props": list(actor_props), "history": []})
 
+    def own_from(plan_path):
+        return {"plan": calib_sweep.relative_text(plan_path), "plan_sha256": sha(plan_path)}
+
+    def own_glow(plan_path, **extra):
+        return dict(dict(glow, level=campfire_level, value=2.0, **{"from": own_from(plan_path)}), **extra)
+
+    def own_adopted(plan_path):
+        source = own_from(plan_path)
+        return [{"json_path": vorticity_path, "value": 1.8, "split_group": False, "kind": "knob", "from": source},
+                {"json_path": fog_path, "value": 60.0, "split_group": False, "kind": "knob", "base": 90.0, "from": source}]
+
+    def add_other_level_scene(plan):
+        plan["scenes"].append(dict(copy.deepcopy(plan["scenes"][0]), name="campfire_other", level=other_level))
+        for target in plan["metrics"]["targets"]:
+            target["scene"] = plan["scenes"][0]["name"]
+
     fog_knob = {"json_path": fog_path, "base": 90.0, "values": [60.0, 90.0, 120.0]}
-    adopted = [{"json_path": vorticity_path, "value": 1.8, "split_group": False, "kind": "knob", "from": own_source},
-               {"json_path": fog_path, "value": 60.0, "split_group": False, "kind": "knob", "base": 90.0, "from": id_source}]
-    chain_overlay = own_overlay("k10-b1", adopted, [own_glow])
     chain_path = chain_plan("k10-b1", [fog_knob])
+    chain_overlay = own_overlay("k10-b1", own_adopted(chain_path), [own_glow(chain_path)])
     code, text, record = dry("k10-b1", chain_path, "--stage", "verify", "--overlay", chain_overlay)
     spec_steps = lookdev_spec("k10-b1", record)["variants"] if record else []
     fog_copy = load_json(sweep_dir / "k10-b1" / "v00" / "TDFluidMaterialLook.json")["Materials"][fog_look["package"]]["Scalars"].get("FogExtrudeHeightCm") if record else None
-    check("K10 B1 verify: 덧씌움에 이 계획(파일 stem·계획 id) 채택 경로(조절·정본에 없는 Look 키+base)가 있어도 겹침 거부 없음·종료 0, v00 base_value = 덧씌움 값(조절 1.8·Look 60·actor_props 2.0)·사본·look_live·props 도 그 값",
+    check("K10 B1 verify: 덧씌움에 이 계획(from.plan 프로젝트 상대 경로·plan_sha256 같음) 채택 경로(조절·정본에 없는 Look 키+base)가 있어도 겹침 거부 없음·종료 0, v00 base_value = 덧씌움 값(조절 1.8·Look 60·actor_props 2.0)·사본·look_live·props 도 그 값",
           code == 0 and record["sequence"] == ["v00", "v00", "v00"] and [param["base_value"] for param in record["params"]] == [1.8, 2.0, 60.0]
           and [variant["id"] for variant in record["variants"]] == ["v00"] and record["variants"][0]["values"] == [1.8, 2.0, 60.0]
           and copy_value("k10-b1", "v00", "Campfire", "TDFluidSimulationConfig", "VorticityStrength") == 1.8 and fog_copy == 60.0 and len(spec_steps) == 3
@@ -2120,41 +2136,83 @@ def check_cal0_sweep():
                   for step in spec_steps),
           (code, text[-300:], record and [param["base_value"] for param in record["params"]]))
 
-    foreign = {name: dry(name, chain_plan(name), "--stage", "verify", "--overlay", own_overlay(name, [dict(adopted[0], **extra)]))[:2]
-               for name, extra in (("k10-b2", {"from": other_source}), ("k10-b2b", {"from": None}))}
-    check("K10 B2 verify 라도 남의 계획(from.plan 다른 stem·id)·from 없는 덧씌움 항목이 params 경로와 같으면 기존대로 종료 2 '덧씌움 경로가 계획 params·base_tuning 경로와 같다'",
+    foreign = {}
+    for name, source in (("k10-b2", lambda path: other_source), ("k10-b2b", lambda path: None)):
+        foreign_path = chain_plan(name)
+        foreign[name] = dry(name, foreign_path, "--stage", "verify", "--overlay", own_overlay(name, [dict(own_adopted(foreign_path)[0], **{"from": source(foreign_path)})]))[:2]
+    check("K10 B2 verify 라도 남의 계획(from.plan 다른 경로)·from 없는 덧씌움 항목이 params 경로와 같으면 기존대로 종료 2 '덧씌움 경로가 계획 params·base_tuning 경로와 같다'",
           all(code == 2 and overlap_text in text and vorticity_path in text for code, text in foreign.values()), foreign)
 
     stage_codes = {}
     for stage in ("screen", "confirm"):
         name = f"k10-b3-{stage}"
         stage_path = chain_plan(name, [fog_knob])
-        extra = ("--screen-result", screen_file(name, stage_path, overlay_sha256=sha(chain_overlay))) if stage == "confirm" else ()
-        stage_codes[stage] = dry(name, stage_path, "--stage", stage, "--overlay", chain_overlay, *extra)[:2]
+        stage_overlay = own_overlay(name, own_adopted(stage_path))
+        extra = ("--screen-result", screen_file(name, stage_path, overlay_sha256=sha(stage_overlay))) if stage == "confirm" else ()
+        stage_codes[stage] = dry(name, stage_path, "--stage", stage, "--overlay", stage_overlay, *extra)[:2]
     shipped_path = chain_plan("k10-b3-base", mutate=lambda plan: plan.update(base_tuning=[{"json_path": torch_path, "value": 2.5}], base_tuning_ships=True))
-    shipped = dry("k10-b3-base", shipped_path, "--stage", "verify", "--overlay", own_overlay("k10-b3-base", [{"json_path": torch_path, "value": 2.5, "split_group": False, "kind": "base_tuning", "from": id_source}]))[:2]
-    check("K10 B3 자기 채택 경로 겹침 허용은 verify 만: 같은 덧씌움으로 screen·confirm 은 종료 2 겹침 거부 / verify 라도 base_tuning 경로와 겹치면(자기 항목이라도) 종료 2",
+    shipped = dry("k10-b3-base", shipped_path, "--stage", "verify", "--overlay", own_overlay("k10-b3-base", [{"json_path": torch_path, "value": 2.5, "split_group": False, "kind": "base_tuning", "from": own_from(shipped_path)}]))[:2]
+    check("K10 B3 자기 채택 경로 겹침 허용은 verify 만: 그 계획 자신의 덧씌움으로 screen·confirm 은 종료 2 겹침 거부 / verify 라도 base_tuning 경로와 겹치면(자기 항목이라도) 종료 2",
           all(code == 2 and overlap_text in text for code, text in stage_codes.values()) and shipped[0] == 2 and overlap_text in shipped[1] and torch_path in shipped[1],
           (stage_codes, shipped))
 
-    split_glow = [own_glow, dict(own_glow, level="/Game/CAL0/LV_Other", value=3.0)]
-    code_split, text_split, _ = dry("k10-b4", chain_plan("k10-b4"), "--stage", "verify", "--overlay", own_overlay("k10-b4", [], split_glow))
-    code_screen, text_screen, screen_record = dry("k10-b4s", chain_plan("k10-b4s"), "--stage", "screen", "--overlay", own_overlay("k10-b4s", [], [own_glow]))
-    screen_props = [step["apply"]["props"]["TDGen_CampfireFire"]["cal0_glow"] for step in lookdev_spec("k10-b4s", screen_record)["variants"] if step["name"].endswith("_v00")] if screen_record else []
-    check("K10 B4 actor_props: verify 에서 이 계획의 같은 대상 채택 값이 레벨마다 다르면 종료 2 '레벨마다 다르다' / verify 밖(screen) v00 props 는 옛 동작대로 계획 base 1.0",
-          code_split == 2 and "레벨마다 다르다" in text_split and code_screen == 0 and screen_record["params"][1]["base_value"] == 1.0 and screen_props and set(screen_props) == {1.0},
-          (code_split, text_split[-200:], code_screen, text_screen[-200:], screen_props))
+    split_path = chain_plan("k10-b4", mutate=add_other_level_scene)
+    code_split, text_split, _ = dry("k10-b4", split_path, "--stage", "verify", "--overlay", own_overlay("k10-b4", [], [own_glow(split_path), own_glow(split_path, level=other_level, value=3.0)]))
+    check("K10 B4 actor_props: verify 에서 이 계획의 같은 대상(계획 장면 두 레벨) 채택 값이 레벨마다 다르면 종료 2 '레벨마다 다르다'",
+          code_split == 2 and "레벨마다 다르다" in text_split, (code_split, text_split[-200:]))
 
     reset_world(fire_world)
     WORLD.actors[0].cal0_glow = 1.0
     live_path = chain_plan("k10-b5")
-    live_overlay = own_overlay("k10-b5", [dict(adopted[0], **{"from": id_source})], [own_glow])
+    live_overlay = own_overlay("k10-b5", [own_adopted(live_path)[0]], [own_glow(live_path)])
     code, text = sweep_text(["--plan", live_path, "--run-dir", sweep_dir / "k10-b5", "--stage", "verify", "--lock", write_lock("k10-b5", live_path), "--overlay", live_overlay])
     live_record = load_json(sweep_dir / "k10-b5" / "sweep.json") if (sweep_dir / "k10-b5" / "sweep.json").is_file() else {"scenes": [{"steps": []}]}
     live_steps = live_record["scenes"][0]["steps"]
     check("K10 B5 가짜 PIE verify(자기 채택 조절 1.8·actor_props 2.0): 대조 3단계 유효·ChangedFieldCount 0·액터 값 2.0(계획 base 1.0 이 덮지 않음)·종료 0",
           code == 0 and len(live_steps) == 3 and all(step["valid"] for step in live_steps) and [step["report"]["changed_field_count"] for step in live_steps] == [0, 0, 0]
           and WORLD.actors[0].cal0_glow == 2.0, (code, text[-300:], step_errors(live_steps)[:4], WORLD.actors[0].cal0_glow))
+
+    round_one = chain_plan("k10-c1")
+    round_two = chain_plan("k10-c1-p20")
+    descendant_text = calib_sweep.relative_text(round_two)
+    p20_refusal = f"P-20 2라운드 채택이 있는 1라운드 계획은 재검증하지 않는다: {descendant_text}"
+    p20_overlay = own_overlay("k10-c1", [own_adopted(round_two)[0]])
+    code_one, text_one, _ = dry("k10-c1", round_one, "--stage", "verify", "--overlay", p20_overlay)
+    code_prop, text_prop, _ = dry("k10-c1b", round_one, "--stage", "verify", "--overlay", own_overlay("k10-c1b", [], [own_glow(round_two)]))
+    code_two, text_two, record_two = dry("k10-c1-p20", round_two, "--stage", "verify", "--overlay", p20_overlay)
+    code_round_screen, text_round_screen, _ = dry("k10-c1s", round_one, "--stage", "screen", "--overlay", p20_overlay)
+    check("K10 C1 P-20 자손: 덧씌움에 같은 폴더 <계획 stem>-p20.json 채택(조절·actor_props 어느 쪽이든)이 있으면 1라운드 계획 verify 는 종료 2 'P-20 2라운드 채택이 있는 1라운드 계획은 재검증하지 않는다: <경로>' / 2라운드 계획 자신의 verify 는 일반 규칙(자기 채택 허용·종료 0·base 1.8) / 1라운드 screen 은 기존 겹침 거부",
+          code_one == 2 and p20_refusal in text_one and code_prop == 2 and p20_refusal in text_prop and code_two == 0 and record_two["params"][0]["base_value"] == 1.8
+          and code_round_screen == 2 and overlap_text in text_round_screen and "P-20" not in text_round_screen,
+          (code_one, text_one[-200:], code_prop, text_prop[-200:], code_two, text_two[-200:], code_round_screen, text_round_screen[-200:]))
+
+    elsewhere_path = chain_plan("k10-d1")
+    elsewhere_source = {"plan": f"Tools/FluidFX/calib/plans/{elsewhere_path.stem}.json", "plan_sha256": sha(elsewhere_path)}
+    code_elsewhere, text_elsewhere, _ = dry("k10-d1", elsewhere_path, "--stage", "verify", "--overlay", own_overlay("k10-d1", [dict(own_adopted(elsewhere_path)[0], **{"from": elsewhere_source})]))
+    changed_path = chain_plan("k10-d1b")
+    changed_source = dict(own_from(changed_path), plan_sha256="0" * 64)
+    code_changed, text_changed, _ = dry("k10-d1b", changed_path, "--stage", "verify", "--overlay", own_overlay("k10-d1b", [dict(own_adopted(changed_path)[0], **{"from": changed_source})]))
+    code_changed_prop, text_changed_prop, _ = dry("k10-d1c", changed_path, "--stage", "verify", "--overlay", own_overlay("k10-d1c", [], [own_glow(changed_path, **{"from": changed_source})]))
+    check("K10 D1 자기 채택 판별은 from.plan 프로젝트 상대 경로 + plan_sha256: 다른 폴더의 같은 stem·같은 sha 출처는 남의 계획(verify 겹침 종료 2) / 경로는 같고 sha 가 다르면 조절·actor_props 모두 종료 2 '계획이 채택 뒤 바뀜'",
+          code_elsewhere == 2 and overlap_text in text_elsewhere and code_changed == 2 and "계획이 채택 뒤 바뀜" in text_changed and code_changed_prop == 2 and "계획이 채택 뒤 바뀜" in text_changed_prop,
+          (code_elsewhere, text_elsewhere[-200:], code_changed, text_changed[-200:], code_changed_prop, text_changed_prop[-200:]))
+
+    orphan_path = chain_plan("k10-e1")
+    orphans = {name: dry(name, orphan_path, "--stage", "verify", "--overlay", own_overlay(name, [], [own_glow(orphan_path, **extra)]))[:2]
+               for name, extra in (("k10-e1", {"component": "light_component"}), ("k10-e1b", {"level": other_level}), ("k10-e1c", {"property": "cal0_other"}))}
+    check("K10 E1 actor_props(a): 이 계획 자신의 덧씌움 actor_props 항목이 대상 키(component·level(계획 장면 레벨 밖)·property)로 계획 actor_prop 손잡이와 하나도 맞지 않으면 verify 종료 2 '하나도 맞지 않는다'(계획 base 로 조용히 돌아가지 않음)",
+          all(code == 2 and "하나도 맞지 않는다" in text for code, text in orphans.values()), orphans)
+
+    prop_runs = {}
+    for name, stage, item in (("k10-e2", "screen", "own"), ("k10-e2b", "verify", "other"), ("k10-e2c", "frame", "other"), ("k10-e2d", "verify", "other_level")):
+        prop_path = chain_plan(name)
+        prop_item = {"own": own_glow(prop_path), "other": own_glow(prop_path, **{"from": other_source}), "other_level": own_glow(prop_path, level=other_level, **{"from": other_source})}[item]
+        prop_runs[name] = dry(name, prop_path, "--stage", stage, "--overlay", own_overlay(name, [], [prop_item]))
+    blocked = [prop_runs[name] for name in ("k10-e2", "k10-e2b", "k10-e2c")]
+    unrelated_code, _, unrelated_record = prop_runs["k10-e2d"]
+    check("K10 E2 actor_props(b): 덧씌움 actor_props 가 계획 actor_prop 손잡이와 같은 대상(level·label·property·component)이면 json_path 겹침과 같이 종료 2 — 자기 채택이라도 screen, 남의 채택은 verify·frame 모두 / 계획 장면 레벨 밖 같은 라벨은 다른 대상이라 통과(base 1.0)",
+          all(code == 2 and prop_overlap_text in text and "cal0_glow" in text for code, text, _ in blocked) and unrelated_code == 0 and unrelated_record["params"][1]["base_value"] == 1.0,
+          ([(code, text[-200:]) for code, text, _ in blocked], unrelated_code))
 
 
 def check_cal0_integration():
@@ -3218,6 +3276,29 @@ def check_cal0_batch():
     check("K10 A4 StructDefaultsMatchHeader 오류 줄에 다른 꼴(빈 배열 기본값 단언)이 섞임 / Error 줄이 없음(Warning 만) → 각각 되돌림·header_sync_pending []",
           reverted(other_form) and reverted(no_lines), (other_form["after"], other_form["record"], no_lines["after"], no_lines["record"]))
 
+    p20_chain = "Groups.P20"
+    arguments = batch_arguments("k10-c2", [{"id": "K13", "plans": [entry("b8_p1", p20_chain), entry("b8_p2", p20_chain), entry("b8_p3", p20_chain)]}])
+    p20_overlay_path = root / "k10-c2" / "overlay.json"
+    p20_overlay_path.parent.mkdir(parents=True, exist_ok=True)
+    descendant_text = f"{(root / 'plans').relative_to(W).as_posix()}/b8_p1-p20.json"
+    p20_overlay_path.write_text(json.dumps({"version": 2, "assignments": [{"json_path": "Groups.B8.TDFluidTest.b8_p1_round2", "value": 2.0, "kind": "knob", "from": {"plan": descendant_text}}],
+                                            "actor_props": [], "history": []}), encoding="utf-8")
+    fake = FakeBatchTools(p20_overlay_path)
+    with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
+        p20_code = run_batch(arguments)
+    items, calls = statuses(load_json(root / "k10-c2" / "journal.json")), fake.calls
+    after_p3 = calls[calls.index("accept b8_p3") + 1:] if "accept b8_p3" in calls else []
+    p20_chain_calls = after_p3[:after_p3.index("materialize")] if "materialize" in after_p3 else after_p3
+    p20_log = (root / "k10-c2" / "batch.log").read_text(encoding="utf-8")
+    p20_summary_path = root / "k10-c2" / "chains" / "Groups_P20.json"
+    p20_summary = load_json(p20_summary_path) if p20_summary_path.is_file() else {}
+    p20_note = f"P-20 2라운드 채택이 있는 1라운드 계획은 재검증하지 않는다: {descendant_text}"
+    check("K10 C2 사슬 재검증: 덧씌움에 같은 폴더 <stem>-p20.json 채택이 있는 앞 구성원(b8_p1)은 verify 스윕 없이 빼고 일지 reason·batch.log '사슬 재검증 | 제외' 한 줄에 사유, 나머지 앞 구성원(b8_p2)만 재검증·사슬 요약 rounds [{b8_p2: 통과}]",
+          p20_chain_calls == ["sweep b8_p2 verify", "judge b8_p2 verify"] and "sweep b8_p1 verify" not in calls and items["b8_p1"]["status"] == "adopted"
+          and items["b8_p1"]["reason"].count(p20_note) == 1 and sum(1 for line in p20_log.splitlines() if "b8_p1 사슬 재검증 | 제외 |" in line and p20_note in line) == 1
+          and p20_summary.get("rounds") == [{"b8_p2": True}] and p20_code == 0,
+          (p20_chain_calls, items["b8_p1"]["reason"][-300:], p20_summary, p20_log[-400:], p20_code))
+
 
 class ValidatingBatchTools(FakeBatchTools):
     def respond(self, label, command, timeout):
@@ -3698,6 +3779,36 @@ def check_time_origin_fixes():
           and built_collection is existing_collection and stored_collection_scalars(existing_collection) == list(volume_material.COLLECTION_SCALAR_DEFAULTS)
           and flow_saves == [volume_material.FLOW_COLLECTION_PATH] and preserved and volume_material.FLOW_COLLECTION_PATH in volume_material.collect_target_asset_paths(),
           ([(source.get_name(), output, target.get_name(), target_input) for source, output, target, target_input in links], fake_elapsed.get_name(), stored_collection_scalars(existing_collection), flow_saves, preserved))
+
+    hvol_links, hvol_create, hvol_connect = record_material_graph()
+    hvol_collection = FakeMaterialParameterCollection(hvol_material.FLOW_COLLECTION_PATH, volume_scalar_names)
+    hvol_textures = {name: (None, None) for name in hvol_material.TEXTURE_PARAMETER_NAMES}
+    with patched(FakeMaterialEditingLibrary, create_material_expression=hvol_create, connect_material_expressions=hvol_connect), \
+            patched(hvol_material, build_object_position=lambda material, x, y: RecordedMaterialNode(unreal.MaterialExpressionAbs),
+                    build_object_half_extents=lambda material, x, y: RecordedMaterialNode(unreal.MaterialExpressionAbs)):
+        hvol_sources = hvol_material.build_sources(None, hvol_textures, hvol_collection)
+    hvol_elapsed = hvol_sources["ElapsedSeconds"][0]
+    hvol_time_targets = [target for source, _, target, _ in hvol_links if source.get_name() == "MaterialExpressionTime"]
+
+    def hvol_flow_error(collection):
+        with patched(unreal, EditorAssetLibrary=Props(load_asset=lambda path: collection)):
+            try:
+                hvol_material.load_flow_collection()
+            except RuntimeError as error:
+                return str(error)
+        return ""
+
+    with patched(unreal, EditorAssetLibrary=Props(load_asset=lambda path: hvol_collection if path == hvol_material.FLOW_COLLECTION_PATH else None)):
+        hvol_loaded = hvol_material.load_flow_collection()
+    hvol_stale, hvol_missing = hvol_flow_error(FakeMaterialParameterCollection(hvol_material.FLOW_COLLECTION_PATH, [])), hvol_flow_error(None)
+    check("F12d HVOL 마스터 그래프: M_TD_FluidHeterogeneousVolume ElapsedSeconds 원천 = Subtract(A Time, B CollectionParameter MPC_TD_FluidVolumeFlow.VolumeFlowOriginSeconds)(SVOL·룩데브와 같은 MPC 경로·이름, 보고 식 같음, Time 은 뺄셈에만) / MPC 는 읽기만: 있으면 그 MPC, 매개변수 없음·MPC 없음은 '매개변수 없음'·'MPC 없음' 중단 / 필요 언리얼 이름에 CollectionParameter·Subtract·MaterialParameterCollection",
+          is_origin_subtract(hvol_elapsed, hvol_links, hvol_collection, volume_origin_name) and hvol_time_targets == [hvol_elapsed]
+          and hvol_material.FLOW_COLLECTION_PATH == volume_material.FLOW_COLLECTION_PATH and hvol_material.FLOW_ORIGIN_PARAMETER_NAME == volume_origin_name
+          and f'VOLUME_FLOW_COLLECTION_PATH = "{hvol_material.FLOW_COLLECTION_PATH}"' in lookdev.LOOKDEV_ACTIONS and f'VOLUME_FLOW_ORIGIN_PARAMETER_NAME = "{volume_origin_name}"' in lookdev.LOOKDEV_ACTIONS
+          and hvol_material.describe_elapsed_seconds() == volume_material.describe_elapsed_seconds(volume_material.VOLUME_MASTER)
+          and hvol_loaded is hvol_collection and "매개변수 없음" in hvol_stale and "MPC 없음" in hvol_missing
+          and all(name in hvol_material.REQUIRED_UNREAL_NAMES for name in ("MaterialExpressionCollectionParameter", "MaterialExpressionSubtract", "MaterialParameterCollection")),
+          ([(source.get_name(), output, target.get_name(), target_input) for source, output, target, target_input in hvol_links if target is hvol_elapsed], hvol_time_targets, hvol_stale, hvol_missing))
 
     wind_origin_name = foliage_material.WIND_ORIGIN_PARAMETER_NAME
     wind_scalar_names = [name for name, _ in foliage_material.COLLECTION_SCALAR_DEFAULTS]

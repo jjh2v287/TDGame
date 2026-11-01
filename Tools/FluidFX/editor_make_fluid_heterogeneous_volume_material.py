@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안에서 엔진 이종 볼륨(HVOL) 마스터 M_TD_FluidHeterogeneousVolume(MD_VOLUME·BLEND_ADDITIVE·HVOL 사용 플래그, Custom 노드 1개 = Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl + TDFluidHeterogeneousVolume.hlsl, 보조 출력 알베도·발광·차폐), 단면 텍스처 3장, 재질 인스턴스 7개를 만든다. 먼저 editor_make_fluid_volume_material.py(T_TD_FluidNoiseVolume)·make_fluid_cross_section_textures.py(PNG)가 끝나 있고, look-fragment-fx9.json 이 모양 정본에 병합되어 있어야 한다(반박 S5).
+"""실행 환경: TDGame 언리얼 에디터 안에서 엔진 이종 볼륨(HVOL) 마스터 M_TD_FluidHeterogeneousVolume(MD_VOLUME·BLEND_ADDITIVE·HVOL 사용 플래그, Custom 노드 1개 = Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl + TDFluidHeterogeneousVolume.hlsl, 보조 출력 알베도·발광·차폐), 단면 텍스처 3장, 재질 인스턴스 7개를 만든다. 먼저 editor_make_fluid_volume_material.py(T_TD_FluidNoiseVolume·MPC_TD_FluidVolumeFlow)·make_fluid_cross_section_textures.py(PNG)가 끝나 있고, look-fragment-fx9.json 이 모양 정본에 병합되어 있어야 한다(반박 S5).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_heterogeneous_volume_material.py (기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_heterogeneous_volume_material_request.json 에 {"overwrite": true})
-출력: /Game/FluidFX/Materials/M_TD_FluidHeterogeneousVolume·MI_TD_FluidHeterogeneousVolume_*(7), /Game/FluidFX/Textures/T_TD_FluidCrossSection_{Mushroom,Pump,Ring}(sRGB 끔·16비트 반정밀·고정 주소), Saved/FluidFX/fluid_heterogeneous_volume_material.json(앞단 substrate|legacy, 최종 컴파일 오류 수, 사용 플래그, HLSL sha256, 텍스처 원본 sha256)
-상태: 미검증(2026-10-26 FX-9 묶음 E 작성: py_compile·가짜 unreal·check_fluid_hvol_hlsl.py 만, 에디터 실행 전). 사용 플래그는 노드 만들기 전에 재질 속성으로 켜고 확인은 컴파일 뒤(L-editor-61·36), 속성이 없으면 컴파일 뒤 set_material_usage. 도메인 변경 직후 Additive 경고는 무시하고 최종 컴파일 오류 수로 판정(L-editor-65). MI 텍스처 값은 반환값 대신 다시 읽어 판정(L-editor-66). 마스터는 제자리 재구성하고, 형식이 다른 기존 에셋만 지운 뒤 디스크 잔존을 확인한다(L-editor-67·10). MI 값은 모양 정본(apply_to_instance)만 쓴다. 2026-10-31: HVOL 라이브 셰이딩은 ObjectPositionWS 를 (0,0,0)·ObjectBounds 를 거대값으로 넘겨(엔진 LiveShadingPipeline.usf 269~276 TODO) 화면에 안 보였다 → VolObjectPosition 은 로컬 원점 TransformPosition(로컬→월드)·VolObjectBoundsCm 은 ObjectLocalBounds 반 크기 Transform(로컬→월드)의 절댓값으로, HLSL 중심·크기는 lerp 대신 선택식(PIE 3회 반복 확인, Saved/AgentOps/20261031/hvol/r2).
+출력: /Game/FluidFX/Materials/M_TD_FluidHeterogeneousVolume·MI_TD_FluidHeterogeneousVolume_*(7), /Game/FluidFX/Textures/T_TD_FluidCrossSection_{Mushroom,Pump,Ring}(sRGB 끔·16비트 반정밀·고정 주소), Saved/FluidFX/fluid_heterogeneous_volume_material.json(앞단 substrate|legacy, 최종 컴파일 오류 수, 사용 플래그, HLSL sha256, 텍스처 원본 sha256, flow_collection, master.elapsed_seconds)
+상태: 미검증(2026-10-26 FX-9 묶음 E 작성: py_compile·가짜 unreal·check_fluid_hvol_hlsl.py 만, 에디터 실행 전). 사용 플래그는 노드 만들기 전에 재질 속성으로 켜고 확인은 컴파일 뒤(L-editor-61·36), 속성이 없으면 컴파일 뒤 set_material_usage. 도메인 변경 직후 Additive 경고는 무시하고 최종 컴파일 오류 수로 판정(L-editor-65). MI 텍스처 값은 반환값 대신 다시 읽어 판정(L-editor-66). 마스터는 제자리 재구성하고, 형식이 다른 기존 에셋만 지운 뒤 디스크 잔존을 확인한다(L-editor-67·10). MI 값은 모양 정본(apply_to_instance)만 쓴다. 2026-10-31: HVOL 라이브 셰이딩은 ObjectPositionWS 를 (0,0,0)·ObjectBounds 를 거대값으로 넘겨(엔진 LiveShadingPipeline.usf 269~276 TODO) 화면에 안 보였다 → VolObjectPosition 은 로컬 원점 TransformPosition(로컬→월드)·VolObjectBoundsCm 은 ObjectLocalBounds 반 크기 Transform(로컬→월드)의 절댓값으로, HLSL 중심·크기는 lerp 대신 선택식(PIE 3회 반복 확인, Saved/AgentOps/20261031/hvol/r2). 2026-11-01 시간 원점(K10 fx9 대조 표류, Saved/AgentOps/20261101/diag-k10-hvol.md): Custom 입력 ElapsedSeconds = Time − MPC_TD_FluidVolumeFlow.VolumeFlowOriginSeconds(SVOL M_TD_FluidVolume 과 같은 MPC·같은 꼴, MPC 는 editor_make_fluid_volume_material.py 가 만들고 여기서는 읽기만, 없거나 매개변수가 없으면 텍스처 단계 전에 중단, 기본 0 이라 게임 모양 불변) — 가짜 unreal 시험(calib_offline_test F12d)만, 에디터 재생성 전에는 자산이 옛 Time 그래프다.
 """
 import gc
 import hashlib
@@ -19,6 +19,9 @@ TEXTURE_DIR = f"{FLUID_ROOT}/Textures"
 MASTER_NAME = "M_TD_FluidHeterogeneousVolume"
 MASTER_PATH = f"{MATERIAL_DIR}/{MASTER_NAME}"
 NOISE_VOLUME_PATH = f"{TEXTURE_DIR}/T_TD_FluidNoiseVolume"
+FLOW_COLLECTION_NAME = "MPC_TD_FluidVolumeFlow"
+FLOW_COLLECTION_PATH = f"{MATERIAL_DIR}/{FLOW_COLLECTION_NAME}"
+FLOW_ORIGIN_PARAMETER_NAME = "VolumeFlowOriginSeconds"
 DEFAULT_TEXTURE_PATHS = ("/Engine/EngineResources/Black", "/Engine/EngineResources/DefaultTexture")
 SHADER_DIRECTORY = ("Tools", "FluidFX", "Shaders")
 COMMON_HLSL_NAME = "TDFluidVolumeDensityCommon.hlsl"
@@ -171,6 +174,9 @@ REQUIRED_UNREAL_NAMES = (
     "MaterialVectorCoordTransform.TRANSFORM_WORLD",
     "MaterialExpressionAbs",
     "MaterialExpressionTime",
+    "MaterialExpressionCollectionParameter",
+    "MaterialExpressionSubtract",
+    "MaterialParameterCollection",
     "MaterialExpressionTextureObjectParameter",
     "MaterialExpressionVectorParameter",
     "MaterialExpressionScalarParameter",
@@ -418,6 +424,16 @@ def load_noise_volume():
     return texture, choose_sampler_type(texture) or unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR
 
 
+def load_flow_collection():
+    collection = unreal.EditorAssetLibrary.load_asset(FLOW_COLLECTION_PATH)
+    if not isinstance(collection, unreal.MaterialParameterCollection):
+        raise RuntimeError(f"흐름 원점 MPC 없음(editor_make_fluid_volume_material.py 먼저): {FLOW_COLLECTION_PATH}")
+    names = [str(item.get_editor_property("parameter_name")) for item in collection.get_editor_property("scalar_parameters")]
+    if FLOW_ORIGIN_PARAMETER_NAME not in names:
+        raise RuntimeError(f"흐름 원점 MPC 매개변수 없음: {FLOW_ORIGIN_PARAMETER_NAME}({FLOW_COLLECTION_PATH}, editor_make_fluid_volume_material.py 재생성)")
+    return collection
+
+
 def import_cross_section_texture(section_name, overwrite):
     source_path = project_path(*CROSS_SECTION_SOURCE_DIRECTORY, texture_asset_name(section_name) + ".png")
     if not os.path.isfile(source_path):
@@ -511,6 +527,19 @@ def build_object_half_extents(material, x, y):
     return absolute
 
 
+def build_elapsed_seconds(material, flow_collection, x, y):
+    game_time = add_node(material, unreal.MaterialExpressionTime, x - 440, y)
+    flow_origin = add_node(material, unreal.MaterialExpressionCollectionParameter, x - 440, y + 55, collection=flow_collection, parameter_name=FLOW_ORIGIN_PARAMETER_NAME)
+    elapsed = add_node(material, unreal.MaterialExpressionSubtract, x - 220, y)
+    link(game_time, elapsed, "A")
+    link(flow_origin, elapsed, "B")
+    return elapsed
+
+
+def describe_elapsed_seconds():
+    return f"Time - {FLOW_COLLECTION_NAME}.{FLOW_ORIGIN_PARAMETER_NAME}"
+
+
 def prepare_master(overwrite):
     material, replaced = load_or_replace(MASTER_PATH, unreal.Material, overwrite)
     if material is not None:
@@ -531,7 +560,7 @@ def enable_usage_before_nodes(material):
     return "property"
 
 
-def build_sources(material, textures):
+def build_sources(material, textures, flow_collection):
     sources = {}
     rows = iter(range(200))
 
@@ -550,7 +579,7 @@ def build_sources(material, textures):
     x, y = place()
     sources["VolObjectBoundsCm"] = (build_object_half_extents(material, x, y), "")
     x, y = place()
-    sources["ElapsedSeconds"] = (add_node(material, unreal.MaterialExpressionTime, x, y), "")
+    sources["ElapsedSeconds"] = (build_elapsed_seconds(material, flow_collection, x, y), "")
     for name in TEXTURE_PARAMETER_NAMES:
         texture, sampler_type = textures[name]
         x, y = place()
@@ -665,12 +694,12 @@ def read_material_statistics(material):
         return {}
 
 
-def create_master(code, textures, overwrite):
+def create_master(code, textures, flow_collection, overwrite):
     material, was_created, replaced = prepare_master(overwrite)
     material.set_editor_property("material_domain", unreal.MaterialDomain.MD_VOLUME)
     material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_ADDITIVE)
     usage_route = enable_usage_before_nodes(material)
-    sources = build_sources(material, textures)
+    sources = build_sources(material, textures, flow_collection)
     custom = build_custom_node(material, code, sources)
     front = build_front_outputs(material, custom)
     errors = compile_errors(material)
@@ -684,6 +713,7 @@ def create_master(code, textures, overwrite):
         "created": was_created,
         "replaced_wrong_type": replaced,
         "front": front,
+        "elapsed_seconds": describe_elapsed_seconds(),
         "compile_error_count": 0,
         "ignored_warning": ADDITIVE_WARNING_TEXT,
         "usage": usage,
@@ -746,6 +776,9 @@ def main():
     if unsaved_names:
         raise RuntimeError("미저장 작업을 보존합니다: " + ", ".join(unsaved_names))
 
+    print("단계: 흐름 원점 MPC")
+    flow_collection = load_flow_collection()
+
     print("단계: 텍스처")
     texture_path, default_texture, default_sampler = pick_default_texture()
     noise_texture, noise_sampler = load_noise_volume()
@@ -760,7 +793,7 @@ def main():
     textures[CROSS_SECTION_TEXTURE_PARAMETER] = section_textures["Mushroom"]
 
     print("단계: 마스터 재질")
-    master, master_summary = create_master(code, textures, overwrite)
+    master, master_summary = create_master(code, textures, flow_collection, overwrite)
 
     print("단계: 재질 인스턴스")
     instances = []
@@ -778,6 +811,7 @@ def main():
         "overwrite": overwrite,
         "default_texture": texture_path,
         "noise_texture": NOISE_VOLUME_PATH,
+        "flow_collection": FLOW_COLLECTION_PATH,
         "cross_section_textures": texture_records,
         "cross_section_v_convention": "v = saturate(h / VolCrossSectionHeightCm), 이미지 위 행(v=0) = 바닥 (cross-plan P-04)",
         "master": master_summary,

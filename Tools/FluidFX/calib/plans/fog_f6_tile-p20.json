@@ -1,0 +1,94 @@
+{
+  "id": "fog_f6_tile-p20",
+  "note": "P-20 2라운드(Tools/FluidFX/calib/plans/fog_f6_tile.json 에서 생성): 1라운드 채택 Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_TileSync.Scalars.FogExtinctionPerM=0.08(덧씌움으로 v00 기준), 남은 screen 민감 손잡이 3개(1라운드 params 색인 [1, 2, 3], 채택 색인 [0]). FX-10c F6. 8C 감싸기 원천(FogTileSim 30 m 창, Wrap)이 자기 RT 를 90 m 안개 상자(상자 배율 3)에 타일 렌더(SimAreaWrapped 1). 반복 은폐는 휘도 2D 자기상관 2차 봉우리(SWB L14-a 관례), 원거리 대기 지표는 IMG 19 원거리 기준 2.23 ±25%(타일 안개 이미지 없음, CD M.3.20.1 Water_Sparse_DoubleSim_TilingWaves 유추). MI_TD_FluidFog_TileSync 는 8C 전용이라 재질 값을 훑어도 다른 구역과 충돌하지 않는다 0b(2026-10-30): 자기상관 상한을 LIVE-2 갤러리 안개 영역 최댓값으로(명세 [제안] ≤0.3 은 참고), 원거리 p95/p5 는 IMG 19 측정 재현 2.23 ±25%. 띠는 targets 파일. sky kind background → sky(measure_fx_look 기본 모드 kind 아님). 영역은 frame 뒤 / 영역 2차(2026-10-31, 원문 63ad8084): tile_far.autocorrelation.secondary_peak 목표 이관(criterion) — measure_fx_look 자기상관은 평균만 빼서 원근 밝기 기울기가 양수 중앙 덩어리로 창 전체를 덮고 그 덩어리를 빼고 봉우리를 찾으므로 부분 상자 6개 모두 −3.5e−5~−2e−6 으로 상자와 무관하게 약 0 이 되어 상한 0.0603 이 거저 통과한다. 띠 근거인 갤러리 안개 6영역도 5개가 0 이라 같은 결함의 값이다. 기울기 제거 뒤 갤러리 띠를 다시 재면 되살린다(원문 63ad8084). 그동안 타일 반복 은폐는 승인 시트 육안, 손잡이 4개는 tile_far.atmosphere.p95_over_p5 로만 판정. exposure_ev100 1.0 은 AEM_MANUAL 볼륨이라 manual_ignored(실제 bias 0)이고 영역 상자는 그 화면 기준",
+  "scenes": [
+    {
+      "name": "f6_tile",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+      "camera": {
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": true
+        },
+        "exposure_ev100": 1.0,
+        "pawn": [
+          17000,
+          -36800
+        ],
+        "arm": 2500.0,
+        "view": [
+          -35.0,
+          90.0
+        ],
+        "console": [
+          "r.TDFogScattering 0",
+          "r.VolumetricFog.GridPixelSize 8",
+          "r.VolumetricFog.GridSizeZ 128"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 10.0,
+      "regions_template": "Tools/FluidFX/calib/regions/fog_f6_tile_frame_regions.json",
+      "live2_refs": [],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      },
+      "targets": "Tools/FluidFX/calib/targets/fog_f6_tile_plan_targets.json"
+    }
+  ],
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidFog_TileSync.Scalars.FogExtrudeHeightCm",
+      "values": [
+        60,
+        120,
+        240
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.FogTileSim.TDFluidSimulationConfig.AmbientNoiseAmount",
+      "values": [
+        0.3,
+        0.6,
+        0.9
+      ],
+      "split_group": false
+    },
+    {
+      "json_path": "Kinds.FogTileSim.TDFluidSimulationConfig.FlowNoiseScaleCm",
+      "values": [
+        200,
+        400,
+        800
+      ],
+      "split_group": false
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "scene": "f6_tile",
+        "metric": "tile_far.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "basis": "live2_image",
+        "note": "IMG19 원거리 FVOL (800,240,1280,420) p95/p5 2.231 ±25%(ICF:125 관례). 띠 targets 파일"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "reinit",
+  "spec_source": "작업 기록 AgentOps/20261026/wave2/spec-fx10c.md:197(저장소 밖)"
+}

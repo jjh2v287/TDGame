@@ -1,0 +1,121 @@
+{
+  "id": "cloud_g9_mushroom-p20",
+  "note": "P-20 2라운드(Tools/FluidFX/calib/plans/cloud_g9_mushroom.json 에서 생성): 1라운드 채택 Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_MushroomShield.Scalars.CloudSlot2PatternCoverage=0.6(덧씌움으로 v00 기준), 남은 screen 민감 손잡이 3개(1라운드 params 색인 [0, 1, 2], 채택 색인 [3]). FX-11r G9, 셋업 8·9, IMG 6·23(갓 발광·방패 갑판) / 2026-10-31 frame 영역 2차 결정: mushroom_cap 카메라에 exposure_manual bias(무대 PPV TDGen_CloudExposure 가 AEM_MANUAL·바이어스 0·물리 카메라 노출 끔이라 EV100 12 는 manual_ignored 였고 갓 원판이 포화 → bias = 0 + 0 − EV100, EV100 5 는 PIE 비교(3·5·7) 전 중앙 후보). mushroom 목표(두 장면, 원점 화산이 몸통을 가림)·mushroom_shield 의 cap 목표(그 장면 갓 손잡이 없음)·mushroom_cap 의 far_deck 목표(슬롯 2 층 없음, 상자가 하늘을 잼)는 structural-gaps 로 옮김(원문 63ad8084) / 2026-10-31 노출·발광 결정(PIE A/B ab/g9_exposure·g9_emissive, 원본 IMG6·IMG23 대조, 반박 통과): 두 장면 exposure_ev100 2.0 + bias(auto_exposure_bias −2, 원본 하늘 0.22~0.36 이 측정 bias 0 의 0.553·−3 의 0.163 사이). 발광 손잡이 4·8·16 → 0.0075·0.015·0.03, 기준값 0.015(모양 정본 8 → 0.015 로 고침: 정본 8 은 측정한 EV5 이하 모든 노출에서 포화). 포화 근거는 단조성(bias 0·발광 0.03 실측 포화 0, bias −2 는 선형 1/4). 구조 위험: 발광 0 에서도 갓 산란(CloudSlot1 Albedo 1)이 하늘보다 밝아 갓/하늘 비 1.1~1.5(원본 0.59~1.05), cap p95/p5 예측 1.26~1.44 로 목표 1.76~2.93 미달 가능 → K3 에서 닿지 않으면 Albedo 손잡이 제안 또는 structural-gaps. 재촬영 확인 조건: 하늘 [0,4,300,133] 중앙값 0.22~0.36, cap 포화 ≤1%",
+  "scenes": [
+    {
+      "name": "mushroom_cap",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "camera": {
+        "view_target": "TDGen_CloudCam_Mushroom",
+        "exposure_ev100": 2.0,
+        "exposure_manual": "bias",
+        "console": [
+          "TD.FluidFX.CloudSetup 8",
+          "TD.FluidFX.CloudViewSampleScale 2",
+          "r.TDFogScattering 0",
+          "r.VolumetricRenderTarget.Mode 0"
+        ]
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/cloud_g9_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+      "live2_refs": [
+        "IMG6"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    },
+    {
+      "name": "mushroom_shield",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "camera": {
+        "view_target": "TDGen_CloudCam_MushroomShield",
+        "exposure_ev100": 2.0,
+        "console": [
+          "TD.FluidFX.CloudSetup 9",
+          "TD.FluidFX.CloudViewSampleScale 2",
+          "r.TDFogScattering 0",
+          "r.VolumetricRenderTarget.Mode 0"
+        ],
+        "exposure_manual": "bias"
+      },
+      "time_dilation": 1.0,
+      "settle": 6.0,
+      "regions_template": "Tools/FluidFX/calib/regions/cloud_g9_regions.json",
+      "targets": "Tools/FluidFX/calib/targets/cloud_live2_atmosphere.json",
+      "live2_refs": [
+        "IMG23"
+      ],
+      "shots": {
+        "count": 5,
+        "interval": 0.25,
+        "kind": "replicate"
+      }
+    }
+  ],
+  "params": [
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EmissiveIntensity",
+      "values": [
+        0.0075,
+        0.015,
+        0.03
+      ],
+      "scenes": [
+        "mushroom_cap"
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EmissiveExponent",
+      "values": [
+        2,
+        3,
+        4
+      ],
+      "scenes": [
+        "mushroom_cap"
+      ]
+    },
+    {
+      "json_path": "Look:Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom.Scalars.CloudSlot1EdgeErosion",
+      "values": [
+        0.4,
+        0.6,
+        0.8
+      ],
+      "scenes": [
+        "mushroom_cap"
+      ]
+    }
+  ],
+  "metrics": {
+    "sources": [
+      "look"
+    ],
+    "targets": [
+      {
+        "metric": "cap.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.76,
+        "high": 2.93,
+        "scene": "mushroom_cap",
+        "note": "노출 bias EV100 5 는 PIE 비교 전 후보다. cap 상자 포화(최대 채널 254 이상)가 남으면 값은 클리핑 상수(1.003386)라 무효"
+      },
+      {
+        "metric": "far_deck.atmosphere.p95_over_p5",
+        "weight": 1.0,
+        "low": 1.29,
+        "high": 2.15,
+        "scene": "mushroom_shield"
+      }
+    ]
+  },
+  "mode": "one_at_a_time",
+  "repeats": 2,
+  "control_every": 0,
+  "reset": "keep"
+}

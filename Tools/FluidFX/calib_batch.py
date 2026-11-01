@@ -48,10 +48,9 @@ MATERIALIZED_LOOK = "TDFluidMaterialLook.json"
 QUEUE_STAGE_SETS = (["screen"], ["screen", "confirm"])
 DEFAULT_REAL_DT = 0.0255
 SHOT_SECONDS = 0.35
-STEP_OVERHEAD_SECONDS = 6.0
-SCENE_OVERHEAD_SECONDS = 42.0
+STEP_OVERHEAD_SECONDS = 10.0
+SCENE_OVERHEAD_SECONDS = 130.0
 STEP_LIMIT_FACTOR = 2.0
-STEP_LIMIT_FLOOR_SECONDS = 600.0
 REPLACE_ATTEMPTS = 4
 REPLACE_RETRY_SECONDS = 2.0
 VERIFY_PASSED, VERIFY_FAILED, VERIFY_UNDETERMINED, VERIFY_NOT_RUN = "passed", "failed", "undetermined", "not_run"
@@ -384,7 +383,7 @@ class BatchRunner:
     def run_stage(self, item, stage, extra_arguments, run_key=None):
         run_key = run_key or stage
         estimate = max(self.stage_estimate(item, stage), SCENE_OVERHEAD_SECONDS)
-        limit = max(STEP_LIMIT_FACTOR * estimate, STEP_LIMIT_FLOOR_SECONDS)
+        limit = STEP_LIMIT_FACTOR * estimate
         failure = ""
         for attempt in (1, 2):
             run_dir, log_path = self.run_dir_and_log(item, run_key)
@@ -398,7 +397,7 @@ class BatchRunner:
                 self.update_real_dt(item, run_dir)
                 return run_dir, ""
             if code is None:
-                return None, f"{stage} 실행이 한도 {limit:.0f}초(추정 {estimate:.0f}초의 2배, 하한 {STEP_LIMIT_FLOOR_SECONDS:.0f}초)를 넘어 중단(L-editor-06 앞창 확인): {tail}"
+                return None, f"{stage} 실행이 한도 {limit:.0f}초(추정 {estimate:.0f}초의 2배)를 넘어 중단(L-editor-06 앞창 확인): {tail}"
             failure = f"{stage} 종료 {code}({attempt}회): {tail}"
             if code == 2:
                 return None, failure

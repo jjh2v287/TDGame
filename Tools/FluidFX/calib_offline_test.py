@@ -3128,7 +3128,7 @@ def check_cal0_batch():
 
     regions_path = root / "t98" / "regions_alpha.json"
     arguments = batch_arguments("t98", [{"id": "K1", "plans": [entry("b8_alpha", regions=regions_path), entry("b8_beta"), entry("b8_gamma"),
-                                                                entry("b8_delta", estimate_seconds={"screen": 1000, "confirm": 10})]}])
+                                                                entry("b8_delta", estimate_seconds={"screen": 4000, "confirm": 10})]}])
     journal_path = root / "t98" / "journal.json"
     fake = FakeBatchTools(root / "t98" / "overlay.json")
     fake.interrupt_at = "sweep b8_beta screen"
@@ -3147,7 +3147,7 @@ def check_cal0_batch():
         journal_path.write_text(json.dumps(killed), encoding="utf-8")
         regions_path.write_text("{}", encoding="utf-8")
         fake.calls.clear()
-        fake.sweep_outcomes = {("b8_beta", "screen"): [(1, 5.0), (0, 10.0)], ("b8_gamma", "screen"): [(0, 1.0e6)], ("b8_delta", "screen"): [(0, 1990.0)]}
+        fake.sweep_outcomes = {("b8_beta", "screen"): [(1, 5.0), (0, 10.0)], ("b8_gamma", "screen"): [(0, 1.0e6)], ("b8_delta", "screen"): [(0, 7990.0)]}
         resumed_code = run_batch(arguments + ["--resume"])
         refused_code = run_batch(arguments)
     second, calls = statuses(load_json(journal_path)), fake.calls
@@ -3302,13 +3302,18 @@ def check_cal0_batch():
     arguments = batch_arguments("r5-limit", [{"id": "K14", "plans": [entry("b8_q1", estimate_seconds={"screen": 10, "confirm": 10}),
                                                                       entry("b8_q2", estimate_seconds={"screen": 10, "confirm": 10})]}])
     fake = FakeBatchTools(root / "r5-limit" / "overlay.json")
-    fake.sweep_outcomes = {("b8_q1", "screen"): [(0, 590.0)], ("b8_q2", "screen"): [(0, 610.0)]}
+    fake.sweep_outcomes = {("b8_q1", "screen"): [(0, 250.0)], ("b8_q2", "screen"): [(0, 270.0)]}
     with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
         run_batch(arguments)
     items = statuses(load_json(root / "r5-limit" / "journal.json"))
-    check("R5 단계 한도 = max(2 × 추정, 하한 600초): 추정 42초(장면 고정 비용 하한) 단계가 590초면 screen 이 끝까지 돌고(블록 누적 상한으로 confirm 만 deferred), 610초면 중단·failed·사유에 한도 600초",
-          items["b8_q1"]["status"] == "deferred" and "블록 누적" in items["b8_q1"]["reason"] and items["b8_q2"]["status"] == "failed" and "한도 600초" in items["b8_q2"]["reason"] and "2배" in items["b8_q2"]["reason"],
+    check("R5 단계 한도 = 2 × max(추정, 장면 고정 비용 130초): 250초면 screen 이 끝까지 돌고(블록 누적 상한으로 confirm 만 deferred), 270초면 중단·failed·사유에 한도 260초",
+          items["b8_q1"]["status"] == "deferred" and "블록 누적" in items["b8_q1"]["reason"] and items["b8_q2"]["status"] == "failed" and "한도 260초" in items["b8_q2"]["reason"] and "2배" in items["b8_q2"]["reason"],
           (items["b8_q1"]["status"], items["b8_q2"]["status"], items["b8_q2"]["reason"][:200]))
+    measured_limits = [("w5_underwater_l18a", "screen", 225.0), ("fog_f2_passive", "verify", 211.0)]
+    limit_rows = [(name, stage, measured, calib_batch.STEP_LIMIT_FACTOR * calib_batch.estimate_stage_seconds(load_json(W / f"Tools/FluidFX/calib/plans/{name}.json"), stage, {}))
+                  for name, stage, measured in measured_limits]
+    check("R5 실측 대조(L-build-19): 수중 screen 225초·안개 f2 verify 211초의 한도가 실측 1.5배 이상이고 3fps 스로틀 하한 모형(약 592·595초)보다 짧다",
+          all(1.5 * measured <= limit < 590.0 for _, _, measured, limit in limit_rows), limit_rows)
 
 
 class ValidatingBatchTools(FakeBatchTools):

@@ -163,3 +163,12 @@
 - 증거: Saved/FluidFX/calib/batch/batch.log(K1 1차), Saved/FluidFX/calib/batch-K1-fx5/(재실행·재개), Saved/AgentOps/20261031/overlay-before-restore-K1fx5.json
 - 날짜·상태: 2026-10-31 active
 - 발견: claude(FluidFX 일괄 보정 K1)
+
+### L-build-19 FluidFX calib_batch 단계 한도 '추정의 2배'는 단계 수가 적은 실행(verify 3단계, 5단계 screen)에서 실제 소요보다 짧다 — 장면 고정 비용 추정 42초 < 실측 약 130초
+- 증상: R5 `w5_underwater_l18a: failed screen 실행이 추정 111초의 2배를 넘어 중단(L-editor-06 앞창 확인)`(실측 223초, R3 은 215초로 겨우 통과), 사슬 재검증 `verify 실행이 추정 97초의 2배를 넘어 중단`(fog_f2, 같은 사슬 f1 verify 는 211초/추정 107초로 통과). 편집기 지연이 아니다: 같은 실행의 장별 real_dt_mean 0.028 ≈ 기본 0.0255
+- 원인: estimate_stage_seconds 의 SCENE_OVERHEAD_SECONDS 42초·STEP_OVERHEAD_SECONDS 6초가 실측(장면 고정 약 130초·단계 약 10초, f1 verify·f2 screen·수중 screen 세 점 맞춤)보다 작아 단계 수가 적을수록 비율이 2배에 다가간다. update_real_dt 는 `*_schedule.json` 최상위 real_dt_mean 을 읽지만 pie_lookdev_fluid 는 shots[] 안에 써서 학습이 늘 비어 있다(하네스 T98 fixture 가 최상위에 써 거짓 통과, 영향 4% 미만이라 그대로 둠)
+- 해결: 단계 한도 = max(2 × 추정, STEP_LIMIT_FLOOR_SECONDS 600초)(하네스 'R5 단계 한도' 308/308). 사슬 재검증 중단(VERIFY_NOT_RUN)은 사슬 요약을 쓰지 않으므로 같은 큐로 `--resume --block <블록>` 하면 재검증만 다시 돈다. failed 항목은 이어 하기 대상이 아니라 그 계획만 담은 새 큐·일지·잠금 폴더로 다시 돌린다
+- 범위: Tools/FluidFX/calib_batch.py run_stage(calib_batch 는 사전 등록 잠금 도구 목록 밖이라 잠금 유지)
+- 증거: Saved/FluidFX/calib/batch-R5/batch.log, Saved/AgentOps/20261031/cal-issues.md(18:1x 항목)
+- 날짜·상태: 2026-11-01 active
+- 발견: claude(FluidFX 일괄 보정 R5)

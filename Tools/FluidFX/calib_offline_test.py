@@ -3299,6 +3299,17 @@ def check_cal0_batch():
           and p20_summary.get("rounds") == [{"b8_p2": True}] and p20_code == 0,
           (p20_chain_calls, items["b8_p1"]["reason"][-300:], p20_summary, p20_log[-400:], p20_code))
 
+    arguments = batch_arguments("r5-limit", [{"id": "K14", "plans": [entry("b8_q1", estimate_seconds={"screen": 10, "confirm": 10}),
+                                                                      entry("b8_q2", estimate_seconds={"screen": 10, "confirm": 10})]}])
+    fake = FakeBatchTools(root / "r5-limit" / "overlay.json")
+    fake.sweep_outcomes = {("b8_q1", "screen"): [(0, 590.0)], ("b8_q2", "screen"): [(0, 610.0)]}
+    with patched(calib_batch, run_tool=fake, HOLD_FILE=root / "hold.json"):
+        run_batch(arguments)
+    items = statuses(load_json(root / "r5-limit" / "journal.json"))
+    check("R5 단계 한도 = max(2 × 추정, 하한 600초): 추정 42초(장면 고정 비용 하한) 단계가 590초면 screen 이 끝까지 돌고(블록 누적 상한으로 confirm 만 deferred), 610초면 중단·failed·사유에 한도 600초",
+          items["b8_q1"]["status"] == "deferred" and "블록 누적" in items["b8_q1"]["reason"] and items["b8_q2"]["status"] == "failed" and "한도 600초" in items["b8_q2"]["reason"] and "2배" in items["b8_q2"]["reason"],
+          (items["b8_q1"]["status"], items["b8_q2"]["status"], items["b8_q2"]["reason"][:200]))
+
 
 class ValidatingBatchTools(FakeBatchTools):
     def respond(self, label, command, timeout):

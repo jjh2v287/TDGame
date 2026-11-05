@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "blender": {
+      "type": "stdio",
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Project\\TDGame\\Tools\\BlenderMCP\\Run-BlenderMCP.ps1"],
+      "env": {"DISABLE_TELEMETRY": "true", "BLENDER_HOST": "127.0.0.1", "BLENDER_PORT": "9876"}
+    },
+    "unreal-mcp": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp"
+    },
+    "cascadeur": {
+      "type": "http",
+      "url": "http://127.0.0.1:8765/mcp"
+    },
+    "serena": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "claude-code",
+        "--project-from-cwd"
+      ]
+    }
+  }
+}

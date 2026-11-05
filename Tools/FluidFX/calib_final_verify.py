@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터 불필요, compare·replay 는 calib_judge 측정 경로의 numpy·Pillow·scipy 필요, git 필요, PowerShell — /Game 인수 때문에 Git Bash 금지).
 실행 명령: python -B Tools/FluidFX/calib_final_verify.py w-expect|copies|test-owner|replay|expect|anchor|compare|check-ab|verdict|rollback|r2-spec ...(인수는 하위 명령 도움말, 명세 Saved/AgentOps/20261101/w-runbook/spec-final-verify.md)
 출력: w-expect.json, 사본·copies.json, test_owner.json, replay 대조, expect.json·최종 모드 큐, anchor.json·Docs/Validation/FluidFXCalib/w-anchor.json, compare.json, check-ab 보고, verdict.json, W12 덧씌움 사본·preview-r2·r2 w-expect·rollback.json, r2 명세. 종료 코드 0 통과 / 1 판정 실패·되돌림·사용자 결정·미완·멈춤 사건(copies --check·replay 는 다름) / 2 입력 오류·닻·sha·스윕 관문(E2) / 3 결정론 관문(compare·check-ab)
-상태: 2026-11-05 명세 개정 F 반영. 오프라인 하네스 calib_final_offline_test.py 와 실제 R5 산출물 읽기 전용 건식 실행(replay·expect)만 했고 실제 W 실행 전이다.
+상태: 2026-11-05 명세 개정 F 반영, 같은 날 개정 G(spec-patch-g: expect·w-expect·test-owner 관문 실패는 표준 오류에만 쓰고 --out 산출물을 덮지 않음, 잠금 단계 interrupted 는 E2 아님, r2 대상 covered 부모의 덮는 채택도 r2 대상). 오프라인 하네스 calib_final_offline_test.py 와 실제 R5 산출물 읽기 전용 건식 실행(replay·expect)만 했고 실제 W 실행 전이다.
 """
 import argparse
 import copy
@@ -57,6 +57,7 @@ STOP_EVENTS = ("E3", "E3_repeat", "F0_shortfall", "start_failed")
 VERIFY_TERMINAL = ("verified", "incomplete")
 AB_TERMINAL = ("ab_done", "ab_skipped")
 JUDGE_STEPS = ("official", "compare", "judge", "check_ab")
+ARTIFACT_OUTPUT_COMMANDS = ("w-expect", "test-owner", "expect")
 LOCK_CREATE_STEPS = ("lock_create", "judge_lock_create")
 LOCK_VERIFY_STEPS = ("lock_verify", "judge_lock_verify")
 SCENE_PATH_KEYS = ("measure", "sources")
@@ -1806,6 +1807,9 @@ def r2_targets(expect, reverted_ids):
             if profile["scenes"] & other["scenes"] or profile["levels"] & other["levels"] or (profile["owner"] and profile["owner"] == other["owner"]) or (key, other_key) in relations:
                 targets.append(key)
                 break
+    for item in expect["covered"]:
+        if item["adoption"] in targets and item["by_adoption"] not in reverted and item["by_adoption"] not in targets:
+            targets.append(item["by_adoption"])
     runs = set()
     for key in targets:
         covered = next((item for item in expect["covered"] if item["adoption"] == key), None)
@@ -2456,7 +2460,7 @@ def report_gate_failure(arguments, failure):
     for line in failure.problems:
         print(f"관문 {failure.gate}: {line}", file=sys.stderr)
     out_text = getattr(arguments, "out", None)
-    if not out_text:
+    if not out_text or arguments.command in ARTIFACT_OUTPUT_COMMANDS:
         return
     try:
         write_json(require_saved_output(out_text), {"tool": TOOL_NAME, "version": TOOL_VERSION, "gate": failure.gate, "problems": failure.problems})

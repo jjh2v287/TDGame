@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3, 백그라운드 실행(스윕 1회가 600초를 넘는다). 에디터가 TDGame 을 열 수 있고 Saved/AgentOps/build_hold.json 보류를 얻을 수 있어야 한다. 하위 도구(calib_sweep·calib_judge·prereg_lock·fluid_tuning_patch·ue_editor·run_in_editor·build_and_test, 헤드리스 UnrealEditor-Cmd)는 모두 하위 프로세스로 부르고 정본은 쓰지 않는다(spec-cal0-v2 1.5 G-BATCH, 일지 C10).
-실행 명령: python Tools/FluidFX/calib_batch.py --queue Tools/FluidFX/calib/batch_queue.json --holder <보류 이름> [--journal Saved/FluidFX/calib/batch/journal.json] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--locks-dir Saved/FluidFX/calib/locks] [--block K1]... [--resume] [--revisit-deferred] (PowerShell). 큐 = {"test_classes": {"path", "sha256"}, "blocks": [{"id", "plans": [{"plan": 프로젝트 상대 경로, "chain": 사슬 이름|null, "stages": ["screen"] 또는 ["screen", "confirm"], "estimate_seconds"?: {단계: 초}}]}]}(계획 경로는 큐 전체에서 한 번씩), 시험 분류표 = {"numeric_pinned": [헤드리스 시험 경로], "timing_record_only": [벽시계 시간 기준 시험 경로]}(둘 다 블록 헤드리스에서 실패해도 기록만). 일지가 있으면 --resume 일 때만, 큐 sha256 이 같을 때만 이어 한다. --revisit-deferred 는 고른 블록의 deferred 항목 confirm 을 상한 없이 돌린다(K10) | 최종 모드: --queue <final_dir>/final_queue.json(mode final) --holder w-final --journal <큐 final.journal> [--resume](새 플래그 없음, --block·--revisit-deferred 는 입력 오류, --overlay·--locks-dir 는 읽지도 쓰지도 않음)
-출력: 일지(C10 원자적 다시 쓰기. runs = {단계: 실행 폴더, lock: 잠금, verify<n>: 사슬 재검증, chain_verify: 사슬 요약(사슬 마지막 항목, 재검증 판정 불가로 중단되면 interrupted{plan, reason} 을 남겨 재개 때 반복하지 않음, 실행 실패면 남기지 않음), headless: 블록 헤드리스 폴더(블록 마지막 항목)}), 일지 폴더의 batch.log(시작 처리·명령·상태 한 줄씩), runs/<계획>/<단계>-<n>/ 와 <단계>-<n>.log, chains/<사슬>.json, blocks/<블록>-<n>/(materialize 사본·headless.log·headless.json(판정기 verdict·verdict_code·header_sync_pending)). 종료 코드 0 고른 블록 처리 끝·failed 없음 / 1 failed 항목 있음 / 2 큐·일지·계획 입력 오류 / 3 시작 처리(보류 회수→ensure→t.OverrideFPS 0→정본 재적재→보류 획득) 실패. 최종 모드: 일지 final_batch{edition, phase, restart, anchor_sha256, w_anchor_sha256, starts[{at, ok, reason}], outcome{event E2|E3|E3_repeat|F0_shortfall|start_failed, item, reason, at}|null, f0_gate{self_checks, sample, required, passed}|null}·항목 final{kind verify|ab, attempts[{step, stage, opportunity, try, folder, log, started_at, exit, state}], adoptions_first·adoptions·official_first·official_rerun·self_check·rerun 또는 ab_id·trigger_state·decision, 덧씌움·perf-candidates 앞뒤 sha, artifact_sha256}(명세 Saved/AgentOps/20261101/w-runbook/spec-final-verify.md 4.11), runs/<계획>/(verify|screen|confirm)-<n>/(sweep.json·verify.json·compare.json·screen.json·judge.json·check-ab.json). 최종 모드 종료 코드 0 모든 항목 끝 상태 / 1 E3·E3_repeat(자기 검증 불일치) / 2 입력 오류·E2 / 3 시작 처리 실패(E1, start_failed 포함) / 4 F0 결원(F0_shortfall)
-상태: 가짜 하위 프로세스 시험만(calib_offline_test T98·T99, 2026-10-30), 실제 에디터 배치 미실행. 하위 도구의 새 인수(--stage·--overlay·--lock·--screen-result·--screen-sweep·--verify-against·accept·overlay-remove --overlay·materialize 의 TDFluidPresetTuning.json·TDFluidMaterialLook.json 출력)는 명세 0.4 계약 기준이며 병합 뒤 이름·경로 맞물림 확인(실제 실행 미검증). 단계 2배 상한은 단계 실행 하나(하위 프로세스) 전체의 시간 제한으로 집행한다. 판정 종료 1(스윕 무효·대조 실패·판정 불가)은 undetermined 로 채택 없음(no_adopt)·둔감(insensitive)과 구분한다, 재검증 판정은 종료 0 통과, 종료 1 은 verify.json 대조 통과(control_ok)·verify.passed 거짓일 때만 실패이고 대조 표류·판정 불가는 사슬 중단(되돌림 없음). confirm 직전 screen.json overlay_sha256 ≠ 현재 덧씌움이면 locked 로 되돌려 재screen 한다(deferred 재방문은 상한 없이). 2026-11-01 블록 헤드리스 설계 단언 실패가 TDGame.FluidFX.PresetData.StructDefaultsMatchHeader 하나뿐이고 그 시험 BeginEvents~EndEvents 의 Error 줄이 모두 "Expected '<Globals|StructDefaults>.<구조체>.<필드> equals the header default …' to be true." 꼴이며 그 경로가 모두 덧씌움 assignments json_path 이면 통과(헤더 기본값은 W 단계에서 같이 옮김, headless.json header_sync_pending·batch.log '헤더 기본값 동기 대기(W 단계)'), 다른 꼴 줄·덧씌움 밖 경로·다른 설계 단언 실패가 섞이면 되돌림(calib_offline_test K10 A1~A4, 실제 배치 미실행). 2026-11-01 2차: 사슬 재검증은 덧씌움 assignments·actor_props 에 같은 폴더 <앞 구성원 stem>-p20.json(P-20 2라운드) 채택이 있는 앞 구성원을 재검증에서 빼고(일지 reason 에 '사슬 <이름> 재검증 제외: P-20 2라운드 채택이 있는 1라운드 계획은 재검증하지 않는다: <경로>', batch.log '<계획> 사슬 재검증 | 제외 | …' 한 줄) 나머지 구성원만 재검증한다(calib_offline_test K10 C2, 실제 배치 미실행). 되돌림·채택 순서의 is_from_item 은 그대로 파일 stem·계획 id 규칙 2026-11-05 최종 모드(큐 mode final, 명세 spec-final-verify 4절·개정 G): calib_final_offline_test 의 T100~T115·T160~T188 calib_batch 부분을 가짜 하위 프로세스로만 시험했고 실제 배치는 돌리지 않았다.
+실행 명령: python Tools/FluidFX/calib_batch.py --queue Tools/FluidFX/calib/batch_queue.json --holder <보류 이름> [--journal Saved/FluidFX/calib/batch/journal.json] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--locks-dir Saved/FluidFX/calib/locks] [--block K1]... [--resume] [--revisit-deferred] (PowerShell). 큐 = {"test_classes": {"path", "sha256"}, "blocks": [{"id", "plans": [{"plan": 프로젝트 상대 경로, "chain": 사슬 이름|null, "stages": ["screen"] 또는 ["screen", "confirm"], "estimate_seconds"?: {단계: 초}}]}]}(계획 경로는 큐 전체에서 한 번씩), 시험 분류표 = {"numeric_pinned": [헤드리스 시험 경로], "timing_record_only": [벽시계 시간 기준 시험 경로]}(둘 다 블록 헤드리스에서 실패해도 기록만). 일지가 있으면 --resume 일 때만, 큐 sha256 이 같을 때만 이어 한다. --revisit-deferred 는 고른 블록의 deferred 항목 confirm 을 상한 없이 돌린다(K10) | 최종 모드: --queue <final_dir>/final_queue.json(mode final) --holder w-final --journal <큐 final.journal> [--init-journal | --resume](--init-journal 은 일지·journal_id 만 만들고 측정 0, 그 뒤 calib_final_verify pin-journal 로 w-anchor 에 journal_id 를 더해 부모가 커밋해야 측정 시작·--resume 이 돈다, --init-journal 은 일반 모드에서 입력 오류, --block·--revisit-deferred 는 입력 오류, --overlay·--locks-dir 는 읽지도 쓰지도 않음)
+출력: 일지(C10 원자적 다시 쓰기. runs = {단계: 실행 폴더, lock: 잠금, verify<n>: 사슬 재검증, chain_verify: 사슬 요약(사슬 마지막 항목, 재검증 판정 불가로 중단되면 interrupted{plan, reason} 을 남겨 재개 때 반복하지 않음, 실행 실패면 남기지 않음), headless: 블록 헤드리스 폴더(블록 마지막 항목)}), 일지 폴더의 batch.log(시작 처리·명령·상태 한 줄씩), runs/<계획>/<단계>-<n>/ 와 <단계>-<n>.log, chains/<사슬>.json, blocks/<블록>-<n>/(materialize 사본·headless.log·headless.json(판정기 verdict·verdict_code·header_sync_pending)). 종료 코드 0 고른 블록 처리 끝·failed 없음 / 1 failed 항목 있음 / 2 큐·일지·계획 입력 오류 / 3 시작 처리(보류 회수→ensure→t.OverrideFPS 0→정본 재적재→보류 획득) 실패. 최종 모드: 일지(임시 파일 flush·fsync 뒤 os.replace) final_batch{edition, phase, restart, anchor_sha256, w_anchor_sha256, journal_id(무작위, 잠금 note 에도 적음), starts[{at, ok, reason}], outcome{event E2|E3|E3_repeat|F0_shortfall|start_failed, item, reason, at}|null, events[같은 사건 기록, 덧붙이기만], f0_gate{self_checks, sample, required, passed}|null}·항목 final{kind verify|ab, attempts[{step, stage, opportunity, try, folder, log, started_at, exit, state running|done|timeout|interrupted|recovered, output·output_sha256(sweep·판정 단계가 끝날 때 같은 저장에)}], adoptions_first·adoptions·official_first·official_rerun·self_check·rerun 또는 ab_id·trigger_state·decision, 덧씌움·perf-candidates 앞뒤 sha, artifact_sha256}(명세 Saved/AgentOps/20261101/w-runbook/spec-final-verify.md 4.11), runs/<계획>/(verify|screen|confirm)-<n>/(sweep.json·verify.json·compare.json·screen.json·judge.json·check-ab.json). 최종 모드 종료 코드 0 모든 항목 끝 상태 / 1 E3·E3_repeat(자기 검증 불일치) / 2 입력 오류·E2(일지 손상·이 일지 id 가 아닌 final_dir 잠금·일지가 모르는 실행 폴더·e1 F0 항목 3개 미만·git HEAD w-anchor 와 이력에서 이 판·회차에 처음 고정된 journal_id 가 이 일지가 아님·일지가 sha 를 적은 산출물이 없거나 다름 포함) / 3 시작 처리 실패(E1, start_failed 포함) / 4 F0 결원(F0_shortfall)
+상태: 가짜 하위 프로세스 시험만(calib_offline_test T98·T99, 2026-10-30), 실제 에디터 배치 미실행. 하위 도구의 새 인수(--stage·--overlay·--lock·--screen-result·--screen-sweep·--verify-against·accept·overlay-remove --overlay·materialize 의 TDFluidPresetTuning.json·TDFluidMaterialLook.json 출력)는 명세 0.4 계약 기준이며 병합 뒤 이름·경로 맞물림 확인(실제 실행 미검증). 단계 2배 상한은 단계 실행 하나(하위 프로세스) 전체의 시간 제한으로 집행한다. 판정 종료 1(스윕 무효·대조 실패·판정 불가)은 undetermined 로 채택 없음(no_adopt)·둔감(insensitive)과 구분한다, 재검증 판정은 종료 0 통과, 종료 1 은 verify.json 대조 통과(control_ok)·verify.passed 거짓일 때만 실패이고 대조 표류·판정 불가는 사슬 중단(되돌림 없음). confirm 직전 screen.json overlay_sha256 ≠ 현재 덧씌움이면 locked 로 되돌려 재screen 한다(deferred 재방문은 상한 없이). 2026-11-01 블록 헤드리스 설계 단언 실패가 TDGame.FluidFX.PresetData.StructDefaultsMatchHeader 하나뿐이고 그 시험 BeginEvents~EndEvents 의 Error 줄이 모두 "Expected '<Globals|StructDefaults>.<구조체>.<필드> equals the header default …' to be true." 꼴이며 그 경로가 모두 덧씌움 assignments json_path 이면 통과(헤더 기본값은 W 단계에서 같이 옮김, headless.json header_sync_pending·batch.log '헤더 기본값 동기 대기(W 단계)'), 다른 꼴 줄·덧씌움 밖 경로·다른 설계 단언 실패가 섞이면 되돌림(calib_offline_test K10 A1~A4, 실제 배치 미실행). 2026-11-01 2차: 사슬 재검증은 덧씌움 assignments·actor_props 에 같은 폴더 <앞 구성원 stem>-p20.json(P-20 2라운드) 채택이 있는 앞 구성원을 재검증에서 빼고(일지 reason 에 '사슬 <이름> 재검증 제외: P-20 2라운드 채택이 있는 1라운드 계획은 재검증하지 않는다: <경로>', batch.log '<계획> 사슬 재검증 | 제외 | …' 한 줄) 나머지 구성원만 재검증한다(calib_offline_test K10 C2, 실제 배치 미실행). 되돌림·채택 순서의 is_from_item 은 그대로 파일 stem·계획 id 규칙. 2026-11-05 최종 모드(큐 mode final, 명세 spec-final-verify 4절·개정 G): calib_final_offline_test 의 T100~T115·T160~T188 calib_batch 부분을 가짜 하위 프로세스로만 시험했고 실제 배치는 돌리지 않았다. 2026-11-06 개정 H(spec-patch-h): --resume 은 기록된 F0 관문도 산출물로 다시 계산해 결원·불일치면 F1 없이 같은 사건으로 멈추고, 일지 events 에 사건이 있으면 아무것도 돌리지 않으며, interrupted sweep 의 폴더에 invalid_count 0 sweep.json 이 있으면 다시 찍지 않고 recovered(종료 0)로 쓰고, 재시작 W11 닻 커밋 시각 ≤ 옛 일지 첫 시작·기록 폴더 1개를 보고, 시작 처리 중 예외는 E2(종료 2)다. 같은 하네스의 개정 H 시험(가짜 하위 프로세스)만 했다. 2026-11-06 개정 I(spec-patch-i): --init-journal(측정 0)·journal_id 의 git 고정 대조(HEAD w-anchor·이력의 판·회차 첫 고정, 재시작은 순서·횟수 1·기록 폴더·옛 일지 id), 시도 끝 산출물 sha 기록과 --resume 대조, 새 시도는 일지에 적힌 실행 폴더를 피함, anchor_commit_time 은 지금 닻을 처음 담은 커밋 시각, w_anchor_history 는 오래된 순. 같은 하네스의 개정 I 시험(가짜 하위 프로세스·가짜 git)과 스크래치 임시 저장소의 실제 git 확인만 했다.
 """
 import argparse
 import hashlib
@@ -9,6 +9,7 @@ import json
 import math
 import os
 import re
+import secrets
 import statistics
 import subprocess
 import sys
@@ -707,6 +708,17 @@ FOG_LIGHT_BEFORE = 4.0
 FOG_LIGHT_ADOPTED = 8.0
 FOG_LIGHT_VALUE_PATTERN = re.compile(r"\"volumetric_scattering_intensity\":\s*([-+0-9.eE]+)")
 FINAL_ERRORS = (OSError, ValueError, KeyError, TypeError, prereg_lock.LockError, fluid_tuning_patch.PatchError)
+FINAL_RUN_FOLDER_PATTERN = re.compile(r"^(verify|screen|confirm)-\d+$")
+JOURNAL_DAMAGE_TEXT = "E2: 일지를 읽지 못했거나 형식이 깨졌다(재부팅 손상 의심 — 사람이 판단한다, 새 일지로 다시 추첨하지 않는다)"
+FOREIGN_ARTIFACT_TEXT = ("E2: final_dir 에 이 일지가 만들지 않은 잠금·실행 폴더가 있다(결과 뒤 다시 추첨 금지 — W 멈춤, 다시 시작은 사용자 결정 뒤 새 사전 등록. "
+                         "재시작은 E3 증거가 있을 때 7.6 절차로만, 개정 D1)")
+W_ANCHOR_BASE_KEYS = ("anchor", "edition", "sha256")
+W_ANCHOR_PIN_KEYS = ("journal_id", "restart")
+W_ANCHOR_RESTART_KEYS = ("archive", "e3_evidence")
+JOURNAL_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
+JOURNAL_PIN_TEXT = ("E2: 이 일지 journal_id 가 측정 전에 git(w-anchor)에 고정되지 않았거나 이 판·회차에 처음 고정된 id 가 아니다"
+                    "(결과 뒤 새 일지로 다시 추첨 금지 — W 멈춤, 개정 I)")
+RECORDED_ARTIFACT_TEXT = "E2: 일지가 sha 를 기록한 산출물이 없어졌거나 바뀌었다(끝난 단계 고정, 개정 I — 사람이 판단한다, 지우거나 고쳐 다시 돌리지 않는다)"
 
 
 class FinalStop(Exception):
@@ -753,6 +765,70 @@ def canonical_json_text(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
 
+def write_json_durable(path, document):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    with open(temporary, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(document, ensure_ascii=False, indent=1))
+        handle.flush()
+        os.fsync(handle.fileno())
+    for attempt in range(1, REPLACE_ATTEMPTS + 1):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError:
+            if attempt == REPLACE_ATTEMPTS:
+                raise
+            time.sleep(REPLACE_RETRY_SECONDS)
+
+
+def journal_note(journal_id):
+    return f"일지 {journal_id}"
+
+
+def lock_note_problem(path, journal_id):
+    try:
+        note = read_json(path).get("note")
+    except (OSError, ValueError, AttributeError):
+        return f"잠금 {relative_text(path)}(읽지 못함 — 재부팅 손상 의심)"
+    return None if isinstance(note, str) and journal_note(journal_id) in note else f"잠금 {relative_text(path)}(note 에 이 일지 id 가 없다)"
+
+
+def journal_folders(journal):
+    return {relative_text(attempt["folder"]) for item in journal["items"] for attempt in item["final"]["attempts"] if attempt.get("folder")}
+
+
+def run_folders_in(final_dir, edition):
+    base = prereg_lock.project_path(final_dir)
+    folders = set()
+    for child in sorted(base.iterdir()) if base.is_dir() else []:
+        if not child.is_dir() or child.name.startswith("aborted-") or (edition == "e1" and child.name == "r2"):
+            continue
+        folders.update(relative_text(path) for path in child.rglob("*") if path.is_dir() and FINAL_RUN_FOLDER_PATTERN.match(path.name) and path.parent.parent.name == "runs")
+    return folders
+
+
+def foreign_artifact_problems(final_dir, edition, journal):
+    journal_id = journal["final_batch"]["journal_id"]
+    locks_dir = prereg_lock.project_path(f"{final_dir}/locks")
+    problems = [lock_note_problem(path, journal_id) for path in sorted(locks_dir.iterdir()) if path.is_file()] if locks_dir.is_dir() else []
+    problems = [problem for problem in problems if problem]
+    problems += [f"실행 폴더 {folder}(일지 attempts 에 없다)" for folder in sorted(run_folders_in(final_dir, edition) - journal_folders(journal))]
+    return problems
+
+
+def is_completed_sweep(folder_text):
+    sweep_text = f"{folder_text}/sweep.json"
+    if not is_file_text(sweep_text):
+        return False
+    try:
+        sweep = read_json_text(sweep_text)
+    except (OSError, ValueError):
+        return False
+    return isinstance(sweep, dict) and bool(sweep.get("scenes")) and sweep.get("invalid_count") == 0
+
+
 def is_final_queue(queue_text):
     try:
         queue = read_json(project_path(queue_text))
@@ -770,24 +846,108 @@ def anchor_commit_problems(path_text):
     return [] if clean.returncode == 0 else [f"w-anchor {relative} 에 커밋되지 않은 변경이 있다"]
 
 
+def is_same_anchor(content, current):
+    return isinstance(content, dict) and isinstance(current, dict) and all(content.get(key) == current.get(key) for key in W_ANCHOR_BASE_KEYS)
+
+
 def anchor_commit_time(path_text):
-    completed = subprocess.run(["git", "log", "-1", "--format=%cI", "--", relative_text(path_text)], cwd=ROOT, capture_output=True, text=True)
-    text = completed.stdout.strip()
-    if completed.returncode != 0 or not text:
-        raise InputError(f"w-anchor {path_text} 의 커밋 시각을 git 에서 읽지 못했다")
-    return prereg_lock.parse_moment(text)
+    current = read_json_text(path_text)
+    for entry in w_anchor_history(path_text):
+        if is_same_anchor(entry.get("content"), current):
+            return prereg_lock.parse_moment(entry["committed_at"])
+    raise InputError(f"w-anchor {path_text} 의 지금 닻(anchor·edition·sha256)을 담은 커밋을 git 이력에서 찾지 못했다")
+
+
+def w_anchor_key_problems(w_anchor):
+    if not isinstance(w_anchor, dict):
+        return ["w-anchor 가 JSON 객체가 아니다"]
+    keys = set(w_anchor)
+    base, pin, restart_pin = set(W_ANCHOR_BASE_KEYS), set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS), set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS + W_ANCHOR_RESTART_KEYS)
+    if keys == base:
+        return []
+    is_pin = keys == pin and w_anchor.get("restart") == 0
+    is_restart_pin = keys == restart_pin and w_anchor.get("restart") == 1 and w_anchor.get("edition") == "e1"
+    if (is_pin or is_restart_pin) and isinstance(w_anchor.get("journal_id"), str) and JOURNAL_ID_PATTERN.match(w_anchor["journal_id"]):
+        return []
+    return ["w-anchor 키가 anchor·edition·sha256(pin-journal 뒤에는 journal_id·restart, e1 재시작이면 archive·e3_evidence 까지)이 아니다"]
+
+
+def pin_round(content):
+    if not isinstance(content, dict) or "journal_id" not in content or w_anchor_key_problems(content):
+        return None
+    return content["edition"], content["restart"]
+
+
+def archive_directories(final_dir):
+    base = prereg_lock.project_path(final_dir)
+    return sorted(relative_text(path) for path in base.glob("aborted-*") if path.is_dir()) if base.is_dir() else []
+
+
+def restart_pin_problems(pins, final_dir):
+    restart_indexes = [index for index, content in enumerate(pins) if pin_round(content) == ("e1", 1)]
+    if not restart_indexes:
+        return []
+    first = pins[restart_indexes[0]]
+    problems = []
+    if len({pins[index]["journal_id"] for index in restart_indexes}) > 1:
+        problems.append("git 이력에 e1 재시작 일지 고정이 2개 이상이다(W당 재시작 1회, 개정 I)")
+    earlier = [content for content in pins[:restart_indexes[0]] if pin_round(content) == ("e1", 0)]
+    if not earlier:
+        problems.append("git 이력에서 e1 재시작 일지 고정 앞에 e1 restart 0 일지 고정이 없다(순서, 개정 I)")
+    archives = archive_directories(final_dir)
+    if len(archives) != 1 or relative_text(first.get("archive") or "-") != archives[0]:
+        problems.append(f"재시작 고정의 archive {first.get('archive')} ≠ 지금 기록 폴더 {archives}(개정 I)")
+        return problems
+    evidence = relative_text(first.get("e3_evidence") or "-")
+    if evidence != f"{archives[0]}/batch-e1/journal.json":
+        return problems + [f"재시작 고정의 e3_evidence {first.get('e3_evidence')} ≠ {archives[0]}/batch-e1/journal.json(개정 I)"]
+    try:
+        old_id = (read_json_text(evidence).get("final_batch") or {}).get("journal_id")
+    except (OSError, ValueError, AttributeError):
+        old_id = None
+    if earlier and old_id != earlier[0]["journal_id"]:
+        problems.append("기록 폴더 옛 일지 journal_id ≠ git 이력에 처음 고정된 e1 restart 0 journal_id(옛 일지를 바꿔 넣음, 개정 I)")
+    return problems
+
+
+def journal_pin_problems(w_anchor, history, journal, final_dir):
+    final_batch = journal.get("final_batch") or {}
+    journal_id, round_key = final_batch.get("journal_id"), (final_batch.get("edition"), final_batch.get("restart"))
+    if not isinstance(journal_id, str) or not JOURNAL_ID_PATTERN.match(journal_id):
+        return ["일지 final_batch.journal_id 가 32자리 16진이 아니다(개정 I)"]
+    problems = []
+    if not isinstance(w_anchor, dict) or w_anchor.get("journal_id") != journal_id or pin_round(w_anchor) != round_key:
+        problems.append(f"HEAD w-anchor 에 이 일지의 journal_id·판·회차 {round_key} 고정이 없다(측정 전 pin-journal 뒤 커밋, 개정 I)")
+    pins = [entry.get("content") for entry in history if pin_round(entry.get("content")) is not None]
+    same_round = [content for content in pins if pin_round(content) == round_key]
+    if not same_round or same_round[0]["journal_id"] != journal_id:
+        problems.append(f"git 이력에서 판·회차 {round_key} 에 처음 고정된 journal_id ≠ 이 일지 journal_id(결과 뒤 새 일지 = 다시 추첨, 개정 I)")
+    if round_key == ("e1", 1):
+        problems += restart_pin_problems(pins, final_dir)
+    return problems
+
+
+def recorded_artifact_problems(journal):
+    problems = []
+    for item in journal["items"]:
+        final = item["final"]
+        recorded = sorted((final.get("artifact_sha256") or {}).items())
+        recorded += [(attempt.get("output") or "-", attempt["output_sha256"]) for attempt in final["attempts"] if attempt.get("output_sha256")]
+        problems += [f"산출물 {path}(일지에 sha 를 기록했는데 지금 없거나 다르다)" for path, value in recorded if sha_or_none(path) != value]
+    return problems
 
 
 def w_anchor_history(path_text):
     relative = relative_text(path_text)
-    listed = subprocess.run(["git", "log", "--format=%H", "--", relative], cwd=ROOT, capture_output=True, text=True)
+    listed = subprocess.run(["git", "log", "--reverse", "--topo-order", "--format=%H %cI", "--", relative], cwd=ROOT, capture_output=True, text=True)
     history = []
-    for commit in listed.stdout.split():
+    for line in listed.stdout.splitlines():
+        commit, _, committed_at = line.strip().partition(" ")
         shown = subprocess.run(["git", "show", f"{commit}:{relative}"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
         if shown.returncode != 0:
             continue
         try:
-            history.append(json.loads(shown.stdout))
+            history.append({"committed_at": committed_at, "content": json.loads(shown.stdout)})
         except ValueError:
             continue
     return history
@@ -982,6 +1142,9 @@ def check_final_queue_format(queue):
     block_ids = [block.get("id") for block in queue.get("blocks") or []]
     if not block_ids or block_ids != [block for block in FINAL_BLOCK_ORDER if block in block_ids]:
         raise InputError(f"블록 id 는 {FINAL_BLOCK_ORDER} 순서로 한 번씩만 나와야 한다: {block_ids}")
+    f0_count = sum(len(block.get("plans") or []) for block in queue["blocks"] if block.get("id") == "F0")
+    if edition == "e1" and f0_count < F0_REQUIRED_SELF_CHECKS:
+        raise InputError(f"e1 큐의 F0 항목 {f0_count}개 < 자기 검증 표본 하한 {F0_REQUIRED_SELF_CHECKS}(D-W28·개정 H, 결과 전 사전 등록 결함)")
     plans = [entry.get("plan") for _, entry in queue_entries(queue)]
     if not plans or None in plans:
         raise InputError("큐에 계획이 없다")
@@ -1023,8 +1186,9 @@ def final_anchor_problems(context):
     if not is_file_text(w_anchor_text):
         return [f"w-anchor 없음: {w_anchor_text}"], None
     w_anchor = read_json_text(w_anchor_text)
-    if not isinstance(w_anchor, dict) or set(w_anchor) != {"anchor", "edition", "sha256"}:
-        return ["w-anchor 키가 정확히 anchor·edition·sha256 이 아니다"], None
+    key_problems = w_anchor_key_problems(w_anchor)
+    if key_problems:
+        return key_problems, None
     problems = list(anchor_commit_problems(w_anchor_text))
     if w_anchor["edition"] != final["edition"]:
         problems.append(f"w-anchor edition {w_anchor['edition']} ≠ 큐 {final['edition']}")
@@ -1073,6 +1237,9 @@ def old_journal_problems(final_dir, expect, previous_journal_text):
 
 def restart_problems(context, anchor):
     final_dir, expect = context["final_dir"], context["expect"]
+    archives = [path for path in prereg_lock.project_path(final_dir).glob("aborted-*") if path.is_dir()]
+    if len(archives) != 1:
+        return [f"재시작 정당성: 기록 폴더 aborted-* 가 {len(archives)}개다(W당 재시작 1회, 개정 E2)"]
     previous_journal_text = anchor.get("previous_journal")
     if not is_file_text(previous_journal_text):
         return [f"재시작 정당성: anchor previous_journal(기록 폴더 옛 일지) 없음: {previous_journal_text}"]
@@ -1087,9 +1254,14 @@ def restart_problems(context, anchor):
     if previous_sha != previous_anchor.get("sha256") or previous_sha != (old.get("final_batch") or {}).get("anchor_sha256"):
         problems.append("W11 닻 확인(개정 F1): 옮긴 anchor.json sha ≠ anchor previous_anchor.sha256 또는 옛 일지 final_batch.anchor_sha256")
     committed = {"anchor": f"{final_dir}/anchor.json", "edition": "e1", "sha256": previous_sha}
-    history = [entry for entry in w_anchor_history(context["w_anchor_text"]) if isinstance(entry, dict)]
-    if not any(set(entry) == set(committed) and relative_text(entry["anchor"]) == committed["anchor"] and entry["edition"] == "e1" and entry["sha256"] == previous_sha for entry in history):
+    matching = [entry["committed_at"] for entry in w_anchor_history(context["w_anchor_text"])
+                if isinstance(entry.get("content"), dict) and not w_anchor_key_problems(entry["content"]) and relative_text(entry["content"]["anchor"]) == committed["anchor"]
+                and entry["content"]["edition"] == "e1" and entry["content"]["sha256"] == previous_sha]
+    first_start = (((old.get("final_batch") or {}).get("starts") or [{}])[0] or {}).get("at")
+    if not matching:
         problems.append("W11 닻 확인(개정 F1): w-anchor git 이력에 옮긴 anchor.json sha 를 담은 e1 커밋이 없다")
+    elif not first_start or not any(prereg_lock.parse_moment(moment) <= prereg_lock.parse_moment(first_start) for moment in matching):
+        problems.append(f"W11 닻 확인(개정 H): 옮긴 anchor.json sha 를 담은 e1 커밋 시각이 모두 옛 일지 첫 calib_batch 시작 {first_start} 보다 늦다")
     old_files = read_json_text(previous_anchor_text).get("files") or {}
     new_files = anchor.get("files") or {}
     excluded = {FINAL_TOOL_PATH, f"{final_dir}/expect.json", f"{final_dir}/final_queue.json"}
@@ -1236,18 +1408,48 @@ def new_final_item(block_id, entry, edition):
             "reason": "", "final": final}
 
 
-def open_final_journal(journal_path, context, queue_sha256, is_resume):
+def read_final_journal(journal_path):
+    try:
+        data = journal_path.read_bytes()
+        journal = None if b"\x00" in data else json.loads(data.decode("utf-8"))
+    except (OSError, ValueError) as error:
+        raise InputError(f"{JOURNAL_DAMAGE_TEXT}: {journal_path}: {error}") from error
+    final_batch = journal.get("final_batch") if isinstance(journal, dict) else None
+    is_valid = (isinstance(final_batch, dict) and isinstance(journal.get("items"), list) and isinstance(final_batch.get("journal_id"), str)
+                and isinstance(final_batch.get("events"), list) and isinstance(final_batch.get("starts"), list))
+    if not is_valid:
+        raise InputError(f"{JOURNAL_DAMAGE_TEXT}: {journal_path}")
+    return journal
+
+
+def resume_attempt_state(final, attempt):
+    if attempt["step"] == "sweep" and attempt.get("folder") and is_completed_sweep(attempt["folder"]):
+        sweep_text = f"{attempt['folder']}/sweep.json"
+        attempt.update(exit=0, state="recovered", output=sweep_text, output_sha256=sha_of_text(sweep_text))
+        final["artifact_sha256"][sweep_text] = attempt["output_sha256"]
+        return
+    attempt["state"] = "interrupted"
+
+
+def is_unmeasured_journal(journal):
+    return not journal["final_batch"]["starts"] and all(not item["final"]["attempts"] for item in journal["items"])
+
+
+def open_final_journal(journal_path, context, queue_sha256, mode):
     final = context["final"]
-    if not is_resume:
+    if mode == "init":
         if journal_path.exists():
-            raise InputError(f"일지가 이미 있다(--resume 으로 이어 하거나 옮긴다): {journal_path}")
+            raise InputError(f"일지가 이미 있다: {journal_path}. --init-journal 은 일지가 없을 때 한 번만(결과 뒤 새 일지로 다시 추첨하지 않는다, 재시작은 E3 증거가 있을 때 7.6 절차로만)")
         items = [new_final_item(block["id"], entry, final["edition"]) for block, entry in queue_entries(context["queue"])]
         final_batch = {"edition": final["edition"], "phase": final["phase"], "restart": final["restart"], "anchor_sha256": context["anchor_sha256"],
-                       "w_anchor_sha256": context["w_anchor_sha256"], "starts": [], "outcome": None, "f0_gate": None}
+                       "w_anchor_sha256": context["w_anchor_sha256"], "journal_id": secrets.token_hex(16), "starts": [], "outcome": None, "events": [], "f0_gate": None}
         return {"queue_sha256": queue_sha256, "items": items, "real_dt": {}, "holds": [], "final_batch": final_batch}
     if not journal_path.exists():
-        raise InputError(f"이어 할 일지 없음: {journal_path}")
-    journal = read_json(journal_path)
+        raise InputError(f"일지 없음: {journal_path}. 측정 전에 --init-journal 로 일지를 만들고 calib_final_verify pin-journal 로 w-anchor 에 journal_id 를 더해 커밋한다(개정 I)")
+    journal = read_final_journal(journal_path)
+    if mode == "start" and not is_unmeasured_journal(journal):
+        raise InputError(f"일지가 이미 시작됐다: {journal_path}. 같은 일지는 --resume 으로만 이어 한다(결과 뒤 새 일지로 다시 추첨하지 않는다, 재시작은 E3 증거가 있을 때 7.6 절차로만)")
+    require_no_problems(recorded_artifact_problems(journal), RECORDED_ARTIFACT_TEXT)
     if journal.get("queue_sha256") != queue_sha256:
         raise InputError("큐 sha256 이 일지에 동결한 값과 다르다(큐를 바꾸면 새 일지)")
     final_batch = journal.get("final_batch") or {}
@@ -1258,7 +1460,7 @@ def open_final_journal(journal_path, context, queue_sha256, is_resume):
     for item in journal["items"]:
         for attempt in item["final"]["attempts"]:
             if attempt["state"] == "running":
-                attempt["state"] = "interrupted"
+                resume_attempt_state(item["final"], attempt)
     return journal
 
 
@@ -1270,6 +1472,19 @@ class FinalBatchRunner(BatchRunner):
         self.final = queue["final"]
         self.final_batch = journal["final_batch"]
         self.current_item = None
+
+    def save(self):
+        write_json_durable(self.journal_path, self.journal)
+
+    def stop_record(self):
+        events = self.final_batch["events"]
+        return self.final_batch.get("outcome") or (events[-1] if events else None)
+
+    def record_event(self, event, item_id, reason):
+        outcome = {"event": event, "item": item_id, "reason": reason[-REASON_TAIL_CHARACTERS:], "at": final_now_text()}
+        self.final_batch["outcome"] = outcome
+        self.final_batch["events"].append(dict(outcome))
+        self.save()
 
     def item_id(self, item):
         return item["final"].get("run") or item["final"].get("ab_id")
@@ -1322,8 +1537,9 @@ class FinalBatchRunner(BatchRunner):
         starts = self.final_batch["starts"]
         starts[-1].update(ok=False, reason=reason[-REASON_TAIL_CHARACTERS:])
         if len(starts) >= 2 and starts[-2].get("ok") is False:
-            self.final_batch["outcome"] = {"event": "start_failed", "item": None, "reason": "시작 처리 연속 2회 실패(B1 재시도 1회 뒤 다시)", "at": final_now_text()}
-        self.save()
+            self.record_event("start_failed", None, "시작 처리 연속 2회 실패(B1 재시도 1회 뒤 다시)")
+        else:
+            self.save()
         self.record("시작 처리", "실패", reason[:200])
         return FINAL_EVENT_EXIT_CODES["start_failed"]
 
@@ -1339,7 +1555,7 @@ class FinalBatchRunner(BatchRunner):
         if canonical_disk_sha() != expected:
             raise FinalStop("E2", "정본 sha ≠ 마지막 정본 쓰기 기록(expect canonical_after), 재적재 1회 뒤에도 다르다(B2)")
 
-    def run_attempt(self, item, step, command, log_path, stage=None, opportunity=None, try_number=None, folder=None, timeout=TOOL_TIMEOUT_SECONDS):
+    def run_attempt(self, item, step, command, log_path, stage=None, opportunity=None, try_number=None, folder=None, timeout=TOOL_TIMEOUT_SECONDS, output=None):
         attempt = {"step": step, "stage": stage, "opportunity": opportunity, "try": try_number, "folder": relative_text(folder) if folder else None,
                    "log": relative_text(log_path), "started_at": final_now_text(), "exit": None, "state": "running"}
         item["final"]["attempts"].append(attempt)
@@ -1347,8 +1563,18 @@ class FinalBatchRunner(BatchRunner):
         label = " ".join(str(part) for part in (step, stage, opportunity, f"{try_number}회" if try_number else None) if part)
         code, tail = self.item_tool(item, label, command, log_path, timeout)
         attempt.update(exit=code, state="timeout" if code is None else "done")
+        if output:
+            attempt.update(output=relative_text(output), output_sha256=sha_or_none(output))
         self.save()
         return attempt, tail
+
+    def run_dir_and_log(self, item, run_key):
+        base = self.work_dir / "runs" / self.plan_name(item)
+        recorded = journal_folders(self.journal)
+        number = 1
+        while (base / f"{run_key}-{number}.log").exists() or (base / f"{run_key}-{number}").exists() or relative_text(base / f"{run_key}-{number}") in recorded:
+            number += 1
+        return base / f"{run_key}-{number}", base / f"{run_key}-{number}.log"
 
     def lock_step(self, item, step, command, lock_text):
         attempt, tail = self.run_attempt(item, step, command, self.item_log(item, step))
@@ -1358,20 +1584,21 @@ class FinalBatchRunner(BatchRunner):
 
     def prepare_locks(self, item, entry):
         identifier, suffix = self.item_id(item), self.final["edition"]
+        note = journal_note(self.final_batch["journal_id"])
         file_arguments = [part for path in [*self.final["judge_files"], self.final["anchor"]] for part in ("--file", path)]
         if item["block"] == "F0":
             self.lock_step(item, "lock_verify", python_command(LOCK_TOOL, "verify", "--lock", entry["lock"]), entry["lock"])
             if is_file_text(entry["judge_lock"]):
                 self.lock_step(item, "judge_lock_verify", python_command(LOCK_TOOL, "verify", "--lock", entry["judge_lock"]), entry["judge_lock"])
             else:
-                command = python_command(LOCK_TOOL, "lock", "--out", entry["judge_lock"], "--note", f"{identifier} {suffix} 판정 잠금", *file_arguments)
+                command = python_command(LOCK_TOOL, "lock", "--out", entry["judge_lock"], "--note", f"{identifier} {suffix} 판정 잠금 {note}", *file_arguments)
                 self.lock_step(item, "judge_lock_create", command, entry["judge_lock"])
             item["runs"].update(lock=entry["lock"], judge_lock=entry["judge_lock"])
         elif is_file_text(entry["lock"]):
             self.lock_step(item, "lock_verify", python_command(LOCK_TOOL, "verify", "--lock", entry["lock"]), entry["lock"])
             item["runs"]["lock"] = entry["lock"]
         else:
-            command = python_command(LOCK_TOOL, "lock", "--out", entry["lock"], "--plan", item["plan"], "--note", f"{identifier} {suffix} 최종 검증 실행 잠금", *file_arguments)
+            command = python_command(LOCK_TOOL, "lock", "--out", entry["lock"], "--plan", item["plan"], "--note", f"{identifier} {suffix} 최종 검증 실행 잠금 {note}", *file_arguments)
             self.lock_step(item, "lock_create", command, entry["lock"])
             item["runs"]["lock"] = entry["lock"]
         if item["status"] == "pending":
@@ -1393,7 +1620,7 @@ class FinalBatchRunner(BatchRunner):
             limit = STEP_LIMIT_FACTOR * max(self.stage_estimate(item, stage), SCENE_OVERHEAD_SECONDS)
             command = python_command(SWEEP_TOOL, "--plan", item["plan"], "--stage", stage, "--overlay", entry["overlay"], "--run-dir", run_dir, "--lock", entry["lock"],
                                      *extra_arguments)
-            attempt, tail = self.run_attempt(item, "sweep", command, log_path, stage, opportunity, len(attempts) + 1, run_dir, limit)
+            attempt, tail = self.run_attempt(item, "sweep", command, log_path, stage, opportunity, len(attempts) + 1, run_dir, limit, run_dir / "sweep.json")
             item["attempts"] = sum(1 for each in final["attempts"] if each["step"] == "sweep")
             if attempt["exit"] == 0:
                 sweep_text = f"{attempt['folder']}/sweep.json"
@@ -1414,7 +1641,7 @@ class FinalBatchRunner(BatchRunner):
             is_same = (attempt["step"], attempt["stage"], attempt["opportunity"], attempt["folder"]) == (step, stage, opportunity, folder)
             if is_same and attempt["state"] == "done" and attempt["exit"] in allowed_exits and is_file_text(output_text):
                 return attempt["exit"]
-        attempt, tail = self.run_attempt(item, step, command, prereg_lock.project_path(f"{folder}.{step}.log"), stage, opportunity, None, folder)
+        attempt, tail = self.run_attempt(item, step, command, prereg_lock.project_path(f"{folder}.{step}.log"), stage, opportunity, None, folder, output=output_text)
         if attempt["exit"] not in allowed_exits or not is_file_text(output_text):
             raise FinalStop("E2", f"{step} {stage} 종료 {attempt['exit']}({attempt['state']}): {tail}")
         final["artifact_sha256"][output_text] = sha_of_text(output_text)
@@ -1583,8 +1810,6 @@ class FinalBatchRunner(BatchRunner):
         self.finish_ab(item, entry, "ab_done", decision, f"촉발 상태 {trigger_state} → {decision}")
 
     def pass_f0_gate(self):
-        if self.final_batch.get("f0_gate") is not None:
-            return
         f0_items = [item for item in self.journal["items"] if item["block"] == "F0"]
         if not f0_items:
             return
@@ -1602,7 +1827,10 @@ class FinalBatchRunner(BatchRunner):
         sample.sort()
         required = F0_REQUIRED_SELF_CHECKS if self.final["edition"] == "e1" else 0
         passed = len(sample) >= required and not mismatched
-        self.final_batch["f0_gate"] = {"self_checks": self_checks, "sample": sample, "required": required, "passed": passed}
+        gate = {"self_checks": self_checks, "sample": sample, "required": required, "passed": passed}
+        if passed and self.final_batch.get("f0_gate") == gate:
+            return
+        self.final_batch["f0_gate"] = gate
         for item, checks in mismatched:
             item["final"]["self_check"] = checks
             self.set_status(item, "self_check_mismatch", "F0 관문에서 파일로 다시 계산한 자기 검증이 불일치(E3)")
@@ -1618,10 +1846,17 @@ class FinalBatchRunner(BatchRunner):
         if stop.event == "E2" and item is not None:
             self.set_status(item, "failed", stop.reason[-REASON_TAIL_CHARACTERS:])
         item_id = stop.item_id or (self.item_id(item) if item else None)
-        self.final_batch["outcome"] = {"event": stop.event, "item": item_id, "reason": stop.reason[-REASON_TAIL_CHARACTERS:], "at": final_now_text()}
-        self.save()
+        self.record_event(stop.event, item_id, stop.reason)
         self.record("사건", stop.event, f"{item_id or '-'} {stop.reason[:200]}")
         return FINAL_EVENT_EXIT_CODES[stop.event]
+
+    def start_and_run(self):
+        try:
+            code = self.start()
+        except FINAL_ERRORS as error:
+            self.final_batch["starts"][-1].update(ok=False, reason=f"시작 처리 오류 {type(error).__name__}: {error}"[-REASON_TAIL_CHARACTERS:])
+            return self.stop_batch(FinalStop("E2", f"시작 처리 오류 {type(error).__name__}: {error}"))
+        return self.run() if code is None else code
 
     def run(self):
         blocks = self.queue["blocks"]
@@ -1655,29 +1890,50 @@ class FinalBatchRunner(BatchRunner):
         print("상태:", ", ".join(f"{status} {count}" for status, count in sorted(counts.items())))
         for item in self.journal["items"]:
             print(f"  {item['block']} {self.item_id(item)} {Path(item['plan']).stem}: {item['status']} {item['reason'][:160]}")
-        outcome = self.final_batch.get("outcome")
-        if outcome:
-            print(f"사건: {outcome['event']} {outcome.get('item') or '-'} {outcome.get('reason') or ''}")
+        stopped = self.stop_record()
+        if stopped:
+            print(f"사건: {stopped['event']} {stopped.get('item') or '-'} {stopped.get('reason') or ''}")
+
+
+def final_journal_mode(arguments):
+    if arguments.init_journal and arguments.resume:
+        raise InputError("--init-journal 과 --resume 은 같이 쓰지 않는다")
+    if arguments.init_journal:
+        return "init"
+    return "resume" if arguments.resume else "start"
+
+
+def init_final_journal(runner):
+    runner.save()
+    journal_id = runner.final_batch["journal_id"]
+    print(f"일지 {runner.journal_path} journal_id {journal_id} (측정 0)")
+    print("다음: python -B Tools/FluidFX/calib_final_verify.py pin-journal --spec <final_dir>/final-spec.json → w-anchor 커밋 → calib_batch(같은 --journal, --resume 없이)")
+    return 0
 
 
 def run_final_mode(arguments):
     queue_path = project_path(arguments.queue)
     try:
+        mode = final_journal_mode(arguments)
         context = load_final_context(arguments, queue_path)
-        journal = open_final_journal(project_path(arguments.journal), context, file_sha256(queue_path), arguments.resume)
+        journal = open_final_journal(project_path(arguments.journal), context, file_sha256(queue_path), mode)
+        require_no_problems(foreign_artifact_problems(context["final_dir"], context["final"]["edition"], journal), FOREIGN_ARTIFACT_TEXT)
+        if mode != "init":
+            pin_problems = journal_pin_problems(read_json_text(context["w_anchor_text"]), w_anchor_history(context["w_anchor_text"]), journal, context["final_dir"])
+            require_no_problems(pin_problems, JOURNAL_PIN_TEXT)
         runner = FinalBatchRunner(arguments, context["queue"], journal, context)
+        if mode == "init":
+            return init_final_journal(runner)
     except (InputError, *FINAL_ERRORS) as error:
         print("입력 오류:", error)
         return 2
-    outcome = journal["final_batch"].get("outcome")
-    if outcome and outcome.get("event") in FINAL_EVENT_EXIT_CODES:
+    stopped = runner.stop_record()
+    if stopped and stopped.get("event") in FINAL_EVENT_EXIT_CODES:
         runner.print_final_summary()
-        return FINAL_EVENT_EXIT_CODES[outcome["event"]]
+        return FINAL_EVENT_EXIT_CODES[stopped["event"]]
     runner.save()
     try:
-        code = runner.start()
-        if code is None:
-            code = runner.run()
+        code = runner.start_and_run()
     finally:
         runner.finish()
     runner.print_final_summary()
@@ -1695,9 +1951,13 @@ def main():
     parser.add_argument("--block", action="append", default=[])
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--revisit-deferred", action="store_true")
+    parser.add_argument("--init-journal", action="store_true")
     arguments = parser.parse_args()
     if is_final_queue(arguments.queue):
         return run_final_mode(arguments)
+    if arguments.init_journal:
+        print("입력 오류: --init-journal 은 최종 모드 큐(mode final)에서만 받는다")
+        return 2
     try:
         queue_path = project_path(arguments.queue)
         queue = load_queue(queue_path)

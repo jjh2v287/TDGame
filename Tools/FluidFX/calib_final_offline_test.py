@@ -1,13 +1,14 @@
 """실행 환경: 시스템 Python 3(에디터 불필요, calib_judge import 때문에 numpy·Pillow·scipy 필요, git 함수는 가짜로 바꿔 git 을 부르지 않음, T147 만 fluid_tuning_patch materialize 를 하위 프로세스로 읽기 전용 실행).
 실행 명령: python -B Tools/FluidFX/calib_final_offline_test.py (종료 0 전부 통과 / 1 실패, 마지막 줄 SUMMARY passed=N/M)
 출력: Saved/FluidFX/calib/final-offline-test/(실행마다 지움, 합성 fixture·산출물)과 PASS/FAIL 줄
-상태: 2026-11-05 calib_final_verify 몫(명세 8.3 T130~T150, 8.4·8.5 의 calib_final_verify 부분)과 calib_batch 최종 모드(T100~T115·T161~T168·T179·T182~T188 의 calib_batch 부분, 가짜 run_tool 이 calib_judge·prereg_lock·calib_final_verify 를 같은 프로세스에서 실제로 부르고 스윕·A/B 판정·에디터·보류만 가짜), 개정 G 소수정 3건(관문 보고 표준 오류만·잠금 단계 interrupted·r2 covered 자식) 시험이 있다. 실제 배치·에디터는 돌리지 않는다.
+상태: 2026-11-05 calib_final_verify 몫(명세 8.3 T130~T150, 8.4·8.5 의 calib_final_verify 부분)과 calib_batch 최종 모드(T100~T115·T161~T168·T179·T182~T188 의 calib_batch 부분, 가짜 run_tool 이 calib_judge·prereg_lock·calib_final_verify 를 같은 프로세스에서 실제로 부르고 스윕·A/B 판정·에디터·보류만 가짜), 개정 G 소수정 3건(관문 보고 표준 오류만·잠금 단계 interrupted·r2 covered 자식) 시험, 2026-11-06 개정 H 회귀 시험(반박자 재현 RI s1~s5·적합 R1~R4·fixture A1·D2·N1·C1·I1·H3: F0 관문 끊김 재개·남은 잠금·실행 폴더 재추첨·F0 하한·일지 손상·끝난 interrupted 스윕·outcome 삭제·W11 닻 커밋 시각·시작 예외·r2 시작 관문·자기 검증 복사본 대조, HEAD 코드에 돌려 빨강 확인), 개정 I 회귀 시험(반박 적합 M-1 N1·N2·N1r·M-2 N3·N3b, RI M1'·n2·n3 의 시도 끝 꼴·n4, fixture X1·B1, P-42: --init-journal·pin-journal·가짜 git 이력의 journal_id 첫 고정 대조, 관문 다시 계산, 시도 끝 산출물 sha, 실행 폴더 재사용 금지. 앞 판 동작으로 함수를 되돌린 구동기에서 빨강 확인)이 있다. 가짜 git 은 w-anchor 경로별 커밋 목록이고 reset_batch·simulate_batch 는 새 W 로 보고 고정을 지운다. 실제 배치·에디터는 돌리지 않는다.
 """
 import contextlib
 import copy
 import io
 import json
 import os
+import secrets
 import shutil
 import subprocess
 import sys
@@ -28,7 +29,7 @@ TEST_ROOT = "Saved/FluidFX/calib/final-offline-test"
 REAL_FINAL_DIR = "Saved/FluidFX/calib/final"
 REAL_OVERLAY = "Saved/FluidFX/calib/accepted/overlay.json"
 RESULTS = []
-GIT = {"problems": [], "time": "2026-11-05T00:00:00+09:00", "history": None}
+GIT = {"problems": [], "time": "2026-11-05T00:00:00+09:00", "history": None, "commits": {}}
 PATCH_TOOL = {"calls": [], "fail": None, "tamper": False}
 ARCHIVE_NAME = "aborted-20261105-120000"
 
@@ -310,6 +311,10 @@ def world_scope(world):
     return stack
 
 
+def fixture_note(options):
+    return f"fixture {calib_batch.journal_note(options['journal_id'])}"
+
+
 def make_lock(files, out_text, note="fixture"):
     path = absolute(out_text)
     if path.exists():
@@ -549,14 +554,14 @@ def simulate_verify(world, expect, queue, queue_item, journal_dir, opportunities
         attempts.append(new_attempt(journal_dir, "lock_verify"))
         if fail_here("judge_lock_create"):
             return item
-        make_lock(judge_files, queue_item["judge_lock"])
+        make_lock(judge_files, queue_item["judge_lock"], fixture_note(options))
         attempts.append(new_attempt(journal_dir, "judge_lock_create"))
         artifacts[queue_item["judge_lock"]] = sha(queue_item["judge_lock"])
         item["runs"].update(lock=queue_item["lock"], judge_lock=queue_item["judge_lock"])
     else:
         if fail_here("lock_create"):
             return item
-        make_lock(prereg_lock.required_files(queue_item["plan"]) + judge_files, queue_item["lock"])
+        make_lock(prereg_lock.required_files(queue_item["plan"]) + judge_files, queue_item["lock"], fixture_note(options))
         attempts.append(new_attempt(journal_dir, "lock_create"))
         artifacts[queue_item["lock"]] = sha(queue_item["lock"])
         item["runs"]["lock"] = queue_item["lock"]
@@ -679,7 +684,7 @@ def simulate_ab(world, expect, queue, queue_item, journal_dir, decision_states, 
         final["reason"] = "대상 미완" if "incomplete" in (trigger_state, for_state) else "촉발 아님"
         return item
     failure = options.get("fail") if (options.get("fail") or {}).get("item") == ab["id"] else None
-    make_lock(prereg_lock.required_files(queue_item["plan"]) + queue_judge_files(queue), queue_item["lock"])
+    make_lock(prereg_lock.required_files(queue_item["plan"]) + queue_judge_files(queue), queue_item["lock"], fixture_note(options))
     attempts.append(new_attempt(journal_dir, "lock_create"))
     artifacts[queue_item["lock"]] = sha(queue_item["lock"])
     item["runs"]["lock"] = queue_item["lock"]
@@ -754,7 +759,7 @@ def f0_gate_of(expect, f0_items):
 def simulate_batch(world, final_dir=None, verify_plan=None, ab_plan=None, options=None, w_anchor=None):
     final_dir = final_dir or world["final"]
     verify_plan, ab_plan = verify_plan or {}, ab_plan or {}
-    options = dict(options or {}, w_anchor=w_anchor or world["w_anchor"])
+    options = dict(options or {}, w_anchor=w_anchor or world["w_anchor"], journal_id=secrets.token_hex(16))
     expect, queue = read_json(f"{final_dir}/expect.json"), read_json(f"{final_dir}/final_queue.json")
     journal_text = queue["final"]["journal"]
     journal_dir = verify.parent_text(journal_text)
@@ -792,10 +797,12 @@ def simulate_batch(world, final_dir=None, verify_plan=None, ab_plan=None, option
         outcome = {"event": "start_failed", "item": None, "reason": "시작 처리 연속 2회 실패", "at": now_text()}
     journal = {"queue_sha256": sha(f"{final_dir}/final_queue.json"), "items": items, "real_dt": None, "holds": [],
                "final_batch": {"edition": expect["edition"], "phase": expect["phase"], "restart": expect["restart"], "anchor_sha256": sha(f"{final_dir}/anchor.json"),
-                               "w_anchor_sha256": sha(options["w_anchor"]), "starts": starts, "outcome": outcome, "f0_gate": gate}}
+                               "w_anchor_sha256": sha(options["w_anchor"]), "journal_id": options["journal_id"], "starts": starts, "outcome": outcome,
+                               "events": [dict(outcome)] if outcome else [], "f0_gate": gate}}
     if options.get("edit_journal"):
         options["edit_journal"](journal)
     write_json(journal_text, journal)
+    pin_simulated(journal, final_dir, options["w_anchor"])
     return journal
 
 
@@ -1852,7 +1859,8 @@ def test_self_check_rules(world):
         change_comparator(changed_comparator)
         if change_official:
             change_official(changed_official)
-        return verify.self_check(rows, changed_official, changed_comparator, folder)
+        return (verify.self_check(rows, changed_official, changed_comparator, folder),
+                calib_batch.is_self_check_equal(rows, changed_official, changed_comparator, folder))
 
     def path_keys(document):
         document["scenes"][0]["measure"] = "Saved/elsewhere/measure.json"
@@ -1862,14 +1870,24 @@ def test_self_check_rules(world):
     def official_paths(document):
         document["scenes"][0]["undetermined_reasons"] = [f"{folder}/judge/regions.json", str(absolute(f"{folder}/judge/grid.json"))]
 
+    def backslash_comparator(document):
+        document["scenes"][0]["undetermined_reasons"] = [str(absolute(f"{folder}/compare-judge/grid.json")).replace("/", "\\")]
+
+    def backslash_official(document):
+        document["scenes"][0]["undetermined_reasons"] = [str(absolute(f"{folder}/judge/grid.json")).replace("/", "\\")]
+
     results = {
-        "control_allowed 만 다름": variant(lambda document: document["scenes"][0]["control_allowed"].update(m1=0.5)) is False,
-        "장면 결과의 다른 키 하나": variant(lambda document: document["scenes"][0].update(control_score=(document["scenes"][0]["control_score"] or 0) + 1.0)) is False,
-        "(c) 채택 상태만 다름": variant(lambda document: document.update(adoptions={"13": "fail"})) is False,
-        "경로 키(measure·sources·작업 폴더 문자열)만 다름 → 참": variant(path_keys, official_paths) is True,
+        "control_allowed 만 다름": (variant(lambda document: document["scenes"][0]["control_allowed"].update(m1=0.5)), False),
+        "장면 결과의 다른 키 하나": (variant(lambda document: document["scenes"][0].update(control_score=(document["scenes"][0]["control_score"] or 0) + 1.0)), False),
+        "(c) 채택 상태만 다름": (variant(lambda document: document.update(adoptions={"13": "fail"})), False),
+        "경로 키(measure·sources·작업 폴더 문자열)만 다름 → 참": (variant(path_keys, official_paths), True),
+        "같음 → 참": (variant(lambda document: None), True),
+        "Windows 표기 작업 폴더 문자열만 다름 → 참": (variant(backslash_comparator, backslash_official), True),
     }
-    check("T183 자기 검증 (a)(b)(c): control_allowed·다른 장면 키·채택 상태만 달라도 거짓, 경로 키만 다르면 참", all(results.values()),
-          [name for name, passed in results.items() if not passed])
+    check("T183 자기 검증 (a)(b)(c): control_allowed·다른 장면 키·채택 상태만 달라도 거짓, 경로 키만 다르면 참", all(pair[0] is expected for pair, expected in results.values()),
+          {name: pair for name, (pair, expected) in results.items() if pair[0] is not expected})
+    check("개정 H(반박 적합 S5): calib_batch 자기 검증 복사본 is_self_check_equal 이 같은 변형 여섯에서 calib_final_verify.self_check 와 같은 값",
+          all(pair[0] == pair[1] for pair, _ in results.values()), {name: pair for name, (pair, _) in results.items() if pair[0] != pair[1]})
 
 
 def test_rerun_mismatch(world):
@@ -2033,23 +2051,38 @@ def batch_scope(world, fake):
 def reset_batch(final_dir, edition="e1"):
     shutil.rmtree(absolute(f"{final_dir}/batch-{edition}"), ignore_errors=True)
     shutil.rmtree(absolute(f"{final_dir}/locks"), ignore_errors=True)
+    fresh_git(read_json(f"{final_dir}/final_queue.json")["final"]["w_anchor"], final_dir)
+
+
+def init_and_pin(world, final_dir, queue, fake, extra=()):
+    argv = ["calib_batch.py", "--queue", f"{final_dir}/final_queue.json", "--holder", "w-final", "--journal", queue["final"]["journal"], *extra, "--init-journal"]
+    with batch_scope(world, fake):
+        code, output = call_main(calib_batch.main, argv)
+    if code != 0:
+        return code, output
+    pin_code, pin_output = pin_by_tool(final_dir, queue["final"]["w_anchor"])
+    return pin_code, output + pin_output
 
 
 def batch_case(world, configure=None, extra=(), final_dir=None, reset=True):
     final_dir = final_dir or world["final"]
     queue = read_json(f"{final_dir}/final_queue.json")
+    journal_text = queue["final"]["journal"]
     if reset:
         reset_batch(final_dir, queue["final"]["edition"])
     fake = FakeFinalTools(world, final_dir)
     if configure:
         configure(fake)
-    argv = ["calib_batch.py", "--queue", f"{final_dir}/final_queue.json", "--holder", "w-final", "--journal", queue["final"]["journal"], *extra]
+    if "--resume" not in extra and not absolute(journal_text).is_file():
+        code, output = init_and_pin(world, final_dir, queue, fake, extra)
+        if code != 0:
+            return code, read_json(journal_text) if absolute(journal_text).is_file() else None, fake, output
+    argv = ["calib_batch.py", "--queue", f"{final_dir}/final_queue.json", "--holder", "w-final", "--journal", journal_text, *extra]
     with batch_scope(world, fake):
         try:
             code, output = call_main(calib_batch.main, argv)
         except KeyboardInterrupt as interrupt:
             code, output = "interrupted", str(interrupt)
-    journal_text = queue["final"]["journal"]
     journal = read_json(journal_text) if absolute(journal_text).is_file() else None
     return code, journal, fake, output
 
@@ -2268,8 +2301,10 @@ def test_batch_e2_matrix(world):
         configure = configure_with(exits={label: [exit_code]})
         reset_batch(world["final"])
         if label == "verify-lock g13-judge":
-            make_lock(queue_judge_files(read_json(f"{world['final']}/final_queue.json")), f"{world['final']}/locks/g13-judge-e1-prereg-lock.json")
-        code, journal, fake, output = batch_case(world, configure, reset=False)
+            batch_case(world, configure_with(interrupts={"sweep g13 verify": 1}), reset=False)
+            code, journal, fake, output = batch_case(world, configure, extra=("--resume",), reset=False)
+        else:
+            code, journal, fake, output = batch_case(world, configure, reset=False)
         failed = [key for key, status in statuses_of(journal).items() if status == "failed"]
         verdict_code, report, _ = run_verdict(world, out_name=f"e2-{label.replace(' ', '-')}-{exit_code}")
         results[f"{label} {exit_code}"] = (code, outcome_of(journal).get("event"), failed, calls_after(fake, label), verdict_code, (report.get("stop") or {}).get("event"))
@@ -2423,6 +2458,47 @@ def restart_history(world, old_w_anchor, extra_entries=()):
     return [*extra_entries, old_w_anchor, read_json(world["w_anchor"])]
 
 
+def fake_w_anchor_history(path):
+    current = read_json(path)
+    entries = list(GIT["history"]) if GIT["history"] is not None else list(GIT["commits"].get(verify.normalized(path), []))
+    contents = [entry["content"] if "content" in entry else entry for entry in entries]
+    if not contents or contents[-1] != current:
+        entries.append(current)
+    return [entry if "content" in entry else {"committed_at": GIT["time"], "content": entry} for entry in entries]
+
+
+def commit_w_anchor(w_anchor_text):
+    GIT["commits"].setdefault(verify.normalized(w_anchor_text), []).append(read_json(w_anchor_text))
+
+
+def fresh_git(w_anchor_text, final_dir):
+    document = read_json(w_anchor_text)
+    base = {key: document[key] for key in verify.W_ANCHOR_BASE_KEYS}
+    write_json(w_anchor_text, base)
+    earlier = []
+    expect = read_json(f"{final_dir}/expect.json")
+    archives = verify.archive_directories(final_dir)
+    old_journal = f"{archives[0]}/batch-e1/journal.json" if len(archives) == 1 else None
+    if expect["edition"] == "e1" and expect["restart"] == 1 and old_journal and absolute(old_journal).is_file():
+        old = read_json(old_journal)["final_batch"]
+        old_base = {"anchor": f"{final_dir}/anchor.json", "edition": "e1", "sha256": old["anchor_sha256"]}
+        earlier += [old_base, dict(old_base, journal_id=old["journal_id"], restart=0)]
+    GIT["commits"][verify.normalized(w_anchor_text)] = [*earlier, base]
+
+
+def pin_simulated(journal, final_dir, w_anchor_text):
+    fresh_git(w_anchor_text, final_dir)
+    write_json(w_anchor_text, verify.pinned_w_anchor(read_json(w_anchor_text), journal, final_dir))
+    commit_w_anchor(w_anchor_text)
+
+
+def pin_by_tool(final_dir, w_anchor_text):
+    code, output = run_main(["pin-journal", "--spec", f"{final_dir}/final-spec.json", "--w-anchor", w_anchor_text, "--w-anchor-out", w_anchor_text])
+    if code == 0:
+        commit_w_anchor(w_anchor_text)
+    return code, output
+
+
 def test_batch_restart(world):
     final_dir, root = world["final"], world["root"]
     code, journal, fake, _ = batch_case(world, configure_with(tamper_compare={("f2", "verify-1"): tamper_f2}))
@@ -2466,6 +2542,17 @@ def test_batch_restart(world):
     GIT["history"] = restart_history(world, old_w_anchor)
     check("T184 재시작 범위: 세 파일 밖 항목(test_owner·명세·목표 파일 1바이트, 옛 닻에만 있는 경로) → 종료 2·하위 프로세스 0, r1 계획 사본 1바이트는 닻 대조에서 2",
           all(rebuilt and code == 2 and not calls and has_reason for rebuilt, code, calls, has_reason in outside.values()), outside)
+    late_commit = {"committed_at": (datetime.now().astimezone() + timedelta(hours=2)).isoformat(timespec="seconds"), "content": old_w_anchor}
+    GIT["history"] = [late_commit, read_json(world["w_anchor"])]
+    late_code, _, late_fake, late_output = batch_case(world)
+    GIT["history"] = restart_history(world, old_w_anchor)
+    second_archive = f"{final_dir}/aborted-20261105-130000"
+    absolute(second_archive).mkdir(parents=True, exist_ok=True)
+    double_code, _, double_fake, double_output = batch_case(world)
+    absolute(second_archive).rmdir()
+    check("개정 H S-4(반박 fixture H3·RI S3): 옮긴 anchor.json sha 를 담은 e1 커밋 시각이 옛 일지 첫 calib_batch 시작보다 늦음 → 2, 기록 폴더 2개 → 2(둘 다 하위 프로세스 0)",
+          late_code == 2 and not late_fake.calls and "커밋 시각" in late_output and double_code == 2 and not double_fake.calls and "기록 폴더" in double_output,
+          (late_output[-300:], double_output[-300:]))
     pre_w11 = [dict(old_w_anchor, sha256="1" * 64), dict(old_w_anchor, sha256="2" * 64)]
     GIT["history"] = restart_history(world, old_w_anchor, pre_w11)
     code, journal, fake, output = batch_case(world)
@@ -2522,6 +2609,22 @@ def test_batch_r2_kept(world):
         results["#18 남김인데 생성기 4.0"] = (code, fake.calls, "D5" in output)
     check("T186·T187 r2 시작: r1 닻 항목(r1 명세·r1 계획 사본·목표 파일)을 anchor r2 뒤에 바꿈 → 종료 2·하위 프로세스 0, #18 남김인데 생성기 4.0 → 2(D5)",
           all(value[0] == 2 and not value[1] for value in results.values()) and results["#18 남김인데 생성기 4.0"][2], results)
+    gates = {}
+    r1_anchor = f"{final_dir}/anchor.json"
+    with restored(r1_anchor):
+        append_byte(r1_anchor)
+        code, _, fake, output = batch_case(world, final_dir=r2_final)
+        gates["r1 anchor.json 1바이트(previous_anchor sha 다름)"] = (code, fake.calls, "previous_anchor" in output)
+    r2_anchor = f"{r2_final}/anchor.json"
+    outside_target = f"{root}/targets/new_target_outside.json"
+    write_json(outside_target, {"scene": "new"})
+    with restored(r2_anchor, world["r2_anchor"]):
+        edit_json(r2_anchor, lambda document: document["files"].update({outside_target: sha(outside_target)}))
+        edit_json(world["r2_anchor"], lambda document: document.update(sha256=sha(r2_anchor)))
+        code, _, fake, output = batch_case(world, final_dir=r2_final)
+        gates["r2 닻에 허용 목록 밖 새 경로(w-anchor sha 맞춤)"] = (code, fake.calls, "허용 목록 밖" in output)
+    check("개정 H(반박 적합 S4·T170·T186): calib_batch r2 시작 — previous_anchor(r1 anchor.json) sha 다름·허용 목록 밖 새 경로 → 각각 종료 2·하위 프로세스 0·그 사유",
+          all(code == 2 and not calls and has_reason for code, calls, has_reason in gates.values()), gates)
 
 
 def test_batch_r2_fog(world):
@@ -2585,6 +2688,477 @@ def test_r2_targets_covered_child(world):
           (targets, child_reverted))
 
 
+SHORTFALL_SWEEPS = {"uw": [{"exit": 1}, {"exit": 1}], "f7": [{"states": {"18": "undetermined"}}, {"exit": 1}, {"exit": 1}]}
+F1_RUN_IDS = ("pa", "pb", "pnp20", "pcw", "f5")
+
+
+def f1_calls_of(fake):
+    return [label for label in fake.calls if label.split()[0] in ("sweep", "compare", "lock", "verify-lock") and label.split()[1] in F1_RUN_IDS]
+
+
+def crash_after_record(label, outcome):
+    original = calib_batch.FinalBatchRunner.record
+
+    def crashing(runner, record_label, record_outcome, detail=""):
+        original(runner, record_label, record_outcome, detail)
+        if (record_label, record_outcome) == (label, outcome):
+            raise KeyboardInterrupt(f"{label} {outcome} 기록 직후 끊김")
+    return patched(calib_batch.FinalBatchRunner, record=crashing)
+
+
+def move_batch_out(world, tag):
+    target = absolute(f"{world['root']}/moved-{tag}/batch-e1")
+    shutil.rmtree(target.parent, ignore_errors=True)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(absolute(f"{world['final']}/batch-e1")), str(target))
+
+
+def raw_batch(world, extra=()):
+    queue = read_json(f"{world['final']}/final_queue.json")
+    fake = FakeFinalTools(world)
+    argv = ["calib_batch.py", "--queue", f"{world['final']}/final_queue.json", "--holder", "w-final", "--journal", queue["final"]["journal"], *extra]
+    with batch_scope(world, fake):
+        code, output = call_main(calib_batch.main, argv)
+    return code, fake, output
+
+
+def interrupt_parent():
+    raise KeyboardInterrupt("부모만 끊김(자식 calib_sweep 은 sweep.json 을 다 썼다)")
+
+
+def test_fix_h_f0_gate(world):
+    journal_text = journal_text_of(world)
+    with crash_after_record("F0 관문", "멈춤"):
+        code, journal, _, _ = batch_case(world, configure_with(sweeps=SHORTFALL_SWEEPS))
+    crashed = ((journal["final_batch"]["f0_gate"] or {}).get("passed"), outcome_of(journal))
+    resume_code, journal, resume_fake, _ = batch_case(world, extra=("--resume",), reset=False)
+    verdict_code, report, _ = run_verdict(world, out_name="h-gate-crash")
+    check("개정 H M-A(반박 RI M2·적합 M1·fixture A1): F0 결원 관문 기록 뒤·outcome 기록 전 끊김 → --resume 이 산출물로 관문을 다시 계산해 F1 없이 F0_shortfall·종료 4, verdict 전 채택 incomplete",
+          code == "interrupted" and crashed == (False, {}) and resume_code == 4 and outcome_of(journal).get("event") == "F0_shortfall" and not f1_calls_of(resume_fake)
+          and verdict_code == 1 and (report.get("stop") or {}).get("event") == "F0_shortfall" and set(decisions_of(report).values()) == {"incomplete"}
+          and len(decisions_of(report)) == 12, (code, crashed, resume_code, f1_calls_of(resume_fake), verdict_code, report.get("stop"), report.get("problems")))
+    edit_json(journal_text, lambda document: document["final_batch"].update(outcome=None))
+    outcome_code, _, outcome_fake, _ = batch_case(world, extra=("--resume",), reset=False)
+    edit_json(journal_text, lambda document: document["final_batch"].update(outcome=None, events=[]))
+    erased_code, journal, erased_fake, _ = batch_case(world, extra=("--resume",), reset=False)
+    check("개정 H M-A·S-3: 결원 뒤 outcome 만 지움 → --resume 은 events 로 하위 프로세스 0·종료 4, outcome·events 를 다 지움 → 관문 다시 계산으로 F1 없이 다시 F0_shortfall·4",
+          outcome_code == 4 and not outcome_fake.calls and erased_code == 4 and not f1_calls_of(erased_fake) and outcome_of(journal).get("event") == "F0_shortfall",
+          (outcome_code, outcome_fake.calls, erased_code, f1_calls_of(erased_fake)))
+    original_gate = calib_batch.FinalBatchRunner.pass_f0_gate
+
+    def trusting_gate(runner):
+        if runner.final_batch.get("f0_gate") is not None:
+            return
+        original_gate(runner)
+    with crash_after_record("F0 관문", "멈춤"):
+        batch_case(world, configure_with(sweeps=SHORTFALL_SWEEPS))
+    with patched(calib_batch.FinalBatchRunner, pass_f0_gate=trusting_gate):
+        old_code, journal, old_fake, _ = batch_case(world, extra=("--resume",), reset=False)
+    verdict_code, report, _ = run_verdict(world, out_name="h-gate-trusting")
+    check("개정 H M-A verdict: f0_gate passed 거짓인데 F1·F2 가 끝난 일지(옛 코드의 재개, outcome 없음) → F1·F2 결과와 상관없이 전 채택 incomplete·stop F0_shortfall·종료 1",
+          old_code == 0 and f1_calls_of(old_fake) and outcome_of(journal) == {} and verdict_code == 1 and (report.get("stop") or {}).get("event") == "F0_shortfall"
+          and set(decisions_of(report).values()) == {"incomplete"} and len(decisions_of(report)) == 12, (old_code, verdict_code, report.get("gate"), report.get("problems")))
+
+
+def test_fix_h_redraw(world):
+    final_dir = world["final"]
+    code, _, _, _ = batch_case(world, configure_with(exits={"compare pa": [2]}))
+    again_code, _, again_fake, again_output = batch_case(world, reset=False)
+    move_batch_out(world, "e2")
+    moved_code, _, moved_fake, moved_output = batch_case(world, reset=False)
+    check("개정 H M-B(반박 RI M1 반례 1): E2 뒤 --resume 없이 다시 → 일지 있음 종료 2(문구에 옮기기 권고 없음), batch-e1 을 final 밖으로 옮기고 새로 시작 → 남은 잠금(다른 일지 id)으로 E2·종료 2·하위 프로세스 0",
+          code == 2 and again_code == 2 and not again_fake.calls and "옮" not in again_output and moved_code == 2 and not moved_fake.calls
+          and "이 일지가 만들지 않은" in moved_output and "옮" not in moved_output, (code, again_output[-200:], moved_code, moved_output[-300:]))
+    code, _, _, _ = batch_case(world, configure_with(sweeps={"pa": [{"states": {"2": "fail"}}]}))
+    first_verdict, _, _ = run_verdict(world, out_name="h-fail-first")
+    move_batch_out(world, "fail")
+    moved_code, _, moved_fake, _ = batch_case(world, reset=False)
+    code_e3, _, _, _ = batch_case(world, configure_with(tamper_compare={("f2", "verify-1"): tamper_f2}))
+    shutil.rmtree(absolute(f"{final_dir}/batch-e1"))
+    deleted_code, _, deleted_fake, _ = batch_case(world, reset=False)
+    check("개정 H M-B(반박 RI M1 반례 2·fixture D2): 실패를 본 뒤 batch-e1 옮김·E3 뒤 batch-e1 삭제(판정 잠금은 남음) → 새로 시작 각각 종료 2·하위 프로세스 0(다시 추첨 없음)",
+          code == 0 and first_verdict == 1 and moved_code == 2 and not moved_fake.calls and code_e3 == 1 and deleted_code == 2 and not deleted_fake.calls,
+          (code, first_verdict, moved_code, code_e3, deleted_code))
+    batch_case(world)
+    absolute(journal_text_of(world)).unlink()
+    shutil.rmtree(absolute(f"{final_dir}/locks"))
+    folder_code, _, folder_fake, folder_output = batch_case(world, reset=False)
+    batch_case(world, configure_with(interrupts={"compare pb": 1}))
+    foreign_lock = f"{final_dir}/locks/zz-e1-prereg-lock.json"
+    make_lock(queue_judge_files(read_json(f"{final_dir}/final_queue.json")), foreign_lock, f"fixture {calib_batch.journal_note('0' * 32)}")
+    resume_code, _, resume_fake, resume_output = batch_case(world, extra=("--resume",), reset=False)
+    check("개정 H M-B: journal.json·잠금만 지우고 실행 폴더가 남음 → 새 시작 2(일지가 모르는 실행 폴더), 이어 하기 중 다른 일지 id 잠금이 생김 → --resume 2(둘 다 하위 프로세스 0)",
+          folder_code == 2 and not folder_fake.calls and "실행 폴더" in folder_output and resume_code == 2 and not resume_fake.calls and "zz-e1" in resume_output,
+          (folder_code, folder_output[-300:], resume_code, resume_output[-300:]))
+    batch_case(world, configure_with(sweeps={"pa": [{"states": {"2": "fail"}}]}))
+    move_batch_out(world, "bypass")
+    fresh_git(world["w_anchor"], final_dir)
+    with patched(calib_batch, foreign_artifact_problems=lambda final_dir_text, edition, journal: []):
+        bypass_code, _, bypass_fake, _ = batch_case(world, reset=False)
+    bypass_verdict, bypass_report, _ = run_verdict(world, out_name="h-bypass")
+    check("개정 H M-B verdict: calib_batch 검사를 건너뛰고 남은 잠금(다른 일지 id)을 verify 로 다시 쓴 일지 → verdict 2(gate journal, 잠금 note 에 이 일지 id 없음)",
+          bypass_code == 0 and "verify-lock pa" in bypass_fake.calls and bypass_verdict == 2 and bypass_report.get("gate") == "journal"
+          and any("일지 id" in line for line in bypass_report.get("problems", [])), (bypass_code, bypass_verdict, bypass_report.get("gate"), bypass_report.get("problems")))
+    batch_case(world)
+    extra_lock = f"{final_dir}/locks/zz-e1-prereg-lock.json"
+    with restored(extra_lock):
+        shutil.copyfile(absolute(f"{final_dir}/locks/pa-e1-prereg-lock.json"), absolute(extra_lock))
+        lock_verdict, lock_report, _ = run_verdict(world, out_name="h-extra-lock")
+    stash = f"{final_dir}/stash/runs/pa/verify-1"
+    shutil.copytree(absolute(folder_of(world, "pa")), absolute(stash))
+    folder_verdict, folder_report, _ = run_verdict(world, out_name="h-extra-folder")
+    shutil.rmtree(absolute(f"{final_dir}/stash"))
+    clean_verdict, _, _ = run_verdict(world, out_name="h-clean")
+    check("개정 H M-B verdict: 일지가 쓰지 않은 잠금이 final_dir/locks 에 있음 → 2(gate journal), 일지가 모르는 실행 폴더가 final_dir 안 다른 곳에 있음 → 2(gate artifacts), 지운 뒤 0",
+          lock_verdict == 2 and lock_report.get("gate") == "journal" and folder_verdict == 2 and folder_report.get("gate") == "artifacts" and clean_verdict == 0,
+          (lock_verdict, lock_report.get("gate"), folder_verdict, folder_report.get("gate"), folder_report.get("problems"), clean_verdict))
+
+
+def test_fix_h_journal_damage(world):
+    journal_text = journal_text_of(world)
+    batch_case(world, configure_with(interrupts={"compare pb": 1}))
+    absolute(journal_text).write_bytes(b"\x00" * absolute(journal_text).stat().st_size)
+    resume_code, resume_fake, resume_output = raw_batch(world, ("--resume",))
+    fresh_code, fresh_fake, fresh_output = raw_batch(world)
+    write_json(journal_text, {"items": [], "final_batch": {}})
+    broken_code, broken_fake, broken_output = raw_batch(world, ("--resume",))
+    check("개정 H S-1(반박 fixture C1·적합 S2): 재부팅으로 일지가 NUL → --resume 종료 2·하위 프로세스 0·'재부팅 손상'(사람 판단), 새 시작도 2(일지 있음), 키가 빠진 일지 → --resume 2",
+          resume_code == 2 and not resume_fake.calls and "재부팅 손상" in resume_output and fresh_code == 2 and not fresh_fake.calls
+          and broken_code == 2 and not broken_fake.calls and "재부팅 손상" in broken_output, (resume_output[-200:], fresh_output[-200:], broken_output[-200:]))
+    fsync_calls = []
+    original_fsync = os.fsync
+
+    def counting_fsync(descriptor):
+        fsync_calls.append(descriptor)
+        return original_fsync(descriptor)
+    with patched(calib_batch.os, fsync=counting_fsync):
+        code, journal, _, _ = batch_case(world)
+    raw = absolute(journal_text).read_bytes()
+    check("개정 H S-1: 최종 모드 일지 저장은 임시 파일 flush·os.fsync 뒤 os.replace(fsync 호출 있음, 남은 .tmp 없음, LF), journal_id·events 키",
+          code == 0 and fsync_calls and b"\r" not in raw and not absolute(journal_text + ".tmp").exists() and len(journal["final_batch"]["journal_id"]) == 32
+          and journal["final_batch"]["events"] == [], (code, len(fsync_calls)))
+    judge_lock = f"{world['final']}/locks/g13-judge-e1-prereg-lock.json"
+
+    def partial_lock_write():
+        absolute(judge_lock).parent.mkdir(parents=True, exist_ok=True)
+        absolute(judge_lock).write_bytes(b"\x00" * 512)
+        raise KeyboardInterrupt("판정 잠금 쓰는 중 끊김")
+    code, _, _, _ = batch_case(world, configure_with(hooks={"lock g13-judge": partial_lock_write}))
+    resume_code, _, resume_fake, resume_output = batch_case(world, extra=("--resume",), reset=False)
+    check("개정 H(반박 fixture I1): 판정 잠금 쓰는 중 끊김(잠금 파일 NUL) → --resume 은 하위 프로세스 없이 종료 2(E2 '읽지 못함 — 재부팅 손상 의심', 사람이 판단, 자동으로 다시 만들지 않음)",
+          code == "interrupted" and resume_code == 2 and not resume_fake.calls and "읽지 못함" in resume_output, (code, resume_code, resume_output[-300:]))
+    live = f"{world['live']}/{fluid_tuning_patch.TUNING_FILE_NAME}"
+    with restored(live):
+        absolute(live).unlink()
+        code, journal, fake, _ = batch_case(world)
+    check("개정 H(반박 적합 S1·R4): 시작 처리 중 정본 파일 읽기 예외(FileNotFoundError) → 잡히지 않은 종료 1 이 아니라 E2·종료 2, starts[-1].ok false, 보류 해제",
+          code == 2 and outcome_of(journal).get("event") == "E2" and journal["final_batch"]["starts"][-1]["ok"] is False and fake.calls[-1] == "release",
+          (code, outcome_of(journal), fake.calls))
+
+
+def test_fix_h_recovered_sweep(world):
+    code, _, _, _ = batch_case(world, configure_with(sweeps={"pa": [{"states": {"2": "fail"}}]}, after_hooks={"sweep pa verify": interrupt_parent}))
+    resume_code, journal, resume_fake, _ = batch_case(world, extra=("--resume",), reset=False)
+    pa = item_of(journal, "pa")["final"]
+    sweeps = [(attempt["try"], attempt["exit"], attempt["state"]) for attempt in pa["attempts"] if attempt["step"] == "sweep"]
+    verdict_code, report, _ = run_verdict(world, out_name="h-recovered")
+    check("개정 H S-2(반박 RI S1): 자식이 sweep.json(invalid_count 0)을 다 쓴 뒤 부모만 끊김 → --resume 은 다시 찍지 않고(sweep pa 0회) 그 결과(채택 2 fail)로 판정, 시도 recovered·sha 기록, verdict 관문 없음",
+          code == "interrupted" and resume_code == 0 and sweeps == [(1, 0, "recovered")] and "sweep pa verify" not in resume_fake.calls and pa["adoptions"] == {"2": "fail"}
+          and f"{folder_of(world, 'pa')}/sweep.json" in pa["artifact_sha256"] and report.get("gate") is None and decisions_of(report).get("2") == "user_decision",
+          (code, resume_code, sweeps, report.get("gate"), report.get("problems")))
+    batch_case(world, configure_with(sweeps={"pa": [{"states": {"2": "fail"}}]}, after_hooks={"sweep pa verify": interrupt_parent}))
+    with patched(calib_batch, is_completed_sweep=lambda folder_text: False):
+        redraw_code, _, redraw_fake, _ = batch_case(world, extra=("--resume",), reset=False)
+    redraw_verdict, redraw_report, _ = run_verdict(world, out_name="h-redraw")
+    check("개정 H S-2 verdict: 끝난 스윕을 interrupted 로 세고 try 2 로 다시 찍은 일지(옛 코드) → verdict 2(gate artifacts, 다시 추첨)",
+          redraw_code == 0 and redraw_fake.counts.get("sweep pa verify") == 1 and redraw_verdict == 2 and redraw_report.get("gate") == "artifacts",
+          (redraw_code, redraw_verdict, redraw_report.get("gate"), redraw_report.get("problems")))
+
+    def write_partial():
+        edit_json(f"{folder_of(world, 'pa')}/sweep.json", lambda document: document.update(invalid_count=1))
+        raise KeyboardInterrupt("자식이 미완 sweep.json 을 쓰고 끊김")
+    batch_case(world, configure_with(after_hooks={"sweep pa verify": write_partial}))
+    resume_code, journal, resume_fake, _ = batch_case(world, extra=("--resume",), reset=False)
+    sweeps = [(attempt["try"], attempt["exit"], attempt["state"]) for attempt in item_of(journal, "pa")["final"]["attempts"] if attempt["step"] == "sweep"]
+    verdict_code, report, _ = run_verdict(world, out_name="h-partial")
+    check("개정 H S-2: 미완 sweep.json(invalid_count 1) 뒤 끊김 → interrupted(E1 한 번)로 세고 새 폴더 try 2 로 다시 찍음, verdict 0",
+          resume_code == 0 and sweeps == [(1, None, "interrupted"), (2, 0, "done")] and resume_fake.counts.get("sweep pa verify") == 1 and verdict_code == 0,
+          (resume_code, sweeps, verdict_code, report.get("problems")))
+
+
+def test_fix_h_events(world):
+    journal_text = journal_text_of(world)
+    live = f"{world['live']}/{fluid_tuning_patch.TUNING_FILE_NAME}"
+    with restored(live):
+        append_byte(live)
+        code, journal, _, _ = batch_case(world)
+    events = [event["event"] for event in journal["final_batch"]["events"]]
+    edit_json(journal_text, lambda document: document["final_batch"].update(outcome=None))
+    resume_code, _, resume_fake, _ = batch_case(world, extra=("--resume",), reset=False)
+    verdict_code, report, _ = run_verdict(world, out_name="h-events-e2")
+    attempt_code, _, _, _ = batch_case(world, configure_with(exits={"compare pa": [2]}))
+    edit_json(journal_text, lambda document: document["final_batch"].update(outcome=None, events=[]))
+    attempt_verdict, attempt_report, _ = run_verdict(world, out_name="h-attempts-e2")
+    check("개정 H S-3(반박 RI S2): 시작 때 정본 sha E2 뒤 일지 outcome 만 지움 → --resume 은 events 로 하위 프로세스 0·종료 2, verdict 는 events 로 stop E2·종료 2. compare 종료 2 뒤 outcome·events 를 다 지워도 attempts 로 E2",
+          code == 2 and events == ["E2"] and resume_code == 2 and not resume_fake.calls and verdict_code == 2 and (report.get("stop") or {}).get("event") == "E2"
+          and attempt_code == 2 and attempt_verdict == 2 and (attempt_report.get("stop") or {}).get("event") == "E2",
+          (code, events, resume_code, verdict_code, report.get("gate"), report.get("stop"), attempt_verdict, attempt_report.get("stop")))
+
+
+def no_f0_runs(world, spec, overlay):
+    for run in spec["runs"]:
+        if run["block"] == "F0":
+            run["block"] = "F1"
+            run.pop("lock")
+            run.pop("verify_against")
+
+
+def two_f0_runs(world, spec, overlay):
+    for run in spec["runs"]:
+        if run["id"] in ("uw", "f7"):
+            run["block"] = "F1"
+            run.pop("lock")
+            run.pop("verify_against")
+
+
+def test_fix_h_f0_floor():
+    results = {}
+    for name, preprocess in (("F0 0개", no_f0_runs), ("F0 2개", two_f0_runs)):
+        world = build_world(f"f0-floor-{len(results)}", preprocess)
+        expect_code, expect_output = world["setup"][1]
+        results[name] = (expect_code, "표본 하한" in expect_output)
+    check("개정 H M-C(반박 fixture N1·RI S4): e1 명세 F0 실행 0개·2개 → expect 종료 2(W2 결과 전 관문, 표본 하한 3)",
+          all(code == 2 and has_reason for code, has_reason in results.values()), results)
+    with patched(verify, f0_shortage_problems=lambda runs, edition: []):
+        world = build_world("f0-floor-bypass", no_f0_runs)
+    with world_scope(world):
+        anchor_code, anchor_output = run_anchor(world)
+        batch_code, _, batch_fake, batch_output = batch_case(world)
+        simulate_batch(world)
+        verdict_code, report, _ = run_verdict(world, out_name="f0-floor")
+    check("개정 H M-C: 표본 하한 검사를 건너뛰어 만든 F0 0개 e1 사전 등록 → anchor 2·calib_batch 2(하위 프로세스 0)·verdict 2(gate input)",
+          setup_ok(world) and anchor_code == 2 and "표본 하한" in anchor_output and batch_code == 2 and not batch_fake.calls and "표본 하한" in batch_output
+          and verdict_code == 2 and report.get("gate") == "input", (setup_detail(world), anchor_code, batch_code, batch_output[-200:], verdict_code, report.get("gate")))
+
+
+def hand_pin(final_dir, w_anchor_text):
+    journal = read_json(read_json(f"{final_dir}/final_queue.json")["final"]["journal"])
+    base = {key: read_json(w_anchor_text)[key] for key in verify.W_ANCHOR_BASE_KEYS}
+    write_json(w_anchor_text, verify.pinned_w_anchor(base, journal, final_dir))
+    commit_w_anchor(w_anchor_text)
+
+
+def unpin_and_commit(w_anchor_text):
+    write_json(w_anchor_text, {key: read_json(w_anchor_text)[key] for key in verify.W_ANCHOR_BASE_KEYS})
+    commit_w_anchor(w_anchor_text)
+
+
+def move_batch_into(world, target):
+    absolute(target).mkdir(parents=True, exist_ok=True)
+    shutil.move(str(absolute(f"{world['final']}/batch-e1")), str(absolute(f"{target}/batch-e1")))
+    shutil.move(str(absolute(f"{world['final']}/locks")), str(absolute(f"{target}/locks")))
+
+
+def redraw_after_pin(world, name):
+    final_dir = world["final"]
+    init_code, _, init_fake, init_output = batch_case(world, reset=False)
+    unpin_and_commit(world["w_anchor"])
+    repin_code, repin_output = pin_by_tool(final_dir, world["w_anchor"])
+    hand_pin(final_dir, world["w_anchor"])
+    start_code, _, start_fake, start_output = batch_case(world, reset=False)
+    with patched(calib_batch, journal_pin_problems=lambda w_anchor, history, journal, final_dir_text: []):
+        bypass_code, journal, bypass_fake, _ = batch_case(world, reset=False)
+    verdict_code, report, _ = run_verdict(world, out_name=f"i-redraw-{name}")
+    return {"pin-journal": (init_code, "관문 pin" in init_output, init_fake.calls), "되돌려 커밋 뒤 pin-journal": (repin_code, "처음 고정된 journal_id" in repin_output),
+            "손 고정 뒤 시작": (start_code, "처음 고정된 journal_id" in start_output, start_fake.calls),
+            "검사 건너뛴 측정": (bypass_code, "sweep pa verify" in bypass_fake.calls, item_of(journal, "pa")["final"]["adoptions"] if journal else None),
+            "verdict": (verdict_code, report.get("gate"), any("처음 고정된 journal_id" in line for line in report.get("problems", []))),
+            "손 고정 뒤 시작 문구": start_output[-800:]}
+
+
+def is_blocked_redraw(result):
+    return (result["pin-journal"] == (2, True, []) and result["되돌려 커밋 뒤 pin-journal"] == (2, True) and result["손 고정 뒤 시작"] == (2, True, [])
+            and result["검사 건너뛴 측정"] == (0, True, {"2": "pass"}) and result["verdict"] == (2, "journal", True))
+
+
+def test_fix_i_init_and_pin(world):
+    final_dir = world["final"]
+    reset_batch(final_dir)
+    journal_text = journal_text_of(world)
+    init_code, init_fake, init_output = raw_batch(world, ("--init-journal",))
+    journal = read_json(journal_text) if absolute(journal_text).is_file() else {"final_batch": {}, "items": []}
+    is_unmeasured = journal["final_batch"].get("starts") == [] and all(not item["final"]["attempts"] for item in journal["items"])
+    again_code, again_fake, _ = raw_batch(world, ("--init-journal",))
+    both_code, both_fake, _ = raw_batch(world, ("--init-journal", "--resume"))
+    unpinned_code, unpinned_fake, unpinned_output = raw_batch(world)
+    check("개정 I F-1: --init-journal → 종료 0·하위 프로세스 0·journal_id 32자리·starts·attempts 빔(측정 0), 다시 --init-journal → 2, --resume 과 함께 → 2, pin 전 측정 시작 → 2(HEAD w-anchor 에 고정 없음)·하위 프로세스 0",
+          init_code == 0 and not init_fake.calls and len(journal["final_batch"].get("journal_id") or "") == 32 and is_unmeasured and again_code == 2 and not again_fake.calls
+          and both_code == 2 and not both_fake.calls and unpinned_code == 2 and not unpinned_fake.calls and "고정이 없다" in unpinned_output,
+          (init_code, init_output[-200:], again_code, both_code, unpinned_code, unpinned_output[-300:]))
+    pin_code, pin_output = pin_by_tool(final_dir, world["w_anchor"])
+    pinned = read_json(world["w_anchor"])
+    repin_code, repin_output = pin_by_tool(final_dir, world["w_anchor"])
+    start_code, start_fake, _ = raw_batch(world)
+    restart_code, restart_fake, restart_output = raw_batch(world)
+    verdict_code, report, _ = run_verdict(world, out_name="i-pinned")
+    check("개정 I F-1: pin-journal → w-anchor = 닻 세 키 + journal_id·restart 0, 다시 pin-journal → 2(이미 고정), 고정 뒤 측정 시작 → 0, 시작한 일지로 --resume 없이 다시 → 2·하위 프로세스 0, verdict 0",
+          pin_code == 0 and set(pinned) == {"anchor", "edition", "sha256", "journal_id", "restart"} and pinned["journal_id"] == journal["final_batch"].get("journal_id")
+          and pinned["restart"] == 0 and repin_code == 2 and start_code == 0 and start_fake.calls and restart_code == 2 and not restart_fake.calls and "이미 시작" in restart_output
+          and verdict_code == 0, (pin_output[-200:], repin_output[-200:], start_code, restart_code, verdict_code, report.get("problems")))
+    normal_queue = f"{world['root']}/normal-queue-i.json"
+    write_json(normal_queue, {"test_classes": read_json(f"{final_dir}/final_queue.json")["test_classes"],
+                              "blocks": [{"id": "K1", "plans": [{"plan": plan_path(world, "pa"), "chain": None, "stages": ["screen"]}]}]})
+    fake = FakeFinalTools(world)
+    with batch_scope(world, fake):
+        normal_code, normal_output = call_main(calib_batch.main, ["calib_batch.py", "--queue", normal_queue, "--holder", "w-normal", "--journal", f"{world['root']}/normal-i/journal.json",
+                                                                  "--init-journal"])
+    check("개정 I F-1: 일반 모드(mode 없음)에서 --init-journal → 종료 2·하위 프로세스 0", normal_code == 2 and not fake.calls and "최종 모드" in normal_output, normal_output[-200:])
+
+
+def test_fix_i_redraw(world):
+    final_dir, root = world["final"], world["root"]
+    results = {}
+    for name, target in (("aborted", f"{final_dir}/aborted-20261106-010000"), ("r2", f"{final_dir}/r2/old"), ("out", f"{root}/moved-all")):
+        code, _, _, _ = batch_case(world, configure_with(sweeps={"pa": [{"states": {"2": "fail"}}]}))
+        first_verdict, first_report, _ = run_verdict(world, out_name=f"i-first-{name}")
+        move_batch_into(world, target)
+        result = redraw_after_pin(world, name)
+        result["첫 실행"] = (code, first_verdict, decisions_of(first_report).get("2"))
+        results[name] = result
+        shutil.rmtree(absolute(target), ignore_errors=True)
+        shutil.rmtree(absolute(f"{final_dir}/r2"), ignore_errors=True)
+    check("개정 I F-1(반박 적합 M-1 N1·N2·RI M1'·P-42): 채택 2 fail 을 본 뒤 batch-e1·locks 를 aborted-*·r2/·final_dir 밖으로 옮기고 새 일지 → pin-journal 2(이미 고정), 고정을 지워 커밋해도 pin-journal 2, 손으로 고정·커밋 → calib_batch 2·하위 프로세스 0, 그 검사까지 건너뛰고 측정(pass) → verdict 2(gate journal, git 에 처음 고정된 id 아님)",
+          all(result["첫 실행"] == (0, 1, "user_decision") and is_blocked_redraw(result) for result in results.values()), results)
+
+
+def test_fix_i_restart_pin(world):
+    final_dir = world["final"]
+    code, _, _, _ = batch_case(world, configure_with(tamper_compare={("f2", "verify-1"): tamper_f2}))
+    archive = archive_e1(world)
+    expect_code, _ = rerun_expect(world)
+    anchor_code, _ = run_anchor(world)
+    restart_code, _, _, restart_output = batch_case(world, configure_with(sweeps={"pa": [{"states": {"2": "fail"}}]}))
+    pinned = read_json(world["w_anchor"])
+    first_verdict, first_report, _ = run_verdict(world, out_name="i-restart-first")
+    check("개정 I F-1 재시작: E3 → 기록 폴더·expect·anchor restart 1 → --init-journal·pin-journal(restart 1·archive·e3_evidence = 기록 폴더 옛 일지) → 측정 0, verdict 1(채택 2 user_decision)",
+          code == 1 and expect_code == 0 and anchor_code == 0 and restart_code == 0 and pinned.get("restart") == 1 and pinned.get("archive") == archive
+          and pinned.get("e3_evidence") == f"{archive}/batch-e1/journal.json" and first_verdict == 1 and decisions_of(first_report).get("2") == "user_decision",
+          (code, expect_code, anchor_code, restart_code, restart_output[-300:], pinned, first_verdict, first_report.get("problems")))
+    old_journal = f"{archive}/batch-e1/journal.json"
+    with restored(old_journal):
+        edit_json(old_journal, lambda document: document["final_batch"].update(journal_id="0" * 32))
+        swapped_code, _, swapped_fake, swapped_output = batch_case(world, extra=("--resume",), reset=False)
+        swapped_verdict, swapped_report, _ = run_verdict(world, out_name="i-restart-swapped")
+    GIT["history"] = [entry for entry in fake_w_anchor_history(world["w_anchor"]) if verify.pin_round(entry["content"]) != ("e1", 0)]
+    order_code, _, order_fake, order_output = batch_case(world, extra=("--resume",), reset=False)
+    GIT["history"] = None
+    check("개정 I F-1 재시작 순서·증거: 기록 폴더 옛 일지 journal_id 를 바꿔 넣음 → --resume 2·verdict 2(gate journal), git 이력에 e1 restart 0 고정이 없음 → --resume 2(모두 하위 프로세스 0)",
+          swapped_code == 2 and not swapped_fake.calls and "옛 일지 journal_id" in swapped_output and swapped_verdict == 2 and swapped_report.get("gate") == "journal"
+          and order_code == 2 and not order_fake.calls and "순서" in order_output, (swapped_output[-300:], swapped_report.get("problems"), order_output[-300:]))
+    move_batch_into(world, f"{archive}/again")
+    result = redraw_after_pin(world, "restart")
+    check("개정 I F-1(반박 적합 N1r·RI n4): restart 1 결과를 본 뒤 batch-e1·locks 를 하나뿐인 기록 폴더 안 again/ 으로 옮기고 새 일지 → pin-journal 2, 고정을 지워 커밋해도 2, 손으로 고정 → calib_batch 2(처음 고정 아님·재시작 고정 2개), 검사를 건너뛴 측정 → verdict 2(gate journal)",
+          is_blocked_redraw(result) and "2개 이상" in result["손 고정 뒤 시작 문구"], result)
+
+
+def crash_before_gate(runner):
+    raise KeyboardInterrupt("F0 마지막 항목 저장 뒤·관문 기록 전 끊김")
+
+
+def test_fix_i_f0_gate_recompute(world):
+    with patched(calib_batch.FinalBatchRunner, pass_f0_gate=crash_before_gate):
+        code, _, _, _ = batch_case(world, configure_with(sweeps=SHORTFALL_SWEEPS))
+    first_resume, _, _, _ = batch_case(world, configure_with(exits={"ensure": [1]}), extra=("--resume",), reset=False)
+    second_resume, journal, _, _ = batch_case(world, configure_with(exits={"ensure": [1]}), extra=("--resume",), reset=False)
+    verdict_code, report, _ = run_verdict(world, out_name="i-n3")
+    check("개정 I F-2(반박 적합 M-2 N3): F0 마지막 항목 뒤·관문 기록 전 끊김 → 재개 시작 연속 2회 실패(start_failed, f0_gate null) → verdict 가 산출물로 관문을 다시 계산(표본 2 < 3) → stop F0_shortfall·전 채택 incomplete·종료 1",
+          code == "interrupted" and (first_resume, second_resume) == (3, 3) and outcome_of(journal).get("event") == "start_failed" and journal["final_batch"]["f0_gate"] is None
+          and verdict_code == 1 and (report.get("stop") or {}).get("event") == "F0_shortfall" and set(decisions_of(report).values()) == {"incomplete"}
+          and len(decisions_of(report)) == 12, (code, first_resume, second_resume, outcome_of(journal), verdict_code, report.get("stop"), decisions_of(report)))
+    with patched(calib_batch.FinalBatchRunner, pass_f0_gate=crash_before_gate):
+        batch_case(world, configure_with(sweeps=SHORTFALL_SWEEPS))
+    live = f"{world['live']}/{fluid_tuning_patch.TUNING_FILE_NAME}"
+    with restored(live):
+        append_byte(live)
+        e2_code, journal, _, _ = batch_case(world, extra=("--resume",), reset=False)
+    e2_verdict, e2_report, _ = run_verdict(world, out_name="i-n3b")
+    check("개정 I F-2(반박 적합 N3b): 같은 끊김 뒤 재개 시작 E2(정본 sha) → verdict 2·settled 빔·전 채택 incomplete",
+          e2_code == 2 and outcome_of(journal).get("event") == "E2" and e2_verdict == 2 and e2_report.get("settled") == {} and len(e2_report.get("incomplete", [])) == 12,
+          (e2_code, e2_verdict, sorted(e2_report.get("settled") or {}), len(e2_report.get("incomplete", []))))
+    batch_case(world, configure_with(interrupts={"sweep uw verify": 1}))
+    open_verdict, open_report, _ = run_verdict(world, out_name="i-f0-open")
+    check("개정 I F-2: F0 가 끝나지 않은 채 끊긴 일지(사건 없음) → 관문 미결이라 F0_shortfall 이 아니라 verdict 2(gate terminal, --resume 대상)",
+          open_verdict == 2 and open_report.get("gate") == "terminal" and open_report.get("stop") is None, (open_verdict, open_report.get("gate"), open_report.get("stop")))
+
+
+def crash_after_attempt(step, key):
+    original = calib_batch.FinalBatchRunner.run_attempt
+    state = {"done": False}
+
+    def crashing(runner, item, attempt_step, *arguments, **keywords):
+        attempt, tail = original(runner, item, attempt_step, *arguments, **keywords)
+        if attempt_step == step and runner.item_id(item) == key and not state["done"]:
+            state["done"] = True
+            raise KeyboardInterrupt(f"{key} {step} 시도 끝 저장 뒤·항목 sha 저장 전 끊김")
+        return attempt, tail
+    return patched(calib_batch.FinalBatchRunner, run_attempt=crashing)
+
+
+def crash_before_tool(plan_stem, label_prefix):
+    original = calib_batch.FinalBatchRunner.item_tool
+    state = {"done": False}
+
+    def crashing(runner, item, label, command, log_path, timeout=calib_batch.TOOL_TIMEOUT_SECONDS):
+        if not state["done"] and runner.plan_name(item) == plan_stem and label.startswith(label_prefix):
+            state["done"] = True
+            raise KeyboardInterrupt(f"시도 저장 뒤·로그·폴더 생성 전 끊김: {plan_stem} {label}")
+        return original(runner, item, label, command, log_path, timeout)
+    return patched(calib_batch.FinalBatchRunner, item_tool=crashing)
+
+
+def test_fix_i_recorded_outputs(world):
+    code, journal, _, _ = batch_case(world)
+    ended = [attempt for item in journal["items"] for attempt in item["final"]["attempts"] if attempt["step"] in ("sweep", "official", "compare", "judge", "check_ab")]
+    check("개정 I F-3: sweep·official·compare·judge·check_ab 시도는 끝날 때 산출물 경로·sha(output·output_sha256)를 종료 코드와 같은 저장에 적는다",
+          code == 0 and ended and all(attempt.get("output") and attempt.get("output_sha256") == sha(attempt["output"]) for attempt in ended),
+          [(attempt["step"], attempt.get("output"), attempt.get("output_sha256")) for attempt in ended][:3])
+    sweep_text = f"{folder_of(world, 'pg')}/sweep.json"
+    results = {}
+    for name, mutate in (("지움", lambda: absolute(sweep_text).unlink()), ("invalid_count 1", lambda: edit_json(sweep_text, lambda document: document.update(invalid_count=1)))):
+        batch_case(world, configure_with(interrupts={"official g13": 1}))
+        mutate()
+        resume_code, _, resume_fake, resume_output = batch_case(world, extra=("--resume",), reset=False)
+        verdict_code, report, _ = run_verdict(world, out_name=f"i-recorded-{len(results)}")
+        results[name] = (resume_code, resume_fake.calls, "sha 를 기록" in resume_output, verdict_code, report.get("gate"))
+    check("개정 I F-3(반박 RI n2·n3 의 '시도가 끝난 뒤' 꼴): 끝난 sweep 의 sweep.json 을 지우거나 invalid_count 를 고친 뒤 --resume → 2·하위 프로세스 0, verdict 2(gate artifacts)",
+          all(value[0] == 2 and not value[1] and value[2] and value[3] == 2 and value[4] == "artifacts" for value in results.values()), results)
+    with crash_after_attempt("compare", "pa"):
+        crash_code, _, _, _ = batch_case(world)
+    compare_text = f"{folder_of(world, 'pa')}/compare.json"
+    append_byte(compare_text)
+    window_code, _, window_fake, window_output = batch_case(world, extra=("--resume",), reset=False)
+    window_verdict, window_report, _ = run_verdict(world, out_name="i-window")
+    check("개정 I F-3(반박 fixture B1 창): compare 시도 끝 저장 뒤·항목 sha 저장 전 끊김 → compare.json 1바이트 → --resume 2·하위 프로세스 0, verdict 2(gate artifacts)",
+          crash_code == "interrupted" and window_code == 2 and not window_fake.calls and "sha 를 기록" in window_output and window_verdict == 2
+          and window_report.get("gate") == "artifacts", (crash_code, window_code, window_output[-300:], window_verdict, window_report.get("gate")))
+
+
+def test_fix_i_folder_reuse(world):
+    results = {}
+    for plan_stem, key in (("pa", "pa"), ("pg", "g13")):
+        with crash_before_tool(plan_stem, "sweep verify first"):
+            crash_code, _, _, _ = batch_case(world)
+        folder_exists = absolute(folder_of(world, plan_stem)).exists()
+        resume_code, journal, _, _ = batch_case(world, extra=("--resume",), reset=False)
+        verdict_code, report, _ = run_verdict(world, out_name=f"i-x1-{key}")
+        sweeps = [(attempt["try"], attempt["exit"], attempt["state"], attempt["folder"].rsplit("/", 1)[-1]) for attempt in item_of(journal, key)["final"]["attempts"]
+                  if attempt["step"] == "sweep"]
+        results[key] = (crash_code, folder_exists, resume_code, sweeps, verdict_code, report.get("gate"))
+    expected = [(1, None, "interrupted", "verify-1"), (2, 0, "done", "verify-2")]
+    check("개정 I F-4(반박 fixture X1): sweep 시도 저장 뒤·로그·폴더 생성 전 끊김 → --resume 의 try 2 는 일지에 적힌 verify-1 을 피해 verify-2 로 찍고, verdict 0(정상 일지를 거부하지 않음)",
+          all(value[0] == "interrupted" and value[1] is False and value[2] == 0 and value[3] == expected and value[4] == 0 for value in results.values()), results)
+
+
 def real_state():
     final = absolute(REAL_FINAL_DIR)
     files = sorted(str(path.relative_to(final)) for path in final.rglob("*") if path.is_file()) if final.is_dir() else []
@@ -2627,6 +3201,18 @@ def run_all():
     restart_world = build_world("batch-restart")
     with world_scope(restart_world):
         test_batch_restart(restart_world)
+    fix_world = build_world("batch-fix-h")
+    with world_scope(fix_world):
+        for function in (test_fix_h_f0_gate, test_fix_h_redraw, test_fix_h_journal_damage, test_fix_h_recovered_sweep, test_fix_h_events):
+            function(fix_world)
+    test_fix_h_f0_floor()
+    fix_i_world = build_world("batch-fix-i")
+    with world_scope(fix_i_world):
+        for function in (test_fix_i_init_and_pin, test_fix_i_redraw, test_fix_i_f0_gate_recompute, test_fix_i_recorded_outputs, test_fix_i_folder_reuse):
+            function(fix_i_world)
+    fix_i_restart_world = build_world("batch-fix-i-restart")
+    with world_scope(fix_i_restart_world):
+        test_fix_i_restart_pin(fix_i_restart_world)
     for name, verify_plan, ab_plan, fog_fix, function in (("batch-r2-kept", {"f2": [{"states": {"15": "fail"}}]}, {"f2wab": {"screen": "best", "confirm": "v01"}}, False, test_batch_r2_kept),
                                                           ("batch-r2-fog", {"f7": [{"states": {"18": "fail"}}]}, {"f7wab": {"screen": "best", "confirm": "v01"}}, True, test_batch_r2_fog)):
         world = prepare_r2_batch_world(name, verify_plan, ab_plan, fog_fix)
@@ -2640,9 +3226,10 @@ def main():
             stream.reconfigure(encoding="utf-8", errors="replace")
     shutil.rmtree(absolute(TEST_ROOT), ignore_errors=True)
     before = real_state()
-    git_fakes = patched(verify, anchor_commit_problems=lambda path: list(GIT["problems"]), anchor_commit_time=lambda path: prereg_lock.parse_moment(GIT["time"]))
+    git_fakes = patched(verify, anchor_commit_problems=lambda path: list(GIT["problems"]), anchor_commit_time=lambda path: prereg_lock.parse_moment(GIT["time"]),
+                        w_anchor_history=fake_w_anchor_history)
     batch_git_fakes = patched(calib_batch, anchor_commit_problems=lambda path: list(GIT["problems"]), anchor_commit_time=lambda path: prereg_lock.parse_moment(GIT["time"]),
-                              w_anchor_history=lambda path: list(GIT["history"]) if GIT["history"] is not None else [read_json(path)])
+                              w_anchor_history=fake_w_anchor_history)
     with git_fakes, batch_git_fakes:
         try:
             run_all()

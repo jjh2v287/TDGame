@@ -1,0 +1,1934 @@
+"""실행 환경: 시스템 Python 3(에디터 불필요, calib_judge import 때문에 numpy·Pillow·scipy 필요, git 함수는 가짜로 바꿔 git 을 부르지 않음, T147 만 fluid_tuning_patch materialize 를 하위 프로세스로 읽기 전용 실행).
+실행 명령: python -B Tools/FluidFX/calib_final_offline_test.py (종료 0 전부 통과 / 1 실패, 마지막 줄 SUMMARY passed=N/M)
+출력: Saved/FluidFX/calib/final-offline-test/(실행마다 지움, 합성 fixture·산출물)과 PASS/FAIL 줄
+상태: 2026-11-05 calib_final_verify 몫(명세 8.3 T130~T150, 8.4·8.5 의 calib_final_verify 부분)만 있다. calib_batch 최종 모드 시험(T100~T115·T161~T168·T179·T182~T188 의 calib_batch 부분)은 그 구현자가 더한다.
+"""
+import contextlib
+import copy
+import io
+import json
+import os
+import shutil
+import subprocess
+import sys
+import traceback
+from datetime import datetime, timedelta
+from pathlib import Path, PurePosixPath
+from types import SimpleNamespace
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import calib_final_verify as verify  # noqa: E402
+import calib_judge  # noqa: E402
+import fluid_tuning_patch  # noqa: E402
+import prereg_lock  # noqa: E402
+
+ROOT = prereg_lock.ROOT
+TEST_ROOT = "Saved/FluidFX/calib/final-offline-test"
+REAL_FINAL_DIR = "Saved/FluidFX/calib/final"
+REAL_OVERLAY = "Saved/FluidFX/calib/accepted/overlay.json"
+RESULTS = []
+GIT = {"problems": [], "time": "2026-11-05T00:00:00+09:00"}
+PATCH_TOOL = {"calls": [], "fail": None, "tamper": False}
+ARCHIVE_NAME = "aborted-20261105-120000"
+
+LEVEL = "/Game/Fixture/{}".format
+HEAT = "Kinds.Flamethrower.TDFluidSimulationConfig.HeatCoolingPerSec"
+AMBIENT = "Kinds.CloudCyclone.TDFluidSimulationConfig.AmbientRefillPerSec"
+HARDNESS = "Kinds.SnowTrack.TDFluidInputBrushSettings.BrushHardness"
+WIND = "Globals.TDFluidCloudSceneSettings.WindCurtainSpeedCmPerSec"
+MI_SHIELD, MI_CAP, MI_PASSIVE, MI_LAKE, MI_SNOW = (f"/Game/Fixture/MI_TD_{name}" for name in ("Shield", "Cap", "Passive", "Lake", "Snow"))
+NS_FIXTURE = "/Game/Fixture/NS_TD_Fixture"
+COVERAGE = f"Look:Materials.{MI_SHIELD}.Scalars.Coverage"
+EMISSIVE = f"Look:Materials.{MI_CAP}.Scalars.Emissive"
+PASSIVE = f"Look:Materials.{MI_PASSIVE}.Scalars.PassiveCoverage"
+LAKE = f"Look:Materials.{MI_LAKE}.Scalars.FogDensity"
+CONTRAST = f"Look:Materials.{MI_SNOW}.Scalars.Contrast"
+SPEED = f"Look:NiagaraSystems.{NS_FIXTURE}.Floats.User.Speed"
+BUOYANCY = f"Look:NiagaraSystems.{NS_FIXTURE}.Floats.User.Buoyancy"
+LIGHT = {"level": LEVEL("LV_Fog"), "label": "TDGen_LabGreenLight", "component": "light_component", "property": "volumetric_scattering_intensity"}
+LIGHT_ID = fluid_tuning_patch.describe_actor_prop(LIGHT)
+METRIC_BASES = {"m1": 1.0, "m2": 2.0}
+SHIFT = 0.2
+
+PLANS = {
+    "pa": {"scenes": [("a_cyclone", "LV_Track")], "params": [{"json_path": AMBIENT, "values": [0.2]}]},
+    "pb": {"scenes": [("b_cap", "LV_Cloud"), ("b_shield", "LV_Cloud")], "params": [{"json_path": EMISSIVE, "values": [0.03], "base": 0.015, "scenes": ["b_cap"]}]},
+    "pb_src": {"scenes": [("b_cap", "LV_Cloud"), ("b_shield", "LV_Cloud")], "params": [{"json_path": COVERAGE, "values": [0.6], "base": 0.8, "scenes": ["b_shield"]}]},
+    "pn": {"scenes": [("n_mass", "LV_Mass")], "params": [{"json_path": HEAT, "values": [4.0]}], "base_tuning": [{"json_path": BUOYANCY, "value": -300.0}]},
+    "pn_p20": {"scenes": [("n_mass", "LV_Mass")], "params": [{"json_path": SPEED, "values": [750.0], "base": 900.0}], "base_tuning": [{"json_path": BUOYANCY, "value": -300.0}]},
+    "pc": {"scenes": [("c_groove", "LV_Track")], "params": [{"json_path": HARDNESS, "values": [0.6]}]},
+    "pc_p20": {"scenes": [("c_groove", "LV_Track")], "params": [{"json_path": CONTRAST, "values": [0.7], "base": 1.0}]},
+    "pg": {"scenes": [("g_wall", "LV_Storm")], "params": [{"json_path": WIND, "values": [75.0]}]},
+    "pf2": {"scenes": [("f2_field", "LV_Fog")], "params": [{"json_path": PASSIVE, "values": [0.35], "base": 0.5}]},
+    "pu": {"scenes": [("u_pit", "LV_Water")], "params": [{"json_path": LAKE, "values": [0.004], "base": 0.002}]},
+    "pf7": {"scenes": [("f7_lights", "LV_Fog")], "params": [{"actor_prop": {key: LIGHT[key] for key in ("label", "component", "property")}, "values": [8.0], "base": 4.0}]},
+    "pf5": {"scenes": [("f5_cut", "LV_Fog")], "params": []},
+}
+ADOPTIONS = {
+    "1": {"json_path": HEAT, "value": 4.0, "plan": "pn", "measured_under_base": [BUOYANCY]},
+    "2": {"json_path": AMBIENT, "value": 0.2, "plan": "pa"},
+    "3": {"json_path": COVERAGE, "value": 0.6, "plan": "pb_src", "base": 0.8},
+    "9": {"json_path": HARDNESS, "value": 0.6, "plan": "pc", "split_group": True},
+    "10": {"json_path": SPEED, "value": 750.0, "plan": "pn_p20", "base": 900.0, "crlf": True},
+    "11": {"json_path": EMISSIVE, "value": 0.03, "plan": "pb", "base": 0.015},
+    "12": {"json_path": CONTRAST, "value": 0.7, "plan": "pc_p20", "base": 1.0},
+    "13": {"json_path": WIND, "value": 75.0, "plan": "pg"},
+    "15": {"json_path": PASSIVE, "value": 0.35, "plan": "pf2", "base": 0.5},
+    "17": {"json_path": LAKE, "value": 0.004, "plan": "pu", "base": 0.002},
+    "18": {"actor_prop": LIGHT, "value": 8.0, "plan": "pf7"},
+}
+F0_RUNS = (("g13", "pg", "13"), ("f2", "pf2", "15"), ("uw", "pu", "17"), ("f7", "pf7", "18"))
+AB_ROWS = (("pawab", "pa", "pa", "pa", "2", "2", "always_record"), ("pbwab11", "pb", "pb", "pb", "11", "11", "on_fail"),
+           ("pbwab3", "pb_src", "pb_src", "pb", "3", "3", "always_record"), ("pnwab", "pn", "pn", "pnp20", "1", "10", "on_fail"),
+           ("pnp20wab", "pn_p20", "pn_p20", "pnp20", "10", "10", "on_fail"), ("pcwab9", "pc", "pc", "pcw", "9", "12", "on_fail"),
+           ("pcwab12", "pc_p20", "pc_p20", "pcw", "12", "12", "on_fail"), ("g13wab", "pg", "pg", "g13", "13", "13", "on_fail"),
+           ("f2wab", "pf2", "pf2", "f2", "15", "15", "on_fail"), ("uwwab", "pu", "pu", "uw", "17", "17", "on_fail"),
+           ("f7wab", "pf7", "pf7", "f7", "18", "18", "on_fail"))
+TEST_SOURCES = {
+    "HeatTests.cpp": ("TDGame.FluidFX.Fixture.HeatOwner", "HeatCoolingPerSec Flamethrower"),
+    "TwoOwnerTests.cpp": ("TDGame.FluidFX.Fixture.TwoOwners", "Coverage MI_TD_Shield PassiveCoverage MI_TD_Passive"),
+    "KindlessTests.cpp": ("TDGame.FluidFX.Fixture.KindlessHardness", "BrushHardness only"),
+    "NoOwnerTests.cpp": ("TDGame.FluidFX.Fixture.NoOwner", "nothing"),
+    "TimingTests.cpp": ("TDGame.FluidFX.Fixture.Timing", "frame timing"),
+    "HeaderTests.cpp": (verify.HEADER_SYNC_TEST, "HeatCoolingPerSec Flamethrower header"),
+    "PinTests.cpp": ("TDGame.FluidFXRhi.Fixture.PinMatch", "pinned"),
+}
+TEST_CLASSES = {"version": 2, "rules": {}, "tests": [], "timing_record_only": ["TDGame.FluidFX.Fixture.Timing"], "numeric_pinned": [],
+                "numeric_pin_when_failures_match": {"TDGame.FluidFXRhi.Fixture.PinMatch": ["허용 문구"]}}
+
+
+def check(name, condition, detail=""):
+    RESULTS.append((name, bool(condition)))
+    suffix = "" if condition or not detail else f" — {str(detail)[:600]}"
+    print(f"{'PASS' if condition else 'FAIL'} {name}{suffix}")
+
+
+@contextlib.contextmanager
+def patched(target, **replacements):
+    originals = {name: getattr(target, name) for name in replacements}
+    for name, value in replacements.items():
+        setattr(target, name, value)
+    try:
+        yield
+    finally:
+        for name, value in originals.items():
+            setattr(target, name, value)
+
+
+def absolute(text):
+    return ROOT / text
+
+
+def write_text(text, content):
+    path = absolute(text)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content.encode("utf-8"))
+
+
+def write_json(text, value):
+    write_text(text, verify.json_text(value))
+
+
+def read_json(text):
+    return json.loads(absolute(text).read_text(encoding="utf-8"))
+
+
+def sha(text):
+    return prereg_lock.file_sha256(absolute(text))
+
+
+def now_text():
+    return datetime.now().astimezone().isoformat()
+
+
+def append_byte(text, data=b" "):
+    with absolute(text).open("ab") as handle:
+        handle.write(data)
+
+
+@contextlib.contextmanager
+def restored(*texts):
+    saved = {text: absolute(text).read_bytes() if absolute(text).is_file() else None for text in texts}
+    try:
+        yield
+    finally:
+        for text, data in saved.items():
+            if data is None:
+                if absolute(text).is_file():
+                    absolute(text).unlink()
+                continue
+            absolute(text).parent.mkdir(parents=True, exist_ok=True)
+            absolute(text).write_bytes(data)
+
+
+def run_main(argv):
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
+        code = verify.main([str(part) for part in argv])
+    return code, output.getvalue()
+
+
+def gate_of(function, *arguments):
+    try:
+        function(*arguments)
+    except verify.GateFailure as failure:
+        return failure.exit_code, " | ".join(failure.problems)
+    except verify.INPUT_ERRORS as error:
+        return verify.EXIT_INPUT, f"{type(error).__name__}: {error}"
+    return 0, ""
+
+
+def plan_path(world, name):
+    return f"{world['root']}/plans/{name}.json"
+
+
+def scene_object(world, name, level):
+    return {"name": name, "level": LEVEL(level), "sources": ["probe"], "regions_template": f"{world['root']}/regions/{name}.json", "targets": f"{world['root']}/targets/{name}.json"}
+
+
+def plan_document(world, name, definition, series_scenes=()):
+    scenes, targets = [], []
+    for scene_name, level in definition["scenes"]:
+        scene = scene_object(world, scene_name, level)
+        if scene_name in series_scenes:
+            scene["shots"] = {"kind": "series"}
+        scenes.append(scene)
+        targets.append({"scene": scene_name, "metric": "m1", "low": 0.0, "high": 4.0, "tolerance": 0.0, "role": "score"})
+        targets.append({"scene": scene_name, "metric": "m2", "low": 0.0, "high": 4.0, "tolerance": 0.0, "role": "constraint"})
+    document = {"id": name, "scenes": scenes, "metrics": {"targets": targets, "derived": []}, "params": copy.deepcopy(definition["params"])}
+    if definition.get("base_tuning"):
+        document["base_tuning"] = copy.deepcopy(definition["base_tuning"])
+    return document
+
+
+def scene_values(plan, behaviors, shift=SHIFT):
+    scenes = []
+    for scene in plan["scenes"]:
+        behavior = behaviors.get(scene["name"], "pass")
+        steps = []
+        for index in range(3):
+            metrics = {}
+            for target in plan["metrics"]["targets"]:
+                if target.get("scene") != scene["name"]:
+                    continue
+                value = METRIC_BASES[target["metric"]] + (shift if behavior == "fail" else 0.0) + (shift if behavior == "undetermined" and index == 2 else 0.0)
+                metrics[target["metric"]] = [value - 0.01, value, value + 0.01]
+            steps.append({"step": index + 1, "variant": "v00", "valid": True, "name": f"{scene['name']}-{index + 1}", "metrics": metrics})
+        scenes.append({"name": scene["name"], "sources": list(scene["sources"]), "regions_template": scene["regions_template"], "targets": scene["targets"], "steps": steps})
+    return scenes
+
+
+def make_sweep(plan_text, lock_text, stage, overlay_sha, canonical, behaviors, run_dir):
+    plan = read_json(plan_text)
+    return {"tool": "calib_sweep", "plan": plan_text, "plan_sha256": sha(plan_text), "stage": stage, "lock": lock_text, "lock_sha256": sha(lock_text),
+            "overlay_sha256": overlay_sha, "canonical_tuning_sha256": canonical["tuning"], "canonical_look_sha256": canonical["look"], "started_at": now_text(),
+            "invalid_count": 0, "run_dir": run_dir, "metrics": copy.deepcopy(plan["metrics"]), "params": copy.deepcopy(plan.get("params") or []),
+            "scenes": scene_values(plan, behaviors)}
+
+
+def before_documents():
+    tuning = {"StructDefaults": {"TDFluidSimulationConfig": {"HeatCoolingPerSec": 1.0, "AmbientRefillPerSec": 0.05}, "TDFluidInputBrushSettings": {"BrushHardness": 0.3}},
+              "Groups": {}, "Kinds": {"Flamethrower": {"TDFluidSimulationConfig": {"HeatCoolingPerSec": 2.5}}, "CloudCyclone": {"TDFluidSimulationConfig": {"AmbientRefillPerSec": 0.1}},
+                                       "SnowTrack": {}},
+              "Globals": {"TDFluidCloudSceneSettings": {"WindCurtainSpeedCmPerSec": 150.0}}}
+    look = {"Materials": {MI_SHIELD: {"Scalars": {"Coverage": 0.8}}, MI_CAP: {"Scalars": {"Emissive": 0.015}}, MI_PASSIVE: {"Scalars": {"PassiveCoverage": 0.5}},
+                          MI_LAKE: {"Scalars": {"FogDensity": 0.002}}, MI_SNOW: {"Scalars": {}}},
+            "NiagaraSystems": {NS_FIXTURE: {"Floats": {"User.Speed": 900.0, "User.Buoyancy": -300.0}}}}
+    return tuning, look
+
+
+def apply_assignments(tuning, look, assignments):
+    tuning, look = copy.deepcopy(tuning), copy.deepcopy(look)
+    for entry in assignments:
+        json_path = entry["json_path"]
+        if fluid_tuning_patch.is_look_path(json_path):
+            table_key, package, section, name = fluid_tuning_patch.parse_look_path(json_path)
+            look.setdefault(table_key[len(fluid_tuning_patch.LOOK_PREFIX):], {}).setdefault(package, {}).setdefault(section, {})[name] = entry["value"]
+            continue
+        section, kind_name, struct_name, field_name = fluid_tuning_patch.parse_json_path(json_path)
+        if section == fluid_tuning_patch.GLOBALS_SECTION:
+            tuning[section][struct_name][field_name] = entry["value"]
+            continue
+        tuning[section].setdefault(kind_name, {}).setdefault(struct_name, {})[field_name] = entry["value"]
+    return tuning, look
+
+
+def write_pair(directory, tuning, look):
+    write_json(f"{directory}/{fluid_tuning_patch.TUNING_FILE_NAME}", tuning)
+    write_json(f"{directory}/{fluid_tuning_patch.LOOK_FILE_NAME}", look)
+    return {"tuning": sha(f"{directory}/{fluid_tuning_patch.TUNING_FILE_NAME}"), "look": sha(f"{directory}/{fluid_tuning_patch.LOOK_FILE_NAME}")}
+
+
+def pair_sha(directory):
+    return {"tuning": sha(f"{directory}/{fluid_tuning_patch.TUNING_FILE_NAME}"), "look": sha(f"{directory}/{fluid_tuning_patch.LOOK_FILE_NAME}")}
+
+
+def fake_patch_tool(world):
+    def run(arguments):
+        command = arguments[0]
+        PATCH_TOOL["calls"].append(command)
+        if PATCH_TOOL["fail"] == command:
+            return 1, "", "가짜 fluid_tuning_patch 실패"
+        options, index = {}, 1
+        while index < len(arguments):
+            if index + 1 < len(arguments) and not arguments[index + 1].startswith("--"):
+                options[arguments[index]] = arguments[index + 1]
+                index += 2
+                continue
+            options[arguments[index]] = True
+            index += 1
+        tuning, look = before_documents()
+        if command == "restore":
+            write_pair(world["live"], tuning, look)
+            return 0, json.dumps({"restored": []}), ""
+        if command == "overlay-remove":
+            overlay = fluid_tuning_patch.read_overlay(absolute(options["--overlay"]))
+            removed = [entry for entry in overlay["assignments"] if entry["json_path"] == options["--json-path"]]
+            overlay["assignments"] = [entry for entry in overlay["assignments"] if entry["json_path"] != options["--json-path"]]
+            if PATCH_TOOL["tamper"] and overlay["assignments"]:
+                overlay["assignments"][0]["value"] = 123.0
+            overlay["history"].extend(fluid_tuning_patch.history_entries("remove", removed, options["--reason"], "2026-11-05T12:00:00"))
+            fluid_tuning_patch.write_overlay(absolute(options["--overlay"]), overlay)
+            return 0, json.dumps({"overlay_sha256": sha(options["--overlay"])}), ""
+        overlay = fluid_tuning_patch.read_overlay(absolute(options.get("--overlay") or options.get("--from-overlay")))
+        tuning, look = apply_assignments(tuning, look, overlay["assignments"])
+        if command == "materialize":
+            shas = write_pair(options["--out"], tuning, look)
+            return 0, json.dumps({"tuning_sha256": shas["tuning"], "look_sha256": shas["look"]}), ""
+        if command == "write-canonical":
+            shas = write_pair(world["live"], tuning, look)
+            return 0, json.dumps({"written_sha256": shas["tuning"], "written_look_sha256": shas["look"]}), ""
+        return 2, "", f"가짜 fluid_tuning_patch: 모르는 명령 {command}"
+    return run
+
+
+def world_scope(world):
+    stack = contextlib.ExitStack()
+    stack.enter_context(patched(verify, CANONICAL_BEFORE_SHA256=world["before_sha"], FOG_GENERATOR=world["fog_generator"], FOG_STAGE_REPORT=world["fog_report"],
+                                TEST_CLASSES_PATH=world["test_classes"], canonical_now_sha=lambda: pair_sha(world["live"]), run_patch_tool=fake_patch_tool(world)))
+    return stack
+
+
+def make_lock(files, out_text, note="fixture"):
+    path = absolute(out_text)
+    if path.exists():
+        path.unlink()
+    prereg_lock.create_lock(files, path, note)
+    return out_text
+
+
+def make_source(world, number, plan_name, kind, scene_names=None):
+    plan_text = plan_path(world, plan_name)
+    folder = f"{world['root']}/src/{plan_name}-{number}"
+    lock_text = make_lock(prereg_lock.required_files(plan_text), f"{folder}/lock.json")
+    stage = "confirm" if kind == "confirm" else "screen"
+    sweep_text = f"{folder}/{stage}-1/sweep.json"
+    sweep = make_sweep(plan_text, lock_text, stage, None, world["before_sha"], {}, f"{folder}/{stage}-1")
+    write_json(sweep_text, sweep)
+    scenes = calib_judge.judge_sweep_scenes(sweep, read_json(plan_text), absolute(f"{folder}/{stage}-1/judge"))
+    plan_sha = verify.crlf_sha(plan_text) if (ADOPTIONS.get(number) or {}).get("crlf") else sha(plan_text)
+    if kind == "screen":
+        judge = {"tool": "calib_judge", "version": 2, "stage": "screen", "plan": plan_text, "plan_sha256": plan_sha, "lock_sha256": sha(lock_text),
+                 "screen_sweep": sweep_text, "screen_sweep_sha256": sha(sweep_text), "scenes": scenes, "keep": True, "best": None, "insensitive": False}
+        judge_text = f"{folder}/screen-1/screen.json"
+    else:
+        for scene in scenes:
+            scene["candidate_medians"] = {target["metric"]: METRIC_BASES[target["metric"]] for target in scene["targets"]}
+        judge = {"tool": "calib_judge", "version": 2, "stage": "confirm", "sweep": sweep_text, "lock": lock_text, "plan": plan_text, "plan_sha256": plan_sha,
+                 "lock_sha256": sha(lock_text), "scenes": scenes, "adopt": {"decision": True, "variant": "v01"}}
+        judge_text = f"{folder}/confirm-1/judge.json"
+    write_json(judge_text, judge)
+    return {"judge": judge_text, "lock": lock_text, "sweep": sweep_text, "plan": plan_text}
+
+
+def overlay_entry(number, source):
+    adoption = ADOPTIONS[number]
+    origin = {"plan": source["plan"], "plan_sha256": read_json(source["judge"])["plan_sha256"], "confirm_judge": source["judge"], "judge_sha256": sha(source["judge"]),
+              "variant": "v01", "lock_sha256": sha(source["lock"])}
+    if "actor_prop" in adoption:
+        return dict(copy.deepcopy(adoption["actor_prop"]), value=adoption["value"], **{"from": origin})
+    entry = {"json_path": adoption["json_path"], "value": adoption["value"], "split_group": bool(adoption.get("split_group")), "kind": "knob", "from": origin}
+    if "base" in adoption:
+        entry["base"] = adoption["base"]
+        entry["levels"] = [LEVEL(PLANS[adoption["plan"]]["scenes"][-1][1])]
+    if adoption.get("measured_under_base"):
+        entry["measured_under_base"] = list(adoption["measured_under_base"])
+    return entry
+
+
+def source_entry(number, kind, judge_text, scenes, binding=None, lineage="clean", evidence=None):
+    entry = {"adoption": number, "kind": kind, "judge": judge_text, "scenes": scenes, "binding": binding or {"kind": "same"}, "lineage": lineage}
+    if evidence:
+        entry["lineage_evidence"] = evidence
+    return entry
+
+
+def build_spec(world, sources):
+    root, final_dir = world["root"], world["final"]
+    plan = lambda name: plan_path(world, name)
+    empty, actor = f"{final_dir}/overlay-empty.json", f"{final_dir}/overlay-actor-props.json"
+    runs = []
+    for run_id, plan_name, number in F0_RUNS:
+        runs.append({"id": run_id, "block": "F0", "plan": plan(plan_name), "overlay": actor if number == "18" else empty, "lock": sources[number]["lock"],
+                     "verify_against": sources[number]["judge"], "sources": [source_entry(number, "confirm", sources[number]["judge"], [PLANS[plan_name]["scenes"][0][0]])]})
+    runs += [
+        {"id": "pa", "block": "F1", "plan": plan("pa"), "overlay": empty, "sources": [source_entry("2", "confirm", sources["2"]["judge"], ["a_cyclone"])]},
+        {"id": "pb", "block": "F1", "plan": plan("pb"), "overlay": empty,
+         "sources": [source_entry("11", "confirm", sources["11"]["judge"], ["b_cap"]),
+                     source_entry("3", "confirm", sources["3"]["judge"], ["b_shield"], {"kind": "cross_plan", "source_plan": plan("pb_src")}, "scene_changed", ["fixture-commit"])]},
+        {"id": "pnp20", "block": "F1", "plan": plan("pn_p20"), "overlay": empty,
+         "sources": [source_entry("10", "confirm", sources["10"]["judge"], ["n_mass"], {"kind": "eol", "eol_note": f"{root}/eol/eol-note.json"})]},
+        {"id": "pcw", "block": "F1", "plan": f"{final_dir}/plans/pc_p20-w.json", "overlay": empty,
+         "sources": [source_entry("12", "confirm", sources["12"]["judge"], ["c_groove"], {"kind": "copy", "source_plan": plan("pc_p20")})]},
+        {"id": "f5", "block": "F1", "plan": plan("pf5"), "overlay": empty, "sources": [source_entry("f5", "screen", sources["f5"]["judge"], ["f5_cut"], lineage="other_after")]},
+    ]
+    covered = [{"adoption": "1", "by_run": "pnp20", "by_adoption": "10", "rule": "P-20",
+                "fallback": {"id": "pn", "block": "F1", "plan": plan("pn"), "overlay": empty, "sources": [source_entry("1", "confirm", sources["1"]["judge"], ["n_mass"], lineage="scene_changed")]}},
+               {"adoption": "9", "by_run": "pcw", "by_adoption": "12", "rule": "P-20",
+                "fallback": {"id": "pc", "block": "F1", "plan": plan("pc"), "overlay": empty, "sources": [source_entry("9", "confirm", sources["9"]["judge"], ["c_groove"], lineage="scene_changed")]}}]
+    ab = [{"id": identifier, "scene_plan": plan(scene_plan), "knob_plan": plan(knob_plan), "plan": f"{final_dir}/plans/{scene_plan}-wab.json", "overlay": empty,
+           "for_run": for_run, "for_adoption": for_adoption, "trigger_adoption": trigger_adoption, "trigger": trigger, "cross": False}
+          for identifier, scene_plan, knob_plan, for_run, for_adoption, trigger_adoption, trigger in AB_ROWS]
+    ab.append({"id": "f5xf7wab", "scene_plan": plan("pf5"), "knob_plan": plan("pf7"), "plan": f"{final_dir}/plans/pf5-x-pf7-wab.json", "overlay": empty,
+               "for_run": "f5", "for_adoption": "18", "trigger_adoption": "f5", "trigger": "on_fail", "cross": True})
+    adoptions = {number: ({"actor_prop": copy.deepcopy(adoption["actor_prop"])} if "actor_prop" in adoption else {"json_path": adoption["json_path"]})
+                 for number, adoption in ADOPTIONS.items()}
+    return {"version": 4, "edition": "e1", "final_dir": final_dir, "overlay": f"{final_dir}/overlay-frozen.json", "canonical_before_dir": f"{final_dir}/canonical-before",
+            "preview_dir": f"{final_dir}/preview", "w_expect": f"{final_dir}/w-expect.json", "test_owner": f"{final_dir}/test_owner.json", "pie_files": [f"{root}/pie/pie-plan.json"],
+            "adoptions": adoptions, "influences": ["f5"], "plan_copies": [{"plan": plan("pc_p20"), "out": f"{final_dir}/plans/pc_p20-w.json"}], "runs": runs, "covered": covered, "ab": ab,
+            "p22": {"plans": [plan("pn"), plan("pn_p20")], "ns_package": NS_FIXTURE, "runs": ["pnp20"]}, "source_scene_exceptions": [],
+            "tests_required": {"w11": ["w4-header", "w10-rhi"], "w13": ["w4-header", "w10-rhi", "w13-headless", "w13-rhi"]}}
+
+
+def fog_generator_text(value):
+    return f'FIXTURE_LIGHTS = [\n    {{"label": "LabGreenLight", "intensity": 2000.0, "volumetric_scattering_intensity": {value}}},\n]\n'
+
+
+def write_tests(world, label, failures=(), incomplete=False):
+    results = [{"path": name, "result": "Success", "events": []} for name in ("TDGame.FluidFX.Fixture.Pass",)]
+    results += [{"path": name, "result": "Fail", "events": list(events)} for name, events in failures]
+    text = f"{world['root']}/tests/{label}-tests.json"
+    write_json(text, {"results": results, "incomplete": incomplete, "crashed": False, "found_count": len(results)})
+    return text
+
+
+def build_world(name, preprocess=None):
+    root = f"{TEST_ROOT}/{name}"
+    final_dir = f"{root}/final"
+    world = {"name": name, "root": root, "final": final_dir, "w_anchor": f"{root}/w-anchor.json", "live": f"{root}/live", "test_classes": f"{root}/test_classes.json",
+             "fog_generator": f"{root}/fog/editor_make_fluid_fog_stage.py", "fog_report": f"{root}/fog/fluid_fog_stage.json"}
+    shutil.rmtree(absolute(root), ignore_errors=True)
+    tuning, look = before_documents()
+    world["before_sha"] = write_pair(f"{final_dir}/canonical-before", tuning, look)
+    write_json(world["test_classes"], TEST_CLASSES)
+    write_text(world["fog_generator"], fog_generator_text(8.0))
+    for plan_name, definition in PLANS.items():
+        document = plan_document(world, plan_name, definition)
+        for scene in document["scenes"]:
+            write_json(scene["regions_template"], {"regions": [{"name": scene["name"]}]})
+            write_json(scene["targets"], {"scene": scene["name"]})
+        write_json(plan_path(world, plan_name), document)
+    write_json(f"{root}/eol/eol-note.json", {"plans": [{"plan": plan_path(world, "pn_p20"), "from": "CRLF", "to": "LF"}]})
+    write_json(f"{root}/pie/pie-plan.json", {"shots": []})
+    for file_name, (test_name, body) in TEST_SOURCES.items():
+        write_text(f"{root}/code/Tests/{file_name}", f'IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFixture, "{test_name}", 0)\n// {body}\n')
+    with world_scope(world):
+        sources = {number: make_source(world, number, adoption["plan"], "confirm") for number, adoption in ADOPTIONS.items()}
+        sources["f5"] = make_source(world, "f5", "pf5", "screen")
+        overlay = {"version": 2, "assignments": [overlay_entry(number, sources[number]) for number in verify.sorted_adoptions(ADOPTIONS) if "json_path" in ADOPTIONS[number]],
+                   "actor_props": [overlay_entry("18", sources["18"])], "history": []}
+        world["sources"] = sources
+        spec = build_spec(world, sources)
+        if preprocess:
+            preprocess(world, spec, overlay)
+        write_json(spec["overlay"], overlay)
+        preview_tuning, preview_look = apply_assignments(tuning, look, overlay["assignments"])
+        world["after_sha"] = write_pair(spec["preview_dir"], preview_tuning, preview_look)
+        write_pair(world["live"], preview_tuning, preview_look)
+        write_json(f"{final_dir}/builder-before/preset_builder_dump.json", {"Flamethrower": {"TDFluidSimulationConfig": {"HeatCoolingPerSec": 2.5}},
+                                                                            "CloudCyclone": {"TDFluidSimulationConfig": {"AmbientRefillPerSec": 0.1}}})
+        write_json(spec["w_expect"], verify.build_w_expect(spec["overlay"], spec["canonical_before_dir"], spec["preview_dir"], f"{final_dir}/builder-before/preset_builder_dump.json"))
+        write_json(spec["test_owner"], verify.build_test_owner(spec["overlay"], world["test_classes"], f"{root}/code"))
+        write_json(f"{final_dir}/final-spec.json", spec)
+        world["spec"] = f"{final_dir}/final-spec.json"
+        world["setup"] = [run_main(["copies", "--spec", world["spec"], "--out-dir", final_dir]),
+                          run_main(["expect", "--spec", world["spec"], "--out", f"{final_dir}/expect.json", "--queue-out", f"{final_dir}/final_queue.json"])]
+        world["setup"].append(run_anchor(world))
+        write_json(f"{final_dir}/write-canonical.json", {"written_sha256": world["after_sha"]["tuning"], "written_look_sha256": world["after_sha"]["look"]})
+        write_json(world["fog_report"], {"preset_tuning_sha256": world["after_sha"]["tuning"]})
+    world["ns_dump"] = f"{root}/ns_after/NS_TD_Fixture.dump.json"
+    write_ns_dump(world, {"User.Speed": 750.0, "User.Buoyancy": -300.0})
+    for label in ("w4-header", "w10-rhi", "w13-headless", "w13-rhi"):
+        write_tests(world, label)
+    return world
+
+
+def write_ns_dump(world, floats):
+    variables = [{"name": name, "type": {"classStructOrEnum": {"refPath": "/Script/Niagara.NiagaraFloat"}}, "defaultValue": {"struct": {"refPath": "/Script/Niagara.NiagaraFloat"},
+                                                                                                                      "value": {"value": value}}}
+                 for name, value in floats.items()]
+    write_json(world["ns_dump"], {"sections": {"UserVariables": {"userVariables": variables}}})
+
+
+def run_anchor(world, spec_text=None, w_anchor_out=None):
+    return run_main(["anchor", "--spec", spec_text or world["spec"], "--w-anchor", world["w_anchor"], "--w-anchor-out", w_anchor_out or world["w_anchor"]])
+
+
+def setup_ok(world):
+    return all(code == 0 for code, _ in world["setup"])
+
+
+def setup_detail(world):
+    return "; ".join(output.strip()[-300:] for code, output in world["setup"] if code != 0)
+
+
+def queue_judge_files(queue):
+    return list(queue["final"]["judge_files"]) + [queue["final"]["anchor"]]
+
+
+def new_attempt(journal_dir, step, **fields):
+    attempt = {"step": step, "stage": None, "opportunity": None, "try": None, "folder": None, "log": f"{journal_dir}/batch.log", "started_at": now_text(), "exit": 0, "state": "done"}
+    attempt.update(fields)
+    return attempt
+
+
+def run_rows_of(expect, run_id):
+    return [row for row in expect["rows"] if row["run"] == run_id]
+
+
+def target_state_of(expect, decision_states, statuses, key):
+    covered = next((item for item in expect["covered"] if item["adoption"] == key), None)
+    run_id, adoption = (covered["by_run"], covered["by_adoption"]) if covered else (next(row["run"] for row in expect["rows"] if row["adoption"] == key), key)
+    if statuses.get(run_id) == "incomplete":
+        return "incomplete"
+    return (decision_states.get(run_id) or {}).get(adoption)
+
+
+def environment_attempts(journal_dir, folder_base, stage, opportunity, mode, start_count):
+    attempts = []
+    for try_number in (1, 2):
+        folder = f"{folder_base}/{stage}-{start_count + try_number}"
+        absolute(folder).mkdir(parents=True, exist_ok=True)
+        exit_code, state = (None, "interrupted") if mode == "interrupted" else (1, "done")
+        attempts.append(new_attempt(journal_dir, "sweep", stage=stage, opportunity=opportunity, folder=folder, exit=exit_code, state=state, **{"try": try_number}))
+    return attempts
+
+
+def world_final(expect):
+    return expect["final_dir"]
+
+
+def simulate_verify(world, expect, queue, queue_item, journal_dir, opportunities_plan, options, stop):
+    run_id = queue_item["run"]
+    run = expect["runs"][run_id]
+    is_f0 = run["block"] == "F0"
+    rows = run_rows_of(expect, run_id)
+    keys = verify.sorted_adoptions({row["adoption"] for row in rows})
+    scenes_of = {key: {row["scene"] for row in rows if row["adoption"] == key} for key in keys}
+    stem = PurePosixPath(queue_item["plan"]).stem
+    folder_base = f"{journal_dir}/runs/{stem}"
+    attempts, artifacts = [], {}
+    judge_files = queue_judge_files(queue)
+    failure = options.get("fail") if (options.get("fail") or {}).get("item") == run_id else None
+    item = {"plan": queue_item["plan"], "block": run["block"], "chain": None, "status": "pending", "runs": {}, "attempts": 0, "wall_seconds": 0.0, "estimate_seconds": 0.0, "reason": ""}
+    final = {"kind": "verify", "run": run_id, "edition": expect["edition"], "attempts": attempts, "adoptions_first": {}, "adoptions": {}, "official_first": {}, "official_rerun": {},
+             "self_check": None, "rerun": 0, "overlay_sha256_before": sha(queue_item["overlay"]), "overlay_sha256_after": None, "artifact_sha256": artifacts}
+    item["final"] = final
+
+    def fail_here(step):
+        if not failure or failure["step"] != step:
+            return False
+        attempts.append(new_attempt(journal_dir, step, stage="verify" if step in ("sweep", "official", "compare") else None, exit=failure.get("exit"), state=failure.get("state", "done")))
+        item["status"] = "failed"
+        stop.update(event="E2", item=run_id, reason=f"{step} 종료 {failure.get('exit')}")
+        return True
+
+    if is_f0:
+        attempts.append(new_attempt(journal_dir, "lock_verify"))
+        if fail_here("judge_lock_create"):
+            return item
+        make_lock(judge_files, queue_item["judge_lock"])
+        attempts.append(new_attempt(journal_dir, "judge_lock_create"))
+        artifacts[queue_item["judge_lock"]] = sha(queue_item["judge_lock"])
+        item["runs"].update(lock=queue_item["lock"], judge_lock=queue_item["judge_lock"])
+    else:
+        if fail_here("lock_create"):
+            return item
+        make_lock(prereg_lock.required_files(queue_item["plan"]) + judge_files, queue_item["lock"])
+        attempts.append(new_attempt(journal_dir, "lock_create"))
+        artifacts[queue_item["lock"]] = sha(queue_item["lock"])
+        item["runs"]["lock"] = queue_item["lock"]
+    lock_text = queue_item["lock"]
+    count, outcomes, states = 0, {}, {}
+    self_checks = {"first": None, "rerun": None}
+    for index, opportunity in enumerate(verify.OPPORTUNITIES):
+        if opportunity == "rerun" and (outcomes.get("first") != "done" or "undetermined" not in states["first"].values()):
+            break
+        plan_entry = opportunities_plan[index] if index < len(opportunities_plan) else {}
+        if plan_entry.get("infeasible"):
+            attempts.extend(environment_attempts(journal_dir, folder_base, "verify", opportunity, plan_entry["infeasible"], count))
+            count += 2
+            outcomes[opportunity] = "infeasible"
+            continue
+        if plan_entry.get("retry"):
+            count += 1
+            absolute(f"{folder_base}/verify-{count}").mkdir(parents=True, exist_ok=True)
+            attempts.append(new_attempt(journal_dir, "sweep", stage="verify", opportunity=opportunity, folder=f"{folder_base}/verify-{count}", exit=1, **{"try": 1}))
+            attempts.append(new_attempt(journal_dir, "ensure"))
+        count += 1
+        folder = f"{folder_base}/verify-{count}"
+        if fail_here("sweep"):
+            return item
+        desired = {key: (plan_entry.get("states") or {}).get(key, "pass") for key in keys}
+        behaviors = {scene: state for key, state in desired.items() for scene in scenes_of[key]}
+        sweep = make_sweep(queue_item["plan"], lock_text, "verify", sha(queue_item["overlay"]), expect["canonical_after"], behaviors, folder)
+        write_json(f"{folder}/sweep.json", sweep)
+        attempts.append(new_attempt(journal_dir, "sweep", stage="verify", opportunity=opportunity, folder=folder, exit=0, **{"try": 2 if plan_entry.get("retry") else 1}))
+        artifacts[f"{folder}/sweep.json"] = sha(f"{folder}/sweep.json")
+        if is_f0:
+            if fail_here("official"):
+                return item
+            official = calib_judge.judge_verify_document(sweep, absolute(f"{folder}/sweep.json"), read_json(queue_item["plan"]), absolute(lock_text), sha(lock_text),
+                                                         run["verify_against"], absolute(f"{folder}/judge"))
+            write_json(f"{folder}/verify.json", official)
+            attempts.append(new_attempt(journal_dir, "official", stage="verify", opportunity=opportunity, folder=folder, exit=calib_judge.staged_exit_code(official)))
+            artifacts[f"{folder}/verify.json"] = sha(f"{folder}/verify.json")
+            official_states = verify.adoption_states(rows, official["scenes"], official["verify"]["checks"])
+            if official_states != desired:
+                raise RuntimeError(f"fixture 결함: {run_id} {opportunity} 공식 상태 {official_states} ≠ 의도 {desired}")
+            final["official_first" if opportunity == "first" else "official_rerun"] = official_states
+        if fail_here("compare"):
+            return item
+        report, exit_code = verify.compare_run(SimpleNamespace(expect=f"{world_final(expect)}/expect.json", run=run_id, sweep=f"{folder}/sweep.json", lock=lock_text,
+                                                               judge_lock=queue_item.get("judge_lock"), work_dir=f"{folder}/compare-judge", w_anchor=options["w_anchor"]))
+        if report["adoptions"] != desired:
+            raise RuntimeError(f"fixture 결함: {run_id} {opportunity} 비교기 상태 {report['adoptions']} ≠ 의도 {desired}")
+        tamper = (options.get("tamper_compare") or {}).get((run_id, opportunity))
+        if tamper:
+            tamper(report)
+        write_json(f"{folder}/compare.json", report)
+        attempts.append(new_attempt(journal_dir, "compare", stage="verify", opportunity=opportunity, folder=folder, exit=exit_code))
+        artifacts[f"{folder}/compare.json"] = sha(f"{folder}/compare.json")
+        item["runs"].update(verify=folder, compare=f"{folder}/compare.json")
+        if is_f0:
+            item["runs"]["verify_official"] = f"{folder}/verify.json"
+        states[opportunity] = desired
+        outcomes[opportunity] = "done"
+        if is_f0:
+            self_checks[opportunity] = not tamper and options.get("lie_self_check") != (run_id, opportunity)
+            if self_checks[opportunity] is False:
+                break
+    final["self_check"] = self_checks if is_f0 else None
+    final["overlay_sha256_after"] = sha(queue_item["overlay"])
+    item["attempts"] = sum(1 for attempt in attempts if attempt["step"] == "sweep")
+    if is_f0 and False in self_checks.values():
+        item["status"] = "self_check_mismatch"
+        stop.update(event="E3_repeat" if expect["restart"] == 1 else "E3", item=run_id, reason="자기 검증 불일치")
+        return item
+    if outcomes.get("first") == "infeasible":
+        decision = {key: "incomplete" for key in keys}
+    else:
+        first = states["first"]
+        final["adoptions_first"] = first
+        final["rerun"] = 1 if "undetermined" in first.values() else 0
+        decision = {}
+        for key in keys:
+            if first[key] in ("pass", "fail"):
+                decision[key] = first[key]
+            elif outcomes.get("rerun") == "done":
+                decision[key] = states["rerun"][key]
+            else:
+                decision[key] = "incomplete"
+    final["adoptions"] = decision
+    item["status"] = "incomplete" if all(value == "incomplete" for value in decision.values()) else "verified"
+    return item
+
+
+def ab_sweep(queue_item, ab, lock_text, stage, expect, folder):
+    plan = read_json(queue_item["plan"])
+    params = copy.deepcopy(plan["params"])
+    params[0]["base_value"] = ab["adopted_value"]
+    params[0]["values"] = [ab["before_value"]]
+    return {"tool": "calib_sweep", "plan": queue_item["plan"], "plan_sha256": sha(queue_item["plan"]), "stage": stage, "lock": lock_text, "lock_sha256": sha(lock_text),
+            "overlay_sha256": sha(queue_item["overlay"]), "canonical_tuning_sha256": expect["canonical_after"]["tuning"], "canonical_look_sha256": expect["canonical_after"]["look"],
+            "started_at": now_text(), "invalid_count": 0, "run_dir": folder, "params": params}
+
+
+def ab_result(sweep, stage, scene_names, control_ok, extra):
+    document = {"tool": "calib_judge", "version": 2, "stage": stage, "plan": sweep["plan"], "plan_sha256": sweep["plan_sha256"], "overlay_sha256": sweep["overlay_sha256"],
+                "canonical_tuning_sha256": sweep["canonical_tuning_sha256"], "canonical_look_sha256": sweep["canonical_look_sha256"], "lock_sha256": sweep["lock_sha256"],
+                "scenes": [{"name": name, "control_ok": control_ok, "targets": [], "control_reference": {}, "variants": {}} for name in scene_names]}
+    document.update(extra)
+    return document
+
+
+def simulate_ab(world, expect, queue, queue_item, journal_dir, decision_states, statuses, ab_plan, options, stop):
+    ab = next(entry for entry in expect["ab"] if entry["id"] == queue_item["ab"]["id"])
+    trigger_state = "incomplete" if statuses.get(ab["for_run"]) == "incomplete" else (decision_states.get(ab["for_run"]) or {}).get(ab["trigger_adoption"])
+    for_state = target_state_of(expect, decision_states, statuses, ab["for_adoption"])
+    attempts, artifacts = [], {}
+    item = {"plan": queue_item["plan"], "block": "F2", "chain": None, "status": "pending", "runs": {}, "attempts": 0, "wall_seconds": 0.0, "estimate_seconds": 0.0, "reason": ""}
+    final = {"kind": "ab", "ab_id": ab["id"], "edition": expect["edition"], "trigger_state": trigger_state, "decision": None, "reason": "", "attempts": attempts,
+             "overlay_sha256_before": sha(queue_item["overlay"]), "overlay_sha256_after": sha(queue_item["overlay"]), "perf_candidates_sha256_before": None,
+             "perf_candidates_sha256_after": None, "artifact_sha256": artifacts}
+    item["final"] = final
+    if "incomplete" in (trigger_state, for_state) or (ab["trigger"] == "on_fail" and trigger_state == "pass"):
+        item["status"], final["decision"] = "ab_skipped", "ab_skipped"
+        final["reason"] = "대상 미완" if "incomplete" in (trigger_state, for_state) else "촉발 아님"
+        return item
+    failure = options.get("fail") if (options.get("fail") or {}).get("item") == ab["id"] else None
+    make_lock(prereg_lock.required_files(queue_item["plan"]) + queue_judge_files(queue), queue_item["lock"])
+    attempts.append(new_attempt(journal_dir, "lock_create"))
+    artifacts[queue_item["lock"]] = sha(queue_item["lock"])
+    item["runs"]["lock"] = queue_item["lock"]
+    folder_base = f"{journal_dir}/runs/{PurePosixPath(queue_item['plan']).stem}"
+    scene_names = [scene["name"] for scene in read_json(queue_item["plan"])["scenes"]]
+    plan_entry = ab_plan.get(ab["id"]) or {"screen": "keep"}
+
+    def finish(decision):
+        item["status"], final["decision"] = "ab_done", decision
+        item["attempts"] = sum(1 for attempt in attempts if attempt["step"] == "sweep")
+        return item
+
+    for stage in verify.AB_STAGES:
+        if plan_entry.get("infeasible") == stage:
+            attempts.extend(environment_attempts(journal_dir, folder_base, stage, None, "exit1", 0))
+            return finish("ab_incomplete")
+        folder = f"{folder_base}/{stage}-1"
+        sweep = ab_sweep(queue_item, ab, queue_item["lock"], stage, expect, folder)
+        write_json(f"{folder}/sweep.json", sweep)
+        attempts.append(new_attempt(journal_dir, "sweep", stage=stage, folder=folder, exit=0, **{"try": 1}))
+        outcome = plan_entry.get(stage, "keep")
+        if stage == "screen":
+            result = ab_result(sweep, stage, scene_names, outcome != "undetermined", {"screen_sweep": f"{folder}/sweep.json", "insensitive": False, "best": "v01" if outcome == "best" else None})
+            result_text = f"{folder}/screen.json"
+        else:
+            adopted = outcome in ("v01", "v02")
+            result = ab_result(sweep, stage, scene_names, outcome != "undetermined", {"adopt": {"decision": adopted, "variant": outcome if adopted else None}})
+            result_text = f"{folder}/judge.json"
+        write_json(result_text, result)
+        if failure and failure["step"] == "judge":
+            attempts.append(new_attempt(journal_dir, "judge", stage=stage, folder=folder, exit=failure["exit"], state=failure.get("state", "done")))
+            item["status"] = "failed"
+            stop.update(event="E2", item=ab["id"], reason="judge")
+            return item
+        attempts.append(new_attempt(journal_dir, "judge", stage=stage, folder=folder, exit=0 if outcome != "undetermined" else 1))
+        report_text = f"{folder}/check-ab.json"
+        code, _ = run_main(["check-ab", "--expect", f"{expect['final_dir']}/expect.json", "--ab", ab["id"], "--stage", stage, "--result", result_text, "--sweep", f"{folder}/sweep.json",
+                            "--lock", queue_item["lock"], "--out", report_text, "--w-anchor", options["w_anchor"]])
+        if code != 0:
+            raise RuntimeError(f"fixture 결함: {ab['id']} {stage} check-ab 종료 {code}")
+        attempts.append(new_attempt(journal_dir, "check_ab", stage=stage, folder=folder, exit=code))
+        for text in (f"{folder}/sweep.json", result_text, report_text):
+            artifacts[text] = sha(text)
+        item["runs"].update({stage: folder, f"check_ab_{stage}": report_text})
+        if outcome == "undetermined":
+            return finish("ab_undetermined")
+        if stage == "screen" and outcome != "best":
+            return finish("ab_keep")
+    return finish("ab_v01" if plan_entry.get("confirm") == "v01" else "ab_keep")
+
+
+def pending_item(queue_item, block_id, expect):
+    final = {"kind": "ab", "ab_id": queue_item["ab"]["id"]} if "ab" in queue_item else {"kind": "verify", "run": queue_item["run"]}
+    final.update(edition=expect["edition"], attempts=[])
+    return {"plan": queue_item["plan"], "block": block_id, "chain": None, "status": "pending", "runs": {}, "attempts": 0, "wall_seconds": 0.0, "estimate_seconds": 0.0,
+            "reason": "", "final": final}
+
+
+def f0_gate_of(expect, f0_items):
+    self_checks, sample = {}, []
+    for item in f0_items:
+        final = item["final"]
+        self_checks[final["run"]] = final["self_check"]
+        if item["status"] == "self_check_mismatch" or (item["status"] == "verified" and "incomplete" not in final["adoptions"].values()):
+            sample.append(final["run"])
+    required = verify.F0_REQUIRED_SELF_CHECKS if expect["edition"] == "e1" else 0
+    sample.sort()
+    passed = len(sample) >= required and all(value is not False for run in sample for value in self_checks[run].values())
+    return {"self_checks": self_checks, "sample": sample, "required": required, "passed": passed}
+
+
+def simulate_batch(world, final_dir=None, verify_plan=None, ab_plan=None, options=None, w_anchor=None):
+    final_dir = final_dir or world["final"]
+    verify_plan, ab_plan = verify_plan or {}, ab_plan or {}
+    options = dict(options or {}, w_anchor=w_anchor or world["w_anchor"])
+    expect, queue = read_json(f"{final_dir}/expect.json"), read_json(f"{final_dir}/final_queue.json")
+    journal_text = queue["final"]["journal"]
+    journal_dir = verify.parent_text(journal_text)
+    shutil.rmtree(absolute(journal_dir), ignore_errors=True)
+    shutil.rmtree(absolute(f"{final_dir}/locks"), ignore_errors=True)
+    absolute(journal_dir).mkdir(parents=True, exist_ok=True)
+    stop, items, decision_states, statuses, f0_items = {}, [], {}, {}, []
+    gate = None
+    f0_count = sum(len(block["plans"]) for block in queue["blocks"] if block["id"] == "F0")
+    stop_after = options.get("start_failed_after")
+    for block in queue["blocks"]:
+        for queue_item in block["plans"]:
+            is_started = stop_after is None or len(items) < stop_after
+            if block["id"] != "F0" and f0_count and gate is None and not stop and is_started:
+                gate = f0_gate_of(expect, f0_items)
+                if not gate["passed"] and expect["edition"] == "e1":
+                    stop.update(event="F0_shortfall", item=None, reason="표본 3건 미만")
+            if stop or not is_started:
+                items.append(pending_item(queue_item, block["id"], expect))
+                continue
+            if "ab" in queue_item:
+                items.append(simulate_ab(world, expect, queue, queue_item, journal_dir, decision_states, statuses, ab_plan, options, stop))
+                continue
+            item = simulate_verify(world, expect, queue, queue_item, journal_dir, verify_plan.get(queue_item["run"]) or [], options, stop)
+            items.append(item)
+            if item["status"] in verify.VERIFY_TERMINAL:
+                decision_states[queue_item["run"]] = item["final"]["adoptions"]
+                statuses[queue_item["run"]] = item["status"]
+            if block["id"] == "F0" and item["status"] != "failed":
+                f0_items.append(item)
+    starts = [{"at": now_text(), "ok": True, "reason": ""}]
+    outcome = {"event": stop["event"], "item": stop.get("item"), "reason": stop.get("reason"), "at": now_text()} if stop else None
+    if stop_after is not None and not stop:
+        starts += [{"at": now_text(), "ok": False, "reason": "가짜 보류 실패"}, {"at": now_text(), "ok": False, "reason": "가짜 보류 실패"}]
+        outcome = {"event": "start_failed", "item": None, "reason": "시작 처리 연속 2회 실패", "at": now_text()}
+    journal = {"queue_sha256": sha(f"{final_dir}/final_queue.json"), "items": items, "real_dt": None, "holds": [],
+               "final_batch": {"edition": expect["edition"], "phase": expect["phase"], "restart": expect["restart"], "anchor_sha256": sha(f"{final_dir}/anchor.json"),
+                               "w_anchor_sha256": sha(options["w_anchor"]), "starts": starts, "outcome": outcome, "f0_gate": gate}}
+    if options.get("edit_journal"):
+        options["edit_journal"](journal)
+    write_json(journal_text, journal)
+    return journal
+
+
+def run_verdict(world, phase="w11", final_dir=None, labels=None, extra=(), out_name=None, w_anchor=None, ns_dump=True):
+    final_dir = final_dir or world["final"]
+    expect = read_json(f"{final_dir}/expect.json")
+    queue = read_json(f"{final_dir}/final_queue.json")
+    out = f"{world['root']}/verdict/{out_name or phase}.json"
+    argv = ["verdict", "--phase", phase, "--expect", f"{final_dir}/expect.json", "--journal", queue["final"]["journal"], "--queue", f"{final_dir}/final_queue.json",
+            "--out", out, "--w-anchor", w_anchor or world["w_anchor"]]
+    for label in ((expect["tests_required"].get(phase) or []) if labels is None else labels):
+        argv += ["--tests", f"{world['root']}/tests/{label}-tests.json"]
+    if expect.get("p22") and ns_dump:
+        argv += ["--ns-dump", world["ns_dump"]]
+    argv += list(extra)
+    if absolute(out).is_file():
+        absolute(out).unlink()
+    code, output = run_main(argv)
+    report = read_json(out) if absolute(out).is_file() else {}
+    return code, report, output
+
+
+def decisions_of(report):
+    return {key: value["decision"] for key, value in (report.get("adoptions") or {}).items()}
+
+
+def journal_text_of(world, final_dir=None):
+    return read_json(f"{final_dir or world['final']}/final_queue.json")["final"]["journal"]
+
+
+def edit_json(text, function):
+    document = read_json(text)
+    function(document)
+    write_json(text, document)
+
+
+def copy_output_paths(world, final_dir=None):
+    final_dir = final_dir or world["final"]
+    return [output["path"] for output in read_json(f"{final_dir}/copies.json")["outputs"]] + [f"{final_dir}/copies.json"]
+
+
+def item_of(journal, key):
+    return next(item for item in journal["items"] if item["final"].get("run") == key or item["final"].get("ab_id") == key)
+
+
+def folder_of(world, plan_name, stage="verify", number=1, final_dir=None, edition="e1"):
+    return f"{final_dir or world['final']}/batch-{edition}/runs/{plan_name}/{stage}-{number}"
+
+
+def compare_argv(world, run_id, sweep_text, out_name, judge_lock=True):
+    expect = read_json(f"{world['final']}/expect.json")
+    run = expect["runs"][run_id]
+    argv = ["compare", "--expect", f"{world['final']}/expect.json", "--run", run_id, "--sweep", sweep_text, "--lock", run["lock"],
+            "--work-dir", f"{world['root']}/cmp/{out_name}", "--out", f"{world['root']}/cmp/{out_name}.json", "--w-anchor", world["w_anchor"]]
+    if run["block"] == "F0" and judge_lock:
+        argv += ["--judge-lock", run["judge_lock"]]
+    return argv
+
+
+def run_compare(world, run_id, sweep_text, out_name):
+    code, output = run_main(compare_argv(world, run_id, sweep_text, out_name))
+    report_text = f"{world['root']}/cmp/{out_name}.json"
+    return code, read_json(report_text) if absolute(report_text).is_file() else {}, output
+
+
+def variant_sweep(world, source_text, name, function):
+    document = read_json(source_text)
+    function(document)
+    text = f"{world['root']}/variants/{name}/sweep.json"
+    write_json(text, document)
+    return text
+
+
+def archive_e1(world, parts=("journal", "locks", "anchor")):
+    final_dir = world["final"]
+    archive = f"{final_dir}/{ARCHIVE_NAME}"
+    absolute(f"{archive}/locks").mkdir(parents=True, exist_ok=True)
+    if "journal" in parts:
+        shutil.move(str(absolute(f"{final_dir}/batch-e1")), str(absolute(f"{archive}/batch-e1")))
+    if "locks" in parts:
+        for path in sorted(absolute(f"{final_dir}/locks").glob("*-e1-prereg-lock.json")):
+            shutil.move(str(path), str(absolute(f"{archive}/locks") / path.name))
+    if "anchor" in parts:
+        shutil.move(str(absolute(f"{final_dir}/anchor.json")), str(absolute(f"{archive}/anchor.json")))
+    return archive
+
+
+def rerun_expect(world, final_dir=None):
+    final_dir = final_dir or world["final"]
+    return run_main(["expect", "--spec", f"{final_dir}/final-spec.json", "--out", f"{final_dir}/expect.json", "--queue-out", f"{final_dir}/final_queue.json"])
+
+
+def crafted_verdict(world, numbers):
+    expect = read_json(f"{world['final']}/expect.json")
+    revert = [{"adoption": number, "entry_id": expect["adoptions"][number]["entry_id"], "kind": expect["adoptions"][number]["kind"], "rules": ["R-W8"], "labels": [], "evidence": []}
+              for number in numbers]
+    document = {"tool": verify.TOOL_NAME, "version": 1, "phase": "w13", "edition": "e1", "restart": 0, "stop": None, "gate": None, "problems": [],
+                "inputs": {"anchor": {"path": f"{world['final']}/anchor.json", "sha256": sha(f"{world['final']}/anchor.json")}}, "revert": revert,
+                "r2_targets": verify.r2_targets(expect, {item["entry_id"] for item in revert})}
+    text = f"{world['root']}/verdict/crafted-{'-'.join(numbers)}.json"
+    write_json(text, document)
+    return text
+
+
+def rollback_argv(world, verdict_text, verdict_sha=None):
+    return ["rollback", "--spec", world["spec"], "--verdict", verdict_text, "--verdict-sha", verdict_sha or sha(verdict_text), "--backup-dir", f"{world['root']}/backup",
+            "--w-anchor", world["w_anchor"]]
+
+
+def clear_rollback(world):
+    final_dir = world["final"]
+    for name in ("overlay-keep.json", "write-canonical-r2.json"):
+        if absolute(f"{final_dir}/{name}").is_file():
+            absolute(f"{final_dir}/{name}").unlink()
+    for name in ("preview-r2", "r2", "canonical_backup_r2"):
+        shutil.rmtree(absolute(f"{final_dir}/{name}"), ignore_errors=True)
+    tuning, look = before_documents()
+    overlay = fluid_tuning_patch.read_overlay(absolute(f"{final_dir}/overlay-frozen.json"))
+    write_pair(world["live"], *apply_assignments(tuning, look, overlay["assignments"]))
+    PATCH_TOOL.update(calls=[], fail=None, tamper=False)
+
+
+def r2_spec_argv(world, verdict_text):
+    final_dir = world["final"]
+    return ["r2-spec", "--spec", world["spec"], "--verdict", verdict_text, "--overlay-keep", f"{final_dir}/overlay-keep.json", "--preview-dir", f"{final_dir}/preview-r2",
+            "--out-dir", f"{final_dir}/r2", "--w-anchor", world["w_anchor"]]
+
+
+def prepare_r2(world, verdict_text):
+    final_dir = world["final"]
+    steps = [run_main(rollback_argv(world, verdict_text)), run_main(r2_spec_argv(world, verdict_text)),
+             run_main(["copies", "--spec", f"{final_dir}/r2/final-spec.json", "--out-dir", f"{final_dir}/r2"]), rerun_expect(world, f"{final_dir}/r2")]
+    return steps
+
+
+def test_preparation_commands(world):
+    final_dir = world["final"]
+    spec = read_json(world["spec"])
+    check("준비: 기본 fixture 의 copies·expect·anchor 가 종료 0", setup_ok(world), setup_detail(world))
+    copied = read_json(f"{final_dir}/plans/pc_p20-w.json")
+    original = read_json(plan_path(world, "pc_p20"))
+    check("T137 계획 사본: 지운 키는 Look base 하나, 원본 = 사본 + 지운 키, id 같음",
+          verify.removed_base_paths(original, copied) == [CONTRAST] and copied["id"] == original["id"] and "base" not in copied["params"][0])
+    outputs = copy_output_paths(world)
+    check("T137 사본·copies.json 은 LF(CR 0)", all(b"\r" not in absolute(path).read_bytes() for path in outputs))
+    values = {label: read_json(f"{final_dir}/plans/{name}-wab.json")["params"][0]["values"] for label, name in
+              (("Kinds", "pa"), ("Globals", "pg"), ("Look", "pf2"), ("actor_prop", "pf7"), ("Kinds split", "pc"), ("Look 정본에 없음", "pc_p20"))}
+    check("T137 채택 전 값 4종(+split·정본에 없는 Look base)이 canonical-before·동결본에서 나온다",
+          values == {"Kinds": [0.1], "Globals": [150.0], "Look": [0.5], "actor_prop": [4.0], "Kinds split": [0.3], "Look 정본에 없음": [1.0]}, values)
+    f7, f2, cross = (read_json(f"{final_dir}/plans/{name}.json")["params"][0] for name in ("pf7-wab", "pf2-wab", "pf5-x-pf7-wab"))
+    check("T137 wab base: actor_prop 은 채택값 8.0, preview 에 있는 Look 은 base 뺌, 교차 wab 는 scenes 없음",
+          f7.get("base") == 8.0 and "base" not in f2 and cross.get("base") == 8.0 and "scenes" not in cross and f7.get("scenes") is None)
+    before = {path: absolute(path).read_bytes() for path in outputs}
+    with restored(f"{world['live']}/{fluid_tuning_patch.TUNING_FILE_NAME}"):
+        write_json(f"{world['live']}/{fluid_tuning_patch.TUNING_FILE_NAME}", {"changed": True})
+        code, output = run_main(["copies", "--spec", world["spec"], "--out-dir", final_dir])
+    check("T137 지금 정본을 바꾼 fixture 도 같은 출력, 두 번 같은 바이트", code == 0 and all(absolute(path).read_bytes() == data for path, data in before.items()), output)
+    code, _ = run_main(["copies", "--spec", world["spec"], "--out-dir", final_dir, "--check"])
+    with restored(f"{final_dir}/plans/pa-wab.json"):
+        append_byte(f"{final_dir}/plans/pa-wab.json")
+        changed_code, _ = run_main(["copies", "--spec", world["spec"], "--out-dir", final_dir, "--check"])
+    check("T137 copies --check: 같으면 0, 1바이트 다르면 1", code == 0 and changed_code == 1, (code, changed_code))
+    overlay_text = spec["overlay"]
+    for name, mutate in (("채택 전 = 채택", lambda overlay: next(entry for entry in overlay["assignments"] if entry["json_path"] == AMBIENT).update(value=0.1)),
+                         ("Look base ≠ canonical-before 값", lambda overlay: next(entry for entry in overlay["assignments"] if entry["json_path"] == PASSIVE).update(base=0.6))):
+        with restored(overlay_text):
+            edit_json(overlay_text, mutate)
+            code, output = run_main(["copies", "--spec", world["spec"], "--out-dir", final_dir])
+        check(f"T137 {name} → copies 종료 2", code == 2, output)
+    code, output = run_main(["copies", "--spec", world["spec"], "--out-dir", world["root"]])
+    check("T137 --out-dir ≠ 명세 final_dir → 종료 2", code == 2, output)
+    test_owner(world, spec)
+    test_w_expect_fixture(world, spec)
+    test_expect_gates(world, spec)
+    test_anchor_list(world, spec)
+
+
+def test_owner(world, spec):
+    rows = {row["test"]: row for row in read_json(spec["test_owner"])["rows"]}
+    expected = {"TDGame.FluidFX.Fixture.HeatOwner": [HEAT], "TDGame.FluidFX.Fixture.TwoOwners": sorted([COVERAGE, PASSIVE]), "TDGame.FluidFX.Fixture.KindlessHardness": [],
+                "TDGame.FluidFX.Fixture.NoOwner": []}
+    check("T142 test-owner 겹침 0·1·2개, Kinds 종류 이름이 없으면 겹침 아님", {name: rows[name]["owners"] for name in expected} == expected,
+          {name: rows.get(name, {}).get("owners") for name in expected})
+    header = rows.get(verify.HEADER_SYNC_TEST) or {}
+    check("T142 header_sync 특례(owners 빈 목록)·분류(timing·numeric_pin_when_failures_match·design)",
+          header.get("special") == "header_sync" and header.get("owners") == [] and rows["TDGame.FluidFX.Fixture.Timing"]["class"] == "timing_record_only"
+          and rows["TDGame.FluidFXRhi.Fixture.PinMatch"]["class"] == "numeric_pin_when_failures_match" and rows["TDGame.FluidFX.Fixture.NoOwner"]["class"] == "design")
+    again = verify.json_text(verify.build_test_owner(spec["overlay"], world["test_classes"], f"{world['root']}/code"))
+    check("T142 test-owner 두 번 같은 바이트", again.encode("utf-8") == absolute(spec["test_owner"]).read_bytes())
+
+
+def w_expect_variant(world, spec, name, removed_paths):
+    overlay = read_json(spec["overlay"])
+    overlay["assignments"] = [entry for entry in overlay["assignments"] if entry["json_path"] not in removed_paths]
+    folder = f"{world['root']}/w-expect-{name}"
+    write_json(f"{folder}/overlay.json", overlay)
+    tuning, look = before_documents()
+    write_pair(f"{folder}/preview", *apply_assignments(tuning, look, overlay["assignments"]))
+    return verify.build_w_expect(f"{folder}/overlay.json", spec["canonical_before_dir"], f"{folder}/preview", f"{world['final']}/builder-before/preset_builder_dump.json")
+
+
+def test_w_expect_fixture(world, spec):
+    document = read_json(spec["w_expect"])
+    check("T147 w-expect(fixture): ns_expect·builder_diff·effective_diff·look_leaf_diff",
+          document["ns_expect"] == {NS_FIXTURE: {"Floats": {"User.Speed": 750.0, "User.Buoyancy": -300.0}}}
+          and [entry["json_path"] for entry in document["builder_diff"]] == [AMBIENT, HEAT]
+          and [entry["json_path"] for entry in document["effective_diff"]] == [WIND, AMBIENT, HEAT, HARDNESS]
+          and document["look_leaf_diff"] == sorted([COVERAGE, EMISSIVE, PASSIVE, LAKE, CONTRAST, SPEED])
+          and document["written"] == world["after_sha"], document)
+    without_speed = w_expect_variant(world, spec, "no10", [SPEED])
+    without_heat = w_expect_variant(world, spec, "no1", [HEAT])
+    check("T147 #10 을 뺀 덧씌움 → NS Speed 기대 900, #1 을 뺀 덧씌움 → builder_diff 1개(fixture 빌더 2종)",
+          without_speed["ns_expect"][NS_FIXTURE]["Floats"]["User.Speed"] == 900.0 and len(without_heat["builder_diff"]) == 1)
+
+
+def expect_gate(world, spec_change=None, overlay_change=None, recopy=False, before_sha=None, extra_restore=(), file_change=None):
+    final_dir = world["final"]
+    spec = read_json(world["spec"])
+    paths = [world["spec"], spec["overlay"], *copy_output_paths(world), *extra_restore]
+    with restored(*paths):
+        if spec_change:
+            edit_json(world["spec"], spec_change)
+        if overlay_change:
+            edit_json(spec["overlay"], overlay_change)
+        if file_change:
+            file_change()
+        if recopy or spec_change:
+            run_main(["copies", "--spec", world["spec"], "--out-dir", final_dir])
+        with patched(verify, CANONICAL_BEFORE_SHA256=before_sha or verify.CANONICAL_BEFORE_SHA256):
+            return gate_of(verify.build_expect, world["spec"], world["w_anchor"])
+
+
+def entry_by_path(overlay, json_path):
+    return next(entry for entry in overlay["assignments"] if entry["json_path"] == json_path)
+
+
+def test_expect_gates(world, spec):
+    final_dir = world["final"]
+    first = sha(f"{final_dir}/expect.json"), sha(f"{final_dir}/final_queue.json")
+    code, output = rerun_expect(world)
+    check("T138 expect 두 번 같은 sha(expect·큐)", code == 0 and (sha(f"{final_dir}/expect.json"), sha(f"{final_dir}/final_queue.json")) == first, output)
+    expect = read_json(f"{final_dir}/expect.json")
+    queue = read_json(f"{final_dir}/final_queue.json")
+    check("T138 큐: F0 → F1 → F2, F2 는 명세 ab 순, judge_files 6, restart 0",
+          [block["id"] for block in queue["blocks"]] == ["F0", "F1", "F2"] and [item["ab"]["id"] for item in queue["blocks"][2]["plans"]] == [ab["id"] for ab in spec["ab"]]
+          and len(queue["final"]["judge_files"]) == 6 and queue["final"]["restart"] == 0 and expect["restart"] == 0)
+    f5_rows = [row for row in expect["rows"] if row["adoption"] == "f5"]
+    screen = read_json(world["sources"]["f5"]["judge"])["scenes"][0]
+    check("T132 screen 출처(영향 f5): expected = control_reference, noise·drift_floor = screen 장면 noise",
+          f5_rows and all(row["source"]["field"] == "control_reference" and row["expected"] == screen["control_reference"][row["metric"]]
+                          and row["noise"] == screen["noise"][row["metric"]]["noise"] and row["drift_floor"] == screen["noise"][row["metric"]]["drift_floor"] for row in f5_rows))
+    pb_rows = {(row["scene"], row["adoption"], row["source"]["judge"]) for row in expect["rows"] if row["run"] == "pb"}
+    check("T131 출처 둘(pb): 장면별 기대·허용이 각 출처 judge 에서 나온다",
+          pb_rows == {("b_cap", "11", world["sources"]["11"]["judge"]), ("b_shield", "3", world["sources"]["3"]["judge"])}, pb_rows)
+    cases = [
+        ("덮이지 않은 채택", dict(spec_change=lambda document: document["runs"].__setitem__(slice(None), [run for run in document["runs"] if run["id"] != "pa"])), "rows·covered"),
+        ("from.judge_sha256 다름", dict(overlay_change=lambda overlay: entry_by_path(overlay, AMBIENT)["from"].update(judge_sha256="0" * 64), recopy=True), "from.judge_sha256"),
+        ("fx9 경로", dict(overlay_change=lambda overlay: overlay["assignments"].append({"json_path": verify.FX9_REMOVED_PATH, "value": 80.0, "base": 120.0})), "fx9"),
+        ("p22_pre 거짓", dict(file_change=lambda: edit_json(f"{final_dir}/preview/{fluid_tuning_patch.LOOK_FILE_NAME}",
+                                                             lambda look: look["NiagaraSystems"][NS_FIXTURE]["Floats"].update({"User.Buoyancy": -250.0})),
+                            recopy=True, extra_restore=[f"{final_dir}/preview/{fluid_tuning_patch.LOOK_FILE_NAME}"]), "p22_pre"),
+        ("손잡이 장면 빠짐", dict(spec_change=lambda document: next(run for run in document["runs"] if run["id"] == "pb")["sources"][0].update(scenes=[])), "손잡이 장면"),
+        ("canonical-before 다름", dict(before_sha={"tuning": "0" * 64, "look": "0" * 64}), "canonical-before"),
+        ("adoptions ↔ 동결본 불일치", dict(spec_change=lambda document: document["adoptions"].pop("2")), "adoptions"),
+        ("fallback 결합 불량", dict(spec_change=lambda document: document["covered"][0]["fallback"]["sources"][0].update(binding={"kind": "eol", "eol_note": f"{world['root']}/eol/eol-note.json"})),
+         "CRLF"),
+        ("명세에 restart 키", dict(spec_change=lambda document: document.update(restart=0)), "restart"),
+    ]
+    for name, arguments, keyword in cases:
+        code, detail = expect_gate(world, **arguments)
+        check(f"T138 {name} → expect 종료 2", code == 2 and keyword in detail, detail)
+    lock_text = world["sources"]["2"]["lock"]
+    measure = verify.MEASURE_TOOL_FILES[0]
+    code, detail = expect_gate(world, file_change=lambda: edit_json(lock_text, lambda lock: lock["files"].update({measure: "0" * 64})), extra_restore=[lock_text])
+    evidence = lambda document: next(run for run in document["runs"] if run["id"] == "pa")["sources"][0].update(lineage_evidence=["fixture-commit"])
+    code_ok, detail_ok = expect_gate(world, spec_change=evidence, file_change=lambda: edit_json(lock_text, lambda lock: lock["files"].update({measure: "0" * 64})), extra_restore=[lock_text])
+    check("T144 측정 도구 sha 가 다른데 lineage clean·근거 없음 → 2, 근거 있으면 통과", code == 2 and "lineage" in detail and code_ok == 0, (detail, detail_ok))
+
+
+def test_anchor_list(world, spec):
+    final_dir = world["final"]
+    anchor_text = f"{final_dir}/anchor.json"
+    first = absolute(anchor_text).read_bytes()
+    code, output = run_anchor(world)
+    check("T160 anchor 같은 입력 두 번 같은 바이트", code == 0 and absolute(anchor_text).read_bytes() == first, output)
+    files = read_json(anchor_text)["files"]
+    copies = read_json(f"{final_dir}/copies.json")
+    required = set(verify.RULE_DOCUMENTS) | set(prereg_lock.JUDGE_TOOL_FILES) | {verify.BATCH_PATH, verify.TOOL_PATH, world["test_classes"], world["spec"], f"{final_dir}/expect.json",
+                                                                              f"{final_dir}/final_queue.json", f"{final_dir}/copies.json", spec["overlay"], spec["w_expect"], spec["test_owner"]}
+    required |= set(spec["pie_files"]) | {output["path"] for output in copies["outputs"]} | {path for output in copies["outputs"] for path in output["inputs"]}
+    required |= {f"{world['root']}/regions/g_wall.json", f"{world['root']}/targets/g_wall.json", plan_path(world, "pn"), plan_path(world, "pc")}
+    required |= {world["sources"][number][key] for number in ("13", "15", "17", "18") for key in ("lock", "judge")}
+    missing = sorted(required - set(files))
+    check("T160 닻 목록: 규칙 문서 8(개정 E·F)·잠금 도구 7·calib_batch·비교기·test_classes·명세·expect·큐·copies 입출력·w_expect·test_owner·pie_files·계획 영역 틀·목표·F0 원래 잠금",
+          not missing and len(verify.RULE_DOCUMENTS) == 8 and f"{verify.RULE_DOCUMENT_DIR}/runbook-v3-amend-f.md" in files, missing)
+    w_anchor = read_json(world["w_anchor"])
+    check("T160 w-anchor 키가 정확히 anchor·edition·sha256", set(w_anchor) == {"anchor", "edition", "sha256"} and w_anchor["sha256"] == sha(anchor_text))
+
+
+def test_compare(world):
+    final_dir = world["final"]
+    journal = read_json(journal_text_of(world))
+    expect = read_json(f"{final_dir}/expect.json")
+    g13 = folder_of(world, "pg")
+    verify_document, compare_document = read_json(f"{g13}/verify.json"), read_json(f"{g13}/compare.json")
+    rows = verify.run_rows(expect, "g13")
+    check("T130 비트 동일: F0 공식 verify.checks = 비교기 checks, 장면 결과(경로 키 제외) 같음, 자기 검증 참",
+          verify.canonical_text(verify_document["verify"]["checks"]) == verify.canonical_text(compare_document["checks"])
+          and verify.self_check(rows, verify_document, compare_document, g13) is True
+          and all(item["final"]["self_check"]["first"] is True for item in journal["items"] if item["block"] == "F0"))
+    pb = read_json(f"{folder_of(world, 'pb')}/compare.json")
+    check("T131 출처 둘: 분해 통과, binding 2개 모두 참", pb.get("decomposition_ok") is True and [entry["ok"] for entry in pb["binding"]] == [True, True], pb.get("binding"))
+    pb_sweep, pb_plan = read_json(f"{folder_of(world, 'pb')}/sweep.json"), read_json(plan_path(world, "pb"))
+    mixed = copy.deepcopy(verify.run_rows(expect, "pb"))
+    moved = next(row for row in mixed if row["adoption"] == "11" and row["metric"] == "m1")
+    moved.update(scene="b_shield", expected=9.0)
+    _, merged = verify.rejudge(pb_sweep, pb_plan, mixed, f"{world['root']}/cmp/mixed")
+    with patched(verify, run_rows=lambda expect_document, run_id: mixed):
+        code, report, _ = run_compare(world, "pb", f"{folder_of(world, 'pb')}/sweep.json", "pb-mixed")
+    check("T131 한 출처 행을 다른 장면에 섞음 → 분해 거짓, compare 종료 3",
+          verify.decomposition_check(pb_sweep, pb_plan, mixed, f"{world['root']}/cmp/mixed-d", merged) is False and code == 3 and report.get("gate") == "rejudge", report)
+    test_allowance_rules(world, expect)
+    states = verify.adoption_states
+    two = [{"adoption": "a", "scene": "s1", "metric": "m"}, {"adoption": "a", "scene": "s2", "metric": "m"}]
+    check("T136 상태 판례: 한 장면 실패·한 장면 대조 표류 → undetermined, 모두 대조 통과 + 거짓 하나 → fail, 값 None → undetermined",
+          states(two, [{"name": "s1", "control_ok": True}, {"name": "s2", "control_ok": False}], [{"scene": "s1", "metric": "m", "passed": False}, {"scene": "s2", "metric": "m", "passed": True}])
+          == {"a": "undetermined"}
+          and states(two, [{"name": "s1", "control_ok": True}, {"name": "s2", "control_ok": True}], [{"scene": "s1", "metric": "m", "passed": False}, {"scene": "s2", "metric": "m", "passed": True}])
+          == {"a": "fail"}
+          and states(two, [{"name": "s1", "control_ok": True}, {"name": "s2", "control_ok": True}], [{"scene": "s1", "metric": "m", "passed": None}, {"scene": "s2", "metric": "m", "passed": True}])
+          == {"a": "undetermined"})
+    pa_sweep = f"{folder_of(world, 'pa')}/sweep.json"
+    invalid = variant_sweep(world, f"{g13}/sweep.json", "invalid", lambda document: document.update(invalid_count=1))
+    code, report, _ = run_compare(world, "g13", invalid, "g13-invalid")
+    check("T149 invalid_count > 0 → 모든 채택 undetermined, 종료 1", code == 1 and report.get("adoptions") == {"13": "undetermined"}, report)
+    gates = []
+    with restored(world["sources"]["2"]["judge"]):
+        append_byte(world["sources"]["2"]["judge"])
+        gates.append(("출처 judge sha 1바이트", run_compare(world, "pa", pa_sweep, "pa-judge")[:2], 3, "binding"))
+    with restored(world["sources"]["2"]["lock"]):
+        edit_json(world["sources"]["2"]["lock"], lambda lock: lock["files"].update({f"{world['root']}/plans/extra.json": "0" * 64}))
+        gates.append(("출처 잠금 files 차이가 허용 밖", run_compare(world, "pa", pa_sweep, "pa-lock")[:2], 3, "binding"))
+    for name, change, keyword in (("정본 sha", lambda document: document.update(canonical_tuning_sha256="0" * 64), "sweep"),
+                                  ("잠금 created_at > 스윕 started_at", lambda document: document.update(started_at="2000-01-01T00:00:00+09:00"), "lock"),
+                                  ("overlay sha", lambda document: document.update(overlay_sha256="0" * 64), "sweep")):
+        gates.append((name, run_compare(world, "pa", variant_sweep(world, pa_sweep, name.split()[0], change), f"pa-{len(gates)}")[:2], 2, keyword))
+    for name, (code, report), expected, keyword in gates:
+        check(f"T135 관문 분류: {name} → 종료 {expected}", code == expected and report.get("gate") == keyword, (code, report.get("gate"), report.get("problems")))
+    test_binding_rules(world)
+    judge_lock = expect["runs"]["g13"]["judge_lock"]
+    lock_files = read_json(judge_lock)["files"]
+    with restored(judge_lock):
+        make_lock([path for path in lock_files if not path.endswith("/anchor.json")], judge_lock)
+        code, report, _ = run_compare(world, "g13", f"{g13}/sweep.json", "g13-noanchor")
+        verdict_code, verdict, _ = run_verdict(world, out_name="t180")
+    check("T180 실행·판정 잠금 files 에 anchor.json 이 있다, anchor 를 뺀 잠금 → compare 3·verdict 2",
+          f"{final_dir}/anchor.json" in lock_files and code == 3 and report.get("gate") == "lock" and verdict_code == 2, (code, report.get("gate"), verdict_code, verdict.get("gate")))
+
+
+def test_allowance_rules(world, expect):
+    sweep = read_json(f"{folder_of(world, 'pg')}/sweep.json")
+    plan = read_json(plan_path(world, "pg"))
+    rows = [dict(row, drift_floor=0.0, tolerance=0.0, allowed=0.0) for row in verify.run_rows(expect, "g13")]
+    _, same = verify.rejudge(sweep, plan, rows, f"{world['root']}/cmp/zero-same")
+    shifted = [dict(row, expected=row["expected"] + 1e-9) for row in rows]
+    _, moved = verify.rejudge(sweep, plan, shifted, f"{world['root']}/cmp/zero-moved")
+    check("T133 허용 0(drift_floor 0·tolerance 0): 같은 값 통과, 1e-12 보다 큰 차이 실패",
+          all(check_entry["allowed"] == 0.0 and check_entry["passed"] is True for check_entry in same) and all(check_entry["passed"] is False for check_entry in moved))
+    judge = {"scenes": [{"name": "s", "series": True, "targets": [{"metric": "m", "tolerance": 0.3}], "noise": {"m": {"noise": 0.1, "drift_floor": 0.5}}, "candidate_medians": {"m": 1.0}}]}
+    write_json(f"{world['root']}/cmp/series-judge.json", judge)
+    series_rows = verify.source_rows("r", "a", "clean", "confirm", judge, f"{world['root']}/cmp/series-judge.json", ["s"])
+    check("T134 계열 장면: allowed = tolerance", [row["allowed"] for row in series_rows] == [0.3])
+
+
+def test_binding_rules(world):
+    root = world["root"]
+    source12 = {"adoption": "12", "binding": {"kind": "copy", "source_plan": plan_path(world, "pc_p20")}}
+    judge12 = read_json(world["sources"]["12"]["judge"])
+    bad_copy = read_json(f"{world['final']}/plans/pc_p20-w.json")
+    bad_copy["params"][0]["values"] = [0.75]
+    write_json(f"{root}/binding/copy-bad.json", bad_copy)
+    write_json(f"{root}/binding/empty-note.json", {"plans": []})
+    source10 = {"adoption": "10", "binding": {"kind": "eol", "eol_note": f"{root}/binding/empty-note.json"}}
+    judge3 = read_json(world["sources"]["3"]["judge"])
+    source3 = {"adoption": "3", "scenes": ["b_shield"], "binding": {"kind": "cross_plan", "source_plan": plan_path(world, "pb_src")}}
+    shifted = read_json(plan_path(world, "pb"))
+    shifted["scenes"][1]["level"] = LEVEL("LV_Other")
+    write_json(f"{root}/binding/pb-scene.json", shifted)
+    regions = read_json(plan_path(world, "pb"))
+    regions["scenes"][1]["regions_template"] = f"{root}/binding/other-regions.json"
+    write_json(f"{root}/binding/other-regions.json", {"regions": [{"name": "other"}]})
+    write_json(f"{root}/binding/pb-regions.json", regions)
+    cases = (("사본 base 밖 차이", f"{root}/binding/copy-bad.json", source12, judge12), ("EOL 메모 없는 CRLF", plan_path(world, "pn_p20"), source10, read_json(world["sources"]["10"]["judge"])),
+             ("cross_plan 장면 한 줄", f"{root}/binding/pb-scene.json", source3, judge3), ("영역 틀 파일 다름", f"{root}/binding/pb-regions.json", source3, judge3))
+    for name, plan_text, source, judge in cases:
+        check(f"T135 결합 규칙: {name} → binding 문제(compare 에서 종료 3)", bool(verify.binding_problems(plan_text, source, judge)))
+    check("T135 결합 규칙: 정상 copy·eol·cross_plan 은 문제 없음",
+          not verify.binding_problems(f"{world['final']}/plans/pc_p20-w.json", source12, judge12)
+          and not verify.binding_problems(plan_path(world, "pn_p20"), {"adoption": "10", "binding": {"kind": "eol", "eol_note": f"{root}/eol/eol-note.json"}}, read_json(world["sources"]["10"]["judge"]))
+          and not verify.binding_problems(plan_path(world, "pb"), source3, judge3))
+
+
+def test_replay_and_check_ab(world):
+    root = world["root"]
+    g13 = folder_of(world, "pg")
+    code, output = run_main(["replay", "--verify", f"{g13}/verify.json", "--self", world["sources"]["13"]["judge"], "--identity", world["sources"]["f5"]["judge"],
+                             "--out-dir", f"{root}/replay/ok"])
+    cases = read_json(f"{root}/replay/ok/replay.json")["cases"]
+    check("T141 replay: 공식 verify.json 같음, 자기 replay(--self)·항등(--identity) 같음 → 종료 0", code == 0 and [case["equal"] for case in cases] == [True, True, True], output)
+    changed = read_json(f"{g13}/verify.json")
+    changed["scenes"][0]["control_score"] = 99.0
+    write_json(f"{root}/replay/changed/verify.json", changed)
+    code, output = run_main(["replay", "--verify", f"{root}/replay/changed/verify.json", "--out-dir", f"{root}/replay/changed-out"])
+    check("T141 replay: 장면 결과 한 키 다름 → 종료 1", code == 1, output)
+    expect = read_json(f"{world['final']}/expect.json")
+    pawab = next(ab for ab in expect["ab"] if ab["id"] == "pawab")
+    screen_folder = folder_of(world, "pa-wab", "screen")
+
+    def check_ab(sweep_text, result_text=f"{screen_folder}/screen.json", name="ok"):
+        return run_main(["check-ab", "--expect", f"{world['final']}/expect.json", "--ab", "pawab", "--stage", "screen", "--result", result_text, "--sweep", sweep_text,
+                         "--lock", pawab["lock"], "--out", f"{root}/check-ab/{name}.json", "--w-anchor", world["w_anchor"]])[0]
+    sweep_text = f"{screen_folder}/sweep.json"
+    results = {"정상": (check_ab(sweep_text), 0)}
+    results["base_value ≠ 채택값"] = (check_ab(variant_sweep(world, sweep_text, "ab-base", lambda document: document["params"][0].update(base_value=0.3)), name="base"), 2)
+    results["values ≠ [채택 전 값]"] = (check_ab(variant_sweep(world, sweep_text, "ab-values", lambda document: document["params"][0].update(values=[0.15])), name="values"), 2)
+    changed_result = read_json(f"{screen_folder}/screen.json")
+    changed_result["overlay_sha256"] = "0" * 64
+    write_json(f"{root}/variants/ab-result/screen.json", changed_result)
+    results["overlay sha 다름"] = (check_ab(sweep_text, f"{root}/variants/ab-result/screen.json", "overlay"), 2)
+    results["정본 sha 다름"] = (check_ab(variant_sweep(world, sweep_text, "ab-canonical", lambda document: document.update(canonical_look_sha256="0" * 64)), name="canonical"), 2)
+    lock_files = read_json(pawab["lock"])["files"]
+    with restored(pawab["lock"]):
+        make_lock([path for path in lock_files if not path.endswith("/anchor.json")], pawab["lock"])
+        results["잠금에 anchor 없음"] = (check_ab(sweep_text, name="noanchor"), 3)
+    check("T148 check-ab: 정상 0, base_value·values·overlay·정본 sha 다름 2, 잠금에 anchor 없음 3",
+          all(code == expected for code, expected in results.values()), {name: code for name, (code, _) in results.items()})
+
+
+def gate_name(world, code_output, out_text):
+    code, output = code_output
+    if out_text and absolute(out_text).is_file():
+        return code, read_json(out_text).get("gate")
+    return code, "anchor" if "관문 anchor" in output else output.strip()[-200:]
+
+
+def gate_commands(world):
+    final_dir, root = world["final"], world["root"]
+    expect = read_json(f"{final_dir}/expect.json")
+    pawab = next(ab for ab in expect["ab"] if ab["id"] == "pawab")
+    screen_folder = folder_of(world, "pa-wab", "screen")
+    commands = {
+        "compare": (compare_argv(world, "g13", f"{folder_of(world, 'pg')}/sweep.json", "gate-compare"), f"{root}/cmp/gate-compare.json"),
+        "check-ab": (["check-ab", "--expect", f"{final_dir}/expect.json", "--ab", "pawab", "--stage", "screen", "--result", f"{screen_folder}/screen.json", "--sweep",
+                      f"{screen_folder}/sweep.json", "--lock", pawab["lock"], "--out", f"{root}/check-ab/gate.json", "--w-anchor", world["w_anchor"]], f"{root}/check-ab/gate.json"),
+        "rollback": (rollback_argv(world, f"{root}/verdict/w11.json", "0" * 64), None),
+        "r2-spec": (r2_spec_argv(world, f"{root}/verdict/w11.json"), None),
+    }
+    results = {}
+    for name, (argv, out_text) in commands.items():
+        if out_text and absolute(out_text).is_file():
+            absolute(out_text).unlink()
+        results[name] = gate_name(world, run_main(argv), out_text)
+    code, report, _ = run_verdict(world, out_name="gate")
+    results["verdict"] = (code, report.get("gate"))
+    return results
+
+
+def test_gate_anchor(world):
+    root, final_dir = world["root"], world["final"]
+    clean = gate_commands(world)
+    check("T161 준비: 닻이 맞으면 관문 명령이 닻 관문에서 멈추지 않는다", all(gate != "anchor" for _, gate in clean.values()), clean)
+    mutations = (("닻 안 목표 파일 1바이트", lambda: append_byte(f"{root}/targets/g_wall.json"), [f"{root}/targets/g_wall.json"]),
+                 ("닻 안 개정 B 사본(wab) 1바이트", lambda: append_byte(f"{final_dir}/plans/pa-wab.json"), [f"{final_dir}/plans/pa-wab.json"]),
+                 ("w-anchor sha 다름", lambda: edit_json(world["w_anchor"], lambda document: document.update(sha256="0" * 64)), [world["w_anchor"]]),
+                 ("edition 다름", lambda: edit_json(world["w_anchor"], lambda document: document.update(edition="r2")), [world["w_anchor"]]),
+                 ("git 미추적·변경(가짜)", lambda: GIT.update(problems=["가짜: w-anchor 미추적"]), []))
+    for name, mutate, paths in mutations:
+        with restored(*paths):
+            mutate()
+            results = gate_commands(world)
+        GIT["problems"] = []
+        check(f"T161 {name} → compare·check-ab·verdict·rollback·r2-spec 모두 종료 2(닻 관문)", all(code == 2 and gate == "anchor" for code, gate in results.values()), results)
+
+
+def test_verdict_clean(world):
+    code, report, output = run_verdict(world, out_name="w11")
+    decisions = decisions_of(report)
+    check("verdict 정상 w11: 종료 0, 모든 채택·영향 keep, F0 자기 검증 참", code == 0 and set(decisions.values()) == {"keep"} and len(decisions) == 12
+          and all(value["first"] is True for value in report["self_check"].values()), output)
+    check("T181 P-22: 덤프 float32 같음 → 통과, p22.runs 결정 상태 기록", (report.get("p22") or {}).get("ns_dump_equal") is True
+          and report["p22"]["runs"] == {"pnp20": {"10": "pass"}}, report.get("p22"))
+    with restored(world["ns_dump"]):
+        write_ns_dump(world, {"User.Speed": 900.0, "User.Buoyancy": -300.0})
+        speed_code, speed_report, _ = run_verdict(world, out_name="p22-speed")
+    missing_code, missing_report, _ = run_verdict(world, out_name="p22-missing", ns_dump=False)
+    check("T181 P-22: Speed 900 → verdict 2, --ns-dump 빠짐 → 2", speed_code == 2 and speed_report.get("gate") == "p22" and missing_code == 2, (speed_report.get("gate"), missing_report.get("gate")))
+    journal_text = journal_text_of(world)
+    old_mtime = (datetime.now() - timedelta(days=3)).timestamp()
+    write_canonical = f"{world['final']}/write-canonical.json"
+    stat = absolute(write_canonical).stat()
+    os.utime(absolute(write_canonical), (old_mtime, old_mtime))
+    early_code, early_report, _ = run_verdict(world, out_name="t162-w3")
+    future = datetime.now().astimezone() + timedelta(hours=1)
+    os.utime(absolute(write_canonical), (future.timestamp() + 3600, future.timestamp() + 3600))
+    with patched_git_time(future.isoformat()):
+        late_code, late_report, _ = run_verdict(world, out_name="t162-sweep")
+    os.utime(absolute(write_canonical), (stat.st_atime, stat.st_mtime))
+    check("T162 w-anchor 커밋 시각 > W3 write-canonical mtime → verdict 2, 커밋 시각 > 첫 스윕 started_at → 2",
+          early_code == 2 and early_report.get("gate") == "time" and late_code == 2 and late_report.get("gate") == "time", (early_report.get("problems"), late_report.get("problems")))
+    test_verdict_recompute(world, journal_text)
+
+
+@contextlib.contextmanager
+def patched_git_time(text):
+    original = GIT["time"]
+    GIT["time"] = text
+    try:
+        yield
+    finally:
+        GIT["time"] = original
+
+
+def journal_variant(world, journal_text, name, function, extra_paths=()):
+    with restored(journal_text, *extra_paths):
+        function(read_json(journal_text), journal_text)
+        return run_verdict(world, out_name=name)
+
+
+def set_journal(journal_text, edit):
+    def function(journal, text):
+        edit(journal)
+        write_json(text, journal)
+    return function
+
+
+def test_verdict_recompute(world, journal_text):
+    final_dir = world["final"]
+    pa_compare = f"{folder_of(world, 'pa')}/compare.json"
+    g13_compare = f"{folder_of(world, 'pg')}/compare.json"
+    screen = f"{folder_of(world, 'pa-wab', 'screen')}/screen.json"
+    judge_lock = f"{final_dir}/locks/g13-judge-e1-prereg-lock.json"
+
+    def refresh_artifact(journal, key, path):
+        item_of(journal, key)["final"]["artifact_sha256"][path] = sha(path)
+
+    def tamper_g13(journal, text):
+        edit_json(g13_compare, lambda document: document["scenes"][0]["control_allowed"].update(m1=0.5))
+        refresh_artifact(journal, "g13", g13_compare)
+        write_json(text, journal)
+
+    def tamper_lock(journal, text):
+        edit_json(judge_lock, lambda lock: lock["files"].update({world["test_classes"]: "0" * 64}))
+        refresh_artifact(journal, "g13", judge_lock)
+        write_json(text, journal)
+
+    def tamper_screen(journal, text):
+        edit_json(screen, lambda document: document.update(canonical_tuning_sha256="0" * 64))
+        refresh_artifact(journal, "pawab", screen)
+        write_json(text, journal)
+
+    def extra_folder(journal, text):
+        absolute(f"{final_dir}/batch-e1/runs/pa/verify-9").mkdir(parents=True, exist_ok=True)
+
+    cases = [
+        ("일지 결정 손편집", set_journal(journal_text, lambda journal: item_of(journal, "pa")["final"]["adoptions"].update({"2": "fail"})), ()),
+        ("compare.json 1바이트", lambda journal, text: append_byte(pa_compare), (pa_compare,)),
+        ("폴더 수 ≠ attempts", extra_folder, ()),
+        ("일지 self_check 참·산출물 불일치", tamper_g13, (g13_compare,)),
+        ("잠금 판정 파일 sha ≠ 큐", tamper_lock, (judge_lock,)),
+        ("A/B screen.json 정본 sha ≠ canonical_after", tamper_screen, (screen,)),
+        ("일지 f0_gate.sample 손편집(T182)", set_journal(journal_text, lambda journal: journal["final_batch"]["f0_gate"].update(sample=["f2", "g13", "uw"])), ()),
+        ("일지 self_check 거짓 기록·파일은 일치(T168)", set_journal(journal_text, lambda journal: item_of(journal, "g13")["final"]["self_check"].update(first=False)), ()),
+        ("일지 판 ≠ 큐(T173)", set_journal(journal_text, lambda journal: journal["final_batch"].update(edition="r2")), ()),
+        ("항목 하나의 final.edition 다름(T173)", set_journal(journal_text, lambda journal: item_of(journal, "pa")["final"].update(edition="r2")), ()),
+    ]
+    for name, function, paths in cases:
+        code, report, output = journal_variant(world, journal_text, name, function, paths)
+        shutil.rmtree(absolute(f"{final_dir}/batch-e1/runs/pa/verify-9"), ignore_errors=True)
+        check(f"T143 verdict 다시 계산: {name} → 종료 2", code == 2 and report.get("gate") not in (None, "anchor"), (code, report.get("gate"), report.get("problems")))
+    with restored(f"{final_dir}/plans/pa-wab.json"):
+        append_byte(f"{final_dir}/plans/pa-wab.json")
+        code, report, _ = run_verdict(world, out_name="copies-fail")
+    check("T143 copies 실패(사본 1바이트) → 종료 2(닻 관문이 먼저 잡음)", code == 2, report.get("gate"))
+    code, report, _ = run_verdict(world, phase="r2", labels=["w10-rhi-r2"], out_name="t173-phase")
+    check("T173 phase r2 에 e1 일지 → 종료 2", code == 2 and report.get("gate") == "input", report.get("problems"))
+    for step in (dict(step="sweep", exit=2), dict(step="official", exit=2), dict(step="compare", exit=3), dict(step="check_ab", exit=2), dict(step="lock_create", exit=1),
+                 dict(step="lock_verify", exit=2), dict(step="judge", exit=None, state="timeout")):
+        attempt = dict({"stage": None, "opportunity": None, "try": None, "folder": None, "log": "", "started_at": now_text(), "state": "done"}, **step)
+        code, report, _ = journal_variant(world, journal_text, f"t163-{step['step']}",
+                                          set_journal(journal_text, lambda journal: item_of(journal, "pawab" if step["step"] in ("check_ab", "judge") else "pa")["final"]["attempts"].append(attempt)))
+        check(f"T163 verdict: attempts 에 {step['step']} 종료 {step.get('exit')}({step.get('state', 'done')}) → 일지 결정이 그럴듯해도 종료 2·stop E2",
+              code == 2 and (report.get("stop") or {}).get("event") == "E2", (code, report.get("stop"), report.get("gate")))
+
+
+def scenario(world, name, verify_plan=None, ab_plan=None, options=None, phase="w11", labels=None, extra=()):
+    simulate_batch(world, verify_plan=verify_plan, ab_plan=ab_plan, options=options)
+    return run_verdict(world, phase=phase, labels=labels, extra=extra, out_name=name)
+
+
+def test_verdict_scenarios(world):
+    code, report, output = scenario(world, "t174", {"pa": [{"states": {"2": "fail"}}]}, {"pawab": {"screen": "keep"}})
+    entry = report.get("adoptions", {}).get("2", {})
+    check("T174 fail + ab_keep(기록용) → user_decision '재현 근거 없음(유지)'·종료 1",
+          code == 1 and entry.get("decision") == "user_decision" and any("재현 근거 없음(유지)" in label for label in entry.get("labels", [])), entry)
+    code, report, output = scenario(world, "p20", {"pnp20": [{"states": {"10": "fail"}}]}, {"pnp20wab": {"screen": "best", "confirm": "v01"}, "pnwab": {"screen": "keep"}})
+    decisions = decisions_of(report)
+    check("T139 P-20: 자식 #10 은 자기 wab(v01) 로 revert, 부모 #1 은 자식 상태 + 자기 wab(keep) 로 user_decision", code == 1 and decisions.get("10") == "revert"
+          and decisions.get("1") == "user_decision" and report["adoptions"]["1"]["state"] == "fail" and report["adoptions"]["1"]["ab"]["id"] == "pnwab", decisions)
+    for mode in ("exit1", "interrupted"):
+        code, report, output = scenario(world, f"t179-{mode}", {"pa": [{"infeasible": mode}]})
+        check(f"T179 sweep {mode} 두 번 → 그 실행 채택 incomplete(E2 아님)·종료 1", code == 1 and report.get("stop") is None and decisions_of(report).get("2") == "incomplete"
+              and report["adoptions"]["2"]["ab"]["decision"] == "ab_skipped", (code, report.get("stop"), decisions_of(report)))
+    code, report, output = scenario(world, "t112", {"pa": [{"retry": True}]})
+    check("E1 한 번 → 재시도 통과(폴더 2·sweep 시도 2)도 verdict 가 받는다", code == 0, report.get("problems"))
+    code, report, output = scenario(world, "t182-3", {"uw": [{"infeasible": "exit1"}]})
+    check("T182 F0 한 건 미완(표본 3) → F1 진행, 그 채택만 incomplete", code == 1 and report.get("stop") is None and decisions_of(report).get("17") == "incomplete"
+          and decisions_of(report).get("2") == "keep", (report.get("stop"), decisions_of(report)))
+    code, report, output = scenario(world, "t182-2", {"uw": [{"infeasible": "exit1"}], "f7": [{"states": {"18": "undetermined"}}, {"infeasible": "exit1"}]})
+    journal = read_json(journal_text_of(world))
+    reasons = {item["reason"] for item in report.get("incomplete", [])}
+    check("T182·T150 두 건 미완(표본 2, 1회차 판정 불가 + rerun 실행 불가 포함) → F0_shortfall → verdict 전 채택 incomplete·근거 'F0 결원(개정 E1·D-W28'·종료 1",
+          code == 1 and (report.get("stop") or {}).get("event") == "F0_shortfall" and journal["final_batch"]["f0_gate"]["sample"] == ["f2", "g13"]
+          and set(decisions_of(report).values()) == {"incomplete"} and len(decisions_of(report)) == 12 and any("F0 결원(개정 E1·D-W28" in reason for reason in reasons),
+          (report.get("stop"), journal["final_batch"]["f0_gate"], reasons))
+    code, report, output = scenario(world, "t188-f2", {"f2": [{"states": {"15": "undetermined"}}, {"states": {"15": "pass"}}]})
+    journal = read_json(journal_text_of(world))
+    f2 = item_of(journal, "f2")
+    official = read_json(f"{folder_of(world, 'pf2')}/verify.json")
+    check("T188 개정 F2: 공식 장면 control_ok 거짓·checks 모두 참(verify.passed 참) → 1회차 undetermined, rerun 통과 → 결정 pass·종료 0",
+          official["verify"]["passed"] is True and not official["scenes"][0]["control_ok"] and f2["final"]["official_first"] == {"15": "undetermined"}
+          and code == 0 and report["adoptions"]["15"]["state_source"]["opportunity"] == "rerun", (code, report.get("problems"), f2["final"]["official_first"]))
+    code, report, _ = journal_variant(world, journal_text_of(world), "t188-passed", set_journal(journal_text_of(world), lambda journal: item_of(journal, "f2")["final"].update(
+        official_first={"15": "pass"})))
+    check("T188 개정 F2: 일지 official_first 를 verify.passed(통과)로 적으면 verdict 2", code == 2, report.get("problems"))
+    code, report, output = scenario(world, "t188-start", options={"start_failed_after": 2})
+    decisions = decisions_of(report)
+    check("T164·T188 첫 시작 성공·두 항목 끝난 뒤 시작 연속 2회 실패 → start_failed: 끝난 두 항목 채택은 결정, 나머지 incomplete·종료 1",
+          code == 1 and (report.get("stop") or {}).get("event") == "start_failed" and decisions.get("13") == "keep" and decisions.get("15") == "keep"
+          and all(decisions.get(key) == "incomplete" for key in ("17", "18", "2", "3", "f5")), (report.get("stop"), decisions))
+    code, report, output = scenario(world, "t175", options={"fail": {"item": "pb", "step": "compare", "exit": 2}})
+    check("T175 항목 pb 에서 E2 → 앞의 끝난 채택(F0 넷) settled, 나머지 incomplete, 종료 2",
+          code == 2 and set(report.get("settled") or {}) == {"13", "15", "17", "18"} and {item["adoption"] for item in report.get("incomplete", [])} >= {"2", "3", "11", "f5"},
+          (code, sorted(report.get("settled") or {}), [item["adoption"] for item in report.get("incomplete", [])]))
+    with restored(world["w_anchor"]):
+        edit_json(world["w_anchor"], lambda document: document.update(sha256="0" * 64))
+        code, report, _ = run_verdict(world, out_name="t175-anchor")
+    check("T175 닻 실패 → settled 빔·전 채택 incomplete·종료 2", code == 2 and report.get("settled") == {} and len(report.get("incomplete", [])) == 12, report.get("gate"))
+    code, report, output = scenario(world, "t183", options={"tamper_compare": {("f2", "first"): lambda report: report["scenes"][0]["control_allowed"].update(m1=0.5)}})
+    journal = read_json(journal_text_of(world))
+    check("T183 control_allowed 만 다른 비교기 → E3 즉시 멈춤(남은 F0·F1·F2 pending), verdict stop E3 next restart·종료 1",
+          code == 1 and report.get("stop") == {"event": "E3", "next": "restart"} and journal["final_batch"]["outcome"]["event"] == "E3"
+          and all(item["status"] == "pending" for item in journal["items"][2:]), (code, report.get("stop"), report.get("problems")))
+
+
+def test_tests_and_approval(world):
+    simulate_batch(world)
+    labels = ["w4-header", "w10-rhi", "w13-headless", "w13-rhi"]
+    with restored(f"{world['root']}/tests/w13-rhi-tests.json"):
+        write_tests(world, "w13-rhi", incomplete=True)
+        code, report, _ = run_verdict(world, phase="w13", labels=labels, out_name="t169-json")
+    owners = {"1", "3", "15"}
+    check("T169 w13 label JSON incomplete 참 → test_owner owner 전부 incomplete·종료 1",
+          code == 1 and {item["adoption"] for item in report.get("incomplete", [])} == owners, [item["adoption"] for item in report.get("incomplete", [])])
+    evidence = f"{world['root']}/tests/w13-rhi-exits.txt"
+    write_text(evidence, "exit 3\nexit 3\n")
+    code, report, _ = run_verdict(world, phase="w13", labels=labels[:3], extra=["--tests-base-error", f"w13-rhi={evidence}"], out_name="t169-arg")
+    check("T169 --tests-base-error w13-rhi=… → 같음", code == 1 and {item["adoption"] for item in report.get("incomplete", [])} == owners)
+    with restored(f"{world['root']}/tests/w4-header-tests.json"):
+        write_tests(world, "w4-header", incomplete=True)
+        base_code, _, _ = run_verdict(world, phase="w13", labels=labels, out_name="t169-w4")
+    missing_code, _, _ = run_verdict(world, phase="w13", labels=labels[:3], out_name="t169-missing")
+    double_code, _, _ = run_verdict(world, phase="w13", labels=labels, extra=["--tests-base-error", f"w13-rhi={evidence}"], out_name="t169-double")
+    write_tests(world, "extra-label")
+    extra_code, _, _ = run_verdict(world, phase="w11", labels=["w4-header", "w10-rhi", "extra-label"], out_name="t169-extra")
+    check("T169 w4 label 기반 오류 → 2, 필수 label 빠짐·겹침·목록 밖 → 2", (base_code, missing_code, double_code, extra_code) == (2, 2, 2, 2),
+          (base_code, missing_code, double_code, extra_code))
+    failures = [("TDGame.FluidFX.Fixture.HeatOwner", ["Error: 단언 실패"]), ("TDGame.FluidFX.Fixture.TwoOwners", ["Error: 단언 실패"]), ("TDGame.FluidFX.Fixture.Timing", ["Error: 느림"]),
+                (verify.HEADER_SYNC_TEST, ["Error: 헤더 다름"]), ("TDGame.FluidFX.Fixture.Unknown", ["Error: 표에 없는 시험"]),
+                ("TDGame.FluidFXRhi.Fixture.PinMatch", ["Error: 허용 문구 값 1.0"])]
+    with restored(f"{world['root']}/tests/w13-headless-tests.json"):
+        write_tests(world, "w13-headless", failures)
+        code, report, _ = run_verdict(world, phase="w13", labels=labels, out_name="t146")
+        failed = {entry["test"]: entry["outcome"] for entry in report["tests"]["w13-headless"]["failed"]}
+        user_keys = {item["adoption"] for item in report.get("user_decision", [])}
+        check("T146 시험: owners 1 → revert, 2 → user_decision, timing·조건부 고정(문구 일치) → 기록만, header_sync → w_defect, 표에 없는 시험 → user_decision",
+              code == 1 and [item["adoption"] for item in report.get("revert", [])] == ["1"] and {"3", "15", None} <= user_keys and len(report.get("w_defect", [])) == 1
+              and failed.get("TDGame.FluidFX.Fixture.Timing") == "recorded" and failed.get("TDGame.FluidFXRhi.Fixture.PinMatch") == "recorded"
+              and failed.get("TDGame.FluidFX.Fixture.Unknown") == "user_decision", (failed, user_keys, report.get("revert")))
+        write_tests(world, "w13-headless", [("TDGame.FluidFXRhi.Fixture.PinMatch", ["Error: 다른 오류"])])
+        code, report, _ = run_verdict(world, phase="w13", labels=labels, out_name="t146-pin")
+        check("T146 조건부 고정 시험의 Error 줄이 문구와 다르면 design(owners 0 → user_decision)",
+              report["tests"]["w13-headless"]["failed"][0]["class"] == "design" and report["tests"]["w13-headless"]["failed"][0]["outcome"] == "user_decision")
+    approved = f"{world['root']}/approved.json"
+    write_text(f"{world['root']}/approved-evidence.md", "사용자 승인\n")
+    write_json(approved, [{"json_path": AMBIENT, "rule": "user_approved", "evidence": f"{world['root']}/approved-evidence.md"}])
+    code, report, _ = run_verdict(world, phase="w13", labels=labels, extra=["--user-approved", approved], out_name="t146-approved")
+    write_json(f"{world['root']}/approved-missing.json", [{"json_path": AMBIENT, "rule": "user_approved", "evidence": f"{world['root']}/none.md"}])
+    missing_code, _, _ = run_verdict(world, phase="w13", labels=labels, extra=["--user-approved", f"{world['root']}/approved-missing.json"], out_name="t146-missing")
+    check("T146 --user-approved: 근거 있음 → revert(user_approved), 근거 없음 → 2", code == 1 and [item["adoption"] for item in report.get("revert", [])] == ["2"]
+          and "user_approved" in report["revert"][0]["rules"] and missing_code == 2, (report.get("revert"), missing_code))
+
+
+def test_decision_tables():
+    rows = [("incomplete", "on_fail", "ab_skipped", "incomplete"), ("pass", "on_fail", "ab_skipped", "keep"), ("pass", "always_record", "ab_keep", "keep"),
+            ("pass", "always_record", "ab_undetermined", "keep"), ("pass", "always_record", "ab_v01", "user_decision"), ("pass", "always_record", "ab_incomplete", "incomplete"),
+            ("fail", "on_fail", "ab_v01", "revert"), ("undetermined", "on_fail", "ab_v01", "revert"), ("fail", "on_fail", "ab_keep", "user_decision"),
+            ("undetermined", "on_fail", "ab_keep", "user_decision"), ("fail", "on_fail", "ab_undetermined", "user_decision"), ("undetermined", "on_fail", "ab_undetermined", "user_decision"),
+            ("fail", "on_fail", "ab_incomplete", "incomplete"), ("undetermined", "on_fail", "ab_incomplete", "incomplete")]
+    wrong = [(state, trigger, decision, verify.decide_adoption("2", state, trigger, decision)[0]) for state, trigger, decision, expected in rows
+             if verify.decide_adoption("2", state, trigger, decision)[0] != expected]
+    skipped = gate_of(verify.decide_adoption, "2", "fail", "on_fail", "ab_skipped")
+    chain = verify.decide_adoption("4", "fail", "always_record", "ab_keep")
+    keep_label = verify.decide_adoption("2", "fail", "on_fail", "ab_keep")[2]
+    check("T139 6.2 결정 표 모든 행, fail·undetermined + ab_skipped → 2(A1), #4 사슬 의심, '재현 근거 없음(유지)'",
+          not wrong and skipped[0] == 2 and chain[0] == "user_decision" and "사슬 의심" in chain[2] and "재현 근거 없음(유지)" in keep_label, (wrong, skipped, chain))
+    band = {"metric": "m2", "role": "constraint", "low": 0.0, "high": 1.0}
+    resolved = {"scenes": [{"targets": [band], "control_reference": {"m2": 1.5}, "variants": {"v01": {"medians": {"m2": 0.5}}}}]}
+    score_only = {"scenes": [{"targets": [dict(band, role="score")], "control_reference": {"m2": 1.5}, "variants": {"v01": {"medians": {"m2": 0.5}}}}]}
+    inside = {"scenes": [{"targets": [band], "control_reference": {"m2": 0.5}, "variants": {"v01": {"medians": {"m2": 0.4}}}}]}
+    cross = {"id": "f5xf7wab", "for_adoption": "18"}
+    influence = verify.decide_influence
+    table = {
+        "pass·ab_skipped": influence("f5", "pass", cross, {"decision": "ab_skipped"}, "f7") == [],
+        "incomplete·ab_skipped": [entry[:2] for entry in influence("f5", "incomplete", cross, {"decision": "ab_skipped"}, "f7")] == [("f5", "incomplete")],
+        "fail·v01 제약 해소": [entry[:2] for entry in influence("f5", "fail", cross, {"decision": "ab_v01", "confirm": resolved}, "f7")] == [("18", "revert")],
+        "fail·v01 점수만": [entry[:2] for entry in influence("f5", "fail", cross, {"decision": "ab_v01", "confirm": score_only}, "f7")] == [("18", "user_decision")]
+                         and "목표 충돌(f5 대 f7)" in influence("f5", "fail", cross, {"decision": "ab_v01", "confirm": score_only}, "f7")[0][3],
+        "fail·v01 v00 밴드 안": [entry[:2] for entry in influence("f5", "fail", cross, {"decision": "ab_v01", "confirm": inside}, "f7")] == [("18", "user_decision")],
+        "fail·ab_keep": [entry[:2] for entry in influence("f5", "fail", cross, {"decision": "ab_keep"}, "f7")] == [("f5", "user_decision")],
+        "undetermined·ab_undetermined": [entry[:2] for entry in influence("f5", "undetermined", cross, {"decision": "ab_undetermined"}, "f7")] == [("f5", "user_decision")],
+        "fail·ab_incomplete": [entry[:2] for entry in influence("f5", "fail", cross, {"decision": "ab_incomplete"}, "f7")] == [("f5", "incomplete")],
+        "fail·교차 없음": [entry[:2] for entry in influence("f5", "fail", None, None, "f7")] == [("f5", "user_decision")],
+    }
+    check("T139·T176 영향 f5 표 모든 행: 제약 해소 → revert 18, 점수만 → user_decision 18 '목표 충돌', f5 incomplete → incomplete f5", all(table.values()),
+          [name for name, passed in table.items() if not passed])
+
+
+def test_r2_targets(world):
+    expect = read_json(f"{world['final']}/expect.json")
+    targets = verify.r2_targets
+    cases = {
+        "레벨 공유(#15 → #18·f5)": (targets(expect, {PASSIVE}), {"adoptions": ["18"], "runs": ["f5", "f7"], "influences": ["f5"]}),
+        "레벨·P-20 공유(#12 → #2·#9, covered 부모는 fallback)": (targets(expect, {CONTRAST}), {"adoptions": ["2", "9"], "runs": ["pa", "pc"], "influences": []}),
+        "장면·P-20 공유(#10 → #1 fallback pn)": (targets(expect, {SPEED}), {"adoptions": ["1"], "runs": ["pn"], "influences": []}),
+    }
+    synthetic = {"adoptions": {"a": {"entry_id": "x", "scenes": ["s1"], "levels": ["L1"], "owner": "O"}, "b": {"entry_id": "y", "scenes": ["s2"], "levels": ["L2"], "owner": "O"},
+                               "c": {"entry_id": "z", "scenes": ["s3"], "levels": ["L3"], "owner": "P"}},
+                 "runs": {"r1": {"plan": plan_path(world, "pa")}, "r2": {"plan": plan_path(world, "pg")}, "r3": {"plan": plan_path(world, "pu")}},
+                 "rows": [{"run": "r1", "adoption": "a", "scene": "s1"}, {"run": "r2", "adoption": "b", "scene": "s2"}, {"run": "r3", "adoption": "c", "scene": "s3"}],
+                 "fallback_runs": {}, "fallback_rows": [], "influences": [], "covered": []}
+    cases["owner 공유"] = (targets(synthetic, {"x"}), {"adoptions": ["b"], "runs": ["r2"], "influences": []})
+    wrong = {name: actual for name, (actual, expected) in cases.items() if actual != expected}
+    check("T177 r2 대상: 장면·레벨·owner·P-20 공유 각각 → 대상, 되돌린 채택 자신은 빠짐, 정렬·결정론", not wrong and targets(expect, {PASSIVE}) == targets(expect, {PASSIVE}), wrong)
+
+
+ALL_LABELS = ["w4-header", "w10-rhi", "w13-headless", "w13-rhi"]
+
+
+def rollback_negatives(world, verdict_text):
+    results = {}
+    clear_rollback(world)
+    results["verdict sha 다름"] = run_main(rollback_argv(world, verdict_text, "0" * 64))[0]
+    bad = read_json(verdict_text)
+    bad["revert"][0]["entry_id"] = "Look:Materials./Game/Fixture/MI_TD_None.Scalars.Missing"
+    bad_text = f"{world['root']}/verdict/bad-entry.json"
+    write_json(bad_text, bad)
+    results["revert entry_id 가 동결본에 없음"] = run_main(rollback_argv(world, bad_text))[0]
+    clear_rollback(world)
+    PATCH_TOOL["tamper"] = True
+    results["남긴 항목 값 변경(가짜 overlay-remove)"] = run_main(rollback_argv(world, verdict_text))[0]
+    clear_rollback(world)
+    PATCH_TOOL["fail"] = "materialize"
+    results["fluid_tuning_patch 종료 1"] = run_main(rollback_argv(world, verdict_text))[0]
+    clear_rollback(world)
+    return results
+
+
+def test_r2_chain(world):
+    final_dir, root = world["final"], world["root"]
+    code, report, _ = scenario(world, "w11", {"f2": [{"states": {"15": "fail"}}]}, {"f2wab": {"screen": "best", "confirm": "v01"}})
+    check("되돌림 시나리오 w11: f2 실패 + f2wab v01 → revert 15·종료 1, w11 은 r2_targets 없음",
+          code == 1 and [item["adoption"] for item in report.get("revert", [])] == ["15"] and report.get("r2_targets") is None, (code, report.get("revert"), report.get("problems")))
+    code, report, _ = run_verdict(world, phase="w13", out_name="w13")
+    expected_targets = {"adoptions": ["18"], "influences": ["f5"], "runs": ["f5", "f7"]}
+    check("T177 verdict w13 r2_targets = r2-spec 계산(r2_targets 함수)", code == 1 and report.get("r2_targets") == expected_targets
+          and report["r2_targets"] == verify.r2_targets(read_json(f"{final_dir}/expect.json"), {PASSIVE}), report.get("r2_targets"))
+    verdict_text = f"{root}/verdict/w13.json"
+    negatives = rollback_negatives(world, verdict_text)
+    check("T171 rollback 실패 경로: verdict sha 다름·revert 가 동결본에 없음·남긴 항목 값 변경·fluid_tuning_patch 종료 1 → 각각 2",
+          all(code == 2 for code in negatives.values()), negatives)
+    code, output = run_main(rollback_argv(world, verdict_text))
+    rollback = read_json(f"{final_dir}/r2/rollback.json") if code == 0 else {}
+    r2_w_expect = read_json(f"{final_dir}/r2/w-expect.json") if code == 0 else {}
+    check("T171 rollback 정상: 종료 0, 순서 restore → overlay-remove → materialize → write-canonical, A = K, followups(Globals·#18 아님)",
+          code == 0 and PATCH_TOOL["calls"] == ["restore", "overlay-remove", "materialize", "write-canonical"] and rollback["expected_ids"] == rollback["actual_ids"]
+          and len(rollback["actual_ids"]) == 10 and PASSIVE not in rollback["actual_ids"] and rollback["followups"]["header_revert"] is False
+          and rollback["followups"]["fog_generator_value"] is None and rollback["followups"]["fog_stage_regeneration"] is False
+          and rollback["followups"]["reverted_look_assets"] == [MI_PASSIVE] and pair_sha(world["live"]) == r2_w_expect.get("written"), (code, output, PATCH_TOOL["calls"]))
+    code, output = run_main(rollback_argv(world, verdict_text))
+    check("T171 출력 경로가 이미 있으면 rollback 2", code == 2 and "outputs" in output, output)
+    code, output = run_main(r2_spec_argv(world, verdict_text))
+    first = absolute(f"{final_dir}/r2/final-spec.json").read_bytes() if code == 0 else b""
+    second_code, _ = run_main(r2_spec_argv(world, verdict_text))
+    check("T145 r2-spec 두 번 같은 바이트", code == 0 and second_code == 0 and absolute(f"{final_dir}/r2/final-spec.json").read_bytes() == first, output)
+    r2_spec = read_json(f"{final_dir}/r2/final-spec.json")
+    sources = [source["adoption"] for run in r2_spec["runs"] for source in run["sources"]]
+    check("T177·T145 r2 명세: 대상 실행 f7·f5, 되돌린 채택 #15 의 행·wab 빠짐, edition r2·restart 없음·tests_required r2",
+          [run["id"] for run in r2_spec["runs"]] == ["f7", "f5"] and [ab["id"] for ab in r2_spec["ab"]] == ["f7wab", "f5xf7wab"] and "15" not in r2_spec["adoptions"]
+          and "15" not in sources and r2_spec["edition"] == "r2" and "restart" not in r2_spec and r2_spec["tests_required"]["r2"] == ["w10-rhi-r2"], r2_spec.get("runs"))
+    copies_code, copies_output = run_main(["copies", "--spec", f"{final_dir}/r2/final-spec.json", "--out-dir", f"{final_dir}/r2"])
+    expect_code, expect_output = rerun_expect(world, f"{final_dir}/r2")
+    check("r2 사전 등록: copies r2·expect r2 종료 0", copies_code == 0 and expect_code == 0, (copies_output, expect_output))
+    r2_anchor = f"{root}/w-anchor-r2.json"
+    anchor_r2 = lambda: run_anchor(world, f"{final_dir}/r2/final-spec.json", r2_anchor)
+    with restored(world["fog_generator"]):
+        write_text(world["fog_generator"], fog_generator_text(4.0))
+        kept_code, kept_output = anchor_r2()
+    check("T172 #18 남김인데 생성기 4.0 → anchor r2 종료 2(W12 검사, 측정 전 관문)", kept_code == 2 and "w12" in kept_output, kept_output)
+    with restored(f"{root}/targets/g_wall.json"):
+        append_byte(f"{root}/targets/g_wall.json")
+        changed_code, changed_output = anchor_r2()
+    with restored(world["w_anchor"]):
+        edit_json(world["w_anchor"], lambda document: document.update(sha256="0" * 64))
+        previous_code, previous_output = anchor_r2()
+    r2_paths = [f"{final_dir}/r2/final-spec.json", f"{final_dir}/r2/expect.json", f"{final_dir}/r2/final_queue.json", *copy_output_paths(world, f"{final_dir}/r2")]
+    with restored(*r2_paths):
+        write_json(f"{root}/pie/new-target.json", {"new": True})
+        edit_json(f"{final_dir}/r2/final-spec.json", lambda document: document["pie_files"].append(f"{root}/pie/new-target.json"))
+        run_main(["copies", "--spec", f"{final_dir}/r2/final-spec.json", "--out-dir", f"{final_dir}/r2"])
+        rerun_expect(world, f"{final_dir}/r2")
+        outside_code, outside_output = anchor_r2()
+    check("T170·T186 r1 닻 항목 1바이트 → 2, 앞 닻(w-anchor) sha 다름 → 2, 허용 목록 밖 새 경로 → 2",
+          (changed_code, previous_code, outside_code) == (2, 2, 2) and "superset" in outside_output, (changed_output[-300:], previous_output[-300:], outside_output[-300:]))
+    code, output = anchor_r2()
+    r1_files = read_json(f"{final_dir}/anchor.json")["files"]
+    r2_document = read_json(f"{final_dir}/r2/anchor.json") if code == 0 else {"files": {}}
+    new_paths = sorted(set(r2_document["files"]) - set(r1_files))
+    allowed = {f"{final_dir}/overlay-keep.json", f"{final_dir}/r2/w-expect.json", f"{final_dir}/r2/rollback.json", f"{final_dir}/write-canonical-r2.json",
+               f"{final_dir}/r2/final-spec.json", f"{final_dir}/r2/copies.json", f"{final_dir}/r2/expect.json", f"{final_dir}/r2/final_queue.json"}
+    allowed |= {output_entry["path"] for output_entry in read_json(f"{final_dir}/r2/copies.json")["outputs"]}
+    check("T186 anchor r2 정상: 종료 0, r1 닻 항목 전부 같은 sha 로 담음, 새 경로는 W12 출력·r2 명세·copies·expect·큐뿐, previous_anchor·w12_check 기록",
+          code == 0 and all(r2_document["files"].get(path) == value for path, value in r1_files.items())
+          and all(path in allowed or path.startswith(f"{final_dir}/preview-r2/") for path in new_paths) and r2_document.get("previous_anchor", {}).get("sha256") == sha(f"{final_dir}/anchor.json")
+          and all((r2_document.get("w12_check") or {}).values()) and read_json(r2_anchor)["edition"] == "r2", (code, output, new_paths))
+    write_tests(world, "w10-rhi-r2")
+    r2_final = f"{final_dir}/r2"
+    r2_run = lambda name, verify_plan=None, ab_plan=None, options=None: (simulate_batch(world, r2_final, verify_plan, ab_plan, options, w_anchor=r2_anchor),
+                                                                          run_verdict(world, phase="r2", final_dir=r2_final, out_name=name, w_anchor=r2_anchor))[1]
+    code, report, output = r2_run("r2-clean")
+    check("T186 w-anchor edition r2 → r2 일지·큐·expect 판 대조 통과, r2 verdict 종료 0", code == 0 and set(decisions_of(report)) == {"18", "f5"}, (code, report.get("problems")))
+    code, report, _ = r2_run("r2-posthoc", {"f7": [{"states": {"18": "fail"}}]}, {"f7wab": {"screen": "best", "confirm": "v01"}})
+    check("T178 r2 verdict 되돌림 → post_hoc, revert 빔·종료 1", code == 1 and [item["adoption"] for item in report.get("post_hoc", [])] == ["18"] and report.get("revert") == [],
+          (report.get("post_hoc"), report.get("revert")))
+    code, report, _ = r2_run("r2-e3", options={"tamper_compare": {("f7", "first"): lambda document: document["scenes"][0]["control_allowed"].update(m1=0.5)}})
+    check("T178 r2 E3 → r2 대상 incomplete·종료 1", code == 1 and (report.get("stop") or {}).get("event") == "E3"
+          and sorted(item["adoption"] for item in report.get("incomplete", [])) == ["18", "f5"], (report.get("stop"), report.get("incomplete")))
+    code, report, _ = r2_run("r2-f0-incomplete", {"f7": [{"infeasible": "exit1"}]})
+    check("T178 r2 F0 미완은 결원 규칙 없이 계속(f5 결정, #18 만 incomplete)", code == 1 and report.get("stop") is None and decisions_of(report) == {"18": "incomplete", "f5": "keep"},
+          (report.get("stop"), decisions_of(report)))
+
+
+def test_fog_chain(world):
+    final_dir, root = world["final"], world["root"]
+    code, report, _ = scenario(world, "w13", {"f7": [{"states": {"18": "fail"}}]}, {"f7wab": {"screen": "best", "confirm": "v01"}}, phase="w13")
+    check("#18 되돌림 시나리오 w13: revert 18, r2_targets #15·f5", code == 1 and [item["adoption"] for item in report.get("revert", [])] == ["18"]
+          and report.get("r2_targets") == {"adoptions": ["15"], "influences": ["f5"], "runs": ["f2", "f5"]}, (report.get("revert"), report.get("r2_targets")))
+    verdict_text = f"{root}/verdict/w13.json"
+    clear_rollback(world)
+    steps = prepare_r2(world, verdict_text)
+    rollback = read_json(f"{final_dir}/r2/rollback.json") if steps[0][0] == 0 else {}
+    check("T171·T187 #18 만 되돌림(Look 없음): overlay-remove 호출 없이 사본에서 빠짐, followups fog_generator_value 4.0·fog_stage_regeneration 참",
+          all(code == 0 for code, _ in steps) and PATCH_TOOL["calls"] == ["restore", "materialize", "write-canonical"] and LIGHT_ID not in rollback.get("actual_ids", [LIGHT_ID])
+          and rollback["followups"]["fog_generator_value"] == 4.0 and rollback["followups"]["fog_stage_regeneration"] is True and rollback["followups"]["reverted_look_assets"] == [],
+          ([output[-300:] for code, output in steps if code], PATCH_TOOL["calls"], rollback.get("followups")))
+    r2_anchor = f"{root}/w-anchor-r2.json"
+    anchor_r2 = lambda: run_anchor(world, f"{final_dir}/r2/final-spec.json", r2_anchor)
+    immediate, immediate_output = anchor_r2()
+    written = read_json(f"{final_dir}/r2/w-expect.json")["written"]["tuning"]
+    write_text(world["fog_generator"], fog_generator_text(4.0))
+    write_json(world["fog_report"], {"preset_tuning_sha256": written})
+    past = datetime(2026, 1, 1).timestamp()
+    os.utime(absolute(world["fog_report"]), (past, past))
+    stale, stale_output = anchor_r2()
+    write_json(world["fog_report"], {"preset_tuning_sha256": "0" * 64})
+    wrong, wrong_output = anchor_r2()
+    write_json(world["fog_report"], {"preset_tuning_sha256": written})
+    fixed, fixed_output = anchor_r2()
+    check("T172·T187 anchor r2 W12 검사: rollback 직후(생성기 8.0) → 2, 무대 보고 mtime ≤ finished_at → 2, 보고 preset sha ≠ r2 written → 2, 상수 4.0·무대 보고 갱신 뒤 → 0",
+          (immediate, stale, wrong, fixed) == (2, 2, 2, 0), (immediate_output[-200:], stale_output[-200:], wrong_output[-200:], fixed_output[-200:]))
+
+
+def test_crafted_rollbacks(world):
+    final_dir, root = world["final"], world["root"]
+    clear_rollback(world)
+    all_numbers = verify.sorted_adoptions(ADOPTIONS)
+    code, output = run_main(rollback_argv(world, crafted_verdict(world, all_numbers)))
+    rollback = read_json(f"{final_dir}/r2/rollback.json") if code == 0 else {}
+    check("T171 모든 채택 되돌림 → write-canonical 건너뜀(skipped_empty)·정본 = before",
+          code == 0 and rollback.get("write_canonical") == "skipped_empty" and "write-canonical" not in PATCH_TOOL["calls"] and pair_sha(world["live"]) == world["before_sha"], output)
+    clear_rollback(world)
+    steps = prepare_r2(world, crafted_verdict(world, ["12"]))
+    r2_spec = read_json(f"{final_dir}/r2/final-spec.json") if steps[1][0] == 0 else {"runs": [], "ab": []}
+    runs = {run["id"]: run for run in r2_spec["runs"]}
+    abs_ = {ab["id"]: ab for ab in r2_spec["ab"]}
+    pawab = read_json(f"{final_dir}/r2/plans/pa-wab.json")["params"][0]["values"] if steps[2][0] == 0 else None
+    check("T145 #12 되돌림 → groove 계열은 원 계획(binding same, fallback pc), #9 자기 wab for_run pc·trigger 9, r2 wab #2 v01 = W 전 정본 0.1, r2 expect 통과",
+          all(code == 0 for code, _ in steps) and sorted(runs) == ["pa", "pc"] and runs["pc"]["plan"] == plan_path(world, "pc")
+          and runs["pc"]["sources"][0]["binding"] == {"kind": "same"} and abs_.get("pcwab9", {}).get("for_run") == "pc" and abs_["pcwab9"]["trigger_adoption"] == "9"
+          and "pcwab12" not in abs_ and pawab == [0.1], ([output[-300:] for code, output in steps if code], sorted(runs), sorted(abs_)))
+    clear_rollback(world)
+    steps = prepare_r2(world, crafted_verdict(world, ["10"]))
+    r2_spec = read_json(f"{final_dir}/r2/final-spec.json") if steps[1][0] == 0 else {"runs": [], "ab": []}
+    abs_ = {ab["id"]: ab for ab in r2_spec["ab"]}
+    check("T145 #10 되돌림 → #1 fallback pn 실행·pnwab for_run pn·trigger 1, P-22 실행 id 도 fallback 으로",
+          all(code == 0 for code, _ in steps) and [run["id"] for run in r2_spec["runs"]] == ["pn"] and abs_.get("pnwab", {}).get("for_run") == "pn"
+          and abs_["pnwab"]["trigger_adoption"] == "1" and (r2_spec.get("p22") or {}).get("runs") == ["pn"], ([output[-300:] for code, output in steps if code], r2_spec.get("p22")))
+    clear_rollback(world)
+
+
+def tamper_f2(report):
+    report["scenes"][0]["control_allowed"]["m1"] = 0.5
+
+
+def test_restart(world):
+    final_dir = world["final"]
+    simulate_batch(world, options={"tamper_compare": {("f2", "first"): tamper_f2}})
+    code, output = run_anchor(world)
+    check("T162 e1·restart 0 에서 batch-e1/journal.json 이 있으면 anchor 2", code == 2 and "after_results" in output, output)
+    archive = archive_e1(world, ("journal", "anchor"))
+    expect_code, expect_output = rerun_expect(world)
+    leftover_code, leftover_output = run_anchor(world)
+    archive_e1(world, ("locks",))
+    absolute(f"{final_dir}/aborted-20261105-130000").mkdir(parents=True, exist_ok=True)
+    double_code, double_output = rerun_expect(world)
+    absolute(f"{final_dir}/aborted-20261105-130000").rmdir()
+    rerun_expect(world)
+    with restored(f"{final_dir}/batch-e1/journal.json"):
+        write_json(f"{final_dir}/batch-e1/journal.json", {})
+        journal_code, _ = run_anchor(world)
+    shutil.rmtree(absolute(f"{final_dir}/batch-e1"), ignore_errors=True)
+    shutil.move(str(absolute(f"{archive}/anchor.json")), str(absolute(f"{world['root']}/held-anchor.json")))
+    missing_code, _ = run_anchor(world)
+    shutil.move(str(absolute(f"{world['root']}/held-anchor.json")), str(absolute(f"{archive}/anchor.json")))
+    check("T185·T167 재시작 옮기기: 옛 F0 판정 잠금이 locks/ 에 남음 → 2, 기록 폴더 2개 → expect 2, batch-e1/journal.json 남음 → 2, 기록 폴더에 anchor.json 없음 → 2",
+          expect_code == 0 and (leftover_code, double_code, journal_code, missing_code) == (2, 2, 2, 2) and "restart" in leftover_output, (leftover_output[-200:], double_output[-200:]))
+    code, output = run_anchor(world)
+    anchor = read_json(f"{final_dir}/anchor.json") if code == 0 else {}
+    check("T185 재시작 정당성 통과: anchor restart 1, previous_journal = 기록 폴더 옛 일지, previous_anchor = 옮긴 W11 anchor.json sha(개정 F1)",
+          code == 0 and anchor.get("restart") == 1 and anchor.get("previous_journal") == f"{archive}/batch-e1/journal.json"
+          and anchor.get("previous_anchor") == {"path": f"{archive}/anchor.json", "sha256": sha(f"{archive}/anchor.json")}, output)
+    journal = simulate_batch(world)
+    creates = [attempt for item in journal["items"] for attempt in item["final"]["attempts"] if attempt["step"] in ("judge_lock_create", "judge_lock_verify")]
+    code, report, output = run_verdict(world, out_name="restart-ok")
+    check("T185·T167 restart 1 정상: 판정 잠금 4개 judge_lock_create(verify 0회), verdict 는 새 일지만 읽고 종료 0(옛 폴더는 실행 폴더 집합에 없음)",
+          [attempt["step"] for attempt in creates] == ["judge_lock_create"] * 4 and code == 0 and report.get("restart") == 1, (code, report.get("problems")))
+    simulate_batch(world, options={"tamper_compare": {("f2", "first"): tamper_f2}})
+    code, report, output = run_verdict(world, out_name="restart-e3")
+    check("T167 restart 1 에서 다시 E3 → E3_repeat·verdict 전 채택 incomplete('D1 두 번째 E3')·종료 1",
+          code == 1 and (report.get("stop") or {}).get("event") == "E3_repeat" and len(report.get("incomplete", [])) == 12
+          and all(item["reason"] == "D1 두 번째 E3" for item in report["incomplete"]), (report.get("stop"), report.get("problems")))
+
+
+def test_restart_without_mismatch(world):
+    simulate_batch(world, options={"lie_self_check": ("f2", "first")})
+    archive_e1(world)
+    expect_code, _ = rerun_expect(world)
+    code, output = run_anchor(world)
+    check("T167 기록 폴더 옛 일지에 E3 기록은 있고 다시 계산하면 일치 → anchor restart 1 종료 2", expect_code == 0 and code == 2 and "불일치가 없다" in output, output[-300:])
+
+
+def test_w_expect_real():
+    folder = f"{TEST_ROOT}/w-expect-real"
+    real_speed = "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidFlamethrower.Floats.User.TDMassSpeedCmPerSec"
+    real_heat = "Kinds.Flamethrower.TDFluidSimulationConfig.HeatCoolingPerSec"
+    write_json(f"{folder}/builder-before.json", {"Flamethrower": {"TDFluidSimulationConfig": {"HeatCoolingPerSec": 2.5}},
+                                                 "CloudCyclone": {"TDFluidSimulationConfig": {"AmbientRefillPerSec": 0.1}},
+                                                 "ViscousBlood": {"TDFluidSimulationConfig": {"AdvectionSpeedScale": 0.55}}})
+    absolute(f"{folder}/canonical-before").mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(fluid_tuning_patch.canonical_tuning_path(), absolute(f"{folder}/canonical-before/{fluid_tuning_patch.TUNING_FILE_NAME}"))
+    shutil.copyfile(fluid_tuning_patch.canonical_look_path(), absolute(f"{folder}/canonical-before/{fluid_tuning_patch.LOOK_FILE_NAME}"))
+    results = {}
+    for name, removed in (("full", []), ("no10", [real_speed]), ("no1", [real_heat])):
+        overlay = read_json(REAL_OVERLAY)
+        overlay["assignments"] = [entry for entry in overlay["assignments"] if entry["json_path"] not in [verify.FX9_REMOVED_PATH] + removed]
+        write_json(f"{folder}/{name}/overlay.json", overlay)
+        completed = subprocess.run([sys.executable, "-B", str(ROOT / "Tools/FluidFX/fluid_tuning_patch.py"), "materialize", "--overlay", f"{folder}/{name}/overlay.json",
+                                    "--out", f"{folder}/{name}/preview"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if completed.returncode != 0:
+            results[name] = {"error": completed.stderr[-400:]}
+            continue
+        results[name] = verify.build_w_expect(f"{folder}/{name}/overlay.json", f"{folder}/canonical-before", f"{folder}/{name}/preview", f"{folder}/builder-before.json")
+    full = results["full"]
+    floats = ((full.get("ns_expect") or {}).get("/Game/FluidFX/Niagara/NS_TD_FluidFlamethrower") or {}).get("Floats") or {}
+    builder = {entry["json_path"]: (entry["before"], entry["after"]) for entry in full.get("builder_diff") or []}
+    sections = [entry["json_path"].split(".")[0] for entry in full.get("effective_diff") or []]
+    check("T147 w-expect(실제 덧씌움 − fx9, 읽기 전용 materialize): 3판 1.4 참고값(NS Speed 750·Buoyancy −300·Lifetime 0.5, builder_diff 3, effective_diff Kinds 4 + Globals 1, look_leaf_diff 11)",
+          floats.get("User.TDMassSpeedCmPerSec") == 750 and floats.get("User.TDMassBuoyancyCmPerSec2") == -300 and floats.get("User.TDMassLifetimeSeconds") == 0.5
+          and builder == {real_heat: (2.5, 4.0), "Kinds.CloudCyclone.TDFluidSimulationConfig.AmbientRefillPerSec": (0.1, 0.2),
+                          "Kinds.ViscousBlood.TDFluidSimulationConfig.AdvectionSpeedScale": (0.55, 1.0)}
+          and sorted(sections) == ["Globals", "Kinds", "Kinds", "Kinds", "Kinds"] and len(full.get("look_leaf_diff") or []) == 11,
+          {"floats": floats, "builder": builder, "sections": sections, "look": len(full.get("look_leaf_diff") or []), "error": full.get("error")})
+    no10 = (((results["no10"].get("ns_expect") or {}).get("/Game/FluidFX/Niagara/NS_TD_FluidFlamethrower") or {}).get("Floats") or {})
+    check("T147 실제: #10 을 뺀 덧씌움 → NS Speed 기대 900, #1 을 뺀 덧씌움 → builder_diff 2개",
+          no10.get("User.TDMassSpeedCmPerSec") == 900 and len(results["no1"].get("builder_diff") or []) == 2, (no10.get("User.TDMassSpeedCmPerSec"), results["no1"].get("builder_diff")))
+
+
+def prepare_sweep(world, run_id, behaviors=None):
+    final_dir = world["final"]
+    expect, queue = read_json(f"{final_dir}/expect.json"), read_json(f"{final_dir}/final_queue.json")
+    run = expect["runs"][run_id]
+    folder = f"{final_dir}/batch-e1/runs/{PurePosixPath(run['plan']).stem}/verify-1"
+    if run["block"] == "F0":
+        make_lock(queue_judge_files(queue), run["judge_lock"])
+    else:
+        make_lock(prereg_lock.required_files(run["plan"]) + queue_judge_files(queue), run["lock"])
+    write_json(f"{folder}/sweep.json", make_sweep(run["plan"], run["lock"], "verify", run["overlay_sha256"], expect["canonical_after"], behaviors or {}, folder))
+    return f"{folder}/sweep.json"
+
+
+def add_metric_to_source(world, spec, overlay):
+    judge_text = world["sources"]["2"]["judge"]
+
+    def change(judge):
+        scene = judge["scenes"][0]
+        scene["targets"].append(dict(scene["targets"][0], metric="m3"))
+        scene["noise"]["m3"] = dict(scene["noise"]["m1"])
+        scene["candidate_medians"]["m3"] = 3.0
+    edit_json(judge_text, change)
+    entry_by_path(overlay, AMBIENT)["from"]["judge_sha256"] = sha(judge_text)
+
+
+def test_extra_metric_and_judge_file(world):
+    check("준비: 지표를 더한 출처 judge fixture 의 copies·expect·anchor 가 종료 0", setup_ok(world), setup_detail(world))
+    code, report, output = run_compare(world, "pa", prepare_sweep(world, "pa"), "pa-extra")
+    check("T140 계획 targets 에 없는 지표가 출처 행에 있음(집합 검사) → compare 종료 3", code == 3 and report.get("gate") == "rejudge", (code, report.get("problems")))
+    g13_sweep = prepare_sweep(world, "g13")
+    append_byte(world["test_classes"], b"\n")
+    expect_code, _ = rerun_expect(world)
+    anchor_code, _ = run_anchor(world)
+    code, report, output = run_compare(world, "g13", g13_sweep, "g13-judge-file")
+    check("T135 판정 파일 1바이트(잠금 뒤 test_classes 변경, expect·anchor 다시 만듦) → compare 종료 3(잠금 관문)",
+          expect_code == 0 and anchor_code == 0 and code == 3 and report.get("gate") == "lock", (expect_code, anchor_code, code, report.get("problems")))
+
+
+def test_self_check_rules(world):
+    expect = read_json(f"{world['final']}/expect.json")
+    folder = folder_of(world, "pg")
+    rows = verify.run_rows(expect, "g13")
+    official, comparator = read_json(f"{folder}/verify.json"), read_json(f"{folder}/compare.json")
+
+    def variant(change_comparator, change_official=None):
+        changed_official, changed_comparator = copy.deepcopy(official), copy.deepcopy(comparator)
+        change_comparator(changed_comparator)
+        if change_official:
+            change_official(changed_official)
+        return verify.self_check(rows, changed_official, changed_comparator, folder)
+
+    def path_keys(document):
+        document["scenes"][0]["measure"] = "Saved/elsewhere/measure.json"
+        document["scenes"][0]["sources"] = ["look"]
+        document["scenes"][0]["undetermined_reasons"] = [f"{folder}/compare-judge/regions.json", str(absolute(f"{folder}/compare-judge/grid.json"))]
+
+    def official_paths(document):
+        document["scenes"][0]["undetermined_reasons"] = [f"{folder}/judge/regions.json", str(absolute(f"{folder}/judge/grid.json"))]
+
+    results = {
+        "control_allowed 만 다름": variant(lambda document: document["scenes"][0]["control_allowed"].update(m1=0.5)) is False,
+        "장면 결과의 다른 키 하나": variant(lambda document: document["scenes"][0].update(control_score=(document["scenes"][0]["control_score"] or 0) + 1.0)) is False,
+        "(c) 채택 상태만 다름": variant(lambda document: document.update(adoptions={"13": "fail"})) is False,
+        "경로 키(measure·sources·작업 폴더 문자열)만 다름 → 참": variant(path_keys, official_paths) is True,
+    }
+    check("T183 자기 검증 (a)(b)(c): control_allowed·다른 장면 키·채택 상태만 달라도 거짓, 경로 키만 다르면 참", all(results.values()),
+          [name for name, passed in results.items() if not passed])
+
+
+def test_rerun_mismatch(world):
+    code, report, output = scenario(world, "t183-rerun", {"f2": [{"states": {"15": "undetermined"}}, {"states": {"15": "pass"}}]},
+                                    options={"tamper_compare": {("f2", "rerun"): tamper_f2}})
+    check("T183 rerun 기회에서만 다름 → 같은 E3 처리(verdict stop E3 next restart·종료 1)", code == 1 and report.get("stop") == {"event": "E3", "next": "restart"},
+          (code, report.get("stop"), report.get("problems")))
+
+
+def real_state():
+    final = absolute(REAL_FINAL_DIR)
+    files = sorted(str(path.relative_to(final)) for path in final.rglob("*") if path.is_file()) if final.is_dir() else []
+    return {"tuning": prereg_lock.file_sha256(fluid_tuning_patch.canonical_tuning_path()), "look": prereg_lock.file_sha256(fluid_tuning_patch.canonical_look_path()),
+            "overlay": sha(REAL_OVERLAY), "final": files, "w_anchor": absolute(verify.DEFAULT_W_ANCHOR).is_file()}
+
+
+def run_all():
+    base = build_world("base")
+    with world_scope(base):
+        test_preparation_commands(base)
+        simulate_batch(base)
+        test_compare(base)
+        test_self_check_rules(base)
+        test_replay_and_check_ab(base)
+        test_verdict_clean(base)
+        test_gate_anchor(base)
+    test_decision_tables()
+    test_r2_targets(base)
+    scenario_world = build_world("scenario")
+    with world_scope(scenario_world):
+        test_verdict_scenarios(scenario_world)
+        test_rerun_mismatch(scenario_world)
+        test_tests_and_approval(scenario_world)
+    for name, function in (("chain15", test_r2_chain), ("chain18", test_fog_chain), ("crafted", test_crafted_rollbacks), ("restart", test_restart),
+                           ("restart-lie", test_restart_without_mismatch)):
+        world = build_world(name)
+        with world_scope(world):
+            function(world)
+    extra_world = build_world("extra-metric", add_metric_to_source)
+    with world_scope(extra_world):
+        test_extra_metric_and_judge_file(extra_world)
+    test_w_expect_real()
+
+
+def main():
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+    shutil.rmtree(absolute(TEST_ROOT), ignore_errors=True)
+    before = real_state()
+    git_fakes = patched(verify, anchor_commit_problems=lambda path: list(GIT["problems"]), anchor_commit_time=lambda path: prereg_lock.parse_moment(GIT["time"]))
+    with git_fakes:
+        try:
+            run_all()
+        except Exception as error:
+            check("하네스 예외 없이 끝남", False, f"{type(error).__name__}: {error}")
+            traceback.print_exc()
+    check("실행 전후 실제 정본·accepted 덧씌움·Saved/FluidFX/calib/final·w-anchor 불변", real_state() == before, (before, real_state()))
+    passed = sum(1 for _, condition in RESULTS if condition)
+    print(f"SUMMARY passed={passed}/{len(RESULTS)}")
+    return 0 if passed == len(RESULTS) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

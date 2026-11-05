@@ -282,3 +282,11 @@
 - 증거: 2026-10-31 HVOL 2차 진단(Saved/AgentOps/20261031/hvol/r2) 뒤 본 트리 git status
 - 날짜·상태: 2026-10-31 active
 - 발견: claude
+
+### L-repo-32 갑작스런 재부팅 뒤 `fatal: index file corrupt`·`your current branch appears to be broken`: 직전에 쓴 git 인덱스·브랜치 참조·작업 파일이 0 바이트로 채워진다
+- 증상: 재부팅 직후 `git status` 가 `error: bad signature 0x00000000` / `fatal: index file corrupt`, `git log` 가 `fatal: your current branch appears to be broken`. `.git/index`·`.git/refs/heads/main`·`COMMIT_EDITMSG` 가 같은 크기의 NUL 로만 채워지고, reflog 마지막 줄도 NUL 이다. 재부팅 직전에 커밋한 파일(작업 트리 `Docs/Tasks/decisions.md`)과 쓰던 파일(새 하네스)도 크기는 그대로인데 내용이 모두 NUL 이었다. 직전 커밋 객체(.git/objects 의 느슨한 객체)는 멀쩡했다
+- 해결(작업 트리를 건드리지 않는 순서): ① 손상 파일을 `Saved/AgentOps/<날짜>/git-repair/` 에 복사 ② `find .git/objects -type f -newer <기준>` 과 `git cat-file -t` 로 재부팅 직전 커밋 객체를 찾고 `git cat-file -p` 로 부모가 reflog 마지막 정상 줄의 새 해시와 같은지 확인 ③ `git rev-list --objects <커밋> --max-count=1 | cut -d' ' -f1 | git cat-file --batch-check='%(objecttype)'` 에 missing 이 없는지 확인 ④ `.git/refs/heads/main` 에 그 해시를 쓰고 두 reflog 의 NUL 꼬리를 잘라 그 커밋 줄을 더함 ⑤ `.git/index` 를 지우고 `git read-tree HEAD` ⑥ 최근 수정 파일에서 전부 NUL 인 파일을 찾아 추적 파일은 `git show HEAD:<경로> > <경로>` 로(크기가 같으면 커밋 직후 데이터가 안 내려간 것), 추적 안 되는 파일은 다시 만든다 ⑦ `git fsck --no-dangling`. 원자적 쓰기의 `<파일>.tmp.<pid>.<난수>` 가 남아 있으면 그것이 마지막 의도한 내용이다(compile 확인 뒤 바꿔 넣음). 자동 메모리 파일도 꼬리가 NUL 일 수 있다
+- 범위: Windows NTFS, Git for Windows, 쓰기 직후 전원 끊김. 에이전트가 쓰던 Saved 산출물도 같은 방식으로 깨질 수 있으므로 재개 때 최근 파일 NUL 검사부터 한다
+- 증거: Saved/AgentOps/20261105/git-repair/(손상 사본), 복구 커밋 108a0cf1(부모 c4ad6c8b), git fsck 종료 0
+- 날짜·상태: 2026-11-05 active
+- 발견: claude(FluidFX W 설계 재개)

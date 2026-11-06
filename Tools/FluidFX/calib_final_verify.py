@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(에디터 불필요, compare·replay 는 calib_judge 측정 경로의 numpy·Pillow·scipy 필요, git 필요, PowerShell — /Game 인수 때문에 Git Bash 금지).
-실행 명령: python -B Tools/FluidFX/calib_final_verify.py w-expect|copies|test-owner|replay|expect|anchor|pin-journal|compare|check-ab|verdict|rollback|r2-spec ...(인수는 하위 명령 도움말, 명세 Saved/AgentOps/20261101/w-runbook/spec-final-verify.md)
-출력: w-expect.json, 사본·copies.json, test_owner.json, replay 대조, expect.json·최종 모드 큐, anchor.json·Docs/Validation/FluidFXCalib/w-anchor.json(pin-journal 은 같은 파일에 journal_id·restart, e1 재시작이면 archive·e3_evidence 를 더한다, 커밋은 부모), compare.json, check-ab 보고, verdict.json, W12 덧씌움 사본·preview-r2·r2 w-expect·rollback.json, r2 명세. 종료 코드 0 통과 / 1 판정 실패·되돌림·사용자 결정·미완·멈춤 사건(copies --check·replay 는 다름) / 2 입력 오류·닻·sha·스윕 관문(E2) / 3 결정론 관문(compare·check-ab)
-상태: 2026-11-05 명세 개정 F 반영, 같은 날 개정 G(spec-patch-g: expect·w-expect·test-owner 관문 실패는 표준 오류에만 쓰고 --out 산출물을 덮지 않음, 잠금 단계 interrupted 는 E2 아님, r2 대상 covered 부모의 덮는 채택도 r2 대상), 2026-11-06 개정 H(spec-patch-h: e1 F0 실행 3개 미만이면 expect·anchor·verdict 종료 2, verdict 는 일지 journal_id 에 묶이지 않은 final_dir 잠금·일지가 모르는 실행 폴더·끝난 스윕의 interrupted 재추첨을 관문 실패로, events 의 E2 를 outcome 없이도 E2 로, f0_gate passed 거짓(기록 또는 다시 계산)이면 전 채택 미완), 개정 I(spec-patch-i: pin-journal, verdict 는 git HEAD w-anchor·이력에서 이 판·회차에 처음 고정된 journal_id = 이 일지·재시작 고정 순서·횟수 1·기록 폴더·옛 일지 id 를 관문 journal 로, f0_gate 가 없어도 F0 항목이 모두 끝났으면 산출물로 관문을 다시 계산해 결원·불일치면 전 채택 미완, 시도 끝 산출물 sha 를 관문 artifacts 로, anchor_commit_time 은 지금 닻을 처음 담은 커밋). 오프라인 하네스 calib_final_offline_test.py 와 실제 R5 산출물 읽기 전용 건식 실행(replay·expect), 개정 I git 함수는 스크래치 임시 저장소 실제 git 확인만 했고 실제 W 실행 전이다.
+실행 명령: python -B Tools/FluidFX/calib_final_verify.py w-expect|copies|test-owner|replay|expect|anchor|pin-journal [--user-decision <결정 가리킴> --e2-evidence <옛 일지>]|compare|check-ab|verdict|rollback|r2-spec ...(인수는 하위 명령 도움말, 명세 Saved/AgentOps/20261101/w-runbook/spec-final-verify.md)
+출력: w-expect.json, 사본·copies.json, test_owner.json, replay 대조, expect.json·최종 모드 큐, anchor.json·Docs/Validation/FluidFXCalib/w-anchor.json(pin-journal 은 같은 파일에 journal_id·restart, e1 재시작이면 archive·e3_evidence, E2 뒤 재등록이면 user_decision·e2_evidence 를 더한다, 커밋은 부모), compare.json, check-ab 보고, verdict.json, W12 덧씌움 사본·preview-r2·r2 w-expect·rollback.json, r2 명세. 종료 코드 0 통과 / 1 판정 실패·되돌림·사용자 결정·미완·멈춤 사건(copies --check·replay 는 다름) / 2 입력 오류·닻·sha·스윕 관문(E2) / 3 결정론 관문(compare·check-ab)
+상태: 2026-11-05 명세 개정 F 반영, 같은 날 개정 G(spec-patch-g: expect·w-expect·test-owner 관문 실패는 표준 오류에만 쓰고 --out 산출물을 덮지 않음, 잠금 단계 interrupted 는 E2 아님, r2 대상 covered 부모의 덮는 채택도 r2 대상), 2026-11-06 개정 H(spec-patch-h: e1 F0 실행 3개 미만이면 expect·anchor·verdict 종료 2, verdict 는 일지 journal_id 에 묶이지 않은 final_dir 잠금·일지가 모르는 실행 폴더·끝난 스윕의 interrupted 재추첨을 관문 실패로, events 의 E2 를 outcome 없이도 E2 로, f0_gate passed 거짓(기록 또는 다시 계산)이면 전 채택 미완), 개정 I(spec-patch-i: pin-journal, verdict 는 git HEAD w-anchor·이력에서 이 판·회차에 처음 고정된 journal_id = 이 일지·재시작 고정 순서·횟수 1·기록 폴더·옛 일지 id 를 관문 journal 로, f0_gate 가 없어도 F0 항목이 모두 끝났으면 산출물로 관문을 다시 계산해 결원·불일치면 전 채택 미완, 시도 끝 산출물 sha 를 관문 artifacts 로, anchor_commit_time 은 지금 닻을 처음 담은 커밋). 오프라인 하네스 calib_final_offline_test.py 와 실제 R5 산출물 읽기 전용 건식 실행(replay·expect), 개정 I git 함수는 스크래치 임시 저장소 실제 git 확인만 했고 실제 W 실행 전이다. 2026-11-06 개정 J(spec-patch-j): w_anchor_history 는 git log --all --full-history, 판·회차 고정 사슬은 첫 고정 + 앞 일지가 E2(사건 기록 E2 또는 일지 손상)로 끝난 뒤의 user_decision·e2_evidence 재등록만 받고 그 밖의 다른 journal_id 고정이 이력 어디에 있어도 관문 journal, verdict 는 F0 표본 + 끝나지 않은 F0 항목 < 3(결원 확정)이면 start_failed·E2·사건 없는 끊김이어도 전 채택 미완(E2 는 settled 빔). 하네스 개정 J 시험(가짜 git, 실제 임시 git 저장소 1건)만 했다. 2026-11-06 개정 K(spec-patch-k): 재등록 e2_evidence 는 일지로 읽혀야 한다(JSON·키 모양·NUL 없음, 아니면 pin-journal·verdict 거부), verdict 의 결원 확정 관문 실패는 끝난 일지(outcome start_failed·E2 또는 판정 도구 실패 E2 기록)에만 쓰고 사건 없이 끊긴 일지는 끝 상태 아님 2. 하네스 개정 K 시험(가짜 git)만 했다.
 """
 import argparse
 import copy
@@ -38,7 +38,9 @@ DEFAULT_W_ANCHOR = "Docs/Validation/FluidFXCalib/w-anchor.json"
 W_ANCHOR_BASE_KEYS = ("anchor", "edition", "sha256")
 W_ANCHOR_PIN_KEYS = ("journal_id", "restart")
 W_ANCHOR_RESTART_KEYS = ("archive", "e3_evidence")
+W_ANCHOR_REDO_KEYS = ("user_decision", "e2_evidence")
 JOURNAL_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
+USER_DECISION_PATTERN = re.compile(r"D-[0-9A-Za-z]+|\d{4}-\d{2}-\d{2} \d{2}:\d{2}")
 FOG_GENERATOR = "Tools/FluidFX/editor_make_fluid_fog_stage.py"
 FOG_STAGE_REPORT = "Saved/FluidFX/fluid_fog_stage.json"
 FOG_LIGHT_LABEL = "LabGreenLight"
@@ -300,7 +302,7 @@ def anchor_commit_problems(path_text):
 
 def w_anchor_history(path_text):
     relative = normalized(path_text)
-    listed = subprocess.run(["git", "log", "--reverse", "--topo-order", "--format=%H %cI", "--", relative], cwd=ROOT, capture_output=True, text=True)
+    listed = subprocess.run(["git", "log", "--all", "--full-history", "--reverse", "--topo-order", "--format=%H %cI", "--", relative], cwd=ROOT, capture_output=True, text=True)
     history = []
     for line in listed.stdout.splitlines():
         commit, _, committed_at = line.strip().partition(" ")
@@ -330,14 +332,22 @@ def w_anchor_key_problems(w_anchor):
     if not isinstance(w_anchor, dict):
         return ["w-anchor 가 JSON 객체가 아니다"]
     keys = set(w_anchor)
-    base, pin, restart_pin = set(W_ANCHOR_BASE_KEYS), set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS), set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS + W_ANCHOR_RESTART_KEYS)
-    if keys == base:
+    if keys == set(W_ANCHOR_BASE_KEYS):
         return []
+    if is_redo_pin(w_anchor):
+        keys -= set(W_ANCHOR_REDO_KEYS)
+    pin, restart_pin = set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS), set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS + W_ANCHOR_RESTART_KEYS)
     is_pin = keys == pin and w_anchor.get("restart") == 0
     is_restart_pin = keys == restart_pin and w_anchor.get("restart") == 1 and w_anchor.get("edition") == "e1"
     if (is_pin or is_restart_pin) and isinstance(w_anchor.get("journal_id"), str) and JOURNAL_ID_PATTERN.match(w_anchor["journal_id"]):
         return []
-    return ["w-anchor 키가 anchor·edition·sha256(pin-journal 뒤에는 journal_id·restart, e1 재시작이면 archive·e3_evidence 까지)이 아니다"]
+    return ["w-anchor 키가 anchor·edition·sha256(pin-journal 뒤에는 journal_id·restart, e1 재시작이면 archive·e3_evidence, E2 뒤 재등록이면 user_decision·e2_evidence 까지)이 아니다"]
+
+
+def is_redo_pin(content):
+    if not isinstance(content, dict) or not all(isinstance(content.get(key), str) and content[key].strip() for key in W_ANCHOR_REDO_KEYS):
+        return False
+    return bool(USER_DECISION_PATTERN.search(content["user_decision"]))
 
 
 def pin_round(content):
@@ -346,17 +356,83 @@ def pin_round(content):
     return content["edition"], content["restart"]
 
 
+def round_registrations(pins, round_key):
+    registrations = []
+    for entry in pins:
+        content = entry["content"]
+        if pin_round(content) == round_key and content["journal_id"] not in {registration["content"]["journal_id"] for registration in registrations}:
+            registrations.append(entry)
+    return registrations
+
+
+def stopped_journal_or_none(evidence_text):
+    data = project_path(evidence_text).read_bytes()
+    try:
+        journal = None if b"\x00" in data else json.loads(data.decode("utf-8"))
+    except ValueError:
+        return None
+    final_batch = journal.get("final_batch") if isinstance(journal, dict) else None
+    is_valid = (isinstance(final_batch, dict) and isinstance(journal.get("items"), list) and isinstance(final_batch.get("journal_id"), str)
+                and isinstance(final_batch.get("events"), list) and isinstance(final_batch.get("starts"), list))
+    return journal if is_valid else None
+
+
+def e2_event_moments(journal):
+    final_batch = journal["final_batch"]
+    events = [final_batch.get("outcome"), *final_batch["events"]]
+    return [event.get("at") for event in events if isinstance(event, dict) and event.get("event") == "E2"]
+
+
+def stopped_journal_problems(evidence_text, previous_id, round_key, committed_at):
+    label = f"재등록 e2_evidence {evidence_text}"
+    if not is_file(evidence_text):
+        return [f"{label} 이 없다(앞 일지가 E2 로 끝났음을 산출물로 보일 수 없다, 개정 J)"]
+    old = stopped_journal_or_none(evidence_text)
+    if old is None:
+        return [f"{label} 을 일지로 읽지 못했다(JSON·키 모양·NUL — 재등록 증거는 읽히는 일지여야 한다, 깨진 일지는 위협 모형 밖이라 W 를 멈춘다, 개정 K4)"]
+    final_batch = old["final_batch"]
+    problems = []
+    if final_batch["journal_id"] != previous_id or (final_batch.get("edition"), final_batch.get("restart")) != round_key:
+        problems.append(f"{label} 의 journal_id·판·회차 ≠ git 이력에서 바로 앞에 고정된 {previous_id}·{round_key}(개정 J)")
+    if all(isinstance(item, dict) and item.get("status") in VERIFY_TERMINAL + AB_TERMINAL for item in old["items"]):
+        problems.append(f"{label} 의 모든 항목이 끝 상태다(측정이 끝난 뒤 덧붙은 E2 는 W 중단이 아니다, 개정 J)")
+    moments = e2_event_moments(old)
+    if not moments:
+        return problems + [f"{label} 이 E2 로 끝나지 않았다(사건 기록에 E2 없음 — E2 아닌 결과 뒤 새 일지 = 다시 추첨, 개정 J)"]
+    known = [prereg_lock.parse_moment(moment) for moment in moments if moment]
+    if committed_at and known and min(known) > prereg_lock.parse_moment(committed_at):
+        problems.append(f"{label} 의 E2 시각 {min(known).isoformat()} > 재등록 고정 커밋 시각 {committed_at}(앞 일지 E2 → 사용자 결정 → 새 고정 순서, 개정 J)")
+    return problems
+
+
+def registration_problems(registrations, round_key):
+    problems = []
+    for index, entry in enumerate(registrations):
+        content = entry["content"]
+        if index == 0:
+            if is_redo_pin(content):
+                problems.append(f"git 이력에서 판·회차 {round_key} 에 처음 고정된 journal_id {content['journal_id']} 가 재등록(user_decision·e2_evidence) 모양이다(앞 고정이 이력에 없다, 개정 J)")
+            continue
+        if not is_redo_pin(content):
+            problems.append(f"git 이력에서 판·회차 {round_key} 에 처음 고정된 journal_id {registrations[0]['content']['journal_id']} 뒤에 사용자 결정(user_decision)·E2 증거(e2_evidence) "
+                            f"없는 다른 journal_id {content['journal_id']} 고정이 있다(결과 뒤 새 일지 = 다시 추첨, 개정 I·J)")
+            continue
+        problems += stopped_journal_problems(normalized(content["e2_evidence"]), registrations[index - 1]["content"]["journal_id"], round_key, entry.get("committed_at"))
+    return problems
+
+
 def restart_pin_problems(pins, final_dir):
-    restart_indexes = [index for index, content in enumerate(pins) if pin_round(content) == ("e1", 1)]
+    restart_indexes = [index for index, entry in enumerate(pins) if pin_round(entry["content"]) == ("e1", 1)]
     if not restart_indexes:
         return []
-    first = pins[restart_indexes[0]]
+    first = pins[restart_indexes[0]]["content"]
     problems = []
-    if len({pins[index]["journal_id"] for index in restart_indexes}) > 1:
-        problems.append("git 이력에 e1 재시작 일지 고정이 2개 이상이다(W당 재시작 1회, 개정 I)")
-    earlier = [content for content in pins[:restart_indexes[0]] if pin_round(content) == ("e1", 0)]
+    if len([entry for entry in round_registrations(pins, ("e1", 1)) if not is_redo_pin(entry["content"])]) > 1:
+        problems.append("git 이력에 e1 재시작 일지 고정이 2개 이상이다(W당 재시작 1회, E2 뒤 사용자 결정 재등록은 빼고 센다, 개정 I·J)")
+    earlier = round_registrations(pins[:restart_indexes[0]], ("e1", 0))
     if not earlier:
         problems.append("git 이력에서 e1 재시작 일지 고정 앞에 e1 restart 0 일지 고정이 없다(순서, 개정 I)")
+    problems += registration_problems(earlier, ("e1", 0))
     archives = archive_directories(final_dir)
     if len(archives) != 1 or normalized(first.get("archive") or "-") != archives[0]:
         problems.append(f"재시작 고정의 archive {first.get('archive')} ≠ 지금 기록 폴더 {archives}(개정 I)")
@@ -365,8 +441,8 @@ def restart_pin_problems(pins, final_dir):
     if evidence != f"{archives[0]}/batch-e1/journal.json":
         return problems + [f"재시작 고정의 e3_evidence {first.get('e3_evidence')} ≠ {archives[0]}/batch-e1/journal.json(개정 I)"]
     old_id = ((load_json_or_none(evidence) or {}).get("final_batch") or {}).get("journal_id")
-    if earlier and old_id != earlier[0]["journal_id"]:
-        problems.append("기록 폴더 옛 일지 journal_id ≠ git 이력에 처음 고정된 e1 restart 0 journal_id(옛 일지를 바꿔 넣음, 개정 I)")
+    if earlier and old_id != earlier[-1]["content"]["journal_id"]:
+        problems.append("기록 폴더 옛 일지 journal_id ≠ git 이력에서 재시작 고정 앞에 마지막으로 등록된 e1 restart 0 journal_id(옛 일지를 바꿔 넣음, 개정 I·J)")
     return problems
 
 
@@ -378,16 +454,17 @@ def journal_pin_problems(w_anchor, history, journal, final_dir):
     problems = []
     if w_anchor.get("journal_id") != journal_id or pin_round(w_anchor) != round_key:
         problems.append(f"HEAD w-anchor 에 이 일지의 journal_id·판·회차 {round_key} 고정이 없다(측정 전 pin-journal 뒤 커밋, 개정 I)")
-    pins = [entry.get("content") for entry in history if pin_round(entry.get("content")) is not None]
-    same_round = [content for content in pins if pin_round(content) == round_key]
-    if not same_round or same_round[0]["journal_id"] != journal_id:
-        problems.append(f"git 이력에서 판·회차 {round_key} 에 처음 고정된 journal_id ≠ 이 일지 journal_id(결과 뒤 새 일지 = 다시 추첨, 개정 I)")
+    pins = [entry for entry in history if pin_round(entry.get("content")) is not None]
+    registrations = round_registrations(pins, round_key)
+    if journal_id not in {entry["content"]["journal_id"] for entry in registrations}:
+        problems.append(f"git 이력에 판·회차 {round_key} 의 이 일지 journal_id 고정이 없다(개정 I)")
+    problems += registration_problems(registrations, round_key)
     if round_key == ("e1", 1):
         problems += restart_pin_problems(pins, final_dir)
     return problems
 
 
-def pinned_w_anchor(w_anchor, journal, final_dir):
+def pinned_w_anchor(w_anchor, journal, final_dir, redo=None):
     final_batch = journal.get("final_batch") or {}
     pinned = {key: w_anchor[key] for key in W_ANCHOR_BASE_KEYS}
     pinned.update(journal_id=final_batch.get("journal_id"), restart=final_batch.get("restart"))
@@ -395,6 +472,8 @@ def pinned_w_anchor(w_anchor, journal, final_dir):
         archives = archive_directories(final_dir)
         archive = archives[0] if len(archives) == 1 else None
         pinned.update(archive=archive, e3_evidence=f"{archive}/batch-e1/journal.json" if archive else None)
+    if redo:
+        pinned.update(redo)
     return pinned
 
 
@@ -1414,7 +1493,10 @@ def command_pin_journal(arguments):
     require(is_unmeasured_journal(journal), "journal", "일지가 이미 시작·측정됐다(pin-journal 은 --init-journal 직후, 측정 전에만)")
     require((final_batch.get("edition"), final_batch.get("restart")) == (edition, expect["restart"]), "journal", "일지 판·restart ≠ 명세·expect")
     require(final_batch.get("anchor_sha256") == w_anchor["sha256"] == sha_of(paths["anchor"]), "journal", "일지 anchor_sha256 ≠ w-anchor sha256·지금 anchor.json")
-    pinned = pinned_w_anchor(w_anchor, journal, final_dir)
+    require((arguments.user_decision is None) == (arguments.e2_evidence is None), "input", "--user-decision 과 --e2-evidence 는 함께 준다(E2 뒤 재등록, 개정 J)")
+    redo = {"user_decision": arguments.user_decision, "e2_evidence": normalized(arguments.e2_evidence)} if arguments.user_decision is not None else None
+    pinned = pinned_w_anchor(w_anchor, journal, final_dir, redo)
+    require_none(w_anchor_key_problems(pinned), "pin")
     history = w_anchor_history(arguments.w_anchor) + [{"committed_at": None, "content": pinned}]
     require_none(journal_pin_problems(pinned, history, journal, final_dir), "pin")
     w_anchor_out = normalized(arguments.w_anchor_out)
@@ -2227,6 +2309,13 @@ def is_f0_decided(journal):
     return all(item.get("status") in VERIFY_TERMINAL + ("self_check_mismatch",) for item in journal.get("items") or [] if item.get("block") == "F0")
 
 
+def is_f0_shortfall_certain(expect, verify_results):
+    gate = f0_gate_recompute(expect, verify_results)
+    finished = {result["run"] for result in verify_results.values() if result["is_f0"] and result["status"] is not None}
+    open_runs = [run_id for run_id, run in expect["runs"].items() if run.get("block") == "F0" and run_id not in finished]
+    return len(gate["sample"]) + len(open_runs) < gate["required"]
+
+
 def terminal_problems(journal):
     problems = []
     for index, item in enumerate(journal.get("items") or []):
@@ -2334,7 +2423,8 @@ def evaluate_verdict(arguments, expect):
     if mismatched and outcome_event not in ("E3", "E3_repeat"):
         global_problems.append(f"자기 검증 불일치 {mismatched} 인데 일지 outcome 이 E3 이 아니다")
     report["self_check"] = {result["run"]: result["self_check"] for result in verify_results.values() if result["is_f0"]}
-    is_gate_failed = is_f0_gate_failed(expect, journal, verify_results) and is_f0_decided(journal)
+    is_journal_ended = outcome_event == "start_failed" or e2 is not None
+    is_gate_failed = (is_f0_gate_failed(expect, journal, verify_results) and is_f0_decided(journal)) or (is_journal_ended and is_f0_shortfall_certain(expect, verify_results))
     if e2 is None:
         failures = [line for index in sorted(item_problems, key=lambda value: (value is None, value or 0)) for _, line in item_problems[index]] + global_problems
         gates = [gate for index in item_problems for gate, _ in item_problems[index]]
@@ -2645,7 +2735,7 @@ def build_parser():
         "replay": [("--out-dir", True)],
         "expect": [("--spec", True), ("--out", True), ("--queue-out", True)],
         "anchor": [("--spec", True)],
-        "pin-journal": [("--spec", True)],
+        "pin-journal": [("--spec", True), ("--user-decision", False), ("--e2-evidence", False)],
         "compare": [("--expect", True), ("--run", True), ("--sweep", True), ("--lock", True), ("--judge-lock", False), ("--work-dir", True), ("--out", True)],
         "check-ab": [("--expect", True), ("--ab", True), ("--stage", True), ("--result", True), ("--sweep", True), ("--lock", True), ("--out", True)],
         "verdict": [("--phase", True), ("--expect", True), ("--journal", True), ("--queue", True), ("--out", True), ("--user-approved", False), ("--ns-dump", False),

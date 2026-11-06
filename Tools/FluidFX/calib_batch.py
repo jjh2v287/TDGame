@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3, 백그라운드 실행(스윕 1회가 600초를 넘는다). 에디터가 TDGame 을 열 수 있고 Saved/AgentOps/build_hold.json 보류를 얻을 수 있어야 한다. 하위 도구(calib_sweep·calib_judge·prereg_lock·fluid_tuning_patch·ue_editor·run_in_editor·build_and_test, 헤드리스 UnrealEditor-Cmd)는 모두 하위 프로세스로 부르고 정본은 쓰지 않는다(spec-cal0-v2 1.5 G-BATCH, 일지 C10).
 실행 명령: python Tools/FluidFX/calib_batch.py --queue Tools/FluidFX/calib/batch_queue.json --holder <보류 이름> [--journal Saved/FluidFX/calib/batch/journal.json] [--overlay Saved/FluidFX/calib/accepted/overlay.json] [--locks-dir Saved/FluidFX/calib/locks] [--block K1]... [--resume] [--revisit-deferred] (PowerShell). 큐 = {"test_classes": {"path", "sha256"}, "blocks": [{"id", "plans": [{"plan": 프로젝트 상대 경로, "chain": 사슬 이름|null, "stages": ["screen"] 또는 ["screen", "confirm"], "estimate_seconds"?: {단계: 초}}]}]}(계획 경로는 큐 전체에서 한 번씩), 시험 분류표 = {"numeric_pinned": [헤드리스 시험 경로], "timing_record_only": [벽시계 시간 기준 시험 경로]}(둘 다 블록 헤드리스에서 실패해도 기록만). 일지가 있으면 --resume 일 때만, 큐 sha256 이 같을 때만 이어 한다. --revisit-deferred 는 고른 블록의 deferred 항목 confirm 을 상한 없이 돌린다(K10) | 최종 모드: --queue <final_dir>/final_queue.json(mode final) --holder w-final --journal <큐 final.journal> [--init-journal | --resume](--init-journal 은 일지·journal_id 만 만들고 측정 0, 그 뒤 calib_final_verify pin-journal 로 w-anchor 에 journal_id 를 더해 부모가 커밋해야 측정 시작·--resume 이 돈다, --init-journal 은 일반 모드에서 입력 오류, --block·--revisit-deferred 는 입력 오류, --overlay·--locks-dir 는 읽지도 쓰지도 않음)
-출력: 일지(C10 원자적 다시 쓰기. runs = {단계: 실행 폴더, lock: 잠금, verify<n>: 사슬 재검증, chain_verify: 사슬 요약(사슬 마지막 항목, 재검증 판정 불가로 중단되면 interrupted{plan, reason} 을 남겨 재개 때 반복하지 않음, 실행 실패면 남기지 않음), headless: 블록 헤드리스 폴더(블록 마지막 항목)}), 일지 폴더의 batch.log(시작 처리·명령·상태 한 줄씩), runs/<계획>/<단계>-<n>/ 와 <단계>-<n>.log, chains/<사슬>.json, blocks/<블록>-<n>/(materialize 사본·headless.log·headless.json(판정기 verdict·verdict_code·header_sync_pending)). 종료 코드 0 고른 블록 처리 끝·failed 없음 / 1 failed 항목 있음 / 2 큐·일지·계획 입력 오류 / 3 시작 처리(보류 회수→ensure→t.OverrideFPS 0→정본 재적재→보류 획득) 실패. 최종 모드: 일지(임시 파일 flush·fsync 뒤 os.replace) final_batch{edition, phase, restart, anchor_sha256, w_anchor_sha256, journal_id(무작위, 잠금 note 에도 적음), starts[{at, ok, reason}], outcome{event E2|E3|E3_repeat|F0_shortfall|start_failed, item, reason, at}|null, events[같은 사건 기록, 덧붙이기만], f0_gate{self_checks, sample, required, passed}|null}·항목 final{kind verify|ab, attempts[{step, stage, opportunity, try, folder, log, started_at, exit, state running|done|timeout|interrupted|recovered, output·output_sha256(sweep·판정 단계가 끝날 때 같은 저장에)}], adoptions_first·adoptions·official_first·official_rerun·self_check·rerun 또는 ab_id·trigger_state·decision, 덧씌움·perf-candidates 앞뒤 sha, artifact_sha256}(명세 Saved/AgentOps/20261101/w-runbook/spec-final-verify.md 4.11), runs/<계획>/(verify|screen|confirm)-<n>/(sweep.json·verify.json·compare.json·screen.json·judge.json·check-ab.json). 최종 모드 종료 코드 0 모든 항목 끝 상태 / 1 E3·E3_repeat(자기 검증 불일치) / 2 입력 오류·E2(일지 손상·이 일지 id 가 아닌 final_dir 잠금·일지가 모르는 실행 폴더·e1 F0 항목 3개 미만·git HEAD w-anchor 와 이력에서 이 판·회차에 처음 고정된 journal_id 가 이 일지가 아님·일지가 sha 를 적은 산출물이 없거나 다름 포함) / 3 시작 처리 실패(E1, start_failed 포함) / 4 F0 결원(F0_shortfall)
-상태: 가짜 하위 프로세스 시험만(calib_offline_test T98·T99, 2026-10-30), 실제 에디터 배치 미실행. 하위 도구의 새 인수(--stage·--overlay·--lock·--screen-result·--screen-sweep·--verify-against·accept·overlay-remove --overlay·materialize 의 TDFluidPresetTuning.json·TDFluidMaterialLook.json 출력)는 명세 0.4 계약 기준이며 병합 뒤 이름·경로 맞물림 확인(실제 실행 미검증). 단계 2배 상한은 단계 실행 하나(하위 프로세스) 전체의 시간 제한으로 집행한다. 판정 종료 1(스윕 무효·대조 실패·판정 불가)은 undetermined 로 채택 없음(no_adopt)·둔감(insensitive)과 구분한다, 재검증 판정은 종료 0 통과, 종료 1 은 verify.json 대조 통과(control_ok)·verify.passed 거짓일 때만 실패이고 대조 표류·판정 불가는 사슬 중단(되돌림 없음). confirm 직전 screen.json overlay_sha256 ≠ 현재 덧씌움이면 locked 로 되돌려 재screen 한다(deferred 재방문은 상한 없이). 2026-11-01 블록 헤드리스 설계 단언 실패가 TDGame.FluidFX.PresetData.StructDefaultsMatchHeader 하나뿐이고 그 시험 BeginEvents~EndEvents 의 Error 줄이 모두 "Expected '<Globals|StructDefaults>.<구조체>.<필드> equals the header default …' to be true." 꼴이며 그 경로가 모두 덧씌움 assignments json_path 이면 통과(헤더 기본값은 W 단계에서 같이 옮김, headless.json header_sync_pending·batch.log '헤더 기본값 동기 대기(W 단계)'), 다른 꼴 줄·덧씌움 밖 경로·다른 설계 단언 실패가 섞이면 되돌림(calib_offline_test K10 A1~A4, 실제 배치 미실행). 2026-11-01 2차: 사슬 재검증은 덧씌움 assignments·actor_props 에 같은 폴더 <앞 구성원 stem>-p20.json(P-20 2라운드) 채택이 있는 앞 구성원을 재검증에서 빼고(일지 reason 에 '사슬 <이름> 재검증 제외: P-20 2라운드 채택이 있는 1라운드 계획은 재검증하지 않는다: <경로>', batch.log '<계획> 사슬 재검증 | 제외 | …' 한 줄) 나머지 구성원만 재검증한다(calib_offline_test K10 C2, 실제 배치 미실행). 되돌림·채택 순서의 is_from_item 은 그대로 파일 stem·계획 id 규칙. 2026-11-05 최종 모드(큐 mode final, 명세 spec-final-verify 4절·개정 G): calib_final_offline_test 의 T100~T115·T160~T188 calib_batch 부분을 가짜 하위 프로세스로만 시험했고 실제 배치는 돌리지 않았다. 2026-11-06 개정 H(spec-patch-h): --resume 은 기록된 F0 관문도 산출물로 다시 계산해 결원·불일치면 F1 없이 같은 사건으로 멈추고, 일지 events 에 사건이 있으면 아무것도 돌리지 않으며, interrupted sweep 의 폴더에 invalid_count 0 sweep.json 이 있으면 다시 찍지 않고 recovered(종료 0)로 쓰고, 재시작 W11 닻 커밋 시각 ≤ 옛 일지 첫 시작·기록 폴더 1개를 보고, 시작 처리 중 예외는 E2(종료 2)다. 같은 하네스의 개정 H 시험(가짜 하위 프로세스)만 했다. 2026-11-06 개정 I(spec-patch-i): --init-journal(측정 0)·journal_id 의 git 고정 대조(HEAD w-anchor·이력의 판·회차 첫 고정, 재시작은 순서·횟수 1·기록 폴더·옛 일지 id), 시도 끝 산출물 sha 기록과 --resume 대조, 새 시도는 일지에 적힌 실행 폴더를 피함, anchor_commit_time 은 지금 닻을 처음 담은 커밋 시각, w_anchor_history 는 오래된 순. 같은 하네스의 개정 I 시험(가짜 하위 프로세스·가짜 git)과 스크래치 임시 저장소의 실제 git 확인만 했다.
+출력: 일지(C10 원자적 다시 쓰기. runs = {단계: 실행 폴더, lock: 잠금, verify<n>: 사슬 재검증, chain_verify: 사슬 요약(사슬 마지막 항목, 재검증 판정 불가로 중단되면 interrupted{plan, reason} 을 남겨 재개 때 반복하지 않음, 실행 실패면 남기지 않음), headless: 블록 헤드리스 폴더(블록 마지막 항목)}), 일지 폴더의 batch.log(시작 처리·명령·상태 한 줄씩), runs/<계획>/<단계>-<n>/ 와 <단계>-<n>.log, chains/<사슬>.json, blocks/<블록>-<n>/(materialize 사본·headless.log·headless.json(판정기 verdict·verdict_code·header_sync_pending)). 종료 코드 0 고른 블록 처리 끝·failed 없음 / 1 failed 항목 있음 / 2 큐·일지·계획 입력 오류 / 3 시작 처리(보류 회수→ensure→t.OverrideFPS 0→정본 재적재→보류 획득) 실패. 최종 모드: 일지(임시 파일 flush·fsync 뒤 os.replace) final_batch{edition, phase, restart, anchor_sha256, w_anchor_sha256, journal_id(무작위, 잠금 note 에도 적음), starts[{at, ok, reason}], outcome{event E2|E3|E3_repeat|F0_shortfall|start_failed, item, reason, at}|null, events[같은 사건 기록, 덧붙이기만], f0_gate{self_checks, sample, required, passed}|null}·항목 final{kind verify|ab, attempts[{step, stage, opportunity, try, folder, log, started_at, exit, state running|done|timeout|interrupted|recovered, output·output_sha256(sweep·판정 단계가 끝날 때 같은 저장에)}], adoptions_first·adoptions·official_first·official_rerun·self_check·rerun 또는 ab_id·trigger_state·decision, 덧씌움·perf-candidates 앞뒤 sha, artifact_sha256}(명세 Saved/AgentOps/20261101/w-runbook/spec-final-verify.md 4.11), runs/<계획>/(verify|screen|confirm)-<n>/(sweep.json·verify.json·compare.json·screen.json·judge.json·check-ab.json). 최종 모드 종료 코드 0 모든 항목 끝 상태 / 1 E3·E3_repeat(자기 검증 불일치) / 2 입력 오류·E2(일지 손상·이 일지 id 가 아닌 final_dir 잠금·일지가 모르는 실행 폴더·e1 F0 항목 3개 미만·git HEAD w-anchor 가 이 일지 고정이 아니거나 모든 브랜치 이력의 이 판·회차 고정 사슬(첫 고정 + E2 뒤 user_decision·e2_evidence 재등록)에 이 일지가 없거나 사슬이 어긋남·일지가 sha 를 적은 산출물이 없거나 다름 포함. --resume 에서 그 가운데 기록 산출물·남의 잠금·모르는 실행 폴더·git 고정 사슬 문제는 한 번 이상 시작했고(starts 있음) events 에 start_failed 밖의 사건이 없는 일지면 사건 E2 를 적은 뒤 2(아니면 일지 바이트 불변·사건 없이 2, 개정 L1), 인수 오류·일지 손상은 사건 없이 2, 모든 항목이 끝난 일지의 --resume 은 아무것도 하지 않고 2) / 3 시작 처리 실패(E1, start_failed 포함) / 4 F0 결원(F0_shortfall). 일지에 적는 산출물 sha 는 그 파일을 쓰기 핸들로 os.fsync 한 뒤 잰다
+상태: 가짜 하위 프로세스 시험만(calib_offline_test T98·T99, 2026-10-30), 실제 에디터 배치 미실행. 하위 도구의 새 인수(--stage·--overlay·--lock·--screen-result·--screen-sweep·--verify-against·accept·overlay-remove --overlay·materialize 의 TDFluidPresetTuning.json·TDFluidMaterialLook.json 출력)는 명세 0.4 계약 기준이며 병합 뒤 이름·경로 맞물림 확인(실제 실행 미검증). 단계 2배 상한은 단계 실행 하나(하위 프로세스) 전체의 시간 제한으로 집행한다. 판정 종료 1(스윕 무효·대조 실패·판정 불가)은 undetermined 로 채택 없음(no_adopt)·둔감(insensitive)과 구분한다, 재검증 판정은 종료 0 통과, 종료 1 은 verify.json 대조 통과(control_ok)·verify.passed 거짓일 때만 실패이고 대조 표류·판정 불가는 사슬 중단(되돌림 없음). confirm 직전 screen.json overlay_sha256 ≠ 현재 덧씌움이면 locked 로 되돌려 재screen 한다(deferred 재방문은 상한 없이). 2026-11-01 블록 헤드리스 설계 단언 실패가 TDGame.FluidFX.PresetData.StructDefaultsMatchHeader 하나뿐이고 그 시험 BeginEvents~EndEvents 의 Error 줄이 모두 "Expected '<Globals|StructDefaults>.<구조체>.<필드> equals the header default …' to be true." 꼴이며 그 경로가 모두 덧씌움 assignments json_path 이면 통과(헤더 기본값은 W 단계에서 같이 옮김, headless.json header_sync_pending·batch.log '헤더 기본값 동기 대기(W 단계)'), 다른 꼴 줄·덧씌움 밖 경로·다른 설계 단언 실패가 섞이면 되돌림(calib_offline_test K10 A1~A4, 실제 배치 미실행). 2026-11-01 2차: 사슬 재검증은 덧씌움 assignments·actor_props 에 같은 폴더 <앞 구성원 stem>-p20.json(P-20 2라운드) 채택이 있는 앞 구성원을 재검증에서 빼고(일지 reason 에 '사슬 <이름> 재검증 제외: P-20 2라운드 채택이 있는 1라운드 계획은 재검증하지 않는다: <경로>', batch.log '<계획> 사슬 재검증 | 제외 | …' 한 줄) 나머지 구성원만 재검증한다(calib_offline_test K10 C2, 실제 배치 미실행). 되돌림·채택 순서의 is_from_item 은 그대로 파일 stem·계획 id 규칙. 2026-11-05 최종 모드(큐 mode final, 명세 spec-final-verify 4절·개정 G): calib_final_offline_test 의 T100~T115·T160~T188 calib_batch 부분을 가짜 하위 프로세스로만 시험했고 실제 배치는 돌리지 않았다. 2026-11-06 개정 H(spec-patch-h): --resume 은 기록된 F0 관문도 산출물로 다시 계산해 결원·불일치면 F1 없이 같은 사건으로 멈추고, 일지 events 에 사건이 있으면 아무것도 돌리지 않으며, interrupted sweep 의 폴더에 invalid_count 0 sweep.json 이 있으면 다시 찍지 않고 recovered(종료 0)로 쓰고, 재시작 W11 닻 커밋 시각 ≤ 옛 일지 첫 시작·기록 폴더 1개를 보고, 시작 처리 중 예외는 E2(종료 2)다. 같은 하네스의 개정 H 시험(가짜 하위 프로세스)만 했다. 2026-11-06 개정 I(spec-patch-i): --init-journal(측정 0)·journal_id 의 git 고정 대조(HEAD w-anchor·이력의 판·회차 첫 고정, 재시작은 순서·횟수 1·기록 폴더·옛 일지 id), 시도 끝 산출물 sha 기록과 --resume 대조, 새 시도는 일지에 적힌 실행 폴더를 피함, anchor_commit_time 은 지금 닻을 처음 담은 커밋 시각, w_anchor_history 는 오래된 순. 같은 하네스의 개정 I 시험(가짜 하위 프로세스·가짜 git)과 스크래치 임시 저장소의 실제 git 확인만 했다. 2026-11-06 개정 J(spec-patch-j): w_anchor_history 는 git log --all --full-history(가지·병합 너머의 앞 고정도 본다), 판·회차 고정은 첫 고정 하나 또는 앞 일지가 E2(사건 기록 E2 또는 일지 손상)로 끝난 뒤 user_decision(decisions.md 항목·Worklog 시각)·e2_evidence(옛 일지 경로)를 단 재등록만 사슬로 받고, 재시작 회차의 옛 일지 id 는 재시작 고정 앞 마지막 (e1, 0) 등록과 대조한다. 같은 하네스의 개정 J 시험(가짜 하위 프로세스·가짜 git, 실제 임시 git 저장소 1건)만 했다. 2026-11-06 개정 K(spec-patch-k): 일지에 sha 를 적는 산출물(시도 output·artifact_sha256)은 sha 직전 fsync, --resume 의 시작 전 E2 갈래(기록 산출물·남의 잠금·모르는 실행 폴더·git 고정 사슬)는 일지에 사건 E2 를 적고 2(인수 오류·일지 손상은 사건 없이), 모든 항목이 끝난 일지의 --resume 은 시작 처리·검사·사건 쓰기 없이 2, 재등록 e2_evidence 는 일지로 읽혀야 한다(깨지면 거부). 같은 하네스의 개정 K 시험(가짜 하위 프로세스·가짜 git)만 했다. 2026-11-06 개정 L1(spec-patch-k 개정 L1 절): 개정 K2 의 사건 E2 쓰기는 starts 가 비지 않고 events 에 start_failed 밖의 사건(E2·E3·E3_repeat·F0_shortfall)이 없는 일지에만 하고, 아니면 일지를 쓰지 않고 사건 없이 2(E3 일지는 7.6 재시작이 열린 채, 시작 전 일지는 고친 뒤 시작). 같은 하네스의 개정 L1 시험(가짜 하위 프로세스·가짜 git)만 했다.
 """
 import argparse
 import hashlib
@@ -715,10 +715,16 @@ FOREIGN_ARTIFACT_TEXT = ("E2: final_dir 에 이 일지가 만들지 않은 잠�
 W_ANCHOR_BASE_KEYS = ("anchor", "edition", "sha256")
 W_ANCHOR_PIN_KEYS = ("journal_id", "restart")
 W_ANCHOR_RESTART_KEYS = ("archive", "e3_evidence")
+W_ANCHOR_REDO_KEYS = ("user_decision", "e2_evidence")
 JOURNAL_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
+USER_DECISION_PATTERN = re.compile(r"D-[0-9A-Za-z]+|\d{4}-\d{2}-\d{2} \d{2}:\d{2}")
 JOURNAL_PIN_TEXT = ("E2: 이 일지 journal_id 가 측정 전에 git(w-anchor)에 고정되지 않았거나 이 판·회차에 처음 고정된 id 가 아니다"
                     "(결과 뒤 새 일지로 다시 추첨 금지 — W 멈춤, 개정 I)")
 RECORDED_ARTIFACT_TEXT = "E2: 일지가 sha 를 기록한 산출물이 없어졌거나 바뀌었다(끝난 단계 고정, 개정 I — 사람이 판단한다, 지우거나 고쳐 다시 돌리지 않는다)"
+START_E2_RECORDED_TEXT = "— 이 일지에 사건 E2 를 적었다(W 멈춤, 다시 시작은 사용자 결정 뒤 7.4a 재등록, 개정 K2)"
+START_E2_SKIPPED_TEXT = ("— 사건을 적지 않았다(일지 바이트 불변, 개정 L1: 이미 사건으로 멈춘 일지는 그 사건의 다음 할 일(E3 이면 7.6 재시작), "
+                         "한 번도 시작하지 않은 일지는 원인을 고친 뒤 --resume 없이 시작)")
+FINISHED_JOURNAL_TEXT = "끝난 일지 — verdict 를 돌린다(모든 항목이 끝 상태라 --resume 은 시작 처리·검사·사건 쓰기 없이 멈춘다, 개정 K3)"
 
 
 class FinalStop(Exception):
@@ -755,6 +761,20 @@ def sha_of_text(text):
 
 def sha_or_none(text):
     return sha_of_text(text) if is_file_text(text) else None
+
+
+def flush_to_disk(text):
+    with open(prereg_lock.project_path(str(text)), "r+b") as handle:
+        os.fsync(handle.fileno())
+
+
+def durable_sha_of_text(text):
+    flush_to_disk(text)
+    return sha_of_text(text)
+
+
+def durable_sha_or_none(text):
+    return durable_sha_of_text(text) if is_file_text(text) else None
 
 
 def file_moment(text):
@@ -862,14 +882,22 @@ def w_anchor_key_problems(w_anchor):
     if not isinstance(w_anchor, dict):
         return ["w-anchor 가 JSON 객체가 아니다"]
     keys = set(w_anchor)
-    base, pin, restart_pin = set(W_ANCHOR_BASE_KEYS), set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS), set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS + W_ANCHOR_RESTART_KEYS)
-    if keys == base:
+    if keys == set(W_ANCHOR_BASE_KEYS):
         return []
+    if is_redo_pin(w_anchor):
+        keys -= set(W_ANCHOR_REDO_KEYS)
+    pin, restart_pin = set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS), set(W_ANCHOR_BASE_KEYS + W_ANCHOR_PIN_KEYS + W_ANCHOR_RESTART_KEYS)
     is_pin = keys == pin and w_anchor.get("restart") == 0
     is_restart_pin = keys == restart_pin and w_anchor.get("restart") == 1 and w_anchor.get("edition") == "e1"
     if (is_pin or is_restart_pin) and isinstance(w_anchor.get("journal_id"), str) and JOURNAL_ID_PATTERN.match(w_anchor["journal_id"]):
         return []
-    return ["w-anchor 키가 anchor·edition·sha256(pin-journal 뒤에는 journal_id·restart, e1 재시작이면 archive·e3_evidence 까지)이 아니다"]
+    return ["w-anchor 키가 anchor·edition·sha256(pin-journal 뒤에는 journal_id·restart, e1 재시작이면 archive·e3_evidence, E2 뒤 재등록이면 user_decision·e2_evidence 까지)이 아니다"]
+
+
+def is_redo_pin(content):
+    if not isinstance(content, dict) or not all(isinstance(content.get(key), str) and content[key].strip() for key in W_ANCHOR_REDO_KEYS):
+        return False
+    return bool(USER_DECISION_PATTERN.search(content["user_decision"]))
 
 
 def pin_round(content):
@@ -883,17 +911,72 @@ def archive_directories(final_dir):
     return sorted(relative_text(path) for path in base.glob("aborted-*") if path.is_dir()) if base.is_dir() else []
 
 
+def round_registrations(pins, round_key):
+    registrations = []
+    for entry in pins:
+        content = entry["content"]
+        if pin_round(content) == round_key and content["journal_id"] not in {registration["content"]["journal_id"] for registration in registrations}:
+            registrations.append(entry)
+    return registrations
+
+
+def e2_event_moments(journal):
+    final_batch = journal["final_batch"]
+    events = [final_batch.get("outcome"), *final_batch["events"]]
+    return [event.get("at") for event in events if isinstance(event, dict) and event.get("event") == "E2"]
+
+
+def stopped_journal_problems(evidence_text, previous_id, round_key, committed_at):
+    label = f"재등록 e2_evidence {evidence_text}"
+    if not is_file_text(evidence_text):
+        return [f"{label} 이 없다(앞 일지가 E2 로 끝났음을 산출물로 보일 수 없다, 개정 J)"]
+    try:
+        old = read_final_journal(prereg_lock.project_path(evidence_text))
+    except InputError:
+        return [f"{label} 을 일지로 읽지 못했다(JSON·키 모양·NUL — 재등록 증거는 읽히는 일지여야 한다, 깨진 일지는 위협 모형 밖이라 W 를 멈춘다, 개정 K4)"]
+    final_batch = old["final_batch"]
+    problems = []
+    if final_batch["journal_id"] != previous_id or (final_batch.get("edition"), final_batch.get("restart")) != round_key:
+        problems.append(f"{label} 의 journal_id·판·회차 ≠ git 이력에서 바로 앞에 고정된 {previous_id}·{round_key}(개정 J)")
+    if is_finished_journal(old):
+        problems.append(f"{label} 의 모든 항목이 끝 상태다(측정이 끝난 뒤 덧붙은 E2 는 W 중단이 아니다, 개정 J)")
+    moments = e2_event_moments(old)
+    if not moments:
+        return problems + [f"{label} 이 E2 로 끝나지 않았다(사건 기록에 E2 없음 — E2 아닌 결과 뒤 새 일지 = 다시 추첨, 개정 J)"]
+    known = [prereg_lock.parse_moment(moment) for moment in moments if moment]
+    if committed_at and known and min(known) > prereg_lock.parse_moment(committed_at):
+        problems.append(f"{label} 의 E2 시각 {min(known).isoformat()} > 재등록 고정 커밋 시각 {committed_at}(앞 일지 E2 → 사용자 결정 → 새 고정 순서, 개정 J)")
+    return problems
+
+
+def registration_problems(registrations, round_key):
+    problems = []
+    for index, entry in enumerate(registrations):
+        content = entry["content"]
+        if index == 0:
+            if is_redo_pin(content):
+                problems.append(f"git 이력에서 판·회차 {round_key} 에 처음 고정된 journal_id {content['journal_id']} 가 재등록(user_decision·e2_evidence) 모양이다(앞 고정이 이력에 없다, 개정 J)")
+            continue
+        if not is_redo_pin(content):
+            problems.append(f"git 이력에서 판·회차 {round_key} 에 처음 고정된 journal_id {registrations[0]['content']['journal_id']} 뒤에 사용자 결정(user_decision)·E2 증거(e2_evidence) "
+                            f"없는 다른 journal_id {content['journal_id']} 고정이 있다(결과 뒤 새 일지 = 다시 추첨, 개정 I·J)")
+            continue
+        problems += stopped_journal_problems(relative_text(content["e2_evidence"]), registrations[index - 1]["content"]["journal_id"], round_key, entry.get("committed_at"))
+    return problems
+
+
 def restart_pin_problems(pins, final_dir):
-    restart_indexes = [index for index, content in enumerate(pins) if pin_round(content) == ("e1", 1)]
+    restart_indexes = [index for index, entry in enumerate(pins) if pin_round(entry["content"]) == ("e1", 1)]
     if not restart_indexes:
         return []
-    first = pins[restart_indexes[0]]
+    first = pins[restart_indexes[0]]["content"]
     problems = []
-    if len({pins[index]["journal_id"] for index in restart_indexes}) > 1:
-        problems.append("git 이력에 e1 재시작 일지 고정이 2개 이상이다(W당 재시작 1회, 개정 I)")
-    earlier = [content for content in pins[:restart_indexes[0]] if pin_round(content) == ("e1", 0)]
+    if len([entry for entry in round_registrations(pins, ("e1", 1)) if not is_redo_pin(entry["content"])]) > 1:
+        problems.append("git 이력에 e1 재시작 일지 고정이 2개 이상이다(W당 재시작 1회, E2 뒤 사용자 결정 재등록은 빼고 센다, 개정 I·J)")
+    earlier = round_registrations(pins[:restart_indexes[0]], ("e1", 0))
     if not earlier:
         problems.append("git 이력에서 e1 재시작 일지 고정 앞에 e1 restart 0 일지 고정이 없다(순서, 개정 I)")
+    problems += registration_problems(earlier, ("e1", 0))
     archives = archive_directories(final_dir)
     if len(archives) != 1 or relative_text(first.get("archive") or "-") != archives[0]:
         problems.append(f"재시작 고정의 archive {first.get('archive')} ≠ 지금 기록 폴더 {archives}(개정 I)")
@@ -905,8 +988,8 @@ def restart_pin_problems(pins, final_dir):
         old_id = (read_json_text(evidence).get("final_batch") or {}).get("journal_id")
     except (OSError, ValueError, AttributeError):
         old_id = None
-    if earlier and old_id != earlier[0]["journal_id"]:
-        problems.append("기록 폴더 옛 일지 journal_id ≠ git 이력에 처음 고정된 e1 restart 0 journal_id(옛 일지를 바꿔 넣음, 개정 I)")
+    if earlier and old_id != earlier[-1]["content"]["journal_id"]:
+        problems.append("기록 폴더 옛 일지 journal_id ≠ git 이력에서 재시작 고정 앞에 마지막으로 등록된 e1 restart 0 journal_id(옛 일지를 바꿔 넣음, 개정 I·J)")
     return problems
 
 
@@ -918,10 +1001,11 @@ def journal_pin_problems(w_anchor, history, journal, final_dir):
     problems = []
     if not isinstance(w_anchor, dict) or w_anchor.get("journal_id") != journal_id or pin_round(w_anchor) != round_key:
         problems.append(f"HEAD w-anchor 에 이 일지의 journal_id·판·회차 {round_key} 고정이 없다(측정 전 pin-journal 뒤 커밋, 개정 I)")
-    pins = [entry.get("content") for entry in history if pin_round(entry.get("content")) is not None]
-    same_round = [content for content in pins if pin_round(content) == round_key]
-    if not same_round or same_round[0]["journal_id"] != journal_id:
-        problems.append(f"git 이력에서 판·회차 {round_key} 에 처음 고정된 journal_id ≠ 이 일지 journal_id(결과 뒤 새 일지 = 다시 추첨, 개정 I)")
+    pins = [entry for entry in history if pin_round(entry.get("content")) is not None]
+    registrations = round_registrations(pins, round_key)
+    if journal_id not in {entry["content"]["journal_id"] for entry in registrations}:
+        problems.append(f"git 이력에 판·회차 {round_key} 의 이 일지 journal_id 고정이 없다(개정 I)")
+    problems += registration_problems(registrations, round_key)
     if round_key == ("e1", 1):
         problems += restart_pin_problems(pins, final_dir)
     return problems
@@ -939,7 +1023,7 @@ def recorded_artifact_problems(journal):
 
 def w_anchor_history(path_text):
     relative = relative_text(path_text)
-    listed = subprocess.run(["git", "log", "--reverse", "--topo-order", "--format=%H %cI", "--", relative], cwd=ROOT, capture_output=True, text=True)
+    listed = subprocess.run(["git", "log", "--all", "--full-history", "--reverse", "--topo-order", "--format=%H %cI", "--", relative], cwd=ROOT, capture_output=True, text=True)
     history = []
     for line in listed.stdout.splitlines():
         commit, _, committed_at = line.strip().partition(" ")
@@ -1425,14 +1509,49 @@ def read_final_journal(journal_path):
 def resume_attempt_state(final, attempt):
     if attempt["step"] == "sweep" and attempt.get("folder") and is_completed_sweep(attempt["folder"]):
         sweep_text = f"{attempt['folder']}/sweep.json"
-        attempt.update(exit=0, state="recovered", output=sweep_text, output_sha256=sha_of_text(sweep_text))
+        attempt.update(exit=0, state="recovered", output=sweep_text, output_sha256=durable_sha_of_text(sweep_text))
         final["artifact_sha256"][sweep_text] = attempt["output_sha256"]
         return
     attempt["state"] = "interrupted"
 
 
+def resume_running_attempts(journal):
+    for item in journal["items"]:
+        for attempt in item["final"]["attempts"]:
+            if attempt["state"] == "running":
+                resume_attempt_state(item["final"], attempt)
+
+
 def is_unmeasured_journal(journal):
     return not journal["final_batch"]["starts"] and all(not item["final"]["attempts"] for item in journal["items"])
+
+
+def is_finished_journal(journal):
+    return all(isinstance(item, dict) and item.get("status") in FINAL_TERMINAL_STATUSES for item in journal["items"])
+
+
+def start_e2_reason(context, journal, mode):
+    final_dir, edition, w_anchor_text = context["final_dir"], context["final"]["edition"], context["w_anchor_text"]
+    checks = [(RECORDED_ARTIFACT_TEXT, lambda: recorded_artifact_problems(journal)), (FOREIGN_ARTIFACT_TEXT, lambda: foreign_artifact_problems(final_dir, edition, journal))]
+    if mode != "init":
+        checks.append((JOURNAL_PIN_TEXT, lambda: journal_pin_problems(read_json_text(w_anchor_text), w_anchor_history(w_anchor_text), journal, final_dir)))
+    for title, problems_of in checks:
+        problems = problems_of()
+        if problems:
+            return f"{title}: " + " | ".join(problems[:12])
+    return None
+
+
+def can_record_start_e2(journal):
+    final_batch = journal["final_batch"]
+    return bool(final_batch["starts"]) and all(isinstance(event, dict) and event.get("event") == "start_failed" for event in final_batch["events"])
+
+
+def record_start_e2(journal_path, journal, reason):
+    final_batch = journal["final_batch"]
+    final_batch["outcome"] = {"event": "E2", "item": None, "reason": reason[:REASON_TAIL_CHARACTERS], "at": final_now_text()}
+    final_batch["events"].append(dict(final_batch["outcome"]))
+    write_json_durable(journal_path, journal)
 
 
 def open_final_journal(journal_path, context, queue_sha256, mode):
@@ -1447,9 +1566,10 @@ def open_final_journal(journal_path, context, queue_sha256, mode):
     if not journal_path.exists():
         raise InputError(f"일지 없음: {journal_path}. 측정 전에 --init-journal 로 일지를 만들고 calib_final_verify pin-journal 로 w-anchor 에 journal_id 를 더해 커밋한다(개정 I)")
     journal = read_final_journal(journal_path)
+    if mode == "resume" and is_finished_journal(journal):
+        raise InputError(f"{FINISHED_JOURNAL_TEXT}: {journal_path}")
     if mode == "start" and not is_unmeasured_journal(journal):
         raise InputError(f"일지가 이미 시작됐다: {journal_path}. 같은 일지는 --resume 으로만 이어 한다(결과 뒤 새 일지로 다시 추첨하지 않는다, 재시작은 E3 증거가 있을 때 7.6 절차로만)")
-    require_no_problems(recorded_artifact_problems(journal), RECORDED_ARTIFACT_TEXT)
     if journal.get("queue_sha256") != queue_sha256:
         raise InputError("큐 sha256 이 일지에 동결한 값과 다르다(큐를 바꾸면 새 일지)")
     final_batch = journal.get("final_batch") or {}
@@ -1457,10 +1577,6 @@ def open_final_journal(journal_path, context, queue_sha256, mode):
         raise InputError("일지 final_batch.anchor_sha256 ≠ 지금 anchor.json sha")
     if (final_batch.get("edition"), final_batch.get("restart")) != (final["edition"], final["restart"]):
         raise InputError("일지 final_batch.edition·restart ≠ 큐")
-    for item in journal["items"]:
-        for attempt in item["final"]["attempts"]:
-            if attempt["state"] == "running":
-                resume_attempt_state(item["final"], attempt)
     return journal
 
 
@@ -1564,7 +1680,7 @@ class FinalBatchRunner(BatchRunner):
         code, tail = self.item_tool(item, label, command, log_path, timeout)
         attempt.update(exit=code, state="timeout" if code is None else "done")
         if output:
-            attempt.update(output=relative_text(output), output_sha256=sha_or_none(output))
+            attempt.update(output=relative_text(output), output_sha256=durable_sha_or_none(output))
         self.save()
         return attempt, tail
 
@@ -1580,7 +1696,7 @@ class FinalBatchRunner(BatchRunner):
         attempt, tail = self.run_attempt(item, step, command, self.item_log(item, step))
         if attempt["exit"] != 0 or not is_file_text(lock_text):
             raise FinalStop("E2", f"{step} 종료 {attempt['exit']}({attempt['state']}): {tail}")
-        item["final"]["artifact_sha256"][relative_text(lock_text)] = sha_of_text(lock_text)
+        item["final"]["artifact_sha256"][relative_text(lock_text)] = durable_sha_of_text(lock_text)
 
     def prepare_locks(self, item, entry):
         identifier, suffix = self.item_id(item), self.final["edition"]
@@ -1626,7 +1742,7 @@ class FinalBatchRunner(BatchRunner):
                 sweep_text = f"{attempt['folder']}/sweep.json"
                 if not is_file_text(sweep_text):
                     raise FinalStop("E2", f"sweep {stage} 종료 0 인데 {sweep_text} 이 없다")
-                final["artifact_sha256"][sweep_text] = sha_of_text(sweep_text)
+                final["artifact_sha256"][sweep_text] = durable_sha_of_text(sweep_text)
                 self.update_real_dt(item, run_dir)
                 self.save()
                 continue
@@ -1644,7 +1760,7 @@ class FinalBatchRunner(BatchRunner):
         attempt, tail = self.run_attempt(item, step, command, prereg_lock.project_path(f"{folder}.{step}.log"), stage, opportunity, None, folder, output=output_text)
         if attempt["exit"] not in allowed_exits or not is_file_text(output_text):
             raise FinalStop("E2", f"{step} {stage} 종료 {attempt['exit']}({attempt['state']}): {tail}")
-        final["artifact_sha256"][output_text] = sha_of_text(output_text)
+        final["artifact_sha256"][output_text] = durable_sha_of_text(output_text)
         self.save()
         return attempt["exit"]
 
@@ -1916,11 +2032,17 @@ def run_final_mode(arguments):
     try:
         mode = final_journal_mode(arguments)
         context = load_final_context(arguments, queue_path)
-        journal = open_final_journal(project_path(arguments.journal), context, file_sha256(queue_path), mode)
-        require_no_problems(foreign_artifact_problems(context["final_dir"], context["final"]["edition"], journal), FOREIGN_ARTIFACT_TEXT)
-        if mode != "init":
-            pin_problems = journal_pin_problems(read_json_text(context["w_anchor_text"]), w_anchor_history(context["w_anchor_text"]), journal, context["final_dir"])
-            require_no_problems(pin_problems, JOURNAL_PIN_TEXT)
+        journal_path = project_path(arguments.journal)
+        journal = open_final_journal(journal_path, context, file_sha256(queue_path), mode)
+        reason = start_e2_reason(context, journal, mode)
+        if reason and mode == "resume" and can_record_start_e2(journal):
+            record_start_e2(journal_path, journal, reason)
+            raise InputError(f"{reason} {START_E2_RECORDED_TEXT}")
+        if reason and mode == "resume":
+            raise InputError(f"{reason} {START_E2_SKIPPED_TEXT}")
+        if reason:
+            raise InputError(reason)
+        resume_running_attempts(journal)
         runner = FinalBatchRunner(arguments, context["queue"], journal, context)
         if mode == "init":
             return init_final_journal(runner)

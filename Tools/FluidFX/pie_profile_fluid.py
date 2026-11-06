@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, C++ 콘솔 변수 TD.FluidFX.LogTickCost가 들어간 빌드), 에디터 쪽 조작은 이 파일의 EDITOR_CODE를 원격 실행으로 보낸다. --csv-gpu는 계획 JSON 장면마다 무대 PIE를 열고 효과 켬(A)·끔(B) csvprofile 블록을 ABBA로 찍으며 nvidia-smi 클럭을 함께 기록하고(build_hold.json owner가 --holder와 같아야 하며 장면마다 보류 시각을 갱신), --analyze는 에디터 없이 실행 폴더만 읽는다(utrace는 UnrealInsights로 내보냄). GPU 재구성 크래시(FX-4a 결함, 2026-10-22) 대비로 계획 fresh_pie_after_gpu는 GPU로 재구성한 장면 다음에 액터를 재운 뒤 새 PIE를 열고, configure 단계 stagger_seconds는 액터를 한 번에 하나씩 재구성한다.
-실행 명령: python Tools/FluidFX/pie_profile_fluid.py [--phase-seconds 10] (PowerShell, 측정 동안 에디터 창을 앞창으로 두기: 백그라운드 PIE는 3fps로 제한된다 L-editor-06) | --csv-gpu PLAN.json --holder 이름 (예 Tools/FluidFX/fx7p_plan.json 전체·fx7p_plan_run2.json 2회차, PowerShell, 빌드·헤드리스 시험과 동시 금지) | --analyze Saved/FluidFX/fx7p/<run>
-출력: Saved/FluidFX/fluid_pie_perf.json, Docs/Validation/FluidFX/D-48-pie-perf-<날짜>.json(측정이 이뤄진 경우, 그날 파일이 이미 있으면 덮지 않고 -<시분초>를 붙임), 표준 출력 구간별 표. 종료 코드 0 전 구간에 TDFluidPerf 줄 있음·나이아가라 활성 토글 통과/1 줄 없는 구간·구간 오염·나이아가라 실패 있음/2 환경 문제(에디터·MCP·PIE·콘솔 변수). --csv-gpu는 Saved/FluidFX/fx7p/<run>/session.json·plan.json·csv/·shots/·traces/·clock.csv·editor.log·result.json(증거 파일은 쓰지 않음), --analyze는 같은 폴더 result.json(J1~J9 verdicts·J6 표, 렌더 스레드는 Exclusive/RenderThread 합(EventWait 제외), S12는 A·B 투과율 텍스처 확인이 없으면 J8 null)과 Docs/Validation/FluidFX/FX-7p-baseline-<날짜>.json·FX-4a-gpu-<날짜>.json(J1·J2·J3·J5 발췌, 그날 파일이 있으면 -<시분초>). 두 경로의 종료 코드 0 완료/1 불안정·A 블록 필수 열 없음·클럭 폐기 과다·추적 분석 실패/2 환경(보류·빌드·셰이더·프레임 상한 관문, 에디터·PIE·CSV 시간 초과)
-상태: 현행(2026-10-18 첫 성공, 증거 Docs/Validation/FluidFX/D-48-perf-2026-10-18.md). --csv-gpu·--analyze는 부분 검증(명세 Saved/AgentOps/20261022/fx7p/spec-b.md): 2026-10-22 1회차 PIE 31장면 중 15장면 측정(Saved/FluidFX/fx7p/fx7p-run1-20261022123641, 카메라·스폰·라벨·관문 10%는 그 측정 사본과 같음), GPU 재구성 뒤 에디터 크래시 2회로 중단(리드백 링 결함, 9cdea12e로 수정). 2회차 run2·run2b·run2c로 나머지 장면을 재서 32장면 합본(장면마다 오류 없는 마지막 기록)·--analyze 완료(판정 정본 Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md·judge-closure.md). 2026-10-22 고침: 큰 결과의 원격 출력 분할 읽기(L-editor-54), 스냅숏 설정 `.copy()`(L-editor-55, 이전 판 reset은 configure 설정을 되돌리지 못했다). 남은 한계: 안정 관문이 장면 FrameTime 하나라 GT 묶임 PIE에서 null이 많다(J별 규칙으로 바꾸는 것은 FX-7p-r). 2026-10-23 W-1 관문 확장(미검증, 계획 Saved/AgentOps/20261023/w1gate/plan_w1perf.json): 계획 키 extra_columns(블록 통계·차분에 더할 CSV 열)·write_fx7p_evidence(false면 --analyze가 FX-7p·FX-4a 증거를 쓰지 않음)·장면 refill_frames·steady_frames, 동작 view(폰 붐 길이·카메라 16:9 고정)·pawn z·speed, 준비 확인은 --csv-gpu에서만 깨어 있는 액터 기준(깨어 있는 액터가 0개면 미준비), 추적 분석은 표식 창 길이로 자르고(L-editor-32) 창 이동 프레임(TDFluid_RasterizeWater 포함)·깨어남 구간을 따로 내며, 계획 표식 profilegpu:<장면>뒤 ProfileGPU 압축 출력(r.ProfileGPU.TableFormatting 0)의 SingleLayerWater 포함 시간을 표식 라벨별로 모아 셰이더 관문 끝 이후 표본만 요약해 장면 profilegpu에 라벨 키로 붙이고, 점유 측정에 16:9 중앙 비율과 setup 뒤 조건 기준 occupancy_px_internal·ms_per_mpx_internal을 더한다. 2026-10-23 추적 창 자르기 도입으로 FX-7p J8.explosion·J9 재분석 값이 미세 변동(통과 여부 동일)
+실행 명령: python Tools/FluidFX/pie_profile_fluid.py [--phase-seconds 10] (PowerShell, 측정 동안 에디터 창을 앞창으로 두기: 백그라운드 PIE는 3fps로 제한된다 L-editor-06) | --csv-gpu PLAN.json --holder 이름 (예 Tools/FluidFX/fx7p_plan.json 전체·fx7p_plan_run2.json 2회차, PowerShell, 빌드·헤드리스 시험과 동시 금지) | --analyze Saved/FluidFX/fx7p/<run> | --check-plan PLAN.json(에디터 없이 계획 키만 검사, 셸 무관)
+출력: Saved/FluidFX/fluid_pie_perf.json, Docs/Validation/FluidFX/D-48-pie-perf-<날짜>.json(측정이 이뤄진 경우, 그날 파일이 이미 있으면 덮지 않고 -<시분초>를 붙임), 표준 출력 구간별 표. 종료 코드 0 전 구간에 TDFluidPerf 줄 있음·나이아가라 활성 토글 통과/1 줄 없는 구간·구간 오염·나이아가라 실패 있음/2 환경 문제(에디터·MCP·PIE·콘솔 변수). --csv-gpu는 Saved/FluidFX/fx7p/<run>/session.json·plan.json·csv/·shots/·traces/·clock.csv·editor.log·result.json(증거 파일은 쓰지 않음), --analyze는 같은 폴더 result.json(J1~J9 verdicts·J6 표, 렌더 스레드는 Exclusive/RenderThread 합(EventWait 제외), S12는 A·B 투과율 텍스처 확인이 없으면 J8 null)과 Docs/Validation/FluidFX/FX-7p-baseline-<날짜>.json·FX-4a-gpu-<날짜>.json(J1·J2·J3·J5 발췌, 그날 파일이 있으면 -<시분초>). 두 경로의 종료 코드 0 완료/1 불안정·A 블록 필수 열 없음·클럭 폐기 과다·추적 분석 실패/2 환경(보류·빌드·셰이더·프레임 상한 관문, 에디터·PIE·CSV 시간 초과). 계획 최상위에 _p가 있는 P 계획은 장면 오류(동작 실패·대상 0 단계·셰이더 관문)를 그 장면 error_kind scene으로 남기고 복원 뒤 다음 장면을 새 PIE로 이어 재며(그때 --csv-gpu 종료 1), 환경 오류(보류·빌드·MCP·원격 실행 끊김·PIE·CSV·파일 시간 초과·프레임 상한 관문, error_kind environment)만 실행을 멈춘다(종료 2). 블록 기록 side_steps [{action, result}]는 그 블록 앞 A/B 측 단계 결과(actor는 측 안정 뒤 되읽기 {labels, matched, 선언한 hidden·ns_inactive}, console은 {readback}). --check-plan은 표준 출력에 '문제:' 줄과 끝 줄, 종료 0 통과/2 문제(모르는 최상위·장면·동작 키, _ 시작 최상위 키는 주석, draft_status, write_fx7p_evidence 없음·false 아님, actor·camera 형식, 필수 동작 키)
+상태: 현행(2026-10-18 첫 성공, 증거 Docs/Validation/FluidFX/D-48-perf-2026-10-18.md). --csv-gpu·--analyze는 부분 검증(명세 Saved/AgentOps/20261022/fx7p/spec-b.md): 2026-10-22 1회차 PIE 31장면 중 15장면 측정(Saved/FluidFX/fx7p/fx7p-run1-20261022123641, 카메라·스폰·라벨·관문 10%는 그 측정 사본과 같음), GPU 재구성 뒤 에디터 크래시 2회로 중단(리드백 링 결함, 9cdea12e로 수정). 2회차 run2·run2b·run2c로 나머지 장면을 재서 32장면 합본(장면마다 오류 없는 마지막 기록)·--analyze 완료(판정 정본 Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md·judge-closure.md). 2026-10-22 고침: 큰 결과의 원격 출력 분할 읽기(L-editor-54), 스냅숏 설정 `.copy()`(L-editor-55, 이전 판 reset은 configure 설정을 되돌리지 못했다). 남은 한계: 안정 관문이 장면 FrameTime 하나라 GT 묶임 PIE에서 null이 많다(J별 규칙으로 바꾸는 것은 FX-7p-r). 2026-10-23 W-1 관문 확장(미검증, 계획 Saved/AgentOps/20261023/w1gate/plan_w1perf.json): 계획 키 extra_columns(블록 통계·차분에 더할 CSV 열)·write_fx7p_evidence(false면 --analyze가 FX-7p·FX-4a 증거를 쓰지 않음)·장면 refill_frames·steady_frames, 동작 view(폰 붐 길이·카메라 16:9 고정)·pawn z·speed, 준비 확인은 --csv-gpu에서만 깨어 있는 액터 기준(깨어 있는 액터가 0개면 미준비), 추적 분석은 표식 창 길이로 자르고(L-editor-32) 창 이동 프레임(TDFluid_RasterizeWater 포함)·깨어남 구간을 따로 내며, 계획 표식 profilegpu:<장면>뒤 ProfileGPU 압축 출력(r.ProfileGPU.TableFormatting 0)의 SingleLayerWater 포함 시간을 표식 라벨별로 모아 셰이더 관문 끝 이후 표본만 요약해 장면 profilegpu에 라벨 키로 붙이고, 점유 측정에 16:9 중앙 비율과 setup 뒤 조건 기준 occupancy_px_internal·ms_per_mpx_internal을 더한다. 2026-10-23 추적 창 자르기 도입으로 FX-7p J8.explosion·J9 재분석 값이 미세 변동(통과 여부 동일). 2026-11-06 P T1 확장(미검증: 에디터 동작은 P fire 시운전이 확인, 오프라인은 가짜 에디터 fixture Tools/FluidFX/perf/p/fixtures_t1.py만): 동작 actor {labels, hidden?, niagara? deactivate|activate}(PIE 게임 월드 라벨 액터, 클래스 무관 숨김·소유 NS, DeactivateImmediate가 파이썬에 없으면 Deactivate, 라벨 하나라도 없으면 장면 오류, 장면 끝 보임·Activate(true) 복원), camera target_label(임의 라벨 액터 1개를 뷰 대상으로, 그 액터 CameraComponent(CineCamera 포함)의 화면 비율 제한을 PIE 인스턴스에서 끄고 결과 aspect_constraints [{component, constrain_before, constrain_after, aspect_ratio, field_of_view}]에 남겨 렌더 화소 = conditions.viewport를 지키며, 끄지 못하면 장면 오류), P 계획 대상 0 단계 = 장면 오류(sleep targets others 예외), visibility 결과에 components 수
 """
 import argparse
 import bisect
@@ -439,13 +439,15 @@ def run_fx7p_visibility(world):
     parts = PARAMS.get("parts") or list(FX7P_PART_NAMES)
     visible = bool(PARAMS["visible"])
     labels = []
+    toggled = 0
     for actor in fx7p_targets(world):
         components = fx7p_part_components(actor)
         for name in parts:
             if components.get(name) is not None:
                 components[name].set_visibility(visible)
+                toggled += 1
         labels.append(actor.get_actor_label())
-    return {"visible": visible, "parts": parts, "actors": labels}
+    return {"visible": visible, "parts": parts, "actors": labels, "components": toggled}
 
 
 def run_fx7p_sleep(world):
@@ -467,9 +469,45 @@ def run_fx7p_light(world):
     return {"visible": visible, "lights": count}
 
 
+def fx7p_find_labeled_actors(world, labels):
+    wanted = set(labels)
+    return [actor for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.Actor) if actor.get_actor_label() in wanted]
+
+
+def fx7p_release_camera_aspect_constraints(actor):
+    released = []
+    for camera in actor.get_components_by_class(unreal.CameraComponent):
+        constrained_before = bool(camera.get_editor_property("constrain_aspect_ratio"))
+        camera.set_constraint_aspect_ratio(False)
+        released.append({"component": camera.get_name(), "constrain_before": constrained_before,
+                         "constrain_after": bool(camera.get_editor_property("constrain_aspect_ratio")),
+                         "aspect_ratio": camera.get_editor_property("aspect_ratio"), "field_of_view": camera.get_editor_property("field_of_view")})
+    return released
+
+
+def run_fx7p_camera_view_target(world):
+    label = PARAMS["target_label"]
+    found = fx7p_find_labeled_actors(world, [label])
+    if len(found) != 1:
+        return {"error": "카메라 target_label 액터가 " + str(len(found)) + "개다(1개여야 한다): " + label, "matched": len(found)}
+    aspect_constraints = fx7p_release_camera_aspect_constraints(found[0])
+    still_constrained = [entry["component"] for entry in aspect_constraints if entry["constrain_after"]]
+    if still_constrained:
+        return {"error": "카메라 target_label 액터의 화면 비율 제한을 끄지 못했다: " + ", ".join(still_constrained), "matched": 1, "aspect_constraints": aspect_constraints}
+    controller = unreal.GameplayStatics.get_player_controller(world, 0)
+    controller.set_view_target_with_blend(found[0], 0.0)
+    location = found[0].get_actor_location()
+    result = {"target_label": label, "matched": 1, "view_target": found[0].get_name(), "location": [location.x, location.y, location.z]}
+    if aspect_constraints:
+        result["aspect_constraints"] = aspect_constraints
+    return result
+
+
 def run_fx7p_camera(world):
     if PARAMS.get("mode") == "pawn":
         return {"destroyed_cameras": fx7p_view_pawn(world)}
+    if PARAMS.get("target_label") is not None:
+        return run_fx7p_camera_view_target(world)
     target = fx7p_find_label(world, PARAMS["target"])
     if target is None:
         return {"error": "카메라 대상 액터가 없다: " + PARAMS["target"]}
@@ -605,10 +643,69 @@ def run_fx7p_marker(world):
     return {"marked": PARAMS["text"]}
 
 
+def fx7p_owned_niagara(actor):
+    return list(actor.get_components_by_class(unreal.NiagaraComponent))
+
+
+def fx7p_is_actor_hidden(actor):
+    try:
+        return bool(actor.get_editor_property("hidden"))
+    except Exception:
+        return None
+
+
+def fx7p_switch_niagara(component, mode):
+    if mode == "activate":
+        component.activate(True)
+        return "activate"
+    immediate = getattr(component, "deactivate_immediate", None)
+    if immediate is not None:
+        immediate()
+        return "deactivate_immediate"
+    component.deactivate()
+    return "deactivate"
+
+
+def fx7p_read_actor_state(actors, labels):
+    state = {"labels": labels, "matched": len(actors)}
+    if "hidden" in PARAMS:
+        flags = [fx7p_is_actor_hidden(actor) for actor in actors]
+        state["hidden"] = sum(1 for flag in flags if flag is True)
+        if None in flags:
+            state["hidden_unreadable"] = sum(1 for flag in flags if flag is None)
+    if "niagara" in PARAMS:
+        state["ns_inactive"] = sum(1 for actor in actors if not any(component.is_active() for component in fx7p_owned_niagara(actor)))
+    return state
+
+
+def run_fx7p_actor(world):
+    labels = list(PARAMS["labels"])
+    actors = fx7p_find_labeled_actors(world, labels)
+    found = {actor.get_actor_label() for actor in actors}
+    missing = [label for label in labels if label not in found]
+    if missing:
+        return {"error": "actor 라벨의 PIE 게임 월드 액터가 없다: " + ", ".join(missing), "labels": labels, "matched": len(actors)}
+    if "niagara" in PARAMS:
+        bare = [actor.get_actor_label() for actor in actors if not fx7p_owned_niagara(actor)]
+        if bare:
+            return {"error": "actor niagara 대상 액터에 나이아가라 컴포넌트가 없다: " + ", ".join(bare), "labels": labels, "matched": len(actors)}
+    methods = set()
+    if not PARAMS.get("readback_only"):
+        for actor in actors:
+            if "hidden" in PARAMS:
+                actor.set_actor_hidden_in_game(bool(PARAMS["hidden"]))
+            if "niagara" in PARAMS:
+                methods.update(fx7p_switch_niagara(component, PARAMS["niagara"]) for component in fx7p_owned_niagara(actor))
+    state = fx7p_read_actor_state(actors, labels)
+    if methods:
+        state["niagara_method"] = sorted(methods)
+    return state
+
+
 FX7P_HANDLERS = {"snapshot": run_fx7p_snapshot, "reset": run_fx7p_reset, "configure": run_fx7p_configure, "spawn": run_fx7p_spawn, "despawn": run_fx7p_despawn,
                  "visibility": run_fx7p_visibility, "sleep": run_fx7p_sleep, "light": run_fx7p_light, "camera": run_fx7p_camera, "pawn": run_fx7p_pawn, "view": run_fx7p_view,
                  "console": run_fx7p_console, "conditions": run_fx7p_conditions, "csv": run_fx7p_csv, "shot": run_fx7p_shot, "trace": run_fx7p_trace,
-                 "trigger": run_fx7p_trigger, "transmittance": run_fx7p_transmittance, "marker": run_fx7p_marker}
+                 "trigger": run_fx7p_trigger, "transmittance": run_fx7p_transmittance, "marker": run_fx7p_marker, "actor": run_fx7p_actor}
 
 
 def run_action():
@@ -633,12 +730,18 @@ print(RESULT_MARKER, json.dumps(result, ensure_ascii=False, default=str))
 '''
 
 
+EDITOR_UNREACHABLE_ERROR = "에디터 원격 실행에 연결하지 못했다"
+EDITOR_UNREADABLE_RESULT_ERROR = "결과 표식 뒤 JSON을 읽지 못했다"
+EDITOR_MISSING_RESULT_ERROR = "결과 표식이 없다"
+EDITOR_LINK_ERRORS = (EDITOR_UNREACHABLE_ERROR, EDITOR_UNREADABLE_RESULT_ERROR, EDITOR_MISSING_RESULT_ERROR)
+
+
 def run_editor_action(action, **fields):
     params = {"action": action, "run_token": RUN_TOKEN, **fields}
     code = EDITOR_CODE.replace("__PARAMS__", repr(json.dumps(params)))
     outcome = run_in_editor.run_code(code)
     if not outcome["connected"]:
-        return {"error": "에디터 원격 실행에 연결하지 못했다: " + " | ".join(outcome["lines"])[-300:]}
+        return {"error": EDITOR_UNREACHABLE_ERROR + ": " + " | ".join(outcome["lines"])[-300:]}
     for line_index, line in enumerate(outcome["lines"]):
         marker_index = line.find(EDITOR_RESULT_MARKER)
         if marker_index < 0:
@@ -648,8 +751,8 @@ def run_editor_action(action, **fields):
         try:
             return json.JSONDecoder().raw_decode(following_text.lstrip())[0]
         except ValueError:
-            return {"error": "결과 표식 뒤 JSON을 읽지 못했다: " + line[marker_index:][:300]}
-    return {"error": "결과 표식이 없다: " + " | ".join(outcome["lines"])[-400:]}
+            return {"error": EDITOR_UNREADABLE_RESULT_ERROR + ": " + line[marker_index:][:300]}
+    return {"error": EDITOR_MISSING_RESULT_ERROR + ": " + " | ".join(outcome["lines"])[-400:]}
 
 
 def read_log_size():
@@ -986,6 +1089,43 @@ FX7P_DEFAULTS = {
     "extra_columns": [], "write_fx7p_evidence": True,
     "scenes": [],
 }
+FX7P_PLAN_KEYS = tuple(FX7P_DEFAULTS)
+FX7P_PLAN_COMMENT_PREFIX = "_"
+FX7P_P_PLAN_KEY = "_p"
+FX7P_DRAFT_KEY = "draft_status"
+FX7P_EVIDENCE_KEY = "write_fx7p_evidence"
+FX7P_SCENE_KEYS = ("id", "level", "kind", "targets", "setup", "a", "b", "trace_steps", "meta", "block_frames", "gpu_clock", "metric", "required_columns",
+                   "occupancy", "occupancy_metric", "fresh_pie", "cap_gate", "repeats", "pie_per_repeat", "channels", "refill_frames", "steady_frames")
+FX7P_STEP_LIST_KEYS = ("setup", "a", "b", "trace_steps")
+FX7P_STEP_KEYS = {
+    "wait": ("seconds",),
+    "configure": ("targets", "backend", "grid_resolution", "enable_heat_channel", "stagger_seconds", "stagger_batch", "batch_start", "batch_size"),
+    "spawn": ("source", "count", "spacing_cm"),
+    "despawn": (),
+    "visibility": ("targets", "parts", "visible"),
+    "sleep": ("targets", "awake"),
+    "light": ("targets", "visible"),
+    "camera": ("mode", "target", "target_label", "distance_cm", "height_cm", "pitch", "yaw"),
+    "pawn": ("speed", "x", "y", "z", "goal_x", "goal_y"),
+    "view": ("arm_cm", "aspect_ratio", "constrain_aspect"),
+    "console": ("commands", "restore"),
+    "shot": ("path",),
+    "trigger": ("hit_dx", "hit_dy", "hit_dz"),
+    "transmittance": ("targets", "enabled"),
+    "marker": ("text",),
+    "actor": ("labels", "hidden", "niagara"),
+}
+FX7P_STEP_REQUIRED_KEYS = {"wait": ("seconds",), "spawn": ("source", "count"), "visibility": ("visible",), "sleep": ("awake",), "light": ("visible",),
+                           "console": ("commands",), "shot": ("path",), "trigger": ("hit_dx", "hit_dy", "hit_dz"), "transmittance": ("enabled",),
+                           "marker": ("text",), "actor": ("labels",)}
+FX7P_ACTOR_STATE_KEYS = ("hidden", "niagara")
+FX7P_ACTOR_NIAGARA_MODES = ("deactivate", "activate")
+FX7P_ACTOR_REMOVED_KEY = "tick"
+FX7P_CAMERA_LABEL_KEY = "target_label"
+FX7P_OTHERS_TARGETS = "others"
+FX7P_EMPTY_TARGET_COUNT_KEYS = {"visibility": "components", "sleep": "actors", "light": "lights", "configure": "total", "transmittance": "actors"}
+FX7P_SCENE_ERROR_KIND = "scene"
+FX7P_ENVIRONMENT_ERROR_KIND = "environment"
 
 
 def fx7p_metric_columns(config):
@@ -1048,6 +1188,126 @@ def validate_fx7p_plan(config):
     if set(config["order"]) != {"A", "B"} or config["order"].count("A") != config["order"].count("B"):
         return "order는 A와 B를 같은 수로 가져야 한다(예 ABBA)"
     return None
+
+
+def find_fx7p_actor_step_problems(where, step):
+    problems = []
+    labels = step.get("labels")
+    if "labels" in step and not (isinstance(labels, list) and labels and all(isinstance(label, str) and label for label in labels)):
+        problems.append(f"{where} actor: labels는 비지 않은 문자열 목록이어야 한다: {labels!r}")
+    if "hidden" in step and not isinstance(step["hidden"], bool):
+        problems.append(f"{where} actor: hidden은 true 또는 false여야 한다: {step['hidden']!r}")
+    if "niagara" in step and step["niagara"] not in FX7P_ACTOR_NIAGARA_MODES:
+        problems.append(f"{where} actor: niagara 값은 deactivate 또는 activate여야 한다: {step['niagara']!r}")
+    if not any(key in step for key in FX7P_ACTOR_STATE_KEYS):
+        problems.append(f"{where} actor: hidden·niagara 중 하나는 있어야 한다(아무것도 바꾸지 않는 토글)")
+    return problems
+
+
+def find_fx7p_camera_step_problems(where, step):
+    if FX7P_CAMERA_LABEL_KEY not in step:
+        if step.get("mode") == "pawn" or ("target" in step and "distance_cm" in step):
+            return []
+        return [f"{where} camera: mode pawn·target+distance_cm·target_label 중 하나여야 한다"]
+    problems = []
+    label = step[FX7P_CAMERA_LABEL_KEY]
+    if not (isinstance(label, str) and label):
+        problems.append(f"{where} camera: target_label은 비지 않은 문자열이어야 한다: {label!r}")
+    extra = sorted(set(step) - {"action", FX7P_CAMERA_LABEL_KEY})
+    if extra:
+        problems.append(f"{where} camera: target_label과 함께 쓰지 않는 키: {', '.join(extra)}")
+    return problems
+
+
+def find_fx7p_step_problems(where, step):
+    if not isinstance(step, dict):
+        return [f"{where}: 단계가 객체가 아니다"]
+    action = step.get("action")
+    if action not in FX7P_STEP_KEYS:
+        return [f"{where}: 모르는 동작: {action!r}"]
+    problems = []
+    allowed = set(FX7P_STEP_KEYS[action]) | {"action"}
+    for key in step:
+        if action == "actor" and key == FX7P_ACTOR_REMOVED_KEY:
+            problems.append(f"{where} actor: tick 키는 없다(E2, TDFluidLiveActor bCanEverTick 거짓이라 틱 토글을 쓰지 않는다)")
+            continue
+        if key not in allowed:
+            problems.append(f"{where} {action}: 모르는 동작 키: {key}")
+    problems.extend(f"{where} {action}: {key}가 없다" for key in FX7P_STEP_REQUIRED_KEYS.get(action, ()) if key not in step)
+    if action == "actor":
+        problems.extend(find_fx7p_actor_step_problems(where, step))
+    if action == "camera":
+        problems.extend(find_fx7p_camera_step_problems(where, step))
+    return problems
+
+
+def find_fx7p_scene_problems(index, scene):
+    if not isinstance(scene, dict):
+        return [f"scenes[{index}]: 장면이 객체가 아니다"]
+    name = scene.get("id") or f"scenes[{index}]"
+    problems = [f"{name}: 모르는 장면 키: {key}" for key in scene if key not in FX7P_SCENE_KEYS]
+    for list_key in FX7P_STEP_LIST_KEYS:
+        if list_key not in scene:
+            continue
+        steps = scene[list_key]
+        if not isinstance(steps, list):
+            problems.append(f"{name} {list_key}: 단계 목록이 아니다")
+            continue
+        for step_index, step in enumerate(steps):
+            problems.extend(find_fx7p_step_problems(f"{name} {list_key}[{step_index}]", step))
+    return problems
+
+
+def find_fx7p_top_level_problems(plan):
+    problems = []
+    for key in plan:
+        if key.startswith(FX7P_PLAN_COMMENT_PREFIX):
+            continue
+        if key == FX7P_DRAFT_KEY:
+            problems.append(f"draft_status가 있다(초안 계획은 재지 않는다): {plan[key]!r}")
+            continue
+        if key not in FX7P_PLAN_KEYS:
+            problems.append(f"모르는 최상위 키: {key}")
+    if FX7P_EVIDENCE_KEY not in plan:
+        problems.append("write_fx7p_evidence가 없다(증거 키 없음: 계획에 false를 적는다)")
+    elif plan[FX7P_EVIDENCE_KEY] is not False:
+        problems.append(f"write_fx7p_evidence가 false가 아니다: {plan[FX7P_EVIDENCE_KEY]!r}")
+    return problems
+
+
+def find_fx7p_plan_problems(plan):
+    if not isinstance(plan, dict):
+        return ["계획 최상위가 객체가 아니다"]
+    problems = find_fx7p_top_level_problems(plan)
+    scenes = plan.get("scenes")
+    if not isinstance(scenes, list):
+        return problems + ["scenes가 없거나 목록이 아니다"]
+    for index, scene in enumerate(scenes):
+        problems.extend(find_fx7p_scene_problems(index, scene))
+    if not all(isinstance(scene, dict) for scene in scenes):
+        return problems
+    try:
+        structural = validate_fx7p_plan(merge_fx7p_plan(plan))
+    except (TypeError, AttributeError, KeyError) as error:
+        structural = f"계획 구조를 검사하지 못했다: {type(error).__name__}: {error}"
+    if structural is not None:
+        problems.append(structural)
+    return problems
+
+
+def check_fx7p_plan_file(plan_path):
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        problems = [f"계획 JSON을 읽지 못했다: {error}"]
+    else:
+        problems = find_fx7p_plan_problems(plan)
+    for problem in problems:
+        print("문제:", problem)
+    exit_code = EXIT_ENVIRONMENT if problems else 0
+    state = f"문제 {len(problems)}개" if problems else "통과"
+    print(f"check-plan {plan_path.as_posix()}: {state} exit_code {exit_code}")
+    return exit_code
 
 
 def read_csv_columns(path, discard_rows=0):
@@ -1267,8 +1527,69 @@ def wait_for_fx7p_file(path, timeout_seconds):
     return False
 
 
+def is_fx7p_link_error(result):
+    error = result.get("error") if isinstance(result, dict) else None
+    return isinstance(error, str) and error.startswith(EDITOR_LINK_ERRORS)
+
+
+def fail_fx7p_environment(context, message):
+    if context.get("environment_failure") is None:
+        context["environment_failure"] = message
+    return message
+
+
 def run_fx7p_action(context, action, **fields):
-    return run_editor_action(action, pie_session=context["pie_session"], **fields)
+    result = run_editor_action(action, pie_session=context["pie_session"], **fields)
+    if is_fx7p_link_error(result):
+        fail_fx7p_environment(context, f"{action}: {result['error']}"[:500])
+    return result
+
+
+def find_fx7p_empty_target(action, step, result):
+    count_key = FX7P_EMPTY_TARGET_COUNT_KEYS.get(action)
+    if count_key is None or "error" in result:
+        return None
+    if action == "sleep" and step.get("targets") == FX7P_OTHERS_TARGETS:
+        return None
+    value = result.get(count_key)
+    count = len(value) if isinstance(value, list) else value
+    if isinstance(count, (int, float)) and not isinstance(count, bool) and count > 0:
+        return None
+    return f"{action} 대상이 0개다({count_key}={value!r})"
+
+
+def build_fx7p_actor_readback_params(step):
+    params = {key: step[key] for key in ("labels",) + FX7P_ACTOR_STATE_KEYS if key in step}
+    params["readback_only"] = True
+    return params
+
+
+def build_fx7p_actor_restores(step):
+    labels = list(step.get("labels") or [])
+    restores = []
+    if "hidden" in step:
+        restores.append({"labels": labels, "hidden": False})
+    if "niagara" in step:
+        restores.append({"labels": labels, "niagara": "activate"})
+    return restores
+
+
+def collect_fx7p_actor_restores(scene):
+    restores = []
+    for list_key in FX7P_STEP_LIST_KEYS:
+        for step in scene.get(list_key, []):
+            if step.get("action") != "actor":
+                continue
+            for restore in build_fx7p_actor_restores(step):
+                if restore not in restores:
+                    restores.append(restore)
+    return restores
+
+
+def classify_fx7p_scene_error(error, environment_failure):
+    if error is None:
+        return None
+    return FX7P_ENVIRONMENT_ERROR_KIND if environment_failure is not None else FX7P_SCENE_ERROR_KIND
 
 
 def resolve_fx7p_step(step, scene):
@@ -1308,6 +1629,9 @@ def execute_fx7p_steps(context, scene, steps, records):
             result = run_fx7p_staggered_configure(context, params)
         else:
             result = run_fx7p_action(context, action, **params)
+        empty_target = find_fx7p_empty_target(action, step, result) if context.get("p_mode") else None
+        if empty_target is not None:
+            result = {**result, "error": empty_target}
         if records is not None:
             records.append({"action": action, "result": result})
         if "error" in result:
@@ -1372,10 +1696,10 @@ def ensure_fx7p_pie(context, level, fresh):
 def prepare_fx7p_scene(context, scene, record, fresh):
     error = ensure_fx7p_pie(context, scene["level"], fresh)
     if error is not None:
-        return error
+        return fail_fx7p_environment(context, error)
     hold_error = refresh_fx7p_hold(context)
     if hold_error is not None:
-        return hold_error
+        return fail_fx7p_environment(context, hold_error)
     reset = run_fx7p_action(context, "reset")
     record.setdefault("resets", []).append(reset)
     if "error" in reset:
@@ -1384,14 +1708,27 @@ def prepare_fx7p_scene(context, scene, record, fresh):
     return execute_fx7p_steps(context, scene, scene.get("setup", []), record["steps"])
 
 
+def reread_fx7p_actor_steps(context, scene, steps, side_steps):
+    actor_steps = [step for step in steps if step["action"] == "actor"]
+    actor_entries = [entry for entry in side_steps if entry["action"] == "actor"]
+    for step, entry in zip(actor_steps, actor_entries):
+        settled = run_fx7p_action(context, "actor", **build_fx7p_actor_readback_params(step))
+        entry["applied"] = entry["result"]
+        entry["result"] = settled
+        if "error" in settled:
+            return f"{scene['id']} actor 되읽기 실패: {str(settled['error'])[-300:]}"
+    return None
+
+
 def apply_fx7p_side(context, scene, side):
     steps = scene[side.lower()]
-    error = execute_fx7p_steps(context, scene, steps, None)
+    side_steps = []
+    error = execute_fx7p_steps(context, scene, steps, side_steps)
     if error is not None:
-        return error
+        return error, side_steps
     reconfigured = any(step["action"] in FX7P_RECONFIGURE_ACTIONS for step in steps)
     time.sleep(context["config"]["reconfigure_settle_seconds"] if reconfigured else context["config"]["settle_seconds"])
-    return None
+    return reread_fx7p_actor_steps(context, scene, steps, side_steps), side_steps
 
 
 def capture_fx7p_csv(context, scene, block_id, frames, discard_rows):
@@ -1402,7 +1739,7 @@ def capture_fx7p_csv(context, scene, block_id, frames, discard_rows):
         return None, f"{block_id} csvprofile 요청 실패: {result['error']}"
     source, finished = wait_for_fx7p_csv(before, context["config"]["csv_timeout_seconds"])
     if source is None:
-        return None, f"{block_id}: {context['config']['csv_timeout_seconds']:.0f}초 안에 CSV가 완성되지 않았다(Saved/Profiling/CSV)"
+        return None, fail_fx7p_environment(context, f"{block_id}: {context['config']['csv_timeout_seconds']:.0f}초 안에 CSV가 완성되지 않았다(Saved/Profiling/CSV)")
     target = context["run_dir"] / "csv" / f"{block_id}.csv"
     shutil.copy2(source, target)
     description = describe_fx7p_csv(target, discard_rows, context["config"]["warmup"]["spike_ratio"], fx7p_metric_columns(context["config"]))
@@ -1432,20 +1769,20 @@ def judge_fx7p_block_clock(context, block):
     return True, round(mhz, 1)
 
 
-def capture_fx7p_slot(context, scene, record, side, slot):
+def capture_fx7p_slot(context, scene, record, side, slot, side_steps):
     config = context["config"]
     for attempt in range(config["clock"]["retries"] + 1):
         block_id = slot if attempt == 0 else f"{slot}_retry{attempt}"
         block, frames = capture_fx7p_csv(context, scene, block_id, scene.get("block_frames", config["block_frames"]), config["discard_frames"])
         if block is None:
             return frames
-        block.update({"kind": "block", "side": side, "slot": slot, "attempt": attempt, "status": "ok", "clock_mhz": None})
+        block.update({"kind": "block", "side": side, "slot": slot, "attempt": attempt, "status": "ok", "clock_mhz": None, "side_steps": side_steps})
         record["blocks"].append(block)
         if side == "B" and record.get("cap_gate_active"):
             cap = check_fx7p_frame_cap(frames, config["cap_gate"])
             record.setdefault("cap_gate", []).append({"block_id": block_id, **cap})
             if cap["tripped"]:
-                return f"{block_id} 상한 관문: FrameTime p50 {cap['p50']}ms·한 값 몰림 {cap['cluster_share']}(프레임 상한이 풀리지 않았다)"
+                return fail_fx7p_environment(context, f"{block_id} 상한 관문: FrameTime p50 {cap['p50']}ms·한 값 몰림 {cap['cluster_share']}(프레임 상한이 풀리지 않았다)")
         if not scene.get("gpu_clock"):
             return None
         accepted, mhz = judge_fx7p_block_clock(context, block)
@@ -1459,7 +1796,7 @@ def capture_fx7p_slot(context, scene, record, side, slot):
 
 def run_fx7p_shader_gate(context, scene):
     rule = context["config"]["warmup"]
-    error = apply_fx7p_side(context, scene, "A")
+    error, _ = apply_fx7p_side(context, scene, "A")
     if error is not None:
         return {"passed": False, "error": error, "attempts": []}
     attempts = []
@@ -1487,9 +1824,9 @@ def run_fx7p_rounds(context, scene, record):
     while True:
         for position, side in enumerate(config["order"]):
             slot = f"{scene['id']}_r{round_index + 1}_{position + 1}{side}"
-            error = apply_fx7p_side(context, scene, side)
+            error, side_steps = apply_fx7p_side(context, scene, side)
             if error is None:
-                error = capture_fx7p_slot(context, scene, record, side, slot)
+                error = capture_fx7p_slot(context, scene, record, side, slot, side_steps)
             if error is not None:
                 return error
         round_index += 1
@@ -1544,7 +1881,7 @@ def take_fx7p_shot(context, path):
     if "error" in result:
         return result["error"]
     if not wait_for_fx7p_file(path, context["config"]["file_timeout_seconds"]):
-        return f"스크린숏이 생기지 않았다: {path.name}"
+        return fail_fx7p_environment(context, f"스크린숏이 생기지 않았다: {path.name}")
     return None
 
 
@@ -1574,7 +1911,7 @@ def calibrate_fx7p_occupancy(context, scene, record):
                 break
             paths = {}
             for side in ("A", "B"):
-                error = apply_fx7p_side(context, scene, side)
+                error, _ = apply_fx7p_side(context, scene, side)
                 if error is not None:
                     break
                 paths[side] = context["run_dir"] / "shots" / f"{scene['id']}_{iteration}{side}.png"
@@ -1624,7 +1961,7 @@ def run_fx7p_trace_scene(context, scene, record):
         if step_error is not None:
             return step_error
         if not exists:
-            return f"{label}: utrace 파일이 생기지 않았다"
+            return fail_fx7p_environment(context, f"{label}: utrace 파일이 생기지 않았다")
     return None
 
 
@@ -1638,9 +1975,25 @@ def restore_fx7p_scene_console(context, scene, record):
     return run_fx7p_action(context, "console", commands=commands)
 
 
+def restore_fx7p_scene_actors(context, scene):
+    restored = []
+    for params in collect_fx7p_actor_restores(scene):
+        result = run_fx7p_action(context, "actor", **params)
+        restored.append({"action": "actor", "params": params, "result": result})
+        if "error" in result:
+            context["fresh_pie_next"] = True
+    return restored
+
+
 def fx7p_reconfigures_gpu(scene):
     steps = [step for key in ("setup", "a", "b", "trace_steps") for step in scene.get(key, [])]
     return any(step["action"] == "configure" and str(step.get("backend", "")).lower() == "gpu" for step in steps)
+
+
+def is_fx7p_cap_gate_finished(context, record):
+    if not context["p_mode"]:
+        return record["cap_gate_active"]
+    return bool(record.get("cap_gate"))
 
 
 def run_fx7p_scene(context, scene):
@@ -1649,8 +2002,10 @@ def run_fx7p_scene(context, scene):
     context["session"]["scenes"].append(record)
     record["cap_gate_active"] = bool(scene.get("cap_gate", kind == "csv" and not context["cap_gate_done"]))
     after_gpu = bool(context["config"]["fresh_pie_after_gpu"] and context["gpu_dirty"])
-    record["fresh_pie"] = "plan" if scene.get("fresh_pie") else "after_gpu" if after_gpu else None
-    error = prepare_fx7p_scene(context, scene, record, bool(scene.get("fresh_pie")) or after_gpu)
+    after_scene_error = bool(context.get("fresh_pie_next"))
+    context["fresh_pie_next"] = False
+    record["fresh_pie"] = "plan" if scene.get("fresh_pie") else "after_gpu" if after_gpu else "after_scene_error" if after_scene_error else None
+    error = prepare_fx7p_scene(context, scene, record, bool(scene.get("fresh_pie")) or after_gpu or after_scene_error)
     context["gpu_dirty"] = context["gpu_dirty"] or fx7p_reconfigures_gpu(scene)
     if error is None and kind == "trace":
         error = run_fx7p_trace_scene(context, scene, record)
@@ -1664,9 +2019,16 @@ def run_fx7p_scene(context, scene):
                 error = f"{scene['id']} 셰이더 관문 실패: {record['shader_gate'].get('error') or record['shader_gate']['attempts']}"
         if error is None:
             error = run_fx7p_rounds(context, scene, record)
-        context["cap_gate_done"] = context["cap_gate_done"] or record["cap_gate_active"]
+        context["cap_gate_done"] = context["cap_gate_done"] or is_fx7p_cap_gate_finished(context, record)
+    if context["p_mode"]:
+        record["error_kind"] = classify_fx7p_scene_error(error, context["environment_failure"])
     if context["pie_running"]:
         record["restored_console"] = restore_fx7p_scene_console(context, scene, record)
+        restored_actors = restore_fx7p_scene_actors(context, scene) if context["environment_failure"] is None else []
+        if restored_actors:
+            record["restored_actors"] = restored_actors
+    if context["p_mode"] and error is not None:
+        context["fresh_pie_next"] = True
     record["finished"] = fx7p_now()
     record["error"] = error
     write_fx7p_json(context["run_dir"] / FX7P_SESSION_NAME, context["session"])
@@ -1681,8 +2043,14 @@ def run_fx7p_scenes(context):
     for scene in context["config"]["scenes"]:
         print(f"scene {scene['id']} 시작 {fx7p_now()}", flush=True)
         error = run_fx7p_scene(context, scene)
+        if not context["p_mode"]:
+            if error is not None:
+                return error
+            continue
+        if context["environment_failure"] is not None:
+            return error or context["environment_failure"]
         if error is not None:
-            return error
+            print(f"scene {scene['id']} 장면 오류(기록하고 다음 장면은 새 PIE): {error}", flush=True)
     return None
 
 
@@ -1728,7 +2096,8 @@ def run_fx7p_plan(plan_path, holder):
                "build_gate": build_gate, "asset_hashes": hash_fx7p_assets(config["hash_paths"]), "warnings": [FOREGROUND_WARNING], "pie_sessions": [],
                "scenes": [], "environment": {}, "environment_error": None, "restored_variables": None}
     context = {"config": config, "run_dir": run_dir, "session": session, "holder": holder, "environment": session["environment"], "mcp": None,
-               "level": None, "pie_running": False, "pie_session": 0, "previous_variables": None, "gpu_clock_values": [], "cap_gate_done": False, "gpu_dirty": False}
+               "level": None, "pie_running": False, "pie_session": 0, "previous_variables": None, "gpu_clock_values": [], "cap_gate_done": False, "gpu_dirty": False,
+               "p_mode": FX7P_P_PLAN_KEY in config, "environment_failure": None, "fresh_pie_next": False}
     print("경고:", FOREGROUND_WARNING, flush=True)
     log_offset = read_log_size()
     context["clock"] = start_fx7p_clock_sampler(run_dir / FX7P_CLOCK_NAME, config["clock"]["interval_ms"])
@@ -2028,7 +2397,7 @@ def analyze_fx7p_csv_scene(plan_scene, record, context):
     occupancy_px, ms_per_mpx, occupancy_note = compute_fx7p_occupancy(plan_scene, record, diff)
     transmittance_check = check_fx7p_transmittance(plan_scene, a_blocks, b_blocks)
     return {"id": record["id"], "kind": "csv", "meta": plan_scene.get("meta", {}), "metric": plan_scene.get("metric", FRAME_COLUMN), "rounds": record.get("rounds"),
-            "error": record.get("error"), "pairs": pairs, "discarded_pairs": discarded_pairs,
+            "error": record.get("error"), **select_fx7p_error_kind(record), "pairs": pairs, "discarded_pairs": discarded_pairs,
             "clock_null": gpu_judged and bool(pairs) and discarded_pairs * 3 > len(pairs), "diff": diff, "a": a_values, "b": b_values,
             "variation": variation, "stable": stable, "missing_columns": missing_columns, "occupancy_px": occupancy_px, "ms_per_mpx": ms_per_mpx,
             "occupancy_note": occupancy_note, "occupancy": record.get("occupancy"), "backend_check": check_fx7p_backend(plan_scene, a_blocks, b_blocks, a_values),
@@ -2163,7 +2532,7 @@ def analyze_fx7p_trace_scene(plan_scene, record, context):
     measured = [trace for trace in traces if "error" not in trace]
     ratios = collect_fx7p_trace_values(measured, "shift", "shift_p95_over_awake_mean")
     wake_deltas = collect_fx7p_trace_values(measured, "wake", "refill_outside_minus_steady_mean_ms")
-    return {"id": record["id"], "kind": "trace", "meta": plan_scene.get("meta", {}), "error": record.get("error"), "traces": traces,
+    return {"id": record["id"], "kind": "trace", "meta": plan_scene.get("meta", {}), "error": record.get("error"), **select_fx7p_error_kind(record), "traces": traces,
             "outside_ms_p50": fx7p_round(fx7p_median([trace["outside_ms_p50"] for trace in measured])),
             "step_ms_mean": fx7p_round(fx7p_median([trace["step_ms_mean"] for trace in measured])),
             "trace_distortion": any(trace["trace_distortion"] for trace in measured) if measured else None,
@@ -2427,10 +2796,14 @@ def compute_fx7p_clock_median(session, plan_scenes, clock_samples):
     return fx7p_median(values)
 
 
+def select_fx7p_error_kind(record):
+    return {"error_kind": record["error_kind"]} if "error_kind" in record else {}
+
+
 def compute_fx7p_exit_code(scenes):
     for scene in scenes.values():
         if scene.get("error"):
-            return EXIT_ENVIRONMENT
+            return EXIT_MISSING_LINES if scene.get("error_kind") == FX7P_SCENE_ERROR_KIND else EXIT_ENVIRONMENT
         if scene["kind"] == "csv" and (scene["missing_columns"] or not scene["stable"] or scene["clock_null"]):
             return EXIT_MISSING_LINES
         if scene["kind"] == "trace" and any("error" in trace for trace in scene["traces"]):
@@ -2566,9 +2939,12 @@ def parse_arguments():
     parser.add_argument("--csv-gpu", metavar="PLAN.json", help="FX-7p 계획 JSON의 장면을 csvprofile ABBA 블록으로 잰다(--holder 필수)")
     parser.add_argument("--analyze", metavar="RUN_DIR", help="--csv-gpu 실행 폴더를 판정하고 증거 JSON을 쓴다(에디터 불필요)")
     parser.add_argument("--holder", help="Saved/AgentOps/build_hold.json owner와 같아야 하는 보류 이름")
+    parser.add_argument("--check-plan", metavar="PLAN.json", help="에디터 없이 계획 키를 검사한다(종료 0 통과/2 문제, 사유 출력)")
     arguments = parser.parse_args()
     if arguments.phase_seconds <= 0:
         parser.error("--phase-seconds는 0보다 커야 한다")
+    if arguments.check_plan and (arguments.csv_gpu or arguments.analyze):
+        parser.error("--check-plan은 --csv-gpu·--analyze와 함께 쓰지 않는다")
     if arguments.csv_gpu and arguments.analyze:
         parser.error("--csv-gpu와 --analyze는 함께 쓰지 않는다")
     if arguments.csv_gpu and not arguments.holder:
@@ -2578,6 +2954,8 @@ def parse_arguments():
 
 def main():
     arguments = parse_arguments()
+    if arguments.check_plan:
+        return check_fx7p_plan_file(Path(arguments.check_plan))
     if arguments.analyze:
         return analyze_fx7p_run(Path(arguments.analyze).resolve(), True)
     if arguments.csv_gpu:

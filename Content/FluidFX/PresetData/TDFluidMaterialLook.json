@@ -206,7 +206,7 @@
     "CloudSlot1BottomKm": 0.0,
     "CloudSlot1EdgeErosion": 0.6,
     "CloudSlot1EmissiveExponent": 3.0,
-    "CloudSlot1EmissiveIntensity": 0.015,
+    "CloudSlot1EmissiveIntensity": 0.03,
     "CloudSlot1ExtinctionPerM": 0.05,
     "CloudSlot1Shape": 1.0,
     "CloudSlot1Source": 3.0,
@@ -233,7 +233,7 @@
     "CloudSlot1ThicknessKm": 10.0,
     "CloudSlot2BottomKm": 4.0,
     "CloudSlot2Pattern": 0.0,
-    "CloudSlot2PatternCoverage": 0.8,
+    "CloudSlot2PatternCoverage": 0.6,
     "CloudSlot2Source": 2.0,
     "CloudSlot2ThicknessKm": 0.6
    },
@@ -295,7 +295,7 @@
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidCloudLayers",
    "Scalars": {
     "CloudSlot1BottomKm": 0.0,
-    "CloudSlot1SectionDepthKm": 3.0,
+    "CloudSlot1SectionDepthKm": 2,
     "CloudSlot1SectionYawDegrees": 90.0,
     "CloudSlot1Shape": 2.0,
     "CloudSlot1Source": 3.0,
@@ -353,7 +353,7 @@
   "/Game/FluidFX/Materials/MI_TD_FluidCloud_Stratus": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidCloudLayers",
    "Scalars": {
-    "CloudCameraFadeEndKm": 0.05,
+    "CloudCameraFadeEndKm": 0.02,
     "CloudCameraFadeStartKm": 0.0,
     "CloudSlot1BottomKm": 0.8,
     "CloudSlot1Pattern": 0.0,
@@ -435,7 +435,7 @@
     "CloudSlot2PatternScaleKm": 2.0,
     "CloudSlot2Source": 2.0,
     "CloudSlot2TerrainFollow": 1.0,
-    "CloudSlot2ThicknessKm": 0.4
+    "CloudSlot2ThicknessKm": 0.6
    },
    "Switches": {},
    "Vectors": {
@@ -840,7 +840,7 @@
   "/Game/FluidFX/Materials/MI_TD_FluidFog_PassiveField": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
    "Scalars": {
-    "FogPassiveCoverage": 0.5,
+    "FogPassiveCoverage": 0.35,
     "FogShapeSoftCm": 3000.0,
     "FogUsesWindowMask": 1.0
    },
@@ -849,7 +849,9 @@
   },
   "/Game/FluidFX/Materials/MI_TD_FluidFog_Sim": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
-   "Scalars": {},
+   "Scalars": {
+    "FogExtrudeHeightCm": 60
+   },
    "Switches": {},
    "Vectors": {}
   },
@@ -873,7 +875,7 @@
   "/Game/FluidFX/Materials/MI_TD_FluidFog_TileSync": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidFogVolume",
    "Scalars": {
-    "FogExtinctionPerM": 0.15,
+    "FogExtinctionPerM": 0.08,
     "FogExtrudeHeightCm": 120.0,
     "FogNoiseSubtract": 0.2,
     "FogTopFadeCm": 60.0
@@ -1193,6 +1195,7 @@
     "TileMapNormalStrength": 0.0,
     "TrackBankHeightCm": 6.0,
     "TrackBankRadiusCm": 15.0,
+    "TrackDensityContrast": 0.7,
     "TrackLayerThicknessCm": 20.0,
     "TrackPomMaxDepthCm": 25.0,
     "TrackRoughness": 0.75,
@@ -1264,7 +1267,7 @@
   "/Game/FluidFX/Materials/MI_TD_FluidUnderwater_Lake": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidUnderwaterPostProcess",
    "Scalars": {
-    "UnderwaterFogDensityPerCm": 0.002,
+    "UnderwaterFogDensityPerCm": 0.004,
     "UnderwaterMaxDistanceCm": 20000.0
    },
    "Switches": {},
@@ -2232,7 +2235,7 @@
     "User.TDMassLifetimeSeconds": 0.5,
     "User.TDMassRadiusCm": 30.0,
     "User.TDMassSpawnRatePerSec": 2000.0,
-    "User.TDMassSpeedCmPerSec": 900.0
+    "User.TDMassSpeedCmPerSec": 750
    },
    "Ints": {},
    "Vectors2": {},

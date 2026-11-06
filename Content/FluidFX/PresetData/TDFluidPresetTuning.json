@@ -760,7 +760,6 @@
         "GroundSlabThicknessCm": 15.0,
         "BoneBrushRadiusOverrideCm": 15.0,
         "BoneStampAspectRatio": 1.8,
-        "BrushHardness": 0.3,
         "bStampsSlowBones": true,
         "BoneStampMaxSpeedCmPerSec": 250.0,
         "bInterpolateStrokes": true
@@ -800,31 +799,31 @@
         "ViscousMud",
         "ViscousBlood"
       ],
-        "TDFluidSimulationConfig": {
-          "GridResolution": 256,
-          "SimExtentCm": {
-            "X": 1280.0,
-            "Y": 1280.0
-          },
-          "SolverBackend": "Gpu",
-          "CpuFallbackResolution": 128,
-          "PressureIterations": 4,
-          "DensityDissipation": 0.05,
-          "DensityAccumulationPerSec": 3.0,
-          "DenseDensityCeiling": 2.0,
-          "DenseGrowthThreshold": 0.15,
-          "FlowNoiseAccelerationCmPerSec2": 400.0,
-          "FlowNoiseScaleCm": 15.0,
-          "FlowNoiseSpeed": 0.0,
-          "FlowNoiseSpeedMaskReferenceCmPerSec": 100.0,
-          "MaxCellSpeedCmPerSec": 300.0,
-          "BorderFadeRatio": 0.1,
-          "MaxPointsPerTick": 96
+      "TDFluidSimulationConfig": {
+        "GridResolution": 256,
+        "SimExtentCm": {
+          "X": 1280.0,
+          "Y": 1280.0
         },
-        "TDFluidInputBrushSettings": {
-          "DensityFadeBelowSpeedCmPerSec": 20.0,
-          "BrushVelocityScale": 1.5
-        }
+        "SolverBackend": "Gpu",
+        "CpuFallbackResolution": 128,
+        "PressureIterations": 4,
+        "DensityDissipation": 0.05,
+        "DensityAccumulationPerSec": 3.0,
+        "DenseDensityCeiling": 2.0,
+        "DenseGrowthThreshold": 0.15,
+        "FlowNoiseAccelerationCmPerSec2": 400.0,
+        "FlowNoiseScaleCm": 15.0,
+        "FlowNoiseSpeed": 0.0,
+        "FlowNoiseSpeedMaskReferenceCmPerSec": 100.0,
+        "MaxCellSpeedCmPerSec": 300.0,
+        "BorderFadeRatio": 0.1,
+        "MaxPointsPerTick": 96
+      },
+      "TDFluidInputBrushSettings": {
+        "DensityFadeBelowSpeedCmPerSec": 20.0,
+        "BrushVelocityScale": 1.5
+      }
     },
     "DenseWater": {
       "Kinds": [
@@ -1492,7 +1491,7 @@
         "OutflowBandRatio": 0.12,
         "OutflowRatePerSec": 4.0,
         "bEnableHeatChannel": true,
-        "HeatCoolingPerSec": 2.5,
+        "HeatCoolingPerSec": 4.0,
         "HeatBuoyancyCmPerSec2": 600.0
       },
       "TDFluidPlaneSettings": {
@@ -1633,6 +1632,9 @@
     "SnowTrack": {
       "TDFluidSurfaceRenderSettings": {
         "bUsesTrackDeformMesh": true
+      },
+      "TDFluidInputBrushSettings": {
+        "BrushHardness": 0.6
       }
     },
     "ViscousMud": {
@@ -1648,7 +1650,7 @@
         "VelocityDamping": 0.45,
         "VorticityStrength": 0.3,
         "TerrainSlopeGravity": 450.0,
-        "AdvectionSpeedScale": 0.55
+        "AdvectionSpeedScale": 1.0
       },
       "TDFluidSurfaceRenderSettings": {
         "bUsesDecalOutput": true,
@@ -2215,7 +2217,7 @@
         "VelocityDamping": 0.2,
         "DensityDissipation": 0.0,
         "AmbientDensity": 0.75,
-        "AmbientRefillPerSec": 0.1,
+        "AmbientRefillPerSec": 0.2,
         "AmbientNoiseAmount": 0.5,
         "FlowNoiseAccelerationCmPerSec2": 8.0,
         "FlowNoiseScaleCm": 750.0,
@@ -2267,6 +2269,11 @@
         "AmbientRefillPerSec": 0.15,
         "AmbientNoiseAmount": 0.6
       }
+    },
+    "SandTrack": {
+      "TDFluidInputBrushSettings": {
+        "BrushHardness": 0.3
+      }
     }
   },
   "Globals": {
@@ -2304,7 +2311,7 @@
       "WindCurtainHeightRatio": 0.12,
       "WindCurtainThicknessRatio": 0.1,
       "WindCurtainSpanRatio": 0.9,
-      "WindCurtainSpeedCmPerSec": 150.0,
+      "WindCurtainSpeedCmPerSec": 75,
       "WindCurtainLiftRatio": 0.2,
       "WindCurtainStampCount": 12,
       "WindCurtainGustAmplitude": 0.3,

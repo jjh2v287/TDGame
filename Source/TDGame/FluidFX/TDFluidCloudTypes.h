@@ -58,7 +58,7 @@ struct TDGAME_API FTDFluidCloudSceneSettings
 	float WindCurtainSpanRatio = 0.9f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudWindCurtain", meta = (ClampMin = "0.0", ClampMax = "1200.0"))
-	float WindCurtainSpeedCmPerSec = 150.0f;
+	float WindCurtainSpeedCmPerSec = 75.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CloudWindCurtain", meta = (ClampMin = "-1.0", ClampMax = "1.0"))
 	float WindCurtainLiftRatio = 0.2f;

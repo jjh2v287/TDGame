@@ -95,7 +95,7 @@ LAB_WALLS = (
 )
 SHRINE_PILLARS = tuple((f"ShrinePillar{index}", (9000.0 + x, y, 250.0), (0.6, 0.6, 5.0)) for index, (x, y) in enumerate(((-400.0, -400.0), (400.0, -400.0), (-400.0, 400.0), (400.0, 400.0))))
 LOCAL_LIGHTS = (
-    {"label": "LabGreenLight", "location": (5800.0, -300.0, 120.0), "color": (0.25, 1.0, 0.35), "intensity": 2000.0, "radius": 900.0, "volumetric_scattering_intensity": 4.0},
+    {"label": "LabGreenLight", "location": (5800.0, -300.0, 120.0), "color": (0.25, 1.0, 0.35), "intensity": 2000.0, "radius": 900.0, "volumetric_scattering_intensity": 8.0},
     {"label": "LabBlueLight", "location": (6200.0, 300.0, 120.0), "color": (0.25, 0.45, 1.0), "intensity": 2000.0, "radius": 900.0, "volumetric_scattering_intensity": 4.0},
     {"label": "ShrineWarmLight0", "location": (9000.0, 0.0, 300.0), "color": (1.0, 0.62, 0.3), "intensity": 1500.0, "radius": 1200.0, "volumetric_scattering_intensity": 3.0},
     {"label": "ShrineWarmLight1", "location": (8600.0, 400.0, 150.0), "color": (1.0, 0.5, 0.25), "intensity": 800.0, "radius": 800.0, "volumetric_scattering_intensity": 3.0},

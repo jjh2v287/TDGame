@@ -787,3 +787,11 @@
 - 증거: Saved/AgentOps/20261101/precheck/(judge.json·verify-judge.json), Saved/AgentOps/20261101/diag-w1b-s00.md, Saved/AgentOps/20261031/cal-issues.md groove 진단
 - 날짜·상태: 2026-11-01 active(w1b 수면 누출 층은 미검증)
 - 발견: claude(FluidFX 일괄 보정 K7·K9 재실행)
+
+### L-editor-90 보정 허용 띠를 한 세션 안 잡음(median_floor·대조 단계)으로만 잡으면 다른 세션의 재측정이 고정 오프셋(기대의 약 1%)으로 실패한다
+- 증상 원문: W11 최종 검증 verdict "재현 실패 — W 경로 점검 / 재현 근거 없음(유지)" 4건. #11 cap.atmosphere.p95_over_p5 기대 1.4681(±0.0079) 대 1.4556·1.4557, #17 derived.uw_blue_over_red 2.6132(±0.00078) 대 2.60545·2.6060 — 두 회차는 서로 0.00015~0.0005 안에서 일치
+- 해결: 무작위 잡음이 아니라 세션 간 고정 오프셋이므로 재측정 실패를 W 경로 결함으로 읽기 전에 (1) 같은 세션 두 회차 일치 여부 (2) A/B v00·v01 이 여전히 민감하게 갈라지는지 (3) 정본·에셋 값 대조(W9)를 본다. 다음 사전 등록부터 재현 허용에 세션 간 편차 항(같은 장면을 다른 에디터 세션에서 2회 잰 차이)을 넣는다
+- 범위: calib_sweep verify 단계 재현 판정(채택 후보 중앙값 ± max(2×median_floor, tolerance)), 에디터 재시작·재생성 뒤 다시 잰 화면 비율 지표
+- 증거: Saved/FluidFX/calib/final/verdict-w11.json, Saved/AgentOps/20261106/w/w11-user-items-diag.md
+- 날짜·상태: 2026-11-06 active(오프셋 원인 — 셰이더 캐시·재질 재생성·하드웨어 — 는 미검증)
+- 발견: claude(FluidFX W11 최종 검증)

@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-06 12:29 claude
+갱신: 2026-11-06 15:31 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -8,7 +8,7 @@
 - M3-37 done(로컬 커밋): 타격감 7종. 끄기 `TD.Feedback.ShakeScale 0`.
 - M3-38~40 done(로컬 커밋): 래그돌 정착·물리 에셋 7종·사망 즉시 래그돌(L-anim-23). 끄기 `TD.Death.ImmediateRagdoll 0`. 후속 M3-41 todo.
 - 커밋 끝: M3-14·27~32·34, D-47(후속 c). 전술 끄기 `TD.MonsterAI.Tactics 0`.
-- FluidFX: W3~W10 끝(커밋 a9867a50) → W11 최종 검증 중(calib_batch 최종 모드)
+- FluidFX: W 끝(W11·W13 revert 0, W12 생략) → P(성능 9영역·승인 시트) 준비
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴.
 - 게임플레이 분석(미커밋)·M3-25·26 done(26 미커밋·PIE 육안 대기).
@@ -30,7 +30,7 @@
 - 공개 저장소 Fab·Paragon·Manny 원본 비공개 전환·재저장 에셋 유지 판단.
 - 분석 결정 GQ-01~32(26=아니오), 먼저 GQ-01·10~13·20·27.
 - 기록 누락 의심: M1-01~05(코드 있음, 대장 todo).
-- FluidFX D-64 ⑫·㉒(㉜ 수중 채택 조건부)·㉓·㉘·㊻(#13 바람 커튼 시험) 확인
+- FluidFX D-64 ⑫·㉒(㉜)·㉓·㉘·㊻·㊿(W11 유지 7건, w11-user-items-diag.md)
 - 빌드 순서 L-build-05·08. `TDGame.Combat` GUI 크래시→헤드리스(L-editor-08).
 
 ## ③ 다음 행동

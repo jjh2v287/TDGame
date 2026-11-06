@@ -27,6 +27,7 @@
 - 증상: 한글 마크다운을 `Add-Content`로 쓰면 CP949, `>`·`Out-File -Encoding utf8`은 BOM이 붙고, `Get-Content`는 BOM 없는 UTF-8 한글을 잘못 읽어 줄 수가 달라진다.
 - 해결: 장부 파일은 파일 편집 도구 또는 `python -c "open(p,'a',encoding='utf-8').write(...)"`로 쓴다. 읽을 때는 `Get-Content -Encoding UTF8` 또는 `rg`.
 - 범위: Windows PowerShell 5.1(PowerShell 7은 기본 UTF-8)
+- 보강(2026-11-06 claude): BOM 없는 UTF-8 `.ps1` 을 `powershell -File` 로 돌리면 5.1이 CP949로 읽어 한글 문자열 안 따옴표가 깨지고 `The string is missing the terminator: '.`(ParserError)로 아무 줄도 실행하지 않는다. 같은 방식의 다른 스크립트는 우연히 통과했다. 해결: 한글이 든 `.ps1` 은 UTF-8 BOM 으로 저장한다(Write 도구로 쓴 뒤 `python` 으로 BOM 앞붙이기). 증거: W 실행 W2 첫 시도(오류 문구는 Worklog 2026-11-06, 로그는 재실행으로 덮임).
 - 증거: 미검증
 - 날짜·상태: 2026-09-18 active
 - 발견: claude

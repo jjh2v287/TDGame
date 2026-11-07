@@ -1,0 +1,8043 @@
+{
+ "version": 1,
+ "rows": [
+  {
+   "id": "A1",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveComponent.h",
+      "regex": "class TDGAME_API UTDFluidLiveComponent\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "class TDGAME_API ATDFluidLiveActor\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveSubsystem.h",
+      "regex": "class TDGAME_API UTDFluidLiveSubsystem\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.h",
+      "regex": "class TDGAME_API FTDFluidGrid2DSolver\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.FluidSim.AdvectionPressureAndViscosity",
+     "TDGame.FluidFX.LiveActor.ActivationSleepWakeAndActorTracking",
+     "TDGame.FluidFX.Subsystem.PresetPoolAndPointBudget"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A2",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-4a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGpuSolverProxy.h",
+      "regex": "class FTDFluidGpuSolverProxy\\b"
+     },
+     {
+      "file": "Source/TDFluidGpu/Public/TDFluidGpuBatch.h",
+      "regex": "struct alignas\\(16\\) FTDFluidGpuActorParameters\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.StatisticalParityWithCpu256",
+     "TDGame.FluidFXRhi.RunToRunDeterministic",
+     "TDGame.FluidFX.Gpu.BackendFallsBackToCpuWithoutRhi"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A3",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-4a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDFluidGpu/Private/TDFluidGpuStepPasses.cpp",
+      "regex": "FSolverOptionsDimension"
+     },
+     {
+      "file": "Source/TDFluidGpu/Private/TDFluidGpuStepPasses.cpp",
+      "regex": "FTDFluidGpuMassInputDimension"
+     },
+     {
+      "file": "Source/TDFluidGpu/Shaders/Private/TDFluidGpuForces.usf",
+      "regex": "TerrainSlopeGravity"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.SolverOptions.MixedBatchKeepsDisabledEntriesExact",
+     "TDGame.FluidFX.MassInput.Gpu.KeyAndMemoryUnchangedWhenOff"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "선택 단계만 셰이더 순열, 지형·노이즈·부력은 늘 계산"
+  },
+  {
+   "id": "A4",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-4a",
+    "FX-16",
+    "W-2s"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveComponent.h",
+      "regex": "FTDFluidExternalOutputTargets ExternalOutputTargets;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveComponent.h",
+      "regex": "bool IsAuxOutputActive\\(\\) const;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.AuxOutput.WrittenOnlyWhenEnabled",
+     "TDGame.FluidFXRhi.Ops.ExternalTargetGpuDirectWrite"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "외부 출력·보조 출력은 있음, 압력과 발산 분리 노출은 미확인"
+  },
+  {
+   "id": "A5",
+   "d52": "다름",
+   "status": "다름",
+   "stages": [
+    "FX-4a",
+    "FX-4b",
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "PressureMethod = ETDFluidPressureMethod::PoissonSolve;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "enum class ETDFluidPressureMethod\\b"
+     },
+     {
+      "file": "Source/TDFluidGpu/Private/TDFluidGpuKernelPressurePasses.cpp",
+      "regex": "KernelDivergence"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverOptions.KernelModeReducesDivergence",
+     "TDGame.FluidFX.SolverOptions.KernelSteadyStateSolvesPoisson",
+     "TDGame.FluidFX.Gpu.SolverOptions.KernelBatchKeyRules",
+     "TDGame.FluidFXRhi.SolverOptions.KernelPressureMatchesCpuStatistics",
+     "TDGame.FluidFXRhi.MultigridConvergence"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.SmokeKernelPressure.TDFluidSimulationConfig.PressureMethod"
+     }
+    ],
+    "plans": [
+     "fx15a_kernel_vs_jacobi"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "기본은 야코비 반복, 커널 피드백 압력은 선택(기본 꺼짐)"
+  },
+  {
+   "id": "A6",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-14",
+    "W-6"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float DenseDensityCeiling = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolverViscous.cpp",
+      "regex": "DenseDensityCeiling > 1\\.0f"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Viscous.Dense.GrowthIsBistable",
+     "TDGame.FluidFX.Viscous.Dense.StampCeilingAndEncoding",
+     "TDGame.FluidFX.Viscous.Dense.OffMatchesLegacy",
+     "TDGame.FluidFXRhi.Viscous.GpuMatchesCpu"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.Viscous.TDFluidSimulationConfig.DenseDensityCeiling"
+     }
+    ],
+    "plans": [
+     "viscous_fx14_blood",
+     "viscous_fx14_mud"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w11.json"
+    ],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A7",
+   "d52": "다름",
+   "status": "다름",
+   "stages": [
+    "FX-14"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float AdvectionSpeedScale = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Viscous.Dense.FrameRateIndependent"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ViscousMud.TDFluidSimulationConfig.AdvectionSpeedScale"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ViscousBlood.TDFluidSimulationConfig.AdvectionSpeedScale"
+     }
+    ],
+    "plans": [
+     "viscous_fx14_blood",
+     "viscous_fx14_mud"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w11.json"
+    ],
+    "docs": []
+   },
+   "note": "이류 속도 배율 방식, 점성 값은 일괄 보정으로 정함"
+  },
+  {
+   "id": "A8",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "bool bNormalizeDynamicsByCellSize = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bNormalizeDynamicsByCellSize = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float ReferenceCellSizeCm = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Ops.CellSizeNormalization"
+    ],
+    "data": [],
+    "plans": [
+     "fx16a_cell_size_invariance"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "칸 크기 정규화 실험 옵션"
+  },
+  {
+   "id": "A9",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float VorticityStrength = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float MaxCellSpeedCmPerSec = 1200\\.0f;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverRegression.StampVelocityIsCappedAtMaxSpeed"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.Campfire.TDFluidSimulationConfig.VorticityStrength"
+     }
+    ],
+    "plans": [
+     "campfire_vorticity"
+    ],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15a.md",
+      "line": 204
+     },
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15a.md",
+      "line": 205
+     }
+    ]
+   },
+   "note": "이름 대응표, 와도 가둠 척도와 단위가 다름"
+  },
+  {
+   "id": "A10",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-14",
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "float FlowAmplitudeNoiseDampingPerSec = 0\\.0f;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float FlowAmplitudeNoiseDampingPerSec = 0\\.0f;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bRandomizeNoiseOffsetPerActor = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float FlowNoiseSpeedMaskReferenceCmPerSec = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverOptions.FlowAmplitudeNoiseOnlyRemovesEnergy",
+     "TDGame.FluidFX.SolverOptions.NoiseLatticeOffsetDecorrelatesStackedActors",
+     "TDGame.FluidFX.Viscous.FlowNoise.SpeedMask",
+     "TDGame.FluidFX.FlowNoise.SmokePresetCarriesNoiseFactoryValues"
+    ],
+    "data": [],
+    "plans": [
+     "fx15a_amplitude_noise"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "진폭 감쇠 노이즈·오프셋 무작위는 기본 꺼짐"
+  },
+  {
+   "id": "A11",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float EdgeBounciness = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float BorderFadeExponent = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverBounds.EdgeBounceReflects",
+     "TDGame.FluidFX.SolverBounds.ObstacleBounceReflects",
+     "TDGame.FluidFX.SolverBounds.BorderFadeExponentOneIsIdentity",
+     "TDGame.FluidFXRhi.Bounds.EdgeBounceParity"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A12",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-2s",
+    "FX-10",
+    "FX-11",
+    "FX-14",
+    "W-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "enum class ETDFluidAreaAddressMode\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "ETDFluidAreaAddressMode AreaAddressMode = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.WrapArea.",
+     "TDGame.FluidFXRhi.WrapArea."
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FogTileSim.TDFluidSimulationConfig.AreaAddressMode"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.LavaTile.TDFluidSimulationConfig.AreaAddressMode"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A13",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "FVector DirectVelocityCmPerSec = FVector::ZeroVector;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "FVector DirectVelocityCmPerSec = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bDirectVelocityInWorldSpace\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverOptions.AdvectionOffsetMovesCentroid",
+     "TDGame.FluidFX.SolverOptions.AdvectionOffsetFrameRateInvariant",
+     "TDGame.FluidFX.SolverOptions.AdvectionOffsetRuleProjectsWorldWind",
+     "TDGame.FluidFXRhi.SolverOptions.ForceOptionsMatchCpuStatistics"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.SmokeWindDrift.TDFluidSimulationConfig.DirectVelocityCmPerSec"
+     }
+    ],
+    "plans": [
+     "fx15a_wind_and_anchor"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A14",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float FieldVelocityScale = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float TerrainSlopeGravity = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float BrushVelocityScale = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.Input.BitmapVelocityFollowsEncoding",
+     "TDGame.FluidFX.LiveActor.TerrainElevationDrivesDownhillFlow",
+     "TDGame.FluidFX.Viscous.Input.BrushVelocityScale"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15a.md",
+      "line": 207
+     },
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15a.md",
+      "line": 209
+     }
+    ]
+   },
+   "note": ""
+  },
+  {
+   "id": "A15",
+   "d52": "다름",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "float MaxStepRateHz = 0\\.0f;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRuntimeOps.cpp",
+      "regex": "TD\\.FluidFX\\.MaxStepRateHz"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRuntimeOps.h",
+      "regex": "ComputeLodStepRateHz"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Ops.StepRateCapMatchesLowerFrameRate",
+     "TDGame.FluidFX.Ops.StepRateLod",
+     "TDGame.FluidFX.Ops.StepClockCadence"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "처리 주기 상한·거리 단계 낮춤, 둘 다 기본 꺼짐"
+  },
+  {
+   "id": "A16",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidPlaneTypes.h",
+      "regex": "enum class ETDFluidPlaneOrientation\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverOptions.CameraFacingShiftKeepsPeakDensity",
+     "TDGame.FluidFX.Plane.CameraFacingBasisAtPitchMinus60",
+     "TDGame.FluidFXRhi.Plane.ViewRotationKeepsGpuState"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A17",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "bool bAnchorsDensityToActor = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bAnchorsDensityToActor = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float SimAreaMotionVelocityScale = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverOptions.AnchoredWindowCarriesDensityWithoutResample",
+     "TDGame.FluidFX.SolverOptions.AnchoredWindowWithFullAreaMotionKeepsWorldCentroid"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.SmokeAnchoredCauldron.TDFluidSimulationConfig.bAnchorsDensityToActor"
+     }
+    ],
+    "plans": [
+     "fx15a_wind_and_anchor"
+    ],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15a.md",
+      "line": 71
+     }
+    ]
+   },
+   "note": "밀도 고정 창 조합만 더함, 나머지 조합은 비범위"
+  },
+  {
+   "id": "A18",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.h",
+      "regex": "bool ShiftOriginForSlidingWindow\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SlidingWindow.WorldCoordinatePreservation",
+     "TDGame.FluidFX.Solver.InPlaceShiftEqualsCopyShift",
+     "TDGame.FluidFXRhi.ShiftMovesStateExactly"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A19",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 96
+     }
+    ]
+   },
+   "note": "구판 호환 기능, 범위 밖"
+  },
+  {
+   "id": "A20",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "FVector2D SimExtentCm = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverRegression.NonSquareProjectionResidual",
+     "TDGame.FluidFX.SolverRegression.NonSquareFourToOneProjectionResidual",
+     "TDGame.FluidFX.LiveActor.PlaneScaleFollowsClampedSolverExtent"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "A21",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "bool bKeepBuffersOnReinit = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bKeepBuffersOnReinit = false;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Ops.KeepBuffersOnReinit",
+     "TDGame.FluidFX.Solver.ReinitializationGenerationAdvancesOnResetAndResolutionChange"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "버퍼 유지 재초기화 옵션"
+  },
+  {
+   "id": "B1",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidMassInputDataChannelReader.h",
+      "regex": "struct FTDFluidMassInputDataChannelReader : public FNDCReaderBase"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidSplatDataInterface.h",
+      "regex": "class TDGAME_API UTDFluidSplatDataInterface\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.MassInput.DataChannelRoutesByChannel",
+     "TDGame.FluidFX.MassInput.SplatInterfaceContract",
+     "TDGame.FluidFXRhi.MassInput.NiagaraSplatReachesTarget",
+     "TDGame.FluidFXRhi.MassInput.MatchesStampPathForSparsePoints"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B2",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "FX-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidMassInputDataChannelReader.h",
+      "regex": "const UNiagaraDataChannel\\* DataChannel"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.MassInput.DataChannelRoutesByChannel"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 104
+     }
+    ]
+   },
+   "note": "원본의 단일 채널 한계 행, 우리는 채널 지정 가능"
+  },
+  {
+   "id": "B3",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidInputActorFilter.h",
+      "regex": "static bool ShouldHarvest\\("
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "TArray<FName> TrackedActorTags;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bMovePivotToBoundsBottom = false;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputHarvest.FilterRules",
+     "TDGame.FluidFX.InputHarvest.PivotMovesToBoundsBottom"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B4",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+    "regex": "bool bInteractWithOwner = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "bool bInteractWithOwner = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "TArray<FName> OwnerBoneNames;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputHarvest.OwnerModeTracksOwnerBones"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B5",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "FX-8b",
+    "FX-14"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.h",
+      "regex": "class TDGAME_API ATDFluidFragmentEmitterActor\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.TargetArrayMatchesLegacy",
+     "TDGame.FluidFX.Fragment.HeightFalloffForGroundTarget",
+     "TDGame.FluidFX.Fragment.BuildStampsFromTransforms"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidFragmentTrailSettings"
+     }
+    ],
+    "plans": [
+     "viscous_fx14_blood"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B6",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-15",
+    "W-6"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGameEditor/FluidFX/TDFluidMeshFieldEditorLibrary.h",
+      "regex": "class \\w+ UTDFluidMeshFieldEditorLibrary\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bMeshDistance\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.Input.MeshDistanceContourBand",
+     "TDGameEditor.FluidFX.MeshField.CubeSliceSignedDistance",
+     "TDGameEditor.FluidFX.MeshField.BakeIsDeterministic"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15b.md",
+      "line": 17
+     }
+    ]
+   },
+   "note": "에디터 단면 굽기 시험은 헤드리스 필터 밖이라 기록 없음"
+  },
+  {
+   "id": "B7",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-1"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRiverActor.h",
+      "regex": "class TDGAME_API ATDFluidRiverActor\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "struct TDGAME_API FTDFluidFlowGuide\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTerrainCollisionMask.h",
+      "regex": "TDFluidTerrainCollisionMask"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.RiverActor.BuildsGuideFromSpline",
+     "TDGame.FluidFX.Water.FlowGuide.RasterizesTangentInsideWidth",
+     "TDGame.FluidFX.Terrain.CollisionMaskBoxes"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B8",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidHeightCacheAsset.h",
+      "regex": "class TDGAME_API UTDFluidHeightCacheAsset\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "struct TDGAME_API FTDFluidTerrainHeightSettings\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.HeightCache.EncodeSampleBake",
+     "TDGame.FluidFX.Terrain.CacheSourceAndOps",
+     "TDGame.FluidFX.LiveActor.TerrainElevationDrivesDownhillFlow"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidTerrainHeightSettings.HeightSource"
+     }
+    ],
+    "plans": [
+     "fx9_terrain_cache"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B9",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidFireTypes.h",
+    "regex": "FragmentInputMode = ETDFluidFragmentInputMode::Points;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFireTypes.h",
+      "regex": "enum class ETDFluidFragmentInputMode\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.FootprintStampMatchesLeafBox",
+     "TDGame.FluidFX.Fragment.FootprintPaintedAreaMatchesBox",
+     "TDGame.FluidFX.Fragment.InputModeSelectsStampKinds"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15b.md",
+      "line": 18
+     }
+    ]
+   },
+   "note": "조각 잎 상자 근사 타원 스탬프, 조각 충돌은 넘김"
+  },
+  {
+   "id": "B10",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFieldInputComponent.h",
+      "regex": "class TDGAME_API UTDFluidFieldInputComponent\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "enum class ETDFluidFieldInputLayout\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.Input.BitmapDensityMatchesTexels",
+     "TDGame.FluidFXRhi.Input.BitmapVelocityFollowsEncoding",
+     "TDGame.FluidFXRhi.Input.CollisionMaskMakesSolidCells",
+     "TDGame.FluidFXRhi.Input.FieldTextureSlotOverflowCounts",
+     "TDGame.FluidFX.FieldBuffer.SdfObstacleAndTerrainSlope",
+     "TDGame.FluidFX.Input.CpuIgnoresFieldInputs"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "필드 입력은 그래픽 처리 장치 경로 전용"
+  },
+  {
+   "id": "B11",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+    "regex": "PointerInputMode = ETDFluidPointerInputMode::Off;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "ETDFluidPointerInputMode PointerInputMode = ETDFluidPointerInputMode::Off;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "void PollTouchPointers\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputHarvest.MultiTouchSeparateStrokes",
+     "TDGame.FluidFX.LiveActor.MouseRayPlaneIntersection"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B12",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "ETDFluidObjectSizeMode ObjectSizeMode = ETDFluidObjectSizeMode::Fixed;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidInputBrushRules.h",
+      "regex": "ApplyToStamps"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "ETDFluidObjectSizeMode ObjectSizeMode = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float BrushVelocityExponent = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputBrush.ModelDefaultsAreIdentity",
+     "TDGame.FluidFX.InputBrush.SourceRadiusScales",
+     "TDGame.FluidFX.InputBrush.VelocityExponentAndClamp",
+     "TDGame.FluidFX.InputBrush.LeadJitterNoiseDeterministic",
+     "TDGame.FluidFX.InputBrush.AdditiveAndSharedScales",
+     "TDGame.FluidFX.InputHarvest.BoundsDoubleDoublesRadius",
+     "TDGame.FluidFX.InputHarvest.HardnessScalesWithObjectSize"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B13",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-10",
+    "FX-15"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "ETDFluidVelocityOnlySources VelocityOnlySources = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bShouldInvertInputDensity = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float DensityFadeBelowSpeedCmPerSec = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float BrushHeightFadeDistanceCm = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputBrushRules.VelocityOnlyZeroesDensityAndHeat",
+     "TDGame.FluidFX.InputBrushRules.InvertFlipsDensitySign",
+     "TDGame.FluidFX.InputBrushRules.SlowSpeedScalesDensity",
+     "TDGame.FluidFX.InputBrushRules.HeightFadeScalesAndDrops",
+     "TDGame.FluidFX.InputBrushRules.SourceSelectionMatchesLive2Table",
+     "TDGame.FluidFX.Volume.ErasingBrushIsFrameRateInvariantAndChannelScoped"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FogMistStir"
+     }
+    ],
+    "plans": [
+     "fog_f5_cut_stir"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B14",
+   "d52": "없음",
+   "status": "다름",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "bool bInterpolatePivotAndPointerStrokes = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bInterpolatePivotAndPointerStrokes = false;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputHarvest.FastPivotStrokeHasNoGaps"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15b.md",
+      "line": 14
+     }
+    ]
+   },
+   "note": "캡슐 선분 대신 점 분할로 궤적을 잇는다"
+  },
+  {
+   "id": "B15",
+   "d52": "부분",
+   "status": "다름",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "float InputPersistenceSeconds = 0\\.0f;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float InputPersistenceSeconds = 0\\.0f;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidInputPersistence.h",
+      "regex": "TDFluidInputPersistence"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputHarvest.PersistenceHalfLifeFrameRateInvariant"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15b.md",
+      "line": 15
+     }
+    ]
+   },
+   "note": "누적 버퍼 대신 출처별 잔류 스탬프 감쇠"
+  },
+  {
+   "id": "B16",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-4a",
+    "FX-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDFluidGpu/Public/TDFluidGpuStampBins.h",
+      "regex": "OverTickLimitStampCount"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Gpu.StampBinsMatchBruteForce",
+     "TDGame.FluidFX.Fragment.ExplosionStampBinBudget"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "이중 해싱 대신 칸 묶음 분류"
+  },
+  {
+   "id": "B17",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float GroundSlabThicknessCm = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float BrushHeightFadeDistanceCm = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Input.GroundSlabOnRamp",
+     "TDGame.FluidFX.InputBrushRules.HeightFadeScalesAndDrops",
+     "TDGame.FluidFX.LiveComponent.StampDepthCulling"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B18",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "void RegisterInteractingActor\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputHarvest.ActorSpawnedInsideVolumeStamps"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B19",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "bool bReceivesSharedInput = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveSubsystem.h",
+      "regex": "int32 BroadcastSharedBrushStamps\\("
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bReceivesSharedInput = false;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.InputHarvest.SharedBusReachesOptedInActorsOnce",
+     "TDGame.FluidFX.Subsystem.ParticleSplashCountsOnlyActorsThatReceiveParticles"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "B20",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "void RegisterInteractingActor\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Ops.TransformDrivenActorMatchesRegistered"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "C1",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidPresetAsset.h",
+      "regex": "PrimaryOutputMaterials;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidPresetAsset.h",
+      "regex": "TertiaryOutputMaterials;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "int32 PrimaryOutputMaterialIndex = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.VolumeDriver.SlotResolveAndNeed",
+     "TDGame.FluidFX.VolumeDriver.TaggedTargetCollection"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "C2",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "bool bRecollectTargetsDuringGame = true;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "float RecollectIntervalSeconds = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "double NiagaraCacheRefreshIntervalSeconds = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.VolumeDriver.TaggedTargetCollection",
+     "TDGame.FluidFX.VolumeDriver.RecollectAndRecapture",
+     "TDGame.FluidFX.Niagara.TagAddedLaterIsDrivenAfterCacheRefresh"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "C3",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-4a",
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveComponent.h",
+      "regex": "FTDFluidExternalOutputTargets ExternalOutputTargets;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveComponent.h",
+      "regex": "bool ShouldWriteSharedParameterCollection\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Ops.ExternalTargetValidation",
+     "TDGame.FluidFX.Ops.SharedOutputClaims",
+     "TDGame.FluidFXRhi.Ops.ExternalTargetGpuDirectWrite",
+     "TDGame.FluidFXRhi.Ops.ExternalTargetCpuCopy"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "C4",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDFluidGpu/Public/TDFluidGpuBatch.h",
+      "regex": "float TrackBankStrength = "
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTrackCommon.hlsl",
+      "regex": "TrackDensityContrast"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Bank.CpuProfile",
+     "TDGame.FluidFXRhi.Track.BankMatchesCpu"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Snow.Scalars.TrackDensityContrast"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx12c.md",
+      "line": 20
+     },
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx12c.md",
+      "line": 351
+     }
+    ]
+   },
+   "note": "대비·둑 팩 패스는 있음, 반전 밀도 알파 복사는 없음"
+  },
+  {
+   "id": "C5",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "FX-12",
+    "FX-14"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidPresetAsset.h",
+      "regex": "SurfaceMesh"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTrackSurface.hlsl",
+      "regex": "trackPomActive"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidViscousSurface.hlsl",
+      "regex": "viscousCellCm"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Viscous.SurfaceOutput.PlacementAndGate",
+     "TDGame.FluidFX.LiveComponent.PresetSurfaceMeshLoadsAsyncAndRebinds"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "C6",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "bool bRenderHeterogeneousVolume = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "bool bRenderFogVolume = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverComponent.h",
+      "regex": "class TDGAME_API UTDFluidVolumeDriverComponent\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.VolumeDriver.HeterogeneousDriven",
+     "TDGame.FluidFX.VolumeDriver.SlotResolveAndNeed",
+     "TDGame.FluidFX.VolumeDriver.PlacementMath"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.HeterogeneousStage.TDFluidVolumeDriverSettings.bRenderHeterogeneousVolume"
+     }
+    ],
+    "plans": [
+     "fx9_hvol_vs_svol"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "C7",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-9",
+    "FX-13",
+    "FX-8n"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "bool bDriveTaggedMeshes = true;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "bool bDriveTaggedHeterogeneousVolumes = true;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveComponent.h",
+      "regex": "TSoftObjectPtr<UNiagaraSystem> ExternalNiagaraSystem;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.VolumeDriver.TaggedTargetCollection",
+     "TDGame.FluidFX.Niagara.TaggedActorReceivesCenterExtentsAndTextures",
+     "TDGame.FluidFXRhi.Niagara.Drive.SpawnFollowsDensity"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx9.md",
+      "line": 37
+     }
+    ]
+   },
+   "note": "표면 정렬은 태그 재질 인스턴스와 높이 슬롯으로 대신"
+  },
+  {
+   "id": "C8",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "W-2r",
+    "FX-9",
+    "FX-10",
+    "FX-11",
+    "FX-12",
+    "FX-13"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_heterogeneous_volume_material.py",
+      "regex": "M_TD_FluidHeterogeneousVolume"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_fog_material.py",
+      "regex": "M_TD_FluidFog"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_cloud_material.py",
+      "regex": "M_TD_FluidCloud"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_foliage_material.py",
+      "regex": "M_TD_Fluid"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_viscous_material.py",
+      "regex": "Decal"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "재질 생성 스크립트는 갖춤, 자동 시험 없음"
+  },
+  {
+   "id": "C9",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-2r",
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTileMap.hlsl",
+      "regex": "TileMap1PeriodCm"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl",
+      "regex": "TD_VOL_FLOW_WEIGHT"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.WrapArea.TileMapTargetParameters",
+     "TDGame.FluidFX.WrapArea.Component.TileMapOrigin"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand.Scalars.TileMapHeightCm"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "타일맵만 시험, 거리 마스크·압력 높이는 셰이더만"
+  },
+  {
+   "id": "C10",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-12",
+    "FX-14",
+    "FX-8a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFakeVolume.hlsl",
+      "regex": "FakeThicknessCm"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTrackSurface.hlsl",
+      "regex": "TrackPomMaxDepthCm"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFakeVolume_SmokeChamber.Scalars.FakeThicknessCm"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/fx8a/report.md",
+      "line": 11
+     }
+    ]
+   },
+   "note": "가짜 볼륨 재질과 자국 시차 매핑은 있음, 가짜 볼륨 무대 배치 없음"
+  },
+  {
+   "id": "C11",
+   "d52": "해당 없음",
+   "status": "부분",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRenderProfile.cpp",
+      "regex": "r\\.HeterogeneousVolumes\\.Composition"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "int32 Composition = -1;"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl",
+      "regex": "TD_VOL_CAMERA_FADE"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.RenderProfile.ApplyAndRestore"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 137
+     },
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx9.md",
+      "line": 31
+     }
+    ]
+   },
+   "note": "렌더러 생김, 반투명 합성 값은 측정 뒤 결정이라 유지 값"
+  },
+  {
+   "id": "C12",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-8n",
+    "W-1b",
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-12"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/fluid_niagara_drive.py",
+      "regex": "PROFILES = \\(\"drive\""
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveComponent.h",
+      "regex": "TSoftObjectPtr<UNiagaraSystem> ExternalNiagaraSystem;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.Niagara.Drive.SpawnFollowsDensity",
+     "TDGame.FluidFXRhi.Niagara.Drive.HeightFollowsDensity",
+     "TDGame.FluidFXRhi.Niagara.Drive.LocalMatchesWorld",
+     "TDGame.FluidFXRhi.Niagara.Drive.VelocityCouplingSign"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidDriveMeshFloat"
+     }
+    ],
+    "plans": [
+     "fx8n_drive",
+     "w1b_water_particles"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "구동 보정 계획은 차단, 부유물 수 비용 후보는 사용자 대기"
+  },
+  {
+   "id": "D1",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "bool bRenderHeterogeneousVolume = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "bool bRenderFogVolume = false;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.h",
+      "regex": "class TDGAME_API ATDFluidCloudLayersActor\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.VolumeDriver.SlotResolveAndNeed",
+     "TDGame.FluidFXRhi.VolumeDriver.HeterogeneousDriven",
+     "TDGame.FluidFX.CloudLayers.FlowClockRestarts"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx9.md",
+      "line": 26
+     }
+    ]
+   },
+   "note": ""
+  },
+  {
+   "id": "D2",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-8a",
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl",
+      "regex": "TD_VOL_TERRAIN_HEIGHT"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl",
+      "regex": "TD_VOL_EXTRUDE_TOP_CM"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.HeightCache.EncodeSampleBake",
+     "TDGame.FluidFX.Terrain.CacheSourceAndOps"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_Smoke.Scalars.VolNoiseSubtract"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "감산·지형 기준면 밀도 함수는 셰이더, 높이 공급만 자동 시험"
+  },
+  {
+   "id": "D3",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl",
+      "regex": "TD_VOL_BLACKBODY_SRGB"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl",
+      "regex": "TD_VOL_POLAR"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl",
+      "regex": "TD_VOL_HEIGHT_FADE"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_CrossSectionRadial.Scalars.VolCrossSectionMode"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "공용 함수는 셰이더, 검사는 파이썬 거울만"
+  },
+  {
+   "id": "D4",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float VolumeFadeEndCm = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float VolumeFadeLengthCm = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "FVector VolumePositionOffsetCm = "
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "페이드·위치 오프셋 매개변수화, 전용 자동 시험 없음"
+  },
+  {
+   "id": "D5",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverComponent.h",
+      "regex": "UHeterogeneousVolumeComponent"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.VolumeDriver.HeterogeneousDriven",
+     "TDGame.FluidFXRhi.VolumeDriver.OffscreenCost"
+    ],
+    "data": [],
+    "plans": [
+     "fx9_hvol_vs_svol"
+    ],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx9.md",
+      "line": 43
+     }
+    ]
+   },
+   "note": "엔진 이종 볼륨 방식 하나, 나이아가라 방식 둘은 비범위"
+  },
+  {
+   "id": "D6",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "struct TDGAME_API FTDFluidHeterogeneousVolumeRenderProfile\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "bool bHeterogeneousVolumeCastShadow = false;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.RenderProfile.ApplyAndRestore"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx9.md",
+      "line": 31
+     }
+    ]
+   },
+   "note": "실행 중 콘솔 변수 다리만, 영구값은 측정 뒤 결정"
+  },
+  {
+   "id": "D7",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "FX-8n",
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bSmokeCameraFacing\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidPlaneTypes.h",
+      "regex": "enum class ETDFluidPlaneOrientation\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.VolumeDriver.HeterogeneousDriven",
+     "TDGame.FluidFX.Plane.CameraFacingBasisAtPitchMinus60",
+     "TDGame.FluidFX.Plane.BillboardLeanScreenFactor"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.SmokeCameraFacing"
+     }
+    ],
+    "plans": [
+     "fx9_camera_facing"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "D8",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-8a",
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeRaymarch.hlsl",
+      "regex": "NoiseGrain"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidVolume_SmokeBillow.Scalars.NoiseErosion"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/fx8a/report.md",
+      "line": 9
+     }
+    ]
+   },
+   "note": "저주파 감산·낟알은 셰이더, 질감 판정은 화면 몫"
+  },
+  {
+   "id": "D9",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeTransmittance.h",
+      "regex": "TDFluidVolumeTransmittance"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "bool bEnableTransmittance = false;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Transmittance.SlabMatchesBeerLambert",
+     "TDGame.FluidFX.Transmittance.PointLightDarkerFarSide",
+     "TDGame.FluidFX.Transmittance.ResolutionQuarter",
+     "TDGame.FluidFXRhi.Transmittance.CpuGpuParity"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.CampfireSmoke.TDFluidVolumeRenderSettings.bEnableTransmittance"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "D10",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-8a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeRaymarch.hlsl",
+      "regex": "PhaseForwardG"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeRaymarch.hlsl",
+      "regex": "multiScatter"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/fx8a/report.md",
+      "line": 10
+     }
+    ]
+   },
+   "note": "이중 로브 위상·다중 산란 근사는 셰이더, 자동 시험 없음"
+  },
+  {
+   "id": "D11",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-8b",
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "struct TDGAME_API FTDFluidShadowCapsule\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float CapsuleShadowStrength = "
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "폰 캡슐 그림자 구현, 전용 시험 없음, 구조물은 엔진 그림자"
+  },
+  {
+   "id": "D12",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "ETDFluidVolumeHeightSource VolumeHeightSource = "
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+      "regex": "int32 SceneCaptureResolution = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.VolumeDriver.SceneCaptureHeight",
+     "TDGame.FluidFX.VolumeDriver.RecollectAndRecapture"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FloorSmokeCapture.TDFluidTerrainHeightSettings.VolumeHeightSource"
+     }
+    ],
+    "plans": [
+     "fx9_floor_smoke"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "D13",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-8b",
+    "FX-8n",
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bInvertedVortex\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bPortalVortex\\b"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_smoke_setup_stage.py",
+      "regex": "\"SetupVortex\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SolverBounds.VortexSpinsAndInverts",
+     "TDGame.FluidFX.SolverBounds.PortalDriftIsInward",
+     "TDGame.FluidFXRhi.Bounds.VortexParity"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "D14",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFogVolume.hlsl",
+      "regex": "FogWindowBlendRatio"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFog_PassiveField.Scalars.FogUsesWindowMask"
+     }
+    ],
+    "plans": [
+     "fog_f2_passive"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w11.json"
+    ],
+    "docs": []
+   },
+   "note": "정적 큰 상자와 창 가중"
+  },
+  {
+   "id": "D15",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float VolumeSizeMultiplier = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.FogInput.FogKindsDataContract"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FogTileSim.TDFluidVolumeRenderSettings.VolumeSizeMultiplier"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "배율 시험은 프리셋 데이터 계약 수준"
+  },
+  {
+   "id": "E1",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "FX-8a",
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFlameCard.hlsl",
+      "regex": "temperatureKelvin"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFireActor.h",
+      "regex": "class TDGAME_API ATDFluidFireActor\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fire.TongueCountCampfire",
+     "TDGame.FluidFX.Fire.FlickerIsDeterministicBandLimited",
+     "TDGame.FluidFX.Fire.CoreDensityCapped"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "E2",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-8b",
+    "FX-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bCandle\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bFlamethrower\\b"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_fire_stage.py",
+      "regex": "MI_TD_FluidFlame_Torch"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Preset.FireFamilyKindsValid",
+     "TDGame.FluidFX.Fire.CampfireSmokeSteadyState"
+    ],
+    "data": [],
+    "plans": [
+     "fx5_flamethrower"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "셋업은 종류 조합으로 대응"
+  },
+  {
+   "id": "E3",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-8a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFlameCard.hlsl",
+      "regex": "FlameTemperatureCurve"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFlame_Campfire.Scalars.FlameBrightnessExponent"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/fx8a/report.md",
+      "line": 5
+     }
+    ]
+   },
+   "note": "온도 곡선·색 램프는 셰이더, 자동 시험 없음"
+  },
+  {
+   "id": "E4",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-8a",
+    "FX-4a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFlameCard.hlsl",
+      "regex": "TD_RIDGE"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFlame_Campfire.Scalars.FlameNoiseScale"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/fx8a/report.md",
+      "line": 6
+     }
+    ]
+   },
+   "note": "능선 노이즈·고차 표본은 셰이더, 자동 시험 없음"
+  },
+  {
+   "id": "E5",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-8a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFlameCard.hlsl",
+      "regex": "FlameSmokeOpacity"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/fx8a/report.md",
+      "line": 7
+     }
+    ]
+   },
+   "note": "알파 합성과 불 위 연기 흡수는 셰이더, 자동 시험 없음"
+  },
+  {
+   "id": "E6",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float HeatCoolingPerSec = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Heat.SeparateFromDensityCooling",
+     "TDGame.FluidFX.Explosion.HotCoreAreaTimeline",
+     "TDGame.FluidFX.Fragment.BurstHeatSustainsWhileDensityDecays",
+     "TDGame.FluidFXRhi.Heat.CpuGpuParity"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "E7",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-8n"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidEmberComponent.h",
+      "regex": "class TDGAME_API UTDFluidEmberComponent\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.Niagara.EmberHeat.SpawnsFromHeatOnly",
+     "TDGame.FluidFXRhi.Niagara.EmberHeat.AttributeRanges",
+     "TDGame.FluidFX.Ember.SpawnAdvectKill"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidEmberHeat"
+     }
+    ],
+    "plans": [
+     "fx8n_embers"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "보정 일지 최종은 둔감"
+  },
+  {
+   "id": "E8",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFireActor.h",
+      "regex": "class TDGAME_API ATDFluidFireActor\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fire.TorchCoreHeatPinnedToAnchor",
+     "TDGame.FluidFX.Fire.ExtraCardCountFromPreset",
+     "TDGame.FluidFX.Fire.SubstepEmissionContinuous"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "E9",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-8a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCharredWood.hlsl",
+      "regex": "WoodCrackWidth"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_fire_stage.py",
+      "regex": "MI_TD_FluidCharredWood_Campfire"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCharredWood_Campfire.Scalars.WoodGlowIntensity"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/fx8a/report.md",
+      "line": 8
+     }
+    ]
+   },
+   "note": "장작 균열 발광 재질과 무대 연결, 자동 시험 없음"
+  },
+  {
+   "id": "E10",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.h",
+      "regex": "class TDGAME_API ATDFluidFragmentEmitterActor\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.BreakDelegateStartsSameFrame",
+     "TDGame.FluidFX.Fragment.BurstUsesRingVelocity",
+     "TDGame.FluidFX.Fragment.BuildStampsFromTransforms"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "E11",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bExplosionGroundDust\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.TargetArrayMatchesLegacy",
+     "TDGame.FluidFX.Fragment.HeightFalloffForGroundTarget"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ExplosionGroundDust"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "E12",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.cpp",
+      "regex": "SetActorTickInterval\\(TrailSettings\\.ArmedPollIntervalSeconds\\)"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 173
+     }
+    ]
+   },
+   "note": "엔진 결함 우회 행, 우리는 폴링 방식이라 불필요"
+  },
+  {
+   "id": "E13",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-8b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bPlasmaExplosion\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bSteamPuff\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Preset.FireFamilyKindsValid"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.Fireball"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "E14",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidObstacleComponent.h",
+      "regex": "class TDGAME_API UTDFluidObstacleComponent\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.MassInput.OrientedObstacleProjection",
+     "TDGame.FluidFX.MassInput.ObstacleComponentRegistration",
+     "TDGame.FluidFXRhi.MassInput.ObstacleCellsStayEmpty"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.Flamethrower"
+     }
+    ],
+    "plans": [
+     "fx5_flamethrower",
+     "fx5_flamethrower-p20"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w11.json"
+    ],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "E15",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-7"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/pie_lookdev_fluid.py",
+      "regex": "APPLY_KEYS = "
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "구도 키는 있음, 주변광 프리셋은 미확인"
+  },
+  {
+   "id": "F1",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFogVolume.hlsl",
+      "regex": "TDFogFloorHeightCm"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bFogMist\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.FogInput.FogKindsDataContract"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FogMist"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Sim.Scalars.FogExtrudeHeightCm"
+     }
+    ],
+    "plans": [
+     "fog_f1_layer"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w11.json"
+    ],
+    "docs": []
+   },
+   "note": "시뮬 구동 안개 있음, 안개 바닥은 평면 기준이고 지형 기준면은 이종 볼륨만"
+  },
+  {
+   "id": "F2",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFogVolume.hlsl",
+      "regex": "FogPassiveCoverage"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFog_PassiveField.Scalars.FogPassiveCoverage"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFog_Passive0.Scalars.FogPassiveCoverage"
+     }
+    ],
+    "plans": [
+     "fog_f2_passive"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w11.json"
+    ],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "F3",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-11",
+    "FQ-18"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/fx10_fog_grid_plan.json",
+      "regex": "\"run_label\": \"fx10\""
+     },
+     {
+      "file": "Tools/WorldGen/editor_build_open_world.py",
+      "regex": "enable_volumetric_fog"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "격자 행렬 측정 계획만, 전역 값은 사용자 결정 대기"
+  },
+  {
+   "id": "F4",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_fog_stage.py",
+      "regex": "ZONE_COUNT_ON_AXIS = "
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "안개 무대 구역 스크립트, 자동 시험 없음"
+  },
+  {
+   "id": "F5",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bFogMistStir\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.FogInput.CutTrailRefills",
+     "TDGame.FluidFX.Volume.SmokeIsCutByActorStampAndRefills",
+     "TDGame.FluidFX.InputBrushRules.VelocityOnlyZeroesDensityAndHeat"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FogMistStir"
+     }
+    ],
+    "plans": [
+     "fog_f5_cut_stir"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "F6",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bFogTileSim\\b"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.FogTile.SelfWrapUvMatchesTileMapOrigin",
+     "TDGame.FluidFXRhi.FogTile.GpuWrapVolumeParameters",
+     "TDGame.FluidFXRhi.FogTile.CpuWrapVolumeParameters"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FogTileSim.TDFluidSimulationConfig.AreaAddressMode"
+     }
+    ],
+    "plans": [
+     "fog_f6_tile",
+     "fog_f6_tile-p20"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w11.json"
+    ],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "F7",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_fog_stage.py",
+      "regex": "LabGreenLight"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [
+     "fog_f7_lights"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w11.json"
+    ],
+    "docs": []
+   },
+   "note": "엔진 안개의 다중 광원 처리에 의존, 자동 시험 없음"
+  },
+  {
+   "id": "F8",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-10"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFogVolume.hlsl",
+      "regex": "FogCameraFadeInvert"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidVolumeDensityCommon.hlsl",
+      "regex": "TD_VOL_CAMERA_FADE"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "같은 텍스처 두 렌더러와 거리 페이드는 셰이더, 자동 시험 없음"
+  },
+  {
+   "id": "G1",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.h",
+      "regex": "TObjectPtr<UVolumetricCloudComponent> CloudComponent;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.cpp",
+      "regex": "CloudComponent->SetMaterial\\(ActiveMaterial\\);"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_cloud_stage.py",
+      "regex": "\"cast_cloud_shadows\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudLayers.SetupIndex",
+     "TDGame.FluidFX.CloudLayers.SlabCoversActiveBands",
+     "TDGame.FluidFXRhi.CloudLayers.BindsSlotTextures",
+     "TDGame.FluidFXRhi.CloudLayers.OffscreenCost"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Globals.TDFluidCloudSceneSettings.ViewSampleCountScaleFar"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_SkyOnly"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx13r-fx11r.md",
+      "line": 25
+     }
+    ]
+   },
+   "note": "층 고도·자기·지면 구름 그림자 있음, 국소광 표본 설정 근거 없음"
+  },
+  {
+   "id": "G2",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bCloudWrapField\\b"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.cpp",
+      "regex": "bool ATDFluidCloudLayersActor::ShouldWarnWrapMismatch"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudSlot.hlsl",
+      "regex": "float cloudEdgeMask ="
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudLayers.WrapMismatchRule",
+     "TDGame.FluidFX.WrapArea.SeamContinuity",
+     "TDGame.FluidFX.CloudSource.PainterSeamCrossing"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.CloudWrapField"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_WrapField"
+     }
+    ],
+    "plans": [
+     "cloud_g2_wrap_seam"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "G3",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.h",
+      "regex": "TArray<FTDFluidCloudSetup> Setups;"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_cloud_stage.py",
+      "regex": "\\{\"name\": \"Titan\", \"sources\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudLayers.SetupIndex",
+     "TDGame.FluidFX.CloudLayers.SlotParameterNames",
+     "TDGame.FluidFXRhi.CloudSourceAsset.LiveSlotsBind"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Pillars"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Vortex"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Impulse"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Aurora"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Titan"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Paint"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "시뮬은 미터 규모, 구름은 킬로미터 발자국으로 늘려 표시"
+  },
+  {
+   "id": "G4",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-5"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudPainterActor.h",
+      "regex": "class TDGAME_API ATDFluidCloudPainterActor"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudPainterActor.cpp",
+      "regex": "TD\\.FluidFX\\.CloudPaintStroke"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudSource.PainterPaintsAndErases",
+     "TDGame.FluidFX.CloudSource.PainterRayToAltitude",
+     "TDGame.FluidFX.CloudSource.PainterDisplayToSimulation",
+     "TDGame.FluidFX.CloudSource.PainterScaleAndRadius",
+     "TDGame.FluidFXRhi.CloudSource.PainterTexelRoundTrip"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.CloudPaint"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Globals.TDFluidCloudSceneSettings.PainterBrushRadiusKm"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Paint"
+     }
+    ],
+    "plans": [
+     "cloud_g4_painter"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "G5",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudSlot.hlsl",
+      "regex": "cloudPattern < 0\\.5 \\? cloudStratus"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.cpp",
+      "regex": "ATDFluidCloudLayersActor::ComputeCloudFlowSeconds"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_cloud_stage.py",
+      "regex": "\\{\"name\": \"Mammatus\", \"sources\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudLayers.FlowClockRestarts",
+     "TDGame.FluidFX.CloudLayers.SlotParameterNames"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Nimbus"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Stratus"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mammatus"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Cyclone"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Tornado"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Volcano"
+     }
+    ],
+    "plans": [
+     "cloud_g5_cyclone"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "재질 흐름 시계로 움직이는 표시 전용, 원천 없는 셋업"
+  },
+  {
+   "id": "G6",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-9",
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudSlot.hlsl",
+      "regex": "SlotTerrainFollow \\* cloudTerrainCm"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudCommon.hlsl",
+      "regex": "#define TD_CLOUD_TERRAIN_HEIGHT_CM"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_cloud_stage.py",
+      "regex": "def find_terrain_contract_problems"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudLayers.SlabCoversActiveBands"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloudStageTerrain"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx13r-fx11r.md",
+      "line": 25
+     }
+    ]
+   },
+   "note": "무대에 구운 높이 텍스처만, 런타임 지형 높이 연결 없음"
+  },
+  {
+   "id": "G7",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudCombine.hlsl",
+      "regex": "Slot0Main\\.x \\+ Slot1Main\\.x \\+ Slot2Main\\.x \\+ Slot3Main\\.x"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.cpp",
+      "regex": "FVector2D ATDFluidCloudLayersActor::ComputeSlabKm"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudLayers.SlabCoversActiveBands",
+     "TDGame.FluidFXRhi.CloudLayers.BindsSlotTextures",
+     "TDGame.FluidFXRhi.CloudLayers.OffscreenCost"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_VolcanoSky"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_SkyOnly"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "재질 하나의 고정 슬롯 넷(하늘 층 포함) 합산"
+  },
+  {
+   "id": "G8",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-9",
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudSlot.hlsl",
+      "regex": "float cloudRadialU ="
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidHeterogeneousVolume.hlsl",
+      "regex": "round\\(VolCrossSectionMode\\)"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_CrossSectionRadial"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_CrossSectionRing"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "방사·선형·링 단면 셰이더와 재질 있음, 단면 전용 자동 시험 없음"
+  },
+  {
+   "id": "G9",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-8"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudSlot.hlsl",
+      "regex": "SlotEmissive = max\\(SlotEmissiveColor"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Mushroom"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_MushroomShield"
+     }
+    ],
+    "plans": [
+     "cloud_g9_mushroom",
+     "cloud_g9_mushroom-p20"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "발광·단면 재질 있음, 전용 시험 없고 최종 검증 재현 실패·판정 불가(유지)"
+  },
+  {
+   "id": "G10",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-8"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.cpp",
+      "regex": "CloudComponent->SetViewSampleCountScale\\(DesiredScale\\);"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudSlot.hlsl",
+      "regex": "float cloudCameraFade ="
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudLayers.NearSamplingHysteresis"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Globals.TDFluidCloudSceneSettings.ViewSampleCountScaleNear"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Globals.TDFluidCloudSceneSettings.NearEnterMarginKm"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Stratus"
+     }
+    ],
+    "plans": [
+     "cloud_g10_near"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "최종 검증 재현 실패(유지), 카메라 페이드는 층운 셋업만 켬"
+  },
+  {
+   "id": "G11",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bCloudCyclone,"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudTypes.h",
+      "regex": "float CycloneEyeRadiusRatio"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudSource.CycloneEyeForms",
+     "TDGame.FluidFX.CloudSource.SimulationClockRestarts"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.CloudCyclone"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_CycloneLive"
+     }
+    ],
+    "plans": [
+     "cloud_g11_cyclone_live",
+     "cloud_g11_cyclone_live-p20"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w13.json"
+    ],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "G12",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidCloudSlot.hlsl",
+      "regex": "SlotTerrainFollow \\* cloudTerrainCm"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Volcano"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_VolcanoSky"
+     }
+    ],
+    "plans": [
+     "cloud_g12_volcano",
+     "cloud_g12_volcano-p20"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w13.json"
+    ],
+    "docs": []
+   },
+   "note": "경사 흐름 시뮬 없이 다층·지형 정렬 재질로 보정 통과"
+  },
+  {
+   "id": "G13",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-7",
+    "FQ-8"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudWindCurtainActor.h",
+      "regex": "class TDGAME_API ATDFluidCloudWindCurtainActor"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bCloudStormWall,"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.CloudSource.StormWallRisesAndCurls",
+     "TDGame.FluidFX.CloudSource.WindCurtainStamps"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.CloudStormWall"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Globals.TDFluidCloudSceneSettings.WindCurtainSpeedCmPerSec"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_StormWall"
+     }
+    ],
+    "plans": [
+     "cloud_g13_storm_wall"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "바람 막 도장 시험 실패(속도 채택 뒤), 최종 검증 재현 실패(유지)"
+  },
+  {
+   "id": "G14",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_cloud_stage.py",
+      "regex": "def attach_tornado_hvol"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.VolumeDriver.HeterogeneousDriven"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Tornado"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_Tornado"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "아래 HVOL은 소용돌이 이종 볼륨 프리셋, 토네이도 전용 시험 없음"
+  },
+  {
+   "id": "H1",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-8"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bSnowTrack,"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_track_stage.py",
+      "regex": "\"dust_preset\": \"SandDust\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Kinds.BuildersAndFamilies",
+     "TDGame.FluidFXRhi.Track.PainterVelocityMatchesCpu",
+     "TDGame.FluidFXRhi.Track.PainterOffscreenCost"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.TrackPainter"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.TrackDust"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.SandTrack"
+     }
+    ],
+    "plans": [
+     "track_fx12c_groove",
+     "track_fx12c_groove-p20"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "홈 보정 최종 검증 판정 불가(유지)"
+  },
+  {
+   "id": "H2",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bSandTrack,"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Kinds.BuildersAndFamilies"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.SandTrack"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "단일 시뮬 표면·볼륨 겸용 셋업 근거 없음, 두 액터 조합만"
+  },
+  {
+   "id": "H3",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.cpp",
+      "regex": "ATDFluidFragmentEmitterActor::BuildFootprintStamp"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.FootprintPaintedAreaMatchesBox",
+     "TDGame.FluidFX.Fragment.InputModeSelectsStampKinds"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "조각 점·상자 발자국 입력 있음, 모래 지면 자국·먼지 무대 연결 근거 없음"
+  },
+  {
+   "id": "H4",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTrackCommon.hlsl",
+      "regex": "DuneHeightTexture"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand.Scalars.TileMapHeightCm"
+     }
+    ],
+    "plans": [
+     "track_sand_h4"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "정적 사구 타일 재질 있음, 자동 시험·통과 판정 없음"
+  },
+  {
+   "id": "H5",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTrackCommon.hlsl",
+      "regex": "WpoFadeEndCm"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand"
+     }
+    ],
+    "plans": [
+     "track_sand_h4"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "무대 바닥 정적 변위 재질 있음, 자동 시험·통과 판정 없음"
+  },
+  {
+   "id": "H6",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_track_material.py",
+      "regex": "FUNCTION_NAME = \"MF_TD_FluidTrackSample\""
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveSubsystem.cpp",
+      "regex": "int32 UTDFluidLiveSubsystem::BindLandscapeMaterialViaTag"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx12c.md",
+      "line": 30
+     }
+    ]
+   },
+   "note": "재질 함수·결합 함수만, 지형 재질 삽입은 월드 담당 후속"
+  },
+  {
+   "id": "H7",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-12",
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_SandWall"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidVolume_SandDust"
+     }
+    ],
+    "plans": [
+     "cloud_h7_sandwall"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w13.json"
+    ],
+    "docs": []
+   },
+   "note": "모래 벽 구름·지면 먼지 볼륨만, 연무·바람 입자 근거 없음"
+  },
+  {
+   "id": "H8",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_track_stage.py",
+      "regex": "\"name\": \"sand\","
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Sand"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidVolume_SandDust"
+     }
+    ],
+    "plans": [
+     "track_sand_h4"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "모래 무대 홈·먼지·수확기만, 하강풍 먼지 기둥 근거 없음"
+  },
+  {
+   "id": "I1",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_track_stage.py",
+      "regex": "\"dust_preset\": \"SnowDust\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Kinds.BuildersAndFamilies"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.SnowTrack"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "페인터·먼지 조합만, 단일 시뮬 구성 근거 없음"
+  },
+  {
+   "id": "I2",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTrackDeformMeshActor.h",
+      "regex": "class TDGAME_API ATDFluidTrackDeformMeshActor"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTrackSurface.hlsl",
+      "regex": "PomMaxSteps"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.DeformMesh.SnapPolicyActivation"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_SnowDeform"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_SnowGround"
+     }
+    ],
+    "plans": [
+     "track_snow_i2"
+    ],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx12c.md",
+      "line": 30
+     }
+    ]
+   },
+   "note": "무대 바닥 시차·근거리 변형 메시 있음, 지형 재질 삽입은 월드 담당 후속"
+  },
+  {
+   "id": "I3",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.cpp",
+      "regex": "void BuildTDFluidTrackBankBlur"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Bank.CpuProfile",
+     "TDGame.FluidFXRhi.Track.BankMatchesCpu"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidVolume_SnowDust"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidTrack_Snow"
+     }
+    ],
+    "plans": [
+     "track_snow_i2"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "깊은 홈·둑·눈가루 볼륨 있음, 눈보라 안개·줄무늬 입자 근거 없음"
+  },
+  {
+   "id": "I4",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-5",
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidPresetAsset.cpp",
+      "regex": "case ETDFluidPresetKind::SnowAvalanche:"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.MassInput.NiagaraSplatReachesTarget",
+     "TDGame.FluidFXRhi.MassInput.SplatOrderIndependent"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.SnowAvalanche.TDFluidMassInputSettings"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidAvalanche"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "눈사태 전용 시험 없음, 나이아가라 대량 입력 시험으로 갈음"
+  },
+  {
+   "id": "J1",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "FX-4a",
+    "FX-12",
+    "FX-8n"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.cpp",
+      "regex": "StepSimplePainter\\(ClampedDeltaTime\\);"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SimplePainter.FootprintTrailAndFade",
+     "TDGame.FluidFXRhi.SimplePainterParity",
+     "TDGame.FluidFXRhi.Track.PainterVelocityMatchesCpu"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FootprintPainter"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "대량 페인터 규모 비용은 성능 판정 몫"
+  },
+  {
+   "id": "J2",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "완료"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.cpp",
+      "regex": "bool FTDFluidGrid2DSolver::ShiftOriginForSlidingWindow"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SlidingWindow.WorldCoordinatePreservation",
+     "TDGame.FluidFXRhi.ShiftMovesStateExactly"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "J3",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-8"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float GroundSlabThicknessCm"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float BrushHeightFadeDistanceCm"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Input.GroundSlabOnRamp",
+     "TDGame.FluidFX.Track.Input.HeightFadeCurve",
+     "TDGame.FluidFX.Track.Input.SlowBonesAndSpeedCap",
+     "TDGame.FluidFX.Track.Input.StrokeNoGaps"
+    ],
+    "data": [],
+    "plans": [
+     "track_fx12c_groove",
+     "track_fx12c_groove-p20"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "J4",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTrackSourceComponent.h",
+      "regex": "class TDGAME_API UTDFluidTrackSourceComponent"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float VehicleStampAspectRatio"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Input.WheelSocketStamps",
+     "TDGame.FluidFX.Track.Stamp.EllipseAxesAndHardness",
+     "TDGame.FluidFXRhi.Track.EllipseStampMatchesCpu"
+    ],
+    "data": [],
+    "plans": [
+     "track_fx12c_vehicle"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "J5",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveSubsystem.cpp",
+      "regex": "int32 UTDFluidLiveSubsystem::BindLandscapeMaterialViaTag"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_track_material.py",
+      "regex": "FUNCTION_NAME = \"MF_TD_FluidTrackSample\""
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx12c.md",
+      "line": 30
+     }
+    ]
+   },
+   "note": "결합 함수만, 지형 재질 삽입은 월드 담당 후속"
+  },
+  {
+   "id": "J6",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-2r",
+    "FX-14"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidSurfaceOutputActor.cpp",
+      "regex": "TD\\.FluidFX\\.SurfaceDecal"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterWetDecal.hlsl",
+      "regex": "WetSubmergedFadeCm"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Viscous.SurfaceOutput.PlacementAndGate",
+     "TDGame.FluidFX.Water.WetDecal.FollowsWindow",
+     "TDGame.FluidFXRhi.RainAssets.PuddleDecalParameters"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidViscousDecal_Blood"
+     }
+    ],
+    "plans": [
+     "viscous_fx14_blood"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w13.json"
+    ],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "J7",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-12",
+    "W-2s"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTrackSurface.hlsl",
+      "regex": "WetSourceTexture"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.Track.Wetness.SourceBinding",
+     "TDGame.FluidFX.Water.Wetness.SwashWetsBandAboveWaterline"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "J8",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-12"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-8"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.cpp",
+      "regex": "void BuildTDFluidTrackBankBlur"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "float TrackBankStrength"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Track.Bank.CpuProfile",
+     "TDGame.FluidFXRhi.Track.BankMatchesCpu",
+     "TDGame.FluidFX.Track.Stamp.EllipseAxesAndHardness",
+     "TDGame.FluidFXRhi.Input.BitmapDensityMatchesTexels"
+    ],
+    "data": [],
+    "plans": [
+     "track_fx12c_groove",
+     "track_fx12c_groove-p20"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "비트맵 스탬프는 범용 필드 입력, 홈 보정 판정 불가(유지)"
+  },
+  {
+   "id": "K1",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-13"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFoliageBendLayer.h",
+      "regex": "class TDGAME_API FTDFluidFoliageBendLayer"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFoliageBendLayer.h",
+      "regex": "static FVector2f AdvanceBend"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidFoliageBend.hlsl",
+      "regex": "float3 tdBendArm ="
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.FoliageBend.StepResponse",
+     "TDGame.FluidFX.FoliageBend.FrameRateIndependence",
+     "TDGame.FluidFXRhi.FoliageBend.GpuMatchesCpu",
+     "TDGame.FluidFX.FoliageFlow.WindowVectors"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FoliageWalk"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassSim"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassWind"
+     }
+    ],
+    "plans": [
+     "foliage_k1_bend"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "K2",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-13"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-6"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFoliageBendLayer.cpp",
+      "regex": "FVector2f ResolvePressDirection"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.FoliageBend.PressHoldsDirection",
+     "TDGame.FluidFX.FoliageBend.PressHalfLifeRecord"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.FoliagePainter"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassPress"
+     }
+    ],
+    "plans": [
+     "foliage_k2_press"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "눌림 반감기 목표는 보류(사용자 결정 대기)"
+  },
+  {
+   "id": "K3",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-13"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFoliageBendLayer.cpp",
+      "regex": "Parameters\\.RippleSlopeWeight = Config\\.BendFromRippleSlope;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.FoliageBend.RippleSlopeOpposesGradient",
+     "TDGame.FluidFX.FoliageBend.RippleLagRecord",
+     "TDGame.FluidFXRhi.FoliageBend.WaterAuxKeepsObstacleDistance"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ReedShallows"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_Reed"
+     }
+    ],
+    "plans": [
+     "foliage_k3_reed"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "갈대 보정 채택은 헤드리스 되돌림으로 제거됨"
+  },
+  {
+   "id": "K4",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-13"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_foliage_stage.py",
+      "regex": "\"name\": \"PcgStandIn\""
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_PcgStandIn"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx13r-fx11r.md",
+      "line": 24
+     }
+    ]
+   },
+   "note": "PCG 대역 대리 구역만, 실제 PCG 풀 재질 삽입은 월드 담당 후속"
+  },
+  {
+   "id": "K5",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-13"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_foliage_stage.py",
+      "regex": "\"name\": \"Underwater\""
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidFoliage_GrassUnderwater"
+     }
+    ],
+    "plans": [
+     "foliage_k5_radial"
+    ],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Tools/FluidFX/calib/batch_queue.json",
+      "line": 90
+     }
+    ]
+   },
+   "note": "수중 구역·재질 있음, 방사 눕힘 보정은 측정 명세 없어 차단"
+  },
+  {
+   "id": "L1",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-6"
+   ],
+   "default_off": {
+    "file": "Source/TDFluidGpu/Private/TDFluidGpuBackendSelection.cpp",
+    "regex": "TEXT\\(\"TD\\.FluidFX\\.WaterGpu\"\\),\\s*0,"
+   },
+   "user_items": [
+    "FQ-10"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolverDenseWater.cpp",
+      "regex": "TEXT\\(\"TD\\.FluidFX\\.DenseWater\"\\)"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidDenseWaterCacheAsset.h",
+      "regex": "class TDGAME_API UTDFluidDenseWaterCacheAsset"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.DenseWater.FillsOneMeterGap",
+     "TDGame.FluidFX.DenseWater.SaddleIsNotClimbed",
+     "TDGame.FluidFX.DenseWater.DownhillAcceleratesUphillDecelerates",
+     "TDGame.FluidFXRhi.DenseWater.CpuGpuParity192",
+     "TDGame.FluidFXRhi.DenseWater.MemoryEstimate2048"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.DenseWater.TDFluidSimulationConfig.bEnableDenseWater"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.DenseCreek.TDFluidSimulationConfig.GridResolution"
+     }
+    ],
+    "plans": [
+     "w6_dense_creek"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "물 GPU 기본 꺼짐이라 기본은 CPU 대체 해상도, 개울 보정 차단"
+  },
+  {
+   "id": "L2",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "W-2s"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterWetnessRules.h",
+      "regex": "static float ComputeCoastWavePhase"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterOffset.hlsl",
+      "regex": "CoastWavePhase"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.Wetness.SwashWetsBandAboveWaterline",
+     "TDGame.FluidFXRhi.Water.Wetness.SwashBandParity"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261025/wave1/spec-w2s-bc.md",
+      "line": 23
+     }
+    ]
+   },
+   "note": "해석식 해안 위상만, 선택 시뮬 해안파는 미배정"
+  },
+  {
+   "id": "L3",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-2s"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.cpp",
+      "regex": "TEXT\\(\"TD\\.FluidFX\\.WaterWetness\"\\)"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterWetDecal.hlsl",
+      "regex": "WetSubmergedFadeCm"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.Wetness.DriesWithTimeConstant",
+     "TDGame.FluidFX.Water.Wetness.WaterCellsAreWet",
+     "TDGame.FluidFX.Water.WetDecal.FollowsWindow",
+     "TDGame.FluidFXRhi.Water.Wetness.Gpu1024MatchesCpu192"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.WaterLayer.TDFluidSimulationConfig.bEnableWaterWetness"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L4",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-2r",
+    "W-1b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterParticleActor.cpp",
+      "regex": "TD\\.FluidFX\\.WaterParticles"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "foamFarBlend"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "tileMapFoam"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.WaterParticleAssets.WhitewaterSpawnsOnWhitewater",
+     "TDGame.FluidFX.WaterParticle.Contact.CpuWaterWhitewaterRises",
+     "TDGame.FluidFXRhi.WaterParticle.ContactRaisesWhitewaterGpu"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWaterWhitewater_Default"
+     }
+    ],
+    "plans": [
+     "w1b_water_particles"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L5",
+   "d52": "해당 없음",
+   "status": "있음",
+   "stages": [
+    "W-1b"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-12"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterParticleActor.h",
+      "regex": "FTDFluidWaterSurfaceParameters ResolveWaterSurfaceParameters\\(\\);"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFXRhi.WaterParticleAssets.DebrisFollowsSurface",
+     "TDGame.FluidFXRhi.WaterParticleAssets.DebrisCarriedByFlow"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterDebris"
+     }
+    ],
+    "plans": [
+     "w1b_water_particles"
+    ],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 258
+     }
+    ]
+   },
+   "note": "결함은 설계로 회피, 입자 높이를 수면에서 읽음, 부유물 수 상향은 비용 보류"
+  },
+  {
+   "id": "L6",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-7"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidNearRippleLayer.h",
+      "regex": "class TDGAME_API FTDFluidNearRippleLayer"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveComponent.cpp",
+      "regex": "TEXT\\(\"TD\\.FluidFX\\.NearRipple\"\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.NearRipple.SubstepCountAndClamp",
+     "TDGame.FluidFX.NearRipple.WindowTorusMath",
+     "TDGame.FluidFXRhi.NearRipple.DeterministicReplay",
+     "TDGame.FluidFXRhi.NearRipple.OffscreenCost"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.WaterLayer.TDFluidWaterNearRippleSettings.bEnabled"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L7",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-2s"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "bool bEnableLodGrid = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterLodGridComponent.h",
+      "regex": "class TDGAME_API UTDFluidWaterLodGridComponent"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterLodMorph.hlsl",
+      "regex": "LodMorphStartRatio"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.WaterLodGrid.SelectionCoversWithoutGapsOrOverlap",
+     "TDGame.FluidFX.WaterLodGrid.SharedEdgeVerticesMatchAfterMorph",
+     "TDGame.FluidFX.WaterLodGrid.NeighborLevelsDifferByAtMostOne",
+     "TDGame.FluidFX.WaterLodGrid.DisabledByDefaultKeepsTiles"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidWaterLodGridSettings.bEnableLodGrid"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "카메라 추종 격자는 기본 꺼짐, 켜는 종류 없음"
+  },
+  {
+   "id": "L8",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "W-1"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterActor.h",
+      "regex": "FName WaterSurfaceActorTag"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterActor.cpp",
+      "regex": "void ATDFluidWaterActor::RebuildSharedSurfaceMaterials"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.WaterActor.SharesMIDPerParentMaterial",
+     "TDGame.FluidFX.Water.WaterActor.DrivesWaterMaterialParameters",
+     "TDGame.FluidFX.Water.WaterActor.RegionTagExcludesRibbons"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "수면 태그 메시 높이가 수위"
+  },
+  {
+   "id": "L9",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "W-2r"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "WaterExtinctionPerCm"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_Lake.Vectors.WaterExtinctionPerCm"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "흡수 계수 재질 값 있음, 자동 시험·통과 판정 없음"
+  },
+  {
+   "id": "L10",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "W-2r"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_water_stage.py",
+      "regex": "LAKE_RADIUS_CM = "
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_water_stage.py",
+      "regex": "COAST_SCENE = "
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_Lake"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_Sea"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_SeaStorm"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_Swamp"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "호수·해변 무대와 호수·바다 둘·늪 재질 있음, 바다 변형 수 부족, 시험·판정 없음"
+  },
+  {
+   "id": "L11",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterPropActor.h",
+      "regex": "class TDGAME_API ATDFluidWaterPropActor"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.WaterProps.SourceStampsLineAndPoint",
+     "TDGame.FluidFX.WaterProps.ActorQueuesSourceAndCoupling",
+     "TDGame.FluidFX.WaterProps.CouplingColumnsFromBottomBand",
+     "TDGame.FluidFXRhi.WaterProps.LiquidSphereSlotDriven"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.Fountain"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.Cauldron"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.LiquidSphereClear"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.BloodOrb"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.WaterySandFlow"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.DenseTank"
+     }
+    ],
+    "plans": [
+     "w5_liquid_sphere_l11",
+     "w5_tank_l11"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "액체 구 보정은 차단"
+  },
+  {
+   "id": "L12",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-3"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRainActor.h",
+      "regex": "class TDGAME_API ATDFluidRainActor"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Rain.ImpactCountConservesRate",
+     "TDGame.FluidFX.Rain.PuddleLevelIntegration",
+     "TDGame.FluidFX.Rain.WetnessFromRain",
+     "TDGame.FluidFXRhi.Rain.GpuWaterRippleAndWetness"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.RainPond"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidRain"
+     }
+    ],
+    "plans": [
+     "w3_rain"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L13",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-6"
+   ],
+   "default_off": {
+    "file": "Source/TDFluidGpu/Private/TDFluidGpuBackendSelection.cpp",
+    "regex": "TEXT\\(\"TD\\.FluidFX\\.WaterGpu\"\\),\\s*0,"
+   },
+   "user_items": [
+    "FQ-10"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidHullWakeComponent.h",
+      "regex": "class TDGAME_API UTDFluidHullWakeComponent"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.DenseWater.HullStampsFromBounds"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ShipWakeSea.TDFluidSimulationConfig.SimExtentCm"
+     }
+    ],
+    "plans": [
+     "w6_ship_wake"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "물 GPU 기본 꺼짐이라 큰 창 고해상도는 기본 아님, 항적 보정 차단"
+  },
+  {
+   "id": "L14",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-2s"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "\\bTileWaves,"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidTileMap.hlsl",
+      "regex": "TileMap1PeriodCm"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.WrapArea.Component.TileMapOrigin",
+     "TDGame.FluidFXRhi.WrapArea.TileMapTargetParameters",
+     "TDGame.FluidFXRhi.WrapArea.TileSimPassTiming"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.TileWaves.TDFluidSimulationConfig.AreaAddressMode"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_Sea.Scalars.TileMap1HeightCm"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L15",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-6"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolverDenseWater.cpp",
+      "regex": "TEXT\\(\"TD\\.FluidFX\\.DenseWater\"\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.DenseWater.DisabledIsBitIdentical",
+     "TDGame.FluidFX.DenseWater.LakeSettlesFlat",
+     "TDGame.FluidFX.Water.WaterLayer.FlatSurfaceOverSlopeStaysStill"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.DenseWater.TDFluidSimulationConfig.bEnableDenseWater"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.DenseLake"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.DenseSea"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L16",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-1"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRiverActor.h",
+      "regex": "class TDGAME_API ATDFluidRiverActor"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.RiverActor.BuildsGuideFromSpline",
+     "TDGame.FluidFX.Water.RiverActor.RegistersWithSubsystem",
+     "TDGame.FluidFX.Water.FlowGuide.RasterizesTangentInsideWidth",
+     "TDGame.FluidFX.Water.River.OpenBordersCarryDischarge"
+    ],
+    "data": [],
+    "plans": [
+     "river_vorticity"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L17",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-2r"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "DyeColor"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.Whitewater.DyeKeepsDensityDissipation",
+     "TDGame.FluidFXRhi.Input.BitmapVelocityFollowsEncoding"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "선택 밀도 염료 색과 범용 속도 텍스처 입력"
+  },
+  {
+   "id": "L18a",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-5"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-4",
+    "FQ-5",
+    "FQ-8"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidUnderwaterSubsystem.h",
+      "regex": "class TDGAME_API UTDFluidUnderwaterSubsystem"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidUnderwaterPostProcess.hlsl",
+      "regex": "UnderwaterSurfaceZCm"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Underwater.SurfaceAndHysteresis",
+     "TDGame.FluidFX.Underwater.BlendWeightStep",
+     "TDGame.FluidFX.Underwater.SwitchDrivesTaggedUnboundVolume",
+     "TDGame.FluidFX.Underwater.GameThreadCost",
+     "TDGame.FluidFXRhi.WaterProps.UnderwaterBoxSurfaceZ"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Globals.TDFluidUnderwaterSettings.bEnableUnderwaterSwitch"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidUnderwater_Lake"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidUnderwater_Tank"
+     }
+    ],
+    "plans": [
+     "w5_underwater_l18a"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "수중 전환 대리 지표·장 번호 지표·최종 검증 재현 실패 모두 사용자 결정 대기"
+  },
+  {
+   "id": "L18b",
+   "d52": "없음",
+   "status": "해당 없음",
+   "stages": [
+    "W-8"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 272
+     }
+    ]
+   },
+   "note": "LIVE-2도 미지원(동시 표시·지형 정렬 수중 후처리)"
+  },
+  {
+   "id": "L19",
+   "d52": "없음",
+   "status": "해당 없음",
+   "stages": [
+    "W-8"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [
+     "TDGame.FluidFXRhi.WaterParticleAssets.DebrisFollowsSurface"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 273
+     }
+    ]
+   },
+   "note": "LIVE-2도 미지원, 대안인 수면 추종 부유물은 있음"
+  },
+  {
+   "id": "L20",
+   "d52": "있음",
+   "status": "부분",
+   "stages": [
+    "완료"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterCommon.hlsl",
+      "regex": "const float waveSteepness = 0\\.6;"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_Sea"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "재질 게르스트너 파 있음(우리가 앞섬), 자동 시험·통과 판정 근거 없음"
+  },
+  {
+   "id": "L21",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "W-2r"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "GlintIntensity"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_River.Scalars.GlintIntensity"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "반짝임 식·값 있음, 자동 시험·통과 판정 없음"
+  },
+  {
+   "id": "L22",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-2r",
+    "W-2s"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "CoastFoamThreshold"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.Wetness.SwashWetsBandAboveWaterline",
+     "TDGame.FluidFX.Water.WetDecal.BoxCoversTerrainRange",
+     "TDGame.FluidFXRhi.Water.Wetness.SwashBandParity"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWaterSandCoast"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L23",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-7"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidNearRippleLayer.h",
+      "regex": "class TDGAME_API FTDFluidNearRippleLayer"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.cpp",
+      "regex": "void FTDFluidGrid2DSolver::PackObstacleDistanceAuxPixels"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.Brush.RingStampLeavesAnnulus",
+     "TDGame.FluidFX.Water.Aux.ObstacleDistanceInG",
+     "TDGame.FluidFX.NearRipple.SourceCollection",
+     "TDGame.FluidFXRhi.NearRipple.MaskedCellsStayFlat"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L24",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-2r",
+    "W-2s"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "LaceMask"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.Brush.RingSweepSideBandWidth",
+     "TDGame.FluidFX.Water.Whitewater.LaceRetainsHalfAfterFiveSeconds",
+     "TDGame.FluidFXRhi.Water.Wetness.WhitewaterDissipationParity"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L25",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "W-2r"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "CausticsStrength"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_Lake.Scalars.CausticsStrength"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "코스틱 세기·셀 값 있음, 자동 시험·통과 판정 없음"
+  },
+  {
+   "id": "L26",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-1b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterSplashRules.h",
+      "regex": "struct TDGAME_API FTDFluidWaterSplashRules"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.WaterParticle.Splash.EntryCrossingEmitsOnce",
+     "TDGame.FluidFX.WaterParticle.Splash.BandAndCooldownSuppress",
+     "TDGame.FluidFXRhi.WaterParticleAssets.SplashContactReachesWater"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterSplash"
+     }
+    ],
+    "plans": [
+     "w1b_water_particles"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "물방울 수명·접촉 세기 미달은 보정·판정 몫"
+  },
+  {
+   "id": "L27",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-1",
+    "W-7"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolver.cpp",
+      "regex": "void FTDFluidGrid2DSolver::PackObstacleDistanceAuxPixels"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.Aux.ObstacleDistanceInG",
+     "TDGame.FluidFX.Water.River.RockSplitsFlowAndLeavesWhitewater",
+     "TDGame.FluidFXRhi.Water.River.RockWakeParity",
+     "TDGame.FluidFXRhi.Water.AuxObstacleDistanceMatchesCpu"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L28",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "W-2r"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterOffset.hlsl",
+      "regex": "SwashHeightCm"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_water_stage.py",
+      "regex": "COAST_MAP_PATH = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Water.Wetness.SwashWetsBandAboveWaterline",
+     "TDGame.FluidFXRhi.Water.Wetness.SwashBandParity"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_Sea"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_SeaStorm"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "L29",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterfallSheet.hlsl",
+      "regex": "FoamNoiseTexture"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterfallFar.hlsl",
+      "regex": "FarFlowSpeedCmPerSec"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.WaterProps.WaterfallSheetFalls"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.Waterfall"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWaterfallSheet_Default"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWaterfallFar_Blue"
+     }
+    ],
+    "plans": [
+     "w5_waterfall_l29"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "폭포 보정은 차단"
+  },
+  {
+   "id": "L30",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "W-2r"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidWaterSurface.hlsl",
+      "regex": "RibbonLocalCaustics"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidWater_River.Switches.bRibbonLocalCaustics"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "리본·월드 좌표 분기 재질 있음, 자동 시험·통과 판정 없음"
+  },
+  {
+   "id": "M1",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-14"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolverViscous.cpp",
+      "regex": "bool FTDFluidGrid2DSolver::UsesDenseDensity"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidGrid2DSolverViscous.cpp",
+      "regex": "float FTDFluidGrid2DSolver::ComputeFlowNoiseSpeedMask"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Viscous.Dense.GrowthIsBistable",
+     "TDGame.FluidFX.Viscous.Dense.FrameRateIndependent",
+     "TDGame.FluidFX.Viscous.FlowNoise.SpeedMask",
+     "TDGame.FluidFXRhi.Viscous.GpuMatchesCpu"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Groups.Viscous"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ViscousMud"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ViscousBlood"
+     }
+    ],
+    "plans": [
+     "viscous_fx14_blood",
+     "viscous_fx14_mud"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w13.json"
+    ],
+    "docs": []
+   },
+   "note": "진흙 보정은 차단, 피 보정은 통과"
+  },
+  {
+   "id": "M2",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-14"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_viscous_stage.py",
+      "regex": "\"id\": \"ViscousBloodBath\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Viscous.Kinds.BuildersAndFamilies",
+     "TDGame.FluidFX.Viscous.Input.BrushVelocityScale"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ViscousBlood"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ViscousMud"
+     }
+    ],
+    "plans": [
+     "viscous_fx14_blood",
+     "viscous_fx14_mud"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w13.json"
+    ],
+    "docs": [
+     {
+      "file": "Tools/FluidFX/calib/batch_queue.json",
+      "line": 86
+     }
+    ]
+   },
+   "note": "피 튐 장면은 재무장 수단 전까지 판정 보류"
+  },
+  {
+   "id": "M3",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-14"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidLavaSurface.hlsl",
+      "regex": "LavaCrustThreshold"
+     },
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_viscous_stage.py",
+      "regex": "STEAM_PRESET_PATH = "
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.WrapArea.Component.TileMapOrigin",
+     "TDGame.FluidFXRhi.WrapArea.TileMapTargetParameters"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.LavaTile.TDFluidSimulationConfig.AreaAddressMode"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.LavaLocal"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidLava"
+     }
+    ],
+    "plans": [
+     "viscous_fx14_lava"
+    ],
+    "judgments": [],
+    "docs": []
+   },
+   "note": "용암 전용 시험 없음, 감싸기 타일 합성 시험으로 갈음, 보정은 육안 이관"
+  },
+  {
+   "id": "M4",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-14"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidViscousSurface.hlsl",
+      "regex": "ViscousNormalStrength"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidViscousOffset.hlsl",
+      "regex": "viscousHeightCm"
+     },
+     {
+      "file": "Tools/FluidFX/Shaders/TDFluidViscousDecal.hlsl",
+      "regex": "ViscousDecalOpacity"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Viscous.SurfaceOutput.PlacementAndGate",
+     "TDGame.FluidFX.Viscous.HeadlessMetricsReport",
+     "TDGame.FluidFXRhi.Viscous.OffscreenCost"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidViscous_Blood"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidViscous_Mud"
+     }
+    ],
+    "plans": [
+     "viscous_fx14_blood",
+     "viscous_fx14_mud"
+    ],
+    "judgments": [
+     "Saved/FluidFX/calib/final/verdict-w13.json"
+    ],
+    "docs": []
+   },
+   "note": ""
+  },
+  {
+   "id": "N1",
+   "d52": "부분",
+   "status": "다름",
+   "stages": [
+    "FX-15"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidFireTypes.h",
+    "regex": "ETDFluidFragmentInputMode FragmentInputMode = ETDFluidFragmentInputMode::Points;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFireTypes.h",
+      "regex": "enum class ETDFluidFragmentInputMode : uint8"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.h",
+      "regex": "static bool BuildFootprintStamp\\("
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.cpp",
+      "regex": "FootprintResolveLeafLocalBounds\\(const FGeometryCollection& Collection"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.FootprintStampMatchesLeafBox",
+     "TDGame.FluidFX.Fragment.InputModeSelectsStampKinds",
+     "TDGame.FluidFX.Fragment.FootprintPaintedAreaMatchesBox"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidFragmentTrailSettings.FragmentInputMode"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx15b.md",
+      "line": 18
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 243
+     }
+    ]
+   },
+   "note": "SDF 대신 잎 상자 투영 타원 자국, 기본은 점 방식, 조각 충돌은 넘김"
+  },
+  {
+   "id": "N2",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "완료"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Config/DefaultEngine.ini",
+      "regex": "r\\.GenerateMeshDistanceFields=True"
+     },
+     {
+      "file": "Source/TDGameEditor/FluidFX/TDFluidFractureEditorLibrary.h",
+      "regex": "static UGeometryCollection\\* CreateBrickGeometryCollection\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.GlowMaterialAppliesOnBreakAndCools",
+     "TDGame.FluidFX.Fragment.BuildStampsFromTransforms"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 244
+     }
+    ]
+   },
+   "note": "메시 거리장 켬·벽돌 지오메트리 컬렉션 도구, 조각은 변환 폴링이라 트레일링 불필요"
+  },
+  {
+   "id": "N3",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.cpp",
+      "regex": "OnBrokenNative\\.AddUObject\\(this, &ATDFluidFragmentEmitterActor::HandleSourceBroken\\)"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.cpp",
+      "regex": "SetActorTickInterval\\(TrailSettings\\.ArmedPollIntervalSeconds\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.BreakDelegateStartsSameFrame",
+     "TDGame.FluidFX.Fragment.TrackerStopsWhenSourceGone"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidFragmentTrailSettings.ArmedPollIntervalSeconds"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 299
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 245
+     }
+    ]
+   },
+   "note": "자체 파괴 대리자와 변환 폴링이라 Chaos 이벤트 종류 선택이 필요 없음"
+  },
+  {
+   "id": "N4",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.cpp",
+      "regex": "FootprintResolveLeafLocalBounds\\(const FGeometryCollection& Collection"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 300
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 246
+     }
+    ]
+   },
+   "note": "지오메트리 컬렉션 데이터 인터페이스를 쓰지 않아 누수 수정판 불필요"
+  },
+  {
+   "id": "N5",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFragmentEmitterActor.cpp",
+      "regex": "SetActorTickInterval\\(TrailSettings\\.ArmedPollIntervalSeconds\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Fragment.BuildStampsFromTransforms"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 301
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 173
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 247
+     }
+    ]
+   },
+   "note": "트레일링 이벤트 대신 변환 폴링이라 생성 파괴물 결함과 무관"
+  },
+  {
+   "id": "O1",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/pie_capture_fluid_preset.py",
+      "regex": "def capture_actor\\("
+     },
+     {
+      "file": "Tools/FluidFX/fluid_tuning_patch.py",
+      "regex": "for name in \\(\\\"variant\\\", \\\"write-canonical\\\"\\):"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidPresetTuningSubsystem.h",
+      "regex": "int32 ReloadPresetTuningFromPaths\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.PresetData.LoadsWithoutErrors",
+     "TDGame.FluidFX.PresetData.BuildersMatchTuningFile"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 25
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 253
+     }
+    ]
+   },
+   "note": "정본 JSON 읽기와 PIE 값 포착 후 패치 도구, 포착 도구는 PIE 미실행"
+  },
+  {
+   "id": "O2",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidPresetTuningSubsystem.cpp",
+    "regex": "0 turns the check off"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidPresetTuningSubsystem.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.PresetTuningAutoReloadSeconds\\\"\\)"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFoliageFlowActor.cpp",
+      "regex": "OnPresetTuningReloaded\\.AddUObject\\(this, &ATDFluidFoliageFlowActor::HandlePresetTuningReloaded\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.PresetReapply.NonStructuralChangeKeepsStateAndRepeats",
+     "TDGame.FluidFX.PresetReapply.ResolutionChangeResetsAndCounts",
+     "TDGame.FluidFX.PresetData.ReloadFromPathsUsesSavedFiles",
+     "TDGame.FluidFX.LookRefresh.FoliageAndTrackSubscribe"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 26
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 254
+     }
+    ]
+   },
+   "note": "재적재와 실행 중 액터 재적용 있음, 자동 재읽기는 기본 꺼짐(LIVE-2도 꺼짐)"
+  },
+  {
+   "id": "O3",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 308
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 255
+     }
+    ]
+   },
+   "note": "이전 판 데이터 테이블 프리셋 호환 항목, 우리 구조에 없음"
+  },
+  {
+   "id": "O4",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "완료"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveSubsystem.h",
+      "regex": "ATDFluidLiveActor\\* SpawnPooledFluidActor\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Subsystem.PresetPoolAndPointBudget",
+     "TDGame.FluidFX.LiveActor.PoolReturnClearsOutputAndReuseClearsState",
+     "TDGame.FluidFX.Subsystem.PooledReuseWithoutPresetMovesSolverCenter"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 256
+     }
+    ]
+   },
+   "note": "풀 생성·프리셋 지정·반환 뒤 재사용 초기화"
+  },
+  {
+   "id": "O5",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidSimStateCacheAsset.h",
+      "regex": "class TDGAME_API UTDFluidSimStateCacheAsset : public UDataAsset"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "TSoftObjectPtr<UTDFluidSimStateCacheAsset> SimStateCache;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActorSimStateCache.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.SimStateCache\\\"\\)"
+     },
+     {
+      "file": "Tools/FluidFX/pie_bake_fluid_sim_cache.py",
+      "regex": "CACHE_OUTPUT_ROOT = ROOT"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SimStateCache.CpuSeedStepMatchesOriginal",
+     "TDGame.FluidFX.SimStateCache.RejectsMismatchedHeader",
+     "TDGame.FluidFX.SimStateCache.AssetRoundTrip",
+     "TDGame.FluidFX.SimStateCache.ComponentConsumesSeedOnce",
+     "TDGame.FluidFXRhi.SimStateCache.GpuSeedStepMatchesOriginal",
+     "TDGame.FluidFXRhi.SimStateCache.GpuWaterChannelsRoundTrip"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.SimStateCacheMaxWaitSeconds"
+     }
+    ],
+    "plans": [],
+    "judgments": [
+     "Saved/AgentOps/20261106/fx16b/cost.json"
+    ],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 22
+     },
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 489
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 257
+     }
+    ]
+   },
+   "note": "포착·데이터 에셋·시작 씨앗 있음, 굽힌 캐시 에셋은 없음(강 굽기 보류)"
+  },
+  {
+   "id": "O6",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+    "regex": "ETDFluidTerrainHeightSource HeightSource = ETDFluidTerrainHeightSource::LineTrace;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidHeightCacheAsset.h",
+      "regex": "class TDGAME_API UTDFluidHeightCacheAsset : public UDataAsset"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "TSoftObjectPtr<UTDFluidHeightCacheAsset> TerrainHeightCache;"
+     },
+     {
+      "file": "Tools/FluidFX/editor_bake_fluid_height_cache.py",
+      "regex": "CACHE_DIR = f\\\"\\{FLUID_ROOT\\}/HeightCaches\\\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.HeightCache.EncodeSampleBake"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidTerrainHeightSettings.HeightSource"
+     }
+    ],
+    "plans": [
+     "fx9_terrain_cache"
+    ],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx9.md",
+      "line": 29
+     },
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 486
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 258
+     }
+    ]
+   },
+   "note": "트레이스 굽기 데이터 에셋과 표본 있음, 높이 원천 기본은 트레이스(캐시 꺼짐)"
+  },
+  {
+   "id": "O7",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 312
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 259
+     }
+    ]
+   },
+   "note": "이전 판 셋업 변환 항목, 우리 구조에 없음"
+  },
+  {
+   "id": "P1",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 317
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 265
+     }
+    ]
+   },
+   "note": "공개 문서에 없는 기능이라 동등 범위에서 제외"
+  },
+  {
+   "id": "P2",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-16",
+    "FX-11",
+    "FX-15"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidSimStateCacheAsset.h",
+      "regex": "class TDGAME_API UTDFluidSimStateCacheAsset : public UDataAsset"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidFieldInputComponent.h",
+      "regex": "class TDGAME_API UTDFluidFieldInputComponent : public USceneComponent"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.SimStateCache.AssetRoundTrip",
+     "TDGame.FluidFX.CloudLayers.SetupIndex",
+     "TDGame.FluidFXRhi.Input.FieldTextureSlotOverflowCounts"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_Nimbus.Scalars.CloudSlot1Pattern"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 318
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 266
+     }
+    ]
+   },
+   "note": "캐시·수동 구름·텍스처 필드 입력은 각 행에 있음, 재질에서 렌더 타깃 입력 부품은 없음"
+  },
+  {
+   "id": "Q1",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "완료"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveSubsystem.h",
+      "regex": "class TDGAME_API UTDFluidLiveSubsystem : public UTickableWorldSubsystem"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveSubsystem.h",
+      "regex": "virtual bool IsTickableInEditor\\(\\) const override \\{ return false; \\}"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Subsystem.PresetPoolAndPointBudget",
+     "TDGame.FluidFX.PresetReapply.NonGameWorldIsUntouched"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 272
+     }
+    ]
+   },
+   "note": "게임 월드 틱 서브시스템, PIE와 게임에서만 실행"
+  },
+  {
+   "id": "Q2",
+   "d52": "없음",
+   "status": "다름",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGameEditor/FluidFX/TDFluidSimulatePreviewSubsystem.cpp",
+    "regex": "0 leaves activation to the player pawn"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGameEditor/FluidFX/TDFluidSimulatePreviewSubsystem.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.SimulatePreview\\\"\\)"
+     },
+     {
+      "file": "Source/TDGameEditor/FluidFX/TDFluidSimulatePreviewSubsystem.cpp",
+      "regex": "bool UTDFluidSimulatePreviewSubsystem::IsTickable\\(\\) const"
+     }
+    ],
+    "tests": [
+     "TDGameEditor.FluidFX.SimulatePreview.Activation"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 27
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 273
+     }
+    ]
+   },
+   "note": "편집기 월드 틱 대신 편집기 안 시뮬레이트 미리보기, 기본 꺼짐, 시험은 통과 목록 밖"
+  },
+  {
+   "id": "Q3",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidDebugDrawSubsystem.cpp",
+    "regex": "0 turns the display off"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidDebugDrawSubsystem.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.Debug\\\"\\)"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidDebugDrawSubsystem.cpp",
+      "regex": "constexpr int32 DebugDrawStepRateFlag = 16;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidDebugDrawSubsystem.h",
+      "regex": "FString BuildDebugSnapshotJson\\(\\) const;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.DebugDraw.SnapshotListsActors"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [
+     "Saved/AgentOps/20261106/fx16b/cost.json"
+    ],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 31
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 274
+     }
+    ]
+   },
+   "note": "범위·이름표·추적 수·넘침·처리 주기 표시 있음, 본 이름 표시 없음"
+  },
+  {
+   "id": "Q4",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/editor_make_fluid_debug_material.py",
+      "regex": "MASTER_NAME = \\\"M_TD_FluidBufferView\\\""
+     },
+     {
+      "file": "Tools/FluidFX/pie_lookdev_fluid.py",
+      "regex": "apply\\.get\\(\\\"surface_material\\\", \\{\\}\\)"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/Debug/MI_TD_FluidBufferView_Density.Scalars.DebugChannel"
+     }
+    ],
+    "plans": [],
+    "judgments": [
+     "Saved/FluidFX/fluid_debug_material.json"
+    ],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 275
+     }
+    ]
+   },
+   "note": "버퍼 보기 재질과 채널 인스턴스 있음, 자동 시험·화면 확인 기록 없음"
+  },
+  {
+   "id": "Q5",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRuntimeControlComponent.h",
+      "regex": "void FadeOut\\(float Seconds = -1\\.0f\\);"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.RuntimeControl.FadeOutMonotonicToZero",
+     "TDGame.FluidFX.RuntimeControl.ReapplyAdoptsNewBase"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.FadeOutSeconds"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.FadeOutDissipationPerSec"
+     }
+    ],
+    "plans": [
+     "fx16b_fadeout"
+    ],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 28
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 276
+     }
+    ]
+   },
+   "note": "서서히 끄기·되살리기 있음, 브러시 크기는 정본 재적재 경로, 화면 보정 계획은 퇴역"
+  },
+  {
+   "id": "Q6",
+   "d52": "부분",
+   "status": "다름",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/pie_lookdev_fluid.py",
+      "regex": "APPLY_KEYS = \\(\\\"tuning_reload\\\""
+     },
+     {
+      "file": "Tools/FluidFX/pie_profile_fluid.py",
+      "regex": "\\\"tool\\\": \\\"pie_profile_fluid --csv-gpu\\\""
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 180
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 277
+     }
+    ]
+   },
+   "note": "런타임 유틸리티 대신 무대 생성기와 PIE 도구로 대체"
+  },
+  {
+   "id": "Q7",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/pie_lookdev_fluid.py",
+      "regex": "def run_console_commands\\(world, commands\\):"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 329
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 278
+     },
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 32
+     }
+    ]
+   },
+   "note": "프로젝트 설정과 룩데브 콘솔 키로 대체"
+  },
+  {
+   "id": "Q8",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRuntimeControlComponent.h",
+      "regex": "UPROPERTY\\(EditAnywhere, BlueprintReadWrite, Interp, Category = \\\"FluidControl\\\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.RuntimeControl.InterpScaleWithinOneTick"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 29
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 279
+     }
+    ]
+   },
+   "note": "핵심 배율 다섯 개를 시퀀서 트랙으로 노출, 한 틱 안에 반영"
+  },
+  {
+   "id": "Q9",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 331
+     },
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 181
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 280
+     }
+    ]
+   },
+   "note": "시네마틱 미사용, 촬영 규칙은 명세에만 있고 설계서에는 없음"
+  },
+  {
+   "id": "Q10",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 332
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 281
+     }
+    ]
+   },
+   "note": "판 확인·다운로드·조작 안내 항목"
+  },
+  {
+   "id": "R1",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "전 단계"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-2"
+   ],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [
+     "Saved/AgentOps/20261106/p/p-summary.json"
+    ],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 423
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 288
+     }
+    ]
+   },
+   "note": "단계 예산과 영역 성능 판정 있음, 미충족 영역이 남음"
+  },
+  {
+   "id": "R2",
+   "d52": "다름",
+   "status": "부분",
+   "stages": [
+    "FX-4a"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-10"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDFluidGpu/Private/TDFluidGpuBackendSelection.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.SolverBackend\\\"\\)"
+     },
+     {
+      "file": "Source/TDFluidGpu/Private/TDFluidGpuBackendSelection.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.WaterGpu\\\"\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Gpu.BackendFallsBackToCpuWithoutRhi",
+     "TDGame.FluidFX.Water.Gpu.BackendSelectsGpuForWaterLayer"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidSimulationConfig.SolverBackend"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Kinds.ExplosionSmoke.TDFluidSimulationConfig.SolverBackend"
+     }
+    ],
+    "plans": [],
+    "judgments": [
+     "Saved/AgentOps/20261106/p/p-summary.json"
+    ],
+    "docs": [
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 441
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 289
+     }
+    ]
+   },
+   "note": "GPU 솔버 있음, 기본 백엔드 CPU·종류별 GPU, 물 층은 기본 CPU"
+  },
+  {
+   "id": "R3",
+   "d52": "있음",
+   "status": "있음",
+   "stages": [
+    "완료"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+    "regex": "bool bShouldUseActivationVolume = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.h",
+      "regex": "float ActivationDistanceCm = 5000\\.0f;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.cpp",
+      "regex": "ActivationDistanceCm \\* LiveComponent->GetRuntimeOpsSettings\\(\\)\\.SleepDistanceRatio"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.LiveActor.SleepWakeHysteresisAndWakeClearsHistory",
+     "TDGame.FluidFX.LiveActor.ActivationSleepWakeAndActorTracking"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.SleepDistanceRatio"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 290
+     }
+    ]
+   },
+   "note": "근접 깨움·잠듦 이력 있음, 배치 기본 꺼짐(LIVE-2도 기본 꺼짐)"
+  },
+  {
+   "id": "R4",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "bool bPauseWhenNotVisible = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRuntimeOps.h",
+      "regex": "TDGAME_API bool ShouldPauseForVisibility\\("
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRuntimeOps.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.PauseWhenNotVisible\\\"\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Ops.VisibilityPauseDecision",
+     "TDGame.FluidFX.Ops.VisibilityPauseHoldsState",
+     "TDGame.FluidFX.Ops.VisibilityPauseNeedsViewport",
+     "TDGame.FluidFX.Ops.PausedActorCost"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.bPauseWhenNotVisible"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.VisibilityGraceSeconds"
+     }
+    ],
+    "plans": [],
+    "judgments": [
+     "Saved/AgentOps/20261106/fx16a/paused_cost.json"
+    ],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16a.md",
+      "line": 26
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 291
+     }
+    ]
+   },
+   "note": "최근 렌더 여부로 정지, 기본 꺼짐이고 켜기는 보정 뒤 불 묶음에서 할 예정"
+  },
+  {
+   "id": "R5",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "int32 LodStepCount = 0;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRuntimeOps.h",
+      "regex": "TDGAME_API float ComputeLodStepRateHz\\("
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Ops.StepRateLod"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.LodStepCount"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidRuntimeOpsSettings.LodNearDistanceCm"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16a.md",
+      "line": 24
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 292
+     }
+    ]
+   },
+   "note": "거리 단계 처리 주기 있음, 기본 꺼짐(LIVE-2도 기본 꺼짐)"
+  },
+  {
+   "id": "R6",
+   "d52": "없음",
+   "status": "다름",
+   "stages": [
+    "FX-4b",
+    "FX-5"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-10"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDFluidGpu/Public/TDFluidGpuInputs.h",
+      "regex": "WaterHalfPressureMinimumResolution = 512;"
+     },
+     {
+      "file": "Source/TDFluidGpu/Public/TDFluidGpuInputs.h",
+      "regex": "WaterQuarterFieldMinimumResolution = 1024;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "int32 MassInputBufferDivisor = 2;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Gpu.Water.KeyAndTierRules",
+     "TDGame.FluidFX.MassInput.Gpu.KeyAndMemoryUnchangedWhenOff"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidSimulationConfig.MassInputBufferDivisor"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 436
+     },
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 440
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 293
+     }
+    ]
+   },
+   "note": "해상도 등급별 축소와 입력 버퍼 절반, 물 축소는 물 GPU를 켤 때만 쓰임"
+  },
+  {
+   "id": "R7",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-4a",
+    "FX-5"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDFluidGpu/Public/TDFluidGpuInputs.h",
+      "regex": "MaximumStampsPerTick = 16000;"
+     },
+     {
+      "file": "Source/TDFluidGpu/Public/TDFluidGpuInputs.h",
+      "regex": "MaximumStampsPerBin = 256;"
+     },
+     {
+      "file": "Source/TDFluidGpu/Public/TDFluidGpuInputs.h",
+      "regex": "StampBinsPerAxis = 16;"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+      "regex": "int32 MaxPointsPerTick = 64;"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Gpu.StampBinsMatchBruteForce",
+     "TDGame.FluidFX.Fragment.ExplosionStampBinBudget",
+     "TDGame.FluidFXRhi.MassInput.SaturationGuardDeterministic"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidSimulationConfig.MaxPointsPerTick"
+     },
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidMassInputSettings.MaxDataChannelPointsPerTick"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 487
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 294
+     }
+    ]
+   },
+   "note": "GPU 경로 상한과 해싱은 같음, CPU 경로는 틱당 점 상한이 작음"
+  },
+  {
+   "id": "R8",
+   "d52": "없음",
+   "status": "있음",
+   "stages": [
+    "W-2s"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidTypes.h",
+    "regex": "bool bEnableLodGrid = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidWaterLodGridComponent.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.WaterLodGrid\\\"\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.WaterLodGrid.SelectionCoversWithoutGapsOrOverlap",
+     "TDGame.FluidFX.WaterLodGrid.NeighborLevelsDifferByAtMostOne",
+     "TDGame.FluidFX.WaterLodGrid.SharedEdgeVerticesMatchAfterMorph",
+     "TDGame.FluidFX.WaterLodGrid.DisabledByDefaultKeepsTiles"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidWaterLodGridSettings.bEnableLodGrid"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 483
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 295
+     }
+    ]
+   },
+   "note": "물 표면 LOD 격자 있음, 기본 꺼짐이고 켠 종류 없음"
+  },
+  {
+   "id": "R9",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidOutputQuality.cpp",
+    "regex": "FTDFluidOutputQuality::HighestLevel,"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidOutputQuality.cpp",
+      "regex": "TEXT\\(\\\"TD\\.FluidFX\\.OutputQuality\\\"\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.OutputQuality.LoopScaleMath",
+     "TDGame.FluidFX.OutputQuality.VolumeLoopScalarsScaleAndRestore"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "Globals.TDFluidOutputQualitySettings.Level1LoopScale"
+     }
+    ],
+    "plans": [
+     "fx16b_output_quality"
+    ],
+    "judgments": [
+     "Saved/AgentOps/20261106/fx16b/cost.json"
+    ],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16b.md",
+      "line": 30
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 296
+     }
+    ]
+   },
+   "note": "볼륨·자국 루프 단계만 있음, 물 재질 교체·노이즈 끄기 단계 없음"
+  },
+  {
+   "id": "R10",
+   "d52": "다름",
+   "status": "다름",
+   "stages": [
+    "FX-7"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-9",
+    "FQ-14"
+   ],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Config/DefaultEngine.ini",
+      "regex": "r\\.DynamicGlobalIlluminationMethod=1"
+     },
+     {
+      "file": "Config/DefaultEngine.ini",
+      "regex": "r\\.Nanite\\.ProjectEnabled=False"
+     },
+     {
+      "file": "Config/DefaultEngine.ini",
+      "regex": "DefaultGraphicsRHI=DefaultGraphicsRHI_DX12"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [
+     "Saved/AgentOps/20261106/p/p-summary.json"
+    ],
+    "docs": [
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 367
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 297
+     }
+    ]
+   },
+   "note": "효과 차분 비교로 대체, 같은 기계 두 설정 측정은 사용자 답 대기"
+  },
+  {
+   "id": "R11",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "FX-7",
+    "FX-P"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 347
+     },
+     {
+      "file": "Docs/Lessons/build.md",
+      "line": 142
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 298
+     }
+    ]
+   },
+   "note": "측정 조건 행, Test 빌드 불가라 PIE 체제와 패키지 첫 읽기만"
+  },
+  {
+   "id": "R12",
+   "d52": "부분",
+   "status": "있음",
+   "stages": [
+    "FX-7p",
+    "FX-4a"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/pie_profile_fluid.py",
+      "regex": "\\\"tool\\\": \\\"pie_profile_fluid --csv-gpu\\\""
+     },
+     {
+      "file": "Tools/FluidFX/profile_fluid_bench.py",
+      "regex": "BENCH_TEST = \\\"TDGame\\.FluidFX\\.Perf\\.StepCostByResolution\\\""
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Perf.StepCostByResolution",
+     "TDGame.FluidFX.Perf.TickCostLogFollowsConsoleVariable"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [
+     "Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md",
+     "Saved/AgentOps/20261106/p/p-summary.json"
+    ],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 299
+     }
+    ]
+   },
+   "note": "프레임별 CSV·GPU 통계 ABBA 측정기와 헤드리스 벤치"
+  },
+  {
+   "id": "R13",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-4a",
+    "FX-P"
+   ],
+   "default_off": null,
+   "user_items": [
+    "FQ-16"
+   ],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [
+     "Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md",
+     "Saved/AgentOps/20261106/p/p-summary.json"
+    ],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261030/cal0/plan-batch-v2.md",
+      "line": 220
+     },
+     {
+      "file": "Saved/AgentOps/20261107/fxp/parent-decisions.md",
+      "line": 29
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 300
+     }
+    ]
+   },
+   "note": "입자·액터 규모는 기존 측정 인용, 나머지 세 종은 무대 없음"
+  },
+  {
+   "id": "R14",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "완료"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 350
+     },
+     {
+      "file": "AGENTS.md",
+      "line": 68
+     }
+    ]
+   },
+   "note": "로직이 전부 C++라 블루프린트 네이티브화 불필요"
+  },
+  {
+   "id": "R15",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "참고"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 351
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 302
+     }
+    ]
+   },
+   "note": "이전 판 대비 참고 항목"
+  },
+  {
+   "id": "R16",
+   "d52": "다름",
+   "status": "다름",
+   "stages": [
+    "FX-7a",
+    "FX-7b"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Tools/FluidFX/measure_fx_look.py",
+      "regex": "condition = read_text_field\\(entry, \\\"condition\\\", where\\)"
+     }
+    ],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Tools/README.md",
+      "line": 113
+     },
+     {
+      "file": "Docs/Tasks/decisions.md",
+      "line": 367
+     }
+    ]
+   },
+   "note": "조건별 비교 측정 도구 있음, 전역 안티에일리어싱은 사용자 결정 대기"
+  },
+  {
+   "id": "S1",
+   "d52": "없음",
+   "status": "부분",
+   "stages": [
+    "FX-16"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveSubsystem.h",
+      "regex": "bool FindFluidSampleAtWorldLocation\\(const FVector& WorldLocation"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidRuntimeOps.h",
+      "regex": "struct TDGAME_API FTDFluidExternalOutputTargets"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Ops.FindFluidSample",
+     "TDGame.FluidFX.Ops.SharedOutputClaims",
+     "TDGame.FluidFXRhi.Ops.ExternalTargetGpuDirectWrite"
+    ],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261029/wave3/spec-fx16a.md",
+      "line": 33
+     },
+     {
+      "file": "Saved/AgentOps/20261107/fxp/parent-decisions.md",
+      "line": 8
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 308
+     }
+    ]
+   },
+   "note": "질의 함수·외부 출력 렌더 타깃·파라미터 모음만, PCG 요소는 월드 대장"
+  },
+  {
+   "id": "S2",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx9.md",
+      "line": 37
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 358
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 309
+     }
+    ]
+   },
+   "note": "랜드스케이프 기반이라 메시 지형 높이 변환이 필요 없음"
+  },
+  {
+   "id": "S3",
+   "d52": "다름",
+   "status": "다름",
+   "stages": [
+    "FX-9"
+   ],
+   "default_off": {
+    "file": "Source/TDGame/FluidFX/TDFluidVolumeDriverTypes.h",
+    "regex": "bool bUseHeightAsCollisionMask = false;"
+   },
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidTerrainCollisionMask.h",
+      "regex": "int32 BuildBoxes\\(float BaseZCm, float AboveCm"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidLiveActor.cpp",
+      "regex": "if \\(TerrainHeightSettings\\.bUseHeightAsCollisionMask\\)"
+     }
+    ],
+    "tests": [
+     "TDGame.FluidFX.Terrain.CollisionMaskBoxes"
+    ],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+      "json_path": "StructDefaults.TDFluidTerrainHeightSettings.CollisionHeightAboveBaseCm"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx9.md",
+      "line": 30
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 310
+     }
+    ]
+   },
+   "note": "높이 문턱 마스크를 상자 장애물로 합침, 같은 평면 한계이고 기본 꺼짐"
+  },
+  {
+   "id": "S4",
+   "d52": "부분",
+   "status": "부분",
+   "stages": [
+    "FX-11"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.cpp",
+      "regex": "bool ATDFluidCloudLayersActor::ResolveSceneCloudOwnership\\(\\)"
+     },
+     {
+      "file": "Source/TDGame/FluidFX/TDFluidCloudLayersActor.h",
+      "regex": "bool bTakesOverSceneCloud = false;"
+     },
+     {
+      "file": "Source/TDGame/World/Streaming/TDRealmSubsystem.cpp",
+      "regex": "FindFirstActorComponent<ASkyAtmosphere, USkyAtmosphereComponent>"
+     }
+    ],
+    "tests": [],
+    "data": [
+     {
+      "file": "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+      "json_path": "Materials./Game/FluidFX/Materials/MI_TD_FluidCloud_SkyOnly.Scalars.CloudSlot0Source"
+     }
+    ],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261026/wave2/spec-fx13r-fx11r.md",
+      "line": 158
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 311
+     }
+    ]
+   },
+   "note": "하늘 슬롯과 장면 구름 양보 있음, 중재 시험과 주광 불일치 확인 없음"
+  },
+  {
+   "id": "S5",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 361
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 312
+     }
+    ]
+   },
+   "note": "윈도우 전용이라 다른 플랫폼 항목 불필요"
+  },
+  {
+   "id": "S6",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 362
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 313
+     }
+    ]
+   },
+   "note": "플러그인이 아닌 프로젝트 형태 안내 항목"
+  },
+  {
+   "id": "S7",
+   "d52": "해당 없음",
+   "status": "해당 없음",
+   "stages": [
+    "제외"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 363
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 314
+     }
+    ]
+   },
+   "note": "문서 학습·에이전트 셋업 계획 안내 항목"
+  },
+  {
+   "id": "S8",
+   "d52": "없음",
+   "status": "해당 없음",
+   "stages": [
+    "완료"
+   ],
+   "default_off": null,
+   "user_items": [],
+   "anchors": {
+    "symbols": [],
+    "tests": [],
+    "data": [],
+    "plans": [],
+    "judgments": [],
+    "docs": [
+     {
+      "file": "Docs/TDFluidLiveSystemDesign.md",
+      "line": 20
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/roadmap-final.md",
+      "line": 364
+     },
+     {
+      "file": "Saved/AgentOps/20261019/fluidfx/parity2/manual-catalog.md",
+      "line": 315
+     }
+    ]
+   },
+   "note": "복제 없음, 설계서가 같은 한계로 범위 제외(미지원 문구는 아님)"
+  }
+ ]
+}

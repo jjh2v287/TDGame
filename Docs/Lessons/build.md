@@ -172,3 +172,12 @@
 - 증거: Saved/FluidFX/calib/batch-R5/batch.log, Saved/AgentOps/20261101/refute-r5-limit-fix.md·refute-r5-limit2.md, Saved/AgentOps/20261031/cal-issues.md(18:1x 항목)
 - 날짜·상태: 2026-11-01 active
 - 발견: claude(FluidFX 일괄 보정 R5)
+
+### L-build-20 에디터(SM6)에서 멀쩡한 TDFluidGpu 전역 셰이더가 패키지 쿠킹 때 PCD3D_SM5(D3D11 FL11.0)로도 컴파일되어 치명 오류로 쿠킹 전체가 실패한다 — 에디터·PIE·헤드리스 시험으로는 드러나지 않음
+- 증상: `cook_single_map.py` 가 약 30~95초 만에 `AutomationTool exiting with ExitCode=25 (Error_UnknownCookFailure)`. 로그 `24 errors encountered compiling global shaders for platform PCD3D_SM5` 뒤 `appError called: Fatal error: [File:...ShaderCompilerEditor.cpp] [Line: 601]`. 원인 줄 두 종류: `FTDFluidGpuWaterShiftCS` `Shader is using too many UAVs: 9 (only 8 supported)`·`limit is 8 due to maximum feature level 11.0`, `FTDFluidGpuMultigridCoarseSolveCS` `error X4026: thread sync operation must be in non-varying flow control`(FXC). `FTDFluidGpuPainterStepCS` 순열 2도 실패
+- 원인: `Config/DefaultEngine.ini` 의 `+D3D11TargetedShaderFormats=PCD3D_SM5` 때문에 쿠킹이 SM6와 함께 SM5 전역 셰이더를 컴파일한다. TDFluidGpu 셰이더의 `ShouldCompilePermutation` 은 `IsFeatureLevelSupported(..., SM5)` 라 SM5에서도 컴파일 대상이고, 에디터는 SM6(DXC)만 써서 FXC 제약(UAV 8개·분기 안 GroupMemoryBarrier 금지)을 만나지 않는다. 마지막 쿠킹 성공 2026-10-18(cook-path-audit), TDFluidGpu 모듈 추가 2026-10-20(0b7056e1) 뒤로 쿠킹한 적이 없어 늦게 드러났다
+- 해결: 미검증(FX-P FU-14). 후보 (가) 문제 셰이더를 UAV 8개 이하·동기화를 균일 흐름으로 고치기 (나) 해당 순열을 SM6 전용으로 하고 SM5 백엔드에서 CPU 경로로 내리기(`TDFluidGpuBackendSelection.cpp` bSupportsShaderModel5) (다) D3D11 SM5 대상을 빼기(설정 변경 = 사용자 결정). 확인은 `python Tools/cook_single_map.py --label <이름>` 종료 0. GPU 셰이더를 고치거나 추가한 단계는 쿠킹 1회를 완료 조건에 넣는다
+- 범위: Source/TDFluidGpu/Shaders/Private/*.usf 전역 셰이더, 패키징(BuildCookRun) 경로 전부
+- 증거: Saved/Logs/cook_fxp-pkg-min.log·cook_fxp-pkg-fluid.log, Saved/AgentOps/cook_fxp-pkg-min.json, Saved/FluidFX/fxp/package-min.md
+- 날짜·상태: 2026-11-07 active
+- 발견: claude(FluidFX FX-P X5)

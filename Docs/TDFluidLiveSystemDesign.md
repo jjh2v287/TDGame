@@ -287,3 +287,9 @@ LIVE-2 구조 요약(공개 자료): GPU 2D 시뮬레이션(나이아가라 시�
 - 값 회귀 경비: 시험 `BuildersMatchTuningFile` 은 빌더 = JSON 만 본다. 의도하지 않은 값 변경은 JSON 의 git diff 와 굽기 전후 `editor_dump_fluid_preset_builders.py` 덤프 비교로 잡는다(덤프 golden 은 Saved 아래라 커밋되지 않음).
 - 예외: 물 계열·옛 종류는 회귀 시험(SolverRegressionTests·WaterActorTests·GoldenHash)이 숫자를 고정하므로 그 종류를 구우면 C++ 시험도 고친다.
 - 미검증: 패키징 빌드의 NonUFS 스테이징·첫 읽기, 첫 읽기 실패 뒤 PIE 가 헤더 기본값으로 조용히 도는 경우의 경고(지금은 ensure 1회).
+
+### 9.2 FX-P 동등 감사 산출물(D-64 11차, 2026-11-08)
+
+- 근거 장부 `Docs/FluidFX/live2_evidence.json`: 대조표 213행의 상태(있음·부분·없음·다름·해당 없음)와 근거(심볼 정규식·시험·데이터 경로·판정 파일·문서 줄). LIVE-2 수치·이미지 없음(D-49). 시험 앵커는 마지막 헤드리스 통과 목록에 있어야 '있음'(PD-16).
+- 레벨 지도 `Docs/FluidFX/live2_level_map.json`: LIVE-2 레벨 59개(대상 58)의 ID·짧은 이름, 레벨별 대표 맵(느슨)·셋업 항목별 맵·장면(엄격), 범위 밖 3개와 근거.
+- 판정 도구 `Tools/FluidFX/fxp/fxp_audit.py`(`rows`·`levels` 등, `Tools/README.md` 표). 실행서 `Saved/AgentOps/20261107/fxp/runbook-fxp-v4.md`.

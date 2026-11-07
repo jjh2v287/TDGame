@@ -1,21 +1,22 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-07 19:56 claude
+갱신: 2026-11-08 00:42 claude
 
 ## ① 진행 중 (대장 doing)
 
-- M3-33·35·36 done(로컬 커밋): 종 17·`LV_TDBossArena` 한 사이클·공용 보스 기반·3페이즈 용(`TDSpawnMonster MountainDragon`).
-- M3-37 done(로컬 커밋): 타격감 7종. 끄기 `TD.Feedback.ShakeScale 0`.
-- M3-38~40 done(로컬 커밋): 래그돌 정착·물리 에셋 7종·사망 즉시 래그돌(L-anim-23). 끄기 `TD.Death.ImmediateRagdoll 0`. 후속 M3-41 todo.
+- M3-33·35·36 done: 종 17·`LV_TDBossArena` 한 사이클·공용 보스 기반·3페이즈 용(`TDSpawnMonster MountainDragon`).
+- M3-37 done: 타격감 7종. 끄기 `TD.Feedback.ShakeScale 0`.
+- M3-38~40 done: 래그돌 정착·물리 에셋 7종·사망 즉시 래그돌(L-anim-23). 끄기 `TD.Death.ImmediateRagdoll 0`. 후속 M3-41 todo.
 - 커밋 끝: M3-14·27~32·34, D-47(후속 c). 전술 끄기 `TD.MonsterAI.Tactics 0`.
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴.
-- 게임플레이 분석(미커밋)·M3-25·26 done(26 미커밋·PIE 육안 대기).
+- M3-25·26 done(26 PIE 육안 대기).
+- FluidFX FX-P 재부팅 중지: X5까지, 재개 Saved/AgentOps/20261107/fxp/PAUSE.md
 
 ## ② 막힘·결정 대기
 
-- D-61 NarshaADK 제거 완료(장부 미커밋). 문서 research/narsha-adk.md. D-62 SF-4 v2 실측 값 확정.
-- D-63 무한 샌드박스(미커밋): 조건부 가능, 착수 보류(사용자). 재개 시 IWQ-01·02 먼저(`Docs/InfiniteWorld_Plan.md`).
+- D-61 NarshaADK 제거 완료. 문서 research/narsha-adk.md. D-62 SF-4 v2 실측 값 확정.
+- D-63 무한 샌드박스: 조건부 가능, 착수 보류(사용자). 재개 시 IWQ-01·02 먼저(`Docs/InfiniteWorld_Plan.md`).
 - 07#MD-59 타격감 기본값(MD-46·MD-13 대체, proposed). 흔들림+모션 블러 번짐 검토. M3-13 미정.
 - 07#MD-62 사망 즉시 래그돌 기본값(proposed): 그리폰 알파·용 지상 클립, 바게스트 계열 클립 뒤 래그돌, 동시 시체 +2.3ms 수용.
 - M3-27 남음: 근접 육안(칼·방패 쥐기·피격 모션), 4단 콤보는 Blender 검토 전 이식.
@@ -29,8 +30,7 @@
 - 공개 저장소 Fab·Paragon·Manny 원본 비공개 전환·재저장 에셋 유지 판단.
 - 분석 결정 GQ-01~32(26=아니오), 먼저 GQ-01·10~13·20·27.
 - 기록 누락 의심: M1-01~05(코드 있음, 대장 todo).
-- 승인 대기: FluidFX 9영역 (Saved/FluidFX/approval/<영역>/current.json)
-- FluidFX 미충족 6(레버·예산·체제)·⑫㉒㉓㉘㊻㊿
+- FluidFX 승인 9영역(Saved/FluidFX/approval/)·미충족 6(레버·예산·체제)·⑫㉒㉓㉘㊻㊿·쿠킹(L-build-20)
 - 빌드 순서 L-build-05·08. Combat GUI 크래시→헤드리스(L-editor-08).
 
 ## ③ 다음 행동

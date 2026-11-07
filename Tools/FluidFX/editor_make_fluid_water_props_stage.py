@@ -139,7 +139,7 @@ ZONES = (
     {"index": 4, "label": "LiquidSpheres", "cd_ids": [], "refs": ["SP1"], "presets": ("LiquidSphereClear", "LiquidSphereTurbulent", "BloodOrb"), "assets": ("sphere_clear", "sphere_turbulent", "sphere_blood")},
     {"index": 5, "label": "Waterfall", "cd_ids": ["S.0.17.2", "S.0.23.8"], "refs": ["WF1", "WF2"], "presets": ("Waterfall", "WaterPool"), "assets": ("lake", "grid_unit", "sheet")},
     {"index": 6, "label": "FarWaterfalls", "cd_ids": ["SE.0.23.9.1", "SE.0.23.9.2"], "refs": ["WF3"], "presets": (), "assets": ("far_white", "far_blue")},
-    {"index": 7, "label": "WaterySand", "cd_ids": ["SE.0.23.10"], "refs": ["SD1"], "presets": ("WaterySandFlow",), "assets": ("sand",)},
+    {"index": 7, "label": "WaterySand", "cd_ids": ["SE.0.23.10.2"], "refs": ["SD1"], "presets": ("WaterySandFlow",), "assets": ("sand",)},
     {"index": 8, "label": "UnderwaterPit", "cd_ids": [], "refs": ["MC:225", "UW1", "UW2", "UW3", "IMG 21"], "presets": ("WaterPool",), "assets": ("lake", "grid_unit", "underwater_lake")},
 )
 BUILDER_EXPECTATIONS = (

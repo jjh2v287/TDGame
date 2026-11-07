@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "level_map": "Docs/FluidFX/live2_level_map.json",
+  "content_list": "Saved/AgentOps/20261019/fluidfx/parity2/fx7d-build/content_list.txt",
+  "coverage": "Docs/FluidFX/live2_coverage.json",
+  "maps_dir": "Content/FluidFX/Maps",
+  "report_globs": ["Saved/FluidFX/fluid_*stage.json", "Saved/FluidFX/fluid_test_level.json"],
+  "report_scene_containers": ["scenes", "zones", "setups", "scene_actors", "smoke_actors"],
+  "report_scene_keys": ["scene", "name", "label", "id", "zone"],
+  "report_not_built_keys": ["blocked", "deferred"],
+  "plan_sources": [
+    {"glob": "Tools/FluidFX/calib/plans/*.json", "scene_key": "name"},
+    {"glob": "Tools/FluidFX/fx7p_plan.json", "scene_key": "id"}
+  ],
+  "expected_counts": {"levels": 59, "targets": 58},
+  "aliases": [
+    {"from": "SE.0.23.10", "to": "SE.0.23.10.2", "remove_after": "FU-16",
+     "evidence": {"file": "Saved/AgentOps/20261019/fluidfx/parity2/fx7d-build/content_list.txt", "line": 132, "expect": "SE.0.23.10.2|"},
+     "source": "Saved/FluidFX/fluid_water_props_stage.json zones.7.cd_ids(생성기 :142 정정 전 보고, 재생성은 에디터 필요)"}
+  ],
+  "manual_prefix": "manual-",
+  "free_text_limit": 80
+}

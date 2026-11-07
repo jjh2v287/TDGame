@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "rule": "runbook-fxp-v3 3.6·4.3(PD-12b): R13은 감사만. 입자 1만은 P 판정 인용, 액터 49(16)는 FX-7p 기존 측정 인용(구조 격차·보정 전), 무대 없는 3종은 R13s 대기. 새 측정·한도 판정 없음.",
+  "live2": {
+    "quotes": [
+      {"file": "Saved/AgentOps/20261019/fluidfx/parity2/performance.md", "line": 206, "expect": "LIVE-2 스트레스 레벨의 실제 FPS, 게임·렌더 스레드 비용, VRAM은 공개 자료 어디에도 없다"}
+    ]
+  },
+  "rows": [
+    {
+      "id": "particles_10k",
+      "name": "입자 1만",
+      "kind": "p_quote",
+      "basis": "P IN1, S038·S043·S072",
+      "items": ["S038", "S043", "S072"],
+      "p_rows": ["IN1/ft", "IN1/gt"],
+      "source": "P 요약 IN1 state·d·한도(gt 0.4 = S038+S072, PF:162 단독 0.1과 다름)",
+      "quotes": [
+        {"file": "Saved/AgentOps/20261019/fluidfx/parity2/performance.md", "line": 162, "expect": "입자 1만(GPU 경로, CPU 리드백 없음) ≤0.1ms"}
+      ],
+      "values": []
+    },
+    {
+      "id": "primitives_200",
+      "name": "프리미티브 200",
+      "kind": "no_stage",
+      "basis": "S039",
+      "items": ["S039"],
+      "p_rows": [],
+      "source": "—",
+      "quotes": [
+        {"file": "Saved/AgentOps/20261030/cal0/plan-batch-v2.md", "line": 220, "expect": "R13 스트레스 5종 중 무대 없는 3종 | 무대 생성기 확장 명세(FX-P 앞 별도)"}
+      ],
+      "values": []
+    },
+    {
+      "id": "skeletal_40",
+      "name": "스켈레탈 40",
+      "kind": "no_stage",
+      "basis": "S039",
+      "items": ["S039"],
+      "p_rows": [],
+      "source": "—",
+      "quotes": [
+        {"file": "Saved/AgentOps/20261030/cal0/plan-batch-v2.md", "line": 220, "expect": "R13 스트레스 5종 중 무대 없는 3종 | 무대 생성기 확장 명세(FX-P 앞 별도)"}
+      ],
+      "values": []
+    },
+    {
+      "id": "actors_49",
+      "name": "액터 49(16)",
+      "kind": "structural",
+      "basis": "FX-7p S9·S8, S041·S045·S053",
+      "items": ["S041", "S045", "S053"],
+      "p_rows": [],
+      "scenes": ["S9", "S8"],
+      "source": "judge-final.md:48(솔버 7.515 대 4.0)·:120(16×256 2.4845)",
+      "quotes": [
+        {"file": "Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md", "line": 48, "expect": "S9 Sol 7.515 [7.468~7.526] [r2b] | ≤4.0"},
+        {"file": "Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md", "line": 120, "expect": "2.4845 · 7.515 | r2b S11·D6·S6h·S6·S8·S9"}
+      ],
+      "values": [
+        {"name": "49×256 솔버(S9)", "value": "7.515", "quote": 0},
+        {"name": "사전 한도", "value": "≤4.0", "quote": 0},
+        {"name": "16×256 솔버(S8)", "value": "2.4845", "quote": 1}
+      ]
+    },
+    {
+      "id": "painters_64",
+      "name": "페인터 64",
+      "kind": "no_stage",
+      "basis": "S041(단일 TR1뿐)",
+      "items": ["S041"],
+      "p_rows": [],
+      "source": "—",
+      "quotes": [
+        {"file": "Saved/AgentOps/20261030/cal0/plan-batch-v2.md", "line": 220, "expect": "R13 스트레스 5종 중 무대 없는 3종 | 무대 생성기 확장 명세(FX-P 앞 별도)"}
+      ],
+      "values": []
+    }
+  ]
+}

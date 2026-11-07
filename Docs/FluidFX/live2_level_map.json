@@ -1,0 +1,1148 @@
+{
+ "excluded": {
+  "L.3.10": {
+   "evidence": "Saved/AgentOps/20261030/cal0/plan-batch-v2.md:220",
+   "expect": "무대 생성기 확장 명세",
+   "follow_up": "FU-12",
+   "kind": "후속 대기",
+   "reason": "스트레스 무대 없음, 무대 생성기 확장 명세 대기"
+  },
+  "L.3.7": {
+   "evidence": "Saved/AgentOps/20261030/cal0/plan-batch-v2.md:220",
+   "expect": "무대 생성기 확장 명세",
+   "follow_up": "FU-12",
+   "kind": "후속 대기",
+   "reason": "스트레스 무대 없음, 무대 생성기 확장 명세 대기"
+  },
+  "L.3.9": {
+   "evidence": "Saved/AgentOps/20261030/cal0/plan-batch-v2.md:220",
+   "expect": "무대 생성기 확장 명세",
+   "follow_up": "FU-12",
+   "kind": "후속 대기",
+   "reason": "스트레스 무대 없음, 무대 생성기 확장 명세 대기"
+  }
+ },
+ "level_maps": {
+  "L.0.1": [
+   "LV_TDFluidCloudStage"
+  ],
+  "L.0.10": [
+   "LV_TDFluidSnowStage"
+  ],
+  "L.0.11": [
+   "LV_TDFluidViscousStage"
+  ],
+  "L.0.12": [
+   "LV_TDFluidDenseWaterStage_Creek"
+  ],
+  "L.0.13": [
+   "LV_TDFluidDenseWaterStage_Creek"
+  ],
+  "L.0.14": [
+   "LV_TDFluidDenseWaterStage_Lake"
+  ],
+  "L.0.15": [
+   "LV_TDFluidDenseWaterStage_Sea"
+  ],
+  "L.0.16": [
+   "LV_TDFluidWaterStage"
+  ],
+  "L.0.17": [
+   "LV_TDFluidWaterStage",
+   "LV_TDFluidWaterParticleRapidsStage",
+   "LV_TDFluidWaterPropsStage"
+  ],
+  "L.0.18": [
+   "LV_TDFluidWaterStage",
+   "LV_TDFluidWaterParticleRapidsStage"
+  ],
+  "L.0.19": [
+   "LV_TDFluidWaterParticleSeaStage",
+   "LV_TDFluidCoastStage"
+  ],
+  "L.0.2": [
+   "LV_TDFluidCloudStage"
+  ],
+  "L.0.20": [
+   "LV_TDFluidWaterParticleSeaStage",
+   "LV_TDFluidCoastStage"
+  ],
+  "L.0.21": [
+   "LV_TDFluidWaterParticleSeaStage",
+   "LV_TDFluidCoastStage"
+  ],
+  "L.0.22": [
+   "LV_TDFluidWaterParticleSeaStage",
+   "LV_TDFluidCoastStage"
+  ],
+  "L.0.23": [
+   "LV_TDFluidWaterPropsStage"
+  ],
+  "L.0.24": [],
+  "L.0.3": [
+   "LV_TDFluidFireStage",
+   "LV_TDFluidEmberStage",
+   "LV_TDFluidSmokeSetupStage",
+   "LV_TDFluidSmokeStage",
+   "LV_TDFluidMassInputStage"
+  ],
+  "L.0.4": [
+   "LV_TDFluidFogStage"
+  ],
+  "L.0.5": [
+   "LV_TDFluidFogStage"
+  ],
+  "L.0.6": [
+   "LV_TDFluidFoliageStage",
+   "LV_TDFluidSandStage"
+  ],
+  "L.0.7": [
+   "LV_TDFluidSandStage"
+  ],
+  "L.0.8": [
+   "LV_TDFluidSandStage"
+  ],
+  "L.0.9": [
+   "LV_TDFluidSnowStage",
+   "LV_TDFluidSnowDeformStage"
+  ],
+  "L.1.1": [
+   "LV_TDFluidInputStage",
+   "LV_TDFluidOpsStage"
+  ],
+  "L.1.2": [
+   "LV_TDFluidInputStage",
+   "LV_TDFluidMassInputStage"
+  ],
+  "L.1.3": [
+   "LV_TDFluidDenseWaterStage_Compare"
+  ],
+  "L.1.4": [
+   "LV_TDFluidHvolStage"
+  ],
+  "L.1.5": [
+   "LV_TDFluidInputStage",
+   "LV_TDFluidOpsStage",
+   "LV_TDFluidFogStage",
+   "LV_TDFluidViscousStage"
+  ],
+  "L.1.6": [
+   "LV_TDFluidWaterStage"
+  ],
+  "L.2.1": [
+   "LV_TDFluidHvolStage"
+  ],
+  "L.2.2": [
+   "LV_TDFluidSandStage"
+  ],
+  "L.2.3": [
+   "LV_TDFluidSandStage"
+  ],
+  "L.2.4": [
+   "LV_TDFluidInputStage"
+  ],
+  "L.2.5": [
+   "LV_TDFluidWaterStage",
+   "LV_TDFluidCoastStage"
+  ],
+  "L.2.6": [
+   "LV_TDFluidWaterStage"
+  ],
+  "L.3.1": [
+   "LV_TDFluidInputStage",
+   "LV_TDFluidFireStage"
+  ],
+  "L.3.10": [],
+  "L.3.11": [],
+  "L.3.12": [
+   "LV_TDFluidFogStage"
+  ],
+  "L.3.13": [
+   "LV_TDFluidHvolStage"
+  ],
+  "L.3.14": [
+   "LV_TDFluidHvolStage",
+   "LV_TDFluidSmokeSetupStage",
+   "LV_TDFluidSmokeStage"
+  ],
+  "L.3.15": [
+   "LV_TDFluidHvolStage"
+  ],
+  "L.3.16": [
+   "LV_TDFluidSmokeStage"
+  ],
+  "L.3.17": [
+   "LV_TDFluidSmokeStage",
+   "LV_TDFluidHvolStage"
+  ],
+  "L.3.18": [
+   "LV_TDFluidRainStage"
+  ],
+  "L.3.19": [
+   "LV_TDFluidDenseWaterStage_Compare"
+  ],
+  "L.3.2": [
+   "LV_TDFluidInputStage"
+  ],
+  "L.3.20": [],
+  "L.3.21": [],
+  "L.3.22": [
+   "LV_TDFluidDenseWaterStage_Ship"
+  ],
+  "L.3.3": [
+   "LV_TDFluidInputStage"
+  ],
+  "L.3.4": [
+   "LV_TDFluidParticleStage"
+  ],
+  "L.3.5": [
+   "LV_TDFluidViscousStage"
+  ],
+  "L.3.6": [
+   "LV_TDFluidMassInputStage"
+  ],
+  "L.3.7": [],
+  "L.3.8": [
+   "LV_TDFluidSmokeStage"
+  ],
+  "L.3.9": []
+ },
+ "levels": [
+  {
+   "id": "L.0.1",
+   "name": "Clouds"
+  },
+  {
+   "id": "L.0.2",
+   "name": "Clouds_PASSIVE"
+  },
+  {
+   "id": "L.0.3",
+   "name": "Fire_Smoke_Explosive"
+  },
+  {
+   "id": "L.0.4",
+   "name": "Fog_Mist"
+  },
+  {
+   "id": "L.0.5",
+   "name": "Fog_Mist_PASSIVE"
+  },
+  {
+   "id": "L.0.6",
+   "name": "Grass"
+  },
+  {
+   "id": "L.0.7",
+   "name": "Sand"
+  },
+  {
+   "id": "L.0.8",
+   "name": "Sand_Destructibles"
+  },
+  {
+   "id": "L.0.9",
+   "name": "Snow"
+  },
+  {
+   "id": "L.0.10",
+   "name": "Snow_Minimal"
+  },
+  {
+   "id": "L.0.11",
+   "name": "Viscous_Blood_Mud"
+  },
+  {
+   "id": "L.0.12",
+   "name": "Water_Dense_Creek1"
+  },
+  {
+   "id": "L.0.13",
+   "name": "Water_Dense_Creek2"
+  },
+  {
+   "id": "L.0.14",
+   "name": "Water_Dense_Lake"
+  },
+  {
+   "id": "L.0.15",
+   "name": "Water_Dense_Sea"
+  },
+  {
+   "id": "L.0.16",
+   "name": "Water_Sparse_Lake"
+  },
+  {
+   "id": "L.0.17",
+   "name": "Water_Sparse_River"
+  },
+  {
+   "id": "L.0.18",
+   "name": "Water_Sparse_Rivers_Minimal"
+  },
+  {
+   "id": "L.0.19",
+   "name": "Water_Sparse_Sea_Minimal"
+  },
+  {
+   "id": "L.0.20",
+   "name": "Water_Sparse_Sea_Quiet"
+  },
+  {
+   "id": "L.0.21",
+   "name": "Water_Sparse_Sea_Stormy"
+  },
+  {
+   "id": "L.0.22",
+   "name": "Water_Sparse_Sea_Windy"
+  },
+  {
+   "id": "L.0.23",
+   "name": "Water_Sparse_Various"
+  },
+  {
+   "id": "L.0.24",
+   "name": "Water_Sparse_Swamp"
+  },
+  {
+   "id": "L.1.0",
+   "name": "StartingGuide"
+  },
+  {
+   "id": "L.1.1",
+   "name": "Tutorial01_Basics"
+  },
+  {
+   "id": "L.1.2",
+   "name": "Tutorial02_Inputs_Interaction"
+  },
+  {
+   "id": "L.1.3",
+   "name": "Tutorial03_KeyConceptsForWater"
+  },
+  {
+   "id": "L.1.4",
+   "name": "Tutorial04_Presets_Spawning_Caching"
+  },
+  {
+   "id": "L.1.5",
+   "name": "Tutorial05_Tricks"
+  },
+  {
+   "id": "L.1.6",
+   "name": "Tutorial06_SplineBasedRivers"
+  },
+  {
+   "id": "L.2.1",
+   "name": "CamfaceTest"
+  },
+  {
+   "id": "L.2.2",
+   "name": "Desert_SimplePainter_Landscape"
+  },
+  {
+   "id": "L.2.3",
+   "name": "Desert_SimplePainter_Mesh"
+  },
+  {
+   "id": "L.2.4",
+   "name": "Destructibles_as_SDF"
+  },
+  {
+   "id": "L.2.5",
+   "name": "LandscapeAlignedWater_ProtoVersion"
+  },
+  {
+   "id": "L.2.6",
+   "name": "River"
+  },
+  {
+   "id": "L.3.1",
+   "name": "Destructibles_as_Points_CameraFacing"
+  },
+  {
+   "id": "L.3.2",
+   "name": "Destructibles_as_Points_WorldAligned"
+  },
+  {
+   "id": "L.3.3",
+   "name": "Destructibles_as_SDF_WorldAligned"
+  },
+  {
+   "id": "L.3.4",
+   "name": "DrivingParticlesWithFluidsim"
+  },
+  {
+   "id": "L.3.5",
+   "name": "Lava_Sparse"
+  },
+  {
+   "id": "L.3.6",
+   "name": "PerformanceTest_Particles"
+  },
+  {
+   "id": "L.3.7",
+   "name": "PerformanceTest_Primitives"
+  },
+  {
+   "id": "L.3.8",
+   "name": "PerformanceTest_SimContainers"
+  },
+  {
+   "id": "L.3.9",
+   "name": "PerformanceTest_SimplePainterContainers"
+  },
+  {
+   "id": "L.3.10",
+   "name": "PerformanceTest_SkeletalMeshes"
+  },
+  {
+   "id": "L.3.11",
+   "name": "VolumeDemo_FAKE"
+  },
+  {
+   "id": "L.3.12",
+   "name": "VolumeDemo_FVOL_Small"
+  },
+  {
+   "id": "L.3.13",
+   "name": "VolumeDemo_HVOL_Medium"
+  },
+  {
+   "id": "L.3.14",
+   "name": "VolumeDemo_HVOL_Small"
+  },
+  {
+   "id": "L.3.15",
+   "name": "VolumeDemo_HVOL_Small_PASSIVE"
+  },
+  {
+   "id": "L.3.16",
+   "name": "VolumeDemo_SVOL_Medium"
+  },
+  {
+   "id": "L.3.17",
+   "name": "VolumeDemo_SVOL_Small"
+  },
+  {
+   "id": "L.3.18",
+   "name": "Water_Dense_Rain"
+  },
+  {
+   "id": "L.3.19",
+   "name": "Water_Dense_vs_Sparse"
+  },
+  {
+   "id": "L.3.20",
+   "name": "Water_Sparse_DoubleSim_TilingWaves"
+  },
+  {
+   "id": "L.3.21",
+   "name": "Water_Sparse_DoubleSim_Vortex"
+  },
+  {
+   "id": "L.3.22",
+   "name": "Water_Sparse_Sea_Ship"
+  }
+ ],
+ "rows": {
+  "A12": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.1.5.2"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "FogTileSync"
+   }
+  ],
+  "B1": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.1.2.6.2"
+    ],
+    "map": "LV_TDFluidMassInputStage",
+    "scene": "M3"
+   }
+  ],
+  "B10": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.1.2.1.1",
+     "S.1.2.4"
+    ],
+    "map": "LV_TDFluidInputStage",
+    "scene": "TDGen_InputField"
+   }
+  ],
+  "B12": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.1.5.8"
+    ],
+    "map": "LV_TDFluidInputStage",
+    "scene": "TDGen_InputSize"
+   }
+  ],
+  "B14": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.1.5.3"
+    ],
+    "map": "LV_TDFluidInputStage",
+    "scene": "TDGen_InputOrbit"
+   }
+  ],
+  "B15": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.1.5.9"
+    ],
+    "map": "LV_TDFluidInputStage",
+    "scene": "TDGen_InputStop"
+   }
+  ],
+  "B6": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.1.2.5.1"
+    ],
+    "map": "LV_TDFluidInputStage",
+    "scene": "TDGen_InputMesh"
+   }
+  ],
+  "B9": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.1.2.5.4"
+    ],
+    "map": "LV_TDFluidInputStage",
+    "scene": "TDGen_InputFragment"
+   }
+  ],
+  "D12": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.3.14.11.2"
+    ],
+    "map": "LV_TDFluidHvolStage",
+    "scene": "floor_smoke"
+   }
+  ],
+  "D13": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.3.17.8.1",
+     "SE.3.17.8.2"
+    ],
+    "map": "LV_TDFluidHvolStage",
+    "scene": "hvol_pair"
+   },
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.3.17.7.1"
+    ],
+    "map": "LV_TDFluidSmokeStage",
+    "scene": "smoke_pool"
+   }
+  ],
+  "D2": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.3.13.1"
+    ],
+    "map": "LV_TDFluidHvolStage",
+    "scene": "slope_cache"
+   }
+  ],
+  "D7": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.3.14.3"
+    ],
+    "map": "LV_TDFluidHvolStage",
+    "scene": "camera_facing"
+   }
+  ],
+  "E10": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.3.16"
+    ],
+    "map": "LV_TDFluidFireStage",
+    "scene": "explosion_block"
+   }
+  ],
+  "E11": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.1.1"
+    ],
+    "map": "LV_TDFluidFireStage",
+    "scene": "explosion_block"
+   }
+  ],
+  "E8": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.3.1"
+    ],
+    "map": "LV_TDFluidFireStage",
+    "scene": "torch"
+   }
+  ],
+  "F1": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.0.4.1"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "f1_backlit"
+   }
+  ],
+  "F2": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.5.1"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "PassiveDisplays"
+   }
+  ],
+  "F3": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.12.0"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "Intro"
+   }
+  ],
+  "F4": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.3.12.1.1",
+     "SE.3.12.1.2"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "Cylinders"
+   },
+   {
+    "evidence": "plan",
+    "items": [
+     "S.3.12.2"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "f7_lab"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.12.3"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "Shrine"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.12.4"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "Hollow"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.12.5"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "Trail"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.12.6"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "Character"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.3.12.7.2"
+    ],
+    "map": "LV_TDFluidFogStage",
+    "scene": "AmbientWindowAndField"
+   }
+  ],
+  "G11": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.0.2.1.10"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "cyclone_live"
+   }
+  ],
+  "G12": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.0.2.1.1"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "volcano_backlit"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.2.1.2"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "VolcanoSky"
+   }
+  ],
+  "G14": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.2.1.9"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Tornado"
+   }
+  ],
+  "G3": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.1.1.1"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Pillars"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.1.1.2"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Vortex"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.1.1.3"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Impulse"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.1.1.4"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Aurora"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.1.1.5"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Titan"
+   }
+  ],
+  "G4": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.0.1.1.6"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "painter_stroke"
+   }
+  ],
+  "G5": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.2.1.6"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Nimbus"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.2.1.7"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Stratus"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.0.2.1.8"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "Mammatus"
+   }
+  ],
+  "G8": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.14.14"
+    ],
+    "map": "LV_TDFluidHvolStage",
+    "scene": "CrossSection"
+   }
+  ],
+  "G9": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.0.2.1.3"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "mushroom_cap"
+   }
+  ],
+  "H1": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.7.1",
+     "S.0.8.1"
+    ],
+    "map": "LV_TDFluidSandStage",
+    "scene": "sand"
+   }
+  ],
+  "H7": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.0.2.1.5"
+    ],
+    "map": "LV_TDFluidCloudStage",
+    "scene": "sand_wall"
+   }
+  ],
+  "I1": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.9.1"
+    ],
+    "map": "LV_TDFluidSnowStage",
+    "scene": "snow"
+   }
+  ],
+  "I2": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.0.10.1"
+    ],
+    "map": "LV_TDFluidSnowStage",
+    "scene": "snow_groove"
+   }
+  ],
+  "J4": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.0.6.1.2"
+    ],
+    "map": "LV_TDFluidSandStage",
+    "scene": "sand_harvester"
+   }
+  ],
+  "J6": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.0.11.6"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "blood_decal"
+   }
+  ],
+  "K1": [
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.0.6.1.1"
+    ],
+    "map": "LV_TDFluidFoliageStage",
+    "scene": "k1_bend"
+   }
+  ],
+  "K2": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.0.6.2"
+    ],
+    "map": "LV_TDFluidFoliageStage",
+    "scene": "k2_press"
+   }
+  ],
+  "L1": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.0.12.1",
+     "S.0.13.1"
+    ],
+    "map": "LV_TDFluidDenseWaterStage_Creek",
+    "scene": "creek"
+   }
+  ],
+  "L10": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.16.1"
+    ],
+    "map": "LV_TDFluidWaterStage",
+    "scene": "0"
+   }
+  ],
+  "L11": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.23.3"
+    ],
+    "map": "LV_TDFluidWaterPropsStage",
+    "scene": "Fountain"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.23.5"
+    ],
+    "map": "LV_TDFluidWaterPropsStage",
+    "scene": "Cauldron"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.23.6"
+    ],
+    "map": "LV_TDFluidWaterPropsStage",
+    "scene": "WaterTank"
+   },
+   {
+    "evidence": "plan",
+    "items": [
+     "SE.0.23.7.1",
+     "SE.0.23.7.2",
+     "SE.0.23.10.1"
+    ],
+    "map": "LV_TDFluidWaterPropsStage",
+    "scene": "spheres"
+   }
+  ],
+  "L12": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.3.18.1"
+    ],
+    "map": "LV_TDFluidRainStage",
+    "scene": "pond_near"
+   }
+  ],
+  "L13": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.3.22.1"
+    ],
+    "map": "LV_TDFluidDenseWaterStage_Ship",
+    "scene": "ship"
+   }
+  ],
+  "L15": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.19.1",
+     "S.3.19.2"
+    ],
+    "map": "LV_TDFluidDenseWaterStage_Compare",
+    "scene": "Compare"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "SE.1.3.1.1",
+     "SE.1.3.1.2"
+    ],
+    "map": "LV_TDFluidDenseWaterStage_Compare",
+    "scene": "Compare"
+   }
+  ],
+  "L2": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.14.1"
+    ],
+    "map": "LV_TDFluidDenseWaterStage_Lake",
+    "scene": "Lake"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.15.1"
+    ],
+    "map": "LV_TDFluidDenseWaterStage_Sea",
+    "scene": "Sea"
+   }
+  ],
+  "M2": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.11.1"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "ViscousBloodSlide"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.11.2"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "ViscousBloodSplash"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.11.3"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "ViscousMudLocal"
+   },
+   {
+    "evidence": "plan",
+    "items": [
+     "S.0.11.4"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "mud_world"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.11.5"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "ViscousBloodFlowMesh"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.0.11.7"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "ViscousBloodBath"
+   }
+  ],
+  "M3": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.5.1"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "LavaWorld"
+   },
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.5.2"
+    ],
+    "map": "LV_TDFluidViscousStage",
+    "scene": "LavaFlow"
+   }
+  ],
+  "N1": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.2.1"
+    ],
+    "map": "LV_TDFluidInputStage",
+    "scene": "TDGen_InputFragment"
+   }
+  ],
+  "O6": [
+   {
+    "evidence": "plan",
+    "items": [
+     "S.1.4.5"
+    ],
+    "map": "LV_TDFluidHvolStage",
+    "scene": "slope_cache"
+   }
+  ],
+  "Q8": [
+   {
+    "evidence": "report",
+    "items": [
+     "SE.1.5.1.1"
+    ],
+    "map": "LV_TDFluidOpsStage",
+    "scene": "sequencer"
+   }
+  ],
+  "R13": [
+   {
+    "evidence": "report",
+    "items": [
+     "S.3.6.1"
+    ],
+    "map": "LV_TDFluidMassInputStage",
+    "scene": "M1"
+   },
+   {
+    "evidence": "plan",
+    "items": [
+     "S.3.8.1"
+    ],
+    "map": "LV_TDFluidSmokeStage",
+    "scene": "S9"
+   }
+  ]
+ },
+ "version": 1
+}

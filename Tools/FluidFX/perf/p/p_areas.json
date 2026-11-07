@@ -1,0 +1,4349 @@
+{
+  "version": 1,
+  "ledger": {
+    "path": "Saved/AgentOps/20261106/p-prep/p-ledger-v2.md",
+    "sha256": "1e9095b057d108d695237aed327557ef125fa3f07c17d7f60d297bcfd1d6c54e"
+  },
+  "areas_order": [
+    "fire",
+    "smoke",
+    "fog",
+    "water",
+    "cloud",
+    "input",
+    "track",
+    "viscous"
+  ],
+  "cvar_defaults": [
+    {
+      "name": "TD.FluidFX.WaterWetness",
+      "value": 1,
+      "source": "[사실] `Source/TDGame/FluidFX/TDFluidGrid2DSolver.cpp:35-36`",
+      "rows": [
+        "WA3"
+      ]
+    },
+    {
+      "name": "TD.FluidFX.MassInput",
+      "value": -1,
+      "source": "[사실] `Source/TDGame/FluidFX/TDFluidMassInputTargets.cpp:9-10`(0이면 판독·스플랫 끔 :8-18)",
+      "rows": [
+        "IN1",
+        "IN2",
+        "IN4"
+      ]
+    },
+    {
+      "name": "TD.FluidFX.CloudSetup",
+      "value": -1,
+      "source": "[사실] `Source/TDGame/FluidFX/TDFluidCloudLayersActor.cpp:23-24`",
+      "rows": [
+        "CL1~6"
+      ]
+    },
+    {
+      "name": "TD.FluidFX.CloudViewSampleScale",
+      "value": -1.0,
+      "source": "[사실] 같은 파일 :29-30",
+      "rows": [
+        "CL1~6"
+      ]
+    },
+    {
+      "name": "r.VolumetricFog",
+      "value": 1,
+      "source": "[사실] ENG `Renderer/Private/VolumetricFog.cpp:94-100`(ECVF_Scalability), ShadowQuality ≥2 → 1(ENG `Config/BaseScalability.ini:143,178,213,251,289`), 프로젝트 Config 0건, 사용자 `GameUserSettings.ini:42` sg.ShadowQuality=3 → 실효 1 [가정: PIE가 사용]",
+      "rows": [
+        "FO1",
+        "FO2"
+      ]
+    },
+    {
+      "name": "t.OverrideFPS",
+      "value": 0.0,
+      "source": "[사실] ENG `Source/Runtime/Engine/Private/UnrealEngine.cpp:519-526`(비배포 전용, ECVF_Cheat)",
+      "rows": [
+        "전 계획"
+      ]
+    },
+    {
+      "name": "r.ScreenPercentage",
+      "value": 100,
+      "source": "[사실] FX7P cvars PP:968",
+      "rows": [
+        "전 장면"
+      ]
+    }
+  ],
+  "record_only_variables": [
+    "TD.FluidFX.SolverBackend",
+    "TD.FluidFX.WaterGpu",
+    "TD.FluidFX.MaxStepRateHz",
+    "TD.FluidFX.PauseWhenNotVisible",
+    "TD.FluidFX.ParallelActorSteps",
+    "TD.FluidFX.LogTickCost"
+  ],
+  "items": [
+    {
+      "id": "S001",
+      "source": "PF:158 GT",
+      "summary": "연기 GPU 경로 액터당",
+      "limit": "≤0.2",
+      "area": "smoke",
+      "disposition": "출하 밖",
+      "reason": "출하 프리셋 CPU",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S002",
+      "source": "PF:158 GT",
+      "summary": "연기 CPU 256²",
+      "limit": "≤2.0",
+      "area": "smoke",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "SM1/gt",
+        "SM2/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S003",
+      "source": "PF:158 GT",
+      "summary": "연기 CPU 128²",
+      "limit": "≤0.8",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "128² 연기 장면 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S004",
+      "source": "PF:158 RT",
+      "summary": "연기 액터당",
+      "limit": "≤0.1",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "부분 토글: SM1·SM2 cards 두 측 유지, C8; HV2는 C8 예상 밖",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S005",
+      "source": "PF:158 GPU",
+      "summary": "연기 시뮬 512²",
+      "limit": "≤0.45",
+      "area": "smoke",
+      "disposition": "출하 밖",
+      "reason": "출하 프리셋 CPU",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S006",
+      "source": "PF:158 GPU·RM:479·RM:146",
+      "summary": "SVOL 무조명 HARD",
+      "limit": "≤1.0",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "무조명 장면 없음, B16",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S007",
+      "source": "PF:158 GPU·RM:479·RM:146",
+      "summary": "SVOL 포인트 HARD",
+      "limit": "≤2.0",
+      "area": "smoke",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "SM1/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S008",
+      "source": "PF:158 GPU·RM:479·RM:146",
+      "summary": "SVOL 포인트 SOFT",
+      "limit": "≤4.0",
+      "area": "smoke",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "SM2/ft",
+        "FI1/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S009",
+      "source": "PF:158 GPU·RM:150",
+      "summary": "SOFT/HARD 비",
+      "limit": "≤2.2배",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "장면 간 비",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S010",
+      "source": "PF:158·159·160(a)·161·162 메모리",
+      "summary": "VRAM·CPU 메모리(①≤12MB·≤1MB, ③a ≤6.5MB, ④ 증가분, ②⑤ 문장)",
+      "limit": "각",
+      "area": "각",
+      "disposition": "측정 불가",
+      "reason": "메모리 경로 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S011",
+      "source": "PF:159 GT·RM:496",
+      "summary": "횃불 CPU",
+      "limit": "≤1.0",
+      "area": "fire",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "FI2/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S012",
+      "source": "RM:902",
+      "summary": "횃불 GPU 경로 GT",
+      "limit": "≤1.0",
+      "area": "fire",
+      "disposition": "출하 밖",
+      "reason": "출하 프리셋 CPU",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S013",
+      "source": "PF:159 GT·RM:496",
+      "summary": "모닥불",
+      "limit": "≤2.0",
+      "area": "fire",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "FI1/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S014",
+      "source": "PF:159 GT·RM:496·RM:167",
+      "summary": "폭발",
+      "limit": "≤2.5",
+      "area": "fire",
+      "disposition": "측정 불가",
+      "reason": "1회성 트리거, ABBA 불가, AM A7",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S015",
+      "source": "PF:159 GT",
+      "summary": "GPU 불 액터당(모닥불·횃불)",
+      "limit": "≤0.3",
+      "area": "fire",
+      "disposition": "출하 밖",
+      "reason": "출하 프리셋 CPU",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S016",
+      "source": "PF:159 GT",
+      "summary": "GPU 불 액터당(화염방사기 GPU 128²)",
+      "limit": "≤0.3",
+      "area": "input",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "IN3/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S017",
+      "source": "PF:159 RT",
+      "summary": "불(불티 갱신 포함)",
+      "limit": "≤0.15",
+      "area": "fire",
+      "disposition": "측정 불가",
+      "reason": "부분 토글: FI1 추가 불꽃 카드 B측 유지 AM9 P7, FI2 광원 유지 AM4 G3",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S018",
+      "source": "PF:159 GPU·RM:478·RM:165",
+      "summary": "불꽃 카드",
+      "limit": "≤0.3",
+      "area": "fire",
+      "disposition": "측정 불가",
+      "reason": "부분 토글: Campfire 추가 불꽃 카드 1장(TJ:1050)이 B측 sleep 뒤 보임을 유지한다, FA:402-428·443-447; PP cards 되읽기는 InternalSurfaceMesh뿐 PP:240-243·279, AM9 P6",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S019",
+      "source": "PF:159 GPU",
+      "summary": "불티 256 ISM",
+      "limit": "≤0.15",
+      "area": "fire",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "FI5a/ft",
+        "FI1/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S020",
+      "source": "PF:159 GPU·RM:512·RM:168",
+      "summary": "GPU 불티 1천",
+      "limit": "≤0.3",
+      "area": "fire",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "FI5b/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S021",
+      "source": "PF:159 GPU",
+      "summary": "그림자 점광원",
+      "limit": "≤0.5",
+      "area": "fire",
+      "disposition": "행",
+      "reason": "몫, light 동작 U2",
+      "rows": [
+        "FI1/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S022",
+      "source": "PF:159 GPU·RM:149·CCT:14·PB1:196(fx9 HV4)",
+      "summary": "카메라 정렬 4효과",
+      "limit": "≤2.5",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "4효과 장면 없음, B7",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S023",
+      "source": "PF:160 GT(a)",
+      "summary": "강 192² CPU",
+      "limit": "≤3.0",
+      "area": "water",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "WA1/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S024",
+      "source": "PF:160 GT(a)",
+      "summary": "창 이동 p95",
+      "limit": "≤평균×1.5",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "판정기에 CPU 이동 경로 없음, AM A2",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S025",
+      "source": "PF:160 GT(b)",
+      "summary": "개울 GPU",
+      "limit": "≤0.3",
+      "area": "water",
+      "disposition": "출하 밖",
+      "reason": "D-60 보류, WaterGpu 0",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S026",
+      "source": "PF:160 RT",
+      "summary": "물(업로드 포함)",
+      "limit": "≤0.2",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "부분 토글: WA1 SLW 유지, C8",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S027",
+      "source": "PF:160 GPU(a)·RM:521·RM:263",
+      "summary": "SLW 고품질",
+      "limit": "≤1.5",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "SLW만 끄는 토글 없음, B3",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S028",
+      "source": "PF:160 GPU(a)·RM:521",
+      "summary": "SLW 중·Lite",
+      "limit": "≤1.0·≤0.7",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "품질 단계 전환 경로 없음, U13",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S029",
+      "source": "PF:160 GPU(b)·메모리(b)",
+      "summary": "2048² 시뮬·메시 합·VRAM",
+      "limit": "≤2.8·≤LIVE-2·≤256MB",
+      "area": "water",
+      "disposition": "출하 밖",
+      "reason": "D-60 보류",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S030",
+      "source": "PF:161 GT·RM:581·RM:182·RM:197",
+      "summary": "수동(안개·구름)",
+      "limit": "≤0.05",
+      "area": "fog",
+      "disposition": "측정 불가",
+      "reason": "수동 GT 분리 경로 없음: PassiveField는 틱 없는 STATIC StaticMeshActor, editor_make_fluid_fog_stage.py:563-568, ENG Actor.cpp:278; 구름 몫 부분 토글 AM5 H1, AM9 P2",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S031",
+      "source": "RM:156",
+      "summary": "D14 확장 볼륨 수동 GT(연기 표)",
+      "limit": "≤0.05",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "확장 볼륨 수동 장면 없음, SW 칸 정정",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S032",
+      "source": "PF:161 GT·RM:581·RM:181·RM:628(GT)",
+      "summary": "시뮬 구동",
+      "limit": "≤0.2",
+      "area": "fog",
+      "disposition": "행",
+      "reason": "구름 CL3의 gt 몫은 측정 불가: Ls는 원천만 재우고 구름 층 호스트 틱이 두 측에 남는다, TDFluidCloudLayersActor.cpp:92-93·248-274, AM9 P10",
+      "rows": [
+        "FO1/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S033",
+      "source": "PF:161 RT",
+      "summary": "구름·안개",
+      "limit": "≤0.1",
+      "area": "fog",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "FO1/rt",
+        "CL1/rt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S034",
+      "source": "PF:161 GPU·RM:579·RM:181·RM:187",
+      "summary": "FVOL 효과",
+      "limit": "≤0.8",
+      "area": "fog",
+      "disposition": "행",
+      "reason": "몫; FO2/ft는 FVOL 몫 없음, AM8 N1",
+      "rows": [
+        "FO1/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S035",
+      "source": "PF:161 GPU·RM:628·RM:193",
+      "summary": "CVOL 배율 2",
+      "limit": "≤2.5",
+      "area": "cloud",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "CL1/ft",
+        "CL2/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S036",
+      "source": "PF:161 GPU·RM:628·RM:202·F11:56·103·150",
+      "summary": "관통 배율 4·5·6",
+      "limit": "≤4.0",
+      "area": "cloud",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "CL4/ft",
+        "CL5/ft",
+        "CL6/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S037",
+      "source": "PF:161 GPU·RM:147·RM:565",
+      "summary": "HVOL 512×512×(256·128)",
+      "limit": "≤LIVE-2(환산 4.6~6)",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "LIVE-2 실측·512² HVOL 장면 없음 [사실 TJ:434-435]",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S038",
+      "source": "PF:162 GT·RM:591·RM:103",
+      "summary": "1만 점 GT",
+      "limit": "≤0.1",
+      "area": "input",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "IN1/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S039",
+      "source": "PF:162 GT·RM:666·RM:105",
+      "summary": "프리미티브 200·스켈레탈 40",
+      "limit": "≤0.2·≤0.3",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "무대 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S040",
+      "source": "PF:162 GT·RM:107",
+      "summary": "조각 500",
+      "limit": "≤0.2",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "장면 없음: 불 무대 조각 4×4×4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S041",
+      "source": "PF:162 GT·GPU·RM:231",
+      "summary": "액터 49 합·페인터 64 합",
+      "limit": "≤2.0·≤1.0",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "무대 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S042",
+      "source": "PF:162 RT",
+      "summary": "입력 합",
+      "limit": "≤0.3",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "한도 조성 불가: PF:162 RT '≤0.3ms 합'은 스트레스 6종 합이고 입자 1만 몫이 없다; IN1 무대는 입자 NS뿐, MassInput 0은 입자 경로만 끈다, AM9 P4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S043",
+      "source": "PF:162 GPU·RM:590·RM:103·RM:118·PB1:196(fx5)",
+      "summary": "1만 점 스플랫",
+      "limit": "≤0.5",
+      "area": "input",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "IN1/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S044",
+      "source": "PF:162 GPU·RM:590·PB1:196(fx5)",
+      "summary": "1천 점",
+      "limit": "≤0.15",
+      "area": "input",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "IN2/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S045",
+      "source": "PF:162 GPU",
+      "summary": "49×256²",
+      "limit": "≥LIVE-2 FPS",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "무대·LIVE-2 실측 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S046",
+      "source": "RM:463·RM:79·RM:82·RM:628(시뮬)·RM:713",
+      "summary": "512² GPU 스텝",
+      "limit": "≤0.45",
+      "area": "cloud",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "CL3/ng"
+      ],
+      "record": null
+    },
+    {
+      "id": "S047",
+      "source": "RM:463",
+      "summary": "512² p95",
+      "limit": "≤0.55",
+      "area": "cloud",
+      "disposition": "측정 불가",
+      "reason": "p95 판정 경로 없음, PR-7은 p50",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S048",
+      "source": "RM:463",
+      "summary": "4×512²",
+      "limit": "≤1.6",
+      "area": "smoke",
+      "disposition": "출하 밖",
+      "reason": "출하 프리셋 CPU",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S049",
+      "source": "RM:463",
+      "summary": "256² GPU(연기)",
+      "limit": "≤0.15",
+      "area": "smoke",
+      "disposition": "출하 밖",
+      "reason": "출하 프리셋 CPU",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S050",
+      "source": "RM:463",
+      "summary": "256² GPU(FogAmbient 몫)",
+      "limit": "≤0.15",
+      "area": "fog",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "FO1/ft",
+        "FO2/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S051",
+      "source": "RM:463·RM:606·RM:211·CCT:30",
+      "summary": "페인터 1024² GPU",
+      "limit": "≤0.10",
+      "area": "track",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "TR1/ft",
+        "TR1/ng"
+      ],
+      "record": null
+    },
+    {
+      "id": "S052",
+      "source": "RM:464·RM:79·RM:901",
+      "summary": "액터당 고정비 GT·RT",
+      "limit": "≤0.04·≤0.006",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "고정비 분리 장면 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S053",
+      "source": "RM:464·RM:901",
+      "summary": "49×256² GPU·GT·RT",
+      "limit": "≤4.0·≤2.0·≤0.3",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "무대 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S054",
+      "source": "RM:465·342·801·857·863·965",
+      "summary": "VRAM 512²·페인터",
+      "limit": "≤16·≤17MiB",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "메모리 경로 없음, U16",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S055",
+      "source": "RM:480",
+      "summary": "노이즈 순증 Translucency",
+      "limit": "+10%",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "변경 전 출하 기준 없음, PR-16",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S056",
+      "source": "RM:495·RM:151",
+      "summary": "투과율 사전 계산",
+      "limit": "0.05~0.1(실측 뒤)",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "재구성 토글, L·Lb·C·X 밖",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S057",
+      "source": "RM:497·RM:153",
+      "summary": "캡슐 그림자 8",
+      "limit": "≤0.2",
+      "area": "fire",
+      "disposition": "측정 불가",
+      "reason": "캡슐 그림자 토글 없음 [사실 FC F14]",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S058",
+      "source": "RM:512·RM:138",
+      "summary": "메시 입자 1천",
+      "limit": "≤0.3",
+      "area": "fire",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "FI6/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S059",
+      "source": "RM:512·RM:620",
+      "summary": "VSM 그림자 깊이 차분",
+      "limit": "—",
+      "area": "fire",
+      "disposition": "기록",
+      "reason": "FI6 장면 VSM 열; 식생 행 없음",
+      "rows": [],
+      "record": {
+        "value": "FI6 장면 VSM 열; 식생 행 없음",
+        "file": "RM:512·RM:620",
+        "date": null,
+        "canonical_sha": null,
+        "before_w": null
+      }
+    },
+    {
+      "id": "S060",
+      "source": "RM:521",
+      "summary": "Reflection 3 Lumen 몫",
+      "limit": "—",
+      "area": "water",
+      "disposition": "기록",
+      "reason": "값 없음, 변형 장면 없음",
+      "rows": [],
+      "record": {
+        "value": "값 없음, 변형 장면 없음",
+        "file": "RM:521",
+        "date": null,
+        "canonical_sha": null,
+        "before_w": null
+      }
+    },
+    {
+      "id": "S061",
+      "source": "RM:522·RM:236·RM:256",
+      "summary": "젖음 데칼",
+      "limit": "≤0.3",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "데칼만 끄는 경로·증거 열 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S062",
+      "source": "RM:522",
+      "summary": "셰이더 산술",
+      "limit": "≤200",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "정적 셰이더 통계, PIE 경로 아님",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S063",
+      "source": "RM:535",
+      "summary": "192²·1024² GPU·GT",
+      "limit": "≤0.10·≤0.9·≤0.3",
+      "area": "water",
+      "disposition": "출하 밖",
+      "reason": "D-60 미결, WaterGpu 0",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S064",
+      "source": "RM:537",
+      "summary": "2048² 미정(계산 3.2~4.5·344MB)",
+      "limit": "—",
+      "area": "water",
+      "disposition": "기록",
+      "reason": "계산값",
+      "rows": [],
+      "record": {
+        "value": "계산값",
+        "file": "RM:537",
+        "date": null,
+        "canonical_sha": null,
+        "before_w": null
+      }
+    },
+    {
+      "id": "S065",
+      "source": "RM:544·DEC:481",
+      "summary": "젖음 192² CPU 추가",
+      "limit": "≤0.15",
+      "area": "water",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "WA3/gt",
+        "WA1/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S066",
+      "source": "RM:544",
+      "summary": "젖음 GPU 1024²",
+      "limit": "≤0.1",
+      "area": "water",
+      "disposition": "출하 밖",
+      "reason": "D-60",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S067",
+      "source": "RM:551·RM:259·RM:277·DEC:483",
+      "summary": "근접 층·업로드 0(기록 0.061·0.080 ms)",
+      "limit": "≤0.1",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "증거 열 없음, AM A4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S068",
+      "source": "RM:566",
+      "summary": "구동 컴포넌트 GT/대상",
+      "limit": "≤0.05",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "구동 컴포넌트만 끄는 토글 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S069",
+      "source": "RM:566",
+      "summary": "높이 굽기 런타임",
+      "limit": "0",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "분리 열 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S070",
+      "source": "RM:566·RM:148·CCT:10·SG:76-80",
+      "summary": "HV3 CVAR 이득",
+      "limit": "15~25%",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "비율 지표",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S071",
+      "source": "RM:580·RM:181",
+      "summary": "근거리 HVOL 또는 SVOL SOFT",
+      "limit": "≤1.5 / ≤4.0",
+      "area": "fog",
+      "disposition": "행",
+      "reason": "SM2/ft 공유, SVOL SOFT 대안, B17",
+      "rows": [
+        "FO3/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S072",
+      "source": "RM:591",
+      "summary": "CPU 단계 판독기 1천",
+      "limit": "≤0.3",
+      "area": "input",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "IN4/gt",
+        "IN1/gt"
+      ],
+      "record": null
+    },
+    {
+      "id": "S073",
+      "source": "RM:607·RM:136·RM:224",
+      "summary": "지형 POM",
+      "limit": "≤0.6",
+      "area": "track",
+      "disposition": "측정 불가",
+      "reason": "POM만 끄는 토글 없음 [사실 FC F14]",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S074",
+      "source": "RM:608·RM:224·CCT:34",
+      "summary": "변형 메시",
+      "limit": "≤0.3",
+      "area": "track",
+      "disposition": "측정 불가",
+      "reason": "TR2 증거 열 없음, AM A4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S075",
+      "source": "RM:609·CCT:38",
+      "summary": "먼지 볼륨",
+      "limit": "≤1.0",
+      "area": "track",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "TR3/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S076",
+      "source": "RM:609",
+      "summary": "눈 입자 5천",
+      "limit": "≤0.4",
+      "area": "track",
+      "disposition": "측정 불가",
+      "reason": "장면 없음 [사실 FC F14]",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S077",
+      "source": "RM:609",
+      "summary": "자국 GT 합",
+      "limit": "≤0.2",
+      "area": "track",
+      "disposition": "측정 불가",
+      "reason": "한도 조성 불가: RM:609 '게임 스레드 합 ≤0.2ms'는 자국 기능 전체 합, TR1 Ls는 페인터만 끈다, AM9 P5",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S078",
+      "source": "RM:609·CCT:42",
+      "summary": "페인터 VRAM",
+      "limit": "≤17MiB",
+      "area": "track",
+      "disposition": "측정 불가",
+      "reason": "메모리 경로 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S079",
+      "source": "RM:620·RM:243",
+      "summary": "식생 WPO·GT",
+      "limit": "≤0.3·≤0.05",
+      "area": "foliage",
+      "disposition": "측정 불가",
+      "reason": "FL1 증거 열 없음, AM A4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S080",
+      "source": "RM:628",
+      "summary": "CSV 열 VolumetricCloud·Shadow·캡처",
+      "limit": "—",
+      "area": "cloud",
+      "disposition": "기록",
+      "reason": "CL 장면 열",
+      "rows": [],
+      "record": {
+        "value": "CL 장면 열",
+        "file": "RM:628",
+        "date": null,
+        "canonical_sha": null,
+        "before_w": null
+      }
+    },
+    {
+      "id": "S081",
+      "source": "RM:628·RM:199",
+      "summary": "층 추가당",
+      "limit": "≤0.3",
+      "area": "cloud",
+      "disposition": "행",
+      "reason": "몫",
+      "rows": [
+        "CL2/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S082",
+      "source": "RM:635·RM:289·CCT:53",
+      "summary": "점성 256² GPU",
+      "limit": "≤0.15",
+      "area": "viscous",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "VI1/ng"
+      ],
+      "record": null
+    },
+    {
+      "id": "S083",
+      "source": "RM:635·RM:292·CCT:57",
+      "summary": "표면",
+      "limit": "≤0.3",
+      "area": "viscous",
+      "disposition": "측정 불가",
+      "reason": "표면만 끄는 토글 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S084",
+      "source": "RM:635·RM:292·CCT:61",
+      "summary": "데칼",
+      "limit": "≤0.2",
+      "area": "viscous",
+      "disposition": "측정 불가",
+      "reason": "VI2 증거 열 없음, AM A4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S085",
+      "source": "CCT:65",
+      "summary": "용암 타일(estimated)",
+      "limit": "≤0.03",
+      "area": "viscous",
+      "disposition": "측정 불가",
+      "reason": "토글 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S086",
+      "source": "RM:642·PB1:196(w6 creek=spec-w6:33)",
+      "summary": "2048²·creek·GT·VRAM",
+      "limit": "≤2.8·≤3.2·≤0.3·≤384MiB",
+      "area": "water",
+      "disposition": "출하 밖",
+      "reason": "D-60 보류, AM A3",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S087",
+      "source": "PB1:196(w6 ship)",
+      "summary": "1024²",
+      "limit": "≤1.3",
+      "area": "water",
+      "disposition": "출하 밖",
+      "reason": "D-60 승인 전 보류",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S088",
+      "source": "RM:651·RM:280",
+      "summary": "물보라·부유 메시 1천",
+      "limit": "≤0.3·≤0.3",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "한도 조성 불가: WaterParticles 0이 흰 물 NS도 끔, U6",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S089",
+      "source": "RM:652",
+      "summary": "빗방울 5천",
+      "limit": "≤0.3",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "한도 조성 불가: Rain 0이 연못 스탬프·젖음도 끔, C9·FC F15",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S090",
+      "source": "RM:657·RM:271·DEC:493 ㉒",
+      "summary": "수중 전환 GT·mean_tick",
+      "limit": "≤0.02",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "증거 열·수중 카메라 장면 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S091",
+      "source": "RM:666·RM:112",
+      "summary": "비트맵 입력",
+      "limit": "≤0.05",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "FieldInput 증거 열 없음, AM A4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S092",
+      "source": "RM:666·RM:108",
+      "summary": "메시 SDF 갱신",
+      "limit": "≤0.1",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "토글·증거 열 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S093",
+      "source": "RM:672·RM:92·PB1:196(fx16a OP1)",
+      "summary": "상한 60Hz 비용 절반",
+      "limit": "≤0.55 비",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "장면 간 비",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S094",
+      "source": "RM:672·RM:340·PB1:196(fx16a 정지)",
+      "summary": "화면 밖 정지",
+      "limit": "≤0.01/액터",
+      "area": "smoke",
+      "disposition": "출하 밖",
+      "reason": "출하 정지 장치 꺼짐 TJ:350, B15",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S095",
+      "source": "TC:916(`TDFluidOpsActorTests.cpp:36·516`)",
+      "summary": "PausedActorCost 단언",
+      "limit": "≤1.0 ms/틱",
+      "area": "smoke",
+      "disposition": "출하 밖",
+      "reason": "출하 정지 장치 꺼짐, B15; SW 칸 정정",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S096",
+      "source": "RM:673",
+      "summary": "운용 장치 GT/액터",
+      "limit": "≤0.02",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "장치만 끄는 토글 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S097",
+      "source": "RM:679",
+      "summary": "FX-P 1차",
+      "limit": "≤LIVE-2·p95×1.1",
+      "area": "(FX-P)",
+      "disposition": "측정 불가",
+      "reason": "LIVE-2 같은 기계 실측 없음, P-4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S098",
+      "source": "RM:128",
+      "summary": "직접 구동 재수집 GT",
+      "limit": "≤0.02",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "재수집만 끄는 토글 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S099",
+      "source": "RM:162",
+      "summary": "512² 불 GPU",
+      "limit": "≤0.45",
+      "area": "fire",
+      "disposition": "출하 밖",
+      "reason": "출하 프리셋 CPU",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S100",
+      "source": "RM:80·81·84·110·129·154·164·166·169·198·226·262·275·276·278·279·282·284·310·311",
+      "summary": "2절 정성 목표",
+      "limit": "정성",
+      "area": "각",
+      "disposition": "측정 불가",
+      "reason": "ms 행 아님",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S101",
+      "source": "RM:152",
+      "summary": "D10 볼륨 비용",
+      "limit": "+5% 이내",
+      "area": "각",
+      "disposition": "측정 불가",
+      "reason": "변경 전 출하 기준 없음, SW 칸 정정",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S102",
+      "source": "CCT:6",
+      "summary": "hv2 HVOL 효과 p50",
+      "limit": "≤6.0",
+      "area": "smoke",
+      "disposition": "행",
+      "reason": null,
+      "rows": [
+        "HV2/ft"
+      ],
+      "record": null
+    },
+    {
+      "id": "S103",
+      "source": "CCT:18·22",
+      "summary": "hv5 포착 1회/변경·정지 0",
+      "limit": "횟수",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "횟수, 판정기 밖; SG:71",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S104",
+      "source": "PB1:196",
+      "summary": "fx16b 출력 품질",
+      "limit": "—",
+      "area": "smoke",
+      "disposition": "기록",
+      "reason": "포착 2.38·씨앗 3.69 ms, W 전; 1.51은 기준선",
+      "rows": [],
+      "record": {
+        "value": "포착 2.38·씨앗 3.69 ms, W 전; 1.51은 기준선",
+        "file": "PB1:196",
+        "date": null,
+        "canonical_sha": null,
+        "before_w": true
+      }
+    },
+    {
+      "id": "S105",
+      "source": "PB1:196(`TDFluidGpuModuleTests.cpp:2312-2314·2367`)",
+      "summary": "fx15a Cost512",
+      "limit": "≤0.45·p95 ≤0.55·×4 ≤1.6·다중 격자 < Jacobi",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "RHI 시험, PIE 행 없음; 같은 한도 S046~S048",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S106",
+      "source": "PB1:196·DEC:487 ⑥",
+      "summary": "스탬프 1만6천",
+      "limit": "제안 0.3",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "1만6천 장면 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S107",
+      "source": "PB1:196·DEC:487 ⑥",
+      "summary": "R7 GPU 반영",
+      "limit": "1~2프레임",
+      "area": "input",
+      "disposition": "측정 불가",
+      "reason": "프레임 지연 경로 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S108",
+      "source": "PB1:196·DEC:487 ⑥",
+      "summary": "구름 비용 1.6 ms",
+      "limit": "—",
+      "area": "cloud",
+      "disposition": "기록",
+      "reason": "W 전",
+      "rows": [],
+      "record": {
+        "value": "W 전",
+        "file": "PB1:196·DEC:487 ⑥",
+        "date": null,
+        "canonical_sha": null,
+        "before_w": true
+      }
+    },
+    {
+      "id": "S109",
+      "source": "PB1:196·DEC:489 ⑮",
+      "summary": "파동 3 비용 9파일",
+      "limit": "—",
+      "area": "각",
+      "disposition": "기록",
+      "reason": "`a9-tests/index.md:30-43`, W 전",
+      "rows": [],
+      "record": {
+        "value": "`a9-tests/index.md:30-43`, W 전",
+        "file": "a9-tests/index.md:30-43",
+        "date": null,
+        "canonical_sha": null,
+        "before_w": true
+      }
+    },
+    {
+      "id": "S110",
+      "source": "DEC:483",
+      "summary": "감싸기 타일 128² 0.178·256² 0.332",
+      "limit": "참고 ≤0.04·≤0.12(spec-w2s-bc:209)",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "단독 장면 미확인, U8",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S111",
+      "source": "DEC:494 ㉙",
+      "summary": "WA6 잔해 1000 후보",
+      "limit": "RP WA6 ≤0.6",
+      "area": "water",
+      "disposition": "측정 불가",
+      "reason": "변형 재적재 증거 경로 없음, AM A6",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S112",
+      "source": "TC:915·DEC:493 ⑲",
+      "summary": "FlowNoise 단계 비용(`TDFluidFlowNoiseTests.cpp:509`)",
+      "limit": "<2.0",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "헤드리스 단언, PIE 행 없음, B16·FC F4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S113",
+      "source": "TC:917·DEC:493 ⑲",
+      "summary": "StepCostByResolution",
+      "limit": "1·3·7·12 / 0.5~4",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "헤드리스 단언, PIE 행 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S114",
+      "source": "TC:918·DEC:493 ⑲",
+      "summary": "TransmittanceCpuCost 96²",
+      "limit": "≤0.3",
+      "area": "smoke",
+      "disposition": "측정 불가",
+      "reason": "헤드리스 단언, PIE 행 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S115",
+      "source": "RM:878",
+      "summary": "B10 `ReadbackLatencyAtMostThreeFrames`",
+      "limit": "≤3프레임",
+      "area": "각",
+      "disposition": "측정 불가",
+      "reason": "RHI 시험 단언, PIE 행 없음",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S116",
+      "source": "RM:900",
+      "summary": "(g) 모닥불+연기 GPU 경로 ft 중앙값·p95 ≤ CPU 경로",
+      "limit": "GPU ≤ CPU",
+      "area": "fire",
+      "disposition": "측정 불가",
+      "reason": "백엔드 간 비: 단일 출하 백엔드 B4, ABBA 밖",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S117",
+      "source": "RM:496·RM:902 조건",
+      "summary": "횃불 수용 = 솔버 밖 몫 조건",
+      "limit": "≤0.6",
+      "area": "fire",
+      "disposition": "측정 불가",
+      "reason": "솔버 밖 분해 경로 없음, PIE CSV 아님",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S118",
+      "source": "RM:903",
+      "summary": "FX-7c 스텝당 GPU",
+      "limit": "≤LIVE-2",
+      "area": "각",
+      "disposition": "측정 불가",
+      "reason": "LIVE-2 같은 기계 실측 없음, P-4",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S119",
+      "source": "F11:92",
+      "summary": "volcano_s4 per_layer_budget_ms",
+      "limit": "≤0.3",
+      "area": "cloud",
+      "disposition": "측정 불가",
+      "reason": "층당 분해 경로 없음: P는 3슬롯·배율 2 전체 합만 재고 장면 간 차분 없음, AM8 N2",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S120",
+      "source": "F11:139",
+      "summary": "volcano_s5 per_layer_budget_ms",
+      "limit": "≤0.3",
+      "area": "cloud",
+      "disposition": "측정 불가",
+      "reason": "층당 분해 경로 없음: P는 3슬롯·배율 2 전체 합만 재고 장면 간 차분 없음, AM8 N2",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S121",
+      "source": "F11:186",
+      "summary": "volcano_s6 per_layer_budget_ms",
+      "limit": "≤0.3",
+      "area": "cloud",
+      "disposition": "측정 불가",
+      "reason": "층당 분해 경로 없음: P는 3슬롯·배율 2 전체 합만 재고 장면 간 차분 없음, AM8 N2",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S122",
+      "source": "F11:93",
+      "summary": "volcano_s4 game_thread_budget_ms",
+      "limit": "≤0.2",
+      "area": "cloud",
+      "disposition": "측정 불가",
+      "reason": "부분 토글: X {hidden true}는 구름 층 틱 유지, AM5 H1",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S123",
+      "source": "F11:140",
+      "summary": "volcano_s5 game_thread_budget_ms",
+      "limit": "≤0.2",
+      "area": "cloud",
+      "disposition": "측정 불가",
+      "reason": "부분 토글: X {hidden true}는 구름 층 틱 유지, AM5 H1",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S124",
+      "source": "F11:187",
+      "summary": "volcano_s6 game_thread_budget_ms",
+      "limit": "≤0.2",
+      "area": "cloud",
+      "disposition": "측정 불가",
+      "reason": "부분 토글: X {hidden true}는 구름 층 틱 유지, AM5 H1",
+      "rows": [],
+      "record": null
+    },
+    {
+      "id": "S125",
+      "source": "RM:900",
+      "summary": "512² 4장면 GPU 경로 효과 차분 ft(RM:886 (b), 연기 무대)",
+      "limit": "≤1.7",
+      "area": "smoke",
+      "disposition": "출하 밖",
+      "reason": "출하 프리셋 CPU",
+      "rows": [],
+      "record": null
+    }
+  ],
+  "derived_rows": [
+    {
+      "id": "FO3",
+      "area": "fog",
+      "from": "SM2/ft",
+      "rule": "B17",
+      "items": [
+        "S071"
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "id": "FI1",
+      "area": "fire",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+      "targets": [
+        "TDGen_CampfireFire",
+        "TDGen_CampfireSmoke"
+      ],
+      "toggle": "L",
+      "toggle_summary": "L: B sleep 2 + Fire[cards,embers]·Smoke[volumes] 끔 + light(TDGen_CampfireSmoke) 끔(PP가 그 volume_light_actor = TDGen_CampfireFire의 그림자 점광원을 끈다, PP:245-249·`editor_make_fluid_fire_stage.py:736·971`); Smoke cards 두 측 보임; 추가 불꽃 카드 두 측 보임(AM9 P6)",
+      "awake_sides": "A",
+      "awake_step_count": 2,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_CampfireFire": 128,
+        "TDGen_CampfireSmoke": 96
+      },
+      "backend_basis": "CPU 128²(TJ:1020)+CPU 96²(TJ:1076)",
+      "water_layer": false,
+      "block_frames": 1200,
+      "camera_source": "출처 확인: FX-7p F1 카메라 그대로(같은 무대·같은 대상) | Tools/FluidFX/fx7p_plan.json:1761-1768",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_CampfireFlame.uasset",
+        "Content/FluidFX/Presets/DA_TDFluid_CampfireSmoke.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidEmber_Default.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFlame_Campfire.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidVolume_SmokeBillow.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidVolumeFlow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidEmber.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidFlame.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidVolume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "camera",
+            "target": "TDGen_CampfireFire",
+            "distance_cm": 700.0,
+            "pitch": -15.0,
+            "yaw": 0.0,
+            "height_cm": 120.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_CampfireFire"
+            ],
+            "parts": [
+              "cards",
+              "embers"
+            ],
+            "visible": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_CampfireSmoke"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": true
+          },
+          {
+            "action": "light",
+            "targets": [
+              "TDGen_CampfireSmoke"
+            ],
+            "visible": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_CampfireFire"
+            ],
+            "parts": [
+              "cards",
+              "embers"
+            ],
+            "visible": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_CampfireSmoke"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": false
+          },
+          {
+            "action": "light",
+            "targets": [
+              "TDGen_CampfireSmoke"
+            ],
+            "visible": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_CampfireFire": [
+            "cards",
+            "embers"
+          ],
+          "TDGen_CampfireSmoke": [
+            "volumes"
+          ]
+        },
+        "light": true,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 2,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "FI1/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "ISM 불티",
+              "ms": 0.15,
+              "item": "S019"
+            },
+            {
+              "part": "연기 포인트 SOFT",
+              "ms": 4.0,
+              "item": "S008"
+            },
+            {
+              "part": "점광원",
+              "ms": 0.5,
+              "item": "S021"
+            }
+          ],
+          "limit_ms": 4.65,
+          "limit_formula": "0.15+4.0+0.5",
+          "items": [
+            "S019",
+            "S008",
+            "S021"
+          ],
+          "note": "캡슐 그림자 0.2·S057 미포함 표기"
+        },
+        {
+          "id": "FI1/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "모닥불 CPU",
+              "ms": 2.0,
+              "item": "S013"
+            }
+          ],
+          "limit_ms": 2.0,
+          "limit_formula": "2.0",
+          "items": [
+            "S013"
+          ],
+          "note": "불+연기 합 [가정]"
+        }
+      ]
+    },
+    {
+      "id": "FI2",
+      "area": "fire",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+      "targets": [
+        "TDGen_TorchFire"
+      ],
+      "toggle": "L",
+      "toggle_summary": "L: B sleep + [cards,volumes,embers] 끔(광원 두 측 유지)",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_TorchFire": 96
+      },
+      "backend_basis": "CPU 96²(TJ:963)",
+      "water_layer": false,
+      "block_frames": 1200,
+      "camera_source": "출처 확인: FX-7p F5(횃불) 카메라·폰 그대로, 횃불은 폰을 따라감(should_follow_player_pawn 참) | Tools/FluidFX/fx7p_plan.json:2012-2020, Tools/FluidFX/editor_make_fluid_fire_stage.py:939",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_TorchFlame.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidEmber_Default.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFlame_Torch.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidEmber.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidFlame.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "camera",
+            "mode": "pawn"
+          },
+          {
+            "action": "pawn",
+            "x": -300.0,
+            "y": -300.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_TorchFire"
+            ],
+            "parts": [
+              "cards",
+              "volumes",
+              "embers"
+            ],
+            "visible": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_TorchFire"
+            ],
+            "parts": [
+              "cards",
+              "volumes",
+              "embers"
+            ],
+            "visible": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_TorchFire": [
+            "cards",
+            "embers",
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "FI2/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "횃불 CPU",
+              "ms": 1.0,
+              "item": "S011"
+            }
+          ],
+          "limit_ms": 1.0,
+          "limit_formula": "1.0",
+          "items": [
+            "S011"
+          ],
+          "note": "수용 조건 미확인(RM:496), S117"
+        }
+      ]
+    },
+    {
+      "id": "FI5a",
+      "area": "fire",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidEmberStage",
+      "targets": [
+        "TDGen_EmberA_Campfire"
+      ],
+      "toggle": "Lb",
+      "toggle_summary": "Lb: B [embers] 끔",
+      "awake_sides": "both",
+      "awake_step_count": 1,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_EmberA_Campfire": 128
+      },
+      "backend_basis": "CPU 128²(TJ:1020)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_EmberA_Campfire 중심에서 거리 300 cm·pitch -3·yaw 80·높이 0. lookdev 카메라는 폰 중심 암이라 이 구도와 대응하지 않는다(pie_lookdev_fluid.py:1195-1211 ↔ PP:514-519). 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/pie_lookdev_fluid.py:1195-1211",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_EmberStageCampfireIsm.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidEmber_Default.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFlame_Campfire.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidEmber.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidFlame.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_EmberA_Campfire",
+            "distance_cm": 300.0,
+            "pitch": -3.0,
+            "yaw": 80.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_EmberA_Campfire"
+            ],
+            "parts": [
+              "embers"
+            ],
+            "visible": true
+          }
+        ],
+        "b": [
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_EmberA_Campfire"
+            ],
+            "parts": [
+              "embers"
+            ],
+            "visible": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_EmberA_Campfire": [
+            "embers"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "FI5a/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "ISM 불티",
+              "ms": 0.15,
+              "item": "S019"
+            }
+          ],
+          "limit_ms": 0.15,
+          "limit_formula": "0.15",
+          "items": [
+            "S019"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "FI5b",
+      "area": "fire",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidEmberStage",
+      "targets": [
+        "TDGen_EmberB_Campfire"
+      ],
+      "toggle": "Xn",
+      "toggle_summary": "Xn",
+      "awake_sides": "both",
+      "awake_step_count": 1,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_EmberB_Campfire": 128
+      },
+      "backend_basis": "CPU 128²(TJ:1020)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_EmberB_Campfire 중심, 수치는 FI5a와 같다(거리 300 cm·pitch -3·yaw 80·높이 0). lookdev 카메라는 폰 중심 암이라 이 구도와 대응하지 않는다(pie_lookdev_fluid.py:1195-1211 ↔ PP:514-519). 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/pie_lookdev_fluid.py:1195-1211",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_EmberStageCampfireNiagara.uasset",
+        "Content/FluidFX/Niagara/NS_TD_FluidEmberHeat.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidEmberNiagara_Default.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFlame_Campfire.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidEmberNiagara.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidFlame.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_EmberB_Campfire",
+            "distance_cm": 300.0,
+            "pitch": -3.0,
+            "yaw": 80.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_EmberB_Campfire"
+            ],
+            "niagara": "activate"
+          }
+        ],
+        "b": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_EmberB_Campfire"
+            ],
+            "niagara": "deactivate"
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": false,
+          "niagara": true
+        }
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "FI5b/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "소유 불티 NS",
+              "ms": 0.3,
+              "item": "S020"
+            }
+          ],
+          "limit_ms": 0.3,
+          "limit_formula": "0.3",
+          "items": [
+            "S020"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "FI6",
+      "area": "fire",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidParticleStage",
+      "targets": [
+        "TDGen_ParticleP4_Fluid"
+      ],
+      "toggle": "Xn",
+      "toggle_summary": "Xn",
+      "awake_sides": "both",
+      "awake_step_count": 1,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_ParticleP4_Fluid": 128
+      },
+      "backend_basis": "CPU 128²(TJ:658)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_ParticleP4_Fluid 중심에서 거리 900 cm·pitch -35·yaw 0·높이 0. lookdev 카메라는 폰 중심 암이라 이 구도와 대응하지 않는다(pie_lookdev_fluid.py:1195-1211 ↔ PP:514-519). 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/pie_lookdev_fluid.py:1195-1211",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_DriveP4.uasset",
+        "Content/FluidFX/Niagara/NS_TD_FluidDriveMeshFloat.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidDrivenParticleMesh_Default.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidDrivenParticleMesh.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_ParticleP4_Fluid",
+            "distance_cm": 900.0,
+            "pitch": -35.0,
+            "yaw": 0.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_ParticleP4_Fluid"
+            ],
+            "niagara": "activate"
+          }
+        ],
+        "b": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_ParticleP4_Fluid"
+            ],
+            "niagara": "deactivate"
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": false,
+          "niagara": true
+        }
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "FI6/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "소유 메시 입자 NS",
+              "ms": 0.3,
+              "item": "S058"
+            }
+          ],
+          "limit_ms": 0.3,
+          "limit_formula": "0.3",
+          "items": [
+            "S058"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "SM1",
+      "area": "smoke",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "targets": [
+        "TDGen_SmokeHard"
+      ],
+      "toggle": "L",
+      "toggle_summary": "L: B sleep + [volumes] 끔; cards·궤도 광원 두 측 유지",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_SmokeHard": 256
+      },
+      "backend_basis": "CPU 256²(TJ:919)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: FX-7p S1 카메라 그대로 | Tools/FluidFX/fx7p_plan.json:35-42",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_SmokeHard.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidVolume_SmokeHard.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidVolumeFlow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidVolume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "camera",
+            "target": "TDGen_SmokeHard",
+            "distance_cm": 1800.0,
+            "pitch": -25.0,
+            "yaw": 0.0,
+            "height_cm": 100.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_SmokeHard"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_SmokeHard"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SmokeHard": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "SM1/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "포인트 HARD",
+              "ms": 2.0,
+              "item": "S007"
+            }
+          ],
+          "limit_ms": 2.0,
+          "limit_formula": "2.0",
+          "items": [
+            "S007"
+          ],
+          "note": null
+        },
+        {
+          "id": "SM1/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "연기 CPU 256²",
+              "ms": 2.0,
+              "item": "S002"
+            }
+          ],
+          "limit_ms": 2.0,
+          "limit_formula": "2.0",
+          "items": [
+            "S002"
+          ],
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "SM2",
+      "area": "smoke",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "targets": [
+        "TDGen_SmokeSoft"
+      ],
+      "toggle": "L",
+      "toggle_summary": "L: B sleep + [volumes] 끔; cards·궤도 광원 두 측 유지",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_SmokeSoft": 256
+      },
+      "backend_basis": "CPU 256²(TJ:919)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심(높이 100 cm라 원점은 중앙보다 약 2.8° 아래), 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 수치는 SM1(FX-7p S1 대상 중심 카메라, fx7p_plan.json:35-42)과 같게 골랐다(SmokeSoft PP 카메라 선례 없음, FX-7p V3·V4는 카메라 단계 없음). 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/fx7p_plan.json:35-42, Saved/FluidFX/fluid_smoke_stage.json:28-31",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_SmokeSoft.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidVolume_SmokeSoft.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidVolumeFlow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidVolume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "camera",
+            "target": "TDGen_SmokeSoft",
+            "distance_cm": 1800.0,
+            "pitch": -25.0,
+            "yaw": 0.0,
+            "height_cm": 100.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_SmokeSoft"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_SmokeSoft"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SmokeSoft": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "SM2/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "포인트 SOFT",
+              "ms": 4.0,
+              "item": "S008"
+            }
+          ],
+          "limit_ms": 4.0,
+          "limit_formula": "4.0",
+          "items": [
+            "S008",
+            "S071"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        },
+        {
+          "id": "SM2/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "연기 CPU 256²",
+              "ms": 2.0,
+              "item": "S002"
+            }
+          ],
+          "limit_ms": 2.0,
+          "limit_formula": "2.0",
+          "items": [
+            "S002"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "HV2",
+      "area": "smoke",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidHvolStage",
+      "targets": [
+        "TDGen_HvolVortexA",
+        "TDGen_HvolVortexB"
+      ],
+      "toggle": "Ls+X",
+      "toggle_summary": "Ls+X: B sleep 2 + X {hidden true} 2",
+      "awake_sides": "A",
+      "awake_step_count": 2,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_HvolVortexA": 128,
+        "TDGen_HvolVortexB": 128
+      },
+      "backend_basis": "CPU 128²+128²(TJ:658; HVOL 256×256×128 TJ:434-435)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심(높이 100 cm라 원점은 중앙보다 약 2.8° 아래), 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 폰 (3000,0) 이동은 사전 등록 값이며 활성 거리와 무관하다(reset이 모든 유체의 활성 볼륨을 끈다, PP:361(reset, PP:1703)). 카메라 수치는 SM1(fx7p_plan.json:35-42)과 같게 골랐고 VortexA(3000,-450) 중심이다. VortexB(3000,450)는 시선축 옆 900 cm라 화면 안 여부를 확인하지 않았다. 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/pie_profile_fluid.py:361, Tools/FluidFX/pie_profile_fluid.py:1703, Tools/FluidFX/fx7p_plan.json:35-42, Saved/FluidFX/fluid_hvol_stage.json:121-146",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_HvolVortex.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_Vortex.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidVolumeFlow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidHeterogeneousVolume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCrossSection_Mushroom.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "pawn",
+            "x": 3000.0,
+            "y": 0.0
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_HvolVortexA",
+            "distance_cm": 1800.0,
+            "pitch": -25.0,
+            "yaw": 0.0,
+            "height_cm": 100.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_HvolVortexA",
+              "TDGen_HvolVortexB"
+            ],
+            "hidden": false
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_HvolVortexA",
+              "TDGen_HvolVortexB"
+            ],
+            "hidden": true
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "meta": {
+        "count": 2,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "HV2/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "hv2 효과(시뮬 2·HVOL 2)",
+              "ms": 6.0,
+              "item": "S102"
+            }
+          ],
+          "limit_ms": 6.0,
+          "limit_formula": "6.0",
+          "items": [
+            "S102"
+          ],
+          "note": "효과 전체 값 [가정]; [가정] 카메라 앞 구역 2 HVOL이 두 측 보이면 HVOL 패스 고정비가 차분에서 빠짐(통과 쪽), AM9 P9; [가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "FO1",
+      "area": "fog",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+      "targets": [
+        "TDGen_FogAmbient"
+      ],
+      "toggle": "L+X",
+      "toggle_summary": "setup `r.VolumetricFog 1`; L+X: B sleep 1(FogAmbient) + [volumes] 끔 + X(PassiveField {hidden true})",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_FogAmbient": 256
+      },
+      "backend_basis": "GPU 256²(TJ:1561·1566)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: FX-10 포그 격자 계획의 폰·카메라 그대로(폰이 FogAmbient 9000,25000의 활성 거리 2000 cm 안) | Tools/FluidFX/fx10_fog_grid_plan.json:29-39, Tools/FluidFX/editor_make_fluid_fog_stage.py:39, Tools/FluidFX/editor_make_fluid_fog_stage.py:629-630",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_FogAmbient.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFog_Sim.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFog_PassiveField.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidFogWindow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidFogVolume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "console",
+            "commands": [
+              "r.VolumetricFog 1"
+            ],
+            "restore": true
+          },
+          {
+            "action": "pawn",
+            "x": 8000.0,
+            "y": 25000.0
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_FogAmbient",
+            "distance_cm": 1800.0,
+            "pitch": -15.0,
+            "yaw": 0.0,
+            "height_cm": 200.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_FogAmbient"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": true
+          },
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_FogPassiveField"
+            ],
+            "hidden": false
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_FogAmbient"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": false
+          },
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_FogPassiveField"
+            ],
+            "hidden": true
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_FogAmbient": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "FO1/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "FVOL",
+              "ms": 0.8,
+              "item": "S034"
+            },
+            {
+              "part": "GPU 256² 시뮬",
+              "ms": 0.15,
+              "item": "S050"
+            }
+          ],
+          "limit_ms": 0.95,
+          "limit_formula": "0.8+0.15",
+          "items": [
+            "S034",
+            "S050"
+          ],
+          "note": null
+        },
+        {
+          "id": "FO1/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "구동",
+              "ms": 0.2,
+              "item": "S032"
+            }
+          ],
+          "limit_ms": 0.2,
+          "limit_formula": "0.2",
+          "items": [
+            "S032"
+          ],
+          "note": "X는 GT 몫 없음, AM9 P2"
+        },
+        {
+          "id": "FO1/rt",
+          "metric": "rt",
+          "parts_off": [
+            {
+              "part": "안개 효과 전체 RT",
+              "ms": 0.1,
+              "item": "S033"
+            }
+          ],
+          "limit_ms": 0.1,
+          "limit_formula": "0.1",
+          "items": [
+            "S033"
+          ],
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "FO2",
+      "area": "fog",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+      "targets": [
+        "TDGen_FogAmbient"
+      ],
+      "toggle": "L+X",
+      "toggle_summary": "setup `r.VolumetricFog 0`; L+X: B sleep 1(FogAmbient) + [volumes] 끔 + X(PassiveField {hidden true})",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_FogAmbient": 256
+      },
+      "backend_basis": "GPU 256²",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: FO1과 같은 폰·카메라 | Tools/FluidFX/fx10_fog_grid_plan.json:29-39",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_FogAmbient.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFog_Sim.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFog_PassiveField.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidFogWindow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidFogVolume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "console",
+            "commands": [
+              "r.VolumetricFog 0"
+            ],
+            "restore": true
+          },
+          {
+            "action": "pawn",
+            "x": 8000.0,
+            "y": 25000.0
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_FogAmbient",
+            "distance_cm": 1800.0,
+            "pitch": -15.0,
+            "yaw": 0.0,
+            "height_cm": 200.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_FogAmbient"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": true
+          },
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_FogPassiveField"
+            ],
+            "hidden": false
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_FogAmbient"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": false
+          },
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_FogPassiveField"
+            ],
+            "hidden": true
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_FogAmbient": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "FO2/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "GPU 256²",
+              "ms": 0.15,
+              "item": "S050"
+            }
+          ],
+          "limit_ms": 0.15,
+          "limit_formula": "0.15",
+          "items": [
+            "S050"
+          ],
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "WA1",
+      "area": "water",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidWaterStage",
+      "targets": [
+        "TDGen_WaterRiverSimulation"
+      ],
+      "toggle": "Ls",
+      "toggle_summary": "Ls(솔버째 멈춰 젖음 패스도 빠짐, FC F2)",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_WaterRiverSimulation": 192
+      },
+      "backend_basis": "CPU 192²(TJ:630)",
+      "water_layer": true,
+      "block_frames": null,
+      "camera_source": "출처 확인: FX-4b 판정 WQ1(같은 강 액터) view·카메라·폰 그대로 | Saved/FluidFX/fx7p/fx4b-budget-judge-20261024120142/plan.json:264-282",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_River.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidWater.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidWater_River.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidWaterFlow.uasset",
+        "Content/FluidFX/Meshes/SM_TD_FluidWaterGridUnit.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCaustics.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidFlowPhaseNoise.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidFoamNoise.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidWaterDetailN.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "view",
+            "arm_cm": 800.0,
+            "aspect_ratio": 1.777778,
+            "constrain_aspect": false
+          },
+          {
+            "action": "camera",
+            "mode": "pawn"
+          },
+          {
+            "action": "pawn",
+            "x": 3350.0,
+            "y": 2500.0,
+            "z": 121.0,
+            "speed": 400.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "WA1/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "물 CPU 192²",
+              "ms": 3.0,
+              "item": "S023"
+            },
+            {
+              "part": "강 젖음",
+              "ms": 0.15,
+              "item": "S065"
+            }
+          ],
+          "limit_ms": 3.15,
+          "limit_formula": "3.0+0.15",
+          "items": [
+            "S023",
+            "S065"
+          ],
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "WA3",
+      "area": "water",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCoastStage",
+      "targets": [
+        "TDGen_CoastStageWaterSea"
+      ],
+      "toggle": "C",
+      "toggle_summary": "C `TD.FluidFX.WaterWetness` A 1 / B 0",
+      "awake_sides": "both",
+      "awake_step_count": 1,
+      "backend": "CPU",
+      "grid": {
+        "TDGen_CoastStageWaterSea": 192
+      },
+      "backend_basis": "CPU 192²(TJ:630)",
+      "water_layer": true,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(폰 시점 camera mode pawn, FX-4b WQ1 형식), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 중심 카메라가 아니라 폰 시점이다(PP:507-508). [사실] PlayerStart(300,0)가 물 창(반폭 1800 cm) 안이라 폰을 옮기지 않는다. 행은 WA3/gt 하나. 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:507-508, Saved/FluidFX/fx7p/fx4b-budget-judge-20261024120142/plan.json:271-273, Saved/FluidFX/fluid_coast_stage.json:36-44",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_Sea.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidWater_Sea.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidWaterFlow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidWater.uasset",
+        "Content/FluidFX/Meshes/SM_TD_FluidWaterGridUnit.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCaustics.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidFlowPhaseNoise.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidFoamNoise.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidWaterDetailN.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "camera",
+            "mode": "pawn"
+          }
+        ],
+        "a": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.WaterWetness 1"
+            ]
+          }
+        ],
+        "b": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.WaterWetness 0"
+            ]
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [
+          "TDFluid/GameThread/WaterWetness",
+          "TDFluid/AllWorkers/WaterWetness"
+        ],
+        "parts": {},
+        "light": false,
+        "console": {
+          "TD.FluidFX.WaterWetness": {
+            "A": 1.0,
+            "B": 0.0
+          }
+        },
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "WA3/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "젖음 패스",
+              "ms": 0.15,
+              "item": "S065"
+            }
+          ],
+          "limit_ms": 0.15,
+          "limit_formula": "0.15",
+          "items": [
+            "S065"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(폰 시점), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "CL1",
+      "area": "cloud",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "targets": [],
+      "toggle": "X",
+      "toggle_summary": "setup CloudSetup 6·CloudViewSampleScale 2·camera TDGen_CloudCam_Volcano; X(NS 조건 없음)",
+      "awake_sides": "none",
+      "awake_step_count": 0,
+      "backend": null,
+      "grid": {},
+      "backend_basis": "없음",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: - | Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:177, Saved/FluidFX/fluid_cloud_stage.json:157, Tools/FluidFX/fx11_cloud_perf_plan.json:25-26",
+      "hash_paths": [
+        "Content/FluidFX/Materials/MI_TD_FluidCloud_Volcano.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidCloudLayers.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudBlack.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudSection_VolcanoPlume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudStageHeight.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudWhite.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.CloudSetup 6",
+              "TD.FluidFX.CloudViewSampleScale 2"
+            ],
+            "restore": true
+          },
+          {
+            "action": "camera",
+            "target_label": "TDGen_CloudCam_Volcano"
+          }
+        ],
+        "a": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": false
+          }
+        ],
+        "b": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": true
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "meta": {
+        "count": 0,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "CL1/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "구름 층 전체(CVOL 배율 2)",
+              "ms": 2.5,
+              "item": "S035"
+            }
+          ],
+          "limit_ms": 2.5,
+          "limit_formula": "2.5",
+          "items": [
+            "S035"
+          ],
+          "note": "[사실] 구름 무대에 물 없음: RM:628 '물 위 구름' 몫은 두 측 0, 통과는 물 없는 장면 조건부(통과 쪽), AM9 P9"
+        },
+        {
+          "id": "CL1/rt",
+          "metric": "rt",
+          "parts_off": [
+            {
+              "part": "구름 효과 전체 RT",
+              "ms": 0.1,
+              "item": "S033"
+            }
+          ],
+          "limit_ms": 0.1,
+          "limit_formula": "0.1",
+          "items": [
+            "S033"
+          ],
+          "note": "[가정] 구름 층 틱의 MID 갱신 RT 몫이 두 측에 남음: 통과 쪽 편향"
+        }
+      ]
+    },
+    {
+      "id": "CL2",
+      "area": "cloud",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "targets": [],
+      "toggle": "X",
+      "toggle_summary": "setup CloudSetup 7·CloudViewSampleScale 2·camera TDGen_CloudCam_VolcanoSky; X",
+      "awake_sides": "none",
+      "awake_step_count": 0,
+      "backend": null,
+      "grid": {},
+      "backend_basis": "없음",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: - | Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:179, Saved/FluidFX/fluid_cloud_stage.json:177, Tools/FluidFX/fx11_cloud_perf_plan.json:307-308",
+      "hash_paths": [
+        "Content/FluidFX/Materials/MI_TD_FluidCloud_VolcanoSky.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidCloudLayers.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudBlack.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudSection_VolcanoPlume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudStageHeight.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudWhite.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.CloudSetup 7",
+              "TD.FluidFX.CloudViewSampleScale 2"
+            ],
+            "restore": true
+          },
+          {
+            "action": "camera",
+            "target_label": "TDGen_CloudCam_VolcanoSky"
+          }
+        ],
+        "a": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": false
+          }
+        ],
+        "b": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": true
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "meta": {
+        "count": 0,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "CL2/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "CVOL 배율 2",
+              "ms": 2.5,
+              "item": "S035"
+            },
+            {
+              "part": "층 추가",
+              "ms": 0.6,
+              "item": "S081"
+            }
+          ],
+          "limit_ms": 3.1,
+          "limit_formula": "2.5+0.3×2",
+          "items": [
+            "S035",
+            "S081"
+          ],
+          "note": "[사실] 구름 무대에 물 없음: RM:628 '물 위 구름' 몫은 두 측 0, 통과는 물 없는 장면 조건부(통과 쪽), AM9 P9"
+        }
+      ]
+    },
+    {
+      "id": "CL3",
+      "area": "cloud",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "targets": [
+        "TDGen_CloudCyclone_Source"
+      ],
+      "toggle": "Ls",
+      "toggle_summary": "setup CloudSetup 17·CloudViewSampleScale 2·camera TDGen_CloudCam_CycloneLive; Ls",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_CloudCyclone_Source": 512
+      },
+      "backend_basis": "GPU 512²(TJ:2207·2208)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: - | Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:180, Saved/FluidFX/fluid_cloud_stage.json:381, Tools/FluidFX/fx11_cloud_perf_plan.json:354-355",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_CloudCyclone.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidCloud_CycloneLive.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidCloudLayers.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudBlack.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudCoverage_Cyclone.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudStageHeight.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudWhite.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.CloudSetup 17",
+              "TD.FluidFX.CloudViewSampleScale 2"
+            ],
+            "restore": true
+          },
+          {
+            "action": "camera",
+            "target_label": "TDGen_CloudCam_CycloneLive"
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "CL3/ng",
+          "metric": "ng",
+          "parts_off": [
+            {
+              "part": "GPU 512² 시뮬",
+              "ms": 0.45,
+              "item": "S046"
+            }
+          ],
+          "limit_ms": 0.45,
+          "limit_formula": "0.45",
+          "items": [
+            "S046"
+          ],
+          "note": null
+        }
+      ]
+    },
+    {
+      "id": "CL4",
+      "area": "cloud",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "targets": [],
+      "toggle": "X",
+      "toggle_summary": "setup CloudSetup 6·CloudViewSampleScale 4·camera Volcano(=CL1/ft); X",
+      "awake_sides": "none",
+      "awake_step_count": 0,
+      "backend": null,
+      "grid": {},
+      "backend_basis": "없음",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: - | Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:181, Saved/FluidFX/fluid_cloud_stage.json:157, Tools/FluidFX/fx11_cloud_perf_plan.json:72-73",
+      "hash_paths": [
+        "Content/FluidFX/Materials/MI_TD_FluidCloud_Volcano.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidCloudLayers.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudBlack.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudSection_VolcanoPlume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudStageHeight.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudWhite.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.CloudSetup 6",
+              "TD.FluidFX.CloudViewSampleScale 4"
+            ],
+            "restore": true
+          },
+          {
+            "action": "camera",
+            "target_label": "TDGen_CloudCam_Volcano"
+          }
+        ],
+        "a": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": false
+          }
+        ],
+        "b": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": true
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "meta": {
+        "count": 0,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "CL4/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "관통 배율 4",
+              "ms": 4.0,
+              "item": "S036"
+            }
+          ],
+          "limit_ms": 4.0,
+          "limit_formula": "4.0",
+          "items": [
+            "S036"
+          ],
+          "note": "[사실] 구름 무대에 물 없음: RM:628 '물 위 구름' 몫은 두 측 0, 통과는 물 없는 장면 조건부(통과 쪽), AM9 P9"
+        }
+      ]
+    },
+    {
+      "id": "CL5",
+      "area": "cloud",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "targets": [],
+      "toggle": "X",
+      "toggle_summary": "setup CloudSetup 6·CloudViewSampleScale 5·camera Volcano(=CL1/ft); X",
+      "awake_sides": "none",
+      "awake_step_count": 0,
+      "backend": null,
+      "grid": {},
+      "backend_basis": "없음",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: - | Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:182, Saved/FluidFX/fluid_cloud_stage.json:157, Tools/FluidFX/fx11_cloud_perf_plan.json:119-120",
+      "hash_paths": [
+        "Content/FluidFX/Materials/MI_TD_FluidCloud_Volcano.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidCloudLayers.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudBlack.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudSection_VolcanoPlume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudStageHeight.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudWhite.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.CloudSetup 6",
+              "TD.FluidFX.CloudViewSampleScale 5"
+            ],
+            "restore": true
+          },
+          {
+            "action": "camera",
+            "target_label": "TDGen_CloudCam_Volcano"
+          }
+        ],
+        "a": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": false
+          }
+        ],
+        "b": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": true
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "meta": {
+        "count": 0,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "CL5/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "관통 배율 5",
+              "ms": 4.0,
+              "item": "S036"
+            }
+          ],
+          "limit_ms": 4.0,
+          "limit_formula": "4.0",
+          "items": [
+            "S036"
+          ],
+          "note": "[사실] 구름 무대에 물 없음: RM:628 '물 위 구름' 몫은 두 측 0, 통과는 물 없는 장면 조건부(통과 쪽), AM9 P9"
+        }
+      ]
+    },
+    {
+      "id": "CL6",
+      "area": "cloud",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCloudStage",
+      "targets": [],
+      "toggle": "X",
+      "toggle_summary": "setup CloudSetup 6·CloudViewSampleScale 6·camera Volcano(=CL1/ft); X",
+      "awake_sides": "none",
+      "awake_step_count": 0,
+      "backend": null,
+      "grid": {},
+      "backend_basis": "없음",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "출처 확인: - | Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:183, Saved/FluidFX/fluid_cloud_stage.json:157, Tools/FluidFX/fx11_cloud_perf_plan.json:166-167",
+      "hash_paths": [
+        "Content/FluidFX/Materials/MI_TD_FluidCloud_Volcano.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidCloudLayers.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudBlack.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudSection_VolcanoPlume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudStageHeight.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidCloudWhite.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.CloudSetup 6",
+              "TD.FluidFX.CloudViewSampleScale 6"
+            ],
+            "restore": true
+          },
+          {
+            "action": "camera",
+            "target_label": "TDGen_CloudCam_Volcano"
+          }
+        ],
+        "a": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": false
+          }
+        ],
+        "b": [
+          {
+            "action": "actor",
+            "labels": [
+              "TDGen_CloudLayers"
+            ],
+            "hidden": true
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "meta": {
+        "count": 0,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "CL6/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "관통 배율 6",
+              "ms": 4.0,
+              "item": "S036"
+            }
+          ],
+          "limit_ms": 4.0,
+          "limit_formula": "4.0",
+          "items": [
+            "S036"
+          ],
+          "note": "[사실] 구름 무대에 물 없음: RM:628 '물 위 구름' 몫은 두 측 0, 통과는 물 없는 장면 조건부(통과 쪽), AM9 P9"
+        }
+      ]
+    },
+    {
+      "id": "IN1",
+      "area": "input",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidMassInputStage",
+      "targets": [
+        "TDGen_MassBench10k"
+      ],
+      "toggle": "C",
+      "toggle_summary": "C `TD.FluidFX.MassInput` A -1 / B 0",
+      "awake_sides": "both",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_MassBench10k": 512
+      },
+      "backend_basis": "GPU 512²(TJ:1549·1550)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_MassBench10k 중심에서 거리 2500 cm·pitch -60·yaw 90·높이 0. 성능 계획 선례 fx5_mass_perf.json bench10k는 폰 중심 lookdev 카메라(폰 0,-2600·arm 2500·view -60,90)라 구도가 다르다. lookdev 카메라는 폰 중심 암이라 이 구도와 대응하지 않는다(pie_lookdev_fluid.py:1195-1211 ↔ PP:514-519). 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/pie_lookdev_fluid.py:1195-1211, Tools/FluidFX/perf/plans/fx5_mass_perf.json:8-28",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_MassBench.uasset",
+        "Content/FluidFX/Niagara/NS_TD_FluidMassBench.uasset",
+        "Content/FluidFX/Niagara/DataChannels/NDC_TD_FluidMassInput.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_MassBench10k",
+            "distance_cm": 2500.0,
+            "pitch": -60.0,
+            "yaw": 90.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.MassInput -1"
+            ]
+          }
+        ],
+        "b": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.MassInput 0"
+            ]
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [
+          "TDFluid/MassInputSplatCalls",
+          "TDFluid/MassInputDataChannelPoints"
+        ],
+        "parts": {},
+        "light": false,
+        "console": {
+          "TD.FluidFX.MassInput": {
+            "A": -1.0,
+            "B": 0.0
+          }
+        },
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "IN1/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "스플랫 1만",
+              "ms": 0.5,
+              "item": "S043"
+            }
+          ],
+          "limit_ms": 0.5,
+          "limit_formula": "0.5",
+          "items": [
+            "S043"
+          ],
+          "note": "NDC 판독 GT 몫 미가산, 엄격; [가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        },
+        {
+          "id": "IN1/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "1만 점 GT",
+              "ms": 0.1,
+              "item": "S038"
+            },
+            {
+              "part": "NDC 판독 1천",
+              "ms": 0.3,
+              "item": "S072"
+            }
+          ],
+          "limit_ms": 0.4,
+          "limit_formula": "0.1+0.3",
+          "items": [
+            "S038",
+            "S072"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "IN2",
+      "area": "input",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidMassInputStage",
+      "targets": [
+        "TDGen_MassBench1k"
+      ],
+      "toggle": "C",
+      "toggle_summary": "C `TD.FluidFX.MassInput` A -1 / B 0",
+      "awake_sides": "both",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_MassBench1k": 512
+      },
+      "backend_basis": "GPU 512²(TJ:1549·1550)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_MassBench1k 중심에서 거리 1500 cm·pitch -60·yaw 90·높이 0. 성능 계획 선례 fx5_mass_perf.json bench1k는 폰 중심 lookdev 카메라(폰 7000,-1200·arm 1500·view -60,90)라 구도가 다르다. lookdev 카메라는 폰 중심 암이라 이 구도와 대응하지 않는다(pie_lookdev_fluid.py:1195-1211 ↔ PP:514-519). 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/pie_lookdev_fluid.py:1195-1211, Tools/FluidFX/perf/plans/fx5_mass_perf.json:38-58",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_MassBench.uasset",
+        "Content/FluidFX/Niagara/NS_TD_FluidMassBench1k.uasset",
+        "Content/FluidFX/Niagara/DataChannels/NDC_TD_FluidMassInput.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_MassBench1k",
+            "distance_cm": 1500.0,
+            "pitch": -60.0,
+            "yaw": 90.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.MassInput -1"
+            ]
+          }
+        ],
+        "b": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.MassInput 0"
+            ]
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [
+          "TDFluid/MassInputSplatCalls"
+        ],
+        "parts": {},
+        "light": false,
+        "console": {
+          "TD.FluidFX.MassInput": {
+            "A": -1.0,
+            "B": 0.0
+          }
+        },
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "IN2/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "스플랫 1천",
+              "ms": 0.15,
+              "item": "S044"
+            }
+          ],
+          "limit_ms": 0.15,
+          "limit_formula": "0.15",
+          "items": [
+            "S044"
+          ],
+          "note": "Ndc 점 창 밖 [가정]; NDC 몫 미가산, 엄격; [가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "IN3",
+      "area": "input",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidMassInputStage",
+      "targets": [
+        "TDGen_FlamethrowerTurret"
+      ],
+      "toggle": "L",
+      "toggle_summary": "L: B sleep + 전 부품 끔",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_FlamethrowerTurret": 128
+      },
+      "backend_basis": "GPU 128²(TJ:1478·1483)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_FlamethrowerTurret 중심에서 거리 450 cm·pitch -8·yaw 90·높이 0. 행은 IN3/gt 하나. 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_MassFlamethrower.uasset",
+        "Content/FluidFX/Niagara/NS_TD_FluidFlamethrower.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidEmber_Default.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidFlame_Campfire.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidEmber.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidFlame.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "camera",
+            "target": "TDGen_FlamethrowerTurret",
+            "distance_cm": 450.0,
+            "pitch": -8.0,
+            "yaw": 90.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_FlamethrowerTurret"
+            ],
+            "parts": [
+              "cards",
+              "volumes",
+              "embers"
+            ],
+            "visible": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_FlamethrowerTurret"
+            ],
+            "parts": [
+              "cards",
+              "volumes",
+              "embers"
+            ],
+            "visible": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_FlamethrowerTurret": [
+            "cards",
+            "embers",
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "IN3/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "GPU 불 액터당",
+              "ms": 0.3,
+              "item": "S016"
+            }
+          ],
+          "limit_ms": 0.3,
+          "limit_formula": "0.3×1",
+          "items": [
+            "S016"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "IN4",
+      "area": "input",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidMassInputStage",
+      "targets": [
+        "TDGen_MassNdc1k"
+      ],
+      "toggle": "C",
+      "toggle_summary": "C `TD.FluidFX.MassInput` A -1 / B 0",
+      "awake_sides": "both",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_MassNdc1k": 512
+      },
+      "backend_basis": "GPU 512²(TJ:1549·1550)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_MassNdc1k 중심에서 거리 1500 cm·pitch -60·yaw 90·높이 0. 행은 IN4/gt 하나. 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_MassBench.uasset",
+        "Content/FluidFX/Niagara/NS_TD_FluidMassNdcBench.uasset",
+        "Content/FluidFX/Niagara/DataChannels/NDC_TD_FluidMassInput.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "camera",
+            "target": "TDGen_MassNdc1k",
+            "distance_cm": 1500.0,
+            "pitch": -60.0,
+            "yaw": 90.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.MassInput -1"
+            ]
+          }
+        ],
+        "b": [
+          {
+            "action": "console",
+            "commands": [
+              "TD.FluidFX.MassInput 0"
+            ]
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": false,
+        "columns": [
+          "TDFluid/MassInputDataChannelPoints"
+        ],
+        "parts": {},
+        "light": false,
+        "console": {
+          "TD.FluidFX.MassInput": {
+            "A": -1.0,
+            "B": 0.0
+          }
+        },
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "IN4/gt",
+          "metric": "gt",
+          "parts_off": [
+            {
+              "part": "CPU 판독기 1천",
+              "ms": 0.3,
+              "item": "S072"
+            }
+          ],
+          "limit_ms": 0.3,
+          "limit_formula": "0.3",
+          "items": [
+            "S072"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "TR1",
+      "area": "track",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSnowStage",
+      "targets": [
+        "TDGen_SnowTrack"
+      ],
+      "toggle": "Ls",
+      "toggle_summary": "Ls",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_SnowTrack": 1024
+      },
+      "backend_basis": "GPU 1024²(TJ:740·745)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_SnowTrack(페인터, PlayerStart -1500,0에 배치) 중심에서 거리 350 cm·pitch -12·yaw 0·높이 0. 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/editor_make_fluid_track_stage.py:76, Tools/FluidFX/editor_make_fluid_track_stage.py:587-588",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_SnowTrack.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidTrack_Snow.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidTrackWindow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidTrackLayer.uasset",
+        "Content/FluidFX/Meshes/SM_TD_FluidTrackGridUnit256.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidDuneHeight.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidSnowDetailN.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "camera",
+            "target": "TDGen_SnowTrack",
+            "distance_cm": 350.0,
+            "pitch": -12.0,
+            "yaw": 0.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "TR1/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "페인터 1024²",
+              "ms": 0.1,
+              "item": "S051"
+            }
+          ],
+          "limit_ms": 0.1,
+          "limit_formula": "0.10",
+          "items": [
+            "S051"
+          ],
+          "note": "[가정] 폰 정지(걷기 단계 없음: 0e 계획은 1500 cm를 걷는다 track_fx12c_groove.json:22-24; bStampsSlowBones 참 TJ:763이라 정지 중에도 찍지만 스탬프 수가 달라 페인터 몫이 작게 잡힐 수 있다, 통과 쪽); [가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        },
+        {
+          "id": "TR1/ng",
+          "metric": "ng",
+          "parts_off": [
+            {
+              "part": "페인터 1024²",
+              "ms": 0.1,
+              "item": "S051"
+            }
+          ],
+          "limit_ms": 0.1,
+          "limit_formula": "0.10",
+          "items": [
+            "S051"
+          ],
+          "note": "[가정] 폰 정지(걷기 단계 없음: 0e 계획은 1500 cm를 걷는다 track_fx12c_groove.json:22-24; bStampsSlowBones 참 TJ:763이라 정지 중에도 찍지만 스탬프 수가 달라 페인터 몫이 작게 잡힐 수 있다, 통과 쪽); [가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "TR3",
+      "area": "track",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSandStage",
+      "targets": [
+        "TDGen_SandDust"
+      ],
+      "toggle": "L",
+      "toggle_summary": "L: B sleep + [volumes] 끔(C9; HarvesterSandDust 대상 밖)",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_SandDust": 256
+      },
+      "backend_basis": "GPU 256²(설정 192 TJ:774·788 → GB:795 올림)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_SandDust(-1500,-1500) 중심에서 거리 500 cm·pitch -20·yaw 30·높이 0. 폰은 옮기지 않으며 활성 거리와 무관하다(reset이 모든 유체의 활성 볼륨을 끈다, PP:361(reset, PP:1703)). 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524, Tools/FluidFX/pie_profile_fluid.py:361, Tools/FluidFX/pie_profile_fluid.py:1703, Tools/FluidFX/editor_make_fluid_track_stage.py:90-92",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_SandDust.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidVolume_SandDust.uasset",
+        "Content/FluidFX/Materials/MPC_TD_FluidVolumeFlow.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidVolume.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+        "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "camera",
+            "target": "TDGen_SandDust",
+            "distance_cm": 500.0,
+            "pitch": -20.0,
+            "yaw": 30.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_SandDust"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          },
+          {
+            "action": "visibility",
+            "targets": [
+              "TDGen_SandDust"
+            ],
+            "parts": [
+              "volumes"
+            ],
+            "visible": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SandDust": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "TR3/ft",
+          "metric": "ft",
+          "parts_off": [
+            {
+              "part": "먼지 효과(256² 시뮬+볼륨)",
+              "ms": 1.0,
+              "item": "S075"
+            }
+          ],
+          "limit_ms": 1.0,
+          "limit_formula": "1.0",
+          "items": [
+            "S075"
+          ],
+          "note": "전체 예산, 256² 몫 미가산, FC F14; [가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    },
+    {
+      "id": "VI1",
+      "area": "viscous",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidViscousStage",
+      "targets": [
+        "TDGen_ViscousBloodSlide"
+      ],
+      "toggle": "Ls",
+      "toggle_summary": "Ls",
+      "awake_sides": "A",
+      "awake_step_count": 1,
+      "backend": "GPU",
+      "grid": {
+        "TDGen_ViscousBloodSlide": 256
+      },
+      "backend_basis": "GPU 256²(TJ:803·808)",
+      "water_layer": false,
+      "block_frames": null,
+      "camera_source": "가정: 사전 등록 선택(camera target, PP:505-524: 대상 원점에서 forward×거리 뒤·같은 회전이라 대상 중심, 화면 밖 없음), lookdev 변환 아님(AM8 N3·AM9 P1, LG v2 X17). 대상 TDGen_ViscousBloodSlide 중심에서 거리 700 cm·pitch -35·yaw 90·높이 0. 행은 VI1/ng 하나. 가림·점유 미확인. | Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend8.md:26-33, Saved/AgentOps/20261106/p-prep/runbook-p-v3-amend9.md:7-12, Saved/AgentOps/20261106/p-prep/p-ledger-v2.md:293, Tools/FluidFX/pie_profile_fluid.py:505-524",
+      "hash_paths": [
+        "Content/FluidFX/Presets/DA_TDFluid_ViscousBlood.uasset",
+        "Content/FluidFX/Materials/MI_TD_FluidViscous_Blood.uasset",
+        "Content/FluidFX/Materials/M_TD_FluidViscousSurface.uasset",
+        "Content/FluidFX/Meshes/SM_TD_FluidTrackGridUnit256.uasset"
+      ],
+      "steps": {
+        "setup": [
+          {
+            "action": "camera",
+            "target": "TDGen_ViscousBloodSlide",
+            "distance_cm": 700.0,
+            "pitch": -35.0,
+            "yaw": 90.0,
+            "height_cm": 0.0
+          }
+        ],
+        "a": [
+          {
+            "action": "sleep",
+            "awake": true
+          }
+        ],
+        "b": [
+          {
+            "action": "sleep",
+            "awake": false
+          }
+        ]
+      },
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "meta": {
+        "count": 1,
+        "note": null
+      },
+      "rows": [
+        {
+          "id": "VI1/ng",
+          "metric": "ng",
+          "parts_off": [
+            {
+              "part": "점성 256²",
+              "ms": 0.15,
+              "item": "S082"
+            }
+          ],
+          "limit_ms": 0.15,
+          "limit_formula": "0.15",
+          "items": [
+            "S082"
+          ],
+          "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+        }
+      ]
+    }
+  ]
+}

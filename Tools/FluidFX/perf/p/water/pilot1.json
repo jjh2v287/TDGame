@@ -1,0 +1,227 @@
+{
+  "run_label": "p-water-pilot1",
+  "cvars": [
+    "t.MaxFPS 1000",
+    "r.VSync 0",
+    "r.VSyncEditor 0",
+    "r.GPUCsvStatsEnabled 1",
+    "r.DynamicRes.OperationMode 0",
+    "r.ScreenPercentage 100",
+    "TD.FluidFX.LogTickCost 1",
+    "TD.FluidFX.SolverBackend 0",
+    "t.OverrideFPS 0",
+    "TD.FluidFX.WaterWetness 1",
+    "TD.FluidFX.MassInput -1",
+    "TD.FluidFX.CloudSetup -1",
+    "TD.FluidFX.CloudViewSampleScale -1",
+    "r.VolumetricFog 1"
+  ],
+  "recorded_variables": [
+    "t.MaxFPS",
+    "r.VSync",
+    "r.VSyncEditor",
+    "r.GPUCsvStatsEnabled",
+    "r.DynamicRes.OperationMode",
+    "r.ScreenPercentage",
+    "r.Editor.Viewport.OverridePIEScreenPercentage",
+    "r.AntiAliasingMethod",
+    "r.VolumetricFog",
+    "sg.ResolutionQuality",
+    "sg.ViewDistanceQuality",
+    "sg.AntiAliasingQuality",
+    "sg.ShadowQuality",
+    "sg.GlobalIlluminationQuality",
+    "sg.ReflectionQuality",
+    "sg.PostProcessQuality",
+    "sg.TextureQuality",
+    "sg.EffectsQuality",
+    "sg.FoliageQuality",
+    "sg.ShadingQuality",
+    "TD.FluidFX.WaterWetness",
+    "TD.FluidFX.MassInput",
+    "TD.FluidFX.CloudSetup",
+    "TD.FluidFX.CloudViewSampleScale",
+    "t.OverrideFPS",
+    "r.TDFogScattering",
+    "TD.FluidFX.SolverBackend",
+    "TD.FluidFX.WaterGpu",
+    "TD.FluidFX.MaxStepRateHz",
+    "TD.FluidFX.PauseWhenNotVisible",
+    "TD.FluidFX.ParallelActorSteps",
+    "TD.FluidFX.LogTickCost"
+  ],
+  "hash_paths": [
+    "Content/FluidFX/Maps/LV_TDFluidWaterStage.umap",
+    "Content/FluidFX/Maps/LV_TDFluidCoastStage.umap",
+    "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+    "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+    "Binaries/Win64/UnrealEditor-TDGame.dll",
+    "Binaries/Win64/UnrealEditor-TDFluidGpu.dll",
+    "Binaries/Win64/UnrealEditor-TDGameEditor.dll",
+    "Binaries/Win64/UnrealEditor-TDWorldGen.dll",
+    "Content/FluidFX/Presets/DA_TDFluid_River.uasset",
+    "Content/FluidFX/Materials/M_TD_FluidWater.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidWater_River.uasset",
+    "Content/FluidFX/Materials/MPC_TD_FluidWaterFlow.uasset",
+    "Content/FluidFX/Meshes/SM_TD_FluidWaterGridUnit.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidCaustics.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidFlowPhaseNoise.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidFoamNoise.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidWaterDetailN.uasset",
+    "Content/FluidFX/Presets/DA_TDFluid_Sea.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidWater_Sea.uasset"
+  ],
+  "block_frames": 300,
+  "discard_frames": 60,
+  "order": "ABBA",
+  "settle_seconds": 3.0,
+  "initial_warmup_seconds": 90.0,
+  "fresh_pie_after_gpu": true,
+  "repeats": 1,
+  "unstable_repeats": 1,
+  "write_fx7p_evidence": false,
+  "_p": {
+    "generator": "Tools/FluidFX/perf/p_plans.py",
+    "stage": "pilot1",
+    "area": "water",
+    "p_areas": "Tools/FluidFX/perf/p/p_areas.json",
+    "p_areas_sha256": "591d5bf2f91eb3b8d0407c2432a5dbf9b52da27401098aa9e22c010640a63352",
+    "ledger": "Saved/AgentOps/20261106/p-prep/p-ledger-v2.md",
+    "ledger_sha256": "1e9095b057d108d695237aed327557ef125fa3f07c17d7f60d297bcfd1d6c54e"
+  },
+  "scenes": [
+    {
+      "id": "WA1",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidWaterStage",
+      "targets": [
+        "TDGen_WaterRiverSimulation"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "view",
+          "arm_cm": 800.0,
+          "aspect_ratio": 1.777778,
+          "constrain_aspect": false
+        },
+        {
+          "action": "camera",
+          "mode": "pawn"
+        },
+        {
+          "action": "pawn",
+          "speed": 400.0,
+          "x": 3350.0,
+          "y": 2500.0,
+          "z": 121.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 100"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 100,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_WaterRiverSimulation": 192
+        },
+        "toggle": "Ls",
+        "rows": [
+          "WA1/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "WA3",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidCoastStage",
+      "targets": [
+        "TDGen_CoastStageWaterSea"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "camera",
+          "mode": "pawn"
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 100"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "console",
+          "commands": [
+            "TD.FluidFX.WaterWetness 1"
+          ]
+        }
+      ],
+      "b": [
+        {
+          "action": "console",
+          "commands": [
+            "TD.FluidFX.WaterWetness 0"
+          ]
+        }
+      ],
+      "meta": {
+        "screen_percentage": 100,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_CoastStageWaterSea": 192
+        },
+        "toggle": "C",
+        "rows": [
+          "WA3/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    }
+  ]
+}

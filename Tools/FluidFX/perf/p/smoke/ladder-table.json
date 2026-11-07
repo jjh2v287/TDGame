@@ -1,0 +1,307 @@
+{
+  "version": 1,
+  "area": "smoke",
+  "title": "P smoke 성능 판정 표",
+  "water_path_check": false,
+  "reference": null,
+  "scenes": {
+    "SM1_sp130": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_SmokeHard": 256
+      },
+      "target_labels": [
+        "TDGen_SmokeHard"
+      ],
+      "awake_step_count": 1,
+      "toggle": "L",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SmokeHard": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage"
+    },
+    "SM2_sp130": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_SmokeSoft": 256
+      },
+      "target_labels": [
+        "TDGen_SmokeSoft"
+      ],
+      "awake_step_count": 1,
+      "toggle": "L",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SmokeSoft": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage"
+    },
+    "HV2_sp130": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_HvolVortexA": 128,
+        "TDGen_HvolVortexB": 128
+      },
+      "target_labels": [
+        "TDGen_HvolVortexA",
+        "TDGen_HvolVortexB"
+      ],
+      "awake_step_count": 2,
+      "toggle": "Ls+X",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidHvolStage"
+    },
+    "SM1_sp160": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_SmokeHard": 256
+      },
+      "target_labels": [
+        "TDGen_SmokeHard"
+      ],
+      "awake_step_count": 1,
+      "toggle": "L",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SmokeHard": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage"
+    },
+    "SM2_sp160": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_SmokeSoft": 256
+      },
+      "target_labels": [
+        "TDGen_SmokeSoft"
+      ],
+      "awake_step_count": 1,
+      "toggle": "L",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SmokeSoft": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage"
+    },
+    "HV2_sp160": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_HvolVortexA": 128,
+        "TDGen_HvolVortexB": 128
+      },
+      "target_labels": [
+        "TDGen_HvolVortexA",
+        "TDGen_HvolVortexB"
+      ],
+      "awake_step_count": 2,
+      "toggle": "Ls+X",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidHvolStage"
+    },
+    "SM1_sp200": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_SmokeHard": 256
+      },
+      "target_labels": [
+        "TDGen_SmokeHard"
+      ],
+      "awake_step_count": 1,
+      "toggle": "L",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SmokeHard": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage"
+    },
+    "SM2_sp200": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_SmokeSoft": 256
+      },
+      "target_labels": [
+        "TDGen_SmokeSoft"
+      ],
+      "awake_step_count": 1,
+      "toggle": "L",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {
+          "TDGen_SmokeSoft": [
+            "volumes"
+          ]
+        },
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage"
+    },
+    "HV2_sp200": {
+      "backend": "CPU",
+      "grid": {
+        "TDGen_HvolVortexA": 128,
+        "TDGen_HvolVortexB": 128
+      },
+      "target_labels": [
+        "TDGen_HvolVortexA",
+        "TDGen_HvolVortexB"
+      ],
+      "awake_step_count": 2,
+      "toggle": "Ls+X",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": true,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": {
+          "hidden": true,
+          "niagara": false
+        }
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidHvolStage"
+    }
+  },
+  "metrics": {
+    "ft": {
+      "label": "FrameTime 쌍 차분",
+      "columns": [
+        "FrameTime"
+      ],
+      "pair": "difference",
+      "pdh": false,
+      "backends": [],
+      "pixel_scale": true,
+      "p95_record": true
+    },
+    "gt": {
+      "label": "GameThreadTime 쌍 차분",
+      "columns": [
+        "GameThreadTime"
+      ],
+      "pair": "difference",
+      "pdh": false,
+      "backends": []
+    },
+    "rt": {
+      "label": "RTSUM 쌍 차분(EventWait 제외)",
+      "columns": [],
+      "pair": "difference",
+      "pdh": false,
+      "backends": [],
+      "sum_prefix": {
+        "include": "Exclusive/RenderThread/",
+        "exclude": "Exclusive/RenderThread/EventWait"
+      }
+    },
+    "ng": {
+      "label": "GPU/TDFluidGpuSolver A p50",
+      "columns": [
+        "GPU/TDFluidGpuSolver"
+      ],
+      "pair": "a_only",
+      "pdh": false,
+      "backends": [
+        "GPU"
+      ],
+      "p95_record": true
+    }
+  },
+  "rows": [],
+  "records": [],
+  "consequences": {
+    "충족(proposed)": "[제안] 기준 충족(동등 증명 아님): 화면 승인만 남는다(PR-11)",
+    "미충족": "손잡이 채택 공집합(RC 5절): 사용자 결정 (가) 성능 레버 (나) 예산 개정 (다) 측정 체제(D-59 (e)), FX-P '성능 미달'(PR-11)",
+    "판정 불가": "부분이면 FX-P '성능 부분(a/b/c/d/e)', 측정 불가면 FX-P 앞 측정 경로 명세, 판정 불가 사유는 FX-P 앞에서 해소(PR-11)"
+  }
+}

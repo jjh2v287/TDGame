@@ -1,0 +1,528 @@
+{
+  "run_label": "p-fire-pilot1",
+  "cvars": [
+    "t.MaxFPS 1000",
+    "r.VSync 0",
+    "r.VSyncEditor 0",
+    "r.GPUCsvStatsEnabled 1",
+    "r.DynamicRes.OperationMode 0",
+    "r.ScreenPercentage 100",
+    "TD.FluidFX.LogTickCost 1",
+    "TD.FluidFX.SolverBackend 0",
+    "t.OverrideFPS 0",
+    "TD.FluidFX.WaterWetness 1",
+    "TD.FluidFX.MassInput -1",
+    "TD.FluidFX.CloudSetup -1",
+    "TD.FluidFX.CloudViewSampleScale -1",
+    "r.VolumetricFog 1"
+  ],
+  "recorded_variables": [
+    "t.MaxFPS",
+    "r.VSync",
+    "r.VSyncEditor",
+    "r.GPUCsvStatsEnabled",
+    "r.DynamicRes.OperationMode",
+    "r.ScreenPercentage",
+    "r.Editor.Viewport.OverridePIEScreenPercentage",
+    "r.AntiAliasingMethod",
+    "r.VolumetricFog",
+    "sg.ResolutionQuality",
+    "sg.ViewDistanceQuality",
+    "sg.AntiAliasingQuality",
+    "sg.ShadowQuality",
+    "sg.GlobalIlluminationQuality",
+    "sg.ReflectionQuality",
+    "sg.PostProcessQuality",
+    "sg.TextureQuality",
+    "sg.EffectsQuality",
+    "sg.FoliageQuality",
+    "sg.ShadingQuality",
+    "TD.FluidFX.WaterWetness",
+    "TD.FluidFX.MassInput",
+    "TD.FluidFX.CloudSetup",
+    "TD.FluidFX.CloudViewSampleScale",
+    "t.OverrideFPS",
+    "r.TDFogScattering",
+    "TD.FluidFX.SolverBackend",
+    "TD.FluidFX.WaterGpu",
+    "TD.FluidFX.MaxStepRateHz",
+    "TD.FluidFX.PauseWhenNotVisible",
+    "TD.FluidFX.ParallelActorSteps",
+    "TD.FluidFX.LogTickCost"
+  ],
+  "hash_paths": [
+    "Content/FluidFX/Maps/LV_TDFluidFireStage.umap",
+    "Content/FluidFX/Maps/LV_TDFluidEmberStage.umap",
+    "Content/FluidFX/Maps/LV_TDFluidParticleStage.umap",
+    "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+    "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+    "Binaries/Win64/UnrealEditor-TDGame.dll",
+    "Binaries/Win64/UnrealEditor-TDFluidGpu.dll",
+    "Binaries/Win64/UnrealEditor-TDGameEditor.dll",
+    "Binaries/Win64/UnrealEditor-TDWorldGen.dll",
+    "Content/FluidFX/Presets/DA_TDFluid_CampfireFlame.uasset",
+    "Content/FluidFX/Presets/DA_TDFluid_CampfireSmoke.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidEmber_Default.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidFlame_Campfire.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidVolume_SmokeBillow.uasset",
+    "Content/FluidFX/Materials/MPC_TD_FluidVolumeFlow.uasset",
+    "Content/FluidFX/Materials/M_TD_FluidEmber.uasset",
+    "Content/FluidFX/Materials/M_TD_FluidFlame.uasset",
+    "Content/FluidFX/Materials/M_TD_FluidVolume.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset",
+    "Content/FluidFX/Presets/DA_TDFluid_TorchFlame.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidFlame_Torch.uasset",
+    "Content/FluidFX/Presets/DA_TDFluid_EmberStageCampfireIsm.uasset",
+    "Content/FluidFX/Presets/DA_TDFluid_EmberStageCampfireNiagara.uasset",
+    "Content/FluidFX/Niagara/NS_TD_FluidEmberHeat.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidEmberNiagara_Default.uasset",
+    "Content/FluidFX/Materials/M_TD_FluidEmberNiagara.uasset",
+    "Content/FluidFX/Presets/DA_TDFluid_DriveP4.uasset",
+    "Content/FluidFX/Niagara/NS_TD_FluidDriveMeshFloat.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidDrivenParticleMesh_Default.uasset",
+    "Content/FluidFX/Materials/M_TD_FluidDrivenParticleMesh.uasset"
+  ],
+  "block_frames": 300,
+  "discard_frames": 60,
+  "order": "ABBA",
+  "settle_seconds": 3.0,
+  "initial_warmup_seconds": 90.0,
+  "fresh_pie_after_gpu": true,
+  "repeats": 1,
+  "unstable_repeats": 1,
+  "write_fx7p_evidence": false,
+  "_p": {
+    "generator": "Tools/FluidFX/perf/p_plans.py",
+    "stage": "pilot1",
+    "area": "fire",
+    "p_areas": "Tools/FluidFX/perf/p/p_areas.json",
+    "p_areas_sha256": "591d5bf2f91eb3b8d0407c2432a5dbf9b52da27401098aa9e22c010640a63352",
+    "ledger": "Saved/AgentOps/20261106/p-prep/p-ledger-v2.md",
+    "ledger_sha256": "1e9095b057d108d695237aed327557ef125fa3f07c17d7f60d297bcfd1d6c54e"
+  },
+  "scenes": [
+    {
+      "id": "FI1",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+      "targets": [
+        "TDGen_CampfireFire",
+        "TDGen_CampfireSmoke"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "camera",
+          "distance_cm": 700.0,
+          "height_cm": 120.0,
+          "pitch": -15.0,
+          "target": "TDGen_CampfireFire",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 100"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "cards",
+            "embers"
+          ],
+          "targets": [
+            "TDGen_CampfireFire"
+          ],
+          "visible": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_CampfireSmoke"
+          ],
+          "visible": true
+        },
+        {
+          "action": "light",
+          "targets": [
+            "TDGen_CampfireSmoke"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "cards",
+            "embers"
+          ],
+          "targets": [
+            "TDGen_CampfireFire"
+          ],
+          "visible": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_CampfireSmoke"
+          ],
+          "visible": false
+        },
+        {
+          "action": "light",
+          "targets": [
+            "TDGen_CampfireSmoke"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 100,
+        "count": 2,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_CampfireFire": 128,
+          "TDGen_CampfireSmoke": 96
+        },
+        "toggle": "L",
+        "rows": [
+          "FI1/ft",
+          "FI1/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime",
+      "block_frames": 1200
+    },
+    {
+      "id": "FI2",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidFireStage",
+      "targets": [
+        "TDGen_TorchFire"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "camera",
+          "mode": "pawn"
+        },
+        {
+          "action": "pawn",
+          "x": -300.0,
+          "y": -300.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 100"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "cards",
+            "volumes",
+            "embers"
+          ],
+          "targets": [
+            "TDGen_TorchFire"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "cards",
+            "volumes",
+            "embers"
+          ],
+          "targets": [
+            "TDGen_TorchFire"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 100,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_TorchFire": 96
+        },
+        "toggle": "L",
+        "rows": [
+          "FI2/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime",
+      "block_frames": 1200
+    },
+    {
+      "id": "FI5a",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidEmberStage",
+      "targets": [
+        "TDGen_EmberA_Campfire"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "camera",
+          "distance_cm": 300.0,
+          "height_cm": 0.0,
+          "pitch": -3.0,
+          "target": "TDGen_EmberA_Campfire",
+          "yaw": 80.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 100"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "visibility",
+          "parts": [
+            "embers"
+          ],
+          "targets": [
+            "TDGen_EmberA_Campfire"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "visibility",
+          "parts": [
+            "embers"
+          ],
+          "targets": [
+            "TDGen_EmberA_Campfire"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 100,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_EmberA_Campfire": 128
+        },
+        "toggle": "Lb",
+        "rows": [
+          "FI5a/ft"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "FI5b",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidEmberStage",
+      "targets": [
+        "TDGen_EmberB_Campfire"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "camera",
+          "distance_cm": 300.0,
+          "height_cm": 0.0,
+          "pitch": -3.0,
+          "target": "TDGen_EmberB_Campfire",
+          "yaw": 80.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 100"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "actor",
+          "labels": [
+            "TDGen_EmberB_Campfire"
+          ],
+          "niagara": "activate"
+        }
+      ],
+      "b": [
+        {
+          "action": "actor",
+          "labels": [
+            "TDGen_EmberB_Campfire"
+          ],
+          "niagara": "deactivate"
+        }
+      ],
+      "meta": {
+        "screen_percentage": 100,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_EmberB_Campfire": 128
+        },
+        "toggle": "Xn",
+        "rows": [
+          "FI5b/ft"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "FI6",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidParticleStage",
+      "targets": [
+        "TDGen_ParticleP4_Fluid"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "camera",
+          "distance_cm": 900.0,
+          "height_cm": 0.0,
+          "pitch": -35.0,
+          "target": "TDGen_ParticleP4_Fluid",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 100"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "actor",
+          "labels": [
+            "TDGen_ParticleP4_Fluid"
+          ],
+          "niagara": "activate"
+        }
+      ],
+      "b": [
+        {
+          "action": "actor",
+          "labels": [
+            "TDGen_ParticleP4_Fluid"
+          ],
+          "niagara": "deactivate"
+        }
+      ],
+      "meta": {
+        "screen_percentage": 100,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_ParticleP4_Fluid": 128
+        },
+        "toggle": "Xn",
+        "rows": [
+          "FI6/ft"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    }
+  ]
+}

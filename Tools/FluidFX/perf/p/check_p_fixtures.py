@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(표준 라이브러리만, git hash-object 사용, 에디터 불필요). runbook-p-v3 T3.10 fixture 실행기: 임시 폴더(tempfile)에 가짜 LG v2·p_areas.json·0e/W11·expect 입력·대역 pie_profile_fluid.py(--check-plan·build gate만, FX7P_DEFAULTS는 진짜)·prereg_lock.py 복사본·가짜 실행 폴더(Saved/FluidFX/fx7p, merge는 진짜 PP merge_fx7p_plan 원문)·가짜 T2 판정 출력으로 저장소 사본을 만들고 p_plans.py build·current-lock·lock-list·preflight·runs·need-ladder·select-sp·status·summary 사례를 돌린다.
 실행 명령: python -B Tools/FluidFX/perf/p/check_p_fixtures.py [--root <저장소 사본>](시험할 p_plans.py·prereg_lock.py·pie_profile_fluid.py FX7P_DEFAULTS가 있는 루트, 기본 이 파일의 저장소)
 출력: 사례마다 '통과|실패 <이름>: <근거>' 한 줄과 끝 'P fixture 통과 <n>/<m>'(표준 출력). 끝에서 <root>/Tools/FluidFX/perf/p/fixtures_t1·t2·t4.py가 있으면 하위 프로세스로 돌리고 그 출력은 표준 오류. 종료 0 = 사례 전부 통과·하위 fixture 모두 0, 1 = 그 밖
-상태: 2026-11-06 T3.10 사례 전부(build·current-lock·lock-list·preflight·runs·need-ladder·select-sp·status·summary), 반박 r1 M1(compare 하나를 함께 쓰는 채택의 장면 귀속)·M2(PB2:214 열 빠짐 입력 경로) 사례 추가, 2026-11-07 AM7 L1(재잠금 뒤 session 없는 폴더)·L2(T2 실제 열 결함 형식)·L3(pb2_fxp_sources) 사례 추가, 저장소 파일은 쓰지 않는다.
+상태: 2026-11-06 T3.10 사례 전부(build·current-lock·lock-list·preflight·runs·need-ladder·select-sp·status·summary), 반박 r1 M1(compare 하나를 함께 쓰는 채택의 장면 귀속)·M2(PB2:214 열 빠짐 입력 경로) 사례 추가, 2026-11-07 AM7 L1(재잠금 뒤 session 없는 폴더)·L2(T2 실제 열 결함 형식)·L3(pb2_fxp_sources) 사례 추가, AM9 P3(줄 분류는 그 영역 행만·그 영역 행이 없으면 rows 전부) summary 사례 2개, AM9 P3 ③(줄 밖 행 미달 → 그 영역 미충족·판정 불가 → 부분·통과 → 막지 않음, orphan_rows·md '(줄 밖 행: …)') summary 사례 3개 추가, 저장소 파일은 쓰지 않는다.
 """
 import argparse
 import ast
@@ -1168,6 +1168,54 @@ def run_summary_cases(run, base, parent):
     run.check("summary A10 미충족·FO3 SM2/ft 미달 → 판정 불가(HVOL 대안 측정 불가; SM2/ft 미달)",
               code == 0 and summary["areas"]["track"]["overall"] == "미충족(통과 0 / 미달 1 / 행 1 / 판정 불가 0 / 측정 불가 1 / 출하 밖 0)"
               and row_label(summary, "FO3/ft") == "판정 불가(HVOL 대안 측정 불가; SM2/ft 미달)" and t4_compatible(summary), f"종료 {code} {err[-200:]}")
+
+    def line_of(summary, area, item_id):
+        return next((line for line in summary["areas"][area]["lines"] if line["id"] == item_id), {}) if summary else {}
+
+    code, summary, err, md = scenario(lambda root: edit_areas(root, lambda areas: item_of(areas, "S009").__setitem__("rows", ["WA3/gt", "TR1/ng"])),
+                                      verdicts={"TR1/ng": ("미달", None)})
+    line = line_of(summary, "water", "S009")
+    run.check("summary 줄 분류는 그 영역 행만(AM9 P3): S009 rows WA3/gt·TR1/ng 중 TR1/ng만 미달 → water 줄 통과·rows_used WA3/gt·water 부분·track 미충족·md '(영역 행만: WA3/gt)'",
+              code == 0 and line.get("class") == "통과" and line.get("rows_used") == ["WA3/gt"] and line.get("rows") == ["WA3/gt", "TR1/ng"]
+              and summary["areas"]["water"]["overall"] == "부분(통과 1 / 행 1 / 판정 불가 0 / 측정 불가 1 / 출하 밖 0)"
+              and summary["areas"]["track"]["overall"] == "미충족(통과 0 / 미달 1 / 행 1 / 판정 불가 0 / 측정 불가 1 / 출하 밖 0)" and t4_compatible(summary)
+              and "- water 줄 S009: 통과 (영역 행만: WA3/gt)" in md.read_text(encoding="utf-8"),
+              f"종료 {code} {line.get('class')} {line.get('rows_used')} {summary['areas']['water']['overall'] if summary else None} {err[-200:]}")
+    code, summary, err, md = scenario(lambda root: edit_areas(root, lambda areas: item_of(areas, "S009").__setitem__("rows", ["TR1/ng"])), verdicts={"TR1/ng": ("미달", None)})
+    line = line_of(summary, "water", "S009")
+    run.check("summary 줄 rows에 그 영역 행 없음 → rows 전부로 분류(AM9 P3): S009 rows TR1/ng 미달 → water 줄 미달·rows_used = rows·water 미충족·md '영역 행만' 없음",
+              code == 0 and line.get("class") == "미달" and line.get("rows_used") == ["TR1/ng"]
+              and summary["areas"]["water"]["overall"] == "미충족(통과 0 / 미달 1 / 행 1 / 판정 불가 0 / 측정 불가 1 / 출하 밖 0)" and t4_compatible(summary)
+              and "영역 행만" not in md.read_text(encoding="utf-8"),
+              f"종료 {code} {line.get('class')} {line.get('rows_used')} {summary['areas']['water']['overall'] if summary else None} {err[-200:]}")
+
+    def orphan_scenario(verdicts, move_record_line=False):
+        def prepare(root):
+            edit_areas(root, lambda areas: item_of(areas, "S013").__setitem__("rows", ["TR1/ft"]))
+            if move_record_line:
+                edit_areas(root, lambda areas: item_of(areas, "S015").__setitem__("area", "foliage"))
+
+        code, summary, err, md = scenario(prepare, verdicts=verdicts)
+        track = summary["areas"]["track"] if summary else {}
+        others_empty = bool(summary) and all(entry["orphan_rows"] == [] for area, entry in summary["areas"].items() if area != "track")
+        md_lines = md.read_text(encoding="utf-8").splitlines() if md.is_file() else []
+        return code, summary, err, track, others_empty, md_lines
+
+    code, summary, err, track, others_empty, md_lines = orphan_scenario({"TR1/ng": ("미달", None)})
+    run.check("summary 줄 밖 행만 미달(AM9 P3 ③·반박 am9 M1): S013 rows TR1/ft만 → TR1/ng는 track 줄 밖·미달 → track 미충족(줄 미달 0)·orphan_rows [TR1/ng]·다른 영역 []·md '- track (줄 밖 행: TR1/ng 미달)'",
+              code == 0 and track.get("overall") == "미충족(통과 1 / 미달 0 / 행 1 / 판정 불가 0 / 측정 불가 1 / 출하 밖 0)" and track.get("orphan_rows") == ["TR1/ng"]
+              and others_empty and t4_compatible(summary) and "- track (줄 밖 행: TR1/ng 미달)" in md_lines,
+              f"종료 {code} {track.get('overall')} {track.get('orphan_rows')} {err[-200:]}")
+    code, summary, err, track, others_empty, md_lines = orphan_scenario({"TR1/ng": ("판정 불가", "걸침")}, move_record_line=True)
+    run.check("summary 줄 밖 행만 판정 불가(AM9 P3 ③, '각' S015는 foliage로): TR1/ng 판정 불가(걸침) → track 충족 아님·부분·md '- track (줄 밖 행: TR1/ng 판정 불가(걸침))'",
+              code == 0 and track.get("overall") == "부분(통과 1 / 행 1 / 판정 불가 0 / 측정 불가 0 / 출하 밖 0)" and track.get("orphan_rows") == ["TR1/ng"]
+              and others_empty and t4_compatible(summary) and "- track (줄 밖 행: TR1/ng 판정 불가(걸침))" in md_lines,
+              f"종료 {code} {track.get('overall')} {track.get('orphan_rows')} {err[-200:]}")
+    code, summary, err, track, others_empty, md_lines = orphan_scenario({}, move_record_line=True)
+    run.check("summary 줄 밖 행 통과(AM9 P3 ③, '각' S015는 foliage로): TR1/ng 통과 → track 충족(proposed)·orphan_rows [TR1/ng]·md에 '줄 밖 행' 없음",
+              code == 0 and track.get("overall") == "충족(proposed)" and track.get("orphan_rows") == ["TR1/ng"] and others_empty and t4_compatible(summary)
+              and bool(md_lines) and not any("줄 밖 행" in md_line for md_line in md_lines),
+              f"종료 {code} {track.get('overall')} {track.get('orphan_rows')} {err[-200:]}")
     code, summary, err, _ = scenario(verdicts={"SM2/ft": ("판정 불가", "걸침")})
     run.check("summary FO3 SM2/ft 판정 불가(걸침) → FO3 판정 불가(…; SM2/ft 판정 불가(걸침))", code == 0 and row_label(summary, "SM2/ft") == "판정 불가(걸침)"
               and row_label(summary, "FO3/ft") == "판정 불가(HVOL 대안 측정 불가; SM2/ft 판정 불가(걸침))", f"종료 {code} {err[-200:]}")

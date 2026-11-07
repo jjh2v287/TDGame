@@ -1,0 +1,830 @@
+{
+  "run_label": "p-smoke-ladder",
+  "cvars": [
+    "t.MaxFPS 1000",
+    "r.VSync 0",
+    "r.VSyncEditor 0",
+    "r.GPUCsvStatsEnabled 1",
+    "r.DynamicRes.OperationMode 0",
+    "r.ScreenPercentage 100",
+    "TD.FluidFX.LogTickCost 1",
+    "TD.FluidFX.SolverBackend 0",
+    "t.OverrideFPS 0",
+    "TD.FluidFX.WaterWetness 1",
+    "TD.FluidFX.MassInput -1",
+    "TD.FluidFX.CloudSetup -1",
+    "TD.FluidFX.CloudViewSampleScale -1",
+    "r.VolumetricFog 1"
+  ],
+  "recorded_variables": [
+    "t.MaxFPS",
+    "r.VSync",
+    "r.VSyncEditor",
+    "r.GPUCsvStatsEnabled",
+    "r.DynamicRes.OperationMode",
+    "r.ScreenPercentage",
+    "r.Editor.Viewport.OverridePIEScreenPercentage",
+    "r.AntiAliasingMethod",
+    "r.VolumetricFog",
+    "sg.ResolutionQuality",
+    "sg.ViewDistanceQuality",
+    "sg.AntiAliasingQuality",
+    "sg.ShadowQuality",
+    "sg.GlobalIlluminationQuality",
+    "sg.ReflectionQuality",
+    "sg.PostProcessQuality",
+    "sg.TextureQuality",
+    "sg.EffectsQuality",
+    "sg.FoliageQuality",
+    "sg.ShadingQuality",
+    "TD.FluidFX.WaterWetness",
+    "TD.FluidFX.MassInput",
+    "TD.FluidFX.CloudSetup",
+    "TD.FluidFX.CloudViewSampleScale",
+    "t.OverrideFPS",
+    "r.TDFogScattering",
+    "TD.FluidFX.SolverBackend",
+    "TD.FluidFX.WaterGpu",
+    "TD.FluidFX.MaxStepRateHz",
+    "TD.FluidFX.PauseWhenNotVisible",
+    "TD.FluidFX.ParallelActorSteps",
+    "TD.FluidFX.LogTickCost"
+  ],
+  "hash_paths": [
+    "Content/FluidFX/Maps/LV_TDFluidSmokeStage.umap",
+    "Content/FluidFX/Maps/LV_TDFluidHvolStage.umap",
+    "Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+    "Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+    "Binaries/Win64/UnrealEditor-TDGame.dll",
+    "Binaries/Win64/UnrealEditor-TDFluidGpu.dll",
+    "Binaries/Win64/UnrealEditor-TDGameEditor.dll",
+    "Binaries/Win64/UnrealEditor-TDWorldGen.dll",
+    "Content/FluidFX/Presets/DA_TDFluid_SmokeHard.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidVolume_SmokeHard.uasset",
+    "Content/FluidFX/Materials/MPC_TD_FluidVolumeFlow.uasset",
+    "Content/FluidFX/Materials/M_TD_FluidVolume.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidNoiseAtlas.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidNoiseVolume.uasset",
+    "Content/FluidFX/Presets/DA_TDFluid_SmokeSoft.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidVolume_SmokeSoft.uasset",
+    "Content/FluidFX/Presets/DA_TDFluid_HvolVortex.uasset",
+    "Content/FluidFX/Materials/MI_TD_FluidHeterogeneousVolume_Vortex.uasset",
+    "Content/FluidFX/Materials/M_TD_FluidHeterogeneousVolume.uasset",
+    "Content/FluidFX/Textures/T_TD_FluidCrossSection_Mushroom.uasset"
+  ],
+  "block_frames": 300,
+  "discard_frames": 60,
+  "order": "ABBA",
+  "settle_seconds": 3.0,
+  "initial_warmup_seconds": 90.0,
+  "fresh_pie_after_gpu": true,
+  "repeats": 1,
+  "unstable_repeats": 1,
+  "write_fx7p_evidence": false,
+  "_p": {
+    "generator": "Tools/FluidFX/perf/p_plans.py",
+    "stage": "ladder",
+    "area": "smoke",
+    "p_areas": "Tools/FluidFX/perf/p/p_areas.json",
+    "p_areas_sha256": "591d5bf2f91eb3b8d0407c2432a5dbf9b52da27401098aa9e22c010640a63352",
+    "ledger": "Saved/AgentOps/20261106/p-prep/p-ledger-v2.md",
+    "ledger_sha256": "1e9095b057d108d695237aed327557ef125fa3f07c17d7f60d297bcfd1d6c54e"
+  },
+  "scenes": [
+    {
+      "id": "SM1_sp130",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "targets": [
+        "TDGen_SmokeHard"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_SmokeHard",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 130"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeHard"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeHard"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 130,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_SmokeHard": 256
+        },
+        "toggle": "L",
+        "rows": [
+          "SM1/ft",
+          "SM1/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "SM2_sp130",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "targets": [
+        "TDGen_SmokeSoft"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_SmokeSoft",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 130"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeSoft"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeSoft"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 130,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_SmokeSoft": 256
+        },
+        "toggle": "L",
+        "rows": [
+          "SM2/ft",
+          "SM2/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "HV2_sp130",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidHvolStage",
+      "targets": [
+        "TDGen_HvolVortexA",
+        "TDGen_HvolVortexB"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "pawn",
+          "x": 3000.0,
+          "y": 0.0
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_HvolVortexA",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 130"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "actor",
+          "hidden": false,
+          "labels": [
+            "TDGen_HvolVortexA",
+            "TDGen_HvolVortexB"
+          ]
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "actor",
+          "hidden": true,
+          "labels": [
+            "TDGen_HvolVortexA",
+            "TDGen_HvolVortexB"
+          ]
+        }
+      ],
+      "meta": {
+        "screen_percentage": 130,
+        "count": 2,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_HvolVortexA": 128,
+          "TDGen_HvolVortexB": 128
+        },
+        "toggle": "Ls+X",
+        "rows": [
+          "HV2/ft"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "SM1_sp160",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "targets": [
+        "TDGen_SmokeHard"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_SmokeHard",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 160"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeHard"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeHard"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 160,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_SmokeHard": 256
+        },
+        "toggle": "L",
+        "rows": [
+          "SM1/ft",
+          "SM1/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "SM2_sp160",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "targets": [
+        "TDGen_SmokeSoft"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_SmokeSoft",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 160"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeSoft"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeSoft"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 160,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_SmokeSoft": 256
+        },
+        "toggle": "L",
+        "rows": [
+          "SM2/ft",
+          "SM2/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "HV2_sp160",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidHvolStage",
+      "targets": [
+        "TDGen_HvolVortexA",
+        "TDGen_HvolVortexB"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "pawn",
+          "x": 3000.0,
+          "y": 0.0
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_HvolVortexA",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 160"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "actor",
+          "hidden": false,
+          "labels": [
+            "TDGen_HvolVortexA",
+            "TDGen_HvolVortexB"
+          ]
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "actor",
+          "hidden": true,
+          "labels": [
+            "TDGen_HvolVortexA",
+            "TDGen_HvolVortexB"
+          ]
+        }
+      ],
+      "meta": {
+        "screen_percentage": 160,
+        "count": 2,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_HvolVortexA": 128,
+          "TDGen_HvolVortexB": 128
+        },
+        "toggle": "Ls+X",
+        "rows": [
+          "HV2/ft"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "SM1_sp200",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "targets": [
+        "TDGen_SmokeHard"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_SmokeHard",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 200"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeHard"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeHard"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 200,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_SmokeHard": 256
+        },
+        "toggle": "L",
+        "rows": [
+          "SM1/ft",
+          "SM1/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "SM2_sp200",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidSmokeStage",
+      "targets": [
+        "TDGen_SmokeSoft"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_SmokeSoft",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 200"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeSoft"
+          ],
+          "visible": true
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "visibility",
+          "parts": [
+            "volumes"
+          ],
+          "targets": [
+            "TDGen_SmokeSoft"
+          ],
+          "visible": false
+        }
+      ],
+      "meta": {
+        "screen_percentage": 200,
+        "count": 1,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_SmokeSoft": 256
+        },
+        "toggle": "L",
+        "rows": [
+          "SM2/ft",
+          "SM2/gt"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    },
+    {
+      "id": "HV2_sp200",
+      "level": "/Game/FluidFX/Maps/LV_TDFluidHvolStage",
+      "targets": [
+        "TDGen_HvolVortexA",
+        "TDGen_HvolVortexB"
+      ],
+      "setup": [
+        {
+          "action": "sleep",
+          "targets": "others",
+          "awake": false
+        },
+        {
+          "action": "pawn",
+          "x": 3000.0,
+          "y": 0.0
+        },
+        {
+          "action": "camera",
+          "distance_cm": 1800.0,
+          "height_cm": 100.0,
+          "pitch": -25.0,
+          "target": "TDGen_HvolVortexA",
+          "yaw": 0.0
+        },
+        {
+          "action": "console",
+          "commands": [
+            "r.ScreenPercentage 200"
+          ],
+          "restore": true
+        }
+      ],
+      "a": [
+        {
+          "action": "sleep",
+          "awake": true
+        },
+        {
+          "action": "actor",
+          "hidden": false,
+          "labels": [
+            "TDGen_HvolVortexA",
+            "TDGen_HvolVortexB"
+          ]
+        }
+      ],
+      "b": [
+        {
+          "action": "sleep",
+          "awake": false
+        },
+        {
+          "action": "actor",
+          "hidden": true,
+          "labels": [
+            "TDGen_HvolVortexA",
+            "TDGen_HvolVortexB"
+          ]
+        }
+      ],
+      "meta": {
+        "screen_percentage": 200,
+        "count": 2,
+        "backend": "CPU",
+        "grid": {
+          "TDGen_HvolVortexA": 128,
+          "TDGen_HvolVortexB": 128
+        },
+        "toggle": "Ls+X",
+        "rows": [
+          "HV2/ft"
+        ]
+      },
+      "gpu_clock": false,
+      "required_columns": [
+        "FrameTime",
+        "GameThreadTime",
+        "GPUTime"
+      ],
+      "metric": "FrameTime"
+    }
+  ]
+}

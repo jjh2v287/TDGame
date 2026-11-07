@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "area": "viscous",
+  "title": "P viscous 성능 판정 표",
+  "water_path_check": false,
+  "reference": null,
+  "scenes": {
+    "VI1": {
+      "backend": "GPU",
+      "grid": {
+        "TDGen_ViscousBloodSlide": 256
+      },
+      "target_labels": [
+        "TDGen_ViscousBloodSlide"
+      ],
+      "awake_step_count": 1,
+      "toggle": "Ls",
+      "awake_sides": "A",
+      "water_layer": false,
+      "regime": false,
+      "evidence": {
+        "step_count": true,
+        "columns": [],
+        "parts": {},
+        "light": false,
+        "console": {},
+        "actor": null
+      },
+      "source": "/Game/FluidFX/Maps/LV_TDFluidViscousStage"
+    }
+  },
+  "metrics": {
+    "ft": {
+      "label": "FrameTime 쌍 차분",
+      "columns": [
+        "FrameTime"
+      ],
+      "pair": "difference",
+      "pdh": false,
+      "backends": [],
+      "pixel_scale": true,
+      "p95_record": true
+    },
+    "gt": {
+      "label": "GameThreadTime 쌍 차분",
+      "columns": [
+        "GameThreadTime"
+      ],
+      "pair": "difference",
+      "pdh": false,
+      "backends": []
+    },
+    "rt": {
+      "label": "RTSUM 쌍 차분(EventWait 제외)",
+      "columns": [],
+      "pair": "difference",
+      "pdh": false,
+      "backends": [],
+      "sum_prefix": {
+        "include": "Exclusive/RenderThread/",
+        "exclude": "Exclusive/RenderThread/EventWait"
+      }
+    },
+    "ng": {
+      "label": "GPU/TDFluidGpuSolver A p50",
+      "columns": [
+        "GPU/TDFluidGpuSolver"
+      ],
+      "pair": "a_only",
+      "pdh": false,
+      "backends": [
+        "GPU"
+      ],
+      "p95_record": true
+    }
+  },
+  "rows": [
+    {
+      "row": "VI1/ng",
+      "scene": "VI1",
+      "metric": "ng",
+      "limit_ms": 0.15,
+      "ledger_row": "VI1/ng",
+      "source": "S082",
+      "basis": "0.15",
+      "note": "[가정] 카메라 사전 등록 선택(대상 중심, 화면 밖 없음), 가림·점유 미확인: 통과는 이 카메라 조건부(AM9 P1)"
+    }
+  ],
+  "records": [],
+  "consequences": {
+    "충족(proposed)": "[제안] 기준 충족(동등 증명 아님): 화면 승인만 남는다(PR-11)",
+    "미충족": "손잡이 채택 공집합(RC 5절): 사용자 결정 (가) 성능 레버 (나) 예산 개정 (다) 측정 체제(D-59 (e)), FX-P '성능 미달'(PR-11)",
+    "판정 불가": "부분이면 FX-P '성능 부분(a/b/c/d/e)', 측정 불가면 FX-P 앞 측정 경로 명세, 판정 불가 사유는 FX-P 앞에서 해소(PR-11)"
+  }
+}

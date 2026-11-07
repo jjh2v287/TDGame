@@ -1,0 +1,368 @@
+{
+  "version": 1,
+  "generator": "Tools/FluidFX/perf/p_plans.py",
+  "inputs": {
+    "verdict": {
+      "path": "Saved/FluidFX/calib/final/verdict-w11.json",
+      "sha256": "50ec47a4fb0c0cbeaab63cdc690792fdb2e5379f9fb29221399a776d1144d485"
+    },
+    "expect": {
+      "path": "Saved/FluidFX/calib/final/expect.json",
+      "sha256": "cde5aa7c0f2bb305c07fe25e6463b4dbdb86f948adf526c92c3826455a159ac3"
+    },
+    "plans_dir": "Tools/FluidFX/calib/plans",
+    "frames_dir": "Saved/FluidFX/calib/frames"
+  },
+  "rule": "6.2 ① W11 채택 판정 장면(번호 순, 채택별 장면 = expect.json adoptions[번호].scenes 중 0e sweep level ∈ levels·그 채택 compare.json checks에 있는 장면, T4 도출과 같은 규칙) ② 2개 미만이면 0e 계획 알파벳 순·계획당 첫 사진 장면, 채택 없는 영역은 4개까지 ④ reshoot = W11 짝 없는 장면의 계획",
+  "areas_order": [
+    "fire",
+    "smoke",
+    "fog",
+    "water",
+    "cloud",
+    "input",
+    "track",
+    "viscous",
+    "foliage"
+  ],
+  "areas": {
+    "fire": {
+      "has_adoption": false,
+      "cap": 4,
+      "scenes": [
+        {
+          "plan": "campfire_vorticity",
+          "scene": "campfire",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/campfire_vorticity/campfire",
+          "after": null
+        },
+        {
+          "plan": "fx8n_embers",
+          "scene": "ember_campfire_niagara",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/fx8n_embers/ember_campfire_niagara",
+          "after": null
+        }
+      ],
+      "note": null
+    },
+    "smoke": {
+      "has_adoption": false,
+      "cap": 4,
+      "scenes": [
+        {
+          "plan": "fx15a_amplitude_noise",
+          "scene": "smoke_pool",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/fx15a_amplitude_noise/smoke_pool",
+          "after": null
+        },
+        {
+          "plan": "fx15a_kernel_vs_jacobi",
+          "scene": "smoke_pair",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/fx15a_kernel_vs_jacobi/smoke_pair",
+          "after": null
+        },
+        {
+          "plan": "fx16a_cell_size_invariance",
+          "scene": "smoke_soft_cells",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/fx16a_cell_size_invariance/smoke_soft_cells",
+          "after": null
+        },
+        {
+          "plan": "fx16b_output_quality",
+          "scene": "svol_q0",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/fx16b_output_quality/svol_q0",
+          "after": null
+        }
+      ],
+      "note": null
+    },
+    "fog": {
+      "has_adoption": true,
+      "cap": 2,
+      "scenes": [
+        {
+          "plan": "fog_f6_tile",
+          "scene": "f6_tile",
+          "source": "adoption",
+          "adoptions": [
+            "4"
+          ],
+          "before": "Saved/FluidFX/calib/frames/fog_f6_tile/f6_tile",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/fog_f6_tile/verify-1/f6_tile"
+        },
+        {
+          "plan": "fog_f1_layer",
+          "scene": "f1_backlit",
+          "source": "adoption",
+          "adoptions": [
+            "14"
+          ],
+          "before": "Saved/FluidFX/calib/frames/fog_f1_layer/f1_backlit",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/fog_f1_layer-w/verify-1/f1_backlit"
+        },
+        {
+          "plan": "fog_f2_passive",
+          "scene": "d14_window_move",
+          "source": "adoption",
+          "adoptions": [
+            "15"
+          ],
+          "before": "Saved/FluidFX/calib/frames/fog_f2_passive/d14_window_move",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/fog_f2_passive/verify-1/d14_window_move"
+        },
+        {
+          "plan": "fog_f7_lights",
+          "scene": "f7_lab",
+          "source": "adoption",
+          "adoptions": [
+            "18"
+          ],
+          "before": "Saved/FluidFX/calib/frames/fog_f7_lights/f7_lab",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/fog_f7_lights/verify-1/f7_lab"
+        }
+      ],
+      "note": null
+    },
+    "water": {
+      "has_adoption": true,
+      "cap": 2,
+      "scenes": [
+        {
+          "plan": "w5_underwater_l18a",
+          "scene": "uw_pit",
+          "source": "adoption",
+          "adoptions": [
+            "17"
+          ],
+          "before": "Saved/FluidFX/calib/frames/w5_underwater_l18a/uw_pit",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/w5_underwater_l18a/verify-1/uw_pit"
+        },
+        {
+          "plan": "w1b_water_particles",
+          "scene": "sea_img16",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/w1b_water_particles/sea_img16",
+          "after": null
+        }
+      ],
+      "note": null
+    },
+    "cloud": {
+      "has_adoption": true,
+      "cap": 2,
+      "scenes": [
+        {
+          "plan": "cloud_g11_cyclone_live",
+          "scene": "cyclone_live",
+          "source": "adoption",
+          "adoptions": [
+            "2"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_g11_cyclone_live/cyclone_live",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_g11_cyclone_live/verify-1/cyclone_live"
+        },
+        {
+          "plan": "cloud_g9_mushroom",
+          "scene": "mushroom_shield",
+          "source": "adoption",
+          "adoptions": [
+            "3"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_g9_mushroom/mushroom_shield",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_g9_mushroom-p20/verify-1/mushroom_shield"
+        },
+        {
+          "plan": "cloud_g10_near",
+          "scene": "stratus_scale4",
+          "source": "adoption",
+          "adoptions": [
+            "6"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_g10_near/stratus_scale4",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_g10_near/verify-1/stratus_scale4"
+        },
+        {
+          "plan": "cloud_g10_near",
+          "scene": "stratus_scale5",
+          "source": "adoption",
+          "adoptions": [
+            "6"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_g10_near/stratus_scale5",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_g10_near/verify-1/stratus_scale5"
+        },
+        {
+          "plan": "cloud_g10_near",
+          "scene": "stratus_scale6",
+          "source": "adoption",
+          "adoptions": [
+            "6"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_g10_near/stratus_scale6",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_g10_near/verify-1/stratus_scale6"
+        },
+        {
+          "plan": "cloud_g12_volcano",
+          "scene": "volcano_backlit",
+          "source": "adoption",
+          "adoptions": [
+            "7"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_g12_volcano/volcano_backlit",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_g12_volcano/verify-1/volcano_backlit"
+        },
+        {
+          "plan": "cloud_h7_sandwall",
+          "scene": "sand_wall",
+          "source": "adoption",
+          "adoptions": [
+            "8"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_h7_sandwall/sand_wall",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_h7_sandwall/verify-1/sand_wall"
+        },
+        {
+          "plan": "cloud_g9_mushroom",
+          "scene": "mushroom_cap",
+          "source": "adoption",
+          "adoptions": [
+            "11"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_g9_mushroom/mushroom_cap",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_g9_mushroom-p20/verify-1/mushroom_cap"
+        },
+        {
+          "plan": "cloud_g13_storm_wall",
+          "scene": "storm_wall",
+          "source": "adoption",
+          "adoptions": [
+            "13"
+          ],
+          "before": "Saved/FluidFX/calib/frames/cloud_g13_storm_wall/storm_wall",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/cloud_g13_storm_wall/verify-1/storm_wall"
+        }
+      ],
+      "note": null
+    },
+    "input": {
+      "has_adoption": true,
+      "cap": 2,
+      "scenes": [
+        {
+          "plan": "fx5_flamethrower",
+          "scene": "turret_img17",
+          "source": "adoption",
+          "adoptions": [
+            "1",
+            "10"
+          ],
+          "before": "Saved/FluidFX/calib/frames/fx5_flamethrower/turret_img17",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/fx5_flamethrower-p20/verify-1/turret_img17"
+        }
+      ],
+      "note": "대표 1개(0e 짝 없음)"
+    },
+    "track": {
+      "has_adoption": true,
+      "cap": 2,
+      "scenes": [
+        {
+          "plan": "track_fx12c_groove",
+          "scene": "snow_groove",
+          "source": "adoption",
+          "adoptions": [
+            "9",
+            "12"
+          ],
+          "before": "Saved/FluidFX/calib/frames/track_fx12c_groove/snow_groove",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/track_fx12c_groove-p20-w/verify-1/snow_groove"
+        },
+        {
+          "plan": "track_fx12c_groove",
+          "scene": "groove_decay",
+          "source": "adoption",
+          "adoptions": [
+            "9",
+            "12"
+          ],
+          "before": "Saved/FluidFX/calib/frames/track_fx12c_groove/groove_decay",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/track_fx12c_groove-p20-w/verify-1/groove_decay"
+        }
+      ],
+      "note": null
+    },
+    "viscous": {
+      "has_adoption": true,
+      "cap": 2,
+      "scenes": [
+        {
+          "plan": "viscous_fx14_blood",
+          "scene": "blood_decal",
+          "source": "adoption",
+          "adoptions": [
+            "5"
+          ],
+          "before": "Saved/FluidFX/calib/frames/viscous_fx14_blood/blood_decal",
+          "after": "Saved/FluidFX/calib/final/batch-e1/runs/viscous_fx14_blood/verify-1/blood_decal"
+        },
+        {
+          "plan": "viscous_fx14_mud",
+          "scene": "mud_world",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/viscous_fx14_mud/mud_world",
+          "after": null
+        }
+      ],
+      "note": null
+    },
+    "foliage": {
+      "has_adoption": false,
+      "cap": 4,
+      "scenes": [
+        {
+          "plan": "foliage_k1_bend",
+          "scene": "k1_bend",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/foliage_k1_bend/k1_bend",
+          "after": null
+        },
+        {
+          "plan": "foliage_k2_press",
+          "scene": "k2_press",
+          "source": "fill",
+          "adoptions": [],
+          "before": "Saved/FluidFX/calib/frames/foliage_k2_press/k2_press",
+          "after": null
+        }
+      ],
+      "note": null
+    }
+  },
+  "reshoot": [
+    "campfire_vorticity",
+    "fx8n_embers",
+    "fx15a_amplitude_noise",
+    "fx15a_kernel_vs_jacobi",
+    "fx16a_cell_size_invariance",
+    "fx16b_output_quality",
+    "w1b_water_particles",
+    "viscous_fx14_mud",
+    "foliage_k1_bend",
+    "foliage_k2_press"
+  ]
+}

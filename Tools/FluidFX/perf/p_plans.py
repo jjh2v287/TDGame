@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(표준 라이브러리만, git 명령은 runs의 hash_paths 대조에만, 에디터 불필요, PowerShell 또는 Git Bash). FluidFX P 단계(runbook-p-v3 5절 T3) 계획·잠금·실행 선택·요약 도구: p_areas.json 검사(T3.1), 영역별 표·시운전·사다리 계획과 sheet_areas.json 생성·대조(T3.2), 현재 잠금·잠금 목록(T3.3), 측정 전 점검(T3.4), 실행 고르기 PR-10(T3.5), 사다리 필요(T3.6), 판정 SP 고르기 PR-5·C6(T3.7), 영역 상태(T3.8), P 요약(T3.9).
 실행 명령: python -B Tools/FluidFX/perf/p_plans.py build --ledger <LG v2> --areas <p_areas.json> --out-dir Tools/FluidFX/perf/p [--check] | current-lock --stage L0|L1 [--area A] [--next] | lock-list --stage L0 --areas <p_areas.json> | lock-list --stage L1 --area A --area-dir <AD> | preflight --lock <L0> --holder <이름> --out <json> | runs --plan <계획> --lock <현재 잠금> --out <AD>/<단계>-runs.json | need-ladder --area A --area-dir <AD> --out <AD>/ladder-need.json | select-sp --area A --area-dir <AD> --out-plan <AD>/judge-plan.json --out <AD>/sp-choice.json | status --area A --p-dir <P> | summary --p-dir <P> --areas <p_areas.json> --approvals <approvals.json> --out <p-summary.json> --md <p-summary.md>, 모든 하위 명령에 [--root <저장소 사본>](fixture용, 기본 저장소 루트)
 출력: build = <out-dir>/<영역>/{table,pilot1[,ladder,ladder-table]}.json·sheet_areas.json(같은 입력 = 같은 바이트), --check = 문제 목록, current-lock = 루트 상대 잠금 경로 한 줄, lock-list = 잠글 파일 한 줄에 하나(하위 명령 출력은 표준 오류), preflight = {lock, holder, checks, ok}, runs = 종료 0·4에서만 {plan, lock, lock_created_at, first_lock, l0_lock, exit, reason, selected, attempts, counted_failures, runs}, need-ladder = {area, needed, reason, strong_fail, pilot_judge}, select-sp = judge-plan.json(먼저)·{area, inputs, scenes}, status = done|todo, summary = md(먼저)·{areas{영역: overall·counts·table_sha256·rows·lines·…}, pb2_214, pb2_fxp_sources, fxp_items, …}; 결함 파일 <P>/defects/D<n>.md의 '사후 결함 행: <행 ID…>' 줄만 사후 결함, 승인 파일 = {areas: {영역: {decision 승인|거부, date, sheet_json, sheet_json_sha256, text}}}. 모든 쓰기는 원자적. 종료 0 성공 / 2 입력·검사 실패·--out 있음 / 3 L1 잠금 이미 있음(lock-list)·측정 필요(runs) / 4 runs 측정 불가(실행) / 5 runs 잠금 verify·hash_paths 다름(재잠금) / 6 runs 첫 잠금 전 실행(종착)
-상태: 2026-11-06 T3.1~T3.9 구현, 반박 r1 M1 반영(sheet_areas 채택 귀속 = expect.json adoptions[번호].scenes·levels ∩ 그 채택 compare 장면, 입력에 expect 추가). 시험 python -B Tools/FluidFX/perf/p/check_p_fixtures.py(build·current-lock·lock-list·preflight·runs·need-ladder·select-sp·status·summary 사례). 실제 p_areas.json·PIE 실행·T2 판정 출력과의 실물 대조는 아직 없음. 2026-11-07 AM7 L1~L3 반영(runs ②는 session 있는 후보만, 열 결함 이름은 '열 결함: a, b'·'(열 결함: …)' 두 형식, summary pb2_fxp_sources).
+상태: 2026-11-06 T3.1~T3.9 구현, 반박 r1 M1 반영(sheet_areas 채택 귀속 = expect.json adoptions[번호].scenes·levels ∩ 그 채택 compare 장면, 입력에 expect 추가). 시험 python -B Tools/FluidFX/perf/p/check_p_fixtures.py(build·current-lock·lock-list·preflight·runs·need-ladder·select-sp·status·summary 사례). 실제 p_areas.json·PIE 실행·T2 판정 출력과의 실물 대조는 아직 없음. 2026-11-07 AM7 L1~L3 반영(runs ②는 session 있는 후보만, 열 결함 이름은 '열 결함: a, b'·'(열 결함: …)' 두 형식, summary pb2_fxp_sources). 2026-11-07 AM9 P3 반영(영역 종합 줄 분류는 그 영역 행만 = rows_used, 없으면 rows 전부; 영역 항목 orphan_rows; md '(영역 행만: …)'·'(줄 밖 행: …)').
 """
 import argparse
 import ast
@@ -58,7 +58,7 @@ L0_TOOL_FILES = ("Tools/FluidFX/perf/p_plans.py", "Tools/FluidFX/fx4b_budget_jud
 L0_OPTIONAL_FIXTURE_FILES = tuple(f"{T_DIR}/fixtures_t{lane}.py" for lane in (1, 2, 4))
 L0_HISTORY_FILES = tuple(f"{PREP_DIR}/{name}" for name in (
     "runbook-p-v1.md", "runbook-p-v1-amend1.md", "runbook-p-v2.md", "runbook-p-v2-amend2.md", "runbook-p-v2-amend3.md", "runbook-p-v3-amend4.md",
-    "runbook-p-v3-amend5.md", "runbook-p-v3-amend6.md", "runbook-p-v3-amend7.md", "runbook-p-v3.r0.md", "runbook-p-v3.r1.md", "runbook-p-v3.r2.md", "check-rtsum.md", "check-v3.md", "check-am4-v3.md",
+    "runbook-p-v3-amend5.md", "runbook-p-v3-amend6.md", "runbook-p-v3-amend7.md", "runbook-p-v3-amend8.md", "runbook-p-v3-amend9.md", "runbook-p-v3.r0.md", "runbook-p-v3.r1.md", "runbook-p-v3.r2.md", "runbook-p-v3.r3.md", "p-ledger-v2.r3.md", "p-ledger-v2.r4.md", "check-rtsum.md", "check-v3.md", "check-am4-v3.md",
     "check-am4-lg.md", "check-am5-v3.md", "check-am5-lg.md", "p-ledger.md", "fact-runtime.md", "fact-code.md", "ledger-sweep.md"))
 L1_REQUIRED_FILES = ("judge-plan.json", "sp-choice.json", "pilot1-runs.json", "ladder-need.json")
 L1_OPTIONAL_FILES = ("pilot1-judge.json", "ladder-runs.json", "ladder-judge.json")
@@ -3014,12 +3014,16 @@ def area_ledger_lines(document, area):
     return [item for item in document["items"] if item["area"] in (area, ALL_AREAS_MARK)]
 
 
-def classify_ledger_line(item, row_results):
+def select_area_line_rows(item, area_row_ids):
+    return [row for row in item["rows"] if row in area_row_ids] or list(item["rows"])
+
+
+def classify_ledger_line(item, row_results, rows_used):
     if item["disposition"] == "기록":
         return None
     if item["disposition"] in ("출하 밖", "측정 불가"):
         return item["disposition"]
-    verdicts = [row_results[row]["verdict"] for row in item["rows"]]
+    verdicts = [row_results[row]["verdict"] for row in rows_used]
     if all(verdict == "통과" for verdict in verdicts):
         return "통과"
     return next(category for category in ("미달", "판정 불가", "측정 불가") if category in verdicts)
@@ -3034,9 +3038,10 @@ def format_overall_counts(counts, row_lines, include_failures):
 def summarize_area_lines(document, area, row_results, area_row_ids):
     counts, row_lines, entries = {key: 0 for key in SUMMARY_COUNT_KEYS}, 0, []
     for item in area_ledger_lines(document, area):
-        line_class = classify_ledger_line(item, row_results)
+        rows_used = select_area_line_rows(item, area_row_ids)
+        line_class = classify_ledger_line(item, row_results, rows_used)
         entries.append({"id": item["id"], "area": item["area"], "source": item["source"], "summary": item["summary"], "limit": item["limit"], "disposition": item["disposition"],
-                        "reason": item["reason"], "rows": list(item["rows"]), "class": line_class or "기록(분모 밖)"})
+                        "reason": item["reason"], "rows": list(item["rows"]), "rows_used": rows_used, "class": line_class or "기록(분모 밖)"})
         if line_class is None:
             continue
         counts[line_class] += 1
@@ -3050,6 +3055,11 @@ def summarize_area_lines(document, area, row_results, area_row_ids):
     else:
         overall = f"부분({format_overall_counts(counts, row_lines, False)})"
     return overall, counts, row_lines, entries
+
+
+def find_orphan_rows(lines, area_row_ids):
+    used_rows = {row for line in lines for row in line["rows_used"]}
+    return [row for row in area_row_ids if row not in used_rows]
 
 
 def collect_column_defects(rows):
@@ -3167,7 +3177,8 @@ def build_area_summary(root, area, document, inputs, row_results, extra):
              "overall": overall, "counts": counts, "row_lines": row_lines, "blocking_unmeasurable": counts["측정 불가"],
              "table_sha256": inputs["locked_sha"] if inputs else None,
              "table_check": {"locked": inputs["locked_sha"], "judged": inputs["judged_table"], "matches": inputs["table_matches"]} if inputs else None,
-             "rows": rows, "lines": lines, "records": [{"id": item["id"], **item["record"]} for item in area_ledger_lines(document, area) if item["record"]],
+             "rows": rows, "lines": lines, "orphan_rows": find_orphan_rows(lines, area_rows),
+             "records": [{"id": item["id"], **item["record"]} for item in area_ledger_lines(document, area) if item["record"]],
              "column_defects": collect_column_defects(rows), "post_hoc_defects": [defect for defect in extra["defects"] if set(defect["rows"]) & set(area_rows)],
              "approval": approval, "labels": area_section7_labels(area), "k_judges": extra["k_judges"][area], "band_basis": count_band_basis(root, extra["k_judges"][area])}
     entry["pb2_214"] = build_pb2_columns(area, extra["adoptions"][area], overall, approval)
@@ -3222,6 +3233,13 @@ def format_cell(value):
     return json.dumps(value, ensure_ascii=False).replace("|", "/")
 
 
+def render_area_notes(area, entry):
+    row_by_id = {row["row"]: row for row in entry["rows"]}
+    area_only = [f"- {area} 줄 {line['id']}: {line['class']} (영역 행만: {'·'.join(line['rows_used'])})" for line in entry["lines"] if line["rows_used"] != line["rows"]]
+    orphans = [f"- {area} (줄 밖 행: {row_id} {row_by_id[row_id]['label']})" for row_id in entry["orphan_rows"] if row_by_id[row_id]["verdict"] in ("미달", "판정 불가")]
+    return area_only + orphans
+
+
 def render_summary_markdown(summary):
     lines = ["# P 요약(영역 성능 판정·승인 상태)", "", f"- 입력 p_areas {format_cell(summary['inputs']['p_areas']['sha256'])[:12]} · 승인 파일 {format_cell(summary['inputs']['approvals']['sha256'])[:12]}",
              f"- {summary['rule']}", "- 표기: PF 환산 ×2.3~3·상한 비교(증명 아님), '동등 확인' 없음(A14)", "", "## 영역 종합", "",
@@ -3231,6 +3249,8 @@ def render_summary_markdown(summary):
         counts = entry["counts"]
         lines.append(f"| {area} | {format_cell(entry['overall'])} | " + " | ".join(str(counts[key]) for key in SUMMARY_COUNT_KEYS)
                      + f" | {entry['blocking_unmeasurable']} | {format_cell(entry['table_sha256'])[:8]} | {format_cell(entry['approval']['state'])} |")
+    area_notes = [note for area in summary["areas_order"] for note in render_area_notes(area, summary["areas"][area])]
+    lines += [""] + area_notes if area_notes else []
     lines += ["", "## 행별 판정", "", "| 행 | 판정 | 규칙 | 구간 | d | d′ | 한도 ms | S### | SP | p95 | count |", "|---|---|---|---|---|---|---|---|---|---|---|"]
     for area in summary["areas_order"]:
         for row in summary["areas"][area]["rows"]:

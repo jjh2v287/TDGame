@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python(언리얼 에디터가 TDGame을 열고 MCP 포트 8000·원격 실행이 켜진 상태, C++ 콘솔 변수 TD.FluidFX.LogTickCost가 들어간 빌드), 에디터 쪽 조작은 이 파일의 EDITOR_CODE를 원격 실행으로 보낸다. --csv-gpu는 계획 JSON 장면마다 무대 PIE를 열고 효과 켬(A)·끔(B) csvprofile 블록을 ABBA로 찍으며 nvidia-smi 클럭을 함께 기록하고(build_hold.json owner가 --holder와 같아야 하며 장면마다 보류 시각을 갱신), --analyze는 에디터 없이 실행 폴더만 읽는다(utrace는 UnrealInsights로 내보냄). GPU 재구성 크래시(FX-4a 결함, 2026-10-22) 대비로 계획 fresh_pie_after_gpu는 GPU로 재구성한 장면 다음에 액터를 재운 뒤 새 PIE를 열고, configure 단계 stagger_seconds는 액터를 한 번에 하나씩 재구성한다.
 실행 명령: python Tools/FluidFX/pie_profile_fluid.py [--phase-seconds 10] (PowerShell, 측정 동안 에디터 창을 앞창으로 두기: 백그라운드 PIE는 3fps로 제한된다 L-editor-06) | --csv-gpu PLAN.json --holder 이름 (예 Tools/FluidFX/fx7p_plan.json 전체·fx7p_plan_run2.json 2회차, PowerShell, 빌드·헤드리스 시험과 동시 금지) | --analyze Saved/FluidFX/fx7p/<run> | --check-plan PLAN.json(에디터 없이 계획 키만 검사, 셸 무관)
 출력: Saved/FluidFX/fluid_pie_perf.json, Docs/Validation/FluidFX/D-48-pie-perf-<날짜>.json(측정이 이뤄진 경우, 그날 파일이 이미 있으면 덮지 않고 -<시분초>를 붙임), 표준 출력 구간별 표. 종료 코드 0 전 구간에 TDFluidPerf 줄 있음·나이아가라 활성 토글 통과/1 줄 없는 구간·구간 오염·나이아가라 실패 있음/2 환경 문제(에디터·MCP·PIE·콘솔 변수). --csv-gpu는 Saved/FluidFX/fx7p/<run>/session.json·plan.json·csv/·shots/·traces/·clock.csv·editor.log·result.json(증거 파일은 쓰지 않음), --analyze는 같은 폴더 result.json(J1~J9 verdicts·J6 표, 렌더 스레드는 Exclusive/RenderThread 합(EventWait 제외), S12는 A·B 투과율 텍스처 확인이 없으면 J8 null)과 Docs/Validation/FluidFX/FX-7p-baseline-<날짜>.json·FX-4a-gpu-<날짜>.json(J1·J2·J3·J5 발췌, 그날 파일이 있으면 -<시분초>). 두 경로의 종료 코드 0 완료/1 불안정·A 블록 필수 열 없음·클럭 폐기 과다·추적 분석 실패/2 환경(보류·빌드·셰이더·프레임 상한 관문, 에디터·PIE·CSV 시간 초과). 계획 최상위에 _p가 있는 P 계획은 장면 오류(동작 실패·대상 0 단계·셰이더 관문)를 그 장면 error_kind scene으로 남기고 복원 뒤 다음 장면을 새 PIE로 이어 재며(그때 --csv-gpu 종료 1), 환경 오류(보류·빌드·MCP·원격 실행 끊김·PIE·CSV·파일 시간 초과·프레임 상한 관문, error_kind environment)만 실행을 멈춘다(종료 2). 블록 기록 side_steps [{action, result}]는 그 블록 앞 A/B 측 단계 결과(actor는 측 안정 뒤 되읽기 {labels, matched, 선언한 hidden·ns_inactive}, console은 {readback}). --check-plan은 표준 출력에 '문제:' 줄과 끝 줄, 종료 0 통과/2 문제(모르는 최상위·장면·동작 키, _ 시작 최상위 키는 주석, draft_status, write_fx7p_evidence 없음·false 아님, actor·camera 형식, 필수 동작 키)
-상태: 현행(2026-10-18 첫 성공, 증거 Docs/Validation/FluidFX/D-48-perf-2026-10-18.md). --csv-gpu·--analyze는 부분 검증(명세 Saved/AgentOps/20261022/fx7p/spec-b.md): 2026-10-22 1회차 PIE 31장면 중 15장면 측정(Saved/FluidFX/fx7p/fx7p-run1-20261022123641, 카메라·스폰·라벨·관문 10%는 그 측정 사본과 같음), GPU 재구성 뒤 에디터 크래시 2회로 중단(리드백 링 결함, 9cdea12e로 수정). 2회차 run2·run2b·run2c로 나머지 장면을 재서 32장면 합본(장면마다 오류 없는 마지막 기록)·--analyze 완료(판정 정본 Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md·judge-closure.md). 2026-10-22 고침: 큰 결과의 원격 출력 분할 읽기(L-editor-54), 스냅숏 설정 `.copy()`(L-editor-55, 이전 판 reset은 configure 설정을 되돌리지 못했다). 남은 한계: 안정 관문이 장면 FrameTime 하나라 GT 묶임 PIE에서 null이 많다(J별 규칙으로 바꾸는 것은 FX-7p-r). 2026-10-23 W-1 관문 확장(미검증, 계획 Saved/AgentOps/20261023/w1gate/plan_w1perf.json): 계획 키 extra_columns(블록 통계·차분에 더할 CSV 열)·write_fx7p_evidence(false면 --analyze가 FX-7p·FX-4a 증거를 쓰지 않음)·장면 refill_frames·steady_frames, 동작 view(폰 붐 길이·카메라 16:9 고정)·pawn z·speed, 준비 확인은 --csv-gpu에서만 깨어 있는 액터 기준(깨어 있는 액터가 0개면 미준비), 추적 분석은 표식 창 길이로 자르고(L-editor-32) 창 이동 프레임(TDFluid_RasterizeWater 포함)·깨어남 구간을 따로 내며, 계획 표식 profilegpu:<장면>뒤 ProfileGPU 압축 출력(r.ProfileGPU.TableFormatting 0)의 SingleLayerWater 포함 시간을 표식 라벨별로 모아 셰이더 관문 끝 이후 표본만 요약해 장면 profilegpu에 라벨 키로 붙이고, 점유 측정에 16:9 중앙 비율과 setup 뒤 조건 기준 occupancy_px_internal·ms_per_mpx_internal을 더한다. 2026-10-23 추적 창 자르기 도입으로 FX-7p J8.explosion·J9 재분석 값이 미세 변동(통과 여부 동일). 2026-11-06 P T1 확장(미검증: 에디터 동작은 P fire 시운전이 확인, 오프라인은 가짜 에디터 fixture Tools/FluidFX/perf/p/fixtures_t1.py만): 동작 actor {labels, hidden?, niagara? deactivate|activate}(PIE 게임 월드 라벨 액터, 클래스 무관 숨김·소유 NS, DeactivateImmediate가 파이썬에 없으면 Deactivate, 라벨 하나라도 없으면 장면 오류, 장면 끝 보임·Activate(true) 복원), camera target_label(임의 라벨 액터 1개를 뷰 대상으로, 그 액터 CameraComponent(CineCamera 포함)의 화면 비율 제한을 PIE 인스턴스에서 끄고 결과 aspect_constraints [{component, constrain_before, constrain_after, aspect_ratio, field_of_view}]에 남겨 렌더 화소 = conditions.viewport를 지키며, 끄지 못하면 장면 오류), P 계획 대상 0 단계 = 장면 오류(sleep targets others 예외), visibility 결과에 components 수
+상태: 현행(2026-10-18 첫 성공, 증거 Docs/Validation/FluidFX/D-48-perf-2026-10-18.md). --csv-gpu·--analyze는 부분 검증(명세 Saved/AgentOps/20261022/fx7p/spec-b.md): 2026-10-22 1회차 PIE 31장면 중 15장면 측정(Saved/FluidFX/fx7p/fx7p-run1-20261022123641, 카메라·스폰·라벨·관문 10%는 그 측정 사본과 같음), GPU 재구성 뒤 에디터 크래시 2회로 중단(리드백 링 결함, 9cdea12e로 수정). 2회차 run2·run2b·run2c로 나머지 장면을 재서 32장면 합본(장면마다 오류 없는 마지막 기록)·--analyze 완료(판정 정본 Saved/AgentOps/20261022/fx7p/run2-judge/judge-final.md·judge-closure.md). 2026-10-22 고침: 큰 결과의 원격 출력 분할 읽기(L-editor-54), 스냅숏 설정 `.copy()`(L-editor-55, 이전 판 reset은 configure 설정을 되돌리지 못했다). 남은 한계: 안정 관문이 장면 FrameTime 하나라 GT 묶임 PIE에서 null이 많다(J별 규칙으로 바꾸는 것은 FX-7p-r). 2026-10-23 W-1 관문 확장(미검증, 계획 Saved/AgentOps/20261023/w1gate/plan_w1perf.json): 계획 키 extra_columns(블록 통계·차분에 더할 CSV 열)·write_fx7p_evidence(false면 --analyze가 FX-7p·FX-4a 증거를 쓰지 않음)·장면 refill_frames·steady_frames, 동작 view(폰 붐 길이·카메라 16:9 고정)·pawn z·speed, 준비 확인은 --csv-gpu에서만 깨어 있는 액터 기준(깨어 있는 액터가 0개면 미준비, 시한 끝까지 미준비면 마지막 1회 깨어 있음 0·전부 텍스처를 준비로 받고 pie_sessions all_asleep_accepted 참, P 결함 D1), 추적 분석은 표식 창 길이로 자르고(L-editor-32) 창 이동 프레임(TDFluid_RasterizeWater 포함)·깨어남 구간을 따로 내며, 계획 표식 profilegpu:<장면>뒤 ProfileGPU 압축 출력(r.ProfileGPU.TableFormatting 0)의 SingleLayerWater 포함 시간을 표식 라벨별로 모아 셰이더 관문 끝 이후 표본만 요약해 장면 profilegpu에 라벨 키로 붙이고, 점유 측정에 16:9 중앙 비율과 setup 뒤 조건 기준 occupancy_px_internal·ms_per_mpx_internal을 더한다. 2026-10-23 추적 창 자르기 도입으로 FX-7p J8.explosion·J9 재분석 값이 미세 변동(통과 여부 동일). 2026-11-06 P T1 확장(미검증: 에디터 동작은 P fire 시운전이 확인, 오프라인은 가짜 에디터 fixture Tools/FluidFX/perf/p/fixtures_t1.py만): 동작 actor {labels, hidden?, niagara? deactivate|activate}(PIE 게임 월드 라벨 액터, 클래스 무관 숨김·소유 NS, DeactivateImmediate가 파이썬에 없으면 Deactivate, 라벨 하나라도 없으면 장면 오류, 장면 끝 보임·Activate(true) 복원), camera target_label(임의 라벨 액터 1개를 뷰 대상으로, 그 액터 CameraComponent(CineCamera 포함)의 화면 비율 제한을 PIE 인스턴스에서 끄고 결과 aspect_constraints [{component, constrain_before, constrain_after, aspect_ratio, field_of_view}]에 남겨 렌더 화소 = conditions.viewport를 지키며, 끄지 못하면 장면 오류), P 계획 대상 0 단계 = 장면 오류(sleep targets others 예외), visibility 결과에 components 수, 준비 관문은 시한 동안 깨어 있는 액터가 끝내 0이면 마지막 1회 전부의 텍스처를 본다(전부 잠든 채 시작하는 fog 무대, P 결함 D1 2026-11-07)
 """
 import argparse
 import bisect
@@ -116,12 +116,15 @@ def run_setup(world):
     entries = describe_actors(actors)
     awake_only = bool(PARAMS.get("awake_only"))
     required = [entry for entry in entries if entry["awake"]] if awake_only else entries
+    is_all_asleep_accepted = awake_only and not required and bool(PARAMS.get("accept_all_asleep"))
+    if is_all_asleep_accepted:
+        required = entries
     if (awake_only and not required) or not all(entry["has_runtime_texture"] for entry in required):
         return {"ready": False, "actors": entries}
     unreal.SystemLibrary.execute_console_command(world, CONSOLE_VARIABLE + " 1")
     for actor in actors:
         actor.set_editor_property("should_use_activation_volume", False)
-    return {"ready": True, "console_variable_value": read_console_variable(), "actors": describe_actors(actors)}
+    return {"ready": True, "console_variable_value": read_console_variable(), "actors": describe_actors(actors), "all_asleep_accepted": is_all_asleep_accepted}
 
 
 def run_phase(world):
@@ -858,6 +861,10 @@ def wait_for_fluid_setup(awake_only=False):
         if "error" in result or result.get("ready"):
             return result
         time.sleep(SETUP_POLL_SECONDS)
+    if awake_only:
+        result = run_editor_action("setup", awake_only=True, accept_all_asleep=True)
+        if "error" in result or result.get("ready"):
+            return result
     return {"error": f"{SETUP_TIMEOUT_SECONDS:.0f}초 안에 모든 유체 액터의 실행 중 텍스처가 준비되지 않았다", "last": result}
 
 
@@ -1686,7 +1693,7 @@ def ensure_fx7p_pie(context, level, fresh):
         return f"초기 상태 기록 실패: {snapshot['error']}"
     conditions = run_fx7p_action(context, "conditions", variables=config["recorded_variables"])
     context["session"]["pie_sessions"].append({"index": context["pie_session"], "level": level, "started": fx7p_now(), "cvar_readback": applied.get("readback"),
-                                               "conditions": conditions, "actors": snapshot.get("actors")})
+                                               "conditions": conditions, "actors": snapshot.get("actors"), "all_asleep_accepted": bool(setup.get("all_asleep_accepted"))})
     if context["pie_session"] == 1 and config["initial_warmup_seconds"] > 0:
         print(f"첫 PIE 예열 {config['initial_warmup_seconds']:.0f}초", flush=True)
         time.sleep(config["initial_warmup_seconds"])

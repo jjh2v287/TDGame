@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(표준 라이브러리만), 에디터·빌드·unreal 모듈 불필요. Tools/FluidFX/pie_profile_fluid.py를 그대로 불러 가짜 unreal 모듈·가짜 원격 실행·가짜 PIE로 에디터 쪽 코드(EDITOR_CODE)와 --csv-gpu 흐름을 돌리고, --check-plan은 하위 프로세스로 부른다(V3 5절 T1 ①~⑧·A17).
 실행 명령: python -B Tools/FluidFX/perf/p/fixtures_t1.py [--keep] (작업 루트 C:/Project/TDGame, 셸 무관)
 출력: 표준 출력에 사례마다 ok/FAIL 한 줄과 끝 줄 'fixtures_t1: 통과 n/m', 종료 0 전부 통과/1 하나라도 실패. 계획 사본·가짜 CSV·가짜 실행 폴더·PP 출력 로그·T3 fixture 저장소 사본(p_plans.py build 결과)은 Saved/AgentOps/20261106/p/tools/t1/tmp/<시각>/ 아래에 만들고 --keep이 없으면 끝에 지운다
-상태: 2026-11-06 작성(P T1 차선), 반박 r1 반영(첫 장면 오류 뒤 상한 관문 유지·P 생성 계획 = T3 fixture 사본 build 결과 전부에 진짜 --check-plan), 반박 r2 M1 반영(camera target_label 뷰 대상 CameraComponent 화면 비율 제한 끄기·aspect_constraints 기록). 에디터 실제 동작(숨김 되읽기 속성 이름 hidden, Deactivate 완료 시점, 라벨 조회, CineCamera 제한 해제 뒤 필러박스 없음)은 가짜로만 확인했고 P fire 시운전이 확인한다
+상태: 2026-11-06 작성(P T1 차선), 반박 r1 반영(첫 장면 오류 뒤 상한 관문 유지·P 생성 계획 = T3 fixture 사본 build 결과 전부에 진짜 --check-plan), 반박 r2 M1 반영(camera target_label 뷰 대상 CameraComponent 화면 비율 제한 끄기·aspect_constraints 기록). 에디터 실제 동작(숨김 되읽기 속성 이름 hidden, Deactivate 완료 시점, 라벨 조회, CineCamera 제한 해제 뒤 필러박스 없음)은 가짜로만 확인했고 P fire 시운전이 확인한다. P 결함 D1(2026-11-07): 가짜 start_pie에 start_asleep·가짜 컴포넌트에 has_texture, 전부 잠든 시작 사례 D1-1~4
 """
 import argparse
 import ast
@@ -170,6 +170,7 @@ class FakeLiveComponent(FakeObject):
         super().__init__(name)
         self.owner = owner
         self.awake = True
+        self.has_texture = True
         config = FakeConfig(name + "_config")
         config.properties.update({"grid_resolution": 128, "solver_backend": "TDFluidSolverBackend.CPU", "enable_heat_channel": False})
         self.properties.update({"simulation_config": config, "active_preset": None})
@@ -186,7 +187,7 @@ class FakeLiveComponent(FakeObject):
                 component.active = False
 
     def get_density_pressure_texture(self):
-        return FakeTexture("density")
+        return FakeTexture("density") if self.has_texture else None
 
     def get_transmittance_texture(self):
         return None
@@ -318,6 +319,9 @@ class FakeEditor:
         self.hold_calls = 0
         self.csv_writes_left = None
         self.pie_start_failures = set()
+        self.start_asleep = False
+        self.wake_on_setup_call = None
+        self.setup_params = []
 
     def run_console(self, command):
         parts = command.split()
@@ -358,7 +362,7 @@ class FakeEditor:
             return False
         for actor in self.world.actors:
             if isinstance(actor, FakeFluidActor):
-                actor.properties["live_component"].awake = True
+                actor.properties["live_component"].awake = not self.start_asleep
         return True
 
     def take_hold_error(self):
@@ -416,6 +420,10 @@ def read_editor_params(code):
 def run_fake_editor_code(code):
     params = read_editor_params(code)
     FAKE.actions.append(params["action"])
+    if params["action"] == "setup":
+        FAKE.setup_params.append(params)
+        if len(FAKE.setup_params) == FAKE.wake_on_setup_call:
+            fluid_components(FAKE.world)[0].awake = True
     if params["action"] == FAKE.fail_action:
         FAKE.fail_after -= 1
         if FAKE.fail_after < 0:
@@ -1057,6 +1065,69 @@ def check_partial_scene_error(pp, work):
           (run["exit"], hvb.get("error"), len(hvb.get("blocks", [])), run["log"][-500:]))
 
 
+def fluid_components(world):
+    return [actor.properties["live_component"] for actor in world.actors if isinstance(actor, FakeFluidActor)]
+
+
+def check_all_asleep_start(pp, work):
+    original_timeout = pp.SETUP_TIMEOUT_SECONDS
+    pp.SETUP_TIMEOUT_SECONDS = 0.05
+    try:
+        reset_fake(pp, build_fake_world(), "20261107000001")
+        FAKE.start_asleep = True
+        run = run_plan_scenario_keep(pp, work, "d1-1-all-asleep", make_p_plan(pp, [make_wa3_scene()], run_label="t1-d1-1"), "20261107000001")
+        session = run["session"]
+        accepted = [params for params in FAKE.setup_params if params.get("accept_all_asleep")]
+        check("D1-1 전부 잠든 시작(활성화 거리 밖)·텍스처 전부 → 시한 뒤 마지막 1회만 전부 잠듦 허용, 실행 완료(환경 오류 없음·종료 0)", run["exit"] == 0 and session
+              and session["environment_error"] is None and len(session["pie_sessions"]) == 1 and len(accepted) == 1 and FAKE.setup_params[-1] is accepted[0]
+              and session["pie_sessions"][0].get("all_asleep_accepted") is True,
+              (run["exit"], session and session["environment_error"], len(accepted), run["log"][-400:]))
+        reset_fake(pp, build_fake_world(), "20261107000005")
+        pp.SETUP_TIMEOUT_SECONDS = 30.0
+        FAKE.start_asleep = True
+        FAKE.wake_on_setup_call = 3
+        run = run_plan_scenario_keep(pp, work, "d1-5-wakes-later", make_p_plan(pp, [make_wa3_scene()], run_label="t1-d1-5"), "20261107000005")
+        session = run["session"]
+        snapshot = getattr(sys.modules["unreal"], "td_fx7p_snapshot", {"actors": {}})
+        woken_path = fluid_components(FAKE.world)[0].owner.get_path_name()
+        check("D1-5 기존 동작 불변: 잠든 채 시작했다가 시한 안에 깨어나면 그때 준비됨(전부 잠듦 허용 안 씀)·초기 상태 기록에 깨어난 액터 awake 참", run["exit"] == 0 and session
+              and session["environment_error"] is None and len(FAKE.setup_params) == 3 and not any(params.get("accept_all_asleep") for params in FAKE.setup_params)
+              and snapshot["actors"].get(woken_path, {}).get("awake") is True and session["pie_sessions"][0].get("all_asleep_accepted") is False,
+              (run["exit"], len(FAKE.setup_params), session and session["environment_error"]))
+        pp.SETUP_TIMEOUT_SECONDS = 0.05
+        reset_fake(pp, build_fake_world(), "20261107000006")
+        fluid_components(FAKE.world)[1].awake = False
+        fluid_components(FAKE.world)[1].has_texture = False
+        result = pp.wait_for_fluid_setup()
+        check("D1-6 기존 동작 불변: awake_only 거짓(D-48 경로)은 시한 뒤 재질문 없이 실패(잠든 액터 텍스처 없음)", "error" in result
+              and not any(params.get("accept_all_asleep") or params.get("awake_only") for params in FAKE.setup_params), (result, len(FAKE.setup_params)))
+        reset_fake(pp, build_fake_world(), "20261107000002")
+        FAKE.start_asleep = True
+        fluid_components(FAKE.world)[1].has_texture = False
+        run = run_plan_scenario_keep(pp, work, "d1-2-all-asleep-missing", make_p_plan(pp, [make_wa3_scene()], run_label="t1-d1-2"), "20261107000002")
+        session = run["session"]
+        check("D1-2 전부 잠든 시작·텍스처 하나 없음 → 계속 유체 액터 준비 실패(종료 2)", run["exit"] == 2 and session
+              and "유체 액터 준비 실패" in str(session["environment_error"]), (run["exit"], session and session["environment_error"]))
+    finally:
+        pp.SETUP_TIMEOUT_SECONDS = original_timeout
+    reset_fake(pp, build_fake_world(), "20261107000003")
+    components = fluid_components(FAKE.world)
+    for component in components:
+        component.awake = False
+    components[0].awake = True
+    components[1].has_texture = False
+    result = call_editor(pp, "setup", awake_only=True)
+    check("D1-3 기존 동작 불변: 깨어 있음 하나·잠든 액터 텍스처 없음 → 준비됨", result.get("ready") is True, result)
+    reset_fake(pp, build_fake_world(), "20261107000004")
+    components = fluid_components(FAKE.world)
+    for component in components:
+        component.awake = False
+    components[0].awake = True
+    components[0].has_texture = False
+    result = call_editor(pp, "setup", awake_only=True)
+    check("D1-4 기존 동작 불변: 깨어 있는 액터 텍스처 없음 → 준비 안 됨", result.get("ready") is False, result)
+
+
 def check_old_plan_behavior(pp, work):
     scenes = [make_hv2_scene(labels=("TDGen_HvolVortexA", "TDGen_Missing"), scene_id="HVX"), make_wa3_scene()]
     run = run_plan_scenario(pp, work, "s7-old-scene-error", make_p_plan(pp, scenes, run_label="t1-s7", include_marker=False), build_fake_world(), "20261106000017")
@@ -1084,7 +1155,7 @@ def main():
     groups = ((check_check_plan, (pp, work)), (check_pure_functions, (pp,)), (install_fakes, (pp, work)), (check_editor_handlers, (pp,)),
               (check_full_p_run, (pp, work)), (check_scene_error_continues, (pp, work)), (check_partial_scene_error, (pp, work)),
               (check_environment_error_stops, (pp, work)), (check_cap_gate_after_first_scene_error, (pp, work)), (check_timeouts_and_pie_failures, (pp, work)), (check_others_without_other_fluids, (pp, work)),
-              (check_old_plan_behavior, (pp, work)))
+              (check_all_asleep_start, (pp, work)), (check_old_plan_behavior, (pp, work)))
     try:
         for group, group_arguments in groups:
             try:

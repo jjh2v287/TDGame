@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12 + PIL(Pillow), 프로젝트 루트(PowerShell). 에디터·PIE·MCP 불필요, 글꼴 C:/Windows/Fonts/malgun.ttf 고정
 실행 명령: python -B Tools/FluidFX/make_approval_sheet.py --area <영역> --areas <sheet_areas.json> --perf <p-summary.json> [--check] [--root <사본 루트>] [--out-root <Saved 아래 폴더>] | python -B Tools/FluidFX/make_approval_sheet.py --reshoot-check <재촬영 실행 폴더> [--root <사본 루트>]
 출력: <out-root, 기본 Saved/FluidFX/approval>/<영역>/r<n>/{sheet.png, sheet-2.png…, index.md, sheet.json}·<영역>/current.json(입력 sha가 최신 판과 같으면 새 판 없음), 표준 출력 요약. 종료 0 성공·새 판 없음·--check 일치·재촬영 통과 / 1 출력·그림이 Saved 밖, 전후 짝 시각 불일치, 재촬영 실패·없음 / 2 입력 누락·형식(0e·W11 사진 해석 실패 포함)·sha·정의 불일치, index.md 30줄 초과, 필수 항목 누락, --check 바이트 불일치
-상태: 새 도구(2026-11-06 claude 하위 에이전트, runbook-p-v3 5절 T4·6절·7절, 반박 r1 must 2 반영: --perf counts 다섯 키·종합 수 일치·표 sha 64자 필수, 반박 r2 must M3·M4 반영: 재촬영 통과에 invalid_count 0·problems·key_errors 빈 목록·장면 00_schedule 사진 수 = shots_expected·0e 사진 이름 집합 일치 추가, 재촬영 사진 해석 실패는 그 폴더 실패, 시도한 재촬영 폴더 전체를 입력 sha에 넣음, AM7 L4: K 판정 찾기 batch-K* → batch(K1) → batch-R* 이름 내림차순, 판정 파일 없는 폴더는 건너뜀). fixture Tools/FluidFX/perf/p/fixtures_t4.py 통과, 실제 P7 입력(T3 p-summary)으로는 아직 안 돌림
+상태: 새 도구(2026-11-06 claude 하위 에이전트, runbook-p-v3 5절 T4·6절·7절, 반박 r1 must 2 반영: --perf counts 다섯 키·종합 수 일치·표 sha 64자 필수, 반박 r2 must M3·M4 반영: 재촬영 통과에 invalid_count 0·problems·key_errors 빈 목록·장면 00_schedule 사진 수 = shots_expected·0e 사진 이름 집합 일치 추가, 재촬영 사진 해석 실패는 그 폴더 실패, 시도한 재촬영 폴더 전체를 입력 sha에 넣음, AM7 L4: K 판정 찾기 batch-K* → batch(K1) → batch-R* 이름 내림차순, 판정 파일 없는 폴더는 건너뜀). fixture Tools/FluidFX/perf/p/fixtures_t4.py 통과, 실제 P7 입력(T3 p-summary)으로 r1 생성(2026-11-07). 결함 D2(2026-11-07): 6.4 자유 문안·6.3 머리줄 괄호·perf-candidates 표기·낱말 줄바꿈
 """
 import argparse
 import hashlib
@@ -101,6 +101,9 @@ PERF_TABLELESS_AREAS = ("foliage",)
 OVERALL_COUNT = re.compile("(" + "|".join(re.escape(key) for key in PERF_COUNT_KEYS) + r") (\d+)")
 SHA256_TEXT = re.compile(r"^[0-9a-f]{64}$")
 BASIS_LABELS = {"live2_image": "LIVE-2 이미지", "spec_proposal": "[제안] 동등 증명 아님(P-11)"}
+FREE_TEXT_BASIS_PREFIX = "자유 문안: "
+MISSING_BASIS_LABEL = "근거 미표기"
+MIXED_BEFORE_LABEL = "전 정본 ≠ W 직전(보정 아닌 차이 섞임)"
 SAFE_NAME = re.compile(r"^[A-Za-z0-9_.\-]+$")
 SCHEDULE_PHOTO = re.compile(r"^00_schedule_(\d+)ms\.png$")
 ANY_SCHEDULE_PHOTO = re.compile(r"^\d\d_schedule_(\d+)ms\.png$")
@@ -510,6 +513,12 @@ def plan_basis(ledger, judge, scene_name, metric):
     return None
 
 
+def basis_label(basis):
+    if not isinstance(basis, str) or not basis.strip():
+        return MISSING_BASIS_LABEL
+    return BASIS_LABELS.get(basis, FREE_TEXT_BASIS_PREFIX + basis.strip())
+
+
 def band_from_target(ledger, judge, scene_name, metric):
     target = find_target(find_scene(judge, scene_name), metric)
     if target is None:
@@ -520,7 +529,7 @@ def band_from_target(ledger, judge, scene_name, metric):
         "high": target.get("high"),
         "band_source": target.get("band_source"),
         "basis": basis,
-        "basis_label": BASIS_LABELS.get(basis, "근거 미표기"),
+        "basis_label": basis_label(basis),
     }
 
 
@@ -779,7 +788,22 @@ def required_adopted_scenes(context):
     return required
 
 
-def read_listed_items(ledger, path, list_key, area, keep_item):
+def listed_item_text(item):
+    return str(item.get("item", "")), str(item.get("destination", ""))
+
+
+def perf_candidate_text(item):
+    assignments = item.get("assignments") if isinstance(item.get("assignments"), list) else []
+    changes = "; ".join(
+        f"{str(entry.get('json_path', '')).rsplit('.', 1)[-1]} {entry.get('base')}→{entry.get('value')}"
+        for entry in assignments if isinstance(entry, dict)
+    )
+    gain = item.get("gain")
+    destination = f"gain {gain:.2f}" if isinstance(gain, (int, float)) and not isinstance(gain, bool) else "—"
+    return f"{item.get('variant', '')} {changes}".strip(), destination
+
+
+def read_listed_items(ledger, path, list_key, area, keep_item, describe=listed_item_text):
     document = ledger.load_json(path)
     items = document.get(list_key) if isinstance(document, dict) else None
     if not isinstance(items, list):
@@ -793,7 +817,8 @@ def read_listed_items(ledger, path, list_key, area, keep_item):
         if item_area is None:
             fail_input(f"{ledger.relative_text(path)} {list_key}[{index}] 계획 {plan!r} 의 영역을 정할 수 없다")
         if item_area == area:
-            selected.append({"index": index, "plan": plan, "item": str(item.get("item", "")), "destination": str(item.get("destination", ""))})
+            text, destination = describe(item)
+            selected.append({"index": index, "plan": plan, "item": text, "destination": destination})
     return selected
 
 
@@ -839,11 +864,12 @@ def read_perf_table_sha(entry, area):
     return table_sha
 
 
-def perf_line(perf, candidate_count):
+def perf_line(perf, candidates):
     counts = "·".join(f"{key} {perf['counts'][key]}" for key in PERF_COUNT_KEYS)
     table = perf["table_sha256"][:8] if perf["table_sha256"] else "—"
-    candidates = f" · 성능 후보 {candidate_count}(perf-candidates)" if candidate_count else ""
-    return f"성능: {perf['overall']} · {counts} · {PERF_LABEL} · 표 {table}{candidates}"
+    listed = ", ".join(f"{candidate['item']} · {candidate['destination']}" for candidate in candidates)
+    candidate_text = f" · 성능 후보 {len(candidates)}(perf-candidates: {listed})" if candidates else ""
+    return f"성능: {perf['overall']} · {counts} · {PERF_LABEL} · 표 {table}{candidate_text}"
 
 
 def build_model(ledger, area, areas_path, perf_path, out_root):
@@ -860,7 +886,7 @@ def build_model(ledger, area, areas_path, perf_path, out_root):
     perf = read_perf_entry(ledger, perf_path, area)
     approval_only = read_listed_items(ledger, ledger.root / APPROVAL_ONLY_PATH, "items", area, lambda item: True)
     structural = read_listed_items(ledger, ledger.root / STRUCTURAL_GAPS_PATH, "gaps", area, lambda item: str(item.get("destination", "")).startswith("승인 시트"))
-    candidates = read_listed_items(ledger, ledger.root / PERF_CANDIDATES_PATH, "items", area, lambda item: True)
+    candidates = read_listed_items(ledger, ledger.root / PERF_CANDIDATES_PATH, "items", area, lambda item: True, perf_candidate_text)
     wave3 = []
     for name in WAVE3_PAIRS.get(area, ()):
         before_path, after_path = ledger.root / WAVE3_BEFORE_DIR / name, ledger.root / WAVE3_AFTER_DIR / name
@@ -919,7 +945,7 @@ def build_model(ledger, area, areas_path, perf_path, out_root):
         "wave3_pairs": wave3,
         "pending": pending,
         "perf": perf,
-        "perf_line": perf_line(perf, len(candidates)),
+        "perf_line": perf_line(perf, candidates),
         "fingerprint": fingerprint,
     }
 
@@ -963,7 +989,7 @@ def build_index_lines(model, revision, page_count):
             verdicts = " / ".join(f"#{entry['adoption']} {'·'.join(entry['labels']) or '라벨 없음'}" for entry in scene["verdict_labels"])
         else:
             verdicts = "채택 0"
-        mixed = " · 전 정본 ≠ W 직전(보정 아닌 차이 섞임)" if scene["before"]["differs_from_w_before"] else ""
+        mixed = f" · {MIXED_BEFORE_LABEL}" if scene["before"]["differs_from_w_before"] else ""
         lines.append(f"- 장면 {scene['scene']}({scene['plan']}, {scene['map']}) · {verdicts} · 띠 안 전 {summary['before']}·후 {summary['after']} · {after_description(scene)}{mixed}")
     if len(model["scenes"]) < 2:
         lines.append("- 대표 1개(0e 짝 없음)")
@@ -1036,15 +1062,26 @@ def fit_text(font, text, width):
     return trimmed + "…"
 
 
+def fitting_prefix_length(font, text, width):
+    length = 1
+    while length < len(text) and font.getlength(text[:length + 1]) <= width:
+        length += 1
+    return length
+
+
 def wrap_text(font, text, width):
     lines = []
     current = ""
-    for character in text:
-        if font.getlength(current + character) > width and current:
+    for word in re.findall(r"\s*\S+", text):
+        if current and font.getlength(current + word) > width:
             lines.append(current)
-            current = character.lstrip()
-            continue
-        current += character
+            current = ""
+            word = word.lstrip()
+        current += word
+        while len(current) > 1 and font.getlength(current) > width:
+            length = fitting_prefix_length(font, current, width)
+            lines.append(current[:length])
+            current = current[length:].lstrip()
     if current:
         lines.append(current)
     return lines
@@ -1074,7 +1111,7 @@ def canonical_text(canonical):
 def draw_photo_cells(sheet, draw, fonts, root, scene, x, y):
     before = scene["before"]
     paste_photo(sheet, root, before["path"], (x, y))
-    mixed = " · 전 정본 ≠ W 직전" if before["differs_from_w_before"] else ""
+    mixed = f" · {MIXED_BEFORE_LABEL}" if before["differs_from_w_before"] else ""
     draw_cell_header(draw, fonts, (x, y), CELL_WIDTH, f"전 0e · {canonical_text(before['canonical'])} · {before['schedule_ms']}ms{mixed}")
     after = scene["after"]
     after_x = x + CELL_WIDTH
@@ -1109,14 +1146,16 @@ def draw_metric_cell(draw, fonts, scene, x, y):
     if not scene["metrics"]:
         draw.text((x + 8, cursor), "지표 없음(채택·K 판정 없음)", font=fonts["body"], fill=MUTED_COLOR)
         return
+    width = CELL_WIDTH - 16
     for index, metric in enumerate(scene["metrics"]):
-        lines = metric_text_lines(metric)
+        name, band_text, values = metric_text_lines(metric)
+        lines = [fit_text(fonts["body"], name, width), *wrap_text(fonts["body"], band_text, width), fit_text(fonts["body"], values, width)]
         if cursor + METRIC_LINE_HEIGHT * (len(lines) + 1) > bottom:
             draw.text((x + 8, cursor), f"… 외 {len(scene['metrics']) - index}개(sheet.json)", font=fonts["body"], fill=WARNING_COLOR)
             return
         for line_index, line in enumerate(lines):
             color = TEXT_COLOR if line_index == 0 else MUTED_COLOR
-            draw.text((x + 8, cursor), fit_text(fonts["body"], line, CELL_WIDTH - 16), font=fonts["body"], fill=color)
+            draw.text((x + 8, cursor), line, font=fonts["body"], fill=color)
             cursor += METRIC_LINE_HEIGHT
         cursor += 5
 

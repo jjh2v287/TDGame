@@ -1,9 +1,10 @@
 """실행 환경: 시스템 Python 3.12 + PIL(Pillow), 프로젝트 루트(PowerShell). 에디터 불필요, 가짜 루트는 tempfile 임시 폴더에 만들고 끝나면 지운다
 실행 명령: python -B Tools/FluidFX/perf/p/fixtures_t4.py
 출력: 표준 출력 사례별 '통과|실패 <사례> <근거>' 줄과 합계 한 줄. 종료 0 전부 통과 / 1 실패 있음 / 2 PIL 없음
-상태: 새 fixture(2026-11-06 claude 하위 에이전트, runbook-p-v3 T4 fixture 목록: 가짜 장면 2·짝 시각·Saved 밖·누락·같은 입력·r<n+1>·current.json·30줄·approval-only·7절 라벨·㊿ 7·㊻ 1·structural-gaps·reshoot 휘도 + 반박 r1: 성능 counts 키·종합 수·표 sha·foliage null, 공유 compare.json 채택 귀속(T3 모양 sheet_areas) + 반박 r2: 재촬영 invalid_count·problems·key_errors·부분 실행·0e 이름 불일치·잘린 PNG → 1(예외 없음), 앞 폴더 실패 시 -2 사용·둘 다 실패 → 후 없음, 재촬영 폴더 생김·통과 폴더 사진 잘림 → r<n+1>, 0e·W11 사진 잘림 → 2 + AM7 L4: K 판정이 batch(K1)에만 있음·K 폴더에 판정 파일 없음 + batch-R만 있음·K 폴더에 판정 파일 없음 + K1·R 둘 다 → K1(반박 S1)·아무것도 없음·판정 파일 있는 K 폴더 둘 → 2)
+상태: 새 fixture(2026-11-06 claude 하위 에이전트, runbook-p-v3 T4 fixture 목록: 가짜 장면 2·짝 시각·Saved 밖·누락·같은 입력·r<n+1>·current.json·30줄·approval-only·7절 라벨·㊿ 7·㊻ 1·structural-gaps·reshoot 휘도 + 반박 r1: 성능 counts 키·종합 수·표 sha·foliage null, 공유 compare.json 채택 귀속(T3 모양 sheet_areas) + 반박 r2: 재촬영 invalid_count·problems·key_errors·부분 실행·0e 이름 불일치·잘린 PNG → 1(예외 없음), 앞 폴더 실패 시 -2 사용·둘 다 실패 → 후 없음, 재촬영 폴더 생김·통과 폴더 사진 잘림 → r<n+1>, 0e·W11 사진 잘림 → 2 + AM7 L4: K 판정이 batch(K1)에만 있음·K 폴더에 판정 파일 없음 + batch-R만 있음·K 폴더에 판정 파일 없음 + K1·R 둘 다 → K1(반박 S1)·아무것도 없음·판정 파일 있는 K 폴더 둘 → 2) + 결함 D2(2026-11-07): D2-1~6 자유 문안·[제안] 보존·근거 미표기·전 머리줄 괄호·perf-candidates 표기·낱말 줄바꿈(그림 글은 도구 모듈의 그리기 함수를 기록용 draw로 불러 확인)
 """
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
@@ -414,7 +415,7 @@ def case_section_seven_labels(run, root):
     run.expect("7절 공통 PF·승인 대기·동등 확인 없음", all("PF 환산 ×2.3~3·상한 비교(증명 아님)" in text and "승인 대기" in text and "동등 확인" not in text for text in texts.values()), "6영역")
     run.expect("대표 1개(0e 짝 없음)", "대표 1개(0e 짝 없음)" in texts["input"] and "대표 1개" not in texts["fog"], "input")
     run.expect("합칠 대기·파동 3 짝", "Saved/FluidFX/showcase/w1-river-20261023-021209" in water and "탱크 코스틱 = 그림 없음(촬영 계획 없음)" in water and "w5_underwater_pit_under.png" in water and "fx11c_cloud_paint.png" in texts["cloud"], "water·cloud")
-    run.expect("성능 후보(perf-candidates)", "성능 후보 1(perf-candidates)" in water and "성능 후보" not in texts["fog"], "water")
+    run.expect("성능 후보(perf-candidates)", "성능 후보 1(perf-candidates: " in water and "성능 후보" not in texts["fog"], "water")
     numbers = []
     for text in texts.values():
         for line in text.splitlines():
@@ -793,6 +794,166 @@ def case_k_judge_search_order(run):
     run.expect("판정 파일 있는 batch-K* 폴더 둘 → 2·판 없음", code == 2 and "K 판정 폴더가 둘 이상" in output and "batch-K3" not in output and revisions(root, "smoke") == [], f"종료 {code} {output.strip()[:200]}")
 
 
+FREE_TEXT_PREFIX = "자유 문안: "
+MISSING_BASIS = "근거 미표기"
+FREE_TEXT_LONG_BASIS = "인라인 삭제 → 안개 kind 띠 [2.66,4.44](P-11) 0e 사진 세 장의 가운데 장과 W11 verify 가운데 장을 같은 예약 시각으로 맞춘 뒤 읽은 값을 띠로 삼는다"
+FREE_TEXT_PROPOSAL_BASIS = "  E7-e 줄무늬 늘어남 1.5~6 [제안]  "
+OVERFLOW_BASIS = FREE_TEXT_LONG_BASIS + " " + FREE_TEXT_LONG_BASIS
+MIXED_BEFORE_TEXT = "전 정본 ≠ W 직전(보정 아닌 차이 섞임)"
+WRAP_SENTENCE = "성능: 부분(통과 1 / 행 2 / 판정 불가 1 / 측정 불가 17 / 출하 밖 6) · 통과 1·미달 0·판정 불가 1·측정 불가 17·출하 밖 6 · PF 환산 ×2.3~3·상한 비교(증명 아님) · 표 b1886e95 · 성능 후보 1(perf-candidates: v02 TDDebrisCount 300→1000 · gain 4.28)"
+D2_PERF_CANDIDATES = [
+    {"plan": "Tools/FluidFX/calib/plans/w1b_b.json", "plan_sha256": "a" * 64, "variant": "v02", "gain": 4.278895512499599, "assignments": [{"json_path": "Look:NiagaraSystems./Game/FluidFX/Niagara/NS_TD_FluidWaterDebris.Ints.User.TDDebrisCount", "value": 1000, "split_group": False, "base": 300}], "recorded_at": "2026-11-01T05:01:53+00:00"},
+    {"plan": "Tools/FluidFX/calib/plans/w5_a.json", "variant": "v03", "assignments": [{"json_path": "Tuning:Water.Foam.Strength", "value": 0.25, "base": 0.5}, {"json_path": "Tuning:Water.Foam.Radius", "value": 12, "base": 8}]},
+    {"plan": "Tools/FluidFX/calib/plans/fog_a.json", "variant": "v09", "gain": 1.5, "assignments": []},
+]
+D2_PERF_EXPECTED = [("v02 TDDebrisCount 300→1000", "gain 4.28"), ("v03 Strength 0.5→0.25; Radius 8→12", "—")]
+D2_PERF_TAIL = "성능 후보 2(perf-candidates: v02 TDDebrisCount 300→1000 · gain 4.28, v03 Strength 0.5→0.25; Radius 8→12 · —)"
+
+
+class RecordingDraw:
+    def __init__(self):
+        self.texts = []
+
+    def rectangle(self, *arguments, **keywords):
+        return None
+
+    def text(self, position, text, font=None, fill=None):
+        self.texts.append((text, fill))
+
+
+class DiscardingSheet:
+    def paste(self, *arguments, **keywords):
+        return None
+
+
+def load_tool_module():
+    specification = importlib.util.spec_from_file_location("approval_sheet_under_test", TOOL)
+    module = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(module)
+    return module
+
+
+def set_plan_basis(root, plan, metric, basis):
+    path = root / f"Tools/FluidFX/calib/plans/{plan}.json"
+    document = read_json(path)
+    for target in document["metrics"]["targets"]:
+        if target["metric"] == metric:
+            target["basis"] = basis
+    write_json(path, document)
+
+
+def sheet_scenes(root, area, revision="r1"):
+    path = area_dir(root, area) / revision / "sheet.json"
+    return {scene["scene"]: scene for scene in read_json(path)["scenes"]} if path.is_file() else {}
+
+
+def first_band(scenes, name):
+    metrics = scenes.get(name, {}).get("metrics") or []
+    return (metrics[0].get("band") or {}) if metrics else {}
+
+
+def drawn_metric_texts(module, fonts, scene):
+    draw = RecordingDraw()
+    module.draw_metric_cell(draw, fonts, scene, 0, 0)
+    return draw.texts
+
+
+def without_spaces(text):
+    return text.replace(" ", "")
+
+
+def case_free_text_basis(run, module, fonts):
+    root = run.fresh_root()
+    set_plan_basis(root, "fog_a", metric_of("4"), FREE_TEXT_LONG_BASIS)
+    set_plan_basis(root, "fog_b", metric_of("14"), FREE_TEXT_PROPOSAL_BASIS)
+    code, output = run_sheet(root, "fog")
+    scenes = sheet_scenes(root, "fog") if code == 0 else {}
+    long_band, proposal_band = first_band(scenes, "fa"), first_band(scenes, "fb")
+    run.expect("D2-1 자유 문안 → '자유 문안: 원문'·basis 원문 그대로", code == 0 and long_band.get("basis_label") == FREE_TEXT_PREFIX + FREE_TEXT_LONG_BASIS and long_band.get("basis") == FREE_TEXT_LONG_BASIS, f"종료 {code} {long_band.get('basis_label')!r} {output.strip()[-160:]}")
+    run.expect("D2-2 '[제안]' 든 자유 문안 → 라벨에 '[제안]' 보존(앞뒤 공백 제거)", code == 0 and proposal_band.get("basis_label") == FREE_TEXT_PREFIX + FREE_TEXT_PROPOSAL_BASIS.strip() and proposal_band.get("basis") == FREE_TEXT_PROPOSAL_BASIS, f"종료 {code} {proposal_band.get('basis_label')!r}")
+    texts = [text for text, _ in drawn_metric_texts(module, fonts, scenes["fa"])] if "fa" in scenes else []
+    band_line_count = len(texts) - 3
+    run.expect("D2-1 그림 띠 줄 = 자유 문안 전부(2줄 이상 줄바꿈·'…' 없음)", without_spaces(FREE_TEXT_PREFIX + FREE_TEXT_LONG_BASIS) in without_spaces("".join(texts)) and band_line_count >= 2 and not any(text.endswith("…") for text in texts), f"그림 글 {len(texts)}줄 {texts[1:4]}")
+
+
+def case_band_overflow_whole_metrics(run, module, fonts):
+    root = run.fresh_root()
+    for number in PLAN_SCENES["cloud_a"][1]:
+        set_plan_basis(root, "cloud_a", metric_of(number), OVERFLOW_BASIS)
+    code, output = run_sheet(root, "cloud")
+    scenes = sheet_scenes(root, "cloud") if code == 0 else {}
+    metric_count = len(scenes.get("ca", {}).get("metrics") or [])
+    texts = drawn_metric_texts(module, fonts, scenes["ca"]) if "ca" in scenes else []
+    groups, overflow = [], None
+    for text, fill in texts[1:]:
+        if text.startswith("… 외 "):
+            overflow = text
+        elif fill == module.TEXT_COLOR:
+            groups.append([text])
+        elif groups:
+            groups[-1].append(text)
+    complete = all(len(group) >= 3 and group[1].startswith("띠 ") and "띠 안 전" in group[-1] for group in groups)
+    full = all(without_spaces(FREE_TEXT_PREFIX + OVERFLOW_BASIS) in without_spaces("".join(group)) for group in groups)
+    undrawn = metric_count - len(groups)
+    run.expect("D2-1 지표 칸 넘침 → 지표 단위 '외 n개'(그린 지표의 띠 줄은 끝까지)", code == 0 and 1 <= len(groups) < metric_count and complete and full and overflow is not None and overflow.startswith(f"… 외 {undrawn}개"), f"종료 {code} 지표 {metric_count} 그림 {len(groups)} 완전 {complete} 전문 {full} 넘침 {overflow!r}")
+
+
+def case_missing_basis(run):
+    for name, first, second in (("None·빈 문자열", None, ""), ("공백만·문자열 아님(목록)", "   ", ["live2_image"])):
+        root = run.fresh_root()
+        set_plan_basis(root, "fog_a", metric_of("4"), first)
+        set_plan_basis(root, "fog_b", metric_of("14"), second)
+        code, output = run_sheet(root, "fog")
+        scenes = sheet_scenes(root, "fog") if code == 0 else {}
+        bands = [first_band(scenes, "fa"), first_band(scenes, "fb")]
+        labels = [band.get("basis_label") for band in bands]
+        run.expect(f"D2-3 basis {name} → '근거 미표기'·basis 원문 그대로", code == 0 and labels == [MISSING_BASIS, MISSING_BASIS] and [band.get("basis") for band in bands] == [first, second], f"종료 {code} {labels} {output.strip()[-160:]}")
+
+
+def case_mixed_before_header(run, module, fonts):
+    root = run.fresh_root()
+    code, output = run_sheet(root, "fog")
+    scenes = sheet_scenes(root, "fog") if code == 0 else {}
+    headers = {}
+    for name, scene in scenes.items():
+        draw = RecordingDraw()
+        module.draw_photo_cells(DiscardingSheet(), draw, fonts, root, scene, 0, 0)
+        headers[name] = draw.texts[0][0] if draw.texts else ""
+    mixed = headers.get("fb", "")
+    run.expect("D2-4 전 정본 ≠ W 직전 그림 머리줄 = 6.3 전체 문구·fit_text 그대로(fb만)", code == 0 and mixed.endswith(" · " + MIXED_BEFORE_TEXT) and module.fit_text(fonts["body"], mixed, module.CELL_WIDTH - 12) == mixed and "전 정본 ≠ W 직전" not in headers.get("fa", "전 정본 ≠ W 직전"), f"종료 {code} fb {mixed!r} fa {headers.get('fa')!r}")
+    lines = [line for line in index_text(root, "fog").splitlines() if "장면 fb(" in line] if code == 0 else []
+    run.expect("D2-4 index.md fb 줄 6.3 전체 문구", len(lines) == 1 and lines[0].endswith(" · " + MIXED_BEFORE_TEXT), str(lines)[:200])
+
+
+def case_perf_candidate_text(run):
+    root = run.fresh_root()
+    write_json(root / "Saved/FluidFX/calib/perf-candidates.json", {"version": 1, "items": D2_PERF_CANDIDATES})
+    code, output = run_sheet(root, "water")
+    sheet = read_json(area_dir(root, "water") / "r1" / "sheet.json") if code == 0 else {}
+    listed = [(item["item"], item["destination"]) for item in sheet.get("perf_candidates") or []]
+    run.expect("D2-5 perf-candidates 키(variant·gain·assignments) → sheet.json item·destination", code == 0 and listed == D2_PERF_EXPECTED, f"종료 {code} {listed} {output.strip()[-160:]}")
+    text = index_text(root, "water") if code == 0 else ""
+    perf_lines = [line for line in text.splitlines() if line.startswith("- 성능")]
+    run.expect("D2-5 index.md 성능 줄 한 줄에 variant·gain·30줄 이하", len(perf_lines) == 1 and perf_lines[0].endswith(D2_PERF_TAIL) and len(text.splitlines()) <= 30, f"{len(text.splitlines())}줄 {perf_lines[0][-160:] if perf_lines else '성능 줄 없음'}")
+
+
+def case_word_wrap(run, module, fonts):
+    font = fonts["body"]
+    widest = max(font.getlength(word) for word in WRAP_SENTENCE.split(" "))
+    widths = sorted({*range(int(widest) + 1, module.PERF_WIDTH - 16, 3), module.PERF_WIDTH - 16})
+    broken = []
+    for width in widths:
+        lines = module.wrap_text(font, WRAP_SENTENCE, width)
+        if " ".join(lines) != WRAP_SENTENCE or any(font.getlength(line) > width or line.startswith(" ") for line in lines):
+            broken.append(width)
+    perf_cell_lines = module.wrap_text(font, WRAP_SENTENCE, module.PERF_WIDTH - 16)
+    run.expect("D2-6 wrap_text 공백에서만 끊음(낱말이 폭 안인 모든 폭)", not broken and len(perf_cell_lines) >= 2, f"폭 {len(widths)}개 중 낱말 중간 끊김 {len(broken)} {broken[:6]} · 성능 칸 {perf_cell_lines[:3]}")
+    long_word = "TDDebrisCount"
+    narrow = font.getlength(long_word) / 2
+    pieces = module.wrap_text(font, f"값 {long_word} 끝", narrow)
+    run.expect("D2-6 폭보다 긴 낱말만 글자 단위", len(pieces) >= 3 and pieces[0] == "값" and "".join(pieces[1:]).replace(" ", "") == long_word + "끝" and all(font.getlength(piece) <= narrow for piece in pieces), str(pieces))
+
+
 def main():
     if Image is None:
         print("PIL(Pillow) 없음", file=sys.stderr)
@@ -820,6 +981,14 @@ def main():
         case_reshoot_folder_appears(run)
         case_unreadable_sheet_photos(run)
         case_k_judge_search_order(run)
+        module = load_tool_module()
+        fonts = module.load_fonts()
+        case_free_text_basis(run, module, fonts)
+        case_band_overflow_whole_metrics(run, module, fonts)
+        case_missing_basis(run)
+        case_mixed_before_header(run, module, fonts)
+        case_perf_candidate_text(run)
+        case_word_wrap(run, module, fonts)
     failed = [name for name, passed, _ in run.results if not passed]
     print(f"합계: 통과 {len(run.results) - len(failed)} / {len(run.results)}, 실패 {len(failed)}")
     return 0 if not failed else 1

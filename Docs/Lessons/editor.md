@@ -795,3 +795,12 @@
 - 증거: Saved/FluidFX/calib/final/verdict-w11.json, Saved/AgentOps/20261106/w/w11-user-items-diag.md
 - 날짜·상태: 2026-11-06 active(오프셋 원인 — 셰이더 캐시·재질 재생성·하드웨어 — 는 미검증)
 - 발견: claude(FluidFX W11 최종 검증)
+
+### L-editor-91 활성화 볼륨으로 전부 잠든 채 시작하는 무대는 fx7p `--csv-gpu` 준비 관문(깨어 있는 액터 기준)에 60초 뒤 환경 실패로 막힌다
+- 증상 원문: `유체 액터 준비 실패: 60초 안에 모든 유체 액터의 실행 중 텍스처가 준비되지 않았다`(종료 2, 시도로 세지 않음) 3회 → p25 `pilot1: 시도로 세지 않는 실패(보류·MCP) 반복`. editor.log `TD_FLUID_PERF_RESULT {"ready": false, …}`에서 액터 7개 모두 `awake false`·`has_runtime_texture true`
+- 원인: fog 무대 액터는 `bShouldUseActivationVolume` 참·`ActivationDistanceCm` 2000인데 PlayerStart가 가장 가까운 액터에서 6000 cm라 PIE 시작 직후 전부 잠든다(`TDFluidLiveActor.cpp` `EvaluateActivationProximity`). `run_setup(awake_only=True)`는 깨어 있는 액터 0개를 미준비로 보고, 계획의 setup(폰 이동·sleep awake)은 이 관문 뒤에야 돈다
+- 해결: 시한 동안 끝내 미준비이고 awake_only면 마지막 1회 전부의 텍스처를 보고 준비로 받는다(`accept_all_asleep`, pie_sessions `all_asleep_accepted` 참). 첫 폴링부터 받는 안은 곧 깨어날 무대를 잠든 채 재게 되어 버렸다(fixture D1-5). 새 무대는 측정 전에 읽기 전용 표본(PIE 시작 뒤 깨어 있음·텍스처 수, `Saved/AgentOps/20261106/p/p5/probe_stage_ready.py` 꼴)으로 먼저 본다
+- 범위: `Tools/FluidFX/pie_profile_fluid.py` `--csv-gpu` 준비 관문, 활성화 볼륨 무대(지금은 Fog만). awake_only 거짓(D-48) 경로는 불변. 비용: 그런 무대는 PIE 시작마다 60초 대기
+- 증거: `Saved/AgentOps/20261106/p/defects/D1.md`, 커밋 4a439acd, fog 실행 3개 pie_sessions `all_asleep_accepted` 참(`Saved/FluidFX/fx7p/p-fog-{pilot1-20261107161902,ladder-20261107162424,judge-20261107163621}`), 냉시작 가정 기각(FO1/ft 첫 쌍 0.82 대 중앙값 0.81)
+- 날짜·상태: 2026-11-07 active
+- 발견: claude(FluidFX P5 fog 시운전)

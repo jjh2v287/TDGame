@@ -1,7 +1,7 @@
 [← 인덱스로](AgentCollaboration_Plan.md)
 종류: 결정
 작성: 2026-11-08·claude
-확인: 2026-11-08 claude(FU-14 해결 반영)
+확인: 2026-11-08 19:37 claude(FU-14 해결·푸시 대기 24개 반영)
 
 # 사용자 승인·결정 대기 목록
 
@@ -157,7 +157,7 @@
 
 | 번호 | 무엇을 정하나 | 권장안 | 근거 | 답이 막는 것 |
 |---|---|---|---|---|
-| 로컬 커밋 푸시 | 로컬 커밋 20개(FluidFX W·P 단계 + FX-P 1판, 108c6fb0~d1c302e3)를 공개 원격에 푸시할지 | 없음. 지금 / FX-P 뒤 / 공개 저장소 결정 뒤 | `Docs/NOW.md:39`, `git rev-list origin/main..main`(2026-11-08) | 원격 백업 |
+| 로컬 커밋 푸시 | 로컬 커밋 24개(FluidFX W·P 단계 + FX-P 1판 + FU-14, 108c6fb0~86da9af7)를 공개 원격에 푸시할지 | 없음. 지금 / FX-P 뒤 / 공개 저장소 결정 뒤 | `Docs/NOW.md:39`, `git rev-list origin/main..main`(2026-11-08) | 원격 백업 |
 | 동시 세션 운용 | D-25(순차)·D-32 (c)(동시 운용 안 함, AgentRules 5절 보류)가 유효한데 실제로는 동료 세션 병행 중(build_hold.json으로 빌드 창 조정). 동시 운용을 인정해 5절(동시 doing 회수·자원 잠금)을 켜는 규칙 변경(OP-01) 승인 여부. 같은 묶음: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 끄기('사용자 결정', decisions.md 미등록) | (a) 5절 활성 + 잠금 스크립트 2층 (b) 규칙만 활성(스크립트는 첫 충돌 뒤) (c) 현행 유지. 원문 권장 '동시 세션을 실제로 돌릴 계획이면 (a)'(`결정:259`). 2026-09-18 결정이 (c)라 바꾸려면 사용자 승인(규칙 변경) | `결정:214·262`, `Docs/AgentRules.md:167-169`, `07:661`, `Docs/AgentCollaboration/05-concurrency-and-handoff.md:57·107` | AgentRules 5절 활성 |
 
 급함 낮음:

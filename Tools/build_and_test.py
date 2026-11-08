@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python(에디터 밖). 다른 세션의 UnrealEditor·UnrealEditor-Cmd·UBT·UAT가 없을 때까지 기다린 뒤 TDGameEditor를 빌드하고 헤드리스 자동화 시험을 돌려 실패만 요약한다(L-build-05·08, L-repo-12).
-실행 명령: python Tools/build_and_test.py --filter TDGame.FluidFX [--filter TDGame.Combat] [--label 이름] [--no-build] [--no-test] [--rhi null|offscreen] [--wait-seconds 1800] [--holder 이름] | --acquire-hold 이름 --reason 사유 | --release-hold 이름 (Saved/AgentOps/build_hold.json {"owner","reason"}이 있으면 owner가 아닌 실행은 대기, 3시간 지나면 무시)
-출력: 표준 출력 요약, Saved/AgentOps/<YYYYMMDD>/<label>-build.log·<label>-tests.log·<label>-tests.json. 종료 코드 0 성공 / 1 빌드 실패 / 2 시험 실패·시험 없음 / 3 대기 시간 초과 / 4 보류 획득·해제 거부
-상태: 현행
+실행 명령: python Tools/build_and_test.py --filter TDGame.FluidFX [--filter TDGame.Combat] [--label 이름] [--no-build] [--no-test] [--rhi null|offscreen|d3d11] [--wait-seconds 1800] [--holder 이름] | --acquire-hold 이름 --reason 사유 | --release-hold 이름 (Saved/AgentOps/build_hold.json {"owner","reason"}이 있으면 owner가 아닌 실행은 대기, 3시간 지나면 무시)
+출력: 표준 출력 요약, Saved/AgentOps/<YYYYMMDD>/<label>-build.log·<label>-tests.log·<label>-tests.json. 종료 코드 0 성공 / 1 빌드 실패 / 2 시험 실패·시험 없음·(--rhi d3d11 인데 로그의 사용 RHI·기능 수준이 `D3D11 SM5` 가 아님) / 3 대기 시간 초과 / 4 보류 획득·해제 거부
+상태: 현행(2026-11-08 FU-14 `--rhi d3d11` = -d3d11 -RenderOffScreen 추가, tests.json 에 rhi_in_use·wrong_rhi, 같은 날 반박 반영: 기능 수준 SM5 까지 확인)
 """
 import argparse
 import json
@@ -122,7 +122,10 @@ def wait_for_quiet_machine(wait_seconds, holder=None):
     return False
 
 
-RHI_ARGUMENTS = {"null": "-NullRHI", "offscreen": "-RenderOffScreen"}
+RHI_ARGUMENTS = {"null": "-NullRHI", "offscreen": "-RenderOffScreen", "d3d11": "-RenderOffScreen"}
+RHI_DEVICE_ARGUMENTS = {"d3d11": ["-d3d11"]}
+RHI_EXPECTED_IN_USE = {"d3d11": "D3D11 SM5"}
+RHI_IN_USE = re.compile(r"LogRHI: RHI (\S+) with Feature Level (\S+) is supported and will be used")
 
 
 def run_build(log_path):
@@ -141,7 +144,7 @@ def run_tests(test_filters, log_path, rhi_mode="null"):
         EDITOR_CMD_EXE, UPROJECT,
         f"-ExecCmds={test_command}",
         "-TestExit=Automation Test Queue Empty",
-        "-unattended", RHI_ARGUMENTS[rhi_mode], "-NoSplash", "-NoSound",
+        "-unattended", *RHI_DEVICE_ARGUMENTS.get(rhi_mode, []), RHI_ARGUMENTS[rhi_mode], "-NoSplash", "-NoSound",
         f"-abslog={log_path}",
     ]
     completed_process = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -150,14 +153,23 @@ def run_tests(test_filters, log_path, rhi_mode="null"):
     return run_summary
 
 
+def is_unexpected_rhi(rhi_mode, rhi_in_use):
+    expected_rhi_in_use = RHI_EXPECTED_IN_USE.get(rhi_mode)
+    return expected_rhi_in_use is not None and rhi_in_use != expected_rhi_in_use
+
+
 def parse_test_log(log_path):
-    run_summary = {"results": [], "found_count": None, "crash_lines": []}
+    run_summary = {"results": [], "found_count": None, "crash_lines": [], "rhi_in_use": None}
     if not os.path.exists(log_path):
         return run_summary
     results = {}
     events_by_path = {}
     current_events_path = None
     for line in open(log_path, encoding="utf-8", errors="replace"):
+        rhi_in_use = RHI_IN_USE.search(line)
+        if rhi_in_use and run_summary["rhi_in_use"] is None:
+            run_summary["rhi_in_use"] = f"{rhi_in_use.group(1)} {rhi_in_use.group(2)}"
+            continue
         found = TESTS_FOUND.search(line)
         if found:
             run_summary["found_count"] = int(found.group(1))
@@ -191,7 +203,7 @@ def main():
     parser.add_argument("--label", default="build-and-test")
     parser.add_argument("--no-build", action="store_true")
     parser.add_argument("--no-test", action="store_true")
-    parser.add_argument("--rhi", choices=sorted(RHI_ARGUMENTS), default="null", help="null: -NullRHI(기본, 헤드리스, EAutomationTestFlags::NonNullRHI 시험은 엔진이 목록에서 뺀다) / offscreen: -RenderOffScreen(실제 GPU, TDGame.FluidFXRhi 시험용). RunTests 필터는 부분 문자열 일치라 TDGame.FluidFX 는 TDGame.FluidFXRhi 도 고른다")
+    parser.add_argument("--rhi", choices=sorted(RHI_ARGUMENTS), default="null", help="null: -NullRHI(기본, 헤드리스, EAutomationTestFlags::NonNullRHI 시험은 엔진이 목록에서 뺀다) / offscreen: -RenderOffScreen(실제 GPU, TDGame.FluidFXRhi 시험용) / d3d11: -d3d11 -RenderOffScreen(실제 GPU를 D3D11·SM5로, 시험 고르기는 offscreen 과 같고 로그의 사용 RHI·기능 수준이 D3D11 SM5 가 아니면 종료 2). RunTests 필터는 부분 문자열 일치라 TDGame.FluidFX 는 TDGame.FluidFXRhi 도 고른다")
     parser.add_argument("--wait-seconds", type=int, default=1800)
     parser.add_argument("--holder", default=None, help="Saved/AgentOps/build_hold.json 의 owner와 같으면 보류를 통과")
     parser.add_argument("--acquire-hold", metavar="OWNER", default=None, help="보류 파일이 없을 때만 만든다(원자적), 종료 0 성공/4 이미 있음")
@@ -238,10 +250,13 @@ def main():
     found_count = run_summary["found_count"]
     is_incomplete = found_count is None or len(results) < found_count
     has_crashed = bool(run_summary["crash_lines"]) or run_summary["engine_exit_code"] != 0
-    run_summary.update({"filters": args.filter, "rhi": args.rhi, "log": test_log, "incomplete": is_incomplete, "crashed": has_crashed})
+    has_wrong_rhi = is_unexpected_rhi(args.rhi, run_summary["rhi_in_use"])
+    run_summary.update({"filters": args.filter, "rhi": args.rhi, "log": test_log, "incomplete": is_incomplete, "crashed": has_crashed, "wrong_rhi": has_wrong_rhi})
     with open(test_json, "w", encoding="utf-8") as json_file:
         json.dump(run_summary, json_file, ensure_ascii=False, indent=1)
-    print(f"TESTS {len(passed)}/{found_count if found_count is not None else '?'} passed (completed {len(results)}, engine exit {run_summary['engine_exit_code']}) -> {test_json}")
+    print(f"TESTS {len(passed)}/{found_count if found_count is not None else '?'} passed (completed {len(results)}, engine exit {run_summary['engine_exit_code']}, RHI {run_summary['rhi_in_use'] or '?'}) -> {test_json}")
+    if has_wrong_rhi:
+        print(f"  WRONG RHI: --rhi {args.rhi} 인데 로그의 사용 RHI·기능 수준이 {run_summary['rhi_in_use'] or '없음'}(기대 {RHI_EXPECTED_IN_USE[args.rhi]})")
     for entry in failed:
         print("  FAIL", entry["path"], entry["result"])
         for event in entry["events"]:
@@ -250,7 +265,7 @@ def main():
         print("  INCOMPLETE: 발견한 시험 수보다 완료한 시험이 적다(중간 종료)")
     for crash_line in run_summary["crash_lines"]:
         print("  CRASH", crash_line)
-    if not results or failed or is_incomplete or has_crashed:
+    if not results or failed or is_incomplete or has_crashed or has_wrong_rhi:
         return 2
     return 0
 

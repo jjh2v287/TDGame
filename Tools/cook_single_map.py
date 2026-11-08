@@ -1,10 +1,11 @@
 """시스템 Python으로 실행(에디터가 꺼져 있어야 함): RunUAT BuildCookRun으로 Win64 Development 게임을 빌드하고 맵 하나만 쿠킹·스테이징·pak 한 뒤, 결과 요약을 남긴다. 쿠킹된 실행·프레임 확인은 이어서 measure_game_frames.py 로 한다.
 실행: python Tools/cook_single_map.py --label baseline [--map /Game/Level/LV-Cambat]
 출력: Saved/AgentOps/cook_<label>.json (종료 코드, 소요 초, 경고·오류 줄 상위 40개) + Saved/Logs/cook_<label>.log(전체 UAT 출력), 스테이징 Saved/StagedBuilds/Windows
-상태: 현행 (2026-09-29)
+상태: 현행 (2026-09-29, 2026-11-08 FU-14: 엔진 'Warning/Error Summary' 머리줄을 오류로 세던 거짓 양성 제외 — 요약 아래 다시 나열되는 경고·오류 줄은 여전히 한 번 더 셈, exit_code·success_line 판정은 그대로)
 """
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
@@ -16,6 +17,15 @@ import ue_editor  # noqa: E402
 
 RUN_UAT = Path(ue_editor.ENGINE) / 'Engine/Build/BatchFiles/RunUAT.bat'
 PROJECT = ROOT / 'TDGame.uproject'
+SUMMARY_HEADER = re.compile(r'Warning/Error Summary')
+
+
+def summarize_problems(lines):
+    problems = [line.strip()[:300] for line in lines
+                if ('Error:' in line or 'error ' in line.lower() or 'Warning:' in line) and not SUMMARY_HEADER.search(line)]
+    return {'error_count': sum(1 for line in problems if 'rror' in line),
+            'warning_count': sum(1 for line in problems if 'Warning:' in line),
+            'first_problems': problems[:40]}
 
 
 def main():
@@ -38,12 +48,9 @@ def main():
         except subprocess.TimeoutExpired:
             exit_code = 'timeout'
     lines = log_path.read_text(encoding='utf-8', errors='replace').splitlines()
-    problems = [line.strip()[:300] for line in lines if ('Error:' in line or 'error ' in line.lower() or 'Warning:' in line)]
     report = {'label': args.label, 'map': args.map, 'exit_code': exit_code,
               'seconds': round(time.time() - started), 'log': str(log_path),
-              'error_count': sum(1 for line in problems if 'rror' in line),
-              'warning_count': sum(1 for line in problems if 'Warning:' in line),
-              'first_problems': problems[:40],
+              **summarize_problems(lines),
               'success_line': next((line for line in reversed(lines) if 'BUILD SUCCESSFUL' in line or 'AutomationTool exiting with ExitCode' in line), None)}
     output = ROOT / f'Saved/AgentOps/cook_{args.label}.json'
     output.parent.mkdir(parents=True, exist_ok=True)

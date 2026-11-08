@@ -18,6 +18,7 @@
 #include "RHIGPUReadback.h"
 #include "RenderGraphBuilder.h"
 #include "RenderGraphUtils.h"
+#include "ShaderCompilerCore.h"
 #include "ShaderParameterStruct.h"
 #include "ShaderPermutation.h"
 #include "TextureResource.h"
@@ -36,6 +37,7 @@ namespace
 	constexpr int32 ShiftPhaseGather = 0;
 	constexpr int32 ShiftPhaseScatter = 1;
 	constexpr int32 ShiftPhaseResetOnly = 2;
+	constexpr int32 WaterShiftPhaseFieldReset = 3;
 	constexpr EPixelFormat VelocityFormat = PF_G16R16F;
 	constexpr EPixelFormat DensityFormat = PF_G32R32F;
 	constexpr EPixelFormat SurfaceDisplacementFormat = PF_R16F;
@@ -595,6 +597,18 @@ class FTDFluidGpuPainterStepCS : public FTDFluidGpuComputeShader
 	class FWritesPainterVelocityDimension : SHADER_PERMUTATION_BOOL("TDFLUIDGPU_WRITES_PAINTER_VELOCITY");
 	using FPermutationDomain = TShaderPermutationDomain<FWritesOutputDimension, FWritesPainterVelocityDimension>;
 
+	static void ModifyCompilationEnvironment(const FGlobalShaderPermutationParameters& Parameters, FShaderCompilerEnvironment& OutEnvironment)
+	{
+		FTDFluidGpuComputeShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
+		const FPermutationDomain PermutationVector(Parameters.PermutationId);
+		if (!PermutationVector.Get<FWritesPainterVelocityDimension>())
+		{
+			return;
+		}
+
+		OutEnvironment.CompilerFlags.Add(CFLAG_AllowTypedUAVLoads);
+	}
+
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuActorParameters>, ActorParameters)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FTDFluidGpuPackedStamp>, Stamps)
@@ -650,7 +664,7 @@ class FTDFluidGpuWaterShiftCS : public FTDFluidGpuComputeShader
 	DECLARE_GLOBAL_SHADER(FTDFluidGpuWaterShiftCS);
 	SHADER_USE_PARAMETER_STRUCT(FTDFluidGpuWaterShiftCS, FTDFluidGpuComputeShader);
 
-	class FPhaseDimension : SHADER_PERMUTATION_INT("TDFLUIDGPU_WATER_SHIFT_PHASE", 3);
+	class FPhaseDimension : SHADER_PERMUTATION_INT("TDFLUIDGPU_WATER_SHIFT_PHASE", 4);
 	using FPermutationDomain = TShaderPermutationDomain<FPhaseDimension>;
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
@@ -2599,6 +2613,35 @@ namespace
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterShiftGather"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, Frame.ShiftEntryIndices.Num()));
 	}
 
+	void AddWaterFieldResetPass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
+	{
+		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
+		const int32 ResetCount = Frame.ResetEntryIndices.Num();
+		if (ResetCount == 0)
+		{
+			return;
+		}
+
+		FRDGBuilder& GraphBuilder = Context.GraphBuilder;
+		const FTDFluidGpuBatchGraphTextures& Textures = Context.Textures;
+
+		FTDFluidGpuWaterShiftCS::FPermutationDomain Permutation;
+		Permutation.Set<FTDFluidGpuWaterShiftCS::FPhaseDimension>(WaterShiftPhaseFieldReset);
+
+		FTDFluidGpuWaterShiftCS::FParameters* Parameters = GraphBuilder.AllocParameters<FTDFluidGpuWaterShiftCS::FParameters>();
+		Parameters->ActorParameters = Context.ActorParameters;
+		Parameters->WaterParameters = Water.WaterParameters;
+		Parameters->EntryList = UploadEntryList(GraphBuilder, TEXT("TDFluidGpu.WaterFieldResetEntries"), TArray<uint32>(Frame.ResetEntryIndices));
+		Parameters->ShiftEntryCount = 0;
+		Parameters->ObstacleSdfOut = MakeUAV(GraphBuilder, Textures.ObstacleSdf);
+		Parameters->WaterGuideFieldOut = MakeUAV(GraphBuilder, Water.GuideField);
+		Parameters->WaterSurfaceHeightFieldOut = MakeUAV(GraphBuilder, Water.SurfaceHeightField);
+		Parameters->WaterTerrainFieldOut = MakeUAV(GraphBuilder, Water.TerrainField);
+
+		TShaderMapRef<FTDFluidGpuWaterShiftCS> Shader(Context.ShaderMap, Permutation);
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterFieldReset"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, ResetCount));
+	}
+
 	void AddWaterShiftAndResetPasses(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)
 	{
 		const FTDFluidGpuBatchFrame& Frame = Context.Batch.GetFrame();
@@ -2634,10 +2677,6 @@ namespace
 		Parameters->RippleOut = MakeUAV(GraphBuilder, Water.Ripple[0]);
 		Parameters->PressureOut = MakeUAV(GraphBuilder, Textures.PressureSolution[0]);
 		Parameters->WetnessOut = MakeUAV(GraphBuilder, Water.Wetness);
-		Parameters->ObstacleSdfOut = MakeUAV(GraphBuilder, Textures.ObstacleSdf);
-		Parameters->WaterGuideFieldOut = MakeUAV(GraphBuilder, Water.GuideField);
-		Parameters->WaterSurfaceHeightFieldOut = MakeUAV(GraphBuilder, Water.SurfaceHeightField);
-		Parameters->WaterTerrainFieldOut = MakeUAV(GraphBuilder, Water.TerrainField);
 		if (ShiftCount > 0)
 		{
 			Parameters->VelocityStageIn = MakeSRV(GraphBuilder, Textures.Velocity[1]);
@@ -2649,6 +2688,7 @@ namespace
 
 		TShaderMapRef<FTDFluidGpuWaterShiftCS> Shader(Context.ShaderMap, Permutation);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("TDFluidGpu.WaterShiftScatter"), Shader, Parameters, MakeCellGroupCount(Context.Resolution, ScatterCount));
+		AddWaterFieldResetPass(Context, Water);
 	}
 
 	void AddWaterGuideUpdatePass(const FTDFluidGpuBatchPassContext& Context, const FTDFluidGpuWaterGraphTextures& Water)

@@ -3,6 +3,7 @@
 #include "DataDrivenShaderPlatformInfo.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/App.h"
+#include "RHI.h"
 #include "RHIGlobals.h"
 #include "RHIShaderPlatform.h"
 #include "TDFluidGpuBatch.h"
@@ -53,6 +54,10 @@ namespace
 		{
 			return false;
 		}
+		if (Query.bIsSimplePainter && Query.bWritesPainterVelocity && !Environment.bSupportsPainterVelocityTypedUavLoad)
+		{
+			return false;
+		}
 		if (Environment.Override == ETDFluidGpuBackendOverride::ForceGpuWhenPossible)
 		{
 			return true;
@@ -77,6 +82,7 @@ FTDFluidGpuBackendEnvironment FTDFluidGpuBackendSelection::CaptureEnvironment()
 	}
 
 	Environment.bSupportsShaderModel5 = IsFeatureLevelSupported(GMaxRHIShaderPlatform, ERHIFeatureLevel::SM5);
+	Environment.bSupportsPainterVelocityTypedUavLoad = RHIIsTypedUAVLoadSupported(PF_G32R32F);
 	return Environment;
 }
 

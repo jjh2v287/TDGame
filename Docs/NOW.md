@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-08 11:12 claude
+갱신: 2026-11-08 12:57 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -30,7 +30,7 @@
 - 공개 저장소 Fab·Paragon·Manny 원본 비공개 전환·재저장 에셋 유지 판단.
 - 분석 결정 GQ-01~32(26=아니오), 먼저 GQ-01·10~13·20·27.
 - 기록 누락 의심: M1-01~05(코드 있음, 대장 todo).
-- 사용자 승인 대기 전체: Docs/UserApprovalQueue.md(FluidFX·쿠킹 L-build-20 포함)
+- 사용자 승인 대기 전체: Docs/UserApprovalQueue.md(FluidFX 포함). 쿠킹 복구(FU-14)
 - 빌드 순서 L-build-05·08. Combat GUI 크래시→헤드리스(L-editor-08).
 
 ## ③ 다음 행동

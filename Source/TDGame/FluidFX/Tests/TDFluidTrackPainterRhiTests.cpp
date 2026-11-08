@@ -13,6 +13,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "RenderingThread.h"
+#include "RHI.h"
 #include "RHICommandList.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -53,6 +54,16 @@ namespace TDFluidTrackPainterRhiTestPrivate
 			return false;
 		}
 		return true;
+	}
+
+	bool CanRunPainterVelocityRhiTest(FAutomationTestBase& Test, const TCHAR* TestName)
+	{
+		if (RHIIsTypedUAVLoadSupported(PF_G32R32F))
+		{
+			return true;
+		}
+		Test.AddError(FString::Printf(TEXT("%s builds the painter velocity GPU proxy directly, but this RHI cannot load PF_G32R32F through a typed UAV, so the backend selection would keep painter velocity on the CPU."), TestName));
+		return false;
 	}
 
 	void ReportTrackLine(FAutomationTestBase& Test, const FString& Line)
@@ -429,7 +440,7 @@ bool FTDFluidTrackPainterVelocityMatchesCpuRhiTest::RunTest(const FString& Param
 	const int64 VelocityOffBytes = FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMode::SimplePainter, TrackCostResolution).GetTotalBytes();
 	const int64 VelocityOnBytes = FTDFluidGpuBatch::EstimateActorMemory(ETDFluidGpuSimMode::SimplePainter, TrackCostResolution, false, false, 0, 0, true).GetTotalBytes();
 	TestEqual(TEXT("Painter velocity adds 16 bytes per cell and drops the 4x4 placeholder"), VelocityOnBytes - VelocityOffBytes, CellCount * 16 - 4 * 4 * 8);
-	if (!CanRunTrackRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.PainterVelocityMatchesCpu")))
+	if (!CanRunTrackRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.PainterVelocityMatchesCpu")) || !CanRunPainterVelocityRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.PainterVelocityMatchesCpu")))
 	{
 		return false;
 	}
@@ -474,7 +485,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FTDFluidTrackDeterministicReplayRhiTest::RunTest(const FString& Parameters)
 {
 	using namespace TDFluidTrackPainterRhiTestPrivate;
-	if (!CanRunTrackRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.DeterministicReplay")))
+	if (!CanRunTrackRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.DeterministicReplay")) || !CanRunPainterVelocityRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.DeterministicReplay")))
 	{
 		return false;
 	}
@@ -510,7 +521,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FTDFluidTrackPainterOffscreenCostRhiTest::RunTest(const FString& Parameters)
 {
 	using namespace TDFluidTrackPainterRhiTestPrivate;
-	if (!CanRunTrackRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.PainterOffscreenCost")))
+	if (!CanRunTrackRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.PainterOffscreenCost")) || !CanRunPainterVelocityRhiTest(*this, TEXT("TDGame.FluidFXRhi.Track.PainterOffscreenCost")))
 	{
 		return false;
 	}

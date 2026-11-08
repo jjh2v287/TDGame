@@ -5,8 +5,10 @@
 #include "Math/Float16.h"
 #include "Misc/App.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/Crc.h"
 #include "RHIGlobals.h"
 #include "RHIGPUReadback.h"
+#include "RHIStrings.h"
 #include "RenderGraphBuilder.h"
 #include "RenderGraphUtils.h"
 #include "RenderingThread.h"
@@ -16,10 +18,12 @@
 #include "TDFluidGpuWaterPressureProbeReadbacks.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTDFluidGpuWaterModuleRhiTests, Log, All);
+DEFINE_LOG_CATEGORY_STATIC(LogTDFluidGpuRhiReadbackWait, Log, All);
 
 namespace TDFluidGpuWaterModuleRhiTestPrivate
 {
 	constexpr float SixtyHertzStepSeconds = 1.0f / 60.0f;
+	constexpr int32 MaximumReadbackExtraSubmitCount = 16;
 	constexpr double ModuleWaterExtentCm = 3600.0;
 	constexpr uint64 ModuleWaterActorKey = 4101;
 	constexpr float ModuleWaterSurfaceHeightCm = 100.0f;
@@ -85,6 +89,8 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 		GuideField,
 		SurfaceHeightField,
 		TerrainField,
+		Wetness,
+		ObstacleSdf,
 		Count
 	};
 
@@ -282,6 +288,10 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 			return State.WaterGuideField;
 		case ETDWaterGpuStateTexture::SurfaceHeightField:
 			return State.WaterSurfaceHeightField;
+		case ETDWaterGpuStateTexture::Wetness:
+			return State.WaterWetness;
+		case ETDWaterGpuStateTexture::ObstacleSdf:
+			return State.ObstacleSdf;
 		default:
 			return State.WaterTerrainField;
 		}
@@ -388,6 +398,49 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 		Capture.bIsValid = bHasReadAll && OpenBorderFlags != nullptr;
 	}
 
+	bool AreTextureReadbacksReady(const TArray<TUniquePtr<FRHIGPUTextureReadback>>& Readbacks)
+	{
+		for (const TUniquePtr<FRHIGPUTextureReadback>& Readback : Readbacks)
+		{
+			if (Readback.IsValid() && !Readback->IsReady())
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool AreWaterReadbacksReady(const FTDWaterGpuRunState& RunState)
+	{
+		for (const TArray<TUniquePtr<FRHIGPUTextureReadback>>& SnapshotReadbacks : RunState.SnapshotReadbacks)
+		{
+			if (!AreTextureReadbacksReady(SnapshotReadbacks))
+			{
+				return false;
+			}
+		}
+
+		const FTDFluidGpuWaterPressureProbeReadbacks& ProbeReadbacks = RunState.ProbeReadbacks;
+		const bool bAreProbeTexturesReady = (!ProbeReadbacks.Velocity.IsValid() || ProbeReadbacks.Velocity->IsReady())
+			&& (!ProbeReadbacks.CompositeSdf.IsValid() || ProbeReadbacks.CompositeSdf->IsReady())
+			&& (!ProbeReadbacks.SurfaceHeightField.IsValid() || ProbeReadbacks.SurfaceHeightField->IsReady())
+			&& AreTextureReadbacksReady(ProbeReadbacks.PressureFullByCycle);
+		return bAreProbeTexturesReady && (!ProbeReadbacks.OpenBorderFlags.IsValid() || ProbeReadbacks.OpenBorderFlags->IsReady());
+	}
+
+	void SubmitUntilWaterReadbacksAreReady(FRHICommandListImmediate& RHICmdList, const FTDWaterGpuRunState& RunState)
+	{
+		int32 ExtraSubmitCount = 0;
+		bool bAreReadbacksReady = AreWaterReadbacksReady(RunState);
+		while (!bAreReadbacksReady && ExtraSubmitCount < MaximumReadbackExtraSubmitCount)
+		{
+			RHICmdList.SubmitAndBlockUntilGPUIdle();
+			++ExtraSubmitCount;
+			bAreReadbacksReady = AreWaterReadbacksReady(RunState);
+		}
+		UE_LOG(LogTDFluidGpuRhiReadbackWait, Display, TEXT("Water readback wait: RHI=%s ShaderPlatform=%s ExtraSubmits=%d of %d Ready=%d"), GDynamicRHI->GetName(), *LexToString(GMaxRHIShaderPlatform), ExtraSubmitCount, MaximumReadbackExtraSubmitCount, bAreReadbacksReady ? 1 : 0);
+	}
+
 	void RecordWaterBatchSummary(FTDWaterGpuRunState& InOutRunState)
 	{
 		FTDFluidGpuBatch* WaterBatch = FindSteppedWaterBatch(InOutRunState.Batches);
@@ -430,6 +483,7 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 
 				EnqueueWaterPressureProbe(RHICmdList, Request.ProbeCycleCounts, *RunState);
 				RHICmdList.SubmitAndBlockUntilGPUIdle();
+				SubmitUntilWaterReadbacksAreReady(RHICmdList, *RunState);
 				RunState->Result.bHasReadAllSnapshots = ReadWaterStateSnapshots(*RunState);
 				ReadWaterPressureProbe(*RunState);
 				RecordWaterBatchSummary(*RunState);
@@ -1771,8 +1825,35 @@ namespace TDFluidGpuWaterModuleRhiTestPrivate
 			return TEXT("RippleScratch");
 		case ETDWaterGpuStateTexture::Pressure:
 			return TEXT("Pressure");
+		case ETDWaterGpuStateTexture::Wetness:
+			return TEXT("Wetness");
+		case ETDWaterGpuStateTexture::ObstacleSdf:
+			return TEXT("ObstacleSdf");
+		case ETDWaterGpuStateTexture::GuideField:
+			return TEXT("WaterGuideField");
+		case ETDWaterGpuStateTexture::SurfaceHeightField:
+			return TEXT("WaterSurfaceHeightField");
+		case ETDWaterGpuStateTexture::TerrainField:
+			return TEXT("WaterTerrainField");
 		default:
 			return TEXT("Other");
+		}
+	}
+
+	void ReportWaterStateCrcLines(FAutomationTestBase& Test, const TCHAR* CaseName, const FString& RunLabel, const FTDWaterGpuStateSnapshot& Snapshot, const TArray<ETDWaterGpuStateTexture>& TextureKinds)
+	{
+		for (const ETDWaterGpuStateTexture TextureKind : TextureKinds)
+		{
+			const FTDWaterGpuTextureSlice& Slice = GetSnapshotTexture(Snapshot, TextureKind);
+			const FString CrcLine = FString::Printf(TEXT("TDFluidGpuWaterCrc: case=%s run=%s frame=%d tex=%s bytes=%d crc=0x%08X"),
+				CaseName,
+				*RunLabel,
+				Snapshot.FrameCount,
+				GetStateTextureLabel(TextureKind),
+				Slice.Bytes.Num(),
+				FCrc::MemCrc32(Slice.Bytes.GetData(), Slice.Bytes.Num()));
+			UE_LOG(LogTDFluidGpuWaterModuleRhiTests, Display, TEXT("%s"), *CrcLine);
+			Test.AddInfo(CrcLine);
 		}
 	}
 }
@@ -1874,6 +1955,7 @@ bool FTDFluidGpuWaterModuleRhiShiftMovesWaterStateExactlyTest::RunTest(const FSt
 		{ TEXT("192"), 192, FIntPoint(1, -2) },
 		{ TEXT("1024"), 1024, FIntPoint(4, -8) },
 	};
+	const TArray<ETDWaterGpuStateTexture> CrcTextures = { ETDWaterGpuStateTexture::Velocity, ETDWaterGpuStateTexture::Density, ETDWaterGpuStateTexture::Ripple, ETDWaterGpuStateTexture::Pressure, ETDWaterGpuStateTexture::Wetness, ETDWaterGpuStateTexture::ObstacleSdf, ETDWaterGpuStateTexture::GuideField, ETDWaterGpuStateTexture::SurfaceHeightField, ETDWaterGpuStateTexture::TerrainField };
 
 	for (const FTDWaterShiftCase& Case : Cases)
 	{
@@ -1888,7 +1970,7 @@ bool FTDFluidGpuWaterModuleRhiShiftMovesWaterStateExactlyTest::RunTest(const FSt
 		FTDWaterGpuRunRequest Request;
 		Request.FrameCount = 2;
 		Request.SnapshotFrameCounts = { 1, 2 };
-		Request.SnapshotTextures = { ETDWaterGpuStateTexture::Velocity, ETDWaterGpuStateTexture::Density, ETDWaterGpuStateTexture::Ripple, ETDWaterGpuStateTexture::Pressure, ETDWaterGpuStateTexture::GuideField, ETDWaterGpuStateTexture::SurfaceHeightField, ETDWaterGpuStateTexture::TerrainField };
+		Request.SnapshotTextures = CrcTextures;
 		const FTDWaterGpuRunResult Run = RunWaterGpuFrames(Request, [Scene](int32 FrameIndex, FTDFluidGpuFrameInputs& OutFrame)
 		{
 			OutFrame.Actors.Add(MakeShearActor(Scene, FrameIndex));
@@ -1896,6 +1978,11 @@ bool FTDFluidGpuWaterModuleRhiShiftMovesWaterStateExactlyTest::RunTest(const FSt
 		if (!TestTrue(*FString::Printf(TEXT("%s read both state snapshots"), Case.Label), Run.bHasWaterBatch && Run.bHasReadAllSnapshots && Run.Snapshots.Num() == 2))
 		{
 			continue;
+		}
+
+		for (const FTDWaterGpuStateSnapshot& Snapshot : Run.Snapshots)
+		{
+			ReportWaterStateCrcLines(*this, TEXT("Shift"), Case.Label, Snapshot, CrcTextures);
 		}
 
 		const FTDWaterGpuStateSnapshot& Before = Run.Snapshots[0];
@@ -1980,7 +2067,8 @@ bool FTDFluidGpuWaterModuleRhiShiftMovesWaterStateExactlyTest::RunTest(const FSt
 	FTDWaterGpuRunRequest GatherRequest;
 	GatherRequest.FrameCount = PressureGatherShiftFrameIndex + 1;
 	GatherRequest.SnapshotFrameCounts = { PressureGatherShiftFrameIndex, PressureGatherShiftFrameIndex + 1 };
-	GatherRequest.SnapshotTextures = { ETDWaterGpuStateTexture::Pressure, ETDWaterGpuStateTexture::PressureScratch };
+	GatherRequest.SnapshotTextures = CrcTextures;
+	GatherRequest.SnapshotTextures.Add(ETDWaterGpuStateTexture::PressureScratch);
 	const FTDWaterGpuRunResult GatherRun = RunWaterGpuFrames(GatherRequest, [GatherScene](int32 FrameIndex, FTDFluidGpuFrameInputs& OutFrame)
 	{
 		OutFrame.Actors.Add(MakePressureGatherActor(GatherScene, FrameIndex));
@@ -1988,6 +2076,11 @@ bool FTDFluidGpuWaterModuleRhiShiftMovesWaterStateExactlyTest::RunTest(const FSt
 	if (!TestTrue(TEXT("1024 pressure gather run read both snapshots"), GatherRun.bHasWaterBatch && GatherRun.bHasReadAllSnapshots && GatherRun.Snapshots.Num() == 2))
 	{
 		return false;
+	}
+
+	for (const FTDWaterGpuStateSnapshot& Snapshot : GatherRun.Snapshots)
+	{
+		ReportWaterStateCrcLines(*this, TEXT("Shift"), TEXT("1024gather"), Snapshot, CrcTextures);
 	}
 
 	const FTDWaterGpuTextureSlice& HalfPressureBefore = GetSnapshotTexture(GatherRun.Snapshots[0], ETDWaterGpuStateTexture::Pressure);
@@ -2072,6 +2165,9 @@ bool FTDFluidGpuWaterModuleRhiMultigridOpenBoundaryConvergesTest::RunTest(const 
 			{
 				continue;
 			}
+
+			const FString CrcRunLabel = FString::Printf(TEXT("%s_cycles_%d"), bOpensWaterBorders ? TEXT("open") : TEXT("closed"), CycleCount);
+			ReportWaterStateCrcLines(*this, TEXT("OpenBoundary"), CrcRunLabel, Run.Snapshots[0], Request.SnapshotTextures);
 
 			TestTrue(*FString::Printf(TEXT("%s runs the half resolution multigrid"), *CaseLabel), Run.WaterKey.WaterPressureMode == ETDFluidGpuWaterPressureMode::HalfResolutionMultigrid);
 			TestEqual(*FString::Printf(TEXT("%s batch key carries the cycle count"), *CaseLabel), Run.WaterKey.MultigridCycles, CycleCount);
@@ -2182,6 +2278,7 @@ bool FTDFluidGpuWaterModuleRhiMultigridOpenBoundaryConvergesTest::RunTest(const 
 		});
 		if (TestTrue(TEXT("Closed pillar channel read every half pressure snapshot"), CycleScope.IsValid() && DriftRun.bHasReadAllSnapshots && DriftRun.Snapshots.Num() == MeanDriftFrameCount))
 		{
+			ReportWaterStateCrcLines(*this, TEXT("OpenBoundary"), TEXT("closed_pillar"), DriftRun.Snapshots.Last(), DriftRequest.SnapshotTextures);
 			FString DeltaSeries;
 			TArray<double> Deltas;
 			for (const FTDWaterGpuStateSnapshot& Snapshot : DriftRun.Snapshots)
@@ -2227,6 +2324,7 @@ bool FTDFluidGpuWaterModuleRhiMultigridOpenBoundaryConvergesTest::RunTest(const 
 			const bool bHasDecaySnapshot = CycleScope.IsValid() && DecayScope.IsValid() && DecayRun.bHasReadAllSnapshots && DecayRun.Snapshots.Num() == 1;
 			if (TestTrue(*FString::Printf(TEXT("%s decay %d run read the half pressure"), DecayLabel, DecayFrames), bHasDecaySnapshot))
 			{
+				ReportWaterStateCrcLines(*this, TEXT("OpenBoundary"), FString::Printf(TEXT("%s_decay_%d"), DecayLabel, DecayFrames), DecayRun.Snapshots[0], DecayRequest.SnapshotTextures);
 				DecayPressures.Add(GetSnapshotTexture(DecayRun.Snapshots[0], ETDWaterGpuStateTexture::Pressure));
 			}
 		}

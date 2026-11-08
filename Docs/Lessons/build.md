@@ -176,8 +176,17 @@
 ### L-build-20 에디터(SM6)에서 멀쩡한 TDFluidGpu 전역 셰이더가 패키지 쿠킹 때 PCD3D_SM5(D3D11 FL11.0)로도 컴파일되어 치명 오류로 쿠킹 전체가 실패한다 — 에디터·PIE·헤드리스 시험으로는 드러나지 않음
 - 증상: `cook_single_map.py` 가 약 30~95초 만에 `AutomationTool exiting with ExitCode=25 (Error_UnknownCookFailure)`. 로그 `24 errors encountered compiling global shaders for platform PCD3D_SM5` 뒤 `appError called: Fatal error: [File:...ShaderCompilerEditor.cpp] [Line: 601]`. 원인 줄 두 종류: `FTDFluidGpuWaterShiftCS` `Shader is using too many UAVs: 9 (only 8 supported)`·`limit is 8 due to maximum feature level 11.0`, `FTDFluidGpuMultigridCoarseSolveCS` `error X4026: thread sync operation must be in non-varying flow control`(FXC). `FTDFluidGpuPainterStepCS` 순열 2도 실패
 - 원인: `Config/DefaultEngine.ini` 의 `+D3D11TargetedShaderFormats=PCD3D_SM5` 때문에 쿠킹이 SM6와 함께 SM5 전역 셰이더를 컴파일한다. TDFluidGpu 셰이더의 `ShouldCompilePermutation` 은 `IsFeatureLevelSupported(..., SM5)` 라 SM5에서도 컴파일 대상이고, 에디터는 SM6(DXC)만 써서 FXC 제약(UAV 8개·분기 안 GroupMemoryBarrier 금지)을 만나지 않는다. 마지막 쿠킹 성공 2026-10-18(cook-path-audit), TDFluidGpu 모듈 추가 2026-10-20(0b7056e1) 뒤로 쿠킹한 적이 없어 늦게 드러났다
-- 해결: 미검증(FX-P FU-14). 후보 (가) 문제 셰이더를 UAV 8개 이하·동기화를 균일 흐름으로 고치기 (나) 해당 순열을 SM6 전용으로 하고 SM5 백엔드에서 CPU 경로로 내리기(`TDFluidGpuBackendSelection.cpp` bSupportsShaderModel5) (다) D3D11 SM5 대상을 빼기(설정 변경 = 사용자 결정). 확인은 `python Tools/cook_single_map.py --label <이름>` 종료 0. GPU 셰이더를 고치거나 추가한 단계는 쿠킹 1회를 완료 조건에 넣는다
+- 해결: (가)로 고침(2026-11-08, FU-14, 설정 변경 없음). WaterShift는 상태 패스(UAV 5)와 필드 초기화 패스(UAV 4, 새 순열 FIELD_RESET, 필드 UAV는 MakeUAV로 장벽 유지)로 나눔. MultigridCoarse는 groupshared 플래그를 읽은 뒤 GroupMemoryBarrierWithGroupSync 한 줄 추가(X4026 해소, 원래도 경쟁 없음). PainterStep 순열 2·3은 실제 원인이 UAV 수가 아니라 PF_G32R32F 형식 있는 UAV 읽기(float2)였다 — 속도 순열에만 CFLAG_AllowTypedUAVLoads를 주고, RHIIsTypedUAVLoadSupported(PF_G32R32F)가 거짓인 장치는 판정기가 페인터 속도 액터를 CPU로 보냄. 로그의 'N errors'는 중복을 지운 고유 메시지 수라 실패 작업 수(6)와 다르다. 확인: SM6 시험 보고 줄 205개 전후 동일, 쿠킹 2맵 종료 0, `UnrealEditor-Cmd -run=CookGlobalShaders -platform=Windows`(SM5 전역만, 약 1분) 오류 0, -d3d11 시험 7/7. `Tools/FluidFX/check_fluid_gpu_shaders.py`는 dxc cs_6_0만 써서 FXC 제약(UAV 8개·X4026·형식 있는 UAV 읽기)을 원리상 못 잡는다. 남은 여유: UAV 7개 셰이더 3개(ShiftCS·AdvectDensityPack·WaterFinalize), MultigridCoarse 순열 1 groupshared 27,852/32,768바이트
 - 범위: Source/TDFluidGpu/Shaders/Private/*.usf 전역 셰이더, 패키징(BuildCookRun) 경로 전부
-- 증거: Saved/Logs/cook_fxp-pkg-min.log·cook_fxp-pkg-fluid.log, Saved/AgentOps/cook_fxp-pkg-min.json, Saved/FluidFX/fxp/package-min.md
-- 날짜·상태: 2026-11-07 active
+- 증거: Saved/Logs/cook_fxp-pkg-min.log·cook_fxp-pkg-fluid.log, Saved/AgentOps/cook_fxp-pkg-min.json, Saved/FluidFX/fxp/package-min.md · 해결 Saved/AgentOps/20261108/fu14/(spec-v2.md·stage-c.md·fu14-gs.log·harness/), Saved/AgentOps/cook_fu14-cambat.json·cook_fu14-foliage.json
+- 날짜·상태: 2026-11-07 발견, 2026-11-08 해결(active, 재발 방지 규칙: GPU 셰이더를 고치거나 추가한 단계는 CookGlobalShaders 또는 쿠킹 1회를 완료 조건에)
 - 발견: claude(FluidFX FX-P X5)
+
+### L-build-21 D3D11 RHI에서 `SubmitAndBlockUntilGPUIdle()` 직후 `FRHIGPUReadback::IsReady()`가 거짓일 수 있다 — 같은 시험이 D3D12에서는 통과
+- 증상: `-d3d11` 로 돌린 `TDGame.FluidFXRhi.Water.Module.ShiftMovesWaterStateExactly`·`MultigridOpenBoundaryConverges` 가 수치가 아니라 '읽기 성공' 단언에서 실패(D3D12 에서는 통과). 같은 실행의 감쇠 읽기 4회는 성공해, 늘 실패하는 것은 아니다
+- 원인: D3D11 GPU 펜스 `Poll` 은 이벤트 완료 표시만 보는데(Engine `D3D11Commands.cpp:1720`), 그 표시는 `RHISubmitCommandLists` 첫머리의 `PollSyncs`(:1411)에서만 갱신된다. `RHIBlockUntilGPUIdle`(:1244)은 별도 쿼리로 기다려 이벤트를 표시하지 않는다
+- 해결: 대기 뒤 리드백이 모두 준비될 때까지 다시 제출하는 반복(상한 16, 넘으면 그대로 실패) — `TDFluidGpuWaterModuleRhiTests.cpp` `SubmitUntilWaterReadbacksAreReady`, D3D11 추가 제출 1회·D3D12 0회. 더 단순한 엔진 경로 `FRHIGPUReadback::Wait(RHICmdList, GPUMask)`(`RHIGPUReadback.h:53`, D3D11 은 `PollSyncsUntil`)는 미검증
+- 범위: 리드백을 쓰는 RHI 시험·도구 전부(렌더 타깃 ReadPixels 경로는 해당 없음). 시험 하네스는 오프스크린 기본 D3D12 라 SM5 경로를 덮지 않는다 — `build_and_test.py` 에 `--rhi d3d11` 없음(직접 실행기 `Saved/AgentOps/20261108/fu14/run_d3d11.py`)
+- 증거: Saved/AgentOps/20261108/fu14/fu14-d3d11-tests.log(5/7) → harness/fu14-d3d11-tests.json(7/7)
+- 날짜·상태: 2026-11-08 active
+- 발견: claude(FluidFX FU-14)

@@ -20,6 +20,7 @@
 #include "Misc/DateTime.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "RHI.h"
 #include "RHICommandList.h"
 #include "RHIGlobals.h"
 #include "RenderingThread.h"
@@ -453,6 +454,40 @@ bool FTDFluidFoliageBendRhiLiveGpuAuxCarriesBendTest::RunTest(const FString& Par
 	TestTrue(TEXT("live GPU bend layer has output"), Component.GetFoliageBendLayer().HasOutput());
 	TestTrue(TEXT("live GPU aux carries the bend in blue and alpha"), LargestBend > LiveBendThreshold);
 	TestTrue(TEXT("registered MID turns AuxFoliageBendActive on"), bHasBendActive && BendActive == 1.0f);
+	return !HasAnyErrors();
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidFoliageRhiPainterVelocityBackendMatchesCapabilityTest,
+	"TDGame.FluidFXRhi.Foliage.PainterVelocityBackendMatchesCapability",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidFoliageRhiPainterVelocityBackendMatchesCapabilityTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidFoliageBendRhiTestsPrivate;
+
+	const FString CaseLabel = TEXT("TDGame.FluidFXRhi.Foliage.PainterVelocityBackendMatchesCapability");
+	if (!CanRunFoliageBendRhiTest(*this, CaseLabel))
+	{
+		return false;
+	}
+
+	FTDFluidSimulationConfig Config = UTDFluidPresetAsset::BuildConfigForPresetKind(ETDFluidPresetKind::FoliagePainter);
+	Config.SolverBackend = ETDFluidSolverBackend::Gpu;
+	TestTrue(TEXT("FoliagePainter is a simple painter"), Config.SimMode == ETDFluidSimMode::SimplePainter);
+	TestTrue(TEXT("FoliagePainter writes painter velocity"), Config.bWritesPainterVelocity);
+	FTDFluidFoliageBendRhiTestWorld TestWorld;
+	ATDFluidLiveActor* LiveActor = TestWorld.World ? SpawnFoliageLiveActor(*TestWorld.World, Config) : nullptr;
+	if (!TestNotNull(TEXT("FoliagePainter live actor spawns"), LiveActor))
+	{
+		return false;
+	}
+
+	const bool bSupportsTypedUavLoad = RHIIsTypedUAVLoadSupported(PF_G32R32F);
+	const bool bUsesGpuSolver = LiveActor->LiveComponent->IsUsingGpuSolver();
+	AddInfo(FString::Printf(TEXT("%s: typed_uav_load_g32r32f=%d uses_gpu_solver=%d"), *CaseLabel, bSupportsTypedUavLoad ? 1 : 0, bUsesGpuSolver ? 1 : 0));
+	TestTrue(TEXT("FoliagePainter simulation is initialized"), LiveActor->LiveComponent->IsSimulationInitialized());
+	TestEqual(TEXT("FoliagePainter GPU selection follows the PF_G32R32F typed UAV load capability"), bUsesGpuSolver, bSupportsTypedUavLoad);
 	return !HasAnyErrors();
 }
 

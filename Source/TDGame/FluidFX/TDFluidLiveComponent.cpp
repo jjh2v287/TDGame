@@ -2201,6 +2201,7 @@ FTDFluidGpuBackendDecision UTDFluidLiveComponent::ResolveSolverBackend() const
 	BackendQuery.RequestedResolution = SimulationConfig.GridResolution;
 	BackendQuery.CpuFallbackResolution = SimulationConfig.CpuFallbackResolution;
 	BackendQuery.bIsSimplePainter = SimulationConfig.SimMode == ETDFluidSimMode::SimplePainter;
+	BackendQuery.bWritesPainterVelocity = SimulationConfig.bWritesPainterVelocity;
 	return FTDFluidGpuBackendSelection::Decide(BackendQuery, FTDFluidGpuBackendSelection::CaptureEnvironment());
 }
 

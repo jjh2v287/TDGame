@@ -1708,6 +1708,47 @@ bool FTDFluidGpuResolutionClampPerBackendTest::RunTest(const FString& Parameters
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidGpuPainterVelocityNeedsTypedUavLoadTest,
+	"TDGame.FluidFX.Gpu.PainterVelocityNeedsTypedUavLoad",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidGpuPainterVelocityNeedsTypedUavLoadTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidGpuBackendTestPrivate;
+
+	struct FTDFluidPainterVelocityCase
+	{
+		const TCHAR* Name;
+		bool bSupportsTypedUavLoad;
+		bool bWritesPainterVelocity;
+		ETDFluidGpuSolverPreference Preference;
+		ETDFluidGpuBackendOverride Override;
+		bool bExpectsGpu;
+	};
+
+	const FTDFluidPainterVelocityCase PainterVelocityCases[] = {
+		{ TEXT("Painter velocity without typed UAV load keeps a Gpu setting on the CPU"), false, true, ETDFluidGpuSolverPreference::Gpu, ETDFluidGpuBackendOverride::FollowPreset, false },
+		{ TEXT("Painter velocity without typed UAV load keeps console force GPU on the CPU"), false, true, ETDFluidGpuSolverPreference::Cpu, ETDFluidGpuBackendOverride::ForceGpuWhenPossible, false },
+		{ TEXT("Painter velocity with typed UAV load uses the GPU"), true, true, ETDFluidGpuSolverPreference::Gpu, ETDFluidGpuBackendOverride::FollowPreset, true },
+		{ TEXT("Painter without velocity uses the GPU without typed UAV load"), false, false, ETDFluidGpuSolverPreference::Gpu, ETDFluidGpuBackendOverride::FollowPreset, true },
+	};
+
+	for (const FTDFluidPainterVelocityCase& PainterVelocityCase : PainterVelocityCases)
+	{
+		FTDFluidGpuBackendEnvironment Environment = MakeBackendEnvironment(true, true, PainterVelocityCase.Override);
+		Environment.bSupportsPainterVelocityTypedUavLoad = PainterVelocityCase.bSupportsTypedUavLoad;
+		FTDFluidGpuBackendQuery Query;
+		Query.Preference = PainterVelocityCase.Preference;
+		Query.RequestedResolution = 256;
+		Query.bIsSimplePainter = true;
+		Query.bWritesPainterVelocity = PainterVelocityCase.bWritesPainterVelocity;
+		const FTDFluidGpuBackendDecision Decision = FTDFluidGpuBackendSelection::Decide(Query, Environment);
+		TestTrue(*FString::Printf(TEXT("%s: backend"), PainterVelocityCase.Name), Decision.bUsesGpu == PainterVelocityCase.bExpectsGpu);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidGpuReadbackFieldMappingTest,
 	"TDGame.FluidFX.Gpu.ReadbackFieldMappingMatchesCpuDownsample",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

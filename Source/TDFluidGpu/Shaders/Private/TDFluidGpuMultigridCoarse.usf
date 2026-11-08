@@ -179,8 +179,9 @@ void LabelConnectedComponents(uint GroupIndex)
 			SharedLabelChanged[LabelPass % TDFLUIDGPU_MG_LABEL_FLAG_COUNT] = 1u;
 		}
 		GroupMemoryBarrierWithGroupSync();
-
-		if (SharedLabelChanged[LabelPass % TDFLUIDGPU_MG_LABEL_FLAG_COUNT] == 0u)
+		const bool bHasAnyChangedLabel = SharedLabelChanged[LabelPass % TDFLUIDGPU_MG_LABEL_FLAG_COUNT] != 0u;
+		GroupMemoryBarrierWithGroupSync();
+		if (!bHasAnyChangedLabel)
 		{
 			break;
 		}

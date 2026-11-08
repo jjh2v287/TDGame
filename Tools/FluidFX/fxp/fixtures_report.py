@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(표준 라이브러리만), check_fxp_fixtures.py 가 import 해서 run(임시 루트)을 부른다.
 실행 명령: python -B Tools/FluidFX/fxp/check_fxp_fixtures.py(단독 실행 없음).
-출력: (통과, 실패, 줄). 합성 입력 9개·실제 fxp_static.json·합성 실행서(고정 문구 + 그 static 원래 줄로 만든 5·6절 표)/defs/sha 기록으로 fxp_audit.py report 를 돌려 정상·같은 바이트·종료 2(입력 빠짐·형식·날짜·원래 줄 없음)·종료 1(sha 불일치·D-49(40자 창 경계)·입력 problems·연결 불일치·4.1/4.7 재검산(basis 섞임·승인 대기 ∧ 충족)·행 동등·4.2·4.3·골든·고정 문구·FU·FQ 표(v3 FU-15 대 v4·조각·id 목록·기록만)·excluded)·경고(모듈 사이 sha)를 본다.
-상태: 2026-11-07 FX-P X6(B6), fix1(빌더 A) 반박 변이·FU·FQ 표 대조 사례 추가.
+출력: (통과, 실패, 줄). 합성 입력 9개·실제 fxp_static.json·합성 실행서(고정 문구 + 그 static 원래 줄로 만든 5·6절 표)/defs/sha 기록으로 fxp_audit.py report 를 돌리고(이음표·생략 경로는 check_static_tables 직접 호출) 정상·같은 바이트·종료 2(입력 빠짐·형식·날짜·원래 줄 없음)·종료 1(sha 불일치·D-49(40자 창 경계)·입력 problems·연결 불일치·4.1/4.7 재검산(basis 섞임·승인 대기 ∧ 충족)·행 동등·4.2·4.3·골든·고정 문구·FU·FQ 표(v3 FU-15 대 v4·조각(순서)·원천 조각(묶음·단일 id)·id 목록(빠짐·순서·중복)·기록만(묶음 가운데·표지 없는 줄))·excluded)·경고(모듈 사이 sha)를 본다.
+상태: 2026-11-07 FX-P X6(B6), fix1(빌더 A) 반박 변이·FU·FQ 표 대조 사례 추가, 2026-11-08 fix2 반박 공백 4변이(순서·중복·기록만 둘·조각 순서)·원천 조각 사례 추가, fix3 X7 반박 공백(괄호·여러 묶음 모호·생략 경로 고정 '[회귀 고정]', 앞뒤 공백·이음표 수·생략 경고)·표기(d 없음·P 규칙·레벨 평균·합산·교훈 줄) 사례 추가.
 """
 import copy
 import hashlib
@@ -168,7 +168,11 @@ def check_normal(log, root):
     document = first.document or {}
     public_lines = (first.public_bytes or b"").decode("utf-8").splitlines()
     sha8 = sha_file(world, RUNBOOK)[:8]
-    log.check("정상 공개 md 머리 3줄", public_lines[:3] == [f"{report.TITLE_PREFIX}{DATE}, claude)", report.LESSON_LINE, report.COMMAND_LINE], str(public_lines[:3]))
+    static = real_static()
+    lesson = f"교훈: {static['lesson_line']}" if "lesson_line" in static else report.LESSON_LINE
+    log.check("정상 공개 md 머리 3줄(교훈 줄 = fxp_static lesson_line)", public_lines[:3] == [f"{report.TITLE_PREFIX}{DATE}, claude)", lesson, report.COMMAND_LINE], str(public_lines[:3]))
+    log.check("정상 원천 대조 생략 0줄(JSON·md 경고)", document.get("static_tables_skipped") == [] and "FU·FQ id별 원천 대조 생략 0줄" in first.markdown,
+              f"{document.get('static_tables_skipped')}")
     log.check("정상 4.6 머리 채움", "동등 확인 1영역" in document.get("header", "") and f"실행서 sha {sha8}(기록 1줄)" in document.get("header", ""), document.get("header"))
     log.check("정상 md 끝 SUMMARY", first.markdown.rstrip("\n").splitlines()[-1].startswith("SUMMARY ") and public_lines[-1].startswith("SUMMARY "), first.markdown[-200:])
     log.check("정상 입력 고정 목록(fxp-audit* 제외)", sorted(document.get("inputs") or {}) == EXPECTED_INPUTS, str(sorted(document.get("inputs") or {})))
@@ -358,6 +362,84 @@ def add_runbook_fq_row(documents, settings):
     settings["runbook"] = "\n".join(lines[:index + 1] + ["| 21 | 새 질문 | DEC:999 |"] + lines[index + 1:])
 
 
+def swap_fields(key, first, second, field):
+    def change(static):
+        a, b = static_entry(static, key, first), static_entry(static, key, second)
+        a[field], b[field] = b[field], a[field]
+    return change_static(change)
+
+
+def swap_follow_up_order(static):
+    entries = static["follow_ups"]
+    first, second = [entries.index(static_entry(static, "follow_ups", identifier)) for identifier in ("FU-2", "FU-3")]
+    entries[first], entries[second] = entries[second], entries[first]
+
+
+def duplicate_follow_up(static):
+    static["follow_ups"].insert(2, dict(static_entry(static, "follow_ups", "FU-2")))
+
+
+def duplicate_row_and_entries(static):
+    rows, entries = static["follow_up_rows"], static["follow_ups"]
+    row_index = rows.index(static_entry(static, "follow_up_rows", "2 · 3", "no"))
+    rows.insert(row_index + 1, dict(rows[row_index]))
+    entry_index = entries.index(static_entry(static, "follow_ups", "FU-3"))
+    entries[entry_index + 1:entry_index + 1] = [dict(static_entry(static, "follow_ups", "FU-2")), dict(static_entry(static, "follow_ups", "FU-3"))]
+
+
+def reorder_rows_and_entries(static):
+    rows, entries = static["follow_up_rows"], static["follow_ups"]
+    first, second = [rows.index(static_entry(static, "follow_up_rows", number, "no")) for number in ("2 · 3", "4 · 5")]
+    rows[first], rows[second] = rows[second], rows[first]
+    order = {identifier: entries.index(static_entry(static, "follow_ups", identifier)) for identifier in ("FU-2", "FU-3", "FU-4", "FU-5")}
+    moved = [static_entry(static, "follow_ups", identifier) for identifier in ("FU-4", "FU-5", "FU-2", "FU-3")]
+    for slot, entry in zip(sorted(order.values()), moved):
+        entries[slot] = entry
+
+
+def shift_range_boundary(static):
+    static_entry(static, "user_items", "FQ-7").update(ask="㊻·㊿(W11 #3")
+    static_entry(static, "user_items", "FQ-8").update(ask="#6·#9·#11·#12·#13·#17)")
+
+
+def add_later_table_line(documents, settings):
+    last = f"| {settings['static']['user_item_rows'][-1]['no']} |"
+    lines = settings["runbook"].split("\n")
+    index = next(number for number, line in enumerate(lines) if line.startswith(last))
+    settings["runbook"] = "\n".join(lines[:index + 1] + ["", "참고 표(대조 밖):", "| x | y | z |"] + lines[index + 1:])
+
+
+def check_static_table_parent_cases(log, root):
+    list_text = "FU 원래 줄 목록 순서·중복이 실행서 5절 표와 다름"
+    expect_code(log, root, "원래 줄과 항목 함께 중복(2 · 3) 종료 1", 1, change_static(duplicate_row_and_entries), expect_text=list_text)
+    expect_code(log, root, "원래 줄과 항목 함께 순서 바꿈(2 · 3 ↔ 4 · 5) 종료 1", 1, change_static(reorder_rows_and_entries), expect_text=list_text)
+    expect_code(log, root, "범위 이음 경계 이동(FQ-7·FQ-8) 종료 1", 1, change_static(shift_range_boundary), expect_text="FQ 원래 줄 '3~8' 이음표 모호: FQ-7")
+    expect_code(log, root, "범위 묶음 항목 맞바꿈(FQ-4·FQ-5) 종료 1", 1, swap_fields("user_items", "FQ-4", "FQ-5", "ask"), expect_text="FQ 원래 줄 '3~8' 조각 ≠ id별 ask")
+    expect_code(log, root, "범위 압축 원천 맞바꿈(FQ-4·FQ-6) 종료 1", 1, swap_fields("user_items", "FQ-4", "FQ-6", "source"), expect_text="FQ 원래 줄 '3~8' 원천 조각 ≠ FQ-4 source")
+    expect_code(log, root, "범위 원천 접두 펼침(FQ-10 = FU-6) 종료 1", 1, change_static(lambda static: static_entry(static, "user_items", "FQ-10").update(source="FU-6")),
+                expect_text="FQ 원래 줄 '9 · 10~12' 원천 조각 ≠ FQ-10 source")
+    expect_code(log, root, "범위 섞인 줄의 단일 id 원천(FQ-9) 종료 1", 1, change_static(lambda static: static_entry(static, "user_items", "FQ-9").update(source="DEC:999")),
+                expect_text="FQ 원래 줄 '9 · 10~12' 원천 조각 ≠ FQ-9 source")
+    expect_code(log, root, "공유 원천 범위(13~19) 하나만 다름 종료 1", 1, change_static(lambda static: static_entry(static, "user_items", "FQ-17").update(source="D10:27")),
+                expect_text="FQ 원래 줄 '13~19' 원천 조각 ≠ FQ-17 source")
+    expect_code(log, root, "표 뒤 다른 '|' 줄은 대조 밖 종료 0", 0, add_later_table_line)
+
+
+def check_static_table_gaps(log, root):
+    order_text = "FU id 목록 다름: 원래 줄에만 [] · follow_ups에만 []"
+    expect_code(log, root, "FU id 순서 바뀜(FU-2·FU-3) 종료 1", 1, change_static(swap_follow_up_order), expect_text=order_text)
+    expect_code(log, root, "FU id 중복(FU-2 두 번) 종료 1", 1, change_static(duplicate_follow_up), expect_text=order_text)
+    expect_code(log, root, "기록만 묶음 13~19 가운데 FQ-15만 false 종료 1", 1,
+                change_static(lambda static: static_entry(static, "user_items", "FQ-15").update(record_only=False)), expect_text="FQ 원래 줄 '13~19' 기록만 표지")
+    expect_code(log, root, "표지 없는 줄 FQ-1 record_only true 종료 1", 1,
+                change_static(lambda static: static_entry(static, "user_items", "FQ-1").update(record_only=True)), expect_text="FQ 원래 줄 '1' 기록만 표지")
+    expect_code(log, root, "FU-2·FU-3 item 맞바꿈 종료 1", 1, swap_fields("follow_ups", "FU-2", "FU-3", "item"), expect_text="FU 원래 줄 '2 · 3' 조각 ≠ id별 item")
+    expect_code(log, root, "FU-2·FU-3 source 맞바꿈 종료 1", 1, swap_fields("follow_ups", "FU-2", "FU-3", "source"),
+                expect_text="FU 원래 줄 '2 · 3' 원천 조각 ≠ FU-2 source")
+    expect_code(log, root, "단일 id 줄 FU-15 source 앞 조각만 종료 1", 1,
+                change_static(lambda static: static_entry(static, "follow_ups", "FU-15").update(source=V3_FU15_SOURCE)), expect_text="FU 원래 줄 '15' 원천 조각 ≠ FU-15 source")
+
+
 def check_static_tables(log, root):
     run = expect_code(log, root, "v3 문안(FU-15 = R16만) 대 v4 실행서 종료 1", 1, v3_fu15(True), expect_text="FU 원래 줄이 실행서 5절 표에 없음: '| 15 | 굽기 변형 R16:")
     log.check("v3 대 v4: 실행서 v4 줄도 static에 없음으로", "실행서 5절 표 줄이 fxp_static follow_up_rows에 없음: '| 15 | 굽기 변형: R16" in problems_text(run), problems_text(run)[:300])
@@ -401,6 +483,107 @@ def check_compare_r13_golden_levels(log, root):
     expect_code(log, root, "4.4 excluded 근거 없음 종료 1", 1, set_value("levels", ["excluded", "L.3.7", "evidence"], ""), expect_text="excluded 근거")
 
 
+def synthetic_tables(rows, entries):
+    lines = ["## 5. FU", "", "## 6. FQ", "", "| FQ | 묻는 것 | 근거 |", "|---|---|---|"] + [f"| {no} | {text} | {source} |" for no, text, source in rows] + ["", "## 7. 끝"]
+    static = {"follow_up_rows": [], "follow_ups": [], "user_item_rows": [{"no": no, "ask": text, "source": source} for no, text, source in rows],
+              "user_items": [{"id": identifier, "ask": text, "source": source, "record_only": False} for identifier, text, source in entries]}
+    return "\n".join(lines) + "\n", static
+
+
+def table_case(log, case, rows, entries, expect_text=None):
+    problems = report.check_static_tables(*synthetic_tables(rows, entries))
+    ok = not problems if expect_text is None else any(expect_text in problem for problem in problems)
+    log.check(case, ok, str(problems)[:300])
+
+
+def check_joiner_pins(log):
+    table_case(log, "[회귀 고정] 여러 묶음 줄 단일 id 글자에 괄호 밖 ' · ' → 모호", [("1 · 2", "A · B · C", "S · T")], [("FQ-1", "A · B", "S"), ("FQ-2", "C", "T")],
+               "FQ 원래 줄 '1 · 2' 이음표 모호: FQ-1")
+    table_case(log, "[회귀 고정] 닫힌 괄호 뒤 이음표 'A(b)·C' → 모호", [("1~2", "A(b)·C·D", "S")], [("FQ-1", "A(b)·C", "S"), ("FQ-2", "D", "S")],
+               "FQ 원래 줄 '1~2' 이음표 모호: FQ-1")
+    table_case(log, "[회귀 고정] 짝 없는 닫는 괄호 뒤 이음표 'x)·d' → 모호", [("1~2", "x)·d·e", "S")], [("FQ-1", "x)·d", "S"), ("FQ-2", "e", "S")],
+               "FQ 원래 줄 '1~2' 이음표 모호: FQ-1")
+    table_case(log, "[회귀 고정] 범위 원천 펼침 불가 → 묶음 말고 줄 전체 생략(단일 id 원천도 대조 안 함)", [("1 · 2~3", "X · A·B", "P · Q·R·S")],
+               [("FQ-1", "X", "WRONG"), ("FQ-2", "A", "Q"), ("FQ-3", "B", "R")])
+    table_case(log, "[회귀 고정] 범위 원천 접두 없음 → 줄 생략", [("1~2", "A·B", "가·나")], [("FQ-1", "A", "가·나"), ("FQ-2", "B", "가·나")])
+    table_case(log, "[회귀 고정] 범위 원천 조각 수 ≠ id 수 → 줄 생략", [("1~2", "A·B", "D:1·2·3")], [("FQ-1", "A", "D:1·2·3"), ("FQ-2", "B", "D:1·2·3")])
+    table_case(log, "[회귀 고정] 원천 ' · ' 조각 수 ≠ 묶음 수 → 줄 생략", [("1 · 2", "X · Y", "P · Q · R")], [("FQ-1", "X", "WRONG"), ("FQ-2", "Y", "WRONG")])
+
+
+def check_joiner_latent(log):
+    table_case(log, "id 글자 앞뒤 공백(번호 나열을 공백 낀 붙여 잇기로) → 문제", [("1~2", "1 A · 2 B", "S")], [("FQ-1", "1 A ", "S"), ("FQ-2", " 2 B", "S")],
+               "FQ 원래 줄 '1~2' FQ-1 ask 앞뒤 공백")
+    table_case(log, "[회귀 고정] 번호 나열 참값(공백 없음) 통과", [("1~2", "1 A · 2 B", "S")], [("FQ-1", "A", "S"), ("FQ-2", "B", "S")])
+    table_case(log, "붙여 잇기 이음표가 괄호 안('A(x·y' + 'z)') → 이음표 수 문제", [("1~2", "A(x·y·z)", "S")], [("FQ-1", "A(x·y", "S"), ("FQ-2", "z)", "S")],
+               "FQ 원래 줄 '1~2' 붙여 잇기 이음표 수: FQ-1~2 괄호 밖 '·' 0개 ≠ id 수−1 1")
+    table_case(log, "짝 없는 여는 괄호가 이음표를 가림('A(B·C' + 'D') → 이음표 수 문제", [("1~2", "A(B·C·D", "S")], [("FQ-1", "A(B·C", "S"), ("FQ-2", "D", "S")],
+               "FQ 원래 줄 '1~2' 붙여 잇기 이음표 수")
+    table_case(log, "[회귀 고정] 붙여 잇기 괄호 안 이음표만(㊿(W11 #3·#6)) 통과", [("1~2", "㊻·㊿(W11 #3·#6)", "DEC:498·499")], [("FQ-1", "㊻", "DEC:498"), ("FQ-2", "㊿(W11 #3·#6)", "DEC:499")])
+
+
+def notation_rows(documents, settings):
+    compare = documents["compare"]
+    base = compare["rows"][0]
+    compare["rows"] += [dict(base, area="smoke", row="HV2/ft", d={"median": None, "interval": None}, p95_record_median=0.97, p_label="판정 불가(불안정)", p_rule="judge.json"),
+                        dict(base, area="fog", row="FO3/ft", d={"median": None, "interval": None}, p95_record_median=None, p_label="통과", p_rule="FO3 SM2/ft 통과(B17)",
+                             derived_from="SM2/ft", live2_public="PF 줄 없음(한도 원천이 PF 밖)"),
+                        dict(base, area="fog", row="FO9/ft", d={"median": 0.5, "interval": None})]
+    documents["levels"]["counts"].update(strict_mean=0.4757, strict_items=110, items=294)
+
+
+def md_line(run, prefix):
+    return next((line for line in run.markdown.splitlines() if line.startswith(prefix)), "")
+
+
+def check_notation(log, root):
+    run = expect_code(log, root, "[회귀 고정] 표기 사례(d 없음·P 규칙 대신 판정·레벨 평균·합산) 종료 0", 0, notation_rows)
+    hv2, fo3, fo9 = md_line(run, "| smoke | HV2/ft |"), md_line(run, "| fog | FO3/ft |"), md_line(run, "| fog | FO9/ft |")
+    log.check("2절 d 없는 행 '—'(None 구간 아님)", hv2.startswith("| smoke | HV2/ft | ft | — | — | 0.97 |") and "None" not in hv2, hv2)
+    log.check("2절 P 규칙 대신 판정 → 표기 칸에 규칙·원천 행·측정 없음", fo3.endswith(f"| {report.COMPARE_NOTATION} · P 규칙 FO3 SM2/ft 통과(B17), SM2/ft 행이 대신 판정, 이 행 측정 없음 |")
+              and fo3.startswith("| fog | FO3/ft | ft | — |"), fo3)
+    log.check("[회귀 고정] 2절 기본 규칙(judge.json) 행은 표기 그대로", hv2.endswith(f"| {report.COMPARE_NOTATION} |"), hv2)
+    log.check("2절 구간 없는 중앙값은 값만", fo9.startswith("| fog | FO9/ft | ft | 0.5 |"), fo9)
+    notes = {row.get("row"): row.get("rule_note") for row in ((run.document or {}).get("compare") or {}).get("rows") or []}
+    log.check("2절 JSON rule_note(FO3만)", notes == {"FI1/ft": None, "HV2/ft": None, "FO3/ft": "P 규칙 FO3 SM2/ft 통과(B17), SM2/ft 행이 대신 판정, 이 행 측정 없음", "FO9/ft": None}, f"{notes}")
+    log.check("5절 레벨 평균·합산 이름 붙여 병기", "엄격(셋업 항목) 레벨 평균 0.476 · 합산 110/294 = 0.374" in run.markdown, md_line(run, "- 느슨"))
+
+
+def without_lesson(documents, settings):
+    settings["static"].pop("lesson_line", None)
+
+
+def with_lesson(value):
+    def mutate(documents, settings):
+        settings["static"]["lesson_line"] = value
+    return mutate
+
+
+def check_lesson_line(log, root):
+    run = expect_code(log, root, "[회귀 고정] 교훈 키 없음(하위 호환) 종료 0", 0, without_lesson)
+    lines = (run.public_bytes or b"").decode("utf-8").splitlines()
+    log.check("[회귀 고정] 교훈 키 없음 → 고정 '–' 문구", lines[1:2] == [report.LESSON_LINE], str(lines[:3]))
+    run = expect_code(log, root, "[회귀 고정] 교훈 키 있음 종료 0", 0, with_lesson("L-x-1(합성 교훈)"))
+    lines = (run.public_bytes or b"").decode("utf-8").splitlines()
+    log.check("교훈 키 있음 → '교훈: <lesson_line>'", lines[1:2] == ["교훈: L-x-1(합성 교훈)"], str(lines[:3]))
+    expect_code(log, root, "교훈 키 빈 글자 종료 2", 2, with_lesson(""))
+
+
+def unexpandable_rows(documents, settings):
+    static = settings["static"]
+    static_entry(static, "follow_up_rows", "2 · 3", "no")["source"] += " · 덧붙임"
+    static_entry(static, "user_item_rows", "3~8", "no")["source"] = "DEC:489·493"
+    settings["runbook"] = runbook_text(static)
+
+
+def check_skipped_sources(log, root):
+    run = expect_code(log, root, "[회귀 고정] 원천 펼칠 수 없는 줄 2개는 경고만 종료 0", 0, unexpandable_rows)
+    skipped = [(entry.get("table"), entry.get("no"), entry.get("reason")) for entry in (run.document or {}).get("static_tables_skipped") or []]
+    log.check("생략 줄 JSON static_tables_skipped(표·번호·사유)", skipped == [("FU", "2 · 3", "조각 수 ≠ 묶음 수"), ("FQ", "3~8", "범위 원천을 펼칠 수 없음(조각 수 ≠ id 수·접두 없음)")],
+              f"{skipped}")
+    log.check("생략 줄 md 11절 경고(줄 수·번호)", "FU·FQ id별 원천 대조 생략 2줄(그 줄 전체) — FU '2 · 3' 조각 수 ≠ 묶음 수 · FQ '3~8'" in run.markdown,
+              md_line(run, "- 경고"))
+
+
 def run(tmp_root):
     log = FixtureLog("report")
     root = Path(tmp_root)
@@ -412,6 +595,13 @@ def run(tmp_root):
     check_areas(log, root)
     check_equivalence_conditions(log, root)
     check_static_tables(log, root)
+    check_static_table_gaps(log, root)
+    check_static_table_parent_cases(log, root)
     check_rows(log, root)
     check_compare_r13_golden_levels(log, root)
+    check_joiner_pins(log)
+    check_joiner_latent(log)
+    check_notation(log, root)
+    check_lesson_line(log, root)
+    check_skipped_sources(log, root)
     return log.result()

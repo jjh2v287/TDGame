@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(표준 라이브러리만, 에디터·빌드 불필요), fxp_audit.py report 가 import 해서 build(context)를 부른다.
 실행 명령: python -B Tools/FluidFX/fxp/fxp_audit.py report --runbook <실행서> --defs <정의 묶음> --date <YYYY-MM-DD> --out <json> [--md <md>] [--public-md <공개 md>] [--root <저장소 사본>](runbook-fxp-v3 3.8·4절, defs Report).
 출력: Saved/FluidFX/fxp 고정 입력 9개(areas·items·golden·compare·rows·levels·r13·package-min·package-fluid)·fxp_static.json·x0-runbook.sha256 을 묶은 최종 동등 감사 JSON·md·공개 md(OP-24 제목·교훈·명령 줄). 종료 0 / 1(실행서·defs sha 불일치·입력 problems·연결 불일치·4.1~4.7 재검산·고정 문구·FU·FQ 표가 실행서 5·6절과 다름·D-49) / 2(입력 빠짐·형식·날짜).
-상태: 2026-11-07 FX-P X6(B6) 구현, fix1(빌더 A) FU·FQ 원래 줄 대조(실행서 5·6절 표 줄·id별 조각) 추가. 시험 python -B Tools/FluidFX/fxp/check_fxp_fixtures.py(fixtures_report.py).
+상태: 2026-11-07 FX-P X6(B6) 구현, fix1(빌더 A) FU·FQ 원래 줄 대조(실행서 5·6절 표 줄·id별 조각) 추가, 2026-11-08 fix2 id별 원천 조각 대조, fix2 부모 개정(줄 목록 순서·중복, 이음표 모호, 범위 압축 원천 펼침), fix3 표기(비교표 d 없음 '—'·P 규칙 대신 판정, 레벨 평균·합산 병기, 공개 교훈 줄 fxp_static lesson_line)·id 글자 앞뒤 공백·붙여 잇기 이음표 수·원천 대조 생략 줄 경고. 시험 python -B Tools/FluidFX/fxp/check_fxp_fixtures.py(fixtures_report.py).
 """
 import itertools
 import re
@@ -14,6 +14,8 @@ INPUT_DOCUMENTS = (("areas", "areas", None), ("items", "items", None), ("golden"
 SHA_RECORD_PATH = f"{OUTPUT_DIRECTORY}/x0-runbook.sha256"
 TITLE_PREFIX = "# FX-P 최종 동등 감사 ("
 LESSON_LINE = "교훈: –(이 감사가 새로 정한 교훈 없음, 새 함정은 부모 장부가 Docs/Lessons에 L-ID로 기록)"
+LESSON_PREFIX = "교훈: "
+LESSON_KEY = "lesson_line"
 COMMAND_LINE = "명령: python -B Tools/FluidFX/fxp/fxp_audit.py report (FX-P 실행서 X6)"
 DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
@@ -40,6 +42,7 @@ COMPARE_SAME_MACHINE = "P-4 미답"
 COMPARE_NOTATION = "PF 환산 ×2.3~3·상한 비교(증명 아님)·제안 예산 대비·상한 꺼짐(P-22)"
 COMPARE_FORBIDDEN = ("동일 이상", "LIVE-2 이하")
 COMPARE_LABEL_ORDER = ("통과", "미달", "판정 불가", "그 밖")
+COMPARE_DEFAULT_RULE = "judge.json"
 R13_LIVE2 = "스트레스 정량 비공개(PF:206)"
 R13_KIND_PREFIX = {"p_quote": "P 판정 인용(", "structural": "구조 격차(기존 측정 인용·보정 전, FX-7p ", "no_stage": "무대 없음(R13s 대기)"}
 BASIS_REASONS = (("목표 [제안]", "spec_proposal"), ("자유 문안(출처 확인 불가)", "free_text"), ("근거 미표기", "unmarked"))
@@ -57,8 +60,10 @@ BUNDLE_NUMBER_PATTERN = re.compile(r"(\d+)(?:~(\d+))?")
 RECORD_ONLY_PREFIX_PATTERN = re.compile(r"\(기록만[^)]*\) ")
 BUNDLE_SEPARATOR = " · "
 RANGE_JOINER = "·"
+SOURCE_PREFIX_PATTERN = re.compile(r"(.*?[:\-])\d")
+OPENING_BRACKETS, CLOSING_BRACKETS = "(（", ")）"
 CHECK_LABELS = (("runbook_sha", "실행서·defs sha 대조(마지막 기록 줄)"), ("input_problems", "입력 출력의 problems"), ("chain", "연결 대조(앞 단계가 읽은 보고 입력 sha)"),
-                ("runbook_phrases", "고정 문구가 실행서에 그대로"), ("static_tables", "FU·FQ 원래 줄 = 실행서 5·6절 표 줄, id별 항목 = 원래 줄 조각"), ("areas", "4.1 동등·4.7 PR-11 재검산"), ("compare", "4.2 비교표 표기"), ("r13", "4.3 R13 표기"),
+                ("runbook_phrases", "고정 문구가 실행서에 그대로"), ("static_tables", "FU·FQ 원래 줄 = 실행서 5·6절 표 줄, id별 항목·원천 = 원래 줄 조각"), ("areas", "4.1 동등·4.7 PR-11 재검산"), ("compare", "4.2 비교표 표기"), ("r13", "4.3 R13 표기"),
                 ("rows", "4.1 행 동등 재검산"), ("levels", "4.4 excluded 근거"), ("golden", "4.6 골든 줄"), ("d49", "D-49 공개 md 검사"))
 
 
@@ -117,7 +122,13 @@ def read_static(reads):
         rows = static.get(rows_key)
         if not isinstance(rows, list) or not all(isinstance(row, dict) and all(common.is_text(row.get(key)) for key in ("no", text_key, "source")) for row in rows):
             raise common.InputError(f"{common.FXP_STATIC_PATH}: {rows_key} 형식(no·{text_key}·source 글자 목록)")
+    if LESSON_KEY in static and not common.is_text(static[LESSON_KEY]):
+        raise common.InputError(f"{common.FXP_STATIC_PATH}: {LESSON_KEY} 형식(글자, 없으면 키를 뺀다)")
     return static
+
+
+def lesson_line(static):
+    return f"{LESSON_PREFIX}{static[LESSON_KEY]}" if LESSON_KEY in static else LESSON_LINE
 
 
 def parse_sha_line(number, line):
@@ -196,8 +207,8 @@ def bundle_groups(number_text):
 
 def bundle_renderings(group, texts):
     if len(group) == 1:
-        return texts
-    return [RANGE_JOINER.join(texts), BUNDLE_SEPARATOR.join(f"{number} {text}" for number, text in zip(group, texts))]
+        return [("single", texts[0])]
+    return [("joined", RANGE_JOINER.join(texts)), ("numbered", BUNDLE_SEPARATOR.join(f"{number} {text}" for number, text in zip(group, texts)))]
 
 
 def check_bundle_row(row, label, by_id, text_key):
@@ -212,11 +223,94 @@ def check_bundle_row(row, label, by_id, text_key):
     if any((by_id[identifier].get("record_only") is True) != (prefix is not None) for identifier in ids):
         problems.append(f"{label} 원래 줄 '{row['no']}' 기록만 표지: 줄 앞 '(기록만…)' {'있음' if prefix else '없음'} ≠ {' · '.join(ids)} record_only")
     body = row[text_key][prefix.end():] if prefix else row[text_key]
-    choices = itertools.product(*(bundle_renderings(group, [str(by_id[f"{label}-{number}"].get(text_key)) for number in group]) for group in groups))
-    renderings = [BUNDLE_SEPARATOR.join(choice) for choice in choices]
-    if body not in renderings:
-        problems.append(f"{label} 원래 줄 '{row['no']}' 조각 ≠ id별 {text_key}: 줄 '{body}' ≠ {' · '.join(ids)} 이음 '{renderings[0]}'")
+    group_texts = [[str(by_id[f"{label}-{number}"].get(text_key)) for number in group] for group in groups]
+    problems += [f"{label} 원래 줄 '{row['no']}' {identifier} {text_key} 앞뒤 공백: '{text}'"
+                 for identifier, text in zip(ids, itertools.chain(*group_texts)) if text != text.strip()]
+    choices = list(itertools.product(*(bundle_renderings(group, texts) for group, texts in zip(groups, group_texts))))
+    matched = next((choice for choice in choices if BUNDLE_SEPARATOR.join(text for _, text in choice) == body), None)
+    if matched is None:
+        first = BUNDLE_SEPARATOR.join(text for _, text in choices[0])
+        problems.append(f"{label} 원래 줄 '{row['no']}' 조각 ≠ id별 {text_key}: 줄 '{body}' ≠ {' · '.join(ids)} 이음 '{first}'")
+    else:
+        forms = [form for form, _ in matched]
+        ambiguous = ambiguous_joiner_ids(groups, forms, group_texts, label)
+        if ambiguous:
+            problems.append(f"{label} 원래 줄 '{row['no']}' 이음표 모호: {' · '.join(ambiguous)} 글자에 괄호 밖 이음표(붙여 잇기 '{RANGE_JOINER}', 번호 나열·여러 묶음 '{BUNDLE_SEPARATOR}')")
+        miscounted = joined_count_mismatches(groups, forms, group_texts, label)
+        if miscounted:
+            problems.append(f"{label} 원래 줄 '{row['no']}' 붙여 잇기 이음표 수: {' · '.join(miscounted)}(괄호가 이음표를 가리거나 id 글자에 이음표)")
+    problems += [f"{label} 원래 줄 '{row['no']}' 원천 조각 ≠ {identifier} source: 줄 '{fragment}' ≠ '{by_id[identifier].get('source')}'"
+                 for identifier, fragment in zip(ids, source_fragments(row["source"], groups)) if by_id[identifier].get("source") != fragment]
     return ids, problems
+
+
+def text_outside_brackets(text):
+    depth, kept = 0, []
+    for character in text:
+        if character in OPENING_BRACKETS:
+            depth += 1
+        elif character in CLOSING_BRACKETS:
+            depth = max(0, depth - 1)
+        elif depth == 0:
+            kept.append(character)
+    return "".join(kept)
+
+
+def ambiguous_joiner_ids(groups, forms, group_texts, label):
+    found = []
+    for group, form, texts in zip(groups, forms, group_texts):
+        for number, text in zip(group, texts):
+            outside = text_outside_brackets(text)
+            if (form == "joined" and RANGE_JOINER in outside) or ((form == "numbered" or len(groups) > 1) and BUNDLE_SEPARATOR in outside):
+                found.append(f"{label}-{number}")
+    return found
+
+
+def joined_count_mismatches(groups, forms, group_texts, label):
+    found = []
+    for group, form, texts in zip(groups, forms, group_texts):
+        count = text_outside_brackets(RANGE_JOINER.join(texts)).count(RANGE_JOINER)
+        if form == "joined" and count != len(group) - 1:
+            found.append(f"{label}-{group[0]}~{group[-1]} 괄호 밖 '{RANGE_JOINER}' {count}개 ≠ id 수−1 {len(group) - 1}")
+    return found
+
+
+def expand_range_source(fragment, size):
+    if RANGE_JOINER not in fragment:
+        return [fragment] * size
+    pieces = fragment.split(RANGE_JOINER)
+    prefix = SOURCE_PREFIX_PATTERN.match(pieces[0])
+    if len(pieces) != size or prefix is None:
+        return None
+    return [pieces[0]] + [prefix.group(1) + piece if piece.isdigit() else piece for piece in pieces[1:]]
+
+
+def source_fragments(source, groups):
+    fragments = [source] if len(groups) == 1 else source.split(BUNDLE_SEPARATOR)
+    if len(fragments) != len(groups):
+        return []
+    expanded = []
+    for group, fragment in zip(groups, fragments):
+        pieces = [fragment] if len(group) == 1 else expand_range_source(fragment, len(group))
+        if pieces is None:
+            return []
+        expanded += pieces
+    return expanded
+
+
+def source_skip_reason(source, groups):
+    fragments = [source] if len(groups) == 1 else source.split(BUNDLE_SEPARATOR)
+    return "조각 수 ≠ 묶음 수" if len(fragments) != len(groups) else "범위 원천을 펼칠 수 없음(조각 수 ≠ id 수·접두 없음)"
+
+
+def skipped_source_rows(static):
+    skipped = []
+    for label, _, rows_key, _, _ in STATIC_TABLES:
+        for row in static[rows_key]:
+            groups = bundle_groups(row["no"])
+            if groups is not None and not source_fragments(row["source"], groups):
+                skipped.append({"table": label, "no": row["no"], "source": row["source"], "reason": source_skip_reason(row["source"], groups)})
+    return skipped
 
 
 def check_static_tables(runbook_text, static):
@@ -225,8 +319,11 @@ def check_static_tables(runbook_text, static):
         rows, entries = static[rows_key], static[entries_key]
         static_lines = [f"| {row['no']} | {row[text_key]} | {row['source']} |" for row in rows]
         runbook_lines = runbook_table_lines(runbook_text, section)
-        problems += [f"{label} 원래 줄이 실행서 {section}절 표에 없음: '{line}'" for line in static_lines if line not in runbook_lines]
-        problems += [f"실행서 {section}절 표 줄이 fxp_static {rows_key}에 없음: '{line}'" for line in runbook_lines if line not in static_lines]
+        missing = [f"{label} 원래 줄이 실행서 {section}절 표에 없음: '{line}'" for line in static_lines if line not in runbook_lines]
+        missing += [f"실행서 {section}절 표 줄이 fxp_static {rows_key}에 없음: '{line}'" for line in runbook_lines if line not in static_lines]
+        if not missing and static_lines != runbook_lines:
+            missing.append(f"{label} 원래 줄 목록 순서·중복이 실행서 {section}절 표와 다름")
+        problems += missing
         by_id, covered = {entry["id"]: entry for entry in entries}, []
         for row in rows:
             ids, row_problems = check_bundle_row(row, label, by_id, text_key)
@@ -434,11 +531,28 @@ def check_compare_row(row):
     return problems
 
 
+def is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
 def interval_text(value):
-    if not isinstance(value, dict):
+    if not isinstance(value, dict) or not is_number(value.get("median")):
         return "—"
-    interval = value.get("interval") if isinstance(value.get("interval"), dict) else {}
+    interval = value.get("interval")
+    if not isinstance(interval, dict):
+        return f"{value.get('median')}"
     return f"{value.get('median')} ({interval.get('lower')}~{interval.get('upper')}, {interval.get('state')})"
+
+
+def p_rule_note(row):
+    rule = row.get("p_rule") if common.is_text(row.get("p_rule")) and row.get("p_rule") != COMPARE_DEFAULT_RULE else None
+    source_row = row.get("derived_from") if common.is_text(row.get("derived_from")) else None
+    if rule is None and source_row is None:
+        return None
+    parts = [f"P 규칙 {rule}"] if rule else []
+    parts += [f"{source_row} 행이 대신 판정"] if source_row else []
+    parts += [] if interval_text(row.get("d")) != "—" else ["이 행 측정 없음"]
+    return ", ".join(parts)
 
 
 def limit_sources_text(sources):
@@ -454,7 +568,8 @@ def build_compare_section(document):
         problems += check_compare_row(row)
         table.append({"area": row.get("area"), "row": row.get("row"), "metric": row.get("metric"), "d": interval_text(row.get("d")), "d_prime": interval_text(row.get("d_prime")),
                       "p95_record": row.get("p95_record_median"), "limit_ms": row.get("limit_ms"), "limit_sources": limit_sources_text(row.get("limit_sources")),
-                      "p_label": row.get("p_label"), "live2_same_machine": row.get("live2_same_machine"), "live2_public": row.get("live2_public"), "notation": row.get("notation")})
+                      "p_label": row.get("p_label"), "live2_same_machine": row.get("live2_same_machine"), "live2_public": row.get("live2_public"), "notation": row.get("notation"),
+                      "rule_note": p_rule_note(row)})
     labels = document.get("label_counts") if isinstance(document.get("label_counts"), dict) else {}
     return {"rows": table, "label_counts": labels}, problems
 
@@ -472,8 +587,9 @@ def render_compare(section):
              "| 영역 | 행 | 지표 | d 중앙(구간) | d′ | p95 기록 | 한도 | 한도 원천(S###:줄) | 제안 예산 대비(P 판정) | LIVE-2 같은 기계 | LIVE-2 공개·환산(PF 줄) | 표기 |",
              "|" + "---|" * 12]
     for row in section["rows"]:
+        notation = f"{cell(row['notation'])} · {cell(row['rule_note'])}" if row["rule_note"] else cell(row["notation"])
         lines.append("| " + " | ".join(cell(row[key]) for key in ("area", "row", "metric", "d", "d_prime", "p95_record", "limit_ms", "limit_sources", "p_label",
-                                                                    "live2_same_machine", "live2_public", "notation")) + " |")
+                                                                    "live2_same_machine", "live2_public")) + f" | {notation} |")
     return lines + [""]
 
 
@@ -586,11 +702,17 @@ def build_levels_section(document):
     return {"counts": {key: counts.get(key) for key in keys}, "excluded": excluded_rows, "not_loose": not_loose}, check_excluded(excluded)
 
 
+def ratio_text(value):
+    return f"{value:.3f}" if is_number(value) else "—"
+
+
 def render_levels(section):
     counts = section["counts"]
+    pooled = counts["strict_items"] / counts["items"] if is_number(counts["strict_items"]) and is_number(counts["items"]) and counts["items"] else None
     lines = ["## 5. 58레벨 대응 (levels, 3.5·4.4)", "",
              f"- 레벨 {counts['levels']}(대상 {counts['targets']}, 범위 {counts['scope']} = 대상 − excluded {counts['excluded']})",
-             f"- 느슨(맵 ≥1) {counts['loose']}/{counts['scope']} · 엄격 평균 {counts['strict_mean']}(셋업 항목 {counts['strict_items']}/{counts['items']})",
+             f"- 느슨(맵 ≥1) {counts['loose']}/{counts['scope']} · 엄격(셋업 항목) 레벨 평균 {ratio_text(counts['strict_mean'])} · "
+             f"합산 {counts['strict_items']}/{counts['items']} = {ratio_text(pooled)}",
              f"- manual 참조 {counts['manual_refs']} · 모르는 ID {counts['unknown_ids']} · 별칭 {counts['aliased']}",
              "- 맵 없는 범위 안 레벨: " + (" · ".join(f"{entry['id']} {entry['name']}" for entry in section["not_loose"]) or "없음"), "",
              "| excluded 레벨 | 이름 | 종류 | 사유 | 근거 | 후속 |", "|---|---|---|---|---|---|"]
@@ -722,9 +844,11 @@ def render_inputs(record, own, documents, chain_count, warnings):
     return lines + [""]
 
 
-def render_checks(check_counts):
+def render_checks(check_counts, skipped):
     lines = ["## 11. 보고 검사", "", "| 검사 | 문제 |", "|---|---|"]
     lines += [f"| {label} | {check_counts[key]} |" for key, label in CHECK_LABELS]
+    details = " · ".join(f"{entry['table']} '{entry['no']}' {entry['reason']}" for entry in skipped)
+    lines += ["", f"- 경고(종료 코드에 안 셈): FU·FQ id별 원천 대조 생략 {len(skipped)}줄" + (f"(그 줄 전체) — {details}" if skipped else "")]
     return lines + [""]
 
 
@@ -767,10 +891,11 @@ def build(context):
     body += render_areas(areas) + render_compare(compare) + render_r13(r13) + render_rows(rows) + render_levels(levels) + render_package(package)
     body += render_items(items) + render_static_tables(follow_ups, user_items)
     body += render_inputs(record, own, documents, len(checks["chain"]), warnings)
-    public_head = [title, LESSON_LINE, COMMAND_LINE, ""]
+    public_head = [title, lesson_line(static), COMMAND_LINE, ""]
     checks["d49"] = d49_problems(public_head + body)
     check_counts = {key: len(checks[key]) for key, _ in CHECK_LABELS}
-    body += render_checks(check_counts)
+    skipped = skipped_source_rows(static)
+    body += render_checks(check_counts, skipped)
     problems = [problem for key, _ in CHECK_LABELS for problem in checks[key]]
     summary = summary_text(areas, compare, r13, rows, levels, package, items, static, record, check_counts, warnings)
     public_bytes = common.markdown_bytes(public_head + body, f"SUMMARY {summary} problems={len(problems)}")
@@ -778,10 +903,16 @@ def build(context):
                 "runbook_record": record, "areas": areas, "compare": compare, "r13": r13, "rows": rows, "levels": levels, "package": package,
                 "items": {key: items[key] for key in ("items", "class_counts", "unmeasurable")}, "follow_ups": follow_ups, "user_items": user_items,
                 "sources": {name: {"path": document_path(name), "summary": value["summary"]} for name, value in documents.items()},
-                "checks": check_counts, "warnings": warnings, "public_md": {"sha256": common.sha256_bytes(public_bytes), "lines": public_bytes.decode("utf-8").count("\n")},
+                "checks": check_counts, "warnings": warnings, "static_tables_skipped": skipped, "public_md": {"sha256": common.sha256_bytes(public_bytes), "lines": public_bytes.decode("utf-8").count("\n")},
                 "rule": {"inputs": "3.8 고정 목록(glob 아님, fxp-audit* 제외), 빠지면 2", "sha": "x0-runbook.sha256 마지막 줄의 실행서·defs sha만 대조, HEAD는 기록만",
                          "chain": "앞 단계 출력의 inputs 중 이 보고도 읽은 파일 sha는 지금과 같아야 한다(rows 영역 입력은 sha로)",
-                         "static_tables": "fxp_static follow_up_rows·user_item_rows 줄 '| no | 항목 | 원천 |' = 실행서 5절·6절 표 줄(양방향), id별 항목 = 원래 줄 조각(' · ' 묶음, n~m 은 '·' 이음 또는 'n 항목' 나열, 줄 앞 '(기록만…)' = record_only)",
+                         "static_tables": ("fxp_static follow_up_rows·user_item_rows 줄 '| no | 항목 | 원천 |' = 실행서 5절·6절 표 줄(양방향, 순서·중복 포함), "
+                                           "id별 항목 = 원래 줄 조각(' · ' 묶음, n~m 은 '·' 이음 또는 'n 항목' 나열, 줄 앞 '(기록만…)' = record_only), id별 항목 앞뒤 공백 금지, "
+                                           "괄호 밖 이음표가 id 글자에 있으면 모호('·' 이음 묶음은 '·', 나열·여러 묶음 줄은 ' · '), '·' 이음 묶음의 괄호 밖 '·' 수 = id 수−1, "
+                                           "id별 source = 원래 줄 원천을 ' · '로 나눈 묶음 조각(묶음 1개 줄은 원천 전체, 단일 id 묶음은 조각 그대로, "
+                                           "n~m 범위 조각은 '·' 압축을 첫 조각 접두(…: 또는 …-)로 펼침 = 숫자만인 조각에 접두, '·' 없는 범위 조각은 범위 id 전부 같은 원천), "
+                                           "생략 = 조각 수 ≠ 묶음 수 또는 범위 원천을 펼칠 수 없음(조각 수 ≠ id 수·접두 없음)이면 그 줄 전체, "
+                                           "생략 줄은 static_tables_skipped·11절 경고(종료 코드에 안 셈)"),
                          "d49": "공개 md: LIVE-2 뒤 40자 안 수치·단위, 비교 원본 폴더 이름, 이미지 확장자 금지"}}
     extra = {args.public_md: public_bytes} if args.public_md else {}
     return common.Outcome(document, [title, ""] + body, summary, problems, extra)

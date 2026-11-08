@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-08 00:42 claude
+갱신: 2026-11-08 11:12 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -11,7 +11,7 @@
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴.
 - M3-25·26 done(26 PIE 육안 대기).
-- FluidFX FX-P 재부팅 중지: X5까지, 재개 Saved/AgentOps/20261107/fxp/PAUSE.md
+- FluidFX FX-P 1판 끝(동등 확인 0): Docs/Validation/FluidFX/FX-P-audit-2026-11-08.md
 
 ## ② 막힘·결정 대기
 
@@ -30,7 +30,7 @@
 - 공개 저장소 Fab·Paragon·Manny 원본 비공개 전환·재저장 에셋 유지 판단.
 - 분석 결정 GQ-01~32(26=아니오), 먼저 GQ-01·10~13·20·27.
 - 기록 누락 의심: M1-01~05(코드 있음, 대장 todo).
-- FluidFX 승인 9영역(Saved/FluidFX/approval/)·미충족 6(레버·예산·체제)·⑫㉒㉓㉘㊻㊿·쿠킹(L-build-20)
+- 사용자 승인 대기 전체: Docs/UserApprovalQueue.md(FluidFX·쿠킹 L-build-20 포함)
 - 빌드 순서 L-build-05·08. Combat GUI 크래시→헤드리스(L-editor-08).
 
 ## ③ 다음 행동

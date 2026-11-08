@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(표준 라이브러리만), check_fxp_fixtures.py 가 import 해서 run(임시 루트)을 부른다.
 실행 명령: python -B Tools/FluidFX/fxp/check_fxp_fixtures.py(단독 실행 없음).
 출력: (통과, 실패, 줄). 합성 사본에서 fxp_audit.py items 를 돌려 정상(분류·측정 불가 묶음·연결)·같은 바이트·package 분기 3종·굽기 3종(R2 일지 최종·R16 계획별 최종·creek 결과 없음)·인용 변이·종료 1(분류 없음·근거 줄·모르는 FU·모르는 관련 ID·package 형식·R2 상태 다름·R2 상태 같고 이유 다름)·종료 2(입력 없음·모르는 check)를 본다.
-상태: 2026-11-07 FX-P X1a(B1), fix1(빌더 A) reason_contains 불일치 사례 추가.
+상태: 2026-11-07 FX-P X1a(B1), fix1(빌더 A) reason_contains 불일치 사례 추가, 2026-11-08 fix3 package 항목 상태 = 실제 판정(같으면 한 번·다르면 tag별, 규칙 문안 status_rule).
 """
 from pathlib import Path
 
@@ -15,6 +15,7 @@ SPEC = "Saved/AgentOps/20261030/cal0/spec-cal0-v2.md"
 QUOTE = "Q2 표시 없는 채택도 되돌림 후보(기본 넓히지 않음)"
 UNMET = "미충족(통과 0 / 미달 1 / 행 1 / 판정 불가 0 / 측정 불가 0 / 출하 밖 0)"
 PARTIAL = "부분(통과 1 / 행 2 / 판정 불가 1 / 측정 불가 2 / 출하 밖 0)"
+PACKAGE_RULE = "package verdict, 없으면 미검증(X5 전)"
 EXPECTED_SUMMARY = ("SUMMARY items=16 closed=0 record=7 follow_up=4 user=5 unmeasurable=3 non_target=1 feature_gap=1 other=1 lines_unique=4 records_unique=2 problems=0")
 
 
@@ -33,7 +34,7 @@ def static_items():
         {"id": "6", "title": "측정 불가", "class": "FU-10", "refs": [], "evidence": [evidence(DEV10, 2, "Q2")], "checks": [{"kind": "unmeasurable"}]},
         {"id": "7", "title": "R13 밖", "class": "FU-12", "refs": [], "evidence": [evidence(DEV10, 1, "# 편차")], "checks": [{"kind": "ledger_lines", "ids": ["S040"]}]},
         {"id": "11", "title": "같은 기계", "class": "FQ-1", "refs": [], "evidence": [evidence(DEV10, 1, "# 편차")], "checks": [{"kind": "unassigned_items"}]},
-        {"id": "13", "title": "PresetData 첫 읽기", "class": "기록", "refs": [], "closed_by": "package", "evidence": [evidence(DEV10, 1, "# 편차")],
+        {"id": "13", "title": "PresetData 첫 읽기", "class": "기록", "refs": [], "closed_by": "package", "status": PACKAGE_RULE, "evidence": [evidence(DEV10, 1, "# 편차")],
          "checks": [{"kind": "package", "tags": ["min", "fluid"], "closed_verdict": "첫 읽기 확인", "missing": "미검증(X5 전)"}]},
         {"id": "17", "title": "WA6", "class": "FU-1", "refs": [], "evidence": [evidence(DEV10, 1, "# 편차")], "checks": [{"kind": "fixed_item", "id": "WA6 ㉙"}, {"kind": "perf_candidates"}]},
         {"id": "18", "title": "구조 격차", "class": "기록", "refs": [], "evidence": [evidence(DEV10, 1, "# 편차")], "checks": [{"kind": "structural_gaps"}]},
@@ -103,6 +104,8 @@ def check_normal(log, root):
     log.check("측정 불가 묶음(비대상 = 기록·기능 공백 = FU-10·기타 = 기록)", {group: (info["n"], info["class"]) for group, info in groups.items()} == {"비대상": (1, "기록"), "기능 공백": (1, "FU-10"), "기타": (1, "기록")}, f"{groups}")
     package = item_of(document, "13")
     log.check("package 없음 → 미검증(X5 전)·기록", package.get("class") == "기록" and package.get("detail", {}).get("package", {}).get("verdicts") == {"min": "미검증(X5 전)", "fluid": "미검증(X5 전)"}, f"{package}")
+    log.check("package 항목 상태 = 실제 판정(같으면 한 번), 규칙 문안은 status_rule", package.get("status") == "package-min·package-fluid 판정: 미검증(X5 전)"
+              and package.get("status_rule") == PACKAGE_RULE and PACKAGE_RULE not in run.markdown, f"{package.get('status')} / {package.get('status_rule')}")
     r2 = item_of(document, "21a").get("detail", {}).get("journal_final", {}).get("final") or {}
     log.check("굽기 R2: K1 insensitive, 뒤 K2 pending 무시", r2.get("status") == "insensitive" and r2.get("batch") == "K1", f"{r2}")
     r16 = item_of(document, "21b").get("detail", {}).get("journal_finals", {})
@@ -171,6 +174,9 @@ def check_variants(log, root):
     log.check("package 둘 다 첫 읽기 확인 → 닫힘", closed.code == 0 and item_of(closed.document, "13").get("class") == "닫힘", f"종료 {closed.code} {item_of(closed.document, '13')}")
     failed = run_audit(variant(root, "pkg-failed", add_packages({"min": "첫 읽기 확인", "fluid": "첫 읽기 실패(③)"})), "items", "pkg-failed")
     log.check("package 하나 실패 → 기록", failed.code == 0 and item_of(failed.document, "13").get("class") == "기록", f"종료 {failed.code} {item_of(failed.document, '13')}")
+    log.check("package 판정 다름 → 상태에 tag별 판정", item_of(failed.document, "13").get("status") == "package-min 판정: 첫 읽기 확인 · package-fluid 판정: 첫 읽기 실패(③)",
+              f"{item_of(failed.document, '13').get('status')}")
+    log.check("package 둘 다 확인 → 상태 '첫 읽기 확인'", item_of(closed.document, "13").get("status") == "package-min·package-fluid 판정: 첫 읽기 확인", f"{item_of(closed.document, '13').get('status')}")
     texts = dict(TEXT_FILES)
     texts[DEV10] = TEXT_FILES[DEV10].replace("S094·S095", "S094")
     cases = (("pkg-bad", add_packages({"min": None, "fluid": "첫 읽기 확인"}), None, "package 형식: Saved/FluidFX/fxp/package-min.json"),

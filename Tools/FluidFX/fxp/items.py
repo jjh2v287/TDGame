@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(표준 라이브러리만, 에디터·빌드 불필요), fxp_audit.py items 로 실행.
 실행 명령: python -B Tools/FluidFX/fxp/fxp_audit.py items --out Saved/FluidFX/fxp/items.json --md Saved/FluidFX/fxp/items.md [--root <저장소 사본>].
 출력: 넘어온 항목 표(runbook-fxp-v3 3.3, IT 38): items_static.json 항목마다 분류(닫힘·기록·FU-n·FQ-n)·근거 줄 대조·입력 대조(일지 PD-6·$PS fxp_items·pending_judgements·areas.<영역>.records·lines·calib 격차·승인 전용·비용 후보·package-*.json), 측정 불가 분류(비대상·기능 공백·기타), FU·FQ별 연결 항목. 종료 1 = 분류 없음·모르는 FU/FQ·근거 줄 불일치·입력 대조 불일치·FQ 인용 불일치.
-상태: 2026-11-07 FX-P X1a(B1) 구현, fixture fixtures_items.py(굽기 3종·인용 변이·package 분기·분류 없음·근거 줄 변이).
+상태: 2026-11-07 FX-P X1a(B1) 구현, fixture fixtures_items.py(굽기 3종·인용 변이·package 분기·분류 없음·근거 줄 변이), 2026-11-08 fix3 package 항목 상태 = 실제 package-<tag> 판정(규칙 문안은 status_rule).
 """
 import re
 
@@ -15,6 +15,7 @@ USER_ITEM_PREFIX = "FQ-"
 UNMET_PREFIX = "미충족("
 PARTIAL_PREFIX = "부분("
 UNDECIDABLE_VERDICT = "판정 불가"
+PACKAGE_TAG_PREFIX = "package-"
 
 
 def compile_rules(table):
@@ -111,6 +112,13 @@ def check_package(check, facts, problems):
         verdicts[tag] = verdict if common.is_text(verdict) else None
     closed = bool(verdicts) and all(verdict == check.get("closed_verdict") for verdict in verdicts.values())
     return {"verdicts": verdicts}, CLASS_CLOSED if closed else CLASS_RECORD
+
+
+def package_status(verdicts):
+    texts = ["없음" if verdict is None else verdict for verdict in verdicts.values()]
+    if all(text == texts[0] for text in texts):
+        return f"{'·'.join(PACKAGE_TAG_PREFIX + tag for tag in verdicts)} 판정: {texts[0]}"
+    return " · ".join(f"{PACKAGE_TAG_PREFIX}{tag} 판정: {text}" for tag, text in zip(verdicts, texts))
 
 
 def check_fixed_item(check, facts, problems):
@@ -232,8 +240,12 @@ def resolve_item(item, facts, known_ids, problems):
     for ref in item.get("refs", []):
         if ref not in known_ids:
             problems.append(f"모르는 관련 ID: 항목 {item['id']} {ref}")
-    return {"id": item["id"], "title": item["title"], "class": item_class, "refs": list(item.get("refs", [])), "status": item.get("status"),
-            "closed_by": item.get("closed_by"), "evidence": evidence, "detail": detail}
+    record = {"id": item["id"], "title": item["title"], "class": item_class, "refs": list(item.get("refs", [])), "status": item.get("status"),
+              "closed_by": item.get("closed_by"), "evidence": evidence, "detail": detail}
+    verdicts = detail.get("package", {}).get("verdicts")
+    if verdicts:
+        record.update(status=package_status(verdicts), status_rule=item.get("status"))
+    return record
 
 
 def link_items(entries, items):

@@ -65,5 +65,6 @@
   "environment_note": "Test 빌드 불가(L-build-16) → 성능은 PIE SP 체제(P-15), 패키지는 Development 첫 읽기만",
   "header_template": "'동일 이상' 주장 없음(P-4 미답) · 한도 전부 [제안] · 동등 확인 n영역 · D-52 종결 안 함 · 실행서 sha <8자>(기록 n줄)",
   "golden_line_template": "채택된 열거·불·정수 분기는 골든이 덮지 않는다(RP-S1): 채택 <n>(W11 overlay 채택, 영향 f5 제외) 중 열거·불·정수 <k>, 골든 경로 <m>; CPU 솔버 5시나리오 회귀만 보증",
-  "quote_source": {"file": "Saved/AgentOps/20261106/p/dev-10.md", "line": 26}
+  "quote_source": {"file": "Saved/AgentOps/20261106/p/dev-10.md", "line": 26},
+  "lesson_line": "L-build-20(패키지 쿠킹이 PCD3D_SM5 TDFluidGpu 전역 셰이더 오류로 실패, X5에서 발견)"
 }

@@ -291,3 +291,16 @@
 - 증거: Saved/AgentOps/20261105/git-repair/(손상 사본), 복구 커밋 108a0cf1(부모 c4ad6c8b), git fsck 종료 0
 - 날짜·상태: 2026-11-05 active
 - 발견: claude(FluidFX W 설계 재개)
+
+### L-repo-33 `check_fluid_niagara_specs.py --update-golden`이 정답 기록(golden)을 CRLF로 써서 diff가 파일 전체가 된다
+- 증상: `--update-golden` 뒤 `Tools/FluidFX/niagara_specs/golden/*.calls.json` diff가 바꾼 몇 줄이 아니라 파일 전체로 잡힌다(기존 파일은 LF).
+- 원인: `check_golden`이 `golden_path.write_text(text, encoding="utf-8")`로 쓴다(`check_fluid_niagara_specs.py:193`). 윈도의 텍스트 모드라 `
+`이 `
+`으로 바뀐다. L-repo-29와 같은 계열이다.
+- 해결: 갱신 뒤 바뀐 정답 파일을 원래 줄바꿈(LF)으로 되돌린다(예: 파이썬으로 바이트를 읽어 `
+`→`
+`). `git diff --stat`가 바꾼 줄 수만 보이는지 확인한다.
+- 범위: `--update-golden`을 쓰는 FluidFX 나이아가라 명세 정답 갱신 전부
+- 증거: 2026-11-09 Q1 코드 갈래 빌더 보고(`Saved/AgentOps/20261108/quality/q1/code/`), 코드 줄 직접 확인
+- 날짜·상태: 2026-11-09 active
+- 발견: claude(FluidFX 화질 1단계 코드 갈래)

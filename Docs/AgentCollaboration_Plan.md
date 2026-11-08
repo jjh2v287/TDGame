@@ -69,3 +69,4 @@
 | [Docs/Lessons/worldgen.md](Lessons/worldgen.md) | 교훈 | 월드·이계 생성, 심리스 이동 작업 시 |
 | `Docs/Automation_Backlog.md` | 계획 | 스크립트 착수 시 |
 | [Docs/TDFluidLiveSystemDesign.md](TDFluidLiveSystemDesign.md) | 설계 | FluidFX(FluidNinja LIVE-2 역공학 2D 유체) 작업 시, 결정 D-48 |
+| [Docs/UserApprovalQueue.md](UserApprovalQueue.md) | 결정 | 사용자 승인·결정 대기 전 영역 목록(2026-11-08). 사용자 답을 근거 문서에 옮긴 뒤 이 표에서 그 행을 지운다 |

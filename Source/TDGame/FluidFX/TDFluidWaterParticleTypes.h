@@ -125,6 +125,9 @@ struct FTDFluidWaterSurfaceParameters
 	float PressureNormalStrength = 0.0f;
 	float PassiveWaveAmplitudeCm = 0.0f;
 	float PassiveWaveDirectionDegrees = 0.0f;
+	float PassiveWaveSimDamping = 0.5f;
+	float PassiveWaveLengthScale = 1.0f;
+	float PassiveWaveAngleSpread = 1.0f;
 	float TimeSeconds = 0.0f;
 	float TileMapHeightCm = 0.0f;
 	float TileMapDensityHeightCm = 0.0f;

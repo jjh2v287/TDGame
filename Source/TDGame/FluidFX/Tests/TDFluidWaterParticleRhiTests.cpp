@@ -68,6 +68,15 @@ namespace TDFluidWaterParticleRhiTestPrivate
 	constexpr int32 DebrisMinimumCount = 240;
 	constexpr int32 DebrisProbeCount = 64;
 	constexpr float WaveAmplitudeCm = 10.0f;
+	constexpr float SurfaceBorderFadeRatio = 0.1f;
+	constexpr float ShapedWaveAmplitudeCm = 18.0f;
+	constexpr float ShapedLongWaveLengthScale = 4.0f;
+	constexpr int32 ShapedInteriorMinimumCount = 32;
+	constexpr double ShapedPairMinimumDistanceCm = 20.0;
+	constexpr double ShapedPairMaximumDistanceCm = 40.0;
+	constexpr int32 ShapedPairMinimumCount = 8;
+	constexpr double ShapedDampingRatioLimit = 0.3;
+	constexpr double ShapedLengthRatioLimit = 0.6;
 	constexpr int32 FlowSteps = 180;
 	constexpr float FlowSpeedCmPerSec = 200.0f;
 	constexpr int32 SplashEarlySteps = 6;
@@ -470,7 +479,15 @@ namespace TDFluidWaterParticleRhiTestPrivate
 		return Config;
 	}
 
-	FTDFluidWaterSurfaceParameters MakeSurfaceOverride(float PassiveWaveAmplitudeCm)
+	struct FTDPassiveWaveShape
+	{
+		float AmplitudeCm = 0.0f;
+		float SimDamping = 0.5f;
+		float LengthScale = 1.0f;
+		float AngleSpread = 1.0f;
+	};
+
+	FTDFluidWaterSurfaceParameters MakeSurfaceOverride(const FTDPassiveWaveShape& WaveShape)
 	{
 		FTDFluidWaterSurfaceParameters Parameters;
 		Parameters.BaseHeightCm = WaterSurfaceZCm;
@@ -479,8 +496,11 @@ namespace TDFluidWaterParticleRhiTestPrivate
 		Parameters.DepthReferenceCm = WaterSurfaceZCm - FloorTopZCm;
 		Parameters.RippleHeightReferenceCm = 8.0f;
 		Parameters.LayerActive = 1.0f;
-		Parameters.BorderFadeRatio = 0.1f;
-		Parameters.PassiveWaveAmplitudeCm = PassiveWaveAmplitudeCm;
+		Parameters.BorderFadeRatio = SurfaceBorderFadeRatio;
+		Parameters.PassiveWaveAmplitudeCm = WaveShape.AmplitudeCm;
+		Parameters.PassiveWaveSimDamping = WaveShape.SimDamping;
+		Parameters.PassiveWaveLengthScale = WaveShape.LengthScale;
+		Parameters.PassiveWaveAngleSpread = WaveShape.AngleSpread;
 		Parameters.Coverage = 1.0f;
 		Parameters.CameraWorld = FVector(0.0, 0.0, 1000.0);
 		return Parameters;
@@ -550,7 +570,7 @@ namespace TDFluidWaterParticleRhiTestPrivate
 		}
 	};
 
-	bool BuildWaterParticleScene(FAutomationTestBase& Test, const FString& SceneLabel, const FTDWaterParticleAssets& Assets, bool bSpawnsParticleActor, float PassiveWaveAmplitudeCm, FTDWaterParticleScene& OutScene)
+	bool BuildWaterParticleScene(FAutomationTestBase& Test, const FString& SceneLabel, const FTDWaterParticleAssets& Assets, bool bSpawnsParticleActor, const FTDPassiveWaveShape& WaveShape, FTDWaterParticleScene& OutScene)
 	{
 		UWorld& SceneWorld = *OutScene.SceneWorld.World;
 		if (!Test.TestTrue(*(SceneLabel + TEXT(" spawned the floor and the water region")), SpawnWaterSceneProps(SceneWorld, *Assets.CubeMesh.Get())))
@@ -587,7 +607,7 @@ namespace TDFluidWaterParticleRhiTestPrivate
 			OutScene.ParticleActor->SplashSystem = Assets.SplashSystem.Get();
 			OutScene.ParticleActor->ContactDataChannel = Assets.ContactChannel.Get();
 			OutScene.ParticleActor->FinishSpawning(FTransform::Identity);
-			OutScene.ParticleActor->SetSurfaceParametersOverrideForTests(MakeSurfaceOverride(PassiveWaveAmplitudeCm));
+			OutScene.ParticleActor->SetSurfaceParametersOverrideForTests(MakeSurfaceOverride(WaveShape));
 		}
 
 		OutScene.Step();
@@ -722,12 +742,13 @@ namespace TDFluidWaterParticleRhiTestPrivate
 	{
 		TArray<FVector> Positions;
 		TArray<double> ProbeOffsetsCm;
+		FVector WindowCenterWorld = FVector::ZeroVector;
 	};
 
-	bool RunDebrisFollowArm(FAutomationTestBase& Test, const FString& ArmLabel, const FTDWaterParticleAssets& Assets, float PassiveWaveAmplitudeCm, FTDDebrisFollowArm& OutArm)
+	bool RunDebrisFollowArm(FAutomationTestBase& Test, const FString& ArmLabel, const FTDWaterParticleAssets& Assets, const FTDPassiveWaveShape& WaveShape, FTDDebrisFollowArm& OutArm)
 	{
 		FTDWaterParticleScene Scene;
-		if (!BuildWaterParticleScene(Test, ArmLabel, Assets, true, PassiveWaveAmplitudeCm, Scene))
+		if (!BuildWaterParticleScene(Test, ArmLabel, Assets, true, WaveShape, Scene))
 		{
 			return false;
 		}
@@ -744,6 +765,7 @@ namespace TDFluidWaterParticleRhiTestPrivate
 			return false;
 		}
 		SimCache->ReadPositionAttribute(OutArm.Positions, PositionAttributeName, DebrisEmitterName, true, SimCache->GetNumFrames() - 1);
+		OutArm.WindowCenterWorld = Scene.GetWaterComponent().GetSimulationWindowCenterWorld();
 
 		TArray<FVector> ProbeLocations;
 		for (int32 ParticleIndex = 0; ParticleIndex < FMath::Min(DebrisProbeCount, OutArm.Positions.Num()); ++ParticleIndex)
@@ -759,6 +781,53 @@ namespace TDFluidWaterParticleRhiTestPrivate
 			}
 		}
 		return true;
+	}
+
+	TArray<FVector> SelectWindowInteriorPositions(const FTDDebrisFollowArm& Arm)
+	{
+		const double InteriorHalfExtentCm = 0.5 * SceneResolution * SceneCellSizeCm * (1.0 - 2.0 * SurfaceBorderFadeRatio) - SceneCellSizeCm;
+		TArray<FVector> InteriorPositions;
+		for (const FVector& Position : Arm.Positions)
+		{
+			const FVector OffsetCm = Position - Arm.WindowCenterWorld;
+			if (FMath::Max(FMath::Abs(OffsetCm.X), FMath::Abs(OffsetCm.Y)) <= InteriorHalfExtentCm)
+			{
+				InteriorPositions.Add(Position);
+			}
+		}
+		return InteriorPositions;
+	}
+
+	struct FTDNearPairHeightStep
+	{
+		double MeanAbsoluteHeightStepCm = 0.0;
+		int32 PairCount = 0;
+	};
+
+	FTDNearPairHeightStep MeasureNearPairHeightStep(const TArray<FVector>& Positions)
+	{
+		FTDNearPairHeightStep Result;
+		double HeightStepSumCm = 0.0;
+		for (int32 FirstIndex = 0; FirstIndex < Positions.Num(); ++FirstIndex)
+		{
+			for (int32 SecondIndex = FirstIndex + 1; SecondIndex < Positions.Num(); ++SecondIndex)
+			{
+				const double DistanceCm = FVector::DistXY(Positions[FirstIndex], Positions[SecondIndex]);
+				if (DistanceCm < ShapedPairMinimumDistanceCm || DistanceCm > ShapedPairMaximumDistanceCm)
+				{
+					continue;
+				}
+				HeightStepSumCm += FMath::Abs(Positions[FirstIndex].Z - Positions[SecondIndex].Z);
+				++Result.PairCount;
+			}
+		}
+		Result.MeanAbsoluteHeightStepCm = Result.PairCount > 0 ? HeightStepSumCm / Result.PairCount : 0.0;
+		return Result;
+	}
+
+	double DivideOrInfinity(double Numerator, double Denominator)
+	{
+		return Denominator > 0.0 ? Numerator / Denominator : std::numeric_limits<double>::infinity();
 	}
 
 	UNiagaraComponent* FindActiveSplashComponent(const UWorld& SceneWorld, const UNiagaraSystem& SplashSystem)
@@ -840,7 +909,7 @@ namespace TDFluidWaterParticleRhiTestPrivate
 	bool RunOutputOnlyArm(FAutomationTestBase& Test, const FString& ArmLabel, const FTDWaterParticleAssets& Assets, bool bSpawnsParticleActor, int32& OutReadyStepCount, TArray<uint32>& OutChecksums)
 	{
 		FTDWaterParticleScene Scene;
-		if (!BuildWaterParticleScene(Test, ArmLabel, Assets, bSpawnsParticleActor, 0.0f, Scene))
+		if (!BuildWaterParticleScene(Test, ArmLabel, Assets, bSpawnsParticleActor, FTDPassiveWaveShape(), Scene))
 		{
 			return false;
 		}
@@ -922,7 +991,7 @@ bool FTDFluidWaterParticleRhiDebrisFollowsSurfaceTest::RunTest(const FString& Pa
 
 	FTDDebrisFollowArm StillArm;
 	FTDDebrisFollowArm WaveArm;
-	if (!RunDebrisFollowArm(*this, CaseLabel + TEXT(" still"), Assets, 0.0f, StillArm) || !RunDebrisFollowArm(*this, CaseLabel + TEXT(" wave"), Assets, WaveAmplitudeCm, WaveArm))
+	if (!RunDebrisFollowArm(*this, CaseLabel + TEXT(" still"), Assets, FTDPassiveWaveShape(), StillArm) || !RunDebrisFollowArm(*this, CaseLabel + TEXT(" wave"), Assets, FTDPassiveWaveShape{ WaveAmplitudeCm }, WaveArm))
 	{
 		return false;
 	}
@@ -963,6 +1032,89 @@ bool FTDFluidWaterParticleRhiDebrisFollowsSurfaceTest::RunTest(const FString& Pa
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidWaterParticleRhiDebrisFollowsShapedSurfaceTest,
+	"TDGame.FluidFXRhi.WaterParticleAssets.DebrisFollowsShapedSurface",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidWaterParticleRhiDebrisFollowsShapedSurfaceTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidWaterParticleRhiTestPrivate;
+
+	const FString CaseLabel = TEXT("TDGame.FluidFXRhi.WaterParticleAssets.DebrisFollowsShapedSurface");
+	FTDWaterGpuSelectionScope GpuScope;
+	FTDWaterParticleAssets Assets;
+	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets))
+	{
+		return false;
+	}
+
+	FTDPassiveWaveShape UndampedShape;
+	UndampedShape.AmplitudeCm = ShapedWaveAmplitudeCm;
+	UndampedShape.SimDamping = 0.0f;
+	FTDPassiveWaveShape DampedShape = UndampedShape;
+	DampedShape.SimDamping = 1.0f;
+	FTDPassiveWaveShape LongShape = UndampedShape;
+	LongShape.LengthScale = ShapedLongWaveLengthScale;
+
+	FTDDebrisFollowArm UndampedArm;
+	FTDDebrisFollowArm DampedArm;
+	FTDDebrisFollowArm LongArm;
+	if (!RunDebrisFollowArm(*this, CaseLabel + TEXT(" undamped"), Assets, UndampedShape, UndampedArm)
+		|| !RunDebrisFollowArm(*this, CaseLabel + TEXT(" damped"), Assets, DampedShape, DampedArm)
+		|| !RunDebrisFollowArm(*this, CaseLabel + TEXT(" long"), Assets, LongShape, LongArm))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("Shaped debris positions are finite"), AreFinite(UndampedArm.Positions) && AreFinite(DampedArm.Positions) && AreFinite(LongArm.Positions));
+
+	const TArray<FVector> UndampedInteriorPositions = SelectWindowInteriorPositions(UndampedArm);
+	const TArray<FVector> DampedInteriorPositions = SelectWindowInteriorPositions(DampedArm);
+	TestTrue(*FString::Printf(TEXT("Both damping arms keep at least %d debris inside the window fade (%d, %d)"), ShapedInteriorMinimumCount, UndampedInteriorPositions.Num(), DampedInteriorPositions.Num()),
+		UndampedInteriorPositions.Num() >= ShapedInteriorMinimumCount && DampedInteriorPositions.Num() >= ShapedInteriorMinimumCount);
+	const double UndampedInteriorDeviationCm = ComputeStandardDeviationZ(UndampedInteriorPositions);
+	const double DampedInteriorDeviationCm = ComputeStandardDeviationZ(DampedInteriorPositions);
+	TestTrue(*FString::Printf(TEXT("Undamped shaped waves move the interior debris (%.3f > 0)"), UndampedInteriorDeviationCm), UndampedInteriorDeviationCm > 0.0);
+	const double DampingRatio = DivideOrInfinity(DampedInteriorDeviationCm, UndampedInteriorDeviationCm);
+	TestTrue(*FString::Printf(TEXT("Sim damping 1 flattens the interior debris against damping 0 (%.3f <= %.2f)"), DampingRatio, ShapedDampingRatioLimit), DampingRatio <= ShapedDampingRatioLimit);
+
+	const FTDNearPairHeightStep UndampedStep = MeasureNearPairHeightStep(UndampedArm.Positions);
+	const FTDNearPairHeightStep LongStep = MeasureNearPairHeightStep(LongArm.Positions);
+	TestTrue(*FString::Printf(TEXT("Both length arms have at least %d near debris pairs (%d, %d)"), ShapedPairMinimumCount, UndampedStep.PairCount, LongStep.PairCount),
+		UndampedStep.PairCount >= ShapedPairMinimumCount && LongStep.PairCount >= ShapedPairMinimumCount);
+	const double UndampedDeviationCm = ComputeStandardDeviationZ(UndampedArm.Positions);
+	const double LongDeviationCm = ComputeStandardDeviationZ(LongArm.Positions);
+	const double UndampedRoughness = DivideOrInfinity(UndampedStep.MeanAbsoluteHeightStepCm, UndampedDeviationCm);
+	const double LongRoughness = DivideOrInfinity(LongStep.MeanAbsoluteHeightStepCm, LongDeviationCm);
+	const double LengthRatio = DivideOrInfinity(LongRoughness, UndampedRoughness);
+	TestTrue(*FString::Printf(TEXT("Wave length scale %.1f smooths near debris height steps against scale 1 (%.3f <= %.2f)"), ShapedLongWaveLengthScale, LengthRatio, ShapedLengthRatioLimit), LengthRatio <= ShapedLengthRatioLimit);
+	ReportLine(*this, FString::Printf(TEXT("TDFluidWaterParticleShapedSurface: %s damping_ratio=%.4f length_ratio=%.4f interior=%d/%d pairs=%d/%d"), *CaseLabel, DampingRatio, LengthRatio, UndampedInteriorPositions.Num(), DampedInteriorPositions.Num(), UndampedStep.PairCount, LongStep.PairCount));
+
+	TArray<TPair<FString, double>> Fields;
+	Fields.Add({ TEXT("wave_amplitude_cm"), static_cast<double>(ShapedWaveAmplitudeCm) });
+	Fields.Add({ TEXT("long_length_scale"), static_cast<double>(ShapedLongWaveLengthScale) });
+	Fields.Add({ TEXT("undamped_count"), static_cast<double>(UndampedArm.Positions.Num()) });
+	Fields.Add({ TEXT("damped_count"), static_cast<double>(DampedArm.Positions.Num()) });
+	Fields.Add({ TEXT("long_count"), static_cast<double>(LongArm.Positions.Num()) });
+	Fields.Add({ TEXT("undamped_interior_count"), static_cast<double>(UndampedInteriorPositions.Num()) });
+	Fields.Add({ TEXT("damped_interior_count"), static_cast<double>(DampedInteriorPositions.Num()) });
+	Fields.Add({ TEXT("undamped_interior_z_stddev_cm"), UndampedInteriorDeviationCm });
+	Fields.Add({ TEXT("damped_interior_z_stddev_cm"), DampedInteriorDeviationCm });
+	Fields.Add({ TEXT("damping_ratio"), DampingRatio });
+	Fields.Add({ TEXT("damping_ratio_limit"), ShapedDampingRatioLimit });
+	Fields.Add({ TEXT("undamped_pair_count"), static_cast<double>(UndampedStep.PairCount) });
+	Fields.Add({ TEXT("long_pair_count"), static_cast<double>(LongStep.PairCount) });
+	Fields.Add({ TEXT("undamped_pair_step_cm"), UndampedStep.MeanAbsoluteHeightStepCm });
+	Fields.Add({ TEXT("long_pair_step_cm"), LongStep.MeanAbsoluteHeightStepCm });
+	Fields.Add({ TEXT("undamped_z_stddev_cm"), UndampedDeviationCm });
+	Fields.Add({ TEXT("long_z_stddev_cm"), LongDeviationCm });
+	Fields.Add({ TEXT("length_ratio"), LengthRatio });
+	Fields.Add({ TEXT("length_ratio_limit"), ShapedLengthRatioLimit });
+	WriteRecord(*this, TEXT("debris-follows-shaped-surface.json"), Fields);
+	return !HasAnyErrors();
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidWaterParticleRhiDebrisCarriedByFlowTest,
 	"TDGame.FluidFXRhi.WaterParticleAssets.DebrisCarriedByFlow",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
@@ -975,7 +1127,7 @@ bool FTDFluidWaterParticleRhiDebrisCarriedByFlowTest::RunTest(const FString& Par
 	FTDWaterGpuSelectionScope GpuScope;
 	FTDWaterParticleAssets Assets;
 	FTDWaterParticleScene Scene;
-	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets) || !BuildWaterParticleScene(*this, CaseLabel, Assets, true, 0.0f, Scene))
+	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets) || !BuildWaterParticleScene(*this, CaseLabel, Assets, true, FTDPassiveWaveShape(), Scene))
 	{
 		return false;
 	}
@@ -1039,7 +1191,7 @@ bool FTDFluidWaterParticleRhiSplashContactReachesWaterTest::RunTest(const FStrin
 	FTDWaterGpuSelectionScope GpuScope;
 	FTDWaterParticleAssets Assets;
 	FTDWaterParticleScene Scene;
-	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets) || !BuildWaterParticleScene(*this, CaseLabel, Assets, true, 0.0f, Scene))
+	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets) || !BuildWaterParticleScene(*this, CaseLabel, Assets, true, FTDPassiveWaveShape(), Scene))
 	{
 		return false;
 	}
@@ -1136,7 +1288,7 @@ bool FTDFluidWaterParticleRhiWhitewaterSpawnsOnWhitewaterTest::RunTest(const FSt
 	FTDWaterGpuSelectionScope GpuScope;
 	FTDWaterParticleAssets Assets;
 	FTDWaterParticleScene Scene;
-	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets) || !BuildWaterParticleScene(*this, CaseLabel, Assets, true, 0.0f, Scene))
+	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets) || !BuildWaterParticleScene(*this, CaseLabel, Assets, true, FTDPassiveWaveShape(), Scene))
 	{
 		return false;
 	}
@@ -1191,7 +1343,7 @@ bool FTDFluidWaterParticleRhiOffscreenCostTest::RunTest(const FString& Parameter
 	FTDWaterGpuSelectionScope GpuScope;
 	FTDWaterParticleAssets Assets;
 	FTDWaterParticleScene Scene;
-	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets) || !BuildWaterParticleScene(*this, CaseLabel, Assets, true, 0.0f, Scene))
+	if (!CanRunWaterParticleRhiTest(*this, CaseLabel, GpuScope) || !PreloadWaterParticleAssets(*this, CaseLabel, Assets) || !BuildWaterParticleScene(*this, CaseLabel, Assets, true, FTDPassiveWaveShape(), Scene))
 	{
 		return false;
 	}

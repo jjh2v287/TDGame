@@ -56,6 +56,9 @@ WATER_SURFACE_RUNTIME = (
     ("User.TDWaterPressureNormalStrength", F),
     ("User.TDWaterPassiveWaveAmplitudeCm", F),
     ("User.TDWaterPassiveWaveDirectionDegrees", F),
+    ("User.TDWaterPassiveWaveSimDamping", F),
+    ("User.TDWaterPassiveWaveLengthScale", F),
+    ("User.TDWaterPassiveWaveAngleSpread", F),
     ("User.TDWaterTimeSeconds", F),
     ("User.TDWaterCoverage", F),
     ("User.TDWaterCameraWorld", V3),
@@ -397,15 +400,16 @@ def tile_height_expression():
 
 def wave_angle(constants, index):
     offset = math.radians(constants["waveAngleOffsetDegrees"][index])
-    return f"(Particles.TDWaterWaveBaseAngle + {term(offset)})"
+    return f"(Particles.TDWaterWaveBaseAngle + ({term(offset)} * User.TDWaterPassiveWaveAngleSpread))"
 
 
 def wave_phase(constants, index, point):
     wave_number = TWO_PI / constants["waveLengthCm"][index]
     angular = math.sqrt(constants["gravityCmPerSecondSquared"] * wave_number) * constants["waveTimeScale"]
     angle = wave_angle(constants, index)
-    return (f"({number(wave_number)} * dot(float2(cos({angle}), sin({angle})), {point})"
-            f" - {number(angular)} * User.TDWaterTimeSeconds + {term(constants['wavePhaseOffset'][index])})")
+    length_scale = "max(User.TDWaterPassiveWaveLengthScale, 0.1)"
+    return (f"(({number(wave_number)} / {length_scale}) * dot(float2(cos({angle}), sin({angle})), {point})"
+            f" - ({number(angular)} / sqrt({length_scale})) * User.TDWaterTimeSeconds + {term(constants['wavePhaseOffset'][index])})")
 
 
 def wave_rest_expression(constants):
@@ -468,7 +472,7 @@ def surface_update_steps(spec, constants):
         input_entries.append(expression_entry("Particles.TDWaterTileHeightCm", F, tile_height_expression()))
     steps.append(set_step(UPDATE, "update_surface_inputs", *input_entries))
     steps.append(set_step(UPDATE, "update_wave_amplitude",
-                          expression_entry("Particles.TDWaterWaveAmplitudeCm", F, "User.TDWaterPassiveWaveAmplitudeCm * (1.0 - 0.5 * Particles.TDWaterWindowFade)")))
+                          expression_entry("Particles.TDWaterWaveAmplitudeCm", F, "User.TDWaterPassiveWaveAmplitudeCm * (1.0 - User.TDWaterPassiveWaveSimDamping * Particles.TDWaterWindowFade)")))
     steps.append(set_step(UPDATE, "update_wave_rest", expression_entry("Particles.TDWaterRestXY", V2, wave_rest_expression(constants))))
     steps.append(set_step(UPDATE, "update_wave_height",
                           expression_entry("Particles.TDWaterWaveHeightCm", F, wave_height_expression(constants)),

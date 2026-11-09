@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3 와 Windows Kits dxc.exe(ps_6_0·vs_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json ...]
 출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약, 하나라도 실패하면 종료 코드 1
-상태: 미검증(첫 성공 전). 물 셰이더 3개(TDFluidWaterCommon·Surface·Offset.hlsl)를 재질 스크립트와 같은 조립 함수로 노드별 조립해 엔진 순서(정점 오프셋이 먼저)대로 한 파일에 이어 붙여 컴파일하고, 정점용 매크로가 표면 함수로 새면(표본 명령 수가 단독 합과 다르면) 실패한다. 매크로를 지우지 않는 조립을 음성 대조로 넣어 검사의 검출력을 함께 확인한다. C1 추가분: 리본 입력(RibbonTangentWS·RibbonFlowCmPerSec)·C++ 구동 파라미터 계약(MID_DRIVEN_*)·무대 강 배치 자체 점검(validate_river_layout)도 함께 본다. W-2r 추가분: 젖음 데칼 HLSL(TDFluidWaterWetDecal.hlsl) 텍스트·자체 점검·dxc 컴파일, 리본 로컬 UV 정적 스위치 0·1 순열 컴파일(표본 수 불변), 인스턴스 정적 스위치 이름 대조. 파동 0 P1(2026-10-25): 인스턴스 덮어쓰기 이름·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(fluid_material_look.TDMaterialLookTable)에서 읽는다. 파동 3 W-6 E(2026-10-29): --look-fragment(여러 번, 정본에 아직 없는 인스턴스 값을 fluid_material_look.merge_look_fragments 로 메모리에서만 병합, 정본 파일은 쓰지 않는다)·밀집 물 계약(C++ 구동 이름 3·모양 이름 2·밀집 MI 3의 부모와 모양 값)·밀집 식 고정점(비활성 곱셈 인자·windowDepthKnown 한 번 정의·W-1b 파동 상수 7줄 보존) 점검을 더했다.
+상태: 미검증(첫 성공 전). 물 셰이더 3개(TDFluidWaterCommon·Surface·Offset.hlsl)를 재질 스크립트와 같은 조립 함수로 노드별 조립해 엔진 순서(정점 오프셋이 먼저)대로 한 파일에 이어 붙여 컴파일하고, 정점용 매크로가 표면 함수로 새면(표본 명령 수가 단독 합과 다르면) 실패한다. 매크로를 지우지 않는 조립을 음성 대조로 넣어 검사의 검출력을 함께 확인한다. C1 추가분: 리본 입력(RibbonTangentWS·RibbonFlowCmPerSec)·C++ 구동 파라미터 계약(MID_DRIVEN_*)·무대 강 배치 자체 점검(validate_river_layout)도 함께 본다. W-2r 추가분: 젖음 데칼 HLSL(TDFluidWaterWetDecal.hlsl) 텍스트·자체 점검·dxc 컴파일, 리본 로컬 UV 정적 스위치 0·1 순열 컴파일(표본 수 불변), 인스턴스 정적 스위치 이름 대조. 파동 0 P1(2026-10-25): 인스턴스 덮어쓰기 이름·부모는 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json(fluid_material_look.TDMaterialLookTable)에서 읽는다. 파동 3 W-6 E(2026-10-29): --look-fragment(여러 번, 정본에 아직 없는 인스턴스 값을 fluid_material_look.merge_look_fragments 로 메모리에서만 병합, 정본 파일은 쓰지 않는다)·밀집 물 계약(C++ 구동 이름 3·모양 이름 2·밀집 MI 3의 부모와 모양 값)·밀집 식 고정점(비활성 곱셈 인자·windowDepthKnown 한 번 정의·W-1b 파동 상수 7줄 보존) 점검을 더했다. Q1-1 추가분(2026-11-09, 오프라인 통과·재생성 전): N1 새 매개변수 14개(스칼라 13·FoamThinColor) 마스터 기본값, N2 표면 표본 수 = Q1 전 HEAD 상수 119(Od·O3), N3 식 고정점(감쇠·FoamNormalFlatten·밀집 불투명도), N4 음성 대조(PassiveWaveSimDamping 0.4 사본을 N1 이 검출), N5 입자 액터 SurfaceParameterRows 의 MaterialScalar 재질 이름이 물 마스터 스칼라에 있음(+행 이름 하나를 바꾼 사본 음성 대조), N6 Common 원문에 픽셀 전용 문자열 없음, 계약 검사에 FoamDebugView 등 진단 전용 이름을 MI 가 덮으면 실패를 더했다.
 """
 import argparse
 import glob
@@ -199,6 +199,13 @@ def run_contract_checks(material, look_table):
         failures.append(str(error))
     if shadowed:
         failures.append("인스턴스가 C++ 구동 파라미터를 덮어씀: " + ", ".join(shadowed))
+    try:
+        diagnostic = material.find_diagnostic_overrides(look_table)
+    except RuntimeError as error:
+        diagnostic = []
+        failures.append(str(error))
+    if diagnostic:
+        failures.append("인스턴스가 진단 전용 파라미터를 덮어씀: " + ", ".join(diagnostic))
     primitive_indices = material.PRIMITIVE_DATA_INDEX_BY_PARAMETER
     scalar_names = {name for name, _ in material.SCALAR_PARAMETER_DEFAULTS}
     if len(set(primitive_indices.values())) != len(primitive_indices):
@@ -239,6 +246,33 @@ DENSE_SURFACE_ANCHORS = (
     "OutTopOpacity = topOpacity * denseCover;",
     "liteDepthBlend * edgeSoftness)) * denseCover;",
 )
+Q1_SCALAR_DEFAULTS = (
+    ("PassiveWaveSimDamping", 0.5),
+    ("PassiveWaveLengthScale", 1.0),
+    ("PassiveWaveAngleSpread", 1.0),
+    ("PassiveWaveNormalFilterPerDepth", 0.0),
+    ("FoamLayerMode", 0.0),
+    ("FoamPatchVariation", 0.35),
+    ("FoamLaceSoftness", 0.06),
+    ("FoamCoreStart", 0.6),
+    ("FoamBubbleShare", 0.05),
+    ("FoamThinOpacity", 0.5),
+    ("FoamNormalFlatten", 0.6),
+    ("ShoreFoamSimDepthWeight", 0.0),
+    ("FoamDebugView", 0.0),
+)
+Q1_VECTOR_DEFAULTS = (("FoamThinColor", (0.55, 0.70, 0.72, 0.0)),)
+Q1_EXPRESSION_ANCHORS = (
+    ("offset", "(1.0 - PassiveWaveSimDamping * simFade)"),
+    ("surface", "(1.0 - PassiveWaveSimDamping * simFade)"),
+    ("surface", "FoamNormalFlatten * foamMask"),
+    ("surface", "OutTopOpacity = topOpacity * denseCover;"),
+)
+SURFACE_SAMPLE_COUNT_BEFORE_Q1 = 119
+COMMON_PIXEL_ONLY_TOKENS = ("SceneDepthWithoutWaterCm", "PixelDepthCm", "Texture2DSample(")
+PARTICLE_ACTOR_SOURCE_PATH = ("Source", "TDGame", "FluidFX", "TDFluidWaterParticleActor.cpp")
+SURFACE_ROWS_PATTERN = re.compile(r"SurfaceParameterRows\[\]\s*=\s*\{(.*?)\n\s*\};", re.DOTALL)
+MATERIAL_SCALAR_ROW_PATTERN = re.compile(r'\{\s*TEXT\("([^"]+)"\)\s*,\s*TEXT\("([^"]+)"\)\s*,\s*ESurfaceParameterSource::MaterialScalar\b')
 
 
 def run_dense_contract_checks(material, look_table):
@@ -281,6 +315,71 @@ def run_dense_anchor_checks(codes, common_text):
         if not re.search(rf"^const float(?:\[8\])? {name}(?:\[8\])? = ", common_text, re.MULTILINE):
             failures.append(f"W-1b 파동 상수 선언 줄이 바뀜: {name}")
     return failures
+
+
+def find_q1_default_mismatches(scalar_defaults, vector_defaults):
+    failures = []
+    for name, expected in Q1_SCALAR_DEFAULTS:
+        if name not in scalar_defaults:
+            failures.append(f"{name}: 마스터 스칼라 선언 없음")
+            continue
+        if scalar_defaults[name] != expected:
+            failures.append(f"{name}: 기본값 {scalar_defaults[name]} 기대 {expected}")
+    for name, expected in Q1_VECTOR_DEFAULTS:
+        if name not in vector_defaults:
+            failures.append(f"{name}: 마스터 벡터 선언 없음")
+            continue
+        if tuple(vector_defaults[name]) != expected:
+            failures.append(f"{name}: 기본값 {tuple(vector_defaults[name])} 기대 {expected}")
+    return failures
+
+
+def find_missing_q1_anchors(codes):
+    return [f"{label} 식 고정점 없음: {anchor}" for label, anchor in Q1_EXPRESSION_ANCHORS if anchor not in codes[label]]
+
+
+def find_unknown_surface_row_names(cpp_text, scalar_names):
+    table = SURFACE_ROWS_PATTERN.search(cpp_text)
+    if not table:
+        return ["SurfaceParameterRows 표를 찾지 못함"]
+    rows = MATERIAL_SCALAR_ROW_PATTERN.findall(table.group(1))
+    if not rows:
+        return ["SurfaceParameterRows 에 MaterialScalar 행이 없음"]
+    return [f"{runtime_name}: 재질 이름 {material_name} 이 물 마스터 스칼라에 없음" for runtime_name, material_name in rows if material_name not in scalar_names]
+
+
+def rename_first_material_scalar_row(cpp_text):
+    def rename(match):
+        return match.group(0).replace(f'TEXT("{match.group(2)}")', f'TEXT("{match.group(2)}Typo")')
+    return MATERIAL_SCALAR_ROW_PATTERN.sub(rename, cpp_text, count=1)
+
+
+def run_q1_static_checks(root, material, codes, common_text, record):
+    scalar_defaults = dict(material.SCALAR_PARAMETER_DEFAULTS)
+    vector_defaults = dict(material.VECTOR_PARAMETER_DEFAULTS)
+    default_failures = find_q1_default_mismatches(scalar_defaults, vector_defaults)
+    record("N1 Q1 새 매개변수 14개 마스터 기본값", not default_failures, "; ".join(default_failures))
+
+    anchor_failures = find_missing_q1_anchors(codes)
+    record("N3 Q1 식 고정점(감쇠·거품 법선 평탄화·밀집 불투명도)", not anchor_failures, "; ".join(anchor_failures))
+
+    damping_control = dict(scalar_defaults)
+    damping_control["PassiveWaveSimDamping"] = 0.4
+    control_failures = find_q1_default_mismatches(damping_control, vector_defaults)
+    record("N4 음성 대조: PassiveWaveSimDamping 기본 0.4 사본은 N1 이 검출", len(control_failures) > len(default_failures), "; ".join(control_failures) or "검출 못 함")
+
+    cpp_path = root.joinpath(*PARTICLE_ACTOR_SOURCE_PATH)
+    if not cpp_path.is_file():
+        record("N5 입자 액터 SurfaceParameterRows 재질 이름이 물 마스터 스칼라에 있음", False, f"{cpp_path.name} 없음")
+    else:
+        cpp_text = cpp_path.read_text(encoding="utf-8")
+        row_failures = find_unknown_surface_row_names(cpp_text, set(scalar_defaults))
+        record("N5 입자 액터 SurfaceParameterRows 재질 이름이 물 마스터 스칼라에 있음", not row_failures, "; ".join(row_failures))
+        typo_failures = find_unknown_surface_row_names(rename_first_material_scalar_row(cpp_text), set(scalar_defaults))
+        record("N5 음성 대조: 행 이름 하나를 바꾼 사본은 검출", len(typo_failures) > len(row_failures), "; ".join(typo_failures) or "검출 못 함")
+
+    pixel_only_in_common = [token for token in COMMON_PIXEL_ONLY_TOKENS if token in common_text]
+    record("N6 Common 원문에 픽셀 전용 문자열 없음", not pixel_only_in_common, ", ".join(pixel_only_in_common))
 
 
 def main():
@@ -340,6 +439,7 @@ def main():
     offset_text = codes["offset"]
     pixel_only_in_offset = [token for token in ("SceneDepthWithoutWaterCm", "PixelDepthCm", "Texture2DSample(") if token in offset_text]
     record("정점 오프셋에 픽셀 전용 호출 없음", not pixel_only_in_offset, ", ".join(pixel_only_in_offset))
+    run_q1_static_checks(root, material, codes, sources["common"], record)
 
     dxc = find_dxc(arguments.dxc)
     if not dxc:
@@ -367,6 +467,11 @@ def main():
             f"표면 {counts['Od']['surface']} 오프셋 {counts['Od']['offset']}",
         )
         record("오프셋 ps 와 vs 표본 수 동일", counts["Od"]["offset"] == counts["Od"]["vertex"], f"{counts['Od']['offset']} / {counts['Od']['vertex']}")
+        record(
+            "N2 표면 표본 수가 Q1 전 HEAD 상수와 같음(표본 +0)",
+            counts["Od"]["surface"] == SURFACE_SAMPLE_COUNT_BEFORE_Q1 and counts["O3"]["surface"] == SURFACE_SAMPLE_COUNT_BEFORE_Q1,
+            f"Od {counts['Od']['surface']} O3 {counts['O3']['surface']} 기대 {SURFACE_SAMPLE_COUNT_BEFORE_Q1}",
+        )
 
         ribbon_switches = [name for name in material.STATIC_SWITCH_NAMES if name.startswith("bRibbonLocal")]
         for value in (0, 1):

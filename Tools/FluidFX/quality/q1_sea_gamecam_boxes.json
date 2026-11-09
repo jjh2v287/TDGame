@@ -1,0 +1,69 @@
+{
+  "note": "Q1 S0 거품 상자 초안(roadmap-v2 2.3 3항, 2026-11-09 q1 도구 갈래). box = image_size 기준 px [x0, y0, x1, y1]. measure_water_look.py --boxes 가 장 크기에 맞춰 늘리고 파일 이름에 든 가장 긴 variants 열쇠 하나를 고른다. gamecam 상자는 [계산]: 폰 Z -162 cm [가정: 바닥 -250 + 캡슐 반높이], 붐 피벗 = 폰 위치, 시점 pitch -60 yaw 0, 가로 시야 90도, 수면 Z 0. 교반기 공전 중심은 editor_make_fluid_water_particle_stage.py:45-48 center_xy(스침 (500, 400) 반경 150 수평 원, 수직 (-500, 400) 반경 120 XZ 평면 원, 수면 교차 x -620·-380)이고, 변형 JSON 의 location·회전에서 RotatingMovement 피벗(-반경, 0, 0)으로 되짚어도 같다. 상자 = 스침 고리 + 거품 여유 50 cm, 수직 교차 구간 x ±60·y ±70 cm. S0 첫 장 result.json 의 실제 폰·카메라 위치로 다시 계산하고 흰 비율 5% 미만이면 폰 위치를 고친다. sea_img16 상자는 roadmap-v2 2.1 기준선(1280x720 stirrer_ring [574,98,800,172]·right_foam [1158,329,1280,423])을 1.5배 한 값이다.",
+  "image_size": [
+    1920,
+    1080
+  ],
+  "assumed_camera": {
+    "pawn_z_cm": -162.0,
+    "pitch": -60.0,
+    "yaw": 0.0,
+    "horizontal_fov": 90.0,
+    "surface_z_cm": 0.0
+  },
+  "variants": {
+    "gamecam_graze": [
+      {
+        "name": "graze_ring",
+        "box": [
+          836,
+          388,
+          1518,
+          1024
+        ]
+      }
+    ],
+    "gamecam_graze_scale": [
+      {
+        "name": "graze_ring",
+        "box": [
+          878,
+          434,
+          1326,
+          841
+        ]
+      }
+    ],
+    "gamecam_vertical": [
+      {
+        "name": "vertical_crossing",
+        "box": [
+          844,
+          219,
+          1076,
+          635
+        ]
+      }
+    ],
+    "sea_img16": [
+      {
+        "name": "stirrer_ring",
+        "box": [
+          861,
+          147,
+          1200,
+          258
+        ]
+      },
+      {
+        "name": "right_foam",
+        "box": [
+          1737,
+          494,
+          1920,
+          635
+        ]
+      }
+    ]
+  }
+}

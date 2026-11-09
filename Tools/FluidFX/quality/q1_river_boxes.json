@@ -1,0 +1,120 @@
+{
+  "note": "Q1 S0 강 거품 상자(roadmap-v2 2.3 3항 q1_river_boxes, 2026-11-09 S0 강 기준선 첫 장 06000ms 흰빛 마스크를 보고 그림). box = image_size(1280x720) 기준 px [x0, y0, x1, y1], measure_water_look.py --boxes 가 1080p 장에서는 1.5배로 늘리고 파일 이름에 든 가장 긴 variants 열쇠 하나를 고른다. bank_strip = 가까운 둑 흰 띠, bank_strip_far = 먼 둑 흰 띠, wake_blotch = 잠긴 바위 뒤 얼룩, riffle_blotch = 여울 얼룩. 캐릭터 화소는 상자 밖. A18 쓸기(S7r)는 flow_bend 두 구도의 bank_strip 을 쓴다.",
+  "image_size": [
+    1280,
+    720
+  ],
+  "variants": {
+    "river_flow_bend": [
+      {
+        "name": "bank_strip",
+        "box": [
+          860,
+          380,
+          1140,
+          660
+        ]
+      },
+      {
+        "name": "bank_strip_far",
+        "box": [
+          940,
+          60,
+          1280,
+          330
+        ]
+      }
+    ],
+    "river_rock_wake": [
+      {
+        "name": "bank_strip",
+        "box": [
+          880,
+          330,
+          1280,
+          640
+        ]
+      },
+      {
+        "name": "wake_blotch",
+        "box": [
+          600,
+          40,
+          900,
+          300
+        ]
+      }
+    ],
+    "river_shallow": [
+      {
+        "name": "riffle_blotch",
+        "box": [
+          620,
+          430,
+          1120,
+          720
+        ]
+      },
+      {
+        "name": "riffle_blotch_far",
+        "box": [
+          80,
+          60,
+          520,
+          330
+        ]
+      }
+    ],
+    "gamecam_river_flow_bend": [
+      {
+        "name": "bank_strip",
+        "box": [
+          800,
+          260,
+          1000,
+          720
+        ]
+      }
+    ],
+    "gamecam_river_rock_wake": [
+      {
+        "name": "bank_strip",
+        "box": [
+          790,
+          60,
+          1000,
+          720
+        ]
+      },
+      {
+        "name": "wake_blotch",
+        "box": [
+          920,
+          80,
+          1120,
+          300
+        ]
+      }
+    ],
+    "gamecam_river_shallow": [
+      {
+        "name": "riffle_blotch",
+        "box": [
+          460,
+          420,
+          820,
+          720
+        ]
+      },
+      {
+        "name": "riffle_blotch_far",
+        "box": [
+          480,
+          0,
+          800,
+          280
+        ]
+      }
+    ]
+  }
+}

@@ -157,15 +157,17 @@ if (FoamAnisotropyMax > 1.0001)
 }
 float foamNoise = saturate(0.5 + (dot(lerp(foamSampleSecond, foamSampleFirst, flowWeightFirst), foamChannelWeights) - 0.5) * 1.5 * phaseVarianceBoost);
 
-float shoreFoam = (1.0 - smoothstep(0.15 * ShoreFoamDepthCm, max(ShoreFoamDepthCm, 0.01), verticalThicknessCm)) * ShoreFoamAmount;
+float foamDepthSimCm = simField[0].z * WaterDepthReferenceCm;
+float foamDepthCm = lerp(verticalThicknessCm, foamDepthSimCm, saturate(ShoreFoamSimDepthWeight) * windowDepthKnown * simFade * waterLayerBlend);
+float shoreFoam = (1.0 - smoothstep(0.15 * ShoreFoamDepthCm, max(ShoreFoamDepthCm, 0.01), foamDepthCm)) * ShoreFoamAmount;
 
 float coastFoam = 0.0;
 if (CoastWaveMaxDepthCm > 0.0 && CoastFoamStrength > 0.0)
 {
-    float coastPhase = TD_WATER_TWO_PI * (verticalThicknessCm / max(CoastWaveDepthSpacingCm, 1.0) + CoastWavePhase);
+    float coastPhase = TD_WATER_TWO_PI * (foamDepthCm / max(CoastWaveDepthSpacingCm, 1.0) + CoastWavePhase);
     float coastCrest = smoothstep(CoastFoamThreshold, 1.0, max(0.0, sin(coastPhase)));
     float coastBreakup = GradientNoise3D_ALU(float3(WaterWorldPosition.xy / max(CoastBreakupScaleCm, 10.0), ElapsedSeconds * 0.2), false, 1.0) * 0.5 + 0.5;
-    float coastShoal = 1.0 - smoothstep(0.6 * CoastWaveMaxDepthCm, CoastWaveMaxDepthCm, verticalThicknessCm);
+    float coastShoal = 1.0 - smoothstep(0.6 * CoastWaveMaxDepthCm, CoastWaveMaxDepthCm, foamDepthCm);
     coastFoam = coastCrest * (1.0 - CoastBreakupAmount * (1.0 - coastBreakup)) * coastShoal * CoastFoamStrength;
 }
 
@@ -176,14 +178,37 @@ float speedFoam = saturate(simSpeedRatio - FoamSpeedThreshold) * FoamFromSpeed;
 float froudeNumber = length(flowCm) * rsqrt(gravityCmPerSecondSquared * max(verticalThicknessCm, froudeMinimumDepthCm));
 float froudeFoam = saturate(froudeNumber - FoamFroudeThreshold) * FoamFromFroude;
 float foamAmount = min(saturate(densityFoam + speedFoam + froudeFoam + shoreFoam + coastFoam + whitecapFoam + wakeFoam), FoamCoverageMax);
-float foamLaceMask = smoothstep(1.0 - foamAmount, 1.0 - foamAmount + max(FoamEdgeSoftness, 0.02), foamNoise);
+float foamThickness = 1.0;
+float foamLaceMask = 0.0;
+if (FoamLayerMode > 0.5)
+{
+    float3 foamLayers = saturate(0.5 + (lerp(foamSampleSecond, foamSampleFirst, flowWeightFirst) - 0.5) * phaseVarianceBoost);
+    float foamCoverShare = saturate(foamAmount * (1.0 + (foamLayers.g - 0.5) * 2.0 * FoamPatchVariation));
+    float laceSoftness = max(FoamLaceSoftness, 0.01);
+    float laceThreshold = 1.0 - foamCoverShare;
+    float laceMask = smoothstep(laceThreshold - laceSoftness, laceThreshold + laceSoftness, foamLayers.r) * step(0.0001, foamCoverShare);
+    float coreWeight = smoothstep(FoamCoreStart, 1.0, foamAmount);
+    float coreMask = coreWeight * smoothstep(laceThreshold - 0.15, laceThreshold + 0.15, foamLayers.g);
+    float bubbleMask = smoothstep(1.0 - FoamBubbleShare, 1.0 - FoamBubbleShare + laceSoftness, foamLayers.b) * saturate(4.0 * foamAmount) * (1.0 - coreWeight);
+    foamThickness = saturate(max(coreMask, (foamLayers.r - laceThreshold) / max(foamCoverShare, 0.05)));
+    foamLaceMask = max(max(laceMask, bubbleMask), coreMask) * lerp(FoamThinOpacity, 1.0, foamThickness);
+}
+else
+{
+    foamLaceMask = smoothstep(1.0 - foamAmount, 1.0 - foamAmount + max(FoamEdgeSoftness, 0.02), foamNoise);
+}
 float foamFarBlend = saturate((PixelDepthCm - FoamFadeStartCm) / max(FoamFadeLengthCm, 1.0));
 float foamMask = lerp(foamLaceMask, foamAmount * farFoamOpacity, foamFarBlend);
 
 float dyeOpacity = saturate(simSelectiveDensity * DyeOpacity) * simMask;
 float topOpacity = max(foamMask, dyeOpacity);
 float foamShare = topOpacity > foamMask ? foamMask / topOpacity : 1.0;
-float3 topColor = lerp(DyeColor, FoamColor, foamShare);
+float3 foamBaseColor = FoamColor;
+if (FoamLayerMode > 0.5)
+{
+    foamBaseColor = lerp(FoamThinColor, FoamColor, foamThickness);
+}
+float3 topColor = lerp(DyeColor, foamBaseColor, foamShare);
 
 float3 causticLight = float3(1.0, 1.0, 1.0);
 float causticWindow = 0.0;
@@ -223,7 +248,7 @@ float denseDepthCm = simField[0].z * WaterDepthReferenceCm;
 float denseCoverBlend = denseActive * windowDepthKnown;
 float denseCover = lerp(1.0, smoothstep(DenseWaterWetThresholdCm, DenseWaterWetThresholdCm + max(DenseEdgeSoftnessCm, 0.01), denseDepthCm), denseCoverBlend);
 
-OutNormalWS = normalize(lerp(surfaceNormal, float3(0.0, 0.0, 1.0), 0.6 * foamMask));
+OutNormalWS = normalize(lerp(surfaceNormal, float3(0.0, 0.0, 1.0), FoamNormalFlatten * foamMask));
 OutBaseColor = topColor;
 OutRoughness = lerp(waterRoughnessValue, FoamRoughness, foamMask);
 OutSpecular = SpecularScale * edgeSoftness;
@@ -233,5 +258,20 @@ OutEmissive = glintEmission;
 OutLiteColor = lerp(lerp(LiteBedColor, WaterScatteringAlbedo, liteDepthBlend), DyeColor, dyeOpacity);
 OutTranslucentOpacity = saturate(max(topOpacity, liteDepthBlend * edgeSoftness)) * denseCover;
 OutTranslucentColor = lerp(WaterScatteringAlbedo, topColor, topOpacity);
+
+if (FoamDebugView > 0.5)
+{
+    const float foamDebugEmissiveScale = 4.8;
+    float3 foamDebugColor = FoamDebugView < 1.5 ? float3(densityFoam + speedFoam + froudeFoam + wakeFoam, shoreFoam + coastFoam, whitecapFoam) : (FoamDebugView < 2.5 ? foamAmount.xxx : (FoamDebugView < 3.5 ? foamMask.xxx : float3(tileMapFoam, length(tileMapSlope), 0.0)));
+    foamDebugColor = saturate(foamDebugColor);
+    OutBaseColor = float3(0.0, 0.0, 0.0);
+    OutEmissive = foamDebugColor * foamDebugEmissiveScale;
+    OutTopOpacity = 1.0;
+    OutRoughness = 1.0;
+    OutSpecular = 0.0;
+    OutLiteColor = foamDebugColor;
+    OutTranslucentOpacity = 1.0;
+    OutTranslucentColor = foamDebugColor;
+}
 
 return float4(foamMask, verticalThicknessCm, simMask, causticLight.g * causticWindow);

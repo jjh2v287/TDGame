@@ -1,0 +1,332 @@
+{
+  "base": {
+    "awake": {
+      "TDGen_WaterParticleSea": true
+    },
+    "exposure_ev100": 2.0,
+    "pawn": [
+      670.0,
+      274.0
+    ],
+    "arm": 800.0,
+    "view": [
+      -60.0,
+      0.0
+    ],
+    "hide": {},
+    "hide_components": {
+      "pawn": [
+        "Mesh"
+      ]
+    },
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "gamecam_graze",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          670.0,
+          274.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_WaterParticleStirrerVertical": [
+            -611.28,
+            400.0,
+            -44.91
+          ],
+          "TDGen_WaterParticleStirrerGraze": [
+            581.63,
+            274.16,
+            0.0
+          ]
+        },
+        "hide_components": {
+          "pawn": [
+            "Mesh"
+          ]
+        },
+        "call": {
+          "TDGen_WaterParticleStirrerVertical": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                201.98,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_WaterParticleStirrerGraze": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                302.97,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "look_live": {
+          "niagara": {
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris": {
+              "Colors": {
+                "User.TDDebrisColor": [
+                  1.0,
+                  0.45,
+                  0.05,
+                  1.0
+                ]
+              },
+              "Ints": {
+                "User.TDDebrisCount": 300
+              },
+              "Floats": {
+                "User.TDDebrisFloatOffsetCm": -3.0
+              }
+            },
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater": {
+              "Floats": {
+                "User.TDWhitewaterSpawnPerM2PerSec": 20.0
+              }
+            }
+          },
+          "skip_if_no_owner": [
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater"
+          ]
+        },
+        "schedule": {
+          "times": [
+            6.0,
+            6.25,
+            6.5,
+            6.75,
+            7.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "gamecam_graze"
+        }
+      },
+      "settle": 6.0
+    },
+    {
+      "name": "gamecam_vertical",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          -520.0,
+          400.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_WaterParticleStirrerVertical": [
+            -611.28,
+            400.0,
+            -44.91
+          ],
+          "TDGen_WaterParticleStirrerGraze": [
+            581.63,
+            274.16,
+            0.0
+          ]
+        },
+        "hide_components": {
+          "pawn": [
+            "Mesh"
+          ]
+        },
+        "call": {
+          "TDGen_WaterParticleStirrerVertical": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                201.98,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_WaterParticleStirrerGraze": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                302.97,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "look_live": {
+          "niagara": {
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris": {
+              "Colors": {
+                "User.TDDebrisColor": [
+                  1.0,
+                  0.45,
+                  0.05,
+                  1.0
+                ]
+              },
+              "Ints": {
+                "User.TDDebrisCount": 300
+              },
+              "Floats": {
+                "User.TDDebrisFloatOffsetCm": -3.0
+              }
+            },
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater": {
+              "Floats": {
+                "User.TDWhitewaterSpawnPerM2PerSec": 20.0
+              }
+            }
+          },
+          "skip_if_no_owner": [
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater"
+          ]
+        },
+        "schedule": {
+          "times": [
+            6.0,
+            6.25,
+            6.5,
+            6.75,
+            7.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "gamecam_vertical"
+        }
+      },
+      "settle": 6.0
+    },
+    {
+      "name": "gamecam_graze_scale",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          670.0,
+          274.0
+        ],
+        "arm": 1090.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_WaterParticleStirrerVertical": [
+            -611.28,
+            400.0,
+            -44.91
+          ],
+          "TDGen_WaterParticleStirrerGraze": [
+            581.63,
+            274.16,
+            0.0
+          ]
+        },
+        "hide_components": {
+          "pawn": [
+            "Mesh"
+          ]
+        },
+        "call": {
+          "TDGen_WaterParticleStirrerVertical": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                201.98,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_WaterParticleStirrerGraze": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                302.97,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "look_live": {
+          "niagara": {
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris": {
+              "Colors": {
+                "User.TDDebrisColor": [
+                  1.0,
+                  0.45,
+                  0.05,
+                  1.0
+                ]
+              },
+              "Ints": {
+                "User.TDDebrisCount": 300
+              },
+              "Floats": {
+                "User.TDDebrisFloatOffsetCm": -3.0
+              }
+            },
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater": {
+              "Floats": {
+                "User.TDWhitewaterSpawnPerM2PerSec": 20.0
+              }
+            }
+          },
+          "skip_if_no_owner": [
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater"
+          ]
+        },
+        "schedule": {
+          "times": [
+            6.0,
+            6.25,
+            6.5,
+            6.75,
+            7.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "gamecam_graze_scale"
+        }
+      },
+      "settle": 6.0
+    }
+  ]
+}

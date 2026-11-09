@@ -1,0 +1,81 @@
+{
+  "base": {
+    "awake": {
+      "TDGen_Tank_Pool": false,
+      "TDGen_Fountain_Fountain": false,
+      "TDGen_Cauldron_MinimalCauldron": false,
+      "TDGen_Cauldron_GeneralCauldron": false,
+      "TDGen_WaterTank_Pool": false,
+      "TDGen_LiquidSpheres_ClearSim": false,
+      "TDGen_LiquidSpheres_TurbulentSim": false,
+      "TDGen_LiquidSpheres_BloodOrbSim": false,
+      "TDGen_Waterfall_Pool": false,
+      "TDGen_Waterfall_Fall": false,
+      "TDGen_WaterySand_Sand": false,
+      "TDGen_UnderwaterPit_Pool": true
+    },
+    "pawn": [
+      24000.0,
+      0.0,
+      -200.0
+    ],
+    "arm": 800.0,
+    "view": [
+      -60.0,
+      0.0
+    ],
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "uw_gamecam",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "keep",
+          "read_back": []
+        },
+        "pawn": [
+          24000.0,
+          0.0,
+          -200.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "probe": {
+          "stats": [
+            {
+              "subsystem": "TDFluidUnderwaterSubsystem",
+              "function": "get_underwater_stats",
+              "prefix": "underwater"
+            }
+          ],
+          "times": [
+            3.0,
+            3.25,
+            3.5,
+            3.75,
+            4.0
+          ]
+        },
+        "schedule": {
+          "times": [
+            3.0,
+            3.25,
+            3.5,
+            3.75,
+            4.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "uw_gamecam"
+        }
+      },
+      "settle": 3.0
+    }
+  ]
+}

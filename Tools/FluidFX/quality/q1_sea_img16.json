@@ -1,0 +1,212 @@
+{
+  "base": {
+    "awake": {
+      "TDGen_WaterParticleSea": true
+    },
+    "exposure_ev100": 2.0,
+    "pawn": [
+      0.0,
+      0.0
+    ],
+    "arm": 900.0,
+    "view": [
+      -35.0,
+      30.0
+    ],
+    "hide": {},
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "sea_img16",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "location": {
+          "TDGen_WaterParticleStirrerVertical": [
+            -611.28,
+            400.0,
+            -44.91
+          ],
+          "TDGen_WaterParticleStirrerGraze": [
+            581.63,
+            274.16,
+            0.0
+          ]
+        },
+        "call": {
+          "TDGen_WaterParticleStirrerVertical": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                201.98,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_WaterParticleStirrerGraze": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                302.97,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "look_live": {
+          "niagara": {
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris": {
+              "Colors": {
+                "User.TDDebrisColor": [
+                  1.0,
+                  0.45,
+                  0.05,
+                  1.0
+                ]
+              },
+              "Ints": {
+                "User.TDDebrisCount": 300
+              },
+              "Floats": {
+                "User.TDDebrisFloatOffsetCm": -3.0
+              }
+            },
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater": {
+              "Floats": {
+                "User.TDWhitewaterSpawnPerM2PerSec": 20.0
+              }
+            }
+          },
+          "skip_if_no_owner": [
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater"
+          ]
+        },
+        "schedule": {
+          "times": [
+            6.0,
+            6.25,
+            6.5,
+            6.75,
+            7.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "sea_img16"
+        }
+      },
+      "settle": 6.0
+    },
+    {
+      "name": "sea_img16_clip",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "location": {
+          "TDGen_WaterParticleStirrerVertical": [
+            -611.28,
+            400.0,
+            -44.91
+          ],
+          "TDGen_WaterParticleStirrerGraze": [
+            581.63,
+            274.16,
+            0.0
+          ]
+        },
+        "call": {
+          "TDGen_WaterParticleStirrerVertical": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                201.98,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_WaterParticleStirrerGraze": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                302.97,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "look_live": {
+          "niagara": {
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterDebris": {
+              "Colors": {
+                "User.TDDebrisColor": [
+                  1.0,
+                  0.45,
+                  0.05,
+                  1.0
+                ]
+              },
+              "Ints": {
+                "User.TDDebrisCount": 300
+              },
+              "Floats": {
+                "User.TDDebrisFloatOffsetCm": -3.0
+              }
+            },
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater": {
+              "Floats": {
+                "User.TDWhitewaterSpawnPerM2PerSec": 20.0
+              }
+            }
+          },
+          "skip_if_no_owner": [
+            "/Game/FluidFX/Niagara/NS_TD_FluidWaterWhitewater"
+          ]
+        },
+        "schedule": {
+          "times": [
+            6.0,
+            6.1,
+            6.2,
+            6.3,
+            6.4,
+            6.5,
+            6.6,
+            6.7,
+            6.8,
+            6.9,
+            7.0,
+            7.1,
+            7.2,
+            7.3,
+            7.4,
+            7.5,
+            7.6,
+            7.7,
+            7.8,
+            7.9
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "sea_img16_clip"
+        }
+      },
+      "settle": 6.0
+    }
+  ]
+}

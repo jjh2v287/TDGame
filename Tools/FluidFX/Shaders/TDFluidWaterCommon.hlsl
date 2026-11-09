@@ -30,12 +30,14 @@ const float waveSteepness = 0.6;
 const float waveTimeScale = 0.45;
 const float gravityCmPerSecondSquared = 980.0;
 
-float waveAmplitudeCm = PassiveWaveAmplitudeCm * (1.0 - 0.5 * simFade);
+float waveAmplitudeCm = PassiveWaveAmplitudeCm * (1.0 - PassiveWaveSimDamping * simFade);
 float waveBaseAngle = radians(PassiveWaveDirectionDegrees);
+float waveLengthScale = max(PassiveWaveLengthScale, 0.1);
 float2 waveRestXY = waterPosition.xy;
 float3 waveDisplacementCm = float3(0.0, 0.0, 0.0);
 float2 waveSlope = float2(0.0, 0.0);
 float waveFoldDeterminant = 1.0;
+float waveFilterDistanceCm = length(CameraWorldPosition - waterPosition);
 
 [unroll]
 for (int wavePass = 0; wavePass < TD_WATER_WAVE_PASS_COUNT; ++wavePass)
@@ -47,19 +49,23 @@ for (int wavePass = 0; wavePass < TD_WATER_WAVE_PASS_COUNT; ++wavePass)
     [unroll]
     for (int waveIndex = 0; waveIndex < 8; ++waveIndex)
     {
-        float waveNumber = TD_WATER_TWO_PI / waveLengthCm[waveIndex];
-        float waveAngle = waveBaseAngle + radians(waveAngleOffsetDegrees[waveIndex]);
+        float waveLengthLocalCm = waveLengthCm[waveIndex] * waveLengthScale;
+        float waveNumber = TD_WATER_TWO_PI / waveLengthLocalCm;
+        float waveAngle = waveBaseAngle + radians(waveAngleOffsetDegrees[waveIndex] * PassiveWaveAngleSpread);
         float2 waveDirection = float2(cos(waveAngle), sin(waveAngle));
         float waveAmplitudeLocal = waveAmplitudeCm * waveAmplitudeShare[waveIndex];
 #if TD_WATER_VERTEX
-        waveAmplitudeLocal *= lodWaveFilterSpacingCm > 0.0 ? saturate(waveLengthCm[waveIndex] / lodWaveFilterSpacingCm - 1.0) : 1.0;
+        waveAmplitudeLocal *= lodWaveFilterSpacingCm > 0.0 ? saturate(waveLengthLocalCm / lodWaveFilterSpacingCm - 1.0) : 1.0;
+        float waveSlopeFilter = 1.0;
+#else
+        float waveSlopeFilter = PassiveWaveNormalFilterPerDepth > 0.0 ? saturate(waveLengthLocalCm / max(PassiveWaveNormalFilterPerDepth * waveFilterDistanceCm, 0.001) - 1.0) : 1.0;
 #endif
         float wavePhase = waveNumber * dot(waveDirection, waveRestXY) - sqrt(gravityCmPerSecondSquared * waveNumber) * waveTimeScale * ElapsedSeconds + wavePhaseOffset[waveIndex];
         float waveSine = 0.0;
         float waveCosine = 0.0;
         sincos(wavePhase, waveSine, waveCosine);
         passDisplacement += float3(waveDirection * (waveSteepness * waveAmplitudeLocal * waveCosine), waveAmplitudeLocal * waveSine);
-        passSlope += waveDirection * (waveNumber * waveAmplitudeLocal * waveCosine);
+        passSlope += waveDirection * (waveNumber * waveAmplitudeLocal * waveCosine) * waveSlopeFilter;
         float foldTerm = waveSteepness * waveNumber * waveAmplitudeLocal * waveSine;
         passFold += float3(waveDirection.x * waveDirection.x, waveDirection.y * waveDirection.y, waveDirection.x * waveDirection.y) * foldTerm;
     }

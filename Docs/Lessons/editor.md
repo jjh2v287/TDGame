@@ -804,3 +804,13 @@
 - 증거: `Saved/AgentOps/20261106/p/defects/D1.md`, 커밋 4a439acd, fog 실행 3개 pie_sessions `all_asleep_accepted` 참(`Saved/FluidFX/fx7p/p-fog-{pilot1-20261107161902,ladder-20261107162424,judge-20261107163621}`), 냉시작 가정 기각(FO1/ft 첫 쌍 0.82 대 중앙값 0.81)
 - 날짜·상태: 2026-11-07 active
 - 발견: claude(FluidFX P5 fog 시운전)
+
+
+### L-editor-92 물 재질 생성기(overwrite)를 돌릴 때 열려 있던 바다 무대 맵의 격자 메시 참조가 비어 맵이 미저장 상태가 된다
+- 증상: `editor_make_fluid_water_material.py` overwrite 실행 중 열려 있던 `LV_TDFluidWaterParticleSeaStage` 가 미저장(더티)이 되고 수면 판의 격자 참조가 비었다.
+- 원인: [추정, 미검증] 생성기가 격자 메시(`SM_TD_FluidWaterGrid64` 등)와 텍스처를 overwrite 로 다시 만들어, 로드된 맵의 참조가 끊긴다.
+- 해결: 재생성 전에 바다 무대가 아닌 맵을 연다. 재생성 뒤 그 맵은 저장하지 말고 디스크에서 다시 연다. 디스크 맵은 그대로다.
+- 범위: 물 재질 생성기 overwrite 와 그 격자 메시를 쓰는 무대 맵 전부
+- 증거: 2026-11-09 Q1 S4 워크플로(run wf_4df1c416-d7a) 재생성 단계 보고, 뒤 촬영에서 수면 판 정상
+- 날짜·상태: 2026-11-09 active
+- 발견: claude(FluidFX 화질 1단계 S4)

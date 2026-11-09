@@ -304,3 +304,13 @@
 - 증거: 2026-11-09 Q1 코드 갈래 빌더 보고(`Saved/AgentOps/20261108/quality/q1/code/`), 코드 줄 직접 확인
 - 날짜·상태: 2026-11-09 active
 - 발견: claude(FluidFX 화질 1단계 코드 갈래)
+
+
+### L-repo-34 w3job 으로 `build_and_test.py`를 띄우면 실행기가 건 보류를 자기 빌드가 기다리며 멈춘다
+- 증상: 작업 `q1-s4a-220138` 의 out.log 마지막 줄이 `대기: 다른 프로세스 실행 중 -> 보류 q1-s4: wave3 q1-s4a-220138` 에서 더 나아가지 않았다(빌드 시작 전).
+- 원인: `w3job.py start --owner <o>` 가 `Saved/AgentOps/build_hold.json` 을 owner `<o>` 로 잡고, 그 안에서 실행한 `build_and_test.py` 는 자기 보류인 줄 모르고 남의 보류로 보아 기다린다.
+- 해결: w3job 안에서 부르는 `build_and_test.py` 에 `--holder <같은 owner> --wait-seconds 7200` 을 붙인다. 멈춘 대기 프로세스만 끝내고 다시 띄운다.
+- 범위: `Saved/AgentOps/20261029/wave3/prep/w3job.py` 로 빌드·시험을 띄우는 워크플로 전부(L-repo-28 과 같은 실행기)
+- 증거: 2026-11-09 Q1 S4 워크플로(run wf_4df1c416-d7a) 빌드 단계 보고, 작업 폴더 `Saved/AgentOps/20261029/wave3/jobs/q1-s4a-220138`(멈춤)·`q1-s4a-221330`(--holder 로 통과)
+- 날짜·상태: 2026-11-09 active
+- 발견: claude(FluidFX 화질 1단계 S4)

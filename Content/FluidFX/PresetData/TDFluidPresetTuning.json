@@ -637,7 +637,6 @@
         "PressureIterations": 12,
         "VorticityStrength": 0.3,
         "TerrainSlopeGravity": 0.0,
-        "ActorBrushDensityStrength": 0.6,
         "bEnableWaterLayer": true,
         "bEnableWaterWetness": true,
         "ActorBrushRippleImpulseCm": 2.5,
@@ -943,7 +942,8 @@
         "RapidsWhitewaterPerSec": 2.0,
         "WhitewaterFromVorticity": 0.3,
         "RippleWaveSpeedCmPerSec": 120.0,
-        "BankWetHeightCm": 10.0
+        "BankWetHeightCm": 10.0,
+        "ActorBrushDensityStrength": 0.6
       }
     },
     "Sea": {
@@ -955,7 +955,8 @@
         "RippleWaveSpeedCmPerSec": 100.0,
         "SwashHeightCm": 25.0,
         "bUseWhitewaterDissipation": true,
-        "WhitewaterDissipation": 0.12
+        "WhitewaterDissipation": 0.4,
+        "ActorBrushDensityStrength": 0.2
       }
     },
     "Torch": {
@@ -1852,7 +1853,8 @@
         "bEnableBendVectorChannel": true,
         "BendVectorRiseSeconds": 0.08,
         "BendVectorRecoverySeconds": 0.08,
-        "BendFromRippleSlope": 0.15
+        "BendFromRippleSlope": 0.15,
+        "ActorBrushDensityStrength": 0.6
       }
     },
     "DenseCreek": {
@@ -2149,7 +2151,8 @@
     "RainPond": {
       "TDFluidSimulationConfig": {
         "RippleWaveSpeedCmPerSec": 80.0,
-        "MaxPointsPerTick": 256
+        "MaxPointsPerTick": 256,
+        "ActorBrushDensityStrength": 0.6
       },
       "TDFluidRainSettings": {
         "MaxDropsPerTick": 128

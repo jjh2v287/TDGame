@@ -158,7 +158,7 @@ if (FoamAnisotropyMax > 1.0001)
 float foamNoise = saturate(0.5 + (dot(lerp(foamSampleSecond, foamSampleFirst, flowWeightFirst), foamChannelWeights) - 0.5) * 1.5 * phaseVarianceBoost);
 
 float foamDepthSimCm = simField[0].z * WaterDepthReferenceCm;
-float foamDepthCm = lerp(verticalThicknessCm, foamDepthSimCm, saturate(ShoreFoamSimDepthWeight) * windowDepthKnown * simFade * waterLayerBlend);
+float foamDepthCm = lerp(verticalThicknessCm, max(verticalThicknessCm, foamDepthSimCm), saturate(ShoreFoamSimDepthWeight) * windowDepthKnown * simFade * waterLayerBlend);
 float shoreFoam = (1.0 - smoothstep(0.15 * ShoreFoamDepthCm, max(ShoreFoamDepthCm, 0.01), foamDepthCm)) * ShoreFoamAmount;
 
 float coastFoam = 0.0;

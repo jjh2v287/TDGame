@@ -1,7 +1,7 @@
-"""실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). W-1b 물 부유물·물보라 무대 맵 2개를 만든다: 바다 WP1 LV_TDFluidWaterParticleSeaStage(40 m 평바닥 -250 cm, 수면 판 3x3·Sea 물 액터, 교반기 2개(수직 공전 반경 120 cm·Pitch 120도/초, 수평 스침 반경 150 cm·Yaw 180도/초), 물리 공 3개)와 여울 WP2 LV_TDFluidWaterParticleRapidsStage(직선 30 m·폭 6 m·기울기 3 %·수심 35 cm 강 액터, 유속 350, 장애물 바위 2개, River 물 액터). 맵마다 입자 액터 ATDFluidWaterParticleActor 1개를 두고 맵이 둘인 이유는 물 액터 둘째가 영구 휴면이 되기 때문이다(X-18). 먼저 editor_make_fluid_water_material.py·editor_make_fluid_water_particle_assets.py 와 나이아가라 3종 생성(editor_make_fluid_driven_niagara.py)이 끝나 있어야 하고 모양 조각 병합(A0)이 모든 무대보다 앞서야 한다(L-repo-27).
+"""실행 환경: TDGame 언리얼 에디터 안(Python 원격 실행). W-1b 물 부유물·물보라 무대 맵 2개를 만든다: 바다 WP1 LV_TDFluidWaterParticleSeaStage(240 m 평바닥 -250 cm, 수면 판 3x3 + 바깥 판 24개·Sea 물 액터, 교반기 2개(수직 공전 반경 120 cm·Pitch 120도/초, 수평 스침 반경 150 cm·Yaw 180도/초), 물리 공 3개)와 여울 WP2 LV_TDFluidWaterParticleRapidsStage(직선 30 m·폭 6 m·기울기 3 %·수심 35 cm 강 액터, 유속 350, 장애물 바위 2개, River 물 액터). 맵마다 입자 액터 ATDFluidWaterParticleActor 1개를 두고 맵이 둘인 이유는 물 액터 둘째가 영구 휴면이 되기 때문이다(X-18). 먼저 editor_make_fluid_water_material.py·editor_make_fluid_water_particle_assets.py 와 나이아가라 3종 생성(editor_make_fluid_driven_niagara.py)이 끝나 있어야 하고 모양 조각 병합(A0)이 모든 무대보다 앞서야 한다(L-repo-27).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_water_particle_stage.py (PowerShell, L-repo-01). 맵마다 요청 파일이 따로다: Saved/FluidFX/fluid_water_particle_sea_stage_request.json·fluid_water_particle_rapids_stage_request.json 의 {"overwrite": true} 가 있을 때만 그 맵과 프리셋을 갱신하고, 없으면 그 맵은 기존 에셋을 보존하며 건너뛴다. 교반기 블루프린트 BP_TDFluidStageStirrer 가 없으면 editor_make_fluid_particle_stage.py 의 함수로 만든다.
 출력: /Game/FluidFX/Presets/DA_TDFluid_WaterParticleSea·DA_TDFluid_WaterParticleRiver, /Game/FluidFX/Maps/LV_TDFluidWaterParticleSeaStage·LV_TDFluidWaterParticleRapidsStage, Saved/FluidFX/fluid_water_particle_sea_stage.json·fluid_water_particle_rapids_stage.json(preset_tuning_sha256·material_look_sha256, 장면별 cd_ids·niagara_system·kind·카메라 제안). 판정은 출력 본문의 TD_WATER_PARTICLE_STAGE_WP1·WP2 PASS|KEPT|FAIL 줄로 한다(L-editor-73).
-상태: 미검증(2026-10-29 W-1b D 작성: py_compile 과 가짜 unreal 시험만, 에디터 실행 전). 입자 액터 속성 이름(water_actor 등)은 C2 의 C++ 이름 snake 변환 가정이라 첫머리에서 점검하고, 강 배치·물 액터 설정·프리셋 보조는 editor_make_fluid_water_stage.py 의 함수를 importlib 로 불러 쓴다(그 파일 최상위 실행은 __main__ 가드 안). 교반기 회전은 CDO 에 SCS 컴포넌트가 없어(L-editor-65) 배치한 액터에서 설정한다. 스크립트가 맵마다 시작 때 check_fluid_preset_data 와 같은 검사와 정본 다시 읽기를 한다. 노출·카메라 값은 초안이다. 2026-10-31: 교반기 피벗이 회전 속도 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고(바다 맵에 피벗 없음) 다시 읽기가 버려진 옛 핸들을 읽어 통과하던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)로 고침, WP1 맵 재생성 필요.
+상태: 미검증(2026-10-29 W-1b D 작성: py_compile 과 가짜 unreal 시험만, 에디터 실행 전). 입자 액터 속성 이름(water_actor 등)은 C2 의 C++ 이름 snake 변환 가정이라 첫머리에서 점검하고, 강 배치·물 액터 설정·프리셋 보조는 editor_make_fluid_water_stage.py 의 함수를 importlib 로 불러 쓴다(그 파일 최상위 실행은 __main__ 가드 안). 교반기 회전은 CDO 에 SCS 컴포넌트가 없어(L-editor-65) 배치한 액터에서 설정한다. 스크립트가 맵마다 시작 때 check_fluid_preset_data 와 같은 검사와 정본 다시 읽기를 한다. 노출·카메라 값은 초안이다. 2026-10-31: 교반기 피벗이 회전 속도 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고(바다 맵에 피벗 없음) 다시 읽기가 버려진 옛 핸들을 읽어 통과하던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)로 고침, WP1 맵 재생성 필요. 2026-11-10 Q1 S8 무대 원경: WP1 바닥을 240 m 로 넓히고 가운데 3x3 판 둘레에 같은 설정(Sea MI·물 태그 둘)의 바깥 판 24개(4800 cm 칸 5x5, 배율 3, WaterParticleSeaFarTile_<c>_<r>)를 두며 보고 layout.tiles.far 에 적는다. 같은 날 에디터 실행 WP1 PASS(바깥 판 24개, PIE 에서 판 33개가 같은 Sea MID 를 씀).
 """
 import importlib.util
 import json
@@ -38,10 +38,12 @@ LIVE2_REFS = ["C12", "L26", "L5"]
 
 SEA_SURFACE_Z_CM = 0.0
 SEA_FLOOR_TOP_Z_CM = -250.0
-SEA_FLOOR_SIZE_CM = 4000.0
+SEA_FLOOR_SIZE_CM = 24000.0
 SEA_FLOOR_THICKNESS_CM = 50.0
 SEA_TILE_SIZE_CM = 1600.0
 SEA_TILE_COUNT = 3
+SEA_FAR_TILE_SCALE = 3.0
+SEA_FAR_GRID_COUNT = 5
 SEA_STIRRER_SPECS = (
     {"label": "WaterParticleStirrerVertical", "center_xy": (-500.0, 400.0), "radius_cm": 120.0, "rotation": {"pitch": 120.0}, "motion": "수직 공전(수면 교차)"},
     {"label": "WaterParticleStirrerGraze", "center_xy": (500.0, 400.0), "radius_cm": 150.0, "rotation": {"yaw": 180.0}, "motion": "수평 스침"},
@@ -279,6 +281,17 @@ def spawn_physics_balls(spawn_object, sphere_mesh):
     return records
 
 
+def configure_sea_tile(water_stage, tile, sea_material):
+    component = tile.static_mesh_component
+    component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+    component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    component.set_collision_profile_name("NoCollision")
+    component.set_cast_shadow(False)
+    component.set_material(0, sea_material)
+    water_stage.add_actor_tag(tile, water_stage.TAG_WATER_SURFACE)
+    water_stage.add_actor_tag(tile, water_stage.TAG_WATER_REGION)
+
+
 def spawn_sea_tiles(water_stage, spawn_object, tile_mesh, sea_material):
     low_cm = -0.5 * SEA_TILE_SIZE_CM * SEA_TILE_COUNT
     first_tile = None
@@ -286,17 +299,27 @@ def spawn_sea_tiles(water_stage, spawn_object, tile_mesh, sea_material):
         for row in range(SEA_TILE_COUNT):
             location = (low_cm + SEA_TILE_SIZE_CM * (column + 0.5), low_cm + SEA_TILE_SIZE_CM * (row + 0.5), SEA_SURFACE_Z_CM)
             tile = spawn_object(tile_mesh, location, f"WaterParticleSeaTile_{column}_{row}", "WaterTiles")
-            component = tile.static_mesh_component
-            component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
-            component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
-            component.set_collision_profile_name("NoCollision")
-            component.set_cast_shadow(False)
-            component.set_material(0, sea_material)
-            water_stage.add_actor_tag(tile, water_stage.TAG_WATER_SURFACE)
-            water_stage.add_actor_tag(tile, water_stage.TAG_WATER_REGION)
+            configure_sea_tile(water_stage, tile, sea_material)
             if first_tile is None:
                 first_tile = tile
     return first_tile, {"tile_count": SEA_TILE_COUNT * SEA_TILE_COUNT, "size_cm": SEA_TILE_SIZE_CM, "extent_cm": SEA_TILE_SIZE_CM * SEA_TILE_COUNT, "surface_z_cm": SEA_SURFACE_Z_CM}
+
+
+def spawn_sea_far_tiles(water_stage, spawn_object, tile_mesh, sea_material):
+    cell_cm = SEA_TILE_SIZE_CM * SEA_FAR_TILE_SCALE
+    low_cm = -0.5 * cell_cm * SEA_FAR_GRID_COUNT
+    center_index = SEA_FAR_GRID_COUNT // 2
+    tile_count = 0
+    for column in range(SEA_FAR_GRID_COUNT):
+        for row in range(SEA_FAR_GRID_COUNT):
+            if column == center_index and row == center_index:
+                continue
+            location = (low_cm + cell_cm * (column + 0.5), low_cm + cell_cm * (row + 0.5), SEA_SURFACE_Z_CM)
+            tile = spawn_object(tile_mesh, location, f"WaterParticleSeaFarTile_{column}_{row}", "WaterTiles")
+            tile.set_actor_scale3d(unreal.Vector(SEA_FAR_TILE_SCALE, SEA_FAR_TILE_SCALE, 1.0))
+            configure_sea_tile(water_stage, tile, sea_material)
+            tile_count += 1
+    return {"tile_count": tile_count, "scale": SEA_FAR_TILE_SCALE, "extent_cm": cell_cm * SEA_FAR_GRID_COUNT}
 
 
 def build_sea_scene(context):
@@ -307,6 +330,7 @@ def build_sea_scene(context):
     floor_scale = (SEA_FLOOR_SIZE_CM / 100.0, SEA_FLOOR_SIZE_CM / 100.0, SEA_FLOOR_THICKNESS_CM / 100.0)
     spawn_static_box(spawn_object, resources["cube"], floor_center, floor_scale, "WaterParticleSeaFloor", resources.get("sand"))
     first_tile, tile_record = spawn_sea_tiles(water_stage, spawn_object, resources["tile_mesh"], resources["surface_material"])
+    tile_record["far"] = spawn_sea_far_tiles(water_stage, spawn_object, resources["tile_mesh"], resources["surface_material"])
     water = spawn(resources["water_actor_class"], (0.0, 0.0, SEA_SURFACE_Z_CM), context["spec"]["water_label"], "Water")
     water_properties = water_stage.configure_water_actor(water, context["preset"], context["effective"])
     stirrers = [place_orbiting_stirrer(context["particle_stage"], spawn, context["stirrer_class"], stirrer_spec, SEA_SURFACE_Z_CM) for stirrer_spec in SEA_STIRRER_SPECS]

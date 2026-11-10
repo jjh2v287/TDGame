@@ -1,0 +1,30 @@
+{
+  "base": {
+    "awake": {
+      "TDGen_CoastStageWaterSea": true
+    },
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "coast_default",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "schedule": {
+          "times": [
+            6.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "coast_default"
+        }
+      },
+      "settle": 6.0
+    }
+  ]
+}

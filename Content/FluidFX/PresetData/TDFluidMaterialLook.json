@@ -1707,9 +1707,22 @@
   "/Game/FluidFX/Materials/MI_TD_FluidWater_Sea": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidWater",
    "Scalars": {
+    "CausticsMaxDepthCm": 500.0,
+    "CausticsStrength": 2.0,
+    "DetailNormalStrength": 0.2,
+    "FoamCoreStart": 0.45,
+    "FoamCoverageMax": 0.9,
+    "FoamLayerMode": 1.0,
+    "FoamNormalFlatten": 0.15,
+    "FoamPatchVariation": 0.2,
+    "MicroNormalStrength": 0.15,
     "ObstacleRingNormalStrength": 0.15,
-    "PassiveWaveAmplitudeCm": 12.0,
+    "PassiveWaveAmplitudeCm": 24.0,
+    "PassiveWaveAngleSpread": 2.0,
+    "PassiveWaveNormalFilterPerDepth": 0.03,
+    "PassiveWaveSimDamping": 0.0,
     "ShoreFoamDepthCm": 25.0,
+    "ShoreFoamSimDepthWeight": 1.0,
     "TileMap1DensityHeightCm": 4.0,
     "TileMap1FadeLengthCm": 5000.0,
     "TileMap1FadeStartCm": 3000.0,
@@ -1719,7 +1732,7 @@
    },
    "Switches": {},
    "Vectors": {
-    "WaterExtinctionPerCm": [0.004, 0.0009, 0.0006, 0.0],
+    "WaterExtinctionPerCm": [0.0028, 0.0009, 0.0006, 0.0],
     "WaterScatteringAlbedo": [0.03, 0.3, 0.6, 0.0]
    }
   },

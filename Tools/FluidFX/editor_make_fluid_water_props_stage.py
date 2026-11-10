@@ -106,6 +106,8 @@ MATERIAL_INSTANCES = {
     "underwater_tank": "MI_TD_FluidUnderwater_Tank",
     "tank_wall": "MI_TD_FluidWaterTankWall",
     "sand": "MI_TD_Fluid_WaterySand",
+    "pit_stone": "MI_TD_FluidWaterStone",
+    "pit_sand": "MI_TD_FluidWaterSand",
 }
 ASSET_PATHS = {key: f"{MATERIAL_DIR}/{name}" for key, name in MATERIAL_INSTANCES.items()}
 ASSET_PATHS["grid_unit"] = f"{MESH_DIR}/SM_TD_FluidWaterGridUnit"
@@ -140,7 +142,7 @@ ZONES = (
     {"index": 5, "label": "Waterfall", "cd_ids": ["S.0.17.2", "S.0.23.8"], "refs": ["WF1", "WF2"], "presets": ("Waterfall", "WaterPool"), "assets": ("lake", "grid_unit", "sheet")},
     {"index": 6, "label": "FarWaterfalls", "cd_ids": ["SE.0.23.9.1", "SE.0.23.9.2"], "refs": ["WF3"], "presets": (), "assets": ("far_white", "far_blue")},
     {"index": 7, "label": "WaterySand", "cd_ids": ["SE.0.23.10.2"], "refs": ["SD1"], "presets": ("WaterySandFlow",), "assets": ("sand",)},
-    {"index": 8, "label": "UnderwaterPit", "cd_ids": [], "refs": ["MC:225", "UW1", "UW2", "UW3", "IMG 21"], "presets": ("WaterPool",), "assets": ("lake", "grid_unit", "underwater_lake")},
+    {"index": 8, "label": "UnderwaterPit", "cd_ids": [], "refs": ["MC:225", "UW1", "UW2", "UW3", "IMG 21"], "presets": ("WaterPool",), "assets": ("lake", "grid_unit", "underwater_lake", "pit_stone", "pit_sand")},
 )
 BUILDER_EXPECTATIONS = (
     ("Waterfall", "plane", "orientation", "contains", "WORLD_FIXED_VERTICAL"),
@@ -774,13 +776,13 @@ def build_zone_pit(context, center):
     ring_z = -0.5 * ring_thickness
     outer = ZONE_FLOOR_SIZE_CM
     side_depth = 0.5 * (outer - PIT_SIZE_CM)
-    place_mesh(context, "cube", (center[0], center[1] + half + 0.5 * side_depth, ring_z), (outer, side_depth, ring_thickness), "RingNorth")
-    place_mesh(context, "cube", (center[0], center[1] - half - 0.5 * side_depth, ring_z), (outer, side_depth, ring_thickness), "RingSouth")
-    place_mesh(context, "cube", (center[0] + half + 0.5 * side_depth, center[1], ring_z), (side_depth, PIT_SIZE_CM, ring_thickness), "RingEast")
-    place_mesh(context, "cube", (center[0] - half - 0.5 * side_depth, center[1], ring_z), (side_depth, PIT_SIZE_CM, ring_thickness), "RingWest")
-    place_mesh(context, "cube", (center[0], center[1], -PIT_DEPTH_CM - 0.5 * FLOOR_THICKNESS_CM), (PIT_SIZE_CM, PIT_SIZE_CM, FLOOR_THICKNESS_CM), "PitFloor")
+    place_mesh(context, "cube", (center[0], center[1] + half + 0.5 * side_depth, ring_z), (outer, side_depth, ring_thickness), "RingNorth", material_key="pit_stone")
+    place_mesh(context, "cube", (center[0], center[1] - half - 0.5 * side_depth, ring_z), (outer, side_depth, ring_thickness), "RingSouth", material_key="pit_stone")
+    place_mesh(context, "cube", (center[0] + half + 0.5 * side_depth, center[1], ring_z), (side_depth, PIT_SIZE_CM, ring_thickness), "RingEast", material_key="pit_stone")
+    place_mesh(context, "cube", (center[0] - half - 0.5 * side_depth, center[1], ring_z), (side_depth, PIT_SIZE_CM, ring_thickness), "RingWest", material_key="pit_stone")
+    place_mesh(context, "cube", (center[0], center[1], -PIT_DEPTH_CM - 0.5 * FLOOR_THICKNESS_CM), (PIT_SIZE_CM, PIT_SIZE_CM, FLOOR_THICKNESS_CM), "PitFloor", material_key="pit_sand")
     angle, length, offset_x, offset_z = pit_ramp_geometry()
-    place_mesh(context, "cube", (center[0] + offset_x, center[1] + PIT_RAMP_OFFSET_Y_CM, offset_z), (length, PIT_RAMP_WIDTH_CM, PIT_RAMP_THICKNESS_CM), "Ramp", rotation=unreal.Rotator(pitch=-angle))
+    place_mesh(context, "cube", (center[0] + offset_x, center[1] + PIT_RAMP_OFFSET_Y_CM, offset_z), (length, PIT_RAMP_WIDTH_CM, PIT_RAMP_THICKNESS_CM), "Ramp", material_key="pit_sand", rotation=unreal.Rotator(pitch=-angle))
     pool = spawn_fluid_actor(context, "WaterPool", (center[0], center[1], PIT_SURFACE_Z_CM), "Pool", False, True, True)
     region = place_mesh(context, "cube", (center[0], center[1], PIT_SURFACE_Z_CM - 0.5 * PIT_DEPTH_CM), (PIT_SIZE_CM, PIT_SIZE_CM, PIT_DEPTH_CM), "WaterRegion", has_collision=False, casts_shadow=False, tags=(WATER_REGION_TAG,), hidden_in_game=True)
     volume = place_post_process_volume(context, PIT_SURFACE_Z_CM - 0.5 * PIT_DEPTH_CM, (PIT_SIZE_CM, PIT_SIZE_CM, PIT_DEPTH_CM), "UnderwaterVolume", "underwater_lake", True, 0.0, 0.0)

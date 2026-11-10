@@ -25,6 +25,7 @@ BLACK_TEXTURE_KEY = "black"
 TEXTURE_ASSET_PATHS = {
     "FoamNoiseTexture": f"{TEXTURE_DIR}/T_TD_FluidFoamNoise",
     "FlowNoiseTexture": f"{TEXTURE_DIR}/T_TD_FluidFlowPhaseNoise",
+    "UnderwaterCausticsTexture": f"{TEXTURE_DIR}/T_TD_FluidCaustics",
 }
 SURFACE_MASTER_PATH = f"{MATERIAL_DIR}/M_TD_FluidSurface"
 BLENDABLE_LOCATION_NAME = "BL_SCENE_COLOR_BEFORE_DOF"
@@ -62,7 +63,12 @@ FAR_SCALARS = (
     ("FarFoamSharpness", 4.0), ("FarBaseOpacityBias", 0.4), ("FarFoamOpacityGain", 0.6),
 )
 FAR_VECTORS = (("FarTint", (0.9, 0.95, 1.0, 1.0)), ("FarFoamColor", (1.0, 1.0, 1.0, 1.0)))
-UNDERWATER_SCALARS = (("UnderwaterSurfaceZCm", 1.0e7), ("UnderwaterFogDensityPerCm", 0.0), ("UnderwaterMaxDistanceCm", 20000.0))
+UNDERWATER_SCALARS = (
+    ("UnderwaterSurfaceZCm", 1.0e7), ("UnderwaterFogDensityPerCm", 0.0), ("UnderwaterMaxDistanceCm", 20000.0),
+    ("UnderwaterCausticsStrength", 0.0), ("UnderwaterCausticsTilingCm", 220.0), ("UnderwaterCausticsDriftCmPerSec", 6.0),
+    ("UnderwaterCausticsMeanLevel", 0.48), ("UnderwaterCausticsOnsetCm", 10.0), ("UnderwaterCausticsMaxDepthCm", 400.0),
+    ("UnderwaterUpwardBrightness", 0.0),
+)
 UNDERWATER_VECTORS = (("UnderwaterFogColor", (0.02, 0.12, 0.18, 1.0)), ("UnderwaterAbsorptionPerCm", (0.0, 0.0, 0.0, 0.0)))
 GLASS_SCALARS = (("GlassOpacity", 0.25), ("GlassFresnelPower", 3.0), ("GlassRoughness", 0.05))
 GLASS_VECTORS = (("GlassTint", (0.35, 0.75, 0.75, 1.0)),)
@@ -105,13 +111,15 @@ MASTER_SPECS = (
     },
     {
         "key": "underwater", "name": "M_TD_FluidUnderwaterPostProcess", "hlsl": "TDFluidUnderwaterPostProcess.hlsl", "output": "float3",
-        "textures": (),
+        "textures": ("UnderwaterCausticsTexture",),
         "inputs": (
-            "SceneColor", "PixelWorldPosition", "CameraWorldPosition", "UnderwaterSurfaceZCm", "UnderwaterFogDensityPerCm",
-            "UnderwaterMaxDistanceCm", "UnderwaterFogColor", "UnderwaterAbsorptionPerCm",
+            "UnderwaterCausticsTexture", "SceneColor", "PixelWorldPosition", "CameraWorldPosition", "ElapsedSeconds", "UnderwaterSurfaceZCm",
+            "UnderwaterFogDensityPerCm", "UnderwaterMaxDistanceCm", "UnderwaterFogColor", "UnderwaterAbsorptionPerCm",
+            "UnderwaterCausticsStrength", "UnderwaterCausticsTilingCm", "UnderwaterCausticsDriftCmPerSec", "UnderwaterCausticsMeanLevel",
+            "UnderwaterCausticsOnsetCm", "UnderwaterCausticsMaxDepthCm", "UnderwaterUpwardBrightness",
         ),
         "scalars": UNDERWATER_SCALARS, "vectors": UNDERWATER_VECTORS, "direct_scalar_outputs": (),
-        "engine_symbols": (), "two_sided": False,
+        "engine_symbols": ("Texture2DSample",), "two_sided": False,
     },
     {
         "key": "glass", "name": "M_TD_FluidWaterPropGlass", "hlsl": "", "output": "",

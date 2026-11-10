@@ -33,6 +33,7 @@ NOISE_TEXTURE_NAMES = ("FoamNoiseTexture", "FlowNoiseTexture")
 NOISE_TEXTURE_PATHS = {
     "FoamNoiseTexture": "/Game/FluidFX/Textures/T_TD_FluidFoamNoise",
     "FlowNoiseTexture": "/Game/FluidFX/Textures/T_TD_FluidFlowPhaseNoise",
+    "UnderwaterCausticsTexture": "/Game/FluidFX/Textures/T_TD_FluidCaustics",
 }
 SHAPE_PREFIXES = ("Sphere", "Sheet", "Far", "Underwater", "Glass")
 EXPECTED_MASTER_NAMES = (
@@ -45,7 +46,7 @@ EXPECTED_INSTANCE_NAMES = (
 )
 FORBIDDEN_SHAPE_LITERALS = ("0.4 +", "0.6 *", "0.5 + 0.5", "* 4.0")
 MINIMUM_SAMPLES = {"sphere": 1, "sheet": 4, "far": 3, "underwater": 0}
-NEUTRAL_UNDERWATER_SCALARS = {"UnderwaterFogDensityPerCm": 0.0, "UnderwaterSurfaceZCm": 1.0e7}
+NEUTRAL_UNDERWATER_SCALARS = {"UnderwaterFogDensityPerCm": 0.0, "UnderwaterSurfaceZCm": 1.0e7, "UnderwaterCausticsStrength": 0.0, "UnderwaterUpwardBrightness": 0.0}
 NEUTRAL_UNDERWATER_VECTORS = {"UnderwaterAbsorptionPerCm": (0.0, 0.0, 0.0, 0.0)}
 SHEET_SPEED_REFERENCE_DEFAULT = 600.0
 

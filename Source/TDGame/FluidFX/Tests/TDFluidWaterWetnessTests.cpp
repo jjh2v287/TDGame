@@ -1627,7 +1627,7 @@ bool FTDFluidWaterWhitewaterLaceRetainsHalfAfterFiveSecondsTest::RunTest(const F
 
 	const FRetentionRatios SeaRatios = MeasureFiveSecondRetention(SeaConfig);
 	UE_LOG(LogTDFluidWaterWetnessTests, Display, TEXT("%s: five second whitewater retention sea %.4f river %.4f"), *Label, SeaRatios.Primary, RiverRatios.Primary);
-	TestTrue(*FString::Printf(TEXT("%s: Sea retains between half and 70 percent (%.4f)"), *Label, SeaRatios.Primary), SeaRatios.bIsValid && SeaRatios.Primary >= 0.50 && SeaRatios.Primary <= 0.70);
+	TestTrue(*FString::Printf(TEXT("%s: Sea whitewater fades like a whitecap, 8 to 30 percent after five seconds (%.4f)"), *Label, SeaRatios.Primary), SeaRatios.bIsValid && SeaRatios.Primary >= 0.08 && SeaRatios.Primary <= 0.30);
 	TestNearlyEqual(*FString::Printf(TEXT("%s: River keeps the shared dissipation"), *Label), static_cast<float>(RiverRatios.Primary), 0.174f, 0.005f);
 	return true;
 }

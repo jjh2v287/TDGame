@@ -1267,8 +1267,15 @@
   "/Game/FluidFX/Materials/MI_TD_FluidUnderwater_Lake": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidUnderwaterPostProcess",
    "Scalars": {
-    "UnderwaterFogDensityPerCm": 0.004,
-    "UnderwaterMaxDistanceCm": 20000.0
+    "UnderwaterCausticsDriftCmPerSec": 6.0,
+    "UnderwaterCausticsMaxDepthCm": 400.0,
+    "UnderwaterCausticsMeanLevel": 0.48,
+    "UnderwaterCausticsOnsetCm": 10.0,
+    "UnderwaterCausticsStrength": 1.2,
+    "UnderwaterCausticsTilingCm": 220.0,
+    "UnderwaterFogDensityPerCm": 0.0028,
+    "UnderwaterMaxDistanceCm": 20000.0,
+    "UnderwaterUpwardBrightness": 2.0
    },
    "Switches": {},
    "Vectors": {
@@ -1279,8 +1286,15 @@
   "/Game/FluidFX/Materials/MI_TD_FluidUnderwater_Tank": {
    "Parent": "/Game/FluidFX/Materials/M_TD_FluidUnderwaterPostProcess",
    "Scalars": {
+    "UnderwaterCausticsDriftCmPerSec": 6.0,
+    "UnderwaterCausticsMaxDepthCm": 400.0,
+    "UnderwaterCausticsMeanLevel": 0.48,
+    "UnderwaterCausticsOnsetCm": 10.0,
+    "UnderwaterCausticsStrength": 0.0,
+    "UnderwaterCausticsTilingCm": 220.0,
     "UnderwaterFogDensityPerCm": 0.003,
-    "UnderwaterMaxDistanceCm": 20000.0
+    "UnderwaterMaxDistanceCm": 20000.0,
+    "UnderwaterUpwardBrightness": 0.0
    },
    "Switches": {},
    "Vectors": {
@@ -1665,11 +1679,12 @@
     "CausticsStrength": 0.45,
     "CausticsTilingCm": 180.0,
     "CoastFoamStrength": 0.0,
-    "DetailNormalStrength": 0.22,
+    "DetailNormalStrength": 0.4,
     "DyeOpacity": 0.8,
-    "EdgeSoftnessCm": 3.0,
+    "EdgeSoftnessCm": 20.0,
     "FlowPhasePeriodSeconds": 1.0,
-    "FoamCoverageMax": 0.7,
+    "FoamCoreStart": 0.45,
+    "FoamCoverageMax": 0.45,
     "FoamDensityThreshold": 0.08,
     "FoamFadeLengthCm": 2000.0,
     "FoamFadeStartCm": 2200.0,
@@ -1677,21 +1692,24 @@
     "FoamFromFroude": 0.32,
     "FoamFromSpeed": 0.0,
     "FoamFroudeThreshold": 1.2,
+    "FoamLayerMode": 1.0,
+    "FoamNormalFlatten": 0.15,
+    "FoamPatchVariation": 0.2,
     "FoamTilingCm": 180.0,
     "GlintHotspotSharpness": 6.0,
     "GlintIntensity": 10.0,
-    "GlintSharpness": 1500.0,
+    "GlintSharpness": 300.0,
     "MicroNormalStrength": 0.12,
     "MicroNormalTilingCm": 30.0,
     "ObstacleRingNormalStrength": 0.2,
     "ObstacleWakeFoamStrength": 0.6,
     "PassiveWaveAmplitudeCm": 1.5,
     "RibbonSegmentLengthCm": 395.0,
-    "RibbonStretchAlong": 3.0,
+    "RibbonStretchAlong": 1.0,
     "RibbonWidthCm": 800.0,
     "ShoreFoamAmount": 0.7,
     "ShoreFoamDepthCm": 6.0,
-    "WaterRoughness": 0.03
+    "WaterRoughness": 0.05
    },
    "Switches": {
     "bRibbonLocalCaustics": true,
@@ -1700,7 +1718,7 @@
    },
    "Vectors": {
     "DetailNormalTilingCm": [200.0, 640.0, 0.0, 0.0],
-    "WaterExtinctionPerCm": [0.028, 0.0068, 0.0042, 0.0],
+    "WaterExtinctionPerCm": [0.014, 0.0036, 0.0024, 0.0],
     "WaterScatteringAlbedo": [0.04, 0.3, 0.45, 0.0]
    }
   },

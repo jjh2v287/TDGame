@@ -1,0 +1,412 @@
+{
+  "note": "hvfs (HVOL floor smoke TerrainOnly) judged shots, prereg Saved/AgentOps/20261111/hvol-floorsmoke/prereg.json (variant names equal its variants map). Zone 3 view pawn (9000, 0), arm 600, view (-60, 0), pawn Mesh hidden; every variant: tuning_reload reset reinit, read_back Kinds.FloorSmokeCapture SceneCaptureContent through TDFluidLiveActor GetEffectiveTerrainHeightSettings, floor smoke and the three FloorBump boxes explicitly shown or hidden (order independent), stirrer pinned to the fx9_floor_smoke step_apply location and rotation, one shot scheduled at game time 8 s after the reinit (L-editor-46). v2 order: fs_mask is last because the tuning reload (outer key) reapplies the preset and recaptures the height before the variant hide map runs, so in v1 fs_off right after fs_mask captured AllGeometry with the boxes still hidden (run fs, invalid G1); every on/off variant now follows a variant with the boxes shown, no exposure key (stage PostProcessVolume AEM_MANUAL bias 0, L-editor-82). off = tuning copy Saved/AgentOps/20261111/hvol-floorsmoke/tuning/floorsmoke_allgeom/TDFluidPresetTuning.json (fluid_tuning_patch.py variant --set Kinds.FloorSmokeCapture.TDFluidTerrainHeightSettings.SceneCaptureContent=\"AllGeometry\"), on = canonical. Run (PowerShell): python -B Tools/FluidFX/pie_lookdev_hires.py --shot-size 1920x1080 --variants Tools/FluidFX/quality/q5_hvol_floor_smoke.json --fresh-pie --stop-pie --level /Game/FluidFX/Maps/LV_TDFluidHvolStage --output-dir Saved/AgentOps/20261111/hvol-floorsmoke/fs. Judge: python -B Tools/FluidFX/measure_hvol_floor_smoke.py judge --prereg Saved/AgentOps/20261111/hvol-floorsmoke/prereg.json --shots <fs> --before-a <before-a> --before-b <before-b> --after <after> --output <verdict.json>.",
+  "base": {
+    "pawn": [
+      9000.0,
+      0.0
+    ],
+    "arm": 600.0,
+    "view": [
+      -60.0,
+      0.0
+    ],
+    "hide_components": {
+      "pawn": [
+        "Mesh"
+      ]
+    },
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "fs_hidden",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "SceneCaptureContent",
+              "kinds": [
+                "FloorSmokeCapture"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "pawn": [
+          9000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "hide": {
+          "TDGen_HvolFloorSmoke": true,
+          "TDGen_FloorBump0": false,
+          "TDGen_FloorBump1": false,
+          "TDGen_FloorBump2": false
+        },
+        "location": {
+          "TDGen_HvolFloorSmokeStirrer": [
+            8970.52,
+            218.02,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolFloorSmokeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                277.7,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "fs_hidden"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "fs_off",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261111/hvol-floorsmoke/tuning/floorsmoke_allgeom/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "SceneCaptureContent",
+              "kinds": [
+                "FloorSmokeCapture"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "pawn": [
+          9000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "hide": {
+          "TDGen_HvolFloorSmoke": false,
+          "TDGen_FloorBump0": false,
+          "TDGen_FloorBump1": false,
+          "TDGen_FloorBump2": false
+        },
+        "location": {
+          "TDGen_HvolFloorSmokeStirrer": [
+            8970.52,
+            218.02,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolFloorSmokeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                277.7,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "fs_off"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "fs_on",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "SceneCaptureContent",
+              "kinds": [
+                "FloorSmokeCapture"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "pawn": [
+          9000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "hide": {
+          "TDGen_HvolFloorSmoke": false,
+          "TDGen_FloorBump0": false,
+          "TDGen_FloorBump1": false,
+          "TDGen_FloorBump2": false
+        },
+        "location": {
+          "TDGen_HvolFloorSmokeStirrer": [
+            8970.52,
+            218.02,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolFloorSmokeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                277.7,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "fs_on"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "fs_on_repeat",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "SceneCaptureContent",
+              "kinds": [
+                "FloorSmokeCapture"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "pawn": [
+          9000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "hide": {
+          "TDGen_HvolFloorSmoke": false,
+          "TDGen_FloorBump0": false,
+          "TDGen_FloorBump1": false,
+          "TDGen_FloorBump2": false
+        },
+        "location": {
+          "TDGen_HvolFloorSmokeStirrer": [
+            8970.52,
+            218.02,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolFloorSmokeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                277.7,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "fs_on_repeat"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "fs_hidden_repeat",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "SceneCaptureContent",
+              "kinds": [
+                "FloorSmokeCapture"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "pawn": [
+          9000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "hide": {
+          "TDGen_HvolFloorSmoke": true,
+          "TDGen_FloorBump0": false,
+          "TDGen_FloorBump1": false,
+          "TDGen_FloorBump2": false
+        },
+        "location": {
+          "TDGen_HvolFloorSmokeStirrer": [
+            8970.52,
+            218.02,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolFloorSmokeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                277.7,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "fs_hidden_repeat"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "fs_mask",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "SceneCaptureContent",
+              "kinds": [
+                "FloorSmokeCapture"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "pawn": [
+          9000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "hide": {
+          "TDGen_HvolFloorSmoke": true,
+          "TDGen_FloorBump0": true,
+          "TDGen_FloorBump1": true,
+          "TDGen_FloorBump2": true
+        },
+        "location": {
+          "TDGen_HvolFloorSmokeStirrer": [
+            8970.52,
+            218.02,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolFloorSmokeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                277.7,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "fs_mask"
+        }
+      },
+      "settle": 8.0
+    }
+  ]
+}

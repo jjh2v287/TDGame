@@ -235,6 +235,7 @@ bool FTDFluidVolumeDriverSlotResolveAndNeedTest::RunTest(const FString& Paramete
 		TestTrue(*FString::Printf(TEXT("Heterogeneous stage kind %d needs a driver"), static_cast<int32>(Kind)), bIsNeeded);
 	}
 	TestTrue(TEXT("Floor smoke uses scene capture"), UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(ETDFluidPresetKind::FloorSmokeCapture).VolumeHeightSource == ETDFluidVolumeHeightSource::SceneCapture);
+	TestTrue(TEXT("Floor smoke captures terrain only"), UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(ETDFluidPresetKind::FloorSmokeCapture).SceneCaptureContent == ETDFluidHeightCaptureContent::TerrainOnly);
 	Preset->TertiaryOutputActorTag = TargetTag;
 	TestTrue(TEXT("A slot tag alone needs a driver"), UTDFluidVolumeDriverComponent::IsDriverNeeded(FTDFluidVolumeDriverSettings(), FTDFluidTerrainHeightSettings(), Preset));
 	TestFalse(TEXT("Fire family excludes new kinds"), UTDFluidPresetAsset::IsFireFamilyPresetKind(ETDFluidPresetKind::VortexHeterogeneous));

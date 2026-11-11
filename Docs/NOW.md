@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-11 16:16 claude
+갱신: 2026-11-11 19:30 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -11,7 +11,7 @@
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴
 - M3-25·26 done(26 PIE 육안 대기)
-- FluidFX: 지형 안개 FogMist·Stir·Tile 켬·커밋, SMOKE 끔
+- FluidFX: 지형 안개 FogMist·Stir·Tile 켬, HVOL 바닥 연기 지형만 캡처·커밋
 
 ## ② 막힘·결정 대기
 

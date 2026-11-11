@@ -1473,7 +1473,8 @@
         "AmbientNoiseAmount": 0.45
       },
       "TDFluidTerrainHeightSettings": {
-        "VolumeHeightSource": "SceneCapture"
+        "VolumeHeightSource": "SceneCapture",
+        "SceneCaptureContent": "TerrainOnly"
       }
     },
     "Flamethrower": {

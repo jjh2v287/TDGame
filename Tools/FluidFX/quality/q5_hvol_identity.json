@@ -1,0 +1,495 @@
+{
+  "note": "hvfs (HVOL floor smoke TerrainOnly) identity shots, prereg Saved/AgentOps/20261111/hvol-floorsmoke/prereg.json capture.identity_view: one variant per zone 0..8 (zone 3 is a reference only, H4 uses 0,1,2,4..8), pawn = zone center (zone_index*3000, 0), arm 600, view (-60, 0), pawn Mesh hidden, every zone stirrer pinned to its placement (zone center + (-220, offset y, 60), rotation 0) at the reinit, tuning '' (canonical) with reset reinit, one shot scheduled at game time 8 s after the reinit (L-editor-46, 8 s x 90 deg/s = two stirrer turns), no exposure key (stage PostProcessVolume AEM_MANUAL bias 0, L-editor-82). Run (PowerShell): python -B Tools/FluidFX/pie_lookdev_hires.py --shot-size 1920x1080 --variants Tools/FluidFX/quality/q5_hvol_identity.json --fresh-pie --stop-pie --level /Game/FluidFX/Maps/LV_TDFluidHvolStage --output-dir Saved/AgentOps/20261111/hvol-floorsmoke/<before-a|before-b|after>",
+  "base": {
+    "pawn": [
+      0.0,
+      0.0
+    ],
+    "arm": 600.0,
+    "view": [
+      -60.0,
+      0.0
+    ],
+    "hide_components": {
+      "pawn": [
+        "Mesh"
+      ]
+    },
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "z0",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          0.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolPairStirrer": [
+            -220.0,
+            0.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolPairStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z0"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "z1",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          3000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolVortexAStirrer": [
+            2780.0,
+            -450.0,
+            60.0
+          ],
+          "TDGen_HvolVortexBStirrer": [
+            2780.0,
+            450.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolVortexAStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_HvolVortexBStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z1"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "z2",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          6000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolCameraFacingStirrer": [
+            5780.0,
+            0.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolCameraFacingStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z2"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "z3",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          9000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolFloorSmokeStirrer": [
+            8780.0,
+            0.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolFloorSmokeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z3"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "z4",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          12000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolSlopeStirrer": [
+            11780.0,
+            0.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolSlopeStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z4"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "z5",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          15000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolCrossRadialStirrer": [
+            14780.0,
+            -450.0,
+            60.0
+          ],
+          "TDGen_HvolCrossRingStirrer": [
+            14780.0,
+            450.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolCrossRadialStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          },
+          "TDGen_HvolCrossRingStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z5"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "z6",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          18000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolTaggedStirrer": [
+            17780.0,
+            0.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolTaggedStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z6"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "z7",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          21000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolCaveStirrer": [
+            20780.0,
+            0.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolCaveStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z7"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "z8",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "pawn": [
+          24000.0,
+          0.0
+        ],
+        "arm": 600.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "location": {
+          "TDGen_HvolShadowStirrer": [
+            23780.0,
+            0.0,
+            60.0
+          ]
+        },
+        "call": {
+          "TDGen_HvolShadowStirrer": {
+            "function": "set_actor_rotation",
+            "args": [
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "z8"
+        }
+      },
+      "settle": 8.0
+    }
+  ]
+}

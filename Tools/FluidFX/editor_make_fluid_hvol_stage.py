@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 HVOL 비교 무대 LV_TDFluidHvolStage(구역 0~8, X축 30 m 간격: 0 SVOL 대 HVOL·1 소용돌이 쌍·2 카메라 정렬·3 바닥 연기·4 경사+높이 캐시·5 단면·6 태그 대상·7 동굴·8 블록 그림자)와 DA_TDFluid_Hvol* 10개를 만든다. 먼저 editor_make_fluid_heterogeneous_volume_material.py(마스터·MI 7)와 FX-8n 무대(교반기 BP_TDFluidStageStirrer)가 성공해 있어야 하고, FX-9 C++(구동 컴포넌트·DA 슬롯·액터 TerrainHeightCache) 통합·재시작 뒤에 돌린다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_hvol_stage.py (기존 DA·맵을 갱신할 때는 Saved/FluidFX/fluid_hvol_stage_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Presets/DA_TDFluid_Hvol*(10), /Game/FluidFX/Maps/LV_TDFluidHvolStage, Saved/FluidFX/fluid_hvol_stage.json(preset_tuning_sha256·material_look_sha256 = check_fluid_preset_data.py --stage-report 형식, 구역 중심·보정 지표, 6c 굽기 요청 초안, JSON 의존 값 대조)
-상태: 2026-10-27 에디터 실행 통과(파동 2 A5-a: DA 10·액터 38·미저장 0, json_dependencies_differ 2건 기록). 구역 4 높이 캐시는 비워 두고 6c(editor_bake_fluid_height_cache.py, assign_actor)가 채운다(cross-plan A-02). 새 조절 구조체는 DA 사본이 없어 구역 0 오프셋(+900 cm)·HVOL 켬·장면 캡처·충돌 마스크는 조절 정본 종류 값에 의존하고, 무대는 빌더 값을 읽어 보고만 한다(DEV-FX9-11). 태그 구역은 Smoke 종류(내부 HVOL 끔)로 태그 HVOL·메시만 구동한다. 블루프린트는 구성 전용. 2026-10-31: 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고 위치 인수 Rotator(0, v, 0)가 pitch 였던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)와 yaw 키워드로 고침(py_compile·가짜 unreal 핸들 재생성 시험만), 맵 재생성 필요.
+상태: 2026-10-27 에디터 실행 통과(파동 2 A5-a: DA 10·액터 38·미저장 0, json_dependencies_differ 2건 기록). 구역 4 높이 캐시는 비워 두고 6c(editor_bake_fluid_height_cache.py, assign_actor)가 채운다(cross-plan A-02). 새 조절 구조체는 DA 사본이 없어 구역 0 오프셋(+900 cm)·HVOL 켬·장면 캡처·충돌 마스크는 조절 정본 종류 값에 의존하고, 무대는 빌더 값을 읽어 보고만 한다(DEV-FX9-11). 태그 구역은 Smoke 종류(내부 HVOL 끔)로 태그 HVOL·메시만 구동한다. 블루프린트는 구성 전용. 2026-10-31: 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고 위치 인수 Rotator(0, v, 0)가 pitch 였던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)와 yaw 키워드로 고침(py_compile·가짜 unreal 핸들 재생성 시험만), 맵 재생성 필요. 2026-11-11: FloorSmokeCapture 가 TerrainOnly 캡처(랜드스케이프 + TDFluidTerrain 태그 액터만)로 바뀌어 BandFloor 에 TDFluidTerrain 태그를 달고(상자·교반기·벽은 태그 없음) 기대값 scene_capture_content TERRAIN_ONLY 를 더했다. 재생성 뒤 구역 4 높이 캐시를 다시 지정한다.
 """
 import hashlib
 import importlib.util
@@ -61,6 +61,7 @@ VIEW_PITCH_DEGREES = -60.0
 PLAYER_START = (0.0, -1200.0, 96.0)
 TAG_HVOL = "TDFluidHvolTaggedVolume"
 TAG_MESH = "TDFluidHvolTaggedMesh"
+TAG_TERRAIN = "TDFluidTerrain"
 SLOPE_ACTOR_LABEL = "TDGen_HvolSlope"
 
 HVOL_MI = {
@@ -103,6 +104,7 @@ EXPECTED_DRIVER_VALUES = (
     ("HvolPair", "volume_driver", "render_heterogeneous_volume", True),
     ("HvolPair", "volume_driver", "heterogeneous_volume_offset_cm", (0.0, HVOL_PAIR_OFFSET_CM, 0.0)),
     ("HvolFloorSmoke", "terrain_height", "volume_height_source", "SCENE_CAPTURE"),
+    ("HvolFloorSmoke", "terrain_height", "scene_capture_content", "TERRAIN_ONLY"),
     ("HvolCave", "terrain_height", "use_height_as_collision_mask", True),
     ("HvolTagged", "volume_driver", "render_heterogeneous_volume", False),
 )
@@ -558,7 +560,8 @@ def main():
         return actor
 
     band_length = (ZONE_COUNT - 1) * ZONE_SPACING_CM + 2.0 * ZONE_BAND_HALF_WIDTH_CM
-    place_cube((0.5 * (ZONE_COUNT - 1) * ZONE_SPACING_CM, 0.0, FLOOR_Z_CM - 25.0), (band_length, 2.0 * ZONE_BAND_HALF_WIDTH_CM, 50.0), floor_mat, "BandFloor", "Stage")
+    band_floor = place_cube((0.5 * (ZONE_COUNT - 1) * ZONE_SPACING_CM, 0.0, FLOOR_Z_CM - 25.0), (band_length, 2.0 * ZONE_BAND_HALF_WIDTH_CM, 50.0), floor_mat, "BandFloor", "Stage")
+    band_floor.set_editor_property("tags", [TAG_TERRAIN])
     sun = spawn(unreal.DirectionalLight, (0, 0, 2000), "HvolStageSun", "Lighting", unreal.Rotator(pitch=-50, yaw=150))
     sun.light_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
     sun.light_component.set_intensity(4.0)
@@ -641,6 +644,7 @@ def main():
         "fluid_actors": fluid_records,
         "tagged_targets": {"actors": tagged_records, "volume_tag": TAG_HVOL, "mesh_tag": TAG_MESH},
         "passive_hvol": passive.get_actor_label(),
+        "terrain_tagged_actors": [band_floor.get_actor_label()],
         "builder_values": builder_records,
         "json_dependencies_differ": [record for record in builder_records if record["status"] != "ok"],
         "height_cache_request_draft": height_cache_request_draft(),

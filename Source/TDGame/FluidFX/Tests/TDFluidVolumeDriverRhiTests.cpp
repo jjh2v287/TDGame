@@ -50,6 +50,7 @@ namespace TDFluidVolumeDriverRhiTestPrivate
 	constexpr double BoxEdgeCm = 100.0;
 	constexpr double HeightToleranceCm = 1.0;
 	constexpr double MissBelowOwnerCm = 1000.0;
+	const FName FogTerrainTag(TEXT("TDFluidTerrain"));
 	constexpr double ViewYawStepDegrees = 10.0;
 	constexpr int32 CostWarmupFrameCount = 120;
 	constexpr int32 CostMeasuredFrameCount = 240;
@@ -416,7 +417,9 @@ bool FTDFluidVolumeDriverSceneCaptureHeightRhiTest::RunTest(const FString& Param
 	const FVector4f FirstWindow = Driver.GetTerrainHeightWindow();
 	const FVector2D HitXY(FirstWindow.X + 0.2 * FirstWindow.Z, FirstWindow.Y + 0.1 * FirstWindow.W);
 	const FVector2D MirrorXY(FirstWindow.X - 0.2 * FirstWindow.Z, FirstWindow.Y - 0.1 * FirstWindow.W);
-	SpawnBox(*TestWorld.World, *CubeMesh, FVector(HitXY.X, HitXY.Y, BoxTopCm));
+	const FVector2D UntaggedXY(FirstWindow.X - 0.2 * FirstWindow.Z, FirstWindow.Y + 0.2 * FirstWindow.W);
+	SpawnBox(*TestWorld.World, *CubeMesh, FVector(HitXY.X, HitXY.Y, BoxTopCm))->Tags.Add(FogTerrainTag);
+	SpawnBox(*TestWorld.World, *CubeMesh, FVector(UntaggedXY.X, UntaggedXY.Y, BoxTopCm));
 
 	const int32 CaptureCountBefore = Driver.GetHeightCaptureCount();
 	TestWorld.StepWorld(DriverStepSeconds);
@@ -454,8 +457,10 @@ bool FTDFluidVolumeDriverSceneCaptureHeightRhiTest::RunTest(const FString& Param
 	const FVector4f Decode = Driver.GetTerrainHeightDecode();
 	const FIntPoint HitPixel = ResolveWindowPixel(Window, Resolution, HitXY);
 	const FIntPoint MirrorPixel = ResolveWindowPixel(Window, Resolution, MirrorXY);
+	const FIntPoint UntaggedPixel = ResolveWindowPixel(Window, Resolution, UntaggedXY);
 	const double HitHeightCm = DecodeHeight(Pixels, Resolution, HitPixel, Decode);
 	const double MirrorHeightCm = DecodeHeight(Pixels, Resolution, MirrorPixel, Decode);
+	const double UntaggedHeightCm = DecodeHeight(Pixels, Resolution, UntaggedPixel, Decode);
 	const double OwnerZ = LiveActor->GetActorLocation().Z;
 	AddInfo(FString::Printf(TEXT("Window (%.1f, %.1f, %.1f, %.1f), decode (%.3f, %.1f, %.1f), hit pixel (%d, %d) raw %.3f -> %.2f cm, mirror pixel (%d, %d) raw %.3f -> %.2f cm"),
 		Window.X, Window.Y, Window.Z, Window.W, Decode.X, Decode.Y, Decode.Z,
@@ -465,12 +470,12 @@ bool FTDFluidVolumeDriverSceneCaptureHeightRhiTest::RunTest(const FString& Param
 	TestTrue(TEXT("Decode marks the capture valid"), Decode.Z > 0.5f);
 	TestTrue(*FString::Printf(TEXT("Decoded box top %.2f cm is within 1 cm of %.0f cm"), HitHeightCm, BoxTopCm), FMath::Abs(HitHeightCm - BoxTopCm) <= HeightToleranceCm);
 	TestTrue(*FString::Printf(TEXT("Mirrored miss decodes far below the owner (%.1f < %.1f)"), MirrorHeightCm, OwnerZ - MissBelowOwnerCm), MirrorHeightCm < OwnerZ - MissBelowOwnerCm);
+	TestTrue(*FString::Printf(TEXT("Untagged box at pixel (%d, %d) is left out of the floor smoke terrain-only capture (%.1f < %.1f)"), UntaggedPixel.X, UntaggedPixel.Y, UntaggedHeightCm, OwnerZ - MissBelowOwnerCm), UntaggedHeightCm < OwnerZ - MissBelowOwnerCm);
 	return true;
 }
 
 namespace TDFluidVolumeDriverRhiTestPrivate
 {
-	const FName FogTerrainTag(TEXT("TDFluidTerrain"));
 	const FName FogTerrainFollowParameterName(TEXT("FogTerrainFollow"));
 	const FName TerrainHeightDecodeParameterName(TEXT("TerrainHeightDecode"));
 	const FName TerrainHeightTextureParameterName(TEXT("TerrainHeightTexture"));

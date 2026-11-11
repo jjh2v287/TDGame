@@ -1614,6 +1614,15 @@
       "TDFluidInputBrushSettings": {
         "VelocityOnlySources": "All",
         "MassPointDensityStrength": 0.0
+      },
+      "TDFluidVolumeDriverSettings": {
+        "bFogFloorFollowsTerrain": true
+      },
+      "TDFluidTerrainHeightSettings": {
+        "VolumeHeightSource": "SceneCapture",
+        "SceneCaptureContent": "TerrainOnly",
+        "SceneCaptureHeightAboveCm": 2000.0,
+        "SceneCaptureRecaptureCells": 16
       }
     },
     "FogTileSim": {

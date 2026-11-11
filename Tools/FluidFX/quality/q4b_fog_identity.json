@@ -1,0 +1,286 @@
+{
+  "note": "Q4-1b spec-q41b-v2 3 / prereg-v3 identity: q4_fog_identity.json 4 variants unchanged in order and pose (00 7A f1_backlit, 01 8A f5_cut, 02 2 f7_lab SMOKE control, 03 8B f5_stir FogMistStir now following) + 04 id_8c_tile (FogTileSim now following with the sphere-wide capture; pose = calib f6_tile: pawn (17000, -36800), arm 2500, view (-35, 90), EV 1.0 bias, but r.TDFogScattering 1 and grid 8/128 pinned like the other identity shots). Awake maps also list TDGen_FogRelief and TDGen_FogReliefTile as asleep (a label without an actor is skipped by apply_awake, so the same file runs on the pre-change stage). Fixed game time 8 s after reinit (L-editor-46), tuning '' (canonical) in every variant: before sets run with the pre-change canonical (HEAD 564bcb2a data) in two editor sessions, after runs with the changed canonical after the stage regeneration. Run: python -B Tools/FluidFX/pie_lookdev_hires.py --shot-size 1920x1080 --variants Tools/FluidFX/quality/q4b_fog_identity.json --fresh-pie --stop-pie --level /Game/FluidFX/Maps/LV_TDFluidFogStage --output-dir Saved/AgentOps/20261110/fog-terrain/q41b/identity/<before-a|before-b|after>",
+  "base": {
+    "awake": {
+      "TDGen_FogRoom": false,
+      "TDGen_FogTrail": false,
+      "TDGen_FogCharacter": false,
+      "TDGen_FogAmbient": false,
+      "TDGen_FogCut": false,
+      "TDGen_FogStir": false,
+      "TDGen_FogTileSync": false,
+      "TDGen_FogRelief": false,
+      "TDGen_FogReliefTile": false
+    },
+    "pawn": [
+      9000.0,
+      25000.0
+    ],
+    "arm": 800.0,
+    "view": [
+      -45.0,
+      0.0
+    ],
+    "hide_components": {
+      "pawn": [
+        "Mesh"
+      ]
+    },
+    "console": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 1"
+    ],
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "id_7a_ambient",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": true,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          8000.0,
+          25000.0
+        ],
+        "arm": 450.0,
+        "view": [
+          -8.0,
+          0.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "id_7a_ambient"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "id_8a_cut",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": true,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          -155.0,
+          -35000.0
+        ],
+        "arm": 1700.0,
+        "view": [
+          -35.0,
+          0.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "call": {
+          "TDGen_FogCutStirrer": {
+            "function": "set_actor_location_and_rotation",
+            "args": [
+              [
+                -600.0,
+                -35000.0,
+                60.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              false,
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "id_8a_cut"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "id_2_room",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": true,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          6000.0,
+          0.0
+        ],
+        "arm": 900.0,
+        "view": [
+          -45.0,
+          0.0
+        ],
+        "exposure_ev100": 4.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "id_2_room"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "id_8b_stir",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": true,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          6845.0,
+          -35000.0
+        ],
+        "arm": 1700.0,
+        "view": [
+          -35.0,
+          0.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "call": {
+          "TDGen_FogStirStirrer": {
+            "function": "set_actor_location_and_rotation",
+            "args": [
+              [
+                6400.0,
+                -35000.0,
+                60.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0
+              ],
+              false,
+              true
+            ]
+          }
+        },
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "id_8b_stir"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "id_8c_tile",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": true,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          17000.0,
+          -36800.0
+        ],
+        "arm": 2500.0,
+        "view": [
+          -35.0,
+          90.0
+        ],
+        "exposure_ev100": 1.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "id_8c_tile"
+        }
+      },
+      "settle": 8.0
+    }
+  ]
+}

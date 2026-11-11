@@ -486,6 +486,7 @@ namespace TDFluidVolumeDriverRhiTestPrivate
 	constexpr double FogFloorThicknessCm = 100.0;
 	constexpr float FogVolumeHeightCm = 1300.0f;
 	const FVector FogStirActorLocation(0.0, 30000.0, 0.0);
+	const FVector FogSmokeActorLocation(0.0, -30000.0, 0.0);
 
 	AActor* SpawnBoxBetween(UWorld& World, UStaticMesh& CubeMesh, const FVector& MinCm, const FVector& MaxCm, FName Tag)
 	{
@@ -632,17 +633,19 @@ bool FTDFluidVolumeDriverFogFloorFollowsTerrainRhiTest::RunTest(const FString& P
 	FDriverRhiTestWorld TestWorld;
 	ATDFluidLiveActor* MistActor = SpawnFogLiveActor(TestWorld, ETDFluidPresetKind::FogMist, FVector::ZeroVector, *FogMaterial, *CubeMesh);
 	ATDFluidLiveActor* StirActor = SpawnFogLiveActor(TestWorld, ETDFluidPresetKind::FogMistStir, FogStirActorLocation, *FogMaterial, *CubeMesh);
-	if (!TestNotNull(TEXT("Spawned the FogMist actor"), MistActor) || !TestNotNull(TEXT("Spawned the FogMistStir actor"), StirActor))
+	ATDFluidLiveActor* SmokeActor = SpawnFogLiveActor(TestWorld, ETDFluidPresetKind::Smoke, FogSmokeActorLocation, *FogMaterial, *CubeMesh);
+	if (!TestNotNull(TEXT("Spawned the FogMist actor"), MistActor) || !TestNotNull(TEXT("Spawned the FogMistStir actor"), StirActor) || !TestNotNull(TEXT("Spawned the Smoke actor"), SmokeActor))
 	{
 		return false;
 	}
-	const bool bHasFirstCapture = StepUntil(TestWorld, [MistActor, StirActor]()
+	const bool bHasFirstCapture = StepUntil(TestWorld, [MistActor, StirActor, SmokeActor]()
 	{
 		FlushAsyncLoading();
 		const bool bHasMistCapture = MistActor->VolumeDriver && MistActor->VolumeDriver->GetHeightCaptureCount() > 0;
-		return bHasMistCapture && FindLiveVolumeMID(*MistActor) && FindLiveVolumeMID(*StirActor);
+		const bool bHasStirCapture = StirActor->VolumeDriver && StirActor->VolumeDriver->GetHeightCaptureCount() > 0;
+		return bHasMistCapture && bHasStirCapture && FindLiveVolumeMID(*MistActor) && FindLiveVolumeMID(*StirActor) && FindLiveVolumeMID(*SmokeActor);
 	});
-	if (!TestTrue(TEXT("FogMist gets a driver that captures the floor height, and both fog actors get a live volume material"), bHasFirstCapture))
+	if (!TestTrue(TEXT("FogMist and FogMistStir get drivers that capture the floor height, and all three fog actors get a live volume material"), bHasFirstCapture))
 	{
 		return false;
 	}
@@ -699,8 +702,17 @@ bool FTDFluidVolumeDriverFogFloorFollowsTerrainRhiTest::RunTest(const FString& P
 	if (TestNotNull(TEXT("FogMistStir has a live volume material"), StirMID))
 	{
 		const FScalarParameterValue* StirFollowValue = FindScalarOverride(*StirMID, FogTerrainFollowParameterName);
-		TestTrue(TEXT("FogMistStir leaves FogTerrainFollow unset or 0"), !StirFollowValue || FMath::IsNearlyZero(StirFollowValue->ParameterValue));
+		const FTextureParameterValue* StirTextureValue = FindTextureOverride(*StirMID, TerrainHeightTextureParameterName);
+		TestTrue(TEXT("FogMistStir live volume material sets FogTerrainFollow to 1"), StirFollowValue && FMath::IsNearlyEqual(StirFollowValue->ParameterValue, 1.0f));
+		TestTrue(TEXT("FogMistStir live volume material samples its own driver capture target"), StirTextureValue && StirActor->VolumeDriver && StirTextureValue->ParameterValue == StirActor->VolumeDriver->GetHeightCaptureTarget());
 	}
+	UMaterialInstanceDynamic* SmokeMID = FindLiveVolumeMID(*SmokeActor);
+	if (TestNotNull(TEXT("Smoke has a live volume material"), SmokeMID))
+	{
+		const FScalarParameterValue* SmokeFollowValue = FindScalarOverride(*SmokeMID, FogTerrainFollowParameterName);
+		TestTrue(TEXT("Smoke leaves FogTerrainFollow unset or 0"), !SmokeFollowValue || FMath::IsNearlyZero(SmokeFollowValue->ParameterValue));
+	}
+	TestTrue(TEXT("Smoke builds no driver or never captures the floor height"), !SmokeActor->VolumeDriver || SmokeActor->VolumeDriver->GetHeightCaptureCount() == 0);
 
 	ON_SCOPE_EXIT
 	{
@@ -727,6 +739,174 @@ bool FTDFluidVolumeDriverFogFloorFollowsTerrainRhiTest::RunTest(const FString& P
 	const double OverhangAllGeometryCm = DecodeHeightAt(Driver, Pixels, Resolution, OverhangSampleXY);
 	AddInfo(FString::Printf(TEXT("TDFluidFogFloorFollow: all-geometry overhang %.2f cm"), OverhangAllGeometryCm));
 	TestTrue(*FString::Printf(TEXT("All-geometry capture sees the overhang top %.2f cm within 2 cm of %.0f cm"), OverhangAllGeometryCm, FogOverhangTopCm), FMath::Abs(OverhangAllGeometryCm - FogOverhangTopCm) <= FogFollowToleranceCm);
+	return true;
+}
+
+namespace TDFluidVolumeDriverRhiTestPrivate
+{
+	const TCHAR* FogTileSyncInstancePath = TEXT("/Game/FluidFX/Materials/MI_TD_FluidFog_TileSync.MI_TD_FluidFog_TileSync");
+	constexpr double FogTileExpectedCaptureWidthCm = 15273.5;
+	constexpr double FogTileWindowToleranceCm = 1.0;
+	constexpr int32 FogTileExpectedCaptureResolution = 512;
+	constexpr double FogTileFloorHalfSizeCm = 8000.0;
+	constexpr double FogTileHillHalfSizeCm = 100.0;
+	constexpr double FogTileHillTopCm = 600.0;
+	const FVector2D FogTileHillInsideBoxXY(2500.0, 0.0);
+	const FVector2D FogTileBandHillAlongXXY(5900.0, 0.0);
+	const FVector2D FogTileBandHillAlongYXY(0.0, -5900.0);
+	const FVector2D FogTileOpenFloorXY(-2500.0, 0.0);
+
+	FString GetFogTileFollowVariantTuningPath()
+	{
+		return FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("FluidFX/VolumeDriverRhiTests/TDFluidFogTileFollowVariant.json")));
+	}
+
+	bool WriteFogTileFollowVariantTuningFile()
+	{
+		FString BaseText;
+		if (!FFileHelper::LoadFileToString(BaseText, *UTDFluidPresetTuningSubsystem::GetTuningFilePath()))
+		{
+			return false;
+		}
+		TSharedPtr<FJsonObject> Root;
+		if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(BaseText), Root) || !Root.IsValid())
+		{
+			return false;
+		}
+		const TSharedPtr<FJsonObject>* Kinds = nullptr;
+		const TSharedPtr<FJsonObject>* FogTileLayers = nullptr;
+		if (!Root->TryGetObjectField(TEXT("Kinds"), Kinds) || !(*Kinds)->TryGetObjectField(TEXT("FogTileSim"), FogTileLayers))
+		{
+			return false;
+		}
+		const TSharedRef<FJsonObject> FogTileDriver = MakeShared<FJsonObject>();
+		FogTileDriver->SetBoolField(TEXT("bFogFloorFollowsTerrain"), true);
+		const TSharedRef<FJsonObject> FogTileTerrain = MakeShared<FJsonObject>();
+		FogTileTerrain->SetStringField(TEXT("VolumeHeightSource"), TEXT("SceneCapture"));
+		FogTileTerrain->SetStringField(TEXT("SceneCaptureContent"), TEXT("TerrainOnly"));
+		FogTileTerrain->SetNumberField(TEXT("SceneCaptureHeightAboveCm"), 2000.0);
+		FogTileTerrain->SetNumberField(TEXT("SceneCaptureRecaptureCells"), 16);
+		FogTileTerrain->SetNumberField(TEXT("SceneCaptureResolution"), FogTileExpectedCaptureResolution);
+		(*FogTileLayers)->SetObjectField(TEXT("TDFluidVolumeDriverSettings"), FogTileDriver);
+		(*FogTileLayers)->SetObjectField(TEXT("TDFluidTerrainHeightSettings"), FogTileTerrain);
+		FString VariantText;
+		if (!FJsonSerializer::Serialize(Root.ToSharedRef(), TJsonWriterFactory<>::Create(&VariantText)))
+		{
+			return false;
+		}
+		return FFileHelper::SaveStringToFile(VariantText, *GetFogTileFollowVariantTuningPath());
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidVolumeDriverFogTileFollowCoversBoxRhiTest,
+	"TDGame.FluidFXRhi.VolumeDriver.FogTileFollowCoversBox",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::NonNullRHI | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidVolumeDriverFogTileFollowCoversBoxRhiTest::RunTest(const FString& Parameters)
+{
+	using namespace TDFluidVolumeDriverRhiTestPrivate;
+	if (!CanRunVolumeDriverRhiTest(*this, TEXT("TDGame.FluidFXRhi.VolumeDriver.FogTileFollowCoversBox")))
+	{
+		return false;
+	}
+
+	UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+	UMaterialInterface* FogMaterial = LoadObject<UMaterialInterface>(nullptr, FogTileSyncInstancePath);
+	if (!TestNotNull(TEXT("Engine cube mesh is available"), CubeMesh) || !TestNotNull(TEXT("MI_TD_FluidFog_TileSync is available"), FogMaterial))
+	{
+		return false;
+	}
+
+	UTDFluidPresetTuningSubsystem* TuningSubsystem = GEngine ? GEngine->GetEngineSubsystem<UTDFluidPresetTuningSubsystem>() : nullptr;
+	if (!TestNotNull(TEXT("The preset tuning subsystem exists"), TuningSubsystem) || !TestTrue(TEXT("Wrote the FogTileSim follow tuning variant"), WriteFogTileFollowVariantTuningFile()))
+	{
+		return false;
+	}
+	ON_SCOPE_EXIT
+	{
+		TuningSubsystem->ReloadPresetTuning();
+		IFileManager::Get().Delete(*GetFogTileFollowVariantTuningPath());
+	};
+	if (!TestEqual(TEXT("The FogTileSim follow variant loads without errors"), TuningSubsystem->ReloadPresetTuningFromPaths(GetFogTileFollowVariantTuningPath(), FString()), 0))
+	{
+		return false;
+	}
+	if (!TestTrue(TEXT("The FogTileSim follow variant turns following on"), UTDFluidPresetAsset::BuildVolumeDriverForPresetKind(ETDFluidPresetKind::FogTileSim).bFogFloorFollowsTerrain))
+	{
+		return false;
+	}
+
+	FDriverRhiTestWorld TestWorld;
+	ATDFluidLiveActor* TileActor = SpawnFogLiveActor(TestWorld, ETDFluidPresetKind::FogTileSim, FVector::ZeroVector, *FogMaterial, *CubeMesh);
+	if (!TestNotNull(TEXT("Spawned the FogTileSim actor"), TileActor))
+	{
+		return false;
+	}
+	const bool bHasFirstCapture = StepUntil(TestWorld, [TileActor]()
+	{
+		FlushAsyncLoading();
+		const bool bHasTileCapture = TileActor->VolumeDriver && TileActor->VolumeDriver->GetHeightCaptureCount() > 0;
+		return bHasTileCapture && FindLiveVolumeMID(*TileActor);
+	});
+	if (!TestTrue(TEXT("FogTileSim gets a driver that captures the floor height and a live volume material"), bHasFirstCapture))
+	{
+		return false;
+	}
+
+	const FVector FloorHalf(FogTileFloorHalfSizeCm, FogTileFloorHalfSizeCm, 0.0);
+	const FVector HillHalf(FogTileHillHalfSizeCm, FogTileHillHalfSizeCm, 0.0);
+	const FVector2D HillPoints[] = { FogTileHillInsideBoxXY, FogTileBandHillAlongXXY, FogTileBandHillAlongYXY };
+	SpawnBoxBetween(*TestWorld.World, *CubeMesh, FVector(0.0, 0.0, -FogFloorThicknessCm) - FloorHalf, FloorHalf, FogTerrainTag);
+	for (const FVector2D& HillXY : HillPoints)
+	{
+		SpawnBoxBetween(*TestWorld.World, *CubeMesh, FVector(HillXY, 0.0) - HillHalf, FVector(HillXY, FogTileHillTopCm) + HillHalf, FogTerrainTag);
+	}
+	UTDFluidVolumeDriverComponent& Driver = *TileActor->VolumeDriver;
+	if (!TestTrue(TEXT("A requested recapture runs with the terrain in place"), RecaptureAndWait(TestWorld, Driver)))
+	{
+		return false;
+	}
+
+	const FVector4f Window = Driver.GetTerrainHeightWindow();
+	TestTrue(*FString::Printf(TEXT("FogTileSim capture stays centred on the simulation (%.1f, %.1f)"), Window.X, Window.Y), FMath::Abs(Window.X) <= FogTileWindowToleranceCm && FMath::Abs(Window.Y) <= FogTileWindowToleranceCm);
+	TestTrue(*FString::Printf(TEXT("FogTileSim capture width %.1f x %.1f cm is %.1f cm within 1 cm"), Window.Z, Window.W, FogTileExpectedCaptureWidthCm), FMath::Abs(Window.Z - FogTileExpectedCaptureWidthCm) <= FogTileWindowToleranceCm && FMath::Abs(Window.W - FogTileExpectedCaptureWidthCm) <= FogTileWindowToleranceCm);
+
+	TArray<FLinearColor> Pixels;
+	int32 Resolution = 0;
+	if (!ReadHeightCapture(*this, Driver, Pixels, Resolution))
+	{
+		return false;
+	}
+	TestEqual(TEXT("FogTileSim captures at 512 x 512"), Resolution, FogTileExpectedCaptureResolution);
+
+	const UStaticMeshComponent* VolumeMesh = TileActor->VolumeMeshComponent;
+	if (TestNotNull(TEXT("FogTileSim has a live volume mesh"), VolumeMesh))
+	{
+		const double SphereRadiusCm = VolumeMesh->Bounds.SphereRadius;
+		const double CaptureHalfWidthCm = 0.5 * Window.Z;
+		AddInfo(FString::Printf(TEXT("TDFluidFogTileCover: volume box extent (%.1f, %.1f, %.1f) sphere radius %.1f cm, capture half width %.1f cm"),
+			VolumeMesh->Bounds.BoxExtent.X, VolumeMesh->Bounds.BoxExtent.Y, VolumeMesh->Bounds.BoxExtent.Z, SphereRadiusCm, CaptureHalfWidthCm));
+		TestTrue(*FString::Printf(TEXT("Capture half width %.1f cm covers the volume bounding sphere radius %.1f cm"), CaptureHalfWidthCm, SphereRadiusCm), CaptureHalfWidthCm >= SphereRadiusCm);
+	}
+
+	const double InsideBoxCm = DecodeHeightAt(Driver, Pixels, Resolution, FogTileHillInsideBoxXY);
+	const double BandAlongXCm = DecodeHeightAt(Driver, Pixels, Resolution, FogTileBandHillAlongXXY);
+	const double BandAlongYCm = DecodeHeightAt(Driver, Pixels, Resolution, FogTileBandHillAlongYXY);
+	const double OpenFloorCm = DecodeHeightAt(Driver, Pixels, Resolution, FogTileOpenFloorXY);
+	AddInfo(FString::Printf(TEXT("TDFluidFogTileCover: window (%.1f, %.1f, %.1f, %.1f) resolution %d, hill in box %.2f, band x %.2f, band y %.2f, open %.2f cm"),
+		Window.X, Window.Y, Window.Z, Window.W, Resolution, InsideBoxCm, BandAlongXCm, BandAlongYCm, OpenFloorCm));
+	TestTrue(*FString::Printf(TEXT("Capture decodes the hill outside the sim window inside the box (%.2f cm) within 2 cm of %.0f cm"), InsideBoxCm, FogTileHillTopCm), FMath::Abs(InsideBoxCm - FogTileHillTopCm) <= FogFollowToleranceCm);
+	TestTrue(*FString::Printf(TEXT("Capture decodes the hill beyond the box along X (%.2f cm) within 2 cm of %.0f cm"), BandAlongXCm, FogTileHillTopCm), FMath::Abs(BandAlongXCm - FogTileHillTopCm) <= FogFollowToleranceCm);
+	TestTrue(*FString::Printf(TEXT("Capture decodes the hill beyond the box along Y (%.2f cm) within 2 cm of %.0f cm"), BandAlongYCm, FogTileHillTopCm), FMath::Abs(BandAlongYCm - FogTileHillTopCm) <= FogFollowToleranceCm);
+	TestTrue(*FString::Printf(TEXT("Capture decodes the open floor (%.2f cm)"), OpenFloorCm), FMath::Abs(OpenFloorCm) <= FogFollowToleranceCm);
+
+	UMaterialInstanceDynamic* TileMID = FindLiveVolumeMID(*TileActor);
+	if (TestNotNull(TEXT("FogTileSim keeps its live volume material"), TileMID))
+	{
+		const FScalarParameterValue* FollowValue = FindScalarOverride(*TileMID, FogTerrainFollowParameterName);
+		TestTrue(TEXT("FogTileSim live volume material sets FogTerrainFollow to 1"), FollowValue && FMath::IsNearlyEqual(FollowValue->ParameterValue, 1.0f));
+	}
 	return true;
 }
 

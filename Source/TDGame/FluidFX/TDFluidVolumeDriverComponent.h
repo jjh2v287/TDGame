@@ -77,6 +77,7 @@ public:
 	static bool ShouldRecaptureHeight(const FVector2D& Center, const FVector2D& LastCenter, float CellCm, int32 Cells, bool bForced);
 	static bool IsDriverNeeded(const FTDFluidVolumeDriverSettings& Driver, const FTDFluidTerrainHeightSettings& Terrain, const UTDFluidPresetAsset* Preset);
 	static bool IsFogFloorFollowActive(const FTDFluidVolumeDriverSettings& Driver, const FTDFluidTerrainHeightSettings& Terrain, bool bHasHeightTexture, bool bIsWorldFacing);
+	static float GetHeightCaptureCoverMultiplier(bool bFogFloorFollowsTerrain, bool bIsAreaWrapped, float VolumeSizeMultiplier);
 	static bool IsLandscapeSurfaceComponent(const UPrimitiveComponent& Component);
 	static bool ShouldRenderHeightCaptureInMainRenderer(ETDFluidHeightCaptureContent Content, bool bHasGameViewport);
 	static bool IsVolumeDomainMaterial(const UMaterialInterface* Material);

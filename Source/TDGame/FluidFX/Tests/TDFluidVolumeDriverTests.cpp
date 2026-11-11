@@ -163,6 +163,36 @@ bool FTDFluidVolumeDriverHeightCaptureRendererTest::RunTest(const FString& Param
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidVolumeDriverHeightCaptureCoverMultiplierTest,
+	"TDGame.FluidFX.VolumeDriver.HeightCaptureCoverMultiplier",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidVolumeDriverHeightCaptureCoverMultiplierTest::RunTest(const FString& Parameters)
+{
+	struct FCoverCase
+	{
+		bool bFollows;
+		bool bWraps;
+		float SizeMultiplier;
+		float Expected;
+	};
+	const FCoverCase Cases[] = {
+		{ false, false, 3.0f, 1.0f },
+		{ true, false, 3.0f, 1.0f },
+		{ false, true, 3.0f, 1.0f },
+		{ true, true, 3.0f, 3.0f * UE_SQRT_2 },
+		{ true, true, 0.5f, UE_SQRT_2 },
+		{ true, true, 1.0f, UE_SQRT_2 },
+	};
+	for (const FCoverCase& Case : Cases)
+	{
+		const float Actual = UTDFluidVolumeDriverComponent::GetHeightCaptureCoverMultiplier(Case.bFollows, Case.bWraps, Case.SizeMultiplier);
+		TestTrue(*FString::Printf(TEXT("Cover multiplier for follow %d wrap %d box %.2f is %.4f (got %.4f)"), Case.bFollows ? 1 : 0, Case.bWraps ? 1 : 0, Case.SizeMultiplier, Case.Expected, Actual), FMath::IsNearlyEqual(Actual, Case.Expected, 1.0e-4f));
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTDFluidVolumeDriverSlotResolveAndNeedTest,
 	"TDGame.FluidFX.VolumeDriver.SlotResolveAndNeed",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

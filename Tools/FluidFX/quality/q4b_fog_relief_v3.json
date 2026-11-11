@@ -1,0 +1,566 @@
+{
+  "note": "Q4-1b spec-q41b-v2 5.2 / prereg-v3 relief: q4_fog_relief.json 10 variants with the same poses and roles + relief_side_terrain_mask (side pose, hides TDGen_FogRelief and every untagged zone 9 object: ReliefOverhangPlate, ReliefOverhangPillar0, ReliefOverhangPillar1). Every other variant sets those three to hidden=false explicitly; TDGen_FogReliefTile is asleep everywhere. off = Saved/AgentOps/20261110/fog-terrain/q41b/tuning/mist_off (Kinds.FogMist.TDFluidVolumeDriverSettings.bFogFloorFollowsTerrain=false), allgeom = Saved/AgentOps/20261110/fog-terrain/q41b/tuning/mist_allgeom (Kinds.FogMist.TDFluidTerrainHeightSettings.SceneCaptureContent=AllGeometry), both made from the changed canonical with fluid_tuning_patch. Fixed game time 8 s after reinit (L-editor-46), EV 0 bias, grid 8/128 and r.TDFogScattering 1 pinned. Run: python -B Tools/FluidFX/pie_lookdev_hires.py --shot-size 1920x1080 --variants Tools/FluidFX/quality/q4b_fog_relief_v3.json --fresh-pie --stop-pie --level /Game/FluidFX/Maps/LV_TDFluidFogStage --output-dir Saved/AgentOps/20261110/fog-terrain/q41b/relief-v3 Judge: python -B Tools/FluidFX/measure_fog_terrain_follow_v3.py judge-relief --shots Saved/AgentOps/20261110/fog-terrain/q41b/relief-v3 --prereg Saved/AgentOps/20261110/fog-terrain/q41b/prereg-v3.json --output Saved/AgentOps/20261110/fog-terrain/q41b/relief/verdict.json, after prereg_lock.py verify --lock Saved/AgentOps/20261110/fog-terrain/q41b/prereg-lock-v3.json.",
+  "base": {
+    "awake": {
+      "TDGen_FogRoom": false,
+      "TDGen_FogTrail": false,
+      "TDGen_FogCharacter": false,
+      "TDGen_FogAmbient": false,
+      "TDGen_FogCut": false,
+      "TDGen_FogStir": false,
+      "TDGen_FogTileSync": false,
+      "TDGen_FogRelief": false,
+      "TDGen_FogReliefTile": false
+    },
+    "pawn": [
+      9300.0,
+      53400.0
+    ],
+    "arm": 800.0,
+    "view": [
+      -8.0,
+      90.0
+    ],
+    "hide_components": {
+      "pawn": [
+        "Mesh"
+      ]
+    },
+    "console": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 1"
+    ],
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "relief_side_hidden",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": true,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          53400.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_side_hidden"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_side_terrain_mask",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": true,
+          "TDGen_ReliefOverhangPlate": true,
+          "TDGen_ReliefOverhangPillar0": true,
+          "TDGen_ReliefOverhangPillar1": true
+        },
+        "pawn": [
+          9300.0,
+          53400.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_side_terrain_mask"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_side_off",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/q41b/tuning/mist_off/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": false,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          53400.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_side_off"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_side_on",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": false,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          53400.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_side_on"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_side_on_repeat",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": false,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          53400.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_side_on_repeat"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_gamecam_off",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/q41b/tuning/mist_off/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": false,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          53400.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -45.0,
+          90.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_gamecam_off"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_gamecam_on",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": false,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          53400.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -45.0,
+          90.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_gamecam_on"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_overhang_hidden",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": true,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          56300.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -4.0,
+          180.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_overhang_hidden"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_overhang_off",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/q41b/tuning/mist_off/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": false,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          56300.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -4.0,
+          180.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_overhang_off"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_overhang_on",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": false,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          56300.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -4.0,
+          180.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_overhang_on"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "relief_overhang_allgeom",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/q41b/tuning/mist_allgeom/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": true,
+          "TDGen_FogReliefTile": false
+        },
+        "hide": {
+          "TDGen_FogRelief": false,
+          "TDGen_ReliefOverhangPlate": false,
+          "TDGen_ReliefOverhangPillar0": false,
+          "TDGen_ReliefOverhangPillar1": false
+        },
+        "pawn": [
+          9300.0,
+          56300.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -4.0,
+          180.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "relief_overhang_allgeom"
+        }
+      },
+      "settle": 8.0
+    }
+  ]
+}

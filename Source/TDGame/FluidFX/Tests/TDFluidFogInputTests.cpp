@@ -11,6 +11,7 @@
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidVolumeDriverComponent.h"
 #include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "GameFramework/PlayerController.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -300,20 +301,45 @@ bool FTDFluidFogInputKindsDataContractTest::RunTest(const FString& Parameters)
 		TestFalse(*(UEnum::GetValueAsString(Kind) + TEXT(" is not a fire family kind")), UTDFluidPresetAsset::IsFireFamilyPresetKind(Kind));
 	}
 
+	constexpr double MaximumCaptureTexelCm = 32.0;
 	for (const ETDFluidPresetKind Kind : FogKinds)
 	{
 		const FString KindName = UEnum::GetValueAsString(Kind);
-		const bool bIsFogMist = Kind == ETDFluidPresetKind::FogMist;
+		const bool bIsFogTileSim = Kind == ETDFluidPresetKind::FogTileSim;
 		const FTDFluidVolumeDriverSettings FogDriver = UTDFluidPresetAsset::BuildVolumeDriverForPresetKind(Kind);
-		TestEqual(*(KindName + TEXT(" lets the fog floor follow the terrain only for FogMist")), FogDriver.bFogFloorFollowsTerrain, bIsFogMist);
-		if (!bIsFogMist)
+		const FTDFluidTerrainHeightSettings FogTerrain = UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(Kind);
+		TestEqual(*(KindName + TEXT(" lets the fog floor follow the terrain unless it is FogTileSim, whose on-screen tile verdict has not passed")), FogDriver.bFogFloorFollowsTerrain, !bIsFogTileSim);
+		if (!FogDriver.bFogFloorFollowsTerrain)
 		{
+			TestTrue(*(KindName + TEXT(" reads no floor height while it does not follow the terrain")), FogTerrain.VolumeHeightSource == ETDFluidVolumeHeightSource::None);
 			continue;
 		}
-		const FTDFluidTerrainHeightSettings FogTerrain = UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(Kind);
 		TestTrue(*(KindName + TEXT(" reads the floor height from the scene capture")), FogTerrain.VolumeHeightSource == ETDFluidVolumeHeightSource::SceneCapture);
 		TestTrue(*(KindName + TEXT(" captures terrain only")), FogTerrain.SceneCaptureContent == ETDFluidHeightCaptureContent::TerrainOnly);
+		TestEqual(*(KindName + TEXT(" captures from 2000 cm above its owner")), FogTerrain.SceneCaptureHeightAboveCm, 2000.0f);
+
+		const FTDFluidSimulationConfig FogConfig = UTDFluidPresetAsset::BuildConfigForPresetKind(Kind);
+		const FTDFluidVolumeRenderSettings FogRender = UTDFluidPresetAsset::BuildVolumeRenderForPresetKind(Kind);
+		const bool bIsWrapped = FogConfig.AreaAddressMode == ETDFluidAreaAddressMode::Wrap;
+		const double MaximumExtentCm = FMath::Max(FogConfig.SimExtentCm.X, FogConfig.SimExtentCm.Y);
+		const double CoverMultiplier = UTDFluidVolumeDriverComponent::GetHeightCaptureCoverMultiplier(true, bIsWrapped, FogRender.VolumeSizeMultiplier);
+		const double CaptureWidthCm = MaximumExtentCm * CoverMultiplier * (1.0 + 2.0 * FogTerrain.SceneCaptureMarginRatio);
+		const double CaptureTexelCm = CaptureWidthCm / FMath::Max(FogTerrain.SceneCaptureResolution, 1);
+		TestTrue(*FString::Printf(TEXT("%s capture texel %.2f cm stays within %.0f cm"), *KindName, CaptureTexelCm, MaximumCaptureTexelCm), CaptureTexelCm <= MaximumCaptureTexelCm);
+		if (bIsWrapped)
+		{
+			TestTrue(*(KindName + TEXT(" keeps its wrapped fog box centred on the capture")), FMath::IsNearlyZero(FogRender.VolumePositionOffsetCm.X) && FMath::IsNearlyZero(FogRender.VolumePositionOffsetCm.Y));
+			continue;
+		}
+		const double RecaptureDistanceCm = FogTerrain.SceneCaptureRecaptureCells * FogConfig.SimExtentCm.X / FMath::Max(FogConfig.GridResolution, 1);
+		const double CaptureMarginCm = FogTerrain.SceneCaptureMarginRatio * MaximumExtentCm;
+		TestTrue(*FString::Printf(TEXT("%s recaptures after %.1f cm, within the %.1f cm capture margin"), *KindName, RecaptureDistanceCm, CaptureMarginCm), RecaptureDistanceCm <= CaptureMarginCm);
 	}
+
+	const FTDFluidVolumeDriverSettings SmokeDriver = UTDFluidPresetAsset::BuildVolumeDriverForPresetKind(ETDFluidPresetKind::Smoke);
+	const FTDFluidTerrainHeightSettings SmokeTerrain = UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(ETDFluidPresetKind::Smoke);
+	TestFalse(TEXT("Smoke keeps its placed floor instead of following the terrain"), SmokeDriver.bFogFloorFollowsTerrain);
+	TestTrue(TEXT("Smoke reads no floor height and so builds no driver"), SmokeTerrain.VolumeHeightSource == ETDFluidVolumeHeightSource::None);
 
 	const ETDFluidPresetKind UnchangedKinds[] = { ETDFluidPresetKind::Smoke, ETDFluidPresetKind::Water, ETDFluidPresetKind::Torch, ETDFluidPresetKind::TileWaves, ETDFluidPresetKind::FogMist, ETDFluidPresetKind::FogTileSim };
 	for (const ETDFluidPresetKind Kind : UnchangedKinds)

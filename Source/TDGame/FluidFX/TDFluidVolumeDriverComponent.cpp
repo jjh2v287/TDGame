@@ -179,6 +179,15 @@ bool UTDFluidVolumeDriverComponent::IsFogFloorFollowActive(const FTDFluidVolumeD
 	return bHasHeightTexture && bIsWorldFacing;
 }
 
+float UTDFluidVolumeDriverComponent::GetHeightCaptureCoverMultiplier(bool bFogFloorFollowsTerrain, bool bIsAreaWrapped, float VolumeSizeMultiplier)
+{
+	if (!bFogFloorFollowsTerrain || !bIsAreaWrapped)
+	{
+		return 1.0f;
+	}
+	return FMath::Max(VolumeSizeMultiplier, 1.0f) * UE_SQRT_2;
+}
+
 bool UTDFluidVolumeDriverComponent::IsLandscapeSurfaceComponent(const UPrimitiveComponent& Component)
 {
 	return Component.IsA<ULandscapeComponent>() || Component.IsA<ULandscapeNaniteComponent>();
@@ -743,7 +752,8 @@ void UTDFluidVolumeDriverComponent::UpdateSceneCapture(const UTDFluidLiveCompone
 	const AActor* Owner = GetOwner();
 	const double OwnerZ = Owner ? Owner->GetActorLocation().Z : 0.0;
 	const double CaptureZ = OwnerZ + TerrainHeightSettings.SceneCaptureHeightAboveCm;
-	const double WidthCm = FMath::Max(ExtentCm.X, ExtentCm.Y) * (1.0 + 2.0 * TerrainHeightSettings.SceneCaptureMarginRatio);
+	const float CoverMultiplier = GetHeightCaptureCoverMultiplier(DriverSettings.bFogFloorFollowsTerrain, LiveComponent.IsAreaWrapped(), LiveComponent.GetVolumeRenderSettings().VolumeSizeMultiplier);
+	const double WidthCm = FMath::Max(ExtentCm.X, ExtentCm.Y) * CoverMultiplier * (1.0 + 2.0 * TerrainHeightSettings.SceneCaptureMarginRatio);
 	HeightCapture->OrthoWidth = static_cast<float>(WidthCm);
 	HeightCapture->SetWorldLocationAndRotation(FVector(CenterCm.X, CenterCm.Y, CaptureZ), FRotator(-90.0, -90.0, 0.0));
 	ApplyHeightCaptureContent();

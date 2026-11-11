@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-11 14:39 claude
+갱신: 2026-11-11 16:16 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -11,7 +11,7 @@
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴
 - M3-25·26 done(26 PIE 육안 대기)
-- FluidFX: 지형 안개 FogMist·FogMistStir 켬·커밋. Tile 보류(v3b), SMOKE 끔
+- FluidFX: 지형 안개 FogMist·Stir·Tile 켬·커밋, SMOKE 끔
 
 ## ② 막힘·결정 대기
 
@@ -35,6 +35,6 @@
 
 ## ③ 다음 행동
 
-1. FluidFX: Tile v3b·Stir 언덕 촬영 → 물 반박·역광(q1/PAUSE.md) → Q2.
+1. FluidFX: Stir 언덕 촬영 → 물 반박·역광(q1/PAUSE.md) → Q2.
 2. LV_TDBossArena 손 조작 → MD-59·62·49 결정. MD-47·48, P3-16 조명 → P3-14·P1-11.
 3. GQ 결정 → GP-01 → GP-02·03·11 + FL-01 업화의 눈.

@@ -1648,6 +1648,16 @@
       },
       "TDFluidVolumeRenderSettings": {
         "VolumeSizeMultiplier": 3.0
+      },
+      "TDFluidTerrainHeightSettings": {
+        "VolumeHeightSource": "SceneCapture",
+        "SceneCaptureContent": "TerrainOnly",
+        "SceneCaptureHeightAboveCm": 2000.0,
+        "SceneCaptureRecaptureCells": 16,
+        "SceneCaptureResolution": 512
+      },
+      "TDFluidVolumeDriverSettings": {
+        "bFogFloorFollowsTerrain": true
       }
     },
     "SnowTrack": {

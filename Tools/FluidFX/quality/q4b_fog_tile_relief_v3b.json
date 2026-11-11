@@ -1,0 +1,585 @@
+{
+  "note": "Q4-1b tile v3b (spec Saved/AgentOps/20261110/fog-terrain/tile-v3b/spec-v3b.md, prereg prereg-v3b.json): zone 10 ReliefTile, same pose as v3 (pawn (10600, 71000), arm 800, side view (-8, 90), gamecam (-45, 90)). regions_hidden = exact v3 condition (EV100 0, one frame at 8 s) used only to find ridge, band and floor regions. Measurement variants use fixed manual exposure EV100 -5 (32x the v3 light) and 8 frames at game time 8..15 s after reinit, averaged by the judge. on = tile_on copy (canonical + FogTileSim terrain capture keys + bFogFloorFollowsTerrain=true), off = tile_off copy (same, follow=false, equal to the v3 off copy), canonical = current canonical (follow off, no capture keys), hidden = TDGen_FogReliefTile hidden. Every variant: tuning_reload reset reinit, schedule only (no settle judging, L-editor-46), only TDGen_FogReliefTile awake, grid 8/128 and r.TDFogScattering 1 pinned, pawn mesh hidden. Run (PowerShell): python -B Tools/FluidFX/pie_lookdev_hires.py --shot-size 1920x1080 --variants Tools/FluidFX/quality/q4b_fog_tile_relief_v3b.json --fresh-pie --stop-pie --level /Game/FluidFX/Maps/LV_TDFluidFogStage --output-dir Saved/AgentOps/20261110/fog-terrain/tile-v3b/shots Judge: python -B Tools/FluidFX/measure_fog_tile_follow_v3b.py judge --shots Saved/AgentOps/20261110/fog-terrain/tile-v3b/shots --prereg Saved/AgentOps/20261110/fog-terrain/tile-v3b/prereg-v3b.json --output Saved/AgentOps/20261110/fog-terrain/tile-v3b/verdict.json --overlay Saved/AgentOps/20261110/fog-terrain/tile-v3b/overlay.png r2 (v3b refute must 1): every variant reads back TDGen_FogReliefTile's effective bFogFloorFollowsTerrain (volume driver getter) and VolumeHeightSource (live actor getter, same BuildTerrainHeightForPresetKind result the driver copies) right after the tuning reload and reinit; the judge reads <shots>/result.json and returns invalid on any key error, tuning_reload error, wrong copy, missing reinit/state reset or read-back mismatch.",
+  "base": {
+    "awake": {
+      "TDGen_FogRoom": false,
+      "TDGen_FogTrail": false,
+      "TDGen_FogCharacter": false,
+      "TDGen_FogAmbient": false,
+      "TDGen_FogCut": false,
+      "TDGen_FogStir": false,
+      "TDGen_FogTileSync": false,
+      "TDGen_FogRelief": false,
+      "TDGen_FogReliefTile": false
+    },
+    "pawn": [
+      10600.0,
+      71000.0
+    ],
+    "arm": 800.0,
+    "view": [
+      -8.0,
+      90.0
+    ],
+    "hide_components": {
+      "pawn": [
+        "Mesh"
+      ]
+    },
+    "console": [
+      "r.VolumetricFog.GridPixelSize 8",
+      "r.VolumetricFog.GridSizeZ 128",
+      "r.TDFogScattering 1"
+    ],
+    "time_dilation": 1.0
+  },
+  "variants": [
+    {
+      "name": "tile3b_regions_hidden",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidVolumeDriverSettings",
+              "field": "bFogFloorFollowsTerrain",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "volume_driver",
+              "access": "call:get_effective_volume_driver_settings"
+            },
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "VolumeHeightSource",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": true
+        },
+        "hide": {
+          "TDGen_FogReliefTile": true
+        },
+        "pawn": [
+          10600.0,
+          71000.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": 0.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "tile3b_regions_hidden"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "tile3b_side_hidden",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidVolumeDriverSettings",
+              "field": "bFogFloorFollowsTerrain",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "volume_driver",
+              "access": "call:get_effective_volume_driver_settings"
+            },
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "VolumeHeightSource",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": true
+        },
+        "hide": {
+          "TDGen_FogReliefTile": true
+        },
+        "pawn": [
+          10600.0,
+          71000.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": -5.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0,
+            13.0,
+            14.0,
+            15.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "tile3b_side_hidden"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "tile3b_side_off",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/tile-v3b/tuning/tile_off/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidVolumeDriverSettings",
+              "field": "bFogFloorFollowsTerrain",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "volume_driver",
+              "access": "call:get_effective_volume_driver_settings"
+            },
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "VolumeHeightSource",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": true
+        },
+        "hide": {
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          10600.0,
+          71000.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": -5.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0,
+            13.0,
+            14.0,
+            15.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "tile3b_side_off"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "tile3b_side_on",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/tile-v3b/tuning/tile_on/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidVolumeDriverSettings",
+              "field": "bFogFloorFollowsTerrain",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "volume_driver",
+              "access": "call:get_effective_volume_driver_settings"
+            },
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "VolumeHeightSource",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": true
+        },
+        "hide": {
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          10600.0,
+          71000.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": -5.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0,
+            13.0,
+            14.0,
+            15.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "tile3b_side_on"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "tile3b_side_canonical",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidVolumeDriverSettings",
+              "field": "bFogFloorFollowsTerrain",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "volume_driver",
+              "access": "call:get_effective_volume_driver_settings"
+            },
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "VolumeHeightSource",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": true
+        },
+        "hide": {
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          10600.0,
+          71000.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": -5.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0,
+            13.0,
+            14.0,
+            15.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "tile3b_side_canonical"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "tile3b_side_on_repeat",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/tile-v3b/tuning/tile_on/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidVolumeDriverSettings",
+              "field": "bFogFloorFollowsTerrain",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "volume_driver",
+              "access": "call:get_effective_volume_driver_settings"
+            },
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "VolumeHeightSource",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": true
+        },
+        "hide": {
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          10600.0,
+          71000.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -8.0,
+          90.0
+        ],
+        "exposure_ev100": -5.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0,
+            13.0,
+            14.0,
+            15.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "tile3b_side_on_repeat"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "tile3b_gamecam_off",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/tile-v3b/tuning/tile_off/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidVolumeDriverSettings",
+              "field": "bFogFloorFollowsTerrain",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "volume_driver",
+              "access": "call:get_effective_volume_driver_settings"
+            },
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "VolumeHeightSource",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": true
+        },
+        "hide": {
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          10600.0,
+          71000.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -45.0,
+          90.0
+        ],
+        "exposure_ev100": -5.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "tile3b_gamecam_off"
+        }
+      },
+      "settle": 8.0
+    },
+    {
+      "name": "tile3b_gamecam_on",
+      "apply": {
+        "tuning_reload": {
+          "tuning": "Saved/AgentOps/20261110/fog-terrain/tile-v3b/tuning/tile_on/TDFluidPresetTuning.json",
+          "look": "",
+          "reset": "reinit",
+          "read_back": [
+            {
+              "struct": "TDFluidVolumeDriverSettings",
+              "field": "bFogFloorFollowsTerrain",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "volume_driver",
+              "access": "call:get_effective_volume_driver_settings"
+            },
+            {
+              "struct": "TDFluidTerrainHeightSettings",
+              "field": "VolumeHeightSource",
+              "kinds": [
+                "FogTileSim"
+              ],
+              "owner": "actor",
+              "access": "call:get_effective_terrain_height_settings"
+            }
+          ]
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false,
+          "TDGen_FogReliefTile": true
+        },
+        "hide": {
+          "TDGen_FogReliefTile": false
+        },
+        "pawn": [
+          10600.0,
+          71000.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -45.0,
+          90.0
+        ],
+        "exposure_ev100": -5.0,
+        "exposure_manual": "bias",
+        "schedule": {
+          "times": [
+            8.0
+          ],
+          "reference": "now",
+          "fixed_fps": 60,
+          "prefix": "tile3b_gamecam_on"
+        }
+      },
+      "settle": 8.0
+    }
+  ]
+}

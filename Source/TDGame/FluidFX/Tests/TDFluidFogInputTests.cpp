@@ -305,10 +305,9 @@ bool FTDFluidFogInputKindsDataContractTest::RunTest(const FString& Parameters)
 	for (const ETDFluidPresetKind Kind : FogKinds)
 	{
 		const FString KindName = UEnum::GetValueAsString(Kind);
-		const bool bIsFogTileSim = Kind == ETDFluidPresetKind::FogTileSim;
 		const FTDFluidVolumeDriverSettings FogDriver = UTDFluidPresetAsset::BuildVolumeDriverForPresetKind(Kind);
 		const FTDFluidTerrainHeightSettings FogTerrain = UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(Kind);
-		TestEqual(*(KindName + TEXT(" lets the fog floor follow the terrain unless it is FogTileSim, whose on-screen tile verdict has not passed")), FogDriver.bFogFloorFollowsTerrain, !bIsFogTileSim);
+		TestTrue(*(KindName + TEXT(" lets the fog floor follow the terrain")), FogDriver.bFogFloorFollowsTerrain);
 		if (!FogDriver.bFogFloorFollowsTerrain)
 		{
 			TestTrue(*(KindName + TEXT(" reads no floor height while it does not follow the terrain")), FogTerrain.VolumeHeightSource == ETDFluidVolumeHeightSource::None);

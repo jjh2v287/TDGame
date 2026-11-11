@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(numpy) 와 Windows Kits dxc.exe(ps_6_0), 에디터 불필요
 실행 명령: python Tools/FluidFX/check_fluid_fog_hlsl.py [--root 프로젝트경로] [--dxc dxc경로] [--look-fragment 조각.json] [--output 요약.json] [--dxc-baseline 이전_요약.json]
-출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(dxc 명령·표본 수, 감싸기 명령 증가 wrap_instruction_delta, 결정론 시험 sha256 = D1~D4 mirror_sha256·D5 wrap_mirror_sha256), 하나라도 실패하면 종료 코드 1
-상태: 미검증(2026-10-25 FX-10r 작성). TDFluidFogVolume.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점·이름 계약(MI 덮어쓰기에 C++ 구동·조건부 이름 없음, 정본에 아직 없으면 --look-fragment 로 조각을 더해 본다)·dxc ps_6_0 O3/Od 와 역할(정적·구동)×모양(0·1·2) 상수 접기 순열 컴파일을 보고, numpy 거울 시험 D1 창 분할·D2 돌출과 바닥(상자 아래면 = z0, 반 크기 ObjectBounds)·D3 보완 페이드·D4 UV 를 두 번 돌려 sha256 이 같은지 본다. 2026-10-26 FX-10c: 접기 순열에 SimAreaWrapped 0/1 을 더하고 D5(감싸기 주기 E 반복은 시뮬 탭에만·창 가중 1·물 TileMap 원점과 frac 동기·정적 역할 무시)와 D6(감싸기 0 접기 순열의 dxc 명령·표본 수 = 파동 1 기준, 기준은 내장값 dxc 10.0.19041 또는 --dxc-baseline 이전 요약)을 본다.
+출력: 항목별 PASS/FAIL 줄과 마지막 줄 JSON 요약(dxc 명령·표본 수, 감싸기 명령 증가 wrap_instruction_delta, 결정론 시험 sha256 = D1~D4 mirror_sha256·D5 wrap_mirror_sha256·D7 follow_mirror_sha256, 따라가기 비용 follow_runtime_dxc{samples, instructions, limit, vs_baseline, follow_off_instructions, vs_follow_off}·follow_instruction_delta), 하나라도 실패하면 종료 코드 1
+상태: 미검증(2026-10-25 FX-10r 작성). TDFluidFogVolume.hlsl 을 재질 스크립트와 같은 조립 함수로 조립해 텍스트·식 고정점·이름 계약(MI 덮어쓰기에 C++ 구동·조건부 이름 없음, 정본에 아직 없으면 --look-fragment 로 조각을 더해 본다)·dxc ps_6_0 O3/Od 와 역할(정적·구동)×모양(0·1·2) 상수 접기 순열 컴파일을 보고, numpy 거울 시험 D1 창 분할·D2 돌출과 바닥(상자 아래면 = z0, 반 크기 ObjectBounds)·D3 보완 페이드·D4 UV 를 두 번 돌려 sha256 이 같은지 본다. 2026-10-26 FX-10c: 접기 순열에 SimAreaWrapped 0/1 을 더하고 D5(감싸기 주기 E 반복은 시뮬 탭에만·창 가중 1·물 TileMap 원점과 frac 동기·정적 역할 무시)와 D6(감싸기 0 접기 순열의 dxc 명령·표본 수 = 파동 1 기준, 기준은 내장값 dxc 10.0.19041 또는 --dxc-baseline 이전 요약)을 본다. 2026-11-11 Q4-1 2판: 고정점 7줄(fogTerrainKeep 선언·if 조건·자른 UV·유효·차단·바닥 선택·fogBase *= fogTerrainKeep), 접기 이름에 FogTerrainFollow(D6 순열은 0), D7 지형 따라가기 단면 거울(식 회귀 확인, 주 판정 근거 아님: z50-h 상수·미스/깊은 구덩이/창 밖 = 끔 식·평지 차 0·판 아래 기둥 0), D8 FogTerrainFollow 1 접기(역할 2 × 모양 0, 구동 표본 3·정적은 끔과 같은 명령·표본, 같은 역할 끔 접기 대비 명령 증가 <= 40), D8b 접지 않은 O3(실제 재질 형태) 명령 <= 311+45(사전 등록). 첫 실행(2026-11-11): D8b 377 > 356 으로 실패. 2026-11-11 검토 반영: D8 을 접힌 순열의 증가량으로 고침(311 기준은 접힌 순열에 무의미), 셰이더를 같은 뜻으로 줄임(유효 bool·자른 UV 같음 비교·평면 바닥 재사용) O3 377→369·접힌 증가 59→51, 상한 356·40 은 그대로라 D8·D8b 실패(부모 편차 결정 대기), 요약에 FogTerrainFollow 0 접기 O3(지금의 끔 기준). 2026-11-11 부모 결정(proposed): 356 은 낡은 기준이라 기능을 빼도 357 이므로 상한을 지금 값(접힌 증가 51·O3 369)으로 두어 회귀만 막고, 비용 판정은 사전 등록 GPU 시간 C1 로 한다.
 """
 import argparse
 import glob
@@ -39,9 +39,16 @@ REQUIRED_ANCHORS = (
     "1.0 - smoothstep(fogTopCm - max(FogTopFadeCm, 1.0), fogTopCm, fogHeightCm)",
     "(FogUsesWindowMask > 0.5 ? 1.0 - fogWindowWeight : 1.0)",
     "(FogCameraFadeInvert > 0.5 ? 1.0 - fogCameraRamp : fogCameraRamp)",
+    "float fogTerrainKeep = 1.0;",
+    "if (fogIsDriven > 0.5 && FogTerrainFollow > 0.5 && TerrainHeightDecode.z > 0.5)",
+    "float2 fogTerrainClampedUv = saturate(fogTerrainUv);",
+    "bool fogTerrainValid = all(fogTerrainUv == fogTerrainClampedUv) && fogTerrainCm >= fogFloorCm - max(FogTerrainMaxDropCm, 0.0);",
+    "fogTerrainKeep = (fogTerrainValid && FogWorldPosition.z < fogTerrainCm - max(FogTerrainBelowCutCm, 0.0)) ? 0.0 : 1.0;",
+    "fogFloorCm = fogTerrainValid ? fogTerrainCm : fogFloorCm;",
+    "fogBase *= fogTerrainKeep;",
 )
 FORBIDDEN_TOKENS = ("FogObjectBoundsCm.z * 0.5", "FogObjectBoundsCm.z / 2", "0.5 * FogObjectBoundsCm", "DensityScale", "SoftFalloffCm", "VolumeHeightCm")
-FOLD_NAMES = ("SimGridResolution", "FogShape", "SimAreaWrapped")
+FOLD_NAMES = ("SimGridResolution", "FogShape", "SimAreaWrapped", "FogTerrainFollow")
 ROLE_FOLDS = ((0.0, "static"), (256.0, "driven"))
 SHAPE_FOLDS = (0.0, 1.0, 2.0)
 WRAP_OFF_DXC_BASELINE = {
@@ -53,6 +60,25 @@ WRAP_OFF_DXC_BASELINE = {
     "driven_shape2": {"samples": 2, "instructions": 161},
 }
 WRAP_OFF_DXC_BASELINE_O3_INSTRUCTIONS = 311
+FOLLOW_FOLDED_INSTRUCTION_DELTA_LIMIT = 51
+FOLLOW_RUNTIME_O3_INSTRUCTION_LIMIT = WRAP_OFF_DXC_BASELINE_O3_INSTRUCTIONS + 58
+FOLLOW_SAMPLES_BY_ROLE = {"static": 2, "driven": 3}
+TERRAIN_TEXTURE_DECLARATIONS = ["Texture2D TerrainHeightTexture;", "SamplerState TerrainHeightTextureSampler;"]
+FOLLOW_MIRROR_SOURCE = 0.8
+FOLLOW_MIRROR_EXTRUDE_CM = 60.0
+FOLLOW_MIRROR_TOP_FADE_CM = 40.0
+FOLLOW_MIRROR_MAX_DROP_CM = 2000.0
+FOLLOW_MIRROR_BELOW_CUT_CM = 20.0
+FOLLOW_MIRROR_CAPTURE_Z_CM = 2000.0
+FOLLOW_MIRROR_MISS_DEPTH_CM = 1.0e9
+FOLLOW_MIRROR_WINDOW_HALF_CM = 1000.0
+FOLLOW_MIRROR_HILL_HEIGHT_CM = 400.0
+FOLLOW_MIRROR_HILL_RADIUS_CM = 800.0
+FOLLOW_MIRROR_PLATE_TOP_CM = 400.0
+FOLLOW_MIRROR_Z_RANGE_CM = (-100.0, 600.0)
+FOLLOW_MIRROR_Z_STEP_CM = 0.05
+FOLLOW_MIRROR_COLUMN_COUNT = 61
+FOLLOW_MIRROR_OFFSET_TOLERANCE_CM = 0.5
 UV_GRID_RESOLUTION = 256
 SPLIT_GRID_SIZE = 257
 WRAP_TEXTURE_RESOLUTION = 256
@@ -83,9 +109,10 @@ def normalize(text):
 
 def declare_inputs(material, folded):
     vector_names = set(material.VECTOR_INPUT_NAMES)
-    lines = ["Texture2D DensityPressureTexture;", "SamplerState DensityPressureTextureSampler;", "Texture3D NoiseVolumeTexture;", "SamplerState NoiseVolumeTextureSampler;"]
+    float4_names = set(getattr(material, "FLOAT4_VECTOR_NAMES", ()))
+    lines = ["Texture2D DensityPressureTexture;", "SamplerState DensityPressureTextureSampler;", "Texture3D NoiseVolumeTexture;", "SamplerState NoiseVolumeTextureSampler;"] + TERRAIN_TEXTURE_DECLARATIONS
     constants = "".join(f"static const float {name} = {value};\n" for name, value in folded.items())
-    scalars = [f"{'float3' if name in vector_names else 'float'} {name};" for name in material.CUSTOM_INPUT_NAMES if name not in material.TEXTURE_PARAMETER_NAMES and name not in folded]
+    scalars = [f"{'float4' if name in float4_names else ('float3' if name in vector_names else 'float')} {name};" for name in material.CUSTOM_INPUT_NAMES if name not in material.TEXTURE_PARAMETER_NAMES and name not in folded]
     return "\n".join(lines) + "\n" + constants + "cbuffer Inputs {\n" + "\n".join(scalars) + "\n}\n"
 
 
@@ -140,6 +167,20 @@ def camera_fade(distance_cm, start_cm, length_cm, invert):
 
 def floor_height(is_driven, object_position_z, object_bounds_half_z, sim_center_z):
     return sim_center_z if is_driven else object_position_z - object_bounds_half_z
+
+
+def terrain_follow_floor(flat_floor_cm, terrain_cm, is_inside, sim_center_z, max_drop_cm, follows):
+    is_valid = np.logical_and(np.logical_and(bool(follows), is_inside), terrain_cm >= sim_center_z - max(max_drop_cm, 0.0))
+    return np.where(is_valid, terrain_cm, flat_floor_cm), is_valid
+
+
+def terrain_keep(is_valid, terrain_cm, z_cm, below_cut_cm):
+    return np.where(is_valid, (z_cm >= terrain_cm - max(below_cut_cm, 0.0)).astype(np.float64), 1.0)
+
+
+def follow_density(source, z_cm, floor_cm, keep):
+    profile = layer_profile(np.full(np.broadcast(z_cm, floor_cm).shape, source), z_cm - floor_cm, FOLLOW_MIRROR_EXTRUDE_CM, 1.0, FOLLOW_MIRROR_TOP_FADE_CM)
+    return np.clip(source * profile, 0.0, 1.0) * keep
 
 
 def test_window_split():
@@ -205,6 +246,58 @@ def test_window_uv():
     formula_error = float(np.abs(cpp_uv - cell_uv).max() * UV_GRID_RESOLUTION)
     passed = corner_error <= 1e-6 and round_error <= 1e-4 and formula_error <= 1.0
     return passed, f"모서리 {corner_error:.2e}, 칸 왕복 {round_error:.2e}칸, C++ 식 대비 {formula_error:.2e}칸", round_trip
+
+
+def follow_column_densities(terrain_cm, is_inside, z_cm, follows, applies_keep=True):
+    floor, is_valid = terrain_follow_floor(0.0, terrain_cm, is_inside, 0.0, FOLLOW_MIRROR_MAX_DROP_CM, follows)
+    keep = terrain_keep(is_valid, terrain_cm, z_cm, FOLLOW_MIRROR_BELOW_CUT_CM) if applies_keep else 1.0
+    return follow_density(FOLLOW_MIRROR_SOURCE, z_cm, floor, keep), floor, is_valid
+
+
+def test_terrain_follow_cross_section():
+    columns = np.linspace(-1.2 * FOLLOW_MIRROR_WINDOW_HALF_CM, 1.2 * FOLLOW_MIRROR_WINDOW_HALF_CM, FOLLOW_MIRROR_COLUMN_COUNT)[:, None]
+    is_inside = np.abs(columns) <= FOLLOW_MIRROR_WINDOW_HALF_CM
+    z = np.arange(FOLLOW_MIRROR_Z_RANGE_CM[0], FOLLOW_MIRROR_Z_RANGE_CM[1], FOLLOW_MIRROR_Z_STEP_CM)[None, :]
+    hill = FOLLOW_MIRROR_HILL_HEIGHT_CM * np.clip(1.0 - np.abs(columns) / FOLLOW_MIRROR_HILL_RADIUS_CM, 0.0, 1.0)
+    flat = np.zeros_like(columns)
+
+    on, floor_on, valid_on = follow_column_densities(hill, is_inside, z, True)
+    off, _, _ = follow_column_densities(hill, is_inside, z, False)
+    crossing = (z >= floor_on) & (on <= 0.5 * FOLLOW_MIRROR_SOURCE)
+    z50 = z[0, np.argmax(crossing, axis=1)][:, None]
+    offsets = (z50 - hill)[valid_on]
+    offset_spread = float(offsets.max() - offsets.min())
+
+    flat_off, _, _ = follow_column_densities(flat, is_inside, z, False)
+    miss = np.full_like(columns, FOLLOW_MIRROR_CAPTURE_Z_CM - FOLLOW_MIRROR_MISS_DEPTH_CM)
+    deep = np.full_like(columns, -FOLLOW_MIRROR_MAX_DROP_CM - 500.0)
+    miss_on, _, miss_valid = follow_column_densities(miss, is_inside, z, True)
+    deep_on, _, deep_valid = follow_column_densities(deep, is_inside, z, True)
+    fallback_exact = bool(np.array_equal(miss_on, flat_off) and np.array_equal(deep_on, flat_off) and not miss_valid.any() and not deep_valid.any())
+
+    flat_on, _, _ = follow_column_densities(flat, is_inside, z, True)
+    visible = z[0] >= -FOLLOW_MIRROR_BELOW_CUT_CM
+    flat_difference = float(np.abs(flat_on - flat_off)[:, visible].max())
+
+    outside = ~is_inside[:, 0]
+    outside_exact = bool(np.array_equal(on[outside], off[outside]))
+
+    plate = np.array([[FOLLOW_MIRROR_PLATE_TOP_CM]])
+    plate_inside = np.array([[True]])
+    plate_density = follow_column_densities(plate, plate_inside, z, True)[0][0]
+    uncut_density = follow_column_densities(plate, plate_inside, z, True, applies_keep=False)[0][0]
+    cut_top = FOLLOW_MIRROR_PLATE_TOP_CM - FOLLOW_MIRROR_BELOW_CUT_CM
+    pillar_zone = (z[0] >= 0.0) & (z[0] < cut_top)
+    layer_zone = (z[0] >= cut_top) & (z[0] <= FOLLOW_MIRROR_PLATE_TOP_CM + FOLLOW_MIRROR_EXTRUDE_CM * FOLLOW_MIRROR_SOURCE - FOLLOW_MIRROR_TOP_FADE_CM)
+    above_zone = z[0] >= FOLLOW_MIRROR_PLATE_TOP_CM + FOLLOW_MIRROR_EXTRUDE_CM
+    no_pillar = float(plate_density[pillar_zone].max()) == 0.0
+    layer_present = float(plate_density[layer_zone].min()) > 0.0
+    nothing_above = float(plate_density[above_zone].max()) == 0.0
+    failure_reproduced = bool(np.all(uncut_density[pillar_zone] == FOLLOW_MIRROR_SOURCE))
+
+    passed = offset_spread <= FOLLOW_MIRROR_OFFSET_TOLERANCE_CM and fallback_exact and flat_difference == 0.0 and outside_exact and no_pillar and layer_present and nothing_above and failure_reproduced
+    detail = f"(a) z50-h 편차 {offset_spread:.3f} cm(평균 {float(offsets.mean()):.2f}), (b) 미스·깊은 구덩이 = 끔 식 {fallback_exact}, (c) 평지 켬-끔 최대 {flat_difference}, (d) 창 밖 = 끔 식 {outside_exact}, (e) 판 아래 z<{cut_top:.0f} 밀도 0 {no_pillar}·층 있음 {layer_present}·위 0 {nothing_above}·차단 없는 식 기둥 = 원천 {failure_reproduced}"
+    return passed, detail, np.concatenate([offsets, on[:, ::500].ravel(), plate_density[::100], uncut_density[::100]])
 
 
 def area_wrapped_flag(is_driven, sim_area_wrapped):
@@ -300,6 +393,7 @@ def run_mirror_tests(tests):
 
 BASE_MIRROR_TESTS = (("D1 창 분할", test_window_split), ("D2 돌출·바닥", test_extrude_and_floor), ("D3 보완 페이드", test_complementary_fade), ("D4 UV", test_window_uv))
 WRAP_MIRROR_TESTS = (("D5 감싸기 주기·물 TileMap 동기", test_wrap_period_and_sync),)
+FOLLOW_MIRROR_TESTS = (("D7 지형 따라가기 단면(식 회귀 거울)", test_terrain_follow_cross_section),)
 
 
 def build_fold_permutations():
@@ -307,9 +401,46 @@ def build_fold_permutations():
     for role_value, role_label in ROLE_FOLDS:
         for shape_value in SHAPE_FOLDS:
             label = f"{role_label}_shape{int(shape_value)}"
-            permutations[label] = dict(zip(FOLD_NAMES, (role_value, shape_value, 0.0)))
-            permutations[label + "_wrap"] = dict(zip(FOLD_NAMES, (role_value, shape_value, 1.0)))
+            permutations[label] = dict(zip(FOLD_NAMES, (role_value, shape_value, 0.0, 0.0)))
+            permutations[label + "_wrap"] = dict(zip(FOLD_NAMES, (role_value, shape_value, 1.0, 0.0)))
     return permutations
+
+
+def build_follow_permutations():
+    return {f"{role_label}_shape0_follow": dict(zip(FOLD_NAMES, (role_value, 0.0, 0.0, 1.0))) for role_value, role_label in ROLE_FOLDS}
+
+
+def find_follow_fold_problems(compiles):
+    problems = []
+    for _, role_label in ROLE_FOLDS:
+        label = f"{role_label}_shape0_follow"
+        outcome = compiles.get(label)
+        if outcome is None:
+            problems.append(f"{label}: 컴파일 결과 없음")
+            continue
+        if outcome["exit"] != 0:
+            problems.append(f"{label}: 컴파일 실패 {outcome['error']}")
+            continue
+        if outcome["samples"] != FOLLOW_SAMPLES_BY_ROLE[role_label]:
+            problems.append(f"{label}: 표본 {outcome['samples']} ≠ {FOLLOW_SAMPLES_BY_ROLE[role_label]}")
+        plain = compiles.get(f"{role_label}_shape0")
+        if plain and outcome["instructions"] - plain["instructions"] > FOLLOW_FOLDED_INSTRUCTION_DELTA_LIMIT:
+            problems.append(f"{label}: 명령 {plain['instructions']}→{outcome['instructions']} 증가 {outcome['instructions'] - plain['instructions']} > 상한 {FOLLOW_FOLDED_INSTRUCTION_DELTA_LIMIT}")
+    plain, follow = compiles.get("static_shape0"), compiles.get("static_shape0_follow")
+    if plain and follow and (plain["instructions"], plain["samples"]) != (follow["instructions"], follow["samples"]):
+        problems.append("static_shape0_follow: 정적 역할인데 따라가기 1 이 명령·표본 수를 바꿈")
+    return problems
+
+
+def find_follow_runtime_problems(compiles):
+    runtime = compiles.get("O3")
+    if runtime is None:
+        return ["O3 컴파일 결과 없음"]
+    if runtime["exit"] != 0:
+        return [f"O3 컴파일 실패 {runtime['error']}"]
+    if runtime["instructions"] > FOLLOW_RUNTIME_O3_INSTRUCTION_LIMIT:
+        return [f"O3(FogTerrainFollow 일반 입력) 명령 {runtime['instructions']} > 상한 {FOLLOW_RUNTIME_O3_INSTRUCTION_LIMIT}"]
+    return []
 
 
 def read_wrap_off_baseline(baseline_path):
@@ -412,7 +543,7 @@ def main():
     record("MI 이름 계약(부모·마스터 이름·C++ 구동·조건부 이름 없음)", not override_problems, "; ".join(override_problems))
     record("조각과 정본 키 서로소", not overlap or not arguments.look_fragment, ", ".join(overlap))
 
-    for summary_key, tests in (("mirror_sha256", BASE_MIRROR_TESTS), ("wrap_mirror_sha256", WRAP_MIRROR_TESTS)):
+    for summary_key, tests in (("mirror_sha256", BASE_MIRROR_TESTS), ("wrap_mirror_sha256", WRAP_MIRROR_TESTS), ("follow_mirror_sha256", FOLLOW_MIRROR_TESTS)):
         outcomes_first, digest_first = run_mirror_tests(tests)
         outcomes_second, digest_second = run_mirror_tests(tests)
         for label, (passed, detail, value_sha) in outcomes_first.items():
@@ -433,7 +564,7 @@ def main():
             outcome = compile_source(dxc, build_source(material, code, {}), f"fog_{suffix}", optimize, work_folder)
             record(f"dxc 안개 ps_6_0 {suffix}", outcome["exit"] == 0 and outcome["samples"] >= 3, outcome["error"] or f"표본 {outcome['samples']} 명령 {outcome['instructions']}")
             compiles[suffix] = outcome
-        for label, folded in build_fold_permutations().items():
+        for label, folded in (build_fold_permutations() | build_follow_permutations() | {"O3_follow_off": {"FogTerrainFollow": 0.0}}).items():
             outcome = compile_source(dxc, build_source(material, code, folded), label, True, work_folder)
             record(f"dxc 순열 {label} O3", outcome["exit"] == 0 and outcome["samples"] >= 2, outcome["error"] or f"표본 {outcome['samples']} 명령 {outcome['instructions']}")
             compiles[label] = outcome
@@ -442,7 +573,13 @@ def main():
     record("D6 감싸기 끔 항등(SimAreaWrapped 0 접기 순열의 dxc 명령·표본 수 = 파동 1 기준)", not identity_problems, "; ".join(identity_problems) or f"순열 {len(baseline)}개 일치")
     static_wrap_problems = find_static_wrap_problems(compiles)
     record("D6 정적 역할은 감싸기 무시(감싸기 1 접기 = 0 접기 명령 수)", not static_wrap_problems, "; ".join(static_wrap_problems))
+    follow_problems = find_follow_fold_problems(compiles)
+    record(f"D8 따라가기 접기 순열(FogTerrainFollow 1, 역할 2 × 모양 0: 구동 표본 3·정적 2 = 끔과 같음, 같은 역할 끔 접기 대비 명령 증가 ≤ {FOLLOW_FOLDED_INSTRUCTION_DELTA_LIMIT})", not follow_problems, "; ".join(follow_problems))
+    runtime_problems = find_follow_runtime_problems(compiles)
+    record(f"D8b 따라가기 일반 입력(실제 재질 형태 = 접지 않은 O3, 명령 ≤ {FOLLOW_RUNTIME_O3_INSTRUCTION_LIMIT})", not runtime_problems, "; ".join(runtime_problems) or f"표본 {compiles['O3']['samples']} 명령 {compiles['O3']['instructions']}")
     summary["dxc"] = {label: {"samples": item["samples"], "instructions": item["instructions"]} for label, item in compiles.items()}
+    summary["follow_runtime_dxc"] = {"samples": compiles["O3"]["samples"], "instructions": compiles["O3"]["instructions"], "limit": FOLLOW_RUNTIME_O3_INSTRUCTION_LIMIT, "vs_baseline": compiles["O3"]["instructions"] - WRAP_OFF_DXC_BASELINE_O3_INSTRUCTIONS, "follow_off_instructions": compiles["O3_follow_off"]["instructions"], "vs_follow_off": compiles["O3"]["instructions"] - compiles["O3_follow_off"]["instructions"]}
+    summary["follow_instruction_delta"] = {f"{role_label}_shape0_follow_vs_off": compiles[f"{role_label}_shape0_follow"]["instructions"] - compiles[f"{role_label}_shape0"]["instructions"] for _, role_label in ROLE_FOLDS}
     summary["wrap_instruction_delta"] = {
         "O3_vs_baseline": compiles["O3"]["instructions"] - baseline_o3_instructions if baseline_o3_instructions else None,
         **{f"driven_shape{int(shape_value)}_wrap_vs_off": compiles[f"driven_shape{int(shape_value)}_wrap"]["instructions"] - compiles[f"driven_shape{int(shape_value)}"]["instructions"] for shape_value in SHAPE_FOLDS},

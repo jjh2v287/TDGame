@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3(표준 라이브러리만), 에디터·빌드 불필요
 실행 명령: python Tools/check_fluid_preset_data.py [--root 경로] [--tuning 조절.json] [--look 모양.json] [--stage-report 보고.json ...]
 출력: ERROR·WARN·STALE 줄과 마지막 SUMMARY 줄(조절·모양 두 파일 합계), 종료 코드 0 통과(WARN 허용) / 1 ERROR 또는 STALE / 2 입력 오류(헤더·등록표·지정 파일 없음)
-상태: 검증됨(2026-10-22 FX-8c 프리셋 데이터: 사본 fixture 25/25, 실제 트리 정본 오류 0·WARN 1(FootprintPainter AdvectionSpeedScale 0 < ClampMin 0.01, 런타임 그대로)). 파동 0(2026-10-25, 명세 spec-wave0-data-bridge-v2 2.5·R6): 등록표·범위는 C++ GetRegisteredStructs 에서, 형식은 Source/TDGame/FluidFX/*.h 전부에서 읽고 최상위 Globals(범위 Global 만·전 필드 필수)·TArray·FName·소프트 경로(/Game 형식+패키지 존재)·하위 구조체를 받는다(--root fixture 확인). 파동 0 P2(2026-10-25): --tuning·--look 로 사본을 검사하고(기본은 루트 정본), 모양 파일 TDFluidMaterialLook.json 을 C++ ParseMaterialLookText 와 같은 규칙(최상위 두 키, 객체 이름 없는 /Game 패키지 키, Parent 경로, 필수 구획, 값 형식·유한값·float·int32 범위)으로 검사한다. R7 런타임 이름은 Source/TDGame/FluidFX 런타임 소스(Tests 제외)의 Set*ParameterValue(TEXT(…))·TEXT("User.…") 에서 뽑아 Scalars·Vectors·나이아가라 구획에 있으면 ERROR(대소문자 무시), 조건부 DensityScale·SoftFalloffCm 과 기준선 에셋 굽기 이름(BASELINE_BAKED_RUNTIME_NAMES)은 WARN, Content 에 없는 패키지는 WARN 이다. --stage-report 는 material_look_sha256 도 비교한다(다르면 STALE, 없으면 WARN). 검증: --root fixture 76/76(C++ RejectsBadInput 와 같은 잘못된 입력 52건 거부 포함), 실제 트리 정본 오류 0·WARN 4. 굽기 절차는 Docs/TDFluidLiveSystemDesign.md 9.1절(D-58). sha 없는 옛 무대 보고는 그 무대를 재생성하기 전까지 STALE
+상태: 검증됨(2026-10-22 FX-8c 프리셋 데이터: 사본 fixture 25/25, 실제 트리 정본 오류 0·WARN 1(FootprintPainter AdvectionSpeedScale 0 < ClampMin 0.01, 런타임 그대로)). 파동 0(2026-10-25, 명세 spec-wave0-data-bridge-v2 2.5·R6): 등록표·범위는 C++ GetRegisteredStructs 에서, 형식은 Source/TDGame/FluidFX/*.h 전부에서 읽고 최상위 Globals(범위 Global 만·전 필드 필수)·TArray·FName·소프트 경로(/Game 형식+패키지 존재)·하위 구조체를 받는다(--root fixture 확인). 파동 0 P2(2026-10-25): --tuning·--look 로 사본을 검사하고(기본은 루트 정본), 모양 파일 TDFluidMaterialLook.json 을 C++ ParseMaterialLookText 와 같은 규칙(최상위 두 키, 객체 이름 없는 /Game 패키지 키, Parent 경로, 필수 구획, 값 형식·유한값·float·int32 범위)으로 검사한다. R7 런타임 이름은 Source/TDGame/FluidFX 런타임 소스(Tests 제외)의 Set*ParameterValue(TEXT(…))·TEXT("User.…") 에서 뽑아 Scalars·Vectors·나이아가라 구획에 있으면 ERROR(대소문자 무시), 조건부 DensityScale·SoftFalloffCm 과 기준선 에셋 굽기 이름(BASELINE_BAKED_RUNTIME_NAMES)은 WARN, Content 에 없는 패키지는 WARN 이다. --stage-report 는 material_look_sha256 도 비교한다(다르면 STALE, 없으면 WARN). 검증: --root fixture 76/76(C++ RejectsBadInput 와 같은 잘못된 입력 52건 거부 포함), 실제 트리 정본 오류 0·WARN 4. 굽기 절차는 Docs/TDFluidLiveSystemDesign.md 9.1절(D-58). sha 없는 옛 무대 보고는 그 무대를 재생성하기 전까지 STALE. 2026-11-11 Q4-1 2판: 종류별 실효값(Kinds → Groups → StructDefaults 순)이 TDFluidVolumeDriverSettings.bFogFloorFollowsTerrain true 이면 TDFluidTerrainHeightSettings.VolumeHeightSource 가 SceneCapture 여야 한다(아니면 ERROR, 미검증: 사본 헤더 fixture 만)
 """
 import argparse
 import hashlib
@@ -77,6 +77,9 @@ ENUM_AS_BYTE_TYPE_PATTERN = re.compile(r"TEnumAsByte<(\w+)>")
 SOFT_POINTER_TYPE_PATTERN = re.compile(r"TSoft(?:Object|Class)Ptr<\w+>")
 GAME_PATH_PATTERN = re.compile(r"/Game/[A-Za-z0-9_]+(?:/[A-Za-z0-9_]+)*(?:\.[A-Za-z0-9_]+)?")
 GAME_PACKAGE_PATTERN = re.compile(r"/Game/[A-Za-z0-9_]+(?:/[A-Za-z0-9_]+)*")
+FOG_FLOOR_FOLLOW_FIELD = ("TDFluidVolumeDriverSettings", "bFogFloorFollowsTerrain")
+FOG_FLOOR_FOLLOW_SOURCE_FIELD = ("TDFluidTerrainHeightSettings", "VolumeHeightSource")
+FOG_FLOOR_FOLLOW_REQUIRED_SOURCE = "SceneCapture"
 MATERIAL_PARAMETER_SET_PATTERN = re.compile(r'Set\w*ParameterValue\w*\(\s*TEXT\("([^"]+)"\)')
 NIAGARA_USER_NAME_PATTERN = re.compile(r'TEXT\("(User\.[^"]+)"\)')
 
@@ -446,6 +449,38 @@ def check_scoped_section(schema, section, scope):
     return errors, warnings
 
 
+def read_struct_field(entries, struct_name, field_name):
+    fields = entries.get(struct_name) if isinstance(entries, dict) else None
+    if isinstance(fields, dict) and field_name in fields:
+        return True, fields[field_name]
+    return False, None
+
+
+def resolve_kind_field(sections, kind_name, struct_name, field_name):
+    found, value = read_struct_field(sections["Kinds"].get(kind_name), struct_name, field_name)
+    if found:
+        return value
+    for group in sections["Groups"].values():
+        members = group.get(GROUP_KINDS_KEY) if isinstance(group, dict) else None
+        if not isinstance(members, list) or kind_name not in members:
+            continue
+        found, value = read_struct_field(group, struct_name, field_name)
+        if found:
+            return value
+    return read_struct_field(sections["StructDefaults"], struct_name, field_name)[1]
+
+
+def check_fog_floor_follow_sources(schema, sections):
+    errors = []
+    for kind_name in schema.kinds():
+        if resolve_kind_field(sections, kind_name, *FOG_FLOOR_FOLLOW_FIELD) is not True:
+            continue
+        source = resolve_kind_field(sections, kind_name, *FOG_FLOOR_FOLLOW_SOURCE_FIELD)
+        if source != FOG_FLOOR_FOLLOW_REQUIRED_SOURCE:
+            errors.append(f"Kinds.{kind_name}: {'.'.join(FOG_FLOOR_FOLLOW_FIELD)} true 인데 실효 {'.'.join(FOG_FLOOR_FOLLOW_SOURCE_FIELD)} {source!r} ≠ {FOG_FLOOR_FOLLOW_REQUIRED_SOURCE!r}(안개 바닥 따라가기는 장면 캡처 높이만 쓴다)")
+    return errors
+
+
 def check_document(schema, document):
     errors = []
     warnings = []
@@ -500,6 +535,7 @@ def check_document(schema, document):
         errors.extend(entry_errors)
         warnings.extend(entry_warnings)
         errors.extend(claim_fields(owner_by_target, [kind_name], assigned, path))
+    errors.extend(check_fog_floor_follow_sources(schema, sections))
     return errors, warnings
 
 

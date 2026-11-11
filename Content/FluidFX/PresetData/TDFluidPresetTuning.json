@@ -442,7 +442,8 @@
       "bRenderFogVolume": false,
       "FogVolumeMaterialSlot": "Tertiary",
       "FogVolumeHeightCm": 1000.0,
-      "FogVolumeSizeMultiplier": 1.0
+      "FogVolumeSizeMultiplier": 1.0,
+      "bFogFloorFollowsTerrain": false
     },
     "TDFluidOutputTargetSettings": {
       "PrimaryOutputMaterialIndex": 0,
@@ -470,7 +471,8 @@
       "SceneCaptureHeightAboveCm": 2000.0,
       "SceneCaptureRecaptureCells": 4,
       "SceneCaptureMarginRatio": 0.1,
-      "bSceneCaptureIgnoresPawns": true
+      "bSceneCaptureIgnoresPawns": true,
+      "SceneCaptureContent": "AllGeometry"
     },
     "TDFluidMassInputSettings": {
       "bAcceptMassInput": false,
@@ -1577,6 +1579,15 @@
         "FlowNoiseScaleCm": 400.0,
         "ActorBrushDensityStrength": -1.0,
         "ActorBrushPunctureCmPerSec": 380.0
+      },
+      "TDFluidVolumeDriverSettings": {
+        "bFogFloorFollowsTerrain": true
+      },
+      "TDFluidTerrainHeightSettings": {
+        "VolumeHeightSource": "SceneCapture",
+        "SceneCaptureContent": "TerrainOnly",
+        "SceneCaptureHeightAboveCm": 2000.0,
+        "SceneCaptureRecaptureCells": 16
       }
     },
     "FogMistStir": {

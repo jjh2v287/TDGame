@@ -1,15 +1,19 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 안개 무대 LV_TDFluidFogStage(구역 0~6 은 X축 30 m 간격, 구역 7A 대형 창 + 200 m 정적 상자는 Y +250 m 띠, 7B 수동 7변형 진열은 Y −150 m 띠, 구역 8 은 Y −350 m 띠: 8A 가르기 FogMist·8B 휘젓기 FogMistStir 에 교반기, 8C 감싸기 타일 FogTileSim)와 DA 7개(Smoke 대리 3·FogMist 2·FogMistStir 1·FogTileSim 1)를 만든다. 먼저 editor_make_fluid_fog_material.py 와 FX-8n 무대 스크립트(교반기 BP_TDFluidStageStirrer)가 성공해 있어야 하고, 모양 정본 병합 뒤에 돌린다.
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fog_stage.py (기존 DA·맵을 갱신할 때는 Saved/FluidFX/fluid_fog_stage_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Presets/DA_TDFluid_FogAmbient·FogRoom·FogTrail·FogCharacter·FogCut·FogStir·FogTileSync,/Game/FluidFX/Maps/LV_TDFluidFogStage, /Game/FluidFX/Materials/M_TD_FluidFogStageFloor·M_TD_FluidFogStageWall(없을 때만 만듦), Saved/FluidFX/fluid_fog_stage.json(preset_tuning_sha256·material_look_sha256, check_fluid_preset_data.py --stage-report 형식)
-상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·validate_stage_layout 만. 2026-10-26 에디터 실행 status ok·액터 37·DA 4·바닥·벽 재질 2, stage-report 오류 0, 화면 판정 전). 미저장 작업이 있으면 중단하고, 시작 때 프리셋 정본 검사·다시 읽기를 한다. 볼륨 상자 높이 1300 cm(돌출 범위 1000 + 윗면 페이드 300, 아래면 = 바닥)·광원·높이 안개 값은 무대 상수다(D-64 ② 편차, 보정은 룩데브 props). 시뮬 액터는 따라가기를 끄고 활성 볼륨(2000 cm)으로 가까운 것만 깨운다(따라가기를 켜면 안개판이 모든 구역으로 따라옴, 반박 M9). MPC 쓰기 액터는 FogAmbient 하나다. 2026-10-26 FX-10c: 7A FogAmbient 종류를 Smoke 대리에서 FogMist(40 m 창)로 바꾸고 구역 8(TileBandFloor)을 더함, 배치 점검을 종류별 창 × 상자 배율로 일반화(이웃 중심 거리 > 활성 거리 + 두 반폭), 종류 값(창·감싸기·상자 배율 상한)은 에셋 변경 전에 점검. 에디터 실행 전(py_compile·가짜 unreal·validate_stage_layout 만). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(덮어쓰기, 액터 43·DA 7, MI 15 단언 통과), stage-report stale 0, 화면 판정 전. 2026-10-31: 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고(기본 90°/s) 위치 인수 Rotator(0, v, 0)가 pitch 였던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)와 yaw 키워드로 고침, 맵 재생성 필요.
+상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·validate_stage_layout 만. 2026-10-26 에디터 실행 status ok·액터 37·DA 4·바닥·벽 재질 2, stage-report 오류 0, 화면 판정 전). 미저장 작업이 있으면 중단하고, 시작 때 프리셋 정본 검사·다시 읽기를 한다. 볼륨 상자 높이 1300 cm(돌출 범위 1000 + 윗면 페이드 300, 아래면 = 바닥)·광원·높이 안개 값은 무대 상수다(D-64 ② 편차, 보정은 룩데브 props). 시뮬 액터는 따라가기를 끄고 활성 볼륨(2000 cm)으로 가까운 것만 깨운다(따라가기를 켜면 안개판이 모든 구역으로 따라옴, 반박 M9). MPC 쓰기 액터는 FogAmbient 하나다. 2026-10-26 FX-10c: 7A FogAmbient 종류를 Smoke 대리에서 FogMist(40 m 창)로 바꾸고 구역 8(TileBandFloor)을 더함, 배치 점검을 종류별 창 × 상자 배율로 일반화(이웃 중심 거리 > 활성 거리 + 두 반폭), 종류 값(창·감싸기·상자 배율 상한)은 에셋 변경 전에 점검. 에디터 실행 전(py_compile·가짜 unreal·validate_stage_layout 만). 2026-10-27 파동 2 에셋 단계: 에디터 실행 status ok(덮어쓰기, 액터 43·DA 7, MI 15 단언 통과), stage-report stale 0, 화면 판정 전. 2026-10-31: 교반기 회전 속도가 피벗 쓰기 뒤 BP 구성 스크립트 재실행으로 유실되고(기본 90°/s) 위치 인수 Rotator(0, v, 0)가 pitch 였던 것을 particle_stage.set_component_properties(한 번에 쓰기·새 핸들로 다시 읽기, 다르면 FAIL)와 yaw 키워드로 고침, 맵 재생성 필요. 2026-11-11 Q4-1 2판: 구역 9 기복(Y +550 m, 바닥 ReliefFloor 120 m, FogRelief = FOG_MIST·MI_TD_FluidFog_Sim·40 m 창, 원뿔 언덕 ReliefHillLow 400·ReliefHillTall 1200 과 바닥에 태그 TDFluidTerrain, 태그 없는 돌출물 판 윗면 400 + 기둥 2, 평지 띠 X 7200~10800·Y 53300~54000)을 더하고 validate_stage_layout 에 바닥 간격·창 안·평지 띠 비움·돌출물-언덕 200 cm·캡처 높이·볼륨 경계 구 덮음(find_fog_sphere_coverage_problems, 창 모서리는 윗면만)을 더함, 보고서 relief 절. --self-test 는 unreal 없이 덮음 fixture 3개와 배치 점검을 돈다. 에디터 실행 전(py_compile·가짜 unreal·--self-test 만).
 """
 import hashlib
 import importlib.util
 import json
 import math
 import os
+import sys
 
-import unreal
+try:
+    import unreal
+except ModuleNotFoundError:
+    unreal = None
 
 
 FLUID_ROOT = "/Game/FluidFX"
@@ -23,6 +27,8 @@ COLLECTION_PATH = f"{MATERIAL_DIR}/MPC_TD_FluidFogWindow"
 STIRRER_BLUEPRINT_PATH = f"{FLUID_ROOT}/Blueprints/BP_TDFluidStageStirrer"
 GAME_MODE_PATH = "/Game/Combat/Blueprints/BP_TDCombatGameMode"
 CUBE_MESH_PATH = "/Engine/BasicShapes/Cube"
+CONE_MESH_PATH = "/Engine/BasicShapes/Cone"
+TERRAIN_ACTOR_TAG = "TDFluidTerrain"
 CUBE_SIZE_CM = 100.0
 FLUID_ACTOR_CLASS_PATH = "/Script/TDGame.TDFluidLiveActor"
 REQUEST_RELATIVE_PATH = ("Saved", "FluidFX", "fluid_fog_stage_request.json")
@@ -54,6 +60,16 @@ ZONE7A_CENTER = (9000.0, 25000.0)
 ZONE8_BAND_Y_CM = -35000.0
 ZONE8_FLOOR_CENTER = (8500.0, ZONE8_BAND_Y_CM)
 ZONE8_FLOOR_SIZE_CM = (32000.0, 12000.0)
+ZONE9_CENTER = (9000.0, 55000.0)
+ZONE9_FLOOR_SIZE_CM = (12000.0, 12000.0)
+RELIEF_FLOOR_LABEL = "ReliefFloor"
+RELIEF_FLOOR_MIN_GAP_CM = 1800.0
+RELIEF_FLAT_BAND_BOUNDS = (7200.0, 53300.0, 10800.0, 54000.0)
+RELIEF_MIN_OVERHANG_HILL_GAP_CM = 200.0
+RELIEF_FOG_LAYER_HEIGHT_CM = 60.0
+RELIEF_FOG_BELOW_CUT_CM = 50.0
+RELIEF_CAPTURE_HEIGHT_ABOVE_CM = 2000.0
+RELIEF_BOUNDS_TOLERANCE_CM = 0.5
 PASSIVE_FIELD_SIZE_CM = 20000.0
 PASSIVE_DISPLAY_Y_CM = -15000.0
 PASSIVE_DISPLAY_SIZE_CM = 1500.0
@@ -72,6 +88,16 @@ FLUID_SPECS = (
     {"name": "FogCut", "zone": "8A", "center": (0.0, ZONE8_BAND_Y_CM), "kind": "FOG_MIST", "instance": "MI_TD_FluidFog_Sim", "writes_collection": False},
     {"name": "FogStir", "zone": "8B", "center": (7000.0, ZONE8_BAND_Y_CM), "kind": "FOG_MIST_STIR", "instance": "MI_TD_FluidFog_Sim", "writes_collection": False},
     {"name": "FogTileSync", "zone": "8C", "center": (17000.0, ZONE8_BAND_Y_CM), "kind": "FOG_TILE_SIM", "instance": "MI_TD_FluidFog_TileSync", "writes_collection": False},
+    {"name": "FogRelief", "zone": "9", "center": ZONE9_CENTER, "kind": "FOG_MIST", "instance": "MI_TD_FluidFog_Sim", "writes_collection": False},
+)
+RELIEF_HILL_SPECS = (
+    {"label": "ReliefHillLow", "center": (8300.0, 55000.0), "base_diameter_cm": 1600.0, "height_cm": 400.0},
+    {"label": "ReliefHillTall", "center": (9800.0, 55500.0), "base_diameter_cm": 1200.0, "height_cm": 1200.0},
+)
+RELIEF_OVERHANG_SPECS = (
+    {"label": "ReliefOverhangPlate", "center": (8000.0, 56300.0), "size": (600.0, 300.0, 20.0), "top_z_cm": 400.0},
+    {"label": "ReliefOverhangPillar0", "center": (7750.0, 56300.0), "size": (40.0, 40.0, 380.0), "top_z_cm": 380.0},
+    {"label": "ReliefOverhangPillar1", "center": (8250.0, 56300.0), "size": (40.0, 40.0, 380.0), "top_z_cm": 380.0},
 )
 STIRRER_SPECS = (
     {"label": "FogTrailStirrer", "fluid": "FogTrail", "orbit_radius_cm": 220.0, "degrees_per_sec": 90.0},
@@ -106,7 +132,9 @@ FLOOR_SPECS = (
     ("FieldFloor", ZONE7A_CENTER, (PASSIVE_FIELD_SIZE_CM + 2000.0, PASSIVE_FIELD_SIZE_CM + 2000.0)),
     ("DisplayFloor", (9000.0, PASSIVE_DISPLAY_Y_CM), (21000.0 + PASSIVE_DISPLAY_SIZE_CM * 2.0, PASSIVE_DISPLAY_SIZE_CM * 2.0)),
     ("TileBandFloor", ZONE8_FLOOR_CENTER, ZONE8_FLOOR_SIZE_CM),
+    (RELIEF_FLOOR_LABEL, ZONE9_CENTER, ZONE9_FLOOR_SIZE_CM),
 )
+TERRAIN_TAGGED_FLOOR_LABELS = (RELIEF_FLOOR_LABEL,)
 FLOOR_COLOR = (0.03, 0.032, 0.036)
 WALL_COLOR = (0.06, 0.06, 0.07)
 
@@ -223,8 +251,118 @@ def find_stirrer_problems():
     return problems
 
 
+def rectangle_corners(bounds):
+    return ((bounds[0], bounds[1]), (bounds[2], bounds[1]), (bounds[0], bounds[3]), (bounds[2], bounds[3]))
+
+
+def intersect_bounds(first, second):
+    bounds = (max(first[0], second[0]), max(first[1], second[1]), min(first[2], second[2]), min(first[3], second[3]))
+    return bounds if bounds[0] <= bounds[2] and bounds[1] <= bounds[3] else None
+
+
+def rectangle_circle_gap(bounds, center, radius):
+    nearest = (min(max(center[0], bounds[0]), bounds[2]), min(max(center[1], bounds[1]), bounds[3]))
+    return math.dist(nearest, center) - radius
+
+
+def relief_terrain_features():
+    hills = [{"name": spec["label"], "shape": "cone", "center": spec["center"], "radius_cm": 0.5 * spec["base_diameter_cm"], "base_z_cm": FLOOR_Z_CM, "top_z_cm": FLOOR_Z_CM + spec["height_cm"]} for spec in RELIEF_HILL_SPECS]
+    boxes = [{"name": spec["label"], "shape": "box", "center": spec["center"], "size_xy": spec["size"][:2], "base_z_cm": FLOOR_Z_CM, "top_z_cm": FLOOR_Z_CM + spec["top_z_cm"]} for spec in RELIEF_OVERHANG_SPECS]
+    return hills + boxes
+
+
+def feature_xy_bounds(feature):
+    if feature["shape"] == "cone":
+        return box_xy_bounds(feature["center"], (2.0 * feature["radius_cm"], 2.0 * feature["radius_cm"]))
+    return box_xy_bounds(feature["center"], feature["size_xy"])
+
+
+def farthest_feature_distance(feature, window_center_xy, window_bounds):
+    clipped = intersect_bounds(feature_xy_bounds(feature), window_bounds)
+    if clipped is None:
+        return None
+    farthest_clipped_corner = max(math.dist(corner, window_center_xy) for corner in rectangle_corners(clipped))
+    if feature["shape"] == "cone":
+        return min(math.dist(feature["center"], window_center_xy) + feature["radius_cm"], farthest_clipped_corner)
+    return farthest_clipped_corner
+
+
+def sphere_half_chord(radius, distance):
+    if distance > radius:
+        return None
+    return math.sqrt(radius * radius - distance * distance)
+
+
+def find_fog_sphere_coverage_problems(window_center_xy, window_size_xy, box_multiplier, box_height_cm, owner_z_cm, layer_height_cm, below_cut_cm, terrain_features):
+    radius = math.sqrt((0.5 * box_multiplier * window_size_xy[0]) ** 2 + (0.5 * box_multiplier * window_size_xy[1]) ** 2 + (0.5 * box_height_cm) ** 2)
+    center_z = owner_z_cm + 0.5 * box_height_cm
+    window_bounds = box_xy_bounds(window_center_xy, window_size_xy)
+    problems = []
+    corner_distance = max(math.dist(corner, window_center_xy) for corner in rectangle_corners(window_bounds))
+    corner_chord = sphere_half_chord(radius, corner_distance)
+    corner_top = center_z + corner_chord if corner_chord is not None else None
+    if corner_top is None or corner_top < owner_z_cm + layer_height_cm:
+        problems.append(f"창 모서리(거리 {corner_distance:.0f}): 구 윗면 {corner_top} < 바닥 + 층 {owner_z_cm + layer_height_cm:.0f}")
+    for feature in terrain_features:
+        distance = farthest_feature_distance(feature, window_center_xy, window_bounds)
+        if distance is None:
+            continue
+        half_chord = sphere_half_chord(radius, distance)
+        if half_chord is None:
+            problems.append(f"{feature['name']}: 먼 밑면 점 거리 {distance:.0f} > 구 반경 {radius:.0f}")
+            continue
+        failures = []
+        if center_z + half_chord < feature["top_z_cm"] + layer_height_cm:
+            failures.append(f"구 윗면 {center_z + half_chord:.0f} < 높이 + 층 {feature['top_z_cm'] + layer_height_cm:.0f}")
+        if center_z - half_chord > feature["base_z_cm"] - below_cut_cm:
+            failures.append(f"구 아랫면 {center_z - half_chord:.0f} > 밑면 − 차단 {feature['base_z_cm'] - below_cut_cm:.0f}")
+        if failures:
+            problems.append(f"{feature['name']}(먼 밑면 점 거리 {distance:.0f}, 구 반경 {radius:.0f}): " + ", ".join(failures))
+    return problems
+
+
+def relief_fluid_spec():
+    return next(spec for spec in FLUID_SPECS if spec["zone"] == "9")
+
+
+def find_relief_sphere_coverage_problems(terrain_features):
+    relief = relief_fluid_spec()
+    layout = PRESET_KIND_LAYOUTS[relief["kind"]]
+    return find_fog_sphere_coverage_problems(relief["center"], (layout["window_cm"], layout["window_cm"]), layout["box_multiplier"], FOG_BOX_HEIGHT_CM, FLOOR_Z_CM, RELIEF_FOG_LAYER_HEIGHT_CM, RELIEF_FOG_BELOW_CUT_CM, terrain_features)
+
+
+def find_relief_problems():
+    problems = []
+    window = fluid_visible_bounds(relief_fluid_spec())
+    relief_floor = box_xy_bounds(ZONE9_CENTER, ZONE9_FLOOR_SIZE_CM)
+    for label, center, size in FLOOR_SPECS:
+        if label == RELIEF_FLOOR_LABEL:
+            continue
+        gap = rectangle_gap(relief_floor, box_xy_bounds(center, size))
+        if gap < RELIEF_FLOOR_MIN_GAP_CM:
+            problems.append(f"{RELIEF_FLOOR_LABEL}·{label} 간격 {gap:.0f} < {RELIEF_FLOOR_MIN_GAP_CM}")
+    features = relief_terrain_features()
+    for feature in features:
+        if not is_inside_bounds(feature_xy_bounds(feature), window):
+            problems.append(f"{feature['name']}: 기복 창 밖")
+        band_gap = rectangle_circle_gap(RELIEF_FLAT_BAND_BOUNDS, feature["center"], feature["radius_cm"]) if feature["shape"] == "cone" else rectangle_gap(feature_xy_bounds(feature), RELIEF_FLAT_BAND_BOUNDS)
+        if band_gap <= 0.0:
+            problems.append(f"{feature['name']}: 평지 띠와 겹침")
+    for overhang in RELIEF_OVERHANG_SPECS:
+        bounds = box_xy_bounds(overhang["center"], overhang["size"][:2])
+        for hill in RELIEF_HILL_SPECS:
+            gap = rectangle_circle_gap(bounds, hill["center"], 0.5 * hill["base_diameter_cm"])
+            if gap < RELIEF_MIN_OVERHANG_HILL_GAP_CM:
+                problems.append(f"{overhang['label']}·{hill['label']} 밑면 간격 {gap:.0f} < {RELIEF_MIN_OVERHANG_HILL_GAP_CM}")
+    tallest = max(feature["top_z_cm"] for feature in features)
+    if tallest + RELIEF_FOG_LAYER_HEIGHT_CM >= FLOOR_Z_CM + RELIEF_CAPTURE_HEIGHT_ABOVE_CM:
+        problems.append(f"가장 높은 요소 {tallest} + 층 {RELIEF_FOG_LAYER_HEIGHT_CM} ≥ 캡처 높이 {RELIEF_CAPTURE_HEIGHT_ABOVE_CM}")
+    problems.extend(find_relief_sphere_coverage_problems(features))
+    return problems
+
+
 def validate_stage_layout():
-    problems = find_fluid_spacing_problems() + find_stirrer_problems()
+    problems = find_fluid_spacing_problems() + find_stirrer_problems() + find_relief_problems()
     band = (-ZONE_BAND_HALF_WIDTH_CM, -ZONE_BAND_HALF_WIDTH_CM, (ZONE_COUNT_ON_AXIS - 1) * ZONE_SPACING_CM + ZONE_BAND_HALF_WIDTH_CM, ZONE_BAND_HALF_WIDTH_CM)
     if FOG_BOX_HEIGHT_CM < FOG_EXTRUDE_RANGE_MAX_CM + FOG_TOP_FADE_RANGE_MAX_CM:
         problems.append(f"상자 높이 {FOG_BOX_HEIGHT_CM} < 돌출 범위 {FOG_EXTRUDE_RANGE_MAX_CM} + 윗면 페이드 {FOG_TOP_FADE_RANGE_MAX_CM}")
@@ -525,9 +663,10 @@ def main():
     stirrer_class = assets.load_blueprint_class(STIRRER_BLUEPRINT_PATH)
     particle_stage = load_particle_stage()
     fluid_actor_class = unreal.load_class(None, FLUID_ACTOR_CLASS_PATH)
+    cone = assets.load_asset(CONE_MESH_PATH)
     instance_names = sorted({spec["instance"] for spec in STATIC_BOX_SPECS} | {spec["instance"] for spec in FLUID_SPECS})
     instances = {name: assets.load_asset(f"{MATERIAL_DIR}/{name}") for name in instance_names}
-    required = {"게임 모드": game_mode, "큐브": cube, "MPC": collection, "교반기(FX-8n 무대 먼저)": stirrer_class, "유체 액터 클래스": fluid_actor_class}
+    required = {"게임 모드": game_mode, "큐브": cube, "원뿔": cone, "MPC": collection, "교반기(FX-8n 무대 먼저)": stirrer_class, "유체 액터 클래스": fluid_actor_class}
     required.update({f"MI {name}": value for name, value in instances.items()})
     missing = [name for name, value in required.items() if value is None]
     if missing:
@@ -572,8 +711,45 @@ def main():
             component.set_cast_shadow(False)
         return actor
 
+    def tag_as_terrain(actor):
+        actor.set_editor_property("tags", [unreal.Name(TERRAIN_ACTOR_TAG)])
+        tagged_labels.append(actor.get_actor_label())
+
+    def require_bounds(actor, label, center_xy, size, bottom_z):
+        origin, extent = actor.get_actor_bounds(False)
+        expected = (center_xy[0], center_xy[1], bottom_z + 0.5 * size[2])
+        mismatches = [axis for axis, actual, wanted in (("x", origin.x, expected[0]), ("y", origin.y, expected[1]), ("z", origin.z, expected[2]), ("sx", 2.0 * extent.x, size[0]), ("sy", 2.0 * extent.y, size[1]), ("sz", 2.0 * extent.z, size[2])) if abs(actual - wanted) > RELIEF_BOUNDS_TOLERANCE_CM]
+        if mismatches:
+            raise RuntimeError(f"기복 요소 경계 불일치 {label}: {mismatches}, 원점 {origin}, 반 크기 {extent}")
+        return [origin.x - extent.x, origin.y - extent.y, origin.z - extent.z, origin.x + extent.x, origin.y + extent.y, origin.z + extent.z]
+
+    def place_relief_hill(spec):
+        actor = finish(actors.spawn_actor_from_object(cone, unreal.Vector(spec["center"][0], spec["center"][1], FLOOR_Z_CM), unreal.Rotator()), spec["label"], "Relief")
+        _, unit_extent = actor.get_actor_bounds(False)
+        actor.set_actor_scale3d(unreal.Vector(0.5 * spec["base_diameter_cm"] / unit_extent.x, 0.5 * spec["base_diameter_cm"] / unit_extent.y, 0.5 * spec["height_cm"] / unit_extent.z))
+        origin, extent = actor.get_actor_bounds(False)
+        location = actor.get_actor_location()
+        actor.set_actor_location(unreal.Vector(location.x + spec["center"][0] - origin.x, location.y + spec["center"][1] - origin.y, location.z + FLOOR_Z_CM - (origin.z - extent.z)), False, False)
+        component = actor.static_mesh_component
+        component.set_editor_property("mobility", unreal.ComponentMobility.STATIC)
+        component.set_material(0, wall_mat)
+        tag_as_terrain(actor)
+        size = (spec["base_diameter_cm"], spec["base_diameter_cm"], spec["height_cm"])
+        return {"label": actor.get_actor_label(), "center": list(spec["center"]), "base_diameter_cm": spec["base_diameter_cm"], "height_cm": spec["height_cm"], "bounds": require_bounds(actor, spec["label"], spec["center"], size, FLOOR_Z_CM), "tags": [TERRAIN_ACTOR_TAG]}
+
+    def place_relief_overhang(spec):
+        size = spec["size"]
+        location = (spec["center"][0], spec["center"][1], FLOOR_Z_CM + spec["top_z_cm"] - 0.5 * size[2])
+        actor = place_cube(location, tuple(value / CUBE_SIZE_CM for value in size), wall_mat, spec["label"], "Relief", True)
+        return {"label": actor.get_actor_label(), "center": list(spec["center"]), "size_cm": list(size), "top_z_cm": spec["top_z_cm"], "bounds": require_bounds(actor, spec["label"], spec["center"], size, FLOOR_Z_CM + spec["top_z_cm"] - size[2]), "tags": []}
+
+    tagged_labels = []
     for label, center, size in FLOOR_SPECS:
-        place_cube((center[0], center[1], FLOOR_Z_CM - 25.0), (size[0] / CUBE_SIZE_CM, size[1] / CUBE_SIZE_CM, 0.5), floor_mat, label, "Stage", True)
+        floor_actor = place_cube((center[0], center[1], FLOOR_Z_CM - 25.0), (size[0] / CUBE_SIZE_CM, size[1] / CUBE_SIZE_CM, 0.5), floor_mat, label, "Stage", True)
+        if label in TERRAIN_TAGGED_FLOOR_LABELS:
+            tag_as_terrain(floor_actor)
+    relief_hill_records = [place_relief_hill(spec) for spec in RELIEF_HILL_SPECS]
+    relief_overhang_records = [place_relief_overhang(spec) for spec in RELIEF_OVERHANG_SPECS]
     for label, location, scale in LAB_WALLS + SHRINE_PILLARS:
         place_cube(location, scale, wall_mat, label, "Stage", True)
 
@@ -660,7 +836,20 @@ def main():
         "overwrite": overwrite,
         "created_floor_material": floor_created,
         "created_wall_material": wall_created,
-        "zones": {str(index): {"label": label, "center": list(zone_center(index))} for index, label in enumerate(ZONE_LABELS)} | {"7A": {"label": "AmbientWindowAndField", "center": list(ZONE7A_CENTER)}, "7B": {"label": "PassiveDisplays", "y": PASSIVE_DISPLAY_Y_CM}} | {spec["zone"]: {"label": spec["name"], "center": list(spec["center"])} for spec in FLUID_SPECS if spec["zone"].startswith("8")},
+        "zones": {str(index): {"label": label, "center": list(zone_center(index))} for index, label in enumerate(ZONE_LABELS)} | {"7A": {"label": "AmbientWindowAndField", "center": list(ZONE7A_CENTER)}, "7B": {"label": "PassiveDisplays", "y": PASSIVE_DISPLAY_Y_CM}} | {spec["zone"]: {"label": spec["name"], "center": list(spec["center"])} for spec in FLUID_SPECS if spec["zone"].startswith("8") or spec["zone"] == "9"},
+        "relief": {
+            "zone": "9",
+            "fluid_actor": "TDGen_" + relief_fluid_spec()["name"],
+            "window_bounds_xy": list(fluid_visible_bounds(relief_fluid_spec())),
+            "floor_bounds_xy": list(box_xy_bounds(ZONE9_CENTER, ZONE9_FLOOR_SIZE_CM)),
+            "flat_band_bounds_xy": list(RELIEF_FLAT_BAND_BOUNDS),
+            "terrain_tag": TERRAIN_ACTOR_TAG,
+            "tagged_actors": tagged_labels,
+            "hills": relief_hill_records,
+            "overhang": relief_overhang_records,
+            "fog_layer_height_cm": RELIEF_FOG_LAYER_HEIGHT_CM,
+            "sphere_coverage_problems": find_relief_sphere_coverage_problems(relief_terrain_features()),
+        },
         "fluid_actors": fluid_records,
         "static_boxes": box_records,
         "local_lights": light_records,
@@ -684,5 +873,31 @@ def run_with_failure_report():
         raise
 
 
+def run_self_test():
+    relief = relief_fluid_spec()
+    half_window = 0.5 * PRESET_KIND_LAYOUTS[relief["kind"]]["window_cm"]
+    corner = (relief["center"][0] + half_window, relief["center"][1] + half_window)
+    corner_hill = {"name": "CornerHill", "shape": "cone", "center": (corner[0] - 300.0, corner[1] - 300.0), "radius_cm": 600.0, "base_z_cm": FLOOR_Z_CM, "top_z_cm": FLOOR_Z_CM + 1250.0}
+    corner_pit = {"name": "CornerPit", "shape": "box", "center": (corner[0] - 100.0, corner[1] - 100.0), "size_xy": (200.0, 200.0), "base_z_cm": FLOOR_Z_CM - 200.0, "top_z_cm": FLOOR_Z_CM - 200.0}
+    cases = (
+        ("① 무대 기복 요소(언덕 2·돌출물 3)", relief_terrain_features(), 0),
+        ("② 중심이 창 모서리에서 300 cm 안쪽인 1250 cm 언덕(밑반지름 600, H 1300, 층 60)", [corner_hill], 1),
+        ("③ 창 모서리에 닿는 OwnerZ − 200 구덩이", [corner_pit], 1),
+    )
+    all_passed = True
+    for label, features, expected in cases:
+        problems = find_relief_sphere_coverage_problems(features)
+        passed = len(problems) == expected
+        all_passed = all_passed and passed
+        print(("PASS " if passed else "FAIL ") + label + f": 문제 {len(problems)}(기대 {expected}) " + json.dumps(problems, ensure_ascii=False))
+    layout_problems = validate_stage_layout()
+    all_passed = all_passed and not layout_problems
+    print(("PASS " if not layout_problems else "FAIL ") + "validate_stage_layout(구역 9 포함): " + json.dumps(layout_problems, ensure_ascii=False))
+    return 0 if all_passed else 1
+
+
 if __name__ == "__main__":
+    if "--self-test" in sys.argv[1:]:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.exit(run_self_test())
     run_with_failure_report()

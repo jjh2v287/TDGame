@@ -35,7 +35,7 @@ public class TDGame : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "PCG", "Json", "JsonUtilities", "UAFAnimGraph", "SlateCore", "PhysicsCore" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "TDFluidGpu", "RenderCore", "RHI", "NiagaraCore", "NiagaraShader" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "TDFluidGpu", "RenderCore", "RHI", "NiagaraCore", "NiagaraShader", "Landscape" });
 
 		PrivateDependencyModuleNames.Add("TDFogScattering");
 

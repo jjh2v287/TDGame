@@ -1,7 +1,7 @@
 """실행 환경: TDGame 언리얼 에디터 안에서 FluidFX 볼류메트릭 포그 마스터 M_TD_FluidFogVolume(MD_VOLUME·BLEND_ADDITIVE, Custom 노드 1개 = Tools/FluidFX/Shaders/TDFluidFogVolume.hlsl), 창 MPC_TD_FluidFogWindow, 재질 인스턴스 15개를 만든다. 먼저 editor_make_fluid_volume_material.py 가 T_TD_FluidNoiseVolume 을 만들어 두어야 하고, 모양 정본 Content/FluidFX/PresetData/TDFluidMaterialLook.json 에 MI 15개가 병합되어 있어야 한다(MI_TD_FluidFog_TileSync 는 FX-10c 조각 병합 뒤).
 실행 명령: python Tools/run_in_editor.py Tools/FluidFX/editor_make_fluid_fog_material.py (기존 에셋을 다시 지을 때는 Saved/FluidFX/fluid_fog_material_request.json 에 {"overwrite": true})
 출력: /Game/FluidFX/Materials/M_TD_FluidFogVolume·MPC_TD_FluidFogWindow(벡터 SimCenterWorld·SimExtentsCm, 스칼라 FogFlowOriginSeconds 기본 0)·MI_TD_FluidFog_*(15), Saved/FluidFX/fluid_fog_material.json(앞단 경로 substrate|legacy, collection_scalars, master.elapsed_seconds, 재질 통계, HLSL sha256)
-상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만, 에디터 실행 전). 앞단은 Substrate 안개·구름 BSDF 1순위, 연결 실패 시 기존 핀(BaseColor=알베도·SubsurfaceColor=소광·Emissive) 자동 변환. 구동(MID, SimGridResolution > 0.5)은 MID 창·바닥 = SimCenterWorld.z, 정적(MI)은 MPC 창·바닥 = ObjectPositionWS.z − ObjectBounds.z(반 크기). MI 값은 모양 정본(apply_to_instance)만 쓴다. 볼륨 도메인은 재질 통계 PS 명령이 0일 수 있어 실패로 보지 않고, dxc 명령 수(check_fluid_fog_hlsl.py)를 대체 지표로 둔다. MI 수는 명세 13개 + 대형 정적 상자용 MI_TD_FluidFog_PassiveField 1개(반박 S7, 상자 가장자리 부드러움) + 감싸기 타일용 MI_TD_FluidFog_TileSync 1개(FX-10c F6) = 15개. 2026-10-26 FX-10c: C++ 구동 스칼라 SimAreaWrapped(기본 0, MI 덮어쓰기 금지)를 Custom 입력에 더함 — 1이면 창 UV 를 자르지 않고(RT TA_Wrap) 창 가중 1, 기존 마스터는 지우지 않고 식만 제자리 재구성(L-editor-67). 에디터 실행 전(py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만). 2026-10-31 K4 안개 시간 결정론: Custom 입력 ElapsedSeconds = Time(View.GameTime, PIE 시작 원점) − MPC 스칼라 FogFlowOriginSeconds(기본 0 이라 게임 모양 불변, MI 덮어쓰기 금지 — 정적 PassiveField MI 도 같은 마스터라 MID 매개변수 대신 MPC), pie_lookdev_fluid.py 가 안개 무대 단계 apply 마다 원점 = 그 게임 시각(fog_flow_origin). 에디터 재생성 전(py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만), 재생성 전에는 MPC 에 이 스칼라가 없어 안개 무대 룩데브 단계가 키 오류다.
+상태: 미검증(2026-10-25 FX-10r 작성: py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만, 에디터 실행 전). 앞단은 Substrate 안개·구름 BSDF 1순위, 연결 실패 시 기존 핀(BaseColor=알베도·SubsurfaceColor=소광·Emissive) 자동 변환. 구동(MID, SimGridResolution > 0.5)은 MID 창·바닥 = SimCenterWorld.z, 정적(MI)은 MPC 창·바닥 = ObjectPositionWS.z − ObjectBounds.z(반 크기). MI 값은 모양 정본(apply_to_instance)만 쓴다. 볼륨 도메인은 재질 통계 PS 명령이 0일 수 있어 실패로 보지 않고, dxc 명령 수(check_fluid_fog_hlsl.py)를 대체 지표로 둔다. MI 수는 명세 13개 + 대형 정적 상자용 MI_TD_FluidFog_PassiveField 1개(반박 S7, 상자 가장자리 부드러움) + 감싸기 타일용 MI_TD_FluidFog_TileSync 1개(FX-10c F6) = 15개. 2026-10-26 FX-10c: C++ 구동 스칼라 SimAreaWrapped(기본 0, MI 덮어쓰기 금지)를 Custom 입력에 더함 — 1이면 창 UV 를 자르지 않고(RT TA_Wrap) 창 가중 1, 기존 마스터는 지우지 않고 식만 제자리 재구성(L-editor-67). 에디터 실행 전(py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만). 2026-10-31 K4 안개 시간 결정론: Custom 입력 ElapsedSeconds = Time(View.GameTime, PIE 시작 원점) − MPC 스칼라 FogFlowOriginSeconds(기본 0 이라 게임 모양 불변, MI 덮어쓰기 금지 — 정적 PassiveField MI 도 같은 마스터라 MID 매개변수 대신 MPC), pie_lookdev_fluid.py 가 안개 무대 단계 apply 마다 원점 = 그 게임 시각(fog_flow_origin). 에디터 재생성 전(py_compile·가짜 unreal·check_fluid_fog_hlsl.py 만), 재생성 전에는 MPC 에 이 스칼라가 없어 안개 무대 룩데브 단계가 키 오류다. 2026-11-11 Q4-1 2판(지형을 따라가는 안개 바닥): Custom 입력 6개를 SimAreaWrapped 뒤에 더함 — C++ 구동 TerrainHeightTexture·TerrainHeightWindow·TerrainHeightDecode(float4 RGBA 핀, HVOL 과 같은 이름·해독)·FogTerrainFollow(기본 0, MI 덮어쓰기 금지)와 모양 스칼라 FogTerrainMaxDropCm 2000·FogTerrainBelowCutCm 20(MI 덮어쓰기 허용, 2026-11-11 최종 반박 M5 반영: 오목 꺾임 쌍선형 과대 추정 상한 = 경사 × 텍셀 / 4 ≈ 9.4 cm 의 2배·텍셀 1개, 1판 50 은 경사 × 텍셀 38 cm 로 과대 산정). FogTerrainFollow 가 1 이고 해독 z 가 1 인 구동 화소만 바닥 = 캡처 지형(창 안·지형 ≥ SimCenterWorld.z − MaxDrop)이고 지형 − BelowCut 아래 밀도 0. 에디터 재생성 전(check_fluid_fog_hlsl.py D1~D8b 만).
 """
 import hashlib
 import importlib.util
@@ -40,8 +40,10 @@ COLLECTION_SOURCE_BY_INPUT = {"FogWindowCenterWorld": "SimCenterWorld", "FogWind
 DRIVEN_VECTOR_DEFAULTS = (
     ("SimCenterWorld", (0.0, 0.0, 0.0, 0.0)),
     ("SimExtentsCm", (0.0, 0.0, 0.0, 0.0)),
+    ("TerrainHeightWindow", (0.0, 0.0, 0.0, 0.0)),
+    ("TerrainHeightDecode", (0.0, 0.0, 0.0, 0.0)),
 )
-DRIVEN_SCALAR_DEFAULTS = (("SimGridResolution", 0.0), ("SimAreaWrapped", 0.0))
+DRIVEN_SCALAR_DEFAULTS = (("SimGridResolution", 0.0), ("SimAreaWrapped", 0.0), ("FogTerrainFollow", 0.0))
 LOOK_VECTOR_DEFAULTS = (
     ("FogAlbedo", (0.8, 0.85, 0.95, 1.0)),
     ("FogExtinctionTint", (1.0, 1.0, 1.0, 1.0)),
@@ -65,10 +67,13 @@ LOOK_SCALAR_DEFAULTS = (
     ("FogCameraFadeStartCm", 0.0),
     ("FogCameraFadeLengthCm", 0.0),
     ("FogCameraFadeInvert", 0.0),
+    ("FogTerrainMaxDropCm", 2000.0),
+    ("FogTerrainBelowCutCm", 20.0),
 )
 VECTOR_PARAMETER_DEFAULTS = DRIVEN_VECTOR_DEFAULTS + LOOK_VECTOR_DEFAULTS
 SCALAR_PARAMETER_DEFAULTS = DRIVEN_SCALAR_DEFAULTS + LOOK_SCALAR_DEFAULTS
-TEXTURE_PARAMETER_NAMES = ("DensityPressureTexture", "NoiseVolumeTexture")
+TEXTURE_PARAMETER_NAMES = ("DensityPressureTexture", "NoiseVolumeTexture", "TerrainHeightTexture")
+FLOAT4_VECTOR_NAMES = ("TerrainHeightWindow", "TerrainHeightDecode")
 BUILTIN_SOURCE_NAMES = ("FogWorldPosition", "FogCameraPosition", "FogObjectPosition", "FogObjectBoundsCm", "ElapsedSeconds")
 VECTOR_INPUT_NAMES = (
     "FogWorldPosition", "FogCameraPosition", "FogObjectPosition", "FogObjectBoundsCm",
@@ -78,18 +83,21 @@ VECTOR_INPUT_NAMES = (
 CUSTOM_INPUT_NAMES = (
     "FogWorldPosition", "FogCameraPosition", "FogObjectPosition", "FogObjectBoundsCm", "ElapsedSeconds",
     "DensityPressureTexture", "NoiseVolumeTexture",
-    "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "SimAreaWrapped", "FogWindowCenterWorld", "FogWindowExtentsCm",
+    "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "SimAreaWrapped",
+    "TerrainHeightTexture", "TerrainHeightWindow", "TerrainHeightDecode", "FogTerrainFollow", "FogTerrainMaxDropCm", "FogTerrainBelowCutCm",
+    "FogWindowCenterWorld", "FogWindowExtentsCm",
     "FogExtinctionPerM", "FogExtinctionTint", "FogExtrudeHeightCm", "FogExtrudeExponent", "FogTopFadeCm",
     "FogNoiseSubtract", "FogNoiseScaleCm", "FogNoiseWindCmPerSec", "FogPassiveCoverage", "FogPassiveNoiseScaleCm",
     "FogWindowBlendRatio", "FogUsesWindowMask", "FogShape", "FogShapeSoftCm", "FogShellThicknessCm",
     "FogCameraFadeStartCm", "FogCameraFadeLengthCm", "FogCameraFadeInvert",
 )
-SAMPLER_NAMES = ("DensityPressureTextureSampler", "NoiseVolumeTextureSampler")
+SAMPLER_NAMES = ("DensityPressureTextureSampler", "NoiseVolumeTextureSampler", "TerrainHeightTextureSampler")
 ENGINE_SYMBOLS = ("Texture2DSampleLevel", "Texture3DSampleLevel")
 MID_DRIVEN_NAMES = (
     "SimCenterWorld", "SimExtentsCm", "SimGridResolution", "SimAreaWrapped", "DensityPressureTexture", "VelocityTexture",
     "PlaneAxisU", "PlaneAxisV", "PlaneAxisN", "PlaneCoordinateOffsetCm", "VolumeHeightCm", "VolumeBoxScale",
     "VolumeOffsetCm", "ExtrudeSymmetric", "AuxTexture", "AuxHeatActive",
+    "TerrainHeightTexture", "TerrainHeightWindow", "TerrainHeightDecode", "FogTerrainFollow",
 )
 CONDITIONAL_CPP_NAMES = ("DensityScale", "SoftFalloffCm")
 INSTANCE_NAMES = (
@@ -485,7 +493,7 @@ def build_sources(material, textures, collection):
         x, y = place()
         node = add_node(material, unreal.MaterialExpressionVectorParameter, x, y, parameter_name=name, default_value=unreal.LinearColor(*rgba))
         assign_parameter_group(node)
-        sources[name] = (node, "RGB")
+        sources[name] = (node, "RGBA" if name in FLOAT4_VECTOR_NAMES else "RGB")
     for name, value in SCALAR_PARAMETER_DEFAULTS:
         x, y = place()
         node = add_node(material, unreal.MaterialExpressionScalarParameter, x, y, parameter_name=name, default_value=value)
@@ -561,7 +569,7 @@ def verify_master_parameters(material):
     missing = [f"{kind}:{name}" for kind, names in expected.items() for name in names if name not in found[kind]]
     if missing:
         raise RuntimeError("마스터 파라미터 없음: " + ", ".join(missing))
-    for name, reason in (("SimGridResolution", "정적 역할 판정 깨짐"), ("SimAreaWrapped", "감싸기 끔 항등 깨짐")):
+    for name, reason in (("SimGridResolution", "정적 역할 판정 깨짐"), ("SimAreaWrapped", "감싸기 끔 항등 깨짐"), ("FogTerrainFollow", "따라가기 끔 항등 깨짐")):
         default_value = editing.get_material_default_scalar_parameter_value(material, name)
         if abs(default_value) > 1e-6:
             raise RuntimeError(f"마스터 {name} 기본값이 0이 아님({reason}): {default_value}")
@@ -650,7 +658,7 @@ def main():
     print("단계: 텍스처·MPC")
     texture_path, default_texture, default_sampler = pick_default_texture()
     noise_texture, noise_sampler = load_noise_volume()
-    textures = {"DensityPressureTexture": (default_texture, default_sampler), "NoiseVolumeTexture": (noise_texture, noise_sampler)}
+    textures = {"DensityPressureTexture": (default_texture, default_sampler), "NoiseVolumeTexture": (noise_texture, noise_sampler), "TerrainHeightTexture": (default_texture, default_sampler)}
     collection = load_or_create_collection(overwrite)
 
     print("단계: 마스터 재질")

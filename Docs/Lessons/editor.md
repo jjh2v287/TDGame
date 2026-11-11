@@ -814,3 +814,12 @@
 - 증거: 2026-11-09 Q1 S4 워크플로(run wf_4df1c416-d7a) 재생성 단계 보고, 뒤 촬영에서 수면 판 정상
 - 날짜·상태: 2026-11-09 active
 - 발견: claude(FluidFX 화질 1단계 S4)
+
+### L-editor-93 SceneCapture2D 높이 캡처를 독립 렌더러로 강제 재캡처하면 그 프레임 GPU 가 약 0.6 ms 늘고, 게임 뷰포트가 있을 때 bRenderInMainRenderer 로 돌리면 약 0.04 ms 다
+- 증상: Q4-1 지형 안개 TerrainOnly 높이 캡처의 강제 재캡처 프레임이 끔 대비 GPU +0.585 ms(사전 등록 상한 0.30 ms 초과).
+- 원인: [측정] 독립 렌더러 경로(기본)는 캡처마다 장면 렌더 설정 비용이 든다. 주 렌더러 안 패스(`USceneCaptureComponent2D::bRenderInMainRenderer`)는 그 비용을 공유한다[엔진 내부 경로는 미확인].
+- 해결: 게임 뷰포트가 있을 때만 bRenderInMainRenderer true, 없으면(헤드리스·RHI 오프스크린 시험·서버) 독립 렌더러로 되돌린다. 같은 렌더 타깃·해독 값으로 이어지고, 두 경로 화면 차이 0.18/255. 결과 +0.036 ms.
+- 범위: 재캡처형 SceneCapture2D(높이·깊이 캡처, bCaptureEveryFrame false) 전부
+- 증거: Saved/AgentOps/20261110/fog-terrain/cost/c2_after_summary.json, 좁은 독립 확인 MUST 0(2026-11-11)
+- 날짜·상태: 2026-11-11 active
+- 발견: claude(Q4-1 지형 안개)

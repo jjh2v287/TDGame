@@ -26,6 +26,13 @@ enum class ETDFluidVolumeHeightSource : uint8
 	SceneCapture
 };
 
+UENUM(BlueprintType)
+enum class ETDFluidHeightCaptureContent : uint8
+{
+	AllGeometry,
+	TerrainOnly
+};
+
 USTRUCT(BlueprintType)
 struct TDGAME_API FTDFluidVolumeDriverSettings
 {
@@ -81,6 +88,9 @@ struct TDGAME_API FTDFluidVolumeDriverSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX", meta = (ClampMin = "1.0", ClampMax = "8.0"))
 	float FogVolumeSizeMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
+	bool bFogFloorFollowsTerrain = false;
 };
 
 USTRUCT(BlueprintType)
@@ -165,6 +175,9 @@ struct TDGAME_API FTDFluidTerrainHeightSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
 	bool bSceneCaptureIgnoresPawns = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FluidFX")
+	ETDFluidHeightCaptureContent SceneCaptureContent = ETDFluidHeightCaptureContent::AllGeometry;
 };
 
 USTRUCT(BlueprintType)

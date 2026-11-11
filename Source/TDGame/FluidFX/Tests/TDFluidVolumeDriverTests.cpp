@@ -1,5 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -11,6 +13,8 @@
 #include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "GameFramework/Actor.h"
 #include "HAL/IConsoleManager.h"
+#include "LandscapeComponent.h"
+#include "LandscapeNaniteComponent.h"
 #include "Materials/Material.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/Package.h"
@@ -100,6 +104,61 @@ bool FTDFluidVolumeDriverPlacementMathTest::RunTest(const FString& Parameters)
 			TestTrue(TEXT("Center adds the offset along the basis"), Placement.Transform.GetLocation().Equals(ExpectedCenter, 1.0e-3));
 		}
 	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidVolumeDriverFogFloorFollowGateTest,
+	"TDGame.FluidFX.VolumeDriver.FogFloorFollowGate",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidVolumeDriverFogFloorFollowGateTest::RunTest(const FString& Parameters)
+{
+	TestFalse(TEXT("Default settings keep the fog floor flat"), UTDFluidVolumeDriverComponent::IsFogFloorFollowActive(FTDFluidVolumeDriverSettings(), FTDFluidTerrainHeightSettings(), true, true));
+	constexpr int32 GateConditionCount = 4;
+	for (int32 Combination = 0; Combination < (1 << GateConditionCount); ++Combination)
+	{
+		const bool bFollowsTerrain = (Combination & 1) != 0;
+		const bool bUsesSceneCapture = (Combination & 2) != 0;
+		const bool bHasHeightTexture = (Combination & 4) != 0;
+		const bool bIsWorldFacing = (Combination & 8) != 0;
+		FTDFluidVolumeDriverSettings Driver;
+		Driver.bFogFloorFollowsTerrain = bFollowsTerrain;
+		FTDFluidTerrainHeightSettings Terrain;
+		Terrain.VolumeHeightSource = bUsesSceneCapture ? ETDFluidVolumeHeightSource::SceneCapture : ETDFluidVolumeHeightSource::HeightCache;
+		const bool bExpected = bFollowsTerrain && bUsesSceneCapture && bHasHeightTexture && bIsWorldFacing;
+		const bool bIsActive = UTDFluidVolumeDriverComponent::IsFogFloorFollowActive(Driver, Terrain, bHasHeightTexture, bIsWorldFacing);
+		TestEqual(*FString::Printf(TEXT("Gate follow=%d capture=%d texture=%d world=%d"), bFollowsTerrain ? 1 : 0, bUsesSceneCapture ? 1 : 0, bHasHeightTexture ? 1 : 0, bIsWorldFacing ? 1 : 0), bIsActive, bExpected);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidVolumeDriverLandscapeSurfaceComponentTest,
+	"TDGame.FluidFX.VolumeDriver.LandscapeSurfaceComponent",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidVolumeDriverLandscapeSurfaceComponentTest::RunTest(const FString& Parameters)
+{
+	TestTrue(TEXT("Landscape render component is terrain"), UTDFluidVolumeDriverComponent::IsLandscapeSurfaceComponent(*GetDefault<ULandscapeComponent>()));
+	TestTrue(TEXT("Landscape Nanite component is terrain"), UTDFluidVolumeDriverComponent::IsLandscapeSurfaceComponent(*GetDefault<ULandscapeNaniteComponent>()));
+	TestFalse(TEXT("Grass base class (hierarchical instances) is not terrain"), UTDFluidVolumeDriverComponent::IsLandscapeSurfaceComponent(*GetDefault<UHierarchicalInstancedStaticMeshComponent>()));
+	TestFalse(TEXT("Instanced static mesh is not terrain"), UTDFluidVolumeDriverComponent::IsLandscapeSurfaceComponent(*GetDefault<UInstancedStaticMeshComponent>()));
+	TestFalse(TEXT("Static mesh is not terrain"), UTDFluidVolumeDriverComponent::IsLandscapeSurfaceComponent(*GetDefault<UStaticMeshComponent>()));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTDFluidVolumeDriverHeightCaptureRendererTest,
+	"TDGame.FluidFX.VolumeDriver.HeightCaptureRenderer",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDFluidVolumeDriverHeightCaptureRendererTest::RunTest(const FString& Parameters)
+{
+	TestTrue(TEXT("Terrain-only capture renders inside the main renderer when a game viewport draws the world"), UTDFluidVolumeDriverComponent::ShouldRenderHeightCaptureInMainRenderer(ETDFluidHeightCaptureContent::TerrainOnly, true));
+	TestFalse(TEXT("Terrain-only capture keeps its own renderer without a game viewport"), UTDFluidVolumeDriverComponent::ShouldRenderHeightCaptureInMainRenderer(ETDFluidHeightCaptureContent::TerrainOnly, false));
+	TestFalse(TEXT("All-geometry capture keeps its own renderer with a game viewport"), UTDFluidVolumeDriverComponent::ShouldRenderHeightCaptureInMainRenderer(ETDFluidHeightCaptureContent::AllGeometry, true));
+	TestFalse(TEXT("All-geometry capture keeps its own renderer without a game viewport"), UTDFluidVolumeDriverComponent::ShouldRenderHeightCaptureInMainRenderer(ETDFluidHeightCaptureContent::AllGeometry, false));
 	return true;
 }
 

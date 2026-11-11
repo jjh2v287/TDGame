@@ -15,6 +15,16 @@ float fogWindowWeight = fogHasWindow * smoothstep(0.0, fogBlendWidthCm, fogEdgeD
 fogWindowWeight = lerp(fogWindowWeight, 1.0, fogAreaWrapped);
 
 float fogFloorCm = TDFogFloorHeightCm(fogIsDriven);
+float fogTerrainKeep = 1.0;
+if (fogIsDriven > 0.5 && FogTerrainFollow > 0.5 && TerrainHeightDecode.z > 0.5)
+{
+    float2 fogTerrainUv = (FogWorldPosition.xy - TerrainHeightWindow.xy) / max(TerrainHeightWindow.zw, float2(1.0, 1.0)) + 0.5;
+    float2 fogTerrainClampedUv = saturate(fogTerrainUv);
+    float fogTerrainCm = Texture2DSampleLevel(TerrainHeightTexture, TerrainHeightTextureSampler, fogTerrainClampedUv, 0).r * TerrainHeightDecode.x + TerrainHeightDecode.y;
+    bool fogTerrainValid = all(fogTerrainUv == fogTerrainClampedUv) && fogTerrainCm >= fogFloorCm - max(FogTerrainMaxDropCm, 0.0);
+    fogTerrainKeep = (fogTerrainValid && FogWorldPosition.z < fogTerrainCm - max(FogTerrainBelowCutCm, 0.0)) ? 0.0 : 1.0;
+    fogFloorCm = fogTerrainValid ? fogTerrainCm : fogFloorCm;
+}
 float fogHeightCm = FogWorldPosition.z - fogFloorCm;
 float3 fogWindOffsetCm = ElapsedSeconds * FogNoiseWindCmPerSec;
 float fogShapeSoftCm = max(FogShapeSoftCm, 1.0);
@@ -54,6 +64,7 @@ float fogProfile = lerp(1.0, fogLayerProfile, fogUsesLayerProfile);
 
 float fogErosionNoise = TD_FOG_NOISE(FogWorldPosition + fogWindOffsetCm, FogNoiseScaleCm);
 float fogBase = saturate(fogSource * fogProfile - FogNoiseSubtract * fogErosionNoise);
+fogBase *= fogTerrainKeep;
 
 float fogRoleWeight = fogIsDriven > 0.5 ? fogWindowWeight : (FogUsesWindowMask > 0.5 ? 1.0 - fogWindowWeight : 1.0);
 float fogCameraDistanceCm = length(FogWorldPosition - FogCameraPosition);

@@ -9,6 +9,7 @@ class UHeterogeneousVolumeComponent;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
 class UMeshComponent;
+class UPrimitiveComponent;
 class USceneCaptureComponent2D;
 class UStaticMeshComponent;
 class UTextureRenderTarget2D;
@@ -75,6 +76,9 @@ public:
 	static bool ShouldRecollectTargets(double NowSeconds, double LastSeconds, const FTDFluidOutputTargetSettings& Settings, bool bForced);
 	static bool ShouldRecaptureHeight(const FVector2D& Center, const FVector2D& LastCenter, float CellCm, int32 Cells, bool bForced);
 	static bool IsDriverNeeded(const FTDFluidVolumeDriverSettings& Driver, const FTDFluidTerrainHeightSettings& Terrain, const UTDFluidPresetAsset* Preset);
+	static bool IsFogFloorFollowActive(const FTDFluidVolumeDriverSettings& Driver, const FTDFluidTerrainHeightSettings& Terrain, bool bHasHeightTexture, bool bIsWorldFacing);
+	static bool IsLandscapeSurfaceComponent(const UPrimitiveComponent& Component);
+	static bool ShouldRenderHeightCaptureInMainRenderer(ETDFluidHeightCaptureContent Content, bool bHasGameViewport);
 	static bool IsVolumeDomainMaterial(const UMaterialInterface* Material);
 	static FVector ComputeWorldOffsetCm(const FTDFluidPlaneBasis& Basis, const FVector& OffsetCm);
 
@@ -93,6 +97,11 @@ private:
 	void UpdateInternalFogVolume(const UTDFluidLiveComponent& LiveComponent, const FVector& PlaneCenterWorld, bool bIsVisible);
 	void UpdateSceneCapture(const UTDFluidLiveComponent& LiveComponent);
 	void ApplyDriverParametersToMID(const UTDFluidLiveComponent& LiveComponent, UMaterialInstanceDynamic& SlotMID) const;
+	void ApplyTerrainHeightParametersToMID(UMaterialInstanceDynamic& MID) const;
+	void ApplyFogFloorFollowToLiveVolume(const UTDFluidLiveComponent& LiveComponent) const;
+	void ClearFogFloorFollowOnLiveVolume() const;
+	void ApplyHeightCaptureContent();
+	void RestoreDefaultHeightCaptureContent();
 	int32 AddTaggedComponents(AActor& TaggedActor, FName Tag, ETDFluidOutputMaterialSlot Slot);
 	void ReleaseDriverResources();
 	UMaterialInstanceDynamic* FindSlotMID(ETDFluidOutputMaterialSlot Slot) const;

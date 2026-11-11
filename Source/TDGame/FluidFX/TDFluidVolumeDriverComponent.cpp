@@ -15,6 +15,9 @@
 #include "FluidFX/TDFluidRenderProfile.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "LandscapeComponent.h"
+#include "LandscapeNaniteComponent.h"
+#include "LandscapeProxy.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Misc/App.h"
@@ -26,6 +29,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogTDFluidVolumeDriver, Log, All);
 
 namespace
 {
+	const FName TDFluidTerrainActorTag(TEXT("TDFluidTerrain"));
+
 	constexpr ETDFluidOutputMaterialSlot TDFluidAllOutputSlots[] = {
 		ETDFluidOutputMaterialSlot::Primary,
 		ETDFluidOutputMaterialSlot::Secondary,
@@ -159,6 +164,29 @@ bool UTDFluidVolumeDriverComponent::IsDriverNeeded(const FTDFluidVolumeDriverSet
 		return false;
 	}
 	return !Preset->PrimaryOutputActorTag.IsNone() || !Preset->SecondaryOutputActorTag.IsNone() || !Preset->TertiaryOutputActorTag.IsNone();
+}
+
+bool UTDFluidVolumeDriverComponent::IsFogFloorFollowActive(const FTDFluidVolumeDriverSettings& Driver, const FTDFluidTerrainHeightSettings& Terrain, bool bHasHeightTexture, bool bIsWorldFacing)
+{
+	if (!Driver.bFogFloorFollowsTerrain)
+	{
+		return false;
+	}
+	if (Terrain.VolumeHeightSource != ETDFluidVolumeHeightSource::SceneCapture)
+	{
+		return false;
+	}
+	return bHasHeightTexture && bIsWorldFacing;
+}
+
+bool UTDFluidVolumeDriverComponent::IsLandscapeSurfaceComponent(const UPrimitiveComponent& Component)
+{
+	return Component.IsA<ULandscapeComponent>() || Component.IsA<ULandscapeNaniteComponent>();
+}
+
+bool UTDFluidVolumeDriverComponent::ShouldRenderHeightCaptureInMainRenderer(ETDFluidHeightCaptureContent Content, bool bHasGameViewport)
+{
+	return Content == ETDFluidHeightCaptureContent::TerrainOnly && bHasGameViewport;
 }
 
 bool UTDFluidVolumeDriverComponent::IsVolumeDomainMaterial(const UMaterialInterface* Material)
@@ -530,13 +558,90 @@ void UTDFluidVolumeDriverComponent::ApplyDriverParametersToMID(const UTDFluidLiv
 	{
 		return;
 	}
+	ApplyTerrainHeightParametersToMID(SlotMID);
+}
+
+void UTDFluidVolumeDriverComponent::ApplyTerrainHeightParametersToMID(UMaterialInstanceDynamic& MID) const
+{
 	const bool bHasHeightTexture = TerrainHeightTexture != nullptr;
 	if (bHasHeightTexture)
 	{
-		SlotMID.SetTextureParameterValue(TEXT("TerrainHeightTexture"), TerrainHeightTexture);
+		MID.SetTextureParameterValue(TEXT("TerrainHeightTexture"), TerrainHeightTexture);
 	}
-	SlotMID.SetVectorParameterValue(TEXT("TerrainHeightWindow"), FLinearColor(TerrainHeightWindow.X, TerrainHeightWindow.Y, TerrainHeightWindow.Z, TerrainHeightWindow.W));
-	SlotMID.SetVectorParameterValue(TEXT("TerrainHeightDecode"), FLinearColor(TerrainHeightDecode.X, TerrainHeightDecode.Y, bHasHeightTexture ? TerrainHeightDecode.Z : 0.0f, 0.0f));
+	MID.SetVectorParameterValue(TEXT("TerrainHeightWindow"), FLinearColor(TerrainHeightWindow.X, TerrainHeightWindow.Y, TerrainHeightWindow.Z, TerrainHeightWindow.W));
+	MID.SetVectorParameterValue(TEXT("TerrainHeightDecode"), FLinearColor(TerrainHeightDecode.X, TerrainHeightDecode.Y, bHasHeightTexture ? TerrainHeightDecode.Z : 0.0f, 0.0f));
+}
+
+void UTDFluidVolumeDriverComponent::ApplyFogFloorFollowToLiveVolume(const UTDFluidLiveComponent& LiveComponent) const
+{
+	UMaterialInstanceDynamic* LiveVolumeMID = LiveComponent.GetVolumeMaterialInstance();
+	if (!LiveVolumeMID)
+	{
+		return;
+	}
+	const bool bIsFollowActive = IsFogFloorFollowActive(DriverSettings, TerrainHeightSettings, TerrainHeightTexture != nullptr, LiveComponent.GetPlaneBasis().IsWorldFacing());
+	if (bIsFollowActive)
+	{
+		ApplyTerrainHeightParametersToMID(*LiveVolumeMID);
+	}
+	LiveVolumeMID->SetScalarParameterValue(TEXT("FogTerrainFollow"), bIsFollowActive ? 1.0f : 0.0f);
+}
+
+void UTDFluidVolumeDriverComponent::ClearFogFloorFollowOnLiveVolume() const
+{
+	const AActor* Owner = GetOwner();
+	const UTDFluidLiveComponent* LiveComponent = Owner ? Owner->FindComponentByClass<UTDFluidLiveComponent>() : nullptr;
+	UMaterialInstanceDynamic* LiveVolumeMID = IsValid(LiveComponent) ? LiveComponent->GetVolumeMaterialInstance() : nullptr;
+	if (!IsValid(LiveVolumeMID))
+	{
+		return;
+	}
+	LiveVolumeMID->SetScalarParameterValue(TEXT("FogTerrainFollow"), 0.0f);
+}
+
+void UTDFluidVolumeDriverComponent::ApplyHeightCaptureContent()
+{
+	if (TerrainHeightSettings.SceneCaptureContent != ETDFluidHeightCaptureContent::TerrainOnly)
+	{
+		RestoreDefaultHeightCaptureContent();
+		return;
+	}
+	CSV_SCOPED_TIMING_STAT(TDFluid, HeightCaptureList);
+	HeightCapture->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
+	HeightCapture->bRenderInMainRenderer = ShouldRenderHeightCaptureInMainRenderer(TerrainHeightSettings.SceneCaptureContent, GetWorld()->GetGameViewport() != nullptr);
+	HeightCapture->ShowOnlyActors.Reset();
+	HeightCapture->ClearShowOnlyComponents();
+	for (TActorIterator<AActor> ActorIt(GetWorld()); ActorIt; ++ActorIt)
+	{
+		AActor* Actor = *ActorIt;
+		if (Actor->IsA<ALandscapeProxy>())
+		{
+			Actor->ForEachComponent<UPrimitiveComponent>(false, [this](UPrimitiveComponent* Component)
+			{
+				if (IsLandscapeSurfaceComponent(*Component))
+				{
+					HeightCapture->ShowOnlyComponents.Add(Component);
+				}
+			});
+			continue;
+		}
+		if (Actor->ActorHasTag(TDFluidTerrainActorTag))
+		{
+			HeightCapture->ShowOnlyActors.Add(Actor);
+		}
+	}
+}
+
+void UTDFluidVolumeDriverComponent::RestoreDefaultHeightCaptureContent()
+{
+	if (HeightCapture->PrimitiveRenderMode != ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList)
+	{
+		return;
+	}
+	HeightCapture->PrimitiveRenderMode = GetDefault<USceneCaptureComponent2D>()->PrimitiveRenderMode;
+	HeightCapture->bRenderInMainRenderer = GetDefault<USceneCaptureComponent2D>()->bRenderInMainRenderer;
+	HeightCapture->ShowOnlyActors.Reset();
+	HeightCapture->ClearShowOnlyComponents();
 }
 
 void UTDFluidVolumeDriverComponent::UpdateInternalHeterogeneousVolume(const UTDFluidLiveComponent& LiveComponent, const FVector& PlaneCenterWorld, bool bIsVisible)
@@ -641,6 +746,7 @@ void UTDFluidVolumeDriverComponent::UpdateSceneCapture(const UTDFluidLiveCompone
 	const double WidthCm = FMath::Max(ExtentCm.X, ExtentCm.Y) * (1.0 + 2.0 * TerrainHeightSettings.SceneCaptureMarginRatio);
 	HeightCapture->OrthoWidth = static_cast<float>(WidthCm);
 	HeightCapture->SetWorldLocationAndRotation(FVector(CenterCm.X, CenterCm.Y, CaptureZ), FRotator(-90.0, -90.0, 0.0));
+	ApplyHeightCaptureContent();
 	HeightCapture->HiddenActors.Reset();
 	if (Owner)
 	{
@@ -682,6 +788,7 @@ void UTDFluidVolumeDriverComponent::DriveTargets(const UTDFluidLiveComponent& Li
 			ApplyDriverParametersToMID(LiveComponent, *SlotMID);
 		}
 	}
+	ApplyFogFloorFollowToLiveVolume(LiveComponent);
 
 	const AActor* Owner = GetOwner();
 	const double OwnerZ = Owner ? Owner->GetActorLocation().Z : 0.0;
@@ -751,6 +858,7 @@ void UTDFluidVolumeDriverComponent::ReleaseDriverResources()
 		RestoreTargetMaterials();
 	}
 	DrivenTargets.Reset();
+	ClearFogFloorFollowOnLiveVolume();
 	TDFluidDestroyOwnedComponent(InternalHeterogeneousVolume);
 	TDFluidDestroyOwnedComponent(InternalFogVolume);
 	TDFluidDestroyOwnedComponent(HeightCapture);

@@ -195,6 +195,7 @@ public:
 
 	bool SetPlaneBasis(const FTDFluidPlaneBasis& InBasis, const FVector& PivotWorld, double DepthBiasCm);
 	const FTDFluidPlaneBasis& GetPlaneBasis() const { return PlaneBasis; }
+	UMaterialInstanceDynamic* GetVolumeMaterialInstance() const { return VolumeMID; }
 	double GetPlaneDepthCm() const { return PlaneDepthCm; }
 	FTDFluidPlaneSettings GetPlaneSettings() const;
 	FTDFluidVolumeRenderSettings GetVolumeRenderSettings() const;

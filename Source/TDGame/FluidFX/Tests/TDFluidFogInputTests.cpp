@@ -11,6 +11,7 @@
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidTypes.h"
+#include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "GameFramework/PlayerController.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
@@ -297,6 +298,21 @@ bool FTDFluidFogInputKindsDataContractTest::RunTest(const FString& Parameters)
 	for (const ETDFluidPresetKind Kind : FogKinds)
 	{
 		TestFalse(*(UEnum::GetValueAsString(Kind) + TEXT(" is not a fire family kind")), UTDFluidPresetAsset::IsFireFamilyPresetKind(Kind));
+	}
+
+	for (const ETDFluidPresetKind Kind : FogKinds)
+	{
+		const FString KindName = UEnum::GetValueAsString(Kind);
+		const bool bIsFogMist = Kind == ETDFluidPresetKind::FogMist;
+		const FTDFluidVolumeDriverSettings FogDriver = UTDFluidPresetAsset::BuildVolumeDriverForPresetKind(Kind);
+		TestEqual(*(KindName + TEXT(" lets the fog floor follow the terrain only for FogMist")), FogDriver.bFogFloorFollowsTerrain, bIsFogMist);
+		if (!bIsFogMist)
+		{
+			continue;
+		}
+		const FTDFluidTerrainHeightSettings FogTerrain = UTDFluidPresetAsset::BuildTerrainHeightForPresetKind(Kind);
+		TestTrue(*(KindName + TEXT(" reads the floor height from the scene capture")), FogTerrain.VolumeHeightSource == ETDFluidVolumeHeightSource::SceneCapture);
+		TestTrue(*(KindName + TEXT(" captures terrain only")), FogTerrain.SceneCaptureContent == ETDFluidHeightCaptureContent::TerrainOnly);
 	}
 
 	const ETDFluidPresetKind UnchangedKinds[] = { ETDFluidPresetKind::Smoke, ETDFluidPresetKind::Water, ETDFluidPresetKind::Torch, ETDFluidPresetKind::TileWaves, ETDFluidPresetKind::FogMist, ETDFluidPresetKind::FogTileSim };

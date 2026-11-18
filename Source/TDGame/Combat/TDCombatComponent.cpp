@@ -6,6 +6,7 @@
 #include "Core/TDGameplayMessages.h"
 #include "Core/TDGameplayTags.h"
 #include "Combat/Damage/TDDamageDefinition.h"
+#include "Combat/Damage/TDDamageFormula.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
 #include "Engine/World.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
@@ -279,10 +280,11 @@ FTDDamageResult UTDCombatComponent::ReceiveDamage(float RawDamage, ETDDamageElem
 		return Result;
 	}
 	const float Chance = FMath::Clamp(TDCombatInitialization::NonNegative(Context.Stats.CriticalChance), 0.f, 1.f);
-	Result.bWasCritical = bCanCrit && Chance > 0.f && (Chance >= 1.f || FMath::FRand() < Chance);
-	const double Multiplier = Result.bWasCritical ? FMath::Max(1.f, TDCombatInitialization::NonNegative(Context.Stats.CriticalMultiplier)) : 1.;
+	UTDDamageSubsystem* DamageSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UTDDamageSubsystem>() : nullptr;
+	FRandomStream* RandomStream = Context.RandomStream ? Context.RandomStream : (DamageSubsystem ? &DamageSubsystem->ResolveRandomStream(Context) : nullptr);
+	Result.bWasCritical = TDDamageFormula::RollCritical(bCanCrit, Chance, RandomStream);
 	const double Resistance = Element == ETDDamageElement::Physical ? CombatAttributes->GetArmor() : CombatAttributes->GetMagicResistance();
-	const float Damage = static_cast<float>(FMath::Min(static_cast<double>(TNumericLimits<float>::Max()), RawDamage * Multiplier * 100. / (100. + Resistance)));
+	const float Damage = TDDamageFormula::Compute(RawDamage, Result.bWasCritical, TDCombatInitialization::NonNegative(Context.Stats.CriticalMultiplier), Resistance);
 	FGameplayEffectContextHandle EffectContext = MakeEffectContext();
 	EffectContext.AddInstigator(Context.Caster.Get(), Context.Caster.Get());
 	FGameplayEffectSpecHandle Spec = MakeOutgoingSpec(UTDInstantDamageEffect::StaticClass(), FMath::Clamp(Context.Stats.Level, 1, 1000), EffectContext);

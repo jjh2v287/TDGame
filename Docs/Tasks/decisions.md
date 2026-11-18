@@ -538,4 +538,4 @@
 - 사실: 외부 제안 대부분이 이미 있거나 기존 분석 GP 항목과 겹친다(상호작용 GP-17, 저장 GP-08·09, 목표 GP-10, 기록 GP-13, 효과 GP-27·28). StateTree 마을 AI·런타임 방 조립·거래 경제는 결정(D4·D44)·설계와 충돌한다. C++의 약 63%(시험 제외 약 52%)가 유체·안개이고 사람 완주 기록이 0이다. `Core/TDGameplayMessages.h`가 전투 헤더를 포함하므로 경계 허용 목록에서 `Core/`를 뺀다.
 - 제안(권장안): 기반 시스템(FD-01~06)을 한 판 단계가 부를 때 계약부터 만들고 `Foundation/` 폴더 + `Tools/check_foundation_boundary.py`(간접 포함 추적)로 경계를 지킨다. 새 모듈·플러그인은 두 번째 프로젝트 때. 게임플레이 대장 1개에 GP·FD 항목을 등록한다([1-13]과 같은 대장). 14절 목록에서 빠진 `FluidFX/`·`MonsterAI/`·`Combat/Feedback/`도 함께 정리한다. 3D 안개 현 구간을 닫은 뒤 한 판 단계 3까지 게임 우선(FDQ-01).
 - 근거: `Docs/GameplayFoundation_Plan.md`, 조사·반박·설계안·계획 반박 `Saved/AgentOps/20261117/foundation-plan/`.
-- 상태: decision 대기 (제안 2026-11-17 claude). 사용자 카드 [1-14]·[1-15]·[7-28]·[7-29].
+- 상태: accepted (2026-11-18 사용자 "권장대로 진행", claude 기록). AGENTS.md 14·15절 반영, 대장 `Docs/Gameplay_Tasks.md`(1절에 FDQ·GQ 적용 기록). 카드 [1-13]·[1-14]·[1-15]·[7-28]·[7-29] 답함. AGENTS.md가 20KiB 상한에 가까워(약 20.4KB) 다음 규칙 추가 전에 압축이 필요하다.

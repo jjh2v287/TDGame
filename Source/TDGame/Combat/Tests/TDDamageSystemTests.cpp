@@ -9,6 +9,7 @@
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDDamageEntity.h"
 #include "Combat/Damage/TDDamageExamples.h"
+#include "Combat/Damage/TDDamageFormula.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
 #include "Combat/Damage/TDStatusDefinition.h"
 #include "Components/BoxComponent.h"
@@ -762,6 +763,137 @@ bool FTDGASHealthModifierPolicyTest::RunTest(const FString& Parameters)
 	Modifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(50.f));
 	AddExpectedMessage(TEXT("Rejected persistent Health modifier"), ELogVerbosity::Warning);
 	TestFalse(TEXT("Persistent Health modifiers cannot create an unkillable health floor"), Target->ApplyGameplayEffectToSelf(HealthBuff, 1.f, Target->MakeEffectContext()).WasSuccessfullyApplied());
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDDamageFormulaMatchesLegacyTest, "TDGame.Combat.DamageFormulaMatchesLegacyExpression", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDDamageFormulaMatchesLegacyTest::RunTest(const FString& Parameters)
+{
+	const auto LegacyDamage = [](double RawDamage, bool bIsCritical, float CriticalMultiplier, double Resistance)
+	{
+		const double Multiplier = bIsCritical ? FMath::Max(1.f, CriticalMultiplier) : 1.;
+		return static_cast<float>(FMath::Min(static_cast<double>(TNumericLimits<float>::Max()), RawDamage * Multiplier * 100. / (100. + Resistance)));
+	};
+	const double RawValues[] = { 0.5, 1., 100., 12345.678, 3.0e38 };
+	const float CriticalMultipliers[] = { 0.f, 0.5f, 1.f, 2.f, 3.75f };
+	const double Resistances[] = { 0., 50., 100., 999., -50. };
+	for (const double RawDamage : RawValues)
+	{
+		for (const float CriticalMultiplier : CriticalMultipliers)
+		{
+			for (const double Resistance : Resistances)
+			{
+				for (const bool bIsCritical : { false, true })
+				{
+					TestEqual(TEXT("Formula equals the legacy expression"), TDDamageFormula::Compute(RawDamage, bIsCritical, CriticalMultiplier, Resistance), LegacyDamage(RawDamage, bIsCritical, CriticalMultiplier, Resistance));
+				}
+			}
+		}
+	}
+	TestEqual(TEXT("One hundred armor halves a normal hit"), TDDamageFormula::Compute(100., false, 2., 100.), 50.f);
+	TestEqual(TEXT("A critical hit doubles before mitigation"), TDDamageFormula::Compute(100., true, 2., 100.), 100.f);
+	FTDScopedCombatWorld Fixture;
+	UTDCombatComponent* Caster = Fixture.SpawnCombatant(FVector(-500.f, 0.f, 0.f), 0);
+	UTDCombatComponent* Target = Fixture.SpawnCombatant(FVector::ZeroVector);
+	FTDCombatStats TargetStats = Target->GetStats();
+	TargetStats.BaseMaxHealth = 100000.f;
+	TargetStats.Armor = 60.f;
+	TargetStats.MagicResistance = 25.f;
+	Target->SetStats(TargetStats);
+	FTDDamageContext Context = MakeContext(Caster);
+	Context.Stats.CriticalMultiplier = 2.5f;
+	for (const float Chance : { 0.f, 1.f })
+	{
+		Context.Stats.CriticalChance = Chance;
+		for (const ETDDamageElement Element : { ETDDamageElement::Physical, ETDDamageElement::Fire })
+		{
+			const double Resistance = Element == ETDDamageElement::Physical ? 60. : 25.;
+			const FTDDamageResult Result = Target->ReceiveDamage(123.f, Element, true, Context);
+			TestNearlyEqual(TEXT("Component damage equals the legacy expression"), Result.AppliedDamage, LegacyDamage(123., Chance >= 1.f, 2.5f, Resistance), 0.02f);
+		}
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDDamageSeededRandomStreamTest, "TDGame.Combat.SeededRandomStreamIsReproducible", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDDamageSeededRandomStreamTest::RunTest(const FString& Parameters)
+{
+	FRandomStream Stream;
+	FTDScopedCombatWorld Fixture;
+	UTDCombatComponent* Caster = Fixture.SpawnCombatant(FVector(-500.f, 0.f, 0.f), 0);
+	UTDCombatComponent* Target = Fixture.SpawnCombatant(FVector::ZeroVector);
+	FTDCombatStats TargetStats = Target->GetStats();
+	TargetStats.BaseMaxHealth = 1000000.f;
+	Target->SetStats(TargetStats);
+	UTDDamageDefinition* Marker = NewObject<UTDDamageDefinition>(Fixture.World);
+	Marker->Lifetime = 100.f;
+	FTDDamageAction Scatter;
+	Scatter.Type = ETDDamageActionType::SpawnEntity;
+	Scatter.Entity = Marker;
+	Scatter.SpawnCount = 8;
+	Scatter.ScatterRadius = 500.f;
+	const TArray<FTDDamageRule> ScatterRules = { MakeRule(ETDDamageEvent::Hit, Scatter) };
+
+	const auto RunWithSeed = [&](int32 Seed, bool bUseSubsystemStream, TArray<bool>& OutCriticals, TArray<FVector>& OutLocations)
+	{
+		FTDDamageContext Context = MakeContext(Caster);
+		Context.Stats.CriticalChance = 0.5f;
+		if (bUseSubsystemStream)
+		{
+			Context.RandomStream = nullptr;
+			Fixture.GetDamageSubsystem()->SeedCombatStream(Seed);
+		}
+		else
+		{
+			Stream.Initialize(Seed);
+			Context.RandomStream = &Stream;
+		}
+		OutCriticals.Reset();
+		for (int32 Index = 0; Index < 32; ++Index)
+		{
+			OutCriticals.Add(Target->ReceiveDamage(1.f, ETDDamageElement::Physical, true, Context).bWasCritical);
+		}
+		TSet<const ATDDamageEntity*> ExistingEntities;
+		for (TActorIterator<ATDDamageEntity> Entity(Fixture.World); Entity; ++Entity)
+		{
+			ExistingEntities.Add(*Entity);
+		}
+		Fixture.GetDamageSubsystem()->ExecuteRules(ScatterRules, ETDDamageEvent::Hit, Context, Target->GetOwner(), FVector::ZeroVector);
+		OutLocations.Reset();
+		for (TActorIterator<ATDDamageEntity> Entity(Fixture.World); Entity; ++Entity)
+		{
+			if (!ExistingEntities.Contains(*Entity))
+			{
+				OutLocations.Add(Entity->GetActorLocation());
+			}
+		}
+		OutLocations.Sort([](const FVector& Left, const FVector& Right) { return Left.X != Right.X ? Left.X < Right.X : Left.Y < Right.Y; });
+	};
+
+	TArray<bool> FirstCriticals;
+	TArray<bool> SecondCriticals;
+	TArray<bool> OtherCriticals;
+	TArray<FVector> FirstLocations;
+	TArray<FVector> SecondLocations;
+	TArray<FVector> OtherLocations;
+	TArray<bool> SubsystemFirstCriticals;
+	TArray<bool> SubsystemSecondCriticals;
+	TArray<FVector> SubsystemFirstLocations;
+	TArray<FVector> SubsystemSecondLocations;
+	RunWithSeed(1234, false, FirstCriticals, FirstLocations);
+	RunWithSeed(1234, false, SecondCriticals, SecondLocations);
+	RunWithSeed(98765, false, OtherCriticals, OtherLocations);
+	RunWithSeed(1234, true, SubsystemFirstCriticals, SubsystemFirstLocations);
+	RunWithSeed(1234, true, SubsystemSecondCriticals, SubsystemSecondLocations);
+	TestEqual(TEXT("Scatter spawns every requested entity"), FirstLocations.Num(), 8);
+	TestTrue(TEXT("The same seed repeats the critical sequence"), FirstCriticals == SecondCriticals);
+	TestTrue(TEXT("The same seed repeats the scatter positions"), FirstLocations == SecondLocations);
+	TestTrue(TEXT("A different seed changes the critical sequence"), FirstCriticals != OtherCriticals);
+	TestTrue(TEXT("A different seed changes the scatter positions"), FirstLocations != OtherLocations);
+	TestTrue(TEXT("The subsystem stream repeats the critical sequence for the same seed"), SubsystemFirstCriticals == SubsystemSecondCriticals);
+	TestTrue(TEXT("The subsystem stream repeats the scatter positions for the same seed"), SubsystemFirstLocations == SubsystemSecondLocations);
 	return true;
 }
 

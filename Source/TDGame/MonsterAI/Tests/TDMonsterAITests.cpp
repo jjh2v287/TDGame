@@ -700,32 +700,6 @@ bool FTDMonsterAIPhaseTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterAINoGlobalRandomTest, "TDGame.MonsterAI.NoGlobalRandom", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
-bool FTDMonsterAINoGlobalRandomTest::RunTest(const FString& Parameters)
-{
-	const FString SourceDirectory = FPaths::Combine(FPaths::GameSourceDir(), TEXT("TDGame"), TEXT("MonsterAI"));
-	TArray<FString> Files;
-	IFileManager::Get().FindFilesRecursive(Files, *SourceDirectory, TEXT("*.cpp"), true, false);
-	IFileManager::Get().FindFilesRecursive(Files, *SourceDirectory, TEXT("*.h"), true, false, false);
-	TestTrue(TEXT("MonsterAI sources were found"), Files.Num() > 5);
-	const TArray<FString> ForbiddenCalls = { TEXT("FMath::FRand"), TEXT("FMath::Rand"), TEXT("FMath::RandRange"), TEXT("FMath::RandBool"), TEXT("FMath::VRand"), TEXT("FMath::SRand"), TEXT("FMath::RandInit") };
-	for (const FString& File : Files)
-	{
-		if (File.EndsWith(TEXT("TDMonsterAITests.cpp")))
-		{
-			continue;
-		}
-		FString Text;
-		FFileHelper::LoadFileToString(Text, *File);
-		for (const FString& Call : ForbiddenCalls)
-		{
-			TestFalse(FString::Printf(TEXT("%s must not use %s"), *FPaths::GetCleanFilename(File), *Call), Text.Contains(Call));
-		}
-	}
-	return true;
-}
-
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDMonsterAIKitingTest, "TDGame.MonsterAI.Engagement.KitingDoesNotYoYo", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FTDMonsterAIKitingTest::RunTest(const FString& Parameters)

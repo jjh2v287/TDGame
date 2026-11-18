@@ -262,8 +262,11 @@ void UTDDamageSubsystem::ExecuteAction(const FTDDamageAction& Action, const TArr
 		{
 			return;
 		}
-		const float Angle = FMath::FRand() * UE_TWO_PI;
-		const float Distance = FMath::Sqrt(FMath::FRand()) * FMath::Max(0.f, Action.ScatterRadius);
+		FRandomStream& ScatterStream = ResolveRandomStream(Context);
+		const float AngleFraction = ScatterStream.FRand();
+		const float DistanceFraction = ScatterStream.FRand();
+		const float Angle = AngleFraction * UE_TWO_PI;
+		const float Distance = FMath::Sqrt(DistanceFraction) * FMath::Max(0.f, Action.ScatterRadius);
 		const FVector SpawnLocation = Anchor + Action.SpawnOffset + FVector(FMath::Cos(Angle) * Distance, FMath::Sin(Angle) * Distance, 0.f);
 		FTDDamageContext ChildContext = Context;
 		++ChildContext.Depth;
@@ -329,6 +332,22 @@ void UTDDamageSubsystem::GatherTargets(const FVector& Center, float Radius, floa
 			OutTargets.Add(Combatant);
 		}
 	}
+}
+
+void UTDDamageSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	CombatStream.Initialize(static_cast<int32>(FPlatformTime::Cycles64()));
+}
+
+FRandomStream& UTDDamageSubsystem::ResolveRandomStream(const FTDDamageContext& Context)
+{
+	return Context.RandomStream ? *Context.RandomStream : CombatStream;
+}
+
+void UTDDamageSubsystem::SeedCombatStream(int32 Seed)
+{
+	CombatStream.Initialize(Seed);
 }
 
 void UTDDamageSubsystem::Deinitialize()

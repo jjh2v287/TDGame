@@ -166,7 +166,7 @@
 
 ## 14. 소스 폴더 구조와 PJGame 이식 규칙
 
-- `Source/TDGame`은 역할별 폴더로 나뉜다: `Core/`(태그·메시지·아이템 타입), `Characters/`, `Framework/`, `Combat/`(전투 컴포넌트·라이브러리), `Combat/Damage/`, `Combat/GAS/`(+`Abilities/`), `Combat/Skills/`, `AI/{CombatToken,NPC}/`, `Performance/BudgetTick/`, `Actors/`, `World/{Streaming,Persistence,Generation}/`, `Tests/`. 새 파일은 같은 역할의 폴더에 두고, 인클루드는 모듈 루트 기준 경로(`"Combat/TDCombatLibrary.h"`)로 쓴다.
+- `Source/TDGame`은 역할별 폴더로 나뉜다: `Core/`(태그·메시지·아이템 타입), `Characters/`, `Framework/`, `Combat/`(전투 컴포넌트·라이브러리), `Combat/Damage/`, `Combat/GAS/`(+`Abilities/`), `Combat/Skills/`, `AI/{CombatToken,NPC}/`, `Performance/BudgetTick/`, `Actors/`, `World/{Streaming,Persistence,Generation}/`, `Foundation/`(기반 코드, `Tools/check_foundation_boundary.py`), `Tests/`. 새 파일은 같은 역할의 폴더에 두고, 인클루드는 모듈 루트 기준 경로(`"Combat/TDCombatLibrary.h"`)로 쓴다.
 - 이전 프로젝트 `C:\Project\PJGame` 코드는 `Docs/PJGame_PortMap.md`의 대응표대로 이식되어 있다. 추가로 옮길 때는 `Docs/Tasks/decisions.md` D-11의 대체 규칙(ASC는 `UTDCombatComponent` 하나, 팀은 `FTDCombatStats.TeamId`, 데미지는 `UTDCombatLibrary::TryApplyDamage`, 태그는 `Core/TDGameplayTags.h`)을 따르고 표에 한 줄 추가한다.
 
 ## 15. 공통 관리 규칙: 세션·도구·기록 (모든 에이전트)
@@ -193,6 +193,7 @@
 | 몬스터 AI·전투 시뮬 | `Docs/MonsterAI_CombatSim/07-roadmap-and-tasks.md`(M) | 같은 폴더 `00-decision-record.md`(D1~), 07 §4(MD-) | `Docs/MonsterAI_CombatSim/measurements/` | combat |
 | 애니메이션 | `Docs/AnimationAuthoring_Tasks.md`(A~G) | 같은 파일 D절 | `Docs/Validation/BlenderAnimation/` | anim |
 | 전투 기반(GAS·데미지) | 대장 없음(`Docs/TDDamageSystemGuide.md`) | `Docs/Tasks/decisions.md` D-11 | `Docs/Validation/` | combat |
+| 게임플레이 | `Docs/Gameplay_Tasks.md`(GP·GF·FD) | 같은 파일 1절·D-65 | `Docs/Validation/Gameplay/` | gameplay |
 | 공통(빌드·에디터·저장소) | — | `Docs/Tasks/decisions.md` '관리 체계' 절 | `Docs/Validation/` | build, editor, repo |
 
 작성 규칙: 이 파일은 20KiB 이하(권고 18KiB), 절 번호 불변, 코드 스팬 밖의 `@경로`와 HTML 주석 금지(세 에이전트가 임포트로 해석한다). 규칙 추가·변경은 사용자 승인 뒤에만 하고 에이전트는 `Docs/Tasks/decisions.md` '관리 체계' 절에 제안만 남긴다.

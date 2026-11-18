@@ -15,6 +15,7 @@
 #include "Engine/AssetManager.h"
 #include "Engine/Engine.h"
 #include "Engine/StreamableManager.h"
+#include "HAL/IConsoleManager.h"
 #include "InputCoreTypes.h"
 #include "Misc/PackageName.h"
 #include "GameFramework/Pawn.h"
@@ -36,9 +37,12 @@
 #include "Engine/GameInstance.h"
 #include "World/Streaming/TDSeamlessTravelSubsystem.h"
 #include "World/Persistence/TDWorldStateSubsystem.h"
+#include "Framework/TDPauseMenuSubsystem.h"
 
 namespace
 {
+	TAutoConsoleVariable<bool> CVarShowDevelopmentOverlay(TEXT("TD.Dev.ShowOverlay"), false, TEXT("Shows developer help and caster level on-screen messages."), ECVF_Default);
+
 	const TCHAR* const DefaultMeleeActionPath = TEXT("/Game/Characters/Mannequins/Anims/Sword/AS_TD_Player_SwordAttack01.AS_TD_Player_SwordAttack01");
 	const TCHAR* const DefaultCombatMappingContextPath = TEXT("/Game/Combat/Input/IMC_TDCombat.IMC_TDCombat");
 	const TCHAR* const DefaultCombatRollActionPath = TEXT("/Game/Combat/Input/IA_TDRoll.IA_TDRoll");
@@ -128,6 +132,7 @@ void ATDGamePlayerController::SetupInputComponent()
 		InputComponent->BindKey(EKeys::Eight, IE_Pressed, this, &ATDGamePlayerController::CastEighthDamageSpell);
 		InputComponent->BindKey(EKeys::Nine, IE_Pressed, this, &ATDGamePlayerController::CastNinthDamageSpell);
 		InputComponent->BindKey(EKeys::Zero, IE_Pressed, this, &ATDGamePlayerController::CastTenthDamageSpell);
+		InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ATDGamePlayerController::TogglePauseMenu).bExecuteWhenPaused = true;
 
 		// Add Input Mapping Context
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
@@ -522,7 +527,7 @@ void ATDGamePlayerController::BeginPlay()
 	}
 
 	LoadCombatInputAssets();
-	if (GEngine)
+	if (GEngine && CVarShowDevelopmentOverlay.GetValueOnGameThread())
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::White, TEXT("WASD Move + Mouse Aim | Left Click Move\n1 Fireball | 2 Blizzard | 3 Mine | 4 Shockwave | 5 Meteor | 6 Delayed Homing\n7 Thunder Cage | 8 Venom Bloom | 9 Astral Lances | 0 Phoenix Dive\nConsole: TDSpawnDamageTargets / TDSetCasterLevel 10 / TDSpawnMonster Goblin 1 350"));
 	}
@@ -639,6 +644,17 @@ void ATDGamePlayerController::CastEighthDamageSpell()
 void ATDGamePlayerController::CastNinthDamageSpell()
 {
 	CastDamageSpell(8);
+}
+
+void ATDGamePlayerController::TogglePauseMenu()
+{
+	UWorld* World = GetWorld();
+	UTDPauseMenuSubsystem* PauseMenu = World ? World->GetSubsystem<UTDPauseMenuSubsystem>() : nullptr;
+	if (!PauseMenu)
+	{
+		return;
+	}
+	PauseMenu->ToggleMenu(*this);
 }
 
 void ATDGamePlayerController::CastTenthDamageSpell()
@@ -1010,7 +1026,7 @@ void ATDGamePlayerController::TDSetCasterLevel(int32 Level)
 	UTDCombatComponent* Combat = ControlledCharacter->GetCombatComponent();
 	Combat->SetCombatLevel(Level);
 	const FTDCombatStats Stats = Combat->GetStats();
-	if (GEngine)
+	if (GEngine && CVarShowDevelopmentOverlay.GetValueOnGameThread())
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("Caster level %d | Attack %.1f | Spell %.1f"), Stats.Level, Stats.GetAttackPower(), Stats.GetSpellPower()));
 	}

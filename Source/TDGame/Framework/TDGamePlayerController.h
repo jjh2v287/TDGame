@@ -170,6 +170,7 @@ protected:
 	void CastEighthDamageSpell();
 	void CastNinthDamageSpell();
 	void CastTenthDamageSpell();
+	void TogglePauseMenu();
 
 private:
 	void SetupKeyboardMovement();

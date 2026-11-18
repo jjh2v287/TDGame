@@ -4,6 +4,7 @@
 #include "Combat/TDCombatComponent.h"
 #include "Combat/Damage/TDDamageDefinition.h"
 #include "Combat/Damage/TDDamageSubsystem.h"
+#include "Combat/Skills/TDSkillComponent.h"
 #include "Abilities/GameplayAbilityTargetTypes.h"
 #include "AbilitySystemGlobals.h"
 #include "Engine/World.h"
@@ -16,6 +17,7 @@ UTDDamageGameplayAbility::UTDDamageGameplayAbility()
 	SetAssetTags(FGameplayTagContainer(TDGameplayTags::Ability_DamageCast));
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Dead);
 	ActivationBlockedTags.AddTag(TDGameplayTags::State_Frozen);
+	ActivationBlockedTags.AddTag(TDGameplayTags::State_Rolling);
 }
 
 bool UTDDamageGameplayAbility::DidLastCastSucceed() const
@@ -38,6 +40,14 @@ bool UTDDamageGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHand
 		|| !IsValid(Definition) || !Definition->ValidateDefinition(Error))
 	{
 		return false;
+	}
+	if (Combatant->HasMatchingGameplayTag(TDGameplayTags::State_Attacking))
+	{
+		const UTDSkillComponent* SkillComponent = ActorInfo->AvatarActor->FindComponentByClass<UTDSkillComponent>();
+		if (!SkillComponent || !SkillComponent->IsActionCancelWindowOpen(ETDActionCancelType::Skill))
+		{
+			return false;
+		}
 	}
 	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
 }

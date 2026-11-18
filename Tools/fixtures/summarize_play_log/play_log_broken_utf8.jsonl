@@ -1,0 +1,5 @@
+{"ev":"session","t":0.0,"origin":"fixture","map":"fixture","seed":1}
+{"ev":"damage","t":1.0,"src_team":1,"dst_team":2,"amount":5}
+{"ev":"damage","t":2.0,"src_team":2,"dst_team":1,"amount":3}
+{"ev":"note","t":2.5,"msg":"ê°
+{"ev":"death","t":3.0,"dst_team":1

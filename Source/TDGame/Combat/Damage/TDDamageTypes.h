@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Math/RandomStream.h"
 #include "TDDamageTypes.generated.h"
 
 class UTDDamageDefinition;
@@ -231,6 +232,8 @@ struct TDGAME_API FTDDamageContext
 	ETDDamageDelivery Delivery = ETDDamageDelivery::Direct;
 
 	TSharedPtr<FTDDamageChainBudget> Budget;
+
+	FRandomStream* RandomStream = nullptr;
 };
 
 USTRUCT()

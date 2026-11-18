@@ -22,10 +22,14 @@ public:
 	void UnregisterCombatant(UTDCombatComponent* Combatant);
 	void GatherTargets(const FVector& Center, float Radius, float HalfHeight, const FTDDamageContext& Context, ETDDamageTargetPolicy Policy, TArray<UTDCombatComponent*>& OutTargets) const;
 	bool CanTarget(const UTDCombatComponent* Target, const FTDDamageContext& Context, ETDDamageTargetPolicy Policy) const;
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+	FRandomStream& ResolveRandomStream(const FTDDamageContext& Context);
+	void SeedCombatStream(int32 Seed);
 
 private:
 	void ExecuteAction(const FTDDamageAction& Action, const TArray<FTDDamageRule>& Rules, ETDDamageEvent Event, const FTDDamageContext& Context, AActor* Target, const FVector& Location, ATDDamageEntity* SourceEntity);
 	TSet<TWeakObjectPtr<UTDCombatComponent>> Combatants;
 	int32 ExecutionDepth = 0;
+	FRandomStream CombatStream;
 };

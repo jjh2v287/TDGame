@@ -97,7 +97,8 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 ### 3.2 Phase 0 — 기반
 
 ### M0-01 기존 테스트 28개 기준선 확보
-- 상태: todo
+- 상태: done
+- 담당: claude/2026-11-18
 - 우선순위: 높음
 - 선행: 없음
 - 목표: GAS 전환 후 실행 결과가 기록되지 않은 28개 자동화 테스트를 실제로 돌려 통과·실패 목록을 확정한다.
@@ -105,10 +106,11 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: 로그 `Saved/Logs/M0-01-baseline.log`, 기록 칸의 통과 수
 - 검증: BUILD 후 TEST `TDGame.Combat` `M0-01-baseline`; 로그의 "Test Completed" 28건 확인
 - 참조: 결정 D28; project-current-combat-code 결론 5; engine-behaviortree-tick 결론 12(픽스처가 `World->Tick` 을 쓰므로 EQS·퍼셉션도 함께 틱)
-- 기록: (없음)
+- 기록: 2026-11-18 claude: M0-01 기준선 확정(트리 HEAD 495aa195, 코드 변경 없음). TDGame.Combat 시험 Found 132, 통과 132, 실패 0, 크래시 없음(null RHI, 엔진 종료 코드 0). 빌드 성공 약 102초(빌드+시험). 옛 숫자 28은 무효. 로그 Saved/AgentOps/20261118/M0-01-baseline-tests.log, 결과 M0-01-baseline-tests.json.
 
 ### M0-02 난수 스트림 주입과 전역 난수 2곳 교체
-- 상태: todo
+- 상태: done
+- 담당: claude/2026-11-18
 - 우선순위: 높음
 - 선행: M0-01
 - 목표: `FTDDamageContext` 에 스트림을 싣고 치명타·산포 호출 2곳을 교체하며 피해 공식을 `TDDamageFormula::Compute` 로 분리한다.
@@ -116,7 +118,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `Combat/TDDamageTypes.h`, `Combat/TDCombatComponent.cpp`, `Combat/TDDamageSubsystem.cpp`, `Combat/TDDamageFormula.h/.cpp`
 - 검증: BUILD; TEST `TDGame.Combat` `M0-02`; `grep -n "FMath::FRand" Source/TDGame/Combat` 결과 0건
 - 참조: 변경 목록 #1~#4; project-current-combat-code 결론 1; engine-gas-determinism 결론 7·바꿔야 하는 것 1
-- 기록: (없음)
+- 기록: M0-02 완료 (claude/2026-11-18): FTDDamageContext.RandomStream 추가, UTDDamageSubsystem CombatStream(ResolveRandomStream·SeedCombatStream), 전역 FRand 3호출(산포 2·치명 1) 교체, Combat/Damage/TDDamageFormula.h/.cpp(RollCritical·Compute) 분리. 신규 시험 2개(옛 식 대조, 같은/다른 시드). 빌드 성공, TDGame.Combat 134/134 통과(기준선 132+2), FMath 난수 grep 0건. 산출물 위치는 대장의 Combat/ 대신 Combat/Damage/. 로그 Saved/AgentOps/20261118/M0-02-*. 독립 반박(Opus) M0-02 합격.
 
 ### M0-03 SimulationId 도입과 순서 정렬 3곳
 - 상태: todo
@@ -163,7 +165,8 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 기록: 2026-09-24 claude(수직 슬라이스, PIE `Docs/MonsterAI_CombatSim/measurements/monster-pie-check.json` passed, 테스트 `TDGame.MonsterAI.*` 7/7): 부분 — `AutoPossessAI=Disabled`·`AIControllerClass=nullptr`, `bRunPhysicsWithNoController=true` 적용(`Characters/TDMonsterCharacter.cpp` 생성자). 헤드리스 `TDGame.Combat.GAS.*` 통과. 남음: 어빌리티 `ServerOnly` 옵션(#13), `GetController()==nullptr` 로그.
 
 ### M0-07 NoGlobalRandom 자동화 테스트
-- 상태: todo
+- 상태: done
+- 담당: claude/2026-11-18
 - 우선순위: 높음
 - 선행: M0-02
 - 목표: `Source/TDGame/{Combat,MonsterAI,CombatSim}` 소스를 읽어 `FMath::FRand|Rand|RandRange|SRand` 사용을 실패로 보고하는 테스트를 만든다.
@@ -171,7 +174,8 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 산출물: `MonsterAI/Tests/TDNoGlobalRandomTests.cpp`
 - 검증: BUILD; TEST `TDGame.MonsterAI.NoGlobalRandom` `M0-07`
 - 참조: 결정 D29; engine-determinism-headless 결론 4
-- 기록: (없음)
+- 기록: M0-07 done (claude/2026-11-18): TDGame.MonsterAI.NoGlobalRandom 를 MonsterAI/Tests/TDNoGlobalRandomTests.cpp 로 이전·확대(Combat·MonsterAI·CombatSim, 주석 제외, 파일:줄 보고), TDMonsterAITests.cpp 의 옛 중복 시험 삭제. 빌드·시험 M0-07 1/1 통과, Combat 에 FMath::FRand() 주입 시 TDDamageFormula.cpp:26 으로 실패 확인 후 되돌림·재통과. 별건: CircleAvoidance.Scene.CrossingStreams 1건 실패(기준선 미대조), AI/NPC/TDNPCUpdateSubsystem.cpp:89 FRandRange 범위 밖. 증거 Saved/AgentOps/20261118/M0-07-* 독립 반박: 주석 제거가 문자열 속 '/*'를 블록 주석으로 읽어 TDMonsterDefinitionLibrary.cpp 1292행 뒤 284줄을 검사 못 함 — 수정 중.
+- 기록 추가: 2026-11-18 claude: M0-07 전역 난수 금지 시험의 문자열 사각지대 수정(독립 반박 R1 고칠 것 1). 주석 제거 함수가 문자열 상태를 추적하고 자기 확인 4건 추가. TDMonsterDefinitionLibrary.cpp에 FRand 임시 삽입 시 :1295 로 실패 확인 후 바이트 동일 복구, NoGlobalRandom 1/1 통과. M0-02 시드 시험 스트림 수명 수정 + SeedCombatStream 재현 확인 추가, TDGame.Combat 134/134 통과. 미처리: FD-01 도구 꺾쇠 인클루드(R1 고칠 것 2)와 문구·week_ratio 권장 사항. 독립 반박 R2(Opus) 합격.
 
 ### M0-08 증분 빌드 시간 실측
 - 상태: todo

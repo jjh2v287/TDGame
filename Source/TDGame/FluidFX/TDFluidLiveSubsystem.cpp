@@ -942,6 +942,22 @@ int32 UTDFluidLiveSubsystem::GetObstacleSourceCount() const
 	return SourceCount;
 }
 
+void UTDFluidLiveSubsystem::CollectRegisteredObstacles(TArray<FTDFluidSdfObstacle>& OutObstacles) const
+{
+	OutObstacles.Reset();
+	OutObstacles.Reserve(ObstacleSources.Num());
+	for (const TWeakObjectPtr<UTDFluidObstacleComponent>& ObstacleSource : ObstacleSources)
+	{
+		const UTDFluidObstacleComponent* Source = ObstacleSource.Get();
+		FTDFluidSdfObstacle Obstacle;
+		if (!Source || !Source->BuildObstacle(Obstacle))
+		{
+			continue;
+		}
+		OutObstacles.Add(Obstacle);
+	}
+}
+
 void UTDFluidLiveSubsystem::SelectNearestObstacles(TConstArrayView<FTDFluidSdfObstacle> SourceObstacles, const FVector& CenterWorld, int32 MaxObstacleCount, TArray<FTDFluidSdfObstacle>& OutObstacles)
 {
 	OutObstacles.Reset();

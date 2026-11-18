@@ -1,0 +1,90 @@
+﻿경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE 1.2 {"navmesh_actors": 0, "building_or_locked": true, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/base_c/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1,
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/base_c/capture/grid.png
+base_c: 로그 158줄 보관(요약 줄 있음)
+== base_c: 유효 시도 1회, 마지막 58.2초, 내비 대기 줄 1
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k1/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k1/capture/grid.png
+k1: 로그 158줄 보관(요약 줄 있음)
+== k1: 유효 시도 1회, 마지막 59.5초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 1.3 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k2/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k2/capture/grid.png
+k2: 로그 159줄 보관(요약 줄 있음)
+== k2: 유효 시도 1회, 마지막 59.2초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.6 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k3/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k3/capture/grid.png
+k3: 로그 158줄 보관(요약 줄 있음)
+== k3: 유효 시도 1회, 마지막 61.3초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k4/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k4/capture/grid.png
+k4: 로그 161줄 보관(요약 줄 있음)
+== k4: 유효 시도 1회, 마지막 60.2초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k5/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/k5/capture/grid.png
+k5: 로그 158줄 보관(요약 줄 있음)
+== k5: 유효 시도 1회, 마지막 60.4초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/p1/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/p1/capture/grid.png
+p1: 로그 158줄 보관(요약 줄 있음)
+== p1: 유효 시도 1회, 마지막 60.7초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/p2/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/p2/capture/grid.png
+p2: 로그 158줄 보관(요약 줄 있음)
+== p2: 유효 시도 1회, 마지막 61.9초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/p3/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/p3/capture/grid.png
+p3: 로그 158줄 보관(요약 줄 있음)
+== p3: 유효 시도 1회, 마지막 62.4초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 1.3 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/p4/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/p4/capture/grid.png
+p4: 로그 158줄 보관(요약 줄 있음)
+== p4: 유효 시도 1회, 마지막 58.1초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.6 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/s1/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/s1/capture/grid.png
+s1: 로그 161줄 보관(요약 줄 있음)
+== s1: 유효 시도 1회, 마지막 61.5초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/s2/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/s2/capture/grid.png
+s2: 로그 158줄 보관(요약 줄 있음)
+== s2: 유효 시도 1회, 마지막 62.1초, 내비 대기 줄 2
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+calib 예약 19/19장 {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/s3/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/s3/capture/grid.png
+s3: 로그 158줄 보관(요약 줄 있음)
+== s3: 유효 시도 1회, 마지막 62.6초, 내비 대기 줄 2

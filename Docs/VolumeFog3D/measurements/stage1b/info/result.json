@@ -1,0 +1,191 @@
+{
+  "run_id": null,
+  "started_at": "2026-11-13T21:21:10",
+  "variants_sha256": "e91d8b616ce35c307fd5f6703b2e95cd380b4f1fcada5301d0a6daa93d608970",
+  "level": "/Game/FluidFX/Maps/LV_TDFog3DStage",
+  "stopped_leftover_pie": false,
+  "base": {
+    "arm": 400.0,
+    "view": [
+      -12.0,
+      0.0
+    ],
+    "console": [
+      {
+        "command": "TD.Fog3D.Mode 2",
+        "read_back": 2.0
+      }
+    ],
+    "game_time": 7.17258870229125
+  },
+  "variants": [
+    {
+      "name": "low_box_stand",
+      "apply": {
+        "pawn": [
+          380,
+          -400
+        ],
+        "game_time": 8.299825001507998,
+        "shot_game_time": 13.414538100361824,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "low_box_walk",
+      "apply": {
+        "move": {
+          "mode": "input",
+          "yaw": 90.0,
+          "distance_cm": 150.0,
+          "start": [
+            380.0,
+            -400.0
+          ],
+          "goal": [
+            380.0,
+            -250.0
+          ],
+          "max_speed": 600.0,
+          "timeout_seconds": 3.5,
+          "wall_timeout_seconds": 63.5,
+          "start_game_time": 14.503060910850763,
+          "moved_cm": 155.06420862106484,
+          "elapsed_game_seconds": 0.4405607022345066,
+          "timed_out": false,
+          "done": true,
+          "status_path": "C:/Project/TDGame/Saved/FluidFX/lookdev/20261113-212110/01_move_walk.json"
+        },
+        "game_time": 14.503060910850763,
+        "shot_game_time": 16.00198131427169,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "low_box_swing",
+      "apply": {
+        "console": [
+          {
+            "command": "TDPlayMeleeAction"
+          }
+        ],
+        "game_time": 17.070748317986727,
+        "shot_game_time": 21.16086621582508,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "low_box_swing_late",
+      "apply": {
+        "game_time": 22.20813972502947,
+        "shot_game_time": 28.308924324810505,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "high_box_stand",
+      "apply": {
+        "pawn": [
+          380,
+          400
+        ],
+        "game_time": 29.372753221541643,
+        "shot_game_time": 34.49036502093077,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "high_box_swing",
+      "apply": {
+        "console": [
+          {
+            "command": "TDPlayMeleeAction"
+          }
+        ],
+        "game_time": 35.56129963696003,
+        "shot_game_time": 39.66427693888545,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "wall_stand",
+      "apply": {
+        "pawn": [
+          900,
+          0
+        ],
+        "game_time": 40.75445503741503,
+        "shot_game_time": 45.84571573883295,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "wall_walk",
+      "apply": {
+        "move": {
+          "mode": "input",
+          "yaw": 0.0,
+          "distance_cm": 100.0,
+          "start": [
+            900.0,
+            0.0
+          ],
+          "goal": [
+            1000.0,
+            0.0
+          ],
+          "max_speed": 600.0,
+          "timeout_seconds": 3.3333333333333335,
+          "wall_timeout_seconds": 63.333333333333336,
+          "start_game_time": 46.916740637272596,
+          "moved_cm": 101.96787796334854,
+          "elapsed_game_seconds": 0.3576750010251999,
+          "timed_out": false,
+          "done": true,
+          "status_path": "C:/Project/TDGame/Saved/FluidFX/lookdev/20261113-212110/07_move_walk.json"
+        },
+        "game_time": 46.916740637272596,
+        "shot_game_time": 48.4159548394382,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "top_wall",
+      "apply": {
+        "arm": 900.0,
+        "view": [
+          -60.0,
+          0.0
+        ],
+        "game_time": 49.47406215593219,
+        "shot_game_time": 53.56053355708718,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "top_high_box",
+      "apply": {
+        "pawn": [
+          380,
+          400
+        ],
+        "game_time": 54.62819726765156,
+        "shot_game_time": 59.72550956904888,
+        "ember_mid": {}
+      },
+      "saved": true
+    }
+  ],
+  "key_errors": []
+}

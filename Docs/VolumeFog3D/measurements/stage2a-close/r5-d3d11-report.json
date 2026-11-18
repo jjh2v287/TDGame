@@ -1,0 +1,5696 @@
+{
+ "format": "fog3d-verdict-s2a-2",
+ "exit_code": 0,
+ "checks": 506,
+ "failed": 0,
+ "frames_skipped": 0,
+ "closest": {
+  "scene": "s2a_box_on_slope",
+  "dump": "end",
+  "item": "장 차이 wind",
+  "value": 1.4633592351323113e-05,
+  "limit": 0.002,
+  "ratio": 0.007316796175661557,
+  "passed": true,
+  "info": ""
+ },
+ "info_max_abs_diff": [
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.01624298095703125,
+    "v": 0.009980201721191406,
+    "w": 0.0106048583984375,
+    "dx": 0.001495361328125,
+    "dy": 0.00037384033203125,
+    "dz": 0.0009050369262695312,
+    "g": 0.0,
+    "pressure": 0.02313232421875,
+    "divergence": 0.0003796219825744629
+   }
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "max_abs_diff": {
+    "u": 0.000732421875,
+    "v": 0.0008196830749511719,
+    "w": 0.00164794921875,
+    "dx": 0.000152587890625,
+    "dy": 3.814697265625e-05,
+    "dz": 3.4332275390625e-05,
+    "g": 0.0,
+    "pressure": 0.008148193359375,
+    "divergence": 9.1552734375e-05
+   }
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.001861572265625,
+    "v": 0.003304004669189453,
+    "w": 0.0045166015625,
+    "dx": 0.0004425048828125,
+    "dy": 9.5367431640625e-05,
+    "dz": 7.62939453125e-05,
+    "g": 0.0,
+    "pressure": 0.01274871826171875,
+    "divergence": 0.00021696090698242188
+   }
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "max_abs_diff": {
+    "u": 0.000213623046875,
+    "v": 0.00018212199211120605,
+    "w": 0.000392913818359375,
+    "dx": 0.00020599365234375,
+    "dy": 0.0008544921875,
+    "dz": 0.000141143798828125,
+    "g": 1.7881393432617188e-07,
+    "pressure": 0.0029296875,
+    "divergence": 1.52587890625e-05
+   }
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.00018310546875,
+    "v": 0.00012969970703125,
+    "w": 8.416175842285156e-05,
+    "dx": 0.000255584716796875,
+    "dy": 0.001007080078125,
+    "dz": 0.00017642974853515625,
+    "g": 4.936009645462036e-08,
+    "pressure": 0.000125885009765625,
+    "divergence": 2.473592758178711e-06
+   }
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.00042724609375,
+    "v": 0.00025177001953125,
+    "w": 0.0003662109375,
+    "dx": 9.1552734375e-05,
+    "dy": 0.000335693359375,
+    "dz": 4.38690185546875e-05,
+    "g": 0.0,
+    "pressure": 0.005615234375,
+    "divergence": 2.86102294921875e-05
+   }
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "max_abs_diff": {
+    "u": 0.0003662109375,
+    "v": 0.000308990478515625,
+    "w": 0.000316619873046875,
+    "dx": 0.00022125244140625,
+    "dy": 0.00151824951171875,
+    "dz": 0.00055694580078125,
+    "g": 4.6193599700927734e-07,
+    "pressure": 0.0018310546875,
+    "divergence": 1.52587890625e-05
+   }
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.0002593994140625,
+    "v": 0.00025081634521484375,
+    "w": 0.0001964569091796875,
+    "dx": 0.0002593994140625,
+    "dy": 0.0018157958984375,
+    "dz": 0.0004711151123046875,
+    "g": 2.3469328880310059e-07,
+    "pressure": 0.0004863739013671875,
+    "divergence": 3.0100345611572266e-06
+   }
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.00026702880859375,
+    "v": 0.000396728515625,
+    "w": 0.0006103515625,
+    "dx": 7.653236389160156e-05,
+    "dy": 0.000396728515625,
+    "dz": 0.0002231597900390625,
+    "g": 0.0,
+    "pressure": 0.00439453125,
+    "divergence": 2.3126602172851562e-05
+   }
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.0008709430694580078,
+    "v": 0.00344085693359375,
+    "w": 0.009487152099609375,
+    "dx": 0.001556396484375,
+    "dy": 0.0001983642578125,
+    "dz": 0.0006237030029296875,
+    "g": 0.0,
+    "pressure": 0.0160064697265625,
+    "divergence": 0.00029540061950683594
+   }
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "max_abs_diff": {
+    "u": 0.00140380859375,
+    "v": 0.000919342041015625,
+    "w": 0.0035400390625,
+    "dx": 0.0001220703125,
+    "dy": 3.0517578125e-05,
+    "dz": 3.0517578125e-05,
+    "g": 0.0,
+    "pressure": 0.0341796875,
+    "divergence": 0.000225067138671875
+   }
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.000274658203125,
+    "v": 0.0001983642578125,
+    "w": 0.00030517578125,
+    "dx": 0.000396728515625,
+    "dy": 6.866455078125e-05,
+    "dz": 8.392333984375e-05,
+    "g": 0.0,
+    "pressure": 0.00439453125,
+    "divergence": 2.5272369384765625e-05
+   }
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.0002040863037109375,
+    "v": 0.000202178955078125,
+    "w": 0.00011563301086425781,
+    "dx": 0.0019378662109375,
+    "dy": 0.00030517578125,
+    "dz": 0.00020599365234375,
+    "g": 0.0,
+    "pressure": 0.00023651123046875,
+    "divergence": 2.555549144744873e-06
+   }
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.000274658203125,
+    "v": 0.000152587890625,
+    "w": 0.00012969970703125,
+    "dx": 0.00042724609375,
+    "dy": 8.0108642578125e-05,
+    "dz": 5.7220458984375e-05,
+    "g": 0.0,
+    "pressure": 0.00390625,
+    "divergence": 2.1189451217651367e-05
+   }
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 6.4849853515625e-05,
+    "v": 8.0108642578125e-05,
+    "w": 3.0517578125e-05,
+    "dx": 7.2479248046875e-05,
+    "dy": 9.1552734375e-05,
+    "dz": 1.1920928955078125e-05,
+    "g": 1.0244548320770264e-07,
+    "pressure": 6.866455078125e-05,
+    "divergence": 8.046627044677734e-07
+   }
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "max_abs_diff": {
+    "u": 0.000274658203125,
+    "v": 0.00030517578125,
+    "w": 0.0005588531494140625,
+    "dx": 7.62939453125e-05,
+    "dy": 8.392333984375e-05,
+    "dz": 7.867813110351562e-06,
+    "g": 3.5762786865234375e-07,
+    "pressure": 0.0068359375,
+    "divergence": 4.76837158203125e-05
+   }
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.00030517578125,
+    "v": 0.00042724609375,
+    "w": 0.0004100799560546875,
+    "dx": 9.5367431640625e-05,
+    "dy": 0.0001068115234375,
+    "dz": 8.106231689453125e-06,
+    "g": 2.980232238769531e-07,
+    "pressure": 0.006103515625,
+    "divergence": 4.0531158447265625e-05
+   }
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.00048828125,
+    "v": 7.43865966796875e-05,
+    "w": 8.0108642578125e-05,
+    "dx": 0.00238037109375,
+    "dy": 8.0108642578125e-05,
+    "dz": 6.961822509765625e-05,
+    "g": 5.662441253662109e-07,
+    "pressure": 0.0010986328125,
+    "divergence": 1.0728836059570312e-05
+   }
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "max_abs_diff": {
+    "u": 0.000213623046875,
+    "v": 6.4849853515625e-05,
+    "w": 5.7697296142578125e-05,
+    "dx": 0.0001220703125,
+    "dy": 1.52587890625e-05,
+    "dz": 1.049041748046875e-05,
+    "g": 2.384185791015625e-07,
+    "pressure": 0.0008544921875,
+    "divergence": 6.735324859619141e-06
+   }
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "max_abs_diff": {
+    "u": 0.000457763671875,
+    "v": 8.96453857421875e-05,
+    "w": 8.821487426757812e-05,
+    "dx": 0.0004730224609375,
+    "dy": 2.6702880859375e-05,
+    "dz": 2.288818359375e-05,
+    "g": 4.172325134277344e-07,
+    "pressure": 0.0008544921875,
+    "divergence": 8.344650268554688e-06
+   }
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "max_abs_diff": {
+    "u": 0.00048828125,
+    "v": 7.152557373046875e-05,
+    "w": 7.62939453125e-05,
+    "dx": 0.0010986328125,
+    "dy": 4.38690185546875e-05,
+    "dz": 3.719329833984375e-05,
+    "g": 4.172325134277344e-07,
+    "pressure": 0.0009765625,
+    "divergence": 8.285045623779297e-06
+   }
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "max_abs_diff": {
+    "u": 0.0005035400390625,
+    "v": 6.146356463432312e-05,
+    "w": 6.866455078125e-05,
+    "dx": 0.001800537109375,
+    "dy": 6.389617919921875e-05,
+    "dz": 5.4836273193359375e-05,
+    "g": 5.364418029785156e-07,
+    "pressure": 0.00067138671875,
+    "divergence": 8.940696716308594e-06
+   }
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "max_abs_diff": {
+    "u": 0.000335693359375,
+    "v": 0.00018310546875,
+    "w": 0.00054168701171875,
+    "dx": 0.00018310546875,
+    "dy": 0.00128173828125,
+    "dz": 0.00028228759765625,
+    "g": 3.725290298461914e-07,
+    "pressure": 0.0026397705078125,
+    "divergence": 2.372264862060547e-05
+   }
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.000244140625,
+    "v": 0.00016021728515625,
+    "w": 0.00025177001953125,
+    "dx": 0.00028228759765625,
+    "dy": 0.0015106201171875,
+    "dz": 0.0003509521484375,
+    "g": 2.1979212760925293e-07,
+    "pressure": 0.0002593994140625,
+    "divergence": 3.4049153327941895e-06
+   }
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.0002899169921875,
+    "v": 0.00030517578125,
+    "w": 0.0003662109375,
+    "dx": 7.2479248046875e-05,
+    "dy": 0.000457763671875,
+    "dz": 9.5367431640625e-05,
+    "g": 0.0,
+    "pressure": 0.0042724609375,
+    "divergence": 2.0503997802734375e-05
+   }
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "max_abs_diff": {
+    "u": 0.000579833984375,
+    "v": 0.000438690185546875,
+    "w": 0.001708984375,
+    "dx": 0.000202178955078125,
+    "dy": 0.001373291015625,
+    "dz": 0.000293731689453125,
+    "g": 6.556510925292969e-07,
+    "pressure": 0.0078125,
+    "divergence": 5.91278076171875e-05
+   }
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.0001678466796875,
+    "v": 0.000152587890625,
+    "w": 0.000274658203125,
+    "dx": 0.00026702880859375,
+    "dy": 0.0015106201171875,
+    "dz": 0.0003757476806640625,
+    "g": 2.905726432800293e-07,
+    "pressure": 0.000255584716796875,
+    "divergence": 2.0638108253479004e-06
+   }
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.0002899169921875,
+    "v": 0.00030517578125,
+    "w": 0.0003662109375,
+    "dx": 7.2479248046875e-05,
+    "dy": 0.000457763671875,
+    "dz": 9.5367431640625e-05,
+    "g": 0.0,
+    "pressure": 0.0042724609375,
+    "divergence": 2.0503997802734375e-05
+   }
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.0009303092956542969,
+    "v": 0.0032529830932617188,
+    "w": 0.0093994140625,
+    "dx": 0.0015869140625,
+    "dy": 0.0002498626708984375,
+    "dz": 0.0006241798400878906,
+    "g": 0.0,
+    "pressure": 0.0152130126953125,
+    "divergence": 0.00029784440994262695
+   }
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "max_abs_diff": {
+    "u": 0.0003662109375,
+    "v": 0.00018739700317382812,
+    "w": 0.000946044921875,
+    "dx": 0.000152587890625,
+    "dy": 3.24249267578125e-05,
+    "dz": 3.0517578125e-05,
+    "g": 0.0,
+    "pressure": 0.00421142578125,
+    "divergence": 3.820657730102539e-05
+   }
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.00147247314453125,
+    "v": 0.0014209747314453125,
+    "w": 0.00286865234375,
+    "dx": 0.0003662109375,
+    "dy": 7.82012939453125e-05,
+    "dz": 7.62939453125e-05,
+    "g": 0.0,
+    "pressure": 0.0084228515625,
+    "divergence": 0.00011157989501953125
+   }
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.002986907958984375,
+    "v": 0.0021114349365234375,
+    "w": 0.005863189697265625,
+    "dx": 0.0014190673828125,
+    "dy": 0.00018310546875,
+    "dz": 0.0004277229309082031,
+    "g": 0.0,
+    "pressure": 0.0102081298828125,
+    "divergence": 0.00018107891082763672
+   }
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "max_abs_diff": {
+    "u": 0.00048828125,
+    "v": 0.00049591064453125,
+    "w": 0.000812530517578125,
+    "dx": 0.000152587890625,
+    "dy": 3.24249267578125e-05,
+    "dz": 2.6702880859375e-05,
+    "g": 0.0,
+    "pressure": 0.0050048828125,
+    "divergence": 5.340576171875e-05
+   }
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.0010528564453125,
+    "v": 0.0011587142944335938,
+    "w": 0.0015869140625,
+    "dx": 0.00042724609375,
+    "dy": 7.2479248046875e-05,
+    "dz": 7.62939453125e-05,
+    "g": 0.0,
+    "pressure": 0.00904083251953125,
+    "divergence": 0.00013446807861328125
+   }
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.00432586669921875,
+    "v": 0.009458541870117188,
+    "w": 0.011783599853515625,
+    "dx": 0.00019073486328125,
+    "dy": 0.0014190673828125,
+    "dz": 0.0007462501525878906,
+    "g": 0.0,
+    "pressure": 0.018768310546875,
+    "divergence": 0.0003682374954223633
+   }
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "max_abs_diff": {
+    "u": 0.0003757476806640625,
+    "v": 0.00030517578125,
+    "w": 0.00075531005859375,
+    "dx": 3.0517578125e-05,
+    "dy": 0.0001678466796875,
+    "dz": 3.4332275390625e-05,
+    "g": 0.0,
+    "pressure": 0.00518798828125,
+    "divergence": 4.76837158203125e-05
+   }
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "max_abs_diff": {
+    "u": 0.00035858154296875,
+    "v": 0.0004730224609375,
+    "w": 0.00048828125,
+    "dx": 6.4849853515625e-05,
+    "dy": 0.00042724609375,
+    "dz": 7.62939453125e-05,
+    "g": 0.0,
+    "pressure": 0.004638671875,
+    "divergence": 5.1975250244140625e-05
+   }
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "max_abs_diff": {
+    "u": 0.0,
+    "v": 0.0,
+    "w": 0.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "dz": 0.0,
+    "g": 0.0,
+    "pressure": 0.0,
+    "divergence": 0.0
+   }
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "max_abs_diff": {
+    "u": 0.0,
+    "v": 0.0,
+    "w": 0.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "dz": 0.0,
+    "g": 0.0,
+    "pressure": 0.0,
+    "divergence": 0.0
+   }
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "max_abs_diff": {
+    "u": 0.0,
+    "v": 0.0,
+    "w": 0.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "dz": 0.0,
+    "g": 0.0,
+    "pressure": 0.0,
+    "divergence": 0.0
+   }
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "max_abs_diff": {
+    "u": 0.0,
+    "v": 0.0,
+    "w": 0.0,
+    "dx": 0.0,
+    "dy": 0.0,
+    "dz": 0.0,
+    "g": 0.0,
+    "pressure": 0.0,
+    "divergence": 0.0
+   }
+  }
+ ],
+ "rows": [
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 1.4633592351323113e-05,
+   "limit": 0.002,
+   "ratio": 0.007316796175661557,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 1.904085788833854e-06,
+   "limit": 0.002,
+   "ratio": 0.000952042894416927,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "틀 자리(cm)",
+   "value": 0.0,
+   "limit": 0.001,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "end",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "장 차이 wind",
+   "value": 3.7247220951143253e-07,
+   "limit": 0.002,
+   "ratio": 0.00018623610475571625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "장 차이 disp",
+   "value": 3.8018243705363074e-07,
+   "limit": 0.002,
+   "ratio": 0.00019009121852681536,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "틀 자리(cm)",
+   "value": 1.52587890625e-05,
+   "limit": 0.001,
+   "ratio": 0.0152587890625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w35",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 9.755915265139959e-07,
+   "limit": 0.002,
+   "ratio": 0.00048779576325699793,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 6.145053441920519e-07,
+   "limit": 0.002,
+   "ratio": 0.00030725267209602596,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_box_on_slope",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "장 차이 wind",
+   "value": 4.451768361552786e-07,
+   "limit": 0.002,
+   "ratio": 0.00022258841807763928,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "장 차이 disp",
+   "value": 2.252224956800921e-06,
+   "limit": 0.002,
+   "ratio": 0.0011261124784004604,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "장 차이 fill",
+   "value": 3.351688508363214e-07,
+   "limit": 0.002,
+   "ratio": 0.0001675844254181607,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "틀 자리(cm)",
+   "value": 3.814697265625e-06,
+   "limit": 0.001,
+   "ratio": 0.003814697265625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "blade",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 1.7186190456138466e-06,
+   "limit": 0.002,
+   "ratio": 0.0008593095228069232,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 2.814675594869029e-06,
+   "limit": 0.002,
+   "ratio": 0.0014073377974345143,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 9.941210514312246e-07,
+   "limit": 0.002,
+   "ratio": 0.0004970605257156123,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 3.4094914346501675e-07,
+   "limit": 0.002,
+   "ratio": 0.00017047457173250836,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 5.817051479266417e-07,
+   "limit": 0.002,
+   "ratio": 0.00029085257396332085,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_at_edge",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "장 차이 wind",
+   "value": 6.725299491361141e-07,
+   "limit": 0.002,
+   "ratio": 0.000336264974568057,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "장 차이 disp",
+   "value": 1.864340427364356e-06,
+   "limit": 0.002,
+   "ratio": 0.0009321702136821779,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "장 차이 fill",
+   "value": 4.07910637376593e-07,
+   "limit": 0.002,
+   "ratio": 0.0002039553186882965,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "틀 자리(cm)",
+   "value": 6.103515625e-05,
+   "limit": 0.001,
+   "ratio": 0.06103515625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "blade",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 1.4549120387846774e-06,
+   "limit": 0.002,
+   "ratio": 0.0007274560193923387,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 2.188983779997015e-06,
+   "limit": 0.002,
+   "ratio": 0.0010944918899985074,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 9.037862166128364e-07,
+   "limit": 0.002,
+   "ratio": 0.0004518931083064182,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 4.1703681899491366e-07,
+   "limit": 0.002,
+   "ratio": 0.00020851840949745682,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 5.896006879592767e-07,
+   "limit": 0.002,
+   "ratio": 0.00029480034397963835,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_cliff_walk_blade",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 6.116018101215243e-06,
+   "limit": 0.002,
+   "ratio": 0.0030580090506076214,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 1.8966703024733771e-06,
+   "limit": 0.002,
+   "ratio": 0.0009483351512366886,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "틀 자리(cm)",
+   "value": 0.0,
+   "limit": 0.001,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "end",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "장 차이 wind",
+   "value": 7.766641387278426e-07,
+   "limit": 0.002,
+   "ratio": 0.0003883320693639213,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "장 차이 disp",
+   "value": 3.742001888634082e-07,
+   "limit": 0.002,
+   "ratio": 0.0001871000944317041,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "틀 자리(cm)",
+   "value": 2.288818359375e-05,
+   "limit": 0.001,
+   "ratio": 0.02288818359375,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w35",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 3.66102792510505e-07,
+   "limit": 0.002,
+   "ratio": 0.0001830513962552525,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 6.150018579421626e-07,
+   "limit": 0.002,
+   "ratio": 0.00030750092897108126,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_curb30_cross",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 1.8778146841900839e-06,
+   "limit": 0.002,
+   "ratio": 0.000938907342095042,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 2.369975913563022e-06,
+   "limit": 0.002,
+   "ratio": 0.001184987956781511,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "틀 자리(cm)",
+   "value": 0.0,
+   "limit": 0.001,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "end",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 3.5259825669557763e-07,
+   "limit": 0.002,
+   "ratio": 0.00017629912834778882,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 6.110294155223517e-07,
+   "limit": 0.002,
+   "ratio": 0.00030551470776117584,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_flat_offset",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 1.1356266168005467e-06,
+   "limit": 0.002,
+   "ratio": 0.0005678133084002733,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 1.4121713194806677e-06,
+   "limit": 0.002,
+   "ratio": 0.0007060856597403338,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 1.291755121223358e-06,
+   "limit": 0.002,
+   "ratio": 0.0006458775606116789,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "장 차이 wind",
+   "value": 4.5333991360134263e-07,
+   "limit": 0.002,
+   "ratio": 0.0002266699568006713,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "장 차이 disp",
+   "value": 6.492624202415876e-07,
+   "limit": 0.002,
+   "ratio": 0.0003246312101207938,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "장 차이 fill",
+   "value": 3.521266615956592e-07,
+   "limit": 0.002,
+   "ratio": 0.0001760633307978296,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "틀 자리(cm)",
+   "value": 1.52587890625e-05,
+   "limit": 0.001,
+   "ratio": 0.0152587890625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w35",
+   "item": "틀 기울기",
+   "value": 6.966292858123779e-07,
+   "limit": 1e-05,
+   "ratio": 0.06966292858123779,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 4.7036650925021505e-07,
+   "limit": 0.002,
+   "ratio": 0.0002351832546251075,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 8.478383193466365e-07,
+   "limit": 0.002,
+   "ratio": 0.0004239191596733183,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 3.1860302032442675e-07,
+   "limit": 0.002,
+   "ratio": 0.00015930151016221338,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_frame_at_edge",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 1.4062970876693726e-07,
+   "limit": 1e-05,
+   "ratio": 0.014062970876693724,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 7.570048536234436e-07,
+   "limit": 0.002,
+   "ratio": 0.0003785024268117218,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 2.603914014259221e-06,
+   "limit": 0.002,
+   "ratio": 0.0013019570071296103,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 7.496289505989826e-07,
+   "limit": 0.002,
+   "ratio": 0.0003748144752994913,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "틀 자리(cm)",
+   "value": 7.62939453125e-06,
+   "limit": 0.001,
+   "ratio": 0.00762939453125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "end",
+   "item": "틀 기울기",
+   "value": 2.980232238769531e-07,
+   "limit": 1e-05,
+   "ratio": 0.02980232238769531,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "장 차이 wind",
+   "value": 3.0960985464245885e-07,
+   "limit": 0.002,
+   "ratio": 0.0001548049273212294,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "장 차이 disp",
+   "value": 5.681949897425827e-07,
+   "limit": 0.002,
+   "ratio": 0.0002840974948712914,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "장 차이 fill",
+   "value": 3.072148588054015e-07,
+   "limit": 0.002,
+   "ratio": 0.00015360742940270076,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "틀 자리(cm)",
+   "value": 7.62939453125e-06,
+   "limit": 0.001,
+   "ratio": 0.00762939453125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv1",
+   "item": "틀 기울기",
+   "value": 2.384185791015625e-07,
+   "limit": 1e-05,
+   "ratio": 0.023841857910156247,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "장 차이 wind",
+   "value": 6.022747820952089e-07,
+   "limit": 0.002,
+   "ratio": 0.00030113739104760444,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "장 차이 disp",
+   "value": 1.1773939230366113e-06,
+   "limit": 0.002,
+   "ratio": 0.0005886969615183056,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "장 차이 fill",
+   "value": 4.380479196541413e-07,
+   "limit": 0.002,
+   "ratio": 0.00021902395982707065,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "틀 자리(cm)",
+   "value": 1.9073486328125e-06,
+   "limit": 0.001,
+   "ratio": 0.0019073486328125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv2",
+   "item": "틀 기울기",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-05,
+   "ratio": 0.011920928955078123,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "장 차이 wind",
+   "value": 7.431958495037527e-07,
+   "limit": 0.002,
+   "ratio": 0.00037159792475187635,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "장 차이 disp",
+   "value": 1.846390459857409e-06,
+   "limit": 0.002,
+   "ratio": 0.0009231952299287045,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "장 차이 fill",
+   "value": 5.344119084546329e-07,
+   "limit": 0.002,
+   "ratio": 0.0002672059542273164,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "틀 자리(cm)",
+   "value": 0.0,
+   "limit": 0.001,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv3",
+   "item": "틀 기울기",
+   "value": 2.384185791015625e-07,
+   "limit": 1e-05,
+   "ratio": 0.023841857910156247,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "장 차이 wind",
+   "value": 7.365716419776661e-07,
+   "limit": 0.002,
+   "ratio": 0.00036828582098883306,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "장 차이 disp",
+   "value": 2.290244637989614e-06,
+   "limit": 0.002,
+   "ratio": 0.001145122318994807,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "장 차이 fill",
+   "value": 6.333235442078904e-07,
+   "limit": 0.002,
+   "ratio": 0.00031666177210394516,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "틀 자리(cm)",
+   "value": 7.62939453125e-06,
+   "limit": 0.001,
+   "ratio": 0.00762939453125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_hill_run_window",
+   "dump": "mv4",
+   "item": "틀 기울기",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-05,
+   "ratio": 0.011920928955078123,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "장 차이 wind",
+   "value": 5.740981620480812e-07,
+   "limit": 0.002,
+   "ratio": 0.0002870490810240406,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "장 차이 disp",
+   "value": 1.8820129011650957e-06,
+   "limit": 0.002,
+   "ratio": 0.0009410064505825478,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "장 차이 fill",
+   "value": 3.9725512423488646e-07,
+   "limit": 0.002,
+   "ratio": 0.00019862756211744322,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "틀 자리(cm)",
+   "value": 6.103515625e-05,
+   "limit": 0.001,
+   "ratio": 0.06103515625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "blade",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 1.2577104556690785e-06,
+   "limit": 0.002,
+   "ratio": 0.0006288552278345392,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 2.2634011357980497e-06,
+   "limit": 0.002,
+   "ratio": 0.0011317005678990247,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 8.624481363782756e-07,
+   "limit": 0.002,
+   "ratio": 0.0004312240681891378,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 2.842865093920414e-07,
+   "limit": 0.002,
+   "ratio": 0.00014214325469602071,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 5.794055079887064e-07,
+   "limit": 0.002,
+   "ratio": 0.0002897027539943532,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "장 차이 wind",
+   "value": 1.0565663569004902e-06,
+   "limit": 0.002,
+   "ratio": 0.0005282831784502451,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "장 차이 disp",
+   "value": 1.963312648071649e-06,
+   "limit": 0.002,
+   "ratio": 0.0009816563240358245,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "장 차이 fill",
+   "value": 1.0591818715587251e-06,
+   "limit": 0.002,
+   "ratio": 0.0005295909357793626,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "blade",
+   "item": "틀 기울기",
+   "value": 0.0,
+   "limit": 1e-05,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 1.5920801918960694e-06,
+   "limit": 0.002,
+   "ratio": 0.0007960400959480347,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 2.4106528996587794e-06,
+   "limit": 0.002,
+   "ratio": 0.0012053264498293897,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 1.3032459811130072e-06,
+   "limit": 0.002,
+   "ratio": 0.0006516229905565036,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 3.0152068194514456e-07,
+   "limit": 0.002,
+   "ratio": 0.00015076034097257228,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 5.755518064409413e-07,
+   "limit": 0.002,
+   "ratio": 0.0002877759032204707,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_curb60",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 5.714167467622777e-06,
+   "limit": 0.002,
+   "ratio": 0.0028570837338113882,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 1.429679844247726e-06,
+   "limit": 0.002,
+   "ratio": 0.0007148399221238629,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "틀 자리(cm)",
+   "value": 0.0,
+   "limit": 0.001,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "end",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "장 차이 wind",
+   "value": 3.081668539423022e-07,
+   "limit": 0.002,
+   "ratio": 0.0001540834269711511,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "장 차이 disp",
+   "value": 3.615883235614797e-07,
+   "limit": 0.002,
+   "ratio": 0.00018079416178073986,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "틀 자리(cm)",
+   "value": 1.52587890625e-05,
+   "limit": 0.001,
+   "ratio": 0.0152587890625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w35",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 5.722361166727158e-07,
+   "limit": 0.002,
+   "ratio": 0.0002861180583363579,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 5.378745211195908e-07,
+   "limit": 0.002,
+   "ratio": 0.0002689372605597954,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 6.103515625e-05,
+   "limit": 0.001,
+   "ratio": 0.06103515625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_down",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 5.080213573988423e-06,
+   "limit": 0.002,
+   "ratio": 0.0025401067869942114,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 1.8864594438754371e-06,
+   "limit": 0.002,
+   "ratio": 0.0009432297219377186,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "틀 자리(cm)",
+   "value": 0.0,
+   "limit": 0.001,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "end",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "장 차이 wind",
+   "value": 3.052433491171012e-07,
+   "limit": 0.002,
+   "ratio": 0.0001526216745585506,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "장 차이 disp",
+   "value": 3.9334615112472346e-07,
+   "limit": 0.002,
+   "ratio": 0.00019667307556236173,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "틀 자리(cm)",
+   "value": 1.52587890625e-05,
+   "limit": 0.001,
+   "ratio": 0.0152587890625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w35",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 4.852280218163795e-07,
+   "limit": 0.002,
+   "ratio": 0.00024261401090818973,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 6.072821114822274e-07,
+   "limit": 0.002,
+   "ratio": 0.0003036410557411137,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_walk_up",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 1.0825464059774444e-05,
+   "limit": 0.002,
+   "ratio": 0.005412732029887222,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 1.888409531203257e-06,
+   "limit": 0.002,
+   "ratio": 0.0009442047656016285,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "틀 자리(cm)",
+   "value": 0.0,
+   "limit": 0.001,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "end",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "장 차이 wind",
+   "value": 3.0797713797135306e-07,
+   "limit": 0.002,
+   "ratio": 0.00015398856898567653,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "장 차이 disp",
+   "value": 3.7965750382659075e-07,
+   "limit": 0.002,
+   "ratio": 0.00018982875191329537,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "틀 자리(cm)",
+   "value": 1.52587890625e-05,
+   "limit": 0.001,
+   "ratio": 0.0152587890625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w35",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "장 차이 wind",
+   "value": 3.9110971313314154e-07,
+   "limit": 0.002,
+   "ratio": 0.00019555485656657076,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "장 차이 disp",
+   "value": 5.781684194428529e-07,
+   "limit": 0.002,
+   "ratio": 0.0002890842097214264,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "slope_x",
+   "value": 0.0,
+   "limit": 1e-06,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "slope_y",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-06,
+   "ratio": 0.059604644775390625,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "유한값(GPU 입력 틀)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "틀 자리(cm)",
+   "value": 0.0001220703125,
+   "limit": 0.001,
+   "ratio": 0.1220703125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_slope_y_walk",
+   "dump": "w70",
+   "item": "틀 기울기",
+   "value": 5.960464477539063e-08,
+   "limit": 1e-05,
+   "ratio": 0.005960464477539062,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "장 차이 wind",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "장 차이 disp",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "end",
+   "item": "slope_y",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "장 차이 wind",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "장 차이 disp",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m1",
+   "item": "slope_y",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "장 차이 wind",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "장 차이 disp",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m2",
+   "item": "slope_y",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "유체 표시",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 칸 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "유한값(GPU 3차원 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "장 차이 wind",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "장 차이 disp",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "장 차이 fill",
+   "value": 0.0,
+   "limit": 0.002,
+   "ratio": 0.0,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "유한값(GPU 기둥 장)",
+   "value": null,
+   "limit": null,
+   "ratio": null,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "ground_h 비트 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "wall 같음",
+   "value": 0,
+   "limit": 0,
+   "ratio": 0.0,
+   "passed": true,
+   "info": "다른 기둥 수"
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "slope_x",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  },
+  {
+   "scene": "s2a_still_rough",
+   "dump": "m3",
+   "item": "slope_y",
+   "value": 1.1920928955078125e-07,
+   "limit": 1e-06,
+   "ratio": 0.11920928955078125,
+   "passed": true,
+   "info": ""
+  }
+ ]
+}

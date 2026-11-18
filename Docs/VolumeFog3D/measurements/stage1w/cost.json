@@ -1,0 +1,2266 @@
+{
+  "runs": {
+    "C_h_r1": {
+      "run": "C_h_r1",
+      "condition": "h",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 752,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 2,
+        "mode_read": 0,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_224434).csv",
+        "Profile(20261114_224447).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_224434).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 10.330423949579833,
+          "odd_mean": 10.32166329113924,
+          "abs_difference": 0.00876065844059326
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 10.3026,
+          "mean": 10.32605284210526,
+          "p95": 10.49116,
+          "max": 11.0534
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6668,
+          "mean": 16.667841263157893,
+          "p95": 16.67511,
+          "max": 17.1283
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.5621,
+          "mean": 0.5635993684210526,
+          "p95": 0.57583,
+          "max": 0.8863
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0038,
+          "mean": 0.0036461052631578945,
+          "p95": 0.0041,
+          "max": 0.0048
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 10.8075,
+            "values": [
+              10.793,
+              10.832,
+              10.835,
+              10.822,
+              10.774,
+              10.787
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.554,
+            "values": [
+              0.56,
+              0.553,
+              0.549,
+              0.553,
+              0.555,
+              0.559
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 10.8075,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_224447).csv",
+        "rows": 988,
+        "alternation": {
+          "even_mean": 10.401343292682927,
+          "odd_mean": 10.39802464358452,
+          "abs_difference": 0.003318649098407178
+        },
+        "gpu_time": {
+          "frames": 983,
+          "median": 10.3922,
+          "mean": 10.39968565615463,
+          "p95": 10.60589,
+          "max": 11.1222
+        },
+        "frame_time": {
+          "frames": 983,
+          "median": 16.6669,
+          "mean": 16.697146693794508,
+          "p95": 16.6723,
+          "max": 44.73
+        },
+        "volumetric_fog": {
+          "frames": 983,
+          "median": 0.5845,
+          "mean": 0.6549505595116989,
+          "p95": 0.90455,
+          "max": 1.1656
+        },
+        "translucency": {
+          "frames": 983,
+          "median": 0.0038,
+          "mean": 0.003659613428280773,
+          "p95": 0.0041,
+          "max": 0.0048
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 10.663499999999999,
+            "values": [
+              10.698,
+              10.597,
+              10.924,
+              10.634,
+              10.63,
+              10.654,
+              10.673,
+              10.701
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.5694999999999999,
+            "values": [
+              0.574,
+              0.566,
+              0.564,
+              0.569,
+              0.57,
+              0.566,
+              0.596,
+              0.601
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 10.663499999999999,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      }
+    },
+    "C_h_r2": {
+      "run": "C_h_r2",
+      "condition": "h",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 68,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 2,
+        "mode_read": 0,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_225507).csv",
+        "Profile(20261114_225520).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_225507).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 10.599193697478993,
+          "odd_mean": 10.569655274261603,
+          "abs_difference": 0.02953842321739053
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 10.4027,
+          "mean": 10.58445557894737,
+          "p95": 11.78044,
+          "max": 14.8882
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6667,
+          "mean": 16.674652631578947,
+          "p95": 16.67209,
+          "max": 19.2211
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.5608,
+          "mean": 0.5729029473684212,
+          "p95": 0.57209,
+          "max": 1.4928
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0038,
+          "mean": 0.0036589473684210524,
+          "p95": 0.0041,
+          "max": 0.0062
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 10.876999999999999,
+            "values": [
+              13.958,
+              10.859,
+              10.895,
+              10.852,
+              10.806,
+              10.928
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.5575000000000001,
+            "values": [
+              0.566,
+              0.556,
+              0.558,
+              0.556,
+              0.557,
+              0.562
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 10.876999999999999,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_225520).csv",
+        "rows": 988,
+        "alternation": {
+          "even_mean": 10.514241869918699,
+          "odd_mean": 10.510967413441955,
+          "abs_difference": 0.0032744564767437367
+        },
+        "gpu_time": {
+          "frames": 983,
+          "median": 10.4491,
+          "mean": 10.512606307222788,
+          "p95": 11.07662,
+          "max": 13.7904
+        },
+        "frame_time": {
+          "frames": 983,
+          "median": 16.6668,
+          "mean": 16.69540457782299,
+          "p95": 16.6707,
+          "max": 41.9769
+        },
+        "volumetric_fog": {
+          "frames": 983,
+          "median": 0.5612,
+          "mean": 0.567918514750763,
+          "p95": 0.5929,
+          "max": 1.4623
+        },
+        "translucency": {
+          "frames": 983,
+          "median": 0.0038,
+          "mean": 0.003631637843336724,
+          "p95": 0.004,
+          "max": 0.0049
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 11.151,
+            "values": [
+              11.356,
+              11.054,
+              11.175,
+              12.953,
+              11.234,
+              10.967,
+              11.091,
+              11.127
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.564,
+            "values": [
+              0.565,
+              0.553,
+              0.563,
+              0.574,
+              0.558,
+              0.563,
+              0.594,
+              0.59
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 11.151,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      }
+    },
+    "C_m0_r1": {
+      "run": "C_m0_r1",
+      "condition": "m0",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 66,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 2,
+        "mode_read": 0,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_224553).csv",
+        "Profile(20261114_224606).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_224553).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 10.21699369747899,
+          "odd_mean": 10.206411392405062,
+          "abs_difference": 0.010582305073928211
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 10.2084,
+          "mean": 10.211713684210528,
+          "p95": 10.28692,
+          "max": 10.9548
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6667,
+          "mean": 16.66999431578947,
+          "p95": 16.67073,
+          "max": 18.2008
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.6709,
+          "mean": 0.6713614736842105,
+          "p95": 0.6819299999999999,
+          "max": 0.6983
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0219,
+          "mean": 0.021901894736842103,
+          "p95": 0.0234,
+          "max": 0.0271
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 10.7295,
+            "values": [
+              10.717,
+              10.675,
+              10.748,
+              10.741,
+              10.775,
+              10.718
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.6645000000000001,
+            "values": [
+              0.676,
+              0.666,
+              0.659,
+              0.665,
+              0.664,
+              0.664
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 10.7295,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_224606).csv",
+        "rows": 990,
+        "alternation": {
+          "even_mean": 10.657273022312372,
+          "odd_mean": 10.653581300813007,
+          "abs_difference": 0.0036917214993650305
+        },
+        "gpu_time": {
+          "frames": 985,
+          "median": 10.6434,
+          "mean": 10.655429035532995,
+          "p95": 10.83634,
+          "max": 11.4699
+        },
+        "frame_time": {
+          "frames": 985,
+          "median": 16.6668,
+          "mean": 16.670357868020304,
+          "p95": 16.671680000000002,
+          "max": 18.4354
+        },
+        "volumetric_fog": {
+          "frames": 985,
+          "median": 0.6738,
+          "mean": 0.7012007106598985,
+          "p95": 0.98852,
+          "max": 1.2575
+        },
+        "translucency": {
+          "frames": 985,
+          "median": 0.0221,
+          "mean": 0.02215939086294416,
+          "p95": 0.0238,
+          "max": 0.0288
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 10.9165,
+            "values": [
+              10.937,
+              10.793,
+              10.789,
+              10.946,
+              10.977,
+              10.851,
+              10.896,
+              11.293
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.6705000000000001,
+            "values": [
+              0.68,
+              0.667,
+              0.664,
+              0.666,
+              0.674,
+              0.666,
+              0.696,
+              0.707
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 10.9165,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      }
+    },
+    "C_m0_r2": {
+      "run": "C_m0_r2",
+      "condition": "m0",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 412,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 2,
+        "mode_read": 0,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_225348).csv",
+        "Profile(20261114_225401).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_225348).csv",
+        "rows": 479,
+        "alternation": {
+          "even_mean": 10.293588185654007,
+          "odd_mean": 10.283124894514767,
+          "abs_difference": 0.010463291139240383
+        },
+        "gpu_time": {
+          "frames": 474,
+          "median": 10.23345,
+          "mean": 10.28835654008439,
+          "p95": 10.56171,
+          "max": 10.7163
+        },
+        "frame_time": {
+          "frames": 474,
+          "median": 16.6667,
+          "mean": 16.672697046413504,
+          "p95": 16.676209999999998,
+          "max": 18.5698
+        },
+        "volumetric_fog": {
+          "frames": 474,
+          "median": 0.67145,
+          "mean": 0.6716179324894515,
+          "p95": 0.682,
+          "max": 0.6966
+        },
+        "translucency": {
+          "frames": 474,
+          "median": 0.0219,
+          "mean": 0.02188607594936709,
+          "p95": 0.0233,
+          "max": 0.0253
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 11.067,
+            "values": [
+              11.062,
+              11.064,
+              11.07,
+              11.156,
+              11.043,
+              11.22
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.6755,
+            "values": [
+              0.679,
+              0.678,
+              0.677,
+              0.674,
+              0.668,
+              0.666
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 11.067,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_225401).csv",
+        "rows": 990,
+        "alternation": {
+          "even_mean": 10.587015618661257,
+          "odd_mean": 10.568709552845528,
+          "abs_difference": 0.0183060658157288
+        },
+        "gpu_time": {
+          "frames": 985,
+          "median": 10.6015,
+          "mean": 10.577871878172589,
+          "p95": 11.1199,
+          "max": 12.0421
+        },
+        "frame_time": {
+          "frames": 985,
+          "median": 16.6668,
+          "mean": 16.71753045685279,
+          "p95": 16.6713,
+          "max": 43.3131
+        },
+        "volumetric_fog": {
+          "frames": 985,
+          "median": 0.6738,
+          "mean": 0.6792337055837564,
+          "p95": 0.70658,
+          "max": 1.1976
+        },
+        "translucency": {
+          "frames": 985,
+          "median": 0.022,
+          "mean": 0.0219405076142132,
+          "p95": 0.0235,
+          "max": 0.0288
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 11.43,
+            "values": [
+              12.551,
+              10.837,
+              11.3,
+              11.919,
+              11.73,
+              10.925,
+              11.386,
+              11.474
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.675,
+            "values": [
+              0.926,
+              0.661,
+              0.672,
+              0.67,
+              0.675,
+              0.675,
+              0.71,
+              0.717
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 11.43,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      }
+    },
+    "C_q0_r1": {
+      "run": "C_q0_r1",
+      "condition": "q0",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 1248,
+        "rejected": 0,
+        "state_target": [
+          128,
+          128,
+          8
+        ],
+        "quality_read": 0,
+        "mode_read": 2,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_224712).csv",
+        "Profile(20261114_224725).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_224712).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 10.825446638655462,
+          "odd_mean": 10.559666666666665,
+          "abs_difference": 0.2657799719887972
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 10.7226,
+          "mean": 10.69283642105263,
+          "p95": 10.91177,
+          "max": 11.3931
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6667,
+          "mean": 16.666720842105264,
+          "p95": 16.67153,
+          "max": 16.6829
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.6722,
+          "mean": 0.721566947368421,
+          "p95": 0.99323,
+          "max": 1.08
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0222,
+          "mean": 0.022176842105263155,
+          "p95": 0.023829999999999997,
+          "max": 0.0278
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 11.064499999999999,
+            "values": [
+              11.184,
+              11.075,
+              10.747,
+              11.054,
+              10.848,
+              11.322
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.67,
+            "values": [
+              0.672,
+              0.67,
+              0.669,
+              0.671,
+              0.67,
+              0.664
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 11.064499999999999,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_224725).csv",
+        "rows": 990,
+        "alternation": {
+          "even_mean": 10.923776470588235,
+          "odd_mean": 10.683918699186991,
+          "abs_difference": 0.23985777140124398
+        },
+        "gpu_time": {
+          "frames": 985,
+          "median": 10.8008,
+          "mean": 10.803969340101522,
+          "p95": 11.07658,
+          "max": 11.706
+        },
+        "frame_time": {
+          "frames": 985,
+          "median": 16.6668,
+          "mean": 16.671672487309642,
+          "p95": 16.6726,
+          "max": 19.3178
+        },
+        "volumetric_fog": {
+          "frames": 985,
+          "median": 0.6822,
+          "mean": 0.695787614213198,
+          "p95": 0.7331799999999999,
+          "max": 1.2514
+        },
+        "translucency": {
+          "frames": 985,
+          "median": 0.0221,
+          "mean": 0.022458883248730965,
+          "p95": 0.023779999999999996,
+          "max": 0.3463
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 11.264,
+            "values": [
+              11.247,
+              10.838,
+              11.204,
+              11.314,
+              11.294,
+              11.215,
+              11.281,
+              11.341
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.679,
+            "values": [
+              0.683,
+              0.67,
+              0.671,
+              0.678,
+              0.673,
+              0.68,
+              0.709,
+              0.716
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 11.264,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      }
+    },
+    "C_q0_r2": {
+      "run": "C_q0_r2",
+      "condition": "q0",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 1595,
+        "rejected": 0,
+        "state_target": [
+          128,
+          128,
+          8
+        ],
+        "quality_read": 0,
+        "mode_read": 2,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_225228).csv",
+        "Profile(20261114_225241).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_225228).csv",
+        "rows": 478,
+        "alternation": {
+          "even_mean": 10.549884810126583,
+          "odd_mean": 10.691872457627118,
+          "abs_difference": 0.14198764750053527
+        },
+        "gpu_time": {
+          "frames": 473,
+          "median": 10.6006,
+          "mean": 10.620728541226216,
+          "p95": 10.897979999999999,
+          "max": 11.1075
+        },
+        "frame_time": {
+          "frames": 473,
+          "median": 16.6668,
+          "mean": 16.72246934460888,
+          "p95": 16.671039999999998,
+          "max": 43.0205
+        },
+        "volumetric_fog": {
+          "frames": 473,
+          "median": 0.6703,
+          "mean": 0.6708613107822411,
+          "p95": 0.6818,
+          "max": 0.6958
+        },
+        "translucency": {
+          "frames": 473,
+          "median": 0.022,
+          "mean": 0.022036997885835095,
+          "p95": 0.0236,
+          "max": 0.0263
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 10.812000000000001,
+            "values": [
+              11.097,
+              10.842,
+              11.028,
+              10.734,
+              10.782,
+              10.758
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.673,
+            "values": [
+              0.67,
+              0.677,
+              0.676,
+              0.674,
+              0.672,
+              0.67
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 10.812000000000001,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_225241).csv",
+        "rows": 990,
+        "alternation": {
+          "even_mean": 10.583940567951318,
+          "odd_mean": 10.825775203252032,
+          "abs_difference": 0.24183463530071414
+        },
+        "gpu_time": {
+          "frames": 985,
+          "median": 10.6913,
+          "mean": 10.704735126903554,
+          "p95": 11.035599999999999,
+          "max": 11.7849
+        },
+        "frame_time": {
+          "frames": 985,
+          "median": 16.6668,
+          "mean": 16.666774314720815,
+          "p95": 16.6706,
+          "max": 16.7061
+        },
+        "volumetric_fog": {
+          "frames": 985,
+          "median": 0.6786,
+          "mean": 0.6831604060913705,
+          "p95": 0.71398,
+          "max": 0.739
+        },
+        "translucency": {
+          "frames": 985,
+          "median": 0.022,
+          "mean": 0.022070253807106595,
+          "p95": 0.0237,
+          "max": 0.0268
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 10.918500000000002,
+            "values": [
+              10.955,
+              10.831,
+              10.831,
+              10.925,
+              10.912,
+              10.882,
+              11.049,
+              11.056
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.6785000000000001,
+            "values": [
+              0.676,
+              0.667,
+              0.67,
+              0.679,
+              0.684,
+              0.678,
+              0.708,
+              0.716
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 10.918500000000002,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      }
+    },
+    "C_q0_r3": {
+      "run": "C_q0_r3",
+      "condition": "q0",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 1247,
+        "rejected": 0,
+        "state_target": [
+          128,
+          128,
+          8
+        ],
+        "quality_read": 0,
+        "mode_read": 2,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_225713).csv",
+        "Profile(20261114_225726).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_225713).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 10.89068949579832,
+          "odd_mean": 11.169219831223627,
+          "abs_difference": 0.27853033542530703
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 10.8223,
+          "mean": 11.029661473684211,
+          "p95": 13.78004,
+          "max": 15.6426
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6667,
+          "mean": 16.667376210526314,
+          "p95": 16.67229,
+          "max": 16.8764
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 1.0529,
+          "mean": 1.017073052631579,
+          "p95": 1.3261899999999986,
+          "max": 2.0343
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0226,
+          "mean": 0.03384484210526316,
+          "p95": 0.02685999999999999,
+          "max": 0.5367
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 11.0295,
+            "values": [
+              11.558,
+              11.127,
+              10.721,
+              10.999,
+              10.743,
+              11.06
+            ]
+          },
+          "scope": {
+            "present": 3,
+            "median": 0.295,
+            "values": [
+              0.295,
+              0.295,
+              0.296
+            ]
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.672,
+            "values": [
+              0.672,
+              0.665,
+              0.675,
+              0.665,
+              0.672,
+              0.673
+            ]
+          },
+          "frame_with_scope_median": 11.06,
+          "frame_without_scope_median": 10.743,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.125,
+            "TDFluidGpu.Fog3D.Divergence": 0.014,
+            "TDFluidGpu.Fog3D.Gradient": 0.019,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.13400000000000004
+          },
+          "passes_sum_median": 0.29200000000000004
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_225726).csv",
+        "rows": 987,
+        "alternation": {
+          "even_mean": 10.62754215885947,
+          "odd_mean": 10.886696945010184,
+          "abs_difference": 0.25915478615071486
+        },
+        "gpu_time": {
+          "frames": 982,
+          "median": 10.58625,
+          "mean": 10.757119551934826,
+          "p95": 11.557229999999999,
+          "max": 15.5944
+        },
+        "frame_time": {
+          "frames": 982,
+          "median": 16.6668,
+          "mean": 16.708003665987782,
+          "p95": 16.671995,
+          "max": 52.4053
+        },
+        "volumetric_fog": {
+          "frames": 982,
+          "median": 0.6742,
+          "mean": 0.68429816700611,
+          "p95": 0.708195,
+          "max": 1.7937
+        },
+        "translucency": {
+          "frames": 982,
+          "median": 0.0223,
+          "mean": 0.022669857433808557,
+          "p95": 0.02579499999999999,
+          "max": 0.0308
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 11.594000000000001,
+            "values": [
+              11.904,
+              11.515,
+              11.324,
+              11.673,
+              11.3,
+              11.941,
+              11.339,
+              11.699
+            ]
+          },
+          "scope": {
+            "present": 4,
+            "median": 0.2935,
+            "values": [
+              0.293,
+              0.294,
+              0.293,
+              0.32
+            ]
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.6865,
+            "values": [
+              0.693,
+              0.678,
+              0.67,
+              0.68,
+              0.67,
+              1.039,
+              0.717,
+              0.714
+            ]
+          },
+          "frame_with_scope_median": 11.686,
+          "frame_without_scope_median": 11.3315,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.122,
+            "TDFluidGpu.Fog3D.BakeBlocked": 0.0,
+            "TDFluidGpu.Fog3D.BakeFaceFlags": 0.0,
+            "TDFluidGpu.Fog3D.Clean": 0.0,
+            "TDFluidGpu.Fog3D.Divergence": 0.0135,
+            "TDFluidGpu.Fog3D.Gradient": 0.0185,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.13450000000000004
+          },
+          "passes_sum_median": 0.2895
+        }
+      }
+    },
+    "C_q1_r1": {
+      "run": "C_q1_r1",
+      "condition": "q1",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 1595,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 1,
+        "mode_read": 2,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_224831).csv",
+        "Profile(20261114_224844).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_224831).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 10.601757983193279,
+          "odd_mean": 11.559736286919833,
+          "abs_difference": 0.9579783037265539
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 11.3358,
+          "mean": 11.079738736842105,
+          "p95": 11.67534,
+          "max": 12.3454
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6668,
+          "mean": 16.668303368421054,
+          "p95": 16.67296,
+          "max": 17.4062
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.6765,
+          "mean": 0.775052,
+          "p95": 0.99989,
+          "max": 1.2555
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0221,
+          "mean": 0.022212,
+          "p95": 0.0241,
+          "max": 0.028
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 11.08,
+            "values": [
+              11.103,
+              11.102,
+              11.081,
+              11.072,
+              11.079,
+              11.034
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.6755,
+            "values": [
+              0.678,
+              0.682,
+              0.674,
+              0.677,
+              0.673,
+              0.668
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 11.08,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_224844).csv",
+        "rows": 990,
+        "alternation": {
+          "even_mean": 10.678719675456389,
+          "odd_mean": 11.641074593495935,
+          "abs_difference": 0.9623549180395461
+        },
+        "gpu_time": {
+          "frames": 985,
+          "median": 11.2625,
+          "mean": 11.159408629441625,
+          "p95": 11.77456,
+          "max": 12.3577
+        },
+        "frame_time": {
+          "frames": 985,
+          "median": 16.6667,
+          "mean": 16.669151472081218,
+          "p95": 16.6809,
+          "max": 18.6269
+        },
+        "volumetric_fog": {
+          "frames": 985,
+          "median": 0.6788,
+          "mean": 0.7006048730964466,
+          "p95": 0.98646,
+          "max": 1.2657
+        },
+        "translucency": {
+          "frames": 985,
+          "median": 0.022,
+          "mean": 0.02210294416243655,
+          "p95": 0.0237,
+          "max": 0.0271
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 11.064,
+            "values": [
+              10.893,
+              10.814,
+              10.841,
+              11.194,
+              10.946,
+              11.182,
+              11.368,
+              11.375
+            ]
+          },
+          "scope": {
+            "present": 0,
+            "median": null,
+            "values": []
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.678,
+            "values": [
+              0.686,
+              0.678,
+              0.666,
+              0.678,
+              0.675,
+              0.674,
+              0.716,
+              0.713
+            ]
+          },
+          "frame_with_scope_median": null,
+          "frame_without_scope_median": 11.064,
+          "passes_median": {},
+          "passes_sum_median": 0.0
+        }
+      }
+    },
+    "C_q1_r2": {
+      "run": "C_q1_r2",
+      "condition": "q1",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 1934,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 1,
+        "mode_read": 2,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_225109).csv",
+        "Profile(20261114_225122).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_225109).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 11.548610084033614,
+          "odd_mean": 10.57373670886076,
+          "abs_difference": 0.9748733751728533
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 11.1468,
+          "mean": 11.06219957894737,
+          "p95": 11.68213,
+          "max": 11.9791
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6668,
+          "mean": 16.666904631578948,
+          "p95": 16.67249,
+          "max": 16.7852
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.6697,
+          "mean": 0.6698090526315789,
+          "p95": 0.6783,
+          "max": 0.686
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0222,
+          "mean": 0.02215073684210526,
+          "p95": 0.0236,
+          "max": 0.0303
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 11.7745,
+            "values": [
+              11.852,
+              11.757,
+              11.777,
+              12.554,
+              11.772,
+              11.761
+            ]
+          },
+          "scope": {
+            "present": 6,
+            "median": 0.9975,
+            "values": [
+              1.006,
+              0.992,
+              1.0,
+              0.997,
+              0.998,
+              0.997
+            ]
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.6755,
+            "values": [
+              0.676,
+              0.669,
+              0.676,
+              0.675,
+              0.684,
+              0.668
+            ]
+          },
+          "frame_with_scope_median": 11.7745,
+          "frame_without_scope_median": null,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.428,
+            "TDFluidGpu.Fog3D.Divergence": 0.046,
+            "TDFluidGpu.Fog3D.Gradient": 0.076,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.4485000000000002
+          },
+          "passes_sum_median": 0.9985000000000002
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_225122).csv",
+        "rows": 990,
+        "alternation": {
+          "even_mean": 11.424506085192698,
+          "odd_mean": 10.35042987804878,
+          "abs_difference": 1.0740762071439178
+        },
+        "gpu_time": {
+          "frames": 985,
+          "median": 11.0957,
+          "mean": 10.888013197969542,
+          "p95": 11.69628,
+          "max": 12.2471
+        },
+        "frame_time": {
+          "frames": 985,
+          "median": 16.6668,
+          "mean": 16.66896314720812,
+          "p95": 16.6708,
+          "max": 18.1868
+        },
+        "volumetric_fog": {
+          "frames": 985,
+          "median": 0.6782,
+          "mean": 0.6818914720812183,
+          "p95": 0.7097,
+          "max": 0.7234
+        },
+        "translucency": {
+          "frames": 985,
+          "median": 0.022,
+          "mean": 0.022061319796954314,
+          "p95": 0.0236,
+          "max": 0.0266
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 12.2195,
+            "values": [
+              12.233,
+              12.206,
+              12.165,
+              12.293,
+              12.27,
+              12.185,
+              12.288,
+              10.956
+            ]
+          },
+          "scope": {
+            "present": 7,
+            "median": 1.0,
+            "values": [
+              1.003,
+              0.999,
+              0.999,
+              1.004,
+              0.994,
+              1.006,
+              1.0
+            ]
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.679,
+            "values": [
+              0.691,
+              0.673,
+              0.676,
+              0.678,
+              0.674,
+              0.68,
+              0.711,
+              0.711
+            ]
+          },
+          "frame_with_scope_median": 12.233,
+          "frame_without_scope_median": 10.956,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.427,
+            "TDFluidGpu.Fog3D.Divergence": 0.046,
+            "TDFluidGpu.Fog3D.Gradient": 0.077,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.4500000000000002
+          },
+          "passes_sum_median": 0.9980000000000002
+        }
+      }
+    },
+    "C_q1_r3": {
+      "run": "C_q1_r3",
+      "condition": "q1",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 1601,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 1,
+        "mode_read": 2,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_225832).csv",
+        "Profile(20261114_225845).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_225832).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 11.78910756302521,
+          "odd_mean": 10.755564135021096,
+          "abs_difference": 1.0335434280041138
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 11.4372,
+          "mean": 11.273423789473684,
+          "p95": 12.231229999999996,
+          "max": 15.42
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6668,
+          "mean": 16.673690947368424,
+          "p95": 16.6702,
+          "max": 18.7069
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.6702,
+          "mean": 0.6857353684210525,
+          "p95": 0.68063,
+          "max": 1.9838
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0224,
+          "mean": 0.02264294736842105,
+          "p95": 0.025829999999999995,
+          "max": 0.0303
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 11.7345,
+            "values": [
+              11.328,
+              12.789,
+              11.142,
+              12.141,
+              10.737,
+              12.19
+            ]
+          },
+          "scope": {
+            "present": 3,
+            "median": 0.986,
+            "values": [
+              0.985,
+              0.986,
+              0.997
+            ]
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.6685000000000001,
+            "values": [
+              0.691,
+              0.662,
+              0.672,
+              0.668,
+              0.668,
+              0.669
+            ]
+          },
+          "frame_with_scope_median": 12.19,
+          "frame_without_scope_median": 11.142,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.424,
+            "TDFluidGpu.Fog3D.Divergence": 0.046,
+            "TDFluidGpu.Fog3D.Gradient": 0.076,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.44300000000000017
+          },
+          "passes_sum_median": 0.9860000000000002
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_225845).csv",
+        "rows": 990,
+        "alternation": {
+          "even_mean": 10.780969979716023,
+          "odd_mean": 11.64111544715447,
+          "abs_difference": 0.8601454674384481
+        },
+        "gpu_time": {
+          "frames": 985,
+          "median": 11.2056,
+          "mean": 11.210606091370558,
+          "p95": 12.42132,
+          "max": 15.3221
+        },
+        "frame_time": {
+          "frames": 985,
+          "median": 16.6667,
+          "mean": 16.6716061928934,
+          "p95": 16.68158,
+          "max": 19.3716
+        },
+        "volumetric_fog": {
+          "frames": 985,
+          "median": 0.6776,
+          "mean": 0.6867143147208122,
+          "p95": 0.7127,
+          "max": 1.9579
+        },
+        "translucency": {
+          "frames": 985,
+          "median": 0.0223,
+          "mean": 0.023735228426395936,
+          "p95": 0.0258,
+          "max": 0.6182
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 11.8335,
+            "values": [
+              10.993,
+              11.861,
+              10.863,
+              13.279,
+              12.551,
+              11.528,
+              12.022,
+              11.806
+            ]
+          },
+          "scope": {
+            "present": 4,
+            "median": 0.994,
+            "values": [
+              0.998,
+              1.258,
+              0.987,
+              0.99
+            ]
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.6885,
+            "values": [
+              0.687,
+              0.674,
+              0.668,
+              1.444,
+              0.69,
+              0.684,
+              0.717,
+              0.705
+            ]
+          },
+          "frame_with_scope_median": 12.2865,
+          "frame_without_scope_median": 11.2605,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.423,
+            "TDFluidGpu.Fog3D.Divergence": 0.049,
+            "TDFluidGpu.Fog3D.Gradient": 0.077,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.4435000000000001
+          },
+          "passes_sum_median": 0.9935000000000002
+        }
+      }
+    },
+    "C_q2_r1": {
+      "run": "C_q2_r1",
+      "condition": "q2",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 3150,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 2,
+        "mode_read": 2,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_224114).csv",
+        "Profile(20261114_224127).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_224114).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 11.62014411764706,
+          "odd_mean": 11.607551898734176,
+          "abs_difference": 0.012592218912883979
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 11.5806,
+          "mean": 11.613861263157895,
+          "p95": 11.81401,
+          "max": 12.4191
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6668,
+          "mean": 16.66797052631579,
+          "p95": 16.675819999999998,
+          "max": 17.2513
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.6758,
+          "mean": 0.707182947368421,
+          "p95": 0.99837,
+          "max": 1.2947
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0224,
+          "mean": 0.022446736842105262,
+          "p95": 0.024529999999999996,
+          "max": 0.0291
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 11.8645,
+            "values": [
+              11.943,
+              11.812,
+              11.862,
+              11.851,
+              11.867,
+              11.885
+            ]
+          },
+          "scope": {
+            "present": 6,
+            "median": 1.0015,
+            "values": [
+              0.999,
+              0.999,
+              0.999,
+              1.019,
+              1.004,
+              1.009
+            ]
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.674,
+            "values": [
+              0.67,
+              0.669,
+              0.666,
+              0.678,
+              0.681,
+              0.682
+            ]
+          },
+          "frame_with_scope_median": 11.8645,
+          "frame_without_scope_median": null,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.428,
+            "TDFluidGpu.Fog3D.Divergence": 0.047,
+            "TDFluidGpu.Fog3D.Gradient": 0.077,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.4510000000000002
+          },
+          "passes_sum_median": 1.0015
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_224127).csv",
+        "rows": 988,
+        "alternation": {
+          "even_mean": 11.55454674796748,
+          "odd_mean": 11.560845010183298,
+          "abs_difference": 0.0062982622158180845
+        },
+        "gpu_time": {
+          "frames": 983,
+          "median": 11.5224,
+          "mean": 11.557692675483215,
+          "p95": 11.92921,
+          "max": 12.4501
+        },
+        "frame_time": {
+          "frames": 983,
+          "median": 16.6669,
+          "mean": 16.707343641912512,
+          "p95": 16.6782,
+          "max": 45.5082
+        },
+        "volumetric_fog": {
+          "frames": 983,
+          "median": 0.682,
+          "mean": 0.6876598168870803,
+          "p95": 0.7155900000000001,
+          "max": 1.2668
+        },
+        "translucency": {
+          "frames": 983,
+          "median": 0.0227,
+          "mean": 0.023585554425228892,
+          "p95": 0.0257,
+          "max": 0.3565
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 12.3345,
+            "values": [
+              12.477,
+              12.248,
+              12.298,
+              12.351,
+              12.318,
+              12.034,
+              12.516,
+              12.441
+            ]
+          },
+          "scope": {
+            "present": 8,
+            "median": 1.006,
+            "values": [
+              1.011,
+              1.003,
+              1.005,
+              1.006,
+              1.006,
+              1.007,
+              1.1,
+              0.998
+            ]
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.688,
+            "values": [
+              0.694,
+              0.682,
+              0.688,
+              0.688,
+              0.671,
+              0.681,
+              0.709,
+              0.716
+            ]
+          },
+          "frame_with_scope_median": 12.3345,
+          "frame_without_scope_median": null,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.428,
+            "TDFluidGpu.Fog3D.BakeBlocked": 0.0,
+            "TDFluidGpu.Fog3D.BakeFaceFlags": 0.0,
+            "TDFluidGpu.Fog3D.Clean": 0.0,
+            "TDFluidGpu.Fog3D.Divergence": 0.0465,
+            "TDFluidGpu.Fog3D.Gradient": 0.078,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.4515000000000002
+          },
+          "passes_sum_median": 1.0065000000000002
+        }
+      }
+    },
+    "C_q2_r2": {
+      "run": "C_q2_r2",
+      "condition": "q2",
+      "check": {
+        "valid": true,
+        "problems": [],
+        "events_done": 33,
+        "submitted": 2779,
+        "rejected": 0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "quality_read": 2,
+        "mode_read": 2,
+        "viewport_size": [
+          1612.0,
+          715.0
+        ]
+      },
+      "csv_files": [
+        "Profile(20261114_224950).csv",
+        "Profile(20261114_225003).csv"
+      ],
+      "still": {
+        "file": "Profile(20261114_224950).csv",
+        "rows": 480,
+        "alternation": {
+          "even_mean": 11.547316806722689,
+          "odd_mean": 11.5324641350211,
+          "abs_difference": 0.01485267170158977
+        },
+        "gpu_time": {
+          "frames": 475,
+          "median": 11.5158,
+          "mean": 11.53990610526316,
+          "p95": 11.71855,
+          "max": 12.3181
+        },
+        "frame_time": {
+          "frames": 475,
+          "median": 16.6668,
+          "mean": 16.667301263157896,
+          "p95": 16.67483,
+          "max": 16.941
+        },
+        "volumetric_fog": {
+          "frames": 475,
+          "median": 0.6738,
+          "mean": 0.799744,
+          "p95": 1.1085699999999996,
+          "max": 1.3204
+        },
+        "translucency": {
+          "frames": 475,
+          "median": 0.0222,
+          "mean": 0.02225094736842105,
+          "p95": 0.024,
+          "max": 0.0279
+        },
+        "profile_gpu": {
+          "dumps": 6,
+          "frame": {
+            "present": 6,
+            "median": 11.998000000000001,
+            "values": [
+              12.355,
+              12.22,
+              12.095,
+              11.769,
+              11.901,
+              11.84
+            ]
+          },
+          "scope": {
+            "present": 6,
+            "median": 0.995,
+            "values": [
+              0.992,
+              1.004,
+              0.994,
+              0.994,
+              1.002,
+              0.996
+            ]
+          },
+          "volumetric": {
+            "present": 6,
+            "median": 0.6755,
+            "values": [
+              0.672,
+              0.678,
+              0.673,
+              0.665,
+              0.684,
+              0.678
+            ]
+          },
+          "frame_with_scope_median": 11.998000000000001,
+          "frame_without_scope_median": null,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.4265,
+            "TDFluidGpu.Fog3D.Divergence": 0.047,
+            "TDFluidGpu.Fog3D.Gradient": 0.076,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.4455000000000002
+          },
+          "passes_sum_median": 0.9950000000000001
+        }
+      },
+      "loop": {
+        "file": "Profile(20261114_225003).csv",
+        "rows": 975,
+        "alternation": {
+          "even_mean": 11.36018536082474,
+          "odd_mean": 11.370612164948453,
+          "abs_difference": 0.01042680412371233
+        },
+        "gpu_time": {
+          "frames": 970,
+          "median": 11.3166,
+          "mean": 11.365398762886597,
+          "p95": 11.74495,
+          "max": 12.3745
+        },
+        "frame_time": {
+          "frames": 970,
+          "median": 16.66675,
+          "mean": 16.916708247422683,
+          "p95": 16.6807,
+          "max": 50.8506
+        },
+        "volumetric_fog": {
+          "frames": 970,
+          "median": 0.6782,
+          "mean": 0.6821352577319587,
+          "p95": 0.7124550000000001,
+          "max": 0.724
+        },
+        "translucency": {
+          "frames": 970,
+          "median": 0.022,
+          "mean": 0.022101340206185566,
+          "p95": 0.0239,
+          "max": 0.0275
+        },
+        "profile_gpu": {
+          "dumps": 8,
+          "frame": {
+            "present": 8,
+            "median": 12.306000000000001,
+            "values": [
+              12.349,
+              12.391,
+              12.185,
+              12.301,
+              12.259,
+              12.241,
+              12.311,
+              12.439
+            ]
+          },
+          "scope": {
+            "present": 8,
+            "median": 0.993,
+            "values": [
+              1.003,
+              0.989,
+              0.992,
+              0.991,
+              0.994,
+              0.996,
+              0.992,
+              1.091
+            ]
+          },
+          "volumetric": {
+            "present": 8,
+            "median": 0.6845000000000001,
+            "values": [
+              0.69,
+              0.682,
+              0.677,
+              0.684,
+              0.676,
+              0.685,
+              0.704,
+              0.721
+            ]
+          },
+          "frame_with_scope_median": 12.306000000000001,
+          "frame_without_scope_median": null,
+          "passes_median": {
+            "TDFluidGpu.Fog3D.Advect": 0.4245,
+            "TDFluidGpu.Fog3D.BakeBlocked": 0.0,
+            "TDFluidGpu.Fog3D.BakeFaceFlags": 0.0,
+            "TDFluidGpu.Fog3D.Clean": 0.0,
+            "TDFluidGpu.Fog3D.Divergence": 0.047,
+            "TDFluidGpu.Fog3D.Gradient": 0.076,
+            "TDFluidGpu.Fog3D.PressureColumn": 0.44300000000000017
+          },
+          "passes_sum_median": 0.9925000000000002
+        }
+      }
+    }
+  },
+  "environment": "Windows 10, 언리얼 에디터 5.8 안 PIE(게임 빌드 아님), NVIDIA GeForce RTX 2060(드라이버 621.01), PIE 화면 1612×715(상태 읽기 viewport_size)·화면 비율 100%·동적 해상도 끔, `t.MaxFPS 60`·VSync 끔. 측정 중 그래픽 카드 클럭 1935 MHz 고정(보강 실행 2회 동안 2초마다 nvidia-smi 41표본, 최대 2160 MHz, 사용률 약 61~64%, 온도 약 60도), 다른 일 없이 에디터 하나만 켜 둠.",
+  "environment_detail": {
+    "summary": "Windows 10, 언리얼 에디터 5.8 안 PIE(게임 빌드 아님), NVIDIA GeForce RTX 2060(드라이버 621.01), PIE 화면 1612×715(상태 읽기 viewport_size)·화면 비율 100%·동적 해상도 끔, `t.MaxFPS 60`·VSync 끔. 측정 중 그래픽 카드 클럭 1935 MHz 고정(보강 실행 2회 동안 2초마다 nvidia-smi 41표본, 최대 2160 MHz, 사용률 약 61~64%, 온도 약 60도), 다른 일 없이 에디터 하나만 켜 둠.",
+    "gpu": "NVIDIA GeForce RTX 2060",
+    "driver": "621.01",
+    "engine": "Unreal Engine 5.8 에디터 PIE",
+    "viewport": [
+      1612,
+      715
+    ],
+    "clock_sampling_file": "Saved/AgentOps/20261114/fog3d/stage1w/s2/nvsmi_extra.csv"
+  },
+  "notes": [
+    "## 읽는 법과 한계",
+    "",
+    "- 3D 안개 계산 패스는 CSV 의 GPU 통계 열로는 가를 수 없다(계산 패스가 GPU 통계 이름을 따로 갖지 않음 [확인: Source/TDFluidGpu/Private/TDFluidGpuFog3D.cpp:627 에 RDG_EVENT_SCOPE 뿐, DECLARE_GPU_STAT 없음]). 그래서 ProfileGPU 표(프레임 하나)에서 \"TDFluidGpuFog3D 128/256\" 범위의 포함 시간을 읽었다. 이 범위 안 패스 이름(Advect·PressureColumn·Divergence·Gradient 등)의 합은 범위 합과 같았다(표 위 \"패스 이름 합\").",
+    "- 초당 30회 조건(낮음·보통)은 한 프레임 걸러 계산이 돈다. 표 시각이 60프레임 간격과 겹쳐 처음 실행(r1·r2)의 표는 계산이 안 도는 프레임만 잡은 경우가 있었다(표에 \"-\"). 그래서 표 시각을 한 프레임 엇갈린 보강 실행(r3, 낮음·보통)을 더 돌렸다. 보강 실행 값은 같은 표 위 \"보강 실행\" 칸에 있다.",
+    "- 계산이 도는 프레임 하나의 비용(ProfileGPU, 중앙값): 낮음 0.29 ms, 보통 0.99 ms, 높음 1.00 ms. 높음의 패스별(중앙값): Advect 0.43, PressureColumn 0.45, Gradient 0.08, Divergence 0.05 ms. 짝수·홀수 프레임 차이(CSV)도 같은 크기다(보통 약 0.96 ms, 낮음 약 0.14~0.27 ms).",
+    "- 프레임당 평균으로 환산하면(60프레임 기준, 계산이 도는 프레임 비용 × 초당 횟수 ÷ 60) 낮음 약 0.15, 보통 약 0.50, 높음 약 1.00 ms [추정: 곱셈]. 전체 GPU 프레임 시간 평균 차이(조건 − 계산 끔)는 서 있음 0.41/0.82/1.33, 되풀이 0.14/0.41/0.84 ms 로 같은 순서다. 다만 그 차이에는 이 곱셈 값보다 약 0.3~0.5 ms 가 더 얹혀 있고(예: 서 있음 보통 0.82 대 0.50) 원인은 가르지 못했다. 조건 사이 실행 순서·흔들림이 크기가 이 정도(숨김−계산 끔이 −0.21~+0.16 ms)라 이보다 작은 차이는 믿지 않는다.",
+    "- 그리기: 엔진 볼륨 안개 패스(CSV `GPU/VolumetricFog`)가 구역 숨김 0.56 ms, 구역을 켜면(계산 끔 포함) 0.67~0.69 ms 로 약 +0.11 ms 늘었다. 계산 끔과 높음 사이 엔진 볼륨 안개 값은 거의 같다(0.67~0.69). 3D 안개 구역은 엔진 볼륨 안개의 복셀화 단계에서 그려지는 것으로 보인다 [추정].",
+    "- 최악 조건(안개 칸 전부 깨어 있는 장면, 여러 상호작용 입력이 겹치는 싸움)은 이번 무대에 없어 재지 않았다. \"보통 싸움\"·\"최악\" 칸은 비어 있다. 되풀이 구간(휘두르기 1.85초 + 500cm 걷기 두 번)은 폰 하나가 입력 구를 몇 개 넣는 정도다.",
+    "- 측정 환경: 에디터 안 PIE(에디터 화면 그리기·게임 스레드 일 포함), 1612×715, RTX 2060, 클럭 1935 MHz 로 고정, `t.MaxFPS 60`. 게임 빌드 값은 다를 수 있다. 실행 순서: 높음 1회(맨 처음 시운전 실행) → 숨김 → 계산 끔 → 낮음 → 보통 → (2회차 반대 순서) 높음 → 보통 → 낮음 → 계산 끔 → 숨김. 낮음·보통 보강(r3)은 맨 끝.",
+    "- 두 번 잰 차이: 중앙값 기준 0.03~0.21 ms(표의 \"두 번 중앙값 차이\"). 구역 숨김은 계산·그리기 모두 없는 조건이라 3D 안개 값이 없다.",
+    "- 시험 환경 복구: 측정 뒤 콘솔 값을 TD.Fog3D.Quality·Mode -1, t.MaxFPS 0, r.VSync 0, r.GPUCsvStatsEnabled 0, r.DynamicRes.OperationMode 1, r.ProfileGPU.ShowUI 1 로 되돌렸다(원래 값을 미리 읽지는 않아 엔진 기본값으로 되돌린 것).",
+    ""
+  ]
+}

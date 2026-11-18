@@ -1,0 +1,59 @@
+{
+ "base": {
+  "arm": 400,
+  "view": [
+   -12,
+   0
+  ],
+  "console": [
+   "TD.Fog3D.Mode 2"
+  ],
+  "tuning_reload": {
+   "tuning": "Saved/FluidFX/fog3d_diag/tuning_S1.json",
+   "reset": "keep"
+  }
+ },
+ "variants": [
+  {
+   "name": "walk",
+   "apply": {
+    "move": {
+     "distance_cm": 400,
+     "yaw": 0
+    }
+   },
+   "settle": 0.2
+  },
+  {
+   "name": "react",
+   "apply": {
+    "schedule": {
+     "reference": "now",
+     "prefix": "r",
+     "times": [
+      2.5,
+      3.0,
+      4.3,
+      4.8
+     ],
+     "events": [
+      {
+       "time": 0.0,
+       "console": [
+        "TDPlayMeleeAction"
+       ]
+      },
+      {
+       "time": 3.3,
+       "console": [
+        "TD.Fog3D.Mode 0"
+       ]
+      }
+     ],
+     "timeout": 60
+    }
+   },
+   "settle": 0.5
+  }
+ ]
+}

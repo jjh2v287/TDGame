@@ -1,0 +1,144 @@
+{
+  "name": "h60",
+  "description": "두께 60, 윗면 흐림 30",
+  "group": "안개 높이",
+  "camera": "back",
+  "light": "side",
+  "changed_fields": {
+    "BaseThicknessCm": {
+      "from": 90.0,
+      "to": 60.0
+    },
+    "BaseTopBlurCm": {
+      "from": 45.0,
+      "to": 30.0
+    }
+  },
+  "console_extra": [],
+  "on_mode": 2,
+  "valid": true,
+  "invalid_reasons": [],
+  "validity": {
+    "swing_to_S2.5_seconds": 2.5000001303851604,
+    "walk_end_game_seconds": 10.766667228192091,
+    "walk_end_limit_seconds": 11.6,
+    "swing_gap_range_seconds": [
+      2.15,
+      3.0
+    ],
+    "walk_moved_cm": 607.0401137685756,
+    "walk_timed_out": false,
+    "shot_issue_late_max_seconds": 1.0378658785725747e-06,
+    "shot_capture_delay_max_seconds": 0.016667705401779642,
+    "event_late_max_seconds": 0.01666666753590107,
+    "events_done": 5,
+    "events_expected": 5
+  },
+  "notes": [],
+  "log": {
+    "source": "snapshot",
+    "fog3d_warning_or_error_lines": 0,
+    "submitted": 1073,
+    "rejected": 0,
+    "ensure_lines": 0,
+    "rdg_error_lines": 0,
+    "summary_line_count": 1,
+    "examples": {
+      "fog3d_warning_or_error": [],
+      "ensure": [],
+      "rdg_error": []
+    },
+    "usable": true
+  },
+  "usable": true,
+  "numbers": {
+    "image_size": [
+      1280,
+      720
+    ],
+    "regions": {
+      "RW_rows_cols": [
+        519,
+        706,
+        448,
+        832
+      ],
+      "RS_rows_cols": [
+        432,
+        684,
+        320,
+        960
+      ],
+      "RS_excluded_columns": [
+        538,
+        743
+      ],
+      "RS2_rows_cols": [
+        360,
+        548,
+        231,
+        692
+      ],
+      "RT_rows_cols": [
+        396,
+        684,
+        26,
+        384
+      ]
+    },
+    "Wk": {
+      "W12.1": 1.483145975378788,
+      "W13.1": 1.4049931706773617,
+      "W14.1": 1.172322560160428,
+      "W15.6": 0.868697198083779,
+      "W17.6": 0.610869064728164
+    },
+    "Sk": {
+      "S2.5": 5.547496239737274,
+      "S3.5": 5.8199198394453555,
+      "S5.0": 4.840679589490968,
+      "S7.0": 2.7838398686371097
+    },
+    "Wk_moving_information_only": {
+      "W10.0": 1.2177817067736183,
+      "W10.4": 1.2528322443181816,
+      "W10.8": 1.5317464739304811
+    },
+    "Sk_moving_information_only": {
+      "S0.6": 1.7483810782703884,
+      "S1.2": 3.830997535121328,
+      "S1.9": 4.871191948549534
+    },
+    "noise_walk_N_W": 0.2300542613636363,
+    "noise_swing_N_S": 0.2878649242838897,
+    "refill_ratio_swing": 0.5018191537825991,
+    "refill_ratio_walk": 0.41187386465593934,
+    "Tx": 2.535536798654268,
+    "Sk2": {
+      "S2.5": 13.200818032030275,
+      "S3.5": 13.778388967092814,
+      "S5.0": 11.402914886694052,
+      "S7.0": 6.897371641205519
+    },
+    "Sk2_moving_information_only": {
+      "S0.6": 6.950555072229659,
+      "S1.2": 10.814123339640927,
+      "S1.9": 11.486824396547744
+    },
+    "noise_swing2_N_S2": 0.6242766395901601,
+    "Tx2": 0.4457883585910409,
+    "Wk_over_noise": 6.446939807102493,
+    "Sk_over_noise": 19.271178152522623,
+    "Wk_12.1_against_second_reference": 1.4917348178475933,
+    "Sk_2.5_against_second_reference": 5.605366163108921
+  },
+  "images": {
+    "strip": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/h60/report/strip.png",
+    "strip_size": [
+      2000,
+      224
+    ],
+    "swing_animation": "C:\\Project\\TDGame\\Saved\\FluidFX\\fog3d_calib\\h60\\report\\swing.webp",
+    "walk_animation": "C:\\Project\\TDGame\\Saved\\FluidFX\\fog3d_calib\\h60\\report\\walk.webp"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "run_id": null,
+  "started_at": "2026-11-13T21:39:11",
+  "variants_sha256": "811934391244cb77125ee3c51d40bd0d84087aff06fc79ddcd7e6ce5e5a3bbfd",
+  "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+  "stopped_leftover_pie": false,
+  "base": {
+    "fog_flow_origin": {
+      "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+      "value": 7.074738025665283,
+      "game_time": 7.074737798422575,
+      "user": "TDGen_FogCylinderA",
+      "errors": []
+    },
+    "arm": 400.0,
+    "view": [
+      -12.0,
+      0.0
+    ],
+    "game_time": 7.074737798422575
+  },
+  "variants": [
+    {
+      "name": "ctl_before",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 8.181982040405273,
+          "game_time": 8.181982100009918,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "game_time": 8.181982100009918,
+        "shot_game_time": 11.267475698143244,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "ctl_swing",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 12.57423210144043,
+          "game_time": 12.574232205748558,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "console": [
+          {
+            "command": "TDPlayMeleeAction"
+          }
+        ],
+        "game_time": 12.574232205748558,
+        "shot_game_time": 13.62319491058588,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    }
+  ],
+  "key_errors": []
+}

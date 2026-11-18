@@ -1,0 +1,35 @@
+{
+ "name": "topdown_dense",
+ "purpose": "탑다운(게임 기본 카메라: 팔 800cm, 60도)에서 칼 자국이 빈 자리로 보이는 짙은 안개. 개념 증명에서 가장 잘 보인 구성(T8) 그대로",
+ "status": "보류. 2026-11-14 개념 증명 성공 뒤 사용자 결정으로 값과 기록만 보존",
+ "evidence": [
+  "Docs/VolumeFog3D/measurements/stage1c/round2/poc_top.md",
+  "Docs/VolumeFog3D/measurements/stage1c/round2/poc_top_swing.png",
+  "Docs/VolumeFog3D/measurements/stage1c/round2/poc_back.png"
+ ],
+ "measured": {
+  "camera": "top(arm 800, pitch -60)",
+  "fog_visible_Fv": 59.9,
+  "swing_mark_Rs": 60.9,
+  "noise_ratio": 30.5
+ },
+ "overrides": {
+  "BaseDensity": 16,
+  "BaseThicknessCm": 150,
+  "BaseTopBlurCm": 120,
+  "FootRadiusCm": 45,
+  "HandRadiusCm": 45,
+  "PelvisRadiusCm": 60,
+  "BodyWindStrength": 2,
+  "BladeRadiusCm": 30,
+  "bStainNoiseEnabled": true,
+  "StainNoiseAmplitude": 0.6,
+  "StainNoiseSpacingCm": 400
+ },
+ "resume_notes": [
+  "높이 150cm 그라데이션은 자국을 약하게 했다(짙기 8: 34 → 16). 다시 시작하면 기본 높이(90/45)에 짙기 8~16 + 위 반응 값을 먼저 찍어 본다(아직 안 찍은 조합)",
+  "3인칭에서는 허리까지 차는 융단이 되어 자국이 거의 안 보인다. 카메라에 따라 프리셋을 고르는 장치가 필요하다(코드 없음)",
+  "위에서 봐도 안개 자체는 무늬 없는 한 장이다",
+  "걷기 자국은 탑다운에서 약한 띠였다"
+ ]
+}

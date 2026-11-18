@@ -1,0 +1,261 @@
+{
+  "status": "ok",
+  "map": "/Game/FluidFX/Maps/LV_TDFog3DStage",
+  "overwrite": false,
+  "preset_tuning_sha256": "8bacc1fe2a112d2b949f01fdcfac3a5cd19ad56a2ee2510d80139a6b2522036a",
+  "volume_material": "/Game/FluidFX/Materials/M_TD_Fog3DVolume",
+  "zone_label": "TDGen_Fog3D_Zone",
+  "actor_folder": "TDGen/FluidFX/Fog3DStage",
+  "records": {
+    "floor": {
+      "label": "TDGen_Fog3D_Floor",
+      "bounds": [
+        -6000.0,
+        -6000.0,
+        -100.0,
+        6000.0,
+        6000.0,
+        0.0
+      ],
+      "material": "/Game/FluidFX/Materials/M_TD_FluidFogStageFloor"
+    },
+    "obstacles": [
+      {
+        "label": "TDGen_Fog3D_LowBox",
+        "center": [
+          500.0,
+          -400.0,
+          15.0
+        ],
+        "size_cm": [
+          150.0,
+          150.0,
+          30.0
+        ],
+        "bounds": [
+          425.0,
+          -475.0,
+          0.0,
+          575.0,
+          -325.0,
+          30.0
+        ],
+        "material": "/Game/FluidFX/Materials/M_TD_FluidFogStageWall"
+      },
+      {
+        "label": "TDGen_Fog3D_HighBox",
+        "center": [
+          500.0,
+          400.0,
+          90.0
+        ],
+        "size_cm": [
+          150.0,
+          150.0,
+          180.0
+        ],
+        "bounds": [
+          425.0,
+          325.0,
+          0.0,
+          575.0,
+          475.0,
+          180.0
+        ],
+        "material": "/Game/FluidFX/Materials/M_TD_FluidFogStageWall"
+      },
+      {
+        "label": "TDGen_Fog3D_Wall",
+        "center": [
+          1100.0,
+          0.0,
+          125.0
+        ],
+        "size_cm": [
+          10.0,
+          300.0,
+          250.0
+        ],
+        "bounds": [
+          1095.0,
+          -150.0,
+          0.0,
+          1105.0,
+          150.0,
+          250.0
+        ],
+        "material": "/Game/FluidFX/Materials/M_TD_FluidFogStageWall"
+      }
+    ],
+    "height_fog": {
+      "fog_density": 0.002,
+      "enable_volumetric_fog": true,
+      "volumetric_fog_scattering_distribution": 0.35,
+      "volumetric_fog_distance": 12000.0
+    },
+    "zone": {
+      "label": "TDGen_Fog3D_Zone",
+      "center": [
+        0.0,
+        0.0,
+        150.0
+      ],
+      "half_extent_cm": [
+        3000.0,
+        3000.0,
+        150.0
+      ],
+      "volume_material": "/Game/FluidFX/Materials/M_TD_Fog3DVolume",
+      "bounds": [
+        -3000.0,
+        -3000.0,
+        0.0,
+        3000.0,
+        3000.0,
+        300.0
+      ]
+    },
+    "player_start": [
+      -1000.0,
+      0.0,
+      100.0
+    ]
+  },
+  "created_actors": 11,
+  "actors": [
+    {
+      "label": "TDGen_Fog3D_Floor",
+      "class": "StaticMeshActor",
+      "bounds": [
+        -6000.0,
+        -6000.0,
+        -100.0,
+        6000.0,
+        6000.0,
+        0.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_LowBox",
+      "class": "StaticMeshActor",
+      "bounds": [
+        425.0,
+        -475.0,
+        0.0,
+        575.0,
+        -325.0,
+        30.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_HighBox",
+      "class": "StaticMeshActor",
+      "bounds": [
+        425.0,
+        325.0,
+        0.0,
+        575.0,
+        475.0,
+        180.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_Wall",
+      "class": "StaticMeshActor",
+      "bounds": [
+        1095.0,
+        -150.0,
+        0.0,
+        1105.0,
+        150.0,
+        250.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_Sun",
+      "class": "DirectionalLight",
+      "bounds": [
+        -662.7007007151944,
+        -209.07653149841894,
+        1624.3785001160009,
+        128.0,
+        404.24482310686676,
+        2190.2113032590305
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_SkyLight",
+      "class": "SkyLight",
+      "bounds": [
+        -256.0,
+        -256.0,
+        -1.0,
+        256.0,
+        256.0,
+        1756.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_SkyAtmosphere",
+      "class": "SkyAtmosphere",
+      "bounds": [
+        -128.0,
+        -128.0,
+        -128.0,
+        240.0,
+        128.0,
+        128.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_HeightFog",
+      "class": "ExponentialHeightFog",
+      "bounds": [
+        -128.0,
+        -128.0,
+        -128.0,
+        128.0,
+        128.0,
+        128.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_Exposure",
+      "class": "PostProcessVolume",
+      "bounds": [
+        -100.0,
+        -100.0,
+        -100.0,
+        100.0,
+        100.0,
+        100.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_PlayerStart",
+      "class": "PlayerStart",
+      "bounds": [
+        -1128.0,
+        -128.0,
+        -28.0,
+        -760.0,
+        128.0,
+        228.0
+      ]
+    },
+    {
+      "label": "TDGen_Fog3D_Zone",
+      "class": "TDFog3DZoneActor",
+      "bounds": [
+        -3000.0,
+        -3000.0,
+        0.0,
+        3000.0,
+        3000.0,
+        300.0
+      ]
+    }
+  ],
+  "lookdev_command": "python Tools/FluidFX/pie_lookdev_fluid.py --variants Tools/FluidFX/fog3d_lookdev_1b.json --level /Game/FluidFX/Maps/LV_TDFog3DStage --stop-pie",
+  "saved": true
+}

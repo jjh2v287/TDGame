@@ -1,0 +1,130 @@
+[
+  {
+    "activeCells": 524288,
+    "cells": 524288,
+    "errors": [],
+    "frac": 1,
+    "gpuMax": 0.3714,
+    "gpuMed": 0.343,
+    "gpuMin": 0.308,
+    "grid": "256x256x8",
+    "jac": 4,
+    "mode": "dense",
+    "msPerMcellPass": 0.0935,
+    "solidPct": 30.2,
+    "steps": 60
+  },
+  {
+    "activeCells": 524288,
+    "cells": 524288,
+    "errors": [],
+    "frac": 1,
+    "gpuMax": 0.426,
+    "gpuMed": 0.4183,
+    "gpuMin": 0.4129,
+    "grid": "256x256x8",
+    "jac": 8,
+    "mode": "dense",
+    "msPerMcellPass": 0.0725,
+    "solidPct": 30.2,
+    "steps": 60
+  },
+  {
+    "activeCells": 524288,
+    "cells": 524288,
+    "errors": [],
+    "frac": 1,
+    "gpuMax": 0.58,
+    "gpuMed": 0.5702,
+    "gpuMin": 0.568,
+    "grid": "256x256x8",
+    "jac": 12,
+    "mode": "dense",
+    "msPerMcellPass": 0.0725,
+    "solidPct": 30.2,
+    "steps": 60
+  },
+  {
+    "activeCells": 1048576,
+    "cells": 1048576,
+    "errors": [],
+    "frac": 1,
+    "gpuMax": 0.533,
+    "gpuMed": 0.5287,
+    "gpuMin": 0.5232,
+    "grid": "256x256x16",
+    "jac": 4,
+    "mode": "dense",
+    "msPerMcellPass": 0.072,
+    "solidPct": 26.3,
+    "steps": 60
+  },
+  {
+    "activeCells": 1048576,
+    "cells": 1048576,
+    "errors": [],
+    "frac": 1,
+    "gpuMax": 1.136,
+    "gpuMed": 1.1272,
+    "gpuMin": 1.1229,
+    "grid": "256x256x16",
+    "jac": 12,
+    "mode": "dense",
+    "msPerMcellPass": 0.0717,
+    "solidPct": 26.3,
+    "steps": 60
+  },
+  {
+    "activeCells": 262144,
+    "cells": 1048576,
+    "errors": [],
+    "frac": 0.25,
+    "gpuMax": 0.3725,
+    "gpuMed": 0.3626,
+    "gpuMin": 0.3462,
+    "grid": "256x256x16",
+    "jac": 12,
+    "mode": "sparse",
+    "msPerMcellPass": 0.0922,
+    "solidPct": 26.3,
+    "steps": 60
+  },
+  {
+    "activeCells": 104960,
+    "cells": 1048576,
+    "errors": [],
+    "frac": 0.1,
+    "gpuMax": 0.1376,
+    "gpuMed": 0.1191,
+    "gpuMin": 0.1147,
+    "grid": "256x256x16",
+    "jac": 12,
+    "mode": "sparse",
+    "msPerMcellPass": 0.0756,
+    "solidPct": 26.3,
+    "steps": 60
+  },
+  {
+    "activeCells": 131072,
+    "cells": 524288,
+    "errors": [],
+    "frac": 0.25,
+    "gpuMax": 0.1103,
+    "gpuMed": 0.1092,
+    "gpuMin": 0.1016,
+    "grid": "256x256x8",
+    "jac": 8,
+    "mode": "sparse",
+    "msPerMcellPass": 0.0758,
+    "solidPct": 30.2,
+    "steps": 60
+  }
+]
+
+(captured at origin https://example.com)
+
+
+Tab Context:
+- Executed on tabId: seed
+- Available tabs:
+  • tabId seed: "Example Domain" ("https://example.com/")

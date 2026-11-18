@@ -1,0 +1,55 @@
+{
+	"test": "TDGame.FluidFXRhi.Fog3D.GroundCaptureMissingTexels",
+	"rhi": "D3D12",
+	"captureSize": 384,
+	"decodeOffsetCm": 800,
+	"orthoWidthCm": 6000,
+	"renderInMainRenderer": false,
+	"autoCalculateOrthoPlanes": true,
+	"updateOrthoPlanes": false,
+	"maxViewDistanceOverride": -1,
+	"clearColor": 1000000000,
+	"expectedFarPlaneDepthCm": 262144,
+	"emptyTexelRawDepth":
+	{
+		"count": 86016,
+		"nonFiniteCount": 0,
+		"min": 262144,
+		"max": 262144
+	},
+	"highSlabRawDepth":
+	{
+		"count": 30720,
+		"nonFiniteCount": 0,
+		"min": 760,
+		"max": 760
+	},
+	"lowSlabRawDepth":
+	{
+		"count": 30720,
+		"nonFiniteCount": 0,
+		"min": 1800,
+		"max": 1800
+	},
+	"highSlabHeightCm":
+	{
+		"count": 30720,
+		"nonFiniteCount": 0,
+		"min": 40,
+		"max": 40
+	},
+	"lowSlabHeightCm":
+	{
+		"count": 30720,
+		"nonFiniteCount": 0,
+		"min": -1000,
+		"max": -1000
+	},
+	"highExpectedCm": 40,
+	"lowExpectedCm": -1000,
+	"missingHeightCm": -7,
+	"missingBelowFloorCm": 5000,
+	"highMismatchCount": 0,
+	"lowMismatchCount": 0,
+	"emptyMismatchCount": 0
+}

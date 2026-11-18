@@ -1,0 +1,168 @@
+{
+  "files": {
+    "swing_back.webp": {
+      "tile": [
+        640,
+        360
+      ],
+      "quality": 95,
+      "bytes": 1561698,
+      "frames": 61,
+      "attempts": [
+        {
+          "tile": [
+            640,
+            360
+          ],
+          "quality": 95,
+          "bytes": 1561698
+        }
+      ],
+      "verify": {
+        "frames": 61,
+        "size": [
+          1280,
+          720
+        ],
+        "total_milliseconds": 6100
+      }
+    },
+    "strip_swing_back.png": {
+      "columns_tenths": [
+        6,
+        12,
+        25,
+        40,
+        60
+      ],
+      "size": [
+        2030,
+        898
+      ],
+      "bytes": 1007952
+    },
+    "walk_back.webp": {
+      "tile": [
+        640,
+        360
+      ],
+      "quality": 95,
+      "bytes": 1882042,
+      "frames": 71,
+      "attempts": [
+        {
+          "tile": [
+            640,
+            360
+          ],
+          "quality": 95,
+          "bytes": 1882042
+        }
+      ],
+      "verify": {
+        "frames": 71,
+        "size": [
+          1280,
+          720
+        ],
+        "total_milliseconds": 7100
+      }
+    },
+    "strip_walk_back.png": {
+      "columns_tenths": [
+        78,
+        83,
+        98,
+        113,
+        143
+      ],
+      "size": [
+        2030,
+        898
+      ],
+      "bytes": 1003295
+    },
+    "swing_high.webp": {
+      "tile": [
+        640,
+        360
+      ],
+      "quality": 95,
+      "bytes": 1014850,
+      "frames": 61,
+      "attempts": [
+        {
+          "tile": [
+            640,
+            360
+          ],
+          "quality": 95,
+          "bytes": 1014850
+        }
+      ],
+      "verify": {
+        "frames": 61,
+        "size": [
+          1280,
+          720
+        ],
+        "total_milliseconds": 6100
+      }
+    },
+    "strip_swing_high.png": {
+      "columns_tenths": [
+        6,
+        12,
+        25,
+        40,
+        60
+      ],
+      "size": [
+        2030,
+        898
+      ],
+      "bytes": 837853
+    },
+    "walk_high.webp": {
+      "tile": [
+        640,
+        360
+      ],
+      "quality": 95,
+      "bytes": 1294166,
+      "frames": 71,
+      "attempts": [
+        {
+          "tile": [
+            640,
+            360
+          ],
+          "quality": 95,
+          "bytes": 1294166
+        }
+      ],
+      "verify": {
+        "frames": 71,
+        "size": [
+          1280,
+          720
+        ],
+        "total_milliseconds": 7100
+      }
+    },
+    "strip_walk_high.png": {
+      "columns_tenths": [
+        78,
+        83,
+        98,
+        113,
+        143
+      ],
+      "size": [
+        2030,
+        898
+      ],
+      "bytes": 834793
+    }
+  }
+}

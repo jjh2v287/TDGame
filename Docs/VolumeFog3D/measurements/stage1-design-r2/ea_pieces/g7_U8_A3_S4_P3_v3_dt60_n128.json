@@ -1,0 +1,112 @@
+{
+ "name": "g7",
+ "which": null,
+ "config": {
+  "layout": "U8",
+  "advect": "A3",
+  "solid": "S4",
+  "solver": "P3",
+  "delta": "v3",
+  "dt": 60,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false
+ },
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/scratch/fog3d/stage1/r2/gates2.py",
+ "time_scale": 1.0,
+ "values": {
+  "west": {
+   "state_hash": "dd9945f2e32f4475",
+   "t": 1.05,
+   "steps": 63,
+   "state_max_info": {
+    "d": 21.12786293029785,
+    "g": 0.0
+   },
+   "center": [
+    -937.5,
+    0.0,
+    75.0
+   ],
+   "rec": {
+    "near_first": 282.4134521484375,
+    "near_third": 404.65130615234375,
+    "band_wind_after3": {
+     "east": 0.0
+    }
+   },
+   "band_wind_end": {
+    "east": 7.378081591014052e-06
+   },
+   "band_absdiff_end": {
+    "east": 5.960464477539063e-08
+   },
+   "ratio_1": 0.0,
+   "max_absdiff_2": 5.960464477539063e-08,
+   "ratio_2_wind": 2.612510677124582e-08,
+   "passed_1": true,
+   "passed_2": true,
+   "passed": true
+  },
+  "corner": {
+   "state_hash": "74cdb212fc809aef",
+   "t": 1.05,
+   "steps": 63,
+   "state_max_info": {
+    "d": 13.543598175048828,
+    "g": 0.0
+   },
+   "center": [
+    -937.5,
+    -937.5,
+    75.0
+   ],
+   "rec": {
+    "near_first": 279.13653564453125,
+    "near_third": 400.1174621582031,
+    "band_wind_after3": {
+     "se": 0.0,
+     "nw": 0.0,
+     "ne": 0.0
+    }
+   },
+   "band_wind_end": {
+    "se": 7.87770750321215e-06,
+    "nw": 5.035293725086376e-06,
+    "ne": 4.1272865018981975e-06
+   },
+   "band_absdiff_end": {
+    "se": 1.1920928955078125e-07,
+    "nw": 1.4901161193847656e-08,
+    "ne": 1.4901161193847656e-08
+   },
+   "ratio_1": 0.0,
+   "max_absdiff_2": 1.1920928955078125e-07,
+   "ratio_2_wind": 2.8221699767901693e-08,
+   "passed_1": true,
+   "passed_2": true,
+   "passed": true
+  }
+ },
+ "criterion": "① 3번째 뒤 반대 띠 바람 ÷ 입력 근처 ≤ 1e-4 ② 1초 뒤 띠 |차이값| ≤ 1e-6, 바람 ≤ 처음 입력 근처의 1e-4",
+ "passed": true,
+ "elapsed_sec": 178.2,
+ "state_hash": {
+  "west": "dd9945f2e32f4475",
+  "corner": "74cdb212fc809aef"
+ },
+ "finished": "2026-11-13 11:20:44",
+ "solver_cfg": {
+  "kind": "line",
+  "sweeps": 12,
+  "omega": 1.6
+ }
+}

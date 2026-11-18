@@ -1,0 +1,22 @@
+{
+ "name": "thirdperson_mid",
+ "purpose": "3인칭 기준 주력 프리셋(사용자 눈 판정 '중' + 구름 무늬 더 뚜렷하게 + 걷기 자국 이어짐)",
+ "status": "1d 값 맞추기 완료(2026-11-14, prereg-1d-diag.md 4절): 칼 사다리 BladeRadiusCm 35 + BladeWindStrength 2.5 에서 Sk2(2.5) 20.25 로 처음 20~32 에 듦(1.5 → 16.0, 2.0 → 18.3). 걷기 Wk(12.1) 는 7.3~7.6 으로 사다리(BodyWindStrength 2.5~3.5) 끝까지 8 에 못 미쳐 가장 가까운 3.0 을 씀(Wk 7.63, Sk2 20.50). 마지막 확인(얼룩 끔, 같은 출발 네 방향) Wk 6.49/6.16/7.11/6.76 평균 6.63 ±15% 안, 치우침 차 0.075(≤0.10), 크기 ≤0.107(≤0.15) 모두 만족. 코드 기본값과 정본 JSON 에 넣음(2026-11-14)",
+ "evidence": [
+  "Docs/VolumeFog3D/measurements/stage1c/package/",
+  "Docs/VolumeFog3D/measurements/stage1c/round2/cloud_trail.md"
+ ],
+ "overrides": {
+  "FootRadiusCm": 45,
+  "HandRadiusCm": 45,
+  "PelvisRadiusCm": 60,
+  "BodyWindStrength": 3.0,
+  "BladeRadiusCm": 35,
+  "bStainNoiseEnabled": true,
+  "StainNoiseAmplitude": 0.75,
+  "StainNoiseSpacingCm": 400,
+  "DisplacementRefillHorizontalPerSec": 0.05,
+  "DisplacementRefillVerticalPerSec": 0.15,
+  "BladeWindStrength": 2.5
+ }
+}

@@ -1,0 +1,7 @@
+{
+  "base": {"arm": 400, "view": [-12, 0]},
+  "variants": [
+    {"name": "ctl_before", "apply": {}, "settle": 2.0},
+    {"name": "ctl_swing", "apply": {"console": ["TDPlayMeleeAction"]}, "settle": 3.0}
+  ]
+}

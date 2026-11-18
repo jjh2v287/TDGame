@@ -1,0 +1,2054 @@
+{
+  "note": "정보 숫자(판정선 없음). 띠: 물체 면에서 20~120cm, 물체 면의 폭, 안개 바닥에서 135cm 까지의 상자. 화소는 카메라 값으로 세계 좌표에서 계산해 잡고 폰 몸(반지름 40cm 원기둥, 높이 190cm)과 물체 자체가 찍힌 화소는 뺐다.",
+  "measure": "|휘두른 뒤 2.5초 장 − 기준 장(계산 끔)| 의 8비트 밝기 평균(띠 안), 잡음 = 기준 장 두 장의 차이 평균",
+  "runs": {
+    "LOW_sw_b": {
+      "name": "LOW_sw_b",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 63,
+      "found_shots": 63,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 1161,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              305.0,
+              -400.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          341.00000361204104,
+          -400.0,
+          98.1500039100647
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          -50.25903668148112,
+          -399.99999999999994,
+          181.31468023716843
+        ],
+        "cam_world_rotation": [
+          -11.999999999999988,
+          6.4675950086848866e-15,
+          -6.797716273959312e-16
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "LOW_sw_s": {
+      "name": "LOW_sw_s",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 63,
+      "found_shots": 63,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 469,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              305.0,
+              -400.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          341.00000361204104,
+          -400.0,
+          98.1500039100647
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          341.0000036120411,
+          69.84631039295414,
+          269.1600755728991
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "HIGH_sw_b": {
+      "name": "HIGH_sw_b",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 63,
+      "found_shots": 63,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 470,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              305.0,
+              400.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          341.00000361204104,
+          400.0,
+          98.15000772476196
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          -50.25903668148112,
+          400.00000000000006,
+          181.3146840518657
+        ],
+        "cam_world_rotation": [
+          -11.999999999999988,
+          6.4675950086848866e-15,
+          -6.797716273959312e-16
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "HIGH_sw_s": {
+      "name": "HIGH_sw_s",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 63,
+      "found_shots": 63,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 470,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              305.0,
+              400.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          341.00000361204104,
+          400.0,
+          98.15000772476196
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          341.0000036120411,
+          869.8463103929541,
+          269.16007938759634
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "WALL_sw_b": {
+      "name": "WALL_sw_b",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 63,
+      "found_shots": 63,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 469,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              995.0,
+              0.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          1031.0000036120414,
+          -5.717757570724952e-15,
+          98.15000772476196
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          639.7409633185192,
+          6.533651600528506e-14,
+          181.3146840518657
+        ],
+        "cam_world_rotation": [
+          -11.999999999999988,
+          6.4675950086848866e-15,
+          -6.797716273959312e-16
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "WALL_sw_s": {
+      "name": "WALL_sw_s",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 63,
+      "found_shots": 63,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 470,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              995.0,
+              0.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          1031.0000036120414,
+          -5.717757570724952e-15,
+          98.15000772476196
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          1031.0000036120414,
+          469.8463103929542,
+          269.1600793875963
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "LOW_wk_b": {
+      "name": "LOW_wk_b",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 73,
+      "found_shots": 73,
+      "late_max_seconds": 0.0166671995073564,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 531,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              125.0,
+              -265.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          747.6635889882598,
+          -265.0,
+          98.15000772476196
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          356.4045486947376,
+          -264.99999999999994,
+          181.3146840518657
+        ],
+        "cam_world_rotation": [
+          -11.999999999999988,
+          6.4675950086848866e-15,
+          -6.797716273959312e-16
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "LOW_wk_s": {
+      "name": "LOW_wk_s",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 73,
+      "found_shots": 73,
+      "late_max_seconds": 0.0166671995073564,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 530,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              125.0,
+              -265.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          747.6635889882598,
+          -265.0,
+          98.15000772476196
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          747.6635889882598,
+          204.84631039295414,
+          269.16007938759634
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "HIGH_wk_b": {
+      "name": "HIGH_wk_b",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 73,
+      "found_shots": 73,
+      "late_max_seconds": 0.0166671995073564,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 530,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              125.0,
+              535.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          747.6635889882598,
+          535.0,
+          98.15000772476196
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          356.4045486947376,
+          535.0000000000001,
+          181.3146840518657
+        ],
+        "cam_world_rotation": [
+          -11.999999999999988,
+          6.4675950086848866e-15,
+          -6.797716273959312e-16
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "HIGH_wk_s": {
+      "name": "HIGH_wk_s",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 73,
+      "found_shots": 73,
+      "late_max_seconds": 0.0166671995073564,
+      "shots_over_0.05": 0,
+      "events_done": "5/5",
+      "log": {
+        "source": "snapshot",
+        "submitted": 529,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              125.0,
+              535.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          747.6635889882598,
+          535.0,
+          98.15000772476196
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          747.6635889882598,
+          1004.8463103929541,
+          269.16007938759634
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "NS_LOW_s": {
+      "name": "NS_LOW_s",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 3,
+      "found_shots": 3,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "4/4",
+      "log": {
+        "source": "snapshot",
+        "submitted": 472,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              341.0,
+              -400.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          341.0,
+          -400.0,
+          100.0
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          341.00000000000006,
+          69.84631039295414,
+          271.0100716628344
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "NS_HIGH_s": {
+      "name": "NS_HIGH_s",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 3,
+      "found_shots": 3,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "4/4",
+      "log": {
+        "source": "snapshot",
+        "submitted": 469,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              341.0,
+              400.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          341.0,
+          400.0,
+          100.0
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          341.00000000000006,
+          869.8463103929541,
+          271.0100716628344
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "NS_WALL_s": {
+      "name": "NS_WALL_s",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 3,
+      "found_shots": 3,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "4/4",
+      "log": {
+        "source": "snapshot",
+        "submitted": 470,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              1031.0,
+              0.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          1031.0,
+          0.0,
+          100.0
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          1031.0,
+          469.8463103929542,
+          271.0100716628343
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    },
+    "NS_LOW_b": {
+      "name": "NS_LOW_b",
+      "valid": true,
+      "reasons": [],
+      "expected_shots": 3,
+      "found_shots": 3,
+      "late_max_seconds": 0.016667147353292222,
+      "shots_over_0.05": 0,
+      "events_done": "4/4",
+      "log": {
+        "source": "snapshot",
+        "submitted": 469,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0,
+        "usable": true
+      },
+      "teleport_events": [
+        {
+          "time": 0.3,
+          "game_time": 0.30000001564621925,
+          "move": {
+            "goal": [
+              341.0,
+              -400.0
+            ],
+            "mode": "teleport"
+          }
+        }
+      ],
+      "state": {
+        "actor_location": [
+          341.0,
+          -400.0,
+          100.0
+        ],
+        "actor_rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ],
+        "cam_world_location": [
+          -50.25904029352216,
+          -399.99999999999994,
+          183.16467632710373
+        ],
+        "cam_world_rotation": [
+          -11.999999999999988,
+          6.4675950086848866e-15,
+          -6.797716273959312e-16
+        ],
+        "cam_fov": 90.0,
+        "capsule_half_height": 96.0,
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "TD.Fog3D.Quality": -1,
+        "TD.Fog3D.Mode": 0,
+        "error": null
+      }
+    }
+  },
+  "swing": {
+    "LOW_sw_b": {
+      "run": "LOW_sw_b",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 32100,
+        "pixels_raw": 62180,
+        "removed_by_object": 0,
+        "removed_by_pawn": 30080,
+        "mean_abs_diff": 7.755545171339564,
+        "noise_mean_abs_diff": 0.5054517133956387,
+        "polygon_px": [
+          [
+            505.4,
+            305.0
+          ],
+          [
+            534.4,
+            287.5
+          ],
+          [
+            745.6,
+            287.5
+          ],
+          [
+            774.6,
+            305.0
+          ],
+          [
+            764.8,
+            528.7
+          ],
+          [
+            515.2,
+            528.7
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 1882,
+        "pixels_raw": 19922,
+        "removed_by_object": 3312,
+        "removed_by_pawn": 14728,
+        "mean_abs_diff": 8.223698193411265,
+        "noise_mean_abs_diff": 1.4086078639744952,
+        "polygon_px": [
+          [
+            565.0,
+            269.1
+          ],
+          [
+            575.0,
+            263.1
+          ],
+          [
+            705.0,
+            263.1
+          ],
+          [
+            715.0,
+            269.1
+          ],
+          [
+            711.8,
+            399.3
+          ],
+          [
+            568.2,
+            399.3
+          ]
+        ]
+      },
+      "far_over_near": 1.060363651004413,
+      "near_net": 7.250093457943925,
+      "far_net": 6.815090329436769,
+      "far_over_near_net": 0.9400003419224171,
+      "both_bands_visible": true,
+      "band_centers_px": {
+        "near": [
+          639.5,
+          409.7016199376947
+        ],
+        "far": [
+          639.5,
+          320.4335812964931
+        ]
+      },
+      "bands_split_left_right": false
+    },
+    "LOW_sw_s": {
+      "run": "LOW_sw_s",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 13174,
+        "pixels_raw": 33240,
+        "removed_by_object": 0,
+        "removed_by_pawn": 20066,
+        "mean_abs_diff": 10.130863822681038,
+        "noise_mean_abs_diff": 0.4697889782905723,
+        "polygon_px": [
+          [
+            584.6,
+            343.1
+          ],
+          [
+            598.6,
+            288.4
+          ],
+          [
+            713.5,
+            288.4
+          ],
+          [
+            738.4,
+            343.1
+          ],
+          [
+            728.6,
+            520.4
+          ],
+          [
+            590.2,
+            520.4
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 49109,
+        "pixels_raw": 49843,
+        "removed_by_object": 734,
+        "removed_by_pawn": 0,
+        "mean_abs_diff": 3.5719929137225357,
+        "noise_mean_abs_diff": 0.3088232299578489,
+        "polygon_px": [
+          [
+            909.4,
+            428.5
+          ],
+          [
+            931.8,
+            288.4
+          ],
+          [
+            1046.6,
+            288.4
+          ],
+          [
+            1184.4,
+            343.1
+          ],
+          [
+            1130.0,
+            520.4
+          ],
+          [
+            991.6,
+            520.4
+          ]
+        ]
+      },
+      "far_over_near": 0.352585226318563,
+      "near_net": 9.661074844390466,
+      "far_net": 3.2631696837646866,
+      "far_over_near_net": 0.33776466245465314,
+      "both_bands_visible": true,
+      "band_centers_px": {
+        "near": [
+          689.3361165932898,
+          430.35266433884925
+        ],
+        "far": [
+          1041.791484249323,
+          400.4265816856381
+        ]
+      },
+      "bands_split_left_right": true,
+      "control_run": "NS_LOW_s",
+      "near_minus_control": 6.938667071504478,
+      "far_minus_control": 3.247958622655725,
+      "far_over_near_minus_control": 0.46809546980490674
+    },
+    "HIGH_sw_b": {
+      "run": "HIGH_sw_b",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 32100,
+        "pixels_raw": 62180,
+        "removed_by_object": 0,
+        "removed_by_pawn": 30080,
+        "mean_abs_diff": 10.183271028037383,
+        "noise_mean_abs_diff": 0.6077570093457944,
+        "polygon_px": [
+          [
+            505.4,
+            305.0
+          ],
+          [
+            534.4,
+            287.5
+          ],
+          [
+            745.6,
+            287.5
+          ],
+          [
+            774.6,
+            305.0
+          ],
+          [
+            764.8,
+            528.7
+          ],
+          [
+            515.2,
+            528.7
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 0,
+        "pixels_raw": 19922,
+        "removed_by_object": 19922,
+        "removed_by_pawn": 0,
+        "mean_abs_diff": null,
+        "noise_mean_abs_diff": null,
+        "polygon_px": [
+          [
+            565.0,
+            269.1
+          ],
+          [
+            575.0,
+            263.1
+          ],
+          [
+            705.0,
+            263.1
+          ],
+          [
+            715.0,
+            269.1
+          ],
+          [
+            711.8,
+            399.3
+          ],
+          [
+            568.2,
+            399.3
+          ]
+        ]
+      },
+      "far_over_near": null,
+      "near_net": 9.575514018691589,
+      "far_net": 0.0,
+      "far_over_near_net": 0.0,
+      "both_bands_visible": false,
+      "band_centers_px": {
+        "near": [
+          639.5,
+          409.7016199376947
+        ],
+        "far": null
+      },
+      "bands_split_left_right": false
+    },
+    "HIGH_sw_s": {
+      "run": "HIGH_sw_s",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 13174,
+        "pixels_raw": 33240,
+        "removed_by_object": 0,
+        "removed_by_pawn": 20066,
+        "mean_abs_diff": 5.1866555336268405,
+        "noise_mean_abs_diff": 0.5563230605738576,
+        "polygon_px": [
+          [
+            584.6,
+            343.1
+          ],
+          [
+            598.6,
+            288.4
+          ],
+          [
+            713.5,
+            288.4
+          ],
+          [
+            738.4,
+            343.1
+          ],
+          [
+            728.6,
+            520.4
+          ],
+          [
+            590.2,
+            520.4
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 36714,
+        "pixels_raw": 49843,
+        "removed_by_object": 13129,
+        "removed_by_pawn": 0,
+        "mean_abs_diff": 8.740780083891703,
+        "noise_mean_abs_diff": 0.2971346080514245,
+        "polygon_px": [
+          [
+            909.4,
+            428.5
+          ],
+          [
+            931.8,
+            288.4
+          ],
+          [
+            1046.6,
+            288.4
+          ],
+          [
+            1184.4,
+            343.1
+          ],
+          [
+            1130.0,
+            520.4
+          ],
+          [
+            991.6,
+            520.4
+          ]
+        ]
+      },
+      "far_over_near": 1.685243993402352,
+      "near_net": 4.630332473052983,
+      "far_net": 8.44364547584028,
+      "far_over_near_net": 1.823550581946227,
+      "both_bands_visible": true,
+      "band_centers_px": {
+        "near": [
+          689.3361165932898,
+          430.35266433884925
+        ],
+        "far": [
+          1069.944108514463,
+          410.9674238710029
+        ]
+      },
+      "bands_split_left_right": true,
+      "control_run": "NS_HIGH_s",
+      "near_minus_control": 2.6115834218916043,
+      "far_minus_control": 8.452906248297651,
+      "far_over_near_minus_control": 3.2366977740175344
+    },
+    "WALL_sw_b": {
+      "run": "WALL_sw_b",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 108876,
+        "pixels_raw": 138798,
+        "removed_by_object": 0,
+        "removed_by_pawn": 29922,
+        "mean_abs_diff": 7.069427605716595,
+        "noise_mean_abs_diff": 0.34852492744039093,
+        "polygon_px": [
+          [
+            355.2,
+            309.7
+          ],
+          [
+            419.3,
+            290.4
+          ],
+          [
+            860.7,
+            290.4
+          ],
+          [
+            924.8,
+            309.7
+          ],
+          [
+            902.9,
+            545.0
+          ],
+          [
+            377.1,
+            545.0
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 0,
+        "pixels_raw": 68880,
+        "removed_by_object": 68880,
+        "removed_by_pawn": 0,
+        "mean_abs_diff": null,
+        "noise_mean_abs_diff": null,
+        "polygon_px": [
+          [
+            441.6,
+            283.7
+          ],
+          [
+            475.0,
+            273.6
+          ],
+          [
+            805.0,
+            273.6
+          ],
+          [
+            838.4,
+            283.7
+          ],
+          [
+            827.5,
+            453.0
+          ],
+          [
+            452.5,
+            453.0
+          ]
+        ]
+      },
+      "far_over_near": null,
+      "near_net": 6.720902678276205,
+      "far_net": 0.0,
+      "far_over_near_net": 0.0,
+      "both_bands_visible": false,
+      "band_centers_px": {
+        "near": [
+          639.5,
+          419.09094749990817
+        ],
+        "far": null
+      },
+      "bands_split_left_right": false
+    },
+    "WALL_sw_s": {
+      "run": "WALL_sw_s",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 30174,
+        "pixels_raw": 52318,
+        "removed_by_object": 0,
+        "removed_by_pawn": 22144,
+        "mean_abs_diff": 9.060747663551401,
+        "noise_mean_abs_diff": 0.417246636176841,
+        "polygon_px": [
+          [
+            536.3,
+            387.1
+          ],
+          [
+            582.9,
+            270.3
+          ],
+          [
+            684.9,
+            270.3
+          ],
+          [
+            721.5,
+            387.1
+          ],
+          [
+            711.9,
+            591.1
+          ],
+          [
+            548.5,
+            591.1
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 57337,
+        "pixels_raw": 66199,
+        "removed_by_object": 8862,
+        "removed_by_pawn": 0,
+        "mean_abs_diff": 10.26645970315852,
+        "noise_mean_abs_diff": 0.3142473446465633,
+        "polygon_px": [
+          [
+            729.3,
+            397.0
+          ],
+          [
+            735.9,
+            270.3
+          ],
+          [
+            837.8,
+            270.3
+          ],
+          [
+            999.1,
+            387.1
+          ],
+          [
+            956.8,
+            591.1
+          ],
+          [
+            793.5,
+            591.1
+          ]
+        ]
+      },
+      "far_over_near": 1.1330698176771135,
+      "near_net": 8.64350102737456,
+      "far_net": 9.952212358511956,
+      "far_over_near_net": 1.151409865862527,
+      "both_bands_visible": true,
+      "band_centers_px": {
+        "near": [
+          622.456088022801,
+          481.46987472658583
+        ],
+        "far": [
+          871.0939358529397,
+          443.88982681340144
+        ]
+      },
+      "bands_split_left_right": true,
+      "control_run": "NS_WALL_s",
+      "near_minus_control": 8.385331742559819,
+      "far_minus_control": 9.893175436454646,
+      "far_over_near_minus_control": 1.1798192057496968
+    }
+  },
+  "flicker": {
+    "LOW_sw_b": {
+      "run": "LOW_sw_b",
+      "frames": 61,
+      "region_pixels": 28068,
+      "mean_luma": 72.2836203412322,
+      "range_luma_all": 9.908151631751466,
+      "from_seconds": 3.0,
+      "range_luma_settled": 1.6814165597833863,
+      "second_difference_mean_settled": 0.022356420122558045,
+      "second_difference_max_settled": 0.04921975203077977,
+      "second_difference_max_at_seconds": 4.6000000000000005,
+      "second_difference_max_all": 5.2897605814450515
+    },
+    "LOW_sw_s": {
+      "run": "LOW_sw_s",
+      "frames": 61,
+      "region_pixels": 62116,
+      "mean_luma": 80.22810838315198,
+      "range_luma_all": 4.249404340266594,
+      "from_seconds": 3.0,
+      "range_luma_settled": 1.624766565780149,
+      "second_difference_mean_settled": 0.018722497692489525,
+      "second_difference_max_settled": 0.04081074119389427,
+      "second_difference_max_at_seconds": 3.3000000000000003,
+      "second_difference_max_all": 1.2582265438856268
+    },
+    "HIGH_sw_b": {
+      "run": "HIGH_sw_b",
+      "frames": 61,
+      "region_pixels": 20502,
+      "mean_luma": 70.31600035822174,
+      "range_luma_all": 10.756657887035416,
+      "from_seconds": 3.0,
+      "range_luma_settled": 1.4404936103794768,
+      "second_difference_mean_settled": 0.017787695509382216,
+      "second_difference_max_settled": 0.05260462393913201,
+      "second_difference_max_at_seconds": 4.800000000000001,
+      "second_difference_max_all": 2.0993317725099843
+    },
+    "HIGH_sw_s": {
+      "run": "HIGH_sw_s",
+      "frames": 61,
+      "region_pixels": 49434,
+      "mean_luma": 82.25580754468452,
+      "range_luma_all": 18.63612088845734,
+      "from_seconds": 3.0,
+      "range_luma_settled": 1.6862281021159475,
+      "second_difference_mean_settled": 0.031256827284864626,
+      "second_difference_max_settled": 0.06563296516567618,
+      "second_difference_max_at_seconds": 4.2,
+      "second_difference_max_all": 2.920317999757245
+    },
+    "WALL_sw_b": {
+      "run": "WALL_sw_b",
+      "frames": 61,
+      "region_pixels": 58942,
+      "mean_luma": 45.4347165955307,
+      "range_luma_all": 9.617098164297111,
+      "from_seconds": 3.0,
+      "range_luma_settled": 0.5621119066200677,
+      "second_difference_mean_settled": 0.007847262280433635,
+      "second_difference_max_settled": 0.028943707373350946,
+      "second_difference_max_at_seconds": 5.1000000000000005,
+      "second_difference_max_all": 1.0528740117403501
+    },
+    "WALL_sw_s": {
+      "run": "WALL_sw_s",
+      "frames": 61,
+      "region_pixels": 85970,
+      "mean_luma": 65.64302625582313,
+      "range_luma_all": 13.79406769803419,
+      "from_seconds": 3.0,
+      "range_luma_settled": 1.163917645690347,
+      "second_difference_mean_settled": 0.009471908805397788,
+      "second_difference_max_settled": 0.030754914505052966,
+      "second_difference_max_at_seconds": 4.4,
+      "second_difference_max_all": 1.1830696754681895
+    },
+    "LOW_wk_b": {
+      "run": "LOW_wk_b",
+      "frames": 71,
+      "region_pixels": 129978,
+      "mean_luma": 75.25421192622196,
+      "range_luma_all": 9.016495099170626,
+      "from_seconds": 3.0,
+      "range_luma_settled": 0.38065672652294325,
+      "second_difference_mean_settled": 0.017481900783208458,
+      "second_difference_max_settled": 0.04322654603086562,
+      "second_difference_max_at_seconds": 4.800000000000001,
+      "second_difference_max_all": 0.8752365784978906
+    },
+    "LOW_wk_s": {
+      "run": "LOW_wk_s",
+      "frames": 71,
+      "region_pixels": 50373,
+      "mean_luma": 92.98903168280123,
+      "range_luma_all": 7.317471661405904,
+      "from_seconds": 3.0,
+      "range_luma_settled": 1.2407639012963187,
+      "second_difference_mean_settled": 0.012490322196414994,
+      "second_difference_max_settled": 0.03901891886526698,
+      "second_difference_max_at_seconds": 4.800000000000001,
+      "second_difference_max_all": 0.6472812816389677
+    },
+    "HIGH_wk_b": {
+      "run": "HIGH_wk_b",
+      "frames": 71,
+      "region_pixels": 17922,
+      "mean_luma": 68.29599233611691,
+      "range_luma_all": 56.73423725030689,
+      "from_seconds": 3.0,
+      "range_luma_settled": 0.8842763084477099,
+      "second_difference_mean_settled": 0.029949921883718745,
+      "second_difference_max_settled": 0.054597701149432964,
+      "second_difference_max_at_seconds": 5.1000000000000005,
+      "second_difference_max_all": 9.291206338578284
+    },
+    "HIGH_wk_s": {
+      "run": "HIGH_wk_s",
+      "frames": 71,
+      "region_pixels": 40841,
+      "mean_luma": 90.35307518576852,
+      "range_luma_all": 34.17658725300556,
+      "from_seconds": 3.0,
+      "range_luma_settled": 0.3147327440562151,
+      "second_difference_mean_settled": 0.01362417668519278,
+      "second_difference_max_settled": 0.04482015621557878,
+      "second_difference_max_at_seconds": 5.300000000000001,
+      "second_difference_max_all": 10.458803653191652
+    }
+  },
+  "control_no_swing": {
+    "NS_LOW_s": {
+      "run": "NS_LOW_s",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 13174,
+        "pixels_raw": 33240,
+        "removed_by_object": 0,
+        "removed_by_pawn": 20066,
+        "mean_abs_diff": 3.19219675117656,
+        "noise_mean_abs_diff": 0.6392136025504782,
+        "polygon_px": [
+          [
+            584.6,
+            343.1
+          ],
+          [
+            598.6,
+            288.4
+          ],
+          [
+            713.5,
+            288.4
+          ],
+          [
+            738.4,
+            343.1
+          ],
+          [
+            728.6,
+            520.4
+          ],
+          [
+            590.2,
+            520.4
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 49109,
+        "pixels_raw": 49843,
+        "removed_by_object": 734,
+        "removed_by_pawn": 0,
+        "mean_abs_diff": 0.3240342910668106,
+        "noise_mean_abs_diff": 0.3036714247897534,
+        "polygon_px": [
+          [
+            909.4,
+            428.5
+          ],
+          [
+            931.8,
+            288.4
+          ],
+          [
+            1046.6,
+            288.4
+          ],
+          [
+            1184.4,
+            343.1
+          ],
+          [
+            1130.0,
+            520.4
+          ],
+          [
+            991.6,
+            520.4
+          ]
+        ]
+      },
+      "far_over_near": 0.10150824536344134,
+      "near_net": 2.552983148626082,
+      "far_net": 0.02036286627705719,
+      "far_over_near_net": 0.007976106809798454,
+      "both_bands_visible": true,
+      "band_centers_px": {
+        "near": [
+          689.3361165932898,
+          430.35266433884925
+        ],
+        "far": [
+          1041.791484249323,
+          400.4265816856381
+        ]
+      },
+      "bands_split_left_right": true
+    },
+    "NS_HIGH_s": {
+      "run": "NS_HIGH_s",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 13174,
+        "pixels_raw": 33240,
+        "removed_by_object": 0,
+        "removed_by_pawn": 20066,
+        "mean_abs_diff": 2.575072111735236,
+        "noise_mean_abs_diff": 1.0709731288902384,
+        "polygon_px": [
+          [
+            584.6,
+            343.1
+          ],
+          [
+            598.6,
+            288.4
+          ],
+          [
+            713.5,
+            288.4
+          ],
+          [
+            738.4,
+            343.1
+          ],
+          [
+            728.6,
+            520.4
+          ],
+          [
+            590.2,
+            520.4
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 36714,
+        "pixels_raw": 49843,
+        "removed_by_object": 13129,
+        "removed_by_pawn": 0,
+        "mean_abs_diff": 0.28787383559405133,
+        "noise_mean_abs_diff": 0.2953914038241543,
+        "polygon_px": [
+          [
+            909.4,
+            428.5
+          ],
+          [
+            931.8,
+            288.4
+          ],
+          [
+            1046.6,
+            288.4
+          ],
+          [
+            1184.4,
+            343.1
+          ],
+          [
+            1130.0,
+            520.4
+          ],
+          [
+            991.6,
+            520.4
+          ]
+        ]
+      },
+      "far_over_near": 0.11179253360794812,
+      "near_net": 1.5040989828449978,
+      "far_net": 0.0,
+      "far_over_near_net": 0.0,
+      "both_bands_visible": true,
+      "band_centers_px": {
+        "near": [
+          689.3361165932898,
+          430.35266433884925
+        ],
+        "far": [
+          1069.944108514463,
+          410.9674238710029
+        ]
+      },
+      "bands_split_left_right": true
+    },
+    "NS_WALL_s": {
+      "run": "NS_WALL_s",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 30174,
+        "pixels_raw": 52318,
+        "removed_by_object": 0,
+        "removed_by_pawn": 22144,
+        "mean_abs_diff": 0.6754159209915822,
+        "noise_mean_abs_diff": 0.5154437595280705,
+        "polygon_px": [
+          [
+            536.3,
+            387.1
+          ],
+          [
+            582.9,
+            270.3
+          ],
+          [
+            684.9,
+            270.3
+          ],
+          [
+            721.5,
+            387.1
+          ],
+          [
+            711.9,
+            591.1
+          ],
+          [
+            548.5,
+            591.1
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 57337,
+        "pixels_raw": 66199,
+        "removed_by_object": 8862,
+        "removed_by_pawn": 0,
+        "mean_abs_diff": 0.3732842667038736,
+        "noise_mean_abs_diff": 0.2956206289132672,
+        "polygon_px": [
+          [
+            729.3,
+            397.0
+          ],
+          [
+            735.9,
+            270.3
+          ],
+          [
+            837.8,
+            270.3
+          ],
+          [
+            999.1,
+            387.1
+          ],
+          [
+            956.8,
+            591.1
+          ],
+          [
+            793.5,
+            591.1
+          ]
+        ]
+      },
+      "far_over_near": 0.552673182704744,
+      "near_net": 0.15997216146351168,
+      "far_net": 0.07766363779060642,
+      "far_over_near_net": 0.48548220565439354,
+      "both_bands_visible": true,
+      "band_centers_px": {
+        "near": [
+          622.456088022801,
+          481.46987472658583
+        ],
+        "far": [
+          871.0939358529397,
+          443.88982681340144
+        ]
+      },
+      "bands_split_left_right": true
+    },
+    "NS_LOW_b": {
+      "run": "NS_LOW_b",
+      "image": [
+        1280,
+        720
+      ],
+      "frame_seconds_after_swing": 2.5,
+      "reference_times": [
+        8.7,
+        9.2
+      ],
+      "near": {
+        "pixels": 32100,
+        "pixels_raw": 62180,
+        "removed_by_object": 0,
+        "removed_by_pawn": 30080,
+        "mean_abs_diff": 1.1034579439252337,
+        "noise_mean_abs_diff": 0.46218068535825546,
+        "polygon_px": [
+          [
+            505.4,
+            305.0
+          ],
+          [
+            534.4,
+            287.5
+          ],
+          [
+            745.6,
+            287.5
+          ],
+          [
+            774.6,
+            305.0
+          ],
+          [
+            764.8,
+            528.7
+          ],
+          [
+            515.2,
+            528.7
+          ]
+        ]
+      },
+      "far": {
+        "pixels": 1882,
+        "pixels_raw": 19922,
+        "removed_by_object": 3312,
+        "removed_by_pawn": 14728,
+        "mean_abs_diff": 2.4160467587672687,
+        "noise_mean_abs_diff": 1.045164718384697,
+        "polygon_px": [
+          [
+            565.0,
+            269.1
+          ],
+          [
+            575.0,
+            263.1
+          ],
+          [
+            705.0,
+            263.1
+          ],
+          [
+            715.0,
+            269.1
+          ],
+          [
+            711.8,
+            399.3
+          ],
+          [
+            568.2,
+            399.3
+          ]
+        ]
+      },
+      "far_over_near": 2.189523191226372,
+      "near_net": 0.6412772585669781,
+      "far_net": 1.3708820403825717,
+      "far_over_near_net": 2.1377368713276925,
+      "both_bands_visible": true,
+      "band_centers_px": {
+        "near": [
+          639.5,
+          409.7016199376947
+        ],
+        "far": [
+          639.5,
+          320.4335812964931
+        ]
+      },
+      "bands_split_left_right": false
+    }
+  },
+  "extra_far_patch_check": {
+    "note": "뒤 카메라 화면의 높은 상자 아래쪽 칸(가로 780~960, 세로 260~330 화소)의 |휘두른 뒤 2.5초 장 − 기준 장| 평균. 휘두른 자리(LOW)에서 약 800cm 떨어진 곳. HIGH_sw_b 는 이 칸에 폰이 겹쳐 비교 대상 아님",
+    "values": {
+      "LOW_sw_b": 18.02,
+      "NS_LOW_b": 0.27,
+      "HIGH_sw_b": 0.59
+    }
+  }
+}

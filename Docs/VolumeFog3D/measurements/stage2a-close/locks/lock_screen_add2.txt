@@ -1,0 +1,3 @@
+46376c0db58e4e265034ee2eca10d7b933e2ac97c1e9be34d2d2ea2a2afb73f7
+file: Docs/VolumeFog3D/stage2/prereg-2a-screen-add2.md
+locked: 2026-11-16 12:19 (claude, after the low-quality 2a-3 results and the follow-off trial runs; before any follow-on run under the new conditions)

@@ -1,0 +1,52 @@
+{
+ "name": "g4",
+ "which": null,
+ "config": {
+  "layout": "U8",
+  "advect": "A3",
+  "solid": "S4",
+  "solver": "P2",
+  "delta": "v3",
+  "dt": 144,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false
+ },
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/scratch/fog3d/stage1/r2/gates2.py",
+ "time_scale": 1.0,
+ "values": {
+  "state_hash": "04a852f88d053fe5",
+  "t": 10.25,
+  "steps": 1476,
+  "state_max_info": {
+   "d": 291.1997985839844,
+   "g": 0.0
+  },
+  "dt": 0.006944444444444444,
+  "finite": true,
+  "max_face_wind": 1766.4166259765625,
+  "max_center_speed": 1762.363416870867,
+  "energy_end_over_peak": 7.602905413434116e-08,
+  "passed": true
+ },
+ "criterion": "깨짐 없음, 바람 최대 ≤ 3000cm/s, 10초 뒤 에너지 ≤ 최고점 1%. D-G4 통과 = 1/30·1/60·1/144 조각 모두 통과",
+ "passed": true,
+ "elapsed_sec": 2258.5,
+ "state_hash": {
+  "run": "04a852f88d053fe5"
+ },
+ "finished": "2026-11-13 11:09:38",
+ "solver_cfg": {
+  "kind": "line",
+  "sweeps": 8,
+  "omega": 1.5
+ }
+}

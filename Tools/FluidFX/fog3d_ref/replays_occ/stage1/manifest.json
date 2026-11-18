@@ -1,0 +1,29 @@
+{
+ "files": [
+  {
+   "name": "k3_box_high.json",
+   "scene": "k3_box_high",
+   "input_occlusion": true
+  },
+  {
+   "name": "k4_run.json",
+   "scene": "k4_run",
+   "input_occlusion": true
+  },
+  {
+   "name": "k7_thin_swing.json",
+   "scene": "k7_thin_swing",
+   "input_occlusion": true
+  },
+  {
+   "name": "mixed_dt_120.json",
+   "scene": "mixed_dt_120",
+   "input_occlusion": true
+  },
+  {
+   "name": "still_600.json",
+   "scene": "still_600",
+   "input_occlusion": true
+  }
+ ]
+}

@@ -1,0 +1,21 @@
+﻿NVIDIA GeForce RTX 2060 D3D12
+128x128x8 4 median3=0.0700 p95=0.0720 var=0.000 resid=0.698 samples 120
+128x128x8 8 median3=0.1210 p95=0.1240 var=0.008 resid=0.686 samples 120
+128x128x8 12 median3=0.1550 p95=0.1580 var=0.006 resid=0.712 samples 120
+128x128x8 16 median3=0.1880 p95=0.1920 var=0.005 resid=0.636 samples 120
+192x192x8 4 median3=0.1680 p95=0.1710 var=0.006 resid=0.664 samples 120
+192x192x8 8 median3=0.2450 p95=0.2480 var=0.004 resid=0.625 samples 120
+192x192x8 12 median3=0.3220 p95=0.3250 var=0.003 resid=0.602 samples 120
+192x192x8 16 median3=0.3990 p95=0.4010 var=0.005 resid=0.591 samples 120
+256x256x8 4 median3=0.2740 p95=0.2770 var=0.004 resid=0.681 samples 120
+256x256x8 8 median3=0.4110 p95=0.4130 var=0.007 resid=0.643 samples 120
+256x256x8 12 median3=0.5480 p95=0.5520 var=0.004 resid=0.605 samples 120
+256x256x8 16 median3=0.6860 p95=0.6900 var=0.006 resid=0.596 samples 120
+256x256x16 4 median3=0.5060 p95=0.5100 var=0.004 resid=0.723 samples 120
+256x256x16 8 median3=0.7760 p95=0.7850 var=0.001 resid=0.752 samples 120
+256x256x16 12 median3=1.0470 p95=1.4920 var=0.003 resid=0.640 samples 120
+256x256x16 16 median3=1.3150 p95=1.7610 var=0.002 resid=0.558 samples 120
+128x128x32 4 median3=0.2680 p95=0.2710 var=0.004 resid=0.840 samples 120
+128x128x32 8 median3=0.4060 p95=0.4080 var=0.005 resid=0.701 samples 120
+128x128x32 12 median3=0.5440 p95=0.5480 var=0.002 resid=0.529 samples 120
+128x128x32 16 median3=0.6820 p95=0.6860 var=0.004 resid=0.520 samples 120

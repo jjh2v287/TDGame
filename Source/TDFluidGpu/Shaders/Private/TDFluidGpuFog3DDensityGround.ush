@@ -1,0 +1,42 @@
+#pragma once
+
+#include "/TDFluidGpu/Private/TDFluidGpuFog3DDensity.ush"
+
+float2 TDFog3DGroundUv(float2 ZonePositionCm, float4 Ground, float4 Grid)
+{
+	float2 MapTexels = max(Ground.zw, 1.0f);
+	float2 HalfTexel = 0.5f / MapTexels;
+	return clamp((ZonePositionCm - Ground.xy) / (MapTexels * Grid.x), HalfTexel, 1.0f - HalfTexel);
+}
+
+float TDFog3DGroundHeightAboveCm(float3 ZonePositionCm, float4 Window, float GroundHeightCm)
+{
+	return (ZonePositionCm.z - Window.z) - GroundHeightCm;
+}
+
+float3 TDFog3DGroundStateUvw(float3 ZonePositionCm, float4 Window, float4 Grid, float GroundHeightCm)
+{
+	float WindowSizeCm = Window.w * Grid.x;
+	float2 WindowPositionCm = ZonePositionCm.xy - Window.xy;
+	float HeightCm = TDFog3DGroundHeightAboveCm(ZonePositionCm, Window, GroundHeightCm);
+	return float3(WindowPositionCm / WindowSizeCm, HeightCm / (Grid.y * Grid.z));
+}
+
+float TDFog3DGroundStateWeight(float3 ZonePositionCm, float4 Window, float4 Grid, float Active, float GroundHeightCm)
+{
+	float2 WindowPositionCm = ZonePositionCm.xy - Window.xy;
+	float HeightCm = TDFog3DGroundHeightAboveCm(ZonePositionCm, Window, GroundHeightCm);
+	float BandFade = TDFog3DBandFade(TDFog3DBandCells(WindowPositionCm, Window, Grid), Grid.w);
+	return BandFade * Active * TDFog3DHeightWeight(HeightCm, Grid);
+}
+
+float TDFog3DGroundDensity(float3 ZonePositionCm, float4 State, float4 Window, float4 Grid, float Active, float4 BaseShape, float4 Zone, float4 FineNoise, float4 StainNoise, float GroundHeightCm)
+{
+	float Weight = TDFog3DGroundStateWeight(ZonePositionCm, Window, Grid, Active, GroundHeightCm);
+	float3 DisplacementCm = State.xyz * Weight;
+	float FillChange = State.w * Weight;
+	float2 OriginCm = ZonePositionCm.xy - DisplacementCm.xy;
+	float OriginHeightCm = TDFog3DGroundHeightAboveCm(ZonePositionCm, Window, GroundHeightCm) - DisplacementCm.z;
+	float RestDensity = TDFog3DRestDensity(OriginCm, OriginHeightCm, BaseShape, FineNoise, StainNoise);
+	return max(0.0f, 1.0f + FillChange) * RestDensity * TDFog3DZoneFade(ZonePositionCm.xy, Zone);
+}

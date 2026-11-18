@@ -1,0 +1,4479 @@
+{
+ "out_dir": "C:\\Project\\TDGame\\Saved\\AgentOps\\20261116\\fog3d\\blend\\regress_b4",
+ "stage1": {
+  "pieces": {
+   "walk_px": {
+    "compared": true,
+    "equal": false,
+    "differing": [
+     "/abs_left: 14.158800416082387 ≠ 14.19866501806492",
+     "/abs_right: 14.15806738621196 ≠ 14.197865873478122",
+     "/face/face_path_hist[0]: 58181652 ≠ 58180884",
+     "/face/face_path_hist[1]: 14316 ≠ 15084",
+     "/max_wind: 95.35391235351562 ≠ 95.41167449951172",
+     "/path/frac_moved_ge1: 0.00043734988650760134 ≠ 0.0004600318702491554",
+     "/path/hist[0]: 19390172 ≠ 19389732",
+     "/path/hist[1]: 8484 ≠ 8924",
+     "/path/moved_ge1: 8484 ≠ 8924",
+     "/side_bias: 2.5886686181048338e-05 ≠ 2.814233153516314e-05",
+     "/signed_bias_left_minus_right: 2.5886686181048338e-05 ≠ 2.814233153516314e-05",
+     "/state_hash: 'beb1e4a913bf5b19' ≠ '586d8998e9b18f11'",
+     "/total_abs_mean: 14.158433901147172 ≠ 14.19826544577152"
+    ],
+    "hash_equal": false,
+    "hashes": 1,
+    "passed": null,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 11656,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 148
+     }
+    }
+   },
+   "walk_mx": {
+    "compared": true,
+    "equal": false,
+    "differing": [
+     "/abs_left: 14.15879324734747 ≠ 14.198656814693303",
+     "/abs_right: 14.158058307140644 ≠ 14.197857903283387",
+     "/face/face_path_hist[0]: 58181652 ≠ 58180884",
+     "/face/face_path_hist[1]: 14316 ≠ 15084",
+     "/max_wind: 95.35379791259766 ≠ 95.41160583496094",
+     "/path/frac_moved_ge1: 0.00043734988650760134 ≠ 0.0004600318702491554",
+     "/path/hist[0]: 19390172 ≠ 19389732",
+     "/path/hist[1]: 8484 ≠ 8924",
+     "/path/moved_ge1: 8484 ≠ 8924",
+     "/side_bias: 2.5954163915841667e-05 ≠ 2.813413610263587e-05",
+     "/signed_bias_left_minus_right: 2.5954163915841667e-05 ≠ 2.813413610263587e-05",
+     "/state_hash: '8f17a03d31efa3e0' ≠ '7d211a916c4c712c'",
+     "/total_abs_mean: 14.158425777244057 ≠ 14.198257358988345"
+    ],
+    "hash_equal": false,
+    "hashes": 1,
+    "passed": null,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 35256,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 148
+     }
+    }
+   },
+   "walk_py": {
+    "compared": true,
+    "equal": false,
+    "differing": [
+     "/abs_left: 14.158067150489977 ≠ 14.197864912447871",
+     "/abs_right: 14.158799984005121 ≠ 14.198665815904212",
+     "/face/face_path_hist[0]: 58181652 ≠ 58180884",
+     "/face/face_path_hist[1]: 14316 ≠ 15084",
+     "/max_wind: 95.3539047241211 ≠ 95.41167449951172",
+     "/path/frac_moved_ge1: 0.00043734988650760134 ≠ 0.0004600318702491554",
+     "/path/hist[0]: 19390172 ≠ 19389732",
+     "/path/hist[1]: 8484 ≠ 8924",
+     "/path/moved_ge1: 8484 ≠ 8924",
+     "/side_bias: 2.5879752575152242e-05 ≠ 2.8204271289418908e-05",
+     "/signed_bias_left_minus_right: -2.5879752575152242e-05 ≠ -2.8204271289418908e-05",
+     "/state_hash: '3e0b7a152f79383f' ≠ 'ad5d50e9b5d17ba6'",
+     "/total_abs_mean: 14.158433567247549 ≠ 14.198265364176043"
+    ],
+    "hash_equal": false,
+    "hashes": 1,
+    "passed": null,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 26820,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 148
+     }
+    }
+   },
+   "walk_my": {
+    "compared": true,
+    "equal": false,
+    "differing": [
+     "/abs_left: 14.158058558543544 ≠ 14.197857833829895",
+     "/abs_right: 14.158793609325137 ≠ 14.198657225619778",
+     "/face/face_path_hist[0]: 58181652 ≠ 58180884",
+     "/face/face_path_hist[1]: 14316 ≠ 15084",
+     "/max_wind: 95.35380554199219 ≠ 95.4115982055664",
+     "/path/frac_moved_ge1: 0.00043734988650760134 ≠ 0.0004600318702491554",
+     "/path/hist[0]: 19390172 ≠ 19389732",
+     "/path/hist[1]: 8484 ≠ 8924",
+     "/path/moved_ge1: 8484 ≠ 8924",
+     "/side_bias: 2.595806826391981e-05 ≠ 2.8151052627739852e-05",
+     "/signed_bias_left_minus_right: -2.595806826391981e-05 ≠ -2.8151052627739852e-05",
+     "/state_hash: '95c32a570b20215c' ≠ '14c7ac763c8a5b66'",
+     "/total_abs_mean: 14.158426083934339 ≠ 14.198257529724836"
+    ],
+    "hash_equal": false,
+    "hashes": 1,
+    "passed": null,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 16596,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 148
+     }
+    }
+   },
+   "walk_pxpy": {
+    "compared": true,
+    "equal": false,
+    "differing": [
+     "/abs_left: 9.14397885333366 ≠ 9.17136144851833",
+     "/abs_right: 9.143979156680413 ≠ 9.17136163281873",
+     "/max_wind: 101.7085952758789 ≠ 101.84587860107422",
+     "/side_bias: 1.658724019355847e-08 ≠ 1.0047603068597942e-08",
+     "/signed_bias_left_minus_right: -1.658724019355847e-08 ≠ -1.0047603068597942e-08",
+     "/state_hash: 'b012b0b4cbfb271a' ≠ '60fe5543cc493ad7'",
+     "/total_abs_mean: 9.143979005007036 ≠ 9.171361540668531"
+    ],
+    "hash_equal": false,
+    "hashes": 1,
+    "passed": null,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 8644,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 148
+     }
+    }
+   },
+   "v2_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 6,
+    "passed": {
+     "p1": true,
+     "p2": true,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 35404,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 36
+     }
+    }
+   },
+   "g12_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "a": true,
+     "c": true,
+     "b": true,
+     "d": true,
+     "d_undecidable": false,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 28704,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 150
+     }
+    }
+   },
+   "t_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": true,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 34212,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 6
+     }
+    }
+   },
+   "v3_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 3,
+    "passed": {
+     "p1": true,
+     "p2": true,
+     "p3_info": false,
+     "undecidable": false,
+     "p12": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 25848,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 540
+     }
+    }
+   },
+   "k4hash_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": null,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 33448,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 396
+     }
+    }
+   },
+   "k4hash_N2_run2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": null,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 25944,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 396
+     }
+    }
+   },
+   "g14_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "ga": true,
+     "gc": true,
+     "gd": true,
+     "ge": true,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 23408,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 102
+     }
+    }
+   },
+   "g15_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "ga": true,
+     "gb": true,
+     "gc": true,
+     "gd": true,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 34832,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 76
+     }
+    }
+   },
+   "leak_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 12,
+    "passed": true,
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 4656,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 150
+     }
+    }
+   },
+   "g16_ga_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "ga_a": true,
+     "ga_b": true,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 32868,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 768
+     }
+    }
+   },
+   "g16_gb26_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "gb26_a": true,
+     "gb26_b": true,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 9512,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 768
+     }
+    }
+   },
+   "g16_gb45_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "gb45_a": true,
+     "gb45_b": true,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 10188,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 768
+     }
+    }
+   },
+   "g16_gc_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "gc_a": true,
+     "gc_b": true,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 3332,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 768
+     }
+    }
+   },
+   "g16_gd_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "gd_a": true,
+     "gd_b": true,
+     "all": true
+    },
+    "reference": "기록",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 2028,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 768
+     }
+    }
+   },
+   "g2_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 4,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 34832,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 600
+     }
+    }
+   },
+   "g3_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 4,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 35700,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 30
+     }
+    }
+   },
+   "g4_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 4,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 21700,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 615
+     }
+    }
+   },
+   "g5_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "D_G5a": true,
+     "D_G5b": true
+    },
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 35128,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 720
+     }
+    }
+   },
+   "g6_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 19772,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 542
+     }
+    }
+   },
+   "g7_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 6,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 34576,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 126
+     }
+    }
+   },
+   "g8_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 35340,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 410
+     }
+    }
+   },
+   "g9_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": {
+     "p1": true,
+     "p2": true,
+     "p3": true,
+     "all": true
+    },
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 5052,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 600
+     }
+    }
+   },
+   "g10_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 4,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 20292,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 35
+     }
+    }
+   },
+   "g11_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 2,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 33128,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 54
+     }
+    }
+   },
+   "g13_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 4,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 35532,
+     "calls": {}
+    }
+   },
+   "v1_N2": {
+    "compared": true,
+    "equal": true,
+    "differing": [],
+    "hash_equal": true,
+    "hashes": 4,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 35832,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 30
+     }
+    }
+   },
+   "g4_dt30_N2": {
+    "compared": true,
+    "equal": false,
+    "differing": [
+     "/state_hash/run: 'd305afac9f7272b5' ≠ '4d1217a50f95e724'",
+     "/state_hash_raw/run: '31b440fcd3d2fd9e' ≠ 'd06c1bd10023aa18'",
+     "/values/energy_end_over_peak: 7.189910522245234e-08 ≠ 7.65010254259194e-08",
+     "/values/max_center_speed: 1687.3942615041462 ≠ 1460.7309743928492",
+     "/values/max_face_wind: 1704.99267578125 ≠ 1475.2718505859375",
+     "/values/path/frac_moved_ge1: 0.00023388552975344969 ≠ 0.0001868953952541599",
+     "/values/path/hist(길이 5≠4)",
+     "/values/path/max_moves: 4 ≠ 3",
+     "/values/path/moved_ge1: 9442 ≠ 7545",
+     "/values/state_hash: 'd305afac9f7272b5' ≠ '4d1217a50f95e724'",
+     "/values/state_hash_raw: '31b440fcd3d2fd9e' ≠ 'd06c1bd10023aa18'",
+     "/values/state_max_info/d: 261.3694152832031 ≠ 250.8539581298828"
+    ],
+    "hash_equal": false,
+    "hashes": 4,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 22620,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 308
+     }
+    }
+   },
+   "g4_dt144_N2": {
+    "compared": true,
+    "equal": false,
+    "differing": [
+     "/state_hash/run: '79f15a07e5623b6f' ≠ 'e094e332d1a9f9ed'",
+     "/state_hash_raw/run: 'b9e28ce1b2795085' ≠ '04a852f88d053fe5'",
+     "/values/energy_end_over_peak: 8.472181150972596e-08 ≠ 7.602905413434116e-08",
+     "/values/max_center_speed: 1315.293100801424 ≠ 1762.363416870867",
+     "/values/max_face_wind: 1315.428466796875 ≠ 1766.4166259765625",
+     "/values/path/frac_moved_ge1: 4.724435366912263e-06 ≠ 2.0071096859650236e-05",
+     "/values/path/hist[0]: 193461358 ≠ 193458389",
+     "/values/path/hist[1]: 914 ≠ 3883",
+     "/values/path/moved_ge1: 914 ≠ 3883",
+     "/values/state_hash: '79f15a07e5623b6f' ≠ 'e094e332d1a9f9ed'",
+     "/values/state_hash_raw: 'b9e28ce1b2795085' ≠ '04a852f88d053fe5'",
+     "/values/state_max_info/d: 269.6894226074219 ≠ 291.1997985839844"
+    ],
+    "hash_equal": false,
+    "hashes": 4,
+    "passed": true,
+    "reference": "B0 기준 실행",
+    "calls": {
+     "formula": "B4",
+     "installed": true,
+     "pid": 33472,
+     "calls": {
+      "B4|core.Sim._apply_inputs": 1476
+     }
+    }
+   }
+  },
+  "groups": [
+   {
+    "group": "가",
+    "gate": "D-G3·D-V3",
+    "pieces": [
+     "v3_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     {
+      "p1": true,
+      "p2": true,
+      "p3_info": false,
+      "undecidable": false,
+      "p12": true
+     }
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-V2",
+    "pieces": [
+     "v2_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     {
+      "p1": true,
+      "p2": true,
+      "all": true
+     }
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-G12b",
+    "pieces": [
+     "g12_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     {
+      "a": true,
+      "c": true,
+      "b": true,
+      "d": true,
+      "d_undecidable": false,
+      "all": true
+     }
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "R2-P(a)",
+    "pieces": [
+     "t_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "결정론 해시",
+    "pieces": [
+     "k4hash_N2",
+     "k4hash_N2_run2"
+    ],
+    "present": 2,
+    "compared": 2,
+    "equal": 2,
+    "hash_equal": 2,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     null,
+     null
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-G4(1/60 판, 조각 안 dt60)",
+    "pieces": [
+     "g4_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-G5a·b",
+    "pieces": [
+     "g5_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     {
+      "D_G5a": true,
+      "D_G5b": true
+     }
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-G7",
+    "pieces": [
+     "g7_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-G9",
+    "pieces": [
+     "g9_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     {
+      "p1": true,
+      "p2": true,
+      "p3": true,
+      "all": true
+     }
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-G10",
+    "pieces": [
+     "g10_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-G11",
+    "pieces": [
+     "g11_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-G13",
+    "pieces": [
+     "g13_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "가",
+    "gate": "D-V1",
+    "pieces": [
+     "v1_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "나",
+    "gate": "D-G2",
+    "pieces": [
+     "g2_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "나",
+    "gate": "D-G6",
+    "pieces": [
+     "g6_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "나",
+    "gate": "D-G8",
+    "pieces": [
+     "g8_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "나",
+    "gate": "D-G12a·c·d",
+    "pieces": [
+     "g12_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     {
+      "a": true,
+      "c": true,
+      "b": true,
+      "d": true,
+      "d_undecidable": false,
+      "all": true
+     }
+    ]
+   },
+   {
+    "group": "나",
+    "gate": "R2-S 누수",
+    "pieces": [
+     "leak_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     true
+    ]
+   },
+   {
+    "group": "나",
+    "gate": "D-G14",
+    "pieces": [
+     "g14_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     {
+      "ga": true,
+      "gc": true,
+      "gd": true,
+      "ge": true,
+      "all": true
+     }
+    ]
+   },
+   {
+    "group": "나",
+    "gate": "D-G15",
+    "pieces": [
+     "g15_N2"
+    ],
+    "present": 1,
+    "compared": 1,
+    "equal": 1,
+    "hash_equal": 1,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     {
+      "ga": true,
+      "gb": true,
+      "gc": true,
+      "gd": true,
+      "all": true
+     }
+    ]
+   },
+   {
+    "group": "나",
+    "gate": "D-G16",
+    "pieces": [
+     "g16_ga_N2",
+     "g16_gb26_N2",
+     "g16_gb45_N2",
+     "g16_gc_N2",
+     "g16_gd_N2"
+    ],
+    "present": 5,
+    "compared": 5,
+    "equal": 5,
+    "hash_equal": 5,
+    "reference": [
+     "기록"
+    ],
+    "tool_passed": [
+     {
+      "ga_a": true,
+      "ga_b": true,
+      "all": true
+     },
+     {
+      "gb26_a": true,
+      "gb26_b": true,
+      "all": true
+     },
+     {
+      "gb45_a": true,
+      "gb45_b": true,
+      "all": true
+     },
+     {
+      "gc_a": true,
+      "gc_b": true,
+      "all": true
+     },
+     {
+      "gd_a": true,
+      "gd_b": true,
+      "all": true
+     }
+    ]
+   },
+   {
+    "group": "다",
+    "gate": "D-G4(1/30·1/144 판)",
+    "pieces": [
+     "g4_dt30_N2",
+     "g4_dt144_N2"
+    ],
+    "present": 2,
+    "compared": 2,
+    "equal": 0,
+    "hash_equal": 0,
+    "reference": [
+     "B0 기준 실행"
+    ],
+    "tool_passed": [
+     true,
+     true
+    ]
+   },
+   {
+    "group": "다",
+    "gate": "D-S1",
+    "pieces": [
+     "walk_px",
+     "walk_mx",
+     "walk_py",
+     "walk_my"
+    ],
+    "value": {
+     "px": 2.5886686181048338e-05,
+     "mx": 2.5954163915841667e-05,
+     "py": 2.5879752575152242e-05,
+     "my": 2.595806826391981e-05
+    },
+    "threshold": 0.03,
+    "threshold_passed": true
+   },
+   {
+    "group": "다",
+    "gate": "D-S2",
+    "pieces": [
+     "walk_px",
+     "walk_mx",
+     "walk_py",
+     "walk_my"
+    ],
+    "value": {
+     "sizes": {
+      "px": 14.158433901147172,
+      "mx": 14.158425777244057,
+      "py": 14.158433567247549,
+      "my": 14.158426083934339
+     },
+     "max_relative_spread": 2.8737324266841627e-07
+    },
+    "threshold": 0.05,
+    "threshold_passed": true
+   }
+  ]
+ },
+ "stage2a": {
+  "stage2a": {
+   "pieces": {
+    "R3_G13_S30CURB100_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 192.67428588867188 ≠ 192.55088806152344"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R3_G13_S30CURB130_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 192.67428588867188 ≠ 192.55088806152344"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R3_G13_S30CURB45_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 192.67428588867188 ≠ 192.55088806152344"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R3_G13_S30CURB60_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 192.67428588867188 ≠ 192.55088806152344"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R3_G13_S30CURB80_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 192.67428588867188 ≠ 192.55088806152344"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R3_G13_S30DROP100_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 182.09695434570312 ≠ 183.16307067871094",
+      "/values/opposite_max: 457.1493835449219 ≠ 457.69451904296875"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R3_G13_S30DROP60_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 182.09695434570312 ≠ 183.16307067871094",
+      "/values/opposite_max: 452.2951354980469 ≠ 452.3650817871094"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R3_G14_FOOT30_diagonal": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 12.07475133126735 ≠ 12.17784018048911",
+      "/values/abs_left: 12.9104717947014 ≠ 13.110154801521588",
+      "/values/abs_right: 11.239030867833304 ≠ 11.245525559456633",
+      "/values/crossing_abs_mean: 12.967064271005981 ≠ 13.069391440196217",
+      "/values/max_wind: 104.65558624267578 ≠ 722.3385009765625",
+      "/values/run_max_wind: 447.133544921875 ≠ 773.1314697265625",
+      "/values/side_bias: 0.0692122297599591 ≠ 0.07655829007562426",
+      "/values/signed_sum: -3624.0064954627196 ≠ -3639.1019746995225",
+      "/values/state_hash: '8f787d64d6f5a125' ≠ '127b0c0d19c0efa5'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R3_G14_FOOT45_along_fold": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.064442071989287 ≠ 16.134292934189652",
+      "/values/abs_left: 17.43028540754516 ≠ 17.610364562303044",
+      "/values/abs_right: 14.69859873643341 ≠ 14.658221306076262",
+      "/values/crossing_abs_mean: 18.886989526213757 ≠ 19.004885880732274",
+      "/values/max_wind: 96.57752227783203 ≠ 663.3284912109375",
+      "/values/run_max_wind: 553.7900390625 ≠ 1407.868896484375",
+      "/values/side_bias: 0.0850227682626727 ≠ 0.09148660149745365",
+      "/values/signed_sum: -5145.06240697607 ≠ -5159.556120313492",
+      "/values/state_hash: '4854e30e943b2936' ≠ '18a8fa83f6775465'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R3_G14_FOOT45_cross_x": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 21.49675769027186 ≠ 21.88039150120919",
+      "/values/abs_left: 21.497431063822912 ≠ 21.879508587003198",
+      "/values/abs_right: 21.4960843167208 ≠ 21.88127441541518",
+      "/values/crossing_abs_mean: 27.194616754488568 ≠ 27.717801119995315",
+      "/values/max_wind: 98.92011260986328 ≠ 658.5389404296875",
+      "/values/run_max_wind: 667.2796020507812 ≠ 1155.2421875",
+      "/values/side_bias: 3.132442393210385e-05 ≠ 4.035184680963465e-05",
+      "/values/signed_sum: -6825.9820232511065 ≠ -6943.008251700755",
+      "/values/state_hash: '3ce98a03dea72b20' ≠ '1b9c71a5152854ce'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R3_G14_S30CURB100_along_cliff": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 12.299740802367422 ≠ 12.421535530828425",
+      "/values/abs_left: 5.820866893032412 ≠ 5.90131373604403",
+      "/values/abs_right: 17.853061296083144 ≠ 18.01029706921505",
+      "/values/crossing_abs_mean: 15.004218073165706 ≠ 15.192405264538642",
+      "/values/max_wind: 106.1363754272461 ≠ 688.1754760742188",
+      "/values/run_max_wind: 552.621826171875 ≠ 1645.8511962890625",
+      "/values/side_bias: 0.5082466376907704 ≠ 0.5064060063451596",
+      "/values/signed_sum: -4098.795380217682 ≠ -4140.163978135958",
+      "/values/state_hash: '679e5be48762d12c' ≠ '8d0f088a73c6daeb'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R3_G14_S30DROP100_along_cliff": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 10.823449870239081 ≠ 10.933944862026312",
+      "/values/abs_left: 4.457741168478713 ≠ 4.466395288874056",
+      "/values/abs_right: 16.279771614605107 ≠ 16.477558781871103",
+      "/values/crossing_abs_mean: 11.877895338049484 ≠ 12.067976365302714",
+      "/values/max_wind: 94.95587921142578 ≠ 689.2705688476562",
+      "/values/run_max_wind: 551.4943237304688 ≠ 1295.1466064453125",
+      "/values/side_bias: 0.5700794772153178 ≠ 0.573490729230276",
+      "/values/signed_sum: -2164.109574272165 ≠ -2192.3702595306795",
+      "/values/state_hash: 'f05a0f2772377c65' ≠ 'dbbadd32ec915173'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R3_G14_TOP45_cross_x": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 12.815326547912695 ≠ 12.49118553570707",
+      "/values/abs_left: 12.815215347854826 ≠ 12.491131565515667",
+      "/values/abs_right: 12.815437747970568 ≠ 12.491239505898472",
+      "/values/crossing_abs_mean: 15.363059173399977 ≠ 14.873526057614392",
+      "/values/max_wind: 90.5762710571289 ≠ 663.0880126953125",
+      "/values/run_max_wind: 590.2682495117188 ≠ 1179.80615234375",
+      "/values/side_bias: 8.67711466074519e-06 ≠ 4.320662057889381e-06",
+      "/values/signed_sum: -4312.267035565039 ≠ -4242.53418412903",
+      "/values/state_hash: '6750298835e6c497' ≠ 'ace3db968288455b'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R4_G13_S30CURB100_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R4_G13_S30CURB130_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R4_G13_S30CURB45_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R4_G13_S30CURB60_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R4_G13_S30CURB80_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R4_G13_S30DROP100_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 174.4737091064453 ≠ 174.21109008789062",
+      "/values/opposite_max: 457.47723388671875 ≠ 457.5469665527344"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R4_G13_S30DROP60_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 174.4737091064453 ≠ 174.21109008789062",
+      "/values/opposite_max: 459.0520935058594 ≠ 461.153564453125"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 190
+      }
+     }
+    },
+    "R4_G14_FOOT30_diagonal": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 11.153543220112214 ≠ 11.174003128852572",
+      "/values/abs_left: 11.656260449084359 ≠ 11.67624404755836",
+      "/values/abs_right: 10.650825991140067 ≠ 10.671762210146786",
+      "/values/crossing_abs_mean: 11.932739455695552 ≠ 11.960046686644718",
+      "/values/max_wind: 104.82940673828125 ≠ 629.8121337890625",
+      "/values/run_max_wind: 446.7023620605469 ≠ 770.5792236328125",
+      "/values/side_bias: 0.04507242398681341 ≠ 0.04494726848688115",
+      "/values/signed_sum: -3378.4440702626316 ≠ -3371.0665733441474",
+      "/values/state_hash: '0718ea2d9c629381' ≠ 'e1b72602ab49ccc7'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R4_G14_FOOT45_along_fold": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.140095266048625 ≠ 16.1874432446871",
+      "/values/abs_left: 16.139111288010593 ≠ 16.186600004375624",
+      "/values/abs_right: 16.141079244086658 ≠ 16.188286484998578",
+      "/values/crossing_abs_mean: 18.9755094151333 ≠ 19.071184233155392",
+      "/values/max_wind: 94.36734771728516 ≠ 680.5855102539062",
+      "/values/run_max_wind: 551.4027099609375 ≠ 831.5945434570312",
+      "/values/side_bias: 6.096482219050823e-05 ≠ 5.209224821553274e-05",
+      "/values/signed_sum: -5207.467729593718 ≠ -5216.180070514614",
+      "/values/state_hash: '63670b1131f3380b' ≠ '5b015d494ad80156'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R4_G14_FOOT45_cross_x": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.027679586114058 ≠ 16.179047141610827",
+      "/values/abs_left: 16.02908501468676 ≠ 16.18127783593872",
+      "/values/abs_right: 16.026274157541355 ≠ 16.176816447282928",
+      "/values/crossing_abs_mean: 18.966908135228383 ≠ 19.220031694846345",
+      "/values/max_wind: 93.62671661376953 ≠ 690.57958984375",
+      "/values/run_max_wind: 667.8734130859375 ≠ 1310.7393798828125",
+      "/values/side_bias: 8.768758853404988e-05 ≠ 0.0001378755070289933",
+      "/values/signed_sum: -5263.729700639307 ≠ -5309.9126007382065",
+      "/values/state_hash: 'd063bf3a1d76af41' ≠ '1f4ac8b4be601bfe'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R4_G14_S30CURB100_along_cliff": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 12.846079143775597 ≠ 12.983168060957478",
+      "/values/abs_left: 7.113479485815081 ≠ 7.197442507356148",
+      "/values/abs_right: 17.75973599345604 ≠ 17.94236139261576",
+      "/values/crossing_abs_mean: 15.104731518739381 ≠ 15.341103855008539",
+      "/values/max_wind: 102.61997985839844 ≠ 806.218994140625",
+      "/values/run_max_wind: 551.4346313476562 ≠ 1521.662353515625",
+      "/values/side_bias: 0.42802091738051934 ≠ 0.42740663085568537",
+      "/values/signed_sum: -4375.186036378288 ≠ -4413.425138761346",
+      "/values/state_hash: 'ac9840fcd57ee18a' ≠ 'f706f4ddf617ae69'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R4_G14_S30DROP100_along_cliff": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 11.27055970681248 ≠ 11.378767444050073",
+      "/values/abs_left: 4.627316424476999 ≠ 4.653489595612406",
+      "/values/abs_right: 16.964768234528606 ≠ 17.1432913141395",
+      "/values/crossing_abs_mean: 13.05034604115434 ≠ 13.232238734581228",
+      "/values/max_wind: 97.38722229003906 ≠ 656.7421264648438",
+      "/values/run_max_wind: 554.2816772460938 ≠ 1383.7930908203125",
+      "/values/side_bias: 0.5713877101211677 ≠ 0.5730112978719322",
+      "/values/signed_sum: -2281.791797874967 ≠ -2298.5055271510264",
+      "/values/state_hash: 'e4ed82c17b7a00b8' ≠ '9ec6ef993471b9f4'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R4_G14_TOP45_cross_x": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 17.84338157080431 ≠ 17.976354186454937",
+      "/values/abs_left: 17.84458228693496 ≠ 17.978288312036927",
+      "/values/abs_right: 17.842180854673664 ≠ 17.974420060872944",
+      "/values/crossing_abs_mean: 22.349030356801393 ≠ 22.566847966087526",
+      "/values/max_wind: 98.62860107421875 ≠ 671.1729736328125",
+      "/values/run_max_wind: 587.5724487304688 ≠ 1267.90625",
+      "/values/side_bias: 6.729196065681463e-05 ≠ 0.00010759276113110321",
+      "/values/signed_sum: -5485.723240222198 ≠ -5521.576656538104",
+      "/values/state_hash: 'eba082e296a8bb36' ≠ '1107ec7ecde043f5'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSim._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G10_S30": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 70
+      }
+     }
+    },
+    "R5_G11_F0_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.872076472848494 ≠ 17.00410406765813",
+      "/values/abs_left: 16.873427604594426 ≠ 17.006103548216057",
+      "/values/abs_right: 16.870725341102567 ≠ 17.002104587100202",
+      "/values/crossing_abs_mean: 20.55437106969575 ≠ 20.770504208002667",
+      "/values/max_wind: 96.54444122314453 ≠ 731.9420776367188",
+      "/values/run_max_wind: 553.9977416992188 ≠ 1284.405029296875",
+      "/values/side_bias: 8.008094013227696e-05 ≠ 0.00011758811578496117",
+      "/values/signed_sum: -5370.635251143605 ≠ -5413.193979020281",
+      "/values/state_hash: '61e8c618d0c6acc9' ≠ 'c377ace3d9c7ce2c'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G11_F0_hill": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87307054240968 ≠ 17.00509287767846",
+      "/values/abs_left: 16.87442148343576 ≠ 17.00709288406932",
+      "/values/abs_right: 16.871719601383592 ≠ 17.003092871287603",
+      "/values/crossing_abs_mean: 20.559893479798657 ≠ 20.776024769361168",
+      "/values/max_wind: 96.42682647705078 ≠ 731.8333129882812",
+      "/values/run_max_wind: 554.0103759765625 ≠ 1284.3856201171875",
+      "/values/side_bias: 8.006491898961731e-05 ≠ 0.00011761220037107672",
+      "/values/signed_sum: -5367.169196950532 ≠ -5409.72380137546",
+      "/values/state_hash: 'e501ba5b8622b553' ≠ '253a74b5cb25b84e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G11_F0_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208588816721 ≠ 17.004114367953512",
+      "/values/abs_left: 16.873435535566074 ≠ 17.00611452498911",
+      "/values/abs_right: 16.87073624076834 ≠ 17.002114210917917",
+      "/values/crossing_abs_mean: 20.55437139437384 ≠ 20.770507056325762",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9362182617188",
+      "/values/run_max_wind: 553.997802734375 ≠ 1284.40185546875",
+      "/values/side_bias: 7.999291894387984e-05 ≠ 0.00011762782773123549",
+      "/values/signed_sum: -5370.64229669073 ≠ -5413.201233107755",
+      "/values/state_hash: '8feab5219508fc88' ≠ 'bf030778a3bca3bc'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G11_FOOT30_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.3548459930963 ≠ 16.5042179431049",
+      "/values/abs_left: 16.356225874481954 ≠ 16.506257598621442",
+      "/values/abs_right: 16.35346611171065 ≠ 16.50217828758836",
+      "/values/crossing_abs_mean: 19.58394938229682 ≠ 19.83285823106071",
+      "/values/max_wind: 94.79374694824219 ≠ 704.4890747070312",
+      "/values/run_max_wind: 606.3958129882812 ≠ 1299.1458740234375",
+      "/values/side_bias: 8.437140809732824e-05 ≠ 0.00012358389373988055",
+      "/values/signed_sum: -5316.186982659019 ≠ -5362.974827794979",
+      "/values/state_hash: 'c4c651afad1f5431' ≠ '29fe5d623b32739f'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G11_FOOT30_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.354854886491278 ≠ 16.50422801038685",
+      "/values/abs_left: 16.356234022091076 ≠ 16.50626706853474",
+      "/values/abs_right: 16.35347575089148 ≠ 16.502188952238964",
+      "/values/crossing_abs_mean: 19.583949303129234 ≠ 19.832860441486105",
+      "/values/max_wind: 94.79385375976562 ≠ 704.4947509765625",
+      "/values/run_max_wind: 606.3958740234375 ≠ 1299.14208984375",
+      "/values/side_bias: 8.432576194468159e-05 ≠ 0.00012354762346987168",
+      "/values/signed_sum: -5316.193759425835 ≠ -5362.982065481169",
+      "/values/state_hash: '30bf28d27a14dfd2' ≠ '7f5f31738f3c40f7'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G11_HILL_hill": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 17.96963335462027 ≠ 18.066530044735117",
+      "/values/abs_left: 17.97109825020493 ≠ 18.06829147202992",
+      "/values/abs_right: 17.968168459035613 ≠ 18.06476861744031",
+      "/values/crossing_abs_mean: 22.762768350609445 ≠ 22.903050873658874",
+      "/values/max_wind: 100.48873901367188 ≠ 671.177978515625",
+      "/values/run_max_wind: 549.353515625 ≠ 1272.6982421875",
+      "/values/side_bias: 8.152061623899566e-05 ≠ 9.749671300701246e-05",
+      "/values/signed_sum: -5472.758038714767 ≠ -5501.958801934099",
+      "/values/state_hash: 'acfe78669fb2efcf' ≠ '6b62b488ebb76ca7'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G11_TOP30_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 17.459564927399757 ≠ 17.586256510514925",
+      "/values/abs_left: 17.460840311760485 ≠ 17.5884362362891",
+      "/values/abs_right: 17.458289543039026 ≠ 17.584076784740752",
+      "/values/crossing_abs_mean: 21.652719284312898 ≠ 21.857776530832563",
+      "/values/max_wind: 97.98929595947266 ≠ 670.4962158203125",
+      "/values/run_max_wind: 553.9977416992188 ≠ 1267.906494140625",
+      "/values/side_bias: 7.30478889956822e-05 ≠ 0.00012394484140896414",
+      "/values/signed_sum: -5431.827267545787 ≠ -5469.090706533962",
+      "/values/state_hash: 'e0e7c41c8b24245f' ≠ '6ab5f1e085662615'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G11_TOP30_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 17.45957405902733 ≠ 17.586266062138453",
+      "/values/abs_left: 17.46084870276073 ≠ 17.58844617123446",
+      "/values/abs_right: 17.458299415293926 ≠ 17.584085953042447",
+      "/values/crossing_abs_mean: 21.65271944056377 ≠ 21.85777746528286",
+      "/values/max_wind: 97.98943328857422 ≠ 670.494140625",
+      "/values/run_max_wind: 553.997802734375 ≠ 1267.90625",
+      "/values/side_bias: 7.300543123753816e-05 ≠ 0.00012396657074918501",
+      "/values/signed_sum: -5431.833939632547 ≠ -5469.097513910299",
+      "/values/state_hash: 'b95949c02fffd570' ≠ '66b4e2e188bc038e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G13_S30CURB100_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G13_S30CURB130_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G13_S30CURB45_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G13_S30CURB60_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G13_S30CURB80_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G13_S30DROP100_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 174.4737091064453 ≠ 174.21109008789062",
+      "/values/opposite_max: 457.1493835449219 ≠ 457.69451904296875"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G13_S30DROP60_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 174.4737091064453 ≠ 174.21109008789062",
+      "/values/opposite_max: 469.13665771484375 ≠ 470.8173828125"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G14_FOOT30_diagonal": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 11.153543220112214 ≠ 11.174003128852572",
+      "/values/abs_left: 11.656260449084359 ≠ 11.67624404755836",
+      "/values/abs_right: 10.650825991140067 ≠ 10.671762210146786",
+      "/values/crossing_abs_mean: 11.932739455695552 ≠ 11.960046686644718",
+      "/values/max_wind: 104.82940673828125 ≠ 629.8121337890625",
+      "/values/run_max_wind: 446.7023620605469 ≠ 770.5792236328125",
+      "/values/side_bias: 0.04507242398681341 ≠ 0.04494726848688115",
+      "/values/signed_sum: -3378.4440702626316 ≠ -3371.0665733441474",
+      "/values/state_hash: '0718ea2d9c629381' ≠ 'e1b72602ab49ccc7'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G14_FOOT45_along_fold": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.140095266048625 ≠ 16.1874432446871",
+      "/values/abs_left: 16.139111288010593 ≠ 16.186600004375624",
+      "/values/abs_right: 16.141079244086658 ≠ 16.188286484998578",
+      "/values/crossing_abs_mean: 18.9755094151333 ≠ 19.071184233155392",
+      "/values/max_wind: 94.36734771728516 ≠ 680.5855102539062",
+      "/values/run_max_wind: 551.4027099609375 ≠ 831.5945434570312",
+      "/values/side_bias: 6.096482219050823e-05 ≠ 5.209224821553274e-05",
+      "/values/signed_sum: -5207.467729593718 ≠ -5216.180070514614",
+      "/values/state_hash: '63670b1131f3380b' ≠ '5b015d494ad80156'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G14_FOOT45_cross_x": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.028286222734597 ≠ 16.179648409659368",
+      "/values/abs_left: 16.029690699315648 ≠ 16.181877751198094",
+      "/values/abs_right: 16.026881746153542 ≠ 16.177419068120646",
+      "/values/crossing_abs_mean: 18.968107599234628 ≠ 19.221221341675925",
+      "/values/max_wind: 93.62663269042969 ≠ 690.5897827148438",
+      "/values/run_max_wind: 667.6926879882812 ≠ 1310.7291259765625",
+      "/values/side_bias: 8.762487526961484e-05 ≠ 0.000137786772757886",
+      "/values/signed_sum: -5263.887673163242 ≠ -5310.0681049292925",
+      "/values/state_hash: 'c60d18a5dcbeda87' ≠ '10fccac0deb1baaa'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G14_S30CURB100_along_cliff": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 12.353389047026475 ≠ 12.490477964208354",
+      "/values/abs_left: 6.04598427619198 ≠ 6.129947297733049",
+      "/values/abs_right: 17.75973599345604 ≠ 17.94236139261576",
+      "/values/crossing_abs_mean: 14.752794121849572 ≠ 14.98916645811873",
+      "/values/max_wind: 102.61997985839844 ≠ 806.218994140625",
+      "/values/run_max_wind: 551.4346313476562 ≠ 1521.662353515625",
+      "/values/side_bias: 0.4920561774473566 ≠ 0.49070549264012225",
+      "/values/signed_sum: -4195.492183699767 ≠ -4233.731286082826",
+      "/values/state_hash: '7ea47d00ec5f5322' ≠ '5fedcfd42d2537df'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G14_S30DROP100_along_cliff": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 11.19229420404404 ≠ 11.29241622555545",
+      "/values/abs_left: 4.457741168478713 ≠ 4.466395288874056",
+      "/values/abs_right: 16.964768234528606 ≠ 17.1432913141395",
+      "/values/crossing_abs_mean: 12.736647185351627 ≠ 12.908520760375179",
+      "/values/max_wind: 97.38722229003906 ≠ 656.7421264648438",
+      "/values/run_max_wind: 554.2816772460938 ≠ 1383.7930908203125",
+      "/values/side_bias: 0.5838264243821101 ≠ 0.5866302579093211",
+      "/values/signed_sum: -2218.5509650505905 ≠ -2236.4059099092337",
+      "/values/state_hash: 'fabf613d26e2ba52' ≠ '9ca767eaab40e0c3'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G14_TOP45_cross_x": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 17.842863549177018 ≠ 17.97585289785172",
+      "/values/abs_left: 17.84406428301663 ≠ 17.977786985709297",
+      "/values/abs_right: 17.841662815337408 ≠ 17.973918809994142",
+      "/values/crossing_abs_mean: 22.348041690761193 ≠ 22.565891945166513",
+      "/values/max_wind: 98.62706756591797 ≠ 671.1659545898438",
+      "/values/run_max_wind: 587.6246948242188 ≠ 1267.90625",
+      "/values/side_bias: 6.729490680130556e-05 ≠ 0.00010759366293037918",
+      "/values/signed_sum: -5485.56781115857 ≠ -5521.419867410059",
+      "/values/state_hash: '12e23ce4b8ea7c7c' ≠ 'c07a67c209685530'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G1_v2_high_F0": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 18,
+       "B4|TerrainSimR5._apply_inputs": 18
+      }
+     }
+    },
+    "R5_G1_v2_high_F1": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 18,
+       "B4|TerrainSimR5._apply_inputs": 18
+      }
+     }
+    },
+    "R5_G1_v2_low_F0": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 18,
+       "B4|TerrainSimR5._apply_inputs": 18
+      }
+     }
+    },
+    "R5_G1_v2_low_F1": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 18,
+       "B4|TerrainSimR5._apply_inputs": 18
+      }
+     }
+    },
+    "R5_G1_v3_free_F0": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 180,
+       "B4|TerrainSimR5._apply_inputs": 180
+      }
+     }
+    },
+    "R5_G1_v3_free_F1": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 180,
+       "B4|TerrainSimR5._apply_inputs": 180
+      }
+     }
+    },
+    "R5_G1_v3_high_F0": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 180,
+       "B4|TerrainSimR5._apply_inputs": 180
+      }
+     }
+    },
+    "R5_G1_v3_high_F1": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 180,
+       "B4|TerrainSimR5._apply_inputs": 180
+      }
+     }
+    },
+    "R5_G1_v3_low_F0": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 180,
+       "B4|TerrainSimR5._apply_inputs": 180
+      }
+     }
+    },
+    "R5_G1_v3_low_F1": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 180,
+       "B4|TerrainSimR5._apply_inputs": 180
+      }
+     }
+    },
+    "R5_G1_walk_px_F0": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/locked_hash: 'beb1e4a913bf5b19' ≠ '586d8998e9b18f11'",
+      "/values/locked_max_wind: 95.35391235351562 ≠ 95.41167449951172"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 148,
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G1_walk_px_F1": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/locked_hash: 'beb1e4a913bf5b19' ≠ '586d8998e9b18f11'",
+      "/values/locked_max_wind: 95.35391235351562 ≠ 95.41167449951172"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|core.Sim._apply_inputs": 148,
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G2_CLIFF": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 300
+      }
+     }
+    },
+    "R5_G2_HILL": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 300
+      }
+     }
+    },
+    "R5_G2_ROUGH": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 300
+      }
+     }
+    },
+    "R5_G2_S30": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 300
+      }
+     }
+    },
+    "R5_G3_CLIFF": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G3_DIAG": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G3_HILL": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G3_MESA": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G3_S10": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G3_S20": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G3_S30": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G3_S45": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G4_CLIFF_a": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 189.2244110107422 ≠ 187.4755096435547"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G4_CLIFF_a_x-20": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 188.10647583007812 ≠ 186.37509155273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G4_CLIFF_b": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 106.5745849609375 ≠ 758.6461181640625"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G4_DIAG_a": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 142.8418731689453 ≠ 143.44178771972656"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G4_DIAG_b": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 107.21688842773438 ≠ 749.8521728515625"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G4_MESA_a": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 180.0511474609375 ≠ 178.7229461669922"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 190
+      }
+     }
+    },
+    "R5_G4_MESA_b": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/max_wind: 87.99535369873047 ≠ 692.1962280273438"
+     ],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_G6_ROUGH_k2_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2350.598064796698 ≠ 2867.22216796875",
+      "/values/energy_end_over_peak: 0.0002805502272488145 ≠ 0.000251613857490363",
+      "/values/flat_control/energy_end_over_peak: 0.00048335886264303164 ≠ 0.000484058493040035",
+      "/values/flat_control/max_wind: 1865.9759521484375 ≠ 2867.22216796875",
+      "/values/flat_control/peak_energy: 1684400847833.4126 ≠ 2473516476211.827",
+      "/values/flat_control/state_hash: '3ddd698276552f8d' ≠ 'c6a3bed0e131169d'",
+      "/values/info9_original/flat_over_converted: 0.793830293700095 ≠ 1.2197841098013218",
+      "/values/info9_original/wind_over_limit: 0.5487861868079458 ≠ 0.7945689514318862",
+      "/values/limit: 3525.897097195047 ≠ 4300.833251953125",
+      "/values/max_wind: 1934.963623046875 ≠ 2801.568359375",
+      "/values/peak_energy: 1361297562790.7183 ≠ 1737777197064.9907",
+      "/values/wind_over_limit: 0.5487861868079458 ≠ 0.651401297202753",
+      "/values/world_wind_max: 2357.009339804602 ≠ 2666.8280310558434"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_ROUGH_k3_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2350.598064796698 ≠ 2859.177490234375",
+      "/values/energy_end_over_peak: 0.0004855770297607993 ≠ 0.0004749599398288292",
+      "/values/flat_control/energy_end_over_peak: 0.0002061009445562427 ≠ 0.00016133095900915621",
+      "/values/flat_control/max_wind: 1939.5592041015625 ≠ 2859.177490234375",
+      "/values/flat_control/peak_energy: 1725672125680.7693 ≠ 2541542174974.02",
+      "/values/flat_control/state_hash: '41648db731835367' ≠ '9f4a10ebadefde10'",
+      "/values/info9_original/flat_over_converted: 0.8251343490616351 ≠ 1.2163617136652682",
+      "/values/info9_original/wind_over_limit: 0.5513478686476357 ≠ 0.7945689514318862",
+      "/values/limit: 3525.897097195047 ≠ 4288.7662353515625",
+      "/values/max_wind: 1943.995849609375 ≠ 2801.568359375",
+      "/values/peak_energy: 1409495269135.7473 ≠ 1771407250151.131",
+      "/values/wind_over_limit: 0.5513478686476357 ≠ 0.6532341017521901",
+      "/values/world_wind_max: 2102.1458451892636 ≠ 2677.6140740659216"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S30_k1_60": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S30_k2_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2309.401076758503 ≠ 2856.425537109375",
+      "/values/energy_end_over_peak: 0.0004926123840397474 ≠ 0.0004932957769695545",
+      "/values/flat_control/energy_end_over_peak: 0.0004926123840397474 ≠ 0.0004932957769695545",
+      "/values/flat_control/max_wind: 1870.808837890625 ≠ 2856.425537109375",
+      "/values/flat_control/peak_energy: 1622561353974.8374 ≠ 2347588414210.828",
+      "/values/flat_control/state_hash: 'd381fc5b48e8a52a' ≠ '5d496ae4e21b4d28'",
+      "/values/info9_original/flat_over_converted: 0.8100839896188624 ≠ 1.2368685395776642",
+      "/values/info9_original/wind_over_limit: 0.5400559930792416 ≠ 0.8245790263851095",
+      "/values/limit: 3464.101615137755 ≠ 4284.6383056640625",
+      "/values/max_wind: 1870.808837890625 ≠ 2856.425537109375",
+      "/values/peak_energy: 1622561353974.8374 ≠ 2347588414210.828",
+      "/values/wind_over_limit: 0.5400559930792416 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 1863.505352045578 ≠ 2744.0845847534065"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S30_k3_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2309.401076758503 ≠ 2849.4501953125",
+      "/values/energy_end_over_peak: 0.0002423493964665282 ≠ 0.00020464469436222023",
+      "/values/flat_control/energy_end_over_peak: 0.0002423493964665282 ≠ 0.00020464469436222023",
+      "/values/flat_control/max_wind: 1929.58984375 ≠ 2849.4501953125",
+      "/values/flat_control/peak_energy: 1650982671405.7544 ≠ 2373897887475.4507",
+      "/values/flat_control/state_hash: '0ad0b73f316e9a73' ≠ '73f0f69f90cb3d4b'",
+      "/values/info9_original/flat_over_converted: 0.8355369117859728 ≠ 1.2338481279795777",
+      "/values/info9_original/wind_over_limit: 0.5570246078573152 ≠ 0.8225654186530518",
+      "/values/limit: 3464.101615137755 ≠ 4274.17529296875",
+      "/values/max_wind: 1929.58984375 ≠ 2849.4501953125",
+      "/values/peak_energy: 1650982671405.7544 ≠ 2373897887475.4507",
+      "/values/wind_over_limit: 0.5570246078573152 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 1916.934854779823 ≠ 2736.565493647175"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S45_k1_60": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S45_k2_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2828.4271247461897 ≠ 2995.986572265625",
+      "/values/energy_end_over_peak: 0.00039339371199116873 ≠ 0.00040103482415835645",
+      "/values/flat_control/energy_end_over_peak: 0.00039339371199116873 ≠ 0.00040103482415835645",
+      "/values/flat_control/max_wind: 1929.7939453125 ≠ 2995.986572265625",
+      "/values/flat_control/peak_energy: 2586678826416.116 ≠ 4164312192279.3506",
+      "/values/flat_control/state_hash: 'fc01df425d86e498' ≠ 'f1be141c8531c844'",
+      "/values/info9_original/flat_over_converted: 0.6822851925116051 ≠ 1.059241210796432",
+      "/values/info9_original/wind_over_limit: 0.4548567950077368 ≠ 0.7061608071976213",
+      "/values/limit: 4242.640687119285 ≠ 4493.9798583984375",
+      "/values/max_wind: 1929.7939453125 ≠ 2995.986572265625",
+      "/values/peak_energy: 2586678826416.116 ≠ 4164312192279.3506",
+      "/values/wind_over_limit: 0.4548567950077368 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 2393.795122441276 ≠ 3127.251355757571"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S45_k3_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2828.4271247461897 ≠ 2984.4892578125",
+      "/values/energy_end_over_peak: 3.778383902563589e-05 ≠ 2.718433138902987e-05",
+      "/values/flat_control/energy_end_over_peak: 3.778383902563589e-05 ≠ 2.718433138902987e-05",
+      "/values/flat_control/max_wind: 2013.7423095703125 ≠ 2984.4892578125",
+      "/values/flat_control/peak_energy: 3069400194433.3564 ≠ 4128311711805.6787",
+      "/values/flat_control/state_hash: '2bb1f70375b3de99' ≠ '1ed82f7a9e0198dd'",
+      "/values/info9_original/flat_over_converted: 0.711965421329714 ≠ 1.0551762962888127",
+      "/values/info9_original/wind_over_limit: 0.47464361421980933 ≠ 0.7034508641925418",
+      "/values/limit: 4242.640687119285 ≠ 4476.73388671875",
+      "/values/max_wind: 2013.7423095703125 ≠ 2984.4892578125",
+      "/values/peak_energy: 3069400194433.3564 ≠ 4128311711805.6787",
+      "/values/wind_over_limit: 0.47464361421980933 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 1967.023531408182 ≠ 2824.5850172595333"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S60_k1_60": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S60_k2_144": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 4216.508508232849 ≠ 4721.0009765625",
+      "/values/energy_end_over_peak: 0.0003385056461826449 ≠ 0.00039236837527335854",
+      "/values/flat_control/energy_end_over_peak: 0.0003385056461826449 ≠ 0.00039236837527335854",
+      "/values/flat_control/max_wind: 3600.44580078125 ≠ 4721.0009765625",
+      "/values/flat_control/peak_energy: 5464167559616.34 ≠ 8919770226238.459",
+      "/values/flat_control/state_hash: '7880d2f957becbfd' ≠ '637d7748909c216e'",
+      "/values/info9_original/flat_over_converted: 0.8538926919633343 ≠ 1.1196469703178864",
+      "/values/info9_original/wind_over_limit: 0.5692617946422228 ≠ 0.7464313135452576",
+      "/values/limit: 6324.7627623492735 ≠ 7081.50146484375",
+      "/values/max_wind: 3600.44580078125 ≠ 4721.0009765625",
+      "/values/peak_energy: 5464167559616.34 ≠ 8919770226238.459",
+      "/values/wind_over_limit: 0.5692617946422228 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 4703.5308500885885 ≠ 5409.015177387912"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 612,
+       "B4|core.Sim._apply_inputs": 612
+      }
+     }
+    },
+    "R5_G6_S60_k2_30": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 4216.508508232849 ≠ 5340.81591796875",
+      "/values/energy_end_over_peak: 0.00029507605958257685 ≠ 0.00022846067009818524",
+      "/values/flat_control/energy_end_over_peak: 0.00029507605958257685 ≠ 0.00022846067009818524",
+      "/values/flat_control/max_wind: 3202.19775390625 ≠ 5340.81591796875",
+      "/values/flat_control/peak_energy: 4787950186507.599 ≠ 5238354500132.174",
+      "/values/flat_control/state_hash: '92e2edc73f62bcba' ≠ 'e6397fc42f79414f'",
+      "/values/info9_original/flat_over_converted: 0.7594429722254493 ≠ 1.2666441695873873",
+      "/values/info9_original/wind_over_limit: 0.5062953148169662 ≠ 0.8444294463915915",
+      "/values/limit: 6324.7627623492735 ≠ 8011.223876953125",
+      "/values/max_wind: 3202.19775390625 ≠ 5340.81591796875",
+      "/values/peak_energy: 4787950186507.599 ≠ 5238354500132.174",
+      "/values/wind_over_limit: 0.5062953148169662 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 4512.10035991487 ≠ 5158.861773689159"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 128,
+       "B4|core.Sim._apply_inputs": 128
+      }
+     }
+    },
+    "R5_G6_S60_k2_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 4216.508508232849 ≠ 5523.2763671875",
+      "/values/energy_end_over_peak: 0.00031690204475278225 ≠ 0.00031539269001294425",
+      "/values/flat_control/energy_end_over_peak: 0.00031690204475278225 ≠ 0.00031539269001294425",
+      "/values/flat_control/max_wind: 3417.042724609375 ≠ 5523.2763671875",
+      "/values/flat_control/peak_energy: 5551052895402.475 ≠ 8682672929130.859",
+      "/values/flat_control/state_hash: 'a2d1c7b80106ed93' ≠ 'f4c1437c8163514d'",
+      "/values/info9_original/flat_over_converted: 0.8103962598290755 ≠ 1.3099170454424913",
+      "/values/info9_original/wind_over_limit: 0.5402641732193836 ≠ 0.8732780302949942",
+      "/values/limit: 6324.7627623492735 ≠ 8284.91455078125",
+      "/values/max_wind: 3417.042724609375 ≠ 5523.2763671875",
+      "/values/peak_energy: 5551052895402.475 ≠ 8682672929130.859",
+      "/values/wind_over_limit: 0.5402641732193836 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 4805.594114686667 ≠ 5925.080794223558"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G6_S60_k3_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 4216.508508232849 ≠ 5537.6728515625",
+      "/values/energy_end_over_peak: 5.41009770870258e-06 ≠ 3.953927706604404e-06",
+      "/values/flat_control/energy_end_over_peak: 5.41009770870258e-06 ≠ 3.953927706604404e-06",
+      "/values/flat_control/max_wind: 3608.782470703125 ≠ 5537.6728515625",
+      "/values/flat_control/peak_energy: 5368017508792.995 ≠ 7360912113989.318",
+      "/values/flat_control/state_hash: 'b9d278fa9b88c83d' ≠ '66753720e1ec3a8d'",
+      "/values/info9_original/flat_over_converted: 0.8558698419929376 ≠ 1.313331359524128",
+      "/values/info9_original/wind_over_limit: 0.5705798946619584 ≠ 0.8755542396827519",
+      "/values/limit: 6324.7627623492735 ≠ 8306.50927734375",
+      "/values/max_wind: 3608.782470703125 ≠ 5537.6728515625",
+      "/values/peak_energy: 5368017508792.995 ≠ 7360912113989.318",
+      "/values/wind_over_limit: 0.5705798946619584 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 2623.582532260589 ≠ 3282.9880041341694"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "R5_G8_all": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {}
+     }
+    },
+    "R5_G9_HILL_fixed": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 300
+      }
+     }
+    },
+    "R5_G9_HILL_follow": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 300
+      }
+     }
+    },
+    "R5_G9_MESA_fixed": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 300
+      }
+     }
+    },
+    "R5_G9_MESA_follow": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 0,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 300
+      }
+     }
+    },
+    "R5_WALK_CURB30_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 17.800769424764795 ≠ 18.191783303860557",
+      "/values/abs_left: 17.801746075522676 ≠ 18.19127614130058",
+      "/values/abs_right: 17.799792774006914 ≠ 18.192290466420534",
+      "/values/crossing_abs_mean: 22.25839465543615 ≠ 22.985346437738638",
+      "/values/max_wind: 98.45244598388672 ≠ 692.0897216796875",
+      "/values/side_bias: 5.486564847709712e-05 ≠ 2.7878661014460355e-05",
+      "/values/signed_sum: -5655.751305777285 ≠ -5767.54966837102",
+      "/values/state_hash: '1846ab561680e6aa' ≠ 'ef162b88ac414b58'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_CURB30_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.530209210911753 ≠ 16.587465356740363",
+      "/values/abs_left: 16.529712602981874 ≠ 16.587882691271705",
+      "/values/abs_right: 16.53070581884163 ≠ 16.587048022209014",
+      "/values/crossing_abs_mean: 19.851202672799683 ≠ 19.9273463613233",
+      "/values/max_wind: 96.28348541259766 ≠ 690.0009155273438",
+      "/values/side_bias: 3.0042446743465403e-05 ≠ 2.5159632431474443e-05",
+      "/values/signed_sum: -5248.693928690945 ≠ -5255.527005427764",
+      "/values/state_hash: 'a903703aa047116f' ≠ '35e0124fc31392f9'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_CURB45_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.07136394174697 ≠ 16.068211858581147",
+      "/values/abs_left: 16.162827221922907 ≠ 16.149110477826852",
+      "/values/abs_right: 15.979900661571032 ≠ 15.987313239335435",
+      "/values/crossing_abs_mean: 17.215025368329197 ≠ 17.221625753842677",
+      "/values/max_wind: 78.74327087402344 ≠ 640.4213256835938",
+      "/values/side_bias: 0.005691071430368934 ≠ 0.005034699564438773",
+      "/values/signed_sum: -6112.4632668610375 ≠ -6113.862708001519",
+      "/values/state_hash: 'a187a2edd28d39a3' ≠ '0b5c1a916818b92c'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_CURB45_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 13.392819690327036 ≠ 13.486622225717033",
+      "/values/abs_left: 13.392514784671116 ≠ 13.482365039852587",
+      "/values/abs_right: 13.393124595982956 ≠ 13.49087941158148",
+      "/values/crossing_abs_mean: 13.919119562626422 ≠ 14.013317009908157",
+      "/values/max_wind: 82.85879516601562 ≠ 684.1500244140625",
+      "/values/side_bias: 2.2766352640446136e-05 ≠ 0.0003156599030651737",
+      "/values/signed_sum: -5077.70533074454 ≠ -5114.455499926375",
+      "/values/state_hash: '6a62cd96f79efae2' ≠ 'a94ea2f89490599c'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_CURB60_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 19.55502327360636 ≠ 20.452830519013162",
+      "/values/abs_left: 19.588151549001193 ≠ 20.49293285445583",
+      "/values/abs_right: 19.521894998211526 ≠ 20.41272818357049",
+      "/values/crossing_abs_mean: 23.36699551479299 ≠ 25.09326361962265",
+      "/values/max_wind: 133.01123046875 ≠ 641.625732421875",
+      "/values/side_bias: 0.0016941056490353181 ≠ 0.001960723011193518",
+      "/values/signed_sum: -7406.814278103059 ≠ -7742.434626077129",
+      "/values/state_hash: '9b4d5357bc01495c' ≠ 'b0d7d3b357ca2c44'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_CURB60_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 13.120790401126044 ≠ 13.155084548012821",
+      "/values/abs_left: 13.122177299795274 ≠ 13.15466477501485",
+      "/values/abs_right: 13.119403502456814 ≠ 13.15550432101079",
+      "/values/crossing_abs_mean: 13.46957989883235 ≠ 13.514637634172695",
+      "/values/max_wind: 80.85395812988281 ≠ 680.43603515625",
+      "/values/side_bias: 0.0001057023721002953 ≠ 3.190956290987813e-05",
+      "/values/signed_sum: -4964.187662773409 ≠ -4974.696262789443",
+      "/values/state_hash: 'a66bcba9f63b96e8' ≠ 'aaeda80374073112'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S10_contour": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208596424235 ≠ 17.004113836165256",
+      "/values/abs_left: 16.870735311910135 ≠ 17.00211317558735",
+      "/values/abs_right: 16.87343661657457 ≠ 17.006114496743162",
+      "/values/crossing_abs_mean: 20.554371755337037 ≠ 20.770506128914985",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9419555664062",
+      "/values/side_bias: 8.005248047452955e-05 ≠ 0.00011765744437977244",
+      "/values/signed_sum: -5370.642251660678 ≠ -5413.2010708726375",
+      "/values/state_hash: 'ec53597506d19a75' ≠ '0c750a3bd3c9d82e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S10_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.872076472848494 ≠ 17.00410406765813",
+      "/values/abs_left: 16.873427604594426 ≠ 17.006103548216057",
+      "/values/abs_right: 16.870725341102567 ≠ 17.002104587100202",
+      "/values/crossing_abs_mean: 20.55437106969575 ≠ 20.770504208002667",
+      "/values/max_wind: 96.54444122314453 ≠ 731.9420776367188",
+      "/values/side_bias: 8.008094013227696e-05 ≠ 0.00011758811578496117",
+      "/values/signed_sum: -5370.635251143605 ≠ -5413.193979020281",
+      "/values/state_hash: '61e8c618d0c6acc9' ≠ 'c377ace3d9c7ce2c'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S10_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208588816721 ≠ 17.004114367953512",
+      "/values/abs_left: 16.873435535566074 ≠ 17.00611452498911",
+      "/values/abs_right: 16.87073624076834 ≠ 17.002114210917917",
+      "/values/crossing_abs_mean: 20.55437139437384 ≠ 20.770507056325762",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9362182617188",
+      "/values/side_bias: 7.999291894387984e-05 ≠ 0.00011762782773123549",
+      "/values/signed_sum: -5370.64229669073 ≠ -5413.201233107755",
+      "/values/state_hash: '8feab5219508fc88' ≠ 'bf030778a3bca3bc'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S20_contour": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208596424235 ≠ 17.004113836165256",
+      "/values/abs_left: 16.870735311910135 ≠ 17.00211317558735",
+      "/values/abs_right: 16.87343661657457 ≠ 17.006114496743162",
+      "/values/crossing_abs_mean: 20.554371755337037 ≠ 20.770506128914985",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9419555664062",
+      "/values/side_bias: 8.005248047452955e-05 ≠ 0.00011765744437977244",
+      "/values/signed_sum: -5370.642251660678 ≠ -5413.2010708726375",
+      "/values/state_hash: 'ec53597506d19a75' ≠ '0c750a3bd3c9d82e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S20_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.872076472848494 ≠ 17.00410406765813",
+      "/values/abs_left: 16.873427604594426 ≠ 17.006103548216057",
+      "/values/abs_right: 16.870725341102567 ≠ 17.002104587100202",
+      "/values/crossing_abs_mean: 20.55437106969575 ≠ 20.770504208002667",
+      "/values/max_wind: 96.54444122314453 ≠ 731.9420776367188",
+      "/values/side_bias: 8.008094013227696e-05 ≠ 0.00011758811578496117",
+      "/values/signed_sum: -5370.635251143605 ≠ -5413.193979020281",
+      "/values/state_hash: '61e8c618d0c6acc9' ≠ 'c377ace3d9c7ce2c'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S20_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208588816721 ≠ 17.004114367953512",
+      "/values/abs_left: 16.873435535566074 ≠ 17.00611452498911",
+      "/values/abs_right: 16.87073624076834 ≠ 17.002114210917917",
+      "/values/crossing_abs_mean: 20.55437139437384 ≠ 20.770507056325762",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9362182617188",
+      "/values/side_bias: 7.999291894387984e-05 ≠ 0.00011762782773123549",
+      "/values/signed_sum: -5370.64229669073 ≠ -5413.201233107755",
+      "/values/state_hash: '8feab5219508fc88' ≠ 'bf030778a3bca3bc'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S30Y_contour": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208596424235 ≠ 17.004113836165256",
+      "/values/abs_left: 16.870735311910135 ≠ 17.00211317558735",
+      "/values/abs_right: 16.87343661657457 ≠ 17.006114496743162",
+      "/values/crossing_abs_mean: 20.554371755337037 ≠ 20.770506128914985",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9419555664062",
+      "/values/side_bias: 8.005248047452955e-05 ≠ 0.00011765744437977244",
+      "/values/signed_sum: -5370.642251660678 ≠ -5413.2010708726375",
+      "/values/state_hash: 'ec53597506d19a75' ≠ '0c750a3bd3c9d82e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S30Y_ydown": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87207691660944 ≠ 17.004103776950917",
+      "/values/abs_left: 16.870726086505357 ≠ 17.00210340905961",
+      "/values/abs_right: 16.873427746713524 ≠ 17.006104144842222",
+      "/values/crossing_abs_mean: 20.55437141536915 ≠ 20.770503100297223",
+      "/values/max_wind: 96.54442596435547 ≠ 731.9428100585938",
+      "/values/side_bias: 8.006305985683677e-05 ≠ 0.00011764030127933849",
+      "/values/signed_sum: -5370.635323637522 ≠ -5413.193982266586",
+      "/values/state_hash: '236eff2f16bca67c' ≠ 'be0dc8aeb65f8131'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S30_contour": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208596424235 ≠ 17.004113836165256",
+      "/values/abs_left: 16.870735311910135 ≠ 17.00211317558735",
+      "/values/abs_right: 16.87343661657457 ≠ 17.006114496743162",
+      "/values/crossing_abs_mean: 20.554371755337037 ≠ 20.770506128914985",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9419555664062",
+      "/values/side_bias: 8.005248047452955e-05 ≠ 0.00011765744437977244",
+      "/values/signed_sum: -5370.642251660678 ≠ -5413.2010708726375",
+      "/values/state_hash: 'ec53597506d19a75' ≠ '0c750a3bd3c9d82e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35188,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S30_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.872076472848494 ≠ 17.00410406765813",
+      "/values/abs_left: 16.873427604594426 ≠ 17.006103548216057",
+      "/values/abs_right: 16.870725341102567 ≠ 17.002104587100202",
+      "/values/crossing_abs_mean: 20.55437106969575 ≠ 20.770504208002667",
+      "/values/max_wind: 96.54444122314453 ≠ 731.9420776367188",
+      "/values/side_bias: 8.008094013227696e-05 ≠ 0.00011758811578496117",
+      "/values/signed_sum: -5370.635251143605 ≠ -5413.193979020281",
+      "/values/state_hash: '61e8c618d0c6acc9' ≠ 'c377ace3d9c7ce2c'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S30_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208588816721 ≠ 17.004114367953512",
+      "/values/abs_left: 16.873435535566074 ≠ 17.00611452498911",
+      "/values/abs_right: 16.87073624076834 ≠ 17.002114210917917",
+      "/values/crossing_abs_mean: 20.55437139437384 ≠ 20.770507056325762",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9362182617188",
+      "/values/side_bias: 7.999291894387984e-05 ≠ 0.00011762782773123549",
+      "/values/signed_sum: -5370.64229669073 ≠ -5413.201233107755",
+      "/values/state_hash: '8feab5219508fc88' ≠ 'bf030778a3bca3bc'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S45_contour": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208596424235 ≠ 17.004113836165256",
+      "/values/abs_left: 16.870735311910135 ≠ 17.00211317558735",
+      "/values/abs_right: 16.87343661657457 ≠ 17.006114496743162",
+      "/values/crossing_abs_mean: 20.554371755337037 ≠ 20.770506128914985",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9419555664062",
+      "/values/side_bias: 8.005248047452955e-05 ≠ 0.00011765744437977244",
+      "/values/signed_sum: -5370.642251660678 ≠ -5413.2010708726375",
+      "/values/state_hash: 'ec53597506d19a75' ≠ '0c750a3bd3c9d82e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S45_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.872076472848494 ≠ 17.00410406765813",
+      "/values/abs_left: 16.873427604594426 ≠ 17.006103548216057",
+      "/values/abs_right: 16.870725341102567 ≠ 17.002104587100202",
+      "/values/crossing_abs_mean: 20.55437106969575 ≠ 20.770504208002667",
+      "/values/max_wind: 96.54444122314453 ≠ 731.9420776367188",
+      "/values/side_bias: 8.008094013227696e-05 ≠ 0.00011758811578496117",
+      "/values/signed_sum: -5370.635251143605 ≠ -5413.193979020281",
+      "/values/state_hash: '61e8c618d0c6acc9' ≠ 'c377ace3d9c7ce2c'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34424,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "R5_WALK_S45_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208588816721 ≠ 17.004114367953512",
+      "/values/abs_left: 16.873435535566074 ≠ 17.00611452498911",
+      "/values/abs_right: 16.87073624076834 ≠ 17.002114210917917",
+      "/values/crossing_abs_mean: 20.55437139437384 ≠ 20.770507056325762",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9362182617188",
+      "/values/side_bias: 7.999291894387984e-05 ≠ 0.00011762782773123549",
+      "/values/signed_sum: -5370.64229669073 ≠ -5413.201233107755",
+      "/values/state_hash: '8feab5219508fc88' ≠ 'bf030778a3bca3bc'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "REF_G14_F0_along_cliff": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.519006433812642 ≠ 16.690048492505095",
+      "/values/abs_left: 16.74202159135795 ≠ 16.961507158769248",
+      "/values/abs_right: 16.327850584488083 ≠ 16.45736963570725",
+      "/values/crossing_abs_mean: 20.286036310582066 ≠ 20.55983376894944",
+      "/values/max_wind: 98.02196502685547 ≠ 798.7675170898438",
+      "/values/run_max_wind: 559.4308471679688 ≠ 1545.9068603515625",
+      "/values/side_bias: 0.01252411877093299 ≠ 0.01508541194135296",
+      "/values/signed_sum: -5479.279039289542 ≠ -5532.36146397097",
+      "/values/state_hash: '573a10507568d960' ≠ 'ac3a0dd85903fcd6'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "REF_G14_F0_along_fold": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208596424235 ≠ 17.004113836165256",
+      "/values/abs_left: 16.870735311910135 ≠ 17.00211317558735",
+      "/values/abs_right: 16.87343661657457 ≠ 17.006114496743162",
+      "/values/crossing_abs_mean: 20.554371755337037 ≠ 20.770506128914985",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9419555664062",
+      "/values/run_max_wind: 553.997802734375 ≠ 1284.4036865234375",
+      "/values/side_bias: 8.005248047452955e-05 ≠ 0.00011765744437977244",
+      "/values/signed_sum: -5370.642251660678 ≠ -5413.2010708726375",
+      "/values/state_hash: 'ec53597506d19a75' ≠ '0c750a3bd3c9d82e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "REF_G14_F0_cross_x": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208588816721 ≠ 17.004114367953512",
+      "/values/abs_left: 16.873435535566074 ≠ 17.00611452498911",
+      "/values/abs_right: 16.87073624076834 ≠ 17.002114210917917",
+      "/values/crossing_abs_mean: 20.55437139437384 ≠ 20.770507056325762",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9362182617188",
+      "/values/run_max_wind: 553.997802734375 ≠ 1284.40185546875",
+      "/values/side_bias: 7.999291894387984e-05 ≠ 0.00011762782773123549",
+      "/values/signed_sum: -5370.64229669073 ≠ -5413.201233107755",
+      "/values/state_hash: '8feab5219508fc88' ≠ 'bf030778a3bca3bc'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "REF_G14_F0_diagonal": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 11.287938823242106 ≠ 11.286629829871533",
+      "/values/abs_left: 11.287938683707301 ≠ 11.286629943056726",
+      "/values/abs_right: 11.287938962776908 ≠ 11.286629716686344",
+      "/values/crossing_abs_mean: 12.20815542842901 ≠ 12.195255111835447",
+      "/values/max_wind: 104.67407989501953 ≠ 629.81103515625",
+      "/values/run_max_wind: 446.5120544433594 ≠ 671.2985229492188",
+      "/values/side_bias: 1.2361406759224558e-08 ≠ 1.0028254022994214e-08",
+      "/values/signed_sum: -3394.1412306020634 ≠ -3388.691795864448",
+      "/values/state_hash: '7983d9bc302d9a05' ≠ '55106a0bfdfd48de'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "REF_G6_F0_k1_60": {
+     "compared": true,
+     "equal": true,
+     "differing": [],
+     "hash_equal": true,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "REF_G6_F0_k2_144": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2060.298583984375 ≠ 2793.40673828125",
+      "/values/energy_end_over_peak: 0.0005423327841242997 ≠ 0.0005544062733640324",
+      "/values/flat_control/energy_end_over_peak: 0.0005423327841242997 ≠ 0.0005544062733640324",
+      "/values/flat_control/max_wind: 2060.298583984375 ≠ 2793.40673828125",
+      "/values/flat_control/peak_energy: 1784923344935.2483 ≠ 2530158170337.953",
+      "/values/flat_control/state_hash: '03ceeae72ecb74b4' ≠ '917939195b57fd2b'",
+      "/values/info9_original/flat_over_converted: 1.0301492919921875 ≠ 1.396703369140625",
+      "/values/info9_original/wind_over_limit: 0.6867661946614584 ≠ 0.9311355794270834",
+      "/values/limit: 3090.4478759765625 ≠ 4190.110107421875",
+      "/values/max_wind: 2060.298583984375 ≠ 2793.40673828125",
+      "/values/peak_energy: 1784923344935.2483 ≠ 2530158170337.953",
+      "/values/world_wind_max: 2056.7937601839194 ≠ 2590.6288434616413"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 612,
+       "B4|core.Sim._apply_inputs": 612
+      }
+     }
+    },
+    "REF_G6_F0_k2_30": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2000.0 ≠ 3153.139892578125",
+      "/values/energy_end_over_peak: 0.0004886421053775596 ≠ 0.00043194856932089536",
+      "/values/flat_control/energy_end_over_peak: 0.0004886421053775596 ≠ 0.00043194856932089536",
+      "/values/flat_control/max_wind: 1967.715087890625 ≠ 3153.139892578125",
+      "/values/flat_control/peak_energy: 1315083368168.324 ≠ 1516341180458.3127",
+      "/values/flat_control/state_hash: 'bb8a9b3f14623a56' ≠ '4416b6ee0685c487'",
+      "/values/info9_original/flat_over_converted: 0.9838575439453126 ≠ 1.5765699462890626",
+      "/values/info9_original/gate_passed: True ≠ False",
+      "/values/info9_original/wind_over_limit: 0.655905029296875 ≠ 1.051046630859375",
+      "/values/info9_original/wind_passed: True ≠ False",
+      "/values/limit: 3000.0 ≠ 4729.7098388671875",
+      "/values/max_wind: 1967.715087890625 ≠ 3153.139892578125",
+      "/values/peak_energy: 1315083368168.324 ≠ 1516341180458.3127",
+      "/values/wind_over_limit: 0.655905029296875 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 1906.3357529956709 ≠ 2966.756112592135"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 35464,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 128,
+       "B4|core.Sim._apply_inputs": 128
+      }
+     }
+    },
+    "REF_G6_F0_k2_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2000.0 ≠ 2793.40673828125",
+      "/values/energy_end_over_peak: 0.000524098995217062 ≠ 0.0005105719212756793",
+      "/values/flat_control/energy_end_over_peak: 0.000524098995217062 ≠ 0.0005105719212756793",
+      "/values/flat_control/max_wind: 1991.8291015625 ≠ 2793.40673828125",
+      "/values/flat_control/peak_energy: 1578174274260.0803 ≠ 1859610613743.7031",
+      "/values/flat_control/state_hash: 'bb2356e740f2b95e' ≠ '9b3a5dbe53e8ddb5'",
+      "/values/info9_original/flat_over_converted: 0.99591455078125 ≠ 1.396703369140625",
+      "/values/info9_original/wind_over_limit: 0.6639430338541666 ≠ 0.9311355794270834",
+      "/values/limit: 3000.0 ≠ 4190.110107421875",
+      "/values/max_wind: 1991.8291015625 ≠ 2793.40673828125",
+      "/values/peak_energy: 1578174274260.0803 ≠ 1859610613743.7031",
+      "/values/wind_over_limit: 0.6639430338541666 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 1985.9173647107325 ≠ 2610.2857804403598"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "REF_G6_F0_k3_60": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/M: 2000.0 ≠ 2793.40673828125",
+      "/values/energy_end_over_peak: 0.0005241109832792902 ≠ 0.0005105927461364347",
+      "/values/flat_control/energy_end_over_peak: 0.0005241109832792902 ≠ 0.0005105927461364347",
+      "/values/flat_control/max_wind: 1991.8291015625 ≠ 2793.40673828125",
+      "/values/flat_control/peak_energy: 1578174250559.7295 ≠ 1859610562546.606",
+      "/values/flat_control/state_hash: '139317b4f7f59697' ≠ '2152a0c5eaf487d2'",
+      "/values/info9_original/flat_over_converted: 0.99591455078125 ≠ 1.396703369140625",
+      "/values/info9_original/wind_over_limit: 0.6639430338541666 ≠ 0.9311355794270834",
+      "/values/limit: 3000.0 ≠ 4190.110107421875",
+      "/values/max_wind: 1991.8291015625 ≠ 2793.40673828125",
+      "/values/peak_energy: 1578174250559.7295 ≠ 1859610562546.606",
+      "/values/wind_over_limit: 0.6639430338541666 ≠ 0.6666666666666666",
+      "/values/world_wind_max: 1985.9174867664171 ≠ 2610.285536475669"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 255,
+       "B4|core.Sim._apply_inputs": 255
+      }
+     }
+    },
+    "REF_WALK_F0_contour": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208596424235 ≠ 17.004113836165256",
+      "/values/abs_left: 16.870735311910135 ≠ 17.00211317558735",
+      "/values/abs_right: 16.87343661657457 ≠ 17.006114496743162",
+      "/values/crossing_abs_mean: 20.554371755337037 ≠ 20.770506128914985",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9419555664062",
+      "/values/side_bias: 8.005248047452955e-05 ≠ 0.00011765744437977244",
+      "/values/signed_sum: -5370.642251660678 ≠ -5413.2010708726375",
+      "/values/state_hash: 'ec53597506d19a75' ≠ '0c750a3bd3c9d82e'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 21912,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "REF_WALK_F0_down": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.872076472848494 ≠ 17.00410406765813",
+      "/values/abs_left: 16.873427604594426 ≠ 17.006103548216057",
+      "/values/abs_right: 16.870725341102567 ≠ 17.002104587100202",
+      "/values/crossing_abs_mean: 20.55437106969575 ≠ 20.770504208002667",
+      "/values/max_wind: 96.54444122314453 ≠ 731.9420776367188",
+      "/values/side_bias: 8.008094013227696e-05 ≠ 0.00011758811578496117",
+      "/values/signed_sum: -5370.635251143605 ≠ -5413.193979020281",
+      "/values/state_hash: '61e8c618d0c6acc9' ≠ 'c377ace3d9c7ce2c'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 34260,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "REF_WALK_F0_up": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87208588816721 ≠ 17.004114367953512",
+      "/values/abs_left: 16.873435535566074 ≠ 17.00611452498911",
+      "/values/abs_right: 16.87073624076834 ≠ 17.002114210917917",
+      "/values/crossing_abs_mean: 20.55437139437384 ≠ 20.770507056325762",
+      "/values/max_wind: 96.54457092285156 ≠ 731.9362182617188",
+      "/values/side_bias: 7.999291894387984e-05 ≠ 0.00011762782773123549",
+      "/values/signed_sum: -5370.64229669073 ≠ -5413.201233107755",
+      "/values/state_hash: '8feab5219508fc88' ≠ 'bf030778a3bca3bc'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 20192,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    },
+    "REF_WALK_F0_ydown": {
+     "compared": true,
+     "equal": false,
+     "differing": [
+      "/values/S: 16.87207691660944 ≠ 17.004103776950917",
+      "/values/abs_left: 16.870726086505357 ≠ 17.00210340905961",
+      "/values/abs_right: 16.873427746713524 ≠ 17.006104144842222",
+      "/values/crossing_abs_mean: 20.55437141536915 ≠ 20.770503100297223",
+      "/values/max_wind: 96.54442596435547 ≠ 731.9428100585938",
+      "/values/side_bias: 8.006305985683677e-05 ≠ 0.00011764030127933849",
+      "/values/signed_sum: -5370.635323637522 ≠ -5413.193982266586",
+      "/values/state_hash: '236eff2f16bca67c' ≠ 'be0dc8aeb65f8131'"
+     ],
+     "hash_equal": false,
+     "hashes": 1,
+     "passed": null,
+     "calls": {
+      "formula": "B4",
+      "installed": true,
+      "pid": 13276,
+      "calls": {
+       "B4|TerrainSimR5._apply_inputs": 148
+      }
+     }
+    }
+   },
+   "groups": {
+    "다·라·정보": {
+     "pieces": 109,
+     "equal": 11,
+     "hash_equal": 39
+    },
+    "나": {
+     "pieces": 13,
+     "equal": 13,
+     "hash_equal": 13
+    },
+    "가": {
+     "pieces": 8,
+     "equal": 8,
+     "hash_equal": 8
+    }
+   },
+   "results": [
+    {
+     "group": "다",
+     "gate": "2A-G4",
+     "value": 0.0,
+     "threshold": 1e-06,
+     "passed": true,
+     "recorded_value": 0.0,
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "다",
+     "gate": "2A-G5",
+     "value": {
+      "up": 0.9657898211488661,
+      "down": 1.082903221896812
+     },
+     "threshold": 0.5,
+     "passed": true,
+     "recorded_value": {
+      "up": 0.9594058684886234,
+      "down": 1.1066340136741897
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": false
+    },
+    {
+     "group": "다",
+     "gate": "2A-G6",
+     "value": {
+      "S30_k1_60": 0.5217655436197917,
+      "S30_k2_60": 0.5400559930792416,
+      "S30_k3_60": 0.5570246078573152,
+      "S45_k1_60": 0.5590702718098959,
+      "S45_k2_60": 0.4548567950077368,
+      "S45_k3_60": 0.47464361421980933,
+      "S60_k1_60": 0.5814464518229167,
+      "S60_k2_60": 0.5402641732193836,
+      "S60_k3_60": 0.5705798946619584,
+      "S60_k2_30": 0.5062953148169662,
+      "S60_k2_144": 0.5692617946422228,
+      "ROUGH_k2_60": 0.5487861868079458
+     },
+     "threshold": {
+      "wind_over_limit": 1.0,
+      "energy": 0.01
+     },
+     "passed": true,
+     "recorded_value": {
+      "S30_k1_60": 0.5217655436197917,
+      "S30_k2_60": 0.6666666666666666,
+      "S30_k3_60": 0.6666666666666666,
+      "S45_k1_60": 0.5590702718098959,
+      "S45_k2_60": 0.6666666666666666,
+      "S45_k3_60": 0.6666666666666666,
+      "S60_k1_60": 0.5814464518229167,
+      "S60_k2_60": 0.6666666666666666,
+      "S60_k3_60": 0.6666666666666666,
+      "S60_k2_30": 0.6666666666666666,
+      "S60_k2_144": 0.6666666666666666,
+      "ROUGH_k2_60": 0.651401297202753
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": false
+    },
+    {
+     "group": "다",
+     "gate": "2A-G7",
+     "value": {
+      "S20": 2.790206677578652e-07,
+      "S30": 2.790206677578652e-07
+     },
+     "threshold": 0.15,
+     "passed": true,
+     "recorded_value": {
+      "S20": 3.028766532522033e-07,
+      "S30": 3.028766532522033e-07
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": false
+    },
+    {
+     "group": "다",
+     "gate": "2A-G10",
+     "value": 2.6716406864579767e-12,
+     "threshold": 0.5,
+     "passed": true,
+     "recorded_value": 2.6716406864579767e-12,
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "다",
+     "gate": "2A-G11",
+     "value": {
+      "HILL_hill": {
+       "finite": true,
+       "value_over_flat": 1.0649889307019984,
+       "run_max_wind_over_flat": 0.9915942723214276
+      },
+      "FOOT30_up": {
+       "finite": true,
+       "value_over_flat": 0.9527875568352223,
+       "run_max_wind_over_flat": 1.0945817312459374
+      },
+      "FOOT30_down": {
+       "finite": true,
+       "value_over_flat": 0.9527875757371302,
+       "run_max_wind_over_flat": 1.0945817416662158
+      },
+      "TOP30_up": {
+       "finite": true,
+       "value_over_flat": 1.0534362265386803,
+       "run_max_wind_over_flat": 1.0
+      },
+      "TOP30_down": {
+       "finite": true,
+       "value_over_flat": 1.0534362355769908,
+       "run_max_wind_over_flat": 1.0
+      }
+     },
+     "threshold": {
+      "value_over_flat": [
+       0.5,
+       2.0
+      ],
+      "run_max_wind_over_flat": 1.5
+     },
+     "passed": true,
+     "recorded_value": {
+      "HILL_hill": {
+       "finite": true,
+       "value_over_flat": 1.062418780931796,
+       "run_max_wind_over_flat": 0.9909004135933714
+      },
+      "FOOT30_up": {
+       "finite": true,
+       "value_over_flat": 0.954856825964964,
+       "run_max_wind_over_flat": 1.0114763415454742
+      },
+      "FOOT30_down": {
+       "finite": true,
+       "value_over_flat": 0.9548568504860518,
+       "run_max_wind_over_flat": 1.0114767883886535
+      },
+      "TOP30_up": {
+       "finite": true,
+       "value_over_flat": 1.0523468399692228,
+       "run_max_wind_over_flat": 0.9871569747439132
+      },
+      "TOP30_down": {
+       "finite": true,
+       "value_over_flat": 1.0523469392914873,
+       "run_max_wind_over_flat": 0.9871547255110937
+      }
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": false
+    },
+    {
+     "group": "다",
+     "gate": "2A-G14",
+     "value": {
+      "가_S30CURB100_along_cliff": "pass",
+      "나_S30DROP100_along_cliff": "pass",
+      "다_FOOT45_cross_x": "pass",
+      "라_TOP45_cross_x": "pass",
+      "마_FOOT30_diagonal": "pass",
+      "바_FOOT45_along_fold": "pass"
+     },
+     "threshold": {
+      "value_over_flat": [
+       0.5,
+       2.0
+      ],
+      "run_max_wind_over_M": 1.5,
+      "rule": "R5 의 실패가 없으면 통과(덧붙임 2 F절 2)"
+     },
+     "passed": true,
+     "recorded_value": {
+      "가_S30CURB100_along_cliff": "pass",
+      "나_S30DROP100_along_cliff": "pass",
+      "다_FOOT45_cross_x": "pass",
+      "라_TOP45_cross_x": "pass",
+      "마_FOOT30_diagonal": "pass",
+      "바_FOOT45_along_fold": "pass"
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "라",
+     "gate": "2A-G1",
+     "value": {
+      "F0": 0.0,
+      "F1": 0.0
+     },
+     "threshold": {
+      "F0": 1e-05,
+      "F1": 0.0001
+     },
+     "passed": true,
+     "recorded_value": {
+      "F0": 0.0,
+      "F1": 0.0
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "라",
+     "gate": "2A-G12",
+     "value": {
+      "walk_S20_up": 0.0,
+      "walk_S20_down": 0.0,
+      "walk_S30_up": 0.0,
+      "walk_S30_down": 0.0,
+      "walk_S30_contour": 0.0,
+      "walk_S30Y_contour": 0.0,
+      "walk_S30Y_ydown": 0.0,
+      "g6_S30_k2_60": 0.0,
+      "g6_S30_k3_60": 0.0,
+      "g6_S45_k2_60": 0.0,
+      "g6_S45_k3_60": 0.0,
+      "g6_S60_k2_60": 0.0,
+      "g6_S60_k3_60": 0.0,
+      "g6_S60_k2_30": 0.0,
+      "g6_S60_k2_144": 0.0
+     },
+     "threshold": 0.001,
+     "passed": true,
+     "recorded_value": {
+      "walk_S20_up": 0.0,
+      "walk_S20_down": 0.0,
+      "walk_S30_up": 0.0,
+      "walk_S30_down": 0.0,
+      "walk_S30_contour": 0.0,
+      "walk_S30Y_contour": 0.0,
+      "walk_S30Y_ydown": 0.0,
+      "g6_S30_k2_60": 0.0,
+      "g6_S30_k3_60": 0.0,
+      "g6_S45_k2_60": 0.0,
+      "g6_S45_k3_60": 0.0,
+      "g6_S60_k2_60": 0.0,
+      "g6_S60_k3_60": 0.0,
+      "g6_S60_k2_30": 0.0,
+      "g6_S60_k2_144": 0.0
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "라",
+     "gate": "2A-G13",
+     "value": {
+      "S30CURB100": 1.0,
+      "S30DROP100": 1.0
+     },
+     "threshold": {
+      "ratio": [
+       0.8,
+       1.25
+      ],
+      "zero": 1e-06
+     },
+     "passed": true,
+     "recorded_value": {
+      "S30CURB100": 1.0,
+      "S30DROP100": 1.0
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "가",
+     "gate": "2A-G9",
+     "value": {
+      "HILL": {
+       "ratio_1": 0.002363205277024509,
+       "ratio_2": 0.0037029713441274177,
+       "ratio_3": 1.3490285899776394e-05
+      },
+      "MESA": {
+       "ratio_1": 0.002505171076445747,
+       "ratio_2": 0.003755307192673886,
+       "ratio_3": 1.284562635150969e-05
+      }
+     },
+     "threshold": [
+      0.05,
+      0.05,
+      0.01
+     ],
+     "passed": true,
+     "recorded_value": {
+      "HILL": {
+       "ratio_1": 0.002363205277024509,
+       "ratio_2": 0.0037029713441274177,
+       "ratio_3": 1.3490285899776394e-05
+      },
+      "MESA": {
+       "ratio_1": 0.002505171076445747,
+       "ratio_2": 0.003755307192673886,
+       "ratio_3": 1.284562635150969e-05
+      }
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "나",
+     "gate": "2A-G2",
+     "value": 0.0,
+     "threshold": 0.0,
+     "passed": true,
+     "recorded_value": 0.0,
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "나",
+     "gate": "2A-G3",
+     "value": {
+      "smooth": 0.25570711922563305,
+      "cliff": 0.0
+     },
+     "threshold": 3.0,
+     "passed": true,
+     "recorded_value": {
+      "smooth": 0.25570711922563305,
+      "cliff": 0.0
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    },
+    {
+     "group": "나",
+     "gate": "2A-G8",
+     "value": {
+      "S10_r45": 1.0,
+      "S10_r60": 1.0,
+      "S20_r45": 1.0,
+      "S20_r60": 1.0,
+      "S30_r45": 1.0,
+      "S30_r60": 1.0,
+      "S45_r45": 1.0,
+      "S45_r60": 1.0,
+      "S60_r45": 1.0,
+      "S60_r60": 1.0
+     },
+     "threshold": [
+      0.95,
+      1.05
+     ],
+     "passed": true,
+     "recorded_value": {
+      "S10_r45": 1.0,
+      "S10_r60": 1.0,
+      "S20_r45": 1.0,
+      "S20_r60": 1.0,
+      "S30_r45": 1.0,
+      "S30_r60": 1.0,
+      "S45_r45": 1.0,
+      "S45_r60": 1.0,
+      "S60_r45": 1.0,
+      "S60_r60": 1.0
+     },
+     "recorded_passed": true,
+     "value_equal_to_record": true
+    }
+   ]
+  }
+ },
+ "tools": {
+  "fog3d_blend_patch.py": "edcb43dc6a8eec973f8684cdc67ab57561567234da33203d4c6facc66316a610",
+  "fog3d_blend_gates.py": "91ab8df3ceb6689381ba572910cd7c233c637a40828b6be89a702e79c75054e2",
+  "fog3d_blend_regress.py": "ac23e90b54a316e9d19411dfb0fc5dee55d16334bf37a0716c2e374ded39c2c0",
+  "fog3d_blend_probe.py": "ebe8b6e7604f14b93c9da2783694ba87df56d9af14df595e726ef0819e21b178"
+ },
+ "rule": "(가)·(나)·(라): 기록과 같음(json 에 저장된 자릿수 그대로, 해시 같음). (다): 문턱에 대한 값. 시간·코드 지문 칸은 견주지 않음"
+}

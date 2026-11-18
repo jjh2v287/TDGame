@@ -1,0 +1,146 @@
+{
+  "inputs": {
+    "hidden_a": {
+      "path": "Saved\\FluidFX\\lookdev\\20261113-211400\\00_hidden_a.png",
+      "sha256": "d532309f1ed0e96c95e1f3e99ec14e8fdabe4e449b0cc5db58f85294ab2d0d1c",
+      "height_width": [
+        720,
+        1280
+      ]
+    },
+    "hidden_b": {
+      "path": "Saved\\FluidFX\\lookdev\\20261113-211400\\01_hidden_b.png",
+      "sha256": "ea54267be7a628c5ecf6545103a8859444e7cf82a4cd76483e966e7b265bd12c",
+      "height_width": [
+        720,
+        1280
+      ]
+    },
+    "shown_a": {
+      "path": "Saved\\FluidFX\\lookdev\\20261113-211400\\02_shown_a.png",
+      "sha256": "11f3c37483c7c0bd7c407e6bf94ed3a6e761381333e69cd29e32ea10fe623119",
+      "height_width": [
+        720,
+        1280
+      ]
+    },
+    "shown_b": {
+      "path": "Saved\\FluidFX\\lookdev\\20261113-211400\\03_shown_b.png",
+      "sha256": "2bb31c60da170c688f180bebe65dc8cac5baf44f5cc5a634b11b6422408b285b",
+      "height_width": [
+        720,
+        1280
+      ]
+    },
+    "mode2_a": {
+      "path": "Saved\\FluidFX\\lookdev\\20261113-211400\\05_mode2_a.png",
+      "sha256": "a8bb691c5ffbfbe090aadf064d31759a4ae5e28b8a0dd8e8ced5d8ee144e6531",
+      "height_width": [
+        720,
+        1280
+      ]
+    },
+    "mode2_b": {
+      "path": "Saved\\FluidFX\\lookdev\\20261113-211400\\06_mode2_b.png",
+      "sha256": "f0d00f0e1879b8f9d86724e5f9846d1dd7944f670cad4bc40ac167e0627ef681",
+      "height_width": [
+        720,
+        1280
+      ]
+    },
+    "mode0_a": {
+      "path": "Saved\\FluidFX\\lookdev\\20261113-211400\\07_mode0_a.png",
+      "sha256": "33a1047bfc246a121ac12f2d6c3b8832785b0b3c54411b8e668feded409e0134",
+      "height_width": [
+        720,
+        1280
+      ]
+    },
+    "mode0_b": {
+      "path": "Saved\\FluidFX\\lookdev\\20261113-211400\\08_mode0_b.png",
+      "sha256": "b8693890e266b9c77b3ceda756f7d74c0c325220f1c16daf9f490f4568eacb89",
+      "height_width": [
+        720,
+        1280
+      ]
+    }
+  },
+  "definition": {
+    "luma": "Y = (0.2126 R + 0.7152 G + 0.0722 B) / 255, 저장된 8비트 값 그대로",
+    "zone_rows_fraction": [
+      0.4,
+      1.0
+    ],
+    "pawn_rows_fraction": [
+      0.3,
+      0.95
+    ],
+    "pawn_columns_fraction": [
+      0.25,
+      0.75
+    ],
+    "noise_ratio_minimum": 3.0,
+    "difference_minimum": 0.00392156862745098,
+    "difference_image_gain": 16.0
+  },
+  "zone_visible": {
+    "difference": 0.15263827880185632,
+    "noise": 0.00017008355743919346,
+    "ratio": 897.4311279702978,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "region_rows_cols": [
+      288,
+      720,
+      0,
+      1280
+    ],
+    "region_means": {
+      "hidden_a": 0.1499511864787582,
+      "hidden_b": 0.14990704042131903,
+      "shown_a": 0.30258946528061453,
+      "shown_b": 0.30241938172317534
+    }
+  },
+  "reaction_visible": {
+    "difference": 0.025068649085595772,
+    "noise": 0.02358448231418636,
+    "ratio": 1.0629298006900354,
+    "passes_noise_ratio": false,
+    "passes_minimum": true,
+    "passed": false,
+    "region_rows_cols": [
+      216,
+      684,
+      320,
+      960
+    ]
+  },
+  "log": {
+    "fog3d_warning_or_error_lines": 0,
+    "ensure_lines": 2,
+    "rdg_error_lines": 0,
+    "summary_line_count": 1,
+    "submitted": 1380,
+    "rejected": 0,
+    "examples": {
+      "fog3d_warning_or_error": [],
+      "ensure": [
+        "[2026.11.13-12.16.37:509][230]LogOutputDevice: Error: Ensure condition failed: TimelineTrait.GetState(Context, ChildState)  [File:D:\\build\\++UE5\\Sync\\Engine\\Plugins\\Experimental\\UAF\\UAFAnimGraph\\Source\\UAFAnimGraph\\Private\\Injection\\InjectionSiteTrait.cpp] [Line: 268] ",
+        "[2026.11.13-12.16.37:511][230]EnsureFailed: Error: Ensure condition failed: TimelineTrait.GetState(Context, ChildState)  [File:D:\\build\\++UE5\\Sync\\Engine\\Plugins\\Experimental\\UAF\\UAFAnimGraph\\Source\\UAFAnimGraph\\Private\\Injection\\InjectionSiteTrait.cpp] [Line: 268] "
+      ],
+      "rdg_error": []
+    },
+    "passed": false,
+    "log_path": "C:\\Project\\TDGame\\Saved\\Logs\\TDGame.log",
+    "start_line_number": 2732,
+    "line_count_checked": 279
+  },
+  "lookdev_key_errors": [],
+  "difference_images": {
+    "zone": "Saved\\FluidFX\\lookdev\\20261113-211400\\fog3d_diff_zone.png",
+    "reaction": "Saved\\FluidFX\\lookdev\\20261113-211400\\fog3d_diff_reaction.png"
+  },
+  "passed": false
+}

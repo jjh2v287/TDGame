@@ -1,0 +1,196 @@
+{
+  "name": "blade_a",
+  "group": "칼",
+  "description": "칼 깎기 60",
+  "camera": "back",
+  "light": "side",
+  "on_mode": 2,
+  "walk_shift_seconds": 0.0,
+  "changed_fields": {
+    "BladeErosionPerSec": {
+      "from": 30.0,
+      "to": 60.0
+    }
+  },
+  "console_extra": [],
+  "console_restore": [],
+  "level": "/Game/FluidFX/Maps/LV_TDFog3DStage",
+  "shots": [
+    {
+      "id": "S0.6",
+      "group": "S",
+      "time": 0.6,
+      "role": "moving"
+    },
+    {
+      "id": "S1.2",
+      "group": "S",
+      "time": 1.2,
+      "role": "moving"
+    },
+    {
+      "id": "S1.9",
+      "group": "S",
+      "time": 1.9,
+      "role": "moving"
+    },
+    {
+      "id": "S2.5",
+      "group": "S",
+      "time": 2.5,
+      "role": "stopped"
+    },
+    {
+      "id": "S3.5",
+      "group": "S",
+      "time": 3.5,
+      "role": "stopped"
+    },
+    {
+      "id": "S5.0",
+      "group": "S",
+      "time": 5.0,
+      "role": "stopped"
+    },
+    {
+      "id": "S7.0",
+      "group": "S",
+      "time": 7.0,
+      "role": "stopped"
+    },
+    {
+      "id": "S8.3",
+      "group": "S",
+      "time": 8.3,
+      "role": "reference"
+    },
+    {
+      "id": "S8.8",
+      "group": "S",
+      "time": 8.8,
+      "role": "reference"
+    },
+    {
+      "id": "W10.0",
+      "group": "W",
+      "time": 10.0,
+      "role": "moving"
+    },
+    {
+      "id": "W10.4",
+      "group": "W",
+      "time": 10.4,
+      "role": "moving"
+    },
+    {
+      "id": "W10.8",
+      "group": "W",
+      "time": 10.8,
+      "role": "moving"
+    },
+    {
+      "id": "W12.1",
+      "group": "W",
+      "time": 12.1,
+      "role": "stopped"
+    },
+    {
+      "id": "W13.1",
+      "group": "W",
+      "time": 13.1,
+      "role": "stopped"
+    },
+    {
+      "id": "W14.1",
+      "group": "W",
+      "time": 14.1,
+      "role": "stopped"
+    },
+    {
+      "id": "W15.6",
+      "group": "W",
+      "time": 15.6,
+      "role": "stopped"
+    },
+    {
+      "id": "W17.6",
+      "group": "W",
+      "time": 17.6,
+      "role": "stopped"
+    },
+    {
+      "id": "W19.4",
+      "group": "W",
+      "time": 19.4,
+      "role": "reference"
+    },
+    {
+      "id": "W19.9",
+      "group": "W",
+      "time": 19.9,
+      "role": "reference"
+    }
+  ],
+  "events": [
+    {
+      "kind": "swing",
+      "time": 0.0,
+      "console": [
+        "TDPlayMeleeAction"
+      ]
+    },
+    {
+      "kind": "swing_compute_off",
+      "time": 7.3,
+      "console": [
+        "TD.Fog3D.Mode 0"
+      ]
+    },
+    {
+      "kind": "compute_on",
+      "time": 8.9,
+      "console": [
+        "TD.Fog3D.Mode 2"
+      ]
+    },
+    {
+      "kind": "walk",
+      "time": 9.6,
+      "move": {
+        "distance_cm": 600,
+        "yaw": 0
+      }
+    },
+    {
+      "kind": "walk_compute_off",
+      "time": 18.4,
+      "console": [
+        "TD.Fog3D.Mode 0"
+      ]
+    }
+  ],
+  "valid_conditions": {
+    "swing_to_S2.5_seconds": [
+      2.15,
+      3.0
+    ],
+    "walk_end_before_seconds": 11.6
+  },
+  "sun_label": "TDGen_Fog3D_Sun",
+  "sun_rotation_degrees": [
+    -35.0,
+    100.0,
+    0.0
+  ],
+  "canonical_tuning_sha256": "8bacc1fe2a112d2b949f01fdcfac3a5cd19ad56a2ee2510d80139a6b2522036a",
+  "preregistration": "Docs/VolumeFog3D/stage1/prereg-1c.md",
+  "preregistration_sha256": "ad4d5061e30da55eb975bbd5a26c009804ff049b484d06bcb8dbcbc982f82f63",
+  "commands": {
+    "capture": "python Tools/FluidFX/pie_lookdev_fluid.py --variants Saved/FluidFX/fog3d_calib/blade_a/variants.json --level /Game/FluidFX/Maps/LV_TDFog3DStage --fresh-pie --stop-pie --output-dir Saved/FluidFX/fog3d_calib/blade_a/capture --run-id fog3d_calib_blade_a",
+    "snapshot_log": "python -B Tools/FluidFX/fog3d_calib_report.py --snapshot-log blade_a",
+    "report": "python -B Tools/FluidFX/fog3d_calib_report.py --runs blade_a"
+  },
+  "notes": [
+    "엔진 설정을 바꾸지 않는다."
+  ]
+}

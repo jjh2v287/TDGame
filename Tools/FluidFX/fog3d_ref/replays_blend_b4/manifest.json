@@ -1,0 +1,220 @@
+{
+ "files": [
+  {
+   "name": "s2a_slope_walk_up.json",
+   "scene": "s2a_slope_walk_up",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_slope_walk_up.ground.bin"
+  },
+  {
+   "name": "s2a_slope_walk_down.json",
+   "scene": "s2a_slope_walk_down",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_slope_walk_down.ground.bin"
+  },
+  {
+   "name": "s2a_slope_y_walk.json",
+   "scene": "s2a_slope_y_walk",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_slope_y_walk.ground.bin"
+  },
+  {
+   "name": "s2a_cliff_walk_blade.json",
+   "scene": "s2a_cliff_walk_blade",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_cliff_walk_blade.ground.bin"
+  },
+  {
+   "name": "s2a_curb30_cross.json",
+   "scene": "s2a_curb30_cross",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_curb30_cross.ground.bin"
+  },
+  {
+   "name": "s2a_hill_run_window.json",
+   "scene": "s2a_hill_run_window",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_hill_run_window.ground.bin"
+  },
+  {
+   "name": "s2a_still_rough.json",
+   "scene": "s2a_still_rough",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_still_rough.ground.bin"
+  },
+  {
+   "name": "s2a_slope_curb.json",
+   "scene": "s2a_slope_curb",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_slope_curb.ground.bin"
+  },
+  {
+   "name": "s2a_flat_offset.json",
+   "scene": "s2a_flat_offset",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_flat_offset.ground.bin"
+  },
+  {
+   "name": "s2a_box_on_slope.json",
+   "scene": "s2a_box_on_slope",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_box_on_slope.ground.bin"
+  },
+  {
+   "name": "s2a_cliff_at_edge.json",
+   "scene": "s2a_cliff_at_edge",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_cliff_at_edge.ground.bin"
+  },
+  {
+   "name": "s2a_frame_at_edge.json",
+   "scene": "s2a_frame_at_edge",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_frame_at_edge.ground.bin"
+  },
+  {
+   "name": "s2a_slope_curb60.json",
+   "scene": "s2a_slope_curb60",
+   "ground_off_twin": false
+  },
+  {
+   "name": "s2a_slope_curb60.ground.bin"
+  },
+  {
+   "name": "b4_walk_stand_h60_g100.json",
+   "scene": "b4_walk_stand_h60_g100",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_walk_stand_h60_g100.ground.bin"
+  },
+  {
+   "name": "b4_walk_stand_h60_g125.json",
+   "scene": "b4_walk_stand_h60_g125",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_walk_stand_h60_g125.ground.bin"
+  },
+  {
+   "name": "b4_walk_stand_h30_g100.json",
+   "scene": "b4_walk_stand_h30_g100",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_walk_stand_h30_g100.ground.bin"
+  },
+  {
+   "name": "b4_walk_stand_h30_g125.json",
+   "scene": "b4_walk_stand_h30_g125",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_walk_stand_h30_g125.ground.bin"
+  },
+  {
+   "name": "b4_walk_stand_h144_g100.json",
+   "scene": "b4_walk_stand_h144_g100",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_walk_stand_h144_g100.ground.bin"
+  },
+  {
+   "name": "b4_blade_h60_g100.json",
+   "scene": "b4_blade_h60_g100",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_blade_h60_g100.ground.bin"
+  },
+  {
+   "name": "b4_blade_h60_g125.json",
+   "scene": "b4_blade_h60_g125",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_blade_h60_g125.ground.bin"
+  },
+  {
+   "name": "b4_blade_h30_g100.json",
+   "scene": "b4_blade_h30_g100",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_blade_h30_g100.ground.bin"
+  },
+  {
+   "name": "b4_blade_h30_g125.json",
+   "scene": "b4_blade_h30_g125",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_blade_h30_g125.ground.bin"
+  },
+  {
+   "name": "b4_turn_stand_h60_g100.json",
+   "scene": "b4_turn_stand_h60_g100",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_turn_stand_h60_g100.ground.bin"
+  },
+  {
+   "name": "b4_turn_stand_h60_g125.json",
+   "scene": "b4_turn_stand_h60_g125",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_turn_stand_h60_g125.ground.bin"
+  },
+  {
+   "name": "b4_turn_stand_h30_g100.json",
+   "scene": "b4_turn_stand_h30_g100",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_turn_stand_h30_g100.ground.bin"
+  },
+  {
+   "name": "b4_turn_stand_h30_g125.json",
+   "scene": "b4_turn_stand_h30_g125",
+   "ground_off_twin": true
+  },
+  {
+   "name": "b4_turn_stand_h30_g125.ground.bin"
+  },
+  {
+   "name": "b4_slope_walk_up_h60_g125.json",
+   "scene": "b4_slope_walk_up_h60_g125",
+   "ground_off_twin": false
+  },
+  {
+   "name": "b4_slope_walk_up_h60_g125.ground.bin"
+  }
+ ]
+}

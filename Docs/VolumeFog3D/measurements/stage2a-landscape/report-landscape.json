@@ -1,0 +1,315 @@
+{
+ "level": "/Game/Level/LV_DarkFantasy_OpenWorld",
+ "L0": {
+  "fog3d_warning_error": 0,
+  "rdg_error": 0,
+  "ensure_events": 1,
+  "ensure_note": "UAF TimelineTrait.GetState(InjectionSiteTrait) 1건(같은 사건이 두 줄), 15:54:25 촬영 중 순간이동 직후. 알려진 L-editor-98 꼴, Fog3D 아님",
+  "summary_line": [
+   "[2026.11.15-15.57.37:029][995]LogTDFog3DZone: Display: Fog3D zone summary: submitted=34367 rejected=0 deferred=22"
+  ],
+  "git_content_same": true,
+  "external_actors_new": 0,
+  "dirty_packages_before": [],
+  "dirty_packages_after": []
+ },
+ "L1": {
+  "sites": {
+   "A_gentle": {
+    "pawn": [
+     -11800.0,
+     2200.0,
+     643.4384536743164
+    ],
+    "floor_z": 400.0,
+    "min_cell": [
+     -944,
+     -48
+    ],
+    "columns": 256,
+    "valid": 256,
+    "median_abs": 0.006916656494126983,
+    "p95_abs": 0.017190475463848998,
+    "max_abs": 0.0200736999511264,
+    "mean_signed": -0.006936185956003094,
+    "max_at": {
+     "x": -12335.9375,
+     "y": 492.1875,
+     "diff": -0.0200736999511264,
+     "dist_pawn": 1789.9308754984088,
+     "slope_deg": 1.8447731232575686,
+     "canon_z": 536.2,
+     "truth_z": 536.2200736999512,
+     "cx": -790,
+     "cy": 31
+    },
+    "slope_max": 2.828732747080502,
+    "n_slope_over_15": 0,
+    "truth_z_range": [
+     498.5225200653076,
+     542.9685115814209
+    ],
+    "retraced_non_landscape": 7
+   },
+   "B_slope": {
+    "pawn": [
+     -9800.0,
+     10200.0,
+     654.3747138977051
+    ],
+    "floor_z": -100.0,
+    "min_cell": [
+     -816,
+     464
+    ],
+    "columns": 256,
+    "valid": 256,
+    "median_abs": 0.005891799926743602,
+    "p95_abs": 0.015885086059597597,
+    "max_abs": 0.021544952392559935,
+    "mean_signed": -0.005016630291939106,
+    "max_at": {
+     "x": -9554.6875,
+     "y": 11617.1875,
+     "diff": -0.021544952392559935,
+     "dist_pawn": 1438.2623657777117,
+     "slope_deg": 13.784666481468893,
+     "canon_z": 348.73,
+     "truth_z": 348.7515449523926,
+     "cx": -612,
+     "cy": 743
+    },
+    "slope_max": 21.799349791075734,
+    "n_slope_over_15": 11,
+    "truth_z_range": [
+     12.023448944091797,
+     538.9022827148438
+    ],
+    "retraced_non_landscape": 22,
+    "slope_15_90": {
+     "n": 11,
+     "max_abs": 0.018578796386691465,
+     "median_abs": 0.01006744384767444
+    }
+   }
+  },
+  "site_distance_cm": 8246.211251235321,
+  "total_columns": 512,
+  "valid": 512,
+  "excluded": 0,
+  "median_abs": 0.006222991943388934,
+  "p95_abs": 0.016439514160197177,
+  "max_abs": 0.021544952392559935,
+  "max_at": {
+   "site": "B",
+   "x": -9554.6875,
+   "y": 11617.1875,
+   "diff": -0.021544952392559935,
+   "dist_pawn": 1438.2623657777117,
+   "slope_deg": 13.784666481468893
+  },
+  "log_resolution_cm": 0.01,
+  "truth": "PIE 수직 선 추적(복잡 충돌, 랜드스케이프 아닌 첫 닿음은 무시 후 재추적)"
+ },
+ "L2": {
+  "B_slope": {
+   "block_min_cell": [
+    -720,
+    760
+   ],
+   "window_rect_min_cell_before_read": {
+    "P0": [
+     -816,
+     464
+    ],
+    "P0_again": [
+     -816,
+     464
+    ],
+    "X1": [
+     -800,
+     464
+    ],
+    "X2": [
+     -784,
+     464
+    ],
+    "X1r": [
+     -800,
+     464
+    ],
+    "P0r": [
+     -816,
+     464
+    ],
+    "Y1": [
+     -816,
+     480
+    ],
+    "Y2": [
+     -816,
+     496
+    ],
+    "P0rr": [
+     -816,
+     464
+    ]
+   },
+   "max_range_cm": 0.0,
+   "wall_counts_inner14": {
+    "P0": 0,
+    "P0_again": 0,
+    "X1": 0,
+    "X2": 0,
+    "X1r": 0,
+    "P0r": 0,
+    "Y1": 0,
+    "Y2": 0,
+    "P0rr": 0
+   },
+   "wall_flags_changed": 0,
+   "max_neighbor_step_cm_first": 6.850000000000023,
+   "repeat_pair": {
+    "positions": [
+     "P0",
+     "P0_again"
+    ],
+    "max_abs_diff": 0.0,
+    "n": 256
+   },
+   "invalid_per_position": {
+    "P0": 0,
+    "P0_again": 0,
+    "X1": 0,
+    "X2": 0,
+    "X1r": 0,
+    "P0r": 0,
+    "Y1": 0,
+    "Y2": 0,
+    "P0rr": 0
+   }
+  },
+  "C_cliff_extra": {
+   "block_min_cell": [
+    4184,
+    3104
+   ],
+   "window_rect_min_cell_before_read": {
+    "P0": [
+     3936,
+     2896
+    ],
+    "P0_again": [
+     3936,
+     2896
+    ],
+    "X1": [
+     3952,
+     2896
+    ],
+    "X2": [
+     3968,
+     2896
+    ],
+    "X1r": [
+     3952,
+     2896
+    ],
+    "P0r": [
+     3936,
+     2896
+    ],
+    "Y1": [
+     3936,
+     2880
+    ],
+    "Y2": [
+     3936,
+     2864
+    ],
+    "P0rr": [
+     3936,
+     2896
+    ]
+   },
+   "max_range_cm": 0.0,
+   "wall_counts_inner14": {
+    "P0": 110,
+    "P0_again": 110,
+    "X1": 110,
+    "X2": 110,
+    "X1r": 110,
+    "P0r": 110,
+    "Y1": 110,
+    "Y2": 110,
+    "P0rr": 110
+   },
+   "wall_flags_changed": 0,
+   "max_neighbor_step_cm_first": 145.15999999999985,
+   "repeat_pair": {
+    "positions": [
+     "P0",
+     "P0_again"
+    ],
+    "max_abs_diff": 0.0,
+    "n": 256
+   },
+   "invalid_per_position": {
+    "P0": 0,
+    "P0_again": 0,
+    "X1": 0,
+    "X2": 0,
+    "X1r": 0,
+    "P0r": 0,
+    "Y1": 0,
+    "Y2": 0,
+    "P0rr": 0
+   }
+  },
+  "note": "B 묶음은 벽 0(이웃 차 최대 6.85cm) → (나) 해당 없음, 그래서 85도 절벽 C 에서 한 번 더 잼"
+ },
+ "L3": {
+  "walk_cm": 10669,
+  "window_recaptures": 47,
+  "conversions": 42,
+  "deferred_steps": 0,
+  "latency_frames": {
+   "2": 42
+  },
+  "recapture_interval_frames": {
+   "min": 1,
+   "median": 13,
+   "max": 26
+  },
+  "note": "촬영·프로파일 없는 걷기, 품질 2, 초속 600, 6구간(x±20m, y±15m, 대각±18m). 16칸 창 이동 47회 모두 보류 0"
+ },
+ "info": {
+  "landscape": {
+   "count": 3,
+   "enable_nanite": true,
+   "r.Nanite.ProjectEnabled": 0,
+   "r.Nanite": 1,
+   "landscape.RenderNanite": 1,
+   "quad_cm": 100,
+   "scale": [
+    100,
+    100,
+    100
+   ],
+   "collision_mip_level": 0,
+   "simple_collision_mip_level": 0,
+   "components_editor": {
+    "LandscapeComponent": 384,
+    "LandscapeHeightfieldCollisionComponent": 384,
+    "LandscapeNaniteComponent": 96
+   },
+   "streaming_proxies_editor": 96,
+   "proxies_loaded_in_PIE": 83,
+   "component_size_quads": "못 읽음(Python 에 안 드러남)"
+  },
+  "cost_info2": "못 잼",
+  "cost_info4": "못 잼",
+  "quality_used": 2,
+  "quality_cvar_before_after": 0
+ }
+}

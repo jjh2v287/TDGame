@@ -1,0 +1,69 @@
+#include "/Engine/Public/Platform.ush"
+#include "/TDFluidGpu/Private/TDFluidGpuFog3DDensityGround.ush"
+
+StructuredBuffer<float4> SampleInputs;
+StructuredBuffer<float4> ParameterSets;
+RWStructuredBuffer<float4> SampleOutputs;
+uint SampleCount;
+uint ParameterSetCount;
+
+[numthreads(64, 1, 1)]
+void Fog3DDensityProbeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint SampleIndex = DispatchThreadId.x;
+	if (SampleIndex >= SampleCount)
+	{
+		return;
+	}
+
+	float4 PositionAndSet = SampleInputs[SampleIndex * 2];
+	float4 State = SampleInputs[SampleIndex * 2 + 1];
+	uint SetIndex = min((uint)PositionAndSet.w, ParameterSetCount - 1);
+	uint SetBase = SetIndex * 7;
+	float4 Window = ParameterSets[SetBase + 0];
+	float4 Grid = ParameterSets[SetBase + 1];
+	float Active = ParameterSets[SetBase + 2].x;
+	float4 BaseShape = ParameterSets[SetBase + 3];
+	float4 Zone = ParameterSets[SetBase + 4];
+	float4 FineNoise = ParameterSets[SetBase + 5];
+	float4 StainNoise = ParameterSets[SetBase + 6];
+	float3 ZonePositionCm = PositionAndSet.xyz;
+
+	float3 Uvw = TDFog3DStateUvw(ZonePositionCm, Window, Grid);
+	float Weight = TDFog3DStateWeight(ZonePositionCm, Window, Grid, Active);
+	float Density = TDFog3DDensity(ZonePositionCm, State, Window, Grid, Active, BaseShape, Zone, FineNoise, StainNoise);
+	SampleOutputs[SampleIndex * 2] = float4(Uvw, Weight);
+	SampleOutputs[SampleIndex * 2 + 1] = float4(Density, 0.0f, 0.0f, 0.0f);
+}
+
+[numthreads(64, 1, 1)]
+void Fog3DGroundDensityProbeCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint SampleIndex = DispatchThreadId.x;
+	if (SampleIndex >= SampleCount)
+	{
+		return;
+	}
+
+	float4 PositionAndSet = SampleInputs[SampleIndex * 3];
+	float4 State = SampleInputs[SampleIndex * 3 + 1];
+	float GroundHeightCm = SampleInputs[SampleIndex * 3 + 2].x;
+	uint SetIndex = min((uint)PositionAndSet.w, ParameterSetCount - 1);
+	uint SetBase = SetIndex * 8;
+	float4 Window = ParameterSets[SetBase + 0];
+	float4 Grid = ParameterSets[SetBase + 1];
+	float Active = ParameterSets[SetBase + 2].x;
+	float4 BaseShape = ParameterSets[SetBase + 3];
+	float4 Zone = ParameterSets[SetBase + 4];
+	float4 FineNoise = ParameterSets[SetBase + 5];
+	float4 StainNoise = ParameterSets[SetBase + 6];
+	float4 Ground = ParameterSets[SetBase + 7];
+	float3 ZonePositionCm = PositionAndSet.xyz;
+
+	float2 GroundUv = TDFog3DGroundUv(ZonePositionCm.xy, Ground, Grid);
+	float3 Uvw = TDFog3DGroundStateUvw(ZonePositionCm, Window, Grid, GroundHeightCm);
+	float Weight = TDFog3DGroundStateWeight(ZonePositionCm, Window, Grid, Active, GroundHeightCm);
+	float Density = TDFog3DGroundDensity(ZonePositionCm, State, Window, Grid, Active, BaseShape, Zone, FineNoise, StainNoise, GroundHeightCm);
+	SampleOutputs[SampleIndex * 2] = float4(Uvw, Weight);
+	SampleOutputs[SampleIndex * 2 + 1] = float4(Density, GroundUv, 0.0f);
+}

@@ -1,0 +1,33 @@
+{
+  "files": {
+    "poc_top_swing.png": [
+      1600,
+      1646
+    ],
+    "poc_top_walk.png": [
+      1600,
+      1646
+    ],
+    "poc_back.png": [
+      1440,
+      836
+    ],
+    "poc_gridz.png": [
+      1440,
+      566
+    ],
+    "asym_crops.png": [
+      768,
+      961
+    ],
+    "cloud_trail_back.png": [
+      1280,
+      1286
+    ],
+    "cloud_trail_top.png": [
+      1600,
+      701
+    ]
+  },
+  "missing_runs": []
+}

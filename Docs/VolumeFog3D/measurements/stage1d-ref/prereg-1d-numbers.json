@@ -1,0 +1,967 @@
+{
+ "format": "fog3d-prereg-1d-numbers-1",
+ "status": "1d 기준 숫자(새 방식 N2 기준 모의). 잠긴 fog3d_compare.py·fog3d_compare_add1.py 에 --numbers 로 준다. code 키는 잠긴 도구가 적는 옛 지문이며 새 방식의 지문은 stage1d.code 다",
+ "code": {
+  "fog3d_core.py": "fa5564705c405769",
+  "fog3d_replay.py": "6edd3fe644f3aa9e",
+  "fog3d_compare.py": "69c021d077a315de",
+  "tuned_solvers.json": "6ab5094bd599daf9"
+ },
+ "a3": {
+  "k1_downstrike": {
+   "dump": "t0p5",
+   "include_band": false,
+   "sensitivity": {
+    "wind": 2.097196233272165e-06,
+    "disp": 2.030278098246404e-06,
+    "fill": 0.0
+   },
+   "x": 0.002,
+   "x_by_field": {
+    "wind": 0.002,
+    "disp": 0.002,
+    "fill": 0.002
+   },
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌. 민감도 = 모든 입력 위치를 0.0001cm 흔든 실행과의 장 차이",
+   "scene": "k1_downstrike",
+   "code": "c313442c6bb14040"
+  },
+  "k2_swing_low": {
+   "dump": "end",
+   "include_band": false,
+   "sensitivity": {
+    "wind": 1.2920405201055995e-06,
+    "disp": 1.3549361039942264e-06,
+    "fill": 2.3664955699394036e-06
+   },
+   "x": 0.002,
+   "x_by_field": {
+    "wind": 0.002,
+    "disp": 0.002,
+    "fill": 0.002
+   },
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌. 민감도 = 모든 입력 위치를 0.0001cm 흔든 실행과의 장 차이",
+   "scene": "k2_swing_low",
+   "code": "c313442c6bb14040"
+  },
+  "k3_box_high": {
+   "dump": "end",
+   "include_band": false,
+   "sensitivity": {
+    "wind": 2.655309429093077e-06,
+    "disp": 2.89494599952941e-06,
+    "fill": 0.0
+   },
+   "x": 0.002,
+   "x_by_field": {
+    "wind": 0.002,
+    "disp": 0.002,
+    "fill": 0.002
+   },
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌. 민감도 = 모든 입력 위치를 0.0001cm 흔든 실행과의 장 차이",
+   "scene": "k3_box_high",
+   "code": "c313442c6bb14040"
+  },
+  "k4_run": {
+   "dump": "end",
+   "include_band": false,
+   "sensitivity": {
+    "wind": 1.0046808493746316e-06,
+    "disp": 1.4495923039734856e-06,
+    "fill": 1.1952096016346166e-06
+   },
+   "x": 0.002,
+   "x_by_field": {
+    "wind": 0.002,
+    "disp": 0.002,
+    "fill": 0.002
+   },
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌. 민감도 = 모든 입력 위치를 0.0001cm 흔든 실행과의 장 차이",
+   "scene": "k4_run",
+   "code": "c313442c6bb14040"
+  },
+  "k5_swing_dt30": {
+   "dump": "end",
+   "include_band": false,
+   "sensitivity": {
+    "wind": 1.8155392002087199e-06,
+    "disp": 1.7907498320531574e-06,
+    "fill": 4.274203839507294e-06
+   },
+   "x": 0.002,
+   "x_by_field": {
+    "wind": 0.002,
+    "disp": 0.002,
+    "fill": 0.002
+   },
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌. 민감도 = 모든 입력 위치를 0.0001cm 흔든 실행과의 장 차이",
+   "scene": "k5_swing_dt30",
+   "code": "c313442c6bb14040"
+  },
+  "k6_swing_256": {
+   "dump": "end",
+   "include_band": false,
+   "sensitivity": {
+    "wind": 1.2953132896278743e-06,
+    "disp": 1.3592926895756695e-06,
+    "fill": 2.3750657415433103e-06
+   },
+   "x": 0.002,
+   "x_by_field": {
+    "wind": 0.002,
+    "disp": 0.002,
+    "fill": 0.002
+   },
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌. 민감도 = 모든 입력 위치를 0.0001cm 흔든 실행과의 장 차이",
+   "scene": "k6_swing_256",
+   "code": "c313442c6bb14040"
+  },
+  "k7_thin_swing": {
+   "dump": "end",
+   "include_band": false,
+   "sensitivity": {
+    "wind": 1.2330514763870028e-06,
+    "disp": 1.2336230274185172e-06,
+    "fill": 2.0942637277483314e-06
+   },
+   "x": 0.002,
+   "x_by_field": {
+    "wind": 0.002,
+    "disp": 0.002,
+    "fill": 0.002
+   },
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌. 민감도 = 모든 입력 위치를 0.0001cm 흔든 실행과의 장 차이",
+   "scene": "k7_thin_swing",
+   "code": "c313442c6bb14040"
+  },
+  "k8_seam_west": {
+   "dump": "end",
+   "include_band": true,
+   "sensitivity": {
+    "wind": 5.173132679015469e-06,
+    "disp": 5.0268947072958945e-06,
+    "fill": 0.0
+   },
+   "x": 0.002,
+   "x_by_field": {
+    "wind": 0.002,
+    "disp": 0.002,
+    "fill": 0.002
+   },
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 포함. 민감도 = 모든 입력 위치를 0.0001cm 흔든 실행과의 장 차이",
+   "scene": "k8_seam_west",
+   "code": "c313442c6bb14040"
+  }
+ },
+ "a5": {
+  "wind_max": {
+   "value": 0.032908931374549866,
+   "method": "10.5초 시점 u·v·w 절댓값 최댓값(상한 = 값 × 1.2 + 1e-4 cm/s)",
+   "scene": "k1_downstrike",
+   "code": "c313442c6bb14040",
+   "dump": "t10p5"
+  },
+  "disp_max": {
+   "value": 28.377857208251953,
+   "method": "10.5초 시점 dx·dy·dz 절댓값 최댓값(상한 = 값 × 1.2 + 1e-4 cm)",
+   "scene": "k1_downstrike",
+   "code": "c313442c6bb14040",
+   "dump": "t10p5"
+  },
+  "finite": true,
+  "factor": 1.2,
+  "wind_floor": 0.0001,
+  "disp_floor": 0.0001
+ },
+ "a8": {
+  "first_solve_t1": {
+   "value": 0.11116258943503732,
+   "method": "남은 몰림 비 R = rms(압력 뒤 몰림) ÷ rms(압력 앞 몰림), 유체 칸, 몰림 = (u[i]−u[i−1])/h + (v[j]−v[j−1])/h + (w[k]−w[k−1])/30",
+   "scene": "first_solve_t1",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "tolerance": 0.0022232517887007465,
+   "tolerance_rule": "± max(기준값의 2%, 0.002)"
+  },
+  "first_solve_t2": {
+   "value": 0.11942262385742648,
+   "method": "남은 몰림 비 R = rms(압력 뒤 몰림) ÷ rms(압력 앞 몰림), 유체 칸, 몰림 = (u[i]−u[i−1])/h + (v[j]−v[j−1])/h + (w[k]−w[k−1])/30",
+   "scene": "first_solve_t2",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "tolerance": 0.0023884524771485296,
+   "tolerance_rule": "± max(기준값의 2%, 0.002)"
+  },
+  "first_solve_t3": {
+   "value": 0.12345397399894249,
+   "method": "남은 몰림 비 R = rms(압력 뒤 몰림) ÷ rms(압력 앞 몰림), 유체 칸, 몰림 = (u[i]−u[i−1])/h + (v[j]−v[j−1])/h + (w[k]−w[k−1])/30",
+   "scene": "first_solve_t3",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "tolerance": 0.00246907947997885,
+   "tolerance_rule": "± max(기준값의 2%, 0.002)"
+  },
+  "first_solve_t4": {
+   "value": 0.10804956759773347,
+   "method": "남은 몰림 비 R = rms(압력 뒤 몰림) ÷ rms(압력 앞 몰림), 유체 칸, 몰림 = (u[i]−u[i−1])/h + (v[j]−v[j−1])/h + (w[k]−w[k−1])/30",
+   "scene": "first_solve_t4",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "tolerance": 0.0021609913519546695,
+   "tolerance_rule": "± max(기준값의 2%, 0.002)"
+  },
+  "first_solve_t5": {
+   "value": 0.17398274147621934,
+   "method": "남은 몰림 비 R = rms(압력 뒤 몰림) ÷ rms(압력 앞 몰림), 유체 칸, 몰림 = (u[i]−u[i−1])/h + (v[j]−v[j−1])/h + (w[k]−w[k−1])/30",
+   "scene": "first_solve_t5",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "tolerance": 0.0034796548295243867,
+   "tolerance_rule": "± max(기준값의 2%, 0.002)"
+  },
+  "first_solve_moving_256": {
+   "value": 0.018123971453166833,
+   "method": "256×256, 61개 계산 가운데 51~60번째 계산의 R 평균(상한 = 값 × 1.2 + 0.005)",
+   "scene": "first_solve_moving_256",
+   "code": "c313442c6bb14040",
+   "dump": "r51..r60",
+   "upper": 0.0267487657438002,
+   "R_each": [
+    0.018085739203424184,
+    0.01800193971866551,
+    0.017879102661457112,
+    0.01818008027191746,
+    0.018140981555805197,
+    0.018015427872061247,
+    0.018250875704159057,
+    0.018259611881212452,
+    0.01813115345998126,
+    0.01829480220298487
+   ]
+  }
+ },
+ "a9": {
+  "max_rel_dev": {
+   "value": 3.8074897235063077e-08,
+   "method": "높이 35개(30~200cm, 5cm 간격) 각각 P = Σ(u × 그 자리 부피), 출렁임 = max|P/평균 − 1|(상한 = max(값 × 3, 1e-5))",
+   "scene": "brush_height",
+   "code": "c313442c6bb14040"
+  },
+  "mean_over_formula": {
+   "value": 0.9734336335334853,
+   "method": "평균 P ÷ (V × 32π r³ / 105), V = 300 cm/s, r = 20 cm(허용 ± 0.01)",
+   "scene": "brush_height",
+   "code": "c313442c6bb14040"
+  }
+ },
+ "a10": {
+  "erase_dt_difference": {
+   "ga": {
+    "value": 3.505555399296867e-07,
+    "method": "머문 양 = −ln(1+g) ÷ 30, 전체 합 × 칸 부피. dt 1/30·1/144 의 합이 dt 1/60 의 합과 다른 비율의 최댓값(상한 0.0037)",
+    "scene": "erase_ga_dt60/30/144",
+    "code": "c313442c6bb14040",
+    "rel_vs_dt60": {
+     "30": 3.505555399296867e-07,
+     "144": -5.737469921385241e-08
+    },
+    "total_dt60": 7986.710962182918
+   },
+   "na": {
+    "value": 0.0015086582773493618,
+    "method": "머문 양 = −ln(1+g) ÷ 30, 전체 합 × 칸 부피. dt 1/30·1/144 의 합이 dt 1/60 의 합과 다른 비율의 최댓값(상한 0.0037)",
+    "scene": "erase_na_dt60/30/144",
+    "code": "c313442c6bb14040",
+    "rel_vs_dt60": {
+     "30": 0.0015086582773493618,
+     "144": -9.529793863838343e-05
+    },
+    "total_dt60": 1993.4497922551298
+   },
+   "da": {
+    "value": 2.0115323420277775e-06,
+    "method": "머문 양 = −ln(1+g) ÷ 30, 전체 합 × 칸 부피. dt 1/30·1/144 의 합이 dt 1/60 의 합과 다른 비율의 최댓값(상한 0.0037)",
+    "scene": "erase_da_dt60/30/144",
+    "code": "c313442c6bb14040",
+    "rel_vs_dt60": {
+     "30": 1.0054369230516613e-06,
+     "144": 2.0115323420277775e-06
+    },
+    "total_dt60": 4191.948325470976
+   }
+  },
+  "dwell": {
+   "dwell_still": {
+    "mean_over_formula": {
+     "value": 1.09457517936931,
+     "method": "높이 35개 각각 Q = Σ(−ln(1+g)÷30 × 칸 부피), 평균 Q ÷ (dt × 32π r³ / 105)(허용 ± 0.002)",
+     "scene": "dwell_still",
+     "code": "c313442c6bb14040"
+    },
+    "max_rel_dev": {
+     "value": 5.170629213679945e-08,
+     "method": "출렁임 = max|Q/평균 − 1|(상한 = max(값 × 3, 1e-5))",
+     "scene": "dwell_still",
+     "code": "c313442c6bb14040"
+    }
+   },
+   "dwell_moving": {
+    "mean_over_formula": {
+     "value": 1.0316834334495562,
+     "method": "높이 35개 각각 Q = Σ(−ln(1+g)÷30 × 칸 부피), 평균 Q ÷ (dt × 32π r³ / 105)(허용 ± 0.002)",
+     "scene": "dwell_moving",
+     "code": "c313442c6bb14040"
+    },
+    "max_rel_dev": {
+     "value": 2.892457362513312e-08,
+     "method": "출렁임 = max|Q/평균 − 1|(상한 = max(값 × 3, 1e-5))",
+     "scene": "dwell_moving",
+     "code": "c313442c6bb14040"
+    }
+   }
+  },
+  "dev_floor": 1e-05,
+  "dev_floor_note": "출렁임 상한 = max(값 × 3, 1e-5). 기준 출렁임이 32비트 저장 반올림 수준이라 바닥값을 둔다(감독 결정, 등록 전)"
+ },
+ "a11": {
+  "empty_hold_limit": 1e-06,
+  "empty_hold_max_one_plus_g": {
+   "value": 0.0,
+   "method": "0.5초 뒤 유체 칸 1+g 의 최댓값(판정 ≤ 1e-6, 설계 판정선과 같은 기준)",
+   "scene": "empty_hold",
+   "code": "c313442c6bb14040",
+   "dump": "end"
+  },
+  "vortex_end": {
+   "value": 0.025170177221298218,
+   "method": "끝(0.5초) 차이값 절댓값 최댓값(판정 = 값 ± 0.002 이고 ≤ 0.04)",
+   "scene": "vortex_return",
+   "code": "c313442c6bb14040",
+   "dump": "end"
+  },
+  "vortex_mid": {
+   "value": 0.4552863836288452,
+   "method": "가운데(0.25초) 차이값 절댓값 최댓값(정보. 0.05 보다 작으면 판정 불가)",
+   "scene": "vortex_return",
+   "code": "c313442c6bb14040",
+   "dump": "mid"
+  }
+ },
+ "a12": {
+  "k8_seam_west": {
+   "value": {
+    "ratio_after_inputs": 0.0,
+    "ratio_after_one_second": 1.3171053737319042e-06,
+    "band_absdiff_end": 2.2351741790771484e-07
+   },
+   "method": "ratio_* = 반대편 띠 면 바람 최댓값 ÷ 입력 근처 면 바람 최댓값(입력 직후는 3번째 계산 뒤, 1초 뒤는 첫 계산 뒤 값으로 나눔), band_absdiff_end = 끝 시점 띠의 차이값 절댓값 최댓값",
+   "scene": "k8_seam_west",
+   "code": "c313442c6bb14040",
+   "dump": "s1,s3,end"
+  },
+  "seam_corner": {
+   "value": {
+    "ratio_after_inputs": 0.0,
+    "ratio_after_one_second": 7.57872388758997e-07,
+    "band_absdiff_end": 3.427267074584961e-07
+   },
+   "method": "ratio_* = 반대편 띠 면 바람 최댓값 ÷ 입력 근처 면 바람 최댓값(입력 직후는 3번째 계산 뒤, 1초 뒤는 첫 계산 뒤 값으로 나눔), band_absdiff_end = 끝 시점 띠의 차이값 절댓값 최댓값",
+   "scene": "seam_corner",
+   "code": "c313442c6bb14040",
+   "dump": "s1,s3,end"
+  }
+ },
+ "a13": {
+  "leak_thick_n50": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 평균 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thick_n50",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 54,
+   "kind": "mean_fill_ratio",
+   "rule": "기준값 ± 0.02"
+  },
+  "leak_thick_n300": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 평균 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thick_n300",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 54,
+   "kind": "mean_fill_ratio",
+   "rule": "기준값 ± 0.02"
+  },
+  "leak_thick_n1000": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 평균 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thick_n1000",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 54,
+   "kind": "mean_fill_ratio",
+   "rule": "기준값 ± 0.02"
+  },
+  "leak_thick_d45": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 평균 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thick_d45",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 108,
+   "kind": "mean_fill_ratio",
+   "rule": "기준값 ± 0.02"
+  },
+  "leak_thick_top100": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 평균 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thick_top100",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 72,
+   "kind": "mean_fill_ratio",
+   "rule": "기준값 ± 0.02"
+  },
+  "leak_thin_x3_v1000_dt60": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_x3_v1000_dt60",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 6912,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_x3_v1000_dt30": {
+   "value": 0.9999994702995758,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_x3_v1000_dt30",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 6912,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_x3_v3000_dt60": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_x3_v3000_dt60",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 6912,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_x3_v3000_dt30": {
+   "value": 0.9999994702995758,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_x3_v3000_dt30",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 6912,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_a45_normal_v3000_dt60": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_a45_normal_v3000_dt60",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 9912,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_a45_normal_v3000_dt30": {
+   "value": 0.9999994702995758,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_a45_normal_v3000_dt30",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 9912,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_up_v1000_dt60": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_up_v1000_dt60",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 46080,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_up_v1000_dt30": {
+   "value": 0.9999994702995758,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_up_v1000_dt30",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 46080,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_corner_v300_dt60": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_corner_v300_dt60",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 96,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_thin_corner_v300_dt30": {
+   "value": 0.9999994702995758,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_thin_corner_v300_dt30",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 96,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_stacked45_l099_up_dt60": {
+   "value": 1.0000034192444183,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_stacked45_l099_up_dt60",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 36100,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_stacked45_l099_up_dt30": {
+   "value": 0.9999994702995758,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_stacked45_l099_up_dt30",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 36100,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_room_X8_s075_xp_dt20": {
+   "value": 0.9999991788762299,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_room_X8_s075_xp_dt20",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 73280,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_room_X8_s075_xp_dt30": {
+   "value": 0.9999994702995758,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_room_X8_s075_xp_dt30",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 73280,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_room_sXs_s075_yp_dt20": {
+   "value": 0.9999991788762299,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_room_sXs_s075_yp_dt20",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 73280,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  },
+  "leak_room_sXs_s075_yp_dt30": {
+   "value": 0.9999994702995758,
+   "method": "재는 칸 1+g 의 최댓값 ÷ (1 − exp(−0.3 dt))",
+   "scene": "leak_room_sXs_s075_yp_dt30",
+   "code": "c313442c6bb14040",
+   "dump": "end",
+   "cells": 73280,
+   "kind": "max_fill_ratio",
+   "rule": "≤ 1.15"
+  }
+ },
+ "a15": {
+  "k2_swing_low_mode1": {
+   "dump": "end",
+   "sensitivity": {
+    "wind": 0.0,
+    "disp": 0.0,
+    "fill": 4.861240302875226e-06
+   },
+   "x": 0.002,
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌",
+   "scene": "k2_swing_low_mode1",
+   "code": "c313442c6bb14040"
+  },
+  "k4_run_mode1": {
+   "dump": "end",
+   "sensitivity": {
+    "wind": 0.0,
+    "disp": 0.0,
+    "fill": 2.134618225347723e-06
+   },
+   "x": 0.002,
+   "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 유체 칸만, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로, 가장자리 띠 8칸 뺌",
+   "scene": "k4_run_mode1",
+   "code": "c313442c6bb14040"
+  }
+ },
+ "a4": {
+  "reference_hashes": {
+   "far_origin_0": "c32808361fb423ec",
+   "far_origin_p1e6": "c32808361fb423ec",
+   "far_origin_m1e6": "c32808361fb423ec",
+   "far_origin_p1e6_16": "c32808361fb423ec"
+  },
+  "all_equal": true,
+  "method": "정규 상태 해시(u v w dx dy dz g, 막힌 칸 0, −0 → +0, sha256 앞 16자)"
+ },
+ "add1_meta": {
+  "format": "fog3d-prereg-1b-add1-numbers-1",
+  "status": "초안 값: 1b 등록본으로 옮기기 전",
+  "code": {
+   "fog3d_core.py": "fa5564705c405769",
+   "fog3d_replay.py": "6edd3fe644f3aa9e",
+   "fog3d_compare.py": "69c021d077a315de",
+   "fog3d_replay_add1.py": "aaf10ad8bdde86d7",
+   "fog3d_compare_add1.py": "9c68f1f2e4150273",
+   "tuned_solvers.json": "6ab5094bd599daf9"
+  },
+  "code_short": "8a4ca80672b94786",
+  "replays": {
+   "add1_connect4_wall45": "1243bbbc0c6957b4",
+   "add1_first_solve_skew": "6466b15424ab3019",
+   "add1_obstacle_swap": "f43cceb3186240d0"
+  }
+ },
+ "add1_connect4_wall45": {
+  "dump": "end",
+  "value": NaN,
+  "sensitivity": NaN,
+  "tolerance": 0.002,
+  "cells": 0,
+  "rule": "|GPU − 기준값| ≤ 허용, 그리고 재는 칸이 GPU 덤프에서도 모두 유체",
+  "method": "재는 칸 = 기준 덤프 measure_mask(기준 모의의 마지막 계산에서 이어짐 넷째 단계가 무게 > 0 인 모서리를 이어 준 유체 칸). 값 = 그 칸들의 1+g 평균. 허용 = max(0.002, 민감도 × 3), 민감도 = 덮어쓴 바람을 계산당 1e-4cm 흔든 실행과의 차"
+ },
+ "add1_first_solve_skew": {
+  "dump": "end",
+  "value": 0.012055585050168363,
+  "sensitivity": 2.0415730635735263e-07,
+  "tolerance": 0.002,
+  "tolerance_rule": "± max(기준값의 2%, 0.002)",
+  "method": "남은 몰림 비 R = rms(압력 뒤 몰림) ÷ rms(압력 앞 몰림), 유체 칸(A8 과 같은 식). 민감도 = 입력 위치 1e-4cm 흔든 실행과의 차(정보)"
+ },
+ "add1_obstacle_swap": {
+  "include_band": false,
+  "dumps": {
+   "c00": {
+    "sensitivity": {
+     "wind": 3.7530565188350632e-06,
+     "disp": 2.5592838690092945e-06,
+     "fill": 3.526550364178411e-06
+    },
+    "x": 0.002,
+    "x_by_field": {
+     "wind": 0.002,
+     "disp": 0.002,
+     "fill": 0.002
+    }
+   },
+   "c18": {
+    "sensitivity": {
+     "wind": 1.7648081487294975e-06,
+     "disp": 1.9107625917222315e-06,
+     "fill": 2.339586675312101e-06
+    },
+    "x": 0.002,
+    "x_by_field": {
+     "wind": 0.002,
+     "disp": 0.002,
+     "fill": 0.002
+    }
+   }
+  },
+  "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 기준 덤프의 유체 칸만, 가장자리 띠 8칸 뺌, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로. X = max(0.002, 민감도 × 3), 민감도 = 모든 입력 위치를 1e-4cm 흔든 실행과의 장 차이 가운데 큰 것"
+ },
+ "proof": {
+  "add1_connect4_wall45": {
+   "step4_cells": 0,
+   "note": "새 방식에서는 이 장면의 마지막 계산에 이어짐 넷째 단계가 무게 > 0 으로 쓰인 칸이 0개다(measure_mask 빔). 덧붙임 판정 ADD-a 는 값이 정의되지 않는다",
+   "step4": {
+    "cells": 0,
+    "cells_any_weight": 0,
+    "weight_sum": 0.0,
+    "weight_max": 0.0,
+    "weight_mean": 0.0
+   }
+  },
+  "add1_first_solve_skew": {
+   "value": 0.012055585050168363,
+   "core_last_R": 0.012055585095112004,
+   "sensitivity": 2.0415730635735263e-07,
+   "tolerance": 0.002,
+   "variant_color1_first": 0.01999326872542441,
+   "diff": 0.007937683675256046,
+   "diff_over_tolerance": 3.9688418376280232
+  },
+  "add1_obstacle_swap": {
+   "changes": [
+    {
+     "variant": null,
+     "became_fluid": 16,
+     "became_solid": 24,
+     "nonzero_in_became_fluid_before": 0,
+     "closed_faces_nonzero_before": 100,
+     "step_index": 8
+    }
+   ],
+   "dumps": {
+    "c00": {
+     "sensitivity": {
+      "wind": 3.7530565188350632e-06,
+      "disp": 2.5592838690092945e-06,
+      "fill": 3.526550364178411e-06
+     },
+     "x": 0.002
+    },
+    "c18": {
+     "sensitivity": {
+      "wind": 1.7648081487294975e-06,
+      "disp": 1.9107625917222315e-06,
+      "fill": 2.339586675312101e-06
+     },
+     "x": 0.002
+    }
+   },
+   "variants": {
+    "no_rebake": {
+     "c00": {
+      "field_diff": {
+       "wind": 0.6136832503919372,
+       "disp": 0.14267945694495102,
+       "fill": 0.029184116861605214
+      },
+      "worst_over_x": 306.84162519596856
+     },
+     "c18": {
+      "field_diff": {
+       "wind": 0.39788464831137854,
+       "disp": 0.41223025398778634,
+       "fill": 0.3609724532977374
+      },
+      "worst_over_x": 206.11512699389317
+     }
+    },
+    "keep_drawn": {
+     "c00": {
+      "field_diff": {
+       "wind": 0.0,
+       "disp": 0.14830954082987585,
+       "fill": 0.20576475745635242
+      },
+      "worst_over_x": 102.8823787281762
+     },
+     "c18": {
+      "field_diff": {
+       "wind": 0.0,
+       "disp": 0.022135223643859416,
+       "fill": 0.09840652975810094
+      },
+      "worst_over_x": 49.203264879050465
+     }
+    },
+    "keep_closed_wind": {
+     "c00": {
+      "field_diff": {
+       "wind": 0.04458724674867066,
+       "disp": 0.039898976635393775,
+       "fill": 0.05830480914809892
+      },
+      "worst_over_x": 29.15240457404946
+     },
+     "c18": {
+      "field_diff": {
+       "wind": 0.005500216235094329,
+       "disp": 0.007942085048561741,
+       "fill": 0.040389280448078345
+      },
+      "worst_over_x": 20.194640224039173
+     }
+    }
+   }
+  },
+  "code": {
+   "fog3d_core.py": "fa5564705c405769",
+   "fog3d_replay.py": "6edd3fe644f3aa9e",
+   "fog3d_replay_add1.py": "aaf10ad8bdde86d7",
+   "fog3d_compare.py": "69c021d077a315de",
+   "fog3d_compare_add1.py": "9c68f1f2e4150273",
+   "tuned_solvers.json": "6ab5094bd599daf9",
+   "fog3d_core_v2.py": "3d034f9cafb7b5de",
+   "fog3d_replay_v2.py": "a7de750f3fe9efa8"
+  }
+ },
+ "stage1d": {
+  "code": {
+   "fog3d_core_v2.py": "3d034f9cafb7b5de3cda7a96fca59cb8f4467fb3abb39b0ecc5672bd2f311ed2",
+   "fog3d_replay_v2.py": "a7de750f3fe9efa8280244419e2b83fd976d1c4a959cfd20faa269205eb6ed7b",
+   "fog3d_compare_v2.py": "47afdb7b9ab31245572a7196b8e8ca35004799cb52d5dc709f0d1b324f6b99ae"
+  },
+  "ref_listing_sha256": {
+   "ref_v2": "55122e8577c32e6a62ffa86797b843c0dd82d42b72a71e3db6399bde588fc674",
+   "ref_v2_shake": "4ebed7eebc2c72c4e86b71ed0ac43a0040f640d0fbe79c3ce20b22f7c7b837aa",
+   "ref_add1_v2": "6afdb82cd4fd7d6a2e97d5ae91dfe355c46b486501b0b54f44187b59257e6bef",
+   "ref_add1_v2_shake": "55d0164109269d2e657d5ac5487fdb41813084a7f4891d68cd495c1885c74cbd",
+   "ref_v2_new": "076d18be3daef9ca28d83a52630e0c7adc7990b0637f13e4276aba39e11d15d1"
+  },
+  "replays_v2": {
+   "face_rule": "596fbef0973bff4dec7b8e77894415fe394629f517d9bb3d3a32d972a987c83f",
+   "top_wface": "fa3ab7d21b04e0108b526f97d8fab89f11fbd9c7b7d55179c7c43b134ba70013",
+   "walk_a11": "a68916f92cd7ca9bd224cfdfb270328e7dc935fb2c614be8fbeff28662c28073",
+   "walk_a22": "eed6fb1f7db67956a762ee19e10215cac683506521b1ede92cfddb7dcbe56f44",
+   "walk_mx": "9a007bfea6207ea6a4a54b9810d31de2cecde36ef2ad478b95fe911c75d97772",
+   "walk_my": "6944f39b41efaa6fa127a0b1de32d731b786087351769315e3f15ff7ce266209",
+   "walk_px": "f00ac90b91b8e388f8fe6ed0bb59572c28bcca7ce0e4b21d51acfe67749429ef",
+   "walk_py": "1a276db919f6fbb7f4a46aa87fc8b60ba1b73ddaa0bd73a7bdbadb03aa4e48a7",
+   "wall_self": "6192737a0cfbe1471cdec817da79dc593e60fc5ab2c1002a21af64402b40c674"
+  },
+  "field_rule": "E1·E2: 모든 덤프에서 바람·밀린 거리·채움 장 차이 각각 ≤ 0.002(가장자리 띠 포함, 기준 덤프의 유체 칸, 덤프에 있는 필드만), 유체 표시 같음",
+  "e3_reference": {
+   "walk_px": {
+    "abs_left": 14.19866501806492,
+    "abs_right": 14.197865873478122,
+    "side_bias": 2.814233153516314e-05,
+    "signed_bias": 2.814233153516314e-05,
+    "strength": 14.19826544577152
+   },
+   "walk_py": {
+    "abs_left": 14.197864912447871,
+    "abs_right": 14.198665815904212,
+    "side_bias": 2.8204271289418908e-05,
+    "signed_bias": -2.8204271289418908e-05,
+    "strength": 14.198265364176043
+   },
+   "walk_mx": {
+    "abs_left": 14.198656814693303,
+    "abs_right": 14.197857903283387,
+    "side_bias": 2.813413610263587e-05,
+    "signed_bias": 2.813413610263587e-05,
+    "strength": 14.198257358988345
+   },
+   "walk_my": {
+    "abs_left": 14.197857833829895,
+    "abs_right": 14.198657225619778,
+    "side_bias": 2.8151052627739852e-05,
+    "signed_bias": -2.8151052627739852e-05,
+    "strength": 14.198257529724836
+   },
+   "walk_a11": {
+    "abs_left": 13.250307746196274,
+    "abs_right": 11.949282134819732,
+    "side_bias": 0.05162884068826307,
+    "signed_bias": 0.05162884068826307,
+    "strength": 12.599794940508001
+   },
+   "walk_a22": {
+    "abs_left": 11.646586843046022,
+    "abs_right": 10.660439378919296,
+    "side_bias": 0.0442079304661275,
+    "signed_bias": 0.0442079304661275,
+    "strength": 11.155883657771426
+   }
+  },
+  "e3_rule": "네 방향 각각 좌우 치우침 ≤ 0.03, 세기(띠 절댓값 평균)가 네 방향 평균의 ±5% 안, 비스듬한 방향 치우침은 e3_reference ± 0.01",
+  "face_rule": {
+   "dumps": {
+    "s1": {
+     "faces": [
+      {
+       "comp": "u",
+       "i": 19,
+       "j": 40,
+       "k": 2,
+       "ref": -1137.12939453125,
+       "rule_off": -1148.0458984375
+      },
+      {
+       "comp": "u",
+       "i": 39,
+       "j": 40,
+       "k": 2,
+       "ref": -1137.12939453125,
+       "rule_off": -1148.0458984375
+      },
+      {
+       "comp": "u",
+       "i": 59,
+       "j": 40,
+       "k": 2,
+       "ref": -1137.12939453125,
+       "rule_off": -1148.0458984375
+      },
+      {
+       "comp": "u",
+       "i": 79,
+       "j": 40,
+       "k": 2,
+       "ref": -1137.12939453125,
+       "rule_off": -1148.0458984375
+      },
+      {
+       "comp": "u",
+       "i": 99,
+       "j": 40,
+       "k": 2,
+       "ref": -1137.12939453125,
+       "rule_off": -1148.0458984375
+      }
+     ],
+     "wind_scale": 1687.5,
+     "tolerance": 1.6875
+    },
+    "s2": {
+     "faces": [
+      {
+       "comp": "u",
+       "i": 19,
+       "j": 75,
+       "k": 3,
+       "ref": -1294.3787841796875,
+       "rule_off": -1309.9112548828125
+      },
+      {
+       "comp": "u",
+       "i": 44,
+       "j": 75,
+       "k": 3,
+       "ref": -1294.3787841796875,
+       "rule_off": -1309.9112548828125
+      },
+      {
+       "comp": "u",
+       "i": 69,
+       "j": 75,
+       "k": 3,
+       "ref": -1294.3787841796875,
+       "rule_off": -1309.9112548828125
+      },
+      {
+       "comp": "u",
+       "i": 94,
+       "j": 75,
+       "k": 3,
+       "ref": -1294.3787841796875,
+       "rule_off": -1309.9112548828125
+      }
+     ],
+     "wind_scale": 1750.0,
+     "tolerance": 1.75
+    }
+   },
+   "rule": "덤프마다 면 목록의 각 면에서 |GPU − 기준| ≤ 허용(= 1e-3 × 그 기준 덤프 바람 절댓값 최댓값). 목록 = 기준 모의에서 면 이어짐 규칙을 끄면 값이 바뀌는 면. 바람을 계산마다 덮어쓰므로 덤프끼리 섞이지 않는다"
+  }
+ }
+}

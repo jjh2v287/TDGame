@@ -1,0 +1,140 @@
+{
+  "run_id": null,
+  "started_at": "2026-11-13T21:17:46",
+  "variants_sha256": "80aeeeb0b70cd70c99423cac601285093fdb3c692bfd236374d0ff808ff72243",
+  "level": "/Game/FluidFX/Maps/LV_TDFog3DStage",
+  "stopped_leftover_pie": false,
+  "base": {
+    "arm": 400.0,
+    "view": [
+      -12.0,
+      0.0
+    ],
+    "console": [
+      {
+        "command": "TD.Fog3D.Mode 2",
+        "read_back": 2.0
+      }
+    ],
+    "game_time": 7.18624010309577
+  },
+  "variants": [
+    {
+      "name": "hidden_a",
+      "apply": {
+        "hide": {
+          "TDGen_Fog3D_Zone": true
+        },
+        "game_time": 8.302126005291939,
+        "shot_game_time": 10.412109702825546,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "hidden_b",
+      "apply": {
+        "game_time": 11.474697809666395,
+        "shot_game_time": 13.069300811737776,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "shown_a",
+      "apply": {
+        "hide": {
+          "TDGen_Fog3D_Zone": false
+        },
+        "game_time": 14.463311709463596,
+        "shot_game_time": 16.391542196273804,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "shown_b",
+      "apply": {
+        "game_time": 16.957165900617838,
+        "shot_game_time": 18.640154097229242,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "walk",
+      "apply": {
+        "move": {
+          "mode": "input",
+          "yaw": 0.0,
+          "distance_cm": 400.0,
+          "start": [
+            -1000.0,
+            0.0
+          ],
+          "goal": [
+            -600.0,
+            0.0
+          ],
+          "max_speed": 600.0,
+          "timeout_seconds": 4.333333333333333,
+          "wall_timeout_seconds": 64.33333333333333,
+          "start_game_time": 19.751915495842695,
+          "moved_cm": 403.2862307315286,
+          "elapsed_game_seconds": 0.8619018979370594,
+          "timed_out": false,
+          "done": true,
+          "status_path": "C:/Project/TDGame/Saved/FluidFX/lookdev/20261113-211746/04_move_walk.json"
+        },
+        "game_time": 19.751915495842695,
+        "shot_game_time": 21.09576889500022,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "mode2_a",
+      "apply": {
+        "game_time": 22.222903084009886,
+        "shot_game_time": 24.35358578339219,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "mode2_b",
+      "apply": {
+        "game_time": 25.45399259775877,
+        "shot_game_time": 27.079802196472883,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "mode0_a",
+      "apply": {
+        "console": [
+          {
+            "command": "TD.Fog3D.Mode 0",
+            "read_back": 0.0
+          }
+        ],
+        "game_time": 28.165942400693893,
+        "shot_game_time": 30.27174350246787,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "mode0_b",
+      "apply": {
+        "game_time": 31.35061439499259,
+        "shot_game_time": 32.96656949445605,
+        "ember_mid": {}
+      },
+      "saved": true
+    }
+  ],
+  "key_errors": []
+}

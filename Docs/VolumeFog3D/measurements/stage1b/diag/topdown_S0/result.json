@@ -1,0 +1,123 @@
+{
+  "run_id": null,
+  "started_at": "2026-11-13T21:56:21",
+  "variants_sha256": "7dd61e8be637d7cd4cebdac897759dc98e340a7084b16b244bcde333ac27e8ea",
+  "level": "/Game/FluidFX/Maps/LV_TDFog3DStage",
+  "stopped_leftover_pie": false,
+  "base": {
+    "arm": 900.0,
+    "view": [
+      -60.0,
+      0.0
+    ],
+    "console": [
+      {
+        "command": "TD.Fog3D.Mode 2",
+        "read_back": 2.0
+      }
+    ],
+    "game_time": 11.66453430056572,
+    "tuning_reload": {
+      "reset": "keep",
+      "tuning": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/tuning_S0.json",
+      "look": "",
+      "base": {
+        "error_count": 0,
+        "load_errors": [],
+        "table_generation": 17,
+        "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+        "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+        "is_using_override_paths": false,
+        "report": {
+          "table_generation": 17,
+          "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+          "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+          "reapplied_actor_count": 0,
+          "state_reset_actor_count": 0,
+          "changed_field_count": 0,
+          "live_material_count": 0,
+          "bake_only_changed_count": 0
+        }
+      },
+      "load": {
+        "error_count": 0,
+        "load_errors": [],
+        "table_generation": 18,
+        "tuning_source_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/tuning_S0.json",
+        "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+        "is_using_override_paths": true,
+        "report": {
+          "table_generation": 18,
+          "tuning_source_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/tuning_S0.json",
+          "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+          "reapplied_actor_count": 0,
+          "state_reset_actor_count": 0,
+          "changed_field_count": 0,
+          "live_material_count": 0,
+          "bake_only_changed_count": 0
+        }
+      },
+      "report": {
+        "table_generation": 18,
+        "tuning_source_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/tuning_S0.json",
+        "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+        "reapplied_actor_count": 0,
+        "state_reset_actor_count": 0,
+        "changed_field_count": 0,
+        "live_material_count": 0,
+        "bake_only_changed_count": 0
+      }
+    }
+  },
+  "variants": [
+    {
+      "name": "walk800",
+      "apply": {
+        "move": {
+          "mode": "input",
+          "yaw": 0.0,
+          "distance_cm": 800.0,
+          "start": [
+            -1000.0,
+            0.0
+          ],
+          "goal": [
+            -200.0,
+            0.0
+          ],
+          "max_speed": 600.0,
+          "timeout_seconds": 5.666666666666666,
+          "wall_timeout_seconds": 65.66666666666667,
+          "start_game_time": 12.784112300723791,
+          "moved_cm": 840.2068348614399,
+          "elapsed_game_seconds": 1.59221900254488,
+          "timed_out": false,
+          "done": true,
+          "status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/top_S0/00_move_walk.json"
+        },
+        "game_time": 12.784112300723791,
+        "shot_game_time": 14.10317200049758,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "top_after",
+      "apply": {
+        "game_time": 15.722422901540995,
+        "shot_game_time": 17.151117503643036,
+        "ember_mid": {}
+      },
+      "saved": true
+    }
+  ],
+  "canonical_reload": {
+    "error_count": 0,
+    "load_errors": [],
+    "table_generation": 19,
+    "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+    "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+    "is_using_override_paths": false
+  },
+  "key_errors": []
+}

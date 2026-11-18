@@ -908,6 +908,9 @@ struct TDGAME_API FTDFluidMassInputSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MassInput", meta = (ClampMin = "0", ClampMax = "256"))
 	int32 MaxCollectedObstacles = 32;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MassInput", meta = (ClampMin = "0.0", ClampMax = "100000.0"))
+	float ObstacleMinBlockHeightCm = 0.0f;
 };
 
 USTRUCT(BlueprintType)

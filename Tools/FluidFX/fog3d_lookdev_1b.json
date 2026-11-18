@@ -1,0 +1,14 @@
+{
+  "base": {"arm": 400, "view": [-12, 0], "console": ["TD.Fog3D.Mode 2"]},
+  "variants": [
+    {"name": "hidden_a", "apply": {"hide": {"TDGen_Fog3D_Zone": true}}, "settle": 1.0},
+    {"name": "hidden_b", "apply": {}, "settle": 0.5},
+    {"name": "shown_a", "apply": {"hide": {"TDGen_Fog3D_Zone": false}}, "settle": 1.0},
+    {"name": "shown_b", "apply": {}, "settle": 0.5},
+    {"name": "walk", "apply": {"move": {"distance_cm": 400, "yaw": 0}}, "settle": 0.2},
+    {"name": "mode2_a", "apply": {"console": ["TDPlayMeleeAction"]}, "settle": 2.4},
+    {"name": "mode2_b", "apply": {}, "settle": 0.5},
+    {"name": "mode0_a", "apply": {"console": ["TD.Fog3D.Mode 0"]}, "settle": 1.0},
+    {"name": "mode0_b", "apply": {}, "settle": 0.5}
+  ]
+}

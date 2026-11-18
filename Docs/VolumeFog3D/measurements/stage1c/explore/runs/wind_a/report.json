@@ -1,0 +1,144 @@
+{
+  "name": "wind_a",
+  "description": "몸·칼 바람 세기 2",
+  "group": "바람",
+  "camera": "back",
+  "light": "side",
+  "changed_fields": {
+    "BodyWindStrength": {
+      "from": 1.0,
+      "to": 2.0
+    },
+    "BladeWindStrength": {
+      "from": 1.0,
+      "to": 2.0
+    }
+  },
+  "console_extra": [],
+  "on_mode": 2,
+  "valid": true,
+  "invalid_reasons": [],
+  "validity": {
+    "swing_to_S2.5_seconds": 2.5000001303851604,
+    "walk_end_game_seconds": 10.766667228192091,
+    "walk_end_limit_seconds": 11.6,
+    "swing_gap_range_seconds": [
+      2.15,
+      3.0
+    ],
+    "walk_moved_cm": 607.0401137685756,
+    "walk_timed_out": false,
+    "shot_issue_late_max_seconds": 1.0378658785725747e-06,
+    "shot_capture_delay_max_seconds": 0.016667705401779642,
+    "event_late_max_seconds": 0.01666666753590107,
+    "events_done": 5,
+    "events_expected": 5
+  },
+  "notes": [],
+  "log": {
+    "source": "snapshot",
+    "fog3d_warning_or_error_lines": 0,
+    "submitted": 1073,
+    "rejected": 0,
+    "ensure_lines": 0,
+    "rdg_error_lines": 0,
+    "summary_line_count": 1,
+    "examples": {
+      "fog3d_warning_or_error": [],
+      "ensure": [],
+      "rdg_error": []
+    },
+    "usable": true
+  },
+  "usable": true,
+  "numbers": {
+    "image_size": [
+      1280,
+      720
+    ],
+    "regions": {
+      "RW_rows_cols": [
+        519,
+        706,
+        448,
+        832
+      ],
+      "RS_rows_cols": [
+        432,
+        684,
+        320,
+        960
+      ],
+      "RS_excluded_columns": [
+        538,
+        743
+      ],
+      "RS2_rows_cols": [
+        360,
+        548,
+        231,
+        692
+      ],
+      "RT_rows_cols": [
+        396,
+        684,
+        26,
+        384
+      ]
+    },
+    "Wk": {
+      "W12.1": 2.1899180035650625,
+      "W13.1": 2.031041338012478,
+      "W14.1": 1.5807964182263818,
+      "W15.6": 0.9063139176693403,
+      "W17.6": 0.6615893633021391
+    },
+    "Sk": {
+      "S2.5": 7.496410636745119,
+      "S3.5": 7.370604719941617,
+      "S5.0": 5.16505459405218,
+      "S7.0": 2.808211811713191
+    },
+    "Wk_moving_information_only": {
+      "W10.0": 1.3661170203877009,
+      "W10.4": 1.1760778158422462,
+      "W10.8": 1.6142227662655972
+    },
+    "Sk_moving_information_only": {
+      "S0.6": 1.3799843878854223,
+      "S1.2": 4.149271831782522,
+      "S1.9": 6.6373930560116765
+    },
+    "noise_walk_N_W": 0.22673321635472374,
+    "noise_swing_N_S": 0.29110400474365994,
+    "refill_ratio_swing": 0.3746075218916361,
+    "refill_ratio_walk": 0.30210691095516323,
+    "Tx": 1.7325858582989655,
+    "Sk2": {
+      "S2.5": 19.729415341302442,
+      "S3.5": 19.029638244796235,
+      "S5.0": 13.13929030553376,
+      "S7.0": 6.834410912909033
+    },
+    "Sk2_moving_information_only": {
+      "S0.6": 6.436063631328749,
+      "S1.2": 13.438624599621544,
+      "S1.9": 17.59757140120921
+    },
+    "noise_swing2_N_S2": 0.6106350509992153,
+    "Tx2": 0.3831507390006264,
+    "Wk_over_noise": 9.658567186463493,
+    "Sk_over_noise": 25.75165753334895,
+    "Wk_12.1_against_second_reference": 2.1941866922905526,
+    "Sk_2.5_against_second_reference": 7.536035984309434
+  },
+  "images": {
+    "strip": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/wind_a/report/strip.png",
+    "strip_size": [
+      2000,
+      224
+    ],
+    "swing_animation": "C:\\Project\\TDGame\\Saved\\FluidFX\\fog3d_calib\\wind_a\\report\\swing.webp",
+    "walk_animation": "C:\\Project\\TDGame\\Saved\\FluidFX\\fog3d_calib\\wind_a\\report\\walk.webp"
+  }
+}

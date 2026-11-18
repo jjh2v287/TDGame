@@ -1,0 +1,921 @@
+{
+  "started_at": "2026-11-14T01:14:27",
+  "finished_at": "2026-11-14T01:46:31",
+  "navigation_wait_seconds_used": 5.0,
+  "navigation_wait_seconds_original": 120.0,
+  "names": [
+    "body4",
+    "body12",
+    "body30",
+    "bodysize",
+    "stain1",
+    "stain2",
+    "stain3",
+    "stain4",
+    "fine_off",
+    "fine1",
+    "fine2",
+    "fine3",
+    "fine4",
+    "fine5",
+    "fine_stain",
+    "h60",
+    "h130",
+    "h170",
+    "dens04",
+    "dens16",
+    "refill015",
+    "refill06",
+    "disp_a",
+    "disp_b",
+    "wind_a",
+    "wind_b",
+    "blade_a",
+    "blade_b",
+    "mode1",
+    "eng_hist",
+    "eng_grid4",
+    "base_b"
+  ],
+  "runs": [
+    {
+      "name": "body4",
+      "started_at": "2026-11-14T01:14:27",
+      "finished_at": "2026-11-14T01:15:27",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:14:27",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.8,
+          "stdout": "Saved/FluidFX/fog3d_calib/body4/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.2,
+          "finished_at": "2026-11-14T01:15:27"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "body12",
+      "started_at": "2026-11-14T01:15:27",
+      "finished_at": "2026-11-14T01:16:27",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:15:27",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.5,
+          "stdout": "Saved/FluidFX/fog3d_calib/body12/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1072,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.9,
+          "finished_at": "2026-11-14T01:16:27"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "body30",
+      "started_at": "2026-11-14T01:16:27",
+      "finished_at": "2026-11-14T01:17:27",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:16:27",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.0,
+          "stdout": "Saved/FluidFX/fog3d_calib/body30/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.4,
+          "finished_at": "2026-11-14T01:17:27"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "bodysize",
+      "started_at": "2026-11-14T01:17:27",
+      "finished_at": "2026-11-14T01:18:28",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:17:27",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.0,
+          "stdout": "Saved/FluidFX/fog3d_calib/bodysize/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.3,
+          "finished_at": "2026-11-14T01:18:28"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "stain1",
+      "started_at": "2026-11-14T01:18:28",
+      "finished_at": "2026-11-14T01:19:28",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:18:28",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.6,
+          "stdout": "Saved/FluidFX/fog3d_calib/stain1/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.0,
+          "finished_at": "2026-11-14T01:19:28"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "stain2",
+      "started_at": "2026-11-14T01:19:28",
+      "finished_at": "2026-11-14T01:20:28",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:19:28",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.2,
+          "stdout": "Saved/FluidFX/fog3d_calib/stain2/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.4,
+          "finished_at": "2026-11-14T01:20:28"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "stain3",
+      "started_at": "2026-11-14T01:20:28",
+      "finished_at": "2026-11-14T01:21:28",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:20:28",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.6,
+          "stdout": "Saved/FluidFX/fog3d_calib/stain3/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.8,
+          "finished_at": "2026-11-14T01:21:28"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "stain4",
+      "started_at": "2026-11-14T01:21:28",
+      "finished_at": "2026-11-14T01:22:28",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:21:28",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.5,
+          "stdout": "Saved/FluidFX/fog3d_calib/stain4/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.0,
+          "finished_at": "2026-11-14T01:22:28"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "fine_off",
+      "started_at": "2026-11-14T01:22:28",
+      "finished_at": "2026-11-14T01:23:28",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:22:28",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.6,
+          "stdout": "Saved/FluidFX/fog3d_calib/fine_off/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.8,
+          "finished_at": "2026-11-14T01:23:28"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "fine1",
+      "started_at": "2026-11-14T01:23:28",
+      "finished_at": "2026-11-14T01:24:27",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:23:28",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.5,
+          "stdout": "Saved/FluidFX/fog3d_calib/fine1/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.1,
+          "finished_at": "2026-11-14T01:24:27"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "fine2",
+      "started_at": "2026-11-14T01:24:27",
+      "finished_at": "2026-11-14T01:25:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:24:27",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.1,
+          "stdout": "Saved/FluidFX/fog3d_calib/fine2/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1072,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.6,
+          "finished_at": "2026-11-14T01:25:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "fine3",
+      "started_at": "2026-11-14T01:25:26",
+      "finished_at": "2026-11-14T01:26:25",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:25:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.5,
+          "stdout": "Saved/FluidFX/fog3d_calib/fine3/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.1,
+          "finished_at": "2026-11-14T01:26:25"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "fine4",
+      "started_at": "2026-11-14T01:26:25",
+      "finished_at": "2026-11-14T01:27:25",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:26:25",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.5,
+          "stdout": "Saved/FluidFX/fog3d_calib/fine4/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.3,
+          "finished_at": "2026-11-14T01:27:25"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "fine5",
+      "started_at": "2026-11-14T01:27:25",
+      "finished_at": "2026-11-14T01:28:25",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:27:25",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.0,
+          "stdout": "Saved/FluidFX/fog3d_calib/fine5/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.3,
+          "finished_at": "2026-11-14T01:28:25"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "fine_stain",
+      "started_at": "2026-11-14T01:28:25",
+      "finished_at": "2026-11-14T01:29:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:28:25",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.3,
+          "stdout": "Saved/FluidFX/fog3d_calib/fine_stain/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.7,
+          "finished_at": "2026-11-14T01:29:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "h60",
+      "started_at": "2026-11-14T01:29:26",
+      "finished_at": "2026-11-14T01:30:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:29:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.7,
+          "stdout": "Saved/FluidFX/fog3d_calib/h60/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.0,
+          "finished_at": "2026-11-14T01:30:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "h130",
+      "started_at": "2026-11-14T01:30:26",
+      "finished_at": "2026-11-14T01:31:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:30:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.7,
+          "stdout": "Saved/FluidFX/fog3d_calib/h130/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.2,
+          "finished_at": "2026-11-14T01:31:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "h170",
+      "started_at": "2026-11-14T01:31:26",
+      "finished_at": "2026-11-14T01:32:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:31:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.6,
+          "stdout": "Saved/FluidFX/fog3d_calib/h170/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.0,
+          "finished_at": "2026-11-14T01:32:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "dens04",
+      "started_at": "2026-11-14T01:32:26",
+      "finished_at": "2026-11-14T01:33:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:32:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.5,
+          "stdout": "Saved/FluidFX/fog3d_calib/dens04/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.6,
+          "finished_at": "2026-11-14T01:33:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "dens16",
+      "started_at": "2026-11-14T01:33:26",
+      "finished_at": "2026-11-14T01:34:25",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:33:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.6,
+          "stdout": "Saved/FluidFX/fog3d_calib/dens16/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.8,
+          "finished_at": "2026-11-14T01:34:25"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "refill015",
+      "started_at": "2026-11-14T01:34:25",
+      "finished_at": "2026-11-14T01:35:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:34:25",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.1,
+          "stdout": "Saved/FluidFX/fog3d_calib/refill015/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.4,
+          "finished_at": "2026-11-14T01:35:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "refill06",
+      "started_at": "2026-11-14T01:35:26",
+      "finished_at": "2026-11-14T01:36:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:35:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.4,
+          "stdout": "Saved/FluidFX/fog3d_calib/refill06/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1072,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.8,
+          "finished_at": "2026-11-14T01:36:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "disp_a",
+      "started_at": "2026-11-14T01:36:26",
+      "finished_at": "2026-11-14T01:37:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:36:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.0,
+          "stdout": "Saved/FluidFX/fog3d_calib/disp_a/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.4,
+          "finished_at": "2026-11-14T01:37:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "disp_b",
+      "started_at": "2026-11-14T01:37:26",
+      "finished_at": "2026-11-14T01:38:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:37:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.6,
+          "stdout": "Saved/FluidFX/fog3d_calib/disp_b/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.8,
+          "finished_at": "2026-11-14T01:38:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "wind_a",
+      "started_at": "2026-11-14T01:38:26",
+      "finished_at": "2026-11-14T01:39:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:38:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.4,
+          "stdout": "Saved/FluidFX/fog3d_calib/wind_a/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.7,
+          "finished_at": "2026-11-14T01:39:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "wind_b",
+      "started_at": "2026-11-14T01:39:26",
+      "finished_at": "2026-11-14T01:40:25",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:39:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.5,
+          "stdout": "Saved/FluidFX/fog3d_calib/wind_b/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1074,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.9,
+          "finished_at": "2026-11-14T01:40:25"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "blade_a",
+      "started_at": "2026-11-14T01:40:25",
+      "finished_at": "2026-11-14T01:41:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:40:25",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.4,
+          "stdout": "Saved/FluidFX/fog3d_calib/blade_a/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.5,
+          "finished_at": "2026-11-14T01:41:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "blade_b",
+      "started_at": "2026-11-14T01:41:26",
+      "finished_at": "2026-11-14T01:42:26",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:41:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.6,
+          "stdout": "Saved/FluidFX/fog3d_calib/blade_b/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.8,
+          "finished_at": "2026-11-14T01:42:26"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "mode1",
+      "started_at": "2026-11-14T01:42:26",
+      "finished_at": "2026-11-14T01:43:25",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:42:26",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 56.0,
+          "stdout": "Saved/FluidFX/fog3d_calib/mode1/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1072,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 59.2,
+          "finished_at": "2026-11-14T01:43:25"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "eng_hist",
+      "started_at": "2026-11-14T01:43:25",
+      "finished_at": "2026-11-14T01:44:27",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:43:25",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.6,
+          "stdout": "Saved/FluidFX/fog3d_calib/eng_hist/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "engine_cvars": {
+            "values": {
+              "r.VolumetricFog.HistoryWeight": 0.8999999761581421,
+              "r.VolumetricFog.GridPixelSize": 8.0
+            },
+            "restored": true
+          },
+          "wall_seconds": 61.8,
+          "finished_at": "2026-11-14T01:44:27"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "eng_grid4",
+      "started_at": "2026-11-14T01:44:27",
+      "finished_at": "2026-11-14T01:45:30",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:44:27",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 59.0,
+          "stdout": "Saved/FluidFX/fog3d_calib/eng_grid4/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1072,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "engine_cvars": {
+            "values": {
+              "r.VolumetricFog.HistoryWeight": 0.8999999761581421,
+              "r.VolumetricFog.GridPixelSize": 8.0
+            },
+            "restored": true
+          },
+          "wall_seconds": 63.3,
+          "finished_at": "2026-11-14T01:45:30"
+        }
+      ],
+      "final_valid": true
+    },
+    {
+      "name": "base_b",
+      "started_at": "2026-11-14T01:45:30",
+      "finished_at": "2026-11-14T01:46:31",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:45:30",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 58.0,
+          "stdout": "Saved/FluidFX/fog3d_calib/base_b/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1073,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 61.1,
+          "finished_at": "2026-11-14T01:46:31"
+        }
+      ],
+      "final_valid": true
+    }
+  ],
+  "failed_names": []
+}

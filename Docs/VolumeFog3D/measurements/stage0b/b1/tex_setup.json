@@ -1,0 +1,28 @@
+{
+  "volume_render_target": {
+    "object_path": "/Engine/Transient.Fog3dDensityVolumeRT",
+    "class": "TextureRenderTargetVolume",
+    "size_x": 128,
+    "size_y": 128,
+    "size_z": 64,
+    "b_hdr": "읽기 실패: ed to find property 'b_hdr' for attribute 'b_hdr' on 'TextureRenderTargetVolume'",
+    "b_supports_uav": "읽기 실패: y 'b_supports_uav' for attribute 'b_supports_uav' on 'TextureRenderTargetVolume'",
+    "b_can_create_uav": "읽기 실패: _can_create_uav' for attribute 'b_can_create_uav' on 'TextureRenderTargetVolume'"
+  },
+  "volume_created_with": "unreal.RenderingLibrary.create_render_target_volume(world, 128, 128, 64, RTF_RGBA16F, ClearColor(1,1,1,1), False, True) 후 rename(Fog3dDensityVolumeRT, 임시 패키지)",
+  "volume_fill": "생성 때 ClearColor (1,1,1,1) 로 지움(UpdateResourceImmediate(true)). 알파 1 상수",
+  "volume_renamed": true,
+  "material": "/Game/Repro/Fog3D/M_Fog3D_TexProbe",
+  "front_path": "substrate",
+  "compile_errors": [],
+  "box_label": "Fog3dTexBox",
+  "mid_read_back": {
+    "ExtinctionPerM": 0.25,
+    "GroundZ": 0.0,
+    "CenterX": 9000.0,
+    "CenterY": 53650.0,
+    "DensityVolume": "/Engine/Transient.Fog3dDensityVolumeRT"
+  },
+  "hlsl": "\nfloat3 boxMin = float3(CenterX - 300.0, CenterY - 300.0, GroundZ);\nfloat3 uvw = (WorldPos - boxMin) / float3(600.0, 600.0, 300.0);\nfloat h = WorldPos.z - GroundZ;\nfloat inFog = (h >= 0.0 && h <= 240.0) ? 1.0 : 0.0;\nfloat density = Texture3DSampleLevel(DensityVolume, DensityVolumeSampler, saturate(uvw), 0).a;\nfloat keep = inFog * saturate(density);\nreturn float4(ExtinctionPerM * keep, ExtinctionPerM * keep, ExtinctionPerM * keep, keep);\n",
+  "shader_wait_seconds": 25.0
+}

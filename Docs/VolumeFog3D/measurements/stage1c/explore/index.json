@@ -1,0 +1,206 @@
+{
+  "matrix": "explore",
+  "camera": "back",
+  "light": "side",
+  "walk_shift_seconds": 0.0,
+  "runs": [
+    {
+      "name": "base_a",
+      "group": "기본값",
+      "description": "기본값 처음",
+      "status": "written"
+    },
+    {
+      "name": "body4",
+      "group": "몸 깎기",
+      "description": "BodyErosionPerSec 4",
+      "status": "written"
+    },
+    {
+      "name": "body12",
+      "group": "몸 깎기",
+      "description": "BodyErosionPerSec 12",
+      "status": "written"
+    },
+    {
+      "name": "body30",
+      "group": "몸 깎기",
+      "description": "BodyErosionPerSec 30",
+      "status": "written"
+    },
+    {
+      "name": "bodysize",
+      "group": "몸 크기",
+      "description": "발·손 반지름 35, 골반 45, 몸 깎기 12",
+      "status": "written"
+    },
+    {
+      "name": "stain1",
+      "group": "얼룩",
+      "description": "얼룩 켬 0.3 / 200",
+      "status": "written"
+    },
+    {
+      "name": "stain2",
+      "group": "얼룩",
+      "description": "얼룩 켬 0.6 / 300",
+      "status": "written"
+    },
+    {
+      "name": "stain3",
+      "group": "얼룩",
+      "description": "얼룩 켬 0.6 / 500",
+      "status": "written"
+    },
+    {
+      "name": "stain4",
+      "group": "얼룩",
+      "description": "얼룩 켬 0.9 / 400",
+      "status": "written"
+    },
+    {
+      "name": "fine_off",
+      "group": "잔무늬",
+      "description": "잔무늬 끔",
+      "status": "written"
+    },
+    {
+      "name": "fine1",
+      "group": "잔무늬",
+      "description": "잔무늬 0.5 / 100",
+      "status": "written"
+    },
+    {
+      "name": "fine2",
+      "group": "잔무늬",
+      "description": "잔무늬 0.5 / 150",
+      "status": "written"
+    },
+    {
+      "name": "fine3",
+      "group": "잔무늬",
+      "description": "잔무늬 0.8 / 150",
+      "status": "written"
+    },
+    {
+      "name": "fine4",
+      "group": "잔무늬",
+      "description": "잔무늬 0.8 / 300 (덧붙임 2절)",
+      "status": "written"
+    },
+    {
+      "name": "fine5",
+      "group": "잔무늬",
+      "description": "잔무늬 0.8 / 500 (덧붙임 2절)",
+      "status": "written"
+    },
+    {
+      "name": "fine_stain",
+      "group": "잔무늬",
+      "description": "잔무늬 0.8 / 300 + 얼룩 켬 0.6 / 500 (덧붙임 2절)",
+      "status": "written"
+    },
+    {
+      "name": "h60",
+      "group": "안개 높이",
+      "description": "두께 60, 윗면 흐림 30",
+      "status": "written"
+    },
+    {
+      "name": "h130",
+      "group": "안개 높이",
+      "description": "두께 130, 윗면 흐림 65",
+      "status": "written"
+    },
+    {
+      "name": "h170",
+      "group": "안개 높이",
+      "description": "두께 170, 윗면 흐림 85",
+      "status": "written"
+    },
+    {
+      "name": "dens04",
+      "group": "안개 짙기",
+      "description": "BaseDensity 0.4",
+      "status": "written"
+    },
+    {
+      "name": "dens16",
+      "group": "안개 짙기",
+      "description": "BaseDensity 1.6",
+      "status": "written"
+    },
+    {
+      "name": "refill015",
+      "group": "다시 차오름",
+      "description": "FillRefillPerSec 0.15",
+      "status": "written"
+    },
+    {
+      "name": "refill06",
+      "group": "다시 차오름",
+      "description": "FillRefillPerSec 0.6",
+      "status": "written"
+    },
+    {
+      "name": "disp_a",
+      "group": "밀린 것 되돌림",
+      "description": "가로 0.03 / 세로 0.1",
+      "status": "written"
+    },
+    {
+      "name": "disp_b",
+      "group": "밀린 것 되돌림",
+      "description": "가로 0.3 / 세로 0.9",
+      "status": "written"
+    },
+    {
+      "name": "wind_a",
+      "group": "바람",
+      "description": "몸·칼 바람 세기 2",
+      "status": "written"
+    },
+    {
+      "name": "wind_b",
+      "group": "바람",
+      "description": "WindRefillPerSec 0.3",
+      "status": "written"
+    },
+    {
+      "name": "blade_a",
+      "group": "칼",
+      "description": "칼 깎기 60",
+      "status": "written"
+    },
+    {
+      "name": "blade_b",
+      "group": "칼",
+      "description": "칼 반지름 30",
+      "status": "written"
+    },
+    {
+      "name": "mode1",
+      "group": "바람 없는 판",
+      "description": "콘솔 TD.Fog3D.Mode 1",
+      "status": "written"
+    },
+    {
+      "name": "eng_hist",
+      "group": "엔진 안개",
+      "description": "r.VolumetricFog.HistoryWeight 0.7",
+      "status": "written"
+    },
+    {
+      "name": "eng_grid4",
+      "group": "엔진 안개",
+      "description": "r.VolumetricFog.GridPixelSize 4 (덧붙임 2절, 끝나면 8)",
+      "status": "written"
+    },
+    {
+      "name": "base_b",
+      "group": "기본값",
+      "description": "기본값 끝(같은 값이 다시 나오는지)",
+      "status": "written"
+    }
+  ]
+}

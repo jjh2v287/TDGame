@@ -1,0 +1,156 @@
+{
+ "name": "t",
+ "which": null,
+ "config": {
+  "layout": "S8",
+  "advect": "A3",
+  "solid": "S4",
+  "solver": "P6",
+  "delta": "v3",
+  "dt": 60,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false
+ },
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/scratch/fog3d/stage1/r2/gates2.py",
+ "time_scale": 1.0,
+ "values": {
+  "rows": {
+   "T0": {
+    "R": 0.00796449058008018,
+    "cost": 11.4140625,
+    "passes": 58,
+    "cycles": 2,
+    "blocked": 0.0,
+    "pos": [
+     0.0,
+     0.0,
+     105.0
+    ],
+    "vel": [
+     300.0,
+     200.0,
+     -250.0
+    ]
+   },
+   "T1": {
+    "R": 0.006809422666986956,
+    "cost": 11.4140625,
+    "passes": 58,
+    "cycles": 2,
+    "blocked": 0.0,
+    "pos": [
+     0.0,
+     0.0,
+     75.0
+    ],
+    "vel": [
+     500.0,
+     0.0,
+     0.0
+    ]
+   },
+   "T2": {
+    "R": 0.013971166398472285,
+    "cost": 11.4140625,
+    "passes": 58,
+    "cycles": 2,
+    "blocked": 0.0,
+    "pos": [
+     0.0,
+     0.0,
+     120.0
+    ],
+    "vel": [
+     0.0,
+     0.0,
+     -500.0
+    ]
+   },
+   "T3": {
+    "R": 0.007006041817755329,
+    "cost": 11.4140625,
+    "passes": 58,
+    "cycles": 2,
+    "blocked": 0.0,
+    "pos": [
+     0.0,
+     0.0,
+     75.0
+    ],
+    "vel": [
+     500.0,
+     0.0,
+     0.0
+    ]
+   },
+   "T4": {
+    "R": 0.007385533072830471,
+    "cost": 11.4140625,
+    "passes": 58,
+    "cycles": 2,
+    "blocked": 0.0,
+    "pos": [
+     -937.5,
+     0.0,
+     75.0
+    ],
+    "vel": [
+     -500.0,
+     0.0,
+     0.0
+    ]
+   },
+   "T5": {
+    "R": 0.016573046817272195,
+    "cost": 11.4140625,
+    "passes": 58,
+    "cycles": 2,
+    "blocked": 0.0,
+    "pos": [
+     -937.5,
+     -937.5,
+     120.0
+    ],
+    "vel": [
+     0.0,
+     0.0,
+     -500.0
+    ]
+   }
+  },
+  "worst_T1_T5": 0.016573046817272195,
+  "solver_cfg": {
+   "kind": "mg",
+   "levels": 5,
+   "budget": 12.0,
+   "nu1": 1,
+   "nu2": 1,
+   "nc": 16,
+   "omega": 1.2
+  },
+  "passed": true
+ },
+ "criterion": "R2-P (a): T1~T5 처음 풀기 R 가장 나쁜 값 ≤ 0.25",
+ "passed": true,
+ "elapsed_sec": 4.4,
+ "state_hash": {},
+ "finished": "2026-11-13 10:26:39",
+ "solver_cfg": {
+  "kind": "mg",
+  "levels": 5,
+  "budget": 12.0,
+  "nu1": 1,
+  "nu2": 1,
+  "nc": 16,
+  "omega": 1.2
+ }
+}

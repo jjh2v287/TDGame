@@ -1,0 +1,17 @@
+37a38
+> EXTRA_STEP_RATE_PIECES = (("g4", 30), ("g4", 144))
+54a56,61
+> def stage1_step_rate_piece(name, steps_per_second):
+>     file = f"{name}_dt{steps_per_second}_N2.json"
+>     argv = [name, "--advect", "N2", "--budget-sec", "100000", "--dt", str(steps_per_second)]
+>     return dict(id=os.path.splitext(file)[0], kind="gate", argv=argv, subdir="pieces", file=file, record=None)
+> 
+> 
+57c64
+<     extra = [stage1_piece("gate", n, w) for n, w in EXTRA_GATE_PIECES]
+---
+>     extra = [stage1_piece("gate", n, w) for n, w in EXTRA_GATE_PIECES] + [stage1_step_rate_piece(n, r) for n, r in EXTRA_STEP_RATE_PIECES]
+270c277
+<     ("나", "D-G16", ("g16_ga_N2", "g16_gb26_N2", "g16_gb45_N2", "g16_gc_N2", "g16_gd_N2")), ("다", "D-G4(1/30·1/144 판, 조각 안 dt30·dt144)", ("g4_N2",)))
+---
+>     ("나", "D-G16", ("g16_ga_N2", "g16_gb26_N2", "g16_gb45_N2", "g16_gc_N2", "g16_gd_N2")), ("다", "D-G4(1/30·1/144 판)", ("g4_dt30_N2", "g4_dt144_N2")))

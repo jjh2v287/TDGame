@@ -1,0 +1,26 @@
+{
+ "tall_box_wind_erase": {
+  "g_rel_l2": 8.818410947196204e-18,
+  "d_rel_l2": 4.923888158780112e-09,
+  "wind_rel_l2": 0.0,
+  "diff_abs_max_gap": 0.0,
+  "diff_abs_max_fresh": 0.6495298147201538,
+  "window_min": [
+   0,
+   0
+  ],
+  "solid_cells": 600
+ },
+ "run_past_boxes": {
+  "g_rel_l2": 4.371466804002142e-09,
+  "d_rel_l2": 1.1855582220023717e-07,
+  "wind_rel_l2": 0.0,
+  "diff_abs_max_gap": 2.9802322387695312e-08,
+  "diff_abs_max_fresh": 0.7064527273178101,
+  "window_min": [
+   0,
+   0
+  ],
+  "solid_cells": 690
+ }
+}

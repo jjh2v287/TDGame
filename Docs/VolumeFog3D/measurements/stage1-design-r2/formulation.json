@@ -1,0 +1,518 @@
+{
+ "chosen": "v3",
+ "reason": "3판이 모든 판정선을 통과",
+ "rule": "prereg-design-2b.md 3절 R2-F(글자 그대로)",
+ "config": "U8, 옮기기 A3, 막힌 칸 S4, 압력 REF, 1/60초, 128×128, 새 깎기 정의",
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "v3_failed": [],
+ "v2_passes_where_v3_failed": [],
+ "both_failed_formula_defect": [],
+ "table": [
+  {
+   "gate": "D-G2",
+   "criterion": "600번 뒤 바람·차이값 최대 정확히 0",
+   "v3": {
+    "max_wind": 0.0,
+    "max_diff": 0.0
+   },
+   "v3_passed": true,
+   "v2": {
+    "max_wind": 0.0,
+    "max_diff": 0.0
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g2_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g2_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G4",
+   "criterion": "1/30·1/60·1/144 모두: 깨짐 없음, ≤3000cm/s, 끝 에너지 ≤ 최고 1%",
+   "v3": {
+    "1/30": {
+     "max_face": 1465.55859375,
+     "max_center": 1465.1624492215542,
+     "energy_end_over_peak": 7.38343004620023e-08
+    },
+    "1/60": {
+     "max_face": 1566.8524169921875,
+     "max_center": 1566.8372485896828,
+     "energy_end_over_peak": 7.64518279053329e-08
+    },
+    "1/144": {
+     "max_face": 1771.3126220703125,
+     "max_center": 1766.85768973787,
+     "energy_end_over_peak": 7.616390669005492e-08
+    }
+   },
+   "v3_passed": true,
+   "v2": {
+    "1/30": {
+     "max_face": 1465.55859375,
+     "max_center": 1465.1624492215542,
+     "energy_end_over_peak": 7.38343004620023e-08
+    },
+    "1/60": {
+     "max_face": 1566.8524169921875,
+     "max_center": 1566.8372485896828,
+     "energy_end_over_peak": 7.64518279053329e-08
+    },
+    "1/144": {
+     "max_face": 1771.3126220703125,
+     "max_center": 1766.85768973787,
+     "energy_end_over_peak": 7.616390669005492e-08
+    }
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g4_U8_A3_S4_REF_v3_dt30_n128.json; Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g4_U8_A3_S4_REF_v3_dt60_n128.json; Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g4_U8_A3_S4_REF_v3_dt144_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g4_U8_A3_S4_REF_v2_dt30_n128.json; Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g4_U8_A3_S4_REF_v2_dt60_n128.json; Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g4_U8_A3_S4_REF_v2_dt144_n128.json"
+  },
+  {
+   "gate": "D-G5a",
+   "criterion": "압력 끔, 겹침 차 ≤ 최댓값 1e-5",
+   "v3": {
+    "worst_ratio": 7.135277443545194e-15
+   },
+   "v3_passed": true,
+   "v2": {
+    "worst_ratio": 7.135277443545194e-15
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g5_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g5_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G5b",
+   "criterion": "압력 켬, 원 중심 2m 안 차 ≤ 5%",
+   "v3": {
+    "worst_ratio": 5.316070254634896e-05
+   },
+   "v3_passed": true,
+   "v2": {
+    "worst_ratio": 5.271408069377766e-05
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g5_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g5_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G6",
+   "criterion": "반감 2.31초 ±5%, dt 사이 2%",
+   "v3": {
+    "half_time_60": 2.310501052338969,
+    "spread_vs_60": 1.1546305002330115e-05
+   },
+   "v3_passed": true,
+   "v2": {
+    "half_time_60": 2.310499066793738,
+    "spread_vs_60": 1.1974922558888323e-05
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g6_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g6_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G7",
+   "criterion": "이음매 누수 ① ≤1e-4 ② |차이값| ≤1e-6·바람 ≤1e-4",
+   "v3": {
+    "west": {
+     "ratio_1": 5.168194013179472e-08,
+     "max_absdiff_2": 5.960464477539063e-08,
+     "ratio_2_wind": 1.4314597314968886e-08
+    },
+    "corner": {
+     "ratio_1": 1.003408863711881e-07,
+     "max_absdiff_2": 1.1920928955078125e-07,
+     "ratio_2_wind": 2.3839965400626976e-08
+    }
+   },
+   "v3_passed": true,
+   "v2": {
+    "west": {
+     "ratio_1": 5.168194013179472e-08,
+     "max_absdiff_2": 0.0,
+     "ratio_2_wind": 1.4314597314968886e-08
+    },
+    "corner": {
+     "ratio_1": 1.003408863711881e-07,
+     "max_absdiff_2": 1.710224779571945e-07,
+     "ratio_2_wind": 2.3839965400626976e-08
+    }
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g7_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g7_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G8",
+   "criterion": "없어진 양 1/30·1/144 가 1/60 의 ±5%(새 깎기 정의)",
+   "v3": {
+    "ga": {
+     "removed_60": 76504.05364401535,
+     "rel_30": 2.7481779518723215e-07,
+     "rel_144": -1.6439137273671633e-08
+    },
+    "na": {
+     "removed_60": 41188.32072160572,
+     "rel_30": 0.0012900225036398538,
+     "rel_144": -8.450557584538387e-05
+    },
+    "da": {
+     "removed_60": 23261.29630887408,
+     "rel_30": 7.433707804871403e-08,
+     "rel_144": 1.5087347815523344e-07
+    }
+   },
+   "v3_passed": true,
+   "v2": {
+    "ga": {
+     "removed_60": 76504.05147550999,
+     "rel_30": 3.0106748361014013e-07,
+     "rel_144": -5.789919987897463e-09
+    },
+    "na": {
+     "removed_60": 41188.32233420911,
+     "rel_30": 0.0012900289015838062,
+     "rel_144": -8.451914481810707e-05
+    },
+    "da": {
+     "removed_60": 23261.29892139761,
+     "rel_30": 9.750325724589004e-08,
+     "rel_144": -7.712287719563449e-08
+    }
+   },
+   "v2_passed": true,
+   "v2_source": "2판 새로 잼(새 깎기 정의·새 판정선)",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g8_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g8_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G9",
+   "criterion": "① ≤5% ② ≤5% ③ ≤1%",
+   "v3": {
+    "ratio_1": 0.002802206755923214,
+    "ratio_2": 0.0028562920804344515,
+    "ratio_3": 1.4440458672624644e-05
+   },
+   "v3_passed": true,
+   "v2": {
+    "ratio_1": 0.00273837814537576,
+    "ratio_2": 0.0028562920804344515,
+    "ratio_3": 1.4609463416353225e-05
+   },
+   "v2_passed": true,
+   "v2_source": "2판 새로 잼(새 깎기 정의·새 판정선)",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g9_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g9_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G10",
+   "criterion": "U8·S8: ① ±10% ② 식 값 ±15%",
+   "v3": {
+    "U8": {
+     "max_rel_dev": 3.8074897235063077e-08,
+     "mean_over_formula": 0.9734336335334853
+    },
+    "S8": {
+     "max_rel_dev": 4.094854388903002e-08,
+     "mean_over_formula": 0.9734336402897186
+    }
+   },
+   "v3_passed": true,
+   "v2": {
+    "U8": {
+     "max_rel_dev": 3.8074897235063077e-08,
+     "mean_over_formula": 0.9734336335334853
+    },
+    "S8": {
+     "max_rel_dev": 4.094854388903002e-08,
+     "mean_over_formula": 0.9734336402897186
+    }
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g10_U8_A3_S4_REF_v3_dt60_n128.json; Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g10_S8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g10_U8_A3_S4_REF_v2_dt60_n128.json; Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g10_S8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G11",
+   "criterion": "원점 0·±100만 칸 해시 같음",
+   "v3": {
+    "o0": "622ffe278991af31",
+    "op1e6": "622ffe278991af31",
+    "om1e6": "622ffe278991af31"
+   },
+   "v3_passed": true,
+   "v2": {
+    "o0": "2817e7251880f890",
+    "op1e6": "2817e7251880f890",
+    "om1e6": "2817e7251880f890"
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g11_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g11_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G12a",
+   "criterion": "빈 곳 전체 농도 ≤ 1e-6",
+   "v3": {
+    "max_total": 0.0
+   },
+   "v3_passed": true,
+   "v2": {
+    "max_total": 0.0
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] 값, d 때문에 g12 조각을 다시 돌림(K1b 조각 사본 backup_before_k2/ 와 같은지 확인)",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G12b",
+   "criterion": "기둥 비율 ≤ 0.17375",
+   "v3": {
+    "ratio": 0.015734779550512685
+   },
+   "v3_passed": true,
+   "v2": {
+    "ratio": 0.0976086268670988
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] 값, d 때문에 g12 조각을 다시 돌림(K1b 조각 사본 backup_before_k2/ 와 같은지 확인)",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G12c",
+   "criterion": "1·2주기 뒤 |차이값| ≤ 0.04",
+   "v3": {
+    "absdiff": {
+     "0.25": 0.0008837729692459106,
+     "0.5": 0.00549529492855072
+    }
+   },
+   "v3_passed": true,
+   "v2": {
+    "absdiff": {
+     "0.25": 0.028587982058525085,
+     "0.5": 0.042318250983953476
+    }
+   },
+   "v2_passed": false,
+   "v2_source": "[이미 봄] 값, d 때문에 g12 조각을 다시 돌림(K1b 조각 사본 backup_before_k2/ 와 같은지 확인)",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G12d",
+   "criterion": "되돌리는 소용돌이 끝 |차이값| ≤ 0.04(가운데 < 0.05 면 판정 불가)",
+   "v3": {
+    "end_absdiff": 0.025170177221298218,
+    "mid_absdiff_info": 0.4552863836288452,
+    "undecidable": false
+   },
+   "v3_passed": true,
+   "v2": {
+    "end_absdiff": 0.23240426182746887,
+    "mid_absdiff_info": 0.3637545704841614,
+    "undecidable": false
+   },
+   "v2_passed": false,
+   "v2_source": "2판 새로 잼(새 깎기 정의·새 판정선)",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-G13",
+   "criterion": "U8·S8, 가·나: ① ±10% ② dt·32πr³/105 ±15%",
+   "v3": {
+    "U8": {
+     "still": {
+      "max_rel_dev": 2.220446049250313e-16,
+      "mean_over_formula": 1.0945751725657493
+     },
+     "moving": {
+      "max_rel_dev": 2.220446049250313e-16,
+      "mean_over_formula": 1.0316834376878552
+     }
+    },
+    "S8": {
+     "still": {
+      "max_rel_dev": 4.440892098500626e-16,
+      "mean_over_formula": 1.0945751725657493
+     },
+     "moving": {
+      "max_rel_dev": 2.220446049250313e-16,
+      "mean_over_formula": 1.0316834376878552
+     }
+    }
+   },
+   "v3_passed": true,
+   "v2": {
+    "U8": {
+     "still": {
+      "max_rel_dev": 2.220446049250313e-16,
+      "mean_over_formula": 1.0945751725657493
+     },
+     "moving": {
+      "max_rel_dev": 2.220446049250313e-16,
+      "mean_over_formula": 1.0316834376878552
+     }
+    },
+    "S8": {
+     "still": {
+      "max_rel_dev": 4.440892098500626e-16,
+      "mean_over_formula": 1.0945751725657493
+     },
+     "moving": {
+      "max_rel_dev": 2.220446049250313e-16,
+      "mean_over_formula": 1.0316834376878552
+     }
+    }
+   },
+   "v2_passed": true,
+   "v2_source": "2판 새로 잼(새 깎기 정의·새 판정선)",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g13_U8_A3_S4_REF_v3_dt60_n128.json; Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g13_S8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g13_U8_A3_S4_REF_v2_dt60_n128.json; Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g13_S8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-V1",
+   "criterion": "고리 바람 > 0, 기둥 저하 ≥ 10%, 둘레 차이값 > 0",
+   "v3": {
+    "ring_outward_wind": 24.69162755489649,
+    "center_column_drop": 1.0,
+    "best_ring_column_diff": 7.522354610264301
+   },
+   "v3_passed": true,
+   "v2": {
+    "ring_outward_wind": 24.69162755489649,
+    "center_column_drop": 0.7131392943103199,
+    "best_ring_column_diff": 4.974663585401099
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v1_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v1_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-V2",
+   "criterion": "비율 ≥ 2, 중심 차 ≥ 50cm",
+   "v3": {
+    "diff_ratio_low_over_high": 2.2147577233632414,
+    "energy_center_gap_cm": 87.27801364786922
+   },
+   "v3_passed": true,
+   "v2": {
+    "diff_ratio_low_over_high": 2.197023523262025,
+    "energy_center_gap_cm": 87.27801364786922
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v2_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v2_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-V3-1",
+   "criterion": "F(낮음)/F(자유) ≥ 0.5",
+   "v3": {
+    "F_low_over_free": 0.8410205545451539,
+    "undecidable": false
+   },
+   "v3_passed": true,
+   "v2": {
+    "F_low_over_free": 0.8410205545451539,
+    "undecidable": false
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v3_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v3_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "D-V3-2",
+   "criterion": "F(높음)/F(자유) ≤ 0.2",
+   "v3": {
+    "F_high_over_free": 0.04762043422471249,
+    "S_high_over_free_info": 0.4407347990308292
+   },
+   "v3_passed": true,
+   "v2": {
+    "F_high_over_free": 0.04762043422471249,
+    "S_high_over_free_info": 0.4407347990308292
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v3_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v3_U8_A3_S4_REF_v2_dt60_n128.json"
+  },
+  {
+   "gate": "LEAK-S4",
+   "criterion": "모든 경우 다시 찬 비율 ÷ 설계값 ≤ 1.15",
+   "v3": {
+    "n50": 1.0000077960260851,
+    "n300": 1.0000077960260851,
+    "n1000": 1.0000077960260851,
+    "d45": 1.0000077960260851,
+    "top100": 1.097197065246611
+   },
+   "v3_passed": true,
+   "v2": {
+    "n50": 0.9999978370628062,
+    "n300": 0.9999978370628062,
+    "n1000": 0.9999978370628062,
+    "d45": 0.9999978370628062,
+    "top100": 0.9999995349560821
+   },
+   "v2_passed": true,
+   "v2_source": "[이미 봄] K1b 조각",
+   "v3_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/leak_U8_A3_S4_REF_v3_dt60_n128.json",
+   "v2_piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/leak_U8_A3_S4_REF_v2_dt60_n128.json"
+  }
+ ],
+ "s8_info_chosen": {
+  "v1": {
+   "values": {
+    "ring_outward_wind": 32.0077736006731,
+    "center_column_drop": 1.0,
+    "best_ring_column_diff": 6.624834326018269
+   },
+   "passed": true,
+   "piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v1_S8_A3_S4_REF_v3_dt60_n128.json"
+  },
+  "v2": {
+   "values": {
+    "diff_ratio_low_over_high": 2.105622870174442,
+    "energy_center_gap_cm": 89.89546947650243
+   },
+   "passed": {
+    "p1": true,
+    "p2": true,
+    "all": true
+   },
+   "piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/v2_S8_A3_S4_REF_v3_dt60_n128.json"
+  },
+  "g12": {
+   "c_absdiff": {
+    "0.25": 0.00011855363845825195,
+    "0.5": 0.0015786290168762207
+   },
+   "d_end_absdiff": 0.025480657815933228,
+   "d_mid_absdiff_info": 0.40926969051361084,
+   "passed": {
+    "c": true,
+    "d": true
+   },
+   "piece": "Saved/AgentOps/20261113/fog3d/stage1r2/pieces/g12_S8_A3_S4_REF_v3_dt60_n128.json"
+  }
+ }
+}

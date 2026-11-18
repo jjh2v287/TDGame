@@ -1,0 +1,27 @@
+{
+ "piece": "g4_dt30_N2.json",
+ "calls": {
+  "B0|core.Sim._apply_inputs": {
+   "calls": 308,
+   "component_blends": 144
+  }
+ },
+ "patch": {
+  "formula": "B0",
+  "installed": true,
+  "default_gain": 1.0,
+  "pid": 32748,
+  "targets": [
+   "fog3d_core.Sim._apply_inputs",
+   "fog3d_terrain.TerrainSim._apply_inputs",
+   "fog3d_terrain_add2.TerrainSimR5._apply_inputs"
+  ],
+  "tools": {
+   "fog3d_blend_patch.py": "edcb43dc6a8eec973f8684cdc67ab57561567234da33203d4c6facc66316a610",
+   "fog3d_blend_gates.py": "91ab8df3ceb6689381ba572910cd7c233c637a40828b6be89a702e79c75054e2",
+   "fog3d_blend_regress.py": "1e8b80654d1d7767e7622bb7ecd77cd72af7eee57f5f4fa84b634a5eaec9bbd9",
+   "fog3d_blend_probe.py": "ebe8b6e7604f14b93c9da2783694ba87df56d9af14df595e726ef0819e21b178"
+  }
+ },
+ "exit_code": 0
+}

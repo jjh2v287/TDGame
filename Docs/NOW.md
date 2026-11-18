@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-11 19:30 claude
+갱신: 2026-11-18 10:33 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -11,11 +11,10 @@
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴
 - M3-25·26 done(26 PIE 육안 대기)
-- FluidFX: 지형 안개 FogMist·Stir·Tile 켬, HVOL 바닥 연기 지형만 캡처·커밋
+- FluidFX: FogMist·Stir·Tile 켬. 3D 안개 2b-1 GPU 끝·D3D11 보류, 사용량 멈춤, 눈 판정·기본값 대기(stage2/RESUME.md)
 
 ## ② 막힘·결정 대기
 
-- D-61 NarshaADK 제거 완료(research/narsha-adk.md). D-62 SF-4 v2 값 확정.
 - D-63 무한 샌드박스: 조건부 가능, 착수 보류(사용자). 재개 시 IWQ-01·02 먼저(`Docs/InfiniteWorld_Plan.md`).
 - 07#MD-59 타격감 기본값(MD-46·MD-13 대체, proposed). 흔들림+모션 블러 번짐 검토. M3-13 미정.
 - 07#MD-62 사망 즉시 래그돌 기본값(proposed): 그리폰 알파·용 지상 클립, 바게스트 계열 클립 뒤 래그돌, 동시 시체 +2.3ms 수용.
@@ -28,13 +27,13 @@
 - M3-29 제안: AGENTS.md 14절 `AI/{CombatToken,NPC}/`→`AI/NPC/`(승인 필요). 종별 token_cost 미지정.
 - 길쭉한 형상 회피 MD-25~39·M3-18~24 미등록(승인 대기). M3-25 후속 MD-40~44.
 - 공개 저장소: 공개 유지(사용자 푸시 11-08). 재저장 에셋 유지 판단 남음.
-- 분석 결정 GQ-01~32(26=아니오), 먼저 GQ-01·10~13·20·27.
+- 분석 결정 GQ-01~32(26=아니오), 먼저 GQ-01·10~13·20·27. 기반 계획 FDQ-01~05(GameplayFoundation_Plan 6절).
 - 기록 누락 의심: M1-01~05(코드 있음·대장 todo)
-- 사용자 승인 대기 전체: Docs/UserApprovalQueue.md(1-1·2-1 답: 최적화 후순위·화질 우선)
+- 승인 대기 전체: Docs/UserApprovalQueue.md(1-1·2-1 답: 최적화 후순위·화질 우선)
 - 빌드 순서 L-build-05·08. Combat GUI 크래시→헤드리스 L-editor-08
 
 ## ③ 다음 행동
 
-1. FluidFX: Stir 언덕 촬영 → 물 반박·역광(q1/PAUSE.md) → Q2.
+1. FluidFX: 3D 안개 D3D11 조사 / Stir 언덕 촬영 → 물 반박·역광(q1/PAUSE.md) → Q2.
 2. LV_TDBossArena 손 조작 → MD-59·62·49 결정. MD-47·48, P3-16 조명 → P3-14·P1-11.
-3. GQ 결정 → GP-01 → GP-02·03·11 + FL-01 업화의 눈.
+3. GQ·FDQ 결정 → GP-01 → M0-01·02·07·기록기 → GP-02·03·11 + FL-01 업화의 눈.

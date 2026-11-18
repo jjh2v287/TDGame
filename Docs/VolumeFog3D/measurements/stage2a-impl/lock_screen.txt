@@ -1,0 +1,3 @@
+a0eda96db48fdb74941936c04078e4a7089fb761dceffed22c133b0576b87398
+file: Docs/VolumeFog3D/stage2/prereg-2a-screen.md
+locked: 2026-11-15 22:07 (claude, before the stage map and the material asset exist)

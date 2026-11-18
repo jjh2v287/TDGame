@@ -1,0 +1,15 @@
+{
+  "base": {"arm": 400, "view": [-12, 0], "console": ["TD.Fog3D.Mode 2"]},
+  "variants": [
+    {"name": "low_box_stand", "apply": {"pawn": [380, -400]}, "settle": 4.0},
+    {"name": "low_box_walk", "apply": {"move": {"distance_cm": 150, "yaw": 90}}, "settle": 0.4},
+    {"name": "low_box_swing", "apply": {"console": ["TDPlayMeleeAction"]}, "settle": 3.0},
+    {"name": "low_box_swing_late", "apply": {}, "settle": 5.0},
+    {"name": "high_box_stand", "apply": {"pawn": [380, 400]}, "settle": 4.0},
+    {"name": "high_box_swing", "apply": {"console": ["TDPlayMeleeAction"]}, "settle": 3.0},
+    {"name": "wall_stand", "apply": {"pawn": [900, 0]}, "settle": 4.0},
+    {"name": "wall_walk", "apply": {"move": {"distance_cm": 100, "yaw": 0}}, "settle": 0.4},
+    {"name": "top_wall", "apply": {"arm": 900, "view": [-60, 0]}, "settle": 3.0},
+    {"name": "top_high_box", "apply": {"pawn": [380, 400]}, "settle": 4.0}
+  ]
+}

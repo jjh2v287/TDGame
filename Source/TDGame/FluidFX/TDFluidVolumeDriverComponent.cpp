@@ -6,18 +6,14 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/TextureRenderTarget2D.h"
-#include "EngineUtils.h"
 #include "FluidFX/TDFluidLiveComponent.h"
 #include "FluidFX/TDFluidLiveSubsystem.h"
 #include "FluidFX/TDFluidPlaneBasis.h"
 #include "FluidFX/TDFluidPresetAsset.h"
 #include "FluidFX/TDFluidPresetTuningSubsystem.h"
 #include "FluidFX/TDFluidRenderProfile.h"
-#include "GameFramework/Pawn.h"
+#include "FluidFX/TDFluidTerrainCapture.h"
 #include "Kismet/GameplayStatics.h"
-#include "LandscapeComponent.h"
-#include "LandscapeNaniteComponent.h"
-#include "LandscapeProxy.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Misc/App.h"
@@ -29,8 +25,6 @@ DEFINE_LOG_CATEGORY_STATIC(LogTDFluidVolumeDriver, Log, All);
 
 namespace
 {
-	const FName TDFluidTerrainActorTag(TEXT("TDFluidTerrain"));
-
 	constexpr ETDFluidOutputMaterialSlot TDFluidAllOutputSlots[] = {
 		ETDFluidOutputMaterialSlot::Primary,
 		ETDFluidOutputMaterialSlot::Secondary,
@@ -190,12 +184,12 @@ float UTDFluidVolumeDriverComponent::GetHeightCaptureCoverMultiplier(bool bFogFl
 
 bool UTDFluidVolumeDriverComponent::IsLandscapeSurfaceComponent(const UPrimitiveComponent& Component)
 {
-	return Component.IsA<ULandscapeComponent>() || Component.IsA<ULandscapeNaniteComponent>();
+	return FTDFluidTerrainCapture::IsLandscapeSurfaceComponent(Component);
 }
 
 bool UTDFluidVolumeDriverComponent::ShouldRenderHeightCaptureInMainRenderer(ETDFluidHeightCaptureContent Content, bool bHasGameViewport)
 {
-	return Content == ETDFluidHeightCaptureContent::TerrainOnly && bHasGameViewport;
+	return FTDFluidTerrainCapture::ShouldRenderInMainRenderer(Content, bHasGameViewport);
 }
 
 bool UTDFluidVolumeDriverComponent::IsVolumeDomainMaterial(const UMaterialInterface* Material)
@@ -616,29 +610,7 @@ void UTDFluidVolumeDriverComponent::ApplyHeightCaptureContent()
 		return;
 	}
 	CSV_SCOPED_TIMING_STAT(TDFluid, HeightCaptureList);
-	HeightCapture->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
-	HeightCapture->bRenderInMainRenderer = ShouldRenderHeightCaptureInMainRenderer(TerrainHeightSettings.SceneCaptureContent, GetWorld()->GetGameViewport() != nullptr);
-	HeightCapture->ShowOnlyActors.Reset();
-	HeightCapture->ClearShowOnlyComponents();
-	for (TActorIterator<AActor> ActorIt(GetWorld()); ActorIt; ++ActorIt)
-	{
-		AActor* Actor = *ActorIt;
-		if (Actor->IsA<ALandscapeProxy>())
-		{
-			Actor->ForEachComponent<UPrimitiveComponent>(false, [this](UPrimitiveComponent* Component)
-			{
-				if (IsLandscapeSurfaceComponent(*Component))
-				{
-					HeightCapture->ShowOnlyComponents.Add(Component);
-				}
-			});
-			continue;
-		}
-		if (Actor->ActorHasTag(TDFluidTerrainActorTag))
-		{
-			HeightCapture->ShowOnlyActors.Add(Actor);
-		}
-	}
+	FTDFluidTerrainCapture::ApplyTerrainOnlyList(*HeightCapture, *GetWorld());
 }
 
 void UTDFluidVolumeDriverComponent::RestoreDefaultHeightCaptureContent()
@@ -757,18 +729,7 @@ void UTDFluidVolumeDriverComponent::UpdateSceneCapture(const UTDFluidLiveCompone
 	HeightCapture->OrthoWidth = static_cast<float>(WidthCm);
 	HeightCapture->SetWorldLocationAndRotation(FVector(CenterCm.X, CenterCm.Y, CaptureZ), FRotator(-90.0, -90.0, 0.0));
 	ApplyHeightCaptureContent();
-	HeightCapture->HiddenActors.Reset();
-	if (Owner)
-	{
-		HeightCapture->HiddenActors.Add(const_cast<AActor*>(Owner));
-	}
-	if (TerrainHeightSettings.bSceneCaptureIgnoresPawns)
-	{
-		for (TActorIterator<APawn> PawnIt(GetWorld()); PawnIt; ++PawnIt)
-		{
-			HeightCapture->HiddenActors.Add(*PawnIt);
-		}
-	}
+	FTDFluidTerrainCapture::HideOwnerAndPawns(*HeightCapture, Owner, TerrainHeightSettings.bSceneCaptureIgnoresPawns, *GetWorld());
 	HeightCapture->CaptureScene();
 
 	TerrainHeightTexture = HeightCaptureTarget;

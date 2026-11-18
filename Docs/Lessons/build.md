@@ -190,3 +190,53 @@
 - 증거: Saved/AgentOps/20261108/fu14/fu14-d3d11-tests.log(5/7) → harness/fu14-d3d11-tests.json(7/7)
 - 날짜·상태: 2026-11-08 active
 - 발견: claude(FluidFX FU-14)
+
+### L-build-22 `FPlatformMisc::GetSHA256Signature` 는 Windows 구현이 없어 부르면 `checkf(false)` 로 멈춘다 (미검증: 코드로만 확인)
+- 증상: C++ 자동화 시험에서 상태 해시를 sha256 으로 내려고 했는데, 엔진 공통 구현이 `checkf(false, …)` 뿐이고 Windows 쪽 재정의가 없다(Engine `Source/Runtime/Core/Private/GenericPlatform/GenericPlatformMisc.cpp:2019-2024`, 2026-11-13 확인. 실제로 부르지는 않았다)
+- 해결: C++ 시험은 정규화한 바이트를 `FMemory::Memcmp` 로 비교하고, sha256 은 파이썬 도구가 덤프 파일로 계산한다(`Source/TDFluidGpu/Private/Tests/TDFluidGpuFog3DDumpFiles.cpp`, `Tools/FluidFX/fog3d_ref/fog3d_compare.py`)
+- 범위: C++ 에서 강한 해시가 필요한 시험·도구. 날짜 2026-11-13, claude(3D 안개 1a)
+
+### L-build-23 FXC(cs_5_0)는 반복문 안에서 벡터 성분을 변수 번호로 쓰는 대입을 X3500 으로 거부한다 — dxc 는 통과
+- 증상: `[loop]`·`[unroll]` 안의 `Offset[Axis] += Step` 같은 줄이 셰이더 검사기(`python -B Tools/FluidFX/check_fluid_gpu_shaders.py`)의 FXC 단계에서 `error X3500`(배열 참조를 대입 대상으로 못 씀)으로 실패한다. 같은 줄이 dxc SM5·SM6 에서는 통과(2026-11-13, 3D 안개의 길 따라가기 루프)
+- 해결: `select(Axis == int3(0, 1, 2), Step, 0)` 로 벡터 전체에 더하거나 축별 스칼라 함수로 푼다(`Source/TDFluidGpu/Shaders/Private/TDFluidGpuFog3D.usf` 의 길 따라가기)
+- 범위: SM5 쿠킹(FXC)을 거치는 TDFluidGpu 전역 셰이더 전부. 에디터(SM6)만 돌려서는 드러나지 않는다(L-build-20 과 같은 계열). 날짜 2026-11-13, claude
+
+### L-build-24 `CookGlobalShaders` 는 캐시에 있는 셰이더를 다시 컴파일하지 않아 '쿠킹 통과'가 SM5 컴파일의 증거가 못 될 수 있다
+- 증상: `UnrealEditor-Cmd.exe TDGame.uproject -run=CookGlobalShaders -platform=Windows` 가 종료 0 인데 `Shaders Compiled: 2` 뿐이었다(새 셰이더 9개 중 나머지는 캐시 적중, 2026-11-13 `Saved/AgentOps/20261113/fog3d/stage1a/logs/f1-cook-global-shaders.log`)
+- 해결: SM5 컴파일의 실질 근거는 (가) 셰이더 검사기의 FXC cs_5_0 통과 줄 수(셰이더 수만큼 실제로 찍혔는지 센다) (나) `python Tools/build_and_test.py --rhi d3d11` 시험 통과로 삼는다. 캐시 없이 보려면 DDC 를 비운 쿠킹이 필요하다
+- 덧붙임: 검사기는 클래스 선언이 `class F…CS : public 부모` 꼴이 아니거나(`final` 을 넣으면 놓침) 선언과 `IMPLEMENT_GLOBAL_SHADER` 가 다른 파일이면 그 셰이더를 말없이 건너뛴다. D3D11 과 D3D12 의 결과는 비트까지 같지 않다(바이트 같음 판정은 한 RHI 안에서만)
+- 범위: TDFluidGpu 전역 셰이더를 더하거나 고치는 작업. 날짜 2026-11-13, claude
+
+### L-build-25 `FMath::DivideAndRoundDown` 은 음수에서 내림이 아니라 0 쪽으로 자른다
+- 증상: 3D 안개 창 칸 맞추기에서 음수 좌표의 결과가 한 걸음 어긋나 널 RHI 시험이 12/14 로 실패했다(2026-11-13, `Saved/AgentOps/20261113/fog3d-1b-l1-tests.json`)
+- 원인: 정수 나눗셈 그대로(C++ 의 0 쪽 자르기)라서 나뉠 수가 음수면 이름과 달리 내림이 아니다
+- 해결: 음수가 올 수 있는 칸 계산은 직접 쓴 내림 나눗셈이나 실수로 나눈 뒤 `FMath::FloorToInt` 를 쓴다(`Source/TDGame/FluidFX/TDFog3DLayer.cpp` 의 창 계산). 시험에 음수 좌표를 넣는다
+- 범위: 세계 좌표 → 칸·타일 번호 계산 전반. 날짜 2026-11-13, claude
+
+### L-build-26 널 RHI(헤드리스) 시험에서는 렌더 타깃의 자원 포인터가 null 이다
+- 증상: `-NullRHI` 헤드리스 시험에서 `UTextureRenderTarget2D::GameThread_GetRenderTargetResource()` 가 null 을 돌려줘, 자원 포인터가 프레임 입력으로 옮겨지는지 보던 시험(`TDGame.FluidFX.Fog3D.GroundFrameInputAssembly`)이 실패했다(2026-11-15, `Saved/AgentOps/20261115/fog3d/stage2a/impl/step5-handoff.md` 9절)
+- 해결: RHI 없는 시험에서 포인터를 옮기기만 확인할 때는 가짜 포인터 값을 쓴다. 실제 자원이 필요한 확인은 `--rhi offscreen` 시험(`TDGame.FluidFXRhi.*`)으로 한다
+- 범위: UE 5.8 헤드리스 자동화 시험, 렌더 타깃·캡처를 쓰는 게임 모듈 코드. 날짜 2026-11-15, claude
+
+### L-build-27 회귀 기준을 등록하기 전에 그 대조 도구를 지금 상태에서 한 번 돌려 끝 코드를 본다
+- 증상: 통과 기준에 '1단계 대조 도구 셋 모두 끝 코드 0'이라고 적었는데 `fog3d_compare_add1.py` 는 1d 때부터 끝 코드 1 이었다(예외 ADD-a: 새 옮기기 방식에서 값이 정의되지 않아 판정에서 빼기로 한 검사). 그래서 2A-I2 가 글자대로는 미충족이 됐다(2026-11-15, `Docs/VolumeFog3D/progress.md` 20:05). 1단계 1a 때도 같은 꼴의 실수가 있었다(두 번째)
+- 해결: '기존 것이 그대로 통과'를 기준으로 적을 때는 등록 전에 그 명령을 돌려 끝 코드와 실패 항목을 보고, 알려진 예외를 문장에 적는다. 3D 안개의 1단계 대조는 `fog3d_compare.py`·`fog3d_compare_v2.py` 끝 코드 0, `fog3d_compare_add1.py` 는 ADD-a 하나만 실패가 정상이다
+- 범위: 사전 등록 문서의 회귀 기준 전반. 날짜 2026-11-15, claude
+
+### L-build-28 3D 안개 시험에서 벽 문턱(30cm)을 넘는 턱은 높은 쪽 기둥이 통째로 막혀 그 면의 식이 시험되지 않는다
+- 증상: 면 표본(두 기둥 높이의 평균)의 식을 틀리게 한 변이가 60cm·100cm 턱 장면과 재생 13장면 대조에서 모두 살아남았다(2026-11-15, `Docs/VolumeFog3D/measurements/stage2a-impl/impl-refute-r5.md`)
+- 원인: 이웃보다 30cm 넘게 높은 기둥은 8층이 모두 막힌 벽이 되어, 턱을 낀 면이 닫힌 면이 되고 입력 결과에 들어오지 않는다. 한 번에 오르는 높은 턱으로는 '면 평균이 결과를 바꾸는 표본'이 생기지 않는다
+- 해결: 단마다 30cm 이하로 오르는 열린 계단(24→48→72→90cm)을 비탈 옆에 두면 면 평균이 결과를 바꾸는 면이 생긴다(`GroundPlaneBlendCases` 의 넷째 경우, 그 변이를 잡음). 변이 시험은 등록한 목록 밖에서도 두엇 골라 넣어 본다
+- 범위: 3D 안개 땅 따라가기의 단위 시험·재생 장면 설계. 날짜 2026-11-15, claude
+
+### L-build-29 3D 안개 GPU 덤프는 D3D12 와 D3D11 이 서로 다르다 — '끄면 바이트까지 같다'는 RHI 마다 따로 잰다
+- 증상: 11-16 닫기 기록에 'D3D12 사본과 D3D11 실행의 R5 덤프 164파일이 모두 같다'고 적었으나, 11-17 기준선(`Saved/AgentOps/20261117/fog3d-blend-gpu/baseline_d3d12`·`baseline_d3d11`, 각 680파일)에서 두 RHI 는 gpu 163·gpu_1d 19·gpu_add1 4·gpu_blend 12·gpu_s2a_r5 45 파일이 달랐다. 같은 RHI 끼리는 날을 달리해도(D3D12 11-16 대 11-17) 두 번 돌려도(D3D11) 680/680 바이트 같았다
+- 원인[추정]: D3D12 는 DXC(셰이더 모델 6), D3D11 은 FXC(셰이더 모델 5)로 컴파일되어 32비트 반올림 순서가 다르다. 명령 수준으로 확인하지는 않았다
+- 해결: 바이트 같음 기준은 RHI 마다 기준선을 따로 뜬다. `build_and_test.py --rhi offscreen` 과 `--rhi d3d11` 은 같은 폴더(`Saved/FluidFX/Fog3D/gpu*`)에 덤프를 덮어쓰므로, 한 RHI 를 돌린 뒤 다른 RHI 를 돌리기 전에 덤프를 사본으로 떠 둔다(이번에는 `Tools/scratch/fog3d_dump_snapshot.py snapshot|compare` — sha256 목록으로 비교). 기준 계산과의 허용 대조(`fog3d_compare_s2a.py` 등)는 두 RHI 모두 같은 한도로 통과한다
+- 범위: 3D 안개 GPU 시험의 '끄면 지금과 같다' 판정 전부. 날짜 2026-11-17, claude
+
+### L-build-30 D3D11 3D 안개 덤프가 같은 바이너리·같은 입력에서도 실행 맥락에 따라 두 값으로 갈린다(원인 미검증)
+- 증상: 2b-1 입력 가림 구현 뒤 D3D11 에서 `gpu_blend_b4/b4_walk_stand_h144_g100` 의 .f32 4개가 기준선과 달랐다(대조 수치는 통과). 같은 세션에서 `InputOcclusionReplayDumps` 시험의 끔 계산은 기준선 바이트(walk_end 13f48ac5…)를, `ClampedTimeBlendReplayDumps` 시험은 다른 바이트(ed747cd8…)를 냈다. 끈 길 셰이더의 FXC 역어셈블은 원래와 같았고, D3D12 는 모두 같았다. 바꾸기 전 코드는 같은 필터로 두 번(11-17) 바이트가 같았다(2026-11-18, `Saved/AgentOps/20261118/fog3d-2b/occ-gpu-handoff.md` 3절)
+- 원인[미검증]: 초당 144걸음(1 아닌 걸음 거듭) 길에서 초기화 안 된 자원 읽기나 경합이 있어, 자원 배치(새 버퍼가 생기면 바뀜)나 앞선 GPU 작업에 따라 값이 갈리는 것으로 보인다. FXC 가 같은 파일에 선언·함수만 더해도 advect 코드(레지스터 배정·명령 순서)를 바꾸는 것은 따로 확인됐다 — 그래서 켬 분기는 순열·별도 usf 로 뺀다
+- 해결: 미해결. 그동안 D3D11 의 '끄면 바이트 같음' 판정은 같은 시험 맥락(같은 필터·같은 차례)끼리만 견주고, 다른 맥락에서 갈리면 이 교훈을 먼저 본다. 원인 조사는 같은 바이너리에서 시험 차례를 바꿔 두 값을 재현 → 자원 초기화(클리어)를 넣어 한 값으로 모이는지 확인
+- 범위: 3D 안개 GPU 시험의 D3D11 바이트 비교. 날짜 2026-11-18, claude(구현 하위 에이전트가 찾음)

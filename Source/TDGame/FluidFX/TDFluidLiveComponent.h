@@ -219,6 +219,8 @@ public:
 	void EnsureMassInputDataChannelLoadRequested();
 	void SetCollectedObstacles(const TArray<FTDFluidSdfObstacle>& InObstacles);
 	const TArray<FTDFluidSdfObstacle>& GetCollectedObstacles() const { return CollectedObstacles; }
+	static float ComputeObstacleWorldHeightCm(const FTDFluidSdfObstacle& Obstacle);
+	static void AppendObstaclesTallEnoughToBlock(TConstArrayView<FTDFluidSdfObstacle> SourceObstacles, float MinBlockHeightCm, TArray<FTDFluidSdfObstacle>& OutObstacles);
 	static bool ProjectObstacleToPlane(const FTDFluidPlaneBasis& Basis, double InPlaneDepthCm, const FTDFluidPlaneSettings& InPlaneSettings, const FTDFluidSdfObstacle& InObstacle, FTDFluidSdfObstacle& OutObstacle);
 	static void SortAndClampMassPoints(TArray<FTDFluidMassInputPoint>& InOutPoints, const FVector& CenterWorld, int32 MaxPoints);
 	const FTDFluidRuntimeOpsSettings& GetRuntimeOpsSettings() const { return RuntimeOpsSettings; }

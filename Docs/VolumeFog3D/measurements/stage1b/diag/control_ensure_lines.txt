@@ -1,0 +1,4 @@
+[2026.11.13-12.41.38:039][648]Cmd: TDPlayMeleeAction
+[2026.11.13-12.41.38:113][651]LogTDGame: TDPlayMeleeAction: 'AS_TD_Player_SwordAttack01' on 'BP_TDCombatCharacter_C_0' (duration 1.85).
+[2026.11.13-12.41.38:842][652]LogOutputDevice: Error: Ensure condition failed: TimelineTrait.GetState(Context, ChildState)  [File:D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp] [Line: 268] 
+[2026.11.13-12.41.38:846][652]EnsureFailed: Error: Ensure condition failed: TimelineTrait.GetState(Context, ChildState)  [File:D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp] [Line: 268] 

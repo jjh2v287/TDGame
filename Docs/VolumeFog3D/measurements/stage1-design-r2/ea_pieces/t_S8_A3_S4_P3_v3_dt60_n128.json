@@ -1,0 +1,148 @@
+{
+ "name": "t",
+ "which": null,
+ "config": {
+  "layout": "S8",
+  "advect": "A3",
+  "solid": "S4",
+  "solver": "P3",
+  "delta": "v3",
+  "dt": 60,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false
+ },
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/scratch/fog3d/stage1/r2/gates2.py",
+ "time_scale": 1.0,
+ "values": {
+  "rows": {
+   "T0": {
+    "R": 0.08050957789058974,
+    "cost": 12.0,
+    "passes": 24,
+    "cycles": 0,
+    "blocked": 0.0,
+    "pos": [
+     0.0,
+     0.0,
+     105.0
+    ],
+    "vel": [
+     300.0,
+     200.0,
+     -250.0
+    ]
+   },
+   "T1": {
+    "R": 0.06518144480888488,
+    "cost": 12.0,
+    "passes": 24,
+    "cycles": 0,
+    "blocked": 0.0,
+    "pos": [
+     0.0,
+     0.0,
+     75.0
+    ],
+    "vel": [
+     500.0,
+     0.0,
+     0.0
+    ]
+   },
+   "T2": {
+    "R": 0.11173423422696155,
+    "cost": 12.0,
+    "passes": 24,
+    "cycles": 0,
+    "blocked": 0.0,
+    "pos": [
+     0.0,
+     0.0,
+     120.0
+    ],
+    "vel": [
+     0.0,
+     0.0,
+     -500.0
+    ]
+   },
+   "T3": {
+    "R": 0.05964672793494538,
+    "cost": 12.0,
+    "passes": 24,
+    "cycles": 0,
+    "blocked": 0.0,
+    "pos": [
+     0.0,
+     0.0,
+     75.0
+    ],
+    "vel": [
+     500.0,
+     0.0,
+     0.0
+    ]
+   },
+   "T4": {
+    "R": 0.049192736771494494,
+    "cost": 12.0,
+    "passes": 24,
+    "cycles": 0,
+    "blocked": 0.0,
+    "pos": [
+     -937.5,
+     0.0,
+     75.0
+    ],
+    "vel": [
+     -500.0,
+     0.0,
+     0.0
+    ]
+   },
+   "T5": {
+    "R": 0.1814264122633946,
+    "cost": 12.0,
+    "passes": 24,
+    "cycles": 0,
+    "blocked": 0.0,
+    "pos": [
+     -937.5,
+     -937.5,
+     120.0
+    ],
+    "vel": [
+     0.0,
+     0.0,
+     -500.0
+    ]
+   }
+  },
+  "worst_T1_T5": 0.1814264122633946,
+  "solver_cfg": {
+   "kind": "line",
+   "sweeps": 12,
+   "omega": 1.6
+  },
+  "passed": true
+ },
+ "criterion": "R2-P (a): T1~T5 처음 풀기 R 가장 나쁜 값 ≤ 0.25",
+ "passed": true,
+ "elapsed_sec": 7.0,
+ "state_hash": {},
+ "finished": "2026-11-13 10:24:25",
+ "solver_cfg": {
+  "kind": "line",
+  "sweeps": 12,
+  "omega": 1.6
+ }
+}

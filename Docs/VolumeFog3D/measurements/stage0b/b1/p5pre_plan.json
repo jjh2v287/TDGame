@@ -1,0 +1,446 @@
+{
+ "note": "fog3d 0b-1 P5 pre: formula N/C vs texture constant (DensityVolume alpha 1); fixed exposure bias; 8 shots per scene.",
+ "base": {
+  "time_dilation": 1.0
+ },
+ "variants": [
+  {
+   "name": "third_d20g8_N",
+   "apply": {
+    "awake": {
+     "TDGen_FogRoom": false,
+     "TDGen_FogTrail": false,
+     "TDGen_FogCharacter": false,
+     "TDGen_FogAmbient": false,
+     "TDGen_FogCut": false,
+     "TDGen_FogStir": false,
+     "TDGen_FogTileSync": false,
+     "TDGen_FogRelief": false
+    },
+    "pawn": [
+     9000.0,
+     53650.0
+    ],
+    "arm": 505.446,
+    "view": [
+     -8.419,
+     90.0
+    ],
+    "hide_components": {
+     "pawn": [
+      "Mesh"
+     ]
+    },
+    "exposure_ev100": 0.0,
+    "exposure_manual": "bias",
+    "console": [
+     "r.VolumetricFog.GridPixelSize 8",
+     "r.VolumetricFog.GridSizeZ 128",
+     "r.TDFogScattering 1"
+    ],
+    "call": {
+     "Fog3dProbeBox": {
+      "component": "static_mesh_component",
+      "function": "set_scalar_parameter_value_on_materials",
+      "args": [
+       "Packed",
+       25.0
+      ]
+     },
+     "TDGen_FogStageHeightFog": {
+      "component": "component",
+      "function": "set_volumetric_fog_distance",
+      "args": [
+       2000.0
+      ]
+     }
+    },
+    "schedule": {
+     "times": [
+      10.0,
+      10.5,
+      11.0,
+      11.5,
+      12.0,
+      12.5,
+      13.0,
+      13.5
+     ],
+     "reference": "now",
+     "fixed_fps": 60,
+     "prefix": "third_d20g8_N"
+    },
+    "hide": {
+     "Fog3dProbeBox": false,
+     "Fog3dTexBox": true
+    }
+   },
+   "settle": 2.0
+  },
+  {
+   "name": "third_d20g8_T",
+   "apply": {
+    "awake": {
+     "TDGen_FogRoom": false,
+     "TDGen_FogTrail": false,
+     "TDGen_FogCharacter": false,
+     "TDGen_FogAmbient": false,
+     "TDGen_FogCut": false,
+     "TDGen_FogStir": false,
+     "TDGen_FogTileSync": false,
+     "TDGen_FogRelief": false
+    },
+    "pawn": [
+     9000.0,
+     53650.0
+    ],
+    "arm": 505.446,
+    "view": [
+     -8.419,
+     90.0
+    ],
+    "hide_components": {
+     "pawn": [
+      "Mesh"
+     ]
+    },
+    "exposure_ev100": 0.0,
+    "exposure_manual": "bias",
+    "console": [
+     "r.VolumetricFog.GridPixelSize 8",
+     "r.VolumetricFog.GridSizeZ 128",
+     "r.TDFogScattering 1"
+    ],
+    "call": {
+     "Fog3dProbeBox": {
+      "component": "static_mesh_component",
+      "function": "set_scalar_parameter_value_on_materials",
+      "args": [
+       "Packed",
+       25.0
+      ]
+     },
+     "TDGen_FogStageHeightFog": {
+      "component": "component",
+      "function": "set_volumetric_fog_distance",
+      "args": [
+       2000.0
+      ]
+     }
+    },
+    "schedule": {
+     "times": [
+      10.0,
+      10.5,
+      11.0,
+      11.5,
+      12.0,
+      12.5,
+      13.0,
+      13.5
+     ],
+     "reference": "now",
+     "fixed_fps": 60,
+     "prefix": "third_d20g8_T"
+    },
+    "hide": {
+     "Fog3dProbeBox": true,
+     "Fog3dTexBox": false
+    }
+   },
+   "settle": 2.0
+  },
+  {
+   "name": "third_d20g8_C",
+   "apply": {
+    "awake": {
+     "TDGen_FogRoom": false,
+     "TDGen_FogTrail": false,
+     "TDGen_FogCharacter": false,
+     "TDGen_FogAmbient": false,
+     "TDGen_FogCut": false,
+     "TDGen_FogStir": false,
+     "TDGen_FogTileSync": false,
+     "TDGen_FogRelief": false
+    },
+    "pawn": [
+     9000.0,
+     53650.0
+    ],
+    "arm": 505.446,
+    "view": [
+     -8.419,
+     90.0
+    ],
+    "hide_components": {
+     "pawn": [
+      "Mesh"
+     ]
+    },
+    "exposure_ev100": 0.0,
+    "exposure_manual": "bias",
+    "console": [
+     "r.VolumetricFog.GridPixelSize 8",
+     "r.VolumetricFog.GridSizeZ 128",
+     "r.TDFogScattering 1"
+    ],
+    "call": {
+     "Fog3dProbeBox": {
+      "component": "static_mesh_component",
+      "function": "set_scalar_parameter_value_on_materials",
+      "args": [
+       "Packed",
+       3025.0
+      ]
+     },
+     "TDGen_FogStageHeightFog": {
+      "component": "component",
+      "function": "set_volumetric_fog_distance",
+      "args": [
+       2000.0
+      ]
+     }
+    },
+    "schedule": {
+     "times": [
+      10.0,
+      10.5,
+      11.0,
+      11.5,
+      12.0,
+      12.5,
+      13.0,
+      13.5
+     ],
+     "reference": "now",
+     "fixed_fps": 60,
+     "prefix": "third_d20g8_C"
+    },
+    "hide": {
+     "Fog3dProbeBox": false,
+     "Fog3dTexBox": true
+    }
+   },
+   "settle": 2.0
+  },
+  {
+   "name": "third_d20g8_Np",
+   "apply": {
+    "awake": {
+     "TDGen_FogRoom": false,
+     "TDGen_FogTrail": false,
+     "TDGen_FogCharacter": false,
+     "TDGen_FogAmbient": false,
+     "TDGen_FogCut": false,
+     "TDGen_FogStir": false,
+     "TDGen_FogTileSync": false,
+     "TDGen_FogRelief": false
+    },
+    "pawn": [
+     9000.0,
+     53650.0
+    ],
+    "arm": 505.446,
+    "view": [
+     -8.419,
+     90.0
+    ],
+    "hide_components": {
+     "pawn": [
+      "Mesh"
+     ]
+    },
+    "exposure_ev100": 0.0,
+    "exposure_manual": "bias",
+    "console": [
+     "r.VolumetricFog.GridPixelSize 8",
+     "r.VolumetricFog.GridSizeZ 128",
+     "r.TDFogScattering 1"
+    ],
+    "call": {
+     "Fog3dProbeBox": {
+      "component": "static_mesh_component",
+      "function": "set_scalar_parameter_value_on_materials",
+      "args": [
+       "Packed",
+       25.0
+      ]
+     },
+     "TDGen_FogStageHeightFog": {
+      "component": "component",
+      "function": "set_volumetric_fog_distance",
+      "args": [
+       2000.0
+      ]
+     }
+    },
+    "schedule": {
+     "times": [
+      10.0,
+      10.5,
+      11.0,
+      11.5,
+      12.0,
+      12.5,
+      13.0,
+      13.5
+     ],
+     "reference": "now",
+     "fixed_fps": 60,
+     "prefix": "third_d20g8_Np"
+    },
+    "hide": {
+     "Fog3dProbeBox": false,
+     "Fog3dTexBox": true
+    }
+   },
+   "settle": 2.0
+  },
+  {
+   "name": "third_d20g8_Tp",
+   "apply": {
+    "awake": {
+     "TDGen_FogRoom": false,
+     "TDGen_FogTrail": false,
+     "TDGen_FogCharacter": false,
+     "TDGen_FogAmbient": false,
+     "TDGen_FogCut": false,
+     "TDGen_FogStir": false,
+     "TDGen_FogTileSync": false,
+     "TDGen_FogRelief": false
+    },
+    "pawn": [
+     9000.0,
+     53650.0
+    ],
+    "arm": 505.446,
+    "view": [
+     -8.419,
+     90.0
+    ],
+    "hide_components": {
+     "pawn": [
+      "Mesh"
+     ]
+    },
+    "exposure_ev100": 0.0,
+    "exposure_manual": "bias",
+    "console": [
+     "r.VolumetricFog.GridPixelSize 8",
+     "r.VolumetricFog.GridSizeZ 128",
+     "r.TDFogScattering 1"
+    ],
+    "call": {
+     "Fog3dProbeBox": {
+      "component": "static_mesh_component",
+      "function": "set_scalar_parameter_value_on_materials",
+      "args": [
+       "Packed",
+       25.0
+      ]
+     },
+     "TDGen_FogStageHeightFog": {
+      "component": "component",
+      "function": "set_volumetric_fog_distance",
+      "args": [
+       2000.0
+      ]
+     }
+    },
+    "schedule": {
+     "times": [
+      10.0,
+      10.5,
+      11.0,
+      11.5,
+      12.0,
+      12.5,
+      13.0,
+      13.5
+     ],
+     "reference": "now",
+     "fixed_fps": 60,
+     "prefix": "third_d20g8_Tp"
+    },
+    "hide": {
+     "Fog3dProbeBox": true,
+     "Fog3dTexBox": false
+    }
+   },
+   "settle": 2.0
+  },
+  {
+   "name": "third_d20g8_X",
+   "apply": {
+    "awake": {
+     "TDGen_FogRoom": false,
+     "TDGen_FogTrail": false,
+     "TDGen_FogCharacter": false,
+     "TDGen_FogAmbient": false,
+     "TDGen_FogCut": false,
+     "TDGen_FogStir": false,
+     "TDGen_FogTileSync": false,
+     "TDGen_FogRelief": false
+    },
+    "pawn": [
+     9000.0,
+     53650.0
+    ],
+    "arm": 505.446,
+    "view": [
+     -8.419,
+     90.0
+    ],
+    "hide_components": {
+     "pawn": [
+      "Mesh"
+     ]
+    },
+    "exposure_ev100": 0.0,
+    "exposure_manual": "bias",
+    "console": [
+     "r.VolumetricFog.GridPixelSize 8",
+     "r.VolumetricFog.GridSizeZ 128",
+     "r.TDFogScattering 1"
+    ],
+    "call": {
+     "Fog3dProbeBox": {
+      "component": "static_mesh_component",
+      "function": "set_scalar_parameter_value_on_materials",
+      "args": [
+       "Packed",
+       25.0
+      ]
+     },
+     "TDGen_FogStageHeightFog": {
+      "component": "component",
+      "function": "set_volumetric_fog_distance",
+      "args": [
+       2000.0
+      ]
+     }
+    },
+    "schedule": {
+     "times": [
+      10.0,
+      10.5,
+      11.0,
+      11.5,
+      12.0,
+      12.5,
+      13.0,
+      13.5
+     ],
+     "reference": "now",
+     "fixed_fps": 60,
+     "prefix": "third_d20g8_X"
+    },
+    "hide": {
+     "Fog3dProbeBox": true,
+     "Fog3dTexBox": true
+    }
+   },
+   "settle": 2.0
+  }
+ ]
+}

@@ -1,0 +1,166 @@
+[2026.11.13-16.12.50:610][184]LogPlayLevel: PIE: Created PIE world by copying editor world from /Game/FluidFX/Maps/LV_TDFog3DStage.LV_TDFog3DStage to /Game/FluidFX/Maps/UEDPIE_0_LV_TDFog3DStage.LV_TDFog3DStage (0.003267s)
+[2026.11.13-16.12.50:686][184]LogUObjectHash: Compacting FUObjectHashTables data took   1.00ms
+[2026.11.13-16.12.50:687][184]LogChaosDD: Creating Chaos Debug Draw Scene for world LV_TDFog3DStage
+[2026.11.13-16.12.50:690][184]LogPlayLevel: PIE: World Init took: (0.002782s)
+[2026.11.13-16.12.50:690][184]LogAudio: Display: Creating Audio Device:                 Id: 2, Scope: Unique, Realtime: True
+[2026.11.13-16.12.50:690][184]LogAudioMixer: Display: bUseRenderScheduler set to true.
+[2026.11.13-16.12.50:690][184]LogAudioMixer: Display: Audio Mixer Platform Settings:
+[2026.11.13-16.12.50:690][184]LogAudioMixer: Display: 	Sample Rate:						  48000
+[2026.11.13-16.12.50:690][184]LogAudioMixer: Display: 	Callback Buffer Frame Size Requested: 1024
+[2026.11.13-16.12.50:690][184]LogAudioMixer: Display: 	Callback Buffer Frame Size To Use:	  1024
+[2026.11.13-16.12.50:690][184]LogAudioMixer: Display: 	Number of buffers to queue:			  1
+[2026.11.13-16.12.50:690][184]LogAudioMixer: Display: 	Max Channels (voices):				  32
+[2026.11.13-16.12.50:690][184]LogAudioMixer: Display: 	Number of Async Source Workers:		  4
+[2026.11.13-16.12.50:690][184]LogAudio: Display: AudioDevice MaxSources: 32
+[2026.11.13-16.12.50:690][184]LogAudio: Display: Audio Spatialization Plugin: None (built-in).
+[2026.11.13-16.12.50:690][184]LogAudio: Display: Audio Reverb Plugin: None (built-in).
+[2026.11.13-16.12.50:690][184]LogAudio: Display: Audio Occlusion Plugin: None (built-in).
+[2026.11.13-16.12.50:690][184]LogAudioEnumeration: Display: Refreshing FWindowsMMDeviceCache
+[2026.11.13-16.12.50:697][184]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Console', Device='스피커(Realtek(R) Audio)'
+[2026.11.13-16.12.50:698][184]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Console', Device='마이크(USB Audio)'
+[2026.11.13-16.12.50:698][184]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Multimedia', Device='스피커(Realtek(R) Audio)'
+[2026.11.13-16.12.50:699][184]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Multimedia', Device='마이크(USB Audio)'
+[2026.11.13-16.12.50:700][184]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Communications', Device='스피커(USB Audio)'
+[2026.11.13-16.12.50:701][184]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Communications', Device='마이크(USB Audio)'
+[2026.11.13-16.12.50:706][184]LogAudioMixerWasapi: Display: FWasapiServiceWatcher started.
+[2026.11.13-16.12.50:706][184]LogAudioMixer: Display: Initializing audio mixer using platform API: 'WASAPIMixer'
+[2026.11.13-16.12.50:706][184]LogAudioMixerWasapi: Display: FWasapiServiceWatcher initial state: Audiosrv=RUNNING, AudioEndpointBuilder=RUNNING
+[2026.11.13-16.12.50:707][184]LogAudioMixerWasapi: FAudioMixerWasapiRenderStream::InitializeHardware DefaultDevicePeriod: 480 requesting buffer size: 1920
+[2026.11.13-16.12.50:709][184]LogAudioMixerWasapi: Display: FAudioMixerWasapiRenderStream::InitializeHardware audio mixer requested num channels: 2, Wasapi render stream hardware supports num channels: 2
+[2026.11.13-16.12.50:709][184]LogAudioMixerWasapi: Display: FAudioMixerWasapiRenderStream::InitializeHardware succeeded with sample rate: 48000, buffer period: 1024
+[2026.11.13-16.12.50:709][184]LogAudioMixer: Display: FAudioMixerWasapi initialized: SampleRate=48000 NumChannels=2 NumDirectOutChannels=0 bIsAggregateDevice=0 StreamParams.Num()=1
+[2026.11.13-16.12.50:709][184]LogAudioMixer: Display: Using Audio Hardware Device 스피커(Realtek(R) Audio)
+[2026.11.13-16.12.50:709][184]LogAudioMixer: Display: Initializing Sound Submixes...
+[2026.11.13-16.12.50:709][184]LogAudioMixer: Display: Creating Master Submix 'MasterSubmixDefault'
+[2026.11.13-16.12.50:709][184]LogAudioMixer: Display: Creating Master Submix 'MasterReverbSubmixDefault'
+[2026.11.13-16.12.50:710][184]LogAudioMixer: Display: Output buffers initialized: Frames=1024, Channels=2, Samples=2048, InstanceID=2
+[2026.11.13-16.12.50:712][184]LogAudioMixer: Display: Starting AudioMixerPlatformInterface::RunInternal(), InstanceID=2
+[2026.11.13-16.12.50:714][184]LogInit: FAudioDevice initialized with ID 2.
+[2026.11.13-16.12.50:714][184]LogAudio: Display: Audio Device (ID: 2) registered with world 'LV_TDFog3DStage'.
+[2026.11.13-16.12.50:714][184]LogAudioMixer: Initializing Audio Bus Subsystem for audio device with ID 2
+[2026.11.13-16.12.50:715][184]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden
+[2026.11.13-16.12.50:718][184]LogLoad: Game class is 'BP_TDCombatGameMode_C'
+[2026.11.13-16.12.50:719][184]LogWorld: Bringing World /Game/FluidFX/Maps/UEDPIE_0_LV_TDFog3DStage.LV_TDFog3DStage up for play (max tick rate 0) at 2026.11.14-01.12.50
+[2026.11.13-16.12.50:719][184]LogWorld: Bringing up level for play took: 0.000908
+[2026.11.13-16.12.50:722][184]LogOnline: OSS: Created online subsystem instance for: :Context_1
+[2026.11.13-16.12.50:723][184]LogWindows: WindowsPlatformFeatures enabled
+[2026.11.13-16.12.50:723][184]LogEnhancedInput: Enhanced Input local player subsystem has initialized the user settings!
+[2026.11.13-16.12.50:724][184]LogModuleManager: InternalLoadLibrary: 'Voice' ('C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Voice.dll')
+[2026.11.13-16.12.50:724][184]LogModuleManager: InternalLoadLibrary: 'MovieSceneCapture' ('C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-MovieSceneCapture.dll')
+[2026.11.13-16.12.50:727][184]LogStats: UGameplayCueManager::InitializeEditorObjectLibrary -  0.001 s
+[2026.11.13-16.12.50:727][184]LogAbilitySystem: Warning: No GameplayCueNotifyPaths were specified in DefaultGame.ini under [/Script/GameplayAbilities.AbilitySystemGlobals]. Falling back to using all of /Game/. This may be slow on large projects. Consider specifying which paths are to be searched.
+[2026.11.13-16.12.50:727][184]LogAbilitySystem: Display: Processing InitializeRuntimeObjectLibrary.
+[2026.11.13-16.12.50:734][184]PIE: 서버가 로그인했습니다.
+[2026.11.13-16.12.50:736][184]PIE: 에디터에서 플레이 총 시작 시간 0.136초입니다.
+[2026.11.13-16.12.50:758][184]LogRenderer: Recreating Persistent SBTs due to initializer changes: 
+		NumShaderSlotsPerGeometrySegment changed: current: 1 - new: 2
+		NumGeometrySegments changed: current: 0 - new: 512
+[2026.11.13-16.12.51:548][226]LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.10.dll
+[2026.11.13-16.12.51:650][231]LogTDGame: Realm: 2 of 2 configured realm definitions loaded.
+[2026.11.13-16.12.51:652][231]LogTDGame: RealmLift 'SunkenStarfieldSoutheast': travel 4000.0 cm, hold depth 1912.5 cm, treadmill enabled, max treadmill 20.0 s, deck mesh 'SM_WoodenFloorSegment', deck top 2.5 cm above the landings, field exit edges 0x1, realm exit edges 0x4.
+[2026.11.13-16.12.51:654][231]LogTDGame: ShaftLiner 'SunkenStarfieldSoutheast': 7 rings of 450.0 cm from depth 600.0 cm, panel mesh 'Plane', material 'MI_TD_RockLocal_ShaftLiner'.
+[2026.11.13-16.12.51:654][231]LogTDGame: Realm: lift of gate 'SunkenStarfieldSoutheast' spawned at the field landing V(X=9200.00, Y=-47800.00, Z=600.00).
+[2026.11.13-16.12.53:159][325]LogStaticMesh: Display: Waiting on static mesh StaticMesh /Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Sword.SM_Sword being ready before playing
+[2026.11.13-16.12.53:159][325]LogStaticMesh: Display: Waiting on static mesh StaticMesh /Game/DarkFantasyTopDown/StaticMeshes/Weapons/SM_Shield.SM_Shield being ready before playing
+[2026.11.13-16.12.53:380][335]LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.14.dll
+[2026.11.13-16.12.53:681][353]LogPython: 4120
+
+[2026.11.13-16.12.53:724][355]LogPython: TD_FLUID_PROBE_RESULT {"pie_running": true, "pie_world": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFog3DStage.LV_TDFog3DStage", "editor_world": null}
+
+[2026.11.13-16.12.57:775][671]LogPython: 4120
+
+[2026.11.13-16.12.57:825][673]LogPython: TD_FLUID_SHOWCASE_RESULT {"arm": 400.0, "view": [-12.0, 0.0], "game_time": 7.1418078020215034}
+
+[2026.11.13-16.12.58:888][765]LogPython: 4120
+
+[2026.11.13-16.12.58:936][767]LogPython: TD_FLUID_SHOWCASE_RESULT {"game_time": 8.255501002073288}
+
+[2026.11.13-16.13.02:013][ 36]LogPython: 4120
+
+[2026.11.13-16.13.02:057][ 38]LogPython: TD_FLUID_SHOWCASE_RESULT {"game_time": 11.376902103424072, "ember_mid": {}}
+
+[2026.11.13-16.13.02:635][ 43]LogCore: Display: Tracing Screenshot "00_ctl_before" taken with size: 1280 x 720
+[2026.11.13-16.13.02:751][ 44]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/ctl/capture/00_ctl_before.png
+[2026.11.13-16.13.03:580][104]LogPython: 4120
+
+[2026.11.13-16.13.03:626][106]Cmd: TDPlayMeleeAction
+[2026.11.13-16.13.03:626][106]LogPython: TD_FLUID_SHOWCASE_RESULT {"console": [{"command": "TDPlayMeleeAction"}], "game_time": 12.588548306375742}
+
+[2026.11.13-16.13.03:668][108]LogTDGame: TDPlayMeleeAction: 'AS_TD_Player_SwordAttack01' on 'BP_TDCombatCharacter_C_0' (duration 1.85).
+[2026.11.13-16.13.04:266][109]LogStats: FPlatformStackWalk::StackWalkAndDump -  0.587 s
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: === Handled ensure: ===
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: 
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: Ensure condition failed: TimelineTrait.GetState(Context, ChildState)  [File:D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp] [Line: 268] 
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: 
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: Stack: 
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x000001ec48477234 UnrealEditor-UAFAnimGraph.dll!UE::UAF::FInjectionSiteTrait::PreUpdate() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp:268]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x000001ec4850873e UnrealEditor-UAFAnimGraph.dll!UE::UAF::UpdateGraph() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\TraitInterfaces\IUpdate.cpp:604]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x000001ec484c7c6a UnrealEditor-UAFAnimGraph.dll!FRigUnit_UAFRunAsset::StaticExecute() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Graph\RigUnit_UAFRunAsset.cpp:125]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x000001ec484baa25 UnrealEditor-UAFAnimGraph.dll!FUAFSimplePrePhysicsGraphComponent::PrePhysics() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Native\UAFSimplePrePhysicsGraphComponent.cpp:41]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x000001ec481f1b8c UnrealEditor-UAF.dll!FAnimNextModuleInstance::RunScriptEvent() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAF\Source\UAF\Private\Module\AnimNextModuleInstance.cpp:629]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x000001ec481f1182 UnrealEditor-UAF.dll!UE::UAF::FModuleEventTickFunction::Run() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAF\Source\UAF\Private\Module\ModuleTickFunction.cpp:226]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x000001ec481d22af UnrealEditor-UAF.dll!UE::UAF::FModuleEventTickFunction::ExecuteTick() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAF\Source\UAF\Private\Module\ModuleTickFunction.cpp:144]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x00007ffa09651ac7 UnrealEditor-Engine.dll!TGraphTask<FTickFunctionTask>::ExecuteTask() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Async\TaskGraphInterfaces.h:703]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x00007ffa0770f656 UnrealEditor-Engine.dll!UE::Tasks::Private::FTaskBase::TryExecuteTask() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Tasks\TaskPrivate.h:524]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x00007ffa076be3f8 UnrealEditor-Engine.dll!LowLevelTasks::TTaskDelegate<LowLevelTasks::FTask * __cdecl(bool),48>::TTaskDelegateImpl<`LowLevelTasks::FTask::Init<`UE::Tasks::Private::FTaskBase::Init'::`2'::<lambda_1> >'::`15'::<lambda_1>,0>::CallAndMove() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Async\Fundamental\TaskDelegate.h:171]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x00007ffa0be33047 UnrealEditor-Core.dll!LowLevelTasks::FTask::ExecuteTask() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Async\Fundamental\Task.h:623]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x00007ffa0be32da4 UnrealEditor-Core.dll!LowLevelTasks::FScheduler::ExecuteTask() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Async\Fundamental\Scheduler.cpp:403]
+[2026.11.13-16.13.04:266][109]LogOutputDevice: Error: [Callstack] 0x00007ffa0be5a1ee UnrealEditor-Core.dll!LowLevelTasks::FScheduler::WorkerLoop() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Async\Fundamental\Scheduler.cpp:802]
+[2026.11.13-16.13.04:267][109]LogOutputDevice: Error: [Callstack] 0x00007ffa0be1e905 UnrealEditor-Core.dll!`LowLevelTasks::FScheduler::CreateWorker'::`2'::<lambda_1>::operator()() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Async\Fundamental\Scheduler.cpp:223]
+[2026.11.13-16.13.04:267][109]LogOutputDevice: Error: [Callstack] 0x00007ffa0c0d1854 UnrealEditor-Core.dll!FThreadImpl::Run() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\HAL\Thread.cpp:69]
+[2026.11.13-16.13.04:267][109]LogOutputDevice: Error: [Callstack] 0x00007ffa0c580658 UnrealEditor-Core.dll!FRunnableThreadWin::Run() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Windows\WindowsRunnableThread.cpp:167]
+[2026.11.13-16.13.04:267][109]LogOutputDevice: Error: [Callstack] 0x00007ffa0c579f85 UnrealEditor-Core.dll!FRunnableThreadWin::GuardedRun() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Windows\WindowsRunnableThread.cpp:87]
+[2026.11.13-16.13.04:267][109]LogOutputDevice: Error: [Callstack] 0x00007ffaee5d7374 KERNEL32.DLL!UnknownFunction []
+[2026.11.13-16.13.04:267][109]LogOutputDevice: Error: [Callstack] 0x00007ffaee87cc91 ntdll.dll!UnknownFunction []
+[2026.11.13-16.13.04:267][109]LogOutputDevice: Error: 
+[2026.11.13-16.13.04:276][109]LogStats:                SubmitErrorReport -  0.000 s
+[2026.11.13-16.13.04:276][109]EnsureFailed: Error: Ensure condition failed: TimelineTrait.GetState(Context, ChildState)  [File:D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp] [Line: 268] 
+
+Stack: 
+0x000001ec48477234 UnrealEditor-UAFAnimGraph.dll!UE::UAF::FInjectionSiteTrait::PreUpdate() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp:268]
+0x000001ec4850873e UnrealEditor-UAFAnimGraph.dll!UE::UAF::UpdateGraph() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\TraitInterfaces\IUpdate.cpp:604]
+0x000001ec484c7c6a UnrealEditor-UAFAnimGraph.dll!FRigUnit_UAFRunAsset::StaticExecute() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Graph\RigUnit_UAFRunAsset.cpp:125]
+0x000001ec484baa25 UnrealEditor-UAFAnimGraph.dll!FUAFSimplePrePhysicsGraphComponent::PrePhysics() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Native\UAFSimplePrePhysicsGraphComponent.cpp:41]
+0x000001ec481f1b8c UnrealEditor-UAF.dll!FAnimNextModuleInstance::RunScriptEvent() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAF\Source\UAF\Private\Module\AnimNextModuleInstance.cpp:629]
+0x000001ec481f1182 UnrealEditor-UAF.dll!UE::UAF::FModuleEventTickFunction::Run() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAF\Source\UAF\Private\Module\ModuleTickFunction.cpp:226]
+0x000001ec481d22af UnrealEditor-UAF.dll!UE::UAF::FModuleEventTickFunction::ExecuteTick() [D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAF\Source\UAF\Private\Module\ModuleTickFunction.cpp:144]
+0x00007ffa09651ac7 UnrealEditor-Engine.dll!TGraphTask<FTickFunctionTask>::ExecuteTask() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Async\TaskGraphInterfaces.h:703]
+0x00007ffa0770f656 UnrealEditor-Engine.dll!UE::Tasks::Private::FTaskBase::TryExecuteTask() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Tasks\TaskPrivate.h:524]
+0x00007ffa076be3f8 UnrealEditor-Engine.dll!LowLevelTasks::TTaskDelegate<LowLevelTasks::FTask * __cdecl(bool),48>::TTaskDelegateImpl<`LowLevelTasks::FTask::Init<`UE::Tasks::Private::FTaskBase::Init'::`2'::<lambda_1> >'::`15'::<lambda_1>,0>::CallAndMove() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Async\Fundamental\TaskDelegate.h:171]
+0x00007ffa0be33047 UnrealEditor-Core.dll!LowLevelTasks::FTask::ExecuteTask() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Public\Async\Fundamental\Task.h:623]
+0x00007ffa0be32da4 UnrealEditor-Core.dll!LowLevelTasks::FScheduler::ExecuteTask() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Async\Fundamental\Scheduler.cpp:403]
+0x00007ffa0be5a1ee UnrealEditor-Core.dll!LowLevelTasks::FScheduler::WorkerLoop() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Async\Fundamental\Scheduler.cpp:802]
+0x00007ffa0be1e905 UnrealEditor-Core.dll!`LowLevelTasks::FScheduler::CreateWorker'::`2'::<lambda_1>::operator()() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Async\Fundamental\Scheduler.cpp:223]
+0x00007ffa0c0d1854 UnrealEditor-Core.dll!FThreadImpl::Run() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\HAL\Thread.cpp:69]
+0x00007ffa0c580658 UnrealEditor-Core.dll!FRunnableThreadWin::Run() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Windows\WindowsRunnableThread.cpp:167]
+0x00007ffa0c579f85 UnrealEditor-Core.dll!FRunnableThreadWin::GuardedRun() [D:\build\++UE5\Sync\Engine\Source\Runtime\Core\Private\Windows\WindowsRunnableThread.cpp:87]
+0x00007ffaee5d7374 KERNEL32.DLL!UnknownFunction []
+0x00007ffaee87cc91 ntdll.dll!UnknownFunction []
+
+[2026.11.13-16.13.06:878][109]LogStats:                    SendNewReport -  2.602 s
+[2026.11.13-16.13.06:878][109]LogStats:             FDebug::EnsureFailed -  3.198 s
+[2026.11.13-16.13.07:671][161]LogPython: 4120
+
+[2026.11.13-16.13.07:715][163]LogPython: TD_FLUID_SHOWCASE_RESULT {"game_time": 13.779230412095785, "ember_mid": {}}
+
+[2026.11.13-16.13.07:792][168]LogCore: Display: Tracing Screenshot "01_ctl_swing" taken with size: 1280 x 720
+[2026.11.13-16.13.07:917][169]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/ctl/capture/01_ctl_swing.png
+[2026.11.13-16.13.08:086][170]LogModelContextProtocol: Running tool: 'call_tool'
+[2026.11.13-16.13.08:086][170]LogModelContextProtocol: Dispatching toolset tool: 'EditorToolset.EditorAppToolset.StopPIE'
+[2026.11.13-16.13.08:144][171]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden
+[2026.11.13-16.13.08:144][171]LogWorld: BeginTearingDown for /Game/FluidFX/Maps/UEDPIE_0_LV_TDFog3DStage
+[2026.11.13-16.13.08:145][171]LogTDFog3DZone: Display: Fog3D zone summary: submitted=618 rejected=0
+[2026.11.13-16.13.08:145][171]LogWorld: UWorld::CleanupWorld for LV_TDFog3DStage, bSessionEnded=true, bCleanupResources=true
+[2026.11.13-16.13.08:146][171]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
+[2026.11.13-16.13.08:147][171]LogPlayLevel: Display: Shutting down PIE online subsystems
+[2026.11.13-16.13.08:154][171]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
+[2026.11.13-16.13.08:195][171]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden
+[2026.11.13-16.13.08:195][171]LogAudioMixer: Deinitializing Audio Bus Subsystem for audio device with ID 2
+[2026.11.13-16.13.08:196][171]LogAudioMixer: Display: FAudioMixerWasapi::StopAudioStream() InstanceID=2, StreamState=4
+[2026.11.13-16.13.08:205][171]LogAudioMixerWasapi: Display: FWasapiServiceWatcher stopped.
+[2026.11.13-16.13.08:215][171]LogUObjectHash: Compacting FUObjectHashTables data took   1.12ms
+[2026.11.13-16.13.08:300][172]LogPlayLevel: Display: Destroying online subsystem :Context_1
+[2026.11.13-16.13.09:281][259]LogPython: 4120
+
+[2026.11.13-16.13.09:317][261]LogPython: TD_FLUID_PROBE_RESULT {"pie_running": false, "pie_world": null, "editor_world": "/Game/FluidFX/Maps/LV_TDFog3DStage.LV_TDFog3DStage"}
+

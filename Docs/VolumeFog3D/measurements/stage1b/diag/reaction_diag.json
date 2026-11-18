@@ -1,0 +1,217 @@
+{
+ "note": "D1 diagnostic; no edits to source/content; values via fog3d_visible_check functions; region G = rows [0.60H,0.95H) x cols [0.25W,0.75W) minus cols [0.42W,0.58W)",
+ "control_run": {
+  "map": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+  "ensure_present": true,
+  "log_lines": "2656 and 2680 of Saved/Logs/TDGame.log (InjectionSiteTrait.cpp Line 268)",
+  "see": "control_ensure_lines.txt"
+ },
+ "candidates": {
+  "S0": {
+   "run": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S0",
+   "valid": true,
+   "gaps": {
+    "swing_to_mode2_a": 2.5000001303851604,
+    "mode2_a_to_mode2_b": 0.5000000260770321,
+    "mode2_b_before_mode0_cmd": 0.2833333481103182,
+    "mode0_cmd_to_mode0_a": 1.0166667196899652,
+    "mode0_a_to_mode0_b": 0.5000000260770321
+   },
+   "captured_game_time": {
+    "mode2_a": 2.5166667979210615,
+    "mode2_b": 3.0166668239980936,
+    "mode0_a": 4.316666891798377,
+    "mode0_b": 4.816666917875409
+   },
+   "pawn_region": {
+    "difference": 0.017864296115615054,
+    "noise": 0.0029227314186358305,
+    "ratio": 6.112192178080161,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.0029227314186358305,
+    "noise_mode0_pair": 0.0021251734330484323,
+    "diff_cross_b": 0.018282516682901786
+   },
+   "ground_region_G": {
+    "difference": 0.01975466438427223,
+    "noise": 0.0028169539263981453,
+    "ratio": 7.012775111139722,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.0028169539263981453,
+    "noise_mode0_pair": 0.0012241054051250128,
+    "diff_cross_b": 0.02054528978181311
+   },
+   "result_folder": "Docs/VolumeFog3D/measurements/stage1b/diag/run_S0",
+   "discarded_runs": []
+  },
+  "S1": {
+   "run": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S1",
+   "valid": true,
+   "gaps": {
+    "swing_to_mode2_a": 2.5000001303851604,
+    "mode2_a_to_mode2_b": 0.5000000260770321,
+    "mode2_b_before_mode0_cmd": 0.2833333481103182,
+    "mode0_cmd_to_mode0_a": 1.0166667196899652,
+    "mode0_a_to_mode0_b": 0.5000000260770321
+   },
+   "captured_game_time": {
+    "mode2_a": 2.5166667979210615,
+    "mode2_b": 3.0166668239980936,
+    "mode0_a": 4.316666891798377,
+    "mode0_b": 4.816666917875409
+   },
+   "pawn_region": {
+    "difference": 0.018339716092152677,
+    "noise": 0.002867356834988268,
+    "ratio": 6.396035494559475,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.002867356834988268,
+    "noise_mode0_pair": 0.0021158098081112786,
+    "diff_cross_b": 0.018688338161974197
+   },
+   "ground_region_G": {
+    "difference": 0.019740348397852117,
+    "noise": 0.0027686388057138562,
+    "ratio": 7.129983281716783,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.0027686388057138562,
+    "noise_mode0_pair": 0.0011756174234700265,
+    "diff_cross_b": 0.020625246809835046
+   },
+   "result_folder": "Docs/VolumeFog3D/measurements/stage1b/diag/run_S1",
+   "discarded_runs": []
+  },
+  "S2": {
+   "run": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S2",
+   "valid": true,
+   "gaps": {
+    "swing_to_mode2_a": 2.5000001303851604,
+    "mode2_a_to_mode2_b": 0.5000000260770321,
+    "mode2_b_before_mode0_cmd": 0.2833333481103182,
+    "mode0_cmd_to_mode0_a": 1.0166667196899652,
+    "mode0_a_to_mode0_b": 0.5000000260770321
+   },
+   "captured_game_time": {
+    "mode2_a": 2.5166667979210615,
+    "mode2_b": 3.0166668239980936,
+    "mode0_a": 4.316666891798377,
+    "mode0_b": 4.816666917875409
+   },
+   "pawn_region": {
+    "difference": 0.017884561944863413,
+    "noise": 0.002781843171296296,
+    "ratio": 6.429033142270735,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.002781843171296296,
+    "noise_mode0_pair": 0.002099152929654767,
+    "diff_cross_b": 0.017905886534795537
+   },
+   "ground_region_G": {
+    "difference": 0.017953288021722098,
+    "noise": 0.002226798000937284,
+    "ratio": 8.06237836308698,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.002226798000937284,
+    "noise_mode0_pair": 0.0012692245153489237,
+    "diff_cross_b": 0.018262647126794523
+   },
+   "result_folder": "Docs/VolumeFog3D/measurements/stage1b/diag/run_S2",
+   "discarded_runs": []
+  },
+  "S3": {
+   "run": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S3",
+   "valid": true,
+   "gaps": {
+    "swing_to_mode2_a": 2.5000001303851604,
+    "mode2_a_to_mode2_b": 0.5000000260770321,
+    "mode2_b_before_mode0_cmd": 0.2833333481103182,
+    "mode0_cmd_to_mode0_a": 1.0166667196899652,
+    "mode0_a_to_mode0_b": 0.5000000260770321
+   },
+   "captured_game_time": {
+    "mode2_a": 2.5166667979210615,
+    "mode2_b": 3.0166668239980936,
+    "mode0_a": 4.316666891798377,
+    "mode0_b": 4.816666917875409
+   },
+   "pawn_region": {
+    "difference": 0.018419944014999162,
+    "noise": 0.00275668347787833,
+    "ratio": 6.681922013468153,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.00275668347787833,
+    "noise_mode0_pair": 0.002122169209296967,
+    "diff_cross_b": 0.01840274349547511
+   },
+   "ground_region_G": {
+    "difference": 0.017978520965474313,
+    "noise": 0.002156193674404628,
+    "ratio": 8.338082603103162,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.002156193674404628,
+    "noise_mode0_pair": 0.0013216415639052553,
+    "diff_cross_b": 0.018147600094443904
+   },
+   "result_folder": "Docs/VolumeFog3D/measurements/stage1b/diag/run_S3",
+   "discarded_runs": []
+  },
+  "S4": {
+   "run": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S4",
+   "valid": true,
+   "gaps": {
+    "swing_to_mode2_a": 2.5000001303851604,
+    "mode2_a_to_mode2_b": 0.5000000260770321,
+    "mode2_b_before_mode0_cmd": 0.2833333481103182,
+    "mode0_cmd_to_mode0_a": 1.0166667196899652,
+    "mode0_a_to_mode0_b": 0.5000000260770321
+   },
+   "captured_game_time": {
+    "mode2_a": 2.5166667979210615,
+    "mode2_b": 3.0166668239980936,
+    "mode0_a": 4.316666891798377,
+    "mode0_b": 4.816666917875409
+   },
+   "pawn_region": {
+    "difference": 0.018629502778301492,
+    "noise": 0.0028132434850008377,
+    "ratio": 6.622072663680565,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.0028132434850008377,
+    "noise_mode0_pair": 0.002089593909732696,
+    "diff_cross_b": 0.018569963300758337
+   },
+   "ground_region_G": {
+    "difference": 0.017642344190805313,
+    "noise": 0.0022287557229788463,
+    "ratio": 7.915781890724846,
+    "passes_noise_ratio": true,
+    "passes_minimum": true,
+    "passed": true,
+    "noise_mode2_pair": 0.0022287557229788463,
+    "noise_mode0_pair": 0.0012532505446623094,
+    "diff_cross_b": 0.01802427704261782
+   },
+   "result_folder": "Docs/VolumeFog3D/measurements/stage1b/diag/run_S4",
+   "discarded_runs": []
+  }
+ },
+ "rule_result": "S1 is the first of S1,S2,S3,S4 to pass (2); but baseline S0 also passes, so the failure is not a value problem"
+}

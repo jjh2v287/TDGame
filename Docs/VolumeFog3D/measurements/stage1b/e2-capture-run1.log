@@ -1,0 +1,32 @@
+﻿경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 8.7 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 14.9 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 21.1 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 27.3 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 33.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 39.7 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 45.9 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 52.2 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 58.4 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 64.6 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 70.8 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 77.0 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 83.2 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 89.4 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 95.6 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 101.8 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 108.0 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 114.2 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+TD_NAV_STATE 120.4 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+hidden_a 찍음 {"hide": {"TDGen_Fog3D_Zone": true}, "game_time": 8.263902109116316, "shot_game_time": 10.362458009272814, "ember_mid": {}}
+hidden_b 찍음 {"game_time": 11.597039017826319, "shot_game_time": 13.213964715600014, "ember_mid": {}}
+shown_a 찍음 {"hide": {"TDGen_Fog3D_Zone": false}, "game_time": 14.298999611288309, "shot_game_time": 16.410548713058233, "ember_mid": {}}
+shown_b 찍음 {"game_time": 17.4777898080647, "shot_game_time": 19.11419291049242, "ember_mid": {}}
+walk 찍음 {"move": {"mode": "input", "yaw": 0.0, "distance_cm": 400.0, "start": [-1000.0, 0.0], "goal": [-600.0, 0.0], "max_speed": 600.0, "timeout_seconds": 4.333333333333333, "wall_timeout_seconds": 64.333333
+mode2_a 찍음 {"console": [{"command": "TDPlayMeleeAction"}], "game_time": 22.555208925157785, "shot_game_time": 23.558331329375505, "ember_mid": {}}
+mode2_b 찍음 {"game_time": 24.647510327398777, "shot_game_time": 26.264881528913975, "ember_mid": {}}
+mode0_a 찍음 {"console": [{"command": "TD.Fog3D.Mode 0", "read_back": 0.0}], "game_time": 27.345442928373814, "shot_game_time": 29.4466319270432, "ember_mid": {}}
+mode0_b 찍음 {"game_time": 30.506461322307587, "shot_game_time": 32.10754072293639, "ember_mid": {}}
+격자 C:/Project/TDGame/Saved/FluidFX/lookdev/20261113-211400/grid.png

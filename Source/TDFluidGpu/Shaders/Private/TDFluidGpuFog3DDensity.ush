@@ -1,0 +1,124 @@
+#pragma once
+
+static const uint TDFog3DHashPrimeX = 374761393u;
+static const uint TDFog3DHashPrimeY = 668265263u;
+static const uint TDFog3DHashPrimeSeed = 2246822519u;
+static const uint TDFog3DHashMixMultiplier = 1274126177u;
+static const float TDFog3DHashToUnit = 2.3283064365386963e-10f;
+
+uint TDFog3DSeed(float SeedValue)
+{
+	return uint(SeedValue + 0.5f);
+}
+
+float TDFog3DHash01(int2 LatticeCell, uint Seed)
+{
+	uint Hash = asuint(LatticeCell.x) * TDFog3DHashPrimeX + asuint(LatticeCell.y) * TDFog3DHashPrimeY + Seed * TDFog3DHashPrimeSeed;
+	Hash = (Hash ^ (Hash >> 13)) * TDFog3DHashMixMultiplier;
+	Hash = Hash ^ (Hash >> 16);
+	return float(Hash) * TDFog3DHashToUnit;
+}
+
+float TDFog3DValueNoise(float2 PositionCm, float SpacingCm, uint Seed)
+{
+	float2 LatticePosition = PositionCm / SpacingCm;
+	float2 LatticeFloor = floor(LatticePosition);
+	int2 LatticeCell = int2(LatticeFloor);
+	float2 Blend = smoothstep(0.0f, 1.0f, LatticePosition - LatticeFloor);
+	float Value00 = TDFog3DHash01(LatticeCell, Seed);
+	float Value10 = TDFog3DHash01(LatticeCell + int2(1, 0), Seed);
+	float Value01 = TDFog3DHash01(LatticeCell + int2(0, 1), Seed);
+	float Value11 = TDFog3DHash01(LatticeCell + int2(1, 1), Seed);
+	float LowRow = Value00 * (1.0f - Blend.x) + Value10 * Blend.x;
+	float HighRow = Value01 * (1.0f - Blend.x) + Value11 * Blend.x;
+	return LowRow * (1.0f - Blend.y) + HighRow * Blend.y;
+}
+
+float TDFog3DBaseCurve(float HeightCm, float ThicknessCm, float4 BaseShape)
+{
+	return BaseShape.x * (1.0f - smoothstep(ThicknessCm - BaseShape.z, ThicknessCm, max(HeightCm, 0.0f)));
+}
+
+float TDFog3DStainThickness(float2 OriginCm, float4 BaseShape, float4 StainNoise)
+{
+	if (StainNoise.x == 0.0f)
+	{
+		return BaseShape.y;
+	}
+
+	float Stain = TDFog3DValueNoise(OriginCm, StainNoise.y, TDFog3DSeed(StainNoise.z));
+	return BaseShape.y * (1.0f + StainNoise.x * (2.0f * Stain - 1.0f));
+}
+
+float TDFog3DRestDensity(float2 OriginCm, float OriginHeightCm, float4 BaseShape, float4 FineNoise, float4 StainNoise)
+{
+	float Density = TDFog3DBaseCurve(OriginHeightCm, TDFog3DStainThickness(OriginCm, BaseShape, StainNoise), BaseShape);
+	if (FineNoise.x == 0.0f)
+	{
+		return Density;
+	}
+
+	float Fine = TDFog3DValueNoise(OriginCm, FineNoise.y, TDFog3DSeed(FineNoise.z));
+	return Density * (1.0f + FineNoise.x * (2.0f * Fine - 1.0f));
+}
+
+float3 TDFog3DStateUvw(float3 ZonePositionCm, float4 Window, float4 Grid)
+{
+	float WindowSizeCm = Window.w * Grid.x;
+	float2 WindowPositionCm = ZonePositionCm.xy - Window.xy;
+	float HeightCm = ZonePositionCm.z - Window.z;
+	return float3(WindowPositionCm / WindowSizeCm, HeightCm / (Grid.y * Grid.z));
+}
+
+float TDFog3DBandCells(float2 WindowPositionCm, float4 Window, float4 Grid)
+{
+	float2 FarSideCm = Window.w * Grid.x - WindowPositionCm;
+	float NearestSideCm = min(min(WindowPositionCm.x, WindowPositionCm.y), min(FarSideCm.x, FarSideCm.y));
+	return NearestSideCm / Grid.x;
+}
+
+float TDFog3DBandFade(float BandCells, float BandWidthCells)
+{
+	if (BandWidthCells > 0.0f)
+	{
+		return smoothstep(0.0f, BandWidthCells, BandCells);
+	}
+
+	return BandCells >= 0.0f ? 1.0f : 0.0f;
+}
+
+float TDFog3DHeightWeight(float HeightCm, float4 Grid)
+{
+	float TopCm = Grid.y * Grid.z;
+	return 1.0f - smoothstep(TopCm - Grid.y, TopCm, HeightCm);
+}
+
+float TDFog3DStateWeight(float3 ZonePositionCm, float4 Window, float4 Grid, float Active)
+{
+	float2 WindowPositionCm = ZonePositionCm.xy - Window.xy;
+	float HeightCm = ZonePositionCm.z - Window.z;
+	float BandFade = TDFog3DBandFade(TDFog3DBandCells(WindowPositionCm, Window, Grid), Grid.w);
+	return BandFade * Active * TDFog3DHeightWeight(HeightCm, Grid);
+}
+
+float TDFog3DZoneFade(float2 ZonePositionCm, float4 Zone)
+{
+	float InsideCm = min(Zone.x - abs(ZonePositionCm.x), Zone.y - abs(ZonePositionCm.y));
+	if (Zone.w > 0.0f)
+	{
+		return smoothstep(0.0f, Zone.w, InsideCm);
+	}
+
+	return InsideCm >= 0.0f ? 1.0f : 0.0f;
+}
+
+float TDFog3DDensity(float3 ZonePositionCm, float4 State, float4 Window, float4 Grid, float Active, float4 BaseShape, float4 Zone, float4 FineNoise, float4 StainNoise)
+{
+	float Weight = TDFog3DStateWeight(ZonePositionCm, Window, Grid, Active);
+	float3 DisplacementCm = State.xyz * Weight;
+	float FillChange = State.w * Weight;
+	float2 OriginCm = ZonePositionCm.xy - DisplacementCm.xy;
+	float OriginHeightCm = (ZonePositionCm.z - Window.z) - DisplacementCm.z;
+	float RestDensity = TDFog3DRestDensity(OriginCm, OriginHeightCm, BaseShape, FineNoise, StainNoise);
+	return max(0.0f, 1.0f + FillChange) * RestDensity * TDFog3DZoneFade(ZonePositionCm.xy, Zone);
+}

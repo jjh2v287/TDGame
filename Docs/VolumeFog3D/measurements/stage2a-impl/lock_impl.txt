@@ -1,0 +1,5 @@
+415526681b8bcb59831f07a519d45c5a99ca0f083df1b4408dc788ca053fcc67
+file: Docs/VolumeFog3D/stage2/prereg-2a-impl.md
+locked: 2026-11-15 19:29 (claude, before any GPU-vs-reference comparison of the s2a replay scenes)
+numbers: 13374142aa8b6fb79962b1d9554559a671ac525f758488bf2d1b83d9db96d07d
+numbers file: Docs/VolumeFog3D/measurements/stage2a-impl/prereg-2a-impl-numbers.json

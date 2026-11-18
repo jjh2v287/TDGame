@@ -1,0 +1,3 @@
+40772b856b6f41248f77062d4ef53436a3528e63911a3fa331fde6a554438944
+file: Docs/VolumeFog3D/stage2/prereg-blend-note1.md
+locked: 2026-11-16 14:11 (claude, after the tools were built and smoke-tested at 64 cells; before any registered candidate case was run)

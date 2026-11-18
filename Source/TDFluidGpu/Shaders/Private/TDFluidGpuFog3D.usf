@@ -1,0 +1,1394 @@
+#include "/TDFluidGpu/Private/TDFluidGpuFog3DCommon.ush"
+
+struct FTDFluidGpuFog3DSphere
+{
+	float4 StartCmRadiusCm;
+	float4 EndCmWindStrength;
+	float4 VelocityCmPerSecErosionPerSec;
+};
+
+struct FTDFluidGpuFog3DObstacle
+{
+	float4 CenterCmYawCosine;
+	float4 HalfExtentCmYawSine;
+};
+
+struct FTDFluidGpuFog3DSphereFrame
+{
+	float4 TiltedStartCmReferenceHeightCm;
+	float4 TiltedEndCm;
+	float4 MidpointCmFrameSlope;
+	float4 ReferenceColumnCm;
+};
+
+Texture3D<float4> WindIn;
+Texture3D<float4> DisplacementFillIn;
+Texture3D<uint> FaceFlagsIn;
+Texture3D<uint> CellBlockedIn;
+Texture3D<float> PressureIn;
+Texture3D<float> DivergenceIn;
+StructuredBuffer<FTDFluidGpuFog3DSphere> Spheres;
+StructuredBuffer<FTDFluidGpuFog3DSphereFrame> SphereFrames;
+RWStructuredBuffer<FTDFluidGpuFog3DSphereFrame> SphereFramesOut;
+StructuredBuffer<FTDFluidGpuFog3DObstacle> Obstacles;
+StructuredBuffer<float4> WindOverride;
+StructuredBuffer<uint> FillOperation;
+RWTexture3D<float4> WindOut;
+RWTexture3D<float4> DisplacementFillOut;
+RWTexture3D<float4> OutputVolume;
+RWTexture3D<float> PressureOut;
+RWTexture3D<float> DivergenceOut;
+RWTexture3D<uint> CellBlockedOut;
+RWTexture3D<uint> FaceFlagsOut;
+RWStructuredBuffer<float> DumpOut;
+
+uint ObstacleCount;
+uint SphereCount;
+uint HasWindOverride;
+uint HasFillOperation;
+uint AppliesPressureGradient;
+int Mode;
+float DeltaSeconds;
+float WindRefillFactor;
+float DisplacementRefillFactorHorizontal;
+float DisplacementRefillFactorVertical;
+float FillRefillFactor;
+int EdgeBandCells;
+float4 EdgeBandFactors[4];
+float3 MoveLimitCm;
+uint ClampedTimeWindBlend;
+float WindBlendStepRepeat;
+uint WindBlendIsUnitStep;
+
+static const uint Fog3DFillOperationRest = 1u;
+static const uint Fog3DFillOperationEmpty = 2u;
+
+bool IsFog3DCellCenterInsideObstacle(float3 CellCenterCm, FTDFluidGpuFog3DObstacle Obstacle)
+{
+	float3 Offset = CellCenterCm - Obstacle.CenterCmYawCosine.xyz;
+	float Cosine = Obstacle.CenterCmYawCosine.w;
+	float Sine = Obstacle.HalfExtentCmYawSine.w;
+	float3 LocalOffset = float3(Offset.x * Cosine + Offset.y * Sine, Offset.y * Cosine - Offset.x * Sine, Offset.z);
+	return all(abs(LocalOffset) < Obstacle.HalfExtentCmYawSine.xyz);
+}
+
+uint ReadFog3DCellBlocked(int3 LocalCell)
+{
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return 0u;
+	}
+	return CellBlockedIn[MakeFog3DStorageTexel(LocalCell)];
+}
+
+float GetFog3DEdgeBandFactor(int3 LocalCell)
+{
+	int EdgeDistance = min(min(LocalCell.x, Resolution - 1 - LocalCell.x), min(LocalCell.y, Resolution - 1 - LocalCell.y));
+	if (EdgeDistance >= EdgeBandCells)
+	{
+		return 1.0f;
+	}
+	uint FactorIndex = uint(EdgeDistance);
+	return EdgeBandFactors[FactorIndex >> 2u][FactorIndex & 3u];
+}
+
+float ReadFog3DWestWind(int3 LocalCell, uint AxisIndex)
+{
+	int3 Step = int3(AxisIndex == 0u ? 1 : 0, AxisIndex == 1u ? 1 : 0, AxisIndex == 2u ? 1 : 0);
+	int3 NeighborCell = LocalCell - Step;
+	if (!IsFog3DLocalCellInside(NeighborCell))
+	{
+		return 0.0f;
+	}
+	float4 NeighborWind = WindIn[MakeFog3DStorageTexel(NeighborCell)];
+	return AxisIndex == 0u ? NeighborWind.x : (AxisIndex == 1u ? NeighborWind.y : NeighborWind.z);
+}
+
+float ReadFog3DOpenNeighborPressure(int3 LocalCell, uint AxisIndex)
+{
+	int3 Step = int3(AxisIndex == 0u ? 1 : 0, AxisIndex == 1u ? 1 : 0, AxisIndex == 2u ? 1 : 0);
+	int3 NeighborCell = LocalCell + Step;
+	if (AxisIndex == 2u && NeighborCell.z >= TDFOG3D_LAYER_COUNT)
+	{
+		return 0.0f;
+	}
+	return PressureIn[MakeFog3DStorageTexel(NeighborCell)];
+}
+
+float ComputeFog3DPressureStep(int3 LocalCell, uint FaceFlags, uint AxisIndex, float CellPressure, float FaceSpacingCm)
+{
+	if (IsFog3DFaceClosed(LocalCell, FaceFlags, AxisIndex, true))
+	{
+		return 0.0f;
+	}
+	return (ReadFog3DOpenNeighborPressure(LocalCell, AxisIndex) - CellPressure) / FaceSpacingCm;
+}
+
+[numthreads(8, 8, 4)]
+void Fog3DBakeBlockedCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int3 LocalCell = int3(DispatchThreadId);
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return;
+	}
+
+	float4 ColumnTerrain = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	if (GroundFollow != 0u)
+	{
+		ColumnTerrain = ReadFog3DColumnTerrain(LocalCell.xy);
+	}
+	float3 CellCenterCm = GetFog3DCellCenterCm(LocalCell);
+	CellCenterCm.z = ColumnTerrain.x + CellCenterCm.z;
+	uint IsBlocked = ColumnTerrain.w > 0.5f ? 1u : 0u;
+	for (uint ObstacleIndex = 0u; ObstacleIndex < ObstacleCount; ++ObstacleIndex)
+	{
+		IsBlocked = IsFog3DCellCenterInsideObstacle(CellCenterCm, Obstacles[ObstacleIndex]) ? 1u : IsBlocked;
+	}
+	CellBlockedOut[MakeFog3DStorageTexel(LocalCell)] = IsBlocked;
+}
+
+StructuredBuffer<float> GroundUploadIn;
+RWTexture2D<float> GroundHeightOut;
+uint GroundUploadSize;
+Texture2D<float> GroundHeightIn;
+RWTexture2D<float4> ColumnTerrainOut;
+int2 GroundTexelOffset;
+
+[numthreads(8, 8, 1)]
+void Fog3DUploadGroundCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (any(DispatchThreadId.xy >= GroundUploadSize))
+	{
+		return;
+	}
+	GroundHeightOut[DispatchThreadId.xy] = GroundUploadIn[DispatchThreadId.y * GroundUploadSize + DispatchThreadId.x];
+}
+
+Texture2D<float> GroundCaptureDepthIn;
+uint GroundCaptureSize;
+float GroundDecodeOffsetCm;
+float GroundMissingHeightCm;
+float GroundMissingBelowFloorCm;
+
+[numthreads(8, 8, 1)]
+void Fog3DConvertGroundCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (any(DispatchThreadId.xy >= GroundCaptureSize))
+	{
+		return;
+	}
+	const float DepthCm = GroundCaptureDepthIn.Load(int3(DispatchThreadId.xy, 0));
+	const float HeightCm = GroundDecodeOffsetCm - DepthCm;
+	const bool bIsHeightFinite = (asuint(HeightCm) & 0x7F800000u) != 0x7F800000u;
+	const bool bIsGroundFound = bIsHeightFinite && HeightCm >= -GroundMissingBelowFloorCm;
+	GroundHeightOut[DispatchThreadId.xy] = bIsGroundFound ? HeightCm : GroundMissingHeightCm;
+}
+
+float ReadFog3DGroundHeight(int2 LocalColumn)
+{
+	return GroundHeightIn.Load(int3(LocalColumn + GroundTexelOffset, 0));
+}
+
+float ComputeFog3DAxisSlope(float LowerHeight, float CenterHeight, float UpperHeight)
+{
+	float RiseUp = UpperHeight - CenterHeight;
+	float RiseDown = CenterHeight - LowerHeight;
+	bool bIsUpGentle = abs(RiseUp) <= GroundWallStepCm;
+	bool bIsDownGentle = abs(RiseDown) <= GroundWallStepCm;
+	if (bIsUpGentle && bIsDownGentle)
+	{
+		return (UpperHeight - LowerHeight) / (2.0f * CellSizeCm);
+	}
+	if (bIsUpGentle)
+	{
+		return RiseUp / CellSizeCm;
+	}
+	if (bIsDownGentle)
+	{
+		return RiseDown / CellSizeCm;
+	}
+	return 0.0f;
+}
+
+bool IsFog3DWallAbove(float CenterHeight, float NeighborHeight)
+{
+	return CenterHeight - NeighborHeight > GroundWallStepCm;
+}
+
+[numthreads(8, 8, 1)]
+void Fog3DBakeTerrainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int2 Texel = int2(DispatchThreadId.xy);
+	if (any(Texel >= Resolution + 2))
+	{
+		return;
+	}
+	if (GroundFollow == 0u)
+	{
+		ColumnTerrainOut[Texel] = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		return;
+	}
+
+	int2 LocalColumn = Texel - 1;
+	float Height = ReadFog3DGroundHeight(LocalColumn);
+	if (any(LocalColumn < 0) || any(LocalColumn >= Resolution))
+	{
+		ColumnTerrainOut[Texel] = float4(Height, 0.0f, 0.0f, 0.0f);
+		return;
+	}
+
+	float WestHeight = ReadFog3DGroundHeight(LocalColumn + int2(-1, 0));
+	float EastHeight = ReadFog3DGroundHeight(LocalColumn + int2(1, 0));
+	float SouthHeight = ReadFog3DGroundHeight(LocalColumn + int2(0, -1));
+	float NorthHeight = ReadFog3DGroundHeight(LocalColumn + int2(0, 1));
+	float SlopeX = ComputeFog3DAxisSlope(WestHeight, Height, EastHeight);
+	float SlopeY = ComputeFog3DAxisSlope(SouthHeight, Height, NorthHeight);
+	bool bIsWall = IsFog3DWallAbove(Height, EastHeight) || IsFog3DWallAbove(Height, WestHeight) || IsFog3DWallAbove(Height, NorthHeight) || IsFog3DWallAbove(Height, SouthHeight);
+	ColumnTerrainOut[Texel] = float4(Height, SlopeX, SlopeY, bIsWall ? 1.0f : 0.0f);
+}
+
+[numthreads(8, 8, 4)]
+void Fog3DBakeFaceFlagsCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int3 LocalCell = int3(DispatchThreadId);
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return;
+	}
+
+	uint SelfBlocked = ReadFog3DCellBlocked(LocalCell);
+	uint Flags = SelfBlocked != 0u ? Fog3DSelfBlockedBit : 0u;
+	[unroll]
+	for (uint AxisIndex = 0u; AxisIndex < 3u; ++AxisIndex)
+	{
+		int3 Step = int3(AxisIndex == 0u ? 1 : 0, AxisIndex == 1u ? 1 : 0, AxisIndex == 2u ? 1 : 0);
+		uint PositiveBlocked = SelfBlocked | ReadFog3DCellBlocked(LocalCell + Step);
+		uint NegativeBlocked = SelfBlocked | ReadFog3DCellBlocked(LocalCell - Step);
+		Flags |= PositiveBlocked != 0u ? GetFog3DClosedFaceBit(AxisIndex, true) : 0u;
+		Flags |= NegativeBlocked != 0u ? GetFog3DClosedFaceBit(AxisIndex, false) : 0u;
+	}
+	FaceFlagsOut[MakeFog3DStorageTexel(LocalCell)] = Flags;
+}
+
+[numthreads(8, 8, 4)]
+void Fog3DCleanCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int3 LocalCell = int3(DispatchThreadId);
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return;
+	}
+
+	uint3 Texel = MakeFog3DStorageTexel(LocalCell);
+	uint Flags = FaceFlagsIn[Texel];
+	float FluidFlag = (Flags & Fog3DSelfBlockedBit) != 0u ? 0.0f : 1.0f;
+	float4 PreviousWind = WindIn[Texel];
+	bool bBecameFluid = FluidFlag > 0.5f && PreviousWind.w < 0.5f;
+	float3 Wind = SelectFog3DOpenFaceWind(LocalCell, Flags, PreviousWind.xyz);
+	if (!IsFog3DCellInNewBand(LocalCell) && !bBecameFluid)
+	{
+		WindOut[Texel] = float4(Wind, FluidFlag);
+		if (FluidFlag < 0.5f)
+		{
+			PressureOut[Texel] = 0.0f;
+		}
+		return;
+	}
+
+	WindOut[Texel] = float4(0.0f, 0.0f, 0.0f, FluidFlag);
+	DisplacementFillOut[Texel] = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	PressureOut[Texel] = 0.0f;
+}
+
+[numthreads(8, 8, 4)]
+void Fog3DOverrideCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int3 LocalCell = int3(DispatchThreadId);
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return;
+	}
+
+	uint3 Texel = MakeFog3DStorageTexel(LocalCell);
+	uint WindowOrderIndex = MakeFog3DWindowOrderIndex(LocalCell);
+	uint Flags = FaceFlagsIn[Texel];
+	float4 Wind = WindIn[Texel];
+	float4 DisplacementFill = DisplacementFillIn[Texel];
+	float3 NewWind = Wind.xyz;
+	if (HasWindOverride != 0u)
+	{
+		NewWind = SelectFog3DOpenFaceWind(LocalCell, Flags, WindOverride[WindowOrderIndex].xyz);
+	}
+
+	float4 NewDisplacementFill = DisplacementFill;
+	bool bIsFluid = (Flags & Fog3DSelfBlockedBit) == 0u;
+	if (HasFillOperation != 0u && bIsFluid)
+	{
+		uint Operation = FillOperation[WindowOrderIndex];
+		if (Operation == Fog3DFillOperationRest)
+		{
+			NewDisplacementFill = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		}
+		if (Operation == Fog3DFillOperationEmpty)
+		{
+			NewDisplacementFill = float4(0.0f, 0.0f, 0.0f, -1.0f);
+		}
+	}
+
+	WindOut[Texel] = float4(NewWind, Wind.w);
+	DisplacementFillOut[Texel] = NewDisplacementFill;
+}
+
+static const uint Fog3DPathIterationLimit = 24u;
+static const uint Fog3DAllFacesClosedFlags = 0x7Eu;
+static const uint Fog3DAllCornersMask = 0xFFu;
+static const float Fog3DNoCrossingTime = 2.0f;
+static const float Fog3DStillSegmentCm = 0.01f;
+static const float Fog3DDwellNodeLow = 0.11270166537925831f;
+static const float Fog3DDwellNodeMiddle = 0.5f;
+static const float Fog3DDwellNodeHigh = 0.88729833462074169f;
+static const float Fog3DDwellWeightSide = 0.27777777777777778f;
+static const float Fog3DDwellWeightMiddle = 0.44444444444444444f;
+static const float Fog3DSphereCullMarginCells = 2.0f;
+
+struct FTDFluidGpuFog3DCellResult
+{
+	float3 Wind;
+	float4 DisplacementFill;
+};
+
+float3 GetFog3DCellSpacingCm()
+{
+	return float3(CellSizeCm, CellSizeCm, LayerHeightCm);
+}
+
+bool IsFog3DCellFluid(float4 Wind)
+{
+	return Wind.w >= 0.5f;
+}
+
+void AccumulateFog3DFluidNeighborFill(int3 NeighborCell, inout float4 FillSum, inout float NeighborCount)
+{
+	if (!IsFog3DLocalCellInside(NeighborCell))
+	{
+		return;
+	}
+
+	uint3 NeighborTexel = MakeFog3DStorageTexel(NeighborCell);
+	if (!IsFog3DCellFluid(WindIn[NeighborTexel]))
+	{
+		return;
+	}
+
+	FillSum += DisplacementFillIn[NeighborTexel];
+	NeighborCount += 1.0f;
+}
+
+float4 ComputeFog3DBlockedCellDrawFill(int3 LocalCell)
+{
+	float4 FillSum = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float NeighborCount = 0.0f;
+	AccumulateFog3DFluidNeighborFill(LocalCell + int3(1, 0, 0), FillSum, NeighborCount);
+	AccumulateFog3DFluidNeighborFill(LocalCell - int3(1, 0, 0), FillSum, NeighborCount);
+	AccumulateFog3DFluidNeighborFill(LocalCell + int3(0, 1, 0), FillSum, NeighborCount);
+	AccumulateFog3DFluidNeighborFill(LocalCell - int3(0, 1, 0), FillSum, NeighborCount);
+	AccumulateFog3DFluidNeighborFill(LocalCell + int3(0, 0, 1), FillSum, NeighborCount);
+	AccumulateFog3DFluidNeighborFill(LocalCell - int3(0, 0, 1), FillSum, NeighborCount);
+	if (NeighborCount == 0.0f)
+	{
+		return float4(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+	return FillSum / NeighborCount;
+}
+
+void GetFog3DOverlapLocalCells(out int2 OverlapMin, out int2 OverlapMax)
+{
+	int2 PreviousWindowShift = PreviousWindowMinCell - WindowMinCell;
+	OverlapMin = max(PreviousWindowShift, int2(0, 0));
+	OverlapMax = min(PreviousWindowShift + Resolution - 1, int2(Resolution - 1, Resolution - 1));
+	if (any(OverlapMin > OverlapMax))
+	{
+		OverlapMin = int2(0, 0);
+		OverlapMax = int2(Resolution - 1, Resolution - 1);
+	}
+}
+
+float3 LimitFog3DMove(float3 MoveCm)
+{
+	float3 MoveSize = abs(MoveCm);
+	float Scale = 1.0f;
+	Scale = MoveSize.x > 0.0f ? min(Scale, MoveLimitCm.x / MoveSize.x) : Scale;
+	Scale = MoveSize.y > 0.0f ? min(Scale, MoveLimitCm.y / MoveSize.y) : Scale;
+	Scale = MoveSize.z > 0.0f ? min(Scale, MoveLimitCm.z / MoveSize.z) : Scale;
+	return MoveCm * Scale;
+}
+
+void GetFog3DOverlapBoundsCm(int3 LocalCell, out float3 LowCm, out float3 HighCm)
+{
+	int2 OverlapMin;
+	int2 OverlapMax;
+	GetFog3DOverlapLocalCells(OverlapMin, OverlapMax);
+	float3 Spacing = GetFog3DCellSpacingCm();
+	LowCm = float3(float2(OverlapMin - LocalCell.xy), float(-LocalCell.z)) * Spacing;
+	HighCm = float3(float2(OverlapMax - LocalCell.xy), float(TDFOG3D_LAYER_COUNT - 1 - LocalCell.z)) * Spacing;
+}
+
+int3 MakeFog3DAxisStep(uint AxisIndex)
+{
+	return int3(AxisIndex == 0u ? 1 : 0, AxisIndex == 1u ? 1 : 0, AxisIndex == 2u ? 1 : 0);
+}
+
+float PickFog3DAxis(float3 Value, uint AxisIndex)
+{
+	return AxisIndex == 0u ? Value.x : (AxisIndex == 1u ? Value.y : Value.z);
+}
+
+int PickFog3DAxisInt(int3 Value, uint AxisIndex)
+{
+	return AxisIndex == 0u ? Value.x : (AxisIndex == 1u ? Value.y : Value.z);
+}
+
+uint ReadFog3DPathFaceFlags(int3 PathCell)
+{
+	if (!IsFog3DLocalCellInside(PathCell))
+	{
+		return Fog3DAllFacesClosedFlags;
+	}
+	return FaceFlagsIn[MakeFog3DStorageTexel(PathCell)];
+}
+
+void BindFog3DPathAxisAtClosedFace(bool bIsFaceClosed, float TargetCm, float CenterCm, int Direction, inout float SampleCm, inout bool bIsBound)
+{
+	if (bIsBound || !bIsFaceClosed)
+	{
+		return;
+	}
+
+	bool bHasPassedCenter = (TargetCm - CenterCm) * float(Direction) > 0.0f;
+	SampleCm = bHasPassedCenter ? CenterCm : TargetCm;
+	bIsBound = true;
+}
+
+void PickFog3DEarlierCrossing(bool bIsBound, float EdgeCm, float TargetCm, int AxisIndex, inout float EarliestTime, inout int EarliestAxis)
+{
+	if (bIsBound || TargetCm == 0.0f)
+	{
+		return;
+	}
+
+	float CrossingTime = EdgeCm / TargetCm;
+	if (CrossingTime < EarliestTime)
+	{
+		EarliestTime = CrossingTime;
+		EarliestAxis = AxisIndex;
+	}
+}
+
+int3 FollowFog3DPath(int3 StartCell, float3 TargetCm, float3 StartCenterCm, out float3 SampleCm)
+{
+	float3 Spacing = GetFog3DCellSpacingCm();
+	int3 Direction = int3(sign(TargetCm));
+	bool bIsBoundX = Direction.x == 0;
+	bool bIsBoundY = Direction.y == 0;
+	bool bIsBoundZ = Direction.z == 0;
+	int3 EndOffset = int3(0, 0, 0);
+	SampleCm = TargetCm;
+
+	[loop]
+	for (uint Iteration = 0u; Iteration < Fog3DPathIterationLimit; ++Iteration)
+	{
+		int3 PathCell = StartCell + EndOffset;
+		uint PathFlags = ReadFog3DPathFaceFlags(PathCell);
+		float3 CenterCm = float3(EndOffset) * Spacing + StartCenterCm;
+		BindFog3DPathAxisAtClosedFace(IsFog3DFaceClosed(PathCell, PathFlags, 0u, Direction.x > 0), TargetCm.x, CenterCm.x, Direction.x, SampleCm.x, bIsBoundX);
+		BindFog3DPathAxisAtClosedFace(IsFog3DFaceClosed(PathCell, PathFlags, 1u, Direction.y > 0), TargetCm.y, CenterCm.y, Direction.y, SampleCm.y, bIsBoundY);
+		BindFog3DPathAxisAtClosedFace(IsFog3DFaceClosed(PathCell, PathFlags, 2u, Direction.z > 0), TargetCm.z, CenterCm.z, Direction.z, SampleCm.z, bIsBoundZ);
+
+		float3 EdgeCm = CenterCm + float3(Direction) * 0.5f * Spacing;
+		float EarliestTime = Fog3DNoCrossingTime;
+		int EarliestAxis = -1;
+		PickFog3DEarlierCrossing(bIsBoundX, EdgeCm.x, TargetCm.x, 0, EarliestTime, EarliestAxis);
+		PickFog3DEarlierCrossing(bIsBoundY, EdgeCm.y, TargetCm.y, 1, EarliestTime, EarliestAxis);
+		PickFog3DEarlierCrossing(bIsBoundZ, EdgeCm.z, TargetCm.z, 2, EarliestTime, EarliestAxis);
+		if (EarliestAxis < 0 || EarliestTime > 1.0f)
+		{
+			break;
+		}
+
+		EndOffset += select(int3(0, 1, 2) == EarliestAxis, Direction, int3(0, 0, 0));
+	}
+	return EndOffset;
+}
+
+void SplitFog3DSampleAxis(float SampleCm, float SpacingCm, int SelfCell, int BaseLimit, out int BaseCell, out float Weight)
+{
+	float CellsBelow = floor(SampleCm / SpacingCm);
+	CellsBelow = CellsBelow * SpacingCm > SampleCm ? CellsBelow - 1.0f : CellsBelow;
+	CellsBelow = (CellsBelow + 1.0f) * SpacingCm <= SampleCm ? CellsBelow + 1.0f : CellsBelow;
+	BaseCell = SelfCell + int(CellsBelow);
+	Weight = min((SampleCm - CellsBelow * SpacingCm) / SpacingCm, 1.0f);
+	if (BaseCell > BaseLimit)
+	{
+		BaseCell = BaseLimit;
+		Weight = 1.0f;
+	}
+	if (BaseCell < 0)
+	{
+		BaseCell = 0;
+		Weight = 0.0f;
+	}
+}
+
+uint IsFog3DCornerOpen(uint BlockedMask, uint EndCorner, uint CornerDifference)
+{
+	return ((~BlockedMask) >> (EndCorner ^ CornerDifference)) & 1u;
+}
+
+uint FindFog3DDisconnectedCorners(uint BlockedMask, int3 EndOffsetInBlock)
+{
+	if (any(EndOffsetInBlock < int3(0, 0, 0)) || any(EndOffsetInBlock > int3(1, 1, 1)))
+	{
+		return 0u;
+	}
+
+	uint EndCorner = uint(EndOffsetInBlock.x) * 4u + uint(EndOffsetInBlock.y) * 2u + uint(EndOffsetInBlock.z);
+	uint Open1 = IsFog3DCornerOpen(BlockedMask, EndCorner, 1u);
+	uint Open2 = IsFog3DCornerOpen(BlockedMask, EndCorner, 2u);
+	uint Open3 = IsFog3DCornerOpen(BlockedMask, EndCorner, 3u);
+	uint Open4 = IsFog3DCornerOpen(BlockedMask, EndCorner, 4u);
+	uint Open5 = IsFog3DCornerOpen(BlockedMask, EndCorner, 5u);
+	uint Open6 = IsFog3DCornerOpen(BlockedMask, EndCorner, 6u);
+	uint Open7 = IsFog3DCornerOpen(BlockedMask, EndCorner, 7u);
+	uint Reach1 = Open1;
+	uint Reach2 = Open2;
+	uint Reach4 = Open4;
+	uint Reach6 = Open6 & (Reach4 | Reach2);
+	uint Reach5 = Open5 & (Reach4 | Reach1);
+	uint Reach3 = Open3 & (Reach2 | Reach1);
+	uint Reach7 = Open7 & (Reach6 | Reach5 | Reach3);
+	Reach6 |= Open6 & Reach7;
+	Reach5 |= Open5 & Reach7;
+	Reach3 |= Open3 & Reach7;
+	uint ReachMask = (1u << EndCorner)
+		| (Reach1 << (EndCorner ^ 1u))
+		| (Reach2 << (EndCorner ^ 2u))
+		| (Reach3 << (EndCorner ^ 3u))
+		| (Reach4 << (EndCorner ^ 4u))
+		| (Reach5 << (EndCorner ^ 5u))
+		| (Reach6 << (EndCorner ^ 6u))
+		| (Reach7 << (EndCorner ^ 7u));
+	return ~ReachMask & ~BlockedMask & Fog3DAllCornersMask;
+}
+
+bool IsFog3DCornerInMask(uint Mask, uint Corner)
+{
+	return ((Mask >> Corner) & 1u) != 0u;
+}
+
+float SelectFog3DAxisWeight(uint Corner, uint AxisShift, float LowWeight, float HighWeight)
+{
+	return ((Corner >> AxisShift) & 1u) != 0u ? HighWeight : LowWeight;
+}
+
+FTDFluidGpuFog3DCellResult SampleFog3DEightCells(int3 LocalCell, int3 EndOffset, float3 SampleCm, float4 SelfDisplacementFill)
+{
+	float3 Spacing = GetFog3DCellSpacingCm();
+	int3 BaseCell;
+	float3 Weight;
+	SplitFog3DSampleAxis(SampleCm.x, Spacing.x, LocalCell.x, Resolution - 2, BaseCell.x, Weight.x);
+	SplitFog3DSampleAxis(SampleCm.y, Spacing.y, LocalCell.y, Resolution - 2, BaseCell.y, Weight.y);
+	SplitFog3DSampleAxis(SampleCm.z, Spacing.z, LocalCell.z, TDFOG3D_LAYER_COUNT - 2, BaseCell.z, Weight.z);
+
+	float4 CornerWind[8];
+	float4 CornerFill[8];
+	uint BlockedMask = 0u;
+	[unroll]
+	for (uint CornerIndex = 0u; CornerIndex < 8u; ++CornerIndex)
+	{
+		int3 CornerCell = BaseCell + int3(int((CornerIndex >> 2u) & 1u), int((CornerIndex >> 1u) & 1u), int(CornerIndex & 1u));
+		uint3 CornerTexel = MakeFog3DStorageTexel(CornerCell);
+		CornerWind[CornerIndex] = WindIn[CornerTexel];
+		CornerFill[CornerIndex] = DisplacementFillIn[CornerTexel];
+		BlockedMask |= IsFog3DCellFluid(CornerWind[CornerIndex]) ? 0u : (1u << CornerIndex);
+	}
+
+	uint DisconnectedMask = FindFog3DDisconnectedCorners(BlockedMask, LocalCell + EndOffset - BaseCell);
+	float3 WindValue[8];
+	float4 FillValue[8];
+	[unroll]
+	for (uint ValueIndex = 0u; ValueIndex < 8u; ++ValueIndex)
+	{
+		WindValue[ValueIndex] = IsFog3DCornerInMask(DisconnectedMask, ValueIndex) ? float3(0.0f, 0.0f, 0.0f) : CornerWind[ValueIndex].xyz;
+		FillValue[ValueIndex] = IsFog3DCornerInMask(BlockedMask, ValueIndex) ? float4(0.0f, 0.0f, 0.0f, 0.0f) : CornerFill[ValueIndex];
+	}
+
+	float3 LowWeight = 1.0f - Weight;
+	float3 HeightBlend0 = WindValue[0] * LowWeight.z + WindValue[1] * Weight.z;
+	float3 HeightBlend1 = WindValue[2] * LowWeight.z + WindValue[3] * Weight.z;
+	float3 HeightBlend2 = WindValue[4] * LowWeight.z + WindValue[5] * Weight.z;
+	float3 HeightBlend3 = WindValue[6] * LowWeight.z + WindValue[7] * Weight.z;
+	float3 DepthBlend0 = HeightBlend0 * LowWeight.y + HeightBlend1 * Weight.y;
+	float3 DepthBlend1 = HeightBlend2 * LowWeight.y + HeightBlend3 * Weight.y;
+
+	FTDFluidGpuFog3DCellResult Result;
+	Result.Wind = DepthBlend0 * LowWeight.x + DepthBlend1 * Weight.x;
+
+	if (BlockedMask == Fog3DAllCornersMask)
+	{
+		Result.DisplacementFill = SelfDisplacementFill;
+		return Result;
+	}
+
+	float CornerWeight[8];
+	[unroll]
+	for (uint WeightIndex = 0u; WeightIndex < 8u; ++WeightIndex)
+	{
+		CornerWeight[WeightIndex] = SelectFog3DAxisWeight(WeightIndex, 2u, LowWeight.x, Weight.x)
+			* SelectFog3DAxisWeight(WeightIndex, 1u, LowWeight.y, Weight.y)
+			* SelectFog3DAxisWeight(WeightIndex, 0u, LowWeight.z, Weight.z);
+	}
+
+	uint ExcludedMask = BlockedMask | DisconnectedMask;
+	if (ExcludedMask != 0u)
+	{
+		float KeptWeightTotal = 0.0f;
+		[unroll]
+		for (uint KeptIndex = 0u; KeptIndex < 8u; ++KeptIndex)
+		{
+			KeptWeightTotal += IsFog3DCornerInMask(ExcludedMask, KeptIndex) ? 0.0f : CornerWeight[KeptIndex];
+		}
+		if (KeptWeightTotal > 0.0f)
+		{
+			[unroll]
+			for (uint SplitIndex = 0u; SplitIndex < 8u; ++SplitIndex)
+			{
+				CornerWeight[SplitIndex] = IsFog3DCornerInMask(ExcludedMask, SplitIndex) ? 0.0f : CornerWeight[SplitIndex] / KeptWeightTotal;
+			}
+		}
+	}
+
+	float4 FillSum = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	[unroll]
+	for (uint SumIndex = 0u; SumIndex < 8u; ++SumIndex)
+	{
+		FillSum += CornerWeight[SumIndex] * FillValue[SumIndex];
+	}
+	Result.DisplacementFill = FillSum;
+	return Result;
+}
+
+float ReadFog3DWindComponent(int3 LocalCell, uint AxisIndex)
+{
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return 0.0f;
+	}
+	return PickFog3DAxis(WindIn[MakeFog3DStorageTexel(LocalCell)].xyz, AxisIndex);
+}
+
+float BlendFog3DHalves(float LowValue, float HighValue)
+{
+	return LowValue * 0.5f + HighValue * 0.5f;
+}
+
+float3 ComputeFog3DCenterWind(int3 LocalCell, float3 SelfWind)
+{
+	float3 WestWind = float3(ReadFog3DWestWind(LocalCell, 0u), ReadFog3DWestWind(LocalCell, 1u), ReadFog3DWestWind(LocalCell, 2u));
+	return 0.5f * (SelfWind + WestWind);
+}
+
+float ComputeFog3DFaceWindComponent(int3 LocalCell, uint FaceAxis, uint WindAxis, bool bIsFaceClamped)
+{
+	int3 WindStep = MakeFog3DAxisStep(WindAxis);
+	float SelfValue = ReadFog3DWindComponent(LocalCell, WindAxis);
+	float BehindValue = ReadFog3DWindComponent(LocalCell - WindStep, WindAxis);
+	if (WindAxis == FaceAxis)
+	{
+		return bIsFaceClamped ? BlendFog3DHalves(BehindValue, SelfValue) : SelfValue;
+	}
+
+	if (bIsFaceClamped)
+	{
+		return BlendFog3DHalves(BehindValue, SelfValue);
+	}
+
+	int3 FaceStep = MakeFog3DAxisStep(FaceAxis);
+	float AheadValue = ReadFog3DWindComponent(LocalCell + FaceStep, WindAxis);
+	float AheadBehindValue = ReadFog3DWindComponent(LocalCell + FaceStep - WindStep, WindAxis);
+	if (WindAxis > FaceAxis)
+	{
+		return BlendFog3DHalves(BlendFog3DHalves(BehindValue, SelfValue), BlendFog3DHalves(AheadBehindValue, AheadValue));
+	}
+	return BlendFog3DHalves(BlendFog3DHalves(BehindValue, AheadBehindValue), BlendFog3DHalves(SelfValue, AheadValue));
+}
+
+float3 ComputeFog3DFaceWind(int3 LocalCell, uint FaceAxis, bool bIsFaceClamped)
+{
+	return float3(
+		ComputeFog3DFaceWindComponent(LocalCell, FaceAxis, 0u, bIsFaceClamped),
+		ComputeFog3DFaceWindComponent(LocalCell, FaceAxis, 1u, bIsFaceClamped),
+		ComputeFog3DFaceWindComponent(LocalCell, FaceAxis, 2u, bIsFaceClamped));
+}
+
+uint ReadFog3DBlockedCornerMask(int3 BaseCell)
+{
+	uint BlockedMask = 0u;
+	[unroll]
+	for (uint CornerIndex = 0u; CornerIndex < 8u; ++CornerIndex)
+	{
+		int3 CornerCell = BaseCell + int3(int((CornerIndex >> 2u) & 1u), int((CornerIndex >> 1u) & 1u), int(CornerIndex & 1u));
+		BlockedMask |= IsFog3DCellFluid(WindIn[MakeFog3DStorageTexel(CornerCell)]) ? 0u : (1u << CornerIndex);
+	}
+	return BlockedMask;
+}
+
+float SampleFog3DFaceNodes(int3 LocalCell, uint FaceAxis, int3 EndCell, float3 SampleCm)
+{
+	float3 Spacing = GetFog3DCellSpacingCm();
+	int3 FaceStep = MakeFog3DAxisStep(FaceAxis);
+	bool3 IsFaceAxis = FaceStep != int3(0, 0, 0);
+	float3 CellSampleCm = SampleCm + float3(FaceStep) * Spacing * 0.5f;
+
+	int3 BaseCell;
+	float3 CellWeight;
+	SplitFog3DSampleAxis(CellSampleCm.x, Spacing.x, LocalCell.x, Resolution - 2, BaseCell.x, CellWeight.x);
+	SplitFog3DSampleAxis(CellSampleCm.y, Spacing.y, LocalCell.y, Resolution - 2, BaseCell.y, CellWeight.y);
+	SplitFog3DSampleAxis(CellSampleCm.z, Spacing.z, LocalCell.z, TDFOG3D_LAYER_COUNT - 2, BaseCell.z, CellWeight.z);
+
+	int FaceCellCount = FaceAxis == 2u ? TDFOG3D_LAYER_COUNT : Resolution;
+	int FaceNodeBase;
+	float FaceWeight;
+	SplitFog3DSampleAxis(PickFog3DAxis(SampleCm, FaceAxis), PickFog3DAxis(Spacing, FaceAxis), PickFog3DAxisInt(LocalCell, FaceAxis) + 1, FaceCellCount - 1, FaceNodeBase, FaceWeight);
+	float3 Weight = select(IsFaceAxis, float3(FaceWeight, FaceWeight, FaceWeight), CellWeight);
+
+	uint BlockedMask = ReadFog3DBlockedCornerMask(BaseCell);
+	uint DisconnectedMask = FindFog3DDisconnectedCorners(BlockedMask, EndCell - BaseCell);
+	int FaceBlockBase = PickFog3DAxisInt(BaseCell, FaceAxis);
+
+	float NodeValue[8];
+	[unroll]
+	for (uint NodeIndex = 0u; NodeIndex < 8u; ++NodeIndex)
+	{
+		int3 NodeOffset = int3(int((NodeIndex >> 2u) & 1u), int((NodeIndex >> 1u) & 1u), int(NodeIndex & 1u));
+		int Node = FaceNodeBase + PickFog3DAxisInt(NodeOffset, FaceAxis);
+		int3 ValueCell = select(IsFaceAxis, int3(Node - 1, Node - 1, Node - 1), BaseCell + NodeOffset);
+		bool bIsNodeCellInBlock = Node >= FaceBlockBase && Node <= FaceBlockBase + 1 && Node <= FaceCellCount - 1;
+		int BlockAxisOffset = clamp((bIsNodeCellInBlock ? Node : Node - 1) - FaceBlockBase, 0, 1);
+		int3 BlockOffset = select(IsFaceAxis, int3(BlockAxisOffset, BlockAxisOffset, BlockAxisOffset), NodeOffset);
+		uint BlockCorner = uint(BlockOffset.x * 4 + BlockOffset.y * 2 + BlockOffset.z);
+		float Value = ReadFog3DWindComponent(ValueCell, FaceAxis);
+		NodeValue[NodeIndex] = IsFog3DCornerInMask(DisconnectedMask, BlockCorner) ? 0.0f : Value;
+	}
+
+	float3 LowWeight = 1.0f - Weight;
+	float HeightBlend0 = NodeValue[0] * LowWeight.z + NodeValue[1] * Weight.z;
+	float HeightBlend1 = NodeValue[2] * LowWeight.z + NodeValue[3] * Weight.z;
+	float HeightBlend2 = NodeValue[4] * LowWeight.z + NodeValue[5] * Weight.z;
+	float HeightBlend3 = NodeValue[6] * LowWeight.z + NodeValue[7] * Weight.z;
+	float DepthBlend0 = HeightBlend0 * LowWeight.y + HeightBlend1 * Weight.y;
+	float DepthBlend1 = HeightBlend2 * LowWeight.y + HeightBlend3 * Weight.y;
+	return DepthBlend0 * LowWeight.x + DepthBlend1 * Weight.x;
+}
+
+float AdvectFog3DFaceWind(int3 LocalCell, uint Flags, uint FaceAxis, float3 LowCm, float3 HighCm)
+{
+	if (IsFog3DFaceClosed(LocalCell, Flags, FaceAxis, true))
+	{
+		return 0.0f;
+	}
+
+	float3 Spacing = GetFog3DCellSpacingCm();
+	int3 FaceStep = MakeFog3DAxisStep(FaceAxis);
+	bool bIsFaceClamped = PickFog3DAxis(HighCm, FaceAxis) <= 0.0f;
+	float3 FaceWind = ComputeFog3DFaceWind(LocalCell, FaceAxis, bIsFaceClamped);
+	float3 FaceOffsetCm = float3(FaceStep) * Spacing * 0.5f;
+	float3 TargetCm = min(max(LimitFog3DMove(-FaceWind * DeltaSeconds), LowCm - FaceOffsetCm), HighCm - FaceOffsetCm);
+	int StartShift = PickFog3DAxis(TargetCm, FaceAxis) > 0.0f ? 1 : 0;
+	int3 StartCell = LocalCell + FaceStep * StartShift;
+	float3 StartCenterCm = float3(FaceStep) * Spacing * (float(StartShift) - 0.5f);
+	float3 SampleCm;
+	int3 EndCell = StartCell + FollowFog3DPath(StartCell, TargetCm, StartCenterCm, SampleCm);
+	return SampleFog3DFaceNodes(LocalCell, FaceAxis, EndCell, SampleCm);
+}
+
+float IntegrateFog3DBrushProfile(float Area, float Height)
+{
+	float HeightCubed = Height * Height * Height;
+	return Area * Area * Height - (2.0f / 3.0f) * Area * HeightCubed + HeightCubed * Height * Height / 5.0f;
+}
+
+float ComputeFog3DLayerBrushWeight(float3 OffsetCm, float RadiusCm)
+{
+	float Area = 1.0f - (OffsetCm.x * OffsetCm.x + OffsetCm.y * OffsetCm.y) / (RadiusCm * RadiusCm);
+	if (!(Area > 0.0f))
+	{
+		return 0.0f;
+	}
+
+	float AreaRoot = sqrt(Area);
+	float HalfLayerCm = LayerHeightCm * 0.5f;
+	float LowerHeight = max((OffsetCm.z - HalfLayerCm) / RadiusCm, -AreaRoot);
+	float UpperHeight = min((OffsetCm.z + HalfLayerCm) / RadiusCm, AreaRoot);
+	if (!(UpperHeight > LowerHeight))
+	{
+		return 0.0f;
+	}
+	return (RadiusCm / LayerHeightCm) * (IntegrateFog3DBrushProfile(Area, UpperHeight) - IntegrateFog3DBrushProfile(Area, LowerHeight));
+}
+
+float ComputeFog3DSweptBrushWeight(float3 PositionCm, FTDFluidGpuFog3DSphere Sphere)
+{
+	float3 StartCm = Sphere.StartCmRadiusCm.xyz;
+	float3 SegmentCm = Sphere.EndCmWindStrength.xyz - StartCm;
+	float3 OffsetCm = PositionCm - StartCm;
+	float SegmentLengthSquared = dot(SegmentCm, SegmentCm);
+	if (SegmentLengthSquared > 0.0f)
+	{
+		float Along = saturate(dot(OffsetCm, SegmentCm) / SegmentLengthSquared);
+		OffsetCm -= Along * SegmentCm;
+	}
+	return ComputeFog3DLayerBrushWeight(OffsetCm, Sphere.StartCmRadiusCm.w);
+}
+
+float ComputeFog3DDwellAmount(float3 CellCenterCm, FTDFluidGpuFog3DSphere Sphere)
+{
+	float3 StartCm = Sphere.StartCmRadiusCm.xyz;
+	float RadiusCm = Sphere.StartCmRadiusCm.w;
+	float3 SegmentCm = Sphere.EndCmWindStrength.xyz - StartCm;
+	if (sqrt(dot(SegmentCm, SegmentCm)) < Fog3DStillSegmentCm)
+	{
+		return DeltaSeconds * ComputeFog3DLayerBrushWeight(CellCenterCm - StartCm, RadiusCm);
+	}
+
+	float2 HorizontalSegmentCm = SegmentCm.xy;
+	float2 HorizontalOffsetCm = CellCenterCm.xy - StartCm.xy;
+	float OffsetSquared = dot(HorizontalOffsetCm, HorizontalOffsetCm);
+	float HorizontalLengthSquared = dot(HorizontalSegmentCm, HorizontalSegmentCm);
+	float RadiusSquared = RadiusCm * RadiusCm;
+	float EnterTime = 0.0f;
+	float LeaveTime = 1.0f;
+	if (sqrt(HorizontalLengthSquared) < Fog3DStillSegmentCm)
+	{
+		if (!(OffsetSquared < RadiusSquared))
+		{
+			return 0.0f;
+		}
+	}
+	else
+	{
+		float Projection = dot(HorizontalOffsetCm, HorizontalSegmentCm);
+		float Discriminant = Projection * Projection - HorizontalLengthSquared * (OffsetSquared - RadiusSquared);
+		if (!(Discriminant > 0.0f))
+		{
+			return 0.0f;
+		}
+		float DiscriminantRoot = sqrt(Discriminant);
+		EnterTime = saturate((Projection - DiscriminantRoot) / HorizontalLengthSquared);
+		LeaveTime = saturate((Projection + DiscriminantRoot) / HorizontalLengthSquared);
+		if (!(LeaveTime > EnterTime))
+		{
+			return 0.0f;
+		}
+	}
+
+	float Span = LeaveTime - EnterTime;
+	float WeightedSum = 0.0f;
+	WeightedSum += Fog3DDwellWeightSide * ComputeFog3DLayerBrushWeight(CellCenterCm - (StartCm + (EnterTime + Span * Fog3DDwellNodeLow) * SegmentCm), RadiusCm);
+	WeightedSum += Fog3DDwellWeightMiddle * ComputeFog3DLayerBrushWeight(CellCenterCm - (StartCm + (EnterTime + Span * Fog3DDwellNodeMiddle) * SegmentCm), RadiusCm);
+	WeightedSum += Fog3DDwellWeightSide * ComputeFog3DLayerBrushWeight(CellCenterCm - (StartCm + (EnterTime + Span * Fog3DDwellNodeHigh) * SegmentCm), RadiusCm);
+	return DeltaSeconds * Span * WeightedSum;
+}
+
+bool IsFog3DCellNearSphere(float3 CellCenterCm, FTDFluidGpuFog3DSphere Sphere)
+{
+	float MarginCm = Sphere.StartCmRadiusCm.w + CellSizeCm * Fog3DSphereCullMarginCells;
+	float2 LowCm = min(Sphere.StartCmRadiusCm.xy, Sphere.EndCmWindStrength.xy) - MarginCm;
+	float2 HighCm = max(Sphere.StartCmRadiusCm.xy, Sphere.EndCmWindStrength.xy) + MarginCm;
+	return all(CellCenterCm.xy >= LowCm) && all(CellCenterCm.xy <= HighCm);
+}
+
+float ComputeFog3DLogOnePlus(float Value)
+{
+	float OnePlusValue = 1.0f + Value;
+	if (OnePlusValue == 1.0f)
+	{
+		return Value;
+	}
+	return log(OnePlusValue) * Value / (OnePlusValue - 1.0f);
+}
+
+float ComputeFog3DExpMinusOne(float Value)
+{
+	float ExpValue = exp(Value);
+	if (ExpValue == 1.0f)
+	{
+		return Value;
+	}
+	float ExpValueMinusOne = ExpValue - 1.0f;
+	if (ExpValueMinusOne == -1.0f)
+	{
+		return -1.0f;
+	}
+	return ExpValueMinusOne * Value / log(ExpValue);
+}
+
+float ComputeFog3DClampedTimeBlendFactor(float WeightStrength)
+{
+	float ClampedFactor = min(WeightStrength, 1.0f);
+	if (WindBlendIsUnitStep != 0u || ClampedFactor >= 1.0f)
+	{
+		return ClampedFactor;
+	}
+	return -ComputeFog3DExpMinusOne(WindBlendStepRepeat * ComputeFog3DLogOnePlus(-ClampedFactor));
+}
+
+float BlendFog3DFaceWind(float FaceWind, float BrushWeight, float SphereWindComponent, float WindStrength)
+{
+	if (!(BrushWeight > 0.0f))
+	{
+		return FaceWind;
+	}
+	if (ClampedTimeWindBlend == 0u)
+	{
+		return FaceWind + (SphereWindComponent - FaceWind) * (BrushWeight * WindStrength);
+	}
+	return FaceWind + (SphereWindComponent - FaceWind) * ComputeFog3DClampedTimeBlendFactor(BrushWeight * WindStrength);
+}
+
+static const uint Fog3DSampleCenter = 0u;
+static const uint Fog3DSampleEastFace = 1u;
+static const uint Fog3DSampleNorthFace = 2u;
+static const uint Fog3DSampleTopFace = 3u;
+
+float3 GetFog3DSampleLocalPositionCm(int3 LocalCell, uint SampleKind)
+{
+	float3 CellCenterCm = GetFog3DCellCenterCm(LocalCell);
+	float HalfCellCm = CellSizeCm * 0.5f;
+	float HalfLayerCm = LayerHeightCm * 0.5f;
+	if (SampleKind == Fog3DSampleEastFace)
+	{
+		return CellCenterCm + float3(HalfCellCm, 0.0f, 0.0f);
+	}
+	if (SampleKind == Fog3DSampleNorthFace)
+	{
+		return CellCenterCm + float3(0.0f, HalfCellCm, 0.0f);
+	}
+	if (SampleKind == Fog3DSampleTopFace)
+	{
+		return CellCenterCm + float3(0.0f, 0.0f, HalfLayerCm);
+	}
+	return CellCenterCm;
+}
+
+float GetFog3DSampleGroundHeightCm(int3 LocalCell, uint SampleKind)
+{
+	float ColumnHeightCm = ReadFog3DColumnTerrain(LocalCell.xy).x;
+	if (SampleKind == Fog3DSampleEastFace)
+	{
+		return 0.5f * (ColumnHeightCm + ReadFog3DColumnTerrain(LocalCell.xy + int2(1, 0)).x);
+	}
+	if (SampleKind == Fog3DSampleNorthFace)
+	{
+		return 0.5f * (ColumnHeightCm + ReadFog3DColumnTerrain(LocalCell.xy + int2(0, 1)).x);
+	}
+	return ColumnHeightCm;
+}
+
+float3 GetFog3DSampleWorldPositionCm(int3 LocalCell, uint SampleKind)
+{
+	float3 PositionCm = GetFog3DSampleLocalPositionCm(LocalCell, SampleKind);
+	if (GroundFollow != 0u)
+	{
+		PositionCm.z = GetFog3DSampleGroundHeightCm(LocalCell, SampleKind) + PositionCm.z;
+	}
+	return PositionCm;
+}
+
+float2 ReadFog3DSampleColumnSlope(int3 LocalCell)
+{
+	if (GroundFollow == 0u)
+	{
+		return float2(0.0f, 0.0f);
+	}
+	return ReadFog3DColumnTerrain(LocalCell.xy).yz;
+}
+
+float TiltFog3DHeightCm(float3 PositionCm, float4 MidpointCmFrameSlope)
+{
+	return PositionCm.z - MidpointCmFrameSlope.z * (PositionCm.x - MidpointCmFrameSlope.x) - MidpointCmFrameSlope.w * (PositionCm.y - MidpointCmFrameSlope.y);
+}
+
+FTDFluidGpuFog3DSphereFrame LoadFog3DSphereFrame(uint SphereIndex)
+{
+	FTDFluidGpuFog3DSphereFrame Frame = (FTDFluidGpuFog3DSphereFrame)0;
+	if (GroundFollow != 0u)
+	{
+		Frame = SphereFrames[SphereIndex];
+	}
+	return Frame;
+}
+
+FTDFluidGpuFog3DSphere MakeFog3DFramedSphere(FTDFluidGpuFog3DSphere Sphere, FTDFluidGpuFog3DSphereFrame Frame)
+{
+	if (GroundFollow == 0u)
+	{
+		return Sphere;
+	}
+	Sphere.StartCmRadiusCm.xyz = Frame.TiltedStartCmReferenceHeightCm.xyz;
+	Sphere.EndCmWindStrength.xyz = Frame.TiltedEndCm.xyz;
+	return Sphere;
+}
+
+float3 TiltFog3DSamplePositionCm(float3 WorldPositionCm, FTDFluidGpuFog3DSphereFrame Frame)
+{
+	if (GroundFollow == 0u)
+	{
+		return WorldPositionCm;
+	}
+	return float3(WorldPositionCm.xy, TiltFog3DHeightCm(WorldPositionCm, Frame.MidpointCmFrameSlope));
+}
+
+float ComputeFog3DTopWindTarget(float3 VelocityCmPerSec, float2 ColumnSlope)
+{
+	if (GroundFollow == 0u)
+	{
+		return VelocityCmPerSec.z;
+	}
+	return VelocityCmPerSec.z - VelocityCmPerSec.x * ColumnSlope.x - VelocityCmPerSec.y * ColumnSlope.y;
+}
+
+float ComputeFog3DTiltShare(int3 LocalCell, uint SampleKind, float2 SampleCm, FTDFluidGpuFog3DSphereFrame Frame)
+{
+	if (GroundFollow == 0u)
+	{
+		return 1.0f;
+	}
+	float2 FrameSlope = Frame.MidpointCmFrameSlope.zw;
+	if (FrameSlope.x == 0.0f && FrameSlope.y == 0.0f)
+	{
+		return 1.0f;
+	}
+	float2 FromReferenceCm = SampleCm - Frame.ReferenceColumnCm.xy;
+	float DeviationCm = GetFog3DSampleGroundHeightCm(LocalCell, SampleKind) - Frame.TiltedStartCmReferenceHeightCm.w - FrameSlope.x * FromReferenceCm.x - FrameSlope.y * FromReferenceCm.y;
+	return saturate((2.0f * GroundWallStepCm - abs(DeviationCm)) / GroundWallStepCm);
+}
+
+float MixFog3DFrameValues(float Share, float TiltedValue, float WorldValue)
+{
+	return Share * TiltedValue + (1.0f - Share) * WorldValue;
+}
+
+float ComputeFog3DFramedBrushWeight(int3 LocalCell, uint SampleKind, float3 WorldPositionCm, FTDFluidGpuFog3DSphere Sphere, FTDFluidGpuFog3DSphereFrame Frame)
+{
+	float Share = ComputeFog3DTiltShare(LocalCell, SampleKind, WorldPositionCm.xy, Frame);
+	if (!(Share > 0.0f))
+	{
+		return ComputeFog3DSweptBrushWeight(WorldPositionCm, Sphere);
+	}
+	float TiltedWeight = ComputeFog3DSweptBrushWeight(TiltFog3DSamplePositionCm(WorldPositionCm, Frame), MakeFog3DFramedSphere(Sphere, Frame));
+	if (Share >= 1.0f)
+	{
+		return TiltedWeight;
+	}
+	return MixFog3DFrameValues(Share, TiltedWeight, ComputeFog3DSweptBrushWeight(WorldPositionCm, Sphere));
+}
+
+float ComputeFog3DFramedDwellAmount(int3 LocalCell, float3 CellWorldCm, FTDFluidGpuFog3DSphere Sphere, FTDFluidGpuFog3DSphereFrame Frame)
+{
+	float Share = ComputeFog3DTiltShare(LocalCell, Fog3DSampleCenter, CellWorldCm.xy, Frame);
+	if (!(Share > 0.0f))
+	{
+		return ComputeFog3DDwellAmount(CellWorldCm, Sphere);
+	}
+	float TiltedAmount = ComputeFog3DDwellAmount(TiltFog3DSamplePositionCm(CellWorldCm, Frame), MakeFog3DFramedSphere(Sphere, Frame));
+	if (Share >= 1.0f)
+	{
+		return TiltedAmount;
+	}
+	return MixFog3DFrameValues(Share, TiltedAmount, ComputeFog3DDwellAmount(CellWorldCm, Sphere));
+}
+
+#if TDFOG3D_INPUT_OCCLUSION
+StructuredBuffer<uint> InputReachIn;
+
+uint ReadFog3DReachedSphereBits(int3 LocalCell)
+{
+	return InputReachIn[MakeFog3DWindowOrderIndex(LocalCell)];
+}
+
+bool IsFog3DSphereReached(uint ReachedSphereBits, uint SphereIndex)
+{
+	return (ReachedSphereBits & (1u << SphereIndex)) != 0u;
+}
+
+#endif
+float3 BlendFog3DSphereWind(int3 LocalCell, float3 Wind)
+{
+	float3 CellCenterCm = GetFog3DCellCenterCm(LocalCell);
+	float3 EastFaceCm = GetFog3DSampleWorldPositionCm(LocalCell, Fog3DSampleEastFace);
+	float3 NorthFaceCm = GetFog3DSampleWorldPositionCm(LocalCell, Fog3DSampleNorthFace);
+	float3 TopFaceCm = GetFog3DSampleWorldPositionCm(LocalCell, Fog3DSampleTopFace);
+	float2 ColumnSlope = ReadFog3DSampleColumnSlope(LocalCell);
+#if TDFOG3D_INPUT_OCCLUSION
+	uint ReachedSphereBits = ReadFog3DReachedSphereBits(LocalCell);
+#endif
+	for (uint SphereIndex = 0u; SphereIndex < SphereCount; ++SphereIndex)
+	{
+		FTDFluidGpuFog3DSphere Sphere = Spheres[SphereIndex];
+		if (!IsFog3DCellNearSphere(CellCenterCm, Sphere))
+		{
+			continue;
+		}
+#if TDFOG3D_INPUT_OCCLUSION
+		if (!IsFog3DSphereReached(ReachedSphereBits, SphereIndex))
+		{
+			continue;
+		}
+#endif
+		FTDFluidGpuFog3DSphereFrame Frame = LoadFog3DSphereFrame(SphereIndex);
+		float3 VelocityCmPerSec = Sphere.VelocityCmPerSecErosionPerSec.xyz;
+		float WindStrength = Sphere.EndCmWindStrength.w;
+		Wind.x = BlendFog3DFaceWind(Wind.x, ComputeFog3DFramedBrushWeight(LocalCell, Fog3DSampleEastFace, EastFaceCm, Sphere, Frame), VelocityCmPerSec.x, WindStrength);
+		Wind.y = BlendFog3DFaceWind(Wind.y, ComputeFog3DFramedBrushWeight(LocalCell, Fog3DSampleNorthFace, NorthFaceCm, Sphere, Frame), VelocityCmPerSec.y, WindStrength);
+		Wind.z = BlendFog3DFaceWind(Wind.z, ComputeFog3DFramedBrushWeight(LocalCell, Fog3DSampleTopFace, TopFaceCm, Sphere, Frame), ComputeFog3DTopWindTarget(VelocityCmPerSec, ColumnSlope), WindStrength);
+	}
+	return Wind;
+}
+
+float ErodeFog3DFill(int3 LocalCell, float Fill)
+{
+	float3 CellCenterCm = GetFog3DCellCenterCm(LocalCell);
+	float3 CellWorldCm = GetFog3DSampleWorldPositionCm(LocalCell, Fog3DSampleCenter);
+	float Erosion = 0.0f;
+#if TDFOG3D_INPUT_OCCLUSION
+	uint ReachedSphereBits = ReadFog3DReachedSphereBits(LocalCell);
+#endif
+	for (uint SphereIndex = 0u; SphereIndex < SphereCount; ++SphereIndex)
+	{
+		FTDFluidGpuFog3DSphere Sphere = Spheres[SphereIndex];
+		float ErosionPerSec = Sphere.VelocityCmPerSecErosionPerSec.w;
+		if (!(ErosionPerSec > 0.0f) || !IsFog3DCellNearSphere(CellCenterCm, Sphere))
+		{
+			continue;
+		}
+#if TDFOG3D_INPUT_OCCLUSION
+		if (!IsFog3DSphereReached(ReachedSphereBits, SphereIndex))
+		{
+			continue;
+		}
+#endif
+		FTDFluidGpuFog3DSphereFrame Frame = LoadFog3DSphereFrame(SphereIndex);
+		Erosion += ErosionPerSec * ComputeFog3DFramedDwellAmount(LocalCell, CellWorldCm, Sphere, Frame);
+	}
+	if (!(Erosion > 0.0f))
+	{
+		return Fill;
+	}
+	return max(0.0f, 1.0f + Fill) * exp(-Erosion) - 1.0f;
+}
+
+FTDFluidGpuFog3DCellResult AdvectFog3DOverlapCell(int3 LocalCell, uint Flags, float4 Wind, float4 DisplacementFill)
+{
+	float3 LowCm;
+	float3 HighCm;
+	GetFog3DOverlapBoundsCm(LocalCell, LowCm, HighCm);
+	float3 CenterWind = ComputeFog3DCenterWind(LocalCell, Wind.xyz);
+	float3 TargetCm = min(max(LimitFog3DMove(-CenterWind * DeltaSeconds), LowCm), HighCm);
+	float3 SampleCm;
+	int3 EndOffset = FollowFog3DPath(LocalCell, TargetCm, float3(0.0f, 0.0f, 0.0f), SampleCm);
+	float4 SampledFill = SampleFog3DEightCells(LocalCell, EndOffset, SampleCm, DisplacementFill).DisplacementFill;
+	float3 NewWind = float3(
+		AdvectFog3DFaceWind(LocalCell, Flags, 0u, LowCm, HighCm),
+		AdvectFog3DFaceWind(LocalCell, Flags, 1u, LowCm, HighCm),
+		AdvectFog3DFaceWind(LocalCell, Flags, 2u, LowCm, HighCm));
+
+	float EdgeBandFactor = GetFog3DEdgeBandFactor(LocalCell);
+	float3 DisplacementRefill = float3(DisplacementRefillFactorHorizontal, DisplacementRefillFactorHorizontal, DisplacementRefillFactorVertical);
+	FTDFluidGpuFog3DCellResult Result;
+	Result.Wind = NewWind * WindRefillFactor * EdgeBandFactor;
+	Result.DisplacementFill.xyz = (SampledFill.xyz - SampleCm) * DisplacementRefill * EdgeBandFactor;
+	Result.DisplacementFill.w = SampledFill.w * FillRefillFactor * EdgeBandFactor;
+	return Result;
+}
+
+FTDFluidGpuFog3DCellResult AdvectFog3DFluidCell(int3 LocalCell, uint Flags, float4 Wind, float4 DisplacementFill)
+{
+	FTDFluidGpuFog3DCellResult Result;
+	Result.Wind = float3(0.0f, 0.0f, 0.0f);
+	Result.DisplacementFill = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	if (!IsFog3DCellInNewBand(LocalCell))
+	{
+		Result = AdvectFog3DOverlapCell(LocalCell, Flags, Wind, DisplacementFill);
+	}
+
+	Result.Wind = BlendFog3DSphereWind(LocalCell, Result.Wind);
+	Result.DisplacementFill.w = ErodeFog3DFill(LocalCell, Result.DisplacementFill.w);
+	return Result;
+}
+
+FTDFluidGpuFog3DCellResult RefillFog3DWindlessCell(int3 LocalCell, float4 DisplacementFill)
+{
+	FTDFluidGpuFog3DCellResult Result;
+	Result.Wind = float3(0.0f, 0.0f, 0.0f);
+	float Fill = IsFog3DCellInNewBand(LocalCell) ? 0.0f : DisplacementFill.w * FillRefillFactor;
+	Result.DisplacementFill = float4(0.0f, 0.0f, 0.0f, ErodeFog3DFill(LocalCell, Fill));
+	return Result;
+}
+
+float ClampFog3DToColumnCentersCm(float PositionCm)
+{
+	return clamp(PositionCm, 0.5f * CellSizeCm, (float(Resolution) - 0.5f) * CellSizeCm);
+}
+
+float2 SampleFog3DFrameSlope(float2 MidpointCm)
+{
+	float2 ClampedCm = float2(ClampFog3DToColumnCentersCm(MidpointCm.x), ClampFog3DToColumnCentersCm(MidpointCm.y));
+	float2 Fraction = (ClampedCm - 0.5f * CellSizeCm) / CellSizeCm;
+	int2 LowColumn = clamp(int2(floor(Fraction)), int2(0, 0), int2(Resolution - 2, Resolution - 2));
+	float2 Blend = Fraction - float2(LowColumn);
+	float2 Slope00 = ReadFog3DColumnTerrain(LowColumn).yz;
+	float2 Slope10 = ReadFog3DColumnTerrain(LowColumn + int2(1, 0)).yz;
+	float2 Slope01 = ReadFog3DColumnTerrain(LowColumn + int2(0, 1)).yz;
+	float2 Slope11 = ReadFog3DColumnTerrain(LowColumn + int2(1, 1)).yz;
+	return (Slope00 * (1.0f - Blend.x) + Slope10 * Blend.x) * (1.0f - Blend.y) + (Slope01 * (1.0f - Blend.x) + Slope11 * Blend.x) * Blend.y;
+}
+
+int2 FindFog3DReferenceColumn(float2 MidpointCm)
+{
+	int2 NearestColumn = int2(floor((MidpointCm - 0.5f * CellSizeCm) / CellSizeCm + 0.5f));
+	return clamp(NearestColumn, int2(0, 0), int2(Resolution - 1, Resolution - 1));
+}
+
+[numthreads(64, 1, 1)]
+void Fog3DInputFrameCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint SphereIndex = DispatchThreadId.x;
+	if (SphereIndex >= SphereCount)
+	{
+		return;
+	}
+
+	FTDFluidGpuFog3DSphere Sphere = Spheres[SphereIndex];
+	float3 StartCm = Sphere.StartCmRadiusCm.xyz;
+	float3 EndCm = Sphere.EndCmWindStrength.xyz;
+	float2 MidpointCm = 0.5f * (StartCm.xy + EndCm.xy);
+	float4 MidpointCmFrameSlope = float4(MidpointCm, SampleFog3DFrameSlope(MidpointCm));
+	int2 ReferenceColumn = FindFog3DReferenceColumn(MidpointCm);
+
+	FTDFluidGpuFog3DSphereFrame Frame;
+	Frame.TiltedStartCmReferenceHeightCm = float4(StartCm.xy, TiltFog3DHeightCm(StartCm, MidpointCmFrameSlope), ReadFog3DColumnTerrain(ReferenceColumn).x);
+	Frame.TiltedEndCm = float4(EndCm.xy, TiltFog3DHeightCm(EndCm, MidpointCmFrameSlope), 0.0f);
+	Frame.MidpointCmFrameSlope = MidpointCmFrameSlope;
+	Frame.ReferenceColumnCm = float4((float2(ReferenceColumn) + 0.5f) * CellSizeCm, 0.0f, 0.0f);
+	SphereFramesOut[SphereIndex] = Frame;
+}
+
+[numthreads(8, 8, 4)]
+void Fog3DAdvectCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int3 LocalCell = int3(DispatchThreadId);
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return;
+	}
+
+	uint3 Texel = MakeFog3DStorageTexel(LocalCell);
+	uint Flags = FaceFlagsIn[Texel];
+	float4 Wind = WindIn[Texel];
+	float4 DisplacementFill = DisplacementFillIn[Texel];
+	if ((Flags & Fog3DSelfBlockedBit) != 0u)
+	{
+		float4 DrawFill = ComputeFog3DBlockedCellDrawFill(LocalCell);
+		DrawFill.xyz = Mode == 1 ? float3(0.0f, 0.0f, 0.0f) : DrawFill.xyz;
+		WindOut[Texel] = float4(0.0f, 0.0f, 0.0f, Wind.w);
+		DisplacementFillOut[Texel] = DrawFill;
+		OutputVolume[uint3(LocalCell)] = DrawFill;
+		return;
+	}
+
+	FTDFluidGpuFog3DCellResult Result;
+	if (Mode == 1)
+	{
+		Result = RefillFog3DWindlessCell(LocalCell, DisplacementFill);
+	}
+	else
+	{
+		Result = AdvectFog3DFluidCell(LocalCell, Flags, Wind, DisplacementFill);
+	}
+	float3 NewWind = SelectFog3DOpenFaceWind(LocalCell, Flags, Result.Wind);
+	WindOut[Texel] = float4(NewWind, Wind.w);
+	DisplacementFillOut[Texel] = Result.DisplacementFill;
+	OutputVolume[uint3(LocalCell)] = Result.DisplacementFill;
+}
+
+[numthreads(8, 8, 4)]
+void Fog3DDivergenceCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int3 LocalCell = int3(DispatchThreadId);
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return;
+	}
+
+	uint3 Texel = MakeFog3DStorageTexel(LocalCell);
+	float4 Wind = WindIn[Texel];
+	float Divergence = 0.0f;
+	if (Wind.w >= 0.5f)
+	{
+		Divergence = (Wind.x - ReadFog3DWestWind(LocalCell, 0u)) / CellSizeCm
+			+ (Wind.y - ReadFog3DWestWind(LocalCell, 1u)) / CellSizeCm
+			+ (Wind.z - ReadFog3DWestWind(LocalCell, 2u)) / LayerHeightCm;
+	}
+	DivergenceOut[Texel] = Divergence;
+}
+
+[numthreads(8, 8, 4)]
+void Fog3DGradientCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int3 LocalCell = int3(DispatchThreadId);
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return;
+	}
+
+	uint3 Texel = MakeFog3DStorageTexel(LocalCell);
+	uint Flags = FaceFlagsIn[Texel];
+	float4 Wind = WindIn[Texel];
+	float3 NewWind = Wind.xyz;
+	if (AppliesPressureGradient != 0u)
+	{
+		float CellPressure = PressureIn[Texel];
+		NewWind -= float3(
+			ComputeFog3DPressureStep(LocalCell, Flags, 0u, CellPressure, CellSizeCm),
+			ComputeFog3DPressureStep(LocalCell, Flags, 1u, CellPressure, CellSizeCm),
+			ComputeFog3DPressureStep(LocalCell, Flags, 2u, CellPressure, LayerHeightCm));
+	}
+	WindOut[Texel] = float4(SelectFog3DOpenFaceWind(LocalCell, Flags, NewWind), Wind.w);
+}
+
+[numthreads(8, 8, 4)]
+void Fog3DDumpCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int3 LocalCell = int3(DispatchThreadId);
+	if (!IsFog3DLocalCellInside(LocalCell))
+	{
+		return;
+	}
+
+	uint3 Texel = MakeFog3DStorageTexel(LocalCell);
+	uint FieldStride = uint(Resolution) * uint(Resolution) * uint(TDFOG3D_LAYER_COUNT);
+	uint Index = MakeFog3DWindowOrderIndex(LocalCell);
+	float4 Wind = WindIn[Texel];
+	float4 DisplacementFill = DisplacementFillIn[Texel];
+	DumpOut[Index] = Wind.x;
+	DumpOut[Index + FieldStride] = Wind.y;
+	DumpOut[Index + FieldStride * 2u] = Wind.z;
+	DumpOut[Index + FieldStride * 3u] = DisplacementFill.x;
+	DumpOut[Index + FieldStride * 4u] = DisplacementFill.y;
+	DumpOut[Index + FieldStride * 5u] = DisplacementFill.z;
+	DumpOut[Index + FieldStride * 6u] = DisplacementFill.w;
+	DumpOut[Index + FieldStride * 7u] = PressureIn[Texel];
+	DumpOut[Index + FieldStride * 8u] = DivergenceIn[Texel];
+	DumpOut[Index + FieldStride * 9u] = Wind.w;
+}

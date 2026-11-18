@@ -1,0 +1,158 @@
+[2026.11.13-16.20.43:691][125]LogPlayLevel: PIE: Created PIE world by copying editor world from /Game/FluidFX/Maps/LV_TDFog3DStage.LV_TDFog3DStage to /Game/FluidFX/Maps/UEDPIE_0_LV_TDFog3DStage.LV_TDFog3DStage (0.003362s)
+[2026.11.13-16.20.43:723][125]LogUObjectHash: Compacting FUObjectHashTables data took   0.98ms
+[2026.11.13-16.20.43:725][125]LogChaosDD: Creating Chaos Debug Draw Scene for world LV_TDFog3DStage
+[2026.11.13-16.20.43:727][125]LogPlayLevel: PIE: World Init took: (0.002805s)
+[2026.11.13-16.20.43:728][125]LogAudio: Display: Creating Audio Device:                 Id: 10, Scope: Unique, Realtime: True
+[2026.11.13-16.20.43:728][125]LogAudioMixer: Display: bUseRenderScheduler set to true.
+[2026.11.13-16.20.43:728][125]LogAudioMixer: Display: Audio Mixer Platform Settings:
+[2026.11.13-16.20.43:728][125]LogAudioMixer: Display: 	Sample Rate:						  48000
+[2026.11.13-16.20.43:728][125]LogAudioMixer: Display: 	Callback Buffer Frame Size Requested: 1024
+[2026.11.13-16.20.43:728][125]LogAudioMixer: Display: 	Callback Buffer Frame Size To Use:	  1024
+[2026.11.13-16.20.43:728][125]LogAudioMixer: Display: 	Number of buffers to queue:			  1
+[2026.11.13-16.20.43:728][125]LogAudioMixer: Display: 	Max Channels (voices):				  32
+[2026.11.13-16.20.43:728][125]LogAudioMixer: Display: 	Number of Async Source Workers:		  4
+[2026.11.13-16.20.43:728][125]LogAudio: Display: AudioDevice MaxSources: 32
+[2026.11.13-16.20.43:728][125]LogAudio: Display: Audio Spatialization Plugin: None (built-in).
+[2026.11.13-16.20.43:728][125]LogAudio: Display: Audio Reverb Plugin: None (built-in).
+[2026.11.13-16.20.43:728][125]LogAudio: Display: Audio Occlusion Plugin: None (built-in).
+[2026.11.13-16.20.43:728][125]LogAudioEnumeration: Display: Refreshing FWindowsMMDeviceCache
+[2026.11.13-16.20.43:735][125]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Console', Device='스피커(Realtek(R) Audio)'
+[2026.11.13-16.20.43:736][125]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Console', Device='마이크(USB Audio)'
+[2026.11.13-16.20.43:737][125]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Multimedia', Device='스피커(Realtek(R) Audio)'
+[2026.11.13-16.20.43:737][125]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Multimedia', Device='마이크(USB Audio)'
+[2026.11.13-16.20.43:738][125]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Communications', Device='스피커(USB Audio)'
+[2026.11.13-16.20.43:739][125]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Communications', Device='마이크(USB Audio)'
+[2026.11.13-16.20.43:744][125]LogAudioMixerWasapi: Display: FWasapiServiceWatcher started.
+[2026.11.13-16.20.43:744][125]LogAudioMixer: Display: Initializing audio mixer using platform API: 'WASAPIMixer'
+[2026.11.13-16.20.43:744][125]LogAudioMixerWasapi: Display: FWasapiServiceWatcher initial state: Audiosrv=RUNNING, AudioEndpointBuilder=RUNNING
+[2026.11.13-16.20.43:745][125]LogAudioMixerWasapi: FAudioMixerWasapiRenderStream::InitializeHardware DefaultDevicePeriod: 480 requesting buffer size: 1920
+[2026.11.13-16.20.43:747][125]LogAudioMixerWasapi: Display: FAudioMixerWasapiRenderStream::InitializeHardware audio mixer requested num channels: 2, Wasapi render stream hardware supports num channels: 2
+[2026.11.13-16.20.43:747][125]LogAudioMixerWasapi: Display: FAudioMixerWasapiRenderStream::InitializeHardware succeeded with sample rate: 48000, buffer period: 1024
+[2026.11.13-16.20.43:747][125]LogAudioMixer: Display: FAudioMixerWasapi initialized: SampleRate=48000 NumChannels=2 NumDirectOutChannels=0 bIsAggregateDevice=0 StreamParams.Num()=1
+[2026.11.13-16.20.43:747][125]LogAudioMixer: Display: Using Audio Hardware Device 스피커(Realtek(R) Audio)
+[2026.11.13-16.20.43:747][125]LogAudioMixer: Display: Initializing Sound Submixes...
+[2026.11.13-16.20.43:747][125]LogAudioMixer: Display: Creating Master Submix 'MasterSubmixDefault'
+[2026.11.13-16.20.43:747][125]LogAudioMixer: Display: Creating Master Submix 'MasterReverbSubmixDefault'
+[2026.11.13-16.20.43:748][125]LogAudioMixer: Display: Output buffers initialized: Frames=1024, Channels=2, Samples=2048, InstanceID=10
+[2026.11.13-16.20.43:750][125]LogAudioMixer: Display: Starting AudioMixerPlatformInterface::RunInternal(), InstanceID=10
+[2026.11.13-16.20.43:753][125]LogInit: FAudioDevice initialized with ID 10.
+[2026.11.13-16.20.43:753][125]LogAudio: Display: Audio Device (ID: 10) registered with world 'LV_TDFog3DStage'.
+[2026.11.13-16.20.43:753][125]LogAudioMixer: Initializing Audio Bus Subsystem for audio device with ID 10
+[2026.11.13-16.20.43:753][125]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden
+[2026.11.13-16.20.43:756][125]LogLoad: Game class is 'BP_TDCombatGameMode_C'
+[2026.11.13-16.20.43:757][125]LogWorld: Bringing World /Game/FluidFX/Maps/UEDPIE_0_LV_TDFog3DStage.LV_TDFog3DStage up for play (max tick rate 0) at 2026.11.14-01.20.43
+[2026.11.13-16.20.43:757][125]LogWorld: Bringing up level for play took: 0.000853
+[2026.11.13-16.20.43:760][125]LogOnline: OSS: Created online subsystem instance for: :Context_9
+[2026.11.13-16.20.43:761][125]LogEnhancedInput: Enhanced Input local player subsystem has initialized the user settings!
+[2026.11.13-16.20.43:763][125]LogTDGame: Realm: 2 of 2 configured realm definitions loaded.
+[2026.11.13-16.20.43:763][125]LogTDGame: RealmLift 'SunkenStarfieldSoutheast': travel 4000.0 cm, hold depth 1912.5 cm, treadmill enabled, max treadmill 20.0 s, deck mesh 'SM_WoodenFloorSegment', deck top 2.5 cm above the landings, field exit edges 0x1, realm exit edges 0x4.
+[2026.11.13-16.20.43:765][125]LogTDGame: ShaftLiner 'SunkenStarfieldSoutheast': 7 rings of 450.0 cm from depth 600.0 cm, panel mesh 'Plane', material 'MI_TD_RockLocal_ShaftLiner'.
+[2026.11.13-16.20.43:765][125]LogTDGame: Realm: lift of gate 'SunkenStarfieldSoutheast' spawned at the field landing V(X=9200.00, Y=-47800.00, Z=600.00).
+[2026.11.13-16.20.43:766][125]PIE: 서버가 로그인했습니다.
+[2026.11.13-16.20.43:768][125]PIE: 에디터에서 플레이 총 시작 시간 0.081초입니다.
+[2026.11.13-16.20.43:784][125]LogRenderer: Recreating Persistent SBTs due to initializer changes: 
+		NumShaderSlotsPerGeometrySegment changed: current: 1 - new: 2
+		NumGeometrySegments changed: current: 0 - new: 512
+[2026.11.13-16.20.46:734][379]LogPython: 4120
+
+[2026.11.13-16.20.46:771][381]LogPython: TD_FLUID_PROBE_RESULT {"pie_running": true, "pie_world": "/Game/FluidFX/Maps/UEDPIE_0_LV_TDFog3DStage.LV_TDFog3DStage", "editor_world": null}
+
+[2026.11.13-16.20.50:824][735]LogPython: 4120
+
+[2026.11.13-16.20.50:879][737]LogTDFluidPresetTuning: Preset tuning ../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json (loaded), material look ../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json (loaded): 0 errors, generation 23
+[2026.11.13-16.20.50:879][737]LogPython: TD_FLUID_SHOWCASE_RESULT {"error_count": 0, "load_errors": [], "table_generation": 23, "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json", "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json", "is_using_override_paths": false}
+
+[2026.11.13-16.20.50:902][738]LogTDGame: FluidFX preset tuning generation 23 reapplied (../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json, ../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json): 0 actors, 0 reset, 0 changed fields, 0 live materials, 0 bake-only changes
+[2026.11.13-16.20.51:951][830]LogPython: 4120
+
+[2026.11.13-16.20.51:997][832]LogPython: TD_FLUID_SHOWCASE_RESULT {"table_generation": 23, "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json", "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json", "reapplied_actor_count": 0, "state_reset_actor_count": 0, "changed_field_count": 0, "live_material_count": 0, "bake_only_changed_count": 0}
+
+[2026.11.13-16.20.53:055][924]LogPython: 4120
+
+[2026.11.13-16.20.53:114][926]LogTDFluidPresetTuning: Preset tuning C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/tuning.json (loaded), material look ../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json (loaded): 0 errors, generation 24
+[2026.11.13-16.20.53:114][926]LogPython: TD_FLUID_SHOWCASE_RESULT {"error_count": 0, "load_errors": [], "table_generation": 24, "tuning_source_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/tuning.json", "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json", "is_using_override_paths": true}
+
+[2026.11.13-16.20.53:135][927]LogTDGame: FluidFX preset tuning generation 24 reapplied (C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/tuning.json, ../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json): 0 actors, 0 reset, 0 changed fields, 0 live materials, 0 bake-only changes
+[2026.11.13-16.20.54:168][ 18]LogPython: 4120
+
+[2026.11.13-16.20.54:213][ 20]LogPython: TD_FLUID_SHOWCASE_RESULT {"table_generation": 24, "tuning_source_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/tuning.json", "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json", "reapplied_actor_count": 0, "state_reset_actor_count": 0, "changed_field_count": 0, "live_material_count": 0, "bake_only_changed_count": 0}
+
+[2026.11.13-16.20.55:270][112]LogPython: 4120
+
+[2026.11.13-16.20.55:315][114]TD.Fog3D.Mode = "2"
+[2026.11.13-16.20.55:315][114]LogPython: TD_FLUID_SHOWCASE_RESULT {"arm": 400.0, "view": [-12.0, 0.0], "props": {"TDGen_Fog3D_Sun": ["root_component"]}, "console": [{"command": "TD.Fog3D.Mode 2", "read_back": 2.0}], "game_time": 11.615898501127958}
+
+[2026.11.13-16.20.56:376][205]LogPython: 4120
+
+[2026.11.13-16.20.56:420][207]t.OverrideFPS = "60"
+[2026.11.13-16.20.56:420][207]LogPython: TD_FLUID_SHOWCASE_RESULT {"schedule": {"status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_schedule.json", "times": [0.6, 1.2, 1.9, 2.5, 3.5, 5.0, 7.0, 8.3, 8.8, 10.0, 10.4, 10.8, 12.1, 13.1, 14.1, 15.6, 17.6, 19.4, 19.9], "reference_game_time": 12.721035100519657, "timeout_seconds": 240.0, "fixed_step": {"requested_fps": 60.0, "before": 0.0, "applied_fps": 60.0}}, "game_time": 12.721035100519657}
+
+[2026.11.13-16.20.56:444][208]Cmd: TDPlayMeleeAction
+[2026.11.13-16.20.56:444][208]LogTDGame: TDPlayMeleeAction: 'AS_TD_Player_SwordAttack01' on 'BP_TDCombatCharacter_C_0' (duration 1.85).
+[2026.11.13-16.20.56:919][248]LogCore: Display: Tracing Screenshot "00_c_00600ms" taken with size: 1280 x 720
+[2026.11.13-16.20.57:033][249]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_00600ms.png
+[2026.11.13-16.20.57:788][289]LogCore: Display: Tracing Screenshot "00_c_01200ms" taken with size: 1280 x 720
+[2026.11.13-16.20.57:916][290]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_01200ms.png
+[2026.11.13-16.20.58:781][336]LogCore: Display: Tracing Screenshot "00_c_01900ms" taken with size: 1280 x 720
+[2026.11.13-16.20.58:900][337]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_01900ms.png
+[2026.11.13-16.20.59:686][377]LogCore: Display: Tracing Screenshot "00_c_02500ms" taken with size: 1280 x 720
+[2026.11.13-16.20.59:801][378]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_02500ms.png
+[2026.11.13-16.21.00:928][442]LogCore: Display: Tracing Screenshot "00_c_03500ms" taken with size: 1280 x 720
+[2026.11.13-16.21.01:049][443]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_03500ms.png
+[2026.11.13-16.21.02:499][537]LogCore: Display: Tracing Screenshot "00_c_05000ms" taken with size: 1280 x 720
+[2026.11.13-16.21.02:617][538]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_05000ms.png
+[2026.11.13-16.21.04:480][662]LogCore: Display: Tracing Screenshot "00_c_07000ms" taken with size: 1280 x 720
+[2026.11.13-16.21.04:600][663]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_07000ms.png
+[2026.11.13-16.21.05:136][680]TD.Fog3D.Mode = "0"
+[2026.11.13-16.21.05:939][745]LogCore: Display: Tracing Screenshot "00_c_08300ms" taken with size: 1280 x 720
+[2026.11.13-16.21.06:051][746]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_08300ms.png
+[2026.11.13-16.21.06:892][780]LogCore: Display: Tracing Screenshot "00_c_08800ms" taken with size: 1280 x 720
+[2026.11.13-16.21.07:017][781]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_08800ms.png
+[2026.11.13-16.21.07:476][786]TD.Fog3D.Mode = "2"
+[2026.11.13-16.21.08:364][857]LogCore: Display: Tracing Screenshot "00_c_10000ms" taken with size: 1280 x 720
+[2026.11.13-16.21.08:483][858]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_10000ms.png
+[2026.11.13-16.21.09:160][886]LogCore: Display: Tracing Screenshot "00_c_10400ms" taken with size: 1280 x 720
+[2026.11.13-16.21.09:284][887]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_10400ms.png
+[2026.11.13-16.21.10:023][915]LogCore: Display: Tracing Screenshot "00_c_10800ms" taken with size: 1280 x 720
+[2026.11.13-16.21.10:134][916]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_10800ms.png
+[2026.11.13-16.21.11:607][998]LogCore: Display: Tracing Screenshot "00_c_12100ms" taken with size: 1280 x 720
+[2026.11.13-16.21.11:733][999]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_12100ms.png
+[2026.11.13-16.21.12:955][ 63]LogCore: Display: Tracing Screenshot "00_c_13100ms" taken with size: 1280 x 720
+[2026.11.13-16.21.13:084][ 64]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_13100ms.png
+[2026.11.13-16.21.14:253][128]LogCore: Display: Tracing Screenshot "00_c_14100ms" taken with size: 1280 x 720
+[2026.11.13-16.21.14:367][129]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_14100ms.png
+[2026.11.13-16.21.16:136][223]LogCore: Display: Tracing Screenshot "00_c_15600ms" taken with size: 1280 x 720
+[2026.11.13-16.21.16:251][224]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_15600ms.png
+[2026.11.13-16.21.18:349][348]LogCore: Display: Tracing Screenshot "00_c_17600ms" taken with size: 1280 x 720
+[2026.11.13-16.21.18:467][349]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_17600ms.png
+[2026.11.13-16.21.19:428][396]TD.Fog3D.Mode = "0"
+[2026.11.13-16.21.20:173][461]LogCore: Display: Tracing Screenshot "00_c_19400ms" taken with size: 1280 x 720
+[2026.11.13-16.21.20:300][462]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_19400ms.png
+[2026.11.13-16.21.21:026][496]LogCore: Display: Tracing Screenshot "00_c_19900ms" taken with size: 1280 x 720
+[2026.11.13-16.21.21:151][497]LogClient: 고해상도 스크린샷이 저장되었습니다: C:/Project/TDGame/Saved/FluidFX/fog3d_calib/stain3/capture/00_c_19900ms.png
+[2026.11.13-16.21.21:453][498]t.OverrideFPS = "0"
+[2026.11.13-16.21.22:525][587]LogPython: 4120
+
+[2026.11.13-16.21.22:583][589]LogTDFluidPresetTuning: Preset tuning ../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json (loaded), material look ../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json (loaded): 0 errors, generation 25
+[2026.11.13-16.21.22:583][589]LogPython: TD_FLUID_SHOWCASE_RESULT {"error_count": 0, "load_errors": [], "table_generation": 25, "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json", "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json", "is_using_override_paths": false}
+
+[2026.11.13-16.21.22:607][590]LogTDGame: FluidFX preset tuning generation 25 reapplied (../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json, ../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json): 0 actors, 0 reset, 0 changed fields, 0 live materials, 0 bake-only changes
+[2026.11.13-16.21.23:748][688]LogModelContextProtocol: Running tool: 'call_tool'
+[2026.11.13-16.21.23:748][688]LogModelContextProtocol: Dispatching toolset tool: 'EditorToolset.EditorAppToolset.StopPIE'
+[2026.11.13-16.21.23:792][689]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden
+[2026.11.13-16.21.23:792][689]LogWorld: BeginTearingDown for /Game/FluidFX/Maps/UEDPIE_0_LV_TDFog3DStage
+[2026.11.13-16.21.23:793][689]LogTDFog3DZone: Display: Fog3D zone summary: submitted=1073 rejected=0
+[2026.11.13-16.21.23:793][689]LogWorld: UWorld::CleanupWorld for LV_TDFog3DStage, bSessionEnded=true, bCleanupResources=true
+[2026.11.13-16.21.23:793][689]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
+[2026.11.13-16.21.23:794][689]LogPlayLevel: Display: Shutting down PIE online subsystems
+[2026.11.13-16.21.23:801][689]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
+[2026.11.13-16.21.23:833][689]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden
+[2026.11.13-16.21.23:834][689]LogAudioMixer: Deinitializing Audio Bus Subsystem for audio device with ID 10
+[2026.11.13-16.21.23:834][689]LogAudioMixer: Display: FAudioMixerWasapi::StopAudioStream() InstanceID=10, StreamState=4
+[2026.11.13-16.21.23:841][689]LogAudioMixerWasapi: Display: FWasapiServiceWatcher stopped.
+[2026.11.13-16.21.23:847][689]LogUObjectHash: Compacting FUObjectHashTables data took   0.89ms
+[2026.11.13-16.21.23:886][690]LogPlayLevel: Display: Destroying online subsystem :Context_9
+[2026.11.13-16.21.24:840][773]LogPython: 4120
+
+[2026.11.13-16.21.24:878][775]LogPython: TD_FLUID_PROBE_RESULT {"pie_running": false, "pie_world": null, "editor_world": "/Game/FluidFX/Maps/LV_TDFog3DStage.LV_TDFog3DStage"}
+

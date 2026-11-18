@@ -1,0 +1,70 @@
+{
+ "name": "v2",
+ "which": null,
+ "config": {
+  "layout": "S8",
+  "advect": "A3",
+  "solid": "S4",
+  "solver": "P1",
+  "delta": "v3",
+  "dt": 60,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false
+ },
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/scratch/fog3d/stage1/r2/gates2.py",
+ "time_scale": 1.0,
+ "values": {
+  "low": {
+   "state_hash": "607ffae5c92750fa",
+   "t": 0.3,
+   "steps": 18,
+   "state_max_info": {
+    "d": 130.43350219726562,
+    "g": 0.0
+   },
+   "abs_diff_vol": 368894.73924012424,
+   "energy_height_center": 49.61549325653289,
+   "removed": 33572.61162826753
+  },
+  "high": {
+   "state_hash": "31418ea117f9691d",
+   "t": 0.3,
+   "steps": 18,
+   "state_max_info": {
+    "d": 93.43359375,
+    "g": 0.0
+   },
+   "abs_diff_vol": 167140.55310824706,
+   "energy_height_center": 138.43165256672964,
+   "removed": 14682.485911698961
+  },
+  "diff_ratio_low_over_high": 2.207092966846968,
+  "energy_center_gap_cm": 88.81615931019675
+ },
+ "criterion": "Σ|차이값|·부피 낮음 ÷ 높음 ≥ 2, 바람 에너지 높이 중심 차 ≥ 50cm",
+ "passed": {
+  "p1": true,
+  "p2": true,
+  "all": true
+ },
+ "elapsed_sec": 51.9,
+ "state_hash": {
+  "low": "607ffae5c92750fa",
+  "high": "31418ea117f9691d"
+ },
+ "finished": "2026-11-13 10:24:14",
+ "solver_cfg": {
+  "kind": "line",
+  "sweeps": 4,
+  "omega": 1.3
+ }
+}

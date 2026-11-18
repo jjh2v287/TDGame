@@ -1,0 +1,75 @@
+{
+ "name": "v3",
+ "which": null,
+ "config": {
+  "layout": "S8",
+  "advect": "A3",
+  "solid": "S4",
+  "solver": "P3",
+  "delta": "v3",
+  "dt": 60,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false
+ },
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/scratch/fog3d/stage1/r2/gates2.py",
+ "time_scale": 1.0,
+ "values": {
+  "F_free": 1561453.655900147,
+  "F_low": 1330341.8933932448,
+  "F_high": 182765.08190418096,
+  "S_free": 954047.2679913983,
+  "S_high": 434232.76036719617,
+  "F_low_over_free": 0.8519893551540145,
+  "F_high_over_free": 0.11704803483188908,
+  "S_high_over_free": 0.45514805705739014,
+  "F_free_over_floor5pct": 3.485387624777114,
+  "undecidable": false,
+  "plane_x": {
+   "back2": 187.5
+  },
+  "top_outflow": {
+   "free": 6085822.796917357,
+   "low": 5772526.691567006,
+   "high": 4869802.490738064
+  },
+  "F_above_180": {
+   "free": 268738.98831906985,
+   "low": 273278.81493440876,
+   "high": 210985.7890606494
+  },
+  "hashes": {
+   "free": "940b036eb15bc6e9",
+   "low": "02b9fad1a610842f",
+   "high": "e792860016355614"
+  }
+ },
+ "criterion": "① F(낮음)/F(자유) ≥ 0.5 ② F(높음)/F(자유) ≤ 0.2 ③ S(높음)/S(자유) ≥ 1.0(2차: 값만)",
+ "passed": {
+  "p1": true,
+  "p2": true,
+  "p3_info": false,
+  "undecidable": false,
+  "p12": true
+ },
+ "elapsed_sec": 955.4,
+ "state_hash": {
+  "free": "940b036eb15bc6e9",
+  "low": "02b9fad1a610842f",
+  "high": "e792860016355614"
+ },
+ "finished": "2026-11-13 10:56:56",
+ "solver_cfg": {
+  "kind": "line",
+  "sweeps": 12,
+  "omega": 1.6
+ }
+}

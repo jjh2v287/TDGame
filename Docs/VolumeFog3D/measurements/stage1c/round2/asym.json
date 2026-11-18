@@ -1,0 +1,179 @@
+{
+  "formulas": "Wk_L·Wk_R = 걷기 영역 RW(세로 [0.72H,0.98H) x 가로 [0.35W,0.65W))를 가로 0.50W 에서 둘로 나눈 왼쪽·오른쪽에서 |Y(W12.1) - Y(W19.4)| 평균(8비트 단위). 치우침 = (Wk_L - Wk_R) / (Wk_L + Wk_R), 양수면 화면 왼쪽(폰의 왼쪽)이 크다",
+  "thresholds": {
+    "halved_ratio": 0.5,
+    "negligible": 0.1
+  },
+  "rows": [
+    {
+      "name": "A0",
+      "valid": true,
+      "usable": true,
+      "walk_yaw": 0,
+      "camera_yaw": 0.0,
+      "light": "side",
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400",
+      "screen_left_is_world": "-Y",
+      "description": "중 값 그대로 +X 로 걷기",
+      "log": {
+        "submitted": 1074,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "walk_end_cm": [
+        -400.0,
+        0.0
+      ],
+      "Wk_L": 14.967169747103387,
+      "Wk_R": 6.286214555481283,
+      "Wk_all": 10.626692151292337,
+      "asymmetry": 0.4084504880743343,
+      "split_column": 640,
+      "RW_rows_cols": [
+        519,
+        706,
+        448,
+        832
+      ]
+    },
+    {
+      "name": "A1",
+      "valid": true,
+      "usable": true,
+      "walk_yaw": 0,
+      "camera_yaw": 0.0,
+      "light": "side",
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400, BladeWindStrength 0, BladeErosionPerSec 0",
+      "screen_left_is_world": "-Y",
+      "description": "중 값 + 칼 바람 0·칼 깎기 0",
+      "log": {
+        "submitted": 1074,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "walk_end_cm": [
+        -400.0,
+        0.0
+      ],
+      "Wk_L": 16.343704216800358,
+      "Wk_R": 8.251413290998217,
+      "Wk_all": 12.297558753899287,
+      "asymmetry": 0.32902021806711235,
+      "split_column": 640,
+      "RW_rows_cols": [
+        519,
+        706,
+        448,
+        832
+      ]
+    },
+    {
+      "name": "A2",
+      "valid": true,
+      "usable": true,
+      "walk_yaw": 180.0,
+      "camera_yaw": 180.0,
+      "light": "side",
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400",
+      "screen_left_is_world": "+Y",
+      "description": "중 값, −X 로 걷기(걷는 방향 180, 카메라 방향 180)",
+      "log": {
+        "submitted": 1072,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "walk_end_cm": [
+        -1600.0,
+        0.0
+      ],
+      "Wk_L": 1.1651017156862749,
+      "Wk_R": 6.6800268716577555,
+      "Wk_all": 3.9225642936720155,
+      "asymmetry": -0.7029744757617236,
+      "split_column": 640,
+      "RW_rows_cols": [
+        519,
+        706,
+        448,
+        832
+      ]
+    },
+    {
+      "name": "A3",
+      "valid": true,
+      "usable": true,
+      "walk_yaw": 90.0,
+      "camera_yaw": 90.0,
+      "light": "side",
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400",
+      "screen_left_is_world": "+X",
+      "description": "중 값, +Y 로 걷기(걷는 방향 90, 카메라 방향 90)",
+      "log": {
+        "submitted": 1073,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "walk_end_cm": [
+        -1000.0,
+        600.0
+      ],
+      "Wk_L": 3.2713967413101597,
+      "Wk_R": 4.7246442624777165,
+      "Wk_all": 3.998020501893939,
+      "asymmetry": -0.1817458815530243,
+      "split_column": 640,
+      "RW_rows_cols": [
+        519,
+        706,
+        448,
+        832
+      ]
+    },
+    {
+      "name": "A4",
+      "valid": true,
+      "usable": true,
+      "walk_yaw": 0,
+      "camera_yaw": 0.0,
+      "light": "side_flip",
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400",
+      "screen_left_is_world": "-Y",
+      "description": "중 값, 빛 반대쪽(해 높이 35도, 방향 280)",
+      "log": {
+        "submitted": 1072,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "walk_end_cm": [
+        -400.0,
+        0.0
+      ],
+      "Wk_L": 10.562320248440285,
+      "Wk_R": 5.677815101381462,
+      "Wk_all": 8.120067674910873,
+      "asymmetry": 0.30076751466929336,
+      "split_column": 640,
+      "RW_rows_cols": [
+        519,
+        706,
+        448,
+        832
+      ]
+    }
+  ],
+  "reading": {
+    "lines": [
+      "A0 치우침 +0.408: 걷기 자국이 폰의 왼쪽(화면 왼쪽)으로 치우침(세계 축으로는 -Y 쪽)",
+      "A1(칼 바람 0·칼 깎기 0) +0.329: A0 의 절반(0.204) 아래로 줄지 않았다 → 칼 쪽 입력이 원인이 아님",
+      "A2 -0.703: 폰 기준 반대쪽이고 세계 축으로는 A0 와 같은 쪽(-Y)에 남음(A2 는 걷는 방향·카메라가 180도 돌아 있다) → 계산 격자 쪽 원인",
+      "A3 -0.182: A0 의 절반(0.204) 아래로 약해짐 → 읽는 법의 두 갈래(폰 쪽·격자 쪽) 어느 쪽도 해당하지 않음",
+      "A4(빛 반대쪽) +0.301: 뒤집히지 않음 → 빛 때문만은 아님"
+    ],
+    "verdict": {
+      "A1": "not_knife_input",
+      "A2": "grid_side",
+      "A3": "weakened",
+      "A4": "not_light"
+    }
+  }
+}

@@ -1,0 +1,2033 @@
+{
+  "b1": {
+    "note": "정보 숫자(판정선 없음). Wk(t)·Sk(t)·Sk2(t)·좌우 치우침은 등록본 prereg-1c.md 3절·prereg-1c-r2.md·prereg-1c-add1.md 식 그대로(뒤 카메라, 옆빛, 새 기본값, 8비트 밝기). 초당 계산 횟수는 로그 제출 수의 높음 대비 비율로 확인(높음 60회/초, 낮음·보통 30회/초가 기대).",
+    "tiers": {
+      "0": {
+        "name": "QB_q0",
+        "valid": true,
+        "invalid_reasons": [],
+        "Wk": {
+          "W12.1": 9.019116120766487,
+          "W13.1": 9.568208650846703,
+          "W14.1": 9.051791463346703,
+          "W15.6": 7.559513848039216,
+          "W17.6": 5.628852244875222
+        },
+        "Wk_12.1": 9.019116120766487,
+        "Sk": {
+          "S2.5": 10.839744568509394,
+          "S3.5": 10.824272001459589,
+          "S5.0": 10.149238124429846,
+          "S7.0": 8.356971824484583
+        },
+        "Sk_2.5": 10.839744568509394,
+        "Sk2": {
+          "S2.5": 16.520045539299396,
+          "S3.5": 18.33854817233581,
+          "S5.0": 17.959429291087826,
+          "S7.0": 14.644085468685095
+        },
+        "Sk2_2.5": 16.520045539299396,
+        "N_W": 0.2346805258467023,
+        "N_S": 0.27827437511403025,
+        "Tx": 0.8705504813631785,
+        "Tx2": 0.5719605629553427,
+        "refill_ratio_swing": 0.7709565268505009,
+        "refill_ratio_walk": 0.6241024252825403,
+        "Wk_L": 9.861341527406417,
+        "Wk_R": 8.17689071412656,
+        "asymmetry": 0.09338225557388118,
+        "log": {
+          "source": "snapshot",
+          "submitted": 538,
+          "rejected": 0,
+          "fog3d_warning_or_error_lines": 0,
+          "usable": true
+        },
+        "state_target": [
+          128,
+          128,
+          8
+        ],
+        "console_quality_read": 0,
+        "console_mode_read": 0,
+        "tier": {
+          "name": "낮음",
+          "cells": 128,
+          "rate": 30
+        },
+        "dense_check": {
+          "name": "QD_q0",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 132,
+          "found_shots": 132,
+          "late_max_seconds": 0.03333333507180214,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 727,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -341.33640739970315,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -732.5954476932253,
+              6.533651600528506e-14,
+              181.3146840518657
+            ],
+            "cam_world_rotation": [
+              -11.999999999999988,
+              6.4675950086848866e-15,
+              -6.797716273959312e-16
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              128,
+              128,
+              8
+            ],
+            "TD.Fog3D.Quality": 0,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 400.0,
+            "error": null
+          },
+          "tier": {
+            "name": "낮음",
+            "cells": 128,
+            "rate": 30
+          }
+        },
+        "submitted_ratio_to_high": 0.49953574744661094,
+        "dense_submitted_ratio_to_high": 0.4140091116173121
+      },
+      "1": {
+        "name": "QB_q1",
+        "valid": true,
+        "invalid_reasons": [],
+        "Wk": {
+          "W12.1": 9.21137584391711,
+          "W13.1": 9.726178272615863,
+          "W14.1": 9.093905801581998,
+          "W15.6": 7.534663558377895,
+          "W17.6": 5.602613238079323
+        },
+        "Wk_12.1": 9.21137584391711,
+        "Sk": {
+          "S2.5": 14.041009965334792,
+          "S3.5": 14.670196632001462,
+          "S5.0": 13.55282823937238,
+          "S7.0": 10.814800423280422
+        },
+        "Sk_2.5": 14.041009965334792,
+        "Sk2": {
+          "S2.5": 19.63823615175151,
+          "S3.5": 20.947617639728616,
+          "S5.0": 19.98790388609406,
+          "S7.0": 16.054570293533946
+        },
+        "Sk2_2.5": 19.63823615175151,
+        "N_W": 0.23298039772727275,
+        "N_S": 0.2752533333333333,
+        "Tx": 0.8711687458788198,
+        "Tx2": 0.5781503154804685,
+        "refill_ratio_swing": 0.77022952408556,
+        "refill_ratio_walk": 0.608227623431423,
+        "Wk_L": 10.095092563502675,
+        "Wk_R": 8.327659124331548,
+        "asymmetry": 0.09593753794870293,
+        "log": {
+          "source": "snapshot",
+          "submitted": 538,
+          "rejected": 0,
+          "fog3d_warning_or_error_lines": 0,
+          "usable": true
+        },
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "console_quality_read": 1,
+        "console_mode_read": 0,
+        "tier": {
+          "name": "보통",
+          "cells": 256,
+          "rate": 30
+        },
+        "dense_check": {
+          "name": "QD_q1",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 132,
+          "found_shots": 132,
+          "late_max_seconds": 0.03333333507180214,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 1067,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -341.33640739970315,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -732.5954476932253,
+              6.533651600528506e-14,
+              181.3146840518657
+            ],
+            "cam_world_rotation": [
+              -11.999999999999988,
+              6.4675950086848866e-15,
+              -6.797716273959312e-16
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              256,
+              256,
+              8
+            ],
+            "TD.Fog3D.Quality": 1,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 400.0,
+            "error": null
+          },
+          "tier": {
+            "name": "보통",
+            "cells": 256,
+            "rate": 30
+          }
+        },
+        "submitted_ratio_to_high": 0.49953574744661094,
+        "dense_submitted_ratio_to_high": 0.607630979498861
+      },
+      "2": {
+        "name": "QB_q2",
+        "valid": true,
+        "invalid_reasons": [],
+        "Wk": {
+          "W12.1": 7.590664747660428,
+          "W13.1": 7.972496421011586,
+          "W14.1": 7.560982444852941,
+          "W15.6": 6.450842474376114,
+          "W17.6": 5.04656864416221
+        },
+        "Wk_12.1": 7.590664747660428,
+        "Sk": {
+          "S2.5": 15.919063143586937,
+          "S3.5": 15.94194432767743,
+          "S5.0": 14.24150322751323,
+          "S7.0": 11.571344154351397
+        },
+        "Sk_2.5": 15.919063143586937,
+        "Sk2": {
+          "S2.5": 20.53265129228781,
+          "S3.5": 21.896735459454472,
+          "S5.0": 21.004328464946692,
+          "S7.0": 17.077986954816076
+        },
+        "Sk2_2.5": 20.53265129228781,
+        "N_W": 0.23327937834224602,
+        "N_S": 0.27587716657544253,
+        "Tx": 0.8698773409887592,
+        "Tx2": 0.5646877065416516,
+        "refill_ratio_swing": 0.7268860013921713,
+        "refill_ratio_walk": 0.6648388266281485,
+        "Wk_L": 8.213378676470587,
+        "Wk_R": 6.967950818850266,
+        "asymmetry": 0.08203681093966,
+        "log": {
+          "source": "snapshot",
+          "submitted": 1077,
+          "rejected": 0,
+          "fog3d_warning_or_error_lines": 0,
+          "usable": true
+        },
+        "state_target": [
+          256,
+          256,
+          8
+        ],
+        "console_quality_read": 2,
+        "console_mode_read": 0,
+        "tier": {
+          "name": "높음",
+          "cells": 256,
+          "rate": 60
+        },
+        "dense_check": {
+          "name": "QD_q2",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 132,
+          "found_shots": 132,
+          "late_max_seconds": 0.03333333507180214,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 1756,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -341.33640739970315,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -732.5954476932253,
+              6.533651600528506e-14,
+              181.3146840518657
+            ],
+            "cam_world_rotation": [
+              -11.999999999999988,
+              6.4675950086848866e-15,
+              -6.797716273959312e-16
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              256,
+              256,
+              8
+            ],
+            "TD.Fog3D.Quality": 2,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 400.0,
+            "error": null
+          },
+          "tier": {
+            "name": "높음",
+            "cells": 256,
+            "rate": 60
+          }
+        },
+        "submitted_ratio_to_high": 1.0,
+        "dense_submitted_ratio_to_high": 1.0
+      }
+    }
+  },
+  "b2": {
+    "note": "창 가장자리 밝기 차(8비트, Rec.709 밝기) = 가장자리 선의 안쪽 100cm 띠 평균 − 바깥쪽 100cm 띠 평균. 띠는 바닥~135cm 높이 상자(1b 안개 높이 상자와 같은 135cm), 선 방향은 창 모서리에서 100cm 안쪽까지, 폰·물체가 앞에 찍힌 화소는 뺌. 가만히 선 장(휘두르기 전, 계산 켠 지 3.0초). 1.0 이하면 안 보임(표시용 문턱). 대표 = 쓸 수 있는 가장자리 전부의 화소를 합친 평균 차, 최악 = 가장자리별 차이의 절댓값 최댓값.",
+    "rows": {
+      "q0_a500": {
+        "run": "WQ0_a500",
+        "level": 0,
+        "tier": {
+          "name": "낮음",
+          "cells": 128,
+          "rate": 30
+        },
+        "arm_cm": 500,
+        "image": [
+          1280,
+          720
+        ],
+        "window_x_cm": [
+          -2000.0,
+          0.0
+        ],
+        "window_y_cm": [
+          -1000.0,
+          1000.0
+        ],
+        "player_cell": [
+          -64,
+          0
+        ],
+        "min_cell": [
+          -128,
+          -64
+        ],
+        "floor_z_cm": 2.150007724761963,
+        "camera_check": {
+          "camera_minus_pawn": [
+            -469.8463103929539,
+            2.842170943040401e-14,
+            171.01007166283432
+          ],
+          "predicted_from_arm": [
+            -469.84631039295425,
+            0.0,
+            171.0100716628342
+          ],
+          "max_abs_difference_cm": 3.410605131648481e-13,
+          "pawn_end_xy": [
+            -963.9999963879586,
+            -5.717757570724952e-15
+          ],
+          "pawn_push_cm": 36.00000361204138
+        },
+        "camera_world_location": [
+          -1469.846310392954,
+          2.842170943040401e-14,
+          269.1600793875963
+        ],
+        "edges": {
+          "+Y": {
+            "line_cm": 1000.0,
+            "along_cm": [
+              -1900.0,
+              -100.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 19825,
+            "outer_raw": 14376,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 6423,
+            "outer_pixels": 974,
+            "used": true,
+            "inner_mean": 65.08680669469096,
+            "outer_mean": 50.538126899383975,
+            "difference": 14.548679795306988
+          },
+          "-Y": {
+            "line_cm": -1000.0,
+            "along_cm": [
+              -1900.0,
+              -100.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 19825,
+            "outer_raw": 14376,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 6423,
+            "outer_pixels": 974,
+            "used": true,
+            "inner_mean": 92.34422600031137,
+            "outer_mean": 93.88398521560573,
+            "difference": -1.5397592152943673
+          },
+          "+X": {
+            "line_cm": 0.0,
+            "along_cm": [
+              -900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 58594,
+            "outer_raw": 51614,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 4876,
+            "inner_pixels": 9236,
+            "outer_pixels": 3124,
+            "used": true,
+            "inner_mean": 84.32028083585968,
+            "outer_mean": 80.83316779769527,
+            "difference": 3.4871130381644093
+          },
+          "-X": {
+            "line_cm": -2000.0,
+            "along_cm": [
+              -900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 0,
+            "outer_raw": 0,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 0,
+            "outer_pixels": 0,
+            "used": false,
+            "reason": "화면에 보이는 화소가 200개 미만"
+          }
+        },
+        "controls": [
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 48919,
+            "outer_pixels": 108851,
+            "difference": 7.848850263830904
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 48362,
+            "outer_pixels": 12742,
+            "difference": -14.580762754466349
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 13814,
+            "outer_pixels": 3496,
+            "difference": -5.79492604976744
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 48919,
+            "outer_pixels": 108851,
+            "difference": -4.237865577867765
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 48362,
+            "outer_pixels": 12742,
+            "difference": -20.76811783410234
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 13814,
+            "outer_pixels": 3496,
+            "difference": -15.039292462667646
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 60284,
+            "outer_pixels": 25784,
+            "difference": -11.713589963699675
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 27152,
+            "outer_pixels": 12572,
+            "difference": -19.965177562533853
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 18844,
+            "outer_pixels": 5838,
+            "difference": -10.654944047097288
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 5678,
+            "outer_pixels": 1978,
+            "difference": 12.132221786000372
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 3654,
+            "outer_pixels": 1004,
+            "difference": 11.85043792830865
+          },
+          {
+            "edge": "-X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 51724,
+            "outer_pixels": 144640,
+            "difference": 9.883604505591343
+          }
+        ],
+        "control_abs_median": 11.782013946004163,
+        "control_abs_max": 20.76811783410234,
+        "pooled": {
+          "inner_pixels": 22082,
+          "outer_pixels": 5072,
+          "inner_mean": 81.05976074630921,
+          "outer_mean": 77.52167850946371,
+          "difference": 3.538082236845497
+        },
+        "worst_edge_abs": 14.548679795306988,
+        "visible_by_pooled": true,
+        "visible_by_worst_edge": true,
+        "run_check": {
+          "name": "WQ0_a500",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 2,
+          "found_shots": 2,
+          "late_max_seconds": 0.01666700653731823,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 988,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -963.9999963879586,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -1433.8463067809125,
+              2.2703951859679056e-14,
+              269.1600793875963
+            ],
+            "cam_world_rotation": [
+              -19.999999999999982,
+              -2.9387137463325593e-16,
+              1.6666273842636491e-15
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              128,
+              128,
+              8
+            ],
+            "TD.Fog3D.Quality": 0,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 500.0,
+            "error": null
+          }
+        }
+      },
+      "q0_a1000": {
+        "run": "WQ0_a1000",
+        "level": 0,
+        "tier": {
+          "name": "낮음",
+          "cells": 128,
+          "rate": 30
+        },
+        "arm_cm": 1000,
+        "image": [
+          1280,
+          720
+        ],
+        "window_x_cm": [
+          -2000.0,
+          0.0
+        ],
+        "window_y_cm": [
+          -1000.0,
+          1000.0
+        ],
+        "player_cell": [
+          -64,
+          0
+        ],
+        "min_cell": [
+          -128,
+          -64
+        ],
+        "floor_z_cm": 2.150007724761963,
+        "camera_check": {
+          "camera_minus_pawn": [
+            -939.6926207859078,
+            8.526512829121202e-14,
+            342.02014332566876
+          ],
+          "predicted_from_arm": [
+            -939.6926207859085,
+            0.0,
+            342.0201433256684
+          ],
+          "max_abs_difference_cm": 6.821210263296962e-13,
+          "pawn_end_xy": [
+            -963.9999963879586,
+            -5.717757570724952e-15
+          ],
+          "pawn_push_cm": 36.00000361204138
+        },
+        "camera_world_location": [
+          -1939.6926207859078,
+          8.526512829121202e-14,
+          440.1701510504307
+        ],
+        "edges": {
+          "+Y": {
+            "line_cm": 1000.0,
+            "along_cm": [
+              -1900.0,
+              -100.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 30356,
+            "outer_raw": 24900,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 9481,
+            "outer_pixels": 4025,
+            "used": true,
+            "inner_mean": 60.59383303449004,
+            "outer_mean": 64.36929749068322,
+            "difference": -3.775464456193184
+          },
+          "-Y": {
+            "line_cm": -1000.0,
+            "along_cm": [
+              -1900.0,
+              -100.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 30356,
+            "outer_raw": 24900,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 9481,
+            "outer_pixels": 4025,
+            "used": true,
+            "inner_mean": 75.22449574939351,
+            "outer_mean": 87.28125689440992,
+            "difference": -12.05676114501641
+          },
+          "+X": {
+            "line_cm": 0.0,
+            "along_cm": [
+              -900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 32248,
+            "outer_raw": 28922,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 6240,
+            "outer_pixels": 2914,
+            "used": true,
+            "inner_mean": 80.17859205128205,
+            "outer_mean": 84.27665531914893,
+            "difference": -4.098063267866877
+          },
+          "-X": {
+            "line_cm": -2000.0,
+            "along_cm": [
+              -900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 0,
+            "outer_raw": 0,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 0,
+            "outer_pixels": 0,
+            "used": false,
+            "reason": "화면에 보이는 화소가 200개 미만"
+          }
+        },
+        "controls": [
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 33315,
+            "outer_pixels": 52536,
+            "difference": -1.4122114799774153
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 36589,
+            "outer_pixels": 31044,
+            "difference": -0.22751656905786177
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 21611,
+            "outer_pixels": 9815,
+            "difference": -7.502410104102317
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 4998,
+            "outer_pixels": 1652,
+            "difference": 12.27496135301579
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 2857,
+            "outer_pixels": 450,
+            "difference": 2.7055030255512804
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 33315,
+            "outer_pixels": 52536,
+            "difference": -2.012369282570461
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 36589,
+            "outer_pixels": 31044,
+            "difference": -10.893481536288306
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 21611,
+            "outer_pixels": 9815,
+            "difference": -13.108688091024945
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 4998,
+            "outer_pixels": 1652,
+            "difference": -5.555734612828189
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 2857,
+            "outer_pixels": 450,
+            "difference": 1.0118416919068238
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 32938,
+            "outer_pixels": 14580,
+            "difference": -7.163942397012946
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 16086,
+            "outer_pixels": 8204,
+            "difference": -10.674133357372213
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 8844,
+            "outer_pixels": 4784,
+            "difference": -9.276212153696406
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 4080,
+            "outer_pixels": 2052,
+            "difference": 8.626605376103655
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 2166,
+            "outer_pixels": 1223,
+            "difference": 14.916713046872488
+          },
+          {
+            "edge": "-X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 25860,
+            "outer_pixels": 46724,
+            "difference": 4.944498982162003
+          },
+          {
+            "edge": "-X",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 57368,
+            "outer_pixels": 97280,
+            "difference": 19.310722050136327
+          }
+        ],
+        "control_abs_median": 7.502410104102317,
+        "control_abs_max": 19.310722050136327,
+        "pooled": {
+          "inner_pixels": 25202,
+          "outer_pixels": 10964,
+          "inner_mean": 70.94706728037457,
+          "outer_mean": 78.0714752827435,
+          "difference": -7.124408002368938
+        },
+        "worst_edge_abs": 12.05676114501641,
+        "visible_by_pooled": true,
+        "visible_by_worst_edge": true,
+        "run_check": {
+          "name": "WQ0_a1000",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 2,
+          "found_shots": 2,
+          "late_max_seconds": 0.01666700653731823,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 646,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -963.9999963879586,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -1903.6926171738664,
+              7.954737072048707e-14,
+              440.1701510504307
+            ],
+            "cam_world_rotation": [
+              -19.999999999999982,
+              -2.9387137463325593e-16,
+              1.6666273842636491e-15
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              128,
+              128,
+              8
+            ],
+            "TD.Fog3D.Quality": 0,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 1000.0,
+            "error": null
+          }
+        }
+      },
+      "q0_a2000": {
+        "run": "WQ0_a2000",
+        "level": 0,
+        "tier": {
+          "name": "낮음",
+          "cells": 128,
+          "rate": 30
+        },
+        "arm_cm": 2000,
+        "image": [
+          1280,
+          720
+        ],
+        "window_x_cm": [
+          -2000.0,
+          0.0
+        ],
+        "window_y_cm": [
+          -1000.0,
+          1000.0
+        ],
+        "player_cell": [
+          -64,
+          0
+        ],
+        "min_cell": [
+          -128,
+          -64
+        ],
+        "floor_z_cm": 2.150007724761963,
+        "camera_check": {
+          "camera_minus_pawn": [
+            -1879.385241571816,
+            1.1368683772161603e-13,
+            684.0402866513375
+          ],
+          "predicted_from_arm": [
+            -1879.385241571817,
+            0.0,
+            684.0402866513368
+          ],
+          "max_abs_difference_cm": 9.094947017729282e-13,
+          "pawn_end_xy": [
+            -963.9999963879586,
+            -5.717757570724952e-15
+          ],
+          "pawn_push_cm": 36.00000361204138
+        },
+        "camera_world_location": [
+          -2879.385241571816,
+          1.1368683772161603e-13,
+          782.1902943760995
+        ],
+        "edges": {
+          "+Y": {
+            "line_cm": 1000.0,
+            "along_cm": [
+              -1900.0,
+              -100.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 28813,
+            "outer_raw": 30626,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 10700,
+            "outer_pixels": 12513,
+            "used": true,
+            "inner_mean": 57.194471682242984,
+            "outer_mean": 48.95765646927196,
+            "difference": 8.236815212971024
+          },
+          "-Y": {
+            "line_cm": -1000.0,
+            "along_cm": [
+              -1900.0,
+              -100.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 28813,
+            "outer_raw": 30626,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 10700,
+            "outer_pixels": 12513,
+            "used": true,
+            "inner_mean": 68.7569676635514,
+            "outer_mean": 67.26309503716135,
+            "difference": 1.4938726263900577
+          },
+          "+X": {
+            "line_cm": 0.0,
+            "along_cm": [
+              -900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 14100,
+            "outer_raw": 12880,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 2772,
+            "outer_pixels": 1552,
+            "used": true,
+            "inner_mean": 76.6055924963925,
+            "outer_mean": 83.24119845360825,
+            "difference": -6.635605957215745
+          },
+          "-X": {
+            "line_cm": -2000.0,
+            "along_cm": [
+              -900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 108018,
+            "outer_raw": 131190,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 36936,
+            "outer_pixels": 60108,
+            "used": true,
+            "inner_mean": 59.41954886831275,
+            "outer_mean": 51.72691242097557,
+            "difference": 7.692636447337179
+          }
+        },
+        "controls": [
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 9865,
+            "outer_pixels": 12508,
+            "difference": -3.2440093150382623
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 10696,
+            "outer_pixels": 12511,
+            "difference": 1.4640969733141844
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 10700,
+            "outer_pixels": 12501,
+            "difference": 3.129870510226098
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 9509,
+            "outer_pixels": 5976,
+            "difference": -7.2143236615477235
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 5693,
+            "outer_pixels": 3420,
+            "difference": 2.1280772662950156
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 9865,
+            "outer_pixels": 12508,
+            "difference": -2.2787074158510947
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 10696,
+            "outer_pixels": 12511,
+            "difference": -2.44979491716699
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 10700,
+            "outer_pixels": 12501,
+            "difference": -0.9904806321168991
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 9509,
+            "outer_pixels": 5976,
+            "difference": -11.22055022986396
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 5693,
+            "outer_pixels": 3420,
+            "difference": -1.5667273067365812
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 6950,
+            "outer_pixels": 4642,
+            "difference": -0.6993010789569212
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 4948,
+            "outer_pixels": 3350,
+            "difference": -7.650840750467552
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 3514,
+            "outer_pixels": 2564,
+            "difference": -6.450765688616173
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 2108,
+            "outer_pixels": 1416,
+            "difference": 6.559821099068387
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 1321,
+            "outer_pixels": 882,
+            "difference": 12.045814985898474
+          },
+          {
+            "edge": "-X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 6246,
+            "outer_pixels": 10056,
+            "difference": -1.3383409214260098
+          },
+          {
+            "edge": "-X",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 10256,
+            "outer_pixels": 16114,
+            "difference": 10.487002852736346
+          },
+          {
+            "edge": "-X",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 18458,
+            "outer_pixels": 29680,
+            "difference": 2.0715019706186766
+          }
+        ],
+        "control_abs_median": 2.789832713696544,
+        "control_abs_max": 12.045814985898474,
+        "pooled": {
+          "inner_pixels": 61108,
+          "outer_pixels": 86686,
+          "inner_mean": 61.44451725469659,
+          "outer_mean": 54.134022280414364,
+          "difference": 7.3104949742822285
+        },
+        "worst_edge_abs": 8.236815212971024,
+        "visible_by_pooled": true,
+        "visible_by_worst_edge": true,
+        "run_check": {
+          "name": "WQ0_a2000",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 2,
+          "found_shots": 2,
+          "late_max_seconds": 0.01666700653731823,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 635,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -963.9999963879586,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -2843.3852379597747,
+              1.0796908015089107e-13,
+              782.1902943760995
+            ],
+            "cam_world_rotation": [
+              -19.999999999999982,
+              -2.9387137463325593e-16,
+              1.6666273842636491e-15
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              128,
+              128,
+              8
+            ],
+            "TD.Fog3D.Quality": 0,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 2000.0,
+            "error": null
+          }
+        }
+      },
+      "q2_a500": {
+        "run": "WQ2_a500",
+        "level": 2,
+        "tier": {
+          "name": "높음",
+          "cells": 256,
+          "rate": 60
+        },
+        "arm_cm": 500,
+        "image": [
+          1280,
+          720
+        ],
+        "window_x_cm": [
+          -3000.0,
+          1000.0
+        ],
+        "window_y_cm": [
+          -2000.0,
+          2000.0
+        ],
+        "player_cell": [
+          -64,
+          0
+        ],
+        "min_cell": [
+          -192,
+          -128
+        ],
+        "floor_z_cm": 2.150007724761963,
+        "camera_check": {
+          "camera_minus_pawn": [
+            -469.8463103929539,
+            2.842170943040401e-14,
+            171.01007166283432
+          ],
+          "predicted_from_arm": [
+            -469.84631039295425,
+            0.0,
+            171.0100716628342
+          ],
+          "max_abs_difference_cm": 3.410605131648481e-13,
+          "pawn_end_xy": [
+            -963.9999963879586,
+            -5.717757570724952e-15
+          ],
+          "pawn_push_cm": 36.00000361204138
+        },
+        "camera_world_location": [
+          -1469.846310392954,
+          2.842170943040401e-14,
+          269.1600793875963
+        ],
+        "edges": {
+          "+Y": {
+            "line_cm": 2000.0,
+            "along_cm": [
+              -2900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 5062,
+            "outer_raw": 3658,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 1521,
+            "outer_pixels": 117,
+            "used": false,
+            "reason": "화면에 보이는 화소가 200개 미만"
+          },
+          "-Y": {
+            "line_cm": -2000.0,
+            "along_cm": [
+              -2900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 5062,
+            "outer_raw": 3658,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 1521,
+            "outer_pixels": 117,
+            "used": false,
+            "reason": "화면에 보이는 화소가 200개 미만"
+          },
+          "+X": {
+            "line_cm": 1000.0,
+            "along_cm": [
+              -1900.0,
+              1900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 43426,
+            "outer_raw": 38686,
+            "blocked_by_objects": 4792,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 5512,
+            "outer_pixels": 950,
+            "used": true,
+            "inner_mean": 85.29897783018868,
+            "outer_mean": 80.19428357894736,
+            "difference": 5.1046942512413125
+          },
+          "-X": {
+            "line_cm": -3000.0,
+            "along_cm": [
+              -1900.0,
+              1900.0
+            ],
+            "coincides_with_zone_edge": true,
+            "used": false,
+            "reason": "구역 가장자리(±3000cm)와 겹쳐 창 가장자리만 가를 수 없어 뺌"
+          }
+        },
+        "controls": [
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 5280,
+            "outer_pixels": 1612,
+            "difference": 7.570479277765244
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 3189,
+            "outer_pixels": 802,
+            "difference": 11.138570650435682
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 2129,
+            "outer_pixels": 373,
+            "difference": 21.392964574993357
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 5280,
+            "outer_pixels": 1612,
+            "difference": -1.2288409033573942
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 3189,
+            "outer_pixels": 802,
+            "difference": 7.109857218196268
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 2129,
+            "outer_pixels": 373,
+            "difference": 28.719853283332284
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 9360,
+            "outer_pixels": 3840,
+            "difference": 6.0614229513888915
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 7680,
+            "outer_pixels": 3728,
+            "difference": 7.8857024036569925
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 6588,
+            "outer_pixels": 2146,
+            "difference": -2.950633008107033
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 2737,
+            "outer_pixels": 764,
+            "difference": 9.609829683300575
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 2238,
+            "outer_pixels": 697,
+            "difference": 27.51729329912569
+          }
+        ],
+        "control_abs_median": 7.8857024036569925,
+        "control_abs_max": 28.719853283332284,
+        "pooled": {
+          "inner_pixels": 5512,
+          "outer_pixels": 950,
+          "inner_mean": 85.29897783018868,
+          "outer_mean": 80.19428357894736,
+          "difference": 5.1046942512413125
+        },
+        "worst_edge_abs": 5.1046942512413125,
+        "visible_by_pooled": true,
+        "visible_by_worst_edge": true,
+        "run_check": {
+          "name": "WQ2_a500",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 2,
+          "found_shots": 2,
+          "late_max_seconds": 0.01666700653731823,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 913,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -963.9999963879586,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -1433.8463067809125,
+              2.2703951859679056e-14,
+              269.1600793875963
+            ],
+            "cam_world_rotation": [
+              -19.999999999999982,
+              -2.9387137463325593e-16,
+              1.6666273842636491e-15
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              256,
+              256,
+              8
+            ],
+            "TD.Fog3D.Quality": 2,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 500.0,
+            "error": null
+          }
+        }
+      },
+      "q2_a1000": {
+        "run": "WQ2_a1000",
+        "level": 2,
+        "tier": {
+          "name": "높음",
+          "cells": 256,
+          "rate": 60
+        },
+        "arm_cm": 1000,
+        "image": [
+          1280,
+          720
+        ],
+        "window_x_cm": [
+          -3000.0,
+          1000.0
+        ],
+        "window_y_cm": [
+          -2000.0,
+          2000.0
+        ],
+        "player_cell": [
+          -64,
+          0
+        ],
+        "min_cell": [
+          -192,
+          -128
+        ],
+        "floor_z_cm": 2.150007724761963,
+        "camera_check": {
+          "camera_minus_pawn": [
+            -939.6926207859078,
+            8.526512829121202e-14,
+            342.02014332566876
+          ],
+          "predicted_from_arm": [
+            -939.6926207859085,
+            0.0,
+            342.0201433256684
+          ],
+          "max_abs_difference_cm": 6.821210263296962e-13,
+          "pawn_end_xy": [
+            -963.9999963879586,
+            -5.717757570724952e-15
+          ],
+          "pawn_push_cm": 36.00000361204138
+        },
+        "camera_world_location": [
+          -1939.6926207859078,
+          8.526512829121202e-14,
+          440.1701510504307
+        ],
+        "edges": {
+          "+Y": {
+            "line_cm": 2000.0,
+            "along_cm": [
+              -2900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 9198,
+            "outer_raw": 7878,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 2019,
+            "outer_pixels": 699,
+            "used": true,
+            "inner_mean": 51.94955690936107,
+            "outer_mean": 51.40312703862661,
+            "difference": 0.5464298707344639
+          },
+          "-Y": {
+            "line_cm": -2000.0,
+            "along_cm": [
+              -2900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 9198,
+            "outer_raw": 7878,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 2019,
+            "outer_pixels": 699,
+            "used": true,
+            "inner_mean": 90.79733838533927,
+            "outer_mean": 74.99522288984262,
+            "difference": 15.80211549549665
+          },
+          "+X": {
+            "line_cm": 1000.0,
+            "along_cm": [
+              -1900.0,
+              1900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 29568,
+            "outer_raw": 26932,
+            "blocked_by_objects": 2950,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 4120,
+            "outer_pixels": 1672,
+            "used": true,
+            "inner_mean": 81.05219747572815,
+            "outer_mean": 82.17175861244019,
+            "difference": -1.1195611367120364
+          },
+          "-X": {
+            "line_cm": -3000.0,
+            "along_cm": [
+              -1900.0,
+              1900.0
+            ],
+            "coincides_with_zone_edge": true,
+            "used": false,
+            "reason": "구역 가장자리(±3000cm)와 겹쳐 창 가장자리만 가를 수 없어 뺌"
+          }
+        },
+        "controls": [
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 8183,
+            "outer_pixels": 4132,
+            "difference": 1.492342868978838
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 4765,
+            "outer_pixels": 2273,
+            "difference": 15.53721481075575
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 3013,
+            "outer_pixels": 1285,
+            "difference": 0.8321171969971815
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 1392,
+            "outer_pixels": 325,
+            "difference": 20.395859811228995
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 8183,
+            "outer_pixels": 4132,
+            "difference": -7.2762776742956135
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 4765,
+            "outer_pixels": 2273,
+            "difference": -6.099931358984449
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 3013,
+            "outer_pixels": 1285,
+            "difference": 2.1456020269106233
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 1392,
+            "outer_pixels": 325,
+            "difference": 27.499525273651642
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 11046,
+            "outer_pixels": 4712,
+            "difference": 0.5671753737265419
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 7058,
+            "outer_pixels": 4015,
+            "difference": 3.154091899370002
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 5517,
+            "outer_pixels": 2634,
+            "difference": -2.1587937351643944
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 2670,
+            "outer_pixels": 1400,
+            "difference": -2.5206874146602445
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 1728,
+            "outer_pixels": 634,
+            "difference": 3.8516723752044584
+          }
+        ],
+        "control_abs_median": 3.154091899370002,
+        "control_abs_max": 27.499525273651642,
+        "pooled": {
+          "inner_pixels": 8158,
+          "outer_pixels": 3070,
+          "inner_mean": 76.26146545721991,
+          "outer_mean": 73.53212605863192,
+          "difference": 2.729339398587996
+        },
+        "worst_edge_abs": 15.80211549549665,
+        "visible_by_pooled": true,
+        "visible_by_worst_edge": true,
+        "run_check": {
+          "name": "WQ2_a1000",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 2,
+          "found_shots": 2,
+          "late_max_seconds": 0.01666700653731823,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 1253,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -963.9999963879586,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -1903.6926171738664,
+              7.954737072048707e-14,
+              440.1701510504307
+            ],
+            "cam_world_rotation": [
+              -19.999999999999982,
+              -2.9387137463325593e-16,
+              1.6666273842636491e-15
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              256,
+              256,
+              8
+            ],
+            "TD.Fog3D.Quality": 2,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 1000.0,
+            "error": null
+          }
+        }
+      },
+      "q2_a2000": {
+        "run": "WQ2_a2000",
+        "level": 2,
+        "tier": {
+          "name": "높음",
+          "cells": 256,
+          "rate": 60
+        },
+        "arm_cm": 2000,
+        "image": [
+          1280,
+          720
+        ],
+        "window_x_cm": [
+          -3000.0,
+          1000.0
+        ],
+        "window_y_cm": [
+          -2000.0,
+          2000.0
+        ],
+        "player_cell": [
+          -64,
+          0
+        ],
+        "min_cell": [
+          -192,
+          -128
+        ],
+        "floor_z_cm": 2.150007724761963,
+        "camera_check": {
+          "camera_minus_pawn": [
+            -1879.385241571816,
+            1.1368683772161603e-13,
+            684.0402866513375
+          ],
+          "predicted_from_arm": [
+            -1879.385241571817,
+            0.0,
+            684.0402866513368
+          ],
+          "max_abs_difference_cm": 9.094947017729282e-13,
+          "pawn_end_xy": [
+            -963.9999963879586,
+            -5.717757570724952e-15
+          ],
+          "pawn_push_cm": 36.00000361204138
+        },
+        "camera_world_location": [
+          -2879.385241571816,
+          1.1368683772161603e-13,
+          782.1902943760995
+        ],
+        "edges": {
+          "+Y": {
+            "line_cm": 2000.0,
+            "along_cm": [
+              -2900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 14308,
+            "outer_raw": 12976,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 3683,
+            "outer_pixels": 2351,
+            "used": true,
+            "inner_mean": 53.58450469725768,
+            "outer_mean": 56.08682058698426,
+            "difference": -2.5023158897265816
+          },
+          "-Y": {
+            "line_cm": -2000.0,
+            "along_cm": [
+              -2900.0,
+              900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 14308,
+            "outer_raw": 12976,
+            "blocked_by_objects": 0,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 3683,
+            "outer_pixels": 2351,
+            "used": true,
+            "inner_mean": 81.5001270703231,
+            "outer_mean": 80.71554946831135,
+            "difference": 0.7845776020117512
+          },
+          "+X": {
+            "line_cm": 1000.0,
+            "along_cm": [
+              -1900.0,
+              1900.0
+            ],
+            "coincides_with_zone_edge": false,
+            "inner_raw": 16016,
+            "outer_raw": 15622,
+            "blocked_by_objects": 1209,
+            "blocked_by_pawn": 0,
+            "inner_pixels": 2167,
+            "outer_pixels": 1866,
+            "used": true,
+            "inner_mean": 75.31457489616982,
+            "outer_mean": 75.73518735262591,
+            "difference": -0.420612456456098
+          },
+          "-X": {
+            "line_cm": -3000.0,
+            "along_cm": [
+              -1900.0,
+              1900.0
+            ],
+            "coincides_with_zone_edge": true,
+            "used": false,
+            "reason": "구역 가장자리(±3000cm)와 겹쳐 창 가장자리만 가를 수 없어 뺌"
+          }
+        },
+        "controls": [
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 14663,
+            "outer_pixels": 9654,
+            "difference": -1.8681183452114851
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 8550,
+            "outer_pixels": 5696,
+            "difference": -3.844935323181538
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 5461,
+            "outer_pixels": 3597,
+            "difference": 4.628120316717968
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 2568,
+            "outer_pixels": 1549,
+            "difference": 0.45810039519013657
+          },
+          {
+            "edge": "+Y",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 1825,
+            "outer_pixels": 1007,
+            "difference": 19.51906734828801
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 14663,
+            "outer_pixels": 9654,
+            "difference": -5.25395782601224
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 8550,
+            "outer_pixels": 5696,
+            "difference": -10.4676131992575
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 5461,
+            "outer_pixels": 3597,
+            "difference": 0.4944649606528202
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 2568,
+            "outer_pixels": 1549,
+            "difference": 0.280108709166214
+          },
+          {
+            "edge": "-Y",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 1825,
+            "outer_pixels": 1007,
+            "difference": 27.947296439335588
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -900.0,
+            "inner_pixels": 5612,
+            "outer_pixels": 3970,
+            "difference": 2.2695658751936776
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -600.0,
+            "inner_pixels": 3542,
+            "outer_pixels": 2811,
+            "difference": 4.189052435087547
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": -300.0,
+            "inner_pixels": 2930,
+            "outer_pixels": 1925,
+            "difference": -0.3684027225743449
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 300.0,
+            "inner_pixels": 1826,
+            "outer_pixels": 1066,
+            "difference": -3.301419601791096
+          },
+          {
+            "edge": "+X",
+            "offset_outward_cm": 600.0,
+            "inner_pixels": 1191,
+            "outer_pixels": 988,
+            "difference": -2.978748465379681
+          }
+        ],
+        "control_abs_median": 3.301419601791096,
+        "control_abs_max": 27.947296439335588,
+        "pooled": {
+          "inner_pixels": 9533,
+          "outer_pixels": 6568,
+          "inner_mean": 69.30907191859855,
+          "outer_mean": 70.48480992691839,
+          "difference": -1.1757380083198399
+        },
+        "worst_edge_abs": 2.5023158897265816,
+        "visible_by_pooled": true,
+        "visible_by_worst_edge": true,
+        "run_check": {
+          "name": "WQ2_a2000",
+          "valid": true,
+          "reasons": [],
+          "expected_shots": 2,
+          "found_shots": 2,
+          "late_max_seconds": 0.01666700653731823,
+          "shots_over_0.05": 0,
+          "events_done": "4/4",
+          "log": {
+            "source": "snapshot",
+            "submitted": 1268,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0,
+            "usable": true
+          },
+          "state": {
+            "actor_location": [
+              -963.9999963879586,
+              -5.717757570724952e-15,
+              98.15000772476196
+            ],
+            "cam_world_location": [
+              -2843.3852379597747,
+              1.0796908015089107e-13,
+              782.1902943760995
+            ],
+            "cam_world_rotation": [
+              -19.999999999999982,
+              -2.9387137463325593e-16,
+              1.6666273842636491e-15
+            ],
+            "cam_fov": 90.0,
+            "state_target": [
+              256,
+              256,
+              8
+            ],
+            "TD.Fog3D.Quality": 2,
+            "TD.Fog3D.Mode": 2,
+            "boom_target_arm_length": 2000.0,
+            "error": null
+          }
+        }
+      }
+    }
+  },
+  "clip": {
+    "bytes": 1979618,
+    "quality": 95,
+    "frames": 132,
+    "size": [
+      1440,
+      270
+    ],
+    "verify": {
+      "frames": 132,
+      "size": [
+        1440,
+        270
+      ],
+      "total_milliseconds": 13200
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+ "name": "v1",
+ "which": null,
+ "config": {
+  "layout": "S8",
+  "advect": "A3",
+  "solid": "S4",
+  "solver": "P1",
+  "delta": "v3",
+  "dt": 60,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false
+ },
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/scratch/fog3d/stage1/r2/gates2.py",
+ "time_scale": 1.0,
+ "values": {
+  "state_hash": "df46841dd30c3677",
+  "t": 0.5,
+  "steps": 30,
+  "state_max_info": {
+   "d": 129.27879333496094,
+   "g": 0.0
+  },
+  "ring_outward_wind": 32.06615368355525,
+  "center_column_drop": 1.0,
+  "best_ring_radius": 67.8125,
+  "best_ring_column_diff": 6.6258137733287485,
+  "passed_1": true,
+  "passed_2": true,
+  "passed_3": true,
+  "passed": true
+ },
+ "criterion": "고리 바깥 바람 > 0, 기둥(0~90cm) 농도 10% 이상 낮음, 0.6m 밖 둘레 차이값 > 0",
+ "passed": true,
+ "elapsed_sec": 47.3,
+ "state_hash": {
+  "run": "df46841dd30c3677"
+ },
+ "finished": "2026-11-13 10:23:45",
+ "solver_cfg": {
+  "kind": "line",
+  "sweeps": 4,
+  "omega": 1.3
+ }
+}

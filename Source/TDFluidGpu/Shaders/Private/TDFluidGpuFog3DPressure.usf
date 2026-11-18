@@ -1,0 +1,106 @@
+#include "/TDFluidGpu/Private/TDFluidGpuFog3DCommon.ush"
+
+Texture3D<float> DivergenceIn;
+Texture3D<uint> FaceFlagsIn;
+RWTexture3D<float> PressureInOut;
+
+uint PressureColor;
+float OverRelaxation;
+float HorizontalCoupling;
+float VerticalCoupling;
+float CellVolume;
+float PivotGuardRatio;
+
+float ReadFog3DHorizontalNeighborPressure(int3 LocalCell, uint FaceFlags, uint AxisIndex, bool bIsPositive, inout float HorizontalCouplingSum)
+{
+	if (IsFog3DFaceClosed(LocalCell, FaceFlags, AxisIndex, bIsPositive))
+	{
+		return 0.0f;
+	}
+
+	int Direction = bIsPositive ? 1 : -1;
+	int3 NeighborCell = LocalCell + int3(AxisIndex == 0u ? Direction : 0, AxisIndex == 1u ? Direction : 0, 0);
+	HorizontalCouplingSum += HorizontalCoupling;
+	return HorizontalCoupling * PressureInOut[MakeFog3DStorageTexel(NeighborCell)];
+}
+
+float InvertFog3DPivot(float Pivot, float GuardDiagonal)
+{
+	bool bIsTiny = abs(Pivot) < PivotGuardRatio * GuardDiagonal;
+	return bIsTiny ? 0.0f : 1.0f / (bIsTiny ? 1.0f : Pivot);
+}
+
+[numthreads(8, 8, 1)]
+void Fog3DPressureColumnCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	int2 Column = int2(int(DispatchThreadId.x) * 2 + int((DispatchThreadId.y + PressureColor) & 1u), int(DispatchThreadId.y));
+	if (any(Column >= int2(Resolution, Resolution)))
+	{
+		return;
+	}
+
+	float OldPressure[TDFOG3D_LAYER_COUNT];
+	float RightSide[TDFOG3D_LAYER_COUNT];
+	float UpwardCoupling[TDFOG3D_LAYER_COUNT];
+	float LayerOwnCoupling[TDFOG3D_LAYER_COUNT];
+	float GuardDiagonal[TDFOG3D_LAYER_COUNT];
+	bool bIsLive[TDFOG3D_LAYER_COUNT];
+
+	[unroll]
+	for (int Layer = 0; Layer < TDFOG3D_LAYER_COUNT; ++Layer)
+	{
+		int3 LocalCell = int3(Column, Layer);
+		uint3 Texel = MakeFog3DStorageTexel(LocalCell);
+		uint Flags = FaceFlagsIn[Texel];
+		float HorizontalCouplingSum = 0.0f;
+		float NeighborSum = 0.0f;
+		NeighborSum += ReadFog3DHorizontalNeighborPressure(LocalCell, Flags, 0u, true, HorizontalCouplingSum);
+		NeighborSum += ReadFog3DHorizontalNeighborPressure(LocalCell, Flags, 0u, false, HorizontalCouplingSum);
+		NeighborSum += ReadFog3DHorizontalNeighborPressure(LocalCell, Flags, 1u, true, HorizontalCouplingSum);
+		NeighborSum += ReadFog3DHorizontalNeighborPressure(LocalCell, Flags, 1u, false, HorizontalCouplingSum);
+		bool bIsUpOpen = !IsFog3DFaceClosed(LocalCell, Flags, 2u, true);
+		bool bIsDownOpen = !IsFog3DFaceClosed(LocalCell, Flags, 2u, false);
+		bool bIsTopLayer = Layer == TDFOG3D_LAYER_COUNT - 1;
+		UpwardCoupling[Layer] = bIsUpOpen && !bIsTopLayer ? VerticalCoupling : 0.0f;
+		LayerOwnCoupling[Layer] = HorizontalCouplingSum + (bIsUpOpen && bIsTopLayer ? VerticalCoupling : 0.0f);
+		float Diagonal = LayerOwnCoupling[Layer] + UpwardCoupling[Layer] + (bIsDownOpen ? VerticalCoupling : 0.0f);
+		bIsLive[Layer] = (Flags & Fog3DSelfBlockedBit) == 0u && Diagonal > 0.0f;
+		GuardDiagonal[Layer] = bIsLive[Layer] ? Diagonal : 1.0f;
+		OldPressure[Layer] = PressureInOut[Texel];
+		RightSide[Layer] = NeighborSum - CellVolume * DivergenceIn[Texel];
+	}
+
+	float InversePivot[TDFOG3D_LAYER_COUNT];
+	float Solved[TDFOG3D_LAYER_COUNT];
+	float PivotExcess = 0.0f;
+	float BelowCoupling = 0.0f;
+	float BelowInversePivot = 0.0f;
+	float BelowSolved = 0.0f;
+
+	[unroll]
+	for (int ForwardLayer = 0; ForwardLayer < TDFOG3D_LAYER_COUNT; ++ForwardLayer)
+	{
+		float CarriedCoupling = BelowInversePivot == 0.0f ? BelowCoupling : BelowCoupling * PivotExcess * BelowInversePivot;
+		float LiveExcess = LayerOwnCoupling[ForwardLayer] + CarriedCoupling;
+		PivotExcess = bIsLive[ForwardLayer] ? LiveExcess : 1.0f;
+		float Pivot = bIsLive[ForwardLayer] ? UpwardCoupling[ForwardLayer] + LiveExcess : 1.0f;
+		InversePivot[ForwardLayer] = InvertFog3DPivot(Pivot, GuardDiagonal[ForwardLayer]);
+		Solved[ForwardLayer] = (RightSide[ForwardLayer] + BelowCoupling * BelowSolved) * InversePivot[ForwardLayer];
+		BelowCoupling = UpwardCoupling[ForwardLayer];
+		BelowInversePivot = InversePivot[ForwardLayer];
+		BelowSolved = Solved[ForwardLayer];
+	}
+
+	[unroll]
+	for (int BackwardLayer = TDFOG3D_LAYER_COUNT - 2; BackwardLayer >= 0; --BackwardLayer)
+	{
+		Solved[BackwardLayer] += UpwardCoupling[BackwardLayer] * InversePivot[BackwardLayer] * Solved[BackwardLayer + 1];
+	}
+
+	[unroll]
+	for (int WriteLayer = 0; WriteLayer < TDFOG3D_LAYER_COUNT; ++WriteLayer)
+	{
+		float Relaxed = (1.0f - OverRelaxation) * OldPressure[WriteLayer] + OverRelaxation * Solved[WriteLayer];
+		PressureInOut[MakeFog3DStorageTexel(int3(Column, WriteLayer))] = bIsLive[WriteLayer] ? Relaxed : 0.0f;
+	}
+}

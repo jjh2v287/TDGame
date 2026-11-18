@@ -11,6 +11,7 @@
 #include "FluidFX/TDFluidVolumeDriverTypes.h"
 #include "FluidFX/TDFluidWaterParticleTypes.h"
 #include "FluidFX/TDFluidWaterPropTypes.h"
+#include "FluidFX/TDFog3DTypes.h"
 #include "HAL/FileManager.h"
 #include "HAL/IConsoleManager.h"
 #include "JsonObjectConverter.h"
@@ -720,6 +721,7 @@ const TArray<FTDFluidPresetTuningRegisteredStruct>& UTDFluidPresetTuningSubsyste
 		{ FTDFluidRainSettings::StaticStruct(), ETDFluidPresetTuningScope::PresetKind },
 		{ FTDFluidCloudSceneSettings::StaticStruct(), ETDFluidPresetTuningScope::Global },
 		{ FTDFluidOutputQualitySettings::StaticStruct(), ETDFluidPresetTuningScope::Global },
+		{ FTDFog3DSettings::StaticStruct(), ETDFluidPresetTuningScope::Global },
 	};
 	return RegisteredStructs;
 }

@@ -1,0 +1,406 @@
+{
+  "criteria": {
+    "Fv_at_least": 10.0,
+    "Rs_at_least": 12.0,
+    "Rs_over_Rn_at_least": 3.0
+  },
+  "formulas": "C = 세로 [0.25H,0.75H) x 가로 [0.25W,0.75W). Fv = C 안 |Y(S 기준 장 S8.3) - Y(top_hidden 의 S8.3)| 평균. Rs = C 안 |Y(S2.5) - Y(S8.3)| 가운데 큰 쪽 2% 화소(올림) 평균. Rn = 같은 식, S8.3 과 S8.8. Rw = 같은 식, W12.1 과 W19.4, 걷기 잡음 Rn_walk = W19.4 와 W19.9. 8비트 밝기 단위",
+  "hidden_run": {
+    "valid": true,
+    "usable": true,
+    "log": {
+      "submitted": 1753,
+      "rejected": 0,
+      "fog3d_warning_or_error_lines": 0
+    },
+    "self_noise_S8.3_vs_S8.8_in_C": 0.28261034809027735
+  },
+  "rows": [
+    {
+      "name": "T0",
+      "changed": "기본값",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1074,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 11.178612371527777,
+      "Fv_with_second_reference": 11.221802435763891,
+      "Rs": 14.260302647569446,
+      "Rn": 4.694084765625002,
+      "Rs_over_Rn": 3.037930365467257,
+      "Rw": 7.4082553819444446,
+      "Rn_walk": 6.382424609375003,
+      "Rw_over_Rn_walk": 1.160727440644206,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    },
+    {
+      "name": "T1",
+      "changed": "BaseDensity 4",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1074,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 36.756308080729156,
+      "Fv_with_second_reference": 36.81105312760416,
+      "Rs": 32.186469010416666,
+      "Rn": 4.14059357638889,
+      "Rs_over_Rn": 7.773394905009549,
+      "Rw": 12.56427682291667,
+      "Rn_walk": 6.148305034722225,
+      "Rw_over_Rn_walk": 2.0435350477831835,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    },
+    {
+      "name": "T2",
+      "changed": "BaseDensity 8",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1075,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 49.660975418402785,
+      "Fv_with_second_reference": 49.65833462847222,
+      "Rs": 34.135181857638884,
+      "Rn": 3.9561475260416703,
+      "Rs_over_Rn": 8.628389521103854,
+      "Rw": 9.676906510416666,
+      "Rn_walk": 5.8566369791666695,
+      "Rw_over_Rn_walk": 1.6522974780303996,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    },
+    {
+      "name": "T3",
+      "changed": "BaseDensity 16",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1075,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 58.01888556336805,
+      "Fv_with_second_reference": 58.06488983680556,
+      "Rs": 26.345749609374998,
+      "Rn": 3.6809634548611148,
+      "Rs_over_Rn": 7.1572972490619415,
+      "Rw": 7.532811631944443,
+      "Rn_walk": 5.40097973090278,
+      "Rw_over_Rn_walk": 1.3947120721160946,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    },
+    {
+      "name": "T4",
+      "changed": "BaseDensity 8, BaseThicknessCm 150, BaseTopBlurCm 120",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1076,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 54.273959402777784,
+      "Fv_with_second_reference": 54.29701072743055,
+      "Rs": 15.988311979166665,
+      "Rn": 2.7075027343750033,
+      "Rs_over_Rn": 5.905187749646867,
+      "Rw": 5.653977256944445,
+      "Rn_walk": 3.8405035156250027,
+      "Rw_over_Rn_walk": 1.4721968705252748,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    },
+    {
+      "name": "T5",
+      "changed": "BaseDensity 16, BaseThicknessCm 150, BaseTopBlurCm 120",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1075,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 60.24464688888888,
+      "Fv_with_second_reference": 60.301774065104176,
+      "Rs": 11.427597526041666,
+      "Rn": 2.238553125000004,
+      "Rs_over_Rn": 5.104903429996393,
+      "Rw": 4.298929166666668,
+      "Rn_walk": 3.032152213541671,
+      "Rw_over_Rn_walk": 1.4177814515602278,
+      "meets": {
+        "Fv": true,
+        "Rs": false,
+        "Rs_over_Rn": true
+      },
+      "meets_all": false
+    },
+    {
+      "name": "T6",
+      "changed": "BaseDensity 8, BaseThicknessCm 150, BaseTopBlurCm 120, FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1076,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 54.28243002170138,
+      "Fv_with_second_reference": 54.25005505468751,
+      "Rs": 48.52568971354167,
+      "Rn": 2.705806727430559,
+      "Rs_over_Rn": 17.93390829492903,
+      "Rw": 12.077108246527779,
+      "Rn_walk": 3.804765451388892,
+      "Rw_over_Rn_walk": 3.174205716706965,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    },
+    {
+      "name": "T7",
+      "changed": "BaseDensity 16, BaseThicknessCm 150, BaseTopBlurCm 120, FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1074,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 60.288307619791674,
+      "Fv_with_second_reference": 60.28847426302082,
+      "Rs": 40.82293858506944,
+      "Rn": 2.223698263888893,
+      "Rs_over_Rn": 18.358128550083336,
+      "Rw": 7.90163120659722,
+      "Rn_walk": 3.054142447916671,
+      "Rw_over_Rn_walk": 2.5871848944004485,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    },
+    {
+      "name": "T8",
+      "changed": "BaseDensity 16, BaseThicknessCm 150, BaseTopBlurCm 120, FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1074,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 59.88794653993055,
+      "Fv_with_second_reference": 59.94585133333334,
+      "Rs": 60.89182743055554,
+      "Rn": 1.993695703125005,
+      "Rs_over_Rn": 30.542187223010536,
+      "Rw": 12.158977213541668,
+      "Rn_walk": 3.1389828559027793,
+      "Rw_over_Rn_walk": 3.8735404975777468,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    },
+    {
+      "name": "T7_gridz",
+      "changed": "BaseDensity 16, BaseThicknessCm 150, BaseTopBlurCm 120, FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30",
+      "valid": true,
+      "usable": true,
+      "invalid_reasons": [],
+      "log": {
+        "submitted": 1074,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "console_extra": [
+        "r.VolumetricFog.GridSizeZ 256"
+      ],
+      "region_C_rows_cols": [
+        180,
+        540,
+        320,
+        960
+      ],
+      "Fv": 60.32658329253472,
+      "Fv_with_second_reference": 60.37819818663195,
+      "Rs": 41.666498046875,
+      "Rn": 2.631321137152781,
+      "Rs_over_Rn": 15.834820561643875,
+      "Rw": 7.889938628472222,
+      "Rn_walk": 3.3814270399305593,
+      "Rw_over_Rn_walk": 2.3333162405403396,
+      "meets": {
+        "Fv": true,
+        "Rs": true,
+        "Rs_over_Rn": true
+      },
+      "meets_all": true
+    }
+  ],
+  "back_rows": [
+    {
+      "name": "T4_back",
+      "changed": "BaseDensity 8, BaseThicknessCm 150, BaseTopBlurCm 120",
+      "valid": true,
+      "usable": true,
+      "Wk_12.1": 0.5839372465463459,
+      "Sk_2.5": 0.6460153147235908,
+      "Sk2_2.5": 2.2934552014584395,
+      "Tx2": 0.35552957909215593,
+      "N_W": 0.3109324782754011,
+      "N_S": 0.29944554643313265,
+      "log": {
+        "submitted": 1075,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      }
+    },
+    {
+      "name": "T7_back",
+      "changed": "BaseDensity 16, BaseThicknessCm 150, BaseTopBlurCm 120, FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30",
+      "valid": true,
+      "usable": true,
+      "Wk_12.1": 2.1076852411987517,
+      "Sk_2.5": 1.7735320014595886,
+      "Sk2_2.5": 3.7668318710481397,
+      "Tx2": 0.3575368784927835,
+      "N_W": 0.3217909675802139,
+      "N_S": 0.31433163656267105,
+      "log": {
+        "submitted": 1075,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      }
+    },
+    {
+      "name": "base_d",
+      "changed": "기본값",
+      "valid": true,
+      "usable": true,
+      "Wk_12.1": 1.2761257464349376,
+      "Sk_2.5": 4.570861218755701,
+      "Sk2_2.5": 12.260899600775375,
+      "Tx2": 0.3872445523484382,
+      "N_W": 0.23255882352941182,
+      "N_S": 0.28531783433679986,
+      "log": {
+        "submitted": 1073,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      }
+    }
+  ],
+  "any_config_meets_all": true
+}

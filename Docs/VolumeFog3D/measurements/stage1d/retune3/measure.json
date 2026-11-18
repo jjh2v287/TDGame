@@ -1,0 +1,419 @@
+{
+ "final_overrides": {
+  "FootRadiusCm": 45,
+  "HandRadiusCm": 45,
+  "PelvisRadiusCm": 60,
+  "BodyWindStrength": 3.0,
+  "BladeRadiusCm": 35,
+  "bStainNoiseEnabled": true,
+  "StainNoiseAmplitude": 0.75,
+  "StainNoiseSpacingCm": 400,
+  "DisplacementRefillHorizontalPerSec": 0.05,
+  "DisplacementRefillVerticalPerSec": 0.15,
+  "BladeWindStrength": 2.5
+ },
+ "ladder": [
+  {
+   "run": "R0_base",
+   "step": "기준(프리셋 그대로)",
+   "values_changed_from_preset": {},
+   "Sk2_2.5": 12.162150059999073,
+   "Wk_12.1": 8.201139608400178,
+   "asymmetry": 0.12802167671060793,
+   "Wk_17.6": 5.454181433823529,
+   "residual_rain": 0.6650516506555963,
+   "valid": true
+  },
+  {
+   "run": "R1_b35",
+   "step": "BladeRadiusCm=35",
+   "values_changed_from_preset": {
+    "BladeRadiusCm": 35
+   },
+   "Sk2_2.5": 13.700944895463147,
+   "Wk_12.1": 7.7573944295900175,
+   "asymmetry": 0.11721146130190745,
+   "Wk_17.6": 4.9511927974598935,
+   "residual_rain": 0.638254615309224,
+   "valid": true
+  },
+  {
+   "run": "R2_w15",
+   "step": "+BladeWindStrength=1.5",
+   "values_changed_from_preset": {
+    "BladeRadiusCm": 35,
+    "BladeWindStrength": 1.5
+   },
+   "Sk2_2.5": 16.015132967185117,
+   "Wk_12.1": 7.502075339795009,
+   "asymmetry": 0.11216923994884037,
+   "Wk_17.6": 4.7742930453431365,
+   "residual_rain": 0.6363963075680859,
+   "valid": true
+  },
+  {
+   "run": "R3_w20",
+   "step": "+BladeWindStrength=2.0",
+   "values_changed_from_preset": {
+    "BladeRadiusCm": 35,
+    "BladeWindStrength": 2.0
+   },
+   "Sk2_2.5": 18.340062059814464,
+   "Wk_12.1": 7.376219802807486,
+   "asymmetry": 0.11073307107679145,
+   "Wk_17.6": 4.66054065285205,
+   "residual_rain": 0.6318332123289204,
+   "valid": true
+  },
+  {
+   "run": "R4_w25",
+   "step": "+BladeWindStrength=2.5 (Sk2 처음 20~32 에 듦, 사다리 멈춤)",
+   "values_changed_from_preset": {
+    "BladeRadiusCm": 35,
+    "BladeWindStrength": 2.5
+   },
+   "Sk2_2.5": 20.250546889278628,
+   "Wk_12.1": 7.287565705770944,
+   "asymmetry": 0.10895632821935718,
+   "Wk_17.6": 4.575271688391266,
+   "residual_rain": 0.6278189278990868,
+   "valid": true
+  },
+  {
+   "run": "R5_body25",
+   "step": "걷기 사다리 BodyWindStrength=2.5 (Wk<8)",
+   "values_changed_from_preset": {
+    "BladeRadiusCm": 35,
+    "BladeWindStrength": 2.5,
+    "BodyWindStrength": 2.5
+   },
+   "Sk2_2.5": 20.34006954585314,
+   "Wk_12.1": 7.538390198863636,
+   "asymmetry": 0.09331293421480859,
+   "Wk_17.6": 4.851857547905526,
+   "residual_rain": 0.6436198471972057,
+   "valid": true
+  },
+  {
+   "run": "R6_body30",
+   "step": "BodyWindStrength=3.0 (Wk 가 가장 큰 단계, 최종 선택)",
+   "values_changed_from_preset": {
+    "BladeRadiusCm": 35,
+    "BladeWindStrength": 2.5,
+    "BodyWindStrength": 3.0
+   },
+   "Sk2_2.5": 20.49660363686713,
+   "Wk_12.1": 7.6337621128565045,
+   "asymmetry": 0.08431319146125024,
+   "Wk_17.6": 5.073364839572194,
+   "residual_rain": 0.6645956167572759,
+   "valid": true
+  },
+  {
+   "run": "R7_body35",
+   "step": "BodyWindStrength=3.5",
+   "values_changed_from_preset": {
+    "BladeRadiusCm": 35,
+    "BladeWindStrength": 2.5,
+    "BodyWindStrength": 3.5
+   },
+   "Sk2_2.5": 20.918501744588546,
+   "Wk_12.1": 7.62050309157754,
+   "asymmetry": 0.08059742781809134,
+   "Wk_17.6": 5.294394777740641,
+   "residual_rain": 0.6947565946915238,
+   "valid": true
+  }
+ ],
+ "measured": {
+  "reference_condition_final_values_stain_on_+X_sun100": {
+   "run": "R6_body30",
+   "Wk_12.1": 7.6337621128565045,
+   "Wk_L": 8.277388959447414,
+   "Wk_R": 6.990135266265597,
+   "asymmetry": 0.08431319146125024,
+   "Sk2_2.5": 20.49660363686713,
+   "residual_rain": 0.6645956167572759,
+   "Wk_17.6": 5.073364839572194
+  },
+  "reference_condition_before_E_px": {
+   "Wk_12.1": 8.194484422348484,
+   "asymmetry": 0.1275161483761369,
+   "Sk2_2.5": 12.216138660174458,
+   "residual_rain": 0.6597744238255162,
+   "replicate_R0_base_Wk": 8.201139608400178,
+   "replicate_R0_base_Sk2": 12.162150059999073
+  },
+  "final_check_same_start_stain_off": {
+   "A(+X)": {
+    "run": "F_A",
+    "Wk_12.1": 6.486073345588235,
+    "Wk_L": 7.135754528743314,
+    "Wk_R": 5.836392162433155,
+    "asymmetry": 0.10016556220366929,
+    "Sk2_2.5": 16.727032334887156,
+    "line_error_cm_start_end": [
+     0.0,
+     0.0
+    ],
+    "valid": true
+   },
+   "B(-X)": {
+    "run": "F_B",
+    "Wk_12.1": 6.161539591688948,
+    "Wk_L": 6.78250902963458,
+    "Wk_R": 5.540570153743315,
+    "asymmetry": 0.10078153823489723,
+    "Sk2_2.5": 12.433523002723035,
+    "line_error_cm_start_end": [
+     0.0,
+     0.0
+    ],
+    "valid": true
+   },
+   "C(+Y)": {
+    "run": "F_C",
+    "Wk_12.1": 7.114098150623887,
+    "Wk_L": 7.340413096033869,
+    "Wk_R": 6.887783205213903,
+    "asymmetry": 0.03181217641622438,
+    "Sk2_2.5": 21.40023396870818,
+    "line_error_cm_start_end": [
+     0.0,
+     0.0
+    ],
+    "valid": true
+   },
+   "D(-Y)": {
+    "run": "F_D",
+    "Wk_12.1": 6.760103885360962,
+    "Wk_L": 7.482421167557932,
+    "Wk_R": 6.037786603163993,
+    "asymmetry": 0.10685002692949012,
+    "Sk2_2.5": 15.164419686620205,
+    "line_error_cm_start_end": [
+     0.0,
+     0.0
+    ],
+    "valid": true
+   }
+  }
+ },
+ "conditions": {
+  "registered": "prereg-1d-diag.md 4절 마지막 확인 + prereg-1d-gait.md 4절(같은 출발 네 방향)",
+  "Wk_mean": 6.630453743315508,
+  "Wk_relative_deviation": {
+   "F_A": -0.021775341977587903,
+   "F_B": -0.07072127636804582,
+   "F_C": 0.07294288234737567,
+   "F_D": 0.01955373599825827
+  },
+  "Wk_within_15pct": true,
+  "asymmetry_spread": 0.07503785051326575,
+  "asymmetry_spread_within_0.10": true,
+  "asymmetry_magnitude_le_0.15": {
+   "F_A": true,
+   "F_B": true,
+   "F_C": true,
+   "F_D": true
+  },
+  "all_valid": true,
+  "met": true
+ },
+ "final_rows": {
+  "F_A": {
+   "name": "F_A",
+   "dir": "A",
+   "walk_yaw": 0,
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.486073345588235,
+   "Wk_17.6": 3.1817782893270947,
+   "Wk_L": 7.135754528743314,
+   "Wk_R": 5.836392162433155,
+   "asymmetry": 0.10016556220366929,
+   "Sk2_2.5": 16.727032334887156,
+   "pawn_start_xy": [
+    -964.0,
+    500.0
+   ],
+   "pawn_end_xy": [
+    -341.33641101174453,
+    500.0
+   ],
+   "pawn_yaw_end": 0.0,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "line_within_3cm": true,
+   "yaw_matches_walk_yaw": true,
+   "prewalk": {
+    "moved_cm": 157.04004000782766,
+    "elapsed_s": 0.41666668839752674,
+    "timed_out": false
+   },
+   "walk_timed_out": false,
+   "tuning_mismatches": {},
+   "sun_rotation": [
+    -35.0,
+    100.0,
+    0.0
+   ],
+   "key_errors": [],
+   "tuning_load_error_count": 0,
+   "editor_log_submitted_rejected": [
+    1076,
+    0
+   ],
+   "valid": true
+  },
+  "F_B": {
+   "name": "F_B",
+   "dir": "B",
+   "walk_yaw": 180,
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.161539591688948,
+   "Wk_17.6": 2.989762413658646,
+   "Wk_L": 6.78250902963458,
+   "Wk_R": 5.540570153743315,
+   "asymmetry": 0.10078153823489723,
+   "Sk2_2.5": 12.433523002723035,
+   "pawn_start_xy": [
+    -964.0,
+    500.0
+   ],
+   "pawn_end_xy": [
+    -1586.6635889882552,
+    500.0
+   ],
+   "pawn_yaw_end": 179.9999994152442,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "line_within_3cm": true,
+   "yaw_matches_walk_yaw": true,
+   "prewalk": {
+    "moved_cm": 157.04004000782766,
+    "elapsed_s": 0.41666668839752674,
+    "timed_out": false
+   },
+   "walk_timed_out": false,
+   "tuning_mismatches": {},
+   "sun_rotation": [
+    -35.0,
+    280.0,
+    0.0
+   ],
+   "key_errors": [],
+   "tuning_load_error_count": 0,
+   "editor_log_submitted_rejected": [
+    1074,
+    0
+   ],
+   "valid": true
+  },
+  "F_C": {
+   "name": "F_C",
+   "dir": "C",
+   "walk_yaw": 90,
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 7.114098150623887,
+   "Wk_17.6": 3.7091362689393943,
+   "Wk_L": 7.340413096033869,
+   "Wk_R": 6.887783205213903,
+   "asymmetry": 0.03181217641622438,
+   "Sk2_2.5": 21.40023396870818,
+   "pawn_start_xy": [
+    -2000.0,
+    0.0
+   ],
+   "pawn_end_xy": [
+    -2000.0,
+    622.6635889882598
+   ],
+   "pawn_yaw_end": 89.99999970762211,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "line_within_3cm": true,
+   "yaw_matches_walk_yaw": true,
+   "prewalk": {
+    "moved_cm": 157.040040007832,
+    "elapsed_s": 0.41666668839752674,
+    "timed_out": false
+   },
+   "walk_timed_out": false,
+   "tuning_mismatches": {},
+   "sun_rotation": [
+    -35.0,
+    190.0,
+    0.0
+   ],
+   "key_errors": [],
+   "tuning_load_error_count": 0,
+   "editor_log_submitted_rejected": [
+    1073,
+    0
+   ],
+   "valid": true
+  },
+  "F_D": {
+   "name": "F_D",
+   "dir": "D",
+   "walk_yaw": 270,
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.760103885360962,
+   "Wk_17.6": 4.262818198529412,
+   "Wk_L": 7.482421167557932,
+   "Wk_R": 6.037786603163993,
+   "asymmetry": 0.10685002692949012,
+   "Sk2_2.5": 15.164419686620205,
+   "pawn_start_xy": [
+    -2000.0,
+    0.0
+   ],
+   "pawn_end_xy": [
+    -2000.0,
+    -622.6635889882598
+   ],
+   "pawn_yaw_end": -89.99999970762214,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "line_within_3cm": true,
+   "yaw_matches_walk_yaw": true,
+   "prewalk": {
+    "moved_cm": 157.040040007832,
+    "elapsed_s": 0.41666668839752674,
+    "timed_out": false
+   },
+   "walk_timed_out": false,
+   "tuning_mismatches": {},
+   "sun_rotation": [
+    -35.0,
+    370.0,
+    0.0
+   ],
+   "key_errors": [],
+   "tuning_load_error_count": 0,
+   "editor_log_submitted_rejected": [
+    1074,
+    0
+   ],
+   "valid": true
+  }
+ },
+ "pose_body_box_mean_abs_luma": {
+  "10.0": {
+   "body_pairs_mean": 2.0758191287878787,
+   "body_pairs_max": 2.224744318181818
+  },
+  "10.4": {
+   "body_pairs_mean": 2.0488825757575757,
+   "body_pairs_max": 2.3710227272727273
+  },
+  "10.8": {
+   "body_pairs_mean": 1.3867234848484848,
+   "body_pairs_max": 1.716590909090909
+  }
+ }
+}

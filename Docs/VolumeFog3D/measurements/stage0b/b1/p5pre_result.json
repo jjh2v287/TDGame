@@ -1,0 +1,1581 @@
+{
+  "run_id": null,
+  "started_at": "2026-11-12T18:24:32",
+  "variants_sha256": "d2f77914594eb0e1eb202048fa8042d04ed29582f9c1485f8bd937e5b8772454",
+  "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+  "stopped_leftover_pie": false,
+  "base": {
+    "fog_flow_origin": {
+      "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+      "value": 7.329400062561035,
+      "game_time": 7.329400103539228,
+      "user": "TDGen_FogCylinderA",
+      "errors": []
+    },
+    "time_dilation": 1.0,
+    "game_time": 7.329400103539228
+  },
+  "variants": [
+    {
+      "name": "third_d20g8_N",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 8.484869003295898,
+          "game_time": 8.484868802130222,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          }
+        ],
+        "call_game_time": 8.484868802130222,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 8.484868802130222
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 8.484868802130222
+          }
+        },
+        "schedule": {
+          "status_path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_schedule.json",
+          "times": [
+            10.0,
+            10.5,
+            11.0,
+            11.5,
+            12.0,
+            12.5,
+            13.0,
+            13.5
+          ],
+          "reference_game_time": 8.484868802130222,
+          "timeout_seconds": 255.0,
+          "fixed_step": {
+            "requested_fps": 60.0,
+            "before": 0.0,
+            "applied_fps": 60.0
+          }
+        },
+        "game_time": 8.484868802130222
+      },
+      "schedule": {
+        "times": [
+          10.0,
+          10.5,
+          11.0,
+          11.5,
+          12.0,
+          12.5,
+          13.0,
+          13.5
+        ],
+        "reference": "now",
+        "reference_game_time": 8.484868802130222,
+        "prefix": "third_d20g8_N",
+        "shots": [
+          {
+            "time": 10.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_10000ms.png",
+            "issued_game_time": 10.000000521540642,
+            "late_seconds": 5.21540641784668e-07,
+            "issued_real_time": 18.484869323670864,
+            "issued_tick": 600,
+            "real_dt": 0.01889369999844348,
+            "real_dt_mean": 0.018821058000624665,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.016667189076543,
+            "saved": true,
+            "capture_real_dt": 0.45215210000242223,
+            "wait_ticks": 1
+          },
+          {
+            "time": 10.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_10500ms.png",
+            "issued_game_time": 10.500000547617674,
+            "late_seconds": 5.476176738739014e-07,
+            "issued_real_time": 18.984869349747896,
+            "issued_tick": 630,
+            "real_dt": 0.021544800001720432,
+            "real_dt_mean": 0.020269834482766376,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.516667215153575,
+            "saved": true,
+            "capture_real_dt": 0.44655629999761004,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_11000ms.png",
+            "issued_game_time": 11.000000573694706,
+            "late_seconds": 5.736947059631348e-07,
+            "issued_real_time": 19.48486937582493,
+            "issued_tick": 660,
+            "real_dt": 0.018548899999586865,
+            "real_dt_mean": 0.02095583103449638,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.016667241230607,
+            "saved": true,
+            "capture_real_dt": 0.47550110000156565,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_11500ms.png",
+            "issued_game_time": 11.500000599771738,
+            "late_seconds": 5.997717380523682e-07,
+            "issued_real_time": 19.98486940190196,
+            "issued_tick": 690,
+            "real_dt": 0.02053439999872353,
+            "real_dt_mean": 0.020292513793061392,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.51666726730764,
+            "saved": true,
+            "capture_real_dt": 0.4972023000009358,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_12000ms.png",
+            "issued_game_time": 12.00000062584877,
+            "late_seconds": 6.258487701416016e-07,
+            "issued_real_time": 20.484869427978992,
+            "issued_tick": 720,
+            "real_dt": 0.018442100001266226,
+            "real_dt_mean": 0.02155541724140017,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.016667293384671,
+            "saved": true,
+            "capture_real_dt": 0.5051086999992549,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_12500ms.png",
+            "issued_game_time": 12.500000651925802,
+            "late_seconds": 6.51925802230835e-07,
+            "issued_real_time": 20.984869454056025,
+            "issued_tick": 750,
+            "real_dt": 0.022591900000406895,
+            "real_dt_mean": 0.021885755172441915,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.516667319461703,
+            "saved": true,
+            "capture_real_dt": 0.5193963999990956,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_13000ms.png",
+            "issued_game_time": 13.000000678002834,
+            "late_seconds": 6.780028343200684e-07,
+            "issued_real_time": 21.484869480133057,
+            "issued_tick": 780,
+            "real_dt": 0.017501199999969685,
+            "real_dt_mean": 0.024097175861995845,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.016667345538735,
+            "saved": true,
+            "capture_real_dt": 0.5140151000014157,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/00_third_d20g8_N_13500ms.png",
+            "issued_game_time": 13.500000704079866,
+            "late_seconds": 7.040798664093018e-07,
+            "issued_real_time": 21.98486950621009,
+            "issued_tick": 810,
+            "real_dt": 0.020099999997910345,
+            "real_dt_mean": 0.024026310344824792,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.516667371615767,
+            "saved": true,
+            "capture_real_dt": 0.552398899999389,
+            "wait_ticks": 1
+          }
+        ],
+        "events_done": [],
+        "done": true,
+        "fixed_step": {
+          "requested_fps": 60.0,
+          "before": 0.0,
+          "applied_fps": 60.0,
+          "restored_fps": 0.0
+        },
+        "preset_effect": {},
+        "error": null
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "third_d20g8_T",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 23.483304977416992,
+          "game_time": 23.483304139226675,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          }
+        ],
+        "call_game_time": 23.483304139226675,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 23.483304139226675
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 23.483304139226675
+          }
+        },
+        "schedule": {
+          "status_path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_schedule.json",
+          "times": [
+            10.0,
+            10.5,
+            11.0,
+            11.5,
+            12.0,
+            12.5,
+            13.0,
+            13.5
+          ],
+          "reference_game_time": 23.483304139226675,
+          "timeout_seconds": 255.0,
+          "fixed_step": {
+            "requested_fps": 60.0,
+            "before": 0.0,
+            "applied_fps": 60.0
+          }
+        },
+        "game_time": 23.483304139226675
+      },
+      "schedule": {
+        "times": [
+          10.0,
+          10.5,
+          11.0,
+          11.5,
+          12.0,
+          12.5,
+          13.0,
+          13.5
+        ],
+        "reference": "now",
+        "reference_game_time": 23.483304139226675,
+        "prefix": "third_d20g8_T",
+        "shots": [
+          {
+            "time": 10.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_10000ms.png",
+            "issued_game_time": 10.000000521540642,
+            "late_seconds": 5.21540641784668e-07,
+            "issued_real_time": 33.48330466076732,
+            "issued_tick": 600,
+            "real_dt": 0.01715870000043651,
+            "real_dt_mean": 0.01948183733674038,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.016667189076543,
+            "saved": true,
+            "capture_real_dt": 0.433819300000323,
+            "wait_ticks": 1
+          },
+          {
+            "time": 10.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_10500ms.png",
+            "issued_game_time": 10.500000547617674,
+            "late_seconds": 5.476176738739014e-07,
+            "issued_real_time": 33.98330468684435,
+            "issued_tick": 630,
+            "real_dt": 0.01809480000156327,
+            "real_dt_mean": 0.020703537931067644,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.516667215153575,
+            "saved": true,
+            "capture_real_dt": 0.45047599999816157,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_11000ms.png",
+            "issued_game_time": 11.000000573694706,
+            "late_seconds": 5.736947059631348e-07,
+            "issued_real_time": 34.48330471292138,
+            "issued_tick": 660,
+            "real_dt": 0.016777299999375828,
+            "real_dt_mean": 0.02090413103448147,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.016667241230607,
+            "saved": true,
+            "capture_real_dt": 0.47909620000064024,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_11500ms.png",
+            "issued_game_time": 11.500000599771738,
+            "late_seconds": 5.997717380523682e-07,
+            "issued_real_time": 34.98330473899841,
+            "issued_tick": 690,
+            "real_dt": 0.019051900002523325,
+            "real_dt_mean": 0.0209702172414209,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.51666726730764,
+            "saved": true,
+            "capture_real_dt": 0.4917461999975785,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_12000ms.png",
+            "issued_game_time": 12.00000062584877,
+            "late_seconds": 6.258487701416016e-07,
+            "issued_real_time": 35.483304765075445,
+            "issued_tick": 720,
+            "real_dt": 0.028238300001248717,
+            "real_dt_mean": 0.02186428965520965,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.016667293384671,
+            "saved": true,
+            "capture_real_dt": 0.5178374999995867,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_12500ms.png",
+            "issued_game_time": 12.500000651925802,
+            "late_seconds": 6.51925802230835e-07,
+            "issued_real_time": 35.98330479115248,
+            "issued_tick": 750,
+            "real_dt": 0.026069399998959852,
+            "real_dt_mean": 0.022588451724130147,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.516667319461703,
+            "saved": true,
+            "capture_real_dt": 0.525053500001377,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_13000ms.png",
+            "issued_game_time": 13.000000678002834,
+            "late_seconds": 6.780028343200684e-07,
+            "issued_real_time": 36.48330481722951,
+            "issued_tick": 780,
+            "real_dt": 0.022226900000532623,
+            "real_dt_mean": 0.022600017241372904,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.016667345538735,
+            "saved": true,
+            "capture_real_dt": 0.528389099999913,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/01_third_d20g8_T_13500ms.png",
+            "issued_game_time": 13.500000704079866,
+            "late_seconds": 7.040798664093018e-07,
+            "issued_real_time": 36.98330484330654,
+            "issued_tick": 810,
+            "real_dt": 0.017044499996700324,
+            "real_dt_mean": 0.024122813793053803,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.516667371615767,
+            "saved": true,
+            "capture_real_dt": 0.5526114000022062,
+            "wait_ticks": 1
+          }
+        ],
+        "events_done": [],
+        "done": true,
+        "fixed_step": {
+          "requested_fps": 60.0,
+          "before": 0.0,
+          "applied_fps": 60.0,
+          "restored_fps": 0.0
+        },
+        "preset_effect": {},
+        "error": null
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "third_d20g8_C",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 38.53338623046875,
+          "game_time": 38.53338537365198,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          }
+        ],
+        "call_game_time": 38.53338537365198,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 38.53338537365198
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 38.53338537365198
+          }
+        },
+        "schedule": {
+          "status_path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_schedule.json",
+          "times": [
+            10.0,
+            10.5,
+            11.0,
+            11.5,
+            12.0,
+            12.5,
+            13.0,
+            13.5
+          ],
+          "reference_game_time": 38.53338537365198,
+          "timeout_seconds": 255.0,
+          "fixed_step": {
+            "requested_fps": 60.0,
+            "before": 0.0,
+            "applied_fps": 60.0
+          }
+        },
+        "game_time": 38.53338537365198
+      },
+      "schedule": {
+        "times": [
+          10.0,
+          10.5,
+          11.0,
+          11.5,
+          12.0,
+          12.5,
+          13.0,
+          13.5
+        ],
+        "reference": "now",
+        "reference_game_time": 38.53338537365198,
+        "prefix": "third_d20g8_C",
+        "shots": [
+          {
+            "time": 10.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_10000ms.png",
+            "issued_game_time": 10.000000521540642,
+            "late_seconds": 5.21540641784668e-07,
+            "issued_real_time": 48.53338589519262,
+            "issued_tick": 600,
+            "real_dt": 0.01845360000152141,
+            "real_dt_mean": 0.019421841166458762,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.016667189076543,
+            "saved": true,
+            "capture_real_dt": 0.4360558000007586,
+            "wait_ticks": 1
+          },
+          {
+            "time": 10.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_10500ms.png",
+            "issued_game_time": 10.500000547617674,
+            "late_seconds": 5.476176738739014e-07,
+            "issued_real_time": 49.033385921269655,
+            "issued_tick": 630,
+            "real_dt": 0.01728010000078939,
+            "real_dt_mean": 0.020243965517222712,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.516667215153575,
+            "saved": true,
+            "capture_real_dt": 0.4630107999983011,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_11000ms.png",
+            "issued_game_time": 11.000000573694706,
+            "late_seconds": 5.736947059631348e-07,
+            "issued_real_time": 49.53338594734669,
+            "issued_tick": 660,
+            "real_dt": 0.020978100001229905,
+            "real_dt_mean": 0.02102560689660283,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.016667241230607,
+            "saved": true,
+            "capture_real_dt": 0.45749660000001313,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_11500ms.png",
+            "issued_game_time": 11.500000599771738,
+            "late_seconds": 5.997717380523682e-07,
+            "issued_real_time": 50.03338597342372,
+            "issued_tick": 690,
+            "real_dt": 0.02068670000153361,
+            "real_dt_mean": 0.02150518275862098,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.51666726730764,
+            "saved": true,
+            "capture_real_dt": 0.4785379999993893,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_12000ms.png",
+            "issued_game_time": 12.00000062584877,
+            "late_seconds": 6.258487701416016e-07,
+            "issued_real_time": 50.53338599950075,
+            "issued_tick": 720,
+            "real_dt": 0.019097399999736808,
+            "real_dt_mean": 0.02164533448276102,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.016667293384671,
+            "saved": true,
+            "capture_real_dt": 0.5025796000008995,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_12500ms.png",
+            "issued_game_time": 12.500000651925802,
+            "late_seconds": 6.51925802230835e-07,
+            "issued_real_time": 51.033386025577784,
+            "issued_tick": 750,
+            "real_dt": 0.019291800002974924,
+            "real_dt_mean": 0.021969365517273624,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.516667319461703,
+            "saved": true,
+            "capture_real_dt": 0.5148112999995647,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_13000ms.png",
+            "issued_game_time": 13.000000678002834,
+            "late_seconds": 6.780028343200684e-07,
+            "issued_real_time": 51.533386051654816,
+            "issued_tick": 780,
+            "real_dt": 0.017279499999858672,
+            "real_dt_mean": 0.02288441034472961,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.016667345538735,
+            "saved": true,
+            "capture_real_dt": 0.5357850000000326,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/02_third_d20g8_C_13500ms.png",
+            "issued_game_time": 13.500000704079866,
+            "late_seconds": 7.040798664093018e-07,
+            "issued_real_time": 52.03338607773185,
+            "issued_tick": 810,
+            "real_dt": 0.01627409999491647,
+            "real_dt_mean": 0.022674731034479416,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.516667371615767,
+            "saved": true,
+            "capture_real_dt": 0.5624861000032979,
+            "wait_ticks": 1
+          }
+        ],
+        "events_done": [],
+        "done": true,
+        "fixed_step": {
+          "requested_fps": 60.0,
+          "before": 0.0,
+          "applied_fps": 60.0,
+          "restored_fps": 0.0
+        },
+        "preset_effect": {},
+        "error": null
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "third_d20g8_Np",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 53.19814682006836,
+          "game_time": 53.19814811274409,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          }
+        ],
+        "call_game_time": 53.19814811274409,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 53.19814811274409
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 53.19814811274409
+          }
+        },
+        "schedule": {
+          "status_path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_schedule.json",
+          "times": [
+            10.0,
+            10.5,
+            11.0,
+            11.5,
+            12.0,
+            12.5,
+            13.0,
+            13.5
+          ],
+          "reference_game_time": 53.19814811274409,
+          "timeout_seconds": 255.0,
+          "fixed_step": {
+            "requested_fps": 60.0,
+            "before": 0.0,
+            "applied_fps": 60.0
+          }
+        },
+        "game_time": 53.19814811274409
+      },
+      "schedule": {
+        "times": [
+          10.0,
+          10.5,
+          11.0,
+          11.5,
+          12.0,
+          12.5,
+          13.0,
+          13.5
+        ],
+        "reference": "now",
+        "reference_game_time": 53.19814811274409,
+        "prefix": "third_d20g8_Np",
+        "shots": [
+          {
+            "time": 10.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_10000ms.png",
+            "issued_game_time": 10.000000521540642,
+            "late_seconds": 5.21540641784668e-07,
+            "issued_real_time": 63.198148634284735,
+            "issued_tick": 600,
+            "real_dt": 0.019782999996095896,
+            "real_dt_mean": 0.019374940165531977,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.016667189076543,
+            "saved": true,
+            "capture_real_dt": 0.433229800000845,
+            "wait_ticks": 1
+          },
+          {
+            "time": 10.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_10500ms.png",
+            "issued_game_time": 10.500000547617674,
+            "late_seconds": 5.476176738739014e-07,
+            "issued_real_time": 63.69814866036177,
+            "issued_tick": 630,
+            "real_dt": 0.016780999998445623,
+            "real_dt_mean": 0.02066676896557228,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.516667215153575,
+            "saved": true,
+            "capture_real_dt": 0.46672480000415817,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_11000ms.png",
+            "issued_game_time": 11.000000573694706,
+            "late_seconds": 5.736947059631348e-07,
+            "issued_real_time": 64.1981486864388,
+            "issued_tick": 660,
+            "real_dt": 0.020954100000381004,
+            "real_dt_mean": 0.021366296551573686,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.016667241230607,
+            "saved": true,
+            "capture_real_dt": 0.47687759999826085,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_11500ms.png",
+            "issued_game_time": 11.500000599771738,
+            "late_seconds": 5.997717380523682e-07,
+            "issued_real_time": 64.69814871251583,
+            "issued_tick": 690,
+            "real_dt": 0.016741100000217557,
+            "real_dt_mean": 0.020404713793109767,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.51666726730764,
+            "saved": true,
+            "capture_real_dt": 0.49242680000315886,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_12000ms.png",
+            "issued_game_time": 12.00000062584877,
+            "late_seconds": 6.258487701416016e-07,
+            "issued_real_time": 65.19814873859286,
+            "issued_tick": 720,
+            "real_dt": 0.01598599999852013,
+            "real_dt_mean": 0.020943310344842633,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.016667293384671,
+            "saved": true,
+            "capture_real_dt": 0.5091318999984651,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_12500ms.png",
+            "issued_game_time": 12.500000651925802,
+            "late_seconds": 6.51925802230835e-07,
+            "issued_real_time": 65.6981487646699,
+            "issued_tick": 750,
+            "real_dt": 0.02283059999899706,
+            "real_dt_mean": 0.022018182758544974,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.516667319461703,
+            "saved": true,
+            "capture_real_dt": 0.5283034000021871,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_13000ms.png",
+            "issued_game_time": 13.000000678002834,
+            "late_seconds": 6.780028343200684e-07,
+            "issued_real_time": 66.19814879074693,
+            "issued_tick": 780,
+            "real_dt": 0.0186013999991701,
+            "real_dt_mean": 0.022778862068913316,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.016667345538735,
+            "saved": true,
+            "capture_real_dt": 0.5579742000045371,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/03_third_d20g8_Np_13500ms.png",
+            "issued_game_time": 13.500000704079866,
+            "late_seconds": 7.040798664093018e-07,
+            "issued_real_time": 66.69814881682396,
+            "issued_tick": 810,
+            "real_dt": 0.016417599996202625,
+            "real_dt_mean": 0.023697027586077356,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.516667371615767,
+            "saved": true,
+            "capture_real_dt": 0.563645499998529,
+            "wait_ticks": 1
+          }
+        ],
+        "events_done": [],
+        "done": true,
+        "fixed_step": {
+          "requested_fps": 60.0,
+          "before": 0.0,
+          "applied_fps": 60.0,
+          "restored_fps": 0.0
+        },
+        "preset_effect": {},
+        "error": null
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "third_d20g8_Tp",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 68.32524108886719,
+          "game_time": 68.32524125277996,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          }
+        ],
+        "call_game_time": 68.32524125277996,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 68.32524125277996
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 68.32524125277996
+          }
+        },
+        "schedule": {
+          "status_path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_schedule.json",
+          "times": [
+            10.0,
+            10.5,
+            11.0,
+            11.5,
+            12.0,
+            12.5,
+            13.0,
+            13.5
+          ],
+          "reference_game_time": 68.32524125277996,
+          "timeout_seconds": 255.0,
+          "fixed_step": {
+            "requested_fps": 60.0,
+            "before": 0.0,
+            "applied_fps": 60.0
+          }
+        },
+        "game_time": 68.32524125277996
+      },
+      "schedule": {
+        "times": [
+          10.0,
+          10.5,
+          11.0,
+          11.5,
+          12.0,
+          12.5,
+          13.0,
+          13.5
+        ],
+        "reference": "now",
+        "reference_game_time": 68.32524125277996,
+        "prefix": "third_d20g8_Tp",
+        "shots": [
+          {
+            "time": 10.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_10000ms.png",
+            "issued_game_time": 10.000000521540642,
+            "late_seconds": 5.21540641784668e-07,
+            "issued_real_time": 78.3252417743206,
+            "issued_tick": 600,
+            "real_dt": 0.014237499999580905,
+            "real_dt_mean": 0.018144752498568173,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.016667189076543,
+            "saved": true,
+            "capture_real_dt": 0.43509849999827566,
+            "wait_ticks": 1
+          },
+          {
+            "time": 10.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_10500ms.png",
+            "issued_game_time": 10.500000547617674,
+            "late_seconds": 5.476176738739014e-07,
+            "issued_real_time": 78.82524180039763,
+            "issued_tick": 630,
+            "real_dt": 0.016327400000591297,
+            "real_dt_mean": 0.018941158620722928,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.516667215153575,
+            "saved": true,
+            "capture_real_dt": 0.47027220000018133,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_11000ms.png",
+            "issued_game_time": 11.000000573694706,
+            "late_seconds": 5.736947059631348e-07,
+            "issued_real_time": 79.32524182647467,
+            "issued_tick": 660,
+            "real_dt": 0.01441970000450965,
+            "real_dt_mean": 0.020396113793108742,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.016667241230607,
+            "saved": true,
+            "capture_real_dt": 0.4893841000011889,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_11500ms.png",
+            "issued_game_time": 11.500000599771738,
+            "late_seconds": 5.997717380523682e-07,
+            "issued_real_time": 79.8252418525517,
+            "issued_tick": 690,
+            "real_dt": 0.014632899998105131,
+            "real_dt_mean": 0.019150803448202827,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.51666726730764,
+            "saved": true,
+            "capture_real_dt": 0.4948847999985446,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_12000ms.png",
+            "issued_game_time": 12.00000062584877,
+            "late_seconds": 6.258487701416016e-07,
+            "issued_real_time": 80.32524187862873,
+            "issued_tick": 720,
+            "real_dt": 0.01872729999740841,
+            "real_dt_mean": 0.01970660344823986,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.016667293384671,
+            "saved": true,
+            "capture_real_dt": 0.5118743999992148,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_12500ms.png",
+            "issued_game_time": 12.500000651925802,
+            "late_seconds": 6.51925802230835e-07,
+            "issued_real_time": 80.82524190470576,
+            "issued_tick": 750,
+            "real_dt": 0.013096299997414462,
+            "real_dt_mean": 0.02031255172413035,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.516667319461703,
+            "saved": true,
+            "capture_real_dt": 0.5609819000019343,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_13000ms.png",
+            "issued_game_time": 13.000000678002834,
+            "late_seconds": 6.780028343200684e-07,
+            "issued_real_time": 81.3252419307828,
+            "issued_tick": 780,
+            "real_dt": 0.01804429999901913,
+            "real_dt_mean": 0.021324710344899734,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.016667345538735,
+            "saved": true,
+            "capture_real_dt": 0.5510783999998239,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/04_third_d20g8_Tp_13500ms.png",
+            "issued_game_time": 13.500000704079866,
+            "late_seconds": 7.040798664093018e-07,
+            "issued_real_time": 81.82524195685983,
+            "issued_tick": 810,
+            "real_dt": 0.020458300001337193,
+            "real_dt_mean": 0.02194320689661003,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.516667371615767,
+            "saved": true,
+            "capture_real_dt": 0.5604862999971374,
+            "wait_ticks": 1
+          }
+        ],
+        "events_done": [],
+        "done": true,
+        "fixed_step": {
+          "requested_fps": 60.0,
+          "before": 0.0,
+          "applied_fps": 60.0,
+          "restored_fps": 0.0
+        },
+        "preset_effect": {},
+        "error": null
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "third_d20g8_X",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 83.42922973632812,
+          "game_time": 83.42922629788518,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          }
+        ],
+        "call_game_time": 83.42922629788518,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 83.42922629788518
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 83.42922629788518
+          }
+        },
+        "schedule": {
+          "status_path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_schedule.json",
+          "times": [
+            10.0,
+            10.5,
+            11.0,
+            11.5,
+            12.0,
+            12.5,
+            13.0,
+            13.5
+          ],
+          "reference_game_time": 83.42922629788518,
+          "timeout_seconds": 255.0,
+          "fixed_step": {
+            "requested_fps": 60.0,
+            "before": 0.0,
+            "applied_fps": 60.0
+          }
+        },
+        "game_time": 83.42922629788518
+      },
+      "schedule": {
+        "times": [
+          10.0,
+          10.5,
+          11.0,
+          11.5,
+          12.0,
+          12.5,
+          13.0,
+          13.5
+        ],
+        "reference": "now",
+        "reference_game_time": 83.42922629788518,
+        "prefix": "third_d20g8_X",
+        "shots": [
+          {
+            "time": 10.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_10000ms.png",
+            "issued_game_time": 10.000000521540642,
+            "late_seconds": 5.21540641784668e-07,
+            "issued_real_time": 93.42922681942582,
+            "issued_tick": 600,
+            "real_dt": 0.013829499999701511,
+            "real_dt_mean": 0.017786692665201068,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.016667189076543,
+            "saved": true,
+            "capture_real_dt": 0.4024007000043639,
+            "wait_ticks": 1
+          },
+          {
+            "time": 10.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_10500ms.png",
+            "issued_game_time": 10.500000547617674,
+            "late_seconds": 5.476176738739014e-07,
+            "issued_real_time": 93.92922684550285,
+            "issued_tick": 630,
+            "real_dt": 0.02229839999927208,
+            "real_dt_mean": 0.019199410344801184,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 10.516667215153575,
+            "saved": true,
+            "capture_real_dt": 0.4058982999995351,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_11000ms.png",
+            "issued_game_time": 11.000000573694706,
+            "late_seconds": 5.736947059631348e-07,
+            "issued_real_time": 94.42922687157989,
+            "issued_tick": 660,
+            "real_dt": 0.014012200001161546,
+            "real_dt_mean": 0.019511175862009685,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.016667241230607,
+            "saved": true,
+            "capture_real_dt": 0.43397099999856437,
+            "wait_ticks": 1
+          },
+          {
+            "time": 11.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_11500ms.png",
+            "issued_game_time": 11.500000599771738,
+            "late_seconds": 5.997717380523682e-07,
+            "issued_real_time": 94.92922689765692,
+            "issued_tick": 690,
+            "real_dt": 0.015472599996428471,
+            "real_dt_mean": 0.020380662068983556,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 11.51666726730764,
+            "saved": true,
+            "capture_real_dt": 0.4430824000010034,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_12000ms.png",
+            "issued_game_time": 12.00000062584877,
+            "late_seconds": 6.258487701416016e-07,
+            "issued_real_time": 95.42922692373395,
+            "issued_tick": 720,
+            "real_dt": 0.019115399998554494,
+            "real_dt_mean": 0.02136622758628399,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.016667293384671,
+            "saved": true,
+            "capture_real_dt": 0.4630661999981385,
+            "wait_ticks": 1
+          },
+          {
+            "time": 12.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_12500ms.png",
+            "issued_game_time": 12.500000651925802,
+            "late_seconds": 6.51925802230835e-07,
+            "issued_real_time": 95.92922694981098,
+            "issued_tick": 750,
+            "real_dt": 0.020477199999731965,
+            "real_dt_mean": 0.02165307241375558,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 12.516667319461703,
+            "saved": true,
+            "capture_real_dt": 0.47228710000490537,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.0,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_13000ms.png",
+            "issued_game_time": 13.000000678002834,
+            "late_seconds": 6.780028343200684e-07,
+            "issued_real_time": 96.42922697588801,
+            "issued_tick": 780,
+            "real_dt": 0.016951899997366127,
+            "real_dt_mean": 0.02203046206880666,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.016667345538735,
+            "saved": true,
+            "capture_real_dt": 0.5104758000015863,
+            "wait_ticks": 1
+          },
+          {
+            "time": 13.5,
+            "path": "C:/Project/TDGame/Saved/AgentOps/20261112/fog3d/stage0/b1/p5pre/run/05_third_d20g8_X_13500ms.png",
+            "issued_game_time": 13.500000704079866,
+            "late_seconds": 7.040798664093018e-07,
+            "issued_real_time": 96.92922700196505,
+            "issued_tick": 810,
+            "real_dt": 0.017605900000489783,
+            "real_dt_mean": 0.02146164482762507,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 13.516667371615767,
+            "saved": true,
+            "capture_real_dt": 0.5118857999987085,
+            "wait_ticks": 1
+          }
+        ],
+        "events_done": [],
+        "done": true,
+        "fixed_step": {
+          "requested_fps": 60.0,
+          "before": 0.0,
+          "applied_fps": 60.0,
+          "restored_fps": 0.0
+        },
+        "preset_effect": {},
+        "error": null
+      },
+      "saved": true,
+      "console_screenshots": []
+    }
+  ],
+  "key_errors": []
+}

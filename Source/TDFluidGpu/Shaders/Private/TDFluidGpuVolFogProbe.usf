@@ -1,0 +1,262 @@
+#include "/Engine/Public/Platform.ush"
+
+Texture3D<float4> VelocityIn;
+Texture3D<float> PressureIn;
+Texture3D<float> DivergenceIn;
+Texture3D<uint> ObstacleMask;
+SamplerState VelocitySampler;
+RWTexture3D<float4> VelocityOut;
+RWTexture3D<float> PressureOut;
+RWTexture3D<float> DivergenceOut;
+RWTexture3D<uint> ObstacleMaskOut;
+RWTexture2D<float> ResidualColumnOut;
+RWTexture3D<float4> DensityOut;
+int3 GridSize;
+float3 InverseGridSize;
+uint InputCount;
+float4 InputPositionRadius[8];
+float4 InputVelocityStrength[8];
+float AdvectCellsPerStep;
+float DisturbanceRecovery;
+float VelocityDamping;
+uint PatternIndex;
+
+static const uint VolFogProbeSolidXPlusBit = 1u;
+static const uint VolFogProbeSolidXMinusBit = 2u;
+static const uint VolFogProbeSolidYPlusBit = 4u;
+static const uint VolFogProbeSolidYMinusBit = 8u;
+static const uint VolFogProbeSolidZPlusBit = 16u;
+static const uint VolFogProbeSolidZMinusBit = 32u;
+static const uint VolFogProbeSolidSelfBit = 64u;
+static const uint VolFogProbeMaximumInputCount = 8u;
+static const float VolFogProbeCylinderRadiusSquared = 0.0625f;
+static const float VolFogProbeLayerBoundaryW = 0.4f;
+static const float VolFogProbeFogTopW = 0.8f;
+
+bool IsVolFogProbeCellOutside(uint3 Cell)
+{
+	return any(int3(Cell) >= GridSize);
+}
+
+int3 ClampVolFogProbeCell(int3 Cell)
+{
+	return clamp(Cell, int3(0, 0, 0), GridSize - 1);
+}
+
+bool IsVolFogProbeSolid(int3 Cell)
+{
+	if (any(Cell < int3(0, 0, 0)) || any(Cell >= GridSize))
+	{
+		return true;
+	}
+
+	float LayerCount = (float)GridSize.z;
+	float FloorHeight = LayerCount * 0.22f + LayerCount * 0.10f * sin((float)Cell.x * 12.566f / (float)GridSize.x) * cos((float)Cell.y * 9.42f / (float)GridSize.y);
+	return Cell.z <= (int)floor(FloorHeight);
+}
+
+uint SelectVolFogProbeBit(bool bIsSolid, uint Bit)
+{
+	return bIsSolid ? Bit : 0u;
+}
+
+float LoadVolFogProbeVelocityAxis(int3 NeighborCell, uint Mask, uint SolidBit, uint Axis)
+{
+	if ((Mask & SolidBit) != 0u)
+	{
+		return 0.0f;
+	}
+
+	float4 Neighbor = VelocityIn.Load(int4(ClampVolFogProbeCell(NeighborCell), 0));
+	return Axis == 0u ? Neighbor.x : (Axis == 1u ? Neighbor.y : Neighbor.z);
+}
+
+float ComputeVolFogProbeDivergence(int3 Cell)
+{
+	uint Mask = ObstacleMask.Load(int4(Cell, 0));
+	if ((Mask & VolFogProbeSolidSelfBit) != 0u)
+	{
+		return 0.0f;
+	}
+
+	float XPlus = LoadVolFogProbeVelocityAxis(Cell + int3(1, 0, 0), Mask, VolFogProbeSolidXPlusBit, 0u);
+	float XMinus = LoadVolFogProbeVelocityAxis(Cell - int3(1, 0, 0), Mask, VolFogProbeSolidXMinusBit, 0u);
+	float YPlus = LoadVolFogProbeVelocityAxis(Cell + int3(0, 1, 0), Mask, VolFogProbeSolidYPlusBit, 1u);
+	float YMinus = LoadVolFogProbeVelocityAxis(Cell - int3(0, 1, 0), Mask, VolFogProbeSolidYMinusBit, 1u);
+	float ZPlus = LoadVolFogProbeVelocityAxis(Cell + int3(0, 0, 1), Mask, VolFogProbeSolidZPlusBit, 2u);
+	float ZMinus = LoadVolFogProbeVelocityAxis(Cell - int3(0, 0, 1), Mask, VolFogProbeSolidZMinusBit, 2u);
+	return 0.5f * ((XPlus - XMinus) + (YPlus - YMinus) + (ZPlus - ZMinus));
+}
+
+float LoadVolFogProbePressureNeighbor(int3 NeighborCell, uint Mask, uint SolidBit, float CenterPressure)
+{
+	if ((Mask & SolidBit) != 0u)
+	{
+		return CenterPressure;
+	}
+
+	return PressureIn.Load(int4(ClampVolFogProbeCell(NeighborCell), 0));
+}
+
+[numthreads(8, 8, 4)]
+void VolFogProbeObstacleMaskCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (IsVolFogProbeCellOutside(DispatchThreadId))
+	{
+		return;
+	}
+
+	int3 Cell = int3(DispatchThreadId);
+	uint Mask = SelectVolFogProbeBit(IsVolFogProbeSolid(Cell + int3(1, 0, 0)), VolFogProbeSolidXPlusBit);
+	Mask |= SelectVolFogProbeBit(IsVolFogProbeSolid(Cell - int3(1, 0, 0)), VolFogProbeSolidXMinusBit);
+	Mask |= SelectVolFogProbeBit(IsVolFogProbeSolid(Cell + int3(0, 1, 0)), VolFogProbeSolidYPlusBit);
+	Mask |= SelectVolFogProbeBit(IsVolFogProbeSolid(Cell - int3(0, 1, 0)), VolFogProbeSolidYMinusBit);
+	Mask |= SelectVolFogProbeBit(IsVolFogProbeSolid(Cell + int3(0, 0, 1)), VolFogProbeSolidZPlusBit);
+	Mask |= SelectVolFogProbeBit(IsVolFogProbeSolid(Cell - int3(0, 0, 1)), VolFogProbeSolidZMinusBit);
+	Mask |= SelectVolFogProbeBit(IsVolFogProbeSolid(Cell), VolFogProbeSolidSelfBit);
+	ObstacleMaskOut[DispatchThreadId] = Mask;
+}
+
+[numthreads(8, 8, 4)]
+void VolFogProbeAdvectCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (IsVolFogProbeCellOutside(DispatchThreadId))
+	{
+		return;
+	}
+
+	int3 Cell = int3(DispatchThreadId);
+	uint Mask = ObstacleMask.Load(int4(Cell, 0));
+	if ((Mask & VolFogProbeSolidSelfBit) != 0u)
+	{
+		VelocityOut[DispatchThreadId] = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		return;
+	}
+
+	float4 Current = VelocityIn.Load(int4(Cell, 0));
+	float3 CellCenter = float3(DispatchThreadId) + 0.5f;
+	float3 SourceUvw = (CellCenter - Current.xyz * AdvectCellsPerStep) * InverseGridSize;
+	float4 Advected = VelocityIn.SampleLevel(VelocitySampler, SourceUvw, 0.0f);
+	float3 Velocity = Advected.xyz;
+	float Disturbance = Advected.w;
+	for (uint InputIndex = 0u; InputIndex < VolFogProbeMaximumInputCount; ++InputIndex)
+	{
+		if (InputIndex >= InputCount)
+		{
+			break;
+		}
+
+		float3 Offset = CellCenter - InputPositionRadius[InputIndex].xyz;
+		float Falloff = exp(-dot(Offset, Offset) * InputPositionRadius[InputIndex].w);
+		Velocity += InputVelocityStrength[InputIndex].xyz * Falloff;
+		Disturbance -= Disturbance * min(1.0f, InputVelocityStrength[InputIndex].w * Falloff);
+	}
+
+	Disturbance = lerp(Disturbance, 1.0f, DisturbanceRecovery);
+	VelocityOut[DispatchThreadId] = float4(Velocity * VelocityDamping, Disturbance);
+}
+
+[numthreads(8, 8, 4)]
+void VolFogProbeDivergenceCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (IsVolFogProbeCellOutside(DispatchThreadId))
+	{
+		return;
+	}
+
+	DivergenceOut[DispatchThreadId] = ComputeVolFogProbeDivergence(int3(DispatchThreadId));
+}
+
+[numthreads(8, 8, 4)]
+void VolFogProbePressureCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (IsVolFogProbeCellOutside(DispatchThreadId))
+	{
+		return;
+	}
+
+	int3 Cell = int3(DispatchThreadId);
+	uint Mask = ObstacleMask.Load(int4(Cell, 0));
+	if ((Mask & VolFogProbeSolidSelfBit) != 0u)
+	{
+		PressureOut[DispatchThreadId] = 0.0f;
+		return;
+	}
+
+	float CenterPressure = PressureIn.Load(int4(Cell, 0));
+	float NeighborSum = LoadVolFogProbePressureNeighbor(Cell + int3(1, 0, 0), Mask, VolFogProbeSolidXPlusBit, CenterPressure);
+	NeighborSum += LoadVolFogProbePressureNeighbor(Cell - int3(1, 0, 0), Mask, VolFogProbeSolidXMinusBit, CenterPressure);
+	NeighborSum += LoadVolFogProbePressureNeighbor(Cell + int3(0, 1, 0), Mask, VolFogProbeSolidYPlusBit, CenterPressure);
+	NeighborSum += LoadVolFogProbePressureNeighbor(Cell - int3(0, 1, 0), Mask, VolFogProbeSolidYMinusBit, CenterPressure);
+	NeighborSum += LoadVolFogProbePressureNeighbor(Cell + int3(0, 0, 1), Mask, VolFogProbeSolidZPlusBit, CenterPressure);
+	NeighborSum += LoadVolFogProbePressureNeighbor(Cell - int3(0, 0, 1), Mask, VolFogProbeSolidZMinusBit, CenterPressure);
+	PressureOut[DispatchThreadId] = (NeighborSum - DivergenceIn.Load(int4(Cell, 0))) / 6.0f;
+}
+
+[numthreads(8, 8, 4)]
+void VolFogProbeGradientCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (IsVolFogProbeCellOutside(DispatchThreadId))
+	{
+		return;
+	}
+
+	int3 Cell = int3(DispatchThreadId);
+	uint Mask = ObstacleMask.Load(int4(Cell, 0));
+	float4 Current = VelocityIn.Load(int4(Cell, 0));
+	if ((Mask & VolFogProbeSolidSelfBit) != 0u)
+	{
+		VelocityOut[DispatchThreadId] = float4(0.0f, 0.0f, 0.0f, Current.w);
+		return;
+	}
+
+	float CenterPressure = PressureIn.Load(int4(Cell, 0));
+	float XPlus = LoadVolFogProbePressureNeighbor(Cell + int3(1, 0, 0), Mask, VolFogProbeSolidXPlusBit, CenterPressure);
+	float XMinus = LoadVolFogProbePressureNeighbor(Cell - int3(1, 0, 0), Mask, VolFogProbeSolidXMinusBit, CenterPressure);
+	float YPlus = LoadVolFogProbePressureNeighbor(Cell + int3(0, 1, 0), Mask, VolFogProbeSolidYPlusBit, CenterPressure);
+	float YMinus = LoadVolFogProbePressureNeighbor(Cell - int3(0, 1, 0), Mask, VolFogProbeSolidYMinusBit, CenterPressure);
+	float ZPlus = LoadVolFogProbePressureNeighbor(Cell + int3(0, 0, 1), Mask, VolFogProbeSolidZPlusBit, CenterPressure);
+	float ZMinus = LoadVolFogProbePressureNeighbor(Cell - int3(0, 0, 1), Mask, VolFogProbeSolidZMinusBit, CenterPressure);
+	float3 Velocity = Current.xyz - 0.5f * float3(XPlus - XMinus, YPlus - YMinus, ZPlus - ZMinus);
+	Velocity.x = (Mask & VolFogProbeSolidXPlusBit) != 0u ? min(Velocity.x, 0.0f) : Velocity.x;
+	Velocity.x = (Mask & VolFogProbeSolidXMinusBit) != 0u ? max(Velocity.x, 0.0f) : Velocity.x;
+	Velocity.y = (Mask & VolFogProbeSolidYPlusBit) != 0u ? min(Velocity.y, 0.0f) : Velocity.y;
+	Velocity.y = (Mask & VolFogProbeSolidYMinusBit) != 0u ? max(Velocity.y, 0.0f) : Velocity.y;
+	Velocity.z = (Mask & VolFogProbeSolidZPlusBit) != 0u ? min(Velocity.z, 0.0f) : Velocity.z;
+	Velocity.z = (Mask & VolFogProbeSolidZMinusBit) != 0u ? max(Velocity.z, 0.0f) : Velocity.z;
+	VelocityOut[DispatchThreadId] = float4(Velocity, Current.w);
+}
+
+[numthreads(8, 8, 1)]
+void VolFogProbeResidualColumnCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (any(int2(DispatchThreadId.xy) >= GridSize.xy))
+	{
+		return;
+	}
+
+	float ResidualSum = 0.0f;
+	for (int Layer = 0; Layer < GridSize.z; ++Layer)
+	{
+		ResidualSum += abs(ComputeVolFogProbeDivergence(int3(int2(DispatchThreadId.xy), Layer)));
+	}
+	ResidualColumnOut[DispatchThreadId.xy] = ResidualSum;
+}
+
+[numthreads(8, 8, 4)]
+void VolFogProbePatternCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	if (IsVolFogProbeCellOutside(DispatchThreadId))
+	{
+		return;
+	}
+
+	float3 Uvw = (float3(DispatchThreadId) + 0.5f) * InverseGridSize;
+	float2 Radial = Uvw.xy - 0.5f;
+	bool bIsInsideCylinder = dot(Radial, Radial) < VolFogProbeCylinderRadiusSquared;
+	bool bIsLowerLayer = Uvw.z < VolFogProbeLayerBoundaryW;
+	bool bErasesLayer = PatternIndex == 1u || (PatternIndex == 2u && !bIsLowerLayer) || (PatternIndex == 3u && bIsLowerLayer);
+	bool bIsErased = bIsInsideCylinder && bErasesLayer;
+	float Density = (Uvw.z < VolFogProbeFogTopW && !bIsErased) ? 1.0f : 0.0f;
+	DensityOut[DispatchThreadId] = float4(Density, Density, Density, Density);
+}

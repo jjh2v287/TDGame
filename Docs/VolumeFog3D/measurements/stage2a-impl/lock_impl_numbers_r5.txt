@@ -1,0 +1,3 @@
+fc1abb56fc3e8964960afb4913d6b3fae12073cdadaabbd0209d165646aed76d
+file: Docs/VolumeFog3D/measurements/stage2a-impl/prereg-2a-impl-numbers-r5.json
+written: 2026-11-15 21:29:02 (claude, before comparing the R5 GPU dumps)

@@ -1,0 +1,78 @@
+#pragma once
+
+#include "/Engine/Public/Platform.ush"
+
+#define TDFOG3D_LAYER_COUNT 8
+
+int Resolution;
+float CellSizeCm;
+float LayerHeightCm;
+int2 WindowMinCell;
+int2 PreviousWindowMinCell;
+uint GroundFollow;
+float GroundWallStepCm;
+Texture2D<float4> ColumnTerrainIn;
+
+static const uint Fog3DSelfBlockedBit = 1u;
+
+float4 ReadFog3DColumnTerrain(int2 LocalColumn)
+{
+	return ColumnTerrainIn.Load(int3(LocalColumn + 1, 0));
+}
+
+bool IsFog3DLocalCellInside(int3 LocalCell)
+{
+	return all(LocalCell >= int3(0, 0, 0)) && all(LocalCell < int3(Resolution, Resolution, TDFOG3D_LAYER_COUNT));
+}
+
+uint3 MakeFog3DStorageTexel(int3 LocalCell)
+{
+	int2 WorldCell = WindowMinCell + LocalCell.xy;
+	return uint3(uint2(WorldCell & (Resolution - 1)), uint(LocalCell.z));
+}
+
+uint MakeFog3DWindowOrderIndex(int3 LocalCell)
+{
+	return (uint(LocalCell.x) * uint(Resolution) + uint(LocalCell.y)) * uint(TDFOG3D_LAYER_COUNT) + uint(LocalCell.z);
+}
+
+float3 GetFog3DCellCenterCm(int3 LocalCell)
+{
+	return (float3(LocalCell) + 0.5f) * float3(CellSizeCm, CellSizeCm, LayerHeightCm);
+}
+
+uint GetFog3DClosedFaceBit(uint AxisIndex, bool bIsPositive)
+{
+	return 1u << (1u + AxisIndex * 2u + (bIsPositive ? 0u : 1u));
+}
+
+bool IsFog3DFaceClosed(int3 LocalCell, uint FaceFlags, uint AxisIndex, bool bIsPositive)
+{
+	if ((FaceFlags & GetFog3DClosedFaceBit(AxisIndex, bIsPositive)) != 0u)
+	{
+		return true;
+	}
+
+	if (AxisIndex == 2u)
+	{
+		return !bIsPositive && LocalCell.z == 0;
+	}
+
+	int Coordinate = AxisIndex == 0u ? LocalCell.x : LocalCell.y;
+	return bIsPositive ? Coordinate == Resolution - 1 : Coordinate == 0;
+}
+
+bool IsFog3DCellInNewBand(int3 LocalCell)
+{
+	int2 WorldCell = WindowMinCell + LocalCell.xy;
+	return any(WorldCell < PreviousWindowMinCell) || any(WorldCell >= PreviousWindowMinCell + Resolution);
+}
+
+float3 SelectFog3DOpenFaceWind(int3 LocalCell, uint FaceFlags, float3 Wind)
+{
+	bool3 IsClosed = bool3(
+		IsFog3DFaceClosed(LocalCell, FaceFlags, 0u, true),
+		IsFog3DFaceClosed(LocalCell, FaceFlags, 1u, true),
+		IsFog3DFaceClosed(LocalCell, FaceFlags, 2u, true));
+	return select(IsClosed, float3(0.0f, 0.0f, 0.0f), Wind);
+}

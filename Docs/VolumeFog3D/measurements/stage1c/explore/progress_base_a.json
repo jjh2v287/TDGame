@@ -1,0 +1,39 @@
+{
+  "started_at": "2026-11-14T01:13:16",
+  "finished_at": "2026-11-14T01:14:16",
+  "navigation_wait_seconds_used": 5.0,
+  "navigation_wait_seconds_original": 120.0,
+  "names": [
+    "base_a"
+  ],
+  "runs": [
+    {
+      "name": "base_a",
+      "started_at": "2026-11-14T01:13:16",
+      "finished_at": "2026-11-14T01:14:16",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:13:16",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 57.3,
+          "stdout": "Saved/FluidFX/fog3d_calib/base_a/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": true,
+            "usable": true,
+            "reasons": [],
+            "submitted": 1762,
+            "rejected": 0,
+            "fog3d_warning_or_error_lines": 0
+          },
+          "wall_seconds": 60.6,
+          "finished_at": "2026-11-14T01:14:16"
+        }
+      ],
+      "final_valid": true
+    }
+  ],
+  "failed_names": []
+}

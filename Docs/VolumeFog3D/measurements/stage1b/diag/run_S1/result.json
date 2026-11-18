@@ -1,0 +1,240 @@
+{
+  "run_id": null,
+  "started_at": "2026-11-13T21:45:18",
+  "variants_sha256": "1ecc05a55c86693d9210897f4a448d719452c054ba0f450257895796fd1b2f2c",
+  "level": "/Game/FluidFX/Maps/LV_TDFog3DStage",
+  "stopped_leftover_pie": false,
+  "base": {
+    "arm": 400.0,
+    "view": [
+      -12.0,
+      0.0
+    ],
+    "console": [
+      {
+        "command": "TD.Fog3D.Mode 2",
+        "read_back": 2.0
+      }
+    ],
+    "game_time": 11.622423499822617,
+    "tuning_reload": {
+      "reset": "keep",
+      "tuning": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/tuning_S1.json",
+      "look": "",
+      "base": {
+        "error_count": 0,
+        "load_errors": [],
+        "table_generation": 5,
+        "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+        "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+        "is_using_override_paths": false,
+        "report": {
+          "table_generation": 5,
+          "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+          "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+          "reapplied_actor_count": 0,
+          "state_reset_actor_count": 0,
+          "changed_field_count": 0,
+          "live_material_count": 0,
+          "bake_only_changed_count": 0
+        }
+      },
+      "load": {
+        "error_count": 0,
+        "load_errors": [],
+        "table_generation": 6,
+        "tuning_source_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/tuning_S1.json",
+        "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+        "is_using_override_paths": true,
+        "report": {
+          "table_generation": 6,
+          "tuning_source_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/tuning_S1.json",
+          "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+          "reapplied_actor_count": 0,
+          "state_reset_actor_count": 0,
+          "changed_field_count": 0,
+          "live_material_count": 0,
+          "bake_only_changed_count": 0
+        }
+      },
+      "report": {
+        "table_generation": 6,
+        "tuning_source_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/tuning_S1.json",
+        "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+        "reapplied_actor_count": 0,
+        "state_reset_actor_count": 0,
+        "changed_field_count": 0,
+        "live_material_count": 0,
+        "bake_only_changed_count": 0
+      }
+    }
+  },
+  "variants": [
+    {
+      "name": "walk",
+      "apply": {
+        "move": {
+          "mode": "input",
+          "yaw": 0.0,
+          "distance_cm": 400.0,
+          "start": [
+            -1000.0,
+            0.0
+          ],
+          "goal": [
+            -600.0,
+            0.0
+          ],
+          "max_speed": 600.0,
+          "timeout_seconds": 4.333333333333333,
+          "wall_timeout_seconds": 64.33333333333333,
+          "start_game_time": 12.72983579710126,
+          "moved_cm": 406.602090506439,
+          "elapsed_game_seconds": 0.8603031001985073,
+          "timed_out": false,
+          "done": true,
+          "status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S1/00_move_walk.json"
+        },
+        "game_time": 12.72983579710126,
+        "shot_game_time": 14.032625298947096,
+        "ember_mid": {}
+      },
+      "saved": true
+    },
+    {
+      "name": "react",
+      "apply": {
+        "schedule": {
+          "status_path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S1/01_r_schedule.json",
+          "times": [
+            2.5,
+            3.0,
+            4.3,
+            4.8
+          ],
+          "reference_game_time": 15.11204369366169,
+          "timeout_seconds": 60.0,
+          "fixed_step": {
+            "requested_fps": 60.0,
+            "before": 0.0,
+            "applied_fps": 60.0
+          }
+        },
+        "game_time": 15.11204369366169
+      },
+      "schedule": {
+        "times": [
+          2.5,
+          3.0,
+          4.3,
+          4.8
+        ],
+        "reference": "now",
+        "reference_game_time": 15.11204369366169,
+        "prefix": "r",
+        "shots": [
+          {
+            "time": 2.5,
+            "path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S1/01_r_02500ms.png",
+            "issued_game_time": 2.5000001303851604,
+            "late_seconds": 1.30385160446167e-07,
+            "issued_real_time": 17.61204382404685,
+            "issued_tick": 150,
+            "real_dt": 0.01146139999764273,
+            "real_dt_mean": 0.01159681867803253,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 2.5166667979210615,
+            "saved": true,
+            "capture_real_dt": 0.28625060000194935,
+            "wait_ticks": 1
+          },
+          {
+            "time": 3.0,
+            "path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S1/01_r_03000ms.png",
+            "issued_game_time": 3.0000001564621925,
+            "late_seconds": 1.564621925354004e-07,
+            "issued_real_time": 18.112043850123882,
+            "issued_tick": 180,
+            "real_dt": 0.01028260000020964,
+            "real_dt_mean": 0.018991631034466615,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 3.0166668239980936,
+            "saved": true,
+            "capture_real_dt": 0.2998885000051814,
+            "wait_ticks": 1
+          },
+          {
+            "time": 4.3,
+            "path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S1/01_r_04300ms.png",
+            "issued_game_time": 4.300000224262476,
+            "late_seconds": 2.242624761450429e-07,
+            "issued_real_time": 19.412043917924166,
+            "issued_tick": 258,
+            "real_dt": 0.0111996999985422,
+            "real_dt_mean": 0.013688110389543377,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 4.316666891798377,
+            "saved": true,
+            "capture_real_dt": 0.3131525999997393,
+            "wait_ticks": 1
+          },
+          {
+            "time": 4.8,
+            "path": "C:/Project/TDGame/Saved/FluidFX/fog3d_diag/run_S1/01_r_04800ms.png",
+            "issued_game_time": 4.800000250339508,
+            "late_seconds": 2.503395082342763e-07,
+            "issued_real_time": 19.912043944001198,
+            "issued_tick": 288,
+            "real_dt": 0.01163280000037048,
+            "real_dt_mean": 0.019128389655289256,
+            "world_dt": 0.01666666753590107,
+            "captured_game_time": 4.816666917875409,
+            "saved": true,
+            "capture_real_dt": 0.31041949999780627,
+            "wait_ticks": 1
+          }
+        ],
+        "events_done": [
+          {
+            "time": 0.0,
+            "game_time": 0.01666666753590107,
+            "console": [
+              {
+                "command": "TDPlayMeleeAction"
+              }
+            ]
+          },
+          {
+            "time": 3.3,
+            "game_time": 3.300000172108412,
+            "console": [
+              {
+                "command": "TD.Fog3D.Mode 0",
+                "read_back": 0.0
+              }
+            ]
+          }
+        ],
+        "done": true,
+        "fixed_step": {
+          "requested_fps": 60.0,
+          "before": 0.0,
+          "applied_fps": 60.0,
+          "restored_fps": 0.0
+        },
+        "preset_effect": {},
+        "error": null
+      },
+      "saved": true
+    }
+  ],
+  "canonical_reload": {
+    "error_count": 0,
+    "load_errors": [],
+    "table_generation": 7,
+    "tuning_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidPresetTuning.json",
+    "look_source_path": "../../../../../../Project/TDGame/Content/FluidFX/PresetData/TDFluidMaterialLook.json",
+    "is_using_override_paths": false
+  },
+  "key_errors": []
+}

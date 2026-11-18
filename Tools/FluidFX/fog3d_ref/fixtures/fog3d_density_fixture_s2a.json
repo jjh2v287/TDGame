@@ -1,0 +1,334 @@
+{
+ "format": "fog3d-density-fixture-s2a-1",
+ "binary": "fog3d_density_fixture_s2a.bin",
+ "sha256": "4e35c4bbdf71158a7b9a5f9577c821c29f1273e4233bfc5be947bfc55544078f",
+ "bytes": 246428,
+ "layout": {
+  "header": "8 bytes magic TDF3DGD1 + uint32 version, parameter_set_count, sample_count, floats_per_sample (20), floats_per_parameter_set (32)",
+  "parameter_set": "28 float32 as fog3d_density_fixture.bin + ground(map min x, map min y, S, S) relative to the zone reference, cm and texels",
+  "sample": "v0 position float32x3 + set_index uint32, v1 state (dx,dy,dz,g), v2 ground height cm + expected ground uv float32x2 + category uint32, v3 expected uvw float32x3 + expected weight, v4 expected density + 3 zero"
+ },
+ "expected": "density/uvw/weight = fog3d_density_fixture.expected_sample with window z replaced by window z + H (H = float32 ground height given to the probe); uv = clamp((xy - ground.xy) / (S h), 0.5/S, 1 - 0.5/S)",
+ "parameter_sets": [
+  {
+   "index": 0,
+   "name": "ground/fine_stain",
+   "values": [
+    -2500.0,
+    1250.0,
+    -20.0,
+    128.0,
+    15.625,
+    30.0,
+    8.0,
+    8.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.800000011920929,
+    90.0,
+    45.0,
+    0.0,
+    4500.0,
+    4500.0,
+    400.0,
+    500.0,
+    0.20000000298023224,
+    50.0,
+    1.0,
+    0.0,
+    0.30000001192092896,
+    200.0,
+    7.0,
+    0.0
+   ],
+   "ground": [
+    -2750.0,
+    1000.0,
+    160.0,
+    160.0
+   ],
+   "border_cells": 16,
+   "terrain": "cliff_slope",
+   "map_sha256": "17ca170d048ee9e650668c575fb79fa26262b7cb39d5924e2db81216ffc9197d",
+   "map_height_range": [
+    -233.6283416748047,
+    323.5270080566406
+   ]
+  },
+  {
+   "index": 1,
+   "name": "ground/off",
+   "values": [
+    -2500.0,
+    1250.0,
+    -20.0,
+    128.0,
+    15.625,
+    30.0,
+    8.0,
+    8.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.800000011920929,
+    90.0,
+    45.0,
+    0.0,
+    4500.0,
+    4500.0,
+    400.0,
+    500.0,
+    0.0,
+    50.0,
+    1.0,
+    0.0,
+    0.0,
+    200.0,
+    0.0,
+    0.0
+   ],
+   "ground": [
+    -2750.0,
+    1000.0,
+    160.0,
+    160.0
+   ],
+   "border_cells": 16,
+   "terrain": "cliff_slope",
+   "map_sha256": "17ca170d048ee9e650668c575fb79fa26262b7cb39d5924e2db81216ffc9197d",
+   "map_height_range": [
+    -233.6283416748047,
+    323.5270080566406
+   ]
+  },
+  {
+   "index": 2,
+   "name": "ground/wide_other_shape",
+   "values": [
+    -1000.0,
+    -1000.0,
+    10.0,
+    256.0,
+    15.625,
+    30.0,
+    8.0,
+    8.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.6000000238418579,
+    120.0,
+    60.0,
+    0.0,
+    4500.0,
+    4500.0,
+    400.0,
+    500.0,
+    0.25,
+    37.5,
+    3.0,
+    0.0,
+    0.25,
+    150.0,
+    11.0,
+    0.0
+   ],
+   "ground": [
+    -2000.0,
+    -2000.0,
+    384.0,
+    384.0
+   ],
+   "border_cells": 64,
+   "terrain": "rolling_ridge",
+   "map_sha256": "f7a8c72efa0451b0f755400a7d269c727f3d301d36d8f7737e30eb1cc78a85bc",
+   "map_height_range": [
+    -217.6908721923828,
+    374.4001159667969
+   ]
+  },
+  {
+   "index": 3,
+   "name": "ground/inactive",
+   "values": [
+    -2500.0,
+    1250.0,
+    -20.0,
+    128.0,
+    15.625,
+    30.0,
+    8.0,
+    8.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.800000011920929,
+    90.0,
+    45.0,
+    0.0,
+    4500.0,
+    4500.0,
+    400.0,
+    500.0,
+    0.20000000298023224,
+    50.0,
+    1.0,
+    0.0,
+    0.30000001192092896,
+    200.0,
+    7.0,
+    0.0
+   ],
+   "ground": [
+    -2750.0,
+    1000.0,
+    160.0,
+    160.0
+   ],
+   "border_cells": 16,
+   "terrain": "cliff_slope",
+   "map_sha256": "17ca170d048ee9e650668c575fb79fa26262b7cb39d5924e2db81216ffc9197d",
+   "map_height_range": [
+    -233.6283416748047,
+    323.5270080566406
+   ]
+  },
+  {
+   "index": 4,
+   "name": "ground/zero",
+   "values": [
+    -1800.0,
+    -400.0,
+    0.0,
+    128.0,
+    15.625,
+    30.0,
+    8.0,
+    8.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.800000011920929,
+    90.0,
+    45.0,
+    0.0,
+    4500.0,
+    4500.0,
+    400.0,
+    500.0,
+    0.20000000298023224,
+    50.0,
+    1.0,
+    0.0,
+    0.30000001192092896,
+    200.0,
+    7.0,
+    0.0
+   ],
+   "ground": [
+    -2050.0,
+    -650.0,
+    160.0,
+    160.0
+   ],
+   "border_cells": 16,
+   "terrain": "zero",
+   "map_sha256": "f627ca4c2c322f15db26152df306bd4f983f0146409b81a4341b9b340c365a16",
+   "map_height_range": [
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "sample_count": 3072,
+ "categories": {
+  "interior": {
+   "count": 384,
+   "density_min": 0.0,
+   "density_max": 0.9610443768537373,
+   "ground_height_min": -224.60986328125,
+   "ground_height_max": 340.691650390625,
+   "non_zero_density": 168
+  },
+  "cliff_side": {
+   "count": 384,
+   "density_min": 0.0,
+   "density_max": 1.099808046674621,
+   "ground_height_min": -49.5224609375,
+   "ground_height_max": 233.123046875,
+   "non_zero_density": 171
+  },
+  "window_edge": {
+   "count": 384,
+   "density_min": 0.0,
+   "density_max": 0.9504815936088562,
+   "ground_height_min": -231.224853515625,
+   "ground_height_max": 359.3720703125,
+   "non_zero_density": 172
+  },
+  "map_outside": {
+   "count": 384,
+   "density_min": 0.0,
+   "density_max": 0.909938395023346,
+   "ground_height_min": -229.939453125,
+   "ground_height_max": 348.65380859375,
+   "non_zero_density": 158
+  },
+  "displacement": {
+   "count": 384,
+   "density_min": 0.0,
+   "density_max": 1.1153255717038792,
+   "ground_height_min": -202.024169921875,
+   "ground_height_max": 304.559814453125,
+   "non_zero_density": 156
+  },
+  "height_weight": {
+   "count": 384,
+   "density_min": 0.0,
+   "density_max": 0.8920405163174943,
+   "ground_height_min": -228.001953125,
+   "ground_height_max": 294.931396484375,
+   "non_zero_density": 91
+  },
+  "below_ground": {
+   "count": 384,
+   "density_min": 0.0005921363918801603,
+   "density_max": 1.049411962692429,
+   "ground_height_min": -225.275634765625,
+   "ground_height_max": 303.69921875,
+   "non_zero_density": 384
+  },
+  "zero_ground": {
+   "count": 384,
+   "density_min": 0.0,
+   "density_max": 1.1030898652236623,
+   "ground_height_min": 0.0,
+   "ground_height_max": 0.0,
+   "non_zero_density": 189
+  }
+ },
+ "self_checks": {
+  "height_quantization_max": 0.00012204382915115275,
+  "window_reference_checked": 2523,
+  "window_reference_max": 2.638778084929072e-12,
+  "zero_ground_max": 0.0,
+  "float32_uvw_z_max": 5.563100180516756e-08,
+  "float32_weight_max": 9.489059460410232e-08,
+  "outside_map": 399
+ },
+ "source": {
+  "tool": "fog3d_density_fixture_s2a.py",
+  "code": {
+   "fog3d_density_fixture_s2a.py": "39d2c840c9e91a96",
+   "fog3d_density_fixture.py": "0b162febe13497ce",
+   "fog3d_terrain.py": "7a375bb4669b1da5",
+   "fog3d_core.py": "fa5564705c405769"
+  }
+ }
+}

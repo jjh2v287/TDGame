@@ -1,0 +1,302 @@
+#include "/TDFluidGpu/Private/TDFluidGpuFog3D.usf"
+
+struct FTDFluidGpuFog3DSphereAnchor
+{
+	int CellX;
+	int CellY;
+	float ZCm;
+	uint Flags;
+};
+
+StructuredBuffer<FTDFluidGpuFog3DSphereAnchor> SphereAnchors;
+RWStructuredBuffer<uint> InputReachOut;
+
+#define TDFOG3D_REACH_THREAD_COUNT 256
+#define TDFOG3D_REACH_FILL_LIMIT_CELLS 48
+#define TDFOG3D_REACH_MAXIMUM_COLUMNS 2304
+
+static const uint Fog3DReachSlackCells = 2u;
+static const uint Fog3DReachIterationLimit = 256u;
+static const uint Fog3DReachRangeAdjustLimit = 4u;
+static const uint Fog3DReachAnchorPresentFlag = 1u;
+static const uint Fog3DReachOpenEastBit = 1u;
+static const uint Fog3DReachOpenNorthBit = 2u;
+static const uint Fog3DReachOpenTopBit = 4u;
+static const uint Fog3DReachUnreachedWord = 0xFFFFFFFFu;
+
+groupshared uint Fog3DReachDistanceWords[TDFOG3D_REACH_MAXIMUM_COLUMNS * 2];
+groupshared uint Fog3DReachOpenFaceNibbles[TDFOG3D_REACH_MAXIMUM_COLUMNS];
+groupshared uint Fog3DReachChangedFlags[2];
+
+struct FTDFog3DReachBox
+{
+	int2 PredicateMin;
+	int2 PredicateMax;
+	int2 FillMin;
+	int2 FillMax;
+	int3 AnchorCell;
+	bool bIsAllowed;
+};
+
+float GetFog3DCellCenterAxisCm(int Cell)
+{
+	return GetFog3DCellCenterCm(int3(Cell, 0, 0)).x;
+}
+
+int FindFog3DFirstCellAtOrAbove(float LowCm)
+{
+	int Cell = int(floor(LowCm / CellSizeCm - 0.5f));
+	[loop]
+	for (uint RaiseAttempt = 0u; RaiseAttempt < Fog3DReachRangeAdjustLimit && GetFog3DCellCenterAxisCm(Cell) < LowCm; ++RaiseAttempt)
+	{
+		++Cell;
+	}
+	[loop]
+	for (uint LowerAttempt = 0u; LowerAttempt < Fog3DReachRangeAdjustLimit && GetFog3DCellCenterAxisCm(Cell - 1) >= LowCm; ++LowerAttempt)
+	{
+		--Cell;
+	}
+	return Cell;
+}
+
+int FindFog3DLastCellAtOrBelow(float HighCm)
+{
+	int Cell = int(floor(HighCm / CellSizeCm - 0.5f));
+	[loop]
+	for (uint LowerAttempt = 0u; LowerAttempt < Fog3DReachRangeAdjustLimit && GetFog3DCellCenterAxisCm(Cell) > HighCm; ++LowerAttempt)
+	{
+		--Cell;
+	}
+	[loop]
+	for (uint RaiseAttempt = 0u; RaiseAttempt < Fog3DReachRangeAdjustLimit && GetFog3DCellCenterAxisCm(Cell + 1) <= HighCm; ++RaiseAttempt)
+	{
+		++Cell;
+	}
+	return Cell;
+}
+
+FTDFog3DReachBox MakeFog3DReachBox(uint SphereIndex)
+{
+	FTDFluidGpuFog3DSphere Sphere = Spheres[SphereIndex];
+	float MarginCm = Sphere.StartCmRadiusCm.w + CellSizeCm * Fog3DSphereCullMarginCells;
+	float2 LowCm = min(Sphere.StartCmRadiusCm.xy, Sphere.EndCmWindStrength.xy) - MarginCm;
+	float2 HighCm = max(Sphere.StartCmRadiusCm.xy, Sphere.EndCmWindStrength.xy) + MarginCm;
+	int2 RawMin = int2(FindFog3DFirstCellAtOrAbove(LowCm.x), FindFog3DFirstCellAtOrAbove(LowCm.y));
+	int2 RawMax = int2(FindFog3DLastCellAtOrBelow(HighCm.x), FindFog3DLastCellAtOrBelow(HighCm.y));
+	int2 WindowMax = int2(Resolution - 1, Resolution - 1);
+
+	FTDFluidGpuFog3DSphereAnchor Anchor = SphereAnchors[SphereIndex];
+	int2 AnchorColumn = clamp(int2(Anchor.CellX, Anchor.CellY), int2(0, 0), WindowMax);
+	float GroundCm = GroundFollow != 0u ? ReadFog3DColumnTerrain(AnchorColumn).x : 0.0f;
+	float AnchorLayer = clamp(floor((Anchor.ZCm - GroundCm) / LayerHeightCm), 0.0f, float(TDFOG3D_LAYER_COUNT - 1));
+
+	FTDFog3DReachBox Box;
+	Box.PredicateMin = max(RawMin, int2(0, 0));
+	Box.PredicateMax = min(RawMax, WindowMax);
+	Box.FillMin = max(min(RawMin, AnchorColumn), int2(0, 0));
+	Box.FillMax = min(max(RawMax, AnchorColumn), WindowMax);
+	Box.AnchorCell = int3(AnchorColumn, int(AnchorLayer));
+	bool bHasAnchor = (Anchor.Flags & Fog3DReachAnchorPresentFlag) != 0u;
+	bool bIsOversize = any(Box.FillMax - Box.FillMin + 1 > int2(TDFOG3D_REACH_FILL_LIMIT_CELLS, TDFOG3D_REACH_FILL_LIMIT_CELLS));
+	bool bIsAnchorBlocked = CellBlockedIn[MakeFog3DStorageTexel(Box.AnchorCell)] != 0u;
+	Box.bIsAllowed = !bHasAnchor || bIsOversize || bIsAnchorBlocked;
+	return Box;
+}
+
+int2 GetFog3DReachWindowColumn(uint Column, uint BoxHeight, int2 BoxMin)
+{
+	uint ColumnX = Column / BoxHeight;
+	return BoxMin + int2(int(ColumnX), int(Column - ColumnX * BoxHeight));
+}
+
+uint2 LoadFog3DReachDistanceWords(uint Column)
+{
+	return uint2(Fog3DReachDistanceWords[Column * 2u], Fog3DReachDistanceWords[Column * 2u + 1u]);
+}
+
+uint ExtractFog3DReachDistance(uint2 Words, uint Layer)
+{
+	uint Word = Layer < 4u ? Words.x : Words.y;
+	return (Word >> ((Layer & 3u) * 8u)) & 0xFFu;
+}
+
+uint ReadFog3DReachOpenFaces(uint Nibbles, uint Layer)
+{
+	return (Nibbles >> (Layer * 4u)) & 0xFu;
+}
+
+uint RelaxFog3DReachDistance(uint Distance, uint NeighborDistance, bool bIsFaceOpen)
+{
+	return bIsFaceOpen ? min(Distance, NeighborDistance + 1u) : Distance;
+}
+
+uint MakeFog3DReachOpenFaces(uint FaceFlags)
+{
+	uint OpenFaces = (FaceFlags & GetFog3DClosedFaceBit(0u, true)) == 0u ? Fog3DReachOpenEastBit : 0u;
+	OpenFaces |= (FaceFlags & GetFog3DClosedFaceBit(1u, true)) == 0u ? Fog3DReachOpenNorthBit : 0u;
+	OpenFaces |= (FaceFlags & GetFog3DClosedFaceBit(2u, true)) == 0u ? Fog3DReachOpenTopBit : 0u;
+	return OpenFaces;
+}
+
+void InitializeFog3DReachColumn(uint Column, uint BoxHeight, FTDFog3DReachBox Box)
+{
+	int2 WindowColumn = GetFog3DReachWindowColumn(Column, BoxHeight, Box.FillMin);
+	uint Nibbles = 0u;
+	[unroll]
+	for (uint Layer = 0u; Layer < TDFOG3D_LAYER_COUNT; ++Layer)
+	{
+		Nibbles |= MakeFog3DReachOpenFaces(FaceFlagsIn[MakeFog3DStorageTexel(int3(WindowColumn, int(Layer)))]) << (Layer * 4u);
+	}
+	Fog3DReachOpenFaceNibbles[Column] = Nibbles;
+
+	uint2 Words = uint2(Fog3DReachUnreachedWord, Fog3DReachUnreachedWord);
+	if (all(WindowColumn == Box.AnchorCell.xy))
+	{
+		uint AnchorLayer = uint(Box.AnchorCell.z);
+		uint ClearMask = ~(0xFFu << ((AnchorLayer & 3u) * 8u));
+		Words.x = AnchorLayer < 4u ? (Words.x & ClearMask) : Words.x;
+		Words.y = AnchorLayer < 4u ? Words.y : (Words.y & ClearMask);
+	}
+	Fog3DReachDistanceWords[Column * 2u] = Words.x;
+	Fog3DReachDistanceWords[Column * 2u + 1u] = Words.y;
+}
+
+bool RelaxFog3DReachColumn(uint Column, uint2 BoxSize)
+{
+	uint ColumnX = Column / BoxSize.y;
+	uint ColumnY = Column - ColumnX * BoxSize.y;
+	bool bHasWest = ColumnX > 0u;
+	bool bHasSouth = ColumnY > 0u;
+	uint2 Unreached = uint2(Fog3DReachUnreachedWord, Fog3DReachUnreachedWord);
+	uint OwnNibbles = Fog3DReachOpenFaceNibbles[Column];
+	uint WestNibbles = bHasWest ? Fog3DReachOpenFaceNibbles[Column - BoxSize.y] : 0u;
+	uint SouthNibbles = bHasSouth ? Fog3DReachOpenFaceNibbles[Column - 1u] : 0u;
+	uint2 Own = LoadFog3DReachDistanceWords(Column);
+	uint2 East = ColumnX + 1u < BoxSize.x ? LoadFog3DReachDistanceWords(Column + BoxSize.y) : Unreached;
+	uint2 West = bHasWest ? LoadFog3DReachDistanceWords(Column - BoxSize.y) : Unreached;
+	uint2 North = ColumnY + 1u < BoxSize.y ? LoadFog3DReachDistanceWords(Column + 1u) : Unreached;
+	uint2 South = bHasSouth ? LoadFog3DReachDistanceWords(Column - 1u) : Unreached;
+
+	uint2 Relaxed = uint2(0u, 0u);
+	uint BelowDistance = 0xFFu;
+	[unroll]
+	for (uint Layer = 0u; Layer < TDFOG3D_LAYER_COUNT; ++Layer)
+	{
+		uint OwnFaces = ReadFog3DReachOpenFaces(OwnNibbles, Layer);
+		uint Distance = ExtractFog3DReachDistance(Own, Layer);
+		Distance = RelaxFog3DReachDistance(Distance, ExtractFog3DReachDistance(East, Layer), (OwnFaces & Fog3DReachOpenEastBit) != 0u);
+		Distance = RelaxFog3DReachDistance(Distance, ExtractFog3DReachDistance(West, Layer), (ReadFog3DReachOpenFaces(WestNibbles, Layer) & Fog3DReachOpenEastBit) != 0u);
+		Distance = RelaxFog3DReachDistance(Distance, ExtractFog3DReachDistance(North, Layer), (OwnFaces & Fog3DReachOpenNorthBit) != 0u);
+		Distance = RelaxFog3DReachDistance(Distance, ExtractFog3DReachDistance(South, Layer), (ReadFog3DReachOpenFaces(SouthNibbles, Layer) & Fog3DReachOpenNorthBit) != 0u);
+		if (Layer + 1u < TDFOG3D_LAYER_COUNT)
+		{
+			Distance = RelaxFog3DReachDistance(Distance, ExtractFog3DReachDistance(Own, Layer + 1u), (OwnFaces & Fog3DReachOpenTopBit) != 0u);
+		}
+		if (Layer > 0u)
+		{
+			Distance = RelaxFog3DReachDistance(Distance, BelowDistance, (ReadFog3DReachOpenFaces(OwnNibbles, Layer - 1u) & Fog3DReachOpenTopBit) != 0u);
+		}
+		BelowDistance = Distance;
+		Relaxed.x |= Layer < 4u ? Distance << (Layer * 8u) : 0u;
+		Relaxed.y |= Layer < 4u ? 0u : Distance << ((Layer - 4u) * 8u);
+	}
+
+	if (all(Relaxed == Own))
+	{
+		return false;
+	}
+	Fog3DReachDistanceWords[Column * 2u] = Relaxed.x;
+	Fog3DReachDistanceWords[Column * 2u + 1u] = Relaxed.y;
+	return true;
+}
+
+void WriteFog3DReachedColumn(uint Column, uint BoxHeight, FTDFog3DReachBox Box, uint SphereBit)
+{
+	int2 WindowColumn = GetFog3DReachWindowColumn(Column, BoxHeight, Box.FillMin);
+	uint2 Words = LoadFog3DReachDistanceWords(Column);
+	uint HorizontalDistance = uint(abs(WindowColumn.x - Box.AnchorCell.x) + abs(WindowColumn.y - Box.AnchorCell.y));
+	[unroll]
+	for (uint Layer = 0u; Layer < TDFOG3D_LAYER_COUNT; ++Layer)
+	{
+		uint ManhattanDistance = HorizontalDistance + uint(abs(int(Layer) - Box.AnchorCell.z));
+		if (ExtractFog3DReachDistance(Words, Layer) <= ManhattanDistance + Fog3DReachSlackCells)
+		{
+			InterlockedOr(InputReachOut[MakeFog3DWindowOrderIndex(int3(WindowColumn, int(Layer)))], SphereBit);
+		}
+	}
+}
+
+void WriteFog3DPredicateColumns(uint GroupIndex, FTDFog3DReachBox Box, uint SphereBit)
+{
+	if (any(Box.PredicateMax < Box.PredicateMin))
+	{
+		return;
+	}
+	uint2 PredicateSize = uint2(Box.PredicateMax - Box.PredicateMin + 1);
+	uint ColumnCount = PredicateSize.x * PredicateSize.y;
+	for (uint Column = GroupIndex; Column < ColumnCount; Column += TDFOG3D_REACH_THREAD_COUNT)
+	{
+		int2 WindowColumn = GetFog3DReachWindowColumn(Column, PredicateSize.y, Box.PredicateMin);
+		[unroll]
+		for (uint Layer = 0u; Layer < TDFOG3D_LAYER_COUNT; ++Layer)
+		{
+			InterlockedOr(InputReachOut[MakeFog3DWindowOrderIndex(int3(WindowColumn, int(Layer)))], SphereBit);
+		}
+	}
+}
+
+[numthreads(TDFOG3D_REACH_THREAD_COUNT, 1, 1)]
+void Fog3DInputReachCS(uint3 GroupId : SV_GroupID, uint GroupIndex : SV_GroupIndex)
+{
+	uint SphereIndex = GroupId.x;
+	uint SphereBit = 1u << SphereIndex;
+	FTDFog3DReachBox Box = MakeFog3DReachBox(SphereIndex);
+	uint2 BoxSize = Box.bIsAllowed ? uint2(0u, 0u) : uint2(Box.FillMax - Box.FillMin + 1);
+	uint ColumnCount = BoxSize.x * BoxSize.y;
+
+	for (uint InitialColumn = GroupIndex; InitialColumn < ColumnCount; InitialColumn += TDFOG3D_REACH_THREAD_COUNT)
+	{
+		InitializeFog3DReachColumn(InitialColumn, BoxSize.y, Box);
+	}
+	if (GroupIndex == 0u)
+	{
+		Fog3DReachChangedFlags[0] = 0u;
+		Fog3DReachChangedFlags[1] = 0u;
+	}
+	GroupMemoryBarrierWithGroupSync();
+
+	[loop]
+	for (uint Iteration = 0u; Iteration < Fog3DReachIterationLimit; ++Iteration)
+	{
+		uint FlagSlot = Iteration & 1u;
+		bool bHasChanged = false;
+		for (uint RelaxColumn = GroupIndex; RelaxColumn < ColumnCount; RelaxColumn += TDFOG3D_REACH_THREAD_COUNT)
+		{
+			bHasChanged = RelaxFog3DReachColumn(RelaxColumn, BoxSize) || bHasChanged;
+		}
+		if (bHasChanged)
+		{
+			Fog3DReachChangedFlags[FlagSlot] = 1u;
+		}
+		if (GroupIndex == 0u)
+		{
+			Fog3DReachChangedFlags[1u - FlagSlot] = 0u;
+		}
+		GroupMemoryBarrierWithGroupSync();
+		uint AnyChanged = Fog3DReachChangedFlags[FlagSlot];
+		GroupMemoryBarrierWithGroupSync();
+		if (AnyChanged == 0u)
+		{
+			break;
+		}
+	}
+
+	for (uint ReachedColumn = GroupIndex; ReachedColumn < ColumnCount; ReachedColumn += TDFOG3D_REACH_THREAD_COUNT)
+	{
+		WriteFog3DReachedColumn(ReachedColumn, BoxSize.y, Box, SphereBit);
+	}
+	if (Box.bIsAllowed)
+	{
+		WriteFog3DPredicateColumns(GroupIndex, Box, SphereBit);
+	}
+}

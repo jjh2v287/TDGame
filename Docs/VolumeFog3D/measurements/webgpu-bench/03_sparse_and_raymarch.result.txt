@@ -1,0 +1,193 @@
+{
+  "march": [
+    {
+      "H": 540,
+      "W": 960,
+      "errors": [],
+      "frames": 400,
+      "gpuMed": 0.1042,
+      "gpuMin": 0.1021,
+      "steps": 16,
+      "view": "top",
+      "vol": "256x256x32"
+    },
+    {
+      "H": 540,
+      "W": 960,
+      "errors": [],
+      "frames": 400,
+      "gpuMed": 0.183,
+      "gpuMin": 0.1824,
+      "steps": 32,
+      "view": "top",
+      "vol": "256x256x32"
+    },
+    {
+      "H": 1080,
+      "W": 1920,
+      "errors": [],
+      "frames": 333,
+      "gpuMed": 0.3875,
+      "gpuMin": 0.3867,
+      "steps": 16,
+      "view": "top",
+      "vol": "256x256x32"
+    },
+    {
+      "H": 1080,
+      "W": 1920,
+      "errors": [],
+      "frames": 159,
+      "gpuMed": 0.6937,
+      "gpuMin": 0.6887,
+      "steps": 32,
+      "view": "top",
+      "vol": "256x256x32"
+    },
+    {
+      "H": 540,
+      "W": 960,
+      "errors": [],
+      "frames": 400,
+      "gpuMed": 0.1989,
+      "gpuMin": 0.1979,
+      "steps": 32,
+      "view": "third",
+      "vol": "256x256x32"
+    },
+    {
+      "H": 540,
+      "W": 960,
+      "errors": [],
+      "frames": 366,
+      "gpuMed": 0.368,
+      "gpuMin": 0.3667,
+      "steps": 64,
+      "view": "third",
+      "vol": "256x256x32"
+    },
+    {
+      "H": 1080,
+      "W": 1920,
+      "errors": [],
+      "frames": 166,
+      "gpuMed": 0.7414,
+      "gpuMin": 0.7371,
+      "steps": 32,
+      "view": "third",
+      "vol": "256x256x32"
+    },
+    {
+      "H": 1080,
+      "W": 1920,
+      "errors": [],
+      "frames": 92,
+      "gpuMed": 1.4033,
+      "gpuMin": 1.3962,
+      "steps": 64,
+      "view": "third",
+      "vol": "256x256x32"
+    }
+  ],
+  "sim": [
+    {
+      "activeCells": 2097152,
+      "errors": [],
+      "frac": 1,
+      "gpuMax": 8.7793,
+      "gpuMed": 2.8861,
+      "gpuMin": 2.8609,
+      "grid": "256x256x32",
+      "jac": 12,
+      "mode": "sparse",
+      "msPerMcellPass": 0.0917,
+      "steps": 26
+    },
+    {
+      "activeCells": 1048576,
+      "errors": [],
+      "frac": 0.5,
+      "gpuMax": 1.4702,
+      "gpuMed": 1.4571,
+      "gpuMin": 1.4396,
+      "grid": "256x256x32",
+      "jac": 12,
+      "mode": "sparse",
+      "msPerMcellPass": 0.0926,
+      "steps": 60
+    },
+    {
+      "activeCells": 524288,
+      "errors": [],
+      "frac": 0.25,
+      "gpuMax": 0.7416,
+      "gpuMed": 0.7362,
+      "gpuMin": 0.7285,
+      "grid": "256x256x32",
+      "jac": 12,
+      "mode": "sparse",
+      "msPerMcellPass": 0.0936,
+      "steps": 60
+    },
+    {
+      "activeCells": 209920,
+      "errors": [],
+      "frac": 0.1,
+      "gpuMax": 0.2687,
+      "gpuMed": 0.26,
+      "gpuMin": 0.2479,
+      "grid": "256x256x32",
+      "jac": 12,
+      "mode": "sparse",
+      "msPerMcellPass": 0.0826,
+      "steps": 60
+    },
+    {
+      "activeCells": 104960,
+      "errors": [],
+      "frac": 0.05,
+      "gpuMax": 0.1333,
+      "gpuMed": 0.1245,
+      "gpuMin": 0.1114,
+      "grid": "256x256x32",
+      "jac": 12,
+      "mode": "sparse",
+      "msPerMcellPass": 0.0791,
+      "steps": 60
+    },
+    {
+      "activeCells": 419328,
+      "errors": [],
+      "frac": 0.1,
+      "gpuMax": 0.5756,
+      "gpuMed": 0.5713,
+      "gpuMin": 0.5658,
+      "grid": "256x256x64",
+      "jac": 12,
+      "mode": "sparse",
+      "msPerMcellPass": 0.0908,
+      "steps": 60
+    },
+    {
+      "activeCells": 503296,
+      "errors": [],
+      "frac": 0.03,
+      "gpuMax": 0.698,
+      "gpuMed": 0.6903,
+      "gpuMin": 0.6739,
+      "grid": "512x512x64",
+      "jac": 12,
+      "mode": "sparse",
+      "msPerMcellPass": 0.0914,
+      "steps": 60
+    }
+  ]
+}
+
+(captured at origin https://example.com)
+
+
+Tab Context:
+- Executed on tabId: seed
+- Available tabs:
+  • tabId seed: "Example Domain" ("https://example.com/")

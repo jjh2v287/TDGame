@@ -1106,9 +1106,45 @@ bool UTDFluidLiveComponent::HasAnySolverObstacles() const
 void UTDFluidLiveComponent::BuildWorldSolverObstacles(TArray<FTDFluidSdfObstacle>& OutObstacles) const
 {
 	OutObstacles.Reset(ActiveObstacles.Num() + TerrainCollisionObstacles.Num() + CollectedObstacles.Num());
-	OutObstacles.Append(ActiveObstacles);
+	AppendObstaclesTallEnoughToBlock(ActiveObstacles, MassInputSettings.ObstacleMinBlockHeightCm, OutObstacles);
 	OutObstacles.Append(TerrainCollisionObstacles);
-	OutObstacles.Append(CollectedObstacles);
+	AppendObstaclesTallEnoughToBlock(CollectedObstacles, MassInputSettings.ObstacleMinBlockHeightCm, OutObstacles);
+}
+
+float UTDFluidLiveComponent::ComputeObstacleWorldHeightCm(const FTDFluidSdfObstacle& Obstacle)
+{
+	if (!Obstacle.bIsBox || Obstacle.BoxHalfExtents3DCm.IsZero())
+	{
+		return 0.0f;
+	}
+
+	const FRotationMatrix RotationMatrix(Obstacle.WorldRotation);
+	const FVector AxisX = RotationMatrix.GetScaledAxis(EAxis::X);
+	const FVector AxisY = RotationMatrix.GetScaledAxis(EAxis::Y);
+	const FVector AxisZ = RotationMatrix.GetScaledAxis(EAxis::Z);
+	const double WorldHalfHeight = FMath::Abs(AxisX.Z) * Obstacle.BoxHalfExtents3DCm.X
+		+ FMath::Abs(AxisY.Z) * Obstacle.BoxHalfExtents3DCm.Y
+		+ FMath::Abs(AxisZ.Z) * Obstacle.BoxHalfExtents3DCm.Z;
+	return static_cast<float>(WorldHalfHeight * 2.0);
+}
+
+void UTDFluidLiveComponent::AppendObstaclesTallEnoughToBlock(TConstArrayView<FTDFluidSdfObstacle> SourceObstacles, float MinBlockHeightCm, TArray<FTDFluidSdfObstacle>& OutObstacles)
+{
+	if (MinBlockHeightCm <= 0.0f)
+	{
+		OutObstacles.Append(SourceObstacles);
+		return;
+	}
+
+	for (const FTDFluidSdfObstacle& Obstacle : SourceObstacles)
+	{
+		const float WorldHeightCm = ComputeObstacleWorldHeightCm(Obstacle);
+		if (WorldHeightCm > 0.0f && WorldHeightCm < MinBlockHeightCm)
+		{
+			continue;
+		}
+		OutObstacles.Add(Obstacle);
+	}
 }
 
 void UTDFluidLiveComponent::ReapplyActiveObstacles()
@@ -1168,13 +1204,21 @@ void UTDFluidLiveComponent::RasterizeActiveObstacles()
 
 	if (PlaneBasis.IsWorldFacing())
 	{
+		TArray<FTDFluidSdfObstacle> BlockingActiveObstacles;
+		const TArray<FTDFluidSdfObstacle>* DirectObstacles = &ActiveObstacles;
+		if (MassInputSettings.ObstacleMinBlockHeightCm > 0.0f)
+		{
+			AppendObstaclesTallEnoughToBlock(ActiveObstacles, MassInputSettings.ObstacleMinBlockHeightCm, BlockingActiveObstacles);
+			DirectObstacles = &BlockingActiveObstacles;
+		}
+
 		if (bUsesGpuSolver)
 		{
-			GpuSolverProxy.SetObstacles(ActiveObstacles);
+			GpuSolverProxy.SetObstacles(*DirectObstacles);
 			return;
 		}
 
-		Solver.RasterizeSdfObstacles(ActiveObstacles);
+		Solver.RasterizeSdfObstacles(*DirectObstacles);
 		return;
 	}
 

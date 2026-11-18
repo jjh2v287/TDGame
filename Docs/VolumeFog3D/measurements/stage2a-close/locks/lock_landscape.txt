@@ -1,0 +1,3 @@
+fdbacefd4fc8656d1b7d256721e57a54b8a311c28d7cfd1e75dc765a0b4ba4bf
+file: Docs/VolumeFog3D/stage2/prereg-2a-landscape.md
+locked: 2026-11-16 00:32 (claude, before the landscape level is opened; no landscape values seen)

@@ -1,0 +1,6 @@
+dry_a wall_seconds 178
+dry_b wall_seconds 175.6958666
+dry_c wall_seconds 175.6437901
+dry_d wall_seconds 175.8317664
+dry_e wall_seconds 176.3491812
+DONE

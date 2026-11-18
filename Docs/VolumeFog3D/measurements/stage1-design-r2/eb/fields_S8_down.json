@@ -1,0 +1,36 @@
+{
+ "layout": "S8",
+ "scene": "down",
+ "time_s": 1.0,
+ "steps": 60,
+ "hashes": {
+  "A3": "9d50583496e63a1a",
+  "A1": "ec7a836c255905ad",
+  "A2": "2dda68f9c51b12fe"
+ },
+ "A1_vs_A3": {
+  "wind_rel_l2": 0.42621185105076537,
+  "wind_max_abs_cm_s": 114.5644359588623,
+  "wind_ref_max_cm_s": 138.38057708740234,
+  "diff_rel_l2": 0.32307694707174106,
+  "diff_max_abs": 0.6132746338844299,
+  "diff_ref_max_abs": 0.800000011920929,
+  "abs_diff_vol": 1252019.5729102257,
+  "abs_diff_vol_ref": 1306419.554723579,
+  "energy_height_center": 35.689624551883846,
+  "energy_height_center_ref": 63.600048098181105
+ },
+ "A2_vs_A3": {
+  "wind_rel_l2": 0.42621185105076537,
+  "wind_max_abs_cm_s": 114.5644359588623,
+  "wind_ref_max_cm_s": 138.38057708740234,
+  "diff_rel_l2": 0.3209053755662175,
+  "diff_max_abs": 0.6240999698638916,
+  "diff_ref_max_abs": 0.800000011920929,
+  "abs_diff_vol": 1260066.4737888596,
+  "abs_diff_vol_ref": 1306419.554723579,
+  "energy_height_center": 35.689624551883846,
+  "energy_height_center_ref": 63.600048098181105
+ },
+ "elapsed_sec": 341.2
+}

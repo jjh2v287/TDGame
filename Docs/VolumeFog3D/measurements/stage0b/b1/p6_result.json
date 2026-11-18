@@ -1,0 +1,1803 @@
+{
+  "run_id": null,
+  "started_at": "2026-11-12T18:34:29",
+  "variants_sha256": "4e0447627e64fd53bcdd587dfe422a7b4eda6ccb3b73df788915385cb226c929",
+  "level": "/Game/FluidFX/Maps/LV_TDFluidFogStage",
+  "stopped_leftover_pie": false,
+  "base": {
+    "fog_flow_origin": {
+      "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+      "value": 99.86762237548828,
+      "game_time": 99.86761875450611,
+      "user": "TDGen_FogCylinderA",
+      "errors": []
+    },
+    "console": [
+      {
+        "command": "r.GPUCsvStatsEnabled 1",
+        "read_back": 1.0
+      }
+    ],
+    "time_dilation": 1.0,
+    "game_time": 99.86761875450611
+  },
+  "variants": [
+    {
+      "name": "cost_third_warm",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 100.97571563720703,
+          "game_time": 100.97571445256472,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          }
+        ],
+        "call_game_time": 100.97571445256472,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 100.97571445256472
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 100.97571445256472
+          }
+        },
+        "game_time": 100.97571445256472,
+        "shot_game_time": 110.11954915151,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_third_00_F1",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 111.74626922607422,
+          "game_time": 111.74627245590091,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 111.74627245590091,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 111.74627245590091
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 111.74627245590091
+          }
+        },
+        "game_time": 111.74627245590091,
+        "shot_game_time": 130.89504655450583,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_third_01_T1",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 132.56553649902344,
+          "game_time": 132.56554335728288,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 132.56554335728288,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 132.56554335728288
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 132.56554335728288
+          }
+        },
+        "game_time": 132.56554335728288,
+        "shot_game_time": 151.70206644758582,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_third_02_T2",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 153.32449340820312,
+          "game_time": 153.32448706030846,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 153.32448706030846,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 153.32448706030846
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 153.32448706030846
+          }
+        },
+        "game_time": 153.32448706030846,
+        "shot_game_time": 172.48552336543798,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_third_03_F2",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 174.12863159179688,
+          "game_time": 174.1286253668368,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 174.1286253668368,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 174.1286253668368
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 174.1286253668368
+          }
+        },
+        "game_time": 174.1286253668368,
+        "shot_game_time": 193.27658027410507,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_third_04_T3",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 194.9127655029297,
+          "game_time": 194.91277227178216,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 194.91277227178216,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 194.91277227178216
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 194.91277227178216
+          }
+        },
+        "game_time": 194.91277227178216,
+        "shot_game_time": 214.07672956585884,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_third_05_F3",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 215.75057983398438,
+          "game_time": 215.75057376921177,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 215.75057376921177,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 215.75057376921177
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 215.75057376921177
+          }
+        },
+        "game_time": 215.75057376921177,
+        "shot_game_time": 234.88633596524596,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_third_06_F4",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 236.5482635498047,
+          "game_time": 236.5482686571777,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 236.5482686571777,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 236.5482686571777
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 236.5482686571777
+          }
+        },
+        "game_time": 236.5482686571777,
+        "shot_game_time": 255.70128706097603,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_third_07_T4",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 257.3389892578125,
+          "game_time": 257.3389973640442,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 505.4460144042969,
+        "view": [
+          -8.418999671936035,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 257.3389973640442,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 257.3389973640442
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 257.3389973640442
+          }
+        },
+        "game_time": 257.3389973640442,
+        "shot_game_time": 276.5029555670917,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_warm",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 278.137451171875,
+          "game_time": 278.1374558657408,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          }
+        ],
+        "call_game_time": 278.1374558657408,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 278.1374558657408
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 278.1374558657408
+          }
+        },
+        "game_time": 278.1374558657408,
+        "shot_game_time": 287.30169317126274,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_00_F1",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 288.9527282714844,
+          "game_time": 288.95274298265576,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 288.95274298265576,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 288.95274298265576
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 288.95274298265576
+          }
+        },
+        "game_time": 288.95274298265576,
+        "shot_game_time": 308.1245934776962,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_01_T1",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 309.7605285644531,
+          "game_time": 309.76051458343863,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 309.76051458343863,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 309.76051458343863
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 309.76051458343863
+          }
+        },
+        "game_time": 309.76051458343863,
+        "shot_game_time": 328.8999686948955,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_02_T2",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 330.5278015136719,
+          "game_time": 330.52780590206385,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 330.52780590206385,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 330.52780590206385
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 330.52780590206385
+          }
+        },
+        "game_time": 330.52780590206385,
+        "shot_game_time": 349.6747417040169,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_03_F2",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 351.3125,
+          "game_time": 351.3124908134341,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 351.3124908134341,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 351.3124908134341
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 351.3124908134341
+          }
+        },
+        "game_time": 351.3124908134341,
+        "shot_game_time": 370.4835734181106,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_04_T3",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 372.1192626953125,
+          "game_time": 372.11927393078804,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 372.11927393078804,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 372.11927393078804
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 372.11927393078804
+          }
+        },
+        "game_time": 372.11927393078804,
+        "shot_game_time": 391.2702972367406,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_05_F3",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 392.9063415527344,
+          "game_time": 392.90634974092245,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 392.90634974092245,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 392.90634974092245
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 392.90634974092245
+          }
+        },
+        "game_time": 392.90634974092245,
+        "shot_game_time": 412.0802594460547,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_06_F4",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 413.70037841796875,
+          "game_time": 413.70039355382323,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": false,
+          "Fog3dTexBox": true,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 413.70039355382323,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 413.70039355382323
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 413.70039355382323
+          }
+        },
+        "game_time": 413.70039355382323,
+        "shot_game_time": 432.87781505286694,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    },
+    {
+      "name": "cost_topdown_07_T4",
+      "apply": {
+        "fog_flow_origin": {
+          "mpc": "/Game/FluidFX/Materials/MPC_TD_FluidFogWindow",
+          "value": 434.4974365234375,
+          "game_time": 434.49743636325,
+          "user": "TDGen_FogCylinderA",
+          "errors": []
+        },
+        "awake": {
+          "TDGen_FogRoom": false,
+          "TDGen_FogTrail": false,
+          "TDGen_FogCharacter": false,
+          "TDGen_FogAmbient": false,
+          "TDGen_FogCut": false,
+          "TDGen_FogStir": false,
+          "TDGen_FogTileSync": false,
+          "TDGen_FogRelief": false
+        },
+        "pawn": [
+          9000.0,
+          53650.0
+        ],
+        "arm": 800.0,
+        "view": [
+          -60.0,
+          90.0
+        ],
+        "hide": {
+          "Fog3dProbeBox": true,
+          "Fog3dTexBox": false,
+          "Fog3dTexBoxZero": true
+        },
+        "hide_components": {
+          "pawn": [
+            "CharacterMesh0",
+            "SwordMesh",
+            "ShieldMesh",
+            "CameraProxyMeshComponent_0"
+          ]
+        },
+        "exposure_applied": [
+          {
+            "label": "TDGen_FogStageExposure",
+            "ev100": 0.0,
+            "mode": "manual",
+            "fields": {
+              "auto_exposure_bias": 0.0
+            },
+            "original_bias": 0.0,
+            "physical_camera_ev100": 0.0,
+            "ignored_by_engine": [
+              "auto_exposure_min_brightness",
+              "auto_exposure_max_brightness"
+            ],
+            "formula": "original_bias + physical_camera_ev100 - ev100"
+          }
+        ],
+        "exposure": [
+          "TDGen_FogStageExposure"
+        ],
+        "console": [
+          {
+            "command": "r.VolumetricFog.GridPixelSize 8",
+            "read_back": 8.0
+          },
+          {
+            "command": "r.VolumetricFog.GridSizeZ 128",
+            "read_back": 128.0
+          },
+          {
+            "command": "r.TDFogScattering 1",
+            "read_back": 1.0
+          },
+          {
+            "command": "csvprofile frames=400"
+          }
+        ],
+        "call_game_time": 434.49743636325,
+        "call": {
+          "Fog3dProbeBox": {
+            "function": "set_scalar_parameter_value_on_materials",
+            "returned": null,
+            "game_time": 434.49743636325
+          },
+          "TDGen_FogStageHeightFog": {
+            "function": "set_volumetric_fog_distance",
+            "returned": null,
+            "game_time": 434.49743636325
+          }
+        },
+        "game_time": 434.49743636325,
+        "shot_game_time": 453.6829627677798,
+        "ember_mid": {}
+      },
+      "saved": true,
+      "console_screenshots": []
+    }
+  ],
+  "key_errors": []
+}

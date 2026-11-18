@@ -314,3 +314,27 @@
 - 증거: 2026-11-09 Q1 S4 워크플로(run wf_4df1c416-d7a) 빌드 단계 보고, 작업 폴더 `Saved/AgentOps/20261029/wave3/jobs/q1-s4a-220138`(멈춤)·`q1-s4a-221330`(--holder 로 통과)
 - 날짜·상태: 2026-11-09 active
 - 발견: claude(FluidFX 화질 1단계 S4)
+
+### L-repo-35 `python Tools/ue_editor.py` 는 `PYTHONUTF8=1` 과 함께 돌리면 죽는다
+- 증상: `PYTHONUTF8=1 python Tools/ue_editor.py restart` → `AttributeError: 'NoneType' object has no attribute 'splitlines'`(tasklist 출력을 읽는 자리, 2026-11-14, `Saved/AgentOps/20261114/fog3d/stage1c/t2-handoff.md`)
+- 원인[추정]: UTF-8 모드에서 tasklist(cp949) 출력의 해석이 실패해 결과가 비어 온다. 코드로 확인하지는 않았다
+- 해결: 이 도구에는 `PYTHONUTF8=1` 을 붙이지 않는다(한글을 찍는 다른 도구에는 붙인다). 상태만 볼 때는 출력을 `iconv -f cp949 -t utf-8 -c` 로 넘긴다
+- 범위: Git Bash 에서 에디터 기동·종료 도구를 부르는 모든 작업. 날짜 2026-11-14, claude
+
+### L-repo-36 다시 돌리기 실행기가 판정선의 변형 판을 안 돌렸는데 대조표는 통과로 보였다
+- 증상: `fog3d_blend_regress.py compare` 의 표에 `다 | D-G4(1/30·1/144 판, 조각 안 dt30·dt144) | g4_N2 | … [true]` — 실제로는 `g4` 를 기본 `--dt 60` 으로만 돌았고 초당 30·144걸음 판은 조각이 없었다(2026-11-16, `Docs/VolumeFog3D/measurements/blend-b4/refute/refute-b4.md` E절)
+- 원인: 문서의 '판정선 하나 = 인자를 바꾼 조각 여럿'을 실행기의 조각 표로 옮기면서 변형을 빠뜨리고, 대조표의 줄 이름에는 변형을 적어 넣었다. 틀 확인(지금 식으로 옛 기록을 다시 냄)은 돈 조각이 맞는지만 보므로 안 돈 조각을 못 잡는다. 독립 반박자가 잠긴 판정 도구의 인자(`--dt`)를 읽어 찾았다
+- 해결: ① 실행기는 '판정선 → 조각 파일 이름'을 한 표로 두고, 대조 단계가 그 조각 파일이 있는지와 조각 안의 설정값(dt 등)이 줄 이름과 맞는지를 기계로 확인한다 ② 독립 반박 계약에 '목록의 판정선 가운데 어느 조각으로도 덮이지 않는 것'을 항목으로 넣는다 ③ 실행 도중에는 실행기 파일을 고치지 않는다(조각마다 하위 프로세스가 파일을 새로 읽어 지문이 섞인다). 빠진 조각은 조각 입구(`stage1-piece … -- g4 … --dt 30`)를 직접 불러 돌리고, 실행기는 다 끝난 뒤 고친다
+- 범위: 잠긴 판정 도구를 감싸 다시 돌리는 실행기 전부(`Tools/FluidFX/fog3d_ref/`). 날짜 2026-11-16, claude
+
+### L-repo-37 1단계 GPU 대조 도구를 기본 인수로 돌리면 옛 기준(1a·1b)을 읽어 같은 바이트로도 실패한다
+- 증상: 바이트까지 같은 덤프로 `fog3d_compare.py --extras` 가 22개, `fog3d_compare_add1.py` 가 6개 실패(2026-11-17, `Saved/AgentOps/20261117/fog3d-blend-gpu/impl/*DEFAULT_*_REFS_NOT_BG2*`)
+- 원인: 두 도구의 기본 기준 폴더는 1a·1b 때의 `ref`·`ref_add1` 이다. 1d 부터 판정 기준은 `ref_v2`·`ref_v2_shake`·`ref_add1_v2` 와 `prereg-1d-numbers.json` 이다(1d 계약 125·126줄)
+- 해결: 1d 꼴 인수로 돌린다 — `PYTHONUTF8=1 python -B Tools/FluidFX/fog3d_ref/fog3d_compare.py --gpu Saved/FluidFX/Fog3D/gpu --ref Saved/FluidFX/Fog3D/ref_v2 --shake Saved/FluidFX/Fog3D/ref_v2_shake --numbers Docs/VolumeFog3D/measurements/stage1d-ref/prereg-1d-numbers.json --extras --out <json>`(기대 86 모두 통과), `… fog3d_compare_add1.py --gpu Saved/FluidFX/Fog3D/gpu_add1 --ref Saved/FluidFX/Fog3D/ref_add1_v2 --numbers Docs/VolumeFog3D/measurements/stage1d-ref/prereg-1d-numbers.json --out <json>`(기대 12검사 중 ADD-a 하나만 실패 — 기준·GPU 모두 칸 0개). `--out` 을 주어 `Saved/FluidFX/Fog3D/compare/verdict_1d_*.json` 을 덮어쓰지 않는다
+- 범위: 1단계 회귀 대조를 다시 돌리는 모든 작업(2a 닫기, 섞기 B4 의 BG-2 등). 날짜 2026-11-17, claude(구현 하위 에이전트가 찾음)
+
+### L-repo-38 `fog3d_compare_s2a.py` 는 기준 쪽 덤프·파일이 빠져도 끝 코드 0 을 낸다 — 검사 수·덤프 수·건너뜀 0 을 함께 본다
+- 증상: 독립 반박 fixture 에서 기준 덤프 하나 뺌·기준에 없는 장면·기준 기둥 파일 뺌·기준 틀 파일 뺌·GPU 틀 파일 뺌이 모두 끝 0 이었다(GPU 틀 뺌은 건너뜀 1 로만 보임). GPU 덤프·GPU 기둥 파일 뺌만 실패로 잡혔다(2026-11-17, `Saved/AgentOps/20261117/fog3d-blend-gpu/refute/static-report.md` 4절)
+- 원인: 덤프 목록을 기준 폴더에서만 세고(181~199행), 기준 기둥·틀 파일이 없으면 말없이 건너뛰며(131~132·155~156행), 끝 코드가 틀 건너뜀 수를 보지 않는다(161~164·203~207행). 잠긴 도구라 고치지 않는다
+- 해결: 판정할 때 끝 코드와 함께 보고서 JSON 의 `checks`(기대 검사 수), `rows` 의 (scene, dump) 쌍 수(= 재생 manifest 의 덤프 수), `frames_skipped` = 0 을 본다. 예: 섞기 B4 구현 판정은 검사 1121·덤프 92·건너뜀 0
+- 범위: `fog3d_compare_s2a.py` 로 하는 모든 GPU 대 기준 판정(2a R5, 섞기 B4). 날짜 2026-11-17, claude(독립 반박자가 찾음)

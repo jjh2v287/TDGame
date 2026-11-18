@@ -1,0 +1,60 @@
+{
+ "files": [
+  {
+   "name": "occ_edge_layer7.json",
+   "scene": "occ_edge_layer7",
+   "input_occlusion": true
+  },
+  {
+   "name": "occ_edge_layer7.ground.bin"
+  },
+  {
+   "name": "occ_edge_teleport.json",
+   "scene": "occ_edge_teleport",
+   "input_occlusion": true
+  },
+  {
+   "name": "occ_edge_teleport.ground.bin"
+  },
+  {
+   "name": "occ_w1_tip_through.json",
+   "scene": "occ_w1_tip_through",
+   "input_occlusion": true
+  },
+  {
+   "name": "occ_w1_tip_through.ground.bin"
+  },
+  {
+   "name": "occ_w2_radius_reach.json",
+   "scene": "occ_w2_radius_reach",
+   "input_occlusion": true
+  },
+  {
+   "name": "occ_w2_radius_reach.ground.bin"
+  },
+  {
+   "name": "occ_w3_short_wall.json",
+   "scene": "occ_w3_short_wall",
+   "input_occlusion": true
+  },
+  {
+   "name": "occ_w3_short_wall.ground.bin"
+  },
+  {
+   "name": "occ_w4_body_parallel.json",
+   "scene": "occ_w4_body_parallel",
+   "input_occlusion": true
+  },
+  {
+   "name": "occ_w4_body_parallel.ground.bin"
+  },
+  {
+   "name": "occ_w5_end_row.json",
+   "scene": "occ_w5_end_row",
+   "input_occlusion": true
+  },
+  {
+   "name": "occ_w5_end_row.ground.bin"
+  }
+ ]
+}

@@ -1,0 +1,5 @@
+0e530367244fb43c4fcf35585d7db2b122526bba3797993f286072a1ee777e90
+file: Docs/VolumeFog3D/stage2/prereg-2a-design.md
+locked: 2026-11-15 10:48 (claude, before the official run)
+fog3d_terrain.py: 7a375bb4669b1da56274fc8711b2805ea83795fa6abf413badeff85820ad8c03
+fog3d_gates_s2a.py: 067957a5333913610f42c3b6467fcb26bea54b3dc2652947191f5a7d59261e61

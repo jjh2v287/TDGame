@@ -1,0 +1,40 @@
+{
+  "started_at": "2026-11-14T01:12:35",
+  "finished_at": "2026-11-14T01:13:09",
+  "navigation_wait_seconds_used": 5.0,
+  "navigation_wait_seconds_original": 120.0,
+  "names": [
+    "ctl"
+  ],
+  "runs": [
+    {
+      "name": "ctl",
+      "started_at": "2026-11-14T01:12:35",
+      "finished_at": "2026-11-14T01:13:09",
+      "attempts": [
+        {
+          "attempt": 1,
+          "started_at": "2026-11-14T01:12:35",
+          "capture_exit_code": 0,
+          "navigation_state_lines": 2,
+          "capture_wall_seconds": 34.2,
+          "stdout": "Saved/FluidFX/fog3d_calib/ctl/capture_stdout_1.txt",
+          "snapshot_exit_code": 0,
+          "validity": {
+            "valid": false,
+            "usable": null,
+            "reasons": [
+              "보고 계산 오류: C:\\Project\\TDGame\\Saved\\FluidFX\\fog3d_calib\\ctl\\capture 에 *_schedule.json 이 정확히 하나여야 한다(지금 0개)"
+            ]
+          },
+          "wall_seconds": 34.2,
+          "finished_at": "2026-11-14T01:13:09"
+        }
+      ],
+      "final_valid": false
+    }
+  ],
+  "failed_names": [
+    "ctl"
+  ]
+}

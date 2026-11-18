@@ -1,0 +1,209 @@
+{
+ "column": "GPU/VolumetricFog",
+ "discard_rows": 60,
+ "pass_limit_ms": 0.1,
+ "blocks": {
+  "cost_third_00_F1": {
+   "csv": "Profile(20261112_183443).csv",
+   "count": 340,
+   "mean": 1.6597273529411767,
+   "median": 1.5077500000000001,
+   "p95": 2.3326149999999997,
+   "max": 4.8317
+  },
+  "cost_third_01_T1": {
+   "csv": "Profile(20261112_183503).csv",
+   "count": 340,
+   "mean": 1.710875,
+   "median": 1.5215,
+   "p95": 2.6881650000000006,
+   "max": 3.7367
+  },
+  "cost_third_02_T2": {
+   "csv": "Profile(20261112_183524).csv",
+   "count": 340,
+   "mean": 1.6539876470588237,
+   "median": 1.5225499999999998,
+   "p95": 2.3437050000000004,
+   "max": 3.9138
+  },
+  "cost_third_03_F2": {
+   "csv": "Profile(20261112_183545).csv",
+   "count": 340,
+   "mean": 1.6037979411764705,
+   "median": 1.5095,
+   "p95": 2.2187200000000007,
+   "max": 3.6683
+  },
+  "cost_third_04_T3": {
+   "csv": "Profile(20261112_183606).csv",
+   "count": 340,
+   "mean": 1.676395588235294,
+   "median": 1.5237,
+   "p95": 2.574585,
+   "max": 3.6587
+  },
+  "cost_third_05_F3": {
+   "csv": "Profile(20261112_183627).csv",
+   "count": 340,
+   "mean": 1.6882279411764707,
+   "median": 1.5155,
+   "p95": 2.4921050000000045,
+   "max": 3.7024
+  },
+  "cost_third_06_F4": {
+   "csv": "Profile(20261112_183647).csv",
+   "count": 340,
+   "mean": 1.6376026470588234,
+   "median": 1.5118,
+   "p95": 2.327635,
+   "max": 4.0939
+  },
+  "cost_third_07_T4": {
+   "csv": "Profile(20261112_183708).csv",
+   "count": 340,
+   "mean": 1.6917952941176473,
+   "median": 1.5246,
+   "p95": 2.5137750000000008,
+   "max": 3.6513
+  },
+  "cost_topdown_00_F1": {
+   "csv": "Profile(20261112_183740).csv",
+   "count": 340,
+   "mean": 1.71572,
+   "median": 1.5483,
+   "p95": 2.5819400000000003,
+   "max": 3.8806
+  },
+  "cost_topdown_01_T1": {
+   "csv": "Profile(20261112_183801).csv",
+   "count": 340,
+   "mean": 1.7544320588235294,
+   "median": 1.5559,
+   "p95": 2.9543250000000003,
+   "max": 4.3225
+  },
+  "cost_topdown_02_T2": {
+   "csv": "Profile(20261112_183822).csv",
+   "count": 340,
+   "mean": 1.8465417647058824,
+   "median": 1.5603500000000001,
+   "p95": 3.20751,
+   "max": 4.2418
+  },
+  "cost_topdown_03_F2": {
+   "csv": "Profile(20261112_183842).csv",
+   "count": 340,
+   "mean": 1.7752332352941176,
+   "median": 1.55395,
+   "p95": 2.941625,
+   "max": 4.354
+  },
+  "cost_topdown_04_T3": {
+   "csv": "Profile(20261112_183903).csv",
+   "count": 340,
+   "mean": 1.7585782352941177,
+   "median": 1.55605,
+   "p95": 2.9656000000000002,
+   "max": 3.7192
+  },
+  "cost_topdown_05_F3": {
+   "csv": "Profile(20261112_183924).csv",
+   "count": 340,
+   "mean": 1.7156870588235296,
+   "median": 1.5523500000000001,
+   "p95": 2.4627950000000007,
+   "max": 3.6885
+  },
+  "cost_topdown_06_F4": {
+   "csv": "Profile(20261112_183945).csv",
+   "count": 340,
+   "mean": 1.7750955882352941,
+   "median": 1.55395,
+   "p95": 2.963225,
+   "max": 3.9282
+  },
+  "cost_topdown_07_T4": {
+   "csv": "Profile(20261112_184006).csv",
+   "count": 340,
+   "mean": 1.7202117647058823,
+   "median": 1.55655,
+   "p95": 2.516690000000001,
+   "max": 3.7333
+  }
+ },
+ "views": {
+  "third": {
+   "formula": {
+    "count": 1360,
+    "mean": 1.647338970588235,
+    "median": 1.5115,
+    "p95": 2.3564499999999997,
+    "max": 4.8317
+   },
+   "texture": {
+    "count": 1360,
+    "mean": 1.6832633823529413,
+    "median": 1.52305,
+    "p95": 2.582325,
+    "max": 3.9138
+   },
+   "median_difference_texture_minus_formula_ms": 0.01154999999999995,
+   "mean_difference_ms": 0.03592441176470618,
+   "difference_of_block_medians_ms": 0.012474999999999792,
+   "block_medians_formula": [
+    1.5077500000000001,
+    1.5095,
+    1.5155,
+    1.5118
+   ],
+   "block_medians_texture": [
+    1.5215,
+    1.5225499999999998,
+    1.5237,
+    1.5246
+   ],
+   "same_material_block_median_spread_ms": {
+    "formula": 0.007749999999999924,
+    "texture": 0.0030999999999998806
+   },
+   "verdict": "통과"
+  },
+  "topdown": {
+   "formula": {
+    "count": 1360,
+    "mean": 1.7454339705882351,
+    "median": 1.5522,
+    "p95": 2.617379999999999,
+    "max": 4.354
+   },
+   "texture": {
+    "count": 1360,
+    "mean": 1.7699409558823531,
+    "median": 1.55715,
+    "p95": 2.974175,
+    "max": 4.3225
+   },
+   "median_difference_texture_minus_formula_ms": 0.00495000000000001,
+   "mean_difference_ms": 0.02450698529411799,
+   "difference_of_block_medians_ms": 0.003149999999999986,
+   "block_medians_formula": [
+    1.5483,
+    1.55395,
+    1.5523500000000001,
+    1.55395
+   ],
+   "block_medians_texture": [
+    1.5559,
+    1.5603500000000001,
+    1.55605,
+    1.55655
+   ],
+   "same_material_block_median_spread_ms": {
+    "formula": 0.005649999999999933,
+    "texture": 0.004450000000000065
+   },
+   "verdict": "통과"
+  }
+ }
+}

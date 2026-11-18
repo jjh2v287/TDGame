@@ -1,0 +1,108 @@
+{
+ "files": [
+  {
+   "name": "s2a_box_on_slope.json",
+   "scene": "s2a_box_on_slope",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_box_on_slope.ground.bin"
+  },
+  {
+   "name": "s2a_cliff_at_edge.json",
+   "scene": "s2a_cliff_at_edge",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_cliff_at_edge.ground.bin"
+  },
+  {
+   "name": "s2a_cliff_walk_blade.json",
+   "scene": "s2a_cliff_walk_blade",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_cliff_walk_blade.ground.bin"
+  },
+  {
+   "name": "s2a_curb30_cross.json",
+   "scene": "s2a_curb30_cross",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_curb30_cross.ground.bin"
+  },
+  {
+   "name": "s2a_flat_offset.json",
+   "scene": "s2a_flat_offset",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_flat_offset.ground.bin"
+  },
+  {
+   "name": "s2a_frame_at_edge.json",
+   "scene": "s2a_frame_at_edge",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_frame_at_edge.ground.bin"
+  },
+  {
+   "name": "s2a_hill_run_window.json",
+   "scene": "s2a_hill_run_window",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_hill_run_window.ground.bin"
+  },
+  {
+   "name": "s2a_slope_curb.json",
+   "scene": "s2a_slope_curb",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_slope_curb.ground.bin"
+  },
+  {
+   "name": "s2a_slope_curb60.json",
+   "scene": "s2a_slope_curb60",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_slope_curb60.ground.bin"
+  },
+  {
+   "name": "s2a_slope_walk_down.json",
+   "scene": "s2a_slope_walk_down",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_slope_walk_down.ground.bin"
+  },
+  {
+   "name": "s2a_slope_walk_up.json",
+   "scene": "s2a_slope_walk_up",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_slope_walk_up.ground.bin"
+  },
+  {
+   "name": "s2a_slope_y_walk.json",
+   "scene": "s2a_slope_y_walk",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_slope_y_walk.ground.bin"
+  },
+  {
+   "name": "s2a_still_rough.json",
+   "scene": "s2a_still_rough",
+   "input_occlusion": true
+  },
+  {
+   "name": "s2a_still_rough.ground.bin"
+  }
+ ]
+}

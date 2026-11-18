@@ -1,0 +1,3 @@
+ab70fd2fa204b23cb07cf0e5bd25818cf063c7441f06c24bc4022a5b3a631080
+file: Docs/VolumeFog3D/stage2/prereg-2a-screen-add1.md
+locked: 2026-11-16 00:32 (claude, after seeing all 2a-3 results; records measurement-method gaps only, verdicts unchanged)

@@ -1,0 +1,2621 @@
+{
+ "stage1": {
+  "pieces": {
+   "v2_N2": {
+    "group": "가",
+    "gate": "D-V2",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 5,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "p1": true,
+     "p2": true,
+     "all": true
+    }
+   },
+   "g12_N2": {
+    "group": "가",
+    "gate": "D-G12a·b·c·d",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "a": true,
+     "c": true,
+     "b": true,
+     "d": true,
+     "d_undecidable": false,
+     "all": true
+    }
+   },
+   "t_N2": {
+    "group": "가",
+    "gate": "R2-P(a)",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true
+   },
+   "v3_N2": {
+    "group": "가",
+    "gate": "D-G3·D-V3①②바닥",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "p1": true,
+     "p2": true,
+     "p3_info": false,
+     "undecidable": false,
+     "p12": true
+    }
+   },
+   "k4hash_N2": {
+    "group": "가",
+    "gate": "결정론",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null
+   },
+   "k4hash_N2_run2": {
+    "group": "가",
+    "gate": "결정론",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null
+   },
+   "g14_N2": {
+    "group": "나",
+    "gate": "D-G14",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "ga": true,
+     "gc": true,
+     "gd": true,
+     "ge": true,
+     "all": true
+    }
+   },
+   "g15_N2": {
+    "group": "나",
+    "gate": "D-G15",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "ga": true,
+     "gb": true,
+     "gc": true,
+     "gd": true,
+     "all": true
+    }
+   },
+   "leak_N2": {
+    "group": "나",
+    "gate": "누수 R2-S",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 11,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true
+   },
+   "g16_ga_N2": {
+    "group": "나",
+    "gate": "D-G16",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "ga_a": true,
+     "ga_b": true,
+     "all": true
+    }
+   },
+   "g16_gb26_N2": {
+    "group": "나",
+    "gate": "D-G16",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "gb26_a": true,
+     "gb26_b": true,
+     "all": true
+    }
+   },
+   "g16_gb45_N2": {
+    "group": "나",
+    "gate": "D-G16",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "gb45_a": true,
+     "gb45_b": true,
+     "all": true
+    }
+   },
+   "g16_gc_N2": {
+    "group": "나",
+    "gate": "D-G16",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "gc_a": true,
+     "gc_b": true,
+     "all": true
+    }
+   },
+   "g16_gd_N2": {
+    "group": "나",
+    "gate": "D-G16",
+    "state": "같음",
+    "reference": "1d 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "gd_a": true,
+     "gd_b": true,
+     "all": true
+    }
+   },
+   "g4_N2": {
+    "group": "가",
+    "gate": "D-G4 1/60",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 3,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "g5_N2": {
+    "group": "가",
+    "gate": "D-G5a·b",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "D_G5a": true,
+     "D_G5b": true
+    },
+    "b0_passed": {
+     "D_G5a": true,
+     "D_G5b": true
+    }
+   },
+   "g7_N2": {
+    "group": "가",
+    "gate": "D-G7",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 5,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "g9_N2": {
+    "group": "가",
+    "gate": "D-G9",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": {
+     "p1": true,
+     "p2": true,
+     "p3": true,
+     "all": true
+    },
+    "b0_passed": {
+     "p1": true,
+     "p2": true,
+     "p3": true,
+     "all": true
+    }
+   },
+   "g10_N2": {
+    "group": "가",
+    "gate": "D-G10",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 3,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "g11_N2": {
+    "group": "가",
+    "gate": "D-G11",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "g13_N2": {
+    "group": "가",
+    "gate": "D-G13",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 3,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "v1_N2": {
+    "group": "가",
+    "gate": "D-V1",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 3,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "g2_N2": {
+    "group": "나",
+    "gate": "D-G2",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 3,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "g6_N2": {
+    "group": "나",
+    "gate": "D-G6",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "g8_N2": {
+    "group": "나",
+    "gate": "D-G8",
+    "state": "같음",
+    "reference": "B0 기준 실행",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": true,
+    "b0_passed": true
+   },
+   "k4hash_run1_vs_run2": {
+    "group": "가",
+    "gate": "결정론(두 번)",
+    "state": "같음",
+    "differing": []
+   },
+   "D-G4 1/30·1/144": {
+    "group": "다",
+    "gate": "D-G4 1/30·1/144",
+    "state": "조각 없음: 도구가 g4 를 --dt 60(기본)으로만 돈다",
+    "g4_piece_dt": 60
+   }
+  },
+  "walks": {
+   "px": {
+    "side_bias": 2.5886686181048338e-05,
+    "signed": 2.5886686181048338e-05,
+    "total": 14.158433901147172,
+    "rec_side_bias": 2.814233153516314e-05,
+    "rec_total": 14.19826544577152,
+    "max_wind": 95.35391235351562,
+    "rec_max_wind": 95.41167449951172,
+    "equal_record": false
+   },
+   "mx": {
+    "side_bias": 2.5954163915841667e-05,
+    "signed": 2.5954163915841667e-05,
+    "total": 14.158425777244057,
+    "rec_side_bias": 2.813413610263587e-05,
+    "rec_total": 14.198257358988345,
+    "max_wind": 95.35379791259766,
+    "rec_max_wind": 95.41160583496094,
+    "equal_record": false
+   },
+   "py": {
+    "side_bias": 2.5879752575152242e-05,
+    "signed": -2.5879752575152242e-05,
+    "total": 14.158433567247549,
+    "rec_side_bias": 2.8204271289418908e-05,
+    "rec_total": 14.198265364176043,
+    "max_wind": 95.3539047241211,
+    "rec_max_wind": 95.41167449951172,
+    "equal_record": false
+   },
+   "my": {
+    "side_bias": 2.595806826391981e-05,
+    "signed": -2.595806826391981e-05,
+    "total": 14.158426083934339,
+    "rec_side_bias": 2.8151052627739852e-05,
+    "rec_total": 14.198257529724836,
+    "max_wind": 95.35380554199219,
+    "rec_max_wind": 95.4115982055664,
+    "equal_record": false
+   },
+   "pxpy": {
+    "side_bias": 1.658724019355847e-08,
+    "signed": -1.658724019355847e-08,
+    "total": 9.143979005007036,
+    "rec_side_bias": 1.0047603068597942e-08,
+    "rec_total": 9.171361540668531,
+    "max_wind": 101.7085952758789,
+    "rec_max_wind": 101.84587860107422,
+    "equal_record": false
+   }
+  },
+  "criteria": {
+   "D-S1": {
+    "value": 2.595806826391981e-05,
+    "threshold": 0.03,
+    "passed": true
+   },
+   "D-S2": {
+    "value": 2.8737324266841627e-07,
+    "threshold": 0.05,
+    "passed": true
+   }
+  }
+ },
+ "stage2a": {
+  "counts": {
+   "다·라": {
+    "pieces": 109,
+    "equal": 11,
+    "hash_equal": 39
+   },
+   "나": {
+    "pieces": 13,
+    "equal": 13,
+    "hash_equal": 13
+   },
+   "가": {
+    "pieces": 8,
+    "equal": 8,
+    "hash_equal": 8
+   }
+  },
+  "record_minus_new": [],
+  "new_minus_record": [],
+  "thresholds": {
+   "G4": true,
+   "G5": true,
+   "G6_wind": true,
+   "G6_detail": {
+    "threshold": {
+     "wind_over_limit": 1.0,
+     "energy": 0.01
+    },
+    "passed": true,
+    "detail": {
+     "runs": {
+      "S30_k1_60": {
+       "max_wind": 1565.296630859375,
+       "converted_input_speed": 2000.0,
+       "flat_control_max_wind": 1544.885498046875,
+       "M": 2000.0,
+       "limit": 3000.0,
+       "wind_over_limit": 0.5217655436197917,
+       "energy": 0.0006162049882920751,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 3000.0,
+        "wind_over_limit": 0.5217655436197917,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.7724427490234375
+       }
+      },
+      "S30_k2_60": {
+       "max_wind": 1870.808837890625,
+       "converted_input_speed": 2309.401076758503,
+       "flat_control_max_wind": 1870.808837890625,
+       "M": 2309.401076758503,
+       "limit": 3464.101615137755,
+       "wind_over_limit": 0.5400559930792416,
+       "energy": 0.0004926123840397474,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 3464.101615137755,
+        "wind_over_limit": 0.5400559930792416,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.8100839896188624
+       }
+      },
+      "S30_k3_60": {
+       "max_wind": 1929.58984375,
+       "converted_input_speed": 2309.401076758503,
+       "flat_control_max_wind": 1929.58984375,
+       "M": 2309.401076758503,
+       "limit": 3464.101615137755,
+       "wind_over_limit": 0.5570246078573152,
+       "energy": 0.0002423493964665282,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 3464.101615137755,
+        "wind_over_limit": 0.5570246078573152,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.8355369117859728
+       }
+      },
+      "S45_k1_60": {
+       "max_wind": 1677.2108154296875,
+       "converted_input_speed": 2000.0,
+       "flat_control_max_wind": 1544.885498046875,
+       "M": 2000.0,
+       "limit": 3000.0,
+       "wind_over_limit": 0.5590702718098959,
+       "energy": 0.0006169084756831021,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 3000.0,
+        "wind_over_limit": 0.5590702718098959,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.7724427490234375
+       }
+      },
+      "S45_k2_60": {
+       "max_wind": 1929.7939453125,
+       "converted_input_speed": 2828.4271247461897,
+       "flat_control_max_wind": 1929.7939453125,
+       "M": 2828.4271247461897,
+       "limit": 4242.640687119285,
+       "wind_over_limit": 0.4548567950077368,
+       "energy": 0.00039339371199116873,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 4242.640687119285,
+        "wind_over_limit": 0.4548567950077368,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.6822851925116051
+       }
+      },
+      "S45_k3_60": {
+       "max_wind": 2013.7423095703125,
+       "converted_input_speed": 2828.4271247461897,
+       "flat_control_max_wind": 2013.7423095703125,
+       "M": 2828.4271247461897,
+       "limit": 4242.640687119285,
+       "wind_over_limit": 0.47464361421980933,
+       "energy": 3.778383902563589e-05,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 4242.640687119285,
+        "wind_over_limit": 0.47464361421980933,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.711965421329714
+       }
+      },
+      "S60_k1_60": {
+       "max_wind": 1744.33935546875,
+       "converted_input_speed": 2000.0,
+       "flat_control_max_wind": 1544.885498046875,
+       "M": 2000.0,
+       "limit": 3000.0,
+       "wind_over_limit": 0.5814464518229167,
+       "energy": 0.0006199345898158738,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 3000.0,
+        "wind_over_limit": 0.5814464518229167,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.7724427490234375
+       }
+      },
+      "S60_k2_60": {
+       "max_wind": 3417.042724609375,
+       "converted_input_speed": 4216.508508232849,
+       "flat_control_max_wind": 3417.042724609375,
+       "M": 4216.508508232849,
+       "limit": 6324.7627623492735,
+       "wind_over_limit": 0.5402641732193836,
+       "energy": 0.00031690204475278225,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 6324.7627623492735,
+        "wind_over_limit": 0.5402641732193836,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.8103962598290755
+       }
+      },
+      "S60_k3_60": {
+       "max_wind": 3608.782470703125,
+       "converted_input_speed": 4216.508508232849,
+       "flat_control_max_wind": 3608.782470703125,
+       "M": 4216.508508232849,
+       "limit": 6324.7627623492735,
+       "wind_over_limit": 0.5705798946619584,
+       "energy": 5.41009770870258e-06,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 6324.7627623492735,
+        "wind_over_limit": 0.5705798946619584,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.8558698419929376
+       }
+      },
+      "S60_k2_30": {
+       "max_wind": 3202.19775390625,
+       "converted_input_speed": 4216.508508232849,
+       "flat_control_max_wind": 3202.19775390625,
+       "M": 4216.508508232849,
+       "limit": 6324.7627623492735,
+       "wind_over_limit": 0.5062953148169662,
+       "energy": 0.00029507605958257685,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 6324.7627623492735,
+        "wind_over_limit": 0.5062953148169662,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.7594429722254493
+       }
+      },
+      "S60_k2_144": {
+       "max_wind": 3600.44580078125,
+       "converted_input_speed": 4216.508508232849,
+       "flat_control_max_wind": 3600.44580078125,
+       "M": 4216.508508232849,
+       "limit": 6324.7627623492735,
+       "wind_over_limit": 0.5692617946422228,
+       "energy": 0.0003385056461826449,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 6324.7627623492735,
+        "wind_over_limit": 0.5692617946422228,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.8538926919633343
+       }
+      },
+      "ROUGH_k2_60": {
+       "max_wind": 1934.963623046875,
+       "converted_input_speed": 2350.598064796698,
+       "flat_control_max_wind": 1865.9759521484375,
+       "M": 2350.598064796698,
+       "limit": 3525.897097195047,
+       "wind_over_limit": 0.5487861868079458,
+       "energy": 0.0002805502272488145,
+       "finite": true,
+       "passed": true,
+       "info9_original": {
+        "limit": 3525.897097195047,
+        "wind_over_limit": 0.5487861868079458,
+        "wind_passed": true,
+        "gate_passed": true,
+        "flat_over_converted": 0.793830293700095
+       }
+      }
+     }
+    },
+    "kind": "required",
+    "applies": true
+   },
+   "G7": true,
+   "G10": true,
+   "G11": true,
+   "G14": true,
+   "G1": true,
+   "G12": true,
+   "G13": true,
+   "passed_flags": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "G5": true,
+    "G6": true,
+    "G7": true,
+    "G8": true,
+    "G9": true,
+    "G10": true,
+    "G11": true,
+    "G12": true,
+    "G13": true,
+    "G14": true
+   }
+  },
+  "values": {
+   "G1": {
+    "F0": 0.0,
+    "F1": 0.0
+   },
+   "G2": 0.0,
+   "G3": {
+    "smooth": 0.25570711922563305,
+    "cliff": 0.0
+   },
+   "G4": 0.0,
+   "G5": {
+    "up": 0.9657898211488661,
+    "down": 1.082903221896812
+   },
+   "G6": {
+    "S30_k1_60": 0.5217655436197917,
+    "S30_k2_60": 0.5400559930792416,
+    "S30_k3_60": 0.5570246078573152,
+    "S45_k1_60": 0.5590702718098959,
+    "S45_k2_60": 0.4548567950077368,
+    "S45_k3_60": 0.47464361421980933,
+    "S60_k1_60": 0.5814464518229167,
+    "S60_k2_60": 0.5402641732193836,
+    "S60_k3_60": 0.5705798946619584,
+    "S60_k2_30": 0.5062953148169662,
+    "S60_k2_144": 0.5692617946422228,
+    "ROUGH_k2_60": 0.5487861868079458
+   },
+   "G7": {
+    "S20": 2.790206677578652e-07,
+    "S30": 2.790206677578652e-07
+   },
+   "G8": {
+    "S10_r45": 1.0,
+    "S10_r60": 1.0,
+    "S20_r45": 1.0,
+    "S20_r60": 1.0,
+    "S30_r45": 1.0,
+    "S30_r60": 1.0,
+    "S45_r45": 1.0,
+    "S45_r60": 1.0,
+    "S60_r45": 1.0,
+    "S60_r60": 1.0
+   },
+   "G9": {
+    "HILL": {
+     "ratio_1": 0.002363205277024509,
+     "ratio_2": 0.0037029713441274177,
+     "ratio_3": 1.3490285899776394e-05
+    },
+    "MESA": {
+     "ratio_1": 0.002505171076445747,
+     "ratio_2": 0.003755307192673886,
+     "ratio_3": 1.284562635150969e-05
+    }
+   },
+   "G10": 2.6716406864579767e-12,
+   "G11": {
+    "HILL_hill": {
+     "finite": true,
+     "value_over_flat": 1.0649889307019984,
+     "run_max_wind_over_flat": 0.9915942723214276
+    },
+    "FOOT30_up": {
+     "finite": true,
+     "value_over_flat": 0.9527875568352223,
+     "run_max_wind_over_flat": 1.0945817312459374
+    },
+    "FOOT30_down": {
+     "finite": true,
+     "value_over_flat": 0.9527875757371302,
+     "run_max_wind_over_flat": 1.0945817416662158
+    },
+    "TOP30_up": {
+     "finite": true,
+     "value_over_flat": 1.0534362265386803,
+     "run_max_wind_over_flat": 1.0
+    },
+    "TOP30_down": {
+     "finite": true,
+     "value_over_flat": 1.0534362355769908,
+     "run_max_wind_over_flat": 1.0
+    }
+   },
+   "G12": {
+    "walk_S20_up": 0.0,
+    "walk_S20_down": 0.0,
+    "walk_S30_up": 0.0,
+    "walk_S30_down": 0.0,
+    "walk_S30_contour": 0.0,
+    "walk_S30Y_contour": 0.0,
+    "walk_S30Y_ydown": 0.0,
+    "g6_S30_k2_60": 0.0,
+    "g6_S30_k3_60": 0.0,
+    "g6_S45_k2_60": 0.0,
+    "g6_S45_k3_60": 0.0,
+    "g6_S60_k2_60": 0.0,
+    "g6_S60_k3_60": 0.0,
+    "g6_S60_k2_30": 0.0,
+    "g6_S60_k2_144": 0.0
+   },
+   "G13": {
+    "S30CURB100": 1.0,
+    "S30DROP100": 1.0
+   },
+   "G14": {
+    "가_S30CURB100_along_cliff": "pass",
+    "나_S30DROP100_along_cliff": "pass",
+    "다_FOOT45_cross_x": "pass",
+    "라_TOP45_cross_x": "pass",
+    "마_FOOT30_diagonal": "pass",
+    "바_FOOT45_along_fold": "pass"
+   }
+  },
+  "r5_equals_r4_values": {
+   "R5_G13_S30CURB100_a_x-20": false,
+   "R5_G13_S30CURB130_a_x-20": false,
+   "R5_G13_S30CURB45_a_x-20": false,
+   "R5_G13_S30CURB60_a_x-20": false,
+   "R5_G13_S30CURB80_a_x-20": false,
+   "R5_G13_S30DROP100_a_x-20": false,
+   "R5_G13_S30DROP60_a_x-20": false,
+   "R5_G14_FOOT30_diagonal": false,
+   "R5_G14_FOOT45_along_fold": false,
+   "R5_G14_FOOT45_cross_x": false,
+   "R5_G14_S30CURB100_along_cliff": false,
+   "R5_G14_S30DROP100_along_cliff": false,
+   "R5_G14_TOP45_cross_x": false
+  },
+  "not_equal_in_ga_na": [],
+  "code_fields_differ": [],
+  "pieces": {
+   "R3_G13_S30CURB100_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 192.67428588867188 != 192.55088806152344"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G13_S30CURB130_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 192.67428588867188 != 192.55088806152344"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G13_S30CURB45_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 192.67428588867188 != 192.55088806152344"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G13_S30CURB60_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 192.67428588867188 != 192.55088806152344"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G13_S30CURB80_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 192.67428588867188 != 192.55088806152344"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G13_S30DROP100_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 182.09695434570312 != 183.16307067871094",
+     "/values/opposite_max: 457.1493835449219 != 457.69451904296875"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G13_S30DROP60_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 182.09695434570312 != 183.16307067871094",
+     "/values/opposite_max: 452.2951354980469 != 452.3650817871094"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G14_FOOT30_diagonal": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 12.07475133126735 != 12.17784018048911",
+     "/values/abs_left: 12.9104717947014 != 13.110154801521588",
+     "/values/abs_right: 11.239030867833304 != 11.245525559456633",
+     "/values/crossing_abs_mean: 12.967064271005981 != 13.069391440196217",
+     "/values/max_wind: 104.65558624267578 != 722.3385009765625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G14_FOOT45_along_fold": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.064442071989287 != 16.134292934189652",
+     "/values/abs_left: 17.43028540754516 != 17.610364562303044",
+     "/values/abs_right: 14.69859873643341 != 14.658221306076262",
+     "/values/crossing_abs_mean: 18.886989526213757 != 19.004885880732274",
+     "/values/max_wind: 96.57752227783203 != 663.3284912109375"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G14_FOOT45_cross_x": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 21.49675769027186 != 21.88039150120919",
+     "/values/abs_left: 21.497431063822912 != 21.879508587003198",
+     "/values/abs_right: 21.4960843167208 != 21.88127441541518",
+     "/values/crossing_abs_mean: 27.194616754488568 != 27.717801119995315",
+     "/values/max_wind: 98.92011260986328 != 658.5389404296875"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G14_S30CURB100_along_cliff": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 12.299740802367422 != 12.421535530828425",
+     "/values/abs_left: 5.820866893032412 != 5.90131373604403",
+     "/values/abs_right: 17.853061296083144 != 18.01029706921505",
+     "/values/crossing_abs_mean: 15.004218073165706 != 15.192405264538642",
+     "/values/max_wind: 106.1363754272461 != 688.1754760742188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G14_S30DROP100_along_cliff": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 10.823449870239081 != 10.933944862026312",
+     "/values/abs_left: 4.457741168478713 != 4.466395288874056",
+     "/values/abs_right: 16.279771614605107 != 16.477558781871103",
+     "/values/crossing_abs_mean: 11.877895338049484 != 12.067976365302714",
+     "/values/max_wind: 94.95587921142578 != 689.2705688476562"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R3_G14_TOP45_cross_x": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 12.815326547912695 != 12.49118553570707",
+     "/values/abs_left: 12.815215347854826 != 12.491131565515667",
+     "/values/abs_right: 12.815437747970568 != 12.491239505898472",
+     "/values/crossing_abs_mean: 15.363059173399977 != 14.873526057614392",
+     "/values/max_wind: 90.5762710571289 != 663.0880126953125"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G13_S30CURB100_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G13_S30CURB130_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G13_S30CURB45_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G13_S30CURB60_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G13_S30CURB80_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G13_S30DROP100_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 174.4737091064453 != 174.21109008789062",
+     "/values/opposite_max: 457.47723388671875 != 457.5469665527344"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G13_S30DROP60_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 174.4737091064453 != 174.21109008789062",
+     "/values/opposite_max: 459.0520935058594 != 461.153564453125"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G14_FOOT30_diagonal": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 11.153543220112214 != 11.174003128852572",
+     "/values/abs_left: 11.656260449084359 != 11.67624404755836",
+     "/values/abs_right: 10.650825991140067 != 10.671762210146786",
+     "/values/crossing_abs_mean: 11.932739455695552 != 11.960046686644718",
+     "/values/max_wind: 104.82940673828125 != 629.8121337890625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G14_FOOT45_along_fold": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.140095266048625 != 16.1874432446871",
+     "/values/abs_left: 16.139111288010593 != 16.186600004375624",
+     "/values/abs_right: 16.141079244086658 != 16.188286484998578",
+     "/values/crossing_abs_mean: 18.9755094151333 != 19.071184233155392",
+     "/values/max_wind: 94.36734771728516 != 680.5855102539062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G14_FOOT45_cross_x": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.027679586114058 != 16.179047141610827",
+     "/values/abs_left: 16.02908501468676 != 16.18127783593872",
+     "/values/abs_right: 16.026274157541355 != 16.176816447282928",
+     "/values/crossing_abs_mean: 18.966908135228383 != 19.220031694846345",
+     "/values/max_wind: 93.62671661376953 != 690.57958984375"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G14_S30CURB100_along_cliff": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 12.846079143775597 != 12.983168060957478",
+     "/values/abs_left: 7.113479485815081 != 7.197442507356148",
+     "/values/abs_right: 17.75973599345604 != 17.94236139261576",
+     "/values/crossing_abs_mean: 15.104731518739381 != 15.341103855008539",
+     "/values/max_wind: 102.61997985839844 != 806.218994140625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G14_S30DROP100_along_cliff": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 11.27055970681248 != 11.378767444050073",
+     "/values/abs_left: 4.627316424476999 != 4.653489595612406",
+     "/values/abs_right: 16.964768234528606 != 17.1432913141395",
+     "/values/crossing_abs_mean: 13.05034604115434 != 13.232238734581228",
+     "/values/max_wind: 97.38722229003906 != 656.7421264648438"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R4_G14_TOP45_cross_x": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 17.84338157080431 != 17.976354186454937",
+     "/values/abs_left: 17.84458228693496 != 17.978288312036927",
+     "/values/abs_right: 17.842180854673664 != 17.974420060872944",
+     "/values/crossing_abs_mean: 22.349030356801393 != 22.566847966087526",
+     "/values/max_wind: 98.62860107421875 != 671.1729736328125"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G10_S30": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G11_F0_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.872076472848494 != 17.00410406765813",
+     "/values/abs_left: 16.873427604594426 != 17.006103548216057",
+     "/values/abs_right: 16.870725341102567 != 17.002104587100202",
+     "/values/crossing_abs_mean: 20.55437106969575 != 20.770504208002667",
+     "/values/max_wind: 96.54444122314453 != 731.9420776367188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G11_F0_hill": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87307054240968 != 17.00509287767846",
+     "/values/abs_left: 16.87442148343576 != 17.00709288406932",
+     "/values/abs_right: 16.871719601383592 != 17.003092871287603",
+     "/values/crossing_abs_mean: 20.559893479798657 != 20.776024769361168",
+     "/values/max_wind: 96.42682647705078 != 731.8333129882812"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G11_F0_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208588816721 != 17.004114367953512",
+     "/values/abs_left: 16.873435535566074 != 17.00611452498911",
+     "/values/abs_right: 16.87073624076834 != 17.002114210917917",
+     "/values/crossing_abs_mean: 20.55437139437384 != 20.770507056325762",
+     "/values/max_wind: 96.54457092285156 != 731.9362182617188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G11_FOOT30_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.3548459930963 != 16.5042179431049",
+     "/values/abs_left: 16.356225874481954 != 16.506257598621442",
+     "/values/abs_right: 16.35346611171065 != 16.50217828758836",
+     "/values/crossing_abs_mean: 19.58394938229682 != 19.83285823106071",
+     "/values/max_wind: 94.79374694824219 != 704.4890747070312"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G11_FOOT30_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.354854886491278 != 16.50422801038685",
+     "/values/abs_left: 16.356234022091076 != 16.50626706853474",
+     "/values/abs_right: 16.35347575089148 != 16.502188952238964",
+     "/values/crossing_abs_mean: 19.583949303129234 != 19.832860441486105",
+     "/values/max_wind: 94.79385375976562 != 704.4947509765625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G11_HILL_hill": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 17.96963335462027 != 18.066530044735117",
+     "/values/abs_left: 17.97109825020493 != 18.06829147202992",
+     "/values/abs_right: 17.968168459035613 != 18.06476861744031",
+     "/values/crossing_abs_mean: 22.762768350609445 != 22.903050873658874",
+     "/values/max_wind: 100.48873901367188 != 671.177978515625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G11_TOP30_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 17.459564927399757 != 17.586256510514925",
+     "/values/abs_left: 17.460840311760485 != 17.5884362362891",
+     "/values/abs_right: 17.458289543039026 != 17.584076784740752",
+     "/values/crossing_abs_mean: 21.652719284312898 != 21.857776530832563",
+     "/values/max_wind: 97.98929595947266 != 670.4962158203125"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G11_TOP30_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 17.45957405902733 != 17.586266062138453",
+     "/values/abs_left: 17.46084870276073 != 17.58844617123446",
+     "/values/abs_right: 17.458299415293926 != 17.584085953042447",
+     "/values/crossing_abs_mean: 21.65271944056377 != 21.85777746528286",
+     "/values/max_wind: 97.98943328857422 != 670.494140625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G13_S30CURB100_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G13_S30CURB130_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G13_S30CURB45_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G13_S30CURB60_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G13_S30CURB80_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G13_S30DROP100_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 174.4737091064453 != 174.21109008789062",
+     "/values/opposite_max: 457.1493835449219 != 457.69451904296875"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G13_S30DROP60_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 174.4737091064453 != 174.21109008789062",
+     "/values/opposite_max: 469.13665771484375 != 470.8173828125"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G14_FOOT30_diagonal": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 11.153543220112214 != 11.174003128852572",
+     "/values/abs_left: 11.656260449084359 != 11.67624404755836",
+     "/values/abs_right: 10.650825991140067 != 10.671762210146786",
+     "/values/crossing_abs_mean: 11.932739455695552 != 11.960046686644718",
+     "/values/max_wind: 104.82940673828125 != 629.8121337890625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G14_FOOT45_along_fold": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.140095266048625 != 16.1874432446871",
+     "/values/abs_left: 16.139111288010593 != 16.186600004375624",
+     "/values/abs_right: 16.141079244086658 != 16.188286484998578",
+     "/values/crossing_abs_mean: 18.9755094151333 != 19.071184233155392",
+     "/values/max_wind: 94.36734771728516 != 680.5855102539062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G14_FOOT45_cross_x": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.028286222734597 != 16.179648409659368",
+     "/values/abs_left: 16.029690699315648 != 16.181877751198094",
+     "/values/abs_right: 16.026881746153542 != 16.177419068120646",
+     "/values/crossing_abs_mean: 18.968107599234628 != 19.221221341675925",
+     "/values/max_wind: 93.62663269042969 != 690.5897827148438"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G14_S30CURB100_along_cliff": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 12.353389047026475 != 12.490477964208354",
+     "/values/abs_left: 6.04598427619198 != 6.129947297733049",
+     "/values/abs_right: 17.75973599345604 != 17.94236139261576",
+     "/values/crossing_abs_mean: 14.752794121849572 != 14.98916645811873",
+     "/values/max_wind: 102.61997985839844 != 806.218994140625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G14_S30DROP100_along_cliff": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 11.19229420404404 != 11.29241622555545",
+     "/values/abs_left: 4.457741168478713 != 4.466395288874056",
+     "/values/abs_right: 16.964768234528606 != 17.1432913141395",
+     "/values/crossing_abs_mean: 12.736647185351627 != 12.908520760375179",
+     "/values/max_wind: 97.38722229003906 != 656.7421264648438"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G14_TOP45_cross_x": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 17.842863549177018 != 17.97585289785172",
+     "/values/abs_left: 17.84406428301663 != 17.977786985709297",
+     "/values/abs_right: 17.841662815337408 != 17.973918809994142",
+     "/values/crossing_abs_mean: 22.348041690761193 != 22.565891945166513",
+     "/values/max_wind: 98.62706756591797 != 671.1659545898438"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v2_high_F0": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v2_high_F1": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v2_low_F0": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v2_low_F1": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v3_free_F0": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v3_free_F1": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v3_high_F0": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v3_high_F1": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v3_low_F0": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_v3_low_F1": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_walk_px_F0": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/locked_hash: beb1e4a913bf5b19 != 586d8998e9b18f11",
+     "/values/locked_max_wind: 95.35391235351562 != 95.41167449951172"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G1_walk_px_F1": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/locked_hash: beb1e4a913bf5b19 != 586d8998e9b18f11",
+     "/values/locked_max_wind: 95.35391235351562 != 95.41167449951172"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G2_CLIFF": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G2_HILL": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G2_ROUGH": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G2_S30": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G3_CLIFF": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G3_DIAG": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G3_HILL": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G3_MESA": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G3_S10": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G3_S20": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G3_S30": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G3_S45": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G4_CLIFF_a": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 189.2244110107422 != 187.4755096435547"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G4_CLIFF_a_x-20": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 188.10647583007812 != 186.37509155273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G4_CLIFF_b": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 106.5745849609375 != 758.6461181640625"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G4_DIAG_a": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 142.8418731689453 != 143.44178771972656"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G4_DIAG_b": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 107.21688842773438 != 749.8521728515625"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G4_MESA_a": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 180.0511474609375 != 178.7229461669922"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G4_MESA_b": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/max_wind: 87.99535369873047 != 692.1962280273438"
+    ],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_ROUGH_k2_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2350.598064796698 != 2867.22216796875",
+     "/values/energy_end_over_peak: 0.0002805502272488145 != 0.000251613857490363",
+     "/values/flat_control/energy_end_over_peak: 0.00048335886264303164 != 0.000484058493040035",
+     "/values/flat_control/max_wind: 1865.9759521484375 != 2867.22216796875",
+     "/values/flat_control/peak_energy: 1684400847833.4126 != 2473516476211.827"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_ROUGH_k3_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2350.598064796698 != 2859.177490234375",
+     "/values/energy_end_over_peak: 0.0004855770297607993 != 0.0004749599398288292",
+     "/values/flat_control/energy_end_over_peak: 0.0002061009445562427 != 0.00016133095900915621",
+     "/values/flat_control/max_wind: 1939.5592041015625 != 2859.177490234375",
+     "/values/flat_control/peak_energy: 1725672125680.7693 != 2541542174974.02"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_S30_k1_60": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "가"
+   },
+   "R5_G6_S30_k2_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2309.401076758503 != 2856.425537109375",
+     "/values/energy_end_over_peak: 0.0004926123840397474 != 0.0004932957769695545",
+     "/values/flat_control/energy_end_over_peak: 0.0004926123840397474 != 0.0004932957769695545",
+     "/values/flat_control/max_wind: 1870.808837890625 != 2856.425537109375",
+     "/values/flat_control/peak_energy: 1622561353974.8374 != 2347588414210.828"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_S30_k3_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2309.401076758503 != 2849.4501953125",
+     "/values/energy_end_over_peak: 0.0002423493964665282 != 0.00020464469436222023",
+     "/values/flat_control/energy_end_over_peak: 0.0002423493964665282 != 0.00020464469436222023",
+     "/values/flat_control/max_wind: 1929.58984375 != 2849.4501953125",
+     "/values/flat_control/peak_energy: 1650982671405.7544 != 2373897887475.4507"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_S45_k1_60": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "가"
+   },
+   "R5_G6_S45_k2_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2828.4271247461897 != 2995.986572265625",
+     "/values/energy_end_over_peak: 0.00039339371199116873 != 0.00040103482415835645",
+     "/values/flat_control/energy_end_over_peak: 0.00039339371199116873 != 0.00040103482415835645",
+     "/values/flat_control/max_wind: 1929.7939453125 != 2995.986572265625",
+     "/values/flat_control/peak_energy: 2586678826416.116 != 4164312192279.3506"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_S45_k3_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2828.4271247461897 != 2984.4892578125",
+     "/values/energy_end_over_peak: 3.778383902563589e-05 != 2.718433138902987e-05",
+     "/values/flat_control/energy_end_over_peak: 3.778383902563589e-05 != 2.718433138902987e-05",
+     "/values/flat_control/max_wind: 2013.7423095703125 != 2984.4892578125",
+     "/values/flat_control/peak_energy: 3069400194433.3564 != 4128311711805.6787"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_S60_k1_60": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "가"
+   },
+   "R5_G6_S60_k2_144": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 4216.508508232849 != 4721.0009765625",
+     "/values/energy_end_over_peak: 0.0003385056461826449 != 0.00039236837527335854",
+     "/values/flat_control/energy_end_over_peak: 0.0003385056461826449 != 0.00039236837527335854",
+     "/values/flat_control/max_wind: 3600.44580078125 != 4721.0009765625",
+     "/values/flat_control/peak_energy: 5464167559616.34 != 8919770226238.459"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_S60_k2_30": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 4216.508508232849 != 5340.81591796875",
+     "/values/energy_end_over_peak: 0.00029507605958257685 != 0.00022846067009818524",
+     "/values/flat_control/energy_end_over_peak: 0.00029507605958257685 != 0.00022846067009818524",
+     "/values/flat_control/max_wind: 3202.19775390625 != 5340.81591796875",
+     "/values/flat_control/peak_energy: 4787950186507.599 != 5238354500132.174"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_S60_k2_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 4216.508508232849 != 5523.2763671875",
+     "/values/energy_end_over_peak: 0.00031690204475278225 != 0.00031539269001294425",
+     "/values/flat_control/energy_end_over_peak: 0.00031690204475278225 != 0.00031539269001294425",
+     "/values/flat_control/max_wind: 3417.042724609375 != 5523.2763671875",
+     "/values/flat_control/peak_energy: 5551052895402.475 != 8682672929130.859"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G6_S60_k3_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 4216.508508232849 != 5537.6728515625",
+     "/values/energy_end_over_peak: 5.41009770870258e-06 != 3.953927706604404e-06",
+     "/values/flat_control/energy_end_over_peak: 5.41009770870258e-06 != 3.953927706604404e-06",
+     "/values/flat_control/max_wind: 3608.782470703125 != 5537.6728515625",
+     "/values/flat_control/peak_energy: 5368017508792.995 != 7360912113989.318"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_G8_all": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "나"
+   },
+   "R5_G9_HILL_fixed": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "가"
+   },
+   "R5_G9_HILL_follow": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "가"
+   },
+   "R5_G9_MESA_fixed": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "가"
+   },
+   "R5_G9_MESA_follow": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 0,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "가"
+   },
+   "R5_WALK_CURB30_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 17.800769424764795 != 18.191783303860557",
+     "/values/abs_left: 17.801746075522676 != 18.19127614130058",
+     "/values/abs_right: 17.799792774006914 != 18.192290466420534",
+     "/values/crossing_abs_mean: 22.25839465543615 != 22.985346437738638",
+     "/values/max_wind: 98.45244598388672 != 692.0897216796875"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_CURB30_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.530209210911753 != 16.587465356740363",
+     "/values/abs_left: 16.529712602981874 != 16.587882691271705",
+     "/values/abs_right: 16.53070581884163 != 16.587048022209014",
+     "/values/crossing_abs_mean: 19.851202672799683 != 19.9273463613233",
+     "/values/max_wind: 96.28348541259766 != 690.0009155273438"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_CURB45_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.07136394174697 != 16.068211858581147",
+     "/values/abs_left: 16.162827221922907 != 16.149110477826852",
+     "/values/abs_right: 15.979900661571032 != 15.987313239335435",
+     "/values/crossing_abs_mean: 17.215025368329197 != 17.221625753842677",
+     "/values/max_wind: 78.74327087402344 != 640.4213256835938"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_CURB45_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 13.392819690327036 != 13.486622225717033",
+     "/values/abs_left: 13.392514784671116 != 13.482365039852587",
+     "/values/abs_right: 13.393124595982956 != 13.49087941158148",
+     "/values/crossing_abs_mean: 13.919119562626422 != 14.013317009908157",
+     "/values/max_wind: 82.85879516601562 != 684.1500244140625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_CURB60_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 19.55502327360636 != 20.452830519013162",
+     "/values/abs_left: 19.588151549001193 != 20.49293285445583",
+     "/values/abs_right: 19.521894998211526 != 20.41272818357049",
+     "/values/crossing_abs_mean: 23.36699551479299 != 25.09326361962265",
+     "/values/max_wind: 133.01123046875 != 641.625732421875"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_CURB60_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 13.120790401126044 != 13.155084548012821",
+     "/values/abs_left: 13.122177299795274 != 13.15466477501485",
+     "/values/abs_right: 13.119403502456814 != 13.15550432101079",
+     "/values/crossing_abs_mean: 13.46957989883235 != 13.514637634172695",
+     "/values/max_wind: 80.85395812988281 != 680.43603515625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S10_contour": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208596424235 != 17.004113836165256",
+     "/values/abs_left: 16.870735311910135 != 17.00211317558735",
+     "/values/abs_right: 16.87343661657457 != 17.006114496743162",
+     "/values/crossing_abs_mean: 20.554371755337037 != 20.770506128914985",
+     "/values/max_wind: 96.54457092285156 != 731.9419555664062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S10_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.872076472848494 != 17.00410406765813",
+     "/values/abs_left: 16.873427604594426 != 17.006103548216057",
+     "/values/abs_right: 16.870725341102567 != 17.002104587100202",
+     "/values/crossing_abs_mean: 20.55437106969575 != 20.770504208002667",
+     "/values/max_wind: 96.54444122314453 != 731.9420776367188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S10_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208588816721 != 17.004114367953512",
+     "/values/abs_left: 16.873435535566074 != 17.00611452498911",
+     "/values/abs_right: 16.87073624076834 != 17.002114210917917",
+     "/values/crossing_abs_mean: 20.55437139437384 != 20.770507056325762",
+     "/values/max_wind: 96.54457092285156 != 731.9362182617188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S20_contour": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208596424235 != 17.004113836165256",
+     "/values/abs_left: 16.870735311910135 != 17.00211317558735",
+     "/values/abs_right: 16.87343661657457 != 17.006114496743162",
+     "/values/crossing_abs_mean: 20.554371755337037 != 20.770506128914985",
+     "/values/max_wind: 96.54457092285156 != 731.9419555664062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S20_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.872076472848494 != 17.00410406765813",
+     "/values/abs_left: 16.873427604594426 != 17.006103548216057",
+     "/values/abs_right: 16.870725341102567 != 17.002104587100202",
+     "/values/crossing_abs_mean: 20.55437106969575 != 20.770504208002667",
+     "/values/max_wind: 96.54444122314453 != 731.9420776367188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S20_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208588816721 != 17.004114367953512",
+     "/values/abs_left: 16.873435535566074 != 17.00611452498911",
+     "/values/abs_right: 16.87073624076834 != 17.002114210917917",
+     "/values/crossing_abs_mean: 20.55437139437384 != 20.770507056325762",
+     "/values/max_wind: 96.54457092285156 != 731.9362182617188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S30Y_contour": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208596424235 != 17.004113836165256",
+     "/values/abs_left: 16.870735311910135 != 17.00211317558735",
+     "/values/abs_right: 16.87343661657457 != 17.006114496743162",
+     "/values/crossing_abs_mean: 20.554371755337037 != 20.770506128914985",
+     "/values/max_wind: 96.54457092285156 != 731.9419555664062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S30Y_ydown": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87207691660944 != 17.004103776950917",
+     "/values/abs_left: 16.870726086505357 != 17.00210340905961",
+     "/values/abs_right: 16.873427746713524 != 17.006104144842222",
+     "/values/crossing_abs_mean: 20.55437141536915 != 20.770503100297223",
+     "/values/max_wind: 96.54442596435547 != 731.9428100585938"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S30_contour": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208596424235 != 17.004113836165256",
+     "/values/abs_left: 16.870735311910135 != 17.00211317558735",
+     "/values/abs_right: 16.87343661657457 != 17.006114496743162",
+     "/values/crossing_abs_mean: 20.554371755337037 != 20.770506128914985",
+     "/values/max_wind: 96.54457092285156 != 731.9419555664062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S30_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.872076472848494 != 17.00410406765813",
+     "/values/abs_left: 16.873427604594426 != 17.006103548216057",
+     "/values/abs_right: 16.870725341102567 != 17.002104587100202",
+     "/values/crossing_abs_mean: 20.55437106969575 != 20.770504208002667",
+     "/values/max_wind: 96.54444122314453 != 731.9420776367188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S30_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208588816721 != 17.004114367953512",
+     "/values/abs_left: 16.873435535566074 != 17.00611452498911",
+     "/values/abs_right: 16.87073624076834 != 17.002114210917917",
+     "/values/crossing_abs_mean: 20.55437139437384 != 20.770507056325762",
+     "/values/max_wind: 96.54457092285156 != 731.9362182617188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S45_contour": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208596424235 != 17.004113836165256",
+     "/values/abs_left: 16.870735311910135 != 17.00211317558735",
+     "/values/abs_right: 16.87343661657457 != 17.006114496743162",
+     "/values/crossing_abs_mean: 20.554371755337037 != 20.770506128914985",
+     "/values/max_wind: 96.54457092285156 != 731.9419555664062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S45_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.872076472848494 != 17.00410406765813",
+     "/values/abs_left: 16.873427604594426 != 17.006103548216057",
+     "/values/abs_right: 16.870725341102567 != 17.002104587100202",
+     "/values/crossing_abs_mean: 20.55437106969575 != 20.770504208002667",
+     "/values/max_wind: 96.54444122314453 != 731.9420776367188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "R5_WALK_S45_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208588816721 != 17.004114367953512",
+     "/values/abs_left: 16.873435535566074 != 17.00611452498911",
+     "/values/abs_right: 16.87073624076834 != 17.002114210917917",
+     "/values/crossing_abs_mean: 20.55437139437384 != 20.770507056325762",
+     "/values/max_wind: 96.54457092285156 != 731.9362182617188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_G14_F0_along_cliff": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.519006433812642 != 16.690048492505095",
+     "/values/abs_left: 16.74202159135795 != 16.961507158769248",
+     "/values/abs_right: 16.327850584488083 != 16.45736963570725",
+     "/values/crossing_abs_mean: 20.286036310582066 != 20.55983376894944",
+     "/values/max_wind: 98.02196502685547 != 798.7675170898438"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_G14_F0_along_fold": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208596424235 != 17.004113836165256",
+     "/values/abs_left: 16.870735311910135 != 17.00211317558735",
+     "/values/abs_right: 16.87343661657457 != 17.006114496743162",
+     "/values/crossing_abs_mean: 20.554371755337037 != 20.770506128914985",
+     "/values/max_wind: 96.54457092285156 != 731.9419555664062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_G14_F0_cross_x": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208588816721 != 17.004114367953512",
+     "/values/abs_left: 16.873435535566074 != 17.00611452498911",
+     "/values/abs_right: 16.87073624076834 != 17.002114210917917",
+     "/values/crossing_abs_mean: 20.55437139437384 != 20.770507056325762",
+     "/values/max_wind: 96.54457092285156 != 731.9362182617188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_G14_F0_diagonal": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 11.287938823242106 != 11.286629829871533",
+     "/values/abs_left: 11.287938683707301 != 11.286629943056726",
+     "/values/abs_right: 11.287938962776908 != 11.286629716686344",
+     "/values/crossing_abs_mean: 12.20815542842901 != 12.195255111835447",
+     "/values/max_wind: 104.67407989501953 != 629.81103515625"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_G6_F0_k1_60": {
+    "state": "같음",
+    "reference": "2a 기록",
+    "differing": [],
+    "hashes": 1,
+    "hash_equal": true,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "가"
+   },
+   "REF_G6_F0_k2_144": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2060.298583984375 != 2793.40673828125",
+     "/values/energy_end_over_peak: 0.0005423327841242997 != 0.0005544062733640324",
+     "/values/flat_control/energy_end_over_peak: 0.0005423327841242997 != 0.0005544062733640324",
+     "/values/flat_control/max_wind: 2060.298583984375 != 2793.40673828125",
+     "/values/flat_control/peak_energy: 1784923344935.2483 != 2530158170337.953"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_G6_F0_k2_30": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2000.0 != 3153.139892578125",
+     "/values/energy_end_over_peak: 0.0004886421053775596 != 0.00043194856932089536",
+     "/values/flat_control/energy_end_over_peak: 0.0004886421053775596 != 0.00043194856932089536",
+     "/values/flat_control/max_wind: 1967.715087890625 != 3153.139892578125",
+     "/values/flat_control/peak_energy: 1315083368168.324 != 1516341180458.3127"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_G6_F0_k2_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2000.0 != 2793.40673828125",
+     "/values/energy_end_over_peak: 0.000524098995217062 != 0.0005105719212756793",
+     "/values/flat_control/energy_end_over_peak: 0.000524098995217062 != 0.0005105719212756793",
+     "/values/flat_control/max_wind: 1991.8291015625 != 2793.40673828125",
+     "/values/flat_control/peak_energy: 1578174274260.0803 != 1859610613743.7031"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_G6_F0_k3_60": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/M: 2000.0 != 2793.40673828125",
+     "/values/energy_end_over_peak: 0.0005241109832792902 != 0.0005105927461364347",
+     "/values/flat_control/energy_end_over_peak: 0.0005241109832792902 != 0.0005105927461364347",
+     "/values/flat_control/max_wind: 1991.8291015625 != 2793.40673828125",
+     "/values/flat_control/peak_energy: 1578174250559.7295 != 1859610562546.606"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_WALK_F0_contour": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208596424235 != 17.004113836165256",
+     "/values/abs_left: 16.870735311910135 != 17.00211317558735",
+     "/values/abs_right: 16.87343661657457 != 17.006114496743162",
+     "/values/crossing_abs_mean: 20.554371755337037 != 20.770506128914985",
+     "/values/max_wind: 96.54457092285156 != 731.9419555664062"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_WALK_F0_down": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.872076472848494 != 17.00410406765813",
+     "/values/abs_left: 16.873427604594426 != 17.006103548216057",
+     "/values/abs_right: 16.870725341102567 != 17.002104587100202",
+     "/values/crossing_abs_mean: 20.55437106969575 != 20.770504208002667",
+     "/values/max_wind: 96.54444122314453 != 731.9420776367188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_WALK_F0_up": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87208588816721 != 17.004114367953512",
+     "/values/abs_left: 16.873435535566074 != 17.00611452498911",
+     "/values/abs_right: 16.87073624076834 != 17.002114210917917",
+     "/values/crossing_abs_mean: 20.55437139437384 != 20.770507056325762",
+     "/values/max_wind: 96.54457092285156 != 731.9362182617188"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   },
+   "REF_WALK_F0_ydown": {
+    "state": "다름",
+    "reference": "2a 기록",
+    "differing": [
+     "/values/S: 16.87207691660944 != 17.004103776950917",
+     "/values/abs_left: 16.870726086505357 != 17.00210340905961",
+     "/values/abs_right: 16.873427746713524 != 17.006104144842222",
+     "/values/crossing_abs_mean: 20.55437141536915 != 20.770503100297223",
+     "/values/max_wind: 96.54442596435547 != 731.9428100585938"
+    ],
+    "hashes": 1,
+    "hash_equal": false,
+    "code_fields_differ": [],
+    "passed": null,
+    "group": "다·라"
+   }
+  }
+ }
+}

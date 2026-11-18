@@ -1,0 +1,103 @@
+{
+ "name": "g4",
+ "which": null,
+ "config": {
+  "layout": "U8",
+  "advect": "N2",
+  "solid": "S9",
+  "solver": "P2",
+  "delta": "v3",
+  "dt": 30,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false,
+  "inflate": true,
+  "emu_gpu": false,
+  "pivot_guard": true,
+  "path_t32": true,
+  "canonical_hash": true
+ },
+ "prereg": {
+  "prereg-design-2e.md": "0825d1c692d2f6b5",
+  "prereg-design-2d.md": "cfa1740a5c01a728",
+  "prereg-design-2c.md": "b882aaafe2cc8d0f",
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/FluidFX/fog3d_ref/fog3d_gates.py",
+ "time_scale": 1.0,
+ "values": {
+  "state_hash": "4d1217a50f95e724",
+  "state_hash_raw": "d06c1bd10023aa18",
+  "t": 10.26667,
+  "steps": 308,
+  "tiny_pivots": 0,
+  "state_max_info": {
+   "d": 250.8539581298828,
+   "g": 0.0
+  },
+  "path": {
+   "cells": 40370176,
+   "moved_ge1": 7545,
+   "frac_moved_ge1": 0.0001868953952541599,
+   "max_moves": 3,
+   "cap_hits": 0,
+   "hist": [
+    40362631,
+    5951,
+    1227,
+    367
+   ]
+  },
+  "connected_rule": {
+   "cells": 0,
+   "weighted_cells": 0,
+   "end_cell_outside_8": 0
+  },
+  "prop_check": {
+   "dg_unconnected": 0,
+   "dg_other_component": 0,
+   "wind_unconnected": 0,
+   "wind_other_component": 0,
+   "end_outside_8": 0
+  },
+  "dt": 0.03333333333333333,
+  "finite": true,
+  "max_face_wind": 1475.2718505859375,
+  "max_center_speed": 1460.7309743928492,
+  "energy_end_over_peak": 7.65010254259194e-08,
+  "passed": true
+ },
+ "criterion": "깨짐 없음, 바람 최대 ≤ 3000cm/s, 10초 뒤 에너지 ≤ 최고점 1%. D-G4 통과 = 1/30·1/60·1/144 조각 모두 통과",
+ "passed": true,
+ "elapsed_sec": 685.0,
+ "state_hash": {
+  "run": "4d1217a50f95e724"
+ },
+ "state_hash_raw": {
+  "run": "d06c1bd10023aa18"
+ },
+ "tiny_pivots": 0,
+ "finished": "2026-11-16 18:50:54",
+ "code": {
+  "fog3d_core.py": "fa5564705c405769",
+  "fog3d_gates.py": "8dbcc05522fae9b6",
+  "tuned_solvers.json": "6ab5094bd599daf9"
+ },
+ "solver_cfg": {
+  "kind": "line",
+  "sweeps": 8,
+  "omega": 1.5
+ },
+ "script_v2": "Tools/FluidFX/fog3d_ref/fog3d_gates_v2.py",
+ "code_v2": {
+  "fog3d_core.py": "fa5564705c405769",
+  "fog3d_core_v2.py": "3d034f9cafb7b5de",
+  "fog3d_gates.py": "8dbcc05522fae9b6",
+  "fog3d_gates_v2.py": "13fced431d7083e1"
+ }
+}

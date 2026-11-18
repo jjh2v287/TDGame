@@ -1,0 +1,191 @@
+{
+ "format": "fog3d-prereg-1b-add1-numbers-1",
+ "status": "초안 값: 1b 등록본으로 옮기기 전",
+ "code": {
+  "fog3d_core.py": "fa5564705c405769",
+  "fog3d_replay.py": "6edd3fe644f3aa9e",
+  "fog3d_compare.py": "69c021d077a315de",
+  "fog3d_replay_add1.py": "aaf10ad8bdde86d7",
+  "fog3d_compare_add1.py": "9c68f1f2e4150273",
+  "tuned_solvers.json": "6ab5094bd599daf9"
+ },
+ "code_short": "8a4ca80672b94786",
+ "replays": {
+  "add1_connect4_wall45": "1243bbbc0c6957b4",
+  "add1_first_solve_skew": "6466b15424ab3019",
+  "add1_obstacle_swap": "f43cceb3186240d0"
+ },
+ "add1_connect4_wall45": {
+  "dump": "end",
+  "value": 0.9465239942073822,
+  "sensitivity": 3.423541784286499e-06,
+  "tolerance": 0.002,
+  "cells": 20,
+  "rule": "|GPU − 기준값| ≤ 허용, 그리고 재는 칸이 GPU 덤프에서도 모두 유체",
+  "method": "재는 칸 = 기준 덤프 measure_mask(기준 모의의 마지막 계산에서 이어짐 넷째 단계가 무게 > 0 인 모서리를 이어 준 유체 칸). 값 = 그 칸들의 1+g 평균. 허용 = max(0.002, 민감도 × 3), 민감도 = 덮어쓴 바람을 계산당 1e-4cm 흔든 실행과의 차"
+ },
+ "add1_first_solve_skew": {
+  "dump": "end",
+  "value": 0.012055585050168363,
+  "sensitivity": 2.0415730635735263e-07,
+  "tolerance": 0.002,
+  "tolerance_rule": "± max(기준값의 2%, 0.002)",
+  "method": "남은 몰림 비 R = rms(압력 뒤 몰림) ÷ rms(압력 앞 몰림), 유체 칸(A8 과 같은 식). 민감도 = 입력 위치 1e-4cm 흔든 실행과의 차(정보)"
+ },
+ "add1_obstacle_swap": {
+  "include_band": false,
+  "dumps": {
+   "c00": {
+    "sensitivity": {
+     "wind": 4.0959008334683965e-06,
+     "disp": 2.763233430525394e-06,
+     "fill": 4.24253810483482e-06
+    },
+    "x": 0.002,
+    "x_by_field": {
+     "wind": 0.002,
+     "disp": 0.002,
+     "fill": 0.002
+    }
+   },
+   "c18": {
+    "sensitivity": {
+     "wind": 2.259031633575963e-06,
+     "disp": 2.238430653388551e-06,
+     "fill": 2.5457149698312633e-06
+    },
+    "x": 0.002,
+    "x_by_field": {
+     "wind": 0.002,
+     "disp": 0.002,
+     "fill": 0.002
+    }
+   }
+  },
+  "method": "장 차이 = (두 장의 차)의 제곱합 제곱근 ÷ (기준 장)의 제곱합 제곱근, 기준 덤프의 유체 칸만, 가장자리 띠 8칸 뺌, 바람 u·v·w / 밀린 거리 dx·dy·dz / 채움 g 를 따로. X = max(0.002, 민감도 × 3), 민감도 = 모든 입력 위치를 1e-4cm 흔든 실행과의 장 차이 가운데 큰 것"
+ },
+ "proof": {
+  "add1_connect4_wall45": {
+   "value": 0.9465239942073822,
+   "sensitivity": 3.423541784286499e-06,
+   "tolerance": 0.002,
+   "step4": {
+    "cells": 20,
+    "cells_any_weight": 20,
+    "weight_sum": 0.8159998655319214,
+    "weight_max": 0.04079999774694443,
+    "weight_mean": 0.04079999402165413
+   },
+   "variant_no_step4": 1.0,
+   "diff": 0.0534760057926178,
+   "diff_over_tolerance": 26.7380028963089,
+   "g_change_max_on_mask": 0.0534760057926178,
+   "field_diff_vs_no_step4": {
+    "wind": 0.0005727949130932871,
+    "disp": 0.0,
+    "fill": 0.0014828569102394384
+   }
+  },
+  "add1_first_solve_skew": {
+   "value": 0.012055585050168363,
+   "core_last_R": 0.012055585095112004,
+   "sensitivity": 2.0415730635735263e-07,
+   "tolerance": 0.002,
+   "variant_color1_first": 0.01999326872542441,
+   "diff": 0.007937683675256046,
+   "diff_over_tolerance": 3.9688418376280232
+  },
+  "add1_obstacle_swap": {
+   "changes": [
+    {
+     "variant": null,
+     "became_fluid": 16,
+     "became_solid": 24,
+     "nonzero_in_became_fluid_before": 0,
+     "closed_faces_nonzero_before": 100,
+     "step_index": 8
+    }
+   ],
+   "dumps": {
+    "c00": {
+     "sensitivity": {
+      "wind": 4.0959008334683965e-06,
+      "disp": 2.763233430525394e-06,
+      "fill": 4.24253810483482e-06
+     },
+     "x": 0.002
+    },
+    "c18": {
+     "sensitivity": {
+      "wind": 2.259031633575963e-06,
+      "disp": 2.238430653388551e-06,
+      "fill": 2.5457149698312633e-06
+     },
+     "x": 0.002
+    }
+   },
+   "variants": {
+    "no_rebake": {
+     "c00": {
+      "field_diff": {
+       "wind": 0.6325638069129751,
+       "disp": 0.15896841792803537,
+       "fill": 0.050132182642068146
+      },
+      "worst_over_x": 316.28190345648756
+     },
+     "c18": {
+      "field_diff": {
+       "wind": 0.40789125030438345,
+       "disp": 0.47238467093447584,
+       "fill": 0.4323532566245092
+      },
+      "worst_over_x": 236.1923354672379
+     }
+    },
+    "keep_drawn": {
+     "c00": {
+      "field_diff": {
+       "wind": 0.0,
+       "disp": 0.16169023770547164,
+       "fill": 0.20997528697379245
+      },
+      "worst_over_x": 104.98764348689622
+     },
+     "c18": {
+      "field_diff": {
+       "wind": 0.0,
+       "disp": 0.023123898096860062,
+       "fill": 0.18045752280517927
+      },
+      "worst_over_x": 90.22876140258963
+     }
+    },
+    "keep_closed_wind": {
+     "c00": {
+      "field_diff": {
+       "wind": 0.045064143771158284,
+       "disp": 0.10262696595105984,
+       "fill": 0.10456671662628532
+      },
+      "worst_over_x": 52.28335831314266
+     },
+     "c18": {
+      "field_diff": {
+       "wind": 0.03465586593698455,
+       "disp": 0.040717810795541085,
+       "fill": 0.12084186155986974
+      },
+      "worst_over_x": 60.42093077993487
+     }
+    }
+   }
+  },
+  "code": {
+   "fog3d_core.py": "fa5564705c405769",
+   "fog3d_replay.py": "6edd3fe644f3aa9e",
+   "fog3d_replay_add1.py": "aaf10ad8bdde86d7",
+   "tuned_solvers.json": "6ab5094bd599daf9"
+  }
+ }
+}

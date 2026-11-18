@@ -1,0 +1,1372 @@
+{
+  "note": "2b-0 화면 시운전(끔 = 지금 코드). 값 = |측정 시각 8장 평균 − 기준 8장 평균(계산 끔)| 의 띠 안 평균(8비트 밝기). 대조 = 휘두르기 없이 끝자리에 서 있음.",
+  "band": {
+    "far_cm_from_far_face": [
+      31.0,
+      120.0
+    ],
+    "edge_trim_cm_each_end": 31.0,
+    "height_cm": [
+      0.0,
+      135.0
+    ],
+    "removed": "물체 자체가 앞에 찍힌 화소와 폰 몸(반지름 40cm 원기둥 높이 190cm)이 찍힌 화소"
+  },
+  "times_after_swing_start_seconds": {
+    "A": 3.3499999999999996,
+    "B": 4.85
+  },
+  "times_after_swing_end_seconds": {
+    "A": 1.5,
+    "B": 3.0
+  },
+  "frames_per_average": 8,
+  "combos": {
+    "WALL_T": {
+      "scene": "WALL",
+      "camera": "T",
+      "camera_state": {
+        "cam_world_location": [
+          1480.9999999999998,
+          0.0,
+          879.4228634059943
+        ],
+        "cam_world_rotation": [
+          -59.999999999999865,
+          -180.0,
+          -7.837209927628183e-15
+        ],
+        "cam_fov": 90.0,
+        "actor_location": [
+          1031.0,
+          0.0,
+          100.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ]
+      },
+      "pixels": {
+        "far": 19016,
+        "near": 3358
+      },
+      "pixels_raw": {
+        "far": 19016,
+        "near": 17194
+      },
+      "removed_by_object": {
+        "far": 0,
+        "near": 12014
+      },
+      "removed_by_pawn": {
+        "far": 0,
+        "near": 1822
+      },
+      "image": [
+        1280,
+        720
+      ],
+      "controls": {
+        "P_WALL_T_c1": {
+          "A": {
+            "far": 0.3643839398401346,
+            "near": 0.12198481238832638
+          },
+          "B": {
+            "far": 0.47552718763146823,
+            "near": 0.11573108993448482
+          }
+        },
+        "P_WALL_T_c2": {
+          "A": {
+            "far": 0.3632664598233067,
+            "near": 0.1242182846932698
+          },
+          "B": {
+            "far": 0.46888804164913755,
+            "near": 0.11636390708755212
+          }
+        },
+        "P_WALL_T_c3": {
+          "A": {
+            "far": 0.4660483277240219,
+            "near": 0.1275312686122692
+          },
+          "B": {
+            "far": 0.4155250841396719,
+            "near": 0.12269207861822513
+          }
+        },
+        "P_WALL_T_c4": {
+          "A": {
+            "far": 0.4683555952881784,
+            "near": 0.13281715306730196
+          },
+          "B": {
+            "far": 0.4132375368111064,
+            "near": 0.12496277546158428
+          }
+        },
+        "P_WALL_T_c5": {
+          "A": {
+            "far": 0.5009137042490535,
+            "near": 0.12734514592019058
+          },
+          "B": {
+            "far": 0.4612891775347076,
+            "near": 0.11606611078022633
+          }
+        },
+        "P_WALL_T_c6": {
+          "A": {
+            "far": 0.5017551009676062,
+            "near": 0.12209648600357356
+          },
+          "B": {
+            "far": 0.4442114535128313,
+            "near": 0.11584276354973198
+          }
+        }
+      },
+      "defects": {
+        "P_WALL_T_d1": {
+          "A": {
+            "far": 4.645896876314683,
+            "near": 2.834723049434187
+          },
+          "B": {
+            "far": 4.664571939419436,
+            "near": 2.860296307325789
+          }
+        },
+        "P_WALL_T_d2": {
+          "A": {
+            "far": 4.622495530079933,
+            "near": 2.81711584276355
+          },
+          "B": {
+            "far": 4.628411600757257,
+            "near": 2.8458159618820726
+          }
+        },
+        "P_WALL_T_d3": {
+          "A": {
+            "far": 4.635859276398822,
+            "near": 2.888289160214413
+          },
+          "B": {
+            "far": 4.643964293226756,
+            "near": 2.915686420488386
+          }
+        }
+      },
+      "camera_drift_cm": {
+        "P_WALL_T_c1": 0.0,
+        "P_WALL_T_c2": 0.0,
+        "P_WALL_T_c3": 0.0,
+        "P_WALL_T_c4": 0.0,
+        "P_WALL_T_c5": 0.0,
+        "P_WALL_T_c6": 0.0,
+        "P_WALL_T_d1": 1.8499922752415634,
+        "P_WALL_T_d2": 1.8499922752415634,
+        "P_WALL_T_d3": 1.8499922752415634
+      },
+      "summary": {
+        "A": {
+          "far": {
+            "control_values": [
+              0.3643839398401346,
+              0.3632664598233067,
+              0.4660483277240219,
+              0.4683555952881784,
+              0.5009137042490535,
+              0.5017551009676062
+            ],
+            "mu": 0.4441205213153836,
+            "sigma_hat": 0.06404791891843296,
+            "sigma_used": 0.1,
+            "defect_values": [
+              4.645896876314683,
+              4.622495530079933,
+              4.635859276398822
+            ],
+            "defect_mean": 4.6347505609311455,
+            "defect_minus_mu": 4.190630039615762,
+            "gap_over_sigma_used": 41.90630039615762,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 1.2822465292385359
+          },
+          "near": {
+            "control_values": [
+              0.12198481238832638,
+              0.1242182846932698,
+              0.1275312686122692,
+              0.13281715306730196,
+              0.12734514592019058,
+              0.12209648600357356
+            ],
+            "mu": 0.1259988584474886,
+            "sigma_hat": 0.004127019063323286,
+            "sigma_used": 0.1,
+            "defect_values": [
+              2.834723049434187,
+              2.81711584276355,
+              2.888289160214413
+            ],
+            "defect_mean": 2.84670935080405,
+            "defect_minus_mu": 2.7207104923565613,
+            "gap_over_sigma_used": 27.207104923565613,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 0.6701409569188008
+          }
+        },
+        "B": {
+          "far": {
+            "control_values": [
+              0.47552718763146823,
+              0.46888804164913755,
+              0.4155250841396719,
+              0.4132375368111064,
+              0.4612891775347076,
+              0.4442114535128313
+            ],
+            "mu": 0.4464464135464872,
+            "sigma_hat": 0.02695766640030965,
+            "sigma_used": 0.1,
+            "defect_values": [
+              4.664571939419436,
+              4.628411600757257,
+              4.643964293226756
+            ],
+            "defect_mean": 4.645649277801149,
+            "defect_minus_mu": 4.199202864254662,
+            "gap_over_sigma_used": 41.99202864254662,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 1.2862869863974198
+          },
+          "near": {
+            "control_values": [
+              0.11573108993448482,
+              0.11636390708755212,
+              0.12269207861822513,
+              0.12496277546158428,
+              0.11606611078022633,
+              0.11584276354973198
+            ],
+            "mu": 0.11860978757196744,
+            "sigma_hat": 0.0041105510119878105,
+            "sigma_used": 0.1,
+            "defect_values": [
+              2.860296307325789,
+              2.8458159618820726,
+              2.915686420488386
+            ],
+            "defect_mean": 2.873932896565416,
+            "defect_minus_mu": 2.7553231089934487,
+            "gap_over_sigma_used": 27.553231089934485,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 0.6696744093706573
+          }
+        }
+      }
+    },
+    "WALL_S": {
+      "scene": "WALL",
+      "camera": "S",
+      "camera_state": {
+        "cam_world_location": [
+          1031.0,
+          469.8463103929542,
+          271.0100716628343
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "actor_location": [
+          1031.0,
+          0.0,
+          100.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ]
+      },
+      "pixels": {
+        "far": 44934,
+        "near": 17829
+      },
+      "pixels_raw": {
+        "far": 50263,
+        "near": 38689
+      },
+      "removed_by_object": {
+        "far": 5329,
+        "near": 0
+      },
+      "removed_by_pawn": {
+        "far": 0,
+        "near": 20860
+      },
+      "image": [
+        1280,
+        720
+      ],
+      "controls": {
+        "P_WALL_S_c1": {
+          "A": {
+            "far": 0.34223249655049626,
+            "near": 0.9442130798137865
+          },
+          "B": {
+            "far": 0.3578331552944318,
+            "near": 0.8004795557799091
+          }
+        },
+        "P_WALL_S_c2": {
+          "A": {
+            "far": 0.3281868963368496,
+            "near": 0.6674168489539515
+          },
+          "B": {
+            "far": 0.33425691013486447,
+            "near": 0.4146194402378148
+          }
+        },
+        "P_WALL_S_c3": {
+          "A": {
+            "far": 0.3258362264654827,
+            "near": 0.7442158842335521
+          },
+          "B": {
+            "far": 0.34892286464592515,
+            "near": 1.0246017723932919
+          }
+        },
+        "P_WALL_S_c4": {
+          "A": {
+            "far": 0.3165225664307651,
+            "near": 0.825985753547591
+          },
+          "B": {
+            "far": 0.3540498286375573,
+            "near": 1.1125203320433001
+          }
+        },
+        "P_WALL_S_c5": {
+          "A": {
+            "far": 0.3137434904526639,
+            "near": 0.9327920803185821
+          },
+          "B": {
+            "far": 0.33921139894066854,
+            "near": 0.8179861461663582
+          }
+        },
+        "P_WALL_S_c6": {
+          "A": {
+            "far": 0.33660758000623137,
+            "near": 0.7013923944135958
+          },
+          "B": {
+            "far": 0.35972203676503317,
+            "near": 0.46063295754108474
+          }
+        }
+      },
+      "defects": {
+        "P_WALL_S_d1": {
+          "A": {
+            "far": 11.719616548715894,
+            "near": 6.86557714958775
+          },
+          "B": {
+            "far": 11.545004896069791,
+            "near": 6.580655112457233
+          }
+        },
+        "P_WALL_S_d2": {
+          "A": {
+            "far": 11.734390995682556,
+            "near": 6.895318021201414
+          },
+          "B": {
+            "far": 11.558839075087906,
+            "near": 6.6301180660721295
+          }
+        },
+        "P_WALL_S_d3": {
+          "A": {
+            "far": 11.75939433391196,
+            "near": 6.97227129956812
+          },
+          "B": {
+            "far": 11.521434214625895,
+            "near": 6.670915362611476
+          }
+        }
+      },
+      "camera_drift_cm": {
+        "P_WALL_S_c1": 0.0,
+        "P_WALL_S_c2": 0.0,
+        "P_WALL_S_c3": 0.0,
+        "P_WALL_S_c4": 0.0,
+        "P_WALL_S_c5": 0.0,
+        "P_WALL_S_c6": 0.0,
+        "P_WALL_S_d1": 1.8499922752415634,
+        "P_WALL_S_d2": 1.8499922752415634,
+        "P_WALL_S_d3": 1.8499922752415634
+      },
+      "summary": {
+        "A": {
+          "far": {
+            "control_values": [
+              0.34223249655049626,
+              0.3281868963368496,
+              0.3258362264654827,
+              0.3165225664307651,
+              0.3137434904526639,
+              0.33660758000623137
+            ],
+            "mu": 0.32718820937374815,
+            "sigma_hat": 0.0110670389848164,
+            "sigma_used": 0.1,
+            "defect_values": [
+              11.719616548715894,
+              11.734390995682556,
+              11.75939433391196
+            ],
+            "defect_mean": 11.73780062610347,
+            "defect_minus_mu": 11.410612416729721,
+            "gap_over_sigma_used": 114.10612416729721,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 2.6093106927196925
+          },
+          "near": {
+            "control_values": [
+              0.9442130798137865,
+              0.6674168489539515,
+              0.7442158842335521,
+              0.825985753547591,
+              0.9327920803185821,
+              0.7013923944135958
+            ],
+            "mu": 0.80266934021351,
+            "sigma_hat": 0.11787898498182389,
+            "sigma_used": 0.11787898498182389,
+            "defect_values": [
+              6.86557714958775,
+              6.895318021201414,
+              6.97227129956812
+            ],
+            "defect_mean": 6.911055490119094,
+            "defect_minus_mu": 6.108386149905584,
+            "gap_over_sigma_used": 51.81912747931664,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 2.024346570194627
+          }
+        },
+        "B": {
+          "far": {
+            "control_values": [
+              0.3578331552944318,
+              0.33425691013486447,
+              0.34892286464592515,
+              0.3540498286375573,
+              0.33921139894066854,
+              0.35972203676503317
+            ],
+            "mu": 0.34899936573641344,
+            "sigma_hat": 0.010311826521371267,
+            "sigma_used": 0.1,
+            "defect_values": [
+              11.545004896069791,
+              11.558839075087906,
+              11.521434214625895
+            ],
+            "defect_mean": 11.541759395261197,
+            "defect_minus_mu": 11.192760029524784,
+            "gap_over_sigma_used": 111.92760029524784,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 2.5875513716413705
+          },
+          "near": {
+            "control_values": [
+              0.8004795557799091,
+              0.4146194402378148,
+              1.0246017723932919,
+              1.1125203320433001,
+              0.8179861461663582,
+              0.46063295754108474
+            ],
+            "mu": 0.7718067006936266,
+            "sigma_hat": 0.28543217692670186,
+            "sigma_used": 0.28543217692670186,
+            "defect_values": [
+              6.580655112457233,
+              6.6301180660721295,
+              6.670915362611476
+            ],
+            "defect_mean": 6.627229513713613,
+            "defect_minus_mu": 5.855422813019986,
+            "gap_over_sigma_used": 20.514235206648202,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 1.942891263297624
+          }
+        }
+      }
+    },
+    "HIGH_T": {
+      "scene": "HIGH",
+      "camera": "T",
+      "camera_state": {
+        "cam_world_location": [
+          791.0,
+          400.00000000000017,
+          879.4228634059946
+        ],
+        "cam_world_rotation": [
+          -59.999999999999865,
+          -180.0,
+          -7.837209927628183e-15
+        ],
+        "cam_fov": 90.0,
+        "actor_location": [
+          341.0,
+          400.0,
+          100.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ]
+      },
+      "pixels": {
+        "far": 7722,
+        "near": 450
+      },
+      "pixels_raw": {
+        "far": 7722,
+        "near": 6426
+      },
+      "removed_by_object": {
+        "far": 0,
+        "near": 2376
+      },
+      "removed_by_pawn": {
+        "far": 0,
+        "near": 3600
+      },
+      "image": [
+        1280,
+        720
+      ],
+      "controls": {
+        "P_HIGH_T_c1": {
+          "A": {
+            "far": 0.1303095053095053,
+            "near": 3.395
+          },
+          "B": {
+            "far": 0.13285094535094535,
+            "near": 2.4275
+          }
+        },
+        "P_HIGH_T_c2": {
+          "A": {
+            "far": 0.13288332038332037,
+            "near": 6.177222222222222
+          },
+          "B": {
+            "far": 0.13348225848225848,
+            "near": 5.196111111111111
+          }
+        },
+        "P_HIGH_T_c3": {
+          "A": {
+            "far": 0.13895363895363896,
+            "near": 5.644722222222223
+          },
+          "B": {
+            "far": 0.13202538202538203,
+            "near": 5.361666666666666
+          }
+        },
+        "P_HIGH_T_c4": {
+          "A": {
+            "far": 0.13688163688163688,
+            "near": 5.611944444444444
+          },
+          "B": {
+            "far": 0.13612082362082362,
+            "near": 4.651944444444444
+          }
+        },
+        "P_HIGH_T_c5": {
+          "A": {
+            "far": 0.1359103859103859,
+            "near": 5.688888888888889
+          },
+          "B": {
+            "far": 0.13471250971250973,
+            "near": 5.016944444444444
+          }
+        },
+        "P_HIGH_T_c6": {
+          "A": {
+            "far": 0.13804713804713806,
+            "near": 5.6194444444444445
+          },
+          "B": {
+            "far": 0.13464775964775966,
+            "near": 4.7811111111111115
+          }
+        }
+      },
+      "defects": {
+        "P_HIGH_T_d1": {
+          "A": {
+            "far": 1.4466297591297592,
+            "near": 6.222777777777778
+          },
+          "B": {
+            "far": 1.25488862988863,
+            "near": 5.456666666666667
+          }
+        },
+        "P_HIGH_T_d2": {
+          "A": {
+            "far": 1.4428418803418803,
+            "near": 6.282222222222222
+          },
+          "B": {
+            "far": 1.2533184408184408,
+            "near": 5.479166666666667
+          }
+        },
+        "P_HIGH_T_d3": {
+          "A": {
+            "far": 1.4516317016317015,
+            "near": 6.241388888888889
+          },
+          "B": {
+            "far": 1.2564264439264439,
+            "near": 5.428333333333334
+          }
+        }
+      },
+      "camera_drift_cm": {
+        "P_HIGH_T_c1": 0.0,
+        "P_HIGH_T_c2": 0.0,
+        "P_HIGH_T_c3": 0.0,
+        "P_HIGH_T_c4": 0.0,
+        "P_HIGH_T_c5": 0.0,
+        "P_HIGH_T_c6": 0.0,
+        "P_HIGH_T_d1": 1.8499922752415634,
+        "P_HIGH_T_d2": 1.8499922752415634,
+        "P_HIGH_T_d3": 1.8499922752415634
+      },
+      "summary": {
+        "A": {
+          "far": {
+            "control_values": [
+              0.1303095053095053,
+              0.13288332038332037,
+              0.13895363895363896,
+              0.13688163688163688,
+              0.1359103859103859,
+              0.13804713804713806
+            ],
+            "mu": 0.13549760424760424,
+            "sigma_hat": 0.0032948773643957153,
+            "sigma_used": 0.1,
+            "defect_values": [
+              1.4466297591297592,
+              1.4428418803418803,
+              1.4516317016317015
+            ],
+            "defect_mean": 1.4470344470344472,
+            "defect_minus_mu": 1.311536842786843,
+            "gap_over_sigma_used": 13.115368427868429,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 0.39780497280497285
+          },
+          "near": {
+            "control_values": [
+              3.395,
+              6.177222222222222,
+              5.644722222222223,
+              5.611944444444444,
+              5.688888888888889,
+              5.6194444444444445
+            ],
+            "mu": 5.356203703703705,
+            "sigma_hat": 0.9847855357590959,
+            "sigma_used": 0.9847855357590959,
+            "defect_values": [
+              6.222777777777778,
+              6.282222222222222,
+              6.241388888888889
+            ],
+            "defect_mean": 6.2487962962962955,
+            "defect_minus_mu": 0.8925925925925906,
+            "gap_over_sigma_used": 0.9063827200757566,
+            "precondition_ge_10sigma": false,
+            "on_threshold_mu_plus_0p2_gap": 5.534722222222223
+          }
+        },
+        "B": {
+          "far": {
+            "control_values": [
+              0.13285094535094535,
+              0.13348225848225848,
+              0.13202538202538203,
+              0.13612082362082362,
+              0.13471250971250973,
+              0.13464775964775966
+            ],
+            "mu": 0.13397327980661314,
+            "sigma_hat": 0.0014770491312961662,
+            "sigma_used": 0.1,
+            "defect_values": [
+              1.25488862988863,
+              1.2533184408184408,
+              1.2564264439264439
+            ],
+            "defect_mean": 1.2548778382111716,
+            "defect_minus_mu": 1.1209045584045585,
+            "gap_over_sigma_used": 11.209045584045585,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 0.3581541914875248
+          },
+          "near": {
+            "control_values": [
+              2.4275,
+              5.196111111111111,
+              5.361666666666666,
+              4.651944444444444,
+              5.016944444444444,
+              4.7811111111111115
+            ],
+            "mu": 4.572546296296296,
+            "sigma_hat": 1.0825950962800968,
+            "sigma_used": 1.0825950962800968,
+            "defect_values": [
+              5.456666666666667,
+              5.479166666666667,
+              5.428333333333334
+            ],
+            "defect_mean": 5.454722222222223,
+            "defect_minus_mu": 0.8821759259259272,
+            "gap_over_sigma_used": 0.8148715331864799,
+            "precondition_ge_10sigma": false,
+            "on_threshold_mu_plus_0p2_gap": 4.748981481481481
+          }
+        }
+      }
+    },
+    "HIGH_S": {
+      "scene": "HIGH",
+      "camera": "S",
+      "camera_state": {
+        "cam_world_location": [
+          341.00000000000006,
+          869.8463103929541,
+          271.0100716628344
+        ],
+        "cam_world_rotation": [
+          -19.999999999999982,
+          -89.99999999999999,
+          5.0770133942365185e-15
+        ],
+        "cam_fov": 90.0,
+        "actor_location": [
+          341.0,
+          400.0,
+          100.0
+        ],
+        "sun_rotation": [
+          -35.000000000000014,
+          100.00000000000007,
+          -0.0
+        ]
+      },
+      "pixels": {
+        "far": 26552,
+        "near": 5114
+      },
+      "pixels_raw": {
+        "far": 34156,
+        "near": 24248
+      },
+      "removed_by_object": {
+        "far": 7604,
+        "near": 0
+      },
+      "removed_by_pawn": {
+        "far": 0,
+        "near": 19134
+      },
+      "image": [
+        1280,
+        720
+      ],
+      "controls": {
+        "P_HIGH_S_c1": {
+          "A": {
+            "far": 0.1646344908104851,
+            "near": 2.7873240125146657
+          },
+          "B": {
+            "far": 0.16515705031636035,
+            "near": 5.028891278842393
+          }
+        },
+        "P_HIGH_S_c2": {
+          "A": {
+            "far": 0.16300090388671287,
+            "near": 3.340218028940164
+          },
+          "B": {
+            "far": 0.1605575851159988,
+            "near": 3.1321128275322643
+          }
+        },
+        "P_HIGH_S_c3": {
+          "A": {
+            "far": 0.1624595134076529,
+            "near": 3.3350117324990225
+          },
+          "B": {
+            "far": 0.16481338505573967,
+            "near": 3.2590682440359795
+          }
+        },
+        "P_HIGH_S_c4": {
+          "A": {
+            "far": 0.16561840915938536,
+            "near": 3.8019651935862337
+          },
+          "B": {
+            "far": 0.16120725369087074,
+            "near": 4.13976339460305
+          }
+        },
+        "P_HIGH_S_c5": {
+          "A": {
+            "far": 0.16810880536306116,
+            "near": 3.3161908486507627
+          },
+          "B": {
+            "far": 0.1613390705031636,
+            "near": 3.2315213140398904
+          }
+        },
+        "P_HIGH_S_c6": {
+          "A": {
+            "far": 0.16239831274480265,
+            "near": 3.741420610089949
+          },
+          "B": {
+            "far": 0.16114134528472432,
+            "near": 3.8201750097770826
+          }
+        }
+      },
+      "defects": {
+        "P_HIGH_S_d1": {
+          "A": {
+            "far": 5.982035251581801,
+            "near": 5.7847575283535395
+          },
+          "B": {
+            "far": 5.529672905995782,
+            "near": 7.026324794681267
+          }
+        },
+        "P_HIGH_S_d2": {
+          "A": {
+            "far": 5.993771655619162,
+            "near": 5.77493156042237
+          },
+          "B": {
+            "far": 5.552806756553179,
+            "near": 7.014958936253422
+          }
+        },
+        "P_HIGH_S_d3": {
+          "A": {
+            "far": 5.999340915938536,
+            "near": 5.702067852952679
+          },
+          "B": {
+            "far": 5.519852553479964,
+            "near": 6.944270629644114
+          }
+        }
+      },
+      "camera_drift_cm": {
+        "P_HIGH_S_c1": 0.0,
+        "P_HIGH_S_c2": 0.0,
+        "P_HIGH_S_c3": 0.0,
+        "P_HIGH_S_c4": 0.0,
+        "P_HIGH_S_c5": 0.0,
+        "P_HIGH_S_c6": 0.0,
+        "P_HIGH_S_d1": 1.8499922752415634,
+        "P_HIGH_S_d2": 1.8499922752415634,
+        "P_HIGH_S_d3": 1.8499922752415634
+      },
+      "summary": {
+        "A": {
+          "far": {
+            "control_values": [
+              0.1646344908104851,
+              0.16300090388671287,
+              0.1624595134076529,
+              0.16561840915938536,
+              0.16810880536306116,
+              0.16239831274480265
+            ],
+            "mu": 0.16437007256201666,
+            "sigma_hat": 0.0022369211049384522,
+            "sigma_used": 0.1,
+            "defect_values": [
+              5.982035251581801,
+              5.993771655619162,
+              5.999340915938536
+            ],
+            "defect_mean": 5.9917159410465,
+            "defect_minus_mu": 5.827345868484484,
+            "gap_over_sigma_used": 58.27345868484483,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 1.3298392462589135
+          },
+          "near": {
+            "control_values": [
+              2.7873240125146657,
+              3.340218028940164,
+              3.3350117324990225,
+              3.8019651935862337,
+              3.3161908486507627,
+              3.741420610089949
+            ],
+            "mu": 3.387021737713466,
+            "sigma_hat": 0.36532906716130037,
+            "sigma_used": 0.36532906716130037,
+            "defect_values": [
+              5.7847575283535395,
+              5.77493156042237,
+              5.702067852952679
+            ],
+            "defect_mean": 5.753918980576196,
+            "defect_minus_mu": 2.3668972428627297,
+            "gap_over_sigma_used": 6.478808985154459,
+            "precondition_ge_10sigma": false,
+            "on_threshold_mu_plus_0p2_gap": 3.860401186286012
+          }
+        },
+        "B": {
+          "far": {
+            "control_values": [
+              0.16515705031636035,
+              0.1605575851159988,
+              0.16481338505573967,
+              0.16120725369087074,
+              0.1613390705031636,
+              0.16114134528472432
+            ],
+            "mu": 0.16236928166114292,
+            "sigma_hat": 0.0020468029523347552,
+            "sigma_used": 0.1,
+            "defect_values": [
+              5.529672905995782,
+              5.552806756553179,
+              5.519852553479964
+            ],
+            "defect_mean": 5.534110738676309,
+            "defect_minus_mu": 5.371741457015165,
+            "gap_over_sigma_used": 53.717414570151654,
+            "precondition_ge_10sigma": true,
+            "on_threshold_mu_plus_0p2_gap": 1.236717573064176
+          },
+          "near": {
+            "control_values": [
+              5.028891278842393,
+              3.1321128275322643,
+              3.2590682440359795,
+              4.13976339460305,
+              3.2315213140398904,
+              3.8201750097770826
+            ],
+            "mu": 3.768588678138444,
+            "sigma_hat": 0.7323862914948972,
+            "sigma_used": 0.7323862914948972,
+            "defect_values": [
+              7.026324794681267,
+              7.014958936253422,
+              6.944270629644114
+            ],
+            "defect_mean": 6.995184786859601,
+            "defect_minus_mu": 3.2265961087211568,
+            "gap_over_sigma_used": 4.405593258900638,
+            "precondition_ge_10sigma": false,
+            "on_threshold_mu_plus_0p2_gap": 4.413907899882675
+          }
+        }
+      }
+    }
+  },
+  "runs": {
+    "P_WALL_T_c1": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_T_c2": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_T_c3": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_T_c4": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_T_c5": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_T_c6": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_T_d1": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_T_d2": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_T_d3": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_c1": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_c2": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_c3": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_c4": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_c5": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_c6": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_d1": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_d2": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_WALL_S_d3": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_c1": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_c2": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_c3": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_c4": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_c5": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_c6": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_d1": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_d2": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_T_d3": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_c1": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_c2": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_c3": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_c4": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_c5": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_c6": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "4/4",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_d1": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_d2": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    },
+    "P_HIGH_S_d3": {
+      "valid": true,
+      "reasons": [],
+      "late_max_seconds": 0.016667136922478676,
+      "shots": "24/24",
+      "events": "5/5",
+      "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+      "quality_cvar_at_end": 2
+    }
+  },
+  "extra_LOW_back": {
+    "region": "뒤 카메라 화면의 먼 높은 상자 아래쪽 30% 칸(640x360 기준 x 395~475, y 131~148, 1단계 쐐기 자리를 장에서 눈으로 잡은 고정 직사각형)",
+    "pixels": 5440,
+    "values": {
+      "P_LOW_B_c1": {
+        "A": 0.11716452205882352,
+        "B": 0.11217830882352942
+      },
+      "P_LOW_B_c2": {
+        "A": 0.11608455882352942,
+        "B": 0.11449908088235294
+      },
+      "P_LOW_B_d1": {
+        "A": 14.010500919117646,
+        "B": 5.840602022058824
+      }
+    },
+    "settings_line": "Fog3D settings: quality=2 resolution=256 stepsPerSecond=60 clampedTimeWindBlend=0 bodyWindGain=1 bladeWindGain=1 followsGround=0",
+    "valid": true
+  }
+}

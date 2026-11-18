@@ -1,0 +1,86 @@
+{
+  "status": "ok",
+  "overwrite": false,
+  "code_mode": "include",
+  "state_volume_default": "/Game/FluidFX/Textures/T_TD_FluidNoiseVolume",
+  "master": {
+    "asset": "/Game/FluidFX/Materials/M_TD_Fog3DVolume",
+    "created": true,
+    "front": {
+      "path": "substrate",
+      "pins": {
+        "albedo": "Albedo",
+        "extinction": "Extinction"
+      }
+    },
+    "include_file_paths": [
+      "/TDFluidGpu/Private/TDFluidGpuFog3DDensity.ush"
+    ],
+    "statistics": {
+      "num_vertex_shader_instructions": 272,
+      "num_pixel_shader_instructions": 86,
+      "num_samplers": 1
+    },
+    "statistics_note": "볼륨 도메인은 베이스 패스가 없어 PS 명령 0일 수 있음(L-editor-65 경고도 무해) → check_fog3d_material_hlsl.py dxc 명령 수가 대체 지표"
+  },
+  "hlsl": {
+    "ush": "Source/TDFluidGpu/Shaders/Private/TDFluidGpuFog3DDensity.ush",
+    "ush_sha256": "560c47b74aa542609f6476bed39867ab8ffda3b5a1d51d96ded815437537277c",
+    "custom_code_sha256": "4516eb599b1d3b7083b6069390f9993a9e960c398522e9d20965a162dca6ed7d",
+    "inline_stripped_includes": []
+  },
+  "parameters": {
+    "vector": {
+      "Fog3DWindow": [
+        0.0,
+        0.0,
+        0.0,
+        256.0
+      ],
+      "Fog3DGrid": [
+        15.625,
+        30.0,
+        8.0,
+        8.0
+      ],
+      "Fog3DBaseShape": [
+        0.8,
+        90.0,
+        45.0,
+        0.0
+      ],
+      "Fog3DZone": [
+        1000.0,
+        1000.0,
+        500.0,
+        500.0
+      ],
+      "Fog3DFineNoise": [
+        0.2,
+        50.0,
+        1.0,
+        0.0
+      ],
+      "Fog3DStainNoise": [
+        0.0,
+        200.0,
+        0.0,
+        0.0
+      ],
+      "Fog3DAlbedo": [
+        0.8,
+        0.85,
+        0.95,
+        1.0
+      ]
+    },
+    "scalar": {
+      "Fog3DActive": 0.0,
+      "Fog3DExtinctionPerM": 0.2
+    },
+    "texture": {
+      "Fog3DStateVolume": "/Game/FluidFX/Textures/T_TD_FluidNoiseVolume"
+    }
+  },
+  "saved": true
+}

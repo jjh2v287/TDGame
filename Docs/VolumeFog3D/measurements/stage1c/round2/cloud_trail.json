@@ -1,0 +1,201 @@
+{
+  "conditions": "구름 무늬: Tx2 > 0.45 이고 Sk2(2.5) >= 0.8 x s3 의 Sk2(2.5). 걷기 자국 이어짐: Wk(17.6) / Wk(12.1) >= 0.4 이고 8 <= Wk(12.1) <= 14. 고르는 것은 감독이 그림을 보고 한다",
+  "mid_reference": {
+    "name": "s3",
+    "Tx2": 0.4488192245570037,
+    "Sk2_2.5": 26.028643134721,
+    "Wk_12.1": 10.632416223819074,
+    "Wk_17.6": 2.3957878286541887
+  },
+  "rows": [
+    {
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400, BladeRadiusCm 30",
+      "valid": true,
+      "usable": true,
+      "log": {
+        "submitted": 1075,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "name": "s3",
+      "Tx2": 0.4488192245570037,
+      "Sk2_2.5": 26.028643134721,
+      "Sk2_over_mid": 1.0,
+      "Wk_12.1": 10.632416223819074,
+      "Wk_17.6": 2.3957878286541887,
+      "Wk_refill_ratio": 0.22532863445348097,
+      "cloud_conditions": {
+        "Tx2_over_0.45": false,
+        "Sk2_at_least_0.8_of_mid": true
+      },
+      "cloud_ok": false,
+      "trail_conditions": {
+        "Wk17.6_over_Wk12.1_at_least_0.4": false,
+        "Wk12.1_in_8_14": true
+      },
+      "trail_ok": false
+    },
+    {
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.75, StainNoiseSpacingCm 400",
+      "valid": true,
+      "usable": true,
+      "log": {
+        "submitted": 1073,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "name": "C1",
+      "Tx2": 0.5795445580751316,
+      "Sk2_2.5": 25.29656618128952,
+      "Sk2_over_mid": 0.9718741791632264,
+      "Wk_12.1": 11.051362480503565,
+      "Wk_17.6": 2.6915868426916214,
+      "Wk_refill_ratio": 0.24355248933695067,
+      "cloud_conditions": {
+        "Tx2_over_0.45": true,
+        "Sk2_at_least_0.8_of_mid": true
+      },
+      "cloud_ok": true,
+      "trail_conditions": {
+        "Wk17.6_over_Wk12.1_at_least_0.4": false,
+        "Wk12.1_in_8_14": true
+      },
+      "trail_ok": false
+    },
+    {
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.75, StainNoiseSpacingCm 600",
+      "valid": true,
+      "usable": true,
+      "log": {
+        "submitted": 1073,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "name": "C2",
+      "Tx2": 0.4474432292646581,
+      "Sk2_2.5": 21.40453170951216,
+      "Sk2_over_mid": 0.8223452754999552,
+      "Wk_12.1": 9.032217855949199,
+      "Wk_17.6": 1.2306927194741535,
+      "Wk_refill_ratio": 0.13625587193554461,
+      "cloud_conditions": {
+        "Tx2_over_0.45": false,
+        "Sk2_at_least_0.8_of_mid": true
+      },
+      "cloud_ok": false,
+      "trail_conditions": {
+        "Wk17.6_over_Wk12.1_at_least_0.4": false,
+        "Wk12.1_in_8_14": true
+      },
+      "trail_ok": false
+    },
+    {
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.85, StainNoiseSpacingCm 500",
+      "valid": true,
+      "usable": true,
+      "log": {
+        "submitted": 1074,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "name": "C3",
+      "Tx2": 0.4822387076044359,
+      "Sk2_2.5": 21.574363845940827,
+      "Sk2_over_mid": 0.8288700926235232,
+      "Wk_12.1": 10.801990237856508,
+      "Wk_17.6": 1.9686267936720143,
+      "Wk_refill_ratio": 0.1822466740224215,
+      "cloud_conditions": {
+        "Tx2_over_0.45": true,
+        "Sk2_at_least_0.8_of_mid": true
+      },
+      "cloud_ok": true,
+      "trail_conditions": {
+        "Wk17.6_over_Wk12.1_at_least_0.4": false,
+        "Wk12.1_in_8_14": true
+      },
+      "trail_ok": false
+    },
+    {
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.75, StainNoiseSpacingCm 400, BaseThicknessCm 110, BaseTopBlurCm 70",
+      "valid": true,
+      "usable": true,
+      "log": {
+        "submitted": 1076,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "name": "C4",
+      "Tx2": 0.42538531917801903,
+      "Sk2_2.5": 20.625531017215117,
+      "Sk2_over_mid": 0.7924166815173557,
+      "Wk_12.1": 11.263395571524063,
+      "Wk_17.6": 2.801529539884136,
+      "Wk_refill_ratio": 0.24872868240257123,
+      "cloud_conditions": {
+        "Tx2_over_0.45": false,
+        "Sk2_at_least_0.8_of_mid": false
+      },
+      "cloud_ok": false,
+      "trail_conditions": {
+        "Wk17.6_over_Wk12.1_at_least_0.4": false,
+        "Wk12.1_in_8_14": true
+      },
+      "trail_ok": false
+    },
+    {
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400, DisplacementRefillHorizontalPerSec 0.05, DisplacementRefillVerticalPerSec 0.15",
+      "valid": true,
+      "usable": true,
+      "log": {
+        "submitted": 1076,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "name": "R1",
+      "Tx2": 0.43998735728494665,
+      "Sk2_2.5": 27.61862947800803,
+      "Sk2_over_mid": 1.0610860249248284,
+      "Wk_12.1": 11.95964337121212,
+      "Wk_17.6": 6.612498223039215,
+      "Wk_refill_ratio": 0.552900953464554,
+      "cloud_conditions": {
+        "Tx2_over_0.45": false,
+        "Sk2_at_least_0.8_of_mid": true
+      },
+      "cloud_ok": false,
+      "trail_conditions": {
+        "Wk17.6_over_Wk12.1_at_least_0.4": true,
+        "Wk12.1_in_8_14": true
+      },
+      "trail_ok": true
+    },
+    {
+      "changed": "FootRadiusCm 45, HandRadiusCm 45, PelvisRadiusCm 60, BodyWindStrength 2, BladeRadiusCm 30, bStainNoiseEnabled True, StainNoiseAmplitude 0.6, StainNoiseSpacingCm 400, DisplacementRefillHorizontalPerSec 0.05, DisplacementRefillVerticalPerSec 0.15, WindRefillPerSec 0.5",
+      "valid": true,
+      "usable": true,
+      "log": {
+        "submitted": 1075,
+        "rejected": 0,
+        "fog3d_warning_or_error_lines": 0
+      },
+      "name": "R2",
+      "Tx2": 0.4446009045061918,
+      "Sk2_2.5": 31.36041664051323,
+      "Sk2_over_mid": 1.2048425451221423,
+      "Wk_12.1": 13.576969401737967,
+      "Wk_17.6": 8.22881998384581,
+      "Wk_refill_ratio": 0.6060866560391932,
+      "cloud_conditions": {
+        "Tx2_over_0.45": false,
+        "Sk2_at_least_0.8_of_mid": true
+      },
+      "cloud_ok": false,
+      "trail_conditions": {
+        "Wk17.6_over_Wk12.1_at_least_0.4": true,
+        "Wk12.1_in_8_14": true
+      },
+      "trail_ok": true
+    }
+  ]
+}

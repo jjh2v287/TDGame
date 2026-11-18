@@ -1,0 +1,37 @@
+{
+  "errors": [],
+  "first": {
+    "activeCells": 524288,
+    "cells": 524288,
+    "errors": [],
+    "frac": 1,
+    "gpuMax": 5.8948,
+    "gpuMed": 0.6174,
+    "gpuMin": 0.5415,
+    "grid": "128x128x32",
+    "hasTs": true,
+    "jac": 12,
+    "kernel": "step",
+    "mode": "dense",
+    "msPerMcellPass": 0.0785,
+    "solidPct": 25.7,
+    "steps": 19,
+    "wallMed": 0.7263
+  },
+  "init": {
+    "arch": "turing",
+    "feats": [
+      "timestamp-query",
+      "float32-filterable"
+    ],
+    "vendor": "nvidia"
+  }
+}
+
+(captured at origin https://example.com)
+
+
+Tab Context:
+- Executed on tabId: seed
+- Available tabs:
+  • tabId seed: "Example Domain" ("https://example.com/")

@@ -6,7 +6,7 @@
 
 ## Claude Code 전용: 서브에이전트 운용 (근거 `Docs/AgentCollaboration/research/claude-subagents.md`)
 
-- 원칙: 이 세션의 모델은 오케스트레이터다. 계획·명세·위임·판정·통합만 직접 하고, 넓게 읽거나 오래 실행하는 일은 `.claude/agents/`의 싼 모델에 넘긴다.
+- 원칙(2026-11-17 사용자 지정): 세션 모델은 Opus 5.5 다. 감독·계획·결정·명세·판정·기록과 복잡한 코드 분석·코드 생성은 세션 모델이 맡고, 보통의 코드·분석은 Sonnet, 단순 작업은 Haiku 에 넘긴다. 넓게 읽거나 오래 실행하는 일은 `.claude/agents/`의 싼 모델에 넘긴다. Fable 5.2 는 Opus 가 풀기 어렵거나 막힌 문제의 조언자로만 쓴다: 정리된 질문을 Fable 하위 에이전트(`model: 'fable'`)나 사용자가 따로 연 Fable 세션에 보내 주고받고, 설정 `advisorModel` 은 쓰지 않는다.
 - 라우팅: 위치 찾기 `td-scout`(haiku) 또는 내장 Explore · 조사 `td-researcher`(sonnet) · 명세대로 구현 `td-builder`(sonnet) · 독립 검증 `td-refuter`(opus) · 원인 조사 `td-debugger`(opus) · 빌드·테스트 실행 `td-test-runner`(haiku).
 - 위임 체크리스트: 다음 다섯 가지를 모두 만족할 때만 위임한다. 시작 비용을 정당화할 양이 있다 / 긴 설명 없이 기술할 수 있다 / 싼 모델이나 격리의 이점이 있다 / 중간 정보를 내가 볼 필요가 없다 / 잦은 설계 결정이 필요 없다. 한 줄 수정, 파일 한두 개 읽기, 단순 검색은 직접 한다.
 - 위임 프롬프트는 계약 형식으로 쓴다: Goal(결과 하나) / Scope(정확한 파일·폴더·심볼) / Allowed changes / Required verification(명령·수용 기준) / Do not / Known facts(이미 아는 것) / Output(보고 구조) / Output limit / Stop conditions.

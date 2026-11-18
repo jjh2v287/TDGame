@@ -1,0 +1,116 @@
+{
+ "name": "g7",
+ "which": null,
+ "config": {
+  "layout": "S8",
+  "advect": "A3",
+  "solid": "S4",
+  "solver": "P4",
+  "delta": "v3",
+  "dt": 60,
+  "n": 128,
+  "wind_relax": 0.75,
+  "mode": "full",
+  "patch": 0.0,
+  "emu8": false,
+  "emu16": false
+ },
+ "prereg": {
+  "prereg-design-2b.md": "25f6ea62b87734de",
+  "prereg-design-2.md": "3a0ddd47b0f5b729",
+  "prereg-design.md": "84c1f178cad78ebb"
+ },
+ "script": "Tools/scratch/fog3d/stage1/r2/gates2.py",
+ "time_scale": 1.0,
+ "values": {
+  "west": {
+   "state_hash": "cf396303bb18a6b8",
+   "t": 1.05,
+   "steps": 63,
+   "state_max_info": {
+    "d": 19.98038101196289,
+    "g": 0.0
+   },
+   "center": [
+    -937.5,
+    0.0,
+    75.0
+   ],
+   "rec": {
+    "near_first": 292.257080078125,
+    "near_third": 408.1788024902344,
+    "band_wind_after3": {
+     "east": 5.577553774453937e-32
+    }
+   },
+   "band_wind_end": {
+    "east": 0.00030955657712183893
+   },
+   "band_absdiff_end": {
+    "east": 4.76837158203125e-07
+   },
+   "ratio_1": 1.3664486593684344e-34,
+   "max_absdiff_2": 4.76837158203125e-07,
+   "ratio_2_wind": 1.059192738937546e-06,
+   "passed_1": true,
+   "passed_2": true,
+   "passed": true
+  },
+  "corner": {
+   "state_hash": "26029576c1777696",
+   "t": 1.05,
+   "steps": 63,
+   "state_max_info": {
+    "d": 12.958465576171875,
+    "g": 0.0
+   },
+   "center": [
+    -937.5,
+    -937.5,
+    75.0
+   ],
+   "rec": {
+    "near_first": 289.4798583984375,
+    "near_third": 403.8258056640625,
+    "band_wind_after3": {
+     "se": 4.8093895255531643e-29,
+     "nw": 2.596542963994625e-29,
+     "ne": 0.0
+    }
+   },
+   "band_wind_end": {
+    "se": 0.00022921018535271287,
+    "nw": 0.0002572984667494893,
+    "ne": 1.5106055798241869e-05
+   },
+   "band_absdiff_end": {
+    "se": 2.682209014892578e-07,
+    "nw": 8.046627044677734e-07,
+    "ne": 2.9802322387695312e-08
+   },
+   "ratio_1": 1.190956461448636e-31,
+   "max_absdiff_2": 8.046627044677734e-07,
+   "ratio_2_wind": 8.888302908983256e-07,
+   "passed_1": true,
+   "passed_2": true,
+   "passed": true
+  }
+ },
+ "criterion": "① 3번째 뒤 반대 띠 바람 ÷ 입력 근처 ≤ 1e-4 ② 1초 뒤 띠 |차이값| ≤ 1e-6, 바람 ≤ 처음 입력 근처의 1e-4",
+ "passed": true,
+ "elapsed_sec": 136.9,
+ "state_hash": {
+  "west": "cf396303bb18a6b8",
+  "corner": "26029576c1777696"
+ },
+ "finished": "2026-11-13 11:18:12",
+ "solver_cfg": {
+  "kind": "mg",
+  "levels": 2,
+  "budget": 8.0,
+  "nu1": 0,
+  "nu2": 1,
+  "nc": 8,
+  "omega": 1.2
+ }
+}

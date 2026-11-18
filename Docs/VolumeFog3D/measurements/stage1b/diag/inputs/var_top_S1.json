@@ -1,0 +1,33 @@
+{
+ "base": {
+  "arm": 900,
+  "view": [
+   -60,
+   0
+  ],
+  "console": [
+   "TD.Fog3D.Mode 2"
+  ],
+  "tuning_reload": {
+   "tuning": "Saved/FluidFX/fog3d_diag/tuning_S1.json",
+   "reset": "keep"
+  }
+ },
+ "variants": [
+  {
+   "name": "walk800",
+   "apply": {
+    "move": {
+     "distance_cm": 800,
+     "yaw": 0
+    }
+   },
+   "settle": 0.2
+  },
+  {
+   "name": "top_after",
+   "apply": {},
+   "settle": 0.3
+  }
+ ]
+}

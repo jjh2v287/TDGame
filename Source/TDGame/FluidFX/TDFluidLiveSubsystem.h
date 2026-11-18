@@ -79,6 +79,7 @@ public:
 	double GetLastMassInputReadSeconds() const { return LastMassInputReadSeconds; }
 	double GetLastMassInputPublishSeconds() const { return LastMassInputPublishSeconds; }
 	int32 GetObstacleSourceCount() const;
+	void CollectRegisteredObstacles(TArray<FTDFluidSdfObstacle>& OutObstacles) const;
 	static void SelectNearestObstacles(TConstArrayView<FTDFluidSdfObstacle> SourceObstacles, const FVector& CenterWorld, int32 MaxObstacleCount, TArray<FTDFluidSdfObstacle>& OutObstacles);
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;

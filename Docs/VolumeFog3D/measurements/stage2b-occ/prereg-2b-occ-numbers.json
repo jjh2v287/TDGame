@@ -1,0 +1,834 @@
+{
+ "version": 2,
+ "format": "fog3d-prereg-2b-occ-numbers-1",
+ "candidate": "R5",
+ "formula": "B0(지금 식, wind_blend 없음)",
+ "rule": "X = min(0.03, max(0.002, 3 x sensitivity)); sensitivity = fog3d_compare_v2.group_diffs(가림 켬 닻 판 기준, 흔든 가림 켬 닻 판 기준); only dumps and groups with X > 0.002 are listed under dumps, all others use default.relative (s2a 규칙, B2-3 바뀜 묶음 20장면); groups whose fields are absent from a dump (1단계 중간 덤프 u·v·w 만: disp·fill) get no sensitivity, see shake[dump].absent_groups",
+ "default": {
+  "relative": {
+   "wind": 0.002,
+   "disp": 0.002,
+   "fill": 0.002
+  },
+  "slope": 1e-06,
+  "frames_position_cm": 0.001,
+  "frames_slope": 1e-05
+ },
+ "dumps": {},
+ "sensitivity": {
+  "occ_w1_tip_through__swing_end": {
+   "wind": 4.256712164161043e-06,
+   "disp": 3.3575855519989767e-06,
+   "fill": 1.8881280745255077e-06
+  },
+  "occ_w1_tip_through__end": {
+   "wind": 2.7467380517026464e-06,
+   "disp": 2.6183373641760897e-06,
+   "fill": 2.9104639362454405e-06
+  },
+  "occ_w2_radius_reach__swing_end": {
+   "wind": 3.0786446712795586e-06,
+   "disp": 2.6884797567718647e-06,
+   "fill": 1.676648653092593e-06
+  },
+  "occ_w2_radius_reach__end": {
+   "wind": 1.954959933386343e-06,
+   "disp": 2.0087376543998977e-06,
+   "fill": 2.8191043271043006e-06
+  },
+  "occ_w4_body_parallel__walk_end": {
+   "wind": 2.0200077510260395e-06,
+   "disp": 1.0174749480008298e-06,
+   "fill": 0.0
+  },
+  "occ_w4_body_parallel__end": {
+   "wind": 7.780565043032393e-06,
+   "disp": 1.4253432052999988e-06,
+   "fill": 0.0
+  },
+  "occ_w3_short_wall__swing_end": {
+   "wind": 3.751295468957858e-06,
+   "disp": 3.3083524434125994e-06,
+   "fill": 1.985466839402031e-06
+  },
+  "occ_w3_short_wall__end": {
+   "wind": 3.2156233442491308e-06,
+   "disp": 3.2178582331937153e-06,
+   "fill": 2.731194361055616e-06
+  },
+  "occ_w5_end_row__swing_end": {
+   "wind": 3.2065836526535896e-06,
+   "disp": 2.9473705599179054e-06,
+   "fill": 1.8626621366844217e-06
+  },
+  "occ_w5_end_row__end": {
+   "wind": 2.0404164175703006e-06,
+   "disp": 2.103320284688922e-06,
+   "fill": 2.7130658933399518e-06
+  },
+  "occ_edge_layer7__stroke_end": {
+   "wind": 6.284989325122512e-06,
+   "disp": 2.7162904443892703e-06,
+   "fill": 2.288594990981579e-06
+  },
+  "occ_edge_layer7__end": {
+   "wind": 5.934231581847852e-06,
+   "disp": 4.473126555451912e-06,
+   "fill": 5.596406055359658e-06
+  },
+  "occ_edge_teleport__teleport": {
+   "wind": 4.071078819997417e-06,
+   "disp": 2.2533041044989635e-06,
+   "fill": 0.0
+  },
+  "occ_edge_teleport__end": {
+   "wind": 1.340346588921606e-05,
+   "disp": 1.602672856588358e-05,
+   "fill": 0.0
+  },
+  "s2a_box_on_slope__w35": {
+   "wind": 4.2565266229125425e-06,
+   "disp": 1.2956680523233752e-06,
+   "fill": 0.0
+  },
+  "s2a_box_on_slope__w70": {
+   "wind": 1.7549748273495965e-05,
+   "disp": 1.7791810491433146e-06,
+   "fill": 0.0
+  },
+  "s2a_box_on_slope__end": {
+   "wind": 0.0004018100191766341,
+   "disp": 4.185455715044539e-06,
+   "fill": 0.0
+  },
+  "s2a_cliff_at_edge__w70": {
+   "wind": 1.5911372440771733e-06,
+   "disp": 6.737188535265114e-07,
+   "fill": 0.0
+  },
+  "s2a_cliff_at_edge__blade": {
+   "wind": 2.4050792038161045e-06,
+   "disp": 1.464386088304276e-06,
+   "fill": 1.6280907849603305e-06
+  },
+  "s2a_cliff_at_edge__end": {
+   "wind": 2.094959219989023e-06,
+   "disp": 1.5148976352642826e-06,
+   "fill": 2.6580037481159464e-06
+  },
+  "s2a_cliff_walk_blade__w70": {
+   "wind": 1.4460276918584247e-06,
+   "disp": 7.798346645224932e-07,
+   "fill": 0.0
+  },
+  "s2a_cliff_walk_blade__blade": {
+   "wind": 2.6622865321232977e-06,
+   "disp": 2.3063430000181133e-06,
+   "fill": 1.7573300927417533e-06
+  },
+  "s2a_cliff_walk_blade__end": {
+   "wind": 2.2516545817811095e-06,
+   "disp": 2.4689749902410547e-06,
+   "fill": 2.7065902107397684e-06
+  },
+  "s2a_slope_curb60__w70": {
+   "wind": 1.6540223156803643e-06,
+   "disp": 7.543765701228897e-07,
+   "fill": 0.0
+  },
+  "s2a_slope_curb60__blade": {
+   "wind": 1.3179826504762463e-05,
+   "disp": 2.8997694702362834e-06,
+   "fill": 1.1618509822633777e-05
+  },
+  "s2a_slope_curb60__end": {
+   "wind": 4.504930142954565e-06,
+   "disp": 3.0640166449882465e-06,
+   "fill": 6.76498892077675e-06
+  },
+  "s2a_hill_run_window__mv1": {
+   "wind": 1.944848735691888e-06,
+   "disp": 2.7949750203439987e-06,
+   "fill": 1.6294911280362926e-06
+  },
+  "s2a_hill_run_window__mv2": {
+   "wind": 1.7364722739987517e-06,
+   "disp": 1.982100470204654e-06,
+   "fill": 1.4961226002201375e-06
+  },
+  "s2a_hill_run_window__mv3": {
+   "wind": 1.2342768862205091e-06,
+   "disp": 1.8215781027940583e-06,
+   "fill": 1.277784198335831e-06
+  },
+  "s2a_hill_run_window__mv4": {
+   "wind": 1.5696364524420723e-06,
+   "disp": 1.8322903633745085e-06,
+   "fill": 1.6536824765471012e-06
+  },
+  "s2a_hill_run_window__end": {
+   "wind": 1.2384885036665901e-06,
+   "disp": 1.8069283685910723e-06,
+   "fill": 1.3806144564499747e-06
+  },
+  "s2a_still_rough__m1": {
+   "wind": 0.0,
+   "disp": 0.0,
+   "fill": 0.0
+  },
+  "s2a_still_rough__m2": {
+   "wind": 0.0,
+   "disp": 0.0,
+   "fill": 0.0
+  },
+  "s2a_still_rough__m3": {
+   "wind": 0.0,
+   "disp": 0.0,
+   "fill": 0.0
+  },
+  "s2a_still_rough__end": {
+   "wind": 0.0,
+   "disp": 0.0,
+   "fill": 0.0
+  },
+  "s2a_slope_curb__w70": {
+   "wind": 1.6540223156803643e-06,
+   "disp": 7.543765701228897e-07,
+   "fill": 0.0
+  },
+  "s2a_slope_curb__blade": {
+   "wind": 2.9213662286357287e-06,
+   "disp": 2.8027357061021187e-06,
+   "fill": 1.934816193311973e-06
+  },
+  "s2a_slope_curb__end": {
+   "wind": 2.1202515627569447e-06,
+   "disp": 2.94817380516592e-06,
+   "fill": 2.5528177979828043e-06
+  },
+  "s2a_curb30_cross__w35": {
+   "wind": 5.7266128841729346e-06,
+   "disp": 1.279702630754401e-06,
+   "fill": 0.0
+  },
+  "s2a_curb30_cross__w70": {
+   "wind": 1.584098434934471e-06,
+   "disp": 1.3616055803093967e-06,
+   "fill": 0.0
+  },
+  "s2a_curb30_cross__end": {
+   "wind": 7.244321619267178e-05,
+   "disp": 3.3807489299038854e-06,
+   "fill": 0.0
+  },
+  "k3_box_high__s01": {
+   "wind": 4.331287428510671e-06
+  },
+  "k3_box_high__s02": {
+   "wind": 3.4961946841290966e-06
+  },
+  "k3_box_high__s03": {
+   "wind": 3.244114686646334e-06
+  },
+  "k3_box_high__s04": {
+   "wind": 2.9682257974055857e-06
+  },
+  "k3_box_high__s05": {
+   "wind": 2.9134156617728437e-06
+  },
+  "k3_box_high__s06": {
+   "wind": 2.715234955821552e-06
+  },
+  "k3_box_high__s07": {
+   "wind": 2.5856849528984306e-06
+  },
+  "k3_box_high__s08": {
+   "wind": 2.6249936404000817e-06
+  },
+  "k3_box_high__s09": {
+   "wind": 2.649628450781672e-06
+  },
+  "k3_box_high__end": {
+   "wind": 2.655310615694026e-06,
+   "disp": 2.8949460135740067e-06,
+   "fill": 0.0
+  },
+  "k4_run__s01": {
+   "wind": 2.441401005473107e-06
+  },
+  "k4_run__s02": {
+   "wind": 2.1430896640642102e-06
+  },
+  "k4_run__mv1": {
+   "wind": 1.8656369262876849e-06,
+   "disp": 1.8386495611687776e-06,
+   "fill": 1.7767918236003244e-06
+  },
+  "k4_run__s03": {
+   "wind": 1.4735229361408378e-06
+  },
+  "k4_run__s04": {
+   "wind": 1.4882542151814533e-06
+  },
+  "k4_run__mv2": {
+   "wind": 1.7789956492208556e-06,
+   "disp": 1.6089300709885537e-06,
+   "fill": 1.6960037004296143e-06
+  },
+  "k4_run__s05": {
+   "wind": 1.3832950184532146e-06
+  },
+  "k4_run__s06": {
+   "wind": 1.1454657855584674e-06
+  },
+  "k4_run__mv3": {
+   "wind": 1.0424107437198504e-06,
+   "disp": 1.477905223254286e-06,
+   "fill": 1.1120766317887094e-06
+  },
+  "k4_run__s07": {
+   "wind": 1.262680093165197e-06
+  },
+  "k4_run__s08": {
+   "wind": 1.3458372152333287e-06
+  },
+  "k4_run__mv4": {
+   "wind": 1.093170774056489e-06,
+   "disp": 1.4918564762881394e-06,
+   "fill": 1.120448026486474e-06
+  },
+  "k4_run__s09": {
+   "wind": 1.442975093282779e-06
+  },
+  "k4_run__end": {
+   "wind": 1.0100296739047714e-06,
+   "disp": 1.4822436277686048e-06,
+   "fill": 1.2003851944743442e-06
+  },
+  "k7_thin_swing__end": {
+   "wind": 1.233052592189268e-06,
+   "disp": 1.2336229234525375e-06,
+   "fill": 2.0942637277483314e-06
+  },
+  "still_600__end": {
+   "wind": 0.0,
+   "disp": 0.0,
+   "fill": 0.0
+  },
+  "mixed_dt_120__end": {
+   "wind": 1.9409416934861807e-06,
+   "disp": 2.0685275657778004e-06,
+   "fill": 2.7739510586815347e-06
+  }
+ },
+ "shake": {
+  "occ_w1_tip_through__swing_end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w1_tip_through__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w2_radius_reach__swing_end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w2_radius_reach__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w4_body_parallel__walk_end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w4_body_parallel__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w3_short_wall__swing_end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w3_short_wall__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w5_end_row__swing_end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_w5_end_row__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_edge_layer7__stroke_end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_edge_layer7__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_edge_teleport__teleport": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "occ_edge_teleport__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_box_on_slope__w35": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_box_on_slope__w70": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_box_on_slope__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_cliff_at_edge__w70": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_cliff_at_edge__blade": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_cliff_at_edge__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_cliff_walk_blade__w70": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_cliff_walk_blade__blade": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_cliff_walk_blade__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_slope_curb60__w70": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_slope_curb60__blade": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_slope_curb60__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_hill_run_window__mv1": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_hill_run_window__mv2": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_hill_run_window__mv3": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_hill_run_window__mv4": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_hill_run_window__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_still_rough__m1": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_still_rough__m2": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_still_rough__m3": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_still_rough__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_slope_curb__w70": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_slope_curb__blade": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_slope_curb__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_curb30_cross__w35": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_curb30_cross__w70": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "s2a_curb30_cross__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s01": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s02": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s03": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s04": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s05": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s06": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s07": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s08": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__s09": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k3_box_high__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s01": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s02": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__mv1": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s03": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s04": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__mv2": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s05": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s06": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__mv3": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s07": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s08": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__mv4": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "k4_run__s09": {
+   "fluid_mismatch": 0,
+   "absent_groups": [
+    "disp",
+    "fill"
+   ],
+   "reach_bits_diff": 0
+  },
+  "k4_run__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "k7_thin_swing__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "still_600__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  },
+  "mixed_dt_120__end": {
+   "fluid_mismatch": 0,
+   "absent_groups": [],
+   "reach_bits_diff": 0
+  }
+ },
+ "sources": {
+  "occ_w1_tip_through": {
+   "flavor": "scenes",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/scenes/on",
+   "replay_sha256": "6ed5e6d581c2ea5da410e9b29cb984c3c24c590bf22d84956bc747e83b4f14ff"
+  },
+  "occ_w2_radius_reach": {
+   "flavor": "scenes",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/scenes/on",
+   "replay_sha256": "4dadb615c259a2d27c1e507867ddc413ce8eea7bfd8e5d999b36123c260fbdcc"
+  },
+  "occ_w4_body_parallel": {
+   "flavor": "scenes",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/scenes/on",
+   "replay_sha256": "9d3c46661e4887c1a8d4fc8dde60c6036ea089693f91a49218508dbc2baba28b"
+  },
+  "occ_w3_short_wall": {
+   "flavor": "scenes",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/scenes/on",
+   "replay_sha256": "0014909fba0dd6ced2f4df83b1dadcb6480ed7beb858e6665b96ee195aa1220d"
+  },
+  "occ_w5_end_row": {
+   "flavor": "scenes",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/scenes/on",
+   "replay_sha256": "f252583c3ac8ab4b8c32e79c15b7d4855a88fed465a315596c60e1ac657a9ebb"
+  },
+  "occ_edge_layer7": {
+   "flavor": "scenes",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/scenes/on",
+   "replay_sha256": "a44ac35df2adff08e4c280a8084d89666cb3158ef5ffde4119aaf8dd4d4dc2f8"
+  },
+  "occ_edge_teleport": {
+   "flavor": "scenes",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/scenes/on",
+   "replay_sha256": "0c71fcfdf0cd102520b82e91365f61187bba6a4d11a44875a120961ec1b05668"
+  },
+  "s2a_box_on_slope": {
+   "flavor": "r5",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/r5/on",
+   "replay_sha256": "1563cf49dbb6450a1f3498649e3f25c421489c37fefbfea5105b44f094f9b07c"
+  },
+  "s2a_cliff_at_edge": {
+   "flavor": "r5",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/r5/on",
+   "replay_sha256": "e778e345733ce5db8761a106231cbae64f5253d2226aad5bd9208f3cb0bb4ee5"
+  },
+  "s2a_cliff_walk_blade": {
+   "flavor": "r5",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/r5/on",
+   "replay_sha256": "5c5e81b361ca5667ee82827290232a25b62002348445c234a3b6d9d9612ebbf9"
+  },
+  "s2a_slope_curb60": {
+   "flavor": "r5",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/r5/on",
+   "replay_sha256": "867acfb72acd22b7707f87f47113d1eef963e8536cd936978b32bb74731052cd"
+  },
+  "s2a_hill_run_window": {
+   "flavor": "r5",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/r5/on",
+   "replay_sha256": "721333b6a3132b906d31392c46804155cb48addc7ee29149d81e57d4fe9da31a"
+  },
+  "s2a_still_rough": {
+   "flavor": "r5",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/r5/on",
+   "replay_sha256": "6b4d5aea28e5f0932f04ced6d241d5d77244bd1a1da6c44fae4cf1119fdc4fe8"
+  },
+  "s2a_slope_curb": {
+   "flavor": "r5",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/r5/on",
+   "replay_sha256": "96d80f6014ba23c87ba976c0ff222f4eaa7a0eb3f84806b06c1c7d1cd56edb4b"
+  },
+  "s2a_curb30_cross": {
+   "flavor": "r5",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/r5/on",
+   "replay_sha256": "0f60b4408a0fa5c8c2798842b288475950a6ca548e3306062c7f5e1bf16d67f4"
+  },
+  "k3_box_high": {
+   "flavor": "stage1",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/stage1/on",
+   "replay_sha256": "79b35220250f0196f754c84334177586839a480a9dca2dc0e58395919d659839"
+  },
+  "k4_run": {
+   "flavor": "stage1",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/stage1/on",
+   "replay_sha256": "946cb0920177017599ffba98562b413fec02d6c622aa56984ba23ec7940066d8"
+  },
+  "k7_thin_swing": {
+   "flavor": "stage1",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/stage1/on",
+   "replay_sha256": "879499052be7bc3e70edb998f4cb120cc3d4491a17a72c71c53defd087842c24"
+  },
+  "still_600": {
+   "flavor": "stage1",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/stage1/on",
+   "replay_sha256": "ab7783464c4925ec62dd2acff17407126c36a41c4a62cf8149d6c382f0c54796"
+  },
+  "mixed_dt_120": {
+   "flavor": "stage1",
+   "reference": "Saved/FluidFX/Fog3D/ref_occ/stage1/on",
+   "replay_sha256": "3eefe34c9ad875a6285b3ec95b2472aca20018e477576802a5df59faad83f69e"
+  }
+ },
+ "shake_cm": 0.0001,
+ "seed": 20261113,
+ "reference_manifests": {
+  "Saved/FluidFX/Fog3D/ref_occ/r5/on/manifest.json": "9b12d37accecaf89d9f7b7db9d3bff32105be6e538e4b382b3ea6fb6a1becb79",
+  "Saved/FluidFX/Fog3D/ref_occ/r5/on/shake/manifest.json": "3ba8584dd10a8e3e9b153e58452f84ea12e91e3d12c98ef37ab92c0d2bd4ccaf",
+  "Saved/FluidFX/Fog3D/ref_occ/scenes/on/manifest.json": "ea0cd26cb1728b28de55e905ea7e3b4039765452990dc72855bf59c0b051cb89",
+  "Saved/FluidFX/Fog3D/ref_occ/scenes/on/shake/manifest.json": "30787e2a11c52feef69b86e4ae82e456f8826526b3058ce9a8b2530d2af225b7",
+  "Saved/FluidFX/Fog3D/ref_occ/stage1/on/manifest.json": "7797479fe6500d6e9f62c8aa0ec76ad01477603e7bc83e3a8b6a99ae492cca72",
+  "Saved/FluidFX/Fog3D/ref_occ/stage1/on/shake/manifest.json": "0c94510633fa7ab0323375e5de34d4558697268bc3a208f014d425f5e7c8e67b"
+ },
+ "prereg_sha256": "117cc69bacb11d679effb0da14b3820596b739bbf1116c85fef4d76d7daf7367",
+ "tool_sha256": "232a9a8d68dd739f6a10934a7bc8d2330fc8049c5f16821d3807fecc184379a8"
+}

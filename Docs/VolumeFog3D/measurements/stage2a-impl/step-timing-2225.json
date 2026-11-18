@@ -1,0 +1,15 @@
+{
+  "test": "TDGame.FluidFXRhi.Fog3D.GroundStepTiming",
+  "rhi": "D3D12",
+  "adapter": "NVIDIA GeForce RTX 2060",
+  "rounds": 2,
+  "warmup_computes_per_round": 20,
+  "measured_computes_per_round": 80,
+  "window_move_period": 10,
+  "spheres": 4,
+  "ground": "uniform slope tan30 along x, uploaded once",
+  "resolutions": [
+    {"resolution": 128, "off": {"still_count": 144, "still_mean_ms": 0.293882, "still_median_ms": 0.280000, "moving_count": 16, "moving_mean_ms": 0.319312, "moving_median_ms": 0.291000}, "on": {"still_count": 144, "still_mean_ms": 0.306514, "still_median_ms": 0.290000, "moving_count": 16, "moving_mean_ms": 0.352500, "moving_median_ms": 0.307000}, "still_mean_on_minus_off_ms": 0.012632, "moving_mean_on_minus_off_ms": 0.033187},
+    {"resolution": 256, "off": {"still_count": 144, "still_mean_ms": 1.034139, "still_median_ms": 0.983000, "moving_count": 16, "moving_mean_ms": 1.125813, "moving_median_ms": 1.060000}, "on": {"still_count": 144, "still_mean_ms": 1.057764, "still_median_ms": 0.999000, "moving_count": 16, "moving_mean_ms": 1.130250, "moving_median_ms": 1.086000}, "still_mean_on_minus_off_ms": 0.023625, "moving_mean_on_minus_off_ms": 0.004437}
+  ]
+}

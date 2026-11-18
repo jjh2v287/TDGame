@@ -1,0 +1,6 @@
+경고: 측정 동안 UnrealEditor 창을 앞창으로 두고 건드리지 않는다(L-editor-06).
+TD_NAV_STATE RebuildNavigation 요청(새 맵은 에디터 내비가 비어 있을 수 있음)
+TD_NAV_STATE 2.5 {"navmesh_actors": 0, "building_or_locked": false, "player_start_found": true, "projected": [false]}
+ctl_before 찍음 {"game_time": 8.255501002073288, "shot_game_time": 11.376902103424072, "ember_mid": {}}
+ctl_swing 찍음 {"console": [{"command": "TDPlayMeleeAction"}], "game_time": 12.588548306375742, "shot_game_time": 13.779230412095785, "ember_mid": {}}
+격자 C:/Project/TDGame/Saved/FluidFX/fog3d_calib/ctl/capture/grid.png

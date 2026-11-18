@@ -1,0 +1,3 @@
+4a0b8c904d942801dd89e94d2d83064d5d2338ee84f6fd6529f42e00816c5a14
+file: Docs/VolumeFog3D/stage2/prereg-2a-impl-add1.md
+locked: 2026-11-15 20:27 (claude, before the R5 layer exists on the GPU)

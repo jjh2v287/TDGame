@@ -1,0 +1,3 @@
+2671:[2026.11.13-13.41.40:248][533]LogOutputDevice: Error: Ensure condition failed: TimelineTrait.GetState(Context, ChildState)  [File:D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp] [Line: 268] 
+2695:[2026.11.13-13.41.40:252][533]EnsureFailed: Error: Ensure condition failed: TimelineTrait.GetState(Context, ChildState)  [File:D:\build\++UE5\Sync\Engine\Plugins\Experimental\UAF\UAFAnimGraph\Source\UAFAnimGraph\Private\Injection\InjectionSiteTrait.cpp] [Line: 268] 
+[2026.11.13-13.41.38:949][530]Cmd: TDPlayMeleeAction

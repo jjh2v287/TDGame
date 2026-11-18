@@ -1,0 +1,578 @@
+{
+ "rows": {
+  "G1_px": {
+   "name": "G1_px",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.500225715797683,
+   "Wk_L": 7.486165073529413,
+   "Wk_R": 5.514286358065954,
+   "asymmetry": 0.15167771102710684,
+   "camera_yaw": 0.0,
+   "walk_yaw": 0.0,
+   "centroid_offset_px": -15.41474355153241,
+   "centroid_offset_lower60_px": -16.53079104096969
+  },
+  "G1_nx": {
+   "name": "G1_nx",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.18778123328877,
+   "Wk_L": 3.822717775178253,
+   "Wk_R": 8.552844691399287,
+   "asymmetry": -0.38221510569686046,
+   "camera_yaw": 180.0,
+   "walk_yaw": 180.0,
+   "centroid_offset_px": 34.14925423160719,
+   "centroid_offset_lower60_px": 38.337330189917
+  },
+  "G1_py": {
+   "name": "G1_py",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 5.766051253342246,
+   "Wk_L": 5.124645972593583,
+   "Wk_R": 6.407456534090908,
+   "asymmetry": -0.11123822050261473,
+   "camera_yaw": 90.0,
+   "walk_yaw": 90.0,
+   "centroid_offset_px": 5.033430068578809,
+   "centroid_offset_lower60_px": 11.430111686360647
+  },
+  "P1_px": {
+   "name": "P1_px",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.650743917112298,
+   "Wk_L": 7.328794323752228,
+   "Wk_R": 5.972693510472371,
+   "asymmetry": 0.10195106218047452,
+   "camera_yaw": 0.0,
+   "walk_yaw": 0.0,
+   "centroid_offset_px": -9.4667071678831,
+   "centroid_offset_lower60_px": -9.382709087445278,
+   "pawn_start_xy": [
+    -964.0,
+    500.0
+   ],
+   "pawn_end_xy": [
+    -341.33641101174453,
+    500.0
+   ],
+   "line_axis": "y",
+   "line_target": 500.0,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "walk_moved_cm": 607.0401137685756,
+   "walk_timed_out": false,
+   "cells_expected": 256,
+   "state_target_xyz": [
+    256,
+    256,
+    8
+   ],
+   "quality_cvar_after_run": -1,
+   "line_within_3cm": true,
+   "min_gap_to_stage_objects_cm": 766.7440869301578,
+   "gap_by_object_cm": {
+    "Fog3D_LowBox": 1126.009100692513,
+    "Fog3D_HighBox": 766.7440869301578,
+    "Fog3D_Wall": 1478.364733615524
+   },
+   "path_inside_fade_band_inner": true,
+   "editor_log_submitted_rejected": [
+    1763,
+    0
+   ],
+   "valid": true
+  },
+  "P1_nx": {
+   "name": "P1_nx",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.033293073195187,
+   "Wk_L": 4.23698731617647,
+   "Wk_R": 7.829598830213904,
+   "asymmetry": -0.29773222272250843,
+   "camera_yaw": 180.0,
+   "walk_yaw": 180.0,
+   "centroid_offset_px": 23.1518690945785,
+   "centroid_offset_lower60_px": 30.00285591052034,
+   "pawn_start_xy": [
+    -964.0,
+    500.0
+   ],
+   "pawn_end_xy": [
+    -1586.6635889882552,
+    500.0
+   ],
+   "line_axis": "y",
+   "line_target": 500.0,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "walk_moved_cm": 607.0401137685756,
+   "walk_timed_out": false,
+   "cells_expected": 256,
+   "state_target_xyz": [
+    256,
+    256,
+    8
+   ],
+   "quality_cvar_after_run": -1,
+   "line_within_3cm": true,
+   "min_gap_to_stage_objects_cm": 1389.2249637837638,
+   "gap_by_object_cm": {
+    "Fog3D_LowBox": 1615.53272947347,
+    "Fog3D_HighBox": 1389.2249637837638,
+    "Fog3D_Wall": 2088.5356113794182
+   },
+   "path_inside_fade_band_inner": true,
+   "editor_log_submitted_rejected": [
+    1073,
+    0
+   ],
+   "valid": true
+  },
+  "P2_px": {
+   "name": "P2_px",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.746563112745098,
+   "Wk_L": 7.657748640819962,
+   "Wk_R": 5.835377584670232,
+   "asymmetry": 0.13505921649995722,
+   "camera_yaw": 0.0,
+   "walk_yaw": 0.0,
+   "centroid_offset_px": -12.501857051154502,
+   "centroid_offset_lower60_px": -13.239403016330698,
+   "pawn_start_xy": [
+    -964.0,
+    507.8125
+   ],
+   "pawn_end_xy": [
+    -341.33641101174453,
+    507.8125
+   ],
+   "line_axis": "y",
+   "line_target": 507.8125,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "walk_moved_cm": 607.0401137685756,
+   "walk_timed_out": false,
+   "cells_expected": 256,
+   "state_target_xyz": [
+    256,
+    256,
+    8
+   ],
+   "quality_cvar_after_run": -1,
+   "line_within_3cm": true,
+   "min_gap_to_stage_objects_cm": 767.0385616112213,
+   "gap_by_object_cm": {
+    "Fog3D_LowBox": 1131.7456229200145,
+    "Fog3D_HighBox": 767.0385616112213,
+    "Fog3D_Wall": 1480.2337892219423
+   },
+   "path_inside_fade_band_inner": true,
+   "editor_log_submitted_rejected": [
+    1074,
+    0
+   ],
+   "valid": true
+  },
+  "P2_nx": {
+   "name": "P2_nx",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.104966541332442,
+   "Wk_L": 4.409824727049911,
+   "Wk_R": 7.800108355614973,
+   "asymmetry": -0.27766602860243633,
+   "camera_yaw": 180.0,
+   "walk_yaw": 180.0,
+   "centroid_offset_px": 19.93773418533533,
+   "centroid_offset_lower60_px": 27.420965593274786,
+   "pawn_start_xy": [
+    -964.0,
+    507.8125
+   ],
+   "pawn_end_xy": [
+    -1586.6635889882552,
+    507.8125
+   ],
+   "line_axis": "y",
+   "line_target": 507.8125,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "walk_moved_cm": 607.0401137685756,
+   "walk_timed_out": false,
+   "cells_expected": 256,
+   "state_target_xyz": [
+    256,
+    256,
+    8
+   ],
+   "quality_cvar_after_run": -1,
+   "line_within_3cm": true,
+   "min_gap_to_stage_objects_cm": 1389.3875125954783,
+   "gap_by_object_cm": {
+    "Fog3D_LowBox": 1619.5362484848092,
+    "Fog3D_HighBox": 1389.3875125954783,
+    "Fog3D_Wall": 2089.859034757189
+   },
+   "path_inside_fade_band_inner": true,
+   "editor_log_submitted_rejected": [
+    1073,
+    0
+   ],
+   "valid": true
+  },
+  "P4_py": {
+   "name": "P4_py",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 7.090509494763813,
+   "Wk_L": 6.663907536764705,
+   "Wk_R": 7.517111452762924,
+   "asymmetry": -0.06016520509762321,
+   "camera_yaw": 90.0,
+   "walk_yaw": 90.0,
+   "centroid_offset_px": 5.042658755330876,
+   "centroid_offset_lower60_px": 13.515385384956176,
+   "pawn_start_xy": [
+    -2000.0,
+    0.0
+   ],
+   "pawn_end_xy": [
+    -2000.0,
+    622.6635889882598
+   ],
+   "line_axis": "x",
+   "line_target": -2000.0,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "walk_moved_cm": 607.0401137685799,
+   "walk_timed_out": false,
+   "cells_expected": 256,
+   "state_target_xyz": [
+    256,
+    256,
+    8
+   ],
+   "quality_cvar_after_run": -1,
+   "line_within_3cm": true,
+   "min_gap_to_stage_objects_cm": 2425.0,
+   "gap_by_object_cm": {
+    "Fog3D_LowBox": 2446.681425931868,
+    "Fog3D_HighBox": 2425.0,
+    "Fog3D_Wall": 3095.0
+   },
+   "path_inside_fade_band_inner": true,
+   "editor_log_submitted_rejected": [
+    1074,
+    0
+   ],
+   "valid": true
+  },
+  "P4_ny": {
+   "name": "P4_ny",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 6.7541167725044575,
+   "Wk_L": 9.031279918672013,
+   "Wk_R": 4.4769536263369,
+   "asymmetry": 0.3371518768283265,
+   "camera_yaw": 270.0,
+   "walk_yaw": 270.0,
+   "centroid_offset_px": -27.63143695782992,
+   "centroid_offset_lower60_px": -30.846011795487016,
+   "pawn_start_xy": [
+    -2000.0,
+    0.0
+   ],
+   "pawn_end_xy": [
+    -2000.0,
+    -622.6635889882598
+   ],
+   "line_axis": "x",
+   "line_target": -2000.0,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "walk_moved_cm": 607.0401137685799,
+   "walk_timed_out": false,
+   "cells_expected": 256,
+   "state_target_xyz": [
+    256,
+    256,
+    8
+   ],
+   "quality_cvar_after_run": -1,
+   "line_within_3cm": true,
+   "min_gap_to_stage_objects_cm": 2425.0,
+   "gap_by_object_cm": {
+    "Fog3D_LowBox": 2425.0,
+    "Fog3D_HighBox": 2446.681425931868,
+    "Fog3D_Wall": 3095.0
+   },
+   "path_inside_fade_band_inner": true,
+   "editor_log_submitted_rejected": [
+    1074,
+    0
+   ],
+   "valid": true
+  },
+  "P3_py": {
+   "name": "P3_py",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 7.494177205882353,
+   "Wk_L": 7.579204138814617,
+   "Wk_R": 7.409150272950088,
+   "asymmetry": 0.011345732906545794,
+   "camera_yaw": 90.0,
+   "walk_yaw": 90.0,
+   "centroid_offset_px": -1.0719189150754573,
+   "centroid_offset_lower60_px": 6.68789980705526,
+   "pawn_start_xy": [
+    -2000.0,
+    0.0
+   ],
+   "pawn_end_xy": [
+    -2000.0,
+    622.6635889882598
+   ],
+   "line_axis": "x",
+   "line_target": -2000.0,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "walk_moved_cm": 607.0401137685799,
+   "walk_timed_out": false,
+   "cells_expected": 128,
+   "state_target_xyz": [
+    256,
+    256,
+    8
+   ],
+   "quality_cvar_after_run": -1,
+   "line_within_3cm": true,
+   "min_gap_to_stage_objects_cm": 2425.0,
+   "gap_by_object_cm": {
+    "Fog3D_LowBox": 2446.681425931868,
+    "Fog3D_HighBox": 2425.0,
+    "Fog3D_Wall": 3095.0
+   },
+   "path_inside_fade_band_inner": true,
+   "editor_log_submitted_rejected": [
+    537,
+    0
+   ],
+   "valid": true
+  },
+  "P3_ny": {
+   "name": "P3_ny",
+   "valid_by_tool": true,
+   "invalid_reasons": [],
+   "Wk_12.1": 7.249176047237077,
+   "Wk_L": 9.673407280525847,
+   "Wk_R": 4.824944813948306,
+   "asymmetry": 0.3344147276175935,
+   "camera_yaw": 270.0,
+   "walk_yaw": 270.0,
+   "centroid_offset_px": -26.822086205515348,
+   "centroid_offset_lower60_px": -33.26559577890214,
+   "pawn_start_xy": [
+    -2000.0,
+    0.0
+   ],
+   "pawn_end_xy": [
+    -2000.0,
+    -622.6635889882598
+   ],
+   "line_axis": "x",
+   "line_target": -2000.0,
+   "line_error_start_cm": 0.0,
+   "line_error_end_cm": 0.0,
+   "walk_moved_cm": 607.0401137685799,
+   "walk_timed_out": false,
+   "cells_expected": 128,
+   "state_target_xyz": [
+    256,
+    256,
+    8
+   ],
+   "quality_cvar_after_run": -1,
+   "line_within_3cm": true,
+   "min_gap_to_stage_objects_cm": 2425.0,
+   "gap_by_object_cm": {
+    "Fog3D_LowBox": 2425.0,
+    "Fog3D_HighBox": 2446.681425931868,
+    "Fog3D_Wall": 3095.0
+   },
+   "path_inside_fade_band_inner": true,
+   "editor_log_submitted_rejected": [
+    537,
+    0
+   ],
+   "valid": true
+  }
+ },
+ "pairs": {
+  "P1": {
+   "w": 0.19984164245149147,
+   "p": -0.09789058027101696,
+   "valid": true,
+   "fwd": "P1_px",
+   "rev": "P1_nx",
+   "fwd_asymmetry": 0.10195106218047452,
+   "rev_asymmetry": -0.29773222272250843,
+   "biased_world_side_of_w": "-Y",
+   "cells": 256,
+   "line": "y = 500.0"
+  },
+  "P2": {
+   "w": 0.20636262255119678,
+   "p": -0.07130340605123955,
+   "valid": true,
+   "fwd": "P2_px",
+   "rev": "P2_nx",
+   "fwd_asymmetry": 0.13505921649995722,
+   "rev_asymmetry": -0.27766602860243633,
+   "biased_world_side_of_w": "-Y",
+   "cells": 256,
+   "line": "y = 507.8125"
+  },
+  "P3": {
+   "w": -0.16153449735552386,
+   "p": 0.17288023026206964,
+   "valid": true,
+   "fwd": "P3_py",
+   "rev": "P3_ny",
+   "fwd_asymmetry": 0.011345732906545794,
+   "rev_asymmetry": 0.3344147276175935,
+   "biased_world_side_of_w": "-X",
+   "cells": 128,
+   "line": "x = -2000.0"
+  },
+  "P4": {
+   "w": -0.19865854096297483,
+   "p": 0.13849333586535165,
+   "valid": true,
+   "fwd": "P4_py",
+   "rev": "P4_ny",
+   "fwd_asymmetry": -0.06016520509762321,
+   "rev_asymmetry": 0.3371518768283265,
+   "biased_world_side_of_w": "-X",
+   "cells": 256,
+   "line": "x = -2000.0"
+  }
+ },
+ "verdict": "축",
+ "verdict_rule": "|w1|≥0.15 이고 |w2|≥0.15",
+ "editor_log": {
+  "summaries_in_order": [
+   [
+    1763,
+    0
+   ],
+   [
+    1073,
+    0
+   ],
+   [
+    1074,
+    0
+   ],
+   [
+    1073,
+    0
+   ],
+   [
+    1074,
+    0
+   ],
+   [
+    1074,
+    0
+   ],
+   [
+    537,
+    0
+   ],
+   [
+    537,
+    0
+   ],
+   [
+    1074,
+    0
+   ],
+   [
+    1075,
+    0
+   ],
+   [
+    218,
+    0
+   ]
+  ],
+  "run_order_for_summaries": [
+   "P1_px",
+   "P1_nx",
+   "P2_px",
+   "P2_nx",
+   "P4_py",
+   "P4_ny",
+   "P3_py",
+   "P3_ny"
+  ],
+  "fog3d_warning_or_error_lines_whole_editor_log": 0,
+  "sample": []
+ },
+ "P0_reference": {
+  "w_from_G1": 0.26694640836198363,
+  "p_from_G1": -0.11526869733487681
+ },
+ "info_teleport_control_I0": {
+  "I0_px": {
+   "Wk_12.1": 6.495602581885027,
+   "Wk_L": 7.475234748217469,
+   "Wk_R": 5.515970415552585,
+   "asymmetry": 0.15081467099980003,
+   "valid_by_tool": true,
+   "pawn_start_xy": [
+    -963.9999963879586,
+    -5.717757570724952e-15
+   ],
+   "pawn_end_xy": [
+    -341.33640739970315,
+    -5.717757570724952e-15,
+    98.15000772476196
+   ],
+   "centroid_offset_px": -15.316197787637975,
+   "centroid_offset_lower60_px": -16.471142833616568
+  },
+  "I0_nx": {
+   "Wk_12.1": 6.182372894385026,
+   "Wk_L": 3.825675746434938,
+   "Wk_R": 8.539070042335114,
+   "asymmetry": -0.3811962151442685,
+   "valid_by_tool": true,
+   "pawn_start_xy": [
+    -963.9999963879586,
+    -5.717757570724952e-15
+   ],
+   "pawn_end_xy": [
+    -1586.6635853762139,
+    -5.717757570724952e-15,
+    98.15000772476196
+   ],
+   "centroid_offset_px": 34.07536917614016,
+   "centroid_offset_lower60_px": 38.245450340526645
+  },
+  "pair": {
+   "w": 0.2660054430720343,
+   "p": -0.11519077207223423,
+   "note": "정보용: P0(y=0, 순간이동 없음) 와 같은 선에 같은 순간이동 이벤트를 넣은 통제. 판정에는 안 씀"
+  }
+ }
+}

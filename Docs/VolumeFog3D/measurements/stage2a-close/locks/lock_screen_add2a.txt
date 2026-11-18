@@ -1,0 +1,3 @@
+4b81bdbfefd640b2c2c8afe18586e47f5ddca1a60b10b685e52153d28ef4752b
+file: Docs/VolumeFog3D/stage2/prereg-2a-screen-add2a.md
+locked: 2026-11-16 12:21 (claude, follow-on runs in progress since 12:21 but no follow-on value or picture seen by the supervisor)

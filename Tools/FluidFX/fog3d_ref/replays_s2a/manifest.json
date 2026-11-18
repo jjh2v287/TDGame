@@ -1,0 +1,141 @@
+{
+ "format": "fog3d-ref-manifest-1",
+ "folder": "Tools/FluidFX/fog3d_ref/replays_s2a",
+ "advect": "N2",
+ "solid": "S9",
+ "code": {
+  "fog3d_core.py": "fa5564705c405769",
+  "fog3d_core_v2.py": "3d034f9cafb7b5de",
+  "fog3d_replay.py": "6edd3fe644f3aa9e",
+  "fog3d_terrain.py": "7a375bb4669b1da5",
+  "fog3d_terrain_add1.py": "51726afd38cb3776",
+  "fog3d_gates_s2a.py": "067957a533391361",
+  "tuned_solvers.json": "6ab5094bd599daf9"
+ },
+ "tool_sha256": "4c91b61aa34314d75796cb228028a1e8b23c5bfaec0358128ac4a3dabde44f66",
+ "files": [
+  {
+   "name": "s2a_box_on_slope.ground.bin",
+   "bytes": 67600,
+   "sha256": "46a2d159c4c1b0334c3c03362f229321126c180ffd80966a621e662d67335bbe"
+  },
+  {
+   "name": "s2a_box_on_slope.json",
+   "bytes": 109953,
+   "sha256": "89e0fad49010ed79fa7620f1a6a1fd7474dd235d0629fea367a85887c679a153"
+  },
+  {
+   "name": "s2a_cliff_at_edge.ground.bin",
+   "bytes": 67600,
+   "sha256": "ec99ff70219cb788e01746ac8535153b43095e878368cb7092edac8ab791d97f"
+  },
+  {
+   "name": "s2a_cliff_at_edge.json",
+   "bytes": 105525,
+   "sha256": "97d5da516e4dba51d526d42cc7a8f3b454d490ad3f59bddebe3aef792455daa7"
+  },
+  {
+   "name": "s2a_cliff_walk_blade.ground.bin",
+   "bytes": 67600,
+   "sha256": "7610dbb0155dc6f88fd5099ffa3a788dec110e2a897de345d194e706cd20b941"
+  },
+  {
+   "name": "s2a_cliff_walk_blade.json",
+   "bytes": 106307,
+   "sha256": "356319d9945be7873bcbcd7077946b071d58864e456df7aa1e68388392a38134"
+  },
+  {
+   "name": "s2a_curb30_cross.ground.bin",
+   "bytes": 67600,
+   "sha256": "3153c7f3df178732d58ea96aea19eefb0661e4564f70c7ac936c586ff760497d"
+  },
+  {
+   "name": "s2a_curb30_cross.json",
+   "bytes": 95095,
+   "sha256": "b4d701275e9d34d2e9f61e899bf68d148c8f354dc3a2bc9201d9bf3dfcacc1d9"
+  },
+  {
+   "name": "s2a_flat_offset.ground.bin",
+   "bytes": 67600,
+   "sha256": "52ad8dfbfe545167840dc0d700c0528010c9ce2a71864d6c7ba841b20197aeb6"
+  },
+  {
+   "name": "s2a_flat_offset.json",
+   "bytes": 93399,
+   "sha256": "b5403d829954f3d8e7d18c83cf8318d004a76618f8b5e772b49477b4ff37f06f"
+  },
+  {
+   "name": "s2a_frame_at_edge.ground.bin",
+   "bytes": 67600,
+   "sha256": "eaa89598703b71d1c83fd4e0de5fe822131691e80f3b3cb6987ecaa44cc6f235"
+  },
+  {
+   "name": "s2a_frame_at_edge.json",
+   "bytes": 61939,
+   "sha256": "62907eb531eecbe13d5d7ff7a0688f5dfe7209a3769656ebf59e8957fefb5094"
+  },
+  {
+   "name": "s2a_hill_run_window.ground.bin",
+   "bytes": 100880,
+   "sha256": "a9cb5598dae9256fd45ad46fcee3cc0084b981900c1e12e27e647abb94f0c76e"
+  },
+  {
+   "name": "s2a_hill_run_window.json",
+   "bytes": 44893,
+   "sha256": "16980eea49b23419970b019351e737373cfe8573e6b67948f7059cebe554f439"
+  },
+  {
+   "name": "s2a_slope_curb.ground.bin",
+   "bytes": 67600,
+   "sha256": "525d5cb5b7da0ced5d60575260a5df97db67c41193a26c5bc757719d79655d48"
+  },
+  {
+   "name": "s2a_slope_curb.json",
+   "bytes": 118613,
+   "sha256": "d5bfda12a2dfe25d709fb51deaaf0df4a86b56cab8a96c04cca1e1f3bad61c79"
+  },
+  {
+   "name": "s2a_slope_walk_down.ground.bin",
+   "bytes": 67600,
+   "sha256": "46a2d159c4c1b0334c3c03362f229321126c180ffd80966a621e662d67335bbe"
+  },
+  {
+   "name": "s2a_slope_walk_down.json",
+   "bytes": 111230,
+   "sha256": "9ce5bc90ddb705b4fb888d6fd181829d210acec326dfc81004e91a0b084e45f1"
+  },
+  {
+   "name": "s2a_slope_walk_up.ground.bin",
+   "bytes": 67600,
+   "sha256": "46a2d159c4c1b0334c3c03362f229321126c180ffd80966a621e662d67335bbe"
+  },
+  {
+   "name": "s2a_slope_walk_up.json",
+   "bytes": 109856,
+   "sha256": "9df8f7613da3edb7a9e13ef4064f284759c357c7e3f9e008cdd21946066515f9"
+  },
+  {
+   "name": "s2a_slope_y_walk.ground.bin",
+   "bytes": 67600,
+   "sha256": "4e62c7e5fb3433da7bd24c44fbe3934355330ac2a284037b2188b2aeb8026443"
+  },
+  {
+   "name": "s2a_slope_y_walk.json",
+   "bytes": 109855,
+   "sha256": "5b46c54c73262085908a7fcca3d0a6e7a4267e06ae5530eeee4957ff761e00cc"
+  },
+  {
+   "name": "s2a_still_rough.ground.bin",
+   "bytes": 92560,
+   "sha256": "0bdc9e7801694941575da92693ccd3f1aaaaf01ea75d5fbbec40ab3dd9f2e1d8"
+  },
+  {
+   "name": "s2a_still_rough.json",
+   "bytes": 25803,
+   "sha256": "5053b20859b4f4bf50232f9ae18e2bec877c94d5cf8c1034beee9e64c587b985"
+  }
+ ],
+ "listing_sha256": "ec1744bde7bd228b968d4231531f1336195dc953079a3a5a5058e588ef603927",
+ "listing_rule": "각 줄 '이름 바이트수 sha256' 을 이름순으로 \\n 으로 잇고 끝에 \\n, 그 sha256",
+ "candidate": "R4"
+}

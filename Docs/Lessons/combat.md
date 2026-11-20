@@ -106,3 +106,12 @@
 - 증거: 엔진 소스 위 줄, 시험 `TDGame.MonsterAI.TurnSmoothing.TurnSettlesAtAnyFrameRate`(M3-43)
 - 날짜·상태: 2026-11-20 active
 - 발견: claude(M3-43 설계)
+
+### L-combat-13 Mover 내장 회전 부드럽게(TurnGenerator·SimpleSpringWalkingMode·SmoothWalkingMode)는 최고 속도를 따로 못 묶는 스프링이라 몬스터 회전 판정선을 못 맞춘다
+- 증상: (사용자 질문, 실행 오류 아님) "예전 CMC 에 부드러운 회전이 있었는데 Mover 2.0 이라 자체 구현했나, Mover 기능을 썼나" — M3-42·43 문서에 내장 기능 검토 기록이 없었다.
+- 원인: CMC `RotationRate`(FixedTurn, CharacterMovementComponent.cpp:6595-6604)와 Mover `TurningRate`(기본 500, MovementUtils.cpp:608-625)는 둘 다 등속이고 마지막 스텝에 바로 멈춘다. CMC 의 smoothing 은 네트워크 프록시 메시 보정 전용이다(8370-8391). Mover 내장 가감속은 셋: 걷기 모드 `TurnGenerator`(기본 비어 있음, ExactDamped 반감기 0.15초 — 반환값이 각속도를 대입해 TurningRate 상한이 사라진다 WalkingMode.cpp:119, 인터페이스 주석은 additive), `SimpleSpringWalkingMode`(방향·속도 0.2초 스프링), `SmoothWalkingMode`(Experimental, 이중 스프링 0.25초, 걷기 속도 모델 전체 교체). 셋 다 걷기 계열에만 있고 낙하·비행에는 없으며 스프링 상태는 Private 헤더다. 스프링·지수 감쇠는 시간 값 하나가 수렴 시간·최고 속도·추적 지연을 함께 정해, 최고 541도/초 이하·150도 0.45초 안 수렴·360도/초 추적 지연 25도 이하를 동시에 못 맞춘다(참조 계산: 수렴 0.67~1.08초 또는 최고 619~1450도/초).
+- 해결: 가감속은 `ProduceInput` 에서 방향 의도(OrientationIntent)를 `FTDTurnSmoother`(최고·가속·감속을 따로 제한, 1/240초 하위 단계)로 다듬어 넘기고, Mover 는 TurningRate 상한 등속으로 그 방향에 닿게 둔다(모든 이동 모드에 같은 효과). 엔진 정식 확장점이 필요하면 `ITurnGeneratorInterface`(ModularMovement.h:17-36)에 같은 식을 넣되 걷기 계열에만 듣고 상한을 직접 지켜야 한다.
+- 범위: UE 5.8 Mover(플러그인 Experimental, Mover.uplugin:15), 몬스터·플레이어 몸 방향 회전.
+- 증거: `Saved/AgentOps/20261120/mover-turn-q/V-verify.md`(주장별 엔진 줄 근거·참조 계산 표). 엔진 식을 파이썬으로 옮긴 참조 계산이며, 엔진에서 내장 모드로 바꿔 돌린 실측은 미검증.
+- 날짜·상태: 2026-11-20 active(참조 계산)
+- 발견: claude(사용자 질문 조사, 워크플로 td-mover-turn-question)

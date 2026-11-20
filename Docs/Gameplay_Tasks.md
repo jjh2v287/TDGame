@@ -164,6 +164,7 @@
 - 기록: 2026-11-18 claude: GP-11 Esc 일시정지·종료 메뉴 구현 — UTDPauseMenuSubsystem(월드)+STDPauseMenu(Slate 3버튼), Esc BindKey(bExecuteWhenPaused) 토글, 저장 후 종료(슬롯 TDPauseMenuAutoSave, 저장 실패 시 종료 안 함)·새로 시작(ClearAllState 후 맵 다시 열기). 몬스터 사고·NPC·타이머는 이미 일시정지를 따라 수정 없음(코드 읽기). 시험 PauseMenu 3/3, Combat 138/138, check_sync_loads 새 위반 0, check_foundation_boundary 0.
 - 반박 R4(Opus) 꼭 고칠 것: 메뉴를 닫을 때 FInputModeGameOnly 가 마우스 잠금·고정밀 입력을 켜 커서·조준·클릭 이동이 바뀜 → 고침: 열 때 뷰포트 입력 상태(캡처·잠금·커서 숨김·입력 무시)를 저장하고 닫을 때 되돌린 뒤 게임 뷰포트에 포커스(SaveViewportInputState·RestoreViewportInputState), 빌드·시험 141/141·검사 통과. 이 경로는 시험에 뷰포트가 없어 실행되지 않음 — -game 확인 필요.
 - 남은 것: `-game`에서 Esc로 열고 닫은 뒤 커서·조준·클릭 이동이 열기 전과 같은지와 버튼 모양·클릭(에디터 PIE에서는 Esc가 PIE 중지라 `-game`으로, L-gameplay-03). 몬스터 사고 일시정지 시험(c)은 코드 읽기로만 확인. '저장 후 종료' 슬롯은 이어하기(FD-04) 전까지 쓰기만 된다.
+- 기록: 2026-11-20 20:59 claude: 시험 틀 정리 누락 고침 — FTDPauseMenuTestWorld 게임 인스턴스 분기가 Shutdown 만 해 InitializeStandalone 의 월드 컨텍스트·월드가 엔진 목록에 남던 누수(충돌 원인은 아님, L-build-35). 소멸자를 EndPlay → Shutdown → DestroyWorld → DestroyWorldContext 순서(엔진 PIE 정리 순서와 같음)로. Framework 8/8. 사용자 지시로 커밋.
 
 ### GP-03 필드 공터 3곳 열린 조우
 - 상태: done
@@ -177,6 +178,7 @@
 - 진행(재개): 2026-11-20 08:35 — 재부팅으로 세션이 끝나면서 td-gp03-d 가 P 결과를 돌려주기 전에 멈춤(보류·에디터 없었음). P 산출물은 00:20 에 완성(spec-v2-add2.md 00:07 → 도구 수정, p-measure-fix.md, p_measure_check 25/25) → 이어 하기 워크플로 td-gp03-e(같은 프롬프트로 정적 반박 R2 부터).
 - 기록: 2026-11-20 09:32 claude: 자동 확인 통과 — 측정 규칙 spec-v2-add2(00:07)와 정정 M1(08:58:22, 이미 죽은 경우 기록기 사망 틱을 못 보면 측정 무효)을 도구 수정 전에 등록, 도구 마지막 수정 08:58:27(워크플로 td-gp03-d·e). 에디터 창 3회차 자가 점검 11/11, PIE final3·4·5 세 번 모두 complete·passed(서 27/27·북 20/20·동 20/20, 측정 무효 0). 북 추적 중앙값 448~561cm(기준 150, 옛 측정 131~409에서 안정), 동은 세 번 모두 몬스터가 먼저 죽여 기록기 사망 틱 기준 부활 4.0초(한도 6.0), 서 입장 걷기 게임 시각 2.03~2.20초에 1139~1146cm(520~563cm/s, Slate 1/8초 절단 가설 확인). 로그 스폰 실패·대체 경고·누수 0, 에셋 저장 0. 브러시 적중을 에디터에서 직접 확인(d2-confirm.txt, L-gameplay-05 갱신). 최종 반박 E4a(규칙 대조, M1 정정 재반박 포함)·E4b(201줄 재계산 일치, 측정 타당성) 통과. 근거 Saved/Gameplay/FieldEncounters/final3~5/result.json, Saved/AgentOps/20261119/gp03/final-refute-2a.md·final-refute-2b.md.
 - 남은 것: 마을→세 공터 사람 손 조작(단계 1 사람 관문). 별도 항목 후보 2건(위 줄). 도구 함정: 배치 --dry-run 이 placement.json 을 덮어써 PIE 도구가 거부 — Tools/README 에 적음.
+- 기록: 2026-11-20 20:59 claude: 시험 정리 결함 고침 — 부활 시험 월드가 BeginPlay 없이 정리돼 몬스터 Mover 시뮬레이션이 Uninit 없이 GC 되고, BeginDestroy 가 고아 UNullMovementMode 를 만들어 같은 실행의 다음 PIE 종료(EndPlayMap 객체 순회)에서 충돌(L-build-35, 바닥 세션 분리 실행 발견, 덤프 3개 확인). TDRespawnTests 소멸자에서 World->EndPlay 가 false 면 액터마다 RouteEndPlay, 회귀 시험 TDGame.Framework.Respawn.TeardownLeavesNoOrphanedMoverModes 추가. 빨강(고아 1, gp11-respawn-red-tests.json) → 초록(Camera·Framework·SeamlessTravel 20/20, 충돌 0, gp11-respawn-green-tests.json). 사용자 지시로 커밋.
 
 ### GF-07 게임플레이 바닥 텍스처 팝핑
 - 상태: done

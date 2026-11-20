@@ -48,13 +48,19 @@ namespace
 
 		~FTDPauseMenuTestWorld()
 		{
+			if (World)
+			{
+				World->EndPlay(EEndPlayReason::Quit);
+			}
 			if (GameInstance)
 			{
 				GameInstance->Shutdown();
 				GameInstance->RemoveFromRoot();
+			}
+			if (!World)
+			{
 				return;
 			}
-			World->EndPlay(EEndPlayReason::Quit);
 			World->DestroyWorld(false);
 			GEngine->DestroyWorldContext(World);
 		}

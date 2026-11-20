@@ -7,10 +7,13 @@
 #include "Engine/CollisionProfile.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "Framework/TDGameGameMode.h"
 #include "GameFramework/PlayerStart.h"
 #include "Misc/AutomationTest.h"
+#include "MovementMode.h"
 #include "UObject/Package.h"
+#include "UObject/UObjectIterator.h"
 
 namespace TDRespawnTests
 {
@@ -42,9 +45,24 @@ namespace TDRespawnTests
 
 		~FTDRespawnTestWorld()
 		{
-			World->EndPlay(EEndPlayReason::Quit);
+			if (!World)
+			{
+				return;
+			}
+			if (!World->EndPlay(EEndPlayReason::Quit))
+			{
+				RouteEndPlayToActors();
+			}
 			World->DestroyWorld(false);
 			GEngine->DestroyWorldContext(World);
+		}
+
+		void RouteEndPlayToActors() const
+		{
+			for (TActorIterator<AActor> ActorIt(World); ActorIt; ++ActorIt)
+			{
+				ActorIt->RouteEndPlay(EEndPlayReason::Quit);
+			}
 		}
 
 		ATDGameGameMode* SpawnConcreteGameMode() const
@@ -128,6 +146,27 @@ namespace TDRespawnTests
 		ATDGameGameMode* GameMode = nullptr;
 		AAIController* Controller = nullptr;
 	};
+
+	int32 CountMoverModesWithFreedOuter()
+	{
+		TSet<const UObjectBase*> LiveObjects;
+		for (FRawObjectIterator ObjectIt; ObjectIt; ++ObjectIt)
+		{
+			if (const UObjectBase* Object = (*ObjectIt)->GetObject())
+			{
+				LiveObjects.Add(Object);
+			}
+		}
+		int32 OrphanCount = 0;
+		for (TObjectIterator<UBaseMovementMode> ModeIt; ModeIt; ++ModeIt)
+		{
+			if (!LiveObjects.Contains(ModeIt->GetOuter()))
+			{
+				++OrphanCount;
+			}
+		}
+		return OrphanCount;
+	}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDRespawnPinchedCheckpointTest, "TDGame.Framework.Respawn.PinchedCheckpointStillSpawnsPawn", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -218,6 +257,27 @@ bool FTDRespawnClearCheckpointTest::RunTest(const FString& Parameters)
 	}
 	TestTrue(TEXT("A clear checkpoint is used exactly"), Pawn->GetActorLocation().Equals(RespawnCheckpointLocation, RespawnExactToleranceCm));
 	TestTrue(TEXT("The controller possesses the pawn"), Pawn->GetController() == Fixture.Controller);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDRespawnTeardownLeavesNoOrphanedMoverModesTest, "TDGame.Framework.Respawn.TeardownLeavesNoOrphanedMoverModes", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDRespawnTeardownLeavesNoOrphanedMoverModesTest::RunTest(const FString& Parameters)
+{
+	using namespace TDRespawnTests;
+	{
+		FTDRespawnTestWorld Fixture;
+		if (!Fixture.IsReady(*this))
+		{
+			return false;
+		}
+		if (!TestNotNull(TEXT("The respawned Mover pawn exists before teardown"), Fixture.Respawn()))
+		{
+			return false;
+		}
+	}
+	CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS);
+	TestEqual(TEXT("No Mover movement mode keeps a freed outer after teardown and garbage collection"), CountMoverModesWithFreedOuter(), 0);
 	return true;
 }
 

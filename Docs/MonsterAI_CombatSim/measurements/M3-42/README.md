@@ -70,3 +70,5 @@
 
 - 회피(원형 회피 후보 선택)가 이동 방향을 64Hz 스텝마다 두 후보 사이로 번갈아 바꾸는 경우(하이에나 ±10°/프레임). 보이는 몸은 이제 ±0.3° 수준으로 걸러지지만 위치는 미세하게 지그재그한다.
 - 서 있는 몬스터가 아주 작은 비켜서기(yield) 입력에도 몸을 그 방향으로 돌린다(`ATDCombatCharacter::ProduceInput_Implementation` 의 방향 입력 문턱 1e-3). 고치면 논리 방향이 바뀌므로 시뮬 회귀·결정이 필요하다.
+
+- 원본 덮어쓰기 알림(2026-11-20 15:13, M3-43): 측정 도구가 원본을 `Saved/AgentOps/<날짜>/turn-popping/<label>/` 에 써서, 같은 날 M3-43 측정이 같은 라벨(`after`·`clip-before`·`clip-after`)의 원본·촬영 프레임을 덮어썼다. 이 폴더의 지표(report.json·summary.md)와 media 는 그대로 유효하고, `baseline`·`after-off` 원본은 남아 있다. 도구는 이제 `turn-popping/<task>/<label>/` 에 쓴다.

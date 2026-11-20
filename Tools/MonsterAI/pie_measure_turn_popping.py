@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(언리얼 에디터가 TDGame을 열고 원격 실행이 켜진 상태). 맵을 저장하지 않는다. 헤드리스 시험과 동시에 돌리지 않는다(L-editor-20). 에디터·PIE 전에 빌드 보류를 잡는다.
 실행 명령: python Tools/MonsterAI/pie_measure_turn_popping.py --label baseline [--task M3-42] [--species Barghest Goblin Hyena StoneGolem] [--count 3] [--distance 900] [--seconds 30] [--fixed-fps 60] [--cvar 이름=값 ...] [--map /Game/Combat/Maps/LV_TDMegaMagicArena] [--keep-pie] [--capture-species Hyena --capture-start 2 --capture-seconds 6 --capture-every 2 --capture-size 960x540 --camera-arm 900 --capture-focus 0] | --label <이름> --analyze-only | --summarize <label> <label> ... (PowerShell, L-repo-01)
-출력: Docs/MonsterAI_CombatSim/measurements/<task>/<label>/report.json·summary.md(종·몬스터마다 논리 요(액터)·보이는 메시 요·골반 뼈 요의 각속도 최대·p99·p95, 초당 720도 초과 프레임, 한 프레임 급회전(초과 + 10도 이상)과 그때 상태·행동, 각속도 급변(연속 프레임 차 400도/초 이상), 방향 뒤집힘(90도/초 이상 회전이 0.25초 안에 반대로), 멈춤 뒤 몰아 돌기(가운데 프레임 0.05도 미만·양옆 1도 이상 같은 방향), 메시-액터·골반-메시 어긋남 p95·최대, 프레임 간격), 원본 Saved/AgentOps/<날짜>/turn-popping/<label>/raw/<종>.json, 촬영 종은 같은 폴더 frames/<종>/<종>_<번호>.png(게임 뷰포트 HighResShot, 원본 JSON capture 에 발행·찍힌 게임 초). 종료 코드 0 측정 완료 / 1 일부 종 실패 / 2 환경 문제
-상태: 현행(M3-42). 판정선은 측정 전에 정한 아래 상수(OVER_RATE_DEG_S 등)이고 결과를 본 뒤 바꾸지 않는다. 플레이어는 시작점 둘레 반지름 650cm 별 모양 꼭짓점을 걷고 멈춤을 섞어(몬스터 공격 유도) 몬스터가 쫓으며 방향을 바꾸게 한다.
+출력: Docs/MonsterAI_CombatSim/measurements/<task>/<label>/report.json·summary.md(종·몬스터마다 논리 요(액터)·보이는 메시 요·골반 뼈 요의 각속도 최대·p99·p95, 초당 720도 초과 프레임, 한 프레임 급회전(초과 + 10도 이상)과 그때 상태·행동, 각속도 급변(연속 프레임 차 400도/초 이상), 방향 뒤집힘(90도/초 이상 회전이 0.25초 안에 반대로), 멈춤 뒤 몰아 돌기(가운데 프레임 0.05도 미만·양옆 1도 이상 같은 방향), 메시-액터·골반-메시 어긋남 p95·최대, 프레임 간격), 원본 Saved/AgentOps/<날짜>/turn-popping/<task>/<label>/raw/<종>.json, 촬영 종은 같은 폴더 frames/<종>/<종>_<번호>.png(게임 뷰포트 HighResShot, 원본 JSON capture 에 발행·찍힌 게임 초). 종료 코드 0 측정 완료 / 1 일부 종 실패 / 2 환경 문제
+상태: 현행(M3-42, M3-43 에서 원본 경로에 작업 ID 를 넣음 — 그 전에는 같은 날 같은 라벨이 덮어써 M3-42 after·clip-before·clip-after 원본이 M3-43 측정으로 바뀌었다). 판정선은 측정 전에 정한 아래 상수(OVER_RATE_DEG_S 등)이고 결과를 본 뒤 바꾸지 않는다. 플레이어는 시작점 둘레 반지름 650cm 별 모양 꼭짓점을 걷고 멈춤을 섞어(몬스터 공격 유도) 몬스터가 쫓으며 방향을 바꾸게 한다.
 """
 import argparse
 import datetime
@@ -423,8 +423,8 @@ def summarize(task, labels):
     print("\n".join(lines))
 
 
-def raw_directory(label):
-    return ROOT / "Saved" / "AgentOps" / datetime.date.today().strftime("%Y%m%d") / "turn-popping" / label / "raw"
+def raw_directory(task, label):
+    return ROOT / "Saved" / "AgentOps" / datetime.date.today().strftime("%Y%m%d") / "turn-popping" / task / label / "raw"
 
 
 def wait_for_job(seconds):
@@ -487,7 +487,7 @@ def write_report(arguments, results):
 
 
 def analyze_only(arguments):
-    raw_dir = raw_directory(arguments.label)
+    raw_dir = raw_directory(arguments.task, arguments.label)
     previous_path = MEASUREMENT_ROOT / arguments.task / arguments.label / "report.json"
     previous = json.loads(previous_path.read_text(encoding="utf-8")) if previous_path.exists() else {}
     results = {}
@@ -503,7 +503,7 @@ def analyze_only(arguments):
 
 
 def run(arguments):
-    raw_dir = raw_directory(arguments.label)
+    raw_dir = raw_directory(arguments.task, arguments.label)
     raw_dir.mkdir(parents=True, exist_ok=True)
     loaded = run_editor_code(LOAD_CODE.format(path=SAMPLER_PATH.as_posix()))
     if "loaded" not in loaded:

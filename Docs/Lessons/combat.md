@@ -95,5 +95,14 @@
 - 해결: 몬스터 액터 틱을 TG_PostUpdateWork 로 옮겨 그 프레임 모든 논리 회전 뒤에 `메시 상대 = Base * 요 회전` 을 쓰고(Base 자체는 바꾸지 않아 SetPresentationOffset·캡슐 모디파이어와 충돌 없음), `UMoverComponent::OnPostFinalize`(동적 델리게이트)에 묶어 되돌림 직후 같은 오프셋을 다시 씌운다(`ATDMonsterCharacter::HandleMoverPostFinalize`). 시험 `TDGame.MonsterAI.VisualTurn.FreezeHoldsVisibleBody`(빙결 중 −140.00° 유지, 해동 첫 프레임 10°).
 - 범위: Mover + 메시 표현 오프셋(회전·위치) 전부. 몬스터가 GAS 타임라인 근접 스윕(`TDMeleeSweep`, 메시 월드 트랜스폼)이나 루트 모션을 쓰면 판정·이동이 보이는 요를 따르게 됨(지금은 안 씀).
 - 증거: `Saved/AgentOps/20261120/turn-popping/refute-static.md` F1, `Saved/AgentOps/20261120/m342-post-tests.log`
-- 날짜·상태: 2026-11-20 active
+- 날짜·상태: 2026-11-20 active(사실은 유효, 이 메시 오프셋 층 코드는 M3-43 에서 캡슐 가감속으로 대체·제거)
 - 발견: claude(M3-42, td-refuter 정적 반박)
+
+### L-combat-12 Mover 독립 실행 백엔드의 ProduceInput 시간(SimTimeMs)은 정수 밀리초로 잘려, 입력 단계에서 시간 적분하면 프레임 속도마다 느려진다
+- 증상: (설계 중 엔진 소스로 확인, 실행 오류 아님) `ProduceInput_Implementation(int32 SimTimeMs, ...)` 의 SimTimeMs 로 회전 스프링을 적분하면 60fps 16.67ms→16ms(4% 느림), 144fps 6.94ms→6ms(14% 느림)로 시뮬보다 시간이 덜 흐른다.
+- 원인: `UMoverStandaloneLiaisonComponent::TickInputProduction` 이 `const int32 DeltaTimeMs = DeltaSeconds * 1000.f` 로 넘기고(MoverStandaloneLiaison.cpp:415), 시뮬은 `TimeStep.StepMs = DeltaSeconds * 1000.f`(float, 440행)를 쓴다. 두 틱 모두 `ExecuteTickHelper` 로 소유 액터 CustomTimeDilation 을 곱한 시간이다(524~558행).
+- 해결: 입력 단계에서 시간이 필요하면 `GetWorld()->GetDeltaSeconds() * CustomTimeDilation` 을 쓴다(시뮬 dt 와 같은 값). 방향 의도를 다듬어 넘기면 Mover 는 `ComputeAngularVelocityDegrees`(최단 회전/dt, TurningRate 클램프, MovementUtils.cpp:608)로 그 요에 정확히 닿는다 — 다듬은 최대 각속도 ≤ TurningRate 여야 한다(`ATDMonsterCharacter::SmoothOrientationIntent`, M3-43).
+- 범위: Mover 독립 실행 백엔드에서 ProduceInput 안에 시간 적분(회전·입력 보간)을 넣는 모든 캐릭터. 비동기 입력 생산·네트워크 예측 백엔드는 확인 안 함.
+- 증거: 엔진 소스 위 줄, 시험 `TDGame.MonsterAI.TurnSmoothing.TurnSettlesAtAnyFrameRate`(M3-43)
+- 날짜·상태: 2026-11-20 active
+- 발견: claude(M3-43 설계)

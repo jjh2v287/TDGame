@@ -851,6 +851,19 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 기록: 2026-11-20 claude — 청구.
 - 기록: 2026-11-20 claude — 완료. 원인(기준선, 4종×3마리×30초): 급회전 8~19회/판은 전부 공격 시작 `FaceRotationImmediately`(한 프레임 최대 176.7°), 끊김은 Mover 540도/초 회전이 가감속 없이 시작·정지(각속도 급변 123~270/분), 흔들림 47~169/분은 회피가 이동 방향을 스텝마다 번갈아 바꾸거나 서 있는 몸이 작은 비켜서기 입력을 따라 돎. 틱 예산·갱신 건너뜀(몰아 돌기 0~1)·애니메이션 루트 회전(몬스터 클립 루트 모션 끔) 원인 아님. 수정: 논리 방향은 그대로 두고 보이는 메시만 따라가게 함(전투 판정·결정론 불변). 값은 파이썬 참조 계산 사전 등록 규칙으로 고름. 정적 반박(불합격 1: 빙결이 액터 틱을 꺼 메시가 튈 수 있음) → OnPostFinalize 다시 씌움 + 빙결 시험. 사본 문법 검사 도구(clang-cl, L-build-33)로 빌드 전 확인. 결과(after): 보이는 몸 급회전·720 초과 0, 각속도 급변 99.5~100%·흔들림 55~69% 감소, 논리 층 그대로, 끔 대조군 = 기준선 크기. 시험: 새 6개 통과(수치가 참조와 같음), 헤드리스 254/255(실패 = 기준선 CrossingStreams), 결정론 6종 통과. 남은 논리 결함(회피 번갈이·작은 입력에 몸 돌기)은 별도 과제. 사용자 허가로 커밋(2026-11-20)
 
+### M3-43 몬스터 논리 회전(캡슐) 가감속: 보이는 몸 층 대신 캡슐 자체를 부드럽게
+- 상태: done
+- 담당: claude/2026-11-20
+- 우선순위: 상(사용자 선택 2026-11-20 "캡슐도 부드럽게" — 07#MD-63 (b))
+- 선행: M3-42
+- 목표: 몬스터 캡슐(액터 요·Mover 방향)이 가속·감속하며 돌고 메시는 자식으로 그대로 따라 돌게 한다. 공격 시작 즉시 회전도 부드러운 회전으로 바꾸고, 보이는 몸 오프셋 층(M3-42)은 걷어낸다. 공격 조준(피해 엔티티 Origin→Target)은 그대로
+- 완료 조건: 방향 의존 로직 목록, 고정 스텝 헤드리스 결투 끔/켬 비교(첫 타격·타격 수·피해·한 스텝 최대 회전), 같은 장면 PIE 전·후(논리 요 급회전·각속도 급변), 시험(프레임 시간 무관 수렴·외부 회전 재동기·빙결·공격 방향 부드럽게), 회귀 `TDGame.Combat`·`TDGame.MonsterAI`·`TDGame.Encounter`·결정론 통과, 나란히 보기, MD-63 결정 기록
+- 산출물: `Characters/TDTurnSmoother.*`(새, M3-42 `TDVisualTurnSmoother.*` 대체: 임계 감쇠 0.06초, 최대 = TurningRate, 가속 8000도/초², 감속 한도 (2/0.06)×최대, 1/240초 하위 단계, 되돌아감 없는 정지 목표), `Characters/TDMonsterCharacter.*`(ProduceInput 에서 Mover 방향 의도 다듬기·다른 코드의 즉시 회전 재동기·시간 멈춤 때 각속도 0, 공격 시작 `FaceAbilityAim` = 시전 준비 중 회전, 보이는 몸 층·틱 그룹 변경 제거, 끄기 `TD.Monster.SmoothTurn 0`), 시험 `MonsterAI/Tests/TDTurnSmoothingTests.cpp`(12, `TDVisualTurnTests.cpp` 대체), 도구 보강 `Tools/MonsterAI/compose_turn_popping_media.py`(캡션·두 판 각속도 그래프)·`pie_measure_turn_popping.py`(원본 경로에 작업 ID)
+- 검증: 헤드리스 `python Tools/build_and_test.py --filter TDGame.Combat --filter TDGame.MonsterAI --filter TDGame.Encounter --filter TDGame.Movement`(260/261, 기준선 CrossingStreams 만 실패, 결정론 6 통과), PIE `pie_measure_turn_popping.py --task M3-43 --label before|after --cvar TD.Monster.SmoothTurn=0|1`
+- 참조: [measurements/M3-43/](measurements/M3-43/)(판정선·덧붙임 1·2·결과·media), `Saved/AgentOps/20261120/turn-logic/`(사본·통합 스크립트·반박·참조 계산), 07#MD-63
+- 기록: 2026-11-20 claude — 청구. 방향 의존은 FacingTarget(6종 공격 점수, 커널 Body.Yaw)뿐이고 피해 엔티티는 Origin→Target(`Saved/AgentOps/20261120/turn-popping/logic-facing-research.md`). 밸런스 시뮬레이터(M1-06~12)는 미구현이라 고정 스텝 헤드리스 결투 끔/켬 비교로 대신한다.
+- 기록: 2026-11-20 claude — 완료. 판정선(14:27 사전 등록, 덧붙임 1 반박 반영·덧붙임 2 첫 결과 뒤 시험 준비 고침·빙결 재출발)을 모두 통과. 헤드리스 결투 21판(7종 × 앞·옆·뒤, 12초)에서 켬·끔의 첫 타격·타격 수·피해가 모두 같다 → 방향에 기대는 FacingTarget 이 있어도 게임 결과 변화 0, 한 스텝 최대 회전 켬 8.44도(끔 16~25도, Barghest 169도). PIE 같은 장면(4종 × 3마리 × 30초): 논리 급회전 1~19 → 0, 각속도 급변 220~293/분 → 0, 최대 3456~6017 → 540도/초, 흔들림 9~40% 로, 메시-캡슐 어긋남 0. 정적 반박 must 1(반전 때 감속 한도 없음 → 60fps 각속도 차 465~539)을 감속 한도로 고쳐 재검증 합격. 남은 것은 README 6절(07#MD-63 (d) 회피 번갈이·작은 비켜서기, 짧은 시전 준비, 레거시 GAS 경로). 미커밋.
+
 ### 3.6 Phase 4 — 확장(조건부)
 
 ### M4-01 자체 C++ HTN(보스·무리)
@@ -1140,12 +1153,12 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 결정: (대기)
 
 ### MD-63 몬스터 보이는 몸 회전 부드럽게 하기(논리 방향 불변) 기본값(사용자 지시 "회전 팝핑 개선", 권장안 적용·재검토 가능)
-- 상태: proposed · 2026-11-20 claude(M3-42, "묻지 말고 권장안")
+- 상태: accepted · 2026-11-20 사용자 결정(제안 2026-11-20 claude, M3-42 → 구현 M3-43)
 - 질문: 지금 들어간 규칙·값을 확정할까? ① 논리 방향(액터 요: Mover TurningRate 540도/초, 공격 시작 `FaceRotationImmediately` 즉시 회전, 회피·추적 입력)은 그대로 두고 보이는 메시만 따라가게 한다(전투 판정·결정론·시뮬 불변) ② 임계 감쇠 스프링 0.06초·최대 720도/초·가속 한도 8000도/초²·1/240초 하위 단계(값은 파이썬 참조 계산의 사전 등록 규칙: 60fps 각속도 급변 < 400도/초, 넘침 ≤ 0.5°, 179° 즉시 회전 1° 안 수렴 ≤ 0.40초, 540도/초 회전 최대 지연 ≤ 30° 가운데 급변 최소) ③ 몬스터 액터 틱을 TG_PostUpdateWork 로 옮겨 그 프레임의 모든 논리 회전 뒤에 적용, Mover 프레임 마무리(OnPostFinalize)마다 다시 씌워 빙결(액터 틱 꺼짐) 중에도 유지 ④ 사망·히트스톱 동안 멈춤, 래그돌·시체(PrimaryVisualComponent 아님)는 손대지 않음 ⑤ 끄기 `TD.Monster.VisualTurn 0`
 - 선택지: (a) 현행 (b) 논리 회전에도 가감속(공격 방향·맞힘이 바뀌어 시뮬 회귀·결정 필요) (c) 종 크기별 값(큰 몸은 더 느리게) (d) 회피 계산의 매 스텝 방향 번갈이(하이에나 ±10°)·서 있는 몸이 작은 비켜서기 입력을 따라 도는 것은 논리 쪽 별도 과제로 고침
 - 권장: (a) + (d)는 별도 과제. 근거: 기준선의 급회전은 전부 공격 시작 즉시 회전이고, 끊김·흔들림은 가감속 없는 540도/초 회전과 회피 입력 번갈이 — 모두 보이는 몸 층에서 없앨 수 있고 판정은 바뀌지 않는다
 - 영향: 07#M3-42, `Characters/TDVisualTurnSmoother.*`(새), `Characters/TDMonsterCharacter.*`(틱 그룹·보이는 회전·Mover 마무리 연결), 시험 `MonsterAI/Tests/TDVisualTurnTests.cpp`(6), 측정 [measurements/M3-42/](measurements/M3-42/). 잠재 위험: 몬스터가 GAS 타임라인 근접 스윕(`TDMeleeSweep`, 메시 트랜스폼 사용)이나 루트 모션을 쓰게 되면 그 판정·이동이 보이는 요를 따른다(현재 몬스터는 둘 다 안 씀)
-- 결정: (대기)
+- 결정: (b) 논리 회전(캡슐)에도 가감속 — 2026-11-20 사용자 선택 "캡슐도 부드럽게"(메시만 도는 구조를 되물음). 구현 07#M3-43: Mover 방향 의도를 `FTDTurnSmoother`(임계 감쇠 0.06초, 최대 = TurningRate 540도/초 그대로, 가속 8000도/초², 감속 한도 = (2/0.06)×최대 = 18000도/초², 1/240초 하위 단계)로 다듬고, 공격 시작 즉시 회전은 시전 준비 중 회전으로 바꿈. 보이는 몸 층(①③④⑤의 메시 오프셋·틱 그룹·`TD.Monster.VisualTurn`)은 제거, 끄기 `TD.Monster.SmoothTurn 0`(= 이전 논리). 검증: 헤드리스 결투 21판에서 첫 타격·타격 수·피해 변화 0, PIE 급회전 0·각속도 급변 0·흔들림 9~40%로([measurements/M3-43/](measurements/M3-43/)). (d)는 별도 과제로 남음. 남은 위험: 시전 준비가 회전 시간(150도 0.35초)보다 짧은 공격은 몸이 덜 돈 채 타격(맞힘은 Origin→Target 이라 그대로), 레거시 GAS 행동 능력 경로(호출처 없음·기본 부여 꺼짐)는 즉시 회전 그대로, 기절 때 최대 16도 더 돌고 멈춤, 루트에 붙는 채널 효과는 시전 첫 0.35초 동안 캡슐 방향을 따름
 
 ## 5. 위험표(12)
 

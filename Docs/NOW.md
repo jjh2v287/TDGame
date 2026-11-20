@@ -1,6 +1,6 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-20 12:10 claude
+갱신: 2026-11-20 15:17 claude
 
 ## ① 진행 중 (대장 doing)
 
@@ -10,7 +10,7 @@
 - 커밋 끝: M3-14·27~32·34, D-47(후속 c). 전술 끄기 TD.MonsterAI.Tactics 0
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴
-- M3-25·26·42 done(26 육안 대기, 42 끄기 TD.Monster.VisualTurn 0)
+- M3-25·26·42·43 done(26 육안 대기, 43 끄기 TD.Monster.SmoothTurn 0)
 - FluidFX: FogMist·Stir·Tile 켬. 3D 안개 2b-1 GPU 끝·D3D11 보류, 사용량 멈춤, 눈 판정·기본값 대기(stage2/RESUME.md)
 - 게임플레이: GP-03 done(PIE 3회 통과). 단계 1 사람 관문 대기(GP-02·03·11)
 

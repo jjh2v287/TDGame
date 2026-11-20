@@ -1,7 +1,7 @@
 """실행 환경: 시스템 Python 3.12(PIL·matplotlib·numpy). 에디터 불필요.
-실행 명령: python Tools/MonsterAI/compose_turn_popping_media.py --replay <label> --species Hyena [--monster 0] [--start 2] [--seconds 8] [--slow 2] [--span 800] | --clip-before <label> --clip-after <label> --species Hyena [--slow 2] [--crop 0.6] [--clip-first 0 --clip-step 2 --clip-frames 60 --clip-width 480 --colors 64] [--webp-dir <폴더>(같은 프레임을 손실 압축 WEBP 로도, 보기용·커밋 안 함)] [--task M3-42] (PowerShell)
-출력: Docs/MonsterAI_CombatSim/measurements/<task>/media/ — replay_<종>.gif(같은 측정 한 판에서 왼쪽 논리 방향 = 고치기 전 보이던 몸, 오른쪽 보이는 메시 방향 = 고친 뒤를 위에서 본 나란히 재생, 주목 몬스터(--monster)를 가운데 두고 한 변 --span cm), yaw_<종>.png(몸 방향·각속도 시간 그래프), clip_<종>.gif(부드럽게 하기 끔/켬 두 판의 실제 PIE 화면 나란히, 두 판은 같은 장면 설정이지만 프레임 단위로 같지는 않다).
-상태: 현행(M3-42). 원본은 pie_measure_turn_popping.py 의 report.json 이 가리키는 raw/<종>.json, 촬영은 같은 라벨 frames/<종>/.
+실행 명령: python Tools/MonsterAI/compose_turn_popping_media.py --replay <label> --species Hyena [--monster 0] [--start 2] [--seconds 8] [--slow 2] [--span 800] | --clip-before <label> --clip-after <label> --species Hyena [--slow 2] [--crop 0.6] [--clip-first 0 --clip-step 2 --clip-frames 60 --clip-width 480 --colors 64] [--webp-dir <폴더>(같은 프레임을 손실 압축 WEBP 로도, 보기용·커밋 안 함)] [--caption-before 글 --caption-after 글] | --rate-before <label> --rate-after <label> --species Hyena [--monster 0] [--start 2] [--seconds 8] [--rate-limit 540] [--task M3-43] (PowerShell)
+출력: Docs/MonsterAI_CombatSim/measurements/<task>/media/ — replay_<종>.gif(같은 측정 한 판에서 왼쪽 논리 방향 = 고치기 전 보이던 몸, 오른쪽 보이는 메시 방향 = 고친 뒤를 위에서 본 나란히 재생, 주목 몬스터(--monster)를 가운데 두고 한 변 --span cm), yaw_<종>.png(몸 방향·각속도 시간 그래프), clip_<종>.gif(끔/켬 두 판의 실제 PIE 화면 나란히, 두 판은 같은 장면 설정이지만 프레임 단위로 같지는 않다), rate_<종>.png(두 판의 논리 방향(캡슐) 각속도를 위·아래로, 판마다 자기 시계).
+상태: 현행(M3-42, M3-43 에 캡션·두 판 각속도 그래프 추가). 원본은 pie_measure_turn_popping.py 의 report.json 이 가리키는 raw/<종>.json, 촬영은 같은 라벨 frames/<종>/.
 """
 import argparse
 import json
@@ -192,8 +192,8 @@ def compose_clip(arguments):
     full_frames = []
     durations = []
     for position, index in enumerate(indices):
-        left = caption(fit_width(crop_center(Image.open(before[index]["path"]).convert("RGB"), arguments.crop), arguments.clip_width), "고치기 전(VisualTurn 0)")
-        right = caption(fit_width(crop_center(Image.open(after[index]["path"]).convert("RGB"), arguments.crop), arguments.clip_width), "고친 뒤(VisualTurn 1)")
+        left = caption(fit_width(crop_center(Image.open(before[index]["path"]).convert("RGB"), arguments.crop), arguments.clip_width), arguments.caption_before)
+        right = caption(fit_width(crop_center(Image.open(after[index]["path"]).convert("RGB"), arguments.crop), arguments.clip_width), arguments.caption_after)
         canvas = Image.new("RGB", (left.width + right.width + 6, max(left.height, right.height)), (255, 255, 255))
         canvas.paste(left, (0, 0))
         canvas.paste(right, (left.width + 6, 0))
@@ -215,8 +215,46 @@ def compose_clip(arguments):
     print(json.dumps(result, ensure_ascii=False))
 
 
+def logic_rates(raw, monster_index, start_seconds, seconds):
+    monsters = raw["monsters"]
+    frames = window_frames(monsters[min(monster_index, len(monsters) - 1)]["frames"], start_seconds, seconds)
+    if len(frames) < 2:
+        return [], []
+    origin = monsters[0]["frames"][0][COLUMN_TIME]
+    times = [frame[COLUMN_TIME] - origin for frame in frames]
+    yaws = unwrap([frame[COLUMN_YAW] for frame in frames])
+    rates = [abs(yaws[i] - yaws[i - 1]) / max(times[i] - times[i - 1], 1e-6) for i in range(1, len(times))]
+    return times[1:], rates
+
+
+def compose_rate_chart(arguments):
+    before_times, before_rates = logic_rates(load_raw(arguments.task, arguments.rate_before, arguments.species), arguments.monster, arguments.start, arguments.seconds)
+    after_times, after_rates = logic_rates(load_raw(arguments.task, arguments.rate_after, arguments.species), arguments.monster, arguments.start, arguments.seconds)
+    if not before_rates or not after_rates:
+        sys.exit("no frames in window")
+    plt.rcParams["font.family"] = "Malgun Gothic"
+    plt.rcParams["axes.unicode_minus"] = False
+    figure, (top, bottom) = plt.subplots(2, 1, figsize=(10, 6), sharex=True, sharey=True)
+    top.plot(before_times, before_rates, color="#999999", linewidth=1.2, label=arguments.caption_before)
+    bottom.plot(after_times, after_rates, color="#2f6db5", linewidth=1.6, label=arguments.caption_after)
+    for axis in (top, bottom):
+        axis.axhline(arguments.rate_limit, color="#c0392b", linestyle="--", linewidth=1.0, label=f"{arguments.rate_limit:.0f}도/초")
+        axis.set_ylabel("캡슐 각속도(도/초)")
+        axis.legend(loc="upper left")
+    top.set_ylim(0, max(arguments.rate_limit * 1.25, min(max(before_rates + after_rates) * 1.05, 4000.0)))
+    bottom.set_xlabel("게임 시각(초, 판마다 자기 시계)")
+    figure.suptitle(f"{arguments.species} 몬스터 {arguments.monster} — 논리 방향(캡슐) 각속도, 같은 장면 설정의 두 판")
+    figure.tight_layout()
+    out_dir = MEASUREMENT_ROOT / arguments.task / "media"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    chart_path = out_dir / f"rate_{arguments.species}.png"
+    figure.savefig(chart_path, dpi=110)
+    plt.close(figure)
+    print(json.dumps({"rate_chart": str(chart_path.relative_to(ROOT)), "before_frames": len(before_rates), "after_frames": len(after_rates)}, ensure_ascii=False))
+
+
 def main():
-    parser = argparse.ArgumentParser(description="회전 팝핑 전·후 나란히 보기 만들기(M3-42)")
+    parser = argparse.ArgumentParser(description="회전 팝핑 전·후 나란히 보기 만들기(M3-42·M3-43)")
     parser.add_argument("--task", default="M3-42")
     parser.add_argument("--species", required=True)
     parser.add_argument("--replay")
@@ -234,11 +272,18 @@ def main():
     parser.add_argument("--webp-dir")
     parser.add_argument("--clip-before")
     parser.add_argument("--clip-after")
+    parser.add_argument("--caption-before", default="고치기 전(VisualTurn 0)")
+    parser.add_argument("--caption-after", default="고친 뒤(VisualTurn 1)")
+    parser.add_argument("--rate-before")
+    parser.add_argument("--rate-after")
+    parser.add_argument("--rate-limit", type=float, default=720.0)
     arguments = parser.parse_args()
     if arguments.replay:
         compose_replay(arguments)
     if arguments.clip_before and arguments.clip_after:
         compose_clip(arguments)
+    if arguments.rate_before and arguments.rate_after:
+        compose_rate_chart(arguments)
     return 0
 
 

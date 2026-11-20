@@ -43,6 +43,7 @@ protected:
 private:
 	void HandleActorDeath(FGameplayTag Channel, const FTDActorDeathMessage& Message);
 	void RespawnPlayer(TWeakObjectPtr<AController> Controller);
+	void PrestreamRespawnView(AController* PlayerController);
 	FTransform FindClearPawnSpawnTransform(AController* NewPlayer, const UClass& PawnClass, const FTransform& RequestedTransform);
 	bool TryFindClearPawnSpot(const UPrimitiveComponent& PawnShape, const FTransform& BaseTransform, const AActor* IgnoredActor, FTransform& OutTransform) const;
 

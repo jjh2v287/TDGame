@@ -10,12 +10,14 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/WorldSettings.h"
 #include "TimerManager.h"
+#include "World/Streaming/TDTexturePrestreamSubsystem.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTDGameMode, Log, All);
 
 namespace TDGameGameModeInternal
 {
 	constexpr float PawnSpawnLiftStepsCm[] = { 0.f, 25.f, 75.f, 150.f };
+	constexpr float RespawnPrestreamTailSeconds = 2.f;
 }
 
 ATDGameGameMode::ATDGameGameMode()
@@ -57,6 +59,28 @@ void ATDGameGameMode::HandleActorDeath(FGameplayTag Channel, const FTDActorDeath
 	}
 	FTimerHandle RespawnTimer;
 	GetWorldTimerManager().SetTimer(RespawnTimer, FTimerDelegate::CreateUObject(this, &ThisClass::RespawnPlayer, TWeakObjectPtr<AController>(PlayerController)), FMath::Max(PlayerRespawnDelaySeconds, 0.01f), false);
+	PrestreamRespawnView(PlayerController);
+}
+
+void ATDGameGameMode::PrestreamRespawnView(AController* PlayerController)
+{
+	const UWorld* World = GetWorld();
+	const UTDTexturePrestreamSubsystem* Prestream = World ? World->GetSubsystem<UTDTexturePrestreamSubsystem>() : nullptr;
+	if (!Prestream)
+	{
+		return;
+	}
+	if (bHasRespawnCheckpoint)
+	{
+		Prestream->PrestreamAtPawnLocation(RespawnCheckpoint.GetLocation(), FMath::Max(PlayerRespawnDelaySeconds, 0.01f) + TDGameGameModeInternal::RespawnPrestreamTailSeconds);
+		return;
+	}
+	const AActor* PlayerStart = FindPlayerStart(PlayerController);
+	if (!PlayerStart)
+	{
+		return;
+	}
+	Prestream->PrestreamAtPawnLocation(PlayerStart->GetActorLocation(), FMath::Max(PlayerRespawnDelaySeconds, 0.01f) + TDGameGameModeInternal::RespawnPrestreamTailSeconds);
 }
 
 void ATDGameGameMode::RespawnPlayer(const TWeakObjectPtr<AController> Controller)

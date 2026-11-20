@@ -26,6 +26,7 @@
 #include "GameplayAbilitySpec.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -39,6 +40,7 @@
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "HAL/IConsoleManager.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include "Misc/App.h"
@@ -49,6 +51,13 @@
 
 namespace
 {
+	int32 GTDSnapCameraOnTeleport = 1;
+	FAutoConsoleVariableRef CVarTDSnapCameraOnTeleport(
+		TEXT("TD.Camera.SnapOnTeleport"),
+		GTDSnapCameraOnTeleport,
+		TEXT("1: after a teleport or a respawn the top-down camera skips its lag and the renderer starts a new motion blur and temporal history (camera cut). 0: off."));
+
+	constexpr double TDGameCharacterTeleportJumpCm = 1000.0;
 	constexpr float TDGameCharacterMinimumPassagePaceScale = 0.3f;
 	constexpr int32 TDGameCharacterSwordComboStepCount = 4;
 	constexpr float TDGameCharacterSwordComboResetSeconds = 1.6f;
@@ -278,14 +287,81 @@ void ATDGameCharacter::HandleDamaged(const FTDDamageResult& Result, const FTDDam
 void ATDGameCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+	SnapCameraAfterLargeJump();
 
 	// stub
+}
+
+void ATDGameCharacter::SnapCameraAfterLargeJump()
+{
+	const FVector CurrentLocation = GetActorLocation();
+	const bool bJumped = bHasLastTickLocation && FVector::DistSquared(CurrentLocation, LastTickLocation) > FMath::Square(TDGameCharacterTeleportJumpCm);
+	LastTickLocation = CurrentLocation;
+	bHasLastTickLocation = true;
+	if (!bJumped || GTDSnapCameraOnTeleport == 0)
+	{
+		return;
+	}
+	SnapCameraBoomToPawn();
+	RequestCameraCut();
+}
+
+void ATDGameCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	if (GTDSnapCameraOnTeleport == 0)
+	{
+		return;
+	}
+	RequestCameraCut();
 }
 
 void ATDGameCharacter::UnPossessed()
 {
 	Super::UnPossessed();
 	SetPassagePaceScale(1.f);
+}
+
+void ATDGameCharacter::TeleportSucceeded(bool bIsATest)
+{
+	Super::TeleportSucceeded(bIsATest);
+	if (bIsATest || GTDSnapCameraOnTeleport == 0)
+	{
+		return;
+	}
+	SnapCameraBoomToPawn();
+	RequestCameraCut();
+}
+
+void ATDGameCharacter::SnapCameraBoomToPawn()
+{
+	LastTickLocation = GetActorLocation();
+	bHasLastTickLocation = true;
+	if (!CameraBoom)
+	{
+		return;
+	}
+	const FVector ArmOrigin = CameraBoom->GetComponentLocation() + CameraBoom->TargetOffset;
+	CameraBoom->PreviousArmOrigin = ArmOrigin;
+	CameraBoom->PreviousDesiredLoc = ArmOrigin;
+}
+
+void ATDGameCharacter::RequestCameraCut()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	APlayerCameraManager* CameraManager = PlayerController ? PlayerController->PlayerCameraManager.Get() : nullptr;
+	if (!CameraManager)
+	{
+		return;
+	}
+	CameraManager->SetGameCameraCutThisFrame();
+	GetWorldTimerManager().SetTimerForNextTick([WeakCameraManager = TWeakObjectPtr<APlayerCameraManager>(CameraManager)]()
+	{
+		if (APlayerCameraManager* NextFrameCameraManager = WeakCameraManager.Get())
+		{
+			NextFrameCameraManager->SetGameCameraCutThisFrame();
+		}
+	});
 }
 
 void ATDGameCharacter::SetPassagePaceScale(float Scale)

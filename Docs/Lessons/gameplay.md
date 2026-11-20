@@ -42,3 +42,56 @@
 - 범위: UE 5.8 `LV_DarkFantasy_OpenWorld`의 지면·겹침 질의 전반(`Source/TDGame/World/Generation/TDArenaEncounter.cpp`, `Tools/Gameplay/editor_place_field_encounters.py`). 소환 졸개 `FindGroundHeight`(TDMonsterCharacter.cpp)에는 같은 결함이 남아 있다
 - 증거: `Saved/AgentOps/20261119/gp03/d2-spawn.md`(낙하 적분 예측과 관측 z 일치), `fix-refute.md` M1, `f2_checkpoint_filter_check.py` 11/11, PIE final·final2 접지 3/3(발과 지면 차 2~3cm). 에디터 직접 질의로 확인(2026-11-20, `Saved/AgentOps/20261119/gp03/d2-confirm.txt`: 북 공터 두 점에서 WorldStatic 선 추적이 PCGVolume BrushComponent에 시작점 겹침·시간 0으로 맞음)
 - 날짜·상태: 2026-11-19 active
+
+### L-gameplay-06 엔진 `Shot`(스크린샷)은 PIE 게임 스레드를 장당 약 200ms(첫 장 약 0.8초) 멈춘다 — 움직이는 화면 측정은 엔진 밖 영역 복사로 한다
+- 증상: GF-07 스모크에서 걷는 중 8Hz 로 `Shot filename=<경로> -nosuffix` 를 찍자 걷기 구간 프레임이 20ms 에서 200~245ms 로 늘고, 촬영 간격보다 프레임이 길어 매 프레임 사진이 찍혀 6fps 로 떨어졌다(`smoke1/frames.csv`, 사진 요청 프레임 다음 프레임 길이).
+- 원인: Shot 은 다음 그리기에서 백버퍼를 읽어 파일로 쓰며 그 프레임이 통째로 길어진다(실측만, 엔진 안 지연 지점은 미확인).
+- 해결: 걷는 동안의 촬영은 `Tools/Gameplay/floor_popping_capture.py`(GDI BitBlt 로 뷰포트 영역만 복사, 1612×715 장당 약 17ms, PNG 압축 1단계·쓰기 스레드 3개, 12Hz)로 하고, 엔진 Shot 은 시작 대기 중 1장만 찍어 에디터 창 캡처 안에서 뷰포트 위치를 찾는 데 쓴다(정규 상관 0.94~0.95). 화면 복사에는 HUD(체력 막대)와 화면 메시지가 들어가므로 측정 동안 `DisableAllScreenMessages`, 분석에서 HUD 영역을 가린다. Pillow `ImageGrab.grab(bbox)` 는 전체 가상 화면을 찍고 잘라 느리다(6400×2160 에서 약 150ms).
+- 범위: UE 5.8 에디터 PIE 화면 측정 전반.
+- 증거: `Saved/Gameplay/FloorPopping/smoke1/frames.csv`·`result.json`, `smoke2/capture.json`(복사 109장·누락 0, 걷기 프레임 중앙 20.4ms).
+- 날짜·상태: 2026-11-20 active
+
+### L-gameplay-07 Mover 플레이어 폰을 파이썬 `set_actor_location`(teleport)으로 매 틱 옮기면 실제보다 훨씬 강한 모션 블러가 나고, 한 번이라도 순간이동시킨 뒤에는 `add_movement_input` 이 폰을 움직이지 않는다
+- 증상: GF-07 걷기 흉내(550cm/s 로 매 틱 위치 지정) 화면이 50~100px 줄무늬로 번졌다(카메라 이동 프레임당 약 11cm·기본 모션 블러로 계산하면 약 7~15px). 같은 자리를 실제 이동 입력으로 걸으면 또렷하다. 또 시작 대기에서 매 틱 위치를 고정했거나 `TeleportPawn` 으로 한 번 옮긴 뒤에는 `add_movement_input((-1,0,0))` 을 매 틱 줘도 폰이 그대로였다(아무것도 옮기지 않은 PIE 에서는 약 600cm/s 로 걷는다).
+- 원인: 미검증(블러는 스프링 암 지연·Mover 보정·동작 벡터의 상호작용, 입력 무시는 순간이동 뒤 Mover 상태로 추정).
+- 해결: 화면을 보는 걷기 측정은 순간이동 없이 PIE 시작 위치에서 실제 입력으로 한다(`pie_floor_popping.py --drive input`). 순간이동 측정은 도착 뒤 정지 화면만 쓴다. 흉내 걷기로 잰 스트리밍 지표(카메라 위치만의 함수)는 그대로 쓸 수 있다.
+- 범위: UE 5.8 Mover 기반 `BP_TDCombatCharacter`, 에디터 파이썬 PIE 도구(`editor_pie_probe.py` 의 hold 뒤 walk 도 같은 위험).
+- 증거: `Saved/AgentOps/20261120/gf07/walk_direct_grid.png`(입력 걷기 또렷)·`base_a_v2_big.png`(흉내 걷기 번짐)·`input_test.json`·`input_test2.json`, `Saved/Gameplay/FloorPopping/mb_input`(이동 0).
+- 날짜·상태: 2026-11-20 active(원인 미검증)
+
+### L-gameplay-08 파이썬 `add_movement_input` 방향은 단위 길이로 준다 — 길이가 큰 벡터를 주면 폰이 멈춘다
+- 증상: 방향 (−1,0,0) 은 약 600cm/s 로 걷는데, (−150,0,0) 을 주자 0.6초 안에 멈춰 그 뒤 움직이지 않았다.
+- 원인: 미검증(입력 벡터 크기 제한·정규화 경로 추정).
+- 해결: `length = hypot(dx, dy)` 로 나눈 단위 벡터와 배율 1.0 을 준다(`editor_floor_popping_probe.py` `steer_pawn`, `editor_pie_probe.py` `walk_toward` 와 같은 꼴).
+- 범위: UE 5.8 Mover 기반 플레이어 폰.
+- 증거: `Saved/AgentOps/20261120/gf07/input_test.json`(0~1초 이동, 1~2초 정지).
+- 날짜·상태: 2026-11-20 active
+
+### L-gameplay-09 12Hz 화면 복사를 PNG 로 남기면 실행당 3~4GB — 측정 몇 번에 C: 가 차서 실행이 실패한다
+- 증상: GF-07 2차 창에서 걷기 실행이 중간에 멈추고 C: 남은 공간 0GB. 화면 복사 1612×715 PNG 장당 약 3.3MB, 걷기 한 번(약 1,300장)에 4GB 넘게 쌓였고, 작업 중단으로 남은 nvidia-smi 기록 프로세스도 그대로 돌고 있었다.
+- 해결: 화면 복사를 JPEG 품질 95·색 축소 없음(4:4:4)으로 바꿨다(장당 약 0.86MB, PNG 와의 평균 차 0.009 — 팝 판정 문턱 0.303 보다 훨씬 작음). 다 쓴 실행의 `grabs/` 는 분석 뒤 지운다(이번에 45.6GB 정리). 측정 일괄 실행 전 `df -h /c` 로 실행 수 × 1GB 이상 남았는지 본다. 드라이버 정리 순서는 GPU 기록기 종료 → 화면 복사 종료 → PIE 정지로 해, 중간 실패에도 자식 프로세스가 남지 않게 했다.
+- 범위: `Tools/Gameplay/floor_popping_capture.py`·`pie_floor_popping.py`, 같은 방식의 다른 화면 복사 도구.
+- 증거: `Saved/AgentOps/20261120/gf07/`(창 2 로그), 같은 장면 한 장 PNG 3.27MB·JPEG 855KB(2026-11-20 직접 비교), JPEG 로 찍은 실행 `Saved/Gameplay/FloorPopping/w2_tp_off2` 이후.
+- 날짜·상태: 2026-11-20 active
+
+### L-gameplay-10 '도착 뒤 정착 시간'(마지막 사진 대비 T_pop 넘는 블록 1% 이상인 마지막 시각)은 바람에 흔들리는 식물 화면에서 응시 길이로 포화한다
+- 증상: GF-07 순간이동 응시 정착 시간이 원래·최종 모두 5.0~5.1초(응시 길이)로 나와 등록 판정이 '악화'로 보였다. 지점별 곡선은 0.2~4.9초 내내 0.03~0.08 로 평평 — 연속 사진끼리도 덤불잎·풀이 T_pop(0.303)을 넘어 1% 를 넘는다. 모션 블러를 끄면 흔들리는 잎이 또렷해져 포화 지점이 2곳 늘었다.
+- 해결: 등록 전 시운전에서 응시 마지막 두 사진끼리 바뀐 블록 비율이 문턱(1%)보다 충분히 작은지 먼저 본다. 넘으면 '마지막 사진 대비' 대신 '늦은 구간 잡음 수준 + 여유'를 기준으로 하거나, 도착 0.1·0.3·0.5초의 화면 칸 변화 비율(마지막 4장 평균 기준, `judge_floor_popping.py` 보조 지표)로 잰다.
+- 범위: `analyze_floor_popping.py` 응시 정착, 식물이 많은 필드 화면의 모든 '정착' 지표.
+- 증거: `Saved/AgentOps/20261120/gf07/judge_same_session/judgment.md`·`judge_cross/judgment.md`, `Docs/Validation/Gameplay/GF-07-floor-popping.md` 6.3.
+- 날짜·상태: 2026-11-20 active
+
+### L-gameplay-11 에디터 PIE 프레임 p95 는 세션 간에 비교하지 않는다 — 엔진 범주 밖 게임 스레드 시간이 에디터 재시작·다른 세션 GPU 시험에 따라 튄다
+- 증상: GF-07 수정 전(2차 창)·후(에디터 재시작 직후) 걷기 FrameTime p95 23.0 → 27.4ms 로 회귀 판정선(1.5ms)을 넘었다. 범주별로 보면 변경 코드가 도는 범주(Tickables·TickActors·Camera·RenderAssetStreaming 대기) 합은 0.98~1.04ms 로 같았고, 늘어난 것은 어느 Exclusive/GameThread 범주에도 안 잡히는 시간(p95 7.4·9.4 → 15.6·10.9ms)뿐이었다.
+- 해결: 회귀 판정은 같은 에디터 세션 안에서 원래 설정(콘솔 변수로 끔)과 최종을 순서 교대(원·최·최·원)로 잰다 — 같은 세션에서는 22.63 → 22.50ms 로 차이가 없었다. 범주 귀속은 `Tools/Gameplay/judge_floor_popping.py` 실행별 표(범주 밖 GT p95·변경 코드 범주 합).
+- 범위: PIE 성능 비교 전반(CSV 프로파일러 FrameTime·GameThreadTime). GPUTime 은 덜 흔들렸다.
+- 증거: `Saved/AgentOps/20261120/gf07/judge_cross/`·`judge_same_session/`, 측정 w2_ww_base_*·w3_final_ww_*·w5_ww_*.
+- 날짜·상태: 2026-11-20 active
+
+### L-gameplay-12 목적지 텍스처 미리 요청: 엔진은 안 그려진 물체에 배율을 1.5 까지만 주고, 측정 도구가 다음 목적지 요청을 도착 순간에 걸면 '도착 뒤 대기'에 다음 지점 미리 받기가 섞인다
+- 증상: `IStreamingManager::AddViewLocation` 배율 2 로 미리 요청을 켜자 서쪽 공터 도착 대기(71MB·1.5초)는 0 이 됐지만 다른 지점에서 도착 직후 32~71MB 대기가 새로 보였다. 꼬리 2초→0, 배율 2→1.5 로 바꿔도 그대로였다.
+- 원인: (1) 엔진 `FAsyncRenderAssetStreamingData` 는 배율이 `r.Streaming.MaxHiddenPrimitiveViewBoost`(기본 1.5)를 넘으면 안 그려진 물체에는 1.5 만, 보이는 물체에는 나머지를 더 준다 — 숨은 목적지에는 1.5 넘는 배율이 이득 없이 보이는 물체만 밉을 더 요청한다. (2) 탐침(`editor_floor_popping_probe.py`)의 `prestream_next` 는 직전 구간이 시작될 때(= 현재 지점 도착 순간) 다음 목적지를 요청해, 도착 직후 대기가 '다음 지점 미리 받기'였다(화면 변화 곡선은 스냅만 켠 것과 같음).
+- 해결: 기본 배율 1.5(`TD.Streaming.PrestreamBoost`). 미리 요청 효과는 '목적지 도착 뒤 대기'만 따로 보거나, 요청 시각을 구간 끝 N초 전으로 옮겨 잰다.
+- 범위: `UTDTexturePrestreamSubsystem`, 미리 요청을 쓰는 측정 전반.
+- 증거: `Saved/AgentOps/20261120/gf07/prestream_variants_quick.json`, 측정 w5_tp_*.
+- 날짜·상태: 2026-11-20 active

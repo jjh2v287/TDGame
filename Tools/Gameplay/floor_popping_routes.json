@@ -1,0 +1,1899 @@
+{
+ "defaults": {
+  "speed_cm_s": 550.0,
+  "shot_hz": 8.0,
+  "point_spacing_cm": 25.0
+ },
+ "routes": {
+  "village_loop": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 8.0
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -27000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": [
+      0.1,
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -27000,
+      -10000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": [
+      0.1,
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -11000,
+      -10000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": [
+      0.1,
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -11000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": [
+      0.1,
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      4.0
+     ]
+    }
+   ]
+  },
+  "teleport_spots": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 8.0
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -24000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 5.0,
+     "shot_times": [
+      0.05,
+      0.15,
+      0.3,
+      0.5,
+      0.75,
+      1.0,
+      1.5,
+      2.0,
+      3.0,
+      5.0
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -16000,
+      -9000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 5.0,
+     "shot_times": [
+      0.05,
+      0.15,
+      0.3,
+      0.5,
+      0.75,
+      1.0,
+      1.5,
+      2.0,
+      3.0,
+      5.0
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -26000,
+      -8000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 5.0,
+     "shot_times": [
+      0.05,
+      0.15,
+      0.3,
+      0.5,
+      0.75,
+      1.0,
+      1.5,
+      2.0,
+      3.0,
+      5.0
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -11000,
+      -6000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 5.0,
+     "shot_times": [
+      0.05,
+      0.15,
+      0.3,
+      0.5,
+      0.75,
+      1.0,
+      1.5,
+      2.0,
+      3.0,
+      5.0
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -20000,
+      -2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 5.0,
+     "shot_times": [
+      0.05,
+      0.15,
+      0.3,
+      0.5,
+      0.75,
+      1.0,
+      1.5,
+      2.0,
+      3.0,
+      5.0
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -12000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 5.0,
+     "shot_times": [
+      0.05,
+      0.15,
+      0.3,
+      0.5,
+      0.75,
+      1.0,
+      1.5,
+      2.0,
+      3.0,
+      5.0
+     ]
+    }
+   ]
+  },
+  "smoke": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 3.0
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -14000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [
+      0.25,
+      1.0,
+      2.0
+     ]
+    }
+   ]
+  },
+  "burst_probe": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 8.0
+    },
+    {
+     "kind": "stare",
+     "seconds": 0.5,
+     "shot_times": [],
+     "console": [
+      "ListTextures streaming -csv"
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -24300,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 0.3,
+     "shot_times": [],
+     "console": [
+      "ListTextures streaming -csv"
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -26000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 0.5,
+     "shot_times": [],
+     "console": [
+      "ListTextures streaming -csv"
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -27000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 0.5,
+     "shot_times": [],
+     "console": [
+      "ListTextures streaming -csv"
+     ]
+    }
+   ]
+  },
+  "toggle_probe": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 6.0
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -11000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 3"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 1"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -20000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 3"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 1"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -25100,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 3"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 1"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -27000,
+      -3000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 3"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 1"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -18000,
+      -10000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "foliage.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.ForceLOD -1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Streaming.FullyLoadUsedTextures 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 3"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "grass.CullDistanceScale 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Shadow.Virtual.Enable 1"
+     ]
+    }
+   ]
+  },
+  "respawn_probe": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 6.0
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -26000,
+      -8000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 6.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 10.0,
+     "shot_times": [],
+     "free": true,
+     "kill_player": true
+    }
+   ]
+  },
+  "west_walk": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 8.0
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -26500,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": []
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -11000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 4.0,
+     "shot_times": []
+    }
+   ]
+  },
+  "blur_probe": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 6.0
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -24650,
+      1900
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.5,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -25200,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.5,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -20000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.5,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -26000,
+      -8000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.5,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -11000,
+      2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.5,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.MotionBlurQuality 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.Velocity.EnableVertexDeformation 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    }
+   ]
+  },
+  "zfight_probe": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 6.0
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -16500,
+      3000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Landscape 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Landscape 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "wp.Runtime.HLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "wp.Runtime.HLOD 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Decals 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Decals 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedGrass 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedGrass 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedFoliage 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedFoliage 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.StaticMeshes 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.StaticMeshes 2"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -22800,
+      1200
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Landscape 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Landscape 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "wp.Runtime.HLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "wp.Runtime.HLOD 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Decals 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Decals 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedGrass 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedGrass 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedFoliage 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedFoliage 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.StaticMeshes 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.StaticMeshes 2"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -26200,
+      2800
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Landscape 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Landscape 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "wp.Runtime.HLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "wp.Runtime.HLOD 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Decals 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Decals 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedGrass 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedGrass 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedFoliage 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedFoliage 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.StaticMeshes 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.StaticMeshes 2"
+     ]
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -13500,
+      4300
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.0,
+     "shot_times": []
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Landscape 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Landscape 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "wp.Runtime.HLOD 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "wp.Runtime.HLOD 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Decals 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.Decals 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "r.AntiAliasingMethod 4"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedGrass 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedGrass 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedFoliage 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.InstancedFoliage 2"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.StaticMeshes 0"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.StaticMeshes 2"
+     ]
+    }
+   ]
+  },
+  "inventory_stand": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 4.0
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -19000,
+      -2000
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 6.0,
+     "shot_times": []
+    }
+   ]
+  },
+  "west_walk_mbvis": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 8.0
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -26500,
+      2000
+     ],
+     "console": [
+      "ShowFlag.VisualizeMotionBlur 1"
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 3.0,
+     "shot_times": [],
+     "console": [
+      "ShowFlag.VisualizeMotionBlur 2"
+     ]
+    }
+   ]
+  },
+  "puddle_probe": {
+   "start": [
+    -11000,
+    2000
+   ],
+   "segments": [
+    {
+     "kind": "settle",
+     "seconds": 5.0
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -11030,
+      1900
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": []
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -10230,
+      1900
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -11030,
+      1900
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 1.5,
+     "shot_times": []
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -17090,
+      2150
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": []
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -16290,
+      2150
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -17090,
+      2150
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 1.5,
+     "shot_times": []
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -19750,
+      2110
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": []
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -18950,
+      2110
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -19750,
+      2110
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 1.5,
+     "shot_times": []
+    },
+    {
+     "kind": "teleport",
+     "to": [
+      -22970,
+      2140
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 2.5,
+     "shot_times": []
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -22170,
+      2140
+     ]
+    },
+    {
+     "kind": "glide",
+     "to": [
+      -22970,
+      2140
+     ]
+    },
+    {
+     "kind": "stare",
+     "seconds": 1.5,
+     "shot_times": []
+    }
+   ]
+  }
+ }
+}

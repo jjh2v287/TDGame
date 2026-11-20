@@ -83,6 +83,7 @@ private:
 	bool IsDestinationReady() const;
 	FWorldPartitionStreamingQuerySource MakeReadinessQuerySource() const;
 	bool IsDestinationOnNavigation() const;
+	void PrestreamDestinationView() const;
 	void RegisterStreamingProvider();
 	void UnregisterStreamingProvider();
 	void HandleStreamingStateUpdated();

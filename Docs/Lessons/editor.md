@@ -922,3 +922,11 @@
 - 원인(미검증, 코드 읽기만): `tasklist` 의 한글 윈도우 출력(cp949)을 UTF-8 로 풀다가 실패해 표준 출력이 `None` 이 된다
 - 해결: `Tools/ue_editor.py` 는 `PYTHONUTF8` 없이 돌린다. 오류로 끝났으면 `python Tools/ue_editor.py status` 로 에디터가 실제로 닫혔는지 확인한다
 - 범위: `tasklist` 출력을 읽는 Tools 스크립트 전반. 날짜 2026-11-16, claude
+
+### L-editor-111 `EditorPerformanceSettings`(배경 CPU 줄이기)는 파이썬 클래스로 노출되지 않는다 — 기본 객체 경로와 C++ 속성 이름으로만 읽고 쓴다
+- 증상: `unreal.get_default_object(unreal.EditorPerformanceSettings)` 가 `module 'unreal' has no attribute 'EditorPerformanceSettings'`, 기본 객체를 얻어도 `throttle_cpu_when_not_foreground` 는 `Failed to find property`.
+- 원인: 클래스가 파이썬 형으로 노출되지 않고, 비트필드 속성의 파이썬 이름 변환이 되지 않는다(실측).
+- 해결: `unreal.load_object(None, '/Script/UnrealEd.Default__EditorPerformanceSettings')` 를 얻어 `get_editor_property('bThrottleCPUWhenNotForeground')`·`set_editor_property(...)`(메모리만, 저장 안 함). 2026-11-20 이 PC 값은 이미 False.
+- 범위: UE 5.8 에디터 파이썬, 에디터 설정 객체의 비트필드 속성.
+- 증거: `Tools/Gameplay/editor_floor_popping_probe.py` `set_background_throttle`(GF-07 smoke1 첫 실패 → smoke2 통과).
+- 날짜·상태: 2026-11-20 active

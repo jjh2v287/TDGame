@@ -18,6 +18,7 @@
 #include "WorldPartition/DataLayer/DataLayerManager.h"
 #include "WorldPartition/WorldPartitionRuntimeCell.h"
 #include "WorldPartition/WorldPartitionSubsystem.h"
+#include "World/Streaming/TDTexturePrestreamSubsystem.h"
 
 namespace
 {
@@ -405,6 +406,7 @@ TStatId UTDSeamlessTravelSubsystem::GetStatId() const
 void UTDSeamlessTravelSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	PrestreamDestinationView();
 
 	switch (TravelState)
 	{
@@ -417,6 +419,17 @@ void UTDSeamlessTravelSubsystem::Tick(float DeltaTime)
 	default:
 		break;
 	}
+}
+
+void UTDSeamlessTravelSubsystem::PrestreamDestinationView() const
+{
+	const UWorld* World = GetWorld();
+	const UTDTexturePrestreamSubsystem* Prestream = World ? World->GetSubsystem<UTDTexturePrestreamSubsystem>() : nullptr;
+	if (!Prestream)
+	{
+		return;
+	}
+	Prestream->PrestreamAtPawnLocation(Destination.GetLocation(), 0.f);
 }
 
 bool UTDSeamlessTravelSubsystem::IsDestinationOnNavigation() const

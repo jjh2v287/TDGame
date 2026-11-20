@@ -49,6 +49,8 @@ public:
 	/** Update */
 	virtual void Tick(float DeltaSeconds) override;
 
+	virtual void PossessedBy(AController* NewController) override;
+
 	virtual void UnPossessed() override;
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
@@ -112,6 +114,7 @@ public:
 
 protected:
 	virtual void HandleMovementModeChanged(const FName& PreviousMovementModeName, const FName& NewMovementModeName) override;
+	virtual void TeleportSucceeded(bool bIsATest) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UTDCapsuleModifierComponent> CapsuleModifierComponent;
@@ -186,6 +189,12 @@ protected:
 	float HeavyKnockbackSeconds = 0.22f;
 
 private:
+	void SnapCameraAfterLargeJump();
+	void SnapCameraBoomToPawn();
+	void RequestCameraCut();
+
+	FVector LastTickLocation = FVector::ZeroVector;
+	bool bHasLastTickLocation = false;
 	void ApplyDefaultCombatStyle();
 	void AttachWeaponMeshes();
 	void RequestWeaponMeshes();

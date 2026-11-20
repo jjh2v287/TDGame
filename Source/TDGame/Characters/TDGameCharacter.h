@@ -49,8 +49,6 @@ public:
 	/** Update */
 	virtual void Tick(float DeltaSeconds) override;
 
-	virtual void PossessedBy(AController* NewController) override;
-
 	virtual void UnPossessed() override;
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
@@ -189,12 +187,16 @@ protected:
 	float HeavyKnockbackSeconds = 0.22f;
 
 private:
+	friend struct FTDGameCharacterTestAccess;
+
+	bool HasJumpedSinceLastTick() const;
 	void SnapCameraAfterLargeJump();
 	void SnapCameraBoomToPawn();
 	void RequestCameraCut();
 
 	FVector LastTickLocation = FVector::ZeroVector;
 	bool bHasLastTickLocation = false;
+	int32 CameraCutRequestCount = 0;
 	void ApplyDefaultCombatStyle();
 	void AttachWeaponMeshes();
 	void RequestWeaponMeshes();

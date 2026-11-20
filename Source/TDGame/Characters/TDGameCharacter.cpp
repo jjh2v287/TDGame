@@ -41,6 +41,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HAL/IConsoleManager.h"
+#include "Misc/App.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include "Misc/App.h"
@@ -55,7 +56,7 @@ namespace
 	FAutoConsoleVariableRef CVarTDSnapCameraOnTeleport(
 		TEXT("TD.Camera.SnapOnTeleport"),
 		GTDSnapCameraOnTeleport,
-		TEXT("1: after a teleport or a respawn the top-down camera skips its lag and the renderer starts a new motion blur and temporal history (camera cut). 0: off."));
+		TEXT("1: after the pawn jumps more than 10 m (a TeleportTo or a single-frame move) the top-down camera skips its lag and, when the game renders, starts a new motion blur and temporal history (camera cut). Turning in place and short steps keep the lag. 0: off."));
 
 	constexpr double TDGameCharacterTeleportJumpCm = 1000.0;
 	constexpr float TDGameCharacterMinimumPassagePaceScale = 0.3f;
@@ -189,6 +190,8 @@ void ATDGameCharacter::BeginPlay()
 	ApplyDefaultCombatStyle();
 
 	Super::BeginPlay();
+	LastTickLocation = GetActorLocation();
+	bHasLastTickLocation = true;
 
 	if (CharacterAnimation)
 	{
@@ -292,27 +295,21 @@ void ATDGameCharacter::Tick(float DeltaSeconds)
 	// stub
 }
 
+bool ATDGameCharacter::HasJumpedSinceLastTick() const
+{
+	return bHasLastTickLocation && FVector::DistSquared(GetActorLocation(), LastTickLocation) > FMath::Square(TDGameCharacterTeleportJumpCm);
+}
+
 void ATDGameCharacter::SnapCameraAfterLargeJump()
 {
-	const FVector CurrentLocation = GetActorLocation();
-	const bool bJumped = bHasLastTickLocation && FVector::DistSquared(CurrentLocation, LastTickLocation) > FMath::Square(TDGameCharacterTeleportJumpCm);
-	LastTickLocation = CurrentLocation;
+	const bool bJumped = HasJumpedSinceLastTick();
+	LastTickLocation = GetActorLocation();
 	bHasLastTickLocation = true;
 	if (!bJumped || GTDSnapCameraOnTeleport == 0)
 	{
 		return;
 	}
 	SnapCameraBoomToPawn();
-	RequestCameraCut();
-}
-
-void ATDGameCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-	if (GTDSnapCameraOnTeleport == 0)
-	{
-		return;
-	}
 	RequestCameraCut();
 }
 
@@ -325,7 +322,7 @@ void ATDGameCharacter::UnPossessed()
 void ATDGameCharacter::TeleportSucceeded(bool bIsATest)
 {
 	Super::TeleportSucceeded(bIsATest);
-	if (bIsATest || GTDSnapCameraOnTeleport == 0)
+	if (bIsATest || GTDSnapCameraOnTeleport == 0 || !HasJumpedSinceLastTick())
 	{
 		return;
 	}
@@ -348,6 +345,11 @@ void ATDGameCharacter::SnapCameraBoomToPawn()
 
 void ATDGameCharacter::RequestCameraCut()
 {
+	++CameraCutRequestCount;
+	if (!FApp::CanEverRender())
+	{
+		return;
+	}
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	APlayerCameraManager* CameraManager = PlayerController ? PlayerController->PlayerCameraManager.Get() : nullptr;
 	if (!CameraManager)

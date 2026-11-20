@@ -11,10 +11,19 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HAL/IConsoleManager.h"
+#include "Misc/App.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/ConfigCacheIni.h"
 #include "UObject/Package.h"
 #include "UObject/UnrealType.h"
+
+struct FTDGameCharacterTestAccess
+{
+	static int32 GetCameraCutRequestCount(const ATDGameCharacter& Character)
+	{
+		return Character.CameraCutRequestCount;
+	}
+};
 
 namespace TDCameraTeleportSnapTests
 {
@@ -26,6 +35,9 @@ namespace TDCameraTeleportSnapTests
 	const FVector FirstDestination(3000.f, -2000.f, PlayerSpawnHeight);
 	const FVector SecondDestination(-3000.f, 2000.f, PlayerSpawnHeight);
 	const TCHAR* const SnapVariableName = TEXT("TD.Camera.SnapOnTeleport");
+	constexpr float LagDistanceCm = 57.f;
+	const FVector SmallStepOffset(300.f, 0.f, 0.f);
+	const FRotator TurnRotation(0.f, 90.f, 0.f);
 
 	struct FTDCameraSnapWorld
 	{
@@ -109,6 +121,46 @@ namespace TDCameraTeleportSnapTests
 	{
 		return Boom.GetComponentLocation() + Boom.TargetOffset;
 	}
+
+	struct FTDPossessedPlayer
+	{
+		ATDGameCharacter* Player = nullptr;
+		APlayerController* Controller = nullptr;
+		APlayerCameraManager* CameraManager = nullptr;
+		USpringArmComponent* Boom = nullptr;
+	};
+
+	bool SpawnPossessedPlayer(FAutomationTestBase& Test, const FTDCameraSnapWorld& Fixture, FTDPossessedPlayer& OutPossessed)
+	{
+		OutPossessed.Player = Fixture.SpawnPlayer();
+		OutPossessed.Controller = Fixture.World->SpawnActor<APlayerController>();
+		if (!Test.TestNotNull(TEXT("Player pawn spawned"), OutPossessed.Player) || !Test.TestNotNull(TEXT("Player controller spawned"), OutPossessed.Controller))
+		{
+			return false;
+		}
+		if (!OutPossessed.Controller->PlayerCameraManager)
+		{
+			OutPossessed.Controller->SpawnPlayerCameraManager();
+		}
+		OutPossessed.CameraManager = OutPossessed.Controller->PlayerCameraManager;
+		OutPossessed.Boom = OutPossessed.Player->GetCameraBoom();
+		if (!Test.TestNotNull(TEXT("Camera manager exists"), OutPossessed.CameraManager) || !Test.TestNotNull(TEXT("Camera boom exists"), OutPossessed.Boom))
+		{
+			return false;
+		}
+		OutPossessed.Controller->Possess(OutPossessed.Player);
+		OutPossessed.Boom->bEnableCameraLag = true;
+		OutPossessed.Boom->CameraLagSpeed = CameraLagSpeed;
+		return true;
+	}
+
+	FVector PlaceLagBehindArmOrigin(USpringArmComponent& Boom)
+	{
+		const FVector LaggedOrigin = ComputeArmOrigin(Boom) - FVector(LagDistanceCm, 0.f, 0.f);
+		Boom.PreviousDesiredLoc = LaggedOrigin;
+		Boom.PreviousArmOrigin = LaggedOrigin;
+		return LaggedOrigin;
+	}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCameraTeleportSnapsLagTest, "TDGame.Camera.TeleportSnapsCameraLag", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -176,11 +228,76 @@ bool FTDCameraLargeJumpSnapsLagTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCameraTeleportRequestsCutTest, "TDGame.Camera.PossessAndTeleportRequestCameraCut", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCameraTurnInPlaceKeepsLagTest, "TDGame.Camera.TurnInPlaceTeleportKeepsCameraLag", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FTDCameraTeleportRequestsCutTest::RunTest(const FString& Parameters)
+bool FTDCameraTurnInPlaceKeepsLagTest::RunTest(const FString& Parameters)
 {
 	using namespace TDCameraTeleportSnapTests;
+	FTDSnapVariableScope SnapOn(1);
+	FTDCameraSnapWorld Fixture;
+	FTDPossessedPlayer Possessed;
+	if (!SpawnPossessedPlayer(*this, Fixture, Possessed))
+	{
+		return false;
+	}
+	const FVector LaggedOrigin = PlaceLagBehindArmOrigin(*Possessed.Boom);
+	const int32 CutRequestsBefore = FTDGameCharacterTestAccess::GetCameraCutRequestCount(*Possessed.Player);
+	Possessed.CameraManager->bGameCameraCutThisFrame = false;
+	TestTrue(TEXT("Turning in place through TeleportTo succeeds, as the Mover teleport effect of FaceRotationImmediately does"), Possessed.Player->TeleportTo(Possessed.Player->GetActorLocation(), TurnRotation));
+	TestTrue(TEXT("Turning in place keeps the camera lag"), Possessed.Boom->PreviousDesiredLoc.Equals(LaggedOrigin, ToleranceCm));
+	TestFalse(TEXT("Turning in place does not cut the camera"), Possessed.CameraManager->bGameCameraCutThisFrame);
+	TestEqual(TEXT("Turning in place requests no camera cut"), FTDGameCharacterTestAccess::GetCameraCutRequestCount(*Possessed.Player) - CutRequestsBefore, 0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCameraSmallTeleportKeepsLagTest, "TDGame.Camera.SmallTeleportStepKeepsCameraLag", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDCameraSmallTeleportKeepsLagTest::RunTest(const FString& Parameters)
+{
+	using namespace TDCameraTeleportSnapTests;
+	FTDSnapVariableScope SnapOn(1);
+	FTDCameraSnapWorld Fixture;
+	FTDPossessedPlayer Possessed;
+	if (!SpawnPossessedPlayer(*this, Fixture, Possessed))
+	{
+		return false;
+	}
+	const FVector LaggedOrigin = PlaceLagBehindArmOrigin(*Possessed.Boom);
+	const int32 CutRequestsBefore = FTDGameCharacterTestAccess::GetCameraCutRequestCount(*Possessed.Player);
+	Possessed.CameraManager->bGameCameraCutThisFrame = false;
+	TestTrue(TEXT("A short teleport step succeeds"), Possessed.Player->TeleportTo(Possessed.Player->GetActorLocation() + SmallStepOffset, FRotator::ZeroRotator));
+	TestTrue(TEXT("A step shorter than the jump distance keeps the camera lag"), Possessed.Boom->PreviousDesiredLoc.Equals(LaggedOrigin, ToleranceCm));
+	TestFalse(TEXT("A step shorter than the jump distance does not cut the camera"), Possessed.CameraManager->bGameCameraCutThisFrame);
+	TestEqual(TEXT("A step shorter than the jump distance requests no camera cut"), FTDGameCharacterTestAccess::GetCameraCutRequestCount(*Possessed.Player) - CutRequestsBefore, 0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCameraLongTeleportSnapsTest, "TDGame.Camera.LongTeleportSnapsCameraLag", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDCameraLongTeleportSnapsTest::RunTest(const FString& Parameters)
+{
+	using namespace TDCameraTeleportSnapTests;
+	FTDSnapVariableScope SnapOn(1);
+	FTDCameraSnapWorld Fixture;
+	FTDPossessedPlayer Possessed;
+	if (!SpawnPossessedPlayer(*this, Fixture, Possessed))
+	{
+		return false;
+	}
+	PlaceLagBehindArmOrigin(*Possessed.Boom);
+	const int32 CutRequestsBefore = FTDGameCharacterTestAccess::GetCameraCutRequestCount(*Possessed.Player);
+	TestTrue(TEXT("A long teleport succeeds"), Possessed.Player->TeleportTo(FirstDestination, FRotator::ZeroRotator));
+	TestTrue(TEXT("A long teleport snaps the camera lag to the new arm origin"), Possessed.Boom->PreviousDesiredLoc.Equals(ComputeArmOrigin(*Possessed.Boom), ToleranceCm));
+	TestEqual(TEXT("A long teleport requests one camera cut"), FTDGameCharacterTestAccess::GetCameraCutRequestCount(*Possessed.Player) - CutRequestsBefore, 1);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDCameraHeadlessLeavesNoCutTest, "TDGame.Camera.HeadlessLeavesNoCameraCutFlag", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDCameraHeadlessLeavesNoCutTest::RunTest(const FString& Parameters)
+{
+	using namespace TDCameraTeleportSnapTests;
+	FTDSnapVariableScope SnapOn(1);
 	FTDCameraSnapWorld Fixture;
 	ATDGameCharacter* Player = Fixture.SpawnPlayer();
 	APlayerController* Controller = Fixture.World->SpawnActor<APlayerController>();
@@ -197,19 +314,17 @@ bool FTDCameraTeleportRequestsCutTest::RunTest(const FString& Parameters)
 	{
 		return false;
 	}
-	FTDSnapVariableScope SnapOn(1);
 	CameraManager->bGameCameraCutThisFrame = false;
 	Controller->Possess(Player);
-	TestTrue(TEXT("Possession requests a camera cut"), CameraManager->bGameCameraCutThisFrame);
-	CameraManager->bGameCameraCutThisFrame = false;
-	TestTrue(TEXT("Teleport succeeds"), Player->TeleportTo(FirstDestination, FRotator::ZeroRotator));
-	TestTrue(TEXT("Teleport requests a camera cut"), CameraManager->bGameCameraCutThisFrame);
+	TestFalse(TEXT("Possession does not cut the camera"), CameraManager->bGameCameraCutThisFrame);
+	TestEqual(TEXT("Possession requests no camera cut"), FTDGameCharacterTestAccess::GetCameraCutRequestCount(*Player), 0);
+	if (FApp::CanEverRender())
 	{
-		FTDSnapVariableScope SnapOff(0);
-		CameraManager->bGameCameraCutThisFrame = false;
-		TestTrue(TEXT("Teleport without snap succeeds"), Player->TeleportTo(SecondDestination, FRotator::ZeroRotator));
-		TestFalse(TEXT("Without snap no camera cut is requested"), CameraManager->bGameCameraCutThisFrame);
+		AddInfo(TEXT("This run renders, so the viewport clears camera cuts and the headless check is skipped."));
+		return true;
 	}
+	TestTrue(TEXT("A long teleport succeeds"), Player->TeleportTo(FirstDestination, FRotator::ZeroRotator));
+	TestFalse(TEXT("Without rendering nothing clears a camera cut, so none is left set"), CameraManager->bGameCameraCutThisFrame);
 	return true;
 }
 

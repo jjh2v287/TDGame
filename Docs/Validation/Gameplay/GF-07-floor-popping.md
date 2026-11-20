@@ -94,3 +94,11 @@
 - 회귀 없음: 같은 세션 A/B 회귀 4줄 통과, 헤드리스 161/161, 동기 로드 검사 새 항목 0.
 - 등록 판정 7줄 중 2줄(걷기 팝 사건 비율·순간이동 정착 시간) 미충족 — 6.3 의 지표 한계. 개선은 보조 지표(6.4)·전후 자료(`GF-07/*`)로 보였다.
 - 남은 것: 순간이동 직후 약 0.5초 간접광 수렴, 웅덩이 재질 흰 반사, 안개 판 57개, 모션 블러는 연출 취향 — 되돌리려면 ini 한 줄.
+
+### 6.7 감독 검토 결함 2건 고침 (2026-11-20 17:10~18:13, 커밋 안 함)
+
+- 결함(근거 `Saved/AgentOps/20261120/gf07-review/correctness.md`): ① 순간이동 스냅·컷이 이동 거리를 안 봐 방향만 바꾸는 Mover 순간이동 효과(공격 시작·구르기·키보드 조준)에도 걸림 ② 이계 PIE 시험 카메라 컷 0회 단언이 걸음 순간이동·헤드리스 빙의 컷 플래그로 깨짐.
+- 고침(`TDGameCharacter.cpp/.h`): 직전 틱 위치(`BeginPlay` 초기화)에서 10m 넘게 옮겨졌을 때만 스냅·컷, 빙의 컷 제거, 엔진 컷 플래그는 `FApp::CanEverRender()` 일 때만(요청 횟수는 시험 접근 구조체로 셈).
+- 빨강(새 시험 + 옛 코드, `gf07-camfix-red`): Camera 3개(제자리 회전·짧은 걸음·헤드리스 컷 플래그) 실패, 이계 PIE RealmConnectorWalk·RealmLiftRide·RealmLiftTreadmill 컷 2,145~3,220회로 실패.
+- 초록(고친 코드): Camera 6/6, SeamlessTravel 6/6(분리 실행), Framework 7/7(분리 실행), GUI PIE RealmConnectorWalk 컷 0/726·0/722·0/865·0/879틱, RealmLiftRide 컷 0/366·0/296·0/286·0/356틱. 동기 로드 새 위반 0, 기반 경계 0.
+- 따로 찾음: Framework 의 PauseMenu 시험 뒤에 PIE 시험을 이어 돌리면 PIE 종료(`UEditorEngine::EndPlayMap` 객체 순회)에서 에디터가 죽는다(Respawn 뒤는 정상). PauseMenu 시험 틀이 게임 인스턴스 월드·월드 컨텍스트를 안 지움 — 감독 세션(GP-11)이 고침. 카메라 고침과 무관(SeamlessTravel 단독 통과).

@@ -95,3 +95,11 @@
 - 범위: `UTDTexturePrestreamSubsystem`, 미리 요청을 쓰는 측정 전반.
 - 증거: `Saved/AgentOps/20261120/gf07/prestream_variants_quick.json`, 측정 w5_tp_*.
 - 날짜·상태: 2026-11-20 active
+
+### L-gameplay-13 Mover 의 '제자리 방향 바꾸기' 순간이동 효과도 `AActor::TeleportTo` → `TeleportSucceeded` 를 부른다 — 순간이동 훅은 이동 거리를 보고, 컷 플래그는 그리는 실행에서만 켠다
+- 증상: GF-07 의 순간이동 카메라 스냅·컷(`ATDGameCharacter::TeleportSucceeded`)이 공격 시작·구르기·키보드 조준마다 걸려 카메라가 덜컥이고 카메라 컷이 TSR·Lumen·볼륨 안개 이력과 자동 노출을 초기화했다(감독 세션 독립 검토). 카메라 컷 0회를 단언하는 이계 PIE 시험(RealmConnectorWalk·RealmLiftRide·RealmLiftTreadmill)이 컷 2,145~3,220회로 실패했다.
+- 원인: `ATDCombatCharacter::FaceRotationImmediately` 의 `FTeleportEffect`(현재 위치 그대로)를 Mover 가 `OwnerActor->TeleportTo` 로 적용하고, 엔진 `AActor::TeleportTo` 는 이동 0 이어도 성공하면 `TeleportSucceeded(false)` 를 부른다. 시험 걷기도 매 프레임 `TeleportPawnToDestination`(60cm 걸음)이다. 헤드리스(`-NullRHI`)는 그리기가 없어 `bGameCameraCutThisFrame` 을 지우는 쪽이 없다(L-editor-18) — 빙의 때 한 번 켠 컷이 끝까지 남았다.
+- 해결: 스냅·컷은 직전 틱 위치(`BeginPlay` 에서 초기화)에서 10m 넘게 옮겨졌을 때만, 빙의 컷 제거(부활은 새 폰이라 효과 없었음), 엔진 컷 플래그는 `FApp::CanEverRender()` 일 때만 켠다(요청 횟수는 시험용으로 셈). 시험 `TDGame.Camera.TurnInPlaceTeleportKeepsCameraLag`·`SmallTeleportStepKeepsCameraLag`·`LongTeleportSnapsCameraLag`·`HeadlessLeavesNoCameraCutFlag`(빨강 3 → 초록), 이계 PIE 헤드리스 6/6·GUI 컷 0회.
+- 범위: `TeleportSucceeded`·`TeleportTo` 를 훅으로 쓰는 모든 코드(Mover 순간이동 효과는 회전에도 쓰인다), 컷 플래그를 켜는 코드.
+- 증거: `Saved/AgentOps/20261120/gf07-camfix-red-tests.json`·`gf07-camfix-seamless-tests.json`·`gf07/gui_realm_tests.txt`, 검토 `Saved/AgentOps/20261120/gf07-review/correctness.md`.
+- 날짜·상태: 2026-11-20 active

@@ -169,7 +169,8 @@ MCP 툴셋 이름은 `python Tools/uemcp.py call list_toolsets '{}'`로 본다. 
 | 도구 | 용도 |
 |---|---|
 | `WorldGen/generate_ashen_vale.py --seed N [--out 폴더]` | 메인 지역 높이맵·레이어·배치 생성(에디터 밖) → `Saved/WorldGen/AshenVale/` |
-| `WorldGen/editor_build_open_world.py` | 레벨에 베이크(랜드스케이프·대기·인스턴스·액터·조명·마커·저장). `Saved/WorldGen/open_world_build_request.json` {"mode":"partial","previous_layout":...}이면 부분 모드(지형·생성 산포만 교체, 던전·PCG·상자·이계 보존) |
+| `WorldGen/editor_build_open_world.py` | 레벨에 베이크(랜드스케이프·대기·인스턴스·액터·조명·마커·저장). layout 판 중 재질 도메인이 데칼(웅덩이 `MI_PuddlesDecal`)인 것은 평면 메시 대신 지형 투사 데칼 액터(반 깊이 40cm)로 만든다(GF-07, 2026-11-20). `Saved/WorldGen/open_world_build_request.json` {"mode":"partial","previous_layout":...}이면 부분 모드(지형·생성 산포만 교체, 던전·PCG·상자·이계 보존) |
+| `WorldGen/editor_convert_puddle_planes.py` (run_in_editor `-c` 로 `sys.argv=['x','report'\|'apply']` 뒤 절대 경로 `exec(open('C:/Project/TDGame/Tools/WorldGen/editor_convert_puddle_planes.py').read())`, PIE 꺼짐) | 이미 구운 레벨의 웅덩이 판(평면 메시 + 데칼 재질, 지형 곡면과 엇갈려 회색·흰 판이 드러나고 Z-파이팅)을 같은 이름·태그·폴더·데이터 레이어의 지형 투사 데칼 액터로 바꾼다. 기본 report 는 개수만, apply 는 액터 삭제·생성·저장이라 사용자 승인 뒤에만 | `Saved/WorldGen/puddle_plane_conversion_<모드>.json` |
 | `WorldGen/generate_realm.py --realm SunkenStarfield·PaleHeights·all [--seed N]` | 연속 세계(D-45, P3-19) 이계 지역 생성: 필드 옆 자리(`realm_passages.REALM_PLACEMENT`)에 높이맵·레이어·배치, 공유 변 필드 값 복사·45m 경계 띠, 연결로 이계 구간·연결로 소품(`TDRealm_Connector_<GateId>_*`)·관문 `gates[]`·지형 MI 지역 혼합 값, 검증(에디터 밖, 필드 생성 뒤) → `Saved/WorldGen/Realms/<RealmId>/` |
 | `WorldGen/editor_build_realm.py` | 이계 베이크(지형·재질 인스턴스·인스턴스·액터·연결로 소품·내비 경계·후처리·`DA_TDRealm_*`(관문·승강 lift·`gameplay_data_layer`)·저장). 굽기 전에 layout을 검사하고, 랜드스케이프는 태그 `TDRealm:<R>`, 그 밖은 `DL_TDRegion_<R>` 소속·이전 접두로 지운다 |
 | `WorldGen/realm_passages.py` | 연속 세계 공유 정의(이계 배치 `REALM_PLACEMENT`, 걷는 연결로 `CONNECTOR_ROWS`, 승강 갱도 `SHAFT_ROWS`, 운행 `LIFT_MOTION`, 단면·스탬프·소품, 난수 없음). `generate_ashen_vale.py`·`generate_realm.py`·`check_continuous_world.py`가 가져다 쓴다(직접 실행 시 자체 점검) |

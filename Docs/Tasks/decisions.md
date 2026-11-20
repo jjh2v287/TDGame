@@ -539,3 +539,11 @@
 - 제안(권장안): 기반 시스템(FD-01~06)을 한 판 단계가 부를 때 계약부터 만들고 `Foundation/` 폴더 + `Tools/check_foundation_boundary.py`(간접 포함 추적)로 경계를 지킨다. 새 모듈·플러그인은 두 번째 프로젝트 때. 게임플레이 대장 1개에 GP·FD 항목을 등록한다([1-13]과 같은 대장). 14절 목록에서 빠진 `FluidFX/`·`MonsterAI/`·`Combat/Feedback/`도 함께 정리한다. 3D 안개 현 구간을 닫은 뒤 한 판 단계 3까지 게임 우선(FDQ-01).
 - 근거: `Docs/GameplayFoundation_Plan.md`, 조사·반박·설계안·계획 반박 `Saved/AgentOps/20261117/foundation-plan/`.
 - 상태: accepted (2026-11-18 사용자 "권장대로 진행", claude 기록). AGENTS.md 14·15절 반영, 대장 `Docs/Gameplay_Tasks.md`(1절에 FDQ·GQ 적용 기록). 카드 [1-13]·[1-14]·[1-15]·[7-28]·[7-29] 답함. AGENTS.md가 20KiB 상한에 가까워(약 20.4KB) 다음 규칙 추가 전에 압축이 필요하다.
+
+### D-67 들판 웅덩이를 평면 메시에서 지형 투사 데칼로 (GF-07)
+- 배경: 사용자 보고(2026-11-20) — 풀 흙바닥·높낮이 있는 곳에 회색·흰 바닥이 따로 있는 듯 보이고 바닥끼리 Z-파이팅하는 듯하다.
+- 원인: 들판 생성기(`Tools/WorldGen/generate_ashen_vale.py` `place_ground_decals`)가 웅덩이 291개를 `SM_Plane`(VFX) 평면 메시 + 데칼 재질 `MI_PuddlesDecal` 로, 높이 = 가운데 지형 + 3cm 고정(6~20m)으로 깔았다(`editor_build_open_world.py` `spawn_planes`). 평면이 곡면 지형과 엇갈려 일부는 묻히고 일부는 드러나, 지형에 잘린 섬 모양 판(어두운 유광 + 하늘 반사 흰색)이 보이고 지형과 몇 cm 차이 경계는 카메라가 움직일 때 흔들렸다.
+- 결정(사용자, 2026-11-20 "데칼로 모두 바꾸는게 맞는거 같네요 모두 변경하고 저장하고 커밋까지"): 레벨의 웅덩이 판 291개(모두 `DL_TDRegion_Field`)를 같은 이름·태그·폴더·데이터 레이어의 데칼 액터(아래로 투사, 반 깊이 40cm, 크기 = 판 메시 경계 × 배율)로 바꿔 저장한다. 굽기 스크립트는 앞으로 재질 도메인이 데칼인 layout 판을 데칼 액터로 만든다. 변환 도구 `Tools/WorldGen/editor_convert_puddle_planes.py`(report/apply, 미저장 패키지가 있으면 apply 거부).
+- 확인: 변환 직전 미저장 패키지 0, 저장 패키지 582 = 새 데칼 291 + 지운 판 291(git 상태와 같음, 다른 파일 없음). 같은 지점 PIE 전후 `Docs/Validation/Gameplay/GF-07/puddle_before_after.png`·`.gif`.
+- 남은 것: 데칼은 투사 상자(±40cm) 안의 풀·소품·캐릭터 발에도 묻는다(풀은 젖은 모양). 하늘이 비친 흰 부분은 재질의 젖음 표현이라 남는다 — 줄이려면 재질 거칠기 조정은 따로 정한다. 같은 꼴로 깔린 평평한 반투명 안개 판 57개(`MI_FogPlane`, 22~42m)는 엇갈림 후보로 남긴다(마을에서 360m 이상).
+- 상태: decided (2026-11-20 사용자, claude 기록).

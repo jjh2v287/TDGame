@@ -72,3 +72,13 @@
 - 증거: `Docs/InfiniteWorld/measurements/bench/REPORT-static.md`, `.../bench/results/terrain-r{1,2}.json`·`diag-r{1,2}.json`
 - 날짜·상태: 2026-10-23 active(②는 원인 미확인)
 - 발견: claude(무한 세계 가능성 검토)
+
+### L-worldgen-09 데칼 재질을 평면 메시에 붙여 지형 위 고정 높이로 깔면 곡면에서 판이 묻히고 드러나며 경계가 Z-파이팅처럼 흔들린다
+- 증상: 사용자 보고 "풀 흙바닥·높낮이 있는 곳에 회색·흰 바닥이 따로 있는 듯, 바닥끼리 Z-파이팅하는 듯". 탑다운 화면에서 웅덩이가 지형에 잘린 섬 모양 구멍·날카로운 경계를 가진 어두운 유광 판(하늘 반사 흰색)으로 보였다.
+- 원인: 생성기(`generate_ashen_vale.py` `place_ground_decals`)가 웅덩이를 `SM_Plane`(VFX) + 데칼 재질 `MI_PuddlesDecal` 평면으로, 높이 = 가운데 지형 + 3cm 로 고정했다(6~20m). 평면은 메시 깊이 그대로 지형과 깊이 시험을 하므로 곡면에서 묻힌 부분은 사라지고 몇 cm 차이 경계가 흔들린다(데칼 도메인 재질이 메시 데칼로 그려지는 경로는 미검증). 판 291개의 판−지형 높이 차 −35~+40cm(판 기본 1m 가정), 시작 지점 5m 앞 #265 는 면적 79% 가 5cm 안.
+- 해결: 아래로 투사하는 데칼 액터(반 깊이 40cm, 크기 = 판 메시 경계 × 배율)로 바꿨다 — D-67, `Tools/WorldGen/editor_convert_puddle_planes.py`, `editor_build_open_world.py` `spawn_planes` 가 데칼 도메인 재질 판을 데칼 액터로 만든다.
+- 찾는 법: `Saved/WorldGen/<지역>/layout.json` 판 높이를 높이 지도와 견주면(판−지형 최소·최대·묻힌 비율·5cm 안 비율) 에디터 없이 바로 나온다. 카메라를 세운 화면에서는 판 경계가 거의 깜빡이지 않고 바람에 흔들리는 풀이 정지 깜빡임을 덮어 정지 깜빡임 지도로는 안 잡힌다 — 움직이는 화면·배치 데이터로 본다.
+- 범위: 같은 방식(평평한 판, 고정 높이)으로 깔린 반투명 안개 판(`MI_FogPlane`, 57개)도 엇갈림 후보. 에디터 Python 의 `exec(open(...))` 는 에디터 작업 폴더가 프로젝트 루트가 아니라 절대 경로를 쓴다.
+- 증거: `Saved/WorldGen/puddle_plane_conversion_apply.json`, `Docs/Validation/Gameplay/GF-07/puddle_before_after.png`·`.gif`, `Saved/Gameplay/FloorPopping/w5_pp_planes`·`w5_pp_decals`.
+- 날짜·상태: 2026-11-20 active
+- 발견: claude(GF-07 바닥 팝핑)

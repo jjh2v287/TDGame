@@ -26,6 +26,7 @@ LEVEL_PATH = "/Game/Level/LV_DarkFantasy_OpenWorld"
 LAYOUT_PATH = os.environ.get("TD_WORLDGEN_LAYOUT", r"C:\Project\TDGame\Saved\WorldGen\AshenVale\layout.json")
 LOOK = {"sun_lux": 7.0, "sky_intensity": 1.8, "exposure_bias": 10.4, "fog_density": 0.022, "local_light_scale": 0.4}
 KEEP_CLASSES = {"WorldSettings", "WorldDataLayers", "WorldPartitionMiniMap", "Brush", "LevelBounds"}
+PLANE_DECAL_HALF_DEPTH_CM = 40.0
 REALM_TAG = "TDRealm"
 REALM_TAG_PREFIX = "TDRealm:"
 REALM_LABEL_PREFIX = "TDRealm_"
@@ -489,6 +490,33 @@ def spawn_actors(layout, label_prefix="", folder_root="TDGen", extra_tags=()):
     return n
 
 
+def is_decal_material(material):
+    base = material.get_base_material() if material else None
+    return base is not None and base.get_editor_property("material_domain") == unreal.MaterialDomain.MD_DEFERRED_DECAL
+
+
+def plane_entry_from_actor(actor):
+    location = actor.get_actor_location()
+    rotation = actor.get_actor_rotation()
+    scale = actor.get_actor_scale3d()
+    mesh = actor.static_mesh_component.get_editor_property("static_mesh")
+    return {"mesh": mesh.get_path_name(), "loc": [location.x, location.y, location.z], "rot": [rotation.pitch, rotation.yaw, rotation.roll], "scale": [scale.x, scale.y, scale.z], "label": actor.get_actor_label()}
+
+
+def spawn_plane_decal(e, mat, folder, tags):
+    mesh = EAL.load_asset(e["mesh"])
+    if mesh is None:
+        return None
+    box = mesh.get_bounding_box()
+    half_x = (box.max.x - box.min.x) * 0.5 * abs(e["scale"][0])
+    half_y = (box.max.y - box.min.y) * 0.5 * abs(e["scale"][1])
+    actor = eas.spawn_actor_from_class(unreal.DecalActor, vec(e["loc"]), unreal.Rotator(roll=0.0, pitch=-90.0, yaw=e["rot"][1]))
+    decal = actor.decal
+    decal.set_decal_material(mat)
+    decal.set_editor_property("decal_size", unreal.Vector(PLANE_DECAL_HALF_DEPTH_CM, half_y, half_x))
+    return finish_actor(actor, e["label"], folder, True, tags)
+
+
 def spawn_planes(layout, label_prefix="", folder_root="TDGen", extra_tags=()):
     n = 0
     for e in layout["planes"]:
@@ -496,6 +524,11 @@ def spawn_planes(layout, label_prefix="", folder_root="TDGen", extra_tags=()):
         mat = EAL.load_asset(e["material"])
         if mesh is None or mat is None:
             log(f"plane asset missing {e}")
+            continue
+        if is_decal_material(mat):
+            decal_entry = dict(e, label=apply_label_prefix(e["label"], label_prefix))
+            if spawn_plane_decal(decal_entry, mat, f"{folder_root}/Planes", ["TDGen"] + list(extra_tags)) is not None:
+                n += 1
             continue
         actor = eas.spawn_actor_from_object(mesh, vec(e["loc"]), rot(e["rot"]))
         actor.set_actor_scale3d(vec(e["scale"]))

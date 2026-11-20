@@ -863,6 +863,7 @@ VALIDATE <Id>:  위와 같되 -run=TDMonsterAIValidate -only=<Id> [-print-resolv
 - 참조: [measurements/M3-43/](measurements/M3-43/)(판정선·덧붙임 1·2·결과·media), `Saved/AgentOps/20261120/turn-logic/`(사본·통합 스크립트·반박·참조 계산), 07#MD-63
 - 기록: 2026-11-20 claude — 청구. 방향 의존은 FacingTarget(6종 공격 점수, 커널 Body.Yaw)뿐이고 피해 엔티티는 Origin→Target(`Saved/AgentOps/20261120/turn-popping/logic-facing-research.md`). 밸런스 시뮬레이터(M1-06~12)는 미구현이라 고정 스텝 헤드리스 결투 끔/켬 비교로 대신한다.
 - 기록: 2026-11-20 claude — 완료. 판정선(14:27 사전 등록, 덧붙임 1 반박 반영·덧붙임 2 첫 결과 뒤 시험 준비 고침·빙결 재출발)을 모두 통과. 헤드리스 결투 21판(7종 × 앞·옆·뒤, 12초)에서 켬·끔의 첫 타격·타격 수·피해가 모두 같다 → 방향에 기대는 FacingTarget 이 있어도 게임 결과 변화 0, 한 스텝 최대 회전 켬 8.44도(끔 16~25도, Barghest 169도). PIE 같은 장면(4종 × 3마리 × 30초): 논리 급회전 1~19 → 0, 각속도 급변 220~293/분 → 0, 최대 3456~6017 → 540도/초, 흔들림 9~40% 로, 메시-캡슐 어긋남 0. 정적 반박 must 1(반전 때 감속 한도 없음 → 60fps 각속도 차 465~539)을 감속 한도로 고쳐 재검증 합격. 남은 것은 README 6절(07#MD-63 (d) 회피 번갈이·작은 비켜서기, 짧은 시전 준비, 레거시 GAS 경로). 미커밋.
+- 기록: 2026-11-20 claude — 후속 고침(22:26): 안개 세션이 새 .cpp 를 더하자 unity 묶음이 바뀌어 `TDTurnSmoothingTests.cpp:769` 가 C2668(`IgnoreEngineInjectionEnsures` 모호) — `TDMidBossTests.cpp` 의 파일 범위 using 과 겹침. 한정 호출로 고치고 결합 번역 단위 clang 검사 양순서 통과(L-build-36 적용 줄). 미커밋.
 
 ### 3.6 Phase 4 — 확장(조건부)
 

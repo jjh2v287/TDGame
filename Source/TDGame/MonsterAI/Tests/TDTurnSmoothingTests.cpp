@@ -766,7 +766,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDTurnSmoothingDuelComparisonTest, "TDGame.Mon
 bool FTDTurnSmoothingDuelComparisonTest::RunTest(const FString& Parameters)
 {
 	using namespace TDTurnSmoothingTestSupport;
-	IgnoreEngineInjectionEnsures(*this);
+	TDTurnSmoothingTestSupport::IgnoreEngineInjectionEnsures(*this);
 	const FName Species[] = { TEXT("Goblin_Melee"), TEXT("Swordsman"), TEXT("Wukong"), TEXT("Kwang"), TEXT("Griffon"), TEXT("Greystone"), TEXT("Barghest") };
 	const FVector TargetLocations[] = { FVector(500.f, 0.f, 0.f), FVector(0.f, 500.f, 0.f), FVector(-450.f, 150.f, 0.f) };
 	float LargestSmoothStepTurn = 0.f;

@@ -26,3 +26,19 @@
 - 범위: UE 5.8 에디터 PIE
 - 증거: `Saved/AgentOps/20261118/stage1-gp11/R4-refute.md`(반박자가 엔진 소스 줄 확인)
 - 날짜·상태: 2026-11-18 active
+
+### L-gameplay-04 Mover 폰 부활이 'SpawnActor failed because of collision'으로 취소돼 컨트롤러가 폰 없이 남는다
+- 증상: `SpawnActor failed because of collision at [-8303.128,-20015.354,34.424] for BP_TDCombatCharacter_C` → `SpawnDefaultPawnAtTransform: Couldn't spawn` 뒤 플레이어 컨트롤러가 폰 없이 Inactive로 남아 진행이 멈춘다(북 공터 체크포인트, 바닥+100cm).
+- 원인: 기본 `SpawnDefaultPawnAtTransform`은 APawn 기본값 `AdjustIfPossibleButDontSpawnIfColliding`을 쓴다(엔진 Pawn.cpp:93). Mover 폰은 캡슐뿐 아니라 질의 충돌이 켜진 메시까지 겹침 검사에 들어가고, 메시 쪽 보정량(MTD, 최소 이동 거리)이 0이라 엔진(UWorld::FindTeleportSpot)이 다른 자리를 시도하지 않고 생성을 취소한다. 캡슐 반높이가 88cm라 바닥+100이면 캡슐 바닥이 지면 위 12cm다.
+- 해결: `ATDGameGameMode::SpawnDefaultPawnAtTransform_Implementation` 재정의 — 기본 폰 CDO의 루트 캡슐로 요청 위치 +0/25/75/150cm → 플레이어 스타트 순으로 빈자리를 찾고, 생성은 `AdjustIfPossibleButAlwaysSpawn`(취소 없음). 체크포인트 높이는 캡슐 쓸기 정지 높이 +25cm(배치 도구).
+- 범위: UE 5.8, Mover 기반 플레이어 폰의 부활·생성(`Source/TDGame/Framework/TDGameGameMode.cpp`, 시험 `Source/TDGame/Tests/TDRespawnTests.cpp`)
+- 증거: `Saved/AgentOps/20261119/gp03/d1-respawn.md`, 수정 전 빨강 `Saved/AgentOps/20261119/GP03-F-red2-tests.json`, PIE `Saved/Gameplay/FieldEncounters/final2/result.json`(세 공터 체크포인트 부활). 실제로 겹친 컴포넌트는 미검증
+- 날짜·상태: 2026-11-19 active
+
+### L-gameplay-05 오픈 월드 PCG 볼륨 브러시(WorldStatic, Pawn은 막지 않음)가 WorldStatic 객체 질의에 잡혀 지면 찾기·겹침 검사를 속인다
+- 증상: 아레나 몬스터가 지형과 무관하게 한 높이(지면 위 약 2.5m)에서 스폰돼 떨어진다. 배치 도구의 체크포인트 겹침 검사(`capsule_overlap_components`)는 모든 후보를 막힘으로 본다(반박이 예측, 가짜 모듈로 재현).
+- 원인: 오픈 월드 전체를 덮는 PCG 볼륨 `TDGen_PCG_BiomeForest`의 브러시는 WorldStatic 객체 유형이고 Pawn은 막지 않는다(엔진 AVolume 기본 프로필은 OverlapAll — Volume.cpp 26-27, 이 인스턴스의 실측 프로필 이름은 Custom). WorldStatic 객체 유형 선 추적은 시작점 초기 겹침으로 그 브러시에 맞고, 객체 유형 겹침 질의는 응답이 겹침이든 막힘이든 컴포넌트를 돌려준다(KismetSystemLibrary.cpp 1806-1821).
+- 해결: C++ 지면 찾기는 몬스터 캡슐 자신의 콜리전으로 Pawn 채널 쓸기(`SweepSingleByChannel`), 시작 겹침·법선 Z<0.7은 거부. 파이썬 겹침 검사는 `get_collision_response_to_channel(Pawn)`이 Block인 컴포넌트만 막힘으로 센다(BlockingVolume은 세야 하므로 브러시 클래스째 빼지 않는다).
+- 범위: UE 5.8 `LV_DarkFantasy_OpenWorld`의 지면·겹침 질의 전반(`Source/TDGame/World/Generation/TDArenaEncounter.cpp`, `Tools/Gameplay/editor_place_field_encounters.py`). 소환 졸개 `FindGroundHeight`(TDMonsterCharacter.cpp)에는 같은 결함이 남아 있다
+- 증거: `Saved/AgentOps/20261119/gp03/d2-spawn.md`(낙하 적분 예측과 관측 z 일치), `fix-refute.md` M1, `f2_checkpoint_filter_check.py` 11/11, PIE final·final2 접지 3/3(발과 지면 차 2~3cm). 에디터 직접 질의로 확인(2026-11-20, `Saved/AgentOps/20261119/gp03/d2-confirm.txt`: 북 공터 두 점에서 WorldStatic 선 추적이 PCGVolume BrushComponent에 시작점 겹침·시간 0으로 맞음)
+- 날짜·상태: 2026-11-19 active

@@ -8,6 +8,7 @@
 #include "TDGameGameMode.generated.h"
 
 struct FTDActorDeathMessage;
+class UPrimitiveComponent;
 
 /**
  *  Simple Game Mode for a top-down perspective game
@@ -34,6 +35,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Respawn", meta=(ClampMin="0"))
 	float PlayerRespawnDelaySeconds = 4.f;
@@ -41,6 +43,8 @@ protected:
 private:
 	void HandleActorDeath(FGameplayTag Channel, const FTDActorDeathMessage& Message);
 	void RespawnPlayer(TWeakObjectPtr<AController> Controller);
+	FTransform FindClearPawnSpawnTransform(AController* NewPlayer, const UClass& PawnClass, const FTransform& RequestedTransform);
+	bool TryFindClearPawnSpot(const UPrimitiveComponent& PawnShape, const FTransform& BaseTransform, const AActor* IgnoredActor, FTransform& OutTransform) const;
 
 	FGameplayMessageListenerHandle DeathListenerHandle;
 	FTransform RespawnCheckpoint = FTransform::Identity;

@@ -85,6 +85,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Arena|Result", meta=(ClampMin="0.5"))
 	float VictoryBannerSeconds = 6.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Arena|Open")
+	bool bShouldStartFromAnyDirection = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Arena|Open")
+	bool bShouldResetWhenChallengerLeaves = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Arena|Open", meta=(ClampMin="0"))
+	float LeashMarginCm = 600.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Arena|Open", meta=(ClampMin="0.1"))
+	float LeashResetSeconds = 5.f;
+
 	void GatherSpeciesPaths(TArray<FSoftObjectPath>& OutPaths) const;
 	bool IsBossWave(int32 WaveIndex) const;
 	int32 CountMonstersInWave(int32 WaveIndex) const;

@@ -151,7 +151,8 @@ private:
 	void BeginEncounter();
 	void BeginWaveDelay(int32 WaveIndex);
 	void SpawnCurrentWave();
-	ATDMonsterCharacter* SpawnMonster(UTDMonsterSpeciesAsset& Species, const FVector& Location, const FRotator& Rotation);
+	ATDMonsterCharacter* SpawnMonster(UTDMonsterSpeciesAsset& Species, const FVector& Location, const FRotator& Rotation, double GroundReferenceZ);
+	bool TryFindSpawnFloorLocation(const ATDMonsterCharacter& Monster, const FVector& Candidate, double GroundReferenceZ, FVector& OutLocation) const;
 	void ShowBossHealthBar(ATDMonsterCharacter& Monster, const FTDArenaSpawnEntry& Entry);
 	void HideBossHealthBar();
 	void HandleMonsterDeath(const FTDDamageContext& Context, TWeakObjectPtr<ATDMonsterCharacter> Monster);
@@ -180,6 +181,9 @@ private:
 	FText MakeWaveTitle(int32 WaveIndex) const;
 	FName GetEncounterId() const;
 	bool IsFightRunning() const;
+	bool IsLocationInOpenEntry(const FVector& WorldLocation) const;
+	bool UpdateLeash(float DeltaSeconds);
+	void ResetAfterChallengerLeft();
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UTDMonsterSpeciesAsset>> LoadedSpecies;
@@ -196,6 +200,7 @@ private:
 	TSharedPtr<FStreamableHandle> SpeciesHandle;
 	ETDArenaEncounterState EncounterState = ETDArenaEncounterState::Idle;
 	float StateSecondsRemaining = 0.f;
+	float ChallengerOutsideSeconds = 0.f;
 	int32 CurrentWaveIndex = INDEX_NONE;
 	int32 KilledMonsterCount = 0;
 	int32 AttemptCount = 0;

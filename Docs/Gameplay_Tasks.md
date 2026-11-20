@@ -32,8 +32,8 @@
 | ID | 할 일 | 단계 | 등급 | 상태 | 담당 | 연결 |
 |---|---|---|---|---|---|---|
 | GP-01 | 게임 설계 한 장·결정 묶음 | 0 | P0 | done |  | GQ 먼저 묶음, FDQ-01~05 |
-| GP-02 | 실행하면 마을에서 시작 | 1 | P0 | doing(실행 확인) | claude/2026-11-18 | GQ-11 |
-| GP-03 | 필드 공터 3곳 열린 조우 | 1 | P0 | todo |  | FL-05 |
+| GP-02 | 실행하면 마을에서 시작 | 1 | P0 | blocked(사람 화면 확인) | claude/2026-11-18 | GQ-11 |
+| GP-03 | 필드 공터 3곳 열린 조우 | 1 | P0 | done | claude/2026-11-19 | FL-05 |
 | GP-04 | 고원 보스 길(켄타우로스→산룡) | 3 | P0 | todo |  | FL-01 |
 | GP-05 | 처치 경험치·레벨업 | 2 | P0 | todo |  | FD-04, FL-07 |
 | GP-06 | 주문 장착 칸·해금 | 2 | P0 | todo |  | FD-04, GQ-07 |
@@ -41,9 +41,9 @@
 | GP-08 | 성소: 부활·충전·자동 저장 | 2 | P0 | todo |  | FD-04, FL-04 |
 | GP-09 | 진행 저장 v2·이어하기 | 3 | P0 | todo |  | FD-04 |
 | GP-10 | 목표 한 줄·방향·결과 화면 | 2 | P0 | todo |  | FD-03 |
-| GP-11 | Esc 일시정지·종료 | 1 | P0 | doing(사람 화면 확인) | claude/2026-11-18 | - |
+| GP-11 | Esc 일시정지·종료 | 1 | P0 | blocked(사람 화면 확인) | claude/2026-11-18 | - |
 | GP-12 | 손 조작 난이도 곡선 1차 조정 | 3 | P0 | todo |  | FL-01, FL-06 |
-| GP-13 | 재미 측정 기록·자동 전투원 | 1(기준선은 0) | P1 | doing(기록기 끝) | claude/2026-11-18 | FD-05, M0-05 |
+| GP-13 | 재미 측정 기록·자동 전투원 | 1(기준선은 0) | P1 | todo(기록기 done, 자동 전투원) | claude/2026-11-18 | FD-05, M0-05 |
 | GP-14 | 스태미나 경제(구르기 25) | 2 | P1 | todo |  | FD-04 |
 | GP-15 | 주문 자원: 근접 충전 마력 | 4 | P1 | todo |  | - |
 | GP-16 | 승리 보상 선택(제단·상자) | 4 | P1 | todo |  | FD-02, FD-06 |
@@ -110,7 +110,7 @@
 | FD-02 | 상호작용 입구 | 2 | 기반 | todo |  | GP-17, FDQ-03 |
 | FD-03 | 목표 추적 | 2 | 기반 | todo |  | GP-10 |
 | FD-04 | 저장 2판·자동 저장·이어하기 | 2~3 | 기반 | todo |  | GP-08, GP-09 |
-| FD-05 | 사건 기록기·기반 시험 월드 | 1 | 기반 | doing | claude/2026-11-18 | GP-13, M0-05 |
+| FD-05 | 사건 기록기·기반 시험 월드 | 1 | 기반 | todo(기록기 done, 나머지) | claude/2026-11-18 | GP-13, M0-05 |
 | FD-06 | 효과 정의(공통 데이터) | 6 | 기반 | todo |  | GP-27, GP-28 |
 | FD-07 | 상황 생성=조우 세트 확장(미룸) | 7 | 기반 | todo |  | GP-33, GP-35 |
 
@@ -134,7 +134,7 @@
 - 목표·완료 조건: `Docs/GameplayFoundation_Plan.md` 4절 FD-01.
 
 ### FD-05 사건 기록기·기반 시험 월드
-- 상태: doing
+- 상태: todo (기록기 부분 done, 나머지 todo)
 - 담당: claude/2026-11-18
 - 기록: FD-05(사건 기록기 부분) 완료 2026-11-18 claude: 기반 UTDGameplayRecorderSubsystem(Foundation/Recording, 버퍼 64줄·종료·Deinitialize 때 Saved/Telemetry/<시각>_<맵>.jsonl, TD.Recorder.Enabled) + TDGame 연결 UTDGameplayRecorderBridge(Framework, 피해·회피·사망·조우 배너·조우 끝·페이즈 6채널, 월드 시간) + Tools/summarize_play_log.py(결정론 요약, --json). 시험 3개(TDGame.Foundation.Recorder.*) 통과, TDGame.Combat 134/134 유지, 경계 검사 위반 0, 요약 두 번 동일. 남은 FD-05: 기반 시험 월드·자동 전투원 기준선·데이터 검증은 다음 회차. 연결 서브시스템은 게임 인스턴스가 CreateWorld 안에서 아직 없어 월드 종류만 보고 만들고 게임 인스턴스는 BeginPlay 때 확인(교훈 후보).
 - 결정(2026-11-18 claude, 반박 R2가 지적한 규격 편차 — 뒤집을 수 있음): ① src·dst는 SimulationId가 생기는 M0-03 전까지 액터 이름 문자열, 그 뒤 정수로 바꾼다. ② ability는 지금 피해 전달 방식 이름, 피해 정의 ID로 바꾸는 일은 자동 전투원과 함께. ③ 머리줄의 build·dh(데이터 해시)는 자동 전투원·기준선 때 더하고, difficulty·equipment는 그 기능이 생길 때, persona_guess는 분석 도구가 계산한다. ④ 메시지 9종 중 휘두르기(매 타 고빈도)·카라반 파괴(한 판에 없음)·보스 체력 막대(피해와 중복)는 일부러 뺐다. 규격의 물약·플레이어 입력 기록은 GP-07·자동 전투원 때. ⑤ 요약 도구는 규격의 `summarize_batch.py --live`가 아직 없어 `Tools/summarize_play_log.py`로 따로 두고, 시뮬 요약 도구가 생기면 합친다.
@@ -149,20 +149,33 @@
 - 반박 R2 고칠 것: 스킬 컴포넌트가 있는 캐릭터로 '공격 중·취소 창 닫힘/열림'을 독립 시험하고 빨강을 다시 증명 — 해결: 2026-11-18 claude: GF-02 시험 보강 완료 — Source/TDGame/Combat/Tests/TDSpellActivationBlockTests.cpp 를 기본 플레이어(ATDGameCharacter, 스킬 컴포넌트 있음)로 4건 분리(TDGame.Combat.GAS.SpellCast.IdlePlayerCasts·RollingPlayerBlocked·AttackingClosedWindowBlocked·AttackingOpenWindowCasts, 경우마다 새 월드·새 시전자). 빨강: TDDamageGameplayAbility.cpp 수정(구르기 차단 태그·State_Attacking 취소 창 검사)을 되돌리면 구르기·창 닫힘 2건만 실패, 대기·창 열림 2건 통과(W1-red). 복구는 백업과 바이트 대조 동일, 초록 TDGame.Combat 138/138(W1-green). 증거 Saved/AgentOps/20261118/stage1-wave3/. 동료 캐릭터 경로 시험은 제품에서 일어나지 않는 분기라 제거. 재확인 R3(Opus) 합격, 지적 1건(시험 파일 동기 로드 3곳이 가드 밖)은 세션이 `#if WITH_DEV_AUTOMATION_TESTS` 가드로 고침 → check_sync_loads new=0, TDGame.Combat 138/138(Saved/AgentOps/20261118/stage1-wave3/FIX-combat.log).
 
 ### GP-02 실행하면 마을에서 시작
-- 상태: doing
+- 상태: blocked (사람 화면 확인)
 - 담당: claude/2026-11-18
 - 기록: GP-02: 코드 완료, 사람 관문 대기 — GameDefaultMap·EditorStartupMap을 LV_DarkFantasy_OpenWorld 로 바꿨습니다(.umap 존재 확인). 디버그 안내와 시전자 레벨 문구는 콘솔 변수 TD.Dev.ShowOverlay(기본 0) 뒤로 옮겼습니다. 두 문구는 분석서가 가리킨 TDGameCharacter.cpp 가 아니라 TDGamePlayerController.cpp 527줄·1015줄에 있었습니다. -game 실행으로 조작 가능까지 시간과 디버그 문구 0을 보는 것은 미실시입니다.
 - 기록 추가: GP-02 실제 실행 확인: -game -windowed 120초 실행, 맵 LV_DarkFantasy_OpenWorld 로드(LoadMap 시작 시각이 프로세스 시작 14초 뒤, 월드 구동 시작 15초 뒤, 스트리밍 생성 0.94초), 크래시·Fatal 없음, Error는 에디터 시작 때 LogPython의 ToolsetDefinition 속성 없음 2건뿐(게임플레이 무관), 폰 생성·컨트롤러 부착 로그와 TD.Dev.ShowOverlay 줄은 없음(화면 확인은 사람 관문), SyncLoad 경고 엔진 에셋 위주. 로그 Saved/AgentOps/20261118/stage1-wave3/GP02-game.log
 - 남은 것: 사람 관문에서 화면(디버그 문구 0·마을 위치·조작 가능까지 시간)과 폰·컨트롤러 부착(로그에 해당 줄 없음) 확인.
 
 ### GP-11 Esc 일시정지·종료
-- 상태: doing
+- 상태: blocked (사람 화면 확인)
 - 담당: claude/2026-11-18
 - 목표·완료 조건: 분석서 3절 GP-11 행(버튼 3개 계속·저장 후 종료·새로 시작, 일시정지 중 두뇌·타이머 정지, 재개 튐 0, 종료 시 저장). 메뉴는 순수 C++ Slate.
 - 진행: 워크플로 `td-stage1-gp11`(2026-11-18, 주간 사용량 98%에서 착수). 끊기면 `git diff`로 Framework/의 일시정지 메뉴 파일·TDGamePlayerController.cpp 의 Escape 줄·Tests/ 를 보고 이어 가거나 되돌린다.
 - 기록: 2026-11-18 claude: GP-11 Esc 일시정지·종료 메뉴 구현 — UTDPauseMenuSubsystem(월드)+STDPauseMenu(Slate 3버튼), Esc BindKey(bExecuteWhenPaused) 토글, 저장 후 종료(슬롯 TDPauseMenuAutoSave, 저장 실패 시 종료 안 함)·새로 시작(ClearAllState 후 맵 다시 열기). 몬스터 사고·NPC·타이머는 이미 일시정지를 따라 수정 없음(코드 읽기). 시험 PauseMenu 3/3, Combat 138/138, check_sync_loads 새 위반 0, check_foundation_boundary 0.
 - 반박 R4(Opus) 꼭 고칠 것: 메뉴를 닫을 때 FInputModeGameOnly 가 마우스 잠금·고정밀 입력을 켜 커서·조준·클릭 이동이 바뀜 → 고침: 열 때 뷰포트 입력 상태(캡처·잠금·커서 숨김·입력 무시)를 저장하고 닫을 때 되돌린 뒤 게임 뷰포트에 포커스(SaveViewportInputState·RestoreViewportInputState), 빌드·시험 141/141·검사 통과. 이 경로는 시험에 뷰포트가 없어 실행되지 않음 — -game 확인 필요.
 - 남은 것: `-game`에서 Esc로 열고 닫은 뒤 커서·조준·클릭 이동이 열기 전과 같은지와 버튼 모양·클릭(에디터 PIE에서는 Esc가 PIE 중지라 `-game`으로, L-gameplay-03). 몬스터 사고 일시정지 시험(c)은 코드 읽기로만 확인. '저장 후 종료' 슬롯은 이어하기(FD-04) 전까지 쓰기만 된다.
+
+### GP-03 필드 공터 3곳 열린 조우
+- 상태: done
+- 담당: claude/2026-11-19
+- 목표·완료 조건: 분석서 3절 GP-03 행 — 공터 3곳에 아레나 열린 조우를 놓고(GQ-13 (a)), 이탈 리셋(반경+600cm 밖 5초 → ResetEncounter)과 등장 연출, 시험 TDGame.Encounter.Arena.LeashReset, 끼임·스폰 실패 0. 마을→3곳 손 조작 승리는 단계 1 사람 관문.
+- 진행: 워크플로 td-gp03-a(조사→명세→명세 반박→이탈 리셋 C++·시험∥배치·확인 스크립트→반박, Saved/AgentOps/20261119/gp03/). 에디터 배치·PIE는 3D 안개 세션과 창을 맞춘 뒤(build_hold.json owner gameplay-gp03).
+- 기록: 2026-11-19 22:05 claude: C++ 이탈 리셋·사방 시작(시험 TDGame.Encounter 11/11, Combat 138/138), 공터 정의 3+외부 액터 3 배치(LFS, 재실행 unchanged), PIE 서 17/17·북·동은 단독 실행만 통과. 반박 E3 불합격 — 북 체크포인트 부활 충돌(진행 막힘), PIE 도구가 예외 때 부분 결과 버림, 배치 도구가 더러운 정의 미저장, 북 스폰 높이 원인 미확정(전체 실행 미통과). 수정 워크플로 td-gp03-c, 에디터 창 2회차는 3D 안개 세션 반박 뒤.
+- 기록: 2026-11-19 23:52 claude: 수정 워크플로 td-gp03-c(Opus 원인 조사 2·C++ 수정, Sonnet 도구·에디터 창, Opus 반박 2). 원인 — 부활: Mover 폰은 메시까지 겹침 검사에 들어가 보정량이 0이라 체크포인트 생성이 취소되고 폰 없이 멈춤(L-gameplay-04). 스폰: 오픈 월드 PCG 볼륨 브러시(OverlapAll)에 지면 추적이 시작점에서 맞아 세 공터 모두 공중 스폰(L-gameplay-05). C++ — 게임 모드 부활 빈자리 찾기(+0/25/75/150cm → 플레이어 스타트 → 원위치, 생성 취소 없음), 아레나 스폰을 몬스터 캡슐 Pawn 쓸기로 지점별 접지·마리 간격. 새 시험 6개 빨강→초록, 155/155. 도구 — 체크포인트 = 캡슐 정지 높이+25cm, 겹침은 Pawn Block 컴포넌트만 막힘, 더러운 패키지 저장, 예외 때 부분 결과, 공터별 실제 사망→부활 판정 6줄(spec-v2-add1, 실행 전 등록). 에디터 창 2회차 — 외부 액터 3개 갱신 저장 → 재실행 unchanged, PIE final 서 27/27·북 19/20·동 19/20, final2 27/20/20 전부 통과. 최종 반박 E3 조건부 통과: final 실패 2건은 도구 측정 경쟁(북 추적 기준 시각이 폴링 0.8~1.4초 늦음, 동은 몬스터가 먼저 죽여 처치 피해 0)이고 게임 결함은 아님. 서 입장 걷기 값이 불가능해 끼임 판정이 비어 있었음.
+- 진행: 워크플로 td-gp03-d — 측정 방식 사전 등록(처치 전 생존 확인, 추적 기준을 실제 스폰 시각·위치로, 입장 걷기 측정 타당성, 대체 경고 문구, 결과 파일 먼저 쓰기, 3회 모두 통과 규칙) → 도구 수정 → 정적 반박 → 에디터 창 3회차(PIE 3회, 판정선 숫자 불변) → 최종 반박 2관점. 끊기면 Saved/AgentOps/20261119/gp03/ 의 spec-v2-add2.md·p-measure-fix.md·editor-window-3-log.md 를 보고 이어 간다.
+- 별도 항목 후보(범위 밖, 고치지 않음): 소환 졸개 지면 찾기(TDMonsterCharacter.cpp FindGroundHeight)에 같은 브러시 적중 결함. 아레나 스폰 쓸기가 +1000cm에서 시작해 나무 수관 같은 돌출물 위에 설 수 있음(PIE 지면 검사가 못 잡음).
+- 진행(재개): 2026-11-20 08:35 — 재부팅으로 세션이 끝나면서 td-gp03-d 가 P 결과를 돌려주기 전에 멈춤(보류·에디터 없었음). P 산출물은 00:20 에 완성(spec-v2-add2.md 00:07 → 도구 수정, p-measure-fix.md, p_measure_check 25/25) → 이어 하기 워크플로 td-gp03-e(같은 프롬프트로 정적 반박 R2 부터).
+- 기록: 2026-11-20 09:32 claude: 자동 확인 통과 — 측정 규칙 spec-v2-add2(00:07)와 정정 M1(08:58:22, 이미 죽은 경우 기록기 사망 틱을 못 보면 측정 무효)을 도구 수정 전에 등록, 도구 마지막 수정 08:58:27(워크플로 td-gp03-d·e). 에디터 창 3회차 자가 점검 11/11, PIE final3·4·5 세 번 모두 complete·passed(서 27/27·북 20/20·동 20/20, 측정 무효 0). 북 추적 중앙값 448~561cm(기준 150, 옛 측정 131~409에서 안정), 동은 세 번 모두 몬스터가 먼저 죽여 기록기 사망 틱 기준 부활 4.0초(한도 6.0), 서 입장 걷기 게임 시각 2.03~2.20초에 1139~1146cm(520~563cm/s, Slate 1/8초 절단 가설 확인). 로그 스폰 실패·대체 경고·누수 0, 에셋 저장 0. 브러시 적중을 에디터에서 직접 확인(d2-confirm.txt, L-gameplay-05 갱신). 최종 반박 E4a(규칙 대조, M1 정정 재반박 포함)·E4b(201줄 재계산 일치, 측정 타당성) 통과. 근거 Saved/Gameplay/FieldEncounters/final3~5/result.json, Saved/AgentOps/20261119/gp03/final-refute-2a.md·final-refute-2b.md.
+- 남은 것: 마을→세 공터 사람 손 조작(단계 1 사람 관문). 별도 항목 후보 2건(위 줄). 도구 함정: 배치 --dry-run 이 placement.json 을 덮어써 PIE 도구가 거부 — Tools/README 에 적음.
 
 ## 4. 이어 하기
 
@@ -173,3 +186,6 @@
 - 2026-11-18 12:26: 워크플로 3 끝 — GF-02 done(플레이어 시험 4, 빨강 재증명, Combat 138/138), GP-02 `-game` 확인(맵 로드·크래시 없음, 화면·폰은 사람 관문), 요약 도구 보강. 사용량 약 99%. 다음 회차(사용량 리셋 뒤): GP-03 공터 조우(에디터 필요, 맵 저장 전 사용자 알림), GP-11 Esc 메뉴, FD-05 남은 것, 단계 1 사람 손 관문. 전부 미커밋.
 - 2026-11-18 12:28: GP-11 착수(워크플로 `td-stage1-gp11`, Sonnet 구현 + Opus 좁은 반박). 결과가 기록되지 않았으면 할당량이 바닥난 것 — 위 GP-11 블록의 '진행' 줄대로 확인.
 - 2026-11-18 12:59: GP-11 끝(반박 수정 포함) — 오늘 작업 전체를 사용자 지시("끝나면 커밋")로 커밋. 다음 회차: GP-03 공터 조우(에디터), FD-05 나머지, 단계 1 사람 손 관문.
+- 2026-11-19 23:52: GP-03 수정 워크플로 td-gp03-c 끝 — 부활 막힘·공중 스폰 고침(C++ 시험 6개, 155/155), PIE final2 세 공터 전부 통과, 최종 반박 조건부 통과(측정 경쟁 2건). 다음 묶음 td-gp03-d: 측정 방식 사전 등록 → 도구 수정 → 반박 → 에디터 창 3회차 PIE 3회 → 최종 반박. 주간 사용량 9%(11-19 리셋). 미커밋.
+- 2026-11-20 08:35: 재부팅 뒤 이어 하기 — td-gp03-e(정적 반박 → 필요 시 재수정 → 에디터 창 3회차 PIE 3회 → 최종 반박 2관점). P 산출물은 00:20 완성분 그대로. 미커밋.
+- 2026-11-20 09:32: GP-03 done(자동 확인 3회 통과, 최종 반박 2관점 통과). 다음: 단계 1 사람 손 관문(GP-02 시작 맵·GP-11 Esc 메뉴 `-game`·GP-03 마을→세 공터 전투·사망→부활), FD-05 나머지. 미커밋(사용자 지시 대기).

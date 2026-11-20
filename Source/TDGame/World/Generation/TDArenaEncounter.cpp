@@ -31,9 +31,12 @@ namespace TDArenaEncounterInternal
 	constexpr float DefaultEntryZoneInsetCm = 350.f;
 	constexpr float DefaultCheckpointOutsetCm = 600.f;
 	constexpr float CheckpointHeightCm = 100.f;
-	constexpr float SpawnTraceAboveCm = 250.f;
+	constexpr float SpawnTraceAboveCm = 1000.f;
 	constexpr float SpawnTraceBelowCm = 2000.f;
 	constexpr float SpawnGroundClearanceCm = 3.f;
+	constexpr float SpawnWalkableNormalZ = 0.7f;
+	constexpr float SpawnSeparationGapCm = 50.f;
+	constexpr int32 SpawnSeparationAttempts = 8;
 	constexpr float ArenaCleanupMarginCm = 300.f;
 	constexpr float LeftoverLethalDamage = 10000000.f;
 
@@ -59,6 +62,54 @@ namespace TDArenaEncounterInternal
 		}
 		const FVector Clamped = Offset * (MaxRadiusCm / Distance);
 		return FVector(ArenaCenter.X + Clamped.X, ArenaCenter.Y + Clamped.Y, ArenaCenter.Z);
+	}
+
+	struct FTDArenaPlacedSpawn
+	{
+		FVector Location = FVector::ZeroVector;
+		float RadiusCm = 0.f;
+	};
+
+	bool IsClearOfPlacedSpawns(const FVector& Location, const float RadiusCm, const TArray<FTDArenaPlacedSpawn>& PlacedSpawns)
+	{
+		return !PlacedSpawns.ContainsByPredicate([&Location, RadiusCm](const FTDArenaPlacedSpawn& Placed)
+		{
+			return FVector::Dist2D(Location, Placed.Location) < RadiusCm + Placed.RadiusCm + SpawnSeparationGapCm;
+		});
+	}
+
+	float FindWidestPlacedRadius(const TArray<FTDArenaPlacedSpawn>& PlacedSpawns)
+	{
+		float WidestRadiusCm = 0.f;
+		for (const FTDArenaPlacedSpawn& Placed : PlacedSpawns)
+		{
+			WidestRadiusCm = FMath::Max(WidestRadiusCm, Placed.RadiusCm);
+		}
+		return WidestRadiusCm;
+	}
+
+	FVector SeparateFromPlacedSpawns(const FVector& Candidate, const float RadiusCm, const FVector& Pivot, const FVector& ArenaCenter, const float MaxRadiusCm, const TArray<FTDArenaPlacedSpawn>& PlacedSpawns)
+	{
+		const FVector PivotOffset(Candidate.X - Pivot.X, Candidate.Y - Pivot.Y, 0.f);
+		const double PivotDistance = PivotOffset.Size();
+		if (PivotDistance <= UE_KINDA_SMALL_NUMBER || IsClearOfPlacedSpawns(Candidate, RadiusCm, PlacedSpawns))
+		{
+			return Candidate;
+		}
+		const double StepRadians = (RadiusCm + FindWidestPlacedRadius(PlacedSpawns) + SpawnSeparationGapCm) / PivotDistance;
+		const double CandidateRadians = FMath::Atan2(PivotOffset.Y, PivotOffset.X);
+		for (int32 Attempt = 1; Attempt <= SpawnSeparationAttempts; ++Attempt)
+		{
+			const double StepSign = Attempt % 2 == 1 ? 1.0 : -1.0;
+			const double Radians = CandidateRadians + StepSign * ((Attempt + 1) / 2) * StepRadians;
+			const FVector Rotated(Pivot.X + PivotDistance * FMath::Cos(Radians), Pivot.Y + PivotDistance * FMath::Sin(Radians), Candidate.Z);
+			const FVector Separated = ClampInsideArena(Rotated, ArenaCenter, MaxRadiusCm);
+			if (IsClearOfPlacedSpawns(Separated, RadiusCm, PlacedSpawns))
+			{
+				return Separated;
+			}
+		}
+		return Candidate;
 	}
 
 #if !UE_BUILD_SHIPPING
@@ -219,6 +270,7 @@ void ATDArenaEncounter::ResetEncounter()
 	EndCameraPullBack();
 	CurrentWaveIndex = INDEX_NONE;
 	StateSecondsRemaining = 0.f;
+	ChallengerOutsideSeconds = 0.f;
 	SetSealed(false);
 	SetExitOpen(false);
 	EncounterState = ETDArenaEncounterState::Idle;
@@ -308,6 +360,10 @@ FTransform ATDArenaEncounter::GetCheckpointTransform() const
 
 bool ATDArenaEncounter::IsLocationInEntryZone(const FVector& WorldLocation) const
 {
+	if (Definition && Definition->bShouldStartFromAnyDirection)
+	{
+		return IsLocationInOpenEntry(WorldLocation);
+	}
 	if (!EntryZone)
 	{
 		return false;
@@ -319,6 +375,10 @@ bool ATDArenaEncounter::IsLocationInEntryZone(const FVector& WorldLocation) cons
 
 FVector ATDArenaEncounter::GetEntryZoneCenter() const
 {
+	if (Definition && Definition->bShouldStartFromAnyDirection)
+	{
+		return GetActorLocation();
+	}
 	return EntryZone ? EntryZone->GetComponentLocation() : GetActorLocation();
 }
 
@@ -342,6 +402,11 @@ void ATDArenaEncounter::Tick(const float DeltaSeconds)
 	if (IsFightRunning() && !UTDCombatLibrary::IsActorAlive(ChallengerPawn.Get()))
 	{
 		FailEncounter();
+		return;
+	}
+
+	if (UpdateLeash(DeltaSeconds))
+	{
 		return;
 	}
 
@@ -537,6 +602,8 @@ void ATDArenaEncounter::SpawnCurrentWave()
 	}
 
 	TArray<FVector> SpawnLocations;
+	TArray<TDArenaEncounterInternal::FTDArenaPlacedSpawn> PlacedSpawns;
+	const double GroundReferenceZ = FMath::Max(ArenaCenter.Z, ChallengerLocation.Z);
 	LastWaveSpawnLocations.Reset();
 	for (const FTDArenaSpawnEntry& Entry : Definition->Waves[CurrentWaveIndex].Entries)
 	{
@@ -548,18 +615,22 @@ void ATDArenaEncounter::SpawnCurrentWave()
 		}
 
 		ComputeSpawnLocations(Entry, ArenaCenter, SpawnRadiusCm, ChallengerLocation, SpawnLocations);
+		const FVector SpawnPivot = Entry.Anchor == ETDArenaSpawnAnchor::AroundChallenger ? ChallengerLocation : ArenaCenter;
 		bool bHasShownBossBar = false;
-		for (const FVector& SpawnLocation : SpawnLocations)
+		for (const FVector& CandidateLocation : SpawnLocations)
 		{
+			const FVector SpawnLocation = TDArenaEncounterInternal::SeparateFromPlacedSpawns(CandidateLocation, Species->CapsuleRadius, SpawnPivot, ArenaCenter, SpawnRadiusCm, PlacedSpawns);
 			const FRotator FacingChallenger(0.f, TDArenaEncounterInternal::ComputePlanarYaw(ChallengerLocation - SpawnLocation, GetActorRotation().Yaw), 0.f);
-			ATDMonsterCharacter* Monster = SpawnMonster(*Species, SpawnLocation, FacingChallenger);
+			ATDMonsterCharacter* Monster = SpawnMonster(*Species, SpawnLocation, FacingChallenger, GroundReferenceZ);
 			if (!Monster)
 			{
 				UE_LOG(LogTDArenaEncounter, Warning, TEXT("%s: failed to spawn '%s' at %s."), *GetName(), *Species->GetName(), *SpawnLocation.ToCompactString());
 				continue;
 			}
+			const FVector GroundedLocation = Monster->GetActorLocation();
+			PlacedSpawns.Add({ GroundedLocation, Species->CapsuleRadius });
 			AliveMonsters.Add(Monster);
-			LastWaveSpawnLocations.Add(SpawnLocation);
+			LastWaveSpawnLocations.Add(GroundedLocation);
 			Monster->EngageMonsterBrain(ChallengerPawn.Get());
 			if (UTDCombatComponent* MonsterCombat = Monster->GetCombatComponent())
 			{
@@ -580,7 +651,7 @@ void ATDArenaEncounter::SpawnCurrentWave()
 	}
 }
 
-ATDMonsterCharacter* ATDArenaEncounter::SpawnMonster(UTDMonsterSpeciesAsset& Species, const FVector& Location, const FRotator& Rotation)
+ATDMonsterCharacter* ATDArenaEncounter::SpawnMonster(UTDMonsterSpeciesAsset& Species, const FVector& Location, const FRotator& Rotation, const double GroundReferenceZ)
 {
 	using namespace TDArenaEncounterInternal;
 
@@ -597,22 +668,48 @@ ATDMonsterCharacter* ATDArenaEncounter::SpawnMonster(UTDMonsterSpeciesAsset& Spe
 	}
 
 	Monster->SetSpecies(&Species);
-	FVector GroundedLocation = Location;
-	FCollisionObjectQueryParams GroundObjects;
-	GroundObjects.AddObjectTypesToQuery(ECC_WorldStatic);
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDArenaEncounterSpawn), false, this);
-	QueryParams.AddIgnoredActor(Monster);
-	QueryParams.AddIgnoredActor(ChallengerPawn.Get());
-	FHitResult GroundHit;
-	if (World->LineTraceSingleByObjectType(GroundHit, Location + FVector(0.f, 0.f, SpawnTraceAboveCm), Location - FVector(0.f, 0.f, SpawnTraceBelowCm), GroundObjects, QueryParams))
+	FVector GroundedLocation;
+	if (!TryFindSpawnFloorLocation(*Monster, Location, GroundReferenceZ, GroundedLocation))
 	{
 		const UCapsuleComponent* Capsule = Monster->GetCapsuleComponent();
 		const float CapsuleHalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 0.f;
-		GroundedLocation.Z = GroundHit.ImpactPoint.Z + CapsuleHalfHeight + SpawnGroundClearanceCm;
+		GroundedLocation = FVector(Location.X, Location.Y, GetActorLocation().Z + CapsuleHalfHeight + SpawnGroundClearanceCm);
+		UE_LOG(LogTDArenaEncounter, Warning, TEXT("%s: no walkable ground under %s for '%s'; spawning at the arena floor height."), *GetName(), *Location.ToCompactString(), *Species.GetName());
 	}
 
 	Monster->FinishSpawning(FTransform(Rotation, GroundedLocation));
 	return Monster;
+}
+
+bool ATDArenaEncounter::TryFindSpawnFloorLocation(const ATDMonsterCharacter& Monster, const FVector& Candidate, const double GroundReferenceZ, FVector& OutLocation) const
+{
+	using namespace TDArenaEncounterInternal;
+
+	const UWorld* World = GetWorld();
+	const UCapsuleComponent* Capsule = Monster.GetCapsuleComponent();
+	if (!World || !Capsule)
+	{
+		return false;
+	}
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(TDArenaEncounterSpawn), false, this);
+	FCollisionResponseParams ResponseParams;
+	Capsule->InitSweepCollisionParams(QueryParams, ResponseParams);
+	ResponseParams.CollisionResponse.SetResponse(ECC_Pawn, ECR_Ignore);
+	QueryParams.AddIgnoredActor(&Monster);
+	QueryParams.AddIgnoredActor(ChallengerPawn.Get());
+	const FVector SweepStart(Candidate.X, Candidate.Y, GroundReferenceZ + SpawnTraceAboveCm);
+	const FVector SweepEnd(Candidate.X, Candidate.Y, GroundReferenceZ - SpawnTraceBelowCm);
+	FHitResult FloorHit;
+	if (!World->SweepSingleByChannel(FloorHit, SweepStart, SweepEnd, FQuat::Identity, Capsule->GetCollisionObjectType(), Capsule->GetCollisionShape(), QueryParams, ResponseParams))
+	{
+		return false;
+	}
+	if (FloorHit.bStartPenetrating || FloorHit.ImpactNormal.Z < SpawnWalkableNormalZ)
+	{
+		return false;
+	}
+	OutLocation = FloorHit.Location + FVector(0.f, 0.f, SpawnGroundClearanceCm);
+	return true;
 }
 
 void ATDArenaEncounter::ShowBossHealthBar(ATDMonsterCharacter& Monster, const FTDArenaSpawnEntry& Entry)
@@ -980,4 +1077,47 @@ bool ATDArenaEncounter::IsFightRunning() const
 	default:
 		return false;
 	}
+}
+
+namespace TDArenaEncounterOpen
+{
+	constexpr float EntryInsetCm = 400.f;
+	constexpr float EntryHeightToleranceCm = 400.f;
+}
+
+bool ATDArenaEncounter::IsLocationInOpenEntry(const FVector& WorldLocation) const
+{
+	const float EntryRadiusCm = FMath::Max(ArenaRadiusCm - TDArenaEncounterOpen::EntryInsetCm, ArenaRadiusCm * 0.5f);
+	const FVector ActorLocation = GetActorLocation();
+	return FVector::Dist2D(WorldLocation, ActorLocation) <= EntryRadiusCm && FMath::Abs(WorldLocation.Z - ActorLocation.Z) <= TDArenaEncounterOpen::EntryHeightToleranceCm;
+}
+
+bool ATDArenaEncounter::UpdateLeash(const float DeltaSeconds)
+{
+	const APawn* Challenger = ChallengerPawn.Get();
+	if (!Definition || !Definition->bShouldResetWhenChallengerLeaves || !IsFightRunning() || !Challenger)
+	{
+		ChallengerOutsideSeconds = 0.f;
+		return false;
+	}
+	if (FVector::Dist2D(Challenger->GetActorLocation(), GetActorLocation()) <= ArenaRadiusCm + Definition->LeashMarginCm)
+	{
+		ChallengerOutsideSeconds = 0.f;
+		return false;
+	}
+	ChallengerOutsideSeconds += DeltaSeconds;
+	if (ChallengerOutsideSeconds < Definition->LeashResetSeconds)
+	{
+		return false;
+	}
+	ResetAfterChallengerLeft();
+	return true;
+}
+
+void ATDArenaEncounter::ResetAfterChallengerLeft()
+{
+	ReleaseRespawnCheckpoint();
+	ResetEncounter();
+	BroadcastBanner(FText::FromString(TEXT("이탈")), FText::FromString(TEXT("조우가 초기화되었습니다")), ETDEncounterBannerStyle::Defeat, Definition ? Definition->BannerSeconds : 3.f);
+	UE_LOG(LogTDArenaEncounter, Log, TEXT("%s: challenger left the arena, encounter reset after attempt %d."), *GetName(), AttemptCount);
 }

@@ -529,3 +529,256 @@ bool FTDArenaBossDeathClearsSummonsTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("The next wave follows the boss wave"), Encounter->GetCurrentWaveIndex(), 1);
 	return true;
 }
+
+#if WITH_DEV_AUTOMATION_TESTS
+namespace TDArenaEncounterOpenTests
+{
+	using namespace TDArenaEncounterTests;
+
+	const FVector OutsideLeashLocation(-2200.f, 0.f, 100.f);
+
+	UTDArenaEncounterDefinition* MakeLeashDefinition(const FTDArenaTestWorld& Fixture, const bool bShouldReset)
+	{
+		UTDArenaEncounterDefinition* Definition = MakeThreeWaveDefinition(Fixture);
+		Definition->bShouldResetWhenChallengerLeaves = bShouldReset;
+		return Definition;
+	}
+
+	void StartAndActivateWave(const FTDArenaTestWorld& Fixture, ATDArenaEncounter& Encounter, APawn* Challenger)
+	{
+		Encounter.TryStartEncounter(Challenger);
+		Fixture.Tick(ArenaWaveDelaySeconds + 0.1f);
+	}
+
+	int32 GetState(const ATDArenaEncounter& Encounter)
+	{
+		return static_cast<int32>(Encounter.GetEncounterState());
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDArenaLeashResetTest, "TDGame.Encounter.Arena.LeashReset", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDArenaLeashResetTest::RunTest(const FString& Parameters)
+{
+	using namespace TDArenaEncounterOpenTests;
+	FTDArenaTestWorld Fixture;
+	ATDArenaEncounter* Encounter = Fixture.SpawnEncounter(MakeLeashDefinition(Fixture, true));
+	APawn* Challenger = Fixture.SpawnChallenger(ArenaChallengerLocation);
+	StartAndActivateWave(Fixture, *Encounter, Challenger);
+	TestEqual(TEXT("Fight runs before leaving"), GetState(*Encounter), static_cast<int32>(ETDArenaEncounterState::WaveActive));
+
+	Challenger->SetActorLocation(OutsideLeashLocation);
+	Fixture.Tick(4.f);
+	TestEqual(TEXT("Short absence keeps the fight"), GetState(*Encounter), static_cast<int32>(ETDArenaEncounterState::WaveActive));
+
+	Challenger->SetActorLocation(ArenaChallengerLocation);
+	Fixture.Tick(0.2f);
+	Challenger->SetActorLocation(OutsideLeashLocation);
+	Fixture.Tick(4.f);
+	TestEqual(TEXT("Returning inside cancels the countdown"), GetState(*Encounter), static_cast<int32>(ETDArenaEncounterState::WaveActive));
+
+	Fixture.Tick(1.2f);
+	TestEqual(TEXT("Staying outside resets the encounter"), GetState(*Encounter), static_cast<int32>(ETDArenaEncounterState::Idle));
+	TestEqual(TEXT("Reset removes every monster"), Fixture.CountLiveMonsterActors(), 0);
+	TestEqual(TEXT("Reset keeps the attempt count"), Encounter->GetAttemptCount(), 1);
+
+	Challenger->SetActorLocation(ArenaChallengerLocation);
+	StartAndActivateWave(Fixture, *Encounter, Challenger);
+	for (int32 KillRound = 0; KillRound < 8 && Encounter->GetEncounterState() != ETDArenaEncounterState::Victory; ++KillRound)
+	{
+		Encounter->KillCurrentWave();
+		Fixture.Tick(ArenaWaveDelaySeconds + 0.1f);
+	}
+	TestEqual(TEXT("Second attempt can be won"), GetState(*Encounter), static_cast<int32>(ETDArenaEncounterState::Victory));
+
+	Challenger->SetActorLocation(OutsideLeashLocation);
+	Fixture.Tick(6.f);
+	TestEqual(TEXT("Victory is not reset by leaving"), GetState(*Encounter), static_cast<int32>(ETDArenaEncounterState::Victory));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDArenaLeashOffByDefaultTest, "TDGame.Encounter.Arena.LeashOffByDefault", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDArenaLeashOffByDefaultTest::RunTest(const FString& Parameters)
+{
+	using namespace TDArenaEncounterOpenTests;
+	FTDArenaTestWorld Fixture;
+	ATDArenaEncounter* Encounter = Fixture.SpawnEncounter(MakeThreeWaveDefinition(Fixture));
+	APawn* Challenger = Fixture.SpawnChallenger(ArenaChallengerLocation);
+	StartAndActivateWave(Fixture, *Encounter, Challenger);
+	Challenger->SetActorLocation(OutsideLeashLocation);
+	Fixture.Tick(6.f);
+	TestEqual(TEXT("Default definition never resets on leaving"), GetState(*Encounter), static_cast<int32>(ETDArenaEncounterState::WaveActive));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDArenaOpenEntryAnyDirectionTest, "TDGame.Encounter.Arena.OpenEntryAnyDirection", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDArenaOpenEntryAnyDirectionTest::RunTest(const FString& Parameters)
+{
+	using namespace TDArenaEncounterOpenTests;
+	FTDArenaTestWorld Fixture;
+	UTDArenaEncounterDefinition* Definition = MakeThreeWaveDefinition(Fixture);
+	Definition->bShouldStartFromAnyDirection = true;
+	ATDArenaEncounter* Encounter = Fixture.SpawnEncounter(Definition);
+	TestEqual(TEXT("Entry centre is the actor location"), Encounter->GetEntryZoneCenter(), Encounter->GetActorLocation());
+		TestTrue(TEXT("East side starts"),Encounter->IsLocationInEntryZone(FVector(900.f, 0.f, 100.f)));
+	TestTrue(TEXT("West side starts"), Encounter->IsLocationInEntryZone(FVector(-900.f, 0.f, 100.f)));
+	TestTrue(TEXT("North side starts"), Encounter->IsLocationInEntryZone(FVector(0.f, 900.f, 100.f)));
+	TestTrue(TEXT("South side starts"), Encounter->IsLocationInEntryZone(FVector(0.f, -900.f, 100.f)));
+	TestTrue(TEXT("Centre starts"), Encounter->IsLocationInEntryZone(FVector(0.f, 0.f, 100.f)));
+	TestFalse(TEXT("Beyond the entry circle does not start"), Encounter->IsLocationInEntryZone(FVector(1200.f, 0.f, 100.f)));
+	TestFalse(TEXT("Far above the floor does not start"), Encounter->IsLocationInEntryZone(FVector(0.f, 0.f, 700.f)));
+	return true;
+}
+
+namespace TDArenaEncounterSpawnTests
+{
+	using namespace TDArenaEncounterTests;
+
+	constexpr float ArenaSlopePitchDegrees = 15.f;
+	constexpr float ArenaSlopeCenterHeightCm = 1000.f;
+	constexpr float ArenaSlopeHalfThicknessCm = 50.f;
+	constexpr float ArenaSlopeSpeciesRadiusCm = 40.f;
+	constexpr float ArenaSlopeSpeciesHalfHeightCm = 50.f;
+	constexpr float ArenaWideSpeciesRadiusCm = 60.f;
+	constexpr float ArenaSpawnClearanceCm = 3.f;
+	constexpr float ArenaFootToleranceCm = 1.f;
+	constexpr double ArenaGroundSpanMinimumCm = 100.0;
+	constexpr double ArenaHeightFollowToleranceCm = 2.0;
+	constexpr float ArenaSpawnSeparationSlackCm = 10.f;
+	constexpr float ArenaDefaultSpawnEdgeMarginCm = 150.f;
+	const FVector ArenaEdgeChallengerLocation(-1300.f, 0.f, 100.f);
+
+	AActor* SpawnSlopedFloor(const FTDArenaTestWorld& Fixture)
+	{
+		AActor* Slope = Fixture.World->SpawnActor<AActor>();
+		UBoxComponent* SlopeBox = NewObject<UBoxComponent>(Slope);
+		Slope->AddInstanceComponent(SlopeBox);
+		Slope->SetRootComponent(SlopeBox);
+		SlopeBox->SetBoxExtent(FVector(4000.f, 4000.f, ArenaSlopeHalfThicknessCm));
+		SlopeBox->SetCollisionObjectType(ECC_WorldStatic);
+		SlopeBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		SlopeBox->SetCollisionResponseToAllChannels(ECR_Block);
+		SlopeBox->RegisterComponent();
+		Slope->SetActorLocationAndRotation(FVector(0.f, 0.f, ArenaSlopeCenterHeightCm), FRotator(ArenaSlopePitchDegrees, 0.f, 0.f));
+		return Slope;
+	}
+
+	void SpawnOverlapOnlyVolume(const FTDArenaTestWorld& Fixture)
+	{
+		AActor* Volume = Fixture.World->SpawnActor<AActor>();
+		UBoxComponent* VolumeBox = NewObject<UBoxComponent>(Volume);
+		Volume->AddInstanceComponent(VolumeBox);
+		Volume->SetRootComponent(VolumeBox);
+		VolumeBox->SetBoxExtent(FVector(20000.f));
+		VolumeBox->SetCollisionObjectType(ECC_WorldStatic);
+		VolumeBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		VolumeBox->SetCollisionResponseToAllChannels(ECR_Overlap);
+		VolumeBox->RegisterComponent();
+	}
+
+	double ComputeSlopeGroundZ(const AActor& Slope, const double X, const double Y)
+	{
+		const FVector Up = Slope.GetActorUpVector();
+		const FVector TopPoint = Slope.GetActorLocation() + Up * ArenaSlopeHalfThicknessCm;
+		return TopPoint.Z - (Up.X * (X - TopPoint.X) + Up.Y * (Y - TopPoint.Y)) / Up.Z;
+	}
+
+	FTDArenaSpawnEntry MakeShapedEntry(UTDMonsterSpeciesAsset* Species, const int32 Count, const float DistanceCm, const float SpreadDegrees, const ETDArenaSpawnAnchor Anchor)
+	{
+		FTDArenaSpawnEntry Entry;
+		Entry.Species = Species;
+		Entry.Count = Count;
+		Entry.DistanceCm = DistanceCm;
+		Entry.SpreadDegrees = SpreadDegrees;
+		Entry.Anchor = Anchor;
+		return Entry;
+	}
+
+	void TestSpawnsKeepApart(FAutomationTestBase& Test, const ATDArenaEncounter& Encounter, const float RadiusCm, const TCHAR* WaveName)
+	{
+		const TArray<FVector>& Locations = Encounter.GetLastWaveSpawnLocations();
+		const double SpawnRingRadiusCm = Encounter.GetArenaRadiusCm() - ArenaDefaultSpawnEdgeMarginCm + 0.5f;
+		for (int32 FirstIndex = 0; FirstIndex < Locations.Num(); ++FirstIndex)
+		{
+			const double CenterDistance = FVector::Dist2D(Locations[FirstIndex], Encounter.GetActorLocation());
+			Test.TestTrue(FString::Printf(TEXT("%s spawn %d stays inside the spawn ring (%.1f cm)"), WaveName, FirstIndex, CenterDistance), CenterDistance <= SpawnRingRadiusCm);
+			for (int32 SecondIndex = FirstIndex + 1; SecondIndex < Locations.Num(); ++SecondIndex)
+			{
+				const double Separation = FVector::Dist2D(Locations[FirstIndex], Locations[SecondIndex]);
+				Test.TestTrue(FString::Printf(TEXT("%s spawns %d and %d keep apart (%.1f cm)"), WaveName, FirstIndex, SecondIndex, Separation), Separation >= 2.f * RadiusCm + ArenaSpawnSeparationSlackCm);
+			}
+		}
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDArenaSpawnGroundsOnSlopeTest, "TDGame.Encounter.Arena.SpawnGroundsEachMonsterOnSlope", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDArenaSpawnGroundsOnSlopeTest::RunTest(const FString& Parameters)
+{
+	using namespace TDArenaEncounterSpawnTests;
+	FTDArenaTestWorld Fixture;
+	const AActor* Slope = SpawnSlopedFloor(Fixture);
+	SpawnOverlapOnlyVolume(Fixture);
+	Fixture.MinionSpecies->CapsuleRadius = ArenaSlopeSpeciesRadiusCm;
+	Fixture.MinionSpecies->CapsuleHalfHeight = ArenaSlopeSpeciesHalfHeightCm;
+	UTDArenaEncounterDefinition* Definition = NewObject<UTDArenaEncounterDefinition>(Fixture.World);
+	Definition->Waves.Add(MakeWave({ MakeShapedEntry(Fixture.MinionSpecies, 3, 900.f, 140.f, ETDArenaSpawnAnchor::AroundChallenger), MakeShapedEntry(Fixture.MinionSpecies, 6, 1200.f, 360.f, ETDArenaSpawnAnchor::ArenaCenter) }));
+	ATDArenaEncounter* Encounter = Fixture.SpawnEncounter(Definition);
+	Encounter->SetActorLocation(FVector(0.f, 0.f, ComputeSlopeGroundZ(*Slope, 0.0, 0.0)));
+	const double ChallengerX = -800.0;
+	APawn* Challenger = Fixture.SpawnChallenger(FVector(ChallengerX, 0.0, ComputeSlopeGroundZ(*Slope, ChallengerX, 0.0) + 100.0));
+	TestTrue(TEXT("Challenger starts the sloped encounter"), Encounter->TryStartEncounter(Challenger));
+	Fixture.Tick(ArenaWaveDelaySeconds + 0.1f);
+
+	const TArray<FVector>& Locations = Encounter->GetLastWaveSpawnLocations();
+	TestEqual(TEXT("Every sloped spawn is recorded"), Locations.Num(), 9);
+	const double MaxFootGapCm = ArenaSpawnClearanceCm + ArenaSlopeSpeciesRadiusCm * (1.0 / FMath::Cos(FMath::DegreesToRadians(ArenaSlopePitchDegrees)) - 1.0) + ArenaFootToleranceCm;
+	int32 LowestIndex = INDEX_NONE;
+	int32 HighestIndex = INDEX_NONE;
+	for (int32 Index = 0; Index < Locations.Num(); ++Index)
+	{
+		const double GroundZ = ComputeSlopeGroundZ(*Slope, Locations[Index].X, Locations[Index].Y);
+		const double FootGap = Locations[Index].Z - ArenaSlopeSpeciesHalfHeightCm - GroundZ;
+		TestTrue(FString::Printf(TEXT("Spawn %d stands on the slope (foot gap %.1f cm over ground %.1f)"), Index, FootGap, GroundZ), FootGap >= -ArenaFootToleranceCm && FootGap <= MaxFootGapCm);
+		LowestIndex = LowestIndex == INDEX_NONE || GroundZ < ComputeSlopeGroundZ(*Slope, Locations[LowestIndex].X, Locations[LowestIndex].Y) ? Index : LowestIndex;
+		HighestIndex = HighestIndex == INDEX_NONE || GroundZ > ComputeSlopeGroundZ(*Slope, Locations[HighestIndex].X, Locations[HighestIndex].Y) ? Index : HighestIndex;
+	}
+	if (LowestIndex == INDEX_NONE || HighestIndex == INDEX_NONE)
+	{
+		return false;
+	}
+	const double GroundSpan = ComputeSlopeGroundZ(*Slope, Locations[HighestIndex].X, Locations[HighestIndex].Y) - ComputeSlopeGroundZ(*Slope, Locations[LowestIndex].X, Locations[LowestIndex].Y);
+	TestTrue(TEXT("The sloped spawns cover more than a metre of ground height"), GroundSpan > ArenaGroundSpanMinimumCm);
+	TestEqual(TEXT("Spawn heights follow the ground instead of sharing one height"), Locations[HighestIndex].Z - Locations[LowestIndex].Z, GroundSpan, ArenaHeightFollowToleranceCm);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTDArenaSpawnedMonstersKeepApartTest, "TDGame.Encounter.Arena.SpawnedMonstersKeepApart", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FTDArenaSpawnedMonstersKeepApartTest::RunTest(const FString& Parameters)
+{
+	using namespace TDArenaEncounterSpawnTests;
+	FTDArenaTestWorld Fixture;
+	Fixture.MinionSpecies->CapsuleRadius = ArenaWideSpeciesRadiusCm;
+	UTDArenaEncounterDefinition* Definition = NewObject<UTDArenaEncounterDefinition>(Fixture.World);
+	Definition->Waves.Add(MakeWave({ MakeShapedEntry(Fixture.MinionSpecies, 1, 1000.f, 0.f, ETDArenaSpawnAnchor::AroundChallenger), MakeShapedEntry(Fixture.MinionSpecies, 3, 900.f, 160.f, ETDArenaSpawnAnchor::AroundChallenger) }));
+	Definition->Waves.Add(MakeWave({ MakeShapedEntry(Fixture.MinionSpecies, 3, 4000.f, 4.f, ETDArenaSpawnAnchor::AroundChallenger) }));
+	ATDArenaEncounter* Encounter = Fixture.SpawnEncounter(Definition);
+	APawn* Challenger = Fixture.SpawnChallenger(ArenaChallengerLocation);
+	TestTrue(TEXT("Challenger starts the crowded encounter"), Encounter->TryStartEncounter(Challenger));
+	Fixture.Tick(ArenaWaveDelaySeconds + 0.1f);
+	TestEqual(TEXT("The same-bearing wave spawns every monster"), Encounter->GetLastWaveSpawnLocations().Num(), 4);
+	TestSpawnsKeepApart(*this, *Encounter, ArenaWideSpeciesRadiusCm, TEXT("Same-bearing wave"));
+
+	KillAliveMonsters(*Encounter, Challenger);
+	Fixture.Tick(ArenaStepSeconds);
+	Challenger->SetActorLocation(ArenaEdgeChallengerLocation);
+	Fixture.Tick(ArenaWaveDelaySeconds + 0.1f);
+	TestEqual(TEXT("The edge wave is running"), Encounter->GetCurrentWaveIndex(), 1);
+	TestEqual(TEXT("The edge wave spawns every monster"), Encounter->GetLastWaveSpawnLocations().Num(), 3);
+	TestSpawnsKeepApart(*this, *Encounter, ArenaWideSpeciesRadiusCm, TEXT("Edge-projected wave"));
+	return true;
+}
+#endif

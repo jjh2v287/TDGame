@@ -1,0 +1,2238 @@
+{
+ "label": "after",
+ "task": "M3-42",
+ "map": "/Game/Combat/Maps/LV_TDMegaMagicArena",
+ "count": 3,
+ "distance": 900.0,
+ "seconds": 30.0,
+ "fixed_fps": 60.0,
+ "cvars": {
+  "TD.Monster.VisualTurn": "1"
+ },
+ "legs": [
+  [
+   "hold",
+   2.5
+  ],
+  [
+   "move",
+   650.0,
+   0.0
+  ],
+  [
+   "move",
+   -525.9,
+   382.1
+  ],
+  [
+   "hold",
+   1.2
+  ],
+  [
+   "move",
+   200.9,
+   -618.2
+  ],
+  [
+   "move",
+   200.9,
+   618.2
+  ],
+  [
+   "hold",
+   1.2
+  ],
+  [
+   "move",
+   -525.9,
+   -382.1
+  ],
+  [
+   "move",
+   650.0,
+   0.0
+  ],
+  [
+   "hold",
+   1.2
+  ],
+  [
+   "move",
+   -525.9,
+   382.1
+  ],
+  [
+   "move",
+   200.9,
+   -618.2
+  ],
+  [
+   "hold",
+   1.2
+  ],
+  [
+   "move",
+   200.9,
+   618.2
+  ],
+  [
+   "move",
+   -525.9,
+   -382.1
+  ],
+  [
+   "hold",
+   1.2
+  ]
+ ],
+ "measured_at": "2026-11-20T11:44:53",
+ "definitions": {
+  "logic": "액터 요(Mover 가 정하는 논리 방향). 이동 중 회전 한도는 TurningRate(몬스터 540도/초)",
+  "visual": "메시 컴포넌트 월드 요(화면에 보이는 몸 방향, 종 MeshYaw 상수 포함)",
+  "pose": "골반(없으면 척추) 뼈 월드 요. 애니메이션이 몸을 돌리는 몫까지 포함",
+  "rate": "연속 두 표본의 요 차(−180~180 감싸기) ÷ 그 프레임 월드 델타",
+  "over_rate_frames": "각속도 > 720도/초 프레임(Mover 한도 540의 1.33배, 정상 회전으로는 나올 수 없음)",
+  "snaps": "초과 프레임 가운데 한 프레임 요 차 ≥ 10도(한 번에 돌아가는 팝핑)",
+  "rate_jumps": "연속 두 프레임 부호 있는 각속도 차 ≥ 400도/초(두 프레임 모두 델타 ≤ 1/30초). 회전이 가속 없이 바로 서거나 바로 최고 속도가 되는 끊김",
+  "reversals": "|각속도| ≥ 90도/초 회전 프레임의 부호가 직전 회전 프레임과 반대이고 간격 ≤ 0.25초(좌우로 흔들림)",
+  "hold_jumps": "가운데 프레임 요 차 < 0.05도, 양옆 ≥ 1도 같은 방향(갱신이 건너뛴 뒤 몰아 도는 뚝뚝 끊김, 틱 예산 의심)",
+  "visual_offset": "wrap(메시 요 − 액터 요 − 중앙값) 절대값(보이는 몸이 논리 방향에서 벗어난 각)",
+  "pose_offset": "wrap(골반 요 − 메시 요 − 중앙값) 절대값(애니메이션이 몸을 돌리는 몫)",
+  "per_minute": "개수 ÷ 살아 있는 표본 시간(분)"
+ },
+ "species": {
+  "Barghest": {
+   "result": "complete",
+   "raw": "Saved\\AgentOps\\20261120\\turn-popping\\after\\raw\\Barghest.json",
+   "monsters": [
+    {
+     "name": "TDMonsterCharacter_0",
+     "species": "DA_TDMonster_Barghest",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "ROOT_",
+     "pelvis_bone": null
+    },
+    {
+     "name": "TDMonsterCharacter_1",
+     "species": "DA_TDMonster_Barghest",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "ROOT_",
+     "pelvis_bone": null
+    },
+    {
+     "name": "TDMonsterCharacter_2",
+     "species": "DA_TDMonster_Barghest",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "ROOT_",
+     "pelvis_bone": null
+    }
+   ],
+   "analysis": {
+    "summary": {
+     "monsters": 3,
+     "sample_minutes": 1.499,
+     "result": "complete",
+     "applied_fps": 60.0,
+     "logic": {
+      "max_deg_s": 4207.11,
+      "p99_deg_s": 539.99,
+      "p95_deg_s": 539.99,
+      "over_rate_frames": 9,
+      "over_rate_frames_per_minute": 6.0,
+      "snaps": 9,
+      "snaps_per_minute": 6.0,
+      "rate_jumps": 417,
+      "rate_jumps_per_minute": 278.16,
+      "reversals": 273,
+      "reversals_per_minute": 182.1,
+      "hold_jumps": 3,
+      "hold_jumps_per_minute": 2.0,
+      "over_rate_states": {
+       "Cast": 9
+      },
+      "snap_events": [
+       {
+        "t": 18.222,
+        "delta_deg": 70.12,
+        "rate_deg_s": 4207.0,
+        "state": "Cast",
+        "action": "Pounce",
+        "monster": "TDMonsterCharacter_0"
+       },
+       {
+        "t": 35.939,
+        "delta_deg": 42.52,
+        "rate_deg_s": 2551.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_1"
+       },
+       {
+        "t": 37.555,
+        "delta_deg": 38.47,
+        "rate_deg_s": 2308.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_2"
+       },
+       {
+        "t": 21.939,
+        "delta_deg": 28.29,
+        "rate_deg_s": 1698.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_2"
+       },
+       {
+        "t": 28.939,
+        "delta_deg": -28.27,
+        "rate_deg_s": -1696.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_0"
+       },
+       {
+        "t": 30.889,
+        "delta_deg": -21.45,
+        "rate_deg_s": -1287.0,
+        "state": "Cast",
+        "action": "Pounce",
+        "monster": "TDMonsterCharacter_1"
+       },
+       {
+        "t": 25.372,
+        "delta_deg": -20.39,
+        "rate_deg_s": -1223.0,
+        "state": "Cast",
+        "action": "Pounce",
+        "monster": "TDMonsterCharacter_1"
+       },
+       {
+        "t": 23.739,
+        "delta_deg": 16.55,
+        "rate_deg_s": 993.0,
+        "state": "Cast",
+        "action": "Pounce",
+        "monster": "TDMonsterCharacter_0"
+       },
+       {
+        "t": 39.655,
+        "delta_deg": -12.22,
+        "rate_deg_s": -733.0,
+        "state": "Cast",
+        "action": "Pounce",
+        "monster": "TDMonsterCharacter_0"
+       }
+      ]
+     },
+     "visual": {
+      "max_deg_s": 719.99,
+      "p99_deg_s": 539.38,
+      "p95_deg_s": 520.75,
+      "over_rate_frames": 0,
+      "over_rate_frames_per_minute": 0.0,
+      "snaps": 0,
+      "snaps_per_minute": 0.0,
+      "rate_jumps": 0,
+      "rate_jumps_per_minute": 0.0,
+      "reversals": 79,
+      "reversals_per_minute": 52.7,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {},
+      "snap_events": []
+     },
+     "pose": {
+      "max_deg_s": 719.99,
+      "p99_deg_s": 539.38,
+      "p95_deg_s": 520.75,
+      "over_rate_frames": 0,
+      "over_rate_frames_per_minute": 0.0,
+      "snaps": 0,
+      "snaps_per_minute": 0.0,
+      "rate_jumps": 0,
+      "rate_jumps_per_minute": 0.0,
+      "reversals": 79,
+      "reversals_per_minute": 52.7,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {},
+      "snap_events": []
+     },
+     "visual_offset": {
+      "p95_deg": 27.4,
+      "max_deg": 87.44
+     },
+     "pose_offset": {
+      "p95_deg": 0.0,
+      "max_deg": 0.0
+     },
+     "delta_max_ms": 16.67,
+     "hitch_frames": 0
+    },
+    "monsters": [
+     {
+      "name": "TDMonsterCharacter_0",
+      "species": "DA_TDMonster_Barghest",
+      "info": {
+       "name": "TDMonsterCharacter_0",
+       "species": "DA_TDMonster_Barghest",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "ROOT_",
+       "pelvis_bone": null
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.589,
+      "state_frames": {
+       "Move": 1327,
+       "Cast": 468,
+       "Idle": 5
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 4207.11,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 4,
+       "snaps": 4,
+       "rate_jumps": 135,
+       "reversals": 82,
+       "hold_jumps": 2,
+       "over_rate_states": {
+        "Cast": 4
+       },
+       "snap_events": [
+        {
+         "t": 18.222,
+         "delta_deg": 70.12,
+         "rate_deg_s": 4207.0,
+         "state": "Cast",
+         "action": "Pounce"
+        },
+        {
+         "t": 28.939,
+         "delta_deg": -28.27,
+         "rate_deg_s": -1696.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 23.739,
+         "delta_deg": 16.55,
+         "rate_deg_s": 993.0,
+         "state": "Cast",
+         "action": "Pounce"
+        },
+        {
+         "t": 39.655,
+         "delta_deg": -12.22,
+         "rate_deg_s": -733.0,
+         "state": "Cast",
+         "action": "Pounce"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 719.99,
+       "p99_deg_s": 538.34,
+       "p95_deg_s": 520.93,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 26,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 719.99,
+       "p99_deg_s": 538.34,
+       "p95_deg_s": 520.93,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 26,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 27.38,
+       "max_deg": 87.44
+      },
+      "pose_offset": {
+       "center_deg": 0.0,
+       "p95_deg": 0.0,
+       "max_deg": 0.0
+      }
+     },
+     {
+      "name": "TDMonsterCharacter_1",
+      "species": "DA_TDMonster_Barghest",
+      "info": {
+       "name": "TDMonsterCharacter_1",
+       "species": "DA_TDMonster_Barghest",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "ROOT_",
+       "pelvis_bone": null
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.51,
+      "state_frames": {
+       "Move": 1376,
+       "Cast": 419,
+       "Idle": 5
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 2551.15,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 3,
+       "snaps": 3,
+       "rate_jumps": 196,
+       "reversals": 142,
+       "hold_jumps": 1,
+       "over_rate_states": {
+        "Cast": 3
+       },
+       "snap_events": [
+        {
+         "t": 35.939,
+         "delta_deg": 42.52,
+         "rate_deg_s": 2551.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 30.889,
+         "delta_deg": -21.45,
+         "rate_deg_s": -1287.0,
+         "state": "Cast",
+         "action": "Pounce"
+        },
+        {
+         "t": 25.372,
+         "delta_deg": -20.39,
+         "rate_deg_s": -1223.0,
+         "state": "Cast",
+         "action": "Pounce"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 539.86,
+       "p99_deg_s": 538.34,
+       "p95_deg_s": 518.11,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 33,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 539.86,
+       "p99_deg_s": 538.34,
+       "p95_deg_s": 518.11,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 33,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 27.33,
+       "max_deg": 30.84
+      },
+      "pose_offset": {
+       "center_deg": 0.0,
+       "p95_deg": 0.0,
+       "max_deg": 0.0
+      }
+     },
+     {
+      "name": "TDMonsterCharacter_2",
+      "species": "DA_TDMonster_Barghest",
+      "info": {
+       "name": "TDMonsterCharacter_2",
+       "species": "DA_TDMonster_Barghest",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "ROOT_",
+       "pelvis_bone": null
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.508,
+      "state_frames": {
+       "Cast": 449,
+       "Idle": 5,
+       "Move": 1346
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 2308.1,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 2,
+       "snaps": 2,
+       "rate_jumps": 86,
+       "reversals": 49,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Cast": 2
+       },
+       "snap_events": [
+        {
+         "t": 37.555,
+         "delta_deg": 38.47,
+         "rate_deg_s": 2308.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 21.939,
+         "delta_deg": 28.29,
+         "rate_deg_s": 1698.0,
+         "state": "Cast",
+         "action": "Bite"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 539.99,
+       "p99_deg_s": 539.91,
+       "p95_deg_s": 526.41,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 20,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 539.99,
+       "p99_deg_s": 539.91,
+       "p95_deg_s": 526.41,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 20,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 27.41,
+       "max_deg": 27.9
+      },
+      "pose_offset": {
+       "center_deg": 0.0,
+       "p95_deg": 0.0,
+       "max_deg": 0.0
+      }
+     }
+    ]
+   }
+  },
+  "Goblin": {
+   "result": "complete",
+   "raw": "Saved\\AgentOps\\20261120\\turn-popping\\after\\raw\\Goblin.json",
+   "monsters": [
+    {
+     "name": "TDMonsterCharacter_3",
+     "species": "DA_TDMonster_Goblin",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "root",
+     "pelvis_bone": "pelvis"
+    },
+    {
+     "name": "TDMonsterCharacter_4",
+     "species": "DA_TDMonster_Goblin",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "root",
+     "pelvis_bone": "pelvis"
+    },
+    {
+     "name": "TDMonsterCharacter_5",
+     "species": "DA_TDMonster_Goblin",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "root",
+     "pelvis_bone": "pelvis"
+    }
+   ],
+   "analysis": {
+    "summary": {
+     "monsters": 3,
+     "sample_minutes": 1.499,
+     "result": "complete",
+     "applied_fps": 60.0,
+     "logic": {
+      "max_deg_s": 4056.24,
+      "p99_deg_s": 539.99,
+      "p95_deg_s": 539.99,
+      "over_rate_frames": 7,
+      "over_rate_frames_per_minute": 4.67,
+      "snaps": 7,
+      "snaps_per_minute": 4.67,
+      "rate_jumps": 403,
+      "rate_jumps_per_minute": 268.82,
+      "reversals": 281,
+      "reversals_per_minute": 187.44,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {
+       "Cast": 7
+      },
+      "snap_events": [
+       {
+        "t": 64.866,
+        "delta_deg": -67.61,
+        "rate_deg_s": -4056.0,
+        "state": "Cast",
+        "action": "Slash",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 60.833,
+        "delta_deg": -57.27,
+        "rate_deg_s": -3436.0,
+        "state": "Cast",
+        "action": "Slash",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 67.116,
+        "delta_deg": -34.21,
+        "rate_deg_s": -2052.0,
+        "state": "Cast",
+        "action": "Slash",
+        "monster": "TDMonsterCharacter_3"
+       },
+       {
+        "t": 74.149,
+        "delta_deg": -33.27,
+        "rate_deg_s": -1996.0,
+        "state": "Cast",
+        "action": "Slash",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 70.583,
+        "delta_deg": -22.54,
+        "rate_deg_s": -1352.0,
+        "state": "Cast",
+        "action": "Slash",
+        "monster": "TDMonsterCharacter_4"
+       },
+       {
+        "t": 47.049,
+        "delta_deg": 22.43,
+        "rate_deg_s": 1346.0,
+        "state": "Cast",
+        "action": "Slash",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 60.466,
+        "delta_deg": -18.35,
+        "rate_deg_s": -1101.0,
+        "state": "Cast",
+        "action": "Slash",
+        "monster": "TDMonsterCharacter_4"
+       }
+      ]
+     },
+     "visual": {
+      "max_deg_s": 564.77,
+      "p99_deg_s": 539.94,
+      "p95_deg_s": 531.22,
+      "over_rate_frames": 0,
+      "over_rate_frames_per_minute": 0.0,
+      "snaps": 0,
+      "snaps_per_minute": 0.0,
+      "rate_jumps": 0,
+      "rate_jumps_per_minute": 0.0,
+      "reversals": 83,
+      "reversals_per_minute": 55.36,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {},
+      "snap_events": []
+     },
+     "pose": {
+      "max_deg_s": 7017.98,
+      "p99_deg_s": 4168.51,
+      "p95_deg_s": 1548.89,
+      "over_rate_frames": 963,
+      "over_rate_frames_per_minute": 642.36,
+      "snaps": 963,
+      "snaps_per_minute": 642.36,
+      "rate_jumps": 845,
+      "rate_jumps_per_minute": 563.65,
+      "reversals": 542,
+      "reversals_per_minute": 361.54,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {
+       "Move": 739,
+       "Cast": 224
+      },
+      "snap_events": [
+       {
+        "t": 55.466,
+        "delta_deg": 116.97,
+        "rate_deg_s": 7018.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_4"
+       },
+       {
+        "t": 71.816,
+        "delta_deg": 105.19,
+        "rate_deg_s": 6312.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 73.483,
+        "delta_deg": 102.05,
+        "rate_deg_s": 6123.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 58.983,
+        "delta_deg": 95.89,
+        "rate_deg_s": 5753.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_4"
+       },
+       {
+        "t": 71.949,
+        "delta_deg": 93.26,
+        "rate_deg_s": 5596.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_3"
+       },
+       {
+        "t": 75.799,
+        "delta_deg": -92.55,
+        "rate_deg_s": -5553.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 50.666,
+        "delta_deg": -88.69,
+        "rate_deg_s": -5321.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_3"
+       },
+       {
+        "t": 55.449,
+        "delta_deg": 87.79,
+        "rate_deg_s": 5267.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_3"
+       },
+       {
+        "t": 47.566,
+        "delta_deg": -87.62,
+        "rate_deg_s": -5257.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_3"
+       },
+       {
+        "t": 72.366,
+        "delta_deg": 87.44,
+        "rate_deg_s": 5246.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 55.383,
+        "delta_deg": 87.44,
+        "rate_deg_s": 5246.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_5"
+       },
+       {
+        "t": 73.749,
+        "delta_deg": -86.23,
+        "rate_deg_s": -5173.0,
+        "state": "Move",
+        "action": "Approach",
+        "monster": "TDMonsterCharacter_5"
+       }
+      ]
+     },
+     "visual_offset": {
+      "p95_deg": 27.7,
+      "max_deg": 57.85
+     },
+     "pose_offset": {
+      "p95_deg": 90.05,
+      "max_deg": 130.05
+     },
+     "delta_max_ms": 16.67,
+     "hitch_frames": 0
+    },
+    "monsters": [
+     {
+      "name": "TDMonsterCharacter_3",
+      "species": "DA_TDMonster_Goblin",
+      "info": {
+       "name": "TDMonsterCharacter_3",
+       "species": "DA_TDMonster_Goblin",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "root",
+       "pelvis_bone": "pelvis"
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.496,
+      "state_frames": {
+       "Cast": 613,
+       "Idle": 10,
+       "Move": 1177
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 2052.26,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 1,
+       "snaps": 1,
+       "rate_jumps": 112,
+       "reversals": 75,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Cast": 1
+       },
+       "snap_events": [
+        {
+         "t": 67.116,
+         "delta_deg": -34.21,
+         "rate_deg_s": -2052.0,
+         "state": "Cast",
+         "action": "Slash"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 539.95,
+       "p99_deg_s": 539.41,
+       "p95_deg_s": 528.12,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 27,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 5595.57,
+       "p99_deg_s": 4301.59,
+       "p95_deg_s": 1355.67,
+       "over_rate_frames": 313,
+       "snaps": 313,
+       "rate_jumps": 252,
+       "reversals": 163,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Move": 235,
+        "Cast": 78
+       },
+       "snap_events": [
+        {
+         "t": 71.949,
+         "delta_deg": 93.26,
+         "rate_deg_s": 5596.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 50.666,
+         "delta_deg": -88.69,
+         "rate_deg_s": -5321.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 55.449,
+         "delta_deg": 87.79,
+         "rate_deg_s": 5267.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 47.566,
+         "delta_deg": -87.62,
+         "rate_deg_s": -5257.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 53.066,
+         "delta_deg": 84.14,
+         "rate_deg_s": 5048.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 55.166,
+         "delta_deg": -83.31,
+         "rate_deg_s": -4998.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 66.233,
+         "delta_deg": -83.03,
+         "rate_deg_s": -4981.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 59.766,
+         "delta_deg": -82.33,
+         "rate_deg_s": -4940.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 48.699,
+         "delta_deg": -77.48,
+         "rate_deg_s": -4649.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 71.383,
+         "delta_deg": 76.8,
+         "rate_deg_s": 4608.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 61.199,
+         "delta_deg": -76.39,
+         "rate_deg_s": -4583.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 60.066,
+         "delta_deg": 75.89,
+         "rate_deg_s": 4553.0,
+         "state": "Move",
+         "action": "Approach"
+        }
+       ]
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 27.59,
+       "max_deg": 32.82
+      },
+      "pose_offset": {
+       "center_deg": -81.69,
+       "p95_deg": 93.72,
+       "max_deg": 129.93
+      }
+     },
+     {
+      "name": "TDMonsterCharacter_4",
+      "species": "DA_TDMonster_Goblin",
+      "info": {
+       "name": "TDMonsterCharacter_4",
+       "species": "DA_TDMonster_Goblin",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "root",
+       "pelvis_bone": "pelvis"
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.532,
+      "state_frames": {
+       "Move": 1258,
+       "Cast": 534,
+       "Idle": 8
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 1352.08,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 2,
+       "snaps": 2,
+       "rate_jumps": 149,
+       "reversals": 105,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Cast": 2
+       },
+       "snap_events": [
+        {
+         "t": 70.583,
+         "delta_deg": -22.54,
+         "rate_deg_s": -1352.0,
+         "state": "Cast",
+         "action": "Slash"
+        },
+        {
+         "t": 60.466,
+         "delta_deg": -18.35,
+         "rate_deg_s": -1101.0,
+         "state": "Cast",
+         "action": "Slash"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 542.52,
+       "p99_deg_s": 539.98,
+       "p95_deg_s": 531.33,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 32,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 7017.98,
+       "p99_deg_s": 4000.67,
+       "p95_deg_s": 1473.16,
+       "over_rate_frames": 329,
+       "snaps": 329,
+       "rate_jumps": 287,
+       "reversals": 174,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Move": 257,
+        "Cast": 72
+       },
+       "snap_events": [
+        {
+         "t": 55.466,
+         "delta_deg": 116.97,
+         "rate_deg_s": 7018.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 58.983,
+         "delta_deg": 95.89,
+         "rate_deg_s": 5753.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 66.516,
+         "delta_deg": 80.23,
+         "rate_deg_s": 4814.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 59.766,
+         "delta_deg": -79.68,
+         "rate_deg_s": -4781.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 57.533,
+         "delta_deg": -77.8,
+         "rate_deg_s": -4668.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 66.233,
+         "delta_deg": -76.53,
+         "rate_deg_s": -4592.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 69.233,
+         "delta_deg": -76.46,
+         "rate_deg_s": -4588.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 57.816,
+         "delta_deg": 75.56,
+         "rate_deg_s": 4534.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 74.199,
+         "delta_deg": 75.12,
+         "rate_deg_s": 4507.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 73.366,
+         "delta_deg": -74.9,
+         "rate_deg_s": -4494.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 54.916,
+         "delta_deg": 74.45,
+         "rate_deg_s": 4467.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 54.083,
+         "delta_deg": -73.26,
+         "rate_deg_s": -4396.0,
+         "state": "Move",
+         "action": "Approach"
+        }
+       ]
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 27.68,
+       "max_deg": 28.11
+      },
+      "pose_offset": {
+       "center_deg": -81.58,
+       "p95_deg": 87.66,
+       "max_deg": 130.05
+      }
+     },
+     {
+      "name": "TDMonsterCharacter_5",
+      "species": "DA_TDMonster_Goblin",
+      "info": {
+       "name": "TDMonsterCharacter_5",
+       "species": "DA_TDMonster_Goblin",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "root",
+       "pelvis_bone": "pelvis"
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.593,
+      "state_frames": {
+       "Move": 1280,
+       "Cast": 513,
+       "Idle": 7
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 4056.24,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 4,
+       "snaps": 4,
+       "rate_jumps": 142,
+       "reversals": 101,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Cast": 4
+       },
+       "snap_events": [
+        {
+         "t": 64.866,
+         "delta_deg": -67.61,
+         "rate_deg_s": -4056.0,
+         "state": "Cast",
+         "action": "Slash"
+        },
+        {
+         "t": 60.833,
+         "delta_deg": -57.27,
+         "rate_deg_s": -3436.0,
+         "state": "Cast",
+         "action": "Slash"
+        },
+        {
+         "t": 74.149,
+         "delta_deg": -33.27,
+         "rate_deg_s": -1996.0,
+         "state": "Cast",
+         "action": "Slash"
+        },
+        {
+         "t": 47.049,
+         "delta_deg": 22.43,
+         "rate_deg_s": 1346.0,
+         "state": "Cast",
+         "action": "Slash"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 564.77,
+       "p99_deg_s": 539.98,
+       "p95_deg_s": 532.7,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 24,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 6311.56,
+       "p99_deg_s": 4192.48,
+       "p95_deg_s": 1725.55,
+       "over_rate_frames": 321,
+       "snaps": 321,
+       "rate_jumps": 306,
+       "reversals": 205,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Move": 247,
+        "Cast": 74
+       },
+       "snap_events": [
+        {
+         "t": 71.816,
+         "delta_deg": 105.19,
+         "rate_deg_s": 6312.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 73.483,
+         "delta_deg": 102.05,
+         "rate_deg_s": 6123.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 75.799,
+         "delta_deg": -92.55,
+         "rate_deg_s": -5553.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 72.366,
+         "delta_deg": 87.44,
+         "rate_deg_s": 5246.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 55.383,
+         "delta_deg": 87.44,
+         "rate_deg_s": 5246.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 73.749,
+         "delta_deg": -86.23,
+         "rate_deg_s": -5173.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 50.949,
+         "delta_deg": -85.58,
+         "rate_deg_s": -5135.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 51.233,
+         "delta_deg": 85.33,
+         "rate_deg_s": 5120.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 54.283,
+         "delta_deg": 82.99,
+         "rate_deg_s": 4979.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 66.516,
+         "delta_deg": -82.61,
+         "rate_deg_s": -4956.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 53.999,
+         "delta_deg": -79.48,
+         "rate_deg_s": -4769.0,
+         "state": "Move",
+         "action": "Approach"
+        },
+        {
+         "t": 70.399,
+         "delta_deg": -79.18,
+         "rate_deg_s": -4751.0,
+         "state": "Move",
+         "action": "Approach"
+        }
+       ]
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 27.79,
+       "max_deg": 57.85
+      },
+      "pose_offset": {
+       "center_deg": -85.37,
+       "p95_deg": 84.1,
+       "max_deg": 126.26
+      }
+     }
+    ]
+   }
+  },
+  "Hyena": {
+   "result": "complete",
+   "raw": "Saved\\AgentOps\\20261120\\turn-popping\\after\\raw\\Hyena.json",
+   "monsters": [
+    {
+     "name": "TDMonsterCharacter_6",
+     "species": "DA_TDMonster_Hyena",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "RL_BoneRoot",
+     "pelvis_bone": null
+    },
+    {
+     "name": "TDMonsterCharacter_7",
+     "species": "DA_TDMonster_Hyena",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "RL_BoneRoot",
+     "pelvis_bone": null
+    },
+    {
+     "name": "TDMonsterCharacter_8",
+     "species": "DA_TDMonster_Hyena",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "RL_BoneRoot",
+     "pelvis_bone": null
+    }
+   ],
+   "analysis": {
+    "summary": {
+     "monsters": 3,
+     "sample_minutes": 1.499,
+     "result": "complete",
+     "applied_fps": 60.0,
+     "logic": {
+      "max_deg_s": 10729.99,
+      "p99_deg_s": 539.99,
+      "p95_deg_s": 539.99,
+      "over_rate_frames": 21,
+      "over_rate_frames_per_minute": 14.01,
+      "snaps": 21,
+      "snaps_per_minute": 14.01,
+      "rate_jumps": 458,
+      "rate_jumps_per_minute": 305.51,
+      "reversals": 284,
+      "reversals_per_minute": 189.44,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {
+       "Cast": 21
+      },
+      "snap_events": [
+       {
+        "t": 87.942,
+        "delta_deg": 178.84,
+        "rate_deg_s": 10730.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_6"
+       },
+       {
+        "t": 95.375,
+        "delta_deg": -164.62,
+        "rate_deg_s": -9877.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_8"
+       },
+       {
+        "t": 104.975,
+        "delta_deg": -82.51,
+        "rate_deg_s": -4950.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_8"
+       },
+       {
+        "t": 114.042,
+        "delta_deg": -78.2,
+        "rate_deg_s": -4692.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_7"
+       },
+       {
+        "t": 87.242,
+        "delta_deg": 72.31,
+        "rate_deg_s": 4339.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_8"
+       },
+       {
+        "t": 113.725,
+        "delta_deg": 62.34,
+        "rate_deg_s": 3741.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_6"
+       },
+       {
+        "t": 102.475,
+        "delta_deg": -53.5,
+        "rate_deg_s": -3210.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_8"
+       },
+       {
+        "t": 108.725,
+        "delta_deg": 46.41,
+        "rate_deg_s": 2784.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_8"
+       },
+       {
+        "t": 99.975,
+        "delta_deg": -41.93,
+        "rate_deg_s": -2516.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_8"
+       },
+       {
+        "t": 104.658,
+        "delta_deg": -41.66,
+        "rate_deg_s": -2500.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_7"
+       },
+       {
+        "t": 110.758,
+        "delta_deg": -38.89,
+        "rate_deg_s": -2334.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_6"
+       },
+       {
+        "t": 91.775,
+        "delta_deg": -37.16,
+        "rate_deg_s": -2230.0,
+        "state": "Cast",
+        "action": "Bite",
+        "monster": "TDMonsterCharacter_6"
+       }
+      ]
+     },
+     "visual": {
+      "max_deg_s": 719.99,
+      "p99_deg_s": 539.8,
+      "p95_deg_s": 528.12,
+      "over_rate_frames": 0,
+      "over_rate_frames_per_minute": 0.0,
+      "snaps": 0,
+      "snaps_per_minute": 0.0,
+      "rate_jumps": 2,
+      "rate_jumps_per_minute": 1.33,
+      "reversals": 110,
+      "reversals_per_minute": 73.37,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {},
+      "snap_events": []
+     },
+     "pose": {
+      "max_deg_s": 719.99,
+      "p99_deg_s": 539.8,
+      "p95_deg_s": 528.12,
+      "over_rate_frames": 0,
+      "over_rate_frames_per_minute": 0.0,
+      "snaps": 0,
+      "snaps_per_minute": 0.0,
+      "rate_jumps": 2,
+      "rate_jumps_per_minute": 1.33,
+      "reversals": 110,
+      "reversals_per_minute": 73.37,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {},
+      "snap_events": []
+     },
+     "visual_offset": {
+      "p95_deg": 27.71,
+      "max_deg": 175.16
+     },
+     "pose_offset": {
+      "p95_deg": 0.0,
+      "max_deg": 0.0
+     },
+     "delta_max_ms": 16.67,
+     "hitch_frames": 0
+    },
+    "monsters": [
+     {
+      "name": "TDMonsterCharacter_6",
+      "species": "DA_TDMonster_Hyena",
+      "info": {
+       "name": "TDMonsterCharacter_6",
+       "species": "DA_TDMonster_Hyena",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "RL_BoneRoot",
+       "pelvis_bone": null
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.696,
+      "state_frames": {
+       "Move": 1440,
+       "Cast": 353,
+       "Idle": 7
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 10729.99,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 9,
+       "snaps": 9,
+       "rate_jumps": 149,
+       "reversals": 93,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Cast": 9
+       },
+       "snap_events": [
+        {
+         "t": 87.942,
+         "delta_deg": 178.84,
+         "rate_deg_s": 10730.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 113.725,
+         "delta_deg": 62.34,
+         "rate_deg_s": 3741.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 110.758,
+         "delta_deg": -38.89,
+         "rate_deg_s": -2334.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 91.775,
+         "delta_deg": -37.16,
+         "rate_deg_s": -2230.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 85.608,
+         "delta_deg": -27.02,
+         "rate_deg_s": -1621.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 107.708,
+         "delta_deg": -24.75,
+         "rate_deg_s": -1485.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 97.008,
+         "delta_deg": -24.04,
+         "rate_deg_s": -1442.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 103.658,
+         "delta_deg": 16.22,
+         "rate_deg_s": 973.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 100.842,
+         "delta_deg": -13.71,
+         "rate_deg_s": -823.0,
+         "state": "Cast",
+         "action": "Bite"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 719.99,
+       "p99_deg_s": 539.91,
+       "p95_deg_s": 535.53,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 24,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 719.99,
+       "p99_deg_s": 539.91,
+       "p95_deg_s": 535.53,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 24,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 27.83,
+       "max_deg": 175.16
+      },
+      "pose_offset": {
+       "center_deg": 0.0,
+       "p95_deg": 0.0,
+       "max_deg": 0.0
+      }
+     },
+     {
+      "name": "TDMonsterCharacter_7",
+      "species": "DA_TDMonster_Hyena",
+      "info": {
+       "name": "TDMonsterCharacter_7",
+       "species": "DA_TDMonster_Hyena",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "RL_BoneRoot",
+       "pelvis_bone": null
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.669,
+      "state_frames": {
+       "Move": 1458,
+       "Cast": 336,
+       "Idle": 6
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 4691.9,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 2,
+       "snaps": 2,
+       "rate_jumps": 152,
+       "reversals": 94,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Cast": 2
+       },
+       "snap_events": [
+        {
+         "t": 114.042,
+         "delta_deg": -78.2,
+         "rate_deg_s": -4692.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 104.658,
+         "delta_deg": -41.66,
+         "rate_deg_s": -2500.0,
+         "state": "Cast",
+         "action": "Bite"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 539.86,
+       "p99_deg_s": 538.41,
+       "p95_deg_s": 501.01,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 44,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 539.86,
+       "p99_deg_s": 538.41,
+       "p95_deg_s": 501.01,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 44,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.03,
+       "p95_deg": 26.59,
+       "max_deg": 54.38
+      },
+      "pose_offset": {
+       "center_deg": 0.0,
+       "p95_deg": 0.0,
+       "max_deg": 0.0
+      }
+     },
+     {
+      "name": "TDMonsterCharacter_8",
+      "species": "DA_TDMonster_Hyena",
+      "info": {
+       "name": "TDMonsterCharacter_8",
+       "species": "DA_TDMonster_Hyena",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "RL_BoneRoot",
+       "pelvis_bone": null
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.592,
+      "state_frames": {
+       "Move": 1379,
+       "Cast": 411,
+       "Idle": 10
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 9877.28,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 10,
+       "snaps": 10,
+       "rate_jumps": 157,
+       "reversals": 97,
+       "hold_jumps": 0,
+       "over_rate_states": {
+        "Cast": 10
+       },
+       "snap_events": [
+        {
+         "t": 95.375,
+         "delta_deg": -164.62,
+         "rate_deg_s": -9877.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 104.975,
+         "delta_deg": -82.51,
+         "rate_deg_s": -4950.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 87.242,
+         "delta_deg": 72.31,
+         "rate_deg_s": 4339.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 102.475,
+         "delta_deg": -53.5,
+         "rate_deg_s": -3210.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 108.725,
+         "delta_deg": 46.41,
+         "rate_deg_s": 2784.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 99.975,
+         "delta_deg": -41.93,
+         "rate_deg_s": -2516.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 84.825,
+         "delta_deg": 36.73,
+         "rate_deg_s": 2204.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 112.942,
+         "delta_deg": -33.54,
+         "rate_deg_s": -2012.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 89.975,
+         "delta_deg": -17.6,
+         "rate_deg_s": -1056.0,
+         "state": "Cast",
+         "action": "Bite"
+        },
+        {
+         "t": 92.408,
+         "delta_deg": 12.66,
+         "rate_deg_s": 759.0,
+         "state": "Cast",
+         "action": "Bite"
+        }
+       ]
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 719.99,
+       "p99_deg_s": 539.97,
+       "p95_deg_s": 530.09,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 2,
+       "reversals": 42,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 719.99,
+       "p99_deg_s": 539.97,
+       "p95_deg_s": 530.09,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 2,
+       "reversals": 42,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 27.79,
+       "max_deg": 136.71
+      },
+      "pose_offset": {
+       "center_deg": 0.0,
+       "p95_deg": 0.0,
+       "max_deg": 0.0
+      }
+     }
+    ]
+   }
+  },
+  "StoneGolem": {
+   "result": "complete",
+   "raw": "Saved\\AgentOps\\20261120\\turn-popping\\after\\raw\\StoneGolem.json",
+   "monsters": [
+    {
+     "name": "TDMonsterCharacter_9",
+     "species": "DA_TDMonster_StoneGolem",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "root",
+     "pelvis_bone": "pelvis"
+    },
+    {
+     "name": "TDMonsterCharacter_10",
+     "species": "DA_TDMonster_StoneGolem",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "root",
+     "pelvis_bone": "pelvis"
+    },
+    {
+     "name": "TDMonsterCharacter_11",
+     "species": "DA_TDMonster_StoneGolem",
+     "mesh_yaw": -90.0,
+     "turning_rate": 540.0,
+     "root_bone": "root",
+     "pelvis_bone": "pelvis"
+    }
+   ],
+   "analysis": {
+    "summary": {
+     "monsters": 3,
+     "sample_minutes": 1.499,
+     "result": "complete",
+     "applied_fps": 60.0,
+     "logic": {
+      "max_deg_s": 540.0,
+      "p99_deg_s": 539.99,
+      "p95_deg_s": 539.99,
+      "over_rate_frames": 0,
+      "over_rate_frames_per_minute": 0.0,
+      "snaps": 0,
+      "snaps_per_minute": 0.0,
+      "rate_jumps": 207,
+      "rate_jumps_per_minute": 138.08,
+      "reversals": 93,
+      "reversals_per_minute": 62.04,
+      "hold_jumps": 1,
+      "hold_jumps_per_minute": 0.67,
+      "over_rate_states": {},
+      "snap_events": []
+     },
+     "visual": {
+      "max_deg_s": 539.78,
+      "p99_deg_s": 490.86,
+      "p95_deg_s": 209.64,
+      "over_rate_frames": 0,
+      "over_rate_frames_per_minute": 0.0,
+      "snaps": 0,
+      "snaps_per_minute": 0.0,
+      "rate_jumps": 0,
+      "rate_jumps_per_minute": 0.0,
+      "reversals": 23,
+      "reversals_per_minute": 15.34,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {},
+      "snap_events": []
+     },
+     "pose": {
+      "max_deg_s": 641.21,
+      "p99_deg_s": 475.2,
+      "p95_deg_s": 284.68,
+      "over_rate_frames": 0,
+      "over_rate_frames_per_minute": 0.0,
+      "snaps": 0,
+      "snaps_per_minute": 0.0,
+      "rate_jumps": 0,
+      "rate_jumps_per_minute": 0.0,
+      "reversals": 55,
+      "reversals_per_minute": 36.69,
+      "hold_jumps": 0,
+      "hold_jumps_per_minute": 0.0,
+      "over_rate_states": {},
+      "snap_events": []
+     },
+     "visual_offset": {
+      "p95_deg": 11.49,
+      "max_deg": 27.9
+     },
+     "pose_offset": {
+      "p95_deg": 65.03,
+      "max_deg": 68.32
+     },
+     "delta_max_ms": 16.67,
+     "hitch_frames": 0
+    },
+    "monsters": [
+     {
+      "name": "TDMonsterCharacter_9",
+      "species": "DA_TDMonster_StoneGolem",
+      "info": {
+       "name": "TDMonsterCharacter_9",
+       "species": "DA_TDMonster_StoneGolem",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "root",
+       "pelvis_bone": "pelvis"
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.0,
+      "state_frames": {
+       "Move": 1800
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 540.0,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 75,
+       "reversals": 33,
+       "hold_jumps": 1,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 539.78,
+       "p99_deg_s": 490.86,
+       "p95_deg_s": 189.89,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 8,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 569.33,
+       "p99_deg_s": 472.67,
+       "p95_deg_s": 270.55,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 16,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 10.31,
+       "max_deg": 27.9
+      },
+      "pose_offset": {
+       "center_deg": 82.61,
+       "p95_deg": 65.03,
+       "max_deg": 68.32
+      }
+     },
+     {
+      "name": "TDMonsterCharacter_10",
+      "species": "DA_TDMonster_StoneGolem",
+      "info": {
+       "name": "TDMonsterCharacter_10",
+       "species": "DA_TDMonster_StoneGolem",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "root",
+       "pelvis_bone": "pelvis"
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.0,
+      "state_frames": {
+       "Move": 1800
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 540.0,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 49,
+       "reversals": 22,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 539.77,
+       "p99_deg_s": 520.44,
+       "p95_deg_s": 245.47,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 4,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 641.21,
+       "p99_deg_s": 485.46,
+       "p95_deg_s": 298.99,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 15,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 13.38,
+       "max_deg": 27.9
+      },
+      "pose_offset": {
+       "center_deg": 82.61,
+       "p95_deg": 65.03,
+       "max_deg": 68.32
+      }
+     },
+     {
+      "name": "TDMonsterCharacter_11",
+      "species": "DA_TDMonster_StoneGolem",
+      "info": {
+       "name": "TDMonsterCharacter_11",
+       "species": "DA_TDMonster_StoneGolem",
+       "mesh_yaw": -90.0,
+       "turning_rate": 540.0,
+       "root_bone": "root",
+       "pelvis_bone": "pelvis"
+      },
+      "seconds": 29.983,
+      "delta_p50_ms": 16.67,
+      "delta_max_ms": 16.67,
+      "hitch_frames": 0,
+      "moving_fraction": 0.0,
+      "state_frames": {
+       "Move": 1800
+      },
+      "logic": {
+       "frames": 1799,
+       "max_deg_s": 540.0,
+       "p99_deg_s": 539.99,
+       "p95_deg_s": 539.99,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 83,
+       "reversals": 38,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual": {
+       "frames": 1799,
+       "max_deg_s": 537.39,
+       "p99_deg_s": 443.24,
+       "p95_deg_s": 197.37,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 11,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "pose": {
+       "frames": 1799,
+       "max_deg_s": 553.92,
+       "p99_deg_s": 455.66,
+       "p95_deg_s": 272.47,
+       "over_rate_frames": 0,
+       "snaps": 0,
+       "rate_jumps": 0,
+       "reversals": 24,
+       "hold_jumps": 0,
+       "over_rate_states": {},
+       "snap_events": []
+      },
+      "visual_offset": {
+       "center_deg": -90.0,
+       "p95_deg": 11.03,
+       "max_deg": 27.84
+      },
+      "pose_offset": {
+       "center_deg": 82.61,
+       "p95_deg": 65.03,
+       "max_deg": 68.32
+      }
+     }
+    ]
+   }
+  }
+ }
+}

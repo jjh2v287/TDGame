@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Characters/TDCombatCharacter.h"
+#include "Characters/TDVisualTurnSmoother.h"
 #include "Engine/TimerHandle.h"
 #include "GameplayTagContainer.h"
 #include "GenericTeamAgentInterface.h"
@@ -29,6 +30,7 @@ public:
 	ATDMonsterCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	virtual FVector GetBodyLocation() const override;
 	virtual float GetBodyYaw() const override;
@@ -180,6 +182,13 @@ private:
 	void SpawnSummonedMinions(UTDMonsterSpeciesAsset* MinionSpecies, const FTDMonsterSummonRequest& Request);
 	ATDMonsterCharacter* SpawnSummonedMinion(UTDMonsterSpeciesAsset* MinionSpecies, const FVector& Location, const FRotator& Rotation);
 	void CancelSummonLoads();
+	void UpdateVisualTurn(float DeltaSeconds);
+	void ClearVisualTurn();
+	void ApplyVisualYawOffset(float YawOffset);
+
+	UFUNCTION()
+	void HandleMoverPostFinalize(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState);
+
 
 	bool bHasGrantedDefaultActionAbilities = false;
 	bool bHasAppliedMonsterStats = false;
@@ -221,6 +230,8 @@ private:
 	TArray<FTimerHandle> SummonTimerHandles;
 	FName ActivePresentationPhaseId;
 	TSharedPtr<FStreamableHandle> ChannelEffectHandle;
+	FTDVisualTurnSmoother VisualTurnSmoother;
+	bool bHasVisualYawOffset = false;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UNiagaraComponent> ChannelEffectComponent;

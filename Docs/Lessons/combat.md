@@ -88,3 +88,12 @@
 - 증거: `Saved/AgentOps/20261018/fluidfx/gc-explosion-debug.md`, `Docs/Validation/FluidFX/D-49-fx3-probe-2026-10-18.json`(퍼짐 11.3배, 트리거 뒤 오류 0)
 - 날짜·상태: 2026-10-18 active
 - 발견: claude(td-debugger)
+
+### L-combat-11 보이는 몸만 돌리는 메시 오프셋은 Mover 가 프레임마다 되돌리고, 빙결은 액터 틱을 꺼서 다시 씌우지 못한다
+- 증상: 몬스터 보이는 몸 회전 부드럽게 하기(M3-42)를 메시 상대 회전으로 넣을 때 ① 생각 서브시스템(TG_PrePhysics) 안에서 바꾸면 같은 프레임의 Mover 시뮬 회전(540도/초)이 걸러지지 않고 그대로 섞이고 ② 정적 반박: `UTDCombatComponent::SetFrozen` 이 `CustomTimeDilation=0`·`SetActorTickEnabled(false)` 를 하므로 액터 틱에서만 다시 씌우면 빙결 때 Null 모드 전환 프레임에 메시가 논리 방향으로 튀고 해동 때 옛 오프셋으로 다시 튈 수 있음.
+- 원인: Mover 독립 실행 백엔드는 동기 상태가 바뀐 프레임마다 `FinalizeFrame` 에서 PrimaryVisualComponent 상대 트랜스폼을 BaseVisualComponentTransform 으로 되돌린다(MoverComponent.cpp 388~393, MoverStandaloneLiaison.cpp 481~503). 생각 서브시스템 틱은 Mover 보다 앞이다(TDMonsterThinkSubsystem.cpp OnWorldBeginPlay, TG_PrePhysics 우선).
+- 해결: 몬스터 액터 틱을 TG_PostUpdateWork 로 옮겨 그 프레임 모든 논리 회전 뒤에 `메시 상대 = Base * 요 회전` 을 쓰고(Base 자체는 바꾸지 않아 SetPresentationOffset·캡슐 모디파이어와 충돌 없음), `UMoverComponent::OnPostFinalize`(동적 델리게이트)에 묶어 되돌림 직후 같은 오프셋을 다시 씌운다(`ATDMonsterCharacter::HandleMoverPostFinalize`). 시험 `TDGame.MonsterAI.VisualTurn.FreezeHoldsVisibleBody`(빙결 중 −140.00° 유지, 해동 첫 프레임 10°).
+- 범위: Mover + 메시 표현 오프셋(회전·위치) 전부. 몬스터가 GAS 타임라인 근접 스윕(`TDMeleeSweep`, 메시 월드 트랜스폼)이나 루트 모션을 쓰면 판정·이동이 보이는 요를 따르게 됨(지금은 안 씀).
+- 증거: `Saved/AgentOps/20261120/turn-popping/refute-static.md` F1, `Saved/AgentOps/20261120/m342-post-tests.log`
+- 날짜·상태: 2026-11-20 active
+- 발견: claude(M3-42, td-refuter 정적 반박)

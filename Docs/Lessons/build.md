@@ -240,3 +240,9 @@
 - 원인[미검증]: 초당 144걸음(1 아닌 걸음 거듭) 길에서 초기화 안 된 자원 읽기나 경합이 있어, 자원 배치(새 버퍼가 생기면 바뀜)나 앞선 GPU 작업에 따라 값이 갈리는 것으로 보인다. FXC 가 같은 파일에 선언·함수만 더해도 advect 코드(레지스터 배정·명령 순서)를 바꾸는 것은 따로 확인됐다 — 그래서 켬 분기는 순열·별도 usf 로 뺀다
 - 해결: 미해결. 그동안 D3D11 의 '끄면 바이트 같음' 판정은 같은 시험 맥락(같은 필터·같은 차례)끼리만 견주고, 다른 맥락에서 갈리면 이 교훈을 먼저 본다. 원인 조사는 같은 바이너리에서 시험 차례를 바꿔 두 값을 재현 → 자원 초기화(클리어)를 넣어 한 값으로 모이는지 확인
 - 범위: 3D 안개 GPU 시험의 D3D11 바이트 비교. 날짜 2026-11-18, claude(구현 하위 에이전트가 찾음)
+
+### L-build-33 빌드 창 없이 사본 C++ 문법 검사(clang-cl /Zs)는 다섯 가지 함정만 피하면 된다
+- 증상: 동료 세션이 빌드 창을 쥔 동안 사본(Saved 아래) C++ 를 확인하려고 `compile_commands.json`·`<모듈>.Shared.rsp` 로 clang-cl 을 돌리자 차례로 ① Git Bash 에서 `/FI"C:/..."` 가 `C:\Program Files\Git\FIC;...` 로 바뀜 ② `input is not a PCH file: ...SharedPCH...h.pch` ③ `'CoreMinimal.h' file not found` ④ `static assertion failed ... Visual Studio 2022 v17.8 (MSVC 14.38) or greater is required` ⑤ 사본 헤더 줄을 하나 늘리자 `unknown type name 'FID_Project_TDGame_Source_TDGame_Characters_TDMonsterCharacter_h_24_PROLOG'`·`call to deleted constructor` 가 남.
+- 원인: ① MSYS 경로 변환 ② clang 은 `-include X.h` 옆의 `X.h.pch` 를 저절로 찾는데 MSVC .pch 라 읽지 못함 ③ rsp 포함 경로가 `Engine/Source` 기준 상대 경로 ④ clang-cl 기본 `_MSC_VER` 1900 ⑤ UHT 생성 헤더 매크로가 UCLASS·GENERATED_BODY 의 줄 번호에 묶여 있음(마지막 빌드의 *.generated.h 를 씀).
+- 해결: `python Tools/check_cpp_syntax.py <파일> --include-root <사본>/Source/TDGame` (파이썬이 인수를 넘기고, PCH 대신 SharedDefinitions·Definitions 만 강제 포함, 작업 폴더 Engine/Source, `-fms-compatibility-version=19.44`, MSVC 전용 플래그 제거). ⑤ 는 위쪽 줄 수를 맞춘 검사용 헤더 사본을 더 앞의 `--include-root` 에 둔다. 검사기는 일부러 넣은 오류(`no member named 'AdvanceTypo'`)를 잡는다. 통과해도 링크·UHT·MSVC 경고는 따로 빌드로 본다(L-build-10).
+- 범위: UE 5.8 TDGame 모듈 사본 검사, LLVM 22 clang-cl(`ue_editor.LLVM_BIN`). 날짜 2026-11-20(M3-42, claude).

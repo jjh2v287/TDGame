@@ -26,6 +26,7 @@
 #include "Engine/World.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameplayAbilitySpec.h"
+#include "HAL/IConsoleManager.h"
 #include "Misc/PackageName.h"
 #include "MonsterAI/TDMonsterDefinitionLibrary.h"
 #include "MonsterAI/TDMonsterSpeciesAsset.h"
@@ -51,6 +52,12 @@ namespace TDMonsterCorpse
 
 namespace
 {
+	TAutoConsoleVariable<int32> CVarMonsterVisualTurn(
+		TEXT("TD.Monster.VisualTurn"),
+		1,
+		TEXT("1: the visible monster body eases toward the logical facing (instant facings and turn starts/stops are smoothed, logic is unchanged). 0: the mesh follows the logical facing exactly."),
+		ECVF_Default);
+	constexpr float MinimumVisualYawOffsetDegrees = 0.01f;
 	constexpr float GroundTargetedRangeThreshold = 450.f;
 	constexpr float DefaultRecoverySeconds = 0.3f;
 	constexpr float MaxAnimationOverrunSeconds = 0.6f;
@@ -166,6 +173,7 @@ ATDMonsterCharacter::ATDMonsterCharacter(const FObjectInitializer& ObjectInitial
 	bUseControllerRotationYaw = false;
 	DefaultMaxMoveSpeed = 400.f;
 	TurningRate = 540.f;
+	PrimaryActorTick.TickGroup = TG_PostUpdateWork;
 
 	SkillComponent = CreateDefaultSubobject<UTDSkillComponent>(TEXT("SkillComponent"));
 	SignificanceComponent = CreateDefaultSubobject<UTDSignificanceComponent>(TEXT("SignificanceComponent"));
@@ -177,6 +185,10 @@ void ATDMonsterCharacter::BeginPlay()
 
 	GrantDefaultActionAbilities();
 	CombatComponent->OnDeath.AddUObject(this, &ThisClass::HandleDeath);
+	if (UCharacterMoverComponent* Mover = GetMoverComponent())
+	{
+		Mover->OnPostFinalize.AddUniqueDynamic(this, &ThisClass::HandleMoverPostFinalize);
+	}
 	ApplySpeciesBody();
 	ApplySpeciesFollowerMeshes();
 	ApplySpeciesAnimation();
@@ -495,6 +507,61 @@ void ATDMonsterCharacter::PresentBody(const float DeltaSeconds, const ETDMonster
 	{
 		CatchUpAbilityClip();
 	}
+}
+
+void ATDMonsterCharacter::Tick(const float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UpdateVisualTurn(DeltaSeconds);
+}
+
+void ATDMonsterCharacter::UpdateVisualTurn(const float DeltaSeconds)
+{
+	const UCharacterMoverComponent* Mover = GetMoverComponent();
+	if (!Mover || Mover->GetPrimaryVisualComponent() != GetMesh())
+	{
+		VisualTurnSmoother.Reset(GetActorRotation().Yaw);
+		bHasVisualYawOffset = false;
+		return;
+	}
+	if (CVarMonsterVisualTurn.GetValueOnGameThread() == 0)
+	{
+		ClearVisualTurn();
+		return;
+	}
+	const bool bIsBodyPoseHeld = !CombatComponent->IsAlive() || CombatComponent->IsFrozen() || CharacterAnimation->IsAnimationFrozen() || CharacterAnimation->IsHitStopped();
+	const float YawOffset = VisualTurnSmoother.Advance(GetActorRotation().Yaw, bIsBodyPoseHeld ? 0.f : DeltaSeconds, FTDVisualTurnSettings());
+	ApplyVisualYawOffset(YawOffset);
+}
+
+void ATDMonsterCharacter::ClearVisualTurn()
+{
+	VisualTurnSmoother.Reset(GetActorRotation().Yaw);
+	if (bHasVisualYawOffset)
+	{
+		ApplyVisualYawOffset(0.f);
+	}
+}
+
+void ATDMonsterCharacter::ApplyVisualYawOffset(const float YawOffset)
+{
+	USkeletalMeshComponent* MeshComponent = GetMesh();
+	const FTransform BaseTransform = GetMoverComponent()->GetBaseVisualComponentTransform();
+	bHasVisualYawOffset = FMath::Abs(YawOffset) > MinimumVisualYawOffsetDegrees;
+	const FTransform VisualTransform = bHasVisualYawOffset ? BaseTransform * FTransform(FRotator(0.f, YawOffset, 0.f)) : BaseTransform;
+	if (!MeshComponent->GetRelativeTransform().Equals(VisualTransform))
+	{
+		MeshComponent->SetRelativeTransform(VisualTransform);
+	}
+}
+
+void ATDMonsterCharacter::HandleMoverPostFinalize(const FMoverSyncState& SyncState, const FMoverAuxStateContext& AuxState)
+{
+	if (!bHasVisualYawOffset || GetMoverComponent()->GetPrimaryVisualComponent() != GetMesh())
+	{
+		return;
+	}
+	ApplyVisualYawOffset(FRotator::NormalizeAxis(VisualTurnSmoother.GetVisualYaw() - GetActorRotation().Yaw));
 }
 
 float ATDMonsterCharacter::BeginBodyFlight(const float AltitudeCm, const float Seconds)

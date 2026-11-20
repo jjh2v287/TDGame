@@ -1,16 +1,16 @@
 # NOW — 현재 상태 한 장
 
-갱신: 2026-11-20 09:32 claude
+갱신: 2026-11-20 12:10 claude
 
 ## ① 진행 중 (대장 doing)
 
-- M3-33·35·36 done: 종 17·LV_TDBossArena 한 사이클·공용 보스 기반·3페이즈 용(TDSpawnMonster MountainDragon).
+- M3-33·35·36 done: 종 17·LV_TDBossArena·공용 보스 기반·3페이즈 용(TDSpawnMonster MountainDragon)
 - M3-37 done: 타격감 7종. 끄기 TD.Feedback.ShakeScale 0
-- M3-38~40 done: 래그돌 정착·물리 에셋 7종·사망 즉시 래그돌(L-anim-23). 끄기 TD.Death.ImmediateRagdoll 0. 후속 M3-41 todo
+- M3-38~40 done: 래그돌 정착·물리 에셋 7종·즉시 래그돌(L-anim-23). 끄기 TD.Death.ImmediateRagdoll 0. M3-41 todo
 - 커밋 끝: M3-14·27~32·34, D-47(후속 c). 전술 끄기 TD.MonsterAI.Tactics 0
 - 월드 doing(담당 없음): P2-07·09/P3-02·05·07·08·09·11. todo: P1-11·12/P2-11·13·14/P3-12·14·16.
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴
-- M3-25·26 done(26 PIE 육안 대기)
+- M3-25·26·42 done(26 육안 대기, 42 끄기 TD.Monster.VisualTurn 0)
 - FluidFX: FogMist·Stir·Tile 켬. 3D 안개 2b-1 GPU 끝·D3D11 보류, 사용량 멈춤, 눈 판정·기본값 대기(stage2/RESUME.md)
 - 게임플레이: GP-03 done(PIE 3회 통과). 단계 1 사람 관문 대기(GP-02·03·11)
 
@@ -23,14 +23,14 @@
 - P3-16 국소 조명 결정, 나무 다리 1.65m 단차.
 - M3-02 blocked: 장면 보정·300마리 실측. 기준선 CrossingStreams 1.
 - 07#MD-47 (a) 권장·발짝 체감. MD-48 무리 기본값, MD-43 Flee 끝(proposed). 공황·호출 연출 미연결.
-- 07#MD-49 아레나 기본값, MD-50 몬스터화 종 구성·수치, MD-60·61 래그돌 정착(proposed, 3초 대 멈춤 속도 맞바꿈). Kwang 물리 에셋만·검사 무기 미부착.
+- 07#MD-49 아레나 기본값, MD-50 몬스터화 종 구성·수치, MD-60·61 래그돌 정착(proposed). Kwang 물리 에셋만·검사 무기 미부착.
 - 07#MD-57 용 보스 수치·업화 안전 지대 1곳·생략 기술, MD-58 보스 기반 규칙, MD-53·54 중간 보스 수치·구현(proposed).
 - M3-29 제안: AGENTS.md 14절 AI/{CombatToken,NPC}/→AI/NPC/(승인 필요). 종별 token_cost 미지정.
 - 길쭉한 형상 회피 MD-25~39·M3-18~24 미등록(승인 대기). M3-25 후속 MD-40~44.
 - 공개 저장소: 공개 유지(사용자 푸시 11-08). 재저장 에셋 유지 판단 남음.
 - GQ·FDQ 권장안 적용(11-18, Gameplay_Tasks 1절). 남음: 레벨 상한, GQ-20 라이선스.
 - 기록 누락 의심: M1-01~05(코드 있음·대장 todo)
-- 승인 대기 전체: Docs/UserApprovalQueue.md(1-1·2-1 답: 최적화 후순위·화질 우선)
+- 승인 대기: Docs/UserApprovalQueue.md(1-1·2-1: 최적화 후순위·화질 우선)
 - 빌드 순서 L-build-05·08. Combat GUI 크래시→헤드리스 L-editor-08
 
 ## ③ 다음 행동

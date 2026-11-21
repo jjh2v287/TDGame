@@ -102,3 +102,14 @@
 - 빨강(새 시험 + 옛 코드, `gf07-camfix-red`): Camera 3개(제자리 회전·짧은 걸음·헤드리스 컷 플래그) 실패, 이계 PIE RealmConnectorWalk·RealmLiftRide·RealmLiftTreadmill 컷 2,145~3,220회로 실패.
 - 초록(고친 코드): Camera 6/6, SeamlessTravel 6/6(분리 실행), Framework 7/7(분리 실행), GUI PIE RealmConnectorWalk 컷 0/726·0/722·0/865·0/879틱, RealmLiftRide 컷 0/366·0/296·0/286·0/356틱. 동기 로드 새 위반 0, 기반 경계 0.
 - 따로 찾음: Framework 의 PauseMenu 시험 뒤에 PIE 시험을 이어 돌리면 PIE 종료(`UEditorEngine::EndPlayMap` 객체 순회)에서 에디터가 죽는다(Respawn 뒤는 정상). PauseMenu 시험 틀이 게임 인스턴스 월드·월드 컨텍스트를 안 지움 — 감독 세션(GP-11)이 고침. 카메라 고침과 무관(SeamlessTravel 단독 통과).
+
+### 6.8 숲 바닥 낙엽이 맨바닥과 번갈아 보이던 것 — 낙엽 풀 판 Z-파이팅 (2026-11-21, 사용자 승인으로 저장 10:04·커밋)
+
+- 보고: 사용자 스크린샷 두 장(같은 자리, 카메라만 조금 다름) — 낙엽이 깔린 곳이 다른 장에서는 회색·흰 맨바닥 덩어리, 안에 흐린 낙엽 잔상(`Saved/AgentOps/20261120/gf07/flicker/user_shots_box.jpg`).
+- 원인: 숲 바닥 풀 타입 `GT_TD_ForestFloor` 의 낙엽 변종(밀도 100㎡당 220, 배율 2.5~5, 한 점에 평균 약 9장 겹침)이 두께 0 판 `SM_BirchLavesPlane` 이고, UE 5.8 풀 배치가 높이·법선을 지형 삼각형에서 그대로 가져와 판이 지형 면과 같은 평면이 된다. 높이 지도(`Saved/WorldGen/AshenVale/height.r16`, 이끼 층 6,000곳) 계산: 판 면적 29% 가 지형과 0.2mm 안, 45% 가 1mm 안, 99% 가 1.5cm 안. 판을 띄우면 2.5cm 에서 97%, 5cm 에서 99.6% 의 판이 통째로 지형 위.
+- 결정적 시험(`Tools/Gameplay/pie_zfight_submm.py`, 숲 지점 3곳, slomo 0.0001·AA 끔·카메라 지연 끔): 카메라를 0.1mm 옮길 때 바뀐 화소(1825×921 중) — 원래 판 3.6만~6.6만(제자리 잡음 2천~4천의 약 18배), 1cm 띄운 판 5.6천~8.2천, 최종 1.5cm 띄운 판 5.5천~9천(잡음의 약 2배, 나머지는 그림자 등 카메라 위치에 따른 보통 변화). 같은 지점 도구 재실행: 원래 35,403~37,850(17.7배) → 최종 3,895~4,121(2.1배). 그림 `GF-07/leaf_zfight_before_after.jpg`.
+- 원인이 아니었던 것: 지형 나나이트 오차(일시 정지 화면에서 `r.Nanite.MaxPixelsPerEdge 4`·`landscape.RenderNanite 0` 으로 바꿔도 원래 판·띄운 판 모두 바뀐 화소 0.5% 미만 — 이 PIE 의 지형은 나나이트로 안 그려짐), 낙엽 메시 LOD(4단계 모두 같은 2삼각형 판), 바람(낙엽 재질 WPO 꺼짐), 그리기 거리(화면 가장 먼 곳 약 24m < 낙엽 사라지기 시작 26m).
+- 효과 없던 측정 방법(기록만): 바람 있는 PIE 에서 20cm·2cm 걸음 비교(원래·띄운 판 차이가 풀 흔들림에 묻힘), 일시 정지 중 걸음(카메라가 폰을 안 따라감).
+- 고침(메모리에서만 확인, 저장 안 함): 판을 1.5cm 띄운 복사본 `/Game/World/Landscape/Grass/SM_TD_LeafLitterPlane`(LOD 1개, 배율과 함께 실제 3.75~7.5cm — 나나이트 지형 오차가 생겨도 화면 먼 곳 1화소 ≈ 2.4cm 보다 크다)으로 낙엽 변종을 바꾼다. 적용·저장 `Tools/WorldGen/editor_make_leaf_litter_plane.py save`(새 메시 생성 + `GT_TD_ForestFloor` 덮어쓰기라 사용자 승인 뒤), 생성기 `editor_make_landscape_material.py` 도 같은 메시를 쓰게 바꿨다. 실험 뒤 에디터는 미저장 2개를 버리고 닫았다 — 디스크·git 에셋 변경 없음.
+- 저장(사용자 승인 '승인', 감독 세션 전달): 새 에디터 세션에서 저장 직전 미저장 패키지 0 확인 → `editor_make_leaf_litter_plane.py save`(낙엽 판 1.5cm·LOD 1개, `GT_TD_ForestFloor` 낙엽 변종 교체) → 저장 뒤 미저장 0. git 변경은 저장 전 상태 목록 대비 `Content/World/Landscape/Grass/GT_TD_ForestFloor.uasset`(수정)·`SM_TD_LeafLitterPlane.uasset`(새로) 두 개뿐, 둘 다 LFS.
+- 저장 전후(같은 에디터 세션, 같은 도구·숲 3곳, `Saved/Gameplay/ZFight/gf07_leaf_before_save`·`gf07_leaf_after_save`): 0.1mm 걸음마다 바뀐 화소 — 지점 0 35,488~37,661(잡음 20.9배) → 3,426~3,751(2.6배), 지점 1 36,999~42,783(14.4배) → 6,843~7,154(3.0배), 지점 2 66,236~69,734(17.6배) → 7,444~7,765(2.0배). 약 90% 줄고 나머지는 카메라 위치에 따른 보통 변화 수준. 그림 `GF-07/leaf_zfight_saved_before_after.jpg`. 캐릭터 발밑 확대에서 낙엽이 발을 덮는 차이는 눈에 띄지 않음.

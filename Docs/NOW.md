@@ -12,7 +12,7 @@
 - 애니 H-01 blocked, H-02 todo. Fab 후보 5종 미가져옴
 - M3-25·26·42·43 done(26 육안 대기, 43 끄기 TD.Monster.SmoothTurn 0)
 - FluidFX: FogMist·Stir·Tile 켬. 3D 안개 2b-1 GPU 끝·D3D11 보류, 사용량 멈춤, 눈 판정·기본값 대기(stage2/RESUME.md)
-- 게임플레이: GP-03·GF-07 done. 단계 1 사람 관문 대기(GP-02·03·11)
+- 게임플레이: GP-03·GF-07 done(낙엽 판 저장·커밋). 단계 1 사람 관문 대기(GP-02·03·11)
 
 ## ② 막힘·결정 대기
 

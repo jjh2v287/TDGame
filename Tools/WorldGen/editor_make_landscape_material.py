@@ -1,6 +1,6 @@
 """에디터 안에서 실행: 랜드스케이프 레이어 머티리얼(M_TD_Landscape)·인스턴스·풀 타입을 다시 만들고, 부모가 M_TD_Landscape였던 인스턴스와 각 랜드스케이프의 원래 재질 연결을 되살린다. 이계 색은 MF_TD_RegionBlend 가중치 w(경계 0 → 안쪽 RegionFadeWidth에서 1)로 섞는다(P3-19).
 실행: python Tools/run_in_editor.py Tools/WorldGen/editor_make_landscape_material.py (PowerShell). MF_TD_RegionBlend를 만드는 editor_make_topdown_materials.py 뒤에 실행한다.
-출력: /Game/World/Landscape/M_TD_Landscape·MI_TD_Landscape·Grass/GT_TD_* (재실행하면 덮어쓴다), 재부모화한 /Game/World/Landscape·/Game/World/Realms 인스턴스
+출력: /Game/World/Landscape/M_TD_Landscape·MI_TD_Landscape·Grass/GT_TD_*·Grass/SM_TD_LeafLitterPlane(띄운 낙엽 판, editor_make_leaf_litter_plane.py) (재실행하면 덮어쓴다), 재부모화한 /Game/World/Landscape·/Game/World/Realms 인스턴스
 상태: 현행(P3-19)
 
 레이어 인포(LI_TD_*)는 C++ UTDLandscapeEditorLibrary가 만든다.
@@ -20,6 +20,7 @@ if WORLDGEN_TOOLS_DIR not in sys.path:
     sys.path.insert(0, WORLDGEN_TOOLS_DIR)
 
 td = importlib.reload(importlib.import_module("topdown_materials"))
+leaf_litter = importlib.reload(importlib.import_module("editor_make_leaf_litter_plane"))
 
 ROOT = "/Game/World/Landscape"
 MASTER_INSTANCE_ROOTS = (ROOT, "/Game/World/Realms")
@@ -52,7 +53,7 @@ GRASS_TYPES = {
         (f"{MESH}/Nature/Dreadplants/SM_Mycelium1", 45.0, 1.0, 2.6, 4000),
         (f"{MESH}/Nature/Dreadplants/SM_DreadplantMushroom1", 14.0, 0.6, 1.3, 4000),
         (f"{MESH}/Nature/Dreadplants/SM_DreadplantMushroom2", 8.0, 0.5, 1.1, 4000),
-        (f"{MESH}/Birch/SM_BirchLavesPlane", 220.0, 2.5, 5.0, 3500),
+        (leaf_litter.LEAF_LITTER_MESH_PATH, 220.0, 2.5, 5.0, 3500),
         (f"{MESH}/Nature/SM_Grass_VarB", 70.0, 0.6, 1.0, 4000),
     ]),
     "GT_TD_MudReeds": ("Mud", [
@@ -104,6 +105,8 @@ def load_region_function():
 
 def make_grass_types():
     ensure_dir(ROOT + "/Grass")
+    leaf_litter.ensure_leaf_litter_plane()
+    EAL.save_asset(leaf_litter.LEAF_LITTER_MESH_PATH, only_if_is_dirty=True)
     result = {}
     for name, (layer, varieties) in GRASS_TYPES.items():
         path = f"{ROOT}/Grass/{name}"

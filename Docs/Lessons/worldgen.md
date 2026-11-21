@@ -82,3 +82,13 @@
 - 증거: `Saved/WorldGen/puddle_plane_conversion_apply.json`, `Docs/Validation/Gameplay/GF-07/puddle_before_after.png`·`.gif`, `Saved/Gameplay/FloorPopping/w5_pp_planes`·`w5_pp_decals`.
 - 날짜·상태: 2026-11-20 active
 - 발견: claude(GF-07 바닥 팝핑)
+
+### L-worldgen-10 두께 0 평면 메시를 랜드스케이프 풀로 깔면 UE 풀 배치가 판을 지형 삼각형과 정확히 같은 평면에 놓아 Z-파이팅한다
+- 증상: 사용자 스크린샷 두 장(같은 자리, 카메라만 조금 다름): "숲 바닥 낙엽이 깔린 곳이 다른 장에서는 회색·흰 맨바닥 덩어리로 보인다". 덩어리 안에 흐린 낙엽 잔상, 경계는 곧은 선.
+- 원인: `GT_TD_ForestFloor` 낙엽 변종 `SM_BirchLavesPlane` 은 z=0 두께 0 판이다. UE 5.8 풀 배치(`LandscapeGrass.cpp` `SampleLandscapeAtLocationLocal`)는 높이를 지형 삼각형 무게중심 좌표로, 법선을 그 삼각형 법선(`bAlignToTriangleNormals` 기본 참)으로 정해 판이 가운데 삼각형 면과 같은 평면이 된다. 높이 지도 계산으로 판 면적 29% 가 지형과 0.2mm 안, 45% 가 1mm 안. 깊이가 같으니 카메라 위치(뷰 기준 좌표 반올림)에 따라 넓은 덩어리가 지형·낙엽으로 뒤집히고 TSR 이 섞어 잔상이 남는다. 같은 삼각형 위 낙엽끼리도 같은 평면이다.
+- 해결: 판을 1.5cm 띄운 복사본 `SM_TD_LeafLitterPlane`(균일 스케일 2.5~5 배라 실제 3.75~7.5cm, 같은 삼각형 위 두 판도 높이가 갈려 낙엽끼리 겹침도 풀린다 — LockXY 로 고정 높이만 띄우면 낙엽끼리는 그대로 같은 평면) — `Tools/WorldGen/editor_make_leaf_litter_plane.py`, 생성기 `editor_make_landscape_material.py` 가 같은 메시를 쓴다.
+- 찾는 법: 일시 정지 화면에서 `r.Nanite.MaxPixelsPerEdge 4`·`landscape.RenderNanite 0` 을 바꿔도 화면이 그대로였고(이 PIE 의 지형은 나나이트로 안 그려짐, 일시 정지 중엔 카메라가 폰을 안 따라감), 바람 있는 2cm 걸음 비교는 풀 흔들림에 묻혔다. 결정적인 것은 slomo 0.0001 + AA 끔 + 카메라 지연 끔 + 카메라 0.1mm 이동(`Tools/Gameplay/pie_zfight_submm.py`): 보통 물체는 안 바뀌고 같은 깊이 면만 뒤집힌다(두께 0 판 3.6만 화소 = 제자리 잡음 17.7배, 띄운 판 4천 = 2.1배). PIE 중엔 `EditorAssetLibrary.load_asset` 이 None 이라 풀 타입·메시 교체는 PIE 를 끄고 한다.
+- 범위: 두께 0 평면을 풀·산포로 지형 면에 맞춰 까는 모든 경우(다른 풀 타입의 납작한 판은 현재 없음 — `SM_GrassPlane` 은 세운 카드).
+- 증거: `Saved/Gameplay/ZFight/gf07_leaf_flat`·`gf07_leaf_final`, `Saved/AgentOps/20261120/gf07/submm/`, `Docs/Validation/Gameplay/GF-07/leaf_zfight_before_after.jpg`
+- 날짜·상태: 2026-11-21 active(사용자 승인으로 저장, 저장 뒤 0.1mm 시험 약 90% 감소)
+- 발견: claude(GF-07 바닥 팝핑)

@@ -338,3 +338,14 @@
 - 원인: 덤프 목록을 기준 폴더에서만 세고(181~199행), 기준 기둥·틀 파일이 없으면 말없이 건너뛰며(131~132·155~156행), 끝 코드가 틀 건너뜀 수를 보지 않는다(161~164·203~207행). 잠긴 도구라 고치지 않는다
 - 해결: 판정할 때 끝 코드와 함께 보고서 JSON 의 `checks`(기대 검사 수), `rows` 의 (scene, dump) 쌍 수(= 재생 manifest 의 덤프 수), `frames_skipped` = 0 을 본다. 예: 섞기 B4 구현 판정은 검사 1121·덤프 92·건너뜀 0
 - 범위: `fog3d_compare_s2a.py` 로 하는 모든 GPU 대 기준 판정(2a R5, 섞기 B4). 날짜 2026-11-17, claude(독립 반박자가 찾음)
+
+### L-repo-40 새로 `read-tree` 한 개인 인덱스(`GIT_INDEX_FILE`)로 `git commit` 하면 1~3분 걸린다 — 공유 인덱스 사본에 `read-tree --reset -i`
+- 증상: M3-43 커밋 두 번에서 `git read-tree HEAD` 로 만든 개인 인덱스의 `git commit -F` 가 2분 48초·51초 걸렸다(메시지 파일 → `commit.index`·커밋 시각). 대신 공유 인덱스 사본에 `git read-tree -m <HEAD>` 를 하면 남이 올린 항목이 있을 때 `error: Entry 'f2.txt' not uptodate. Cannot merge.`
+- 원인: 새 인덱스는 stat 정보가 0이라 `git commit` 의 인덱스 갱신이 작업 트리 파일 1만 5천여 개를 모두 다시 해시한다(LFS 파일은 clean 필터까지). `-m` 은 작업 트리가 최신인지 검사한다
+- 해결: `git rev-parse --git-path index` 파일을 복사해 `GIT_INDEX_FILE=<사본> git read-tree --reset -i <HEAD>` → HEAD 와 같은 항목은 stat 을 이어받고 남이 올린 항목은 HEAD 블롭으로 돌아간다(`-i` 작업 트리 검사 끔, `--reset` 은 문서상 충돌 항목을 버림 — 충돌 항목은 미검증). 실측 15,786 항목: read-tree 0.30초, 전체 갱신 0.38초. 뒤에 `git diff-index --cached --quiet <HEAD>` 로 HEAD 와 같은지 확인한다. `Tools/commit_own_changes.py` 가 이렇게 하고, 실패하면 일반 `read-tree` 로 물러난다
+- 함께 확인: `git hash-object --path` 는 safer autocrlf 를 따르지 않는다 — HEAD 블롭이 CRLF(i/crlf)여도 CRLF→LF 로 바꿔 파일 전체가 바뀐다(같은 파일을 `git add` 하면 CRLF 유지). 지금 저장소 i/crlf 0개. 도구는 HEAD 가 CRLF 인데 새 블롭에 CRLF 가 없으면 거부한다
+- 함께 확인: 공유 인덱스의 `git add -N` 항목은 `ls-files --stage` 에서 빈 블롭으로만 보이고(`--debug` 의 flags 에 0x20000000) 트리에 안 들어가므로, 남겨 두면 다음 커밋이 내가 방금 커밋한 그 파일을 지운다 — 동기화 때 '항목 없음'으로 본다. 경로 수백 개(최근 커밋 589·1,412개)를 명령줄 인수로 넘기면 `[WinError 206] 파일 이름이나 확장명이 너무 깁니다` → 24,000자씩 나누거나 `--stdin-paths`
+- 범위: 같은 작업 트리를 쓰는 세션이 개인 인덱스로 하는 부분 커밋 전부(Windows, Git 2.46.0.windows.1, 시스템 core.autocrlf=true)
+- 증거: `Saved/AgentOps/20261121/commit-tool/git-behavior.txt`(실험 출력·시간 측정), 같은 폴더 자체 시험·변이 검사 기록
+- 날짜·상태: 2026-11-21 active
+- 발견: claude(commit_own_changes 제작)
